@@ -1,0 +1,453 @@
+\chapter{Multivariate time series models}
+\label{chap:var}
+
+\app{Gretl} provides a standard set of procedures for dealing with the
+multivariate time-series models known as VARs (\emph{Vector
+  AutoRegression}). More general models --- such as VARMAs, nonlinear
+models or multivariate GARCH models --- are not provided as of now,
+although it is entirely possible to estimate them by writing custom
+procedures in the \app{gretl} scripting language. In this chapter, we
+will briefly review \app{gretl}'s VAR toolbox.
+
+\section{Notation}
+\label{sec:var-def}
+
+A VAR is a structure whose aim is to model the time persistence of a
+vector of $n$ time series, $y_t$, via a multivariate autoregression,
+as in
+\begin{equation}
+  \label{eq:VAR}
+  y_t = A_1 y_{t-1} + A_2 y_{t-2} + \cdots + A_p y_{t-p} +
+  B x_t + \epsilon_t 
+\end{equation}
+The number of lags $p$ is called the \emph{order} of the VAR. The
+vector $x_t$, if present, contains a set of exogenous variables, often
+including a constant, possibly with a time trend and seasonal
+dummies. The vector $\epsilon_t$ is typically assumed to be a vector
+white noise, with covariance matrix $\Sigma$.
+
+Equation \eqref{eq:VAR} can be written more compactly as
+\begin{equation}
+  \label{eq:VARpoly}
+  A(L) y_t = B x_t + \epsilon_t
+\end{equation}
+where $A(L)$ is a matrix polynomial in the lag operator, or as
+\begin{equation}
+  \label{eq:VARcompan}
+  \left[\begin{array}{c} y_t \\ y_{t-1} \\ \cdots \\ y_{t-p-1} 
+    \end{array} \right] = 
+  \mathbf{A}
+  \left[\begin{array}{c} y_{t-1} \\ y_{t-2} \\ \cdots \\ y_{t-p} 
+    \end{array} \right] +
+  \left[\begin{array}{c} B \\ 0 \\ \cdots \\ 0
+    \end{array} \right] x_t +
+  \left[\begin{array}{c} \epsilon_t \\ 0 \\ \cdots \\ 0 
+    \end{array} \right]
+\end{equation}
+The matrix $\mathbf{A}$ is known as the ``companion matrix'' and equals
+\[
+\mathbf{A} =
+  \left[\begin{array}{ccccc} 
+      A_1 & A_2 & \cdots & A_p \\ 
+      I & 0 & \cdots & 0 \\ 
+      0 & I & \cdots & 0 \\ 
+      \vdots & \vdots & \ddots & \vdots
+    \end{array} \right]
+\]
+Equation \eqref{eq:VARcompan} is known as the ``companion form'' of
+the VAR.
+
+Another representation of interest is the so-called ``VMA
+representation'', which is written in terms of an infinite series of
+matrices $\Theta_i$ defined as
+\begin{equation}
+  \label{eq:VMA}
+  \Theta_i = \frac{\partial y_t}{\partial \epsilon_{t-i}}
+\end{equation}
+The $\Theta_i$ matrices may be derived by recursive substitution in
+equation \eqref{eq:VAR}: for example, assuming for simplicity that
+$B=0$ and $p=1$, equation \eqref{eq:VAR} would become
+\[
+  y_t = A y_{t-1} + \epsilon_t
+\]
+which could be rewritten as
+\[
+  y_t = A^{n+1} y_{t-n-1} + \epsilon_t + A \epsilon_{t-1} + A^2
+  \epsilon_{t-2} + \cdots + A^n \epsilon_{t-n}
+\]
+In this case $\Theta_i = A^i$. In general, it is possible to compute
+$\Theta_i$ as the $n \times n$ north-west block of the $i$-th power of the
+companion matrix $\mathbf{A}$ (so $\Theta_0$ is always an identity matrix).
+
+The VAR is said to be \emph{stable} if all the eigenvalues of the
+companion matrix $\mathbf{A}$ are smaller than 1 in absolute value, or
+equivalently, if the matrix polynomial $A(L)$ in equation
+\eqref{eq:VARpoly} is such that $|A(z)| = 0$ implies $|z|>1$. If this
+is the case, $\lim_{n \to \infty} \Theta_n = 0$ and the vector $y_t$ is
+stationary; as a consequence, the equation
+\begin{equation}
+  \label{eq:VMArep}
+  y_t - E(y_t) = \sum_{i=0}^{\infty} \Theta_i \epsilon_{t-i}
+\end{equation}
+is a legitimate Wold representation. 
+
+If the VAR is not stable, then the inferential procedures that are
+called for become somewhat more specialized, except for some simple
+cases. In particular, if the number of eigenvalues of $\mathbf{A}$
+with modulus 1 is between 1 and $n-1$, the canonical tool to deal with
+these models is the cointegrated VAR model, discussed in chapter
+\ref{chap:vecm}.
+
+\section{Estimation}
+\label{sec:var-estim}
+
+\begin{script}[htbp]
+  \caption{Estimation of a VAR via OLS}
+  \label{script:var-ols}
+Input:
+\begin{scodebit}
+open sw_ch14.gdt
+genr infl = 400*sdiff(log(PUNEW))
+
+scalar p = 2
+list X = LHUR infl
+list Xlag = lags(p,X)
+
+loop foreach i X
+    ols $i const Xlag
+end loop
+
+var p X
+\end{scodebit}
+%$
+Output (selected portions):
+\begin{scodebit}
+Model 1: OLS, using observations 1960:3-1999:4 (T = 158)
+Dependent variable: LHUR
+
+             coefficient   std. error   t-ratio   p-value 
+  --------------------------------------------------------
+  const       0.113673     0.0875210     1.299    0.1960  
+  LHUR_1      1.54297      0.0680518    22.67     8.78e-51 ***
+  LHUR_2     -0.583104     0.0645879    -9.028    7.00e-16 ***
+  infl_1      0.0219040    0.00874581    2.505    0.0133   **
+  infl_2     -0.0148408    0.00920536   -1.612    0.1090  
+
+Mean dependent var   6.019198   S.D. dependent var   1.502549
+Sum squared resid    8.654176   S.E. of regression   0.237830
+
+...
+
+
+VAR system, lag order 2
+OLS estimates, observations 1960:3-1999:4 (T = 158)
+Log-likelihood = -322.73663
+Determinant of covariance matrix = 0.20382769
+AIC = 4.2119
+BIC = 4.4057
+HQC = 4.2906
+Portmanteau test: LB(39) = 226.984, df = 148 [0.0000]
+
+Equation 1: LHUR
+
+             coefficient   std. error   t-ratio   p-value 
+  --------------------------------------------------------
+  const       0.113673     0.0875210     1.299    0.1960  
+  LHUR_1      1.54297      0.0680518    22.67     8.78e-51 ***
+  LHUR_2     -0.583104     0.0645879    -9.028    7.00e-16 ***
+  infl_1      0.0219040    0.00874581    2.505    0.0133   **
+  infl_2     -0.0148408    0.00920536   -1.612    0.1090  
+
+Mean dependent var   6.019198   S.D. dependent var   1.502549
+Sum squared resid    8.654176   S.E. of regression   0.237830
+\end{scodebit}
+\end{script}
+
+The \app{gretl} command for estimating a VAR is \cmd{var} which, in
+the command line interface, is invoked in the following manner:
+\begin{flushleft}
+    \texttt{[ \emph{modelname} \textless - ] var \emph{p} \emph{Ylist} [;
+    \emph{Xlist}]}
+\end{flushleft}
+where \texttt{p} is a scalar (the VAR order) and \texttt{Ylist} is a
+list of variables describing the content of $y_t$. If the list
+\texttt{Xlist} is absent, the vector $x_t$ is understood to contain a
+constant only; if present, must be separated from \texttt{Ylist} by a
+semi-colon and contains the other exogenous variables. Note, however,
+that a few common choices can be obtained in a simpler way via
+options: the options \app{gretl} provides are \option{trend},
+\option{seasonals} and \option{nc} (no constant). Either
+\texttt{Ylist} and \texttt{Xlist} may be named lists (see section
+\ref{named-lists}). The ``\texttt{\textless -}'' construct can be used
+to store the model under a name (see section
+\ref{sect-script-objects}), if so desired. To estimate a VAR using the
+graphical interface, choose ``Time Series, Vector Autoregression'',
+under the Model menu.
+
+The parameters in eq. \eqref{eq:VAR} are typically free from
+restrictions, which implies that multivariate OLS provides a
+consistent and asymptotically efficient estimator of all the
+parameters.\footnote{In fact, under normality of $\epsilon_t$ OLS is
+  indeed the conditional ML estimator. You may want to use other
+  methods if you need to estimate a VAR in which some parameters are
+  constrained.}  Given the simplicity of OLS, this is what every
+software package, including \app{gretl}, uses: example script
+\ref{script:var-ols} exemplifies the fact that the \cmd{var} command
+gives you exactly the output you would have from a battery of OLS
+regressions. The advantage of using the dedicated command is that,
+after estimation is done, it makes it much easier to access certain
+quantities and manage certain tasks. For example, the \dollar{coeff}
+accessor returns the estimated coefficients as a matrix with $n$
+columns and \dollar{sigma} returns an estimate of the matrix $\Sigma$,
+the covariance matrix of $\epsilon_t$. 
+
+Moreover, for each variable in the system an F test is automatically
+performed, in which the null hypothesis is that no lags of variable
+$j$ are significant in the equation for variable $i$. This is commonly
+known as a \textbf{Granger causality} test.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{rl}
+    \hline
+    Periodicity & horizon \\
+    \hline
+    Quarterly & 20 (5 years) \\
+    Monthly & 24 (2 years) \\
+    Daily & 3 weeks \\
+    All other cases & 10 \\
+    \hline
+  \end{tabular}
+  \caption{VMA horizon as a function of the dataset periodicity}
+  \label{tab:var-horizon}
+\end{table}
+
+In addition, two accessors become available for the companion matrix
+(\dollar{compan}) and the VMA representation (\dollar{vma}). The
+latter deserves a detailed description: since the VMA representation
+\eqref{eq:VMArep} is of infinite order, \app{gretl} defines a
+\emph{horizon} up to which the $\Theta_i$ matrices are computed
+automatically. By default, this is a function of the periodicity of
+the data (see table \ref{tab:var-horizon}), but it can be set by the
+user to any desired value via the \cmd{set} command with the
+\cmd{horizon} parameter, as in
+\begin{code}
+set horizon 30
+\end{code}
+Calling the horizon $h$, the \dollar{vma} accessor returns an $(h+1)
+\times n^2$ matrix, in which the $(i+1)$-th row is the vectorized form
+of $\Theta_i$.
+
+\subsection{VAR order selection}
+
+In order to help the user choose the most appropriate VAR order,
+\app{gretl} provides a special syntax construct to the \texttt{var}
+command:
+\begin{flushleft}
+  \texttt{var \emph{p} \emph{Ylist} [; \emph{Xlist}]} \option{lagselect}
+\end{flushleft}
+When the command is invoked with the \option{lagselect} option,
+estimation is performed for all lags up to \texttt{p} and a table is
+printed: it displays, for each order, a LR test for the order $p$
+versus $p-1$, plus an array of information criteria (see chapter
+\ref{select-criteria}). For each information criterion in the table, a
+star indicates what appears to be the ``best'' choice. The same output
+can be obtained through the graphical interface via the ``Time Series,
+VAR lag selection'' entry under the Model menu.
+
+\begin{script}[htbp]
+  \caption{VAR lag selection via Information Criteria}
+  \label{script:var-lagselect}
+Input:
+\begin{scodebit}
+open denmark
+list Y = 1 2 3 4
+var 4 Y --lagselect
+var 6 Y --lagselect
+\end{scodebit}
+%$
+Output (selected portions):
+\begin{scodebit}
+VAR system, maximum lag order 4
+
+The asterisks below indicate the best (that is, minimized) values
+of the respective information criteria, AIC = Akaike criterion,
+BIC = Schwarz Bayesian criterion and HQC = Hannan-Quinn criterion.
+
+lags        loglik    p(LR)       AIC          BIC          HQC
+
+   1     609.15315           -23.104045   -22.346466*  -22.814552 
+   2     631.70153  0.00013  -23.360844*  -21.997203   -22.839757*
+   3     642.38574  0.16478  -23.152382   -21.182677   -22.399699 
+   4     653.22564  0.15383  -22.950025   -20.374257   -21.965748 
+
+VAR system, maximum lag order 6
+
+The asterisks below indicate the best (that is, minimized) values
+of the respective information criteria, AIC = Akaike criterion,
+BIC = Schwarz Bayesian criterion and HQC = Hannan-Quinn criterion.
+
+lags        loglik    p(LR)       AIC          BIC          HQC
+
+   1     594.38410           -23.444249   -22.672078*  -23.151288*
+   2     615.43480  0.00038  -23.650400*  -22.260491   -23.123070 
+   3     624.97613  0.26440  -23.386781   -21.379135   -22.625083 
+   4     636.03766  0.13926  -23.185210   -20.559827   -22.189144 
+   5     658.36014  0.00016  -23.443271   -20.200150   -22.212836 
+   6     669.88472  0.11243  -23.260601   -19.399743   -21.795797 
+\end{scodebit}
+\end{script}
+
+Warning: in finite samples the choice of $p$ may affect the outcome of
+the procedure. \textbf{This is not a bug}, but rather a nasty but
+unavoidable side effect of the way these comparisons should be made:
+if your sample contains $T$ observations, the lag selection procedure,
+if invoked with parameter $p$, examines all VARs of order ranging form
+1 to $p$, estimated on a sample of $T-p$ observations. In other words,
+the comparison procedure does not use all the data available when
+estimating VARs of order less than $p$ to make sure that all the
+models compared are estimated on the same data range. Under these
+circumstances, choosing a different value of $p$ may alter the
+results, although this is unlikely to happen if your sample size is
+reasonably large.
+
+An example of this unpleasant phenomenon is given in example script
+\ref{script:var-lagselect}. As can be seen, according to the
+Hannan-Quinn criterion, order 2 seems preferable to order 1 if the
+maximum tested order is 4, but the situation is reversed if the
+maximum tested order is 6.
+
+\section{Structural VARs}
+\label{sec:svar}
+
+As of today, \app{gretl} does not provide a native implementation for
+the class of models known as ``Structural VARs''; however, it provides
+an implementation of the Cholesky deconposition-based approach, which
+is the most classic, and certainly most popular SVAR version.
+
+\subsection{IRF and FEVD}
+
+Assume that the disturbance in equation \eqref{eq:VAR} can be thought
+of as a linear function of a vector of \emph{structural shocks} $u_t$,
+which are assumed to have unit variance and to be incorrelated to one
+another, so $V(u_t) = I$. If $\epsilon_t = K u_t$, it follows that
+$\Sigma = V(\epsilon_t) = KK'$.
+
+The main object of interest in this setting the sequence of matrices
+\begin{equation}
+  \label{eq:svma}
+  C_k = \frac{\partial y_t}{\partial u_{t-i}} = \Theta_k K, 
+\end{equation}
+known as the structural VMA representation. From the $C_k$ matrices
+defined in equation \eqref{eq:svma} two quantities of interest may be
+derived: the \textbf{Impulse Response Function} (IRF) and the
+\textbf{Forecast Error Variance Decomposition} (FEVD).
+
+The IRF of variable $i$ to shock $j$ is simply the sequence of the
+elements in row $i$ and column $j$ of the $C_k$ matrices. In formulae:
+\[
+  \mathcal{I}_{i,j,k} = \pder{y_{i,t}}{u_{j, t-k}}
+\]
+As a rule, Impulse Response Functions are plotted as a function of
+$k$, and are interpreted as the effect that a shock has on an
+observable variable through time. Of course, what we observe are the
+estimated IRFs, so it is natural to endow them with confidence
+intervals: following common practice among econometric software,
+\app{gretl} computes the confidence intervals by using the
+bootstrap\footnote{It is possible, in principle, to compute analytical
+  confidence intervals via an asymptotic approximation, but this is
+  not a very popular choice: asymptotic formulae are known to often
+  give a very poor approximation of the finite-sample properties.};
+details are later in this section.
+
+Another quantity of interest that may be computed from the structural
+VMA representation is the Forecast Error Variance Decomposition
+(FEVD). The forecast error variance after $h$ steps is given by
+\[
+  \Omega_h = \sum_{k=0}^h C_k C_k'
+\]
+hence the variance for variable $i$ is
+\[
+  \omega^2_i = \left[ \Omega_h \right]_{i,i} = \sum_{k=0}^h
+  \mathrm{diag}(C_k C_k')_i =
+  \sum_{k=0}^h \sum_{l=1}^n ({}_kc_{i.l})^2 
+\]
+where ${}_kc_{i.l}$ is, trivially, the $i,l$ element of $C_k$. As a
+consequence, the share of uncertainty on variable $i$ that can be
+attributed to the $j$-th shock after $h$ periods equals
+\[
+  \mathcal{VD}_{i,j,h} =
+  \frac{\sum_{k=0}^h ({}_kc_{i.j})^2 }{  \sum_{k=0}^h \sum_{l=1}^n
+    ({}_kc_{i.l})^2 } .
+\]
+This makes it possible to quantify which shocks are most important to
+determine a certain variable in the short and/or in the long run.
+
+\subsection{Triangularization}
+
+The formula \ref{eq:svma} takes $K$ as known, while of course it has
+to be estimated. The estimation problem has been the subject of an
+enormous body of literature we will not even attempt to summarize
+here: see for example \cite[chapter 9]{LKBook05}.
+
+Suffice it to say that the most popular choice dates back to
+\cite{sims80}, and consists in assuming that $K$ is lower triangular,
+so its estimate is simply the Cholesky deconposition of the estimate
+of $\Sigma$. The main consequence of this choice is that the ordering
+of variables within the vector $y_t$ becomes meaningful: since $K$ is
+also the matrix of Impulse Response Functions at lag 0, the
+triangularity assumption means that the first variable in the ordering
+responds instantaneously only to shock number 1, the second one only
+to shocks 1 and 2, and so forth. For this reason, each variable is
+thought to ``own'' one shock: variable 1 owns shock number 1,
+etcetera.
+
+This is the reason why in this sort of exercises the ordering of the
+variables is important and the applied literature has developed the
+``most exogenous first'' mantra. Where, in this setting, ``exogenous''
+really means ``instantaneously insensitive to structural
+shocks''\footnote{The word ``exogenous'' has caught on in this
+  context, but it's a rather unfortunate choice: for a start, each
+  shock impacts on every variable after one lag, so nothing is really
+  exogenous here. A much better choice of words would probably have
+  been something like ``sturdy'', but it's too late now.}. To put it
+differently, if variable \texttt{foo} comes before variable
+\texttt{bar} in the $Y$ list, it follows that the shock owned by
+\texttt{foo} affects \texttt{bar} instantaneously, but the reverse
+does not happen.
+
+Impulse Response Functions and the FEVD can be printed out via the
+command line interface by using the \option{impulse-response} and
+\option{variance-decomp} options, respectively. If you need to store
+them into matrices, you can compute the structural VMA and proceed
+from there. For example, the following code snippet shows you how to
+compute a matrix containing the IRFs:
+\begin{code}
+open denmark
+list Y = 1 2 3 4
+scalar n = nelem(Y)
+var 2 Y --quiet --impulse
+
+matrix K = cholesky($sigma)
+matrix V = $vma
+matrix IRF = V * (K ** I(n))
+print IRF
+\end{code}
+in which the equality
+\[
+\mathrm{vec}(C_k) = \mathrm{vec}(\Theta_k K) = (K' \otimes I)
+\mathrm{vec} (\Theta_k)
+\]
+was used.
+
+FIXME: show all the nice stuff we have under the GUI.
+
+\subsection{IRF bootstrap}
+
+FIXME: todo 
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
