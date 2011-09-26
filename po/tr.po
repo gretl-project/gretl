@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-24 11:17-0400\n"
-"PO-Revision-Date: 2011-09-11 16:28-0400\n"
+"PO-Revision-Date: 2011-09-26 09:29+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -1392,7 +1392,7 @@ msgstr "Veri seti geri yerleştirme: yeniden örneklemeli değil\n"
 
 #: lib/src/dbread.c:390 lib/src/dbread.c:631
 msgid "Couldn't open database index file"
-msgstr "Veritabanı indeks dosyası açılamadı"
+msgstr "Veritabanı endeks dosyası açılamadı"
 
 #: lib/src/dbread.c:410
 msgid "Couldn't open database binary file"
@@ -2268,9 +2268,9 @@ msgid "Unmatched '%c'\n"
 msgstr "'%c' uyuşmadı\n"
 
 #: lib/src/geneval.c:9654
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is of type %s"
-msgstr "%s değişkeni kesikli değil"
+msgstr "%s değişkeninin türü %s"
 
 #: lib/src/geneval.c:9810
 #, c-format
@@ -2400,7 +2400,7 @@ msgstr "model %d için birim-başı sabitler"
 
 #: lib/src/genfuncs.c:3191
 msgid "Invalid declaration: maybe you need the \"clear\" command?"
-msgstr ""
+msgstr "Geçersiz bildiri: \"clear\" komutuna gerek duyuyor olabilir misiniz?"
 
 #: lib/src/genfuncs.c:3194
 msgid "Invalid declaration"
@@ -6793,7 +6793,7 @@ msgstr "%d - %d aralığı artı-dışı!"
 
 #: lib/src/usermat.c:741
 msgid "Ambiguous matrix index"
-msgstr ""
+msgstr "Muğlak dizey endeksi"
 
 #: lib/src/usermat.c:1214
 #, c-format
@@ -9241,14 +9241,12 @@ msgid "all files (*.*)"
 msgstr "tüm dosyalar (*.*)"
 
 #: gui2/fileselect.c:767
-#, fuzzy
 msgid "Excel files (*.xls)"
-msgstr "Ox dosyalar (*.ox)"
+msgstr "Excel dosyası (*.xls)"
 
 #: gui2/fileselect.c:768
-#, fuzzy
 msgid "Excel files (*.xlsx)"
-msgstr "Ox dosyalar (*.ox)"
+msgstr "Excel dosyası (*.xlsx)"
 
 #: gui2/fileselect.c:770
 msgid "gretl script files (*.inp)"
@@ -11175,7 +11173,6 @@ msgid "_Command reference"
 msgstr "_Komut başvuru belgesi"
 
 #: gui2/gretl.c:1516
-#, fuzzy
 msgid "_Function reference"
 msgstr "_İşlev başvuru belgesi"
 
@@ -12729,6 +12726,9 @@ msgid ""
 "%s (value = %g)\n"
 "Name (max. 15 characters):"
 msgstr ""
+"Model %d istatistikleri\n"
+"%s (değer = %g)\n"
+"Ad (ençok 15 harf):"
 
 #: gui2/library.c:5806
 msgid "standardized residual"
