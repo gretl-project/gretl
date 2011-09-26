@@ -14,7 +14,7 @@ Hélio Guilherme, 23 September 2011
 Ubuntu natty (11.04) (contrib. 2011-09-23, helio_guilherme@hotmail.com)
 # dependencies
 sudo apt-get install gnuplot libfftw3-dev liblapack-dev gfortran libxml2 \
- zlibc libreadline5-dev libgtksourceview2.0-dev libgmp3-dev
+ zlib1g-dev libreadline5-dev libgtksourceview2.0-dev libgmp3-dev
 
 # documentation build (optional)
 sudo apt-get install texlive texlive-latex-extra libxslt1-dev
