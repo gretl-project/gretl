@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-24 11:17-0400\n"
-"PO-Revision-Date: 2011-09-12 15:20+0200\n"
+"PO-Revision-Date: 2011-09-26 11:35+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -2277,9 +2277,9 @@ msgid "Unmatched '%c'\n"
 msgstr "'%c' no corresponde\n"
 
 #: lib/src/geneval.c:9654
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is of type %s"
-msgstr "La variable '%s' no es un discreta"
+msgstr "La variable %s es de tipo %s"
 
 #: lib/src/geneval.c:9810
 #, c-format
@@ -2410,6 +2410,8 @@ msgstr "constantes del modelo %d por unidad"
 #: lib/src/genfuncs.c:3191
 msgid "Invalid declaration: maybe you need the \"clear\" command?"
 msgstr ""
+"Declaración no válida: es posible que Vd. necesite utilizar la instrucción "
+"\"clear\""
 
 #: lib/src/genfuncs.c:3194
 msgid "Invalid declaration"
@@ -9322,9 +9324,8 @@ msgid "Excel files (*.xls)"
 msgstr "ficheros Excel (*.xls)"
 
 #: gui2/fileselect.c:768
-#, fuzzy
 msgid "Excel files (*.xlsx)"
-msgstr "ficheros Excel (*.xls)"
+msgstr "ficheros Excel (*.xlsx)"
 
 #: gui2/fileselect.c:770
 msgid "gretl script files (*.inp)"
@@ -12810,6 +12811,9 @@ msgid ""
 "%s (value = %g)\n"
 "Name (max. 15 characters):"
 msgstr ""
+"Estadístico del modelo %d\n"
+"%s (valor = %g)\n"
+"Nombre (máx. 15 caracteres):"
 
 #: gui2/library.c:5806
 msgid "standardized residual"
