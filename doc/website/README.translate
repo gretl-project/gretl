@@ -1,0 +1,22 @@
+Hello translators!
+
+Please note: if you are contributing translations of the gretl
+web pages, you should be aware that the pages that reference 
+the current gretl version-number and the last release date are
+auto-generated, based on "pattern" files in which the version
+and date are represented by standard place-holders. These files
+are located in the "template" sub-directory.
+
+Here is a little table showing which of these pages are generated
+from which original sources, with Turkish given as the example of 
+translation. The files for other languages are named on the same
+pattern as Turkish.
+
+                 English               Turkish
+
+Main page     index_pat.html     gretl_turkish_pat.html
+Windows page  win32_pat.html     win32_pat_tr.html
+OS X page     osx_pat.html       osx_pat_tr.html
+
+
+
