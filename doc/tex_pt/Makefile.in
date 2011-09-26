@@ -1,6 +1,8 @@
 topsrc = @top_srcdir@
 docsrc = $(topsrc)/doc
 
+MAKE = @MAKE@
+
 GUIDE = gretl-guide-pt.pdf
 REF = gretl-ref-pt.pdf
 
@@ -20,6 +22,7 @@ TEXSRC = cli.tex \
 	datafiles.tex \
 	robust_vcv.tex \
 	panel.tex \
+	dpanel.tex \
 	genr.tex \
 	biblio.tex \
 	mle.tex \
@@ -27,7 +30,9 @@ TEXSRC = cli.tex \
 	probit.tex \
 	nls.tex \
 	timeseries.tex \
+	forecast.tex \
 	vecm.tex \
+	kalman.tex \
 	functions.tex \
 	gretltex.tex \
 	cheatsheet.tex \
@@ -39,19 +44,37 @@ TEXSRC = cli.tex \
 	quantreg.tex \
 	odbc.tex \
 	gretlR.tex \
+	gretlOx.tex \
+	gretlOctave.tex \
+	datatypes.tex \
+	df.tex \
 	var.tex
 
 WEBDIR = /home/helio/gretl/website
+DOCDIR = /home/helio/share/gretl/doc
+
+BIBSRC = gretl.bib gretl.bst
+
+STYSRC = $(docsrc)/gretl.sty.in
+
+ALLSRC = $(wildcard $(docsrc)/tex_pt/*.tex) $(STYSRC)
 
 all: $(GUIDE) $(REF)
 
-$(GUIDE): gretl-guide-pt.tex links textables_pt date.tex
+$(GUIDE): gretl-guide-pt.tex links textables_pt date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
+	bibtex gretl-guide-pt
+	pdflatex $<
+	bibtex gretl-guide-pt
 	pdflatex $<
 	pdflatex $<
 
-$(REF): gretl-ref-pt.tex links cmdtex functex textables_pt topiclist date.tex
+$(REF): gretl-ref-pt.tex links cmdtex functex textables_pt topiclist \
+	date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
+	bibtex gretl-ref-pt
+	pdflatex $<
+	bibtex gretl-ref-pt
 	pdflatex $<
 	pdflatex $<
 
@@ -61,12 +84,14 @@ gretl-guide-pt.tex:
 gretl-ref-pt.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_pt/$@ . ; fi
 
-.PHONY : links cmdtex functex textables_pt onepass refpass topiclist install clean
+.PHONY : links cmdtex_pt functex_pt textables_pt onepass refpass topiclist install clean
 
 links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
 	rm -f figures && ln -s $(docsrc)/figures_pt ./figures
 	for f in $(TEXSRC) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_pt/$$f . ; fi ; done
+	for f in $(BIBSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_pt/$$f . ; fi ; done
 
 cmdtex:
@@ -85,16 +110,20 @@ date.tex:
 	LANG=pt_PT date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
 
 onepass: gretl-guide-pt.tex links textables_pt
-	pdflatex gretl-guide-pt
+	 pdflatex $<
 
-refpass: gretl-ref-pt.tex links cmdtex functex textables_pt topiclist
-	pdflatex gretl-ref-pt
+refpass: gretl-ref-pt.tex links cmdtex_pt functex_pt textables_pt topiclist
+	 pdflatex $<
+
+bibpass: onepass refpass
+	bibtex gretl-guide-pt
+	bibtex gretl-ref-pt
 
 install: $(GUIDE) $(REF)
-	cp $(GUIDE) $(REF) $(WEBDIR)
+	cp $(GUIDE) $(REF) $(WEBDIR) $(DOCDIR)
 
 clean:
-	rm -f *.aux *.log *.out *.toc *.tpt *.pdf
+	rm -f *.aux *.log *.out *.toc *.pdf *.bbl *.blg
 	rm -f refbody.tex funcbody.tex cmdtopics.tex
 	rm -f ../commands/textables_pt ../commands/topiclist_pt 
 	rm -f ../commands/cmdtex_pt ../commands/functex_pt

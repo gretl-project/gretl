@@ -111,18 +111,14 @@ installed and working on your system and that \app{gretl} knows where
 it is. The relevant settings can be found by selecting the ``Tools,
 Preferences, General'' menu entry, under the ``Programs'' tab.
 
-Assuming \app{R} was launched successfully, you will notice that two
-commands have been executed automatically:
-\begin{code}
-  gretldata <- read.table("/home/jack/.gretl/Rdata.tmp", header=TRUE)
-  attach(gretldata)
-\end{code}
-These commands have the effect of loading our dataset into the \app{R}
-workspace in the form of a \emph{data frame} (one of several forms in
-which \app{R} can store data). Use of a data frame enables the
-subsequent \texttt{attach()} command, which sets things up so that the
-variable names defined in the \app{gretl} workspace are available as
-valid identifiers within \app{R}.
+Assuming \app{R} was launched successfully, you will see notification
+that the data from gretl are available.  In the background,
+\app{gretl} has arranged for two \app{R} commands to be executed, one
+to load the \app{gretl} dataset in the form of a \emph{data frame}
+(one of several forms in which \app{R} can store data) and one to
+\emph{attach} the data so that the variable names defined in the
+\app{gretl} workspace are available as valid identifiers within
+\app{R}.
 
 In order to replicate \app{gretl}'s OLS estimation, go into the \app{R}
 window and type at the prompt
@@ -193,22 +189,14 @@ Akaike information criterion & -483.39
 \end{table}
 
 If we now open an \app{R} session as described in the previous
-subsection, the data-passing mechanism is slightly different.  The
-\app{R} commands that read the data from \app{gretl} are in this case
-\begin{code}
-# load data from gretl
-gretldata <- read.table("/home/jack/.gretl/Rdata.tmp", header=TRUE)
-gretldata <- ts(gretldata, start=c(1949, 1), frequency = 12)
-\end{code}
-
-Since our data were defined in \app{gretl} as time series, we use an
-\app{R} \emph{time-series} object (\emph{ts} for short) for the
-transfer.  In this way we can retain in \app{R} useful information
-such as the periodicity of the data and the sample limits.  The
-downside is that the names of individual series, as defined in
-\app{gretl}, are not valid identifiers. In order to extract the
-variable \texttt{lg}, one needs to use the syntax
-\verb|lg <- gretldata[, "lg"]|.
+subsection, the data-passing mechanism is slightly different.  Since
+our data were defined in \app{gretl} as time series, we use an \app{R}
+\emph{time-series} object (\emph{ts} for short) for the transfer.  In
+this way we can retain in \app{R} useful information such as the
+periodicity of the data and the sample limits.  The downside is that
+the names of individual series, as defined in \app{gretl}, are not
+valid identifiers. In order to extract the variable \texttt{lg}, one
+needs to use the syntax \verb|lg <- gretldata[, "lg"]|.
 
 ARIMA estimation can be carried out by issuing the following two
 \app{R} commands:
@@ -274,11 +262,11 @@ in the previous section: your data will be pre-loaded (if the
 be executed. Once this is done, you will find yourself at the \app{R}
 prompt, where you can enter more commands.
 
-A non-interactive run, on the other hand, will execute your script, collect the
-output from \app{R} and present it to you in an output window; \app{R}
-will be run in the background. If, for example, the script in
-Figure~\ref{fig:R-edit1} is run non-interactively, a window similar to
-Figure~\ref{fig:R-output1} will appear.
+A non-interactive run, on the other hand, will execute your script,
+collect the output from \app{R} and present it to you in an output
+window; \app{R} will be run in the background. If, for example, the
+script in Figure~\ref{fig:R-edit1} is run non-interactively, a window
+similar to Figure~\ref{fig:R-output1} will appear.
 
 \begin{figure}[htbp]
   \centering
@@ -332,7 +320,7 @@ path is specified in the file name, \app{gretl} stores matrix files in
 the current work directory. However, it may be wise for the purpose at
 hand to use the directory in which \app{gretl} stores all its
 temporary files, whose name is stored in the built-in string
-\texttt{dotdir} (see section \ref{sec:named-strings}). The value of
+\texttt{dotdir} (see section~\ref{sec:named-strings}). The value of
 this string is automatically passed to \app{R} as the string variable
 \texttt{gretl.dotdir}, so the above example may be rewritten more
 cleanly as
@@ -370,7 +358,7 @@ suffix is in this case \texttt{.mat}, and to read the matrix in
 \app{gretl} you must use the \texttt{mread()} function.
 
 As an example, we take the airline data and use them to estimate a
-structural time series model \`a la Harvey (1989). The model we will 
+structural time series model \`a la \cite{harvey89}. The model we will 
 use is the \emph{Basic Structural Model} (BSM), in which a time series
 is decomposed into three terms:
 \[
@@ -412,41 +400,18 @@ gretl.export(vars)
 \end{code}
 %$
 
-In this case, running the above in \app{R} produces nothing more that
-the echoing of commands:
+Running this script via \app{gretl} produces minimal output:
 \begin{code}
-> # load data from gretl
-> gretldata <- read.table("/home/jack/.gretl/Rdata.tmp", header=TRUE)
-
-> gretldata <- ts(gretldata, start=c(1949, 1), frequency = 12)
-
-> # load script from gretl
-> # extract the log series 
-> y <- gretldata[, "lg"]
-
-> # estimate the model
-> strmod <- StructTS(y)
-
-> # save the fitted components (smoothed)
-> compon <- as.ts(tsSmooth(strmod))
-
-> # save the estimated variances
-> vars <- as.matrix(strmod$coef)
-
-> # export into gretl's temp dir
-> gretl.export(compon)
-
-> gretl.export(vars)
+current data loaded as ts object "gretldata"
+wrote /home/cottrell/.gretl/compon.csv 
+wrote /home/cottrell/.gretl/vars.mat 
 \end{code}
-%$
-
-However, we see from the output that the two \texttt{gretl.export()}
-commands ran without errors. Hence, we are ready to pull the results
-back into \app{gretl} by executing the following commands, either from
-the console or by creating a small script:\footnote{This example will
-  work on Linux and presumably on OSX without modifications. On the
-  Windows platform, you may have to substitute the ``\texttt{/}''
-  character with ``$\backslash$''.}
+However, we are now able to pull the results back into \app{gretl} by
+executing the following commands, either from the console or by
+creating a small script:\footnote{This example will work on Linux and
+  presumably on OSX without modifications. On the Windows platform,
+  you may have to substitute the ``\texttt{/}'' character with
+  ``$\backslash$''.}
 \begin{code}
 append @dotdir/compon.csv
 vars = mread("@dotdir/vars.mat")
@@ -498,9 +463,7 @@ Up to this point we have spoken only of interaction with \app{R} via
 the GUI program. In order to do the same from the command line
 interface, \app{gretl} provides the \texttt{foreign} command. This
 enables you to embed non-native commands within a \app{gretl}
-script.\footnote{In future this facility may be extended to handle
-  interaction with other programs, but for the present only \app{R}
-  commands are accepted.} 
+script.
 
 A ``foreign'' block takes the form
 \begin{code}
@@ -549,7 +512,7 @@ block; see example \ref{RStructTS-simple}.
 \begin{script}[htbp]
   \caption{Estimation of the Basic Structural Model --- via a function}
 \begin{scode}
-function RStructTS(series myseries)
+function list RStructTS(series myseries)
 
     smpl ok(myseries) --restrict
     sx = argname(myseries)
@@ -567,7 +530,7 @@ function RStructTS(series myseries)
     rename sea @sx_seas
 
     list ret = @sx_level @sx_slope @sx_seas
-    return list ret
+    return ret
 end function
 
 # ------------ main -------------------------
@@ -584,15 +547,79 @@ its full power when it is used in conjunction with user-written
 functions.  Example~\ref{RStructTS-func} shows how to define a
 \app{gretl} function that calls \app{R} internally.
 
-A note on performance: at present, when \app{R} is called from within
-\app{gretl} using a \texttt{foreign} block, the \app{R} program is
-started up on each invocation, which can be quite time consuming.  For
-maximum performance, you should organize your script so as to group
-together as many \app{R} operations as possible, hence minimizing the
-number of distinct \texttt{foreign} blocks.\footnote{In future we may
-  be able to improve on this, using calls to the \app{R} shared
-  library in place of invocations of the program.}
+\section{Performance issues with \app{R}}
+\label{sec:R-performance}
 
+\app{R} is a large and complex program, which takes an appreciable
+time to initialize itself.\footnote{About one third of a second on an
+  Intel Core Duo machine of 2009 vintage.}  In interactive use this
+not a significant problem, but if you have a \app{gretl} script that
+calls \app{R} repeatedly the cumulated start-up costs can become
+bothersome.  To get around this, \app{gretl} calls the \app{R} shared
+library by preference; in this case the start-up cost is borne only
+once, on the first invocation of \app{R} code from within \app{gretl}.
+
+Support for the \app{R} shared library is built into the \app{gretl}
+packages for MS Windows and OS X --- but the advantage is realized
+only if the library is in fact available at run time.  If you are
+building \app{gretl} yourself on Linux and wish to make use of the
+\app{R} library, you should ensure (a) that \app{R} has been built
+with the shared library enabled (specify \verb|--enable-R-shlib| when
+configuring your build of \app{R}), and (b) that the \verb|pkg-config|
+program is able to detect your \app{R} installation.  We do not link
+to the \app{R} library at build time, rather we open it dynamically on
+demand. The \app{gretl} GUI has an item under the
+\textsf{Tools/Preferences} menu which enables you to select the
+path to the library, if it is not detected automatically.  
+
+If you have the \app{R} shared library installed but want to force
+\app{gretl} to call the \app{R} executable instead, you can do
+\begin{code}
+set R_lib off
+\end{code}
+
+\section{Further use of the \app{R} library}
+\label{sec:R-functions}
+
+Besides improving performance, as noted above, use of the \app{R}
+shared library makes possible a further refinement.  That is, you can
+define functions in \app{R}, within a \texttt{foreign} block, then
+call those functions later in your script much as if they were
+\app{gretl} functions.  This is illustrated below.  
+%
+\begin{code}
+set R_functions on
+foreign language=R
+  plus_one <- function(q) {
+     z = q+1
+     invisible(z)
+  }
+end foreign
+
+scalar b=R.plus_one(2)
+\end{code}
+%
+The \app{R} function \verb|plus_one| is obviously trivial in itself,
+but the example shows a couple of points.  First, for this mechanism
+to work you need to enable \verb|R_functions| via the \texttt{set}
+command.  Second, to avoid collision with the \app{gretl} function
+namespace, calls to functions defined in this way must be prefixed
+with ``\texttt{R.}'', as in \verb|R.plus_one|.
+
+Built-in \app{R} functions may also be called in this way, once
+\verb|R_functions| is set \texttt{on}.  For example one can invoke
+\app{R}'s \texttt{choose} function, which computes binomial
+coefficients:
+%
+\begin{code}
+set R_functions on
+scalar b=R.choose(10,4)
+\end{code}
+%
+Note, however, that the possibilities for use of built-in \app{R}
+functions are limited; only functions whose arguments and return
+values are sufficiently generic (basically scalars or matrices) will
+work.
 
 %%% Local Variables: 
 %%% mode: latex

@@ -1,5 +1,5 @@
 \documentclass[oneside]{book}
-\usepackage{url,verbatim,fancyvrb,color,gretl,appendix}
+\usepackage{url,verbatim,fancyvrb,color,appendix}
 \usepackage{array,longtable}
 \usepackage[latin1]{inputenc}
 \usepackage[pdftex]{graphicx}
@@ -16,6 +16,7 @@
             colorlinks=true,
             linkcolor=blue,
             urlcolor=red,
+            citecolor=steel,
             plainpages=false
 }
 
@@ -27,6 +28,8 @@
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{1ex}
+
+\hyphenation{he-te-ro-ce-das-ti-ci-da-de}
 
 %% titlepage
 
@@ -82,7 +85,7 @@ Foundation (ver em \url{http://www.gnu.org/licenses/fdl.html}).
 \clearpage
 
 %% end license page, start table of contents
-\pdfbookmark[1]{Índice}{contents}
+\pdfbookmark[1]{Conteúdo}{contents}
 
 \pagenumbering{roman}
 \pagestyle{headings}
@@ -97,5 +100,7 @@ Foundation (ver em \url{http://www.gnu.org/licenses/fdl.html}).
 \include{comments}
 \include{optarg}
 \include{reftables}
+\clearpage
+\include{biblio}
 
 \end{document}

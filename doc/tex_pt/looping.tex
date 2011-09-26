@@ -91,40 +91,60 @@ a different value via the \cmd{set} command (see the \GCR).
 \subsection{Index loop}
 \label{loop-index}
 
-A third form of loop control uses the special internal index variable
-\verb+i+.  In this case you specify starting and ending values for
-\verb+i+, which is incremented by one each time round the loop.  The
-syntax looks like this: \cmd{loop i=1..20}.
+A third form of loop control uses an index variable, for example
+\verb+i+.\footnote{It is common programming practice to use simple,
+  one-character names for such variables.  However, you may use any
+  name that is acceptable by gretl: up to 15 characters, starting with
+  a letter, and containing nothing but letters, numerals and the
+  underscore character.}  In this case you specify starting and ending
+values for the index, which is incremented by one each time round the
+loop.  The syntax looks like this: \cmd{loop i=1..20}.
 
-The index variable may be used within the loop body in one or both of
-two ways: you can access the integer value of \verb+i+ (see Example
+The index variable may be a pre-existing scalar; if this is not the
+case, the variable is created automatically and is destroyed on exit
+from the loop.
+
+The index may be used within the loop body in either of two ways: you
+can access the integer value of \verb+i+ (see Example
 \ref{loop-panel-script}) or you can use its string representation,
-\verb+$i+ (see Example \ref{loop-string-script}).
+\dollar{i} (see Example \ref{loop-string-script}).
 
 The starting and ending values for the index can be given in numerical
-form, or by reference to predefined scalar variables.  In the latter
-case the variables are evaluated once, when the loop is set up.  In
-addition, with time series data you can give the starting and ending
-values in the form of dates, as in \cmd{loop i=1950:1..1999:4}.
-      
-This form of loop is particularly useful in conjunction with the
+form, by reference to predefined scalar variables, or as expressions
+that evaluate to scalars.  In the latter two cases the variables are
+evaluated once, at the start of the loop.  In addition, with time
+series data you can give the starting and ending values in the form of
+dates, as in \cmd{loop i=1950:1..1999:4}.
+
+This form of loop control is intended to be quick and easy, and as
+such it is subject to certain limitations. In particular, the index
+variable is always incremented by one at each iteration.  If, for
+example, you have
+\begin{code}
+loop i=m..n
+\end{code}
+where \texttt{m} and \texttt{n} are scalar variables with values
+\texttt{m} $>$ \texttt{n} at the time of execution, the index will not
+be decremented; rather, the loop will simply be bypassed.
+
+If you need more complex loop control, see the ``\texttt{for}'' form
+below.
+
+The index loop is particularly useful in conjunction with the
 \texttt{values()} matrix function when some operation must be carried
 out for each value of some discrete variable (see chapter
 \ref{chap:discrete}). Consider the following example:
 
 \begin{code}
 open greene22_2
-open greene22_2
 discrete Z8
 v8 = values(Z8)
-n = rows(v8)
-n = rows(v8)
-loop i=1..n
-  scalar xi = v8[$i]
+loop i=1..rows(v8)
+  scalar xi = v8[i]
   smpl (Z8=xi) --restrict --replace
   printf "mean(Y | Z8 = %g) = %8.5f, sd(Y | Z8 = %g) = %g\n", \
     xi, mean(Y), xi, sd(Y)
-end loop
+endloop
 \end{code}
 
 In this case, we evaluate the conditional mean and standard deviation
@@ -133,11 +153,11 @@ of the variable \texttt{Y} for each value of \texttt{Z8}.
 \subsection{Foreach loop}
 \label{loop-each}
 
-The fourth form of loop control also uses the internal variable
-\verb+i+, but in this case the variable ranges over a specified list
-of strings.  The loop is executed once for each string in the list.
-This can be useful for performing repetitive operations on a list of
-variables.  Here is an example of the syntax:
+The fourth form of loop control also uses an index variable, in this
+case to index a specified list of strings.  The loop is executed once
+for each string in the list.  This can be useful for performing
+repetitive operations on a list of variables.  Here is an example of
+the syntax:
       
 \begin{code}
 loop foreach i peach pear plum
@@ -146,7 +166,8 @@ endloop
 \end{code}
 
 This loop will execute three times, printing out ``peach'', ``pear''
-and ``plum'' on the respective iterations.  
+and ``plum'' on the respective iterations.  The numerical value of
+the index starts at 1 and is incremented by 1 at each iteration.
 
 If you wish to loop across a list of variables that are contiguous in
 the dataset, you can give the names of the first and last variables in
@@ -176,7 +197,7 @@ endloop
 Note that if you use this idiom inside a function (see
 chapter~\ref{chap:functions}), looping across a list that has been
 supplied to the function as an argument, it is necessary to use the
-syntax \textsl{listname}.\verb|$i| to reference the list-member
+syntax \textsl{listname}.\dollar{i} to reference the list-member
 variables.  In the context of the example above, this would mean
 replacing the third line with
 %
@@ -230,8 +251,8 @@ statement.
 
 If the initialization expression in a \texttt{for} loop takes the
 common form of setting a scalar variable to a given value, the string
-representation of that scalar's value will be available within
-the loop via the accessor \verb+$+\textsl{varname}.  
+representation of that scalar's value is made available within
+the loop via the accessor \dollar{\emph{varname}}.  
 
 
 \section{Progressive mode}
@@ -263,7 +284,8 @@ when the loop is terminated you get a printout of the mean and
 standard deviation of the variable, across the repetitions of the
 loop.  This mode is intended for use with variables that have a scalar
 value at each iteration, for example the error sum of squares from a
-regression.  Data series cannot be printed in this way.
+regression.  Data series cannot be printed in this way, and neither
+can matrices.
 
 \cmd{store}: This command writes out the values of the specified
 scalars, from each time round the loop, to a specified file.  Thus it
@@ -287,7 +309,7 @@ shown in Example~\ref{monte-carlo-loop}.
   \label{monte-carlo-loop}
 \begin{scode}
 nulldata 50
-seed 547
+set seed 547
 genr x = 100 * uniform()
 # open a "progressive" loop, to be repeated 100 times
 loop 100 --progressive
@@ -318,7 +340,7 @@ The command \cmd{nulldata} is useful for Monte Carlo work.  Instead of
 opening a ``real'' data set, \cmd{nulldata 50} (for instance) opens a
 dummy data set, containing just a constant and an index variable, with
 a series length of 50. Constructed variables can then be added using
-the \cmd{genr} command.See the \cmd{set} command for information on
+the \cmd{genr} command.  See the \cmd{set} command for information on
 generating repeatable pseudo-random series.
 
 \subsection{Iterated least squares}
@@ -329,7 +351,7 @@ estimation of a nonlinear consumption function of the form
 	
 \[ C = \alpha + \beta Y^{\gamma} + \epsilon \]
 
-as presented in Greene (2000, Example 11.3).  This script is included
+as presented in \cite{greene00}, Example 11.3.  This script is included
 in the \app{gretl} distribution under the name \verb+greene11_3.inp+;
 you can find it in \app{gretl} under the menu item ``File, Script files,
 Practice file, Greene...''.
@@ -365,7 +387,7 @@ loop while essdiff > .00001
    genr essbak = ess
 endloop 
 # print parameter estimates using their "proper names"
-noecho
+set echo off
 printf "alpha = %g\n", $coeff(0)
 printf "beta  = %g\n", beta
 printf "gamma = %g\n", gamma
@@ -435,8 +457,8 @@ genr se_c = $stderr(sc_c)
 genr se_a = $stderr(sc_a)
 genr se_m = $stderr(sc_m)
 
-noecho
-print "
+set echo off
+printf "\n"
 printf "constant = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
 printf "ar1 term = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
 printf "ma1 term = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m

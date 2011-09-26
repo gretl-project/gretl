@@ -2,17 +2,37 @@
 \label{chap:odbc}
 
 Since version 1.7.5, \app{gretl} provides a method for retrieving data
-from databases which support the ODBC standard. Most users
-won't be interested in this, but there may be some for whom this
-feature matters a lot: typically, those who work in an environment
-where huge data collections are accessible via a Data Base Management
-System (DBMS).
+from databases which support the Open Database Connectivity (ODBC)
+standard. Most users won't be interested in this, but there may be
+some for whom this feature matters a lot --- typically, those who work
+in an environment where huge data collections are accessible via a
+Data Base Management System (DBMS).
 
-ODBC is the \emph{de facto} standard for interacting with such
-systems. In the next section we provide some background information on
-how ODBC works. What you actually need to do to have \app{gretl}
-retrieve data from a database is explained in
+In the following section we explain what is needed for ODBC support in
+\app{gretl}. We provide some background information on how ODBC works
+in section~\ref{sec:odbc-base}, and explain the details of getting
+\app{gretl} to retrieve data from a database in
 section~\ref{sec:odbc-syntax}.
+
+\section{ODBC support}
+\label{sec:odbc-support}
+
+The piece of software that bridges between \app{gretl} and the ODBC
+system is a dynamically loaded ``plugin''. This is included in the
+\app{gretl} packages for MS Windows and Mac OS X (on OS X support was
+added in \app{gretl} 1.9.0). On other unix-type platforms (notably
+Linux) you will have to build \app{gretl} from source to get ODBC
+support.  This is because the \app{gretl} plugin depends on
+having \app{unixODBC} installed, which we cannot assume to be the
+case on typical Linux systems. To enable the ODBC plugin when building 
+\app{gretl}, you must pass the option \verb|--with-odbc| to
+\app{gretl}'s \texttt{configure} script. In addition, if
+\app{unixODBC} is installed in a non-standard location you will have
+to specify its installation prefix using \verb|--with-ODBC-prefix|,
+as in (for example)
+\begin{code}
+  ./configure --with-odbc --with-ODBC-prefix=/opt/ODBC
+\end{code}
 
 \section{ODBC base concepts}
 \label{sec:odbc-base}
@@ -103,14 +123,10 @@ via ODBC and including the results in your currently open dataset.
 \section{Syntax}
 \label{sec:odbc-syntax}
 
-At present, ODBC import is only possible via the command line
-interface.\footnote{Since designing a graphical interface for this is
-  conceptually simple but rather time-consuming, what we're aiming at
-  is a robust and reasonably powerful implementation of the data
-  transfer. Once all the issues are sorted out, we'll start
-  implementing a GUI interface.} The two commands that gretl uses at
-present for fetching data via an ODBC connection are \texttt{open} and
-\texttt{data}.
+At present \app{gretl} does not offer a graphical interface for ODBC
+import; this must be done via the command line interface. The two
+commands used for fetching data via an ODBC connection are
+\texttt{open} and \texttt{data}.
 
 The \texttt{open} command is used for connecting to a DBMS: its syntax
 is
@@ -128,59 +144,93 @@ In order to actually retrieve the data, the \texttt{data} command is
 used. Its syntax is:
 \begin{flushleft}
 \texttt{%
-  data \emph{series} [obs-format=\emph{format-string}] \emph{query-string} --odbc
+  data \emph{series} [obs-format=\emph{format-string}] query=\emph{query-string} --odbc
 }
 \end{flushleft}
 where:
 \begin{description}
-\item[\emph{series}] is the name of the gretl series to contain the
-  incoming data, which needs not exist prior to the query. Note that
-  the \texttt{data} command imports one series at a time.
+\item[\emph{series}] is a list of names of gretl series to contain the
+  incoming data, separated by spaces.  Note that these series need not
+  exist pior to the ODBC import.
 \item[\emph{format-string}] is an optional parameter, used to handle
   cases when a ``rectangular'' organisation of the database cannot be
   assumed (more on this later);
 \item[\emph{query-string}] is a string containing the SQL statement
-  used to extract the data.
+  used to extract the data.\footnote{Prior to \app{gretl} 1.8.8, the
+    tag ``\texttt{query=}'' was not required (or accepted) before the query
+    string, and only one series could be imported at a time.  This
+    variant is still accepted for the sake of backward compatibility.}
 \end{description}
+%
+There should be no spaces around the equals signs in the
+\texttt{obs-format} and \texttt{query} fields in the \texttt{data}
+command.
 
 The \texttt{\emph{query-string}} can, in principle, contain any valid
-SQL statement which results in a table: a ``\texttt{;}'' character at
-the end will be added automatically. This string may be specified
+SQL statement which results in a table. This string may be specified
 directly within the command, as in
 \begin{code}
-  data x "SELECT foo FROM bar" --odbc
+  data x query="SELECT foo FROM bar" --odbc
 \end{code}
 which will store into the gretl variable \texttt{x} the content of the
 column \texttt{foo} from the table \texttt{bar}. However, since in a
-real-life situation the string containing the SQL statement will be
-rather long, it may be best to create it just before the call to
-\texttt{data}. For example:
+real-life situation the string containing the SQL statement may be
+rather long, it may be best to store it in a string variable.  For
+example:
 \begin{code}
-  string SqlQry = "SELECT foo FROM bar"
-  data x SqlQry --odbc
+  string SqlQry = "SELECT foo1, foo2 FROM bar"
+  data x y query=SqlQry --odbc
 \end{code}
 
+\subsection{The observation format specifier}
+
 If the optional parameter \texttt{obs-format} is absent, as in the
-above example, the SQL query should return \emph{exactly one} column
-of data, which is used to fill the variable \texttt{x}
-sequentially.  It may be necessary to include a \texttt{smpl} command
-before the \texttt{data} command to set up the right ``window'' for
-the incoming data.  In addition, if one cannot assume that the data
-will be delivered in the correct order (typically, chronological
-order), the SQL query should contain an appropriate \texttt{ORDER BY}
-clause.
+above example, the SQL query should return $k$ columns of data, where
+$k$ is the number of series names listed in the \texttt{data} command.
+It may be necessary to include a \texttt{smpl} command before the
+\texttt{data} command to set up the right ``window'' for the incoming
+data.  In addition, if one cannot assume that the data will be
+delivered in the correct order (typically, chronological order), the
+SQL query should contain an appropriate \texttt{ORDER BY} clause.
 
 The optional format string is used for those cases when there is no
 certainty that the data from the query will arrive in the same order
 as the \app{gretl} dataset. This may happen when missing values are
 interspersed within a column, or with data that do not have a natural
 ordering, e.g.\ cross-sectional data. In this case, the SQL statement
-should return a table with $n$ columns, where the first $n-1$ columns
-are used to identify which observation the value in the $n$-th column
-belongs to. The format string is used to translate the first $n-1$
-fields into a string which matches the string \app{gretl} uses to
-identify observations in the currently open dataset. At present, $n$
-should be between 2 and 4, which should cover most, if not all, cases.
+should return a table with $m+k$ columns, where the first $m$
+columns are used to identify the observation or row in the \app{gretl}
+dataset into which the actual data values in the final $k$ columns
+should be placed.  The \texttt{obs-format} string is used to translate
+the first $m$ fields into a string which matches the string
+\app{gretl} uses to identify observations in the currently open
+dataset. Up to three columns can be used for this purpose ($m \leq
+3$).
+
+Note that the strings \app{gretl} uses to identify observations
+can be seen by printing any variable ``by observation'', as in
+%
+\begin{code}
+print index --byobs
+\end{code}
+%
+(The series named \texttt{index} is automatically added to a dataset
+created via the \texttt{nulldata} command.)
+
+The format specifiers available for use with \texttt{obs-format} are
+as follows:
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{\%d} & print an integer value \\
+\texttt{\%s} & print an string value \\
+\texttt{\%g} & print a floating-point value \\
+\end{tabular}
+\end{center}
+
+In addition the format can include literal characters to be passed
+through, such as slashes or colons, to make the resulting string
+compatible with \app{gretl}'s observation identifiers.
 
 For example, consider the following fictitious case: we have a
 5-days-per-week dataset, to which we want to add the stock index for
@@ -195,17 +245,19 @@ In this case, the following syntax could be used
 %
 \begin{code}
   string QRY="SELECT year,month,day,VerdSE FROM AlmeaIndexes"
-  data y obs-format="%d/%d/%d" @QRY --odbc
+  data y obs-format="%d/%d/%d" query=QRY --odbc
 \end{code}
 %
 The column \texttt{VerdSE} holds the data to be fetched, which will go
 into the \app{gretl} series \texttt{y}. The first three columns are
-used to construct a string which identifies the day. Since a string
-like \texttt{"2008/04/26"} does not correspond to any observation in
-our dataset (it's a Saturday), that row is simply discarded. On the
-other hand, since no string \texttt{"2008/04/23"} was found in the
+used to construct a string which identifies the day. Daily dates take
+the form \texttt{YYYY/MM/DD} in \app{gretl}.  If a row from the DBMS
+produces the observation string \texttt{2008/04/01} this will match OK
+(it's a Tuesday), but \texttt{2008/04/05} will not match since it is a
+Saturday; the corresponding row will therefore be discarded.  On the
+other hand, since no string \texttt{2008/04/23} will be found in the
 data coming from the DBMS (it's a Wednesday), that entry is left blank
-in our variable \texttt{y}.
+in our series \texttt{y}.
 
 \section{Examples}
 \label{sec:examples}
@@ -286,11 +338,11 @@ and \ref{tab:odbc-AWMexample2}):
 
 The table \texttt{Consump} is the classic ``rectangular'' dataset;
 that is, its internal organization is the same as in a spreadsheet or
-in an econometrics package like \app{gretl} itself: each row is a data
-point and each column is a variable. On the other hand, the structure
-of the \texttt{DATA} table is different: each record is one figure,
-stored in the column \texttt{xval}, and the other fields keep track of
-which variable it belongs to, for which date.
+econometrics package: each row is a data point and each column is a
+variable. The structure of the \texttt{DATA} table
+is different: each record is one figure, stored in the column
+\texttt{xval}, and the other fields keep track of which variable it
+belongs to, for which date.
 
 \begin{script}[htbp]
   \caption{Simple query from a rectangular table}
@@ -300,21 +352,17 @@ nulldata 160
 setobs 4 1970:1 --time
 open dsn=AWM user=Otto password=Bingo --odbc
 
-string Qry1 = "SELECT consump FROM Consump"
-data cons @Qry1 --odbc
-
-string Qry2 = "SELECT income FROM Consump"
-data inc @Qry2 --odbc
+string Qry = "SELECT consump, income FROM Consump"
+data cons inc query=Qry --odbc
 \end{scode}
 \end{script}
 
-Example \ref{ex:odbc-1} shows two elementary queries: first we set up
-an empty quarterly dataset. Then, we connect to the database by the
+Example~\ref{ex:odbc-1} shows a query for two series: first we set up
+an empty quarterly dataset. Then we connect to the database using the
 \texttt{open} statement. Once the connection is established we
-retrieve, one column at a time, the data from the \texttt{Consump}
-table. In this case, no observation string is necessary because the
-data are already arranged in a matrix-like structure, so we only need
-to bring over the relevant columns.
+retrieve two columns from the \texttt{Consump} table. No observation
+string is required because the data already have a suitable structure;
+we need only import the relevant columns.
 
 \begin{script}[htbp]
   \caption{Simple query from a non-rectangular table}
@@ -322,12 +370,12 @@ to bring over the relevant columns.
 \begin{scode}
 string S = "select year, qtr, xval from DATA \
        where varname='WLN' ORDER BY year, qtr"
-data wln obs-format="%d:%d" @S --odbc
+data wln obs-format="%d:%d" query=S --odbc
 \end{scode}
 \end{script}
 
-In example \ref{ex:odbc-2}, on the contrary, we make use of the
-observation string, since we are drawing data from the \texttt{DATA}
+In example~\ref{ex:odbc-2}, by contrast, we make use of the
+observation string since we are drawing from the \texttt{DATA}
 table, which is not rectangular. The SQL statement stored in the
 string \texttt{S} produces a table with three columns. The
 \texttt{ORDER BY} clause ensures that the rows will be in
@@ -340,7 +388,7 @@ case.
 \begin{scode}
 string foo = "select year, qtr, xval from DATA \
        where varname='STN' AND qtr>1"
-data bar obs-format="%d,%d" @foo --odbc
+data bar obs-format="%d:%d" query=foo --odbc
 print bar --byobs
 \end{scode}
 

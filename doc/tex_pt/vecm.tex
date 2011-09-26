@@ -90,15 +90,14 @@ process $y_t$ as
   y_t = \mu_t + A_1 y_{t-1} + A_2 y_{t-2} + \cdots + A_p y_{t-p} +
   \epsilon_t 
 \end{equation}
-But since $y_{t-1} \equiv y_{t} - \Delta y_t$ and $y_{t-i} \equiv
-y_{t-1} - (\Delta y_{t-1} + \Delta y_{t-2} + \cdots + \Delta
-y_{t-i+1})$, we can re-write the above as
+But since $y_{t-i} \equiv y_{t-1} - (\Delta y_{t-1} + \Delta y_{t-2} +
+\cdots + \Delta y_{t-i+1})$, we can re-write the above as
 \begin{equation}
   \label{eq:VECM}
   \Delta y_t = \mu_t + \Pi y_{t-1} + \sum_{i=1}^{p-1} \Gamma_i \Delta
   y_{t-i} + \epsilon_t ,
 \end{equation}
-where $\Pi = \sum_{i=1}^p A_i$ and $\Gamma_k = -\sum_{i=k}^p A_i$.
+where $\Pi = \sum_{i=1}^p A_i - I$ and $\Gamma_i = -\sum_{j=i+1}^p A_j$.
 This is the VECM representation of (\ref{eq:VECM-VAR}).
 
 The interpretation of (\ref{eq:VECM}) depends crucially on $r$, the rank of
@@ -366,7 +365,7 @@ following options to the \texttt{coint2} and \texttt{vecm} commands:
     0 & \option{nc} & no constant \\
     $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \option{rc} & restricted
        constant \\
-    $\mu_0$ &  default & unrestricted constant \\
+    $\mu_0$ &  \option{uc} & unrestricted constant \\
     $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \option{crt} &
      constant + restricted trend \\
     $\mu_0 + \mu_1 t$ &  \option{ct} & 
@@ -376,8 +375,8 @@ following options to the \texttt{coint2} and \texttt{vecm} commands:
 Note that for this command the above options are mutually exclusive.
 In addition, you have the option of using the \option{seasonal}
 options, for augmenting $\mu_t$ with centered seasonal dummies.  In
-each case, p-values are computed via the approximations by Doornik
-(1998).
+each case, p-values are computed via the approximations devised by
+\cite{doornik98}.
 
 \section{The Johansen cointegration tests}
 \label{sec:johansen-test}
@@ -387,7 +386,7 @@ rank of $\beta$; in other words, how many cointegration vectors the
 system has.  These are the ``$\lambda$-max'' test, for hypotheses on
 individual eigenvalues, and the ``trace'' test, for joint hypotheses.
 Suppose that the eigenvalues $\lambda_i$ are sorted from largest to
-smallest. The null hypothesis for the ``$\lambda$-max'' test on the
+smallest. The null hypothesis for the $\lambda$-max test on the
 $i$-th eigenvalue is that $\lambda_i = 0$. The corresponding trace
 test, instead, considers the hypothesis $\lambda_j = 0$ for all $j \ge
 i$.
@@ -470,7 +469,7 @@ normalization'', or ``triangular representation''.\footnote{For
   \verb|set vecm_norm diag| to select a normalization that simply
   scales the columns of the original $\beta$ such that $\beta_{ij} =
   1$ for $i=j$ and $i \leq r$, as used in the empirical section of
-  Boswijk and Doornik (2004).  Another alternative is
+  \cite{boswijk-doornik04}.  Another alternative is
   \verb+set vecm_norm first+, which scales $\beta$ such that the
   elements on the first row equal 1.  To suppress normalization
   altogether, use \verb+set vecm_norm none+.  (To return to the
@@ -514,7 +513,7 @@ of $r^2$ constraints that \app{gretl} will use to produce an estimate
 of $\beta$.
 
 As an example, consider the money demand system presented in section
-9.6 of Verbeek (2004).  The variables used are \texttt{m} (the log of
+9.6 of \cite{verbeek04}.  The variables used are \texttt{m} (the log of
 real money stock M1), \texttt{infl} (inflation), \texttt{cpr} (the
 commercial paper rate), \texttt{y} (log of real GDP) and \texttt{tbr}
 (the Treasury bill rate).\footnote{This data set is available in the
@@ -639,8 +638,8 @@ restrictions are not supported, and neither are restrictions that
 cross between $\beta$ and $\alpha$.  In the case where $r > 1$ such
 restrictions may be in common across all the columns of $\beta$ (or
 $\alpha$) or may be specific to certain columns of these matrices.
-This is the case discussed in Boswijk (1995) and Boswijk and Doornik
-(2004, section 4.4).
+This is the case discussed in \cite{boswijk95} and
+\cite{boswijk-doornik04}, section 4.4.
 
 The restrictions (\ref{eq:Rb}) and (\ref{eq:Ra}) may be written in
 explicit form as
@@ -667,13 +666,13 @@ which case full estimates for the restricted system are printed
 (including the $\Gamma_i$ terms), and the system thus restricted
 becomes the ``current model'' for the purposes of further tests.  Thus
 you are able to carry out cumulative tests, as in Chapter 7 of
-Johansen (1995).
+\cite{johansen95}.
 
 \subsection{Syntax}
 \label{sec:vecm-restr-syntax}
 
-The full syntax for specifying the restriction is an extension of the
-one exemplified in the previous section. Inside a
+The full syntax for specifying the restriction is an extension of
+that exemplified in the previous section. Inside a
 \texttt{restrict}\ldots\texttt{end restrict} block, valid statements
 are of the form
 \begin{center}
@@ -692,10 +691,10 @@ restrictions:
   a[1,1] - a[1,2] = 0
 \end{code}
 
-A special syntax is reserved for the case when a certain constraint
-should be applied to all columns of $\beta$: in this case, one index is
-given for each \texttt{b} term, and the square brackets are dropped.
-Hence, the following syntax
+Special syntax is used when a certain constraint should be applied to
+all columns of $\beta$: in this case, one index is given for each
+\texttt{b} term, and the square brackets are dropped.  Hence, the
+following syntax
 \begin{code}
 restrict
   b1 + b2 = 0
@@ -712,10 +711,11 @@ corresponds to
 \end{array}
 \right]
 \]
-The same convention is used for $\alpha$: when only one index is given for
-each \texttt{a} term, the restriction is presumed to apply to all $r$
-rows of $\alpha$, or in other words the given variables are weakly
-exogenous. For instance, the formulation
+The same convention is used for $\alpha$: when only one index is given
+for an \texttt{a} term the restriction is presumed to apply to all
+$r$ columns of $\alpha$, or in other words the variable associated
+with the given row of $\alpha$ is weakly exogenous. For instance, the
+formulation
 %
 \begin{code}
 restrict
@@ -725,7 +725,10 @@ end restrict
 \end{code}
 %
 specifies that variables 3 and 4 do not respond to the deviation from
-equilibrium in the previous period.  
+equilibrium in the previous period. Note that when two indices are
+given in a restriction on $\alpha$ the indexation is consistent with
+that for $\beta$ restrictions: the leading index denotes the
+cointegrating vector and the trailing index the equation number.
 
 Finally, a short-cut is available for setting up complex restrictions (but
 currently only in relation to $\beta$): you can specify $R_b$ and $q$,
@@ -748,7 +751,7 @@ for a system with cointegrating rank 4.
 \subsection{An example}
 \label{sec:vecm-overid-ex}
 
-Brand and Cassola (2004) propose a money demand system for the Euro
+\cite{brand-cassola04} propose a money demand system for the Euro
 area, in which they postulate three long-run equilibrium
 relationships:
 %
@@ -840,9 +843,9 @@ y         -1.3304       0.0000       0.0000
 
 Example \ref{brand-cassola-script} replicates Table 4 on page 824 of
 the Brand and Cassola article.\footnote{Modulo what appear to be a few
-  typos in the article.} Note that we use the \verb|$lnl| accessor
+  typos in the article.} Note that we use the \dollar{lnl} accessor
 after the \texttt{vecm} command to store the unrestricted
-log-likelihood and the \verb|$rlnl| accessor after \texttt{restrict}
+log-likelihood and the \dollar{rlnl} accessor after \texttt{restrict}
 for its restricted counterpart. 
 
 The example continues in script~\ref{brand-cassola-tab5}, where we
@@ -904,7 +907,7 @@ an autonomous driving force of the whole system.
 
 The code in Example~\ref{brand-cassola-exog} performs this test for
 each variable in turn, thus replicating the first column of Table 6 on
-page 825 of Brand and Cassola (2004).  The results show that weak
+page 825 of \cite{brand-cassola04}.  The results show that weak
 exogeneity might perhaps be accepted for the long-term interest rate
 and real GDP (p-values $0.07$ and $0.08$ respectively).
 
@@ -940,7 +943,7 @@ ts_y = 2*(ll0 - $rlnl)
 
 loop foreach i m p l s y --quiet
   printf "\Delta $i\t%6.3f [%6.4f]\n", ts_$i, pvalue(X, 6, ts_$i)
-end loop
+endloop
 \end{scodebit}
 Output (variable, LR test, p-value):
 \begin{scodebit}
@@ -974,7 +977,7 @@ We said above that the number of restrictions must equal at least
 $r^2$, where $r$ is the cointegrating rank, for identification.  This
 is a necessary and not a sufficient condition.  In fact, when $r>1$ it
 can be quite tricky to assess whether a given set of restrictions is
-identifying.  \app{Gretl} uses the method suggested by Doornik (1995),
+identifying.  \app{Gretl} uses the method suggested by \cite{doornik95},
 where identification is assessed via the rank of the information matrix.
 
 It can be shown that for restrictions of the sort (\ref{eq:vecbeta})
@@ -993,7 +996,7 @@ randomly selected point in the parameter space.  For practical
 purposes we treat this condition as if it were both necessary and
 sufficient; that is, we disregard the special cases where
 identification could be achieved without this condition being
-met.\footnote{See Boswijk and Doornik (2004, pp.\ 447--8) for
+met.\footnote{See \cite{boswijk-doornik04}, pp.\ 447--8 for
   discussion of this point.}
 
 
@@ -1005,16 +1008,16 @@ closed form solution, hence the maximum must be found via numerical
 methods.\footnote{The exception is restrictions that are homogeneous,
   common to all $\beta$ or all $\alpha$ (in case $r>1$), and involve
   either $\beta$ only or $\alpha$ only.  Such restrictions are handled
-  via the modified eigenvalues method set out by Johansen (1995).  We
-  solve directly for the ML estimator, without any need for iterative
-  methods.}  In some cases convergence may be difficult, and
+  via the modified eigenvalues method set out by \cite{johansen95}.
+  We solve directly for the ML estimator, without any need for
+  iterative methods.}  In some cases convergence may be difficult, and
 \app{gretl} provides several choices to solve the problem.
 
 \subsection{Switching and LBFGS}
 \label{sec:vecm-algorithms}
 
 Two maximization methods are available in \app{gretl}. The default is
-the switching algorithm set out in Boswijk and Doornik (2004).  The
+the switching algorithm set out in \cite{boswijk-doornik04}.  The
 alternative is a limited-memory variant of the BFGS algorithm (LBFGS),
 using analytical derivatives.  This is invoked using the
 \option{lbfgs} flag with the \texttt{restrict} command.
@@ -1043,7 +1046,7 @@ of the switching algorithm, at a saddle point).
 
 The solution (or lack thereof) may be sensitive to the initial value
 selected for $\theta$.  By default, \app{gretl} selects a starting
-point using a deterministic method based on Boswijk (1995), but two
+point using a deterministic method based on \cite{boswijk95}, but two
 further options are available: the initialization may be adjusted
 using simulated annealing, or the user may supply an explicit initial
 value for $\theta$.
@@ -1054,7 +1057,7 @@ The default initialization method is:
 \item Calculate the unrestricted ML $\hat{\beta}$ using the
   Johansen procedure.
 \item If the restriction on $\beta$ is non-homogeneous, use the
-  method proposed by Boswijk (1995):
+  method proposed by Boswijk:
 \begin{equation}
 \phi_0 = -[(I_r \otimes \hat{\beta}_{\perp})'H]^+ 
   (I_r \otimes \hat{\beta}_{\perp})' h_0
@@ -1136,7 +1139,7 @@ restrict
 end restrict
 \end{code}
 
-In this example --- from Johansen (1995) --- the cointegration rank is
+In this example --- from \cite{johansen95} --- the cointegration rank is
 1 and there are 4 variables.  However, the model includes a restricted
 constant (the \option{rc} flag) so that $\beta$ has 5 elements.  The
 $\alpha$ matrix has 4 elements, one per equation.  So the matrix

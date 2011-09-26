@@ -1,5 +1,13 @@
-\chapter{Time series models}
+\chapter{Univariate time series models}
 \label{chap:timeser}
+
+\section{Introduction}
+\label{sec:tsintro}
+
+Time series models are discussed in this chapter and the next.  In
+this chapter we concentrate on ARIMA models, unit root tests, and
+GARCH.  The following chapter deals with cointegration and error
+correction.
 
 \section{ARIMA models}
 \label{arma-estimation}
@@ -93,11 +101,11 @@ The \app{gretl} syntax for estimating (\ref{eq:arma-with-xconst}) is simply
 \begin{code}
 arma p q ; y
 \end{code}
-The AR and MA lag orders, \verb|p| and \verb|q|, can be given either as
+The AR and MA lag orders, \texttt{p} and \texttt{q}, can be given either as
 numbers or as pre-defined scalars. The parameter $\mu$ can be dropped
 if necessary by appending the option \cmd{--nc} (``no constant'') to
 the command. If estimation of (\ref{eq:arma-with-zconst}) is needed,
-the switch \texttt{--conditional} must be appended to the command, as
+the switch \option{conditional} must be appended to the command, as
 in 
 \begin{code}
 arma p q ; y --conditional
@@ -115,7 +123,7 @@ would estimate the following model:
   \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q \epsilon_{t-q}
 \]
 where in this instance $x_t \beta = \beta_0 + x_{t,1} \beta_1 +
-x_{t,2} \beta_2$. Appending the \texttt{--conditional} switch, as in 
+x_{t,2} \beta_2$. Appending the \option{conditional} switch, as in 
 \begin{code}
 arma p q ; y const x1 x2 --conditional
 \end{code}
@@ -135,6 +143,7 @@ we would like to generalize the \cmd{arma} command so that
 the user could specify, for any estimation method, whether certain
 exogenous variables should be treated as $x_t$s or $z_t$s, but we're
 not yet at that point (and neither are most other software packages).
+
 
 \subsection{Seasonal models}
 
@@ -168,6 +177,37 @@ y_t - \mu = \phi (y_{t-1} - \mu) + \Phi (y_{t-4} - \mu) - (\phi
 \]
 Such a model is known as a ``multiplicative seasonal ARMA model''.
 
+
+\subsection{Gaps in the lag structure}
+
+The standard way to specify an ARMA model in \app{gretl} is via the AR
+and MA orders, $p$ and $q$ respectively.  In this case all lags from 1
+to the given order are included.  In some cases one may wish to
+include only certain specific AR and/or MA lags.  This can be done in
+either of two ways.
+%
+\begin{itemize}
+\item One can construct a matrix containing the desired lags (positive
+  integer values) and supply the name of this matrix in place of $p$
+  or $q$.
+\item One can give a space-separated list of lags, enclosed in braces,
+  in place of $p$ or $q$.
+\end{itemize}
+%
+The following code illustrates these options:
+%
+\begin{code}
+matrix pvec = {1, 4}
+arma pvec 1 ; y
+arma {1 4} 1 ; y
+\end{code}
+%
+Both forms above specify an ARMA model in which AR lags 1 and 4 are
+used (but not 2 and 3). 
+
+This facility is available only for the non-seasonal component of
+the ARMA specification.
+
 \subsection{Differencing and ARIMA}
 
 The above discussion presupposes that the time series $y_t$ has
@@ -183,9 +223,9 @@ would estimate an ARMA$(p,q)$ model on $\Delta^d y_t$. It is
 functionally equivalent to 
 \begin{code}
 series tmp = y
-loop for i=1..d
+loop i=1..d
   tmp = diff(tmp)
-end loop
+endloop
 arma p q ; tmp 
 \end{code}
 except with regard to forecasting after estimation (see below).
@@ -212,6 +252,37 @@ arma 1 0 ; 1 1 ; dsy
 where we use the \texttt{sdiff} function to create a seasonal
 difference (e.g.\ for quarterly data, $y_t - y_{t-4}$).
 
+In specifying an ARIMA model with exogenous regressors we face a
+choice which relates back to the discussion of the variant models
+(\ref{eq:arma-with-x}) and (\ref{eq:arma-with-z}) above.  If we choose
+model (\ref{eq:arma-with-x}), the ``regression model with ARMA
+errors'', how should this be extended to the case of ARIMA?  The issue
+is whether or not the differencing that is applied to the dependent
+variable should also be applied to the regressors.  Consider the
+simplest case, ARIMA with non-seasonal differencing of order 1. We may
+estimate either
+\begin{equation}
+  \label{eq:arima-with-x}
+  \phi(L) (1-L) (y_t - X_t\beta) = \theta(L) \epsilon_t
+\end{equation}
+or
+\begin{equation}
+  \label{eq:arima-with-z}
+  \phi(L) \left((1-L) y_t - X_t\beta\right) = \theta(L) \epsilon_t
+\end{equation}
+%
+The first of these formulations can be described as a regression model
+with ARIMA errors, while the second preserves the levels of the $X$
+variables.  As of \app{gretl} version 1.8.6, the default model is
+(\ref{eq:arima-with-x}), in which differencing is applied to both
+$y_t$ and $X_t$.  However, when using the default estimation method
+(native exact ML, see below), the option \option{y-diff-only} may be
+given, in which case \app{gretl} estimates
+(\ref{eq:arima-with-z}).\footnote{Prior to \app{gretl} 1.8.6, the
+  default model was (\ref{eq:arima-with-z}).  We changed this for the
+  sake of consistency with other software.}
+
+
 \subsection{Estimation}
 \label{arma-est}
 
@@ -226,9 +297,9 @@ treated as in equation (\ref{eq:arma-with-x}).  The covariance matrix
 for the parameters is computed using a numerical approximation to the
 Hessian at convergence.
 
-The alternative method, invoked with the \verb|--conditional| switch,
+The alternative method, invoked with the \option{conditional} switch,
 is conditional maximum likelihood (CML), also known as ``conditional
-sum of squares'' --- see Hamilton (1994, p.\ 132).  This method was
+sum of squares'' \citep[see][p.\ 132]{hamilton94}.  This method was
 exemplified in the script~\ref{jack-arma}, and only a brief
 description will be given here.  Given a sample of size $T$, the CML
 method minimizes the sum of squared one-step-ahead prediction errors
@@ -267,9 +338,9 @@ $1-\phi$ we get 7.38, which is not far from the ML estimate of 6.93.
     Parameter & \multicolumn{2}{c}{ML} &
     \multicolumn{2}{c}{CML} \\
     \hline 
-    $\mu$ & 6.93042 & (0.673202) & 1.07322 & (0.488661) \\
-    $\phi$ & 0.855360 & (0.0512026) & 0.852772 & (0.0450252) \\
-    $\theta$ & 0.588056 & (0.0809769) & 0.591838 & (0.0456662) \\
+    $\mu$ & 6.93042 & (0.923882) & 1.07322 & (0.488661) \\
+    $\phi$ & 0.855360 & (0.0511842) & 0.852772 & (0.0450252) \\
+    $\theta$ & 0.588056 & (0.0986096) & 0.591838 & (0.0456662) \\
     \hline
   \end{tabular}
 \end{center}
@@ -297,11 +368,11 @@ and the estimation method chosen.
 \end{enumerate}
 
 To see the details of the ARMA estimation procedure, add the
-\verb|--verbose| option to the command.  This prints a notice of the
+\option{verbose} option to the command.  This prints a notice of the
 initialization method used, as well as the parameter values and
 log-likelihood at each iteration.
 
-Besides the build-in initialization mechanisms, the user has the
+Besides the built-in initialization mechanisms, the user has the
 option of specifying a set of starting values manually.  This is done
 via the \cmd{set} command: the first argument should be the keyword
 \texttt{initvals} and the second should be the name of a pre-specified
@@ -321,6 +392,14 @@ $\phi_1$ to 0.85, and $\theta_1$ to 0.34.
 
 You can get \app{gretl} to revert to automatic initialization via
 the command \cmd{set initvals auto}.
+
+Two variants of the BFGS algorithm are available in \app{gretl}.  In
+general we recommend the default variant, which is based on an
+implementation by \cite{nash90}, but for some problems the
+alternative, limited-memory version (L-BFGS-B, see
+\citealp{byrd-etal95}) may increase the chances of convergence on the
+ML solution.  This can be selected via the \option{lbfgs} option to
+the \texttt{arma} command.
 
 \subsection{Estimation via X-12-ARIMA}
 
@@ -345,13 +424,15 @@ To invoke \app{X-12-ARIMA} as the estimation engine, append the flag
 arma p q ; y --x-12-arima
 \end{code}
 As with native estimation, the default is to use exact ML but there is
-the option of using conditional ML with the \verb|--conditional| flag.
+the option of using conditional ML with the \option{conditional} flag.
 However, please note that when \app{X-12-ARIMA} is used in conditional
 ML mode, the comments above regarding the variant treatments of the
 mean of the process $y_t$ \textit{do not apply}.  That is, when you
 use \app{X-12-ARIMA} the model that is estimated is
 (\ref{eq:arma-with-x}), regardless of whether estimation is by exact
-ML or conditional ML.
+ML or conditional ML.  In addition, the treatment of exogenous
+regressors in the context of ARIMA differencing is always that shown
+in equation (\ref{eq:arima-with-x}).
 
 
 \subsection{Forecasting}
@@ -363,7 +444,7 @@ forecasting a process ``out of sample'' over a substantial time
 horizon.
 
 \app{Gretl} supports forecasting on the basis of ARMA models using the
-method set out by Box and Jenkins (1976).\footnote{See in particular
+method set out by \cite{box-jenkins76}.\footnote{See in particular
   their ``Program 4'' on p.\ 505ff.}  The Box and Jenkins algorithm
 produces a set of integrated AR coefficients which take into account
 any differencing of the dependent variable (seasonal and/or
@@ -398,7 +479,7 @@ smpl ; 1981:4
 arma 1 1 ; dy
 smpl --full
 fcast fc2
-genr fcdiff = (t<=1982:1)*(fc1 - y(-1)) + (t>1982:1)*(fc1 - fc1(-1))
+genr fcdiff = (t<=1982:1)? (fc1 - y(-1)) : (fc1 - fc1(-1))
 # compare the forecasts over the later period
 smpl 1981:1 1983:4
 print y fc1 fc2 fcdiff --byobs
@@ -423,36 +504,13 @@ The output from the last command is:
 \end{script}
 
 
-\subsection{Limitations}
-
-The structure of \app{gretl}'s \cmd{arma} command does not allow you
-to specify models with gaps in the lag structure, other than via the
-seasonal specification discussed above.  For example, if you have a
-monthly time series, you cannot estimate an ARMA model with AR terms
-(or MA terms) at just lags 1, 3 and 5.
-
-At a pinch, you could circumvent this limitation in respect of the AR
-part of the specification by the trick of including lags of the
-dependent variable in the list of ``exogenous'' variables.  For
-example, the following command
-\begin{code}
-arma 0 0 ; 0 1 ; y const y(-2)
-\end{code}
-on a quarterly series would estimate the parameters of the model
-\[
-  y_t - \mu = \phi \left(y_{t-2} - \mu\right) + \epsilon_t + \Theta \epsilon_{t-4}
-\]
-However, this workaround is not really recommended: it should deliver
-correct estimates, but will break the existing mechanism for
-forecasting.
-
 \section{Unit root tests}
 \label{sec:uroot}
 
 \subsection{The ADF test}
 \label{sec:ADFtest}
 
-The ADF (Augmented Dickey-Fuller) test is, as implemented in
+The Augmented Dickey--Fuller (ADF) test is, as implemented in
 \app{gretl}, the $t$-statistic on $\varphi$ in the following regression:
 \begin{equation}
   \label{eq:ADFtest}
@@ -462,17 +520,17 @@ The ADF (Augmented Dickey-Fuller) test is, as implemented in
 
 This test statistic is probably the best-known and most widely used
 unit root test. It is a one-sided test whose null hypothesis is
-$\varphi = 0$ versus the alternative $\varphi < 0$. Under the null,
-$y_t$ must be differenced at least once to achieve stationarity;
-under the alternative, $y_t$ is already stationary and no differencing
-is required. Hence, large negative values of the test statistic lead
-to the rejection of the null.
+$\varphi = 0$ versus the alternative $\varphi < 0$ (and hence large
+negative values of the test statistic lead to the rejection of the
+null).  Under the null, $y_t$ must be differenced at least once to
+achieve stationarity; under the alternative, $y_t$ is already
+stationary and no differencing is required.
 
 One peculiar aspect of this test is that its limit distribution is
 non-standard under the null hypothesis: moreover, the shape of the
 distribution, and consequently the critical values for the test,
 depends on the form of the $\mu_t$ term.  A full analysis of the
-various cases is inappropriate here: Hamilton (1994) contains an
+various cases is inappropriate here: \cite{hamilton94} contains an
 excellent discussion, but any recent time series textbook covers
 this topic. Suffice it to say that \app{gretl} allows the user to
 choose the specification for $\mu_t$ among four different
@@ -483,25 +541,25 @@ alternatives:
     \hline
     $\mu_t$ & command option \\
     \hline
-    0 & \verb|--nc| \\
-    $\mu_0$ &  \verb|--c| \\
-    $\mu_0 + \mu_1 t$ &  \verb|--ct| \\
-    $\mu_0 + \mu_1 t + \mu_1 t^2$ &  \verb|--ctt| \\
+    0 & \option{nc} \\
+    $\mu_0$ &  \option{c} \\
+    $\mu_0 + \mu_1 t$ &  \option{ct} \\
+    $\mu_0 + \mu_1 t + \mu_1 t^2$ &  \option{ctt} \\
     \hline
   \end{tabular}
 \end{center}
 
-These options are not mutually exclusive; when they are used together
-the statistic will be reported separately for each case.  By default,
-\app{gretl} uses by default the combination \verb|--c --ct --ctt|. For
-each case, approximate p-values are calculated by means of the
-algorithm developed in MacKinnon (1996).
+These option flags are not mutually exclusive; when they are used
+together the statistic will be reported separately for each selected
+case.  By default, \app{gretl} uses the combination \verb|--c --ct|.
+For each case, approximate p-values are calculated by means of the
+algorithm developed in \cite{mackinnon96}.
 
 The \app{gretl} command used to perform the test is \cmd{adf}; for example
 \begin{code}
-adf 4 x1 --c --ct
+adf 4 x1
 \end{code}
-would compute the test statistic as the t-statistic for $\varphi$ in
+would compute the test statistic as the $t$-statistic for $\varphi$ in
 equation \ref{eq:ADFtest} with $p=4$ in the two cases $\mu_t = \mu_0$
 and $\mu_t = \mu_0 + \mu_1 t$.
 
@@ -509,24 +567,45 @@ The number of lags ($p$ in equation \ref{eq:ADFtest}) should be chosen
 as to ensure that (\ref{eq:ADFtest}) is a parametrization flexible
 enough to represent adequately the short-run persistence of $\Delta
 y_t$. Setting $p$ too low results in size distortions in the test,
-whereas setting $p$ too high would lead to low power. As a convenience
+whereas setting $p$ too high leads to low power. As a convenience
 to the user, the parameter $p$ can be automatically determined.
 Setting $p$ to a negative number triggers a sequential procedure that
 starts with $p$ lags and decrements $p$ until the $t$-statistic for
 the parameter $\gamma_p$ exceeds 1.645 in absolute value.
 
+\subsection{The ADF-GLS test}
+\label{sec:ADF-GLS}
+
+\citet*{ERS96} proposed a variant of the ADF test which involves an
+alternative method of handling the parameters pertaining to the
+deterministic term $\mu_t$: these are estimated first via Generalized
+Least Squares, and in a second stage an ADF regression is performed
+using the GLS residuals. This variant offers greater power than the
+regular ADF test for the cases $\mu_t = \mu_0$ and $\mu_t = \mu_0 +
+\mu_1 t$. 
+
+The ADF-GLS test is available in \app{gretl} via the \verb|--gls|
+option to the \texttt{adf} command. When this option is selected the
+\verb|--nc| and \verb|--ctt| options become unavailable, and only one
+case can be selected at a time; by default the constant-only model is
+used but a trend can be added using the \verb|--ct| flag.  When a
+trend is present in this test MacKinnon-type p-values are not
+available; instead we show critical values from Table 1 in
+\cite{ERS96}.
+
+
 \subsection{The KPSS test}
 \label{sec:KPSStest}
 
-The KPSS test (Kwiatkowski, Phillips, Schmidt and Shin, 1992) is a
-unit root test in which the null hypothesis is opposite to that in the
-ADF test: under the null, the series in question is stationary; the
-alternative is that the series is $I(1)$.
+The KPSS test \citep*{KPSS92} is a unit root test in which the null
+hypothesis is opposite to that in the ADF test: under the null, the
+series in question is stationary; the alternative is that the series
+is $I(1)$.
 
 The basic intuition behind this test statistic is very simple: if
 $y_t$ can be written as $y_t = \mu + u_t$, where $u_t$ is some
 zero-mean stationary process, then not only does the sample average of
-the $y_t$'s provide a consistent estimator of $\mu$, but the long-run
+the $y_t$s provide a consistent estimator of $\mu$, but the long-run
 variance of $u_t$ is a well-defined, finite number. Neither of these
 properties hold under the alternative.
 
@@ -543,8 +622,10 @@ simulation. Under the alternative, the statistic diverges.
 
 As a consequence, it is possible to construct a one-sided test based
 on $\eta$, where $H_0$ is rejected if $\eta$ is bigger than the
-appropriate critical value; \app{gretl} provides the 90\%, 95\%,
-97.5\% and 99\% quantiles.
+appropriate critical value; \app{gretl} provides the 90, 95 and 99
+percent quantiles. The critical values are computed via the method
+presented by \cite{sephton95}, which offers greater accuracy than the
+values tabulated in \cite{KPSS92}.
 
 Usage example:
 \begin{code}
@@ -559,15 +640,16 @@ The $\hat{\gamma}_i$ terms denote the empirical autocovariances of
 $e_t$ from order $-m$ through $m$.  For this estimator to be
 consistent, $m$ must be large enough to accommodate the short-run
 persistence of $e_t$, but not too large compared to the sample size
-$T$.  In the GUI interface of \app{gretl}, this value defaults to the
-integer part of $4 \left( \frac{T}{100} \right)^{1/4}$.
+$T$.  If the supplied \verb|m| is non-positive a default value is
+computed, namely the integer part of $4 \left( \frac{T}{100}
+\right)^{1/4}$.
 
 The above concept can be generalized to the case where $y_t$ is
 thought to be stationary around a deterministic trend. In this case,
 formula (\ref{eq:KPSStest}) remains unchanged, but the series $e_t$ is
 defined as the residuals from an OLS regression of $y_t$ on a constant
 and a linear trend. This second form of the test is obtained by
-appending the \verb|--trend| option to the \cmd{kpss} command:
+appending the \option{trend} option to the \cmd{kpss} command:
 \begin{code}
 kpss n y --trend
 \end{code}
@@ -576,13 +658,143 @@ different and the critical values reported by \app{gretl} differ
 accordingly.
 
 
-\subsection{The Johansen tests}
-\label{sec:Joh-test}
+\subsection{Panel unit root tests}
+\label{sec:panel-uroot}
 
-Strictly speaking, these are tests for cointegration. However, they
-can be used as multivariate unit-root tests since they are the
-multivariate generalization of the ADF test. See section
-\ref{sec:VECM-rep} for more details.
+The most commonly used unit root tests for panel data involve a
+generalization of the ADF procedure, in which the joint null
+hypothesis is that a given times series is non-stationary for all
+individuals in the panel.
+
+In this context the ADF regression (\ref{eq:ADFtest}) can be rewritten
+as
+
+\begin{equation}
+  \label{eq:panelADF}
+  \Delta y_{it} = \mu_{it} + \varphi_i y_{i,t-1} + \sum_{j=1}^{p_i} \gamma_{ij} \Delta
+  y_{i,t-j} + \epsilon_{it}
+\end{equation}
+
+The model (\ref{eq:panelADF}) allows for maximal heterogeneity across
+the individuals in the panel: the parameters of the deterministic
+term, the autoregressive coefficient $\varphi$, and the lag order $p$
+are all specific to the individual, indexed by $i$.
+
+One possible modification of this model is to impose the assumption
+that $\varphi_i = \varphi$ for all $i$; that is, the individual time
+series share a common autoregressive root (although they may differ in
+respect of other statistical properties). The choice of whether or not
+to impose this assumption has an important bearing on the hypotheses
+under test. Under model (\ref{eq:panelADF}) the joint null is
+$\varphi_i = 0$ for all $i$, meaning that all the individual time
+series are non-stationary, and the alternative (simply the negation of
+the null) is that \emph{at least one} individual time series is
+stationary.  When a common $\varphi$ is assumed, the null is that
+$\varphi = 0$ and the alternative is that $\varphi < 0$. The null
+still says that all the individual series are non-stationary, but the
+alternative now says that they are \emph{all} stationary.  The choice
+of model should take this point into account, as well as the gain in
+power from forming a pooled estimate of $\varphi$ and, of course, the
+plausibility of assuming a common AR(1) coefficient.\footnote{If the
+  assumption of a common $\varphi$ seems excessively restrictive, bear
+  in mind that we routinely assume common slope coefficients when
+  estimating panel models, even if this is unlikely to be literally
+  true.}
+
+In \app{gretl}, the formulation (\ref{eq:panelADF}) is used
+automatically when the \texttt{adf} command is used on panel data. The
+joint test statistic is formed using the method of \citet*{IPS03}. In
+this context the behavior of \texttt{adf} differs from regular
+time-series data: only one case of the deterministic term is handled
+per invocation of the command; the default is that $\mu_{it}$ includes
+just a constant but the \verb|--nc| and \verb|--ct| flags can be used
+to suppress the constant or to include a trend, respectively; and the
+quadratic trend option \verb|--ctt| is not available.
+
+The alternative that imposes a common value of $\varphi$ is
+implemented via the \texttt{levinlin} command. The test statistic is
+computed as per \citet*{LLC2002}.  As with the \texttt{adf} command, the
+first argument is the lag order and the second is the name of the
+series to test; and the default case for the deterministic component
+is a constant only. The options \verb|--nc| and \verb|--ct| have the
+same effect as with \texttt{adf}. One refinement is that the lag order
+may be given in either of two forms: if a scalar is given, this is
+taken to represent a common value of $p$ for all individuals, but you
+may instead provide a vector holding a set of $p_i$ values, hence
+allowing the order of autocorrelation of the series to differ by
+individual. So, for example, given
+\begin{code}
+levinlin 2 y
+levinlin {2,2,3,3,4,4} y
+\end{code}
+the first command runs a joint ADF test with a common lag order of 2,
+while the second (which assumes a panel with six individuals) allows
+for differing short-run dynamics. The first argument to
+\texttt{levinlin} can be given as a set of comma-separated integers
+enclosed in braces, as shown above, or as the name of an appropriately
+dimensioned pre-defined matrix (see chapter~\ref{chap:matrices}).
+
+Besides variants of the ADF test, the KPSS test also can be used with
+panel data via the \texttt{kpss} command. In this case the test (of
+the null hypothesis that the given time series is \emph{stationary}
+for all individuals) is implemented using the method of
+\cite{choi01}. This is an application of \emph{meta-analysis}, the
+statistical technique whereby an overall or composite p-value for the
+test of a given null hypothesis can be computed from the p-values of a
+set of separate tests. Unfortunately, in the case of the KPSS test we
+are limited by the unavailability of precise p-values, although if an
+individual test statistic falls between the 10 percent and 1 percent
+critical values we are able to interpolate with a fair degree of
+confidence. This gives rise to four cases.
+
+\begin{enumerate}
+\item All the individual KPSS test statistics fall between the 10
+  percent and 1 percent critical values: the Choi method gives us
+  a plausible composite p-value.
+\item Some of the KPSS test statistics exceed the 1 percent value and
+  none fall short of the 10 percent value: we can give an upper bound
+  for the composite p-value by setting the unknown p-values to 0.01.
+\item Some of the KPSS test statistics fall short of the 10 percent
+  critical value but none exceed the 1 percent value: we can give a
+  lower bound to the composite p-value by setting the unknown p-values
+  to 0.10.
+\item None of the above conditions are satisfied: the Choi method
+  fails to produce any result for the composite KPSS test.
+\end{enumerate}
+
+
+\section{Cointegration tests}
+\label{sec:coint-test}
+
+The generally recommended test for cointegration is the Johansen test,
+which is discussed in detail in chapter~\ref{chap:vecm}. In this
+context we offer a few remarks on the cointegration test of
+\cite{engle-granger87}, which builds on the ADF test discussed above
+(section~\ref{sec:ADFtest}).
+
+For the Engle--Granger test, the procedure is:
+\begin{enumerate}
+\item Test each series for a unit root using an ADF test.
+\item Run a ``cointegrating regression'' via OLS. For this we select
+  one of the potentially cointegrated variables as dependent, and
+  include the other potentially cointegrated variables as regressors.
+\item Perform an ADF test on the residuals from the cointegrating
+  regression.
+\end{enumerate}
+
+The idea is that cointegration is supported if (a) the null of
+non-stationarity is \emph{not} rejected for each of the series
+individually, in step 1, while (b) the null \emph{is} rejected for the
+residuals at step 3. That is, each of the individual series is $I(1)$
+but some linear combination of the series is $I(0)$.  
+
+This test is implemented in \app{gretl} by the \texttt{coint} command,
+which requires an integer lag order (for the ADF tests) followed by a
+list of variables to be tested, the first of which will be taken as
+dependent in the cointegrating regression. Please see the online help
+for \texttt{coint}, or the \textit{Gretl Command Reference}, for
+further details.
+
 
 \section{ARCH and GARCH}
 \label{sec:arch-garch}
@@ -642,20 +854,20 @@ way:
   of ARCH($q$).
 \end{enumerate}
 
-This test is implemented in \app{gretl} via the \cmd{arch} command.
-This command may be issued following the estimation of a time-series
-model by OLS, or by selection from the ``Tests'' menu in the model
-window (again, following OLS estimation).  The result of the test is
-reported and if the $TR^2$ from the auxiliary regression has a p-value
-less than 0.10, ARCH estimates are also reported.  These estimates
-take the form of Generalized Least Squares (GLS), specifically
-weighted least squares, using weights that are inversely proportional
-to the predicted variances of the disturbances, $\hat{\sigma}_t$,
-derived from the auxiliary regression.
+This test is implemented in \app{gretl} via the \cmd{modtest} command
+with the \option{arch} option, which must follow estimation of a
+time-series model by OLS (either a single-equation model or a
+VAR). For example,
+%
+\begin{code}
+ols y 0 x
+modtest 4 --arch
+\end{code}
 
-In addition, the ARCH test is available after estimating a vector
-autoregression (VAR).  In this case, however, there is no provision to
-re-estimate the model via GLS.
+This example specifies an ARCH order of $q=4$; if the order argument
+is omitted, $q$ is set equal to the periodicity of the data.  In the
+graphical interface, the ARCH test is accessible from the ``Tests''
+menu in the model window (again, for single-equation OLS or VARs).
 
 \subsection{GARCH}
 \label{subsec:garch}
@@ -680,24 +892,25 @@ of equations:
   u_t &  = & \sigma_t \varepsilon_t \\
   \label{eq:garch-vareq}
   \sigma^2_t & = & \alpha_0 + \sum_{i=1}^q \alpha_i u^2_{t-i} +
-	  \sum_{j=1}^p \delta_i \sigma^2_{t-j}
+	  \sum_{j=1}^p \delta_j \sigma^2_{t-j}
 \end{eqnarray}
 As above, $\varepsilon_t$ is an iid sequence with unit variance.
 $X_t$ is a matrix of regressors (or in the simplest case,
 just a vector of 1s allowing for a non-zero mean of $y_t$).  Note that
 if $p=0$, GARCH collapses to ARCH($q$): the generalization is embodied
-in the $\delta_i$ terms that multiply previous values of the error
+in the $\delta_j$ terms that multiply previous values of the error
 variance.
 
 In principle the underlying innovation, $\varepsilon_t$, could follow
 any suitable probability distribution, and besides the obvious
-candidate of the normal or Gaussian distribution the $t$ distribution
-has been used in this context.  Currently \app{gretl} only handles the
-case where $\varepsilon_t$ is assumed to be Gaussian.  However, when
-the \verb|--robust| option to the \cmd{garch} command is given, the
-estimator \app{gretl} uses for the covariance matrix can be considered
-Quasi-Maximum Likelihood even with non-normal disturbances.  See below
-for more on the options regarding the GARCH covariance matrix.
+candidate of the normal or Gaussian distribution the Student's $t$
+distribution has been used in this context.  Currently \app{gretl}
+only handles the case where $\varepsilon_t$ is assumed to be Gaussian.
+However, when the \option{robust} option to the \cmd{garch} command is
+given, the estimator \app{gretl} uses for the covariance matrix can be
+considered Quasi-Maximum Likelihood even with non-normal disturbances.
+See below for more on the options regarding the GARCH covariance
+matrix.
 
 Example:
 \begin{code}
@@ -716,24 +929,26 @@ straightforward task.  (Consider equation~\ref{eq:garch-vareq}: the
 conditional variance at any point in time, $\sigma^2_t$, depends on
 the conditional variance in earlier periods, but $\sigma^2_t$ is not
 observed, and must be inferred by some sort of Maximum Likelihood
-procedure.)  \app{Gretl} uses the method proposed by Fiorentini,
-Calzolari and Panattoni (1996),\footnote{The algorithm is based on
-  Fortran code deposited in the archive of the \textit{Journal of
-    Applied Econometrics} by the authors, and is used by kind
-  permission of Professor Fiorentini.}  which was adopted as a
-benchmark in the study of GARCH results by McCullough and Renfro
-(1998).  It employs analytical first and second derivatives of the
-log-likelihood, and uses a mixed-gradient algorithm, exploiting the
-information matrix in the early iterations and then switching to the
-Hessian in the neighborhood of the maximum likelihood.  (This progress
-can be observed if you append the \verb|--verbose| option to
-\app{gretl}'s \cmd{garch} command.)
+procedure.)  By default \app{gretl} uses native code that employs the
+BFGS maximizer; you also have the option (activated by the
+\verb|--fcp| command-line switch) of using the method proposed by
+\cite{fiorentini96},\footnote{The algorithm is based on Fortran code
+  deposited in the archive of the \textit{Journal of Applied
+    Econometrics} by the authors, and is used by kind permission of
+  Professor Fiorentini.} which was adopted as a benchmark in the study
+of GARCH results by \cite{mccullough98}.  It employs analytical first
+and second derivatives of the log-likelihood, and uses a
+mixed-gradient algorithm, exploiting the information matrix in the
+early iterations and then switching to the Hessian in the neighborhood
+of the maximum likelihood.  (This progress can be observed if you
+append the \option{verbose} option to \app{gretl}'s \cmd{garch}
+command.)
 
 Several options are available for computing the covariance matrix of
 the parameter estimates in connection with the \cmd{garch} command.
 At a first level, one can choose between a ``standard'' and a
 ``robust'' estimator.  By default, the Hessian is used unless the
-\verb|--robust| option is given, in which case the QML estimator is
+\option{robust} option is given, in which case the QML estimator is
 used.  A finer choice is available via the \cmd{set} command, as
 shown in Table~\ref{tab:garch-vcv}.
 
@@ -790,305 +1005,6 @@ this into account when formulating an appropriate model.  For example,
 it may be necessary to take the first difference of the variable in
 question and/or to add suitable regressors, $X_t$, as in
 (\ref{eq:garch-meaneq}).
-
-\section{Cointegration and Vector Error Correction Models}
-\label{vecm-explanation}
-
-\subsection{Vector Error Correction Models as representation of a
-  cointegrated system}
-\label{sec:VECM-rep}
-
-Consider a VAR of order $p$ with a deterministic part given by $\mu_t$
-(typically, a polynomial in time). Then, it is possible to write the $n$-variate
-process $y_t$ as 
-\[
-  y_t = \mu_t + A_1 y_{t-1} + A_2 y_{t-2} + \cdots + A_p y_{t-p} +
-  \epsilon_t ;
-\]
-however, this model can be re-cast in a form more suitable to analyze
-the phenomenon of cointegration. Since $y_t = y_{t-1} - \Delta y_t$
-and $y_{t-i} = y_{t-1} - (\Delta y_{t-1} + \Delta y_{t-2} + \cdots +
-\Delta y_{t-i+1}$, the \emph{Vector Error Correction} form of the
-previous model is given by
-\begin{equation}
-  \label{eq:Joh-tests}
-  \Delta y_t = \mu_t + \Pi y_{t-1} + \sum_{i=1}^p \Gamma_i \Delta
-  y_{t-i} + \epsilon_t ,
-\end{equation}
-where $\Pi = \sum_{i=1}^p A_i$ and $\Gamma_k = -\sum_{i=k}^p A_i$.
-
-If the rank of $\Pi$ is 0, the processes are all I(1); if the rank of
-$\Pi$ is full, the processes are all I(0); in between, $\Pi$ can be
-written as $\alpha \beta'$ and you have cointegration.
-
-The rank of $\Pi$ is investigated by computing the eigenvalues of a
-closely related matrix (call it $M$) whose rank is the same as $\Pi$:
-however, $M$ is by construction symmetric and positive semidefinite.
-As a consequence, all its eigenvalues are real and non-negative; tests
-on the rank of $\Pi$ can therefore be carried out by testing how many
-eigenvalues of $M$ are 0.
-
-If all the eigenvalues are significantly different from 0, then all the
-processes are stationary. If, on the contrary, there is at least one
-zero eigenvalue, then the $y_t$ process is integrated, although some
-linear combination $\beta'y_t$ might be stationary. On the other
-extreme, if no eigenvalues are significantly different from 0, then not
-only the process $y_t$ is non-stationary, but the same holds for any
-linear combination $\beta'y_t$; in other words, no cointegration
-occurs.
-
-The two Johansen tests are the ``$\lambda$-max'' test, for hypotheses
-on individual eigenvalues, and the ``trace'' test, for joint
-hypotheses.  The \app{gretl} command \cmd{coint2} performs these two
-tests.  
-
-As in the ADF test, the asymptotic distribution of the tests varies
-with the deterministic kernel $\mu_t$ one includes in the VAR.
-\app{gretl} provides the following options (for a short discussion of
-the meaning of the five options, see section \ref{sec:johansen-test} below):
-\begin{center}
-  \begin{tabular}{cc}
-    \hline
-    $\mu_t$ & command option \\
-    \hline
-    0 & \verb|--nc| \\
-    $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \verb|--rc| \\
-    $\mu_0$ &  default \\
-    $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \verb|--crt| \\
-    $\mu_0 + \mu_1 t$ &  \verb|--ct| \\
-    \hline
-  \end{tabular}
-\end{center}
-Note that for this command the above options are mutually exclusive.
-In addition, you have the option of using the \verb|--seasonal|
-options, for augmenting $\mu_t$ with centered seasonal dummies.  In
-each case, p-values are computed via the approximations by Doornik
-(1998).
-
-The following code uses the \cmd{denmark} database, supplied with
-\app{gretl}, to replicate Johansen's example found in his 1995 book.
-%
-\begin{code}
-open denmark
-coint2 2 LRM LRY IBO IDE --rc --seasonal
-\end{code}
-%
-In this case, the vector $y_t$ in equation (\ref{eq:Joh-tests})
-comprises the four variables \cmd{LRM}, \cmd{LRY}, \cmd{IBO},
-\cmd{IDE}. The number of lags equals $p$ in (\ref{eq:Joh-tests}) plus
-one. Part of the output is reported below:
-
-\begin{center}
-\begin{code}
-Johansen test:
-Number of equations = 4
-Lag order = 2
-Estimation period: 1974:3 - 1987:3 (T = 53)
-
-Case 2: Restricted constant
-Rank Eigenvalue Trace test p-value   Lmax test  p-value
-   0    0.43317     49.144 [0.1284]     30.087 [0.0286]
-   1    0.17758     19.057 [0.7833]     10.362 [0.8017]
-   2    0.11279     8.6950 [0.7645]     6.3427 [0.7483]
-   3   0.043411     2.3522 [0.7088]     2.3522 [0.7076]
-\end{code}
-\end{center}
-
-Since both the trace and $\lambda$-max accept the null hypothesis that
-the smallest eigenvalue is in fact 0, we may conclude that the series
-are in fact non-stationary. However, some linear combination may be
-$I(0)$, as indicated by the rejection of the $\lambda$-max of the
-hypothesis that the rank of $\Pi$ is 0 (the trace test gives less
-clear-cut evidence for this).
-
-\subsection{The Johansen cointegration test}
-\label{sec:johansen-test}
-
-The Johansen test for cointegration is used to establish the rank of
-$\beta$; in other words, how many cointegration vectors the system
-has.  This test has to take into account what hypotheses one is
-willing to make on the deterministic terms, which leads to the famous
-``five cases.'' A full and general illustration of the five cases
-requires a fair amount of matrix algebra, but an intuitive
-understanding of the issue can be gained by means of a simple example.
-    
-Consider a series $x_t$ which behaves as follows
-%      
-\[ x_t = m + x_{t-1} + \varepsilon_t \] 
-%
-where $m$ is a real number and $\varepsilon_t$ is a white noise
-process. As is easy to show, $x_t$ is a random walk which fluctuates
-around a deterministic trend with slope $m$. In the special case $m$ =
-0, the deterministic trend disappears and $x_t$ is a pure random walk.
-    
-Consider now another process $y_t$, defined by
-%      
-\[ y_t = k + x_t + u_t \] 
-%
-where, again, $k$ is a real number and $u_t$ is a white noise process.
-Since $u_t$ is stationary by definition, $x_t$ and $y_t$ cointegrate:
-that is, their difference
-%      
-\[ z_t = y_t - x_t = k + u_t \]
-%	
-is a stationary process. For $k$ = 0, $z_t$ is simple zero-mean white
-noise, whereas for $k$ $\ne$ 0 the process $z_t$ is white noise with a
-non-zero mean.
-  
-After some simple substitutions, the two equations above can be
-represented jointly as a VAR(1) system
-%      
-\[ \left[ \begin{array}{c} y_t \\ x_t \end{array} \right] = \left[
-  \begin{array}{c} k + m \\ m \end{array} \right] + \left[
-  \begin{array}{rr} 0 & 1 \\ 0 & 1 \end{array} \right] \left[
-  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \left[
-  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array}
-\right] \]
-%	
-or in VECM form
-%      
-\begin{eqnarray*}
-  \left[  \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]  & = & 
-  \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
-  \left[  \begin{array}{rr} -1 & 1 \\ 0 & 0 \end{array} \right] 
-  \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + 
-  \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
-  & = & 
-  \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
-  \left[  \begin{array}{r} -1 \\ 0 \end{array} \right]
-  \left[  \begin{array}{rr} 1 & -1 \end{array} \right] 
-  \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + 
-  \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
-  & = & 
-  \mu_0 + \alpha \beta^{\prime} \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \eta_t = 
-  \mu_0 + \alpha z_{t-1} + \eta_t ,
-\end{eqnarray*}
-%	
-where $\beta$ is the cointegration vector and $\alpha$ is the
-``loadings'' or ``adjustments'' vector.
-     
-We are now in a position to consider three possible cases:
-    
-\begin{enumerate}
-\item $m$ $\ne$ 0: In this case $x_t$ is trended, as we just saw; it
-  follows that $y_t$ also follows a linear trend because on average it
-  keeps at a distance $k$ from $x_t$. The vector
-  $\mu_0$ is unrestricted.  This case is the default
-  for gretl's \cmd{vecm} command.
-	
-\item $m$ = 0 and $k$ $\ne$ 0: In this case, $x_t$ is not trended and
-  as a consequence neither is $y_t$. However, the mean distance
-  between $y_t$ and $x_t$ is non-zero. The vector
-  $\mu_0$ is given by
-%	  
-  \[
-  \mu_0 = \left[ \begin{array}{c} k \\ 0 \end{array} \right]
-  \]
-%	    
-  which is not null and therefore the VECM shown above does have a
-  constant term. The constant, however, is subject to the restriction
-  that its second element must be 0. More generally,
-  $\mu_0$ is a multiple of the vector $\alpha$. Note
-  that the VECM could also be written as
-%	  
-  \[
-  \left[ \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]
-  = \left[ \begin{array}{r} -1 \\ 0 \end{array} \right] \left[
-    \begin{array}{rrr} 1 & -1 & -k \end{array} \right] \left[
-    \begin{array}{c} y_{t-1} \\ x_{t-1} \\ 1 \end{array} \right] +
-  \left[ \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t
-    \end{array} \right]
-  \]
-%	   
-  which incorporates the intercept into the cointegration vector. This
-  is known as the ``restricted constant'' case; it may be specified in
-  gretl's \cmd{vecm} command using the option flag \verb+--rc+.
-	
-\item $m$ = 0 and $k$ = 0: This case is the most restrictive: clearly,
-  neither $x_t$ nor $y_t$ are trended, and the mean distance between
-  them is zero. The vector $\mu_0$ is also 0, which
-  explains why this case is referred to as ``no constant.''  This case
-  is specified using the option flag \verb+--nc+ with \cmd{vecm}.
-	
-\end{enumerate}
-
-In most cases, the choice between the three possibilities is based on
-a mix of empirical observation and economic reasoning. If the
-variables under consideration seem to follow a linear trend then we
-should not place any restriction on the intercept. Otherwise, the
-question arises of whether it makes sense to specify a cointegration
-relationship which includes a non-zero intercept. One example where
-this is appropriate is the relationship between two interest rates:
-generally these are not trended, but the VAR might still have an
-intercept because the difference between the two (the ``interest rate
-spread'') might be stationary around a non-zero mean (for example,
-because of a risk or liquidity premium).
-    
-The previous example can be generalized in three directions:
-    
-\begin{enumerate}
-\item If a VAR of order greater than 1 is considered, the algebra gets
-  more convoluted but the conclusions are identical.
-\item If the VAR includes more than two endogenous variables the
-  cointegration rank $r$ can be greater than 1. In this case, $\alpha$
-  is a matrix with $r$ columns, and the case with restricted constant
-  entails the restriction that $\mu_0$ should be some
-  linear combination of the columns of $\alpha$.
-\item If a linear trend is included in the model, the deterministic
-  part of the VAR becomes $\mu_0 + \mu_1 t$. The reasoning is
-  practically the same as above except that the focus now centers on
-  $\mu_1$ rather than $\mu_0$.  The counterpart to the ``restricted
-  constant'' case discussed above is a ``restricted trend'' case, such
-  that the cointegration relationships include a trend but the first
-  differences of the variables in question do not.  In the case of an
-  unrestricted trend, the trend appears in both the cointegration
-  relationships and the first differences, which corresponds to the
-  presence of a quadratic trend in the variables themselves (in
-  levels).  These two cases are specified by the option flags
-  \verb+--crt+ and \verb+--ct+, respectively, with the \cmd{vecm}
-  command.
-\end{enumerate}
-
-\subsection{Identification of the cointegration vectors}
-\label{sec:johansen-ident}
-
-\textbf{FIXME: this is but a stub}
-
-Maximum likelihood estimation of $\beta$ can be shown to be equivalent
-to solving an eigenvector problem. In practice, if the cointegration
-rank is known to be $r$, the $n \times r$ matrix $\beta$ is estimated
-as the solution to the following matrix equation:
-\[
-  M \beta = \beta \langle \lambda \rangle
-\]
-where $\langle \lambda \rangle$ is a diagonal matrix containing the
-eigenvalues. Notice, however, that if all columns of $\beta$ are
-cointegration vectors, then any arbitrary linear combinations of those
-is a cointegration vector too. This means that the matrix $\beta$ is
-under-identified. As a consequence, its elements do not have a proper
-covariance matrix, but this difficulty can be circumvented by imposing
-an appropriate number of restrictions. The method \app{gretl} uses is
-known as the ``Phillips normalization''. The starting point is writing
-$\beta$ in partitioned form as in
-\[
-  \beta = \left[
-    \begin{array}{c} \beta_1 \\ \beta_2  \end{array}
-    \right] ,
-\]
-where $\beta_1$ is an $r \times r$ matrix and  $\beta_2$ is $(n-r)
-\times r$. Assuming that $\beta_1$ has full rank, $\beta$ can be
-post-multiplied by $\beta_1^{-1}$, giving
-\[
-  \hat{\beta} = \left[
-    \begin{array}{c} I \\ \beta_2 \beta_1^{-1}  \end{array}
-    \right] =
-    \left[
-    \begin{array}{c} I \\ \hat{\beta_2} \end{array}
-  \right]  ,
-\]
-
-The coefficients that \app{gretl} produces are $\hat{\beta}$, with
-$\hat{\beta_2}$ known as the matrix of unrestricted coefficients.
 
 %%% Local Variables: 
 %%% mode: latex

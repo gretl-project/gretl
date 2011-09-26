@@ -57,16 +57,10 @@ matrix A = { x, x^2 }
 \end{code}
 %
 Each variable occupies a column (and there can only be one variable
-per column).  You cannot use the semi-colon as a row separator in this
+per column).  You cannot use the semicolon as a row separator in this
 case: if you want the series arranged in rows, append the transpose
 symbol.  The range of data values included in the matrix depends on
 the current setting of the sample range.
-
-\tip{While gretl's built-in statistical functions for data series are
-  capable of handling missing values, the matrix arithmetic functions
-  are not. When you build a matrix from series that include missing
-  values, observations for which at least one series has a missing
-  value are skipped.}
 
 Instead of giving an explicit list of variables, you may instead
 provide the \textit{name of a saved list} (see
@@ -99,15 +93,23 @@ matrix A = {const}~{dataset}
 \end{code}
 %
 
-The syntax 
+By default, when you build a matrix from series that include missing
+values the data rows that contain \texttt{NA}s are skipped.  But you
+can modify this behavior via the command \texttt{set skip\_missing
+  off}.  In that case \texttt{NA}s are converted to NaN (``Not a
+Number'').  In the IEEE floating-point standard, arithmetic operations
+involving NaN always produce NaN. Alternatively, you can take greater
+control over the observations (data rows) that are included in 
+the matrix using the ``set'' variable \texttt{matrix\_mask}, as in
 %
 \begin{code}
-matrix A = {}
+set matrix_mask msk
 \end{code}
 %
-creates an empty matrix --- a matrix with zero rows and zero columns.
-See section \ref{sec:emptymatrix} for a discussion of this
-object.
+where \texttt{msk} is the name of a series.  Subsequent commands that
+form matrices from series or lists will include only observations
+for which \texttt{msk} has non-zero (and non-missing) values. You
+can remove this mask via the command \texttt{set matrix\_mask null}.
 
 \tip{Names of matrices must satisfy the same requirements as names of
   gretl variables in general: the name can be no longer than 15
@@ -116,6 +118,14 @@ object.
 
 \section{Empty matrices}
 \label{sec:emptymatrix}
+
+The syntax 
+%
+\begin{code}
+matrix A = {}
+\end{code}
+%
+creates an empty matrix --- a matrix with zero rows and zero columns.
 
 The main purpose of the concept of an empty matrix is to enable the
 user to define a starting point for subsequent concatenation
@@ -187,11 +197,10 @@ where \textsl{rows} can take any of these forms:
 
 With regard to option 2, the integer value can be given numerically,
 as the name of an existing scalar variable, or as an expression that
-evaluates to a scalar.  With the option 4, the index matrix given
-in the \textsl{rows} field must be either $p\times 1$ or $1\times p$,
-and should contain integer values in the range 1 to $n$, where $n$ is
-the number of rows in the matrix from which the selection is to be
-made.
+evaluates to a scalar.  With option 4, the index matrix given in the
+\textsl{rows} field must be either $p\times 1$ or $1\times p$, and
+should contain integer values in the range 1 to $n$, where $n$ is the
+number of rows in the matrix from which the selection is to be made.
 
 The \textsl{cols} specification works in the same way, \textit{mutatis
   mutandis}.  Here are some examples.
@@ -207,6 +216,11 @@ matrix B = A[idx,]
 The first example selects row 1 from matrix \texttt{A}; the second
 selects a $2\times 3$ submatrix; the third selects a scalar; and
 the fourth selects rows 1, 2, and 6 from matrix \texttt{A}.
+
+If the matrix in question is $n\times 1$ or $1\times m$, it is
+OK to give just one index specifier and omit the comma. For example,
+\texttt{A[2]} selects the second element of \texttt{A} if \texttt{A}
+is a vector. Otherwise the comma is mandatory.
 
 In addition there is a pre-defined index specification, \texttt{diag},
 which selects the principal diagonal of a square matrix, as in
@@ -245,7 +259,8 @@ The following binary operators are available for matrices:
 \texttt{-}  & subtraction \\
 \texttt{*}  & ordinary matrix multiplication \\
 \texttt{'}  & pre-multiplication by transpose \\
-\texttt{/}  & matrix ``division'' (see below) \\
+\verb|\|    & matrix ``left division'' (see below) \\
+\texttt{/}  & matrix ``right division'' (see below) \\
 \verb+~+    & column-wise concatenation \\
 \verb+|+    & row-wise concatenation \\
 \texttt{**} & Kronecker product \\
@@ -292,19 +307,22 @@ produces the product of $X$-transpose and $Y$.  In effect,
 the expression \texttt{X'Y} is shorthand for \texttt{X'*Y}
 (which is also valid).
 
-In matrix ``division'', the statement 
+In matrix ``left division'', the statement 
 %
 \begin{code}
-matrix C = A/B
+matrix X = A \ B
 \end{code}
 %
-is interpreted as a request to find the matrix $C$ that solves $BC=A$.
-If $B$ is a square matrix, this is treated as equivalent to $B^{-1}A$,
-which fails if $B$ is singular; the numerical method employed here is
-the LU decomposition.  If $B$ is a $T \times k$ matrix with
-$T > k$, then $C$ is the least-squares solution, $C = (B'B)^{-1}B'A$,
-which fails if $B'B$ is singular; the numerical method employed here is
+is interpreted as a request to find the matrix $X$ that solves $AX=B$.
+If $B$ is a square matrix, this is in principle equivalent to $A^{-1}B$,
+which fails if $A$ is singular; the numerical method employed here is
+the LU decomposition.  If $A$ is a $T \times k$ matrix with
+$T > k$, then $X$ is the least-squares solution, $X = (A'A)^{-1}A'B$,
+which fails if $A'A$ is singular; the numerical method employed here is
 the QR decomposition.  Otherwise, the operation necessarily fails.
+
+For matrix ``right division'', as in \texttt{X = A / B}, $X$ is the
+matrix that solves $XB = A$, in principle equivalent to $AB^{-1}$.
 
 In ``dot'' operations a binary operation is applied element by
 element; the result of this operation is obvious if the matrices are
@@ -817,19 +835,20 @@ These are set out in Table~\ref{tab:matrix-accessors}.
 \begin{table}[htbp]
 \centering
 \begin{tabular}{ll}
-\texttt{\$coeff}  & vector of estimated coefficients \\
-\texttt{\$compan} & companion matrix (after VAR or VECM estimation) \\
-\texttt{\$jalpha} & matrix $\alpha$ (loadings) from Johansen's procedure \\
-\texttt{\$jbeta}  & matrix $\beta$ (cointegration vectors) from
-Johansen's procedure \\
-\texttt{\$jvbeta} & covariance matrix for the unrestricted elements of
-$\beta$ from Johansen's procedure \\
-\texttt{\$rho}    & autoregressive coefficients for error process \\
-\texttt{\$sigma}  & residual covariance matrix \\
-\texttt{\$stderr} & vector of estimated standard errors \\
-\texttt{\$uhat}   & matrix of residuals \\
-\texttt{\$vcv}    & covariance matrix of parameter estimates \\
-\texttt{\$yhat}   & matrix of fitted values 
+  \dollar{coeff}  & matrix of estimated coefficients \\
+  \dollar{compan} & companion matrix (after VAR or VECM estimation) \\
+  \dollar{jalpha} & matrix $\alpha$ (loadings) from Johansen's procedure \\
+  \dollar{jbeta}  & matrix $\beta$ (cointegration vectors) from
+  Johansen's procedure \\
+  \dollar{jvbeta} & covariance matrix for the unrestricted elements of 
+  $\beta$ from Johansen's procedure \\
+  \dollar{rho}    & autoregressive coefficients for error process \\
+  \dollar{sigma}  & residual covariance matrix \\
+  \dollar{stderr} & matrix of estimated standard errors \\
+  \dollar{uhat}   & matrix of residuals \\
+  \dollar{vcv}    & covariance matrix of parameter estimates \\
+  \dollar{vma}    & VMA matrices in stacked form --- see section \ref{sec:var-estim} (after VAR or VECM estimation) \\
+  \dollar{yhat}   & matrix of fitted values 
 \end{tabular}
 \caption{Matrix accessors for model data}
 \label{tab:matrix-accessors}
@@ -840,15 +859,20 @@ somewhat differently depending on the sort of model that is
 referenced, as follows:
 
 \begin{itemize}
-\item Single-equation models: \texttt{\$sigma} gets a scalar (the
-  standard error of the residuals); \texttt{\$uhat} and
-  \texttt{\$yhat} get series.
-\item All system estimators: \texttt{\$sigma} gets the cross-equation
-  residual covariance matrix, \texttt{\$uhat} gets a matrix of
-  residuals, one column per equation.  
-\item VARs and VECMs: \texttt{\$stderr} and \texttt{\$yhat} are not
-  available; \texttt{\$coeff} gets a matrix of coefficients, one
-  column per equation.
+\item Single-equation models: \dollar{sigma} gets a scalar (the
+  standard error of the regression); \dollar{coeff} and
+  \dollar{stderr} get column vectors; \dollar{uhat} and
+  \dollar{yhat} get series.
+\item System estimators: \dollar{sigma} gets the cross-equation
+  residual covariance matrix; \dollar{uhat} and \dollar{yhat} get
+  matrices with one column per equation.  The format of \dollar{coeff}
+  and \dollar{stderr} depends on the nature of the system: for VARs
+  and VECMs (where the matrix of regressors is the same for all
+  equations) these return matrices with one column per equation, but
+  for other system estimators they return a big column vector.
+\item VARs and VECMs: \dollar{vcv} is not available, but 
+  $X'X^{-1}$ (where $X$ is the common matrix of regressors) is
+  available as \dollar{xtxinv}.
 \end{itemize}
 
 If the accessors are given without any prefix, they retrieve results
@@ -868,12 +892,12 @@ grabs the coefficient vector from model \texttt{m1}; and the third
 (which uses the mechanism of sub-matrix selection described above)
 grabs a portion of the covariance matrix from model \texttt{m1}.
 
-If the model in question a VAR or VECM (only) \verb|$compan| returns
-the companion matrix.
-
-After a vector error correction model is estimated via Johansen's
-procedure, the matrices \verb|$jalpha| and \verb|$jbeta| are
-also available. These have a number of columns equal to the chosen
+If the model in question a VAR or VECM (only) \dollar{compan} and
+\dollar{vma} return the companion matrix and the VMA matrices in
+stacked form, respectively (see section \ref{sec:var-estim} for
+details).  After a vector error correction model is estimated via
+Johansen's procedure, the matrices \dollar{jalpha} and \dollar{jbeta}
+are also available. These have a number of columns equal to the chosen
 cointegration rank; therefore, the product
 \begin{code}
 matrix Pi = $jalpha * $jbeta'
@@ -882,7 +906,7 @@ returns the reduced-rank estimate of $A(1)$. Since $\beta$ is
 automatically identified via the Phillips normalization (see section
 \ref{sec:johansen-ident}), its unrestricted elements do have a proper
 covariance matrix, which can be retrieved through the
-\verb|$jvbeta| accessor.
+\dollar{jvbeta} accessor.
 
 \section{Namespace issues}
 \label{matrix-namespace}
@@ -988,7 +1012,7 @@ to first position.
   \caption{Manipulating a list}
   \label{normalize-list}
 \begin{scode}
-function normalize_list (matrix *x)
+function void normalize_list (matrix *x)
   # If the matrix (representing a list) contains var 0,
   # but not in first position, move it to first position
 
@@ -1000,8 +1024,8 @@ function normalize_list (matrix *x)
             x[1] = 0
             break
          endif
-     end loop
-  end if
+     endloop
+  endif
 end function
 
 open data9-7
@@ -1037,15 +1061,12 @@ print M
 \end{code}
 
 You can get finer control on the formatting of output by using the
-\cmd{printf} command: for example, the following code
+\cmd{printf} command, as illustrated in the interactive session below:
 %
 \begin{code}
-matrix Id = I(2)
-printf "%10.3f", Id
-\end{code}
-%
-produces
-\begin{code}
+? matrix Id = I(2)
+ matrix Id = I(2)
+Generated matrix Id
 ? print Id
  print Id
 Id (2 x 2)

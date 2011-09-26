@@ -7,18 +7,19 @@
 A separate program, \app{gnuplot}, is called to generate graphs.
 Gnuplot is a very full-featured graphing program with myriad options.
 It is available from \href{http://www.gnuplot.info/}{www.gnuplot.info}
-(but note that a copy of gnuplot is bundled with the MS Windows
-version of \app{gretl}).  \app{gretl} gives you direct access, via a
-graphical interface, to a subset of gnuplot's options and it tries to
-choose sensible values for you; it also allows you to take complete
-control over graph details if you wish.
+(but note that a suitable copy of gnuplot is bundled with the packaged
+versions of \app{gretl} for MS Windows and Mac OS X).  \app{gretl}
+gives you direct access, via a graphical interface, to a subset of
+gnuplot's options and it tries to choose sensible values for you; it
+also allows you to take complete control over graph details if you
+wish.
 
 With a graph displayed, you can click on the graph window for a pop-up
 menu with the following options.
 
 \begin{itemize}
 \item \textsf{Save as PNG}: Save the graph in Portable Network
-  Graphics format.
+  Graphics format (the same format that you see on screen).
 \item \textsf{Save as postscript}: Save in encapsulated postscript
   (EPS) format.
 \item \textsf{Save as Windows metafile}: Save in Enhanced Metafile
@@ -27,15 +28,12 @@ menu with the following options.
   iconic form when you select ``Icon view'' from the View menu.
 \item \textsf{Zoom}: Lets you select an area within the graph for
   closer inspection (not available for all graphs).
-\item \textsf{Print}: (Gnome desktop or MS Windows only) lets you
+\item \textsf{Print}: (Current GTK or MS Windows only) lets you
   print the graph directly.
 \item \textsf{Copy to clipboard}: MS Windows only, lets you paste the
-  graph into Windows applications such as MS Word.\footnote{For best
-    results when pasting graphs into MS Office applications, choose
-    the application's ``Edit, Paste Special...'' menu item, and select
-    the option ``Picture (Enhanced Metafile)''.}
+  graph into Windows applications such as MS Word.
 \item \textsf{Edit}: Opens a controller for the plot which lets you
-  adjust various aspects of its appearance.
+  adjust many aspects of its appearance.
 \item \textsf{Close}: Closes the graph window.
 \end{itemize}
 
@@ -43,10 +41,9 @@ menu with the following options.
 \subsection{Displaying data labels}
 \label{plot-labels}
 
-In the case of a simple X-Y scatterplot (with or without a line of
-best fit displayed), some further options are available if the dataset
-includes ``case markers'' (that is, labels identifying each
-observation).\footnote{For an example of such a dataset, see the
+For simple X-Y scatter plots, some further options are available if
+the dataset includes ``case markers'' (that is, labels identifying
+each observation).\footnote{For an example of such a dataset, see the
   Ramanathan file \verb+data4-10+: this contains data on private
   school enrollment for the 50 states of the USA plus Washington, DC;
   the case markers are the two-letter codes for the states.} With a
@@ -56,123 +53,219 @@ transient: they do not appear in the printed or copied version of the
 graph.  They can be removed by selecting ``Clear data labels'' from
 the graph pop-up menu. If you want the labels to be affixed
 permanently (so they will show up when the graph is printed or
-copied), you have two options.
-    
-\begin{itemize}
-\item To affix the labels currently shown on the graph, select
-  ``Freeze data labels'' from the graph pop-up menu.
-\item To affix labels for all points in the graph, select ``Edit''
-  from the graph pop-up and check the box titled ``Show all data
-  labels''.  This option is available only if there are less than 55
-  data points, and it is unlikely to produce good results if the
-  points are tightly clustered since the labels will tend to overlap.
-\end{itemize}
+copied), select the option ``Freeze data labels'' from the pop-up
+menu; ``Clear data labels'' cancels this operation.  The other
+label-related option, ``All data labels'', requests that case markers
+be shown for all observations.  At present the display of case markers
+is disabled for graphs containing more than 250 data points.
 
-To remove labels that have been affixed in either of these ways,
-select ``Edit'' from the graph pop-up and uncheck ``Show all data
-labels''.
-    
 
-\subsection{Advanced options}
-\label{plot-advanced}
+\subsection{GUI plot editor}
+\label{plot-editor}
 
-If you know something about \app{gnuplot} and wish to get finer
-control over the appearance of a graph than is available via the
-graphical controller (``Edit'' option), here's what to do.  In the
-graph display window, right-click and choose ``Save to session as
-icon''.  Then open the icon view window --- either via the menu item
-View/Icon view, or by clicking the ``session icon view'' button on the
-main-window toolbar.  You should see an icon representing your graph.
-Right-click on that and select ``Edit plot commands'' from the pop-up
-menu.  This opens an editing window with the actual gnuplot commands
-displayed. You can edit these commands and either save them for future
-processing or send them to gnuplot, using the Execute (cogwheel)
-button on the toolbar in the plot commands editing window.
-
-To find out more about \app{gnuplot} visit
-\href{http://www.gnuplot.info/}{www.gnuplot.info}. This site has
-documentation for the current version of the program in various
-formats.  
-
-See also the entry for \cmd{gnuplot} in the \GCR\ --- and the
-\cmd{graph} and \cmd{plot} commands for ``quick and dirty'' ASCII
-graphs.
+Selecting the \textsf{Edit} option in the graph popup menu opens
+an editing dialog box, shown in Figure~\ref{fig-plot}.  Notice that
+there are several tabs, allowing you to adjust many aspects of
+a graph's appearance: font, title, axis scaling, line colors
+and types, and so on.  You can also add lines or descriptive
+labels to a graph (under the Lines and Labels tabs).  The
+``Apply'' button applies your changes without closing the
+editor; ``OK'' applies the changes and closes the dialog.
 
 \begin{figure}[htbp]
   \begin{center}
-    \includegraphics[scale=0.5]{figures/plot_control}
+    \includegraphics[scale=0.6]{figures/plot_control}
   \end{center}
   \caption{gretl's gnuplot controller}
   \label{fig-plot}
 \end{figure}
 
 
+\subsection{Publication-quality graphics: advanced options}
+\label{plot-advanced}
+
+The GUI plot editor has two limitations.  First, it cannot represent
+all the myriad options that \app{gnuplot} offers. Users who are
+sufficiently familiar with \app{gnuplot} to know what they're missing
+in the plot editor presumably don't need much help from \app{gretl},
+so long as they can get hold of the \app{gnuplot} command file that
+\app{gretl} has put together.  Second, even if the plot editor meets
+your needs, in terms of fine-tuning the graph you see on screen, a few
+details may need further work in order to get optimal results for
+publication.
+
+Either way, the first step in advanced tweaking of a graph is to get
+access to the graph command file.
+
+\begin{itemize}
+\item In the graph display window, right-click and choose ``Save to
+  session as icon''.
+\item If it's not already open, open the icon view window --- either
+  via the menu item View/Icon view, or by clicking the ``session icon
+  view'' button on the main-window toolbar.
+\item Right-click on the icon representing the newly added graph and
+  select ``Edit plot commands'' from the pop-up menu.
+\item You get a window displaying the plot file
+  (Figure~\ref{fig:plot-edit}).
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.6]{figures/plotedit}
+  \caption{Plot commands editor}
+  \label{fig:plot-edit}
+\end{figure}
+
+Here are the basic things you can do in this window.  Obviously, you
+can edit the file you just opened.  You can also send it for
+processing by gnuplot, by clicking the ``Execute'' (cogwheel)
+icon in the toolbar.  Or you can use the ``Save as'' button to save
+a copy for editing and processing as you wish.
+
+Unless you're a gnuplot expert, most likely you'll only need to edit a
+couple of lines at the top of the file, specifying a driver (plus
+options) and an output file.  We offer here a brief summary of some
+points that may be useful.
+
+First, \app{gnuplot}'s output mode is set via the command \texttt{set
+  term} followed by the name of a supported driver (``terminal'' in
+gnuplot parlance) plus various possible options.  (The top line in the
+plot commands window shows the \texttt{set term} line that \app{gretl}
+used to make a PNG file, commented out.)  The graphic formats that are
+most suitable for publication are PDF and EPS.  These are supported by
+the gnuplot \texttt{term} types \texttt{pdf}, \texttt{pdfcairo} and
+\texttt{postscript} (with the \texttt{eps} option).  The
+\texttt{pdfcairo} driver has the virtue that is behaves in a very
+similar manner to the PNG one, the output of which you see on screen.
+This is provided by the version of gnuplot that is included in the
+\app{gretl} packages for MS Windows and Mac OS X; if you're on Linux
+it may or may be supported.  If \texttt{pdfcairo} is not available,
+the \texttt{pdf} terminal may be available; the \texttt{postscript}
+terminal is almost certainly available.
+
+Besides selecting a term type, if you want to get gnuplot to write the
+actual output file you need to append a \texttt{set output} line
+giving a filename.  Here are a few examples of the first two lines you
+might type in the window editing your plot commands.  We'll make
+these more ``realistic'' shortly.
+%
+\begin{code}
+set term pdfcairo
+set output 'mygraph.pdf'
+
+set term pdf
+set output 'mygraph.pdf'
+
+set term postscript eps
+set output 'mygraph.eps'
+\end{code}
+
+There are a couple of things worth remarking here.  First, you may
+want to adjust the size of the graph, and second you may want to
+change the font.  The default sizes produced by the above drivers are
+5 inches by 3 inches for \texttt{pdfcairo} and \texttt{pdf}, and 5
+inches by 3.5 inches for \texttt{postscript eps}.  In each case
+you can change this by giving a size specification, which takes the
+form \texttt{XX,YY} (examples below).  
+
+You may ask, why bother changing the size in the gnuplot command file?
+After all, PDF and EPS are both vector formats, so the graphs can be
+scaled at will.  True, but a uniform scaling will also affect the font
+size, which may end looking wrong.  You can get optimal results by
+experimenting with the \texttt{font} and \texttt{size} options to
+\app{gnuplot}'s \texttt{set term} command.  Here are some examples
+(comments follow below).
+%
+\begin{code}
+# pdfcairo, regular size, slightly amended
+set term pdfcairo font "Sans,6" size 5in,3.5in
+# or small size
+set term pdfcairo font "Sans,5" size 3in,2in
+
+# pdf, regular size, slightly amended
+set term pdf font "Helvetica,8" size 5in,3.5in
+# or small
+set term pdf font "Helvetica,6" size 3in,2in
+
+# postscript, regular 
+set term post eps solid font "Helvetica,16"
+# or small
+set term post eps solid font "Helvetica,12" size 3in,2in
+\end{code}
+
+On the first line we set a sans serif font for \texttt{pdfcairo} at a
+suitable size for a 5 $\times$ 3.5 inch plot (which you may find looks
+better than the rather ``letterboxy'' default of 5 $\times$ 3).  And
+on the second we illustrate what you might do to get a smaller 3
+$\times$ 2 inch plot. You can specify the plot size in centimeters
+if you prefer, as in
+\begin{code}
+set term pdfcairo font "Sans,6" size 6cm,4cm
+\end{code}
+
+We then repeat the exercise for the \texttt{pdf} terminal.  Notice
+that here we're specifying one of the 35 standard PostScript fonts,
+namely Helvetica.  Unlike \texttt{pdfcairo}, the plain \texttt{pdf}
+driver is unlikely to be able to find fonts other than these.
+
+In the third pair of lines we illustrate options for the
+\texttt{postscript} driver (which, as you see, can be abbreviated as
+\texttt{post}).  Note that here we have added the option
+\texttt{solid}.  Unlike most other drivers, this one uses dashed lines
+unless you specify the \texttt{solid} option.  Also note that we've
+(apparently) specified a much larger font in this case.  That's
+because the \texttt{eps} option in effect tells the
+\texttt{postscript} driver to work at half-size (among other things),
+so we need to double the font size.
+
+Table~\ref{tab:drivers} summarizes the basics for the three drivers we
+have mentioned.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lcc}
+    Terminal & default size (inches) & suggested font \\ [6pt]
+    \texttt{pdfcairo} & 5 $\times$ 3 &   Sans,6 \\
+    \texttt{pdf}      & 5 $\times$ 3 &   Helvetica,8 \\
+    \texttt{post eps} & 5 $\times$ 3.5 & Helvetica,16 \\
+  \end{tabular}
+  \caption{Drivers for publication-quality graphics}
+  \label{tab:drivers}
+\end{table}
+
+To find out more about \app{gnuplot} visit
+\href{http://www.gnuplot.info/}{www.gnuplot.info}. This site has
+documentation for the current version of the program in various
+formats.
+
+\subsection{Additional tips}
+\label{subsect-graph-tips}
+
+To be written.  Line widths, enhanced text.  Show a ``before and
+after'' example.  
+
 \section{Boxplots}
 \label{sect-boxplots}
-
-Boxplots are not generated using gnuplot, but rather by \app{gretl}
-itself.
 
 These plots (after Tukey and Chambers) display the distribution
 of a variable. The central box encloses the middle 50 percent of the
 data, i.e.\ it is bounded by the first and third quartiles.  The
 ``whiskers'' extend to the minimum and maximum values.  A line is
 drawn across the box at the median and a ``\texttt{+}'' sign
-identifies the mean.
+identifies the mean --- see Figure~\ref{fig-boxplot}.
 
-In the case of notched boxes, the notch shows the limits of an
-approximate 90 percent confidence interval for the median.  This is
-obtained by the bootstrap method, which can take a while if the data
-series is very long.
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics{figures/boxplot_sample}
+  \end{center}
+  \caption{Sample boxplot}
+  \label{fig-boxplot}
+\end{figure}
 
-Clicking the mouse in the boxplots window brings up a menu which
-enables you to save the plots as encapsulated postscript (EPS) or as a
-full-page postscript file.  Under the X window system you can also
-save the window as an XPM file; under MS Windows you can copy it to
-the clipboard as a bitmap.  The menu also gives you the option of
-opening a summary window which displays six-number summaries (mean,
-minimum, first quartile, median, third quartile, maximum), plus a
-confidence interval for the median if the ``notched'' option was
-chosen.
-
-Some details of gretl's boxplots can be controlled via a (plain text)
-file named \verb+.boxplotrc+ (or alternatively \verb+plotconfig.txt+)
-which is looked for, in turn, in the current working directory, the
-user's home directory (corresponding to the environment variable HOME)
-and the gretl user directory (which is displayed and may be changed
-under the ``Tools, Preferences, General'' menu).  Options that can be
-set in this way are the font to use when producing postscript output
-(must be a valid generic postscript font name; the default is
-Helvetica), the size of the font in points (also for postscript
-output; default is 12), the minimum and maximum for the y-axis range,
-the width and height of the plot in pixels (default, 560 $\times$ 448),
-whether numerical values should be printed for the quartiles and
-median (default, don't print them), and whether outliers (points lying
-beyond 1.5 times the interquartile range from the central box) should
-be indicated separately (default, no).  Here is an example:
-
-\begin{code}
-font = Times-Roman
-fontsize = 16
-max = 4.0
-min = 0
-width = 400
-height = 448
-numbers = %3.2f
-outliers = true
-\end{code}
-
-On the second to last line, the value associated with \verb+numbers+
-is a format string as in the \texttt{printf} command (see the \GCR);
-if specified, this controls the printing of the median and quartiles
-next to the boxplot, if no \verb+numbers+ entry is given these values
-are not printed.  In the example, the values will be printed to a
-width of 3 digits, with 2 digits of precision following the decimal
-point.
-
-Not all of the options need be specified, and the order doesn't
-matter.  Lines not matching the pattern ``key = value'' are ignored,
-as are lines that begin with the hash mark, \verb+#+.
+In the case of boxplots with confidence intervals, dotted lines show
+the limits of an approximate 90 percent confidence interval for the
+median.  This is obtained by the bootstrap method, which can take a
+while if the data series is very long.
 
 After each variable specified in the boxplot command, a parenthesized
 boolean expression may be added, to limit the sample for the variable

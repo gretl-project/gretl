@@ -63,15 +63,15 @@ where
   pre-defined scalar variable (but see below for a further option).
 \end{itemize}
 
-Estimation is via the Frisch--Newton interior point solver (Portnoy
-and Koenker, 1997), which is substantially faster than the
-``traditional'' Barrodale--Roberts (1974) simplex approach for large
-problems.
+Estimation is via the Frisch--Newton interior point solver
+\citep{portnoy97}, which is substantially faster than the
+``traditional'' Barrodale--Roberts \citeyearpar{barrodale74} simplex
+approach for large problems.
 
 By default, standard errors are computed according to the asymptotic
-formula given by Koenker and Bassett (1978).  Alternatively, if the
+formula given by \cite{koenker-bassett78}.  Alternatively, if the
 \option{robust} option is given, we use the sandwich estimator
-developed in Koenker and Zhao (1994).\footnote{These correspond to the
+developed in \cite{koenker-zhao94}.\footnote{These correspond to the
   \texttt{iid} and \texttt{nid} options in \textsf{R}'s
   \texttt{quantreg} package, respectively.}
 
@@ -84,9 +84,9 @@ inversion method and in general they are asymmetrical about the point
 estimates --- that is, they are not simply ``plus or minus so many
 standard errors''.  The specifics of the calculation are inflected by
 the \option{robust} option: without this, the intervals are computed
-on the assumption of IID errors (Koenker, 1994); with it, they use the
-heteroskedasticity-robust estimator developed by Koenker and Machado
-(1999).
+on the assumption of IID errors \citep{koenker94}; with it, they use
+the heteroskedasticity-robust estimator developed by
+\cite{koenker-machado99}.
 
 By default, 90 percent intervals are produced.  You can change this by
 appending a confidence value (expressed as a decimal fraction) to the
@@ -107,7 +107,7 @@ intervals for quantile estimates require that the model has at least
 two regressors (including the constant).  If the \option{intervals}
 option is given for a model containing only one regressor, an error is
 flagged.  Second, when a model is estimated in this mode, you can
-retrieve the confidence intervals using the accessor \verb|$coeff_ci|.
+retrieve the confidence intervals using the accessor \dollar{coeff\_ci}.
 This produces a $k \times 2$ matrix, where $k$ is the number of
 regressors.  The lower bounds are in the first column, the upper
 bounds in the second.  See also section~\ref{sec:bigdata} below.
@@ -207,7 +207,7 @@ Frisch--Newton algorithm to the Barrodale--Roberts simplex method.
 
 This is OK for moderately large datasets (up to, say, a few thousand
 observations) but on very large problems the simplex algorithm may
-become seriously bogged down.  For example, Koenker and Hallock (2001)
+become seriously bogged down.  For example, \cite{koenker-hallock01}
 present an analysis of the determinants of birth weights, using 
 198377 observations and with 15 regressors.  Generating confidence
 intervals via Barrodale--Roberts for a single value of $\tau$ took

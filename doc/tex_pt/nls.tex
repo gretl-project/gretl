@@ -10,35 +10,30 @@ specification of the regression function; prior to giving this
 specification the parameters to be estimated must be ``declared'' and
 given initial values.  Optionally, the user may supply analytical
 derivatives of the regression function with respect to each of the
-parameters.  The tolerance (criterion for terminating the iterative
-estimation procedure) can be adjusted using the \cmd{set} command.
+parameters.  If derivatives are not given, the user must instead give
+a list of the parameters to be estimated (separated by spaces or
+commas), preceded by the keyword \cmd{params}.  The tolerance
+(criterion for terminating the iterative estimation procedure) can be
+adjusted using the \cmd{set} command.
 
 The syntax for specifying the function to be estimated is the same as
 for the \cmd{genr} command.  Here are two examples, with accompanying
 derivatives.
 
-\begin{script}[htbp]
-  \caption{Consumption function from Greene}
-  \label{nls-cons}
-\begin{scode}
+\begin{code}
+# Consumption function from Greene
 nls C = alpha + beta * Y^gamma
-deriv alpha = 1
-deriv beta = Y^gamma
-deriv gamma = beta * Y^gamma * log(Y)
+    deriv alpha = 1
+    deriv beta = Y^gamma
+    deriv gamma = beta * Y^gamma * log(Y)
 end nls
-\end{scode}
-\end{script}
 
-\begin{script}[htbp]
-  \caption{Nonlinear function from Russell Davidson}
-  \label{nls-ects}
-\begin{scode}
+# Nonlinear function from Russell Davidson
 nls y = alpha + beta * x1 + (1/beta) * x2
-deriv alpha = 1
-deriv beta = x1 - x2/(beta*beta)
-end nls
-\end{scode}
-\end{script}
+    deriv alpha = 1
+    deriv beta = x1 - x2/(beta*beta)
+end nls --vcv
+\end{code}
 
 Note the command words \cmd{nls} (which introduces the regression
 function), \cmd{deriv} (which introduces the specification of a
@@ -58,14 +53,16 @@ In some cases, where the nonlinear function is a generalization of (or
 a restricted form of) a linear model, it may be convenient to run an
 \cmd{ols} and initialize the parameters from the OLS coefficient
 estimates.  In relation to the first example above, one might do:
-
+%
 \begin{code}
 ols C 0 Y
 genr alpha = $coeff(0)
 genr beta = $coeff(Y)
 genr gamma = 1
 \end{code}
+
 And in relation to the second example one might do:
+%
 \begin{code}
 ols y 0 x1 x2
 genr alpha = $coeff(0)
@@ -82,7 +79,7 @@ interactively, by selecting the item ``Nonlinear Least Squares'' under
 the ``Model, Nonlinear models'' menu.  This opens a dialog box where you can
 type the function specification (possibly prefaced by \cmd{genr} lines to set
 the initial parameter values) and the derivatives, if available.  An
-example of this is shown in Figure \ref{fig-nls-dialog}.  Note that in
+example of this is shown in Figure~\ref{fig-nls-dialog}.  Note that in
 this context you do not have to supply the \cmd{nls} and \cmd{end nls}
 tags.
 
@@ -102,8 +99,26 @@ If you are able to figure out the derivatives of the regression
 function with respect to the parameters, it is advisable to supply
 those derivatives as shown in the examples above.  If that is not
 possible, \app{gretl} will compute approximate numerical derivatives.
-The properties of the NLS algorithm may not be so good in this case
-(see Section \ref{nls-accuracy}).
+However, the properties of the NLS algorithm may not be so good in
+this case (see section~\ref{nls-accuracy}).
+
+This is done by using the \cmd{params} statement, which should be
+followed by a list of identifiers containing the parameters to be
+estimated. In this case, the examples above would read as follows:
+
+\begin{code}
+# Greene
+nls C = alpha + beta * Y^gamma
+    params alpha beta gamma
+end nls
+\end{code}
+
+\begin{code}
+# Davidson
+nls y = alpha + beta * x1 + (1/beta) * x2
+    params alpha beta
+end nls
+\end{code}
 
 If analytical derivatives are supplied, they are checked for
 consistency with the given nonlinear function.  If the derivatives are
@@ -185,9 +200,9 @@ Since NLS results are asymptotic, there is room for debate over
 whether or not a correction for degrees of freedom should be applied
 when calculating the standard error of the regression (and the
 standard errors of the parameter estimates).  For comparability with
-OLS, and in light of the reasoning given in Davidson and MacKinnon
-(1993), the estimates shown in \app{gretl} \emph{do} use a degrees of
-freedom correction.
+OLS, and in light of the reasoning given in
+\cite{davidson-mackinnon93}, the estimates shown in \app{gretl}
+\emph{do} use a degrees of freedom correction.
 
 \section{Numerical accuracy}
 \label{nls-accuracy}
