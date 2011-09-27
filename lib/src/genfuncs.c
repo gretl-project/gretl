@@ -4541,8 +4541,9 @@ static double nw_kernel (double x)
  *
  * The scalar @h holds the kernel bandwidth; if negative, it implies
  * that the leave-one-out estimator (essentially a jackknife
- * estimator; see Pagan and Ullah, page 119) is wanted. A rudimentary
- * form of trimming is implemented, but it will have to be refined.
+ * estimator; see Pagan and Ullah, Nonparametric Econometrics,
+ * page 119) is wanted. A rudimentary form of trimming is implemented, 
+ * but it will have to be refined.
  *
  * Returns: 0 on successful completion, non-zero code on error.
  */

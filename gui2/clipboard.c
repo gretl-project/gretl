@@ -169,6 +169,35 @@ static void gretl_clipboard_set (int fmt)
     }
 }
 
+/* We call this when a buffer to be copied as RTF contains
+   non-ascii characters but validates as UTF-8. Note that the 
+   UTF-8 minus sign does not recode correctly into Windows 
+   codepages, it appears, so if it's present we have to remove 
+   it first, then see if there's anything non-ascii left to
+   handle.
+*/
+
+static gchar *fix_buffer_for_rtf (const char *buf)
+{
+    gchar *ret = NULL;
+
+    if (has_utf8_minus((const unsigned char *) buf)) {
+	gchar *tmp = g_strdup(buf);
+	
+	strip_utf_minus(tmp);
+	if (string_is_utf8((const unsigned char *) tmp)) {
+	    ret = utf8_to_cp(tmp);
+	    g_free(tmp);
+	} else {
+	    ret = tmp;
+	}
+    } else {
+	ret = utf8_to_cp(buf);
+    }
+
+    return ret;
+}
+
 int prn_to_clipboard (PRN *prn, int fmt)
 {
     const char *buf = gretl_print_get_buffer(prn);
@@ -183,7 +212,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
     if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) { 
 	/* RTF: ensure that we're not in UTF-8 */
 	if (string_is_utf8((const unsigned char *) buf)) {
-	    gchar *trbuf = utf8_to_cp(buf);
+	    gchar *trbuf = fix_buffer_for_rtf(buf);
 
 	    if (trbuf != NULL) {
 		if (fmt == GRETL_FORMAT_RTF_TXT) {

@@ -692,6 +692,21 @@ char *strip_utf_minus (char *s)
     return s;
 }
 
+int has_utf8_minus (const unsigned char *s)
+{
+    int i, n = strlen((const char *) s);
+    int has_minus = 0;
+
+    for (i=0; i<n-3; i++) {
+	if (UTF_MINUS(s, i)) {
+	    has_minus = 1;
+	    break;
+	}
+    }
+
+    return has_minus;
+}
+
 /* print buf to file, trying to ensure it's not messed up */
 
 void system_print_buf (const gchar *buf, FILE *fp)

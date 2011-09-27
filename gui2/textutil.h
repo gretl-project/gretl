@@ -52,4 +52,6 @@ char *dosify_buffer (const char *buf, int format);
 
 char *strip_utf_minus (char *s);
 
+int has_utf8_minus (const unsigned char *s);
+
 #endif /* TEXTUTIL_H */
