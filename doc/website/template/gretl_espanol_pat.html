@@ -120,20 +120,24 @@ bajo los términos de la Licencia Pública General GNU(<a href="http://www.gnu.o
 especificado por la <a href="http://www.gnu.org">Free Software
 Foundation</a>.</p>
 
-<h2>Conferencia en 2009</h2>
+<h2>Atención: gretl en Ubuntu 11.04</h2>
 
-<p>La primera conferencia sobre gretl tuvo lugar en la Universidad del País Vasco, Bilbao, España, 
-los días 28 y 29 de mayo de 2009: <a href="http://www.gretlconference.org/">más información</a>.  
-Muchas gracias a los organizadores, Ignacio Díaz-Emparanza, Petr Mariel y María Victoria esteban, 
-por organizar un evento tan productivo y tan entretenido.  Esperaremos ansiosamente a la próxima gretl Conference,
-, probablemente en 2011, en lugar aún no determinado.
+<p>El paquete por defecto de gretl para Ubuntu 11.04 (natty) está roto; 
+debería ser reemplazado con la versión 1.9.5 de gretl, que está disponible  vía <a href="http://packages.debian.org/gretl">packages.debian.org</a>.
 </p>
+
+<h2>Conferencia en 2011</h2>
+
+
+<p>Tuvo lugar en la Universidad Nicolás Copérnico en Toruń (Polonia) 
+los días 16 y 17 de junio de 2011: <a href="http://www.gretlconference.org/">más información</a>.  
+
 
 <h2><a name="feat">Características</a></h2>
 
 <ul>
 
-<li><p class="in-list">Interface fácil e intuitiva (ahora en Alemán, Checo, Español, Francés, Italiano, Polaco, Portugués, 
+<li><p class="in-list">Interfaz fácil e intuitiva (ahora en Albanés, Alemán, Checo, Chino, Español, Francés, Griego, Italiano, Polaco, Portugués, 
 Ruso, Turco y Vasco además del Inglés)</p></li>
 
 <li><p class="in-list">Incluye una gran variedad de estimadores: mínimos cuadrados, máxima verosimilitud, GMM; de una sola ecuación 
@@ -141,6 +145,8 @@ y de sistemas de ecuaciones</p></li>
 
 <li><p class="in-list">Métodos de series temporales: ARMA, GARCH, VARs y VECMs, 
 contrastes de raíces unitarias y de cointegración, etc.</p></li>
+
+<li><p class="in-list">Variables dependientes limitadas: logit, probit, tobit, regresión por intervalos, modelos para datos de conteo y de duración, etc.</p></li> 
 
 <li><p class="in-list">Los resultados de los modelos se pueden guardar como ficheros LaTeX, en
 formato tabular y/o de ecuación.
@@ -156,19 +162,21 @@ procedimientos de estimación iterativos.
 <li><p class="in-list">Controlador gráfico mediante menús, para el ajuste fino de los gráficos
 Gnuplot</p></li>
 
-<li><p class="in-list">Enlace a <a href="./gretl_and_R.html">GNU R</a> para análisis más
+<li><p class="in-list">Enlace a <a href="./gretl_and_R.html">GNU R</a>, <a href="http://www.gnu.org/software/octave">GNU Octave</a> y
+<a href="http://www.doornik.com">Ox</a> para análisis más
 sofisticados de los datos</p></li>
+
 
 </ul>
 
 <h2><a name="formats">Formatos de datos</a></h2>
 
 <p>
-Lee sus propios ficheros de datos en formato XML, ficheros CSV (Comma separated
+Admite los siguientes formatos de datos: su propio formato XML, CSV (Comma separated
 values), los de las hojas de cálculo Excel, Gnumeric y Open Document, ficheros <tt>.dta</tt> de Stata, 
 ficheros <tt>.sav</tt> de SPSS; ficheros de trabajo de Eviews, ficheros de datos de JMulTi; su propio 
 formato binario de bases de datos (que permite frecuencias mixtas de los datos y
-larguras mixtas de las series), bases de datos de RATS4 y de PC-Give. Incluye una base de datos
+y larguras mixtas de las series), bases de datos de RATS4 y de PC-Give. Incluye una base de datos
 macroeconómicos de los EEUU. Ver también la página
 <a href="./gretl_data.html">datos para gretl</a>.
 </p>
@@ -183,7 +191,7 @@ macroeconómicos de los EEUU. Ver también la página
 <td><p class="in-cell"><a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.tar.bz2">gretl-VERSION.tar.bz2</a> (c. 4Mb)</p></td>
 </tr>
 <TR>
-<TD><p class="in-cell">Fichero binario genérico en formato rpm para sistemas Linux</p></TD> 
+<TD><p class="in-cell">Fichero binario genérico en formato rpm para sistemas Linux modernos</p></TD> 
 
 <TD><p class="in-cell"><a 
 href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-1gtk2.i586.rpm">gretl-VERSION-1gtk2.i586.rpm</a></p>
@@ -258,13 +266,13 @@ href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats-linux.tar.gz
 <TR><TD></TD><TD></TD></TR>
 </TABLE>
 
-<p>Gretl llama al programa 'gnuplot' para generar los gráficos. La última
-versión oficial de gnuplot es la 4.2.6 (fechada en septiembre de 2009), que está disponible
-en <a href="http://gnuplot.sourceforge.net/">gnuplot.sourceforge.net</a>.La versión actual de desarrollo 
-de gnuplot es la 4.5.  Esta versión incluye varias características nuevas que son convenientes para 
-su uso con gretl, y gnuplot 4.5 se suministra incluído en el paquete de gretl para MS Windows.  
-(El paquete para OS X incluye gnuplot 4.3, que también contiene características convenientes para su uso con 
-gretl.)   </p>
+<h2>Gnuplot</h2>
+
+<p>Gretl llama al programa 'gnuplot' para generar los gráficos. Se necesita una versión de Gnuplot superior o igual a la 4.2.0 (La última
+versión oficial en marzo de 2010), pero se recomienda una versión igual o superior a la 4.4.0.
+Ver <a href="http://gnuplot.sourceforge.net/">gnuplot.sourceforge.net</a>. Los paquetes de gretl para MS Windows y OS X incluyen la versión 4.5 de gnuplot, la versión actual en fase de desarrollo. Para recomendaciones sobre la instalación de gnuplot 4.5 consulte <a href="./gnuplot_for_gretl.html">aquí</a>. 
+</p>
+
 
 
 <h2><a name="man">Manual</a></h2>
@@ -298,7 +306,7 @@ Esta es una lista de sólo lectura, que envía avisos cuando se publican nuevas 
 y 
 <a href="http://sourceforge.net/tracker/?group_id=36234&amp;atid=416806">peticiones de nuevas utilidades</a>
 por medio del sistema de seguimiento de SourceForge.  Pero por favor: le pedimos que utilice el sistema de
-seguimiento de Sourceforge para enviar infromes de error sólo si Vd. está realmente seguro de que ha encontrado
+seguimiento de Sourceforge para enviar informes de error sólo si Vd. está realmente seguro de que ha encontrado
 un error; si Vd. tiene dudas, por favor envíe primero un mensaje a una de las listas de correo de gretl.  
 (No es necesario decir que si gretl se cuelga ¡Vd ya ha encontrado un error seguro!)
 </p>
@@ -329,7 +337,7 @@ pero no escrito en ningún lenguaje de programación en concreto.
     </p
 
 
-<h2><a name="cvs">Acceso al CVS, revisión.</a></h2>
+<h2><a name="cvs">Acceso al CVS y revisión.</a></h2>
 
 <p>Para acceder al último código fuente de gretl vía CVS, vaya a
 <a href="http://sourceforge.net/scm/?type=cvs&group_id=36234">la página del CVS de gretl
@@ -354,11 +362,10 @@ Tadeusz Kufel, Pawel Kufel, Dirk Eddelbuettel, Sven Schreiber y Andreas Rosenbla
 A. Talha Yalta ha desempeñado un importante papel en el análisis de la precisión numérica de
 Gretl.</p>
 
-<p>Muchas gracias a Ignacio Díaz-Emparanza, Susan Orbe, Michel Robitaille, Florent 
+<p>Muchas gracias a Ignacio Díaz-Emparanza, Susan Orbe, Marian Zubía, Michel Robitaille, Florent 
 Bresson, Cristian Rigamonti, Tadeusz and Pawel Kufel, Markus Hahn, Sven 
 Schreiber, Hélio Guilherme, Henrique Andrade, Alexander Gedranovich, Talha Yalta,
-Y. N. Yang, Pavla Nikolovova and Jan Hanousek por su trabajo en las
-traducciones de Gretl.
+Y. N. Yang, Pavla Nikolovova and Jan Hanousek, Artur Bala, Manolis Tzagarakis y Ioannis Venetis por su trabajo con las traducciones de Gretl.
 </p>
 
 <p>Gracias a William Greene, autor de <a href="http://vig.prenhall.com/catalog/academic/product/1,4096,0130132977,00.html"><i>Econometric
