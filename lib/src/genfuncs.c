@@ -4508,13 +4508,14 @@ int list_ok_dollar_vars (DATASET *dset, PRN *prn)
     return 0;
 }
 
-static double nw_kernel(double x)
+static double nw_kernel (double x)
 {
     /* 
        eventually, a libset variable will be used to choose among
        various kernels; for now, the Normal density will have to do.
     */
     double ret, x2 = x*x;
+
     ret = exp(-0.5*x2)/SQRT_2_PI;
     return ret;
 }
@@ -4523,7 +4524,7 @@ static double nw_kernel(double x)
  * nadaraya_watson:
  * @y: array with "dependent variable"
  * @x: array with "explanatory variable"
- * @h: double, bandwitdh (may be negative; see below)
+ * @h: double, bandwidth (may be negative; see below)
  * @dset: data set information.
  * @m: array to hold results
  *
@@ -4538,12 +4539,12 @@ static double nw_kernel(double x)
  * and j, but since the function K() is assumed to be symmetric, we
  * compute it once to save time.
  *
- * The scalar h holds the kernel bandwidth; if negative, it implies
+ * The scalar @h holds the kernel bandwidth; if negative, it implies
  * that the leave-one-out estimator (essentially a jackknife
  * estimator; see Pagan and Ullah, page 119) is wanted. A rudimentary
  * form of trimming is implemented, but it will have to be refined.
  *
- * Returns an error code.
+ * Returns: 0 on successful completion, non-zero code on error.
  */
 
 int nadaraya_watson (const double *y, const double *x, double h,
@@ -4553,7 +4554,7 @@ int nadaraya_watson (const double *y, const double *x, double h,
     int t1 = dset->t1, t2 = dset->t2;
     double xt, xs, ys, yt, k;
     double ah = fabs(h);
-    int LOO = (h<0);  /* leave-one-out */
+    int LOO = (h < 0);  /* leave-one-out */
 
     /* this will have to be taken from a libset variable, eventually */
     int TRIM = 37.0;
@@ -4595,7 +4596,7 @@ int nadaraya_watson (const double *y, const double *x, double h,
 	    yt = y[t];
 	    for (s=t+1; s<=t2; s++) {
 		xs = x[s];
-		if (!na(xs) && fabs(xs-xt)<TRIM) {
+		if (!na(xs) && fabs(xs-xt) < TRIM) {
 		    k = nw_kernel((xt - xs)/ah) / ah;
 		    if (!na(yt)) {
 			num[s] += k * yt;
@@ -4608,9 +4609,7 @@ int nadaraya_watson (const double *y, const double *x, double h,
 		    }
 		}
 	    }
-	    
 	    m[t] = num[t] / den[t];
-
 	} else {
 	    m[t] = NADBL;
 	}
