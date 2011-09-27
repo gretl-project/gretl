@@ -223,6 +223,74 @@
     </gui-access>
 
   </command>
+  <command name="anova" label="ANOVA" section="Statistics">
+    <usage>
+      <arguments>
+        <argument>response</argument>
+        <argument>treatment</argument>
+        <argument optional="true">block</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't print results</effect>
+	</option>
+      </options>
+    </usage>
+    <description>
+      <para>
+	Analysis of Variance: <repl>response</repl> is a series measuring some
+	effect of interest and <repl>treatment</repl> must be a discrete
+	variable that codes for two or more types of treatment (or
+	non-treatment).  For two-way ANOVA, the <repl>block</repl> variable
+	(which should also be discrete) codes for the values of some control
+	variable.
+      </para>
+      <para context="cli">
+	Unless the <opt>--quiet</opt> option is given, this command prints a
+	table showing the sums of squares and mean squares along with an
+	<math>F</math>-test.  The <math>F</math>-test and its P-value can be
+	retrieved using the accessors <lit>$test</lit> and <lit>$pvalue</lit>
+	respectively.  
+      </para>
+      <para>
+	The null hypothesis for the <math>F</math>-test is that the mean
+	response is invariant with respect to the treatment type, or in words
+	that the treatment has no effect.  Strictly speaking, the test
+	is valid only if the variance of the response is the same for
+	all treatment types.
+      </para>
+      <para>
+	Note that the results shown by this command are in fact a subset of
+	the information given by the following procedure, which is easily
+	implemented in gretl.  Create a set of dummy variables coding for all
+	but one of the treatment types.  For two-way ANOVA, in addition create
+	a set of dummies coding for all but one of the <quote>blocks</quote>.
+	Then regress <repl>response</repl> on a constant and the dummies using
+	<cmdref targ="ols"/>.  For a one-way design the ANOVA table is printed
+	via the <opt>--anova</opt> option to <lit>ols</lit>.  In the two-way
+	case the relevant <math>F</math>-test is found by using the <cmdref
+	targ="omit"/> command.  For example (assuming <lit>y</lit> is the
+	response, <lit>xt</lit> codes for the treatment, and <lit>xb</lit>
+	codes for blocks):
+      </para>
+      <code>
+	# one-way
+	list dxt = dummify(xt)
+	ols y 0 dxt --anova
+	# two-way
+	list dxb = dummify(xb)
+	ols y 0 dxt dxb
+	# test joint significance of dxt
+	omit dxt --quiet
+      </code>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Other linear models/ANOVA</menu-path>
+    </gui-access>
+
+  </command>
 
   <command name="append" section="Dataset" 
     label="Acrescentar dados" context="cli">
@@ -682,6 +750,89 @@
 
   </command>
 
+  <command name="biprobit" section="Estimation" label="Bivariate probit"
+    context="cli">
+    <usage>
+      <arguments>
+        <argument>depvar1</argument>
+	<argument>depvar2</argument>
+        <argument>indepvars1</argument>
+	<argument separated="true" optional="true">indepvars2</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+        </option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
+        </option>
+	<option>
+	  <flag>--opg</flag>
+	  <effect>see below</effect>
+        </option>
+	<option>
+	  <flag>--save-xbeta</flag>
+	  <effect>see below</effect>
+        </option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print extra information</effect>
+        </option>
+      </options>      
+      <examples>
+        <example>biprobit y1 y2 0 x1 x2</example>
+	<example>biprobit y1 y2 0 x11 x12 ; 0 x21 x22</example>
+	<demos>
+	  <demo>biprobit.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+    <description>
+      <para>
+	Estimates a bivariate probit model, using the
+	Newton&ndash;Raphson method to maximize the likelihood.
+      </para>
+      <para>
+	The argument list starts with the two (binary) dependent
+	variables, followed by a list of regressors. If a second list
+	is given, separated by a semicolon, this is interpreted as a
+	set of regressors specific to the second equation, with
+	<repl>indepvars1</repl> being specific to the first equation;
+	otherwise <repl>indepvars1</repl> is taken to represent a
+	common set of regressors.
+      </para>
+      <para>
+	By default, standard errors are computed using a numerical
+	approximation to the Hessian at convergence.  But if the
+	<opt>--opg</opt> option is given the covariance matrix is based on
+	the Outer Product of the Gradient (OPG), or if the
+	<opt>--robust</opt> option is given QML standard errors are
+	calculated, using a <quote>sandwich</quote> of the inverse of the
+	Hessian and the OPG.
+      </para>
+      <para>
+	After successful estimation, the accessor <lit>$uhat</lit>
+	retrieves a matrix with two columns holding the generalized
+	residuals for the two equations; that is, the expected values
+	of the disturbances conditional on the observed outcomes and
+	covariates.  By default <lit>$yhat</lit> retrieves a matrix
+	with four columns, holding the estimated probabilities of the
+	four possible joint outcomes for (<math>y</math><sub>1</sub>,
+	<math>y</math><sub>2</sub>), in the order (1,1), (1,0), (0,1),
+	(0,0). Alternatively, if the option <lit>--save-xbeta</lit> is
+	given, <lit>$yhat</lit> has two columns and holds the values
+	of the index functions for the respective equations.
+      </para>
+      <para>
+	The output includes a likelihood ratio test of the null
+	hypothesis that the disturbances in the two equations are
+	uncorrelated.
+      </para>
+    </description>
+  </command>
+
   <command name="bootstrap" section="Tests" label="Bootstrap options"
     context="gui">
 
@@ -859,6 +1010,157 @@
       <menu-path>Janela do modelo, /Testes/Teste de Chow</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="clear" section="Programming" context="cli">
+    <usage>
+      <options>
+	<option>
+	  <flag>--dataset</flag>
+	  <effect>clear dataset only</effect>
+	</option>
+	<option>
+	  <flag>--other</flag>
+	  <effect>clear everything but the dataset</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	With no options, clears all saved objects, including the current
+	dataset if any, out of memory. Note that opening a new dataset, or
+	using the <cmd>nulldata</cmd> command to create an empty dataset,
+	also has this effect, so use of <cmd>clear</cmd> is not usually
+	necessary.
+      </para>
+      <para>
+	If the <lit>--dataset</lit> option is given, then only the dataset
+	is cleared; other saved objects such as named matrices and scalars
+	are preserved.
+      </para>
+      <para>
+	If the <lit>--other</lit> option is given, then the current
+	dataset, if any, is preserved but all other saved objects are
+	destroyed.
+      </para>
+    </description>
+  </command>
+
+  <command name="catch" section="Programming" 
+    label="Catch errors" context="cli">
+    <usage>
+      <syntax>
+        <lit>catch</lit> <repl>command</repl>
+      </syntax>
+    </usage>
+    <description>
+      <para>
+	This is not a command in its own right but can be used as a prefix
+	to most regular commands: the effect is to prevent termination of
+	a script if an error occurs in executing the command. If an error
+	does occur, this is registered in an internal error code which can
+	be accessed as <lit>$error</lit> (a zero value indicates success).
+	The value of <lit>$error</lit> should always be checked
+	immediately after using <lit>catch</lit>, and appropriate action
+	taken if the command failed.
+      </para> 
+      <para>
+	The <lit>catch</lit> keyword cannot be used before <lit>if</lit>,
+	<lit>elif</lit> or <lit>endif</lit>.
+      </para>
+    </description>
+  </command>
+
+  <command name="chow" section="Tests" label="Chow test">
+
+    <usage>
+      <altforms>
+        <altform><lit>chow</lit> <repl>obs</repl></altform>
+        <altform><lit>chow</lit> <repl>dummyvar</repl> <lit>--dummy</lit></altform>
+      </altforms>
+      <options>
+	<option>
+	  <flag>--dummy</flag>
+	  <effect>use a pre-existing dummy variable</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't print estimates for augmented model</effect>
+	</option>
+      </options>
+      <examples>
+        <example>chow 25</example>
+        <example>chow 1988:1</example>
+	<example>chow female --dummy</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="gui">
+	This command needs either an observation number (or date, with dated
+	data), or the name of a dummy variable.
+      </para>
+
+      <para>
+	Must follow an OLS regression.  If an observation number or date is
+	given, provides a test for the null hypothesis of no structural break
+	at the given split point. The procedure is to create a dummy variable
+	which equals 1 from the split point specified by <repl>obs</repl> to
+	the end of the sample, 0 otherwise, and also interaction terms between
+	this dummy and the original regressors. If a dummy variable is given,
+	tests the null hypothesis of structural homogeneity with respect to
+	that dummy. Again, interaction terms are added.  In either case an
+	augmented regression is run including the additional terms.
+      </para>
+      <para>
+	By default an <math>F</math> statistic is calculated, taking the
+	augmented regression as the unrestricted model and the original as
+	the restricted.  But if the original model used a robust estimator
+	for the covariance matrix, the test statistic is a Wald chi-square
+	value based on a robust estimator of the covariance matrix for the
+	augmented regression.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Model window, /Tests/Chow test</menu-path>
+    </gui-access>
+  </command>
+
+  <command name="clear" section="Programming" context="cli">
+    <usage>
+      <options>
+	<option>
+	  <flag>--dataset</flag>
+	  <effect>clear dataset only</effect>
+	</option>
+	<option>
+	  <flag>--other</flag>
+	  <effect>clear everything but the dataset</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	With no options, clears all saved objects, including the current
+	dataset if any, out of memory. Note that opening a new dataset, or
+	using the <cmd>nulldata</cmd> command to create an empty dataset,
+	also has this effect, so use of <cmd>clear</cmd> is not usually
+	necessary.
+      </para>
+      <para>
+	If the <lit>--dataset</lit> option is given, then only the dataset
+	is cleared; other saved objects such as named matrices and scalars
+	are preserved.
+      </para>
+      <para>
+	If the <lit>--other</lit> option is given, then the current
+	dataset, if any, is preserved but all other saved objects are
+	destroyed.
+      </para>
+    </description>
   </command>
 
   <command name="coeffsum" section="Tests" label="Soma de coeficientes">
@@ -1312,51 +1614,6 @@
 
   </command>
 
-  <command name="criteria" section="Utilities" 
-    label="Critério de selecção de modelos" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>ess</argument>
-        <argument>T</argument>
-        <argument>k</argument>
-      </arguments>
-      <examples>
-        <example>criteria 23.45 45 8</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Determina o Critério de Informação de Akaike (AIC) e o Critério
-        de Informação Bayesiano de Schwarz (BIC), dados <repl>ess</repl>
-	(erro da soma de quadrados), o número de observações
-	(<mathvar>T</mathvar>), e o número de coeficientes 
-	(<mathvar>k</mathvar>). <mathvar>T</mathvar>,
-	<mathvar>k</mathvar>, e <repl>ess</repl> podem ser valores 
-        numéricos ou nomes de variáveis préviamente definidas.
-      </para>
-      <para>
-	O AIC é obtido segundo a formulação original de Akaike (1974),
-	nomeadamente
-	<equation status="display"
-	  tex="\[{\rm AIC} = -2 \ell + 2k\]"
-	  ascii="AIC = -2L + 2k"
-          graphic="aic"/>
-	onde <equation status="inline" 
-	  tex="$\ell$" ascii="L"
-	  graphic="ell"/> designa a verosimilhança logaritmica maximizada.
-	O BIC é calculado por 
-	<equation status="display"
-	  tex="\[{\rm BIC} = -2 \ell + k \log T\]"
-	  ascii="BIC = -2L + k log T"
-          graphic="bic_orig"/>
-	Por favor consulte <guideref targ="select-criteria"/> para mais
-        pormenores.
-      </para>
-    </description>
-
-  </command>
 
   <command name="cusum" section="Tests" label="Teste CUSUM">
 
@@ -1580,6 +1837,80 @@
       <para>If no <repl>lista-de-variáveis</repl> is given with this
         command, it deletes the last (highest numbered) variable from the
 	dataset.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>Main window pop-up (single selection)</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="debug" section="Programming" context="cli"
+    label="Debugging">
+
+    <usage>
+      <arguments>
+        <argument>function</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Experimental debugger for user-defined functions, available in the
+	command-line program, gretlcli, and in the GUI console.  The
+	<lit>debug</lit> command should be invoked after the function in
+	question is defined but before it is called.  The effect is that
+	execution pauses when the function is called and a special prompt is
+	shown.
+      </para>
+      <para>
+	At the debugging prompt you can type <lit>next</lit> to execute the
+	next command in the function, or <lit>continue</lit> to allow
+	execution of the function to continue unimpeded. These commands can be
+	abbreviated as <lit>n</lit> and <lit>c</lit> respectively.  You can
+	also interpolate an instruction at this prompt, for example a
+	<lit>print</lit> command to reveal the current value of some variable
+	of interest.
+      </para>
+    </description>
+  </command>  
+
+  <command name="delete" section="Dataset" 
+    label="Delete variables" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>varname</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--db</flag>
+	  <effect>delete series from database</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	This command is an all-purpose destructor for named variables
+	(whether series, scalars, matrices, strings or bundles). It
+	should be used with caution; no confirmation is asked.
+      </para>
+      <para>
+	In the case of series, <repl>varname</repl> may take the form
+	of a named list, in which case all series in the list are
+	deleted, or it may take the form of an explicit list of series
+	given by name or ID number. Note that when you delete series
+	any series with higher ID numbers than those on the deletion
+	list will be re-numbered.
+      </para>
+      <para>
+	If the <opt>--db</opt> option is given, this command deletes the
+	listed series not from the current dataset but from a gretl
+	database, assuming that a database has been opened, and the user
+	has write permission for file in question.  See also the
+	<cmdref targ="open"/> command.
+      </para>
     </description>
 
     <gui-access>
@@ -1835,6 +2166,141 @@
 
   </command>
 
+  <command name="dpanel" section="Estimation" label="Dynamic panel models">
+
+    <usage>
+      <arguments>
+	<argument>p</argument>
+	<argblock separated="true">
+	  <argument>depvar</argument>
+	  <argument>indepvars</argument>
+	</argblock>
+	<argblock optional="true" separated="true">
+	  <argument>instruments</argument>
+	</argblock>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't show estimated model</effect>
+	</option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+        <option>
+	  <flag>--two-step</flag>
+	  <effect>perform 2-step GMM estimation</effect>
+        </option>
+        <option>
+	  <flag>--system</flag>
+	  <effect>add equations in levels</effect>
+        </option>
+        <option>
+	  <flag>--time-dummies</flag>
+	  <effect>add time dummy variables</effect>
+        </option>
+        <option>
+	  <flag>--dpdstyle</flag>
+	  <effect>emulate DPD package for Ox</effect>
+        </option>
+        <option>
+	  <flag>--asymptotic</flag>
+	  <effect>uncorrected asymptotic standard errors</effect>
+        </option>
+      </options>
+      <examples>
+        <example>dpanel 2 ; y x1 x2</example>
+	<example>dpanel 2 ; y x1 x2 --system</example>
+        <example>dpanel {2 3} ; y x1 x2 ; x1</example>
+	<example>dpanel 1 ; y x1 x2 ; x1 GMM(x2,2,3)</example>
+	<demos>
+	  <demo>bbond98.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Carries out estimation of dynamic panel data models (that is,
+	panel models including one or more lags of the dependent
+	variable) using either the GMM-DIF or GMM-SYS method.
+      </para>
+      <para context="cli">
+	The parameter <repl>p</repl> represents the order of the
+	autoregression for the dependent variable. In the simplest
+	case this is a scalar value, but a pre-defined matrix may be
+	given for this argument, to specify a set of (possibly
+	non-contiguous) lags to be used.
+      </para>
+      <para>
+	The dependent variable and regressors should be given in
+	levels form; they will be differenced automatically (since
+	this estimator uses differencing to cancel out the individual
+	effects).
+      </para>
+      <para context="cli">
+	The last (optional) field in the command is for specifying
+	instruments.  If no instruments are given, it is assumed that all
+	the independent variables are strictly exogenous.  If you specify
+	any instruments, you should include in the list any strictly
+	exogenous independent variables.  For predetermined regressors,
+	you can use the <lit>GMM</lit> function to include a specified
+	range of lags in block-diagonal fashion.  This is illustrated in
+	the third example above.  The first argument to <lit>GMM</lit> is
+	the name of the variable in question, the second is the minimum
+	lag to be used as an instrument, and the third is the maximum lag.
+	The same syntax can be used with the <lit>GMMlevel</lit>
+	function to specify GMM-type instruments for the equations
+	in levels.
+      </para>
+      <para context="gui">
+	As regards the handling of instruments, please see the
+	documentation for the script version of this command.  Currently
+	you cannot specify instruments explicitly in the GUI: all the
+	independent variables are taken to be strictly exogenous.
+      </para>
+      <para>
+	By default the results of 1-step estimation are reported (with
+	robust standard errors).  You may select 2-step estimation as an
+	option.  In both cases tests for autocorrelation of orders 1 and 2
+	are provided, as well as the Sargan overidentification test and a
+	Wald test for the joint significance of the regressors.  Note that
+	in this differenced model first-order autocorrelation is not a
+	threat to the validity of the model, but second-order
+	autocorrelation violates the maintained statistical assumptions.
+      </para>
+      <para context="cli">
+	In the case of 2-step estimation, standard errors are by default
+	computed using the finite-sample correction suggested by <cite
+	key="windmeijer05">Windmeijer (2005)</cite>.  The standard
+	asymptotic standard errors associated with the 2-step estimator
+	are generally reckoned to be an unreliable guide to inference, but
+	if for some reason you want to see them you can use the
+	<opt>--asymptotic</opt> option to turn off the Windmeijer
+	correction.
+      </para>
+      <para context="cli">
+	If the <opt>--time-dummies</opt> option is given, a set of
+	time dummy variables is added to the specified regressors.  
+	The number of dummies is one less than the maximum number of
+	periods used in estimation, to avoid perfect collinearity with
+	the constant.  The dummies are entered in differenced form unless
+	the <lit>--dpdstyle</lit> option is given, in which case they
+	are entered in levels.
+      </para>
+      <para>
+	For further details and examples, please see <guideref
+	targ="chap-dpanel"/>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Panel/Dynamic panel model</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="dummify" section="Transformations" 
     label="Create sets of dummies" context="cli">
 
@@ -1890,6 +2356,83 @@
     </description>
 
   </command>
+
+  <command name="duration" section="Estimation" label="Duration models" 
+    context="cli">
+    <usage>
+      <arguments>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+        <argument separated="true" optional="true">censvar</argument>
+      </arguments>
+      <options>
+        <option>
+          <flag>--exponential</flag>
+          <effect>use exponential distribution</effect>
+        </option>
+        <option>
+          <flag>--loglogistic</flag>
+          <effect>use log-logistic distribution</effect>
+        </option>
+        <option>
+          <flag>--lognormal</flag>
+          <effect>use log-normal distribution</effect>
+        </option>
+        <option>
+          <flag>--medians</flag>
+          <effect>fitted values are medians</effect>
+        </option>
+        <option>
+          <flag>--robust</flag>
+          <effect>robust (QML) standard errors</effect>
+        </option>
+        <option>
+          <flag>--vcv</flag>
+          <effect>print covariance matrix</effect>
+        </option>
+        <option>
+          <flag>--verbose</flag>
+          <effect>print details of iterations</effect>
+        </option>
+      </options>      
+      <examples>
+        <example>duration y 0 x1 x2</example>
+	<example>duration y 0 x1 x2 ; cens</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Estimates a duration model: the dependent variable (which must be
+	positive) represents the duration of some state of affairs, for 
+	example the length of spells of unemployment for a cross-section
+	of respondents. By default the Weibull distribution is used but
+	the exponential, log-logistic and log-normal distributions are
+	also available.
+      </para>
+      <para>
+	If some of the duration measurements are right-censored (&eg; an
+	individual's spell of unemployment has not come to an end within the
+	period of observation) then you should supply the trailing argument
+	<repl>censvar</repl>, a series in which non-zero values indicate
+	right-censored cases.
+      </para>
+      <para>
+	By default the fitted values obtained via the accessor
+	<lit>$yhat</lit> are the conditional means of the durations, but if
+	the <lit>--medians</lit> option is given then <lit>$yhat</lit>
+	provides the conditional medians instead.
+      </para>
+      <para>
+	Please see <guideref targ="chap:discr-models"/> for details.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Nonlinear models/Duration data...</menu-path>
+    </gui-access>
+
+  </command>  
 
   <command name="elif" section="Programming" label="Flow control" context="cli">
 
@@ -2250,6 +2793,63 @@
 	See <guideref targ="chap:gretlR"/> for details and examples.
       </para>
     </description>
+
+  </command>
+
+  <command name="fractint" section="Statistics" label="Fractional integration">
+  
+    <usage>
+      <arguments>
+        <argument>series</argument>
+	<argument optional="true">order</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--gph</flag>
+	  <effect>do Geweke and Porter-Hudak test</effect>
+        </option>
+        <option>
+	  <flag>--all</flag>
+	  <effect>do both tests</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>don't print results</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Tests the specified series for fractional integration
+	(<quote>long memory</quote>). The null hypothesis is that the
+	integration order of the series is zero.  By default the local
+	Whittle estimator <cite key="robinson95" p="true">(Robinson,
+	1995)</cite> is used but if the <opt>--gph</opt> option is given
+	the GPH test <cite key="GPH83" p="true">(Geweke and
+	Porter-Hudak, 1983)</cite> is performed instead. If the
+	<opt>--all</opt> flag is given then the results of both tests
+	are printed.
+      </para>
+      <para>
+	For details on this sort of test, see <cite key="phillips04">Phillips 
+	and Shimotsu (2004)</cite>. 
+      </para>
+      <para>
+	If the optional <repl>order</repl> argument is not given the order
+	for the test(s) is set automatically as the lesser of
+	<math>T</math>/2 and <math>T</math><sup>0.6</sup>.
+      </para>
+      <para>
+	The results can be retrieved using the accessors <lit>$test</lit>
+	and <lit>$pvalue</lit>. These values are based on the Local
+	Whittle Estimator unless the <opt>--gph</opt> option is given.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Unit root tests/Fractional integration</menu-path>
+    </gui-access>
 
   </command>
 
@@ -3303,33 +3903,6 @@
 
   </command>
 
-  <command name="graph" section="Graphs" 
-    label="Create ASCII graph" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>yvars</argument>
-        <argument>xvar</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--tall</flag>
-	  <effect>use 40 rows</effect>
-        </option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-	ASCII graphics.  The <repl>yvars</repl> (which may be given by
-	name or number) are  graphed against <repl>xvar</repl> using
-	ASCII symbols. The <lit>--tall</lit> flag will produce a graph
-	with 40 rows and 60 columns. Without it, the graph will be 20
-	by 60 (for screen output).  See also <cmdref targ="gnuplot"/>.
-      </para>
-    </description>
-
-  </command>
 
   <command name="graphing" section="Graphs" context="gui"
     label="Graphing">
@@ -3433,6 +4006,56 @@
 	that under the <quote>Programs</quote> tab in the gretl
 	Preferences dialog box (under the File menu in the main
 	window).</para>
+
+    </description>
+
+  </command>
+
+  <command name="graphpg" section="Graphs" label="Gretl graph page">
+
+    <description>
+
+      <para>
+	The session <quote>graph page</quote> will work only if you have
+	the &latex; typesetting system installed, and are able to generate
+	and view PDF or PostScript output.
+      </para>
+
+      <para>
+	In the session icon window, you can drag up to eight graphs onto
+	the graph page icon.  When you double-click on the graph page (or
+	right-click and select <quote>Display</quote>), a page containing
+	the selected graphs will be composed and opened in a suitable
+	viewer.  From there you should be able to print the page.
+      </para>
+
+      <para>
+	To clear the graph page, right-click on its icon and select
+	<quote>Clear</quote>.
+      </para> 
+
+      <para>
+	In script (or console) mode, you can add a graph to the graph page by
+	issuing the command <lit>graphpg add</lit> after saving
+	a named graph, as in
+      </para>
+      <code>
+	grf1 &lt;- gnuplot Y X
+	graphpg add
+      </code>
+
+      <para>
+	Also in script mode you can call for display of the graph page using
+	the command <lit>graphpg show</lit>, and can clear the page via
+	<lit>graphpg free</lit>.
+      </para>
+
+      <para>
+	Note that on systems other than MS Windows, you may have to adjust the
+	setting for the program used to view PDF or PostScript files. Find
+	that under the <quote>Programs</quote> tab in the gretl Preferences
+	dialog box (under the Tools menu in the main window).
+      </para>
 
     </description>
 
@@ -3621,34 +4244,6 @@
 
   </command>
 
-  <command name="hccm" section="Estimation" context="cli"
-    label="HCCM estimation">
-
-    <usage>
-      <arguments>
-        <argument>variável-dependente</argument>
-        <argument>variáveis-independentes</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>mostrar matriz de covariância</effect>
-	</option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-	Heteroskedasticity-Consistent Covariance Matrix: this command
-	runs a regression where the coefficients are estimated via the
-	standard OLS procedure, but the standard errors of the
-	coefficient estimates are computed in a manner that is robust
-	in the face of heteroskedasticity, namely using the
-	MacKinnon&ndash;White <quote>jackknife</quote> procedure.
-      </para>
-    </description>
-
-  </command>
 
   <command name="hccme" section="Estimation" context="gui"
     label="Robust standard errors">
@@ -3954,6 +4549,91 @@
 
   </command>
 
+  <command name="intreg" section="Estimation" label="Interval regression model">
+
+    <usage>
+      <arguments>
+        <argument></argument>
+        <argument>minvar</argument>
+        <argument>maxvar</argument>
+        <argument>indepvars</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printing of results</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>print details of iterations</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
+        </option>	
+      </options>
+      <examples>
+	<example>intreg lo hi const x1 x2</example>
+	<demos>
+	  <demo>wtp.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Estimates an interval regression model.  This model arises when the
+	dependent variable is imperfectly observed for some (possibly all)
+	observations.  In other words, the data generating process is assumed
+	to be 
+	<equation status="display"
+	tex="\[y^*_t = x_t \beta+\epsilon_t\]" ascii="y* = x b + u"/> but we
+	only observe 
+	<equation status="inline" tex="\[m_t \le
+	y_t \le M_t\]" ascii="m &lt;= y* &lt;= M"/> (the interval may be left-
+	or right-unbounded). Note that for some observations <math>m</math>
+	may equal <math>M</math>.  The variables <repl>minvar</repl> and
+	<repl>maxvar</repl> must contain <lit>NA</lit>s for left- and
+	right-unbounded observations, respectively.
+      </para>
+
+      <para context="gui">
+	In the model specification dialog, <repl>minvar</repl> and
+	<repl>maxvar</repl> are indentified as the Lower bound variable and
+	the Upper bound variable respectively.
+      </para>
+
+      <para>
+	The model is estimated by maximum likelihood, assuming normality of
+	the disturbance term.
+      </para>
+
+      <para context="cli">
+	By default, standard errors are computed using the negative
+	inverse of the Hessian.  If the <opt>--robust</opt> flag is given,
+	then QML or Huber&ndash;White standard errors are calculated
+	instead. In this case the estimated covariance matrix is a
+	<quote>sandwich</quote> of the inverse of the estimated Hessian
+	and the outer product of the gradient.
+      </para>
+      <para context="gui">
+	By default, standard errors are computed using the negative
+	inverse of the Hessian.  If the "Robust standard errors" box is
+	checked, then QML or Huber&ndash;White standard errors are
+	calculated instead. In this case the estimated covariance matrix
+	is a <quote>sandwich</quote> of the inverse of the estimated
+	Hessian and the outer product of the gradient.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Nonlinear models/Interval regression</menu-path>
+    </gui-access>
+
+  </command>
+
+
   <command name="irfboot" section="Graphs" context="gui"
     label="Impulse response bootstrap">
 
@@ -3972,6 +4652,50 @@
 	The bootstrap option is not currently available for restricted VECMs.
       </para>
 
+    </description>
+
+  </command>
+
+  <command name="kalman" section="Estimation" label="Kalman filter">
+
+    <usage>
+      <options>
+	<option>
+	  <flag>--cross</flag>
+	  <effect>allow for cross-correlated disturbances</effect>
+	</option>
+	<option>
+	  <flag>--diffuse</flag>
+	  <effect>use diffuse initialization</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Opens a block of statements to set up a Kalman filter.  This block
+	should end with the line <lit>end kalman</lit>, to which the options
+	shown above may be appended.  The intervening lines specify the
+	matrices that compose the filter.  For example,
+      </para>
+      <code>
+	kalman 
+	  obsy y
+	  obsymat H
+	  statemat F
+	  statevar Q
+	end kalman
+      </code>
+      <para>
+	Please see <guideref targ="chap:kalman"/> for details.
+      </para>
+	<para>
+	  <seelist>
+	    <fncref targ="kfilter"/>
+	    <fncref targ="ksimul"/>
+	    <fncref targ="ksmooth"/>
+	  </seelist>
+	</para>
     </description>
 
   </command>
@@ -4285,96 +5009,74 @@
 
   </command>
 
-  <command name="lmtest" section="Tests" label="LM tests">
+  <command name="levinlin" section="Tests" label="Levin-Lin-Chu test">
 
     <usage>
       <arguments>
-        <argument optional="true">order</argument>
+        <argument>order</argument>
+        <argument>series</argument>
       </arguments>
       <options>
-        <option>
-	  <flag>--logs</flag>
-	  <effect>non-linearity, logs</effect>
-        </option>
-        <option>
-	  <flag>--autocorr</flag>
-	  <effect>serial correlation</effect>
-        </option>
-        <option>
-	  <flag>--arch</flag>
-	  <effect>ARCH</effect>
-        </option>
-        <option>
-	  <flag>--squares</flag>
-	  <effect>non-linearity, squares</effect>
-        </option>
-        <option>
-	  <flag>--white</flag>
-	  <effect>heteroskedasticity, White's test</effect>
-        </option>
-        <option>
-	  <flag>--panel</flag>
-	  <effect>heteroskedasticity, groupwise</effect>
-        </option>
-        <option>
+	<option>
+	  <flag>--nc</flag>
+	  <effect>test without a constant</effect>
+	</option>
+	<option>
+	  <flag>--ct</flag>
+	  <effect>with constant and trend</effect>
+	</option>
+	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't print auxiliary regression</effect>
-        </option>
+	  <effect>suppress printing of results</effect>
+	</option>
       </options>
+      <examples>
+	<example>levinlin 0 y</example>
+        <example>levinlin 2 y --ct</example>
+        <example>levinlin {2,2,3,3,4,4} y</example>
+      </examples>
     </usage>
 
-    <description context="gui">
+    <description>
       <para>
-	Under this heading fall several hypothesis tests.  What they have
-	in common is that the test involves the estimation of an auxiliary
-	regression, where the dependent variable is the residual from some
-	<quote>original</quote> regression.  The right-hand side variables
-	include those from the original regression, along with some
-	additional terms.  The test statistic is calculated as (sample
-	size * R-squared) from the auxiliary regression: this is
-	distributed as chi-square with degrees of freedom equal to the
-	number of additional terms, under the null hypothesis that the
-	additional terms have no explanatory power over the residual.  A
-	<quote>large</quote> chi-square value (small p-value) suggests
-	that this null hypothesis should be rejected.
+	Carries out the panel unit-root test described by <cite
+	key="LLC2002">Levin, Lin and Chu (2002)</cite>. The null
+	hypothesis is that all of the individual time series exhibit a
+	unit root, and the alternative is that none of the series has a
+	unit root. (That is, a common AR(1) coefficient is assumed,
+	although in other respects the statistical properties of the
+	series are allowed to vary across individuals.)
       </para>
-    </description>
+	
+      <para context="cli">
+	By default the test ADF regressions include a constant;
+	to suppress the constant use the <lit>--nc</lit> option, or
+	to add a linear trend use the <lit>--ct</lit> option.
+	(See the <cmdref targ="adf"/> command for explanation of
+	ADF regressions.)
+      </para>
 
-    <description context="cli">
-      <para>
-	Must immediately follow an <cmd>ols</cmd> command. Depending on
-	the options given, this command carries out some combination of
-	the following: Lagrange Multiplier tests for nonlinearity (logs
-	and squares); White's test for heteroskedasticity; the LMF test
-	for serial correlation (see Kiviet, 1986); and a test for ARCH
-	(Autoregressive Conditional Heteroskedasticity, see also the
-	<cmd>arch</cmd> command).
+      <para context="cli">
+	The (non-negative) <repl>order</repl> for the test (governing
+	the number of lags of the dependent variable to include in the
+	ADF regressions) may be given in either of two forms. If a
+	scalar value is given, this is applied to all the individuals
+	in the panel.  The alternative is to provide a matrix
+	containing a specific lag order for each individual; this must
+	be a vector with as many elements as there are individuals in
+	the current sample range. Such a matrix can be specified by
+	name, or constructed using braces as illustrated in the
+	last example above.
       </para>
-      <para>
-	The optional <lit>order</lit> argument is relevant only in case
-	the <lit>--autocorr</lit> or <lit>--arch</lit> options are
-	selected.  The default is to run these tests using a lag order
-	equal to the periodicity of the data, but this can be adjusted by
-	supplying a specific lag order.
-      </para>
-      <para>
-	The <lit>--panel</lit> option is available only when the model
-	is estimated on panel data: in this case a test for groupwise
-	heteroskedasticity is performed (that is, for a differing
-	error variance across the cross-sectional units).
-      </para>
-      <para>
-	By default, the program prints the auxiliary regression on which
-	the test statistic is based.  This may be suppressed by using the
-	<lit>--quiet</lit> flag.
-      </para>
+
     </description>
 
     <gui-access>
-      <menu-path>Janela do modelo, /Tests</menu-path>
+      <menu-path>/Variable/Unit root tests/Levin-Lin-Chu test</menu-path>
     </gui-access>
 
   </command>
+
 
   <command name="logistic" section="Estimation"
     label="Logistic regression">
@@ -4712,6 +5414,51 @@
     </description>
   </command>
 
+  <command name="makepkg" section="Programming" context="cli"
+    label="Make function package">
+
+    <usage>
+      <arguments>
+        <argument>filename</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--index</flag>
+	  <effect>write auxiliary index file</effect>
+        </option>
+        <option>
+	  <flag>--translations</flag>
+	  <effect>write auxiliary strings file</effect>
+        </option>
+      </options>
+    </usage>    
+
+    <description>
+      <para>
+	Supports creation of a gretl function package via the command
+	line. The filename argument represents the name of the package
+	to be created, and should have the <lit>.gfn</lit>
+	extension. Please see <guideref targ="chap:functions"/> for
+	details.
+      </para>
+      <para>
+	The option flags support the writing of auxiliary files for
+	use with gretl <quote>addons</quote>. The index file is a
+	short XML document containing basic information about the
+	package; it has the same basename as the package and the
+	extension <lit>.xml</lit>. The translations file contains
+	strings from the package that may be suitable for translation,
+	in C format; for package <lit>foo</lit> this file is named
+	<lit>foo-i18n.c</lit>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/File/Function files/New package</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="meantest" section="Tests"
     label="Difference of means">
 
@@ -5030,6 +5777,171 @@
 
   </command>
 
+  <command name="modprint" section="Printing"
+    label="Print a user-defined model" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>coeffmat</argument>
+        <argument>names</argument>
+	<argument optional="true">addstats</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Prints the coefficient table and optional additional statistics for a
+	model estimated <quote>by hand</quote>. Mainly useful for user-written
+	functions.
+      </para>
+      <para>
+	The argument <repl>coeffmat</repl> should be a <math>k</math>
+	by 2 matrix containing <math>k</math> coefficients and
+	<math>k</math> associated standard errors, and
+	<repl>names</repl> should be a string containing at least
+	<math>k</math> names for the coefficients, separated by commas
+	or spaces. (The <repl>names</repl> argument may be either the
+	name of a string variable or a literal string, enclosed in
+	double quotes.)
+      </para>
+      <para>
+	The optional argument <repl>addstats</repl> is a vector containing
+	<math>p</math> additional statistics to be printed under the
+	coefficient table.  If this argument is given, then <repl>names</repl>
+	should contain <math>k + p</math> comma-separated strings, the
+	additional <math>p</math> strings to be associated with the additional
+	statistics.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="modtest" section="Tests" label="Model tests"
+    context="cli">
+
+    <usage>
+      <arguments>
+        <argument optional="true">order</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--normality</flag>
+	  <effect>normality of residual</effect>
+        </option>
+        <option>
+	  <flag>--logs</flag>
+	  <effect>non-linearity, logs</effect>
+        </option>
+        <option>
+	  <flag>--autocorr</flag>
+	  <effect>serial correlation</effect>
+        </option>
+        <option>
+	  <flag>--arch</flag>
+	  <effect>ARCH</effect>
+        </option>
+        <option>
+	  <flag>--squares</flag>
+	  <effect>non-linearity, squares</effect>
+        </option>
+        <option>
+	  <flag>--white</flag>
+	  <effect>heteroskedasticity, White's test</effect>
+        </option>
+        <option>
+	  <flag>--white-nocross</flag>
+	  <effect>White's test, squares only</effect>
+        </option>
+        <option>
+	  <flag>--breusch-pagan</flag>
+	  <effect>heteroskedasticity, Breusch&ndash;Pagan</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>robust variance estimate for Breusch&ndash;Pagan</effect>
+        </option>
+        <option>
+	  <flag>--panel</flag>
+	  <effect>heteroskedasticity, groupwise</effect>
+        </option>
+        <option>
+	  <flag>--comfac</flag>
+	  <effect>common factor restriction, AR1 models only</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>don't print details</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Must immediately follow an estimation command. Depending on the
+	option given, this command carries out one of the following: the
+	Doornik&ndash;Hansen test for the normality of the error term; a
+	Lagrange Multiplier test for nonlinearity (logs or squares);
+	White's test (with or without cross-products) or the
+	Breusch&ndash;Pagan test for heteroskedasticity; the LMF test for
+	serial correlation <cite key="kiviet86" p="true">(Kiviet,
+	1986)</cite>; a test for ARCH (Autoregressive Conditional
+	Heteroskedasticity; see also the <cmd>arch</cmd> command); or a
+	test of the common factor restriction implied by AR(1) estimation.
+	With the exception of the normality and common factor test most of
+	the options are only available for models estimated via OLS, but
+	see below for details regarding two-stage least squares.
+      </para>
+      <para>
+	The optional <lit>order</lit> argument is relevant only in case
+	the <opt>--autocorr</opt> or <opt>--arch</opt> options are
+	selected.  The default is to run these tests using a lag order
+	equal to the periodicity of the data, but this can be adjusted by
+	supplying a specific lag order.
+      </para>
+      <para>
+	The <opt>--robust</opt> option applies only when the
+	Breusch&ndash;Pagan test is selected; its effect is to use the
+	robust variance estimator proposed by <cite
+	key="koenker81">Koenker (1981)</cite>, making the test less
+	sensitive to the assumption of normality.
+      </para>
+      <para>
+	The <opt>--panel</opt> option is available only when the model
+	is estimated on panel data: in this case a test for groupwise
+	heteroskedasticity is performed (that is, for a differing
+	error variance across the cross-sectional units).
+      </para>
+      <para>
+	The <opt>--comfac</opt> option is available only when the model is
+	estimated via an AR(1) method such as Hildreth&ndash;Lu.  The
+	auxiliary regression takes the form of a relatively unrestricted
+	dynamic model, which is used to test the common factor restriction
+	implicit in the AR(1) specification.
+      </para>
+      <para>
+	By default, the program prints the auxiliary regression on which the
+	test statistic is based, where applicable.  This may be suppressed by
+	using the <opt>--quiet</opt> flag.  The test statistic and its p-value
+	may be retrieved using the accessors <lit>$test</lit> and
+	<lit>$pvalue</lit> respectively.
+      </para>
+      <para>
+	When a model has been estimated by two-stage least squares (see
+	<cmdref targ="tsls"/>), the LM principle breaks down and gretl
+	offers some equivalents: the <flag>--autocorr</flag> option
+	computes Godfrey's test for autocorrelation <cite key="godfrey94"
+	p="true">(Godfrey, 1994)</cite> while the <flag>--white</flag>
+	option yields the HET1 heteroskedasticity test <cite
+	key="pesaran99" p="true">(Pesaran and Taylor, 1999)</cite>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Model window, /Tests</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="mpols" section="Estimation"
     label="Multiple-precision OLS">
 
@@ -5090,6 +6002,70 @@
       <menu-path>/Model/Other linear models/High precision OLS</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="negbin" section="Estimation"
+    label="Negative Binomial regression">
+
+    <usage>
+      <arguments>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+	<argument separated="true" optional="true">offset</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--model1</flag>
+	  <effect>use NegBin 1 model</effect>
+	</option>
+	<option>
+	  <flag>--opg</flag>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>QML covariance matrix</effect>
+	</option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print details of iterations</effect>
+	</option>
+      </options>
+    </usage>  
+
+    <description>
+      <para>
+	Estimates a Negative Binomial model.  The dependent variable is taken
+	to represent a count of the occurrence of events of some sort, and
+	must have only non-negative integer values. By default the model
+	NegBin 2 is used, in which the conditional variance of the count is
+	given by &mu;(1 + &alpha;&mu;), where &mu; denotes the conditional
+	mean.  But if the <opt>--model1</opt> option is given the conditional
+	variance is &mu;(1 + &alpha;).
+      </para>
+      <para>
+	The optional <lit>offset</lit> series works in the same way as for the
+	<cmdref targ="poisson"/> command.  The Poisson model is a restricted
+	form of the Negative Binomial in which &alpha; = 0 by construction.
+      </para>
+      <para>
+	By default, standard errors are computed using a numerical
+	approximation to the Hessian at convergence.  But if the
+	<opt>--opg</opt> option is given the covariance matrix is based on
+	the Outer Product of the Gradient (OPG), or if the
+	<opt>--robust</opt> option is given QML standard errors are
+	calculated, using a <quote>sandwich</quote> of the inverse of the
+	Hessian and the OPG.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Nonlinear models/Count data...</menu-path>
+    </gui-access>
   </command>
 
   <command name="nls" section="Estimation"
@@ -6067,32 +7043,6 @@
 
   </command>
 
-  <command name="plot" section="Graphs" 
-    label="ASCII plot" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>lista-de-variáveis</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--one-scale</flag>
-	  <effect>force a single scale</effect>
-        </option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-	Plots the values for specified variables, for the range of
-	observations currently in effect, using ASCII symbols.  Each
-	line stands for an observation and the values are plotted
-	horizontally.  By default the variables are scaled
-	appropriately.  See also <cmdref targ="gnuplot"/>.
-      </para>
-    </description>
-
-  </command>
 
   <command name="print" section="Printing" 
     label="Print data or strings" context="cli">
@@ -6375,6 +7325,64 @@
 
     <gui-access>
       <menu-path>Janela do modelo, /Testes/Teste QLR test</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="qqplot" section="Graphs" label="Q-Q plot">
+
+    <usage>
+      <altforms>
+	<altform><lit>qqplot</lit> <repl>y</repl></altform>
+	<altform><lit>qqplot</lit> <repl>y</repl> <repl>x</repl></altform>
+      </altforms>
+      <options>
+	<option>
+	  <flag>--z-scores</flag>
+	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--raw</flag>
+	  <effect>see below</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para context="gui">
+	With just one series selected, displays a plot of the empirical
+	quantiles of the given series against the quantiles of the normal
+	distribution. The series must include at least 20 valid observations
+	in the current sample range. By default the empirical quantiles are
+	plotted against quantiles of the normal distribution having the same
+	mean and variance as the sample data, but two alternatives are
+	available: the data may be standardized (converted to z-scores) before
+	plotting, or the <quote>raw</quote> empirical quantiles may be plotted
+	against the quantiles of the standard normal distribution.
+      </para>
+      <para context="cli">
+	Given just one series argument, displays a plot of the empirical
+	quantiles of the selected series (given by name or ID number)
+	against the quantiles of the normal distribution. The series must
+	include at least 20 valid observations in the current sample
+	range. By default the empirical quantiles are plotted against
+	quantiles of the normal distribution having the same mean and
+	variance as the sample data, but two alternatives are available:
+	if the <opt>--z-scores</opt> option is given the data are
+	standardized, while if the <opt>--raw</opt> option is given the
+	<quote>raw</quote> empirical quantiles are plotted against the
+	quantiles of the standard normal distribution. 
+      </para>
+      <para>
+	Given two series arguments, <repl>y</repl> and <repl>x</repl>,
+	displays a plot of the empirical quantiles of <repl>y</repl> against
+	those of <repl>x</repl>. The data values are not standardized.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Normal Q-Q plot</menu-path>
+      <menu-path>/View/Graph specified vars/Q-Q plot</menu-path>
     </gui-access>
 
   </command>
@@ -6756,39 +7764,6 @@
 
   </command>
 
-  <command name="rhodiff" section="Transformations" 
-    label="Quasi-differencing" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>rholist</argument>
-        <argument separated="true">lista-de-variáveis</argument>
-      </arguments>
-      <examples>
-        <example>rhodiff .65 ; 2 3 4</example>
-        <example>rhodiff r1 r2 ; x1 x2 x3</example>	
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Creates rho-differenced counterparts of the variables (given
-	by number or by name) in <repl>lista-de-variáveis</repl> and adds them to
-	the data set, using the suffix <lit>#</lit> for the new
-	variables. Given variable <lit>v1</lit> in
-	<repl>lista-de-variáveis</repl>, and entries <lit>r1</lit> and
-	<lit>r2</lit> in <repl>rholist</repl>, the new variable
-      </para>
-      <code>
-	v1# = v1 - r1*v1(-1) - r2*v1(-2)
-      </code>
-      <para>
-	is created. The <repl>rholist</repl> entries can be given as numerical
-	values or as the names of variables previously defined.
-      </para>
-    </description>
-
-  </command>
 
   <command name="rmplot" section="Graphs"
     label="Range-mean plot">
@@ -8105,21 +9080,49 @@
 
   </command>
 
-  <command name="testuhat" section="Tests" context="cli"
-    label="Normality of residual">
+  <command name="textplot" section="Graphs" 
+    label="ASCII plot" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>varlist</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--time-series</flag>
+	  <effect>plot by observation</effect>
+        </option>
+        <option>
+	  <flag>--one-scale</flag>
+	  <effect>force a single scale</effect>
+        </option>
+        <option>
+	  <flag>--tall</flag>
+	  <effect>use 40 rows</effect>
+        </option>
+      </options>
+    </usage>
 
     <description>
       <para>
-	Must follow a model estimation command.  Gives the frequency
-	distribution for the residual from the model along with a
-	chi-square test for normality, based on the procedure
-	suggested by Doornik and Hansen (1984).
+	Quick and simple ASCII graphics.  Without the <opt>--time-series</opt>
+	flag, <repl>varlist</repl> must contain at least two series, the last
+	of which is taken as the variable for the <math>x</math> axis, and a
+	scatter plot is produced. In this case the <opt>--tall</opt> option
+	may be used to produce a graph in which the <math>y</math> axis is
+	represented by 40 rows of characters (the default is 20 rows).
+      </para>
+      <para>
+	With the <opt>--time-series</opt>, a plot by observation is produced.
+	In this case the option <opt>--one-scale</opt> may be used to force
+	the use of a single scale; otherwise if <repl>varlist</repl> contains
+	more than one series the data may be scaled. Each line represents an
+	observation, with the data values plotted horizontally.  
+      </para>
+      <para>
+	See also <cmdref targ="gnuplot"/>.
       </para>
     </description>
-
-    <gui-access>
-      <menu-path>Janela do modelo, /Testes/Normality of residual</menu-path>
-    </gui-access>
 
   </command>
 
