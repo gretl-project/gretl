@@ -4559,7 +4559,7 @@ int nadaraya_watson (const double *y, const double *x, double h,
     /* this will have to be taken from a libset variable, eventually */
     int TRIM = 37.0;
 
-    int n = sample_size(dset);
+    int n = t2 + 1;
     double *num;
     double *den;
 
