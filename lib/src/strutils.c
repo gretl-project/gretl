@@ -479,9 +479,11 @@ char *gretl_strdup (const char *src)
     char *targ = NULL;
 
     if (src != NULL) {
-	targ = malloc(strlen(src) + 1);
+	size_t n = strlen(src) + 1;
+
+	targ = malloc(n);
 	if (targ != NULL) {
-	    strcpy(targ, src);
+	    memcpy(targ, src, n);
 	}
     }
 
@@ -510,8 +512,8 @@ char *gretl_strndup (const char *src, size_t n)
 
 	targ = malloc(len + 1);
 	if (targ != NULL) {
-	    *targ = '\0';
-	    strncat(targ, src, len);
+	    memcpy(targ, src, len);
+	    targ[len] = '\0';
 	}
     }
 
