@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-24 11:17-0400\n"
-"PO-Revision-Date: 2011-09-28 14:46+0100\n"
+"PO-Revision-Date: 2011-09-28 15:27+0100\n"
 "Last-Translator: \n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: \n"
@@ -3505,7 +3505,7 @@ msgstr "Emri i funksionit nuk mund të ndërrohet këtu"
 #: lib/src/gretl_func.c:5388
 #: lib/src/gretl_func.c:5409
 msgid "Duplicated pointer argument: not allowed"
-msgstr ""
+msgstr "Nuk lejohet përsëritja e një argumenti të dhënë si \"pointer\""
 
 #: lib/src/gretl_func.c:6258
 #, c-format
