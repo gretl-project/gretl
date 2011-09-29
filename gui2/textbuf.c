@@ -460,30 +460,42 @@ void sourceview_print (windata_t *vwin)
     GtkSourcePrintCompositor *comp;
     GtkPrintOperation *print;
     GtkPrintOperationResult res;
+    GError *error = NULL;
 
     comp = gtk_source_print_compositor_new_from_view(view);
     print = gtk_print_operation_new();
 
-#ifdef G_OS_WIN32
-    gtk_print_operation_set_unit(print, GTK_UNIT_MM);
-#endif
-
     if (settings != NULL) {
 	gtk_print_operation_set_print_settings(print, settings);
     } else {
-	gtk_source_print_compositor_set_right_margin(comp, 20, GTK_UNIT_MM);
-	gtk_source_print_compositor_set_left_margin(comp, 20, GTK_UNIT_MM);
-	gtk_source_print_compositor_set_top_margin(comp, 16, GTK_UNIT_MM);
-	gtk_source_print_compositor_set_bottom_margin(comp, 20, GTK_UNIT_MM);
+	gtk_source_print_compositor_set_right_margin(comp, 54, GTK_UNIT_POINTS);
+	gtk_source_print_compositor_set_left_margin(comp, 54, GTK_UNIT_POINTS);
+	gtk_source_print_compositor_set_top_margin(comp, 54, GTK_UNIT_POINTS);
+	gtk_source_print_compositor_set_bottom_margin(comp, 72, GTK_UNIT_POINTS);
     }
 
     g_signal_connect(print, "begin_print", G_CALLBACK(begin_print), comp);
     g_signal_connect(print, "draw_page", G_CALLBACK(draw_page), comp);
 
-    res = gtk_print_operation_run(print, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
-				  GTK_WINDOW(vwin->main), NULL);
+    res = gtk_print_operation_run(print, 
+				  GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
+				  GTK_WINDOW(vwin->main), 
+				  &error);
 
-    if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
+    if (res == GTK_PRINT_OPERATION_RESULT_ERROR) {
+	GtkWidget *dlg; 
+
+	dlg = gtk_message_dialog_new(GTK_WINDOW(vwin->main),
+				     GTK_DIALOG_DESTROY_WITH_PARENT,
+				     GTK_MESSAGE_ERROR,
+				     GTK_BUTTONS_CLOSE,
+				     "Error printing file:\n%s",
+				     error->message);
+	g_signal_connect(dlg, "response", 
+			 G_CALLBACK(gtk_widget_destroy), NULL);
+	gtk_widget_show(dlg);
+	g_error_free(error);
+    } else if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
 	if (settings != NULL) {
 	    g_object_unref(settings);
 	}

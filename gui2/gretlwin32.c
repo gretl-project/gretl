@@ -252,11 +252,11 @@ static void set_g_logging (int debug)
 	handler = dummy_output_handler;
     }
 
-    g_log_set_handler(NULL, flags, (GLogFunc) handler, NULL);
     g_log_set_handler("Gtk", flags, (GLogFunc) handler, NULL);
     g_log_set_handler("Gdk", flags, (GLogFunc) handler, NULL);
     g_log_set_handler("GLib", flags, (GLogFunc) handler, NULL);
     g_log_set_handler("Pango", flags, (GLogFunc) handler, NULL);
+    g_log_set_handler("GtkSourceView", flags, (GLogFunc) handler, NULL);
 }
 
 char *default_windows_menu_fontspec (void)

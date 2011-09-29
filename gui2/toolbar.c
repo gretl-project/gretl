@@ -249,6 +249,9 @@ static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
 
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
+#ifdef G_OS_WIN32
+    window_print(NULL, vwin);
+#else
     if (textview_use_highlighting(vwin->role)) {
 	int resp = yes_no_dialog(NULL, _("Print with syntax highlighting?"), 1);
 
@@ -260,6 +263,7 @@ static void window_print_callback (GtkWidget *w, windata_t *vwin)
     } else {
 	window_print(NULL, vwin);
     }
+#endif
 }
 
 static void window_help (GtkWidget *w, windata_t *vwin)
