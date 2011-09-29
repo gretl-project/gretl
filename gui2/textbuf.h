@@ -25,6 +25,7 @@
 				       r == VIEW_SCRIPT ||		\
 				       r == VIEW_PKG_CODE ||		\
 				       r == EDIT_PKG_CODE ||		\
+				       r == EDIT_PKG_SAMPLE ||		\
 				       r == VIEW_LOG))
 
 extern int tabwidth;
