@@ -283,6 +283,7 @@ static int xlsx_set_varname (xlsx_info *xinfo, int i, const char *s,
     } else {
 	*xinfo->dset->varname[i] = '\0';
 	strncat(xinfo->dset->varname[i], s, VNAMELEN - 1);
+	charsub(xinfo->dset->varname[i], ' ', '_');
 	if (check_varname(xinfo->dset->varname[i])) {
 	    invalid_varname(prn);
 	    err = 1;
