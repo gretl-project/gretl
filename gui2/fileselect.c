@@ -634,6 +634,29 @@ static char *get_filter_suffix (int action, gpointer data, char *suffix)
     return suffix;
 }
 
+static void maybe_upcase_filter_pattern (GtkFileFilter *filter,
+					 const char *s)
+{
+    char tmp[16];
+    char *p = tmp;
+    int changed = 0;
+
+    strcpy(tmp, s);
+    p = tmp + 1;
+
+    while (*p) {
+	if (islower((unsigned char) *p)) {
+	    *p = toupper(*p);
+	    changed = 1;
+	}
+	p++;
+    }
+
+    if (changed) {
+	gtk_file_filter_add_pattern(filter, tmp);
+    }
+}
+
 static GtkFileFilter *get_file_filter (int action, gpointer data)
 {
     GtkFileFilter *filter;
@@ -642,6 +665,9 @@ static GtkFileFilter *get_file_filter (int action, gpointer data)
     filter = gtk_file_filter_new();
     get_filter_suffix(action, data, suffix);
     gtk_file_filter_add_pattern(filter, suffix);
+
+    /* support Windows stupidity */
+    maybe_upcase_filter_pattern(filter, suffix);
 
     return filter;
 }
@@ -732,7 +758,6 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
     } else if (action == SAVE_LABELS) {
 	gtk_file_chooser_set_current_name(filesel, "labels.txt");
     }
-	
 }
 
 static void filesel_add_filter (GtkWidget *filesel,
@@ -752,6 +777,9 @@ static void filesel_add_filter (GtkWidget *filesel,
 
     gtk_file_filter_set_name(filt, _(desc));
     gtk_file_filter_add_pattern(filt, pat);
+
+    maybe_upcase_filter_pattern(filt, pat);
+
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
 }
 
