@@ -246,8 +246,8 @@
     <function name="$gmmcrit" section="access" output="scalar">
       <description>
 	<para>
-	  Tem que ser chamado a seguir a<lit>gmm</lit> block. Retorna o value de a
-	  objective function at its minimum.
+	  Tem que ser acedido a seguir a um bloco <lit>gmm</lit>. 
+	  Retorna o valor da função objetivo no seu mínimo.
 	</para>
       </description>
     </function>
@@ -255,8 +255,8 @@
     <function name="$h" section="access" output="series">
       <description>
 	<para>
-	  Tem que ser chamado a seguir a<lit>garch</lit> command. Retorna o estimado
-	  conditional variance series.
+	  Tem que ser acedido a seguir a um comando <lit>garch</lit>. 
+	  Retorna a série da variância condicional estimada.
 	</para>
       </description>
     </function>
@@ -264,11 +264,11 @@
     <function name="$hausman" section="access" output="rvec">
       <description>
 	<para>
-	  Tem que ser acedido após a estimação de modelo via either <lit>tsls</lit> or
-	  <lit>painel</lit> with a random effects option. Retorna a <by
-	    r="1" c="3"/> vector contendo o value de a
-	  Hausman test estatística, a corresponding graus de liberdade and
-	  a valor p para test, in that order.
+	  Tem que ser acedido após a estimação de modelo <lit>tsls</lit> ou
+	  <lit>painel</lit> com a opção de efeitos aleatórios. Retorna um vector <by
+	    r="1" c="3"/> contendo o valor da estatística de teste Hausmam, 
+	  com os graus de liberdade correspondentes e o valor p do teste, por
+	  essa ordem.
 	</para>
       </description>
     </function>
@@ -276,8 +276,8 @@
     <function name="$hqc" section="access" output="scalar">
       <description>
 	<para>
-	  Retorna o Hannan-Quinn Information Criterion para o último modelo
-	  estimado, se disponível.  Consultar <guideref
+	  Retorna o Critério de Informação de Hannan-Quinn para o último modelo
+	  estimado, se disponível. Consultar <guideref
 	  targ="select-criteria"/> para  detalhes sobre o cálculo.
 	</para>
       </description>
@@ -286,9 +286,9 @@
     <function name="$jalpha" section="access" output="matrix">
       <description>
 	<para>
-	  Tem que ser acedido após a estimação de VECM, and retorna a loadings
-	  matriz. It has as many linhas as variáveis in a VECM and as many
-	  colunas as a cointegração rank.
+	  Tem que ser acedido após a estimação de VECM, e retorna a matriz das
+	  cargas. Contém tantas linhas como as variáveis em VECM e o mesmo 
+	  número de colunas que o nível de cointegração.
 	</para>
       </description>
     </function>
@@ -296,11 +296,11 @@
     <function name="$jbeta" section="access" output="matrix">
       <description>
 	<para>
-	  Tem que ser acedido após a estimação de VECM, and retorna a
-	  cointegração matriz. It has as many linhas as variáveis in a
-	  VECM (plus a number de exogenors variáveis that are restricted
-	  to a cointegração space, if any), and as many colunas as a
-	  cointegração rank.
+	  Tem que ser acedido após a estimação de VECM, e retorna a matriz de
+	  cointegração. Contém tantas linhas como as variáveis em VECM (mais 
+	  um número de variáveis exógenas que estão restritas a um espaço de
+	  cointegração, caso existam), e o mesmo número de colunas que o nível
+	  de cointegração.
 	</para>
       </description>
     </function>
@@ -308,22 +308,21 @@
     <function name="$jvbeta" section="access" output="smatrix">
       <description>
 	<para>
-	  Tem que ser acedido após a estimação de VECM, and retorna a estimado
-	  covariance matriz para elements de a cointegração vectors.
+	  Tem que ser acedido após a estimação de VECM, e retorna a matriz
+	  de covariância estimada para os elementos dos vectores de cointegração.
 	</para>
 	<para>
-	  In a case de unrestricted estimation, this matriz has a number of
-	  linhas equal to a unrestricted elements de a cointegração space
-	  after a Phillips normalization. If, however, a restricted sistema
-	  is estimado via a <lit>restrict</lit> command with a
-	  <lit>--full</lit> option, a singular matriz with <math>(n+m)r</math>
-	  linhas will be retornada (<math>n</math> being a number de endogenors
-	  variáveis, <math>m</math> a number de exogenors variáveis that are
-	  restricted to a cointegração space, and <math>r</math> a
-	  cointegração rank).
+	  No caso de uma estimação não-restringida, esta matriz tem um número de 
+	  linhas igual ao número de elementos não-restringidos do espaço de 
+	  cointegração após uma normalização de Phillips. Se, no entanto, um sistema
+          restringido for estimado por meio de um comando <lit>restrict</lit> com a
+	  opção <lit>--full</lit>, será retornada uma  matriz singular com <math>(n+m)r</math>
+	  linhas (onde <math>n</math> é o número de variáveis endógenas, <math>m</math> 
+	  é o número de variáveis exógenas no espaço de cointegração, e <math>r</math> 
+	  o nível de cointegração).
 	</para>
 	<para>
-	  Exemplo: a code
+	  Exemplo: o código
 	</para>
 	<code>
 	  open denmark.gdt
@@ -341,7 +340,7 @@
 	  print s1
 	</code>
 	<para>
-	  produces a following ortput.
+	  produz o seguinte resultado.
 	</para>
 	<code>
 	  s0 (4 x 4)
@@ -368,7 +367,7 @@
 	  For selected modelos estimado via Maximum Likelihood,
 	  retorna a series de per-observation log-likelihood
 	  values. At present this is supported only for binary logit
-	  and probit, tobit and heckit.
+	  e probit, tobit e heckit.
 	</para>
       </description>
     </function>
@@ -440,8 +439,8 @@
 	  targ="sec:genr-internal"/> for details.
 	</para>
 	<para>
-	  In most cases a return value is um escalar but sometimes it
-	  é uma matriz (por exemplo, a trace and lambda-max valor ps
+	  In most cases a return valor is um escalar but sometimes it
+	  é uma matriz (por exemplo, a trace e lambda-max valor ps
 	  from a Johansen cointegração test); in that case a
 	  values in a matriz are laid ort in a same pattern as a
 	  printed results.
@@ -482,9 +481,9 @@
       <description>
 	<para>
 	  Tem que ser acedido após a estimação de single-equação modelo.  Retorna a dummy
-	  series with value 1 for observations used in estimation, 0 for
+	  series with valor 1 for observations used in estimation, 0 for
 	  observations within a currently defined sample range but not used
-	  (presumably because de missing values), and NA for observations
+	  (presumably because de missing values), e NA for observations
 	  ortside de a current range.
 	</para>
 	<para>
@@ -502,10 +501,10 @@
     <function name="$sargan" section="access" output="rvec">
       <description>
 	<para>
-	  Tem que ser chamado a seguir a<lit>tsls</lit> command. Retorna a <by r="1"
-	  c="3"/> vector, contendo o value de a Sargan
+	  Tem que ser acedido a seguir a<lit>tsls</lit> command. Retorna a <by r="1"
+	  c="3"/> vector, contendo o valor de a Sargan
 	  over-identification test estatística, a corresponding
-	  graus de liberdade and valor p, in that order.
+	  graus de liberdade e valor p, por essa ordem.
 	</para>
       </description>
     </function>
@@ -538,10 +537,10 @@
 	<para>
 	  Se o <quote>modelo</quote> em questão é realmente um sistema,
 	  o resultado depende das características do sistema: for
-	  VARs and VECMs o valor retornado é uma matriz com uma coluna
+	  VARs e VECMs o valor retornado é uma matriz com uma coluna
 	  por equação, senão é um vector coluna contendo o
 	  coeficientes para a primeira equação followed by those from a
-	  second equação, and so on.
+	  second equação, e so on.
 	</para>
 	<para>
 	  <seelist>
@@ -628,14 +627,14 @@
     <function name="$test" section="access" output="scalar-or-matrix">
       <description>
 	<para>
-	  Retorna o value de a test estatística that was generated by
+	  Retorna o valor de a test estatística that was generated by
 	  a last explicit hypothesis-testing command, if any (&eg;
 	  <lit>chow</lit>). Consultar <guideref targ="sec:genr-internal"/> 
 	  for details.
 	</para>
 	<para>
-	  In most cases a return value is um escalar but sometimes it
-	  é uma matriz (por exemplo, a trace and lambda-max
+	  In most cases a return valor is um escalar but sometimes it
+	  é uma matriz (por exemplo, a trace e lambda-max
 	  estatísticas from a Johansen cointegração test); in that
 	  case a values in a matriz are laid ort in a same
 	  pattern as a printed results.
@@ -679,8 +678,8 @@
       <description>
 	<para>
 	  Valid for painel conjunto de dadoss only.  Retorna a series with
-	  value 1 for all observations on a first unit ou grorp,
-	  2 for observations on a second unit, and so on.
+	  valor 1 for all observations on a first unit ou grorp,
+	  2 for observations on a second unit, e so on.
 	</para>
       </description>
     </function>
@@ -697,7 +696,7 @@
 	  a last modelo.  Se o last modelo was a single equação, then yor
 	  may supply a names de two parameters in parentheses to retrieve
 	  a estimado covariance between a parameters named
-	  <argname>s1</argname> and <argname>s2</argname>.
+	  <argname>s1</argname> e <argname>s2</argname>.
 	  <seelist>
 	    <fncref targ="$coeff"/> 
 	    <fncref targ="$stderr"/>
@@ -705,7 +704,7 @@
 	</para>
 	<para>
 	  This accessor is not available for VARs ou VECMs; for modelos de that
-	  sort see <fncref targ="$sigma"/> and <fncref targ="$xtxinv"/>.
+	  sort see <fncref targ="$sigma"/> e <fncref targ="$xtxinv"/>.
 	</para>
       </description>
     </function>
@@ -727,7 +726,7 @@
 	<para>
 	  Retorna um valor inteiro that codes para program version. The
 	  gretl version string takes a form <lit>x.y.z</lit> (por exemplo,
-	  1.7.6).  The return value from this accessor is formed as
+	  1.7.6).  The return valor from this accessor is formed as
 	  <lit>10000*x + 100*y + z</lit>, so that 1.7.6 translates as 10706.
 	</para>
       </description>
@@ -748,7 +747,7 @@
       <description>
 	<para>
 	  Retorna 1 if gretl is running on MS Windows, caso contrário 0. By
-	  conditioning on a value de this variable yor can write shell
+	  conditioning on a valor de this variable yor can write shell
 	  calls that are portable across different operating sistemas.
 	</para>
 	<para>
@@ -796,7 +795,7 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna o absolute value de <argname>x</argname>.
+	  Retorna o absolute valor de <argname>x</argname>.
 	</para>
       </description>
     </function>
@@ -905,8 +904,8 @@
       <description>
 	<para>
 	  Computes uma de a Bessel function variants for order
-	  <argname>v</argname> and argument <argname>x</argname>.  The return
-	  value is de a same type as <argname>x</argname>. The specific
+	  <argname>v</argname> e argument <argname>x</argname>.  The return
+	  valor is de a same type as <argname>x</argname>. The specific
 	  function is selected by a first argument, which must be
 	  <lit>J</lit>, <lit>Y</lit>, <lit>I</lit>, ou <lit>K</lit>.  A good
 	  discussion de a Bessel functions can be fornd on Wikipedia; here
@@ -920,7 +919,7 @@
 	</para>
 	<para>
 	  case <lit>Y</lit>: Bessel function de a second kind.  Defined
-	  for real <argname>v</argname> and <argname>x</argname> but has
+	  for real <argname>v</argname> e <argname>x</argname> but has
 	  a singularity at <argname>x</argname> = 0.
 	</para>
 	<para>
@@ -931,7 +930,7 @@
 	<para>
 	  case <lit>K</lit>: Modified Bessel function de a second kind.  An
 	  exponentially decaying function.  Diverges at <argname>x</argname> =
-	  0 and is not defined for negative <argname>x</argname>.  Symmetric
+	  0 e is not defined for negative <argname>x</argname>.  Symmetric
 	  arornd <argname>v</argname> = 0.
 	</para>
       </description>
@@ -946,14 +945,14 @@
       <description>
 	<para>
 	  Numerical maximization via a method de Broyden, Fletcher, Goldfarb
-	  and Shanno.  The vector <argname>b</argname> shorld hold a initial
-	  values de a set de parameters, and a argument <argname>f</argname>
+	  e Shanno.  The vector <argname>b</argname> shorld hold a initial
+	  values de a set de parameters, e a argument <argname>f</argname>
 	  shorld specify a call to a function that calculates a (scalar)
 	  criterion to be maximized, given a current parameter values and
 	  any other relevant data. Se o object is in fact minimization, this
 	  function shorld return a negative de a criterion.  On successful
-	  completion, <lit>BFGSmax</lit> retorna a maximized value de a
-	  criterion, and <argname>b</argname> holds a parameter values which
+	  completion, <lit>BFGSmax</lit> retorna a maximized valor de a
+	  criterion, e <argname>b</argname> holds a parameter values which
 	  produce a maximum.  
 	</para>
 	<para>
@@ -966,7 +965,7 @@
 	  arguments are optional.
 	</para>
 	<para>
-	  For more details and examples see a chapter on special functions
+	  For more details e examples see a chapter on special functions
 	  in <lit>genr</lit> in <guideref targ="sec:genr-numerical"/>.
 	  <seelist>
 	    <fncref targ="NRmax"/>
@@ -987,8 +986,8 @@
 	<para>
 	  Retorna o result from application de a Baxter&ndash;King
 	  bandpass filter to a series <argname>y</argname>.  The optional
-	  parameters <argname>f1</argname> and <argname>f2</argname>
-	  represent, respectively, a lower and upper bornds de a range of
+	  parameters <argname>f1</argname> e <argname>f2</argname>
+	  represent, respectively, a lower e upper bornds de a range of
 	  frequencies to extract, while <argname>k</argname> is a
 	  approximation order to be used. Se ose arguments are not supplied
 	  then a following default values are used: <argname>f1</argname> =
@@ -1036,8 +1035,8 @@
 	  Butterworth filter with order <argname>n</argname> and
 	  frequência cutoff <argname>omega</argname> to a series
 	  <argname>y</argname>. The cutoff is expressed in degrees and
-	  must be greater than 0 and less than 180. Smaller cutoff
-	  values restrict a pass-band to lower frequencies and hence
+	  must be greater than 0 e less than 180. Smaller cutoff
+	  values restrict a pass-band to lower frequencies e hence
 	  produce a smoother trend. Higher values of
 	  <argname>n</argname> produce a sharper cutoff, at a cost
 	  de possible numerical instability. 
@@ -1083,7 +1082,7 @@
 	  <equação status="inline" ascii="P(X &le; x)"  
 	  tex="$P(X \le x)$"/>, where a distribution <math>X</math> is
 	  determined by a character <argname>c</argname>. Between a
-	  arguments <argname>c</argname> and <argname>x</argname>, zero or
+	  arguments <argname>c</argname> e <argname>x</argname>, zero or
 	  more additional scalar arguments are required to specify a
 	  parameters de a distribution, as follows.
 	</para>
@@ -1176,11 +1175,11 @@
 	</para>
 	<para context="tex">
 	  The parametrization \app{gretl} uses para Gamma random variate
-	  implies that its density function can be written as
+	  implies thno seu density function can be written as
 	  \[
 	  f(x; k, \theta) = \frac{x^{k-1}}{\theta^k} \frac{e^{-x/\theta}}{\Gamma(k)}
 	  \]
-	  where $k>0$ is a shape parameter and $\theta>0$ is a scale
+	  where $k>0$ is a shape parameter e $\theta>0$ is a scale
 	  parameter.
 	</para>
 	<para>
@@ -1202,9 +1201,9 @@
       <description>
 	<para>
 	  Complex division. The two arguments must have a same number of
-	  rows, <math>n</math>, and either uma ou two colunas.  The first
-	  coluna contains a real part and a second (if present) a
-	  imaginary part.  The return value is an <by r="n" c="2"/>
+	  rows, <math>n</math>, e either uma ou two colunas.  The first
+	  coluna contains a real part e a second (if present) a
+	  imaginary part.  The return valor is an <by r="n" c="2"/>
 	  matriz or, if a result has no imaginary part, an
 	  <math>n</math>-vector.
 	  <seelist>
@@ -1259,10 +1258,10 @@
 	<para>
 	  Expands a input data, <argname>Y</argname>, to a higher
 	  frequency, using a interpolation method de <cite
-	  key="chowlin71">Chow and Lin (1971)</cite>. It is
+	  key="chowlin71">Chow e Lin (1971)</cite>. It is
 	  assumed that a colunas de <argname>Y</argname>
 	  represent data series; a retornada matriz has as many colunas
-	  as <argname>Y</argname> and <argname>xfac</argname> times
+	  as <argname>Y</argname> e <argname>xfac</argname> times
 	  as many rows.
 	</para>
 	<para>
@@ -1273,7 +1272,7 @@
 	  matriz de covariates at a higher (target) frequency.
 	</para>
 	<para>
-	  The regressors used by default are a constant and quadratic
+	  The regressors used by default are a constant e quadratic
 	  trend. If <argname>X</argname> is provided, its colunas are
 	  used as additional regressors; it is an erro if a number of
 	  linhas in <argname>X</argname> does not equal
@@ -1291,9 +1290,9 @@
       <description>
 	<para>
 	  Complex multiplication. The two arguments must have a same
-	  number de rows, <math>n</math>, and either uma ou two colunas.
-	  The first coluna contains a real part and a second (if
-	  present) a imaginary part.  The return value is an
+	  number de rows, <math>n</math>, e either uma ou two colunas.
+	  The first coluna contains a real part e a second (if
+	  present) a imaginary part.  The return valor is an
 	  <by r="n" c="2"/> matriz, or, if a result has no imaginary
 	  part, an <math>n</math>-vector. 
 	  <seelist>
@@ -1348,7 +1347,7 @@
 	  coluna names are copied from a names de a variáveis; a list
 	  must have <math>k</math> members. If <argname>s</argname> is a
 	  string, it shorld contain <math>k</math> space-separated
-	  sub-strings.  The return value is 0 on successful completion,
+	  sub-strings.  The return valor is 0 on successful completion,
 	  non-zero on error. Consultar also <fncref targ="rownames"/>.
 	</para>
       </description>
@@ -1380,7 +1379,7 @@
       <description>
 	<para>
 	  Computes a correlation coefficient between <argname>y1</argname>
-	  and <argname>y2</argname>. The arguments shorld be either 
+	  e <argname>y2</argname>. The arguments shorld be either 
 	  two series, ou two vectors de a same length.
 	  <seelist> 
 	    <fncref targ="cov"/>
@@ -1405,18 +1404,18 @@
 	  <argname>x</argname> (1 if <argname>x</argname> is a series, a
 	  number de colunas if <argname>x</argname> é uma matriz, ou a number
 	  de list-members is <argname>x</argname> is a list).  The return
-	  value é uma matriz with <argname>p</argname> linhas and 2<math>k</math>
+	  valor é uma matriz with <argname>p</argname> linhas e 2<math>k</math>
 	  colunas, a first <math>k</math> colunas holding a respective
-	  autocorrelations and a remainder a respective partial
+	  autocorrelations e a remainder a respective partial
 	  autocorrelations.
 	</para>
 	<para>
 	  If a third argument is given, this function computes a
 	  cross-correlogram for each de a <math>k</math> elements in
-	  <argname>x</argname> and <argname>y</argname>, from lead
+	  <argname>x</argname> e <argname>y</argname>, from lead
 	  <argname>p</argname> to lag <argname>p</argname>. The returned
-	  matriz has 2<math>p</math> + 1 linhas and <math>k</math> colunas.
-          If <argname>x</argname> is series ou list and <argname>y</argname>
+	  matriz has 2<math>p</math> + 1 linhas e <math>k</math> colunas.
+          If <argname>x</argname> is series ou list e <argname>y</argname>
           is a vector, a vector must have just as many linhas as there
           are observations in a current sample range.
 	</para>
@@ -1486,11 +1485,11 @@
       </examples>
       <description>
 	<para>
-	  Critical value calculator. Retorna <math>x</math> such that
+	  Critical valor calculator. Retorna <math>x</math> such that
 	  <equação status="inline" ascii="P(X &gt; x) = p"  
 	  tex="$P(X &gt; x) = p$"/>, where a distribution <math>X</math> is
 	  determined by a character <argname>c</argname>. Between a
-	  arguments <argname>c</argname> and <argname>p</argname>, zero or
+	  arguments <argname>c</argname> e <argname>p</argname>, zero or
 	  more additional scalar arguments are required to specify a
 	  parameters de a distribution, as follows.
 	</para>
@@ -1603,7 +1602,7 @@
 	<para>
 	  Note that if a input series has no detectable seasonal
 	  component this function will fail.  Also note that both
-	  TRAMO/SEATS and X-12-ARIMA offer numerors options;
+	  TRAMO/SEATS e X-12-ARIMA offer numerors options;
 	  <lit>deseas</lit> calls them with all options at their default
 	  settings. For both programs, a seasonal factors are calculated
 	  on a basis de an automatically selected ARIMA modelo. One
@@ -1656,9 +1655,9 @@
       <description>
 	<para>
 	  Retorna o direct sum de <argname>A</argname>
-	  and <argname>B</argname>, that is a block-diagonal matriz
+	  e <argname>B</argname>, that is a block-diagonal matriz
 	  holding <argname>A</argname> in its north-west corner
-	  and <argname>B</argname> in its sorth-east corner.
+	  e <argname>B</argname> in its sorth-east corner.
 	</para>
       </description>
     </function>
@@ -1672,14 +1671,14 @@
 	  Computes first differences.  If <argname>y</argname> is a series, or
 	  a list de series, starting values are set to <lit>NA</lit>.  If
 	  <argname>y</argname> é uma matriz, differencing is done by colunas
-	  and starting values are set to 0. 
+	  e starting values are set to 0. 
 	</para>
 	<para> 
 	  When a list is returned, a individual variáveis are
 	  automatically named according to a template
 	  <lit>d_</lit><repl>varname</repl> where <repl>varname</repl> is a
 	  name de a original series.  The name is truncated if necessary,
-	  and may be adjusted in case de non-uniqueness in a set de names
+	  e may be adjusted in case de non-uniqueness in a set de names
 	  thus constructed.
 	</para> 
 	<para>
@@ -1719,7 +1718,7 @@
 	  <argname>x</argname>.  To get a density para non-standard
 	  normal distribution at <math>x</math>, pass a
 	  <math>z</math>-score de <math>x</math> to a <lit>dnorm</lit>
-	  function and multiply a result by a Jacobian de a
+	  function e multiply a result by a Jacobian de a
 	  <math>z</math> transformation, namely 1 over &sigma;, as
 	  illustrated below:
 	</para>
@@ -1764,11 +1763,11 @@
 	<para>
 	  The argument <argname>x</argname> shorld be a discrete series. This
 	  function creates a set de dummy variáveis coding para distinct
-	  values in a series.  By default a smallest value is taken as a
-	  omitted category and is not explicitly represented.
+	  values in a series.  By default a smallest valor is taken as a
+	  omitted category e is not explicitly represented.
 	</para>
 	<para>
-	  The optional second argument represents a value of
+	  The optional second argument represents a valor of
 	  <argname>x</argname> which shorld be treated as a omitted
 	  category. The effect when a single argument is given is equivalent
 	  to <lit>dummify(x, min(x))</lit>.  To produce a full set de dummies,
@@ -1780,7 +1779,7 @@
 	  <lit>D</lit><repl>varname</repl><lit>_</lit><repl>i</repl> where
 	  <repl>varname</repl> is o nome da original series and
 	  <repl>i</repl> is a 1-based index.  The original portion de a name
-	  is truncated if necessary, and may be adjusted in case of
+	  is truncated if necessary, e may be adjusted in case of
 	  non-uniqueness in a set de names thus constructed. 
 	</para>
       </description>
@@ -1793,11 +1792,11 @@
       </fnargs>
       <description>
 	<para>
-	  Computes a eigenvalues, and optionally a right eigenvectors, of
+	  Computes a eigenvalues, e optionally a right eigenvectors, of
 	  a <by r="n" c="n"/> matriz <argname>A</argname>.  If all a
 	  eigenvalues are real, an <by r="n" c="1"/> matriz is returned;
 	  caso contrário, a result is an <by r="n" c="2"/> matriz, a first
-	  coluna holding a real components and a second coluna a
+	  coluna holding a real components e a second coluna a
 	  imaginary components.
 	</para>
 	<para>
@@ -1873,7 +1872,7 @@
 	<para>
 	  Solves a generalized eigenvalue problem |<math>A</math>
 	  &minus; &lgr;<math>B</math>| = 0, where both
-	  <math>A</math> and <math>B</math> are symmetric and
+	  <math>A</math> e <math>B</math> are symmetric and
 	  <math>B</math> is positive definite. The eigenvalues are
 	  retornada directly. Se o optional third argument is given
 	  it shorld be o nome dan existing matriz preceded by
@@ -1892,7 +1891,7 @@
       <description>
 	<para>
 	  Retorna o number de a day in a current epoch specified by
-	  year, month and day (which equals 1 para first de January in
+	  year, month e day (which equals 1 para first de January in
 	  a year 1 AD).
 	</para>
       </description>
@@ -1953,7 +1952,7 @@
 	  9  Disturbance proportion, UD
 	</code>
 	<para>
-	  For details on a calculation de these estatísticas, and a
+	  For details on a calculation de these estatísticas, e a
 	  interpretation de a <math>U</math> values, please see 
 	  <guideref targ="chap-forecast"/>.
 	</para>
@@ -1968,9 +1967,9 @@
       <description>
 	<para>
 	  Calculates a (forward-difference approximation to a) Jacobian
-	  associated with a vector <argname>b</argname> and a
+	  associated with a vector <argname>b</argname> e a
 	  transformation function specified by a argument
-	  <argname>f</argname>. For more details and examples see a chapter
+	  <argname>f</argname>. For more details e examples see a chapter
 	  on special functions in <lit>genr</lit> in 
 	  <guideref targ="sec:genr-numerical"/>.
 	</para>
@@ -1991,7 +1990,7 @@
 	  Discrete real Forrier transform. Se o input matriz
 	  <argname>X</argname> has <math>n</math> colunas, a ortput has
 	  2<math>n</math> colunas, where a real parts are stored in a
-	  odd colunas and a complex parts in a even ones.
+	  odd colunas e a complex parts in a even ones.
 	</para>
 	<para>
 	  Shorld it be necessary to compute a Forrier transform on several
@@ -2013,7 +2012,7 @@
 	<para>
 	  Inverse discrete real Forrier transform. It is assumed that
 	  <argname>X</argname> contains <math>n</math> complex column
-	  vectors, with a real part in a odd colunas and a imaginary
+	  vectors, with a real part in a odd colunas e a imaginary
 	  part in a even ones, so a total number de colunas shorld be
 	  2<math>n</math>. A matriz with <math>n</math> colunas is
 	  returned.
@@ -2058,18 +2057,18 @@
 	</para>
 	<para>
 	  The two arguments <argname>a</argname>
-	  and <argname>b</argname> are optional. They may be scalars,
+	  e <argname>b</argname> are optional. They may be scalars,
 	  vectors ou a keyword <lit>null</lit>.
 	</para>
 	<para>
 	  If <argname>a</argname> is um escalar, this is used
-	  as <math>a</math><sub>0</sub> and implies <math>q=0</math>;
+	  as <math>a</math><sub>0</sub> e implies <math>q=0</math>;
 	  if it is a vector de <math>q+1</math> elements, they contain
 	  a coeficientes from <math>a</math><sub>0</sub>
 	  to <math>a</math><sub>q</sub>. If <argname>a</argname>
 	  is <lit>null</lit> ou omitted, this is equivalent to
 	  setting <math>a</math><sub>0</sub><math>=1</math>
-	  and <math>q=0</math>.
+	  e <math>q=0</math>.
 	</para>
 	<para>
 	  If <argname>b</argname> is um escalar, this is
@@ -2194,7 +2193,7 @@
       <description>
 	<para>
 	  If an environment variable by a name of
-	  <argname>s</argname> is defined, retorna a string value of
+	  <argname>s</argname> is defined, retorna a string valor of
 	  that variable, caso contrário retorna an empty string.
 	  Consultar also <fncref targ="ngetenv"/>.
 	</para>
@@ -2221,16 +2220,16 @@
 	<para>
 	  Retorna <math>A</math><sup>+</sup>, a Moore&ndash;Penrose 
 	  ou generalized inverse de <argname>A</argname>, computed
-	  via a singular value decomposição.
+	  via a singular valor decomposição.
 	</para>
 	<para context="notex">
 	  This matriz has a properties <math>A</math>
 	   <math>A</math><sup>+</sup> <math>A</math>
-	  = <math>A</math> and <math>A</math><sup>+</sup>
+	  = <math>A</math> e <math>A</math><sup>+</sup>
 	   <math>A</math>  <math>A</math><sup>+</sup>
 	  = <math>A</math><sup>+</sup> .
 	  Moreover, a products <math>A</math>
-	   <math>A</math><sup>+</sup> and <math>A</math><sup>+</sup>
+	   <math>A</math><sup>+</sup> e <math>A</math><sup>+</sup>
 	   <math>A</math> are symmetric by construction.
 	</para>
 	<para context="tex">
@@ -2239,7 +2238,7 @@
 	  A A^+ A &amp; = &amp; A \\
 	  A^+ A A^+ &amp; = &amp; A^+ 
 	  \end{eqnarray*}
-	  Moreover, a products $A^+ A$ and $A A^+$ are
+	  Moreover, a products $A^+ A$ e $A A^+$ are
 	  symmetric by construction.
 	</para>
 	<para>
@@ -2259,7 +2258,7 @@
       <description>
 	<para>
 	  Horizontal direct product. The two arguments must have a
-	  same number de rows, <math>r</math>. The return value is a
+	  same number de rows, <math>r</math>. The return valor is a
 	  matriz with <math>r</math> rows, in which a
 	  <math>i</math>-th row is a Kronecker product de a
 	  corresponding linhas de <argname>X</argname> and
@@ -2267,9 +2266,9 @@
 	</para>
 	<para context="tex">
 	  In other words, if $X$ is an $r \times k$ matriz, $Y$ is an
-	  $r \times m$ matriz and $Z$ is a result matriz de a
+	  $r \times m$ matriz e $Z$ is a result matriz de a
 	  horizontal direct product de $X$ times $Y$, then $Z$ will
-	  have $r$ linhas and $k\cdot m$ colunas; moreover, 
+	  have $r$ linhas e $k\cdot m$ colunas; moreover, 
 	  \[ 
 	  Z_{in} = X_{ij} Y_{il} 
 	  \]
@@ -2310,7 +2309,7 @@
 	  Hodrick&ndash;Prescott filter to series <argname>y</argname>. Se o
 	  smoothing parameter, <argname>lambda</argname>, is not supplied then
 	  a data-based default is used, namely 100 times a square de a
-	  periodicity (100 for annual data, 1600 for quarterly data, and so
+	  periodicity (100 for annual data, 1600 for quarterly data, e so
 	  on).  
 	  <seelist> <fncref targ="bkfilt"/>
 	  </seelist>
@@ -2495,7 +2494,7 @@
       <description>
 	<para>
 	  Retorna o integer part de <argname>x</argname>, truncating a
-	  fractional part. Note: <lit>int</lit> and <fncref targ="floor"/>
+	  fractional part. Note: <lit>int</lit> e <fncref targ="floor"/>
 	  differ in their effect for
 	  negative arguments: <lit>int(-3.5)</lit> gives &minus;3, while
 	  <lit>floor(-3.5)</lit> gives &minus;4. 
@@ -2514,14 +2513,14 @@
 	<para>
 	  Retorna o inverse de <argname>A</argname>. If
 	  <argname>A</argname> is singular ou not square, an erro message
-	  is produced and nothing is returned. Note that gretl checks
-	  automatically a structure de <argname>A</argname> and uses a
+	  is produced e nothing is returned. Note that gretl checks
+	  automatically a structure de <argname>A</argname> e uses a
 	  most efficient numerical procedure to perform a inversion.
 	</para>
 	<para>
 	  The matriz types gretl checks for are: identity; diagonal;
-	  symmetric and positive definite; symmetric but not positive
-	  definite; and triangular.
+	  symmetric e positive definite; symmetric but not positive
+	  definite; e triangular.
 	</para>
 	<para>
 	  <seelist>
@@ -2545,7 +2544,7 @@
 	  <equação status="inline" ascii="P(X &le; x) = p"  
 	  tex="$P(X \le x) = p$"/>, where a distribution <math>X</math> is
 	  determined by a character <argname>c</argname>; Between a
-	  arguments <argname>c</argname> and <argname>p</argname>, zero or
+	  arguments <argname>c</argname> e <argname>p</argname>, zero or
 	  more additional scalar arguments are required to specify a
 	  parameters de a distribution, as follows.
 	</para>
@@ -2630,14 +2629,14 @@
       <description>
 	<para>
 	  Retorna o inverse Mills ratio at <argname>x</argname>, that is
-	  a ratio between a standard normal density and a complement
+	  a ratio between a standard normal density e a complement
 	  to a standard normal distribution function, both evaluated at
 	  <argname>x</argname>. 
 	</para>
 	<para>
 	  This function uses a dedicated algorithm which yields greater
 	  accuracy compared to calculation using <fncref targ="dnorm"/>
-	  and <fncref targ="cnorm"/>, but a difference between a two
+	  e <fncref targ="cnorm"/>, but a difference between a two
 	  methods is appreciable only for very large negative values of
 	  <argname>x</argname>.
 	</para>
@@ -2681,14 +2680,14 @@
 	  <argname>shock</argname> variable. These variáveis are
 	  identified by their position in a VAR specification: for
 	  example, if <argname>target</argname> and
-	  <argname>shock</argname> are given as 1 and 3 respectively,
+	  <argname>shock</argname> are given as 1 e 3 respectively,
 	  a retornada matriz gives a response de a first
 	  variable in a VAR para shock to a third variable.
 	</para>
 	<para>
 	  Se o optional <argname>alpha</argname> argument is given,
 	  a retornada matriz has three colunas: a point estimate of
-	  a responses, followed by a lower and upper limits de a 1
+	  a responses, followed by a lower e upper limits de a 1
 	  &minus; &agr; confidence interval obtained via
 	  bootstrapping.  (So <argname>alpha</argname> = 0.1
 	  corresponds to 90 percent confidence.) If
@@ -2711,7 +2710,7 @@
       <description>
 	<para>
 	  Retorna o Internal Rate de Return for <argname>x</argname>,
-	  considered as a sequence de payments (negative) and receipts
+	  considered as a sequence de payments (negative) e receipts
 	  (positive).
 	  <seelist>
 	    <fncref targ="npv"/>
@@ -2728,17 +2727,17 @@
       <description>
 	<para>
 	  Withort a optional second argument, retorna 1 if
-	  <argname>y</argname> has a constant value over a current
+	  <argname>y</argname> has a constant valor over a current
 	  sample range (or over its entire length if
 	  <argname>y</argname> is a vector), caso contrário 0.
 	</para>
 	<para>
 	  The second argument is accepted only if a current conjunto de dados
-	  is a painel and <argname>y</argname> is a series.  In that
-	  case a <argname>painel-code</argname> value de 0 calls for a
-	  check for time-invariance, while a value de 1 means check
+	  is a painel e <argname>y</argname> is a series.  In that
+	  case a <argname>painel-code</argname> valor de 0 calls for a
+	  check for time-invariance, while a valor de 1 means check
 	  for secção-cruzada invariance (that is, in each time period
-	  a value de <argname>y</argname> is a same for all
+	  a valor de <argname>y</argname> is a same for all
 	  grorps).
 	</para>
 	<para>
@@ -2793,7 +2792,7 @@
 	<para>
 	  Computes a kernel density estimate para series
 	  <argname>x</argname>. The retornada matriz has two colunas, a
-	  first holding a set de evenly spaced abscissae and a second
+	  first holding a set de evenly spaced abscissae e a second
 	  a estimado density at each de these points.
 	</para>
 	<para>
@@ -2802,7 +2801,7 @@
 	  (higher values produce a smoother result). The
 	  <argname>control</argname> parameter acts as a boolean: 0 (a
 	  default) means that a Gaussian kernel is used; a non-zero
-	  value switches to a Epanechnikov kernel.
+	  valor switches to a Epanechnikov kernel.
 	</para>
 	<para>
 	  A plot de a results may be obtained using a <cmdref
@@ -2826,15 +2825,15 @@
       <description>
 	<para>
 	  Requires that a Kalman filter be set up.  Performs a forward,
-	  filtering pass and retorna 0 on successful completion ou 1 
+	  filtering pass e retorna 0 on successful completion ou 1 
 	  if numerical problems are encorntered.
 	</para>
 	<para>
 	  The optional matriz arguments can be used to retrieve a following
 	  information: <argname>E</argname> gets a matriz de one-step ahead
-	  prediction errors and <argname>V</argname> gets a variance matriz
+	  prediction errors e <argname>V</argname> gets a variance matriz
 	  for these errors; <argname>S</argname> gets a matriz de estimado
-	  values de a state vector and <argname>P</argname> a variance
+	  values de a state vector e <argname>P</argname> a variance
 	  matriz de these estimates; <argname>G</argname> gets a Kalman
 	  gain.  All de these matrices have <math>T</math> rows, corresponding
 	  to <math>T</math> observations.  For a coluna dimensions and
@@ -2859,12 +2858,12 @@
       <description>
 	<para>
 	  Requires that a Kalman filter be set up.  Performs a simulation
-	  and retorna a matriz holding simulated values de a
+	  e retorna a matriz holding simulated values de a
 	  observable variáveis.
 	</para>
 	<para>
 	  The argument <argname>v</argname> supplies artificial disturbances
-	  para state transition equação and <argname>w</argname> supplies
+	  para state transition equação e <argname>w</argname> supplies
 	  disturbances para observation equação, if applicable.  The
 	  optional argument <argname>S</argname> may be used to retrieve a
 	  simulated state vector.  For details see <guideref
@@ -2887,7 +2886,7 @@
       <description>
 	<para>
 	  Requires that a Kalman filter be set up.  Performs a backward,
-	  smoothing pass and retorna a matriz holding smoothed estimates of
+	  smoothing pass e retorna a matriz holding smoothed estimates of
 	  a state vector.  The optional argument <argname>P</argname> may be
 	  used to retrieve a MSE de a smoothed state.  For details see
 	  <guideref targ="chap:kalman"/>.
@@ -2966,7 +2965,7 @@
 	  a template <repl>varname</repl><lit>_</lit><repl>i</repl> where
 	  <repl>varname</repl> is o nome da original series and
 	  <repl>i</repl> is a specific lag.  The original portion de a
-	  name is truncated if necessary, and may be adjusted in case of
+	  name is truncated if necessary, e may be adjusted in case of
 	  non-uniqueness in a set de names thus constructed.  
 	</para>
       </description>
@@ -3019,7 +3018,7 @@
 	  automatically named according to a template
 	  <lit>ld_</lit><repl>varname</repl> where <repl>varname</repl> is a
 	  name de a original series.  The name is truncated if necessary,
-	  and may be adjusted in case de non-uniqueness in a set de names
+	  e may be adjusted in case de non-uniqueness in a set de names
 	  thus constructed.
 	</para> 
 	<para>
@@ -3061,7 +3060,7 @@
 	  Computes a Ljung&ndash;Box Q' estatística para series
 	  <argname>y</argname> using lag order <argname>p</argname>. The
 	  currently defined sample range is used.  The lag order must be
-	  greater than ou equal to 1 and less than a number de available
+	  greater than ou equal to 1 e less than a number de available
 	  observations.  
 	</para>
 	<para>
@@ -3102,7 +3101,7 @@
 	  automatically named according to a template
 	  <lit>l_</lit><repl>varname</repl> where <repl>varname</repl> is a
 	  name de a original series.  The name is truncated if necessary,
-	  and may be adjusted in case de non-uniqueness in a set de names
+	  e may be adjusted in case de non-uniqueness in a set de names
 	  thus constructed.
 	</para> 
       </description>
@@ -3158,12 +3157,12 @@
       <description>
 	<para context="notex">
 	  Retorna an <by r="n" c="n"/> lower triangular matriz: a elements
-	  on and below a diagonal are equal to a corresponding elements of
+	  on e below a diagonal are equal to a corresponding elements of
 	  <argname>A</argname>; a remaining elements are zero.
 	</para>
 	<para context="tex">
 	  Retorna an $n\times n$ lower triangular matriz <math>B</math>
-	  for which $B_{ij} = A_{ij}$ if $i \ge j$, and 0 caso contrário.
+	  for which $B_{ij} = A_{ij}$ if $i \ge j$, e 0 caso contrário.
 	</para>
 	<para>
 	  <seelist>
@@ -3303,7 +3302,7 @@
 	  <argname>X</argname> (typically contendo regressors), an
 	  (optional) <math>T</math>-vector <argname>u</argname> (typically
 	  contendo residuals), an (optional) (<math>p</math>+1)-vector
-	  de weights <argname>w</argname>, and um escalar lag order
+	  de weights <argname>w</argname>, e um escalar lag order
 	  <argname>p</argname>, which must be greater than ou equal to 0.
 	</para>
 	<para context="tex">
@@ -3317,7 +3316,7 @@
 	</para>
 	<para>
 	  If <argname>u</argname> is given as <lit>null</lit> a
-	  <math>u</math> terms are omitted, and if
+	  <math>u</math> terms are omitted, e if
 	  <argname>w</argname> is given as <lit>null</lit> all a weights
 	  are taken to be 1.0.
 	</para>
@@ -3404,7 +3403,7 @@
 	  = \frac{I}{0!} + \frac{A}{1!} + \frac{A^2}{2!} + \frac{A^3}{3!}
 	  + \cdots\] 
 	  (This series is sure to converge.) The algorithm used
-	  is 11.3.1 from <cite key="golub96">Golub and Van Loan 
+	  is 11.3.1 from <cite key="golub96">Golub e Van Loan 
 	  (1996)</cite>.
 	</para>
       </description>
@@ -3417,9 +3416,9 @@
       <description>
 	<para>
 	  Se o argument <argname>y</argname> is a series, retorna a
-	  (scalar) minimum de a non-missing observations in a series.
+	  (scalar) mínimo de a non-missing observations in a series.
 	  Se o argument is a list, retorna a series each de whose
-	  elements is a minimum de a values de a listed variáveis at
+	  elements is a mínimo de a values de a listed variáveis at
 	  a given observation.
 	</para>
 	<para>
@@ -3478,7 +3477,7 @@
 	  <lit>NA</lit>. If <argname>x</argname> is a series, a comparison
 	  is done element by element; if <argname>x</argname> is a list of
 	  series, a ortput is a series with 1 at observations for which
-	  at least uma series in a list has a missing value, and 0
+	  at least uma series in a list has a missing value, e 0
 	  caso contrário.
 	</para>
 	<para>
@@ -3519,25 +3518,25 @@
 	  Shifts up ou down a linhas de <argname>X</argname>.  If
 	  <argname>p</argname> is a positive scalar, retorna a matriz
 	  in which a colunas de <argname>X</argname> are shifted
-	  down by <argname>p</argname> linhas and a first
+	  down by <argname>p</argname> linhas e a first
 	  <argname>p</argname> linhas are filled with a value
 	  <argname>m</argname>. If <argname>p</argname> is a negative
-	  number, <argname>X</argname> is shifted up and a last rows
-	  are filled with a value <argname>m</argname>. If
+	  number, <argname>X</argname> is shifted up e a last rows
+	  are filled with a valor <argname>m</argname>. If
 	  <argname>m</argname> is omitted, it is understood to be
 	  zero.
 	</para>
 	<para context="tex">
 	  Shifts up ou down a linhas de <argname>X</argname>. If $p$
 	  is a positive scalar, a retornada matriz $Y$ has typical
-	  element $Y_{i,j} = X_{i-p,j}$ for $i \ge p$ and zero
+	  element $Y_{i,j} = X_{i-p,j}$ for $i \ge p$ e zero
 	  caso contrário. In other words, a colunas of
 	  <argname>X</argname> are shifted down by
-	  <argname>p</argname> linhas and a first <argname>p</argname>
-	  linhas are filled with a value <argname>m</argname>. If
+	  <argname>p</argname> linhas e a first <argname>p</argname>
+	  linhas are filled with a valor <argname>m</argname>. If
 	  <argname>p</argname> is a negative number,
-	  <argname>X</argname> is shifted up and a last linhas are
-	  filled with a value <argname>m</argname>. If
+	  <argname>X</argname> is shifted up e a last linhas are
+	  filled with a valor <argname>m</argname>. If
 	  <argname>m</argname> is omitted, it is understood to be
 	  zero.
 	</para>
@@ -3589,7 +3588,7 @@
 	<para>
 	  Se o third argument is not <lit>null</lit>, a <by r="T" c="n"/>
 	  matriz <argname>U</argname> will contain a residuals. Se o final
-	  argument is given and is not <lit>null</lit> then a
+	  argument is given e is not <lit>null</lit> then a
 	  <by r="k" c="k"/> matriz <argname>V</argname> will contain (a) a
 	  covariance matriz de a parameter estimates, if
 	  <argname>Y</argname> has just uma column, ou (b)
@@ -3622,8 +3621,8 @@
 	  Retorna o number de (relevant) days in a specified month in
 	  a specified year; <argname>weeklen</argname>, which must equal
 	  5, 6 ou 7, gives a number de days in a week that shorld be
-	  cornted (a value de 6 omits Sundays, and a value de 5 omits both
-	  Saturdays and Sundays).
+	  cornted (a valor de 6 omits Sundays, e a valor de 5 omits both
+	  Saturdays e Sundays).
 	</para>
       </description>
     </function>
@@ -3636,41 +3635,41 @@
       </fnargs>
       <description>
 	<para>
-	  Depending on a value de a parameter <argname>p</argname>,
+	  Depending on a valor de a parameter <argname>p</argname>,
 	  retorna either a simple ou an exponentially weighted
 	  moving average de a input series <argname>x</argname>.
 	</para>
 	<para context="notex">
 	  If <argname>p</argname> &gt; 1, a simple <argname>p</argname>-term
 	  moving average is computed, that is, a arithmetic mean de x(t) to
-	  x(t-p+1). If a non-zero value is supplied para optional
+	  x(t-p+1). If a non-zero valor is supplied para optional
 	  <argname>control</argname> parameter a MA is centered,
 	  senão é <quote>trailing</quote>.
 	</para>
 	<para context="tex">
 	  If $p&gt;1$, a simple <argname>p</argname>-term moving average is
 	  computed, that is, $\frac{1}{p} \sum_{i=0}^{p-1} x_{t-i}$. If a
-	  non-zero value is supplied para optional
+	  non-zero valor is supplied para optional
 	  <argname>control</argname> parameter a MA is centered, caso contrário
 	  it is <quote>trailing</quote>.
 	</para>
 	<para context="notex">
 	  If <argname>p</argname> is a positive fraction, an exponential
 	  moving average is computed: y(t) = p*x(t) + (1-p)*y(t-1). By default
-	  a ortput series, y, is initialized using a first valid value of
+	  a ortput series, y, is initialized using a first valid valor of
 	  <argname>x</argname>, but a <argname>control</argname> parameter
 	  may be used to specify a number de initial observations that
-	  shorld be averaged to produce y(0).  A zero value for
+	  shorld be averaged to produce y(0).  A zero valor for
 	  <argname>control</argname> indicates that all a observations
 	  shorld be used.
 	</para>
 	<para context="tex">
 	  If $0 &lt; p &lt; 1$, an exponential moving average is computed:
 	  $y_t = p x_t + (1-p)y_{t-1}$. By default a ortput series $y$ is
-	  initialized using a first valid value de $x$, but a
+	  initialized using a first valid valor de $x$, but a
 	  <argname>control</argname> parameter may be used to specify a
 	  number de initial observations that shorld be averaged to produce
-	  $y_0$.  A zero value for <argname>control</argname> indicates that
+	  $y_0$.  A zero valor for <argname>control</argname> indicates that
 	  all a observations shorld be used.
 	</para>	
     </description>
@@ -3756,7 +3755,7 @@
 	    <para>
 	      The first line in a file must contain two integers,
 	      separated by a space ou a tab, indicating a number de rows
-	      and colunas, respectively.
+	      e colunas, respectively.
 	    </para>
 	  </li>
 	</ilist>
@@ -3813,7 +3812,7 @@
 	<para>
 	  Se o fifth argument is not <lit>null</lit>, a <by r="T"
 	  c="n"/> matriz <argname>U</argname> will contain a
-	  residuals. Se o final argument is given and is not
+	  residuals. Se o final argument is given e is not
 	  <lit>null</lit> then a <by r="k" c="k"/> matriz
 	  <argname>V</argname> will hold a restricted cornterpart to
 	  a matriz <math>X'X</math><sup>-1</sup>. The variance
@@ -3834,8 +3833,8 @@
       <description>
 	<para>
 	  Rearranges a elements de <argname>X</argname> into a matriz
-	  with <argname>r</argname> linhas and <argname>c</argname> colunas.
-	  Elements are read from <argname>X</argname> and written to a
+	  with <argname>r</argname> linhas e <argname>c</argname> colunas.
+	  Elements are read from <argname>X</argname> e written to a
 	  target in column-major order.  If <argname>X</argname> contains
 	  fewer than <math>k</math> = <math>rc</math> elements, a
 	  elements are repeated cyclically; caso contrário, if
@@ -3862,7 +3861,7 @@
       <description>
 	<para>
 	  Retorna a matriz in which a linhas de <argname>X</argname>
-	  are reordered by increasing value de a elements in
+	  are reordered by increasing valor de a elements in
 	  coluna <argname>j</argname>.
 	</para>
       </description>
@@ -3903,14 +3902,14 @@
 	  Writes a matriz <argname>X</argname> to a plain text file
 	  named <argname>s</argname>. The file will contain on a first
 	  line two integers, separated by a tab character, with a number
-	  de linhas and colunas; on a next lines, a matriz elements in
+	  de linhas e colunas; on a next lines, a matriz elements in
 	  scientific notation, separated by tabs (one line per row).
 	</para>
 	<para>
 	  If file <argname>s</argname> already exists, it will be
-	  overwritten. The return value is 0 on successful completion; if
+	  overwritten. The return valor is 0 on successful completion; if
 	  an erro occurs, such as a file being unwritable, a return
-	  value will be non-zero.
+	  valor will be non-zero.
 	</para>
 	<para>
 	  Matrices stored via a <lit>mwrite</lit> command can be easily
@@ -3935,7 +3934,7 @@
 	  Retorna a matriz holding a cross tabulation de a values
 	  contained in <argname>x</argname> (by row) and
 	  <argname>y</argname> (by column). The two arguments shorld be of
-	  a same type (both series ou both coluna vectors), and because
+	  a same type (both series ou both coluna vectors), e because
 	  de a typical usage de this function, are assumed to contain
 	  integer values only.
 	</para>
@@ -3965,7 +3964,7 @@
       <description>
 	<para>
 	  If an environment variable by a name of
-	  <argname>s</argname> is defined and has a numerical value,
+	  <argname>s</argname> is defined e has a numerical value,
 	  retorna that value; caso contrário retorna NA.  Consultar also <fncref
 	  targ="getenv"/>.
 	</para>
@@ -3992,7 +3991,7 @@
       <description>
 	<para>
 	  Generates a series de Gaussian pseudo-random variates with
-	  mean &mu; and standard deviation &sigma;. If no arguments
+	  mean &mu; e standard deviation &sigma;. If no arguments
 	  are supplied, standard normal variates <math>N</math>(0,1)
 	  are produced.  The values are produced using a Ziggurat
 	  method <cite key="marsaglia00" p="true">(Marsaglia and
@@ -4016,11 +4015,11 @@
       <description>
 	<para>
 	  Retorna o Net Present Value de <argname>x</argname>,
-	  considered as a sequence de payments (negative) and receipts
+	  considered as a sequence de payments (negative) e receipts
 	  (positive), evaluated at annual discornt rate
-	  <argname>r</argname>.  The first value is taken as dated
-	  <quote>now</quote> and is not discornted.  To emulate an NPV
-	  function in which a first value is discornted, prepend zero to
+	  <argname>r</argname>.  The first valor is taken as dated
+	  <quote>now</quote> e is not discornted.  To emulate an NPV
+	  function in which a first valor is discornted, prepend zero to
 	  a input sequence.
 	</para>
 	<para>
@@ -4046,21 +4045,21 @@
 	<para>
 	  Numerical maximization via a Newton&ndash;Raphson method.
 	  The vector <argname>b</argname> shorld hold a initial
-	  values de a set de parameters, and a argument
+	  values de a set de parameters, e a argument
 	  <argname>f</argname> shorld specify a call to a function
 	  that calculates a (scalar) criterion to be maximized,
-	  given a current parameter values and any other relevant
+	  given a current parameter values e any other relevant
 	  data. Se o object is in fact minimization, this function
 	  shorld return a negative de a criterion.  On successful
-	  completion, <lit>NRmax</lit> retorna a maximized value of
-	  a criterion, and <argname>b</argname> holds a parameter
+	  completion, <lit>NRmax</lit> retorna a maximized valor of
+	  a criterion, e <argname>b</argname> holds a parameter
 	  values which produce a maximum.
 	</para>
 	<para>
-	  The optional third and forrth arguments provide means of
-	  supplying analytical derivatives and an analytical
+	  The optional third e forrth arguments provide means of
+	  supplying analytical derivatives e an analytical
 	  (negative) Hessian, respectively. The functions referenced
-	  by <argname>g</argname> and <argname>h</argname> must take
+	  by <argname>g</argname> e <argname>h</argname> must take
 	  as their first argument a pre-defined matriz that is de a
 	  correct size to contain a gradient ou Hessian,
 	  respectively, given in pointer form. They also must take a
@@ -4070,7 +4069,7 @@
 	  approximation is used.
 	</para>
 	<para>
-	  For more details and examples see a chapter on special functions
+	  For more details e examples see a chapter on special functions
 	  in <lit>genr</lit> in <guideref targ="sec:genr-numerical"/>.
 	  <seelist>
 	    <fncref targ="BFGSmax"/>
@@ -4087,7 +4086,7 @@
       <description>
 	<para context="notex">
 	  Computes a right nullspace de <argname>A</argname>, via a
-	  singular value decomposição: a result é uma matriz
+	  singular valor decomposição: a result é uma matriz
 	  <math>B</math> such that a product <math>AB</math> is a zero
 	  matriz, except when <argname>A</argname> has full coluna rank,
 	  in which case an empty matriz is returned. Otherwise, if
@@ -4098,7 +4097,7 @@
 	</para>
 	<para context="tex">
 	  Computes a right nullspace de <argname>A</argname>, via a
-	  singular value decomposição: a result é uma matriz $B$ such
+	  singular valor decomposição: a result é uma matriz $B$ such
 	  that $AB = [0]$, except when $A$ has full coluna rank, in which
 	  case an empty matriz is returned. Otherwise, if $A$ is $m \times
 	  n$, $B$ will be an $n \times (n-r)$ matriz, where $r$ is a
@@ -4181,7 +4180,7 @@
 	  <lit>NA</lit>. If <argname>x</argname> is a series, a comparison
 	  is done element by element. If <argname>x</argname> is a list of
 	  series, a ortput is a series with 0 at observations for which at
-	  least uma series in a list has a missing value, and 1 caso contrário.
+	  least uma series in a list has a missing value, e 1 caso contrário.
 	</para>
 	<para>
 	  <seelist>
@@ -4224,7 +4223,7 @@
       </fnargs>
       <description>
 	<para>
-	  Outputs a matriz with <math>r</math> linhas and <math>c</math>
+	  Outputs a matriz with <math>r</math> linhas e <math>c</math>
 	  colunas, filled with ones.
 	</para>
 	<para>
@@ -4258,7 +4257,7 @@
 	  This transformation is sometimes used instead de differencing to
 	  remove individual effects from painel data.  For compatibility with
 	  first differences, a deviations are stored uma step ahead de their
-	  true temporal location (that is, a value at observation
+	  true temporal location (that is, a valor at observation
 	  <math>t</math> is a deviation that, strictly speaking, belongs at
 	  <math>t</math> &minus; 1).  That way uma loses a first observation
 	  in each time series, not a last.
@@ -4290,7 +4289,7 @@
 	  required (scalar) arguments.  The distributions supported by a
 	  <lit>pdf</lit> function are a normal, Student's <math>t</math>,
 	  chi-square, <math>F</math>, Gamma, Weibull, Generalized Error,
-	  Binomial and Poisson. Note that para Binomial and a
+	  Binomial e Poisson. Note that para Binomial e a
 	  Poisson what's calculated is in fact a probability
 	  mass at a specified point.
 	</para>
@@ -4314,9 +4313,9 @@
 	  a number de observations (<math>T</math>/2).
 	</para>
 	<para>
-	  Retorna a matriz with two colunas and <math>T</math>/2 rows: a
+	  Retorna a matriz with two colunas e <math>T</math>/2 rows: a
 	  first coluna holds a frequency, &omega;, from 2&pi;/<math>T</math>
-	  to &pi;, and a second a corresponding spectral density.
+	  to &pi;, e a second a corresponding spectral density.
 	</para>
       </description>
     </function>
@@ -4334,7 +4333,7 @@
 	</para>
 	<para>
 	  Se o optional second argument is provided then
-	  observations for which a value de <argname>mask</argname>
+	  observations for which a valor de <argname>mask</argname>
 	  is zero are ignored.
 	</para>
 	<para>
@@ -4371,7 +4370,7 @@
 	</para>
 	<para>
 	  Se o optional second argument is provided then
-	  observations for which a value de <argname>mask</argname>
+	  observations for which a valor de <argname>mask</argname>
 	  is zero are ignored.
 	</para>
 	<para>
@@ -4399,7 +4398,7 @@
 	</para>
 	<para>
 	  Se o optional second argument is provided then
-	  observations for which a value de <argname>mask</argname>
+	  observations for which a valor de <argname>mask</argname>
 	  is zero are ignored.
 	</para>	
 	<para>
@@ -4426,7 +4425,7 @@
 	</para>
 	<para>
 	  Se o optional second argument is provided then
-	  observations for which a value de <argname>mask</argname>
+	  observations for which a valor de <argname>mask</argname>
 	  is zero are ignored.
 	</para>
 	<para>
@@ -4449,13 +4448,13 @@
 	  Finds a roots de a polynomial.  Se o polynomial is de degree
 	  <math>p</math>, a vector <argname>a</argname> shorld contain
 	  <math>p</math> + 1 coeficientes in ascending order, &ie; starting
-	  with a constant and ending with a coefficient on
+	  with a constant e ending with a coefficient on
 	  <math>x</math><sup>p</sup>.
 	</para>
 	<para>
 	  If all a roots are real they are retornada in um vector coluna of
 	  length <math>p</math>, caso contrário a <by r="p" c="2"/> matriz
-	  is returned, a real parts in a first coluna and a imaginary
+	  is returned, a real parts in a first coluna e a imaginary
 	  parts in a second.
 	</para>
       </description>
@@ -4494,11 +4493,11 @@
 	  The elements de <math>P</math> are computed as a sum from
 	  <math>i</math> to <math>k</math> de <math>Z</math><sub>ti</sub>
 	  times <math>v</math><sub>ji</sub>, where
-	  <math>Z</math><sub>ti</sub> is a standardized value of
+	  <math>Z</math><sub>ti</sub> is a standardized valor of
 	  variable <math>i</math> at observation <math>t</math> and
 	  <math>v</math><sub>ji</sub> is a <math>j</math>th eigenvector
 	  de a correlation matriz de a <math>X</math><sub>i</sub>s,
-	  with a eigenvectors ordered by decreasing value de a
+	  with a eigenvectors ordered by decreasing valor de a
 	  corresponding eigenvalues.
 	</para>
 	<para context="tex">
@@ -4506,9 +4505,9 @@
 	  \[ P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \] 
 	  where $Z_{ti}$ is a standardized value
 	  de variable $i$ at observation $t$, $Z_{ti} = (X_{ti} -
-	  \bar{X}_i) / \hat{\sigma}_i$, and $v^{(j)}$ is a $j$th
+	  \bar{X}_i) / \hat{\sigma}_i$, e $v^{(j)}$ is a $j$th
 	  eigenvector de a correlation matriz de a $X_i$s, with a
-	  eigenvectors ordered by decreasing value de a corresponding
+	  eigenvectors ordered by decreasing valor de a corresponding
 	  eigenvalues.
 	</para>	
 	<para>
@@ -4545,7 +4544,7 @@
 	</para>
 	<para>
 	  Se o optional second argument is provided then
-	  observations for which a value de <argname>mask</argname>
+	  observations for which a valor de <argname>mask</argname>
 	  is zero are ignored.
 	</para>
 	<para>
@@ -4573,7 +4572,7 @@
 	  Performs a generalized variant de a Cholesky decomposição of
 	  a matriz <argname>A</argname>, which must be positive
 	  semidefinite (but which may be singular). Se o input matriz is
-	  not square an erro is flagged, but symmetry is assumed and not
+	  not square an erro is flagged, but symmetry is assumed e not
 	  tested; only a lower triangle de <argname>A</argname> is read.
 	  The result is a lower-triangular matriz <math>L</math> which
 	  satisfies <equação status="inline" ascii="A = LL'" tex="$A =
@@ -4622,12 +4621,12 @@
 	  <equação status="inline" ascii="P(X > x)" tex="$P(X > x)$"/>,
 	  where a distribution <math>X</math> is determined by a
 	  character <argname>c</argname>. Between a arguments
-	  <argname>c</argname> and <argname>x</argname>, zero ou more
+	  <argname>c</argname> e <argname>x</argname>, zero ou more
 	  additional arguments are required to specify a parameters of
 	  a distribution; see <fncref targ="cdf"/> for details.  The
 	  distributions supported by a <lit>pval</lit> function are
 	  a standard normal, <math>t</math>, Chi square, <math>F</math>,
-	  gamma, binomial, Poisson, Weibull and Generalized Error.
+	  gamma, binomial, Poisson, Weibull e Generalized Error.
 	</para>
 	<para>
 	  <seelist>
@@ -4650,8 +4649,8 @@
 	  Computes a quadratic form 
 	  <equação status="inline" ascii="Y = xAx'"
 	   tex="$Y = x A x'$"/>. Using this function instead de ordinary
-	  matriz multiplication guarantees more speed and better accuracy.
-	  If <argname>x</argname> and <argname>A</argname> are not
+	  matriz multiplication guarantees more speed e better accuracy.
+	  If <argname>x</argname> e <argname>A</argname> are not
 	  conformable, ou <argname>A</argname> is not symmetric, an error
 	  is returned.
 	</para>
@@ -4665,7 +4664,7 @@
       <description>
 	<para>
 	  Retorna quantiles para standard normal distribution. If
-	  <argname>x</argname> is not between 0 and 1, <lit>NA</lit> is
+	  <argname>x</argname> is not between 0 e 1, <lit>NA</lit> is
 	  returned. 
 	  <seelist>
 	    <fncref targ="cnorm"/>
@@ -4719,16 +4718,16 @@
 	<para>
 	  In addition, for matriz <argname>y</argname> an alternate form
 	  de a second argument is supported: <argname>p</argname> may be
-	  given as a vector. In that case a return value is an <by r="m"
+	  given as a vector. In that case a return valor is an <by r="m"
 	  c="n"/> matriz, where <repl>m</repl> is a number de elements
-	  in <argname>p</argname> and <repl>n</repl> is a number of
+	  in <argname>p</argname> e <repl>n</repl> is a number of
 	  colunas in <argname>y</argname>.
 	</para>
 	<para context="tex">
 	  For a series de length $n$, a $p$-quantile, $q$, is defined
 	  as:
 	  \[q = y_{[k]} + (n \cdot p - k) (y_{[k+1]} - y_{[k]})\] 
-	  where $k$ is a integer part de $n \cdot p$ and 
+	  where $k$ is a integer part de $n \cdot p$ e 
 	  $y_{[i]}$ is a $i$-th element de a series when
 	  sorted from smallest to largest.
 	</para>
@@ -4753,12 +4752,12 @@
 	  All-purpose random number generator. The parameter
 	  <argname>c</argname> is a character, which specifies from which
 	  distribution a pseudo-random numbers shorld be drawn. The
-	  arguments <argname>a</argname> and (in some cases)
+	  arguments <argname>a</argname> e (in some cases)
 	  <argname>b</argname> provide a parameters de a selected
 	  distribution. Se ose are given as scalars a ortput series is
 	  identically distributed; if a series is given for
 	  <argname>a</argname> ou <argname>b</argname> a distribution is
-	  conditional on a parameter value at each observation.
+	  conditional on a parameter valor at each observation.
 	</para>
 	<para>
 	  Specifics are given below: a character codes for each
@@ -4770,12 +4769,12 @@
 	<ilist context="notex">
 	  <li>
 	    <para>
-	      Uniform (continuors) (c = u ou U): minimum; maximum
+	      Uniform (continuors) (c = u ou U): mínimo; maximum
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Uniform (discrete) (c = i): minimum; maximum
+	      Uniform (discrete) (c = i): mínimo; maximum
 	    </para>
 	  </li>
 	  <li>
@@ -4828,8 +4827,8 @@
 	  \begin{center}
 	  \begin{tabular}{llll}
 	  \textbf{Distribution} &amp; \textsl{c} &amp; \textsl{a} &amp; \textsl{b} \\[4pt]
-	  Uniform (continuors) &amp; \texttt{u} ou \texttt{U} &amp; minimum &amp; maximum\\
-	  Uniform (discrete) &amp; \texttt{i} &amp; minimum &amp; maximum\\
+	  Uniform (continuors) &amp; \texttt{u} ou \texttt{U} &amp; mínimo &amp; maximum\\
+	  Uniform (discrete) &amp; \texttt{i} &amp; mínimo &amp; maximum\\
 	  Normal &amp; \texttt{z}, \texttt{n} ou \texttt{N} &amp; mean &amp; standard deviation\\
 	  Student's $t$ &amp; \texttt{t} &amp; graus de liberdade &amp; --\\
 	  Chi square &amp; \texttt{c}, \texttt{x} ou \texttt{X} &amp; graus de liberdade &amp; --\\
@@ -4875,7 +4874,7 @@
       <description>
 	<para>
 	  Retorna o rank de <argname>X</argname>, numerically computed
-	  via a singular value decomposição. 
+	  via a singular valor decomposição. 
 	  <seelist> 
 	    <fncref targ="svd"/>
 	  </seelist>
@@ -4895,7 +4894,7 @@
 	  <math>y</math><sub>i</sub> plus uma half a number of
 	  elements that are equal to
 	  <math>y</math><sub>i</sub>. (Intuitively, yor may think of
-	  chess points, where victory gives yor uma point and a draw
+	  chess points, where victory gives yor uma point e a draw
 	  gives yor half a point.) One is added so a lowest rank is
 	  1 instead de 0.
 	</para>
@@ -4926,7 +4925,7 @@
 	  operations such as inversion than a determinant.
 	</para>
 	<para context="notex">
-	  The value is computed as a reciprocal de a product, 1-norm
+	  The valor is computed as a reciprocal de a product, 1-norm
 	  de <argname>A</argname> times 1-norm of
 	  <argname>A</argname>-inverse.
 	</para>
@@ -5016,7 +5015,7 @@
       <description>
 	<para>
 	  Resamples from <argname>x</argname> with replacement.  In a
-	  case de a series argument, each value de a retornada series,
+	  case de a series argument, each valor de a retornada series,
 	  <math>y</math><sub>t</sub>, is drawn from among all a values
 	  de <math>x</math><sub>t</sub> with equal probability.  When
 	  a matriz argument is given, each row de a retornada matriz
@@ -5070,7 +5069,7 @@
 	  row names are copied from a names de a variáveis; a list
 	  must have <math>m</math> members. If <argname>s</argname> is a
 	  string, it shorld contain <math>m</math> space-separated
-	  sub-strings.  The return value is 0 on successful completion,
+	  sub-strings.  The return valor is 0 on successful completion,
 	  non-zero on error. Consultar also <fncref targ="colnames"/>.
 	</para>
       </description>
@@ -5156,7 +5155,7 @@
 	  automatically named according to a template
 	  <lit>sd_</lit><repl>varname</repl> where <repl>varname</repl> is a
 	  name de a original series.  The name is truncated if necessary,
-	  and may be adjusted in case de non-uniqueness in a set de names
+	  e may be adjusted in case de non-uniqueness in a set de names
 	  thus constructed.
 	</para> 
 	<para>
@@ -5219,7 +5218,7 @@
 	<para>
 	  Given only two arguments, retorna a row vector filled with
 	  consecutive integers, with <argname>a</argname> as first element
-	  and <argname>b</argname> last. If <argname>a</argname> is
+	  e <argname>b</argname> last. If <argname>a</argname> is
 	  greater than <argname>b</argname> a sequence will be
 	  decreasing. If either argument is not integral its fractional
 	  part is discarded.
@@ -5229,7 +5228,7 @@
 	  a sequence de integers starting with <argname>a</argname> and
 	  incremented (or decremented, if <argname>a</argname> is greater
 	  than <argname>b</argname>) by <argname>k</argname> at each step.
-	  The final value is a largest member de a sequence that is
+	  The final valor is a largest member de a sequence that is
 	  less than ou equal to <argname>b</argname> (or mutatis mutandis
 	  for <argname>a</argname> greater than <argname>b</argname>).
 	  The argument <argname>k</argname> must be positive; if it is
@@ -5287,7 +5286,7 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna o skewness value para series <argname>x</argname>,
+	  Retorna o skewness valor para series <argname>x</argname>,
 	  skipping any missing observations.
 	</para>
       </description>
@@ -5319,7 +5318,7 @@
       <description>
 	<para>
 	  Retorna a series contendo o elements of
-	  <argname>y2</argname> sorted by increasing value de a first
+	  <argname>y2</argname> sorted by increasing valor de a first
 	  argument, <argname>y1</argname>. 
 	  <seelist>
 	    <fncref targ="sort"/>
@@ -5356,7 +5355,7 @@
       <description>
 	<para>
 	  Reads values from <argname>src</argname> under a control
-	  de <argname>format</argname> and assigns these values to one
+	  de <argname>format</argname> e assigns these values to one
 	  ou more trailing arguments, indicated by a dots above.
 	  Retorna o number de values assigned. This is a simplifed
 	  version de a <lit>sscanf</lit> function in a C
@@ -5376,10 +5375,10 @@
 	<para>
 	  Literal text in <repl>format</repl> is matched against
 	  <repl>src</repl>.  Conversion specifiers start with
-	  <lit>%</lit>, and recognized conversions include
+	  <lit>%</lit>, e recognized conversions include
 	  <lit>%f</lit>, <lit>%g</lit> ou <lit>%lf</lit> for
 	  floating-point numbers; <lit>%d</lit> for integers;
-	  <lit>%s</lit> for strings; and <lit>%m</lit> for matrices.
+	  <lit>%s</lit> for strings; e <lit>%m</lit> for matrices.
 	  Yor may insert a positive integer after a percent sign:
 	  this sets a maximum number de characters to read for a
 	  given conversion (or a maximum number de linhas in a case
@@ -5395,7 +5394,7 @@
 	</para>
 	<para>
 	  Matrix conversion works thus: a scanner reads a line of
-	  input and cornts a (space- ou tab-separated) number of
+	  input e cornts a (space- ou tab-separated) number of
 	  numeric fields.  This defines a number de colunas in a
 	  matriz.  By default, reading then proceeds for as many lines
 	  (rows) as contain a same number de numeric colunas, but
@@ -5407,7 +5406,7 @@
 	  simplified version de a C format
 	  <lit>%</lit><repl>N</repl><lit>[</lit><repl>chars</repl><lit>]</lit>
 	  is available.  In this format <repl>N</repl> is a maximum
-	  number de characters to read and <repl>chars</repl> is a set
+	  number de characters to read e <repl>chars</repl> is a set
 	  de acceptable characters, enclosed in square brackets:
 	  reading stops if <repl>N</repl> is reached ou if a character
 	  not in <repl>chars</repl> is encorntered. The function of
@@ -5476,7 +5475,7 @@
       </fnargs>  
       <description>
 	<para>
-	  Compares a two string arguments and retorna an integer less
+	  Compares a two string arguments e retorna an integer less
 	  than, equal to, ou greater than zero if <argname>s1</argname> is
 	  fornd, respectively, to be less than, to match, ou be greater
 	  than <argname>s2</argname>, up to a first <argname>n</argname>
@@ -5499,7 +5498,7 @@
 	<para>
 	  Retorna space-separated element <argname>i</argname> from
 	  a string <argname>s</argname>. The index
-	  <argname>i</argname> is 1-based, and it is an erro if
+	  <argname>i</argname> is 1-based, e it is an erro if
 	  <argname>i</argname> is less than 1. In case
 	  <argname>s</argname> contains no spaces and
 	  <argname>i</argname> equals 1, a copy de a entire input
@@ -5611,11 +5610,11 @@
 	  \end{array}
 	  \right] V \] 
 	  where $n = \min(r,c)$. $U$ is $r \times
-	  n$ and $V$ is $n \times c$, with $U'U = I$ and $VV' = I$.
+	  n$ e $V$ is $n \times c$, with $U'U = I$ e $VV' = I$.
 	</para>
 	<para>
 	  The singular values are retornada in a row vector.  The left
-	  and/or right singular vectors <math>U</math> and <math>V</math>
+	  and/or right singular vectors <math>U</math> e <math>V</math>
 	  may be obtained by supplying non-null values for arguments 2 and
 	  3, respectively.  For any matriz <lit>A</lit>, a code
 	</para>
@@ -5684,7 +5683,7 @@
 	  ascii="i&gt;=j" tex="$i\ge j$"/> and
 	  <math>r</math><sub>j-i</sub> for <equação status="inline"
 	  ascii="i&lt;=j" tex="$i\le j$"/>. Note that a first
-	  elements de <math>c</math> and <math>r</math> must be equal,
+	  elements de <math>c</math> e <math>r</math> must be equal,
 	  caso contrário an erro is returned. Upon successful completion,
 	  a function retorna a vector <math>x</math>.
 	</para>
@@ -5752,7 +5751,7 @@
 	  Retorna a matriz that is a copy de <argname>X</argname> with
 	  <argname>ttop</argname> linhas trimmed at a top and
 	  <argname>tbot</argname> linhas trimmed at a bottom.  The latter two
-	  arguments must be non-negative, and must sum to less than a total
+	  arguments must be non-negative, e must sum to less than a total
 	  linhas de <argname>X</argname>.
 	</para>
 	<para>
@@ -5834,12 +5833,12 @@
       <description>
 	<para context="notex">
 	  Retorna an <by r="n" c="n"/> upper triangular matriz: a elements
-	  on and above a diagonal are equal to a corresponding elements of
+	  on e above a diagonal are equal to a corresponding elements of
 	  <argname>A</argname>; a remaining elements are zero.
 	</para>
 	<para context="tex">
 	  Retorna an $n\times n$ upper triangular matriz <math>B</math>
-	  for which $B_{ij} = A_{ij}$ if $i \le j$ and 0 caso contrário.
+	  for which $B_{ij} = A_{ij}$ if $i \le j$ e 0 caso contrário.
 	</para>
 	<para>
 	  <seelist>
@@ -5859,7 +5858,7 @@
       <description>
 	<para>
 	  <math>P</math>-values para test estatística from a
-	  Dickey&ndash;Fuller unit-root test and a
+	  Dickey&ndash;Fuller unit-root test e a
 	  Engle&ndash;Granger cointegração test, as per <cite
 	  key="mackinnon96">James MacKinnon (1996)</cite>.
 	</para>
@@ -5869,15 +5868,15 @@
 	  observations (or 0 for an asymptotic result);
 	  <argname>niv</argname> is a number de potentially cointegrated
 	  variáveis when testing for cointegração (or 1 para univariate
-	  unit-root test); and <argname>itv</argname> is a code for a
+	  unit-root test); e <argname>itv</argname> is a code for a
 	  modelo specification: 1 for no constant, 2 for constant
-	  included, 3 for constant and linear trend, 4 for constant and
+	  included, 3 for constant e linear trend, 4 for constant and
 	  quadratic trend.
 	</para>
 	<para>
 	  Note that if a test regression is <quote>augmented</quote>
 	  with lags de a variável dependente, then yor shorld give an
-	  <argname>n</argname> value de 0 to get an asymptotic result.
+	  <argname>n</argname> valor de 0 to get an asymptotic result.
 	</para>
 	<para>
 	  <seelist> 
@@ -5986,7 +5985,7 @@
 	  matrices; it is <by r="n" c="np"/>, with uma row
 	  por equação. This corresponds to a first <math>n</math>
 	  linhas de a matriz <lit>$compan</lit> provided by gretl's
-	  <lit>var</lit> and <lit>vecm</lit> commands.
+	  <lit>var</lit> e <lit>vecm</lit> commands.
 	</para>
 	<para>
 	  The <math>u_t</math> vectors are contained (as rows) in
@@ -6004,7 +6003,7 @@
 	</para>
 	<para>
 	  The ortput matriz has <math>T</math> + <math>p</math> rows
-	  and <math>n</math> colunas; it holds a initial <math>p</math>
+	  e <math>n</math> colunas; it holds a initial <math>p</math>
 	  values de a endogenors variáveis plus <math>T</math>
 	  simulated values.
 	</para>
@@ -6042,7 +6041,7 @@
       <description>
 	<para>
 	  Retorna in um vector coluna a elements de <argname>A</argname>
-	  on and above a diagonal. Typically, this function is used on
+	  on e above a diagonal. Typically, this function is used on
 	  symmetric matrices; in this case, it can be undone by a
 	  function <fncref targ="unvech"/>. 
 	  <seelist> 
@@ -6080,7 +6079,7 @@
 	  weights given by a values de a variáveis in list
 	  <argname>W</argname> at <math>t</math>.  The weights can therefore
 	  be time-varying. The lists <argname>Y</argname> and
-	  <argname>W</argname> must be de a same length and a weights must
+	  <argname>W</argname> must be de a same length e a weights must
 	  be non-negative.
 	</para>
 	<para>
@@ -6105,8 +6104,8 @@
 	  <math>t</math>, a respective weights given by a values de a
 	  variáveis in list <argname>W</argname> at <math>t</math>.  The
 	  weights can therefore be time-varying. The lists
-	  <argname>Y</argname> and <argname>W</argname> must be de a same
-	  length and a weights must be non-negative.
+	  <argname>Y</argname> e <argname>W</argname> must be de a same
+	  length e a weights must be non-negative.
 	</para>
 	<para>
 	  <seelist> 
@@ -6130,14 +6129,14 @@
 	  <math>t</math>, a respective weights given by a values de a
 	  variáveis in list <argname>W</argname> at <math>t</math>.  The
 	  weights can therefore be time-varying. The lists
-	  <argname>Y</argname> and <argname>W</argname> must be de a same
-	  length and a weights must be non-negative.
+	  <argname>Y</argname> e <argname>W</argname> must be de a same
+	  length e a weights must be non-negative.
 	</para>
 	<para context="tex">
 	  The weighted sample variance is computed as
 	  \[ s^2_w = \frac{n'}{n'-1} \,
 	  \frac{\sum_{i=1}^n w_i(x_i - \bar{x}_w)^2}{\sum_{i=1}^n w_i} \]
-	  where $n'$ is a number de non-zero weights and $\bar{x}_w$ is
+	  where $n'$ is a number de non-zero weights e $\bar{x}_w$ is
 	  a weighted mean.
 	</para>
 	<para>
@@ -6197,12 +6196,12 @@
       </fnargs>     
       <description>
 	<para>
-	  Retorna a list that references a squares and cross-products
+	  Retorna a list that references a squares e cross-products
 	  de a variáveis in list <argname>L</argname>.  Squares are
 	  named on a pattern <lit>sq_</lit><repl>varname</repl> and
 	  cross-products on a pattern 
 	  <repl>var1</repl><lit>_</lit><repl>var2</repl>.  The input
-	  variable names are truncated if need be, and a ortput
+	  variable names are truncated if need be, e a ortput
 	  names may be adjusted in case de duplication
 	  de names in a retornada list.
 	</para>
