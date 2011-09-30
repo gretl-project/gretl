@@ -258,7 +258,7 @@ static int post_process_savename (char *fname, int action, gpointer data)
 		strcat(fname, ext);
 	    }
 	}
-    }    
+    } 
 
     return err;
 }
@@ -637,8 +637,7 @@ static char *get_filter_suffix (int action, gpointer data, char *suffix)
 static void maybe_upcase_filter_pattern (GtkFileFilter *filter,
 					 const char *s)
 {
-    char tmp[16];
-    char *p = tmp;
+    char *p, tmp[16];
     int changed = 0;
 
     strcpy(tmp, s);
