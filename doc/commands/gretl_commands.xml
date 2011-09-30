@@ -6247,13 +6247,14 @@
 	variable is specified and an expression for the log-likelihood
 	is given (using the same syntax as in the <cmd>genr</cmd>
 	command).  The next line (which is optional) starts with the
-	keyword <lit>deriv</lit> and supplies the derivative of
-	the log-likelihood function with respect to the parameter
+	keyword <lit>deriv</lit> and supplies the derivative of the
+	log-likelihood function with respect to the parameter
 	<lit>p</lit>. If no derivatives are given, you should include
 	a statement using the keyword <lit>params</lit> which
 	identifies the free parameters: these are listed on one line,
-	separated by spaces.  For example, the above could be changed
-	to:
+	separated by spaces and can be either scalars, or vectors, or
+	any combination of the two.  For example, the above could be
+	changed to:
       </para>
       <code>
 	mle loglik = X*log(p) + (1-X)*log(1-p)
@@ -6704,13 +6705,15 @@
     <description context="gui">
       <para>
 	Performs Nonlinear Least Squares (NLS) estimation using a
-	modified version of the Levenberg&ndash;Marquardt algorithm. You
-	must supply a function specification; it is recommended but not
-	required that you also supply expressions for the derivatives of
-	this function with respect to each of the parameters if possible.
-	If you do not supply derivatives you should instead give a list of
-	the parameters to be estimated (separated by spaces or commas),
-	preceded by the keyword <lit>params</lit>.
+	modified version of the Levenberg&ndash;Marquardt
+	algorithm. You must supply a function specification; it is
+	recommended but not required that you also supply expressions
+	for the derivatives of this function with respect to each of
+	the parameters if possible.  If you do not supply derivatives
+	you should instead give a list of the parameters to be
+	estimated (separated by spaces or commas), preceded by the
+	keyword <lit>params</lit>; these can be either scalars, or
+	vectors, or any combination of the two.
       </para>
       <para>
 	Example: Suppose we have a data set with variables

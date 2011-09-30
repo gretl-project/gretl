@@ -181,13 +181,14 @@ p = 1
 
 are necessary to ensure that the variables \texttt{alpha} and
 \texttt{p} exist before the computation of \texttt{logl} is
-attempted. Inside the \texttt{mle} block these variables are
-identified as the parameters that should be adjusted to maximize the
-likelihood via the \texttt{params} keyword.  Their values will be
-changed by the execution of the \texttt{mle} command; upon successful
-completion, they will be replaced by the ML estimates. The starting
-value is 1 for both; this is arbitrary and does not matter much in
-this example (more on this later).
+attempted. Inside the \texttt{mle} block these variables (which could
+be either scalars, vectors or a combination of the two --- see below
+for an example) are identified as the parameters that should be
+adjusted to maximize the likelihood via the \texttt{params} keyword.
+Their values will be changed by the execution of the \texttt{mle}
+command; upon successful completion, they will be replaced by the ML
+estimates. The starting value is 1 for both; this is arbitrary and
+does not matter much in this example (more on this later).
 
 The above code can be made more readable, and marginally more
 efficient, by defining a variable to hold $\alpha \cdot x_t$. This
@@ -337,7 +338,8 @@ described so far. The \texttt{banks91} file contains part of the data
 used in \citet*{lucchetti01}.
 
 \begin{script}[htbp]
-  \caption{Estimation of stochastic frontier cost function}
+  \caption{Estimation of stochastic frontier cost function (with
+    scalar parameters)}
   \label{cost-estimation}
 \begin{scode}
 open banks91
@@ -370,6 +372,50 @@ mle logl = ln(cnorm(e*lambda/ss)) - (ln(ss) + 0.5*(e/ss)^2)
   scalar lambda = su/sv
   series e = rcost - b0*const - b1*y - b2*rp1 - b3*rp2
   params b0 b1 b2 b3 su sv
+end mle
+\end{scode}
+\end{script}
+
+The script in example \ref{cost-estimation} is relatively easy to
+modify to show how one can use vectors (that is, 1-dimensional
+matrices) for storing the parameters to optimize: example
+\ref{cost-estimation-vec} holds essentially the same script in which
+the parameters of the cost function are stored together in a
+vector. Of course, this makes also possible to use variable lists and
+other refinements which make the code more compact and readable.
+
+\begin{script}[htbp]
+  \caption{Estimation of stochastic frontier cost function (with
+    matrix parameters)}
+  \label{cost-estimation-vec}
+\begin{scode}
+open banks91
+
+# Cobb-Douglas cost function
+
+ols cost const y p1 p2 p3
+
+# Cobb-Douglas cost function with homogeneity restrictions
+
+genr rcost = cost - p3
+genr rp1 = p1 - p3
+genr rp2 = p2 - p3
+
+list X = const y rp1 rp2
+ols rcost X
+
+# Cobb-Douglas cost function with homogeneity restrictions 
+# and inefficiency 
+
+matrix b = $coeff
+scalar su = 0.1
+scalar sv = 0.1
+
+mle logl = ln(cnorm(e*lambda/ss)) - (ln(ss) + 0.5*(e/ss)^2)
+  scalar ss = sqrt(su^2 + sv^2)
+  scalar lambda = su/sv
+  series e = rcost - lincomb(X, b)
+  params b su sv
 end mle
 \end{scode}
 \end{script}
