@@ -11161,10 +11161,15 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 #endif
 
     if (p->sym != EOT || p->ch != 0) {
-	if (p->ch != 0) {
+	int c = p->ch;
+
+	if (c == ' ') {
+	    c = 0;
+	} else if (c != 0) {
 	    parser_ungetc(p);
+	    c = p->ch;
 	}
-	context_error(p->ch, p);
+	context_error(c, p);
 	return p->err;
     }    
 
