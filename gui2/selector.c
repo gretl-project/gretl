@@ -6711,6 +6711,7 @@ static int data_export_selection_callback (selector *sr)
 
     if ((sr->cmdlist == NULL || *sr->cmdlist == '\0') && sr->n_left == 0) {
 	warnbox(_("No variables are selected"));
+	/* return non-zero to block closing of dialog */
 	return 1;
     }
 

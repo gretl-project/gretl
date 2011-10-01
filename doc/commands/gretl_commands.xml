@@ -3148,13 +3148,21 @@
       <para>
 	You may export data in Comma-Separated Values (CSV) format: such
 	data may be opened in spreadsheets and many other application
-	programs.
+	programs. If you select this option you will get some further
+	options regarding the specific format of the CSV file.
       </para>
       <para>
-	You may also export data in the native formats of GNU R or GNU
-	octave.  For further information on these programs (both of which
-	support advanced statistical analysis) please see their respective
-	websites, http://www.r-project.org/ and http://www.octave.org/
+	You also have the option of exporting data in the form of a
+	<quote>native</quote> gretl datafile, or (if the data are
+	suitable) exporting to a gretl database. See
+	gretl.sourceforge.net/gretl_data.html for an account of
+	gretl databases.
+      </para>
+      <para>
+	You may also export data in a format suitable for use with GNU
+	R (www.r-project.org), GNU octave
+	(www.gnu.org/software/octave), JMulTi (www.jmulti.de) or
+	PcGive.
       </para>
     </description>
   </command>
