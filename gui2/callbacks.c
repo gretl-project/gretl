@@ -221,17 +221,17 @@ void file_save (windata_t *vwin, int ci)
     case SAVE_SCRIPT:
     case SAVE_GP_CMDS:
     case SAVE_R_CMDS:
-	file_selector(ci, FSEL_DATA_VWIN, vwin);
-	break;
     case SAVE_DATA:
     case SAVE_DATA_AS:
-    case SAVE_DBDATA:
+	file_selector(ci, FSEL_DATA_VWIN, vwin);
+	break;
     case SAVE_FUNCTIONS:	
     case EXPORT_CSV:
     case EXPORT_R:
     case EXPORT_OCTAVE:
     case EXPORT_DAT:
     case EXPORT_JM:
+    case EXPORT_DB:
 	data_save_selection_wrapper(ci);
 	break;
     case SAVE_TEX:
@@ -245,10 +245,10 @@ void file_save (windata_t *vwin, int ci)
 
 static int fsave_code (const gchar *s)
 {
-    if (!strcmp(s, "SaveAsGdt"))
+    if (!strcmp(s, "SaveDataAs"))
 	return SAVE_DATA_AS;
-    if (!strcmp(s, "SaveAsDb"))
-	return SAVE_DBDATA;
+    if (!strcmp(s, "ExportDb"))
+	return EXPORT_DB;
     if (!strcmp(s, "ExportCSV"))
 	return EXPORT_CSV;
     if (!strcmp(s, "ExportR"))

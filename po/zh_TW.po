@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-24 11:17-0400\n"
+"POT-Creation-Date: 2011-09-30 20:12-0400\n"
 "PO-Revision-Date: 2010-12-27 22:56+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
@@ -377,7 +377,7 @@ msgid "Numerical summary"
 msgstr "敘述統計"
 
 #: lib/src/boxplots.c:243 lib/src/boxplots.c:254 lib/src/boxplots.c:257
-#: gui2/gpt_dialog.c:2335
+#: gui2/gpt_dialog.c:2363
 #, fuzzy
 msgid "median"
 msgstr "中位數"
@@ -388,7 +388,7 @@ msgid "(90% interval)"
 msgstr "%g%% 信賴區間 = %g to %g"
 
 #: lib/src/boxplots.c:253 lib/src/gmm.c:1541 gui2/calculator.c:1982
-#: gui2/calculator.c:2007 gui2/calculator.c:2610 gui2/gpt_dialog.c:2337
+#: gui2/calculator.c:2007 gui2/calculator.c:2610 gui2/gpt_dialog.c:2365
 #: plugin/anova.c:193 plugin/anova.c:202 plugin/range-mean.c:69
 #: plugin/range-mean.c:158
 msgid "mean"
@@ -1326,8 +1326,8 @@ msgid "auto-generated constant"
 msgstr "由 gretl 自動產生之常數 (auto-generated constant)"
 
 #: lib/src/dataset.c:1199 gui2/fncall.c:1380 gui2/fncall.c:1391
-#: gui2/gui_utils.c:5032 gui2/toolbar.c:1026 gui2/toolbar.c:1035
-#: gui2/toolbar.c:1044
+#: gui2/gui_utils.c:5032 gui2/toolbar.c:1030 gui2/toolbar.c:1039
+#: gui2/toolbar.c:1048
 msgid "Please open a data file first"
 msgstr "請先開啟資料檔"
 
@@ -2220,7 +2220,7 @@ msgstr ""
 msgid "Matrix specification is not coherent"
 msgstr ""
 
-#: lib/src/geneval.c:5219 lib/src/geneval.c:6425
+#: lib/src/geneval.c:5219 lib/src/geneval.c:6441
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
@@ -2231,93 +2231,93 @@ msgstr ""
 msgid "Wrong type of operand for unary '&'"
 msgstr ""
 
-#: lib/src/geneval.c:7682
+#: lib/src/geneval.c:7698
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': 錯誤的參數 for %s()\n"
 
-#: lib/src/geneval.c:7733 cli/cli_object.c:44 gui2/objectsave.c:49
+#: lib/src/geneval.c:7749 cli/cli_object.c:44 gui2/objectsave.c:49
 #, c-format
 msgid "%s: no such object\n"
 msgstr ""
 
-#: lib/src/geneval.c:7911
+#: lib/src/geneval.c:7927
 #, fuzzy, c-format
 msgid "%s: insufficient arguments"
 msgstr "指令中參數數目不足"
 
-#: lib/src/geneval.c:7913
+#: lib/src/geneval.c:7929
 #, fuzzy, c-format
 msgid "%s: invalid argument type %s"
 msgstr "資料檔格式錯誤\n"
 
-#: lib/src/geneval.c:7916
+#: lib/src/geneval.c:7932
 #, fuzzy, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr "資料檔格式錯誤\n"
 
-#: lib/src/geneval.c:7926
+#: lib/src/geneval.c:7942
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: 運算域應該是 %s"
 
-#: lib/src/geneval.c:7929
+#: lib/src/geneval.c:7945
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: 運算域 %d 應該是 %s"
 
-#: lib/src/geneval.c:7934
+#: lib/src/geneval.c:7950
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: 參數應該是 %s"
 
-#: lib/src/geneval.c:7937
+#: lib/src/geneval.c:7953
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: 參數 %d 應該是 %s"
 
-#: lib/src/geneval.c:9446 lib/src/genlex.c:690
+#: lib/src/geneval.c:9463 lib/src/genlex.c:691
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr ""
 
-#: lib/src/geneval.c:9599 lib/src/genlex.c:720 lib/src/genlex.c:787
+#: lib/src/geneval.c:9616 lib/src/genlex.c:721 lib/src/genlex.c:788
 #: lib/src/gensyntax.c:274
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr ""
 
-#: lib/src/geneval.c:9654
+#: lib/src/geneval.c:9671
 #, fuzzy, c-format
 msgid "The variable %s is of type %s"
 msgstr "變數 '%s' 並未設定為不連續 (not discrete)"
 
-#: lib/src/geneval.c:9810
+#: lib/src/geneval.c:9827
 #, c-format
 msgid "'%s': name is too long (max 15 characters)\n"
 msgstr "變數名稱 '%s'  太長 (最長允計 15 字元)\n"
 
-#: lib/src/geneval.c:9913
+#: lib/src/geneval.c:9930
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s' : 尚不能用在矩陣運算"
 
-#: lib/src/geneval.c:9920
+#: lib/src/geneval.c:9937
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr ""
 
-#: lib/src/geneval.c:9927
+#: lib/src/geneval.c:9944
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr ""
 
-#: lib/src/geneval.c:9934
+#: lib/src/geneval.c:9951
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s' : only defined for matrices"
 
-#: lib/src/geneval.c:9941
+#: lib/src/geneval.c:9958
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr ""
@@ -2431,7 +2431,7 @@ msgid "model-related"
 msgstr ""
 
 #: lib/src/genfuncs.c:4487 lib/src/gretl_scalar.c:621 lib/src/plotspec.c:296
-#: lib/src/plotspec.c:310 gui2/gpt_dialog.c:127 gui2/gui_utils.c:2782
+#: lib/src/plotspec.c:310 gui2/gpt_dialog.c:128 gui2/gui_utils.c:2782
 msgid "none"
 msgstr "無"
 
@@ -2440,39 +2440,39 @@ msgstr "無"
 msgid "other"
 msgstr "其它線性模型(_l)"
 
-#: lib/src/genlex.c:667
+#: lib/src/genlex.c:668
 #, fuzzy, c-format
 msgid "%s: no such object"
 msgstr "共變數矩陣的反矩陣"
 
-#: lib/src/genlex.c:669
+#: lib/src/genlex.c:670
 #, fuzzy, c-format
 msgid "The symbol '%s' is undefined"
 msgstr "符號 (symbol) '%s' 未定義\n"
 
-#: lib/src/genlex.c:679 lib/src/genlex.c:681
+#: lib/src/genlex.c:680 lib/src/genlex.c:682
 #, fuzzy, c-format
 msgid "'%s': no argument was given"
 msgstr "%s: 參數應該是 %s"
 
-#: lib/src/genlex.c:692
+#: lib/src/genlex.c:693
 msgid "(for logical AND, use '&&')\n"
 msgstr ""
 
-#: lib/src/genlex.c:694
+#: lib/src/genlex.c:695
 msgid "(for logical OR, use '||')\n"
 msgstr ""
 
-#: lib/src/genlex.c:700
+#: lib/src/genlex.c:701
 #, c-format
 msgid "The symbol '%s' is not valid in this context\n"
 msgstr ""
 
-#: lib/src/genlex.c:784
+#: lib/src/genlex.c:785
 msgid "Empty observation []\n"
 msgstr "空的樣本 []\n"
 
-#: lib/src/genlex.c:1443
+#: lib/src/genlex.c:1444
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "錯誤的字元 '%c'\n"
@@ -2613,22 +2613,22 @@ msgstr ""
 msgid "Gnuplot does not support PDF output on this system"
 msgstr ""
 
-#: lib/src/graphing.c:1478 gui2/gpt_dialog.c:554
+#: lib/src/graphing.c:1478 gui2/gpt_dialog.c:555
 #, c-format
 msgid "%s versus %s (with least squares fit)"
 msgstr ""
 
-#: lib/src/graphing.c:1481 gui2/gpt_dialog.c:563
+#: lib/src/graphing.c:1481 gui2/gpt_dialog.c:564
 #, c-format
 msgid "%s versus %s (with inverse fit)"
 msgstr ""
 
-#: lib/src/graphing.c:1484 gui2/gpt_dialog.c:557
+#: lib/src/graphing.c:1484 gui2/gpt_dialog.c:558
 #, c-format
 msgid "%s versus %s (with quadratic fit)"
 msgstr "%s versus %s (with quadratic fit)"
 
-#: lib/src/graphing.c:1487 gui2/gpt_dialog.c:560
+#: lib/src/graphing.c:1487 gui2/gpt_dialog.c:561
 #, fuzzy, c-format
 msgid "%s versus %s (with cubic fit)"
 msgstr "%s versus %s (with quadratic fit)"
@@ -2648,7 +2648,7 @@ msgstr "Actual and fitted %s"
 msgid "Actual and fitted %s versus %s"
 msgstr ""
 
-#: lib/src/graphing.c:1619 gui2/gpt_dialog.c:566
+#: lib/src/graphing.c:1619 gui2/gpt_dialog.c:567
 #, c-format
 msgid "%s versus %s (with loess fit)"
 msgstr ""
@@ -2663,12 +2663,12 @@ msgid "time series by group"
 msgstr "time series by group"
 
 #: lib/src/graphing.c:2938 lib/src/plotspec.c:679 lib/src/plotspec.c:1302
-#: gui2/gpt_dialog.c:947 gui2/gpt_dialog.c:1369 gui2/gpt_dialog.c:2739
+#: gui2/gpt_dialog.c:951 gui2/gpt_dialog.c:1373 gui2/gpt_dialog.c:2767
 msgid "right"
 msgstr "右"
 
 #: lib/src/graphing.c:2938 lib/src/plotspec.c:675 lib/src/plotspec.c:681
-#: lib/src/plotspec.c:1300 gui2/gpt_dialog.c:1364 gui2/gpt_dialog.c:2738
+#: lib/src/plotspec.c:1300 gui2/gpt_dialog.c:1368 gui2/gpt_dialog.c:2766
 msgid "left"
 msgstr "左"
 
@@ -3062,7 +3062,7 @@ msgstr ""
 "\n"
 "指令執行有誤: 已中斷\n"
 
-#: lib/src/gretl_errors.c:85 gui2/gretl.c:2146
+#: lib/src/gretl_errors.c:85 gui2/gretl.c:2145
 #, fuzzy
 msgid "Execution aborted by request"
 msgstr "%s, 樣本數 從 1 到 %d"
@@ -4217,7 +4217,7 @@ msgstr "無法開啟指令檔 \"%s\"\n"
 msgid "Model printed to %s\n"
 msgstr "複製資料"
 
-#: lib/src/interact.c:5250 cli/gretlcli.c:1044 gui2/library.c:8467
+#: lib/src/interact.c:5250 cli/gretlcli.c:1044 gui2/library.c:8478
 msgid "Infinite loop detected in script\n"
 msgstr ""
 
@@ -6484,7 +6484,7 @@ msgstr "weibull 分配"
 msgid "GED (shape = %g): "
 msgstr ""
 
-#: lib/src/strutils.c:1831
+#: lib/src/strutils.c:1833
 #, fuzzy
 msgid "out of memory in XML encoding"
 msgstr "XML 編碼時記憶體不足"
@@ -7232,21 +7232,21 @@ msgstr "開啟新資料檔時, 將會關閉現在使用中之資料檔, 要繼�
 msgid "OK, staying with current data set\n"
 msgstr "OK, 繼續使用目前的資料檔\n"
 
-#: cli/gretlcli.c:885 gui2/library.c:8311
+#: cli/gretlcli.c:885 gui2/library.c:8322
 #, c-format
 msgid "Command '%s' ignored; not valid within equation system\n"
 msgstr "指令 '%s' 已被略過; 因為在系統方程式中不適用\n"
 
-#: cli/gretlcli.c:893 gui2/library.c:8319
+#: cli/gretlcli.c:893 gui2/library.c:8330
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
 msgstr ""
 "請輸入在迴圈 (loop) 之中要執行的指令, 否則請輸入 'endloop' 以跳出迴圈\n"
 
-#: cli/gretlcli.c:943 gui2/library.c:6215 gui2/library.c:8383
+#: cli/gretlcli.c:943 gui2/library.c:6215 gui2/library.c:8394
 msgid "Take note: variables have been renumbered"
 msgstr "注意: 變數代碼在刪除變數後, 已重新設定"
 
-#: cli/gretlcli.c:966 gui2/library.c:8429
+#: cli/gretlcli.c:966 gui2/library.c:8440
 msgid "Data series length count missing or invalid\n"
 msgstr "資料長度不正確 (missing or invalid)\n"
 
@@ -7274,7 +7274,7 @@ msgstr "儲存分析檔(_a)"
 msgid "Command is malformed\n"
 msgstr "儲存指令檔"
 
-#: cli/gretlcli.c:1034 cli/gretlcli.c:1052 gui2/library.c:8462
+#: cli/gretlcli.c:1034 cli/gretlcli.c:1052 gui2/library.c:8473
 #, fuzzy, c-format
 msgid "Error reading %s\n"
 msgstr "資料錯誤"
@@ -7613,11 +7613,11 @@ msgstr "weibull 分配"
 msgid " DW "
 msgstr " DW "
 
-#: gui2/calculator.c:1976 gui2/gpt_dialog.c:3205
+#: gui2/calculator.c:1976 gui2/gpt_dialog.c:3233
 msgid "minimum"
 msgstr "最小值"
 
-#: gui2/calculator.c:1978 gui2/gpt_dialog.c:3222
+#: gui2/calculator.c:1978 gui2/gpt_dialog.c:3250
 msgid "maximum"
 msgstr "最大值"
 
@@ -7637,7 +7637,7 @@ msgstr "自由度(分母)"
 msgid "shape"
 msgstr "shape 形狀參數"
 
-#: gui2/calculator.c:2000 gui2/gpt_dialog.c:2717
+#: gui2/calculator.c:2000 gui2/gpt_dialog.c:2745
 msgid "scale"
 msgstr "scale 尺度參數"
 
@@ -7866,7 +7866,7 @@ msgstr "沒有適合的資料"
 msgid "gretl: plot a curve"
 msgstr "gretl: 畫曲線圖"
 
-#: gui2/calculator.c:3199 gui2/gpt_dialog.c:1985 gui2/gpt_dialog.c:2605
+#: gui2/calculator.c:3199 gui2/gpt_dialog.c:2013 gui2/gpt_dialog.c:2633
 msgid "formula"
 msgstr "輸入變數或公式"
 
@@ -7934,7 +7934,7 @@ msgstr "gretl: VAR 落後期選擇"
 
 #: gui2/callbacks.c:473 gui2/callbacks.c:483 gui2/callbacks.c:485
 #: gui2/callbacks.c:633 gui2/callbacks.c:642 gui2/library.c:6677
-#: gui2/toolbar.c:1021
+#: gui2/toolbar.c:1025
 msgid "gretl: define graph"
 msgstr "gretl: 定義圖形"
 
@@ -8175,7 +8175,7 @@ msgid "Display"
 msgstr "顯示 "
 
 #: gui2/database.c:789 gui2/database.c:820 gui2/session.c:801
-#: gui2/toolbar.c:643
+#: gui2/toolbar.c:647
 msgid "Graph"
 msgstr "圖"
 
@@ -8207,7 +8207,7 @@ msgstr "新增至資料檔中"
 
 #: gui2/database.c:824 gui2/datafiles.c:1334 gui2/gpt_control.c:3530
 #: gui2/gpt_control.c:3606 gui2/gpt_control.c:3612 gui2/helpfiles.c:80
-#: gui2/ssheet.c:127 gui2/toolbar.c:657
+#: gui2/ssheet.c:127 gui2/toolbar.c:661
 msgid "Close"
 msgstr "關閉"
 
@@ -8359,7 +8359,7 @@ msgstr "安裝"
 msgid "List series"
 msgstr "列出變數"
 
-#: gui2/datafiles.c:1240 gui2/datafiles.c:1250 gui2/toolbar.c:632
+#: gui2/datafiles.c:1240 gui2/datafiles.c:1250 gui2/toolbar.c:636
 msgid "Find..."
 msgstr "尋找..."
 
@@ -8571,7 +8571,7 @@ msgstr "Hourly 時資料"
 msgid "Decennial"
 msgstr "Decennial 10年資料"
 
-#: gui2/datawiz.c:403 gui2/toolbar.c:510
+#: gui2/datawiz.c:403 gui2/toolbar.c:514
 msgid "Other"
 msgstr "其它 (Other)"
 
@@ -9389,7 +9389,7 @@ msgstr "兩步驟 (two-step) 估計"
 msgid "(Please refer to Help for guidance)"
 msgstr "(詳細請參見「指令參考說明」(command reference) 之指令語法)"
 
-#: gui2/fileselect.c:497
+#: gui2/fileselect.c:489
 #, fuzzy
 msgid ""
 "There is already a file of this name.\n"
@@ -9398,46 +9398,46 @@ msgstr ""
 "已經有同名的資料檔存在.\n"
 "是否取代現有檔案?"
 
-#: gui2/fileselect.c:763
+#: gui2/fileselect.c:782
 msgid "CSV files (*.csv)"
 msgstr "CSV files (*.csv)"
 
-#: gui2/fileselect.c:764 gui2/fileselect.c:780
+#: gui2/fileselect.c:783 gui2/fileselect.c:799
 msgid "ASCII files (*.txt)"
 msgstr "ASCII files (*.txt)"
 
-#: gui2/fileselect.c:765 gui2/fileselect.c:781
+#: gui2/fileselect.c:784 gui2/fileselect.c:800
 msgid "all files (*.*)"
 msgstr "all files (*.*)"
 
-#: gui2/fileselect.c:767
+#: gui2/fileselect.c:786
 #, fuzzy
 msgid "Excel files (*.xls)"
 msgstr "Ox files (*.ox)"
 
-#: gui2/fileselect.c:768
+#: gui2/fileselect.c:787
 #, fuzzy
 msgid "Excel files (*.xlsx)"
 msgstr "Ox files (*.ox)"
 
-#: gui2/fileselect.c:770
+#: gui2/fileselect.c:789
 msgid "gretl script files (*.inp)"
 msgstr "gretl 指令檔 (*.inp)"
 
-#: gui2/fileselect.c:772
+#: gui2/fileselect.c:791
 msgid "GNU R files (*.R)"
 msgstr "GNU R files (*.R)"
 
-#: gui2/fileselect.c:773
+#: gui2/fileselect.c:792
 msgid "gnuplot files (*.plt)"
 msgstr "gnuplot files (*.plt)"
 
-#: gui2/fileselect.c:774
+#: gui2/fileselect.c:793
 #, fuzzy
 msgid "GNU Octave files (*.m)"
 msgstr "gretl 指令檔 (*.inp)"
 
-#: gui2/fileselect.c:776
+#: gui2/fileselect.c:795
 msgid "Ox files (*.ox)"
 msgstr "Ox files (*.ox)"
 
@@ -10035,7 +10035,7 @@ msgstr "存入分析檔中為圖示 (icon)"
 
 #: gui2/gpt_control.c:3493 gui2/gpt_control.c:3495 gui2/gpt_control.c:3605
 #: gui2/session.c:164 gui2/session.c:171 gui2/session.c:3106
-#: gui2/toolbar.c:653 gui2/toolbar.c:654 gui2/toolbar.c:655
+#: gui2/toolbar.c:657 gui2/toolbar.c:658 gui2/toolbar.c:659
 msgid "Help"
 msgstr "說明"
 
@@ -10065,7 +10065,7 @@ msgstr "恢復為全貌檢示"
 msgid "Replace full view"
 msgstr "恢復為全樣本(_R)"
 
-#: gui2/gpt_control.c:3512 gui2/gpt_control.c:3595 gui2/toolbar.c:625
+#: gui2/gpt_control.c:3512 gui2/gpt_control.c:3595 gui2/toolbar.c:629
 msgid "Print..."
 msgstr "列印..."
 
@@ -10086,7 +10086,7 @@ msgstr "顯示變數值(_D)"
 msgid "Font"
 msgstr "字形"
 
-#: gui2/gpt_control.c:3545 gui2/gpt_dialog.c:2779 gui2/graphics.c:257
+#: gui2/gpt_control.c:3545 gui2/gpt_dialog.c:2807 gui2/graphics.c:257
 #: gui2/graph_page.c:608
 msgid "color"
 msgstr "彩色"
@@ -10103,257 +10103,257 @@ msgstr "gretl: 繪圖"
 msgid " Click on graph for pop-up menu"
 msgstr " 在圖上按滑鼠鍵會出現選單"
 
-#: gui2/gpt_dialog.c:128
+#: gui2/gpt_dialog.c:129
 msgid "linear: y = a + b*x"
 msgstr "linear: y = a + b*x"
 
-#: gui2/gpt_dialog.c:129
+#: gui2/gpt_dialog.c:130
 msgid "quadratic: y = a + b*x + c*x^2"
 msgstr ""
 
-#: gui2/gpt_dialog.c:130
+#: gui2/gpt_dialog.c:131
 msgid "cubic: y = a + b*x + c*x^2 + d*x^3"
 msgstr ""
 
-#: gui2/gpt_dialog.c:131
+#: gui2/gpt_dialog.c:132
 msgid "inverse: y = a + b*(1/x)"
 msgstr "inverse: y = a + b*(1/x)"
 
-#: gui2/gpt_dialog.c:132
+#: gui2/gpt_dialog.c:133
 msgid "loess (locally weighted fit)"
 msgstr ""
 
-#: gui2/gpt_dialog.c:297
+#: gui2/gpt_dialog.c:298
 msgid "gretl: graph color selection"
 msgstr "gretl: 選取顏色"
 
-#: gui2/gpt_dialog.c:324 gui2/gpt_dialog.c:394
+#: gui2/gpt_dialog.c:325 gui2/gpt_dialog.c:395
 msgid "Select color"
 msgstr "選擇顏色"
 
-#: gui2/gpt_dialog.c:671 gui2/gpt_dialog.c:710
+#: gui2/gpt_dialog.c:672 gui2/gpt_dialog.c:711
 #, fuzzy
 msgid "Invalid position, must be X Y"
 msgstr "資料標籤位置錯誤, 必須為 X Y"
 
-#: gui2/gpt_dialog.c:1173 gui2/gpt_dialog.c:1208 gui2/gpt_dialog.c:1906
+#: gui2/gpt_dialog.c:1177 gui2/gpt_dialog.c:1212 gui2/gpt_dialog.c:1934
 #: gui2/graphics.c:432
 #, c-format
 msgid "font: %s"
 msgstr "目前選定之字形 (建議選 NSimSun 支援中文顯示): %s"
 
-#: gui2/gpt_dialog.c:1246
+#: gui2/gpt_dialog.c:1250
 msgid "Font for graphs"
 msgstr "圖之字形"
 
-#: gui2/gpt_dialog.c:1454
+#: gui2/gpt_dialog.c:1458
 msgid "Fill color"
 msgstr "選擇顏色"
 
-#: gui2/gpt_dialog.c:1456
+#: gui2/gpt_dialog.c:1460
 #, c-format
 msgid "Color %d"
 msgstr "第 %d 條線顏色: "
 
-#: gui2/gpt_dialog.c:1476
+#: gui2/gpt_dialog.c:1480
 msgid "Reset to default"
 msgstr "回復為預設值"
 
-#: gui2/gpt_dialog.c:1524 gui2/gpt_dialog.c:1881
+#: gui2/gpt_dialog.c:1536 gui2/gpt_dialog.c:1906
 msgid "other..."
 msgstr "其它..."
 
-#: gui2/gpt_dialog.c:1544
+#: gui2/gpt_dialog.c:1564
 msgid ""
 "To add your own \"bars\" to a plot, you must supply the\n"
 "name of a plain text file containing pairs of dates."
 msgstr ""
 
-#: gui2/gpt_dialog.c:1554
+#: gui2/gpt_dialog.c:1574
 msgid "See example"
 msgstr "參見範例 (See example)"
 
-#: gui2/gpt_dialog.c:1645 gui2/gpt_dialog.c:1647
+#: gui2/gpt_dialog.c:1670 gui2/gpt_dialog.c:1672
 msgid "None"
 msgstr "無 (None)"
 
-#: gui2/gpt_dialog.c:1652
+#: gui2/gpt_dialog.c:1677
 msgid "TrueType font"
 msgstr "TrueType 字形"
 
-#: gui2/gpt_dialog.c:1709
+#: gui2/gpt_dialog.c:1734
 msgid "Main"
 msgstr "主圖設定"
 
-#: gui2/gpt_dialog.c:1747
+#: gui2/gpt_dialog.c:1772
 msgid "key position"
 msgstr "圖例位置"
 
-#: gui2/gpt_dialog.c:1773
+#: gui2/gpt_dialog.c:1798
 msgid "fitted line"
 msgstr "加上配適線 (fitted line)"
 
-#: gui2/gpt_dialog.c:1809
+#: gui2/gpt_dialog.c:1834
 msgid "Use only one y axis"
 msgstr "只使用一個 y 軸"
 
-#: gui2/gpt_dialog.c:1822
+#: gui2/gpt_dialog.c:1847
 msgid "Show full border"
 msgstr "顯示完整圖外方框"
 
-#: gui2/gpt_dialog.c:1834
+#: gui2/gpt_dialog.c:1859
 msgid "Show grid"
 msgstr "顯示格線"
 
-#: gui2/gpt_dialog.c:1852
+#: gui2/gpt_dialog.c:1877
 msgid "Allow anti-aliasing of lines"
 msgstr ""
 
-#: gui2/gpt_dialog.c:1870
+#: gui2/gpt_dialog.c:1895
 msgid "Show bars"
 msgstr "Show bars"
 
-#: gui2/gpt_dialog.c:1879
+#: gui2/gpt_dialog.c:1904
 msgid "NBER recessions"
 msgstr "NBER recessions"
 
-#: gui2/gpt_dialog.c:1923 gui2/selector.c:3805
+#: gui2/gpt_dialog.c:1951 gui2/selector.c:3805
 msgid "Set as default"
 msgstr "設定為預設 (default)"
 
-#: gui2/gpt_dialog.c:1978 gui2/gpt_dialog.c:2344
+#: gui2/gpt_dialog.c:2006 gui2/gpt_dialog.c:2372
 #, c-format
 msgid "line %d: "
 msgstr "行數 %d: "
 
-#: gui2/gpt_dialog.c:2177
+#: gui2/gpt_dialog.c:2205
 msgid "No formula was given"
 msgstr "未給定算式"
 
-#: gui2/gpt_dialog.c:2316 gui2/selector.c:4038
+#: gui2/gpt_dialog.c:2344 gui2/selector.c:4038
 msgid "Remove"
 msgstr "移除"
 
-#: gui2/gpt_dialog.c:2333
+#: gui2/gpt_dialog.c:2361
 msgid "quartiles"
 msgstr ""
 
-#: gui2/gpt_dialog.c:2339
+#: gui2/gpt_dialog.c:2367
 msgid "lower bound"
 msgstr ""
 
-#: gui2/gpt_dialog.c:2341
+#: gui2/gpt_dialog.c:2369
 msgid "upper bound"
 msgstr ""
 
-#: gui2/gpt_dialog.c:2360
+#: gui2/gpt_dialog.c:2388
 #, c-format
 msgid "label %d: "
 msgstr "標籤 (label)l %d: "
 
-#: gui2/gpt_dialog.c:2571
+#: gui2/gpt_dialog.c:2599
 msgid "Lines"
 msgstr "線條 Lines"
 
-#: gui2/gpt_dialog.c:2636
+#: gui2/gpt_dialog.c:2664
 msgid "legend"
 msgstr "圖例文字:"
 
-#: gui2/gpt_dialog.c:2662
+#: gui2/gpt_dialog.c:2690
 msgid "type"
 msgstr "型態:"
 
-#: gui2/gpt_dialog.c:2692
+#: gui2/gpt_dialog.c:2720
 msgid "point"
 msgstr "點的樣式:"
 
-#: gui2/gpt_dialog.c:2733
+#: gui2/gpt_dialog.c:2761
 msgid "y axis"
 msgstr "y 軸: "
 
-#: gui2/gpt_dialog.c:2750
+#: gui2/gpt_dialog.c:2778
 msgid "line width"
 msgstr "線寬: "
 
-#: gui2/gpt_dialog.c:2825
+#: gui2/gpt_dialog.c:2853
 msgid "Add line..."
 msgstr "新增一條線..."
 
-#: gui2/gpt_dialog.c:2861
+#: gui2/gpt_dialog.c:2889
 msgid "Labels"
 msgstr "資料標籤"
 
-#: gui2/gpt_dialog.c:2890
+#: gui2/gpt_dialog.c:2918
 msgid "text"
 msgstr "文字:"
 
-#: gui2/gpt_dialog.c:2907
+#: gui2/gpt_dialog.c:2935
 msgid "position (X Y)"
 msgstr "位置 (X Y)"
 
-#: gui2/gpt_dialog.c:2944
+#: gui2/gpt_dialog.c:2972
 msgid "justification"
 msgstr "文字對齊:"
 
-#: gui2/gpt_dialog.c:2974 gui2/gpt_dialog.c:3108 gui2/ssheet.c:125
+#: gui2/gpt_dialog.c:3002 gui2/gpt_dialog.c:3136 gui2/ssheet.c:125
 msgid "Add..."
 msgstr "新增..."
 
-#: gui2/gpt_dialog.c:3013
+#: gui2/gpt_dialog.c:3041
 msgid "Arrows"
 msgstr ""
 
-#: gui2/gpt_dialog.c:3044
+#: gui2/gpt_dialog.c:3072
 msgid "from (X Y)"
 msgstr ""
 
-#: gui2/gpt_dialog.c:3046
+#: gui2/gpt_dialog.c:3074
 #, fuzzy
 msgid "to (X Y)"
 msgstr "位置 (X Y)"
 
-#: gui2/gpt_dialog.c:3081
+#: gui2/gpt_dialog.c:3109
 msgid "arrow has head"
 msgstr ""
 
-#: gui2/gpt_dialog.c:3090
+#: gui2/gpt_dialog.c:3118
 #, fuzzy
 msgid "line is dotted"
 msgstr "線寬: "
 
-#: gui2/gpt_dialog.c:3128
+#: gui2/gpt_dialog.c:3156
 msgid "X-axis"
 msgstr "X-軸"
 
-#: gui2/gpt_dialog.c:3130
+#: gui2/gpt_dialog.c:3158
 msgid "Y-axis"
 msgstr "Y-軸"
 
-#: gui2/gpt_dialog.c:3132
+#: gui2/gpt_dialog.c:3160
 msgid "Y2-axis"
 msgstr "Y2-右軸"
 
-#: gui2/gpt_dialog.c:3182
+#: gui2/gpt_dialog.c:3210
 msgid "auto axis range"
 msgstr "自動刻度設定"
 
-#: gui2/gpt_dialog.c:3195
+#: gui2/gpt_dialog.c:3223
 msgid "manual range:"
 msgstr "手動刻度設定"
 
-#: gui2/gpt_dialog.c:3270
+#: gui2/gpt_dialog.c:3298
 msgid "linear scale"
 msgstr "線性刻度"
 
-#: gui2/gpt_dialog.c:3278
+#: gui2/gpt_dialog.c:3306
 msgid "logarithmic scale, base:"
 msgstr "對數刻度, 底數為:"
 
-#: gui2/gpt_dialog.c:3315
+#: gui2/gpt_dialog.c:3343
 msgid "Palette"
 msgstr "色盤"
 
-#: gui2/gpt_dialog.c:3318
+#: gui2/gpt_dialog.c:3346
 msgid ""
 "These colors will be used unless overridden\n"
 "by graph-specific choices\n"
@@ -10361,15 +10361,15 @@ msgstr ""
 "各線條將依序使用以下顏色\n"
 "除非有特別設定\n"
 
-#: gui2/gpt_dialog.c:3579
+#: gui2/gpt_dialog.c:3608
 msgid "Title of plot"
 msgstr "圖標題"
 
-#: gui2/gpt_dialog.c:3580
+#: gui2/gpt_dialog.c:3609
 msgid "Title for axis"
 msgstr "軸之變數名稱"
 
-#: gui2/gpt_dialog.c:3606
+#: gui2/gpt_dialog.c:3635
 msgid "gretl plot controls"
 msgstr "gretl 繪圖設定"
 
@@ -10421,7 +10421,7 @@ msgstr "預覽 (preview)"
 msgid "The graph page is full"
 msgstr ""
 
-#: gui2/graph_page.c:464 gui2/library.c:7539 gui2/library.c:7698
+#: gui2/graph_page.c:464 gui2/library.c:7550 gui2/library.c:7709
 msgid "Failed to process TeX file"
 msgstr ""
 
@@ -10513,7 +10513,7 @@ msgstr "尚未載入資料檔"
 msgid "_File"
 msgstr "檔案(_F)"
 
-#: gui2/gretl.c:1238 gui2/gretl.c:1283
+#: gui2/gretl.c:1238 gui2/gretl.c:1282
 msgid "_User file..."
 msgstr "開啟舊檔(_U)..."
 
@@ -10529,7 +10529,7 @@ msgstr "匯入資料(_I)"
 msgid "_text/CSV..."
 msgstr "_text/CSV..."
 
-#: gui2/gretl.c:1242 gui2/gretl.c:1255 gui2/gretl.c:1274
+#: gui2/gretl.c:1242 gui2/gretl.c:1255 gui2/gretl.c:1272
 msgid "_Octave..."
 msgstr "_Octave..."
 
@@ -10561,7 +10561,7 @@ msgstr "_SPSS..."
 msgid "_SAS (xport)..."
 msgstr "_SAS (xport)..."
 
-#: gui2/gretl.c:1250 gui2/gretl.c:1264 gui2/gretl.c:1275
+#: gui2/gretl.c:1250 gui2/gretl.c:1264 gui2/gretl.c:1273
 msgid "_JMulTi..."
 msgstr "_JMulTi..."
 
@@ -10569,7 +10569,7 @@ msgstr "_JMulTi..."
 msgid "_Append data"
 msgstr "新增至資料檔(_A)"
 
-#: gui2/gretl.c:1253 gui2/gretl.c:1268
+#: gui2/gretl.c:1253
 msgid "_Standard format..."
 msgstr "gretl 預設格式 (_S)"
 
@@ -10582,823 +10582,824 @@ msgid "Save data _as"
 msgstr "另存新檔(_a)"
 
 #: gui2/gretl.c:1269
-msgid "_Database..."
-msgstr "gretl 資料庫格式(_D)"
-
-#: gui2/gretl.c:1271
 msgid "_Export data"
 msgstr "匯出資料(_E)"
 
-#: gui2/gretl.c:1272
+#: gui2/gretl.c:1270
 msgid "_CSV..."
 msgstr "_CSV..."
 
-#: gui2/gretl.c:1273
+#: gui2/gretl.c:1271
 msgid "GNU _R..."
 msgstr "GNU _R..."
 
-#: gui2/gretl.c:1276 gui2/gretl.c:1302
+#: gui2/gretl.c:1274 gui2/gretl.c:1301
 msgid "_PcGive..."
 msgstr "_PcGive..."
 
-#: gui2/gretl.c:1278 gui2/toolbar.c:639
+#: gui2/gretl.c:1275
+#, fuzzy
+msgid "_gretl database..."
+msgstr "開啟指令視窗(_G)"
+
+#: gui2/gretl.c:1277 gui2/toolbar.c:643
 msgid "Send To..."
 msgstr "寄送資料至..."
 
-#: gui2/gretl.c:1279
+#: gui2/gretl.c:1278
 msgid "_New data set"
 msgstr "建立新資料檔(_N)"
 
-#: gui2/gretl.c:1280
+#: gui2/gretl.c:1279
 msgid "C_lear data set"
 msgstr "清除所有資料(_C)"
 
-#: gui2/gretl.c:1281
+#: gui2/gretl.c:1280
 msgid "_Working directory..."
 msgstr "設定工作子目錄..."
 
-#: gui2/gretl.c:1282
+#: gui2/gretl.c:1281
 msgid "_Script files"
 msgstr "開指令檔(_S)"
 
-#: gui2/gretl.c:1284
+#: gui2/gretl.c:1283
 msgid "_Practice file..."
 msgstr "開啟示範指令檔 (_P)..."
 
-#: gui2/gretl.c:1285
+#: gui2/gretl.c:1284
 msgid "_New script"
 msgstr "開新指令檔(_N)"
 
-#: gui2/gretl.c:1286
+#: gui2/gretl.c:1285
 msgid "gretl script"
 msgstr "gretl 指令檔"
 
-#: gui2/gretl.c:1287
+#: gui2/gretl.c:1286
 msgid "gnuplot script"
 msgstr "gnuplot 指令檔"
 
-#: gui2/gretl.c:1288
+#: gui2/gretl.c:1287
 msgid "R script"
 msgstr "R 指令檔"
 
-#: gui2/gretl.c:1289
+#: gui2/gretl.c:1288
 msgid "Octave script"
 msgstr "Octave 指令"
 
-#: gui2/gretl.c:1290 gui2/gretl.c:1565
+#: gui2/gretl.c:1289 gui2/gretl.c:1564
 msgid "Ox program"
 msgstr "Ox 程式"
 
-#: gui2/gretl.c:1292
+#: gui2/gretl.c:1291
 msgid "_Session files"
 msgstr "分析檔"
 
-#: gui2/gretl.c:1293
+#: gui2/gretl.c:1292
 msgid "_Open session..."
 msgstr "開啟分析檔 (_O)..."
 
-#: gui2/gretl.c:1294
+#: gui2/gretl.c:1293
 msgid "_Save session"
 msgstr "儲存分析檔(_S)"
 
-#: gui2/gretl.c:1296
+#: gui2/gretl.c:1295
 msgid "Save session _as..."
 msgstr "另存分析檔 (_a)..."
 
-#: gui2/gretl.c:1299
+#: gui2/gretl.c:1298
 msgid "_Databases"
 msgstr "資料庫(_D)"
 
-#: gui2/gretl.c:1300
+#: gui2/gretl.c:1299
 msgid "_Gretl native..."
 msgstr "從本機預設資料庫讀取資料 (_G)"
 
-#: gui2/gretl.c:1301
+#: gui2/gretl.c:1300
 msgid "_RATS 4..."
 msgstr "_RATS 4..."
 
-#: gui2/gretl.c:1303
+#: gui2/gretl.c:1302
 msgid "On database _server..."
 msgstr "從伺服器資料庫讀取資料 (_s)..."
 
-#: gui2/gretl.c:1305
+#: gui2/gretl.c:1304
 msgid "_Function files"
 msgstr "自訂函數套件(_F)"
 
-#: gui2/gretl.c:1306
+#: gui2/gretl.c:1305
 msgid "On _local machine..."
 msgstr "從本機讀取 (_l)..."
 
-#: gui2/gretl.c:1307
+#: gui2/gretl.c:1306
 msgid "On _server..."
 msgstr "從伺服器讀取 (_s)..."
 
-#: gui2/gretl.c:1308
+#: gui2/gretl.c:1307
 msgid "Edit package..."
 msgstr "編輯函數套件"
 
-#: gui2/gretl.c:1309
+#: gui2/gretl.c:1308
 msgid "_New package"
 msgstr "開啟新函數套件(_N)"
 
-#: gui2/gretl.c:1311
+#: gui2/gretl.c:1310
 msgid "E_xit"
 msgstr "結束(_x)"
 
-#: gui2/gretl.c:1314
+#: gui2/gretl.c:1313
 msgid "_Tools"
 msgstr "工具(_T)"
 
-#: gui2/gretl.c:1315
+#: gui2/gretl.c:1314
 msgid "_Statistical tables"
 msgstr "統計表臨界值(_S)"
 
-#: gui2/gretl.c:1316
+#: gui2/gretl.c:1315
 msgid "_P-value finder"
 msgstr "查P值(_P)"
 
-#: gui2/gretl.c:1317
+#: gui2/gretl.c:1316
 msgid "_Distribution graphs"
 msgstr "機率分配圖(_D)"
 
-#: gui2/gretl.c:1318
+#: gui2/gretl.c:1317
 msgid "_Plot a curve"
 msgstr "畫曲線圖"
 
-#: gui2/gretl.c:1319
+#: gui2/gretl.c:1318
 msgid "_Test statistic calculator"
 msgstr "基本假設檢定(_T)"
 
-#: gui2/gretl.c:1320
+#: gui2/gretl.c:1319
 msgid "_Nonparametric tests"
 msgstr "無母數檢定(_N)"
 
-#: gui2/gretl.c:1321
+#: gui2/gretl.c:1320
 msgid "_Seed for random numbers"
 msgstr "隨機變數產生設定值(_S)"
 
-#: gui2/gretl.c:1322
+#: gui2/gretl.c:1321
 msgid "_Command log"
 msgstr "指令紀錄(_C)"
 
-#: gui2/gretl.c:1323
+#: gui2/gretl.c:1322
 msgid "_Gretl console"
 msgstr "開啟 console 指令視窗(_G)"
 
-#: gui2/gretl.c:1324
+#: gui2/gretl.c:1323
 msgid "Start GNU _R"
 msgstr "開啟 GNU _R"
 
-#: gui2/gretl.c:1325
+#: gui2/gretl.c:1324
 msgid "_NIST test suite"
 msgstr "_NIST 美國國家標準局測試報告"
 
-#: gui2/gretl.c:1326
+#: gui2/gretl.c:1325
 msgid "_Basic"
 msgstr "精簡報告(_B)"
 
-#: gui2/gretl.c:1327
+#: gui2/gretl.c:1326
 msgid "_Verbose"
 msgstr "詳細報告(_V)"
 
-#: gui2/gretl.c:1328
+#: gui2/gretl.c:1327
 msgid "V_ery verbose"
 msgstr "最詳細報告 (_e)"
 
-#: gui2/gretl.c:1329
+#: gui2/gretl.c:1328
 msgid "_Preferences"
 msgstr "偏好設定(_P)"
 
-#: gui2/gretl.c:1330
+#: gui2/gretl.c:1329
 msgid "_General..."
 msgstr "基本設定 (_G)..."
 
-#: gui2/gretl.c:1332
+#: gui2/gretl.c:1331
 msgid "_Fixed font..."
 msgstr "設定固定寬度字形大小..."
 
-#: gui2/gretl.c:1334 gui2/gretl.c:1538
+#: gui2/gretl.c:1333 gui2/gretl.c:1537
 msgid "_Menu font..."
 msgstr "設定功能表字形大小..."
 
-#: gui2/gretl.c:1338
+#: gui2/gretl.c:1337
 msgid "_Data"
 msgstr "資料(_D)"
 
-#: gui2/gretl.c:1339
+#: gui2/gretl.c:1338
 msgid "Select _all"
 msgstr "全選(_a)"
 
-#: gui2/gretl.c:1340
+#: gui2/gretl.c:1339
 msgid "Define or edit _list..."
 msgstr "定義或編輯變數集 (_list)"
 
-#: gui2/gretl.c:1341
+#: gui2/gretl.c:1340
 msgid "_Set selection from list..."
 msgstr "依已定義之變數集 (list) 選擇變數..."
 
-#: gui2/gretl.c:1342 gui2/gretl.c:1420
+#: gui2/gretl.c:1341 gui2/gretl.c:1419
 msgid "_Display values"
 msgstr "顯示變數值(_D)"
 
-#: gui2/gretl.c:1343
+#: gui2/gretl.c:1342
 msgid "_Edit values"
 msgstr "編輯變數值(_E)"
 
-#: gui2/gretl.c:1344
+#: gui2/gretl.c:1343
 msgid "_Add observations..."
 msgstr "增加樣本 (_A)..."
 
-#: gui2/gretl.c:1345
+#: gui2/gretl.c:1344
 msgid "_Remove extra observations"
 msgstr "移除樣本(_R)"
 
-#: gui2/gretl.c:1346
+#: gui2/gretl.c:1345
 msgid "_Dataset info"
 msgstr "資料檔資訊(_D)"
 
-#: gui2/gretl.c:1347
+#: gui2/gretl.c:1346
 msgid "_Observation markers..."
 msgstr "樣本資料註記 (marker)(_O)"
 
-#: gui2/gretl.c:1348
+#: gui2/gretl.c:1347
 msgid "_Variable labels..."
 msgstr "變數標籤 (_V)"
 
-#: gui2/gretl.c:1349
+#: gui2/gretl.c:1348
 msgid "Dataset _structure..."
 msgstr "資料類型轉換 (_s)..."
 
-#: gui2/gretl.c:1350
+#: gui2/gretl.c:1349
 msgid "_Compact data..."
 msgstr "資料頻率轉換 (_C)..."
 
-#: gui2/gretl.c:1351
+#: gui2/gretl.c:1350
 msgid "_Expand data..."
 msgstr "低頻資料轉為高頻資料...(_E)"
 
-#: gui2/gretl.c:1352
+#: gui2/gretl.c:1351
 msgid "_Transpose data..."
 msgstr "資料轉置 (_Transpose)..."
 
-#: gui2/gretl.c:1353
+#: gui2/gretl.c:1352
 msgid "_Sort data..."
 msgstr "資料重新排序 (_S)..."
 
-#: gui2/gretl.c:1354 gui2/gretl.c:1455
+#: gui2/gretl.c:1353 gui2/gretl.c:1454
 msgid "Set missing _value code..."
 msgstr "設定遺漏值(missing _value) 代碼..."
 
-#: gui2/gretl.c:1355
+#: gui2/gretl.c:1354
 msgid "_Find variable..."
 msgstr "尋找變數(_F)"
 
-#: gui2/gretl.c:1356
+#: gui2/gretl.c:1355
 msgid "_Refresh window"
 msgstr "更新顯示"
 
-#: gui2/gretl.c:1359 gui2/gui_utils.c:291 gui2/gui_utils.c:336
+#: gui2/gretl.c:1358 gui2/gui_utils.c:291 gui2/gui_utils.c:336
 #: gui2/ssheet.c:160
 msgid "_View"
 msgstr "檢視(_V)"
 
-#: gui2/gretl.c:1360
+#: gui2/gretl.c:1359
 msgid "_Icon view"
 msgstr "分析檔圖示(_Icon view)"
 
-#: gui2/gretl.c:1361
+#: gui2/gretl.c:1360
 msgid "_Scalars"
 msgstr "數值變數 (_S)"
 
-#: gui2/gretl.c:1362
+#: gui2/gretl.c:1361
 msgid "_Windows"
 msgstr "_Windows 切換視窗"
 
-#: gui2/gretl.c:1363
+#: gui2/gretl.c:1362
 msgid "_Graph specified vars"
 msgstr "變數繪圖(_G)"
 
-#: gui2/gretl.c:1364
+#: gui2/gretl.c:1363
 msgid "_Time series plot..."
 msgstr "時間序列圖 (_T)..."
 
-#: gui2/gretl.c:1365
+#: gui2/gretl.c:1364
 msgid "X-Y _scatter..."
 msgstr "X-Y 散佈圖(_scatter)..."
 
-#: gui2/gretl.c:1366
+#: gui2/gretl.c:1365
 msgid "X-Y with _impulses..."
 msgstr "X-Y with _impulses..."
 
-#: gui2/gretl.c:1367
+#: gui2/gretl.c:1366
 msgid "X-Y with _factor separation..."
 msgstr "X-Y with _factor separation..."
 
-#: gui2/gretl.c:1368
+#: gui2/gretl.c:1367
 msgid "X-Y with _control..."
 msgstr "X-Y with _control..."
 
-#: gui2/gretl.c:1369
+#: gui2/gretl.c:1368
 msgid "_Boxplots..."
 msgstr "箱形圖 (_Boxplots)... "
 
-#: gui2/gretl.c:1370
+#: gui2/gretl.c:1369
 #, fuzzy
 msgid "_Factorized boxplot..."
 msgstr "頻率分配圖(_p)"
 
-#: gui2/gretl.c:1371
+#: gui2/gretl.c:1370
 msgid "_Q-Q plot..."
 msgstr "_Q-Q plot 分量散佈圖"
 
-#: gui2/gretl.c:1372
+#: gui2/gretl.c:1371
 msgid "_3D plot..."
 msgstr "3D立體圖(_3D plot)"
 
-#: gui2/gretl.c:1373
+#: gui2/gretl.c:1372
 msgid "_Multiple graphs"
 msgstr "多變數繪圖(_M)"
 
-#: gui2/gretl.c:1374
+#: gui2/gretl.c:1373
 msgid "X-Y _scatters..."
 msgstr "X-Y 散佈圖(_scatter)..."
 
-#: gui2/gretl.c:1375
+#: gui2/gretl.c:1374
 msgid "_Time series..."
 msgstr "時間序列圖 (_T)..."
 
-#: gui2/gretl.c:1376 gui2/gretl.c:1421
+#: gui2/gretl.c:1375 gui2/gretl.c:1420
 msgid "_Summary statistics"
 msgstr "敘述統計(_S)"
 
-#: gui2/gretl.c:1377
+#: gui2/gretl.c:1376
 msgid "_Correlation matrix"
 msgstr "相關係數矩陣(_C)"
 
-#: gui2/gretl.c:1378
+#: gui2/gretl.c:1377
 msgid "Cross _Tabulation"
 msgstr "交叉表分析(Cross _Tabulation)"
 
-#: gui2/gretl.c:1379
+#: gui2/gretl.c:1378
 msgid "_Principal components"
 msgstr "主成份分析法"
 
-#: gui2/gretl.c:1380
+#: gui2/gretl.c:1379
 msgid "_Mahalanobis distances"
 msgstr "_Mahalanobis 距離"
 
-#: gui2/gretl.c:1381
+#: gui2/gretl.c:1380
 msgid "C_ross-correlogram"
 msgstr "交叉自我相關圖(_r)"
 
-#: gui2/gretl.c:1384
+#: gui2/gretl.c:1383
 msgid "_Add"
 msgstr "新增變數(_A)"
 
-#: gui2/gretl.c:1385
+#: gui2/gretl.c:1384
 msgid "_Logs of selected variables"
 msgstr "取自然對數"
 
-#: gui2/gretl.c:1386
+#: gui2/gretl.c:1385
 msgid "_Squares of selected variables"
 msgstr "取平方(_S)"
 
-#: gui2/gretl.c:1387
+#: gui2/gretl.c:1386
 msgid "_Lags of selected variables"
 msgstr "取落後期(_L)"
 
-#: gui2/gretl.c:1388
+#: gui2/gretl.c:1387
 msgid "_First differences of selected variables"
 msgstr "取一階差分(_F)"
 
-#: gui2/gretl.c:1390
+#: gui2/gretl.c:1389
 msgid "_Log differences of selected variables"
 msgstr "取對數再一階差分(_L)"
 
-#: gui2/gretl.c:1392
+#: gui2/gretl.c:1391
 msgid "_Seasonal differences of selected variables"
 msgstr "取季節差分(_S)"
 
-#: gui2/gretl.c:1394
+#: gui2/gretl.c:1393
 msgid "_Index variable"
 msgstr "新增指標變數(_I)"
 
-#: gui2/gretl.c:1395
+#: gui2/gretl.c:1394
 msgid "_Time trend"
 msgstr "新增時間趨勢變數(_T)"
 
-#: gui2/gretl.c:1396
+#: gui2/gretl.c:1395
 msgid "_Random variable..."
 msgstr "隨機變數產生器 (_R)..."
 
-#: gui2/gretl.c:1397
+#: gui2/gretl.c:1396
 msgid "_Periodic dummies"
 msgstr "自動產生「週期性虛擬變數」 (_P)"
 
-#: gui2/gretl.c:1398
+#: gui2/gretl.c:1397
 msgid "_Unit dummies"
 msgstr "_Unit 虛擬變數"
 
-#: gui2/gretl.c:1399
+#: gui2/gretl.c:1398
 msgid "_Time dummies"
 msgstr "新增時間虛擬變數(_T)"
 
-#: gui2/gretl.c:1400
+#: gui2/gretl.c:1399
 msgid "Dummies for selected _discrete variables"
 msgstr "以所選變數產生「虛擬變數」(_d)"
 
-#: gui2/gretl.c:1402
+#: gui2/gretl.c:1401
 msgid "_Define matrix..."
 msgstr "產生新矩陣..."
 
-#: gui2/gretl.c:1405
+#: gui2/gretl.c:1404
 msgid "_Sample"
 msgstr "樣本(_S)"
 
-#: gui2/gretl.c:1406
+#: gui2/gretl.c:1405
 msgid "_Set range..."
 msgstr "設定子樣本範圍 (_S)..."
 
-#: gui2/gretl.c:1407
+#: gui2/gretl.c:1406
 msgid "_Restore full range"
 msgstr "恢復為全樣本(_R)"
 
-#: gui2/gretl.c:1408
+#: gui2/gretl.c:1407
 msgid "_Show status"
 msgstr "顯示目前樣本狀態(_S)"
 
-#: gui2/gretl.c:1409
+#: gui2/gretl.c:1408
 msgid "_Restrict, based on criterion..."
 msgstr "樣本篩選 (_R)..."
 
-#: gui2/gretl.c:1411
+#: gui2/gretl.c:1410
 msgid "R_andom sub-sample..."
 msgstr "隨機選取子選本 (_a)"
 
-#: gui2/gretl.c:1412
+#: gui2/gretl.c:1411
 msgid "_Resample with replacement..."
 msgstr "重新抽樣 (_Resample)"
 
-#: gui2/gretl.c:1414
+#: gui2/gretl.c:1413
 msgid "Drop all obs with _missing values"
 msgstr "排除變數有遺漏值之樣本(_m)"
 
-#: gui2/gretl.c:1416
+#: gui2/gretl.c:1415
 msgid "_Count missing values"
 msgstr "計算遺漏值比例(_Count missing values)"
 
-#: gui2/gretl.c:1419
+#: gui2/gretl.c:1418
 msgid "_Variable"
 msgstr "變數 (_V)"
 
-#: gui2/gretl.c:1422
+#: gui2/gretl.c:1421
 msgid "_Normality test"
 msgstr "常態性檢定(_Normality)"
 
-#: gui2/gretl.c:1423
+#: gui2/gretl.c:1422
 msgid "_Frequency distribution..."
 msgstr "頻率分配表(_F)"
 
-#: gui2/gretl.c:1424
+#: gui2/gretl.c:1423
 msgid "Estimated _density plot..."
 msgstr "估計機率密度圖 (_density plot)..."
 
-#: gui2/gretl.c:1425
+#: gui2/gretl.c:1424
 msgid "Normal _Q-Q plot..."
 msgstr "常態分量散佈圖(_Q-Q plot)..."
 
-#: gui2/gretl.c:1426
+#: gui2/gretl.c:1425
 msgid "_Gini coefficient"
 msgstr "Gini 係數(_G)"
 
-#: gui2/gretl.c:1427
+#: gui2/gretl.c:1426
 msgid "_Range-mean graph"
 msgstr "組距-均數圖(range-mean)(_R)"
 
-#: gui2/gretl.c:1428
+#: gui2/gretl.c:1427
 msgid "_Time series plot"
 msgstr "時間序列圖(_T)"
 
-#: gui2/gretl.c:1429
+#: gui2/gretl.c:1428
 #, fuzzy
 msgid "_Panel plot..."
 msgstr "頻率分配圖(_p)"
 
-#: gui2/gretl.c:1430
+#: gui2/gretl.c:1429
 msgid "_Unit root tests"
 msgstr "單根檢定(_N)"
 
-#: gui2/gretl.c:1431
+#: gui2/gretl.c:1430
 msgid "_Augmented Dickey-Fuller test"
 msgstr "ADF 單根檢定(_A)"
 
-#: gui2/gretl.c:1432
+#: gui2/gretl.c:1431
 msgid "ADF-GLS test"
 msgstr "ADF-GLS 單根檢定"
 
-#: gui2/gretl.c:1433
+#: gui2/gretl.c:1432
 msgid "_KPSS test"
 msgstr "_KPSS 單根檢定"
 
-#: gui2/gretl.c:1434
+#: gui2/gretl.c:1433
 msgid "_Levin-Lin-Chu test"
 msgstr "_Levin-Lin-Chu Panel 單根檢定 (LLC)"
 
-#: gui2/gretl.c:1435
+#: gui2/gretl.c:1434
 msgid "_Fractional integration"
 msgstr "部份共整合檢定 (_F)"
 
-#: gui2/gretl.c:1436
+#: gui2/gretl.c:1435
 msgid "_Correlogram"
 msgstr "自我相關圖(_Correlogram)"
 
-#: gui2/gretl.c:1437
+#: gui2/gretl.c:1436
 msgid "_Periodogram"
 msgstr "週期圖 (_Periodogram)"
 
-#: gui2/gretl.c:1438
+#: gui2/gretl.c:1437
 msgid "_Filter"
 msgstr "濾波法 (_Filter)"
 
-#: gui2/gretl.c:1439
+#: gui2/gretl.c:1438
 msgid "_Simple moving average"
 msgstr "移動平均法(_S)"
 
-#: gui2/gretl.c:1440
+#: gui2/gretl.c:1439
 msgid "_Exponential moving average"
 msgstr "指數平滑法(_E)"
 
-#: gui2/gretl.c:1441
+#: gui2/gretl.c:1440
 msgid "_Hodrick-Prescott"
 msgstr "_Hodrick-Prescott 法"
 
-#: gui2/gretl.c:1442
+#: gui2/gretl.c:1441
 msgid "_Baxter-King"
 msgstr "_Baxter-King 法"
 
-#: gui2/gretl.c:1443
+#: gui2/gretl.c:1442
 msgid "_Butterworth"
 msgstr ""
 
-#: gui2/gretl.c:1444
+#: gui2/gretl.c:1443
 msgid "_Polynomial trend"
 msgstr "多項式時間趨勢變數(_P)"
 
-#: gui2/gretl.c:1445
+#: gui2/gretl.c:1444
 msgid "_Fractional difference"
 msgstr "部份差分(_Fractional difference)"
 
-#: gui2/gretl.c:1448 gui2/gretl.c:1547
+#: gui2/gretl.c:1447 gui2/gretl.c:1546
 msgid "_X-12-ARIMA analysis"
 msgstr "_X-12-ARIMA analysis"
 
-#: gui2/gretl.c:1451 gui2/gretl.c:1556
+#: gui2/gretl.c:1450 gui2/gretl.c:1555
 msgid "_TRAMO analysis"
 msgstr "_TRAMO analysis"
 
-#: gui2/gretl.c:1453
+#: gui2/gretl.c:1452
 msgid "_Hurst exponent"
 msgstr "_Hurst exponent"
 
-#: gui2/gretl.c:1454
+#: gui2/gretl.c:1453
 msgid "_Edit attributes"
 msgstr "編輯變數屬性(_E)"
 
-#: gui2/gretl.c:1456 gui2/gui_utils.c:2458
+#: gui2/gretl.c:1455 gui2/gui_utils.c:2458
 msgid "Define _new variable..."
 msgstr "產生新變數 (_n)..."
 
-#: gui2/gretl.c:1459
+#: gui2/gretl.c:1458
 msgid "_Model"
 msgstr "模型(_M)"
 
-#: gui2/gretl.c:1460
+#: gui2/gretl.c:1459
 msgid "_Ordinary Least Squares..."
 msgstr "一般最小平方法 (_OLS)..."
 
-#: gui2/gretl.c:1461
+#: gui2/gretl.c:1460
 msgid "_Instrumental variables"
 msgstr "工具變數法(_IV)"
 
-#: gui2/gretl.c:1462
+#: gui2/gretl.c:1461
 msgid "_Two-Stage Least Squares..."
 msgstr "_TSLS 兩階段最小平方法..."
 
-#: gui2/gretl.c:1463
+#: gui2/gretl.c:1462
 msgid "_LIML..."
 msgstr "_LIML 限制資訊最大概似法..."
 
-#: gui2/gretl.c:1464 gui2/gretl.c:1510
+#: gui2/gretl.c:1463 gui2/gretl.c:1509
 msgid "_GMM..."
 msgstr "_GMM 一般動差法..."
 
-#: gui2/gretl.c:1465
+#: gui2/gretl.c:1464
 msgid "Other _linear models"
 msgstr "其它線性模型 (_l)"
 
-#: gui2/gretl.c:1466
+#: gui2/gretl.c:1465
 msgid "_Weighted Least Squares..."
 msgstr "加權最小平方法 (_WLS)..."
 
-#: gui2/gretl.c:1467
+#: gui2/gretl.c:1466
 msgid "H_eteroskedasticity corrected..."
 msgstr "殘差異質變異校正 WLS (_hsk)..."
 
-#: gui2/gretl.c:1468
+#: gui2/gretl.c:1467
 msgid "High _precision OLS..."
 msgstr "高精準度 OLS (_p)..."
 
-#: gui2/gretl.c:1469
+#: gui2/gretl.c:1468
 msgid "ANOVA..."
 msgstr "變異數分析 (ANOVA)..."
 
-#: gui2/gretl.c:1470
+#: gui2/gretl.c:1469
 msgid "_Time series"
 msgstr "時間序列 (_T)"
 
-#: gui2/gretl.c:1471
+#: gui2/gretl.c:1470
 msgid "_Cochrane-Orcutt..."
 msgstr "Cochrane-Orcutt 轉換(_C)..."
 
-#: gui2/gretl.c:1472
+#: gui2/gretl.c:1471
 msgid "_Hildreth-Lu..."
 msgstr "_Hildreth-Lu..."
 
-#: gui2/gretl.c:1473
+#: gui2/gretl.c:1472
 msgid "_Prais-Winsten..."
 msgstr "_Prais-Winsten..."
 
-#: gui2/gretl.c:1474
+#: gui2/gretl.c:1473
 msgid "_Autoregressive estimation..."
 msgstr "自我相關模型 (_A)..."
 
-#: gui2/gretl.c:1475
+#: gui2/gretl.c:1474
 msgid "ARI_MA..."
 msgstr "ARI_MA..."
 
-#: gui2/gretl.c:1476
+#: gui2/gretl.c:1475
 msgid "_GARCH..."
 msgstr "_GARCH 一般自我相關異質變異模型..."
 
-#: gui2/gretl.c:1477
+#: gui2/gretl.c:1476
 msgid "_Vector Autoregression..."
 msgstr "_VAR 向量自我迴歸..."
 
-#: gui2/gretl.c:1478
+#: gui2/gretl.c:1477
 msgid "VAR _lag selection..."
 msgstr "選擇VAR落後期 (_lag)..."
 
-#: gui2/gretl.c:1479
+#: gui2/gretl.c:1478
 msgid "V_ECM..."
 msgstr "V_ECM 向量誤差修正模型..."
 
-#: gui2/gretl.c:1480
+#: gui2/gretl.c:1479
 msgid "_Cointegration test"
 msgstr "共整合檢定 (_C)"
 
-#: gui2/gretl.c:1481
+#: gui2/gretl.c:1480
 msgid "_Engle-Granger..."
 msgstr "Engle-Granger 共整合檢定(_E)..."
 
-#: gui2/gretl.c:1482
+#: gui2/gretl.c:1481
 msgid "_Johansen..."
 msgstr "Johansen 共整合檢定(_J)..."
 
-#: gui2/gretl.c:1483
+#: gui2/gretl.c:1482
 msgid "_Panel"
 msgstr "縱橫資料 (_Panel)"
 
-#: gui2/gretl.c:1484
+#: gui2/gretl.c:1483
 msgid "_Fixed or random effects..."
 msgstr "固定或隨機效果 (_Fixed or random effects)..."
 
-#: gui2/gretl.c:1485
+#: gui2/gretl.c:1484
 msgid "_Weighted least squares..."
 msgstr "加權最小平方法 (_WLS)..."
 
-#: gui2/gretl.c:1486
+#: gui2/gretl.c:1485
 msgid "_Between model..."
 msgstr "_Between model..."
 
-#: gui2/gretl.c:1487
+#: gui2/gretl.c:1486
 msgid "_Dynamic panel model..."
 msgstr "動態 Panel model...(_D)"
 
-#: gui2/gretl.c:1489
+#: gui2/gretl.c:1488
 msgid "_Nonlinear models"
 msgstr "非線性模型 (_Nonliear)"
 
-#: gui2/gretl.c:1490
+#: gui2/gretl.c:1489
 msgid "_Logit"
 msgstr "_Logit"
 
-#: gui2/gretl.c:1491 gui2/gretl.c:1495
+#: gui2/gretl.c:1490 gui2/gretl.c:1494
 msgid "_Binary..."
 msgstr "二元 (_Binary)..."
 
-#: gui2/gretl.c:1492 gui2/gretl.c:1496
+#: gui2/gretl.c:1491 gui2/gretl.c:1495
 msgid "_Ordered..."
 msgstr "排序 (_Ordered)..."
 
-#: gui2/gretl.c:1493
+#: gui2/gretl.c:1492
 msgid "_Multinomial..."
 msgstr "多元(_Multinomial)..."
 
-#: gui2/gretl.c:1494
+#: gui2/gretl.c:1493
 msgid "_Probit"
 msgstr "_Probit"
 
-#: gui2/gretl.c:1497
+#: gui2/gretl.c:1496
 msgid "Bi_variate..."
 msgstr "二自變數(_v)"
 
-#: gui2/gretl.c:1498
+#: gui2/gretl.c:1497
 msgid "To_bit..."
 msgstr "To_bit..."
 
-#: gui2/gretl.c:1499
+#: gui2/gretl.c:1498
 msgid "_Heckit..."
 msgstr "_Heckit..."
 
-#: gui2/gretl.c:1500
+#: gui2/gretl.c:1499
 msgid "_Count data..."
 msgstr "_Count 資料模型..."
 
-#: gui2/gretl.c:1501
+#: gui2/gretl.c:1500
 msgid "_Duration data..."
 msgstr "_Duration 資料模型..."
 
-#: gui2/gretl.c:1502
+#: gui2/gretl.c:1501
 msgid "Lo_gistic..."
 msgstr "Lo_gistic..."
 
-#: gui2/gretl.c:1503
+#: gui2/gretl.c:1502
 msgid "_Nonlinear Least Squares..."
 msgstr "非線性最小平方法 (_NLS)..."
 
-#: gui2/gretl.c:1504
+#: gui2/gretl.c:1503
 msgid "_Interval regression..."
 msgstr "區間迴歸 (_Interval regression)..."
 
-#: gui2/gretl.c:1505
+#: gui2/gretl.c:1504
 msgid "_Robust estimation"
 msgstr "穩健估計法 (_R)"
 
-#: gui2/gretl.c:1506
+#: gui2/gretl.c:1505
 msgid "Least _Absolute Deviation..."
 msgstr "最小絕對誤差法 (L_AD)..."
 
-#: gui2/gretl.c:1507
+#: gui2/gretl.c:1506
 msgid "_Quantile regression..."
 msgstr "分量迴歸 (_Quantile regression)..."
 
-#: gui2/gretl.c:1508
+#: gui2/gretl.c:1507
 msgid "_Rank correlation..."
 msgstr "等級相關檢定(_Rank correlation)..."
 
-#: gui2/gretl.c:1509
+#: gui2/gretl.c:1508
 msgid "_Maximum likelihood..."
 msgstr "最大概似法 (_M)..."
 
-#: gui2/gretl.c:1511
+#: gui2/gretl.c:1510
 msgid "_Simultaneous equations..."
 msgstr "聯立方程式模型 (_S)..."
 
-#: gui2/gretl.c:1514
+#: gui2/gretl.c:1513
 msgid "_Help"
 msgstr "說明(_H)"
 
-#: gui2/gretl.c:1515 gui2/gretl.c:1518
+#: gui2/gretl.c:1514 gui2/gretl.c:1517
 msgid "_Command reference"
 msgstr "指令參考說明"
 
-#: gui2/gretl.c:1516
+#: gui2/gretl.c:1515
 #, fuzzy
 msgid "_Function reference"
 msgstr "函數參考說明"
 
-#: gui2/gretl.c:1517
+#: gui2/gretl.c:1516
 msgid "_User's guide"
 msgstr "gretl 操作說明 (_U)"
 
-#: gui2/gretl.c:1519
+#: gui2/gretl.c:1518
 msgid "Check for _updates"
 msgstr "檢查有無更新版(_u)"
 
-#: gui2/gretl.c:1520
+#: gui2/gretl.c:1519
 #, fuzzy
 msgid "Check for _addons"
 msgstr "檢查有無更新版(_u)"
 
-#: gui2/gretl.c:1521
+#: gui2/gretl.c:1520
 msgid "_About gretl"
 msgstr "有關 gretl(_A)"
 
-#: gui2/gretl.c:1825 gui2/textbuf.c:2538 gui2/toolbar.c:977
+#: gui2/gretl.c:1824 gui2/textbuf.c:2584 gui2/toolbar.c:981
 msgid "Main window"
 msgstr "回主視窗"
 
-#: gui2/gretl.c:1889
+#: gui2/gretl.c:1888
 msgid "sample status"
 msgstr "樣本狀態 (sample status)"
 
@@ -11862,7 +11863,7 @@ msgstr "另存為 (_S)..."
 msgid "_Graph"
 msgstr "繪圖(_G)"
 
-#: gui2/gui_utils.c:834 gui2/gui_utils.c:1128 gui2/library.c:8158
+#: gui2/gui_utils.c:834 gui2/gui_utils.c:1128 gui2/library.c:8169
 msgid "gretl: open data"
 msgstr "gretl: 開啟資料檔"
 
@@ -11881,7 +11882,7 @@ msgstr ""
 msgid "gretl: import %s data"
 msgstr "gretl: 匯入 %s 資料"
 
-#: gui2/gui_utils.c:1129 gui2/library.c:8159
+#: gui2/gui_utils.c:1129 gui2/library.c:8170
 msgid ""
 "Opening a new data file will automatically\n"
 "close the current one.  Any unsaved work\n"
@@ -12361,7 +12362,7 @@ msgstr "資料工具 (Data utilities)"
 msgid "Strings"
 msgstr "字串 (Strings)"
 
-#: gui2/helpfiles.c:459 gui2/textbuf.c:1552
+#: gui2/helpfiles.c:459 gui2/textbuf.c:1564
 msgid "Index"
 msgstr "索引 (Index)"
 
@@ -12851,7 +12852,7 @@ msgstr "最大落後期數 (max. lag):"
 msgid "gretl: fractional integration"
 msgstr "gretl: open data"
 
-#: gui2/library.c:5188 gui2/toolbar.c:469
+#: gui2/library.c:5188 gui2/toolbar.c:473
 msgid "gretl: coefficient confidence intervals"
 msgstr "gretl: 係數信賴區間"
 
@@ -13128,11 +13129,11 @@ msgid ""
 "Do you want to switch to the reduced version now?"
 msgstr ""
 
-#: gui2/library.c:7821 gui2/library.c:7905
+#: gui2/library.c:7832 gui2/library.c:7916
 msgid "No commands to execute"
 msgstr "沒有指令可執行"
 
-#: gui2/library.c:7982
+#: gui2/library.c:7993
 msgid ""
 "\n"
 "Error executing script: halting\n"
@@ -13140,11 +13141,11 @@ msgstr ""
 "\n"
 "指令執行有誤: 已中斷\n"
 
-#: gui2/library.c:8014
+#: gui2/library.c:8025
 msgid "Unterminated comment in script"
 msgstr ""
 
-#: gui2/library.c:8442
+#: gui2/library.c:8453
 #, fuzzy
 msgid "Script done\n"
 msgstr "開指令檔(_S)"
@@ -13405,7 +13406,7 @@ msgstr "無任何 model"
 msgid "%s replaced\n"
 msgstr "%s 已被替換\n"
 
-#: gui2/selector.c:467 gui2/toolbar.c:1033
+#: gui2/selector.c:467 gui2/toolbar.c:1037
 msgid "gretl: specify model"
 msgstr "gretl: 設定模型"
 
@@ -13889,7 +13890,7 @@ msgstr "計算標準差"
 msgid "Compute confidence intervals"
 msgstr "計算信賴區間"
 
-#: gui2/selector.c:5091 gui2/toolbar.c:474
+#: gui2/selector.c:5091 gui2/toolbar.c:478
 msgid "Confidence level"
 msgstr "信賴水準"
 
@@ -14817,11 +14818,11 @@ msgstr "插入一筆樣本"
 msgid "Warning: there were missing observations"
 msgstr "警告: 資料變數中有遺漏值之樣本"
 
-#: gui2/ssheet.c:1448 gui2/toolbar.c:336
+#: gui2/ssheet.c:1448 gui2/toolbar.c:340
 msgid "gretl: save matrix"
 msgstr "gretl: 儲存矩陣"
 
-#: gui2/ssheet.c:1449 gui2/toolbar.c:337
+#: gui2/ssheet.c:1449 gui2/toolbar.c:341
 msgid "Enter a name"
 msgstr "輸入變數名稱"
 
@@ -14913,74 +14914,74 @@ msgstr "無復原的資訊可用"
 msgid "No undo information available"
 msgstr "無復原的資訊可用"
 
-#: gui2/textbuf.c:1417
+#: gui2/textbuf.c:1429
 msgid "Gretl Command Reference"
 msgstr "Gretl 指令參考說明"
 
-#: gui2/textbuf.c:1461
+#: gui2/textbuf.c:1473
 msgid "Gretl Function Reference"
 msgstr "Gretl 函數參考說明 (Function Reference)"
 
-#: gui2/textbuf.c:1553
+#: gui2/textbuf.c:1565
 msgid "Back"
 msgstr "回上一頁"
 
-#: gui2/textbuf.c:1967
+#: gui2/textbuf.c:1990
 #, fuzzy
 msgid "gretl: configure tabs"
 msgstr "gretl: open data"
 
-#: gui2/textbuf.c:1968
+#: gui2/textbuf.c:1991
 msgid "Spaces per tab"
 msgstr "每一 Tab 鍵空格"
 
-#: gui2/textbuf.c:1969
+#: gui2/textbuf.c:1992
 #, fuzzy
 msgid "Use \"smart\" tabs"
 msgstr "用一階差分"
 
-#: gui2/textbuf.c:2429
+#: gui2/textbuf.c:2475
 msgid "Comment line"
 msgstr "Comment line"
 
-#: gui2/textbuf.c:2430
+#: gui2/textbuf.c:2476
 msgid "Uncomment line"
 msgstr "Uncomment line"
 
-#: gui2/textbuf.c:2431
+#: gui2/textbuf.c:2477
 msgid "Comment region"
 msgstr "Comment region"
 
-#: gui2/textbuf.c:2432
+#: gui2/textbuf.c:2478
 msgid "Uncomment region"
 msgstr "Uncomment region"
 
-#: gui2/textbuf.c:2468
+#: gui2/textbuf.c:2514
 msgid "Execute region"
 msgstr "Execute region"
 
-#: gui2/textbuf.c:2470
+#: gui2/textbuf.c:2516
 msgid "Execute line"
 msgstr "Execute line"
 
-#: gui2/textbuf.c:2497
+#: gui2/textbuf.c:2543
 msgid "Auto-indent region"
 msgstr "Auto-indent region"
 
-#: gui2/textbuf.c:2498
+#: gui2/textbuf.c:2544
 msgid "Indent region"
 msgstr "Indent region"
 
-#: gui2/textbuf.c:2507
+#: gui2/textbuf.c:2553
 msgid "Unindent region"
 msgstr "Unindent region"
 
-#: gui2/textbuf.c:2515
+#: gui2/textbuf.c:2561
 #, fuzzy
 msgid "Auto-indent script"
 msgstr "無法開啟指令檔 \"%s\"\n"
 
-#: gui2/textbuf.c:2526
+#: gui2/textbuf.c:2572
 #, fuzzy
 msgid "Toggle line numbers"
 msgstr "隨機變數產生設定值(_S)"
@@ -15003,11 +15004,11 @@ msgstr "全部取代"
 msgid "_Replace"
 msgstr "已被置換"
 
-#: gui2/textutil.c:441 gui2/toolbar.c:630
+#: gui2/textutil.c:441 gui2/toolbar.c:634
 msgid "Copy"
 msgstr "複製"
 
-#: gui2/textutil.c:442 gui2/toolbar.c:623
+#: gui2/textutil.c:442 gui2/toolbar.c:627
 msgid "Save"
 msgstr "儲存"
 
@@ -15033,173 +15034,173 @@ msgstr "儲存一般文字檔"
 msgid "Nothing to send"
 msgstr "複製資料"
 
-#: gui2/toolbar.c:253
+#: gui2/toolbar.c:256
 msgid "Print with syntax highlighting?"
 msgstr ""
 
-#: gui2/toolbar.c:347
+#: gui2/toolbar.c:351
 #, fuzzy, c-format
 msgid "Saved matrix as %s"
 msgstr "另存新檔(_a)"
 
-#: gui2/toolbar.c:550
+#: gui2/toolbar.c:554
 msgid "Running a script replaces text"
 msgstr "清除上一次結果, 只顯示此次執行結果"
 
-#: gui2/toolbar.c:551
+#: gui2/toolbar.c:555
 msgid "Running a script adds to text"
 msgstr "接續上一次結果, 繼續顯示執行結果"
 
-#: gui2/toolbar.c:621
+#: gui2/toolbar.c:625
 msgid "New window"
 msgstr "開新視窗"
 
-#: gui2/toolbar.c:622
+#: gui2/toolbar.c:626
 msgid "Open..."
 msgstr "開啟"
 
-#: gui2/toolbar.c:624
+#: gui2/toolbar.c:628
 msgid "Save as..."
 msgstr "另存為..."
 
-#: gui2/toolbar.c:626
+#: gui2/toolbar.c:630
 #, fuzzy
 msgid "Show/hide"
 msgstr "顯示格線"
 
-#: gui2/toolbar.c:627
+#: gui2/toolbar.c:631
 msgid "Run"
 msgstr "執行指令"
 
-#: gui2/toolbar.c:628
+#: gui2/toolbar.c:632
 msgid "Stop"
 msgstr ""
 
-#: gui2/toolbar.c:629
+#: gui2/toolbar.c:633
 msgid "Cut"
 msgstr ""
 
-#: gui2/toolbar.c:631
+#: gui2/toolbar.c:635
 msgid "Paste"
 msgstr "貼上"
 
-#: gui2/toolbar.c:633
+#: gui2/toolbar.c:637
 msgid "Replace..."
 msgstr "取代..."
 
-#: gui2/toolbar.c:634
+#: gui2/toolbar.c:638
 msgid "Undo"
 msgstr "復原 (Undo)"
 
-#: gui2/toolbar.c:635
+#: gui2/toolbar.c:639
 msgid "Redo"
 msgstr ""
 
-#: gui2/toolbar.c:636
+#: gui2/toolbar.c:640
 msgid "Sort"
 msgstr "排序"
 
-#: gui2/toolbar.c:637
+#: gui2/toolbar.c:641
 msgid "Sort by..."
 msgstr "依...排序"
 
-#: gui2/toolbar.c:638
+#: gui2/toolbar.c:642
 msgid "Configure tabs..."
 msgstr "設定 Tab 鍵位置"
 
-#: gui2/toolbar.c:640
+#: gui2/toolbar.c:644
 #, fuzzy
 msgid "Scripts index"
 msgstr "新增指標變數(_I)"
 
-#: gui2/toolbar.c:641
+#: gui2/toolbar.c:645
 msgid "Confidence level..."
 msgstr "信賴水準 Confidence level..."
 
-#: gui2/toolbar.c:642
+#: gui2/toolbar.c:646
 msgid "LaTeX"
 msgstr "LaTeX"
 
-#: gui2/toolbar.c:644
+#: gui2/toolbar.c:648
 msgid "Reformat..."
 msgstr "重設數字顯示格式"
 
-#: gui2/toolbar.c:645
+#: gui2/toolbar.c:649
 #, fuzzy
 msgid "Edit values..."
 msgstr "編輯變數(_E)"
 
-#: gui2/toolbar.c:646
+#: gui2/toolbar.c:650
 msgid "Refresh"
 msgstr "更新顯示"
 
-#: gui2/toolbar.c:647
+#: gui2/toolbar.c:651
 msgid "Add to dataset..."
 msgstr "新增至資料中..."
 
-#: gui2/toolbar.c:648
+#: gui2/toolbar.c:652
 msgid "Add as matrix..."
 msgstr "新增為矩陣..."
 
-#: gui2/toolbar.c:649
+#: gui2/toolbar.c:653
 msgid "Stickiness..."
 msgstr "執行結果顯示設定..."
 
-#: gui2/toolbar.c:650 gui2/toolbar.c:651
+#: gui2/toolbar.c:654 gui2/toolbar.c:655
 #, fuzzy
 msgid "Toggle split pane"
 msgstr "隨機變數產生設定值(_S)"
 
-#: gui2/toolbar.c:652
+#: gui2/toolbar.c:656
 msgid "Help on command"
 msgstr "指令輔助說明"
 
-#: gui2/toolbar.c:656
+#: gui2/toolbar.c:660
 msgid "Windows"
 msgstr "切換視窗"
 
-#: gui2/toolbar.c:1061
+#: gui2/toolbar.c:1065
 msgid "launch calculator"
 msgstr "開啟計算機"
 
-#: gui2/toolbar.c:1062
+#: gui2/toolbar.c:1066
 msgid "new script"
 msgstr "開新指令檔"
 
-#: gui2/toolbar.c:1063
+#: gui2/toolbar.c:1067
 msgid "open gretl console"
 msgstr "開啟指令視窗 (console)"
 
-#: gui2/toolbar.c:1064
+#: gui2/toolbar.c:1068
 msgid "session icon view"
 msgstr "分析檔圖示(session icon view)"
 
-#: gui2/toolbar.c:1065
+#: gui2/toolbar.c:1069
 msgid "function packages"
 msgstr "自訂函數套件"
 
-#: gui2/toolbar.c:1066
+#: gui2/toolbar.c:1070
 msgid "user's guide"
 msgstr "gretl 操作說明"
 
-#: gui2/toolbar.c:1067
+#: gui2/toolbar.c:1071
 msgid "command reference"
 msgstr "指令參考說明"
 
-#: gui2/toolbar.c:1068
+#: gui2/toolbar.c:1072
 msgid "X-Y graph"
 msgstr "X-Y 圖"
 
-#: gui2/toolbar.c:1069
+#: gui2/toolbar.c:1073
 msgid "OLS model"
 msgstr "OLS 模型"
 
-#: gui2/toolbar.c:1070
+#: gui2/toolbar.c:1074
 #, fuzzy
 msgid "gretl database"
 msgstr "開啟指令視窗(_G)"
 
-#: gui2/toolbar.c:1071
+#: gui2/toolbar.c:1075
 msgid "open dataset"
 msgstr "開啟示範資料檔"
 
@@ -15544,7 +15545,7 @@ msgid "No worksheets found"
 msgstr "沒有發現任何工作表 (worksheets)"
 
 #: plugin/excel_import.c:1508 plugin/gnumeric_import.c:626
-#: plugin/ods_import.c:1057 plugin/xlsx_import.c:835
+#: plugin/ods_import.c:1057 plugin/xlsx_import.c:935
 msgid "Invalid argument for worksheet import"
 msgstr "工作表資料匯入參數有誤"
 
@@ -15564,7 +15565,7 @@ msgstr "行 (column) 的開始值不正確 (out of bounds)\n"
 msgid "One or more variable names are missing.\n"
 msgstr "有 1 個或多個變數名稱遺失\n"
 
-#: plugin/excel_import.c:1582 plugin/xlsx_import.c:333
+#: plugin/excel_import.c:1582 plugin/xlsx_import.c:365
 #, c-format
 msgid ""
 "Expected numeric data, found string:\n"
@@ -16391,6 +16392,9 @@ msgstr "敘述統計(_S)"
 #, fuzzy
 msgid "Probability distributions"
 msgstr "右尾機率"
+
+#~ msgid "_Database..."
+#~ msgstr "gretl 資料庫格式(_D)"
 
 #~ msgid "String to replace was not found"
 #~ msgstr "未找到要取代的字串"

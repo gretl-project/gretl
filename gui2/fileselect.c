@@ -38,10 +38,6 @@
 # include "gretlwin32.h"
 #endif
 
-#define IS_DAT_ACTION(i) (i == SAVE_DATA || \
-                          i == SAVE_DATA_AS || \
-                          i == OPEN_DATA)
-
 #define OPEN_DATA_ACTION(i)  (i == OPEN_DATA || \
                               i == OPEN_CSV || \
                               i == OPEN_OCTAVE || \
@@ -87,7 +83,7 @@ struct extmap {
 };
 
 static struct extmap action_map[] = {
-    { SAVE_DBDATA,       ".bin" },
+    { EXPORT_DB,         ".bin" },
     { SAVE_SCRIPT,       ".inp" },
     { SAVE_FUNCTIONS_AS, ".inp" },
     { SAVE_CMD_LOG,      ".inp" },
@@ -138,29 +134,25 @@ static struct extmap action_map[] = {
     { FILE_OP_MAX,       NULL }
 };
 
-static gretlopt save_action_to_opt (int action, gpointer p)
+static gretlopt save_action_to_opt (int action)
 {
     gretlopt opt = OPT_NONE;
 
     switch (action) {
     case SAVE_DATA:
     case SAVE_DATA_AS:
-    case SAVE_BOOT_DATA: opt = OPT_Z; break;
-    case SAVE_DBDATA:    opt = OPT_D; break;
+    case SAVE_BOOT_DATA: opt = OPT_Z; break; /* apply compression */
     case EXPORT_OCTAVE:  opt = OPT_M; break;
     case EXPORT_R:       opt = OPT_R; break;
     case EXPORT_CSV:     opt = OPT_C; break;
     case EXPORT_DAT:     opt = OPT_G; break; /* PcGive */
     case EXPORT_JM:      opt = OPT_J; break; /* JMulti */
+    case EXPORT_DB:      opt = OPT_D; break; /* native database */
     default: break;
     }
 
     if (action == SAVE_DATA_AS && session_file_is_open()) {
-	opt |= OPT_X; /* "exporting" to GDT */
-    }
-
-    if (p != NULL) {
-	opt |= GPOINTER_TO_INT(p);
+	opt |= OPT_X; /* "exporting" to gdt */
     }
 
     return opt;
@@ -582,7 +574,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     } else if (src == FSEL_DATA_PRN) {
 	filesel_save_prn_buffer((PRN *) data, fname);
     } else if (SAVE_DATA_ACTION(action)) {
-	err = do_store(fname, save_action_to_opt(action, data));
+	err = do_store(fname, save_action_to_opt(action));
     } else if (action == SAVE_GNUPLOT) {
 	save_graph_to_file(data, fname);
     } else if (action == SAVE_GRAPHIC) {

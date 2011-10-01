@@ -7389,8 +7389,15 @@ static int maybe_back_up_datafile (const char *fname)
     return err;
 }
 
-#define DATA_EXPORT(o) (o & (OPT_M | OPT_R | OPT_G | OPT_A | \
-                             OPT_C | OPT_D | OPT_J | OPT_X))
+static int doing_export (gretlopt opt)
+{
+    if (opt & (OPT_M | OPT_R | OPT_G | OPT_C |
+	       OPT_D | OPT_J | OPT_X)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
 
 /* This is called from the file selector when doing a
    data save, and also from the callback from Ctrl-S
@@ -7399,7 +7406,7 @@ static int maybe_back_up_datafile (const char *fname)
 
 int do_store (char *filename, gretlopt opt)
 {
-    gchar *mylist = NULL;
+    int exporting = doing_export(opt);
     int err = 0;
 
     /* If the dataset is sub-sampled, give the user a chance to
@@ -7411,19 +7418,22 @@ int do_store (char *filename, gretlopt opt)
 
     gretl_command_sprintf("store \"%s\"", filename);
 
-    /* This should give NULL unless there's a current selection
-       of series from the apparatus in selector.c. That's OK:
-       implicitly all series will be saved.
-    */
-    mylist = get_selector_storelist();
-    if (mylist != NULL) {
-	gretl_command_strcat(" ");
-	gretl_command_strcat(mylist);
-	g_free(mylist);
+    if (exporting) {
+	/* This should give NULL unless there's a current selection
+	   of series from the apparatus in selector.c. That's OK:
+	   implicitly all series will be saved.
+	*/
+	gchar *mylist = get_selector_storelist();
+
+	if (mylist != NULL) {
+	    gretl_command_strcat(" ");
+	    gretl_command_strcat(mylist);
+	    g_free(mylist);
+	}
     }
 
     if (opt & OPT_X) {
-	; /* inside a session: exporting gdt */
+	; /* inside a session: "exporting" gdt */
     } else if (opt != OPT_NONE) { 
 	/* not a bog-standard native save */
 	gretl_command_strcat(print_flags(opt, STORE));
@@ -7434,6 +7444,7 @@ int do_store (char *filename, gretlopt opt)
     } 
 
     err = check_lib_command();
+
     if (!err && !WRITING_DB(opt)) {
 	/* record */
 	err = lib_cmd_init();
@@ -7459,9 +7470,9 @@ int do_store (char *filename, gretlopt opt)
 	} else {
 	    gui_errmsg(err);
 	} 
-    }   
+    }  
 
-    if (!err && !DATA_EXPORT(opt)) {
+    if (!err && !exporting) {
 	/* record the fact that data have been saved, etc. */
 	mkfilelist(FILE_LIST_DATA, filename);
 	if (dataset_is_subsampled()) {

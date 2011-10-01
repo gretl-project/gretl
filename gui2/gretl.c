@@ -1264,9 +1264,7 @@ GtkActionEntry main_entries[] = {
     { "AppendJMulTi",   NULL, N_("_JMulTi..."), NULL, NULL, G_CALLBACK(open_data) },
 
     { "SaveData",  GTK_STOCK_SAVE, N_("_Save data"), "<control>S", NULL, G_CALLBACK(auto_store) },
-    { "SaveDataAs", GTK_STOCK_SAVE_AS, N_("Save data _as"), NULL, NULL, NULL }, 
-    { "SaveAsGdt", NULL, N_("_Standard format..."), NULL, NULL, G_CALLBACK(fsave_callback) },
-    { "SaveAsDb",  NULL, N_("_Database..."), NULL, NULL, G_CALLBACK(fsave_callback) },
+    { "SaveDataAs", GTK_STOCK_SAVE_AS, N_("Save data _as"), NULL, NULL, G_CALLBACK(fsave_callback) }, 
 
     { "ExportData", NULL, N_("_Export data"), NULL, NULL, NULL },
     { "ExportCSV",    NULL, N_("_CSV..."), NULL, NULL, G_CALLBACK(fsave_callback) },
@@ -1274,6 +1272,7 @@ GtkActionEntry main_entries[] = {
     { "ExportOctave", NULL, N_("_Octave..."), NULL, NULL, G_CALLBACK(fsave_callback) },
     { "ExportJMulTi", NULL, N_("_JMulTi..."), NULL, NULL, G_CALLBACK(fsave_callback) },
     { "ExportPcGive", NULL, N_("_PcGive..."), NULL, NULL, G_CALLBACK(fsave_callback) },
+    { "ExportDb", NULL, N_("_gretl database..."), NULL, NULL, G_CALLBACK(fsave_callback) },
 
     { "MailData", GRETL_STOCK_MAIL, N_("Send To..."), NULL, NULL, G_CALLBACK(email_data) },
     { "NewData", GTK_STOCK_NEW, N_("_New data set"), NULL, NULL, G_CALLBACK(newdata_callback) },

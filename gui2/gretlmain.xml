@@ -34,16 +34,14 @@
 	<menuitem action="AppendJMulTi"/>
       </menu>
       <menuitem action="SaveData"/>
-      <menu action="SaveDataAs">
-	<menuitem action="SaveAsGdt"/>
-	<menuitem action="SaveAsDb"/>
-      </menu>
+      <menuitem action="SaveDataAs"/>
       <menu action="ExportData">
 	<menuitem action="ExportCSV"/>
 	<menuitem action="ExportR"/>
 	<menuitem action="ExportOctave"/>
 	<menuitem action="ExportJMulTi"/>
 	<menuitem action="ExportPcGive"/>
+	<menuitem action="ExportDb"/>
       </menu>
       <menuitem action="MailData"/>
       <menuitem action="NewData"/>

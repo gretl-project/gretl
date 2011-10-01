@@ -198,7 +198,7 @@ void time_series_menu_state (gboolean s)
     }
 
     /* File menu */
-    flip(mdata->ui, "/menubar/File/SaveDataAs/SaveAsDb", DATASET_DB_OK(dataset));
+    flip(mdata->ui, "/menubar/File/ExportData/ExportDb", DATASET_DB_OK(dataset));
 
     /* Plots */
     flip(mdata->ui, "/menubar/View/GraphVars/TSPlot", sx);

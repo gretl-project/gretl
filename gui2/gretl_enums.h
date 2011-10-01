@@ -151,12 +151,12 @@ enum file_ops {
     END_OPEN,        /* marker for end of file open section */
     SAVE_DATA,
     SAVE_DATA_AS,
-    SAVE_DBDATA,
     EXPORT_OCTAVE,
     EXPORT_R,
     EXPORT_CSV,
     EXPORT_DAT,
     EXPORT_JM,
+    EXPORT_DB,
     COPY_CSV,
     END_SAVE_DATA,  /* marker for end of data-saving section */
     SAVE_TEX,
