@@ -38,6 +38,7 @@
 #define SCRIPT_PAGE 998
 #define GFR_PAGE    997
 #define BIB_PAGE    996
+#define EXT_PAGE    995
 
 enum {
     PLAIN_TEXT,
@@ -1032,6 +1033,8 @@ void textview_insert_from_tempfile (windata_t *vwin, PRN *prn)
     }
 }
 
+#define TAGLEN 64
+
 static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter, 
 			 const char *text, gint page, 
 			 const char *indent)
@@ -1039,12 +1042,13 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
     GtkTextTagTable *tab = gtk_text_buffer_get_tag_table(tbuf);
     GtkTextTag *tag;
     gchar *show = NULL;
-    gchar tagname[32];
+    gchar tagname[TAGLEN];
 
     if (page == GUIDE_PAGE) {
 	strcpy(tagname, "tag:guide");
-    } else if (page == SCRIPT_PAGE) {
-	strcpy(tagname, text);
+    } else if (page == SCRIPT_PAGE || page == EXT_PAGE) {
+	*tagname = '\0';
+	strncat(tagname, text, TAGLEN-1);
     } else if (page == BIB_PAGE) {
 	char *p = strrchr(text, ';');
 
@@ -1064,7 +1068,7 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	if (page == GUIDE_PAGE || page == BIB_PAGE) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
 					     "family", "sans", NULL);
-	} else if (page == SCRIPT_PAGE) {
+	} else if (page == SCRIPT_PAGE || page == EXT_PAGE) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
 					     "family", "monospace", NULL);
 	} else if (indent != NULL) {
@@ -1200,6 +1204,25 @@ static int object_get_int (gpointer p, const char *key)
     return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), key));
 }
 
+static void open_external_link (GtkTextTag *tag)
+{
+    gchar *name = NULL;
+
+    g_object_get(G_OBJECT(tag), "name", &name, NULL);
+
+    if (name != NULL) {
+	if (strncmp(name, "http://", 7)) {
+	    gchar *url = g_strdup_printf("http://%s", name);
+
+	    browser_open(url);
+	    g_free(url);
+	} else {
+	    browser_open(name);
+	}
+	g_free(name);
+    }
+}
+
 static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 {
     GSList *tags = NULL, *tagp = NULL;
@@ -1219,6 +1242,8 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 		open_script_link(tag);
 	    } else if (page == BIB_PAGE) {
 		open_bibitem_link(tag, tview);
+	    } else if (page == EXT_PAGE) {
+		open_external_link(tag);
 	    } else {
 		int role = object_get_int(tview, "role");
 
@@ -2638,6 +2663,7 @@ enum {
     INSERT_FIG,
     INSERT_REPL,
     INSERT_LIT,
+    INSERT_URL,
     INSERT_OPT,
     INSERT_ITAL,
     INSERT_SUP,
@@ -2725,6 +2751,8 @@ static int get_instruction_and_string (const char *p, char *str)
 	ins = INSERT_REPL;
     } else if (!strncmp(p, "lit", 3)) {
 	ins = INSERT_LIT;
+    } else if (!strncmp(p, "url", 3)) {
+	ins = INSERT_URL;
     } else if (!strncmp(p, "opt", 3)) {
 	ins = INSERT_OPT;
     } else if (!strncmp(p, "sup", 3)) {
@@ -2821,6 +2849,8 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 		    itarg = function_help_index_from_word(targ);
 		}
 		insert_xlink(tbuf, iter, targ, itarg, indent);
+	    } else if (ins == INSERT_URL) {
+		insert_link(tbuf, iter, targ, EXT_PAGE, indent);
 	    } else if (ins == INSERT_PDFLINK) {
 		insert_link(tbuf, iter, targ, GUIDE_PAGE, indent);
 	    } else if (ins == INSERT_INPLINK) {

@@ -4815,6 +4815,7 @@ void run_octave_script (gchar *buf)
 #else /* some non-Windows functions follow */
 
 # if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 14
+
 static int alt_show (const char *uri)
 {
     GError *err = NULL;
@@ -4829,6 +4830,7 @@ static int alt_show (const char *uri)
 
     return ret;
 }
+
 # endif
 
 int browser_open (const char *url)

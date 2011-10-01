@@ -186,7 +186,6 @@ static char *graph_items[] = {
 
 static char *dataset_items[] = {
     N_("Edit"),
-    N_("Save..."),
     N_("Export as CSV..."),
     N_("Copy as CSV...")
 };
@@ -3015,8 +3014,6 @@ static void data_popup_callback (GtkWidget *widget, gpointer data)
 
     if (!strcmp(item, _("Edit"))) {
 	show_spreadsheet(SHEET_EDIT_DATASET);
-    } else if (!strcmp(item, _("Save..."))) {
-	file_save(mdata, SAVE_DATA);
     } else if (!strcmp(item, _("Export as CSV..."))) {
 	file_save(mdata, EXPORT_CSV);
     } else if (!strcmp(item, _("Copy as CSV..."))) {

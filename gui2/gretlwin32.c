@@ -670,7 +670,9 @@ static int win32_open_arg (const char *arg, char *ext)
 
 		lstrcat(p, " ");
 		lstrcat(p, arg);
-		if (WinExec(key, SW_SHOW) < 32) err = 1;
+		if (WinExec(key, SW_SHOW) < 32) {
+		    err = 1;
+		}
 	    }
 	}
     }

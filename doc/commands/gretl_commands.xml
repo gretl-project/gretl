@@ -3155,14 +3155,34 @@
 	You also have the option of exporting data in the form of a
 	<quote>native</quote> gretl datafile, or (if the data are
 	suitable) exporting to a gretl database. See
-	gretl.sourceforge.net/gretl_data.html for an account of
+	<url>gretl.sourceforge.net/gretl_data.html</url> for an account of
 	gretl databases.
       </para>
       <para>
-	You may also export data in a format suitable for use with GNU
-	R (www.r-project.org), GNU octave
-	(www.gnu.org/software/octave), JMulTi (www.jmulti.de) or
-	PcGive.
+	You may also export data in a format suitable for use with
+	the following programs:
+      </para>
+      <ilist>
+	<li>
+	  <para>GNU R (<url>www.r-project.org</url>)</para>
+	</li>
+	<li>
+	  <para>GNU octave (<url>www.gnu.org/software/octave</url>)
+	  </para>
+	</li>
+	<li>
+	  <para>JMulTi (<url>www.jmulti.de</url>)</para>
+	</li>
+	<li>
+	  <para>PcGive (<url>www.pcgive.com</url>)</para>
+	</li>
+      </ilist>
+      <para>
+	If you wish to export data by copying to the clipboard rather than
+	writing to a file on disk, select the series you want to copy in
+	the main window, right-click, and select <quote>Copy to
+	clibboard</quote>. (Only CSV format is supported in this
+	context.) 
       </para>
     </description>
   </command>

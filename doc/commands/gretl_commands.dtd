@@ -98,7 +98,7 @@
                 lit | emphasis | book | quote | filename | by |
                 func | guideref | cmdref| fncref | tabref | 
                 sub | sup | flag | footnote | refnote | opt |
-                cmd | cite | seelist)*>
+                cmd | cite | url | seelist)*>
 <!ATTLIST para
    context (cli | gui | tex | notex | all) "all"
 >
@@ -202,6 +202,7 @@
 <!ELEMENT opt      (#PCDATA)>
 <!ELEMENT emphasis (#PCDATA)>
 <!ELEMENT book     (#PCDATA)>
+<!ELEMENT url      (#PCDATA)>
 <!ELEMENT quote    (#PCDATA | lit | math)*>
 <!ELEMENT filename (#PCDATA)>
 <!ELEMENT func     (#PCDATA)>

@@ -60,12 +60,10 @@ void menu_exit_check (void)
     }
 }
 
-/* FIXME this needs attention: it's a callback visited if the user is
-   quitting a session and (a) the session is not associated with a
-   file on disk and (b) the dataset has been modified.
-
-   We probably should not offer the option of subsetting the data at
-   this point?
+/* This callback is invoked if the user is quitting a session and (a)
+   the session is not associated with a file on disk (in which case
+   the data-save is automatic if the session is saved) and (b) the
+   dataset has been modified.  
 */
 
 static void save_data_callback (void)

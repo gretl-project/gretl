@@ -452,6 +452,19 @@
   <xsl:text>"</xsl:text>
 </xsl:template>
 
+<xsl:template match="url">
+  <xsl:choose>
+    <xsl:when test="$hlp='gui'">
+      <xsl:text>&lt;@url="</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>&lt;@lit="</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
+  <xsl:apply-templates/>
+  <xsl:text>"&gt;</xsl:text>
+</xsl:template>
+
 <xsl:template match="equation">
   <xsl:if test="(@status='display')">
     <xsl:text>[/PARA]&#xa;&#xa;&#xa;  </xsl:text>
