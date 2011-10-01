@@ -71,6 +71,7 @@
 #define GDT_ACTION(i) (i == SAVE_DATA || \
                        i == SAVE_DATA_AS || \
                        i == SAVE_BOOT_DATA || \
+                       i == EXPORT_GDT || \
                        i == OPEN_DATA || \
                        i == APPEND_DATA)
 
@@ -133,30 +134,6 @@ static struct extmap action_map[] = {
     { OPEN_BARS,         ".txt" },
     { FILE_OP_MAX,       NULL }
 };
-
-static gretlopt save_action_to_opt (int action)
-{
-    gretlopt opt = OPT_NONE;
-
-    switch (action) {
-    case SAVE_DATA:
-    case SAVE_DATA_AS:
-    case SAVE_BOOT_DATA: opt = OPT_Z; break; /* apply compression */
-    case EXPORT_OCTAVE:  opt = OPT_M; break;
-    case EXPORT_R:       opt = OPT_R; break;
-    case EXPORT_CSV:     opt = OPT_C; break;
-    case EXPORT_DAT:     opt = OPT_G; break; /* PcGive */
-    case EXPORT_JM:      opt = OPT_J; break; /* JMulti */
-    case EXPORT_DB:      opt = OPT_D; break; /* native database */
-    default: break;
-    }
-
-    if (action == SAVE_DATA_AS && session_file_is_open()) {
-	opt |= OPT_X; /* "exporting" to gdt */
-    }
-
-    return opt;
-}
 
 static const char *get_extension_for_action (int action, gpointer data)
 {
@@ -352,6 +329,7 @@ static void filesel_save_prn_buffer (PRN *prn, const char *fname)
 static void filesel_open_script (const char *fname, windata_t *vwin)
 {
     if (vwin != NULL) {
+	/* we're called from an existing script editor window */
 	strcpy(tryfile, fname);
 	sourceview_insert_file(vwin, fname);
     } else if (has_suffix(fname, ".R")) {
@@ -557,7 +535,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	return;
     }
 
-    if (EXPORT_ACTION(action, src) || 
+    if (EXPORT_ACTION(action, src) || action == EXPORT_GDT ||
 	(action > END_SAVE_DATA && action < END_SAVE_OTHER)) {
 	/* saving CSV, graphs etc.; check overwrite */
 	if (overwrite_stop(fname)) {
@@ -574,7 +552,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     } else if (src == FSEL_DATA_PRN) {
 	filesel_save_prn_buffer((PRN *) data, fname);
     } else if (SAVE_DATA_ACTION(action)) {
-	err = do_store(fname, save_action_to_opt(action));
+	err = do_store(fname, action);
     } else if (action == SAVE_GNUPLOT) {
 	save_graph_to_file(data, fname);
     } else if (action == SAVE_GRAPHIC) {
@@ -787,13 +765,11 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_filter(filesel, N_("Excel files (*.xlsx)"), "*.xlsx", maxlen);
     } else if (action == OPEN_SCRIPT) {
 	filesel_add_filter(filesel, N_("gretl script files (*.inp)"), "*.inp", maxlen);
-	if (src != FSEL_DATA_FNPKG) {
-	    filesel_add_filter(filesel, N_("GNU R files (*.R)"), "*.R", maxlen);
-	    filesel_add_filter(filesel, N_("gnuplot files (*.plt)"), "*.plt", maxlen);
-	    filesel_add_filter(filesel, N_("GNU Octave files (*.m)"), "*.m", maxlen);
-	    if (ox_support) {
-		filesel_add_filter(filesel, N_("Ox files (*.ox)"), "*.ox", maxlen);
-	    }
+	filesel_add_filter(filesel, N_("GNU R files (*.R)"), "*.R", maxlen);
+	filesel_add_filter(filesel, N_("gnuplot files (*.plt)"), "*.plt", maxlen);
+	filesel_add_filter(filesel, N_("GNU Octave files (*.m)"), "*.m", maxlen);
+	if (ox_support) {
+	    filesel_add_filter(filesel, N_("Ox files (*.ox)"), "*.ox", maxlen);
 	}
     } else if (action == OPEN_LABELS) {
 	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt", maxlen);
@@ -844,7 +820,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
     static char savedir[MAXLEN];
     char startdir[MAXLEN];
     GtkWidget *filesel;
-    GtkFileChooserAction fa;
+    GtkFileChooserAction fsel_action;
     const gchar *okstr;
     int remember = get_keep_folder();
     int max_filter_len = 0;
@@ -859,18 +835,18 @@ static void gtk_file_selector (int action, FselDataSrc src,
     }
 
     if (SET_DIR_ACTION(action)) {
-	fa = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
+	fsel_action = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
 	okstr = GTK_STOCK_OK;
 	remember = 0;
     } else if (action == SET_PROG) {
-	fa = GTK_FILE_CHOOSER_ACTION_OPEN;
+	fsel_action = GTK_FILE_CHOOSER_ACTION_OPEN;
 	okstr = GTK_STOCK_OK;
 	remember = 0;
     } else if (action < END_OPEN) {
-	fa = GTK_FILE_CHOOSER_ACTION_OPEN;
+	fsel_action = GTK_FILE_CHOOSER_ACTION_OPEN;
 	okstr = GTK_STOCK_OPEN;
     } else {
-	fa = GTK_FILE_CHOOSER_ACTION_SAVE;
+	fsel_action = GTK_FILE_CHOOSER_ACTION_SAVE;
 	okstr = GTK_STOCK_SAVE;
 	if (action == SAVE_FUNCTIONS || 
 	    action == SAVE_DATA_PKG ||
@@ -890,10 +866,12 @@ static void gtk_file_selector (int action, FselDataSrc src,
 #endif
 
     if (parent == NULL) {
+	/* by default the file selector is parented by the
+	   gretl main window */
 	parent = mdata->main;
     }
 
-    filesel = gtk_file_chooser_dialog_new(NULL, GTK_WINDOW(parent), fa,
+    filesel = gtk_file_chooser_dialog_new(NULL, GTK_WINDOW(parent), fsel_action,
 					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					  okstr, GTK_RESPONSE_ACCEPT,
 					  NULL);

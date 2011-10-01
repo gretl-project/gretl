@@ -19,11 +19,10 @@
 
 typedef enum {
     FSEL_DATA_NONE = 0,
-    FSEL_DATA_PRN,
-    FSEL_DATA_VWIN,
-    FSEL_DATA_MISC,
-    FSEL_DATA_FNPKG,
-    FSEL_DATA_STATUS
+    FSEL_DATA_PRN,       /* a text save action: data in the form of a PRN */
+    FSEL_DATA_VWIN,      /* action pertaining to a specific viewer window */
+    FSEL_DATA_MISC,      /* the file-selector call carries some misc data */
+    FSEL_DATA_STATUS     /* provides a means of returning action status */
 } FselDataSrc;
 
 void file_selector (int action, FselDataSrc src, gpointer data);

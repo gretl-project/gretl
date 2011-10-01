@@ -275,7 +275,8 @@ static int want_combo (selector *sr)
 	    sr->ci == COINT2 ||
 	    sr->ci == COUNTMOD ||
 	    sr->ci == DURATION || 
-	    sr->ci == IV_GMM);
+	    sr->ci == IV_GMM ||
+	    sr->ci == EXPORT);
 }
 
 static int want_radios (selector *sr)
@@ -306,9 +307,11 @@ static int want_radios (selector *sr)
     return ret;
 }
 
-static void selector_set_blocking (selector *sr)
+static void selector_set_blocking (selector *sr, int modal)
 {
-    gretl_set_window_modal(sr->dlg);
+    if (modal) {
+	gretl_set_window_modal(sr->dlg);
+    }
     sr->blocking = 1;
     gtk_main();
 }
@@ -5399,7 +5402,7 @@ static void build_arma_combo (selector *sr)
 	deflt = 1;
     }
 
-    combo = gretl_opts_combo_full(&arma_opts, deflt, 
+    combo = gretl_opts_combo_full(&arma_opts, deflt, NULL,
 				  G_CALLBACK(arma_estimator_switch),
 				  sr);
     g_object_set_data(G_OBJECT(combo), "selector", sr);
@@ -5477,6 +5480,55 @@ static void build_vecm_combo (selector *sr)
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
 }
 
+#define DSET_DB_OK(d) (d->pd == 1 || (d->structure == TIME_SERIES && \
+				      (d->pd == 4 || d->pd == 12)))
+
+static void build_data_export_combo (selector *sr)
+{
+    GtkWidget *hbox, *label, *combo;
+    static const char *opt_strs[] = {
+	N_("CSV"),
+	N_("gretl datafile (.gdt)"),
+	N_("gretl database (.bin)"),
+	N_("GNU R"),
+	N_("Octave"),
+	N_("JMulTi"),
+	N_("PcGive"),
+	NULL
+    };
+    static gretlopt opts[] = {
+	OPT_C, 
+	OPT_Z, 
+	OPT_D, 
+	OPT_R, 
+	OPT_M,
+	OPT_J,
+	OPT_G
+    };    
+    static combo_opts export_opts;
+    int deflt = 0;
+
+    export_opts.strs = opt_strs;
+    export_opts.vals = opts;
+    export_opts.optp = &sr->opts;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+
+    label = gtk_label_new(_("Select format"));
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+
+    if (DSET_DB_OK(dataset)) {
+	combo = gretl_opts_combo(&export_opts, deflt);
+    } else {
+	int masked[2] = {1, 2};
+	
+	combo = gretl_opts_combo_masked(&export_opts, deflt, masked);
+    }
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
+
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
+}
+
 static void build_selector_radios (selector *sr)
 {
     if (sr->ci == PANEL) {
@@ -5518,6 +5570,8 @@ static void build_selector_combo (selector *sr)
 	build_count_data_popdown(sr);
     } else if (sr->ci == DURATION) {
 	build_duration_popdown(sr);
+    } else if (sr->ci == EXPORT) {
+	build_data_export_combo(sr);
     }
 }
 
@@ -6032,6 +6086,7 @@ static char *get_topstr (int cmdnum)
     case EXPORT_OCTAVE:
     case EXPORT_JM:
     case EXPORT_DAT:
+    case EXPORT:
 	return N_("Select variables to save");
     case COPY_CSV:
 	return N_("Select variables to copy");
@@ -6480,9 +6535,14 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
 	build_selector_switches(sr);
     }
 
+    /* combo/dropdown list? */
+    if (want_combo(sr)) {
+	build_selector_combo(sr);
+    }
+
     if (ci == ELLIPSE) {
 	build_ellipse_spinner(sr);
-    }
+    } 
 
 #if 0 /* not ready */
     /* bootstrap check box? */
@@ -6516,7 +6576,7 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
     }
 
     if (sr->ci == DEFINE_MATRIX) {
-	selector_set_blocking(sr);
+	selector_set_blocking(sr, 1);
     }
 
     return sr;
@@ -6627,14 +6687,52 @@ static int pkg_add_remove_callback (selector *sr)
     return 0;
 }
 
-static int data_save_selection_callback (selector *sr)
+static int functions_selected_callback (selector *sr)
+{
+    if ((sr->cmdlist == NULL || *sr->cmdlist == '\0') && sr->n_left == 0) {
+	/* nothing selected */
+	return 0;
+    }
+
+    if (sr->cmdlist != NULL) {
+	set_selector_storelist(sr->cmdlist);
+    }
+
+    gtk_widget_destroy(sr->dlg);
+    edit_new_function_package();
+
+    return 0;
+}
+
+static int data_export_selection_callback (selector *sr)
 {
     gpointer data = NULL;
     int ci = sr->ci;
 
     if ((sr->cmdlist == NULL || *sr->cmdlist == '\0') && sr->n_left == 0) {
-	/* nothing selected */
-	return 0;
+	warnbox(_("No variables are selected"));
+	return 1;
+    }
+
+    if (ci == EXPORT) {
+	/* set the specific export format based on the
+	   option from the series selector
+	*/
+	if (sr->opts & OPT_C) {
+	    ci = EXPORT_CSV;
+	} else if (sr->opts & OPT_R) {
+	    ci = EXPORT_R;
+	} else if (sr->opts & OPT_M) {
+	    ci = EXPORT_OCTAVE;
+	} else if (sr->opts & OPT_J) {
+	    ci = EXPORT_JM;
+	} else if (sr->opts & OPT_G) {
+	    ci = EXPORT_DAT;
+	} else if (sr->opts & OPT_D) {
+	    ci = EXPORT_DB;
+	} else {
+	    ci = EXPORT_GDT;
+	}
     }
 
     if (sr->cmdlist != NULL) {
@@ -6656,35 +6754,47 @@ static int data_save_selection_callback (selector *sr)
 	}
     }
 
-    if (ci == SAVE_FUNCTIONS) {
-	edit_new_function_package();
-    } else if (ci != COPY_CSV) {
+    if (ci != COPY_CSV) {
 	file_selector(ci, FSEL_DATA_MISC, data);
     }
 
     return 0;
 }
 
-void data_save_selection_wrapper (int file_ci)
+void data_export_selection_wrapper (int file_ci)
 {
-    selector *sr = NULL;
+    selector *sr;
 
     set_selector_storelist(NULL);
 
-    if (file_ci == SAVE_FUNCTIONS) {
-	if (no_user_functions_check()) {
-	    return;
-	}
-	sr = selection_dialog(_("Save functions"), 
-			      data_save_selection_callback, file_ci);
-    } else {
-	sr = simple_selection((file_ci == COPY_CSV)? 
-			      _("Copy data") : _("Save data"), 
-			      data_save_selection_callback, file_ci, NULL);
-    }
+    sr = simple_selection((file_ci == COPY_CSV)? 
+			  _("Copy data") : _("Export data"), 
+			  data_export_selection_callback, 
+			  file_ci, NULL);
 
     if (sr != NULL) {
-	selector_set_blocking(sr);
+	selector_set_blocking(sr, 0);
+    }
+}
+
+void functions_selection_wrapper (void)
+{
+    int err;
+
+    set_selector_storelist(NULL);
+
+    err = no_user_functions_check();
+
+    if (!err) {
+	selector *sr;
+
+	sr = selection_dialog(_("Save functions"), 
+			      functions_selected_callback, 
+			      SAVE_FUNCTIONS);
+
+	if (sr != NULL) {
+	    selector_set_blocking(sr, 1);
+	}
     }
 }
 
@@ -6760,7 +6870,7 @@ void add_remove_functions_dialog (char **names1, int n1,
 	    }
 	}
 	
-	selector_set_blocking(sr);
+	selector_set_blocking(sr, 1);
     }    
 }
 

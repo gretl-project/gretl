@@ -935,14 +935,14 @@ void set_path_callback (char *setvar, char *setting)
 
 static void browse_button_callback (GtkWidget *w, RCVAR *rc)
 {
-    GtkWidget *top = g_object_get_data(G_OBJECT(w), "parent");
+    GtkWidget *parent = g_object_get_data(G_OBJECT(w), "parent");
     int code = SET_PROG;
 
     if (strstr(rc->description, "directory") != NULL) {
 	code = SET_DIR;
     }
 
-    file_selector_with_parent(code, FSEL_DATA_MISC, rc->var, top);
+    file_selector_with_parent(code, FSEL_DATA_MISC, rc->var, parent);
 }
 
 static GtkWidget *make_path_browse_button (RCVAR *rc, GtkWidget *w)

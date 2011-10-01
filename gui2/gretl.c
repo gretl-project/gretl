@@ -183,15 +183,14 @@ static void options_dialog_callback (void)
     options_dialog(0, NULL, mdata->main);
 }
 
-void open_code_callback (GtkAction *action)
+static void open_script_callback (void)
 {
-    const gchar *s = gtk_action_get_name(action);
+    file_selector(OPEN_SCRIPT, FSEL_DATA_NONE, NULL);
+}
 
-    if (!strcmp(s, "OpenScript")) {
-	file_selector(OPEN_SCRIPT, FSEL_DATA_NONE, NULL);
-    } else if (!strcmp(s, "OpenSession")) {
-	file_selector(OPEN_SESSION, FSEL_DATA_NONE, NULL);
-    }
+static void open_session_callback (void)
+{
+    file_selector(OPEN_SESSION, FSEL_DATA_NONE, NULL);
 }
 
 static void edit_package_callback (GtkAction *action, gpointer p)
@@ -1260,26 +1259,18 @@ GtkActionEntry main_entries[] = {
     { "AppendDTA",      NULL, N_("_Stata..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendSAV",      NULL, N_("_SPSS..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendSAS",      NULL, N_("_SAS (xport)..."), NULL, NULL, G_CALLBACK(open_data) },
-
     { "AppendJMulTi",   NULL, N_("_JMulTi..."), NULL, NULL, G_CALLBACK(open_data) },
 
     { "SaveData",  GTK_STOCK_SAVE, N_("_Save data"), "<control>S", NULL, G_CALLBACK(auto_store) },
-    { "SaveDataAs", GTK_STOCK_SAVE_AS, N_("Save data _as"), NULL, NULL, G_CALLBACK(fsave_callback) }, 
-
-    { "ExportData", NULL, N_("_Export data"), NULL, NULL, NULL },
-    { "ExportCSV",    NULL, N_("_CSV..."), NULL, NULL, G_CALLBACK(fsave_callback) },
-    { "ExportR",      NULL, N_("GNU _R..."), NULL, NULL, G_CALLBACK(fsave_callback) },
-    { "ExportOctave", NULL, N_("_Octave..."), NULL, NULL, G_CALLBACK(fsave_callback) },
-    { "ExportJMulTi", NULL, N_("_JMulTi..."), NULL, NULL, G_CALLBACK(fsave_callback) },
-    { "ExportPcGive", NULL, N_("_PcGive..."), NULL, NULL, G_CALLBACK(fsave_callback) },
-    { "ExportDb", NULL, N_("_gretl database..."), NULL, NULL, G_CALLBACK(fsave_callback) },
+    { "SaveDataAs", GTK_STOCK_SAVE_AS, N_("Save data _as..."), NULL, NULL, G_CALLBACK(fsave_callback) }, 
+    { "ExportData", NULL, N_("_Export data..."), NULL, NULL, G_CALLBACK(fsave_callback) },
 
     { "MailData", GRETL_STOCK_MAIL, N_("Send To..."), NULL, NULL, G_CALLBACK(email_data) },
     { "NewData", GTK_STOCK_NEW, N_("_New data set"), NULL, NULL, G_CALLBACK(newdata_callback) },
     { "ClearData", GTK_STOCK_CLEAR, N_("C_lear data set"), NULL, NULL, G_CALLBACK(verify_clear_data) },
     { "WorkingDir", NULL, N_("_Working directory..."), NULL, NULL, G_CALLBACK(working_dir_dialog) },
     { "ScriptFiles", NULL, N_("_Script files"), NULL, NULL, NULL },
-    { "OpenScript", GTK_STOCK_OPEN, N_("_User file..."), "", NULL, G_CALLBACK(open_code_callback) },
+    { "OpenScript", GTK_STOCK_OPEN, N_("_User file..."), "", NULL, G_CALLBACK(open_script_callback) },
     { "DisplayScripts", GTK_STOCK_OPEN, N_("_Practice file..."), "", NULL, G_CALLBACK(show_files) },
     { "NewScript", GTK_STOCK_NEW, N_("_New script"), "", NULL, NULL },
     { "GretlScript", NULL, N_("gretl script"), NULL, NULL, G_CALLBACK(new_script_callback) },
@@ -1289,7 +1280,7 @@ GtkActionEntry main_entries[] = {
     { "OxScript", NULL, N_("Ox program"), NULL, NULL, G_CALLBACK(new_script_callback) },
 
     { "SessionFiles", NULL, N_("_Session files"), NULL, NULL, NULL },
-    { "OpenSession", GTK_STOCK_OPEN, N_("_Open session..."), "", NULL, G_CALLBACK(open_code_callback) },
+    { "OpenSession", GTK_STOCK_OPEN, N_("_Open session..."), "", NULL, G_CALLBACK(open_session_callback) },
     { "SaveSession", GTK_STOCK_SAVE, N_("_Save session"), "", NULL, 
       G_CALLBACK(save_session_callback) },
     { "SaveSessionAs", GTK_STOCK_SAVE_AS, N_("Save session _as..."), NULL, NULL, 
@@ -2059,22 +2050,12 @@ static void auto_store (void)
 	/* the data file is embedded in a session file */
 	save_session_dataset();
     } else {
-	/* by default, use gzip compression */
-	gretlopt oflag = OPT_Z;
-
-	/* but if there's already a datafile, and it's not gzipped, then
-	   arrange for the new file to be uncompressed too
-	*/
-	if (*datafile != '\0' && !is_gzipped(datafile)) {
-	    oflag = OPT_NONE;
-	}
-
 	/* ensure there's no stale selection around */
 	set_selector_storelist(NULL);
 
 	if ((data_status & USER_DATA) && has_suffix(datafile, ".gdt")) {
 	    /* bypass filename selection */
-	    do_store(datafile, oflag);
+	    do_store(datafile, SAVE_DATA);
 	} else {
 	    file_selector(SAVE_DATA, FSEL_DATA_NONE, NULL);
 	}

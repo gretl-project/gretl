@@ -147,7 +147,11 @@ GList *get_list_of_listnames (void);
 
 GtkWidget *gretl_opts_combo (combo_opts *opts, int deflt);
 
+GtkWidget *gretl_opts_combo_masked (combo_opts *opts, int deflt,
+				    const int *masked);
+
 GtkWidget *gretl_opts_combo_full (combo_opts *opts, int deflt, 
+				  const int *masked,
 				  GCallback callback,
 				  gpointer calldata);
 

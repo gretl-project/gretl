@@ -225,14 +225,12 @@ void file_save (windata_t *vwin, int ci)
     case SAVE_DATA_AS:
 	file_selector(ci, FSEL_DATA_VWIN, vwin);
 	break;
-    case SAVE_FUNCTIONS:	
     case EXPORT_CSV:
-    case EXPORT_R:
-    case EXPORT_OCTAVE:
-    case EXPORT_DAT:
-    case EXPORT_JM:
-    case EXPORT_DB:
-	data_save_selection_wrapper(ci);
+    case EXPORT:
+	data_export_selection_wrapper(ci);
+	break;
+    case SAVE_FUNCTIONS:
+	functions_selection_wrapper();
 	break;
     case SAVE_TEX:
     case SAVE_TEXT:
@@ -247,18 +245,8 @@ static int fsave_code (const gchar *s)
 {
     if (!strcmp(s, "SaveDataAs"))
 	return SAVE_DATA_AS;
-    if (!strcmp(s, "ExportDb"))
-	return EXPORT_DB;
-    if (!strcmp(s, "ExportCSV"))
-	return EXPORT_CSV;
-    if (!strcmp(s, "ExportR"))
-	return EXPORT_R;
-    if (!strcmp(s, "ExportOctave"))
-	return EXPORT_OCTAVE;
-    if (!strcmp(s, "ExportPcGive"))
-	return EXPORT_DAT;
-    if (!strcmp(s, "ExportJMulTi"))
-	return EXPORT_JM;
+    if (!strcmp(s, "ExportData"))
+	return EXPORT;
     if (!strcmp(s, "NewGfn"))
 	return SAVE_FUNCTIONS;
 

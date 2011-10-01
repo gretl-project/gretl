@@ -968,6 +968,7 @@ static void combo_opt_changed (GtkComboBox *box, combo_opts *opts)
 }
 
 GtkWidget *gretl_opts_combo_full (combo_opts *opts, int deflt, 
+				  const int *masked, 
 				  GCallback callback,
 				  gpointer calldata)
 {
@@ -978,7 +979,9 @@ GtkWidget *gretl_opts_combo_full (combo_opts *opts, int deflt,
 
     combo = gtk_combo_box_text_new();
     for (i=0; opts->strs[i] != NULL; i++) {
-	combo_box_append_text(combo, _(opts->strs[i]));
+	if (!in_gretl_list(masked, i)) {
+	    combo_box_append_text(combo, _(opts->strs[i]));
+	}
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), deflt);
     g_signal_connect(G_OBJECT(combo), "changed",
@@ -993,7 +996,14 @@ GtkWidget *gretl_opts_combo_full (combo_opts *opts, int deflt,
 
 GtkWidget *gretl_opts_combo (combo_opts *opts, int deflt)
 {
-    return gretl_opts_combo_full(opts, deflt, NULL, NULL);
+    return gretl_opts_combo_full(opts, deflt, NULL, NULL, NULL);
+}
+
+GtkWidget *gretl_opts_combo_masked (combo_opts *opts, int deflt,
+				    const int *masked)
+{
+    return gretl_opts_combo_full(opts, deflt, masked,
+				 NULL, NULL);
 }
 
 void depopulate_combo_box (GtkComboBox *box)

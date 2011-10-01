@@ -173,14 +173,9 @@ void window_list_state (gboolean s)
 
 #define EXPANSIBLE(d) (d->structure == TIME_SERIES && (d->pd == 1 || d->pd == 4))
 
-#define DATASET_DB_OK(d) (d->pd == 1 || (d->structure == TIME_SERIES && \
-                                         (d->pd == 4 || d->pd == 12)))
-
 #define extended_ts(d) ((d)->structure == TIME_SERIES || \
 			(d)->structure == SPECIAL_TIME_SERIES || \
 			(d)->structure == STACKED_TIME_SERIES)
-
-
 
 void time_series_menu_state (gboolean s)
 {
@@ -196,9 +191,6 @@ void time_series_menu_state (gboolean s)
     if (panel) {
 	ur = dataset->pd > 5;
     }
-
-    /* File menu */
-    flip(mdata->ui, "/menubar/File/ExportData/ExportDb", DATASET_DB_OK(dataset));
 
     /* Plots */
     flip(mdata->ui, "/menubar/View/GraphVars/TSPlot", sx);

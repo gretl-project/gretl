@@ -60,9 +60,23 @@ void menu_exit_check (void)
     }
 }
 
+/* FIXME this needs attention: it's a callback visited if the user is
+   quitting a session and (a) the session is not associated with a
+   file on disk and (b) the dataset has been modified.
+
+   We probably should not offer the option of subsetting the data at
+   this point.
+
+   In addition, we need to see if the user has write permission
+   for the current data -- or maybe that's already handled
+   downstream??
+*/
+
 static void save_data_callback (void)
 {
-    data_save_selection_wrapper(SAVE_DATA);
+    fprintf(stderr, "save data callback...\n");
+    /* FIXME save all data? */
+    data_export_selection_wrapper(SAVE_DATA);
     if (data_status & MODIFIED_DATA) {
 	data_status ^= MODIFIED_DATA;
     }
@@ -281,7 +295,7 @@ gboolean exit_check (void)
 	if (resp == GRETL_YES) {
 	    save_data_callback();
 	} else if (resp == GRETL_CANCEL) {
-	    /* canceled exit: block right now */
+	    /* the user canceled exit: block further processing */
 	    return TRUE;
 	} 
     } 

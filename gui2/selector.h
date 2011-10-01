@@ -44,7 +44,9 @@ void selector_from_model (void *ptr, int ci);
 
 char *main_window_selection_as_string (void);
 
-void data_save_selection_wrapper (int file_code);
+void data_export_selection_wrapper (int file_code);
+
+void functions_selection_wrapper (void);
 
 void add_remove_functions_dialog (char **pubnames, int npub,
 				  char **privnames, int npriv,

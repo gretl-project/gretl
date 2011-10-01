@@ -7389,14 +7389,81 @@ static int maybe_back_up_datafile (const char *fname)
     return err;
 }
 
-static int doing_export (gretlopt opt)
+/* By default we apply gzip compression when saving a datafile in
+   native gdt format, but if there's an existing file of the same name
+   and it's uncompressed then we arrange for the new file to be
+   uncompressed too.  
+*/
+
+static int should_compress_data (const char *fname)
 {
-    if (opt & (OPT_M | OPT_R | OPT_G | OPT_C |
-	       OPT_D | OPT_J | OPT_X)) {
-	return 1;
-    } else {
-	return 0;
+    FILE *fp = gretl_fopen(fname, "r");
+    int zipit = 1;
+
+    if (fp != NULL) {
+	fclose(fp);
+	if (!is_gzipped(fname)) {
+	    zipit = 0;
+	}
     }
+
+    return zipit;
+}
+
+/* Note that in this context "exporting" means that we're saving
+   a file that is not necessarily synced with the current dataset
+   in memory (it may contain a subset of the currently defined
+   series). The "export" may or may not be in a foreign data
+   format.
+*/
+
+static gretlopt store_action_to_opt (const char *fname, int action,
+				     int *exporting)
+{
+    gretlopt opt = OPT_NONE;
+
+    *exporting = 1;
+
+    switch (action) {
+    case SAVE_DATA:
+	*exporting = 0;
+	break;
+    case EXPORT_OCTAVE:  
+	opt = OPT_M; 
+	break;
+    case EXPORT_R:
+	opt = OPT_R; 
+	break;
+    case EXPORT_CSV:
+	opt = OPT_C; 
+	break;
+    case EXPORT_DAT:
+	opt = OPT_G; /* PcGive */
+	break;
+    case EXPORT_JM:
+	opt = OPT_J; /* JMulti */
+	break;
+    case EXPORT_DB:
+	opt = OPT_D; /* gretl database */
+	break;
+    case EXPORT_GDT:
+	opt = OPT_X; 
+	break;
+    default: break;
+    }
+
+    if (action == SAVE_DATA || action == SAVE_DATA_AS ||
+	action == SAVE_BOOT_DATA || action == EXPORT_GDT) {
+	if (should_compress_data(fname)) {
+	    opt = OPT_Z;
+	}
+    }    
+
+    if (action == SAVE_DATA_AS && session_file_is_open()) {
+	opt |= OPT_X; /* "exporting" to gdt (FIXME?) */
+    }
+
+    return opt;
 }
 
 /* This is called from the file selector when doing a
@@ -7404,9 +7471,10 @@ static int doing_export (gretlopt opt)
    in the main gretl window.
 */
 
-int do_store (char *filename, gretlopt opt)
+int do_store (char *filename, int action)
 {
-    int exporting = doing_export(opt);
+    gretlopt opt = OPT_NONE;
+    int exporting = 0;
     int err = 0;
 
     /* If the dataset is sub-sampled, give the user a chance to
@@ -7414,6 +7482,15 @@ int do_store (char *filename, gretlopt opt)
     */
     if (maybe_restore_full_data(SAVE_DATA)) {
 	return 0; /* canceled */
+    }
+
+    opt = store_action_to_opt(filename, action, &exporting);
+
+    if (action == SAVE_DATA || action == SAVE_DATA_AS ||
+	action == SAVE_BOOT_DATA) {
+	if (should_compress_data(filename)) {
+	    opt = OPT_Z;
+	}
     }
 
     gretl_command_sprintf("store \"%s\"", filename);

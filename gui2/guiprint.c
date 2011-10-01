@@ -1908,7 +1908,7 @@ int csv_to_clipboard (void)
     gchar *liststr;
     int cancel, err = 0;
 
-    data_save_selection_wrapper(COPY_CSV);
+    data_export_selection_wrapper(COPY_CSV);
     liststr = get_selector_storelist();
 
     if (liststr != NULL) {

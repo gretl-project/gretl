@@ -170,7 +170,7 @@ void gretl_stock_icons_init (void)
 
 /* callbacks for viewer window toolbar */
 
-void save_as_callback (GtkWidget *w, windata_t *vwin)
+static void save_as_callback (GtkWidget *w, windata_t *vwin)
 {
     guint u = 0;
 
@@ -228,8 +228,15 @@ static void mail_script_callback (GtkWidget *w, windata_t *vwin)
     send_file(vwin->fname);
 }
 
+/* callback for the "Open" icon in a script editing window,
+   which enables the user to switch to a different script
+*/
+
 static void file_open_callback (GtkWidget *w, windata_t *vwin)
 {
+    /* don't proceed unconditionally if there's unsaved
+       text in the window 
+    */
     if (query_save_text(NULL, NULL, vwin)) {
 	return;
     }

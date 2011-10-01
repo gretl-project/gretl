@@ -35,14 +35,7 @@
       </menu>
       <menuitem action="SaveData"/>
       <menuitem action="SaveDataAs"/>
-      <menu action="ExportData">
-	<menuitem action="ExportCSV"/>
-	<menuitem action="ExportR"/>
-	<menuitem action="ExportOctave"/>
-	<menuitem action="ExportJMulTi"/>
-	<menuitem action="ExportPcGive"/>
-	<menuitem action="ExportDb"/>
-      </menu>
+      <menuitem action="ExportData"/>
       <menuitem action="MailData"/>
       <menuitem action="NewData"/>
       <menuitem action="ClearData"/>
