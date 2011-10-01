@@ -7412,7 +7412,7 @@ static int should_compress_data (const char *fname)
 
 /* Note that in this context "exporting" means that we're saving
    a file that is not necessarily synced with the current dataset
-   in memory (it may contain a subset of the currently defined
+   in memory (e.g. it may contain a subset of the currently defined
    series). The "export" may or may not be in a foreign data
    format.
 */
