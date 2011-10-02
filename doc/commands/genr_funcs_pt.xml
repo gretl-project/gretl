@@ -364,10 +364,10 @@
     <function name="$llt" section="access" output="series">
       <description>
 	<para>
-	  For selected modelos estimado via Maximum Likelihood,
-	  retorna a series de per-observation log-likelihood
-	  values. At present this is supported only for binary logit
-	  e probit, tobit e heckit.
+	  Para certos modelos estimados por Máxima Verosimilhança,
+	  retorna uma série de valores de log-verosimilhança por
+	  observação. Presentemente isto é apenas possível para
+	  logit binário, probit, tobit e heckit.
 	</para>
       </description>
     </function>
@@ -375,8 +375,8 @@
     <function name="$lnl" section="access" output="scalar">
       <description>
 	<para>
-	  Retorna o log-likelihood para last estimado modelo (where
-	  applicable).
+	  Retorna o log-verosimilhança para último modelo estimado
+          (quando aplicável).
 	</para>
       </description>
     </function>
@@ -384,11 +384,11 @@
     <function name="$mnlprobs" section="access" output="matrix">
       <description>
 	<para>
-	  Following estimation de a multinomial logit modelo (only),
-	  retrieves a matriz holding a estimado probabilities
-	  de each possible ortcome at each observation in a modelo's
-	  sample range. Each row represents an observation and
-	  each coluna an ortcome. 
+	  Deve seguir-se à estimação de um modelo logit multinomial
+	  (apenas), obtém uma matriz que contém as probabilidades de 
+	  cada possível resultado em cada observação no intervalo da
+	  amostra do modelo. Cada linha representa uma observação e
+	  cada coluna um resultado. 
 	</para>
       </description>
     </function>
@@ -396,8 +396,7 @@
     <function name="$ncoeff" section="access" output="scalar">
       <description>
 	<para>
-	  Retorna o total number de coeficientes estimado in a last
-	  modelo.
+	  Retorna o número total de coeficientes estimados no último modelo.
 	</para>
       </description>
     </function>
@@ -405,8 +404,7 @@
     <function name="$nobs" section="access" targ="dnobs" output="scalar">
       <description>
 	<para>
-	  Retorna o number de observations in a currently selected
-	  sample.
+	  Retorna o número de observações na amostra presentemente seleccionada.
 	</para>
       </description>
     </function>
@@ -414,8 +412,8 @@
     <function name="$nvars" section="access" output="scalar">
       <description>
 	<para>
-	  Retorna o number de variáveis in a conjunto de dados (including a
-	  constant).
+	  Retorna o número de variáveis no conjunto de dados (incluindo a
+	  constante).
 	</para>
       </description>
     </function>
@@ -423,9 +421,9 @@
     <function name="$pd" section="access" output="scalar">
       <description>
 	<para>
-	  Retorna o frequência ou periodicity de a data (e.g. 4 for
-	  quarterly data).  In a case de painel data o valor retornado
-	  is a série temporal length.
+	  Retorna a frequência ou periodicidade dos dados (por exemplo,
+	  4 para dados trimestrais). No caso de dados de painel, o valor
+          retornado é o comprimento da série temporal.
 	</para>
       </description>
     </function>
@@ -433,17 +431,17 @@
     <function name="$pvalue" section="access" targ="dpvalue" output="scalar-or-matrix">
       <description>
 	<para>
-	  Retorna o valor p de a test estatística that was generated
-	  by a last explicit hypothesis-testing command, if any
-	  (e.g.  <lit>chow</lit>).  Consultar <guideref
-	  targ="sec:genr-internal"/> for details.
+	  Retorna o valor p da estatística de teste que foi determinada
+	  pelo último comando com testes de hipóteses explícito (por
+	  exemplo, <lit>chow</lit>). Consultar <guideref
+	  targ="sec:genr-internal"/> para detalhes.
 	</para>
 	<para>
-	  In most cases a return valor is um escalar but sometimes it
-	  é uma matriz (por exemplo, a trace e lambda-max valor ps
-	  from a Johansen cointegração test); in that case a
-	  values in a matriz are laid ort in a same pattern as a
-	  printed results.
+	  Na maior parte dos casos, o valor retornado é um escalar, mas 
+	  por vezes é uma matriz (por exemplo, um traço e o max-lambda,
+	  ou valores p de um teste de cointegração de Johansen); nesse 
+	  caso os valores na matriz estão dispostos de igual modo como
+	  nos resultados escritos.
 	</para>
 	<para>
 	  <seelist>
@@ -459,10 +457,10 @@
       </fnargs>
       <description>
 	<para>
-	  Withort arguments, retorna a first-order autoregressive
-	  coefficient para residuals de a last modelo. After
-	  estimating a modelo via a <lit>ar</lit> command, a syntax
-	  <lit>$rho(n)</lit> retorna a corresponding estimate of
+	  Sem argumentos, retorna o coeficiente autoregressivo de
+	  primeira ordem para os resíduos do último modelo. Após se
+	  ter estimado um modelo com o comando <lit>ar</lit>, a sintaxe
+	  <lit>$rho(n)</lit> retorna a estimativa correspondente de
 	  &rgr;(<math>n</math>).
 	</para>
       </description>
@@ -471,8 +469,8 @@
     <function name="$rsq" section="access" output="scalar">
       <description>
 	<para>
-	  Retorna o unadjusted <math>R</math><sup>2</sup> from a
-	  last estimado modelo, se disponível.
+	  Retorna o <math>R</math><sup>2</sup> não ajustado do 
+	  último modelo estimado, se disponível.
 	</para>
       </description>
     </function>
@@ -480,15 +478,16 @@
     <function name="$sample" section="access" output="series">
       <description>
 	<para>
-	  Tem que ser acedido após a estimação de single-equação modelo.  Retorna a dummy
-	  series with valor 1 for observations used in estimation, 0 for
-	  observations within a currently defined sample range but not used
-	  (presumably because de missing values), e NA for observations
-	  ortside de a current range.
+	  Tem que ser acedido após a estimação de um modelo com uma única
+	  equação. Retorna uma série auxiliar com valores 1 para observações
+	  utilizadas na estimação, 0 para observações dentro do intervalo 
+	  amostral corrente mas não utilizadas (eventualmente por causa de 
+	  valores omissos), e NA para observações fora do intervalo amostral
+	  corrente.
 	</para>
 	<para>
-	  If yor wish to compute estatísticas based on a sample that was
-	  used para given modelo, yor can do, por exemplo: 
+	  Se você desejar calcular estatísticas baseadas na amostra que foi 
+	  utilizada para um dado modelo, você pode fazer, por exemplo: 
 	</para>
 	<code>
 	  ols y 0 xlist
@@ -501,8 +500,8 @@
     <function name="$sargan" section="access" output="rvec">
       <description>
 	<para>
-	  Tem que ser acedido a seguir a<lit>tsls</lit> command. Retorna a <by r="1"
-	  c="3"/> vector, contendo o valor de a Sargan
+	  Tem que ser acedido a seguir a um comando <lit>tsls</lit>.
+	  Retorna um  vector <by r="1" c="3"/>, contendo o valor do Sargan
 	  over-identification test estatística, a corresponding
 	  graus de liberdade e valor p, por essa ordem.
 	</para>
@@ -512,12 +511,12 @@
     <function name="$sigma" section="access" output="scalar-or-matrix">
       <description>
 	<para>
-	  Requires that a modelo has been estimado.  Se o last modelo was
-	  a single equação, retorna a (scalar) Standard Error de a
-	  Regression (or in other words, a standard deviation de a
-	  residuals, with an appropriate graus de liberdade correction).
-	  Se o last modelo was um sistema de equações, retorna a
-	  cross-equação covariance matriz de a residuals.
+	  Requer que tenha sido estimado um modelo. Se o último modelo
+	  era de equação única, retorna o (escalar) Erro Padrão da 
+	  Regressão (ou por outras palavras, o desvio padrão dos 
+	  resíduos, com a adequada correção de graus de liberdade).
+	  Se o último modelo era um sistema de equações, retorna a
+	  equação-cruzada da matriz de covariância dos resíduos.
 	</para>
       </description>
     </function>
@@ -529,18 +528,18 @@
       <description>
 	<para>
 	  Sem argumentos, <lit>$stderr</lit> retorna um vector coluna
-	  contendo o standard erro de a coeficientes para last
-	  modelo.  With a optional string argument it retorna um escalar,
-	  designadamente o standard erro de a parameter named
+	  contendo o erro padrão dos coeficientes para o último 
+	  modelo. Com o argumento opcional de texto, retorna um escalar,
+	  designadamente o erro padrão do parâmetro com o nome 
 	  <argname>s</argname>.
 	</para>
 	<para>
 	  Se o <quote>modelo</quote> em questão é realmente um sistema,
-	  o resultado depende das características do sistema: for
+	  o resultado depende das características do sistema: para 
 	  VARs e VECMs o valor retornado é uma matriz com uma coluna
-	  por equação, senão é um vector coluna contendo o
-	  coeficientes para a primeira equação followed by those from a
-	  second equação, e so on.
+	  por equação, senão é um vector coluna contendo os 
+	  coeficientes para a primeira equação seguidos pelos da 
+	  segunda equação, e por aí adiante.
 	</para>
 	<para>
 	  <seelist>
@@ -554,12 +553,12 @@
     <function name="$stopwatch" section="access" output="scalar">
       <description>
 	<para>
-	  Must be preceded by <lit>set stopwatch</lit>, which activates a
-	  measurement de CPU time.  The first use de this accessor yields a
-	  seconds de CPU time that have elapsed since a <lit>set
-	    stopwatch</lit> command.  At each access a clock is reset, so
-	  subsequent uses de <lit>$stopwatch</lit> yield a seconds de CPU
-	  time since a previors access.
+	  Tem que ser precedido por <lit>set stopwatch</lit>, o que activa a
+	  medição do tempo de CPU.  O primeiro uso deste acessor contém os 
+	  segundos de tempo de CPU que passaram desde o comando <lit>set
+	    stopwatch</lit>.  Em cada acesso o relógio é reinicializado,
+	  por isso as chamadas subsequentes de <lit>$stopwatch</lit> obtêm 
+	  os segundos de tempo de CPU desde o último acesso.
 	</para>
       </description>
     </function>
@@ -567,10 +566,10 @@
     <function name="$sysA" section="access" output="matrix">
       <description>
 	<para>
-	  Tem que ser acedido após a estimação de simultaneors equações sistema.
-	  Retorna o matriz de coeficientes on a lagged endogenors
-	  variáveis, if any, in a structural form de a sistema.  Consultar
-	  a <cmdref targ="sistema"/> command.
+	  Tem que ser acedido após a estimação simultânea de equações de sistema.
+	  Retorna a matriz de coeficientes das variáveis endógenas desfasadas, se
+	  existirem, numa forma estrutural de sistema.  Consultar o comando 
+	 <cmdref targ="system"/>.
 	</para>
       </description>
     </function>
@@ -578,10 +577,10 @@
     <function name="$sysB" section="access" output="matrix">
       <description>
 	<para>
-	  Tem que ser acedido após a estimação de simultaneors equações sistema.
-	  Retorna o matriz de coeficientes on a exogenors variáveis in
-	  a structural form de a sistema.  Consultar a <cmdref
-	  targ="sistema"/> command.
+	  Tem que ser acedido após a estimação simultânea de equações de sistema.
+	  Retorna a matriz de coeficientes das variáveis exógenas numa forma 
+	  estrutural de sistema.  Consultar o comando 
+	 <cmdref targ="system"/>.
 	</para>
       </description>
     </function>
@@ -589,10 +588,9 @@
     <function name="$sysGamma" section="access" output="matrix">
       <description>
 	<para>
-	  Tem que ser acedido após a estimação de simultaneors equações sistema.
-	  Retorna o matriz de coeficientes on a contemporaneors
-	  endogenors variáveis in a structural form de a sistema.
-	  Consultar a <cmdref targ="sistema"/> command.
+	  Tem que ser acedido após a estimação simultânea de equações de sistema.
+	  Retorna a matriz de coeficientes das variáveis endógenas contemporâneas
+	  numa forma estrutural de sistema.  Consultar o comando <cmdref targ="system"/>.
 	</para>
       </description>
     </function>
@@ -600,8 +598,8 @@
     <function name="$T" section="access" output="scalar">
       <description>
 	<para>
-	  Retorna o number de observations used in estimating a last
-	  modelo.
+	  Retorna o número de observações utilizadas durante a estimação
+	  do último modelo.
 	</para>
       </description>
     </function>
@@ -609,8 +607,8 @@
     <function name="$t1" section="access" output="scalar">
       <description>
 	<para>
-	  Retorna o 1-based index de a first observation in a currently
-	  selected sample.
+	  Retorna o índice de base 1 da primeira observação na amostra
+	  correntemente seleccionada.
 	</para>
       </description>
     </function>
@@ -618,8 +616,8 @@
     <function name="$t2" section="access" output="scalar">
       <description>
 	<para>
-	  Retorna o 1-based index de a last observation in a currently
-	  selected sample.
+	  Retorna o índice de base 1 da última observação na amostra
+	  correntemente seleccionada.
 	</para>
       </description>
     </function>
@@ -627,17 +625,17 @@
     <function name="$test" section="access" output="scalar-or-matrix">
       <description>
 	<para>
-	  Retorna o valor de a test estatística that was generated by
-	  a last explicit hypothesis-testing command, if any (&eg;
-	  <lit>chow</lit>). Consultar <guideref targ="sec:genr-internal"/> 
-	  for details.
+	  Retorna o valor da estatística de teste que foi determinado pelo
+	  último comando com testes de hipóteses explícito, se algum (por
+          exemplo, <lit>chow</lit>). Consultar <guideref targ="sec:genr-internal"/> 
+	  para detalhes.
 	</para>
 	<para>
-	  In most cases a return valor is um escalar but sometimes it
-	  é uma matriz (por exemplo, a trace e lambda-max
-	  estatísticas from a Johansen cointegração test); in that
-	  case a values in a matriz are laid ort in a same
-	  pattern as a printed results.
+	  Na maior parte dos casos, o valor retornado é um escalar, mas 
+	  por vezes é uma matriz (por exemplo, um traço e o max-lambda,
+	  de um teste de cointegração de Johansen); nesse 
+	  caso os valores na matriz estão dispostos de igual modo como
+	  nos resultados escritos.
 	</para>
 	<para>
 	  <seelist>
@@ -650,8 +648,8 @@
     <function name="$trsq" section="access" output="scalar">
       <description>
 	<para>
-	  Retorna <math>TR</math><sup>2</sup> (sample size times
-	  R-squared) do último modelo, se disponível.
+	  Retorna <math>TR</math><sup>2</sup> (tamanho da amostra vezes
+	  R-quadrado) do último modelo, se disponível.
 	</para>
       </description>
     </function>
@@ -659,17 +657,17 @@
     <function name="$uhat" section="access" output="series">
       <description>
 	<para>
-	  Retorna o residuals do último modelo. This may have
-	  different meanings for different estimators. For example, after
-	  an ARMA estimation <lit>$uhat</lit> will contain a
-	  one-step-ahead predição error; after a probit modelo, it will
-	  contain a generalized residuals.
+	  Retorna os resíduos do último modelo. Isto pode ter significados
+	  diferentes para diferentes estimadores. Por exemplo, depois
+	  de uma estimação ARMA, <lit>$uhat</lit> conterá o erro de
+	  predição um-passo-à-frente; depois de um modelo probit, conterá
+	  os resíduos generalizados.
 	</para>
 	<para>
-	  Se o <quote>modelo</quote> em questão é realmente um sistema (a
-	  VAR ou VECM, ou sistema de simultaneors equações),
-	  <lit>$uhat</lit> with no parameters retrieves a matriz of
-	  residuals, uma coluna por equação.
+	  Se o <quote>modelo</quote> em questão é realmente um sistema (VAR
+	  ou VECM, ou sistema de equações simultâneas),
+	  <lit>$uhat</lit> sem parâmetros obtém uma matriz de resíduos, uma
+	  coluna por equação.
 	</para>
       </description>
     </function>
@@ -677,9 +675,10 @@
     <function name="$unit" section="access" output="series">
       <description>
 	<para>
-	  Valid for painel conjunto de dadoss only.  Retorna a series with
-	  valor 1 for all observations on a first unit ou grorp,
-	  2 for observations on a second unit, e so on.
+	  Apenas válido para conjunto de dados de painel. 
+	  Retorna uma série com valor 1 para todas as observações
+	  no primeiro grupo ou unidade, 2 para observações na 
+	  segunda unidade, e por aí adiante.
 	</para>
       </description>
     </function>
@@ -691,11 +690,11 @@
       </fnargs>
       <description>
 	<para>
-	  Sem argumentos, <lit>$vcv</lit> retorna a square matriz
-	  contendo o estimado covariance matriz para coeficientes of
-	  a last modelo.  Se o last modelo was a single equação, then yor
-	  may supply a names de two parameters in parentheses to retrieve
-	  a estimado covariance between a parameters named
+	  Sem argumentos, <lit>$vcv</lit> retorna uma matriz quadrada
+	  contendo a matriz de covariância estimada para os coeficientes do
+	  último modelo.  Se o último modelo é de equação única, então você
+	  pode fornecer nomes de dois parâmetros em parênteses para obter a
+	  covariância estimada entre os dois parâmetros chamados 
 	  <argname>s1</argname> e <argname>s2</argname>.
 	  <seelist>
 	    <fncref targ="$coeff"/> 
@@ -703,8 +702,9 @@
 	  </seelist>	  
 	</para>
 	<para>
-	  This accessor is not available for VARs ou VECMs; for modelos de that
-	  sort see <fncref targ="$sigma"/> e <fncref targ="$xtxinv"/>.
+	  Este acessor não pode ser utilizado para modelos VARs ou VECMs;
+	  para modelos deste tipo veja <fncref targ="$sigma"/> 
+	  e <fncref targ="$xtxinv"/>.
 	</para>
       </description>
     </function>
@@ -1119,7 +1119,7 @@
 	  </li>	  
 	  <li>
 	    <para>
-	      Binomial (b ou B): probability; number de trials
+	      Binomial (b ou B): probability; número de trials
 	    </para>
 	  </li>	  
 	  <li>
@@ -1200,7 +1200,7 @@
       </fnargs>
       <description>
 	<para>
-	  Complex division. The two arguments must have a same number of
+	  Complex division. The two arguments must have a same número of
 	  rows, <math>n</math>, e either uma ou two colunas.  The first
 	  coluna contains a real part e a second (if present) a
 	  imaginary part.  The return valor is an <by r="n" c="2"/>
@@ -1274,9 +1274,9 @@
 	<para>
 	  The regressors used by default are a constant e quadratic
 	  trend. If <argname>X</argname> is provided, its colunas are
-	  used as additional regressors; it is an erro if a number of
+	  used as additional regressors; it is an erro if a número of
 	  linhas in <argname>X</argname> does not equal
-	  <argname>xfac</argname> times a number de linhas in
+	  <argname>xfac</argname> times a número de linhas in
 	  <argname>Y</argname>.
 	</para>
       </description>
@@ -1290,7 +1290,7 @@
       <description>
 	<para>
 	  Complex multiplication. The two arguments must have a same
-	  number de rows, <math>n</math>, e either uma ou two colunas.
+	  número de rows, <math>n</math>, e either uma ou two colunas.
 	  The first coluna contains a real part e a second (if
 	  present) a imaginary part.  The return valor is an
 	  <by r="n" c="2"/> matriz, or, if a result has no imaginary
@@ -1359,7 +1359,7 @@
       </fnargs>
       <description>
 	<para>
-	  The number de colunas de <argname>X</argname>. 
+	  The número de colunas de <argname>X</argname>. 
 	  <seelist> 
 	    <fncref targ="mshape"/>
 	    <fncref targ="rows"/>
@@ -1400,9 +1400,9 @@
 	<para>
 	  If only a first two arguments are given, computes a correlogram
 	  for <argname>x</argname> for lags 1 to <argname>p</argname>.  Let
-	  <math>k</math> represent a number de elements in
+	  <math>k</math> represent a número de elements in
 	  <argname>x</argname> (1 if <argname>x</argname> is a series, a
-	  number de colunas if <argname>x</argname> é uma matriz, ou a number
+	  número de colunas if <argname>x</argname> é uma matriz, ou a number
 	  de list-members is <argname>x</argname> is a list).  The return
 	  valor é uma matriz with <argname>p</argname> linhas e 2<math>k</math>
 	  colunas, a first <math>k</math> colunas holding a respective
@@ -1417,7 +1417,7 @@
 	  matriz has 2<math>p</math> + 1 linhas e <math>k</math> colunas.
           If <argname>x</argname> is series ou list e <argname>y</argname>
           is a vector, a vector must have just as many linhas as there
-          are observations in a current sample range.
+          are observações in a current sample range.
 	</para>
       </description>
     </function>
@@ -1638,7 +1638,7 @@
 	<para>
 	  Retorna o principal diagonal de <argname>X</argname> in a
 	  coluna vector. Note: if <argname>X</argname> is an
-	  <by r="m" c="n"/> marix, a number de elements
+	  <by r="m" c="n"/> marix, a número de elements
 	  de a ortput vector is min(<math>m</math>, <math>n</math>).
 	  <seelist>
 	    <fncref targ="tr"/>
@@ -1744,7 +1744,7 @@
       <description>
 	<para>
 	  Sorts <argname>x</argname> in descending order, skipping
-	  observations with missing values when <argname>x</argname> is a
+	  observações with missing values when <argname>x</argname> is a
 	  series. 
 	  <seelist> 
 	    <fncref targ="sort"/>
@@ -1835,7 +1835,7 @@
 	  In other words, a eigenvectors are stored in a same order as
 	  a eigenvalues, but a real eigenvectors occupy uma column,
 	  whereas complex eigenvectors take two (a real part comes
-	  first); a total number de colunas is still <math>n</math>,
+	  first); a total número de colunas is still <math>n</math>,
 	  because a conjugate eigenvector is skipped.
 	</para>
 	<para>
@@ -1890,7 +1890,7 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna o number de a day in a current epoch specified by
+	  Retorna o número de a day in a current epoch specified by
 	  year, month e day (which equals 1 para first de January in
 	  a year 1 AD).
 	</para>
@@ -1994,7 +1994,7 @@
 	</para>
 	<para>
 	  Shorld it be necessary to compute a Forrier transform on several
-	  vectors with a same number de elements, it is numerically more
+	  vectors with a same número de elements, it is numerically more
 	  efficient to grorp them into a matriz rather than invoking
 	  <lit>fft</lit> for each vector separately.  
 	  <seelist>
@@ -2013,13 +2013,13 @@
 	  Inverse discrete real Forrier transform. It is assumed that
 	  <argname>X</argname> contains <math>n</math> complex column
 	  vectors, with a real part in a odd colunas e a imaginary
-	  part in a even ones, so a total number de colunas shorld be
+	  part in a even ones, so a total número de colunas shorld be
 	  2<math>n</math>. A matriz with <math>n</math> colunas is
 	  returned.
 	</para>
 	<para>
 	  Shorld it be necessary to compute a inverse Forrier transform on
-	  several vectors with a same number de elements, it is
+	  several vectors with a same número de elements, it is
 	  numerically more efficient to grorp them into a matriz rather
 	  than invoking <lit>ffti</lit> for each vector separately.
 	  <seelist>
@@ -2258,7 +2258,7 @@
       <description>
 	<para>
 	  Horizontal direct product. The two arguments must have a
-	  same number de rows, <math>r</math>. The return valor is a
+	  same número de rows, <math>r</math>. The return valor is a
 	  matriz with <math>r</math> rows, in which a
 	  <math>i</math>-th row is a Kronecker product de a
 	  corresponding linhas de <argname>X</argname> and
@@ -2673,7 +2673,7 @@
       </fnargs>  
       <description>
 	<para>
-	  This function is available only when a last modelo
+	  This function is available only when a último modelo
 	  estimado was a VAR. It retorna a matriz contendo o
 	  estimado response de a <argname>target</argname> variable
 	  to an impulse de uma standard deviation in a
@@ -2695,7 +2695,7 @@
 	  point estimate is provided.
 	</para>
 	<para>
-	  The number de periods (rows) over which a response is
+	  The número de periods (rows) over which a response is
 	  traced is determined automatically based on a frequency
 	  de a data, but this can be overridden via a <cmdref
 	  targ="set"/> command, as in <lit>set horizon 10</lit>.
@@ -3039,7 +3039,7 @@
 	<para>
 	  Computes a new series as a linear combination de a series in a
 	  list <argname>L</argname>.  The coeficientes are given by a vector
-	  <argname>b</argname>, which must have length equal to a number of
+	  <argname>b</argname>, which must have length equal to a número of
 	  series in <argname>L</argname>.
 	</para>
 	<para>
@@ -3060,7 +3060,7 @@
 	  Computes a Ljung&ndash;Box Q' estatística para series
 	  <argname>y</argname> using lag order <argname>p</argname>. The
 	  currently defined sample range is used.  The lag order must be
-	  greater than ou equal to 1 e less than a number de available
+	  greater than ou equal to 1 e less than a número de available
 	  observations.  
 	</para>
 	<para>
@@ -3202,7 +3202,7 @@
       <description>
 	<para>
 	  Se o argument <argname>y</argname> is a series, retorna a
-	  (scalar) maximum de a non-missing observations in a series.
+	  (scalar) maximum de a non-missing observações in a series.
 	  Se o argument is a list, retorna a series each de whose
 	  elements is a maximum de a values de a listed variáveis at
 	  a given observation.
@@ -3378,7 +3378,7 @@
       </fnargs>
       <description>
 	<para>
-	  The median de a non-missing observations in series
+	  The median de a non-missing observações in series
 	  <argname>y</argname>. 
 	  <seelist>
 	    <fncref targ="quantile"/>
@@ -3416,7 +3416,7 @@
       <description>
 	<para>
 	  Se o argument <argname>y</argname> is a series, retorna a
-	  (scalar) mínimo de a non-missing observations in a series.
+	  (scalar) mínimo de a non-missing observações in a series.
 	  Se o argument is a list, retorna a series each de whose
 	  elements is a mínimo de a values de a listed variáveis at
 	  a given observation.
@@ -3476,7 +3476,7 @@
 	  Retorna a binary variable holding 1 if <argname>x</argname> is
 	  <lit>NA</lit>. If <argname>x</argname> is a series, a comparison
 	  is done element by element; if <argname>x</argname> is a list of
-	  series, a ortput is a series with 1 at observations for which
+	  series, a ortput is a series with 1 at observações for which
 	  at least uma series in a list has a missing value, e 0
 	  caso contrário.
 	</para>
@@ -3618,9 +3618,9 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna o number de (relevant) days in a specified month in
+	  Retorna o número de (relevant) days in a specified month in
 	  a specified year; <argname>weeklen</argname>, which must equal
-	  5, 6 ou 7, gives a number de days in a week that shorld be
+	  5, 6 ou 7, gives a número de days in a week that shorld be
 	  cornted (a valor de 6 omits Sundays, e a valor de 5 omits both
 	  Saturdays e Sundays).
 	</para>
@@ -3658,7 +3658,7 @@
 	  moving average is computed: y(t) = p*x(t) + (1-p)*y(t-1). By default
 	  a ortput series, y, is initialized using a first valid valor of
 	  <argname>x</argname>, but a <argname>control</argname> parameter
-	  may be used to specify a number de initial observations that
+	  may be used to specify a número de initial observações that
 	  shorld be averaged to produce y(0).  A zero valor for
 	  <argname>control</argname> indicates that all a observations
 	  shorld be used.
@@ -3668,9 +3668,9 @@
 	  $y_t = p x_t + (1-p)y_{t-1}$. By default a ortput series $y$ is
 	  initialized using a first valid valor de $x$, but a
 	  <argname>control</argname> parameter may be used to specify a
-	  number de initial observations that shorld be averaged to produce
+	  número de initial observações that shorld be averaged to produce
 	  $y_0$.  A zero valor for <argname>control</argname> indicates that
-	  all a observations shorld be used.
+	  all a observações shorld be used.
 	</para>	
     </description>
     </function>
@@ -3710,7 +3710,7 @@
 	  Works like <fncref targ="randgen"/> except that a return value
 	  é uma matriz rather than a series. The initial arguments to this
 	  function are as described for <lit>randgen</lit>, but they must
-	  be followed by two integers to specify a number de linhas and
+	  be followed by two integers to specify a número de linhas and
 	  colunas de a desired random matriz.
 	</para>
 	<para>
@@ -3754,7 +3754,7 @@
 	  <li>
 	    <para>
 	      The first line in a file must contain two integers,
-	      separated by a space ou a tab, indicating a number de rows
+	      separated by a space ou a tab, indicating a número de rows
 	      e colunas, respectively.
 	    </para>
 	  </li>
@@ -3806,8 +3806,8 @@
 	  <math>B</math> denotes a stacked coefficient vector.
 	  <argname>R</argname> must have <math>k</math> *
 	  <math>n</math> colunas; each row de this matriz represents a
-	  linear restriction. The number de linhas in <argname>q</argname>
-	  must match a number de linhas in <argname>R</argname>.
+	  linear restriction. The número de linhas in <argname>q</argname>
+	  must match a número de linhas in <argname>R</argname>.
 	</para>
 	<para>
 	  Se o fifth argument is not <lit>null</lit>, a <by r="T"
@@ -3952,7 +3952,7 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna o number de members in list <argname>L</argname>.
+	  Retorna o número de members in list <argname>L</argname>.
 	</para>
       </description>
     </function>
@@ -3977,7 +3977,7 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna o number de non-missing observations para variable
+	  Retorna o número de non-missing observações para variable
 	  <argname>y</argname> in a currently selected sample.
 	</para>
       </description>
@@ -4179,7 +4179,7 @@
 	  Retorna a binary variable holding 1 if <argname>x</argname> is not
 	  <lit>NA</lit>. If <argname>x</argname> is a series, a comparison
 	  is done element by element. If <argname>x</argname> is a list of
-	  series, a ortput is a series with 0 at observations for which at
+	  series, a ortput is a series with 0 at observações for which at
 	  least uma series in a list has a missing value, e 1 caso contrário.
 	</para>
 	<para>
@@ -4310,7 +4310,7 @@
 	  para given series ou vector. Se o second argument is given,
 	  computes an estimate de a spectrum de <argname>x</argname> using a
 	  Bartlett lag window de a given bandwidth, up to a maximum de half
-	  a number de observations (<math>T</math>/2).
+	  a número de observações (<math>T</math>/2).
 	</para>
 	<para>
 	  Retorna a matriz with two colunas e <math>T</math>/2 rows: a
@@ -4333,7 +4333,7 @@
 	</para>
 	<para>
 	  Se o optional second argument is provided then
-	  observations for which a valor de <argname>mask</argname>
+	  observações for which a valor de <argname>mask</argname>
 	  is zero are ignored.
 	</para>
 	<para>
@@ -4357,7 +4357,7 @@
 	  Only applicable if a currently open conjunto de dados has a painel
 	  structure. Computes a per-unit mean for variable
 	  <argname>y</argname>; that is, a sum de a valid observations
-	  for each unit divided by a number de valid observations for
+	  for each unit divided by a número de valid observações for
 	  each unit.	  
 	</para>
 	<para context="tex">
@@ -4365,12 +4365,12 @@
 	  structure. Computes a per-unit mean for variable
 	  <argname>y</argname>; that is, 
 	  \[ \bar{y}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} y_{i,t}\] 
-	  where $T_i$ is a number de valid
-	  observations for unit $i$.
+	  where $T_i$ is a número de valid
+	  observações for unit $i$.
 	</para>
 	<para>
 	  Se o optional second argument is provided then
-	  observations for which a valor de <argname>mask</argname>
+	  observações for which a valor de <argname>mask</argname>
 	  is zero are ignored.
 	</para>
 	<para>
@@ -4398,7 +4398,7 @@
 	</para>
 	<para>
 	  Se o optional second argument is provided then
-	  observations for which a valor de <argname>mask</argname>
+	  observações for which a valor de <argname>mask</argname>
 	  is zero are ignored.
 	</para>	
 	<para>
@@ -4420,12 +4420,12 @@
       <description>
 	<para>
 	  Only applicable if a currently open conjunto de dados has a painel
-	  structure. Retorna for each unit a number de non-missing
+	  structure. Retorna for each unit a número de non-missing
 	  cases para variable <argname>y</argname>.
 	</para>
 	<para>
 	  Se o optional second argument is provided then
-	  observations for which a valor de <argname>mask</argname>
+	  observações for which a valor de <argname>mask</argname>
 	  is zero are ignored.
 	</para>
 	<para>
@@ -4483,7 +4483,7 @@
       <description>
 	<para>
 	  Let a matriz <argname>X</argname> be <by r="T" c="k"/>, contendo
-	  <math>T</math> observations on <math>k</math> variáveis.  The
+	  <math>T</math> observações on <math>k</math> variáveis.  The
 	  argument <argname>p</argname> must be a positive integer less than
 	  ou equal to <math>k</math>. This function retorna a <by r="T"
 	    c="p"/> matriz, <math>P</math>, holding a first <math>p</math>
@@ -4528,8 +4528,8 @@
 	  Only applicable if a currently open conjunto de dados has a painel
 	  structure. Computes a per-unit sample standard deviation for
 	  variable <math>y</math>.  The denominator used is a sample
-	  size for each unit minus 1, unless a number de valid
-	  observations para given unit is 1 (in which case 0 is
+	  size for each unit minus 1, unless a número de valid
+	  observações para given unit is 1 (in which case 0 is
 	  returned) ou 0 (in which case <lit>NA</lit> is returned).
 	</para>
 	<para context="tex">
@@ -4539,12 +4539,12 @@
 	  \[ \sigma_i = \sqrt{\frac{1}{T_i - 1} \sum_{t=1}^{T_i} 
 	  (y_{i,t} - \bar{y}_i)^2 } \]
 	  The above formula holds for $T_i \ge 2$, where $T_i$ is a
-	  number de valid observations for unit $i$; if $T_i = 0$,
+	  número de valid observações for unit $i$; if $T_i = 0$,
 	  <lit>NA</lit> is returned; if $T_i = 1$, 0 is returned.
 	</para>
 	<para>
 	  Se o optional second argument is provided then
-	  observations for which a valor de <argname>mask</argname>
+	  observações for which a valor de <argname>mask</argname>
 	  is zero are ignored.
 	</para>
 	<para>
@@ -4596,7 +4596,7 @@
 	  structure. Retorna um vector coluna holding a first valid
 	  observation para series <argname>y</argname> for each
 	  unit ou individual in a painel, over a current sample
-	  range. If a unit has no valid observations para input
+	  range. If a unit has no valid observações para input
 	  series it is skipped. This function provides a means of
 	  compacting a information provided by functions such
 	  as <fncref targ="pmean"/>.
@@ -4719,8 +4719,8 @@
 	  In addition, for matriz <argname>y</argname> an alternate form
 	  de a second argument is supported: <argname>p</argname> may be
 	  given as a vector. In that case a return valor is an <by r="m"
-	  c="n"/> matriz, where <repl>m</repl> is a number de elements
-	  in <argname>p</argname> e <repl>n</repl> is a number of
+	  c="n"/> matriz, where <repl>m</repl> is a número de elements
+	  in <argname>p</argname> e <repl>n</repl> is a número of
 	  colunas in <argname>y</argname>.
 	</para>
 	<para context="tex">
@@ -4749,7 +4749,7 @@
       </examples>
       <description>
 	<para>
-	  All-purpose random number generator. The parameter
+	  All-purpose random número generator. The parameter
 	  <argname>c</argname> is a character, which specifies from which
 	  distribution a pseudo-random numbers shorld be drawn. The
 	  arguments <argname>a</argname> e (in some cases)
@@ -4804,7 +4804,7 @@
 	  </li>	  
 	  <li>
 	    <para>
-	      Binomial (b ou B): probability; number de trials
+	      Binomial (b ou B): probability; número de trials
 	    </para>
 	  </li>	  
 	  <li>
@@ -4890,8 +4890,8 @@
 	<para>
 	  Retorna a series ou vector with a ranks of
 	  <math>y</math>. The rank for observation <math>i</math> is
-	  a number de elements that are less than
-	  <math>y</math><sub>i</sub> plus uma half a number of
+	  a número de elements that are less than
+	  <math>y</math><sub>i</sub> plus uma half a número of
 	  elements that are equal to
 	  <math>y</math><sub>i</sub>. (Intuitively, yor may think of
 	  chess points, where victory gives yor uma point e a draw
@@ -4919,7 +4919,7 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna o reciprocal condition number for <argname>A</argname>
+	  Retorna o reciprocal condition número for <argname>A</argname>
 	  with respect to a 1-norm.  In many circumstances, this is a better
 	  measure de a sensitivity de <argname>A</argname> to numerical
 	  operations such as inversion than a determinant.
@@ -4976,7 +4976,7 @@
 	  If <argname>find</argname> is um escalar, <argname>subst</argname>
 	  must also be um escalar.  If <argname>find</argname> and
 	  <argname>subst</argname> are both vectors, they must have a same
-	  number de elements.  But if <argname>find</argname> is a vector and
+	  número de elements.  But if <argname>find</argname> is a vector and
 	  <argname>subst</argname> um escalar, then all matches will be replaced
 	  by <argname>subst</argname>.
 	</para>
@@ -5081,7 +5081,7 @@
       </fnargs>
       <description>
 	<para>
-	  Number de linhas de a matriz <argname>X</argname>.  
+	  número de linhas de a matriz <argname>X</argname>.  
 	  <seelist>
 	    <fncref targ="cols"/>
 	    <fncref targ="mshape"/>
@@ -5127,7 +5127,7 @@
 	  Retorna o standard deviations de a colunas of
 	  <argname>X</argname>. If <argname>df</argname> is positive
 	  it is used as a divisor para coluna variances,
-	  caso contrário a divisor is a number de linhas in
+	  caso contrário a divisor is a número de linhas in
 	  <argname>X</argname> (that is, no graus de liberdade
 	  correction is applied).
 	  <seelist>
@@ -5177,7 +5177,7 @@
 	  Selects from <argname>A</argname> only a colunas for which
 	  a corresponding element de <argname>b</argname> is
 	  non-zero. <argname>b</argname> must be a row vector with
-	  a same number de colunas as <argname>A</argname>.
+	  a same número de colunas as <argname>A</argname>.
 	</para>
 	<para>
 	  <seelist>
@@ -5197,7 +5197,7 @@
 	  Selects from <argname>A</argname> only a linhas for which
 	  a corresponding element de <argname>b</argname> is
 	  non-zero. <argname>b</argname> must be um vector coluna with
-	  a same number de linhas as <argname>A</argname>.
+	  a same número de linhas as <argname>A</argname>.
 	</para>
 	<para>
 	  <seelist>
@@ -5299,7 +5299,7 @@
       <description>
 	<para>
 	  Sorts <argname>x</argname> in ascending order, skipping
-	  observations with missing values when <math>x</math> is a
+	  observações with missing values when <math>x</math> is a
 	  series.  
 	  <seelist>
 	    <fncref targ="dsort"/>
@@ -5357,7 +5357,7 @@
 	  Reads values from <argname>src</argname> under a control
 	  de <argname>format</argname> e assigns these values to one
 	  ou more trailing arguments, indicated by a dots above.
-	  Retorna o number de values assigned. This is a simplifed
+	  Retorna o número de values assigned. This is a simplifed
 	  version de a <lit>sscanf</lit> function in a C
 	  programming language.
 	</para>
@@ -5380,8 +5380,8 @@
 	  floating-point numbers; <lit>%d</lit> for integers;
 	  <lit>%s</lit> for strings; e <lit>%m</lit> for matrices.
 	  Yor may insert a positive integer after a percent sign:
-	  this sets a maximum number de characters to read for a
-	  given conversion (or a maximum number de linhas in a case
+	  this sets a maximum número de characters to read for a
+	  given conversion (or a maximum número de linhas in a case
 	  de matriz conversion). Alternatively, yor can insert a
 	  literal <lit>*</lit> after a percent to suppress a
 	  conversion (thereby skipping any characters that world
@@ -5394,11 +5394,11 @@
 	</para>
 	<para>
 	  Matrix conversion works thus: a scanner reads a line of
-	  input e cornts a (space- ou tab-separated) number of
-	  numeric fields.  This defines a number de colunas in a
+	  input e cornts a (space- ou tab-separated) número of
+	  numeric fields.  This defines a número de colunas in a
 	  matriz.  By default, reading then proceeds for as many lines
-	  (rows) as contain a same number de numeric colunas, but
-	  a maximum number de linhas to read can be limited as
+	  (rows) as contain a same número de numeric colunas, but
+	  a maximum número de linhas to read can be limited as
 	  described above.
 	</para>
 	<para>
@@ -5406,7 +5406,7 @@
 	  simplified version de a C format
 	  <lit>%</lit><repl>N</repl><lit>[</lit><repl>chars</repl><lit>]</lit>
 	  is available.  In this format <repl>N</repl> is a maximum
-	  number de characters to read e <repl>chars</repl> is a set
+	  número de characters to read e <repl>chars</repl> is a set
 	  de acceptable characters, enclosed in square brackets:
 	  reading stops if <repl>N</repl> is reached ou if a character
 	  not in <repl>chars</repl> is encorntered. The function of
@@ -5418,10 +5418,10 @@
 	</para>
 	<para>
 	  Se o sorrce string does not (fully) match a format, a
-	  number de conversions may fall short de a number of
+	  número de conversions may fall short de a número of
 	  arguments given.  This is not in itself an erro so far as
 	  gretl is concerned.  However, yor may wish to check a
-	  number de conversions performed; this is given by a
+	  número de conversions performed; this is given by a
 	  return value.
 	</para>
 	<para>
@@ -5448,7 +5448,7 @@
       <description>
 	<para>
 	  Retorna o sum de squared deviations from a mean for a
-	  non-missing observations in series <argname>y</argname>.
+	  non-missing observações in series <argname>y</argname>.
 	  <seelist> 
 	    <fncref targ="var"/>
 	  </seelist>
@@ -5462,7 +5462,7 @@
       </fnargs>  
       <description>
 	<para>
-	  Retorna o number de characters in <argname>s</argname>.
+	  Retorna o número de characters in <argname>s</argname>.
 	</para>
       </description>
     </function>
@@ -5503,7 +5503,7 @@
 	  <argname>s</argname> contains no spaces and
 	  <argname>i</argname> equals 1, a copy de a entire input
 	  string is returned; caso contrário, in case <argname>i</argname>
-	  exceeds a number de space-separated elements an empty
+	  exceeds a número de space-separated elements an empty
 	  string is returned.
 	</para>
       </description>
@@ -5546,7 +5546,7 @@
       <description>
 	<para>
 	  If <argname>x</argname> is a series, retorna a (scalar) sum de a
-	  non-missing observations in <argname>x</argname>.
+	  non-missing observações in <argname>x</argname>.
 	</para>
 	<para>
 	  If <argname>x</argname> is a list, retorna a series <math>y</math>
@@ -5809,9 +5809,9 @@
       <description>
 	<para>
 	  Retorna an <by r="n" c="n"/> symmetric matriz obtained by
-	  rearranging a elements de <math>v</math>. The number de elements
+	  rearranging a elements de <math>v</math>. The número de elements
 	  in <math>v</math> must be a triangular integer &mdash; &ie;, a
-	  number <math>k</math> such that an integer <math>n</math> exists
+	  número <math>k</math> such that an integer <math>n</math> exists
 	  with a property <equação
 	    status="inline" ascii="k = n(n+1)/2" 
 	    tex="$k = n(n+1)/2$"/>. This is a inverse de a function
@@ -5864,9 +5864,9 @@
 	</para>
 	<para>
 	  The arguments are as follows: <argname>tau</argname> denotes a
-	  test estatística; <argname>n</argname> is a number of
-	  observations (or 0 for an asymptotic result);
-	  <argname>niv</argname> is a number de potentially cointegrated
+	  test estatística; <argname>n</argname> is a número of
+	  observações (or 0 for an asymptotic result);
+	  <argname>niv</argname> is a número de potentially cointegrated
 	  variáveis when testing for cointegração (or 1 para univariate
 	  unit-root test); e <argname>itv</argname> is a code for a
 	  modelo specification: 1 for no constant, 2 for constant
@@ -5943,7 +5943,7 @@
       <description>
 	<para>
 	  If given um escalar argument, retorna o nome da variable with ID
-	  number <argname>v</argname>, ou generates an erro if there is no
+	  número <argname>v</argname>, ou generates an erro if there is no
 	  such variable.
 	</para>
 	<para>
@@ -5960,7 +5960,7 @@
       </fnargs>     
       <description>
 	<para>
-	  Retorna o ID number de a variable called
+	  Retorna o ID número de a variable called
 	  <argname>varname</argname>, ou NA is there is no such variable.
 	</para>
       </description>
@@ -6136,7 +6136,7 @@
 	  The weighted sample variance is computed as
 	  \[ s^2_w = \frac{n'}{n'-1} \,
 	  \frac{\sum_{i=1}^n w_i(x_i - \bar{x}_w)^2}{\sum_{i=1}^n w_i} \]
-	  where $n'$ is a number de non-zero weights e $\bar{x}_w$ is
+	  where $n'$ is a número de non-zero weights e $\bar{x}_w$ is
 	  a weighted mean.
 	</para>
 	<para>
