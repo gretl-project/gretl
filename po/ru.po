@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-01 14:20-0400\n"
-"PO-Revision-Date: 2011-10-01 15:02-0400\n"
+"PO-Revision-Date: 2011-10-02 22:54+0300\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -31,8 +31,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:290
 msgid "lagged differences"
@@ -2292,9 +2292,9 @@ msgid "Unmatched '%c'\n"
 msgstr "Несовпадение '%c'\n"
 
 #: lib/src/geneval.c:9671
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is of type %s"
-msgstr "Переменная '%s' не является дискретной"
+msgstr "Переменная %s относится к типу %s"
 
 #: lib/src/geneval.c:9827
 #, c-format
@@ -2424,7 +2424,7 @@ msgstr "по-объектная константа из модели %d"
 
 #: lib/src/genfuncs.c:3191
 msgid "Invalid declaration: maybe you need the \"clear\" command?"
-msgstr ""
+msgstr "Неверное объявление: возможно, следует вызвать команду \"clear\"?"
 
 #: lib/src/genfuncs.c:3194
 msgid "Invalid declaration"
@@ -9232,14 +9232,12 @@ msgid "all files (*.*)"
 msgstr "Все файлы (*.*)"
 
 #: gui2/fileselect.c:764
-#, fuzzy
 msgid "Excel files (*.xls)"
-msgstr "файлы Ox (*.ox)"
+msgstr "Файлы Excel (*.xls)"
 
 #: gui2/fileselect.c:765
-#, fuzzy
 msgid "Excel files (*.xlsx)"
-msgstr "файлы Ox (*.ox)"
+msgstr "Файлы Excel (*.xlsx)"
 
 #: gui2/fileselect.c:767
 msgid "gretl script files (*.inp)"
