@@ -2574,9 +2574,11 @@ static void get_rvars1_data (selector *sr, int rows, int context)
     int added = 0;
     int i, j = 1;
 
-    if (SAVE_DATA_ACTION(sr->ci) && sr->ci != COPY_CSV && rows == sr->n_left) {
-	/* saving/exporting all available series: leave the list blank
-	   in case it overflows */
+    if ((SAVE_DATA_ACTION(sr->ci) || sr->ci == EXPORT) && 
+	sr->ci != COPY_CSV && rows == sr->n_left) {
+	/* saving/exporting all available series: leave the 
+	   list blank in case it overflows 
+	*/
 	return;
     }   
 
@@ -5611,6 +5613,7 @@ static void build_selector_buttons (selector *sr)
     if (sr->ci != PRINT && !FNPKG_CODE(sr->ci) &&
 	sr->ci != DEFINE_LIST && sr->ci != DEFINE_MATRIX &&
 	sr->ci != ELLIPSE && !SAVE_DATA_ACTION(sr->ci)) {
+	/* add a Help button if appropriate */
 	int ci = sr->ci;
 
 	if (sr->ci == OLOGIT || sr->ci == MLOGIT) {
@@ -6485,7 +6488,7 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
     g_signal_connect(G_OBJECT(sr->add_button), "clicked", 
 		     G_CALLBACK(add_to_rvars1_callback), sr);
 
-    if (SAVE_DATA_ACTION(sr->ci)) {
+    if (SAVE_DATA_ACTION(sr->ci) || sr->ci == EXPORT) {
 	tmp = gtk_button_new_with_label (_("All ->"));
 	gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
 	g_signal_connect(G_OBJECT(tmp), "clicked", 
@@ -6520,7 +6523,9 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
     gtk_box_pack_start(GTK_BOX(sr->vbox), big_hbox, TRUE, TRUE, 0);
 
     /* unhide lags check box? */
-    if ((sr->ci == DEFINE_LIST || SAVE_DATA_ACTION(sr->ci)) 
+    if ((sr->ci == DEFINE_LIST || 
+	 sr->ci == EXPORT ||
+	 SAVE_DATA_ACTION(sr->ci)) 
 	&& lags_hidden) {
 	unhide_lags_switch(sr);
     }
@@ -6690,7 +6695,7 @@ static int pkg_add_remove_callback (selector *sr)
 static int functions_selected_callback (selector *sr)
 {
     if ((sr->cmdlist == NULL || *sr->cmdlist == '\0') && sr->n_left == 0) {
-	/* nothing selected */
+	/* nothing selected (can't happen?) */
 	return 0;
     }
 

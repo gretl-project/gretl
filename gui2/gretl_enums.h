@@ -191,8 +191,7 @@ enum file_ops {
     FILE_OP_MAX
 };
 
-#define SAVE_DATA_ACTION(i) (i == EXPORT || \
-			     (i >= SAVE_DATA && i < END_SAVE_DATA))
+#define SAVE_DATA_ACTION(i) (i >= SAVE_DATA && i < END_SAVE_DATA)
 
 enum browser_codes {
     TEXTBOOK_DATA = FILE_OP_MAX + 1, /* don't collide with file_ops enum */
