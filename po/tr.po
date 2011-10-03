@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-01 14:20-0400\n"
-"PO-Revision-Date: 2011-10-01 14:50-0400\n"
+"PO-Revision-Date: 2011-10-03 16:59+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -13751,9 +13751,8 @@ msgid "PcGive"
 msgstr "PcGive"
 
 #: gui2/selector.c:5517
-#, fuzzy
 msgid "Select format"
-msgstr "Veri biçimini seçiniz"
+msgstr "Biçim seçiniz"
 
 #: gui2/selector.c:5749
 msgid "plot with impulses"
