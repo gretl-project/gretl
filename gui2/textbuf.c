@@ -23,6 +23,10 @@
 #include "dlgutils.h"
 #include "gretl_func.h"
 
+#ifdef G_OS_WIN32
+# include "gretlwin32.h" /* for browser_open() */
+#endif
+
 #include <gtksourceview/gtksourceview.h>
 #include <gtksourceview/gtksourcelanguagemanager.h>
 #include <gtksourceview/gtksourceprintcompositor.h>
