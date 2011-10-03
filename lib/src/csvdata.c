@@ -1513,11 +1513,13 @@ static char *csv_fgets (char *s, int n, FILE *fp)
 static char *get_csv_descrip (char *line, int n, FILE *fp)
 {
     char *desc = NULL;
+    size_t len;
 
     while (csv_fgets(line, n, fp)) {
 	tailstrip(line);
 	if (desc == NULL) {
-	    desc = malloc(strlen(line) + 2);
+	    len = strlen(line) + 3;
+	    desc = malloc(len);
 	    if (desc == NULL) {
 		return NULL;
 	    }
@@ -1525,7 +1527,8 @@ static char *get_csv_descrip (char *line, int n, FILE *fp)
 	} else {
 	    char *tmp;
 
-	    tmp = realloc(desc, strlen(desc) + strlen(line) + 2);
+	    len = strlen(desc) + strlen(line) + 3;
+	    tmp = realloc(desc, len);
 	    if (tmp == NULL) {
 		free(desc);
 		return NULL;
@@ -1933,7 +1936,7 @@ static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     return err;
 }
 
-static void csv_parsing_header (const char *fname, PRN *prn)
+static void print_csv_parsing_header (const char *fname, PRN *prn)
 {
     if (!g_utf8_validate(fname, -1, NULL)) {
 	gchar *trfname = g_locale_to_utf8(fname, -1, NULL, NULL, NULL);
@@ -2015,7 +2018,7 @@ int import_csv (const char *fname, DATASET *dset,
     }
 
     if (mprn != NULL) {
-	csv_parsing_header(fname, mprn);
+	print_csv_parsing_header(fname, mprn);
     }
 
     /* get line length, also check for binary data, etc. */

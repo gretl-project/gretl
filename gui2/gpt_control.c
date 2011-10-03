@@ -4169,6 +4169,32 @@ void close_plot_windows (void)
     g_list_foreach(plot_list, (GFunc) close_plot_window, NULL);
 }
 
+int plot_file_is_busy (const char *fname)
+{
+    int ret = 0;
+
+    if (plot_list != NULL) {
+	GList *mylist = g_list_first(plot_list);
+	GtkWidget *w;
+	gchar *test;
+
+	while (mylist && !ret) {
+	    w = mylist->data;
+	    if (w != NULL) {
+		test = g_object_get_data(G_OBJECT(w), "fname");
+		if (test != NULL) {
+		    if (strstr(test, fname) != NULL) {
+			ret = 1;
+		    }
+		}
+	    }
+	    mylist = g_list_next(mylist);
+	}
+    }
+
+    return ret;
+}
+
 static void register_plot_window (GtkWidget *w)
 {
     plot_list = g_list_append(plot_list, w);
@@ -4785,6 +4811,9 @@ static int gnuplot_show_png (const char *fname, const char *name,
     }
 
     gtk_widget_show(vbox);
+
+    g_object_set_data(G_OBJECT(plot->shell), "fname", 
+		      plot->spec->fname);
     gtk_widget_show(plot->shell);  
     register_plot_window(plot->shell);
 

@@ -51,6 +51,7 @@
 #ifndef G_OS_WIN32
 # include <unistd.h>
 # include <sys/types.h>
+# include <signal.h>
 # include "../pixmaps/gretl.xpm"  /* program icon for X */
 #else
 # include <windows.h>
@@ -378,6 +379,11 @@ static void record_filearg (char *targ, const char *src)
     }
 }
 
+static void usr1_handler (int signal) 
+{
+    fprintf(stderr, "Hello from gretl's signal handler: got SIGUSR1\n");
+}
+
 #endif
 
 /* callback from within potentially lengthy libgretl
@@ -409,6 +415,8 @@ int main (int argc, char **argv)
 
 #ifdef G_OS_WIN32
     win32_set_gretldir(callname);
+#else
+    signal(SIGUSR1, usr1_handler);
 #endif
 
     nls_init();
@@ -1639,9 +1647,8 @@ static const gchar *window_list_icon (int role)
 	id = GRETL_STOCK_MODEL;
     } else if (role == CONSOLE) {
 	id = GRETL_STOCK_CONSOLE;
-    } else if (role == EDIT_SCRIPT || 
-	       role == EDIT_PKG_CODE ||
-	       role == EDIT_PKG_SAMPLE) {
+    } else if (role >= EDIT_HEADER && 
+	       role < EDIT_MAX) {
 	id = GTK_STOCK_EDIT;
     } else if (role == GNUPLOT) {
 	id = GRETL_STOCK_SCATTER;
@@ -1653,6 +1660,8 @@ static const gchar *window_list_icon (int role)
 	id = GRETL_STOCK_CALC;
     } else if (role == VIEW_SCRIPT) {
 	id = GTK_STOCK_EXECUTE;
+    } else if (role == OPEN_SESSION) {
+	id = GRETL_STOCK_ICONS;
     }
 
     return id;

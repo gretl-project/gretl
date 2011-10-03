@@ -1742,13 +1742,14 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
 #define text_out_ok(r) (r == VIEW_DATA || r == VIEW_FILE)
 
-windata_t *view_file (const char *filename, int editable, int del_file, 
-		      int hsize, int vsize, int role)
+windata_t *
+view_file_with_title (const char *filename, int editable, int del_file, 
+		      int hsize, int vsize, int role, 
+		      const char *given_title)
 {
     windata_t *vwin;
     ViewbarFlags vflags = 0;
     FILE *fp;
-    gchar *title = NULL;
 
     /* first check that we can open the specified file */
     fp = gretl_fopen(filename, "r");
@@ -1759,11 +1760,17 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 	fclose(fp);
     }
 
-    /* then start building the file viewer */
-    title = make_viewer_title(role, filename);
-    vwin = gretl_viewer_new(role, (title != NULL)? title : filename, 
-			    NULL, record_on_winstack(role));
-    g_free(title);
+    if (given_title != NULL) {
+	/* this is the case when editing the plot commands for
+	   a graph saved as a session icon */
+	vwin = gretl_viewer_new(role, given_title, NULL, 1);
+    } else {
+	gchar *title = make_viewer_title(role, filename);
+
+	vwin = gretl_viewer_new(role, (title != NULL)? title : filename, 
+				NULL, record_on_winstack(role));
+	g_free(title);
+    }
 
     if (vwin == NULL) {
 	return NULL;
@@ -1827,6 +1834,13 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     gtk_widget_grab_focus(vwin->text);
 
     return vwin;
+}
+
+windata_t *view_file (const char *filename, int editable, int del_file, 
+		      int hsize, int vsize, int role)
+{
+    return view_file_with_title(filename, editable, del_file,
+				hsize, vsize, role, NULL);
 }
 
 windata_t *console_window (int hsize, int vsize)

@@ -2272,32 +2272,47 @@ static int delete_session_object (gui_obj *obj)
     return 0;
 }
 
+/* run a sanity check on deleting a session object (e.g.
+   model, graph) before proceeding */
+
 static void maybe_delete_session_object (gui_obj *obj)
 {
-    gpointer p = NULL;
-    gchar *msg;
+    int busy = 0;
 
-    if (obj->sort == GRETL_OBJ_EQN || obj->sort == GRETL_OBJ_SYS || 
-	obj->sort == GRETL_OBJ_VAR) {
-	SESSION_MODEL *mod = obj->data;
+    if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
+	SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
+	char fullname[MAXLEN];
 
-	p = mod->ptr;
+	session_file_make_path(fullname, graph->fname);
+	busy = plot_file_is_busy(fullname);
+	if (!busy && match_window_by_filename(fullname)) {
+	    busy = 1;
+	}
     } else {
-	p = obj->data;
+	gpointer p = NULL;
+
+	if (obj->sort == GRETL_OBJ_EQN || obj->sort == GRETL_OBJ_SYS || 
+	    obj->sort == GRETL_OBJ_VAR) {
+	    SESSION_MODEL *mod = obj->data;
+
+	    p = mod->ptr;
+	} else {
+	    p = obj->data;
+	}
+
+	busy = (p != NULL && winstack_match_data(p));
     }
 
-    if (p != NULL && winstack_match_data(p)) {
+    if (busy) {
 	warnbox(_("Please close this object's window first"));
-	return;
+    } else {	    
+	gchar *msg = g_strdup_printf(_("Really delete %s?"), obj->name);
+
+	if (yes_no_dialog(_("gretl: delete"), msg, 0) == GRETL_YES) {
+	    delete_session_object(obj);
+	}
+	g_free(msg);
     }
-
-    msg = g_strdup_printf(_("Really delete %s?"), obj->name);
-
-    if (yes_no_dialog(_("gretl: delete"), msg, 0) == GRETL_YES) {
-	delete_session_object(obj);
-    }
-
-    g_free(msg);
 }
 
 static gui_obj *get_gui_obj_by_data (void *targ)
@@ -3032,14 +3047,15 @@ static void scalars_popup_callback (GtkWidget *widget, gpointer data)
     }
 }
 
-static void object_set_window_title (windata_t *vwin, gui_obj *obj)
+static gchar *object_get_window_title (gui_obj *obj)
 {
-    if (vwin != NULL && obj != NULL) {
-	gchar *title = g_strdup_printf("gretl: %s", obj->name);
+    gchar *title = NULL;
 
-	gtk_window_set_title(GTK_WINDOW(vwin->main), title);
-	g_free(title);	
+    if (obj != NULL) {
+	title = g_strdup_printf("gretl: %s", obj->name);
     }
+
+    return title;
 }
 
 static void object_popup_callback (GtkWidget *widget, gpointer data)
@@ -3066,13 +3082,16 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 	if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
 	    SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
 	    char fullname[MAXLEN];
+	    gchar *title;
 	    windata_t *vwin;
 
 	    gretl_chdir(gretl_dotdir());
 	    session_file_make_path(fullname, graph->fname);
 	    remove_png_term_from_plot_by_name(fullname);
-	    vwin = view_file(fullname, 1, 0, 78, 400, EDIT_GP);
-	    object_set_window_title(vwin, obj);
+	    title = object_get_window_title(obj);
+	    vwin = view_file_with_title(fullname, 1, 0, 78, 400, 
+					EDIT_GP, title);
+	    g_free(title);
 	    /* add flag so we can mark the session as modified
 	       if the plot file is changed */
 	    vwin->flags |= VWIN_SESSION_GRAPH;
@@ -3531,6 +3550,8 @@ void view_session (void)
     gtk_widget_show(scroller);
     gtk_widget_show(hbox);
     gtk_widget_show(iconview);
+
+    add_window_list_item(iconview, OPEN_SESSION);
 
     gtk_container_foreach(GTK_CONTAINER(scroller), 
 			  (GtkCallback) white_bg_style, 
