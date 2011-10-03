@@ -2084,12 +2084,15 @@ void view_window_set_editable (windata_t *vwin)
     attach_content_changed_signal(vwin);
 }
 
+
+
 /* Called on destroying an editing window: give the user a chance
    to save if the content is changed, or to cancel the close.
 */
 
 gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 {
+    fprintf(stderr, "query_save_text\n");
     if (vwin_content_changed(vwin)) {
 	int resp = yes_no_dialog("gretl", _("Save changes?"), 1);
 

@@ -177,6 +177,4 @@ int object_name_entry_dialog (char *name, GretlType type,
 			      const char *labeltxt,
 			      int *show);
 
-int gretl_all_done (void);
-
 #endif /* DIALOGS_H */

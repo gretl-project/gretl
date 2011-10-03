@@ -39,19 +39,12 @@
 
 #include <errno.h>
 
-static int all_done;
-
 static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 				  int spinmin, int spinmax,
 				  int hcode, gpointer p);
 static GtkWidget *option_checkbox (int *checkvar, const char *checktxt);
 static void set_radio_opt (GtkWidget *w, int *opt);
 static GtkWidget *dialog_blurb_box (const char *text);
-
-int gretl_all_done (void)
-{
-    return all_done;
-}
 
 void menu_exit_check (void)
 {
@@ -293,7 +286,6 @@ gboolean exit_check (void)
     } 
 
     write_rc();
-    all_done = 1;
 
     return FALSE;
 }
