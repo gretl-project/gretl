@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-01 14:20-0400\n"
-"PO-Revision-Date: 2011-10-02 17:42+0100\n"
+"PO-Revision-Date: 2011-10-03 11:51+0100\n"
 "Last-Translator: \n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: \n"
@@ -4950,15 +4950,15 @@ msgstr "Regresion kointegrimi -"
 
 #: lib/src/modelprint.c:768
 msgid "Augmented Dickey--Fuller regression"
-msgstr "Regresioni Dickey--Fuller i shtuar"
+msgstr "Regresion Dickey--Fuller i shtuar"
 
 #: lib/src/modelprint.c:770
 msgid "Augmented Dickey-Fuller regression"
-msgstr "Regresioni Dickey-Fuller i shtuar"
+msgstr "Regresion Dickey-Fuller i shtuar"
 
 #: lib/src/modelprint.c:774
 msgid "Dickey--Fuller regression"
-msgstr "Regresioni Dickey--Fuller"
+msgstr "Regresion Dickey--Fuller"
 
 #: lib/src/modelprint.c:776
 msgid "Dickey-Fuller regression"
@@ -4966,7 +4966,7 @@ msgstr "Regresioni Dickey-Fuller"
 
 #: lib/src/modelprint.c:779
 msgid "KPSS regression"
-msgstr "Regresioni KPSS"
+msgstr "Regresion KPSS"
 
 #: lib/src/modelprint.c:781
 msgid "Auxiliary regression for RESET specification test"
@@ -6262,7 +6262,7 @@ msgstr "Vlerësim i përkryer\n"
 
 #: lib/src/nls.c:1893
 msgid "In Gauss-Newton Regression:\n"
-msgstr "Në regresin Gauss-Newton:\n"
+msgstr "Në regresionin Gauss-Newton:\n"
 
 #: lib/src/nls.c:2292
 msgid "NLS: The supplied derivatives seem to be incorrect"
@@ -6313,7 +6313,7 @@ msgstr "komanda '%s' është e pavleshme në këtë kontekst"
 #: lib/src/nls.c:2867
 #: plugin/heckit.c:355
 msgid "No regression function has been specified"
-msgstr "Asnjë funksion regresi nuk është përcaktuar"
+msgstr "Asnjë funksion regresioni nuk është përcaktuar"
 
 #: lib/src/nls.c:2872
 msgid "You cannot supply both a \"params\" line and analytical derivatives"
@@ -6474,9 +6474,10 @@ msgstr "diferenca e mesoreve është zero"
 msgid "zero differences"
 msgstr "diferencë zero"
 
+# te rishihet
 #: lib/src/nonparam.c:1005
 msgid "non-zero ties"
-msgstr "barazime (jo-zero)"
+msgstr "vlera të barabarta jo-zero"
 
 #: lib/src/nonparam.c:1011
 msgid "Expected value"
@@ -14800,9 +14801,10 @@ msgstr "Rendi i modelit MA:"
 msgid "or specific lags"
 msgstr "ose vonesa të veçanta"
 
+# te rishihet
 #: gui2/selector.c:4774
 msgid "Bits per floating-point value"
-msgstr ""
+msgstr "Numri i bajteve për vlerë në \"floating-point\""
 
 #: gui2/selector.c:4829
 msgid "Robust standard errors/intervals"
@@ -14824,7 +14826,7 @@ msgstr "Me prirje kohore"
 
 #: gui2/selector.c:4891
 msgid "Show details of regressions"
-msgstr "Shfaq hollësitë e regreseve"
+msgstr "Shfaq hollësitë e regresioneve"
 
 #: gui2/selector.c:4894
 msgid "Include seasonal dummies"
@@ -16454,7 +16456,7 @@ msgstr "TARCH"
 
 #: plugin/addons-i18n.c:26
 msgid "Taylor/Schwert GARCH"
-msgstr ""
+msgstr "GARCH i Taylor/Schwert"
 
 # ?
 #: plugin/addons-i18n.c:28
@@ -16473,9 +16475,10 @@ msgstr "t"
 msgid "Between model"
 msgstr "Model Between"
 
+# Katroret me te Vegjel te Pergjithshem te Dyfishte
 #: plugin/addons-i18n.c:36
 msgid "G2SLS"
-msgstr ""
+msgstr "KVP2"
 
 #: plugin/addons-i18n.c:37
 msgid "dependent variable"
