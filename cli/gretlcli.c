@@ -164,12 +164,12 @@ static void nls_init (void)
     build_path(LOCALEDIR, gretl_home(), "locale", NULL);
 # endif /* WIN32 */
 
-    setlocale (LC_ALL, "");
-    bindtextdomain (PACKAGE, LOCALEDIR);
-    textdomain (PACKAGE); 
+    setlocale(LC_ALL, "");
+    bindtextdomain(PACKAGE, LOCALEDIR);
+    textdomain(PACKAGE); 
     iso_gettext("@CLI_INIT");
 
-    putenv("LC_NUMERIC=");
+    gretl_setenv("LC_NUMERIC", "");
     setlocale(LC_NUMERIC, "");
     reset_local_decpoint();
 #endif /* ENABLE_NLS */

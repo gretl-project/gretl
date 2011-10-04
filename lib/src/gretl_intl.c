@@ -177,9 +177,9 @@ static int using_utf8;
    record the numerical elements as gretl_cset_maj and gretl_cset_min
    respectively.  If we get a Windows "CPXXXX" reading, record the
    codepage as gretl_cpage.
- */
+*/
 
-void set_gretl_charset (const char *s)
+void set_gretl_charset (void)
 {
     const char *charset = NULL;
     char gretl_charset[32];
@@ -200,10 +200,9 @@ void set_gretl_charset (const char *s)
 	lower(gretl_charset);
 	p = strstr(gretl_charset, "iso");
 	if (p != NULL) {
-	    char numstr[6];
+	    char numstr[6] = {0};
 
 	    while (*p && !isdigit((unsigned char) *p)) p++;
-	    *numstr = '\0';
 	    strncat(numstr, p, 4);
 	    gretl_cset_maj = atoi(numstr);
 	    if (strlen(p) > 4) {
@@ -578,12 +577,12 @@ void set_lcnumeric (int langid, int lcnumeric)
 	} 
 	if (set == NULL) {
 	    setlocale(LC_NUMERIC, "");
-	    putenv("LC_NUMERIC=");
+	    gretl_setenv("LC_NUMERIC", "");
 	}
     } else {
 	/* either lcnumeric is not chosen, or we're in LANG_C */
 	setlocale(LC_NUMERIC, "C");
-	putenv("LC_NUMERIC=C");
+	gretl_setenv("LC_NUMERIC", "C");
     }
 
     reset_local_decpoint();
@@ -664,8 +663,8 @@ int force_language (int langid)
     int err = 0;
 
     if (langid == LANG_C) {
-	putenv("LANGUAGE=english");
-	putenv("LANG=C");
+	gretl_setenv("LANGUAGE", "english");
+	gretl_setenv("LANG", "C");
 	setlocale(LC_ALL, "C");
     } else {
 	lcode = get_setlocale_string(langid);
@@ -687,26 +686,21 @@ int force_language (int langid)
 
 # if defined(WIN32)
     if (langid == LANG_C) {
-	SetEnvironmentVariable("LC_ALL", "C");
-	putenv("LC_ALL=C");
+	gretl_setenv("LC_ALL", "C");
 	textdomain("none");
     } else if (lcode != NULL) {
-        char estr[32];
-
         lcode = lang_code_from_id(langid);
-	SetEnvironmentVariable("LC_ALL", lcode);
-	sprintf(estr, "LC_ALL=%s", lcode);
-	putenv(estr);
-	SetEnvironmentVariable("LANG", lcode);
-	sprintf(estr, "LANG=%s", lcode);
-	putenv(estr);
+	if (lcode != NULL) {
+	    gretl_setenv("LC_ALL", lcode);
+	    gretl_setenv("LANG", lcode);
+	}
     }
 # elif defined(OSX_BUILD)
     if (langid != LANG_C) {
-	char estr[64];
-
-	sprintf(estr, "LANGUAGE=%s", lang_code_from_id(langid));
-	putenv(estr);
+	lcode = lang_code_from_id(langid);
+	if (lcode != NULL) {
+	    gretl_setenv("LANGUAGE", lcode);
+	}
     }
 # endif
 

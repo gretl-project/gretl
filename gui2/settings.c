@@ -534,7 +534,7 @@ static const char *get_reg_base (const char *key)
 
 #ifdef OSX_BUILD
 static int alt_ok (const char *prog)
-{ 
+{
     char *p, test[MAXSTR];
     int tr = strstr(prog, "tramo") != NULL;
     int ok;
@@ -1772,7 +1772,7 @@ static int common_read_rc_setup (void)
 
     err = gretl_set_paths(&paths, set_paths_opt);
     if (err) {
-	/* tell the user, then turn of the special alarm */
+	/* tell the user, then turn off the special alarm */
 	gui_errmsg(err);
 	set_gretl_alarm(0);
     }
@@ -2041,39 +2041,38 @@ int read_win32_config (int debug)
 
 static int read_gretlrc (void) 
 {
-    char line[MAXLEN], key[32], linevar[MAXLEN];
-    int got_recent = 0;
-    FILE *fp;
-
-    fp = fopen(rcfile, "r");
+    FILE *fp = fopen(rcfile, "r");
 
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't read %s\n", rcfile);
-	return common_read_rc_setup();
-    }
+    } else {
+	char line[MAXLEN], key[32], linevar[MAXLEN];
+	int got_recent = 0;
 
-    while (fgets(line, sizeof line, fp) != NULL) {
-	if (line[0] == '#') {
-	    continue;
-	}
-	if (!strncmp(line, "recent", 6)) {
-	    got_recent = 1;
-	    break;
-	}
-	if (sscanf(line, "%s", key) == 1) {
-	    strcpy(linevar, line + strlen(key) + 3); 
-	    chopstr(linevar); 
-	    if (*linevar) {
-		find_and_set_rc_var(key, linevar);
+	while (fgets(line, sizeof line, fp)) {
+	    if (*line == '#') {
+		continue;
 	    }
+	    if (!strncmp(line, "recent", 6)) {
+		got_recent = 1;
+		break;
+	    }
+	    if (sscanf(line, "%31s", key) == 1) {
+		*linevar = '\0';
+		strncat(linevar, line + strlen(key) + 3, MAXLEN-1); 
+		chopstr(linevar); 
+		if (*linevar != '\0') {
+		    find_and_set_rc_var(key, linevar);
+		}
+	    }
+	}	
+
+	if (got_recent) {
+	    rc_read_file_lists(fp, line);
 	}
-    }	
 
-    if (got_recent) {
-	rc_read_file_lists(fp, line);
+	fclose(fp);
     }
-
-    fclose(fp);
 
     return common_read_rc_setup();
 }

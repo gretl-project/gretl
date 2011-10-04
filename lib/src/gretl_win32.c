@@ -1046,4 +1046,3 @@ void win32_aligned_free (void *mem)
 	free(ORIG_PTR(mem));
     }
 }
-

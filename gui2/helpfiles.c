@@ -239,21 +239,13 @@ static int compat_command_number (const char *s)
     return -1;
 }
 
-static void set_en_help_file (int gui)
+static void set_en_help_file (int h)
 {
-    const char *helpfile;
     char *tmp, *p;
 
-    if (gui) {
-	helpfile = helpfile_path(GRETL_HELPFILE);
-    } else {
-	helpfile = helpfile_path(GRETL_CMD_HELPFILE);
-    }
-
-    tmp = malloc(strlen(helpfile) + 1);
+    tmp = gretl_strdup(helpfile_path(h));
 
     if (tmp != NULL) {
-	strcpy(tmp, helpfile);
 #ifdef G_OS_WIN32
 	p = strrchr(tmp, '_');
 	if (p != NULL) strcpy(p, ".txt");
@@ -261,7 +253,7 @@ static void set_en_help_file (int gui)
 	p = strrchr(tmp, '.');
 	if (p != NULL) *p = 0;
 #endif
-	if (gui) {
+	if (h == GRETL_HELPFILE) {
 	    en_gui_helpfile = tmp;
 	} else {
 	    en_cli_helpfile = tmp;
@@ -274,25 +266,23 @@ void helpfile_init (void)
     const char *hpath = helpfile_path(GRETL_HELPFILE);
     char *p;
 
+    translated_helpfile = 0;
+
 #ifdef G_OS_WIN32
     p = strrchr(hpath, '_');
     if (p != NULL && strncmp(p, "_hlp", 4)) { 
 	translated_helpfile = 1;
-    } else {
-	translated_helpfile = 0;
-    }
+    } 
 #else
     p = strrchr(hpath, '.');
     if (p != NULL && strcmp(p, ".hlp")) { 
 	translated_helpfile = 1;
-    } else {
-	translated_helpfile = 0;
-    }
+    } 
 #endif
 
-    if (translated_helpfile == 1) {
-	set_en_help_file(0);
-	set_en_help_file(1);
+    if (translated_helpfile) {
+	set_en_help_file(GRETL_CMD_HELPFILE);
+	set_en_help_file(GRETL_HELPFILE);
     }
 }
 

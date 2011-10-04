@@ -777,14 +777,12 @@ DIR *gretl_opendir (const char *name)
 int gretl_setenv (const char *name, const char *value)
 {
 #ifdef WIN32
-    char estr[1024];
+    gchar *estr;
     int ok;
 
     /* belt and braces */
-    if (strlen(name) + strlen(value) + 1 < 1024) {
-	sprintf(estr, "%s=%s", name, value);
-	putenv(estr);
-    }
+    estr = g_strdup_printf("%s=%s", name, value);
+    putenv(estr);
 
     ok = SetEnvironmentVariable(name, value);
 
@@ -2984,12 +2982,12 @@ static int rc_bool (const char *s)
 
 void get_gretl_rc_path (char *rcfile)
 {
-    char *custprof = getenv("GRETL_PROFILE");
+    char *home = getenv("HOME");
 
-    if (custprof != NULL) {
-	strcpy(rcfile, custprof);
+    if (home != NULL) {
+	sprintf(rcfile, "%s/.gretl2rc", home);
     } else {
-	sprintf(rcfile, "%s/.gretl2rc", getenv("HOME"));
+	strcpy(rcfile, ".gretl2rc");
     }
 }
 

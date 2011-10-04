@@ -90,7 +90,7 @@ char *iso_gettext (const char *msgid);
 
 char *maybe_iso_gettext (const char *msgid);
 
-void set_gretl_charset (const char *s);
+void set_gretl_charset (void);
 
 char *sprint_l2_to_ascii (char *targ, const char *s, size_t len);
 

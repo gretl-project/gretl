@@ -44,7 +44,7 @@
  * GRETL_PLUGIN_PATH.  If gretl has been installed under
  * /usr/local then in a C program you could do:
  *
- * putenv("GRETL_PLUGIN_PATH=/usr/local/lib/gretl-gtk2/");
+ * gretl_setenv("GRETL_PLUGIN_PATH", "/usr/local/lib/gretl-gtk2/");
  *
  */
 

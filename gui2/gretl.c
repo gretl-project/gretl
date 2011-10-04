@@ -300,11 +300,10 @@ static void real_nls_init (void)
 static void real_nls_init (void)
 {
     char localedir[MAXSTR];
-    char *loc;
 
     build_path(localedir, gretl_home(), "locale", NULL);
-    loc = setlocale(LC_ALL, "");
-    set_gretl_charset(loc);
+    setlocale(LC_ALL, "");
+    set_gretl_charset();
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
     bind_textdomain_codeset(PACKAGE, "UTF-8");
@@ -316,7 +315,7 @@ static void real_nls_init (void)
 {
     char *gretlhome = getenv("GRETL_HOME");
     char localedir[MAXSTR];
-    char *p, *loc;
+    char *p;
 
     if (gretlhome == NULL) {
 	return;
@@ -329,8 +328,8 @@ static void real_nls_init (void)
     }
 
     /* FIXME GUI language choice? */
-    loc = setlocale(LC_ALL, "");
-    set_gretl_charset(loc);
+    setlocale(LC_ALL, "");
+    set_gretl_charset();
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
     bind_textdomain_codeset(PACKAGE, "UTF-8");
@@ -340,10 +339,8 @@ static void real_nls_init (void)
 
 static void real_nls_init (void)
 {
-    char *loc;
-
-    loc = setlocale(LC_ALL, "");
-    set_gretl_charset(loc);
+    setlocale(LC_ALL, "");
+    set_gretl_charset();
     bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE);
     bind_textdomain_codeset(PACKAGE, "UTF-8");
@@ -351,13 +348,16 @@ static void real_nls_init (void)
 
 #endif /* NLS init variants */
 
-void nls_init (void)
+void gui_nls_init (void)
 {
     char *mylang = getenv("GRETL_LANG");
 
     if (mylang != NULL) {
 	if (!g_ascii_strcasecmp(mylang, "english") ||
-	    !g_ascii_strcasecmp(mylang, "C")) return;
+	    !g_ascii_strcasecmp(mylang, "C")) {
+	    /* don't set up translation */
+	    return;
+	}
     } 
 
     real_nls_init();
@@ -419,7 +419,7 @@ int main (int argc, char **argv)
     signal(SIGUSR1, usr1_handler);
 #endif
 
-    nls_init();
+    gui_nls_init();
 
     *tryfile = '\0';
     *scriptfile = '\0';
@@ -1056,21 +1056,23 @@ void clear_varlist (GtkWidget *widget)
 
 static float get_gui_scale (void)
 {
-    GtkSettings *settings;
-    gchar *fontname = NULL;
-    int fsize;
+    GtkSettings *settings = gtk_settings_get_default();
     float scale = 1.0;
 
-    settings = gtk_settings_get_default();
-    g_object_get(G_OBJECT(settings), "gtk-font-name", &fontname, NULL);
+    if (settings != NULL) {
+	gchar *fontname = NULL;
+	int fsize;
 
-    if (fontname != NULL) {
-	if (sscanf(fontname, "%*s %d", &fsize) == 1) {
-	    if (fsize > 10 && fsize < 100) {
-		scale = fsize / 10.0;
+	g_object_get(G_OBJECT(settings), "gtk-font-name", &fontname, NULL);
+
+	if (fontname != NULL) {
+	    if (sscanf(fontname, "%*s %d", &fsize) == 1) {
+		if (fsize > 10 && fsize < 100) {
+		    scale = fsize / 10.0;
+		}
 	    }
+	    g_free(fontname);
 	}
-	g_free(fontname);
     }
 
     return scale;

@@ -28,7 +28,7 @@
    be destroyed en masse when a new data file is opened, to prevent
    weirdness that could arise if (e.g.) a model window that pertains
    to a previously opened data file remains open after the data set
-   has been changed.  Script windows are exempt, otherwise they are
+   has been changed. Script windows are exempt, otherwise they are
    likely to disappear when their "run" control is activated, which we
    don't want.
 */
@@ -88,7 +88,7 @@ static int got_filename_match (GtkWidget *w, const char *s,
 	if (code == STACK_MATCH_FNAME) {
 	    return !strcmp(s, vwin->fname);
 	} else {
-	    /* vwin->fname may the suffix removed */
+	    /* vwin->fname may have the suffix removed */
 	    return !strncmp(s, vwin->fname, strlen(vwin->fname));
 	}
     } else {
