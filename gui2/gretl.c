@@ -327,7 +327,6 @@ static void real_nls_init (void)
 	strcpy(p, "share/locale");
     }
 
-    /* FIXME GUI language choice? */
     setlocale(LC_ALL, "");
     set_gretl_charset();
     bindtextdomain(PACKAGE, localedir);
