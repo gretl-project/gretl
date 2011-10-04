@@ -661,7 +661,9 @@ double generate_scalar (const char *s, DATASET *dset, int *err)
 
     if (!*err) {
 	if (p.ret->t == MAT) {
-	    x = p.ret->v.m->val[0];
+	    if (p.ret->v.m->val != NULL) {
+		x = p.ret->v.m->val[0];
+	    } 
 	} else if (p.ret->t == NUM) {
 	    x = p.ret->v.xval;
 	} else {
