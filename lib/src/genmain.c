@@ -661,9 +661,13 @@ double generate_scalar (const char *s, DATASET *dset, int *err)
 
     if (!*err) {
 	if (p.ret->t == MAT) {
-	    if (p.ret->v.m->val != NULL) {
+	    gretl_matrix *m = p.ret->v.m;
+
+	    if (gretl_matrix_is_scalar(m)) {
 		x = p.ret->v.m->val[0];
-	    } 
+	    } else if (!gretl_is_null_matrix(m)) {
+		*err = E_TYPES;
+	    }
 	} else if (p.ret->t == NUM) {
 	    x = p.ret->v.xval;
 	} else {
