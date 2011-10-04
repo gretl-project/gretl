@@ -650,7 +650,7 @@ int generate (const char *line, DATASET *dset, gretlopt opt,
     return p.err;
 }
 
-/* simply retrieve a scalar result */
+/* retrieve a scalar result directly */
 
 double generate_scalar (const char *s, DATASET *dset, int *err)
 {
@@ -666,6 +666,8 @@ double generate_scalar (const char *s, DATASET *dset, int *err)
 	    if (gretl_matrix_is_scalar(m)) {
 		x = p.ret->v.m->val[0];
 	    } else if (!gretl_is_null_matrix(m)) {
+		fprintf(stderr, "generate_scalar: got %d x %d matrix\n",
+			m->rows, m->cols);
 		*err = E_TYPES;
 	    }
 	} else if (p.ret->t == NUM) {
