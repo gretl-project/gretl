@@ -4516,7 +4516,12 @@ static double nw_kernel (double x)
     */
     double ret, x2 = x*x;
 
+#if 0
     ret = exp(-0.5*x2)/SQRT_2_PI;
+#else
+    ret = exp(-0.5*x2);
+#endif
+
     return ret;
 }
 
@@ -4558,7 +4563,7 @@ int nadaraya_watson (const double *y, const double *x, double h,
     int LOO = (h < 0);  /* leave-one-out */
 
     /* this will have to be taken from a libset variable, eventually */
-    int TRIM = 37.0;
+    double TRIM = 4 * ah;
 
     int n = t2 + 1;
     double *num;
@@ -4582,7 +4587,7 @@ int nadaraya_watson (const double *y, const double *x, double h,
 	    num[t] = den[t] = 0.0;
 	}
     } else {
-	k =  nw_kernel(0) / ah;
+	k =  nw_kernel(0);
 	for (t=t1; t<=t2; t++) {
 	    if (!na(y[t])) {
 		num[t] = k * y[t];
@@ -4598,7 +4603,7 @@ int nadaraya_watson (const double *y, const double *x, double h,
 	    for (s=t+1; s<=t2; s++) {
 		xs = x[s];
 		if (!na(xs) && fabs(xs-xt) < TRIM) {
-		    k = nw_kernel((xt - xs)/ah) / ah;
+		    k = nw_kernel((xt - xs)/ah);
 		    if (!na(yt)) {
 			num[s] += k * yt;
 			den[s] += k;
