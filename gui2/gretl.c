@@ -58,7 +58,7 @@
 # include "gretlwin32.h"
 #endif
 
-#define GUI_DEBUG 0
+#define GUI_DEBUG 1
 
 #if GUI_DEBUG
 # include "version.h"
@@ -1171,7 +1171,7 @@ mainwin_config (GtkWidget *w, GdkEventConfigure *event, gpointer p)
    the screen dimensions
 */
 
-static void scale_main_window (void)
+static void set_main_window_scale (void)
 {
     GdkScreen *s = gdk_screen_get_default();
 
@@ -1222,7 +1222,7 @@ static GtkWidget *make_main_window (void)
 	/* set default window size */
 	mainwin_width = 580 * gui_scale;
 	mainwin_height = 420 * gui_scale;
-	scale_main_window();
+	set_main_window_scale();
     }
 
     mdata->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -1255,8 +1255,10 @@ static GtkWidget *make_main_window (void)
 	exit(EXIT_FAILURE);
     }
 
-    /* put the main menu bar in place */
-    gtk_box_pack_start(GTK_BOX(main_vbox), mdata->mbar, FALSE, TRUE, 0);
+    if (mdata->mbar != NULL) {
+	/* put the main menu bar in place */
+	gtk_box_pack_start(GTK_BOX(main_vbox), mdata->mbar, FALSE, TRUE, 0);
+    }
 
     /* label for name of datafile */
     dlabel = gtk_label_new(_(" No datafile loaded ")); 
@@ -1652,11 +1654,12 @@ static void add_conditional_items (windata_t *vwin)
 
 static gchar *get_main_ui (void)
 {
-    char fname[FILENAME_MAX];
     gchar *main_ui = NULL;
+    gchar *fname;
 
-    sprintf(fname, "%sui%cgretlmain.xml", gretl_home(), SLASH);
+    fname = g_strdup_printf("%sui%cgretlmain.xml", gretl_home(), SLASH);
     gretl_file_get_contents(fname, &main_ui, NULL);
+    g_free(fname);
 
     return main_ui;
 }

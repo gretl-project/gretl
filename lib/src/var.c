@@ -2705,7 +2705,8 @@ static void johansen_degenerate_stage_1 (GRETL_VAR *v,
 /* For Johansen analysis: estimate VAR in differences along with the
    other auxiliary regressions required to compute the relevant
    matrices of residuals, for concentration of the log-likelihood.
-   Then compute S00, S11, S01.
+   Then compute S00, S11, S01. See, for example, James Hamilton,
+   "Time Series Analysis", section 20.2.
 */
 
 int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset, 

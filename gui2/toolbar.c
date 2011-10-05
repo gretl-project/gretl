@@ -95,51 +95,34 @@ enum {
 
 static GtkIconFactory *gretl_stock_ifac;
 
+struct stock_maker {
+    char **xpm;
+    const char *str;
+};
+
 void gretl_stock_icons_init (void)
 {
-    char **xpms[] = {
-	mini_tex_xpm,
-	mail_16_xpm,
-	mini_tsplot_xpm,
-	mini_boxplot_xpm,
-	mini_pdf_xpm,
-	mini_manual_xpm,
-	mini_calc_xpm,
-	mini_sh_xpm,
-	mini_session_xpm,
-	mini_plot_xpm,
-	mini_model_xpm,
-	mini_func_xpm,
-	mini_pin_xpm,
-	mini_alpha_xpm,
-	mini_en_xpm,
-	mini_split_h_xpm,
-	mini_split_v_xpm,
-	mini_compass_xpm,
-	mini_spreadsheet_xpm,
-	mini_db_xpm
-    };
-    const char *stocks[] = {
-	GRETL_STOCK_TEX,
-	GRETL_STOCK_MAIL,
-	GRETL_STOCK_TS,
-	GRETL_STOCK_BOX,
-	GRETL_STOCK_PDF,
-	GRETL_STOCK_BOOK,
-	GRETL_STOCK_CALC,
-	GRETL_STOCK_CONSOLE,
-	GRETL_STOCK_ICONS,
-	GRETL_STOCK_SCATTER,
-	GRETL_STOCK_MODEL,
-	GRETL_STOCK_FUNC,
-	GRETL_STOCK_PIN,
-	GRETL_STOCK_ALPHA,
-	GRETL_STOCK_EN,
-	GRETL_STOCK_SPLIT_H,
-	GRETL_STOCK_SPLIT_V,
-	GRETL_STOCK_COMPASS,
-	GRETL_STOCK_SHEET,
-	GRETL_STOCK_DB
+    struct stock_maker stocks[] = {
+	{ mini_tex_xpm, GRETL_STOCK_TEX },
+	{ mail_16_xpm, GRETL_STOCK_MAIL },
+	{ mini_tsplot_xpm, GRETL_STOCK_TS },
+	{ mini_boxplot_xpm, GRETL_STOCK_BOX },
+	{ mini_pdf_xpm, GRETL_STOCK_PDF },
+	{ mini_manual_xpm, GRETL_STOCK_BOOK },
+	{ mini_calc_xpm, GRETL_STOCK_CALC },
+	{ mini_sh_xpm, GRETL_STOCK_CONSOLE },
+	{ mini_session_xpm, GRETL_STOCK_ICONS },
+	{ mini_plot_xpm, GRETL_STOCK_SCATTER },
+	{ mini_model_xpm, GRETL_STOCK_MODEL },
+	{ mini_func_xpm, GRETL_STOCK_FUNC },
+	{ mini_pin_xpm, GRETL_STOCK_PIN },
+	{ mini_alpha_xpm, GRETL_STOCK_ALPHA },
+	{ mini_en_xpm, GRETL_STOCK_EN },
+	{ mini_split_h_xpm, GRETL_STOCK_SPLIT_H },
+	{ mini_split_v_xpm, GRETL_STOCK_SPLIT_V },
+	{ mini_compass_xpm, GRETL_STOCK_COMPASS },
+	{ mini_spreadsheet_xpm, GRETL_STOCK_SHEET },
+	{ mini_db_xpm, GRETL_STOCK_DB}
     };
     int n = G_N_ELEMENTS(stocks);
 
@@ -155,12 +138,12 @@ void gretl_stock_icons_init (void)
 	    set = gtk_icon_set_new();
 	    source = gtk_icon_source_new();
 	    gtk_icon_source_set_size(source, GTK_ICON_SIZE_MENU);
-	    pbuf = gdk_pixbuf_new_from_xpm_data((const char **) xpms[i]);
+	    pbuf = gdk_pixbuf_new_from_xpm_data((const char **) stocks[i].xpm);
 	    gtk_icon_source_set_pixbuf(source, pbuf);
 	    g_object_unref(pbuf);
 	    gtk_icon_set_add_source(set, source);
 	    gtk_icon_source_free(source);
-	    gtk_icon_factory_add(gretl_stock_ifac, stocks[i], set);
+	    gtk_icon_factory_add(gretl_stock_ifac, stocks[i].str, set);
 	    gtk_icon_set_unref(set);
 	}
 

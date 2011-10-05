@@ -43,7 +43,7 @@ static char *sessionp[MAXRECENT];
 static char *scriptp[MAXRECENT];
 static char *wdirp[MAXRECENT];
 
-/* and ui_ids for same */
+/* and ui_ids for same (apart from wdirlist) */
 static guint data_id[MAXRECENT];
 static guint session_id[MAXRECENT];
 static guint script_id[MAXRECENT];
@@ -56,10 +56,10 @@ void initialize_file_lists (void)
 
     /* initialize lists of recently opened files */
     for (i=0; i<MAXRECENT; i++) { 
-	datalist[i][0] = 0;
-	sessionlist[i][0] = 0;
-	scriptlist[i][0] = 0;
-	wdirlist[i][0] = 0;
+	datalist[i][0] = '\0';
+	sessionlist[i][0] = '\0';
+	scriptlist[i][0] = '\0';
+	wdirlist[i][0] = '\0';
     }
 }
 
@@ -99,18 +99,26 @@ static const char *file_sections[] = {
 
 static void write_filename_to_list (int filetype, int i, char *fname)
 {
-    if (filetype == FILE_LIST_DATA) {
-	strcpy(datalist[i], fname);
-    } else if (filetype == FILE_LIST_SESSION) {
-	strcpy(sessionlist[i], fname);
-    } else if (filetype == FILE_LIST_SCRIPT) {
-	strcpy(scriptlist[i], fname);
-    } else if (filetype == FILE_LIST_WDIR) {
-	strcpy(wdirlist[i], fname);
+    if (i < MAXRECENT) {
+	if (filetype == FILE_LIST_DATA) {
+	    strcpy(datalist[i], fname);
+	} else if (filetype == FILE_LIST_SESSION) {
+	    strcpy(sessionlist[i], fname);
+	} else if (filetype == FILE_LIST_SCRIPT) {
+	    strcpy(scriptlist[i], fname);
+	} else if (filetype == FILE_LIST_WDIR) {
+	    strcpy(wdirlist[i], fname);
+	}
     }
 }
 
-/* return 1 if we read any "recent files", else 0 */
+/* We come here on finding a "recent ..." line in
+   the user's .gretl2rc. We process that line (@prev)
+   first, then look for more.
+
+   Return 1 if we manage to read any "recent files", 
+   else 0.
+*/
 
 int rc_read_file_lists (FILE *fp, char *prev)
 {
@@ -121,10 +129,11 @@ int rc_read_file_lists (FILE *fp, char *prev)
     initialize_file_lists();
     strcpy(line, prev);
 
-    while (1) {
+    do {
 	for (i=0; i<NFILELISTS; i++) {
 	    len = strlen(file_sections[i]);
 	    if (!strncmp(line, file_sections[i], len)) {
+		/* found a known "recent files" section */
 		chopstr(line);
 		if (*line != '\0') {
 		    write_filename_to_list(i, n[i], line + len + 2);
@@ -134,10 +143,7 @@ int rc_read_file_lists (FILE *fp, char *prev)
 		break;
 	    }
 	}
-	if (fgets(line, sizeof line, fp) == NULL) {
-	    break;
-	}
-    }
+    } while (fgets(line, sizeof line, fp) != NULL);
 
     return ret;
 }
@@ -444,7 +450,7 @@ static void open_file_from_filelist (GtkAction *action)
 
 static void real_add_files_to_menus (int ftype)
 {
-    char **filep, tmp[MAXSTR];
+    char tmp[MAXSTR];
     const char *fword;
     guint *id;
     GtkActionEntry entry;
@@ -471,7 +477,7 @@ static void real_add_files_to_menus (int ftype)
     entry.callback = G_CALLBACK(open_file_from_filelist);
 
     for (j=jmin; j<jmax; j++) {
-	filep = NULL;
+	char **filep = NULL;
 
 	if (j == FILE_LIST_DATA) {
 	    filep = datap;
@@ -549,7 +555,9 @@ GList *get_working_dir_list (void)
 
     for (i=0; i<MAXRECENT && wdirp[i][0]; i++) {
 	fname = my_filename_to_utf8(wdirp[i]);
-	list = g_list_append(list, fname);
+	if (fname != NULL) {
+	    list = g_list_append(list, fname);
+	}
     }
 
     return list;

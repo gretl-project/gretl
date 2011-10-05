@@ -5096,7 +5096,6 @@ int gretl_file_get_contents (const gchar *fname, gchar **contents, gsize *size)
 	    gchar *trfname = NULL;
 	    gsize bytes;
 
-	    verbose_gerror_report(gerr, "g_file_get_contents");
 	    g_error_free(gerr);
 	    gerr = NULL;
 
