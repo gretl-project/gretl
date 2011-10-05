@@ -10322,6 +10322,7 @@ static void assign_to_matrix_mod (parser *p)
 
 static void matrix_edit (parser *p)
 {
+    matrix_subspec *spec;
     gretl_matrix *m = NULL;
 
     if (p->ret->t != NUM) {
@@ -10335,20 +10336,27 @@ static void matrix_edit (parser *p)
     fprintf(stderr, "matrix_edit: m = %p\n", (void *) m);
 #endif
 
-    p->err = check_matrix_subspec(p->lh.mspec, p->lh.m0);
+    spec = p->lh.mspec;
+
+    p->err = check_matrix_subspec(spec, p->lh.m0);
     if (p->err) {
 	return;
     }
 
-    if (p->ret->t == NUM && p->lh.mspec->type[0] == SEL_ELEMENT) {
-	int i = mspec_get_row_index(p->lh.mspec);
-	int j = mspec_get_col_index(p->lh.mspec);
+    if (p->ret->t == NUM && spec->type[0] == SEL_ELEMENT) {
+	int i = mspec_get_row_index(spec);
+	int j = mspec_get_col_index(spec);
 	double x = matrix_get_element(p->lh.m0, i, j, &p->err);
 
 	if (!p->err) {
 	    x = xy_calc(x, p->ret->v.xval, p->op, MAT, p);
+	    if (xna(x)) {
+		if (na(x)) {
+		    x = M_NA;
+		}
+		set_gretl_warning(W_GENNAN);
+	    }
 	    gretl_matrix_set(p->lh.m0, i-1, j-1, x);
-	    p->lh.m1 = p->lh.m0;
 	}
 	return;
     }
@@ -10361,7 +10369,7 @@ static void matrix_edit (parser *p)
 	gretl_matrix *a = NULL;
 	gretl_matrix *b = NULL;
 
-	a = matrix_get_submatrix(p->lh.m0, p->lh.mspec, 1, &p->err);
+	a = matrix_get_submatrix(p->lh.m0, spec, 1, &p->err);
 
 	if (!p->err) {
 	    if (p->ret->t == NUM) {
@@ -10382,8 +10390,7 @@ static void matrix_edit (parser *p)
 
     if (!p->err) {
 	/* write new submatrix into place */
-	p->err = user_matrix_replace_submatrix(p->lh.name, m,
-					       p->lh.mspec);
+	p->err = user_matrix_replace_submatrix(p->lh.name, m, spec);
 	gretl_matrix_free(m);
 	if (p->ret->t == MAT) {
 	    p->ret->v.m = NULL; /* ?? */

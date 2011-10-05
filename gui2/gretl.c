@@ -58,6 +58,13 @@
 # include "gretlwin32.h"
 #endif
 
+#define GUI_DEBUG 0
+
+#if GUI_DEBUG
+# include "version.h"
+# include "build.h"
+#endif
+
 /* update.c */
 extern int silent_update_query (void);
 extern int update_query (void); 
@@ -426,6 +433,10 @@ int main (int argc, char **argv)
     *auxname = '\0';
     *filearg = '\0';
 
+#if GUI_DEBUG
+    fprintf(stderr, "starting gretl %s, %s\n", GRETL_VERSION, BUILD_DATE);
+#endif
+
     gtk_init_with_args(&argc, &argv, _(param_msg), options, "gretl", &opterr);
     if (opterr != NULL) {
 	g_print("%s\n", opterr->message);
@@ -462,6 +473,10 @@ int main (int argc, char **argv)
 	strncat(auxname, optpkg, MAXLEN - 1);
     }
 
+#if GUI_DEBUG
+    fprintf(stderr, "finished main option processing\n");
+#endif
+
     if (opteng) {
 	force_language(LANG_C);
 	force_english_help();
@@ -469,10 +484,18 @@ int main (int argc, char **argv)
 	force_language(LANG_EU);
     }
 
+#if GUI_DEBUG
+    fprintf(stderr, "finished all option processing\n");
+#endif
+
     /* set libgretl callbacks */
     set_workdir_callback(gui_set_working_dir);
     set_show_activity_func(gui_show_activity);
     set_query_stop_func(gui_query_stop);
+
+#if GUI_DEBUG
+    fprintf(stderr, "finished setting GUI callbacks\n");
+#endif
 
     /* allocate data information struct */
     dataset = datainfo_new();
@@ -486,11 +509,19 @@ int main (int argc, char **argv)
 	noalloc();
     } 
 
+#if GUI_DEBUG
+    fprintf(stderr, "allocated dataset and working model\n");
+#endif
+
     library_command_init();
 
     helpfile_init();
     session_init();
     init_fileptrs();
+
+#if GUI_DEBUG
+    fprintf(stderr, "finished miscellaneous init functions\n");
+#endif
 
     if (argc > 1) {
 	/* Process what is presumably a filename argument
@@ -500,8 +531,14 @@ int main (int argc, char **argv)
 	PRN *prn; 
 	int err = 0;
 
+#if GUI_DEBUG
+	fprintf(stderr, "argc > 1: processing args\n");
+#endif
+
 	prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
-	if (err) exit(EXIT_FAILURE);
+	if (err) {
+	    exit(EXIT_FAILURE);
+	}
 
 	if (*filearg == '\0') {
 	    /* not already registered */
@@ -581,20 +618,40 @@ int main (int argc, char **argv)
 	gretl_print_destroy(prn);
     }
 
+#if GUI_DEBUG
+    fprintf(stderr, "about to build GUI...\n");
+#endif
+
     /* create the GUI */
     gretl_stock_icons_init();
     make_main_window();
+
+#if GUI_DEBUG
+    fprintf(stderr, " step 1 done\n");
+#endif
 
     if (have_data()) {
 	/* redundant? */
 	set_sample_label(dataset);
     }
 
+#if GUI_DEBUG
+    fprintf(stderr, " step 2 done\n");
+#endif
+
     add_files_to_menus();
+
+#if GUI_DEBUG
+    fprintf(stderr, " step 3 done\n");
+#endif
 
     session_menu_state(FALSE);
     restore_sample_state(FALSE);
     main_menubar_state(FALSE);
+
+#if GUI_DEBUG
+    fprintf(stderr, " step 4 done\n");
+#endif
 
     /* FIXME run init script, if found? */
 
@@ -603,6 +660,10 @@ int main (int argc, char **argv)
 	maybe_display_string_table();
 	*tryfile = '\0';
     }
+
+#if GUI_DEBUG
+    fprintf(stderr, " step 5 done (tryfile='%s')\n", tryfile);
+#endif
 
     /* opening a script or session from the command line? */
     if (*tryfile != '\0') { 
@@ -623,6 +684,19 @@ int main (int argc, char **argv)
 	silent_update_query(); 
     }
 
+#if GUI_DEBUG
+    fprintf(stderr, " at last step");
+    if (optdb != NULL) {
+	fprintf(stderr, ": optdb != NULL\n");
+    } else if (optwebdb != NULL) {
+	fprintf(stderr, ": optwebdb != NULL\n");
+    } else if (optpkg != NULL) {
+	fprintf(stderr, ": optpkg != NULL\n");
+    } else {
+	fputc('\n', stderr);
+    }
+#endif
+
     /* try opening specified database or package */
     if (optdb != NULL) {
 	open_named_db_index(auxname);
@@ -631,6 +705,10 @@ int main (int argc, char **argv)
     } else if (optpkg != NULL) {
 	edit_package_at_startup(auxname);
     }
+
+#if GUI_DEBUG
+    fprintf(stderr, "calling gtk_main()\n");
+#endif
 
     /* Enter the event loop */
     gtk_main();
