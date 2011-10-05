@@ -210,7 +210,7 @@ static GtkActionEntry model_items[] = {
     { "ConfEllipse", NULL, N_("Confidence _ellipse..."), NULL, NULL, G_CALLBACK(selector_callback) },    
     { "Covariance", NULL, N_("Coefficient covariance _matrix"), NULL, NULL, G_CALLBACK(do_outcovmx) },    
     { "ANOVA", NULL, N_("_ANOVA"), NULL, NULL, G_CALLBACK(do_anova) },    
-    { "Bootstrap", NULL, N_("_Bootstrap..."), NULL, NULL, G_CALLBACK(do_bootstrap) }    
+    { "Bootstrap", NULL, N_("_Bootstrap..."), NULL, NULL, G_CALLBACK(do_bootstrap) }
 };
 
 static GtkActionEntry model_test_items[] = {
@@ -2162,8 +2162,8 @@ check_delete_model_window (GtkWidget *w, GdkEvent *e, gpointer p)
     return ret;
 }
 
-int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
-		char *title) 
+windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
+		       char *title) 
 {
     windata_t *vwin;
     const char *buf;
@@ -2171,7 +2171,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     vwin = gretl_viewer_new(VIEW_MODEL, title, pmod, 1);
     if (vwin == NULL) {
-	return 1;
+	return NULL;
     }
 
     /* Take responsibility for one reference to this model */
@@ -2215,14 +2215,15 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 		     G_CALLBACK(check_delete_model_window), 
 		     vwin);
 
-    gtk_widget_show(vwin->vbox);
+    gtk_window_set_type_hint(GTK_WINDOW(vwin->main),
+			     GDK_WINDOW_TYPE_HINT_NORMAL);
     gtk_widget_show_all(vwin->main);
 
     cursor_to_top(vwin);
 
-    gtk_window_present(GTK_WINDOW(vwin->main));
+    // gtk_window_present(GTK_WINDOW(vwin->main));
 
-    return 0;
+    return vwin;
 }
 
 #define dw_pval_ok(m) ((m->ci == OLS || m->ci == PANEL) && !na(pmod->dw))

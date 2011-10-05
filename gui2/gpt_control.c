@@ -337,7 +337,6 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 {
     FILE *fsrc, *ftmp;
     char temp[MAXLEN], fline[MAXLEN];
-    char restore_line[MAXLEN];
     GptFlags flags = 0;
 
     sprintf(temp, "%sgpttmp", gretl_dotdir());
@@ -352,11 +351,14 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	return 1;
     }
     
-    *restore_line = '\0';
-
     if (action == ADD_PNG) {
 	/* see if there's already a png term setting, possibly commented
 	   out, that can be reused */
+	char restore_line[MAXLEN];
+	int add_line_styles = 1;
+
+	*restore_line = '\0';
+
 	while (fgets(fline, sizeof fline, fsrc)) {
 	    if (is_png_term_line(fline) && *restore_line == '\0') {
 		strcat(restore_line, fline);
@@ -364,6 +366,8 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 		strcat(restore_line, fline + 2);
 	    } else if (strstr(fline, "letterbox")) {
 		flags = GPT_LETTERBOX;
+	    } else if (!strncmp(fline, "set style line", 14)) {
+		add_line_styles = 0;
 	    } else if (!strncmp(fline, "plot", 4)) {
 		break;
 	    }
@@ -375,9 +379,9 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	/* check for obsolete png term specification (as may be found
 	   in an old session file) */
 	check_win32_png_spec(restore_line);
-#endif	
+#endif
 
-	if (*restore_line) {
+	if (*restore_line != '\0') {
 	    fputs(restore_line, ftmp);
 	} else if (spec != NULL) {
 	    fprintf(ftmp, "%s\n", get_png_line_for_plotspec(spec));
@@ -385,11 +389,13 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	    fprintf(ftmp, "%s\n", get_gretl_png_term_line(PLOT_REGULAR, flags));
 	}	    
 	fprintf(ftmp, "set output '%sgretltmp.png'\n", gretl_dotdir());
-    }
 
-    /* now for the body of the plot file */
+	if (add_line_styles) {
+	    write_plot_line_styles(PLOT_REGULAR, ftmp);
+	}
 
-    if (action == ADD_PNG) {
+	/* now for the body of the plot file */
+
 	while (fgets(fline, sizeof fline, fsrc)) {
 	    if (set_print_line(fline)) {
 		; /* skip it (portability) */
@@ -407,7 +413,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	    print_plot_bounding_box_request(ftmp);
 	}
     } else {
-	/* we're removing the png term line */
+	/* not ADD_PNG: we're removing the png term line */
 	int printit, png_line_saved = 0;
 	
 	while (fgets(fline, sizeof fline, fsrc)) {

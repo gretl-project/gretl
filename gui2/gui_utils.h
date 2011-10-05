@@ -111,8 +111,8 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 
 windata_t *vwin_first_child (windata_t *vwin);
 
-int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
-		char *title);
+windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
+		       char *title);
 
 void view_window_set_editable (windata_t *vwin);
 

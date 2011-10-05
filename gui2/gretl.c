@@ -1823,7 +1823,7 @@ void add_window_list_item (GtkWidget *w, int role)
     guint merge_id;
 
     if (window_list == NULL) {
-	/* create the window group */
+	/* create the window_list group */
 	window_list = gtk_action_group_new("WindowList");
 	gtk_ui_manager_insert_action_group(mdata->ui, window_list, 0);
     }
