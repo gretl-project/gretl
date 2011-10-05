@@ -4871,7 +4871,7 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     char title[128];
     int t, err = 0;
 
-    if (alpha < 0.01 || alpha > 0.5) {
+    if (alpha != 0 && (alpha < 0.01 || alpha > 0.5)) {
 	return E_DATA;
     }
 
