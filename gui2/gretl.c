@@ -473,10 +473,6 @@ int main (int argc, char **argv)
 	strncat(auxname, optpkg, MAXLEN - 1);
     }
 
-#if GUI_DEBUG
-    fprintf(stderr, "finished main option processing\n");
-#endif
-
     if (opteng) {
 	force_language(LANG_C);
 	force_english_help();
@@ -485,17 +481,13 @@ int main (int argc, char **argv)
     }
 
 #if GUI_DEBUG
-    fprintf(stderr, "finished all option processing\n");
+    fprintf(stderr, "finished option processing\n");
 #endif
 
     /* set libgretl callbacks */
     set_workdir_callback(gui_set_working_dir);
     set_show_activity_func(gui_show_activity);
     set_query_stop_func(gui_query_stop);
-
-#if GUI_DEBUG
-    fprintf(stderr, "finished setting GUI callbacks\n");
-#endif
 
     /* allocate data information struct */
     dataset = datainfo_new();
@@ -508,10 +500,6 @@ int main (int argc, char **argv)
     if (model == NULL) {
 	noalloc();
     } 
-
-#if GUI_DEBUG
-    fprintf(stderr, "allocated dataset and working model\n");
-#endif
 
     library_command_init();
 
@@ -530,10 +518,6 @@ int main (int argc, char **argv)
 	*/
 	PRN *prn; 
 	int err = 0;
-
-#if GUI_DEBUG
-	fprintf(stderr, "argc > 1: processing args\n");
-#endif
 
 	prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
 	if (err) {
@@ -624,10 +608,13 @@ int main (int argc, char **argv)
 
     /* create the GUI */
     gretl_stock_icons_init();
+#if GUI_DEBUG
+    fprintf(stderr, " done gretl_stock_icons_init\n");
+#endif
     make_main_window();
 
 #if GUI_DEBUG
-    fprintf(stderr, " step 1 done\n");
+    fprintf(stderr, "done make_main_window\n");
 #endif
 
     if (have_data()) {
@@ -635,14 +622,10 @@ int main (int argc, char **argv)
 	set_sample_label(dataset);
     }
 
-#if GUI_DEBUG
-    fprintf(stderr, " step 2 done\n");
-#endif
-
     add_files_to_menus();
 
 #if GUI_DEBUG
-    fprintf(stderr, " step 3 done\n");
+    fprintf(stderr, "done add_files_to_menus\n");
 #endif
 
     session_menu_state(FALSE);
@@ -650,7 +633,7 @@ int main (int argc, char **argv)
     main_menubar_state(FALSE);
 
 #if GUI_DEBUG
-    fprintf(stderr, " step 4 done\n");
+    fprintf(stderr, "done setting GUI state\n");
 #endif
 
     /* FIXME run init script, if found? */
@@ -660,10 +643,6 @@ int main (int argc, char **argv)
 	maybe_display_string_table();
 	*tryfile = '\0';
     }
-
-#if GUI_DEBUG
-    fprintf(stderr, " step 5 done (tryfile='%s')\n", tryfile);
-#endif
 
     /* opening a script or session from the command line? */
     if (*tryfile != '\0') { 
@@ -684,7 +663,7 @@ int main (int argc, char **argv)
 	silent_update_query(); 
     }
 
-#if GUI_DEBUG
+#if 0
     fprintf(stderr, " at last step");
     if (optdb != NULL) {
 	fprintf(stderr, ": optdb != NULL\n");
@@ -1255,22 +1234,23 @@ static GtkWidget *make_main_window (void)
 	exit(EXIT_FAILURE);
     }
 
-    if (mdata->mbar != NULL) {
-	/* put the main menu bar in place */
-	gtk_box_pack_start(GTK_BOX(main_vbox), mdata->mbar, FALSE, TRUE, 0);
-    }
+    /* put the main menu bar in place */
+    gtk_box_pack_start(GTK_BOX(main_vbox), mdata->mbar, FALSE, TRUE, 0);
 
     /* label for name of datafile */
     dlabel = gtk_label_new(_(" No datafile loaded ")); 
     g_object_set_data(G_OBJECT(mdata->main), "dlabel", dlabel);
 
-    /* will hold the list of variables */
+    /* this will hold the list of variables */
     box = gtk_vbox_new(FALSE, 0);
 
     align = gtk_alignment_new(0, 0, 0, 0);
     gtk_box_pack_start(GTK_BOX(box), align, FALSE, FALSE, 0);
-    gtk_widget_show(align);
     gtk_container_add(GTK_CONTAINER(align), dlabel);
+
+#if GUI_DEBUG
+    fprintf(stderr, " adding main-window listbox...\n");
+#endif
    
     vwin_add_list_box(mdata, GTK_BOX(box), 3, FALSE, types, titles, 1);
 
@@ -1291,6 +1271,10 @@ static GtkWidget *make_main_window (void)
     mdata->status = gtk_label_new("");
     gtk_box_pack_start(GTK_BOX(main_vbox), mdata->status, FALSE, TRUE, 0);
 
+#if GUI_DEBUG
+    fprintf(stderr, " finalizing main window...\n");
+#endif
+
     /* put stuff into list box, activate menus */
     if (have_data()) {
 	populate_varlist();
@@ -1299,24 +1283,19 @@ static GtkWidget *make_main_window (void)
     /* get a monospaced font for various windows */
     set_fixed_font();
 
-    /* and a proportional font for menus, etc */
+    /* and a proportional font for menus, etc. */
     set_app_font(NULL);
 
     gtk_widget_show_all(mdata->main); 
 
     /* create gretl toolbar */
-    show_toolbar();
+    add_mainwin_toolbar(main_vbox);
 
     if (winsize && main_x >= 0 && main_y >= 0) {
 	gtk_window_move(GTK_WINDOW(mdata->main), main_x, main_y);
     }
 
     return main_vbox;
-}
-
-static void iconview_callback (void)
-{
-    view_session();
 }
 
 GtkActionEntry main_entries[] = {
@@ -1436,7 +1415,7 @@ GtkActionEntry main_entries[] = {
 
     /* View */
     { "View", NULL, N_("_View"), NULL, NULL, NULL },
-    { "IconView", NULL, N_("_Icon view"), NULL, NULL, G_CALLBACK(iconview_callback) },
+    { "IconView", NULL, N_("_Icon view"), NULL, NULL, G_CALLBACK(view_session) },
     { "EditScalars", NULL, N_("_Scalars"), NULL, NULL, G_CALLBACK(edit_scalars) },   
     { "Windows", NULL, N_("_Windows"), NULL, NULL, NULL },
     { "GraphVars", NULL, N_("_Graph specified vars"), NULL, NULL, NULL },
@@ -1656,20 +1635,21 @@ static gchar *get_main_ui (void)
 {
     gchar *main_ui = NULL;
     gchar *fname;
+    int err;
 
     fname = g_strdup_printf("%sui%cgretlmain.xml", gretl_home(), SLASH);
-    gretl_file_get_contents(fname, &main_ui, NULL);
+    err = gretl_file_get_contents(fname, &main_ui, NULL);
     g_free(fname);
 
-    return main_ui;
+    return err ? NULL : main_ui;
 }
 
 static int set_up_main_menu (void)
 {
     GtkActionGroup *actions;
-    GtkWidget *dataitem;
     gchar *main_ui = NULL;
     GError *error = NULL;
+    int err = 0;
 
     main_ui = get_main_ui();
     if (main_ui == NULL) {
@@ -1691,18 +1671,29 @@ static int set_up_main_menu (void)
     if (!gtk_ui_manager_add_ui_from_string(mdata->ui, main_ui, -1, &error)) {
 	g_message("building menus failed: %s", error->message);
 	g_error_free(error);
+	err = 1;
     } else {
 	add_conditional_items(mdata);
+	mdata->mbar = gtk_ui_manager_get_widget(mdata->ui, "/menubar");
+	if (mdata->mbar == NULL) {
+	    fprintf(stderr, "/menubar widget is NULL!\n");
+	    err = 1;
+	} else {
+	    GtkWidget *dataitem;
+
+	    dataitem = gtk_ui_manager_get_widget(mdata->ui, "/menubar/Data");
+	    if (dataitem == NULL) {
+		fprintf(stderr, "/menubar/Data widget is NULL!\n");
+		err = 1;
+	    } else {
+		g_signal_connect(G_OBJECT(dataitem), "activate",
+				 G_CALLBACK(check_var_labels_state), mdata);
+		g_free(main_ui);
+	    }
+	}
     }
 
-    g_free(main_ui);
-    mdata->mbar = gtk_ui_manager_get_widget(mdata->ui, "/menubar");
-
-    dataitem = gtk_ui_manager_get_widget(mdata->ui, "/menubar/Data");
-    g_signal_connect(G_OBJECT(dataitem), "activate",
-		     G_CALLBACK(check_var_labels_state), mdata);
-
-    return 0;
+    return err;
 }
 
 void raise_main_window (void)
@@ -2047,7 +2038,11 @@ void set_wm_icon (GtkWidget *w)
 {
     GdkPixbuf *icon = gdk_pixbuf_new_from_xpm_data(gretl_xpm);
 
-    gtk_window_set_icon(GTK_WINDOW(w), icon);
+    if (icon != NULL) {
+	gtk_window_set_icon(GTK_WINDOW(w), icon);
+    } else {
+	fprintf(stderr, "Couldn't create icon for gretl_xpm\n");
+    }
 }
 
 #endif

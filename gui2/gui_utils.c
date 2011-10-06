@@ -5100,7 +5100,8 @@ void verbose_gerror_report (GError *gerr, const char *src)
 	    src, gerr->message, gerr->domain, gerr->code);
 }
 
-int gretl_file_get_contents (const gchar *fname, gchar **contents, gsize *size)
+int gretl_file_get_contents (const gchar *fname, gchar **contents, 
+			     gsize *size)
 {
     GError *gerr = NULL;
     gboolean ok;

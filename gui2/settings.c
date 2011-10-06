@@ -386,7 +386,9 @@ void set_app_font (const char *fontname)
 {
     GtkSettings *settings;
 
-    if (fontname != NULL && *fontname == 0) return;
+    if (fontname != NULL && *fontname == '\0') {
+	return;
+    }
 
     settings = gtk_settings_get_default();
 
@@ -394,8 +396,10 @@ void set_app_font (const char *fontname)
     g_object_set(G_OBJECT(settings), "gtk-menu-images", TRUE, NULL);
 
     if (fontname == NULL) {
+	/* just loading the default font */
 	g_object_set(G_OBJECT(settings), "gtk-font-name", appfontname, NULL);
     } else {
+	/* loading a user-specified font: check that it works */
 	GtkWidget *w;
 	PangoFontDescription *pfd;
 	PangoContext *pc;
@@ -407,6 +411,7 @@ void set_app_font (const char *fontname)
 	pfont = pango_context_load_font(pc, pfd);
 
 	if (pfont != NULL) {
+	    /* OK, found it */
 	    strcpy(appfontname, fontname);
 	    g_object_set(G_OBJECT(settings), "gtk-font-name", appfontname, NULL);
 	}

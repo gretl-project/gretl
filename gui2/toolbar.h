@@ -27,7 +27,7 @@ typedef enum {
 
 void gretl_stock_icons_init (void);
 
-void show_toolbar (void);
+void add_mainwin_toolbar (GtkWidget *vbox);
 
 void gretl_pdf_manual (void);
 

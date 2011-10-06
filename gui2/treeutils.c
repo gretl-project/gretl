@@ -439,11 +439,9 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     if (tree) {
 	tstore = gtk_tree_store_newv(ncols, types);
 	vwin->listbox = view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(tstore));
-	g_object_unref(G_OBJECT(tstore));
     } else {
 	lstore = gtk_list_store_newv(ncols, types);
 	vwin->listbox = view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(lstore));
-	g_object_unref(G_OBJECT(lstore));
     }
 
     gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(view), TRUE);
@@ -554,6 +552,12 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 					list_alpha_compare,
 					NULL, NULL);
     } 
+
+    if (lstore != NULL) {
+	g_object_unref(G_OBJECT(lstore));
+    } else if (tstore != NULL) {
+	g_object_unref(G_OBJECT(tstore));
+    }
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
 

@@ -128,23 +128,23 @@ void gretl_stock_icons_init (void)
 
     if (gretl_stock_ifac == NULL) {
 	GtkIconSource *source;
-	GtkIconSet *set;
+	GtkIconSet *iset;
 	GdkPixbuf *pbuf;
 	int i;
 
 	gretl_stock_ifac = gtk_icon_factory_new();
 
 	for (i=0; i<n; i++) {
-	    set = gtk_icon_set_new();
+	    iset = gtk_icon_set_new();
 	    source = gtk_icon_source_new();
 	    gtk_icon_source_set_size(source, GTK_ICON_SIZE_MENU);
 	    pbuf = gdk_pixbuf_new_from_xpm_data((const char **) stocks[i].xpm);
 	    gtk_icon_source_set_pixbuf(source, pbuf);
 	    g_object_unref(pbuf);
-	    gtk_icon_set_add_source(set, source);
+	    gtk_icon_set_add_source(iset, source);
 	    gtk_icon_source_free(source);
-	    gtk_icon_factory_add(gretl_stock_ifac, stocks[i].str, set);
-	    gtk_icon_set_unref(set);
+	    gtk_icon_factory_add(gretl_stock_ifac, stocks[i].str, iset);
+	    gtk_icon_set_unref(iset);
 	}
 
 	gtk_icon_factory_add_default(gretl_stock_ifac);
@@ -890,10 +890,6 @@ void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags)
 {
     GtkWidget *hbox;
 
-    if (gretl_stock_ifac == NULL) {
-	gretl_stock_icons_init();
-    }
-
     if ((flags & VIEWBAR_HAS_TEXT) || vwin->role == SCRIPT_OUT) {
 	g_object_set_data(G_OBJECT(vwin->main), "text_out", GINT_TO_POINTER(1));
     }
@@ -902,7 +898,6 @@ void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags)
     gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 
     vwin->mbar = gretl_toolbar_new();
-
     viewbar_add_items(vwin, flags);
 
     gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
@@ -1065,13 +1060,11 @@ static GretlToolItem mainbar_items[] = {
     { N_("open dataset"),       GTK_STOCK_OPEN,      G_CALLBACK(tbar_open_data), 0 }
 };
 
-static void make_toolbar (GtkWidget *vbox)
+void add_mainwin_toolbar (GtkWidget *vbox)
 {
     GtkWidget *hbox, *toolbar;
     GretlToolItem *item;
     int i, n = G_N_ELEMENTS(mainbar_items);
-
-    gretl_stock_icons_init();
 
     toolbar = gretl_toolbar_new();
 
@@ -1086,10 +1079,4 @@ static void make_toolbar (GtkWidget *vbox)
     gtk_widget_show_all(hbox);
 }
 
-void show_toolbar (void)
-{
-    GtkWidget *vbox = g_object_get_data(G_OBJECT(mdata->main), "vbox");
-
-    make_toolbar(vbox);
-}
 
