@@ -2892,66 +2892,71 @@ static int printres (Jwrap *J, GRETL_VAR *jvar,
     return 0;
 }
 
-/* simulated annealing: can help when the standard deterministic
+static void set_up_matrix (gretl_matrix *m, double *val, 
+			   int rows, int cols)
+{
+    m->val = val;
+    m->rows = rows;
+    m->cols = cols;
+    m->t1 = m->t2 = 0;
+}
+
+/* Simulated annealing: can help when the standard deterministic
    initialization (theta_0) leads to a local maximum.
-   We use loglik-best point in case of improvement, else the 
-   last value.
+   We use the loglik-best point in case of improvement, else 
+   the last point visited.
+
+   This should be moved into gretl_bfgs.c (with some general-
+   ization possible) and exposed for users.
 */
 
-static int simann (Jwrap *J, gretlopt opt, PRN *prn)
+int gretl_simann (double *theta, int n, int maxit,
+		  BFGS_CRIT_FUNC cfunc, int crittype,
+		  void *data, gretlopt opt, PRN *prn)
 {
+    gretl_matrix b;
     gretl_matrix *b0 = NULL;
     gretl_matrix *b1 = NULL;
     gretl_matrix *bstar = NULL;
     gretl_matrix *d = NULL;
-    gretl_matrix *b = J->theta;
-    int SAiter = 4096;
     double f0, f1;
     double fbest, fworst;
     double Temp = 1.0;
     double radius = 1.0;
-    int jump, improved = 0;
+    int improved = 0;
     int i, err = 0;
 
-    if (b == NULL) {
-	fprintf(stderr, "simann: J->theta = NULL\n");
-	return E_DATA;
-    }
+    set_up_matrix(&b, theta, n, 1);
 
-    b0 = gretl_matrix_copy(b);
-    b1 = gretl_matrix_copy(b);
-    bstar = gretl_matrix_copy(b);
-    d = gretl_column_vector_alloc(b->rows);
+    b0 = gretl_matrix_copy(&b);
+    b1 = gretl_matrix_copy(&b);
+    bstar = gretl_matrix_copy(&b);
+    d = gretl_column_vector_alloc(n);
 
     if (b0 == NULL || b1 == NULL || bstar == NULL || d == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    f0 = fbest = fworst = Jloglik(b0->val, J);
+    f0 = fbest = fworst = cfunc(b.val, data);
 
     if (opt & OPT_V) {
 	pprintf(prn, "\nSimulated annealing: initial function value = %.8g\n",
 		f0);
-    }    
+    }
 
-    for (i=0; i<SAiter; i++) {
+    /* Question: should the initial radius be a function of the scale
+       of the initial parameter vector?
+    */
+
+    for (i=0; i<maxit; i++) {
 	gretl_matrix_random_fill(d, D_NORMAL);
 	gretl_matrix_multiply_by_scalar(d, radius);
 	gretl_matrix_add_to(b1, d);
-	f1 = Jloglik(b1->val, J);
+	f1 = cfunc(b1->val, data);
 
-	if (f1 > f0) {
-	    /* the criterion improved: jump unconditionally */
-	    jump = 1;
-	} else {
-	    /* no improvement: jump at random, with the probability
-	       positively conditional on temperature 
-	    */
-	    jump = (gretl_rand_01() < Temp);
-	}
-
-	if (jump) {
+	if (f1 > f0 || gretl_rand_01() < Temp) {
+	    /* jump to the new point */
 	    f0 = f1;
 	    gretl_matrix_copy_values(b0, b1);
 	    if (f0 > fbest) {
@@ -2970,6 +2975,7 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
 		fworst = f0;
 	    }
 	} else {
+	    /* revert to where we were */
 	    gretl_matrix_copy_values(b1, b0);
 	    f1 = f0;
 	}
@@ -2979,21 +2985,21 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
     }
 
     if (improved) {
-	gretl_matrix_copy_values(J->theta, bstar);
+	/* use the best point */
+	gretl_matrix_copy_values(&b, bstar);
     } else {
-	gretl_matrix_copy_values(J->theta, b0);
+	/* use the last point */
+	gretl_matrix_copy_values(&b, b0);
     }
-
-    sync_with_theta(J, b->val);
 
     if (improved) {
 	if (opt & OPT_V) pputc(prn, '\n');
     } else {
-	pprintf(prn, "No improvement found in %d iterations\n\n", SAiter);
+	pprintf(prn, "No improvement found in %d iterations\n\n", maxit);
     }
     
     if (fbest - fworst < 1.0e-9) {
-	pprintf(prn, "*** warning: likelihood seems to be flat\n");
+	pprintf(prn, "*** warning: surface seems to be flat\n");
     }
 
  bailout:
@@ -3229,7 +3235,14 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     }
 
     if (!err && do_simann) {
-	err = simann(J, opt, prn);
+	int n = gretl_vector_get_length(J->theta);
+
+	err = gretl_simann(J->theta->val, n, 4096,
+			   Jloglik, C_LOGLIK, J,
+			   opt, prn);
+	if (!err) {
+	    sync_with_theta(J, J->theta->val);
+	}
     }
 
     if (!err) {
