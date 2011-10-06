@@ -1280,20 +1280,44 @@ static GtkWidget *make_main_window (void)
 	populate_varlist();
     }
 
+#if GUI_DEBUG
+    fprintf(stderr, "  step 1 done\n");
+#endif
+
     /* get a monospaced font for various windows */
     set_fixed_font();
+
+#if GUI_DEBUG
+    fprintf(stderr, "  step 2 done\n");
+#endif
 
     /* and a proportional font for menus, etc. */
     set_app_font(NULL);
 
+#if GUI_DEBUG
+    fprintf(stderr, "  step 3 done\n");
+#endif
+
     gtk_widget_show_all(mdata->main); 
+
+#if GUI_DEBUG
+    fprintf(stderr, "  step 4 done\n");
+#endif
 
     /* create gretl toolbar */
     add_mainwin_toolbar(main_vbox);
 
+#if GUI_DEBUG
+    fprintf(stderr, "  step 5 done\n");
+#endif
+
     if (winsize && main_x >= 0 && main_y >= 0) {
 	gtk_window_move(GTK_WINDOW(mdata->main), main_x, main_y);
     }
+
+#if GUI_DEBUG
+    fprintf(stderr, "  step 6 done\n");
+#endif
 
     return main_vbox;
 }
