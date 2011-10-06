@@ -360,6 +360,62 @@ static void VAR_fill_Y (GRETL_VAR *v, int mod, const DATASET *dset)
 #endif
 }
 
+#define VECM_PACK 0 /* not just yet */
+
+#if VECM_PACK
+
+static gretl_matrix *VECM_make_full_Y (GRETL_VAR *v, const DATASET *dset)
+{
+    gretl_matrix *Y = NULL;
+    int i, vi, s, t, cols;
+    int k = 0;
+
+    cols = 2 * v->neqns + n_restricted_terms(v);
+
+    Y = gretl_matrix_alloc(v->T, cols);
+    if (Y == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<v->neqns; i++) {
+	vi = v->ylist[i+1];
+	k = i + v->neqns;
+	s = 0;
+	for (t=v->t1; t<=v->t2; t++) {
+	    gretl_matrix_set(Y, s, i, dset->Z[vi][t] - dset->Z[vi][t-1]);
+	    gretl_matrix_set(Y, s, k, dset->Z[vi][t-1]);
+	    s++;
+	}
+    }
+
+    if (auto_restr(v)) {
+	int trend = (v->jinfo->code == J_REST_TREND);
+
+	k++;
+	for (t=0; t<v->T; t++) {
+	    gretl_matrix_set(Y, t, k, (trend)? (v->t1 + t) : 1);
+	}
+    }
+
+    if (v->rlist != NULL) {
+	for (i=0; i<v->rlist[0]; i++) {
+	    vi = v->rlist[i+1];
+	    k++;
+	    s = 0;
+	    for (t=v->t1; t<=v->t2; t++) {
+		gretl_matrix_set(Y, s++, k, dset->Z[vi][t-1]);
+	    }
+	}
+    }  
+
+    gretl_matrix_set_t1(Y, v->t1);
+    gretl_matrix_set_t2(Y, v->t2);
+
+    return Y;
+}
+
+#endif
+
 /* Split the user-supplied list, if need be, and construct the lists
    of endogenous and (possibly) exogenous vars.  Note that
    deterministic terms are handled separately, via option flags.
@@ -2663,6 +2719,26 @@ allocate_johansen_residual_matrices (GRETL_VAR *v)
     return get_gretl_matrix_err();
 }
 
+#if VECM_PACK
+
+static gretl_matrix *johansen_full_R (GRETL_VAR *v)
+{
+    int p = v->neqns;
+    int p1 = p + n_restricted_terms(v);
+
+    return gretl_matrix_alloc(v->T, p + p1);
+}
+
+static gretl_matrix *johansen_full_B (GRETL_VAR *v)
+{
+    int p = v->neqns;
+    int p1 = p + n_restricted_terms(v);
+
+    return gretl_matrix_alloc(v->X->cols, p + p1);
+}
+
+#endif
+
 static void johansen_degenerate_stage_1 (GRETL_VAR *v, 
 					 const DATASET *dset)
 {
@@ -2700,6 +2776,23 @@ static void johansen_degenerate_stage_1 (GRETL_VAR *v,
     }    
 }
 
+static void johansen_fill_S_matrices (GRETL_VAR *v)
+{
+    gretl_matrix_multiply_mod(v->jinfo->R0, GRETL_MOD_TRANSPOSE,
+			      v->jinfo->R0, GRETL_MOD_NONE,
+			      v->jinfo->S00, GRETL_MOD_NONE);
+    gretl_matrix_multiply_mod(v->jinfo->R1, GRETL_MOD_TRANSPOSE,
+			      v->jinfo->R1, GRETL_MOD_NONE,
+			      v->jinfo->S11, GRETL_MOD_NONE);
+    gretl_matrix_multiply_mod(v->jinfo->R0, GRETL_MOD_TRANSPOSE,
+			      v->jinfo->R1, GRETL_MOD_NONE,
+			      v->jinfo->S01, GRETL_MOD_NONE);
+
+    gretl_matrix_divide_by_scalar(v->jinfo->S00, v->T);
+    gretl_matrix_divide_by_scalar(v->jinfo->S11, v->T);
+    gretl_matrix_divide_by_scalar(v->jinfo->S01, v->T);
+}
+
 #define JVAR_USE_SVD 1
 
 /* For Johansen analysis: estimate VAR in differences along with the
@@ -2708,6 +2801,69 @@ static void johansen_degenerate_stage_1 (GRETL_VAR *v,
    Then compute S00, S11, S01. See, for example, James Hamilton,
    "Time Series Analysis", section 20.2.
 */
+
+#if VECM_PACK
+
+static void 
+VECM_partition_residuals (GRETL_VAR *v, const gretl_matrix *R)
+{
+    int n = v->neqns * v->T;
+    int m = n + n_restricted_terms(v) * v->T;
+
+    memcpy(v->jinfo->R0->val, R->val, n * sizeof(double));
+    memcpy(v->jinfo->R1->val, R->val + n, m * sizeof(double));
+}
+
+int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset, 
+		      gretlopt opt, PRN *prn)
+{
+    gretl_matrix *Y = NULL;
+    gretl_matrix *R = NULL;
+    gretl_matrix *B = NULL;
+    int err;
+
+    err = allocate_johansen_residual_matrices(v); 
+    if (err) {
+	return err;
+    }
+
+    if (v->ncoeff == 0) {
+	/* nothing to concentrate out */
+	if (opt & OPT_V) {
+	    pputs(prn, "\nNo initial VAR estimation is required\n\n");
+	}
+	johansen_degenerate_stage_1(v, dset);
+	johansen_fill_S_matrices(v);
+	return 0;
+    }
+
+    Y = VECM_make_full_Y(v, dset);
+    R = johansen_full_R(v);
+    B = johansen_full_B(v);
+
+    if (Y == NULL || R == NULL || B == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = gretl_matrix_multi_SVD_ols(Y, v->X, B, R, NULL);
+    }
+
+    if (!err) {
+	if (opt & OPT_V) {
+	    gretl_matrix_print_to_prn(B, "\nCoefficients, stage 1", 
+				      prn);
+	}
+	VECM_partition_residuals(v, R);
+	johansen_fill_S_matrices(v);
+    }
+
+    gretl_matrix_free(Y);
+    gretl_matrix_free(R);
+    gretl_matrix_free(B);
+
+    return err;
+}
+
+#else /* not VECM_PACK */
 
 int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset, 
 		      gretlopt opt, PRN *prn)
@@ -2725,7 +2881,8 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
 	    pputs(prn, "\nNo initial VAR estimation is required\n\n");
 	}
 	johansen_degenerate_stage_1(v, dset);
-	goto finish;
+	johansen_fill_S_matrices(v);
+	return 0;
     }
 
     if (v->Y->cols > v->neqns) {
@@ -2782,21 +2939,9 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
 	gretl_matrix_reuse(v->B, -1, v->neqns);
     }
 
- finish:
-
-    gretl_matrix_multiply_mod(v->jinfo->R0, GRETL_MOD_TRANSPOSE,
-			      v->jinfo->R0, GRETL_MOD_NONE,
-			      v->jinfo->S00, GRETL_MOD_NONE);
-    gretl_matrix_multiply_mod(v->jinfo->R1, GRETL_MOD_TRANSPOSE,
-			      v->jinfo->R1, GRETL_MOD_NONE,
-			      v->jinfo->S11, GRETL_MOD_NONE);
-    gretl_matrix_multiply_mod(v->jinfo->R0, GRETL_MOD_TRANSPOSE,
-			      v->jinfo->R1, GRETL_MOD_NONE,
-			      v->jinfo->S01, GRETL_MOD_NONE);
-
-    gretl_matrix_divide_by_scalar(v->jinfo->S00, v->T);
-    gretl_matrix_divide_by_scalar(v->jinfo->S11, v->T);
-    gretl_matrix_divide_by_scalar(v->jinfo->S01, v->T);
+    if (!err) {
+	johansen_fill_S_matrices(v);
+    }
 
 #if VDEBUG
     fprintf(stderr, "johansen_stage_1: returning err = %d\n", err);
@@ -2804,6 +2949,8 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
 
     return err;
 }
+
+#endif /* VECM_PACK or not */
 
 static gretlopt opt_from_jcode (JohansenCode jc)
 {
