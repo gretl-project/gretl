@@ -2894,28 +2894,24 @@ static int printres (Jwrap *J, GRETL_VAR *jvar,
 
 /* simulated annealing: can help when the standard deterministic
    initialization (theta_0) leads to a local maximum.
-   We use ll-best point in case of improvement, else the 
+   We use loglik-best point in case of improvement, else the 
    last value.
 */
 
 static int simann (Jwrap *J, gretlopt opt, PRN *prn)
 {
-    gretl_matrix *b = J->theta;
-    int i, SAiter = 4096;
-    double f0, f1;
-    double fbest, fworst;
-    double rndu;
-    int jump;
-
     gretl_matrix *b0 = NULL;
     gretl_matrix *b1 = NULL;
     gretl_matrix *bstar = NULL;
     gretl_matrix *d = NULL;
-
+    gretl_matrix *b = J->theta;
+    int SAiter = 4096;
+    double f0, f1;
+    double fbest, fworst;
     double Temp = 1.0;
     double radius = 1.0;
-    int improved = 0;
-    int err = 0;
+    int jump, improved = 0;
+    int i, err = 0;
 
     if (b == NULL) {
 	fprintf(stderr, "simann: J->theta = NULL\n");
@@ -2946,10 +2942,13 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
 	f1 = Jloglik(b1->val, J);
 
 	if (f1 > f0) {
+	    /* the criterion improved: jump unconditionally */
 	    jump = 1;
 	} else {
-	    rndu = ((double) rand()) / RAND_MAX;
-	    jump = (Temp < rndu);
+	    /* no improvement: jump at random, with the probability
+	       positively conditional on temperature 
+	    */
+	    jump = (gretl_rand_01() < Temp);
 	}
 
 	if (jump) {
