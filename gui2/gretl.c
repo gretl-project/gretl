@@ -70,7 +70,7 @@ extern int silent_update_query (void);
 extern int update_query (void); 
 
 /* functions private to gretl.c */
-static GtkWidget *make_main_window (void);
+static void make_main_window (void);
 
 static gboolean main_popup_handler (GtkWidget *w, GdkEventButton *event,
 				    gpointer data);
@@ -1174,7 +1174,7 @@ static void set_main_window_scale (void)
     }
 }
 
-static GtkWidget *make_main_window (void) 
+static void make_main_window (void) 
 {
     GtkWidget *main_vbox;
     GtkWidget *box, *dlabel;
@@ -1288,27 +1288,26 @@ static GtkWidget *make_main_window (void)
     set_fixed_font();
 
 #if GUI_DEBUG
-    fprintf(stderr, "  step 2 done\n");
+    fprintf(stderr, "  set_fixed_font done\n");
 #endif
 
     /* and a proportional font for menus, etc. */
     set_app_font(NULL);
 
 #if GUI_DEBUG
-    fprintf(stderr, "  step 3 done\n");
+    fprintf(stderr, "  set_app_font done\n");
+#endif
+
+    add_mainwin_toolbar(main_vbox);
+
+#if GUI_DEBUG
+    fprintf(stderr, "  add_mainwin_toolbar done\n");
 #endif
 
     gtk_widget_show_all(mdata->main); 
 
 #if GUI_DEBUG
-    fprintf(stderr, "  step 4 done\n");
-#endif
-
-    /* create gretl toolbar */
-    add_mainwin_toolbar(main_vbox);
-
-#if GUI_DEBUG
-    fprintf(stderr, "  step 5 done\n");
+    fprintf(stderr, "  gtk_widget_show_all done\n");
 #endif
 
     if (winsize && main_x >= 0 && main_y >= 0) {
@@ -1316,10 +1315,8 @@ static GtkWidget *make_main_window (void)
     }
 
 #if GUI_DEBUG
-    fprintf(stderr, "  step 6 done\n");
+    fprintf(stderr, "  possible window_move done\n");
 #endif
-
-    return main_vbox;
 }
 
 GtkActionEntry main_entries[] = {
