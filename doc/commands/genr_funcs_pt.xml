@@ -712,11 +712,12 @@
     <function name="$vecGamma" section="access" output="matrix">
       <description>
 	<para>
-	  Tem que ser acedido após a estimação de VECM; retorna a matriz in
-	  which a Gamma matrices (coeficientes on a lagged differences
-	  de a cointegrated variáveis) are stacked side by side.
-	  Each row represents an equação; para VECM de lag order
-	  <math>p</math> there are <math>p</math> &minus; 1 sub-matrices.
+	  Tem que ser acedido após a estimação de VECM; retorna uma matriz
+	  onde as matrizes Gama (coeficientes das diferenças desfasadas das
+	  variáveis cointegradas) estão lado-a-lado.
+	  Cada linha representa uma equação; para VECM com grau de 
+	  desfasamento <math>p</math> existem <math>p</math> &minus; 1 
+	  sub-matrizes.
 	</para>
       </description>
     </function>    
@@ -724,10 +725,10 @@
     <function name="$version" section="access" output="scalar">
       <description>
 	<para>
-	  Retorna um valor inteiro that codes para program version. The
-	  gretl version string takes a form <lit>x.y.z</lit> (por exemplo,
-	  1.7.6).  The return valor from this accessor is formed as
-	  <lit>10000*x + 100*y + z</lit>, so that 1.7.6 translates as 10706.
+	  Retorna um valor inteiro que representa a versão do programa.
+	  A versão de gretl em texto tem a forma <lit>x.y.z</lit> (por
+	  exemplo, 1.7.6). O valor de retorno deste acessor é formado por 
+	  <lit>10000*x + 100*y + z</lit>, sendo que 1.7.6 resulta em 10706.
 	</para>
       </description>
     </function>
@@ -735,10 +736,10 @@
     <function name="$vma" section="access" output="matrix">
       <description>
 	<para>
-	  Tem que ser acedido após a estimação de VAR ou a VECM; retorna a
-	  matriz contendo o VMA representation up to a order
-	  specified via a <lit>set horizon</lit> command. Consultar
-	  <guideref targ="sec:var-estim"/> for details.
+	  Tem que ser acedido após a estimação de VAR ou VECM; retorna a
+	  matriz contendo a representação VMA até um grau definido com
+	  o comando <lit>set horizon</lit>. Consultar
+	  <guideref targ="sec:var-estim"/> para detalhes.
 	</para>
       </description>
     </function>
@@ -746,12 +747,13 @@
     <function name="$windows" section="access" output="scalar">
       <description>
 	<para>
-	  Retorna 1 if gretl is running on MS Windows, caso contrário 0. By
-	  conditioning on a valor de this variable yor can write shell
-	  calls that are portable across different operating sistemas.
+	  Retorna 1 se gretl estiver a correr em MS Windows, 0 caso 
+	  contrário. Condicionando pelo valor desta variável você
+	  pode escrever chamadas a comandos de sistema que são 
+	  portáveis entre diferentes sistemas operativos.
 	</para>
 	<para>
-	  Also see a <cmdref targ="shell"/> command.
+	  Ver também o comando <cmdref targ="shell"/>.
 	</para>
       </description>
     </function>
@@ -759,8 +761,8 @@
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
-	  Retorna o list de regressors do último modelo (for
-	  single-equação modelos only).
+	  Retorna a lista de regressores do último modelo (apenas para
+          modelos com uma única equação).
 	</para>
       </description>
     </function>
@@ -768,11 +770,12 @@
     <function name="$xtxinv" section="access" output="matrix">
       <description>
 	<para>
-	  Following estimation de a VAR ou VECM (only), retorna
-	  <math>X'X</math><sup>-1</sup>, where <math>X</math> is a common
-	  matriz de regressors used in each de a equações.  This accessor
-	  is not available para VECM estimado with a restriction imposed on
-	  &agr;, a <quote>loadings</quote> matriz.
+	  Seguindo a estimação de VAR ou VECM (apenas), retorna
+	  <math>X'X</math><sup>-1</sup>, onde <math>X</math> é a 
+	  matriz conjunta de regressores utilizados em cada uma 
+	  das equações. Este acessor não está disponível para 
+	  VECM estimado com uma restrição imposta sobre 
+	  &agr;, a matriz <quote>cargas</quote> .
 	</para>
       </description>
     </function>
@@ -780,14 +783,14 @@
     <function name="$yhat" section="access" output="series">
       <description>
 	<para>
-	  Retorna o fitted values do último regression.
+	  Retorna os valores ajustados da última regressão.
 	</para>
       </description>
     </function>
 
   </funclist>
 
-  <funclist name="Functions proper" ref="functions">
+  <funclist name="Funções" ref="functions">
 
     <function name="abs" section="math" output="asinput">
       <fnargs>
@@ -795,7 +798,7 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna o absolute valor de <argname>x</argname>.
+	  Retorna o valor absoluto de <argname>x</argname>.
 	</para>
       </description>
     </function>
@@ -806,9 +809,9 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna o arc cosine de <argname>x</argname>, that is, a value
-	  whose cosine is <argname>x</argname>.  The result is in radians; a
-	  input shorld be in a range &minus;1 to 1.
+	  Retorna o arcoseno de <argname>x</argname>, ou seja, um valor
+	  de cujo cosseno é <argname>x</argname>.  O resultado é em 
+	  radianos; o argumento deve variar de &minus;1 a 1.
 	</para>
       </description>
     </function>
@@ -4955,7 +4958,7 @@
 	  this file, caso contrário flags an error.  
 	</para>
 	<para>
-	  Also see a <fncref targ="sscanf"/> function.
+	  Ver também o comando <fncref targ="sscanf"/> function.
 	</para>
       </description>
     </function>
