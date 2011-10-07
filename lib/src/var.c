@@ -364,18 +364,11 @@ static void VAR_fill_Y (GRETL_VAR *v, int mod, const DATASET *dset)
 
 #if VECM_PACK
 
-static gretl_matrix *VECM_make_full_Y (GRETL_VAR *v, const DATASET *dset)
+static void VECM_fill_Y (GRETL_VAR *v, const DATASET *dset,
+			 gretl_matrix *Y)
 {
-    gretl_matrix *Y = NULL;
-    int i, vi, s, t, cols;
+    int i, vi, s, t;
     int k = 0;
-
-    cols = 2 * v->neqns + n_restricted_terms(v);
-
-    Y = gretl_matrix_alloc(v->T, cols);
-    if (Y == NULL) {
-	return NULL;
-    }
 
     for (i=0; i<v->neqns; i++) {
 	vi = v->ylist[i+1];
@@ -407,11 +400,6 @@ static gretl_matrix *VECM_make_full_Y (GRETL_VAR *v, const DATASET *dset)
 	    }
 	}
     }  
-
-    gretl_matrix_set_t1(Y, v->t1);
-    gretl_matrix_set_t2(Y, v->t2);
-
-    return Y;
 }
 
 #endif
@@ -2695,52 +2683,53 @@ johansen_estimate_complete (GRETL_VAR *jvar, gretl_restriction *rset,
     return err;
 }
 
-static int 
-allocate_johansen_residual_matrices (GRETL_VAR *v)
+/* N.B. we allow for the possibility that this allocation has
+   already been done */
+
+static int allocate_johansen_residual_matrices (GRETL_VAR *v)
 {
-    int p = v->neqns;
-    int p1 = p + n_restricted_terms(v);
+    if (v->jinfo->R0 != NULL && v->jinfo->S00 != NULL) {
+	return 0;
+    } else {
+	int p = v->neqns;
+	int p1 = p + n_restricted_terms(v);
 
-    clear_gretl_matrix_err();
+	clear_gretl_matrix_err();
 
-    /* N.B. allow for the possibility that this has already been done */
+	if (v->jinfo->R0 == NULL) {
+	    v->jinfo->R0 = gretl_matrix_alloc(v->T, p);
+	    v->jinfo->R1 = gretl_matrix_alloc(v->T, p1);
+	}
 
-    if (v->jinfo->R0 == NULL) {
-	v->jinfo->R0 = gretl_matrix_alloc(v->T, p);
-	v->jinfo->R1 = gretl_matrix_alloc(v->T, p1);
+	if (v->jinfo->S00 == NULL) {
+	    v->jinfo->S00 = gretl_matrix_alloc(p, p);
+	    v->jinfo->S11 = gretl_matrix_alloc(p1, p1);
+	    v->jinfo->S01 = gretl_matrix_alloc(p, p1);
+	}
+
+	return get_gretl_matrix_err();
     }
-
-    if (v->jinfo->S00 == NULL) {
-	v->jinfo->S00 = gretl_matrix_alloc(p, p);
-	v->jinfo->S11 = gretl_matrix_alloc(p1, p1);
-	v->jinfo->S01 = gretl_matrix_alloc(p, p1);
-    }
-
-    return get_gretl_matrix_err();
 }
 
-#if VECM_PACK
-
-static gretl_matrix *johansen_full_R (GRETL_VAR *v)
+static void johansen_fill_S_matrices (GRETL_VAR *v)
 {
-    int p = v->neqns;
-    int p1 = p + n_restricted_terms(v);
+    gretl_matrix_multiply_mod(v->jinfo->R0, GRETL_MOD_TRANSPOSE,
+			      v->jinfo->R0, GRETL_MOD_NONE,
+			      v->jinfo->S00, GRETL_MOD_NONE);
+    gretl_matrix_multiply_mod(v->jinfo->R1, GRETL_MOD_TRANSPOSE,
+			      v->jinfo->R1, GRETL_MOD_NONE,
+			      v->jinfo->S11, GRETL_MOD_NONE);
+    gretl_matrix_multiply_mod(v->jinfo->R0, GRETL_MOD_TRANSPOSE,
+			      v->jinfo->R1, GRETL_MOD_NONE,
+			      v->jinfo->S01, GRETL_MOD_NONE);
 
-    return gretl_matrix_alloc(v->T, p + p1);
+    gretl_matrix_divide_by_scalar(v->jinfo->S00, v->T);
+    gretl_matrix_divide_by_scalar(v->jinfo->S11, v->T);
+    gretl_matrix_divide_by_scalar(v->jinfo->S01, v->T);
 }
 
-static gretl_matrix *johansen_full_B (GRETL_VAR *v)
-{
-    int p = v->neqns;
-    int p1 = p + n_restricted_terms(v);
-
-    return gretl_matrix_alloc(v->X->cols, p + p1);
-}
-
-#endif
-
-static void johansen_degenerate_stage_1 (GRETL_VAR *v, 
-					 const DATASET *dset)
+static int johansen_degenerate_stage_1 (GRETL_VAR *v, 
+					const DATASET *dset)
 {
     const double **Z = (const double **) dset->Z;
     gretl_matrix *R0 = v->jinfo->R0;
@@ -2773,24 +2762,19 @@ static void johansen_degenerate_stage_1 (GRETL_VAR *v,
 		gretl_matrix_set(R1, s++, i, Z[vi][t-1]);
 	    }
 	}
-    }    
+    } 
+
+    johansen_fill_S_matrices(v);
+
+    return 0;
 }
 
-static void johansen_fill_S_matrices (GRETL_VAR *v)
+static void VECM_maybe_shrink_matrices (GRETL_VAR *v)
 {
-    gretl_matrix_multiply_mod(v->jinfo->R0, GRETL_MOD_TRANSPOSE,
-			      v->jinfo->R0, GRETL_MOD_NONE,
-			      v->jinfo->S00, GRETL_MOD_NONE);
-    gretl_matrix_multiply_mod(v->jinfo->R1, GRETL_MOD_TRANSPOSE,
-			      v->jinfo->R1, GRETL_MOD_NONE,
-			      v->jinfo->S11, GRETL_MOD_NONE);
-    gretl_matrix_multiply_mod(v->jinfo->R0, GRETL_MOD_TRANSPOSE,
-			      v->jinfo->R1, GRETL_MOD_NONE,
-			      v->jinfo->S01, GRETL_MOD_NONE);
-
-    gretl_matrix_divide_by_scalar(v->jinfo->S00, v->T);
-    gretl_matrix_divide_by_scalar(v->jinfo->S11, v->T);
-    gretl_matrix_divide_by_scalar(v->jinfo->S01, v->T);
+    if (v->Y->cols > v->neqns) {
+	gretl_matrix_reuse(v->Y, -1, v->neqns);
+	gretl_matrix_reuse(v->B, -1, v->neqns);
+    }
 }
 
 #define JVAR_USE_SVD 1
@@ -2805,7 +2789,7 @@ static void johansen_fill_S_matrices (GRETL_VAR *v)
 #if VECM_PACK
 
 static void 
-VECM_partition_residuals (GRETL_VAR *v, const gretl_matrix *R)
+johansen_partition_residuals (GRETL_VAR *v, const gretl_matrix *R)
 {
     int n = v->neqns * v->T;
     int m = n + n_restricted_terms(v) * v->T;
@@ -2817,9 +2801,6 @@ VECM_partition_residuals (GRETL_VAR *v, const gretl_matrix *R)
 int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset, 
 		      gretlopt opt, PRN *prn)
 {
-    gretl_matrix *Y = NULL;
-    gretl_matrix *R = NULL;
-    gretl_matrix *B = NULL;
     int err;
 
     err = allocate_johansen_residual_matrices(v); 
@@ -2833,32 +2814,35 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
 	    pputs(prn, "\nNo initial VAR estimation is required\n\n");
 	}
 	johansen_degenerate_stage_1(v, dset);
-	johansen_fill_S_matrices(v);
-	return 0;
-    }
-
-    Y = VECM_make_full_Y(v, dset);
-    R = johansen_full_R(v);
-    B = johansen_full_B(v);
-
-    if (Y == NULL || R == NULL || B == NULL) {
-	err = E_ALLOC;
     } else {
-	err = gretl_matrix_multi_SVD_ols(Y, v->X, B, R, NULL);
-    }
+	gretl_matrix_block *MB;
+	gretl_matrix *Y, *R, *B;
+	int p = v->neqns;
+	int p1 = p + n_restricted_terms(v);
+	
+	MB = gretl_matrix_block_new(&Y, v->T, p + p1,
+				    &R, v->T, p + p1,
+				    &B, v->X->cols, p + p1,
+				    NULL);
+	if (MB == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    VECM_fill_Y(v, dset, Y);
+	    
+	    err = gretl_matrix_multi_SVD_ols(Y, v->X, B, R, NULL);
 
-    if (!err) {
-	if (opt & OPT_V) {
-	    gretl_matrix_print_to_prn(B, "\nCoefficients, stage 1", 
-				      prn);
+	    if (!err) {
+		if (opt & OPT_V) {
+		    gretl_matrix_print_to_prn(B, "\nCoefficients, stage 1", 
+					      prn);
+		}
+		johansen_partition_residuals(v, R);
+		johansen_fill_S_matrices(v);
+	    }
+
+	    gretl_matrix_block_destroy(MB);
 	}
-	VECM_partition_residuals(v, R);
-	johansen_fill_S_matrices(v);
     }
-
-    gretl_matrix_free(Y);
-    gretl_matrix_free(R);
-    gretl_matrix_free(B);
 
     return err;
 }
@@ -2880,16 +2864,10 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
 	if (opt & OPT_V) {
 	    pputs(prn, "\nNo initial VAR estimation is required\n\n");
 	}
-	johansen_degenerate_stage_1(v, dset);
-	johansen_fill_S_matrices(v);
-	return 0;
+	return johansen_degenerate_stage_1(v, dset);
     }
 
-    if (v->Y->cols > v->neqns) {
-	/* shrink to size */
-	gretl_matrix_reuse(v->Y, -1, v->neqns);
-	gretl_matrix_reuse(v->B, -1, v->neqns);
-    }
+    VECM_maybe_shrink_matrices(v);
 
     VAR_fill_Y(v, DIFF, dset);
 
@@ -2933,11 +2911,7 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
 				  prn);
     }
 
-    if (v->Y->cols > v->neqns) {
-	/* shrink to "final" size */
-	gretl_matrix_reuse(v->Y, -1, v->neqns);
-	gretl_matrix_reuse(v->B, -1, v->neqns);
-    }
+    VECM_maybe_shrink_matrices(v);
 
     if (!err) {
 	johansen_fill_S_matrices(v);
