@@ -58,7 +58,7 @@
 # include "gretlwin32.h"
 #endif
 
-#define GUI_DEBUG 1
+#define GUI_DEBUG 0
 
 #if GUI_DEBUG
 # include "version.h"

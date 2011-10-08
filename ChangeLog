@@ -35,7 +35,8 @@ version 1.9.6, in progress
 - "makepkg" command: add options to produce an XML index entry and a
   file of translatable strings suitable for use with gettext
 - "freq" command: add facility to specify the number of bins, or the
-  location and width of the bins
+  location and width of the bins; also add a --show-plot option for use
+  in a script
 - "tsls" command: add a --no-tests option
 - Add facility for inspecting the list of gretl addons, under the GUI
   Help menu

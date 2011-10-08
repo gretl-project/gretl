@@ -5619,14 +5619,14 @@ static double gini_coeff (const double *x, int t1, int t2, double **plz,
 	}
     }
 
+    if (!*err && (n == 0 || sumx == 0.0)) {
+	*err = E_DATA;
+    }
+
     if (*err) {
 	free(sx);
 	return NADBL;
-    } else if (n == 0) {
-	free(sx);
-	*err = E_DATA;
-	return NADBL;
-    }
+    } 
 
     qsort(sx, n, sizeof *sx, gretl_compare_doubles); 
 
@@ -5652,7 +5652,7 @@ static double gini_coeff (const double *x, int t1, int t2, double **plz,
 	}
 
 	G = 1.0 - num / S[1];
-	fprintf(stderr, "G = %g\n", G);
+	fprintf(stderr, "alt G = %g\n", G);
     }
 #endif
 
@@ -5703,6 +5703,7 @@ static int lorenz_graph (const char *vname, double *lz, int n)
 {
     FILE *fp;
     double idx;
+    int downsample = 0;
     int t, err = 0;
 
     fp = get_plot_input_stream(PLOT_REGULAR, &err);
@@ -5720,13 +5721,24 @@ static int lorenz_graph (const char *vname, double *lz, int n)
 
     gretl_push_c_numeric_locale();
 
+    if (n > 3000) {
+	downsample = (int) (n / 1000.0);
+	fprintf(stderr, "downsample = %d\n", downsample);
+    }
+
     for (t=0; t<n; t++) {
+	if (downsample && t % downsample) {
+	    continue;
+	}
 	idx = t + 1;
 	fprintf(fp, "%g %g\n", idx / n, lz[t]);
     }    
     fputs("e\n", fp);
 
     for (t=0; t<n; t++) {
+	if (downsample && t % downsample) {
+	    continue;
+	}	
 	idx = ((double) t + 1) / n;
 	fprintf(fp, "%g %g\n", idx, idx);
     }    
@@ -5763,6 +5775,8 @@ int gini (int varno, DATASET *dset, gretlopt opt, PRN *prn)
 
     gini = gini_coeff(dset->Z[varno], dset->t1, dset->t2, 
 		      &lz, &n, &err);
+
+    fprintf(stderr, "gini: result=%g, err = %d\n", gini, err);
 
     if (err) {
 	return err;
