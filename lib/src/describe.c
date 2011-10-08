@@ -5721,9 +5721,8 @@ static int lorenz_graph (const char *vname, double *lz, int n)
 
     gretl_push_c_numeric_locale();
 
-    if (n > 3000) {
+    if (n > 4000) {
 	downsample = (int) (n / 1000.0);
-	fprintf(stderr, "downsample = %d\n", downsample);
     }
 
     for (t=0; t<n; t++) {
@@ -5775,8 +5774,6 @@ int gini (int varno, DATASET *dset, gretlopt opt, PRN *prn)
 
     gini = gini_coeff(dset->Z[varno], dset->t1, dset->t2, 
 		      &lz, &n, &err);
-
-    fprintf(stderr, "gini: result=%g, err = %d\n", gini, err);
 
     if (err) {
 	return err;

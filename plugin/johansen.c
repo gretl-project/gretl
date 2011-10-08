@@ -1558,8 +1558,8 @@ compute_coint_test (GRETL_VAR *jvar, const DATASET *dset,
     pputc(prn, '\n');
 
     llc = (1.0 + LN_2_PI) * jvar->T;
-    pprintf(prn, "\n%s = %g (including c: %g)\n", _("Log-likelihood"), 
-	    jvar->ll + llc, jvar->ll);
+    pprintf(prn, "\n%s = %g (%s: %g)\n", _("Log-likelihood"),
+	    jvar->ll + llc, _("including constant term"), jvar->ll);
 
     /* make sure the df is calculated */
     vecm_set_df(jvar, NULL, NULL);
