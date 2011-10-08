@@ -8131,7 +8131,8 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 	add_model_to_session_callback(ptr, type);
     } else if (ptr != NULL && type == GRETL_OBJ_SYS) {
 	add_model_to_session_callback(ptr, type);
-    } else if (ci == FREQ && (s->flags & CONSOLE_EXEC)) {
+    } else if (ci == FREQ && ((s->flags & CONSOLE_EXEC) ||
+			      (s->cmd->opt & OPT_G))) {
 	register_graph(NULL);
     } else if (ci == SETOBS) {
 	set_sample_label(dataset);

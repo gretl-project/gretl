@@ -195,6 +195,7 @@ struct gretl_option gretl_opts[] = {
     { FOREIGN,  OPT_V, "verbose", 0 },
     { FRACTINT, OPT_G, "gph", 0 },
     { FRACTINT, OPT_A, "all", 0 },
+    { FREQ,     OPT_G, "show-plot", 0 },
     { FREQ,     OPT_O, "gamma", 0 },
     { FREQ,     OPT_S, "silent", 0 },
     { FREQ,     OPT_Z, "normal", 0 },

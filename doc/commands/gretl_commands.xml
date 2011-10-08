@@ -3511,6 +3511,10 @@
 	  <flag>--silent</flag>
 	  <effect>don't print anything</effect>
         </option>
+        <option>
+	  <flag>--show-plot</flag>
+	  <effect>see below</effect>
+        </option>
       </options>
       <examples>
         <example>freq x</example>
@@ -3546,8 +3550,12 @@
       </para>
       <para>
 	In interactive mode a graph of the distribution is displayed by
-	default.  The <opt>--quiet</opt> flag can be used to suppress
-	this.
+	default. The <opt>--quiet</opt> flag can be used to suppress
+	this. Conversely, the graph is not usually shown when the
+	<cmd>freq</cmd> is used in a script, but you can force its
+	display by giving the <opt>--show-plot</opt> option. (This does
+	not apply when using the command-line program,
+	<lit>gretlcli</lit>.)
       </para>
       <para>
 	The <opt>--silent</opt> flag suppresses the usual output entirely.
