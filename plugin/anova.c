@@ -372,13 +372,13 @@ int gretl_anova (const int *list, const DATASET *dset,
 
     if (!var_is_discrete(dset, list[2]) && 
 	!gretl_isdiscrete(t1, t2, xt)) {
-	gretl_errmsg_set("anova: the x variables must be discrete");
+	gretl_errmsg_set(_("anova: the treatment variable must be discrete"));
 	return E_DATA;
     }
 
     if (xb != NULL && !var_is_discrete(dset, list[3]) && 
 	!gretl_isdiscrete(t1, t2, xb)) {
-	gretl_errmsg_set("anova: the x variables must be discrete");
+	gretl_errmsg_set(_("anova: the block variable must be discrete"));
 	return E_DATA;
     }
 
