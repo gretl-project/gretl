@@ -2714,17 +2714,45 @@
   <command name="export" section="Dataset" context="gui"
     label="Export data">
 
-    <description>
+     <description>
       <para>
 	You may export data in Comma-Separated Values (CSV) format: such
 	data may be opened in spreadsheets and many other application
-	programs.
+	programs. If you select this option you will get some further
+	options regarding the specific format of the CSV file.
       </para>
       <para>
-	You may also export data in the native formats of GNU R or GNU
-	octave.  For further information on these programs (both of which
-	support advanced statistical analysis) please see their respective
-	websites, http://www.r-project.org/ and http://www.octave.org/
+	You also have the option of exporting data in the form of a
+	<quote>native</quote> gretl datafile, or (if the data are
+	suitable) exporting to a gretl database. See
+	<url>gretl.sourceforge.net/gretl_data.html</url> for an account of
+	gretl databases.
+      </para>
+      <para>
+	You may also export data in a format suitable for use with
+	the following programs:
+      </para>
+      <ilist>
+	<li>
+	  <para>GNU R (<url>www.r-project.org</url>)</para>
+	</li>
+	<li>
+	  <para>GNU octave (<url>www.gnu.org/software/octave</url>)
+	  </para>
+	</li>
+	<li>
+	  <para>JMulTi (<url>www.jmulti.de</url>)</para>
+	</li>
+	<li>
+	  <para>PcGive (<url>www.pcgive.com</url>)</para>
+	</li>
+      </ilist>
+      <para>
+	If you wish to export data by copying to the clipboard rather than
+	writing to a file on disk, select the series you want to copy in
+	the main window, right-click, and select <quote>Copy to
+	clibboard</quote>. (Only CSV format is supported in this
+	context.) 
       </para>
     </description>
   </command>
@@ -3053,6 +3081,10 @@
 	  <flag>--silent</flag>
 	  <effect>don't print anything</effect>
         </option>
+        <option>
+	  <flag>--show-plot</flag>
+	  <effect>see below</effect>
+        </option>
       </options>
       <examples>
         <example>freq x</example>
@@ -3089,7 +3121,11 @@
       <para>
 	In interactive mode a graph of the distribution is displayed by
 	default.  The <opt>--quiet</opt> flag can be used to suppress
-	this.
+	this. Conversely, the graph is not usually shown when the
+	<cmd>freq</cmd> is used in a script, but you can force its
+	display by giving the <opt>--show-plot</opt> option. (This does
+	not apply when using the command-line program,
+	<lit>gretlcli</lit>.)
       </para>
       <para>
 	The <opt>--silent</opt> flag suppresses the usual output entirely.
