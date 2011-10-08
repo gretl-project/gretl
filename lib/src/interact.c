@@ -4635,11 +4635,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    int graph = (s->flags == CONSOLE_EXEC ||
 			 (cmd->opt & OPT_G));
 
-	    fprintf(stderr, "1 graph = %d\n", graph);
-
 	    err = freqdist(cmd->list[1], dset, &graph, cmd->opt, prn);
 	    if (!err && graph) {
-		fprintf(stderr, "2 graph = %d\n", graph);
 		schedule_callback(s);
 	    }
 	}
