@@ -4562,8 +4562,7 @@ int nadaraya_watson (const double *y, const double *x, double h,
     double ah = fabs(h);
     int LOO = (h < 0);  /* leave-one-out */
 
-    /* this will have to be taken from a libset variable, eventually */
-    double TRIM = 4 * ah;
+    double TRIM = libset_get_double(NADARWAT_TRIM) * ah;
 
     int n = t2 + 1;
     double *num;

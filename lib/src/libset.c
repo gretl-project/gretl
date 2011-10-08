@@ -105,6 +105,7 @@ struct set_vars_ {
     struct robust_opts ropts;   /* robust standard error options */
     char shelldir[MAXLEN];      /* working dir for shell commands */
     char csv_na[8];             /* representation of NA in CSV output */
+    double nadarwat_trim;       /* multiple of h to use in nadarwat() for trimming */
 };
 
 #define ECHO "echo"
@@ -137,7 +138,8 @@ struct set_vars_ {
 			  !strcmp(s, BFGS_MAXGRAD) || \
 			  !strcmp(s, BHHH_TOLER) || \
 			  !strcmp(s, NLS_TOLER) || \
-			  !strcmp(s, QS_BANDWIDTH))
+			  !strcmp(s, QS_BANDWIDTH) || \
+			  !strcmp(s, NADARWAT_TRIM))
 
 #define libset_int(s) (!strcmp(s, BFGS_MAXITER) || \
 		       !strcmp(s, BFGS_VERBSKIP) || \
@@ -1344,6 +1346,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_bool(USE_SVD, prn, opt);
     libset_print_bool(USE_FCP, prn, opt);
     libset_print_bool(DPDSTYLE, prn, opt);
+    libset_print_double(NADARWAT_TRIM, prn, opt);
 
     libset_header(N_("Random number generation"), prn, opt);
 
@@ -1644,6 +1647,12 @@ double libset_get_double (const char *key)
 	}
     } else if (!strcmp(key, BFGS_MAXGRAD)) {
 	return state->bfgs_maxgrad;
+    } else if (!strcmp(key, NADARWAT_TRIM)) {
+	if (na(state->nadarwat_trim)) {
+	    return 4.0;
+	} else {
+	    return state->nadarwat_trim;
+	}
     } else {
 	fprintf(stderr, "libset_get_double: unrecognized "
 		"variable '%s'\n", key);	
@@ -1689,6 +1698,8 @@ int libset_set_double (const char *key, double val)
 	state->bfgs_toler = val;
     } else if (!strcmp(key, BFGS_MAXGRAD)) {
 	state->bfgs_maxgrad = val;
+    } else if (!strcmp(key, NADARWAT_TRIM)) {
+	state->nadarwat_trim = val;
     } else {
 	fprintf(stderr, "libset_set_double: unrecognized "
 		"variable '%s'\n", key);	
