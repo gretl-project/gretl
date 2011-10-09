@@ -1431,13 +1431,15 @@ static int non_fatal (const char *s)
        "gnuplot_x11: Some character sets not available" 
        "Warning: empty y2 range..."
        pango warning for, e.g., FreeSans font w/o GPOS table
+       pango error on quartz
     */
 
     if (strstr(s, "using default") ||
 	strstr(s, "trying default") ||
 	strstr(s, "character sets not available") ||
 	strstr(s, "Warning: empty ") ||
-	strstr(s, "Pango-WARNING")) {
+	strstr(s, "Pango-WARNING") ||
+	strstr(s, "CGContextSetFont")) {
 	return 1;
     } else {
 	return 0;
