@@ -2186,7 +2186,6 @@ real_view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 		     G_CALLBACK(check_model_menu), vwin);
 
     gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
-    gtk_widget_show(vwin->mbar);
 
     gretl_print_get_size(prn, &w, &nlines);
     if (w + 2 < hsize) {
@@ -2216,8 +2215,6 @@ real_view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 		     G_CALLBACK(check_delete_model_window), 
 		     vwin);
 
-    gtk_window_set_type_hint(GTK_WINDOW(vwin->main),
-			     GDK_WINDOW_TYPE_HINT_NORMAL);
     gtk_widget_show_all(vwin->main);
 
     cursor_to_top(vwin);
@@ -2235,7 +2232,7 @@ windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     windata_t *vwin = 
 	real_view_model(prn, pmod, hsize, vsize, title);
 
-    g_usleep(2000);
+    g_usleep(50000);
     gtk_window_present(GTK_WINDOW(vwin->main));
     return vwin;
 #else
