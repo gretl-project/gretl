@@ -374,13 +374,6 @@ static int get_series_info (xmlNodePtr n, FILE *fidx, FILE *fbin)
 	/* really writing output to gretl database */
 	FREDbuf *fb;
 
-	/* for now we'll skip series with excessively long names:
-	   these are unlikely to be "major" data
-	*/
-	if (strlen(fb->sername) > 15) {
-	    goto skipit;
-	}
-
 	fb = fredget(FRED_OBS, 0, (const char *) idstr, fidx, &err);
 	if (!err) {
 	    fb->pd = pd;
@@ -389,6 +382,13 @@ static int get_series_info (xmlNodePtr n, FILE *fidx, FILE *fbin)
 	    err = parse_fred_xml(fb, fidx, fbin);
 	    FREDbuf_free(fb);
 	}
+
+	/* for now we'll skip series with excessively long names:
+	   these are unlikely to be "major" data (?)
+	*/
+	if (!err && strlen(fb->sername) > 15) {
+	    goto skipit;
+	}	
 
 	if (!err) {
 	    char stobs[16], endobs[16], sername[32];
@@ -428,6 +428,7 @@ static int get_seriess_info (xmlNodePtr n, FILE *fidx, FILE *fbin)
 
     while (n != NULL && !err) {
 	if (!xmlStrcmp(n->name, (XUC) "series")) {
+	    fprintf(stderr, "Calling get_series_info...\n");
 	    err = get_series_info(n, fidx, fbin);
 	} 
 	n = n->next;
