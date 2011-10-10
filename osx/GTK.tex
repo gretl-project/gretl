@@ -1,0 +1,92 @@
+\documentclass[11pt]{article}
+\usepackage[body={6.5in,9in},top=1in,left=1in,nohead]{geometry}
+\usepackage[pdftex]{color}
+\usepackage{hyperref}
+\usepackage{myguide}
+\usepackage[T1]{fontenc}
+\usepackage{lucidabr}
+
+\hypersetup{pdftitle={README for GTK framework for Gretl on OS X},
+  pdfsubject={gretl},
+  pdfauthor={Allin Cottrell},
+  pdfkeywords={},
+  pdfpagemode={None},
+  colorlinks=true
+}
+
+\begin{document}
+
+\thispagestyle{empty}
+
+\begin{center}
+{\color{gold} \gtkfont GTK+}
+\end{center}
+
+This is a distribution of the GTK libraries and friends, intended for
+use with gretl on Mac OS X, version 10.6 (Snow Leopard) or higher.
+It is a 32-bit i386 build (for intel Macs only).
+
+\section{Installation}
+
+Drag the \texttt{GTK+.framework} folder onto the \texttt{Frameworks}
+folder. You may get an error message if another version of the GTK
+framework is already installed. In that case you can do, at the
+command prompt in a terminal window:
+
+\verb|sudo rm -rf /Library/Frameworks/GTK+.framework|
+
+or, if you want to preserve the existing version in case you need to
+restore it later,
+\begin{verbatim}
+sudo mv /Library/Frameworks/GTK+.framework \
+  /Library/Frameworks/GTK+.framework.old
+\end{verbatim}
+
+Then try the drag again.
+
+\section{Source code}
+
+If you wish to inspect or work with the source code that was used in
+building this package, the following components can be found at
+\url{http://ftp.acc.umu.se/pub/GNOME/sources/}.
+
+\begin{tabular}{l}
+glib-2.18.4 \\
+atk-1.24.0 \\
+pango-1.22.4 \\
+gtk+-2.14.7 \\
+\end{tabular}
+
+Other source packages used are:
+
+\begin{tabular}{ll}
+pkg-config-0.23 & \url{pkgconfig.freedesktop.org} \\
+gettext-0.18.1.1 & \url{www.gnu.org/s/gettext} \\
+libpng-1.2.46 & \url{www.libpng.org} \\
+fontconfig-2.8.0 & \url{www.freedesktop.org} \\
+freetype-2.4.6 & \url{www.freetype.org} \\
+pixman-0.22.2 & \url{cairographics.org} \\
+cairo-1.10.2 & \url{cairographics.org} \\
+\end{tabular}
+
+\section{Developer files}
+
+The framework includes various files needed for program development
+using GTK: headers, pkgconfig files and so on. To find these, navigate
+inside the framework folder to 
+
+\verb|Versions/Current/Resources|
+
+\vspace{.2in}
+
+\raggedright
+Allin Cottrell \\
+Wake Forest University \\
+October, 2011
+
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

@@ -5591,18 +5591,36 @@ static void lag_selector_button (selector *sr)
 
     gtk_box_pack_start(GTK_BOX(hbox), sr->lags_button, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-}    
+}  
 
 static void selector_doit (GtkWidget *w, selector *sr)
 {
     compose_cmdlist(sr);
 
     if (sr->error == 0) {
-	int err = sr->callback(sr);
+	int err;
+
+#ifdef OSX_BUILD
+	/* Hiding the selector window prevents the "next" window
+	   (i.e. the one opened by sr->callback) from being hidden
+	   behind gretl's main window, on Apple's X11
+	*/
+	if (open_selector != NULL) {
+	    gtk_widget_hide(sr->dlg);
+	}
+#endif
+
+	err = sr->callback(sr);
 
 	if (!err && open_selector != NULL) {
 	    gtk_widget_destroy(sr->dlg);
 	}
+
+#ifdef OSX_BUILD
+	if (err && open_selector != NULL) {
+	    gtk_widget_show(sr->dlg);
+	}	
+#endif
     } 
 }
 

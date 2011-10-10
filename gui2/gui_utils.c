@@ -2162,9 +2162,8 @@ check_delete_model_window (GtkWidget *w, GdkEvent *e, gpointer p)
     return ret;
 }
 
-static windata_t *
-real_view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
-		 char *title) 
+windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
+		       char *title) 
 {
     windata_t *vwin;
     const char *buf;
@@ -2220,24 +2219,6 @@ real_view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     cursor_to_top(vwin);
 
     return vwin;
-}
-
-windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
-		       char *title)
-{
-#ifdef OSX_BUILD
-    /* desperate attempt to prevent the model-view window
-       being hidden behind the main window on OS X
-    */
-    windata_t *vwin = 
-	real_view_model(prn, pmod, hsize, vsize, title);
-
-    g_usleep(50000);
-    gtk_window_present(GTK_WINDOW(vwin->main));
-    return vwin;
-#else
-    return real_view_model(prn, pmod, hsize, vsize, title);
-#endif
 }
 
 #define dw_pval_ok(m) ((m->ci == OLS || m->ci == PANEL) && !na(pmod->dw))
