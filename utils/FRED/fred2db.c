@@ -115,6 +115,82 @@ static int push_series_name (const char *s)
     return err;
 }
 
+static char **whitenames;
+static int n_white;
+
+static int allocate_whitenames (int n)
+{
+    int i, err = 0;
+
+    whitenames = malloc(n * sizeof *whitenames);
+    if (whitenames == NULL) {
+	err = 1;
+    } else {
+	for (i=0; i<n && !err; i++) {
+	    whitenames[i] = malloc(16);
+	    if (whitenames[i] == NULL) {
+		err = 1;
+	    }
+	}
+    }
+
+    return err;
+}
+
+/* This is used if we want to restrict the series in a new
+   database to just those that were in an earlier one.
+   First run ./mkwhite on the old .idx file to make
+   a whitelist file, e.g.
+
+   ./mkwhite < fedstl.idx > fedstl.whitelist
+
+   Then the whitelist file will be picked up and series
+   not in that file will be discarded.
+*/
+
+static int maybe_read_whitelist_file (const char *fname)
+{
+    FILE *fp = fopen(fname, "r");
+    int err = 0;
+
+    if (fp != NULL) {
+	char line[32], vname[16];
+	int i, n = 0;
+
+	while (fgets(line, sizeof line, fp)) {
+	    if (sscanf(line, "%15s", vname) == 1) {
+		n++;
+	    }
+	}
+
+	if (n > 0) {
+	    err = allocate_whitenames(n);
+	    if (!err) {
+		rewind(fp);
+		i = 0;
+		while (fgets(line, sizeof line, fp)) {
+		    if (sscanf(line, "%15s", vname) == 1) {
+			*whitenames[i] = '\0';
+			strncat(whitenames[i++], vname, 15);
+		    }
+		}
+		n_white = i;
+		if (n_white > 4) {
+		    printf("whitelisted %d series:\n ", n_white);
+		    for (i=0; i<4; i++) {
+			printf("%s, ", whitenames[i]);
+		    }
+		    printf("%s...\n", whitenames[i]);
+		}
+	    }
+	}	
+
+	fclose(fp);
+    }
+
+    return err;
+}
+
 static FREDbuf *FREDbuf_new (FREDtask task, int catid)
 {
     FREDbuf *fb = malloc(sizeof *fb);
@@ -326,6 +402,36 @@ static int series_is_duplicate (const char *idstr, int *err)
     return dup;
 }
 
+static int skip_this_series (const char *vname)
+{
+    int skip = 0;
+
+    if (strlen(vname) > 15) {
+	/* for now we'll skip series with excessively long names:
+	   these are unlikely to be "major" data (?)
+	*/
+	printf("%s: too long, skipping\n", vname);
+	skip = 1;
+    } else if (whitenames != NULL) {
+	char test[16];
+	int i;
+
+	lower(test, vname);
+	skip = 1;
+	for (i=0; i<n_white; i++) {
+	    if (!strcmp(test, whitenames[i])) {
+		skip = 0;
+		break;
+	    }
+	}
+	if (skip) {
+	    printf("%s: not whitelisted, skipping\n", test);
+	}
+    } 
+
+    return skip;
+}
+
 /* Read the relevant details from a FRED series record. If we're 
    doing a real data write, follow up by getting the observations on
    the series.
@@ -333,9 +439,11 @@ static int series_is_duplicate (const char *idstr, int *err)
 
 static int get_series_info (xmlNodePtr n, FILE *fidx, FILE *fbin)
 {
-    xmlChar *idstr, *title, *units, *freq, *adj;
-    xmlChar *start, *stop;
-    int pd = 0, err = 0;
+    xmlChar *idstr = NULL, *title = NULL;
+    xmlChar *units = NULL, *freq = NULL, *adj = NULL;
+    xmlChar *start = NULL, *stop = NULL;
+    int pd = 0, skipit = 0;
+    int err = 0;
 
     freq = xmlGetProp(n, (XUC) "frequency_short");
     if (freq == NULL) {
@@ -348,18 +456,25 @@ static int get_series_info (xmlNodePtr n, FILE *fidx, FILE *fbin)
 	free(freq);
 	return 0;
     }
-		
+
     idstr = xmlGetProp(n, (XUC) "id");
+
     if (idstr != NULL && fidx != NULL) {
-	if (series_is_duplicate((const char *) idstr, &err)) {
+	if (skip_this_series((const char *) idstr)) {
+	    skipit = 1;
+	} else if (series_is_duplicate((const char *) idstr, &err)) {
 	    if (!err) {
 		printf("duplicate series %s: skipping\n", (const char *) idstr);
 	    }
-	    free(freq);
-	    free(idstr);
-	    return err;
-	}
+	    skipit = 1;
+	}	    
     }
+
+    if (skipit) {
+	free(freq);
+	free(idstr);
+	return err;
+    }	
 
     title = xmlGetProp(n, (XUC) "title");
     units = xmlGetProp(n, (XUC) "units_short");
@@ -375,6 +490,7 @@ static int get_series_info (xmlNodePtr n, FILE *fidx, FILE *fbin)
 	FREDbuf *fb;
 
 	fb = fredget(FRED_OBS, 0, (const char *) idstr, fidx, &err);
+
 	if (!err) {
 	    fb->pd = pd;
 	    strncat(fb->sername, (const char *) idstr, MAXNAME - 1);
@@ -383,14 +499,8 @@ static int get_series_info (xmlNodePtr n, FILE *fidx, FILE *fbin)
 	    FREDbuf_free(fb);
 	}
 
-	/* for now we'll skip series with excessively long names:
-	   these are unlikely to be "major" data (?)
-	*/
-	if (!err && strlen(fb->sername) > 15) {
-	    goto skipit;
-	}	
-
 	if (!err) {
+	    /* finalize the index entry */
 	    char stobs[16], endobs[16], sername[32];
 
 	    lower(sername, (const char *) idstr);
@@ -406,8 +516,6 @@ static int get_series_info (xmlNodePtr n, FILE *fidx, FILE *fbin)
 	    fprintf(fidx, "%s  %s - %s  n = %d\n", freq, stobs, endobs, fb->nobs);
 	}
     } 
-
- skipit:
 
     free(idstr);
     free(title);
@@ -428,7 +536,6 @@ static int get_seriess_info (xmlNodePtr n, FILE *fidx, FILE *fbin)
 
     while (n != NULL && !err) {
 	if (!xmlStrcmp(n->name, (XUC) "series")) {
-	    fprintf(stderr, "Calling get_series_info...\n");
 	    err = get_series_info(n, fidx, fbin);
 	} 
 	n = n->next;
@@ -894,15 +1001,20 @@ int main (int argc, char **argv)
     }
 
     if (!cats_only) {
+	const char *whitename = NULL;
+
 	if (db_opt == DB_INTL) {
 	    fidx = fopen("fred_intl.idx", "w");
 	    fbin = fopen("fred_intl.bin", "wb");
+	    whitename = "fred_intl.whitelist";
 	} else if (db_opt == DB_JOLTS) {
 	    fidx = fopen("jolts.idx", "w");
 	    fbin = fopen("jolts.bin", "wb");
+	    whitename = "jolts.whitelist";
 	} else {
 	    fidx = fopen("fedstl.idx", "w");
 	    fbin = fopen("fedstl.bin", "wb");
+	    whitename = "fedstl.whitelist";
 	}
 
 	if (fidx == NULL || fbin == NULL) {
@@ -915,6 +1027,8 @@ int main (int argc, char **argv)
 	} else {
 	    fputs("# St Louis Fed (various series, large)\n", fidx);
 	}
+
+	maybe_read_whitelist_file(whitename);
     }
 
     xmlKeepBlanksDefault(0);
