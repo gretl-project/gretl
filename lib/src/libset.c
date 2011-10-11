@@ -392,6 +392,7 @@ static void state_vars_copy (set_vars *sv)
     sv->lbfgs_mem = state->lbfgs_mem;
     sv->garch_vcv = state->garch_vcv;
     sv->garch_robust_vcv = state->garch_robust_vcv;
+    sv->nadarwat_trim = state->nadarwat_trim;
 
     sv->initvals = gretl_matrix_copy(state->initvals);
     sv->matmask = gretl_matrix_copy(state->matmask);
@@ -431,6 +432,7 @@ static void state_vars_init (set_vars *sv)
     sv->garch_vcv = VCV_UNSET;
     sv->arma_vcv = VCV_HESSIAN;
     sv->garch_robust_vcv = VCV_UNSET;
+    sv->nadarwat_trim = 4.0;
 
     *sv->shelldir = '\0';
     *sv->csv_na = '\0';
