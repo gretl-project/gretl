@@ -5591,7 +5591,7 @@ static void lag_selector_button (selector *sr)
 
     gtk_box_pack_start(GTK_BOX(hbox), sr->lags_button, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-}  
+}
 
 static void selector_doit (GtkWidget *w, selector *sr)
 {
