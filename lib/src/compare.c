@@ -2195,7 +2195,7 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 	aux = lsq(newlist, dset, OLS, OPT_A);
 	err = aux.errcode;
 	if (err) {
-	   errmsg(err, prn);
+	    errmsg(err, prn);
 	} else { 
 	    RSSxe = aux.ess;
 	}
