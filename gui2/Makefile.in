@@ -190,7 +190,6 @@ $(PROG): .deps $(OBJS) $(HACK_OBJ)
 	$(HACK_OBJ) $(LIBS) $(INETLIB) $(CARBONLIB)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
-	$(AMP)$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $<
 
 mklang.o: mklang.c $(LANGDEPS)
 	$(AMP)$(CC) $(CFLAGS) -c -I.. -I$(libsrc) $(XML_CFLAGS) $<

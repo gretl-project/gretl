@@ -59,35 +59,36 @@ gboolean              gtk_fontsel_hack_set_font_name    (GtkFontselHack *fontsel
 G_CONST_RETURN gchar* gtk_fontsel_hack_get_preview_text (GtkFontselHack *fontsel);
 void                  gtk_fontsel_hack_set_preview_text (GtkFontselHack *fontsel,
 							 const gchar      *text);
+
 gint gtk_fontsel_hack_get_filter (GtkFontselHack *fontsel);
 void gtk_fontsel_hack_set_filter (GtkFontselHack *fontsel,
 				  GtkFontFilterType filter);
 
-GType	   gtk_fontsel_hack_dialog_get_type (void) G_GNUC_CONST;
+GType gtk_fontsel_hack_dialog_get_type (void) G_GNUC_CONST;
 
 GtkWidget* gtk_fontsel_hack_dialog_new (const gchar *title);
 
-gchar* gtk_fontsel_hack_dialog_get_font_name (GtkFontselHackDialog *fsd);
+gchar* gtk_fontsel_hack_dialog_get_font_name(GtkFontselHackDialog *fsd);
 
-gboolean gtk_fontsel_hack_dialog_set_font_name (GtkFontselHackDialog *fsd,
-						const gchar *fontname);
+gboolean gtk_fontsel_hack_dialog_set_font_name(GtkFontselHackDialog *fsd,
+					       const gchar *fontname);
 
 G_CONST_RETURN gchar* gtk_fontsel_hack_dialog_get_preview_text (GtkFontselHackDialog *fsd);
 
 /* This sets the text in the preview entry. It will be copied by the entry. */
-void gtk_fontsel_hack_dialog_set_preview_text (GtkFontselHackDialog *fsd,
-					       const gchar *text);
+void gtk_fontsel_hack_dialog_set_preview_text(GtkFontselHackDialog *fsd,
+					      const gchar *text);
 
 /* This returns the font filter currently in force. */
-gint gtk_fontsel_hack_dialog_get_filter (GtkFontselHackDialog *fsd);
+gint gtk_fontsel_hack_dialog_get_filter(GtkFontselHackDialog *fsd);
 
 /* This sets the font filter for the dialog. */
 void gtk_fontsel_hack_dialog_set_filter (GtkFontselHackDialog *fsd,
 					 GtkFontFilterType filter);
 
-GtkWidget *gtk_fontsel_hack_dialog_ok_button (GtkWidget *fsd);
+GtkWidget *gtk_fontsel_hack_dialog_ok_button(GtkWidget *fsd);
 
-GtkWidget *gtk_fontsel_hack_dialog_cancel_button (GtkWidget *fsd);
+GtkWidget *gtk_fontsel_hack_dialog_cancel_button(GtkWidget *fsd);
 
 
 #endif /* __GTK_FONTSELHACK_H__ */

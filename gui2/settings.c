@@ -2101,24 +2101,21 @@ static int fontsel_code (GtkAction *action)
 
 static void font_selection_ok (GtkWidget *w, GtkFontselHackDialog *fs)
 {
-    guint which = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fs), "which"));
     gchar *fontname;
 
     fontname = gtk_fontsel_hack_dialog_get_font_name(fs);
 
-    if (*fontname == 0) {
-	g_free(fontname);
-	gtk_widget_destroy(GTK_WIDGET(fs));
-	return;
-    }
+    if (fontname != NULL && *fontname != '\0') {
+	int filter = gtk_fontsel_hack_dialog_get_filter(fs); 
 
-    if (which == FIXED_FONT_SELECTION) {
-	strcpy(fixedfontname, fontname);
-	set_fixed_font();
-	write_rc();
-    } else if (which == APP_FONT_SELECTION) {
-	set_app_font(fontname);
-	write_rc();
+	if (filter == GTK_FONT_HACK_LATIN_MONO) {
+	    strcpy(fixedfontname, fontname);
+	    set_fixed_font();
+	    write_rc();
+	} else if (filter == GTK_FONT_HACK_LATIN) {
+	    set_app_font(fontname);
+	    write_rc();
+	}
     }
 
     g_free(fontname);
@@ -2128,8 +2125,7 @@ static void font_selection_ok (GtkWidget *w, GtkFontselHackDialog *fs)
 void font_selector (GtkAction *action)
 {
     static GtkWidget *fontsel = NULL;
-    int which = fontsel_code(action);
-    int filter = GTK_FONT_HACK_LATIN;
+    int filter, which = fontsel_code(action);
     char *title = NULL;
     const char *fontname = NULL;
 
@@ -2144,14 +2140,16 @@ void font_selector (GtkAction *action)
 	fontname = fixedfontname;
     } else if (which == APP_FONT_SELECTION) {
 	title = _("Font for menus and labels");
+	filter = GTK_FONT_HACK_LATIN;
 	fontname = appfontname;
     }
 
     fontsel = gtk_fontsel_hack_dialog_new(title);
-    gtk_fontsel_hack_dialog_set_filter
-	(GTK_FONTSEL_HACK_DIALOG(fontsel), filter);
-    gtk_fontsel_hack_dialog_set_font_name 
-	(GTK_FONTSEL_HACK_DIALOG(fontsel), fontname); 
+
+    gtk_fontsel_hack_dialog_set_filter(GTK_FONTSEL_HACK_DIALOG(fontsel), 
+				       filter);
+    gtk_fontsel_hack_dialog_set_font_name(GTK_FONTSEL_HACK_DIALOG(fontsel), 
+					  fontname); 
     g_object_set_data(G_OBJECT(fontsel), "which", GINT_TO_POINTER(which));
 
     gtk_window_set_position(GTK_WINDOW(fontsel), GTK_WIN_POS_MOUSE);
@@ -2159,21 +2157,14 @@ void font_selector (GtkAction *action)
     g_signal_connect(G_OBJECT(fontsel), "destroy",
 		     G_CALLBACK(gtk_widget_destroyed),
 		     &fontsel);
-    g_signal_connect(G_OBJECT(fontsel), "destroy",
-		     G_CALLBACK(gtk_main_quit),
-		     NULL);
     g_signal_connect(G_OBJECT(gtk_fontsel_hack_dialog_ok_button(fontsel)),
-		     "clicked", 
-		     G_CALLBACK(font_selection_ok),
+		     "clicked", G_CALLBACK(font_selection_ok),
 		     fontsel);
     g_signal_connect(G_OBJECT(gtk_fontsel_hack_dialog_cancel_button(fontsel)),
-		     "clicked", 
-		     G_CALLBACK(delete_widget),
+		     "clicked", G_CALLBACK(delete_widget),
 		     fontsel);
 
     gtk_widget_show(fontsel);
-
-    gtk_main();
 }
 
 #else /* end non-win32 font selection, start win32 */
