@@ -2150,7 +2150,6 @@ void font_selector (GtkAction *action)
 				       filter);
     gtk_fontsel_hack_dialog_set_font_name(GTK_FONTSEL_HACK_DIALOG(fontsel), 
 					  fontname); 
-    g_object_set_data(G_OBJECT(fontsel), "which", GINT_TO_POINTER(which));
 
     gtk_window_set_position(GTK_WINDOW(fontsel), GTK_WIN_POS_MOUSE);
 
