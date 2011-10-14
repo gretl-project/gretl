@@ -38,6 +38,10 @@
 #include "dlgutils.h"
 #include "gtkfontselhack.h"
 
+#if 1
+# include "fontfilter.h"
+#endif
+
 #define GTK_TYPE_FNTHACK              (gtk_fontsel_hack_get_type ())
 #define GTK_FNTHACK(obj)              (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_FNTHACK, GtkFontselHack))
 #define GTK_FNTHACK_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_FNTHACK, GtkFontselHackClass))
@@ -157,7 +161,7 @@ enum {
     SIZE_COLUMN
 };
 
-static void    gtk_fontsel_hack_class_init	     (GtkFontselHackClass *klass);
+static void    gtk_fontsel_hack_class_init	   (GtkFontselHackClass *klass);
 static void    gtk_fontsel_hack_set_property       (GObject         *object,
 						    guint            prop_id,
 						    const GValue    *value,
@@ -656,180 +660,6 @@ cmp_families (const void *a, const void *b)
     const char *b_name = pango_font_family_get_name (*(PangoFontFamily **)b);
   
     return g_utf8_collate(a_name, b_name);
-}
-
-/* next: font filtering apparatus */
-
-#define FDEBUG 0
-
-static GtkWidget *font_test_widget;
-static PangoContext *font_test_context;
-static PangoLanguage *font_test_lang;
-
-static int create_font_test_rig (void)
-{
-    font_test_widget = gtk_label_new(NULL);  
-    font_test_context = gtk_widget_get_pango_context(font_test_widget); 
-
-    if (font_test_context == NULL) {
-	gtk_widget_destroy(font_test_widget);
-	font_test_widget = NULL;
-	return 1;
-    }    
-
-    font_test_lang = pango_language_from_string("eng");
-
-    return 0;
-}
-
-static void destroy_font_test_rig (void)
-{
-    g_object_unref(G_OBJECT(font_test_context));
-    gtk_widget_destroy(font_test_widget); 
-    font_test_context = NULL;
-    font_test_widget = NULL;
-}
-
-enum {
-    HACK_LATIN_FONT = 1 << 0,
-    HACK_MONO_FONT  = 1 << 1,
-    HACK_WEIRD_FONT = 1 << 2
-};
-
-/* We test a font for "latin text" compatibility, via the heuristic
-   of seeing if it contains the letters 'i' and 'W' in English.  Given the
-   latin text characteristic, we then see if the font is monospaced
-   using pango_font_family_is_monospace().
-*/
-
-static int get_font_characteristics (PangoFontFamily *family,
-				     PangoFontDescription *desc)
-{
-    PangoCoverage *coverage = NULL;
-    PangoFont *pfont = NULL;
-    int ret = 0;
-
-    pfont = pango_context_load_font(font_test_context, desc);
-    if (pfont == NULL) {
-	return 0;
-    }
-
-    coverage = pango_font_get_coverage(pfont, font_test_lang);
-    if (coverage == NULL) {
-	return 0;
-    }
-
-    if (pango_coverage_get(coverage, 'i') == PANGO_COVERAGE_EXACT &&
-	pango_coverage_get(coverage, 'W') == PANGO_COVERAGE_EXACT) {
-	ret = HACK_LATIN_FONT;
-	if (pango_font_family_is_monospace(family)) {
-	    ret |= HACK_MONO_FONT;
-	}
-    }
-
-    pango_coverage_unref(coverage);
-
-#if FDEBUG
-    fprintf(stderr, " latin %s, monospaced %s\n",
-	    (ret & HACK_LATIN_FONT)? "yes" : "no",
-	    (ret & HACK_MONO_FONT)? "yes" : "no");
-#endif
-
-    return ret;
-}
-
-static void font_progress_bar (int i, int nf)
-{
-    static int (*show_progress) (long, long, int) = NULL;
-    static void *handle = NULL;
-    static int show = 1;
-
-    if (show && handle == NULL) {
-	show_progress = gui_get_plugin_function("show_progress", 
-						&handle);
-	if (show_progress == NULL) {
-	    show = 0;
-	} else {
-	    (*show_progress)(0L, nf, SP_FONT_INIT);
-	}
-    }
-
-    if (show) {
-	if (i == nf - 1) {
-	    (*show_progress)(0L, nf, SP_FINISH);
-	    show = 0;
-	    close_plugin(handle);
-	    handle = NULL;
-	} else if (i > 0) {
-	    (*show_progress)(1L, nf, SP_NONE);
-	}
-    }
-}
-
-#define weird_font(s) (strstr(s, "arioso") || \
-                       strstr(s, "dings") || \
-                       strstr(s, "ancery"))
-
-/* If we're on the first run, check the font's characteristics and
-   cache the info.  Otherwise just read off the information we cached
-   previously.  In either case, return non-zero iff the font validates
-   in respect of the criterion in @filter.
-*/
-
-static int validate_font_family (PangoFontFamily *family,
-				 const gchar *famname, 
-				 gint i, gint nf,
-				 gint filter, gint *err)
-{
-    static char *fcache;
-    static int build_cache;
-    int ret;
-
-    if (fcache == NULL) {
-	fcache = calloc(nf, 1);
-	if (fcache == NULL) {
-	    *err = 1;
-	    return 1;
-	} 
-	build_cache = 1;
-	create_font_test_rig();
-    }
-
-    if (build_cache) {
-#if FDEBUG
-	fprintf(stderr, "Checking font family %d, '%s'\n", i, famname);
-#endif
-
-	font_progress_bar(i, nf);
-
-	if (weird_font(famname)) {
-	    fcache[i] = HACK_WEIRD_FONT;
-	} else {
-	    gchar *font = g_strdup_printf("%s 10", famname);
-	    PangoFontDescription *desc = pango_font_description_from_string(font);
-
-	    if (desc != NULL) {
-		fcache[i] = get_font_characteristics(family, desc);
-		pango_font_description_free(desc);
-	    }
-	    g_free(font);
-	}
-    } 
-
-    if (build_cache && i == nf - 1) {
-	destroy_font_test_rig();
-	build_cache = 0;
-    }
-
-    if (filter == GTK_FONT_HACK_LATIN) {
-	ret = fcache[i] & HACK_LATIN_FONT;
-    } else if (filter == GTK_FONT_HACK_LATIN_MONO) {
-	ret = fcache[i] & HACK_MONO_FONT;
-    } else {
-	ret = !(fcache[i] & HACK_WEIRD_FONT);
-    }
-
-    return ret;
 }
 
 static void
@@ -1446,8 +1276,8 @@ static GObject * gtk_fontsel_hack_dialog_buildable_get_internal_child (GtkBuilda
 
 G_DEFINE_TYPE_WITH_CODE (GtkFontselHackDialog, gtk_fontsel_hack_dialog,
 			 GTK_TYPE_DIALOG,
-			 G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
-						gtk_fontsel_hack_dialog_buildable_interface_init))
+			 G_IMPLEMENT_INTERFACE(GTK_TYPE_BUILDABLE,
+					       gtk_fontsel_hack_dialog_buildable_interface_init))
 
 static GtkBuildableIface *parent_buildable_iface;
 
@@ -1538,13 +1368,13 @@ GtkWidget*
 gtk_fontsel_hack_dialog_new (const gchar *title)
 {
     GtkFontselHackDialog *fontseldiag;
-  
-    fontseldiag = g_object_new (GTK_TYPE_FNTHACK_DIALOG, NULL);
+
+    fontseldiag = g_object_new(GTK_TYPE_FNTHACK_DIALOG, NULL);
 
     if (title)
-	gtk_window_set_title (GTK_WINDOW (fontseldiag), title);
-  
-    return GTK_WIDGET (fontseldiag);
+	gtk_window_set_title(GTK_WINDOW(fontseldiag), title);
+
+    return GTK_WIDGET(fontseldiag);
 }
 
 gchar*

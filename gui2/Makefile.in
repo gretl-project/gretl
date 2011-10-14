@@ -173,9 +173,9 @@ endif
 
 OBJS = $(SRCS:.c=.o)
 
-HACK_SRC = gtkfontselhack.c
-HACK_HDR = gtkfontselhack.h
-HACK_OBJ = gtkfontselhack.o
+HACK_SRC = gtkfontselhack.c fontfilter.c
+HACK_HDR = gtkfontselhack.h fontfilter.h
+HACK_OBJ = gtkfontselhack.o fontfilter.o
 
 all: $(PROG) $(GRETL_LANG)
 
