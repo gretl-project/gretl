@@ -42,7 +42,16 @@
 # include <sys/stat.h>
 # include <fcntl.h>
 # include <errno.h>
-# include "gtkfontselhack.h"
+#endif
+
+#define GTK_FONTSEL_PATCHED 0
+
+#ifndef G_OS_WIN32
+# if GTK_FONTSEL_PATCHED
+#  include "fontfilter.h"
+# else
+#  include "gtkfontselhack.h"
+# endif
 #endif
 
 static char rcfile[FILENAME_MAX];
@@ -2124,16 +2133,16 @@ void font_selector (GtkAction *action)
     }
 }
 
-#elif 0 /* defined(OSX_BUILD) && defined(PKGBUILD) */
+#elif GTK_FONTSEL_PATCHED
 
-static void font_selection_ok (GtkWidget *w, GtkFontSelectionDialog *fs)
+static void font_selection_ok (GtkWidget *w, GtkFontSelectionDialog *fsd)
 {
     gchar *fontname;
 
-    fontname = gtk_font_selection_dialog_get_font_name(fs);
+    fontname = gtk_font_selection_dialog_get_font_name(fsd);
 
     if (fontname != NULL && *fontname != '\0') {
-	int filter = gtk_font_selection_dialog_get_filter(fs); 
+	gint filter = gtk_font_selection_dialog_get_filter(fsd);
 
 	if (filter == FONT_FILTER_LATIN_MONO) {
 	    strcpy(fixedfontname, fontname);
@@ -2146,51 +2155,52 @@ static void font_selection_ok (GtkWidget *w, GtkFontSelectionDialog *fs)
     }
 
     g_free(fontname);
-    gtk_widget_destroy(GTK_WIDGET(fs));
+    gtk_widget_destroy(GTK_WIDGET(fsd));
 }
 
 void font_selector (GtkAction *action)
 {
-    static GtkWidget *fontsel = NULL;
+    static GtkWidget *dlg = NULL;
+    GtkFontSelectionDialog *fsd;
     int filter, which = fontsel_code(action);
     char *title = NULL;
     const char *fontname = NULL;
 
-    if (fontsel != NULL) {
-	gtk_window_present(GTK_WINDOW(fontsel));
+    if (dlg != NULL) {
+	gtk_window_present(GTK_WINDOW(dlg));
         return;
     }
 
     if (which == FIXED_FONT_SELECTION) {
 	title = _("Font for gretl output windows");
-	filter = GTK_FONT_HACK_LATIN_MONO;
+	filter = FONT_FILTER_LATIN_MONO;
 	fontname = fixedfontname;
     } else if (which == APP_FONT_SELECTION) {
 	title = _("Font for menus and labels");
-	filter = GTK_FONT_HACK_LATIN;
+	filter = FONT_FILTER_LATIN;
 	fontname = appfontname;
     }
 
-    fontsel = gtk_font_selection_dialog_new(title);
+    dlg = gtk_font_selection_dialog_new(title);
+    fsd = GTK_FONT_SELECTION_DIALOG(dlg);
 
-    gtk_font_selection_dialog_set_filter(GTK_FONT_SELECTION_DIALOG(fontsel), 
-					 filter);
-    gtk_font_selection_dialog_set_font_name(GTK_FONT_SELECTION_DIALOG(fontsel), 
-					    fontname); 
+    gtk_font_selection_dialog_set_filter(fsd, filter);
+    gtk_font_selection_dialog_set_filter_func(fsd, validate_font_family);
+    gtk_font_selection_dialog_set_font_name(fsd, fontname); 
 
-    gtk_window_set_position(GTK_WINDOW(fontsel), GTK_WIN_POS_MOUSE);
+    gtk_window_set_position(GTK_WINDOW(fsd), GTK_WIN_POS_MOUSE);
 
-    g_signal_connect(G_OBJECT(fontsel), "destroy",
+    g_signal_connect(G_OBJECT(fsd), "destroy",
 		     G_CALLBACK(gtk_widget_destroyed),
-		     &fontsel);
-    g_signal_connect(G_OBJECT(gtk_font_selection_dialog_ok_button(fontsel)),
+		     &dlg);
+    g_signal_connect(G_OBJECT(gtk_font_selection_dialog_get_ok_button(fsd)),
 		     "clicked", G_CALLBACK(font_selection_ok),
-		     fontsel);
-    g_signal_connect(G_OBJECT(gtk_font_selection_dialog_cancel_button(fontsel)),
+		     fsd);
+    g_signal_connect(G_OBJECT(gtk_font_selection_dialog_get_cancel_button(fsd)),
 		     "clicked", G_CALLBACK(delete_widget),
-		     fontsel);
+		     dlg);
 
-    gtk_widget_show(fontsel);
+    gtk_widget_show(dlg);
 }
 
 #else
