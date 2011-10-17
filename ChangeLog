@@ -1,4 +1,4 @@
-version 1.9.6, in progress
+2011-10-17 version 1.9.6
 - Add an importer for xlsx (Office Open XML) worksheet data
 - cum() function: make this respect panel structure
 - ranking() function: accept vectors as well as series

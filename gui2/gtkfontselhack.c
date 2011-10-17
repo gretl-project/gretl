@@ -290,9 +290,6 @@ gtk_fontsel_hack_set_property (GObject *object,
     case PROP_PREVIEW_TEXT:
 	gtk_fontsel_hack_set_preview_text(fontsel, g_value_get_string(value));
 	break;
-    case PROP_FILTER:
-	gtk_fontsel_hack_set_filter(fontsel, g_value_get_int(value));
-	break;
     default:
 	G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
 	break;

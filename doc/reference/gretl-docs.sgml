@@ -8,7 +8,7 @@
 
   <bookinfo>
     <title>Libgretl Reference Manual</title>
-    <releaseinfo>for libgretl-1.0 version 1 (gretl 1.9.5-cvs)</releaseinfo>
+    <releaseinfo>for libgretl-1.0 version 1 (gretl 1.9.6)</releaseinfo>
   </bookinfo>
   
   <chapter id="ch-overview">

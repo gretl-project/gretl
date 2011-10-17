@@ -20,12 +20,6 @@
 #ifndef GRETL_FONTFILTER_H
 #define GRETL_FONTFILTER_H
 
-enum {
-    FONT_FILTER_NONE,
-    FONT_FILTER_LATIN,
-    FONT_FILTER_LATIN_MONO
-};
-
 int validate_font_family (PangoFontFamily *family,
 			  const gchar *famname, 
 			  gint i, gint nf,

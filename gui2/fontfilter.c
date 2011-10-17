@@ -20,6 +20,12 @@
 #include "gretl.h"
 #include "fontfilter.h"
 
+enum {
+    FONT_FILTER_NONE,
+    FONT_FILTER_LATIN,
+    FONT_FILTER_LATIN_MONO
+};
+
 #define FDEBUG 0
 
 static GtkWidget *font_test_widget;

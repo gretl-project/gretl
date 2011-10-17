@@ -1,4 +1,4 @@
-version 1.9.6, in progress
+2011-10-17 version 1.9.6
 
 When a new series is declared without specifying any values,
 the values default to NA, and not zero as in gretl <= 1.9.5.
