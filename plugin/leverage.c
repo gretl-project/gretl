@@ -73,7 +73,7 @@ static gboolean update_save_flag (GtkWidget *w, struct flag_info *finfo)
 
 static gboolean cancel_set_flag (GtkWidget *w, struct flag_info *finfo)
 {
-    *(finfo->flag) = 0;
+    *finfo->flag = 0;
     gtk_widget_destroy(finfo->dialog);
     return FALSE;
 }
@@ -117,10 +117,8 @@ unsigned char leverage_data_dialog (void)
 
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Variables to save:"));
-    gtk_box_pack_start (GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-    gtk_widget_show(tmp);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(internal_vbox), hbox, TRUE, TRUE, 5);
-    gtk_widget_show(hbox); 
 
     /* Leverage */
     button = gtk_check_button_new_with_label(_("leverage"));
@@ -128,34 +126,29 @@ unsigned char leverage_data_dialog (void)
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(update_save_flag), finfo);
-    gtk_widget_show (button);
     finfo->levcheck = button;
 
     /* Influence */
     button = gtk_check_button_new_with_label(_("influence"));
-    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    gtk_box_pack_start(GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(update_save_flag), finfo);
-    gtk_widget_show (button);
     finfo->infcheck = button;
 
     /* DFFITS */
     button = gtk_check_button_new_with_label(_("DFFITS"));
-    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    gtk_box_pack_start(GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(update_save_flag), finfo);
-    gtk_widget_show (button);
     finfo->dffcheck = button;
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), internal_vbox, TRUE, TRUE, 5);
-    gtk_widget_show(hbox);
 
     gtk_widget_show(internal_vbox);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-    gtk_widget_show(hbox);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_END);
@@ -166,7 +159,6 @@ unsigned char leverage_data_dialog (void)
     gtk_container_add(GTK_CONTAINER(hbox), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(cancel_set_flag), finfo);
-    gtk_widget_show(tmp);    
 
     /* "OK" button */
     tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
@@ -175,9 +167,8 @@ unsigned char leverage_data_dialog (void)
 		     G_CALLBACK(save_dialog_finalize), finfo);
     gtk_widget_set_can_default(tmp, TRUE);
     gtk_widget_grab_default(tmp);
-    gtk_widget_show(tmp);
 
-    gtk_widget_show(dialog);
+    gtk_widget_show_all(dialog);
 
     gtk_main();
 
@@ -376,12 +367,6 @@ static void studentized_residuals (const MODEL *pmod,
     }
 }
 
-/* In fortran arrays, column entries are contiguous.
-   Columns of data matrix X hold variables, rows hold observations.
-   So in a fortran array, entries for a given variable are
-   contiguous.
-*/
-
 gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset, 
 			      gretlopt opt, PRN *prn, 
 			      int *err)
@@ -458,7 +443,9 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
     if (S == NULL) {
 	*err = E_ALLOC;
 	goto qr_cleanup;
-    }	
+    }
+
+    gretl_matrix_set_t1(S, pmod->t1);
 
     /* do the "h" calculations */
     s = 0;
@@ -513,10 +500,6 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
     gretl_matrix_free(Q);
     free(tau); 
     free(work);
-
-    if (S != NULL) {
-	gretl_matrix_set_t1(S, pmod->t1);
-    }
 
     return S;    
 }
