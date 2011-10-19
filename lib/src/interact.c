@@ -5110,7 +5110,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case LEVERAGE:
 	err = leverage_test(model, dset, cmd->opt, prn);
-	if (!err && (cmd->opt & OPT_S)) {
+	if (!err && (cmd->opt & OPT_S) && !(cmd->opt & OPT_Q)) {
 	    /* FIXME gui notification? */
 	    maybe_list_vars(dset, prn);
 	}

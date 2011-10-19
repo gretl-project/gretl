@@ -3444,10 +3444,11 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 }
 
 /**
- * leverage_test:
- * @pmod: pointer to model to be tested.
- * @dset: dataset struct.
- * @opt: if OPT_S, add calculated series to data set.
+ * leverage_test: 
+ * @pmod: pointer to model to be tested.  
+ * @dset: dataset struct.  
+ * @opt: if OPT_S, add calculated series to data set; operate 
+ * silently if OPT_Q.  
  * @prn: gretl printing struct.
  *
  * Tests the data used in the given model for points with
@@ -3474,7 +3475,7 @@ int leverage_test (MODEL *pmod, DATASET *dset,
 	return 1;
     }
 
-    m = (*model_leverage)(pmod, dset, OPT_NONE, prn, &err);
+    m = (*model_leverage)(pmod, dset, opt, prn, &err);
 
     if (!err && (opt & OPT_S)) {
 	err = add_leverage_values_to_dataset(dset, m, 

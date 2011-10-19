@@ -298,6 +298,7 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     return 0;
 }
 
+#if 0
 static int studentized_residuals (const MODEL *pmod, 
 				  DATASET *dset, 
 				  gretl_matrix *S)
@@ -375,6 +376,36 @@ static int studentized_residuals (const MODEL *pmod,
 
     return err;
 }
+
+#else
+
+static int studentized_residuals (const MODEL *pmod, 
+				  DATASET *dset, 
+				  gretl_matrix *S)
+{
+
+    int t, i, err = 0;
+    int df = pmod->dfd;
+    double sampsizadj = sqrt(df - 1);
+    double ESS = pmod->ess;
+
+    double et, mt, dffit;
+
+    for (t=pmod->t1, i=0; t<=pmod->t2; t++, i++) {
+	et = pmod->uhat[t];
+	if (na(et)) {
+	    gretl_matrix_set(S, i, 2, NADBL);
+	} else {
+	    mt = 1.0 - gretl_matrix_get(S, i, 0);
+	    dffit = sampsizadj / sqrt(mt*ESS - et*et) * et;
+	    gretl_matrix_set(S, i, 2, dffit);
+	}
+    }
+
+    return err;
+}
+
+#endif
 
 /* In fortran arrays, column entries are contiguous.
    Columns of data matrix X hold variables, rows hold observations.
@@ -466,13 +497,16 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
 	goto qr_cleanup;
     }	
 
-    pputs(prn, "        ");
-    pprintf(prn, "%*s", UTF_WIDTH(_("residual"), 16), _("residual"));
-    pprintf(prn, "%*s", UTF_WIDTH(_("leverage"), 16), _("leverage"));
-    pprintf(prn, "%*s", UTF_WIDTH(_("influence"), 16), _("influence"));
-    pprintf(prn, "%*s", UTF_WIDTH(_("DFFITS"), 14), _("DFFITS"));
-    pputs(prn, "\n        ");
-    pputs(prn, "            u          0<=h<=1         u*h/(1-h)\n\n");
+    if (!(opt & OPT_Q)) {
+	pputs(prn, "        ");
+	pprintf(prn, "%*s", UTF_WIDTH(_("residual"), 16), _("residual"));
+	pprintf(prn, "%*s", UTF_WIDTH(_("leverage"), 16), _("leverage"));
+	pprintf(prn, "%*s", UTF_WIDTH(_("influence"), 16), _("influence"));
+	pprintf(prn, "%*s", UTF_WIDTH(_("DFFITS"), 14), _("DFFITS"));
+	    pputs(prn, "\n        ");
+	    pputs(prn, "            u          0<=h<=1         u*h/(1-h)\n\n");
+    }
+
 
     /* do the "h" calculations */
     k = 0;
@@ -492,62 +526,85 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
 	gretl_matrix_set(S, j, 0, h);
     }
 
-    /* put studentized resids into S[2] */
-    serr = studentized_residuals(pmod, dset, S);
-
     lp = 2.0 * n / m;
-
-    obs_marker_init(dset);
-
-    /* print the results */
+    double Xvalcrit = 0.0;
+    
+    /* compute the influence series and the cross-validation criterion */
     for (t=pmod->t1, j=0; t<=pmod->t2; t++, j++) {
-	double h, st, d, f = NADBL;
-	char fstr[32];
+	double h, f;
 
 	if (na(pmod->uhat[t])) {
-	    print_obs_marker(t, dset, prn);
 	    gretl_matrix_set(S, j, 1, NADBL);
-	    pputc(prn, '\n');
 	    continue;
 	}
 
 	h = gretl_matrix_get(S, j, 0);
-	if (h > lp) {
-	    gotlp = 1;
-	}
-
 	if (h < 1.0) {
-	    f = pmod->uhat[t] * h / (1.0 - h);
-	    sprintf(fstr, "%15.5g", f);
+	    f =  pmod->uhat[t] / (1.0 - h);
+	    Xvalcrit += f * f; 
+	    f -= pmod->uhat[t];
 	} else {
 	    f = NADBL;
-	    sprintf(fstr, "%15s", _("undefined"));
-	}
-
-	print_obs_marker(t, dset, prn);
-
-	if (!serr) {
-	    st = gretl_matrix_get(S, j, 2);
-	    d = st * sqrt(h / (1.0 - h));
-	    pprintf(prn, "%14.5g %14.3f%s %s %14.3f\n", pmod->uhat[t], h, 
-		    (h > lp)? "*" : " ", fstr, d);
-
-	} else {
-	    pprintf(prn, "%14.5g %14.3f%s %s\n", pmod->uhat[t], h, 
-		    (h > lp)? "*" : " ", fstr);
 	}
 
 	gretl_matrix_set(S, j, 1, f);
     }
 
-    if (gotlp) {
-	pprintf(prn, "\n%s\n\n", _("('*' indicates a leverage point)"));
-    } else {
-	pprintf(prn, "\n%s\n\n", _("No leverage points were found"));
-    }
+    /* put studentized resids into S[2] */
+    serr = studentized_residuals(pmod, dset, S);
 
-    if (opt & OPT_P) {
-	leverage_plot(pmod, S, dset);
+    /* print the results, unless in quiet mode */
+
+    if (!(opt & OPT_Q)) {
+	obs_marker_init(dset);
+
+	for (t=pmod->t1, j=0; t<=pmod->t2; t++, j++) {
+	    double h, st, d, f;
+	    char fstr[32];
+
+	    if (na(pmod->uhat[t])) {
+		print_obs_marker(t, dset, prn);
+		pputc(prn, '\n');
+		continue;
+	    }
+	    
+	    h = gretl_matrix_get(S, j, 0);
+	    if (h > lp) {
+		gotlp = 1;
+	    }
+
+	    f = gretl_matrix_get(S, j, 1);
+	    if (!na(f)) {
+		sprintf(fstr, "%15.5g", f);
+	    } else {
+		sprintf(fstr, "%15s", _("undefined"));
+	    }
+	    
+	    print_obs_marker(t, dset, prn);
+	
+	    if (!serr) {
+		st = gretl_matrix_get(S, j, 2);
+		d = st * sqrt(h / (1.0 - h));
+		pprintf(prn, "%14.5g %14.3f%s %s %14.3f\n", pmod->uhat[t], h, 
+			(h > lp)? "*" : " ", fstr, d);
+	    
+	    } else {
+		pprintf(prn, "%14.5g %14.3f%s %s\n", pmod->uhat[t], h, 
+			(h > lp)? "*" : " ", fstr);
+	    }
+	}
+
+	if (gotlp) {
+	    pprintf(prn, "\n%s\n", _("('*' indicates a leverage point)"));
+	} else {
+	    pprintf(prn, "\n%s\n", _("No leverage points were found"));
+	}
+
+	pprintf(prn, "%s = %g\n\n", _("Cross-validation criterion"), Xvalcrit);
+
+	if (opt & OPT_P) {
+	    leverage_plot(pmod, S, dset);
+	}
     }
 
  qr_cleanup:
