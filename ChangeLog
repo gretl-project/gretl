@@ -1,3 +1,7 @@
+version 1.9.7, in progress
+- "leverage" command: add a --quiet option and add calculation of the
+  cross-validation criterion
+
 2011-10-17 version 1.9.6
 - Add an importer for xlsx (Office Open XML) worksheet data
 - cum() function: make this respect panel structure
