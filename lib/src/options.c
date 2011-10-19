@@ -168,17 +168,11 @@ struct gretl_option gretl_opts[] = {
     { DURATION, OPT_G, "opg", 0 },
     { DURATION, OPT_R, "robust", 0 },
     { DURATION, OPT_V, "verbose", 0 },
-#if 0 /* not yet */
-    { EQNPRINT, OPT_F, "filename", 0 }, /* backward compatibility */
-#endif
     { EQNPRINT, OPT_O, "complete", 0 },
     { EQNPRINT, OPT_T, "t-ratios", 0 },
     { TABPRINT, OPT_O, "complete", 0 },
     { TABPRINT, OPT_R, "rtf", 0 },
     { TABPRINT, OPT_T, "format", 2 },
-#if 0 /* not yet */
-    { TABPRINT, OPT_F, "filename", 0 }, /* backward compatibility */
-#endif
     { EQUATION, OPT_M, "multi", 0 },
     { ESTIMATE, OPT_I, "iterate", 0 },
     { ESTIMATE, OPT_M, "geomean", 0 },
@@ -312,7 +306,7 @@ struct gretl_option gretl_opts[] = {
     { OLS,      OPT_N, "no-df-corr", 0 },
     { OLS,      OPT_O, "vcv", 0 }, 
     { OLS,      OPT_R, "robust", 0 },
-    { OLS,      OPT_Q, "quiet", 0 },
+    { OLS,      OPT_Q, "quiet", 0 }, /* note: for the sake of documentation */
     { OLS,      OPT_S, "simple-print", 0 },
     { OLS,      OPT_V, "anova", 0 },
     { OMIT,     OPT_A, "auto", 1 },
@@ -419,9 +413,6 @@ struct gretl_option gretl_opts[] = {
     { SUMMARY,  OPT_S, "simple", 0 },
     { SYSTEM,   OPT_I, "iterate", 0 },
     { SYSTEM,   OPT_V, "verbose", 0 },
-#if 0
-    { TABPRINT, OPT_F, "filename", 0 }, /* backward compatibility */
-#endif
     { TOBIT,    OPT_L, "llimit", 2 },
     { TOBIT,    OPT_M, "rlimit", 2 },
     { TOBIT,    OPT_R, "robust", 0 },

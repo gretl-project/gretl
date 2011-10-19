@@ -826,6 +826,12 @@ static GtkTextTagTable *gretl_tags_new (void)
     g_object_set(tag, "family", "monospace", NULL);
     gtk_text_tag_table_add(table, tag);
 
+    tag = gtk_text_tag_new("optflag");
+    g_object_set(tag, "family", "monospace", 
+		 "wrap-mode", GTK_WRAP_NONE, 
+		 "wrap-mode-set", TRUE, NULL);
+    gtk_text_tag_table_add(table, tag);
+
     tag = gtk_text_tag_new("text");
     g_object_set(tag, "family", helpfont, NULL);
     gtk_text_tag_table_add(table, tag);
@@ -2713,7 +2719,7 @@ static void insert_tagged_text (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	ftag = "literal";
 	break;
     case INSERT_OPT:
-	ftag = "literal"; /* FIXME? */
+	ftag = "optflag";
 	break;
     case INSERT_SUP:
 	ftag = "superscript";

@@ -5552,12 +5552,16 @@
 	  <flag>--save</flag>
 	  <effect>save variables</effect>
 	</option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>don't print results</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	Must immediately follow an <cmd>ols</cmd> command. Calculates the
+	Must follow an <cmd>ols</cmd> command. Calculates the
 	leverage (<math>h</math>, which must lie in the range 0 to 1) for
 	each data point in the sample on which the previous model was
 	estimated.  Displays the residual (<math>u</math>) for each
@@ -5573,7 +5577,7 @@
 	Chapter 2.
       </para>
       <para>
-	DFFITS values are also shown: these are <quote>studentized
+	DFFITS values are also computed: these are <quote>studentized
 	  residuals</quote> (predicted residuals divided by their
 	standard errors) multiplied by 
 	  <equation status="inline" 
@@ -5598,7 +5602,8 @@
       <para context="cli">
 	If the <opt>--save</opt> flag is given with this command, then the
 	leverage, influence and DFFITS values are added to the current
-	data set.
+	data set. In that context the <opt>--quiet</opt> flag may be used
+	to suppress the printing of results.
       </para>
       <para context="gui">
 	The "+" icon at the top of the leverage test window brings up
