@@ -312,6 +312,7 @@ struct gretl_option gretl_opts[] = {
     { OLS,      OPT_N, "no-df-corr", 0 },
     { OLS,      OPT_O, "vcv", 0 }, 
     { OLS,      OPT_R, "robust", 0 },
+    { OLS,      OPT_Q, "quiet", 0 },
     { OLS,      OPT_S, "simple-print", 0 },
     { OLS,      OPT_V, "anova", 0 },
     { OMIT,     OPT_A, "auto", 1 },

@@ -2524,7 +2524,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.rlibpath) {
 	R_path_from_registry(targ, RLIB);
     } else if (targ == paths.oxlpath) {
-	sprintf(targ, "%s\\OxMetrics5\\Ox\\bin\\oxl.exe", progfiles);
+	sprintf(targ, "%s\\OxMetrics6\\Ox\\bin\\oxl.exe", progfiles);
     } else if (targ == paths.octpath) {
 	strcpy(targ, "C:\\Octave\\3.2.3_gcc-4.0.0\\bin\\octave.exe");
     } else if (targ == paths.pngfont) {
@@ -2592,7 +2592,7 @@ static void load_default_path (char *targ)
 #endif /* RLIBPATH */
     } else if (targ == paths.oxlpath) {
 #ifdef OSX_BUILD
-	strcpy(paths.oxlpath, "/Applications/OxMetrics5/ox/bin/oxl");
+	strcpy(paths.oxlpath, "/Applications/OxMetrics6/ox/bin/oxl");
 #else
 	strcpy(paths.oxlpath, "oxl");
 #endif /* OSX_BUILD */
