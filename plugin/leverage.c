@@ -344,7 +344,7 @@ static void leverage_print (const MODEL *pmod,
 	pprintf(prn, "\n%s\n", _("No leverage points were found"));
     }
 
-    pprintf(prn, "%s = %g\n\n", _("Cross-validation criterion"), Xvalcrit);
+    pprintf(prn, "\n%s = %g\n\n", _("Cross-validation criterion"), Xvalcrit);
 }
 
 static void studentized_residuals (const MODEL *pmod, 
@@ -483,6 +483,8 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
 
 	gretl_matrix_set(S, j, 1, f);
     }
+
+    record_test_result(Xvalcrit, NADBL, _("Cross-validation criterion"));
 
     /* put studentized residuals into S[,2] */
     studentized_residuals(pmod, S);
