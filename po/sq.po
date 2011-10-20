@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-01 14:20-0400\n"
-"PO-Revision-Date: 2011-10-03 11:51+0100\n"
+"PO-Revision-Date: 2011-10-20 12:18+0100\n"
 "Last-Translator: \n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: \n"
@@ -11770,7 +11770,7 @@ msgstr "_Dritaret"
 
 #: gui2/gretl.c:1353
 msgid "_Graph specified vars"
-msgstr "_Grafiqe"
+msgstr "_Grafikë"
 
 #: gui2/gretl.c:1354
 msgid "_Time series plot..."
@@ -12613,7 +12613,7 @@ msgstr "_Ruaj"
 #: gui2/gui_utils.c:201
 #: gui2/gui_utils.c:327
 msgid "_Graphs"
-msgstr "_Grafiqe"
+msgstr "_Grafikë"
 
 #: gui2/gui_utils.c:202
 msgid "_Residual plot"
@@ -13244,7 +13244,7 @@ msgstr "Përafrim"
 
 #: gui2/helpfiles.c:172
 msgid "Graphs"
-msgstr "Grafiqe"
+msgstr "Grafikë"
 
 #: gui2/helpfiles.c:173
 msgid "Prediction"
@@ -14000,7 +14000,7 @@ msgstr "në një grafik të vetëm"
 
 #: gui2/library.c:6673
 msgid "in separate small graphs"
-msgstr "veç e veç në grafiqe të vegjël"
+msgstr "veç e veç në grafikë të vegjël"
 
 #: gui2/library.c:6677
 msgid "Plot the series"
@@ -16358,7 +16358,7 @@ msgstr "Formula:"
 
 #: gui2/varinfo.c:833
 msgid "Display name (shown in graphs):"
-msgstr "Emri i ndryshores në grafiqe:"
+msgstr "Emri i ndryshores në grafikë:"
 
 #: gui2/varinfo.c:859
 msgid "Compaction method (for reducing frequency):"
