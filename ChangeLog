@@ -1,6 +1,6 @@
 version 1.9.7, in progress
 - "leverage" command: add a --quiet option and add calculation of the
-  cross-validation criterion
+  cross-validation criterion (available via the $test accessor)
 - Speed up the production of bootstrapped confidence bands for impulse 
   responses in VECM models
 
