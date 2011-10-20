@@ -360,10 +360,6 @@ static void VAR_fill_Y (GRETL_VAR *v, int mod, const DATASET *dset)
 #endif
 }
 
-#define VECM_PACK 0 /* not just yet */
-
-#if VECM_PACK
-
 static void VECM_fill_Y (GRETL_VAR *v, const DATASET *dset,
 			 gretl_matrix *Y)
 {
@@ -401,8 +397,6 @@ static void VECM_fill_Y (GRETL_VAR *v, const DATASET *dset,
 	}
     }  
 }
-
-#endif
 
 /* Split the user-supplied list, if need be, and construct the lists
    of endogenous and (possibly) exogenous vars.  Note that
@@ -844,6 +838,10 @@ static void johansen_info_free (JohansenInfo *jv)
     gretl_matrix_free(jv->q);
     gretl_matrix_free(jv->Ra);
     gretl_matrix_free(jv->qa);
+
+    gretl_matrix_free(jv->YY);
+    gretl_matrix_free(jv->RR);
+    gretl_matrix_free(jv->BB);
 
     free(jv);
 }
@@ -2686,25 +2684,34 @@ johansen_estimate_complete (GRETL_VAR *jvar, gretl_restriction *rset,
 /* N.B. we allow for the possibility that this allocation has
    already been done */
 
-static int allocate_johansen_residual_matrices (GRETL_VAR *v)
+static int allocate_johansen_extra_matrices (GRETL_VAR *v)
 {
-    if (v->jinfo->R0 != NULL && v->jinfo->S00 != NULL) {
+    if (v->jinfo->R0 != NULL && 
+	v->jinfo->S00 != NULL && 
+	v->jinfo->YY != NULL) {
 	return 0;
     } else {
-	int p = v->neqns;
-	int p1 = p + n_restricted_terms(v);
+	int p0 = v->neqns;
+	int p1 = p0 + n_restricted_terms(v);
+	int p = p0 + p1;
 
 	clear_gretl_matrix_err();
 
 	if (v->jinfo->R0 == NULL) {
-	    v->jinfo->R0 = gretl_matrix_alloc(v->T, p);
+	    v->jinfo->R0 = gretl_matrix_alloc(v->T, p0);
 	    v->jinfo->R1 = gretl_matrix_alloc(v->T, p1);
 	}
 
 	if (v->jinfo->S00 == NULL) {
-	    v->jinfo->S00 = gretl_matrix_alloc(p, p);
+	    v->jinfo->S00 = gretl_matrix_alloc(p0, p0);
 	    v->jinfo->S11 = gretl_matrix_alloc(p1, p1);
-	    v->jinfo->S01 = gretl_matrix_alloc(p, p1);
+	    v->jinfo->S01 = gretl_matrix_alloc(p0, p1);
+	}
+
+	if (v->ncoeff > 0 && v->jinfo->YY == NULL) {
+	    v->jinfo->YY = gretl_matrix_alloc(v->T, p);
+	    v->jinfo->RR = gretl_matrix_alloc(v->T, p);
+	    v->jinfo->BB = gretl_matrix_alloc(v->X->cols, p);
 	}
 
 	return get_gretl_matrix_err();
@@ -2769,41 +2776,31 @@ static int johansen_degenerate_stage_1 (GRETL_VAR *v,
     return 0;
 }
 
-static void VECM_maybe_shrink_matrices (GRETL_VAR *v)
-{
-    if (v->Y->cols > v->neqns) {
-	gretl_matrix_reuse(v->Y, -1, v->neqns);
-	gretl_matrix_reuse(v->B, -1, v->neqns);
-    }
-}
-
 #define JVAR_USE_SVD 1
 
-/* For Johansen analysis: estimate VAR in differences along with the
-   other auxiliary regressions required to compute the relevant
-   matrices of residuals, for concentration of the log-likelihood.
-   Then compute S00, S11, S01. See, for example, James Hamilton,
-   "Time Series Analysis", section 20.2.
-*/
-
-#if VECM_PACK
-
-static void 
-johansen_partition_residuals (GRETL_VAR *v, const gretl_matrix *R)
+static void johansen_partition_residuals (GRETL_VAR *v)
 {
     int n = v->neqns * v->T;
     int m = n + n_restricted_terms(v) * v->T;
+    gretl_matrix *R = v->jinfo->RR;
 
     memcpy(v->jinfo->R0->val, R->val, n * sizeof(double));
     memcpy(v->jinfo->R1->val, R->val + n, m * sizeof(double));
 }
+
+/* For Johansen analysis: estimate VAR in differences along with the
+   other auxiliary regressions required to compute the relevant
+   matrices of residuals, for concentration of the log-likelihood.
+   Then compute S00, S11, S01. See for example James Hamilton,
+   "Time Series Analysis", section 20.2.
+*/
 
 int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset, 
 		      gretlopt opt, PRN *prn)
 {
     int err;
 
-    err = allocate_johansen_residual_matrices(v); 
+    err = allocate_johansen_extra_matrices(v); 
     if (err) {
 	return err;
     }
@@ -2815,116 +2812,30 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
 	}
 	johansen_degenerate_stage_1(v, dset);
     } else {
-	gretl_matrix_block *MB;
-	gretl_matrix *Y, *R, *B;
-	int p = v->neqns;
-	int p1 = p + n_restricted_terms(v);
-	
-	MB = gretl_matrix_block_new(&Y, v->T, p + p1,
-				    &R, v->T, p + p1,
-				    &B, v->X->cols, p + p1,
-				    NULL);
-	if (MB == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    VECM_fill_Y(v, dset, Y);
-	    
-	    err = gretl_matrix_multi_SVD_ols(Y, v->X, B, R, NULL);
+	gretl_matrix *Y = v->jinfo->YY;
+	gretl_matrix *B = v->jinfo->BB;
+	gretl_matrix *R = v->jinfo->RR;
 
-	    if (!err) {
-		if (opt & OPT_V) {
-		    gretl_matrix_print_to_prn(B, "\nCoefficients, stage 1", 
-					      prn);
-		}
-		johansen_partition_residuals(v, R);
-		johansen_fill_S_matrices(v);
+	VECM_fill_Y(v, dset, Y);
+
+#if JVAR_USE_SVD	    
+	err = gretl_matrix_multi_SVD_ols(Y, v->X, B, R, NULL);
+#else
+	err = gretl_matrix_multi_ols(Y, v->X, B, R, NULL);
+#endif
+
+	if (!err) {
+	    if (opt & OPT_V) {
+		gretl_matrix_print_to_prn(B, "\nCoefficients, stage 1", 
+					  prn);
 	    }
-
-	    gretl_matrix_block_destroy(MB);
+	    johansen_partition_residuals(v);
+	    johansen_fill_S_matrices(v);
 	}
     }
 
     return err;
 }
-
-#else /* not VECM_PACK */
-
-int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset, 
-		      gretlopt opt, PRN *prn)
-{
-    int err;
-
-    err = allocate_johansen_residual_matrices(v); 
-    if (err) {
-	return err;
-    }
-
-    if (v->ncoeff == 0) {
-	/* nothing to concentrate out */
-	if (opt & OPT_V) {
-	    pputs(prn, "\nNo initial VAR estimation is required\n\n");
-	}
-	return johansen_degenerate_stage_1(v, dset);
-    }
-
-    VECM_maybe_shrink_matrices(v);
-
-    VAR_fill_Y(v, DIFF, dset);
-
-    /* (1) VAR in first differences */
-
-#if JVAR_USE_SVD
-    err = gretl_matrix_multi_SVD_ols(v->Y, v->X, v->B, 
-				     v->jinfo->R0, NULL);
-#else
-    err = gretl_matrix_multi_ols(v->Y, v->X, v->B, 
-				 v->jinfo->R0, NULL);
-#endif
-
-    if (!err && (opt & OPT_V)) {
-	gretl_matrix_print_to_prn(v->B, "\nCoefficients, VAR in differences", 
-				  prn);
-    }
-
-    if (v->ycols > v->Y->cols) {
-	/* re-expand to full size */
-	gretl_matrix_reuse(v->Y, -1, v->ycols);
-	gretl_matrix_reuse(v->B, -1, v->ycols);
-    }
-
-    /* (2) System with lagged levels on LHS (may include
-       restricted terms in trailing columns)
-    */
-
-    VAR_fill_Y(v, LAGS, dset);
-
-#if JVAR_USE_SVD
-    err = gretl_matrix_multi_SVD_ols(v->Y, v->X, v->B, 
-				     v->jinfo->R1, NULL);
-#else
-    err = gretl_matrix_multi_ols(v->Y, v->X, v->B, 
-				 v->jinfo->R1, NULL);
-#endif
-
-    if (!err && (opt & OPT_V)) {
-	gretl_matrix_print_to_prn(v->B, "Coefficients, eqns in lagged levels", 
-				  prn);
-    }
-
-    VECM_maybe_shrink_matrices(v);
-
-    if (!err) {
-	johansen_fill_S_matrices(v);
-    }
-
-#if VDEBUG
-    fprintf(stderr, "johansen_stage_1: returning err = %d\n", err);
-#endif    
-
-    return err;
-}
-
-#endif /* VECM_PACK or not */
 
 static gretlopt opt_from_jcode (JohansenCode jc)
 {
@@ -2989,6 +2900,9 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
     jv->q = NULL;
     jv->Ra = NULL;
     jv->qa = NULL;
+    jv->YY = NULL;
+    jv->RR = NULL;
+    jv->BB = NULL;
 
     jv->ll0 = jv->prior_ll = NADBL;
     jv->lrdf = jv->prior_df = 0;
@@ -3171,7 +3085,10 @@ int johansen_test_simple (int order, const int *list,
  * @list: list of endogenous variables, possibly plus
  * exogenous variables.
  * @dset: dataset struct.
- * @opt:
+ * @opt: may include OPT_N ("nc"), OPT_R ("rc"), OPT_A ("crt"), 
+ * OPT_T ("ct"), OPT_D (include seasonals), OPT_F (show variance
+ * decompositions), OPT_I (show impulse responses), OPT_V
+ * (verbose operation), OPT_Q (quiet), OPT_S (silent).
  * @prn: gretl printing struct.
  * @err: location to receive error code.
  *

@@ -50,6 +50,9 @@ struct JohansenInfo_ {
     gretl_matrix *q;      /* beta-restrictions RHS matrix */
     gretl_matrix *Ra;     /* alpha-restriction LHS matrix */
     gretl_matrix *qa;     /* alpha-restrictions RHS matrix */
+    gretl_matrix *YY;     /* double-size Y matrix */
+    gretl_matrix *RR;     /* double-size residuals matrix */
+    gretl_matrix *BB;     /* double-size coefficient matrix */
     double ll0;           /* unrestricted log-likelihood */
     int lrdf;             /* df for likelihood ratio test */
     double prior_ll;      /* ll for prior model in restriction sequence */
