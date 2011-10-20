@@ -95,6 +95,7 @@ gui2/fileselect.c
 gui2/filters.c
 gui2/fncall.c
 gui2/fnsave.c
+gui2/fontfilter.c
 gui2/gpt_control.c
 gui2/gpt_dialog.c
 gui2/graphics.c
