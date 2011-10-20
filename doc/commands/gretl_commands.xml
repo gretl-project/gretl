@@ -11004,14 +11004,17 @@
       </para>
 
       <para>
-	Forecast variance decompositions and impulse responses are based on the
-	Cholesky decomposition of the contemporaneous covariance matrix, and in
-	this context the order in which the (stochastic) variables are given
-	matters.  The first variable in the list is assumed to be <quote>most
-	  exogenous</quote> within-period. The horizon for variance
-	decompositions and impulse responses can be set using the <cmdref
-	  targ="set"/> command.
-      </para>
+	Forecast variance decompositions and impulse responses are
+	based on the Cholesky decomposition of the contemporaneous
+	covariance matrix, and in this context the order in which the
+	(stochastic) variables are given matters.  The first variable
+	in the list is assumed to be <quote>most exogenous</quote>
+	within-period. The horizon for variance decompositions and
+	impulse responses can be set using the <cmdref targ="set"/>
+	command.  For retrieval of a specified impulse response
+	function in matrix form, see the <fncref targ="irf"/>
+	function.
+      </para> 
 
       <para context="cli">
 	If the <opt>--robust</opt> option is given, standard errors
@@ -11308,6 +11311,11 @@
 	appropriate if the cointegrating vectors may have a non-zero intercept
 	but the <lit>Y</lit> variables have no trend.
       </para>
+
+      <para context="cli">
+	For retrieval of a specified impulse response function in matrix
+	form, see the <fncref targ="irf"/> function.
+      </para>      
     </description>
 
     <gui-access>

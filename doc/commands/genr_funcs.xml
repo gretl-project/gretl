@@ -2671,15 +2671,15 @@
       <description>
 	<para>
 	  This function is available only when the last model
-	  estimated was a VAR. It returns a matrix containing the
-	  estimated response of the <argname>target</argname> variable
-	  to an impulse of one standard deviation in the
+	  estimated was a VAR or VECM. It returns a matrix containing
+	  the estimated response of the <argname>target</argname>
+	  variable to an impulse of one standard deviation in the
 	  <argname>shock</argname> variable. These variables are
 	  identified by their position in the VAR specification: for
 	  example, if <argname>target</argname> and
 	  <argname>shock</argname> are given as 1 and 3 respectively,
-	  the returned matrix gives the response of the first
-	  variable in the VAR for a shock to the third variable.
+	  the returned matrix gives the response of the first variable
+	  in the VAR for a shock to the third variable.
 	</para>
 	<para>
 	  If the optional <argname>alpha</argname> argument is given,
