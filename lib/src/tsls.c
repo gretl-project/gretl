@@ -372,7 +372,8 @@ ivreg_list_add (const int *orig, const int *add, gretlopt opt, int *err)
  * but not in @instlist, then it is added to @instlist and this
  * is flagged by writing 1 into @addconst.
  *
- * Returns: allocated list of variables to be instrumented.
+ * Returns: allocated list of variables to be instrumented,
+ * or NULL if there are no such variables.
  */
 
 int *tsls_make_endolist (const int *reglist, int **instlist, 
@@ -1010,10 +1011,12 @@ static void replace_list_element (int *list, int targ, int repl)
     }
 }
 
-static int 
-reglist_remove_redundant_vars (const MODEL *tmod, int *s2list, 
-			       int *reglist, int *endolist,
-			       int *hatlist)
+static int reglist_remove_redundant_vars (const MODEL *tmod, 
+					  int *s2list, 
+					  int *reglist, 
+					  int *endolist,
+					  int *hatlist,
+					  int sysest)
 {
     int *dlist = gretl_model_get_data(tmod, "droplist");
     int i, pos;
@@ -1029,21 +1032,25 @@ reglist_remove_redundant_vars (const MODEL *tmod, int *s2list,
 	}
 	pos = in_gretl_list(hatlist, dlist[i]);
 	if (pos > 1) {
-	    /* First replace dlist[i] with the ID of the original
-	       regressor from endolist, in place of the "hatlist"
-	       variable (which will be deleted when the model is
-	       returned), so that the printout of names of variables
-	       that are dropped due to exact collinearity will show
-	       the appropriate series name.
+	    /* Delete the redundant series from both endolist and
+	       hatlist, so that subsequent calculations will not get
+	       messed up.
 
-	       Second, delete the redundant series from both endolist
-	       and hatlist, so that subsequent calculations will not
-	       get messed up.
+	       In addition, if we're not doing tsls as part of system
+	       estimation, replace dlist[i] with the ID of the
+	       original regressor from endolist, in place of the
+	       "hatlist" variable (which will be deleted when the
+	       model is returned), so that the printout of regressors
+	       that are dropped due to exact collinearity will show
+	       the appropriate names.
 	    */
-	       
-	    dlist[i] = endolist[pos];
+	    int dv = endolist[pos];
+
 	    gretl_list_delete_at_pos(endolist, pos);
 	    gretl_list_delete_at_pos(hatlist, pos);
+	    if (!sysest) {
+		dlist[i] = dv;
+	    }
 	}
     }
 
@@ -1057,7 +1064,7 @@ reglist_remove_redundant_vars (const MODEL *tmod, int *s2list,
    "Testing for Weak Instruments in Linear IV Regressions" (originally
    NBER Technical Working Paper 284; revised February 2003), at
    http://ksghome.harvard.edu/~JStock/pdf/rfa_6.pdf
- */
+*/
 
 static int 
 compute_stock_yogo (MODEL *pmod, const int *endolist, 
@@ -1094,6 +1101,7 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 #endif
 
     if (K1 > 0) {
+	/* we have some exogenous regressors */
 	gretl_matrix *M;
 	int j, ix = 0, iz = 0;
 
@@ -1289,26 +1297,29 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
    covariance estimator.
 */
 
-static int 
-compute_first_stage_F (MODEL *pmod, int v, const int *reglist, 
-		       const int *instlist, DATASET *dset, 
-		       gretlopt opt)
+static int compute_first_stage_F (MODEL *pmod, 
+				  const int *endolist, 
+				  const int *reglist, 
+				  const int *instlist, 
+				  DATASET *dset, 
+				  gretlopt opt)
 {
     MODEL mod1;
     int *list1 = NULL;
     int *flist = NULL;
     double F;
-    int i, vi;
+    int i, ev, vi;
     int err = 0;
 
     gretl_model_init(&mod1);
+    ev = endolist[1];
 
-    /* The regression list, list1, has endogenous regressor v as the
+    /* The regression list, list1, has endogenous regressor ev as the
        dependent variable and includes all instruments; the list for
        omission, flist, includes all the excluded instruments.
     */
 
-    list1 = gretl_list_append_term(&list1, v);
+    list1 = gretl_list_append_term(&list1, ev);
     if (list1 == NULL) {
 	return E_ALLOC;
     }
@@ -1330,9 +1341,9 @@ compute_first_stage_F (MODEL *pmod, int v, const int *reglist,
     }
 
     if (!err) {
-	gretlopt myopt = (opt & OPT_R)? (OPT_A | OPT_R) : OPT_A;
+	gretlopt myopt = (opt & OPT_R)? OPT_R : OPT_NONE;
 
-	mod1 = lsq(list1, dset, OLS, myopt);
+	mod1 = lsq(list1, dset, OLS, myopt | OPT_A);
 	err = mod1.errcode;
 	if (err) {
 	    fprintf(stderr, "compute_first_stage F: lsq failed\n");
@@ -1551,14 +1562,13 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     int *hatlist = NULL, *s2list = NULL;
     int *exolist = NULL, *endolist = NULL;
     int *idroplist = NULL;
-    int addconst = 0, addvars = 0;
-    int ninst = 0, nreg = 0;
+    int addconst = 0;
+    int nendo, nreg = 0;
     int orig_nvar = dset->v;
     int sysest = (opt & OPT_E);
     int no_tests = (opt & OPT_X);
-    int nendo, ev = 0;
     int OverIdRank = 0;
-    int i, j, err = 0;
+    int i, err = 0;
 
 #if TDEBUG
     printlist(list, "tsls: incoming list");
@@ -1644,11 +1654,10 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     } 
 
     /* check (again) for order condition: we do this after tsls_Q in case
-       any vars get dropped at that stage
+       any instruments get dropped at that stage
     */
-    ninst = instlist[0];
     nreg = reglist[0] - 1;
-    OverIdRank = ninst - nreg;
+    OverIdRank = instlist[0] - nreg;
     if (OverIdRank < 0) {
         gretl_errmsg_sprintf(_("The order condition for identification is not satisfied.\n"
 			       "At least %d more instruments are needed."), -OverIdRank);
@@ -1662,23 +1671,15 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 #endif
 
     /* allocate storage for fitted vars (etc.), if needed */
-    addvars = nendo;
-    if (addvars > 0) {
-	err = dataset_add_series(addvars, dset);
-	if (err) {
-	    goto bailout;
-	}
-    } 
-
-    /* prepare for first-stage F-test, if just one endogenous regressor */
-    if (nendo == 1) {
-	ev = endolist[1];
-    } 
-
     if (nendo > 0) {
-	r = gretl_vector_alloc(Q->cols);
-	if (r == NULL) {
-	    err = E_ALLOC;
+	err = dataset_add_series(nendo, dset);
+	if (!err) {
+	    r = gretl_vector_alloc(Q->cols);
+	    if (r == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+	if (err) {
 	    goto bailout;
 	}
     }
@@ -1690,7 +1691,6 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
        into the data array, dset->Z.
     */
 
-    j = 1;
     for (i=0; i<nendo; i++) {
 	int v0 = endolist[i+1];
 	int v1 = orig_nvar + i;
@@ -1706,7 +1706,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	replace_list_element(s2list, v0, v1);
 
 	/* and update hatlist */
-	hatlist[j++] = v1;
+	hatlist[i+1] = v1;
     }
 
     /* second-stage regression */
@@ -1727,7 +1727,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	/* Were collinear regressors dropped? If so, adjustments are needed */
 	OverIdRank += s2list[0] - tsls.list[0];
 	reglist_remove_redundant_vars(&tsls, s2list, reglist, endolist,
-				      hatlist);
+				      hatlist, sysest);
 	nendo = endolist[0];
 #if TDEBUG
 	fprintf(stderr, "tsls: dropped collinear vars\n");
@@ -1735,13 +1735,14 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     }
 
     /* record the number of instruments used */
-    gretl_model_set_int(&tsls, "ninst", ninst);
+    gretl_model_set_int(&tsls, "ninst", instlist[0]);
 
     if (!no_tests) {
 	if (!sysest || (opt & OPT_H)) {
 	    if (nendo == 1) {
 		/* handles robust estimation, for single endogenous regressor */
-		compute_first_stage_F(&tsls, ev, reglist, instlist, dset, opt);
+		compute_first_stage_F(&tsls, endolist, reglist, instlist, 
+				      dset, opt);
 	    } else if (!(opt & OPT_R) && nendo > 0) {
 		/* at present, only handles case of i.i.d. errors */
 		compute_stock_yogo(&tsls, endolist, instlist, hatlist, dset);
