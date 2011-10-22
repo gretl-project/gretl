@@ -307,48 +307,19 @@ void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
 #endif
 }
 
-/* construct the matrix of dependent variables for VAR or
-   VECM estimation */
+/* construct the matrix of dependent variables for a plain VAR */
 
-static void VAR_fill_Y (GRETL_VAR *v, int mod, const DATASET *dset)
+static void VAR_fill_Y (GRETL_VAR *v, const DATASET *dset)
 {
     int i, vi, s, t;
-    int k = 0;
 
     for (i=0; i<v->neqns; i++) {
 	vi = v->ylist[i+1];
 	s = 0;
 	for (t=v->t1; t<=v->t2; t++) {
-	    if (mod == DIFF) {
-		gretl_matrix_set(v->Y, s++, k, dset->Z[vi][t] - dset->Z[vi][t-1]);
-	    } else if (mod == LAGS) {
-		gretl_matrix_set(v->Y, s++, k, dset->Z[vi][t-1]);
-	    } else {
-		gretl_matrix_set(v->Y, s++, k, dset->Z[vi][t]);
-	    }
+	    gretl_matrix_set(v->Y, s++, i, dset->Z[vi][t]);
 	}
-	k++;
     }
-
-    if (mod == LAGS && auto_restr(v)) {
-	int trend = (v->jinfo->code == J_REST_TREND);
-
-	for (t=0; t<v->T; t++) {
-	    gretl_matrix_set(v->Y, t, k, (trend)? (v->t1 + t) : 1);
-	}
-	k++;
-    }
-
-    if (mod == LAGS && v->rlist != NULL) {
-	for (i=0; i<v->rlist[0]; i++) {
-	    vi = v->rlist[i+1];
-	    s = 0;
-	    for (t=v->t1; t<=v->t2; t++) {
-		gretl_matrix_set(v->Y, s++, k, dset->Z[vi][t-1]);
-	    }
-	    k++;
-	}
-    }  
 
     if (v->Y != NULL) {
 	gretl_matrix_set_t1(v->Y, v->t1);
@@ -359,6 +330,8 @@ static void VAR_fill_Y (GRETL_VAR *v, int mod, const DATASET *dset)
     gretl_matrix_print(v->Y, "Y");
 #endif
 }
+
+/* construct the combined matrix of dependent variables for a VECM */
 
 static void VECM_fill_Y (GRETL_VAR *v, const DATASET *dset,
 			 gretl_matrix *Y)
@@ -808,7 +781,7 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
     if (!err) {
 	if (var->ci == VAR) {
 	    /* this is deferred for a VECM */
-	    VAR_fill_Y(var, 0, dset);
+	    VAR_fill_Y(var, dset);
 	}
 	VAR_fill_X(var, order, dset);
     }
