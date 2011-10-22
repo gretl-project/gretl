@@ -188,7 +188,7 @@ recalculate_impulse_responses (irfboot *b, GRETL_VAR *v,
 
 static void maybe_resize_vecm_matrices (GRETL_VAR *v)
 {
-    int nc0 = v->ifc + v->order * v->neqns + v->jinfo->seasonals;
+    int nc0 = v->order * v->neqns + v->ifc + v->jinfo->seasonals;
 
     if (v->xlist != NULL) {
 	nc0 += v->xlist[0];

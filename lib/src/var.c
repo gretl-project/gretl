@@ -641,14 +641,16 @@ static int VAR_check_df_etc (GRETL_VAR *v, const DATASET *dset,
     return err;
 }
 
-/* Note: if @v is a VECM, and it includes a restricted const
-   or trend, we make the Y and B matrices big enough to
-   accommodate the additional restricted term.
+/* Note: if @v is a VECM, and it includes a restricted constant or
+   trend (or other restricted exogenous regressors), we make the Y and
+   B matrices big enough to accommodate the additional restricted
+   term(s).  
 */
 
 static int VAR_add_basic_matrices (GRETL_VAR *v, gretlopt opt)
 {
     int k = v->neqns;
+    int err = 0;
 
     if (v->ci == VECM && (opt & (OPT_A | OPT_R))) {
 	/* allow for restricted const/trend */
@@ -662,24 +664,26 @@ static int VAR_add_basic_matrices (GRETL_VAR *v, gretlopt opt)
 
     v->Y = gretl_matrix_alloc(v->T, k);
     v->E = gretl_matrix_alloc(v->T, v->neqns);
-    if (v->Y == NULL || v->E == NULL) {
-	return E_ALLOC;
-    } 
-    
-    /* record max. cols of Y matrix */
-    v->ycols = k;
 
-    if (v->ncoeff > 0) {
-	v->X = gretl_matrix_alloc(v->T, v->ncoeff);
-	v->B = gretl_matrix_alloc(v->ncoeff, k);
-	if (v->X == NULL || v->B == NULL) { 
-	    return E_ALLOC;
+    if (v->Y == NULL || v->E == NULL) {
+	err = E_ALLOC;
+    } else {
+	/* record max. cols of Y matrix */
+	v->ycols = k;
+
+	if (v->ncoeff > 0) {
+	    v->X = gretl_matrix_alloc(v->T, v->ncoeff);
+	    v->B = gretl_matrix_alloc(v->ncoeff, k);
+	    if (v->X == NULL || v->B == NULL) { 
+		err = E_ALLOC;
+	    } else {
+		/* record the full number of columns of X */
+		v->xcols = v->ncoeff;
+	    }
 	}
-	/* record max. cols of X matrix */
-	v->xcols = v->ncoeff;
     }
 
-    return 0;
+    return err;
 }
 
 static void set_to_NA (double *x, int n)
