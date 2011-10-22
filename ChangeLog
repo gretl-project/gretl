@@ -3,6 +3,10 @@ version 1.9.7, in progress
   cross-validation criterion (available via the $test accessor)
 - Speed up the production of bootstrapped confidence bands for impulse 
   responses in VECM models
+- Online help: ensure that option flags don't break across lines (and
+  also colorize them for emphasis)
+- Fix bug: possible crash in tsls when there are missing values and a
+  regressor is all-zero at the complete observations 
 
 2011-10-17 version 1.9.6
 - Add an importer for xlsx (Office Open XML) worksheet data

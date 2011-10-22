@@ -828,8 +828,7 @@ static GtkTextTagTable *gretl_tags_new (void)
 
     tag = gtk_text_tag_new("optflag");
     g_object_set(tag, "family", "monospace", 
-		 "wrap-mode", GTK_WRAP_NONE, 
-		 "wrap-mode-set", TRUE, NULL);
+		 "foreground", "#396d60", NULL);
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("text");

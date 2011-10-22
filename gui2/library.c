@@ -328,7 +328,8 @@ static void maybe_set_utf_flag (PRN *prn)
 	    /* system does not use UTF-8 */
 	    utf_font = 0;
 	} else {
-	    utf_font = font_has_minus(fixed_font);
+	    /* check for Unicode minus sign, U+2212 */
+	    utf_font = font_has_symbol(fixed_font, 0x2212);
 	}
     }
 

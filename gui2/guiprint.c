@@ -2070,7 +2070,12 @@ int copy_vars_formatted (windata_t *vwin, int fmt, int action)
     return err;
 }
 
-int font_has_minus (PangoFontDescription *desc)
+/* We mostly use this for checking whether the font described by @desc
+   has the Unicode minus sign (0x2212), which looks better than a
+   simple dash if it's available.  
+*/
+
+int font_has_symbol (PangoFontDescription *desc, int symbol)
 {
     GtkWidget *widget;
     PangoContext *context = NULL;
@@ -2100,8 +2105,7 @@ int font_has_minus (PangoFontDescription *desc)
 	if (pfont != NULL) {
 	    coverage = pango_font_get_coverage(pfont, lang);
 	    if (coverage != NULL) {
-		/* U+2212 = minus sign */
-		ret = (pango_coverage_get(coverage, 0x2212) == PANGO_COVERAGE_EXACT);
+		ret = (pango_coverage_get(coverage, symbol) == PANGO_COVERAGE_EXACT);
 		pango_coverage_unref(coverage);
 	    }
 	    g_object_unref(G_OBJECT(pfont));

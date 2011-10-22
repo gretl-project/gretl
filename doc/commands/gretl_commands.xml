@@ -1101,7 +1101,7 @@
 	with four columns, holding the estimated probabilities of the
 	four possible joint outcomes for (<math>y</math><sub>1</sub>,
 	<math>y</math><sub>2</sub>), in the order (1,1), (1,0), (0,1),
-	(0,0). Alternatively, if the option <lit>--save-xbeta</lit> is
+	(0,0). Alternatively, if the option <opt>--save-xbeta</opt> is
 	given, <lit>$yhat</lit> has two columns and holds the values
 	of the index functions for the respective equations.
       </para>
@@ -1256,7 +1256,7 @@
 	<lit>01</lit>. The actual plots may be generated later using
 	<program>gnuplot</program> (under MS Windows,
 	<program>wgnuplot</program>).  This behavior can be modified
-	by use of the <lit>--output=</lit><repl>filename</repl>
+	by use of the <opt>--output=</opt><repl>filename</repl>
 	option.  For details, please see the <cmdref targ="gnuplot"/>
 	command.
       </para>
@@ -1417,12 +1417,12 @@
 	necessary.
       </para>
       <para>
-	If the <lit>--dataset</lit> option is given, then only the dataset
+	If the <opt>--dataset</opt> option is given, then only the dataset
 	is cleared; other saved objects such as named matrices and scalars
 	are preserved.
       </para>
       <para>
-	If the <lit>--other</lit> option is given, then the current
+	If the <opt>--other</opt> option is given, then the current
 	dataset, if any, is preserved but all other saved objects are
 	destroyed.
       </para>
@@ -2737,7 +2737,7 @@
 	The number of dummies is one less than the maximum number of
 	periods used in estimation, to avoid perfect collinearity with
 	the constant.  The dummies are entered in differenced form unless
-	the <lit>--dpdstyle</lit> option is given, in which case they
+	the <opt>--dpdstyle</opt> option is given, in which case they
 	are entered in levels.
       </para>
       <para>
@@ -2871,7 +2871,7 @@
       <para>
 	By default the fitted values obtained via the accessor
 	<lit>$yhat</lit> are the conditional means of the durations, but if
-	the <lit>--medians</lit> option is given then <lit>$yhat</lit>
+	the <opt>--medians</opt> option is given then <lit>$yhat</lit>
 	provides the conditional medians instead.
       </para>
       <para>
@@ -5659,8 +5659,8 @@
 	
       <para context="cli">
 	By default the test ADF regressions include a constant;
-	to suppress the constant use the <lit>--nc</lit> option, or
-	to add a linear trend use the <lit>--ct</lit> option.
+	to suppress the constant use the <opt>--nc</opt> option, or
+	to add a linear trend use the <opt>--ct</opt> option.
 	(See the <cmdref targ="adf"/> command for explanation of
 	ADF regressions.)
       </para>
@@ -7313,7 +7313,7 @@
 	By default, opening a new data file clears the current gretl
 	session, which includes deletion of any named matrices and
 	scalars. If you wish to keep any currently defined matrices
-	and scalars, use the <lit>--preserve</lit> option.
+	and scalars, use the <opt>--preserve</opt> option.
       </para>
       <para>
 	The <lit>open</lit> command can also be used to open a database
@@ -9499,13 +9499,13 @@
 	<li>
 	  <para><lit>force_hc</lit>: <lit>off</lit> (the default) or
 	  <lit>on</lit>.  By default, with time-series data and when
-	  the <lit>--robust</lit> option is given with <lit>ols</lit>,
+	  the <opt>--robust</opt> option is given with <lit>ols</lit>,
 	  the HAC estimator is used.  If you set <lit>force_hc</lit>
 	  to <quote>on</quote>, this forces calculation of the regular
 	  Heteroskedasticity Consistent Covariance Matrix (HCCM),
 	  which does not take autocorrelation into account. Note that
-	  when a VAR is estimated with the <lit>--robust</lit> option,
-	  the default is regular HCCM, but the <lit>--robust-hac</lit>
+	  when a VAR is estimated with the <opt>--robust</opt> option,
+	  the default is regular HCCM, but the <opt>--robust-hac</opt>
 	  option is available to produce a HAC estimator.
 	  </para>
 	</li>

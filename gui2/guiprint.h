@@ -65,6 +65,6 @@ int scalars_to_clipboard_as_csv (void);
 
 int matrix_to_clipboard_as_csv (const gretl_matrix *m);
 
-int font_has_minus (PangoFontDescription *desc);
+int font_has_symbol (PangoFontDescription *desc, int symbol);
 
 #endif /* GUIPRINT_H */

@@ -391,8 +391,12 @@
 </xsl:template>
 
 <xsl:template match="opt">
-  <xsl:text>&lt;@opt="</xsl:text>
-  <xsl:apply-templates/>
+  <xsl:comment>
+    For option flags, ensure that there's no break between 
+    the double-dash and the following string.
+  </xsl:comment>
+  <xsl:text>&lt;@opt="--&#x2060;</xsl:text>
+  <xsl:value-of select='substring-after(text(),"--")'/>
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
