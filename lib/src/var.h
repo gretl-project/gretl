@@ -48,14 +48,13 @@ struct GRETL_VAR_ {
     int df;              /* T - average coeffs per equation */
     int ifc;             /* equations include a constant (1) or not (0) */
     int ncoeff;          /* total coefficients per equation */
-    int ycols;           /* maximum columns of Y (VECM special) */
-    int xcols;           /* maximum columns of X (VECM special) */
     int *lags;           /* list of specific lags */
     int *ylist;          /* list of stochastic vars */
     int *xlist;          /* list of exogenous variables */
     int *rlist;          /* restricted exogenous variables (VECM only) */
     int detflags;        /* record of automatic deterministic vars added */
     int robust;          /* computing robust std errors? */
+    int xcols;           /* full column size of X matrix (VECM special) */
     gretl_matrix *Y;     /* matrix of dependent variables */
     gretl_matrix *X;     /* matrix of independent variables */
     gretl_matrix *B;     /* basic coefficient matrix */
@@ -77,7 +76,7 @@ struct GRETL_VAR_ {
     double HQC;          /* Hannan-Quinn criterion */
     double LR;           /* for likelihood-ratio testing */
     double LB;           /* Ljung-Box (Portmanteau) test statistic */
-    int LBs;             /* order for for Portmanteau test */
+    int LBs;             /* order for Portmanteau test */
     JohansenInfo *jinfo; /* extra information for VECMs */
     char *name;          /* for use in session management */
 };

@@ -182,7 +182,6 @@ void gretl_VAR_clear (GRETL_VAR *var)
     var->detflags = 0;
     var->robust = 0;
     var->LBs = 0;
-    var->ycols = 0;
     var->xcols = 0;
 
     var->lags = NULL;
@@ -614,45 +613,25 @@ static int VAR_check_df_etc (GRETL_VAR *v, const DATASET *dset,
     return err;
 }
 
-/* Note: if @v is a VECM, and it includes a restricted constant or
-   trend (or other restricted exogenous regressors), we make the Y and
-   B matrices big enough to accommodate the additional restricted
-   term(s).  
-*/
-
-static int VAR_add_basic_matrices (GRETL_VAR *v, gretlopt opt)
+static int VAR_add_basic_matrices (GRETL_VAR *v)
 {
-    int k = v->neqns;
     int err = 0;
 
-    if (v->ci == VECM && (opt & (OPT_A | OPT_R))) {
-	/* allow for restricted const/trend */
-	k++;
-    }
-
-    /* restricted exog vars? */
-    if (v->rlist != NULL) {
-	k += v->rlist[0];
-    } 
-
-    v->Y = gretl_matrix_alloc(v->T, k);
+    v->Y = gretl_matrix_alloc(v->T, v->neqns);
     v->E = gretl_matrix_alloc(v->T, v->neqns);
 
     if (v->Y == NULL || v->E == NULL) {
 	err = E_ALLOC;
-    } else {
-	/* record max. cols of Y matrix */
-	v->ycols = k;
+    }
 
-	if (v->ncoeff > 0) {
-	    v->X = gretl_matrix_alloc(v->T, v->ncoeff);
-	    v->B = gretl_matrix_alloc(v->ncoeff, k);
-	    if (v->X == NULL || v->B == NULL) { 
-		err = E_ALLOC;
-	    } else {
-		/* record the full number of columns of X */
-		v->xcols = v->ncoeff;
-	    }
+    if (!err && v->ncoeff > 0) {
+	v->X = gretl_matrix_alloc(v->T, v->ncoeff);
+	v->B = gretl_matrix_alloc(v->ncoeff, v->neqns);
+	if (v->X == NULL || v->B == NULL) { 
+	    err = E_ALLOC;
+	} else {
+	    /* record the number of columns of X */
+	    v->xcols = v->X->cols;
 	}
     }
 
@@ -734,7 +713,7 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
     }
 
     if (!err) {
-	err = VAR_add_basic_matrices(var, opt);
+	err = VAR_add_basic_matrices(var);
     }
 
     if (!err && var->ci == VAR) {
@@ -1289,26 +1268,18 @@ static void VAR_dw_rho (MODEL *pmod)
     pmod->rho = ut1 / u11;
 }
 
-/* set basic model statistics when estimation has been
+/* set basic per-model statistics after estimation has been
    done by matrix methods */
 
 int set_VAR_model_stats (GRETL_VAR *var, int i)
 {
     MODEL *pmod = var->models[i];
-    double *y = NULL;
+    const double *y;
     double u, x, SSR = 0, TSS = 0;
     int t;
 
-    y = malloc(var->T * sizeof *y);
-    if (y == NULL) {
-	pmod->ybar = pmod->sdy = NADBL;
-	pmod->rsq = NADBL;
-	return E_ALLOC;
-    }
-
-    for (t=0; t<var->T; t++) {
-	y[t] = gretl_matrix_get(var->Y, t, i);
-    }
+    /* get the appropriate column of var->Y as a plain array */
+    y = var->Y->val + i * var->T;
 
     pmod->ybar = gretl_mean(0, var->T - 1, y);
     pmod->sdy = gretl_stddev(0, var->T - 1, y);
@@ -1336,8 +1307,6 @@ int set_VAR_model_stats (GRETL_VAR *var, int i)
     pmod->lnL = NADBL;
 
     VAR_dw_rho(pmod);
-
-    free(y);
 
     return 0;
 }
@@ -2753,6 +2722,27 @@ static int johansen_degenerate_stage_1 (GRETL_VAR *v,
     return 0;
 }
 
+static void print_stage_1_coeffs (GRETL_VAR *v, gretl_matrix *B,
+				  PRN *prn)
+{
+    gretl_matrix tmp;
+
+    gretl_matrix_init(&tmp);
+    
+    tmp.rows = B->rows;
+    tmp.cols = v->neqns;
+    tmp.val = B->val;
+
+    gretl_matrix_print_to_prn(&tmp, "\nCoefficients, VAR in differences", 
+			      prn);
+
+    tmp.cols += n_restricted_terms(v);
+    tmp.val += v->neqns * tmp.rows;
+
+    gretl_matrix_print_to_prn(&tmp, "Coefficients, eqns in lagged levels", 
+			      prn);
+}
+
 #define JVAR_USE_SVD 1
 
 static void johansen_partition_residuals (GRETL_VAR *v)
@@ -2803,8 +2793,7 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
 
 	if (!err) {
 	    if (opt & OPT_V) {
-		gretl_matrix_print_to_prn(B, "\nCoefficients, stage 1", 
-					  prn);
+		print_stage_1_coeffs(v, B, prn);
 	    }
 	    johansen_partition_residuals(v);
 	    johansen_fill_S_matrices(v);

@@ -515,6 +515,20 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
 }
 
 /**
+ * gretl_matrix_init:
+ * @m: matrix to be initialized.
+ *
+ * Initializes @m to be zero by zero with NULL data.
+ */
+
+void gretl_matrix_init (gretl_matrix *m)
+{
+    m->rows = m->cols = 0;
+    m->t1 = m->t2 = 0;
+    m->val = NULL;
+}
+
+/**
  * gretl_matrix_replace:
  * @pa: location of matrix to be replaced.
  * @b: replacement matrix.

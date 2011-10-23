@@ -663,8 +663,7 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
 	    v->X->cols = v->ncoeff;
 	    v->B->rows = v->ncoeff;
 	}
-	v->Y->cols = v->neqns;
-	v->B->cols = v->neqns;
+
 	return 0;
     }
 
@@ -698,33 +697,21 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
 	} else {
 	    err = gretl_matrix_realloc(v->X, v->T, xc);
 	    if (!err) {
+		/* record revised full size */
 		v->xcols = xc;
 	    }
 	}
     } 
 
-    if (err) {
-	return err;
-    } 
-
-    if (v->B == NULL) {
-	v->B = gretl_matrix_alloc(xc, v->neqns);
+    if (!err) {
 	if (v->B == NULL) {
-	    err = E_ALLOC;
-	}	
-    } else if (v->B->rows < xc) {
-	/* B may have extra cols for restricted terms; the
-	   true number of allocated columns is recorded
-	   in v->ycols
-	*/
-	err = gretl_matrix_realloc(v->B, xc, v->ycols);
-	if (!err && v->ycols > v->neqns) {
-	    v->B->cols = v->neqns;
+	    v->B = gretl_matrix_alloc(xc, v->neqns);
+	    if (v->B == NULL) {
+		err = E_ALLOC;
+	    }	
+	} else if (v->B->rows < xc) {
+	    err = gretl_matrix_realloc(v->B, xc, v->neqns);
 	}
-    }
-
-    if (!err && v->Y->cols > v->neqns) {
-	gretl_matrix_reuse(v->Y, -1, v->neqns);
     }
 
     return err;

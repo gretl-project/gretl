@@ -445,25 +445,25 @@ static int hansen_sargan_test (equation_system *sys,
     int m = sys->neqns;
     int T = sys->T;
     int df = system_get_overid_df(sys);
-    gretl_matrix *WTW = NULL;
-    gretl_matrix *eW = NULL;
-    gretl_matrix *tmp = NULL;
+    gretl_matrix_block *B;
+    gretl_matrix *WTW, *eW, *tmp;
     double x, X2;
     int i, j, t;
     int err = 0;
 
-    if (df <= 0) return 1;
-
-    WTW = gretl_matrix_alloc(nx, nx);
-    eW = gretl_matrix_alloc(m, nx);
-    tmp = gretl_matrix_alloc(m, nx);
-
-    if (WTW == NULL || eW == NULL || tmp == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+    if (df <= 0) {
+	return 1;
     }
 
-    /* construct W-transpose W */
+    B = gretl_matrix_block_new(&WTW, nx, nx,
+			       &eW, m, nx,
+			       &tmp, m, nx,
+			       NULL);
+    if (B == NULL) {
+	return E_ALLOC;
+    }
+
+    /* construct W-transpose W in WTW */
     for (i=0; i<nx; i++) {
 	Wi = dset->Z[exlist[i+1]] + sys->t1;
 	for (j=i; j<nx; j++) {
@@ -488,8 +488,8 @@ static int hansen_sargan_test (equation_system *sys,
 	goto bailout;
     }
 
-    /* set up vectors of SUR or 3SLS residuals, transposed, times W:
-       these are stacked in an m * nx matrix
+    /* set up vectors of SUR or 3SLS residuals, transposed, 
+       times W; these are stacked in the m * nx matrix eW
     */
     for (i=0; i<m; i++) {
 	for (j=0; j<nx; j++) {
@@ -535,9 +535,7 @@ static int hansen_sargan_test (equation_system *sys,
 
  bailout:
 
-    gretl_matrix_free(WTW);
-    gretl_matrix_free(eW);
-    gretl_matrix_free(tmp);
+    gretl_matrix_block_destroy(B);
 
     return err;
 }
@@ -755,13 +753,23 @@ static void clean_up_models (equation_system *sys)
     }
 }
 
-static int drop_redundant_instruments (equation_system *sys,
-				       const int *droplist, int i)
-{
-    int j, k, pos, err = 0;
+/* Given a record of the redundant instruments dropped at the tsls
+   stage, namely @idroplist, purge these series IDs from both the
+   global system instrument list (sys->ilist) and the per-equation
+   regression specification list (if the latter is given in tsls
+   form).  
+*/
 
-    for (j=1; j<=droplist[0]; j++) {
-	pos = in_gretl_list(sys->ilist, droplist[j]);
+static int drop_redundant_instruments (equation_system *sys,
+				       const int *idroplist, 
+				       int eqn)
+{
+    int i, j, di, pos;
+    int err = 0;
+
+    for (i=1; i<=idroplist[0]; i++) {
+	di = idroplist[i];
+	pos = in_gretl_list(sys->ilist, di);
 	if (pos > 0) {
 	    gretl_list_delete_at_pos(sys->ilist, pos);
 	} else {
@@ -769,12 +777,16 @@ static int drop_redundant_instruments (equation_system *sys,
 	}
     }
 
-    pos = gretl_list_separator_position(sys->lists[i]);
+    pos = gretl_list_separator_position(sys->lists[eqn]);
+
     if (pos > 0) {
-	for (j=1; j<=droplist[0]; j++) {
-	    for (k=pos+1; k<=sys->lists[i][0]; k++) {
-		if (sys->lists[i][k] == droplist[j]) {
-		    gretl_list_delete_at_pos(sys->lists[i], k);
+	int *eqnlist = sys->lists[eqn];
+
+	for (i=1; i<=idroplist[0]; i++) {
+	    di = idroplist[i];
+	    for (j=pos+1; j<=eqnlist[0]; j++) {
+		if (eqnlist[j] == di) {
+		    gretl_list_delete_at_pos(eqnlist, j);
 		    break;
 		}
 	    }
@@ -891,7 +903,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
     for (i=0; i<sys->neqns; i++) {
 	int freeit = 0;
 	int *list = system_model_list(sys, i, &freeit);
-	const int *droplist = NULL;
+	const int *idroplist = NULL;
 	MODEL *pmod = models[i];
 
 	if (list == NULL) {
@@ -915,9 +927,9 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	    break;
 	} 
 
-	droplist = gretl_model_get_data(pmod, "inst_droplist");
-	if (droplist != NULL) {
-	    drop_redundant_instruments(sys, droplist, i);
+	idroplist = gretl_model_get_data(pmod, "inst_droplist");
+	if (idroplist != NULL) {
+	    drop_redundant_instruments(sys, idroplist, i);
 	}
 
 	pmod->ID = i;

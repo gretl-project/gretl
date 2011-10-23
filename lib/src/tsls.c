@@ -1015,8 +1015,7 @@ static int reglist_remove_redundant_vars (const MODEL *tmod,
 					  int *s2list, 
 					  int *reglist, 
 					  int *endolist,
-					  int *hatlist,
-					  int sysest)
+					  int *hatlist)
 {
     int *dlist = gretl_model_get_data(tmod, "droplist");
     int i, pos;
@@ -1032,25 +1031,20 @@ static int reglist_remove_redundant_vars (const MODEL *tmod,
 	}
 	pos = in_gretl_list(hatlist, dlist[i]);
 	if (pos > 1) {
-	    /* Delete the redundant series from both endolist and
-	       hatlist, so that subsequent calculations will not get
-	       messed up.
+	    /* First replace dlist[i] with the ID of the original
+	       regressor from @endolist, in place of the "hatlist"
+	       variable (which will be deleted when the model is
+	       returned), so that the printout of regressors that are
+	       dropped due to exact collinearity will show the
+	       appropriate names.
 
-	       In addition, if we're not doing tsls as part of system
-	       estimation, replace dlist[i] with the ID of the
-	       original regressor from endolist, in place of the
-	       "hatlist" variable (which will be deleted when the
-	       model is returned), so that the printout of regressors
-	       that are dropped due to exact collinearity will show
-	       the appropriate names.
-	    */
-	    int dv = endolist[pos];
-
+	       Second, delete the redundant term from both endolist
+	       and hatlist, so that subsequent calculations will not
+	       get messed up.
+	    */	    
+	    dlist[i] = endolist[pos];
 	    gretl_list_delete_at_pos(endolist, pos);
 	    gretl_list_delete_at_pos(hatlist, pos);
-	    if (!sysest) {
-		dlist[i] = dv;
-	    }
 	}
     }
 
@@ -1727,7 +1721,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	/* Were collinear regressors dropped? If so, adjustments are needed */
 	OverIdRank += s2list[0] - tsls.list[0];
 	reglist_remove_redundant_vars(&tsls, s2list, reglist, endolist,
-				      hatlist, sysest);
+				      hatlist);
 	nendo = endolist[0];
 #if TDEBUG
 	fprintf(stderr, "tsls: dropped collinear vars\n");

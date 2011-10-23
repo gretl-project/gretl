@@ -188,7 +188,7 @@ recalculate_impulse_responses (irfboot *b, GRETL_VAR *v,
 
 static void maybe_resize_vecm_matrices (GRETL_VAR *v)
 {
-    int nc0 = v->order * v->neqns + v->ifc + v->jinfo->seasonals;
+    int nc0 = (v->order * v->neqns) + v->ifc + v->jinfo->seasonals;
 
     if (v->xlist != NULL) {
 	nc0 += v->xlist[0];
@@ -199,16 +199,10 @@ static void maybe_resize_vecm_matrices (GRETL_VAR *v)
     }
 
     if (v->X->cols > nc0) {
-	/* skip the EC term columns in X */
+	/* for stage 1: skip the extra EC-term columns in X */
 	gretl_matrix_reuse(v->X, -1, nc0);
 	gretl_matrix_reuse(v->B, nc0, -1);
     }
-
-    if (v->ycols > v->Y->cols) {
-	/* add back column(s) for extra restricted terms */
-	gretl_matrix_reuse(v->Y, -1, v->ycols);
-	gretl_matrix_reuse(v->B, -1, v->ycols);
-    }    
 }
 
 /* In re-estimation of VAR or VECM we'll tolerate at most 9 cases of
@@ -737,35 +731,8 @@ static GRETL_VAR *back_up_VAR (const GRETL_VAR *v)
 
     clear_gretl_matrix_err();
 
-    /* Note: v->ycols is a record of the column size at
-       which v->Y and v->B were originally allocated;
-       see VAR_add_basic_matrices(). This may be greater
-       than the current cols setting.
-    */
-
-    if (v->ycols > v->Y->cols) {
-	int save_k = v->Y->cols;
-
-	/* re-expand these matrices */
-	gretl_matrix_reuse(v->Y, -1, v->ycols);
-	gretl_matrix_reuse(v->B, -1, v->ycols);
-
-	/* and copy at full size */
-	vbak->Y = gretl_matrix_copy(v->Y);
-	vbak->B = gretl_matrix_copy(v->B);
-
-	/* then shrink back to incoming size */
-	if (vbak->Y != NULL && vbak->B != NULL) {
-	    gretl_matrix_reuse(vbak->Y, -1, save_k);
-	    gretl_matrix_reuse(vbak->B, -1, save_k);
-	}
-	
-	gretl_matrix_reuse(v->Y, -1, save_k);
-	gretl_matrix_reuse(v->B, -1, save_k);
-    } else {
-	vbak->Y = gretl_matrix_copy(v->Y);
-	vbak->B = gretl_matrix_copy(v->B);
-    }
+    vbak->Y = gretl_matrix_copy(v->Y);
+    vbak->B = gretl_matrix_copy(v->B);
 
     if (v->xcols > v->X->cols) {
 	int save_k = v->X->cols;
