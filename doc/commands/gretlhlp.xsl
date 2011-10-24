@@ -429,13 +429,9 @@
 </xsl:template>
 
 <xsl:template match="book">
-  <xsl:if test="$hlp='gui'">
-    <xsl:text>&lt;@itl="</xsl:text>
-  </xsl:if>
+  <xsl:text>&lt;@itl="</xsl:text>
   <xsl:apply-templates/>
-  <xsl:if test="$hlp='gui'">
-    <xsl:text>"&gt;</xsl:text>
-  </xsl:if>
+  <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="cite">

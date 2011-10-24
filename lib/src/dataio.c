@@ -749,7 +749,7 @@ real_dateton (const char *date, const DATASET *dset, int nolimit)
     }
 
     if (!handled) {
-	int dotpos1, dotpos2;
+	int pos1, pos2;
 
 #if DATES_DEBUG
 	fprintf(stderr, "dateton: treating as regular numeric obs\n");
@@ -758,33 +758,39 @@ real_dateton (const char *date, const DATASET *dset, int nolimit)
 	    return -1;
 	}
 
-	dotpos1 = get_dot_pos(date);
-	dotpos2 = get_dot_pos(dset->stobs);
+	pos1 = get_dot_pos(date);
+	pos2 = get_dot_pos(dset->stobs);
 
-	if ((dotpos1 && !dotpos2) || (dotpos2 && !dotpos1)) {
+	if ((pos1 && !pos2) || (pos2 && !pos1)) {
 	    gretl_errmsg_set(_("Date strings inconsistent"));
-	} else if (!dotpos1 && !dotpos2) {
+	} else if (!pos1 && !pos2) {
 	    n = atoi(date) - atoi(dset->stobs);
+	} else if (pos1 > OBSLEN - 2) {
+	    gretl_errmsg_set(_("Date strings inconsistent"));
 	} else {
-	    char majstr[5] = {0};
-	    char minstr[3] = {0};
-	    char majstr0[5] = {0};
-	    char minstr0[3] = {0};
-
+	    char tmp[OBSLEN];
 	    int maj, min;
 	    int maj0, min0;
 
-	    strncat(majstr, date, dotpos1);
-	    maj = atoi(majstr);
-	    strncat(minstr, date + dotpos1 + 1, 2);
-	    min = atoi(minstr);	    
+	    *tmp = '\0';
+	    strncat(tmp, date, OBSLEN-1); 
+	    tmp[pos1] = '\0';
+	    maj = atoi(tmp);
+	    min = atoi(tmp + pos1 + 1);
 
-	    strncat(majstr0, dset->stobs, dotpos2);
-	    maj0 = atoi(majstr0);
-	    strncat(minstr0, dset->stobs + dotpos2 + 1, 2);
-	    min0 = atoi(minstr0);
-    
-	    n = dset->pd * (maj - maj0) + (min - min0);
+	    if (min > dset->pd) {
+		gretl_errmsg_sprintf(_("'%s': invalid observation string"),
+				     date);
+		n = -1;
+	    } else {
+		*tmp = '\0';
+		strncat(tmp, dset->stobs, OBSLEN-1); 
+		tmp[pos2] = '\0';
+		maj0 = atoi(tmp);
+		min0 = atoi(tmp + pos2 + 1);
+	    
+		n = dset->pd * (maj - maj0) + (min - min0);
+	    }
 	}
     }
 
