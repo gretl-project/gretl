@@ -5610,6 +5610,32 @@
 	a dialog box that allows you to save one or more of the test
 	variables to the current data set.
       </para>
+      <para context="tex">
+	After execution, the <lit>$test</lit> accessor returns the
+	cross-validation criterion, which is defined as
+	\[
+	\sum_{i=1}^n (y_i - \hat{y}_{-i})^2
+	\]
+	where $\hat{y}_{-i}$ is the forecast error for the $i$-th 
+	observation, after it has been excluded from the sample. The 
+	criterion is, hence, the sum of the squared forecasting errors 
+	where all $n$ observations but the $i$-th one are 
+	used to predict it (the so-called <i>leave-one-out</i> estimator). 
+	For a broader discussion of th cross-validation criterion, see 
+	Davidson and MacKinnon's <book>Econometric Theory and 
+	  Methods</book>, pages 685-686, and the references therein.
+      </para>
+      <para context="notex">
+	After execution, the <lit>$test</lit> accessor returns the
+	cross-validation criterion, which is defined as the sum of
+	squared deviations of the dependent variable from its
+	forecast value, the forecast for each observation being
+	based on a sample from which that observation is excluded.
+	(This is known as the <i>leave-one-out</i> estimator). 
+	For a broader discussion of the  cross-validation criterion, 
+	see Davidson and  MacKinnon's <book>Econometric Theory and 
+	  Methods</book>, pages 685-686, and the references therein.
+      </para>
     </description>
 
     <gui-access>
