@@ -762,27 +762,30 @@ real_dateton (const char *date, const DATASET *dset, int nolimit)
 	pos2 = get_dot_pos(dset->stobs);
 
 	if ((pos1 && !pos2) || (pos2 && !pos1)) {
-	    gretl_errmsg_set(_("Date strings inconsistent"));
+	    gretl_errmsg_sprintf(_("'%s': invalid observation index"),
+				 date);
 	} else if (!pos1 && !pos2) {
 	    n = atoi(date) - atoi(dset->stobs);
 	} else if (pos1 > OBSLEN - 2) {
-	    gretl_errmsg_set(_("Date strings inconsistent"));
+	    gretl_errmsg_sprintf(_("'%s': invalid observation index"),
+				 date);
 	} else {
 	    char tmp[OBSLEN];
 	    int maj, min;
-	    int maj0, min0;
 
 	    *tmp = '\0';
 	    strncat(tmp, date, OBSLEN-1); 
 	    tmp[pos1] = '\0';
-	    maj = atoi(tmp);
-	    min = atoi(tmp + pos1 + 1);
+	    maj = positive_int_from_string(tmp);
+	    min = positive_int_from_string(tmp + pos1 + 1);
 
-	    if (min > dset->pd) {
-		gretl_errmsg_sprintf(_("'%s': invalid observation string"),
+	    if (maj <= 0 || min <= 0 || min > dset->pd) {
+		gretl_errmsg_sprintf(_("'%s': invalid observation index"),
 				     date);
 		n = -1;
 	    } else {
+		int maj0, min0;
+
 		*tmp = '\0';
 		strncat(tmp, dset->stobs, OBSLEN-1); 
 		tmp[pos2] = '\0';
