@@ -4559,40 +4559,60 @@ static Summary *summary_new (const int *list, gretlopt opt)
 }
 
 /**
- * get_summary:
+ * get_summary_restricted:
  * @list: list of variables to process.
  * @dset: dataset struct.
+ * @rv: series to use as restriction dummy.
  * @opt: may include OPT_S for "simple" version.
  * @prn: gretl printing struct.
  * @err: location to receive error code.
  *
- * Calculates descriptive summary statistics for the specified variables.
+ * Calculates descriptive summary statistics for the specified variables,
+ * with the observations restricted to those for which @rv has a non-zero 
+ * (and non-missing) value. The series @rv must be of full length (dset->n).
  *
  * Returns: #Summary object containing the summary statistics, or NULL
  * on failure.
  */
 
-Summary *get_summary (const int *list, const DATASET *dset, 
-		      gretlopt opt, PRN *prn, int *err) 
+Summary *get_summary_restricted (const int *list, const DATASET *dset, 
+				 const double *rv, gretlopt opt, 
+				 PRN *prn, int *err) 
 {
     Summary *s;
-    int i, vi, ni, nmax;
+    double *x;
+    int i, t, nmax;
 
     s = summary_new(list, opt);
-
     if (s == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
+    x = malloc(dset->n * sizeof *x);
+    if (x == NULL) {
+	*err = E_ALLOC;
+	free_summary(s);
+	return NULL;
+    }    
+
     nmax = sample_size(dset);
 
     for (i=0; i<s->list[0]; i++)  {
 	double *pskew = NULL, *pkurt = NULL;
-	double x0;
+	int vi = s->list[i+1];
+	int ni = 0;
 
-	vi = s->list[i + 1];
-	ni = good_obs(dset->Z[vi] + dset->t1, nmax, &x0);
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    if (!na(rv[t]) && rv[t] != 0.0) {
+		x[t] = dset->Z[vi][t];
+		if (!na(x[t])) {
+		    ni++;
+		}
+	    } else {
+		x[t] = NADBL;
+	    }
+	}
 
 	if (ni < nmax) {
 	    s->missing = 1;
@@ -4624,11 +4644,11 @@ Summary *get_summary (const int *list, const DATASET *dset,
 	    pkurt = &s->xkurt[i];
 	}
 
-	gretl_minmax(dset->t1, dset->t2, dset->Z[vi], 
+	gretl_minmax(dset->t1, dset->t2, x, 
 		     &s->low[i], 
 		     &s->high[i]);
 	
-	gretl_moments(dset->t1, dset->t2, dset->Z[vi], 
+	gretl_moments(dset->t1, dset->t2, x, 
 		      &s->mean[i], 
 		      &s->sd[i], 
 		      pskew, pkurt, 
@@ -4642,15 +4662,113 @@ Summary *get_summary (const int *list, const DATASET *dset,
 	    } else {
 		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
 	    } 
-	    s->median[i] = gretl_median(dset->t1, dset->t2, 
-					dset->Z[vi]);
+	    s->median[i] = gretl_median(dset->t1, dset->t2, x);
 	}
+
+	if (dataset_is_panel(dset) && list[0] == 1) {
+	    panel_variance_info(x, dset, s->mean[0], &s->sw, &s->sb);
+	}	
     } 
 
-    if (dataset_is_panel(dset) && list[0] == 1) {
-	panel_variance_info(dset->Z[list[1]], dset, s->mean[0], 
-			    &s->sw, &s->sb);
+    free(x);
+
+    return s;
+}
+
+/**
+ * get_summary:
+ * @list: list of variables to process.
+ * @dset: dataset struct.
+ * @opt: may include OPT_S for "simple" version.
+ * @prn: gretl printing struct.
+ * @err: location to receive error code.
+ *
+ * Calculates descriptive summary statistics for the specified variables.
+ *
+ * Returns: #Summary object containing the summary statistics, or NULL
+ * on failure.
+ */
+
+Summary *get_summary (const int *list, const DATASET *dset, 
+		      gretlopt opt, PRN *prn, int *err) 
+{
+    Summary *s;
+    int i, nmax;
+
+    s = summary_new(list, opt);
+
+    if (s == NULL) {
+	*err = E_ALLOC;
+	return NULL;
     }
+
+    nmax = sample_size(dset);
+
+    for (i=0; i<s->list[0]; i++)  {
+	double *pskew = NULL, *pkurt = NULL;
+	const double *x;
+	double x0;
+	int vi, ni;
+
+	vi = s->list[i+1];
+	x = dset->Z[vi];
+	ni = good_obs(x + dset->t1, nmax, &x0);
+
+	if (ni < nmax) {
+	    s->missing = 1;
+	}
+
+	if (ni > s->n) {
+	    s->n = ni;
+	}
+
+	if (ni == 0) { 
+	    pprintf(prn, _("Dropping %s: sample range contains no valid "
+			   "observations\n"), dset->varname[vi]);
+	    gretl_list_delete_at_pos(s->list, i + 1);
+	    if (s->list[0] == 0) {
+		return s;
+	    } else {
+		i--;
+		continue;
+	    }
+	}
+
+	if (opt & OPT_S) {
+	    s->skew[i] = NADBL;
+	    s->xkurt[i] = NADBL;
+	    s->cv[i] = NADBL;
+	    s->median[i] = NADBL;
+	} else {
+	    pskew = &s->skew[i];
+	    pkurt = &s->xkurt[i];
+	}
+
+	gretl_minmax(dset->t1, dset->t2, x, 
+		     &s->low[i], 
+		     &s->high[i]);
+	
+	gretl_moments(dset->t1, dset->t2, x, 
+		      &s->mean[i], 
+		      &s->sd[i], 
+		      pskew, pkurt, 
+		      1);
+
+	if (!(opt & OPT_S)) {
+	    if (floateq(s->mean[i], 0.0)) {
+		s->cv[i] = NADBL;
+	    } else if (floateq(s->sd[i], 0.0)) {
+		s->cv[i] = 0.0;
+	    } else {
+		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
+	    } 
+	    s->median[i] = gretl_median(dset->t1, dset->t2, x);
+	}
+
+	if (dataset_is_panel(dset) && list[0] == 1) {
+	    panel_variance_info(x, dset, s->mean[0], &s->sw, &s->sb);
+	}	
+    } 
 
     return s;
 }

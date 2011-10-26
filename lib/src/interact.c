@@ -4354,19 +4354,16 @@ static int do_debug_command (ExecState *state, const char *param,
     } 
 }
 
-/* given the name of a discrete variable, perform one of a short list of
-   commands for each value of the discrete variable
+/* Given the name of a discrete variable, perform a command for each
+   value of the discrete variable. Note that at present the only
+   command supported in this way is SUMMARY.  
 */
 
 static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 {
-    ExecState state;
     const char *byvar = get_optval_string(cmd->ci, OPT_B);
-    char line[64];
-    gretl_matrix *vals = NULL;
+    gretl_matrix *xvals = NULL;
     const double *x;
-    int orig_t1 = dset->t1;
-    int orig_t2 = dset->t2;
     int i, v, nvals = 0;
     int err = 0;
 
@@ -4389,61 +4386,43 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 	return E_DATA;
     }
 
-    state.cmd = NULL;
-    state.model = NULL;
-    state.submask = NULL;
-
-    vals = gretl_matrix_values(x + dset->t1, dset->t2 - dset->t1 + 1, 
-			       OPT_S, &err);
+    xvals = gretl_matrix_values(x + dset->t1, dset->t2 - dset->t1 + 1, 
+				OPT_S, &err);
 
     if (!err) {
-	nvals = gretl_vector_get_length(vals);
-    }
-
-    if (!err && dset->submask != NULL) {
-	state.submask = copy_datainfo_submask(dset, &err);
-	if (err) {
-	    gretl_matrix_free(vals);
-	    return err;
+	nvals = gretl_vector_get_length(xvals);
+	if (nvals == 0) {
+	    err = E_DATA;
 	}
     }
 
     for (i=0; i<nvals && !err; i++) {
-	int n;
+	Summary *summ = NULL;
+	char genline[64];
+	double xi = gretl_vector_get(xvals, i);
+	double *rv = NULL;
 
-	sprintf(line, "smpl %s = %g", byvar, gretl_vector_get(vals, i));
-	err = restrict_sample(line, NULL, dset, &state, 
-			      OPT_R | OPT_P, prn);
-	if (err) {
-	    break;
+	sprintf(genline, "%s == %g", byvar, xi);
+	rv = generate_series(genline, dset, prn, &err);
+
+	if (!err) {
+	    summ = get_summary_restricted(cmd->list, dset, rv,
+					  cmd->opt, prn, &err);
 	}
-	n = dset->t2 - dset->t1 + 1;
-	if (cmd->ci == SUMMARY) {
+
+	if (!err) {
 	    if (i == 0) {
 		pputc(prn, '\n');
 	    }	    
-	    pprintf(prn, "%s (n = %d):\n", line + 5, n);
-	    err = list_summary(cmd->list, dset, cmd->opt, prn);
+	    pprintf(prn, "%s = %g (n = %d):\n", byvar, xi, summ->n);
+	    print_summary(summ, dset, prn);
+	    free_summary(summ);
 	}
+
+	free(rv);
     }
 
-    gretl_matrix_free(vals);
-
-    if (complex_subsampled()) {
-	if (state.submask == NULL) {
-	    /* we were not sub-sampled on entry */
-	    restore_full_sample(dset, NULL);
-	} else if (submask_cmp(state.submask, dset->submask)) {
-	    /* we were sub-sampled differently on entry */
-	    restore_full_sample(dset, NULL);
-	    restrict_sample_from_mask(state.submask, dset, OPT_NONE);
-	} 
-    }
-
-    free(state.submask);
-
-    dset->t1 = orig_t1;
-    dset->t2 = orig_t2;
+    gretl_matrix_free(xvals);
 
     return err;
 }

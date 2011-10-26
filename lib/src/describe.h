@@ -189,6 +189,12 @@ Summary *get_summary (const int *list, const DATASET *dset,
 		      gretlopt opt, PRN *prn, 
 		      int *err);
 
+Summary *get_summary_restricted (const int *list, 
+				 const DATASET *dset, 
+				 const double *rv,
+				 gretlopt opt, PRN *prn, 
+				 int *err);
+
 int list_summary (const int *list, const DATASET *dset, 
 		  gretlopt opt, PRN *prn);
 

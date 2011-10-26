@@ -6,7 +6,9 @@ version 1.9.7, in progress
 - Online help: ensure that option flags don't break across lines (and
   also colorize them for emphasis)
 - Fix bug: possible crash in tsls when there are missing values and a
-  regressor is all-zero at the complete observations 
+  regressor is all-zero at the complete observations
+- Fix bug: "summary" command with --by option not respecting the
+  incoming sample range
 
 2011-10-17 version 1.9.6
 - Add an importer for xlsx (Office Open XML) worksheet data
