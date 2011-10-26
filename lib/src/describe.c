@@ -4603,6 +4603,10 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 	int vi = s->list[i+1];
 	int ni = 0;
 
+	/* create the restricted series: substitute NAs
+	   for values at which the restriction dummy is
+	   invalid or zero
+	*/
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (!na(rv[t]) && rv[t] != 0.0) {
 		x[t] = dset->Z[vi][t];

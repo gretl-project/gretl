@@ -1028,12 +1028,37 @@ static void xlsx_dates_check (DATASET *dset)
     }
 }
 
+static int maybe_fix_dates_v1 (xlsx_info *xinfo)
+{
+    DATASET *xd = xinfo->dset;
+    int err = 0;
+
+    if (xd->S != NULL) {
+	err = E_DATA;
+    } else {
+	err = dataset_allocate_obs_markers(xd);
+	if (!err) {
+	    int t, list[2] = {1, 1};
+
+	    for (t=0; t<xd->n; t++) {
+		sprintf(xd->S[t], "%g", xd->Z[1][t]);
+	    }
+	    
+	    dataset_drop_listed_variables(list, xd,
+					  NULL, NULL);
+	}
+    }
+
+    return err;
+}
+
 static int finalize_xlsx_import (DATASET *dset,
 				 xlsx_info *xinfo, 
 				 const char *fname,
 				 gretlopt opt,
 				 PRN *prn)
 {
+    int dates_v1 = 0;
     int merge, err;
 
     merge = (dset->Z != NULL);
@@ -1044,10 +1069,18 @@ static int finalize_xlsx_import (DATASET *dset,
 
 	for (i=1; i<xinfo->dset->v && !err; i++) {
 	    if (*xinfo->dset->varname[i] == '\0') {
-		pprintf(prn, "Name missing for variable %d\n", i);
-		err = E_DATA;
+		if (i == 1) {
+		    dates_v1 = 1;
+		} else {
+		    pprintf(prn, "Name missing for variable %d\n", i);
+		    err = E_DATA;
+		}
 	    }
 	}
+    }
+
+    if (dates_v1) {
+	err = maybe_fix_dates_v1(xinfo);
     }
 
     if (!err && xinfo->trydates) {

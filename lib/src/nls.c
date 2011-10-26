@@ -740,23 +740,22 @@ int update_coeff_values (const double *b, nlspec *s)
 
 static int nls_make_trimmed_dataset (nlspec *spec, int t1, int t2)
 {
-    DATASET *dinfo = NULL;
-    double ***pZ = NULL;
-    double **origZ = *spec->Z;
-    int nvar = spec->dset->v;
+    DATASET *dset = NULL;
+    DATASET *d0 = spec->dset;
+    int nvar = d0->v;
     int nobs = 0;
     int i, t, s;
 
-    spec->missmask = malloc(spec->dset->n + 1);
+    spec->missmask = malloc(d0->n + 1);
     if (spec->missmask == NULL) {
 	return E_ALLOC;
     }
 
-    spec->missmask[spec->dset->n] = '\0';
-    memset(spec->missmask, '0', spec->dset->n);
+    spec->missmask[d0->n] = '\0';
+    memset(spec->missmask, '0', d0->n);
 
     for (t=t1; t<=t2; t++) {
-	if (na(origZ[spec->lhv][t])) {
+	if (na(d0->Z[spec->lhv][t])) {
 	    spec->missmask[t] = '1';
 	} else {
 	    nobs++;
@@ -767,22 +766,17 @@ static int nls_make_trimmed_dataset (nlspec *spec, int t1, int t2)
 	return E_DF;
     }
 
-    pZ = malloc(sizeof *pZ);
-    if (pZ == NULL) {
-	return E_ALLOC;
-    }
-
-    dinfo = create_auxiliary_dataset(pZ, nvar, nobs);
-    if (dinfo == NULL) {
+    dset = create_auxiliary_dataset(nvar, nobs);
+    if (dset == NULL) {
 	return E_ALLOC;
     }
 
     for (i=1; i<nvar; i++) {
-	strcpy(dinfo->varname[i], spec->dset->varname[i]);
+	strcpy(dset->varname[i], d0->varname[i]);
 	s = 0;
 	for (t=t1; t<=t2; t++) {
 	    if (!na(origZ[spec->lhv][t])) {
-		(*pZ)[i][s++] = origZ[i][t];
+		dset->Z[i][s++] = d0->Z[i][t];
 	    }
 	}
     }
@@ -790,8 +784,7 @@ static int nls_make_trimmed_dataset (nlspec *spec, int t1, int t2)
     spec->real_t1 = t1;
     spec->real_t2 = t2;
 
-    spec->Z = pZ;
-    spec->dset = dinfo;
+    spec->dset = dset;
     spec->t1 = 0;
     spec->t2 = nobs - 1;
     spec->nobs = nobs;
