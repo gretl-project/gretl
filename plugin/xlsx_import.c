@@ -645,10 +645,13 @@ static int xlsx_check_dimensions (xlsx_info *xinfo, PRN *prn)
 	n--;
     }
 
+    if (v < 0) v = 0;
+    if (n < 0) n = 0;
+
     pprintf(prn, "Found %d variables and %d observations\n", v, n);
 
-    if (v <= 0 || n <= 0) {
-	pputs(prn, "File contains no data");
+    if (v == 0 || n == 0) {
+	pputs(prn, "File contains no data\n");
 	err = E_DATA;
     } else {
 	int labels = (xinfo->flags & BOOK_OBS_LABELS);
@@ -779,36 +782,33 @@ static int xlsx_workbook_has_sheetnames (xlsx_info *xinfo,
     xmlDocPtr doc = NULL;
     xmlNodePtr c1, cur = NULL;
     char *sheetname;
-    char *sheet_id;
-    int err, ret = 0;
+    int err, found = 0;
 
     err = gretl_xml_open_doc_root(fname, "workbook", 
 				  &doc, &cur);
     if (!err) {
 	cur = cur->xmlChildrenNode;
-	while (cur != NULL && ret == 0) {
+	while (cur != NULL && found == 0) {
 	    if (!xmlStrcmp(cur->name, (XUC) "sheets")) {
 		c1 = cur->xmlChildrenNode;
 		while (c1 != NULL) {
 		    if (!xmlStrcmp(c1->name, (XUC) "sheet")) {
 			sheetname = (char *) xmlGetProp(c1, (XUC) "name");
-			sheet_id = (char *) xmlGetProp(c1, (XUC) "id");
 			if (sheetname != NULL) {
 			    strings_array_add(&xinfo->sheetnames, &xinfo->n_sheets,
 					      sheetname);
 			}
-			free(sheet_id);
-			ret = 1;
 		    }
 		    c1 = c1->next;
 		}
+		found = 1;
 	    }
 	    cur = cur->next;
 	}
 	xmlFreeDoc(doc);
     }
 
-    return ret;
+    return xinfo->n_sheets;
 }
 
 static int xlsx_gather_sheet_names (xlsx_info *xinfo, PRN *prn)
