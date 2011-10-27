@@ -866,8 +866,7 @@ static int datafile_missing (const char *fname, char **fconv)
 int get_imported_data (char *fname, int ftype, int append)
 {
     void *handle = NULL;
-    PRN *errprn = NULL;
-    const char *errbuf = NULL;
+    PRN *prn = NULL;
     int list[4] = {3, 1, 0, 0};
     int *plist = NULL;
     int (*ss_importer) (const char *, int *, char *, DATASET *, 
@@ -880,10 +879,6 @@ int get_imported_data (char *fname, int ftype, int append)
 
     if (datafile_missing(fname, &recoded_fname)) {
 	return E_FOPEN;
-    }
-
-    if (recoded_fname != NULL) {
-	fname = recoded_fname;
     }
 
     ss_importer = NULL;
@@ -932,49 +927,53 @@ int get_imported_data (char *fname, int ftype, int append)
 	goto bailout;
     }
 
-    if (bufopen(&errprn)) {
+    if (bufopen(&prn)) {
         err = 1;
 	goto bailout;
-    }	
-
-    if (SPREADSHEET_IMPORT(ftype)) {
-	err = (*ss_importer)(fname, plist, NULL, dataset, 
-			     OPT_G, errprn);
-    } else {
-	err = (*misc_importer)(fname, dataset, OPT_G, errprn);
     }
 
-    /* in case we substituted a recoding */
+    if (recoded_fname != NULL) {
+	fname = recoded_fname;
+    }
+
+    /* call the actual importer function */
+    if (SPREADSHEET_IMPORT(ftype)) {
+	err = (*ss_importer)(fname, plist, NULL, dataset, 
+			     OPT_G, prn);
+    } else {
+	err = (*misc_importer)(fname, dataset, OPT_G, prn);
+    }
+
+    /* in case we substituted a recoding above */
     fname = original_fname;
 
     if (err == -1) {
 	fprintf(stderr, "data import canceled\n");
 	err = E_CANCEL;
 	goto bailout;
-    }
+    } else {
+	const char *buf = gretl_print_get_buffer(prn);
 
-    errbuf = gretl_print_get_buffer(errprn);
-
-    if (err) {
-	if (errbuf != NULL && *errbuf != '\0') {
-	    errbox(errbuf);
+	if (err) {
+	    if (buf != NULL && *buf != '\0') {
+		errbox(buf);
+	    } else {
+		gui_errmsg(err);
+	    } 
+	    delete_from_filelist(FILE_LIST_DATA, fname);
 	} else {
-	    gui_errmsg(err);
-	} 
-	delete_from_filelist(FILE_LIST_DATA, fname);
-    } else if (errbuf != NULL && *errbuf != '\0') {
-	infobox(errbuf);
-    }
-
-    if (!err) {
-	finalize_data_open(fname, ftype, 1, append, plist);
+	    if (buf != NULL && *buf != '\0') {
+		infobox(buf);
+	    }
+	    finalize_data_open(fname, ftype, 1, append, plist);
+	}
     }
 
  bailout:
 
     close_plugin(handle);
     free(recoded_fname);
-    gretl_print_destroy(errprn);
+    gretl_print_destroy(prn);
 
     return err;
 }
