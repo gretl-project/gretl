@@ -1048,9 +1048,8 @@ void unit_root_test (int ci)
 	}
     }
     
-    /* note: making nradios < 0 places the radio
-       buttons before the check boxes in the
-       dialog box produced bu checks_dialog()
+    /* note: making nradios < 0 places the radio buttons before the
+       check boxes in the dialog box produced by checks_dialog()
     */
 
     if (ci == ADF) {
@@ -4888,8 +4887,22 @@ void do_range_mean (void)
     void *handle;
     int (*range_mean_graph) (int, const DATASET *, 
 			     gretlopt opt, PRN *);
+    const char *opts[] = {
+	N_("Trim maximum and minimum in sub-samples"),
+	NULL
+    };
+    int active = 0;
+    gretlopt opt;
     PRN *prn;
-    int err = 0;
+    int resp, err = 0;
+
+    resp = checks_dialog(_("gretl: range-mean graph"), NULL,
+			 opts, 1, &active, 0, 0, 0,
+			 NULL, NULL, NULL, 0, 0, 0);
+
+    if (resp < 0) {
+	return;
+    }
 
     range_mean_graph = gui_get_plugin_function("range_mean_graph", 
 					       &handle);
@@ -4902,7 +4915,8 @@ void do_range_mean (void)
 	return; 
     }
 
-    err = range_mean_graph(v, dataset, OPT_NONE, prn);
+    opt = active ? OPT_T : OPT_NONE;
+    err = range_mean_graph(v, dataset, opt, prn);
 
     close_plugin(handle);
 
