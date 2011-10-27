@@ -9,6 +9,8 @@ version 1.9.7, in progress
   regressor is all-zero at the complete observations
 - Fix bug: "summary" command with --by option not respecting the
   incoming sample range
+- Fix bug: filename encoding and dates recognition issues with the new
+  xlsx data importer
 
 2011-10-17 version 1.9.6
 - Add an importer for xlsx (Office Open XML) worksheet data
