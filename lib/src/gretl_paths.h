@@ -85,6 +85,9 @@ int string_is_utf8 (const unsigned char *s);
 
 FILE *gretl_fopen (const char *fname, const char *mode);
 
+FILE *gretl_fopen_with_recode (const char *fname, const char *mode,
+			       char **recoded_fname);
+
 FILE *gretl_try_fopen (const char *fname, const char *mode);
 
 FILE *gretl_read_user_file (const char *fname);

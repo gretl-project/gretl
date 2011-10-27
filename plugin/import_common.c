@@ -92,10 +92,10 @@ static int gretl_make_tempdir (char *dname)
 
 # endif /* G_OS_WIN32 or not */
 
-/* for ODS and XLSX: unzip the target file in the user's
+/* For ODS and XLSX: unzip the target file in the user's
    "dotdir". On successful completion @dname holds the
    name of the temporary directory, in the dotdir, holding
-   the contents of the zipfile
+   the contents of the zipfile.
 */
 
 static int open_import_zipfile (const char *fname, char *dname,

@@ -842,12 +842,15 @@ static void finalize_data_open (const char *fname, int ftype,
     }    
 }
 
-static int datafile_missing (const char *fname)
+static int datafile_missing (const char *fname, char **fconv)
 {
-    FILE *fp = gretl_fopen(fname, "r");
+    FILE *fp = gretl_fopen_with_recode(fname, "r", fconv);
     int err = 0;
 
     if (fp == NULL) {
+	if (fconv != NULL && *fconv != NULL) {
+	    free(*fconv);
+	}
 	delete_from_filelist(FILE_LIST_DATA, fname);
 	file_read_errbox(fname);
 	err = E_FOPEN;
@@ -862,19 +865,25 @@ static int datafile_missing (const char *fname)
 
 int get_imported_data (char *fname, int ftype, int append)
 {
-    void *handle;
-    PRN *errprn;
-    const char *errbuf;
+    void *handle = NULL;
+    PRN *errprn = NULL;
+    const char *errbuf = NULL;
     int list[4] = {3, 1, 0, 0};
     int *plist = NULL;
     int (*ss_importer) (const char *, int *, char *, DATASET *, 
 			gretlopt, PRN *);
     int (*misc_importer) (const char *, DATASET *, 
 			  gretlopt, PRN *);
+    char *original_fname = fname;
+    char *recoded_fname = NULL;
     int err = 0;
 
-    if (datafile_missing(fname)) {
+    if (datafile_missing(fname, &recoded_fname)) {
 	return E_FOPEN;
+    }
+
+    if (recoded_fname != NULL) {
+	fname = recoded_fname;
     }
 
     ss_importer = NULL;
@@ -913,17 +922,20 @@ int get_imported_data (char *fname, int ftype, int append)
 						&handle);
     } else {
 	errbox(_("Unrecognized data type"));
-	return 1;
+	err = 1;
+	goto bailout;
     }
 
-    if (ss_importer == NULL && misc_importer == NULL) {
-        return 1;
+    if (!err && ss_importer == NULL && misc_importer == NULL) {
+	/* failed to open plugin */
+        err = 1;
+	goto bailout;
     }
 
     if (bufopen(&errprn)) {
-	close_plugin(handle);
-	return 1;
-    }
+        err = 1;
+	goto bailout;
+    }	
 
     if (SPREADSHEET_IMPORT(ftype)) {
 	err = (*ss_importer)(fname, plist, NULL, dataset, 
@@ -931,13 +943,14 @@ int get_imported_data (char *fname, int ftype, int append)
     } else {
 	err = (*misc_importer)(fname, dataset, OPT_G, errprn);
     }
-	
-    close_plugin(handle);
+
+    /* in case we substituted a recoding */
+    fname = original_fname;
 
     if (err == -1) {
 	fprintf(stderr, "data import canceled\n");
-	gretl_print_destroy(errprn);
-	return E_CANCEL;
+	err = E_CANCEL;
+	goto bailout;
     }
 
     errbuf = gretl_print_get_buffer(errprn);
@@ -953,11 +966,15 @@ int get_imported_data (char *fname, int ftype, int append)
 	infobox(errbuf);
     }
 
-    gretl_print_destroy(errprn);
-
     if (!err) {
 	finalize_data_open(fname, ftype, 1, append, plist);
     }
+
+ bailout:
+
+    close_plugin(handle);
+    free(recoded_fname);
+    gretl_print_destroy(errprn);
 
     return err;
 }
@@ -972,7 +989,7 @@ static int get_csv_data (char *fname, int ftype, int append)
     gchar *title;
     int err = 0;
 
-    if (datafile_missing(fname)) {
+    if (datafile_missing(fname, NULL)) {
 	return E_FOPEN;
     }
 

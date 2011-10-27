@@ -280,7 +280,7 @@ gchar *gretl_zipfile_get_topdir (const char *fname)
     return topdir;
 }
 
-#else
+#else /* native, not using libgsf */
 
 #include "zipunzip.h"
 

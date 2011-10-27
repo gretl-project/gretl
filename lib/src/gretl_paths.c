@@ -251,6 +251,64 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 }
 
 /**
+ * gretl_fopen_with_recode:
+ * @fname: name of file to be opened.
+ * @mode: mode in which to open the file.
+ * @recoded_fname: location to receive recoded filename,
+ * if recoding is needed.
+ *
+ * A wrapper for  the C library's fopen(), making allowance for
+ * the possibility that @fname has to be converted from
+ * UTF-8 to the locale encoding or vice versa. If conversion
+ * is carried out, the newly allocated recoded filename is 
+ * returned via the last argument (otherwise that argument is 
+ * not touched).
+ *
+ * Returns: file pointer, or %NULL on failure.
+ */
+
+FILE *gretl_fopen_with_recode (const char *fname, const char *mode,
+			       char **recoded_fname)
+{
+    gchar *fconv = NULL;
+    FILE *fp = NULL;
+    int err;
+
+    gretl_error_clear();
+
+#if FDEBUG
+    fprintf(stderr, "gretl_fopen_with_recode: got '%s'\n", fname);
+#endif
+
+    err = maybe_recode_path(fname, stdio_use_utf8, &fconv);
+
+    if (!err) {
+	if (fconv != NULL) {
+	    fp = fopen(fconv, mode);
+#if FDEBUG
+            fprintf(stderr, "using recoded name, fp = %p\n", (void *) fp);
+#endif
+	    if (fp != NULL && recoded_fname != NULL) {
+		*recoded_fname = gretl_strdup(fconv);
+	    }
+	    g_free(fconv);
+	} else {
+	    fp = fopen(fname, mode);
+	}
+    }
+
+#if FDEBUG
+    fprintf(stderr, "after fopen, errno = %d\n", errno);
+#endif
+
+    if (errno != 0) {
+	gretl_errmsg_set_from_errno(fname);
+    }
+
+    return fp;
+}
+
+/**
  * gretl_try_fopen:
  * @fname: name of file to be opened.
  * @mode: mode in which to open the file.

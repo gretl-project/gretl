@@ -1015,27 +1015,16 @@ static void xlsx_dates_check (DATASET *dset)
     fprintf(stderr, "xlsx_dates_check: dmin=%d, dmax=%d\n", dmin, dmax);
 
     if (maybe_dates) {
-	if (dmin == 1) {
-	    /* daily? We may have variable gaps but they shouldn't be
-	       too big */
-	    if (dmax > 5) {
-		maybe_dates = 0;
-	    } 
-	} else if (dmin >= 28 && dmax <= 31) {
-	    /* monthly? */
-	    if (dmax > 31) {
-		maybe_dates = 0;
-	    }
+	if (dmin >= 364 && dmax <= 365) {
+	    ; /* annual? */
 	} else if (dmin >= 90 && dmax <= 92) {
-	    /* quarterly? */
-	    if (dmax > 92) {
-		maybe_dates = 0;
-	    }
-	} else if (dmin == 7) {
-	    /* weekly? */
-	    if (dmax != 7) {
-		maybe_dates = 0;
-	    }
+	    ; /* quarterly? */
+	} else if (dmin >= 28 && dmax <= 31) {
+	    ; /* monthly? */
+	} else if (dmin == 7 && dmax == 7) {
+	    ; /* weekly? */
+	} else if (dmin == 1 && dmax <= 5) {
+	    ; /* daily? */
 	} else {
 	    /* unsupported frequency or nonsensical */
 	    maybe_dates = 0;
