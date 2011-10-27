@@ -1,6 +1,8 @@
 version 1.9.7, in progress
 - "leverage" command: add a --quiet option and add calculation of the
   cross-validation criterion (available via the $test accessor)
+- "rmplot" command (range-mean plot): add a --trim option to discard the
+  minimum and maximum from each sub-sample
 - Speed up the production of bootstrapped confidence bands for impulse 
   responses in VECM models
 - Online help: ensure that option flags don't break across lines (and
@@ -10,7 +12,7 @@ version 1.9.7, in progress
 - Fix bug: "summary" command with --by option not respecting the
   incoming sample range
 - Fix bug: filename encoding and dates recognition issues with the new
-  xlsx data importer
+  xlsx data importer; also try harder to find sheet names
 
 2011-10-17 version 1.9.6
 - Add an importer for xlsx (Office Open XML) worksheet data

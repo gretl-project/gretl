@@ -8808,6 +8808,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--trim</flag>
+	  <effect>see below</effect>
+	</option>	
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>suppress printed output</effect>
 	</option>
@@ -8842,6 +8846,12 @@
 	the null, and the corresponding p-value, are recorded and may be
 	retrieved using the accessors <lit>$test</lit> and <lit>$pvalue</lit>
 	respectively.
+      </para>
+      <para context="cli">
+	If the <opt>--trim</opt> option is given, the minimum and maximum
+	values in each sub-sample are discarded before calculating the
+	mean and range. This makes it less likely that outliers will
+	distort the analysis.
       </para>
       <para context="cli">
 	If the <opt>--quiet</opt> option is given, no graph is shown and no
