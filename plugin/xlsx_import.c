@@ -412,6 +412,10 @@ static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
 	   varname, could hold "obs" or similar, or could
 	   be the first numerical value.
 	*/
+#if XDEBUG
+	fprintf(stderr, "xlsx_check_top_left: r=%d, c=%d, x=%g, stringcell=%d, "
+		"s='%s'\n", r, c, x, stringcell, s);
+#endif
 	if (!na(x)) {
 	    /* numerical value */
 	    xinfo->flags |= BOOK_AUTO_VARNAMES;
@@ -419,8 +423,10 @@ static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
 	    /* blank or "obs" or similar */
 	    xinfo->flags |= BOOK_OBS_LABELS;
 	}
-	/* record the fact that the top-left corner is not empty */
-	xinfo->flags &= ~BOOK_TOP_LEFT_EMPTY;
+	if (!na(x) || stringcell) {
+	    /* record the fact that the top-left corner is not empty */
+	    xinfo->flags &= ~BOOK_TOP_LEFT_EMPTY;
+	}
     } else if (r == xinfo->yoffset + 1 && c == xinfo->xoffset + 2) {
 	/* first row, second column */
 	if (!na(x)) {
@@ -976,8 +982,7 @@ static void xlsx_dates_check (DATASET *dset)
        For this purpose we'll require that all the obs labels are 
        integer strings, and that the gap between successive values
        should be constant, or variable to a degree that's consistent
-       with the data being daily (where the mininum gap is 1 day
-       but weekends and holidays might be skipped).
+       with a sane time-series frequency.
     */
 
     for (t=0; t<dset->n && maybe_dates; t++) {
@@ -999,22 +1004,42 @@ static void xlsx_dates_check (DATASET *dset)
 	}
     }
 
+    if (dmax < 0) {
+	/* allow for the possibility that time runs backwards */
+	int tmp = dmin;
+
+	dmin = -dmax;
+	dmax = -tmp;
+    }
+
+    fprintf(stderr, "xlsx_dates_check: dmin=%d, dmax=%d\n", dmin, dmax);
+
     if (maybe_dates) {
-	if (dmin == 1 || dmax == -1) {
-	    /* daily (may be in reverse order)? We may have some gaps
-	       but they shouldn't be too big */
-	    if (dmin == 1 && dmax > 5) {
+	if (dmin == 1) {
+	    /* daily? We may have variable gaps but they shouldn't be
+	       too big */
+	    if (dmax > 5) {
 		maybe_dates = 0;
-	    } else if (dmax == -1 && dmin < -5) {
+	    } 
+	} else if (dmin >= 28 && dmax <= 31) {
+	    /* monthly? */
+	    if (dmax > 31) {
 		maybe_dates = 0;
 	    }
-	} else if (dmax != dmin) {
-	    /* non-daily: the gaps should not be variable */
+	} else if (dmin >= 90 && dmax <= 92) {
+	    /* quarterly? */
+	    if (dmax > 92) {
+		maybe_dates = 0;
+	    }
+	} else if (dmin == 7) {
+	    /* weekly? */
+	    if (dmax != 7) {
+		maybe_dates = 0;
+	    }
+	} else {
+	    /* unsupported frequency or nonsensical */
 	    maybe_dates = 0;
-	} else if (dmax > 365 || dmax < -365) {
-	    /* gap greater than a year */
-	    maybe_dates = 0;
-	}
+	} 
     }
 
     if (maybe_dates) {
@@ -1028,37 +1053,12 @@ static void xlsx_dates_check (DATASET *dset)
     }
 }
 
-static int maybe_fix_dates_v1 (xlsx_info *xinfo)
-{
-    DATASET *xd = xinfo->dset;
-    int err = 0;
-
-    if (xd->S != NULL) {
-	err = E_DATA;
-    } else {
-	err = dataset_allocate_obs_markers(xd);
-	if (!err) {
-	    int t, list[2] = {1, 1};
-
-	    for (t=0; t<xd->n; t++) {
-		sprintf(xd->S[t], "%g", xd->Z[1][t]);
-	    }
-	    
-	    dataset_drop_listed_variables(list, xd,
-					  NULL, NULL);
-	}
-    }
-
-    return err;
-}
-
 static int finalize_xlsx_import (DATASET *dset,
 				 xlsx_info *xinfo, 
 				 const char *fname,
 				 gretlopt opt,
 				 PRN *prn)
 {
-    int dates_v1 = 0;
     int merge, err;
 
     merge = (dset->Z != NULL);
@@ -1069,18 +1069,10 @@ static int finalize_xlsx_import (DATASET *dset,
 
 	for (i=1; i<xinfo->dset->v && !err; i++) {
 	    if (*xinfo->dset->varname[i] == '\0') {
-		if (i == 1) {
-		    dates_v1 = 1;
-		} else {
-		    pprintf(prn, "Name missing for variable %d\n", i);
-		    err = E_DATA;
-		}
+		pprintf(prn, "Name missing for variable %d\n", i);
+		err = E_DATA;
 	    }
 	}
-    }
-
-    if (dates_v1) {
-	err = maybe_fix_dates_v1(xinfo);
     }
 
     if (!err && xinfo->trydates) {
