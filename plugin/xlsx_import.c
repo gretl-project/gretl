@@ -48,6 +48,7 @@ struct xlsx_info_ {
     char sheetfile[FILENAME_MAX];
     char stringsfile[FILENAME_MAX];
     int n_sheets;
+    int wb_names;
     char **sheetnames;
     int selsheet;
     int n_strings;
@@ -68,6 +69,7 @@ static void xlsx_info_init (xlsx_info *xinfo)
     xinfo->sheetfile[0] = '\0';
     xinfo->stringsfile[0] = '\0';
     xinfo->n_sheets = 0;
+    xinfo->wb_names = 0;
     xinfo->sheetnames = NULL;
     xinfo->selsheet = 0;
     xinfo->n_strings = 0;
@@ -285,6 +287,7 @@ static int xlsx_set_varname (xlsx_info *xinfo, int i, const char *s,
 	strncat(xinfo->dset->varname[i], s, VNAMELEN - 1);
 	charsub(xinfo->dset->varname[i], ' ', '_');
 	if (check_varname(xinfo->dset->varname[i])) {
+	    fprintf(stderr, "xlsx_set_varname: i=%d, s='%s'\n", i, s);
 	    invalid_varname(prn);
 	    err = 1;
 	}
@@ -675,8 +678,13 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
     int gotdata = 0;
     int err = 0;
 
-    sprintf(xinfo->sheetfile, "xl%cworksheets%c%s.xml", 
-	    SLASH, SLASH, xinfo->sheetnames[xinfo->selsheet]);
+    if (xinfo->wb_names) {
+	sprintf(xinfo->sheetfile, "xl%cworksheets%csheet%d.xml", 
+		SLASH, SLASH, xinfo->selsheet + 1);
+    } else {
+	sprintf(xinfo->sheetfile, "xl%cworksheets%c%s.xml", 
+		SLASH, SLASH, xinfo->sheetnames[xinfo->selsheet]);
+    }
 
     sprintf(xinfo->stringsfile, "xl%csharedStrings.xml", SLASH);
 
@@ -765,39 +773,84 @@ static int xlsx_sheet_has_data (const char *fname)
     return ret;
 }
 
-static int xlsx_gather_sheet_names (xlsx_info *xinfo, PRN *prn)
+static int xlsx_workbook_has_sheetnames (xlsx_info *xinfo,
+					 const char *fname)
 {
-    gchar *dname = g_strdup_printf("xl%cworksheets", SLASH);
-    DIR *dir = gretl_opendir(dname);
-    int i, err = 0;
+    xmlDocPtr doc = NULL;
+    xmlNodePtr c1, cur = NULL;
+    char *sheetname;
+    char *sheet_id;
+    int err, ret = 0;
 
-    if (dir == NULL) {
-	err = E_FOPEN;
-    } else {
-	struct dirent *dirent;
-
-	while ((dirent = readdir(dir)) != NULL) {
-	    const char *basename = dirent->d_name;
-	    
-	    if (has_suffix(basename, ".xml") && 
-		xlsx_sheet_has_data(basename)) {
-		gchar *tmp = g_strdup(basename);
-		gchar *p = strstr(tmp, ".xml");
-
-		*p = '\0';
-		strings_array_add(&xinfo->sheetnames, &xinfo->n_sheets,
-				  tmp);
-		g_free(tmp);
+    err = gretl_xml_open_doc_root(fname, "workbook", 
+				  &doc, &cur);
+    if (!err) {
+	cur = cur->xmlChildrenNode;
+	while (cur != NULL && ret == 0) {
+	    if (!xmlStrcmp(cur->name, (XUC) "sheets")) {
+		c1 = cur->xmlChildrenNode;
+		while (c1 != NULL) {
+		    if (!xmlStrcmp(c1->name, (XUC) "sheet")) {
+			sheetname = (char *) xmlGetProp(c1, (XUC) "name");
+			sheet_id = (char *) xmlGetProp(c1, (XUC) "id");
+			if (sheetname != NULL) {
+			    strings_array_add(&xinfo->sheetnames, &xinfo->n_sheets,
+					      sheetname);
+			}
+			free(sheet_id);
+			ret = 1;
+		    }
+		    c1 = c1->next;
+		}
 	    }
+	    cur = cur->next;
 	}
-	closedir(dir);
+	xmlFreeDoc(doc);
     }
 
-    g_free(dname);
+    return ret;
+}
+
+static int xlsx_gather_sheet_names (xlsx_info *xinfo, PRN *prn)
+{
+    gchar *wbname = g_strdup_printf("xl%cworkbook.xml", SLASH); 
+    int i, err = 0;
+
+    if (xlsx_workbook_has_sheetnames(xinfo, wbname)) {
+	xinfo->wb_names = 1;
+    } else {
+	gchar *dname = g_strdup_printf("xl%cworksheets", SLASH);
+	DIR *dir = gretl_opendir(dname);
+
+	if (dir == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    struct dirent *dirent;
+
+	    while ((dirent = readdir(dir)) != NULL) {
+		const char *basename = dirent->d_name;
+	    
+		if (has_suffix(basename, ".xml") && 
+		    xlsx_sheet_has_data(basename)) {
+		    gchar *tmp = g_strdup(basename);
+		    gchar *p = strstr(tmp, ".xml");
+
+		    *p = '\0';
+		    strings_array_add(&xinfo->sheetnames, &xinfo->n_sheets,
+				      tmp);
+		    g_free(tmp);
+		}
+	    }
+	    closedir(dir);
+	}
+	g_free(dname);
+    }
+
+    g_free(wbname);
 
     if (xinfo->n_sheets == 0) {
 	err = E_DATA;
-    } else if (xinfo->n_sheets > 1) {
+    } else if (!xinfo->wb_names && xinfo->n_sheets > 1) {
 	strings_array_sort(&xinfo->sheetnames, &xinfo->n_sheets,
 			   OPT_NONE);
     }
