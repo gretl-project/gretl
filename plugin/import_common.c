@@ -94,8 +94,8 @@ static int gretl_make_tempdir (char *dname)
 
 /* For ODS and XLSX: unzip the target file in the user's
    "dotdir". On successful completion @dname holds the
-   name of the temporary directory, in the dotdir, holding
-   the contents of the zipfile.
+   name of the temporary subdirectory, in the dotdir, 
+   holding the contents of the zipfile.
 */
 
 static int open_import_zipfile (const char *fname, char *dname,
@@ -136,9 +136,12 @@ static int open_import_zipfile (const char *fname, char *dname,
        its path is relative */
     if (!g_path_is_absolute(real_fname)) {
 	abspath = get_absolute_path(real_fname);
+	if (abspath != NULL) {
+	    real_fname = abspath;
+	}
     }
 
-    /* cd to user dir */
+    /* cd to user dir and make temporary dir */
     if (gretl_chdir(udir)) {
 	gretl_errmsg_set_from_errno(udir);
 	err = E_FOPEN;
@@ -162,11 +165,7 @@ static int open_import_zipfile (const char *fname, char *dname,
     }
 
     if (!err) {
-	if (abspath != NULL) {
-	    err = (*gretl_unzip_file)(abspath, &gerr);
-	} else {
-	    err = (*gretl_unzip_file)(real_fname, &gerr);
-	}
+	err = (*gretl_unzip_file)(real_fname, &gerr);
 	if (gerr != NULL) {
 	    pprintf(prn, "gretl_unzip_file: '%s'\n", gerr->message);
 	    g_error_free(gerr);
