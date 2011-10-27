@@ -286,8 +286,13 @@ gchar *gretl_zipfile_get_topdir (const char *fname)
 
 int gretl_unzip_file (const char *fname, GError **gerr)
 {
+    int err;
+
     /* for verbose operation, make 3rd arg ZIP_VERBOSE or ZIP_TRACE */
-    return zipfile_extract_files(fname, NULL, 0, gerr);
+    err = zipfile_extract_files(fname, NULL, 0, gerr);
+
+    /* don't let ZIP error codes get confused with gretl ones */
+    return (err != 0);
 }
 
 /*
@@ -305,7 +310,7 @@ int gretl_make_zipfile (const char *fname, const char *path,
     err = zipfile_archive_files(fname, array, 9, 
 				ZIP_RECURSE_DIRS,
 				gerr);
-    return err;
+    return (err != 0);
 }
 
 gchar *gretl_zipfile_get_topdir (const char *fname)
