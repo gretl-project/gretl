@@ -842,15 +842,12 @@ static void finalize_data_open (const char *fname, int ftype,
     }    
 }
 
-static int datafile_missing (const char *fname, char **fconv)
+static int datafile_missing (const char *fname)
 {
-    FILE *fp = gretl_fopen_with_recode(fname, "r", fconv);
+    FILE *fp = gretl_fopen(fname, "r");
     int err = 0;
 
     if (fp == NULL) {
-	if (fconv != NULL && *fconv != NULL) {
-	    free(*fconv);
-	}
 	delete_from_filelist(FILE_LIST_DATA, fname);
 	file_read_errbox(fname);
 	err = E_FOPEN;
@@ -873,11 +870,9 @@ int get_imported_data (char *fname, int ftype, int append)
 			gretlopt, PRN *);
     int (*misc_importer) (const char *, DATASET *, 
 			  gretlopt, PRN *);
-    char *original_fname = fname;
-    char *recoded_fname = NULL;
     int err = 0;
 
-    if (datafile_missing(fname, &recoded_fname)) {
+    if (datafile_missing(fname)) {
 	return E_FOPEN;
     }
 
@@ -932,10 +927,6 @@ int get_imported_data (char *fname, int ftype, int append)
 	goto bailout;
     }
 
-    if (recoded_fname != NULL) {
-	fname = recoded_fname;
-    }
-
     /* call the actual importer function */
     if (SPREADSHEET_IMPORT(ftype)) {
 	err = (*ss_importer)(fname, plist, NULL, dataset, 
@@ -943,9 +934,6 @@ int get_imported_data (char *fname, int ftype, int append)
     } else {
 	err = (*misc_importer)(fname, dataset, OPT_G, prn);
     }
-
-    /* in case we substituted a recoding above */
-    fname = original_fname;
 
     if (err == -1) {
 	fprintf(stderr, "data import canceled\n");
@@ -972,7 +960,6 @@ int get_imported_data (char *fname, int ftype, int append)
  bailout:
 
     close_plugin(handle);
-    free(recoded_fname);
     gretl_print_destroy(prn);
 
     return err;
@@ -988,7 +975,7 @@ static int get_csv_data (char *fname, int ftype, int append)
     gchar *title;
     int err = 0;
 
-    if (datafile_missing(fname, NULL)) {
+    if (datafile_missing(fname)) {
 	return E_FOPEN;
     }
 

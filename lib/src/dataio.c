@@ -3095,12 +3095,11 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
     FILE *fp;
     int (*importer) (const char*, int *, char *,
 		     DATASET *, gretlopt, PRN *);
-    char *recoded_fname = NULL;
     int err = 0;
 
     check_for_console(prn);
 
-    fp = gretl_fopen_with_recode(fname, "r", &recoded_fname);
+    fp = gretl_fopen(fname, "r");
 
     if (fp == NULL) {
 	pprintf(prn, M_("Couldn't open %s\n"), fname);
@@ -3127,18 +3126,12 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
     if (importer == NULL) {
         err = 1;
     } else {
-	if (recoded_fname != NULL) {
-	    err = (*importer)(recoded_fname, list, sheetname, dset, 
-			      opt, prn);
-	} else {
-	    err = (*importer)(fname, list, sheetname, dset, opt, prn);
-	}
+	err = (*importer)(fname, list, sheetname, dset, opt, prn);
 	close_plugin(handle);
     }
 
  bailout:
 
-    free(recoded_fname);
     console_off();
 
     return err;

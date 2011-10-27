@@ -643,6 +643,9 @@ static GtkFileFilter *get_file_filter (int action, gpointer data)
 
 #ifdef G_OS_WIN32
 
+/* On getting an output filename @s from the GTK file chooser, 
+   convert to the locale encoding */
+
 static gchar *inplace_windows_filename (gchar *s)
 {
     char tmp[MAXLEN];
@@ -657,6 +660,9 @@ static gchar *inplace_windows_filename (gchar *s)
 
     return s;
 }
+
+/* Having constructed a path @s for input use with the GTK 
+   file chooser, ensure that it's in UTF-8 */
 
 static char *win32_correct_path (char *s)
 {

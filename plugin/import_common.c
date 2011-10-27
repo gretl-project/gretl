@@ -103,26 +103,39 @@ static int open_import_zipfile (const char *fname, char *dname,
 {
     int (*gretl_unzip_file)(const char *, GError **);
     const char *udir = gretl_dotdir();
+    const char *real_fname = fname;
+    char *recoded_fname = NULL;
     char *abspath = NULL;
     void *handle = NULL;
-    FILE *fp;
     GError *gerr = NULL;
+    FILE *fp;
     int err = 0;
 
     errno = 0;
     *dname = '\0';
 
-    fp = gretl_fopen(fname, "r");
+    /* In case @fname is in UTF-8 but we're on MS Windows (or
+       conceivably on an old non-UTF-8 *nix system), grab the
+       appropriately recoded filename to pass into the
+       zipfile apparatus, since in that context a filename
+       that works with plain system stdio is expected.
+    */
+
+    fp = gretl_fopen_with_recode(fname, "r", &recoded_fname);
     if (fp == NULL) {
 	return E_FOPEN;
     }
 
     fclose(fp);
 
+    if (recoded_fname != NULL) {
+	real_fname = recoded_fname;
+    }
+
     /* by doing chdir, we may lose track of the file if 
        its path is relative */
-    if (!g_path_is_absolute(fname)) {
-	abspath = get_absolute_path(fname);
+    if (!g_path_is_absolute(real_fname)) {
+	abspath = get_absolute_path(real_fname);
     }
 
     /* cd to user dir */
@@ -152,7 +165,7 @@ static int open_import_zipfile (const char *fname, char *dname,
 	if (abspath != NULL) {
 	    err = (*gretl_unzip_file)(abspath, &gerr);
 	} else {
-	    err = (*gretl_unzip_file)(fname, &gerr);
+	    err = (*gretl_unzip_file)(real_fname, &gerr);
 	}
 	if (gerr != NULL) {
 	    pprintf(prn, "gretl_unzip_file: '%s'\n", gerr->message);
@@ -163,10 +176,8 @@ static int open_import_zipfile (const char *fname, char *dname,
     }
 
     free(abspath);
-
-    if (handle != NULL) {
-	close_plugin(handle);
-    }
+    free(recoded_fname);
+    close_plugin(handle);
 
     return err;
 }
