@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-28 17:27-0400\n"
-"PO-Revision-Date: 2011-10-01 14:53-0400\n"
+"PO-Revision-Date: 2011-10-28 23:39+0100\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -1155,9 +1155,9 @@ msgid "Bad character %d in date string"
 msgstr "Caractere inválido %d numa data"
 
 #: lib/src/dataio.c:765 lib/src/dataio.c:770 lib/src/dataio.c:783
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid observation index"
-msgstr "%s, usando %d observações"
+msgstr "'%s': índice de observação inválido"
 
 #: lib/src/dataio.c:802 lib/src/forecast.c:2331 lib/src/genfuncs.c:3115
 msgid "Observation number out of bounds"
@@ -6820,7 +6820,7 @@ msgstr "O número de instrumentos (%d) excedem o número de observações (%d)"
 #: lib/src/tsls.c:893
 #, c-format
 msgid "The first-stage fitted values for %s are all zero"
-msgstr ""
+msgstr "Os valores ajustados para %s no primeiro passo são todos nulos"
 
 #: lib/src/tsls.c:1505 gui2/selector.c:2780
 msgid "You can't use the dependent variable as an instrument"
@@ -7228,7 +7228,7 @@ msgstr "Acerca de gretl"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 25 de setembro de 2011."
+"Tradução de 28 de outubro de 2011."
 
 #: gui2/about.c:166
 msgid "License"
@@ -12656,12 +12656,11 @@ msgstr "gretl: análises X-12-ARIMA"
 
 #: gui2/library.c:4891
 msgid "Trim maximum and minimum in sub-samples"
-msgstr ""
+msgstr "Remover o máximo e o mínimo em sub-amostras"
 
 #: gui2/library.c:4899
-#, fuzzy
 msgid "gretl: range-mean graph"
-msgstr "Gráfico _Amplitude-Média"
+msgstr "gretl: gráfico amplitude-média"
 
 #: gui2/library.c:4931
 msgid "gretl: range-mean statistics"
@@ -15120,14 +15119,12 @@ msgid "APARCH"
 msgstr "APARCH"
 
 #: plugin/addons-i18n.c:6
-#, fuzzy
 msgid "AR lags"
-msgstr "desfasamentos"
+msgstr "desfasamentos AR"
 
 #: plugin/addons-i18n.c:8 plugin/addons-i18n.c:47
-#, fuzzy
 msgid "Constant"
-msgstr "Sem constante"
+msgstr "Constante"
 
 #: plugin/addons-i18n.c:9
 msgid "Covariance estimator"
@@ -15234,58 +15231,53 @@ msgid "regressors"
 msgstr "regressores"
 
 #: plugin/addons-i18n.c:45
-#, fuzzy
 msgid "AB-model"
-msgstr "modelo"
+msgstr "modelo-AB"
 
 #: plugin/addons-i18n.c:46
-#, fuzzy
 msgid "C-model"
-msgstr "modelo"
+msgstr "modelo-C"
 
 #: plugin/addons-i18n.c:48
-#, fuzzy
 msgid "Exogenous regressors"
 msgstr "Regressores exógenos"
 
 #: plugin/addons-i18n.c:49
 msgid "IRF by shock"
-msgstr ""
+msgstr "IRF por choque"
 
 #: plugin/addons-i18n.c:50
 msgid "IRF by var"
-msgstr ""
+msgstr "IRF por var"
 
 #: plugin/addons-i18n.c:51
 msgid "KPSW"
-msgstr ""
+msgstr "KPSW"
 
 #: plugin/addons-i18n.c:52
 msgid "Lags"
-msgstr ""
+msgstr "Desfasamentos"
 
 #: plugin/addons-i18n.c:55
-#, fuzzy
 msgid "Time trend"
-msgstr "_Tendência temporal"
+msgstr "Tendência temporal"
 
 #: plugin/addons-i18n.c:56
-#, fuzzy
 msgid "VAR variables"
-msgstr "Variáveis"
+msgstr "Variáveis VAR"
 
 #: plugin/addons-i18n.c:57
 msgid "horizon"
-msgstr ""
+msgstr "horizonte"
 
+# What is the context?
 #: plugin/addons-i18n.c:58
-#, fuzzy
 msgid "plain"
-msgstr "texto simples"
+msgstr "simples"
 
 #: plugin/addons-i18n.c:59
 msgid "template"
-msgstr ""
+msgstr "modelo"
 
 #: plugin/anova.c:106 plugin/anova.c:108
 msgid "Treatment"
@@ -15304,14 +15296,12 @@ msgid "Grand mean"
 msgstr "Média geral"
 
 #: plugin/anova.c:375
-#, fuzzy
 msgid "anova: the treatment variable must be discrete"
-msgstr "As variáveis índice de unidade e de tempo têm que ser distintas"
+msgstr "anova: a variável de tratamento tem de ser discreta"
 
 #: plugin/anova.c:381
-#, fuzzy
 msgid "anova: the block variable must be discrete"
-msgstr "Tratar esta variável como discreta"
+msgstr "anova: a variável de bloqueio tem que ser discreta"
 
 #: plugin/anova.c:499
 #, c-format
@@ -15523,9 +15513,9 @@ msgid "Selection equation"
 msgstr "Equação de selecção"
 
 #: plugin/import_common.c:53
-#, fuzzy, c-format
+#, c-format
 msgid "At row %d, column %d:\n"
-msgstr "Linha da folha-de-cálculo %d, coluna %d"
+msgstr "Na linha %d, coluna %d:\n"
 
 #: plugin/import_common.c:56
 msgid ""
@@ -15603,9 +15593,8 @@ msgid "Exogenous regressor(s)"
 msgstr "Regressores exógenos"
 
 #: plugin/johansen.c:1549
-#, fuzzy
 msgid "including constant term"
-msgstr "Incluir uma constante"
+msgstr "incluir o termo constante"
 
 #: plugin/johansen.c:1556
 msgid "Cointegration tests, ignoring exogenous variables"
@@ -15743,9 +15732,8 @@ msgid "No leverage points were found"
 msgstr "Não foram encontrados nenhuns pontos de alavancagem (\"leverage\")"
 
 #: plugin/leverage.c:347 plugin/leverage.c:487
-#, fuzzy
 msgid "Cross-validation criterion"
-msgstr "Critério de informação de Akaike"
+msgstr "Critério de validação cruzada"
 
 #: plugin/mailer.c:582
 msgid "To:"
