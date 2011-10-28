@@ -8211,6 +8211,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 			       PRN *prn)
 {
     gretlopt openopt = OPT_NONE;
+    PRN *vprn = prn;
     char *line = s->line;
     CMD *cmd = s->cmd;
     char myfile[MAXLEN] = {0};
@@ -8229,7 +8230,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
     }    
 
     if (!http && !(cmd->opt & OPT_O)) {
-	/* not using ODBC */
+	/* not using http or ODBC */
 	err = getopenfile(line, myfile, (cmd->opt & OPT_W)? 
 			  OPT_W : OPT_NONE);
 	if (err) {
@@ -8275,25 +8276,41 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	close_session(cmd->opt);
     }
 
+    if (cmd->opt & OPT_Q) {
+	/* --quiet, but in case we hit any problems below... */
+	vprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+    } 
+
     if (ftype == GRETL_CSV) {
-	err = import_csv(myfile, dset, openopt, prn);
+	err = import_csv(myfile, dset, openopt, vprn);
     } else if (ftype == GRETL_XML_DATA) {
-	err = gretl_read_gdt(myfile, dset, openopt | OPT_B, prn);
+	err = gretl_read_gdt(myfile, dset, openopt | OPT_B, vprn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
 	err = import_spreadsheet(myfile, ftype, cmd->list, cmd->extra, dset, 
-				 openopt, prn);
+				 openopt, vprn);
     } else if (OTHER_IMPORT(ftype)) {
-	err = import_other(myfile, ftype, dset, openopt, prn);
+	err = import_other(myfile, ftype, dset, openopt, vprn);
     } else if (ftype == GRETL_ODBC) {
-	err = set_odbc_dsn(line, prn);
+	err = set_odbc_dsn(line, vprn);
     } else if (dbdata) {
-	err = set_db_name(myfile, ftype, prn);
+	err = set_db_name(myfile, ftype, vprn);
     } else {
-	err = gretl_get_data(myfile, dset, openopt, prn);
+	err = gretl_get_data(myfile, dset, openopt, vprn);
     }
 
     if (err) {
-	pputc(prn, '\n');
+	if (cmd->opt & OPT_Q) {
+	    /* The user asked for quiet operation, but something
+	       went wrong so let's print any info we got on
+	       vprn.
+	    */
+	    const char *buf = gretl_print_get_buffer(vprn);
+
+	    if (buf != NULL && *buf != '\0') {
+		pputs(prn, buf);
+	    }
+	    gretl_print_destroy(vprn);
+	}
 	gui_errmsg(err);
 	return err;
     }
@@ -8323,6 +8340,10 @@ static int script_open_append (ExecState *s, DATASET *dset,
 
     if (http) {
 	remove(myfile);
+    }
+
+    if (vprn != NULL && vprn != prn) {
+	gretl_print_destroy(vprn);
     }
 
     return err;
