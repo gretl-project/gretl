@@ -4046,7 +4046,7 @@ static void checks_dialog_add_checks (GtkWidget *dialog, GtkWidget *vbox,
 				      int *active, int check_min,
 				      int check_max)
 {
-    GtkWidget *button;
+    GtkWidget *hbox, *button;
     int nc0 = 0, nc1 = 0;
     int i;
 
@@ -4066,8 +4066,12 @@ static void checks_dialog_add_checks (GtkWidget *dialog, GtkWidget *vbox,
 	    /* mark start of the "must check one" area */
 	    vbox_add_hsep(vbox);
 	}	    
+
 	button = gtk_check_button_new_with_label(_(opts[i]));
-	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+	hbox = gtk_hbox_new(FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+
 	if (active[i] < 0) {
 	    gtk_widget_set_sensitive(button, FALSE);
 	} else {
@@ -4094,14 +4098,16 @@ static void checks_dialog_add_checks (GtkWidget *dialog, GtkWidget *vbox,
 static void checks_dialog_add_radios (GtkWidget *vbox, const char **opts, 
 				      int nradios, int *rvar)
 {
-    GtkWidget *button = NULL;
+    GtkWidget *hbox, *button = NULL;
     GSList *group = NULL;
     int i;
 
     for (i=0; i<nradios; i++) {
 	button = gtk_radio_button_new_with_label(group, _(opts[i]));
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+	hbox = gtk_hbox_new(FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER(i));
 	g_signal_connect(G_OBJECT(button), "clicked",

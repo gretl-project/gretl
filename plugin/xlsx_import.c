@@ -51,6 +51,7 @@ struct xlsx_info_ {
     char **sheetnames;
     char **filenames;
     int selsheet;
+    int selsheet_set;
     int n_strings;
     char **strings;
     DATASET *dset;
@@ -72,6 +73,7 @@ static void xlsx_info_init (xlsx_info *xinfo)
     xinfo->sheetnames = NULL;
     xinfo->filenames = NULL;
     xinfo->selsheet = 0;
+    xinfo->selsheet_set = 0;
     xinfo->n_strings = 0;
     xinfo->strings = NULL;
     xinfo->dset = NULL;
@@ -269,7 +271,7 @@ static int xlsx_cell_get_coordinates (const char *s,
 }
 
 static int xlsx_set_varname (xlsx_info *xinfo, int i, const char *s,
-			     PRN *prn)
+			     int row, int col, PRN *prn)
 {
     int err = 0;
 
@@ -286,12 +288,8 @@ static int xlsx_set_varname (xlsx_info *xinfo, int i, const char *s,
     } else {
 	*xinfo->dset->varname[i] = '\0';
 	strncat(xinfo->dset->varname[i], s, VNAMELEN - 1);
-	charsub(xinfo->dset->varname[i], ' ', '_');
-	if (check_varname(xinfo->dset->varname[i])) {
-	    fprintf(stderr, "xlsx_set_varname: i=%d, s='%s'\n", i, s);
-	    invalid_varname(prn);
-	    err = 1;
-	}
+	err = check_imported_varname(xinfo->dset->varname[i], 
+				     row, col, prn);
     }
 
     return err;
@@ -600,7 +598,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 
 		if (stringcell) {
 		    if (row == xinfo->yoffset + 1) {
-			err = xlsx_set_varname(xinfo, i, strval, prn);
+			err = xlsx_set_varname(xinfo, i, strval, row, col, prn);
 		    } else if (col == xinfo->xoffset + 1) {
 			err = xlsx_set_obs_string(xinfo, t, strval);
 		    } else if (strval != NULL) {
@@ -911,7 +909,66 @@ static int xlsx_verify_sheets (xlsx_info *xinfo, PRN *prn)
     return err;
 }
 
-static int xlsx_gather_sheet_names (xlsx_info *xinfo, PRN *prn)
+static int xlsx_verify_specific_sheet (xlsx_info *xinfo, 
+				       int idx, PRN *prn)
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    char *ID, *fname;
+    int err;
+
+    err = gretl_xml_open_doc_root("xl/_rels/workbook.xml.rels",
+				  "Relationships",
+				  &doc, &cur);
+    if (!err) {
+	const char *sname = xinfo->sheetnames[idx];
+	int found = 0;
+
+	cur = cur->xmlChildrenNode;
+	while (cur != NULL && !found) {
+	    if (!xmlStrcmp(cur->name, (XUC) "Relationship")) {
+		ID = (char *) xmlGetProp(cur, (XUC) "Id");
+		if (xlsx_match_sheet_id(xinfo, ID) == idx) {
+		    found = 1;
+		    fname = (char *) xmlGetProp(cur, (XUC) "Target");
+		    if (fname == NULL) {
+			pprintf(prn, "'%s': couldn't find filename\n", sname);
+			err = E_DATA;
+		    } else if (xlsx_sheet_has_data(fname)) {
+			pprintf(prn, "'%s' -> %s\n", sname, fname);
+			free(xinfo->filenames[idx]);
+			xinfo->filenames[idx] = fname;
+		    } else {
+			pprintf(prn, "'%s': contains no data\n", sname);
+			err = E_DATA;
+			free(fname);
+		    }
+		}
+		free(ID);
+	    }
+	    cur = cur->next;
+	}
+
+	xmlFreeDoc(doc);
+
+	if (!found) {
+	    pprintf(prn, "'%s': couldn't find file Id\n", sname);
+	    err = E_DATA;
+	}
+
+	if (!err) {
+	    /* record the pre-checked sheet selection */
+	    xinfo->selsheet = idx;
+	    xinfo->selsheet_set = 1;
+	}
+    }
+
+    return err;
+}
+
+static int xlsx_gather_sheet_names (xlsx_info *xinfo, 
+				    const char *insheet,
+				    PRN *prn)
 {
     gchar *wb_name = g_strdup_printf("xl%cworkbook.xml", SLASH); 
     int i, err;
@@ -925,17 +982,53 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo, PRN *prn)
     }
 
     if (!err) {
+	const char *sname;
+	int have_insheet = 0;
+	int insheet_idx = 0;
+
+	if (insheet != NULL && *insheet != '\0') {
+	    /* try looking for specified sheet */
+	    have_insheet = 1;
+	    insheet_idx = -1;
+	}
+
 	fprintf(stderr, "Found these worksheets:\n");
 	for (i=0; i<xinfo->n_sheets; i++) {
-	    fprintf(stderr, "%d: %s (%s)\n", i, xinfo->sheetnames[i],
-		    xinfo->filenames[i]);
+	    sname = xinfo->sheetnames[i];
+	    fprintf(stderr, "%d: %s (%s)\n", i, sname, xinfo->filenames[i]);
+	    if (insheet_idx < 0 && !strcmp(insheet, sname)) {
+		insheet_idx = i;
+	    }
 	}
-	err = xlsx_verify_sheets(xinfo, prn);
-	if (xinfo->n_sheets == 0) {
-	    pputs(prn, "\nFound no valid sheets\n");
-	    err = E_DATA;
-	} else {
-	    pprintf(prn, "\nFound %d valid sheet(s)\n", xinfo->n_sheets);
+
+	if (insheet_idx < 0) {
+	    /* sheet was specified but not found */
+	    if (integer_string(insheet)) {
+		/* try interpreting as plain integer index? */
+		insheet_idx = atoi(insheet) - 1;
+		if (insheet_idx < 0 || insheet_idx >= xinfo->n_sheets) {
+		    /* no, it doesn't work */
+		    insheet_idx = -1;
+		} 
+	    }
+	    if (insheet_idx < 0) {
+		pprintf(prn, "'%s': no such worksheet\n", insheet);
+		err = E_DATA;
+	    }
+	}
+
+	if (!err) {
+	    if (have_insheet) {
+		err = xlsx_verify_specific_sheet(xinfo, insheet_idx, prn);
+	    } else {
+		err = xlsx_verify_sheets(xinfo, prn);
+		if (xinfo->n_sheets == 0) {
+		    pputs(prn, "\nFound no valid sheets\n");
+		    err = E_DATA;
+		} else {
+		    pprintf(prn, "\nFound %d valid sheet(s)\n", xinfo->n_sheets);
+		}
+	    }
 	}
     }
 
@@ -961,54 +1054,30 @@ static void record_xlsx_params (xlsx_info *xinfo, int *list)
 }
 
 /* When called from the command-line, we might have a
-   pre-specified worksheet name or number, and in addition
-   we might have a row and/or column offset specified
-   in @list.
+   pre-specified worksheet name, and/or we may have a 
+   numerical @list containing sheet number, xoffset and 
+   yoffset.
+
+   If a sheetname has been given, it will already have
+   been checked and the corresponding 0-based index
+   will be recorded in xinfo->selsheet, but we still
+   have to handle the case where a list is given.
 */
 
 static int set_xlsx_params_from_cli (xlsx_info *xinfo, 
-				     const int *list,
-				     char *sheetname)
+				     const int *list)
 {
-    int gotname = (sheetname != NULL && *sheetname != '\0');
     int gotlist = (list != NULL && list[0] == 3);
-    int i, err = 0;
-
-    if (!gotname && !gotlist) {
-	/* nothing was pre-specified */
-	xinfo->selsheet = 0;
-	xinfo->xoffset = 0;
-	xinfo->yoffset = 0;
-	return 0;
-    }
-
-    /* invalidate this */
-    xinfo->selsheet = -1;
-
-    if (gotname) {
-	/* the user specified a sheet, either by name or by number */
-	for (i=0; i<xinfo->n_sheets; i++) {
-	    if (!strcmp(sheetname, xinfo->sheetnames[i])) {
-		xinfo->selsheet = i;
-		break;
-	    }
-	}
-	if (xinfo->selsheet < 0 && integer_string(sheetname)) {
-	    i = atoi(sheetname);
-	    if (i >= 1 && i <= xinfo->n_sheets) {
-		xinfo->selsheet = i - 1;
-	    }
-	}
-    }
+    int err = 0;
 
     if (gotlist) {
-	if (!gotname) {
-	    /* convert to zero-based */
+	if (!xinfo->selsheet_set) {
+	    /* convert sheet number to zero-based */
 	    xinfo->selsheet = list[1] - 1;
 	}
 	xinfo->xoffset = list[2];
 	xinfo->yoffset = list[3];
-    }
+    } 
 
     if (xinfo->selsheet < 0 || xinfo->selsheet >= xinfo->n_sheets ||
 	xinfo->xoffset < 0 || xinfo->yoffset < 0) {
@@ -1178,7 +1247,7 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
     xlsx_info_init(&xinfo);
 
     if (!err) {
-	err = xlsx_gather_sheet_names(&xinfo, prn);
+	err = xlsx_gather_sheet_names(&xinfo, sheetname, prn);
     }
 
     if (!err) {
@@ -1191,7 +1260,7 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 		goto bailout;
 	    } 
 	} else {
-	    err = set_xlsx_params_from_cli(&xinfo, list, sheetname);
+	    err = set_xlsx_params_from_cli(&xinfo, list);
 	} 
     }
 

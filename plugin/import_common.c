@@ -21,10 +21,39 @@
 # include "gtk_compat.h"
 #endif
 
-static void invalid_varname (PRN *prn)
+static int check_imported_varname (char *vname, int row, int col,
+				   PRN *prn)
 {
-    pputs(prn, gretl_errmsg_get());
-    pputs(prn, _("\nPlease rename this variable and try again"));
+    int err;
+
+    charsub(vname, ' ', '_');
+
+    err = check_varname(vname);
+
+    if (err == VARNAME_BADCHAR) {
+	int i, n = strlen(vname);
+	int bad = 0;
+
+	for (i=1; i<n; i++) {
+	    if (!(isalpha((unsigned char) vname[i]))  
+		&& !(isdigit((unsigned char) vname[i]))
+		&& vname[i] != '_') {
+		vname[i] = '_';
+		bad++;
+	    }
+	}
+	err = (bad == n);
+    }
+
+    if (err) {
+	if (row >= 0 && col >= 0) {
+	    pprintf(prn, _("At row %d, column %d:\n"), row, col);
+	}
+	pputs(prn, gretl_errmsg_get());
+	pputs(prn, _("\nPlease rename this variable and try again"));
+    }
+
+    return (err)? E_DATA : 0;
 }
 
 #if defined(ODS_IMPORTER) || defined(XLSX_IMPORTER)

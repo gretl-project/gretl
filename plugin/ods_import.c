@@ -457,13 +457,9 @@ static int real_read_cell (xmlNodePtr cur,
 	    val = get_ods_string_value(cur);
 	    if (val != NULL) {
 		*sheet->dset->varname[v] = '\0';
-		strncat(sheet->dset->varname[v],
-			val, VNAMELEN - 1);
-		fprintf(stderr, " varname: '%s'\n", val);
-		if (check_varname(sheet->dset->varname[v])) {
-		    invalid_varname(prn);
-		    err = 1;
-		}
+		strncat(sheet->dset->varname[v], val, VNAMELEN - 1);
+		err = check_imported_varname(sheet->dset->varname[v],
+					     iread, jread, prn);
 		free(val);
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_STRING, 

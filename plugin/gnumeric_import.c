@@ -330,11 +330,8 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 			if (i == 0 && import_obs_label(tmp)) {
 			    ; /* keep going */
 			} else {
-			    charsub(sheet->varname[i], ' ', '_');
-			    if (check_varname(sheet->varname[i])) {
-				invalid_varname(prn);
-				err = 1;
-			    }
+			    err = check_imported_varname(sheet->varname[i],
+							 r, c, prn);
 			}
 		    } else if (i == 0) {
 			/* first column, not first row */

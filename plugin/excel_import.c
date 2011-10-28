@@ -1077,25 +1077,9 @@ static int first_col_strings (wbook *book)
 
 #define obs_string(s) (!strcmp(s, "obs") || !strcmp(s, "id"))
 
-static int fix_varname (char *vname)
-{
-    int i, n = strlen(vname);
-    int bad = 0;
-
-    for (i=1; i<n; i++) {
-        if (!(isalpha((unsigned char) vname[i]))  
-            && !(isdigit((unsigned char) vname[i]))
-            && vname[i] != '_') {
-	    vname[i] = '_';
-	    bad++;
-	}
-    }
-
-    return (bad == n);
-}   
-
 static int 
-check_all_varnames (wbook *book, int totcols, const char *blank_col)
+check_all_varnames (wbook *book, int totcols, const char *blank_col,
+		    PRN *prn)
 {
     int j, i = book->row_offset;
     int startcol = book->col_offset;
@@ -1143,14 +1127,10 @@ check_all_varnames (wbook *book, int totcols, const char *blank_col)
 		/* pass along */
 		;
 	    } else {
-		int verr = check_varname(test);
+		int verr = check_imported_varname(test, i, j, prn);
 
-		if (verr == VARNAME_BADCHAR) {
-		    verr = fix_varname(test);
-		}
-	    
 		if (verr) {
-		    return VARNAMES_INVALID;
+		    return verr;
 		}
 	    }
 	    vnames++;
@@ -1559,13 +1539,11 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     }
 
     /* any bad or missing variable names? */
-    err = check_all_varnames(book, totcols, blank_col);
+    err = check_all_varnames(book, totcols, blank_col, prn);
 
     if (err == VARNAMES_NULL || err == VARNAMES_NOTSTR) {
 	pputs(prn, _("One or more variable names are missing.\n"));
 	pputs(prn, _(adjust_rc));
-    } else if (err == VARNAMES_INVALID) {
-	invalid_varname(prn);
     } else if (err == VARNAMES_NONE) {
 	pputs(prn, _("it seems there are no variable names\n"));
 	book_set_auto_varnames(book);
