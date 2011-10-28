@@ -31,18 +31,21 @@ static int check_imported_varname (char *vname, int row, int col,
     err = check_varname(vname);
 
     if (err == VARNAME_BADCHAR) {
-	int i, n = strlen(vname);
-	int bad = 0;
+	/* the first byte was OK: try overwriting illegal 
+	   characters with '_' 
+	*/
+	char *s = vname + 1;
 
-	for (i=1; i<n; i++) {
-	    if (!(isalpha((unsigned char) vname[i]))  
-		&& !(isdigit((unsigned char) vname[i]))
-		&& vname[i] != '_') {
-		vname[i] = '_';
-		bad++;
+	while (*s) {
+	    if (!(isalpha((unsigned char) *s))  
+		&& !(isdigit((unsigned char) *s))
+		&& *s != '_') {
+		*s = '_';
 	    }
+	    s++;
 	}
-	err = (bad == n);
+
+	err = 0;
     }
 
     if (err) {

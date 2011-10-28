@@ -737,7 +737,7 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
 }
 
 /* A quick check to see if a worksheet XML file contains
-   any data. */
+   any actual data. */
 
 static int xlsx_sheet_has_data (const char *fname)
 {
@@ -861,7 +861,7 @@ static int xlsx_verify_sheets (xlsx_info *xinfo, PRN *prn)
     xmlNodePtr cur = NULL;
     char *checker;
     char *ID, *fname;
-    int i, j, err;
+    int i, err;
 
     checker = calloc(xinfo->n_sheets, 1);
     if (checker == NULL) {
@@ -894,13 +894,16 @@ static int xlsx_verify_sheets (xlsx_info *xinfo, PRN *prn)
 	}
 	xmlFreeDoc(doc);
     }
+    
+    if (!err) {
+	int j = 0;
 
-    j = 0;
-    for (i=0; i<xinfo->n_sheets; i++) {
-	if (checker[j++] == 0) {
-	    fprintf(stderr, "dropping sheet '%s'\n", 
-		    xinfo->sheetnames[i]);
-	    xlsx_expunge_sheet(xinfo, i--);
+	for (i=0; i<xinfo->n_sheets; i++) {
+	    if (checker[j++] == 0) {
+		fprintf(stderr, "dropping sheet '%s'\n", 
+			xinfo->sheetnames[i]);
+		xlsx_expunge_sheet(xinfo, i--);
+	    }
 	}
     }
 
@@ -1205,6 +1208,10 @@ static int finalize_xlsx_import (DATASET *dset,
 		err = E_DATA;
 	    }
 	}
+    }
+
+    if (!err && fix_varname_duplicates(xinfo->dset)) {
+	pputs(prn, _("warning: some variable names were duplicated\n"));
     }
 
     if (!err && xinfo->trydates) {
