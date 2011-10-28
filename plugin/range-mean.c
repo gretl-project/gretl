@@ -161,14 +161,18 @@ static int get_n_samples (int T, int pd, int mmin)
 {
     int k = (int) sqrt((double) T);
 
-    /* If pd >= mmin and is "not too far" from k, it may make sense to
-       use pd instead of sqrt(T) as the subsample length. This will,
-       e.g., make each subsample a year, with quarterly or monthly
-       data.
-    */
-
-    if (pd >= mmin && pd >= 2.0*k/3.0 && pd <= 3.0*k/2.0) {
-	k = pd;
+    if (k < mmin) {
+	k = mmin;
+    } else {
+	/* If pd >= mmin and is "not too far" from k, it may make sense to
+	   use pd instead of sqrt(T) as the subsample length. This will,
+	   e.g., make each subsample a year, with quarterly or monthly
+	   data.
+	*/
+	if (pd >= mmin && T/pd >= 4 && 
+	    pd >= 2.0*k/3.0 && pd <= 3.0*k/2.0) {
+	    k = pd;
+	}
     }
 
     return k;

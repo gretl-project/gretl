@@ -81,6 +81,7 @@ static void xlsx_info_free (xlsx_info *xinfo)
 {
     if (xinfo != NULL) {
 	free_strings_array(xinfo->sheetnames, xinfo->n_sheets);
+	free_strings_array(xinfo->filenames, xinfo->n_sheets);
 	free_strings_array(xinfo->strings, xinfo->n_strings);
 	destroy_dataset(xinfo->dset);
     }
@@ -177,7 +178,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
 
 /* Given the string representation of the shared-string index for 
    a cell with a string value, look up the target string. If the
-   shared strings XML file has not yet been read, reading is 
+   shared strings XML file has not yet been read, its reading is 
    triggered.
 */
 
@@ -366,7 +367,7 @@ static int xlsx_handle_stringval (const char *s, int r, int c,
 	return 0; /* OK */
     } else {
 	pprintf(prn, _("Expected numeric data, found string:\n"
-		       "%s\" at row %d, column %d\n"), s, r, c);
+		       "'%s' at row %d, column %d\n"), s, r, c);
 	return E_DATA;
     }
 }
@@ -712,7 +713,7 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
     }
 
     if (!err) {
-	pprintf(prn, "\nMax row = %d, max col = %d\n", xinfo->maxrow,
+	pprintf(prn, "Max row = %d, max col = %d\n", xinfo->maxrow,
 		xinfo->maxcol);
 	pprintf(prn, "Accessed %d shared strings\n", xinfo->n_strings);
     }
@@ -736,6 +737,9 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
 
     return err;
 }
+
+/* A quick check to see if a worksheet XML file contains
+   any data. */
 
 static int xlsx_sheet_has_data (const char *fname)
 {
@@ -810,20 +814,19 @@ static int xlsx_workbook_get_sheetnames (xlsx_info *xinfo,
     return err;
 }
 
-static void xlsx_expunge_sheet (xlsx_info *xinfo, int *i)
+static void xlsx_expunge_sheet (xlsx_info *xinfo, int i)
 {
     int j;
 
-    free(xinfo->sheetnames[*i]);
-    free(xinfo->filenames[*i]);
+    free(xinfo->sheetnames[i]);
+    free(xinfo->filenames[i]);
 
-    for (j=*i; j<xinfo->n_sheets-1; j++) {
+    for (j=i; j<xinfo->n_sheets-1; j++) {
 	xinfo->sheetnames[j] = xinfo->sheetnames[j+1];
 	xinfo->filenames[j] = xinfo->filenames[j+1];
     };
 
     xinfo->n_sheets -= 1;
-    *i -= 1;
 }
 
 static int xlsx_match_sheet_id (xlsx_info *xinfo, 
@@ -846,7 +849,7 @@ static int xlsx_match_sheet_id (xlsx_info *xinfo,
 
 /* For the sheet names we got from the main workbook file:
    check that (1) we can track down the corresponding
-   worksheet filename and (2) the worksheet contains
+   worksheet filename and (2) the worksheet file contains
    some data.
 */
 
@@ -856,9 +859,12 @@ static int xlsx_verify_sheets (xlsx_info *xinfo, PRN *prn)
     xmlNodePtr cur = NULL;
     char *checker;
     char *ID, *fname;
-    int i, err;
+    int i, j, err;
 
     checker = calloc(xinfo->n_sheets, 1);
+    if (checker == NULL) {
+	return E_ALLOC;
+    }
 
     err = gretl_xml_open_doc_root("xl/_rels/workbook.xml.rels",
 				  "Relationships",
@@ -869,6 +875,8 @@ static int xlsx_verify_sheets (xlsx_info *xinfo, PRN *prn)
 	    if (!xmlStrcmp(cur->name, (XUC) "Relationship")) {
 		ID = (char *) xmlGetProp(cur, (XUC) "Id");
 		if ((i = xlsx_match_sheet_id(xinfo, ID)) >= 0) {
+		    fprintf(stderr, "rels: matched sheet %d (%s)\n",
+			    i, xinfo->sheetnames[i]);
 		    fname = (char *) xmlGetProp(cur, (XUC) "Target");
 		    if (fname != NULL) {
 			if (xlsx_sheet_has_data(fname)) {
@@ -876,6 +884,7 @@ static int xlsx_verify_sheets (xlsx_info *xinfo, PRN *prn)
 			    free(xinfo->filenames[i]);
 			    xinfo->filenames[i] = fname;
 			} else {
+			    fprintf(stderr, "%d: no data in %s\n", i, fname);
 			    free(fname);
 			}
 		    }
@@ -887,9 +896,12 @@ static int xlsx_verify_sheets (xlsx_info *xinfo, PRN *prn)
 	xmlFreeDoc(doc);
     }
 
+    j = 0;
     for (i=0; i<xinfo->n_sheets; i++) {
-	if (checker[i] == 0) {
-	    xlsx_expunge_sheet(xinfo, &i);
+	if (checker[j++] == 0) {
+	    fprintf(stderr, "dropping sheet '%s'\n", 
+		    xinfo->sheetnames[i]);
+	    xlsx_expunge_sheet(xinfo, i--);
 	}
     }
 
@@ -912,15 +924,18 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo, PRN *prn)
     }
 
     if (!err) {
+	fprintf(stderr, "Found these worksheets:\n");
 	for (i=0; i<xinfo->n_sheets; i++) {
 	    fprintf(stderr, "%d: %s (%s)\n", i, xinfo->sheetnames[i],
 		    xinfo->filenames[i]);
 	}
 	err = xlsx_verify_sheets(xinfo, prn);
 	if (xinfo->n_sheets == 0) {
-	    pputs(prn, "Found no valid sheets\n");
+	    pputs(prn, "\nFound no valid sheets\n");
 	    err = E_DATA;
-	}	
+	} else {
+	    pprintf(prn, "\nFound %d valid sheet(s)\n", xinfo->n_sheets);
+	}
     }
 
     return err;
@@ -944,67 +959,11 @@ static void record_xlsx_params (xlsx_info *xinfo, int *list)
     }
 }
 
-static void xlxs_seek_selsheet_by_name (xlsx_info *xinfo, 
-					const char *name)
-{
-    xmlDocPtr doc = NULL;
-    xmlNodePtr cur = NULL;
-    xmlNodePtr val;
-    gchar *fname;
-    char *xname = NULL;
-    char *xid = NULL;
-    int gotit = 0;
-    int err;
-
-    fname = g_strdup_printf("xl%cworkbook.xml", SLASH);
-    err = gretl_xml_open_doc_root(fname, "workbook", 
-				  &doc, &cur);
-    g_free(fname);
-    if (err) {
-	fprintf(stderr, "couldn't open workbook.xml\n");
-	return;
-    }
-
-    cur = cur->xmlChildrenNode;
-
-    while (cur != NULL && !gotit) {
-	if (!xmlStrcmp(cur->name, (XUC) "sheets")) {
-	    val = cur->xmlChildrenNode;
-	    while (val != NULL && !gotit) {
-		if (!xmlStrcmp(val->name, (XUC) "sheet")) {
-		    xname = (char *) xmlGetProp(val, (XUC) "name");
-		    if (xname != NULL) {
-			if (!strcmp(xname, name)) {
-			    xid = (char *) xmlGetProp(val, (XUC) "sheetId");
-			    gotit = 1;
-			} else {
-			    free(xname);
-			}
-		    }
-		}
-		val = val->next;
-	    }
-	}
-	cur = cur->next;
-    }
-
-    xmlFreeDoc(doc);
-
-    if (xname != NULL && xid != NULL) {
-	int i, j, k = atoi(xid);
-
-	for (i=0; i<xinfo->n_sheets; i++) {
-	    sscanf(xinfo->sheetnames[i], "sheet%d", &j);
-	    if (k == j) {
-		xinfo->selsheet = i;
-		break;
-	    }
-	}
-    }
-
-    free(xname);
-    free(xid);
-}
+/* When called from the command-line, we might have a
+   pre-specified worksheet name or number, and in addition
+   we might have a row and/or column offset specified
+   in @list.
+*/
 
 static int set_xlsx_params_from_cli (xlsx_info *xinfo, 
 				     const int *list,
@@ -1015,6 +974,7 @@ static int set_xlsx_params_from_cli (xlsx_info *xinfo,
     int i, err = 0;
 
     if (!gotname && !gotlist) {
+	/* nothing was pre-specified */
 	xinfo->selsheet = 0;
 	xinfo->xoffset = 0;
 	xinfo->yoffset = 0;
@@ -1025,6 +985,7 @@ static int set_xlsx_params_from_cli (xlsx_info *xinfo,
     xinfo->selsheet = -1;
 
     if (gotname) {
+	/* the user specified a sheet, either by name or by number */
 	for (i=0; i<xinfo->n_sheets; i++) {
 	    if (!strcmp(sheetname, xinfo->sheetnames[i])) {
 		xinfo->selsheet = i;
@@ -1036,9 +997,6 @@ static int set_xlsx_params_from_cli (xlsx_info *xinfo,
 	    if (i >= 1 && i <= xinfo->n_sheets) {
 		xinfo->selsheet = i - 1;
 	    }
-	}
-	if (xinfo->selsheet < 0) {
-	    xlxs_seek_selsheet_by_name(xinfo, sheetname);
 	}
     }
 
@@ -1197,6 +1155,10 @@ static int finalize_xlsx_import (DATASET *dset,
 
     return err;
 }
+
+/* Public driver function for retrieving data from OOXML
+   workbook file.
+*/
 
 int xlsx_get_data (const char *fname, int *list, char *sheetname,
 		   DATASET *dset, gretlopt opt, PRN *prn)
