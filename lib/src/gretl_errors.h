@@ -91,6 +91,8 @@ const char *gretl_errmsg_get (void);
 
 const char *gretl_warnmsg_get (void);
 
+char *maybe_save_gretl_errmsg (int err);
+
 void gretl_errmsg_set (const char *str);
 
 void gretl_warnmsg_set (const char *str);

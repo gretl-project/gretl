@@ -711,6 +711,8 @@ static int cli_open_append (CMD *cmd, const char *line,
 			    DATASET *dset, MODEL *model,
 			    PRN *prn)
 {
+    gretlopt opt = cmd->opt;
+    PRN *vprn = prn;
     char newfile[MAXLEN] = {0};
     char response[3];
     int http = 0, dbdata = 0;
@@ -723,9 +725,9 @@ static int cli_open_append (CMD *cmd, const char *line,
 	return err;
     }
 
-    if (!http && !(cmd->opt & OPT_O)) {
+    if (!http && !(opt & OPT_O)) {
 	/* not using http or ODBC */
-	err = getopenfile(line, newfile, (cmd->opt & OPT_W)?
+	err = getopenfile(line, newfile, (opt & OPT_W)?
 			  OPT_W : OPT_NONE);
 	if (err) {
 	    errmsg(err, prn);
@@ -733,9 +735,9 @@ static int cli_open_append (CMD *cmd, const char *line,
 	}
     }
     
-    if (cmd->opt & OPT_W) {
+    if (opt & OPT_W) {
 	ftype = GRETL_NATIVE_DB_WWW;
-    } else if (cmd->opt & OPT_O) {
+    } else if (opt & OPT_O) {
 	ftype = GRETL_ODBC;
     } else {
 	ftype = detect_filetype(newfile, OPT_P);
@@ -760,24 +762,41 @@ static int cli_open_append (CMD *cmd, const char *line,
 	cli_clear_data(cmd, dset, model);
     } 
 
+    if (opt & OPT_Q) {
+	/* --quiet, but in case we hit any problems below... */
+	vprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+    } 
+
     if (ftype == GRETL_CSV) {
-	err = import_csv(newfile, dset, cmd->opt, prn);
+	err = import_csv(newfile, dset, opt, vprn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
 	err = import_spreadsheet(newfile, ftype, cmd->list, cmd->extra,
-				 dset, cmd->opt, prn);
+				 dset, opt, vprn);
     } else if (OTHER_IMPORT(ftype)) {
-	err = import_other(newfile, ftype, dset, cmd->opt, prn);
+	err = import_other(newfile, ftype, dset, opt, vprn);
     } else if (ftype == GRETL_XML_DATA) {
-	err = gretl_read_gdt(newfile, dset, cmd->opt, prn);
+	err = gretl_read_gdt(newfile, dset, opt, vprn);
     } else if (ftype == GRETL_ODBC) {
-	err = set_odbc_dsn(line, prn);
+	err = set_odbc_dsn(line, vprn);
     } else if (dbdata) {
-	err = set_db_name(newfile, ftype, prn);
+	err = set_db_name(newfile, ftype, vprn);
     } else {
-	err = gretl_get_data(newfile, dset, cmd->opt, prn);
+	err = gretl_get_data(newfile, dset, opt, vprn);
     }
 
     if (err) {
+	if (opt & OPT_Q) {
+	    /* The user asked for quiet operation, but something
+	       went wrong so let's print any info we got on
+	       vprn.
+	    */
+	    const char *buf = gretl_print_get_buffer(vprn);
+
+	    if (buf != NULL && *buf != '\0') {
+		pputs(prn, buf);
+	    }
+	    gretl_print_destroy(vprn);
+	}
 	errmsg(err, prn);
 	return err;
     }
@@ -788,12 +807,16 @@ static int cli_open_append (CMD *cmd, const char *line,
 
     data_status = 1;
 
-    if (dset->v > 0 && !dbdata && !(cmd->opt & OPT_Q)) {
+    if (dset->v > 0 && !dbdata && !(opt & OPT_Q)) {
 	varlist(dset, prn);
     }
 
     if (http) {
 	remove(newfile);
+    }
+
+    if (vprn != NULL && vprn != prn) {
+	gretl_print_destroy(vprn);
     }
 
     return err;

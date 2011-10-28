@@ -769,6 +769,10 @@ static int xlsx_sheet_has_data (const char *fname)
 	xmlFreeDoc(doc);
     }
 
+    if (!ret) {
+	fprintf(stderr, "%s: contains no data\n", fname);
+    }
+
     g_free(fullname);
 
     return ret;
@@ -875,8 +879,6 @@ static int xlsx_verify_sheets (xlsx_info *xinfo, PRN *prn)
 	    if (!xmlStrcmp(cur->name, (XUC) "Relationship")) {
 		ID = (char *) xmlGetProp(cur, (XUC) "Id");
 		if ((i = xlsx_match_sheet_id(xinfo, ID)) >= 0) {
-		    fprintf(stderr, "rels: matched sheet %d (%s)\n",
-			    i, xinfo->sheetnames[i]);
 		    fname = (char *) xmlGetProp(cur, (XUC) "Target");
 		    if (fname != NULL) {
 			if (xlsx_sheet_has_data(fname)) {
@@ -884,7 +886,6 @@ static int xlsx_verify_sheets (xlsx_info *xinfo, PRN *prn)
 			    free(xinfo->filenames[i]);
 			    xinfo->filenames[i] = fname;
 			} else {
-			    fprintf(stderr, "%d: no data in %s\n", i, fname);
 			    free(fname);
 			}
 		    }
@@ -1164,6 +1165,7 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 		   DATASET *dset, gretlopt opt, PRN *prn)
 {
     int gui = (opt & OPT_G);
+    char *save_errmsg = NULL;
     xlsx_info xinfo;
     char dname[32];
     int err;
@@ -1197,8 +1199,6 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 	err = xlsx_read_worksheet(&xinfo, prn);
     }
 
- bailout:
-
     if (!err && xinfo.dset != NULL) {
 	err = finalize_xlsx_import(dset, &xinfo, fname, opt, prn); 
 	if (!err && gui) {
@@ -1206,11 +1206,24 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 	}
     }
 
-    gretl_print_flush_stream(prn);
+ bailout:
 
+    gretl_print_flush_stream(prn);
     xlsx_info_free(&xinfo);
 
+    if (err > 0) {
+	/* preserve any error message so it's not overwritten
+	   by remove_temp_dir();
+	*/
+	save_errmsg = maybe_save_gretl_errmsg(err);
+    }
+
     remove_temp_dir(dname);
+
+    if (save_errmsg != NULL) {
+	gretl_errmsg_set(save_errmsg);
+	free(save_errmsg);
+    }
 
     return err;
 }

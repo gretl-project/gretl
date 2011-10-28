@@ -24,6 +24,8 @@
 
 #include <errno.h>
 
+#define EDEBUG 0
+
 #define ERRLEN 2048
 
 static char gretl_errmsg[ERRLEN];
@@ -134,6 +136,11 @@ const char *errmsg_get_with_default (int err)
 {
     const char *ret = "";
 
+#if EDEBUG
+    fprintf(stderr, "errmsg_get_with_default: msg='%s'\n",
+	    gretl_errmsg);
+#endif    
+
     if (*gretl_errmsg != '\0') {
 	ret = gretl_errmsg;
     } else {
@@ -187,6 +194,11 @@ const char *gretl_warnmsg_get (void)
 
 void errmsg (int err, PRN *prn)
 {
+#if EDEBUG
+    fprintf(stderr, "errmsg: err=%d, error_printed=%d\n",
+	    err, error_printed);
+#endif
+
     if (!error_printed && prn != NULL) {
 	const char *msg = errmsg_get_with_default(err);
 
@@ -250,6 +262,10 @@ const char *gretl_errmsg_get (void)
 
 void gretl_errmsg_set (const char *str)
 {
+#if EDEBUG
+    fprintf(stderr, "gretl_errmsg_set: '%s'\n", str);
+#endif
+
     if (alarm_set && *gretl_errmsg != '\0') {
 	/* leave the current error message in place */
 	return;
@@ -267,6 +283,10 @@ void gretl_errmsg_set (const char *str)
 	    strcat(gretl_errmsg, str);
 	}
     }
+
+#if EDEBUG
+    fprintf(stderr, "gretl_errmsg now: '%s'\n", gretl_errmsg);
+#endif
 }
 
 /**
@@ -294,6 +314,10 @@ void gretl_warnmsg_set (const char *str)
 
 void gretl_errmsg_sprintf (const char *fmt, ...)
 {
+#if EDEBUG
+    fprintf(stderr, "gretl_errmsg_sprintf: fmt='%s'\n", fmt);
+#endif
+
     if (*gretl_errmsg == '\0') {
 	va_list ap;
 
@@ -383,6 +407,9 @@ void gretl_errmsg_set_from_errno (const char *s)
 
 void gretl_error_clear (void)
 {
+#if EDEBUG
+    fprintf(stderr, "gretl_error_clear\n");
+#endif
     if (!alarm_set) {
 	*gretl_errmsg = '\0';
     }
@@ -402,6 +429,23 @@ void gretl_error_clear (void)
 int gretl_errmsg_is_set (void)
 {
     return (*gretl_errmsg != '\0');
+}
+
+/**
+ * maybe_save_gretl_errmsg:
+ *
+ * Returns: An allocated copy of the current gretl error
+ * message, or NULL if @err is zero or the current message
+ * is blank.
+ */
+
+char *maybe_save_gretl_errmsg (int err)
+{
+    if (err && *gretl_errmsg != '\0') {
+	return gretl_strdup(gretl_errmsg);
+    } else {
+	return NULL;
+    }
 }
 
 /* setting the "alarm" prevents gretl_errmsg from being
