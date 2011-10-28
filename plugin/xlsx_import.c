@@ -48,8 +48,8 @@ struct xlsx_info_ {
     char sheetfile[FILENAME_MAX];
     char stringsfile[FILENAME_MAX];
     int n_sheets;
-    int wb_names;
     char **sheetnames;
+    char **filenames;
     int selsheet;
     int n_strings;
     char **strings;
@@ -69,8 +69,8 @@ static void xlsx_info_init (xlsx_info *xinfo)
     xinfo->sheetfile[0] = '\0';
     xinfo->stringsfile[0] = '\0';
     xinfo->n_sheets = 0;
-    xinfo->wb_names = 0;
     xinfo->sheetnames = NULL;
+    xinfo->filenames = NULL;
     xinfo->selsheet = 0;
     xinfo->n_strings = 0;
     xinfo->strings = NULL;
@@ -681,13 +681,8 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
     int gotdata = 0;
     int err = 0;
 
-    if (xinfo->wb_names) {
-	sprintf(xinfo->sheetfile, "xl%cworksheets%csheet%d.xml", 
-		SLASH, SLASH, xinfo->selsheet + 1);
-    } else {
-	sprintf(xinfo->sheetfile, "xl%cworksheets%c%s.xml", 
-		SLASH, SLASH, xinfo->sheetnames[xinfo->selsheet]);
-    }
+    sprintf(xinfo->sheetfile, "xl%c%s", SLASH, 
+	    xinfo->filenames[xinfo->selsheet]);
 
     sprintf(xinfo->stringsfile, "xl%csharedStrings.xml", SLASH);
 
@@ -749,8 +744,7 @@ static int xlsx_sheet_has_data (const char *fname)
     gchar *fullname;
     int err, ret = 0;
 
-    fullname = g_strdup_printf("xl%cworksheets%c%s",
-			       SLASH, SLASH, fname);
+    fullname = g_strdup_printf("xl%c%s", SLASH, fname);
 
     err = gretl_xml_open_doc_root(fullname, "worksheet", 
 				  &doc, &cur);
@@ -776,27 +770,32 @@ static int xlsx_sheet_has_data (const char *fname)
     return ret;
 }
 
-static int xlsx_workbook_has_sheetnames (xlsx_info *xinfo,
+static int xlsx_workbook_get_sheetnames (xlsx_info *xinfo,
 					 const char *fname)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr c1, cur = NULL;
-    char *sheetname;
-    int err, found = 0;
+    char *ID, *sheetname;
+    int ns = 0, found = 0;
+    int err;
 
     err = gretl_xml_open_doc_root(fname, "workbook", 
 				  &doc, &cur);
     if (!err) {
 	cur = cur->xmlChildrenNode;
-	while (cur != NULL && found == 0) {
+	while (cur != NULL && !found) {
 	    if (!xmlStrcmp(cur->name, (XUC) "sheets")) {
 		c1 = cur->xmlChildrenNode;
 		while (c1 != NULL) {
 		    if (!xmlStrcmp(c1->name, (XUC) "sheet")) {
+			ID = (char *) xmlGetProp(c1, (XUC) "id");
 			sheetname = (char *) xmlGetProp(c1, (XUC) "name");
-			if (sheetname != NULL) {
-			    strings_array_add(&xinfo->sheetnames, &xinfo->n_sheets,
+			if (ID != NULL && sheetname != NULL) {
+			    strings_array_add(&xinfo->sheetnames, 
+					      &xinfo->n_sheets,
 					      sheetname);
+			    strings_array_add(&xinfo->filenames, 
+					      &ns, ID);
 			}
 		    }
 		    c1 = c1->next;
@@ -808,57 +807,120 @@ static int xlsx_workbook_has_sheetnames (xlsx_info *xinfo,
 	xmlFreeDoc(doc);
     }
 
-    return xinfo->n_sheets;
+    return err;
+}
+
+static void xlsx_expunge_sheet (xlsx_info *xinfo, int *i)
+{
+    int j;
+
+    free(xinfo->sheetnames[*i]);
+    free(xinfo->filenames[*i]);
+
+    for (j=*i; j<xinfo->n_sheets-1; j++) {
+	xinfo->sheetnames[j] = xinfo->sheetnames[j+1];
+	xinfo->filenames[j] = xinfo->filenames[j+1];
+    };
+
+    xinfo->n_sheets -= 1;
+    *i -= 1;
+}
+
+static int xlsx_match_sheet_id (xlsx_info *xinfo, 
+				const char *ID)
+{
+    int i;
+
+    if (ID == NULL) {
+	return -1;
+    }
+
+    for (i=0; i<xinfo->n_sheets; i++) {
+	if (!strcmp(ID, xinfo->filenames[i])) {
+	    return i;
+	}
+    }
+
+    return -1;
+}
+
+/* For the sheet names we got from the main workbook file:
+   check that (1) we can track down the corresponding
+   worksheet filename and (2) the worksheet contains
+   some data.
+*/
+
+static int xlsx_verify_sheets (xlsx_info *xinfo, PRN *prn)
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    char *checker;
+    char *ID, *fname;
+    int i, err;
+
+    checker = calloc(xinfo->n_sheets, 1);
+
+    err = gretl_xml_open_doc_root("xl/_rels/workbook.xml.rels",
+				  "Relationships",
+				  &doc, &cur);
+    if (!err) {
+	cur = cur->xmlChildrenNode;
+	while (cur != NULL) {
+	    if (!xmlStrcmp(cur->name, (XUC) "Relationship")) {
+		ID = (char *) xmlGetProp(cur, (XUC) "Id");
+		if ((i = xlsx_match_sheet_id(xinfo, ID)) >= 0) {
+		    fname = (char *) xmlGetProp(cur, (XUC) "Target");
+		    if (fname != NULL) {
+			if (xlsx_sheet_has_data(fname)) {
+			    checker[i] = 1;
+			    free(xinfo->filenames[i]);
+			    xinfo->filenames[i] = fname;
+			} else {
+			    free(fname);
+			}
+		    }
+		}
+		free(ID);
+	    }
+	    cur = cur->next;
+	}
+	xmlFreeDoc(doc);
+    }
+
+    for (i=0; i<xinfo->n_sheets; i++) {
+	if (checker[i] == 0) {
+	    xlsx_expunge_sheet(xinfo, &i);
+	}
+    }
+
+    free(checker);
+
+    return err;
 }
 
 static int xlsx_gather_sheet_names (xlsx_info *xinfo, PRN *prn)
 {
-    gchar *wbname = g_strdup_printf("xl%cworkbook.xml", SLASH); 
-    int i, err = 0;
+    gchar *wb_name = g_strdup_printf("xl%cworkbook.xml", SLASH); 
+    int i, err;
 
-    if (xlsx_workbook_has_sheetnames(xinfo, wbname)) {
-	xinfo->wb_names = 1;
-    } else {
-	gchar *dname = g_strdup_printf("xl%cworksheets", SLASH);
-	DIR *dir = gretl_opendir(dname);
+    err = xlsx_workbook_get_sheetnames(xinfo, wb_name);
+    g_free(wb_name);
 
-	if (dir == NULL) {
-	    err = E_FOPEN;
-	} else {
-	    struct dirent *dirent;
-
-	    while ((dirent = readdir(dir)) != NULL) {
-		const char *basename = dirent->d_name;
-	    
-		if (has_suffix(basename, ".xml") && 
-		    xlsx_sheet_has_data(basename)) {
-		    gchar *tmp = g_strdup(basename);
-		    gchar *p = strstr(tmp, ".xml");
-
-		    *p = '\0';
-		    strings_array_add(&xinfo->sheetnames, &xinfo->n_sheets,
-				      tmp);
-		    g_free(tmp);
-		}
-	    }
-	    closedir(dir);
-	}
-	g_free(dname);
-    }
-
-    g_free(wbname);
-
-    if (xinfo->n_sheets == 0) {
+    if (!err && xinfo->n_sheets == 0) {
+	pputs(prn, "Found no sheets\n");
 	err = E_DATA;
-    } else if (!xinfo->wb_names && xinfo->n_sheets > 1) {
-	strings_array_sort(&xinfo->sheetnames, &xinfo->n_sheets,
-			   OPT_NONE);
     }
 
     if (!err) {
 	for (i=0; i<xinfo->n_sheets; i++) {
-	    fprintf(stderr, "%d: %s\n", i, xinfo->sheetnames[i]);
+	    fprintf(stderr, "%d: %s (%s)\n", i, xinfo->sheetnames[i],
+		    xinfo->filenames[i]);
 	}
+	err = xlsx_verify_sheets(xinfo, prn);
+	if (xinfo->n_sheets == 0) {
+	    pputs(prn, "Found no valid sheets\n");
+	    err = E_DATA;
+	}	
     }
 
     return err;
