@@ -1196,7 +1196,7 @@ static void set_rand_seed (GtkWidget *w, guint32 *s)
 {
     guint32 newseed = *s;
 	
-    gretl_command_sprintf("set seed %u", newseed); 
+    lib_command_sprintf("set seed %u", newseed); 
     if (check_and_record_command()) {
 	return;
     }
@@ -1525,7 +1525,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	/* boolean restriction */
 	const gchar *restr = gtk_entry_get_text(GTK_ENTRY(rset->entry));
 	
-	gretl_command_sprintf("smpl %s --restrict%s", restr, replace);
+	lib_command_sprintf("smpl %s --restrict%s", restr, replace);
 
 	if (check_and_record_command()) {
 	    return TRUE;
@@ -1540,7 +1540,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	gchar *dumv;
 
 	dumv = combo_box_get_active_text(GTK_COMBO_BOX(rset->combo));
-	gretl_command_sprintf("smpl %s --dummy%s", dumv, replace);
+	lib_command_sprintf("smpl %s --dummy%s", dumv, replace);
 	g_free(dumv);
 
 	if (check_and_record_command()) {
@@ -1556,7 +1556,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	int subn;
 
 	subn = obs_button_get_value(rset->spin1);
-	gretl_command_sprintf("smpl %d --random", subn);
+	lib_command_sprintf("smpl %d --random", subn);
 	if (check_and_record_command()) {
 	    return TRUE;
 	}
@@ -1596,7 +1596,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	}
 
 	if (t1 != dataset->t1 || t2 != dataset->t2) {
-	    gretl_command_sprintf("smpl %s %s", s1, s2);
+	    lib_command_sprintf("smpl %s %s", s1, s2);
 	    if (check_and_record_command()) {
 		return TRUE;
 	    }

@@ -961,11 +961,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
     fclose(fp);
 
     err = gnuplot_make_graph();
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
-    }
+    gui_graph_handler(err);
 
     return err;
 }
@@ -1022,11 +1018,7 @@ static void butterworth_poles_graph (GtkWidget *button, filter_info *finfo)
     fclose(fp);
 
     err = gnuplot_make_graph();
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
-    }
+    gui_graph_handler(err);
 }
 
 static void weights_shape_graph (GtkWidget *button, filter_info *finfo)
@@ -1068,11 +1060,7 @@ static void weights_shape_graph (GtkWidget *button, filter_info *finfo)
 	destroy_private_matrices();
     }
 
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
-    }
+    gui_graph_handler(err);
 }
 
 static int do_filter_response_graph (filter_info *finfo)
@@ -1141,11 +1129,7 @@ static int do_filter_response_graph (filter_info *finfo)
     fclose(fp);
 
     err = gnuplot_make_graph();
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
-    }
+    gui_graph_handler(err);
 
     return err;
 }

@@ -194,13 +194,8 @@ static void graph_dbdata (DATASET *dbset)
 	err = gnuplot(list, NULL, dbset, OPT_G | OPT_O | OPT_T);
     }
 
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
-    }
-
     free(list);
+    gui_graph_handler(err);
 }
 
 static int expand_data_dialog (int src_pd, int targ_pd, int *interpol)
@@ -305,36 +300,36 @@ static void record_db_open_command (dbwrapper *dw)
 {
     if (dw->fname != NULL) {
 	int quotes = (strchr(dw->fname, ' ') != NULL);
-	gchar *cmdline;
+	gchar *dbline;
 
 	if (dw->dbtype == GRETL_PCGIVE_DB) {
 	    if (quotes) {
-		cmdline = g_strdup_printf("open \"%s.bn7\"", dw->fname);
+		dbline = g_strdup_printf("open \"%s.bn7\"", dw->fname);
 	    } else {
-		cmdline = g_strdup_printf("open %s.bn7", dw->fname);
+		dbline = g_strdup_printf("open %s.bn7", dw->fname);
 	    }
 	} else if (dw->dbtype == GRETL_NATIVE_DB) {
 	    const char *tmp = trimmed_db_name(dw->fname);
 
 	    if (tmp != NULL) {
-		cmdline = g_strdup_printf("open %s.bin", tmp);
+		dbline = g_strdup_printf("open %s.bin", tmp);
 	    } else if (quotes) {
-		cmdline = g_strdup_printf("open \"%s.bin\"", dw->fname);
+		dbline = g_strdup_printf("open \"%s.bin\"", dw->fname);
 	    } else {
-		cmdline = g_strdup_printf("open %s.bin", dw->fname);
+		dbline = g_strdup_printf("open %s.bin", dw->fname);
 	    }
 	} else if (dw->dbtype == GRETL_NATIVE_DB_WWW) {
-	    cmdline = g_strdup_printf("open %s --www", dw->fname);
+	    dbline = g_strdup_printf("open %s --www", dw->fname);
 	} else {
 	    if (quotes) {
-		cmdline = g_strdup_printf("open \"%s\"", dw->fname);
+		dbline = g_strdup_printf("open \"%s\"", dw->fname);
 	    } else {
-		cmdline = g_strdup_printf("open %s", dw->fname);
+		dbline = g_strdup_printf("open %s", dw->fname);
 	    }
 	}
 
-	record_command_verbatim(cmdline);
-	g_free(cmdline);
+	record_command_verbatim(dbline);
+	g_free(dbline);
     }
 }
 
@@ -343,7 +338,7 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 {
     SERIESINFO *sinfo;
     CompactMethod method = COMPACT_AVG;
-    gchar *cmdline = NULL;
+    gchar *dbline = NULL;
     int resp, warned = 0, chosen = 0;
     int i, t, err = 0;
 
@@ -439,15 +434,15 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 
 	/* record successful importation in command log */
 	if (compact && (cstr = compact_method_string(method)) != NULL) {
-	    cmdline = g_strdup_printf("data (compact=%s) %s", cstr,
+	    dbline = g_strdup_printf("data (compact=%s) %s", cstr,
 				      sinfo->varname);
 	} else {
 	    /* FIXME: handle expand/interpolate option */
-	    cmdline = g_strdup_printf("data %s", sinfo->varname);
+	    dbline = g_strdup_printf("data %s", sinfo->varname);
 	}
 
-	record_command_verbatim(cmdline);
-	g_free(cmdline);
+	record_command_verbatim(dbline);
+	g_free(dbline);
 
 	/* common stuff for adding a var */
 	strcpy(dataset->varname[dbv], sinfo->varname);
@@ -500,7 +495,7 @@ static void add_dbdata (windata_t *vwin, DATASET *dbset,
 	add_db_series_to_dataset(vwin, dbset->Z, dw);
     } else {  
 	/* no data open: start new data set from db */
-	gchar *cmdline;
+	gchar *dbline;
 
 	destroy_dataset(dataset);
 	dataset = dbset;
@@ -514,9 +509,9 @@ static void add_dbdata (windata_t *vwin, DATASET *dbset,
 	    strcpy(dataset->varname[i], sinfo->varname);
 	    strcpy(VARLABEL(dataset, i), sinfo->descrip);
 	    
-	    cmdline = g_strdup_printf("data %s", sinfo->varname);
-	    record_command_verbatim(cmdline);
-	    g_free(cmdline);
+	    dbline = g_strdup_printf("data %s", sinfo->varname);
+	    record_command_verbatim(dbline);
+	    g_free(dbline);
 	}
 	
 	data_status |= (GUI_DATA | MODIFIED_DATA);

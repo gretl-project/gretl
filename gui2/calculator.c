@@ -596,11 +596,8 @@ static void htest_graph (int d, double x, double *parms)
 
     fclose(fp);
 
-    if (gnuplot_make_graph()) {
-	errbox(_("gnuplot command failed"));
-    } else {
-	register_graph(NULL);
-    }
+    err = gnuplot_make_graph();
+    gui_graph_handler(err);
 }
 
 static void dist_graph (int d, double *parms)
@@ -686,11 +683,8 @@ static void dist_graph (int d, double *parms)
 
     fclose(fp);
 
-    if (gnuplot_make_graph()) {
-	errbox(_("gnuplot command failed"));
-    } else {
-	register_graph(NULL);
-    }
+    err = gnuplot_make_graph();
+    gui_graph_handler(err);
 }
 
 #define ALT_CHI MAX_DIST
@@ -1371,38 +1365,38 @@ static void get_random (GtkWidget *w, CalcChild *child)
 
     switch (d) {
     case UNIFORM_DIST:
-	gretl_command_sprintf("genr %s = randgen(u,%g,%g)", vname,
-			      x[0], x[1]);
+	lib_command_sprintf("genr %s = randgen(u,%g,%g)", vname,
+			    x[0], x[1]);
 	break;
     case NORMAL_DIST:
-	gretl_command_sprintf("genr %s = randgen(N,%g,%g)", vname,
-			      x[0], x[1]);
+	lib_command_sprintf("genr %s = randgen(N,%g,%g)", vname,
+			    x[0], x[1]);
 	break;
     case T_DIST: 
-	gretl_command_sprintf("genr %s = randgen(t,%g)", vname, x[0]);
+	lib_command_sprintf("genr %s = randgen(t,%g)", vname, x[0]);
 	break;
     case CHISQ_DIST:
-	gretl_command_sprintf("genr %s = randgen(X,%g)", vname, x[0]);
+	lib_command_sprintf("genr %s = randgen(X,%g)", vname, x[0]);
 	break;
     case F_DIST:
-	gretl_command_sprintf("genr %s = randgen(F,%g,%g)", vname, 
-			      x[0], x[1]);
+	lib_command_sprintf("genr %s = randgen(F,%g,%g)", vname, 
+			    x[0], x[1]);
 	break;
     case GAMMA_DIST:
-	gretl_command_sprintf("genr %s = randgen(G,%g,%g)", vname, 
-			      x[0], x[1]);
+	lib_command_sprintf("genr %s = randgen(G,%g,%g)", vname, 
+			    x[0], x[1]);
 	break;
     case WEIBULL_DIST:
-	gretl_command_sprintf("genr %s = randgen(W,%g,%g)", vname, 
-			      x[0], x[1]);
+	lib_command_sprintf("genr %s = randgen(W,%g,%g)", vname, 
+			    x[0], x[1]);
 	break;
     case BINOMIAL_DIST: 
-	gretl_command_sprintf("genr %s = randgen(B,%g,%g)", vname, 
-			      x[0], x[1]);
+	lib_command_sprintf("genr %s = randgen(B,%g,%g)", vname, 
+			    x[0], x[1]);
 	break;
     case POISSON_DIST: 
 	/* FIXME allow variable as param? */
-	gretl_command_sprintf("genr %s = randgen(P,%g)", vname, x[0]);
+	lib_command_sprintf("genr %s = randgen(P,%g)", vname, x[0]);
 	break;
     }
 
@@ -3160,10 +3154,9 @@ static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
     fclose(fp);
 
     err = gnuplot_make_graph();
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
+    gui_graph_handler(err);
+
+    if (!err) {
 	gtk_widget_destroy(p->dlg);
     }
 }
@@ -3301,11 +3294,7 @@ static void do_plot_cdf (GtkWidget *w, GtkWidget *dlg)
     fclose(fp);
 
     err = gnuplot_make_graph();
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
-    }
+    gui_graph_handler(err);
 
     gtk_widget_destroy(dlg);
 }

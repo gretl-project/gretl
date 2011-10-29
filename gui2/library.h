@@ -51,13 +51,11 @@ void library_command_free (void);
 
 CMD *get_lib_cmd (void);
 
-int gretl_command_sprintf (const char *template, ...);
+int lib_command_sprintf (const char *template, ...);
 
-int gretl_command_strcpy (const char *s);
+int lib_command_strcpy (const char *s);
 
-int gretl_command_strcat (const char *s);
-
-int record_command_line (const char *s);
+int lib_command_strcat (const char *s);
 
 int record_command_verbatim (const char *s);
 
@@ -77,7 +75,7 @@ void gui_errmsg (int errcode);
 
 void gui_warnmsg (int errcode);
 
-void register_graph (PRN *prn);
+void gui_graph_handler (int err);
 
 /* sample-related functions */
 

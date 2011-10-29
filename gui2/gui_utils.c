@@ -697,9 +697,9 @@ static void gui_record_data_opening (const char *fname, const int *list)
     const char *recname = (fname != NULL)? fname : datafile;
 
     if (strchr(recname, ' ') != NULL) {
-	gretl_command_sprintf("open \"%s\"", recname);
+	lib_command_sprintf("open \"%s\"", recname);
     } else {
-	gretl_command_sprintf("open %s", recname);
+	lib_command_sprintf("open %s", recname);
     }
 
     if (list != NULL && list[0] == 3) {
@@ -708,15 +708,15 @@ static void gui_record_data_opening (const char *fname, const int *list)
 
 	if (list[1] > 1) {
 	    sprintf(parm, " --sheet=%d", list[1]);
-	    gretl_command_strcat(parm);
+	    lib_command_strcat(parm);
 	}
 	if (list[2] > 0) {
 	    sprintf(parm, " --coloffset=%d", list[2]);
-	    gretl_command_strcat(parm);
+	    lib_command_strcat(parm);
 	}
 	if (list[3] > 0) {
 	    sprintf(parm, " --rowoffset=%d", list[3]);
-	    gretl_command_strcat(parm);
+	    lib_command_strcat(parm);
 	}
     }
 
@@ -2834,12 +2834,7 @@ static void tau_plot_call (GtkAction *action, gpointer p)
 
     varnum_from_action(action, &v);
     err = plot_tau_sequence(pmod, dataset, v);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
-    }    
+    gui_graph_handler(err);
 }
 
 static void add_tau_plot_menu (windata_t *vwin)
@@ -3521,12 +3516,7 @@ static void FEVD_plot_call (GtkAction *action, gpointer p)
     }
 
     err = gretl_VAR_plot_FEVD(var, targ, horizon, dataset);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
-    }
+    gui_graph_handler(err);
 }
 
 static void impulse_plot_call (GtkAction *action, gpointer p)
@@ -3569,12 +3559,7 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     err = gretl_VAR_plot_impulse_response(var, targ, shock, 
 					  horizon, this_alpha, 
 					  dataset, gopt);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
-    }
+    gui_graph_handler(err);
 }
 
 static void multiple_irf_plot_call (GtkAction *action, gpointer p)
@@ -3614,12 +3599,7 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
 
     err = gretl_VAR_plot_multiple_irf(var, horizon, this_alpha, 
 				      dataset, gopt);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
-    }
+    gui_graph_handler(err);
 }
 
 static int VAR_model_data_code (GtkAction *action)
@@ -3805,7 +3785,6 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	int width = 78;
 	PRN *prn;
 
 	if (bufopen(&prn)) {
@@ -3814,13 +3793,10 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
 
 	fr->alpha = 1 - conf;
 	err = text_print_forecast(fr, dataset, gopt, prn);
-	if (!err) {
-	    register_graph(NULL);
-	}
-	if (fr->sderr == NULL) {
-	    width = 50;
-	}
-	view_buffer(prn, width, 400, _("gretl: forecasts"), FCAST, fr);
+	gui_graph_handler(err);
+
+	view_buffer(prn, (fr->sderr == NULL)? 50 : 78, 400, 
+		    _("gretl: forecasts"), FCAST, fr);
     }
 }
 
@@ -3936,12 +3912,7 @@ static void VAR_roots_plot_call (GtkAction *action, gpointer p)
     int err;
 
     err = gretl_VAR_roots_plot(var);
-    
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
-    }
+    gui_graph_handler(err);
 }
 
 static void combined_EC_plot_call (GtkAction *action, gpointer p)
@@ -3951,12 +3922,7 @@ static void combined_EC_plot_call (GtkAction *action, gpointer p)
     int err;
 
     err = gretl_VECM_combined_EC_plot(var, dataset);
-    
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
-    }
+    gui_graph_handler(err);
 }
 
 static int sys_ci_from_action (GtkAction *action)
@@ -3975,12 +3941,7 @@ static void system_resid_plot_call (GtkAction *action, gpointer p)
     int err;
 
     err = gretl_system_residual_plot(vwin->data, ci, dataset);
-    
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
-    }
+    gui_graph_handler(err);
 }
 
 static void system_resid_mplot_call (GtkAction *action, gpointer p)
@@ -3990,12 +3951,7 @@ static void system_resid_mplot_call (GtkAction *action, gpointer p)
     int err;
 
     err = gretl_system_residual_mplot(vwin->data, ci, dataset);
-    
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
-    }
+    gui_graph_handler(err);
 }
 
 static void add_system_menu_items (windata_t *vwin, int ci)
@@ -4463,7 +4419,7 @@ static int set_sample_from_model (MODEL *pmod)
     } else {
 	if (full) {
 	    restore_sample_state(FALSE);
-	    gretl_command_strcpy("smpl --full");
+	    lib_command_strcpy("smpl --full");
 	    check_and_record_command();
 	} else {
 	    char comment[64];
