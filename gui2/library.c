@@ -370,13 +370,13 @@ gint bufopen (PRN **pprn)
    out correctly.  
 */
 
-static int cmd_record (const char *s, int flag)
+static int real_record_command (const char *s, int flag)
 {
     PRN *echo;
     int err = 0;
 
 #if CMD_DEBUG
-    fprintf(stderr, "cmd_record: got cmdstr: '%s'\n", s);
+    fprintf(stderr, "real_record_command: got cmdstr: '%s'\n", s);
     fprintf(stderr, "libcmd.word: '%s'\n", libcmd.word);
     fprintf(stderr, "libcmd.param: '%s'\n", libcmd.param);
     fprintf(stderr, "libcmd.opt: %d\n", (int) libcmd.opt);
@@ -412,9 +412,9 @@ int record_command_verbatim (const char *s)
     return add_command_to_stack(s);
 }
 
-static int lib_cmd_record (void)
+static int record_lib_command (void)
 {
-    return cmd_record(libline, 0);
+    return real_record_command(libline, 0);
 }
 
 static int record_lib_command_verbatim (void)
@@ -422,7 +422,7 @@ static int record_lib_command_verbatim (void)
     return add_command_to_stack(libline);
 }
 
-static int console_cmd_init (char *line, int *console_run)
+static int record_console_command (char *line, int *console_run)
 {
     if (*console_run) {
 	libcmd.word[0] = 0;
@@ -432,7 +432,7 @@ static int console_cmd_init (char *line, int *console_run)
 	*console_run = 0;
     }
 
-    return cmd_record(line, CONSOLE_EXEC);
+    return real_record_command(line, CONSOLE_EXEC);
 }
 
 /* checks the current libline for validity, but does not
@@ -456,7 +456,7 @@ int check_lib_command (void)
 
 int check_and_record_command (void)
 {
-    return (check_lib_command() || lib_cmd_record());
+    return (check_lib_command() || record_lib_command());
 }
 
 /* checks command line @s for errors, and if OK returns 
@@ -3880,7 +3880,7 @@ int do_vector_model (selector *sr)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	lib_cmd_record();
+	record_lib_command();
     }
 
     return err;
@@ -3971,7 +3971,7 @@ void do_graph_model (const int *list, int fit)
 	return;
     }
 
-    if (lib_cmd_record()) {
+    if (record_lib_command()) {
 	errbox(_("Error saving model information"));
 	gretl_print_destroy(prn);
 	return;
@@ -7516,7 +7516,7 @@ int do_store (char *filename, int action)
 	if (WRITING_DB(opt)) {
 	    database_description_dialog(filename);
 	} else {
-	    lib_cmd_record();
+	    record_lib_command();
 	}
     }
 
@@ -8383,7 +8383,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	if (err) {
 	    errmsg(err, prn);
 	} else if (s->flags & CONSOLE_EXEC) {
-	    cmd_record(line, CONSOLE_EXEC);
+	    real_record_command(line, CONSOLE_EXEC);
 	}
 	return err;
     } 
@@ -8588,7 +8588,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 
     if ((s->flags & CONSOLE_EXEC) && !err) {
 	/* log the specific command */
-	console_cmd_init(line, &console_run);
+	record_console_command(line, &console_run);
     }
 
     /* save specific output buffer? */
