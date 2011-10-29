@@ -710,11 +710,13 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
 	cur = cur->next;
     }
 
+#if XDEBUG
     if (!err) {
 	pprintf(prn, "Max row = %d, max col = %d\n", xinfo->maxrow,
 		xinfo->maxcol);
 	pprintf(prn, "Accessed %d shared strings\n", xinfo->n_strings);
     }
+#endif
 
     if (!err && xinfo->dset == NULL) {
 	err = xlsx_check_dimensions(xinfo, prn);
