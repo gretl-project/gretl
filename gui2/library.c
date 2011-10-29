@@ -364,10 +364,20 @@ gint bufopen (PRN **pprn)
 
 /* This function arranges for the recording of the command line @s,
    after using echo_cmd() to make the presentation canonical.
+   A simpler alternative is record_command_verbatim(), which can
+   be used if the command line @s is complete and in canonical
+   format already.
 
    It should always be paired with check_lib_command(), which needs to
    come first, so that the elements of the libcmd structure are filled
-   out correctly.  
+   out correctly. 
+
+   Also, it should not be called before the command has been run,
+   and its status (error or not) has been determined, since we don't
+   want to record commands that bombed out.
+
+   FIXME: this function should probably scrub libcmd after recording, 
+   so that we don't get any stale info hanging around.
 */
 
 static int real_record_command (const char *s, int flag)
@@ -421,6 +431,8 @@ static int record_lib_command_verbatim (void)
 {
     return add_command_to_stack(libline);
 }
+
+/* FIXME what's going on here? */
 
 static int record_console_command (char *line, int *console_run)
 {
@@ -2917,17 +2929,6 @@ static int model_output (MODEL *pmod, PRN *prn)
     return err;
 }
 
-static gint check_model_cmd (void)
-{
-    int err = parse_command_line(libline, &libcmd, dataset); 
-
-    if (err) {
-	gui_errmsg(err);
-    }
-
-    return err;
-}
-
 static int 
 record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
 				int got_start, int got_end)
@@ -3300,11 +3301,9 @@ void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
 
 static int do_nl_genr (void)
 {
-    int err;
+    int err = check_and_record_command();
 
-    if (check_and_record_command()) {
-	err = 1;
-    } else {
+    if (!err) {
 	err = finish_genr(NULL, NULL);
     }
 
@@ -3511,7 +3510,7 @@ static int do_straight_anova (void)
     PRN *prn;
     int err;
 
-    if (check_model_cmd() || bufopen(&prn)) {
+    if (check_lib_command() || bufopen(&prn)) {
 	return 1;
     }
 
@@ -3545,7 +3544,7 @@ static int real_do_model (int action)
     /* parsing may modify libline, so keep a backup */
     linecpy = gretl_strdup(libline);
 
-    if (linecpy == NULL || check_model_cmd() || bufopen(&prn)) {
+    if (linecpy == NULL || check_lib_command() || bufopen(&prn)) {
 	return 1;
     }
 
@@ -3835,7 +3834,7 @@ int do_vector_model (selector *sr)
     fprintf(stderr, "do_vector_model: libline = '%s'\n", libline);
 #endif
 
-    if (check_model_cmd() || bufopen(&prn)) {
+    if (check_lib_command() || bufopen(&prn)) {
 	return 1;
     }
 
@@ -3952,7 +3951,7 @@ void do_graph_model (const int *list, int fit)
     lib_command_sprintf("ols%s", buf);
     free(buf);
 
-    if (check_model_cmd() || bufopen(&prn)) {
+    if (check_lib_command() || bufopen(&prn)) {
 	return;
     }
 
