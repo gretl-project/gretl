@@ -13,6 +13,8 @@ version 1.9.7, in progress
   incoming sample range
 - Fix bug: filename encoding and dates recognition issues with the new
   xlsx data importer; also try harder to find sheet names
+- Fix bug: segfault on running certain commands via the GUI after
+  replacing the previous dataset with a new one
 
 2011-10-17 version 1.9.6
 - Add an importer for xlsx (Office Open XML) worksheet data
