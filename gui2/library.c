@@ -362,35 +362,33 @@ gint bufopen (PRN **pprn)
     return err;
 }
 
-/* This function arranges for the recording of the command line @s,
-   after using echo_cmd() to make the presentation canonical.
-   A simpler alternative is record_command_verbatim(), which can
-   be used if the command line @s is complete and in canonical
-   format already.
+/* This function arranges for the recording of the stored command line
+   @libline, after using echo_cmd() to make the presentation
+   canonical.  A simpler alternative is record_command_verbatim(),
+   which can be used if the caller has access to a complete command
+   line that is in canonical format already.
 
-   It should always be paired with check_lib_command(), which needs to
-   come first, so that the elements of the libcmd structure are filled
-   out correctly. 
+   This function should always be paired with check_lib_command(),
+   which needs to come first, so that the elements of the libcmd
+   structure are filled out (or zeroed) correctly. 
 
-   Also, it should not be called before the command has been run,
-   and its status (error or not) has been determined, since we don't
-   want to record commands that bombed out.
-
-   FIXME: this function should probably scrub libcmd after recording, 
-   so that we don't get any stale info hanging around.
+   Also, it is preferable that this function not be called before the
+   command in question has been run, and its status (error or not) has
+   been determined, since we don't really want to record commands that
+   bombed out.
 */
 
-static int real_record_command (const char *s, int flag)
+int record_lib_command (void)
 {
     PRN *echo;
     int err = 0;
 
 #if CMD_DEBUG
-    fprintf(stderr, "real_record_command: got cmdstr: '%s'\n", s);
-    fprintf(stderr, "libcmd.word: '%s'\n", libcmd.word);
-    fprintf(stderr, "libcmd.param: '%s'\n", libcmd.param);
-    fprintf(stderr, "libcmd.opt: %d\n", (int) libcmd.opt);
-    fprintf(stderr, "line: '%s'\n", s);
+    fprintf(stderr, "record_lib_command:\n");
+    fprintf(stderr, " libcmd.word: '%s'\n", libcmd.word);
+    fprintf(stderr, " libcmd.param: '%s'\n", libcmd.param);
+    fprintf(stderr, " libcmd.opt: %d\n", (int) libcmd.opt);
+    fprintf(stderr, " line: '%s'\n", libline);
 #endif
 
     /* arrange to have the command recorded on a stack */
@@ -399,10 +397,7 @@ static int real_record_command (const char *s, int flag)
     } else {
 	const char *buf;
 
-	if (flag == CONSOLE_EXEC) {
-	    pputs(echo, "# via console\n");
-	}
-	echo_cmd(&libcmd, dataset, s, CMD_RECORDING, echo);
+	echo_cmd(&libcmd, dataset, libline, CMD_RECORDING, echo);
 	buf = gretl_print_get_buffer(echo);
 #if CMD_DEBUG
 	fprintf(stderr, "from echo_cmd: buf='%s'\n", buf);
@@ -422,29 +417,9 @@ int record_command_verbatim (const char *s)
     return add_command_to_stack(s);
 }
 
-static int record_lib_command (void)
-{
-    return real_record_command(libline, 0);
-}
-
 static int record_lib_command_verbatim (void)
 {
     return add_command_to_stack(libline);
-}
-
-/* FIXME what's going on here? */
-
-static int record_console_command (char *line, int *console_run)
-{
-    if (*console_run) {
-	libcmd.word[0] = 0;
-	libcmd.param[0] = 0;
-	libcmd.extra[0] = 0;
-	libcmd.opt = OPT_NONE;
-	*console_run = 0;
-    }
-
-    return real_record_command(line, CONSOLE_EXEC);
 }
 
 /* checks the current libline for validity, but does not
@@ -3879,6 +3854,7 @@ int do_vector_model (selector *sr)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
+	/* note: paired with check_lib_command() above */
 	record_lib_command();
     }
 
@@ -3970,14 +3946,10 @@ void do_graph_model (const int *list, int fit)
 	return;
     }
 
-    if (record_lib_command()) {
-	errbox(_("Error saving model information"));
-	gretl_print_destroy(prn);
-	return;
-    }
+    /* note: paired with check_lib_command() above*/
+    record_lib_command();
 
     attach_subsample_to_model(pmod, dataset);
-
     gretl_object_ref(pmod, GRETL_OBJ_EQN);
     
     sprintf(title, _("gretl: model %d"), pmod->ID);
@@ -7515,6 +7487,7 @@ int do_store (char *filename, int action)
 	if (WRITING_DB(opt)) {
 	    database_description_dialog(filename);
 	} else {
+	    /* note: follows check_lib_command() above */
 	    record_lib_command();
 	}
     }
@@ -8297,7 +8270,6 @@ int gui_exec_line (ExecState *s, DATASET *dset)
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
     char runfile[MAXLEN];
-    int console_run = 0;
     int err = 0;
 
 #if CMD_DEBUG
@@ -8382,7 +8354,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	if (err) {
 	    errmsg(err, prn);
 	} else if (s->flags & CONSOLE_EXEC) {
-	    real_record_command(line, CONSOLE_EXEC);
+	    record_command_verbatim(line);
 	}
 	return err;
     } 
@@ -8532,9 +8504,6 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 
 	    err = execute_script(runfile, NULL, prn, s->flags);
 	    gretl_set_batch_mode(save_batch);
-	    if (!err && (orig_flags & CONSOLE_EXEC)) {
-		console_run = 1;
-	    }
 	    s->flags = orig_flags;
 	}
 	break;
@@ -8587,7 +8556,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 
     if ((s->flags & CONSOLE_EXEC) && !err) {
 	/* log the specific command */
-	record_console_command(line, &console_run);
+	record_command_verbatim(line);
     }
 
     /* save specific output buffer? */
