@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-28 17:27-0400\n"
-"PO-Revision-Date: 2011-10-30 18:53-0300\n"
+"PO-Revision-Date: 2011-10-30 19:34-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -16477,11 +16477,11 @@ msgstr "regressores"
 
 #: plugin/addons-i18n.c:45
 msgid "AB-model"
-msgstr "Modelo A-B"
+msgstr "modelo A-B"
 
 #: plugin/addons-i18n.c:46
 msgid "C-model"
-msgstr "Modelo-C"
+msgstr "modelo-C"
 
 #: plugin/addons-i18n.c:48
 msgid "Exogenous regressors"
@@ -16517,7 +16517,7 @@ msgstr "horizonte"
 
 #: plugin/addons-i18n.c:58
 msgid "plain"
-msgstr "texto simples"
+msgstr "simples"
 
 #: plugin/addons-i18n.c:59
 msgid "template"
