@@ -24,9 +24,7 @@ void free_command_stack (void);
 
 int add_command_to_stack (const char *s);
 
-void delete_last_command (void);
-
-int model_command_init (int model_ID);
+int add_model_command_to_stack (const char *s, int model_ID);
 
 gchar *get_logfile_content (int *err);
 

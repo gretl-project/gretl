@@ -57,7 +57,7 @@ int lib_command_strcpy (const char *s);
 
 int lib_command_strcat (const char *s);
 
-int record_command_verbatim (const char *s);
+int record_command_verbatim (void);
 
 int user_fopen (const char *fname, char *fullname, PRN **pprn);
 

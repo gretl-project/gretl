@@ -4043,7 +4043,7 @@ int call_pca_plugin (VMatrix *cmat, DATASET *dset,
         return 1;
     }
         
-    err = (* pca_from_cmatrix) (cmat, dset, opt, prn);
+    err = (*pca_from_cmatrix) (cmat, dset, opt, prn);
     close_plugin(handle);
     
     return err;

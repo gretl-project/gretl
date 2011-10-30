@@ -5004,4 +5004,115 @@ static int get_png_bounds_info (png_bounds *bounds)
     return ret;
 }
 
+#ifndef G_OS_WIN32
+
+#include <signal.h>
+#include <errno.h>
+
+static int get_terminal (char *s)
+{
+    const gchar *terms[] = {
+	"xterm",
+	"rxvt",
+	"gnome-terminal",
+	"kterm",
+	"urxvt",
+	NULL
+    };
+    gchar *test;
+    int i;
+
+    for (i=0; terms[i] != NULL; i++) {
+	test = g_find_program_in_path(terms[i]);
+	if (test != NULL) {
+	    g_free(test);
+	    strcpy(s, terms[i]);
+	    return 0;
+	}
+    }
+
+    errbox(_("Couldn't find a usable terminal program"));
+    return 1;
+}
+
+#endif /* !G_OS_WIN32 */
+
+void launch_gnuplot_interactive (void)
+{
+# ifdef G_OS_WIN32
+    gchar *gpline;
+
+    gpline = g_strdup_printf("\"%s\" \"%s\" -", 
+			     gretl_gnuplot_path(),
+			     gretl_plotfile());
+    create_child_process(gpline);
+    g_free(gpline);
+# else 
+    char term[16];
+    char fname[MAXLEN];
+    int err = 0;
+
+    strcpy(fname, gretl_plotfile());
+
+    if (gnuplot_has_wxt()) {
+	*term = '\0';
+    } else {
+	err = get_terminal(term);
+    } 
+
+    if (!err) {
+	const char *gp = gretl_gnuplot_path();
+	GError *error = NULL;
+	gchar *argv[12];
+	int ok;
+
+	if (*term == '\0') {
+	    /* no controller is needed */
+	    argv[0] = (char *) gp;
+	    argv[1] = fname;
+	    argv[2] = "-persist";
+	    argv[3] = NULL;
+	} else if (strstr(term, "gnome")) {
+	    /* gnome-terminal */
+	    argv[0] = term;
+	    argv[1] = "--geometry=40x4";
+	    argv[2] = "--title=\"gnuplot: type q to quit\"";
+	    argv[3] = "-x";
+	    argv[4] = (char *) gp;
+	    argv[5] = fname;
+	    argv[6] = "-";
+	    argv[7] = NULL;
+	} else {	    
+	    /* xterm, rxvt, kterm */
+	    argv[0] = term;
+	    argv[1] = "+sb";
+	    argv[2] = "+ls";
+	    argv[3] = "-geometry";
+	    argv[4] = "40x4";
+	    argv[5] = "-title";
+	    argv[6] = "gnuplot: type q to quit";
+	    argv[7] = "-e";
+	    argv[8] = (char *) gp;
+	    argv[9] = fname;
+	    argv[10] = "-";
+	    argv[11] = NULL;
+	} 
+
+	ok = g_spawn_async(NULL, /* working dir */
+			   argv,
+			   NULL, /* env */
+			   G_SPAWN_SEARCH_PATH,
+			   NULL, /* child_setup */
+			   NULL, /* user_data */
+			   NULL, /* child_pid ptr */
+			   &error);
+	if (!ok) {
+	    errbox(error->message);
+	    g_error_free(error);
+	} 
+    }
+#endif /* !G_OS_WIN32 */
+}
+
+
 

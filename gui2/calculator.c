@@ -1310,7 +1310,6 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
 
 static int calc_finish_genr (void)
 {
-    char *cmdline = get_lib_cmdline();
     PRN *prn;
     int err = 0;
 
@@ -1318,12 +1317,12 @@ static int calc_finish_genr (void)
 	return 1;
     }
 
-    err = generate(cmdline, dataset, OPT_NONE, prn); 
+    err = generate(get_lib_cmdline(), dataset, OPT_NONE, prn); 
 
     if (err) {
 	errbox(gretl_print_get_buffer(prn));
-	delete_last_command();
     } else {
+	record_command_verbatim();
 	populate_varlist();
 	mark_dataset_as_modified();
     }
@@ -1401,10 +1400,6 @@ static void get_random (GtkWidget *w, CalcChild *child)
     }
 
     gretl_pop_c_numeric_locale();
-
-    if (check_and_record_command()) {
-	return;
-    }
 
     calc_finish_genr();
 }

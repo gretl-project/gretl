@@ -43,7 +43,6 @@
 #define CMD_DEBUG 0
 
 static char logname[FILENAME_MAX]; /* filename for log */
-static char *logline;              /* buffered command line */
 static PRN *logprn;                /* log printer */
 static int n_cmds;                 /* number of commands logged */
 static int prev_ID;                /* keep track of model ID */
@@ -61,10 +60,6 @@ void free_command_stack (void)
 #if CMD_DEBUG
     fprintf(stderr, "free_command_stack\n");
 #endif
-    if (logline != NULL) {
-	free(logline);
-	logline = NULL;
-    }
 
     if (logprn != NULL) {
 	gretl_print_destroy(logprn);
@@ -159,68 +154,30 @@ static int logfile_init (void)
     }
 }
 
-/* write out the last stacked command line, if any, and
-   flush the log stream */
-
-static int flush_logfile (void)
+static int real_write_log_entry (const char *s)
 {
-    int n_cmds_save;
-    int err;
-
-    if (n_cmds == 0) {
-	/* nothing to be done */
-	return 0;
-    }
-
-    gretl_error_clear();
-    n_cmds_save = n_cmds;
+    int err = 0;
 
 #if CMD_DEBUG
-    fprintf(stderr, "flush_logfile: logname='%s', logprn=%p\n",
+    fprintf(stderr, "real_write_log_entry: logname='%s', logprn=%p\n",
 	    logname, (void *) logprn);
 #endif
 
     if (logprn == NULL) {
 	err = logfile_init();
-	if (err) {
-	    return err;
-	}
     }
 
-    n_cmds = n_cmds_save;
+    if (!err) {
+	int n = strlen(s);
 
-#if CMD_DEBUG
-    fprintf(stderr, "n_cmds = %d, logline='%s'\n", n_cmds, logline);
-#endif
-
-    n_cmds = n_cmds_save;
-
-    if (logline != NULL) {
-	int n = strlen(logline);
-
-	pputs(logprn, logline);
-	if (logline[n-1] != '\n') {
+	pputs(logprn, s);
+	if (s[n-1] != '\n') {
 	    pputc(logprn, '\n');
 	}
-	free(logline);
-	logline = NULL;
+	gretl_print_flush_stream(logprn);
     }
 
-    gretl_print_flush_stream(logprn);
-
-    return 0;
-}
-
-/* in case an error was discovered after buffering a given command,
-   strike it from the record */
-
-void delete_last_command (void)
-{
-    if (logline != NULL) {
-	free(logline);
-	logline = NULL;
-	n_cmds--;
-    }
+    return err;
 }
 
 /* for a given GUI command (not associated with a model): place it in
@@ -234,68 +191,53 @@ int add_command_to_stack (const char *s)
 	return 1;
     }
 
-    /* not a model command, so delete record of
+    /* not a model command, so zero out record of
        previous model ID number */
     prev_ID = 0;
 
-    /* is there a previous buffered command? if so, send it to
-       the logfile first */
-    if (logline != NULL) {
-	err = flush_logfile();
-	if (err) {
-	    return err;
-	}
-    }
-
-    /* buffer the current line in case we need to delete it */
-    logline = gretl_strdup(s);
-    if (logline == NULL) {
-	return E_ALLOC;
-    }
-
-#if CMD_DEBUG
-    fprintf(stderr, "Added to stack: '%s'\n", s);
-#endif 
-
-    n_cmds++;
-
-    if (strlen(s) > 2 && *s != '#' && 
-	strncmp(s, "help", 4) &&
-	strncmp(s, "info", 4) &&
-	strncmp(s, "list", 4) &&
-	strncmp(s, "open", 4) &&
-	strncmp(s, "quit", 4)) {
-	set_commands_recorded();
-    }
-
-    return 0;
-}
-
-/* save to the log a command associated with a particular
-   model */
-
-int model_command_init (int model_ID)
-{
-    /* pre-check the stored command line */
-    int err = check_lib_command();
+    err = real_write_log_entry(s);
 
     if (!err) {
+#if CMD_DEBUG
+	fprintf(stderr, "Written to log: '%s'\n", s);
+#endif 
 	n_cmds++;
-	err = flush_logfile();
-	if (err) {
-	    n_cmds--;
-	} else {
-	    char *line = get_lib_cmdline();
-	    CMD *libcmd = get_lib_cmd();
 
-	    if (model_ID != prev_ID) {
-		pprintf(logprn, "# %s %d\n", _("model"), model_ID);
-		prev_ID = model_ID;
-	    }
-	    echo_cmd(libcmd, dataset, line, CMD_RECORDING, logprn);
+	if (strlen(s) > 2 && *s != '#' && 
+	    strncmp(s, "help", 4) &&
+	    strncmp(s, "info", 4) &&
+	    strncmp(s, "list", 4) &&
+	    strncmp(s, "open", 4) &&
+	    strncmp(s, "quit", 4)) {
 	    set_commands_recorded();
 	}
+    }
+
+    return err;
+}
+
+int add_model_command_to_stack (const char *s, int model_ID)
+{
+    int err = 0;
+
+    if (s == NULL || *s == '\0') {
+	return 1;
+    }
+
+    if (logprn == NULL) {
+	err = logfile_init();
     } 
+
+    if (!err) {
+	if (model_ID != prev_ID) {
+	    pprintf(logprn, "# %s %d\n", _("model"), model_ID);
+	    prev_ID = model_ID;
+	}
+	err = real_write_log_entry(s);
+	if (!err) {
+	    set_commands_recorded();
+	}
+    }
 
     return err;
 }
@@ -311,13 +253,7 @@ gchar *get_logfile_content (int *err)
 {
     gchar *s = NULL;
 
-    if (n_cmds == 0) {
-	return NULL;
-    }
-
-    *err = flush_logfile();
-
-    if (!*err) {
+    if (n_cmds > 0) {
 	*err = gretl_file_get_contents(logname, &s, NULL);
     }
 
@@ -331,13 +267,7 @@ void view_command_log (void)
     if (!session_open && n_cmds == 0) {
 	warnbox(_("The command log is empty"));
     } else {
-	int err = flush_logfile();
-
-	if (err) {
-	    gui_errmsg(err);
-	} else {
-	    view_file(logname, 0, 0, 78, 370, VIEW_LOG);
-	}
+	view_file(logname, 0, 0, 78, 370, VIEW_LOG);
     }
 }
 
@@ -366,8 +296,6 @@ void set_session_log (const char *dirname, int code)
     fprintf(stderr, "set_session_log: dirname = '%s'\n", dirname);
     fprintf(stderr, "session_open = %d\n", session_open);
 #endif
-
-    flush_logfile();
 
     if (code == LOG_SAVE) {
 	strcpy(tmp, dirname);

@@ -2172,7 +2172,15 @@ windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     const char *buf;
     int w, nlines;
 
-    vwin = gretl_viewer_new(VIEW_MODEL, title, pmod, 1);
+    if (title == NULL) {
+	gchar *s = g_strdup_printf(_("gretl: model %d"), pmod->ID);
+
+	vwin = gretl_viewer_new(VIEW_MODEL, s, pmod, 1);
+	g_free(s);
+    } else {
+	vwin = gretl_viewer_new(VIEW_MODEL, title, pmod, 1);
+    }
+
     if (vwin == NULL) {
 	return NULL;
     }

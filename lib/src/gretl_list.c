@@ -1282,17 +1282,35 @@ int *gretl_list_from_vector (const gretl_vector *v, int *err)
     return list;
 }
 
+#define LN_10 2.30258509299404590
+
+static int integer_length (int k)
+{
+    double x = k;
+    int len = 0;
+
+    if (x < 0) {
+	x = fabs(x);
+	len = 1;
+    } 
+
+    if (x < 10) {
+	len += 1;
+    } else {
+	len += (int) ceil(log(x)/LN_10);
+	len += (k % 10 == 0);
+    }
+
+    return len;
+}
+
 /**
  * gretl_list_to_string:
  * @list: array of integers.
  * 
  * Prints the given @list of integers into a newly
  * allocated string, separated by single spaces and with
- * one leading space.  This function is designed to handle 
- * positive integers in a range that is sensible for ID 
- * numbers of variables, typically with three digits or less, 
- * and will fail if the list contains any numbers greater 
- * than 9998.
+ * one leading space.
  *
  * Returns: The string representation of the list on success,
  * or NULL on failure.
@@ -1301,33 +1319,35 @@ int *gretl_list_from_vector (const gretl_vector *v, int *err)
 char *gretl_list_to_string (const int *list)
 {
     char *buf;
-    char numstr[8];
-    int len, i, err = 0;
+    int i, len = 1;
 
-    len = 6 * (list[0] + 1);
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) {
+	    len += 2;
+	} else {
+	    len += integer_length(list[i]) + 1;
+	}
+    }
+
     if (len > MAXLINE - 32) {
+	/* string would be too long for command line */
 	return NULL;
     }
 
     buf = malloc(len);
-    if (buf == NULL) {
-	return NULL;
-    }
 
-    *buf = '\0';
+    if (buf != NULL) {
+	char numstr[16];
 
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) {
-	    strcat(buf, " ;");
-	} else {
-	    sprintf(numstr, " %d", list[i]);
-	    strcat(buf, numstr);
+	*buf = '\0';
+	for (i=1; i<=list[0]; i++) {
+	    if (list[i] == LISTSEP) {
+		strcat(buf, " ;");
+	    } else {
+		sprintf(numstr, " %d", list[i]);
+		strcat(buf, numstr);
+	    }
 	}
-    }
-
-    if (err) {
-	free(buf);
-	buf = NULL;
     }
 
     return buf;

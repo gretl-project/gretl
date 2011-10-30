@@ -99,9 +99,7 @@ static gretlopt pca_flag_dialog (void)
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new (_("Variables to save:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-    gtk_widget_show(tmp);
     gtk_box_pack_start(GTK_BOX(internal_vbox), hbox, TRUE, TRUE, 5);
-    gtk_widget_show(hbox); 
 
     /* Only those with eigenvalues > 1.0 */
     button = gtk_radio_button_new_with_label(NULL, 
@@ -111,7 +109,6 @@ static gretlopt pca_flag_dialog (void)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_pca_flag), finfo);
     g_object_set_data(G_OBJECT(button), "opt", GINT_TO_POINTER(PCA_SAVE_MAIN)); 
-    gtk_widget_show (button);   
 
     /* All components */
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
@@ -121,16 +118,11 @@ static gretlopt pca_flag_dialog (void)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_pca_flag), finfo);
     g_object_set_data(G_OBJECT(button), "opt", GINT_TO_POINTER(PCA_SAVE_ALL)); 
-    gtk_widget_show (button);
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), internal_vbox, TRUE, TRUE, 5);
-    gtk_widget_show(hbox);
-
-    gtk_widget_show(internal_vbox);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-    gtk_widget_show(hbox);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_END);
@@ -141,7 +133,6 @@ static gretlopt pca_flag_dialog (void)
     gtk_container_add(GTK_CONTAINER(hbox), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(cancel_set_flag), finfo);
-    gtk_widget_show(tmp);
 
     /* "OK" button */
     tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
@@ -150,16 +141,18 @@ static gretlopt pca_flag_dialog (void)
 		     G_CALLBACK(pca_dialog_finalize), finfo);
     gtk_widget_set_can_default(tmp, TRUE);
     gtk_widget_grab_default(tmp);
-    gtk_widget_show(tmp);
 
-    gtk_widget_show(dialog);
+    gtk_widget_show_all(dialog);
 
     gtk_main();
 
-    if (flag == PCA_SAVE_MAIN) return OPT_O;
-    if (flag == PCA_SAVE_ALL) return OPT_A;
-
-    return OPT_NONE;
+    if (flag == PCA_SAVE_MAIN) {
+	return OPT_O;
+    } else if (flag == PCA_SAVE_ALL) {
+	return OPT_A;
+    } else {
+	return OPT_NONE;
+    }
 }
 
 #define PCA_COLS 7

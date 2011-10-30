@@ -71,6 +71,8 @@ void filter_gnuplot_file (int ttype, int latin, int mono,
 
 void run_gp_script (gchar *buf);
 
+void launch_gnuplot_interactive (void);
+
 int dump_plot_buffer (const char *buf, const char *fname,
 		      int addpause);
 

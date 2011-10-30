@@ -361,8 +361,8 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 	    maybe_start_editing();
 	} else {
 	    register_data(NULLDATA_STARTED);
-	    sprintf(setline, "nulldata %d", dataset->n);
-	    record_command_verbatim(setline);
+	    lib_command_sprintf("nulldata %d", dataset->n);
+	    record_command_verbatim();
 	}
     } else {
 	if (delete_markers) {
@@ -372,7 +372,8 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
     }
 
     if (!err && *record != '\0') {
-	record_command_verbatim(record);
+	lib_command_strcpy(record);
+	record_command_verbatim();
     }
 
 #if DWDEBUG
