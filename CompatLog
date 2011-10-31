@@ -2,8 +2,8 @@ version 1.9.7, in progress
 
 The optional "ymax" parameter to the "logistic" estimation
 command is now treated as a regular option. This means that
-any scripts that use the syntax "ymax=<value>" should be
-revised to use "--ymax=<value>".
+any scripts that use the syntax "ymax=value" should be
+revised to use "--ymax=value".
 
 2011-10-17 version 1.9.6
 
