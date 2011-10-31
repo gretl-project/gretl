@@ -2003,10 +2003,15 @@ int freqdist (int varno, const DATASET *dset,
     double fmin = NADBL;
     double fwid = NADBL;
     int n_bins = 0;
+    int do_graph = 0;
     int err;
 
+    if (graph != NULL) {
+	do_graph = *graph;
+    }
+
     if (opt & (OPT_Q | OPT_S)) {
-	*graph = 0;
+	do_graph = 0;
     }
 
     if (opt & OPT_O) {
@@ -2028,16 +2033,20 @@ int freqdist (int varno, const DATASET *dset,
 	    record_freq_test(freq);
 	}
 
-	if (*graph && freq->numbins < 2) {
-	    *graph = 0;
+	if (do_graph && freq->numbins < 2) {
+	    do_graph = 0;
 	}
 
-	if (*graph && plot_freq(freq, dist)) {
+	if (do_graph && plot_freq(freq, dist)) {
 	    pputs(prn, _("gnuplot command failed\n"));
-	    *graph = 0;
+	    do_graph = 0;
 	}
 
 	free_freq(freq);
+    }
+
+    if (graph != NULL) {
+	*graph = do_graph;
     }
 
     return err;
