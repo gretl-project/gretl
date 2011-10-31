@@ -51,7 +51,6 @@ struct xlsx_info_ {
     char **sheetnames;
     char **filenames;
     int selsheet;
-    int selsheet_set;
     int n_strings;
     char **strings;
     DATASET *dset;
@@ -73,7 +72,6 @@ static void xlsx_info_init (xlsx_info *xinfo)
     xinfo->sheetnames = NULL;
     xinfo->filenames = NULL;
     xinfo->selsheet = 0;
-    xinfo->selsheet_set = 0;
     xinfo->n_strings = 0;
     xinfo->strings = NULL;
     xinfo->dset = NULL;
@@ -964,7 +962,6 @@ static int xlsx_verify_specific_sheet (xlsx_info *xinfo,
 	if (!err) {
 	    /* record the pre-checked sheet selection */
 	    xinfo->selsheet = idx;
-	    xinfo->selsheet_set = 1;
 	}
     }
 
@@ -973,6 +970,7 @@ static int xlsx_verify_specific_sheet (xlsx_info *xinfo,
 
 static int xlsx_gather_sheet_names (xlsx_info *xinfo, 
 				    const char *insheet,
+				    int *list, 
 				    PRN *prn)
 {
     gchar *wb_name = g_strdup_printf("xl%cworkbook.xml", SLASH); 
@@ -988,27 +986,38 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo,
 
     if (!err) {
 	const char *sname;
-	int have_insheet = 0;
+	int have_insheet_name = 0;
+	int target_sheet_number = 0;
 	int insheet_idx = 0;
 
 	if (insheet != NULL && *insheet != '\0') {
-	    /* try looking for specified sheet */
-	    have_insheet = 1;
+	    /* try looking for a worksheet specified by name */
+	    have_insheet_name = 1;
+	    insheet_idx = -1;
+	} else if (list != NULL && list[0] >= 1 && list[1] > 0) {
+	    /* or sheet specified by (1-based) sequence number */
+	    target_sheet_number = list[1];
 	    insheet_idx = -1;
 	}
 
 	fprintf(stderr, "Found these worksheets:\n");
 	for (i=0; i<xinfo->n_sheets; i++) {
 	    sname = xinfo->sheetnames[i];
-	    fprintf(stderr, "%d: %s (%s)\n", i, sname, xinfo->filenames[i]);
-	    if (insheet_idx < 0 && !strcmp(insheet, sname)) {
+	    fprintf(stderr, "%d: %s (%s)\n", i+1, sname, xinfo->filenames[i]);
+	    if (have_insheet_name) {
+		if (insheet_idx < 0 && !strcmp(insheet, sname)) {
+		    /* found the name we were looking for */
+		    insheet_idx = i;
+		}
+	    } else if (target_sheet_number == i + 1) {
+		/* found the number we were looking for */
 		insheet_idx = i;
 	    }
 	}
 
 	if (insheet_idx < 0) {
 	    /* sheet was specified but not found */
-	    if (integer_string(insheet)) {
+	    if (have_insheet_name && integer_string(insheet)) {
 		/* try interpreting as plain integer index? */
 		insheet_idx = atoi(insheet) - 1;
 		if (insheet_idx < 0 || insheet_idx >= xinfo->n_sheets) {
@@ -1017,13 +1026,17 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo,
 		} 
 	    }
 	    if (insheet_idx < 0) {
-		pprintf(prn, "'%s': no such worksheet\n", insheet);
+		if (have_insheet_name) {
+		    gretl_errmsg_sprintf(_("'%s': no such worksheet"), insheet);
+		} else {
+		    gretl_errmsg_set(_("Invalid argument for worksheet import"));
+		}
 		err = E_DATA;
 	    }
 	}
 
 	if (!err) {
-	    if (have_insheet) {
+	    if (have_insheet_name || target_sheet_number > 0) {
 		err = xlsx_verify_specific_sheet(xinfo, insheet_idx, prn);
 	    } else {
 		err = xlsx_verify_sheets(xinfo, prn);
@@ -1058,37 +1071,30 @@ static void record_xlsx_params (xlsx_info *xinfo, int *list)
     }
 }
 
-/* When called from the command-line, we might have a
-   pre-specified worksheet name, and/or we may have a 
-   numerical @list containing sheet number, xoffset and 
-   yoffset.
-
-   If a sheetname has been given, it will already have
-   been checked and the corresponding 0-based index
-   will be recorded in xinfo->selsheet, but we still
-   have to handle the case where a list is given.
+/* When we're called from the command-line, the @list
+   argument may contain a sheet number followed by
+   x and y offsets. If a sheet number was given, it is
+   already handled by this point: here we check and
+   record the offsets, if present.
 */
 
-static int set_xlsx_params_from_cli (xlsx_info *xinfo, 
-				     const int *list)
+static int set_xlsx_offsets_from_cli (xlsx_info *xinfo, 
+				      const int *list)
 {
-    int gotlist = (list != NULL && list[0] == 3);
     int err = 0;
 
-    if (gotlist) {
-	if (!xinfo->selsheet_set) {
-	    /* convert sheet number to zero-based */
-	    xinfo->selsheet = list[1] - 1;
-	}
-	xinfo->xoffset = list[2];
-	xinfo->yoffset = list[3];
-    } 
+    if (list != NULL && list[0] == 3) {
+	int xoff = list[2];
+	int yoff = list[3];
 
-    if (xinfo->selsheet < 0 || xinfo->selsheet >= xinfo->n_sheets ||
-	xinfo->xoffset < 0 || xinfo->yoffset < 0) {
-	gretl_errmsg_set(_("Invalid argument for worksheet import"));
-	err = E_DATA;
-    }
+	if (xoff < 0 || yoff < 0) {
+	    gretl_errmsg_set(_("Invalid argument for worksheet import"));
+	    err = E_DATA;
+	} else{
+	    xinfo->xoffset = xoff;
+	    xinfo->yoffset = yoff;
+	}
+    } 
 
     return err;
 }
@@ -1255,9 +1261,7 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 
     xlsx_info_init(&xinfo);
 
-    if (!err) {
-	err = xlsx_gather_sheet_names(&xinfo, sheetname, prn);
-    }
+    err = xlsx_gather_sheet_names(&xinfo, sheetname, list, prn);
 
     if (!err) {
 	if (gui) {
@@ -1269,7 +1273,7 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 		goto bailout;
 	    } 
 	} else {
-	    err = set_xlsx_params_from_cli(&xinfo, list);
+	    err = set_xlsx_offsets_from_cli(&xinfo, list);
 	} 
     }
 
