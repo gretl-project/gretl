@@ -2011,6 +2011,7 @@ int freqdist (int varno, const DATASET *dset,
     }
 
     if (opt & (OPT_Q | OPT_S)) {
+	/* --quiet or --silent trump other settings */
 	do_graph = 0;
     }
 
