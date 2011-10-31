@@ -10827,7 +10827,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    /* bundle created on the fly */
 	    p->err = gretl_bundle_add_or_replace(r->v.b, p->lh.name);
 	    if (!p->err) {
-		/* avoid destroying bundle */
+		/* avoid destroying the returned bundle */
 		r->v.b = NULL;
 	    }
 	} else {

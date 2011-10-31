@@ -720,7 +720,7 @@ static void gui_record_data_opening (const char *fname, const int *list)
 	}
     }
 
-    check_and_record_command();
+    record_command_verbatim();
 
     if (*datafile != '\0') {
 	char tmp[FILENAME_MAX];
@@ -4428,7 +4428,7 @@ static int set_sample_from_model (MODEL *pmod)
 	if (full) {
 	    restore_sample_state(FALSE);
 	    lib_command_strcpy("smpl --full");
-	    check_and_record_command();
+	    record_command_verbatim();
 	} else {
 	    char comment[64];
 

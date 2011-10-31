@@ -1195,13 +1195,10 @@ static void record_seed (GtkWidget *w, guint32 *s)
 static void set_rand_seed (GtkWidget *w, guint32 *s)
 {
     guint32 newseed = *s;
-	
-    lib_command_sprintf("set seed %u", newseed); 
-    if (check_and_record_command()) {
-	return;
-    }
 
     gretl_rand_set_seed(newseed);
+    lib_command_sprintf("set seed %u", newseed); 
+    record_command_verbatim();
 }
 
 void rand_seed_dialog (void)
@@ -1527,12 +1524,13 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	
 	lib_command_sprintf("smpl %s --restrict%s", restr, replace);
 
-	if (check_and_record_command()) {
+	if (parse_lib_command()) {
 	    return TRUE;
 	}
 
 	err = bool_subsample(rset->opt);
 	if (!err) {
+	    record_lib_command();
 	    gtk_widget_destroy(rset->dlg);
 	} 	
     } else if (rset->opt & OPT_O) {
@@ -1543,12 +1541,13 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	lib_command_sprintf("smpl %s --dummy%s", dumv, replace);
 	g_free(dumv);
 
-	if (check_and_record_command()) {
+	if (parse_lib_command()) {
 	    return TRUE;
 	}	
 
 	err = bool_subsample(rset->opt);
 	if (!err) {
+	    record_lib_command();
 	    gtk_widget_destroy(rset->dlg);
 	} 
     } else if (rset->opt & OPT_N) {
@@ -1557,12 +1556,13 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 
 	subn = obs_button_get_value(rset->spin1);
 	lib_command_sprintf("smpl %d --random", subn);
-	if (check_and_record_command()) {
+	if (parse_lib_command()) {
 	    return TRUE;
 	}
 
 	err = bool_subsample(rset->opt);
 	if (!err) {
+	    record_lib_command();
 	    gtk_widget_destroy(rset->dlg);
 	} 
     } else {
@@ -1597,13 +1597,14 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 
 	if (t1 != dataset->t1 || t2 != dataset->t2) {
 	    lib_command_sprintf("smpl %s %s", s1, s2);
-	    if (check_and_record_command()) {
+	    if (parse_lib_command()) {
 		return TRUE;
 	    }
 	    err = do_set_sample();
 	    if (err) {
 		gui_errmsg(err);
 	    } else {
+		record_lib_command();
 		gtk_widget_destroy(rset->dlg);
 		set_sample_label(dataset);
 	    }

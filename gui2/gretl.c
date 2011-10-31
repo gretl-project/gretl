@@ -1965,7 +1965,7 @@ static void restore_sample_callback (void)
     if (!err) {
 	set_sample_label(dataset);    
 	lib_command_strcpy("smpl --full");
-	check_and_record_command();
+	record_command_verbatim();
     }
 }
 

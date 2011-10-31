@@ -929,7 +929,7 @@ int save_named_bundle (const char *name)
 /* callback for adding icons representing bundles to the GUI
    session window */
 
-static void (*bundle_add_callback)(void);
+static void (*bundle_add_callback)(gretl_bundle *);
 
 /**
  * set_bundle_add_callback:
@@ -961,17 +961,17 @@ int gretl_bundle_add_or_replace (gretl_bundle *bundle, const char *name)
     bundle->level = level;
 
     if (b0idx >= 0) {
-	/* just replace on stack */
+	/* replace on stack */
 	gretl_bundle_destroy(bundles[b0idx]);
 	bundles[b0idx] = bundle;
     } else {
 	err = gretl_bundle_push(bundle, 0);
+    }
 
-	if (bundle_add_callback != NULL && 
-	    !bundle_name_is_temp(bundle->name) &&
-	    gretl_function_depth() == 0) {
-	    (*bundle_add_callback)();
-	}
+    if (!err && bundle_add_callback != NULL && 
+	!bundle_name_is_temp(bundle->name) &&
+	gretl_function_depth() == 0) {
+	(*bundle_add_callback)(bundle);
     }
 
     return err;

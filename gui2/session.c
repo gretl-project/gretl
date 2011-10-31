@@ -49,7 +49,6 @@
 #include "matrix_extra.h"
 #include "cmd_private.h"
 #include "gretl_scalar.h"
-#include "gretl_bundle.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -261,7 +260,7 @@ static int real_delete_model_from_session (SESSION_MODEL *model);
 static void make_short_label_string (char *targ, const char *src);
 static gui_obj *get_gui_obj_by_data (void *finddata);
 static void add_user_matrix_callback (void);
-static void add_bundle_callback (void);
+static void add_bundle_callback (gretl_bundle *bundle);
 
 static int session_graph_count;
 static int commands_recorded;
@@ -2315,6 +2314,22 @@ static void maybe_delete_session_object (gui_obj *obj)
     }
 }
 
+static gui_obj *get_gui_obj_by_name (const char *name)
+{
+    GList *mylist = g_list_first(iconlist);
+    gui_obj *obj = NULL;
+
+    while (mylist != NULL) {
+	obj = (gui_obj *) mylist->data;
+	if (!strcmp(name, obj->name)) {
+	    return obj;
+	}
+	mylist = mylist->next;
+    }
+
+    return NULL;
+}
+
 static gui_obj *get_gui_obj_by_data (void *targ)
 {
     GList *mylist = g_list_first(iconlist);
@@ -2702,14 +2717,17 @@ static void add_user_matrix_callback (void)
     mark_session_changed();
 }
 
-static void add_bundle_callback (void)
+static void add_bundle_callback (gretl_bundle *bundle)
 {
     if (iconview != NULL) {
-	int n = n_user_bundles();
+	/* first check for replacement of an existing bundle */
+	const char *name = gretl_bundle_get_name(bundle);
+	gui_obj *obj = get_gui_obj_by_name(name);
 
-	if (n > 0) {
-	    session_add_icon(get_gretl_bundle_by_index(n-1), GRETL_OBJ_BUNDLE, 
-			     ICON_ADD_SINGLE);
+	if (obj != NULL) {
+	    obj->data = bundle;
+	} else {
+	    session_add_icon(bundle, GRETL_OBJ_BUNDLE, ICON_ADD_SINGLE);
 	}
     } else if (autoicon_on()) {
 	view_session();

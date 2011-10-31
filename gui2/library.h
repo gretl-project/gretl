@@ -59,6 +59,10 @@ int lib_command_strcat (const char *s);
 
 int record_command_verbatim (void);
 
+int parse_lib_command (void);
+
+int record_lib_command (void);
+
 int user_fopen (const char *fname, char *fullname, PRN **pprn);
 
 gint bufopen (PRN **pprn);
@@ -315,8 +319,6 @@ void save_latex (PRN *prn, const char *fname);
 void do_save_text (char *fname, MODEL *pmod);
 
 int gui_exec_line (ExecState *s, DATASET *dset);
-
-int check_and_record_command (void);
 
 #if USE_GTK_SPINNER
 
