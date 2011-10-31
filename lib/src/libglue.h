@@ -36,7 +36,7 @@ MODEL logit_probit (int *list, DATASET *dset,
 		    int ci, gretlopt opt, PRN *prn);
 
 MODEL logistic_driver (const int *list, DATASET *dset,
-		       const char *param); 
+		       gretlopt opt); 
 
 MODEL tobit_driver (const int *list, DATASET *dset, 
 		    gretlopt opt, PRN *prn);

@@ -5719,9 +5719,13 @@
       <arguments>
         <argument>depvar</argument>
         <argument>indepvars</argument>
-	<argument optional="true" flag="ymax=">value</argument>
       </arguments>
       <options>
+	<option>
+	  <flag>--ymax</flag>
+	  <optparm>value</optparm>
+	  <effect>specify maximum of dependent variable</effect>
+	</option>	
 	<option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
@@ -5729,7 +5733,7 @@
       </options>
       <examples>
         <example>logistic y const x</example>
-        <example>logistic y const x ymax=50</example>
+        <example>logistic y const x --ymax=50</example>
       </examples>
     </usage>
 
@@ -5743,29 +5747,29 @@
 	  graphic="logistic1"/>
       </para>
 
-      <para context="cli">The dependent variable must be strictly
-	positive.  If it is a decimal fraction, between 0 and 1, the
-	default is to use a <math>y</math><sup>*</sup> value
-	(the asymptotic maximum of the dependent variable) of 1. If
-	the dependent variable is a percentage, between 0 and 100, the
-	default <math>y</math><sup>*</sup> is 100.
+      <para>
+	The dependent variable must be strictly positive.  If all its
+	values lie between 0 and 1, the default is to use a
+	<math>y</math><sup>*</sup> value (the asymptotic maximum of
+	the dependent variable) of 1; if its values lie between 0 and
+	100, the default <math>y</math><sup>*</sup> is 100.
       </para>
 
       <para context="cli">
-	If you wish to set a different maximum, use the optional
-	<opt>ymax=</opt><repl>value</repl> syntax following the list of
-	regressors.  The supplied value must be greater than all of the
-	observed values of the dependent variable.
+	If you wish to set a different maximum, use the
+	<opt>--ymax</opt> option. Note that the supplied value must be
+	greater than all of the observed values of the dependent
+	variable.
       </para>
 
       <para context="gui">
-	You are presented with a dialog box that allows you to specify a
-	different maximum if you wish.  The supplied
-	<math>y</math><sup>*</sup> value must be greater than all of
-	the observed values of the dependent variable.
+	You may specify a different maximum <math>y</math> value.
+	Note that the supplied value must be greater than all of the
+	observed values of the dependent variable.
       </para>
 
-      <para>The fitted values and residuals from the regression are
+      <para>
+	The fitted values and residuals from the regression are
 	automatically transformed using 	  
 	<equation status="display" 
 	  tex="\[y=\frac{y^*}{1+e^{-x}}\]"

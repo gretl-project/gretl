@@ -3490,6 +3490,8 @@ MODEL logistic_model (const int *list, double lmax,
     MODEL lmod;
     int err = 0;
 
+    fprintf(stderr, "logistic model: lmax = %g\n", lmax);
+
     gretl_model_init(&lmod); 
 
     llist = gretl_list_copy(list);

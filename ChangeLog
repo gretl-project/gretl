@@ -12,9 +12,13 @@ version 1.9.7, in progress
 - Fix bug: "summary" command with --by option not respecting the
   incoming sample range
 - Fix bug: filename encoding and dates recognition issues with the new
-  xlsx data importer; also try harder to find sheet names
+  xlsx data importer; also try harder to find sheet names/numbers
 - Fix bug: segfault on running certain commands via the GUI after
   replacing the previous dataset with a new one
+- Fix bug: crash on accessing a bundle via its icon if the bundle was
+  replaced while the Icon view window was open
+- Fix bug: crash on using the --quiet option with the "freq" command
+  in a command loop
 
 2011-10-17 version 1.9.6
 - Add an importer for xlsx (Office Open XML) worksheet data

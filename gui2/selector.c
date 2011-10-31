@@ -287,7 +287,7 @@ static int want_radios (selector *sr)
     if (c == PANEL || c == SCATTERS || 
 	c == LOGIT || c == PROBIT || c == HECKIT ||
 	c == XTAB || c == SPEARMAN || c == PCA ||
-	c == QUANTREG || c == DPANEL) {
+	c == QUANTREG || c == DPANEL || c == LOGISTIC) {
 	ret = 1;
     } else if (c == ADD || c == OMIT) {
 	windata_t *vwin = (windata_t *) sr->data;
@@ -2808,8 +2808,8 @@ static int get_rvars2_data (selector *sr, int rows, int context)
 
 static void read_quantreg_extras (selector *sr)
 {
-    GtkWidget *e = gtk_bin_get_child(GTK_BIN(sr->extra[0]));
-    const gchar *s = gtk_entry_get_text(GTK_ENTRY(e));
+    GtkWidget *w = gtk_bin_get_child(GTK_BIN(sr->extra[0]));
+    const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
 	
     if (s == NULL || *s == '\0') {
 	warnbox(_("You must specify a quantile"));
@@ -2832,12 +2832,25 @@ static void read_quantreg_extras (selector *sr)
 	g_free(tmp);
     }
 
-    if (!sr->error && sr->extra[1] != NULL &&
-	gtk_widget_is_sensitive(sr->extra[1])) {
+    w = sr->extra[1];
+
+    if (!sr->error && w != NULL && gtk_widget_is_sensitive(w)) {
 	GtkAdjustment *adj;
 
-	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[1]));
+	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(w));
 	set_optval_double(QUANTREG, OPT_I, gtk_adjustment_get_value(adj));
+    }
+}
+
+static void read_logistic_extras (selector *sr)
+{
+    GtkWidget *w = sr->extra[1];
+
+    if (w != NULL && gtk_widget_is_sensitive(w)) {
+	GtkAdjustment *adj;
+
+	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(w));
+	set_optval_double(LOGISTIC, OPT_M, gtk_adjustment_get_value(adj));
     }
 } 
 
@@ -2925,6 +2938,11 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	read_quantreg_extras(sr);
 	return;
     }
+
+    if (sr->ci == LOGISTIC) {
+	read_logistic_extras(sr);
+	return;
+    }    
 
     if (sr->ci == ELLIPSE) {
 	read_ellipse_alpha(sr);
@@ -3061,7 +3079,8 @@ static void vec_get_spinner_data (selector *sr, int *order,
     }
 }
 
-static void parse_depvar_widget (selector *sr, char *endbit, char **dvlags,
+static void parse_depvar_widget (selector *sr, char *endbit, 
+				 char **dvlags,
 				 char **idvlags)
 {
     int ynum = selector_get_depvar_number(sr);
@@ -3159,7 +3178,7 @@ static void get_anova_list (selector *sr)
 static void compose_cmdlist (selector *sr)
 {
     gint rows = 0, realrows = 0;
-    char endbit[12] = {0};
+    char endbit[32] = {0};
     char *dvlags = NULL;
     char *idvlags = NULL;
     int context = 0;
@@ -5083,6 +5102,37 @@ static void build_quantreg_radios (selector *sr)
     sr->radios[1] = b2;
 }
 
+static GtkWidget *ymax_spinner (void)
+{
+    GtkAdjustment *adj;
+    
+    adj = (GtkAdjustment *) gtk_adjustment_new(1.0, 0, 1e+10, 
+					       0.01, 0.1, 0);
+    return gtk_spin_button_new(adj, 1, 1);
+}
+
+static void build_logistic_radios (selector *sr)
+{
+    GtkWidget *b1, *b2;
+    GSList *group;
+
+    vbox_add_vwedge(sr->vbox);
+
+    b1 = gtk_radio_button_new_with_label(NULL, _("Automatic maximum"));
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, 
+					 _("Specified maximum"));
+    sr->extra[1] = ymax_spinner();
+    pack_switch_with_extra(b2, sr, FALSE, OPT_M, 0, sr->extra[1], NULL);
+    gtk_widget_set_sensitive(sr->extra[1], FALSE);
+    sensitize_conditional_on(sr->extra[1], b2);
+
+    sr->radios[0] = b1;
+    sr->radios[1] = b2;
+}
+
 static void build_ellipse_spinner (selector *sr)
 {
     GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
@@ -5555,7 +5605,9 @@ static void build_selector_radios (selector *sr)
 	build_pca_radios(sr);
     } else if (sr->ci == QUANTREG) {
 	build_quantreg_radios(sr);
-    } 
+    } else if (sr->ci == LOGISTIC) {
+	build_logistic_radios(sr);
+    }
 }
 
 static void build_selector_combo (selector *sr)

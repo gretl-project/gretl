@@ -2946,8 +2946,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		break;
 	    } else if (cmd->ci == ENDLOOP) {
 		; /* implicit break */
-	    } else if (cmd->ci == FREQ) {
-		err = freqdist(cmd->list[1], dset, 0, cmd->opt, prn);
 	    } else if (plain_model_ci(cmd->ci)) {
 		/* model may need special handling */
 		if (loop_is_progressive(loop) && !(cmd->opt & OPT_Q)) {

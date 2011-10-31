@@ -351,7 +351,6 @@ static int real_record_lib_command (int model_ID)
     fprintf(stderr, " line: '%s'\n", libline);
 #endif
 
-    /* arrange to have the command recorded on a stack */
     if (bufopen(&echo)) {
 	err = 1;
     } else {
@@ -400,8 +399,8 @@ int record_model_command_verbatim (int model_ID)
     return add_model_command_to_stack(libline, model_ID);
 }
 
-/* checks the current @libline for validity, but does not
-   of itself record the command */
+/* checks the current @libline for parse-validity, but does 
+   not of itself record the command */
 
 int parse_lib_command (void)
 {
@@ -530,9 +529,11 @@ void add_mahalanobis_data (windata_t *vwin)
 
     if (!err) {
 	liststr = gretl_list_to_string(mlist);
-	lib_command_sprintf("mahal%s --save", liststr);
-	record_command_verbatim();
-	free(liststr);	
+	if (liststr != NULL) {
+	    lib_command_sprintf("mahal%s --save", liststr);
+	    record_command_verbatim();
+	    free(liststr);
+	}	
     }
 }
 
@@ -547,14 +548,12 @@ void add_pca_data (windata_t *vwin)
     if (err) {
 	gui_errmsg(err);
     } else if (dataset->v > oldv) {
-	/* if data were added, register the command */
 	int addv = dataset->v - oldv;
-	char *liststr = gretl_list_to_string(cmat->list);
 	gretlopt opt = (addv == cmat->dim)? OPT_A : OPT_O;
-	const char *flagstr = print_flags(opt, PCA);
+	char *liststr = gretl_list_to_string(cmat->list);
 	
 	if (liststr != NULL) {
-	    lib_command_sprintf("pca%s%s", liststr, flagstr);
+	    lib_command_sprintf("pca%s%s", liststr, print_flags(opt, PCA));
 	    record_command_verbatim();
 	    free(liststr);
 	}
@@ -591,7 +590,6 @@ void VECM_add_EC_data (GtkAction *action, gpointer p)
     sprintf(descrip, "error correction term %d from VECM %d", j, id);
 
     name_new_variable_dialog(vname, descrip, &cancel);
-
     if (cancel) {
 	free(x);
 	return;
@@ -628,7 +626,6 @@ void add_fcast_data (windata_t *vwin)
     sprintf(descrip, _("forecast of %s"), fr->depvar);
 
     name_new_variable_dialog(vname, descrip, &cancel);
-
     if (cancel) {
 	return;
     }
@@ -641,7 +638,6 @@ void add_fcast_data (windata_t *vwin)
 
 	ntodate(stobs, fr->t1, dataset);
 	ntodate(endobs, fr->t2, dataset);
-
 	lib_command_sprintf("fcast %s %s %s", stobs, endobs, vname);
 	record_model_command_verbatim(fr->model_ID);
     }
@@ -721,7 +717,6 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
     }
 
     switch (ci) {
-
     case CORR:
     case PCA:
 	obj = corrlist(libcmd.list, dataset, 
@@ -735,7 +730,6 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 	    }
 	}	    
 	break;
-
     case XTAB:
 	if (libcmd.list[0] == 2) {
 	    obj = single_crosstab(libcmd.list, dataset, opt, 
@@ -745,7 +739,6 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 	    ci = PRINT;
 	}
 	break;
-
     case MAHAL:
 	if (libcmd.list[0] <= 4) {
 	    opt = OPT_V;
@@ -753,14 +746,12 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 	obj = get_mahal_distances(libcmd.list, dataset, opt, 
 				  prn, &err);
 	break;
-
     case SUMMARY:
 	obj = get_summary(libcmd.list, dataset, OPT_NONE, prn, &err);
 	if (!err) {
 	    print_summary(obj, dataset, prn);
 	}
 	break;
-
     case NORMTEST:
 	err = gretl_normality_test(selected_varname(),
 				   dataset, OPT_A, prn);
@@ -842,9 +833,8 @@ void menu_op_action (GtkAction *action, gpointer p)
 	    free(buf);
 	} 
     } else {
-	gchar *title;
+	gchar *title = gretl_window_title(gretl_command_word(ci));
 
-	title = g_strdup_printf("gretl: %s", gretl_command_word(ci));
 	simple_selection(title, menu_op_wrapper, ci, NULL);
 	g_free(title);
     } 
@@ -1182,17 +1172,14 @@ int do_rankcorr (selector *sr)
 {
     const char *buf = selector_list(sr);
     gretlopt opt = selector_get_opts(sr);
-    const char *flagstr;
     PRN *prn;
-    char title[64];
-    gint err;
+    int err;
 
     if (buf == NULL) {
 	return 1;
     }
 
-    flagstr = print_flags(opt, CORR); 
-    lib_command_sprintf("corr%s%s", buf, flagstr);
+    lib_command_sprintf("corr%s%s", buf, print_flags(opt, CORR));
 
     if (parse_lib_command() || bufopen(&prn)) {
 	return 1;
@@ -1208,10 +1195,11 @@ int do_rankcorr (selector *sr)
         gui_errmsg(err);
         gretl_print_destroy(prn);
     } else {
+	gchar *title = gretl_window_title(_("rank correlation"));
+
 	record_lib_command();
-	strcpy(title, "gretl: ");
-	strcat(title, _("rank correlation"));
-	view_buffer(prn, 78, 400, title, PRINT, NULL); 
+	view_buffer(prn, 78, 400, title, PRINT, NULL);
+	g_free(title);
     }
 
     return err;
@@ -1226,8 +1214,8 @@ int do_xcorrgm (selector *sr)
 {
     const char *sbuf = NULL;
     char *mbuf = NULL;
+    gchar *title;
     PRN *prn;
-    char title[64];
     int order = 0;
     int err = 0;
 
@@ -1241,18 +1229,19 @@ int do_xcorrgm (selector *sr)
 	return 1;
     }
 
-    strcpy(title, "gretl: ");
-    strcat(title, _("cross-correlogram"));
+    title = gretl_window_title(_("cross-correlogram"));
 
     order = default_lag_order(dataset);
     if (order > dataset->n / 4) {
 	order = dataset->n / 4;
     }
+
     err = spin_dialog(title, NULL, &order, _("Lag order:"),
 		      1, dataset->n / 4, 0);
     if (err < 0) {
 	/* canceled */
 	free(mbuf);
+	g_free(title);
 	return 0;
     }
 
@@ -1277,6 +1266,8 @@ int do_xcorrgm (selector *sr)
 	    register_graph(NULL);
 	}
     }
+
+    g_free(title);
 
     return err;
 }
@@ -1335,8 +1326,7 @@ void gui_warnmsg (int errcode)
 int bool_subsample (gretlopt opt)
 {
     PRN *prn;
-    const char *smplmsg;
-    int err;
+    int err = 0;
 
     if (bufopen(&prn)) {
 	return 1;
@@ -1352,22 +1342,18 @@ int bool_subsample (gretlopt opt)
 
     if (err) {
 	gui_errmsg(err);
-	goto alldone;
+    } else {
+	const char *msg = gretl_print_get_buffer(prn);
+
+	if (msg != NULL && *msg != '\0') {
+	    infobox(msg);
+	} else {
+	    set_sample_label(dataset);
+	    if (opt & OPT_M) {
+		infobox(_("Sample now includes only complete observations"));
+	    }
+	}
     } 
-
-    smplmsg = gretl_print_get_buffer(prn);
-    if (smplmsg != NULL && *smplmsg != 0) {
-	infobox(smplmsg);
-	goto alldone;
-    }
-
-    set_sample_label(dataset);
-
-    if (opt & OPT_M) {
-	infobox(_("Sample now includes only complete observations"));
-    } 
-
- alldone:
 
     gretl_print_destroy(prn);
 
@@ -1439,7 +1425,6 @@ void count_missing (void)
     }
 
     opt = (active)? (OPT_V | OPT_A) : OPT_A;
-
     mc = count_missing_values(dataset, opt, prn, &err);
 
     if (!err && mc > 0) {
@@ -1725,18 +1710,13 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	fr = rolling_OLS_k_step_fcast(pmod, dataset,
 				      t1, t2, k, pre_n, &err);
     } else {
-	const char *flagstr;
-
 	ntodate(startobs, t1, dataset);
 	ntodate(endobs, t2, dataset);
-	flagstr = print_flags(opt, FCAST);
-
 	lib_command_sprintf("fcasterr %s %s%s", startobs, endobs,
-			    flagstr);
+			    print_flags(opt, FCAST));
 	if (parse_lib_command()) {
 	    return;
 	}
-
 	fr = get_forecast(pmod, t1, t2, pre_n, dataset, 
 			  opt, &err);
 	if (!err) {
@@ -1820,6 +1800,7 @@ void do_bootstrap (GtkAction *action, gpointer p)
 
     if (err) {
 	gui_errmsg(err);
+	gretl_print_destroy(prn);
     } else {
 	windata_t *w;
 
@@ -1859,10 +1840,9 @@ int do_coeff_sum (selector *sr)
         gui_errmsg(err);
         gretl_print_destroy(prn);
     } else {
-	gchar *title;
+	gchar *title = gretl_window_title(_("Sum of coefficients"));
 
 	record_model_command(pmod->ID);
-	title = gretl_window_title(_("Sum of coefficients"), NULL);
 	view_buffer_with_parent(vwin, prn, 78, 200, title, 
 				COEFFSUM, NULL); 
 	g_free(title);
@@ -2171,7 +2151,7 @@ void do_modtest (GtkAction *action, gpointer p)
     MODEL *pmod = (MODEL *) vwin->data;
     DATASET *dset = dataset;
     PRN *prn;
-    char title[64];
+    char title[128];
     gretlopt opt = OPT_NONE;
     int err = 0;
 
@@ -2192,73 +2172,45 @@ void do_modtest (GtkAction *action, gpointer p)
     strcpy(title, _("gretl: LM test "));
 
     if (opt == OPT_W) {
+	strcat(title, _("(heteroskedasticity)"));
 	lib_command_strcpy("modtest --white");
 	err = whites_test(pmod, dset, OPT_S, prn);
-	if (err) {
-	    gui_errmsg(err);
-	    gretl_print_destroy(prn);
-	} else {
-	    strcat(title, _("(heteroskedasticity)"));
-	}
     } else if (opt == OPT_X) {
+	strcat(title, _("(heteroskedasticity)"));
 	lib_command_strcpy("modtest --white-nocross");
 	err = whites_test(pmod, dset, OPT_S | OPT_X, prn);
-	if (err) {
-	    gui_errmsg(err);
-	    gretl_print_destroy(prn);
-	} else {
-	    strcat(title, _("(heteroskedasticity)"));
-	}
     } else if (opt & OPT_B) {
+	strcat(title, _("(heteroskedasticity)"));
 	if (opt & OPT_R) {
 	    lib_command_strcpy("modtest --breusch-pagan --robust");
 	} else {
 	    lib_command_strcpy("modtest --breusch-pagan");
 	}
 	err = whites_test(pmod, dset, opt | OPT_S, prn);
-	if (err) {
-	    gui_errmsg(err);
-	    gretl_print_destroy(prn);
-	} else {
-	    strcat(title, _("(heteroskedasticity)"));
-	}
     } else if (opt == OPT_P) {
+	strcpy(title, _("gretl: groupwise heteroskedasticity"));
 	lib_command_strcpy("modtest --panel");
 	err = groupwise_hetero_test(pmod, dset, opt | OPT_S, prn);
-	if (err) {
-	    gui_errmsg(err);
-	    gretl_print_destroy(prn);
-	} else {
-	    strcpy(title, _("gretl: groupwise heteroskedasticity"));
-	}
     } else if (opt & (OPT_S | OPT_L)) {
 	int aux = (opt == OPT_S)? AUX_SQ : AUX_LOG;
-
-	if (opt == OPT_S) { 
+	
+	strcat(title, _("(non-linearity)"));
+	if (aux == AUX_SQ) { 
 	    lib_command_strcpy("modtest --squares");
 	} else {
 	    lib_command_strcpy("modtest --logs");
 	}
-	clear_model(model);
 	err = nonlinearity_test(pmod, dset, aux, OPT_S, prn);
-	if (err) {
-	    gui_errmsg(err);
-	    gretl_print_destroy(prn);
-	} else {
-	    strcat(title, _("(non-linearity)"));
-	} 
     } else if (opt == OPT_C) {
+	strcpy(title, _("gretl: common factor test"));
 	lib_command_strcpy("modtest --comfac");
 	err = comfac_test(pmod, dset, OPT_S, prn);
-	if (err) {
-	    gui_errmsg(err);
-	    gretl_print_destroy(prn);
-	} else {
-	    strcpy(title, _("gretl: common factor test"));
-	}
-    }	
+    }
 
-    if (!err) {
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {	
 	update_model_tests(vwin);
 	record_model_command_verbatim(pmod->ID);
 	view_buffer_with_parent(vwin, prn, 78, 400, 
@@ -2287,11 +2239,7 @@ void do_arch (GtkAction *action, gpointer p)
 		      1, dataset->n / 2, 0);
     unset_window_busy(vwin);
 
-    if (err < 0) {
-	return;
-    }
-
-    if (bufopen(&prn)) {
+    if (err < 0 || bufopen(&prn)) { 
 	return;
     }
 
@@ -2315,7 +2263,7 @@ void do_panel_tests (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     PRN *prn;
-    int err = 0;
+    int err;
 
     err = model_sample_problem(pmod, dataset);
     if (err) {
@@ -2421,16 +2369,15 @@ void do_leverage (GtkAction *action, gpointer p)
 
     if (err) {
 	gui_errmsg(err);
+	gretl_print_destroy(prn);
     } else {
-	windata_t *levwin;
+	windata_t *w;
 
-	levwin = view_buffer_with_parent(vwin, prn, 78, 400, 
-					 _("gretl: leverage and influence"), 
-					 LEVERAGE, m); 
-	set_model_id_on_window(levwin->main, pmod->ID);
-
+	w = view_buffer_with_parent(vwin, prn, 78, 400, 
+				    _("gretl: leverage and influence"), 
+				    LEVERAGE, m); 
+	set_model_id_on_window(w->main, pmod->ID);
 	make_and_display_graph();
-
 	lib_command_strcpy("leverage");
 	record_model_command_verbatim(pmod->ID);
     } 
@@ -2469,6 +2416,7 @@ void do_vif (GtkAction *action, gpointer p)
 
     if (err) {
 	gui_errmsg(err);
+	gretl_print_destroy(prn);
     } else {
 	view_buffer_with_parent(vwin, prn, 78, 400, 
 				_("gretl: collinearity"), 
@@ -2497,7 +2445,7 @@ void do_gini (void)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	gchar *title = g_strdup_printf("gretl: %s", _("Gini coefficient"));
+	gchar *title = gretl_window_title(_("Gini coefficient"));
 
 	view_buffer(prn, 78, 200, title, PRINT, NULL);
 	g_free(title);
@@ -2517,7 +2465,7 @@ void do_qqplot (void)
     gchar *title;
     int resp;
 
-    title = g_strdup_printf("gretl: %s", _("Q-Q plot"));
+    title = gretl_window_title(_("Q-Q plot"));
     resp = radio_dialog(title, _("Normal Q-Q plot"), opts, 3, 0, QQPLOT);
     g_free(title);
 
@@ -2541,7 +2489,7 @@ void do_qqplot (void)
 	err = qq_plot(list, dataset, opt);
 	gui_graph_handler(err);
 	if (!err) {
-	    record_command_verbatim();
+	    record_lib_command();
 	}
     } 
 }
@@ -2734,9 +2682,13 @@ void do_reset (GtkAction *action, gpointer p)
 	return;
     }
 
+    lib_command_strcpy("reset");
+
     if (resp == 1) {
 	opt |= OPT_R;
+	lib_command_strcat(" --squares-only");
     } else if (resp == 2) {
+	lib_command_strcat(" --cubes-only");
 	opt |= OPT_C;
     } else if (resp == 3) {
 	opt = (OPT_Q | OPT_G);
@@ -2764,7 +2716,6 @@ void do_reset (GtkAction *action, gpointer p)
 	if (opt & OPT_S) {
 	    update_model_tests(vwin);
 	}
-	lib_command_strcpy("reset");
 	record_model_command_verbatim(pmod->ID);
 	view_buffer_with_parent(vwin, prn, width, height, 
 				_("gretl: RESET test"), 
@@ -2779,7 +2730,6 @@ void do_autocorr (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     PRN *prn;
-    char title[64];
     int order, err = 0;
 
     if (gui_exact_fit_check(pmod)) {
@@ -2794,15 +2744,9 @@ void do_autocorr (GtkAction *action, gpointer p)
 		      1, dataset->n / 2, 0);
     unset_window_busy(vwin);
 
-    if (err < 0) {
+    if (err < 0 || bufopen(&prn)) {
 	return;
     }
-
-    if (bufopen(&prn)) {
-	return;
-    }
-
-    strcpy(title, _("gretl: LM test (autocorrelation)"));
 
     if (dataset_is_panel(dataset)) {
 	err = panel_autocorr_test(pmod, order, dataset,
@@ -2815,11 +2759,15 @@ void do_autocorr (GtkAction *action, gpointer p)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
+	gchar *title =
+	    g_strdup_printf(_("gretl: LM test (autocorrelation)"));
+
 	update_model_tests(vwin);
 	lib_command_sprintf("modtest --autocorr %d", order);
 	record_model_command_verbatim(pmod->ID);
 	view_buffer_with_parent(vwin, prn, 78, 400, 
 				title, MODTEST, NULL); 
+	g_free(title);
     }
 }
 
@@ -2828,7 +2776,6 @@ void do_dwpval (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     PRN *prn;
-    gchar *title;
     double pv;
     int err = 0;
 
@@ -2842,7 +2789,8 @@ void do_dwpval (GtkAction *action, gpointer p)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	title = gretl_window_title(_("Durbin-Watson"), NULL);
+	gchar *title = gretl_window_title(_("Durbin-Watson"));
+
 	pprintf(prn, "%s = %g\n", _("Durbin-Watson statistic"), pmod->dw);
 	pprintf(prn, "%s = %g\n", _("p-value"), pv);
 	view_buffer_with_parent(vwin, prn, 78, 200, 
@@ -2929,7 +2877,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
     GRETL_VAR *vnew = NULL;
     gchar *buf;
     PRN *prn;
-    char title[64], bufline[MAXLINE];
+    char bufline[MAXLINE];
     gretl_restriction *my_rset = NULL;
     int save_t1 = dataset->t1;
     int save_t2 = dataset->t2;
@@ -3048,10 +2996,11 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
     if (vnew != NULL) {
 	view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, vnew);
     } else {
-	strcpy(title, "gretl: ");
-	strcat(title, _("linear restrictions"));
+	gchar *title = gretl_window_title(_("linear restrictions"));
+
 	view_buffer_with_parent(vwin, prn, 78, height, title, 
 				PRINT, NULL);
+	g_free(title);
     }
 
     dataset->t1 = save_t1;
@@ -3226,8 +3175,6 @@ void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
 	errmsg(err, prn);
     } 
 
-    /* ref count? */
-
     view_buffer(prn, 78, 450, my_sys->name, SYSTEM, my_sys);
 }
 
@@ -3401,32 +3348,6 @@ void do_gmm_model (GtkWidget *w, dialog_t *dlg)
     real_do_nonlinear_model(dlg, GMM);
 }
 
-static int logistic_model_get_lmax (CMD *cmd)
-{
-    double ymax, lmax;
-    int err;
-
-    err = logistic_ymax_lmax(dataset->Z[cmd->list[1]], dataset, 
-			     &ymax, &lmax);
-
-    if (!err) {
-	lmax_dialog(&lmax, ymax);
-	if (na(lmax)) {
-	    err = 1;
-	} else if (lmax == 0.0) {
-	    /* canceled */
-	    err = -1;
-	} else {
-	    free(cmd->param);
-	    cmd->param = g_strdup_printf("ymax=%g", lmax);
-	    lib_command_strcat(" ");
-	    lib_command_strcat(cmd->param);
-	}
-    }
-
-    return err;
-}
-
 static int do_straight_anova (void) 
 {
     PRN *prn;
@@ -3442,7 +3363,7 @@ static int do_straight_anova (void)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	gchar *title = g_strdup_printf("gretl: %s", _("ANOVA"));
+	gchar *title = gretl_window_title(_("ANOVA"));
 
 	view_buffer(prn, 78, 400, title, PRINT, NULL);
 	g_free(title);
@@ -3458,7 +3379,7 @@ static int real_do_model (int action)
     MODEL *pmod;
     int err = 0;
 
-#if 0
+#if 1
     fprintf(stderr, "do_model: libline = '%s'\n", libline);
 #endif
 
@@ -3469,6 +3390,7 @@ static int real_do_model (int action)
     pmod = gretl_model_new();
     if (pmod == NULL) {
 	nomem();
+	gretl_print_destroy(prn);
 	return 1;
     }
 
@@ -3476,141 +3398,95 @@ static int real_do_model (int action)
 
     case AR1:
 	*pmod = ar1_model(libcmd.list, dataset, libcmd.opt | OPT_G, prn);
-	err = model_output(pmod, prn);
-	if (!err && (libcmd.opt & OPT_H)) {
-	    register_graph(NULL);
-	}
 	break;
-
     case OLS:
     case WLS:
 	*pmod = lsq(libcmd.list, dataset, action, libcmd.opt);
-	err = model_output(pmod, prn);
 	break;
-
     case PANEL:
 	*pmod = panel_model(libcmd.list, dataset, libcmd.opt, prn);
-	err = model_output(pmod, prn);
 	break;
-
     case ARBOND:
 	/* FIXME instrument spec */
 	*pmod = arbond_model(libcmd.list, NULL, dataset, 
 			     libcmd.opt, prn);
-	err = model_output(pmod, prn);
 	break;
-
     case DPANEL:
 	/* FIXME ylags, instrument spec */
 	*pmod = dpd_model(libcmd.list, NULL, NULL, dataset, 
 			  libcmd.opt, prn);
-	err = model_output(pmod, prn);
 	break;
-
     case HSK:
 	*pmod = hsk_model(libcmd.list, dataset);
-	err = model_output(pmod, prn);
 	break;
-
     case IVREG:
 	*pmod = ivreg(libcmd.list, dataset, libcmd.opt);
-	err = model_output(pmod, prn);
 	break;
-
     case AR:
 	*pmod = ar_model(libcmd.list, dataset, OPT_NONE, prn);
-	err = model_output(pmod, prn);
 	break;
-
     case LOGIT:
     case PROBIT:
 	*pmod = logit_probit(libcmd.list, dataset, action, libcmd.opt,
 			     prn);
-	err = model_output(pmod, prn);
 	break;
-
     case BIPROBIT:
 	*pmod = biprobit_model(libcmd.list, dataset, libcmd.opt, prn);
-	err = model_output(pmod, prn);
 	break;
-
     case TOBIT:
 	*pmod = tobit_driver(libcmd.list, dataset, libcmd.opt, prn);
-	err = model_output(pmod, prn);
 	break;
-
     case HECKIT:
 	*pmod = heckit_model(libcmd.list, dataset, libcmd.opt, prn);
-	err = model_output(pmod, prn);
 	break;
-
     case POISSON:
     case NEGBIN:
 	*pmod = count_model(libcmd.list, action, dataset, libcmd.opt,
 			    prn);
-	err = model_output(pmod, prn);
 	break;
-
     case DURATION:
 	*pmod = duration_model(libcmd.list, dataset, libcmd.opt,
 			       prn);
-	err = model_output(pmod, prn);
 	break;
-
     case ARMA:
 	*pmod = arma(libcmd.list, libcmd.auxlist, dataset, 
 		     libcmd.opt, prn);
-	err = model_output(pmod, prn);
 	break;
-
     case ARCH:
 	*pmod = arch_model(libcmd.list, atoi(libcmd.param), dataset, 
 			   libcmd.opt); 
-	err = model_output(pmod, prn);
 	break;
-
     case GARCH:
 	*pmod = garch(libcmd.list, dataset, libcmd.opt, prn); 
-	err = model_output(pmod, prn);
 	break;
-
     case LOGISTIC:
-	err = logistic_model_get_lmax(&libcmd);
-	if (err < 0) {
-	    return 1;
-	} else if (err) {
-	    gui_errmsg(err);
-	    break;
-	} else {
-	    *pmod = logistic_driver(libcmd.list, dataset, libcmd.param);
-	    err = model_output(pmod, prn);
-	}
+	*pmod = logistic_driver(libcmd.list, dataset, libcmd.opt);
 	break;	
-
     case LAD:
 	*pmod = lad(libcmd.list, dataset);
-	err = model_output(pmod, prn);
 	break;	
-
     case QUANTREG:
 	*pmod = quantreg_driver(libcmd.param, libcmd.list, dataset, 
 				libcmd.opt, prn);
-	err = model_output(pmod, prn);
 	break;	
-
     case INTREG:
 	*pmod = interval_model(libcmd.list, dataset, libcmd.opt, prn);
-	err = model_output(pmod, prn);
 	break;	
-
     case MPOLS:
 	*pmod = mp_ols(libcmd.list, dataset);
-	err = model_output(pmod, prn);
 	break;	
-
     default:
 	errbox(_("Sorry, not implemented yet!"));
+	err = 1;
 	break;
+    }
+
+    if (!err) {
+	err = model_output(pmod, prn);
+    }
+
+    if (!err && action == AR1 && (libcmd.opt & OPT_H)) {
+	register_graph(NULL);
     }
 
     if (err) {
@@ -3866,14 +3742,14 @@ void do_graph_model (const int *list, int fit)
     }
 
     pmod = gretl_model_new();
+
     if (pmod == NULL) {
 	nomem();
-	gretl_print_destroy(prn);
-	return;
+	err = E_ALLOC;
+    } else {
+	*pmod = lsq(libcmd.list, dataset, OLS, libcmd.opt);
+	err = model_output(pmod, prn);
     }
-
-    *pmod = lsq(libcmd.list, dataset, OLS, libcmd.opt);
-    err = model_output(pmod, prn);
 
     if (err) {
 	gretl_print_destroy(prn);
@@ -3927,20 +3803,19 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
 			  model, NULL);
 
     err = gui_exec_line(&state, dataset);
+
     if (err) {
 	gui_errmsg(err);
-	return;
-    }
-
-    /* update variable listing in main window if needed */
-    if (check_dataset_is_changed()) {
-	mark_dataset_as_modified();
-	populate_varlist();
-    }    
-
-    /* update sample info and options if needed */
-    if (console_sample_changed(dataset)) {
-	set_sample_label(dataset);
+    } else {
+	/* update variable listing in main window if needed */
+	if (check_dataset_is_changed()) {
+	    mark_dataset_as_modified();
+	    populate_varlist();
+	}    
+	/* update sample info and options if needed */
+	if (console_sample_changed(dataset)) {
+	    set_sample_label(dataset);
+	}
     }
 }
 
@@ -4318,7 +4193,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
 	} else {
-	    gchar *title = g_strdup_printf("gretl: %s", _("normality test"));
+	    gchar *title = gretl_window_title(_("normality test"));
 
 	    view_buffer_with_parent(vwin, prn, 78, 300, title,
 				    PRINT, NULL);
@@ -4842,28 +4717,27 @@ enum {
 
 static void real_do_corrgm (DATASET *dset, int code)
 {
-    char title[64];
-    int order, err = 0;
+    gchar *title;
     int T = sample_size(dset);
+    int order = auto_acf_order(T);
     PRN *prn;
+    int err;
 
-    strcpy(title, "gretl: ");
-    strcat(title, _("correlogram"));
-
-    order = auto_acf_order(T);
+    title = gretl_window_title(_("correlogram"));
 
     err = spin_dialog(title, NULL, &order, _("Maximum lag:"),
 		      1, T - 1, CORRGM);
-    if (err < 0) {
+
+    if (err < 0 || bufopen(&prn)) {
+	g_free(title);
 	return;
     }    
-
-    if (bufopen(&prn)) return;
 
     if (code == SELECTED_VAR) {
 	lib_command_sprintf("corrgm %s %d", selected_varname(), order);
 	if (parse_lib_command()) {
 	    gretl_print_destroy(prn);
+	    g_free(title);
 	    return;
 	}
 	err = corrgram(libcmd.list[1], order, 0, 
@@ -4883,6 +4757,8 @@ static void real_do_corrgm (DATASET *dset, int code)
 	register_graph(NULL);
 	view_buffer(prn, 78, 360, title, CORRGM, NULL);
     }
+
+    g_free(title);
 }
 
 void do_corrgm (void)
@@ -4933,7 +4809,6 @@ void residual_correlogram (GtkAction *action, gpointer p)
 static void real_do_pergm (DATASET *dset, int code)
 {
     PRN *prn;
-    const gchar *title = N_("gretl: periodogram");
     int T = sample_size(dset);
     gretlopt opt = OPT_NONE;
     int width, cancel;
@@ -4968,8 +4843,11 @@ static void real_do_pergm (DATASET *dset, int code)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
+	gchar *title = gretl_window_title(_("periodogram"));
+
 	register_graph(NULL);
 	view_buffer(prn, 60, 400, _(title), PERGM, NULL);
+	g_free(title);
     }
 }
 
@@ -5117,7 +4995,7 @@ void do_anova (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	gchar *title = gretl_window_title(_("ANOVA"), NULL);
+	gchar *title = gretl_window_title(_("ANOVA"));
 
 	view_buffer_with_parent(vwin, prn, 80, 300, 
 				title, PRINT, NULL);
@@ -7106,15 +6984,12 @@ void gui_sort_data (void)
 
 void gui_resample_data (void)
 {
-    gchar *title;
+    gchar *title = gretl_window_title(_("resample dataset"));
     int resp, n = dataset->n;
-
-    title = g_strdup_printf("gretl: %s", _("resample dataset"));
 
     resp = spin_dialog(title, _("Resampling with replacement"), 
 		       &n, _("Number of cases"), 
 		       1, 1000000, 0);
-
     g_free(title);
 
     if (resp != GRETL_CANCEL) {

@@ -1588,29 +1588,6 @@ static void parse_outfile_cmd (const char *s, CMD *cmd)
     }
 }
 
-static void parse_logistic_ymax (const char *s, CMD *cmd)
-{
-    char *p = strstr(s, "ymax");
-
-    if (p != NULL) {
-	char *q = p + 4;
-	char numstr[12];
-
-	while (*q == ' ' || *q == '=') {
-	    q++;
-	}
-	if (sscanf(q, "%11s", numstr)) {
-	    cmd->param = realloc(cmd->param, 6 + strlen(numstr));
-	    if (cmd->param == NULL) {
-		cmd->err = E_ALLOC;
-	    } else {
-		sprintf(cmd->param, "ymax=%s", numstr);
-	    }
-	    *p = '\0';
-	}
-    }
-}
-
 static int read_dash_param (const char **ps, CMD *cmd)
 {
     const char *s = *ps;
@@ -2664,9 +2641,6 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 	/* we may have a block of stuff to pass literally
 	   to gnuplot */
 	grab_gnuplot_literal_block(rem, cmd);
-    } else if (cmd->ci == LOGISTIC) {
-	/* we may have a "ymax" parameter */
-	parse_logistic_ymax(rem, cmd);
     } else if (cmd->ci == ARMA || cmd->ci == DPANEL) {
 	/* allow for specific "gappy" lags */
 	maybe_rewrite_lags(line, cmd);
@@ -3476,7 +3450,7 @@ static int effective_ci (const CMD *cmd)
 
 #define hold_param(c) (c == IVREG || c == AR || c == ARBOND || c == DPANEL || c == ARMA || \
                        c == CORRGM || c == PERGM || c == SCATTERS || c == MPOLS || \
-                       c == GNUPLOT || c == LOGISTIC || c == GARCH || \
+                       c == GNUPLOT || c == GARCH || \
                        c == EQUATION || c == POISSON || c == XCORRGM || \
                        c == HECKIT || c == NEGBIN || c == DURATION || \
 		       c == FRACTINT)
@@ -3590,7 +3564,6 @@ static int command_is_silent (const CMD *cmd, const char *line)
 #define print_param_last(c) (c == ARBOND || \
 			     c == DPANEL || \
 			     c == DELEET || \
-			     c == LOGISTIC || \
 	                     c == CORRGM || \
                              c == PERGM || \
 	                     c == FRACTINT || \
@@ -4957,7 +4930,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (cmd->ci == HSK) {
 	    *model = hsk_model(cmd->list, dset);
 	} else if (cmd->ci == LOGISTIC) {
-	    *model = logistic_driver(cmd->list, dset, cmd->param);
+	    *model = logistic_driver(cmd->list, dset, cmd->opt);
 	} else if (cmd->ci == TOBIT) {
 	    *model = tobit_driver(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == POISSON || cmd->ci == NEGBIN) {

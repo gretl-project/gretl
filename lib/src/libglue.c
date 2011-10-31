@@ -334,13 +334,9 @@ MODEL logit_probit (int *list, DATASET *dset, int ci,
 */
 
 MODEL logistic_driver (const int *list, DATASET *dset,
-		       const char *param) 
+		       gretlopt opt) 
 {
-    double lmax;
-
-    if (param == NULL || sscanf(param, "ymax=%lf", &lmax) != 1) {
-	lmax = NADBL;
-    }
+    double lmax = get_optval_double(LOGISTIC, OPT_M);
 
     return logistic_model(list, lmax, dset);
 }

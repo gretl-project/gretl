@@ -147,12 +147,10 @@ static void model_sample_callback (GtkAction *action, gpointer p)
 }
 #endif
 
-gchar *gretl_window_title (const char *s1, const char *s2)
+gchar *gretl_window_title (const char *s)
 {
-    if (s1 != NULL && s2 != NULL) {
-	return g_strdup_printf("gretl: %s %s", s1, s2);
-    } else if (s1 != NULL) {
-	return g_strdup_printf("gretl: %s", s1);
+    if (s != NULL) {
+	return g_strdup_printf("gretl: %s", s);
     } else {
 	return g_strdup("gretl: untitled");
     }
@@ -174,7 +172,7 @@ static void text_eqn_callback (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	gchar *title = gretl_window_title(_("equation"), NULL);
+	gchar *title = gretl_window_title(_("equation"));
 
 	view_buffer_with_parent(vwin, prn, 78, 200, title, PRINT, NULL);
 	g_free(title);			   
