@@ -4257,20 +4257,6 @@ void do_resid_freq (GtkAction *action, gpointer p)
     free_freq(freq);
 }
 
-static int 
-series_has_negative_vals (const double *x)
-{
-    int t;
-
-    for (t=dataset->t1; t<=dataset->t2; t++) {
-	if (x[t] < 0.0) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
 void do_freq_dist (void)
 {
     FreqDist *freq = NULL;
@@ -4281,16 +4267,21 @@ void do_freq_dist (void)
     double fwid = NADBL;
     gchar *tmp = NULL;
     const char *diststr = "";
+    const double *y;
+    const char *vname;
     int auto_nbins = 0;
     int discrete = 0;
     int nbins = 0;
     int plot = 1;
     int err = 0;
 
-    if (gretl_isdummy(dataset->t1, dataset->t2, dataset->Z[v])) {
+    y = dataset->Z[v];
+    vname = dataset->varname[v];
+
+    if (gretl_isdummy(dataset->t1, dataset->t2, y)) {
 	nbins = 3;
     } else if (var_is_discrete(dataset, v) ||
-	       gretl_isdiscrete(dataset->t1, dataset->t2, dataset->Z[v])) {
+	       gretl_isdiscrete(dataset->t1, dataset->t2, y)) {
 	discrete = 1;
     }
 
@@ -4300,7 +4291,7 @@ void do_freq_dist (void)
 	int n;
 
 	if (discrete) {
-	    n = gretl_minmax(dataset->t1, dataset->t2, dataset->Z[v], 
+	    n = gretl_minmax(dataset->t1, dataset->t2, y, 
 			     &xmin, &xmax);
 	    if (n == 0) {
 		err = E_MISSDATA;
@@ -4316,9 +4307,7 @@ void do_freq_dist (void)
 	}
 
 	tmp = g_strdup_printf(_("range %g to %g"), xmin, xmax);
-	bintxt = g_strdup_printf(_("%s (n = %d, %s)"), 
-				 dataset->varname[v],
-				 n, tmp);
+	bintxt = g_strdup_printf(_("%s (n = %d, %s)"), vname, n, tmp);
 	g_free(tmp);
 	tmp = g_strdup_printf("gretl: %s", _("frequency distribution"));
 
@@ -4354,18 +4343,16 @@ void do_freq_dist (void)
 	if (!na(fmin) && !na(fwid)) {
 	    gretl_push_c_numeric_locale();
 	    lib_command_sprintf("freq %s --min=%g --binwidth=%g%s", 
-				dataset->varname[v], 
-				fmin, fwid, diststr);
+				vname, fmin, fwid, diststr);
 	    gretl_pop_c_numeric_locale();
 	} else if (nbins != auto_nbins) {
 	    lib_command_sprintf("freq %s --nbins=%d%s", 
-				dataset->varname[v], 
-				nbins, diststr);
+				vname, nbins, diststr);
 	} else {
-	    lib_command_sprintf("freq %s%s", dataset->varname[v], diststr);
+	    lib_command_sprintf("freq %s%s", vname, diststr);
 	}
     } else {
-	lib_command_sprintf("freq %s%s", dataset->varname[v], diststr);
+	lib_command_sprintf("freq %s%s", vname, diststr);
     }
 
     if (parse_lib_command()) {
@@ -4374,22 +4361,19 @@ void do_freq_dist (void)
 
     freq = get_freq(v, dataset, fmin, fwid, nbins, 1, opt, &err);
 
-    if (plot && !err) {
-	if (opt == OPT_O && series_has_negative_vals(dataset->Z[v])) {
-	    errbox(_("Data contain negative values: gamma distribution not "
-		     "appropriate"));
-	} else {
-	    err = plot_freq(freq, dist);
-	    gui_graph_handler(err);
-	}
-    } else if (!err) {
+    if (!err) {
 	PRN *prn = NULL;
 
 	if (bufopen(&prn) == 0) {
-	    tmp = g_strdup_printf("gretl: %s", _("frequency distribution"));
+	    tmp = gretl_window_title(_("frequency distribution"));
 	    print_freq(freq, prn);
 	    view_buffer(prn, 78, 340, tmp, FREQ, NULL);
 	    g_free(tmp);
+	}
+
+	if (plot) {
+	    err = plot_freq(freq, dist);
+	    gui_graph_handler(err);
 	}
     }
 
