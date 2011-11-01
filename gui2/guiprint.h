@@ -22,6 +22,12 @@
 #ifndef GUIPRINT_H
 #define GUIPRINT_H
 
+enum {
+    LATEX_OK,
+    LATEX_EXEC_FAILED,
+    LATEX_ERROR
+} tex_return_codes;
+
 void print_window_content (gchar *fullbuf, gchar *selbuf, 
 			   const char *fname,
 			   windata_t *vwin);
@@ -66,5 +72,11 @@ int scalars_to_clipboard_as_csv (void);
 int matrix_to_clipboard_as_csv (const gretl_matrix *m);
 
 int font_has_symbol (PangoFontDescription *desc, int symbol);
+
+int latex_compile (char *texshort);
+
+void view_latex (PRN *prn);
+
+void save_latex (PRN *prn, const char *fname);
 
 #endif /* GUIPRINT_H */

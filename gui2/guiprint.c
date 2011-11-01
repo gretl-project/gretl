@@ -26,6 +26,8 @@
 #include "treeutils.h"
 #include "forecast.h"
 #include "texprint.h"
+#include "guiprint.h"
+#include "graph_page.h"
 
 #include "gretl_scalar.h"
 
@@ -2117,4 +2119,242 @@ int font_has_symbol (PangoFontDescription *desc, int symbol)
     gtk_widget_destroy(widget);
 
     return ret;
+}
+
+#ifdef G_OS_WIN32
+
+static int get_latex_path (char *latex_path)
+{
+    int ret;
+    char *p;
+
+    ret = SearchPath(NULL, latex, NULL, MAXLEN, latex_path, &p);
+
+    return (ret == 0);
+}
+
+#else
+
+static int spawn_latex (char *texsrc)
+{
+    GError *error = NULL;
+    gchar *errout = NULL, *sout = NULL;
+    gchar *argv[] = {
+	latex,
+	"\\batchmode",
+	"\\input",
+	texsrc,
+	NULL
+    };
+    int ok, status;
+    int ret = LATEX_OK;
+
+    signal(SIGCHLD, SIG_DFL);
+
+    ok = g_spawn_sync (gretl_dotdir(), /* working dir */
+		       argv,
+		       NULL,    /* envp */
+		       G_SPAWN_SEARCH_PATH,
+		       NULL,    /* child_setup */
+		       NULL,    /* user_data */
+		       &sout,   /* standard output */
+		       &errout, /* standard error */
+		       &status, /* exit status */
+		       &error);
+
+    if (!ok) {
+	errbox(error->message);
+	g_error_free(error);
+	ret = LATEX_EXEC_FAILED;
+    } else if (status != 0) {
+	if (errout && *errout) {
+	    errbox(errout);
+	} else {
+	    gchar *errmsg;
+
+	    errmsg = g_strdup_printf("%s\n%s", 
+				     _("Failed to process TeX file"),
+				     sout);
+	    errbox(errmsg);
+	    g_free(errmsg);
+	}
+	ret = LATEX_ERROR;
+    } else if (errout && *errout) {
+	fputs("spawn_latex: found stuff on stderr:\n", stderr);
+	fputs(errout, stderr);
+    }
+
+    /* change above, 2008-08-22: before we flagged a LATEX_ERROR
+       if we saw anything on standard error, regardless of the
+       exit status 
+    */
+
+    g_free(errout);
+    g_free(sout);
+
+    return ret;
+}
+
+#endif /* !G_OS_WIN32 */
+
+int latex_compile (char *texshort)
+{
+#ifdef G_OS_WIN32
+    static char latex_path[MAXLEN];
+    char tmp[MAXLEN];
+#endif
+    int err = LATEX_OK;
+
+#ifdef G_OS_WIN32
+    if (*latex_path == 0 && get_latex_path(latex_path)) {
+	win_show_last_error();
+	return LATEX_EXEC_FAILED;
+    }
+
+    sprintf(tmp, "\"%s\" \\batchmode \\input %s", latex_path, texshort);
+    if (win_run_sync(tmp, gretl_dotdir())) {
+	return LATEX_EXEC_FAILED;
+    }
+#else
+    err = spawn_latex(texshort);
+#endif /* G_OS_WIN32 */
+
+    return err;
+}
+
+static int check_for_rerun (const char *texbase)
+{
+    char logfile[MAXLEN];
+    char lline[512];
+    FILE *fp;
+    int ret = 0;
+
+    sprintf(logfile, "%s.log", texbase);
+    fp = gretl_fopen(logfile, "r");
+
+    if (fp != NULL) {
+	while (fgets(lline, sizeof lline, fp)) {
+	    if (strstr(lline, "Rerun LaTeX")) {
+		ret = 1;
+		break;
+	    }
+	}
+	fclose(fp);
+    }
+
+    return ret;
+}
+
+static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
+{
+    char texfile[MAXLEN], texbase[MAXLEN], tmp[MAXLEN];
+    int use_pdf = get_tex_use_pdf();
+    int dot, err = LATEX_OK;
+    char *texshort = NULL;
+    const char *buf;
+    PRN *fprn;
+
+    *texfile = 0;
+
+    if (fname != NULL) {
+	strcpy(texfile, fname);
+    } else {
+	sprintf(texfile, "%swindow.tex", gretl_dotdir());
+    } 
+
+    /* ensure we don't get stale output */
+    remove(texfile);
+
+    fprn = gretl_print_new_with_filename(texfile, &err);
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }
+
+    gretl_tex_preamble(fprn, prn_format(bprn));
+    buf = gretl_print_get_buffer(bprn);
+    pputs(fprn, buf);
+    pputs(fprn, "\n\\end{document}\n");
+
+    gretl_print_destroy(fprn);
+	
+    if (saveit) {
+	return;
+    }
+
+    dot = dotpos(texfile);
+    *texbase = 0;
+    strncat(texbase, texfile, dot);
+
+    texshort = strrchr(texbase, SLASH) + 1;
+    if (texshort == NULL) {
+	errbox(_("Failed to process TeX file"));
+	return;
+    } 
+
+    err = latex_compile(texshort);
+
+    /* now maybe re-run latex (e.g. for longtable) */
+    if (err == LATEX_OK) {
+	if (check_for_rerun(texbase)) {
+	    err = latex_compile(texshort);
+	}
+    }
+
+    if (err == LATEX_OK) {
+#if defined(G_OS_WIN32)
+	if (use_pdf) {
+	    sprintf(tmp, "%s.pdf", texbase);
+	    win32_open_file(tmp);
+	} else {
+	    sprintf(tmp, "\"%s\" \"%s.dvi\"", viewdvi, texbase);
+	    if (WinExec(tmp, SW_SHOWNORMAL) < 32) {
+		win_show_last_error();
+	    }
+	}
+#elif defined(OSX_BUILD)
+	if (use_pdf) {
+	    sprintf(tmp, "%s.pdf", texbase);
+	} else {
+	    sprintf(tmp, "%s.dvi", texbase);
+	}
+	if (osx_open_file(tmp)) {
+	    file_read_errbox(tmp);
+	}
+#else
+	if (use_pdf) {
+	    sprintf(tmp, "%s.pdf", texbase);
+	    gretl_fork("viewpdf", tmp);
+	} else {
+	    sprintf(tmp, "%s.dvi", texbase);
+	    gretl_fork("viewdvi", tmp);
+	}
+#endif
+    }
+
+    sprintf(tmp, "%s.log", texbase);
+    if (err == LATEX_ERROR) {
+	view_file(tmp, 0, 1, 78, 350, VIEW_FILE);
+    } else {
+	fprintf(stderr, "wrote '%s'\n", texfile);
+	/* gretl_remove(texfile); */
+	gretl_remove(tmp);
+    }
+
+    sprintf(tmp, "%s.aux", texbase);
+    gretl_remove(tmp);
+}
+
+void view_latex (PRN *prn)
+{
+    view_or_save_latex(prn, NULL, 0);
+}
+
+void save_latex (PRN *prn, const char *fname)
+{
+    if (prn != NULL) {
+	view_or_save_latex(prn, fname, 1);
+    } else {
+	save_graph_page(fname);
+    }
 }

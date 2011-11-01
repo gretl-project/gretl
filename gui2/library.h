@@ -22,12 +22,6 @@
 #ifndef LIBRARY_H
 #define LIBRARY_H
 
-enum {
-    LATEX_OK,
-    LATEX_EXEC_FAILED,
-    LATEX_ERROR
-} tex_return_codes;
-
 /* general purpose functions */
 
 #ifdef G_OS_WIN32
@@ -312,10 +306,6 @@ void new_script_callback (GtkAction *action);
 
 int do_store (char *mydatfile, int action);
 
-void view_latex (PRN *prn);
-
-void save_latex (PRN *prn, const char *fname);
-
 void do_save_text (char *fname, MODEL *pmod);
 
 int gui_exec_line (ExecState *s, DATASET *dset);
@@ -333,8 +323,6 @@ void stop_wait_for_output (GtkWidget *w);
 int menu_op_wrapper (selector *sr);
 
 int max_untouchable_series_ID (void);
-
-int latex_compile (char *texshort);
 
 void add_mahalanobis_data (windata_t *vwin);
 

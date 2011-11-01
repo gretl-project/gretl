@@ -22,6 +22,7 @@
 #include "session.h"
 #include "gpt_control.h"
 #include "texprint.h"
+#include "guiprint.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>

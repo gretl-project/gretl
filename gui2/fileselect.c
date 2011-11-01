@@ -28,6 +28,7 @@
 #include "fnsave.h"
 #include "database.h"
 #include "datafiles.h"
+#include "guiprint.h"
 #include "graphics.h"
 #include "bootstrap.h"
 

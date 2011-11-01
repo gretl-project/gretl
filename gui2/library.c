@@ -87,13 +87,8 @@
 #define CMD_DEBUG 0
 
 /* private functions */
-static void update_model_tests (windata_t *vwin);
-static int finish_genr (MODEL *pmod, dialog_t *dlg);
 static int execute_script (const char *runfile, const char *buf,
 			   PRN *prn, int exec_code);
-static int make_and_display_graph (void);
-
-const char *CANTDO = N_("Can't do this: no model has been estimated yet\n");
 
 /* file scope state variables */
 static CMD libcmd;
@@ -185,6 +180,15 @@ void gui_graph_handler (int err)
     } else {
 	register_graph(NULL);
     }
+}
+
+static int make_and_display_graph (void)
+{
+    int err = gnuplot_make_graph();
+
+    gui_graph_handler(err);
+
+    return err;
 }
 
 /* the following three functions are used to write
@@ -1882,6 +1886,50 @@ static void trim_dataset (MODEL *pmod, int origv)
     }
 }
 
+static void print_test_to_window (const MODEL *pmod, GtkWidget *w)
+{
+    if (w != NULL) {
+	GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+	GtkTextIter iter, ibak;
+	const char *txt;
+	PRN *prn;
+
+	if (bufopen(&prn)) return;
+
+	gretl_model_print_last_test(pmod, prn);
+	txt = gretl_print_get_buffer(prn);
+	gtk_text_buffer_get_end_iter(buf, &iter);
+
+	ibak = iter;
+	if (gtk_text_iter_backward_chars(&ibak, 2)) {
+	    gchar *tmp = gtk_text_buffer_get_text(buf, &ibak, &iter, FALSE);
+
+	    if (strcmp(tmp, "\n\n")) {
+		gtk_text_buffer_insert(buf, &iter, "\n", -1);
+	    }
+	    g_free(tmp);
+	}
+
+	gtk_text_buffer_insert(buf, &iter, txt, -1);
+	gretl_print_destroy(prn);
+    }
+}
+
+static void update_model_tests (windata_t *vwin)
+{
+    MODEL *pmod = (MODEL *) vwin->data;
+
+#if 0
+    fprintf(stderr, "update_model_tests: pmod->ntests = %d,\n"
+	    " vwin->n_model_tests = %d\n", pmod->ntests, vwin->n_model_tests);
+#endif
+
+    if (pmod->ntests > vwin->n_model_tests) {
+	print_test_to_window(pmod, vwin->text);
+	vwin->n_model_tests += 1;
+    }
+}
+
 int do_add_omit (selector *sr)
 {
     windata_t *vwin = selector_get_data(sr);
@@ -2077,50 +2125,6 @@ int do_confidence_region (selector *sr)
     return 0;
 }
 
-static void print_test_to_window (const MODEL *pmod, GtkWidget *w)
-{
-    if (w != NULL) {
-	GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-	GtkTextIter iter, ibak;
-	const char *txt;
-	PRN *prn;
-
-	if (bufopen(&prn)) return;
-
-	gretl_model_print_last_test(pmod, prn);
-	txt = gretl_print_get_buffer(prn);
-	gtk_text_buffer_get_end_iter(buf, &iter);
-
-	ibak = iter;
-	if (gtk_text_iter_backward_chars(&ibak, 2)) {
-	    gchar *tmp = gtk_text_buffer_get_text(buf, &ibak, &iter, FALSE);
-
-	    if (strcmp(tmp, "\n\n")) {
-		gtk_text_buffer_insert(buf, &iter, "\n", -1);
-	    }
-	    g_free(tmp);
-	}
-
-	gtk_text_buffer_insert(buf, &iter, txt, -1);
-	gretl_print_destroy(prn);
-    }
-}
-
-static void update_model_tests (windata_t *vwin)
-{
-    MODEL *pmod = (MODEL *) vwin->data;
-
-#if 0
-    fprintf(stderr, "update_model_tests: pmod->ntests = %d,\n"
-	    " vwin->n_model_tests = %d\n", pmod->ntests, vwin->n_model_tests);
-#endif
-
-    if (pmod->ntests > vwin->n_model_tests) {
-	print_test_to_window(pmod, vwin->text);
-	vwin->n_model_tests += 1;
-    }
-}
-
 static gretlopt modtest_get_opt (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
@@ -2298,14 +2302,7 @@ static int get_model_id_from_window (GtkWidget *w)
     return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "model_ID"));
 }
 
-static int make_and_display_graph (void)
-{
-    int err = gnuplot_make_graph();
 
-    gui_graph_handler(err);
-
-    return err;
-}
 
 void add_leverage_data (windata_t *vwin)
 {
@@ -3178,6 +3175,104 @@ void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
     view_buffer(prn, 78, 450, my_sys->name, SYSTEM, my_sys);
 }
 
+/* Try for the most informative possible error message,
+   but also try to avoid duplication
+*/
+
+static void errmsg_plus (int err, const char *plus)
+{
+    int handled = 0;
+
+    if (plus != NULL && *plus != '\0') {
+	const char *s1 = errmsg_get_with_default(err);
+	gchar *s2 = g_strstrip(g_strdup(plus));
+
+	if (*s1 != '\0' && *s2 != '\0' && strcmp(s1, s2)) {
+	    errbox("%s\n%s", s1, s2);
+	    handled = 1;
+	} else if (*s1 == '\0' && *s2 != '\0') {
+	    errbox(s2);
+	    handled = 1;
+	}
+
+	g_free(s2);
+    } 
+
+    if (!handled) {
+	gui_errmsg(err);
+    }
+}
+
+static int finish_genr (MODEL *pmod, dialog_t *dlg)
+{
+    PRN *prn;
+    int err = 0;
+
+    if (bufopen(&prn)) {
+	return 1;
+    }
+
+    if (pmod != NULL) {
+	set_genr_model(pmod, GRETL_OBJ_EQN);
+    }
+
+    err = generate(libline, dataset, OPT_NONE, prn); 
+
+    unset_genr_model();
+
+    if (err) {
+	errmsg_plus(err, gretl_print_get_buffer(prn));
+    } else {
+	int n, gentype = genr_get_last_output_type();
+	const char *name;
+	double val;
+	gchar *txt;
+
+	if (dlg != NULL) {
+	    close_dialog(dlg);
+	}
+
+	if (pmod != NULL) {
+	    record_model_command_verbatim(pmod->ID);
+	} else {
+	    record_command_verbatim();
+	}
+
+	if (gentype == GRETL_TYPE_SERIES) {
+	    populate_varlist();
+	    mark_dataset_as_modified();
+	} else if (gentype == GRETL_TYPE_DOUBLE) {
+	    if (autoicon_on()) {
+		edit_scalars();
+	    } else {	    
+		n = n_saved_scalars();
+		name = gretl_scalar_get_name(n-1);
+		val = gretl_scalar_get_value_by_index(n-1);
+		txt = g_strdup_printf(_("Added scalar %s = %g"),
+				      name, val);
+		infobox(txt);
+		g_free(txt);
+	    }
+	} else if (gentype == GRETL_TYPE_MATRIX) {
+	    if (autoicon_on()) {
+		view_session();
+	    } else {
+		n = n_user_matrices();
+		name = get_matrix_name_by_index(n-1);
+		txt = g_strdup_printf(_("Added matrix %s"), name);
+		infobox(txt);
+		g_free(txt);
+	    }
+	}
+
+	maybe_warn();
+    }
+
+    gretl_print_destroy(prn);
+
+    return err;
+}
+
 static int is_genr_line (char *s)
 {
     if (!strncmp(s, "genr ", 5) ||
@@ -3943,104 +4038,6 @@ void do_model_genr (GtkWidget *w, dialog_t *dlg)
 	lib_command_sprintf("genr %s", buf);
 	finish_genr(pmod, dlg);
     }
-}
-
-/* Try for the most informative possible error message,
-   but also try to avoid duplication
-*/
-
-static void errmsg_plus (int err, const char *plus)
-{
-    int handled = 0;
-
-    if (plus != NULL && *plus != '\0') {
-	const char *s1 = errmsg_get_with_default(err);
-	gchar *s2 = g_strstrip(g_strdup(plus));
-
-	if (*s1 != '\0' && *s2 != '\0' && strcmp(s1, s2)) {
-	    errbox("%s\n%s", s1, s2);
-	    handled = 1;
-	} else if (*s1 == '\0' && *s2 != '\0') {
-	    errbox(s2);
-	    handled = 1;
-	}
-
-	g_free(s2);
-    } 
-
-    if (!handled) {
-	gui_errmsg(err);
-    }
-}
-
-static int finish_genr (MODEL *pmod, dialog_t *dlg)
-{
-    PRN *prn;
-    int err = 0;
-
-    if (bufopen(&prn)) {
-	return 1;
-    }
-
-    if (pmod != NULL) {
-	set_genr_model(pmod, GRETL_OBJ_EQN);
-    }
-
-    err = generate(libline, dataset, OPT_NONE, prn); 
-
-    unset_genr_model();
-
-    if (err) {
-	errmsg_plus(err, gretl_print_get_buffer(prn));
-    } else {
-	int n, gentype = genr_get_last_output_type();
-	const char *name;
-	double val;
-	gchar *txt;
-
-	if (dlg != NULL) {
-	    close_dialog(dlg);
-	}
-
-	if (pmod != NULL) {
-	    record_model_command_verbatim(pmod->ID);
-	} else {
-	    record_command_verbatim();
-	}
-
-	if (gentype == GRETL_TYPE_SERIES) {
-	    populate_varlist();
-	    mark_dataset_as_modified();
-	} else if (gentype == GRETL_TYPE_DOUBLE) {
-	    if (autoicon_on()) {
-		edit_scalars();
-	    } else {	    
-		n = n_saved_scalars();
-		name = gretl_scalar_get_name(n-1);
-		val = gretl_scalar_get_value_by_index(n-1);
-		txt = g_strdup_printf(_("Added scalar %s = %g"),
-				      name, val);
-		infobox(txt);
-		g_free(txt);
-	    }
-	} else if (gentype == GRETL_TYPE_MATRIX) {
-	    if (autoicon_on()) {
-		view_session();
-	    } else {
-		n = n_user_matrices();
-		name = get_matrix_name_by_index(n-1);
-		txt = g_strdup_printf(_("Added matrix %s"), name);
-		infobox(txt);
-		g_free(txt);
-	    }
-	}
-
-	maybe_warn();
-    }
-
-    gretl_print_destroy(prn);
-
-    return err;
 }
 
 static int real_do_setmiss (double missval, int varno) 
@@ -7258,107 +7255,6 @@ int do_store (char *filename, int action)
     return err;
 }
 
-#ifdef G_OS_WIN32
-
-static int get_latex_path (char *latex_path)
-{
-    int ret;
-    char *p;
-
-    ret = SearchPath(NULL, latex, NULL, MAXLEN, latex_path, &p);
-
-    return (ret == 0);
-}
-
-#else
-
-static int spawn_latex (char *texsrc)
-{
-    GError *error = NULL;
-    gchar *errout = NULL, *sout = NULL;
-    gchar *argv[] = {
-	latex,
-	"\\batchmode",
-	"\\input",
-	texsrc,
-	NULL
-    };
-    int ok, status;
-    int ret = LATEX_OK;
-
-    signal(SIGCHLD, SIG_DFL);
-
-    ok = g_spawn_sync (gretl_dotdir(), /* working dir */
-		       argv,
-		       NULL,    /* envp */
-		       G_SPAWN_SEARCH_PATH,
-		       NULL,    /* child_setup */
-		       NULL,    /* user_data */
-		       &sout,   /* standard output */
-		       &errout, /* standard error */
-		       &status, /* exit status */
-		       &error);
-
-    if (!ok) {
-	errbox(error->message);
-	g_error_free(error);
-	ret = LATEX_EXEC_FAILED;
-    } else if (status != 0) {
-	if (errout && *errout) {
-	    errbox(errout);
-	} else {
-	    gchar *errmsg;
-
-	    errmsg = g_strdup_printf("%s\n%s", 
-				     _("Failed to process TeX file"),
-				     sout);
-	    errbox(errmsg);
-	    g_free(errmsg);
-	}
-	ret = LATEX_ERROR;
-    } else if (errout && *errout) {
-	fputs("spawn_latex: found stuff on stderr:\n", stderr);
-	fputs(errout, stderr);
-    }
-
-    /* change above, 2008-08-22: before we flagged a LATEX_ERROR
-       if we saw anything on standard error, regardless of the
-       exit status 
-    */
-
-    g_free(errout);
-    g_free(sout);
-
-    return ret;
-}
-
-#endif /* !G_OS_WIN32 */
-
-int latex_compile (char *texshort)
-{
-#ifdef G_OS_WIN32
-    static char latex_path[MAXLEN];
-    char tmp[MAXLEN];
-#endif
-    int err = LATEX_OK;
-
-#ifdef G_OS_WIN32
-    if (*latex_path == 0 && get_latex_path(latex_path)) {
-	win_show_last_error();
-	return LATEX_EXEC_FAILED;
-    }
-
-    sprintf(tmp, "\"%s\" \\batchmode \\input %s", latex_path, texshort);
-    if (win_run_sync(tmp, gretl_dotdir())) {
-	return LATEX_EXEC_FAILED;
-    }
-#else
-    err = spawn_latex(texshort);
-#endif /* G_OS_WIN32 */
-
-    return err;
-}
-
 #ifdef OSX_BUILD
 
 #include <Carbon/Carbon.h>
@@ -7402,143 +7298,6 @@ int osx_open_url (const char *url)
 }
 
 #endif /* OSX_BUILD */
-
-static int check_for_rerun (const char *texbase)
-{
-    char logfile[MAXLEN];
-    char lline[512];
-    FILE *fp;
-    int ret = 0;
-
-    sprintf(logfile, "%s.log", texbase);
-    fp = gretl_fopen(logfile, "r");
-
-    if (fp != NULL) {
-	while (fgets(lline, sizeof lline, fp)) {
-	    if (strstr(lline, "Rerun LaTeX")) {
-		ret = 1;
-		break;
-	    }
-	}
-	fclose(fp);
-    }
-
-    return ret;
-}
-
-static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
-{
-    char texfile[MAXLEN], texbase[MAXLEN], tmp[MAXLEN];
-    int use_pdf = get_tex_use_pdf();
-    int dot, err = LATEX_OK;
-    char *texshort = NULL;
-    const char *buf;
-    PRN *fprn;
-
-    *texfile = 0;
-
-    if (fname != NULL) {
-	strcpy(texfile, fname);
-    } else {
-	sprintf(texfile, "%swindow.tex", gretl_dotdir());
-    } 
-
-    /* ensure we don't get stale output */
-    remove(texfile);
-
-    fprn = gretl_print_new_with_filename(texfile, &err);
-    if (err) {
-	gui_errmsg(err);
-	return;
-    }
-
-    gretl_tex_preamble(fprn, prn_format(bprn));
-    buf = gretl_print_get_buffer(bprn);
-    pputs(fprn, buf);
-    pputs(fprn, "\n\\end{document}\n");
-
-    gretl_print_destroy(fprn);
-	
-    if (saveit) {
-	return;
-    }
-
-    dot = dotpos(texfile);
-    *texbase = 0;
-    strncat(texbase, texfile, dot);
-
-    texshort = strrchr(texbase, SLASH) + 1;
-    if (texshort == NULL) {
-	errbox(_("Failed to process TeX file"));
-	return;
-    } 
-
-    err = latex_compile(texshort);
-
-    /* now maybe re-run latex (e.g. for longtable) */
-    if (err == LATEX_OK) {
-	if (check_for_rerun(texbase)) {
-	    err = latex_compile(texshort);
-	}
-    }
-
-    if (err == LATEX_OK) {
-#if defined(G_OS_WIN32)
-	if (use_pdf) {
-	    sprintf(tmp, "%s.pdf", texbase);
-	    win32_open_file(tmp);
-	} else {
-	    sprintf(tmp, "\"%s\" \"%s.dvi\"", viewdvi, texbase);
-	    if (WinExec(tmp, SW_SHOWNORMAL) < 32) {
-		win_show_last_error();
-	    }
-	}
-#elif defined(OSX_BUILD)
-	if (use_pdf) {
-	    sprintf(tmp, "%s.pdf", texbase);
-	} else {
-	    sprintf(tmp, "%s.dvi", texbase);
-	}
-	if (osx_open_file(tmp)) {
-	    file_read_errbox(tmp);
-	}
-#else
-	if (use_pdf) {
-	    sprintf(tmp, "%s.pdf", texbase);
-	    gretl_fork("viewpdf", tmp);
-	} else {
-	    sprintf(tmp, "%s.dvi", texbase);
-	    gretl_fork("viewdvi", tmp);
-	}
-#endif
-    }
-
-    sprintf(tmp, "%s.log", texbase);
-    if (err == LATEX_ERROR) {
-	view_file(tmp, 0, 1, 78, 350, VIEW_FILE);
-    } else {
-	fprintf(stderr, "wrote '%s'\n", texfile);
-	/* gretl_remove(texfile); */
-	gretl_remove(tmp);
-    }
-
-    sprintf(tmp, "%s.aux", texbase);
-    gretl_remove(tmp);
-}
-
-void view_latex (PRN *prn)
-{
-    view_or_save_latex(prn, NULL, 0);
-}
-
-void save_latex (PRN *prn, const char *fname)
-{
-    if (prn != NULL) {
-	view_or_save_latex(prn, fname, 1);
-    } else {
-	save_graph_page(fname);
-    }
-}
 
 static void clean_up_varlabels (DATASET *dset)
 {
