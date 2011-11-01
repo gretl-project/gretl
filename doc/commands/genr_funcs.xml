@@ -967,6 +967,7 @@
 	  <seelist>
 	    <fncref targ="NRmax"/>
 	    <fncref targ="fdjac"/>
+	    <fncref targ="simann"/>
 	  </seelist>
 	</para>
       </description>
@@ -5236,6 +5237,29 @@
 	    <fncref targ="ones"/>
 	    <fncref targ="zeros"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="simann" section="numerical" output="scalar">
+      <fnargs>
+	<fnarg type="vector">b</fnarg>
+	<fnarg type="fncall">f</fnarg>
+	<fnarg type="scalar">maxit</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Implements simulated annealing, which may be helpful in
+	  improving the initialization for a numerical optimization
+	  problem (see <fncref targ="BFGSmax"/>).
+	</para>
+	<para>
+	  The first argument holds the intial value of a parameter vector,
+	  the second argument specifies a function call which returns the
+	  (scalar) value of the maximand, and the third argument specifies
+	  the maximum number of iterations. On successful completion,
+	  <lit>simann</lit> returns the final value of the maximand. FIXME
+	  more details are needed here.
 	</para>
       </description>
     </function>

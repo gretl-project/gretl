@@ -802,7 +802,7 @@ static int nls_make_trimmed_dataset (nlspec *spec, int t1, int t2)
 /* Adjust starting and ending points of sample if need be, to avoid
    missing values; abort if there are missing values within the
    (possibly reduced) sample range.  For this purpose we generate the
-   nls residual variable.  
+   nls residual variable, or the loglikelihood in case of MLE. 
 */
 
 static int nl_missval_check (nlspec *s, const DATASET *dset)
@@ -822,7 +822,7 @@ static int nl_missval_check (nlspec *s, const DATASET *dset)
     }
 
     if (s->lvec != NULL || s->lhtype == GRETL_TYPE_DOUBLE) {
-	/* not a series result */
+	/* the calculation gives a matrix or scalar */
 	goto nl_miss_exit;
     }
 
@@ -2929,6 +2929,10 @@ static int check_spec_requirements (nlspec *spec)
 
     return err;
 }
+
+/* make any adjustments that may be needed in case the value that's
+   returned by the user's likelihood function is a scalar 
+*/
 
 static int mle_scalar_check (nlspec *spec)
 {

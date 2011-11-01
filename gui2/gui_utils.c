@@ -2085,8 +2085,6 @@ void view_window_set_editable (windata_t *vwin)
     attach_content_changed_signal(vwin);
 }
 
-
-
 /* Called on destroying an editing window: give the user a chance
    to save if the content is changed, or to cancel the close.
 */

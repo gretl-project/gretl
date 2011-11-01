@@ -147,6 +147,7 @@ enum {
 static char *global_items[] = {
     N_("Save session"),
     N_("Arrange icons"),
+    N_("Windows"),
     N_("Close window")
 };
 
@@ -2986,6 +2987,8 @@ static void global_popup_callback (GtkWidget *widget, gpointer data)
 	}
     } else if (!strcmp(item, _("Arrange icons"))) {
 	rearrange_icons();
+    } else if (!strcmp(item, _("Windows"))) {
+	window_list_popup(iconview);
     } else if (!strcmp(item, _("Close window"))) {
 	gtk_widget_destroy(iconview);
     }

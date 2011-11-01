@@ -331,6 +331,11 @@ gint bufopen (PRN **pprn)
    Typically, between calling parse_lib_command and record_lib_command
    we check to see if the action is successful; once again, we'd like
    to avoid logging failed commands.
+
+   Final point: at present we're not actually logging all the GUI
+   actions that have a CLI counterpart. A useful task for a "rainy
+   day" would be to find unrecorded actions and add some more logging
+   code.
 */
 
 /* To have the command flagged as associated with a particular
@@ -376,26 +381,34 @@ static int real_record_lib_command (int model_ID)
     return err;
 }
 
+/* log a command in @libline that has been pre-parsed */
+
 int record_lib_command (void)
 {
     return real_record_lib_command(0);
 }
+
+/* variant of the above for commands that pertain to a
+   given model
+*/
 
 static int record_model_command (int model_ID)
 {
     return real_record_lib_command(model_ID);
 }
 
-/* used for logging a simple command when we already know
-   that it worked OK */
+/* log a "simple" command when we already know that it 
+   worked OK; doesn't require that parse_lib_command 
+   has been called 
+*/
 
 int record_command_verbatim (void)
 {
     return add_command_to_stack(libline);
 }
 
-/* as above, but arranges for notification in the log that
-   the command is associated with a model (e.g. a test)
+/* variant of the above for commands that pertain to a
+   given model 
 */
 
 int record_model_command_verbatim (int model_ID)
@@ -403,8 +416,9 @@ int record_model_command_verbatim (int model_ID)
     return add_model_command_to_stack(libline, model_ID);
 }
 
-/* checks the current @libline for parse-validity, but does 
-   not of itself record the command */
+/* parses @libline and fills out @libcmd, but does
+   not of itself record (or execute) the command 
+*/
 
 int parse_lib_command (void)
 {
@@ -3474,7 +3488,7 @@ static int real_do_model (int action)
     MODEL *pmod;
     int err = 0;
 
-#if 1
+#if 0
     fprintf(stderr, "do_model: libline = '%s'\n", libline);
 #endif
 

@@ -87,8 +87,19 @@ double user_NR (gretl_matrix *b,
 		PRN *prn, 
 		int *err);
 
+double user_simann (gretl_matrix *b, 
+		    const char *fncall,
+		    int maxit, 
+		    DATASET *dset,
+		    PRN *prn, 
+		    int *err);
+
 gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 		     DATASET *dset, int *err);
+
+int gretl_simann (double *theta, int n, int maxit,
+		  BFGS_CRIT_FUNC cfunc, int crittype,
+		  void *data, gretlopt opt, PRN *prn);
 
 void BFGS_defaults (int *maxit, double *tol, int ci);
 

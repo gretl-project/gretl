@@ -345,6 +345,7 @@ enum {
     F_MLAG,
     F_EIGSOLVE,
     F_NADARWAT,
+    F_SIMANN,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
@@ -397,7 +398,7 @@ enum {
                              s == F_NRMAX || s == F_DESEAS)
 
 /* functions taking string arg in middle position */
-#define string_mid_func(s) (s == F_BFGSMAX || s == F_NRMAX)
+#define string_mid_func(s) (s == F_BFGSMAX || s == F_NRMAX || s == F_SIMANN)
 
 #define unary_op(s)  (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)

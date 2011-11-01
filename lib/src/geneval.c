@@ -2003,21 +2003,21 @@ static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r, parser *p)
 	    sg = r->v.str;
 	} else if (r->t != EMPTY) {
 	    p->err = E_TYPES;
-	    return NULL;
 	}
 
-	if (!is_function_call(sf)) {
+	if (!p->err && !is_function_call(sf)) {
 	    p->err = E_TYPES;
-	    return NULL;
 	}
 
-	if (sg != NULL && !is_function_call(sg)) {
+	if (!p->err && sg != NULL && !is_function_call(sg)) {
 	    p->err = E_TYPES;
-	    return NULL;
 	}	
 
-	if (gretl_is_null_matrix(b)) {
+	if (!p->err && gretl_is_null_matrix(b)) {
 	    p->err = E_DATA;
+	}
+
+	if (p->err) {
 	    return NULL;
 	}
 
@@ -2028,6 +2028,41 @@ static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r, parser *p)
 
 	ret->v.xval = user_BFGS(b, sf, sg, p->dset, 
 				p->prn, &p->err);
+    } else {
+	ret = aux_scalar_node(p);
+    }
+
+    return ret;
+}
+
+static NODE *simann_node (NODE *l, NODE *m, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	gretl_matrix *b = l->v.m;
+	const char *sf = m->v.str;
+	int maxit;
+
+	if (gretl_is_null_matrix(b)) {
+	    p->err = E_DATA;
+	} else if (!is_function_call(sf)) {
+	    p->err = E_TYPES;
+	} else {
+	    maxit = node_get_int(r, p);
+	}
+
+	if (p->err) {
+	    return NULL;
+	}
+
+	ret = aux_scalar_node(p);
+	if (ret == NULL) { 
+	    return NULL;
+	}
+
+	ret->v.xval = user_simann(b, sf, maxit, p->dset, 
+				  p->prn, &p->err);
     } else {
 	ret = aux_scalar_node(p);
     }
@@ -8698,6 +8733,14 @@ static NODE *eval (NODE *t, parser *p)
 	/* matrix, plus one or two string args */
 	if (l->t == MAT && m->t == STR) {
 	    ret = BFGS_maximize(l, m, r, p);
+	} else {
+	    p->err = E_TYPES;
+	} 
+	break;
+    case F_SIMANN:
+	/* matrix, plus string and int args */
+	if (l->t == MAT && m->t == STR && scalar_node(r)) {
+	    ret = simann_node(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;
 	} 

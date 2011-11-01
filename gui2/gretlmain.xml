@@ -128,7 +128,6 @@
     </menu>
     <menu action="View">
       <menuitem action="IconView"/>
-      <menuitem action="EditScalars"/>
       <separator/>
       <menu action="Windows">
       </menu>

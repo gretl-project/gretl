@@ -104,7 +104,6 @@ static void view_items_state (gboolean s)
 {
     const char *viewpaths[] = {
 	"IconView",
-	"EditScalars",
 	"GraphVars",
 	"MultiPlots",
 	"summary",

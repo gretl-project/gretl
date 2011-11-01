@@ -1530,12 +1530,11 @@ double user_BFGS (gretl_matrix *b,
 		  PRN *prn, int *err)
 {
     umax *u;
-    double ret = NADBL;
     gretlopt opt = OPT_NONE;
-    int verbose = libset_get_bool(MAX_VERBOSE);
     int maxit = BFGS_MAXITER_DEFAULT;
-    int fcount = 0, gcount = 0;
+    int verbose, fcount = 0, gcount = 0;
     double tol;
+    double ret = NADBL;
 
     u = umax_new(GRETL_TYPE_DOUBLE);
     if (u == NULL) {
@@ -1557,6 +1556,7 @@ double user_BFGS (gretl_matrix *b,
     }
 
     tol = libset_get_double(BFGS_TOLER);
+    verbose = libset_get_bool(MAX_VERBOSE);
 
     if (verbose) {
 	opt = OPT_V;
@@ -1593,13 +1593,12 @@ double user_NR (gretl_matrix *b,
 		PRN *prn, int *err)
 {
     umax *u;
-    double ret = NADBL;
     double crittol = 1.0e-7;
     double gradtol = 1.0e-7;
     gretlopt opt = OPT_NONE;
-    int verbose = libset_get_bool(MAX_VERBOSE);
     int maxit = 100;
     int iters = 0;
+    double ret = NADBL;
 
     u = umax_new(GRETL_TYPE_DOUBLE);
     if (u == NULL) {
@@ -1620,7 +1619,7 @@ double user_NR (gretl_matrix *b,
 	return NADBL;
     }
 
-    if (verbose) {
+    if (libset_get_bool(MAX_VERBOSE)) {
 	opt = OPT_V;
 	u->prn = prn;
     }
@@ -1635,6 +1634,59 @@ double user_NR (gretl_matrix *b,
 
     if (!*err) {
 	ret = u->fx_out;
+    }
+
+ bailout:
+
+    umax_destroy(u);
+
+    return ret;
+}
+
+double user_simann (gretl_matrix *b, 
+		    const char *fncall,
+		    int maxit,
+		    DATASET *dset,
+		    PRN *prn, int *err)
+{
+    umax *u;
+    gretlopt opt = OPT_NONE;
+    double ret = NADBL;
+
+    u = umax_new(GRETL_TYPE_DOUBLE);
+    if (u == NULL) {
+	*err = E_ALLOC;
+	return ret;
+    }
+
+    u->ncoeff = gretl_vector_get_length(b);
+    if (u->ncoeff == 0) {
+	*err = E_DATA;
+	goto bailout;
+    }
+
+    u->b = b;
+
+    *err = user_gen_setup(u, fncall, NULL, NULL, dset);
+    if (*err) {
+	return NADBL;
+    }
+
+    if (libset_get_bool(MAX_VERBOSE)) {
+	opt = OPT_V;
+	u->prn = prn;
+    }
+
+    *err = gretl_simann(b->val, u->ncoeff, maxit, 
+			user_get_criterion, C_OTHER,
+			u, opt, prn);
+
+    if (!*err) {
+	ret = u->fx_out;
+	if (na(ret)) {
+	    /* we might have ended up out of bounds */
+	    ret = user_get_criterion(b->val, u);
+	}
     }
 
  bailout:
@@ -2107,6 +2159,136 @@ int newton_raphson_max (double *b, int n, int maxit,
 
     free(b0);
     gretl_matrix_block_destroy(B);
+
+    return err;
+}
+
+static void set_up_matrix (gretl_matrix *m, double *val, 
+			   int rows, int cols)
+{
+    m->val = val;
+    m->rows = rows;
+    m->cols = cols;
+    m->t1 = m->t2 = 0;
+}
+
+/**
+ * gretl_simann:
+ * @theta: parameter array.
+ * @n: length of @theta.
+ * @maxit: the maximum number of iterations to perform.
+ * @cfunc: the function to be maximized.
+ * @crittype: 
+ * @data: pointer to be passed to the @cfunc callback.
+ * @opt:
+ * @prn:
+ *
+ * Simulated annealing: can help to improve the initialization
+ * of @theta for numerical optimization. On exit the value of
+ * @theta is set to the func-best point in case of improvement,
+ * otherwise to the last point visited.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */ 
+
+int gretl_simann (double *theta, int n, int maxit,
+		  BFGS_CRIT_FUNC cfunc, int crittype,
+		  void *data, gretlopt opt, PRN *prn)
+{
+    gretl_matrix b;
+    gretl_matrix *b0 = NULL;
+    gretl_matrix *b1 = NULL;
+    gretl_matrix *bstar = NULL;
+    gretl_matrix *d = NULL;
+    double f0, f1;
+    double fbest, fworst;
+    double Temp = 1.0;
+    double radius = 1.0;
+    int improved = 0;
+    int i, err = 0;
+
+    set_up_matrix(&b, theta, n, 1);
+
+    b0 = gretl_matrix_copy(&b);
+    b1 = gretl_matrix_copy(&b);
+    bstar = gretl_matrix_copy(&b);
+    d = gretl_column_vector_alloc(n);
+
+    if (b0 == NULL || b1 == NULL || bstar == NULL || d == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    f0 = fbest = fworst = cfunc(b.val, data);
+
+    if (opt & OPT_V) {
+	pprintf(prn, "\nSimulated annealing: initial function value = %.8g\n",
+		f0);
+    }
+
+    /* Question: should the initial radius be a function of the scale
+       of the initial parameter vector?
+    */
+
+    for (i=0; i<maxit; i++) {
+	gretl_matrix_random_fill(d, D_NORMAL);
+	gretl_matrix_multiply_by_scalar(d, radius);
+	gretl_matrix_add_to(b1, d);
+	f1 = cfunc(b1->val, data);
+
+	if (!na(f1) && (f1 > f0 || gretl_rand_01() < Temp)) {
+	    /* jump to the new point */
+	    f0 = f1;
+	    gretl_matrix_copy_values(b0, b1);
+	    if (f0 > fbest) {
+		fbest = f0;
+		gretl_matrix_copy_values(bstar, b0);
+		if (opt & OPT_V) {
+		    if (!improved) {
+			pprintf(prn, "\n%6s %12s %12s %12s\n",
+				"iter", "temp", "radius", "fbest");
+		    }
+		    pprintf(prn, "%6d %#12.6g %#12.6g %#12.6g\n", 
+			    i, Temp, radius, fbest);
+		}
+		improved = 1;
+	    } else if (f0 < fworst) {
+		fworst = f0;
+	    }
+	} else {
+	    /* revert to where we were */
+	    gretl_matrix_copy_values(b1, b0);
+	    f1 = f0;
+	}
+
+	Temp *= 0.999;
+	radius *= 0.9999;
+    }
+
+    if (improved) {
+	/* use the best point */
+	gretl_matrix_copy_values(&b, bstar);
+    } else {
+	/* use the last point */
+	gretl_matrix_copy_values(&b, b0);
+    }
+
+    if (improved) {
+	if (opt & OPT_V) pputc(prn, '\n');
+    } else {
+	pprintf(prn, "No improvement found in %d iterations\n\n", maxit);
+    }
+    
+    if (fbest - fworst < 1.0e-9) {
+	pprintf(prn, "*** warning: surface seems to be flat\n");
+    }
+
+ bailout:
+
+    gretl_matrix_free(b0);
+    gretl_matrix_free(b1);
+    gretl_matrix_free(bstar);
+    gretl_matrix_free(d);
 
     return err;
 }

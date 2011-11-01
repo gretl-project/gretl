@@ -377,6 +377,7 @@ struct str_table funcs[] = {
     { F_COLNAME,  "colname" },
     { F_RANDINT,  "randint" },
     { F_NADARWAT, "nadarwat" },   /* Nadaraya-Watson */
+    { F_SIMANN,   "simann" },     /* simulated annealing */
     { 0,          NULL }
 };
 
