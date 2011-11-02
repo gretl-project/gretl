@@ -520,9 +520,9 @@ real_gretl_matrix_data_subset (const int *list,
 		gretl_matrix_set(M, s, j, x);
 	    }
 	    if (s == 0) {
-		M->t1 = t;
+		gretl_matrix_set_t1(M, t);
 	    } else if (s == T - 1) {
-		M->t2 = t;
+		gretl_matrix_set_t2(M, t);
 		break;
 	    }
 	    s++;
@@ -549,8 +549,8 @@ real_gretl_matrix_data_subset (const int *list,
 	gretl_matrix_free(M);
 	M = NULL;
     } else if (T == Tmax) {
-	M->t1 = t1;
-	M->t2 = t2;
+	gretl_matrix_set_t1(M, t1);
+	gretl_matrix_set_t2(M, t2);
     }
 
     return M;
@@ -688,9 +688,9 @@ gretl_matrix_data_subset_special (const int *list,
 			    xti = M_NA;
 			}
 			if (s == 0) {
-			    X->t1 = t;
+			    gretl_matrix_set_t1(X, t);
 			} else if (s == T - 1) {
-			    X->t2 = t;
+			    gretl_matrix_set_t2(X, t);
 			}
 			gretl_matrix_set(X, s++, i, xti);
 		    }
@@ -1097,10 +1097,11 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 
     if (msg != NULL && *msg != '\0' && !plain) {
 	pprintf(prn, "%s (%d x %d)", msg, m->rows, m->cols);
-	if (m->t1 == BLOCKT && m->t2 == BLOCKT) {
-	    pprintf(prn, " (part of matrix block)\n\n");
-	} else if (m->t1 != 0 || m->t2 != 0) {
-	    pprintf(prn, " [t1 = %d, t2 = %d]\n\n", m->t1 + 1, m->t2 + 1);
+	if (gretl_matrix_is_dated(m)) {
+	    int mt1 = gretl_matrix_get_t1(m);
+	    int mt2 = gretl_matrix_get_t2(m);
+
+	    pprintf(prn, " [t1 = %d, t2 = %d]\n\n", mt1 + 1, mt2 + 1);
 	} else {
 	    pputs(prn, "\n\n");
 	}

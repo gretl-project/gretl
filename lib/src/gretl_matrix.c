@@ -57,16 +57,25 @@ struct gretl_matrix_block_ {
 #define gretl_is_vector(v) (v->rows == 1 || v->cols == 1)
 #define matrix_is_scalar(m) (m->rows == 1 && m->cols == 1)
 
-#define mdx(a,i,j)   ((j)*a->rows+(i))
+#define mdx(a,i,j) ((j)*a->rows+(i))
 
 #define matrix_transp_get(m,i,j) (m->val[(i)*m->rows+(j)])
 #define matrix_transp_set(m,i,j,x) (m->val[(i)*m->rows+(j)]=x)
 
-#define is_block_matrix(m) (m->t1==BLOCKT)
+#define INFO_INVALID 0xdeadbeef
+#define is_block_matrix(m) (m->info == (matrix_info *) INFO_INVALID)
 
 #define SVD_SMIN 1.0e-9
 
 static int add_scalar_to_matrix (gretl_matrix *targ, double x);
+static void gretl_matrix_destroy_info (gretl_matrix *m);
+
+struct matrix_info_ {
+    int t1;
+    int t2;
+    char **colnames;
+    char **rownames;
+};
 
 /* Central accounting for error in matrix allocation */
 
@@ -155,10 +164,11 @@ static void lapack_free (void *p)
     return;
 }
 
-static void matrix_block_error (const char *f)
+static int matrix_block_error (const char *f)
 {
     fprintf(stderr, "CODING ERROR: illegal call to %s on "
 	    "member of matrix block\n", f);
+    return E_DATA;
 }
 
 /**
@@ -194,7 +204,7 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
 
     m->rows = rows;
     m->cols = cols;
-    m->t1 = m->t2 = 0;
+    m->info = NULL;
 
     return m;
 }
@@ -294,7 +304,7 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 	    gretl_matrix_block_destroy(B);
 	    return NULL;
 	}
-	B->matrix[i]->t1 = B->matrix[i]->t2 = BLOCKT;
+	B->matrix[i]->info = (matrix_info *) INFO_INVALID;
 	B->matrix[i]->val = NULL;
     }
 
@@ -466,6 +476,10 @@ gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
 	m->cols = cols;
     }
 
+#if 0
+    gretl_matrix_destroy_info(m);
+#endif
+
     return m;
 }
 
@@ -494,6 +508,7 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
 	/* no need to reallocate storage */
 	m->rows = rows;
 	m->cols = cols;
+	gretl_matrix_destroy_info(m);
 	return 0;
     }
 
@@ -511,6 +526,8 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
     m->rows = rows;
     m->cols = cols;
 
+    gretl_matrix_destroy_info(m);
+
     return 0;
 }
 
@@ -524,8 +541,8 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
 void gretl_matrix_init (gretl_matrix *m)
 {
     m->rows = m->cols = 0;
-    m->t1 = m->t2 = 0;
     m->val = NULL;
+    m->info = NULL;
 }
 
 /**
@@ -693,9 +710,9 @@ gretl_matrix *gretl_null_matrix_new (void)
 	return m;
     }
 
-    m->val = NULL;
     m->rows = m->cols = 0;
-    m->t1 = m->t2 = 0;
+    m->val = NULL;
+    m->info = NULL;
 
     return m;
 }
@@ -762,6 +779,13 @@ void gretl_matrix_fill (gretl_matrix *m, double x)
     }
 }
 
+static void gretl_matrix_copy_t1_t2 (gretl_matrix *targ,
+				     const gretl_matrix *src)
+{
+    gretl_matrix_set_t1(targ, src->info->t1);
+    gretl_matrix_set_t2(targ, src->info->t2);
+}
+
 static gretl_matrix *
 gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 {
@@ -805,9 +829,9 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 	int n = rows * cols;
 
 	memcpy(c->val, m->val, n * sizeof *m->val);
-	if (!is_block_matrix(m)) {
-	    c->t1 = m->t1;
-	    c->t2 = m->t2;
+
+	if (gretl_matrix_is_dated(m)) {
+	    gretl_matrix_copy_t1_t2(c, m);
 	}
     }
 
@@ -953,6 +977,16 @@ gretl_matrix *gretl_matrix_reverse_cols (const gretl_matrix *m)
     return ret;
 }
 
+static void gretl_matrix_destroy_info (gretl_matrix *m)
+{
+    if (m->info != NULL && !is_block_matrix(m)) {
+	free_strings_array(m->info->colnames, m->cols);
+	free_strings_array(m->info->rownames, m->rows);
+	free(m->info);
+	m->info = NULL;
+    }
+}
+
 /**
  * gretl_matrix_free:
  * @m: matrix to be freed.
@@ -971,6 +1005,10 @@ void gretl_matrix_free (gretl_matrix *m)
 
     if (m->val != NULL) {
 	free(m->val);
+    }
+
+    if (m->info != NULL) {
+	gretl_matrix_destroy_info(m);
     }
 
     free(m);
@@ -2112,9 +2150,7 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
 	}
     }
 
-    if (!is_block_matrix(m)) {
-	m->t1 = m->t2 = 0;
-    }
+    gretl_matrix_destroy_info(m);
 
     free(val);
 
@@ -2560,10 +2596,13 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
 
     if (msg != NULL && *msg != '\0') {
 	fprintf(stderr, "%s (%d x %d)", msg, m->rows, m->cols);
-	if (m->t1 == BLOCKT && m->t2 == BLOCKT) {
+	if (is_block_matrix(m)) {
 	    fprintf(stderr, " (part of matrix block)\n\n");
-	} else if (m->t1 != 0 || m->t2 != 0) {
-	    fprintf(stderr, " [t1 = %d, t2 = %d]\n\n", m->t1 + 1, m->t2 + 1);
+	} else if (gretl_matrix_is_dated(m)) {
+	    int mt1 = gretl_matrix_get_t1(m);
+	    int mt2 = gretl_matrix_get_t2(m);
+
+	    fprintf(stderr, " [t1 = %d, t2 = %d]\n\n", mt1 + 1, mt2 + 1);
 	} else {
 	    fputs("\n\n", stderr);
 	}
@@ -3010,17 +3049,16 @@ double gretl_matrix_log_abs_determinant (gretl_matrix *a, int *err)
 
 static void matrix_grab_content (gretl_matrix *targ, gretl_matrix *src)
 {
+    targ->rows = src->rows;
+    targ->cols = src->cols;
+    
     free(targ->val);
     targ->val = src->val;
     src->val = NULL;
 
-    targ->rows = src->rows;
-    targ->cols = src->cols;
-    targ->t1 = src->t1;
-    targ->t2 = src->t2;
-
-    src->rows = src->cols = 0;
-    src->t1 = src->t2 = 0;
+    gretl_matrix_destroy_info(targ);
+    targ->info = src->info;
+    src->info = NULL;
 }
 
 #if 0 /* not used at present: alternative to QR solve */
@@ -8611,6 +8649,21 @@ int gretl_matrix_inplace_lag (gretl_matrix *targ,
     return 0;
 }
 
+static int gretl_matrix_add_info (gretl_matrix *m)
+{
+    m->info = malloc(sizeof *m->info);
+
+    if (m->info == NULL) {
+	return E_ALLOC;
+    } else {
+	m->info->t1 = 0;
+	m->info->t2 = 0;
+	m->info->colnames = NULL;
+	m->info->rownames = NULL;
+	return 0;
+    }
+}
+
 /**
  * gretl_matrix_set_t1:
  * @m: matrix to operate on.
@@ -8618,17 +8671,23 @@ int gretl_matrix_inplace_lag (gretl_matrix *targ,
  * 
  * Sets an integer value on the %t1 member of the gretl_matrix 
  * (used for internal information).  
+ *
+ * Returns: 0 on success, non-ero on error.
  */
 
-void gretl_matrix_set_t1 (gretl_matrix *m, int t)
+int gretl_matrix_set_t1 (gretl_matrix *m, int t)
 {
     if (m == NULL) {
-	return;
+	return E_DATA;   
     } else if (is_block_matrix(m)) {
-	matrix_block_error("gretl_matrix_set_t1");
-    } else {
-	m->t1 = t;
+	return matrix_block_error("gretl_matrix_set_t1");
+    } else if (m->info == NULL && gretl_matrix_add_info(m)) {
+	return E_ALLOC;
     }
+
+    m->info->t1 = t;
+
+    return 0;
 }
 
 /**
@@ -8637,18 +8696,24 @@ void gretl_matrix_set_t1 (gretl_matrix *m, int t)
  * @t: integer value to set.
  * 
  * Sets an integer value on the %t2 member of the gretl_matrix 
- * (used for internal information).  
+ * (used for internal information).
+ *   
+ * Returns: 0 on success, non-ero on error.
  */
 
-void gretl_matrix_set_t2 (gretl_matrix *m, int t)
+int gretl_matrix_set_t2 (gretl_matrix *m, int t)
 {
     if (m == NULL) {
-	return;    
+	return E_DATA;   
     } else if (is_block_matrix(m)) {
-	matrix_block_error("gretl_matrix_set_t2");
-    } else {
-	m->t2 = t;
+	return matrix_block_error("gretl_matrix_set_t2");
+    } else if (m->info == NULL && gretl_matrix_add_info(m)) {
+	return E_ALLOC;
     }
+
+    m->info->t2 = t;
+
+    return 0;
 }
 
 /**
@@ -8661,11 +8726,11 @@ void gretl_matrix_set_t2 (gretl_matrix *m, int t)
 
 int gretl_matrix_get_t1 (const gretl_matrix *m)
 {
-    if (m != NULL) {
-	return m->t1;
-    } else {
-	return 0;
-    }
+    if (m != NULL && !is_block_matrix(m) && m->info != NULL) {
+	return m->info->t1;
+    } 
+
+    return 0;
 }
 
 /**
@@ -8678,8 +8743,24 @@ int gretl_matrix_get_t1 (const gretl_matrix *m)
 
 int gretl_matrix_get_t2 (const gretl_matrix *m)
 {
-    if (m != NULL) {
-	return m->t2;
+    if (m != NULL && !is_block_matrix(m) && m->info != NULL) {
+	return m->info->t2;
+    } 
+
+    return 0;
+}
+
+/**
+ * gretl_matrix_is_dated:
+ * @m: matrix.
+ * 
+ * Returns: 1 if @m has t1 and t2 indices recorded.
+ */
+
+int gretl_matrix_is_dated (const gretl_matrix *m)
+{
+    if (m != NULL && !is_block_matrix(m) && m->info != NULL) {
+	return (m->info->t1 >= 0 && (m->info->t2 > m->info->t1));
     } else {
 	return 0;
     }
@@ -11516,10 +11597,9 @@ void gretl_matrix_transcribe_obs_info (gretl_matrix *targ,
 				       const gretl_matrix *src)
 {
     if (targ->rows == src->rows &&
-	targ->t1 == 0 && targ->t2 == 0 &&
-	!is_block_matrix(src)) {
-	targ->t1 = src->t1;
-	targ->t2 = src->t2;
+	src->info != NULL && targ->info == NULL) {
+	gretl_matrix_set_t1(targ, src->info->t1);
+	gretl_matrix_set_t2(targ, src->info->t2);
     }
 }
 
@@ -11642,3 +11722,64 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
 
     return X;
 }
+
+int gretl_matrix_set_colnames (gretl_matrix *m, char **S)
+{
+    if (m == NULL) {
+	return E_DATA;   
+    } else if (is_block_matrix(m)) {
+	return matrix_block_error("gretl_matrix_set_colnames");
+    } else if (S != NULL && m->info == NULL && 
+	       gretl_matrix_add_info(m)) {
+	return E_ALLOC;
+    }
+
+    if (m->info != NULL) {
+	if (m->info->colnames != NULL) {
+	    free_strings_array(m->info->colnames, m->cols);
+	}	
+	m->info->colnames = S;
+    }
+
+    return 0;
+}
+
+int gretl_matrix_set_rownames (gretl_matrix *m, char **S)
+{
+    if (m == NULL) {
+	return E_DATA;   
+    } else if (is_block_matrix(m)) {
+	return matrix_block_error("gretl_matrix_set_rownames");
+    } else if (S != NULL && m->info == NULL && 
+	       gretl_matrix_add_info(m)) {
+	return E_ALLOC;
+    }
+
+    if (m->info != NULL) {
+	if (m->info->rownames != NULL) {
+	    free_strings_array(m->info->rownames, m->rows);
+	}	
+	m->info->rownames = S;
+    }
+
+    return 0;
+}
+
+const char **gretl_matrix_get_colnames (const gretl_matrix *m)
+{
+    if (m != NULL && !is_block_matrix(m) && m->info != NULL) {
+	return (const char **) m->info->colnames;
+    } else {
+	return NULL;
+    }
+}
+
+const char **gretl_matrix_get_rownames (const gretl_matrix *m)
+{
+    if (m != NULL && !is_block_matrix(m) && m->info != NULL) {
+	return (const char **) m->info->rownames;
+    } else {
+	return NULL;
+    }
+}
+

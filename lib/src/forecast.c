@@ -2631,8 +2631,8 @@ static int set_forecast_matrices_from_fr (FITRESID *fr)
 	return E_ALLOC;
     }
 
-    f->t1 = ft1;
-    f->t2 = ft2;
+    gretl_matrix_set_t1(f, ft1);
+    gretl_matrix_set_t2(f, ft2);
 
     if (fr->sderr != NULL) {
 	T = et2 - et1 + 1;
@@ -2641,8 +2641,8 @@ static int set_forecast_matrices_from_fr (FITRESID *fr)
 	    if (e == NULL) {
 		err = E_ALLOC;
 	    } else {
-		e->t1 = et1;
-		e->t2 = et2;
+		gretl_matrix_set_t1(e, et1);
+		gretl_matrix_set_t2(e, et2);
 	    }
 	}	    
     }
@@ -2738,7 +2738,7 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
     int f0 = 0, fn = fT;
     int e0 = 0, en = eT;
     double x;
-    int i, j;
+    int i, j, mt1;
     int err = 0;
 
     if (imin == imax) {
@@ -2769,8 +2769,9 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
 	return E_ALLOC;
     }
 
-    f->t1 = F->t1 + f0;
-    f->t2 = f->t1 + fT - 1;
+    mt1 = gretl_matrix_get_t1(F) + f0;
+    gretl_matrix_set_t1(f, mt1);
+    gretl_matrix_set_t2(f, mt1 + fT - 1);
 
     eT = en - e0 + 1;
 
@@ -2779,8 +2780,9 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
 	if (e == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    e->t1 = F->t1 + e0;
-	    e->t2 = e->t1 + eT - 1;
+	    mt1 = gretl_matrix_get_t1(F) + e0;
+	    gretl_matrix_set_t1(e, mt1);
+	    gretl_matrix_set_t2(e, mt1 + eT - 1);
 	}	    
     }
 

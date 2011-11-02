@@ -1373,8 +1373,8 @@ const gretl_matrix *
 gretl_VAR_get_residual_matrix (const GRETL_VAR *var)
 {
     if (var->E != NULL) {
-	var->E->t1 = var->t1;
-	var->E->t2 = var->t2;
+	gretl_matrix_set_t1(var->E, var->t1);
+	gretl_matrix_set_t2(var->E, var->t2);
     }
 
     return var->E;
@@ -1391,8 +1391,8 @@ gretl_VAR_get_fitted_matrix (const GRETL_VAR *var)
 	Yh = gretl_matrix_copy(var->Y);
 	if (Yh != NULL) {
 	    gretl_matrix_subtract_from(Yh, var->E);
-	    Yh->t1 = var->t1;
-	    Yh->t2 = var->t2;
+	    gretl_matrix_set_t1(Yh, var->t1);
+	    gretl_matrix_set_t2(Yh, var->t2);
 	}
     }
 
@@ -3769,10 +3769,6 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 	    }
 	}
     }	    
-
-    if (M != NULL && idx == M_UHAT) {
-	M->t1 = var->t1;
-    }
 
     return M;
 }

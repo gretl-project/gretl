@@ -5558,8 +5558,8 @@ model_get_special_vec (const MODEL *pmod, ModelDataIndex idx, int *err)
     if (v == NULL) {
 	*err = E_ALLOC;
     } else {
-	v->t1 = pmod->t1;
-	v->t2 = pmod->t2;
+	gretl_matrix_set_t1(v, pmod->t1);
+	gretl_matrix_set_t2(v, pmod->t2);
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    /* FIXME: is this indexation always right? */
 	    gretl_vector_set(v, t - pmod->t1, mdata[t]);

@@ -5173,7 +5173,7 @@ int gretl_system_residual_plot (void *p, int ci, const DATASET *dset)
 	return E_DATA;
     }
 
-    t1 = E->t1;
+    t1 = gretl_matrix_get_t1(E);
 
     fp = get_plot_input_stream(PLOT_REGULAR, &err);
     if (err) {
@@ -5246,7 +5246,7 @@ int gretl_VECM_combined_EC_plot (GRETL_VAR *var,
 	return err;
     }
 
-    t1 = EC->t1;
+    t1 = gretl_matrix_get_t1(EC);
 
     fp = get_plot_input_stream(PLOT_REGULAR, &err);
     if (err) {
@@ -5339,7 +5339,7 @@ int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset)
     }
 
     nobs = gretl_matrix_rows(E);
-    t1 = E->t1;
+    t1 = gretl_matrix_get_t1(E);
 
     fp = get_plot_input_stream(PLOT_MULTI_SCATTER, &err);
     if (err) {

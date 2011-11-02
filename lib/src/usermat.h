@@ -108,11 +108,11 @@ int copy_named_matrix_as (const char *orig, const char *newname);
 
 int copy_matrix_as (const gretl_matrix *m, const char *newname);
 
-int umatrix_set_names_from_string (const gretl_matrix *M, 
+int umatrix_set_names_from_string (gretl_matrix *M, 
 				   const char *s,
 				   int byrow);
 
-int umatrix_set_names_from_list (const gretl_matrix *M, 
+int umatrix_set_names_from_list (gretl_matrix *M, 
 				 const int *list,
 				 const DATASET *dset,
 				 int byrow);

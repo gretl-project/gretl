@@ -131,8 +131,6 @@ static int gmm_unkvar (const char *s)
     return E_UNKVAR;
 }
 
-#define matrix_is_dated(m) (!(m->t1 == 0 && m->t2 == 0))
-
 /* Determine the type of an element in an "orthog" specification:
    series, matrix or list of series
 */
@@ -415,8 +413,8 @@ int nlspec_add_ivreg_oc (nlspec *s, int lhv, const int *rlist,
     if (e == NULL) {
 	err = E_ALLOC;
     } else {
-	e->t1 = s->t1;
-	e->t2 = s->t2;
+	gretl_matrix_set_t1(e, s->t1);
+	gretl_matrix_set_t2(e, s->t2);
 	for (t=0; t<s->nobs; t++) {
 	    x = Z[lhv][t + s->t1];
 	    gretl_vector_set(e, t, x);
@@ -435,8 +433,8 @@ int nlspec_add_ivreg_oc (nlspec *s, int lhv, const int *rlist,
     if (M == NULL) {
 	err = E_ALLOC;
     } else {
-	M->t1 = s->t1;
-	M->t2 = s->t2;
+	gretl_matrix_set_t1(M, s->t1);
+	gretl_matrix_set_t2(M, s->t2);
 	for (i=0; i<k && !err; i++) {
 	    v = rlist[i + 1];
 	    for (t=0; t<s->nobs; t++) {
@@ -494,8 +492,8 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	if (e == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    e->t1 = s->t1;
-	    e->t2 = s->t2;
+	    gretl_matrix_set_t1(e, s->t1);
+	    gretl_matrix_set_t2(e, s->t2);
 	    for (i=0; i<k && !err; i++) {
 		v = list[i + 1];
 		for (t=0; t<s->nobs; t++) {
@@ -511,8 +509,8 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	if (e == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    e->t1 = s->t1;
-	    e->t2 = s->t2;
+	    gretl_matrix_set_t1(e, s->t1);
+	    gretl_matrix_set_t2(e, s->t2);
 	    for (t=0; t<s->nobs; t++) {
 		x = dset->Z[v][t + s->t1];
 		gretl_vector_set(e, t, x);
@@ -550,8 +548,8 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	if (M == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    M->t1 = s->t1;
-	    M->t2 = s->t2;
+	    gretl_matrix_set_t1(M, s->t1);
+	    gretl_matrix_set_t2(M, s->t2);
 	    for (i=0; i<k && !err; i++) {
 		v = list[i + 1];
 		for (t=0; t<s->nobs; t++) {
@@ -568,8 +566,8 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	if (M == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    M->t1 = s->t1;
-	    M->t2 = s->t2;
+	    gretl_matrix_set_t1(M, s->t1);
+	    gretl_matrix_set_t2(M, s->t2);
 	    for (t=0; t<s->nobs; t++) {
 		x = dset->Z[v][t + s->t1];
 		gretl_vector_set(M, t, x);
@@ -688,6 +686,8 @@ static int gmm_matrix_resize (gretl_matrix **pA, nlspec *s, int oldt1)
     gretl_matrix *A = *pA;
     gretl_matrix *B = NULL;
     int T = s->t2 - s->t1 + 1;
+    int At1 = gretl_matrix_get_t1(A);
+    int At2 = gretl_matrix_get_t2(A);
     int m = A->cols;
     double x;
     int j, t, offt;
@@ -697,7 +697,11 @@ static int gmm_matrix_resize (gretl_matrix **pA, nlspec *s, int oldt1)
 	return E_ALLOC;
     }
 
-    offt = s->t1 - matrix_t1(A, oldt1); /* ?? */
+    if (At1 == 0 && At2 == 0) {
+	offt = s->t1 - oldt1;
+    } else {
+	offt = s->t1 - At1;
+    }
 
     for (j=0; j<m; j++) {
 	for (t=0; t<T; t++) {
@@ -706,8 +710,8 @@ static int gmm_matrix_resize (gretl_matrix **pA, nlspec *s, int oldt1)
 	}
     }
 
-    B->t1 = s->t1;
-    B->t2 = s->t2;
+    gretl_matrix_set_t1(B, s->t1);
+    gretl_matrix_set_t2(B, s->t2);
 
     gretl_matrix_replace(pA, B);
 
@@ -720,10 +724,10 @@ static int gmm_matrix_resize (gretl_matrix **pA, nlspec *s, int oldt1)
 
 static int gmm_fix_datarows (nlspec *s)
 {
-    int et1 = s->oc->e->t1;
-    int et2 = s->oc->e->t2;
-    int Zt1 = s->oc->Z->t1;
-    int Zt2 = s->oc->Z->t2;
+    int et1 = gretl_matrix_get_t1(s->oc->e);
+    int et2 = gretl_matrix_get_t2(s->oc->e);
+    int Zt1 = gretl_matrix_get_t1(s->oc->Z);
+    int Zt2 = gretl_matrix_get_t2(s->oc->Z);
     int oldt1 = s->t1;
     int err = 0;
 
@@ -1728,8 +1732,11 @@ static int needs_rejigging (gretl_matrix *m, int t1, int t2)
 	return 1;
     }
 
-    if (matrix_is_dated(m)) {
-	if (m->t1 != t1 || m->t2 != t2) {
+    if (gretl_matrix_is_dated(m)) {
+	int mt1 = gretl_matrix_get_t1(m);
+	int mt2 = gretl_matrix_get_t2(m);
+
+	if (mt1 != t1 || mt2 != t2) {
 	    /* offset is wrong */
 	    return 1;
 	}
@@ -1816,7 +1823,8 @@ int gmm_missval_check_etc (nlspec *s)
 #if 0
     /* thought: allow matrix version of GMM for vectors longer
        then the dataset -- but not ready yet */
-    if (!matrix_is_dated(s->oc->e) && !matrix_is_dated(s->oc->Z)) {
+    if (!gretl_matrix_is_dated(s->oc->e) && 
+	!gretl_matrix_is_dated(s->oc->Z)) {
 	int nr1 = s->oc->e->rows;
 	int nr2 = s->oc->Z->rows;
 	
@@ -1827,21 +1835,27 @@ int gmm_missval_check_etc (nlspec *s)
     }
 #endif
 
-    if (matrix_is_dated(s->oc->e)) {
-	if (s->oc->e->t1 > s->t1) {
-	    s->t1 = s->oc->e->t1;
+    if (gretl_matrix_is_dated(s->oc->e)) {
+	int et1 = gretl_matrix_get_t1(s->oc->e);
+	int et2 = gretl_matrix_get_t2(s->oc->e);
+
+	if (et1 > s->t1) {
+	    s->t1 = et1;
 	}
-	if (s->oc->e->t2 < s->t2) {
-	    s->t2 = s->oc->e->t2;
+	if (et2 < s->t2) {
+	    s->t2 = et2;
 	}
     }
 
-    if (matrix_is_dated(s->oc->Z)) {
-	if (s->oc->Z->t1 > s->t1) {
-	    s->t1 = s->oc->Z->t1;
+    if (gretl_matrix_is_dated(s->oc->Z)) {
+	int Zt1 = gretl_matrix_get_t1(s->oc->Z);
+	int Zt2 = gretl_matrix_get_t2(s->oc->Z);
+
+	if (Zt1 > s->t1) {
+	    s->t1 = Zt1;
 	}
-	if (s->oc->Z->t2 < s->t2) {
-	    s->t2 = s->oc->Z->t2;
+	if (Zt2 < s->t2) {
+	    s->t2 = Zt2;
 	}
     }
 

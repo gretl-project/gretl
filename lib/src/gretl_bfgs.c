@@ -2169,7 +2169,7 @@ static void set_up_matrix (gretl_matrix *m, double *val,
     m->val = val;
     m->rows = rows;
     m->cols = cols;
-    m->t1 = m->t2 = 0;
+    m->info = NULL;
 }
 
 /**

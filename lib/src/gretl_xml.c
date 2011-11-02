@@ -447,13 +447,21 @@ void gretl_xml_put_matrix (const gretl_matrix *m, const char *name,
     }
 
     if (name == NULL) {
-	fprintf(fp, "<gretl-matrix rows=\"%d\" cols=\"%d\">\n", 
+	fprintf(fp, "<gretl-matrix rows=\"%d\" cols=\"%d\"\n", 
 		m->rows, m->cols);
     } else {
-	fprintf(fp, "<gretl-matrix name=\"%s\" rows=\"%d\" cols=\"%d\" "
-		"t1=\"%d\" t2=\"%d\">\n", 
-		name, m->rows, m->cols, m->t1, m->t2);
+	fprintf(fp, "<gretl-matrix name=\"%s\" rows=\"%d\" cols=\"%d\"",
+		name, m->rows, m->cols);
     }
+
+    if (gretl_matrix_is_dated(m)) {
+	int mt1 = gretl_matrix_get_t1(m);
+	int mt2 = gretl_matrix_get_t2(m);
+
+	fprintf(fp, " t1=\"%d\" t2=\"%d", mt1, mt2);
+    }
+
+    fputs(">\n", fp);
 
     for (i=0; i<m->rows; i++) {
 	for (j=0; j<m->cols; j++) {
@@ -1330,8 +1338,8 @@ static gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
 	gretl_matrix_free(m);
 	m = NULL;
     } else {
-	m->t1 = t1;
-	m->t2 = t2;
+	gretl_matrix_set_t1(m, t1);
+	gretl_matrix_set_t2(m, t2);
     }
 
     return m;

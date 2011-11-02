@@ -1174,8 +1174,10 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
 	    i++;
 	}
 
-	Uh->t1 = Yh->t1 = bp->t1;
-	Uh->t2 = Yh->t2 = bp->t2;
+	gretl_matrix_set_t1(Uh, bp->t1);
+	gretl_matrix_set_t2(Uh, bp->t2);
+	gretl_matrix_set_t1(Yh, bp->t1);
+	gretl_matrix_set_t2(Yh, bp->t2);
 
 	gretl_model_set_matrix_as_data(pmod, "bp_uhat", Uh);
 	gretl_model_set_matrix_as_data(pmod, "bp_yhat", Yh);

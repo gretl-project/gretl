@@ -2306,7 +2306,7 @@ static void mnl_probs_callback (GtkAction *action, gpointer p)
 	} else {
 	    const int *yvals = gretl_model_get_data(pmod, "yvals");
 	    int obslen = max_obs_label_length(dataset);
-	    int i, j, t = P->t1;
+	    int i, j, t = gretl_matrix_get_t1(P);
 	    char obslabel[OBSLEN];
 	    double x;
 

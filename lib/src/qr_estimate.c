@@ -513,10 +513,10 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
     if (data_based_hac_bandwidth()) {
 	gretl_matrix umat;
 
+	gretl_matrix_init(&umat);
 	umat.rows = T;
 	umat.cols = 1;
 	umat.val = u;
-	umat.t1 = umat.t2 = 0;
 	*err = newey_west_bandwidth(&umat, kern, &p, &bt);
 	if (*err) {
 	    goto bailout;
@@ -612,9 +612,9 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
        into it, equal to the offset of the data on which the model
        is actually estimated.
     */
+    gretl_matrix_init(&umat);
     umat.rows = T;
     umat.cols = 1;
-    umat.t1 = umat.t2 = 0;
     umat.val = pmod->uhat + pmod->t1;
 
     XOX = HAC_XOX(&umat, X, &vi, &err);

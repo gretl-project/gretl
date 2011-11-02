@@ -1694,12 +1694,17 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 
     if (!*err) {
 	/* preserve data-row info? */
-	if (C->rows == A->rows && A->t1 >= 0 && A->t2 > A->t1) {
-	    C->t1 = A->t1;
-	    C->t2 = A->t2;
-	} else if (C->rows == B->rows && B->t1 >= 0 && B->t2 > B->t1) {
-	    C->t1 = B->t1;
-	    C->t2 = B->t2;
+	int At1 = gretl_matrix_get_t1(A);
+	int At2 = gretl_matrix_get_t2(A);
+	int Bt1 = gretl_matrix_get_t1(B);
+	int Bt2 = gretl_matrix_get_t2(B);
+
+	if (C->rows == A->rows && At1 >= 0 && At2 > At1) {
+	    gretl_matrix_set_t1(C, At1);
+	    gretl_matrix_set_t2(C, At2);
+	} else if (C->rows == B->rows && Bt1 >= 0 && Bt2 > Bt1) {
+	    gretl_matrix_set_t1(C, Bt1);
+	    gretl_matrix_set_t2(C, Bt2);
 	}
     }
 
@@ -2335,7 +2340,7 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	const gretl_matrix *m = l->v.m;
+	gretl_matrix *m = l->v.m;
 	int byrow = (f == F_ROWNAMES);
 
 	if (r->t == STR) {
@@ -10038,7 +10043,9 @@ static int non_scalar_matrix (const NODE *r)
 static int matrix_may_be_masked (const gretl_matrix *m, int n,
 				 parser *p)
 {
-    int fullrows = m->t2 - m->t1 + 1;
+    int mt1 = gretl_matrix_get_t1(m);
+    int mt2 = gretl_matrix_get_t2(m);
+    int fullrows = mt2 - mt1 + 1;
     int nobs = get_matrix_mask_nobs();
 
     if (n == nobs && fullrows > n) {
@@ -10055,11 +10062,14 @@ static int matrix_may_be_masked (const gretl_matrix *m, int n,
 static int series_compatible (const gretl_matrix *m, parser *p)
 {
     int n = gretl_vector_get_length(m);
+    int mt2 = gretl_matrix_get_t2(m);
     int T = sample_size(p->dset);
     int ok = 0;
 
-    if (m->t2 > 0) {
-	if (n == m->t2 - m->t1 + 1) {
+    if (mt2 > 0) {
+	int mt1 = gretl_matrix_get_t1(m);
+
+	if (n == mt2 - mt1 + 1) {
 	    /* sample is recorded on matrix */
 	    ok = 1;
 	} else if (matrix_may_be_masked(m, n, p)) {
@@ -10800,7 +10810,9 @@ static int save_generated_var (parser *p, PRN *prn)
 	    }
 	} else if (r->t == MAT) {
 	    const gretl_matrix *m = r->v.m;
-	    int s, k = gretl_vector_get_length(m);
+	    int k = gretl_vector_get_length(m);
+	    int mt1 = gretl_matrix_get_t1(m);
+	    int s;
 
 	    if (p->flags & P_MMASK) {
 		/* result needs special alignment */
@@ -10815,16 +10827,16 @@ static int save_generated_var (parser *p, PRN *prn)
 		for (t=p->dset->t1; t<=p->dset->t2; t++) {
 		    Z[v][t] = xy_calc(Z[v][t], m->val[t], p->op, VEC, p);
 		}
-	    } else if (k == sample_size(p->dset) && m->t1 == 0) {
+	    } else if (k == sample_size(p->dset) && mt1 == 0) {
 		/* treat as series of current sample length */
 		for (t=p->dset->t1, s=0; t<=p->dset->t2; t++, s++) {
 		    Z[v][t] = xy_calc(Z[v][t], m->val[s], p->op, VEC, p);
 		}
 	    } else {
-		/* align using m->t1 */
-		for (t=m->t1; t<m->t1 + k && t<=p->dset->t2; t++) {
+		/* align using matrix "t1" value */
+		for (t=mt1; t<mt1 + k && t<=p->dset->t2; t++) {
 		    if (t >= p->dset->t1) {
-			Z[v][t] = xy_calc(Z[v][t], m->val[t - m->t1], p->op, VEC, p);
+			Z[v][t] = xy_calc(Z[v][t], m->val[t - mt1], p->op, VEC, p);
 		    }
 		}
 	    }

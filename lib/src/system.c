@@ -2479,8 +2479,8 @@ static int system_add_yhat_matrix (equation_system *sys)
 	return E_ALLOC;
     }
 
-    sys->yhat->t1 = sys->t1;
-    sys->yhat->t2 = sys->t2;
+    gretl_matrix_set_t1(sys->yhat, sys->t1);
+    gretl_matrix_set_t2(sys->yhat, sys->t2);
 
     for (i=0; i<sys->neqns; i++) {
 	s = 0;
@@ -3947,8 +3947,8 @@ system_save_and_print_results (equation_system *sys, DATASET *dset,
     int err = 0;
 
     if (sys->E != NULL) {
-	sys->E->t1 = sys->t1;
-	sys->E->t2 = sys->t2;
+	gretl_matrix_set_t1(sys->E, sys->t1);
+	gretl_matrix_set_t2(sys->E, sys->t2);
     }
 
     if (sys->iters > 0 && sys->method == SYS_METHOD_SUR && nr == 0) {

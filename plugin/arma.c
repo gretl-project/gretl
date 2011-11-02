@@ -964,8 +964,8 @@ static void arma_add_ehat (MODEL *pmod, arma_info *ainfo,
 	gretl_matrix *ehat = gretl_matrix_copy(kh->E);
 
 	if (ehat != NULL) {
-	    ehat->t1 = pmod->t1;
-	    ehat->t2 = pmod->t2;
+	    gretl_matrix_set_t1(ehat, pmod->t1);
+	    gretl_matrix_set_t2(ehat, pmod->t2);
 	    gretl_model_set_matrix_as_data(pmod, "ehat", ehat);
 	}
     }
@@ -1549,11 +1549,12 @@ static int arima_by_ls (const DATASET *dset, arma_info *ainfo,
     } else {
 	gretl_vector y;
 
+	gretl_matrix_init(&y);
 	y.rows = ainfo->T;
 	y.cols = 1;
 	y.val = ainfo->y + ainfo->t1;
-	y.t1 = ainfo->t1;
-	y.t2 = ainfo->t2;
+	gretl_matrix_set_t1(&y, ainfo->t1);
+	gretl_matrix_set_t2(&y, ainfo->t2);
 
 	err = gretl_matrix_ols(&y, X, b, V, u, &s2);
     }

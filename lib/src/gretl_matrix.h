@@ -32,7 +32,6 @@
    as non-zero for the purpose of determining the rank of X */
 
 #define R_DIAG_MIN 1.0e-8
-#define BLOCKT -666
 
 typedef enum {
     GRETL_MOD_NONE = 0,
@@ -54,6 +53,8 @@ typedef enum {
 
 typedef struct gretl_matrix_ gretl_vector;
 
+typedef struct matrix_info_ matrix_info;
+
 /**
  * gretl_matrix:
  * @rows: number of rows in matrix
@@ -71,9 +72,8 @@ typedef struct gretl_matrix_ gretl_vector;
 typedef struct gretl_matrix_ {
     int rows;
     int cols;
-    int t1;
-    int t2;
     double *val;
+    matrix_info *info;
 } gretl_matrix;
 
 typedef struct gretl_matrix_block_ gretl_matrix_block;
@@ -651,13 +651,15 @@ int
 gretl_matrix_diagonal_sandwich (const gretl_vector *d, const gretl_matrix *X,
 				gretl_matrix *DXD);
 
-void gretl_matrix_set_t1 (gretl_matrix *m, int t);
+int gretl_matrix_set_t1 (gretl_matrix *m, int t);
 
-void gretl_matrix_set_t2 (gretl_matrix *m, int t);
+int gretl_matrix_set_t2 (gretl_matrix *m, int t);
 
 int gretl_matrix_get_t1 (const gretl_matrix *m);
 
 int gretl_matrix_get_t2 (const gretl_matrix *m);
+
+int gretl_matrix_is_dated (const gretl_matrix *m);
 
 int gretl_is_identity_matrix (const gretl_matrix *m);
 
@@ -724,6 +726,14 @@ gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X,
 
 void gretl_matrix_transcribe_obs_info (gretl_matrix *targ,
 				       const gretl_matrix *src);
+
+int gretl_matrix_set_colnames (gretl_matrix *m, char **S);
+
+int gretl_matrix_set_rownames (gretl_matrix *m, char **S);
+
+const char **gretl_matrix_get_colnames (const gretl_matrix *m);
+
+const char **gretl_matrix_get_rownames (const gretl_matrix *m);
 
 void lapack_mem_free (void);
 
