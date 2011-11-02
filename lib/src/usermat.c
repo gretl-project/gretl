@@ -141,7 +141,8 @@ void set_matrix_add_callback (void (*callback))
     matrix_add_callback = callback; 
 }
 
-static user_matrix *real_user_matrix_add (gretl_matrix *M, const char *name,
+static user_matrix *real_user_matrix_add (gretl_matrix *M, 
+					  const char *name,
 					  int callback_ok)
 {
     user_matrix **tmp;
