@@ -70,6 +70,8 @@ struct gretl_matrix_block_ {
 static int add_scalar_to_matrix (gretl_matrix *targ, double x);
 static void gretl_matrix_destroy_info (gretl_matrix *m);
 
+/* matrix metadata struct, not allocated by default */
+
 struct matrix_info_ {
     int t1;
     int t2;
@@ -477,6 +479,7 @@ gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
     }
 
 #if 0
+    /* this shouldn't be necessary? */
     gretl_matrix_destroy_info(m);
 #endif
 
@@ -525,7 +528,6 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
     m->val = x;
     m->rows = rows;
     m->cols = cols;
-
     gretl_matrix_destroy_info(m);
 
     return 0;
@@ -707,12 +709,10 @@ gretl_matrix *gretl_null_matrix_new (void)
 
     if (m == NULL) {
 	set_gretl_matrix_err(E_ALLOC);
-	return m;
+	return NULL;
     }
 
-    m->rows = m->cols = 0;
-    m->val = NULL;
-    m->info = NULL;
+    gretl_matrix_init(m);
 
     return m;
 }
@@ -778,6 +778,10 @@ void gretl_matrix_fill (gretl_matrix *m, double x)
 	}
     }
 }
+
+/* note: this is called only if we've checked that @src
+   has its "info" member allocated and set
+*/
 
 static void gretl_matrix_copy_t1_t2 (gretl_matrix *targ,
 				     const gretl_matrix *src)
@@ -8728,9 +8732,9 @@ int gretl_matrix_get_t1 (const gretl_matrix *m)
 {
     if (m != NULL && !is_block_matrix(m) && m->info != NULL) {
 	return m->info->t1;
-    } 
-
-    return 0;
+    } else {
+	return 0;
+    }
 }
 
 /**
@@ -8745,9 +8749,9 @@ int gretl_matrix_get_t2 (const gretl_matrix *m)
 {
     if (m != NULL && !is_block_matrix(m) && m->info != NULL) {
 	return m->info->t2;
-    } 
-
-    return 0;
+    } else {
+	return 0;
+    }
 }
 
 /**
