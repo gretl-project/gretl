@@ -3,10 +3,13 @@ version 1.9.7, in progress
   cross-validation criterion (available via the $test accessor)
 - "rmplot" command (range-mean plot): add a --trim option to discard the
   minimum and maximum from each sub-sample
+- new function simann() provides user access to simulated annealing
 - Speed up the production of bootstrapped confidence bands for impulse 
   responses in VECM models
 - Online help: ensure that option flags don't break across lines (and
   also colorize them for emphasis)
+- Matrices returned from user-defined functions: enable the preservation
+  of column and/or row names 
 - Fix bug: possible crash in tsls when there are missing values and a
   regressor is all-zero at the complete observations
 - Fix bug: "summary" command with --by option not respecting the
@@ -19,6 +22,8 @@ version 1.9.7, in progress
   replaced while the Icon view window was open
 - Fix bug: crash on using the --quiet option with the "freq" command
   in a command loop
+- Fix bug: breakage in processing the selection of quantiles for 
+  quantile regression in the GUI 
 
 2011-10-17 version 1.9.6
 - Add an importer for xlsx (Office Open XML) worksheet data
