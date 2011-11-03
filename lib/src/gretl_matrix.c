@@ -68,7 +68,6 @@ struct gretl_matrix_block_ {
 #define SVD_SMIN 1.0e-9
 
 static int add_scalar_to_matrix (gretl_matrix *targ, double x);
-static void gretl_matrix_destroy_info (gretl_matrix *m);
 
 /* matrix metadata struct, not allocated by default */
 
@@ -981,9 +980,9 @@ gretl_matrix *gretl_matrix_reverse_cols (const gretl_matrix *m)
     return ret;
 }
 
-static void gretl_matrix_destroy_info (gretl_matrix *m)
+void gretl_matrix_destroy_info (gretl_matrix *m)
 {
-    if (m->info != NULL && !is_block_matrix(m)) {
+    if (m != NULL && m->info != NULL && !is_block_matrix(m)) {
 	free_strings_array(m->info->colnames, m->cols);
 	free_strings_array(m->info->rownames, m->rows);
 	free(m->info);
@@ -8673,8 +8672,8 @@ static int gretl_matrix_add_info (gretl_matrix *m)
  * @m: matrix to operate on.
  * @t: integer value to set.
  * 
- * Sets an integer value on the %t1 member of the gretl_matrix 
- * (used for internal information).  
+ * Sets an integer value on @m, which can be retrieved using
+ * gretl_matrix_get_t1().
  *
  * Returns: 0 on success, non-ero on error.
  */
@@ -8699,8 +8698,8 @@ int gretl_matrix_set_t1 (gretl_matrix *m, int t)
  * @m: matrix to operate on.
  * @t: integer value to set.
  * 
- * Sets an integer value on the %t2 member of the gretl_matrix 
- * (used for internal information).
+ * Sets an integer value on @m, which can be retrieved using
+ * gretl_matrix_get_t2().
  *   
  * Returns: 0 on success, non-ero on error.
  */
@@ -8724,8 +8723,9 @@ int gretl_matrix_set_t2 (gretl_matrix *m, int t)
  * gretl_matrix_get_t1:
  * @m: matrix to read from.
  * 
- * Returns: the integer that has been set on the %t1 member
- * of the matrix struct, or zero.
+ * Returns: the integer that has been set on @m using
+ * gretl_matrix_set_t1(), or zero if no such value has
+ * been set.
  */
 
 int gretl_matrix_get_t1 (const gretl_matrix *m)
@@ -8741,8 +8741,9 @@ int gretl_matrix_get_t1 (const gretl_matrix *m)
  * gretl_matrix_get_t2:
  * @m: matrix to read from.
  * 
- * Returns: the integer that has been set on the %t2 member
- * of the matrix struct, or zero.
+ * Returns: the integer that has been set on @m using
+ * gretl_matrix_set_t2(), or zero if no such value has
+ * been set.
  */
 
 int gretl_matrix_get_t2 (const gretl_matrix *m)
@@ -8756,9 +8757,11 @@ int gretl_matrix_get_t2 (const gretl_matrix *m)
 
 /**
  * gretl_matrix_is_dated:
- * @m: matrix.
+ * @m: matrix to examine.
  * 
- * Returns: 1 if @m has t1 and t2 indices recorded.
+ * Returns: 1 if matrix @m has integer indices recorded
+ * via gretl_matrix_set_t1() and gretl_matrix_set_t2(),
+ * such that t1 >= 0 and t2 > t1, otherwise zero.
  */
 
 int gretl_matrix_is_dated (const gretl_matrix *m)
@@ -11727,6 +11730,20 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
     return X;
 }
 
+/**
+ * gretl_matrix_set_colnames:
+ * @m: target matrix.
+ * @S: array of strings.
+ *
+ * Sets an array of strings on @m which can be retrieved
+ * using gretl_matrix_get_colnames(). Note that @S must
+ * contain as many strings as @m has columns. The matrix
+ * takes ownership of @S, which should be allocated and
+ * not subsequently touched by the caller.
+ * 
+ * Returns: 0 on success, non-zero code on error.
+ */
+
 int gretl_matrix_set_colnames (gretl_matrix *m, char **S)
 {
     if (m == NULL) {
@@ -11747,6 +11764,20 @@ int gretl_matrix_set_colnames (gretl_matrix *m, char **S)
 
     return 0;
 }
+
+/**
+ * gretl_matrix_set_rownames:
+ * @m: target matrix.
+ * @S: array of strings.
+ * 
+ * Sets an array of strings on @m which can be retrieved
+ * using gretl_matrix_get_rownames(). Note that @S must
+ * contain as many strings as @m has rows. The matrix
+ * takes ownership of @S, which should be allocated and
+ * not subsequently touched by the caller.
+ * 
+ * Returns: 0 on success, non-zero code on error.
+ */
 
 int gretl_matrix_set_rownames (gretl_matrix *m, char **S)
 {
@@ -11769,6 +11800,16 @@ int gretl_matrix_set_rownames (gretl_matrix *m, char **S)
     return 0;
 }
 
+/**
+ * gretl_matrix_get_colnames:
+ * @m: matrix
+ * 
+ * Returns: The array of strings set on @m using 
+ * gretl_matrix_set_colnames(), or NULL if no such
+ * strings have been set. The returned array will 
+ * contain as many strings as @m has columns.
+ */
+
 const char **gretl_matrix_get_colnames (const gretl_matrix *m)
 {
     if (m != NULL && !is_block_matrix(m) && m->info != NULL) {
@@ -11777,6 +11818,16 @@ const char **gretl_matrix_get_colnames (const gretl_matrix *m)
 	return NULL;
     }
 }
+
+/**
+ * gretl_matrix_get_rownames:
+ * @m: matrix
+ * 
+ * Returns:The array of strings set on @m using 
+ * gretl_matrix_set_rownames(), or NULL if no such
+ * strings have been set. The returned array will
+ * contain as many strings as @m has rows.
+ */
 
 const char **gretl_matrix_get_rownames (const gretl_matrix *m)
 {

@@ -78,6 +78,7 @@ typedef struct {
     gretl_matrix *oldmat;
     char mname[VNAMELEN];
     const char **colnames;
+    const char **rownames;
     int *varlist;
     int datacols, datarows;
     int totcols;
@@ -210,25 +211,29 @@ static char *single_underscores (char *targ, const char *src)
 static void set_locator_label (Spreadsheet *sheet, GtkTreePath *path,
 			       GtkTreeViewColumn *column)
 {
-    GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(sheet->view));
-    GtkTreeIter iter;
-    gchar *rstr;
-    const gchar *cstr;
-    char tmp[VNAMELEN];
-
-    gtk_tree_model_get_iter(model, &iter, path);
-    gtk_tree_model_get(model, &iter, 0, &rstr, -1);
-    cstr = gtk_tree_view_column_get_title(column);
     if (sheet->matrix != NULL) {
-	sprintf(sheet->location, "%s, %s", rstr, cstr);
+	gchar *pstr = gtk_tree_path_to_string(path);
+	gint cnum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(column), "colnum"));
+
+	sprintf(sheet->location, "%d, %d", atoi(pstr) + 1, cnum);
+	g_free(pstr);
     } else {
+	GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(sheet->view));
+	const gchar *cstr = gtk_tree_view_column_get_title(column);
+	GtkTreeIter iter;
+	char tmp[VNAMELEN];
+	gchar *rstr;
+
 	single_underscores(tmp, cstr);
+	gtk_tree_model_get_iter(model, &iter, path);
+	gtk_tree_model_get(model, &iter, 0, &rstr, -1);
 	sprintf(sheet->location, "%s, %s", tmp, rstr);
+	g_free(rstr);
     }
+
     gtk_statusbar_pop(GTK_STATUSBAR(sheet->locator), sheet->cid);
     gtk_statusbar_push(GTK_STATUSBAR(sheet->locator), 
 		       sheet->cid, sheet->location);
-    g_free(rstr);
 }
 
 static void set_treeview_column_number (GtkTreeViewColumn *col, int j)
@@ -349,7 +354,7 @@ static void update_sheet_matrix (Spreadsheet *sheet)
 
     for (i=0; i<sheet->datarows; i++) {
 	for (j=0; j<sheet->datacols; j++) {
-	    gtk_tree_model_get(model, &iter, j+1, &numstr, -1);
+	    gtk_tree_model_get(model, &iter, j + 1, &numstr, -1);
 	    x = atof(numstr); 
 	    gretl_matrix_set(sheet->matrix, i, j, x);
 	    g_free(numstr);
@@ -362,36 +367,32 @@ static void maybe_update_column_names (Spreadsheet *sheet)
 {
     if (sheet->flags & SHEET_COLNAME_MOD) {
 	gretl_matrix *M = sheet->oldmat;
-	GtkTreeViewColumn *col;
-	const char *title;
-	char *cnames, tmp[13];
-	int j, err = 0;
+	char **cnames;
 
-	cnames = malloc(M->cols * 13 + 1);
+	cnames = strings_array_new_with_length(M->cols, 13);
 
 	if (cnames == NULL) {
-	    err = 1;
+	    nomem();
 	} else {
-	    *cnames = '\0';
+	    GtkTreeViewColumn *col;
+	    const char *title;
+	    int j, err = 0;
+
 	    for (j=0; j<M->cols && !err; j++) {
-		title = NULL;
-		col = gtk_tree_view_get_column(GTK_TREE_VIEW(sheet->view), j + 1);
+		col = gtk_tree_view_get_column(GTK_TREE_VIEW(sheet->view), 
+					       j + 1);
 		if (col != NULL) {
 		    title = gtk_tree_view_column_get_title(col);
-		}
-		if (title != NULL) {
-		    *tmp = '\0';
-		    single_underscores(tmp, title);
-		    strcat(cnames, tmp);
-		    strcat(cnames, " ");
-		} else {
-		    err = 1;
+		    if (title != NULL) {
+			single_underscores(cnames[j], title);
+		    } else {
+			err = 1;
+		    }
 		}
 	    }
 	    if (!err) {
-		umatrix_set_names_from_string(M, cnames, 0);
+		gretl_matrix_set_colnames(M, cnames);
 	    }
-	    free(cnames);
 	}
 
 	sheet->flags &= ~SHEET_COLNAME_MOD;
@@ -404,16 +405,18 @@ static void maybe_update_column_names (Spreadsheet *sheet)
 static void update_saved_matrix (Spreadsheet *sheet)
 {
     if (sheet->oldmat != NULL) {
-	if (sheet->oldmat->rows == sheet->matrix->rows &&
-	    sheet->oldmat->cols == sheet->matrix->cols) {
-	    gretl_matrix_copy_values(sheet->oldmat, sheet->matrix);
-	} else if (sheet->oldmat->rows * sheet->oldmat->cols ==
-		   sheet->matrix->rows * sheet->matrix->cols) {
-	    sheet->oldmat->rows = sheet->matrix->rows;
-	    sheet->oldmat->cols = sheet->matrix->cols;
-	    gretl_matrix_copy_values(sheet->oldmat, sheet->matrix);
+	gretl_matrix *targ = sheet->oldmat;
+	gretl_matrix *src = sheet->matrix;
+
+	if (targ->rows == src->rows && targ->cols == src->cols) {
+	    gretl_matrix_copy_values(targ, src);
+	} else if (targ->rows * targ->cols == src->rows * src->cols) {
+	    gretl_matrix_destroy_info(targ);
+	    targ->rows = src->rows;
+	    targ->cols = src->cols;
+	    gretl_matrix_copy_values(targ, src);
 	} else {
-	    gretl_matrix *m = gretl_matrix_copy(sheet->matrix);
+	    gretl_matrix *m = gretl_matrix_copy(src);
 
 	    if (m == NULL) {
 		nomem();
@@ -1525,6 +1528,23 @@ static void set_ok_transforms (Spreadsheet *sheet)
 	 s < GRETL_MATRIX_SYMMETRIC);
 }
 
+static void maybe_rename_sheet_cols (Spreadsheet *sheet)
+{
+    GtkTreeViewColumn *col;
+    const char *cname;
+    char cstr[16];
+    int i;
+
+    for (i=1; i<=sheet->matrix->cols; i++) {
+	col = gtk_tree_view_get_column(GTK_TREE_VIEW(sheet->view), i);
+	cname = gtk_tree_view_column_get_title(col);
+	sprintf(cstr, "%d", i);
+	if (strcmp(cname, cstr)) {
+	    gtk_tree_view_column_set_title(col, cstr);
+	}
+    }
+}
+
 static int rejig_sheet_cols (Spreadsheet *sheet)
 {
     int n = sheet->matrix->cols - sheet->datacols;
@@ -1589,6 +1609,8 @@ static int update_sheet_from_matrix (Spreadsheet *sheet)
 	    return err;
 	}
 	resized = 1;
+    } else {
+	maybe_rename_sheet_cols(sheet);
     }
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
@@ -1601,7 +1623,11 @@ static int update_sheet_from_matrix (Spreadsheet *sheet)
 	    gtk_list_store_append(store, &iter);
 	    sprintf(tmpstr, "%d", i1);
 	    gtk_list_store_set(store, &iter, 0, tmpstr, -1);
+	} else if (sheet->rownames != NULL) {
+	    sprintf(tmpstr, "%d", i1);
+	    gtk_list_store_set(store, &iter, 0, tmpstr, -1);
 	}
+	    
 	for (j=0; j<sheet->matrix->cols; j++) {
 	    x = gretl_matrix_get(sheet->matrix, i, j);
 	    if (x == -0.0) {
@@ -1655,8 +1681,8 @@ static int add_matrix_data_to_sheet (Spreadsheet *sheet)
 {
     gchar tmpstr[32];
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
-    GtkTreeIter iter;
     GtkListStore *store;
+    GtkTreeIter iter;
     double x;
     int i, j;
 
@@ -1665,7 +1691,12 @@ static int add_matrix_data_to_sheet (Spreadsheet *sheet)
     /* row labels */
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
     for (i=0; i<sheet->datarows; i++) {
-	sprintf(tmpstr, "%d", i+1);
+	if (sheet->rownames != NULL) {
+	    *tmpstr = '\0';
+	    strncat(tmpstr, sheet->rownames[i], 31);
+	} else {
+	    sprintf(tmpstr, "%d", i+1);
+	}
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 0, tmpstr, -1);
     }
@@ -1810,12 +1841,26 @@ gint get_string_width (const gchar *str)
     return width;
 }
 
-static gint get_row_label_width (void)
+static gint get_row_label_width (Spreadsheet *sheet)
 {
     static gint width;
 
     if (width == 0) {
-	width = get_string_width("XXXX");
+	if (sheet != NULL && sheet->rownames != NULL) {
+	    const char *s = sheet->rownames[0];
+	    int i, len, maxlen = 0;
+
+	    for (i=0; i<sheet->datarows; i++) {
+		len = strlen(sheet->rownames[i]);
+		if (len > maxlen) {
+		    maxlen = len;
+		    s = sheet->rownames[i];
+		}
+	    }
+	    width = get_string_width(s);
+	} else {
+	    width = get_string_width("XXXX");
+	}
     }
     return width;
 }
@@ -2279,7 +2324,7 @@ static int build_sheet_view (Spreadsheet *sheet)
 	col0str = _("Name");
 	width = get_name_col_width();
     } else if (sheet->matrix != NULL) {
-	width = get_row_label_width();
+	width = get_row_label_width(sheet);
     } else {
 	width = get_obs_col_width();
     }
@@ -2476,6 +2521,7 @@ static Spreadsheet *spreadsheet_new (SheetCmd c, int varnum)
     sheet->matrix = NULL;
     sheet->oldmat = NULL;
     sheet->colnames = NULL;
+    sheet->rownames = NULL;
     sheet->cmd = c;
     sheet->flags = 0;
 
@@ -2605,7 +2651,7 @@ static void size_matrix_window (Spreadsheet *sheet)
 	nc = 2;
     }
 
-    w = get_row_label_width() + nc * get_data_col_width() + 30;
+    w = get_row_label_width(sheet) + nc * get_data_col_width() + 30;
     if (w > 640) {
 	w = 640;
     }
@@ -2623,7 +2669,7 @@ static void size_scalars_window (Spreadsheet *sheet)
     int nc = 2;
     int w, h;
 
-    w = get_row_label_width() + nc * get_data_col_width() + 
+    w = get_row_label_width(sheet) + nc * get_data_col_width() + 
 	get_delete_col_width() + 30;
     if (w > 640) {
 	w = 640;
@@ -2768,7 +2814,7 @@ static void sheet_add_matrix_menu (Spreadsheet *sheet, GtkWidget *vbox)
 static void sheet_add_matrix_locator (Spreadsheet *sheet, GtkWidget *vbox)
 {
     GtkWidget *status_box = gtk_hbox_new(FALSE, 1);
-    gint w = get_row_label_width();
+    gint w = get_row_label_width(NULL);
 
     gtk_container_set_border_width(GTK_CONTAINER(status_box), 0);
     gtk_box_pack_start(GTK_BOX(vbox), status_box, FALSE, FALSE, 0);
@@ -3429,6 +3475,7 @@ static void edit_matrix (gretl_matrix *m, const char *name,
 	sheet = NULL;
     } else {
 	sheet->colnames = user_matrix_get_names(m, 0);
+	sheet->rownames = user_matrix_get_names(m, 1);
 	sheet->datarows = gretl_matrix_rows(sheet->matrix);
 	sheet->datacols = gretl_matrix_cols(sheet->matrix);
 	real_show_spreadsheet(&sheet, SHEET_EDIT_MATRIX, block);

@@ -223,6 +223,11 @@ gboolean exit_check (void)
 	return TRUE;
     }
 
+    if (window_list_exit_check()) {
+	/* got cancel exit message from an editor window */
+	return TRUE;
+    }
+
     datamod = (data_status & MODIFIED_DATA);
 
     if (session_file_is_open() && (session_is_modified() || datamod)) {

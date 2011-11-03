@@ -735,6 +735,8 @@ const char **gretl_matrix_get_colnames (const gretl_matrix *m);
 
 const char **gretl_matrix_get_rownames (const gretl_matrix *m);
 
+void gretl_matrix_destroy_info (gretl_matrix *m);
+
 void lapack_mem_free (void);
 
 void set_blas_nmk_min (int nmk);

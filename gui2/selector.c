@@ -2817,7 +2817,7 @@ static void read_quantreg_extras (selector *sr)
     } else {
 	/* convert the GUI string to what ought to be a valid
 	   numerical matrix specification */
-	gchar *tmp = g_strdup_printf("{%s} ", s);
+	gchar *tmp = g_strdup_printf("{%s}", s);
 	gretl_matrix *m;
 
 	comma_separate_numbers(tmp);
@@ -2828,6 +2828,7 @@ static void read_quantreg_extras (selector *sr)
 	    warnbox(_("Invalid quantile specification"));
 	} else {
 	    add_to_cmdlist(sr, tmp);
+	    add_to_cmdlist(sr, " ");
 	}
 	g_free(tmp);
     }

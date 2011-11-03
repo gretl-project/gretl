@@ -161,6 +161,7 @@ void add_window_list_item (GtkWidget *w, int role);
 void window_list_popup (GtkWidget *src);
 void raise_main_window (void);
 int get_n_listed_windows (void);
+gboolean window_list_exit_check (void);
 void do_stop_script (GtkWidget *w, windata_t *vwin);
 
 /* functions defined in files other than gretl.c */

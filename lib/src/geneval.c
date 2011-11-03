@@ -9063,6 +9063,18 @@ static NODE *eval (NODE *t, parser *p)
     return ret;
 }
 
+static int more_input (const char *s)
+{
+    while (*s) {
+	if (!isspace((unsigned char) *s)) {
+	    return 1;
+	}
+	s++;
+    }
+
+    return 0;
+}
+
 /* get the next input character for the lexer */
 
 int parser_getc (parser *p)
@@ -9073,7 +9085,7 @@ int parser_getc (parser *p)
 
     p->ch = 0;
 
-    if (*p->point) {
+    if (more_input(p->point)) { /* 2011-11-03: was just *p->point */
 	p->ch = *p->point;
 	p->point += 1;
     }

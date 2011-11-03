@@ -1941,6 +1941,43 @@ void window_list_popup (GtkWidget *src)
     }
 }
 
+/* on exiting, check for any editing windows with unsaved
+   changes, and if we find any give the user a chance to
+   save the changes, or to cancel the exit
+*/
+
+gboolean window_list_exit_check (void)
+{
+    gboolean ret = FALSE;
+
+    if (n_listed_windows > 0) {
+	GList *list = gtk_action_group_list_actions(window_list);
+	const gchar *name;
+	GtkAction *action;
+	windata_t *vwin;
+	GtkWidget *w;
+
+	while (list) {
+	    action = (GtkAction *) list->data;
+	    name = gtk_action_get_name(action);
+	    w = (GtkWidget *) strtol(name, NULL, 16);
+	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
+
+	    if (vwin != NULL) {
+		if (vwin_is_editing(vwin) && vwin_content_changed(vwin)) {
+		    gtk_window_present(GTK_WINDOW(vwin->main));
+		    ret = query_save_text(NULL, NULL, vwin);
+		}
+	    }
+	    list = list->next;
+	}
+
+	g_list_free(list);
+    }
+
+    return ret;
+}
+
 int gui_restore_sample (DATASET *dset)
 {
     int err = 0;
