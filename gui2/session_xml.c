@@ -737,11 +737,13 @@ static int write_session_xml (const char *datname)
 		trname, print_today());
 	g_free(trname);
     } else {
-	fputs("<gretl-session>\n", fp);
+	fprintf(fp, "<gretl-session date=\"%s\">\n", print_today());
     }
 
-    fprintf(fp, " <sample t1=\"%d\" t2=\"%d\"/>\n", dataset->t1, dataset->t2);
-    write_datainfo_submask(dataset, fp);
+    if (data_status) {
+	fprintf(fp, " <sample t1=\"%d\" t2=\"%d\"/>\n", dataset->t1, dataset->t2);
+	write_datainfo_submask(dataset, fp);
+    }
 
     nmodels = session.nmodels;
     tabmodels = model_table_n_models();
@@ -845,6 +847,7 @@ static int write_session_xml (const char *datname)
     fputs(" </models>\n", fp);
 
     fprintf(fp, " <graphs count=\"%d\">\n", session.ngraphs);
+
     for (i=0; i<session.ngraphs; i++) {
 	objname = session.graphs[i]->name;
 	xmlname = get_xmlname(objname, &err);
@@ -865,6 +868,7 @@ static int write_session_xml (const char *datname)
     fputs(" </graphs>\n", fp);
 
     fprintf(fp, " <texts count=\"%d\">\n", session.ntexts);
+
     for (i=0; i<session.ntexts; i++) {
 	objname = session.texts[i]->name;
 	xmlname = get_xmlname(objname, &err);

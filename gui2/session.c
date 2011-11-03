@@ -1855,9 +1855,17 @@ int save_session (char *fname)
 	strcpy(session.dirname, dirname);
     }
 
-    make_session_dataname(datname);
+    *datname = '\0';
+
+    if (data_status) {
+	make_session_dataname(datname);
+    }
+
     write_session_xml(datname);
-    err = real_save_session_dataset(datname);
+
+    if (data_status) {
+	err = real_save_session_dataset(datname);
+    }
 
     if (!err) {
 	session_switch_log_location(LOG_SAVE);
@@ -1883,7 +1891,7 @@ int save_session (char *fname)
 	if (fname != sessionfile) {
 	    session_name_from_session_file(session.name, fname);
 	    strcpy(sessionfile, fname);
-	    data_status |= SESSION_DATA;
+	    data_status |= SESSION_DATA; /* FIXME? */
 	    set_sample_label(dataset);
 	}
 	mark_session_saved();
