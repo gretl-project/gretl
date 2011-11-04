@@ -216,17 +216,18 @@ void gretl_VAR_clear (GRETL_VAR *var)
 #define lag_wanted(v, i) (v->lags == NULL || in_gretl_list(v->lags, i))
 
 /* Construct the common X matrix (composed of lags of the core
-   variables plus other terms if applicable)
+   variables plus other terms if applicable). This is in 
+   common between VARs and VECMs
 */
 
 void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
 {
+    const double *x;
     int diff = (v->ci == VECM);
     int i, j, s, t, vi;
-    int k = 0; /* X column */
+    int k = 0; /* X column index */
 
     /* const first */
-
     if (v->detflags & DET_CONST) {
 	s = 0;
 	for (t=v->t1; t<=v->t2; t++) {
@@ -236,20 +237,19 @@ void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
     }    
 
     /* add lagged Ys */
-
     for (i=0; i<v->neqns; i++) {
 	vi = v->ylist[i+1];
 	for (j=1; j<=p; j++) {
 	    if (!lag_wanted(v, j)) {
 		continue;
 	    }
+	    x = dset->Z[vi];
 	    s = 0;
 	    for (t=v->t1; t<=v->t2; t++) {
 		if (diff) {
-		    gretl_matrix_set(v->X, s++, k, 
-				     dset->Z[vi][t-j] - dset->Z[vi][t-j-1]);
+		    gretl_matrix_set(v->X, s++, k, x[t-j] - x[t-j-1]);
 		} else {
-		    gretl_matrix_set(v->X, s++, k, dset->Z[vi][t-j]);
+		    gretl_matrix_set(v->X, s++, k, x[t-j]);
 		}
 	    }
 	    k++;
@@ -257,7 +257,6 @@ void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
     }
 
     /* add any exogenous vars */
-
     if (v->xlist != NULL) {
 	for (i=1; i<=v->xlist[0]; i++) {
 	    vi = v->xlist[i];
@@ -270,14 +269,18 @@ void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
     }
 
     /* add other deterministic terms */
-
     if (v->detflags & DET_SEAS) {
 	int per = get_subperiod(v->t1, dset, NULL);
 	int pd1 = dset->pd - 1;
 	double s0, s1;
 
-	s1 = (v->ci == VECM)? 1.0 - 1.0 / dset->pd : 1.0;
-	s0 = (v->ci == VECM)? s1 - 1.0 : 0.0;
+	if (v->ci == VECM) {
+	    s1 = 1 - 1.0 / dset->pd;
+	    s0 = s1 - 1;
+	} else {
+	    s1 = 1;
+	    s0 = 0;
+	}	    
 	
 	for (t=0; t<v->T; t++) {
 	    for (i=0; i<pd1; i++) {
@@ -335,16 +338,18 @@ static void VAR_fill_Y (GRETL_VAR *v, const DATASET *dset)
 static void VECM_fill_Y (GRETL_VAR *v, const DATASET *dset,
 			 gretl_matrix *Y)
 {
+    const double *yi;
     int i, vi, s, t;
     int k = 0;
 
     for (i=0; i<v->neqns; i++) {
 	vi = v->ylist[i+1];
+	yi = dset->Z[vi];
 	k = i + v->neqns;
 	s = 0;
 	for (t=v->t1; t<=v->t2; t++) {
-	    gretl_matrix_set(Y, s, i, dset->Z[vi][t] - dset->Z[vi][t-1]);
-	    gretl_matrix_set(Y, s, k, dset->Z[vi][t-1]);
+	    gretl_matrix_set(Y, s, i, yi[t] - yi[t-1]);
+	    gretl_matrix_set(Y, s, k, yi[t-1]);
 	    s++;
 	}
     }
@@ -354,7 +359,7 @@ static void VECM_fill_Y (GRETL_VAR *v, const DATASET *dset,
 
 	k++;
 	for (t=0; t<v->T; t++) {
-	    gretl_matrix_set(Y, t, k, (trend)? (v->t1 + t) : 1);
+	    gretl_matrix_set(Y, t, k, trend ? (v->t1 + t) : 1);
 	}
     }
 

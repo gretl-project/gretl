@@ -9,7 +9,7 @@ version 1.9.7, in progress
 - Online help: ensure that option flags don't break across lines (and
   also colorize them for emphasis)
 - Matrices returned from user-defined functions: enable the preservation
-  of column and/or row names 
+  of column and/or row names added within the function
 - Fix bug: possible crash in tsls when there are missing values and a
   regressor is all-zero at the complete observations
 - Fix bug: "summary" command with --by option not respecting the
