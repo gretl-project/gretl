@@ -369,7 +369,7 @@ static void VECM_fill_Y (GRETL_VAR *v, const DATASET *dset,
 	    k++;
 	    s = 0;
 	    for (t=v->t1; t<=v->t2; t++) {
-		gretl_matrix_set(Y, s++, k, dset->Z[vi][t-1]);
+		gretl_matrix_set(Y, s++, k, dset->Z[vi][t]); /* was t-1 */
 	    }
 	}
     }  
@@ -477,7 +477,7 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
 	   dependent variable in one of the initial OLS equations.
 	*/
 
-	s = t - 1;
+	s = t; /* = t - 1*/
 	if (v->rlist != NULL && !miss) {
 	    for (i=1; i<=v->rlist[0] && !miss; i++) {
 		vi = v->rlist[i];
