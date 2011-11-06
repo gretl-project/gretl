@@ -364,6 +364,11 @@ static void VECM_fill_Y (GRETL_VAR *v, const DATASET *dset,
     }
 
     if (v->rlist != NULL) {
+	/* There's room for debate here (?) over whether we should
+	   use the current value or the first lag of restricted
+	   exogenous variables. But using the current value agrees
+	   with Ox. See also VAR_set_sample().
+	*/
 	for (i=0; i<v->rlist[0]; i++) {
 	    vi = v->rlist[i+1];
 	    k++;
@@ -472,12 +477,13 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
 	    }
 	}
 
-	/* Note that in estimating a VECM we need the first lag of the
-	   level of each restricted exogenous var to serve as
-	   dependent variable in one of the initial OLS equations.
+	/* In estimating a VECM we need the level (or first lag?)
+	   of each restricted exogenous var to serve as dependent
+	   variable in one of the initial OLS equations. See also
+	   VECM_fill_Y().
 	*/
 
-	s = t; /* = t - 1*/
+	s = t; /* 2011-11-06: was "= t - 1" (the lag) */
 	if (v->rlist != NULL && !miss) {
 	    for (i=1; i<=v->rlist[0] && !miss; i++) {
 		vi = v->rlist[i];

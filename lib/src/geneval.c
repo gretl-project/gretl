@@ -2630,6 +2630,7 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 	if (r->t == EMPTY) {
 	    rname = "null";
 	} else {
+	    /* note: switch to the 'content' sub-node */
 	    r = r->v.b1.b;
 	    if (r->t == UMAT) {
 		rname = r->v.str;
@@ -5305,6 +5306,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	} else if (uscalar_node(n)) {
 	    p->err = push_fn_arg(args, GRETL_TYPE_USCALAR, &n->vnum);
 	} else if (n->t == U_ADDR) {
+	    /* switch to the 'content' sub-node */
 	    NODE *u = n->v.b1.b;
 
 	    if (u->t == USCALAR) {
