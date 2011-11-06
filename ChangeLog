@@ -4,6 +4,8 @@ version 1.9.7, in progress
 - "rmplot" command (range-mean plot): add a --trim option to discard the
   minimum and maximum from each sub-sample
 - new function simann() provides user access to simulated annealing
+- new function nadarwat() implements the Nadaraya-Watson nonparametric
+  kernel estimator
 - Speed up the production of bootstrapped confidence bands for impulse 
   responses in VECM models
 - Online help: ensure that option flags don't break across lines (and
@@ -23,7 +25,9 @@ version 1.9.7, in progress
 - Fix bug: crash on using the --quiet option with the "freq" command
   in a command loop
 - Fix bug: breakage in processing the selection of quantiles for 
-  quantile regression in the GUI 
+  quantile regression in the GUI
+- Fix bug: the third argument to eigsolve() was rejected even when it
+  was valid
 
 2011-10-17 version 1.9.6
 - Add an importer for xlsx (Office Open XML) worksheet data
