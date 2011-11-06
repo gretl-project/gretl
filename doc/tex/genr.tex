@@ -1060,6 +1060,81 @@ print omega
 \end{scode}
 \end{script}
 
+\section{The Nadaraya-Watson estimator}
+\label{sec:genr-nadarwat}
+
+The Nadaraya-Watson nonparametric estimator is an estimator for the
+conditional mean of a variable $Y$, available in a sample of size $n$,
+for a given value of a conditioning variable $X$, and is defined as
+\[
+  m(X) = \frac{ \sum_{j=1}^{n} y_j \cdot K_h(X - x_j)} {\sum_{j=1}^{n} K_h(X - x_j)}
+\]
+where $K_h(\cdot)$ is the so-called \emph{kernel function}, which is
+usually some simple transform of a density function that depends on a
+scalar called the \emph{bandwidth}. The one \app{gretl} uses is given
+by
+\[
+  K_h(x) = \exp\left(-\frac{x^2}{2h}\right)
+\]
+for $|x| < \tau$ and zero otherwise. The scalar $\tau$ is used to
+prevent numerical problems when the the kernel function is evaluated
+too far away from zero and is called the trim parameter.
+
+Although $X$ could be, in principle, any value, in the typical usage
+of this estimator you want to compute $m(X)$ for $X$ equal to one or
+more values actually observed in your sample, that is $m(x_i)$. In
+this context, a common variant is the so-called ``leave-one-out''
+estimator: this is a variant of the estimator that does not use the
+$i$-th observation for evaluating $m(x_i)$. This makes the
+Nadaraya-Watson estimator more robust numerically and is sometimes
+advised what using it for inference purposes.  In formulae, the
+leave-one-out estimator is
+\[
+m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i -
+  x_j)} {\sum_{j \ne i} K_h(x_i - x_j)}
+\]
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/nadarwat-ex}
+  \caption{Nadaraya-Watson example for several choices of the bandwidth parameter}
+  \label{fig:nadarwat-ex}
+\end{figure}
+
+The choice of the bandwidth is up to the user: larger values of $h$
+lead to a smoother $m(\cdot)$ function; smaller values make the
+$m(\cdot)$ function follow the $y_i$ values more closely, so that the
+function appears more ``jagged''. In fact, as $h \to \infty$, $m(x_i)
+\to \bar{Y}$; on the contrary, if $h \to 0$, observations for which
+$x_i \ne X$ are not taken into account at all when computing $m(X)$.
+
+Also, the statistical properties of $m(\cdot)$ vary with $h$: its
+variance can be shown to be decreasing in $h$, while its squared bias
+is increasing in $h$.  It can be shown that choosing $h \sim n^{-1/5}$
+minimizes the RMSE, so that value is customarily taken as a reference
+point.
+
+
+\begin{script}[htbp]
+  \caption{Nadaraya-Watson example}
+  \label{scr:nadarwat-ex}
+\begin{scode}
+open mroz87.gdt 
+dataset sortby WA
+scalar h = $nobs^(-0.2)
+series m0 = nadarwat(HA, WA, h)
+series m1 = nadarwat(HA, WA, h * 5)
+series m2 = nadarwat(HA, WA, h * 10)
+gnuplot m0 m1 m2 HA WA --output=display --with-lines
+\end{scode}
+%$
+\end{script}
+
+Example script \ref{scr:pergm-fft} produces the graph shown in Figure
+\ref{fig:nadarwat-ex}.
+
+FIXME: the trim parameter; syntax for the leave-one-out estimator.
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "gretl-guide"

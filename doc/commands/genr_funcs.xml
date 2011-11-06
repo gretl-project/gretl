@@ -3944,6 +3944,80 @@
       </description>
     </function>
 
+    <function name="nadarwat" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="series">x</fnarg>
+	<fnarg type="scalar">h</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the Nadaraya-Watson nonparametric estimator of the
+	  conditional mean of <argname>y</argname>
+	  given <argname>x</argname>. For each element of the
+	  series <argname>x</argname>, a series is returned, holding
+	  the corresponding nonparametric estimate
+	  of <math>E(y|x)</math>.
+	  </para>
+	  <para context="tex">
+	    \[
+	    m(x_i) = \frac{ \sum_{j=1}^{n} y_j \cdot K_h(x_i -
+	    x_j)} {\sum_{j=1}^{n} K_h(x_i - x_j)}
+	    \]
+	    where the kernel function <math>K_h(\cdot)</math> is given
+	    by
+	    \[
+	      K_h(x) = \exp\left(-\frac{x^2}{2h}\right)
+	    \]
+	    for $|x| &lt; \tau$ and zero otherwise.
+	  </para>
+	  <para context="notex">
+	    The kernel function <math>K</math> is given
+	    by <math>K = exp(-x</math><sup>2</sup><math> / 2h)</math>
+	    for <math>|x| &lt; T</math> and zero otherwise.
+	  </para>
+	  <para context="tex">
+	  The argument <argname>h</argname> is a parameter (a positive
+	  real number) given by the user known as the
+	  \emph{bandwidth}. The scalar $\tau$ is used to prevent
+	  numerical problems when the the kernel function is evaluated
+	  too far away from zero and is called the trim parameter.
+	</para>
+	  <para  context="notex">
+	  The argument <argname>h</argname> is a parameter (a positive
+	  real number) given by the user known as the bandwidth. The
+	  scalar <math>T</math> is used to prevent numerical problems
+	  when the the kernel function is evaluated too far away from
+	  zero and is called the trim parameter.
+	</para>
+        <para>
+	  The trim parameter can be adjusted via
+	  the <lit>nadarwat_trim</lit> setting, as a multiple
+	  of <argname>h</argname>. The default value is 4.  
+        </para>
+	<para>
+	  The user may provide a negative value for the bandwidth:
+	  this is interpreted as conventional syntax to get the
+	  leave-one-out estimator, that is a variant of the
+	  Nadaraya-Watson estimator that does not use
+	  the <math>i</math>-th observation for
+	  evaluating <math>m(x</math><sub>i</sub><math>)</math>. This
+	  makes the Nadaraya-Watson estimator more robust numerically
+	  and is sometimes advised what using it for inference
+	  purposes. Of course, the bandwidth actually used is the
+	  absolute value of <argname>h</argname>.
+	</para>
+	  <para context="tex">
+	    In formulae, the leave-one-out estimator is
+	    \[
+	    m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i -
+	    x_j)} {\sum_{j \ne i} K_h(x_i - x_j)}
+	    \]
+	  </para>
+
+      </description>
+    </function>
+
     <function name="nelem" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="list">L</fnarg>

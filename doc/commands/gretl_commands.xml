@@ -9476,6 +9476,11 @@
 	    250.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>nadarwat_trim</lit>: one integer, the trim
+	  parameter used in the <lit>nadarwat</lit> function.
+	  </para>
+	</li>
       </ilist>
 
       <para>
