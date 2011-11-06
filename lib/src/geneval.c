@@ -97,8 +97,9 @@ static const char *typestr (int t)
     case VEC:
 	return "series";
     case MAT:
-    case UMAT:
 	return "matrix";
+    case UMAT:
+	return "user matrix";
     case STR:
 	return "string";
     case U_ADDR:
@@ -6178,13 +6179,13 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    node_type_error(f, 1, MAT, l, p);
 	} else if (m->t != MAT) {
 	    node_type_error(f, 2, MAT, m, p);
-	} else if (r->t != EMPTY && r->t != UMAT) {
+	} else if (r->t != EMPTY && r->t != U_ADDR) {
 	    /* optional matrix-pointer */
-	    node_type_error(f, 3, UMAT, r, p);
+	    node_type_error(f, 3, U_ADDR, r, p);
 	} else {
 	    const char *rname;
 
-	    rname = (r->t == UMAT)? r->v.str : "null";
+	    rname = (r->t == U_ADDR)? ptr_node_get_name(r, p) : "null";
 	    A = user_gensymm_eigenvals(l->v.m, m->v.m, rname, &p->err);
 	}
     } else if (f == F_NADARWAT) {
@@ -9717,8 +9718,10 @@ static void maybe_do_type_errmsg (const char *name, int t)
 	    tstr = "scalar";
 	} else if (t == USERIES || t == VEC) {
 	    tstr = "series";
-	} else if (t == UMAT || t == MAT) {
+	} else if (t == MAT) {
 	    tstr = "matrix";
+	} else if (t == UMAT) {
+	    tstr = "user matrix";
 	} else if (t == STR) {
 	    tstr = "string";
 	} else if (t == BUNDLE) {
