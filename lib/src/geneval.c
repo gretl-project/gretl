@@ -6729,6 +6729,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
 	for (i=0; i<k && !p->err; i++) {
 	    e = eval(n->v.bn.n[i], p);
+	    if (p->err) {
+		break;
+	    }
 	    if (i == 0) {
 		if (e->t == VEC) {
 		    V = tmp_matrix_from_series(e, p);
@@ -6787,6 +6790,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
 	for (i=0; i<k && !p->err; i++) {
 	    e = eval(n->v.bn.n[i], p);
+	    if (p->err) {
+		break;
+	    }
 	    if (i == 0) {
 		if (e->t == VEC) {
 		    Y = tmp_matrix_from_series(e, p);
@@ -6845,6 +6851,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
 	for (i=0; i<k && !p->err; i++) {
 	    e = eval(n->v.bn.n[i], p);
+	    if (p->err) {
+		break;
+	    }
 	    if (i < 4) {
 		if (e->t != MAT) {
 		    node_type_error(t->t, i+1, MAT, e, p);
@@ -6892,6 +6901,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
 	for (i=0; i<k && !p->err; i++) {
 	    e = eval(n->v.bn.n[i], p);
+	    if (p->err) {
+		break;
+	    }
 	    if (i == 0) {
 		if (e->t != MAT) {
 		    node_type_error(t->t, i+1, MAT, e, p);
