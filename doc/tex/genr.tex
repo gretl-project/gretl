@@ -4,7 +4,7 @@
 \section{Introduction}
 \label{genr-intro}
 
-The \verb+genr+ command provides a flexible means of defining new
+The \cmd{genr} command provides a flexible means of defining new
 variables.  It is documented in the \GCR.  This chapter offers a more
 expansive discussion of some of the special functions available via
 \verb+genr+ and some of the finer points of the command.
@@ -592,7 +592,7 @@ multiplication by zero: zero times a missing value produces zero
 \section{Retrieving internal variables}
 \label{sec:genr-internal}
 
-The \verb+genr+ command provides a means of retrieving various values
+The \cmd{genr} command provides a means of retrieving various values
 calculated by the program in the course of estimating models or
 testing hypotheses.  The variables that can be retrieved in this way
 are listed in the \GCR; here we say a bit more about the special
@@ -627,9 +627,9 @@ these values, you must do so at the correct point in the sequence of
 A related point is that some of the test commands generate, by
 default, more than one test statistic and p-value; in these cases only
 the last values are stored. To get proper control over the retrieval
-of values via \dollar{test} and \dollar{pvalue} you should formulate the
-test command in such a way that the result is unambiguous.  This
-comment applies in particular to the \verb+adf+ and \verb+lmtest+
+of values via \dollar{test} and \dollar{pvalue} you should formulate
+the test command in such a way that the result is unambiguous.  This
+comment applies in particular to the \cmd{adf} and \cmd{lmtest}
 commands.
 
 \begin{itemize}
@@ -678,12 +678,14 @@ Generated scalar pv (ID 13) = 0.363844
 \section{Numerical procedures}
 \label{sec:genr-numerical}
 
-Two special functions are available to aid in the construction of
-special-purpose estimators, namely \texttt{BFGSmax} (the BFGS
-maximizer, discussed in Chapter~\ref{chap:mle}) and \texttt{fdjac},
-which produces a forward-difference approximation to the Jacobian.
+Several special functions are available to aid in the construction of
+special-purpose estimators: one group of functions are used to
+maximize user-supplied functions by using numerical methods: BFGS,
+Newton-Raphson and Simulated Annealing.  Another function is
+\texttt{fdjac}, which produces a forward-difference approximation to
+the Jacobian.
 
-\subsection{The BFGS maximizer}
+\subsection{The maximizer functions}
 \label{sec:BFGSmax}
 
 The \texttt{BFGSmax} function has two required arguments: a vector
@@ -735,7 +737,7 @@ The operation of the BFGS maximizer can be adjusted using the
 \texttt{set} variables \verb+bfgs_maxiter+ and \verb+bfgs_toler+ (see
 Chapter~\ref{chap:mle}).  In addition you can provoke verbose output
 from the maximizer by assigning a positive value to
-\verb|max_verbose|, again via the \texttt{set} command.
+\verb|max_verbose|, again via the \cmd{set} command.
 
 The Rosenbrock function is often used as a test problem for
 optimization algorithms. It is also known as ``Rosenbrock's Valley''
@@ -1077,22 +1079,29 @@ by
   K_h(x) = \exp\left(-\frac{x^2}{2h}\right)
 \]
 for $|x| < \tau$ and zero otherwise. The scalar $\tau$ is used to
-prevent numerical problems when the the kernel function is evaluated
-too far away from zero and is called the trim parameter.
+prevent numerical problems when the kernel function is evaluated too
+far away from zero and is called the trim parameter.
 
-Although $X$ could be, in principle, any value, in the typical usage
-of this estimator you want to compute $m(X)$ for $X$ equal to one or
-more values actually observed in your sample, that is $m(x_i)$. In
-this context, a common variant is the so-called ``leave-one-out''
-estimator: this is a variant of the estimator that does not use the
-$i$-th observation for evaluating $m(x_i)$. This makes the
-Nadaraya-Watson estimator more robust numerically and is sometimes
-advised what using it for inference purposes.  In formulae, the
-leave-one-out estimator is
-\[
-m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i -
-  x_j)} {\sum_{j \ne i} K_h(x_i - x_j)}
-\]
+\begin{script}[htbp]
+  \caption{Nadaraya-Watson example}
+  \label{scr:nadarwat-ex}
+\begin{scode}
+# Nonparametric regression example: husband's age on wife's age
+open mroz87.gdt
+
+# initial value for the bandwidth
+scalar h = $nobs^(-0.2)
+# three increasingly smoother estimates
+series m0 = nadarwat(HA, WA, h)
+series m1 = nadarwat(HA, WA, h * 5)
+series m2 = nadarwat(HA, WA, h * 10)
+
+# produce the graph
+dataset sortby WA
+gnuplot m0 m1 m2 HA WA --output=display --with-lines
+\end{scode}
+%$
+\end{script}
 
 \begin{figure}[htbp]
   \centering
@@ -1100,6 +1109,9 @@ m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i -
   \caption{Nadaraya-Watson example for several choices of the bandwidth parameter}
   \label{fig:nadarwat-ex}
 \end{figure}
+
+Example script \ref{scr:pergm-fft} produces the graph shown in Figure
+\ref{fig:nadarwat-ex} (after some slight editing).
 
 The choice of the bandwidth is up to the user: larger values of $h$
 lead to a smoother $m(\cdot)$ function; smaller values make the
@@ -1114,26 +1126,103 @@ is increasing in $h$.  It can be shown that choosing $h \sim n^{-1/5}$
 minimizes the RMSE, so that value is customarily taken as a reference
 point.
 
+Note that the kernel function has its tails ``trimmed''. The scalar
+$\tau$, which controls the level at which trimming occurs is set by
+default at $4 \cdot h$; this setting, however, may be changed via the
+\cmd{set} command. For example,
+\begin{code}
+  set nadarwat_trim 10
+\end{code}
+sets $\tau = 10 \cdot h$. This may at times produce more sensible
+results in regions of $X$ with sparse support; however, you should be
+aware that in those same cases machine precision (division by
+numerical zero) may render your results spurious. The default is
+relatively safe, but experimenting with larger values may be a sensible
+strategy in some cases.
 
-\begin{script}[htbp]
-  \caption{Nadaraya-Watson example}
-  \label{scr:nadarwat-ex}
-\begin{scode}
-open mroz87.gdt 
-dataset sortby WA
-scalar h = $nobs^(-0.2)
-series m0 = nadarwat(HA, WA, h)
-series m1 = nadarwat(HA, WA, h * 5)
-series m2 = nadarwat(HA, WA, h * 10)
-gnuplot m0 m1 m2 HA WA --output=display --with-lines
-\end{scode}
-%$
-\end{script}
+A common variant of the Nadaraya-Watson estimator is the so-called
+``leave-one-out'' estimator: this is a variant of the estimator that
+does not use the $i$-th observation for evaluating $m(x_i)$. This
+makes the Nadaraya-Watson estimator more robust numerically and its
+usage is often advised for inference purposes.  In formulae, the
+leave-one-out estimator is
+\[
+m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i -
+  x_j)} {\sum_{j \ne i} K_h(x_i - x_j)}
+\]
+In order to have \app{gretl} compute the leave-one-out estimator, just
+reverse the sign of $h$: if we changed example \ref{scr:nadarwat-ex} by
+substituting
+\begin{code}
+  scalar h = $nobs^(-0.2)
+\end{code}
+with
+\begin{code}
+  scalar h = -($nobs^(-0.2))
+\end{code}
+the rest of the example would have stayed unchanged, the only
+difference being the usage of the leave-one-out estimator.
 
-Example script \ref{scr:pergm-fft} produces the graph shown in Figure
-\ref{fig:nadarwat-ex}.
+Although $X$ could be, in principle, any value, in the typical usage
+of this estimator you want to compute $m(X)$ for $X$ equal to one or
+more values actually observed in your sample, that is $m(x_i)$. If you
+need a point estimate of $m(X)$ for some value of $X$ which is not
+present among the valid observations of your dependent variable, you
+may want to add some ``fake'' observations to your dataset in which
+$y$ is missing and $x$ contains the values you want $m(x)$ evaluated
+at. For example, the following script evaluates $m(x)$ at regular
+intervals between -2.0 and 2.0:
 
-FIXME: the trim parameter; syntax for the leave-one-out estimator.
+\begin{code}
+nulldata 120
+set seed 120496
+
+# first part of the sample: actual data
+smpl 1 100
+x = normal()
+y = x^2 + sin(x) + normal()
+
+# second part of the sample: fake x data
+smpl 101 120
+x = (obs-110) / 5
+
+# compute the Nadaraya-Watson estimate
+# with bandwidth equal to 0.4 (note that
+# 100^(-0.2) = 0.398)
+smpl full
+m = nadarwat(y, x, 0.4)
+
+# show m(x) for the fake x values only
+smpl 101 120
+print x m -o
+\end{code}
+
+and running it produces
+\begin{code}
+               x            m
+
+101         -1.8     1.165934
+102         -1.6     0.730221
+103         -1.4     0.314705
+104         -1.2     0.026057
+105         -1.0    -0.131999
+106         -0.8    -0.215445
+107         -0.6    -0.269257
+108         -0.4    -0.304451
+109         -0.2    -0.306448
+110          0.0    -0.238766
+111          0.2    -0.038837
+112          0.4     0.354660
+113          0.6     0.908178
+114          0.8     1.485178
+115          1.0     2.000003
+116          1.2     2.460100
+117          1.4     2.905176
+118          1.6     3.380874
+119          1.8     3.927682
+120          2.0     4.538364
+\end{code}
+
 
 %%% Local Variables: 
 %%% mode: latex

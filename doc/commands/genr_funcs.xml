@@ -3954,41 +3954,54 @@
 	<para>
 	  Returns the Nadaraya-Watson nonparametric estimator of the
 	  conditional mean of <argname>y</argname>
-	  given <argname>x</argname>. For each element of the
-	  series <argname>x</argname>, a series is returned, holding
-	  the corresponding nonparametric estimate
-	  of <math>E(y|x)</math>.
-	  </para>
-	  <para context="tex">
-	    \[
-	    m(x_i) = \frac{ \sum_{j=1}^{n} y_j \cdot K_h(x_i -
-	    x_j)} {\sum_{j=1}^{n} K_h(x_i - x_j)}
-	    \]
-	    where the kernel function <math>K_h(\cdot)</math> is given
-	    by
-	    \[
-	      K_h(x) = \exp\left(-\frac{x^2}{2h}\right)
-	    \]
-	    for $|x| &lt; \tau$ and zero otherwise.
-	  </para>
-	  <para context="notex">
-	    The kernel function <math>K</math> is given
-	    by <math>K = exp(-x</math><sup>2</sup><math> / 2h)</math>
-	    for <math>|x| &lt; T</math> and zero otherwise.
-	  </para>
-	  <para context="tex">
-	  The argument <argname>h</argname> is a parameter (a positive
-	  real number) given by the user known as the
-	  \emph{bandwidth}. The scalar $\tau$ is used to prevent
-	  numerical problems when the the kernel function is evaluated
-	  too far away from zero and is called the trim parameter.
+	  given <argname>x</argname>. It returns a series holding the
+	  nonparametric estimate
+	  of <math>E(y</math><sub>i</sub><math>|x</math><sub>i</sub><math>)</math>
+	  for each nonmissing element of the
+	  series <argname>x</argname>.
 	</para>
-	  <para  context="notex">
-	  The argument <argname>h</argname> is a parameter (a positive
-	  real number) given by the user known as the bandwidth. The
-	  scalar <math>T</math> is used to prevent numerical problems
-	  when the the kernel function is evaluated too far away from
-	  zero and is called the trim parameter.
+	<para context="tex">
+	  \[
+	  m(x_i) = \frac{ \sum_{j=1}^{n} y_j \cdot K_h(x_i -
+	  x_j)} {\sum_{j=1}^{n} K_h(x_i - x_j)}
+	  \]
+	  where the kernel function <math>K_h(\cdot)</math> is given
+	  by
+	  \[
+	  K_h(x) = \exp\left(-\frac{x^2}{2h}\right)
+	  \]
+	  for $|x| &lt; \tau$ and zero otherwise.
+	</para>
+	<para context="notex">
+	  The kernel function <math>K</math> is given
+	  by <math>K = exp(-x</math><sup>2</sup><math> / 2h)</math>
+	  for <math>|x| &lt; T</math> and zero otherwise.
+	</para>
+	<para context="tex">
+	  The argument <argname>h</argname>, known as the
+	  \emph{bandwidth}, is a parameter (a positive real number)
+	  given by the user. This is usually a small number: larger
+	  values of $h$ make $m(x)$ smoother; a popular choice is
+	  $n^{-0.2}$. More details are given in
+	  <guideref targ="sec:genr-nadarwat"/>.
+	</para>
+	<para context="notex">
+	  The argument <argname>h</argname>, known as the bandwidth,
+	  is a parameter (a positive real number) given by the
+	  user. This is usually a small number: larger values
+	  of <argname>h</argname> make <math>m(x)</math> smoother; a
+	  popular choice is <math>n</math><sup>-0.2</sup>. More
+	  details are given in <guideref targ="sec:genr-nadarwat"/>.
+	</para>
+	<para context="tex">
+	  The scalar $\tau$ is used to prevent numerical problems when
+	  the the kernel function is evaluated too far away from zero
+	  and is called the trim parameter.
+	</para>
+	<para context="notex">
+	  The scalar <math>T</math> is used to prevent numerical
+	  problems when the the kernel function is evaluated too far
+	  away from zero and is called the trim parameter.
 	</para>
         <para>
 	  The trim parameter can be adjusted via
@@ -3997,15 +4010,15 @@
         </para>
 	<para>
 	  The user may provide a negative value for the bandwidth:
-	  this is interpreted as conventional syntax to get the
+	  this is interpreted as conventional syntax to obtain the
 	  leave-one-out estimator, that is a variant of the
 	  Nadaraya-Watson estimator that does not use
 	  the <math>i</math>-th observation for
 	  evaluating <math>m(x</math><sub>i</sub><math>)</math>. This
 	  makes the Nadaraya-Watson estimator more robust numerically
-	  and is sometimes advised what using it for inference
-	  purposes. Of course, the bandwidth actually used is the
-	  absolute value of <argname>h</argname>.
+	  and its usage is normally advised when the estimator is
+	  computed for inference purposes. Of course, the bandwidth
+	  actually used is the absolute value of <argname>h</argname>.
 	</para>
 	  <para context="tex">
 	    In formulae, the leave-one-out estimator is
