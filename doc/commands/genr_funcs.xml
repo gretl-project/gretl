@@ -1792,8 +1792,8 @@
 	<para>
 	  Computes the eigenvalues, and optionally the right eigenvectors, of
 	  the <by r="n" c="n"/> matrix <argname>A</argname>.  If all the
-	  eigenvalues are real, an <by r="n" c="1"/> matrix is returned;
-	  otherwise, the result is an <by r="n" c="2"/> matrix, the first
+	  eigenvalues are real an <by r="n" c="1"/> matrix is returned;
+	  otherwise the result is an <by r="n" c="2"/> matrix, the first
 	  column holding the real components and the second column the
 	  imaginary components.
 	</para>
@@ -1839,6 +1839,7 @@
 	<para>
 	  <seelist>
 	    <fncref targ="eigensym"/>
+	    <fncref targ="eigsolve"/>
 	    <fncref targ="qrdecomp"/>
 	    <fncref targ="svd"/>
 	  </seelist>
@@ -1855,7 +1856,8 @@
 	<para>
 	  Works just as <fncref targ="eigengen"/>, but the argument
 	  <argname>A</argname> must be symmetric (in which case the
-	  calculations can be reduced).
+	  calculations can be reduced). The eigenvalues are returned
+	  in ascending order.
 	</para>
       </description>
     </function>
@@ -1869,13 +1871,13 @@
       <description>
 	<para>
 	  Solves the generalized eigenvalue problem |<math>A</math>
-	  &minus; &lgr;<math>B</math>| = 0, where both
-	  <math>A</math> and <math>B</math> are symmetric and
-	  <math>B</math> is positive definite. The eigenvalues are
-	  returned directly. If the optional third argument is given
-	  it should be the name of an existing matrix preceded by
-	  <lit>&amp;</lit>; in that case the generalized eigenvectors
-	  are written to the named matrix.
+	  &minus; &lgr;<math>B</math>| = 0, where both <math>A</math>
+	  and <math>B</math> are symmetric and <math>B</math> is
+	  positive definite. The eigenvalues are returned directly,
+	  arranged in ascending order. If the optional third argument
+	  is given it should be the name of an existing matrix
+	  preceded by <lit>&amp;</lit>; in that case the generalized
+	  eigenvectors are written to the named matrix.
 	</para>
       </description>
     </function>
@@ -3952,7 +3954,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the Nadaraya-Watson nonparametric estimator of the
+	  Returns the Nadaraya&ndash;Watson nonparametric estimator of the
 	  conditional mean of <argname>y</argname>
 	  given <argname>x</argname>. It returns a series holding the
 	  nonparametric estimate
@@ -5654,7 +5656,8 @@
       <description>
 	<para>
 	  If <argname>x</argname> is a series, returns the (scalar) sum of the
-	  non-missing observations in <argname>x</argname>.
+	  non-missing observations in <argname>x</argname>. See also
+	  <fncref targ="sumall"/>.
 	</para>
 	<para>
 	  If <argname>x</argname> is a list, returns a series <math>y</math>
@@ -5662,6 +5665,19 @@
 	  variables in the list at observation <math>t</math>, or
 	  <lit>NA</lit> if there are any missing values at <math>t</math>.
 	</para>	
+      </description>
+    </function>
+
+    <function name="sumall" section="stats" output="scalar">
+      <fnargs>
+	<fnarg type="series">x</fnarg>
+      </fnargs>      
+      <description>
+	<para>
+	  Returns the sum of the observations of <argname>x</argname>
+	  over the current sample range, or <lit>NA</lit> if there are
+	  any missing values.
+	</para>
       </description>
     </function>
 

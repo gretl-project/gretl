@@ -2015,6 +2015,35 @@ gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
     return E;
 }
 
+int user_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
+		     int rank)
+{
+    int err = 0;
+
+    if (gretl_is_null_matrix(evals) || gretl_is_null_matrix(evecs)) {
+	err = E_DATA;
+    } else {
+	int n = gretl_vector_get_length(evals);
+
+	if (n == 0 || rank < 0 || rank > n || 
+	    evecs->rows != n || evecs->cols != n) {
+	    err = E_DATA;
+	} else {
+	    err = gretl_symmetric_eigen_sort(evals, evecs, rank);
+	}
+
+	if (!err && rank > 0 && rank < n) {
+	    if (evals->rows == n) {
+		evals->rows -= 1;
+	    } else {
+		evals->cols -= 1;
+	    }
+	}
+    }
+
+    return err;
+}
+
 static void xml_put_user_matrix (user_matrix *u, FILE *fp)
 {
     gretl_matrix *M;

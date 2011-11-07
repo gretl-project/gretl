@@ -509,9 +509,6 @@ double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err);
 
 double gretl_matrix_rcond (const gretl_matrix *m, int *err);
 
-int gretl_general_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
-			      int rank);
-
 int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
 				int rank);
 

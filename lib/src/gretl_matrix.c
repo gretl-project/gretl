@@ -7163,99 +7163,9 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
     return err;
 }
 
-static int real_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, int rank,
-			    int flag)
-{
-    struct esort {
-	double vr;
-	double vi;
-	int idx;
-    }; 
-    struct esort *es;
-    gretl_matrix *tmp;
-    double x;
-    int i, j, h, n;
-
-    h = n = evecs->rows;
-    if (rank > 0 && rank < h) {
-	h = rank;
-    }
-
-    es = malloc(n * sizeof *es);
-    if (es == NULL) {
-	return E_ALLOC;
-    }
-
-    tmp = gretl_matrix_alloc(n, h);
-    if (tmp == NULL) {
-	free(es);
-	return E_ALLOC;
-    }
-
-    for (i=0; i<n; i++) {
-	es[i].vr = evals->val[i];
-	if (flag == GRETL_MATRIX_SYMMETRIC) {
-	    es[i].vi = 0.0;
-	} else {
-	    es[i].vi = evals->val[i + n];
-	}
-	es[i].idx = i;
-    }
-
-    qsort(es, n, sizeof *es, gretl_inverse_compare_doubles);
-
-    for (i=0; i<n; i++) {
-	evals->val[i] = es[i].vr;
-	if (flag != GRETL_MATRIX_SYMMETRIC) {
-	    evals->val[i + n] = es[i].vi;
-	}
-    }
-
-    for (j=0; j<h; j++) {
-	for (i=0; i<n; i++) {
-	    x = gretl_matrix_get(evecs, i, es[j].idx);
-	    gretl_matrix_set(tmp, i, j, x);
-	}
-    }
-
-    free(evecs->val);
-    evecs->val = tmp->val;
-    tmp->val = NULL;
-
-    evecs->cols = tmp->cols;
-
-    free(tmp);
-    free(es);
-
-    return 0;
-}
-
-/**
- * gretl_general_eigen_sort:
- * @evals: array of eigenvalues, from general (not necessarily
- * symmetric) matrix.
- * @evecs: matrix of eigenvectors.
- * @rank: desired number of columns in output.
- * 
- * Sorts the real components of the eigenvalues in @evals from 
- * largest to smallest, and rearranges the columns in @evecs 
- * correspondingly.  If @rank is greater than zero and less than 
- * the number of columns in @evecs, then on output @evecs is shrunk 
- * so that it contains only the columns associated with the
- * largest @rank eigenvalues.
- *
- * Returns: 0 on success; non-zero error code on failure.
- */
-
-int gretl_general_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
-			      int rank)
-{
-    return real_eigen_sort(evals, evecs, rank, 0);
-}
-
 /**
  * gretl_symmetric_eigen_sort:
- * @evals: array of real eigenvalues, from symmetric matrix.
+ * @evals: array of real eigenvalues from symmetric matrix.
  * @evecs: matrix of eigenvectors.
  * @rank: desired number of columns in output.
  * 
@@ -7271,13 +7181,54 @@ int gretl_general_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
 int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
 				int rank)
 {
-    return real_eigen_sort(evals, evecs, rank, GRETL_MATRIX_SYMMETRIC);    
-}
+    struct esort {
+	double val;
+	int idx;
+    }; 
+    struct esort *es;
+    gretl_matrix *tmp;
+    double x;
+    int i, j, h, n;
 
-static void gretl_matrix_replace_data (gretl_matrix *m, double *x)
-{
-    free(m->val);
-    m->val = x;
+    h = n = evecs->rows;
+    if (rank > 0 && rank < h) {
+	h = rank;
+    }
+
+    es = malloc(n * sizeof *es);
+    tmp = gretl_matrix_alloc(n, h);
+
+    if (es == NULL || tmp == NULL) {
+	free(es);
+	free(tmp);
+	return E_ALLOC;
+    }
+
+    for (i=0; i<n; i++) {
+	es[i].val = evals->val[i];
+	es[i].idx = i;
+    }
+
+    qsort(es, n, sizeof *es, gretl_inverse_compare_doubles);
+
+    for (i=0; i<n; i++) {
+	evals->val[i] = es[i].val;
+    }
+
+    for (j=0; j<h; j++) {
+	for (i=0; i<n; i++) {
+	    x = gretl_matrix_get(evecs, i, es[j].idx);
+	    gretl_matrix_set(tmp, i, j, x);
+	}
+    }
+
+    memcpy(evecs->val, tmp->val, n * h * sizeof(double));
+    evecs->cols = tmp->cols;
+
+    gretl_matrix_free(tmp);
+    free(es);
+
+    return 0;
 }
 
 /**
@@ -7394,7 +7345,8 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	    free(vr);
 	}
     } else if (eigenvecs) {
-	gretl_matrix_replace_data(m, vr);
+	memcpy(m->val, vr, n * n * sizeof(double));
+	free(vr);
     }	
 
     return evals;
@@ -7411,8 +7363,8 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
  * eigenvectors of @m, which are stored in @m. Uses the lapack 
  * function dsyev.
  *
- * Returns: n x 1 matrix containing the eigenvalues, or NULL
- * on failure.
+ * Returns: n x 1 matrix containing the eigenvalues, in ascending
+ * order, or NULL on failure.
  */
 
 gretl_matrix *
@@ -7587,8 +7539,8 @@ static int gensymm_conformable (const gretl_matrix *A,
  * | A - \lambda B | = 0 , where both A and B are symmetric
  * and B is positive definite.
  *
- * Returns: allocated storage containing the eigenvalues, or NULL
- * on failure.
+ * Returns: allocated storage containing the eigenvalues, in
+ * ascending order, or NULL on failure.
  */
 
 gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A, 

@@ -165,7 +165,8 @@ enum {
     F_ZEROMISS,
     F_MEDIAN,
     F_GINI,
-    F_SUM,   
+    F_SUM, 
+    F_SUMALL,
     F_MEAN,
     F_MIN,
     F_MAX,
@@ -346,6 +347,7 @@ enum {
     F_EIGSOLVE,
     F_NADARWAT,
     F_SIMANN,
+    F_EIGSORT,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

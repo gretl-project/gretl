@@ -4342,6 +4342,23 @@ static void cast_to_series (NODE *n, int f, gretl_matrix **tmp,
     } 
 }
 
+static int series_sum_all (int t1, int t2, const double *x)
+{
+    double xsum = 0.0;
+    int t;
+
+    for (t=t1; t<=t2; t++) {
+	if (na(x[t])) {
+	    xsum = NADBL;
+	    break;
+	} else {
+	    xsum += x[t];
+	}
+    }
+
+    return xsum;
+}
+
 /* functions taking a series as argument and returning a scalar */
 
 static NODE *
@@ -4377,6 +4394,9 @@ series_scalar_func (NODE *n, int f, parser *p)
 	switch (f) {
 	case F_SUM:
 	    ret->v.xval = gretl_sum(t1, t2, x);
+	    break;
+	case F_SUMALL:
+	    ret->v.xval = series_sum_all(t1, t2, x);
 	    break;
 	case F_MEAN:
 	    ret->v.xval = gretl_mean(t1, t2, x);
@@ -5875,25 +5895,42 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
     return A;
 }
 
-static const char *ptr_node_get_name (NODE *t, parser *p)
+static const char *ptr_node_get_matrix_name (NODE *t, parser *p)
 {
-    char *ret = NULL;
+    char *name = NULL;
 
     if (t->t == U_ADDR) {
 	NODE *n = t->v.b1.b;
 
-	if (n->t == VEC) {
-	    int v = n->vnum;
+	if (n->t == UMAT) {
+	    name = n->v.str;
+	} else {
+	    p->err = E_TYPES;
+	}
+    } 
 
-	    if (p->dset != NULL && v > 0 && v < p->dset->n) {
-		ret = p->dset->varname[v];
+    return name;
+}
+
+static gretl_matrix *ptr_node_get_matrix (NODE *t, parser *p)
+{
+    gretl_matrix *m = NULL;
+
+    if (t->t == U_ADDR) {
+	NODE *n = t->v.b1.b;
+
+	if (n->t == UMAT) {
+	    m = get_matrix_by_name(n->v.str);
+	    if (m == NULL) {
+		gretl_errmsg_sprintf(_("'%s': no such matrix"), n->v.str);
+		p->err = E_UNKVAR;
 	    }
 	} else {
-	    ret = n->v.str;
+	    p->err = E_TYPES;
 	}
     }
 
-    return ret;
+    return m;
 }
 
 static gretl_matrix *get_density_matrix (const double *x, 
@@ -5949,8 +5986,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else {
 	    const char *uname, *vname;
 
-	    uname = ptr_node_get_name(m, p);
-	    vname = ptr_node_get_name(r, p);
+	    uname = ptr_node_get_matrix_name(m, p);
+	    vname = ptr_node_get_matrix_name(r, p);
 	    A = user_matrix_SVD(l->v.m, uname, vname, &p->err);
 	}
     } else if (f == F_TOEPSOLV || f == F_VARSIMUL) {
@@ -6187,8 +6224,35 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else {
 	    const char *rname;
 
-	    rname = (r->t == U_ADDR)? ptr_node_get_name(r, p) : "null";
+	    rname = (r->t == U_ADDR)? ptr_node_get_matrix_name(r, p) : "null";
 	    A = user_gensymm_eigenvals(l->v.m, m->v.m, rname, &p->err);
+	}
+    } else if (f == F_EIGSORT) {
+	int rval = 0;
+
+	if (l->t != U_ADDR) {
+	    node_type_error(f, 1, U_ADDR, l, p);
+	} else if (m->t != U_ADDR) {
+	    node_type_error(f, 2, U_ADDR, m, p);
+	} else if (r->t != EMPTY) {
+	    /* optional rank value */
+	    if (scalar_node(r)) {
+		rval = node_get_int(r, p);
+	    } else {
+		node_type_error(f, 3, NUM, r, p);
+	    }
+	}
+
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	    if (ret != NULL) {
+		gretl_matrix *m1 = ptr_node_get_matrix(l, p);
+		gretl_matrix *m2 = ptr_node_get_matrix(m, p);
+
+		if (!p->err) {
+		    ret->v.xval = user_eigen_sort(m1, m2, rval);
+		}
+	    }
 	}
     } else if (f == F_NADARWAT) {
 	if (l->t != VEC) {
@@ -6210,7 +6274,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     if (f != F_STRNCMP && f != F_WEEKDAY && 
 	f != F_MONTHLEN && f != F_EPOCHDAY &&
 	f != F_SETNOTE && f != F_BWFILT && 
-	f != F_NADARWAT) {
+	f != F_NADARWAT && f != F_EIGSORT) {
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
@@ -6665,15 +6729,15 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (e->t != U_ADDR) {
 		node_type_error(t->t, i+1, U_ADDR, e, p);
 	    } else if (i == 0) {
-		E = ptr_node_get_name(e, p);
+		E = ptr_node_get_matrix_name(e, p);
 	    } else if (i == 1) {
-		V = ptr_node_get_name(e, p);
+		V = ptr_node_get_matrix_name(e, p);
 	    } else if (i == 2) {
-		S = ptr_node_get_name(e, p);
+		S = ptr_node_get_matrix_name(e, p);
 	    } else if (i == 3) {
-		P = ptr_node_get_name(e, p);
+		P = ptr_node_get_matrix_name(e, p);
 	    } else if (i == 4) {
-		G = ptr_node_get_name(e, p);
+		G = ptr_node_get_matrix_name(e, p);
 	    }
 	}
 
@@ -6701,9 +6765,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (e->t != U_ADDR) {
 		node_type_error(t->t, i+1, U_ADDR, e, p);
 	    } else if (i == 0) {
-		P = ptr_node_get_name(e, p);
+		P = ptr_node_get_matrix_name(e, p);
 	    } else if (i == 1) {
-		U = ptr_node_get_name(e, p);
+		U = ptr_node_get_matrix_name(e, p);
 	    }
 	}
 
@@ -6758,7 +6822,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (e->t != U_ADDR) {
 		    node_type_error(t->t, i+1, U_ADDR, e, p);
 		} else {
-		    S = ptr_node_get_name(e, p);
+		    S = ptr_node_get_matrix_name(e, p);
 		}
 	    } 
 	}
@@ -6817,9 +6881,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (e->t != U_ADDR) {
 		    node_type_error(t->t, i+1, U_ADDR, e, p);
 		} else if (i == 2) {
-		    SU = ptr_node_get_name(e, p);
+		    SU = ptr_node_get_matrix_name(e, p);
 		} else {
-		    SV = ptr_node_get_name(e, p);
+		    SV = ptr_node_get_matrix_name(e, p);
 		}
 	    } 
 	}
@@ -6872,9 +6936,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (e->t != U_ADDR) {
 		    node_type_error(t->t, i+1, U_ADDR, e, p);
 		} else if (i == 4) {
-		    SU = ptr_node_get_name(e, p);
+		    SU = ptr_node_get_matrix_name(e, p);
 		} else {
-		    SV = ptr_node_get_name(e, p);
+		    SV = ptr_node_get_matrix_name(e, p);
 		}
 	    } 
 	}
@@ -8537,6 +8601,7 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;
     case F_SUM:
+    case F_SUMALL:
     case F_MEAN:
     case F_SD:
     case F_VCE:
@@ -8825,6 +8890,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_STRSUB:
     case F_MLAG:
     case F_EIGSOLVE:
+    case F_EIGSORT:
     case F_NADARWAT:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
