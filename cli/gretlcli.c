@@ -784,8 +784,8 @@ static int cli_open_append (CMD *cmd, const char *line,
 	err = gretl_get_data(newfile, dset, opt, vprn);
     }
 
-    if (err) {
-	if (opt & OPT_Q) {
+    if (vprn != prn) {
+	if (err) {
 	    /* The user asked for quiet operation, but something
 	       went wrong so let's print any info we got on
 	       vprn.
@@ -795,8 +795,14 @@ static int cli_open_append (CMD *cmd, const char *line,
 	    if (buf != NULL && *buf != '\0') {
 		pputs(prn, buf);
 	    }
-	    gretl_print_destroy(vprn);
+	} else {
+	    /* print minimal success message */
+	    pprintf(prn, _("Read datafile %s\n"), newfile);
 	}
+	gretl_print_destroy(vprn);
+    }
+
+    if (err) {
 	errmsg(err, prn);
 	return err;
     }
@@ -813,10 +819,6 @@ static int cli_open_append (CMD *cmd, const char *line,
 
     if (http) {
 	remove(newfile);
-    }
-
-    if (vprn != NULL && vprn != prn) {
-	gretl_print_destroy(vprn);
     }
 
     return err;

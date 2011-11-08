@@ -865,6 +865,27 @@ gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m)
     return gretl_matrix_copy_mod(m, GRETL_MOD_TRANSPOSE);
 }
 
+/* relatively lightweight version of gretl_matrix_copy, for
+   internal use when we just want a temporary copy of an
+   original matrix as workspace, and we know that the original
+   is not a null matrix
+*/
+
+static gretl_matrix *gretl_matrix_copy_tmp (const gretl_matrix *a)
+{
+    size_t sz = a->rows * a->cols * sizeof(double);
+    gretl_matrix *b = malloc(sizeof *b);
+
+    if (b != NULL && (b->val = malloc(sz)) != NULL) {
+	b->rows = a->rows;
+	b->cols = a->cols;
+	b->info = NULL;
+	memcpy(b->val, a->val, sz);
+    }
+
+    return b;
+}
+
 /**
  * gretl_matrix_copy_row:
  * @dest: destination matrix.
@@ -1606,7 +1627,7 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
 
     n = m->rows;
 
-    A = gretl_matrix_copy(m);
+    A = gretl_matrix_copy_tmp(m);
     X = gretl_identity_matrix_new(n);
     N = gretl_identity_matrix_new(n);
     D = gretl_identity_matrix_new(n);
@@ -2848,7 +2869,7 @@ double gretl_vcv_log_determinant (const gretl_matrix *m)
 	return det;
     }
 
-    a = gretl_matrix_copy(m);
+    a = gretl_matrix_copy_tmp(m);
     if (a == NULL) {
 	fputs("gretl_vcv_log_determinant: out of memory\n", stderr);
 	return det;
@@ -4513,18 +4534,17 @@ static char *binary_expansion (int s, int *t, int *pow2)
 
     *t = k;
     bits = calloc(k + 1, 1);
-    if (bits == NULL) {
-	return NULL;
-    }
 
-    while (1) {
-	bits[k] = 1;
-	s -= pow(2.0, k);
-	if (s == 0) {
-	    break;
+    if (bits != NULL) {
+	while (1) {
+	    bits[k] = 1;
+	    s -= pow(2.0, k);
+	    if (s == 0) {
+		break;
+	    }
+	    l2 = log_2(s);
+	    k = (int) floor(l2);
 	}
-	l2 = log_2(s);
-	k = (int) floor(l2);
     }
 
     return bits;
@@ -4549,7 +4569,7 @@ gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
     gretl_matrix *C = NULL;
     gretl_matrix *W = NULL;
     char *bits = NULL;
-    int t, pow2 = 0;
+    int n, t, pow2 = 0;
 
     if (gretl_is_null_matrix(A) || s < 0) {
 	*err = E_DATA;
@@ -4561,13 +4581,11 @@ gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
 	return NULL;
     }
 
-    if (s == 0) {
-	B = gretl_identity_matrix_new(A->rows);
-    } else if (s == 1) {
-	B = gretl_matrix_copy(A);
-    }
+    n = A->rows;
 
     if (s < 2) {
+	B = (s == 0)? gretl_identity_matrix_new(n) :
+	    gretl_matrix_copy(A);
 	if (B == NULL) {
 	    *err = E_ALLOC;
 	}
@@ -4580,11 +4598,11 @@ gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
 	return NULL;
     }
 
-    B = gretl_matrix_copy(A);
-    C = gretl_matrix_alloc(A->rows, A->cols);
+    B = gretl_matrix_copy_tmp(A);
+    C = gretl_matrix_alloc(n, n);
 
     if (!pow2) {
-	W = gretl_matrix_alloc(A->rows, A->cols);
+	W = gretl_matrix_alloc(n, n);
     }
 
     if (B == NULL || C == NULL || (W == NULL && !pow2)) {
@@ -4594,7 +4612,7 @@ gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
     }
 
     if (!*err) {
-	int k, q = 0;
+	int q = 0;
 
 	while (bits[q] == 0) {
 	    /* B = B^2 */
@@ -4603,25 +4621,24 @@ gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
 	    q++;
 	}
 
-	if (pow2) {
-	    goto done;
-	}
+	if (!pow2) {
+	    /* more work needed */
+	    int k;
 
-	gretl_matrix_copy_values(C, B);
+	    gretl_matrix_copy_values(C, B);
 
-	for (k=q+1; k<=t; k++) {
-	    /* B = B^2 */
-	    gretl_matrix_multiply(B, B, W);
-	    gretl_matrix_copy_values(B, W);
-	    if (bits[k]) {
-		/* C = CB */
-		gretl_matrix_multiply(C, B, W);
-		gretl_matrix_copy_values(C, W);
+	    for (k=q+1; k<=t; k++) {
+		/* B = B^2 */
+		gretl_matrix_multiply(B, B, W);
+		gretl_matrix_copy_values(B, W);
+		if (bits[k]) {
+		    /* C = CB */
+		    gretl_matrix_multiply(C, B, W);
+		    gretl_matrix_copy_values(C, W);
+		}
 	    }
 	}
     }
-
- done:
 
     gretl_matrix_free(B);
     gretl_matrix_free(W);
@@ -5803,7 +5820,7 @@ static double gretl_general_matrix_rcond (const gretl_matrix *A,
     n = A->cols;
     lda = A->rows;
 
-    a = gretl_matrix_copy(A);
+    a = gretl_matrix_copy_tmp(A);
     work = malloc((4 * n) * sizeof *work);
     iwork = malloc(n * sizeof *iwork);
     ipiv = malloc(min(m, n) * sizeof *ipiv);
@@ -5869,7 +5886,7 @@ double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err)
     n = m->rows;
     lda = m->rows;
 
-    a = gretl_matrix_copy(m);
+    a = gretl_matrix_copy_tmp(m);
     work = malloc((3 * n) * sizeof *work);
     iwork = malloc(n * sizeof *iwork);
 
@@ -7127,7 +7144,7 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
     }
 
     if (v->rows < 100) {
-	vcpy = gretl_matrix_copy(v);
+	vcpy = gretl_matrix_copy_tmp(v);
     }
 
     n = (integer) ((sqrt(1.0 + 8.0 * v->rows) - 1.0) / 2.0);
@@ -7162,128 +7179,6 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
 
     return err;
 }
-
-/**
- * gretl_symmetric_eigen_sort:
- * @evals: array of real eigenvalues from symmetric matrix.
- * @evecs: matrix of eigenvectors.
- * @rank: desired number of columns in output.
- * 
- * Sorts the eigenvalues in @evals from largest to smallest, and 
- * rearranges the columns in @evecs correspondingly.  If @rank is 
- * greater than zero and less than the number of columns in @evecs, 
- * then on output @evecs is shrunk so that it contains only the 
- * columns associated with the largest @rank eigenvalues.
- *
- * Returns: 0 on success; non-zero error code on failure.
- */
-
-#if 1 /* old style */
-
-int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
-				int rank)
-{
-    struct esort {
-	double val;
-	int idx;
-    }; 
-    struct esort *es;
-    gretl_matrix *tmp;
-    double x;
-    int i, j, h, n;
-
-    h = n = evecs->rows;
-    if (rank > 0 && rank < h) {
-	h = rank;
-    }
-
-    es = malloc(n * sizeof *es);
-    tmp = gretl_matrix_alloc(n, h);
-
-    if (es == NULL || tmp == NULL) {
-	free(es);
-	free(tmp);
-	return E_ALLOC;
-    }
-
-    for (i=0; i<n; i++) {
-	es[i].val = evals->val[i];
-	es[i].idx = i;
-    }
-
-    qsort(es, n, sizeof *es, gretl_inverse_compare_doubles);
-
-    for (i=0; i<n; i++) {
-	evals->val[i] = es[i].val;
-    }
-
-    for (j=0; j<h; j++) {
-	for (i=0; i<n; i++) {
-	    x = gretl_matrix_get(evecs, i, es[j].idx);
-	    gretl_matrix_set(tmp, i, j, x);
-	}
-    }
-
-    memcpy(evecs->val, tmp->val, n * h * sizeof(double));
-    evecs->cols = tmp->cols;
-
-    gretl_matrix_free(tmp);
-    free(es);
-
-    return 0;
-}
-
-#else /* slimmer variant, needs more checking */
-
-int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
-				int rank)
-{
-    gretl_matrix *tmp;
-    double x;
-    int i, j, k, h, n, m;
-
-    h = n = evecs->rows;
-    if (rank > 0 && rank < h) {
-	h = rank;
-    }
-
-    tmp = gretl_matrix_copy(evecs);
-    if (tmp == NULL) {
-	return E_ALLOC;
-    }
-
-    m = h / 2;
-
-    /* reverse the eigenvalues (rows) in @evals */
-
-    k = n - 1;
-    for (i=0; i<m; i++) {
-	x = evals->val[i];
-	evals->val[i] = evals->val[k];
-	evals->val[k] = x;
-	k--;
-    }
-
-    /* using @tmp, copy the last h columns of @evecs into @evecs
-       in reverse order */
-
-    k = n - 1;
-    for (j=0; j<h; j++) {
-	for (i=0; i<n; i++) {
-	    x = gretl_matrix_get(tmp, i, k);
-	    gretl_matrix_set(evecs, i, j, x);
-	}
-	k--;
-    }
-
-    evecs->cols = h;
-
-    gretl_matrix_free(tmp);
-
-    return 0;
-}
-
-#endif
 
 /**
  * gretl_general_matrix_eigenvals:
@@ -7407,6 +7302,69 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 }
 
 /**
+ * gretl_symmetric_eigen_sort:
+ * @evals: array of real eigenvalues from symmetric matrix.
+ * @evecs: matrix of eigenvectors.
+ * @rank: desired number of columns in output.
+ * 
+ * Sorts the eigenvalues in @evals from largest to smallest, and 
+ * rearranges the columns in @evecs correspondingly.  If @rank is 
+ * greater than zero and less than the number of columns in @evecs, 
+ * then on output @evecs is shrunk so that it contains only the 
+ * columns associated with the largest @rank eigenvalues.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
+				int rank)
+{
+    gretl_matrix *tmp1, *tmp2;
+    int err = 0;
+
+    tmp1 = gretl_matrix_copy_tmp(evals);
+    tmp2 = gretl_matrix_copy_tmp(evecs);
+
+    if (tmp1 == NULL || tmp2 == NULL) {
+	err = E_ALLOC;
+    } else {
+	int i, j, k, n = evecs->rows;
+	double x;
+
+	/* using tmp1, reverse the eigenvalues in @evals */
+
+	k = n - 1;
+	for (i=0; i<n; i++) {
+	    evals->val[i] = tmp1->val[k--];
+	}
+
+	/* using tmp2, reverse the columns of @evecs */
+
+	k = n - 1;
+	for (j=0; j<n; j++) {
+	    if (k != j) {
+		for (i=0; i<n; i++) {
+		    x = gretl_matrix_get(tmp2, i, k);
+		    gretl_matrix_set(evecs, i, j, x);
+		}
+	    }
+	    k--;
+	}
+
+	/* "shrink" @evecs, if wanted */
+
+	if (rank > 0 && rank < n) {
+	    evecs->cols = rank;
+	}
+    }
+
+    gretl_matrix_free(tmp1);
+    gretl_matrix_free(tmp2);
+
+    return err;
+}
+
+/**
  * gretl_symmetric_matrix_eigenvals:
  * @m: n x n matrix to operate on.
  * @eigenvecs: non-zero to calculate eigenvectors, 0 to omit.
@@ -7415,9 +7373,9 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
  * Computes the eigenvalues of the real symmetric matrix @m.  
  * If @eigenvecs is non-zero, also compute the orthonormal
  * eigenvectors of @m, which are stored in @m. Uses the lapack 
- * function dsyev.
+ * function dsyev().
  *
- * Returns: n x 1 matrix containing the eigenvalues, in ascending
+ * Returns: n x 1 matrix containing the eigenvalues in ascending
  * order, or NULL on failure.
  */
 
@@ -7623,7 +7581,7 @@ gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A,
     }
     
     n = A->rows;
-    K = gretl_matrix_copy(B);
+    K = gretl_matrix_copy_tmp(B);
     tmp = gretl_matrix_alloc(n, n);
 
     if (K == NULL || tmp == NULL) {
@@ -7736,7 +7694,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	return E_NONCONF;
     }
 
-    b = gretl_matrix_copy(a);
+    b = gretl_matrix_copy_tmp(a);
     if (b == NULL) {
 	return E_ALLOC;
     }

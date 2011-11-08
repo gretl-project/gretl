@@ -7739,8 +7739,8 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	err = gretl_get_data(myfile, dset, openopt, vprn);
     }
 
-    if (err) {
-	if (cmd->opt & OPT_Q) {
+    if (vprn != prn) {
+	if (err) {
 	    /* The user asked for quiet operation, but something
 	       went wrong so let's print any info we got on
 	       vprn.
@@ -7750,14 +7750,17 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	    if (buf != NULL && *buf != '\0') {
 		pputs(prn, buf);
 	    }
-	    gretl_print_destroy(vprn);
+	} else {
+	    /* print minimal success message */
+	    pprintf(prn, _("Read datafile %s\n"), myfile);
 	}
+	gretl_print_destroy(vprn);
+    } 
+
+    if (err) {
 	gui_errmsg(err);
 	return err;
-    } else if (vprn != prn) {
-	/* vprn not needed any more */
-	gretl_print_destroy(vprn);
-    }
+    } 
 
     if (!dbdata && !http && cmd->ci != APPEND) {
 	strncpy(datafile, myfile, MAXLEN - 1);
