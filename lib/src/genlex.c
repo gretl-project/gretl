@@ -282,7 +282,6 @@ struct str_table funcs[] = {
     { F_EIGSYM,   "eigensym" },
     { F_EIGGEN,   "eigengen" },
     { F_EIGSOLVE, "eigsolve" },
-    { F_EIGSORT,  "eigsort" },
     { F_NULLSPC,  "nullspace" },
     { F_PRINCOMP, "princomp" },
     { F_MEXP,     "mexp" },

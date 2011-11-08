@@ -5912,27 +5912,6 @@ static const char *ptr_node_get_matrix_name (NODE *t, parser *p)
     return name;
 }
 
-static gretl_matrix *ptr_node_get_matrix (NODE *t, parser *p)
-{
-    gretl_matrix *m = NULL;
-
-    if (t->t == U_ADDR) {
-	NODE *n = t->v.b1.b;
-
-	if (n->t == UMAT) {
-	    m = get_matrix_by_name(n->v.str);
-	    if (m == NULL) {
-		gretl_errmsg_sprintf(_("'%s': no such matrix"), n->v.str);
-		p->err = E_UNKVAR;
-	    }
-	} else {
-	    p->err = E_TYPES;
-	}
-    }
-
-    return m;
-}
-
 static gretl_matrix *get_density_matrix (const double *x, 
 					 const DATASET *dset, 
 					 double bws, int ctrl,
@@ -6227,33 +6206,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    rname = (r->t == U_ADDR)? ptr_node_get_matrix_name(r, p) : "null";
 	    A = user_gensymm_eigenvals(l->v.m, m->v.m, rname, &p->err);
 	}
-    } else if (f == F_EIGSORT) {
-	int rval = 0;
-
-	if (l->t != U_ADDR) {
-	    node_type_error(f, 1, U_ADDR, l, p);
-	} else if (m->t != U_ADDR) {
-	    node_type_error(f, 2, U_ADDR, m, p);
-	} else if (r->t != EMPTY) {
-	    /* optional rank value */
-	    if (scalar_node(r)) {
-		rval = node_get_int(r, p);
-	    } else {
-		node_type_error(f, 3, NUM, r, p);
-	    }
-	}
-
-	if (!p->err) {
-	    ret = aux_scalar_node(p);
-	    if (ret != NULL) {
-		gretl_matrix *m1 = ptr_node_get_matrix(l, p);
-		gretl_matrix *m2 = ptr_node_get_matrix(m, p);
-
-		if (!p->err) {
-		    ret->v.xval = user_eigen_sort(m1, m2, rval);
-		}
-	    }
-	}
     } else if (f == F_NADARWAT) {
 	if (l->t != VEC) {
 	    node_type_error(f, 1, VEC, l, p);
@@ -6274,7 +6226,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     if (f != F_STRNCMP && f != F_WEEKDAY && 
 	f != F_MONTHLEN && f != F_EPOCHDAY &&
 	f != F_SETNOTE && f != F_BWFILT && 
-	f != F_NADARWAT && f != F_EIGSORT) {
+	f != F_NADARWAT) {
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
@@ -8890,7 +8842,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_STRSUB:
     case F_MLAG:
     case F_EIGSOLVE:
-    case F_EIGSORT:
     case F_NADARWAT:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {

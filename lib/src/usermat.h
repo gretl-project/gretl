@@ -172,9 +172,6 @@ gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
 				      const char *rname,
 				      int *err);
 
-int user_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
-		     int rank);
-
 double matrix_get_element (const gretl_matrix *M, int i, int j,
 			   int *err);
 

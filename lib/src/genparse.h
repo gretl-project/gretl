@@ -347,7 +347,6 @@ enum {
     F_EIGSOLVE,
     F_NADARWAT,
     F_SIMANN,
-    F_EIGSORT,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

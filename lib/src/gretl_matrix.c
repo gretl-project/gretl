@@ -7178,6 +7178,8 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
  * Returns: 0 on success; non-zero error code on failure.
  */
 
+#if 1 /* old style */
+
 int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
 				int rank)
 {
@@ -7230,6 +7232,58 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
 
     return 0;
 }
+
+#else /* slimmer variant, needs more checking */
+
+int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
+				int rank)
+{
+    gretl_matrix *tmp;
+    double x;
+    int i, j, k, h, n, m;
+
+    h = n = evecs->rows;
+    if (rank > 0 && rank < h) {
+	h = rank;
+    }
+
+    tmp = gretl_matrix_copy(evecs);
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    m = h / 2;
+
+    /* reverse the eigenvalues (rows) in @evals */
+
+    k = n - 1;
+    for (i=0; i<m; i++) {
+	x = evals->val[i];
+	evals->val[i] = evals->val[k];
+	evals->val[k] = x;
+	k--;
+    }
+
+    /* using @tmp, copy the last h columns of @evecs into @evecs
+       in reverse order */
+
+    k = n - 1;
+    for (j=0; j<h; j++) {
+	for (i=0; i<n; i++) {
+	    x = gretl_matrix_get(tmp, i, k);
+	    gretl_matrix_set(evecs, i, j, x);
+	}
+	k--;
+    }
+
+    evecs->cols = h;
+
+    gretl_matrix_free(tmp);
+
+    return 0;
+}
+
+#endif
 
 /**
  * gretl_general_matrix_eigenvals:
