@@ -7316,24 +7316,28 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-#if 1
-
-/* this version allocates considerably less memory, needs fuller
-   checking */
-
 int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
 				int rank)
 {
     double *tmp;
-    int err = 0;
+    int n, err = 0;
 
-    tmp = malloc(evals->rows * sizeof *tmp);
+    if (gretl_is_null_matrix(evals) || gretl_is_null_matrix(evecs)) {
+	return E_DATA;
+    }
+
+    n = evals->rows;
+    
+    if (evecs->rows != n || evecs->cols != n || evals->cols != 1) {
+	return E_DATA;
+    }
+
+    tmp = malloc(n * sizeof *tmp);
 
     if (tmp == NULL) {
 	err = E_ALLOC;
     } else {
-	int i, j, k, n = evecs->rows;
-	int m = n / 2;
+	int i, j, k, m = n / 2;
 	double x;
 
 	/* reverse the eigenvalues in @evals */
@@ -7377,58 +7381,6 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
 
     return err;
 }
-
-#else
-
-int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
-				int rank)
-{
-    gretl_matrix *tmp1, *tmp2;
-    int err = 0;
-
-    tmp1 = gretl_matrix_copy_tmp(evals);
-    tmp2 = gretl_matrix_copy_tmp(evecs);
-
-    if (tmp1 == NULL || tmp2 == NULL) {
-	err = E_ALLOC;
-    } else {
-	int i, j, k, n = evecs->rows;
-	double x;
-
-	/* using tmp1, reverse the eigenvalues in @evals */
-
-	k = n - 1;
-	for (i=0; i<n; i++) {
-	    evals->val[i] = tmp1->val[k--];
-	}
-
-	/* using tmp2, reverse the columns of @evecs */
-
-	k = n - 1;
-	for (j=0; j<n; j++) {
-	    if (k != j) {
-		for (i=0; i<n; i++) {
-		    x = gretl_matrix_get(tmp2, i, k);
-		    gretl_matrix_set(evecs, i, j, x);
-		}
-	    }
-	    k--;
-	}
-
-	/* "shrink" @evecs, if wanted */
-
-	if (rank > 0 && rank < n) {
-	    evecs->cols = rank;
-	}
-    }
-
-    gretl_matrix_free(tmp1);
-    gretl_matrix_free(tmp2);
-
-    return err;
-}
-
-#endif
 
 /**
  * gretl_symmetric_matrix_eigenvals:
