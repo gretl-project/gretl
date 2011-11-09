@@ -1254,19 +1254,9 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
     }
 
     if (!err) {
-	gretl_matrix *e;
+	double gmin = gretl_symm_matrix_lambda_min(G); 
 
-	e = gretl_symmetric_matrix_eigenvals(G, 0, &err); 
-
-	if (!err) {
-	    double gmin = e->val[0];
-
-	    for (i=1; i<n; i++) {
-		if (e->val[i] < gmin) {
-		    gmin = e->val[i];
-		}
-	    }
-	    gretl_matrix_free(e);
+	if (!xna(gmin)) {
 	    gretl_model_set_double(pmod, "gmin", gmin);
 	    gretl_model_set_int(pmod, "n", n);
 	    gretl_model_set_int(pmod, "K2", K2);

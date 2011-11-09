@@ -7483,18 +7483,17 @@ static double get_extreme_eigenvalue (gretl_matrix *m, int getmax)
     v = gretl_symmetric_matrix_eigenvals(m, 0, &err);
 
     if (!err) {
-	int i, n = gretl_vector_get_length(v);
+	int n = gretl_vector_get_length(v);
 
-	ret = v->val[0];
-	for (i=1; i<n; i++) {
-	    if (getmax) {
-		if (v->val[i] > ret) {
-		    ret = v->val[i];
-		}
-	    } else if (v->val[i] < ret) {
-		ret = v->val[i];
-	    }
+	/* the eigenvalues are in ascending order */
+
+	if (getmax) {
+	    ret = v->val[n-1];
+	} else {
+	    ret = v->val[0];
 	}
+
+	gretl_matrix_free(v);
     }
 
     if (err == 0 || err == 1) {
