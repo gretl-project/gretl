@@ -89,6 +89,10 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
     return err;
 }
 
+#define ALT_EIGEN 0 /* more testing wanted */
+
+#if !ALT_EIGEN
+
 /* find the least characteristic root */
 
 static double lambda_min (const gretl_matrix *lambda, int k)
@@ -104,6 +108,8 @@ static double lambda_min (const gretl_matrix *lambda, int k)
 
     return lmin;
 }
+
+#endif
 
 /* construct the regression list for the auxiliary regressions
    needed as a basis for LIML */
@@ -321,21 +327,44 @@ static int liml_do_equation (equation_system *sys, int eq,
     gretl_matrix_print(W1, "W1");
 #endif
 
+#if ALT_EIGEN
+    /* form a symmetric matrix that has the same eigenvalues
+       as W1^{-1} * W0
+    */
     if (!err) {
 	gretl_matrix_copy_values(Inv, W1);
-	err = gretl_invert_symmetric_matrix(Inv);
+	err = gretl_matrix_cholesky_decomp(Inv) ||
+	    gretl_invert_triangular_matrix(Inv, 'L');
     }
 
     if (!err) {
-	err = gretl_matrix_multiply(Inv, W0, W2);
+	err = gretl_matrix_qform(Inv, GRETL_MOD_NONE, W0,
+				 W2, GRETL_MOD_NONE);
+	if (!err) {
+	    lmin = gretl_symm_matrix_lambda_min(W2);
+	    if (xna(lmin)) {
+		err = E_NAN;
+	    } 
+	}
+    }
+#else
+    if (!err) {
+	gretl_matrix_copy_values(Inv, W1);
+	err = gretl_invert_symmetric_matrix(Inv);
+	if (!err) {
+	    err = gretl_matrix_multiply(Inv, W0, W2);
+	}
     }
 
     if (!err) {
 	lambda = gretl_general_matrix_eigenvals(W2, 0, &err);
+	if (!err) {
+	    lmin = lambda_min(lambda, k);
+	}
     }
+#endif /* ALT_EIGEN or not */
 
     if (!err) {
-	lmin = lambda_min(lambda, k);
 	gretl_model_set_double(pmod, "lmin", lmin);
 	gretl_model_set_int(pmod, "idf", idf);
 
