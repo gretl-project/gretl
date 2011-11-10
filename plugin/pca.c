@@ -396,11 +396,7 @@ int pca_from_cmatrix (VMatrix *cmat, DATASET *dset,
     gretl_matrix_print(C, "original C, in pca");
 #endif
 
-    evals = gretl_symmetric_matrix_eigenvals(C, 1, &err);
-
-    if (!err) {
-	err = gretl_symmetric_eigen_sort(evals, C, 0);
-    }
+    evals = gretl_symm_matrix_eigenvals_descending(C, 1, &err);
 
     if (!err && prn != NULL) {
 	pca_print(cmat, evals, C, prn);

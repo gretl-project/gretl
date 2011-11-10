@@ -2270,11 +2270,7 @@ static int phi_init_nonhomog (Jwrap *J)
 			      J->beta, GRETL_MOD_TRANSPOSE,
 			      BB, GRETL_MOD_NONE);
 
-    E = gretl_symmetric_matrix_eigenvals(BB, 1, &err);
-
-    if (!err) {
-	err = gretl_symmetric_eigen_sort(E, BB, 0);
-    } 
+    E = gretl_symm_matrix_eigenvals_descending(BB, 1, &err);
 
     if (!err) {
 	err = gretl_matrix_extract_matrix(BP, BB, 0, J->r, GRETL_MOD_NONE);

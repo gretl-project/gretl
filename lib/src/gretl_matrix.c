@@ -7319,29 +7319,30 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
 				int rank)
 {
-    double *tmp;
+    double *tmp = NULL;
     int n, err = 0;
 
-    if (gretl_is_null_matrix(evals) || gretl_is_null_matrix(evecs)) {
+    n = gretl_vector_get_length(evals);
+    if (n == 0) {
 	return E_DATA;
     }
 
-    n = evals->rows;
-    
-    if (evecs->rows != n || evecs->cols != n || evals->cols != 1) {
-	return E_DATA;
+    if (evecs != NULL) {
+	if (evecs->rows != n || evecs->cols != n) {
+	    err = E_DATA;
+	} else {
+	    tmp = malloc(n * sizeof *tmp);
+	    if (tmp == NULL) {
+		err = E_ALLOC;
+	    }
+	}
     }
 
-    tmp = malloc(n * sizeof *tmp);
-
-    if (tmp == NULL) {
-	err = E_ALLOC;
-    } else {
+    if (!err) {
 	int i, j, k, m = n / 2;
 	double x;
 
 	/* reverse the eigenvalues in @evals */
-
 	k = n - 1;
 	for (i=0; i<m; i++) {
 	    x = evals->val[i];
@@ -7350,30 +7351,30 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
 	    k--;
 	}
 
-	/* using tmp, reverse the columns of @evecs */
-
-	k = n - 1;
-	for (j=0; j<m; j++) {
-	    for (i=0; i<n; i++) {
-		/* col j -> tmp */
-		tmp[i] = gretl_matrix_get(evecs, i, j);
+	if (evecs != NULL) {
+	    /* using tmp, reverse the columns of @evecs */
+	    k = n - 1;
+	    for (j=0; j<m; j++) {
+		for (i=0; i<n; i++) {
+		    /* col j -> tmp */
+		    tmp[i] = gretl_matrix_get(evecs, i, j);
+		}
+		for (i=0; i<n; i++) {
+		    /* col k -> col j */
+		    x = gretl_matrix_get(evecs, i, k);
+		    gretl_matrix_set(evecs, i, j, x);
+		}
+		for (i=0; i<n; i++) {
+		    /* tmp -> col k */
+		    gretl_matrix_set(evecs, i, k, tmp[i]);
+		}
+		k--;
 	    }
-	    for (i=0; i<n; i++) {
-		/* col k -> col j */
-		x = gretl_matrix_get(evecs, i, k);
-		gretl_matrix_set(evecs, i, j, x);
-	    }
-	    for (i=0; i<n; i++) {
-		/* tmp -> col k */
-		gretl_matrix_set(evecs, i, k, tmp[i]);
-	    }
-	    k--;
-	}
 
-	/* "shrink" @evecs, if wanted */
-
-	if (rank > 0 && rank < n) {
-	    evecs->cols = rank;
+	    /* and "shrink" @evecs, if wanted */
+	    if (rank > 0 && rank < n) {
+		evecs->cols = rank;
+	    }
 	}
     }
 
@@ -7474,60 +7475,98 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     return evals;
 }
 
-static double get_extreme_eigenvalue (gretl_matrix *m, int getmax)
+/**
+ * gretl_symm_matrix_eigenvals_descending:
+ * @m: n x n matrix to operate on.
+ * @eigenvecs: non-zero to calculate eigenvectors, 0 to omit.
+ * @err: location to receive error code.
+ * 
+ * Computes the eigenvalues of the real symmetric matrix @m.  
+ * If @eigenvecs is non-zero, also compute the orthonormal
+ * eigenvectors of @m, which are stored in @m. Uses the lapack 
+ * function dsyev().
+ *
+ * Returns: n x 1 matrix containing the eigenvalues in descending
+ * order, or NULL on failure.
+ */
+
+gretl_matrix *
+gretl_symm_matrix_eigenvals_descending (gretl_matrix *m, 
+					int eigenvecs, 
+					int *err)
 {
-    double ret = 0.0/0.0;
+    gretl_matrix *v = 
+	gretl_symmetric_matrix_eigenvals(m, eigenvecs, err);
+
+    if (!*err) {
+	m = eigenvecs ? m : NULL;
+	*err = gretl_symmetric_eigen_sort(v, m, 0);
+	if (*err) {
+	    gretl_matrix_free(v);
+	    v = NULL;
+	}
+    }
+
+    return v;
+} 
+
+static double get_extreme_eigenvalue (gretl_matrix *m, int getmax,
+				      int *err)
+{
+    double ev = 0.0/0.0;
     gretl_matrix *v;
-    int err = 0;
 
-    v = gretl_symmetric_matrix_eigenvals(m, 0, &err);
+    v = gretl_symmetric_matrix_eigenvals(m, 0, err);
 
-    if (!err) {
+    if (!*err) {
 	int n = gretl_vector_get_length(v);
 
-	/* the eigenvalues are in ascending order */
+	/* the eigenvalues, from lapack's dsyev(), 
+	   are in ascending order */
 
 	if (getmax) {
-	    ret = v->val[n-1];
+	    ev = v->val[n-1];
 	} else {
-	    ret = v->val[0];
+	    ev = v->val[0];
 	}
 
 	gretl_matrix_free(v);
     }
 
-    if (err == 0 || err == 1) {
+    if (*err == 0 || *err == 1) {
 	/* reconstitute full matrix */
 	gretl_matrix_mirror(m, 'L');
     }
     
-    return ret;
+    return ev;
 }
 
 /**
  * gretl_symm_matrix_lambda_min:
  * @m: n x n matrix to operate on.
+ * @err: location to receive error code.
  * 
  * Returns: the minimum eigenvalue of the real symmetric matrix @m,
  * or %NaN on error.
  */
 
-double gretl_symm_matrix_lambda_min (const gretl_matrix *m)
+double gretl_symm_matrix_lambda_min (const gretl_matrix *m, int *err)
 {
-    return get_extreme_eigenvalue((gretl_matrix *) m, 0);
+    return get_extreme_eigenvalue((gretl_matrix *) m, 0, err);
 }
 
 /**
  * gretl_symm_matrix_lambda_max:
  * @m: n x n matrix to operate on.
+ * @err: location to receive error code.
  * 
  * Returns: the maximum eigenvalue of the real symmetric matrix @m,
  * or %NaN on error.
  */
 
-double gretl_symm_matrix_lambda_max (const gretl_matrix *m)
+double gretl_symm_matrix_lambda_max (const gretl_matrix *m, int *err)
 {
-    return get_extreme_eigenvalue((gretl_matrix *) m, 1);
+    return get_extreme_eigenvalue((gretl_matrix *) m, 1, err);
 }
 
 static int gensymm_conformable (const gretl_matrix *A,

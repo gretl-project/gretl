@@ -5494,7 +5494,7 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b,
     double cval = 100 * (1 - alpha);
     gretl_matrix *e = NULL;
     gchar *title;
-    int err = 0;
+    int i, err = 0;
 
     maxerr[0] = tcrit * sqrt(gretl_matrix_get(V, 0, 0));
     maxerr[1] = tcrit * sqrt(gretl_matrix_get(V, 1, 1));
@@ -5509,14 +5509,11 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b,
 	return err;
     }
 
-    e->val[0] = sqrt(1.0 / e->val[0] * Fcrit);
-    e->val[1] = sqrt(1.0 / e->val[1] * Fcrit);
-
-    xcoeff[0] = e->val[0] * gretl_matrix_get(V, 0, 0);
-    xcoeff[1] = e->val[1] * gretl_matrix_get(V, 0, 1);
-
-    ycoeff[0] = e->val[0] * gretl_matrix_get(V, 1, 0);
-    ycoeff[1] = e->val[1] * gretl_matrix_get(V, 1, 1);
+    for (i=0; i<2; i++) {
+	e->val[i] = sqrt(1.0 / e->val[i] * Fcrit);
+	xcoeff[i] = e->val[i] * gretl_matrix_get(V, 0, i);
+	ycoeff[i] = e->val[i] * gretl_matrix_get(V, 1, i);
+    }
 
     gretl_matrix_free(e);
 

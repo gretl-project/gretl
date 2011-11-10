@@ -3550,7 +3550,7 @@ static double imhof_bound (const double *lambda, int k, int *err)
     }
 
     /* The key factor in the integrand is the product of 
-       (1+(lambda(i)*x)**2)**(1/4) across i. Since, for those 
+       (1+(lambda(i)*x)^2)^(1/4) across i. Since, for those 
        factors with small |lambda(i)|, this won't go to zero very
        quickly, we count only the terms on the bigger eigenvalues.
     */
