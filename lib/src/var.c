@@ -304,7 +304,7 @@ void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
 	gretl_matrix_set_t2(v->X, v->t2);
     }
 
-#if 1 || VDEBUG
+#if VDEBUG
     gretl_matrix_print(v->X, "X");
 #endif
 }
