@@ -54,13 +54,13 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
 			const int *exlist, const int *list, 
 			DATASET *dset)
 {
-    int i, vi, t, j = 0;
+    int i, t, j = 0;
     int T = E->rows;
     int t1 = dset->t1;
     int err = 0;
 
     for (i=1; i<=list[0]; i++) {
-	vi = list[i];
+	int vi = list[i];
 
 	if (in_gretl_list(exlist, vi)) {
 	    continue;
@@ -306,8 +306,9 @@ static int liml_do_equation (equation_system *sys, int eq,
 #endif
 
     /* form a symmetric matrix that has the same eigenvalues
-       as W1^{-1} * W0
+       as W1^{-1} * W0, and find its minimum eigenvalue
     */
+
     if (!err) {
 	gretl_matrix_copy_values(Inv, W1);
 	err = gretl_matrix_cholesky_decomp(Inv) ||
