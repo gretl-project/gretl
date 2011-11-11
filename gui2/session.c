@@ -273,6 +273,7 @@ int session_is_modified (void)
 
 void mark_session_changed (void)
 {
+    iconview_menubar_state(TRUE);
     session.status = SESSION_CHANGED;
     if (save_item != NULL) {
 	gtk_widget_set_sensitive(save_item, TRUE);
@@ -1614,7 +1615,7 @@ void gui_clear_dataset (void)
 
     data_status = 0;
     orig_vars = 0;
-    main_menubar_state(FALSE);
+    dataset_menubar_state(FALSE);
 }
 
 static void session_clear_data (DATASET *pdinfo)
@@ -2745,6 +2746,27 @@ static void add_bundle_callback (gretl_bundle *bundle)
     mark_session_changed();
 }
 
+int have_session_objects (void)
+{
+    int n = data_status;
+
+#if 1
+    /* Note: we could do something like the following here, to enable
+       the icon view even when there's no dataset present.
+    */
+
+    if (n == 0) {
+	n = session.ngraphs + session.ntexts;
+    }
+
+    if (n == 0) {
+	n = n_user_matrices() + n_user_bundles() + n_saved_scalars();
+    }
+#endif
+
+    return n > 0;
+}
+
 static void add_all_icons (void) 
 {
     int show_graph_page = check_for_prog(latex);
@@ -2755,14 +2777,16 @@ static void add_all_icons (void)
     if (data_status) {
 	session_add_icon(NULL, GRETL_OBJ_INFO,    ICON_ADD_BATCH);  /* data info */
 	session_add_icon(NULL, GRETL_OBJ_DSET,    ICON_ADD_BATCH);  /* data file */
-	session_add_icon(NULL, GRETL_OBJ_SCALARS, ICON_ADD_BATCH);  /* scalars */
-	session_add_icon(NULL, GRETL_OBJ_NOTES,   ICON_ADD_BATCH);  /* session notes */
 	session_add_icon(NULL, GRETL_OBJ_STATS,   ICON_ADD_BATCH);  /* summary stats */
 	session_add_icon(NULL, GRETL_OBJ_CORR,    ICON_ADD_BATCH);  /* correlation matrix */
 	session_add_icon(NULL, GRETL_OBJ_MODTAB,  ICON_ADD_BATCH);  /* model table */
-	if (show_graph_page) {
-	    session_add_icon(NULL, GRETL_OBJ_GPAGE, ICON_ADD_BATCH); /* graph page */
-	}
+    }
+
+    /* standard icons that don't really require a dataset in place */
+    session_add_icon(NULL, GRETL_OBJ_SCALARS, ICON_ADD_BATCH);  /* scalars */ 
+    session_add_icon(NULL, GRETL_OBJ_NOTES,   ICON_ADD_BATCH);  /* session notes */
+    if (show_graph_page) {
+	session_add_icon(NULL, GRETL_OBJ_GPAGE, ICON_ADD_BATCH); /* graph page */
     }
 
     for (i=0; i<session.nmodels; i++) {

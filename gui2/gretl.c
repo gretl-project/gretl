@@ -630,7 +630,7 @@ int main (int argc, char **argv)
 
     session_menu_state(FALSE);
     restore_sample_state(FALSE);
-    main_menubar_state(FALSE);
+    dataset_menubar_state(FALSE);
 
 #if GUI_DEBUG
     fprintf(stderr, "done setting GUI state\n");

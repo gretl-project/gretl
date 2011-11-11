@@ -771,7 +771,7 @@ static void real_register_data (int flag, const char *user_fname,
     if (mdata != NULL) {
 	populate_varlist();
 	set_sample_label(dataset);
-	main_menubar_state(TRUE);
+	dataset_menubar_state(TRUE);
 	session_menu_state(TRUE);
     }
 

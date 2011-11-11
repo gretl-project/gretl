@@ -57,6 +57,8 @@ int get_commands_recorded (void);
 
 void session_menu_state (gboolean s);
 
+int have_session_objects (void);
+
 const char *get_session_dirname (void);
 
 int real_add_text_to_session (PRN *prn, const char *tname);

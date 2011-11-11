@@ -26,6 +26,7 @@
 #include "selector.h"
 #include "varinfo.h"
 #include "treeutils.h"
+#include "session.h"
 #include "menustate.h"
 
 void refresh_data (void)
@@ -102,8 +103,11 @@ void variable_menu_state (gboolean s)
 
 static void view_items_state (gboolean s)
 {
+    /* note: viewpaths below lists all the items under
+       /View except for /View/Windows, which needs
+       special handling
+    */
     const char *viewpaths[] = {
-	"IconView",
 	"GraphVars",
 	"MultiPlots",
 	"summary",
@@ -111,7 +115,6 @@ static void view_items_state (gboolean s)
 	"xtab",
 	"pca",
 	"mahal",
-	"xcorrgm",
 	NULL
     };
     char fullpath[32];
@@ -121,9 +124,14 @@ static void view_items_state (gboolean s)
 	sprintf(fullpath, "/menubar/View/%s", viewpaths[i]);
 	flip(mdata->ui, fullpath, s);
     }
+
+    flip(mdata->ui, "/menubar/View/IconView", have_session_objects());
+
+    flip(mdata->ui, "/menubar/View/xcorrgm",  
+	 data_status && dataset_is_time_series(dataset));
 }
 
-void main_menubar_state (gboolean s)
+void dataset_menubar_state (gboolean s)
 {
     if (mdata == NULL || mdata->ui == NULL) return;
 
@@ -141,7 +149,13 @@ void main_menubar_state (gboolean s)
 
     view_items_state(s);
 
-    if (s || get_n_listed_windows() == 0) {
+    if (s || (get_n_listed_windows() == 0 && !have_session_objects())) {
+	/* Either we're enabling dataset items, in which
+	   case we should also enable the /View menu, or
+	   we're disabling the dataset items and there's 
+	   nothing in the window list, in which case
+	   /View should be disabled.
+	*/
 	flip(mdata->ui, "/menubar/View", s);
     }
 
@@ -150,18 +164,37 @@ void main_menubar_state (gboolean s)
     set_main_colheads_clickable(s);
 }
 
-void window_list_state (gboolean s)
+void iconview_menubar_state (gboolean s)
 {
     if (s) {
 	GtkAction *a = gtk_ui_manager_get_action(mdata->ui, "/menubar/View");
 
 	if (a != NULL && !gtk_action_get_sensitive(a)) {
 	    gtk_action_set_sensitive(a, TRUE);
+	}
+    }
+
+    flip(mdata->ui, "/menubar/View/IconView", s);
+}
+
+void window_list_state (gboolean s)
+{
+    if (s) {
+	GtkAction *a = gtk_ui_manager_get_action(mdata->ui, "/menubar/View");
+
+	if (a != NULL && !gtk_action_get_sensitive(a)) {
+	    /* the /View menu is currently disabled: so enable it,
+	       but disable all its subitems except /View/Windows
+	    */
+	    gtk_action_set_sensitive(a, TRUE);
 	    view_items_state(FALSE);
 	}
-	flip(mdata->ui, "/menubar/View/Windows", s);
-    } else if (!data_status) {
-	flip(mdata->ui, "/menubar/View", s);
+	flip(mdata->ui, "/menubar/View/Windows", TRUE);
+    } else if (!have_session_objects()) {
+	/* if /View/Windows was the only enabled item
+	   under /View, then disable /View 
+	*/
+	flip(mdata->ui, "/menubar/View", FALSE);
     }
 }
 
