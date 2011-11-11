@@ -2923,13 +2923,13 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
     *err = 0;
     n = a->rows;
 
-    if (a->rows != a->cols) {
+    if (a->cols != n) {
 	fputs("gretl_LU_determinant: matrix must be square\n", stderr);
 	*err = E_NONCONF;
 	return NADBL;
     }
 
-    if (a->rows == 1) {
+    if (n == 1) {
 	if (!logdet) {
 	    return a->val[0];
 	} else if (a->val[0] > 0) {
@@ -3020,6 +3020,32 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
     return det;
 }
 
+static double det_22 (const double *a, int *err)
+{
+    double d = a[0]*a[3] - a[1]*a[2];
+
+    if (xna(d)) {
+	d = NADBL;
+	*err = E_NAN;
+    }
+    
+    return d;
+}
+
+static double det_33 (const double *a, int *err)
+{
+    double d = a[0]*a[4]*a[8] - a[0]*a[7]*a[5]
+	+ a[3]*a[7]*a[2] - a[3]*a[1]*a[8]
+	+ a[6]*a[1]*a[5] - a[6]*a[4]*a[2];
+
+    if (xna(d)) {
+	d = NADBL;
+	*err = E_NAN;
+    }
+    
+    return d;
+}
+
 /**
  * gretl_matrix_determinant:
  * @a: gretl_matrix.
@@ -3034,6 +3060,14 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 
 double gretl_matrix_determinant (gretl_matrix *a, int *err)
 {
+    if (a != NULL) {
+	if (a->rows == 2 && a->cols == 2) {
+	    return det_22(a->val, err);
+	} else if (a->rows == 3 && a->cols == 3) {
+	    return det_33(a->val, err);
+	}
+    }
+
     return gretl_LU_determinant(a, 0, 0, err);
 }
 
