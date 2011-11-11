@@ -3776,7 +3776,7 @@
 	example, to get the conditional variance:  
       </para>
       <code context="cli">
-	genr ht = $h
+	series ht = $h
       </code>
       <para context="cli">
 	If the <opt>--stdresid</opt> option is given, the <lit>$uhat</lit>
@@ -5881,7 +5881,7 @@
 	rather construct the logit variable, as in
       </para>
       <code>
-	genr lgt_p = log(p/(1 - p))
+	series lgt_p = log(p/(1 - p))
       </code>
       <para>and use this as the dependent variable in an OLS regression.
       See chapter 12 of <cite key="ramanathan02">Ramanathan (2002)</cite>.
@@ -6270,7 +6270,7 @@
 	preface the above lines with something like the following:
       </para>
       <code>
-	genr p = 0.5
+	scalar p = 0.5
       </code>
       <para>
 	By default, standard errors are based on the Outer Product of the
@@ -6301,9 +6301,9 @@
 	in the sample.)
       </para>
       <para>
-	The parameter <lit>p</lit> must first be added to the dataset and
-	given an initial value.  This can be done using the genr
-	command.  For example, <lit>genr p = 0.5</lit>.
+	The parameter <lit>p</lit> must first be added to the dataset
+	and given an initial value.  For example, 
+        <lit>scalar p = 0.5</lit>.
       </para>
       <para>
 	We then construct the MLE command block:
@@ -6798,10 +6798,9 @@
 	  graphic="greene_Cfunc"/>
       </para>
       <para>
-	The parameters alpha, beta and gamma must first be added to the
-	dataset and given initial values.  This can be done using the genr
-	command or via menu choices. Appropriate <quote>genr</quote> lines
-	may be typed into the NLS specification window prior to the
+	The parameters alpha, beta and gamma must first be added to
+	the dataset and given initial values.  Appropriate lines may
+	be typed into the NLS specification window prior to the
 	function specification.
       </para>
       <para>
@@ -6825,9 +6824,9 @@
 	following:
       </para>
       <code>
-	genr alpha = 1
-	genr beta = 1
-	genr gamma = 1
+	scalar alpha = 1
+	scalar beta = 1
+	scalar gamma = 1
       </code>
       <para>For further details on NLS estimation please see 
 	<guideref targ="chap-nls"/>.
@@ -6862,9 +6861,9 @@
       <code>
 	1   open greene11_3.gdt
 	2   ols C 0 Y
-	3   genr a = $coeff(0)
-	4   genr b = $coeff(Y)
-	5   genr g = 1.0
+	3   scalar a = $coeff(0)
+	4   scalar b = $coeff(Y)
+	5   scalar g = 1.0
 	6   nls C = a + b * Y^g
 	7    deriv a = 1
 	8    deriv b = Y^g
@@ -7102,21 +7101,21 @@
 	of the loop. See <guideref targ="loop-examples"/> for details.
       </para>
 
-      <para context="cli">Various internal variables may be retrieved
-	using the <cmdref targ="genr"/> command, provided
-	<cmd>genr</cmd> is invoked directly after estimation.
-	For example
+      <para context="cli">
+	Various internal variables may be retrieved following
+	estimation. For example
       </para>
       <code context="cli">
-	genr uh = $uhat
+	series uh = $uhat
       </code>
       <para>
-	saves the residuals under the name <lit>uh</lit>.
-	See the <quote>accessors</quote> section of the
-	gretl function reference for details.
+	saves the residuals under the name <lit>uh</lit>.  See the
+	<quote>accessors</quote> section of the gretl function
+	reference for details.
       </para>
 
-      <para context="cli">The specific formula used for generating
+      <para context="cli">
+	The specific formula used for generating
 	robust standard errors (when the <opt>--robust</opt> option is
 	given) can be adjusted via the <cmdref targ="set"/> command.
 	The <opt>--jackknife</opt> option has the effect of
@@ -8030,8 +8029,8 @@
       </para>
       <code>
 	ols 1 0 2 3
-	genr b = $coeff(2)
-	genr se_b = $stderr(2)
+	scalar b = $coeff(2)
+	scalar se_b = $stderr(2)
 	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b
       </code>
       <para>
@@ -8925,7 +8924,7 @@
 	do the following:
       </para>
       <code>
-	genr signx1 = x1 - median(x1)
+	series signx1 = x1 - median(x1)
 	runs signx1
       </code>
       <para>
@@ -10145,7 +10144,7 @@
 	original.  For example:
       </para>
       <code>
-	genr altx = -x
+	series altx = -x
 	spearman altx y
       </code>
     </description>

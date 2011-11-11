@@ -304,7 +304,7 @@ void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
 	gretl_matrix_set_t2(v->X, v->t2);
     }
 
-#if VDEBUG
+#if 1 || VDEBUG
     gretl_matrix_print(v->X, "X");
 #endif
 }
@@ -377,7 +377,11 @@ static void VECM_fill_Y (GRETL_VAR *v, const DATASET *dset,
 		gretl_matrix_set(Y, s++, k, dset->Z[vi][t]); /* was t-1 */
 	    }
 	}
-    }  
+    } 
+
+#if VDEBUG
+    gretl_matrix_print(Y, "VECM Y");
+#endif 
 }
 
 /* Split the user-supplied list, if need be, and construct the lists
@@ -483,7 +487,7 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
 	   VECM_fill_Y().
 	*/
 
-	s = t; /* 2011-11-06: was "= t - 1" (the lag) */
+	s = t; /* 2011-11-06: was "= t - 1" (first lag) */
 	if (v->rlist != NULL && !miss) {
 	    for (i=1; i<=v->rlist[0] && !miss; i++) {
 		vi = v->rlist[i];
@@ -2698,7 +2702,9 @@ static int johansen_degenerate_stage_1 (GRETL_VAR *v,
     const double **Z = (const double **) dset->Z;
     gretl_matrix *R0 = v->jinfo->R0;
     gretl_matrix *R1 = v->jinfo->R1;
-    int i, vi, s, t;
+    int i, j, vi, s, t;
+
+    fprintf(stderr, "degenerate stage 1\n");
 
     for (i=0; i<v->neqns; i++) {
 	vi = v->ylist[i+1];
@@ -2721,9 +2727,10 @@ static int johansen_degenerate_stage_1 (GRETL_VAR *v,
     if (v->rlist != NULL) {
 	for (i=0; i<v->rlist[0]; i++) {
 	    vi = v->rlist[i+1];
+	    j = v->neqns + i + 1;
 	    s = 0;
 	    for (t=v->t1; t<=v->t2; t++) {
-		gretl_matrix_set(R1, s++, i, Z[vi][t-1]);
+		gretl_matrix_set(R1, s++, j, Z[vi][t]); /* was t-1 */
 	    }
 	}
     } 
@@ -2782,6 +2789,10 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
     if (err) {
 	return err;
     }
+
+#if 0
+    fprintf(stderr, "johansen_stage_1: ncoeff = %d\n", v->ncoeff);
+#endif
 
     if (v->ncoeff == 0) {
 	/* nothing to concentrate out */

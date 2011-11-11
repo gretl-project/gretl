@@ -754,7 +754,7 @@ static int add_EC_terms_to_X (GRETL_VAR *v, gretl_matrix *X,
 	    /* restricted exog vars */
 	    if (v->rlist != NULL) {
 		for (i=0; i<v->rlist[0]; i++) {
-		    xt = dset->Z[v->rlist[i+1]][t-1];
+		    xt = dset->Z[v->rlist[i+1]][t]; /* was t-1 */
 		    bij = gretl_matrix_get(B, ii++, j);
 		    bxt += bij * xt;
 		}
@@ -811,7 +811,7 @@ static int make_vecm_Y (GRETL_VAR *v, const DATASET *dset,
 			} else {
 			    k = j - v->ylist[0] - auto_restr(v) + 1;
 			    vj = v->rlist[k];
-			    xti = dset->Z[vj][t-1];
+			    xti = dset->Z[vj][t]; /* was t-1 */
 			} 
 			yti -= pij * xti;
 		    }

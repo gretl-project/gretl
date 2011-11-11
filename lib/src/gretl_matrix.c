@@ -9256,6 +9256,7 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
 	fprintf(stderr, "gretl_matrix_multi_SVD_ols:\n"
 		" dgelss: rank of data matrix X = %d (rows = %d, cols = %d)\n", 
 		(int) rank, T, k);
+	gretl_matrix_print(X, "X");
     }
 
     if (!err) {
