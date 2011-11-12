@@ -487,11 +487,10 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
 	   VECM_fill_Y().
 	*/
 
-	s = t; /* 2011-11-06: was "= t - 1" (first lag) */
 	if (v->rlist != NULL && !miss) {
 	    for (i=1; i<=v->rlist[0] && !miss; i++) {
 		vi = v->rlist[i];
-		if (na(dset->Z[vi][t]) || s < 0 || na(dset->Z[vi][s])) {
+		if (na(dset->Z[vi][t])) {
 		    v->t1 += 1;
 		    miss = 1;
 		}
@@ -2695,6 +2694,14 @@ static void johansen_fill_S_matrices (GRETL_VAR *v)
     gretl_matrix_divide_by_scalar(v->jinfo->S11, v->T);
     gretl_matrix_divide_by_scalar(v->jinfo->S01, v->T);
 }
+
+/* We come here if there are no regressors at stage 1 of
+   the Johansen procedure. This happens if the associated
+   VAR is of order 1 (becomes order 0 on differencing)
+   and there are no unrestricted exogenous variables.
+   The residuals are then just the values of the
+   variables themselves.
+*/
 
 static int johansen_degenerate_stage_1 (GRETL_VAR *v, 
 					const DATASET *dset)
