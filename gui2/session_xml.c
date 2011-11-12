@@ -345,7 +345,8 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 /* peek inside the session file and retrieve the name of the
    data file, only */
 
-static int get_session_datafile_name (const char *fname, struct sample_info *sinfo)
+static int get_session_datafile_name (const char *fname, struct sample_info *sinfo,
+				      int *nodata)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
@@ -361,8 +362,12 @@ static int get_session_datafile_name (const char *fname, struct sample_info *sin
     /* read datafile attribute, if present */
     tmp = xmlGetProp(cur, (XUC) "datafile");
     if (tmp != NULL) {
-	strcpy(sinfo->datafile, (char *) tmp);
-	my_filename_from_utf8(sinfo->datafile);
+	if (!strcmp((const char *) tmp, "none")) {
+	    *nodata = 1;
+	} else {
+	    strcpy(sinfo->datafile, (char *) tmp);
+	    my_filename_from_utf8(sinfo->datafile);
+	}
 	free(tmp);
     }
 

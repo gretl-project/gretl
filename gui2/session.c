@@ -1295,6 +1295,7 @@ void do_open_session (void)
     char fname[MAXLEN];   /* multi-purpose temp variable */
     gchar *zdirname = NULL;
     FILE *fp;
+    int nodata = 0;
     int err = 0;
 
     sinfo_init(&sinfo);
@@ -1339,7 +1340,7 @@ void do_open_session (void)
     session_file_make_path(xmlname, "session.xml");
 
     /* try getting the name of the session data file first */
-    err = get_session_datafile_name(xmlname, &sinfo);
+    err = get_session_datafile_name(xmlname, &sinfo, &nodata);
 
     if (err) {
 	fprintf(stderr, "Failed on read_session_xml: err = %d\n", err);
@@ -1347,36 +1348,39 @@ void do_open_session (void)
 	goto bailout;
     }
 
-    /* construct path to session data file */
-    session_file_make_path(datafile, sinfo.datafile);
-    fp = gretl_fopen(datafile, "r");
+    if (!nodata) {
+	/* construct path to session data file */
+	session_file_make_path(datafile, sinfo.datafile);
+	fp = gretl_fopen(datafile, "r");
 
-    if (fp != NULL) {
-	/* OK, write good name into gdtname */
-	fprintf(stderr, "got datafile name '%s'\n", datafile);
-	strcpy(gdtname, datafile);
-	fclose(fp);
-    } else {
-	/* try remedial action, transform filename? */
-	fprintf(stderr, "'%s' : not found, trying to fix\n", datafile);
-	err = get_session_dataname(gdtname, &sinfo);
+	if (fp != NULL) {
+	    /* OK, write good name into gdtname */
+	    fprintf(stderr, "got datafile name '%s'\n", datafile);
+	    strcpy(gdtname, datafile);
+	    fclose(fp);
+	} else {
+	    /* try remedial action, transform filename? */
+	    fprintf(stderr, "'%s' : not found, trying to fix\n", datafile);
+	    err = get_session_dataname(gdtname, &sinfo);
+	}
+
+	if (!err) {
+	    err = gretl_read_gdt(gdtname, dataset, OPT_B, NULL);
+	}
+
+	if (err) {
+	    /* FIXME more explicit error message? */
+	    file_read_errbox(sinfo.datafile);
+	    goto bailout;
+	} else {
+	    fprintf(stderr, "Opened session datafile '%s'\n", gdtname);
+	    data_status = USER_DATA;
+	}
     }
 
-    if (!err) {
-	err = gretl_read_gdt(gdtname, dataset, OPT_B, NULL);
-    }
-
-    if (err) {
-	/* FIXME more explicit error message */
-	file_read_errbox(sinfo.datafile);
-	goto bailout;
-    } else {
-	fprintf(stderr, "Opened session datafile '%s'\n", gdtname);
-	data_status = USER_DATA;
-    }
-
-    /* having opened the data file, get the rest of the info from
-       session.xml */    
+    /* having opened the data file (or not, if there's none), get the 
+       rest of the info from session.xml 
+    */    
     err = read_session_xml(xmlname, &sinfo);
     if (err) {
 	fprintf(stderr, "Failed on read_session_xml: err = %d\n", err);
@@ -1402,33 +1406,35 @@ void do_open_session (void)
     session_file_make_path(fname, "settings.inp");
     err = maybe_read_settings_file(fname);
 
-    if (sinfo.resample_n > 0) {
-	err = dataset_resample(sinfo.resample_n, sinfo.seed, 
-			       dataset);
-    } else if (sinfo.mask != NULL) {
-	err = restrict_sample_from_mask(sinfo.mask, dataset,
-					OPT_NONE);
-	if (!err) {
-	    dataset->restriction = sinfo.restriction;
-	    sinfo.restriction = NULL;
+    if (!nodata) {
+	if (sinfo.resample_n > 0) {
+	    err = dataset_resample(sinfo.resample_n, sinfo.seed, 
+				   dataset);
+	} else if (sinfo.mask != NULL) {
+	    err = restrict_sample_from_mask(sinfo.mask, dataset,
+					    OPT_NONE);
+	    if (!err) {
+		dataset->restriction = sinfo.restriction;
+		sinfo.restriction = NULL;
+	    }
 	}
+
+	if (err) {
+	    errbox(_("Couldn't set sample"));
+	    goto bailout;
+	}
+
+	dataset->t1 = sinfo.t1;
+	dataset->t2 = sinfo.t2;
+
+	register_data(OPENED_VIA_SESSION);
+
+	if (sinfo.mask != NULL) {
+	    set_sample_label(dataset);
+	}
+
+	sinfo_free_data(&sinfo);
     }
-
-    if (err) {
-	errbox(_("Couldn't set sample"));
-	goto bailout;
-    }
-
-    dataset->t1 = sinfo.t1;
-    dataset->t2 = sinfo.t2;
-
-    register_data(OPENED_VIA_SESSION);
-
-    if (sinfo.mask != NULL) {
-	set_sample_label(dataset);
-    }
-
-    sinfo_free_data(&sinfo);
 
     set_main_window_title(session.name, FALSE);
 
@@ -1860,6 +1866,8 @@ int save_session (char *fname)
 
     if (data_status) {
 	make_session_dataname(datname);
+    } else {
+	strcpy(datname, "none");
     }
 
     write_session_xml(datname);

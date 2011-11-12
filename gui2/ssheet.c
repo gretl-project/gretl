@@ -92,6 +92,10 @@ typedef struct {
     guint point;
 } Spreadsheet;
 
+#define editing_series(s) (s->cmd == SHEET_EDIT_VARLIST || \
+                           s->cmd == SHEET_EDIT_DATASET || \
+                           s->cmd == SHEET_NEW_DATASET)
+
 #define MATRIX_DIGITS DBL_DIG
 
 static void set_up_sheet_column (GtkTreeViewColumn *column, gint width, 
@@ -2433,7 +2437,7 @@ static void free_spreadsheet (GtkWidget *widget, Spreadsheet **psheet)
 
     free(sheet->varlist);
 
-    if (sheet->matrix == NULL) {
+    if (editing_series(sheet)) {
 	set_dataset_locked(FALSE);
     }
 
@@ -2460,7 +2464,7 @@ static void free_matrix_sheet (GtkWidget *widget, Spreadsheet *sheet)
 
     free(sheet->varlist);
 
-    if (sheet->matrix == NULL) {
+    if (editing_series(sheet)) {
 	set_dataset_locked(FALSE);
     }
 
@@ -3008,7 +3012,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	add_window_list_item(sheet->win, 0);
     }
 
-    if (c != SHEET_EDIT_MATRIX && c != SHEET_EDIT_SCALARS) {
+    if (editing_series(sheet)) {
 	/* we can't have the user making confounding changes elsewhere,
 	   while editing the dataset here */
 	set_dataset_locked(TRUE);
@@ -3565,6 +3569,7 @@ static int locked;
 void set_dataset_locked (gboolean s)
 {
     locked = s;
+    flip(mdata->ui, "/menubar/Data", !s);
     flip(mdata->ui, "/menubar/Sample", !s);
 }
 
