@@ -348,49 +348,94 @@ add_new_cols_to_Z (nlspec *s, const gretl_matrix *M, int oldecols)
     return err;
 }
 
-/* Record the source (ID number of variable, or name of matrix and
-   column within matrix) for a column on the left-hand side of the set
-   of GMM orthogonality conditions.  We need this later for updating
-   the values in the given column, after adjusting the parameters.
+/* Record the source (ID number of series) for a column on 
+   the LHS of a set of GMM orthogonality conditions. 
 */
 
-static int 
-push_column_source (nlspec *s, int v, const char *mname)
+static int push_col_source_series (nlspec *s, int v)
+{
+    colsrc *cols;
+    int n, err = 0;
+
+    n = (s->oc->e != NULL)? s->oc->e->cols : 0;
+
+    cols = realloc(s->oc->ecols, (n + 1) * sizeof *cols);
+
+    if (cols == NULL) {
+	err = E_ALLOC;
+    } else {
+	s->oc->ecols = cols;
+	cols[n].v = v;
+	cols[n].j = 0;
+	cols[n].mname[0] = '\0';
+    }
+
+    return err;
+}
+
+/* Record the source (named matrix) for a set of columns on 
+   the LHS of a set of GMM orthogonality conditions. 
+*/
+
+static int push_col_source_matrix (nlspec *s, const char *mname)
 {
     gretl_matrix *m;
     colsrc *cols;
-    int j, k, n, p;
+    int n, err = 0;
 
-    m = (mname != NULL)? get_matrix_by_name(mname) : NULL;
+    m = get_matrix_by_name(mname);
     n = (s->oc->e != NULL)? s->oc->e->cols : 0;
-    k = (m != NULL)? m->cols : 1;
+
+    cols = realloc(s->oc->ecols, (n + m->cols) * sizeof *cols);
+
+    if (cols == NULL) {
+	err = E_ALLOC;
+    } else {
+	int j, i;
+
+	s->oc->ecols = cols;
+
+	for (j=0; j<m->cols; j++) {
+	    i = n + j;
+	    cols[i].v = 0;
+	    cols[i].j = j;
+	    strcpy(cols[i].mname, mname);
+	}
+    }
+
+    return err;
+}
+
+/* Record the source (list of series) for a set of columns on 
+   the LHS of a set of GMM orthogonality conditions. 
+*/
+
+static int push_col_source_list (nlspec *s, const int *list)
+{
+    colsrc *cols;
+    int n, k, err = 0;
+
+    n = (s->oc->e != NULL)? s->oc->e->cols : 0;
+    k = list[0];
 
     cols = realloc(s->oc->ecols, (n + k) * sizeof *cols);
+
     if (cols == NULL) {
-	return E_ALLOC;
-    }
+	err = E_ALLOC;
+    } else {
+	int j, i;
 
-    s->oc->ecols = cols;
+	s->oc->ecols = cols;
 
-    for (j=0; j<k; j++) {
-	p = n + j;
-	cols[p].v = (v < 0)? 0 : v;
-	cols[p].j = j;
-
-	if (mname == NULL) {
-	    cols[p].mname[0] = '\0';
-	} else {
-	    strcpy(cols[p].mname, mname);
+	for (j=0; j<k; j++) {
+	    i = n + j;
+	    cols[i].v = list[j+1];
+	    cols[i].j = j;
+	    cols[i].mname[0] = '\0';
 	}
-
-#if GMM_DEBUG
-	fprintf(stderr, "push_column_source: added source %d: v=%d, "
-		"mname='%s', j=%d\n", p, cols[p].v, cols[p].mname, 
-		cols[p].j);
-#endif
     }
 
-    return 0;
+    return err;
 }
 
 int nlspec_add_ivreg_oc (nlspec *s, int lhv, const int *rlist,
@@ -419,7 +464,7 @@ int nlspec_add_ivreg_oc (nlspec *s, int lhv, const int *rlist,
 	    x = Z[lhv][t + s->t1];
 	    gretl_vector_set(e, t, x);
 	}
-	err = push_column_source(s, lhv, NULL);
+	err = push_col_source_series(s, lhv);
     }
 
     if (err) {
@@ -482,7 +527,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
     if (ltype == GRETL_TYPE_MATRIX) {
 	e = get_matrix_copy_by_name(lname, &err);
 	if (!err) {
-	    err = push_column_source(s, 0, lname);
+	    err = push_col_source_matrix(s, lname);
 	}
     } else if (ltype == GRETL_TYPE_LIST) {
 	int *list = get_list_by_name(lname);
@@ -494,14 +539,14 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	} else {
 	    gretl_matrix_set_t1(e, s->t1);
 	    gretl_matrix_set_t2(e, s->t2);
-	    for (i=0; i<k && !err; i++) {
-		v = list[i + 1];
+	    for (i=0; i<k; i++) {
+		v = list[i+1];
 		for (t=0; t<s->nobs; t++) {
 		    x = dset->Z[v][t + s->t1];
 		    gretl_matrix_set(e, t, i, x);
 		}
-		err = push_column_source(s, v, NULL);
 	    }
+	    err = push_col_source_list(s, list);
 	}	
     } else if (ltype == GRETL_TYPE_SERIES) {
 	v = series_index(dset, lname);
@@ -515,7 +560,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 		x = dset->Z[v][t + s->t1];
 		gretl_vector_set(e, t, x);
 	    }
-	    err = push_column_source(s, v, NULL);
+	    err = push_col_source_series(s, v);
 	}
     } else {
 	err = gmm_unkvar(lname);
