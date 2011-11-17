@@ -30,6 +30,8 @@ version 1.9.7, in progress
   quantile regression in the GUI
 - Fix bug: the third argument to eigsolve() was rejected even when it
   was valid
+- Fix bug: the option of providing a named list of series as the left-
+  hand term in a GMM orthogonality condition was not fully implemented
 
 2011-10-17 version 1.9.6
 - Add an importer for xlsx (Office Open XML) worksheet data
