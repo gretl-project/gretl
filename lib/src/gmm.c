@@ -348,26 +348,46 @@ add_new_cols_to_Z (nlspec *s, const gretl_matrix *M, int oldecols)
     return err;
 }
 
+/* expand the array containing info on the columns on the left
+   of a set of GMM orthogonality conditions. 
+*/
+
+static int add_oc_cols (nlspec *s, int current_cols, int add_cols)
+{
+    colsrc *cols;    
+    int err = 0;
+
+    cols = realloc(s->oc->ecols, (current_cols + add_cols) * sizeof *cols);
+
+    if (cols == NULL) {
+	err = E_ALLOC;
+    } else {
+	int j, k;
+
+	for (j=0; j<add_cols; j++) {
+	    k = current_cols + j;
+	    cols[k].v = 0;
+	    cols[k].j = j;
+	    cols[k].mname[0] = '\0';
+	} 
+
+	s->oc->ecols = cols;
+    }
+    
+    return err;
+}
+
 /* Record the source (ID number of series) for a column on 
    the LHS of a set of GMM orthogonality conditions. 
 */
 
 static int push_col_source_series (nlspec *s, int v)
 {
-    colsrc *cols;
-    int n, err = 0;
+    int n = (s->oc->e != NULL)? s->oc->e->cols : 0;
+    int err = add_oc_cols(s, n, 1);
 
-    n = (s->oc->e != NULL)? s->oc->e->cols : 0;
-
-    cols = realloc(s->oc->ecols, (n + 1) * sizeof *cols);
-
-    if (cols == NULL) {
-	err = E_ALLOC;
-    } else {
-	s->oc->ecols = cols;
-	cols[n].v = v;
-	cols[n].j = 0;
-	cols[n].mname[0] = '\0';
+    if (!err) {
+	s->oc->ecols[n].v = v;
     }
 
     return err;
@@ -379,27 +399,13 @@ static int push_col_source_series (nlspec *s, int v)
 
 static int push_col_source_matrix (nlspec *s, const char *mname)
 {
-    gretl_matrix *m;
-    colsrc *cols;
-    int n, err = 0;
+    int j, n = (s->oc->e != NULL)? s->oc->e->cols : 0;
+    gretl_matrix *m = get_matrix_by_name(mname);
+    int err = add_oc_cols(s, n, m->cols);
 
-    m = get_matrix_by_name(mname);
-    n = (s->oc->e != NULL)? s->oc->e->cols : 0;
-
-    cols = realloc(s->oc->ecols, (n + m->cols) * sizeof *cols);
-
-    if (cols == NULL) {
-	err = E_ALLOC;
-    } else {
-	int j, i;
-
-	s->oc->ecols = cols;
-
+    if (!err) {
 	for (j=0; j<m->cols; j++) {
-	    i = n + j;
-	    cols[i].v = 0;
-	    cols[i].j = j;
-	    strcpy(cols[i].mname, mname);
+	    strcpy(s->oc->ecols[n+j].mname, mname);
 	}
     }
 
@@ -412,26 +418,12 @@ static int push_col_source_matrix (nlspec *s, const char *mname)
 
 static int push_col_source_list (nlspec *s, const int *list)
 {
-    colsrc *cols;
-    int n, k, err = 0;
+    int j, n = (s->oc->e != NULL)? s->oc->e->cols : 0;
+    int err = add_oc_cols(s, n, list[0]);
 
-    n = (s->oc->e != NULL)? s->oc->e->cols : 0;
-    k = list[0];
-
-    cols = realloc(s->oc->ecols, (n + k) * sizeof *cols);
-
-    if (cols == NULL) {
-	err = E_ALLOC;
-    } else {
-	int j, i;
-
-	s->oc->ecols = cols;
-
-	for (j=0; j<k; j++) {
-	    i = n + j;
-	    cols[i].v = list[j+1];
-	    cols[i].j = j;
-	    cols[i].mname[0] = '\0';
+    if (!err) {
+	for (j=0; j<list[0]; j++) {
+	    s->oc->ecols[n+j].v = list[j+1];
 	}
     }
 
