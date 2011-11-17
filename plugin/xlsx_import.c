@@ -133,6 +133,10 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
 
     cur = cur->xmlChildrenNode;
 
+    /* the strings are set up as 
+       <si><t>foo</t></si><si><t>bar</t></si> ...
+    */
+
     i = 0;
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "si")) {
