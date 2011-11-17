@@ -2149,6 +2149,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	windata_t *local = get_local_viewer(vwin->role);
 
 	if (vwin->role == REMOTE_FUNC_FILES) {
+	    infobox(_("Installed"));
 	    list_store_set_string(GTK_TREE_VIEW(vwin->listbox),
 				  vwin->active_var, 3,
 				  _("Up to date"));

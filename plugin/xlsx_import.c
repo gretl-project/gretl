@@ -95,7 +95,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
     xmlNodePtr cur = NULL;
     xmlNodePtr val;
     char *tmp;
-    int n = 0, i = 0;
+    int i, n = 0;
     int err = 0;
 
     err = gretl_xml_open_doc_root(xinfo->stringsfile, "sst", 
@@ -133,6 +133,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
 
     cur = cur->xmlChildrenNode;
 
+    i = 0;
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "si")) {
 	    int gotstr = 0;
@@ -161,7 +162,9 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
     if (!err && i < n) {
 	pprintf(prn, "expected %d shared strings but only found %d\n",
 		n, i);
-	err = E_DATA;
+	if (i == 0) {
+	    err = E_DATA;
+	}
     }
 
     if (!err) {
@@ -197,6 +200,9 @@ static const char *xlsx_string_value (const char *idx, xlsx_info *xinfo,
 
 	if (i >= 0 && i < xinfo->n_strings) {
 	    ret = xinfo->strings[i];
+	} else {
+	    /* do we really want this fudge factor? */
+	    ret = "";
 	}
     }
 

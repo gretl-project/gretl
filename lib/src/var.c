@@ -3547,9 +3547,11 @@ VAR_matrix_from_models (const GRETL_VAR *var, int idx, int *err)
     double x;
     int i, j;
 
-    if (idx == M_VECG && var->ci != VECM) {
-	*err = E_BADSTAT;
-	return NULL;
+    if (idx == M_VECG) {
+	if (var->ci != VECM || var->order == 0) {
+	    *err = E_BADSTAT;
+	    return NULL;
+	}
     }
 
     if (idx == M_VECG) {
