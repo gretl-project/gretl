@@ -133,8 +133,18 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
 
     cur = cur->xmlChildrenNode;
 
-    /* the strings are set up as 
-       <si><t>foo</t></si><si><t>bar</t></si> ...
+    /* The strings in an <sst> are mostly set up as 
+
+       <si><t>XXX</t></si>
+       <si><t>YYY</t></si> ...
+
+       But there are also weird cases where junk is interposed
+       and the structure becomes
+
+       <si><r>...<t>XXX</t></r><r>...<t>YYY</t></r></si> ...
+
+       That is, an <si> element may contain more than one <r>
+       element, which embeds a <t> along with formatting crap.
     */
 
     i = 0;
@@ -145,6 +155,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
 	    val = cur->xmlChildrenNode;
 	    while (val != NULL && !err && !gotstr) {
 		if (!xmlStrcmp(val->name, (XUC) "t")) {
+		    /* got a regular <t> element */
 		    tmp = (char *) xmlNodeGetContent(val);
 		    if (tmp == NULL) {
 			pprintf(prn, "failed reading string %d\n", i);
@@ -152,6 +163,23 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
 		    } else {
 			xinfo->strings[i++] = tmp;
 			gotstr = 1;
+		    }
+		} else if (!xmlStrcmp(val->name, (XUC) "r")) {
+		    /* hunt for <t> inside an <r> element */
+		    xmlNodePtr sub = val->xmlChildrenNode;
+
+		    while (sub != NULL && !err) {
+			if (!xmlStrcmp(sub->name, (XUC) "t")) {
+			    tmp = (char *) xmlNodeGetContent(sub);
+			    if (tmp == NULL) {
+				pprintf(prn, "failed reading string %d\n", i);
+				err = E_DATA;
+			    } else {
+				xinfo->strings[i++] = tmp;
+				gotstr = 1;
+			    }
+			}
+			sub = sub->next;
 		    }
 		}
 		val = val->next;
@@ -166,9 +194,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
     if (!err && i < n) {
 	pprintf(prn, "expected %d shared strings but only found %d\n",
 		n, i);
-	if (i == 0) {
-	    err = E_DATA;
-	}
+	err = E_DATA;
     }
 
     if (!err) {
@@ -204,10 +230,7 @@ static const char *xlsx_string_value (const char *idx, xlsx_info *xinfo,
 
 	if (i >= 0 && i < xinfo->n_strings) {
 	    ret = xinfo->strings[i];
-	} else {
-	    /* do we really want this fudge factor? */
-	    ret = "";
-	}
+	} 
     }
 
     return ret;

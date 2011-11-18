@@ -245,7 +245,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 
     /* Note: checks to the effect that xfac = 3 or 4, and,
        if X is non-NULL, that X->rows = xfac * Y->rows,
-       have already been performed.
+       should have already been performed.
     */
 
     if (X != NULL) {
