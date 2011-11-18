@@ -243,16 +243,6 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (!strcmp(line, "smpl full")) {
 	strcpy(line, "smpl");
 	cmd->opt = OPT_F;
-    } else if (!strcmp(s, "sample")) {
-	deprecate_alias("sample", "smpl");
-	cmd->ci = SMPL;
-    } else if (!strcmp(s, "lmtest")) {
-	deprecate_alias("lmtest", "modtest");
-	cmd->ci = MODTEST;
-    } else if (!strcmp(s, "testuhat")) {
-	deprecate_alias("testuhat", "modtest");
-	cmd->ci = MODTEST;
-	cmd->opt |= OPT_N;
     } else if (!strcmp(s, "equations")) {
 	cmd->ci = EQUATION;
 	cmd->opt |= OPT_M;
@@ -283,11 +273,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 	}
     } else if (*s == '!' || !strcmp(s, "launch")) {
 	cmd->ci = SHELL;
-    } else if (!strcmp(line, "end if")) {
-	deprecate_alias("end if", "endif");
-	strcpy(s, "endif");
-	strcpy(line, "endif");
-	cmd->ci = ENDIF;
     } else if (!strcmp(s, "elif")) {
 	cmd->ci = ELSE;
 	cmd->opt = OPT_I;
@@ -301,25 +286,6 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (!strcmp(s, "fcasterr")) {
 	cmd->ci = FCAST;
 	cmd->opt |= OPT_E;
-    } else if (!strcmp(s, "corc")) {
-	deprecate_alias("corc", "ar1");
-	strcpy(s, "ar1");
-	cmd->ci = AR1;
-    } else if (!strcmp(s, "hilu")) {
-	deprecate_alias("hilu", "ar1 ... --hilu");
-	strcpy(s, "ar1");
-	cmd->ci = AR1;
-	cmd->opt |= OPT_H;
-    } else if (!strcmp(s, "pwe")) {
-	deprecate_alias("pwe", "ar1 ... --pwe");
-	strcpy(s, "ar1");
-	cmd->ci = AR1;
-	cmd->opt |= OPT_P;
-    } else if (!strcmp(s, "hccm")) {
-	deprecate_alias("hccm", "ols ... --jackknife");
-	strcpy(s, "ols");
-	cmd->ci = OLS;
-	cmd->opt |= OPT_J;
     } else if (!strcmp(s, "continue")) {
 	cmd->ci = FUNDEBUG;
 	cmd->opt |= OPT_C;
