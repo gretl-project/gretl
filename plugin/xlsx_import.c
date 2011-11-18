@@ -168,7 +168,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
 		    /* hunt for <t> inside an <r> element */
 		    xmlNodePtr sub = val->xmlChildrenNode;
 
-		    while (sub != NULL && !err) {
+		    while (sub != NULL && !err && i < n) {
 			if (!xmlStrcmp(sub->name, (XUC) "t")) {
 			    tmp = (char *) xmlNodeGetContent(sub);
 			    if (tmp == NULL) {
