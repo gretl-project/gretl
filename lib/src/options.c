@@ -437,6 +437,7 @@ struct gretl_option gretl_opts[] = {
     { VECM,     OPT_I, "impulse-responses", 1 },
     { VECM,     OPT_N, "nc", 0 },
     { VECM,     OPT_R, "rc", 0 },
+    { VECM,     OPT_C, "uc", 0 },    
     { VECM,     OPT_T, "ct", 0 },
     { VECM,     OPT_V, "verbose", 0 },
     { VECM,     OPT_X, "silent", 0 },

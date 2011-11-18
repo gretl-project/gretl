@@ -10972,6 +10972,14 @@
 	  <effect>HAC standard errors</effect>
         </option>
         <option>
+	  <flag>--quiet</flag>
+	  <effect>skip output of individual equations</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
+        </option>
+        <option>
 	  <flag>--impulse-responses</flag>
 	  <effect>print impulse responses</effect>
         </option>
@@ -11216,6 +11224,10 @@
 	  <effect>restricted constant</effect>
         </option>
         <option>
+	  <flag>--uc</flag>
+	  <effect>unrestricted constant</effect>
+        </option>
+        <option>
 	  <flag>--crt</flag>
 	  <effect>constant and restricted trend</effect>
         </option>
@@ -11226,6 +11238,14 @@
         <option>
 	  <flag>--seasonals</flag>
 	  <effect>include centered seasonal dummies</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>skip output of individual equations</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
         </option>
         <option>
 	  <flag>--impulse-responses</flag>

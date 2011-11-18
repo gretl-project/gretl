@@ -4257,17 +4257,28 @@
       </description>
     </function>
 
-    <function name="ok" section="data-utils" output="asinput">
+    <function name="ok" section="data-utils" output="seebelow">
       <fnargs>
-	<fnarg type="sslist">x</fnarg>
+	<fnarg type="anyfloat-or-list">x</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns a binary variable holding 1 if <argname>x</argname> is not
-	  <lit>NA</lit>. If <argname>x</argname> is a series, the comparison
-	  is done element by element. If <argname>x</argname> is a list of
-	  series, the output is a series with 0 at observations for which at
-	  least one series in the list has a missing value, and 1 otherwise.
+	  If <argname>x</argname> is a scalar, returns 1 if
+	  <argname>x</argname> is not <lit>NA</lit>, otherwise 0.  If
+	  <argname>x</argname> is a series, returns a series with
+	  value 1 at observations with non-missing values and zeros
+	  elsewhere. If <argname>x</argname> is a list, the output is
+	  a series with 0 at observations for which at least one
+	  series in the list has a missing value, and 1 otherwise.
+	</para>
+	<para>
+	  If <argname>x</argname> is a matrix the behavior is a little
+	  different, since matrices cannot contain <lit>NA</lit>s: the
+	  function returns a matrix of the same dimensions as
+	  <argname>x</argname>, with 1s in positions corresponding to
+	  finite elements of <argname>x</argname> and 0s in positions
+	  where the elements are non-finite (either infinities or
+	  not-a-number, as per the IEEE 754 standard).
 	</para>
 	<para>
 	  <seelist>
@@ -4275,6 +4286,7 @@
 	    <fncref targ="misszero"/>
 	    <fncref targ="zeromiss"/>
 	  </seelist>
+	  But note that these functions are not applicable to matrices.
 	</para>
       </description>
     </function>
