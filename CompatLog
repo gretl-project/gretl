@@ -5,17 +5,16 @@ command is now treated as a regular option. This means that
 any scripts that use the old syntax "ymax=value" should be
 revised to use "--ymax=value".
 
-The following aliases to old commands, deprecated since gretl
-1.9.0, have now been removed and should be replaced as
-indicated:
+The following aliases, deprecated since gretl 1.9.0, have now 
+been removed and should be replaced as indicated:
 
- "end if"   use: endif
- "corc"     use: ar1
- "hilu"     use: ar1 ... --hilu
- "pwe"      use: ar1 ... --pwe
- "hccm"     use: ols ... --jackknife
- "lmtest"   use: modtest
- "testuhat" use: modtest --normality
+ "end if"    endif
+ "corc"      ar1
+ "hilu"      ar1 ... --hilu
+ "pwe"       ar1 ... --pwe
+ "hccm"      ols ... --jackknife
+ "lmtest"    modtest
+ "testuhat"  modtest --normality
 
 GUI: the menu item /View/Scalars has been merged into the
 Icon view window.
