@@ -50,7 +50,9 @@ TEXSRC = cli.tex \
 	gretlOctave.tex \
 	datatypes.tex \
 	df.tex \
-	var.tex
+	var.tex \
+	tsfilter.tex \
+	numerical.tex
 
 BIBSRC = gretl.bib gretl.bst
 
