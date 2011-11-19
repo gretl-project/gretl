@@ -1,16 +1,13 @@
 \chapter{Data files}
 \label{datafiles}
 
-\section{Native format}
-\label{native-format}
+\section{Data file formats}
+\label{sec:data-formats}
 
 \app{gretl} has its own format for data files.  Most users will
 probably not want to read or write such files outside of \app{gretl}
 itself, but occasionally this may be useful and full details on the
 file formats are given in Appendix~\ref{app-datafile}.
-
-\section{Other data file formats}
-\label{other-formats}
 
 \app{gretl} will read various other data formats.
     
@@ -39,22 +36,14 @@ the data.  If you encounter a problem with ill-formatted data, the
 messages in this window should give you a handle on fixing the
 problem.
 
-As of version 1.7.5, \app{gretl} also offers ODBC connctivity. Be
-warned: this is a recent feature meant for somewhat advanced users; it
-may still have a few rough edges and there is no GUI interface for
-this yet. Interested readers will find more info in appendix
-\ref{chap:odbc}.
-
-For the convenience of anyone wanting to carry out more complex data
-analysis, \app{gretl} has a facility for writing out data in the
+Note that \app{gretl} has a facility for writing out data in the
 native formats of GNU \app{R}, \app{Octave}, \app{JMulTi} and
 \app{PcGive} (see Appendix~\ref{app-advanced}).  In the GUI client
 this option is found under the ``File, Export data'' menu; in the
 command-line client use the \cmd{store} command with the appropriate
 option flag.
 
-
-\section{Binary databases}
+\section{Databases}
 \label{dbase}
 
 For working with large amounts of data \app{gretl} is supplied
@@ -92,12 +81,17 @@ Analysis of Time Series), \app{gretl} can handle such databases
 --- or at least, a subset of same, namely time-series databases
 containing monthly and quarterly series.  
 
-\app{Gretl} can also import data from \app{PcGive} databases.  These
+\app{gretl} can also import data from \app{PcGive} databases.  These
 take the form of a pair of files, one containing the actual data (with
 suffix \texttt{.bn7}) and one containing supplementary information
 (\texttt{.in7}).  
 
-\section{Creating a data file from scratch}
+In addition, \app{gretl} offers ODBC connectivity. Be warned: this
+feature is meant for somewhat advanced users; there is currently no
+GUI interface.  Interested readers will find more info in appendix
+\ref{chap:odbc}.
+
+\section{Creating a dataset from scratch}
 \label{scratch}
 
 There are several ways of doing this:
@@ -381,6 +375,9 @@ You may input data in whichever arrangement is more convenient.
 Internally, however, \app{gretl} always stores panel data in
 the form of stacked time series.
 
+\section{Panel data specifics}
+\label{sec:more-panel}
+
 When you import panel data into \app{gretl} from a spreadsheet or
 comma separated format, the panel nature of the data will not be
 recognized automatically (most likely the data will be treated as
@@ -427,7 +424,7 @@ setobs 20 1:1 --stacked-time-series
 setobs 5 1:1 --stacked-cross-section
 \end{code}
 
-\subsubsection{Panel data arranged by variable}
+\subsection{Panel data arranged by variable}
 
 Publicly available panel data sometimes come arranged ``by variable.''
 Suppose we have data on two variables, \varname{x1} and \varname{x2},
@@ -528,7 +525,7 @@ store panel.gdt x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 \
   x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
 \end{code}
 
-\subsubsection{Panel data marker strings}
+\subsection{Panel data marker strings}
 
 It can be helpful with panel data to have the observations identified
 by mnemonic markers.  A special function in the \texttt{genr} command
@@ -574,19 +571,130 @@ will look like, for example, \texttt{AR:1965}, where the two-letter
 state code and the year of the observation are spliced together with a
 colon.
 
+\subsection{Panel dummy variables}
+\label{panel-dummies}
+
+In a panel study you may wish to construct dummy variables of one or
+both of the following sorts: (a) dummies as unique identifiers for the
+units or groups, and (b) dummies as unique identifiers for the time
+periods.  The former may be used to allow the intercept of the
+regression to differ across the units, the latter to allow the
+intercept to differ across periods.
+
+Two special functions are available to create such dummies.  These are
+found under the ``Add'' menu in the GUI, or under the \cmd{genr}
+command in script mode or \app{gretlcli}.
+
+\begin{enumerate}
+\item ``unit dummies'' (script command \cmd{genr unitdum}).  This
+  command creates a set of dummy variables identifying the
+  cross-sectional units.  The variable \verb+du_1+ will have value 1
+  in each row corresponding to a unit 1 observation, 0 otherwise;
+  \verb+du_2+ will have value 1 in each row corresponding to a unit 2
+  observation, 0 otherwise; and so on.
+\item ``time dummies'' (script command \cmd{genr timedum}).  This
+  command creates a set of dummy variables identifying the periods.
+  The variable \verb+dt_1+ will have value 1 in each row
+  corresponding to a period 1 observation, 0 otherwise; \verb+dt_2+
+  will have value 1 in each row corresponding to a period 2
+  observation, 0 otherwise; and so on.
+\end{enumerate}
+
+If a panel data set has the \verb+YEAR+ of the observation entered as
+one of the variables you can create a periodic dummy to pick out a
+particular year, e.g.\ \cmd{genr dum = (YEAR=1960)}.  You can also
+create periodic dummy variables using the modulus operator,
+\verb+%+.  For instance, to create a dummy with
+value 1 for the first observation and every thirtieth observation
+thereafter, 0 otherwise, do
+%
+\begin{code}
+genr index 
+genr dum = ((index-1) % 30) = 0
+\end{code}
+
+\subsection{Lags, differences, trends}
+\label{panel-lagged}
+
+If the time periods are evenly spaced you may want to use lagged
+values of variables in a panel regression (but see also
+chapter~\ref{chap-dpanel}); you may also wish to construct first
+differences of variables of interest.
+
+Once a dataset is identified as a panel, \app{gretl} will handle the
+generation of such variables correctly.  For example the command
+\verb+genr x1_1 = x1(-1)+ will create a variable that contains the
+first lag of \verb+x1+ where available, and the missing value code
+where the lag is not available (e.g.\ at the start of the time series
+for each group).  When you run a regression using such variables, the
+program will automatically skip the missing observations.
+
+When a panel data set has a fairly substantial time dimension, you may
+wish to include a trend in the analysis.  The command \cmd{genr time} 
+creates a variable named \varname{time} which runs from 1 to $T$ for
+each unit, where $T$ is the length of the time-series dimension of the
+panel.  If you want to create an index that runs consecutively from 1
+to $m\times T$, where $m$ is the number of units in the panel, use
+\cmd{genr index}.
+
+\subsection{Basic statistics by unit}
+\label{panel-stats}
+
+\app{Gretl} contains functions which can be used to generate basic
+descriptive statistics for a given variable, on a per-unit basis;
+these are \texttt{pnobs()} (number of valid cases), \texttt{pmin()}
+and \texttt{pmax()} (minimum and maximum) and \texttt{pmean()} and
+\texttt{psd()} (mean and standard deviation).
+
+As a brief illustration, suppose we have a panel data set comprising 8
+time-series observations on each of $N$ units or groups.  Then the
+command
+%
+\begin{code}
+genr pmx = pmean(x)
+\end{code}
+%
+creates a series of this form: the first 8 values (corresponding to
+unit 1) contain the mean of \varname{x} for unit 1, the next 8 values
+contain the mean for unit 2, and so on.  The \texttt{psd()} function
+works in a similar manner.  The sample standard deviation for group
+$i$ is computed as
+\[
+s_i = \sqrt{\frac{\sum(x-\bar{x}_i)^2}{T_i-1}}
+\]
+where $T_i$ denotes the number of valid observations on \varname{x}
+for the given unit, $\bar{x}_i$ denotes the group mean, and the
+summation is across valid observations for the group.  If $T_i < 2$,
+however, the standard deviation is recorded as 0.
+
+One particular use of \texttt{psd()} may be worth noting.  If you want
+to form a sub-sample of a panel that contains only those units for
+which the variable \varname{x} is time-varying, you can either use 
+%
+\begin{code}
+smpl (pmin(x) < pmax(x)) --restrict
+\end{code}
+or
+%
+\begin{code}
+smpl (psd(x) > 0) --restrict
+\end{code}
+
 \section{Missing data values}
 \label{missing-data}
 
-These are represented internally as \verb+DBL_MAX+, the largest
-floating-point number that can be represented on the system (which is
-likely to be at least 10 to the power 300, and so should not be
-confused with legitimate data values).  In a native-format data file
-they should be represented as \verb+NA+. When importing CSV data
+\subsection{Representation and handling}
+
+Missing values are represented internally as \verb+DBL_MAX+, the
+largest floating-point number that can be represented on the system
+(which is likely to be at least 10 to the power 300, and so should not
+be confused with legitimate data values).  In a native-format data
+file they should be represented as \verb+NA+. When importing CSV data
 \app{gretl} accepts several common representations of missing values
 including $-$999, the string \verb+NA+ (in upper or lower case), a
 single dot, or simply a blank cell.  Blank cells should, of course, be
-properly delimited, e.g.\ \verb+120.6,,5.38+, in which the middle value
-is presumed missing.
+properly delimited, e.g.\ \verb+120.6,,5.38+, in which the middle
+value is presumed missing.
 
 As for handling of missing values in the course of statistical
 analysis, \app{gretl} does the following:
@@ -617,17 +725,47 @@ their omission leaves a balanced panel. If missing observations are
 found in cases where they are not supported, \app{gretl} gives an
 error message and refuses to produce estimates.
 
-In case missing values in the middle of a dataset present a problem,
-the \cmd{misszero} function (use with care!) is provided under the
-\cmd{genr} command. By doing \cmd{genr foo = misszero(bar)} you can
-produce a series \cmd{foo} which is identical to \cmd{bar} except that
-any missing values become zeros.  Then you can use carefully
-constructed dummy variables to, in effect, drop the missing
-observations from the regression while retaining the surrounding
-sample range.\footnote{\cmd{genr} also offers the inverse function to
-  \cmd{misszero}, namely \cmd{zeromiss}, which replaces zeros in a
-  given series with the missing observation code.}
+\subsection{Manipulating missing values}
+\label{sec:genr-missing}
 
+Some special functions are available for the handling of missing
+values.  The boolean function \verb+missing()+ takes the name of a
+variable as its single argument; it returns a series with value 1 for
+each observation at which the given variable has a missing value, and
+value 0 otherwise (that is, if the given variable has a valid value at
+that observation).  The function \verb+ok()+ is complementary to
+\verb+missing+; it is just a shorthand for \verb+!missing+ (where
+\verb+!+ is the boolean NOT operator).  For example, one can count the
+missing values for variable \verb+x+ using
+
+\begin{code}
+scalar nmiss_x = sum(missing(x))
+\end{code}
+
+The function \verb+zeromiss()+, which again takes a single series as
+its argument, returns a series where all zero values are set to the
+missing code.  This should be used with caution --- one does not want
+to confuse missing values and zeros --- but it can be useful in some
+contexts.  For example, one can determine the first valid observation
+for a variable \verb+x+ using
+
+\begin{code}
+genr time
+scalar x0 = min(zeromiss(time * ok(x)))
+\end{code}
+
+The function \verb+misszero()+ does the opposite of \verb+zeromiss+,
+that is, it converts all missing values to zero.  
+
+It may be worth commenting on the propagation of missing values within
+\verb+genr+ formulae.  The general rule is that in arithmetical
+operations involving two variables, if either of the variables has a
+missing value at observation $t$ then the resulting series will also
+have a missing value at $t$.  The one exception to this rule is
+multiplication by zero: zero times a missing value produces zero
+(since this is mathematically valid regardless of the unknown value).
+
+    
 \section{Maximum size of data sets}
 \label{data-limits}
 

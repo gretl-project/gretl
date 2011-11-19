@@ -9,10 +9,19 @@ the issues.
 
 A sub-sample may be defined in relation to a full data set in two
 different ways: we will refer to these as ``setting'' the sample and
-``restricting'' the sample respectively.
+``restricting'' the sample; these methods are discussed in
+sections~\ref{sec:sample-set} and~\ref{sec:sample-restrict}
+respectively. In addition section~\ref{sec:resampling} discusses
+resampling with replacement, which is useful in the context of
+bootstrapping test statistics.
+
+The following discussion focuses on the command-line approach. But you
+can also invoke the methods outlined here via the items under the
+\textsf{Sample} menu in the GUI program.
+
 
 \section{Setting the sample}
-\label{sample-set}
+\label{sec:sample-set}
 
 By ``setting'' the sample we mean defining a sub-sample simply by
 means of adjusting the starting and/or ending point of the current
@@ -73,7 +82,7 @@ time series before setting the sample, it remains a quarterly time
 series afterwards).
 
 \section{Restricting the sample}
-\label{sample-restrict}
+\label{sec:sample-restrict}
 
 By ``restricting'' the sample we mean selecting observations on the
 basis of some Boolean (logical) criterion, or by means of a random
@@ -174,12 +183,13 @@ regression results.  You can work around this as follows:
 \item Proceed with your analysis.
 \end{enumerate}
 
-\section{Random sampling}
+\subsection{Random sub-sampling}
 \label{sample-random}
 
-With very large datasets (or perhaps to study the properties of an
-estimator) you may wish to draw a random sample from the full dataset.
-This can be done using, for example,
+Besides restricting the sample on some deterministic criterion, it may
+sometimes be useful (when working with very large datasets, or perhaps
+to study the properties of an estimator) to draw a random sub-sample
+from the full dataset.  This can be done using, for example,
 %
 \begin{code}
 smpl 100 --random
@@ -190,19 +200,67 @@ should set the seed for the random number generator first, using
 \cmd{set}.  This sort of sampling falls under the ``restriction''
 category: a reduced copy of the dataset is made.
 
-\section{The Sample menu items}
-\label{sample-menu}
+\section{Resampling and bootstrapping}
+\label{sec:resampling}
 
-The discussion above has focused on the script command \cmd{smpl}. You
-can also use the items under the \textsf{Sample} menu in the GUI
-program to select a sub-sample.
+Given an original data series \varname{x}, the command
+%
+\begin{code}
+series xr = resample(x)
+\end{code}
+%
+creates a new series each of whose elements is drawn at random from
+the elements of \varname{x}.  If the original series has 100
+observations, each element of \varname{x} is selected with probability
+$1/100$ at each drawing.  Thus the effect is to ``shuffle'' the
+elements of \varname{x}, with the twist that each element of
+\varname{x} may appear more than once, or not at all, in \varname{xr}.
 
-The menu items work in the same way as the corresponding \verb+smpl+
-variants.  When you use the item ``Sample, Restrict based on
-criterion'', and the dataset is already sub-sampled, you are given the
-option of preserving or replacing the current restriction.  Replacing
-the current restriction means, in effect, invoking the \verb+replace+
-option described above (Section~\ref{sample-restrict}).
+The primary use of this function is in the construction of bootstrap
+confidence intervals or p-values.  Here is a simple example.  Suppose
+we estimate a simple regression of $y$ on $x$ via OLS and find that
+the slope coefficient has a reported $t$-ratio of 2.5 with 40 degrees
+of freedom.  The two-tailed p-value for the null hypothesis that the
+slope parameter equals zero is then 0.0166, using the $t(40)$
+distribution.  Depending on the context, however, we may doubt whether
+the ratio of coefficient to standard error truly follows the $t(40)$
+distribution.  In that case we could derive a bootstrap p-value as
+shown in Example~\ref{resampling-loop}.  
+
+Under the null hypothesis that the slope with respect to $x$ is zero,
+$y$ is simply equal to its mean plus an error term.  We simulate $y$
+by resampling the residuals from the initial OLS and re-estimate the
+model.  We repeat this procedure a large number of times, and record
+the number of cases where the absolute value of the $t$-ratio is
+greater than 2.5: the proportion of such cases is our bootstrap
+p-value.  For a good discussion of simulation-based tests and
+bootstrapping, see Davidson and MacKinnon
+(\citeyear{davidson-mackinnon04}, chapter 4).
+
+\begin{script}[htbp]
+  \caption{Calculation of bootstrap p-value}
+  \label{resampling-loop}
+\begin{scode}
+ols y 0 x
+# save the residuals
+genr ui = $uhat
+scalar ybar = mean(y)
+# number of replications for bootstrap
+scalar replics = 10000
+scalar tcount = 0
+series ysim = 0
+loop replics --quiet
+  # generate simulated y by resampling
+  ysim = ybar + resample(ui)
+  ols ysim 0 x
+  scalar tsim = abs($coeff(x) / $stderr(x))
+  tcount += (tsim > 2.5)
+endloop      
+printf "proportion of cases with |t| > 2.5 = %g\n", tcount / replics
+\end{scode}
+%$
+\end{script}
+
     
 %%% Local Variables: 
 %%% mode: latex
