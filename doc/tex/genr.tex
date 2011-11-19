@@ -265,14 +265,14 @@ several vectors with the same number of elements, it is numerically more
 efficient to group them into a matrix rather than invoking
 \texttt{fft} for each vector separately.
 
-As an example, consider the multiplication of two polynomals:
+As an example, consider the multiplication of two polynomials:
 \begin{eqnarray*}
   a(x) & = & 1 + 0.5 x \\
   b(x) & = & 1 + 0.3 x - 0.8 x^2 \\
   c(x) = a(x) \cdot b(x) & = & 1 + 0.8 x - 0.65 x^2 - 0.4 x^3
 \end{eqnarray*}
 The coefficients of the polynomial $c(x)$ are the convolution of the
-coefficents of $a(x)$ and $b(x)$; the following \app{gretl} code fragment
+coefficients of $a(x)$ and $b(x)$; the following \app{gretl} code fragment
 illustrates how to compute the coefficients of $c(x)$:
 \begin{code}
 # define the two polynomials
@@ -304,7 +304,7 @@ fc = cmult(f[,1:2], f[,3:4])
 c = ffti(fc)
 \end{code}
 
-Traditionally, the Fourier tranform in econometrics has been mostly
+Traditionally, the Fourier transform in econometrics has been mostly
 used in time-series analysis, the periodogram being the best known
 example. Example script \ref{scr:pergm-fft} shows how to compute the
 periodogram of a time series via the \texttt{fft} function.
