@@ -52,7 +52,8 @@ TEXSRC = cli.tex \
 	df.tex \
 	var.tex \
 	tsfilter.tex \
-	numerical.tex
+	numerical.tex \
+	nonparam.tex
 
 BIBSRC = gretl.bib gretl.bst
 
