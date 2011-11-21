@@ -6961,7 +6961,57 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret->v.xval = user_NR(b, sf, sg, sh, p->dset, 
 				  p->prn, &p->err);
 	}
-    } 
+    } else if (t->t == F_LOESS) {
+	const double *y = NULL, *x = NULL;
+	double bandwidth = 0.5;
+	int poly_order = 1;
+	int robust = 0;
+
+	if (k < 2 || k > 5) {
+	    n_args_error(k, 4, "loess", p);
+	} 
+
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (p->err) {
+		break;
+	    }
+	    if (i < 2) {
+		if (e->t != VEC) {
+		    node_type_error(t->t, i+1, VEC, e, p);
+		} else if (i == 0) {
+		    y = e->v.xvec;
+		} else {
+		    x = e->v.xvec;
+		}
+	    } else if (i == 2 || i == 3) {
+		if (e->t != NUM && e->t != EMPTY) {
+		    node_type_error(t->t, i+1, NUM, e, p);
+		} else if (i == 2 && e->t == NUM) {
+		    poly_order = node_get_int(e, p);
+		} else if (e->t == NUM) {
+		    bandwidth = e->v.xval;
+		}
+	    } else {
+		if (e->t != EMPTY && e->t != NUM) {
+		    node_type_error(t->t, i+1, NUM, e, p);
+		} else {
+		    robust = node_get_int(e, p);
+		    if (!p->err) {
+			robust = (robust != 0);
+		    }
+		}
+	    }
+	}
+
+	if (!p->err) {
+	    ret = aux_vec_node(p, p->dset->n);
+	    if (ret != NULL) {
+		p->err = gretl_loess(y, x, poly_order, bandwidth,
+				     robust, p->dset, ret->v.xvec);
+	    }
+	}
+    }
 
     return ret;
 }
@@ -8875,6 +8925,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_KSMOOTH:
     case F_KSIMUL:
     case F_NRMAX:
+    case F_LOESS:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
 	break;

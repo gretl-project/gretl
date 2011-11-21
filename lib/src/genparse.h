@@ -358,6 +358,7 @@ enum {
     F_KSMOOTH,
     F_KSIMUL,
     F_NRMAX,
+    F_LOESS,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 

@@ -4561,25 +4561,23 @@ int nadaraya_watson (const double *y, const double *x, double h,
     double xt, xs, ys, yt, k;
     double ah = fabs(h);
     int LOO = (h < 0);  /* leave-one-out */
-
     double TRIM = libset_get_double(NADARWAT_TRIM) * ah;
-
     int n = t2 + 1;
-    double *num;
-    double *den;
+    double *num, *den;
 
-    num = malloc(n * sizeof *num);
-    den = malloc(n * sizeof *den);
+    num = malloc(2 * n * sizeof *num);
 
-    if (num == NULL || den == NULL) {
+    if (num == NULL) {
 	return E_ALLOC;
     }
+
+    den = num + n;
 
     /* 
        here we initialize numerator and denominator; we use the
        "diagonal" in the standard case and 0 in the leave-one-out
        case.
-     */
+    */
 
     if (LOO) {
 	for (t=t1; t<=t2; t++) {
@@ -4621,7 +4619,103 @@ int nadaraya_watson (const double *y, const double *x, double h,
     }
 
     free(num);
-    free(den);
+
+    return err;
+}
+
+static int xy_set_sample (const double *y, const double *x,
+			  int *t1, int *t2)
+{
+    int t, err = 0;
+
+    for (t=*t1; t<=*t2; t++) {
+	if (na(y[t]) || na(x[t])) {
+	    *t1 += 1;
+	} else {
+	    break;
+	}
+    }
+
+    for (t=*t2; t>=*t1; t--) {
+	if (na(y[t]) || na(x[t])) {
+	    *t2 -= 1;
+	} else {
+	    break;
+	}
+    }
+
+    for (t=*t1; t<=*t2; t++) {
+	if (na(y[t]) || na(x[t])) {
+	    err = E_MISSDATA;
+	    break;
+	} 
+    }
+
+    return err;
+}
+
+int gretl_loess (const double *y, const double *x, int poly_order,
+		 double bandwidth, int robust, DATASET *dset, 
+		 double *m)
+{
+    gretl_matrix *my, *mx;
+    gretl_matrix *yh = NULL;
+    int *s_order = NULL;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
+    int s, t, n = 0;
+    int err = 0;
+
+    if (poly_order < 0 || bandwidth <= 0 || bandwidth >= 1) {
+	err = E_DATA;
+    } else {
+	err = xy_set_sample(y, x, &t1, &t2);
+	if (!err) {
+	    n = t2 - t1 + 1;
+	    if (n < 10) {
+		err = E_TOOFEW;
+	    }
+	}
+    }
+
+    if (err) {
+	return err;
+    }
+
+    my = gretl_column_vector_alloc(n);
+    mx = gretl_column_vector_alloc(n);
+ 
+    if (my == NULL || mx == NULL) {
+	err = E_ALLOC;
+    } else {
+	s = 0;
+	for (t=t1; t<=t2; t++) {
+	    my->val[s] = y[t];
+	    mx->val[s] = x[t];
+	    s++;
+	}
+	/* sort the points by the value of x */
+	err = sort_pairs_by_x(mx, my, &s_order, NULL);
+    }
+
+    if (!err) {
+	gretlopt opt = robust ? OPT_R : OPT_NONE;
+
+	yh = loess_fit(mx, my, poly_order, bandwidth, opt, &err);
+    }
+
+    if (!err) {
+	for (t=0; t<n; t++) {
+	    /* put the yh values back into dataset order */
+	    s = s_order[t];
+	    m[t+t1] = yh->val[s];
+	}
+    }
+
+    gretl_matrix_free(my);
+    gretl_matrix_free(mx);
+    gretl_matrix_free(yh);
+    free(s_order);
 
     return err;
 }

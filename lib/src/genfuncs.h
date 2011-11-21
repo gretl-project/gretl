@@ -159,4 +159,8 @@ int list_ok_dollar_vars (DATASET *dset, PRN *prn);
 int nadaraya_watson (const double *y, const double *x, double h,
 		     DATASET *dset, double *m);
 
+int gretl_loess (const double *y, const double *x, int poly_order,
+		 double bandwidth, int robust, DATASET *dset, 
+		 double *m);
+
 #endif /* GENFUNCS_H */

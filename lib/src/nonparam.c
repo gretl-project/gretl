@@ -1272,7 +1272,7 @@ struct pair_sorter {
  * sort_pairs_by_x:
  * @x: data vector by which to sort.
  * @y: data vector. 
- * @order: location to recieve sort order, or %NULL.
+ * @order: location to receive sort order, or %NULL.
  * @labels: array of strings to be sorted along with
  * the data, or %NULL.
  *
@@ -1418,7 +1418,7 @@ static void weight_x_y (const gretl_matrix *x, const gretl_matrix *y,
  * @q: bandwidth (0 < q < 1).
  * @opt: give %OPT_R for robust variant (with re-weighting based on
  * the first-stage residuals).
- * @err: location to recieve error code.
+ * @err: location to receive error code.
  *
  * Computes loess estimates based on William Cleveland, "Robust Locally 
  * Weighted Regression and Smoothing Scatterplots", Journal of the 
@@ -1426,7 +1426,7 @@ static void weight_x_y (const gretl_matrix *x, const gretl_matrix *y,
  * Generally one expects that @d = 1 and @q is in the neighborhood
  * of 0.5.
  *
- * The x,y pairs must be pre-sorted by increasing value of x; an
+ * The x,y pairs must be pre-sorted by increasing value of @x; an
  * error is flagged if this is not the case.  See also
  * sort_pairs_by_x().
  * 
