@@ -1485,6 +1485,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
     }    
 
     if (opt & OPT_R) {
+	/* extra storage for robust variant */
 	ei = gretl_column_vector_alloc(n);
 	wi = gretl_column_vector_alloc(n);
 	if (ei == NULL || wi == NULL) {
@@ -1517,7 +1518,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 		break;
 	    }
 	    d1 = fabs(xi - x->val[j]);
-	    d2 = fabs(xi - x->val[j + n]);
+	    d2 = fabs(xi - x->val[j+n]);
 	    if (d1 <= d2) {
 		break;
 	    }
@@ -1547,7 +1548,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 	weight_x_y(x, y, Xr, yr, wt, j, d);
 
 	for (k=0; k<kmax && !*err; k++) {
-	    /* run local WLS */
+	    /* run locally weighted LS */
 	    *err = gretl_matrix_ols(yr, Xr, bj, NULL, NULL, NULL);
 
 	    if (!*err && k < kmax - 1) {
