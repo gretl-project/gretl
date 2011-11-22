@@ -1443,6 +1443,20 @@ static void weight_x_y (const gretl_matrix *x, const gretl_matrix *y,
     }
 }
 
+static int get_jmin (const gretl_matrix *y, int i, int n)
+{
+    int j = i, m = 1;
+
+    while (j > 0 && m < n) {
+	if (!xna(y->val[j-1])) {
+	    m++;
+	}
+	j--;
+    } 
+
+    return j;
+}
+
 /**
  * loess_fit:
  * @x: x-axis variable (must be pre-sorted).
@@ -1525,7 +1539,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 	    *err = E_ALLOC;
 	    goto bailout;
 	}
-	kmax = 2; /* 3? */
+	kmax = 2; /* maybe 3? */
     } else {
 	kmax = 1;
     }
@@ -1544,16 +1558,9 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 	       the leftmost index (from which we should start 
 	       searching to the right); and jmax is the rightmost 
 	       index to be considered.
-
-	       FIXME: the way this is set up at present we may
-	       get less than n usable neighbors if y-values are
-	       missing.
 	    */
 
-	    jmin = i - n + 1;
-	    if (jmin < 0) {
-		jmin = 0;
-	    }
+	    jmin = get_jmin(y, i, n);
 	    jmax = i;
 	    if (jmax + n > N) {
 		jmax = N - n;
@@ -1563,6 +1570,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 		if (j + n >= N) {
 		    break;
 		}
+		/* FIXME handle missing y-values here */
 		d1 = fabs(xi - x->val[j]);
 		d2 = fabs(xi - x->val[j+n]);
 		if (d1 <= d2) {
