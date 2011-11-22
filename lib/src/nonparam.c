@@ -1403,7 +1403,7 @@ static void weight_x_y (const gretl_matrix *x, const gretl_matrix *y,
 	    xrt = x->val[t+j];
 	    gretl_matrix_set(Xr, t, 1, xrt * wt);
 	    if (d == 2) {
-		gretl_matrix_set(Xr, t, 1, xrt * xrt * wt);
+		gretl_matrix_set(Xr, t, 2, xrt * xrt * wt);
 	    }
 	}		
 	yr->val[t] = y->val[t+j] * wt;

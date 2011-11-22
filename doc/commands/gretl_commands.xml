@@ -4261,10 +4261,12 @@
       <options>
         <option>
 	  <flag>--with-lines</flag>
+	  <optparm optional="true">varspec</optparm>
 	  <effect>use lines, not points</effect>
         </option>
         <option>
 	  <flag>--with-impulses</flag>
+	  <optparm optional="true">varspec</optparm>
 	  <effect>use vertical lines</effect>
         </option>
         <option>
@@ -4319,6 +4321,7 @@
         <example>gnuplot y1 y2 x</example>
         <example>gnuplot x --time-series --with-lines</example>
 	<example>gnuplot wages educ gender --dummy</example>
+	<example>gnuplot y1 y2 x --with-lines=y2</example>
       </examples>
     </usage>
 
@@ -4328,6 +4331,20 @@
 	<repl>xvar</repl>.  For a time series plot you may either
 	give <lit>time</lit> as <repl>xvar</repl> or use the option
 	flag <opt>--time-series</opt>.
+      </para>
+
+      <para context="cli">
+	By default, data-points are shown as points; this can be
+	overridden by giving one of the options <opt>--with-lines</opt> or
+	<opt>--with-impulses</opt>. If more than one variable is to be
+	plotted on the <math>y</math> axis, the effect of these options
+	may be confined to a subset of the variables by using the
+	<repl>varspec</repl> parameter. This should take the form of a
+	comma-separated listing of the names or numbers of the variables
+	to be plotted with lines or impulses respectively. For instance,
+	the final example above shows how to plot <lit>y1</lit> and
+	<lit>y2</lit> against <lit>x</lit>, such that <lit>y2</lit> is
+	represented by a line but <lit>y1</lit> by points.
       </para>
 
       <para>

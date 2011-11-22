@@ -68,6 +68,7 @@ struct gnuplot_info_ {
     const char *yformula;
     const double *x;
     gretl_matrix *dvals;
+    int *non_point_list;
 };
 
 #define MAX_LETTERBOX_LINES 8
@@ -225,65 +226,139 @@ int gnuplot_test_command (const char *cmd)
 
 #endif /* !WIN32 */
 
+static int gp_list_pos (const char *s, const int *list,
+			const DATASET *dset)
+{
+    int k;
+
+    if (integer_string(s)) {
+	k = atoi(s);
+    } else {
+	k = current_series_index(dset, s);
+    }
+
+    return in_gretl_list(list, k);
+}
+
+/* When we get from the user something like 
+
+   --with-lines=foo,bar
+
+   this indicates that the "with lines" format should be
+   applied to selected y-axis variables, not all. In that
+   case we construct a list holding the positions in the
+   graph list of the variables that want special
+   treatment; this is gi->non_point_list.
+*/
+
+static int gp_set_non_point_vars (gnuplot_info *gi, 
+				  const char *s, 
+				  const int *list,
+				  const DATASET *dset)
+{
+    int *non_point_list = NULL;
+    int i, pos;
+
+    if (strchr(s, ',') != NULL) {
+	/* multiple components */
+	gchar **strs = g_strsplit(s, ",", 0);
+	
+	for (i=0; strs[i]!=NULL; i++) {
+	    pos = gp_list_pos(strs[i], list, dset);
+	    if (pos > 0 && pos < list[0]) {
+		gretl_list_append_term(&non_point_list, pos);
+	    }
+	}
+	g_strfreev(strs);
+    } else {
+	/* just one component */
+	pos = gp_list_pos(s, list, dset);
+	if (pos > 0 && pos < list[0]) {
+	    non_point_list = gretl_list_new(1);
+	    non_point_list[1] = pos;
+	}
+    }
+
+    if (non_point_list != NULL) {
+	gi->non_point_list = non_point_list;
+    }
+
+    return 0;
+}
+
 #define gp_interactive(f) (!(f & GPT_BATCH))
 
-static GptFlags get_gp_flags (gretlopt opt, int k, FitType *f)
+static void get_gp_flags (gnuplot_info *gi, gretlopt opt, 
+			  const int *list, const DATASET *dset)
 {
-    GptFlags flags = 0;
+    int k;
+
+    gi->flags = 0;
 
     if (gretl_in_batch_mode() || (opt & OPT_U)) {
-	flags |= GPT_BATCH;
+	gi->flags |= GPT_BATCH;
     }
 
     if (opt & OPT_G) {
-	flags |= GPT_GUI;
+	gi->flags |= GPT_GUI;
     } 
 
     if (opt & OPT_R) {
-	flags |= GPT_RESIDS;
+	gi->flags |= GPT_RESIDS;
     } else if (opt & OPT_F) {
-	flags |= GPT_FA;
+	gi->flags |= GPT_FA;
     }
 
     if (opt & OPT_M) {
-	flags |= GPT_IMPULSES;
+	const char *s = get_optval_string(GNUPLOT, OPT_M);
+
+	if (s != NULL) {
+	    gp_set_non_point_vars(gi, s, list, dset);
+	}
+	gi->flags |= GPT_IMPULSES;
     } else if (opt & OPT_O) {
-	flags |= GPT_LINES;
+	const char *s = get_optval_string(GNUPLOT, OPT_O);
+
+	if (s != NULL) {
+	    gp_set_non_point_vars(gi, s, list, dset);
+	}
+	gi->flags |= GPT_LINES;
     }
 
     if (opt & OPT_Z) {
-	flags |= GPT_DUMMY;
+	gi->flags |= GPT_DUMMY;
     } else if (opt & OPT_C) {
-	flags |= GPT_XYZ;
+	gi->flags |= GPT_XYZ;
     } else {
 	if (opt & OPT_S) {
-	    flags |= GPT_FIT_OMIT;
+	    gi->flags |= GPT_FIT_OMIT;
 	}
 	if (opt & OPT_T) {
-	    flags |= GPT_IDX;
+	    gi->flags |= GPT_IDX;
 	}
     }
 
-    if ((k == 2 || (k == 1 && (flags & GPT_IDX))) && !(opt & OPT_S)) {
+    gi->fit = PLOT_FIT_NONE;
+    k = list[0];
+
+    if ((k == 2 || (k == 1 && (gi->flags & GPT_IDX))) && !(opt & OPT_S)) {
 	/* OPT_S suppresses auto-fit */
 	if (opt & OPT_I) {
-	    *f = PLOT_FIT_INVERSE;
+	    gi->fit = PLOT_FIT_INVERSE;
 	} else if (opt & OPT_Q) {
-	    *f = PLOT_FIT_QUADRATIC;
+	    gi->fit = PLOT_FIT_QUADRATIC;
 	} else if (opt & OPT_B) {
-	    *f = PLOT_FIT_CUBIC;
+	    gi->fit = PLOT_FIT_CUBIC;
 	} else if (opt & OPT_L) {
-	    *f = PLOT_FIT_LOESS;
+	    gi->fit = PLOT_FIT_LOESS;
 	} else if (opt & OPT_N) {
-	    *f = PLOT_FIT_OLS;
+	    gi->fit = PLOT_FIT_OLS;
 	}
     }
 
 #if GP_DEBUG
-    print_gnuplot_flags(flags, 0);
+    print_gnuplot_flags(gi->flags, 0);
 #endif
-
-    return flags;
 }
 
 static void printvars (FILE *fp, int t, const int *list, const double **Z,
@@ -2160,24 +2235,25 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset)
 
 static int
 gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list, 
-	     const char *literal, int t1, int t2)
+	     const char *literal, const DATASET *dset)
 {
     int l0 = list[0];
 
-    gi->fit = PLOT_FIT_NONE;
-    gi->flags = get_gp_flags(opt, l0, &gi->fit);
+    gi->non_point_list = NULL;
+
+    get_gp_flags(gi, opt, list, dset);
 
     if (gi->fit == PLOT_FIT_NONE) {
 	gi->flags |= GPT_TS; /* may be renounced later */
     }
 
-    if (t2 - t1 + 1 <= 0) {
+    if (dset->t2 - dset->t1 + 1 <= 0) {
 	/* null sample range */
 	return E_DATA;
     }
 
-    gi->t1 = t1;
-    gi->t2 = t2;
+    gi->t1 = dset->t1;
+    gi->t2 = dset->t2;
     gi->xrange = 0.0;
     gi->xtics[0] = '\0';
     gi->fmt[0] = '\0';
@@ -2232,6 +2308,7 @@ static void clear_gpinfo (gnuplot_info *gi)
 {
     free(gi->list);
     gretl_matrix_free(gi->dvals);
+    free(gi->non_point_list);
 
     if (gi->fp != NULL) {
 	fclose(gi->fp);
@@ -2306,12 +2383,28 @@ static void set_lwstr (const DATASET *dset, int v, char *s)
     }
 }
 
-static void set_withstr (GptFlags flags, char *str)
+static void set_withstr (gnuplot_info *gi, int i, char *str)
 {
-    if (flags & GPT_DATA_STYLE) {
-	*str = 0;
-    } else if (flags & GPT_LINES) {
-	strcpy(str, "w lines");
+    if (gi->flags & GPT_DATA_STYLE) {
+	*str = '\0';
+    } else if (gi->flags & GPT_LINES) {
+	if (gi->non_point_list == NULL) {
+	    /* GPT_LINES applies to all */
+	    strcpy(str, "w lines");
+	} else if (in_gretl_list(gi->non_point_list, i)) {
+	    strcpy(str, "w lines");
+	} else {
+	    strcpy(str, "w points");
+	}
+    } else if (gi->flags & GPT_IMPULSES) {
+	if (gi->non_point_list == NULL) {
+	    /* GPT_IMPULSES applies to all */
+	    strcpy(str, "w impulses");
+	} else if (in_gretl_list(gi->non_point_list, i)) {
+	    strcpy(str, "w impulses");
+	} else {
+	    strcpy(str, "w points");
+	}	
     } else {
 	strcpy(str, "w points");
     }
@@ -2744,8 +2837,7 @@ int gnuplot (const int *plotlist, const char *literal,
     fprintf(stderr, "incoming plot range: obs %d to %d\n", dset->t1, dset->t2);
 #endif
 
-    err = gpinfo_init(&gi, opt, plotlist, literal, 
-		      dset->t1, dset->t2);
+    err = gpinfo_init(&gi, opt, plotlist, literal, dset);
     if (err) {
 	goto bailout;
     }
@@ -2929,9 +3021,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	/* using two y axes */
 	for (i=1; i<list[0]; i++) {
 	    set_lwstr(dset, list[i], lwstr);
-	    if (!use_impulses(&gi)) { 
-		set_withstr(gi.flags, withstr);
-	    }	    
+	    set_withstr(&gi, i, withstr);
 	    fprintf(fp, "'-' using 1:($2) axes %s title \"%s (%s)\" %s%s%s",
 		    (i == oddman)? "x1y2" : "x1y1",
 		    var_get_graph_name(dset, list[i]), 
@@ -2962,7 +3052,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, _("fitted"));
     } else if (gi.flags & GPT_FA) {
 	/* this is a fitted vs actual plot */
-	set_withstr(gi.flags, withstr);
+	set_withstr(&gi, 0, withstr);
 	fprintf(fp, " '-' using 1:($2) title \"%s\" %s lt 2, \\\n", _("fitted"), withstr);
 	fprintf(fp, " '-' using 1:($2) title \"%s\" %s lt 1\n", _("actual"), withstr);	
     } else {
@@ -2974,9 +3064,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    } else {
 		strcpy(s1, var_get_graph_name(dset, list[i]));
 	    }
-	    if (!use_impulses(&gi)) { 
-		set_withstr(gi.flags, withstr);
-	    }
+	    set_withstr(&gi, i, withstr);
 	    fprintf(fp, " '-' using 1:($2) title \"%s\" %s%s", s1, withstr, lwstr);
 	    if (i < list[0] - 1 || (gi.flags & GPT_AUTO_FIT)) {
 	        fputs(" , \\\n", fp); 
@@ -3026,8 +3114,7 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
 	return E_DATA;
     }
 
-    err = gpinfo_init(&gi, opt | OPT_S, plotlist, NULL, 
-		      dset->t1, dset->t2);
+    err = gpinfo_init(&gi, opt | OPT_S, plotlist, NULL, dset);
     if (err) {
 	goto bailout;
     }
