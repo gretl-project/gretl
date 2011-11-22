@@ -4623,13 +4623,13 @@ int nadaraya_watson (const double *y, const double *x, double h,
     return err;
 }
 
-static int xy_set_sample (const double *y, const double *x,
-			  int *t1, int *t2)
+static int xy_get_sample (const double *y, const double *x,
+			  int *t1, int *t2, int *n)
 {
-    int t, err = 0;
+    int t, nxy, err = 0;
 
     for (t=*t1; t<=*t2; t++) {
-	if (na(y[t]) || na(x[t])) {
+	if (xna(x[t])) {
 	    *t1 += 1;
 	} else {
 	    break;
@@ -4637,21 +4637,49 @@ static int xy_set_sample (const double *y, const double *x,
     }
 
     for (t=*t2; t>=*t1; t--) {
-	if (na(y[t]) || na(x[t])) {
+	if (xna(x[t])) {
 	    *t2 -= 1;
 	} else {
 	    break;
 	}
     }
 
+    /* nxy = the number of points where we have valid values
+       for both x and y; n = the number of valid x-values
+    */
+
+    nxy = *n = 0;
+
     for (t=*t1; t<=*t2; t++) {
-	if (na(y[t]) || na(x[t])) {
-	    err = E_MISSDATA;
-	    break;
+	if (!xna(x[t])) {
+	    *n += 1;
+	    if (!xna(y[t])) {
+		nxy++;
+	    } 
 	} 
     }
 
+    if (nxy < 16) {
+	err = E_TOOFEW;
+    }
+
     return err;
+}
+
+static int get_dataset_t (const double *x, int pos, int t1)
+{
+    int t, k = 0;
+
+    for (t=t1; k<=pos; t++) {
+	if (!xna(x[t])) {
+	    if (k == pos) {
+		return t;
+	    }
+	    k++;
+	}
+    }
+
+    return 0;
 }
 
 int gretl_loess (const double *y, const double *x, int poly_order,
@@ -4663,24 +4691,23 @@ int gretl_loess (const double *y, const double *x, int poly_order,
     int *s_order = NULL;
     int t1 = dset->t1;
     int t2 = dset->t2;
-    int s, t, n = 0;
+    int s, t, n;
     int err = 0;
 
-    if (poly_order < 0 || bandwidth <= 0 || bandwidth >= 1) {
-	err = E_DATA;
-    } else {
-	err = xy_set_sample(y, x, &t1, &t2);
-	if (!err) {
-	    n = t2 - t1 + 1;
-	    if (n < 10) {
-		err = E_TOOFEW;
-	    }
-	}
+    if (poly_order < 0 || poly_order > 2 || 
+	bandwidth <= 0 || bandwidth >= 1) {
+	return E_DATA;
     }
 
+    err = xy_get_sample(y, x, &t1, &t2, &n);
     if (err) {
 	return err;
     }
+
+    /* note: n holds the number of non-missing observations
+       on x; the associated y-value may or may not be
+       missing
+    */
 
     my = gretl_column_vector_alloc(n);
     mx = gretl_column_vector_alloc(n);
@@ -4690,9 +4717,11 @@ int gretl_loess (const double *y, const double *x, int poly_order,
     } else {
 	s = 0;
 	for (t=t1; t<=t2; t++) {
-	    my->val[s] = y[t];
-	    mx->val[s] = x[t];
-	    s++;
+	    if (!xna(x[t])) {
+		my->val[s] = y[t];
+		mx->val[s] = x[t];
+		s++;
+	    }
 	}
 	/* sort the points by the value of x */
 	err = sort_pairs_by_x(mx, my, &s_order, NULL);
@@ -4705,10 +4734,10 @@ int gretl_loess (const double *y, const double *x, int poly_order,
     }
 
     if (!err) {
-	for (t=0; t<n; t++) {
-	    /* put the yh values back into dataset order */
-	    s = s_order[t];
-	    m[t+t1] = yh->val[s];
+	/* put the yh values into dataset order */
+	for (s=0; s<n; s++) {
+	    t = get_dataset_t(x, s_order[s], t1);
+	    m[t] = yh->val[s];
 	}
     }
 

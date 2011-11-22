@@ -217,7 +217,7 @@
       <description>
 	<para>
 	  Must follow estimation of a VAR. Returns a matrix containing
-	  the forecast error decomposition. This matrix has
+	  the forecast error variance decomposition. This matrix has
 	  <math>h</math> rows where <math>h</math> is the forecast
 	  horizon, which can be chosen using <lit>set horizon</lit> or
 	  otherwise is set automatically based on the frequency of the
@@ -963,7 +963,7 @@
 	</para>
 	<para>
 	  For more details and examples see the chapter on special functions
-	  in <lit>genr</lit> in <guideref targ="sec:genr-numerical"/>.
+	  in <lit>genr</lit> in <guideref targ="chap-numerical"/>.
 	  <seelist>
 	    <fncref targ="NRmax"/>
 	    <fncref targ="fdjac"/>
@@ -1042,7 +1042,7 @@
 	<para>
 	  Inspecting the periodogram of the target series is a
 	  useful preliminary when you wish to apply this function.
-	  See <guideref targ="chap-genr"/> for details.
+	  See <guideref targ="chap-filters"/> for details.
 	  <seelist>
 	    <fncref targ="bkfilt"/>
 	    <fncref targ="hpfilt"/>
@@ -1970,8 +1970,7 @@
 	  associated with the vector <argname>b</argname> and the
 	  transformation function specified by the argument
 	  <argname>f</argname>. For more details and examples see the chapter
-	  on special functions in <lit>genr</lit> in 
-	  <guideref targ="sec:genr-numerical"/>.
+	  on numerical methods in <guideref targ="chap-numerical"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -3131,6 +3130,49 @@
       </description>
     </function>
 
+    <function name="loess" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="series">x</fnarg>
+	<fnarg optional="true" type="scalar">d</fnarg>
+	<fnarg optional="true" type="scalar">q</fnarg>
+	<fnarg optional="true" type="scalar">robust</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Performs locally-weighted polynomial regression and returns
+	  a series contining predicted values of <argname>y</argname>
+	  for each non-missing value of <argname>x</argname>.  The
+	  method is as described by <cite key="cleveland79">William
+	  Cleveland (1979)</cite>.
+	</para>
+	<para>
+	  The optional arguments <argname>d</argname> and
+	  <argname>q</argname> specify the order of the polynomial in
+	  <argname>x</argname> and the proportion of the data points
+	  to be used in local estimation, respectively.  The default
+	  values are <argname>d</argname> = 1 and <argname>q</argname>
+	  = 0.5. The other acceptable values for <argname>d</argname>
+	  are 0 and 2. Setting <argname>d</argname> = 0 reduces the
+	  local regression to a form of moving average. The value
+	  of <argname>q</argname> must be greater than 0 and cannot
+	  exceed 1; larger values produce a smoother outcome.
+	</para>
+	<para>
+	  If a non-zero value is given for the
+	  <argname>robust</argname> argument the local regression is
+	  iterated twice, with the weights being modified based on the
+	  residuals from the previous iteration so as to give less
+	  influence to outliers.
+	</para>
+	<para>
+	  See also <fncref targ="nadarwat"/>, and in addition see
+	  <guideref targ="chap-nonparam"/> for details on
+	  nonparametric methods.
+	</para>
+      </description>
+    </function>
+
     <function name="logistic" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -3985,7 +4027,7 @@
 	  given by the user. This is usually a small number: larger
 	  values of $h$ make $m(x)$ smoother; a popular choice is
 	  $n^{-0.2}$. More details are given in
-	  <guideref targ="sec:genr-nadarwat"/>.
+	  <guideref targ="sec:nadarwat"/>.
 	</para>
 	<para context="notex">
 	  The argument <argname>h</argname>, known as the bandwidth,
@@ -3993,7 +4035,7 @@
 	  user. This is usually a small number: larger values
 	  of <argname>h</argname> make <math>m(x)</math> smoother; a
 	  popular choice is <math>n</math><sup>-0.2</sup>. More
-	  details are given in <guideref targ="sec:genr-nadarwat"/>.
+	  details are given in <guideref targ="sec:nadarwat"/>.
 	</para>
 	<para context="tex">
 	  The scalar $\tau$ is used to prevent numerical problems when
@@ -4156,8 +4198,8 @@
 	  approximation is used.
 	</para>
 	<para>
-	  For more details and examples see the chapter on special functions
-	  in <lit>genr</lit> in <guideref targ="sec:genr-numerical"/>.
+	  For more details and examples see the chapter on numerical
+	  methods in <guideref targ="chap-numerical"/>.
 	  <seelist>
 	    <fncref targ="BFGSmax"/>
 	    <fncref targ="fdjac"/>

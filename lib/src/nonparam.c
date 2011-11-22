@@ -1354,59 +1354,113 @@ static int data_pre_sorted (const gretl_matrix *x)
     return 1;
 }
 
+static double subset_median (const gretl_matrix *ei, 
+			     const gretl_matrix *wt,
+			     int n, int m, int *err)
+{
+    double *tmp = malloc(m * sizeof *tmp);
+    double s = NADBL;
+
+    if (tmp == NULL) {
+	*err = E_ALLOC;
+    } else {
+	int i, k = 0;
+
+	for (i=0; i<n; i++) {
+	    if (wt->val[i] > 0.0) {
+		tmp[k++] = ei->val[i];
+	    }
+	}
+
+	s = gretl_median(0, m - 1, tmp);
+	free(tmp);
+    }
+
+    return s;
+}
+
 /* revised weights based on bisquare function (Cleveland) */
 
-static void robust_weights (gretl_matrix *ei, const gretl_matrix *X, 
-			    const gretl_matrix *y, const gretl_matrix *bj, 
-			    gretl_matrix *wt, const gretl_matrix *wi,
-			    int d)
+static int robust_weights (gretl_matrix *ei, const gretl_matrix *X, 
+			   const gretl_matrix *y, const gretl_matrix *bj, 
+			   const gretl_matrix *wt, gretl_matrix *wi,
+			   int d)
 {
     int i, n = gretl_vector_get_length(wt);
     double s, es, xi, di;
+    int m = 0, err = 0;
 
     for (i=0; i<n; i++) {
-	ei->val[i] = y->val[i] - bj->val[0];
-	if (d > 0) {
-	    xi = gretl_matrix_get(X, i, 1);
-	    ei->val[i] -= bj->val[1] * xi;
-	    if (d == 2) {
-		ei->val[i] -= bj->val[2] * xi * xi;
+	if (wt->val[i] > 0.0) {
+	    ei->val[i] = y->val[i] - bj->val[0];
+	    if (d > 0) {
+		xi = gretl_matrix_get(X, i, 1);
+		ei->val[i] -= bj->val[1] * xi;
+		if (d == 2) {
+		    ei->val[i] -= bj->val[2] * xi * xi;
+		}
 	    }
+	    ei->val[i] = fabs(ei->val[i]);
+	    m++;
 	}
-	ei->val[i] = fabs(ei->val[i]);
     }
 
-    s = gretl_median(0, n - 1, ei->val);
+    if (m < n) {
+	/* we need to skip some zero-weighted points */
+	s = subset_median(ei, wt, n, m, &err);
+    } else {
+	s = gretl_median(0, n - 1, ei->val);
+    }
 
-    for (i=0; i<n; i++) {
-	es = ei->val[i] / (6.0 * s);
-	if (es < 1.0) {
-	    di = (1.0 - es * es) * (1.0 - es * es);
+    for (i=0; i<n && !err; i++) {
+	if (wt->val[i] == 0.0) {
+	    /* the y observation is missing */
+	    wi->val[i] = 0.0;
 	} else {
-	    di = 0.0;
+	    es = ei->val[i] / (6.0 * s);
+	    if (es < 1.0) {
+		di = (1.0 - es * es) * (1.0 - es * es);
+	    } else {
+		di = 0.0;
+	    }
+	    wi->val[i] = di * wt->val[i];
 	}
-	wi->val[i] = di * wt->val[i];
     }
+
+    return err;
 }
 
 static void weight_x_y (const gretl_matrix *x, const gretl_matrix *y,
 			gretl_matrix *Xr, gretl_matrix *yr,
 			const gretl_matrix *w, int j, int d)
 {
-    int t, n = gretl_vector_get_length(w);
+    int s, t, n = gretl_vector_get_length(w);
     double xrt, wt;
 
     for (t=0; t<n; t++) {
-	wt = sqrt(w->val[t]);
-	gretl_matrix_set(Xr, t, 0, wt);
-	if (d > 0) {
-	    xrt = x->val[t+j];
-	    gretl_matrix_set(Xr, t, 1, xrt * wt);
-	    if (d == 2) {
-		gretl_matrix_set(Xr, t, 2, xrt * xrt * wt);
+	s = t + j;
+	if (xna(y->val[s])) {
+	    /* assign zero weight if y(t) is missing */
+	    gretl_matrix_set(Xr, t, 0, 0.0);
+	    if (d > 0) {
+		gretl_matrix_set(Xr, t, 1, 0.0);
+		if (d == 2) {
+		    gretl_matrix_set(Xr, t, 2, 0.0);
+		}
 	    }
-	}		
-	yr->val[t] = y->val[t+j] * wt;
+	    yr->val[t] = 0.0;
+	} else {
+	    wt = sqrt(w->val[t]);
+	    gretl_matrix_set(Xr, t, 0, wt);
+	    if (d > 0) {
+		xrt = x->val[s];
+		gretl_matrix_set(Xr, t, 1, xrt * wt);
+		if (d == 2) {
+		    gretl_matrix_set(Xr, t, 2, xrt * xrt * wt);
+		}
+	    }		
+	    yr->val[t] = y->val[s] * wt;
+	}
     }
 }
 
@@ -1415,7 +1469,7 @@ static void weight_x_y (const gretl_matrix *x, const gretl_matrix *y,
  * @x: x-axis variable (must be pre-sorted).
  * @y: response variable.
  * @d: order for polynomial fit (0 <= d <= 2).
- * @q: bandwidth (0 < q < 1).
+ * @q: bandwidth (0 < q <= 1).
  * @opt: give %OPT_R for robust variant (with re-weighting based on
  * the first-stage residuals).
  * @err: location to receive error code.
@@ -1502,7 +1556,17 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 
 	xi = x->val[i];
 
-	/* get the search bounds */
+	/* Get the search bounds for finding the n nearest
+	   neighbors to xi (given that x is sorted): jmin is 
+	   the leftmost index (from which we should start 
+	   searching to the right); and jmax is the rightmost 
+	   index to be considered.
+
+	   FIXME: the way this is set up at present we may
+	   get less than n usable neighbors if y-values are
+	   missing.
+	*/
+
 	jmin = i - n + 1;
 	if (jmin < 0) {
 	    jmin = 0;
@@ -1512,7 +1576,6 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 	    jmax = T - n;
 	}
 
-	/* find the n x-values closest to xi */
 	for (j=jmin; j<=jmax; j++) {
 	    if (j + n >= T) {
 		break;
@@ -1520,10 +1583,12 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 	    d1 = fabs(xi - x->val[j]);
 	    d2 = fabs(xi - x->val[j+n]);
 	    if (d1 <= d2) {
+		/* the current j-value is what we want */
 		break;
 	    }
 	}
 
+	/* find the maximum distance */
 	dmax = 0.0;
 	for (t=0; t<n; t++) {
 	    xdt = fabs(xi - x->val[t+j]);
@@ -1532,11 +1597,10 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 	    }
 	}
 
+	/* compute scaled distances and tricube weights */
 	for (t=0; t<n; t++) {
-	    /* compute scaled distances */
 	    xdt = fabs(xi - x->val[t+j]);
 	    xds = xdt / dmax;
-	    /* form tricube weights */
 	    if (xds >= 1.0) {
 		wt->val[t] = 0.0;
 	    } else {
