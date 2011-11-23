@@ -1,5 +1,6 @@
 version 1.9.7, in progress
-- Documentation updates
+- Documentation updates, including a new chapter on Nonparametric
+  methods in the User's Guide
 - "leverage" command: add a --quiet option and add calculation of the
   cross-validation criterion (available via the $test accessor)
 - "rmplot" command (range-mean plot): add a --trim option to discard the

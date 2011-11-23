@@ -70,6 +70,7 @@ static double spearman_signif (double rho, int n)
     if (rho > x[0]) return .01;
     if (rho > x[1]) return .05;
     if (rho > x[2]) return .10;
+
     return 1.0;
 }
 
@@ -1354,22 +1355,43 @@ static int data_pre_sorted (const gretl_matrix *x)
     return 1;
 }
 
-static int get_robustness_weights (const gretl_matrix *ei, 
-				   gretl_matrix *di) 
+#define LDEBUG 0
+
+/* convenience struct for passing loess data */
+
+struct loess_info {
+    const gretl_matrix *y;
+    const gretl_matrix *x;
+    gretl_matrix *Xi;
+    gretl_matrix *yi;
+    gretl_matrix *wt;
+    int d;
+    int n;
+    int N;
+};
+
+/* Compute robustness weights for loess, if wanted: on input @di
+   contains the N residuals; on return it contains the robustness
+   weights as a function of the residuals. For observations
+   where y is missing, the weight is NADBL.
+*/
+
+static int make_robustness_weights (gretl_matrix *di, int N) 
 {
-    int i, N = gretl_vector_get_length(ei);
     double *tmp = malloc(N * sizeof *tmp);
     double s, eis;
-    int k, err = 0;
+    int i, k, err = 0;
 
     if (tmp == NULL) {
 	return E_ALLOC;
     }
 
+    /* pack the absolute values of the non-missing residuals
+       into tmp */
     k = 0;
     for (i=0; i<N; i++) {
-	if (!na(ei->val[i])) {
-	    tmp[k++] = fabs(ei->val[i]);
+	if (!na(di->val[i])) {
+	    tmp[k++] = fabs(di->val[i]);
 	}
     }
 
@@ -1377,20 +1399,19 @@ static int get_robustness_weights (const gretl_matrix *ei,
     s = gretl_median(0, k-1, tmp);
     free(tmp);
 
-    if (!err) {
-	s *= 6.0;
-    }
-
-    for (i=0; i<N && !err; i++) {
-	if (na(ei->val[i])) {
-	    di->val[i] = 0.0;
-	} else {
-	    eis = ei->val[i] / s;
-	    if (fabs(eis) < 1.0) {
-		/* apply bisquare */
-		di->val[i] = (1 - eis * eis) * (1 - eis * eis);
-	    } else {
-		di->val[i] = 0.0;
+    if (na(s)) {
+	err = E_DATA;
+    } else {
+	s *= 6;
+	for (i=0; i<N && !err; i++) {
+	    if (!na(di->val[i])) {
+		eis = di->val[i] / s;
+		if (fabs(eis) < 1.0) {
+		    /* apply bisquare */
+		    di->val[i] = (1 - eis * eis) * (1 - eis * eis);
+		} else {
+		    di->val[i] = 0.0;
+		}
 	    }
 	}
     }
@@ -1398,63 +1419,168 @@ static int get_robustness_weights (const gretl_matrix *ei,
     return err;
 }
 
-static void apply_robustness_weights (const gretl_matrix *di, 
-				      gretl_matrix *wt, int j)
-{
-    int t, n = gretl_vector_get_length(wt);
+/* Multiply the robustness weights, @di, into the regular
+   weights, @wt, taking care to register the two vectors
+   (di is full-length while wt is local), and to skip any 
+   missing values in di.
+*/
 
-    for (t=0; t<n; t++) {
-	wt->val[t] *= di->val[t+j];
+static void adjust_weights (const gretl_matrix *di, 
+			    gretl_matrix *wt, int a)
+{
+    int k, n = gretl_vector_get_length(wt);
+    int t = a;
+
+    for (k=0; k<n; k++) {
+	wt->val[k] *= di->val[t];
+	if (k < n - 1) {
+	    t++;
+	    while (na(di->val[t])) t++;
+	}
     }
 } 
 
-static void weight_x_y (const gretl_matrix *x, const gretl_matrix *y,
-			gretl_matrix *Xr, gretl_matrix *yr,
-			const gretl_matrix *w, int j, int d)
-{
-    int s, t, n = gretl_vector_get_length(w);
-    double xrt, wt;
+/* Apply the weights in lo->wt to the local data matrices
+   lo->Xi and lo->yi. This is straightforward since all
+   the matrices have lo->n rows.
+*/
 
-    for (t=0; t<n; t++) {
-	s = t + j;
-	if (xna(y->val[s])) {
-	    /* assign zero weight if y(t) is missing */
-	    gretl_matrix_set(Xr, t, 0, 0.0);
-	    if (d > 0) {
-		gretl_matrix_set(Xr, t, 1, 0.0);
-		if (d == 2) {
-		    gretl_matrix_set(Xr, t, 2, 0.0);
-		}
-	    }
-	    yr->val[t] = 0.0;
-	} else {
-	    /* apply tricube weights */
-	    wt = sqrt(w->val[t]);
-	    gretl_matrix_set(Xr, t, 0, wt);
-	    if (d > 0) {
-		xrt = x->val[s];
-		gretl_matrix_set(Xr, t, 1, xrt * wt);
-		if (d == 2) {
-		    gretl_matrix_set(Xr, t, 2, xrt * xrt * wt);
-		}
-	    }		
-	    yr->val[t] = y->val[s] * wt;
+static void weight_local_data (struct loess_info *lo)
+{
+    double xkj, wk;
+    int k, j;
+
+    for (k=0; k<lo->n; k++) {
+	wk = sqrt(lo->wt->val[k]);
+	for (j=0; j<lo->Xi->cols; j++) {
+	    xkj = gretl_matrix_get(lo->Xi, k, j);
+	    gretl_matrix_set(lo->Xi, k, j, xkj * wk);
 	}
+	lo->yi->val[k] *= wk;
     }
+
+#if LDEBUG
+    gretl_matrix_print(lo->Xi, "Xi, weighted");
+    gretl_matrix_print(lo->yi, "yi, weighted");
+#endif
 }
 
-static int get_jmin (const gretl_matrix *y, int i, int n)
+static int next_t (const double *y, int t)
 {
-    int j = i, m = 1;
+    t++;
+    while (xna(y[t])) t++;
+    return t;
+}
 
-    while (j > 0 && m < n) {
-	if (!xna(y->val[j-1])) {
-	    m++;
+static int loess_get_local_data (double xi, int *pa,
+				 struct loess_info *lo)
+{
+    const double *x = lo->x->val;
+    const double *y = lo->y->val;
+    double xk, xds, h = 0;
+    int n = lo->n, N = lo->N;
+    int a, b, k, m, t;
+    int n_ok = 0;
+    int err = 0;
+
+    gretl_matrix_zero(lo->Xi);
+    gretl_matrix_zero(lo->yi);
+    gretl_matrix_zero(lo->wt);
+
+    a = *pa;
+
+    while (xna(y[a]) && a < N) {
+	a++;
+    }
+
+    if (a == N-1) {
+	return E_MISSDATA;
+    }
+
+    /* how many OK y values do we have from a rightwards? */
+    for (b=a; b<N; b++) {
+	n_ok += !xna(y[b]);
+    }
+
+    /* First determine where we should start reading the 
+       neighbors of xi: search rightward from a, so far as
+       this is feasible.
+    */
+
+    while (n_ok >= n) {
+	if (!xna(y[a])) {
+	    m = 1;
+	    /* find b, the right-hand end of the neighbor set:
+	       start at a+1 and proceed until we have n points
+	       with valid y-values
+	    */
+	    for (b=a+1; ; b++) {
+		if (!xna(y[b]) && ++m == n) {
+		    break;
+		}
+	    }
+	    if (fabs(xi - x[a]) <= fabs(xi - x[b])) {
+		/* the current a-value is the one we want */
+		break;
+	    }
+	    n_ok--;
 	}
-	j--;
-    } 
+	if (n_ok >= n) {
+	    a++;
+	} 
+    }
 
-    return j;
+    *pa = a;
+
+    /* Having found a = the starting index for the n
+       nearest neighbors of xi, transcribe the relevant
+       data into Xi and yi.
+    */
+    t = a;
+    for (k=0; k<n && !err; k++) {
+	lo->yi->val[k] = y[t];
+	xk = x[t];
+	gretl_matrix_set(lo->Xi, k, 0, 1.0);
+	gretl_matrix_set(lo->Xi, k, 1, xk);
+	if (lo->Xi->cols > 2) {
+	    gretl_matrix_set(lo->Xi, k, 2, xk * xk);
+	}
+	if (k < n - 1) {
+	    t = next_t(y, t);
+	    if (t >= N) {
+		/* "can't happen" */
+		fprintf(stderr, "loess: out of bounds gathering local data\n");
+		err = E_DATA;
+	    }
+	}
+    }
+
+    if (!err) {
+	/* find the max(abs) distance from xi */
+	double h0 = fabs(xi - gretl_matrix_get(lo->Xi, 0, 1));
+	double hn = fabs(xi - gretl_matrix_get(lo->Xi, n-1, 1));
+
+	h = (h0 > hn)? h0 : hn;
+    }
+
+    /* compute scaled distances and tricube weights */
+    for (k=0; k<n && !err; k++) {
+	xk = gretl_matrix_get(lo->Xi, k, 1);
+	xds = fabs(xi - xk) / h;
+	if (xds >= 1.0) {
+	    lo->wt->val[k] = 0.0;
+	} else {
+	    lo->wt->val[k] = pow(1.0 - pow(xds, 3.0), 3.0);
+	}
+    }
+
+#if LDEBUG
+    gretl_matrix_print(lo->Xi, "Xi");
+    gretl_matrix_print(lo->yi, "yi");
+    gretl_matrix_print(lo->wt, "wt");
+#endif
+
+    return err;
 }
 
 /**
@@ -1485,15 +1611,15 @@ static int get_jmin (const gretl_matrix *y, int i, int n)
 gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 			 int d, double q, gretlopt opt, int *err)
 {
+    struct loess_info lo;
     gretl_matrix_block *B;
-    gretl_matrix *Xr, *yr, *wt, *bj;
+    gretl_matrix *Xi, *yi, *wt, *bj;
     gretl_matrix *yh = NULL;
-    gretl_matrix *ei = NULL;
     gretl_matrix *di = NULL;
     int N = gretl_vector_get_length(y);
-    double xi, d1, d2, dmax;
-    int jmin, jmax, k, kmax;
-    int i, j, t, n;
+    int k, iters, Xic;
+    int robust = 0;
+    int i, n;
 
     if (d < 0 || d > 2) {
 	*err = E_DATA;
@@ -1513,10 +1639,15 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 	q = (d + 1.0) / N;
     }
 
+    /* fix the local sub-sample size */
     n = (int) ceil(q * N);
 
-    B = gretl_matrix_block_new(&Xr, n, d+1,
-			       &yr, n, 1,
+    /* we want a minimum of two columns in Xi, in order
+       to compute the x-distance based weights */
+    Xic = (d == 0)? 2 : d + 1;
+
+    B = gretl_matrix_block_new(&Xi, n, Xic,
+			       &yi, n, 1,
 			       &wt, n, 1,
 			       &bj, d+1, 1,
 			       NULL);
@@ -1525,6 +1656,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 	return NULL;
     }
 
+    /* vector to hold the fitted values */
     yh = gretl_column_vector_alloc(N);
     if (yh == NULL) {
 	*err = E_ALLOC;
@@ -1532,116 +1664,96 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
     }    
 
     if (opt & OPT_R) {
-	/* extra storage for robust variant */
-	ei = gretl_column_vector_alloc(N);
+	/* extra storage for residuals/robustness weights */
 	di = gretl_column_vector_alloc(N);
-	if (ei == NULL || di == NULL) {
+	if (di == NULL) {
 	    *err = E_ALLOC;
 	    goto bailout;
 	}
-	kmax = 2; /* maybe 3? */
+	iters = 2; /* maybe 3? */
+	robust = 1;
     } else {
-	kmax = 1;
+	iters = 1;
     }
 
-    for (k=0; k<kmax && !*err; k++) {
+    /* fill out the convenience struct */
+    lo.y = y;
+    lo.x = x;
+    lo.Xi = Xi;
+    lo.yi = yi;
+    lo.wt = wt;
+    lo.d = d;
+    lo.n = n;
+    lo.N = N;
+
+    for (k=0; k<iters && !*err; k++) {
 	/* iterations for robustness, if wanted */
+	int a = 0;
 
 	for (i=0; i<N && !*err; i++) {
 	    /* iterate across points in full sample */
-	    double xdt, xds;
+	    double xi = x->val[i];
 
-	    xi = x->val[i];
-
-	    /* Get the search bounds for finding the n nearest
-	       neighbors to xi (given that x is sorted): jmin is 
-	       the leftmost index (from which we should start 
-	       searching to the right); and jmax is the rightmost 
-	       index to be considered.
+	    /* a is the leftmost possible index for starting to
+	       read the n nearest neighbors of xi.
 	    */
-
-	    jmin = get_jmin(y, i, n);
-	    jmax = i;
-	    if (jmax + n > N) {
-		jmax = N - n;
-	    }
-
-	    for (j=jmin; j<=jmax; j++) {
-		if (j + n >= N) {
-		    break;
-		}
-		/* FIXME handle missing y-values here */
-		d1 = fabs(xi - x->val[j]);
-		d2 = fabs(xi - x->val[j+n]);
-		if (d1 <= d2) {
-		    /* the current j-value is what we want */
-		    break;
-		}
-	    }
-
-	    /* find the maximum distance */
-	    dmax = 0.0;
-	    for (t=0; t<n; t++) {
-		xdt = fabs(xi - x->val[t+j]);
-		if (xdt > dmax) {
-		    dmax = xdt;
-		}
-	    }
-
-	    /* compute scaled distances and tricube weights */
-	    for (t=0; t<n; t++) {
-		xdt = fabs(xi - x->val[t+j]);
-		xds = xdt / dmax;
-		if (xds >= 1.0) {
-		    wt->val[t] = 0.0;
-		} else {
-		    wt->val[t] = pow(1.0 - pow(xds, 3.0), 3.0);
-		}
+	    *err = loess_get_local_data(xi, &a, &lo);
+	    if (*err) {
+		break;
 	    }
 
 	    if (k > 0) {
-		/* we have robustness weights, di, based on the residuals
+		/* We have robustness weights, di, based on the residuals
 		   from the last round, which should be used to adjust 
-		   the wt's 
+		   the wt as computed in loess_get_local_data().
 		*/
-		apply_robustness_weights(di, wt, j);
+		adjust_weights(di, wt, a);
 	    } 
 
-	    /* apply weights to the data */
-	    weight_x_y(x, y, Xr, yr, wt, j, d);
+	    /* apply weights to the local data */
+	    weight_local_data(&lo);
+
+	    if (d == 0) {
+		/* not using x in the regressions: mask the x column */
+		gretl_matrix_reuse(Xi, -1, 1);
+	    }	    
 
 	    /* run local WLS */
-	    *err = gretl_matrix_ols(yr, Xr, bj, NULL, NULL, NULL);
+	    *err = gretl_matrix_ols(yi, Xi, bj, NULL, NULL, NULL);
+
+	    if (d == 0) {
+		/* reinstate the x column */
+		gretl_matrix_reuse(Xi, -1, Xic);
+	    }	    
 
 	    if (!*err) {
-		/* form fitted value in yh */
+		/* yh: evaluate the polynomial at xi */
 		yh->val[i] = bj->val[0];
 		if (d > 0) {
-		    yh->val[i] += bj->val[1] * x->val[i];
-		    if (d == 2) {
-			yh->val[i] += bj->val[2] * x->val[i] * x->val[i];
+		    yh->val[i] += bj->val[1] * xi;
+		    if (d > 1) {
+			yh->val[i] += bj->val[2] * xi * xi;
 		    }
 		}
-		if (kmax > 1 && k < kmax - 1) {
+		if (robust && k < iters - 1) {
 		    /* save residual for robustness weights */
 		    if (xna(y->val[i])) {
-			ei->val[i] = NADBL;
+			di->val[i] = NADBL;
 		    } else {
-			ei->val[i] = y->val[i] - yh->val[i];
+			di->val[i] = y->val[i] - yh->val[i];
 		    }
 		}
 	    }
 	} /* end loop over sample */
 
-	if (!*err && kmax > 1 && k < kmax - 1) {
-	    *err = get_robustness_weights(ei, di);
+	if (!*err && robust && k < iters - 1) {
+	    *err = make_robustness_weights(di, N);
 	}
     } /* end robustness iterations */
 
  bailout:
 	
     gretl_matrix_block_destroy(B);
-    gretl_matrix_free(ei);
     gretl_matrix_free(di);
 
     if (*err) {
