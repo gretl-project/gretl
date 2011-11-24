@@ -5,6 +5,8 @@ version 1.9.7, in progress
   cross-validation criterion (available via the $test accessor)
 - "rmplot" command (range-mean plot): add a --trim option to discard the
   minimum and maximum from each sub-sample
+- "gnuplot" command: enhance the --with-lines option to permit using
+  lines for some series and point for others
 - new function simann() provides user access to simulated annealing
 - new function nadarwat() implements the Nadaraya-Watson nonparametric
   kernel estimator

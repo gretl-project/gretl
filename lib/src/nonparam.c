@@ -1543,7 +1543,7 @@ static int loess_get_local_data (int i, int *pa,
        relevant data into Xi and yi.
     */
     t = a;
-    for (k=0; k<n && !err; k++) {
+    for (k=0; k<n; k++) {
 	lo->yi->val[k] = y[t];
 	xk = x[t];
 	gretl_matrix_set(lo->Xi, k, 0, 1.0);
@@ -1565,7 +1565,7 @@ static int loess_get_local_data (int i, int *pa,
     }
 
     /* compute scaled distances and tricube weights */
-    for (k=0; k<n && !err; k++) {
+    for (k=0; k<n; k++) {
 	xk = gretl_matrix_get(lo->Xi, k, 1);
 	xds = fabs(x[i] - xk) / h;
 	if (xds >= 1.0) {
