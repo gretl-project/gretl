@@ -407,6 +407,10 @@ static int selector_callback_code (const gchar *s)
 	return ELLIPSE;
     if (!strcmp(s, "VarOmit"))
 	return VAROMIT;
+    if (!strcmp(s, "loess"))
+	return LOESS;
+    if (!strcmp(s, "nadarwat"))
+	return NADARWAT;
 
     return 0;
 }
@@ -477,6 +481,12 @@ void selector_callback (GtkAction *action, gpointer data)
 	strcpy(title, "gretl: ");
 	strcat(title, _("rank correlation"));
 	simple_selection(title, do_rankcorr, ci, vwin);
+    } else if (ci == LOESS || ci == NADARWAT) {
+	char title[64];
+	
+	strcpy(title, "gretl: ");
+	strcat(title, (ci == LOESS)? _("Loess") : _("Nadaraya-Watson"));
+	selection_dialog(title, do_nonparam_model, ci);
     } else {
 	errbox("selector_callback: code was not recognized");
     }

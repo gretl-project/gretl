@@ -89,9 +89,12 @@ struct _selector {
 #define MODEL_CODE(c) (MODEL_COMMAND(c) || c == CORC || c == HILU || \
                        c == PWE || c == PANEL_WLS || c == PANEL_B || \
                        c == OLOGIT || c == OPROBIT || c == MLOGIT || \
-	               c == IV_LIML || c == IV_GMM || c == COUNTMOD)
+	               c == IV_LIML || c == IV_GMM || c == COUNTMOD || \
+		       c == LOESS || c == NADARWAT)
 
 #define IV_MODEL(c) (c == IVREG || c == IV_LIML || c == IV_GMM)
+
+#define NONPARAM_CODE(c) (c == LOESS || c == NADARWAT)
 
 #define COINT_CODE(c) (c == COINT || c == COINT2)
 
@@ -321,6 +324,8 @@ static int selection_at_max (selector *sr, int nsel)
     int ret = 0;
 
     if (TWO_VARS_CODE(sr->ci) && nsel == 2) {
+	ret = 1;
+    } else if (NONPARAM_CODE(sr->ci) && nsel == 1) {
 	ret = 1;
     }
 
@@ -3263,7 +3268,11 @@ static void compose_cmdlist (selector *sr)
 	warnbox(_("You must specify a public interface"));
 	sr->error = 1;
 	return;
-    }
+    } else if (NONPARAM_CODE(sr->ci) && rows < 1) {
+	warnbox(_("You must specify an independent variable"));
+	sr->error = 1;
+	return;
+    }	
 
     if (realrows > 0) {
 	maybe_resize_recorder_lists(sr, realrows);
@@ -3474,6 +3483,10 @@ static char *est_str (int cmdnum)
 	return N_("Cointegration");
     case MPOLS:
 	return N_("Multiple precision OLS");
+    case LOESS:
+	return N_("Loess");
+    case NADARWAT:
+	return N_("Nadaraya-Watson");
     default:
 	return "";
     }
@@ -5737,6 +5750,8 @@ static int list_show_var (int v, int ci, int show_lags)
 	;
     } else if (v == 0 && (!MODEL_CODE(ci) || ci == ARMA || ci == GARCH)) {
 	ret = 0;
+    } else if (v == 0 && (ci == LOESS || ci == NADARWAT)) {
+	ret = 0;
     } else if (var_is_hidden(dataset, v)) {
 	ret = 0;
     } else if (!show_lags && is_standard_lag(v, dataset, NULL)) {
@@ -5873,6 +5888,8 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	tmp = gtk_label_new(_("Endogenous variables"));
     } else if (sr->ci == BIPROBIT) {
 	tmp = gtk_label_new(_("First equation regressors"));
+    } else if (NONPARAM_CODE(sr->ci)) {
+	tmp = gtk_label_new(_("Independent variable"));
     } else if (MODEL_CODE(sr->ci)) {
 	tmp = gtk_label_new(_("Independent variables"));
     } else if (sr->ci == GR_XY || sr->ci == GR_IMP) {
@@ -5924,20 +5941,26 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
     if (MODEL_CODE(sr->ci)) {
 	if (sr->ci == ARMA) {
 	    g_object_set_data(G_OBJECT(sr->rvars1), "selector", sr);
-	} else if (sr->ci == GARCH) {
+	} else if (sr->ci == GARCH || NONPARAM_CODE(sr->ci)) {
 	    ; /* skip */
 	} else if (xlist == NULL || has_0(xlist)) {
 	    /* stick the constant in by default */
 	    list_append_var(mod, &iter, 0, sr, SR_RVARS1);
 	} 
 	if (xlist != NULL) {
-	    int nx = 0;
-
 	    /* we have a saved list of regressors */
+	    int nx = 0, nxmax = 0;
+
+	    if (NONPARAM_CODE(sr->ci)) {
+		nxmax = 1;
+	    }
 	    for (i=1; i<=xlist[0]; i++) {
 		if (xlist[i] != 0) {
 		    list_append_var(mod, &iter, xlist[i], sr, SR_RVARS1);
 		    nx++;
+		    if (nx == nxmax) {
+			break;
+		    }
 		}
 	    }
 	    if (nx > 0 && sr->ci == ARMA) {

@@ -159,6 +159,8 @@ void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg);
 
 int do_model (selector *sr);
 
+int do_nonparam_model (selector *sr);
+
 int do_vector_model (selector *sr);
 
 void do_graph_model (const int *list, int fit);

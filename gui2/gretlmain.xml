@@ -280,6 +280,8 @@
 	<menuitem action="lad"/>
 	<menuitem action="quantreg"/>
 	<menuitem action="spearman"/>
+	<menuitem action="loess"/>
+	<menuitem action="nadarwat"/>
       </menu>
       <menuitem action="mle"/>
       <menuitem action="gmm"/>

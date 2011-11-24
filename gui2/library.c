@@ -3694,6 +3694,80 @@ int do_model (selector *sr)
     }
 }
 
+int do_nonparam_model (selector *sr) 
+{
+    const char *buf;
+    const char *yname, *xname;
+    const double *y, *x;
+    double *m;
+    gretlopt opt;
+    int ci, vy, vx;
+    int i, err = 0;
+
+    if (selector_error(sr)) {
+	return 1;
+    }
+
+    buf = selector_list(sr);
+    if (buf == NULL || sscanf(buf, "%d %d", &vy, &vx) != 2) {
+	return 1;
+    }
+
+    ci = selector_code(sr);
+    opt = selector_get_opts(sr);
+
+    yname = dataset->varname[vy];
+    xname = dataset->varname[vx];
+    y = dataset->Z[vy];
+    x = dataset->Z[vx];
+
+    m = malloc(dataset->n * sizeof *m);
+    if (m == NULL) {
+	nomem();
+	return 0;
+    }
+
+    for (i=0; i<dataset->n; i++) {
+	m[i] = NADBL;
+    }
+
+    if (ci == LOESS) {
+	int robust = (opt & OPT_R)? 1 : 0;
+	int d = 1;
+	double q = 0.5;
+
+	fprintf(stderr, "loess(%s,%s,%d,%g,%d)\n", 
+		yname, xname, d, q, robust);
+	err = gretl_loess(y, x, d, q, robust, dataset, m);
+    } else if (ci == NADARWAT) {
+	double h = pow(sample_size(dataset), 0.2);
+
+	fprintf(stderr, "nadarwat(%s,%s,%g)\n", 
+		yname, xname, h);
+	err = nadaraya_watson(y, x, h, dataset, m);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	PRN *prn;
+
+	/* FIXME: need to attach enough info to the viewer
+	   window so that it supports saving the fitted
+	   series to the dataset. The viewer window should
+	   also offer a graphing option.
+	*/
+
+	bufopen(&prn);
+	text_print_x_y_fitted(x, y, m, dataset, prn);
+	view_buffer(prn, 78, 450, "testing", PRINT, NULL);
+    }
+
+    free(m);
+
+    return 0;
+}
+
 int do_vector_model (selector *sr) 
 {
     GRETL_VAR *var;

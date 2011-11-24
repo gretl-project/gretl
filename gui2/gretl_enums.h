@@ -111,6 +111,8 @@ enum extra_cmds {
     BWFILTER,
     POLYWEIGHTS,
     X12AHELP,
+    LOESS,
+    NADARWAT,
     GUI_CMD_MAX
 };
 

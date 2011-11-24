@@ -858,6 +858,78 @@ int text_print_equation (const MODEL *pmod, const DATASET *pdinfo,
     return 0;
 }
 
+int text_print_x_y_fitted (const double *x, const double *y,
+			   const double *f, const DATASET *dset, 
+			   PRN *prn)
+{
+    char obs1[OBSLEN], obs2[OBSLEN];
+    char label[16];
+    int t1 = dset->t1;
+    int t2 = dset->t2;
+    int t, pmax, err = 0;
+
+    for (t=t1; t<=dset->t2; t++) {
+	if (na(x[t])) {
+	    t1++;
+	} else {
+	    break;
+	}
+    }
+
+    for (t=t2; t>dset->t1; t--) {
+	if (na(x[t])) {
+	    t2--;
+	} else {
+	    break;
+	}
+    }
+
+    ntodate(obs1, t1, dset);
+    ntodate(obs2, t2, dset);
+    pprintf(prn, _("Model estimation range: %s - %s"), obs1, obs2);
+    pputc(prn, '\n');
+    pputs(prn, "\n         ");
+
+    for (t=0; t<3; t++) {
+	if (t == 0) strcpy(label, "x");
+	if (t == 1) strcpy(label, "y");
+	if (t == 2) strcpy(label, _("fitted"));
+	pprintf(prn, "%*s", UTF_WIDTH(label, 13), label); 
+    }
+
+    pputs(prn, "\n\n");
+
+    pmax = get_precision(y, dset->n, 6);
+    obs_marker_init(dset);
+
+    for (t=t1; t<=t2; t++) {
+	print_obs_marker(t, dset, prn);
+	if (na(x[t])) {
+	    /* nothing to print */
+	    pputc(prn, '\n');
+	} else if (na(y[t])) {
+	    /* y missing but x and fitted should be OK */
+	    if (pmax != PMAX_NOT_AVAILABLE) {
+		pprintf(prn, "%13.*f%13s%13.*f\n", pmax, x[t], "NA", pmax, f[t]);
+	    } else {
+		pprintf(prn, "%13g%13s%13g\n", x[t], "NA", f[t]);
+	    }
+	} else {
+	    /* got all values */
+	    if (pmax != PMAX_NOT_AVAILABLE) {
+		pprintf(prn, "%13.*f%13.*f%13.*f\n", 
+			pmax, x[t], pmax, y[t], pmax, f[t]);
+	    } else {
+		pprintf(prn, "%13g%13g%13g\n", x[t], y[t], f[t]);
+	    }
+	}
+    }
+
+    pputc(prn, '\n');
+
+    return err;
+}
+
 /* print value in (non-correlation) matrix */
 
 static void tex_matnum (double x, PRN *prn)
