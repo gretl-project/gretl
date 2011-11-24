@@ -1479,9 +1479,8 @@ static int loess_get_local_data (int i, int *pa,
     const double *x = lo->x->val;
     const double *y = lo->y->val;
     double xk, xds, h = 0;
-    int n = lo->n, N = lo->N;
+    int n = lo->n, n_ok = lo->n_ok;
     int a, b, k, m, t;
-    int n_ok = 0;
     int err = 0;
 
     gretl_matrix_zero(lo->Xi);
@@ -1490,73 +1489,58 @@ static int loess_get_local_data (int i, int *pa,
 
     a = *pa;
 
-    while (xna(y[a]) && a < N) {
-	a++;
-    }
-
-    if (a == N-1) {
-	return E_MISSDATA;
-    }
-
-    /* how many OK y values do we have from a rightwards? */
-    if (a == 0) {
-	n_ok = lo->n_ok;
-    } else {
-	for (b=a; b<N; b++) {
-	    n_ok += !xna(y[b]);
-	}
-    }
+#if LDEBUG
+    fprintf(stderr, "\ni=%d, a=%d, n_ok=%d\n", i, a, n_ok);
+#endif
 
     /* First determine where we should start reading the 
        neighbors of xi: search rightward from a, so far as
        this is feasible.
     */
 
-#if 0 /*testing against NIST */
+#if 0 /* assuming no missing y-values: simple */
     for ( ; ; a++) {
-	if (a + n >= N) {
+	if (a + n >= lo->N) {
 	    break;
 	}
 	if (fabs(x[i] - x[a+n]) > fabs(x[i] - x[a])) {
-	    /* the current a-value is what we want */
+	    /* we want the current a-value */
 	    break;
 	}
     }
 #else
-    while (n_ok >= n) {
-	if (!xna(y[a])) {
-	    m = 0;
-	    /* find b, the right-hand end of the neighbor set:
-	       start at a+1 and proceed until we have n points
-	       with valid y-values
-	    */
-	    for (b=a+1; ; b++) {
-		if (!xna(y[b]) && ++m == n) {
-		    break;
-		}
-	    }
-	    if (fabs(x[i] - x[b]) > fabs(x[i] - x[a])) {
-		/* we want the current a-value */
+    while (n_ok > n) {
+	/* find b, the next point that would be included if
+	   we move the neighbor set one place to the right: 
+	   start at a+1 and proceed until we have n points 
+	   with valid y-values
+	*/
+	for (m=0, b=a+1; ; b++) {
+	    if (!xna(y[b]) && ++m == n) {
 		break;
 	    }
-	    n_ok--;
 	}
-	if (n_ok >= n) {
-	    a++;
-	} 
+	if (fabs(x[i] - x[b]) <= fabs(x[i] - x[a])) {
+	    /* shift one (valid) place to the right */
+	    a = next_t(y, a);
+	    n_ok--;
+	} else {	    
+	    /* don't increment a; get out */
+	    break;
+	}
     }
 #endif
 
 #if LDEBUG
-    fprintf(stderr, "\ni=%d, a=%d\n", i, a);
+    fprintf(stderr, " -> a=%d, n_ok=%d\n", a, n_ok);
 #endif
 
-
     *pa = a;
+    lo->n_ok = n_ok;
 
-    /* Having found a = the starting index for the n
-       nearest neighbors of xi, transcribe the relevant
-       data into Xi and yi.
+    /* Having found the starting index for the n
+       nearest neighbors of xi, transcribe the 
+       relevant data into Xi and yi.
     */
     t = a;
     for (k=0; k<n && !err; k++) {
@@ -1569,11 +1553,6 @@ static int loess_get_local_data (int i, int *pa,
 	}
 	if (k < n - 1) {
 	    t = next_t(y, t);
-	    if (t >= N) {
-		/* "can't happen" */
-		fprintf(stderr, "loess: out of bounds gathering local data\n");
-		err = E_DATA;
-	    }
 	}
     }
 
@@ -1609,6 +1588,24 @@ static int loess_get_local_data (int i, int *pa,
     return err;
 }
 
+static int loess_count_usable_obs (const gretl_matrix *y,
+				   int N, int *amin)
+{
+    int i, n_ok = 0;
+
+    for (i=0; i<N; i++) {
+	if (!xna(y->val[i])) {
+	    if (n_ok == 0) {
+		/* record the first usable obs index */
+		*amin = i;
+	    }
+	    n_ok++;
+	}
+    }   
+
+    return n_ok;
+}
+
 /**
  * loess_fit:
  * @x: x-axis variable (must be pre-sorted).
@@ -1622,7 +1619,7 @@ static int loess_get_local_data (int i, int *pa,
  * Computes loess estimates based on William Cleveland, "Robust Locally 
  * Weighted Regression and Smoothing Scatterplots", Journal of the 
  * American Statistical Association, Vol. 74 (1979), pp. 829-836.
- * Generally one expects that @d = 1 and @q is in the neighborhood
+ * Typically one expects that @d = 1 and @q is in the neighborhood
  * of 0.5.
  *
  * The x,y pairs must be pre-sorted by increasing value of @x; an
@@ -1643,7 +1640,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
     gretl_matrix *yh = NULL;
     gretl_matrix *di = NULL;
     int N = gretl_vector_get_length(y);
-    int k, iters, Xic;
+    int k, iters, Xic, amin = 0;
     int n_ok, robust = 0;
     int i, n;
 
@@ -1665,23 +1662,17 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 	q = (d + 1.0) / N;
     }
 
-    /* fix the local sub-sample size */
+    /* set the local sub-sample size */
     n = (int) ceil(q * N);
 
-    /* count the points usable in the regressions */
-    n_ok = 0;
-    for (i=0; i<N; i++) {
-	if (!xna(y->val[i])) {
-	    n_ok++;
-	}
-    }
-
+    /* do we have enough valid data? */
+    n_ok = loess_count_usable_obs(y, N, &amin);
     if (n_ok < n) {
 	*err = E_MISSDATA;
 	return NULL;
     }	
 
-    /* we want a minimum of two columns in Xi, in order
+    /* we need a minimum of two columns in Xi, in order
        to compute the x-distance based weights */
     Xic = (d == 0)? 2 : d + 1;
 
@@ -1727,7 +1718,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 
     for (k=0; k<iters && !*err; k++) {
 	/* iterations for robustness, if wanted */
-	int a = 0;
+	int a = amin;
 
 	lo.n_ok = n_ok;
 
