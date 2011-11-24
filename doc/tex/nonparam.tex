@@ -35,13 +35,13 @@ y_i = g(x_i) + \epsilon_i
 for some smooth function $g(\cdot)$.
 
 Given a sample of $n$ observations on the variables $y$ and $x$, the
-procedure is to run a least squares regression (a polynomial of order
-$d$ = 0, 1 or 2 in $x$) localized to each data point, $i$. In each
-such regression the sample consists of the $r$ nearest neighbors (in
-the $x$ dimension) to the point $i$, using weights that are inversely
-related to the distance $|x_i - x_k|$, $k=1,\dots,r$. The predicted
-value $\hat{y_i}$ is then obtained by evaluating the estimated
-polynomial at $x_i$. The most commonly used order is $d=1$.
+procedure is to run a weighted least squares regression (a polynomial
+of order $d$ = 0, 1 or 2 in $x$) localized to each data point, $i$. In
+each such regression the sample consists of the $r$ nearest neighbors
+(in the $x$ dimension) to the point $i$, with weights that are
+inversely related to the distance $|x_i - x_k|$, $k=1,\dots,r$. The
+predicted value $\hat{y_i}$ is then obtained by evaluating the
+estimated polynomial at $x_i$. The most commonly used order is $d=1$.
 
 A bandwidth parameter $0 < q \leq 1$ controls the proportion of the
 total number of data points used in each regression; thus $r = qn$
