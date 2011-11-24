@@ -1466,11 +1466,11 @@ static void weight_local_data (struct loess_info *lo)
 #endif
 }
 
-static int next_t (const double *y, int t)
+static int next_ok_obs (const double *y, int i)
 {
-    t++;
-    while (xna(y[t])) t++;
-    return t;
+    i++;
+    while (xna(y[i])) i++;
+    return i;
 }
 
 static int loess_get_local_data (int i, int *pa,
@@ -1522,7 +1522,7 @@ static int loess_get_local_data (int i, int *pa,
 	}
 	if (fabs(x[i] - x[b]) <= fabs(x[i] - x[a])) {
 	    /* shift one (valid) place to the right */
-	    a = next_t(y, a);
+	    a = next_ok_obs(y, a);
 	    n_ok--;
 	} else {	    
 	    /* don't increment a; get out */
@@ -1552,7 +1552,7 @@ static int loess_get_local_data (int i, int *pa,
 	    gretl_matrix_set(lo->Xi, k, 2, xk * xk);
 	}
 	if (k < n - 1) {
-	    t = next_t(y, t);
+	    t = next_ok_obs(y, t);
 	}
     }
 
