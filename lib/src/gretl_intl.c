@@ -481,15 +481,13 @@ const char *lang_string_from_id (int langid)
 
 int lang_id_from_name (const char *s)
 {
-    int i;
+    if (s != NULL || *s != '\0') {
+	int i;
 
-    if (s == NULL || *s == '\0') {
-	return 0;
-    }
-
-    for (i=0; i<LANG_MAX; i++) {
-	if (!strcmp(s, langs[i].name)) {
-	    return langs[i].id;
+	for (i=0; i<LANG_MAX; i++) {
+	    if (!strcmp(s, langs[i].name)) {
+		return langs[i].id;
+	    }
 	}
     }
 
@@ -591,7 +589,8 @@ void set_lcnumeric (int langid, int lcnumeric)
 
 #ifdef ENABLE_NLS
 
-static int set_locale_with_workaround (const char *lcode)
+static int 
+set_locale_with_workaround (int langid, const char *lcode)
 {
     char *test = setlocale(LC_ALL, lcode);
 
@@ -606,6 +605,15 @@ static int set_locale_with_workaround (const char *lcode)
 
     if (test != NULL) {
 	fprintf(stderr, "setlocale: '%s' -> '%s'\n", lcode, test);
+	if (strcmp("_File", _("_File")) == 0) {
+	    const char *langstr;
+	    char tmp[64];
+	    
+	    langstr = lang_string_from_id(langid);
+	    sscanf(langstr, "%s", tmp);
+	    lower(tmp);
+	    gretl_setenv("LANGUAGE", tmp);
+	}
     }
 
     return test == NULL;
@@ -641,7 +649,7 @@ int test_locale (const char *langstr)
     *ocpy = '\0';
     strncat(ocpy, orig, 63);
 
-    err = set_locale_with_workaround(lcode);
+    err = set_locale_with_workaround(langid, lcode);
 
     if (err) {
 	gretl_errmsg_sprintf(_("%s: locale is not supported "
@@ -679,7 +687,7 @@ int force_language (int langid)
 		err = 1;
 	    }
 # else
-	    err = set_locale_with_workaround(lcode);
+	    err = set_locale_with_workaround(langid, lcode);
 # endif
 	}
     }

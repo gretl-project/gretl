@@ -1331,6 +1331,9 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 	goto write_exit;
     }
 
+    fprintf(stderr, "get_csv_delim = '%c', decpoint='%c'\n",
+	    get_csv_delim(dset), dset->decpoint);
+
     strcpy(datfile, fname);
 
     /* write header and label files if not exporting to other formats */

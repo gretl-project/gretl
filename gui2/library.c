@@ -3769,7 +3769,7 @@ int do_nonparam_model (selector *sr)
 	if ((s = strstr(buf, "h=")) != NULL) {
 	    h = atof(s + 2);
 	} else {
-	    h = pow(sample_size(dataset), 0.2);
+	    h = pow(sample_size(dataset), -0.2);
 	}
 
 	if (LOO) {
@@ -3847,12 +3847,12 @@ void add_nonparam_data (windata_t *vwin)
 	    q = gretl_bundle_get_scalar(bundle, "q", &err);
 	    robust = gretl_bundle_get_scalar(bundle, "robust", &err);
 	    strcpy(vname, "loess_fit");
-	    sprintf(descrip, "loess(%s, %s, %d, %g, %d)",
+	    sprintf(descrip, "loess(%s, %s, %d, %.3f, %d)",
 		    yname, xname, d, q, robust);
 	} else {
 	    h = gretl_bundle_get_scalar(bundle, "h", &err);
 	    strcpy(vname, "nw_fit");
-	    sprintf(descrip, "nadarwat(%s, %s, %g)",
+	    sprintf(descrip, "nadarwat(%s, %s, %.3f)",
 		    yname, xname, h);
 	}	
 
@@ -3864,14 +3864,16 @@ void add_nonparam_data (windata_t *vwin)
 	}
 
 	if (!cancel && !err) {
+	    gretl_push_c_numeric_locale();
 	    if (!strcmp(func, "loess")) {
 		lib_command_sprintf("%s = loess(%s, %s, %d, %g, %d)", 
 				    vname, yname, xname, d, q, robust);
 	    } else {
 		lib_command_sprintf("%s = nadarwat(%s, %s, %g)", 
 				    vname, yname, xname, h);
-	    }		
+	    }
 	    record_command_verbatim();
+	    gretl_pop_c_numeric_locale();
 	}
     }
 }

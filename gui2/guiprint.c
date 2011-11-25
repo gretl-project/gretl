@@ -1900,7 +1900,6 @@ int scalars_to_prn (PRN *prn)
 	gretl_push_c_numeric_locale();
     }
 
-
     for (i=0; i<n; i++) {
 	sname = gretl_scalar_get_name(i);
 	sval = gretl_scalar_get_value_by_index(i);

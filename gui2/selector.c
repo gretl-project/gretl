@@ -4303,9 +4303,9 @@ static void add_np_controls (selector *sr, GtkWidget *vbox)
 	i = 2;
     }
 
-    b0   = (sr->ci == LOESS)? 0.5 : pow(sample_size(dataset), 0.2);
-    bmin = (sr->ci == LOESS)? 0.01 : 1.0;
-    bmax = (sr->ci == LOESS)? 1.0 : pow(sample_size(dataset), 0.5);
+    b0   = (sr->ci == LOESS)? 0.5 : pow(sample_size(dataset), -0.2);
+    bmin = (sr->ci == LOESS)? 0.01 : 0.001;
+    bmax = 1.0;
 
     /* bandwidth spinner */
     hbox = gtk_hbox_new(FALSE, 5);
