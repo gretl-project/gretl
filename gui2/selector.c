@@ -4304,7 +4304,7 @@ static void add_np_controls (selector *sr, GtkWidget *vbox)
     }
 
     b0   = (sr->ci == LOESS)? 0.5 : pow(sample_size(dataset), -0.2);
-    bmin = (sr->ci == LOESS)? 0.01 : 0.001;
+    bmin = 0.01;
     bmax = 1.0;
 
     /* bandwidth spinner */
