@@ -760,7 +760,7 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 	return NULL;
     }
 
-    names = user_matrix_get_names(m, 0);
+    names = gretl_matrix_get_colnames(m);
 
     for (i=1; i<=nv; i++) {
 	col = (list != NULL)? list[i] - 1 : i - 1;
@@ -1108,11 +1108,11 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
     }
 
     if (heads == NULL) {
-	heads = user_matrix_get_names(m, 0);
+	heads = gretl_matrix_get_colnames(m);
     }
 
     if (!packed) {
-	rownames = user_matrix_get_names(m, 1);
+	rownames = gretl_matrix_get_rownames(m);
 	if (rownames != NULL) {
 	    llen = max_label_length(rownames, m->rows);
 	}
@@ -1220,7 +1220,7 @@ static void maybe_print_col_heads (const gretl_matrix *m,
 {
     const char **heads;
 
-    heads = user_matrix_get_names(m, 0);
+    heads = gretl_matrix_get_colnames(m);
     
     if (heads != NULL) {
 	char wtest[32];
@@ -1301,7 +1301,7 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
 	    intcast = 1;
 	}
 
-	rownames = user_matrix_get_names(m, 1);
+	rownames = gretl_matrix_get_rownames(m);
 	if (rownames != NULL) {
 	    llen = max_label_length(rownames, m->rows);
 	}

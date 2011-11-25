@@ -1281,27 +1281,12 @@ int umatrix_set_names_from_list (gretl_matrix *M,
     return err;
 }
 
-const char **user_matrix_get_names (const gretl_matrix *M,
-				    int byrow)
-{
-    user_matrix *u = get_user_matrix_by_data(M);
-
-    if (u == NULL) {
-	return NULL;
-    } else if (byrow) {
-	return gretl_matrix_get_rownames(M);
-    } else {
-	return gretl_matrix_get_colnames(M);
-    }
-}
-
 char *user_matrix_get_column_name (const gretl_matrix *M, int col,
 				   int *err)
 {
-    user_matrix *u = get_user_matrix_by_data(M);
     char *ret = NULL;
 
-    if (u == NULL || col < 1 || col > M->cols) {
+    if (M == NULL || col < 1 || col > M->cols) {
 	*err = E_DATA;
     } else {
 	const char **S = gretl_matrix_get_colnames(M);

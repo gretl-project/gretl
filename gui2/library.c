@@ -3696,10 +3696,11 @@ int do_model (selector *sr)
 
 int do_nonparam_model (selector *sr) 
 {
-    const char *buf;
+    gretl_bundle *bundle = NULL;
+    double *m = NULL;
+    const char *s, *buf;
     const char *yname, *xname;
     const double *y, *x;
-    double *m;
     gretlopt opt;
     int ci, vy, vx;
     int i, err = 0;
@@ -3723,49 +3724,241 @@ int do_nonparam_model (selector *sr)
 
     m = malloc(dataset->n * sizeof *m);
     if (m == NULL) {
-	nomem();
-	return 0;
+	err = E_ALLOC;
+    } else {
+	for (i=0; i<dataset->n; i++) {
+	    m[i] = NADBL;
+	}
     }
 
-    for (i=0; i<dataset->n; i++) {
-	m[i] = NADBL;
+    if (!err) {
+	bundle = gretl_bundle_new();
+	if (bundle == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    gretl_bundle_set_string(bundle, "yname", yname);
+	    gretl_bundle_set_string(bundle, "xname", xname);
+	}
     }
 
-    if (ci == LOESS) {
+    if (!err && ci == LOESS) {
 	int robust = (opt & OPT_R)? 1 : 0;
 	int d = 1;
 	double q = 0.5;
 
-	fprintf(stderr, "loess(%s,%s,%d,%g,%d)\n", 
-		yname, xname, d, q, robust);
-	err = gretl_loess(y, x, d, q, robust, dataset, m);
-    } else if (ci == NADARWAT) {
-	double h = pow(sample_size(dataset), 0.2);
+	if ((s = strstr(buf, "d=")) != NULL) {
+	    d = atoi(s + 2);
+	}
 
-	fprintf(stderr, "nadarwat(%s,%s,%g)\n", 
-		yname, xname, h);
+	if ((s = strstr(buf, "q=")) != NULL) {
+	    q = atof(s + 2);
+	}	
+
+	err = gretl_loess(y, x, d, q, robust, dataset, m);
+	if (!err) {
+	    gretl_bundle_set_string(bundle, "function", "loess");
+	    gretl_bundle_set_scalar(bundle, "d", d);
+	    gretl_bundle_set_scalar(bundle, "q", q);
+	    gretl_bundle_set_scalar(bundle, "robust", robust);
+	    gretl_bundle_set_series(bundle, "m", m, dataset->n);
+	}
+    } else if (!err && ci == NADARWAT) {
+	int LOO = (opt & OPT_O)? 1 : 0;
+	double h;
+
+	if ((s = strstr(buf, "h=")) != NULL) {
+	    h = atof(s + 2);
+	} else {
+	    h = pow(sample_size(dataset), 0.2);
+	}
+
+	if (LOO) {
+	    h = -h;
+	}
 	err = nadaraya_watson(y, x, h, dataset, m);
+	if (!err) {
+	    gretl_bundle_set_string(bundle, "function", "nadarwat");
+	    gretl_bundle_set_scalar(bundle, "h", h);
+	    gretl_bundle_set_series(bundle, "m", m, dataset->n);
+	}	    
     }
 
     if (err) {
 	gui_errmsg(err);
     } else {
+	gchar *title;
 	PRN *prn;
 
-	/* FIXME: need to attach enough info to the viewer
-	   window so that it supports saving the fitted
-	   series to the dataset. The viewer window should
-	   also offer a graphing option.
-	*/
-
-	bufopen(&prn);
-	text_print_x_y_fitted(x, y, m, dataset, prn);
-	view_buffer(prn, 78, 450, "testing", PRINT, NULL);
+	err = bufopen(&prn);
+	if (!err) {
+	    title = gretl_window_title(ci == LOESS ? _("loess") :
+				       _("Nadaraya-Watson"));
+	    text_print_x_y_fitted(vx, vy, m, dataset, prn);
+	    view_buffer(prn, 78, 450, title, ci, bundle);
+	    g_free(title);
+	}
     }
 
     free(m);
 
+    if (err) {
+	gretl_bundle_destroy(bundle);
+    }
+
     return 0;
+}
+
+static double *nonparam_retrieve_fitted (gretl_bundle *bundle)
+{
+    double *m;
+    int n, err = 0;
+
+    m = gretl_bundle_get_series(bundle, "m", &n, &err);
+
+    if (err) {
+	gui_errmsg(err);
+    } else if (n != dataset->n) {
+	errbox(_("Series length does not match the dataset"));
+    }
+
+    return m;
+}
+
+void add_nonparam_data (windata_t *vwin)
+{
+    gretl_bundle *bundle = vwin->data;
+    double *m;
+    int err = 0;
+
+    m = nonparam_retrieve_fitted(bundle);
+
+    if (m != NULL) {
+	const char *func = gretl_bundle_get_string(bundle, "function", &err);
+	const char *yname = gretl_bundle_get_string(bundle, "yname", &err);
+	const char *xname = gretl_bundle_get_string(bundle, "xname", &err);
+	char vname[VNAMELEN];
+	char descrip[MAXLABEL];
+	double q = 0, h = 0;
+	int d = 0, robust = 0;
+	int cancel = 0;
+
+	if (!strcmp(func, "loess")) {
+	    d = gretl_bundle_get_scalar(bundle, "d", &err);
+	    q = gretl_bundle_get_scalar(bundle, "q", &err);
+	    robust = gretl_bundle_get_scalar(bundle, "robust", &err);
+	    strcpy(vname, "loess_fit");
+	    sprintf(descrip, "loess(%s, %s, %d, %g, %d)",
+		    yname, xname, d, q, robust);
+	} else {
+	    h = gretl_bundle_get_scalar(bundle, "h", &err);
+	    strcpy(vname, "nw_fit");
+	    sprintf(descrip, "nadarwat(%s, %s, %g)",
+		    yname, xname, h);
+	}	
+
+	name_new_variable_dialog(vname, descrip, &cancel);
+
+	if (!cancel) {
+	    err = add_or_replace_series(m, vname, descrip, 
+					DS_COPY_VALUES);
+	}
+
+	if (!cancel && !err) {
+	    if (!strcmp(func, "loess")) {
+		lib_command_sprintf("%s = loess(%s, %s, %d, %g, %d)", 
+				    vname, yname, xname, d, q, robust);
+	    } else {
+		lib_command_sprintf("%s = nadarwat(%s, %s, %g)", 
+				    vname, yname, xname, h);
+	    }		
+	    record_command_verbatim();
+	}
+    }
+}
+
+void do_nonparam_plot (windata_t *vwin)
+{
+    gretl_bundle *bundle = vwin->data;
+    double *m;
+    int err = 0;
+
+    m = nonparam_retrieve_fitted(bundle);
+
+    if (m != NULL) {
+	const char *func = gretl_bundle_get_string(bundle, "function", &err);
+	const char *yname = gretl_bundle_get_string(bundle, "yname", &err);
+	const char *xname = gretl_bundle_get_string(bundle, "xname", &err);
+	int vy = current_series_index(dataset, yname);
+	int vx = current_series_index(dataset, xname);
+	char **S = NULL;
+	gretl_matrix *plotmat, *tmp;
+	const double *x;
+	int need_sort = 0;
+	int i, j, n = sample_size(dataset);
+
+	if (vy < 0 || vx < 0) {
+	    gui_errmsg(E_DATA);
+	    return;
+	}
+
+	plotmat = gretl_matrix_alloc(n, 3);
+	if (plotmat == NULL) {
+	    nomem();
+	    return;
+	}
+
+	for (j=0; j<3; j++) {
+	    x = (j == 0)? dataset->Z[vy] : (j == 1)? m : dataset->Z[vx];
+	    for (i=0; i<n; i++) {
+		gretl_matrix_set(plotmat, i, j, x[i+dataset->t1]);
+		if (!need_sort && j == 2 && i > 0 && 
+		    !na(x[i]) && !na(x[i]) && x[i] < x[i-1]) {
+		    need_sort = 1;
+		}
+	    }
+	}
+
+	if (need_sort) {
+	    /* sort by the x column to avoid wrap-back of plot line */
+	    tmp = gretl_matrix_sort_by_column(plotmat, 2, &err);
+	    if (!err) {
+		gretl_matrix_free(plotmat);
+		plotmat = tmp;
+	    }
+	}
+
+	if (!err) {
+	    S = strings_array_new_with_length(3, VNAMELEN);
+	    if (S != NULL) {
+		strcpy(S[0], yname);
+		strcpy(S[1], _("fitted"));
+		strcpy(S[2], xname);
+		gretl_matrix_set_colnames(plotmat, S);
+	    }
+	}
+
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    gchar *literal, *title;
+
+	    if (!strcmp(func, "loess")) {
+		title = g_strdup_printf(_("%s versus %s with loess fit"),
+					yname, xname);
+	    } else {
+		title = g_strdup_printf(_("%s versus %s with Nadaraya_Watson fit"),
+					yname, xname);
+	    }	
+	    literal = g_strdup_printf("{ set title \"%s\"; }", title);
+	    set_optval_string(GNUPLOT, OPT_O, "fitted");
+	    err = matrix_plot(plotmat, NULL, literal, OPT_O | OPT_G);
+	    gui_graph_handler(err);
+	    g_free(literal);
+	    g_free(title);
+	}
+
+	gretl_matrix_free(plotmat);
+    }
 }
 
 int do_vector_model (selector *sr) 

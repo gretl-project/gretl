@@ -3478,8 +3478,8 @@ static void edit_matrix (gretl_matrix *m, const char *name,
 	free(sheet);
 	sheet = NULL;
     } else {
-	sheet->colnames = user_matrix_get_names(m, 0);
-	sheet->rownames = user_matrix_get_names(m, 1);
+	sheet->colnames = gretl_matrix_get_colnames(m);
+	sheet->rownames = gretl_matrix_get_rownames(m);
 	sheet->datarows = gretl_matrix_rows(sheet->matrix);
 	sheet->datacols = gretl_matrix_cols(sheet->matrix);
 	real_show_spreadsheet(&sheet, SHEET_EDIT_MATRIX, block);

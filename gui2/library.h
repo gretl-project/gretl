@@ -165,6 +165,8 @@ int do_vector_model (selector *sr);
 
 void do_graph_model (const int *list, int fit);
 
+void do_nonparam_plot (windata_t *vwin);
+
 void do_gini (void);
 
 void do_qqplot (void);
@@ -331,6 +333,8 @@ void add_mahalanobis_data (windata_t *vwin);
 void add_pca_data (windata_t *vwin);
 
 void add_fcast_data (windata_t *vwin);
+
+void add_nonparam_data (windata_t *vwin);
 
 void VECM_add_EC_data (GtkAction *action, gpointer p);
 

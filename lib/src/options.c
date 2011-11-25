@@ -889,6 +889,23 @@ int set_optval_double (int ci, gretlopt opt, double x)
     return real_push_option_param(ci, opt, gretl_strdup(s), 1);
 }
 
+/**
+ * set_optval_string:
+ * @ci: gretl command index.
+ * @opt: gretl option value.
+ * @s: value to set.
+ *
+ * Sets a ancillary string value to be associated
+ * with option @opt for command @ci.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int set_optval_string (int ci, gretlopt opt, const char *s)
+{
+    return real_push_option_param(ci, opt, gretl_strdup(s), 1);
+}
+
 gretlopt valid_long_opt (int ci, const char *lopt, OptStatus *status)
 {
     int opt = OPT_NONE;

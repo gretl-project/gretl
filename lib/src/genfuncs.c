@@ -4584,7 +4584,7 @@ int nadaraya_watson (const double *y, const double *x, double h,
 	    num[t] = den[t] = 0.0;
 	}
     } else {
-	k =  nw_kernel(0);
+	k = nw_kernel(0);
 	for (t=t1; t<=t2; t++) {
 	    if (!na(y[t])) {
 		num[t] = k * y[t];

@@ -630,6 +630,37 @@ gretl_matrix *gretl_bundle_get_matrix (gretl_bundle *bundle,
 }
 
 /**
+ * gretl_bundle_get_series:
+ * @bundle: bundle to access.
+ * @key: name of key to access.
+ * @n: location to receive length of series.
+ * @err: location to receive error code.
+ *
+ * Returns: the series associated with @key in the
+ * specified @bundle, if any; otherwise NULL.
+ */
+
+double *gretl_bundle_get_series (gretl_bundle *bundle,
+				 const char *key,
+				 int *n, int *err)
+{
+    double *x = NULL;
+    GretlType type;
+    void *ptr;
+
+    ptr = gretl_bundle_get_data(bundle, key, &type, n, err);
+    if (!*err && type != GRETL_TYPE_SERIES) {
+	*err = E_TYPES;
+    }
+
+    if (!*err) {
+	x = (double *) ptr;
+    }
+
+    return x;
+}
+
+/**
  * gretl_bundle_get_scalar:
  * @bundle: bundle to access.
  * @key: name of key to access.
@@ -659,6 +690,36 @@ double gretl_bundle_get_scalar (gretl_bundle *bundle,
     }
 
     return x;
+}
+
+/**
+ * gretl_bundle_get_string:
+ * @bundle: bundle to access.
+ * @key: name of key to access.
+ * @err: location to receive error code.
+ *
+ * Returns: the string value associated with @key in the
+ * specified @bundle, if any; otherwise #NADBL.
+ */
+
+const char *gretl_bundle_get_string (gretl_bundle *bundle,
+				     const char *key,
+				     int *err)
+{
+    const char *ret = NULL;
+    GretlType type;
+    void *ptr;
+
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
+    if (!*err && type != GRETL_TYPE_STRING) {
+	*err = E_TYPES;
+    }
+
+    if (!*err) {
+	ret = (const char *) ptr;
+    }
+
+    return ret;
 }
 
 /**
@@ -797,6 +858,67 @@ int gretl_bundle_set_data (gretl_bundle *bundle, const char *key,
     }
 
     return err;
+}
+
+/**
+ * gretl_bundle_set_string:
+ * @bundle: target bundle.
+ * @key: name of key to create or replace.
+ * @str: the string to set.
+ * 
+ * Sets @str as a member of @bundle under the name @key.
+ * If @key is already present in the bundle the original 
+ * value is replaced and destroyed.
+ *
+ * Returns: 0 on success, error code on error.
+ */
+
+int gretl_bundle_set_string (gretl_bundle *bundle, const char *key,
+			     const char *str)
+{
+    return gretl_bundle_set_data(bundle, key, (void *) str, 
+				 GRETL_TYPE_STRING, 0);
+}
+
+/**
+ * gretl_bundle_set_scalar:
+ * @bundle: target bundle.
+ * @key: name of key to create or replace.
+ * @val: the value to set.
+ * 
+ * Sets @val as a member of @bundle under the name @key.
+ * If @key is already present in the bundle the original 
+ * value is replaced and destroyed.
+ *
+ * Returns: 0 on success, error code on error.
+ */
+
+int gretl_bundle_set_scalar (gretl_bundle *bundle, const char *key,
+			     double val)
+{
+    return gretl_bundle_set_data(bundle, key, &val, 
+				 GRETL_TYPE_DOUBLE, 0);
+}
+
+/**
+ * gretl_bundle_set_series:
+ * @bundle: target bundle.
+ * @key: name of key to create or replace.
+ * @x: array of doubles.
+ * @n: the length of @x.
+ * 
+ * Sets @x as a member of @bundle under the name @key.
+ * If @key is already present in the bundle the original 
+ * value is replaced and destroyed.
+ *
+ * Returns: 0 on success, error code on error.
+ */
+
+int gretl_bundle_set_series (gretl_bundle *bundle, const char *key,
+			     const double *x, int n)
+{
+    return gretl_bundle_set_data(bundle, key, (void *) x, 
+				 GRETL_TYPE_SERIES, n);
 }
 
 /**

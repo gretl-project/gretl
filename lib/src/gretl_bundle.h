@@ -59,9 +59,17 @@ gretl_matrix *gretl_bundle_get_matrix (gretl_bundle *bundle,
 				       const char *key,
 				       int *err);
 
+double *gretl_bundle_get_series (gretl_bundle *bundle,
+				 const char *key,
+				 int *n, int *err);
+
 double gretl_bundle_get_scalar (gretl_bundle *bundle,
 				const char *key,
 				int *err);
+
+const char *gretl_bundle_get_string (gretl_bundle *bundle,
+				     const char *key,
+				     int *err);
 
 const char *gretl_bundle_get_note (gretl_bundle *bundle, const char *key);
 
@@ -74,6 +82,15 @@ const char *bundled_item_get_note (bundled_item *item);
 
 int gretl_bundle_set_data (gretl_bundle *bundle, const char *key,
 			   void *ptr, GretlType type, int size);
+
+int gretl_bundle_set_string (gretl_bundle *bundle, const char *key,
+			     const char *str);
+
+int gretl_bundle_set_scalar (gretl_bundle *bundle, const char *key,
+			     double val);
+
+int gretl_bundle_set_series (gretl_bundle *bundle, const char *key,
+			     const double *x, int n);
 
 int gretl_bundle_set_note (gretl_bundle *bundle, const char *key,
 			   const char *note);

@@ -62,6 +62,8 @@ int set_optval_double (int ci, gretlopt opt, double x);
 
 const char *get_optval_string (int ci, gretlopt opt);
 
+int set_optval_string (int ci, gretlopt opt, const char *s);
+
 void clear_option_params (void);
 
 void option_flags_cleanup (void);

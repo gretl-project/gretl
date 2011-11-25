@@ -89,8 +89,7 @@ struct _selector {
 #define MODEL_CODE(c) (MODEL_COMMAND(c) || c == CORC || c == HILU || \
                        c == PWE || c == PANEL_WLS || c == PANEL_B || \
                        c == OLOGIT || c == OPROBIT || c == MLOGIT || \
-	               c == IV_LIML || c == IV_GMM || c == COUNTMOD || \
-		       c == LOESS || c == NADARWAT)
+	               c == IV_LIML || c == IV_GMM || c == COUNTMOD)
 
 #define IV_MODEL(c) (c == IVREG || c == IV_LIML || c == IV_GMM)
 
@@ -222,6 +221,7 @@ static int verbose;
 static int lovar;
 static int hivar;
 static int wtvar;
+static int np_xvar;
 static char lp_pvals;
 
 static char dpd_2step;
@@ -325,9 +325,7 @@ static int selection_at_max (selector *sr, int nsel)
 
     if (TWO_VARS_CODE(sr->ci) && nsel == 2) {
 	ret = 1;
-    } else if (NONPARAM_CODE(sr->ci) && nsel == 1) {
-	ret = 1;
-    }
+    } 
 
     return ret;
 }
@@ -403,6 +401,7 @@ void clear_selector (void)
     offvar = 0;
     censvar = 0;
     wtvar = 0;
+    np_xvar = 0;
     vartrend = 0;
     varconst = 1;
     lovar = hivar = 0;
@@ -1201,6 +1200,13 @@ static void real_set_extra_var (GtkTreeModel *model, GtkTreePath *path,
 	if (non_binary_var_check(vnum, vname)) {
 	    return;
 	}
+    } else if (NONPARAM_CODE(sr->ci)) {
+	const gchar *test = gtk_entry_get_text(GTK_ENTRY(sr->depvar));
+
+	if (!strcmp(vname, test)) {
+	    /* can't have the same var in both places */
+	    gtk_entry_set_text(GTK_ENTRY(sr->depvar), "");
+	}
     }
     
     gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), vname);
@@ -1405,6 +1411,19 @@ static void dependent_var_cleanup (selector *sr, int newy)
     }
 }
 
+static void np_xvar_cleanup (selector *sr, int newy)
+{
+    const gchar *test = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
+    
+    if (test != NULL && *test != '\0') {
+	int xv = current_series_index(dataset, test);
+
+	if (xv == newy) {
+	    gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), "");
+	}
+    }
+}
+
 static int set_dependent_var_from_active (selector *sr)
 {
     gint vnum = sr->active_var;
@@ -1426,6 +1445,8 @@ static int set_dependent_var_from_active (selector *sr)
     */
     if (MODEL_CODE(sr->ci)) {
 	dependent_var_cleanup(sr, vnum);
+    } else if (NONPARAM_CODE(sr->ci)) {
+	np_xvar_cleanup(sr, vnum);
     }
 
     gtk_entry_set_text(GTK_ENTRY(sr->depvar), vname);
@@ -2140,7 +2161,9 @@ static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event,
     GdkModifierType mods = parent_get_pointer_mask(sr->lvars);
 
     if (RIGHT_CLICK(mods)) {
-	if (sr->ci == GR_FBOX) {
+	if (NONPARAM_CODE(sr->ci)) {
+	    set_extra_var_callback(NULL, sr);
+	} else if (sr->ci == GR_FBOX) {
 	    set_third_var_callback(NULL, sr);
 	} else {
 	    add_to_rvars1_callback(NULL, sr);
@@ -2190,7 +2213,7 @@ static void clear_vars (GtkWidget *w, selector *sr)
     if (THREE_VARS_CODE(sr->ci)) {
 	/* clear special slot */
 	gtk_entry_set_text(GTK_ENTRY(sr->rvars1), "");
-    } else {
+    } else if (sr->rvars1 != NULL) {
 	/* empty upper right variable list */
 	clear_varlist(sr->rvars1);
 	if (sr->add_button != NULL) {
@@ -2570,6 +2593,15 @@ static int maybe_resize_exog_recorder_lists (selector *sr, int n)
     return err;
 }
 
+static void nonparam_record_xvar (const char *s)
+{
+    int k;
+
+    if (sscanf(s, "%d", &k) == 1 && k > 0) {
+	np_xvar = k;
+    }
+}
+
 static void get_rvars1_data (selector *sr, int rows, int context)
 {
     GtkTreeModel *model;
@@ -2586,10 +2618,6 @@ static void get_rvars1_data (selector *sr, int rows, int context)
 	*/
 	return;
     }   
-
-    if (sr->rvars1 == NULL) {
-	return;
-    }
 
     sr->n_left = 0;
 
@@ -2926,13 +2954,40 @@ static void read_tobit_limits (selector *sr)
     }
 }
 
+static void read_np_extras (selector *sr)
+{
+    char s[16];
+
+    if (sr->ci == LOESS) {
+	int d = spinner_get_int(sr->extra[1]);
+	double q;
+
+	q = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[2]));
+	sprintf(s, " d=%d q=%g", d, q);
+	add_to_cmdlist(sr, s);
+	if (button_is_active(sr->extra[3])) {
+	    sr->opts |= OPT_R;
+	}
+    } else if (sr->ci == NADARWAT) {
+	double h;
+
+	h = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[1]));
+	sprintf(s, " h=%g", h);
+	add_to_cmdlist(sr, s);
+	if (button_is_active(sr->extra[2])) {
+	    sr->opts |= OPT_O;
+	}	
+    }
+}
+
 #define extra_widget_get_int(c) (c == HECKIT ||		\
 	                         c == BIPROBIT ||       \
                                  c == INTREG ||		\
                                  c == COUNTMOD ||	\
 				 c == DURATION ||	\
                                  c == WLS ||		\
-                                 THREE_VARS_CODE(c))
+                                 THREE_VARS_CODE(c) ||  \
+				 NONPARAM_CODE(c))
 
 static void parse_extra_widgets (selector *sr, char *endbit)
 {
@@ -2967,7 +3022,8 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 
     if (sr->ci == WLS || sr->ci == COUNTMOD || sr->ci == DURATION ||
 	sr->ci == AR || sr->ci == HECKIT || sr->ci == BIPROBIT ||
-	sr->ci == INTREG || THREE_VARS_CODE(sr->ci)) {
+	sr->ci == INTREG || THREE_VARS_CODE(sr->ci) || 
+	NONPARAM_CODE(sr->ci)) {
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
 	if (txt == NULL || *txt == '\0') {
 	    if (sr->ci == WLS) {
@@ -2987,6 +3043,9 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 		sr->error = 1;
 	    } else if (sr->ci == ANOVA) {
 		warnbox(_("You must specify a treatment variable"));
+		sr->error = 1;
+	    } else if (NONPARAM_CODE(sr->ci)) {
+		warnbox(_("You must specify an independent variable"));
 		sr->error = 1;
 	    } else if (THREE_VARS_CODE(sr->ci)) { 
 		warnbox(("You must select a Y-axis variable"));
@@ -3029,6 +3088,8 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	sprintf(endbit, " %d", k);
 	selvar = k;
     } else if (sr->ci == BIPROBIT) {
+	sprintf(endbit, " %d", k);
+    } else if (NONPARAM_CODE(sr->ci)) {
 	sprintf(endbit, " %d", k);
     } else if (sr->ci == AR) {
 	free(arlags);
@@ -3115,7 +3176,7 @@ static void parse_depvar_widget (selector *sr, char *endbit,
 	    }
 	}
 	if (sr->default_check != NULL) {
-	    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sr->default_check))) {
+	    if (button_is_active(sr->default_check)) {
 		default_y = ynum;
 	    } else {
 		default_y = -1;
@@ -3268,19 +3329,17 @@ static void compose_cmdlist (selector *sr)
 	warnbox(_("You must specify a public interface"));
 	sr->error = 1;
 	return;
-    } else if (NONPARAM_CODE(sr->ci) && rows < 1) {
-	warnbox(_("You must specify an independent variable"));
-	sr->error = 1;
-	return;
-    }	
+    } 
 
     if (realrows > 0) {
 	maybe_resize_recorder_lists(sr, realrows);
     }
 
     /* primary RHS varlist */
-    context = sr_get_lag_context(sr, SR_RVARS1);
-    get_rvars1_data(sr, rows, context);
+    if (sr->rvars1 != NULL) {
+	context = sr_get_lag_context(sr, SR_RVARS1);
+	get_rvars1_data(sr, rows, context);
+    }
 
     /* cases with a (possibly optional) secondary RHS list */
     if (USE_ZLIST(sr->ci) || USE_VECXLIST(sr->ci) || FNPKG_CODE(sr->ci)) {
@@ -3326,6 +3385,9 @@ static void compose_cmdlist (selector *sr)
 	    add_to_cmdlist(sr, idvlags);
 	    free(idvlags);
 	}
+	if (NONPARAM_CODE(sr->ci)) {
+	    read_np_extras(sr);
+	}
     }
 
     if ((sr->ci == SCATTERS) && !sr->error) {
@@ -3369,6 +3431,8 @@ static void compose_cmdlist (selector *sr)
 	} else if (sr->ci == DPANEL) {
 	    dpd_2step = (sr->opts & OPT_T)? 1 : 0;
 	    dpd_asy = (sr->opts & OPT_A)? 1 : 0;
+	} else if (NONPARAM_CODE(sr->ci)) {
+	    nonparam_record_xvar(endbit);
 	}
 
 	/* FIXME: for now we'll make dpanel backward compatible
@@ -3517,6 +3581,9 @@ static char *extra_string (int ci)
 	return N_("Y-axis variable");
     case ANOVA:
 	return N_("Treatment variable");
+    case LOESS:
+    case NADARWAT:
+	return N_("Independent variable");
     default:
 	return NULL;
     }
@@ -3996,6 +4063,23 @@ static void extra_plotvar_box (selector *sr, GtkWidget *vbox)
 					      set_third_var_callback);
 }
 
+static int get_np_xvar (void)
+{
+    if (np_xvar > 0) {
+	return np_xvar;
+    } else if (xlist != NULL) {
+	int i;
+
+	for (i=1; i<=xlist[0]; i++) {
+	    if (xlist[i] != 0) {
+		return xlist[i];
+	    }
+	}
+    }
+
+    return 0;
+}
+
 /* selector for auxiliary series of some kind */
 
 static void extra_var_box (selector *sr, GtkWidget *vbox)
@@ -4016,7 +4100,9 @@ static void extra_var_box (selector *sr, GtkWidget *vbox)
 	setvar = offvar;
     } else if (sr->ci == DURATION && censvar > 0 && censvar < dataset->v) {
 	setvar = censvar;
-    }
+    } else if (NONPARAM_CODE(sr->ci)) {
+	setvar = get_np_xvar();
+    }	
 
     if (setvar > 0) {
 	gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), dataset->varname[setvar]);
@@ -4198,6 +4284,48 @@ static void tobit_limits_selector (selector *sr, GtkWidget *vbox)
     }
 }
 
+static void add_np_controls (selector *sr, GtkWidget *vbox)
+{
+    GtkAdjustment *adj;
+    GtkWidget *hbox, *w;
+    double b0, bmin, bmax;
+    const char *optstr;
+    int i = 1;
+
+    if (sr->ci == LOESS) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	w = gtk_label_new(_("Polynomial order"));
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	adj = (GtkAdjustment *) gtk_adjustment_new(1, 0, 2, 1, 1, 0);
+    	sr->extra[1] = gtk_spin_button_new(adj, 1, 0);
+	gtk_box_pack_end(GTK_BOX(hbox), sr->extra[1], FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 4);
+	i = 2;
+    }
+
+    b0   = (sr->ci == LOESS)? 0.5 : pow(sample_size(dataset), 0.2);
+    bmin = (sr->ci == LOESS)? 0.01 : 1.0;
+    bmax = (sr->ci == LOESS)? 1.0 : pow(sample_size(dataset), 0.5);
+
+    /* bandwidth spinner */
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_label_new(_("Bandwidth"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    adj = (GtkAdjustment *) gtk_adjustment_new(b0, bmin, bmax, 0.01, 0.1, 0);
+    sr->extra[i] = gtk_spin_button_new(adj, 0.01, 2);
+    gtk_box_pack_end(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 4);
+
+    optstr = (sr->ci == LOESS)? N_("Use robust weights") : 
+	N_("Use \"leave one out\"");
+
+    /* option checkbox */
+    hbox = gtk_hbox_new(FALSE, 5);
+    sr->extra[i+1] = gtk_check_button_new_with_label(_(optstr));
+    gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i+1], FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 4);
+}
+
 static int maybe_set_entry_text (GtkWidget *w, const char *s)
 {
     if (s != NULL && *s != '\0') {
@@ -4224,8 +4352,12 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	primary_rhs_varlist(sr, right_vbox);
     } else if (sr->ci == WLS || sr->ci == INTREG || 
 	       sr->ci == COUNTMOD || sr->ci == DURATION ||
-	       THREE_VARS_CODE(sr->ci)) {
+	       THREE_VARS_CODE(sr->ci)) { 
 	extra_var_box(sr, right_vbox);
+    } else if (NONPARAM_CODE(sr->ci)) {
+	extra_var_box(sr, right_vbox);
+	vbox_add_vwedge(right_vbox);
+	add_np_controls(sr, right_vbox);
     } else if (sr->ci == TOBIT) {
 	tobit_limits_selector(sr, right_vbox);
 	vbox_add_vwedge(right_vbox);
@@ -4407,7 +4539,7 @@ static void option_callback (GtkWidget *w, selector *sr)
     gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "opt"));
     gretlopt opt = i;
 
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+    if (button_is_active(w)) {
 	sr->opts |= opt;
     } else {
 	sr->opts &= ~opt;
@@ -4427,7 +4559,7 @@ static void reverse_option_callback (GtkWidget *w, selector *sr)
     gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "opt"));
     gretlopt opt = i;
 
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+    if (button_is_active(w)) {
 	sr->opts &= ~opt;
     } else {
 	sr->opts |= opt;
@@ -4500,7 +4632,7 @@ static GtkWidget *arma_aux_label (int i)
 
 static void toggle_p (GtkWidget *w, selector *sr)
 {
-    gboolean s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    gboolean s = button_is_active(w);
 
     gtk_widget_set_sensitive(sr->extra[0], !s);
     gtk_widget_set_sensitive(sr->extra[1], s);
@@ -4508,7 +4640,7 @@ static void toggle_p (GtkWidget *w, selector *sr)
 
 static void toggle_q (GtkWidget *w, selector *sr)
 {
-    gboolean s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    gboolean s = button_is_active(w);
 
     gtk_widget_set_sensitive(sr->extra[3], !s);
     gtk_widget_set_sensitive(sr->extra[4], s);
@@ -4768,7 +4900,7 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 
 static gboolean x12a_vs_native_opts (GtkWidget *w, selector *sr)
 {
-    gboolean s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    gboolean s = button_is_active(w);
 
     if (sr->hess_button != NULL) {
 	gtk_widget_set_sensitive(sr->hess_button, !s);
@@ -5000,7 +5132,7 @@ static void unhide_lags_callback (GtkWidget *w, selector *sr)
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     imin = (sr->ci == DEFINE_LIST)? 0 : 1;
-    show_lags = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    show_lags = button_is_active(w);
 
     for (i=imin; i<dataset->v; i++) {
 	if (list_show_var(i, sr->ci, show_lags)) {
@@ -5029,7 +5161,7 @@ static void unhide_lags_switch (selector *sr)
 
 static void boot_switch_callback (GtkWidget *w, selector *sr)
 {
-    if (get_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+    if (button_is_active(w)) {
 	sr->opts |= OPT_P;
     } else {
 	sr->opts &= ~OPT_P;
@@ -5241,7 +5373,7 @@ static void build_scatters_radios (selector *sr)
 
 static void auto_omit_restrict_callback (GtkWidget *w, selector *sr)
 {
-    gboolean r = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    gboolean r = button_is_active(w);
 
     if (sr->lvars != NULL) {
 	gtk_widget_set_sensitive(sr->lvars, r);
@@ -5257,7 +5389,7 @@ static void auto_omit_restrict_callback (GtkWidget *w, selector *sr)
 
 static void auto_omit_callback (GtkWidget *w, selector *sr)
 {
-    gboolean s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    gboolean s = button_is_active(w);
     gboolean arrows = !s;
 
     if (sr->extra[0] != NULL) {
@@ -5265,7 +5397,7 @@ static void auto_omit_callback (GtkWidget *w, selector *sr)
     }
 
     if (sr->extra[1] != NULL) {
-	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sr->extra[1]))) {
+	if (button_is_active(sr->extra[1])) {
 	    arrows = TRUE;
 	}
 	gtk_widget_set_sensitive(sr->extra[1], s);
@@ -5433,7 +5565,7 @@ static gboolean arma_estimator_switch (GtkComboBox *box, selector *sr)
     if (sr->hess_button != NULL) {
 	GtkWidget *xb = sr->x12a_button;
 
-	if (xb == NULL || !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(xb))) {
+	if (xb == NULL || !button_is_active(xb)) {
 	    gchar *s = combo_box_get_active_text(box);
 
 	    gtk_widget_set_sensitive(sr->hess_button, 
@@ -5817,7 +5949,7 @@ static void selection_dialog_add_top_label (selector *sr)
     gchar *s = NULL;
     int ci = sr->ci;
 
-    if (MODEL_CODE(ci) || VEC_CODE(ci)) {
+    if (MODEL_CODE(ci) || VEC_CODE(ci) || NONPARAM_CODE(ci)) {
 	GtkWidget *hbox, *button;
 
 	hbox = gtk_hbox_new(FALSE, 0); 
@@ -5888,8 +6020,6 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	tmp = gtk_label_new(_("Endogenous variables"));
     } else if (sr->ci == BIPROBIT) {
 	tmp = gtk_label_new(_("First equation regressors"));
-    } else if (NONPARAM_CODE(sr->ci)) {
-	tmp = gtk_label_new(_("Independent variable"));
     } else if (MODEL_CODE(sr->ci)) {
 	tmp = gtk_label_new(_("Independent variables"));
     } else if (sr->ci == GR_XY || sr->ci == GR_IMP) {
@@ -5949,18 +6079,12 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	} 
 	if (xlist != NULL) {
 	    /* we have a saved list of regressors */
-	    int nx = 0, nxmax = 0;
+	    int nx = 0;
 
-	    if (NONPARAM_CODE(sr->ci)) {
-		nxmax = 1;
-	    }
 	    for (i=1; i<=xlist[0]; i++) {
 		if (xlist[i] != 0) {
 		    list_append_var(mod, &iter, xlist[i], sr, SR_RVARS1);
 		    nx++;
-		    if (nx == nxmax) {
-			break;
-		    }
 		}
 	    }
 	    if (nx > 0 && sr->ci == ARMA) {
@@ -6062,7 +6186,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
     /* RHS: vertical holder */
     right_vbox = gtk_vbox_new(FALSE, 5);
 
-    if (MODEL_CODE(ci) || ci == ANOVA) { 
+    if (MODEL_CODE(ci) || NONPARAM_CODE(ci) || ci == ANOVA) { 
 	/* models: top right -> dependent variable */
 	yvar = build_depvar_section(sr, right_vbox, preselect);
     } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY ||
@@ -6078,7 +6202,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
     if (ci == WLS || ci == AR || ci == ARCH || USE_ZLIST(ci) ||
 	VEC_CODE(ci) || ci == COUNTMOD || ci == DURATION || 
 	ci == QUANTREG || ci == INTREG || ci == TOBIT ||
-	ci == DPANEL || THREE_VARS_CODE(ci)) {
+	ci == DPANEL || THREE_VARS_CODE(ci) || NONPARAM_CODE(ci)) {
 	build_mid_section(sr, right_vbox);
     }
     
@@ -6087,7 +6211,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
 	extra_plotvar_box(sr, right_vbox);
     } else if (AUX_LAST(ci)) {
 	secondary_rhs_varlist(sr, right_vbox);
-    } else {
+    } else if (!NONPARAM_CODE(ci)) {
 	/* all other uses: list of vars */
 	primary_rhs_varlist(sr, right_vbox);
     }
@@ -7169,7 +7293,7 @@ static void lag_set_callback (GtkWidget *w, gpointer p)
 
 static void activate_specific_lags (GtkWidget *w, var_lag_info *vlinfo)
 {
-    gboolean active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    gboolean active = button_is_active(w);
 
     if (active) {
 	gtk_widget_set_sensitive(vlinfo->entry, TRUE);
@@ -7216,7 +7340,7 @@ static void lag_toggle_register (GtkWidget *w, var_lag_info *vlinfo)
 		continue;
 	    }
 	}
-	active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(vlset[i].toggle));
+	active = button_is_active(vlset[i].toggle);
 	if (active) {
 	    vlset[i].lmin = vlset[i].lmax = NOT_LAG; 
 	} else {
@@ -7228,8 +7352,7 @@ static void lag_toggle_register (GtkWidget *w, var_lag_info *vlinfo)
 
 static void activate_y_lags (GtkWidget *w, var_lag_info *vlinfo)
 {
-    gboolean active = 
-	gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    gboolean active = button_is_active(w);
 
     gtk_widget_set_sensitive(vlinfo->spin1, active);
     gtk_widget_set_sensitive(vlinfo->spin2, active);

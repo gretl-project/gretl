@@ -404,7 +404,7 @@ int current_series_index (const DATASET *dset, const char *vname)
 {
     int v = -1;
 
-    if (dset != NULL) {
+    if (dset != NULL && vname != NULL) {
 	v = series_index(dset, vname);
 	if (v >= dset->v) {
 	    v = -1;

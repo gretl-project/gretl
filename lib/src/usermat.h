@@ -117,9 +117,6 @@ int umatrix_set_names_from_list (gretl_matrix *M,
 				 const DATASET *dset,
 				 int byrow);
 
-const char **user_matrix_get_names (const gretl_matrix *M,
-				    int byrow);
-
 char *user_matrix_get_column_name (const gretl_matrix *M, int col,
 				   int *err);
 

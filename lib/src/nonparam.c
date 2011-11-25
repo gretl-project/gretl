@@ -1520,7 +1520,7 @@ static int loess_get_local_data (int i, int *pa,
 		break;
 	    }
 	}
-	if (fabs(x[i] - x[b]) <= fabs(x[i] - x[a])) {
+	if (fabs(x[i] - x[b]) < fabs(x[i] - x[a])) {
 	    /* shift one (valid) place to the right */
 	    a = next_ok_obs(y, a);
 	    n_ok--;
@@ -1644,7 +1644,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
     int n_ok, robust = 0;
     int i, n;
 
-    if (d < 0 || d > 2) {
+    if (d < 0 || d > 2 || q > 1.0) {
 	*err = E_DATA;
 	return NULL;
     }
@@ -1655,22 +1655,20 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 	return NULL;
     }
 
-    /* check the supplied q value */
-    if (q > 1.0) {
-	q = 1;
-    } else if (q < (d + 1.0) / N) {
-	q = (d + 1.0) / N;
+    /* check for usable data points */
+    n_ok = loess_count_usable_obs(y, N, &amin);
+    if (n_ok < 4) {
+	*err = E_TOOFEW;
+	return NULL;
+    }    
+
+    /* check for q too small */
+    if (q < (d + 1.0) / n_ok) {
+	q = (d + 1.0) / n_ok;
     }
 
     /* set the local sub-sample size */
-    n = (int) ceil(q * N);
-
-    /* do we have enough valid data? */
-    n_ok = loess_count_usable_obs(y, N, &amin);
-    if (n_ok < n) {
-	*err = E_MISSDATA;
-	return NULL;
-    }	
+    n = (int) ceil(q * n_ok);
 
     /* we need a minimum of two columns in Xi, in order
        to compute the x-distance based weights */

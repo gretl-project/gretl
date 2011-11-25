@@ -61,9 +61,8 @@ int text_print_equation (const MODEL *pmod, const DATASET *pdinfo,
 
 int text_equation_ok (const MODEL *pmod);
 
-int text_print_x_y_fitted (const double *x, const double *y,
-			   const double *f, const DATASET *dset, 
-			   PRN *prn);
+int text_print_x_y_fitted (int vx, int vy, const double *f, 
+			   const DATASET *dset, PRN *prn);
 
 int csv_to_clipboard (void);
 

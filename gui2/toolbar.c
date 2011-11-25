@@ -357,6 +357,8 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
 	add_mahalanobis_data(vwin);
     } else if (vwin->role == FCAST) {
 	add_fcast_data(vwin);
+    } else if (vwin->role == LOESS || vwin->role == NADARWAT) {
+	add_nonparam_data(vwin);
     }
 
     if (dataset->v > oldv) {
@@ -562,6 +564,15 @@ static void compass_callback (GtkWidget *w, windata_t *vwin)
     window_list_popup(vwin->main);
 }
 
+static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
+{
+    if (vwin->role == VIEW_SERIES) {
+	series_view_graph(w, vwin);
+    } else {
+	do_nonparam_plot(vwin);
+    }
+}
+
 static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 {
     text_set_cursor(vwin->text, GDK_QUESTION_ARROW);
@@ -595,9 +606,11 @@ static int edit_script_popup_item (GretlToolItem *item)
 	!strcmp(item->icon, GTK_STOCK_FIND_AND_REPLACE);
 }
 
-static void set_plot_icon (GretlToolItem *item)
+static void set_plot_icon (GretlToolItem *item, int role)
 {
-    if (dataset_is_time_series(dataset)) {
+    if (role == LOESS || role == NADARWAT) {
+	item->icon = GRETL_STOCK_SCATTER;
+    } else if (dataset_is_time_series(dataset)) {
 	item->icon = GRETL_STOCK_TS;
     } else {
 	item->icon = GRETL_STOCK_BOX;
@@ -634,7 +647,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Scripts index"), GTK_STOCK_INDEX, G_CALLBACK(script_index), INDEX_ITEM },
     { N_("Confidence level..."), GRETL_STOCK_ALPHA, G_CALLBACK(coeffint_set_alpha), ALPHA_ITEM },
     { N_("LaTeX"), GRETL_STOCK_TEX, G_CALLBACK(window_tex_callback), TEX_ITEM },
-    { N_("Graph"), GRETL_STOCK_TS, G_CALLBACK(series_view_graph), PLOT_ITEM },
+    { N_("Graph"), GRETL_STOCK_TS, G_CALLBACK(toolbar_plot_callback), PLOT_ITEM },
     { N_("Reformat..."), GTK_STOCK_CONVERT, G_CALLBACK(reformat_callback), FORMAT_ITEM },
     { N_("Edit values..."), GRETL_STOCK_SHEET, G_CALLBACK(series_view_edit), EDITOR_ITEM },
     { N_("Refresh"), GTK_STOCK_REFRESH, G_CALLBACK(toolbar_refresh), REFRESH_ITEM },
@@ -687,10 +700,13 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 			r == VIEW_LOG)
 
 #define sort_ok(r)    (r == VIEW_SERIES)
-#define plot_ok(r)    (r == VIEW_SERIES)
+
+#define plot_ok(r)    (r == VIEW_SERIES || \
+		       r == LOESS || r == NADARWAT)
 
 #define add_data_ok(r) (r == PCA || r == LEVERAGE || \
-                        r == MAHAL || r == FCAST)
+                        r == MAHAL || r == FCAST || \
+			r == LOESS || r == NADARWAT)
 
 #define split_ok(r) (r == SCRIPT_OUT)
 
@@ -764,7 +780,7 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
 	} else if (multiple_formats_ok(vwin) || (r == PRINT && vwin->data != NULL)) {
 	    func = G_CALLBACK(multi_save_as_callback);
 	}
-    }
+    } 
 
     return func;
 }
@@ -846,7 +862,7 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	}
 
 	if (item->flag == PLOT_ITEM) {
-	    set_plot_icon(item);
+	    set_plot_icon(item, vwin->role);
 	}
 
 	button = gretl_toolbar_insert(vwin->mbar, item, func, vwin, -1);

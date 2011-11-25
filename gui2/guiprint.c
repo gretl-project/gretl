@@ -858,12 +858,13 @@ int text_print_equation (const MODEL *pmod, const DATASET *pdinfo,
     return 0;
 }
 
-int text_print_x_y_fitted (const double *x, const double *y,
-			   const double *f, const DATASET *dset, 
-			   PRN *prn)
+int text_print_x_y_fitted (int vx, int vy, const double *f, 
+			   const DATASET *dset, PRN *prn)
 {
     char obs1[OBSLEN], obs2[OBSLEN];
-    char label[16];
+    char label[VNAMELEN];
+    const double *x = dset->Z[vx];
+    const double *y = dset->Z[vy];
     int t1 = dset->t1;
     int t2 = dset->t2;
     int t, pmax, err = 0;
@@ -891,8 +892,8 @@ int text_print_x_y_fitted (const double *x, const double *y,
     pputs(prn, "\n         ");
 
     for (t=0; t<3; t++) {
-	if (t == 0) strcpy(label, "x");
-	if (t == 1) strcpy(label, "y");
+	if (t == 0) strcpy(label, dset->varname[vx]);
+	if (t == 1) strcpy(label, dset->varname[vy]);
 	if (t == 2) strcpy(label, _("fitted"));
 	pprintf(prn, "%*s", UTF_WIDTH(label, 13), label); 
     }
