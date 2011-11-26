@@ -144,6 +144,8 @@ static struct gui_help_item gui_help_items[] = {
     { BWFILTER,       "bwfilter" },
     { POLYWEIGHTS,    "polyweights" },
     { X12AHELP,       "x12a" },
+    { LOESS,          "loess" },
+    { NADARWAT,       "nadarwat" },
     { -1,             NULL },
 };
 

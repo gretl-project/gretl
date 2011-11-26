@@ -5730,6 +5730,30 @@
 
   </command>
 
+  <command name="loess" section="Estimation" label="Loess" context="gui">
+    <description>
+      <para>
+	Performs locally-weighted polynomial regression and returns a
+	series containing predicted values of the dependent variable for
+	each non-missing value of the independent variable. The method is
+	as described by <cite key="cleveland79">William Cleveland
+	(1979)</cite>.
+      </para>
+      <para>
+	The controls allow you to specify the order of the polynomial in
+	the independent variable and the proportion of the data points to
+	be used in local estimation (the bandwidth). Higher values of the
+	bandwidth produce a smoother outcome.
+      </para>
+      <para>
+	If the robust weights box is checked the locals regression are
+	iterated twice, with the weights being modified based on the
+	residuals from the previous iteration so as to give less influence
+	to outliers.
+      </para>
+     </description>
+  </command>
+
   <command name="logistic" section="Estimation" label="Logistic regression">
 
     <usage>

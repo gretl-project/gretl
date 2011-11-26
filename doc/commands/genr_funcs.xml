@@ -3141,7 +3141,7 @@
       <description>
 	<para>
 	  Performs locally-weighted polynomial regression and returns
-	  a series contining predicted values of <argname>y</argname>
+	  a series holding predicted values of <argname>y</argname>
 	  for each non-missing value of <argname>x</argname>.  The
 	  method is as described by <cite key="cleveland79">William
 	  Cleveland (1979)</cite>.
@@ -3159,11 +3159,10 @@
 	  exceed 1; larger values produce a smoother outcome.
 	</para>
 	<para>
-	  If a non-zero value is given for the
-	  <argname>robust</argname> argument the local regression is
-	  iterated twice, with the weights being modified based on the
-	  residuals from the previous iteration so as to give less
-	  influence to outliers.
+	  If a non-zero value is given for the <argname>robust</argname>
+	  argument the local regressions are iterated twice, with the
+	  weights being modified based on the residuals from the previous
+	  iteration so as to give less influence to outliers.
 	</para>
 	<para>
 	  See also <fncref targ="nadarwat"/>, and in addition see
