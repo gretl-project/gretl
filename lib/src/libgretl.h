@@ -277,8 +277,6 @@ typedef struct DATASET_ {
     char **varname;     /* array of names of variables */
     VARINFO **varinfo;  /* array of specific info on vars */
     char markers;       /* NO_MARKERS (0), REGULAR MARKERS or DAILY_DATE_STRINGS */
-    char delim;         /* default delimiter for "CSV" files */
-    char decpoint;      /* character used to represent decimal point */
     char **S;           /* to hold observation markers */
     char *descrip;      /* to hold info on data sources etc. */
     char *submask;      /* subsampling mask */

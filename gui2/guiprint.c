@@ -30,6 +30,7 @@
 #include "graph_page.h"
 
 #include "gretl_scalar.h"
+#include "libset.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -1886,17 +1887,19 @@ void special_print_confints (const CoeffIntervals *cf, PRN *prn)
 
 int scalars_to_prn (PRN *prn)
 {
+    char decpoint = get_data_export_decpoint();
+    char delim = get_data_export_delimiter();
     const char *sname;
     double sval;
     int i, n = n_saved_scalars();
 
-    if (dataset->delim == ',' && ',' == dataset->decpoint) {
+    if (delim == ',' && ',' == decpoint) {
 	errbox(_("You can't use the same character for "
 		 "the column delimiter and the decimal point"));
 	return 1;
     }
 
-    if (dataset->decpoint != ',') {
+    if (decpoint != ',') {
 	gretl_push_c_numeric_locale();
     }
 
@@ -1904,13 +1907,13 @@ int scalars_to_prn (PRN *prn)
 	sname = gretl_scalar_get_name(i);
 	sval = gretl_scalar_get_value_by_index(i);
 	if (na(sval)) {
-	    pprintf(prn, "%s%cNA\n", sname, dataset->delim);
+	    pprintf(prn, "%s%cNA\n", sname, delim);
 	} else {
-	    pprintf(prn, "%s%c%.15g\n", sname, dataset->delim, sval);
+	    pprintf(prn, "%s%c%.15g\n", sname, delim, sval);
 	}
     }
 
-    if (dataset->decpoint != ',') {
+    if (decpoint != ',') {
 	gretl_pop_c_numeric_locale();
     }
 
@@ -2003,6 +2006,8 @@ int csv_to_clipboard (void)
 
 static void matrix_print_as_csv (const gretl_matrix *m, PRN *prn)
 {
+    char decpoint = get_data_export_decpoint();
+    char delim = get_data_export_delimiter();
     char numstr[48];
     double x;
     int i, j;
@@ -2013,12 +2018,12 @@ static void matrix_print_as_csv (const gretl_matrix *m, PRN *prn)
 	for (j=0; j<m->cols; j++) {
 	    x = gretl_matrix_get(m, i, j);
 	    sprintf(numstr, "%.*g", DBL_DIG, x);
-	    if (dataset->decpoint != '.') {
-		charsub(numstr, '.', dataset->decpoint);
+	    if (decpoint != '.') {
+		charsub(numstr, '.', decpoint);
 	    }
 	    pputs(prn, numstr);
 	    if (j < m->cols - 1) {
-		pputc(prn, dataset->delim);
+		pputc(prn, delim);
 	    }
 	}
 	pputc(prn, '\n');
@@ -2085,10 +2090,9 @@ int scalars_to_clipboard_as_csv (void)
 
 int copy_vars_formatted (windata_t *vwin, int fmt, int action)
 {
+    char save_delim = get_data_export_delimiter();
     int *list = series_view_get_list(vwin);
     PRN *prn = NULL;
-    char save_delim = dataset->delim;
-    char save_decpoint = dataset->decpoint;
     int i, err = 0;
 
     if (list != NULL) {
@@ -2099,12 +2103,9 @@ int copy_vars_formatted (windata_t *vwin, int fmt, int action)
 	    }
 	}
 
-	if (fmt == GRETL_FORMAT_CSV) {
-	    dataset->delim = ',';
-	    dataset->decpoint = '.';
-	} else if (fmt == GRETL_FORMAT_TAB) {
+	if (fmt == GRETL_FORMAT_TAB) {
 	    fmt |= GRETL_FORMAT_CSV;
-	    dataset->delim = '\t';
+	    set_data_export_delimiter('\t');
 	}
 
 	if (series_view_is_sorted(vwin)) {
@@ -2138,8 +2139,7 @@ int copy_vars_formatted (windata_t *vwin, int fmt, int action)
 	free(list);
     }
 
-    dataset->delim = save_delim;
-    dataset->decpoint = save_decpoint;
+    set_data_export_delimiter(save_delim);
 
     return err;
 }

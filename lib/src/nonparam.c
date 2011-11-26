@@ -1511,7 +1511,7 @@ static int loess_get_local_data (int i, int *pa,
 	    }
 	}
 	if (fabs(x[i] - x[a]) < fabs(x[i] - x[b])) {
-	    /* don't increment a; get out */
+	    /* the max distance increased: get out */
 	    break;
 	}	    
 	/* shift one (valid) place to the right */
@@ -1519,17 +1519,19 @@ static int loess_get_local_data (int i, int *pa,
 	n_ok--;
     }
 
+    /* record status for next round */
     *pa = a;
     lo->n_ok = n_ok;
-
-    *xconst = 1;
-    xk1 = 0;
 
     /* Having found the starting index for the n nearest neighbors
        of xi, transcribe the relevant data into Xi and yi. As we 
        go, check whether x is constant in this sub-sample.
     */
+
+    *xconst = 1;
+    xk1 = 0;
     t = a;
+
     for (k=0; k<n; k++) {
 	lo->yi->val[k] = y[t];
 	xk = x[t];
@@ -1751,7 +1753,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 	    }
 
 	    /* run local WLS */
-	    *err = gretl_matrix_ols(yi, Xi, b, NULL, NULL, NULL);
+	    *err = gretl_matrix_SVD_ols(yi, Xi, b, NULL, NULL, NULL);
 
 	    if (!*err) {
 		/* yh: evaluate the polynomial at xi */

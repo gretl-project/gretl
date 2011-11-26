@@ -1741,31 +1741,6 @@ void modify_date_for_csv (char *s, int pd)
 }
 
 /**
- * csv_obs_string_to_prn:
- * @t: 0-based observation number.
- * @dset: data set information struct.
- * @prn: printing struct.
- *
- * Prints the observation string corresponding to obervation @t to
- * @prn, in a format suitable for a CSV file.
- */
-
-void csv_obs_to_prn (int t, const DATASET *dset, PRN *prn)
-{
-    if (dset->S != NULL) {
-	pprintf(prn, "%s%c", dset->S[t], dset->delim);
-    } else if (dset->structure != CROSS_SECTION) {
-	char tmp[OBSLEN];
-
-	ntodate(tmp, t, dset);
-	if (quarterly_or_monthly(dset)) {
-	    modify_date_for_csv(tmp, dset->pd);
-	}
-	pprintf(prn, "%s%c", tmp, dset->delim);
-    }
-}
-	
-/**
  * print_time:
  * @s: string into which to print: must be at least 48 bytes.
  *

@@ -121,8 +121,8 @@ static PRN *single_series_view_print_formatted (windata_t *vwin,
 						PrnFormat fmt)
 {
     series_view *sview = (series_view *) vwin->data;
+    char dchar = get_data_export_delimiter();
     char obslabel[OBSLEN];
-    char dchar = dataset->delim;
     double x;
     PRN *prn;
     int i, t;

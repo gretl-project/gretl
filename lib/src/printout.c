@@ -1211,7 +1211,7 @@ static void varheading (const int *list, int leader, int wid,
 	    vi = list[i];
 	    pputs(prn, dset->varname[vi]);
 	    if (i < list[0]) {
-		pputc(prn, dset->delim);
+		pputc(prn, delim);
 	    } 
 	}
 	pputc(prn, '\n');
@@ -2210,7 +2210,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
 	if (csv_format(prn)) {
 	    gprec = 15;
 	}
-	delim = dset->delim;
+	delim = get_data_export_delimiter();
 	if (get_local_decpoint() == ',' && delim == ',') {
 	    delim = ';';
 	}

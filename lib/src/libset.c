@@ -85,7 +85,6 @@ struct set_vars_ {
     int bootrep;                /* bootstrap replications */
     double nls_toler;           /* NLS convergence criterion */
     int loop_maxiter;           /* max no. of iterations in non-for loops */
-    char delim;                 /* delimiter for CSV data export */
     int vecm_norm;              /* VECM beta normalization */
     int optim;                  /* code for preferred optimizer */
     int bfgs_maxiter;           /* max iterations, BFGS */         
@@ -164,6 +163,8 @@ static int user_mp_bits;
 static int R_functions;
 static int R_lib = 1;
 static int csv_digits;
+static char data_delim = ',';
+static char data_export_decpoint = '.';
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
@@ -380,7 +381,6 @@ static void state_vars_copy (set_vars *sv)
     sv->rq_maxiter = state->rq_maxiter;
     sv->gmm_maxiter = state->gmm_maxiter;
     sv->nls_toler = state->nls_toler;
-    sv->delim = state->delim; 
     sv->vecm_norm = state->vecm_norm;
     sv->optim = state->optim;
     sv->bfgs_maxiter = state->bfgs_maxiter;
@@ -416,7 +416,6 @@ static void state_vars_init (set_vars *sv)
     sv->loop_maxiter = 250;
     sv->rq_maxiter = 1000;
     sv->gmm_maxiter = 250;
-    sv->delim = UNSET_INT;
     sv->vecm_norm = NORM_PHILLIPS;
     sv->optim = OPTIM_AUTO;
     sv->initvals = NULL;
@@ -532,16 +531,6 @@ int get_mp_bits (void)
 	    }
 	}
 	return DEFAULT_MP_BITS;
-    }
-}
-
-char get_csv_delim (const DATASET *dset)
-{
-    check_for_state();
-    if (state->delim > 0) {
-	return state->delim;
-    } else {
-	return dset->delim;
     }
 }
 
@@ -1293,13 +1282,13 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_header(N_("Program interaction and behavior"), prn, opt);
 
     if (opt & OPT_D) {
-	pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
+	pprintf(prn, " csv_delim = %s\n", arg_from_delim(data_delim));
 	pprintf(prn, " csv_na = %s\n", get_csv_na_string());
     } else {
-	const char *dl = arg_from_delim(state->delim);
+	const char *dl = arg_from_delim(data_delim);
 
 	if (strcmp(dl, "unset")) {
-	    pprintf(prn, "set csv_delim %s\n", arg_from_delim(state->delim));
+	    pprintf(prn, "set csv_delim %s\n", arg_from_delim(data_delim));
 	}
 	pprintf(prn, "set csv_na %s\n", get_csv_na_string());
     }	
@@ -1432,7 +1421,7 @@ static int libset_query_settings (const char *s, PRN *prn)
 		s, state->seed ? state->seed : gretl_rand_get_seed());
     } else if (!strcmp(s, "csv_delim")) {
 	pprintf(prn, "%s: named character, currently \"%s\"\n", s,
-		arg_from_delim(state->delim));
+		arg_from_delim(data_delim));
 	coded_var_show_opts(s, prn);
     } else if (!strcmp(s, "shelldir")) {
 	pprintf(prn, "%s: string, currently \"%s\"\n", s,
@@ -1532,6 +1521,9 @@ int execute_set_line (const char *line, DATASET *dset,
 	} else if (!strcmp(setobj, "stopwatch")) {
 	    gretl_stopwatch();
 	    err = 0;
+	} else if (!strcmp(setobj, "csv_decimal_comma")) {
+	    data_export_decpoint = ',';
+	    err = 0;
 	} else {
 	    return libset_query_settings(setobj, prn);
 	}
@@ -1569,7 +1561,7 @@ int execute_set_line (const char *line, DATASET *dset,
 	    char c = delim_from_arg(setarg);
 
 	    if (c > 0) {
-		state->delim = c;
+		data_delim = c;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "seed")) {
@@ -1977,6 +1969,34 @@ static void libset_set_decpoint (int on)
 
     reset_local_decpoint();
 #endif
+}
+
+void set_data_export_decimal_comma (int s)
+{
+    if (s) {
+	data_export_decpoint = ',';
+    } else {
+	data_export_decpoint = '.';
+    }
+}
+
+char get_data_export_decpoint (void)
+{
+    char c = data_export_decpoint;
+
+    /* revert to '.' on access */
+    data_export_decpoint = '.';
+    return c;
+}
+
+void set_data_export_delimiter (char c)
+{
+    data_delim = c;
+}
+
+char get_data_export_delimiter (void)
+{
+    return data_delim;
 }
 
 static int check_R_setting (int *var, int val, const char *key)

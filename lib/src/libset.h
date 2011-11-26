@@ -158,6 +158,12 @@ char *get_shelldir (void);
 
 char get_csv_delim (const DATASET *dset);
 
+void set_data_export_decimal_comma (int s);
+char get_data_export_decpoint (void);
+
+void set_data_export_delimiter (char c);
+char get_data_export_delimiter (void);
+
 const char *get_csv_na_string (void);
 void set_csv_na_string (const char *s);
 

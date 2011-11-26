@@ -425,8 +425,8 @@ static void set_delim (GtkWidget *w, csv_stuff *csv)
 
 static void really_set_csv_stuff (GtkWidget *w, csv_stuff *csv)
 {
-    dataset->delim = csv->delim;
-    dataset->decpoint = csv->decpoint;
+    set_data_export_delimiter(csv->delim);
+    set_data_export_decimal_comma(csv->decpoint == ',');
 }
 
 static void destroy_delim_dialog (GtkWidget *w, gint *p)
@@ -452,7 +452,7 @@ int csv_options_dialog (gretlopt *optp)
 	return -1;
     }
 
-    csvp->delim = dataset->delim;
+    csvp->delim = ',';
     csvp->decpoint = '.';
     csvp->point_button = NULL;
 

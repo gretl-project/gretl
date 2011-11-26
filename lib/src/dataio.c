@@ -1282,7 +1282,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
     int tsamp = sample_size(dset);
     int n = dset->n;
     int pop_locale = 0;
-    char delim = 0;
+    char delim = 0, decpoint = 0;
     FILE *fp = NULL;
     int *pmax = NULL;
     int freelist = 0;
@@ -1323,16 +1323,16 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 	goto write_exit;
     }
 
-    if (fmt == GRETL_FMT_CSV && get_csv_delim(dset) == ',' && 
-	',' == dset->decpoint) {
-	gretl_errmsg_set(_("You can't use the same character for "
+    if (fmt == GRETL_FMT_CSV) {
+	decpoint = get_data_export_decpoint();
+	delim = get_data_export_delimiter();
+	if (delim == decpoint) {
+	    gretl_errmsg_set(_("You can't use the same character for "
 			   "the column delimiter and the decimal point"));
-	err = E_DATA;
-	goto write_exit;
+	    err = E_DATA;
+	    goto write_exit;
+	}
     }
-
-    fprintf(stderr, "get_csv_delim = '%c', decpoint='%c'\n",
-	    get_csv_delim(dset), dset->decpoint);
 
     strcpy(datfile, fname);
 
@@ -1394,7 +1394,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 	}
     }
 
-    if (fmt != GRETL_FMT_CSV || dset->decpoint != ',') {
+    if (fmt != GRETL_FMT_CSV || decpoint == '.') {
 	gretl_push_c_numeric_locale();
 	pop_locale = 1;
     }
@@ -1426,9 +1426,6 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 	    if ((dset->structure == TIME_SERIES || dset->S != NULL)
 		&& !(opt & OPT_X)) {
 		print_obs = 1;
-	    }
-	    if (!delim) {
-		delim = get_csv_delim(dset);
 	    }
 	    strcpy(na_string, get_csv_na_string());
 	} else {

@@ -209,7 +209,6 @@ void copy_dataset_obs_info (DATASET *targ, const DATASET *src)
     targ->sd0 = src->sd0;
     targ->pd = src->pd;
     targ->structure = src->structure;
-    targ->decpoint = src->decpoint;
 }
 
 /**
@@ -228,7 +227,6 @@ void dataset_obs_info_default (DATASET *dset)
     dset->sd0 = 1.0;
     dset->pd = 1;
     dset->structure = CROSS_SECTION;
-    dset->decpoint = '.';
 }
 
 /**
@@ -380,8 +378,6 @@ void datainfo_init (DATASET *dset)
     dset->varinfo = NULL;    
 
     dset->markers = NO_MARKERS;  
-    dset->delim = ',';
-    dset->decpoint = '.';
 
     dset->S = NULL;
     dset->descrip = NULL;
@@ -534,7 +530,6 @@ int start_new_Z (DATASET *dset, int resample)
 
     dset->S = NULL;
     dset->markers = NO_MARKERS;
-    dset->delim = ',';
     dset->descrip = NULL;
     dset->submask = NULL;
     dset->restriction = NULL;

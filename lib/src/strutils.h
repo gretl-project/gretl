@@ -140,8 +140,6 @@ char *colonize_obs (char *obs);
 
 void modify_date_for_csv (char *s, int pd);
 
-void csv_obs_to_prn (int t, const DATASET *dset, PRN *prn);
-
 char *print_time (char *s);
 
 int gretl_xml_validate (const char *s);

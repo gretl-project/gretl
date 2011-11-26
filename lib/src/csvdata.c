@@ -40,7 +40,8 @@ enum {
     CSV_TRAIL    = 1 << 6,
     CSV_AUTONAME = 1 << 7,
     CSV_NONNUM   = 1 << 8,
-    CSV_REVERSED = 1 << 9
+    CSV_REVERSED = 1 << 9,
+    CSV_DOTSUB   = 1 << 10
 };
 
 typedef struct csvdata_ csvdata;
@@ -48,6 +49,7 @@ typedef struct csvdata_ csvdata;
 struct csvdata_ {
     int flags;
     char delim;
+    char decpoint;
     int markerpd;
     int maxlen;
     int real_n;
@@ -74,6 +76,7 @@ struct csvdata_ {
 #define csv_have_data(c)          (c->flags & CSV_HAVEDATA)
 #define csv_force_nonnum(c)       (c->flags & CSV_NONNUM)
 #define csv_data_reversed(c)      (c->flags & CSV_REVERSED)
+#define csv_do_dotsub(c)          (c->flags & CSV_DOTSUB)
 
 #define csv_set_trailing_comma(c)   (c->flags |= CSV_TRAIL)
 #define csv_unset_trailing_comma(c) (c->flags &= ~CSV_TRAIL)
@@ -85,6 +88,7 @@ struct csvdata_ {
 #define csv_set_autoname(c)         (c->flags |= CSV_AUTONAME)
 #define csv_set_force_nonnum(c)     (c->flags |= CSV_NONNUM)
 #define csv_set_data_reversed(c)    (c->flags |= CSV_REVERSED)
+#define csv_set_dotsub(c)           (c->flags |= CSV_DOTSUB)
 
 #define csv_skipping(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
@@ -154,10 +158,8 @@ static csvdata *csvdata_new (DATASET *dset, gretlopt opt)
 	free(c);
 	c = NULL;
     } else {
-	if (dset != NULL) {
-	    c->delim = c->dset->delim = dset->delim;
-	}
-	c->dset->delim = c->delim;
+	c->delim = get_data_export_delimiter();
+	c->decpoint = get_data_export_decpoint();
 	if (dset->Z != NULL) {
 	    c->flags |= CSV_HAVEDATA;
 	}
@@ -1417,31 +1419,49 @@ static int non_numeric_check (csvdata *c, PRN *prn)
     return err;
 }
 
-/* remedial function: we may be trying to read a "CSV" file
-   that uses ',' as decimal separator, on a platform where
-   '.' is the decimal separator
-*/
-
-static double try_comma_atof (const char *orig)
+static double csv_atof (csvdata *c, const char *s)
 {
-    char *test, s[32];
-    double x;
-
-    if (strlen(orig) > 31) {
-	return NON_NUMERIC;
-    }
-
-    strcpy(s, orig);
-    charsub(s, ',', '.');
+    double x = NON_NUMERIC;
+    char *test;
 
     errno = 0;
-    x = strtod(s, &test);
 
-    if (*test == '\0' && errno != ERANGE) {
-	return x;
-    } else {
-	return NON_NUMERIC;
+    if (c->decpoint == '.' || !csv_do_dotsub(c) || strchr(s, ',') == NULL) {
+	/* we should currently be set to the correct locale,
+	   or there's no problematic decimal point in @s
+	*/
+	x = strtod(s, &test);
+	if (*test == '\0' && errno == 0) {
+	    return x;
+	}
+    } else if (csv_do_dotsub(c) && strlen(s) <= 31) {
+	/* substitute dot for comma */
+	char tmp[32];
+
+	strcpy(tmp, s);
+	charsub(tmp, ',', '.');
+
+	x = strtod(tmp, &test);
+	if (*test == '\0' || errno == 0) {
+	    return x;
+	} 
     }
+
+    if (c->decpoint == '.' && strchr(s, ',') != NULL && strlen(s) <= 31) {
+	/* try remediation for decimal comma? */
+	char tmp[32];
+
+	strcpy(tmp, s);
+	charsub(tmp, ',', '.');
+	errno = 0;
+
+	x = strtod(tmp, &test);
+	if (*test != '\0' || errno != 0) {
+	    x = NON_NUMERIC;
+	} 
+    }
+
+    return x;
 }
 
 static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
@@ -1460,16 +1480,9 @@ static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
 	}
     } else if (csv_missval(c->str, i, t+1, miss_shown, prn)) {
 	c->dset->Z[i][t] = NADBL;
-    } else if (check_atof(c->str)) {
-	if (c->delim != ',' && get_local_decpoint() != ',' &&
-	    strchr(c->str, ',') != NULL) {
-	    c->dset->Z[i][t] = try_comma_atof(c->str);
-	} else {
-	    c->dset->Z[i][t] = NON_NUMERIC;
-	}
     } else {
-	c->dset->Z[i][t] = atof(c->str);
-    }
+	c->dset->Z[i][t] = csv_atof(c, c->str);
+    } 
 
     return err;
 }
@@ -1791,15 +1804,8 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 	    strncat(c->str, p, n);
 	    if (csv_missval(c->str, i, t+1, &miss_shown, prn)) {
 		c->dset->Z[i][t] = NADBL;
-	    } else if (check_atof(c->str)) {
-		if (c->delim != ',' && get_local_decpoint() != ',' &&
-		    strchr(c->str, ',') != NULL) {
-		    c->dset->Z[i][t] = try_comma_atof(c->str);
-		} else {
-		    err = E_DATA;
-		}
 	    } else {
-		c->dset->Z[i][t] = atof(c->str);
+		c->dset->Z[i][t] = csv_atof(c, c->str);
 	    }
 	}
 
@@ -1968,12 +1974,11 @@ int import_csv (const char *fname, DATASET *dset,
 {
     csvdata *c = NULL;
     const char *cols = NULL;
-    int popit = 0;
     FILE *fp = NULL;
     PRN *mprn = NULL;
     int newdata = (dset->Z == NULL);
-    char save_delim = dset->delim;
     int fixed_format = 0;
+    int popit = 0;
     long datapos;
     int i, err = 0;
 
@@ -2031,11 +2036,11 @@ int import_csv (const char *fname, DATASET *dset,
     if (!fixed_format && !csv_got_delim(c)) {
 	/* set default delimiter */
 	if (csv_got_tab(c)) {
-	    c->delim = c->dset->delim = '\t';
+	    c->delim = '\t';
 	} else if (csv_got_semi(c)) {
-	    c->delim = c->dset->delim = ';';
+	    c->delim = ';';
 	} else {
-	    c->delim = c->dset->delim = ' ';
+	    c->delim = ' ';
 	}
     }
 
@@ -2064,7 +2069,7 @@ int import_csv (const char *fname, DATASET *dset,
     err = csv_fields_check(fp, c, mprn);
     if (err && !fixed_format) {
 	if (c->delim != ';' && csv_got_semi(c)) {
-	    c->delim = c->dset->delim = ';';
+	    c->delim = ';';
 	    err = 0;
 	    goto alt_delim;
 	}
@@ -2121,9 +2126,11 @@ int import_csv (const char *fname, DATASET *dset,
 	goto csv_bailout;
     }
 
-    if (dset != NULL && dset->decpoint != ',') {
+    if (c->decpoint == '.' && get_local_decpoint() == ',') {
 	gretl_push_c_numeric_locale();
 	popit = 1;
+    } else if (c->decpoint == ',' && get_local_decpoint() == '.') {
+	csv_set_dotsub(c);
     }
 
     datapos = ftell(fp);
@@ -2225,8 +2232,6 @@ int import_csv (const char *fname, DATASET *dset,
     }    
 
     console_off();
-
-    dset->delim = save_delim;
 
     return err;
 }
