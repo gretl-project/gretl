@@ -1405,7 +1405,9 @@ void free_windata (GtkWidget *w, gpointer data)
 	    g_free(vwin->data); /* help file text */
 	} else if (vwin->role == VIEW_BUNDLE) {
 	    gretl_bundle_destroy_if_temp(vwin->data);
-	} 
+	} else if (vwin->role == LOESS || vwin->role == NADARWAT) {
+	    gretl_bundle_destroy(vwin->data);
+	}
 
 	if (window_delete_filename(vwin)) {
 	    /* there's a temporary file associated */

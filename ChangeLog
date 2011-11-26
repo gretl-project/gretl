@@ -1,4 +1,7 @@
 version 1.9.7, in progress
+- Add two nonparametric estimators: William Cleveland's loess and the
+  Nadaraya-Watson estimator; these are available via the new functions
+  loess() and nadarwat(), and they're also in the GUI Model menu
 - Documentation updates, including a new chapter on Nonparametric
   methods in the User's Guide
 - "leverage" command: add a --quiet option and add calculation of the
@@ -8,10 +11,6 @@ version 1.9.7, in progress
 - "gnuplot" command: enhance the --with-lines option to permit using
   lines for some series and point for others
 - new function simann() provides user access to simulated annealing
-- new function nadarwat() implements the Nadaraya-Watson nonparametric
-  kernel estimator
-- new function loess() implements William Cleveland's nonparametric
-  loess estimator 
 - Speed up the production of bootstrapped confidence bands for impulse 
   responses in VECM models
 - Online help: ensure that option flags don't break across lines (and

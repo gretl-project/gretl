@@ -5733,23 +5733,24 @@
   <command name="loess" section="Estimation" label="Loess" context="gui">
     <description>
       <para>
-	Performs locally-weighted polynomial regression and returns a
+	Performs locally-weighted polynomial regression and produces a
 	series containing predicted values of the dependent variable for
 	each non-missing value of the independent variable. The method is
 	as described by <cite key="cleveland79">William Cleveland
 	(1979)</cite>.
       </para>
       <para>
-	The controls allow you to specify the order of the polynomial in
-	the independent variable and the proportion of the data points to
-	be used in local estimation (the bandwidth). Higher values of the
-	bandwidth produce a smoother outcome.
+	The controls allow you to specify the order of the polynomial
+	in the independent variable and the proportion of the data
+	points to be used in each local regression (the
+	bandwidth). Higher values of the bandwidth produce a smoother
+	outcome.
       </para>
       <para>
-	If the robust weights box is checked the locals regression are
-	iterated twice, with the weights being modified based on the
-	residuals from the previous iteration so as to give less influence
-	to outliers.
+	If the robust weights box is checked the local regression
+	procedure is iterated twice, with the weights being modified
+	based on the residuals from the previous iteration so as to
+	give less influence to outliers.
       </para>
      </description>
   </command>
@@ -6716,6 +6717,37 @@
       <menu-path>/Model/Other linear models/High precision OLS</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="nadarwat" section="Estimation" label="Nadaraya-Watson" 
+	   context="gui">
+    <description>
+      <para>
+	Computes the Nadaraya&ndash;Watson nonparametric estimator of
+	the conditional mean of the dependent variable,
+	<math>m(x)</math>, for each non-missing value of the
+	independent variable.
+      </para>
+      <para>
+	The kernel function <math>K</math> is given by <math>K =
+	exp(-x</math><sup>2</sup><math> / 2h)</math> for <math>|x|
+	&lt; T</math> and zero otherwise.
+      </para>
+      <para>
+	The bandwidth, usually a small number, controls the smoothness
+	of <math>m(x)</math> (higher values producing a smoother
+	series); the default value is <math>n</math><sup>-0.2</sup>.
+      </para>
+      <para>
+	If the <quote>leave-one-out</quote> box is checked, a variant
+	of the estimator is employed in which the <math>i</math>-th
+	observation is not used in evaluating
+	<math>m(x</math><sub>i</sub><math>)</math>. This makes the
+	Nadaraya&ndash;Watson estimator more robust numerically and
+	its usage is normally advised when the estimator is computed
+	for inference purposes.
+      </para>
+     </description>
   </command>
 
   <command name="negbin" section="Estimation"

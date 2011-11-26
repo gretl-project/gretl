@@ -1371,13 +1371,13 @@ struct loess_info {
     int n_ok;
 };
 
-/* Compute robustness weights for loess, if wanted: on input @di
+/* Compute robustness weights for loess, if wanted: on input @rw
    contains the N residuals; on return it contains the robustness
    weights as a function of the residuals. For observations
    where y is missing, the weight is NADBL.
 */
 
-static int make_robustness_weights (gretl_matrix *di, int N) 
+static int make_robustness_weights (gretl_matrix *rw, int N) 
 {
     double *tmp = malloc(N * sizeof *tmp);
     double s, eis;
@@ -1391,8 +1391,8 @@ static int make_robustness_weights (gretl_matrix *di, int N)
        into tmp */
     k = 0;
     for (i=0; i<N; i++) {
-	if (!na(di->val[i])) {
-	    tmp[k++] = fabs(di->val[i]);
+	if (!na(rw->val[i])) {
+	    tmp[k++] = fabs(rw->val[i]);
 	}
     }
 
@@ -1405,13 +1405,13 @@ static int make_robustness_weights (gretl_matrix *di, int N)
     } else {
 	s *= 6;
 	for (i=0; i<N && !err; i++) {
-	    if (!na(di->val[i])) {
-		eis = di->val[i] / s;
+	    if (!na(rw->val[i])) {
+		eis = rw->val[i] / s;
 		if (fabs(eis) < 1.0) {
 		    /* apply bisquare */
-		    di->val[i] = (1 - eis * eis) * (1 - eis * eis);
+		    rw->val[i] = (1 - eis * eis) * (1 - eis * eis);
 		} else {
-		    di->val[i] = 0.0;
+		    rw->val[i] = 0.0;
 		}
 	    }
 	}
@@ -1420,23 +1420,23 @@ static int make_robustness_weights (gretl_matrix *di, int N)
     return err;
 }
 
-/* Multiply the robustness weights, @di, into the regular
+/* Multiply the robustness weights, @rw, into the regular
    weights, @wt, taking care to register the two vectors
-   (di is full-length while wt is local), and to skip any 
-   missing values in di.
+   (rw is full-length while wt is local), and to skip any 
+   missing values in rw.
 */
 
-static void adjust_weights (const gretl_matrix *di, 
+static void adjust_weights (const gretl_matrix *rw, 
 			    gretl_matrix *wt, int a)
 {
     int k, n = gretl_vector_get_length(wt);
     int t = a;
 
     for (k=0; k<n; k++) {
-	wt->val[k] *= di->val[t];
+	wt->val[k] *= rw->val[t];
 	if (k < n - 1) {
 	    t++;
-	    while (na(di->val[t])) t++;
+	    while (na(rw->val[t])) t++;
 	}
     }
 } 
@@ -1627,8 +1627,7 @@ static int loess_count_usable_obs (const gretl_matrix *y,
  * sort_pairs_by_x().
  * 
  * Returns: allocated vector containing the loess fitted values, or
- * %NULL on failure (in which case @err will contain a non-zero
- * error code).
+ * %NULL on failure.
  */
 
 gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,

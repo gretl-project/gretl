@@ -6503,6 +6503,65 @@ static void n_args_error (int k, int n, const char *s, parser *p)
     p->err = 1;
 }
 
+#define PRE_EVAL_ARGS 0 
+
+#if PRE_EVAL_ARGS /* may be worth experimenting with this? */
+
+static void free_tmp_args_node (NODE *n)
+{
+    if (n != NULL) {
+	free(n->v.bn.n);
+	free(n);
+    }
+}
+
+static NODE *tmp_args_node (int k, parser *p)
+{  
+    NODE *n = malloc(sizeof *n);
+
+    if (n == NULL) {
+	p->err = E_ALLOC;
+    } else {
+	NODE **nn = malloc(k * sizeof *nn);
+	int i;
+
+	if (nn == NULL) {
+	    free(n);
+	    n = NULL;
+	    p->err = E_ALLOC;
+	} else {
+	    n->t = FARGS;
+	    n->v.bn.n_nodes = k;
+	    n->v.bn.n = nn;
+	    n->flags = 0;
+	    n->vnum = NO_VNUM;
+	    for (i=0; i<k; i++) {
+		n->v.bn.n[i] = NULL;
+	    }
+	}
+    } 
+
+    fprintf(stderr, "tmp_args_node: %p\n", (void *) n);
+
+    return n;
+}
+
+static NODE *process_n_args_node (NODE *n, parser *p)
+{
+    int i, k = n->v.bn.n_nodes;
+    NODE *ret = tmp_args_node(k, p);
+
+    if (ret != NULL) {
+	for (i=0; i<k && !p->err; i++) {
+	    ret->v.bn.n[i] = eval(n->v.bn.n[i], p);
+	}
+    }
+
+    return ret;
+}
+
+#endif
+
 /* evaluate a built-in function that has more than three arguments */
 
 static NODE *eval_nargs_func (NODE *t, parser *p)
@@ -6510,6 +6569,13 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     NODE *e, *n = t->v.b1.b;
     NODE *ret = NULL;
     int i, k = n->v.bn.n_nodes;
+
+#if PRE_EVAL_ARGS
+    n = process_n_args_node(n, p);
+    if (p->err) {
+	return NULL;
+    }
+#endif
 
     if (t->t == F_BKFILT) {
 	const double *x = NULL;
@@ -7012,6 +7078,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	}
     }
+
+#if PRE_EVAL_ARGS
+    free_tmp_args_node(n);
+#endif
 
     return ret;
 }

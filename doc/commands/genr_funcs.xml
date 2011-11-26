@@ -4054,14 +4054,14 @@
 	<para>
 	  The user may provide a negative value for the bandwidth:
 	  this is interpreted as conventional syntax to obtain the
-	  leave-one-out estimator, that is a variant of the
-	  Nadaraya-Watson estimator that does not use
-	  the <math>i</math>-th observation for
+	  leave-one-out estimator, that is a variant of the estimator
+	  that does not use the <math>i</math>-th observation for
 	  evaluating <math>m(x</math><sub>i</sub><math>)</math>. This
-	  makes the Nadaraya-Watson estimator more robust numerically
-	  and its usage is normally advised when the estimator is
-	  computed for inference purposes. Of course, the bandwidth
-	  actually used is the absolute value of <argname>h</argname>.
+	  makes the Nadaraya&ndash;Watson estimator more robust
+	  numerically and its usage is normally advised when the
+	  estimator is computed for inference purposes. Of course, the
+	  bandwidth actually used is the absolute value of
+	  <argname>h</argname>.
 	</para>
 	  <para context="tex">
 	    In formulae, the leave-one-out estimator is
