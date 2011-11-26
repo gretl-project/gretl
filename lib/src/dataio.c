@@ -1254,6 +1254,76 @@ static void date_maj_min (int t, const DATASET *dset, int *maj, int *min)
     }
 }
 
+static void csv_data_out (const DATASET *dset, const int *list,
+			  int print_obs, int digits, int *pmax, 
+			  char decpoint, char delim, FILE *fp)
+{
+    const char *NA = get_csv_na_string();
+    char tmp[64];
+    double xt;
+    int t, i, dotsub = 0;
+
+    if (decpoint == ',' && get_local_decpoint() == '.') {
+	dotsub = 1;
+    }
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	if (print_obs) {
+	    if (dset->S != NULL) {
+		fprintf(fp, "\"%s\"%c", dset->S[t], delim);
+	    } else {
+		ntodate(tmp, t, dset);
+		if (quarterly_or_monthly(dset)) {
+		    modify_date_for_csv(tmp, dset->pd);
+		}
+		fprintf(fp, "%s%c", tmp, delim);
+	    }
+	}
+
+	for (i=1; i<=list[0]; i++) { 
+	    xt = dset->Z[list[i]][t];
+	    if (na(xt)) {
+		fputs(NA, fp);
+	    } else {
+		if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
+		    sprintf(tmp, "%.*g", digits, xt);
+		} else {
+		    sprintf(tmp, "%.*f", pmax[i-1], xt);
+		}
+		if (dotsub) {
+		    charsub(tmp, '.', ',');
+		}
+		fputs(tmp, fp);
+	    }
+	    fputc(i < list[0] ? delim : '\n', fp);
+	}
+    }
+}
+
+static void R_data_out (const DATASET *dset, const int *list,
+			int digits, int *pmax, FILE *fp)
+{
+    double xt;
+    int t, i;
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	if (dset->S != NULL) {
+	    fprintf(fp, "\"%s\" ", dset->S[t]);
+	} 
+	for (i=1; i<=list[0]; i++) { 
+	    xt = dset->Z[list[i]][t];
+	    if (na(xt)) {
+		fputs("NA", fp);
+	    } else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
+		fprintf(fp, "%.*g", digits, xt);
+	    } else {
+		fprintf(fp, "%.*f", pmax[i-1], xt);
+	    }
+	    fputc(i < list[0] ? ' ' : '\n', fp);
+	}
+    }
+}
+
 #define DEFAULT_CSV_DIGITS 12
 
 #define annual_data(p) (p->structure == TIME_SERIES && p->pd == 1)
@@ -1324,13 +1394,14 @@ int write_data (const char *fname, int *list, const DATASET *dset,
     }
 
     if (fmt == GRETL_FMT_CSV) {
+	/* ensure that decpoint and delim don't collide, which
+	   effectively means that if the active decpoint is ','
+	   we need to use ';' as delimiter, or else we get a
+	   broken data file.
+	*/
 	decpoint = get_data_export_decpoint();
-	delim = get_data_export_delimiter();
-	if (delim == decpoint) {
-	    gretl_errmsg_set(_("You can't use the same character for "
-			   "the column delimiter and the decimal point"));
-	    err = E_DATA;
-	    goto write_exit;
+	if (decpoint == ',') {
+	    delim = ';';
 	}
     }
 
@@ -1380,7 +1451,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 	}	
 
 	if (csv_digits == 0) {
-	    /* the user has not over-riden the default */
+	    /* the user has not overriden the default */
 	    for (i=1; i<=l0; i++) {
 		v = list[i];
 		pmax[i-1] = get_precision(&dset->Z[v][dset->t1], tsamp, 
@@ -1395,6 +1466,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
     }
 
     if (fmt != GRETL_FMT_CSV || decpoint == '.') {
+	/* ensure C locale for data output */
 	gretl_push_c_numeric_locale();
 	pop_locale = 1;
     }
@@ -1417,45 +1489,22 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 	    }
 	    fputc('\n', fp);
 	}
-    } else if (fmt == GRETL_FMT_CSV || fmt == GRETL_FMT_R) { 
-	/* export CSV or GNU R (dataframe) */
-	char na_string[8] = "NA";
+    } else if (fmt == GRETL_FMT_CSV) {
+	const char *msg = get_optval_string(STORE, OPT_E);
 	int print_obs = 0;
 
-	if (fmt == GRETL_FMT_CSV) {
-	    if ((dset->structure == TIME_SERIES || dset->S != NULL)
-		&& !(opt & OPT_X)) {
-		print_obs = 1;
-	    }
-	    strcpy(na_string, get_csv_na_string());
-	} else {
-	    print_obs = (dset->S != NULL);
-	    delim = ' ';
+	if (msg != NULL && *msg != '\0') {
+	    fprintf(fp, "# %s\n", msg);
 	}
 
-	if (fmt == GRETL_FMT_R && dataset_is_time_series(dset)) {
-	    char datestr[OBSLEN];
-
-	    ntodate(datestr, dset->t1, dset);
-	    fprintf(fp, "# time-series data: start = %s, frequency = %d\n",
-		    datestr, dset->pd);
+	if (!(opt & OPT_X)) {
+	    /* OPT_X prohibits printing of observation strings */
+	    print_obs = dset->structure == TIME_SERIES || dset->S != NULL;
 	}
 
-	if (fmt == GRETL_FMT_CSV) {
-	    /* optional comment */
-	    const char *msg = get_optval_string(STORE, OPT_E);
-
-	    if (msg != NULL && *msg != '\0') {
-		fprintf(fp, "# %s\n", msg);
-	    }
-	}	    
-
-	if (fmt == GRETL_FMT_CSV && (opt & OPT_N)) {
-	    ; /* no header */
-	} else {
+	if (!(opt & OPT_N)) {
 	    /* header: variable names */
-	    if (fmt == GRETL_FMT_CSV && print_obs && 
-		(dset->S != NULL || dset->structure != CROSS_SECTION)) {
+	    if (print_obs && (dset->S != NULL || dset->structure != CROSS_SECTION)) {
 		fprintf(fp, "obs%c", delim);
 	    }
 	    for (i=1; i<l0; i++) {
@@ -1463,38 +1512,25 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 	    }
 	    fprintf(fp, "%s\n", dset->varname[list[l0]]);
 	}
-	
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    if (print_obs) {
-		if (dset->S != NULL) {
-		    fprintf(fp, "\"%s\"%c", dset->S[t], delim);
-		} else {
-		    char tmp[OBSLEN];
 
-		    ntodate(tmp, t, dset);
-		    if (quarterly_or_monthly(dset)) {
-			modify_date_for_csv(tmp, dset->pd);
-		    }
-		    fprintf(fp, "%s%c", tmp, delim);
-		}
-	    }
-	    for (i=1; i<=l0; i++) { 
-		v = list[i];
-		xx = dset->Z[v][t];
-		if (na(xx)) {
-		    fputs(na_string, fp);
-		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "%.*g", csv_digits, xx);
-		} else {
-		    fprintf(fp, "%.*f", pmax[i-1], xx);
-		}
-		if (i < l0) {
-		    fputc(delim, fp);
-		} else {
-		    fputc('\n', fp);
-		}
-	    }
+	csv_data_out(dset, list, print_obs, csv_digits, pmax, 
+		     decpoint, delim, fp);
+    } else if (fmt == GRETL_FMT_R) { 
+	/* GNU R dataframe */
+	if (dataset_is_time_series(dset)) {
+	    char datestr[OBSLEN];
+
+	    ntodate(datestr, dset->t1, dset);
+	    fprintf(fp, "# time-series data: start = %s, frequency = %d\n",
+		    datestr, dset->pd);
 	}
+
+	for (i=1; i<l0; i++) {
+	    fprintf(fp, "%s ", dset->varname[list[i]]);
+	}
+	fprintf(fp, "%s\n", dset->varname[list[l0]]);
+
+	R_data_out(dset, list, csv_digits, pmax, fp);
     } else if (fmt == GRETL_FMT_OCTAVE) { 
 	/* GNU Octave: write out data as several matrices (one per
 	   series) in the same file */
@@ -1589,12 +1625,10 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 	}
     }
 
+    free(pmax);
+
     if (pop_locale) {
 	gretl_pop_c_numeric_locale();
-    }
-
-    if (pmax != NULL) {
-	free(pmax);
     }
 
     if (fp != NULL) {

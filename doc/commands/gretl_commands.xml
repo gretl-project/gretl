@@ -9278,12 +9278,13 @@
 	the current settings.
       </para>
       <para>
-	Values set via this comand remain in force for the duration of
-	the gretl session unless they are changed by a further call to
-	<cmd>set</cmd>.  The parameters that can be set in this way are
-	enumerated below. Note that the settings of <lit>hc_version</lit>,
-	<lit>hac_lag</lit> and <lit>hac_kernel</lit> are used when the
-	<opt>--robust</opt> option is given to an estimation command. 
+	Values set via this comand remain in force for the duration of the
+	gretl session unless they are changed by a further call to
+	<cmd>set</cmd> (with one exception noted below).  The parameters
+	that can be set in this way are enumerated below. Note that the
+	settings of <lit>hc_version</lit>, <lit>hac_lag</lit> and
+	<lit>hac_kernel</lit> are used when the <opt>--robust</opt> option
+	is given to an estimation command.
       </para>
       <para>
 	The available settings are grouped under the following categories:
@@ -9310,6 +9311,15 @@
 	  <para><lit>csv_na</lit>: string to represent missing values when
 	    writing data to file in CSV format.  Maximum 7 characters; the
 	    default is <lit>NA</lit>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>csv_decimal_comma</lit>: no argument wanted. This
+	    sets sets the decimal point character to a comma on saving
+	    data in CSV format. Unlike all other <lit>set</lit> commands
+	    this is <emphasis>not</emphasis> persistent: it applies only
+	    to the next <lit>store</lit> command. It also has the side
+	    effect of forcing the CSV delimiter to be a semicolon.
 	  </para>
 	</li>
 	<li>
