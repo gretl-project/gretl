@@ -1358,7 +1358,12 @@ void lex (parser *p)
 	    parser_getc(p);
 	    return;
         case ';': 
-	    p->sym = P_SEMI;
+	    if (p->targ == LIST) {
+		p->sym = B_JOIN;
+	    } else {
+		/* used in matrix definition */
+		p->sym = P_SEMI;
+	    }
 	    parser_getc(p);
 	    return;
         case ':': 

@@ -1378,7 +1378,7 @@ static NODE *expr4 (parser *p)
 		       p->sym == B_DOTADD || p->sym == B_DOTSUB ||
 		       p->sym == B_HCAT || p->sym == B_VCAT ||
 		       p->sym == B_LCAT || p->sym == B_RANGE ||
-		       p->sym == B_ELLIP)) {
+		       p->sym == B_ELLIP || p->sym == B_JOIN)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);

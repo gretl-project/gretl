@@ -568,6 +568,29 @@ static int *matrix_row_to_list (const gretl_matrix *m, int i,
     return list;
 }
 
+static int sys_check_sepcount (const int *list, int n)
+{
+    int i, ns = 0;
+    int err = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) {
+	    ns++;
+	}
+    }
+
+    if (ns != n - 1) {
+	err = E_ARGS;
+    }
+
+    return err;
+}
+
+/* @LY is a simple list of g regressands; @LX is either a common
+   list of regressors or it should contain g sub-lists, one
+   per equation.
+*/ 
+
 static int add_equations_from_lists (equation_system *sys,
 				     const int *LY,
 				     const int *LX,
@@ -575,25 +598,60 @@ static int add_equations_from_lists (equation_system *sys,
 {
     int n = sys->neqns;
     int n_add = LY[0];
-    int nx = LX[0];
+    int nx, nx0 = LX[0];
+    int j0, pos = 0;
     int i, j, err = 0;
 
-    sys->lists = realloc(sys->lists, (n + n_add) * sizeof *sys->lists);
-    if (sys->lists == NULL) {
-	return E_ALLOC;
-    }    
+    /* does LX contain separator(s)? */
+    pos = gretl_list_separator_position(LX);
+    if (pos > 0) {
+	err = sys_check_sepcount(LX, n_add);
+    }
+
+    if (!err) {
+	sys->lists = realloc(sys->lists, (n + n_add) * sizeof *sys->lists);
+	if (sys->lists == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
+	return err;
+    }
+
+    /* the number of series to read from LX */
+    nx = pos > 0 ? (pos - 1) : nx0;
+    /* the starting position for reading from LX */
+    j0 = 1;
 
     for (i=0; i<n_add && !err; i++) {
-	int *list = gretl_list_new(1 + nx);
+	int *list;
+
+	list = gretl_list_new(1 + nx);
 
 	if (list == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    list[1] = LY[i+1];
-	    for (j=1; j<=nx; j++) {
-		list[j+1] = LX[j];
+	    for (j=0; j<nx; j++) {
+		list[j+2] = LX[j+j0];
 	    }
 	    sys->lists[n++] = list;
+	    if (pos > 0) {
+		/* handle the multiple sub-list case */
+		j0 = ++pos; /* start of next read */
+		if (i + 1 == n_add - 1) {
+		    /* the next sublist is the last */
+		    nx = nx0 - pos + 1;
+		} else {
+		    nx = 0;
+		    while (LX[pos] != LISTSEP) {
+			/* advance to next ';' */
+			pos++;
+			nx++;
+		    }
+		} 
+	    }
 	}
     }
 
@@ -645,12 +703,14 @@ static int add_equations_from_matrix (equation_system *sys,
  * the name of a matrix, and we interpret the rows of the 
  * specified matrix as lists. Lists of differing length
  * can be accommodated by padding unused trailing elements of 
- * short rows with zeros. 
+ * short rows with zeros. (EXPERIMENTAL, may be dropped)
  *
  * If @param contains two names, they are taken to be the
- * names of lists. The first list serves as a list of
- * regressands, one per equation, while the second is
- * treated as a common set of regressors.
+ * names of lists. The first serves as a list of g
+ * regressands, one per equation. If the second list contains
+ * no instances of #LISTSEP it is treated as a common set of 
+ * regressors; otherwise it should contain g sub-lists, one
+ * per equation, separated by #LISTSEP.
  * 
  * Returns: 0 on success, non-zero on failure, in which case
  * @sys is destroyed.

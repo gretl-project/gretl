@@ -67,9 +67,10 @@ enum {
 	      B_LCAT,     /* list concatentation */
 	      B_LDIV,     /* matrix left division */
 	      B_ELLIP,    /* list-generating ellipsis */
+	      B_JOIN,     /* list-joining with separator */
 	      OP_MAX,     /* SEPARATOR: end of binary operators */
-              G_LPR,      /* grouping: left paren */
-  /* 40 */    G_RPR,      /* right paren */
+  /* 40 */    G_LPR,      /* grouping: left paren */
+	      G_RPR,      /* right paren */
               G_LBR,      /* left bracket */
               G_RBR,      /* right bracket */
               G_LCB,      /* left curly bracket */
@@ -78,8 +79,8 @@ enum {
 	      P_DOT,	  /* period */
 	      P_SEMI,	  /* semi-colon */
 	      P_COL,	  /* colon */
-	      PUNCT_MAX,  /* SEPARATOR: end of grouping and punctuation marks */
-  /* 50 */    CON,	  /* named constant */
+  /* 50 */    PUNCT_MAX,  /* SEPARATOR: end of grouping and punctuation marks */
+	      CON,	  /* named constant */
 	      DUM,	  /* dummy variable */
               USCALAR,	  /* user variable, scalar */
               USERIES,    /* user variable, series */
@@ -88,8 +89,8 @@ enum {
 	      NUM,	  /* scalar, evaluated */
 	      VEC,	  /* series, evaluated */
 	      IVEC,	  /* vector of integers, evaluated */
-	      LVEC,       /* list, as array of ints */
-  /* 60 */    MAT,	  /* matrix, evaluated */
+  /* 60 */    LVEC,       /* list, as array of ints */
+	      MAT,	  /* matrix, evaluated */
 	      OBS,	  /* observation from a series */
               MSL,	  /* matrix plus subspec */
               DMSL,	  /* "dollar" matrix plus subspec */
@@ -98,8 +99,8 @@ enum {
 	      MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
-	      LAG,        /* variable plus lag length */	  
-  /* 70 */    DVAR,	  /* $ "dataset" variable (mostly scalar or series) */
+  /* 70 */    LAG,        /* variable plus lag length */	  
+	      DVAR,	  /* $ "dataset" variable (mostly scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
               OVAR,	  /* object variable: variable "under" an object */
               LIST,	  /* reference to named list */
@@ -108,8 +109,8 @@ enum {
 	      BUNDLE,     /* gretl bundle (hash table) */
 	      BOBJ,       /* object inside a bundle */
 	      FARGS,	  /* set of n function arguments */
-	      EMPTY,      /* "null" */
-  /* 80 */    ABSENT,
+  /* 80 */    EMPTY,      /* "null" */
+	      ABSENT,
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
               EROOT,	  /* dummy root for (...) expression */
               UFUN,	  /* user-defined function */
@@ -118,7 +119,7 @@ enum {
               INC,   
 	      DEC,
 	      QUERY,
-	      EOT,	  /* end of transmission */
+  /* 90 */    EOT,	  /* end of transmission */
 	      UNK 
 };
 

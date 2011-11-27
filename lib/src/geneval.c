@@ -8050,6 +8050,25 @@ static NODE *ellipsis_list_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *list_join_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_lvec_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int *L1 = node_get_list(l, p);
+	int *L2 = node_get_list(r, p);
+
+	if (!p->err) {
+	    ret->v.ivec = gretl_lists_join_with_separator(L1, L2);
+	    if (ret->v.ivec == NULL) {
+		p->err = E_ALLOC;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static NODE *two_scalars_func (NODE *l, NODE *r, int t, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -8434,6 +8453,14 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES; 
 	}
 	break;
+    case B_JOIN:
+	/* list join with separator */
+	if (ok_list_node(l) && ok_list_node(r)) {
+	    ret = list_join_node(l, r, p);
+	} else {
+	    p->err = E_TYPES; 
+	}
+	break;	
     case F_MSORTBY:
 	/* matrix on left, scalar on right */
 	if (l->t == MAT && scalar_node(r)) {
