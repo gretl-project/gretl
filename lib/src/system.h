@@ -109,7 +109,7 @@ char *get_system_name_from_line (const char *s, int context);
 int equation_system_append (equation_system *sys, const int *list);
 
 int equation_system_append_multi (equation_system *sys, 
-				  const char *mname, 
+				  const char *param, 
 				  const DATASET *dset);
 
 int system_parse_line (equation_system *sys,

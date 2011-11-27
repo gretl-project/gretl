@@ -568,6 +568,42 @@ static int *matrix_row_to_list (const gretl_matrix *m, int i,
     return list;
 }
 
+static int add_equations_from_lists (equation_system *sys,
+				     const int *LY,
+				     const int *LX,
+				     const DATASET *dset)
+{
+    int n = sys->neqns;
+    int n_add = LY[0];
+    int nx = LX[0];
+    int i, j, err = 0;
+
+    sys->lists = realloc(sys->lists, (n + n_add) * sizeof *sys->lists);
+    if (sys->lists == NULL) {
+	return E_ALLOC;
+    }    
+
+    for (i=0; i<n_add && !err; i++) {
+	int *list = gretl_list_new(1 + nx);
+
+	if (list == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    list[1] = LY[i+1];
+	    for (j=1; j<=nx; j++) {
+		list[j+1] = LX[j];
+	    }
+	    sys->lists[n++] = list;
+	}
+    }
+
+    if (!err) {
+	sys->neqns += n_add;
+    }
+
+    return err;
+}
+
 static int add_equations_from_matrix (equation_system *sys,
 				      const gretl_matrix *m,
 				      const DATASET *dset)
@@ -598,38 +634,65 @@ static int add_equations_from_matrix (equation_system *sys,
 /**
  * equation_system_append_multi:
  * @sys: initialized equation system.
- * @mname: the name of a pre-defined matrix.
+ * @param: the name of a pre-defined matrix, or the names
+ * of two pre-defined lists (space-separated).
  * @dset: dataset information.
  * 
- * Adds one or more equations to @sys by interpreting the rows 
- * of the specified matrix as lists. Lists of differing length
+ * Adds one or more equations to @sys in one or other of two
+ * ways, as follows.
+ *
+ * If @param contains a single name it is taken to be
+ * the name of a matrix, and we interpret the rows of the 
+ * specified matrix as lists. Lists of differing length
  * can be accommodated by padding unused trailing elements of 
- * short rows with zeros.
+ * short rows with zeros. 
+ *
+ * If @param contains two names, they are taken to be the
+ * names of lists. The first list serves as a list of
+ * regressands, one per equation, while the second is
+ * treated as a common set of regressors.
  * 
  * Returns: 0 on success, non-zero on failure, in which case
  * @sys is destroyed.
  */
 
 int equation_system_append_multi (equation_system *sys, 
-				  const char *mname, 
+				  const char *param, 
 				  const DATASET *dset)
 {
-    const gretl_matrix *m;
-    int err = 0;
+    char name1[VNAMELEN], name2[VNAMELEN];
+    int n, err = 0;
 
     if (sys == NULL) {
 	gretl_errmsg_set(_(nosystem));
 	return E_DATA;
     }
 
-    m = get_matrix_by_name(mname);
+    n = sscanf(param, "%15s %15s", name1, name2);
 
-    if (m == NULL) {
-	err = E_UNKVAR;
-    } else if (m->rows == 0 || m->cols == 0) {
-	err = E_DATA;
+    if (n == 2) {
+	/* look for two lists */
+	const int *LY = get_list_by_name(name1);
+	const int *LX = get_list_by_name(name2);
+	
+	if (LY == NULL || LX == NULL) {
+	    err = E_DATA;
+	} else {
+	    err = add_equations_from_lists(sys, LY, LX, dset);
+	}
+    } else if (n == 1) {
+	/* look for one matrix */
+	const gretl_matrix *m = get_matrix_by_name(name1);
+
+	if (m == NULL) {
+	    err = E_UNKVAR;
+	} else if (m->rows == 0 || m->cols == 0) {
+	    err = E_DATA;
+	} else {
+	    err = add_equations_from_matrix(sys, m, dset);
+	}
     } else {
-	err = add_equations_from_matrix(sys, m, dset);
+	err = E_DATA;
     }
 
     if (err) {

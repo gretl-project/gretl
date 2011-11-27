@@ -1882,7 +1882,8 @@ static int capture_param (CMD *cmd, const char *s)
 	}
     } else {
 	if (cmd->ci == PRINT || cmd->ci == FUNCERR || 
-	    cmd->ci == DELEET || cmd->ci == HELP) {
+	    cmd->ci == DELEET || cmd->ci == HELP ||
+	    cmd->ci == EQUATION) {
 	    /* grab the whole remainder of line */
 	    cmd_param_grab_string(cmd, s);
 	} else if (cmd->ci == QUANTREG || cmd->ci == LEVINLIN) {
