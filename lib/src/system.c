@@ -637,10 +637,10 @@ static int add_equations_from_lists (equation_system *sys,
 		list[j+2] = LX[j+j0];
 	    }
 	    sys->lists[n++] = list;
-	    if (pos > 0) {
+	    if (pos > 0 && i < n_add - 1) {
 		/* handle the multiple sub-list case */
 		j0 = ++pos; /* start of next read */
-		if (i + 1 == n_add - 1) {
+		if (i == n_add - 2) {
 		    /* the next sublist is the last */
 		    nx = nx0 - pos + 1;
 		} else {
