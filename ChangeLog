@@ -4,6 +4,8 @@ version 1.9.7, in progress
   loess() and nadarwat(), and they're also in the GUI Model menu
 - Documentation updates, including a new chapter on Nonparametric
   methods in the User's Guide
+- "store" command: add a --decimal-comma option to export "CSV" data 
+  using "," as decimal character (and ";" as column delimiter)
 - "leverage" command: add a --quiet option and add calculation of the
   cross-validation criterion (available via the $test accessor)
 - "rmplot" command (range-mean plot): add a --trim option to discard the
