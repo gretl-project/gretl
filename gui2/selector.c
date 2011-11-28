@@ -6969,7 +6969,10 @@ static int data_export_selection_callback (selector *sr)
 	gretlopt opt = OPT_NONE;
 	int cancel;
 
-	cancel = csv_options_dialog(&opt);
+	/* allow possibility of picking up OPT_X to exclude
+	   the obserations column when exporting CSV
+	*/
+	cancel = csv_options_dialog(EXPORT_CSV, &opt);
 	if (cancel) {
 	    set_selector_storelist(NULL);
 	    return 0;

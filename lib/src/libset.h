@@ -156,8 +156,6 @@ int gretl_debugging_on (void);
 void shelldir_init (const char *s);
 char *get_shelldir (void);
 
-char get_csv_delim (const DATASET *dset);
-
 void set_data_export_decimal_comma (int s);
 char get_data_export_decpoint (void);
 

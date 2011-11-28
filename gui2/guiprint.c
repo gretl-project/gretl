@@ -1968,7 +1968,8 @@ int csv_selected_to_clipboard (void)
     int err = 0;
 
     if (list != NULL) {
-	if (csv_options_dialog(NULL)) {
+	if (csv_options_dialog(COPY_CSV, NULL)) {
+	    /* canceled */
 	    return 0;
 	}
 	err = real_csv_to_clipboard(list);
@@ -1992,7 +1993,7 @@ int csv_to_clipboard (void)
 	int *list = gretl_list_from_string(liststr, &err);	
 
 	if (list != NULL) {
-	    cancel = csv_options_dialog(NULL);
+	    cancel = csv_options_dialog(COPY_CSV, NULL);
 	    if (!cancel) {
 		err = real_csv_to_clipboard(list);
 	    }
@@ -2041,7 +2042,7 @@ int matrix_to_clipboard_as_csv (const gretl_matrix *m)
 	return 0;
     }
 
-    if (csv_options_dialog(&opt)) {
+    if (csv_options_dialog(COPY_CSV, &opt)) {
 	/* canceled */
 	return 0;
     }
@@ -2060,6 +2061,7 @@ int matrix_to_clipboard_as_csv (const gretl_matrix *m)
 int scalars_to_clipboard_as_csv (void)
 {
     PRN *prn = NULL;
+    gretlopt opt = OPT_S;
     int err = 0;
 
     if (n_saved_scalars() == 0) {
@@ -2067,7 +2069,8 @@ int scalars_to_clipboard_as_csv (void)
 	return 0;
     }
 
-    if (csv_options_dialog(NULL)) {
+    if (csv_options_dialog(COPY_CSV, &opt)) {
+	/* canceled */
 	return 0;
     }
 

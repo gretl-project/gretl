@@ -3312,6 +3312,11 @@ static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+/* get an *int list from node @n: note that the list is always
+   newly allocated, and so should be freed by the caller if
+   it's just for temporary use
+*/
+
 static int *node_get_list (NODE *n, parser *p)
 {
     int *list = NULL;
@@ -8064,6 +8069,9 @@ static NODE *list_join_node (NODE *l, NODE *r, parser *p)
 		p->err = E_ALLOC;
 	    }
 	}
+
+	free(L1);
+	free(L2);
     }
 
     return ret;

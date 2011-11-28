@@ -205,7 +205,9 @@ void open_data (GtkAction *action)
     code = open_data_code(gtk_action_get_name(action));
 
     if (code == OPEN_CSV || code == APPEND_CSV) {
-	if (csv_options_dialog(NULL)) {
+	/* allow spec. of separator */
+	if (csv_options_dialog(code, NULL)) {
+	    /* canceled */
 	    return;
 	}
     }

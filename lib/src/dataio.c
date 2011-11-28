@@ -1261,9 +1261,13 @@ static void csv_data_out (const DATASET *dset, const int *list,
     const char *NA = get_csv_na_string();
     char tmp[64];
     double xt;
-    int t, i, dotsub = 0;
+    int popit = 0, dotsub = 0;
+    int t, i;
 
-    if (decpoint == ',' && get_local_decpoint() == '.') {
+    if (decpoint == '.' && get_local_decpoint() == ',') {
+	gretl_push_c_numeric_locale();
+	popit = 1;
+    } else if (decpoint == ',' && get_local_decpoint() == '.') {
 	dotsub = 1;
     }
 
@@ -1297,6 +1301,10 @@ static void csv_data_out (const DATASET *dset, const int *list,
 	    }
 	    fputc(i < list[0] ? delim : '\n', fp);
 	}
+    }
+
+    if (popit) {
+	gretl_pop_c_numeric_locale();
     }
 }
 
@@ -1352,7 +1360,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
     int tsamp = sample_size(dset);
     int n = dset->n;
     int pop_locale = 0;
-    char delim = 0, decpoint = 0;
+    char delim = 0;
     FILE *fp = NULL;
     int *pmax = NULL;
     int freelist = 0;
@@ -1391,18 +1399,6 @@ int write_data (const char *fname, int *list, const DATASET *dset,
     if (fmt == GRETL_FMT_DB) {
 	err = write_db_data(fname, list, opt, dset);
 	goto write_exit;
-    }
-
-    if (fmt == GRETL_FMT_CSV) {
-	/* ensure that decpoint and delim don't collide, which
-	   effectively means that if the active decpoint is ','
-	   we need to use ';' as delimiter, or else we get a
-	   broken data file.
-	*/
-	decpoint = get_data_export_decpoint();
-	if (decpoint == ',') {
-	    delim = ';';
-	}
     }
 
     strcpy(datfile, fname);
@@ -1465,7 +1461,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 	}
     }
 
-    if (fmt != GRETL_FMT_CSV || decpoint == '.') {
+    if (fmt != GRETL_FMT_CSV) {
 	/* ensure C locale for data output */
 	gretl_push_c_numeric_locale();
 	pop_locale = 1;
@@ -1491,7 +1487,16 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 	}
     } else if (fmt == GRETL_FMT_CSV) {
 	const char *msg = get_optval_string(STORE, OPT_E);
+	char decpoint = get_data_export_decpoint();
 	int print_obs = 0;
+
+	if (opt & OPT_I) {
+	    /* the CSV --decimal-comma option */
+	    decpoint = ',';
+	    delim = ';';
+	} else if (delim == 0) {
+	    delim = get_data_export_delimiter();
+	}
 
 	if (msg != NULL && *msg != '\0') {
 	    fprintf(fp, "# %s\n", msg);
@@ -1499,7 +1504,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 
 	if (!(opt & OPT_X)) {
 	    /* OPT_X prohibits printing of observation strings */
-	    print_obs = dset->structure == TIME_SERIES || dset->S != NULL;
+	    print_obs = dataset_is_time_series(dset) || dset->S != NULL;
 	}
 
 	if (!(opt & OPT_N)) {

@@ -1521,9 +1521,6 @@ int execute_set_line (const char *line, DATASET *dset,
 	} else if (!strcmp(setobj, "stopwatch")) {
 	    gretl_stopwatch();
 	    err = 0;
-	} else if (!strcmp(setobj, "csv_decimal_comma")) {
-	    data_export_decpoint = ',';
-	    err = 0;
 	} else {
 	    return libset_query_settings(setobj, prn);
 	}

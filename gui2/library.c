@@ -7438,7 +7438,7 @@ static gretlopt store_action_to_opt (const char *fname, int action,
    in the main gretl window.
 */
 
-int do_store (char *filename, int action)
+int do_store (char *filename, int action, gpointer data)
 {
     gretlopt opt = OPT_NONE;
     int exporting = 0;
@@ -7480,6 +7480,10 @@ int do_store (char *filename, int action)
 	; /* inside a session: "exporting" gdt */
     } else if (opt != OPT_NONE) { 
 	/* not a bog-standard native save */
+	if (action == EXPORT_CSV && data != NULL) {
+	    /* pick up option to exclude obs column */
+	    opt |= GPOINTER_TO_INT(data);
+	}
 	lib_command_strcat(print_flags(opt, STORE));
     } else if (has_suffix(filename, ".dat")) { 
 	/* saving in "traditional" mode as ".dat" */

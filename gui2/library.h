@@ -308,7 +308,7 @@ void do_new_script (int code);
 
 void new_script_callback (GtkAction *action);
 
-int do_store (char *mydatfile, int action);
+int do_store (char *mydatfile, int action, gpointer data);
 
 void do_save_text (char *fname, MODEL *pmod);
 

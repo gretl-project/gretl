@@ -410,6 +410,7 @@ struct gretl_option gretl_opts[] = {
     { STORE,    OPT_Z, "gzipped", 0 },
     { STORE,    OPT_X, "omit-obs", 0 },
     { STORE,    OPT_E, "comment", 2 },
+    { STORE,    OPT_I, "decimal-comma", 0 },
     { SUMMARY,  OPT_B, "by", 2 },
     { SUMMARY,  OPT_M, "matrix", 2 },
     { SUMMARY,  OPT_S, "simple", 0 },

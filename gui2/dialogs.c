@@ -384,8 +384,8 @@ static GtkWidget *csv_na_combo (void)
 /* CSV files: setting the delimiter */
 
 typedef struct {
-    GtkWidget *space_button;
-    GtkWidget *point_button;
+    GtkWidget *semic_button;
+    GtkWidget *comma_sep;
     gint delim;
     gint decpoint;
 } csv_stuff;
@@ -397,11 +397,15 @@ static void set_dec (GtkWidget *w, csv_stuff *csv)
     if (button_is_active(w)) {
 	i = widget_get_int(w, "action");
 	csv->decpoint = i;
-	if (csv->decpoint == ',' && csv->delim == ',') {
-	    csv->delim = ' ';
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(csv->space_button), 
+	if (csv->decpoint == ',') {
+	    csv->delim = ';';
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(csv->semic_button), 
 					 TRUE);
-	}
+	} else if (csv->delim == ';') {
+	    csv->delim = ',';
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(csv->comma_sep), 
+					 TRUE);
+	}	    
     }
 }
 
@@ -413,12 +417,6 @@ static void set_delim (GtkWidget *w, csv_stuff *csv)
 	i = widget_get_int(w, "action");
 	if (i != 'a') {
 	    csv->delim = i;
-	}
-	if (csv->point_button != NULL && 
-	    csv->delim == ',' && csv->decpoint == ',') {
-	    csv->decpoint = '.';
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(csv->point_button), 
-					 TRUE);
 	}
     }
 }
@@ -434,13 +432,14 @@ static void destroy_delim_dialog (GtkWidget *w, gint *p)
     free(p);
 }
 
-int csv_options_dialog (gretlopt *optp)
+int csv_options_dialog (int ci, gretlopt *optp)
 {
     GtkWidget *dialog, *vbox, *hbox;
     GtkWidget *tmp, *button;
     GSList *group;
     csv_stuff *csvp = NULL;
-    int reading = (optp == NULL);
+    gretlopt opt = OPT_NONE;
+    int reading = (ci == OPEN_CSV || ci == APPEND_CSV);
     int ret = 0;
 
     if (maybe_raise_dialog()) {
@@ -454,7 +453,10 @@ int csv_options_dialog (gretlopt *optp)
 
     csvp->delim = ',';
     csvp->decpoint = '.';
-    csvp->point_button = NULL;
+
+    if (optp != NULL) {
+	opt = *optp;
+    }
 
     dialog = gretl_dialog_new(_("gretl: data delimiter"), NULL, GRETL_DLG_BLOCK);
 
@@ -468,9 +470,9 @@ int csv_options_dialog (gretlopt *optp)
 
     /* comma separator */
     button = gtk_radio_button_new_with_label(NULL, _("comma (,)"));
+    csvp->comma_sep = button;
     pack_in_hbox(button, vbox, 0);
-    if (csvp->delim == ',')
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_delim), csvp);
     g_object_set_data(G_OBJECT(button), "action", 
@@ -479,7 +481,6 @@ int csv_options_dialog (gretlopt *optp)
     /* space separator */
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("space"));
-    csvp->space_button = button;
     pack_in_hbox(button, vbox, 0);
     if (csvp->delim == ' ')
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
@@ -492,9 +493,6 @@ int csv_options_dialog (gretlopt *optp)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("tab"));
     pack_in_hbox(button, vbox, 0);
-    if (csvp->delim == '\t') {
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-    }
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_delim), csvp);
     g_object_set_data(G_OBJECT(button), "action", 
@@ -503,17 +501,15 @@ int csv_options_dialog (gretlopt *optp)
     /* semicolon separator */
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("semicolon"));
+    csvp->semic_button = button;
     pack_in_hbox(button, vbox, 0);
-    if (csvp->delim == ';') {
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-    }
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_delim), csvp);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(';'));   
 
     if (reading) {
-	/* auto-detect separator */
+	/* add option to auto-detect separator */
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 	button = gtk_radio_button_new_with_label(group, _("auto-detect"));
 	pack_in_hbox(button, vbox, 0);
@@ -532,11 +528,8 @@ int csv_options_dialog (gretlopt *optp)
 
 	/* period decpoint */
 	button = gtk_radio_button_new_with_label(NULL, _("period (.)"));
-	csvp->point_button = button;
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	pack_in_hbox(button, vbox, 0);
-	if (csvp->decpoint == '.') {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-	}
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_dec), csvp);
 	g_object_set_data(G_OBJECT(button), "action", 
@@ -546,26 +539,25 @@ int csv_options_dialog (gretlopt *optp)
 	dgroup = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 	button = gtk_radio_button_new_with_label(dgroup, _("comma (,)"));
 	pack_in_hbox(button, vbox, 0);
-	if (csvp->decpoint == ',') {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-	}
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_dec), csvp);
 	g_object_set_data(G_OBJECT(button), "action", 
-			  GINT_TO_POINTER(','));   
+			  GINT_TO_POINTER(',')); 
     }
 
-    if (!reading && !(*optp & OPT_M)) {
-	/* on output of series only */
-	vbox_add_hsep(vbox);
-	tmp = gretl_option_check_button_switched(_("include observations column"),
-						 optp, OPT_X);
-	pack_in_hbox(tmp, vbox, 0);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
-
-	if (any_missing_user_values(dataset)) {
-	    tmp = csv_na_combo();
+    if (!reading && !(opt & (OPT_M | OPT_S))) {
+	/* on output of series only (not matrix or scalars) */
+	if (dataset_is_time_series(dataset) || dataset->S != NULL) {
+	    vbox_add_hsep(vbox);
+	    tmp = gretl_option_check_button_switched(_("include observations column"),
+						     optp, OPT_X);
 	    pack_in_hbox(tmp, vbox, 0);
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+
+	    if (any_missing_user_values(dataset)) {
+		tmp = csv_na_combo();
+		pack_in_hbox(tmp, vbox, 0);
+	    }
 	}
     }
 

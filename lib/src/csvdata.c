@@ -2044,6 +2044,13 @@ int import_csv (const char *fname, DATASET *dset,
 	}
     }
 
+    /* buffer to hold lines */
+    c->line = malloc(c->maxlen);
+    if (c->line == NULL) {
+	err = E_ALLOC;
+	goto csv_bailout;
+    }  
+
  alt_delim:
 
     if (!fixed_format) {
@@ -2056,13 +2063,6 @@ int import_csv (const char *fname, DATASET *dset,
 	csv_unset_trailing_comma(c);
     }
 
-    /* buffer to hold lines */
-    c->line = malloc(c->maxlen);
-    if (c->line == NULL) {
-	err = E_ALLOC;
-	goto csv_bailout;
-    }  
-    
     rewind(fp);
 
     /* read lines, check for consistency in number of fields */
