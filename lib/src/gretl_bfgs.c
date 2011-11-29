@@ -1682,11 +1682,7 @@ double user_simann (gretl_matrix *b,
 			u, opt, prn);
 
     if (!*err) {
-	ret = u->fx_out;
-	if (na(ret)) {
-	    /* we might have ended up out of bounds */
-	    ret = user_get_criterion(b->val, u);
-	}
+	ret = user_get_criterion(b->val, u);	    
     }
 
  bailout:
