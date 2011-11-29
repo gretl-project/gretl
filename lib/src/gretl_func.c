@@ -6206,7 +6206,7 @@ static void func_exec_callback (ExecState *s, void *ptr,
 {
     int ci = s->cmd->ci;
 
-    if (ci == GNUPLOT) {
+    if (ci == GNUPLOT || ci == SCATTERS || ci == BXPLOT) {
 	/* we permit "reach-back" into the GUI here */
 	EXEC_CALLBACK gc = get_gui_callback();
 
