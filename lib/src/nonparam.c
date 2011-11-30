@@ -1369,6 +1369,7 @@ struct loess_info {
     int n;
     int N;
     int n_ok;
+    int loo;
 };
 
 /* Compute robustness weights for loess, if wanted: on input @rw
@@ -1481,6 +1482,7 @@ static int loess_get_local_data (int i, int *pa,
     const double *y = lo->y->val;
     double xk, xk1, xds, h = 0;
     int n = lo->n, n_ok = lo->n_ok;
+    int k_skip = -1;
     int a, b, k, m, t;
     int err = 0;
 
@@ -1533,6 +1535,10 @@ static int loess_get_local_data (int i, int *pa,
     t = a;
 
     for (k=0; k<n; k++) {
+	if (lo->loo && t == i) {
+	    /* leave-one-out: mark this observation */
+	    k_skip = k;
+	}
 	lo->yi->val[k] = y[t];
 	xk = x[t];
 	gretl_matrix_set(lo->Xi, k, 0, 1.0);
@@ -1564,6 +1570,11 @@ static int loess_get_local_data (int i, int *pa,
 
     /* compute scaled distances and tricube weights */
     for (k=0; k<n; k++) {
+	if (k == k_skip) {
+	    /* exclude this obs via a zero weight? */
+	    lo->wt->val[k] = 0.0;
+	    continue;
+	}
 	xk = gretl_matrix_get(lo->Xi, k, 1);
 	if (h == 0.0) {
 	    lo->wt->val[k] = 1.0;
@@ -1640,7 +1651,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
     gretl_matrix *rw = NULL;
     int N = gretl_vector_get_length(y);
     int k, iters, Xic, amin = 0;
-    int n_ok, robust = 0;
+    int n_ok, robust = 0, loo = 0;
     int i, n;
 
     if (d < 0 || d > 2 || q > 1.0) {
@@ -1659,7 +1670,12 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
     if (n_ok < 4) {
 	*err = E_TOOFEW;
 	return NULL;
-    }    
+    }
+
+    if (opt & OPT_O) {
+	/* leave one out: experimental */
+	loo = 1;
+    }
 
     /* check for q too small */
     if (q < (d + 1.0) / n_ok) {
@@ -1688,7 +1704,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
     if (yh == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
-    }    
+    } 
 
     if (opt & OPT_R) {
 	/* extra storage for residuals/robustness weights */
@@ -1712,6 +1728,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
     lo.d = d;
     lo.n = n;
     lo.N = N;
+    lo.loo = loo;
 
     for (k=0; k<iters && !*err; k++) {
 	/* iterations for robustness, if wanted */

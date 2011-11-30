@@ -7036,10 +7036,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	const double *y = NULL, *x = NULL;
 	double bandwidth = 0.5;
 	int poly_order = 1;
-	int robust = 0;
+	gretlopt opt = OPT_NONE;
 
-	if (k < 2 || k > 5) {
-	    n_args_error(k, 4, "loess", p);
+	if (k < 2 || k > 6) {
+	    n_args_error(k, 5, "loess", p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -7067,9 +7067,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		if (e->t != EMPTY && e->t != NUM) {
 		    node_type_error(t->t, i+1, NUM, e, p);
 		} else {
-		    robust = node_get_int(e, p);
-		    if (!p->err) {
-			robust = (robust != 0);
+		    int ival = node_get_int(e, p);
+
+		    if (!p->err && ival != 0) {
+			if (i == 4) {
+			    opt |= OPT_R;
+			} else {
+			    opt |= OPT_O;
+			}
 		    }
 		}
 	    }
@@ -7079,7 +7084,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret = aux_vec_node(p, p->dset->n);
 	    if (ret != NULL) {
 		p->err = gretl_loess(y, x, poly_order, bandwidth,
-				     robust, p->dset, ret->v.xvec);
+				     opt, p->dset, ret->v.xvec);
 	    }
 	}
     }

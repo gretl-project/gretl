@@ -4683,7 +4683,7 @@ static int get_dataset_t (const double *x, int pos, int t1)
 }
 
 int gretl_loess (const double *y, const double *x, int poly_order,
-		 double bandwidth, int robust, DATASET *dset, 
+		 double bandwidth, gretlopt opt, DATASET *dset, 
 		 double *m)
 {
     gretl_matrix *my, *mx;
@@ -4728,8 +4728,6 @@ int gretl_loess (const double *y, const double *x, int poly_order,
     }
 
     if (!err) {
-	gretlopt opt = robust ? OPT_R : OPT_NONE;
-
 	yh = loess_fit(mx, my, poly_order, bandwidth, opt, &err);
     }
 

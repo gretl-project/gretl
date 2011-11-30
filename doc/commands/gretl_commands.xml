@@ -8102,9 +8102,10 @@
       </para>
       <code>
 	ols 1 0 2 3
-	scalar b = $coeff(2)
-	scalar se_b = $stderr(2)
-	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b
+	scalar b = $coeff[2]
+	scalar se_b = $stderr[2]
+	printf "b = %.8g, standard error %.8g, t = %.4f\n", 
+          b, se_b, b/se_b
       </code>
       <para>
 	The next lines illustrate the use of the varname and date functions,
