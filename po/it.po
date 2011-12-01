@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-28 17:27-0400\n"
-"PO-Revision-Date: 2011-10-25 13:48+0200\n"
+"PO-Revision-Date: 2011-12-01 21:24+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -1156,9 +1156,9 @@ msgid "Bad character %d in date string"
 msgstr "Carattere errato %d in una data"
 
 #: lib/src/dataio.c:765 lib/src/dataio.c:770 lib/src/dataio.c:783
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid observation index"
-msgstr "%s, usando %d osservazioni"
+msgstr "'%s': indice osservazione non valido"
 
 #: lib/src/dataio.c:802 lib/src/forecast.c:2331 lib/src/genfuncs.c:3115
 msgid "Observation number out of bounds"
@@ -6821,7 +6821,7 @@ msgstr ""
 #: lib/src/tsls.c:893
 #, c-format
 msgid "The first-stage fitted values for %s are all zero"
-msgstr ""
+msgstr "I valori stimati al primo stadio per %s sono tutti zero"
 
 #: lib/src/tsls.c:1505 gui2/selector.c:2780
 msgid "You can't use the dependent variable as an instrument"
@@ -12671,12 +12671,11 @@ msgstr "gretl: analisi X-12-ARIMA"
 
 #: gui2/library.c:4891
 msgid "Trim maximum and minimum in sub-samples"
-msgstr ""
+msgstr "Escludi massimo e minimo nei sottocampioni"
 
 #: gui2/library.c:4899
-#, fuzzy
 msgid "gretl: range-mean graph"
-msgstr "Grafico _range-mean"
+msgstr "gretl: grafico range-mean"
 
 #: gui2/library.c:4931
 msgid "gretl: range-mean statistics"
@@ -15535,9 +15534,9 @@ msgid "Selection equation"
 msgstr "Equazione di selezione"
 
 #: plugin/import_common.c:53
-#, fuzzy, c-format
+#, c-format
 msgid "At row %d, column %d:\n"
-msgstr "Riga %d, colonna %d del foglio"
+msgstr "Alla riga %d, colonna %d:\n"
 
 #: plugin/import_common.c:56
 msgid ""
