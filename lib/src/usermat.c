@@ -745,6 +745,51 @@ static int get_slices (matrix_subspec *spec,
     return err;
 }
 
+int assign_scalar_to_submatrix (gretl_matrix *M, double x,
+				matrix_subspec *spec)
+{
+    int mr = gretl_matrix_rows(M);
+    int mc = gretl_matrix_cols(M);
+    int i, err = 0;
+
+    if (spec == NULL) {
+	fprintf(stderr, "matrix_replace_submatrix: spec is NULL!\n");
+	return E_DATA;
+    }
+
+    if (spec->type[0] == SEL_DIAG) {
+	int n = (mr < mc)? mr : mc;
+
+	for (i=0; i<n; i++) {
+	    gretl_matrix_set(M, i, i, x);
+	}
+	return 0;
+    }
+
+    if (spec->rslice == NULL && spec->cslice == NULL) {
+	/* parse mspec into lists of affected rows and columns */
+	err = get_slices(spec, M);
+    }
+
+    if (!err) {
+	int sr = (spec->rslice == NULL)? mr : spec->rslice[0];
+	int sc = (spec->cslice == NULL)? mc : spec->cslice[0];
+	int j, l, k = 0;
+	int mi, mj;
+
+	for (i=0; i<sr; i++) {
+	    mi = (spec->rslice == NULL)? k++ : spec->rslice[i+1] - 1;
+	    l = 0;
+	    for (j=0; j<sc; j++) {
+		mj = (spec->cslice == NULL)? l++ : spec->cslice[j+1] - 1;
+		gretl_matrix_set(M, mi, mj, x);
+	    }
+	}
+    }
+
+    return err;
+}
+
 /* @M is the target for partial replacement, @S is the source to
    substitute, and @spec tells how/where to make the
    substitution.

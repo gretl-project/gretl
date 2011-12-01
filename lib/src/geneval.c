@@ -10577,15 +10577,18 @@ static void assign_to_matrix_mod (parser *p)
     }
 }
 
-/* replacing a sub-matrix of the original LHS matrix, by
-   either straight or modified assignment */
+/* Here we're replacing a sub-matrix of the original LHS matrix, by
+   either straight or inflected assignment. The value that we're
+   using for replacement will be either a matrix or a scalar.
+*/
 
-static void matrix_edit (parser *p)
+static void edit_matrix (parser *p, int *prechecked)
 {
     matrix_subspec *spec;
     gretl_matrix *m = NULL;
 
     if (p->ret->t != NUM) {
+	/* not a scalar: get the replacement matrix */
 	m = grab_or_copy_matrix_result(p);
 	if (m == NULL) {
 	    return;
@@ -10593,17 +10596,21 @@ static void matrix_edit (parser *p)
     }
 
 #if EDEBUG
-    fprintf(stderr, "matrix_edit: m = %p\n", (void *) m);
+    fprintf(stderr, "edit_matrix: m = %p\n", (void *) m);
 #endif
 
     spec = p->lh.mspec;
 
+    /* check the validity of the subspec we got */
     p->err = check_matrix_subspec(spec, p->lh.m0);
     if (p->err) {
 	return;
     }
 
     if (p->ret->t == NUM && spec->type[0] == SEL_ELEMENT) {
+	/* Assignment (possibly "inflected") of a scalar value 
+	   to a single element of an existing matrix
+	*/
 	int i = mspec_get_row_index(spec);
 	int j = mspec_get_col_index(spec);
 	double x = matrix_get_element(p->lh.m0, i, j, &p->err);
@@ -10617,22 +10624,45 @@ static void matrix_edit (parser *p)
 		set_gretl_warning(W_GENNAN);
 	    }
 	    gretl_matrix_set(p->lh.m0, i-1, j-1, x);
-	    /* flag the fact that we produced a matrix, even
-	       though it's the one that was present on input
+	    /* Flag the fact that we produced a matrix, even
+	       though it's the one that was present on input.
+	       Also flag the fact that the output matrix is
+	       "prechecked" for NaNs.
 	    */
 	    p->lh.m1 = p->lh.m0;
+	    *prechecked = 1;
 	}
-	return; /* note */
+	return; /* note, we're done */
+    } 
+
+    if (p->ret->t == NUM && p->op == B_ASN) {
+	/* Straight assignment of a scalar value to non-scalar
+	   submatrix */
+	double x = p->ret->v.xval;
+
+	if (xna(x)) {
+	    if (na(x)) {
+		x = M_NA;
+	    }
+	    set_gretl_warning(W_GENNAN);
+	}
+	p->err = assign_scalar_to_submatrix(p->lh.m0, x, spec);
+	p->lh.m1 = p->lh.m0;
+	*prechecked = 1;
+	return; /* note, we're done */
     }
 
-    if (p->op != B_ASN || p->ret->t == NUM) {
-	/* doing '+=' or some such: new submatrix 'b' must
-	   be calculated using original submatrix 'a' and
-	   generated matrix 'm'.
+    if (p->op != B_ASN) {
+	/* Here we're doing '+=' or some such, in which case a new
+	   submatrix must be calculated using the original
+	   submatrix 'a' and the newly generated matrix (or
+	   scalar value).
 	*/
 	gretl_matrix *a = NULL;
 	gretl_matrix *b = NULL;
 
+	/* get a copy of the relevant chunk of the original
+	   matrix */
 	a = matrix_get_submatrix(p->lh.m0, spec, 1, &p->err);
 
 	if (!p->err) {
@@ -10642,18 +10672,22 @@ static void matrix_edit (parser *p)
 		for (i=0; i<n; i++) {
 		    a->val[i] = xy_calc(a->val[i], p->ret->v.xval, p->op, MAT, p);
 		}
-		m = a; /* preserve modified submatrix */
+		m = a; /* preserve modified submatrix as 'm' */
 	    } else {
 		b = real_matrix_calc(a, m, p->op, &p->err);
 		gretl_matrix_free(a);
 		gretl_matrix_free(m);
-		m = b; /* replace 'm' with fully computed result */
+		m = b; /* replace 'm' with computed result */
 	    }
 	}
     } 
 
     if (!p->err) {
-	/* write new submatrix into place */
+	/* Write new submatrix 'm' into place: note that we come here
+	   directly if none of the special conditions above are
+	   satisfied -- for example, if the newly generated object
+	   is a matrix and the task is straight assignment.
+	*/
 	p->err = user_matrix_replace_submatrix(p->lh.name, m, spec);
 	gretl_matrix_free(m);
 	if (p->ret->t == MAT) {
@@ -11067,21 +11101,23 @@ static int save_generated_var (parser *p, PRN *prn)
 	    set_dataset_is_changed();
 	}
     } else if (p->targ == MAT) {
-	/* writing a matrix */
+	/* we're writing a matrix */
+	int prechecked = 0;
+
 	if (p->lh.m0 == NULL) {
-	    /* no pre-existing LHS: substr must be NULL */
+	    /* there's no pre-existing left-hand side matrix */
 	    matrix_from_scratch(p, 0);
 	} else if (p->lh.substr == NULL && p->op == B_ASN) {
-	    /* unmodified assignment to existing matrix */
+	    /* uninflected assignment to an existing matrix */
 	    assign_to_matrix(p);
 	} else if (p->lh.substr == NULL) {
-	    /* modified assignment to whole existing matrix */
+	    /* inflected assignment to entire existing matrix */
 	    assign_to_matrix_mod(p);
 	} else {
 	    /* assignment to submatrix of original */
-	    matrix_edit(p);
+	    edit_matrix(p, &prechecked);
 	}
-	if (gretl_matrix_xna_check(p->lh.m1)) {
+	if (!prechecked && gretl_matrix_xna_check(p->lh.m1)) {
 	    set_gretl_warning(W_GENNAN);
 	}
     } else if (p->targ == LIST) {

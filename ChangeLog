@@ -19,6 +19,8 @@ version 1.9.7, in progress
   also colorize them for emphasis)
 - Cointegration testing: treat restricted exogenous terms as per Ox and
   PcGive (don't lag them in the initial OLS regressions)
+- Fix bug: breakage in mle when a "genr" line in the mle block assigns
+  a new value to a submatrix
 - Fix bug: possible crash in tsls when there are missing values and a
   regressor is all-zero at the complete observations
 - Fix bug: "summary" command with --by option not respecting the
