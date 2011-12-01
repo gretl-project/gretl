@@ -3157,7 +3157,7 @@ write_weights_to_dataset (double *uvar, int nunits, int T,
 	if (uvar[i] <= 0.0 || na(uvar[i])) {
 	    wi = 0.0;
 	} else {
-	    wi = 1.0 / uvar[i];
+	    wi = 1.0 / uvar[i]; /* sqrt? */
 	}
 	for (t=0; t<T; t++) {
 	    dset->Z[w][panel_index(i, t)] = wi;
@@ -3193,32 +3193,30 @@ static double max_coeff_diff (const MODEL *pmod, const double *bvec)
     return maxdiff;
 }
 
-#define S2MINOBS 2
+#define S2MINOBS 1
 
 /* Wald test for groupwise heteroskedasticity, without assuming
    normality of the errors: see Greene, 4e, p. 598.  Note that the
-   computation involves a factor of (1/(T_i - 1)) so this is not
-   usable when some of the groups have only one observation.
+   computation involves a factor of (1/(T_i - 1)) so we cannot
+   include groups that have only one observation.
 */
 
 static double 
 wald_hetero_test (const MODEL *pmod, double s2, 
-		  const double *uvar, panelmod_t *pan)
+		  const double *uvar, panelmod_t *pan,
+		  int *df)
 {
     double x, W = 0.0;
     int i, t, Ti;
+
+    *df = 0;
 
     for (i=0; i<pan->nunits; i++) {
 	double fii = 0.0;
 
 	Ti = pan->unit_obs[i];
-	if (Ti == 0) {
+	if (Ti < 2) {
 	    continue;
-	}
-
-	if (Ti < S2MINOBS) {
-	    W = NADBL;
-	    break;
 	}
 
 	for (t=0; t<pan->T; t++) {
@@ -3237,6 +3235,11 @@ wald_hetero_test (const MODEL *pmod, double s2,
 	fii *= (1.0 / Ti) * (1.0 / (Ti - 1.0));
 	x = uvar[i] - s2;
 	W += x * x / fii;
+	*df += 1;
+    }
+
+    if (*df < 2) {
+	W = NADBL;
     }
 
     return W;
@@ -3310,7 +3313,7 @@ static void panel_ML_ll (MODEL *pmod, const double *uvar,
 }
 
 /* we can't estimate a group-specific variance based on just one
-   observation? */
+   observation */
 
 static int singleton_check (const int *unit_obs, int nunits)
 {
@@ -3328,39 +3331,44 @@ static int singleton_check (const int *unit_obs, int nunits)
 /* compute per-unit error variances */
 
 static void unit_error_variances (double *uvar, const MODEL *pmod, 
-				  panelmod_t *pan)
+				  panelmod_t *pan, int *df)
 {
     int i, t;
     double uit;
 
+    *df = 0;
+
     for (i=0; i<pan->nunits; i++) {
-	if (pan->unit_obs[i] == 0) {
+	if (pan->unit_obs[i] < S2MINOBS) {
 	    uvar[i] = NADBL;
-	    continue;
-	}
-	uvar[i] = 0.0;
-	for (t=0; t<pan->T; t++) {
-	    uit = pmod->uhat[panel_index(i, t)];
-	    if (!na(uit)) {
-		uvar[i] += uit * uit;
+	} else {
+	    uvar[i] = 0.0;
+	    for (t=0; t<pan->T; t++) {
+		uit = pmod->uhat[panel_index(i, t)];
+		if (!na(uit)) {
+		    uvar[i] += uit * uit;
+		}
 	    }
-	}
-	uvar[i] /= pan->unit_obs[i]; 
+	    uvar[i] /= pan->unit_obs[i];
+	    *df += 1;
+	} 
     }
 }
 
-static void print_unit_variances (panelmod_t *pan, double *uvar, PRN *prn)
+static void print_unit_variances (panelmod_t *pan, double *uvar, 
+				  int wald_test, PRN *prn)
 {
-    int i;
+    int i, Ti;
 
     pputs(prn, " unit    variance\n");
 
     for (i=0; i<pan->nunits; i++) {
-	if (pan->unit_obs[i] > 0) {
-	    pprintf(prn, "%5d%12g (T = %d)\n", i + 1, uvar[i], pan->unit_obs[i]);
+	Ti = pan->unit_obs[i];
+	if (na(uvar[i]) || (wald_test && Ti < 2)) {
+	    pprintf(prn, "%5d%12s (T = %d)\n", i+1, "NA", Ti);
 	} else {
-	    pprintf(prn, "%5d%12s (T = %d)\n", i + 1, "NA", pan->unit_obs[i]);
-	}
+	    pprintf(prn, "%5d%#12g (T = %d)\n", i+1, uvar[i], Ti);
+	} 
     }
 }
 
@@ -3467,10 +3475,11 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
     */
 
     while (diff > SMALLDIFF) {
+	int df = 0;
 
 	iter++;
 
-	unit_error_variances(uvar, &mdl, &pan);
+	unit_error_variances(uvar, &mdl, &pan, &df);
 
 	if (opt & OPT_V) {
 	    if (opt & OPT_I) {
@@ -3479,7 +3488,7 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
 	    } else {
 		pputc(prn, '\n');
 	    }
-	    print_unit_variances(&pan, uvar, prn);
+	    print_unit_variances(&pan, uvar, 0, prn);
 	}
 
 	write_weights_to_dataset(uvar, pan.nunits, pan.T, dset);
@@ -3524,9 +3533,11 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
 	mdl.nwt = 0;
 
 	if (opt & OPT_I) {
+	    int df = 0;
+
 	    gretl_model_set_int(&mdl, "iters", iter);
 	    ml_hetero_test(&mdl, s2, uvar, pan.nunits, pan.unit_obs);
-	    unit_error_variances(uvar, &mdl, &pan);
+	    unit_error_variances(uvar, &mdl, &pan, &df);
 	    panel_ML_ll(&mdl, uvar, pan.nunits, pan.unit_obs);
 	    if (opt & OPT_V) {
 		pputc(prn, '\n');
@@ -3559,7 +3570,7 @@ static void print_wald_test (double W, int df, double pval,
 
     if (pan->nunits <= 30) {
 	pprintf(prn, "%s = %g\n\n", _("Pooled error variance"), s2);
-	print_unit_variances(pan, uvar, prn);
+	print_unit_variances(pan, uvar, 1, prn);
     }
 }
 
@@ -3583,7 +3594,7 @@ int groupwise_hetero_test (MODEL *pmod, DATASET *dset,
     panelmod_t pan;
     double *uvar = NULL;
     double s2, W = NADBL;
-    int err = 0;
+    int df, err = 0;
 
     if (pmod->ci == OLS || (pmod->ci == PANEL && (pmod->opt & OPT_F))) {
 	; /* OK for pooled or fixed effects */
@@ -3607,19 +3618,17 @@ int groupwise_hetero_test (MODEL *pmod, DATASET *dset,
 
     s2 = pmod->ess / pmod->nobs;
 
-    unit_error_variances(uvar, pmod, &pan);
+    unit_error_variances(uvar, pmod, &pan, &df);
 
-    W = wald_hetero_test(pmod, s2, uvar, &pan);
+    if (df >= 2) {
+	W = wald_hetero_test(pmod, s2, uvar, &pan, &df);
+    }
 
-    if (!na(W)) {
-	double pval;
-	int i, df = 0;
+    if (na(W)) {
+	err = E_DATA;
+    } else {
+	double pval = chisq_cdf_comp(df, W);
 
-	for (i=0; i<pan.nunits; i++) {
-	    if (pan.unit_obs[i] >= S2MINOBS) df++;
-	}
-
-	pval = chisq_cdf_comp(df, W);
 	print_wald_test(W, df, pval, &pan, uvar, s2, prn);
 
 	if (opt & OPT_S) {

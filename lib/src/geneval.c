@@ -10582,7 +10582,7 @@ static void assign_to_matrix_mod (parser *p)
    using for replacement will be either a matrix or a scalar.
 */
 
-static void edit_matrix (parser *p, int *prechecked)
+static void edit_matrix (parser *p)
 {
     matrix_subspec *spec;
     gretl_matrix *m = NULL;
@@ -10626,11 +10626,8 @@ static void edit_matrix (parser *p, int *prechecked)
 	    gretl_matrix_set(p->lh.m0, i-1, j-1, x);
 	    /* Flag the fact that we produced a matrix, even
 	       though it's the one that was present on input.
-	       Also flag the fact that the output matrix is
-	       "prechecked" for NaNs.
 	    */
 	    p->lh.m1 = p->lh.m0;
-	    *prechecked = 1;
 	}
 	return; /* note, we're done */
     } 
@@ -10648,7 +10645,6 @@ static void edit_matrix (parser *p, int *prechecked)
 	}
 	p->err = assign_scalar_to_submatrix(p->lh.m0, x, spec);
 	p->lh.m1 = p->lh.m0;
-	*prechecked = 1;
 	return; /* note, we're done */
     }
 
@@ -10658,37 +10654,42 @@ static void edit_matrix (parser *p, int *prechecked)
 	   submatrix 'a' and the newly generated matrix (or
 	   scalar value).
 	*/
-	gretl_matrix *a = NULL;
-	gretl_matrix *b = NULL;
-
-	/* get a copy of the relevant chunk of the original
-	   matrix */
-	a = matrix_get_submatrix(p->lh.m0, spec, 1, &p->err);
+	gretl_matrix *a = matrix_get_submatrix(p->lh.m0, spec, 
+					       1, &p->err);
 
 	if (!p->err) {
 	    if (p->ret->t == NUM) {
 		int i, n = a->rows * a->cols;
+		double x = p->ret->v.xval;
 
 		for (i=0; i<n; i++) {
-		    a->val[i] = xy_calc(a->val[i], p->ret->v.xval, p->op, MAT, p);
+		    a->val[i] = xy_calc(a->val[i], x, p->op, MAT, p);
 		}
-		m = a; /* preserve modified submatrix as 'm' */
+		/* assign computed matrix to m */
+		m = a;
 	    } else {
-		b = real_matrix_calc(a, m, p->op, &p->err);
+		gretl_matrix *b = real_matrix_calc(a, m, p->op, &p->err);
+
 		gretl_matrix_free(a);
+		/* replace existing m with computed result */
 		gretl_matrix_free(m);
-		m = b; /* replace 'm' with computed result */
+		m = b;
 	    }
 	}
     } 
 
     if (!p->err) {
-	/* Write new submatrix 'm' into place: note that we come here
+	/* Write new submatrix m into place: note that we come here
 	   directly if none of the special conditions above are
-	   satisfied -- for example, if the newly generated object
-	   is a matrix and the task is straight assignment.
+	   satisfied -- for example, if the newly generated value
+	   is a matrix and the task is straight assignment. Also
+	   check for numerical "breakage" in the replacement
+	   submatrix.
 	*/
 	p->err = user_matrix_replace_submatrix(p->lh.name, m, spec);
+	if (!p->err && gretl_matrix_xna_check(m)) {
+	    set_gretl_warning(W_GENNAN);
+	}
 	gretl_matrix_free(m);
 	if (p->ret->t == MAT) {
 	    p->ret->v.m = NULL; /* ?? */
@@ -11115,7 +11116,8 @@ static int save_generated_var (parser *p, PRN *prn)
 	    assign_to_matrix_mod(p);
 	} else {
 	    /* assignment to submatrix of original */
-	    edit_matrix(p, &prechecked);
+	    edit_matrix(p);
+	    prechecked = 1;
 	}
 	if (!prechecked && gretl_matrix_xna_check(p->lh.m1)) {
 	    set_gretl_warning(W_GENNAN);
