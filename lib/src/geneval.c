@@ -10617,8 +10617,12 @@ static void matrix_edit (parser *p)
 		set_gretl_warning(W_GENNAN);
 	    }
 	    gretl_matrix_set(p->lh.m0, i-1, j-1, x);
+	    /* flag the fact that we produced a matrix, even
+	       though it's the one that was present on input
+	    */
+	    p->lh.m1 = p->lh.m0;
 	}
-	return;
+	return; /* note */
     }
 
     if (p->op != B_ASN || p->ret->t == NUM) {
