@@ -259,6 +259,7 @@ enum {
     F_GETENV,
     F_NGETENV,
     F_PSHRINK,
+    F_FREQ,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,

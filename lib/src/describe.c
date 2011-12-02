@@ -2053,6 +2053,51 @@ int freqdist (int varno, const DATASET *dset,
     return err;
 }
 
+/* Wrapper function: get the frequency distribution and write it into
+   a gretl_matrix: the first column holds the mid-points of the bins
+   and the second holds the frequencies.
+*/
+
+gretl_matrix *freqdist_matrix (const double *x, int t1, int t2, int *err)
+{
+    DATASET *dset = NULL;
+    FreqDist *freq = NULL;
+    gretl_matrix *m = NULL;
+    int i, t, T = t2 - t1 + 1;
+
+    dset = create_auxiliary_dataset(1, T);
+    if (dset == NULL) {
+	*err = E_ALLOC;
+    }
+    
+    if (!*err) {
+	i = 0;
+	for (t=t1; t<=t2; t++) {
+	    dset->Z[0][i++] = x[t];
+	}
+	freq = get_freq(0, dset, NADBL, NADBL, 0, 1, OPT_NONE, err);
+    }
+
+    if (!*err) {
+	m = gretl_matrix_alloc(freq->numbins, 2);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	for (i=0; i<freq->numbins; i++) {
+	    gretl_matrix_set(m, i, 0, freq->midpt[i]);
+	    gretl_matrix_set(m, i, 1, freq->f[i]);
+	}
+    }
+
+    destroy_dataset(dset); 
+    free_freq(freq);
+
+    return m;
+}
+
 gretl_matrix *xtab_to_matrix (const Xtab *tab)
 {
     gretl_matrix *m;

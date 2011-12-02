@@ -380,6 +380,7 @@ struct str_table funcs[] = {
     { F_NADARWAT, "nadarwat" },   /* Nadaraya-Watson */
     { F_SIMANN,   "simann" },     /* simulated annealing */
     { F_LOESS,    "loess" },
+    { F_FREQ,     "freq" },
     { 0,          NULL }
 };
 

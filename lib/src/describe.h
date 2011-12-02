@@ -147,6 +147,9 @@ FreqDist *get_discrete_freq (int v, const DATASET *dset,
 int freqdist (int varno, const DATASET *dset,
 	      int *graph, gretlopt opt, PRN *prn);
 
+gretl_matrix *freqdist_matrix (const double *x, int t1, int t2, 
+			       int *err);
+
 int crosstab (const int *list, const DATASET *dset, 
 	      gretlopt opt, PRN *prn);
 

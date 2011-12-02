@@ -4844,6 +4844,35 @@ static NODE *do_irr (NODE *l, parser *p)
     return ret;
 }
 
+/* Takes a series as argument and returns a matrix: 
+   right now only F_FREQ does this 
+*/
+
+static NODE *series_matrix_func (NODE *n, int f, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL) {
+	gretl_matrix *tmp = NULL;
+	int t1 = p->dset->t1;
+	int t2 = p->dset->t2;
+
+	if (n->t == MAT) {
+	    cast_to_series(n, f, &tmp, &t1, &t2, p);
+	} 
+
+	if (!p->err) {
+	    ret->v.m = freqdist_matrix(n->v.xvec, t1, t2, &p->err);
+	    if (n->t == MAT) {
+		/* restore matrix on @n after "cast" above */
+		n->v.m = tmp;
+	    }
+	}
+    }
+
+    return ret;
+}	
+
 #define use_tramo(s) (s != NULL && (s[0] == 't' || s[0] == 'T'))
 
 #define is_panel_stat(f) (f == F_PNOBS || \
@@ -8669,6 +8698,14 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 0, VEC, l, p);
 	} 
 	break;
+    case F_FREQ:
+	/* series -> matrix */
+	if (l->t == VEC || l->t == MAT) {
+	    ret = series_matrix_func(l, t->t, p);
+	} else {
+	    node_type_error(t->t, 0, VEC, l, p);
+	} 
+	break;	
     case F_PSHRINK:
 	if (l->t == VEC) {
 	    ret = do_panel_shrink(l, p);
