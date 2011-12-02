@@ -1068,11 +1068,13 @@ static int maybe_fix_op_depvar (MODEL *pmod, DATASET *dset,
 	}
     }
 
+#if 0
     if (fixit) {
 	fputs("oprobit: using normalized y\n", stderr);
     } else {
 	fputs("oprobit: using original y\n", stderr);
     }
+#endif
 
     free(s);
 
