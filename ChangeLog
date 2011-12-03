@@ -11,14 +11,17 @@ version 1.9.7, in progress
 - "rmplot" command (range-mean plot): add a --trim option to discard the
   minimum and maximum from each sub-sample
 - "gnuplot" command: enhance the --with-lines option to permit using
-  lines for some series and point for others
-- new function simann() provides user access to simulated annealing
+  lines for some series and points for others
+- New function simann() provides user access to simulated annealing
 - Speed up the production of bootstrapped confidence bands for impulse 
   responses in VECM models
 - Online help: ensure that option flags don't break across lines (and
   also colorize them for emphasis)
 - Cointegration testing: treat restricted exogenous terms as per Ox and
   PcGive (don't lag them in the initial OLS regressions)
+- Fix breakage in GUI dialog box for ADF-GLS test
+- Fix: the panel groupwise heteroskedasticity test failed silently if
+  a group had just one usable observation
 - Fix bug: breakage in mle when a "genr" line in the mle block assigns
   a new value to a submatrix
 - Fix bug: possible crash in tsls when there are missing values and a

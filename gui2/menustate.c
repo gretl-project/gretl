@@ -214,14 +214,19 @@ void time_series_menu_state (gboolean s)
     gboolean sx = extended_ts(dataset);
     gboolean panel = dataset_is_panel(dataset);
     gboolean realpan = multi_unit_panel_sample(dataset);
-    gboolean ur = s;
+    gboolean ur;
 
     if (mdata->ui == NULL) {
 	return;
     }
 
+    /* unit-root tests: require time-series or panel data,
+       and a time series length greater than 5
+    */
     if (panel) {
 	ur = dataset->pd > 5;
+    } else {
+	ur = s && sample_size(dataset) > 5;
     }
 
     /* Plots */
@@ -233,11 +238,10 @@ void time_series_menu_state (gboolean s)
     /* Variable menu */
     flip(mdata->ui, "/menubar/Variable/URTests", ur); 
     if (ur && !s) {
+	/* a time-series only "ur" option */
 	flip(mdata->ui, "/menubar/Variable/URTests/fractint", s);
     }
-    if (ur && !panel) {
-	flip(mdata->ui, "/menubar/Variable/URTests/levinlin", panel);
-    }
+    flip(mdata->ui, "/menubar/Variable/URTests/levinlin", ur && panel);
     flip(mdata->ui, "/menubar/Variable/corrgm", s);
     flip(mdata->ui, "/menubar/Variable/pergm", s);
     flip(mdata->ui, "/menubar/Variable/Filter", s);
@@ -248,8 +252,10 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/Variable/Tramo", get_tramo_ok());
 #endif
     flip(mdata->ui, "/menubar/Variable/Hurst", s);
+
     /* Model menu */
     flip(mdata->ui, "/menubar/Model/TSModels", s);
+
     /* Sample menu */
     flip(mdata->ui, "/menubar/Data/DataCompact", 
 	 s && (COMPACTABLE(dataset) || dated_weekly_data(dataset)));

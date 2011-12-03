@@ -4158,6 +4158,7 @@ static void checks_dialog_ok (GtkButton *button, GtkWidget *dialog)
   that at least one check button with index greater than or
   equal to @check_min and less than @check_max must be selected,
   or else the the dialog would give a null result.
+
   This is used to flag a warning to the user if OK is pressed with
   "nothing selected".
 */
