@@ -1646,12 +1646,27 @@ static int parse_restriction_row (gretl_restriction *rset,
     }
 
     if (!err) {
+	char rhstr[32];
 	double rhs = 0.0;
 
-	if (!sscanf(s, " = %lf", &rhs)) {
+	s += strspn(s, " ");
+
+	if (*s != '=') {
 	    err = E_PARSE;
 	} else {
-	    row->rhs += rhs;
+	    s++;
+	    if (!sscanf(s, "%31s", rhstr)) {
+		err = E_PARSE;
+	    } else if (sscanf(s, "%lf", &rhs) == 1) {
+		row->rhs += rhs;
+	    } else if (gretl_is_scalar(rhstr)) {
+		rhs = gretl_scalar_get_value(rhstr);
+		if (na(rhs)) {
+		    err = E_DATA;
+		} else {
+		    row->rhs += rhs;
+		}
+	    }
 	}
     }
 
