@@ -929,10 +929,11 @@ static int ok_obs_in_series (int varno)
     return t2 - t1 + 1;
 }
 
-void unit_root_test (int ci)
+static int adf_get_options (const char *title, int panel, 
+			    int omax, int *order,
+			    gretlopt *popt)
 {
-    PRN *prn;
-    const char *adf_opts[] = {
+    const char *ts_opts[] = {
 	N_("test down from maximum lag order"),
 	N_("test without constant"),
 	N_("with constant"),
@@ -944,7 +945,7 @@ void unit_root_test (int ci)
 	N_("use level of variable"),
 	N_("use first difference of variable")
     };
-    const char *panel_adf_opts[] = {
+    const char *panel_opts[] = {
 	/* radio items */
 	N_("with constant"),
 	N_("with constant and trend"),
@@ -953,8 +954,129 @@ void unit_root_test (int ci)
 	N_("use first difference of variable"),
 	N_("show individual test results")
     };
-    const char *alt_opts[] = {
+    static int ts_active[] = { 1, 0, 1, 1, 0, 0, 0 };
+    static int panel_active[] = { 0, 0, 1 };
+    const char **opts = panel ? panel_opts : ts_opts;
+    int *active = panel ? panel_active : ts_active;
+    int nchecks = panel ? 3 : 7;
+    int nradios = panel ? -2 : 2;
+    int check_min = panel ? 0 : 1;
+    int check_max = panel ? 0 : 5;
+    int pantrend = 0;
+    int difference = 0;
+    int *rvar = panel ? &pantrend : &difference;
+    int save_seas = ts_active[5];
+    gretlopt opt = OPT_NONE;
+    int resp;
+
+    if (!panel && dataset->pd == 1) {
+	/* disallow seasonal dummies option */
+	ts_active[5] = -1;
+    }
+
+    /* note: making nradios < 0 places the radio buttons before the
+       check boxes in the dialog box produced by checks_dialog()
+    */
+
+    resp = checks_dialog(_(title), NULL, 
+			 opts, nchecks, active, 
+			 check_min, check_max,
+			 nradios, rvar, order, 
+			 _("Lag order for ADF test:"), 
+			 0, omax, panel ? 0 : ADF);
+    if (resp < 0) {
+	/* canceled */
+	if (ts_active[5] < 0) {
+	    ts_active[5] = save_seas;
+	}
+	return resp;
+    }
+
+    if (panel) {
+	if (active[0]) opt |= OPT_E; /* test down */
+	if (active[1]) opt |= OPT_F; /* difference */
+	if (active[2]) opt |= OPT_V; /* verbose */
+	if (pantrend)  opt |= OPT_T;
+    } else {
+	if (active[0]) opt |= OPT_E;
+	if (active[1]) opt |= OPT_N;
+	if (active[2]) opt |= OPT_C;
+	if (active[3]) opt |= OPT_T;
+	if (active[4]) opt |= OPT_R;     /* quad trend */
+	if (active[5] > 0) opt |= OPT_D; /* seasonals */
+	if (active[6]) opt |= OPT_V;     /* verbosity */
+	if (difference) opt |= OPT_F;
+    }
+    
+    if (ts_active[5] < 0) {
+	ts_active[5] = save_seas;
+    }
+
+    *popt = opt;
+
+    return 0;
+}
+
+static int dfgls_get_options (const char *title, int panel, 
+			      int omax, int *order,
+			      gretlopt *popt)
+{
+    const char *ts_opts[] = {
 	N_("test down from maximum lag order"),
+	N_("include a trend"),
+	N_("show regression results"),
+	/* radio items */
+	N_("use level of variable"),
+	N_("use first difference of variable")
+    };
+    const char *panel_opts[] = {
+	N_("include a trend"),
+	N_("use first difference of variable"),
+	N_("show individual test results")
+    };
+    static int ts_active[] = { 1, 0, 0 };
+    static int panel_active[] = { 0, 0, 1 };
+    const char **opts = panel ? panel_opts : ts_opts;
+    int *active = panel ? panel_active : ts_active;
+    int nchecks = 3;
+    int nradios = panel ? 0 : 2;
+    int difference = 0;
+    int *rvar = panel ? NULL : &difference;
+    gretlopt opt = OPT_NONE;
+    int resp;
+
+    resp = checks_dialog(_(title), NULL, 
+			 opts, nchecks, active, 0, 0,
+			 nradios, rvar, order, 
+			 _("Lag order for ADF test:"), 
+			 0, omax, panel? 0 : DFGLS);
+    if (resp < 0) {
+	return resp;
+    }
+
+    opt |= OPT_G; /* --gls */
+
+    if (panel) {
+	if (active[0]) opt |= OPT_T;
+	if (active[1]) opt |= OPT_F;
+    } else {
+	if (active[0]) opt |= OPT_E;
+	if (active[1]) opt |= OPT_T;
+	if (difference) opt |= OPT_F;
+    }
+    if (active[2]) opt |= OPT_V;
+    if (!(opt & OPT_T)) opt |= OPT_C;
+
+    *popt = opt;
+
+    return 0;
+}
+
+static int kpss_get_options (const char *title, int panel, 
+			     int omax, int *order,
+			     gretlopt *popt)
+{
+    const char *ts_opts[] = {
 	N_("include a trend"),
 	N_("include seasonal dummies"),
 	N_("show regression results"),
@@ -962,38 +1084,107 @@ void unit_root_test (int ci)
 	N_("use level of variable"),
 	N_("use first difference of variable")
     };
-    const char *panel_alt_opts[] = {
+    const char *panel_opts[] = {
 	N_("include a trend"),
 	N_("use first difference of variable"),
 	N_("show individual test results")
     };
+    static int ts_active[] = { 0, 0, 0 };
+    static int panel_active[] = { 0, 0, 1 };
+    const char **opts = panel ? panel_opts : ts_opts;
+    int *active = panel ? panel_active : ts_active;
+    int nchecks = 3;
+    int nradios = panel ? 0 : 2;
+    int difference = 0;
+    int *rvar = panel ? NULL : &difference;
+    gretlopt opt = OPT_NONE;
+    int save_seas = ts_active[1];
+    int resp;
 
-    const char *adf_title = N_("gretl: ADF test");
-    const char *dfgls_title = N_("gretl: ADF-GLS test");
-    const char *kpss_title = N_("gretl: KPSS test");
-    const char *llc_title = N_("gretl: Levin-Lin-Chu test");
-    const char *adf_spintext = N_("Lag order for ADF test:");
-    const char *kpss_spintext = N_("Lag order for KPSS test:");
-    const char *title, *spintext, **opts;
+    if (!panel && dataset->pd == 1) {
+	/* disallow seasonal dummies option */
+	ts_active[1] = -1;
+    }
 
+    resp = checks_dialog(_(title), NULL, 
+			 opts, nchecks, active, 0, 0,
+			 nradios, rvar, order, 
+			 _("Lag order for KPSS test:"), 
+			 0, omax, panel ? 0 : KPSS);
+    if (resp < 0) {
+	if (ts_active[1] < 0) {
+	    ts_active[1] = save_seas;
+	}
+	return resp;
+    }
+
+    if (panel) {
+	if (active[0]) opt |= OPT_T;
+	if (active[1]) opt |= OPT_F; /* difference */
+	if (active[2]) opt |= OPT_V; /* verbose */
+    } else {
+	if (active[0]) opt |= OPT_T;
+	if (active[1] > 0) opt |= OPT_D;
+	if (active[2]) opt |= OPT_V;
+	if (difference) opt |= OPT_F;
+    }
+
+    if (ts_active[1] < 0) {
+	ts_active[1] = save_seas;
+    }
+
+    *popt = opt;
+
+    return 0;	
+}
+
+static int levin_lin_get_options (const char *title,  int panel, 
+				  int omax, int *order,
+				  gretlopt *popt)
+{
+    const char *opts[] = {
+	N_("test without constant"),
+	N_("with constant"),
+	N_("with constant and trend")
+    };
+    static int llc_case = 1;
+    gretlopt opt = OPT_NONE;
+    int resp;
+
+    resp = checks_dialog(_(title), NULL, 
+			 opts, 0, NULL, 0, 0,
+			 3, &llc_case, order, 
+			 _("Lag order for ADF test:"), 
+			 0, omax, LEVINLIN);
+    if (resp < 0) {
+	return resp;
+    }
+
+    if (llc_case == 0) opt |= OPT_N; /* no const */
+    if (llc_case == 2) opt |= OPT_T; /* trend */
+
+    *popt = opt;
+
+    return 0;
+}
+
+void unit_root_test (int ci)
+{
     /* save the user's settings, per session */
-    static int adf_active[] = { 1, 0, 1, 1, 0, 0, 0 };
-    static int panel_adf_active[] = { 0, 0, 1 };
-    static int alt_active[] = { 1, 0, 0 };
-    static int panel_alt_active[] = { 0, 0, 1 };
     static int ts_order = -1;
     static int panel_order = 0;
-    static int llc_case = 1;
-
+    const char *titles[] = {
+	N_("gretl: ADF test"),
+	N_("gretl: ADF-GLS test"),
+	N_("gretl: KPSS test"),
+	N_("gretl: Levin-Lin-Chu test")
+    };
+    const char *title;
     gretlopt opt = 0;
-    int pantrend = 0, difference = 0, *rvar = NULL;
     int panel = dataset_is_panel(dataset);
     int order, omax, okT, v = mdata_active_var();
-    int *active = NULL;
-    int nchecks, nradios;
-    int check_min = 0, check_max = 0;
-    int helpcode = 0;
     int vlist[2] = {1, v};
+    PRN *prn;
     int err;
 
     if (panel) {
@@ -1001,12 +1192,14 @@ void unit_root_test (int ci)
 	order = panel_order;
     } else {
 	okT = ok_obs_in_series(v);
-	helpcode = ci;
     }
 
     omax = okT / 2;
 
-    if (!panel && ci != KPSS) {
+    if (ci == KPSS) {
+	/* including for panel? */
+	order = 4.0 * pow(okT / 100.0, 0.25);
+    } else if (!panel) {
 	if (ts_order >= 0) {
 	    order = ts_order;
 	} else {
@@ -1017,121 +1210,28 @@ void unit_root_test (int ci)
 	    order = 12.0 * pow(okT/100.0, 0.25);
 	}
     }
-    
-    /* note: making nradios < 0 places the radio buttons before the
-       check boxes in the dialog box produced by checks_dialog()
-    */
 
     if (ci == ADF) {
-	title = adf_title;
-	spintext = adf_spintext;
-	opts = (panel)? panel_adf_opts : adf_opts;
-	nchecks = (panel)? 3 : 7;
-	if (!panel) {
-	    check_min = 1;
-	    check_max = 5;
-	}
-	active = (panel)? panel_adf_active : adf_active;
-	nradios = (panel)? -2 : 2;
+	title = titles[0];
+	err = adf_get_options(title, panel, omax, &order, &opt);
     } else if (ci == DFGLS) {
-	title = dfgls_title;
-	spintext = adf_spintext;
-	opts = (panel)? panel_alt_opts : alt_opts;
-	nchecks = 3;
-	active = (panel)? panel_alt_active : alt_active;
-	nradios = (panel)? 0 : 2;
+	title = titles[1];
+	err = dfgls_get_options(title, panel, omax, &order, &opt);
     } else if (ci == KPSS) {
-	title = kpss_title;
-	spintext = kpss_spintext;
-	opts = (panel)? panel_alt_opts : (alt_opts + 1);
-	nchecks = (panel)? 3 : 3;
-	active = (panel)? panel_alt_active : (alt_active + 1);
-	nradios = (panel)? 0 : 2;
-	order = 4.0 * pow(okT / 100.0, 0.25);
+	title = titles[2];
+	err = kpss_get_options(title, panel, omax, &order, &opt);
     } else {
-	/* levinlin */
-	title = llc_title;
-	spintext = adf_spintext;
-	opts = adf_opts + 1;
-	nchecks = 0;
-	nradios = 3;
-	rvar = &llc_case;
-	helpcode = ci;
+	title = titles[3];
+	err = levin_lin_get_options(title, panel, omax, &order, &opt);
     }	
 
-    if (order > omax) {
-	order = omax;
-    }  
-
-    if (opts == adf_opts && dataset->pd == 1) {
-	/* disallow seasonal dummies option */
-	adf_active[5] = -1;
-    }
-
-    if (!panel) {
-	/* levels / differences radio */
-	rvar = &difference;
-    } else if (ci == ADF) {
-	rvar = &pantrend;
-    }
-
-    err = checks_dialog(_(title), NULL, 
-			opts, nchecks, active, 
-			check_min, check_max,
-			nradios, rvar, 
-			&order, _(spintext), 0, omax, 
-			helpcode);
     if (err < 0) {
+	/* canceled */
 	return;
     }
 
-    if (ci == LEVINLIN) {
-	if (llc_case == 0) opt |= OPT_N; /* no const */
-	if (llc_case == 2) opt |= OPT_T; /* trend */
-    } else if (ci == ADF) {
-	if (panel) {
-	    if (active[0]) opt |= OPT_E; /* test down */
-	    if (pantrend) opt |= OPT_T;
-	} else {
-	    if (active[0]) opt |= OPT_E;
-	    if (active[1]) opt |= OPT_N;
-	    if (active[2]) opt |= OPT_C;
-	    if (active[3]) opt |= OPT_T;
-	    if (active[4]) opt |= OPT_R;     /* quad trend */
-	    if (active[5] > 0) opt |= OPT_D; /* seasonals */
-	    if (active[6]) opt |= OPT_V;     /* verbosity */
-	}
-    } else if (ci == DFGLS) {
-	opt |= OPT_G; /* --gls */
-	if (active[0]) {
-	    opt |= OPT_E;
-	}
-	if (active[1]) {
-	    opt |= OPT_T;
-	} else {
-	    opt |= OPT_C;
-	}
-	if (!panel && active[2]) {
-	    opt |= OPT_V;
-	}
-    } else {
-	/* KPSS */
-	if (active[0]) opt |= OPT_T;
-	if (!panel && active[1]) opt |= OPT_D;
-	if (!panel && active[2]) opt |= OPT_V;
-    } 
-
-    if (panel && ci != LEVINLIN) {
-	if (active[1]) opt |= OPT_F; /* difference */
-	if (active[2]) opt |= OPT_V; /* verbose */
-    }
-
-    if (difference) {
-	opt |= OPT_F;
-    }
-
     if (order == 0 && (opt & OPT_E)) {
-	/* scrub the test-down option */
+	/* scrub the test-down option, if present  */
 	opt &= ~OPT_E;
     }
 
