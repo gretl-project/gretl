@@ -910,18 +910,18 @@ int do_coint (selector *sr)
     return err;
 }
 
-static int ok_obs_in_series (int varno)
+static int ok_obs_in_series (int v)
 {
     int t, t1, t2;
 
     for (t=dataset->t1; t<dataset->t2; t++) {
-	if (!na(dataset->Z[varno][t])) break;
+	if (!na(dataset->Z[v][t])) break;
     }
 
     t1 = t;
 
     for (t=dataset->t2; t>=dataset->t1; t--) {
-	if (!na(dataset->Z[varno][t])) break;
+	if (!na(dataset->Z[v][t])) break;
     }
 
     t2 = t;
@@ -1190,7 +1190,6 @@ void unit_root_test (int ci)
     omax = okT / 2;
 
     if (ci == KPSS) {
-	/* including for panel? */
 	order = 4.0 * pow(okT / 100.0, 0.25);
     } else if (!panel) {
 	if (ts_order >= 0) {
