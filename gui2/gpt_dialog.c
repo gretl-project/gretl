@@ -99,6 +99,7 @@ struct plot_editor_ {
     GtkWidget *fitcombo;
     GtkWidget *border_check;
     GtkWidget *grid_check;
+    GtkWidget *grid_combo;
     GtkWidget *y2_check;
     GtkWidget *bars_check;
     GtkWidget *ttfcombo;
@@ -1058,11 +1059,18 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
     } 
 
     if (!err && ed->grid_check != NULL) {
+	spec->flags &= ~(GPT_GRID_Y | GPT_GRID_X);
 	if (button_is_active(ed->grid_check)) {
-	    spec->flags |= GPT_GRID;
-	} else {
-	    spec->flags &= ~GPT_GRID;
-	}
+	    int i = gtk_combo_box_get_active(GTK_COMBO_BOX(ed->grid_combo));
+
+	    if (i == 0) {
+		spec->flags |= GPT_GRID_Y;
+	    } else if (i == 1) {
+		spec->flags |= GPT_GRID_X;
+	    } else {
+		spec->flags |= (GPT_GRID_Y | GPT_GRID_X);
+	    }
+	} 
     }
 
     if (!err) {
@@ -1722,6 +1730,23 @@ static int semilog_is_ok (GPT_SPEC *spec)
     }
 }
 
+static int plotspec_gridval (GPT_SPEC *spec)
+{
+    int val = 0;
+
+    if (spec->flags & (GPT_GRID_Y | GPT_GRID_X)) {
+	if (!(spec->flags & GPT_GRID_X)) {
+	    val = 1;
+	} else if (!(spec->flags & GPT_GRID_Y)) {
+	    val = 2;
+	} else {
+	    val = 3;
+	}
+    }    
+
+    return val;
+}
+
 static int show_bars_check (GPT_SPEC *spec)
 {
     if (!(spec->flags & GPT_TS)) {
@@ -1875,14 +1900,40 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
     } 
 
     if (plot_has_tics(spec)) {
+	/* add show grid options */
+	const char *grid_opts[] = {
+	    N_("horizontal"),
+	    N_("vertical"),
+	    N_("both")
+	};
+	int gridval = plotspec_gridval(spec);
+	GtkWidget *combo;
+
+	/* check button */
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	ed->grid_check = gtk_check_button_new_with_label(_("Show grid"));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  ed->grid_check, 0, TAB_MAIN_COLS, 
-				  rows-1, rows);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), ed->grid_check, 
+				  0, 1, rows-1, rows);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ed->grid_check),
-				     spec->flags & GPT_GRID);
+				     gridval > 0);
 	gtk_widget_show(ed->grid_check);
+
+	/* plus combo selector */
+	ed->grid_combo = combo = gtk_combo_box_text_new();
+	for (i=0; i<3; i++) {
+	    combo_box_append_text(combo, _(grid_opts[i]));
+	}
+	gtk_widget_set_sensitive(combo, gridval > 0);
+	if (gridval > 0) {
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), gridval - 1);
+	} else {
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+	}
+	gtk_table_attach(GTK_TABLE(tbl), combo,
+			 1, 2, rows-1, rows,
+			 GTK_FILL, 0, 0, 0);
+	gtk_widget_show(combo);
+	sensitize_conditional_on(combo, ed->grid_check);
     }
 
     if (show_aa_check < 0) {
@@ -3595,6 +3646,7 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
     ed->fitcombo = NULL;
     ed->border_check = NULL;
     ed->grid_check = NULL;
+    ed->grid_combo = NULL;
     ed->y2_check = NULL;
     ed->bars_check = NULL;
     ed->ttfcombo = NULL;

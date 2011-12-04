@@ -1749,9 +1749,6 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     } else if (!strcmp(key, "yzeroaxis")) {
 	spec->flags |= GPT_YZEROAXIS;
 	return 0;
-    } else if (!strcmp(key, "grid")) {
-	spec->flags |= GPT_GRID;
-	return 0;
     } else if (!strcmp(key, "noxtics")) {
 	strcpy(spec->xtics, "none");
 	return 0;
@@ -1767,7 +1764,21 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     } else if (!strcmp(key, "arrow")) {
 	parse_arrow_line(spec, s);
 	return 0;
-    }	
+    }
+
+    /* grid lines: parameter is optional */
+    if (!strcmp(key, "grid")) {
+	if (catch_value(val, s + 4 + strlen(key), MAXLEN)) {
+	    if (!strcmp(val, "ytics")) {
+		spec->flags |= GPT_GRID_Y;
+	    } else if (!strcmp(val, "xtics")) {
+		spec->flags |= GPT_GRID_X;
+	    }
+	} else {
+	    spec->flags |= GPT_GRID_Y;
+	    spec->flags |= GPT_GRID_X;
+	}
+    }
 
     /* now catch value for settings that need a parameter */
 

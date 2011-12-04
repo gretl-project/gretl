@@ -1104,8 +1104,15 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	fputs("set yzeroaxis\n", fp);
     } 
 
-    if (spec->flags & GPT_GRID) {
-	fputs("set grid\n", fp);
+    if (spec->flags & (GPT_GRID_Y | GPT_GRID_X)) {
+	if (!(spec->flags & GPT_GRID_X)) {
+	    fputs("set grid ytics\n", fp);
+	} else if (!(spec->flags & GPT_GRID_Y)) {
+	    fputs("set grid xtics\n", fp);
+	} else {
+	    /* default, both */
+	    fputs("set grid\n", fp);
+	}
     }     
 
     if (spec->flags & GPT_PARAMETRIC) {
