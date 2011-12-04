@@ -4294,8 +4294,16 @@
 	  <effect>show quadratic fit</effect>
         </option>
         <option>
+	  <flag>--cubic-fit</flag>
+	  <effect>show cubic fit</effect>
+        </option>
+        <option>
 	  <flag>--loess-fit</flag>
 	  <effect>show loess fit</effect>
+        </option>
+        <option>
+	  <flag>--semilog-fit</flag>
+	  <effect>show semilog fit</effect>
         </option>
         <option>
 	  <flag>--dummy</flag>
@@ -4391,19 +4399,25 @@
 	file is written.
       </para>
 
-      <para>
-	The various <quote>fit</quote> options are applicable only in
-	the case of a bivariate scatterplot.  The default behavior
-	is to show the OLS fitted line if and only if the slope
-	coefficient is significant at the 10 percent level. If the
-	<opt>suppress</opt> option is given, no fitted line is shown.
-	If the <opt>linear</opt> option is given, the OLS line is
-	shown regardless of whether or not it is significant.  The other
-	options&mdash;<opt>inverse</opt>, <opt>quadratic</opt> and
-	<opt>loess</opt>&mdash;produce respectively an inverse fit
+      <para context="cli">
+	The various <quote>fit</quote> options are applicable only for
+	bivariate scatterplots and single time-series plots. The
+	default behavior for a scatterplot is to show the OLS fit if
+	the slope coefficient is significant at the 10 percent level;
+	this can be suppressed via the <opt>--suppress-fitted</opt> option.
+	The default behavior for time-series is not to show a fitted
+	line. If the <opt>--linear</opt> option is given, the OLS line
+	is shown regardless of whether or not it is significant.  The
+	other fit options (<opt>--inverse</opt>, <opt>--quadratic</opt>,
+	<opt>--cubic</opt>, <opt>--loess</opt> and
+	<opt>--semilog</opt>) produce respectively an inverse fit
 	(regression of <math>y</math> on 1/<math>x</math>), a
-	quadratic fit, or a loess fit.  Loess (also sometimes called
-	<quote>lowess</quote>) is a robust locally weighted regression.  
+	quadratic fit, a cubic fit, a loess fit, and a semilog fit.
+	Loess (also sometimes called <quote>lowess</quote>) is a
+	robust locally weighted regression. By semilog, we mean a
+	regression of log <math>y</math> on <math>x</math> (or time);
+	the fitted line represents the conditional expectation of
+	<math>y</math>, obtained by exponentiation.
       </para>
 
       <para>

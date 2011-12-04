@@ -353,6 +353,8 @@ static void get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	    gi->fit = PLOT_FIT_LOESS;
 	} else if (opt & OPT_N) {
 	    gi->fit = PLOT_FIT_OLS;
+	} else if (opt & OPT_E) {
+	    gi->fit = PLOT_FIT_LOGLIN;
 	}
     }
 
@@ -1751,7 +1753,7 @@ static int get_fitted_line (gnuplot_info *gi,
     gretl_matrix *b = NULL;
     gretl_matrix *V = NULL;
     const double *yvar, *xvar = NULL;
-    double x0, s2, *ps2 = NULL;
+    double x0, s2 = 0, *ps2 = NULL;
     int err = 0;
 
     if (gi->x != NULL && (dset->pd == 1 || dset->pd == 4 || dset->pd == 12)) {
@@ -1793,6 +1795,8 @@ static int get_fitted_line (gnuplot_info *gi,
 	b = gretl_column_vector_alloc(k);
 	if (b == NULL) {
 	    err = E_ALLOC;
+	} else if (gi->fit == PLOT_FIT_LOGLIN) {
+	    ps2 = &s2;
 	}
     }
     
@@ -1816,6 +1820,10 @@ static int get_fitted_line (gnuplot_info *gi,
     if (!err && gi->fit != PLOT_FIT_NONE) {
 	char title[MAXTITLE], formula[GP_MAXFORMULA];
 	double pd = dset->pd;
+
+	if (gi->fit == PLOT_FIT_LOGLIN) {
+	    b->val[0] += s2 / 2;
+	}
 
 	set_plotfit_line(title, formula, gi->fit, b->val, x0, pd);
 	sprintf(targ, "%s title \"%s\" w lines\n", formula, title);
@@ -2781,7 +2789,7 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
     return err;
 }
 
-#define fit_opts (OPT_I | OPT_L | OPT_Q | OPT_N)
+#define fit_opts (OPT_I | OPT_L | OPT_Q | OPT_N | OPT_E)
 
 /**
  * gnuplot:

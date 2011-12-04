@@ -813,7 +813,8 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
 	return E_DATA;
     }
 
-    if (fit == PLOT_FIT_LOGLIN && !gretl_ispositive(yvar, t1, t2)) {
+    if (fit == PLOT_FIT_LOGLIN && !gretl_ispositive(t1, t2, yvar)) {
+	gretl_errmsg_set(_("Non-positive values encountered"));
 	return E_DATA;
     }
 
