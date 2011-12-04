@@ -85,6 +85,7 @@ GPT_SPEC *plotspec_new (void)
     spec->b_quad = NULL;
     spec->b_cub = NULL;
     spec->b_inv = NULL;
+    spec->b_log = NULL;
 
     spec->code = PLOT_REGULAR;
     spec->flags = 0;
@@ -179,6 +180,7 @@ void plotspec_destroy (GPT_SPEC *spec)
     gretl_matrix_free(spec->b_quad);
     gretl_matrix_free(spec->b_cub);
     gretl_matrix_free(spec->b_inv);
+    gretl_matrix_free(spec->b_log);
 
     free(spec);
 }
@@ -854,6 +856,8 @@ void print_auto_fit_string (FitType fit, FILE *fp)
 	fputs("# plot includes automatic fit: inverse\n", fp);
     } else if (fit == PLOT_FIT_LOESS) {
 	fputs("# plot includes automatic fit: loess\n", fp);
+    } else if (fit == PLOT_FIT_LOGLIN) {
+	fputs("# plot includes automatic fit: semilog\n", fp);
     }
 }
 
@@ -1028,7 +1032,8 @@ static int print_point_type (GPT_LINE *line)
                      s->fit == PLOT_FIT_QUADRATIC || \
 		     s->fit == PLOT_FIT_CUBIC ||     \
                      s->fit == PLOT_FIT_INVERSE || \
-                     s->fit == PLOT_FIT_LOESS)
+                     s->fit == PLOT_FIT_LOESS || \
+		     s->fit == PLOT_FIT_LOGLIN)
 
 int gp_line_data_columns (GPT_SPEC *spec, int i)
 {
@@ -1525,7 +1530,15 @@ static void set_plotfit_formula (char *formula, FitType f, const double *b,
 	} else {
 	    sprintf(formula, "%.10g + %.10g/x", b[0], b[1]);
 	}
-    }
+    } else if (f == PLOT_FIT_LOGLIN) {
+	if (!na(t0)) {
+	    double c = b[1] * pd;
+
+	    sprintf(formula, "exp(%.10g + %.10g*x)", b[0] - c*t0, c);
+	} else {
+	    sprintf(formula, "exp(%.10g + %.10g*x)", b[0], b[1]);
+	}
+    }	
 
     gretl_pop_c_numeric_locale();
 }
@@ -1553,6 +1566,9 @@ void set_plotfit_line (char *title, char *formula,
     } else if (f == PLOT_FIT_INVERSE) {
 	sprintf(title, "Y = %#.3g %c %#.3g(1/%c)", b[0],
 		(b[1] > 0)? '+' : '-', fabs(b[1]), xc);
+    } else if (f == PLOT_FIT_LOGLIN) {
+	sprintf(title, "logY = %#.3g %c %#.3g%c", b[0],
+		(b[1] > 0)? '+' : '-', fabs(b[1]), xc);
     }
 
     /* then set the formula itself */
@@ -1560,7 +1576,8 @@ void set_plotfit_line (char *title, char *formula,
     set_plotfit_formula(formula, f, b, x0, pd);
 }
 
-static void plotspec_set_fitted_line (GPT_SPEC *spec, FitType f, double x0)
+static void plotspec_set_fitted_line (GPT_SPEC *spec, FitType f, 
+				      double x0)
 {
     char *formula = spec->lines[1].formula;
     char *title = spec->lines[1].title;
@@ -1575,6 +1592,8 @@ static void plotspec_set_fitted_line (GPT_SPEC *spec, FitType f, double x0)
 	b = spec->b_cub->val;
     } else if (f == PLOT_FIT_INVERSE) {
 	b = spec->b_inv->val;
+    } else if (f == PLOT_FIT_LOGLIN) {
+	b = spec->b_log->val;
     } else {
 	return;
     }
@@ -1590,7 +1609,8 @@ static void plotspec_set_fitted_line (GPT_SPEC *spec, FitType f, double x0)
 
 #define polyfit(f) (f == PLOT_FIT_OLS || \
 		    f == PLOT_FIT_QUADRATIC ||	\
-		    f == PLOT_FIT_CUBIC)
+		    f == PLOT_FIT_CUBIC || \
+		    f == PLOT_FIT_LOGLIN)
 
 int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 {
@@ -1616,13 +1636,15 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     if ((f == PLOT_FIT_OLS && spec->b_ols != NULL) ||
 	(f == PLOT_FIT_QUADRATIC && spec->b_quad != NULL) ||
 	(f == PLOT_FIT_CUBIC && spec->b_cub != NULL) ||
-	(f == PLOT_FIT_INVERSE && spec->b_inv != NULL)) {
+	(f == PLOT_FIT_INVERSE && spec->b_inv != NULL) ||
+	(f == PLOT_FIT_LOGLIN && spec->b_log != NULL)) {
 	/* just activate existing setup */
 	plotspec_set_fitted_line(spec, f, x0);
 	return 0;
     }
-	
-    if (f == PLOT_FIT_OLS || f == PLOT_FIT_INVERSE) {
+
+    if (f == PLOT_FIT_OLS || f == PLOT_FIT_INVERSE ||
+	f == PLOT_FIT_LOGLIN) {
 	k = 2;
     } else if (f == PLOT_FIT_QUADRATIC) {
 	k = 3;
@@ -1660,7 +1682,16 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 	    xt = px[t];
 	}
 	if (!na(py[t]) && !na(xt)) {
-	    y->val[i] = py[t];
+	    if (f == PLOT_FIT_LOGLIN) {
+		if (py[t] > 0.0) {
+		    y->val[i] = log(py[t]);
+		} else {
+		    err = E_DATA;
+		    goto bailout;
+		}
+	    } else {
+		y->val[i] = py[t];
+	    }
 	    if (f == PLOT_FIT_LOESS) {
 		gretl_matrix_set(X, i, 0, xt);
 	    } else {
@@ -1686,6 +1717,13 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 	if (!err) {
 	    yh = loess_fit(X, y, d, q, OPT_R, &err);
 	}
+    } else if (f == PLOT_FIT_LOGLIN) {
+	double s2;
+
+	err = gretl_matrix_ols(y, X, b, NULL, NULL, &s2);
+	if (!err) {
+	    b->val[0] += s2 / 2;
+	}
     } else {
 	err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
     }
@@ -1706,6 +1744,9 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 	    b = NULL;
 	} else if (f == PLOT_FIT_INVERSE) {
 	    spec->b_inv = b;
+	    b = NULL;
+	} else if (f == PLOT_FIT_LOGLIN) {
+	    spec->b_log = b;
 	    b = NULL;
 	}	    
     }

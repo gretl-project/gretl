@@ -813,6 +813,10 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
 	return E_DATA;
     }
 
+    if (fit == PLOT_FIT_LOGLIN && !gretl_ispositive(yvar, t1, t2)) {
+	return E_DATA;
+    }
+
     mask = calloc(T, 1);
     if (mask == NULL) {
 	return E_ALLOC;
@@ -854,7 +858,11 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
 	t = s + t1;
 	if (!mask[s]) {
 	    j = 0;
-	    y->val[i] = yvar[t];
+	    if (fit == PLOT_FIT_LOGLIN) {
+		y->val[i] = log(yvar[t]);
+	    } else {
+		y->val[i] = yvar[t];
+	    }
 	    if (fit != PLOT_FIT_LOESS) {
 		gretl_matrix_set(X, i, j++, 1.0);
 	    }

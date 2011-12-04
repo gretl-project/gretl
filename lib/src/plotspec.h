@@ -166,6 +166,7 @@ struct GPT_SPEC_ {
     gretl_matrix *b_quad;      /* coeffs for quadratic fit */
     gretl_matrix *b_cub;       /* coeffs for cubic fit */
     gretl_matrix *b_inv;       /* coeffs for inverse fit */
+    gretl_matrix *b_log;       /* coeffs for semi-log fit */
     char *labeled;             /* for GUI use */
     void *ptr;                 /* for GUI use */
     plotbars *bars;            /* for GUI use */

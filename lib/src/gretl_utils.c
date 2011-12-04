@@ -428,6 +428,29 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
 }
 
  /**
+ * gretl_ispositive:
+ * @x: data series to examine.
+ * @t1: starting observation.
+ * @t2: ending observation. 
+ *
+ * Returns: 1 if all non-missing values in @x, over the
+ * range @t1 to @t2, are positive, otherwise 0.
+ */
+
+int gretl_ispositive (int t1, int t2, const double *x)
+{
+    int t;
+
+    for (t=t1; t<=t2; t++) {
+	if (x[t] < 0) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+ /**
  * gretl_is_oprobit_ok:
  * @x: data series to examine.
  * @t1: starting observation.

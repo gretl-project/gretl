@@ -628,9 +628,22 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     }
 
     if (editing) {
-	/* we respond to plain keystrokes below: this won't do if we're
-	   editing text */
+	/* we set up "special" responses to some plain keystrokes 
+	   below: this won't do if we're editing text 
+	*/
 	return FALSE;
+    } 
+
+    if (!mods && vwin->finder != NULL && GTK_IS_ENTRY(vwin->finder)) {
+	gchar *letter = gdk_keyval_name(key->keyval);
+
+	if (letter != NULL) {
+	    /* snap to search box */
+	    gtk_widget_grab_focus(vwin->finder);
+	    gtk_entry_set_text(GTK_ENTRY(vwin->finder), letter);
+	    gtk_editable_set_position(GTK_EDITABLE(vwin->finder), -1);
+	    return TRUE; /* handled */
+	}
     }
 
     if (upkey == GDK_Q || (upkey == GDK_W && Ctrl)) { 
@@ -1949,7 +1962,8 @@ windata_t *view_help_file (const char *filename, int role)
     gtk_widget_show(vwin->main);
 
     /* make the helpfile variant discernible via vwin->text */
-    g_object_set_data(G_OBJECT(vwin->text), "role", GINT_TO_POINTER(vwin->role));
+    g_object_set_data(G_OBJECT(vwin->text), "role", 
+		      GINT_TO_POINTER(vwin->role));
 
     gtk_widget_grab_focus(vwin->text);
 

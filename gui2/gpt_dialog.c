@@ -131,6 +131,7 @@ const gchar *fittype_strings[] = {
     N_("cubic: y = a + b*x + c*x^2 + d*x^3"),
     N_("inverse: y = a + b*(1/x)"),
     N_("loess (locally weighted fit)"),
+    N_("semilog: log y = a + b*x"),
     NULL
 };
 
@@ -517,7 +518,7 @@ static void fittype_from_combo (GtkComboBox *box, GPT_SPEC *spec)
 
     if (f == PLOT_FIT_OLS || f == PLOT_FIT_QUADRATIC || 
 	f == PLOT_FIT_CUBIC || f == PLOT_FIT_INVERSE || 
-	f == PLOT_FIT_LOESS) {
+	f == PLOT_FIT_LOESS || f == PLOT_FIT_LOGLIN) {
 	plotspec_add_fit(spec, f);
 	spec->flags &= ~GPT_FIT_HIDDEN;
     } else if (f == PLOT_FIT_NONE) {
@@ -565,6 +566,9 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
 		s1, s2);
     } else if (f == PLOT_FIT_LOESS) {
 	title = g_strdup_printf(_("%s versus %s (with loess fit)"),
+		s1, s2);
+    } else if (f == PLOT_FIT_LOGLIN) {
+	title = g_strdup_printf(_("%s versus %s (with semilog fit)"),
 		s1, s2);
     } else {
 	title = g_strdup("");
@@ -1705,6 +1709,19 @@ static void add_gd_font_selector (plot_editor *ed, GtkWidget *tbl, int *rows)
     gtk_widget_show(ed->ttfspin);
 }
 
+static int semilog_is_ok (GPT_SPEC *spec)
+{
+    const double *x = spec->data;
+
+    if (x == NULL) {
+	return 0;
+    } else {
+	const double *y = x + spec->nobs;
+
+	return gretl_ispositive(0, spec->nobs - 1, y);
+    }
+}
+
 static int show_bars_check (GPT_SPEC *spec)
 {
     if (!(spec->flags & GPT_TS)) {
@@ -1793,6 +1810,8 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 
     if (spec->fit != PLOT_FIT_NA) {
 	/* give choice of fitted line type, if applicable */
+	int semilog_ok = semilog_is_ok(spec);
+	
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 
 	label = gtk_label_new(_("fitted line"));
@@ -1808,16 +1827,17 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	    char tmp[128];
 
 	    for (i=0; fittype_strings[i] != NULL; i++) {
-		if (!strncmp(fittype_strings[i], "inver", 5)) {
-		    continue;
-		}
 		strcpy(tmp, _(fittype_strings[i]));
 		charsub(tmp, 'x', 't');
-		combo_box_append_text(ed->fitcombo, tmp);
+		if (i != PLOT_FIT_LOGLIN || semilog_ok) {
+		    combo_box_append_text(ed->fitcombo, tmp);
+		}
 	    }	    
 	} else {
 	    for (i=0; fittype_strings[i] != NULL; i++) {
-		combo_box_append_text(ed->fitcombo, _(fittype_strings[i]));
+		if (i != PLOT_FIT_LOGLIN || semilog_ok) {	
+		    combo_box_append_text(ed->fitcombo, _(fittype_strings[i]));
+		}
 	    }
 	}
 

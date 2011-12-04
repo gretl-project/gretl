@@ -62,6 +62,8 @@ int gretl_iscount (int t1, int t2, const double *x);
 
 int gretl_isdiscrete (int t1, int t2, const double *x);
 
+int gretl_ispositive (int t1, int t2, const double *x);
+
 int gretl_is_oprobit_ok (int t1, int t2, const double *x);
 
 int true_const (int v, const DATASET *dset);

@@ -1949,73 +1949,47 @@ static void get_plot_nobs (GPT_SPEC *spec, const char *buf, int *do_markers)
 
 static int grab_fit_coeffs (GPT_SPEC *spec, const char *s)
 {
+    gretl_matrix *b = NULL;
+    int k, f = spec->fit;
     int n, err = 0;
 
-    if (spec->fit == PLOT_FIT_OLS) {
-	spec->b_ols = gretl_column_vector_alloc(2);
-	if (spec->b_ols == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    gretl_push_c_numeric_locale();
-	    n = sscanf(s, "%lf + %lf", &spec->b_ols->val[0],
-		       &spec->b_ols->val[1]);
-	    gretl_pop_c_numeric_locale();
-	    if (n != 2) {
-		gretl_matrix_free(spec->b_ols);
-		spec->b_ols = NULL;
-		err = E_DATA;
-	    }
-	}
-    } else if (spec->fit == PLOT_FIT_INVERSE) {
-	spec->b_inv = gretl_column_vector_alloc(2);
-	if (spec->b_inv == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    gretl_push_c_numeric_locale();
-	    n = sscanf(s, "%lf + %lf", &spec->b_inv->val[0],
-		       &spec->b_inv->val[1]);
-	    gretl_pop_c_numeric_locale();
-	    if (n != 2) {
-		gretl_matrix_free(spec->b_inv);
-		spec->b_inv = NULL;
-		err = E_DATA;
-	    }
-	}
-    } else if (spec->fit == PLOT_FIT_QUADRATIC) {
-	spec->b_quad = gretl_column_vector_alloc(3);
-	if (spec->b_quad == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    gretl_push_c_numeric_locale();
-	    n = sscanf(s, "%lf + %lf*x + %lf", &spec->b_quad->val[0],
-		       &spec->b_quad->val[1], &spec->b_quad->val[2]);
-	    gretl_pop_c_numeric_locale();
-	    if (n != 3) {
-		gretl_matrix_free(spec->b_quad);
-		spec->b_quad = NULL;
-		err = E_DATA;
-	    }
-	}
-    } else if (spec->fit == PLOT_FIT_CUBIC) {
-	spec->b_cub = gretl_column_vector_alloc(4);
-	if (spec->b_cub == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    gretl_push_c_numeric_locale();
-	    n = sscanf(s, "%lf + %lf*x + %lf*x**2 + %lf", 
-		       &spec->b_cub->val[0], &spec->b_cub->val[1], 
-		       &spec->b_cub->val[2], &spec->b_cub->val[3]);
-	    gretl_pop_c_numeric_locale();
-	    if (n != 4) {
-		gretl_matrix_free(spec->b_cub);
-		spec->b_cub = NULL;
-		err = E_DATA;
-	    }
-	}
-    }	
+    k = (f == PLOT_FIT_CUBIC)? 4 : (f == PLOT_FIT_QUADRATIC)? 3 : 2;
 
-    if (err) {
+    b = gretl_column_vector_alloc(k);
+    if (b == NULL) {
+	return E_ALLOC;
+    }
+
+    if (!strncmp(s, "exp(", 4)) {
+	s += 4;
+    }
+
+    gretl_push_c_numeric_locale();
+    if (k == 2) {
+	n = sscanf(s, "%lf + %lf", &b->val[0], &b->val[1]);
+    } else if (k == 3) {
+	n = sscanf(s, "%lf + %lf*x + %lf", &b->val[0],
+		   &b->val[1], &b->val[2]);
+    } else if (k == 4) {
+	n = sscanf(s, "%lf + %lf*x + %lf*x**2 + %lf", &b->val[0], 
+		   &b->val[1], &b->val[2], &b->val[3]);
+    }
+    gretl_pop_c_numeric_locale();
+
+    if (n != k) {
+	err = E_DATA;
+	gretl_matrix_free(b);
 	spec->flags &= ~GPT_AUTO_FIT;
+    } else if (f == PLOT_FIT_OLS) {
+	spec->b_ols = b;
+    } else if (f == PLOT_FIT_INVERSE) {
+	spec->b_inv = b;
+    } else if (f == PLOT_FIT_LOGLIN) {
+	spec->b_log = b;
+    } else if (f == PLOT_FIT_QUADRATIC) {
+	spec->b_quad = b;
+    } else if (f == PLOT_FIT_CUBIC) {
+	spec->b_cub = b;
     }
 
     return err;
@@ -2292,6 +2266,8 @@ static FitType recognize_fit_string (const char *s)
 	return PLOT_FIT_INVERSE;
     } else if (strstr(s, "loess")) {
 	return PLOT_FIT_LOESS;
+    } else if (strstr(s, "semilog")) {
+	return PLOT_FIT_LOGLIN;
     } else {
 	return PLOT_FIT_NONE;
     }
