@@ -2766,7 +2766,11 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
     }
 
     if (!err) {
-	dset = gretl_dataset_from_matrix(m, list, &err);
+	if (list != NULL && list[0] == 0) {
+	    dset = gretl_dataset_from_matrix(m, NULL, &err);
+	} else {
+	    dset = gretl_dataset_from_matrix(m, list, &err);
+	}
     }
 
     if (err) {
@@ -2837,7 +2841,7 @@ int gnuplot (const int *plotlist, const char *literal,
     }
 
     if (opt & OPT_X) {
-	return matrix_plot(NULL, plotlist, literal, opt);
+	return matrix_plot(NULL, list, literal, opt);
     }
 
 #if GP_DEBUG

@@ -4340,8 +4340,7 @@
 	give <lit>time</lit> as <repl>xvar</repl> or use the option
 	flag <opt>--time-series</opt>.
       </para>
-
-      <para context="cli">
+      <para>
 	By default, data-points are shown as points; this can be
 	overridden by giving one of the options <opt>--with-lines</opt> or
 	<opt>--with-impulses</opt>. If more than one variable is to be
@@ -4354,7 +4353,6 @@
 	<lit>y2</lit> against <lit>x</lit>, such that <lit>y2</lit> is
 	represented by a line but <lit>y1</lit> by points.
       </para>
-
       <para>
 	If the <opt>--dummy</opt> option is selected, exactly three
 	variables should be given: a single <math>y</math> variable, an
@@ -4364,21 +4362,28 @@
 	depending on the value of <repl>dvar</repl> at the given
 	observation.
       </para>
-
-      <para context="cli">
-	Generally, <repl>yvars</repl> and <repl>xvar</repl> refer to series in
-	the current dataset (given either by name or ID number).  But if a
-	named matrix is supplied via the <opt>--matrix</opt> option these
-	arguments (which must be given as numerical values) denote
-	(1-based) column indices for the given matrix.  So for example
-	if you want a scatterplot of column 2 of matrix <lit>M</lit> against
-	column 1, you should do:
+      <para>
+	Generally, the arguments <repl>yvars</repl> and
+	<repl>xvar</repl> are required, and refer to series in the
+	current dataset (given either by name or ID number).  But if a
+	named matrix is supplied via the <opt>--matrix</opt> option
+	these arguments become optional: if the specified matrix has
+	<math>k</math> columns, by default the first <math>k</math>
+	&minus; 1 columns are treated as the <repl>yvars</repl> and
+	the last column as <repl>xvar</repl>.  If the
+	<opt>--time-series</opt> option is given, however, all
+	<math>k</math> columns are plotted against time. If you wish
+	to plot selected columns of the matrix, you should specify
+	<repl>yvars</repl> and <repl>xvar</repl> in the form of
+	1-based column numbers.  For example if you want a scatterplot
+	of column 2 of matrix <lit>M</lit> against column 1, you can
+	do:
       </para>
-      <code context="cli">
+      <code>
 	gnuplot 2 1 --matrix=M
       </code>
 
-      <para context="cli">
+      <para>
 	In interactive mode the plot is displayed immediately. In batch mode
 	the default behavior is that a gnuplot command file is written in the
 	user's working directory, with a name on the pattern
@@ -4398,8 +4403,7 @@
 	extension other than those just mentioned is given, a gnuplot command
 	file is written.
       </para>
-
-      <para context="cli">
+      <para>
 	The various <quote>fit</quote> options are applicable only for
 	bivariate scatterplots and single time-series plots. The
 	default behavior for a scatterplot is to show the OLS fit if
@@ -4419,7 +4423,6 @@
 	the fitted line represents the conditional expectation of
 	<math>y</math>, obtained by exponentiation.
       </para>
-
       <para>
 	A further option to this command is available: following
 	the specification of the variables to be plotted and the
@@ -4431,10 +4434,9 @@
 	continue a set of gnuplot commands over more than one line.
 	Here is an example of the syntax:
       </para>
-
-      <para>
-	<lit>{ set title 'My Title'; set yrange [0:1000]; }</lit>
-      </para>
+      <code>
+	{ set title 'My Title'; set yrange [0:1000]; }
+      </code>
 
     </description>
 

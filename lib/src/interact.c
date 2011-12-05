@@ -2335,10 +2335,17 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
 	cmd->err = E_ARGS;
     }
 
-    if (cmd->ci == GNUPLOT && cmd->list[0] < 2) {
-	if (cmd->opt & (OPT_T | OPT_X)) {
-	    cmd->err = (cmd->list[0] == 0)? E_ARGS : cmd->err;
-	} else if (!(cmd->opt & OPT_D)) {
+    if (!cmd->err && cmd->ci == GNUPLOT && cmd->list[0] < 2) {
+	/* check the list for the gnuplot command */
+	if (cmd->opt & (OPT_D | OPT_X)) {
+	    ; /* OK: non-empty list not required */
+	} else if (cmd->opt & OPT_T) {
+	    /* time-series otion: only one series needed */
+	    if (cmd->list[0] < 1) {
+		cmd->err = E_ARGS;
+	    }
+	} else {
+	    /* all other cases: we need at least two series */
 	    cmd->err = E_ARGS;
 	}
     }
@@ -5203,6 +5210,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	if (cmd->ci == GNUPLOT) {
 	    if (cmd->opt & OPT_D) {
 		err = gnuplot_process_file(cmd->opt, prn);
+	    } else if (cmd->opt & OPT_X) {
+		err = matrix_plot(NULL, cmd->list, cmd->param, cmd->opt);
 	    } else if (cmd->opt & OPT_C) {
 		err = xy_plot_with_control(cmd->list, cmd->param, 
 					   dset, cmd->opt);
