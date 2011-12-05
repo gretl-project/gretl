@@ -48,7 +48,7 @@ static int get_range_and_mean (int t1, int t2, const double *x,
 	    if (n < 4) {
 		err = E_TOOFEW;
 		n = 0;
-	    } else {		
+	    } else {
 		qsort(xs, n, sizeof *x, gretl_compare_doubles);
 		xmin = xs[1];
 		xmax = xs[n-2];

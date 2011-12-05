@@ -1726,7 +1726,7 @@ static int semilog_is_ok (GPT_SPEC *spec)
     } else {
 	const double *y = x + spec->nobs;
 
-	return gretl_ispositive(0, spec->nobs - 1, y);
+	return gretl_ispositive(0, spec->nobs - 1, y, 1);
     }
 }
 
