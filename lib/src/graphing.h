@@ -194,6 +194,9 @@ int gnuplot (const int *plotlist, const char *literal,
 int multi_scatters (const int *list, const DATASET *dset, 
 		    gretlopt opt);
 
+int matrix_scatters (const gretl_matrix *m, const int *list, 
+		     const DATASET *dset, gretlopt opt);
+
 int gnuplot_3d (int *list, const char *literal,
 		DATASET *dset, gretlopt opt);
 

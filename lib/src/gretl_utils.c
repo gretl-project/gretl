@@ -437,7 +437,6 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
  * Returns: 1 if all non-missing values in @x, over the range @t1 to
  * @t2, are positive (if strict==1) or non-negative (if strict==0),
  * otherwise 0.
- * 
  */
 
 int gretl_ispositive (int t1, int t2, const double *x, int strict)

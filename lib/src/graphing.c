@@ -3363,6 +3363,281 @@ int multi_scatters (const int *list, const DATASET *dset,
     return err;
 }
 
+static int matrix_plotx_ok (const gretl_matrix *m, const DATASET *dset,
+			    int *pt1, int *pt2, int *ppd, int *offset)
+{
+    if (dset == NULL) {
+	return 0;
+    } else if (m->rows == dset->n) {
+	return 1;
+    } else {
+	int t1 = gretl_matrix_get_t1(m);
+	int t2 = gretl_matrix_get_t2(m);
+
+	if (t2 > t1 && t2 < dset->n) {
+	    if (dset->t1 > t1) {
+		*offset = dset->t1 - t1;
+		t1 = dset->t1;
+	    } 
+	    if (dset->t2 < t2) {
+		t2 = dset->t2;
+	    } 	    
+	    *pt1 = t1;
+	    *pt2 = t2;
+	    *ppd = dset->pd;
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+static const double *matrix_col (const gretl_matrix *m, int j,
+				 int offset)
+{
+    const double *x = m->val;
+
+    return x + (j-1) * m->rows + offset;
+}
+
+static void plot_colname (char *s, const char **colnames, int j)
+{
+    if (colnames != NULL) {
+	*s = '\0';
+	strncat(s, colnames[j-1], 15);
+    } else {
+	sprintf(s, "col %d", j);
+    }
+}
+
+static double *simple_obsvec (int n)
+{
+    double *x = malloc(n * sizeof *x);
+    int i;
+
+    if (x != NULL) {
+	for (i=0; i<n; i++) {
+	    x[i] = i;
+	}
+    }
+
+    return x;
+}
+
+/**
+ * matrix_scatters:
+ * @m: matrix containing data to plot.
+ * @list: list of columns to plot, or NULL.
+ * @dset: dataset pointer, or NULL.
+ * @opt: can include %OPT_L to use lines, %OPT_U to
+ * direct output to a named file.
+ *
+ * Writes a gnuplot plot file to display up to 6 small graphs
+ * based on the data in @m, and calls gnuplot to make 
+ * the graph.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int matrix_scatters (const gretl_matrix *m, const int *list, 
+		     const DATASET *dset, gretlopt opt)
+{
+    GptFlags flags = 0;
+    const double *x = NULL;
+    const double *y = NULL;
+    const double *obs = NULL;
+    const char **colnames = NULL;
+    FILE *fp = NULL;
+    int *plotlist = NULL;
+    int xcol = 0, ycol = 0;
+    int t1 = 0, t2 = 0;
+    int pos = 0, nplots = 0;
+    int offset = 0, pd = 1;
+    int free_obs = 0;
+    int i, t, err = 0;
+
+    if (gretl_is_null_matrix(m)) {
+	return E_DATA;
+    }
+
+    if (gretl_in_batch_mode()) {
+	flags |= GPT_BATCH;
+    }
+
+    if (opt & OPT_L) {
+	flags |= GPT_LINES;
+    }
+
+    t1 = 0;
+    t2 = m->rows - 1;
+
+    if (list != NULL) {
+	for (i=1; i<=list[0]; i++) {
+	    if (list[i] == LISTSEP) {
+		pos = i;
+	    } else if (list[i] < 1 || list[i] > m->cols) {
+		err = E_INVARG;
+		break;
+	    }
+	}
+    }
+
+    if (err) {
+	return err;
+    }
+
+    if (pos == 0) {
+	/* plot against time or index */
+	if (matrix_plotx_ok(m, dset, &t1, &t2, &pd, &offset)) {
+	    obs = gretl_plotx(dset);
+	} else {
+	    obs = simple_obsvec(m->rows);
+	    free_obs = 1;
+	}
+	if (obs == NULL) {
+	    return E_ALLOC;
+	}	
+	plotlist = gretl_list_copy(list);
+	flags |= GPT_LINES;
+    } else if (pos > 2) { 
+	/* plot several yvars against one xvar */
+	plotlist = gretl_list_new(pos - 1);
+	xcol = list[list[0]];
+	x = matrix_col(m, xcol, offset);
+    } else {       
+	/* plot one yvar against several xvars */
+	plotlist = gretl_list_new(list[0] - pos);
+	ycol = list[1];
+	y = matrix_col(m, ycol, offset);
+    }
+
+    if (plotlist == NULL) {
+	return E_ALLOC;
+    }
+
+    if (y != NULL) {
+	for (i=1; i<=plotlist[0]; i++) {
+	   plotlist[i] = list[i + pos]; 
+	}
+    } else if (x != NULL) {
+	for (i=1; i<pos; i++) {
+	   plotlist[i] = list[i]; 
+	}
+    }
+
+    /* max 6 plots */
+    if (plotlist[0] > 6) {
+	plotlist[0] = 6;
+    }
+
+    nplots = plotlist[0];
+    gp_small_font_size = (nplots > 4)? 6 : 0;
+
+    fp = open_gp_stream(PLOT_MULTI_SCATTER, flags, &err);
+    if (err) {
+	return err;
+    }
+
+    colnames = gretl_matrix_get_colnames(m);
+
+    fputs("set size 1.0,1.0\nset origin 0.0,0.0\n"
+	  "set multiplot\n", fp);
+    fputs("set nokey\n", fp);
+
+    gretl_push_c_numeric_locale();
+
+    if (obs != NULL) {
+	double startdate = obs[t1];
+	double enddate = obs[t2];
+	int jump, T = t2 - t1 + 1;
+
+	fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
+
+	jump = (pd == 1)? (T / 6) : (T / (4 * pd));
+	fprintf(fp, "set xtics %g, %d\n", ceil(startdate), jump);
+    } else {
+	fputs("set noxtics\nset noytics\n", fp);
+    }
+
+    for (i=0; i<nplots; i++) {  
+	int j = plotlist[i+1];
+	const double *zj = matrix_col(m, j, offset);
+	char label[16];
+
+	if (nplots <= 4) {
+	    fputs("set size 0.45,0.5\n", fp);
+	    fputs("set origin ", fp);
+	    if (i == 0) fputs("0.0,0.5\n", fp);
+	    else if (i == 1) fputs("0.5,0.5\n", fp);
+	    else if (i == 2) fputs("0.0,0.0\n", fp);
+	    else if (i == 3) fputs("0.5,0.0\n", fp);
+	} else {
+	    fputs("set size 0.31,0.45\n", fp);
+	    fputs("set origin ", fp);
+	    if (i == 0) fputs("0.0,0.5\n", fp);
+	    else if (i == 1) fputs("0.32,0.5\n", fp);
+	    else if (i == 2) fputs("0.64,0.5\n", fp);
+	    else if (i == 3) fputs("0.0,0.0\n", fp);
+	    else if (i == 4) fputs("0.32,0.0\n", fp);
+	    else if (i == 5) fputs("0.64,0.0\n", fp);
+	}
+
+	if (obs != NULL) {
+	    fputs("set noxlabel\n", fp);
+	    fputs("set noylabel\n", fp);
+	    plot_colname(label, colnames, j);
+	    fprintf(fp, "set title '%s'\n", label);
+	} else {
+	    plot_colname(label, colnames, (y != NULL)? j : xcol);
+	    fprintf(fp, "set xlabel '%s'\n", label);
+	    plot_colname(label, colnames, (y != NULL)? ycol : j);
+	    fprintf(fp, "set ylabel '%s'\n", label);
+	}
+
+	fputs("plot '-' using 1:2", fp);
+	if (flags & GPT_LINES) {
+	    fputs(" with lines", fp);
+	}
+	fputc('\n', fp);
+
+	for (t=t1; t<=t2; t++) {
+	    double xt, yt;
+	    int s = t - t1;
+
+	    xt = (y != NULL)? zj[s] : (x != NULL)? x[s] : obs[t];
+	    yt = (y != NULL)? y[s] : zj[s];
+
+	    if (xna(xt)) {
+		fputs("? ", fp);
+	    } else {
+		fprintf(fp, "%.10g ", xt);
+	    }
+
+	    if (xna(yt)) {
+		fputs("?\n", fp);
+	    } else {
+		fprintf(fp, "%.10g\n", yt);
+	    }
+	}
+
+	fputs("e\n", fp);
+    } 
+
+    gretl_pop_c_numeric_locale();
+
+    fputs("set nomultiplot\n", fp);
+
+    fclose(fp);
+    free(plotlist);
+    if (free_obs) {
+	free((double *) obs);
+    }
+
+    err = gnuplot_make_graph();
+
+    return err;
+}
+
 static int get_3d_output_file (FILE **fpp)
 {
     char fname[MAXLEN];

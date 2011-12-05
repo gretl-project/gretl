@@ -3422,12 +3422,12 @@ static int effective_ci (const CMD *cmd)
 
 #define listsep_switch(c) (c == AR || c == MPOLS)
 
-#define hold_param(c) (c == IVREG || c == AR || c == ARBOND || c == DPANEL || c == ARMA || \
-                       c == CORRGM || c == PERGM || c == SCATTERS || c == MPOLS || \
-                       c == GNUPLOT || c == GARCH || \
-                       c == EQUATION || c == POISSON || c == XCORRGM || \
-                       c == HECKIT || c == NEGBIN || c == DURATION || \
-		       c == FRACTINT)
+#define hold_param(c) (c == IVREG || c == AR || c == ARBOND || \
+		       c == DPANEL || c == ARMA || c == CORRGM || \
+		       c == PERGM || c == SCATTERS || c == MPOLS || \
+                       c == GNUPLOT || c == GARCH || c == EQUATION || \
+		       c == POISSON || c == XCORRGM || c == HECKIT || \
+		       c == NEGBIN || c == DURATION || c == FRACTINT)
 
 #define TESTLEN 62
 #define LINELEN 78
@@ -5219,7 +5219,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 		err = gnuplot(cmd->list, cmd->param, dset, cmd->opt);
 	    }
 	} else if (cmd->ci == SCATTERS) {
-	    err = multi_scatters(cmd->list, dset, cmd->opt);
+	    if (cmd->opt & OPT_X) {
+		err = matrix_scatters(NULL, cmd->list, dset, cmd->opt);
+	    } else {
+		err = multi_scatters(cmd->list, dset, cmd->opt);
+	    }
 	} else if (cmd_nolist(cmd)) { 
 	    err = boolean_boxplots(line, dset, cmd->opt);
 	} else {
