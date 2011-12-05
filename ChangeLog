@@ -12,7 +12,8 @@ version 1.9.7, in progress
   minimum and maximum from each sub-sample
 - "gnuplot" command: enhance the --with-lines option to permit using
   lines for some series and points for others
-- Plots in GUI: add option to show semilog fitted line
+- Plots in GUI: add option to show semilog fitted line, and make the
+  option to show a grid more configurable
 - New function simann() provides user access to simulated annealing
 - Speed up the production of bootstrapped confidence bands for impulse 
   responses in VECM models
