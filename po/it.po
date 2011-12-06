@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.9.6\n"
+"Project-Id-Version: gretl 1.9.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-12-05 10:43-0500\n"
-"PO-Revision-Date: 2011-12-01 21:24+0100\n"
+"PO-Revision-Date: 2011-12-06 12:45+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -4299,9 +4299,8 @@ msgid "Pseudo-random number generator seeded with %d\n"
 msgstr "Scelto %d come seme per il generatore di numeri pseudocasuali\n"
 
 #: lib/src/matrix_extra.c:817
-#, fuzzy
 msgid "Non-positive values encountered"
-msgstr "Sono stati trovati valori mancanti"
+msgstr "Sono stati trovati valori non positivi"
 
 #: lib/src/missing.c:778
 #, c-format
@@ -7167,11 +7166,9 @@ msgid "OK, staying with current data set\n"
 msgstr "OK, conservato il dataset attuale\n"
 
 #: cli/gretlcli.c:800 gui2/library.c:8128
-#, fuzzy, c-format
+#, c-format
 msgid "Read datafile %s\n"
-msgstr ""
-"\n"
-"Lettura del file dati %s\n"
+msgstr "Letto il file dati %s\n"
 
 #: cli/gretlcli.c:910 gui2/library.c:8251
 #, c-format
@@ -7889,11 +7886,11 @@ msgstr "Correlazione di rango"
 
 #: gui2/callbacks.c:490 gui2/selector.c:3551
 msgid "Loess"
-msgstr ""
+msgstr "Loess"
 
 #: gui2/callbacks.c:490 gui2/library.c:3895 gui2/selector.c:3553
 msgid "Nadaraya-Watson"
-msgstr ""
+msgstr "Nadaraya-Watson"
 
 #: gui2/callbacks.c:543 gui2/callbacks.c:699 gui2/selector.c:5928
 msgid "Enter formula for new variable"
@@ -10017,9 +10014,8 @@ msgid "loess (locally weighted fit)"
 msgstr "loess (fit pesato localmente)"
 
 #: gui2/gpt_dialog.c:135
-#, fuzzy
 msgid "semilog: log y = a + b*x"
-msgstr "lineare: y = a + b*x"
+msgstr "semilog: log y = a + b*x"
 
 #: gui2/gpt_dialog.c:300
 msgid "gretl: graph color selection"
@@ -10030,9 +10026,9 @@ msgid "Select color"
 msgstr "Seleziona colore"
 
 #: gui2/gpt_dialog.c:572
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with semilog fit)"
-msgstr "%s rispetto a %s (con fit loess)"
+msgstr "%s rispetto a %s (con fit semilog)"
 
 #: gui2/gpt_dialog.c:677 gui2/gpt_dialog.c:716
 msgid "Invalid position, must be X Y"
@@ -10106,19 +10102,16 @@ msgid "Show full border"
 msgstr "Mostra bordo completo"
 
 #: gui2/gpt_dialog.c:1905
-#, fuzzy
 msgid "horizontal"
-msgstr "orizzonte"
+msgstr "orizzontale"
 
 #: gui2/gpt_dialog.c:1906
-#, fuzzy
 msgid "vertical"
-msgstr "Matematica"
+msgstr "verticale"
 
 #: gui2/gpt_dialog.c:1907
-#, fuzzy
 msgid "both"
-msgstr "entrambe le FDR"
+msgstr "entrambe"
 
 #: gui2/gpt_dialog.c:1914
 msgid "Show grid"
@@ -11251,13 +11244,12 @@ msgid "_Rank correlation..."
 msgstr "SPEA_RMAN - Correlazione di rango..."
 
 #: gui2/gretl.c:1587
-#, fuzzy
 msgid "_Loess..."
-msgstr "_Previsione..."
+msgstr "_Loess..."
 
 #: gui2/gretl.c:1588
 msgid "_Nadaraya-Watson..."
-msgstr ""
+msgstr "_Nadaraya-Watson..."
 
 #: gui2/gretl.c:1589
 msgid "_Maximum likelihood..."
@@ -12679,22 +12671,21 @@ msgstr "gretl: GARCH"
 
 #: gui2/library.c:3894
 msgid "loess"
-msgstr ""
+msgstr "loess"
 
 #: gui2/library.c:3921
-#, fuzzy
 msgid "Series length does not match the dataset"
-msgstr "Lunghezza della serie per i dati di simulazione:"
+msgstr "La lunghezza della serie non coincide col dataset"
 
 #: gui2/library.c:4048
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s with loess fit"
-msgstr "%s rispetto a %s (con fit loess)"
+msgstr "%s rispetto a %s con fit loess"
 
 #: gui2/library.c:4051
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s with Nadaraya_Watson fit"
-msgstr "%s rispetto a %s (con fit quadratico)"
+msgstr "%s rispetto a %s con fit di Nadaraya_Watson"
 
 #: gui2/library.c:4468
 #, c-format
@@ -12761,9 +12752,8 @@ msgid "Maximum lag:"
 msgstr "Ritardo massimo:"
 
 #: gui2/library.c:5210
-#, fuzzy
 msgid "periodogram"
-msgstr "Periodogramma"
+msgstr "periodogramma"
 
 #: gui2/library.c:5245
 msgid "gretl: fractional integration"
@@ -13397,9 +13387,8 @@ msgid "You must specify a treatment variable"
 msgstr "Occorre specificare una variabile di trattamento"
 
 #: gui2/selector.c:3048
-#, fuzzy
 msgid "You must specify an independent variable"
-msgstr "Occorre specificare una seconda variabile dipendente"
+msgstr "Occorre specificare una variabile indipendente"
 
 #: gui2/selector.c:3200
 msgid "You must select a Z-axis variable"
@@ -13534,9 +13523,8 @@ msgid "Treatment variable"
 msgstr "Variabile di trattamento"
 
 #: gui2/selector.c:3586
-#, fuzzy
 msgid "Independent variable"
-msgstr "Variabili indipendenti"
+msgstr "Variabile indipendente"
 
 #: gui2/selector.c:3597 gui2/selector.c:6026
 msgid "Y-axis variables"
@@ -13663,23 +13651,20 @@ msgid "right bound"
 msgstr "limite destro"
 
 #: gui2/selector.c:4297
-#, fuzzy
 msgid "Polynomial order"
-msgstr "Trend polinomiale"
+msgstr "Ordine polinomiale"
 
 #: gui2/selector.c:4312
-#, fuzzy
 msgid "Bandwidth"
-msgstr "Ampiezza dell'intervallo:"
+msgstr "Ampiezza di banda"
 
 #: gui2/selector.c:4319
-#, fuzzy
 msgid "Use robust weights"
-msgstr "Mostra pesi"
+msgstr "Usa pesi robusti"
 
 #: gui2/selector.c:4320
 msgid "Use \"leave one out\""
-msgstr ""
+msgstr "Usa \"escludine uno\""
 
 #: gui2/selector.c:4596
 msgid "GARCH p:"
@@ -13807,14 +13792,12 @@ msgstr "Calcola intervalli di confidenza"
 
 #  Deve concordare con "soglia"  
 #: gui2/selector.c:5267
-#, fuzzy
 msgid "Automatic maximum"
-msgstr "Automatica"
+msgstr "Massimo automatico"
 
 #: gui2/selector.c:5272
-#, fuzzy
 msgid "Specified maximum"
-msgstr "con massimo"
+msgstr "Massimo specificato"
 
 #: gui2/selector.c:5292 gui2/toolbar.c:470
 msgid "Confidence level"
@@ -16326,9 +16309,9 @@ msgid "Unexpected error reading the file\n"
 msgstr "Errore inatteso durante la lettura del file\n"
 
 #: plugin/xlsx_import.c:1063
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no such worksheet"
-msgstr "%s: nessun oggetto"
+msgstr "%s: nessun foglio di lavoro"
 
 #: doc/commands/matfuncs.c:50
 msgid "Creation and I/O"
