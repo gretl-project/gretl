@@ -366,6 +366,10 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 		strcat(restore_line, fline + 2);
 	    } else if (strstr(fline, "letterbox")) {
 		flags = GPT_LETTERBOX;
+	    } else if (strstr(fline, "large")) {
+		flags = GPT_XL;
+	    } else if (strstr(fline, "extra-large")) {
+		flags = GPT_XXL;
 	    } else if (!strncmp(fline, "set style line", 14)) {
 		add_line_styles = 0;
 	    } else if (!strncmp(fline, "plot", 4)) {
@@ -2284,6 +2288,25 @@ static FitType recognize_fit_string (const char *s)
     }
 }
 
+static void check_for_plot_size (GPT_SPEC *spec, gchar *buf)
+{
+    char line[128];
+    int i = 0;
+
+    while (bufgets(line, sizeof line, buf) && i < 6) {
+	if (!strncmp(line, "# multiple scatterplots", 23)) {
+	    if (strstr(line, "extra-large")) {
+		spec->flags |= GPT_XXL;
+		break;
+	    } else if (strstr(line, "large")) {
+		spec->flags |= GPT_XL;
+		break;
+	    }		
+	}
+	i++;
+    }
+}
+
 static void linestyle_init (linestyle *ls)
 {
     ls->rgb[0] = '\0';
@@ -2354,6 +2377,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
     if (cant_edit(spec->code)) {
 	fprintf(stderr, "read_plotspec_from_file: plot is not editable\n");
+	if (spec->code == PLOT_MULTI_SCATTER) {
+	    buf_rewind(buf);
+	    check_for_plot_size(spec, buf);
+	}
 	goto bailout;
     }
 
@@ -4664,7 +4691,13 @@ static int gnuplot_show_png (const char *fname, const char *name,
     if (plot->spec->flags & GPT_LETTERBOX) {
 	plot->pixel_width = 680;
 	plot->pixel_height = 400;
-    }
+    } else if (plot->spec->flags & GPT_XXL) {
+	plot->pixel_width = 680;
+	plot->pixel_height = 680;
+    } else if (plot->spec->flags & GPT_XL) {
+	plot->pixel_width = 640;
+	plot->pixel_height = 540;
+    }	
 
     if (!plot->err) {
 	int range_err = get_plot_ranges(plot);

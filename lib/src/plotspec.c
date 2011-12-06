@@ -1199,7 +1199,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
        sort of graph, so that it will be recognized by type when
        it is redisplayed */
 
-    write_plot_type_string(spec->code, fp);
+    write_plot_type_string(spec->code, spec->flags, fp);
 
     if (spec->n_literal > 0) {
 	fprintf(fp, "# literal lines = %d\n", spec->n_literal);

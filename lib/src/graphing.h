@@ -53,7 +53,9 @@ typedef enum {
     GPT_MONO           = 1 << 23, /* monochrome output */
     GPT_GRID_Y         = 1 << 24, /* display horizontal grid lines */
     GPT_GRID_X         = 1 << 25, /* display vertical grid lines */
-    GPT_POLAR          = 1 << 26  /* plot is in polar mode */
+    GPT_POLAR          = 1 << 26, /* plot is in polar mode */
+    GPT_XL             = 1 << 27, /* large */
+    GPT_XXL            = 1 << 28  /* extra-large */
 } GptFlags; 
 
 typedef struct gretlRGB_ gretlRGB;
@@ -169,7 +171,7 @@ void gnuplot_cleanup (void);
 
 int specified_gp_output_format (void);
 
-int write_plot_type_string (PlotType ptype, FILE *fp);
+int write_plot_type_string (PlotType ptype, GptFlags flags, FILE *fp);
 
 void write_plot_line_styles (int ptype, FILE *fp);
 

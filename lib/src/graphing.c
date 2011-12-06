@@ -128,6 +128,7 @@ static void make_time_tics (gnuplot_info *gi,
 			    const DATASET *dset,
 			    int many, char *xlabel,
 			    PRN *prn);
+static void get_x_and_y_sizes (int n, int *x, int *y);
     
 #ifndef WIN32
 
@@ -788,8 +789,8 @@ int split_graph_fontspec (const char *s, char *name, int *psz)
     return nf;
 }
 
-#define USE_SMALL_FONT(t) (t == PLOT_MULTI_IRF || \
-			   t == PLOT_MULTI_SCATTER || \
+#define USE_SMALL_FONT(t) (t == PLOT_MULTI_IRF ||	\
+			   t == PLOT_MULTI_SCATTER ||	\
 			   t == PLOT_PANEL)
 
 static void 
@@ -951,12 +952,16 @@ static const char *real_png_term_line (PlotType ptype, GptFlags flags,
 	strcpy(size_string, " size 480,480");
     } else if (ptype == PLOT_QQ) {
 	strcpy(size_string, " size 480,480");
+    } else if (flags & GPT_XL) {
+	strcpy(size_string, " size 640,540");
+    } else if (flags & GPT_XXL) {
+	strcpy(size_string, " size 680,680");
     }
 
     if (pngterm == GP_PNG_CAIRO) {
 	sprintf(png_term_line, "set term pngcairo%s%s",
 		font_string, size_string);
-	strcat(png_term_line, "\nset encoding utf8"); /* FIXME? */
+	strcat(png_term_line, "\nset encoding utf8");
     } else {
 	sprintf(png_term_line, "set term png%s%s%s",
 		truecolor_string, font_string, size_string); 
@@ -1073,13 +1078,19 @@ PlotType plot_type_from_string (const char *str)
     return ret;
 }
 
-int write_plot_type_string (PlotType ptype, FILE *fp)
+int write_plot_type_string (PlotType ptype, GptFlags flags, FILE *fp)
 {
     int i, ret = 0;
 
     for (i=1; i<PLOT_TYPE_MAX; i++) {
 	if (ptype == ptinfo[i].ptype) {
-	    fprintf(fp, "# %s\n", ptinfo[i].pstr);
+	    if (flags & GPT_XL) {
+		fprintf(fp, "# %s (large)\n", ptinfo[i].pstr);
+	    } else if (flags & GPT_XXL) {
+		fprintf(fp, "# %s (extra-large)\n", ptinfo[i].pstr);
+	    } else {
+		fprintf(fp, "# %s\n", ptinfo[i].pstr);
+	    }
 	    ret = 1;
 	    break;
 	}
@@ -1285,7 +1296,7 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 	    fprintf(fp, "%s\n", get_gretl_png_term_line(ptype, flags));
 	    print_set_output(NULL, fp);
 	}
-	write_plot_type_string(ptype, fp);
+	write_plot_type_string(ptype, flags, fp);
 	write_plot_line_styles(ptype, fp);
     }
 
@@ -2286,7 +2297,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     }
 
     if ((l0 > 2 || (l0 > 1 && (gi->flags & GPT_IDX))) && 
-	 l0 < 7 && !(gi->flags & GPT_RESIDS) && !(gi->flags & GPT_FA)
+	l0 < 7 && !(gi->flags & GPT_RESIDS) && !(gi->flags & GPT_FA)
 	&& !(gi->flags & GPT_DUMMY)  & !(opt & OPT_Y)) { /* FIXME GPT_XYZ */
 	/* allow probe for using two y axes */
 #if GP_DEBUG
@@ -3173,7 +3184,7 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
  * @opt: can include %OPT_L to use lines, %OPT_U to
  * direct output to a named file.
  *
- * Writes a gnuplot plot file to display up to 6 small graphs
+ * Writes a gnuplot plot file to display up to 16 small graphs
  * based on the variables in @list, and calls gnuplot to make 
  * the graph.
  *
@@ -3185,11 +3196,17 @@ int multi_scatters (const int *list, const DATASET *dset,
 {
     GptFlags flags = 0;
     int xvar = 0, yvar = 0;
+    const double *x = NULL;
+    const double *y = NULL;
     const double *obs = NULL;
+    int xnum, ynum;
+    double xfrac, yfrac;
+    double yorig = 0, xorig = 0;
     int *plotlist = NULL;
     int pos, nplots = 0;
     FILE *fp = NULL;
-    int i, t, err = 0;
+    int i, j, k, t;
+    int err = 0;
 
     if (gretl_in_batch_mode()) {
 	flags |= GPT_BATCH;
@@ -3213,10 +3230,12 @@ int multi_scatters (const int *list, const DATASET *dset,
 	/* plot several yvars against one xvar */
 	plotlist = gretl_list_new(pos - 1);
 	xvar = list[list[0]];
+	x = dset->Z[xvar];
     } else {       
 	/* plot one yvar against several xvars */
 	plotlist = gretl_list_new(list[0] - pos);
 	yvar = list[1];
+	y = dset->Z[yvar];
     }
 
     if (plotlist == NULL) {
@@ -3225,44 +3244,58 @@ int multi_scatters (const int *list, const DATASET *dset,
 
     if (yvar) {
 	for (i=1; i<=plotlist[0]; i++) {
-	   plotlist[i] = list[i + pos]; 
+	    plotlist[i] = list[i + pos]; 
 	}
     } else if (xvar) {
 	for (i=1; i<pos; i++) {
-	   plotlist[i] = list[i]; 
+	    plotlist[i] = list[i]; 
 	}
     }
 
-    /* max 6 plots */
-    if (plotlist[0] > 6) {
-	plotlist[0] = 6;
+    /* max 16 plots */
+    if (plotlist[0] > 16) {
+	plotlist[0] = 16;
     }
 
     nplots = plotlist[0];
-    gp_small_font_size = (nplots > 4)? 6 : 0;
+    get_x_and_y_sizes(nplots, &xnum, &ynum);
+    gp_small_font_size = (nplots > 4)? 7 : 0;
+
+    if (nplots > 12) {
+	flags |= GPT_XXL;
+    } else if (nplots > 9) {
+	flags |= GPT_XL;
+    }
 
     fp = open_gp_stream(PLOT_MULTI_SCATTER, flags, &err);
     if (err) {
 	return err;
     }
 
-    fputs("set size 1.0,1.0\nset origin 0.0,0.0\n"
-	  "set multiplot\n", fp);
-    fputs("set nokey\n", fp);
-
     gretl_push_c_numeric_locale();
+
+    xfrac = 1.0 / xnum;
+    yfrac = 1.0 / ynum;
+
+    if (yfrac > 1.4 * xfrac) {
+	yfrac = 1.4 * xfrac;
+    }
+
+    fprintf(fp, "set size %g,%g\n", xfrac, yfrac);
+    fputs("set multiplot\n", fp);
+    fputs("set nokey\n", fp);
 
     if (obs != NULL) {
 	double startdate = obs[dset->t1];
 	double enddate = obs[dset->t2];
-	int jump;
+	int jump, T = dset->t2 - dset->t1 + 1;
 
 	fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
 
 	if (dset->pd == 1) {
-	    jump = (dset->t2 - dset->t1 + 1) / 6;
+	    jump = T / 6;
 	} else {
-	    jump = (dset->t2 - dset->t1 + 1) / (4 * dset->pd);
+	    jump = T / (4 * dset->pd);
 	}
 
 	fprintf(fp, "set xtics %g, %d\n", ceil(startdate), jump);
@@ -3270,81 +3303,73 @@ int multi_scatters (const int *list, const DATASET *dset,
 	fputs("set noxtics\nset noytics\n", fp);
     }
 
-    for (i=0; i<nplots; i++) {  
-	int pv = plotlist[i+1];
+    k = 0;
+    yorig = 1.0 - yfrac;
 
-	if (nplots <= 4) {
-	    fputs("set size 0.45,0.5\n", fp);
-	    fputs("set origin ", fp);
-	    if (i == 0) fputs("0.0,0.5\n", fp);
-	    else if (i == 1) fputs("0.5,0.5\n", fp);
-	    else if (i == 2) fputs("0.0,0.0\n", fp);
-	    else if (i == 3) fputs("0.5,0.0\n", fp);
-	} else {
-	    fputs("set size 0.31,0.45\n", fp);
-	    fputs("set origin ", fp);
-	    if (i == 0) fputs("0.0,0.5\n", fp);
-	    else if (i == 1) fputs("0.32,0.5\n", fp);
-	    else if (i == 2) fputs("0.64,0.5\n", fp);
-	    else if (i == 3) fputs("0.0,0.0\n", fp);
-	    else if (i == 4) fputs("0.32,0.0\n", fp);
-	    else if (i == 5) fputs("0.64,0.0\n", fp);
-	}
+    for (i=0; i<ynum && k<nplots; i++) { 
+	xorig = 0.0;
+	
+	for (j=0; j<xnum && k<nplots; j++, k++) {
+	    int ij = plotlist[k+1];
 
-	if (obs != NULL) {
-	    fputs("set noxlabel\n", fp);
-	    fputs("set noylabel\n", fp);
-	    fprintf(fp, "set title '%s'\n", 
-		    var_get_graph_name(dset, pv));
-	} else {
-	    fprintf(fp, "set xlabel '%s'\n",
-		    (yvar)? dset->varname[pv] :
-		    dset->varname[xvar]);
-	    fprintf(fp, "set ylabel '%s'\n", 
-		    (yvar)? dset->varname[yvar] :
-		    dset->varname[pv]);
-	}
+	    fprintf(fp, "set origin %g,%g\n", xorig, yorig);
 
-	fputs("plot '-' using 1:2", fp);
-	if (flags & GPT_LINES) {
-	    fputs(" with lines", fp);
-	}
-	fputc('\n', fp);
-
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    double xx;
-
-	    xx = (yvar)? dset->Z[pv][t] : (xvar)? dset->Z[xvar][t] : obs[t];
-
-	    if (na(xx)) {
-		fputs("? ", fp);
+	    if (obs != NULL) {
+		fputs("set noxlabel\n", fp);
+		fputs("set noylabel\n", fp);
+		fprintf(fp, "set title '%s'\n", 
+		    var_get_graph_name(dset, ij));
 	    } else {
-		fprintf(fp, "%.10g ", xx);
+		fprintf(fp, "set xlabel '%s'\n",
+			(yvar)? dset->varname[ij] :
+			dset->varname[xvar]);
+		fprintf(fp, "set ylabel '%s'\n", 
+			(yvar)? dset->varname[yvar] :
+			dset->varname[ij]);
 	    }
 
-	    xx = (yvar)? dset->Z[yvar][t] : dset->Z[pv][t];
+	    fputs("plot '-' using 1:2", fp);
+	    if (flags & GPT_LINES) {
+		fputs(" with lines", fp);
+	    }
+	    fputc('\n', fp);
 
-	    if (na(xx)) {
-		fputs("?\n", fp);
-	    } else {
-		fprintf(fp, "%.10g\n", xx);
+	    for (t=dset->t1; t<=dset->t2; t++) {
+		double xt, yt;
+
+		xt = yvar ? dset->Z[ij][t] : xvar ? x[t] : obs[t];
+		yt = yvar ? y[t] : dset->Z[ij][t];
+
+		if (na(xt)) {
+		    fputs("? ", fp);
+		} else {
+		    fprintf(fp, "%.10g ", xt);
+		}
+
+		if (na(yt)) {
+		    fputs("?\n", fp);
+		} else {
+		    fprintf(fp, "%.10g\n", yt);
+		}
+	    }
+	    fputs("e\n", fp);
+
+	    if (k < nplots) {
+		xorig += xfrac;
 	    }
 	}
-
-	fputs("e\n", fp);
+	if (k < nplots) {
+	    yorig -= yfrac;
+	}	
     } 
 
+    fputs("unset multiplot\n", fp);
     gretl_pop_c_numeric_locale();
 
-    fputs("set nomultiplot\n", fp);
-
     fclose(fp);
-
-    err = gnuplot_make_graph();
-
     free(plotlist);
 
-    return err;
+    return gnuplot_make_graph();
 }
 
 static int matrix_plotx_ok (const gretl_matrix *m, const DATASET *dset,
@@ -3399,7 +3424,7 @@ static double get_obsx (const double *obs, int t, int s)
  * @opt: can include %OPT_L to use lines, %OPT_U to
  * direct output to a named file.
  *
- * Writes a gnuplot plot file to display up to 6 small graphs
+ * Writes a gnuplot plot file to display up to 16 small graphs
  * based on the data in @m, and calls gnuplot to make 
  * the graph.
  *
@@ -3417,11 +3442,15 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
     FILE *fp = NULL;
     int *plotlist = NULL;
     int need_list = 0;
+    int xnum, ynum;
+    double xfrac, yfrac;
+    double yorig = 0, xorig = 0;
     int xcol = 0, ycol = 0;
     int t1 = 0, t2 = 0, pd = 1;
     int pos = 0, nplots = 0;
     int simple_obs = 0;
-    int i, t, err = 0;
+    int i, j, k, t;
+    int err = 0;
 
     if (gretl_is_null_matrix(m)) {
 	return E_DATA;
@@ -3434,9 +3463,6 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
     if (opt & OPT_L) {
 	flags |= GPT_LINES;
     }
-
-    t1 = 0;
-    t2 = m->rows - 1;
 
     if (list != NULL) {
 	for (i=1; i<=list[0]; i++) {
@@ -3452,6 +3478,9 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
     if (err) {
 	return err;
     }
+
+    t1 = 0;
+    t2 = m->rows - 1;
 
     if (pos == 0) {
 	/* plot against time or index */
@@ -3496,16 +3525,23 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 		plotlist[i] = list[i]; 
 	    }
 	}
-	/* max 6 plots */
-	if (plotlist[0] > 6) {
-	    plotlist[0] = 6;
+	/* max 16 plots */
+	if (plotlist[0] > 16) {
+	    plotlist[0] = 16;
 	}
 	nplots = plotlist[0];
     } else {
-	nplots = (m->cols > 6)? 6 : m->cols;
+	nplots = (m->cols > 16)? 16 : m->cols;
     }
 
-    gp_small_font_size = (nplots > 4)? 6 : 0;
+    get_x_and_y_sizes(nplots, &xnum, &ynum);
+    gp_small_font_size = (nplots > 4)? 7 : 0;
+
+    if (nplots > 12) {
+	flags |= GPT_XXL;
+    } else if (nplots > 9) {
+	flags |= GPT_XL;
+    }
 
     fp = open_gp_stream(PLOT_MULTI_SCATTER, flags, &err);
     if (err) {
@@ -3514,11 +3550,23 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 
     colnames = gretl_matrix_get_colnames(m);
 
-    fputs("set size 1.0,1.0\nset origin 0.0,0.0\n"
-	  "set multiplot\n", fp);
-    fputs("set nokey\n", fp);
-
     gretl_push_c_numeric_locale();
+
+    xfrac = 1.0 / xnum;
+    yfrac = 1.0 / ynum;
+
+    fprintf(stderr, "xnum=%d, ynum=%d, xfrac=%g, yfrac=%g\n", 
+	    xnum, ynum, xfrac, yfrac);
+
+    if (yfrac > 1.4 * xfrac) {
+	yfrac = 1.4 * xfrac;
+	fprintf(stderr, "revised yfrac=%g\n", yfrac);
+    }
+    fprintf(fp, "set size %g,%g\n", xfrac, yfrac);
+
+    fputs("set multiplot\n", fp);
+    fputs("set xzeroaxis\n", fp);
+    fputs("set nokey\n", fp);
 
     if (obs != NULL) {
 	double startdate = obs[t1];
@@ -3536,80 +3584,77 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 	fputs("set noxtics\nset noytics\n", fp);
     }
 
-    for (i=0; i<nplots; i++) {  
-	int j = (plotlist == NULL)? (i+1) : plotlist[i+1];
-	const double *zj = matrix_col(m, j);
-	char label[16];
+    if (obs != NULL || simple_obs) {
+	fputs("set noxlabel\n", fp);
+	fputs("set noylabel\n", fp);
+    }	
 
-	if (nplots <= 4) {
-	    fputs("set size 0.45,0.5\n", fp);
-	    fputs("set origin ", fp);
-	    if (i == 0) fputs("0.0,0.5\n", fp);
-	    else if (i == 1) fputs("0.5,0.5\n", fp);
-	    else if (i == 2) fputs("0.0,0.0\n", fp);
-	    else if (i == 3) fputs("0.5,0.0\n", fp);
-	} else {
-	    fputs("set size 0.31,0.45\n", fp);
-	    fputs("set origin ", fp);
-	    if (i == 0) fputs("0.0,0.5\n", fp);
-	    else if (i == 1) fputs("0.32,0.5\n", fp);
-	    else if (i == 2) fputs("0.64,0.5\n", fp);
-	    else if (i == 3) fputs("0.0,0.0\n", fp);
-	    else if (i == 4) fputs("0.32,0.0\n", fp);
-	    else if (i == 5) fputs("0.64,0.0\n", fp);
-	}
+    k = 0;
+    yorig = 1.0 - yfrac;
 
-	if (obs != NULL) {
-	    fputs("set noxlabel\n", fp);
-	    fputs("set noylabel\n", fp);
-	    plot_colname(label, colnames, j);
-	    fprintf(fp, "set title '%s'\n", label);
-	} else {
-	    plot_colname(label, colnames, (y != NULL)? j : xcol);
-	    fprintf(fp, "set xlabel '%s'\n", label);
-	    plot_colname(label, colnames, (y != NULL)? ycol : j);
-	    fprintf(fp, "set ylabel '%s'\n", label);
-	}
+    for (i=0; i<ynum && k<nplots; i++) {
+	xorig = 0.0;
 
-	fputs("plot '-' using 1:2", fp);
-	if (flags & GPT_LINES) {
-	    fputs(" with lines", fp);
-	}
-	fputc('\n', fp);
+	for (j=0; j<xnum && k<nplots; j++, k++) {
+	    int ij = (plotlist == NULL)? (k+1) : plotlist[k+1];
+	    const double *zj = matrix_col(m, ij);
+	    char label[16];
 
-	for (t=t1; t<=t2; t++) {
-	    double xt, yt;
-	    int s = t - t1;
+	    fprintf(fp, "set origin %g,%g\n", xorig, yorig);
 
-	    xt = ycol ? zj[s] : xcol ? x[s] : get_obsx(obs, t, s);
-	    yt = (y != NULL)? y[s] : zj[s];
-
-	    if (xna(xt)) {
-		fputs("? ", fp);
+	    if (obs != NULL || simple_obs) {
+		plot_colname(label, colnames, ij);
+		fprintf(fp, "set title '%s'\n", label);
 	    } else {
-		fprintf(fp, "%.10g ", xt);
+		plot_colname(label, colnames, (y != NULL)? ij : xcol);
+		fprintf(fp, "set xlabel '%s'\n", label);
+		plot_colname(label, colnames, (y != NULL)? ycol : ij);
+		fprintf(fp, "set ylabel '%s'\n", label);
 	    }
 
-	    if (xna(yt)) {
-		fputs("?\n", fp);
-	    } else {
-		fprintf(fp, "%.10g\n", yt);
+	    fputs("plot '-' using 1:2", fp);
+	    if (flags & GPT_LINES) {
+		fputs(" with lines", fp);
+	    }
+	    fputc('\n', fp);
+
+	    for (t=t1; t<=t2; t++) {
+		double xt, yt;
+		int s = t - t1;
+
+		xt = ycol ? zj[s] : xcol ? x[s] : get_obsx(obs, t, s);
+		yt = (y != NULL)? y[s] : zj[s];
+
+		if (xna(xt)) {
+		    fputs("? ", fp);
+		} else {
+		    fprintf(fp, "%.10g ", xt);
+		}
+
+		if (xna(yt)) {
+		    fputs("?\n", fp);
+		} else {
+		    fprintf(fp, "%.10g\n", yt);
+		}
+	    }
+	    fputs("e\n", fp);
+
+	    if (k < nplots) {
+		xorig += xfrac;
 	    }
 	}
+	if (k < nplots) {
+	    yorig -= yfrac;
+	}
+    }	
 
-	fputs("e\n", fp);
-    } 
-
+    fputs("unset multiplot\n", fp);
     gretl_pop_c_numeric_locale();
-
-    fputs("set nomultiplot\n", fp);
 
     fclose(fp);
     free(plotlist);
 
-    err = gnuplot_make_graph();
-
-    return err;
+    return gnuplot_make_graph();
 }
 
 static int get_3d_output_file (FILE **fpp)
@@ -4800,7 +4845,7 @@ int rmplot (const int *list, DATASET *dset,
 
     range_mean_graph = get_plugin_function("range_mean_graph", &handle);
     if (range_mean_graph == NULL) {
-        return 1;
+	return 1;
     }
 
     err = range_mean_graph(list[1], dset, opt, prn);
@@ -4819,7 +4864,7 @@ hurstplot (const int *list, DATASET *dset, PRN *prn)
 
     hurst_exponent = get_plugin_function("hurst_exponent", &handle);
     if (hurst_exponent == NULL) {
-        return 1;
+	return 1;
     }
 
     err = hurst_exponent(list[1], dset, prn);
@@ -4831,21 +4876,23 @@ hurstplot (const int *list, DATASET *dset, PRN *prn)
 
 static void get_x_and_y_sizes (int n, int *x, int *y)
 {
-    if (n == 2) {
+    if (n < 3) {
 	*x = 2;
 	*y = 1;
-    } else if (n == 3 || n == 4) {
-	*x = 2;
-	*y = 2;
-    } else if (n == 5 || n == 6) {
+    } else if (n < 5) {
+	*x = *y = 2;
+    } else if (n < 7) {
 	*x = 3;
 	*y = 2;
-    } else if (n > 6 && n < 10) {
+    } else if (n < 10) {
+	*x = *y = 3;
+    } else if (n < 13) {
 	*x = 3;
-	*y = 3;
+	*y = 4;
+    } else if (n < 17) {
+	*x = *y = 4;
     } else {
-	*x = 0;
-	*y = 0;
+	*x = *y = 0;
     }
 }
 
@@ -5052,8 +5099,8 @@ static int panel_sequence_ts_plot (int vnum,
     FILE *fp = NULL;
     int i, j, k, t, t0;
     int w, xnum, ynum;
-    float xfrac, yfrac;
-    float yorig, xorig = 0.0;
+    double xfrac, yfrac;
+    double yorig, xorig = 0.0;
     const double *y, *x = NULL;
     const char *vname;
     double xt, yt, ymin, ymax, incr;
@@ -5276,7 +5323,7 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 	    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1\n", _("point estimate"));
 	} else {
 	    fprintf(fp, "'-' using 1:2 title '%s' w lines, \\\n", 
-		_("point estimate"));
+		    _("point estimate"));
 	    sprintf(title, _("%g and %g quantiles"), ql, qh);
 	    fprintf(fp, "'-' using 1:2:3:4 title '%s' w errorbars\n", title);
 	}

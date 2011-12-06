@@ -9185,6 +9185,11 @@
 	  <effect>create line graphs</effect>
 	</option>
         <option>
+	  <flag>--matrix</flag>
+	  <optparm>name</optparm>
+	  <effect>plot columns of named matrix</effect>
+        </option>
+        <option>
 	  <flag>--output</flag>
 	  <optparm>filename</optparm>
 	  <effect>send output to specified file</effect>
@@ -9209,7 +9214,7 @@
 	plots each of variables 1 through 6 against variable 7 on the
 	<math>x</math>-axis. Scanning a set of such plots can be
 	a useful step in exploratory data analysis.  The maximum
-	number of plots is six; any extra variable in the list will be
+	number of plots is 16; any extra variable in the list will be
 	ignored.
       </para>
       <para context="cli">
@@ -9220,13 +9225,20 @@
 	For details on usage of the <opt>--output</opt> option, please see
 	the <cmdref targ="gnuplot"/> command.
       </para>
+      <para context="cli">
+	If a named matrix is specified as the data source the
+	<repl>x</repl> and <repl>y</repl> lists should be given as
+	1-based column numbers; or alternatively, if no such numbers
+	are given, all the columns are plotted against time or an
+	index variable.
+      </para>
       <para context="gui">
 	Generates pairwise graphs of the selected <quote>Y-axis
 	  variable</quote> against each of the selected <quote>X-axis
 	  variables</quote> in turn.  (Or you can select several variables
 	for the Y-axis and one for the X-axis.)  Scanning a set of such
 	plots can be a useful step in exploratory data analysis.  The
-	maximum number of plots is six; any extra variables will be
+	maximum number of plots is 16; any extra variables will be
 	ignored.
       </para>
     </description>
