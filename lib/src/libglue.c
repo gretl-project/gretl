@@ -517,3 +517,47 @@ int script_add_obs_markers (DATASET *dset)
 
     return err;
 }
+
+int matrix_plot_driver (const int *list, const char *literal,
+			gretlopt opt)
+{
+    gretl_matrix *m = NULL;
+    const char *mname;
+    int err = 0;
+
+    mname = get_optval_string(GNUPLOT, OPT_X);
+
+    if (mname != NULL) {
+	m = get_matrix_by_name(mname);
+    }
+
+    if (m == NULL) {
+	err = E_DATA;
+    } else {
+	err = matrix_plot(m, list, literal, opt);
+    }
+
+    return err;
+}
+
+int matrix_scatters_driver (const int *list, const DATASET *dset,
+			    gretlopt opt)
+{
+    gretl_matrix *m = NULL;
+    const char *mname;
+    int err = 0;
+
+    mname = get_optval_string(SCATTERS, OPT_X);
+
+    if (mname != NULL) {
+	m = get_matrix_by_name(mname);
+    }
+
+    if (m == NULL) {
+	err = E_DATA;
+    } else {
+	err = matrix_scatters(m, list, dset, opt);
+    }
+
+    return err;
+}

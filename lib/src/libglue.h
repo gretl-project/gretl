@@ -41,6 +41,12 @@ MODEL logistic_driver (const int *list, DATASET *dset,
 MODEL tobit_driver (const int *list, DATASET *dset, 
 		    gretlopt opt, PRN *prn);
 
+int matrix_plot_driver (const int *list, const char *literal,
+			gretlopt opt);
+
+int matrix_scatters_driver (const int *list, const DATASET *dset,
+			    gretlopt opt);
+
 int do_modprint (const char *line, gretlopt opt, PRN *prn);
 
 int script_add_obs_markers (DATASET *dset);

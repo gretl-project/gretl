@@ -2751,28 +2751,16 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
     int *plotlist = NULL;
     int err = 0;
 
-    if (m == NULL) {
-	/* we need to find the matrix by name */
-	const char *mname = get_optval_string(GNUPLOT, OPT_X);
-    
-	if (mname == NULL) {
-	    err = E_DATA;
-	} else {
-	    m = get_matrix_by_name(mname);
-	    if (m == NULL) {
-		err = E_DATA;
-	    }
-	}
+    if (gretl_is_null_matrix(m)) {
+	return E_DATA;
     }
 
-    if (!err) {
-	if (list != NULL && list[0] == 0) {
-	    dset = gretl_dataset_from_matrix(m, NULL, &err);
-	} else {
-	    dset = gretl_dataset_from_matrix(m, list, &err);
-	}
+    if (list != NULL && list[0] == 0) {
+	dset = gretl_dataset_from_matrix(m, NULL, &err);
+    } else {
+	dset = gretl_dataset_from_matrix(m, list, &err);
     }
-
+ 
     if (err) {
 	return err;
     }
@@ -2838,10 +2826,6 @@ int gnuplot (const int *plotlist, const char *literal,
 	if (plotlist[0] > 1 || !dataset_is_time_series(dset)) {
 	    return E_BADOPT;
 	}
-    }
-
-    if (opt & OPT_X) {
-	return matrix_plot(NULL, list, literal, opt);
     }
 
 #if GP_DEBUG
@@ -3364,7 +3348,7 @@ int multi_scatters (const int *list, const DATASET *dset,
 }
 
 static int matrix_plotx_ok (const gretl_matrix *m, const DATASET *dset,
-			    int *pt1, int *pt2, int *ppd, int *offset)
+			    int *pt1, int *pt2, int *ppd)
 {
     if (dset == NULL) {
 	return 0;
@@ -3375,13 +3359,6 @@ static int matrix_plotx_ok (const gretl_matrix *m, const DATASET *dset,
 	int t2 = gretl_matrix_get_t2(m);
 
 	if (t2 > t1 && t2 < dset->n) {
-	    if (dset->t1 > t1) {
-		*offset = dset->t1 - t1;
-		t1 = dset->t1;
-	    } 
-	    if (dset->t2 < t2) {
-		t2 = dset->t2;
-	    } 	    
 	    *pt1 = t1;
 	    *pt2 = t2;
 	    *ppd = dset->pd;
@@ -3392,12 +3369,11 @@ static int matrix_plotx_ok (const gretl_matrix *m, const DATASET *dset,
     return 0;
 }
 
-static const double *matrix_col (const gretl_matrix *m, int j,
-				 int offset)
+static const double *matrix_col (const gretl_matrix *m, int j)
 {
     const double *x = m->val;
 
-    return x + (j-1) * m->rows + offset;
+    return x + (j-1) * m->rows;
 }
 
 static void plot_colname (char *s, const char **colnames, int j)
@@ -3410,18 +3386,9 @@ static void plot_colname (char *s, const char **colnames, int j)
     }
 }
 
-static double *simple_obsvec (int n)
+static double get_obsx (const double *obs, int t, int s)
 {
-    double *x = malloc(n * sizeof *x);
-    int i;
-
-    if (x != NULL) {
-	for (i=0; i<n; i++) {
-	    x[i] = i;
-	}
-    }
-
-    return x;
+    return (obs != NULL)? obs[t] : s;
 }
 
 /**
@@ -3449,11 +3416,11 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
     const char **colnames = NULL;
     FILE *fp = NULL;
     int *plotlist = NULL;
+    int need_list = 0;
     int xcol = 0, ycol = 0;
-    int t1 = 0, t2 = 0;
+    int t1 = 0, t2 = 0, pd = 1;
     int pos = 0, nplots = 0;
-    int offset = 0, pd = 1;
-    int free_obs = 0;
+    int simple_obs = 0;
     int i, t, err = 0;
 
     if (gretl_is_null_matrix(m)) {
@@ -3488,49 +3455,56 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 
     if (pos == 0) {
 	/* plot against time or index */
-	if (matrix_plotx_ok(m, dset, &t1, &t2, &pd, &offset)) {
+	if (matrix_plotx_ok(m, dset, &t1, &t2, &pd)) {
 	    obs = gretl_plotx(dset);
+	    if (obs == NULL) {
+		return E_ALLOC;
+	    }	
 	} else {
-	    obs = simple_obsvec(m->rows);
-	    free_obs = 1;
+	    simple_obs = 1;
 	}
-	if (obs == NULL) {
-	    return E_ALLOC;
-	}	
-	plotlist = gretl_list_copy(list);
+	if (list != NULL && list[0] > 0) {
+	    need_list = 1;
+	    plotlist = gretl_list_copy(list);
+	}
 	flags |= GPT_LINES;
     } else if (pos > 2) { 
 	/* plot several yvars against one xvar */
+	need_list = 1;
 	plotlist = gretl_list_new(pos - 1);
 	xcol = list[list[0]];
-	x = matrix_col(m, xcol, offset);
+	x = matrix_col(m, xcol);
     } else {       
 	/* plot one yvar against several xvars */
+	need_list = 1;
 	plotlist = gretl_list_new(list[0] - pos);
 	ycol = list[1];
-	y = matrix_col(m, ycol, offset);
+	y = matrix_col(m, ycol);
     }
 
-    if (plotlist == NULL) {
+    if (need_list && plotlist == NULL) {
 	return E_ALLOC;
     }
 
-    if (y != NULL) {
-	for (i=1; i<=plotlist[0]; i++) {
-	   plotlist[i] = list[i + pos]; 
+    if (plotlist != NULL) {
+	if (y != NULL) {
+	    for (i=1; i<=plotlist[0]; i++) {
+		plotlist[i] = list[i + pos]; 
+	    }
+	} else if (x != NULL) {
+	    for (i=1; i<pos; i++) {
+		plotlist[i] = list[i]; 
+	    }
 	}
-    } else if (x != NULL) {
-	for (i=1; i<pos; i++) {
-	   plotlist[i] = list[i]; 
+	/* max 6 plots */
+	if (plotlist[0] > 6) {
+	    plotlist[0] = 6;
 	}
+	nplots = plotlist[0];
+    } else {
+	nplots = (m->cols > 6)? 6 : m->cols;
     }
 
-    /* max 6 plots */
-    if (plotlist[0] > 6) {
-	plotlist[0] = 6;
-    }
-
-    nplots = plotlist[0];
     gp_small_font_size = (nplots > 4)? 6 : 0;
 
     fp = open_gp_stream(PLOT_MULTI_SCATTER, flags, &err);
@@ -3555,13 +3529,16 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 
 	jump = (pd == 1)? (T / 6) : (T / (4 * pd));
 	fprintf(fp, "set xtics %g, %d\n", ceil(startdate), jump);
+    } else if (simple_obs) {
+	fprintf(fp, "set xrange [0:%d]\n", m->rows - 1);
+	fprintf(fp, "set xtics 0, %d\n", m->rows / 6);
     } else {
 	fputs("set noxtics\nset noytics\n", fp);
     }
 
     for (i=0; i<nplots; i++) {  
-	int j = plotlist[i+1];
-	const double *zj = matrix_col(m, j, offset);
+	int j = (plotlist == NULL)? (i+1) : plotlist[i+1];
+	const double *zj = matrix_col(m, j);
 	char label[16];
 
 	if (nplots <= 4) {
@@ -3604,7 +3581,7 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 	    double xt, yt;
 	    int s = t - t1;
 
-	    xt = (y != NULL)? zj[s] : (x != NULL)? x[s] : obs[t];
+	    xt = ycol ? zj[s] : xcol ? x[s] : get_obsx(obs, t, s);
 	    yt = (y != NULL)? y[s] : zj[s];
 
 	    if (xna(xt)) {
@@ -3629,9 +3606,6 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 
     fclose(fp);
     free(plotlist);
-    if (free_obs) {
-	free((double *) obs);
-    }
 
     err = gnuplot_make_graph();
 

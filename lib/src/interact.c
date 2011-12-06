@@ -2250,7 +2250,8 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
 	cmd->ci == ARMA || cmd->ci == GARCH) {
 	/* flag acceptance of plain ints in list */
 	ints_ok = 1;
-    } else if (cmd->ci == GNUPLOT && (cmd->opt & OPT_X)) {
+    } else if ((cmd->ci == GNUPLOT || cmd->ci == SCATTERS) && 
+	       (cmd->opt & OPT_X)) {
 	/* plotting columns of a matrix */
 	ints_ok = 1;
     }
@@ -2324,6 +2325,7 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
     } else if (cmd->ci != SETMISS && 
 	       cmd->ci != PRINT &&
 	       cmd->ci != GNUPLOT &&
+	       cmd->ci != SCATTERS &&
 	       cmd->ci != DELEET) {
 	/* the command needs a list but doesn't have one */
 	if (cmd->list[0] == 0) {
@@ -2349,6 +2351,16 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
 	    cmd->err = E_ARGS;
 	}
     }
+
+    if (!cmd->err && cmd->ci == SCATTERS && cmd->list[0] < 2) {
+	/* check the list for the scatters command */
+	if ((cmd->opt & OPT_X) && (cmd->opt && OPT_T)) {
+	    ; /* non-empty list not required */
+	} else {
+	    /* all other cases: we need at least two series */
+	    cmd->err = E_ARGS;
+	}
+    }    
 
     /* check list for duplicated variables? */
     if (!cmd->err && !cmd_nolist(cmd)) {
@@ -3444,7 +3456,8 @@ cmd_print_list (const CMD *cmd, const DATASET *dset,
 	return;
     }
     
-    if (cmd->ci == GNUPLOT && (cmd->opt & OPT_X)) {
+    if ((cmd->ci == GNUPLOT || cmd->ci == SCATTERS) && 
+	(cmd->opt & OPT_X)) {
 	/* plotting columns of matrix */
 	use_varnames = 0;
     }
@@ -5211,7 +5224,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    if (cmd->opt & OPT_D) {
 		err = gnuplot_process_file(cmd->opt, prn);
 	    } else if (cmd->opt & OPT_X) {
-		err = matrix_plot(NULL, cmd->list, cmd->param, cmd->opt);
+		err = matrix_plot_driver(cmd->list, cmd->param, cmd->opt);
 	    } else if (cmd->opt & OPT_C) {
 		err = xy_plot_with_control(cmd->list, cmd->param, 
 					   dset, cmd->opt);
@@ -5220,7 +5233,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    }
 	} else if (cmd->ci == SCATTERS) {
 	    if (cmd->opt & OPT_X) {
-		err = matrix_scatters(NULL, cmd->list, dset, cmd->opt);
+		err = matrix_scatters_driver(cmd->list, dset, cmd->opt);
 	    } else {
 		err = multi_scatters(cmd->list, dset, cmd->opt);
 	    }
