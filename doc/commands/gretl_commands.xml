@@ -7530,18 +7530,14 @@
     label="Direct printing to file" context="cli">
 
     <usage>
-      <arguments>
-        <argument>filename</argument>
-        <argument>option</argument>
-      </arguments>
+      <altforms>
+	<altform><lit>outfile</lit> <repl>filename</repl> <repl>option</repl></altform>
+	<altform><lit>outfile --close</lit></altform>
+      </altforms>
       <options>
         <option>
 	  <flag>--append</flag>
 	  <effect>append to file</effect>
-        </option>
-        <option>
-	  <flag>--close</flag>
-	  <effect>close file</effect>
         </option>
         <option>
 	  <flag>--write</flag>
@@ -7549,7 +7545,7 @@
         </option>
       </options>
       <examples>
-        <example>outfile --write regress.txt</example>
+        <example>outfile regress.txt --write</example>
         <example>outfile --close</example>
       </examples>
     </usage>
@@ -7569,20 +7565,22 @@
       </para>
       <para>
 	In the first example command above, the file
-	<filename>regress.txt</filename> is opened for writing, and in the
-	second it is closed.  This would make sense as a sequence only if
-	some commands were issued before the <opt>--close</opt>.  For
-	example if an <cmd>ols</cmd> command intervened, its output would
-	go to <filename>regress.txt</filename> rather than the screen.
+	<filename>regress.txt</filename> is opened for writing, and in
+	the second it is closed.  This would make sense as a sequence
+	only if some commands were issued before the
+	<opt>--close</opt>.  For example if an <cmd>ols</cmd> command
+	intervened, its output would go to
+	<filename>regress.txt</filename> rather than the screen.
       </para>
       <para>
-	Three special variants on the above are available. If you give the
-	keyword <lit>null</lit> in place of a real filename along with the
-	<opt>--write</opt> option, the effect is to suppress all printed
-	output until the next <lit>outfile --close</lit>. In addition if
-	the keywords <lit>stdout</lit> or <lit>stderr</lit> are given in
-	place of a regular filename the effect is to redirect output to
-	standard output or standard error output respectively.
+	Three special variants on the above are available. If you give
+	the keyword <lit>null</lit> in place of a real filename along
+	with the <opt>--write</opt> option, the effect is to suppress
+	all printed output until the next <lit>outfile
+	--close</lit>. In addition if the keywords <lit>stdout</lit>
+	or <lit>stderr</lit> are given in place of a regular filename
+	the effect is to redirect output to standard output or
+	standard error output respectively.
       </para>
     </description>
 

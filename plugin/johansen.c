@@ -2603,6 +2603,7 @@ int vecm_test_restriction (GRETL_VAR *jvar,
 {
     gretl_matrix *B0 = NULL;
     gretl_matrix *A0 = NULL;
+    PRN *vprn;
     int err = 0;
 
     B0 = gretl_matrix_copy(jvar->jinfo->Beta);
@@ -2612,12 +2613,14 @@ int vecm_test_restriction (GRETL_VAR *jvar,
 	return E_ALLOC;
     }
 
+    vprn = (opt & OPT_S)? NULL : prn;
+
     if (simple_beta_restriction(jvar, rset)) {
-	err = vecm_beta_test(jvar, rset, dset, opt, prn);
+	err = vecm_beta_test(jvar, rset, dset, opt, vprn);
     } else if (simple_alpha_restriction(jvar, rset)) {
-	err = vecm_alpha_test(jvar, rset, dset, opt, prn);
+	err = vecm_alpha_test(jvar, rset, dset, opt, vprn);
     } else {
-	err = general_vecm_analysis(jvar, rset, dset, prn);
+	err = general_vecm_analysis(jvar, rset, dset, vprn);
     }
 
     if (!err) {
