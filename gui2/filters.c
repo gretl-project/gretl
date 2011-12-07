@@ -924,7 +924,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines\n", title);
 	print_gp_data(finfo, obs, u, fp);
 	fputs("e\n", fp);
-	fputs("set nomultiplot\n", fp);
+	fputs("unset multiplot\n", fp);
     } else if (finfo->ftype == FILTER_FD) {
 	sprintf(ztitle, "fracdiff(%s, %g)", finfo->vname, finfo->lambda);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines\n", ztitle);

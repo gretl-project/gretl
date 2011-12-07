@@ -128,7 +128,7 @@ static void make_time_tics (gnuplot_info *gi,
 			    const DATASET *dset,
 			    int many, char *xlabel,
 			    PRN *prn);
-static void get_x_and_y_sizes (int n, int *x, int *y);
+static void get_multiplot_layout (int n, int *rows, int *cols);
     
 #ifndef WIN32
 
@@ -789,9 +789,10 @@ int split_graph_fontspec (const char *s, char *name, int *psz)
     return nf;
 }
 
-#define USE_SMALL_FONT(t) (t == PLOT_MULTI_IRF ||	\
-			   t == PLOT_MULTI_SCATTER ||	\
-			   t == PLOT_PANEL)
+static void maybe_set_small_font (int nplots)
+{
+    gp_small_font_size = (nplots > 4)? 6 : 0;
+}
 
 static void 
 write_gnuplot_font_string (char *fstr, PlotType ptype, int pngterm,
@@ -816,7 +817,7 @@ write_gnuplot_font_string (char *fstr, PlotType ptype, int pngterm,
 
 	nf = split_graph_fontspec(grfont, fname, &fsize);
 	if (nf == 2) {
-	    if (USE_SMALL_FONT(ptype) && gp_small_font_size > 0) {
+	    if (maybe_big_multiplot(ptype) && gp_small_font_size > 0) {
 		fprintf(stderr, "Doing small font\n");
 		sprintf(fstr, " font \"%s,%d\"", fname, gp_small_font_size);
 	    } else {
@@ -828,7 +829,7 @@ write_gnuplot_font_string (char *fstr, PlotType ptype, int pngterm,
     } else {
 	int shrink = 0;
 
-	if (USE_SMALL_FONT(ptype) && gp_small_font_size > 0) {
+	if (maybe_big_multiplot(ptype) && gp_small_font_size > 0) {
 	    char fname[64];
 	    int fsize;
 
@@ -849,7 +850,7 @@ write_gnuplot_font_string (char *fstr, PlotType ptype, int pngterm,
 static void 
 write_old_gnuplot_font_string (char *fstr, PlotType ptype)
 {
-    if (USE_SMALL_FONT(ptype)) {
+    if (maybe_big_multiplot(ptype)) {
 	strcpy(fstr, " tiny");
     } else {
 	strcpy(fstr, " small");
@@ -911,6 +912,83 @@ static void do_plot_bounding_box (void)
     }
 }
 
+static void maybe_set_eps_pdf_dims (char *s, PlotType ptype, GptFlags flags)
+{
+    double w = 0, h = 0;
+
+    if (flags & GPT_LETTERBOX) {
+	/* for time series */
+	w = (5.0 * GP_LB_WIDTH) / GP_WIDTH;
+	h = (3.5 * GP_LB_HEIGHT) / GP_HEIGHT;
+    } else if (flags & GPT_XL) {
+	/* large */
+	w = (5.0 * GP_XL_WIDTH) / GP_WIDTH;
+	h = (3.5 * GP_XL_HEIGHT) / GP_HEIGHT;
+    } else if (flags & GPT_XXL) {
+	/* extra large */
+	w = h = (5.0 * GP_XXL_WIDTH) / GP_WIDTH;
+    } else if (ptype == PLOT_ROOTS || ptype == PLOT_QQ) {
+	/* square plots */
+	w = h = 3.5;
+    } 
+
+    if (w > 0 && h > 0) {
+	char size_str[32];
+
+	sprintf(size_str, " size %.2f,%.2f", w, h);
+	strcat(s, size_str);
+    }    
+}
+
+const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags)
+{
+    static char pdf_term_line[128];
+
+    if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
+	strcpy(pdf_term_line, "set term pdfcairo font \"sans,10\"");
+    } else {
+	strcpy(pdf_term_line, "set term pdf");
+    }
+
+    maybe_set_eps_pdf_dims(pdf_term_line, ptype, flags);
+
+    return pdf_term_line;
+}
+
+const char *get_gretl_eps_term_line (PlotType ptype, GptFlags flags)
+{
+    static char eps_term_line[128];
+
+    if (flags & GPT_MONO) {
+	strcpy(eps_term_line, "set term post eps enhanced mono");
+    } else {
+	strcpy(eps_term_line, "set term post eps enhanced color solid");
+    }
+
+    maybe_set_eps_pdf_dims(eps_term_line, ptype, flags);
+
+    return eps_term_line;
+}
+
+static void write_png_size_string (char *s, PlotType ptype, GptFlags flags)
+{
+    *s = '\0';
+
+    if (flags & GPT_LETTERBOX) {
+	/* for time series */
+	sprintf(s, " size %d,%d", GP_LB_WIDTH, GP_LB_HEIGHT);
+    } else if (flags & GPT_XL) {
+	/* large */
+	sprintf(s, " size %d,%d", GP_XL_WIDTH, GP_XL_HEIGHT);
+    } else if (flags & GPT_XXL) {
+	/* extra large */
+	sprintf(s, " size %d,%d", GP_XXL_WIDTH, GP_XXL_HEIGHT);
+    } else if (ptype == PLOT_ROOTS || ptype == PLOT_QQ) {
+	/* square plots */
+	sprintf(s, " size %d,%d", GP_SQ_SIZE, GP_SQ_SIZE);
+    }
+}
+
 static const char *real_png_term_line (PlotType ptype, GptFlags flags,
 				       const char *specfont)
 {
@@ -920,8 +998,7 @@ static const char *real_png_term_line (PlotType ptype, GptFlags flags,
     char size_string[16];
     int gpttf, pngterm = 0;
 
-    *font_string = 0;
-    *size_string = 0;
+    *font_string = *size_string = '\0';
 
     pngterm = gnuplot_png_terminal();
 
@@ -946,17 +1023,7 @@ static const char *real_png_term_line (PlotType ptype, GptFlags flags,
     }
 #endif
 
-    if (flags & GPT_LETTERBOX) {
-	strcpy(size_string, " size 680,400");
-    } else if (ptype == PLOT_ROOTS) {
-	strcpy(size_string, " size 480,480");
-    } else if (ptype == PLOT_QQ) {
-	strcpy(size_string, " size 480,480");
-    } else if (flags & GPT_XL) {
-	strcpy(size_string, " size 640,540");
-    } else if (flags & GPT_XXL) {
-	strcpy(size_string, " size 680,680");
-    }
+    write_png_size_string(size_string, ptype, flags);
 
     if (pngterm == GP_PNG_CAIRO) {
 	sprintf(png_term_line, "set term pngcairo%s%s",
@@ -1103,33 +1170,28 @@ int write_plot_type_string (PlotType ptype, GptFlags flags, FILE *fp)
     return ret;
 }
 
-#define PDF_CAIRO_STRING "set term pdfcairo font \"sans,10\""
-
-static void print_term_string (int tt, FILE *fp)
+static void print_term_string (int ttype, PlotType ptype,
+			       GptFlags flags, FILE *fp)
 {
     const char *tstr = NULL;
 
-    if (tt == GP_TERM_EPS) {
-	tstr = "set term post eps enhanced mono";
-    } else if (tt == GP_TERM_PDF) {
-	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	    tstr = PDF_CAIRO_STRING;
-	} else {
-	    tstr = "set term pdf";
-	}
-    } else if (tt == GP_TERM_PNG) {
-	tstr = get_gretl_png_term_line(PLOT_REGULAR, 0);
-    } else if (tt == GP_TERM_EMF) {
-	tstr = get_gretl_emf_term_line(PLOT_REGULAR, 1);
-    } else if (tt == GP_TERM_FIG) {
+    if (ttype == GP_TERM_EPS) {
+	tstr = get_gretl_eps_term_line(ptype, flags);
+    } else if (ttype == GP_TERM_PDF) {
+	tstr = get_gretl_pdf_term_line(ptype, flags);
+    } else if (ttype == GP_TERM_PNG) {
+	tstr = get_gretl_png_term_line(ptype, 0);
+    } else if (ttype == GP_TERM_EMF) {
+	tstr = get_gretl_emf_term_line(ptype, 1);
+    } else if (ttype == GP_TERM_FIG) {
 	tstr = "set term fig";
-    } else if (tt == GP_TERM_SVG) {
+    } else if (ttype == GP_TERM_SVG) {
 	tstr = "set term svg";
     }
 
     if (tstr != NULL) {
 	fprintf(fp, "%s\n", tstr);
-	if (tt != GP_TERM_EPS) {
+	if (ttype != GP_TERM_EPS) {
 	    write_plot_line_styles(PLOT_REGULAR, fp);
 	}
     }
@@ -1263,7 +1325,7 @@ static FILE *gp_set_up_batch (char *fname, PlotType ptype,
 	set_gretl_plotfile(fname);
 	if (*gnuplot_outname != '\0') {
 	    /* write terminal/output lines */
-	    print_term_string(fmt, fp);
+	    print_term_string(fmt, ptype, flags, fp);
 	    print_set_output(gnuplot_outname, fp);
 	}
     }
@@ -3199,14 +3261,11 @@ int multi_scatters (const int *list, const DATASET *dset,
     const double *x = NULL;
     const double *y = NULL;
     const double *obs = NULL;
-    int xnum, ynum;
-    double xfrac, yfrac;
-    double yorig = 0, xorig = 0;
+    int rows, cols;
     int *plotlist = NULL;
     int pos, nplots = 0;
     FILE *fp = NULL;
-    int i, j, k, t;
-    int err = 0;
+    int i, t, err = 0;
 
     if (gretl_in_batch_mode()) {
 	flags |= GPT_BATCH;
@@ -3258,8 +3317,8 @@ int multi_scatters (const int *list, const DATASET *dset,
     }
 
     nplots = plotlist[0];
-    get_x_and_y_sizes(nplots, &xnum, &ynum);
-    gp_small_font_size = (nplots > 4)? 7 : 0;
+    get_multiplot_layout(nplots, &rows, &cols);
+    maybe_set_small_font(nplots);
 
     if (nplots > 12) {
 	flags |= GPT_XXL;
@@ -3272,18 +3331,10 @@ int multi_scatters (const int *list, const DATASET *dset,
 	return err;
     }
 
-    gretl_push_c_numeric_locale();
-
-    xfrac = 1.0 / xnum;
-    yfrac = 1.0 / ynum;
-
-    if (yfrac > 1.4 * xfrac) {
-	yfrac = 1.4 * xfrac;
-    }
-
-    fprintf(fp, "set size %g,%g\n", xfrac, yfrac);
-    fputs("set multiplot\n", fp);
+    fprintf(fp, "set multiplot layout %d,%d\n", rows, cols);
     fputs("set nokey\n", fp);
+
+    gretl_push_c_numeric_locale();
 
     if (obs != NULL) {
 	double startdate = obs[dset->t1];
@@ -3303,68 +3354,52 @@ int multi_scatters (const int *list, const DATASET *dset,
 	fputs("set noxtics\nset noytics\n", fp);
     }
 
-    k = 0;
-    yorig = 1.0 - yfrac;
+    for (i=0; i<nplots; i++) { 
+	int j = plotlist[i+1];
 
-    for (i=0; i<ynum && k<nplots; i++) { 
-	xorig = 0.0;
-	
-	for (j=0; j<xnum && k<nplots; j++, k++) {
-	    int ij = plotlist[k+1];
+	if (obs != NULL) {
+	    fputs("set noxlabel\n", fp);
+	    fputs("set noylabel\n", fp);
+	    fprintf(fp, "set title '%s'\n", var_get_graph_name(dset, j));
+	} else {
+	    fprintf(fp, "set xlabel '%s'\n",
+		    (yvar)? dset->varname[j] :
+		    dset->varname[xvar]);
+	    fprintf(fp, "set ylabel '%s'\n", 
+		    (yvar)? dset->varname[yvar] :
+		    dset->varname[j]);
+	}
 
-	    fprintf(fp, "set origin %g,%g\n", xorig, yorig);
+	fputs("plot '-' using 1:2", fp);
+	if (flags & GPT_LINES) {
+	    fputs(" with lines", fp);
+	}
+	fputc('\n', fp);
 
-	    if (obs != NULL) {
-		fputs("set noxlabel\n", fp);
-		fputs("set noylabel\n", fp);
-		fprintf(fp, "set title '%s'\n", 
-		    var_get_graph_name(dset, ij));
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    double xt, yt;
+
+	    xt = yvar ? dset->Z[j][t] : xvar ? x[t] : obs[t];
+	    yt = yvar ? y[t] : dset->Z[j][t];
+
+	    if (na(xt)) {
+		fputs("? ", fp);
 	    } else {
-		fprintf(fp, "set xlabel '%s'\n",
-			(yvar)? dset->varname[ij] :
-			dset->varname[xvar]);
-		fprintf(fp, "set ylabel '%s'\n", 
-			(yvar)? dset->varname[yvar] :
-			dset->varname[ij]);
+		fprintf(fp, "%.10g ", xt);
 	    }
 
-	    fputs("plot '-' using 1:2", fp);
-	    if (flags & GPT_LINES) {
-		fputs(" with lines", fp);
-	    }
-	    fputc('\n', fp);
-
-	    for (t=dset->t1; t<=dset->t2; t++) {
-		double xt, yt;
-
-		xt = yvar ? dset->Z[ij][t] : xvar ? x[t] : obs[t];
-		yt = yvar ? y[t] : dset->Z[ij][t];
-
-		if (na(xt)) {
-		    fputs("? ", fp);
-		} else {
-		    fprintf(fp, "%.10g ", xt);
-		}
-
-		if (na(yt)) {
-		    fputs("?\n", fp);
-		} else {
-		    fprintf(fp, "%.10g\n", yt);
-		}
-	    }
-	    fputs("e\n", fp);
-
-	    if (k < nplots) {
-		xorig += xfrac;
+	    if (na(yt)) {
+		fputs("?\n", fp);
+	    } else {
+		fprintf(fp, "%.10g\n", yt);
 	    }
 	}
-	if (k < nplots) {
-	    yorig -= yfrac;
-	}	
-    } 
+	fputs("e\n", fp);
+    }
+
+    gretl_pop_c_numeric_locale();
 
     fputs("unset multiplot\n", fp);
-    gretl_pop_c_numeric_locale();
 
     fclose(fp);
     free(plotlist);
@@ -3442,15 +3477,12 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
     FILE *fp = NULL;
     int *plotlist = NULL;
     int need_list = 0;
-    int xnum, ynum;
-    double xfrac, yfrac;
-    double yorig = 0, xorig = 0;
+    int rows, cols;
     int xcol = 0, ycol = 0;
     int t1 = 0, t2 = 0, pd = 1;
     int pos = 0, nplots = 0;
     int simple_obs = 0;
-    int i, j, k, t;
-    int err = 0;
+    int i, t, err = 0;
 
     if (gretl_is_null_matrix(m)) {
 	return E_DATA;
@@ -3534,8 +3566,8 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 	nplots = (m->cols > 16)? 16 : m->cols;
     }
 
-    get_x_and_y_sizes(nplots, &xnum, &ynum);
-    gp_small_font_size = (nplots > 4)? 7 : 0;
+    get_multiplot_layout(nplots, &rows, &cols);
+    maybe_set_small_font(nplots);
 
     if (nplots > 12) {
 	flags |= GPT_XXL;
@@ -3550,23 +3582,11 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 
     colnames = gretl_matrix_get_colnames(m);
 
-    gretl_push_c_numeric_locale();
-
-    xfrac = 1.0 / xnum;
-    yfrac = 1.0 / ynum;
-
-    fprintf(stderr, "xnum=%d, ynum=%d, xfrac=%g, yfrac=%g\n", 
-	    xnum, ynum, xfrac, yfrac);
-
-    if (yfrac > 1.4 * xfrac) {
-	yfrac = 1.4 * xfrac;
-	fprintf(stderr, "revised yfrac=%g\n", yfrac);
-    }
-    fprintf(fp, "set size %g,%g\n", xfrac, yfrac);
-
-    fputs("set multiplot\n", fp);
+    fprintf(fp, "set multiplot layout %d,%d\n", rows, cols);
     fputs("set xzeroaxis\n", fp);
     fputs("set nokey\n", fp);
+
+    gretl_push_c_numeric_locale();
 
     if (obs != NULL) {
 	double startdate = obs[t1];
@@ -3589,67 +3609,52 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 	fputs("set noylabel\n", fp);
     }	
 
-    k = 0;
-    yorig = 1.0 - yfrac;
+    for (i=0; i<nplots; i++) {
+	int j = (plotlist == NULL)? (i+1) : plotlist[i+1];
+	const double *zj = matrix_col(m, j);
+	char label[16];
 
-    for (i=0; i<ynum && k<nplots; i++) {
-	xorig = 0.0;
+	if (obs != NULL || simple_obs) {
+	    plot_colname(label, colnames, j);
+	    fprintf(fp, "set title '%s'\n", label);
+	} else {
+	    plot_colname(label, colnames, (y != NULL)? j : xcol);
+	    fprintf(fp, "set xlabel '%s'\n", label);
+	    plot_colname(label, colnames, (y != NULL)? ycol : j);
+	    fprintf(fp, "set ylabel '%s'\n", label);
+	}
 
-	for (j=0; j<xnum && k<nplots; j++, k++) {
-	    int ij = (plotlist == NULL)? (k+1) : plotlist[k+1];
-	    const double *zj = matrix_col(m, ij);
-	    char label[16];
+	fputs("plot '-' using 1:2", fp);
+	if (flags & GPT_LINES) {
+	    fputs(" with lines", fp);
+	}
+	fputc('\n', fp);
 
-	    fprintf(fp, "set origin %g,%g\n", xorig, yorig);
+	for (t=t1; t<=t2; t++) {
+	    double xt, yt;
+	    int s = t - t1;
 
-	    if (obs != NULL || simple_obs) {
-		plot_colname(label, colnames, ij);
-		fprintf(fp, "set title '%s'\n", label);
+	    xt = ycol ? zj[s] : xcol ? x[s] : get_obsx(obs, t, s);
+	    yt = (y != NULL)? y[s] : zj[s];
+
+	    if (xna(xt)) {
+		fputs("? ", fp);
 	    } else {
-		plot_colname(label, colnames, (y != NULL)? ij : xcol);
-		fprintf(fp, "set xlabel '%s'\n", label);
-		plot_colname(label, colnames, (y != NULL)? ycol : ij);
-		fprintf(fp, "set ylabel '%s'\n", label);
+		fprintf(fp, "%.10g ", xt);
 	    }
 
-	    fputs("plot '-' using 1:2", fp);
-	    if (flags & GPT_LINES) {
-		fputs(" with lines", fp);
-	    }
-	    fputc('\n', fp);
-
-	    for (t=t1; t<=t2; t++) {
-		double xt, yt;
-		int s = t - t1;
-
-		xt = ycol ? zj[s] : xcol ? x[s] : get_obsx(obs, t, s);
-		yt = (y != NULL)? y[s] : zj[s];
-
-		if (xna(xt)) {
-		    fputs("? ", fp);
-		} else {
-		    fprintf(fp, "%.10g ", xt);
-		}
-
-		if (xna(yt)) {
-		    fputs("?\n", fp);
-		} else {
-		    fprintf(fp, "%.10g\n", yt);
-		}
-	    }
-	    fputs("e\n", fp);
-
-	    if (k < nplots) {
-		xorig += xfrac;
+	    if (xna(yt)) {
+		fputs("?\n", fp);
+	    } else {
+		fprintf(fp, "%.10g\n", yt);
 	    }
 	}
-	if (k < nplots) {
-	    yorig -= yfrac;
-	}
-    }	
+	fputs("e\n", fp);
+    }
+
+    gretl_pop_c_numeric_locale();
 
     fputs("unset multiplot\n", fp);
-    gretl_pop_c_numeric_locale();
 
     fclose(fp);
     free(plotlist);
@@ -4874,25 +4879,25 @@ hurstplot (const int *list, DATASET *dset, PRN *prn)
     return err;
 }
 
-static void get_x_and_y_sizes (int n, int *x, int *y)
+static void get_multiplot_layout (int n, int *rows, int *cols)
 {
     if (n < 3) {
-	*x = 2;
-	*y = 1;
+	*cols = 2;
+	*rows = 1;
     } else if (n < 5) {
-	*x = *y = 2;
+	*cols = *rows = 2;
     } else if (n < 7) {
-	*x = 3;
-	*y = 2;
+	*cols = 3;
+	*rows = 2;
     } else if (n < 10) {
-	*x = *y = 3;
+	*cols = *rows = 3;
     } else if (n < 13) {
-	*x = 3;
-	*y = 4;
+	*cols = 4;
+	*rows = 3;
     } else if (n < 17) {
-	*x = *y = 4;
+	*cols = *rows = 4;
     } else {
-	*x = *y = 0;
+	*cols = *rows = 0;
     }
 }
 
@@ -5097,14 +5102,12 @@ static int panel_sequence_ts_plot (int vnum,
 				   gretlopt opt) 
 {
     FILE *fp = NULL;
-    int i, j, k, t, t0;
-    int w, xnum, ynum;
-    double xfrac, yfrac;
-    double yorig, xorig = 0.0;
+    int w, rows, cols;
     const double *y, *x = NULL;
     const char *vname;
     double xt, yt, ymin, ymax, incr;
     int u0, nunits, T = dset->pd;
+    int i, t, t0;
     int err = 0;
 
     nunits = panel_sample_size(dset);
@@ -5116,17 +5119,17 @@ static int panel_sequence_ts_plot (int vnum,
 	if (xvar > 0) {
 	    x = dset->Z[xvar];
 	}
-	xnum = 1;
-	ynum = nunits;
+	cols = 1;
+	rows = nunits;
     } else {
-	get_x_and_y_sizes(nunits, &xnum, &ynum);
+	get_multiplot_layout(nunits, &rows, &cols);
     }
 
-    if (xnum == 0 || ynum == 0) {
+    if (rows == 0 || cols == 0) {
 	return E_DATA;
     }
 
-    gp_small_font_size = (nunits > 4)? 7 : 0;
+    maybe_set_small_font(nunits);
 
     fp = get_plot_input_stream(PLOT_PANEL, &err);
     if (err) {
@@ -5138,15 +5141,12 @@ static int panel_sequence_ts_plot (int vnum,
     gretl_minmax(dset->t1, dset->t2, y, &ymin, &ymax);
     w = panel_ytic_width(ymin, ymax);
 
-    xfrac = 1.0 / xnum;
-    yfrac = 1.0 / ynum;
-
     fputs("set key left top\n", fp);
     fputs("set datafile missing \"?\"\n", fp);
     fputs("set xtics nomirror\n", fp);
     fputs("set ytics nomirror\n", fp);
     fprintf(fp, "set format y \"%%%dg\"\n", w);
-    fputs("set multiplot\n", fp);
+    fprintf(fp, "set multiplot layout %d,%d\n", rows, cols);
 
     if (opt & OPT_V) {
 	fputs("set noxlabel\n", fp);
@@ -5158,59 +5158,41 @@ static int panel_sequence_ts_plot (int vnum,
 
     gretl_push_c_numeric_locale();
 
-    if (yfrac > 1.4 * xfrac) {
-	yfrac = 1.4 * xfrac;
-    }
-    fprintf(fp, "set size %g,%g\n", xfrac, yfrac);
-
-    k = 0;
     t0 = dset->t1;
 
-    for (i=0; i<xnum && k<nunits; i++) {
-	yorig = 1.0 - yfrac;
+    for (i=0; i<nunits; i++) {
+	if (opt & OPT_V) {
+	    gretl_minmax(t0, t0 + T - 1, y, &ymin, &ymax);
+	    incr = (ymax - ymin) / 2.0;
+	    fprintf(fp, "set ytics %g\n", incr);
+	    fprintf(fp, "set ylabel '%s (%d)'\n", vname, u0+i+1);
+	} else {
+	    fprintf(fp, "set title '%s (%d)'\n", vname, u0+i+1);
+	}
 
-	for (j=0; j<ynum && k<nunits; j++, k++) {
-	    fprintf(fp, "set origin %g,%g\n", xorig, yorig);
+	fputs("plot \\\n'-' using 1:($2) notitle w lines\n", fp);
 
-	    if (opt & OPT_V) {
-		gretl_minmax(t0, t0 + T - 1, y, &ymin, &ymax);
-		incr = (ymax - ymin) / 2.0;
-		fprintf(fp, "set ytics %g\n", incr);
-		fprintf(fp, "set ylabel '%s (%d)'\n", vname, u0+k+1);
+	for (t=0; t<T; t++) {
+	    if (x != NULL) {
+		xt = x[t+t0];
 	    } else {
-		fprintf(fp, "set title '%s (%d)'\n", vname, u0+k+1);
+		xt = t + 1;
 	    }
-
-	    fputs("plot \\\n'-' using 1:($2) notitle w lines\n", fp);
-
-	    for (t=0; t<T; t++) {
-		if (x != NULL) {
-		    xt = x[t+t0];
-		} else {
-		    xt = t + 1;
-		}
-		yt = y[t+t0];
-		if (na(yt)) {
-		    fprintf(fp, "%g ?\n", xt);
-		} else {
-		    fprintf(fp, "%g %.10g\n", xt, yt);
-		}
-	    }
-	    fputs("e\n", fp);
-
-	    if (k < nunits) {
-		t0 += T;
-		yorig -= yfrac;
+	    yt = y[t+t0];
+	    if (na(yt)) {
+		fprintf(fp, "%g ?\n", xt);
+	    } else {
+		fprintf(fp, "%g %.10g\n", xt, yt);
 	    }
 	}
+	fputs("e\n", fp);
 
-	if (k < nunits) {
-	    xorig += xfrac;
-	}
+	t0 += T;
     }
+    
+    gretl_pop_c_numeric_locale();
 
     fputs("unset multiplot\n", fp);
-    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 
@@ -5272,8 +5254,8 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 
     resp = gretl_VAR_get_impulse_response(var, targ, shock, periods, 
 					  alpha, dset, &err);
-    if (resp == NULL) {
-	return E_ALLOC;
+    if (err) {
+	return err;
     }
 
     if (gretl_matrix_cols(resp) > 1) {
@@ -5424,68 +5406,67 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
     return gnuplot_make_graph();
 }
 
-int 
-gretl_VAR_plot_multiple_irf (GRETL_VAR *var, 
-			     int periods, double alpha,
-			     const DATASET *dset,
-			     gretlopt opt)
+int gretl_VAR_plot_multiple_irf (GRETL_VAR *var, 
+				 int periods, double alpha,
+				 const DATASET *dset,
+				 gretlopt opt)
 {
     FILE *fp = NULL;
+    GptFlags flags = 0;
     int confint = 0;
     int use_fill = !(opt & OPT_E);
-    int vtarg, vshock;
-    gretl_matrix *resp;
     char title[128];
     int n = var->neqns;
-    float plot_fraction = 1.0 / n;
-    float xorig = 0.0;
-    float yorig;
+    int nplots = n * n;
     int t, i, j;
     int err = 0;
 
-    gp_small_font_size = (n == 4)? 6 : 0;
+    maybe_set_small_font(nplots);
 
-    resp = gretl_VAR_get_impulse_response(var, 1, 1, periods, 
-					  alpha, dset, &err);
-    if (resp == NULL) {
-	return E_ALLOC;
+    if (nplots > 12) {
+	flags |= GPT_XXL;
+    } else if (nplots > 9) {
+	flags |= GPT_XL;
     }
 
-    if (gretl_matrix_cols(resp) > 1) {
-	confint = 1;
-    }
-
-    fp = get_plot_input_stream(PLOT_MULTI_IRF, &err);
+    fp = open_gp_stream(PLOT_MULTI_IRF, flags, &err);
     if (err) {
-	gretl_matrix_free(resp);
 	return err;
     }
 
-    if (!confint) {
-	fputs("set nokey\n", fp);
+    fprintf(fp, "set multiplot layout %d,%d\n", n, n);
+
+    if (n < 4) {
+	fprintf(fp, "set xlabel '%s'\n", _("periods"));
     } else {
-	fputs("set key left top\n", fp);
+	fputs("set noxlabel\n", fp);
     }
-    fputs("set multiplot\n", fp);
-    fprintf(fp, "set xlabel '%s'\n", _("periods"));
+
     fputs("set xzeroaxis\n", fp);
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fp, "set size %g,%g\n", plot_fraction, plot_fraction);
-
-    for (i=0; i<n; i++) {
-
-	yorig = 1.0 - plot_fraction;
-	vtarg = gretl_VAR_get_variable_number(var, i);
+    for (i=0; i<n && !err; i++) {
+	int vtarg = gretl_VAR_get_variable_number(var, i);
 
 	for (j=0; j<n; j++) {
+	    gretl_matrix *resp;
+	    int vshock;
 
-	    fprintf(fp, "set origin %g,%g\n", xorig, yorig);
 	    resp = gretl_VAR_get_impulse_response(var, i, j, periods, 
 						  alpha, dset, &err);
 	    if (err) {
-		return err;
+		break;
+	    }
+	    
+	    if (i == 0 && j == 0) {
+		/* the first plot */
+		if (gretl_matrix_cols(resp) > 1) {
+		    confint = 1;
+		    fputs("set key left top\n", fp);
+		} else {
+		    fputs("set nokey\n", fp);
+		}
 	    }
 
 	    vshock = gretl_VAR_get_variable_number(var, j);
@@ -5529,20 +5510,22 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 		}
 		fputs("e\n", fp);
 	    }
-	    
-	    yorig -= plot_fraction;
-	}
 
-	xorig += plot_fraction;
+	    gretl_matrix_free(resp);
+	}
     }
 
-    fputs("unset multiplot\n", fp);
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-    gretl_matrix_free(resp);
+    fputs("unset multiplot\n", fp);
 
-    return gnuplot_make_graph();
+    fclose(fp);
+
+    if (!err) {
+	err = gnuplot_make_graph();
+    }
+
+    return err;
 }
 
 int gretl_system_residual_plot (void *p, int ci, const DATASET *dset)
@@ -5741,10 +5724,11 @@ int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset)
 	return err;
     }
 
-    fputs("set size 1.0,1.0\nset origin 0.0,0.0\n"
-	  "set multiplot\n", fp);
+    fprintf(fp, "set multiplot layout %d,1\n", nvars);
     fputs("set nokey\n", fp);
     fputs("set xzeroaxis\n", fp);
+    fputs("set noxlabel\n", fp);
+    fputs("set noylabel\n", fp);
 
     gretl_push_c_numeric_locale();
 
@@ -5759,53 +5743,32 @@ int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset)
     fprintf(fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);	
 
     for (i=0; i<nvars; i++) { 
-
-	if (nvars <= 4) {
-	    fputs("set size 0.45,0.5\n", fp);
-	    fputs("set origin ", fp);
-	    if (i == 0) fputs("0.0,0.5\n", fp);
-	    else if (i == 1) fputs("0.5,0.5\n", fp);
-	    else if (i == 2) fputs("0.0,0.0\n", fp);
-	    else if (i == 3) fputs("0.5,0.0\n", fp);
-	} else {
-	    fputs("set size 0.31,0.45\n", fp);
-	    fputs("set origin ", fp);
-	    if (i == 0) fputs("0.0,0.5\n", fp);
-	    else if (i == 1) fputs("0.32,0.5\n", fp);
-	    else if (i == 2) fputs("0.64,0.5\n", fp);
-	    else if (i == 3) fputs("0.0,0.0\n", fp);
-	    else if (i == 4) fputs("0.32,0.0\n", fp);
-	    else if (i == 5) fputs("0.64,0.0\n", fp);
-	}
-
-	fputs("set noxlabel\n", fp);
-	fputs("set noylabel\n", fp);
 	if (var != NULL) {
 	    v = gretl_VAR_get_variable_number(var, i);
 	} else {
 	    v = system_get_depvar(sys, i);
 	}
-	fprintf(fp, "set title '%s'\n", dset->varname[v]);
 
+	fprintf(fp, "set title '%s'\n", dset->varname[v]);
 	fputs("plot '-' using 1:2 with lines\n", fp);
 
 	for (t=0; t<nobs; t++) {
-	    double xx;
+	    double eti;
 
 	    fprintf(fp, "%.10g\t", obs[t+t1]);
-	    xx = gretl_matrix_get(E, t, i);
-	    if (na(xx)) {
+	    eti = gretl_matrix_get(E, t, i);
+	    if (na(eti)) {
 		fputs("?\n", fp);
 	    } else {
-		fprintf(fp, "%.10g\n", xx);
+		fprintf(fp, "%.10g\n", eti);
 	    }
 	}
-
 	fputs("e\n", fp);
     } 
 
     gretl_pop_c_numeric_locale();
-    fputs("set nomultiplot\n", fp);
+    fputs("unset multiplot\n", fp);
+
     fclose(fp);
 
     return gnuplot_make_graph();

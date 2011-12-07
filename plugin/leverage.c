@@ -280,7 +280,7 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     }
     fputs("e\n", fp);
 
-    fputs("set nomultiplot\n", fp);
+    fputs("unset multiplot\n", fp);
 
     gretl_pop_c_numeric_locale();
 

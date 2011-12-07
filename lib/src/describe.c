@@ -2917,7 +2917,7 @@ static int corrgram_graph (const char *vname, const double *acf, int m,
     }
 
     if (pacf != NULL) {
-	fputs("set nomultiplot\n", fp);
+	fputs("unset multiplot\n", fp);
     }
 
     gretl_pop_c_numeric_locale();

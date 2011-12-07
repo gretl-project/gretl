@@ -653,7 +653,7 @@ static int graph_series (const DATASET *dset, tx_request *req)
 	fputs("e\n", fp);
     }
 
-    fputs("set nomultiplot\n", fp);
+    fputs("unset multiplot\n", fp);
 
     gretl_pop_c_numeric_locale();
 

@@ -78,6 +78,7 @@ struct pdf_ps_saver {
     GPT_SPEC *spec;
     int pdfcairo;
     int mono;
+    int stdsize;
     double pwidth;
     double pheight;
     char psfont[64];
@@ -90,6 +91,33 @@ struct pdf_ps_saver {
     GtkWidget *combo;
 };
 
+static void set_pdf_ps_dims (struct pdf_ps_saver *s, GPT_SPEC *spec)
+{
+    PlotType ptype = spec->code;
+    double w = pwidth, h = pheight;
+
+    if (spec->flags & GPT_LETTERBOX) {
+	/* for time series */
+	w = (5.0 * GP_LB_WIDTH) / GP_WIDTH;
+	h = (3.5 * GP_LB_HEIGHT) / GP_HEIGHT;
+    } else if (spec->flags & GPT_XL) {
+	/* large */
+	w = (5.0 * GP_XL_WIDTH) / GP_WIDTH;
+	h = (3.5 * GP_XL_HEIGHT) / GP_HEIGHT;
+	s->stdsize = 0;
+    } else if (spec->flags & GPT_XXL) {
+	/* extra large */
+	w = h = (5.0 * GP_XXL_WIDTH) / GP_WIDTH;
+	s->stdsize = 0;
+    } else if (ptype == PLOT_ROOTS || ptype == PLOT_QQ) {
+	/* square plots */
+	w = h;
+    } 
+
+    s->pwidth = w;
+    s->pheight = h;
+}
+
 static void saver_init (struct pdf_ps_saver *s,
 			GtkWidget *w,
 			GPT_SPEC *spec)
@@ -98,13 +126,18 @@ static void saver_init (struct pdf_ps_saver *s,
     s->spec = spec;
     s->pdfcairo = 0;
     s->mono = mono;
-    s->pwidth = pwidth;
-    s->pheight = pheight;
+    s->stdsize = 1;
     strcpy(s->psfont, psfont);
     strcpy(s->pdffont, pdffont);
     s->psfontsize = psfontsize;
     s->pdffontsize = pdffontsize;
     s->lw_factor = lw_factor;
+
+    set_pdf_ps_dims(s, spec);
+
+    if (!s->stdsize) {
+	s->pdffontsize = 8;
+    } 
 
     if (spec->termtype == GP_TERM_PDF && 
 	gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
@@ -114,15 +147,22 @@ static void saver_init (struct pdf_ps_saver *s,
 
 static void saver_set_defaults (struct pdf_ps_saver *s)
 {
-    pwidth = s->pwidth;
-    pheight = s->pheight;
+    if (s->stdsize) {
+	/* save user's preferred size */
+	pwidth = s->pwidth;
+	pheight = s->pheight;
+    }
 
     if (s->pdfcairo) {
 	strcpy(pdffont, s->pdffont);
-	pdffontsize = s->pdffontsize;
+	if (s->stdsize) {
+	    pdffontsize = s->pdffontsize;
+	}
     } else {
 	strcpy(psfont, s->psfont);
-	psfontsize = s->psfontsize;
+	if (s->stdsize) {
+	    psfontsize = s->psfontsize;
+	}
     }
 
     mono = s->mono;

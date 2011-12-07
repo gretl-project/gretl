@@ -518,52 +518,23 @@ int gp_term_code (gpointer p, int action)
     return spec->termtype;
 }
 
-static void get_pdfcairo_term_string (char *termstr, int change_size)
-{
-    const char *pngfont = gretl_png_font();
-    char fontname[64];
-    int psz = 0;
-
-    *fontname = '\0';
-
-    if (*pngfont != '\0') {
-	split_graph_fontspec(pngfont, fontname, &psz);
-    }    
-
-    if (*fontname != '\0') {
-	if (psz > 0 && change_size) {
-	    sprintf(termstr, "set term pdfcairo font \"%s,%d\"\n",
-		    fontname, psz / 2);
-	} else {
-	    sprintf(termstr, "set term pdfcairo font \"%s\"\n",
-		    fontname);
-	}
-    } else {
-	strcpy(termstr, "set term pdfcairo font \"sans,5\"");
-    }    
-}
-
 static void get_full_term_string (const GPT_SPEC *spec, char *termstr) 
 {
-    int mono = (spec->flags & GPT_MONO);
-
     if (spec->termtype == GP_TERM_EPS) {
-	if (mono) {
-	    strcpy(termstr, "set term post eps enhanced mono"); 
-	} else {
-	    strcpy(termstr, "set term post eps enhanced color solid");
-	} 
+	const char *s = get_gretl_eps_term_line(spec->code, spec->flags);
+
+	strcpy(termstr, s);
     } else if (spec->termtype == GP_TERM_PDF) {
-	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	    get_pdfcairo_term_string(termstr, 1);
-	} else {
-	    strcpy(termstr, "set term pdf");
-	}
+	const char *s = get_gretl_pdf_term_line(spec->code, spec->flags);
+
+	strcpy(termstr, s);
     } else if (spec->termtype == GP_TERM_FIG) {
 	strcpy(termstr, "set term fig");
     } else if (spec->termtype == GP_TERM_PNG) { 
 	strcpy(termstr, get_png_line_for_plotspec(spec)); 
     } else if (spec->termtype == GP_TERM_EMF) {
+	int mono = (spec->flags & GPT_MONO);
+
 	strcpy(termstr, get_gretl_emf_term_line(spec->code, !mono));
     } 
 }
@@ -841,12 +812,7 @@ static void graph_display_pdf (GPT_SPEC *spec)
 
     spec->termtype = GP_TERM_PDF;
 
-    if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	fprintf(stderr, "gnuplot: using pdfcairo driver\n");
-	get_pdfcairo_term_string(setterm, 0);
-    } else {
-	strcpy(setterm, "set term pdf");
-    }
+    strcpy(setterm, get_gretl_pdf_term_line(spec->code, spec->flags));
 
     build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
     build_path(pdfname, gretl_dotdir(), GRETL_PDF_TMP, NULL);
@@ -2294,7 +2260,7 @@ static void check_for_plot_size (GPT_SPEC *spec, gchar *buf)
     int i = 0;
 
     while (bufgets(line, sizeof line, buf) && i < 6) {
-	if (!strncmp(line, "# multiple scatterplots", 23)) {
+	if (!strncmp(line, "# multiple ", 11)) {
 	    if (strstr(line, "extra-large")) {
 		spec->flags |= GPT_XXL;
 		break;
@@ -2377,7 +2343,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
     if (cant_edit(spec->code)) {
 	fprintf(stderr, "read_plotspec_from_file: plot is not editable\n");
-	if (spec->code == PLOT_MULTI_SCATTER) {
+	if (maybe_big_multiplot(spec->code)) {
 	    buf_rewind(buf);
 	    check_for_plot_size(spec, buf);
 	}
@@ -4591,8 +4557,8 @@ static png_plot *png_plot_new (void)
     plot->editor = NULL;
     plot->window = NULL;
 
-    plot->pixel_width = 640;
-    plot->pixel_height = 480;
+    plot->pixel_width = GP_WIDTH;
+    plot->pixel_height = GP_HEIGHT;
 
     plot->xmin = plot->xmax = 0.0;
     plot->ymin = plot->ymax = 0.0;
@@ -4685,18 +4651,18 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
     if (plot->spec->code == PLOT_ROOTS ||
 	plot->spec->code == PLOT_QQ) {
-	plot->pixel_width = plot->pixel_height;
+	plot->pixel_width = plot->pixel_height = GP_SQ_SIZE;
     }
 
     if (plot->spec->flags & GPT_LETTERBOX) {
-	plot->pixel_width = 680;
-	plot->pixel_height = 400;
+	plot->pixel_width = GP_LB_WIDTH;
+	plot->pixel_height = GP_LB_HEIGHT;
     } else if (plot->spec->flags & GPT_XXL) {
-	plot->pixel_width = 680;
-	plot->pixel_height = 680;
+	plot->pixel_width = GP_XXL_WIDTH;
+	plot->pixel_height = GP_XXL_HEIGHT;
     } else if (plot->spec->flags & GPT_XL) {
-	plot->pixel_width = 640;
-	plot->pixel_height = 540;
+	plot->pixel_width = GP_XL_WIDTH;
+	plot->pixel_height = GP_XL_HEIGHT;
     }	
 
     if (!plot->err) {

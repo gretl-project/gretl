@@ -73,6 +73,16 @@ typedef struct GPT_SPEC_ GPT_SPEC;
 #define BOXCOLOR (N_GP_COLORS - 2)
 #define SHADECOLOR (N_GP_COLORS - 1)
 
+#define GP_WIDTH      640
+#define GP_HEIGHT     480
+#define GP_LB_WIDTH   680
+#define GP_LB_HEIGHT  400
+#define GP_XL_WIDTH   680
+#define GP_XL_HEIGHT  510
+#define GP_XXL_WIDTH  680
+#define GP_XXL_HEIGHT 680
+#define GP_SQ_SIZE    480
+
 typedef enum {
     PLOT_REGULAR = 0,
     PLOT_H_TEST,
@@ -144,6 +154,10 @@ typedef enum {
     GP_PDF_CAIRO
 } PDFTerm;
 
+#define maybe_big_multiplot(c) (c == PLOT_MULTI_IRF || \
+				c == PLOT_MULTI_SCATTER || \
+				c == PLOT_PANEL)
+
 #define frequency_plot_code(c) (c == PLOT_FREQ_SIMPLE || \
 				c == PLOT_FREQ_NORMAL || \
 				c == PLOT_FREQ_GAMMA)
@@ -156,6 +170,10 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags);
 const char *get_png_line_for_plotspec (const GPT_SPEC *spec);
 
 const char *get_gretl_emf_term_line (PlotType ptype, int color);
+
+const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags);
+
+const char *get_gretl_eps_term_line (PlotType ptype, GptFlags flags);
 
 const char *gp_justification_string (int j);
 

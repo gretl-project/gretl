@@ -2296,7 +2296,7 @@ int panel_graph_dialog (int *t1, int *t2)
 	N_("single graph: group means"),
 	N_("single graph: groups overlaid (N <= 80)"),
 	N_("single graph: groups in sequence (N <= 80)"),
-	N_("multiple plots in grid (N <= 9)"),
+	N_("multiple plots in grid (N <= 16)"),
 	N_("multiple plots arranged vertically (N <= 6)"),
 	N_("boxplots by group (N <= 150)"),
 	N_("single boxplot")
@@ -2342,7 +2342,7 @@ int panel_graph_dialog (int *t1, int *t2)
 	if ((i == 1 || i == 2) && nunits > 80) {
 	    gtk_widget_set_sensitive(button, FALSE);
 	}
-	if (i == 3 && nunits > 9) {
+	if (i == 3 && nunits > 16) {
 	    gtk_widget_set_sensitive(button, FALSE);
 	}	
 	if (i == 4 && nunits > 6) {
