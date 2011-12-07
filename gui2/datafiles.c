@@ -1215,8 +1215,7 @@ static void build_funcfiles_popup (windata_t *vwin)
 	    add_popup_item(_("Install"), vwin->popup, 
 			   G_CALLBACK(install_file_from_server), 
 			   vwin);
-	} else {
-	    /* addons */
+	} else if (vwin->role == REMOTE_ADDONS) {
 	    add_popup_item(_("Info"), vwin->popup, 
 			   G_CALLBACK(show_addon_info), 
 			   vwin);
@@ -1325,7 +1324,7 @@ static GretlToolItem files_items[] = {
     { N_("Info"),           GTK_STOCK_INFO,       NULL,                          BTN_INFO },
     { N_("View code"),      GTK_STOCK_PROPERTIES, G_CALLBACK(show_function_code), BTN_CODE },
     { N_("List series"),    GTK_STOCK_INDEX,      NULL,                          BTN_INDX },
-    { N_("Install"),        GTK_STOCK_SAVE,       G_CALLBACK(install_file_from_server), BTN_INST },
+    { N_("Install"),        GTK_STOCK_SAVE,       NULL,                          BTN_INST },
     { N_("Execute"),        GTK_STOCK_EXECUTE,    G_CALLBACK(browser_call_func), BTN_EXEC },
     { N_("Delete"),         GTK_STOCK_DELETE,     G_CALLBACK(browser_del_func),  BTN_DEL },
     { N_("Look on server"), GTK_STOCK_NETWORK,    NULL,                          BTN_WWW },
@@ -1351,10 +1350,12 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	if (role == REMOTE_ADDONS) {
 	    item->func = G_CALLBACK(install_addon_callback);
 	    return 1;
+	} else {
+	    item->func = G_CALLBACK(install_file_from_server);
+	    return (role == REMOTE_DB || 
+		    role == REMOTE_FUNC_FILES ||
+		    role == REMOTE_DATA_PKGS);
 	}
-	return (role == REMOTE_DB || 
-		role == REMOTE_FUNC_FILES ||
-		role == REMOTE_DATA_PKGS);
     } else if (item->flag == BTN_EXEC) {
 	return (role == FUNC_FILES);
     }
