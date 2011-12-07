@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-12-05 10:43-0500\n"
-"PO-Revision-Date: 2011-10-03 16:59+0300\n"
+"PO-Revision-Date: 2011-12-07 11:09+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -1145,9 +1145,9 @@ msgid "Bad character %d in date string"
 msgstr "Tarih dizgisinde geçersiz simge '%d'"
 
 #: lib/src/dataio.c:765 lib/src/dataio.c:770 lib/src/dataio.c:783
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid observation index"
-msgstr "%2$d gözlem kullanılarak bulunan %1$s"
+msgstr "'%s': geçersiz gözlem endeksi"
 
 #: lib/src/dataio.c:802 lib/src/forecast.c:2331 lib/src/genfuncs.c:3115
 msgid "Observation number out of bounds"
@@ -4270,9 +4270,8 @@ msgid "Pseudo-random number generator seeded with %d\n"
 msgstr "Sahte-rastsal sayı oluşturucusu %d ile tohumlandı\n"
 
 #: lib/src/matrix_extra.c:817
-#, fuzzy
 msgid "Non-positive values encountered"
-msgstr "Eksik değerler ile karşılaşıldı"
+msgstr "Pozitif-dışı değerler ile karşılaşıldı"
 
 #: lib/src/missing.c:778
 #, c-format
@@ -6774,7 +6773,7 @@ msgstr "Araç sayısı (%d), gözlem sayısını (%d) aşıyor"
 #: lib/src/tsls.c:893
 #, c-format
 msgid "The first-stage fitted values for %s are all zero"
-msgstr ""
+msgstr "%s için birinci-aşama yakıştırılan değerlerin hepsi sıfır"
 
 #: lib/src/tsls.c:1495 gui2/selector.c:2813
 msgid "You can't use the dependent variable as an instrument"
@@ -7117,11 +7116,9 @@ msgid "OK, staying with current data set\n"
 msgstr "Tamam, şu anki veri seti kalıyor\n"
 
 #: cli/gretlcli.c:800 gui2/library.c:8128
-#, fuzzy, c-format
+#, c-format
 msgid "Read datafile %s\n"
-msgstr ""
-"\n"
-"%s veri dosyasını oku\n"
+msgstr "%s veri dosyasını oku\n"
 
 #: cli/gretlcli.c:910 gui2/library.c:8251
 #, c-format
@@ -7835,11 +7832,11 @@ msgstr "sıra ilintisi"
 
 #: gui2/callbacks.c:490 gui2/selector.c:3551
 msgid "Loess"
-msgstr ""
+msgstr "Loess"
 
 #: gui2/callbacks.c:490 gui2/library.c:3895 gui2/selector.c:3553
 msgid "Nadaraya-Watson"
-msgstr ""
+msgstr "Nadaraya-Watson"
 
 #: gui2/callbacks.c:543 gui2/callbacks.c:699 gui2/selector.c:5928
 msgid "Enter formula for new variable"
@@ -9960,9 +9957,8 @@ msgid "loess (locally weighted fit)"
 msgstr "loess (yerel ağırlıklı yakıştırma)"
 
 #: gui2/gpt_dialog.c:135
-#, fuzzy
 msgid "semilog: log y = a + b*x"
-msgstr "doğrusal: y = a + b*x"
+msgstr "yarı-log: log y = a + b*x"
 
 #: gui2/gpt_dialog.c:300
 msgid "gretl: graph color selection"
@@ -9973,9 +9969,9 @@ msgid "Select color"
 msgstr "Renk seçiniz"
 
 #: gui2/gpt_dialog.c:572
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with semilog fit)"
-msgstr "%s ve %s (loess yakıştırma ile)"
+msgstr "%s ve %s (yarı-log yakıştırma ile)"
 
 #: gui2/gpt_dialog.c:677 gui2/gpt_dialog.c:716
 msgid "Invalid position, must be X Y"
@@ -10050,17 +10046,15 @@ msgstr "Tam çerçeveyi göster"
 
 #: gui2/gpt_dialog.c:1905
 msgid "horizontal"
-msgstr ""
+msgstr "yatay"
 
 #: gui2/gpt_dialog.c:1906
-#, fuzzy
 msgid "vertical"
-msgstr "Matematiksel"
+msgstr "dikey"
 
 #: gui2/gpt_dialog.c:1907
-#, fuzzy
 msgid "both"
-msgstr "her iki yığınsal"
+msgstr "her ikisi"
 
 #: gui2/gpt_dialog.c:1914
 msgid "Show grid"
@@ -11192,13 +11186,12 @@ msgid "_Rank correlation..."
 msgstr "_Sıra ilintisi..."
 
 #: gui2/gretl.c:1587
-#, fuzzy
 msgid "_Loess..."
-msgstr "_Yordamalar..."
+msgstr "_Loess..."
 
 #: gui2/gretl.c:1588
 msgid "_Nadaraya-Watson..."
-msgstr ""
+msgstr "_Nadaraya-Watson..."
 
 #: gui2/gretl.c:1589
 msgid "_Maximum likelihood..."
@@ -12608,21 +12601,21 @@ msgstr "gretl: GÖBKF (GARCH)"
 
 #: gui2/library.c:3894
 msgid "loess"
-msgstr ""
+msgstr "loess"
 
 #: gui2/library.c:3921
 msgid "Series length does not match the dataset"
-msgstr ""
+msgstr "Seri uzunluğu veri seti ile uyuşmuyor"
 
 #: gui2/library.c:4048
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s with loess fit"
 msgstr "%s ve %s (loess yakıştırma ile)"
 
 #: gui2/library.c:4051
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s with Nadaraya_Watson fit"
-msgstr "%s ve %s (kareli yakıştırma ile)"
+msgstr "%s ve %s (Nadaraya_Watson yakıştırması ile)"
 
 #: gui2/library.c:4468
 #, c-format
@@ -12666,12 +12659,11 @@ msgstr "gretl: X-12-ARIMA çözümlemesi"
 
 #: gui2/library.c:4998
 msgid "Trim maximum and minimum in sub-samples"
-msgstr ""
+msgstr "Alt-örneklemlerde ençok ve enaz değerleri kırp"
 
 #: gui2/library.c:5006
-#, fuzzy
 msgid "gretl: range-mean graph"
-msgstr "_Aralık-ortalama çiziti"
+msgstr "gretl: aralık-ortalama çiziti"
 
 #: gui2/library.c:5041
 msgid "gretl: range-mean statistics"
@@ -12690,9 +12682,8 @@ msgid "Maximum lag:"
 msgstr "Ençok gecikme:"
 
 #: gui2/library.c:5210
-#, fuzzy
 msgid "periodogram"
-msgstr "Dönemçizit"
+msgstr "dönemçizit"
 
 #: gui2/library.c:5245
 msgid "gretl: fractional integration"
@@ -13314,9 +13305,8 @@ msgid "You must specify a treatment variable"
 msgstr "Bir işlem değişkeni belirtmelisiniz"
 
 #: gui2/selector.c:3048
-#, fuzzy
 msgid "You must specify an independent variable"
-msgstr "İkinci bir bağımlı değişken belirtmelisiniz"
+msgstr "Bir bağımsız değişken belirtmelisiniz"
 
 #: gui2/selector.c:3200
 msgid "You must select a Z-axis variable"
@@ -13451,9 +13441,8 @@ msgid "Treatment variable"
 msgstr "İşlem değişkeni"
 
 #: gui2/selector.c:3586
-#, fuzzy
 msgid "Independent variable"
-msgstr "Bağımsız değişkenler"
+msgstr "Bağımsız değişken"
 
 #: gui2/selector.c:3597 gui2/selector.c:6026
 msgid "Y-axis variables"
@@ -13580,23 +13569,20 @@ msgid "right bound"
 msgstr "sağdan bağlı"
 
 #: gui2/selector.c:4297
-#, fuzzy
 msgid "Polynomial order"
-msgstr "Çokterimli eğilim"
+msgstr "Çokterimli derecesi"
 
 #: gui2/selector.c:4312
-#, fuzzy
 msgid "Bandwidth"
-msgstr "Kap genişliği:"
+msgstr "Kuşakgenişliği"
 
 #: gui2/selector.c:4319
-#, fuzzy
 msgid "Use robust weights"
-msgstr "Ağırlıkları göster"
+msgstr "Sağlam ağırlıklar kullan"
 
 #: gui2/selector.c:4320
 msgid "Use \"leave one out\""
-msgstr ""
+msgstr "\"Leave one out\" kullan"
 
 #: gui2/selector.c:4596
 msgid "GARCH p:"
@@ -13723,14 +13709,12 @@ msgid "Compute confidence intervals"
 msgstr "Güven aralıklarını hesapla"
 
 #: gui2/selector.c:5267
-#, fuzzy
 msgid "Automatic maximum"
-msgstr "Kendiliğinden"
+msgstr "Kendiliğinden ençok"
 
 #: gui2/selector.c:5272
-#, fuzzy
 msgid "Specified maximum"
-msgstr "ençok:"
+msgstr "Belirtilen ençok"
 
 #: gui2/selector.c:5292 gui2/toolbar.c:470
 msgid "Confidence level"
@@ -15164,14 +15148,12 @@ msgid "APARCH"
 msgstr "BÜÖBKF (APARCH)"
 
 #: plugin/addons-i18n.c:6
-#, fuzzy
 msgid "AR lags"
-msgstr "gecikmeler"
+msgstr "AR gecikmeleri"
 
 #: plugin/addons-i18n.c:8 plugin/addons-i18n.c:47
-#, fuzzy
 msgid "Constant"
-msgstr "Sabit terim yok"
+msgstr "Sabit"
 
 #: plugin/addons-i18n.c:9
 msgid "Covariance estimator"
@@ -15278,58 +15260,52 @@ msgid "regressors"
 msgstr "bağlayanlar"
 
 #: plugin/addons-i18n.c:45
-#, fuzzy
 msgid "AB-model"
-msgstr "model"
+msgstr "AB-modeli"
 
 #: plugin/addons-i18n.c:46
-#, fuzzy
 msgid "C-model"
-msgstr "model"
+msgstr "C-modeli"
 
 #: plugin/addons-i18n.c:48
-#, fuzzy
 msgid "Exogenous regressors"
-msgstr "Dıştürel bağlayan(lar)"
+msgstr "Dıştürel bağlayanlar"
 
 #: plugin/addons-i18n.c:49
 msgid "IRF by shock"
-msgstr ""
+msgstr "DTİ (sarsıntıya göre)"
 
 #: plugin/addons-i18n.c:50
 msgid "IRF by var"
-msgstr ""
+msgstr "DTİ (değişkene göre)"
 
 #: plugin/addons-i18n.c:51
 msgid "KPSW"
-msgstr ""
+msgstr "KPSW"
 
 #: plugin/addons-i18n.c:52
 msgid "Lags"
-msgstr ""
+msgstr "Gecikmeler"
 
 #: plugin/addons-i18n.c:55
-#, fuzzy
 msgid "Time trend"
-msgstr "Zaman _eğilimi"
+msgstr "Zaman eğilimi"
 
 #: plugin/addons-i18n.c:56
-#, fuzzy
 msgid "VAR variables"
-msgstr "Değişkenler"
+msgstr "VAR değişkenleri"
 
 #: plugin/addons-i18n.c:57
 msgid "horizon"
-msgstr ""
+msgstr "uzaklık"
 
 #: plugin/addons-i18n.c:58
-#, fuzzy
 msgid "plain"
-msgstr "düz metin"
+msgstr "düz"
 
 #: plugin/addons-i18n.c:59
 msgid "template"
-msgstr ""
+msgstr "şablon"
 
 #: plugin/anova.c:106 plugin/anova.c:108
 msgid "Treatment"
@@ -15348,14 +15324,12 @@ msgid "Grand mean"
 msgstr "Genel ortalama"
 
 #: plugin/anova.c:375
-#, fuzzy
 msgid "anova: the treatment variable must be discrete"
-msgstr "birim ve zaman endeksi değişkenleri ayrı olmalıdır"
+msgstr "varçöz: işlem değişkeni kesikli olmalıdır"
 
 #: plugin/anova.c:381
-#, fuzzy
 msgid "anova: the block variable must be discrete"
-msgstr "Kesikli değişken olarak ele al"
+msgstr "varçöz: blok değişkeni kesikli olmalıdır"
 
 #: plugin/anova.c:499
 #, c-format
@@ -15568,9 +15542,9 @@ msgid "Selection equation"
 msgstr "Seçim denklemi"
 
 #: plugin/import_common.c:53
-#, fuzzy, c-format
+#, c-format
 msgid "At row %d, column %d:\n"
-msgstr "Sayfa satır %d, sütun %d"
+msgstr "Satır %d, sütun %d:\n"
 
 #: plugin/import_common.c:56
 msgid ""
@@ -15647,9 +15621,8 @@ msgid "Exogenous regressor(s)"
 msgstr "Dıştürel bağlayan(lar)"
 
 #: plugin/johansen.c:1549
-#, fuzzy
 msgid "including constant term"
-msgstr "Sabit terim ekle"
+msgstr "sabit terim ile birlikte"
 
 #: plugin/johansen.c:1556
 msgid "Cointegration tests, ignoring exogenous variables"
@@ -15787,9 +15760,8 @@ msgid "No leverage points were found"
 msgstr "Bulunan kaldıraç noktası yok"
 
 #: plugin/leverage.c:347 plugin/leverage.c:487
-#, fuzzy
 msgid "Cross-validation criterion"
-msgstr "Akaike bilgi ölçütü"
+msgstr "Çapraz-geçerleme ölçütü"
 
 #: plugin/mailer.c:582
 msgid "To:"
@@ -16250,9 +16222,9 @@ msgid "Unexpected error reading the file\n"
 msgstr "Dosya okunurken beklenmeyen hata\n"
 
 #: plugin/xlsx_import.c:1063
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no such worksheet"
-msgstr "%s: böyle bir nesne yok"
+msgstr "%s: böyle bir çalışma tablosu yok"
 
 #: doc/commands/matfuncs.c:50
 msgid "Creation and I/O"
