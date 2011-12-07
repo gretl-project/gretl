@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-12-05 10:43-0500\n"
-"PO-Revision-Date: 2011-10-03 11:06+0200\n"
+"PO-Revision-Date: 2011-12-07 09:54+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -1152,9 +1152,9 @@ msgid "Bad character %d in date string"
 msgstr "Carácter %d no válido en etiqueta de fechas"
 
 #: lib/src/dataio.c:765 lib/src/dataio.c:770 lib/src/dataio.c:783
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid observation index"
-msgstr "%s, utilizando %d observaciones"
+msgstr "'%s': índice de observation no válido"
 
 #: lib/src/dataio.c:802 lib/src/forecast.c:2331 lib/src/genfuncs.c:3115
 msgid "Observation number out of bounds"
@@ -4309,9 +4309,8 @@ msgid "Pseudo-random number generator seeded with %d\n"
 msgstr "Generador de números pseudoaleatorios iniciado con semilla %d\n"
 
 #: lib/src/matrix_extra.c:817
-#, fuzzy
 msgid "Non-positive values encountered"
-msgstr "Se han encontrado valores ausentes"
+msgstr "Se han encontrado valores no positivos"
 
 #: lib/src/missing.c:778
 #, c-format
@@ -6845,7 +6844,7 @@ msgstr ""
 #: lib/src/tsls.c:893
 #, c-format
 msgid "The first-stage fitted values for %s are all zero"
-msgstr ""
+msgstr "Los valores estimados en primera etapa para %s son todos cero"
 
 #: lib/src/tsls.c:1495 gui2/selector.c:2813
 msgid "You can't use the dependent variable as an instrument"
@@ -7190,11 +7189,9 @@ msgid "OK, staying with current data set\n"
 msgstr "De acuerdo, nos quedamos con el conjunto de datos actual\n"
 
 #: cli/gretlcli.c:800 gui2/library.c:8128
-#, fuzzy, c-format
+#, c-format
 msgid "Read datafile %s\n"
-msgstr ""
-"\n"
-"Leer fichero de datos %s\n"
+msgstr "Leer fichero de datos %s\n"
 
 #: cli/gretlcli.c:910 gui2/library.c:8251
 #, c-format
@@ -7911,11 +7908,11 @@ msgstr "correlación por rangos"
 
 #: gui2/callbacks.c:490 gui2/selector.c:3551
 msgid "Loess"
-msgstr ""
+msgstr "Loess"
 
 #: gui2/callbacks.c:490 gui2/library.c:3895 gui2/selector.c:3553
 msgid "Nadaraya-Watson"
-msgstr ""
+msgstr "Nadaraya-Watson"
 
 #: gui2/callbacks.c:543 gui2/callbacks.c:699 gui2/selector.c:5928
 msgid "Enter formula for new variable"
@@ -10040,9 +10037,8 @@ msgid "loess (locally weighted fit)"
 msgstr "loess (estimación ponderada localmente)"
 
 #: gui2/gpt_dialog.c:135
-#, fuzzy
 msgid "semilog: log y = a + b*x"
-msgstr "lineal: y = a + b*x"
+msgstr "semilogarítmica: log y = a + b*x"
 
 #: gui2/gpt_dialog.c:300
 msgid "gretl: graph color selection"
@@ -10053,9 +10049,9 @@ msgid "Select color"
 msgstr "Seleccione un color"
 
 #: gui2/gpt_dialog.c:572
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with semilog fit)"
-msgstr "%s con respecto a %s (con ajuste LOESS)"
+msgstr "%s con respecto a %s (con ajuste semilogarítmico)"
 
 #: gui2/gpt_dialog.c:677 gui2/gpt_dialog.c:716
 msgid "Invalid position, must be X Y"
@@ -10130,17 +10126,15 @@ msgstr "Mostrar el borde completo"
 
 #: gui2/gpt_dialog.c:1905
 msgid "horizontal"
-msgstr ""
+msgstr "horizontal"
 
 #: gui2/gpt_dialog.c:1906
-#, fuzzy
 msgid "vertical"
-msgstr "Matemática"
+msgstr "vertical"
 
 #: gui2/gpt_dialog.c:1907
-#, fuzzy
 msgid "both"
-msgstr "ambas FDAs"
+msgstr "ambos"
 
 #: gui2/gpt_dialog.c:1914
 msgid "Show grid"
@@ -11273,13 +11267,12 @@ msgid "_Rank correlation..."
 msgstr "Correlación por _Rangos..."
 
 #: gui2/gretl.c:1587
-#, fuzzy
 msgid "_Loess..."
-msgstr "_Predicciones..."
+msgstr "_Loess..."
 
 #: gui2/gretl.c:1588
 msgid "_Nadaraya-Watson..."
-msgstr ""
+msgstr "_Nadaraya-Watson..."
 
 #: gui2/gretl.c:1589
 msgid "_Maximum likelihood..."
@@ -12694,21 +12687,21 @@ msgstr "gretl: GARCH"
 
 #: gui2/library.c:3894
 msgid "loess"
-msgstr ""
+msgstr "loess"
 
 #: gui2/library.c:3921
 msgid "Series length does not match the dataset"
-msgstr ""
+msgstr "El tamaño de la serie no casa con el del conjunto de datos"
 
 #: gui2/library.c:4048
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s with loess fit"
-msgstr "%s con respecto a %s (con ajuste LOESS)"
+msgstr "%s con respecto a %s con ajuste LOESS"
 
 #: gui2/library.c:4051
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s with Nadaraya_Watson fit"
-msgstr "%s con respecto a %s (con ajuste cuadrático)"
+msgstr "%s con respecto a %s con ajuste de Nadaraya_Watson"
 
 #: gui2/library.c:4468
 #, c-format
@@ -12752,12 +12745,11 @@ msgstr "gretl: Análisis ARIMA X-12"
 
 #: gui2/library.c:4998
 msgid "Trim maximum and minimum in sub-samples"
-msgstr ""
+msgstr "Descartar el máximo y el mínimo en las submuestras"
 
 #: gui2/library.c:5006
-#, fuzzy
 msgid "gretl: range-mean graph"
-msgstr "Gráfico _rango-media"
+msgstr "gretl: Gráfico rango-media"
 
 #: gui2/library.c:5041
 msgid "gretl: range-mean statistics"
@@ -12776,9 +12768,8 @@ msgid "Maximum lag:"
 msgstr "Máximo retardo:"
 
 #: gui2/library.c:5210
-#, fuzzy
 msgid "periodogram"
-msgstr "Periodograma"
+msgstr "periodograma"
 
 #: gui2/library.c:5245
 msgid "gretl: fractional integration"
@@ -13402,9 +13393,8 @@ msgid "You must specify a treatment variable"
 msgstr "Se debe especificar una variable de tratamiento"
 
 #: gui2/selector.c:3048
-#, fuzzy
 msgid "You must specify an independent variable"
-msgstr "Debe Vd. especificar una segunda variable dependiente"
+msgstr "Debe Vd. especificar una variable independiente"
 
 #: gui2/selector.c:3200
 msgid "You must select a Z-axis variable"
@@ -13539,9 +13529,8 @@ msgid "Treatment variable"
 msgstr "Variable de tratamiento"
 
 #: gui2/selector.c:3586
-#, fuzzy
 msgid "Independent variable"
-msgstr "Variables independientes"
+msgstr "Variables independiente"
 
 #: gui2/selector.c:3597 gui2/selector.c:6026
 msgid "Y-axis variables"
@@ -13668,23 +13657,20 @@ msgid "right bound"
 msgstr "cota derecha"
 
 #: gui2/selector.c:4297
-#, fuzzy
 msgid "Polynomial order"
-msgstr "Tendencia polinómica"
+msgstr "Orden del polinomio"
 
 #: gui2/selector.c:4312
-#, fuzzy
 msgid "Bandwidth"
-msgstr "Grosor del intervalo:"
+msgstr "Ancho de banda"
 
 #: gui2/selector.c:4319
-#, fuzzy
 msgid "Use robust weights"
-msgstr "Mostrar las poderaciones"
+msgstr "Utilizar ponderaciones robustas"
 
 #: gui2/selector.c:4320
 msgid "Use \"leave one out\""
-msgstr ""
+msgstr "Utilizar \"dejar una fuera\""
 
 #: gui2/selector.c:4596
 msgid "GARCH p:"
@@ -13811,14 +13797,12 @@ msgid "Compute confidence intervals"
 msgstr "Calcular los intervalos de confianza"
 
 #: gui2/selector.c:5267
-#, fuzzy
 msgid "Automatic maximum"
-msgstr "Automático"
+msgstr "Máximo automático"
 
 #: gui2/selector.c:5272
-#, fuzzy
 msgid "Specified maximum"
-msgstr "con máximo:"
+msgstr "El máximo especificado"
 
 #: gui2/selector.c:5292 gui2/toolbar.c:470
 msgid "Confidence level"
@@ -15258,14 +15242,12 @@ msgid "APARCH"
 msgstr "APARCH"
 
 #: plugin/addons-i18n.c:6
-#, fuzzy
 msgid "AR lags"
-msgstr "retardos"
+msgstr "retardos AR"
 
 #: plugin/addons-i18n.c:8 plugin/addons-i18n.c:47
-#, fuzzy
 msgid "Constant"
-msgstr "Sin constante"
+msgstr "Constante"
 
 #: plugin/addons-i18n.c:9
 msgid "Covariance estimator"
@@ -15372,58 +15354,52 @@ msgid "regressors"
 msgstr "regresores"
 
 #: plugin/addons-i18n.c:45
-#, fuzzy
 msgid "AB-model"
-msgstr "modelo"
+msgstr "modelo AB"
 
 #: plugin/addons-i18n.c:46
-#, fuzzy
 msgid "C-model"
-msgstr "modelo"
+msgstr "modelo C"
 
 #: plugin/addons-i18n.c:48
-#, fuzzy
 msgid "Exogenous regressors"
-msgstr "Regresor(es) exógeno(s)"
+msgstr "Regresores exógenos"
 
 #: plugin/addons-i18n.c:49
 msgid "IRF by shock"
-msgstr ""
+msgstr "FIR por shock"
 
 #: plugin/addons-i18n.c:50
 msgid "IRF by var"
-msgstr ""
+msgstr "FIR por var"
 
 #: plugin/addons-i18n.c:51
 msgid "KPSW"
-msgstr ""
+msgstr "KPSW"
 
 #: plugin/addons-i18n.c:52
 msgid "Lags"
-msgstr ""
+msgstr "Retardos"
 
 #: plugin/addons-i18n.c:55
-#, fuzzy
 msgid "Time trend"
-msgstr "_Tendencia temporal"
+msgstr "Tendencia temporal"
 
 #: plugin/addons-i18n.c:56
-#, fuzzy
 msgid "VAR variables"
-msgstr "Variables"
+msgstr "Variables del VAR"
 
 #: plugin/addons-i18n.c:57
 msgid "horizon"
-msgstr ""
+msgstr "horizonte"
 
 #: plugin/addons-i18n.c:58
-#, fuzzy
 msgid "plain"
-msgstr "texto plano"
+msgstr "plano"
 
 #: plugin/addons-i18n.c:59
 msgid "template"
-msgstr ""
+msgstr "plantilla"
 
 #: plugin/anova.c:106 plugin/anova.c:108
 msgid "Treatment"
@@ -15442,14 +15418,12 @@ msgid "Grand mean"
 msgstr "Media global"
 
 #: plugin/anova.c:375
-#, fuzzy
 msgid "anova: the treatment variable must be discrete"
-msgstr "Las variables índices de unidad y de tiempo deben ser distintas"
+msgstr "anova: La variable de tratamiento debe de ser discreta"
 
 #: plugin/anova.c:381
-#, fuzzy
 msgid "anova: the block variable must be discrete"
-msgstr "Tratar esta variable como discreta"
+msgstr "anova: la variable de bloqueo debe ser discreta"
 
 #: plugin/anova.c:499
 #, c-format
@@ -15662,9 +15636,9 @@ msgid "Selection equation"
 msgstr "Ecuación de selección"
 
 #: plugin/import_common.c:53
-#, fuzzy, c-format
+#, c-format
 msgid "At row %d, column %d:\n"
-msgstr "Hoja fila %d, columna %d"
+msgstr "En fila %d, columna %d:\n"
 
 #: plugin/import_common.c:56
 msgid ""
@@ -15741,9 +15715,8 @@ msgid "Exogenous regressor(s)"
 msgstr "Regresor(es) exógeno(s)"
 
 #: plugin/johansen.c:1549
-#, fuzzy
 msgid "including constant term"
-msgstr "Incluir una constante"
+msgstr "Incluyendo un término constante"
 
 #: plugin/johansen.c:1556
 msgid "Cointegration tests, ignoring exogenous variables"
@@ -15881,9 +15854,8 @@ msgid "No leverage points were found"
 msgstr "No se encontraron puntos palanca"
 
 #: plugin/leverage.c:347 plugin/leverage.c:487
-#, fuzzy
 msgid "Cross-validation criterion"
-msgstr "Criterio de información de Akaike"
+msgstr "Criterio de validación cruzada"
 
 #: plugin/mailer.c:582
 msgid "To:"
@@ -16345,9 +16317,9 @@ msgid "Unexpected error reading the file\n"
 msgstr "Error inesperado al leer el fichero\n"
 
 #: plugin/xlsx_import.c:1063
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no such worksheet"
-msgstr "%s: no existe ese objeto"
+msgstr "'%s': no existe esa hoja de cálculo"
 
 #: doc/commands/matfuncs.c:50
 msgid "Creation and I/O"
