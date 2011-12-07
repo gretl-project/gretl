@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-12-05 10:43-0500\n"
-"PO-Revision-Date: 2011-12-07 09:54+0100\n"
+"PO-Revision-Date: 2011-12-07 10:20+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -13530,7 +13530,7 @@ msgstr "Variable de tratamiento"
 
 #: gui2/selector.c:3586
 msgid "Independent variable"
-msgstr "Variables independiente"
+msgstr "Variable independiente"
 
 #: gui2/selector.c:3597 gui2/selector.c:6026
 msgid "Y-axis variables"
@@ -15423,7 +15423,7 @@ msgstr "anova: La variable de tratamiento debe de ser discreta"
 
 #: plugin/anova.c:381
 msgid "anova: the block variable must be discrete"
-msgstr "anova: la variable de bloqueo debe ser discreta"
+msgstr "anova: la variable de bloque debe ser discreta"
 
 #: plugin/anova.c:499
 #, c-format
