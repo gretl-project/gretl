@@ -89,25 +89,6 @@ void pack_in_hbox (GtkWidget *w, GtkWidget *vbox, int vspace)
 
 /* Various buttons, usable in several sorts of dialogs */
 
-GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode)
-{
-    GtkWidget *button;
-
-    button = gtk_button_new_from_stock(GTK_STOCK_HELP);
-    gtk_widget_set_can_default(button, TRUE);
-    gtk_container_add(GTK_CONTAINER(hbox), button);
-    gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
-				       button, TRUE);
-
-    if (cmdcode >= 0) {
-	g_signal_connect(G_OBJECT(button), "clicked", 
-			 G_CALLBACK(context_help), 
-			 GINT_TO_POINTER(cmdcode));
-    }
-
-    return button;
-}
-
 static void set_canceled (GtkWidget *w, int *c)
 {
     if (c != NULL) {

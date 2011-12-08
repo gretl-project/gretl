@@ -258,7 +258,7 @@ static void window_print_callback (GtkWidget *w, windata_t *vwin)
 
 static void window_help (GtkWidget *w, windata_t *vwin)
 {
-    context_help(NULL, GINT_TO_POINTER(vwin->role));
+    show_gui_help(vwin->role);
 }
 
 static void multi_save_as_callback (GtkWidget *w, windata_t *vwin)

@@ -7197,7 +7197,7 @@
       <code context="cli">
 	series uh = $uhat
       </code>
-      <para>
+      <para context="cli">
 	saves the residuals under the name <lit>uh</lit>.  See the
 	<quote>accessors</quote> section of the gretl function
 	reference for details.

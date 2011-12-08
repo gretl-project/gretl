@@ -1097,45 +1097,112 @@ static char *funcs_helpfile (void)
     return fname;
 }
 
-void context_help (GtkWidget *widget, gpointer data)
+static int gui_help_get_pos (int idx, int *role)
 {
-    int pos, idx = GPOINTER_TO_INT(data);
-    int role = GUI_HELP;
-
-    idx = gui_ci_to_index(idx);
+    int pos;
 
     /* try for GUI help first */
-    pos = help_pos_from_index(idx, role);
+    pos = help_pos_from_index(idx, *role);
 
     if (pos <= 0 && translated_helpfile) {
 	/* English GUI help? */
-	role = GUI_HELP_EN;
-	pos = help_pos_from_index(idx, role);
+	*role = GUI_HELP_EN;
+	pos = help_pos_from_index(idx, *role);
     }
 
     if (pos <= 0) {
 	/* CLI help? */
-	role = CLI_HELP;
-	pos = help_pos_from_index(idx, role);
+	*role = CLI_HELP;
+	pos = help_pos_from_index(idx, *role);
     }
 
     if (pos <= 0 && translated_helpfile) {
 	/* English CLI help? */
-	role = CLI_HELP_EN;
-	pos = help_pos_from_index(idx, role);
+	*role = CLI_HELP_EN;
+	pos = help_pos_from_index(idx, *role);
     }
 
     if (pos <= 0) {
 	warnbox(_("Sorry, no help is available"));
-	return;
     }
 
-#if HDEBUG
-    fprintf(stderr, "context_help: idx=%d, pos=%d, role=%d\n", 
-	    idx, pos, role);
+    return pos;
+}
+
+void show_gui_help (int helpcode)
+{
+    int idx = gui_ci_to_index(helpcode);
+    int pos, role = GUI_HELP;
+
+    pos = gui_help_get_pos(idx, &role);
+
+    if (pos > 0) {
+	real_do_help(idx, pos, role);
+    }
+}
+
+static void context_help (GtkWidget *widget, gpointer data)
+{
+    int helpcode = GPOINTER_TO_INT(data);
+
+    show_gui_help(helpcode);
+}
+
+#if 0 /* experimental */
+static void context_help_for_window (GtkWidget *widget, GtkWidget *window)
+{
+    int helpcode = widget_get_int(window, "helpcode");
+    int idx = gui_ci_to_index(helpcode);
+    int pos, role = GUI_HELP;
+
+    pos = gui_help_get_pos(idx, &role);
+
+    if (pos > 0) {
+	windata_t *hwin = real_do_help(idx, pos, role);
+
+	if (hwin != NULL) {
+	    gtk_window_set_transient_for(GTK_WINDOW(hwin->main), 
+					 GTK_WINDOW(window));
+	}
+    }    
+}
 #endif
 
-    real_do_help(idx, pos, role);
+GtkWidget *context_help_button (GtkWidget *hbox, int helpcode)
+{
+    GtkWidget *button;
+
+    button = gtk_button_new_from_stock(GTK_STOCK_HELP);
+    gtk_widget_set_can_default(button, TRUE);
+    gtk_container_add(GTK_CONTAINER(hbox), button);
+    gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
+				       button, TRUE);
+
+#if 1
+    if (helpcode >= 0) {
+	g_signal_connect(G_OBJECT(button), "clicked", 
+			 G_CALLBACK(context_help), 
+			 GINT_TO_POINTER(helpcode));
+    }
+#else /* experimental */
+    if (helpcode >= 0) {
+	GtkWidget *window = gtk_widget_get_toplevel(hbox);
+
+	if (window != NULL && GTK_IS_DIALOG(window)) {
+	    g_object_set_data(G_OBJECT(window), "helpcode", 
+			      GINT_TO_POINTER(helpcode));
+	    g_signal_connect(G_OBJECT(button), "clicked", 
+			     G_CALLBACK(context_help_for_window), 
+			     window);
+	} else {
+	    g_signal_connect(G_OBJECT(button), "clicked", 
+			     G_CALLBACK(context_help), 
+			     GINT_TO_POINTER(helpcode));
+	}
+    }
+#endif
+
+    return button;
 }
 
 static gboolean nullify_hwin (GtkWidget *w, windata_t **phwin)

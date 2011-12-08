@@ -5840,14 +5840,7 @@ static void build_selector_buttons (selector *sr)
 	    ci = IVREG;
 	}
 
-	tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
-	gtk_widget_set_can_default(tmp, TRUE);
-	gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
-	gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(sr->action_area),
-					   tmp, TRUE);
-	g_signal_connect(G_OBJECT(tmp), "clicked", 
-			 G_CALLBACK(context_help), 
-			 GINT_TO_POINTER(ci));
+	context_help_button(sr->action_area, ci);
     }
 
     if (sr->ci != EDIT_FUNCTIONS) {

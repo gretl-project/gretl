@@ -22,7 +22,9 @@
 
 void helpfile_init (void);
 
-void context_help (GtkWidget *widget, gpointer data);
+void show_gui_help (int helpcode);
+
+GtkWidget *context_help_button (GtkWidget *hbox, int helpcode);
 
 void command_help_callback (int cmdnum, int en);
 

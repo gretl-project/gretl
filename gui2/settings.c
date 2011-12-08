@@ -1397,77 +1397,16 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	} 
     }
 
-#if 0 /* not for now */
-    if (tab == TAB_MAIN) {
-	/* font selector buttons, working directory */
-	int add_appfont = 1;
-	GtkWidget *hb, *im;
-
-#ifdef G_OS_WIN32
-	if (use_wimp) {
-	    add_appfont = 0;
-	}
-#endif
-
-	hb = gtk_hbox_new(FALSE, 0);
-	w = gtk_button_new();
-	gtk_button_set_label(GTK_BUTTON(w), _("Fixed font..."));
-	im = gtk_image_new_from_stock(GTK_STOCK_SELECT_FONT, 
-				      GTK_ICON_SIZE_BUTTON);
-	gtk_button_set_image(GTK_BUTTON(w), im);
-	gtk_box_pack_start(GTK_BOX(hb), w, FALSE, FALSE, 0);
-	g_signal_connect(G_OBJECT(w), "clicked", 
-			 G_CALLBACK(font_selector), 
-			 GINT_TO_POINTER(FIXED_FONT_SELECTION));
-	gtk_box_pack_start(GTK_BOX(box), hb, FALSE, FALSE, 10);
-	gtk_widget_show_all(hb);
-
-	if (add_appfont) {
-	    hb = gtk_hbox_new(FALSE, 0);
-	    w = gtk_button_new();
-	    gtk_button_set_label(GTK_BUTTON(w), _("Menu font..."));
-	    im = gtk_image_new_from_stock(GTK_STOCK_SELECT_FONT, 
-					  GTK_ICON_SIZE_BUTTON);
-	    gtk_button_set_image(GTK_BUTTON(w), im);
-	    gtk_box_pack_start(GTK_BOX(hb), w, FALSE, FALSE, 0);
-	    g_signal_connect(G_OBJECT(w), "clicked", 
-			     G_CALLBACK(font_selector), 
-			     GINT_TO_POINTER(APP_FONT_SELECTION));
-	    gtk_box_pack_start(GTK_BOX(box), hb, FALSE, FALSE, 0);
-	    gtk_widget_show_all(hb);
-	}
-
-	hb = gtk_hbox_new(FALSE, 0);
-	w = gtk_button_new();
-	gtk_button_set_label(GTK_BUTTON(w), _("Working directory..."));
-	im = gtk_image_new_from_stock(GTK_STOCK_DIRECTORY, 
-				      GTK_ICON_SIZE_BUTTON);
-	gtk_button_set_image(GTK_BUTTON(w), im);
-	gtk_box_pack_start(GTK_BOX(hb), w, FALSE, FALSE, 0);
-	g_signal_connect(G_OBJECT(w), "clicked", 
-			 G_CALLBACK(working_dir_dialog), NULL);
-	gtk_box_pack_start(GTK_BOX(box), hb, FALSE, FALSE, 10);
-	gtk_widget_show_all(hb);
-    }
-#endif	
-
     if (tab == TAB_VCV) {
 	/* we need a help button */
-	GtkWidget *hb = gtk_hbox_new(FALSE, 0);
+	GtkWidget *bb = gtk_hbutton_box_new();
 
-	w = gtk_label_new("");
-	gtk_box_pack_start(GTK_BOX(hb), w, TRUE, TRUE, 0);
-	gtk_widget_show(w);
-
-	w = gtk_button_new_from_stock(GTK_STOCK_HELP);
-	gtk_box_pack_start(GTK_BOX(hb), w, FALSE, FALSE, 0);
-	g_signal_connect(G_OBJECT(w), "clicked", 
-			 G_CALLBACK(context_help), 
-			 GINT_TO_POINTER(HCCME));
-	gtk_widget_show(w);
-
-	gtk_box_pack_start(GTK_BOX(box), hb, FALSE, FALSE, 0);
-	gtk_widget_show(hb);
+	gtk_button_box_set_layout(GTK_BUTTON_BOX(bb), 
+				  GTK_BUTTONBOX_END);
+	gtk_box_set_spacing(GTK_BOX(bb), 10);
+	context_help_button(bb, HCCME);
+	gtk_box_pack_start(GTK_BOX(box), bb, FALSE, FALSE, 0);
+	gtk_widget_show_all(bb);
     }
 }
 

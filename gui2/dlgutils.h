@@ -92,8 +92,6 @@ void vbox_add_hsep (GtkWidget *vbox);
 
 void pack_in_hbox (GtkWidget *w, GtkWidget *vbox, int vspace);
 
-GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode);
-
 GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ,
 				 int *canceled);
 

@@ -3477,9 +3477,9 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
     } else if (!strcmp(item_string, _("Save to session as icon"))) { 
 	add_to_session_callback(plot->spec);
     } else if (plot_is_range_mean(plot) && !strcmp(item_string, _("Help"))) { 
-	context_help(NULL, GINT_TO_POINTER(RMPLOT));
+	show_gui_help(RMPLOT);
     } else if (plot_is_hurst(plot) && !strcmp(item_string, _("Help"))) { 
-	context_help(NULL, GINT_TO_POINTER(HURST));
+	show_gui_help(HURST);
     } else if (!strcmp(item_string, _("Freeze data labels"))) {
 	plot->spec->flags |= GPT_PRINT_MARKERS;
 	redisplay_edited_plot(plot);

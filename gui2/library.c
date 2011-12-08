@@ -4884,7 +4884,7 @@ static void display_tx_output (const char *fname, int graph_ok,
 
 static void x12a_help (void)
 {
-    context_help(NULL, GINT_TO_POINTER(X12AHELP));
+    show_gui_help(X12AHELP);
 }
 
 static void real_do_tramo_x12a (int v, int tramo)

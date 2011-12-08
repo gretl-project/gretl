@@ -3181,9 +3181,9 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 	}
     } else if (!strcmp(item, _("Help"))) {
 	if (obj->sort == GRETL_OBJ_MODTAB) {
-	    context_help(NULL, GINT_TO_POINTER(MODELTAB));
+	    show_gui_help(MODELTAB);
 	} else if (obj->sort == GRETL_OBJ_GPAGE) {
-	    context_help(NULL, GINT_TO_POINTER(GRAPHPG));
+	    show_gui_help(GRAPHPG);
 	}
     } else if (!strcmp(item, _("Save as TeX..."))) {   
 	if (obj->sort == GRETL_OBJ_GPAGE) {

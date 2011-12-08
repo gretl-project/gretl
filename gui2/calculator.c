@@ -3055,13 +3055,7 @@ static void real_stats_calculator (int code, gpointer data)
     /* Help button? */
     hcode = calc_help_code(code);
     if (hcode) { 
-	tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
-	gtk_container_add(GTK_CONTAINER(child->bbox), tmp);
-	gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(child->bbox),
-					   tmp, TRUE);
-	g_signal_connect(G_OBJECT(tmp), "clicked", 
-			 G_CALLBACK(context_help), 
-			 GINT_TO_POINTER(hcode));
+	context_help_button(child->bbox, hcode);
     }
 
     gtk_widget_show_all(child->dlg);

@@ -1930,7 +1930,10 @@ windata_t *view_help_file (const char *filename, int role)
     vwin->data = fbuf;
 
     viewer_box_config(vwin);
-    set_up_helpview_menu(vwin);
+
+    if (role != GUI_HELP && role != GUI_HELP_EN) {
+	set_up_helpview_menu(vwin);
+    }
 
     if (role == FUNCS_HELP) {
 	hsize = 82;
