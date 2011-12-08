@@ -42,7 +42,7 @@ static int translated_helpfile = -1;
 static char *en_gui_helpfile;
 static char *en_cli_helpfile;
 
-static void real_do_help (int idx, int pos, int role);
+static windata_t *real_do_help (int idx, int pos, int role);
 static void en_help_callback (GtkAction *action, windata_t *hwin);
 static void delete_help_viewer (GtkAction *a, windata_t *hwin);
 static char *funcs_helpfile (void);
@@ -1185,7 +1185,7 @@ static void helpwin_set_topic_index (windata_t *hwin, int idx)
     }
 }
 
-static void real_do_help (int idx, int pos, int role)
+static windata_t *real_do_help (int idx, int pos, int role)
 {
     static windata_t *gui_hwin;
     static windata_t *cli_hwin;
@@ -1198,7 +1198,7 @@ static void real_do_help (int idx, int pos, int role)
 
     if (pos < 0) {
 	dummy_call();
-	return;
+	return NULL;
     }
 
 #if HDEBUG
@@ -1272,6 +1272,8 @@ static void real_do_help (int idx, int pos, int role)
 	    helpwin_set_topic_index(hwin, idx);
 	}
     }
+
+    return hwin;
 }
 
 /* called from main menu in gretl.c; also used as callback from

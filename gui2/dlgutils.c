@@ -136,9 +136,12 @@ GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ,
 	g_signal_connect(G_OBJECT(button), "clicked", 
 			 G_CALLBACK(set_canceled), 
 			 canceled);
-	g_signal_connect(GTK_DIALOG(targ), "response", 
-			 G_CALLBACK(maybe_set_canceled), 
-			 canceled);
+	if (GTK_IS_DIALOG(targ)) {
+	    g_signal_connect(GTK_DIALOG(targ), "response", 
+			     G_CALLBACK(maybe_set_canceled), 
+			     canceled);
+	}
+	/* FIXME -- else? */
     }
 
     g_signal_connect(G_OBJECT(button), "clicked", 
@@ -253,15 +256,13 @@ GtkWidget *back_button (GtkWidget *hbox)
     return w;
 }
 
-static void set_dialog_border_widths (GtkWidget *dlg)
+static void set_dialog_border_widths (GtkWidget *ca, GtkWidget *aa)
 {
-    GtkWidget *box = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     int w1 = 10, w2 = 5;
 
-    gtk_container_set_border_width(GTK_CONTAINER(box), w1);
-    gtk_box_set_spacing(GTK_BOX(box), w2);
-    box = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
-    gtk_container_set_border_width(GTK_CONTAINER(box), w2);
+    gtk_container_set_border_width(GTK_CONTAINER(ca), w1);
+    gtk_box_set_spacing(GTK_BOX(ca), w2);
+    gtk_container_set_border_width(GTK_CONTAINER(aa), w2);
 }
 
 static void gretl_dialog_set_resizeable (GtkWidget *w, gboolean s)
@@ -306,7 +307,7 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 			     unsigned char flags)
 {
     GtkWidget *d = gtk_dialog_new();
-    GtkWidget *aa;
+    GtkWidget *ca, *aa;
 
     if (title != NULL) {
 	gtk_window_set_title(GTK_WINDOW(d), title);
@@ -314,9 +315,10 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 	gtk_window_set_title(GTK_WINDOW(d), "gretl");
     }
 
+    ca = gtk_dialog_get_content_area(GTK_DIALOG(d));
     aa = gtk_dialog_get_action_area(GTK_DIALOG(d));
     gtk_button_box_set_layout(GTK_BUTTON_BOX(aa), GTK_BUTTONBOX_END);
-    set_dialog_border_widths(d);
+    set_dialog_border_widths(ca, aa);
     gtk_window_set_position(GTK_WINDOW(d), GTK_WIN_POS_MOUSE);
 
     if (flags & GRETL_DLG_BLOCK) {
@@ -481,6 +483,8 @@ void set_active_edit_name (GtkWidget *w)
 
 struct dialog_t_ {
     GtkWidget *dialog;
+    GtkWidget *vbox;
+    GtkWidget *bbox;
     GtkWidget *edit;
     GtkWidget *popup;
     gpointer data;
@@ -529,11 +533,11 @@ gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key,
 }
 
 static dialog_t *dialog_data_new (gpointer p, int ci, 
+				  int hlpcode,
 				  const char *title,
 				  int *canceled)
 {
     dialog_t *d = mymalloc(sizeof *d);
-    GtkWidget *aa;
 
     if (d == NULL) {
 	return NULL;
@@ -542,8 +546,18 @@ static dialog_t *dialog_data_new (gpointer p, int ci,
     d->data = p;
     d->ci = ci;
     d->opt = OPT_NONE;
-    d->dialog = gtk_dialog_new();
     d->popup = NULL;
+
+    if (hlpcode > 0) {
+	d->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gretl_emulated_dialog_add_structure(d->dialog,
+					    &d->vbox,
+					    &d->bbox);
+    } else {
+	d->dialog = gtk_dialog_new();
+	d->vbox = gtk_dialog_get_content_area(GTK_DIALOG(d->dialog));
+	d->bbox = gtk_dialog_get_action_area(GTK_DIALOG(d->dialog));
+    }
 
     if (canceled != NULL) {
 	d->blocking = 1;
@@ -563,8 +577,7 @@ static dialog_t *dialog_data_new (gpointer p, int ci,
 	g_free(tmp);
     }
 
-    aa = gtk_dialog_get_action_area(GTK_DIALOG(d->dialog));
-    gtk_box_set_homogeneous(GTK_BOX(aa), TRUE); 
+    gtk_box_set_homogeneous(GTK_BOX(d->bbox), TRUE); 
     gtk_window_set_position(GTK_WINDOW(d->dialog), GTK_WIN_POS_MOUSE);
 
     g_signal_connect(G_OBJECT(d->dialog), "destroy", 
@@ -693,12 +706,11 @@ gpointer edit_dialog_get_data (dialog_t *dlg)
 
 static void dialog_table_setup (dialog_t *dlg, int hsize)
 {
-    GtkWidget *vbox, *sw;
+    GtkWidget *sw;
 
     sw = gtk_scrolled_window_new(NULL, NULL);
     gtk_widget_set_size_request(sw, hsize, 200);
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg->dialog));
-    gtk_box_pack_start(GTK_BOX(vbox), sw, TRUE, TRUE, FALSE);
+    gtk_box_pack_start(GTK_BOX(dlg->vbox), sw, TRUE, TRUE, FALSE);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (sw),
 				   GTK_POLICY_AUTOMATIC,
 				   GTK_POLICY_AUTOMATIC);
@@ -1174,12 +1186,9 @@ static void dlg_display_sys (dialog_t *d)
 
     if (d->ci == ESTIMATE) {
 	/* estimating an existing system, not editing */
-	GtkWidget *vbox;
-
 	w = gtk_label_new(sys->name);
 	gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
-	vbox = gtk_dialog_get_content_area(GTK_DIALOG(d->dialog));
-	gtk_box_pack_start(GTK_BOX(vbox), w, TRUE, TRUE, 10);
+	gtk_box_pack_start(GTK_BOX(d->vbox), w, TRUE, TRUE, 10);
 	gtk_widget_show(w);
     }
 
@@ -1267,7 +1276,7 @@ static void edit_dialog_add_note (const char *s, GtkWidget *vbox)
     lbl = g_strdup_printf("%s\n%s", s, _("(Please refer to Help for guidance)"));
     w = gtk_label_new(lbl);
     gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
-    gtk_box_pack_start(GTK_BOX(vbox), w, TRUE, TRUE, 10);
+    gtk_box_pack_start(GTK_BOX(vbox), w, FALSE, FALSE, 10);
     gtk_widget_show(w);
     g_free(lbl);
 }
@@ -1278,7 +1287,6 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 {
     dialog_t *d;
     GtkWidget *w;
-    GtkWidget *top_vbox, *button_box;
     MODEL *pmod = NULL;
     int hlpcode, modal = 0;
     int clear = 0;
@@ -1288,17 +1296,15 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	return;
     }
 
-    d = dialog_data_new(okptr, ci, title, canceled);
+    hlpcode = edit_dialog_help_code(ci, okptr);
+    d = dialog_data_new(okptr, ci, hlpcode, title, canceled);
     if (d == NULL) return;
 
     open_edit_dialog = d->dialog;
-    set_dialog_border_widths(d->dialog);
+    set_dialog_border_widths(d->vbox, d->bbox);
     gretl_dialog_set_resizeable(d->dialog, FALSE);
 
-    /* convenience pointers */
-    top_vbox = gtk_dialog_get_content_area(GTK_DIALOG(d->dialog));
-    button_box = gtk_dialog_get_action_area(GTK_DIALOG(d->dialog));
-    gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), 
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(d->bbox), 
 			      GTK_BUTTONBOX_END);
 
     if (ci == ESTIMATE) {
@@ -1306,14 +1312,14 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	dlg_display_sys(d);
     } else if (ci == SYSTEM && d->data != NULL) {
 	/* repecifying equation system */
-	edit_dialog_add_note(info, top_vbox);
+	edit_dialog_add_note(info, d->vbox);
 	dlg_display_sys(d);
 	clear = 1;
     } else if (ci == NLS || ci == MLE || ci == GMM ||
 	       ci == SYSTEM || ci == RESTRICT) {
 	int hsize = 62;
 
-	edit_dialog_add_note(info, top_vbox);
+	edit_dialog_add_note(info, d->vbox);
 	d->edit = dlg_text_edit_new(&hsize, TRUE);
 	dialog_table_setup(d, hsize);
 	gretl_dialog_set_resizeable(d->dialog, TRUE);
@@ -1341,12 +1347,12 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	if (info != NULL) {
 	    w = gtk_label_new(info);
 	    gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_LEFT);
-	    gtk_box_pack_start(GTK_BOX(top_vbox), w, TRUE, TRUE, 5);
+	    gtk_box_pack_start(GTK_BOX(d->vbox), w, TRUE, TRUE, 5);
 	    gtk_widget_show(w);
 	}
 
 	d->edit = gtk_entry_new();
-	gtk_box_pack_start(GTK_BOX(top_vbox), d->edit, TRUE, TRUE, 5);
+	gtk_box_pack_start(GTK_BOX(d->vbox), d->edit, TRUE, TRUE, 5);
 
 	/* make the Enter key do the business */
 	if (okfunc != NULL) {
@@ -1359,8 +1365,6 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	    gtk_editable_select_region(GTK_EDITABLE(d->edit), 0, strlen(deflt));
 	} 
 
-	gtk_widget_show(d->edit);
-
 	g_signal_connect(G_OBJECT(GTK_EDITABLE(d->edit)), "changed", 
 			 G_CALLBACK(raise_and_focus_dialog), d->dialog);
     }
@@ -1368,24 +1372,24 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     if (ci == SYSTEM || ci == ESTIMATE) {
 	GtkWidget *bt, *bv;
 
-	bt = dialog_option_switch(top_vbox, d, OPT_T, NULL);
-	bv = dialog_option_switch(top_vbox, d, OPT_V, NULL);
-	system_estimator_list(top_vbox, d, bt, bv);
+	bt = dialog_option_switch(d->vbox, d, OPT_T, NULL);
+	bv = dialog_option_switch(d->vbox, d, OPT_V, NULL);
+	system_estimator_list(d->vbox, d, bt, bv);
     } else if (ci == NLS || ci == MLE) {
-	dialog_option_switch(top_vbox, d, OPT_V, pmod);
-	dialog_option_switch(top_vbox, d, OPT_R, pmod);
+	dialog_option_switch(d->vbox, d, OPT_V, pmod);
+	dialog_option_switch(d->vbox, d, OPT_R, pmod);
 	if (ci == MLE) {
-	    iter_control_button(top_vbox, d, pmod);
+	    iter_control_button(d->vbox, d, pmod);
 	}
     } else if (ci == GMM) {
-	dialog_option_switch(top_vbox, d, OPT_V, pmod);
-	build_gmm_combo(top_vbox, d, pmod);
+	dialog_option_switch(d->vbox, d, OPT_V, pmod);
+	build_gmm_combo(d->vbox, d, pmod);
     } else if (ci == RESTRICT && ols_model_window(okptr)) {
-	dialog_option_switch(top_vbox, d, OPT_B, NULL);
+	dialog_option_switch(d->vbox, d, OPT_B, NULL);
     } else if (ci == RESTRICT && vecm_model_window(okptr)) {
-	dialog_option_switch(top_vbox, d, OPT_F, NULL);
+	dialog_option_switch(d->vbox, d, OPT_F, NULL);
     } else if (ci == GR_BOX) {
-	dialog_option_switch(top_vbox, d, OPT_O, NULL);
+	dialog_option_switch(d->vbox, d, OPT_O, NULL);
     }
 
     if (varclick == VARCLICK_INSERT_ID) { 
@@ -1398,27 +1402,27 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	modal = 1;
     }
 
-    hlpcode = edit_dialog_help_code(ci, okptr);
+    // hlpcode = edit_dialog_help_code(ci, okptr);
 
     if (varclick == VARCLICK_NONE && !hlpcode) {
 	gtk_window_set_keep_above(GTK_WINDOW(d->dialog), TRUE);
-    }
+    } 
 
     gtk_widget_grab_focus(d->edit);
 
     /* "Clear" button? */
     if (clear) {
 	w = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
-	gtk_container_add(GTK_CONTAINER(button_box), w);
+	gtk_container_add(GTK_CONTAINER(d->bbox), w);
 	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(clear_dlg_previous), d);
     }    
 
     /* "Cancel" button */
-    cancel_delete_button(button_box, d->dialog, canceled);
+    cancel_delete_button(d->bbox, d->dialog, canceled);
 
     /* "OK" button */
-    w = ok_button(button_box);
+    w = ok_button(d->bbox);
     if (okfunc != NULL) {
 	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(okfunc), d);
@@ -1430,11 +1434,9 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 
     /* "Help" button, if wanted */
     if (hlpcode > 0) {
-	context_help_button(button_box, hlpcode);
+	context_help_button(d->bbox, hlpcode);
 	modal = 0;
-    }
-
-    gtk_widget_show_all(button_box); 
+    } 
 
     if (ci == MODEL_GENR || ci == RESTRICT) {
 	windata_t *vwin = (windata_t *) okptr;
@@ -1455,7 +1457,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 			 G_CALLBACK(gtk_main), NULL);
     }
 
-    gtk_widget_show(d->dialog); 
+    gtk_widget_show_all(d->dialog); 
 }
 
 gchar *entry_box_get_trimmed_text (GtkWidget *w)
