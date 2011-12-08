@@ -5927,7 +5927,7 @@ static void new_var_callback (GtkWidget *w, selector *sr)
     edit_dialog(_("gretl: add var"), 
 		_("Enter formula for new variable"),
 		NULL, do_selector_genr, sr, 
-		GENR, VARCLICK_INSERT_NAME, NULL);  
+		GENR, VARCLICK_INSERT_NAME);  
 }
 
 static GtkWidget *add_var_button (selector *sr)

@@ -1355,12 +1355,11 @@ static int filter_code (GtkAction *action)
 void filter_callback (GtkAction *action)
 {
     filter_info finfo;
+    int code = filter_code(action);
     int v = mdata_active_var();
     int t1 = dataset->t1;
     int t2 = dataset->t2;
-    int code, err = 0;
-
-    code = filter_code(action);
+    int err = 0;
 
     err = series_adjust_sample(dataset->Z[v], &t1, &t2);
 
@@ -1370,10 +1369,8 @@ void filter_callback (GtkAction *action)
 
     if (err) {
 	gui_errmsg(err);
-	return;
+    } else {
+	filter_info_init(&finfo, code, v, t1, t2);
+	filter_dialog(&finfo);
     }
-
-    filter_info_init(&finfo, code, v, t1, t2);
-
-    filter_dialog(&finfo);
 }

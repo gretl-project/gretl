@@ -721,7 +721,7 @@ static void launch_series_maker (GtkWidget *button, call_info *cinfo)
     edit_dialog(_("add series"), 
 		_("Enter name=formula for new series"),
 		NULL, do_fncall_genr, combo, 
-		GENR, VARCLICK_INSERT_NAME, NULL);  
+		GENR, VARCLICK_INSERT_NAME);  
 }
 
 static void launch_scalar_maker (GtkWidget *button, call_info *cinfo)
@@ -731,7 +731,7 @@ static void launch_scalar_maker (GtkWidget *button, call_info *cinfo)
     edit_dialog(_("add scalar"), 
 		_("Enter name=formula for new scalar"),
 		NULL, do_fncall_genr, combo, 
-		GENR, VARCLICK_INSERT_NAME, NULL);  
+		GENR, VARCLICK_INSERT_NAME);  
 }
 
 static GtkWidget *bool_arg_selector (call_info *cinfo, int i)

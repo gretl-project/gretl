@@ -141,7 +141,6 @@ GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ,
 			     G_CALLBACK(maybe_set_canceled), 
 			     canceled);
 	}
-	/* FIXME -- else? */
     }
 
     g_signal_connect(G_OBJECT(button), "clicked", 
@@ -510,21 +509,23 @@ static void destroy_dialog_data (GtkWidget *w, gpointer data)
     if (active_edit_text) active_edit_text = NULL;
 }
 
-static gboolean cancel_on_delete (GtkDialog *d, int resp, int *c)
+static gboolean cancel_on_delete (GtkWidget *w, GdkEvent *event, 
+				  int *cancel)
 {
-    if (resp == GTK_RESPONSE_NONE || 
-	resp == GTK_RESPONSE_DELETE_EVENT ||
-	resp == GTK_RESPONSE_CANCEL) {
-	*c = 1;
-    }
+    *cancel = -1;
 
     return FALSE;
 }
 
-gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key, 
-			   gpointer unused)
+static gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key, 
+				  gpointer data)
 {
-    if (key->keyval == GDK_Escape) { 
+    if (key->keyval == GDK_Escape) {
+	if (data != NULL) {
+	    int *cancel = (int *) data;
+	    
+	    *cancel = -1;
+	}
         gtk_widget_destroy(w);
 	return TRUE;
     } else {
@@ -548,7 +549,10 @@ static dialog_t *dialog_data_new (gpointer p, int ci,
     d->opt = OPT_NONE;
     d->popup = NULL;
 
-    if (hlpcode > 0) {
+    d->blocking = (canceled != NULL);
+
+    if (hlpcode > 0 && d->blocking) {
+	/* allow help to appear above the dialog under metacity */
 	d->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gretl_emulated_dialog_add_structure(d->dialog,
 					    &d->vbox,
@@ -560,12 +564,9 @@ static dialog_t *dialog_data_new (gpointer p, int ci,
     }
 
     if (canceled != NULL) {
-	d->blocking = 1;
 	g_signal_connect(G_OBJECT(d->dialog), "delete-event",
 			 G_CALLBACK(cancel_on_delete), 
 			 canceled);
-    } else {
-	d->blocking = 0;
     }
 
     if (!strncmp(title, "gretl", 5)) {
@@ -583,7 +584,7 @@ static dialog_t *dialog_data_new (gpointer p, int ci,
     g_signal_connect(G_OBJECT(d->dialog), "destroy", 
 		     G_CALLBACK(destroy_dialog_data), d);
     g_signal_connect(G_OBJECT(d->dialog), "key-press-event", 
-		     G_CALLBACK(esc_kills_window), NULL);
+		     G_CALLBACK(esc_kills_window), canceled);
 
     return d;
 }
@@ -1281,9 +1282,10 @@ static void edit_dialog_add_note (const char *s, GtkWidget *vbox)
     g_free(lbl);
 }
 
-void edit_dialog (const char *title, const char *info, const char *deflt, 
-		  void (*okfunc)(), void *okptr, guint ci, 
-		  guint varclick, int *canceled)
+void 
+blocking_edit_dialog (const char *title, const char *info, const char *deflt, 
+		      void (*okfunc)(), void *okptr,
+		      int ci, Varclick click, int *canceled)
 {
     dialog_t *d;
     GtkWidget *w;
@@ -1392,19 +1394,17 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	dialog_option_switch(d->vbox, d, OPT_O, NULL);
     }
 
-    if (varclick == VARCLICK_INSERT_ID) { 
+    if (click == VARCLICK_INSERT_ID) { 
 	active_edit_id = d->edit; 
-    } else if (varclick == VARCLICK_INSERT_NAME) {
+    } else if (click == VARCLICK_INSERT_NAME) {
 	active_edit_name = d->edit;
-    } else if (varclick == VARCLICK_INSERT_TEXT) { 
+    } else if (click == VARCLICK_INSERT_TEXT) { 
 	active_edit_text = d->edit;
     } else if (ci != ESTIMATE) {
 	modal = 1;
     }
 
-    // hlpcode = edit_dialog_help_code(ci, okptr);
-
-    if (varclick == VARCLICK_NONE && !hlpcode) {
+    if (click == VARCLICK_NONE && !hlpcode) {
 	gtk_window_set_keep_above(GTK_WINDOW(d->dialog), TRUE);
     } 
 
@@ -1458,6 +1458,14 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     }
 
     gtk_widget_show_all(d->dialog); 
+}
+
+void edit_dialog (const char *title, const char *info, const char *deflt, 
+		  void (*okfunc)(), void *okptr, int ci, 
+		  Varclick click)
+{
+    blocking_edit_dialog(title, info, deflt, okfunc, okptr, ci,
+			 click, NULL);
 }
 
 gchar *entry_box_get_trimmed_text (GtkWidget *w)

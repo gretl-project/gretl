@@ -267,13 +267,6 @@ enum file_lists {
     FILE_LIST_WDIR,
 };
 
-enum varclick_actions {
-    VARCLICK_NONE,
-    VARCLICK_INSERT_ID,
-    VARCLICK_INSERT_NAME,
-    VARCLICK_INSERT_TEXT
-};
-
 enum font_selections {
     FIXED_FONT_SELECTION,
     APP_FONT_SELECTION

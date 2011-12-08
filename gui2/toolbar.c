@@ -327,10 +327,10 @@ static void add_matrix_callback (GtkWidget *w, windata_t *vwin)
 	if (m == NULL) {
 	    nomem();
 	} else {
-	    edit_dialog(_("gretl: save matrix"), 
-			_("Enter a name"),
-			NULL, matrix_savename, mname, 
-			0, VARCLICK_NONE, &cancel);
+	    blocking_edit_dialog(_("gretl: save matrix"), 
+				 _("Enter a name"),
+				 NULL, matrix_savename, mname, 
+				 0, VARCLICK_NONE, &cancel);
 	    if (cancel) {
 		gretl_matrix_free(m);
 	    } else {

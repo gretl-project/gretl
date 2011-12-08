@@ -2083,10 +2083,9 @@ static int display_session_model (SESSION_MODEL *sm)
 	view_buffer(prn, 78, 450, sm->name, var->ci, var);
     } else if (sm->type == GRETL_OBJ_SYS) {
 	equation_system *sys = (equation_system *) sm->ptr;
-	int cancel = 0;
 
 	edit_dialog(sm->name, NULL, NULL, do_saved_eqn_system, sys, 
-		    ESTIMATE, VARCLICK_NONE, &cancel); 
+		    ESTIMATE, VARCLICK_NONE); 
     }
 
     return 0;
@@ -2526,7 +2525,7 @@ static void rename_object_dialog (gui_obj *obj)
 			  maxlen);
     edit_dialog(_("gretl: rename object"), tmp,
 		obj->name, rename_object_callback, obj, 
-		0, VARCLICK_NONE, NULL);
+		0, VARCLICK_NONE);
     g_free(tmp);
 }
 

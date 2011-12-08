@@ -165,12 +165,12 @@ static void maybe_start_editing (void)
 {
     int cancel = 0;
 
-    edit_dialog(_("gretl: name variable"), 
-		_("Enter name for first variable\n"
-		  "(max. 15 characters)"),
-		NULL, prep_spreadsheet, NULL, 
-		CREATE_DATASET, VARCLICK_NONE, 
-		&cancel);
+    blocking_edit_dialog(_("gretl: name variable"), 
+			 _("Enter name for first variable\n"
+			   "(max. 15 characters)"),
+			 NULL, prep_spreadsheet, NULL, 
+			 CREATE_DATASET, VARCLICK_NONE, 
+			 &cancel);
 
     if (cancel) {
 	/* accept the default blank dataset */

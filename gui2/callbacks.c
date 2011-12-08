@@ -376,7 +376,7 @@ void model_genr_callback (GtkAction *action, gpointer data)
     edit_dialog(_("gretl: add var"), 
 		_("Enter formula for new variable:"),
 		"", do_model_genr, vwin, 
-		MODEL_GENR, VARCLICK_INSERT_NAME, NULL);   
+		MODEL_GENR, VARCLICK_INSERT_NAME);   
 }
 
 static int selector_callback_code (const gchar *s)
@@ -531,12 +531,12 @@ void gretl_callback (GtkAction *action, gpointer data)
     const char *defstr = NULL;
     gchar *dynquery = NULL;
     void (*okfunc)() = NULL;
-    guint varclick = VARCLICK_NONE;
-    int cmd, cancel = 0;
+    Varclick click = VARCLICK_NONE;
+    int ci;
 
-    cmd = gretl_callback_code(gtk_action_get_name(action));
+    ci = gretl_callback_code(gtk_action_get_name(action));
 
-    switch (cmd) {
+    switch (ci) {
     case GENR:
 	title = N_("gretl: add var");
 	if (dataset->n > 5000) {
@@ -546,7 +546,7 @@ void gretl_callback (GtkAction *action, gpointer data)
 		       "(or just a name, to enter data manually)");
 	}
 	okfunc = do_genr;
-	varclick = VARCLICK_INSERT_NAME;
+	click = VARCLICK_INSERT_NAME;
 	break;
     case VSETMISS:
 	title = N_("gretl: missing code");
@@ -564,28 +564,28 @@ void gretl_callback (GtkAction *action, gpointer data)
 	title = N_("gretl: boxplots");
 	query = N_("Specify variables to plot:");
 	okfunc = do_box_graph;
-	varclick = VARCLICK_INSERT_NAME;
+	click = VARCLICK_INSERT_NAME;
 	defstr = get_last_boxplots_string();
 	break;
     case GMM:
 	title = N_("gretl: GMM");
 	query = N_("GMM: Specify function and orthogonality conditions:");
 	okfunc = do_gmm_model;
-	varclick = VARCLICK_INSERT_TEXT;
+	click = VARCLICK_INSERT_TEXT;
 	data = NULL;
 	break;	
     case MLE:
 	title = N_("gretl: maximum likelihood");
 	query = N_("MLE: Specify function, and derivatives if possible:");
 	okfunc = do_mle_model;
-	varclick = VARCLICK_INSERT_TEXT;
+	click = VARCLICK_INSERT_TEXT;
 	data = NULL;
 	break;	
     case NLS:
 	title = N_("gretl: nonlinear least squares");
 	query = N_("NLS: Specify function, and derivatives if possible:");
 	okfunc = do_nls_model;
-	varclick = VARCLICK_INSERT_TEXT;
+	click = VARCLICK_INSERT_TEXT;
 	data = NULL;
 	break;	
     case SYSTEM:
@@ -593,7 +593,7 @@ void gretl_callback (GtkAction *action, gpointer data)
 	query = N_("Specify simultaneous equations:");
 	data = NULL;
 	okfunc = do_eqn_system;
-	varclick = VARCLICK_INSERT_TEXT;
+	click = VARCLICK_INSERT_TEXT;
 	break;
     case RESTRICT:
 	title = N_("gretl: linear restrictions");
@@ -613,11 +613,11 @@ void gretl_callback (GtkAction *action, gpointer data)
 
     if (dynquery != NULL) {
 	edit_dialog(_(title), dynquery, defstr, okfunc, data, 
-		    cmd, varclick, &cancel);
+		    ci, click);
 	g_free(dynquery);
     } else {
 	edit_dialog(_(title), _(query), defstr, okfunc, data, 
-		    cmd, varclick, &cancel);
+		    ci, click);
     }
 }
 
@@ -650,7 +650,6 @@ void revise_nl_model (MODEL *pmod)
     const char *query = NULL;
     const char *defstr;
     void (*okfunc)() = NULL;
-    int cancel = 0;
 
     switch (pmod->ci) {
     case GMM:
@@ -673,13 +672,12 @@ void revise_nl_model (MODEL *pmod)
     defstr = gretl_model_get_data(pmod, "nlinfo");
 
     edit_dialog(_(title), _(query), defstr, okfunc, pmod, 
-		pmod->ci, VARCLICK_INSERT_TEXT, &cancel);   
+		pmod->ci, VARCLICK_INSERT_TEXT);   
 }
 
 void revise_system_model (void *ptr)
 {
     equation_system *sys = (equation_system *) ptr;
-    int cancel = 0;
 
     edit_dialog(_("gretl: simultaneous equations system"), 
 		_("Specify simultaneous equations:"),
@@ -687,8 +685,7 @@ void revise_system_model (void *ptr)
 		do_eqn_system,
 		sys,
 		SYSTEM,
-		VARCLICK_INSERT_TEXT,
-		&cancel);
+		VARCLICK_INSERT_TEXT);
 }
 
 void genr_callback (void)
@@ -704,7 +701,7 @@ void genr_callback (void)
 
     edit_dialog(_("gretl: add var"), _(msg),
 		NULL, do_genr, NULL, 
-		GENR, VARCLICK_INSERT_NAME, NULL);   
+		GENR, VARCLICK_INSERT_NAME);   
 }
 
 void minibuf_callback (void)
@@ -712,7 +709,7 @@ void minibuf_callback (void)
     edit_dialog(_("gretl: command entry"),
 		_("Type a command:"),
 		NULL, do_minibuf, NULL, 
-		MINIBUF, VARCLICK_NONE, NULL);   
+		MINIBUF, VARCLICK_NONE);   
 }
 
 void newdata_callback (void) 

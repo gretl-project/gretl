@@ -851,24 +851,20 @@ static void name_new_obs (GtkWidget *widget, dialog_t *dlg)
 
 static void name_var_dialog (Spreadsheet *sheet) 
 {
-    int cancel = 0;
-    
     edit_dialog(_("gretl: name variable"), 
 		_("Enter name for new variable\n"
 		  "(max. 15 characters)"),
 		NULL, name_new_var, sheet, 
-		0, VARCLICK_NONE, &cancel);
+		0, VARCLICK_NONE);
 }
 
 static void new_case_dialog (Spreadsheet *sheet) 
 {
-    int cancel = 0;
-
     edit_dialog(_("gretl: case marker"), 
 		_("Enter case marker for new obs\n"
 		  "(max. 8 characters)"),
 		NULL, name_new_obs, sheet, 
-		0, VARCLICK_NONE, &cancel);
+		0, VARCLICK_NONE);
 }
 
 static void name_matrix_col (GtkWidget *widget, dialog_t *dlg) 
@@ -901,14 +897,12 @@ static void name_matrix_col (GtkWidget *widget, dialog_t *dlg)
 
 static void name_column_dialog (GtkTreeViewColumn *col, gpointer p) 
 {
-    int cancel = 0;
-
     edit_dialog(_("gretl: name column"), 
 		_("Enter name for column\n"
 		  "(max. 12 characters)"),
 		gtk_tree_view_column_get_title(col),
 		name_matrix_col, col, 
-		0, VARCLICK_NONE, &cancel);
+		0, VARCLICK_NONE);
 }
 
 static GtkListStore *make_sheet_liststore (Spreadsheet *sheet)
@@ -1032,10 +1026,10 @@ static void matrix_edit_callback (GtkAction *action, gpointer data)
     if (!strcmp(s, "ScalarMult") || !strcmp(s, "ScalarDiv")) {
 	int cancel = 0;
 
-	edit_dialog(_("gretl: specify scalar"), 
-		    _("Enter a numerical value"),
-		    NULL, sheet_get_scalar, &x, 
-		    0, VARCLICK_NONE, &cancel);
+	blocking_edit_dialog(_("gretl: specify scalar"), 
+			     _("Enter a numerical value"),
+			     NULL, sheet_get_scalar, &x, 
+			     0, VARCLICK_NONE, &cancel);
 	if (cancel || na(x)) {
 	    return;
 	}
@@ -1452,10 +1446,10 @@ static void matrix_save_as (GtkWidget *w, Spreadsheet *sheet)
     char newname[VNAMELEN];
     int cancel = 0;
 
-    edit_dialog(_("gretl: save matrix"), 
-		_("Enter a name"),
-		NULL, matrix_new_name, newname, 
-		0, VARCLICK_NONE, &cancel);
+    blocking_edit_dialog(_("gretl: save matrix"), 
+			 _("Enter a name"),
+			 NULL, matrix_new_name, newname, 
+			 0, VARCLICK_NONE, &cancel);
     
     if (!cancel) {
 	gretl_matrix *m;

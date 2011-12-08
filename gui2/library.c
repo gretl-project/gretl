@@ -5843,9 +5843,9 @@ void add_model_stat (MODEL *pmod, int which)
 			      "Name (max. 15 characters):"),
 			    pmod->ID, _(descrip), val);
 
-    edit_dialog(_("add scalar"),
-		blurb, vname, set_scalar_name, vname, 
-		0, VARCLICK_NONE, &cancel);
+    blocking_edit_dialog(_("add scalar"), blurb, vname, 
+			 set_scalar_name, vname, 
+			 0, VARCLICK_NONE, &cancel);
 
     g_free(blurb);
 

@@ -27,6 +27,13 @@ enum {
     GRETL_DLG_QUASI_MODAL = 1 << 3,
 };
 
+typedef enum {
+    VARCLICK_NONE,
+    VARCLICK_INSERT_ID,
+    VARCLICK_INSERT_NAME,
+    VARCLICK_INSERT_TEXT
+} Varclick;
+
 enum {
     OPT_TYPE_RADIO,
     OPT_TYPE_COMBO
@@ -105,9 +112,6 @@ GtkWidget *next_button (GtkWidget *hbox);
 
 GtkWidget *back_button (GtkWidget *hbox);
 
-gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key, 
-			   gpointer unused);
-
 void sensitize_conditional_on (GtkWidget *w, GtkWidget *b);
 
 void desensitize_conditional_on (GtkWidget *w, GtkWidget *b);
@@ -124,10 +128,14 @@ GtkWidget *gretl_option_check_button_switched (const char *label,
 					       gretlopt *popt,
 					       gretlopt val);
 
+void 
+blocking_edit_dialog (const char *title, const char *info, const char *deflt, 
+		      void (*okfunc)(), void *okptr,
+		      int ci, Varclick click, int *canceled);
+
 void edit_dialog (const char *title, const char *info, const char *deflt, 
 		  void (*okfunc)(), void *okptr,
-		  guint hlpcode, guint varclick,
-		  int *canceled);
+		  int ci, Varclick click);
 
 const gchar *edit_dialog_get_text (dialog_t *dlg);
 
