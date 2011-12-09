@@ -18,48 +18,60 @@ HREF="../css-gretl.html">
 
 <h2>System requirements</h2>
 
-<p>Please note that as of version 1.9.4, 
-gretl requires Windows XP or higher
-and a processor that supports the SSE2 instruction set. SSE2 support
-is found in all modern processors; it is absent in AMD CPUs prior to
-the Athlon 64, and in Intel CPUs prior to the Pentium 4.
-For versions of gretl that will run on older systems, 
-<a href="#old-windows">see below</a>.</p>
+<p>As of version 1.9.4, gretl requires Windows XP or higher and a processor that supports the
+SSE2 instruction set. SSE2 support is found in all modern processors; it is absent in AMD CPUs
+prior to the Athlon 64, and in Intel CPUs prior to the Pentium 4. For versions of gretl that
+will run on older systems, <a href="#old-windows">see below</a>.</p>
 
-<h2>You have some administrative rights on your Windows system</h2>
+<h2>Downloads</h2>
 
-<p>
-That means you're a "power-user" or better. In that case you'll probably 
-want to use the self-extracting executable,
-<a
-href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.exe">gretl-VERSION.exe</a>
-(SHORTDATE, about 13MB). Just download and run this: you will be
-prompted for the location to install the program (the default is
-<kbd>c:\Program Files\gretl</kbd>).</p>
+<p>If you're a "power-user" or better choose a self-installer from the first column; 
+just download and run the <kbd>exe</kbd> file.</p> 
 
-<p>The link above is to the latest official release.  Another possibilility
-is to download the current "snapshot" of gretl:
-<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl_install.exe/download">gretl_install.exe</a>.
-This will be more up to date: often it will contain 
-bug-fixes but sometimes it will contain newly introduced bugs. 
-Translations into languages other than English are likely to be
-incomplete.  What's new in the snapshot?  Take a look at the 
-<a href="../ChangeLog.html">Change log</a> (the "in progress" entry).</p>
+<p>If you have no administrator rights on Windows choose a zipfile from the second column; unzip
+this in any location where you have write permission. <i>Please note</i>: you must preserve the
+internal directory structure of the archive or gretl will not work. In unzipping programs this
+option may be called "enable folders". The whole archive is in a directory called
+<kbd>gretl</kbd>. So, for example, if you unzip the archive into a directory named
+<kbd>c:\userdata</kbd>, the gretl GUI program will be at
+<kbd>c:\userdata\gretl\gretlw32.exe</kbd>. </p>
 
-<h2>You have no administrative rights on Windows</h2>
+<p>The current "snapshot" of gretl is more up to date than the release: often it will 
+contain bug-fixes but sometimes it will contain newly introduced bugs. To see what's
+new in the snapshot, take a look at the  <a href="../ChangeLog.html">Change log</a>
+(the "in progress" entry).</p>
 
-<p>Then you can't use the self-installer. But you can install gretl from a zip
-archive: either the latest release,
+<table cellpadding="4">
+<tr><td>&nbsp;</td><td><i>self-installer</i></td><td>OR</td><td><i>zip archive</i></td></tr>
+
+<tr>
+<td>latest release (SHORTDATE)</td>
+<td>
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.exe">gretl-VERSION.exe</a>
+</td>
+<td>&nbsp;</td>
+<td>
 <a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-win32.zip">gretl-VERSION-win32.zip</a>
-or the current snapshot,
+</td>
+</tr>
+
+<tr>
+<td>OR current snapshot</td>
+<td>
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl_install.exe/download">gretl_install.exe</a>
+</td>
+<td>&nbsp;</td>
+<td>
 <a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-win32.zip/download">gretl-win32.zip</a>
-Just unzip this in any location where you have write permission. <i>Please note</i>: you must perserve
-the internal directory structure of the archive or the program will not work. In GUI unzipping programs
-this option may be called "enable folders" or something like that. Also note that the whole archive
-is in a directory called <kbd>gretl</kbd>. So, for example, if you unzip the archive into a directory
-named <kbd>c:\userdata</kbd>, the gretl GUI program will be at
-<kbd>c:\userdata\gretl\gretlw32.exe</kbd>.
-</p>
+</td>
+</tr>
+</table>
+
+<p>The executables were cross-compiled under GNU/Linux using <a
+href="http://www.mingw.org/">mingw32</a> and <a
+href="http://www.gtk.org/download-windows.html">GTK for
+Windows</a> (thanks Tor Lillqvist!). The free installer program is courtesy of <a
+href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
 
 <h2>Optional extras you may wish to install</h2>
 
@@ -103,7 +115,7 @@ href="http://sourceforge.net/projects/gretl/files/tramo/ts_install.exe/download"
  </td>
  <td><p><a 
    href="http://sourceforge.net/projects/gretl/files/datafiles/stock_watson.exe/download">stock_watson.exe</a>,
-   <a href="http://sourceforge.net/projects/gretl/files/datafiles/stock_watson_2.exe/download">stock_watson_2.exe</a>,
+   <a href="http://sourceforge.net/projects/gretl/files/datafiles/stock_watson_2.exe/download">stock_watson_2.exe</a>
    </p>
  </td>
 </tr>
@@ -131,12 +143,6 @@ href="http://sourceforge.net/projects/gretl/files/tramo/ts_install.exe/download"
 
 <p>The above are all self-extracting installers.  You must install gretl before installing
 the extra items.</p>
-
-<p>The executables were cross-compiled under GNU/Linux using <a
-href="http://www.mingw.org/">mingw32</a> and <a
-href="http://www.gtk.org/download-windows.html">GTK for
-Windows</a> (thanks Tor Lillqvist!). The free installer program is courtesy of <a
-href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
 
 <h2><a name="old-windows">gretl for older systems</a></h2>
 
