@@ -451,7 +451,8 @@ void window_tex_callback (GtkWidget *w, windata_t *vwin)
 	}
     }
 
-    opt = radio_dialog("gretl: LaTeX", NULL, opts, 3, 0, 0);
+    opt = radio_dialog("gretl: LaTeX", NULL, opts, 3, 0, 0,
+		       vwin->main);
 
     if (opt >= 0) {
 	int fmt = GRETL_FORMAT_TEX;

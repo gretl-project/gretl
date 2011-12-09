@@ -984,7 +984,7 @@ static int adf_get_options (const char *title, int panel,
 			   check_min, check_max,
 			   nradios, radio_var, order, 
 			   _("Lag order for ADF test:"), 
-			   0, omax, panel ? 0 : ADF);
+			   0, omax, panel ? 0 : ADF, NULL);
 
     if (retval == 0) {
 	if (panel) {
@@ -1046,7 +1046,7 @@ static int dfgls_get_options (const char *title, int panel,
 			   opts, nchecks, active, 0, 0,
 			   nradios, radio_var, order, 
 			   _("Lag order for ADF test:"), 
-			   0, omax, panel? 0 : DFGLS);
+			   0, omax, panel? 0 : DFGLS, NULL);
 
     if (retval == 0) {
 	/* OK */
@@ -1108,7 +1108,7 @@ static int kpss_get_options (const char *title, int panel,
 			   opts, nchecks, active, 0, 0,
 			   nradios, rvar, order, 
 			   _("Lag order for KPSS test:"), 
-			   0, omax, panel ? 0 : KPSS);
+			   0, omax, panel ? 0 : KPSS, NULL);
 
     if (retval == 0) {
 	/* OK */
@@ -1150,7 +1150,7 @@ static int levin_lin_get_options (const char *title,  int panel,
 			   opts, 0, NULL, 0, 0,
 			   3, &llc_case, order, 
 			   _("Lag order for ADF test:"), 
-			   0, omax, LEVINLIN);
+			   0, omax, LEVINLIN, NULL);
 
     if (retval == 0) {
 	/* OK */
@@ -1355,7 +1355,7 @@ int do_xcorrgm (selector *sr)
     }
 
     err = spin_dialog(title, NULL, &order, _("Lag order:"),
-		      1, dataset->n / 4, 0);
+		      1, dataset->n / 4, 0, NULL);
     if (err < 0) {
 	/* canceled */
 	free(mbuf);
@@ -1534,9 +1534,8 @@ void count_missing (void)
 
     active = (dataset->n < 1000);
 
-    resp = checks_dialog(_("gretl: missing values info"), NULL,
-			 opts, 1, &active, 0, 0, 0,
-			 NULL, NULL, NULL, 0, 0, 0);
+    resp = checks_only_dialog(_("gretl: missing values info"), NULL,
+			      opts, 1, &active, 0, NULL);
 
     if (resp < 0 || bufopen(&prn)) {
 	return;
@@ -1606,7 +1605,7 @@ void markers_callback (void)
 
 	resp = radio_dialog("gretl", _("The dataset has observation markers.\n"
 				"Would you like to:"),
-			    opts, 2, 0, 0);
+			    opts, 2, 0, 0, NULL);
 	if (resp == 0) {
 	    file_selector(SAVE_MARKERS, FSEL_DATA_NONE, NULL);
 	} else if (resp == 1) {
@@ -1670,7 +1669,7 @@ void labels_callback (void)
 
 	resp = radio_dialog("gretl", _("The dataset has variable labels.\n"
 				       "Would you like to:"),
-			    opts, 2, 0, SAVE_LABELS);
+			    opts, 2, 0, SAVE_LABELS, NULL);
 	if (resp == 0) {
 	    file_selector(SAVE_LABELS, FSEL_DATA_NONE, NULL);
 	} else if (resp == 1) {
@@ -1795,7 +1794,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 			   0, t2, &t2, kptr,
 			   0, premax, &pre_n,
 			   flags, &gopt, &conf,
-			   pmod);
+			   pmod, vwin->main);
     unset_window_busy(vwin);
 
     if (resp < 0) {
@@ -2343,7 +2342,8 @@ void do_arch (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     PRN *prn;
-    int order, err = 0;
+    int order, resp;
+    int err = 0;
 
     if (gui_exact_fit_check(pmod)) {
 	return;
@@ -2351,13 +2351,11 @@ void do_arch (GtkAction *action, gpointer p)
 
     order = default_lag_order(dataset);
 
-    set_window_busy(vwin);
-    err = spin_dialog(_("gretl: ARCH test"), NULL,
-		      &order, _("Lag order for ARCH test:"),
-		      1, dataset->n / 2, 0);
-    unset_window_busy(vwin);
+    resp = spin_dialog(_("gretl: ARCH test"), NULL,
+		       &order, _("Lag order for ARCH test:"),
+		       1, dataset->n / 2, 0, vwin->main);
 
-    if (err < 0 || bufopen(&prn)) { 
+    if (resp < 0 || bufopen(&prn)) { 
 	return;
     }
 
@@ -2577,7 +2575,8 @@ void do_qqplot (void)
     int resp;
 
     title = gretl_window_title(_("Q-Q plot"));
-    resp = radio_dialog(title, _("Normal Q-Q plot"), opts, 3, 0, QQPLOT);
+    resp = radio_dialog(title, _("Normal Q-Q plot"), opts, 3, 0, 
+			QQPLOT, NULL);
     g_free(title);
 
     if (resp < 0) {
@@ -2689,7 +2688,8 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 
 	splitbrk = (pmod->t2 - pmod->t1) / 2;
 	set_window_busy(vwin);
-	resp = chow_dialog(pmod->t1 + 1, pmod->t2 - 1, &splitbrk, &splitdum);
+	resp = chow_dialog(pmod->t1 + 1, pmod->t2 - 1, &splitbrk, &splitdum,
+			   vwin->main);
 	unset_window_busy(vwin);
 
 	if (resp < 0) {
@@ -2778,7 +2778,7 @@ void do_reset (GtkAction *action, gpointer p)
 
     resp = radio_dialog(_("gretl: RESET test"),
 			_("RESET specification test"),
-			optstrs, 4, 0, RESET);
+			optstrs, 4, 0, RESET, NULL);
 
     if (resp < 0) {
 	/* canceled */
@@ -2852,7 +2852,7 @@ void do_autocorr (GtkAction *action, gpointer p)
     set_window_busy(vwin);
     err = spin_dialog(_("gretl: autocorrelation"), NULL,
 		      &order, _("Lag order for test:"),
-		      1, dataset->n / 2, 0);
+		      1, dataset->n / 2, 0, vwin->main);
     unset_window_busy(vwin);
 
     if (err < 0 || bufopen(&prn)) {
@@ -5003,9 +5003,8 @@ void do_range_mean (void)
     PRN *prn;
     int resp, err = 0;
 
-    resp = checks_dialog(_("gretl: range-mean graph"), NULL,
-			 opts, 1, &active, 0, 0, 0,
-			 NULL, NULL, NULL, 0, 0, 0);
+    resp = checks_only_dialog(_("gretl: range-mean graph"), NULL,
+			      opts, 1, &active, 0, NULL);
 
     if (resp < 0) {
 	return;
@@ -5090,7 +5089,7 @@ static void real_do_corrgm (DATASET *dset, int code)
     title = gretl_window_title(_("correlogram"));
 
     err = spin_dialog(title, NULL, &order, _("Maximum lag:"),
-		      1, T - 1, CORRGM);
+		      1, T - 1, CORRGM, NULL);
 
     if (err < 0 || bufopen(&prn)) {
 	g_free(title);
@@ -5249,8 +5248,10 @@ void do_fractint (GtkAction *action)
     PRN *prn;    
 
     width = auto_spectrum_order(T, OPT_NONE);
+
     err = spin_dialog(_(title), NULL, &width, _("Lag order:"),
-		      2, T / 2, FRACTINT);
+		      2, T / 2, FRACTINT, NULL);
+
     if (err < 0 || bufopen(&prn)) {
 	return;
     }   
@@ -5491,7 +5492,7 @@ static int dummify_dialog (gretlopt *opt)
 
     ret = radio_dialog(_("gretl: create dummy variables"), 
 		       _("Encoding variables as dummies"), 
-		       opts, 3, 0, 0);
+		       opts, 3, 0, 0, NULL);
 
     *opt = (ret == 1)? OPT_F : (ret == 2)? OPT_L : OPT_NONE;
 
@@ -5515,7 +5516,7 @@ void add_logs_etc (int ci)
 	order = default_lag_order(dataset);
 	resp = spin_dialog(_("gretl: generate lags"), NULL,
 			   &order, _("Number of lags to create:"), 
-			   1, dataset->n - 1, 0);
+			   1, dataset->n - 1, 0, NULL);
 	if (resp < 0) {
 	    free(liststr);
 	    return;
@@ -6742,8 +6743,9 @@ void plot_from_selection (int code)
 	    };
 	    int ret;
 
-	    ret = radio_dialog(_("gretl: define graph"), _("Plot the series"), 
-			       opts, 2, 0, 0);
+	    ret = radio_dialog(_("gretl: define graph"), 
+			       _("Plot the series"), 
+			       opts, 2, 0, 0, NULL);
 	    if (ret < 0) {
 		cancel = 1;
 	    } else if (ret == 0) {
@@ -7037,7 +7039,7 @@ static void run_native_script (windata_t *vwin, gchar *buf, int sel)
     set_gretl_echo(1);
 }
 
-static void run_R_script (gchar *buf)
+static void run_R_script (gchar *buf, GtkWidget *parent)
 {
     const char *opts[] = {
 	N_("Non-interactive (just get output)"),
@@ -7049,9 +7051,11 @@ static void run_R_script (gchar *buf)
     if (send_data) {
 	resp = radio_dialog_with_check("gretl: R", _("R mode"), 
 				       opts, 2, 0, 0,
-				       &send_data, _("pre-load data"));
+				       &send_data, _("pre-load data"),
+				       parent);
     } else {
-	resp = radio_dialog("gretl: R", _("R mode"), opts, 2, 0, 0);
+	resp = radio_dialog("gretl: R", _("R mode"), opts, 2, 0, 0,
+			    parent);
     }
 
     if (resp >= 0) {
@@ -7103,7 +7107,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
     if (vwin->role == EDIT_GP) {
 	run_gp_script(buf);
     } else if (vwin->role == EDIT_R) {
-	run_R_script(buf);
+	run_R_script(buf, vwin->main);
     } else if (vwin->role == EDIT_OX) {
 	run_ox_script(buf);
     } else if (vwin->role == EDIT_OCTAVE) {
@@ -7353,7 +7357,7 @@ void gui_resample_data (void)
 
     resp = spin_dialog(title, _("Resampling with replacement"), 
 		       &n, _("Number of cases"), 
-		       1, 1000000, 0);
+		       1, 1000000, 0, NULL);
     g_free(title);
 
     if (resp != GRETL_CANCEL) {

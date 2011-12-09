@@ -198,7 +198,8 @@ static void graph_dbdata (DATASET *dbset)
     gui_graph_handler(err);
 }
 
-static int expand_data_dialog (int src_pd, int targ_pd, int *interpol)
+static int expand_data_dialog (int src_pd, int targ_pd, int *interpol,
+			       GtkWidget *parent)
 {
     int mult = targ_pd / src_pd;
     int resp;
@@ -213,7 +214,7 @@ static int expand_data_dialog (int src_pd, int targ_pd, int *interpol)
 
 	resp = radio_dialog("gretl", _("Adding a lower frequency series to a\n"
 				       "higher frequency dataset"),
-			    opts, 2, 0, 0);
+			    opts, 2, 0, 0, parent);
 	if (resp == 0) {
 	    *interpol = 1;
 	    resp = GRETL_YES;
@@ -362,7 +363,8 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	}
 
 	if (sinfo->pd < dataset->pd && !warned) {
-	    resp = expand_data_dialog(sinfo->pd, dataset->pd, &interpol);
+	    resp = expand_data_dialog(sinfo->pd, dataset->pd, &interpol,
+				      vwin->main);
 	    if (resp != GRETL_YES) {
 		return 0;
 	    }
@@ -399,8 +401,8 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	    /* the series needs to be compacted */
 	    compact = 1;
 	    if (!chosen) {
-		data_compact_dialog(vwin->main, sinfo->pd, &dataset->pd, NULL, 
-				    &method, NULL);
+		data_compact_dialog(sinfo->pd, &dataset->pd, NULL, 
+				    &method, NULL, vwin->main);
 		if (method == COMPACT_NONE) {
 		    if (!overwrite) {
 			dataset_drop_last_variables(1, dataset);
@@ -3020,8 +3022,8 @@ void do_compact_data_set (void)
 	pmonstart = &monstart;
     }
 
-    data_compact_dialog(mdata->main, dataset->pd, &newpd, pmonstart, 
-			&method, &repday);
+    data_compact_dialog(dataset->pd, &newpd, pmonstart, 
+			&method, &repday, mdata->main);
 
     if (method == COMPACT_NONE) {
 	/* the user cancelled */
@@ -3049,7 +3051,7 @@ void do_expand_data_set (void)
     /* supported: annual to quarterly or quarterly to monthly */
     newpd = (dataset->pd == 1)? 4 : 12;
 
-    data_expand_dialog(mdata->main, dataset->pd, &interpol);
+    data_expand_dialog(dataset->pd, &interpol, mdata->main);
 
     if (interpol < 0) {
 	/* canceled */

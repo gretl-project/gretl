@@ -83,11 +83,11 @@ void panel_structure_dialog (DATASET *pdinfo);
 
 int panel_graph_dialog (int *t1, int *t2);
 
-void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
-			  int *mon_start, CompactMethod *method,
-			  int *repday);
+void data_compact_dialog (int spd, int *target_pd, int *mon_start,
+			  CompactMethod *method, int *repday, 
+			  GtkWidget *parent);
 
-void data_expand_dialog (GtkWidget *w, int spd, int *interpol);
+void data_expand_dialog (int spd, int *interpol, GtkWidget *parent);
 
 void pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
 		   int *cancel);
@@ -95,16 +95,18 @@ void pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
 int density_dialog (int vnum, double *bw);
 
 int radio_dialog (const char *title, const char *label, const char **opts, 
-		  int nopts, int deflt, int helpcode);
+		  int nopts, int deflt, int helpcode, GtkWidget *parent);
 
 int radio_dialog_with_spinner (const char *title, const char **opts, 
 			       int nopts, int deflt, int helpcode,
 			       int *spinvar, const char *spintxt,
-			       int spinmin, int spinmax);
+			       int spinmin, int spinmax,
+			       GtkWidget *parent);
 
 int radio_dialog_with_check (const char *title, const char *label, 
 			     const char **opts, int nopts, int deflt, int hcode,
-			     int *checkvar, const char *checktxt);
+			     int *checkvar, const char *checktxt,
+			     GtkWidget *parent);
 
 GtkWidget *
 build_checks_dialog (const char *title, const char *blurb,
@@ -114,7 +116,7 @@ build_checks_dialog (const char *title, const char *blurb,
 		     int nradios, int *rvar, 
 		     int *spinvar, const char *spintxt, 
 		     int spinmin, int spinmax, 
-		     int hcode, int *ret);
+		     int hcode, GtkWidget *parent, int *ret);
 
 int checks_dialog (const char *title, const char *blurb,
 		   const char **opts, 
@@ -123,18 +125,20 @@ int checks_dialog (const char *title, const char *blurb,
 		   int nradios, int *rvar,
 		   int *spinvar, const char *spintxt, 
 		   int spinmin, int spinmax, 
-		   int hcode);
+		   int hcode, GtkWidget *parent);
 
 int checks_only_dialog (const char *title, const char *blurb,
 			const char **opts, int nopts,
-			int *active, int hcode);
+			int *active, int hcode,
+			GtkWidget *parent);
 
 int spin_dialog (const char *title, const char *blurb,
 		 int *spinvar, const char *spintxt, 
-		 int spinmin, int spinmax, int helpcode);
+		 int spinmin, int spinmax, int helpcode,
+		 GtkWidget *parent);
 
 int combo_selector_dialog (GList *list, const char *msg,
-			   int deflt);
+			   int deflt, GtkWidget *parent);
 
 int yes_no_help_dialog (const char *msg, int hcode);
 
@@ -149,7 +153,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 		     int t2min, int t2max, int *t2,
 		     int *k, int pmin, int pmax, int *p,
 		     int dyn, gretlopt *optp,
-		     double *conf, MODEL *pmod);
+		     double *conf, MODEL *pmod,
+		     GtkWidget *parent);
 
 void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
 				     gretlopt *gopt);
@@ -164,14 +169,13 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
 void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 		       gretlopt *popt, int *cancelled);
 
-void lmax_dialog (double *lmax, double ymax);
-
-int chow_dialog (int tmin, int tmax, int *t, int *dumv);
+int chow_dialog (int tmin, int tmax, int *t, int *dumv,
+		 GtkWidget *parent);
 
 void iter_control_dialog (int *optim, int *pmaxit, double *ptol, 
 			  int *plmem, int *cancel, GtkWidget *parent);
 
-void tex_format_dialog (void);
+void tex_format_dialog (GtkAction *action, gpointer data);
 
 int object_name_entry_dialog (char *name, GretlType type,
 			      const char *labeltxt,

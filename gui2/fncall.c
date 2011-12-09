@@ -1685,7 +1685,7 @@ static void select_interface (call_info *cinfo, int npub)
     } else if (radios) {
 	resp = radio_dialog("gretl", "select function", 
 			    (const char **) opts, 
-			    nopts, 0, 0);
+			    nopts, 0, 0, cinfo->dlg);
 	if (resp >= 0) {
 	    cinfo->iface = cinfo->publist[resp+1];
 	} else {
@@ -1693,7 +1693,8 @@ static void select_interface (call_info *cinfo, int npub)
 	}
 	free_strings_array(opts, nopts);
     } else {
-	resp = combo_selector_dialog(ilist, "select function", 0);
+	resp = combo_selector_dialog(ilist, "select function", 
+				     0, cinfo->dlg);
 	if (resp >= 0) {
 	    cinfo->iface = cinfo->publist[resp+1];
 	} else {

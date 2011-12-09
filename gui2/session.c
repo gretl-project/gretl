@@ -1911,6 +1911,7 @@ int save_session (char *fname)
 
 void session_notes_callback (GtkWidget *w, gpointer p)
 {
+    windata_t *vwin = (windata_t *) p;
     const char *opts[] = {
 	N_("Display notes on opening session file")
     };
@@ -1920,7 +1921,7 @@ void session_notes_callback (GtkWidget *w, gpointer p)
     active[0] = session.show_notes;
 
     resp = checks_only_dialog("gretl", NULL, opts, 1,
-			      active, 0);
+			      active, 0, vwin->main);
 
     if (resp >= 0 && session.show_notes != active[0]) {
 	session.show_notes = active[0];
@@ -2980,7 +2981,7 @@ static gboolean session_view_click (GtkWidget *widget,
 	    display_model_table_wrapper(); 
 	    break;
 	case GRETL_OBJ_GPAGE:
-	    display_graph_page(); 
+	    display_graph_page(iconview); 
 	    break;
 	case GRETL_OBJ_CORR:
 	    do_menu_op(ALL_CORR, NULL, OPT_NONE); 
@@ -3133,7 +3134,7 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 	} else if (obj->sort == GRETL_OBJ_MODTAB) {
 	    display_model_table_wrapper();
 	} else if (obj->sort == GRETL_OBJ_GPAGE) {
-	    display_graph_page();
+	    display_graph_page(iconview);
 	} else if (obj->sort == GRETL_OBJ_GRAPH || 
 		   obj->sort == GRETL_OBJ_PLOT) {
 	    open_gui_graph(obj);

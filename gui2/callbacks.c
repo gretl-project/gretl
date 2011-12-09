@@ -631,7 +631,7 @@ void menu_boxplot_callback (int varnum)
     int ret;
 
     ret = radio_dialog(_("gretl: define graph"), NULL, 
-		       opts, 3, 0, 0);
+		       opts, 3, 0, 0, NULL);
 
     if (ret == 0) {
 	do_boxplot_var(varnum, OPT_NONE);
@@ -722,7 +722,7 @@ void newdata_callback (void)
 
     resp = spin_dialog(_("gretl: create data set"), NULL, &n, 
 		       _("Number of observations:"), 
-		       2, 1000000, 0);
+		       2, 1000000, 0, NULL);
 
     if (resp < 0) {
 	/* canceled */

@@ -603,7 +603,7 @@ static void gpage_cleanup (void)
     gretl_remove(fname);
 }
 
-int display_graph_page (void)
+int display_graph_page (GtkWidget *parent)
 {
     const char *opts[] = {
 	N_("color"),
@@ -619,7 +619,7 @@ int display_graph_page (void)
     }
 
     resp = radio_dialog(_("graph page options"), NULL, opts, 
-			2, 0, 0);
+			2, 0, 0, parent);
     if (resp < 0) {
 	return 0;
     }
@@ -746,7 +746,7 @@ int graph_page_parse_line (const char *line)
     if (!strcmp(cmdword, "add")) {
 	err = graph_page_add_last_graph();
     } else if (!strcmp(cmdword, "show")) {
-	err = display_graph_page();
+	err = display_graph_page(NULL);
     } else if (!strcmp(cmdword, "free")) {
 	if (gpage.ngraphs > 0) {
 	    clear_graph_page(0);

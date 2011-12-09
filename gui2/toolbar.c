@@ -165,7 +165,7 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
 	int resp;
 
 	resp = radio_dialog(_("gretl: save text"), _("Save text"), 
-			    opts, 2, 0, 0);
+			    opts, 2, 0, 0, vwin->main);
 	if (resp < 0) {
 	    return;
 	} else if (resp == 1) {
@@ -550,7 +550,7 @@ static void set_output_sticky (GtkWidget *w, windata_t *vwin)
 
     deflt = (vwin->flags & VWIN_STICKY)? 1 : 0;
 
-    resp = radio_dialog(NULL, NULL, opts, 2, deflt, 0);
+    resp = radio_dialog(NULL, NULL, opts, 2, deflt, 0, vwin->main);
 
     if (resp == 0) {
 	vwin->flags &= ~VWIN_STICKY;

@@ -1566,7 +1566,7 @@ static void select_singleton (selector *sr)
 		       0, v, 1, 0, 2, dataset->varname[v], -1);
 }
 
-static int varflag_dialog (int v)
+static int varflag_dialog (int v, GtkWidget *parent)
 {
     const char *opts[] = {
 	N_("Unrestricted"),
@@ -1578,7 +1578,7 @@ static int varflag_dialog (int v)
     title = g_strdup_printf("gretl: %s", _("add exogenous variable"));
     label = g_strdup_printf(_("Status of '%s' in VECM:"), dataset->varname[v]);
 
-    ret = radio_dialog(title, label, opts, 2, 0, 0);
+    ret = radio_dialog(title, label, opts, 2, 0, 0, parent);
     if (ret == 0) {
 	set_varflag(UNRESTRICTED);
     } else if (ret == 1) {
@@ -1703,7 +1703,7 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
 	    g_free(vname);
 	} else {
 	    if (locus == SR_RVARS2 && USE_RXLIST(sr->ci)) {
-		if (varflag_dialog(v) < 0) {
+		if (varflag_dialog(v, sr->dlg) < 0) {
 		    return;
 		}
 	    }

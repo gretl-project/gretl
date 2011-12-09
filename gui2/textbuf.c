@@ -2031,7 +2031,8 @@ void script_tabs_dialog (GtkWidget *w, windata_t *vwin)
     resp = checks_dialog(title, NULL, 
 			 &opt, 1, &smt, 0, 0,
 			 0, NULL, /* no radio buttons */
-			 &tsp, spintxt, 2, 8, 0);
+			 &tsp, spintxt, 2, 8, 0,
+			 vwin->main);
 
     if (resp != GRETL_CANCEL) {
 	tabwidth = tsp;

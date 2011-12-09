@@ -760,8 +760,8 @@ static int gui_delete_fn_pkg (const char *fname, windata_t *vwin)
     int active[] = {1, 1};
     int resp, err = 0;
 
-    resp = checks_only_dialog("gretl", msg,
-			      opts, 2, active, 0);
+    resp = checks_only_dialog("gretl", msg, opts, 2, 
+			      active, 0, vwin->main);
     g_free(msg);
 
     if (resp < 0 || (active[0] == 0 && active[1] == 0)) {
@@ -883,7 +883,8 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
 	    return;
 	} 
 
-	resp = radio_dialog("gretl", "function packages", opts, 2, 0, 0);
+	resp = radio_dialog("gretl", "function packages", opts, 2, 
+			    0, 0, vwin->main);
 
 	if (resp < 0) {
 	    /* canceled */

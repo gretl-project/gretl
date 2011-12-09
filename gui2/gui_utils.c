@@ -3375,7 +3375,8 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
 
 static int 
 impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon, 
-			int *bootstrap, double *alpha, gretlopt *gopt)
+			int *bootstrap, double *alpha, gretlopt *gopt,
+			GtkWidget *parent)
 {
     gchar *title;
     int h = default_VAR_horizon(dataset);
@@ -3385,7 +3386,7 @@ impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
     static int active[] = { 0 };
     GtkWidget *dlg;
     double conf = 1 - *alpha;
-    int resp = 0;
+    int resp = -1;
 
     title = g_strdup_printf("gretl: %s", _("impulse responses"));
 
@@ -3394,7 +3395,7 @@ impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
 			      0, NULL, /* no radios */
 			      &h, _("forecast horizon (periods):"),
 			      2, dataset->n / 2, IRF_BOOT,
-			      &resp);
+			      parent, &resp);
 
     g_free(title);
 
@@ -3423,12 +3424,12 @@ impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
 }
 
 static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec, 
-		       int *horizon) 
+		       int *horizon, GtkWidget *parent) 
 {
     gchar *title;
     int h = default_VAR_horizon(dataset);
     GtkWidget *dlg;
-    int resp = 0;
+    int resp = -1;
 
     title = g_strdup_printf("gretl: %s", _("Forecast variance decomposition"));
 
@@ -3436,7 +3437,8 @@ static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
 			      NULL, 0, NULL, 0, 0, /* no checks */
 			      0, NULL, /* no radios */
 			      &h, _("forecast horizon (periods):"),
-			      2, dataset->n / 2, 0, &resp);
+			      2, dataset->n / 2, 0, 
+			      parent, &resp);
 
     g_free(title);
 
@@ -3521,7 +3523,7 @@ static void FEVD_plot_call (GtkAction *action, gpointer p)
     FEVD_param_from_action(action, &targ);
     ordvec = cholesky_order_vector(var);
 
-    resp = FEVD_setup(var, ordvec, &horizon);
+    resp = FEVD_setup(var, ordvec, &horizon, vwin->main);
     
     if (resp < 0) {
 	/* canceled */
@@ -3558,7 +3560,7 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     ordvec = cholesky_order_vector(var);
 
     resp = impulse_response_setup(var, ordvec, &horizon, &bootstrap, 
-				  &alpha, &gopt);
+				  &alpha, &gopt, vwin->main);
 
     if (resp < 0) {
 	/* canceled */
@@ -3599,7 +3601,8 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
     ordvec = cholesky_order_vector(var);
 
     resp = impulse_response_setup(var, ordvec, &horizon, 
-				  &bootstrap, &alpha, &gopt);
+				  &bootstrap, &alpha, &gopt,
+				  vwin->main);
 
     if (resp < 0) {
 	/* canceled */
@@ -3647,7 +3650,7 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
     gchar *title;
     PRN *prn = NULL;
     int code, h = 0;
-    int resp = 0;
+    int resp = -1;
     int err;
 
     if (var == NULL) {
@@ -3667,7 +3670,7 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
 			      0, NULL,             /* no radios */
 			      &h, _("forecast horizon (periods):"),
 			      2, dataset->n / 2, 
-			      0, &resp);
+			      0, vwin->main, &resp);
 
     if (dlg == NULL) {
 	goto bailout;
@@ -3680,14 +3683,10 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
     /* blocks till response is selected */
     gtk_widget_show_all(dlg);
 
-    if (resp < 0) {
-	/* canceled */
+    if (resp < 0 || bufopen(&prn)) {
+	/* cancel or fail */
 	goto bailout;
     }
-
-    if (bufopen(&prn)) {
-	goto bailout;
-    } 
 
     if (ordvec != NULL) {
 	if (ordvec_default(ordvec)) {
@@ -3791,7 +3790,7 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
 			   t1, t2, &t2, NULL,
 			   0, premax, &pre_n,
 			   dyn_ok, &gopt, &conf, 
-			   NULL);
+			   NULL, vwin->main);
     if (resp < 0) {
 	return;
     }
@@ -3877,7 +3876,7 @@ static void system_test_call (GtkAction *action, gpointer p)
 			  _("gretl: autocorrelation") :
 			  _("gretl: ARCH test"), NULL,
 			  &order, _("Lag order for test:"),
-			  1, dataset->n / 2, 0);
+			  1, dataset->n / 2, 0, vwin->main);
 	unset_window_busy(vwin);
 	if (err < 0) {
 	    gretl_print_destroy(prn);

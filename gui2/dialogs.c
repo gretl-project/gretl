@@ -458,7 +458,8 @@ int csv_options_dialog (int ci, gretlopt *optp)
 	opt = *optp;
     }
 
-    dialog = gretl_dialog_new(_("gretl: data delimiter"), NULL, GRETL_DLG_BLOCK);
+    dialog = gretl_dialog_new(_("gretl: data delimiter"), NULL, 
+			      GRETL_DLG_BLOCK);
 
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(destroy_delim_dialog), csvp);
@@ -1311,14 +1312,14 @@ static void combo_set_retval (GtkComboBox *combo, int *ret)
 }
 
 int combo_selector_dialog (GList *list, const char *msg,
-			   int deflt)
+			   int deflt, GtkWidget *parent)
 {
     GtkWidget *dlg;
     GtkWidget *combo;
     GtkWidget *hbox, *vbox, *tmp;
     int ret = deflt;
 
-    dlg = gretl_dialog_new(NULL, NULL, GRETL_DLG_BLOCK);
+    dlg = gretl_dialog_new(NULL, parent, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
     /* label */
@@ -1707,7 +1708,8 @@ static int default_randsize (void)
 static struct range_setting *rset_new (guint code, gpointer p,
 				       MODEL *pmod, 
 				       int *t1, int *t2,
-				       const gchar *title)
+				       const gchar *title,
+				       GtkWidget *parent)
 {
     struct range_setting *rset;
 
@@ -1726,7 +1728,7 @@ static struct range_setting *rset_new (guint code, gpointer p,
 	rset->opt = OPT_NONE;
     }
 
-    rset->dlg = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
+    rset->dlg = gretl_dialog_new(title, parent, GRETL_DLG_BLOCK);
     rset->combo = rset->entry = NULL;
     rset->adj1 = rset->adj2 = NULL;
     rset->spin1 = rset->spin2 = NULL;
@@ -2176,7 +2178,7 @@ void sample_range_dialog (GtkAction *action, gpointer p)
     }
 #endif
 
-    rset = rset_new(u, p, NULL, NULL, NULL, _("gretl: set sample"));
+    rset = rset_new(u, p, NULL, NULL, NULL, _("gretl: set sample"), NULL);
     if (rset == NULL) return;
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
@@ -2312,7 +2314,7 @@ int panel_graph_dialog (int *t1, int *t2)
 
     title = g_strdup_printf("gretl: %s", _("panel plot"));
 
-    rset = rset_new(SMPL, NULL, NULL, t1, t2, title);
+    rset = rset_new(SMPL, NULL, NULL, t1, t2, title, NULL);
     g_free(title);
 
     if (rset == NULL) {
@@ -2432,7 +2434,9 @@ void sample_restrict_dialog (GtkAction *action, gpointer p)
     int thisdum = 0;
     GtkWidget *w, *vbox, *hbox;
 
-    rset = rset_new(SMPLBOOL, p, NULL, NULL, NULL, _("gretl: restrict sample"));
+    rset = rset_new(SMPLBOOL, p, NULL, NULL, NULL, 
+		    _("gretl: restrict sample"), NULL);
+
     if (rset == NULL) return;
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
@@ -2542,7 +2546,8 @@ int get_obs_dialog (const char *title, const char *text,
     struct range_setting *rset;
     int ret = 0;
 
-    rset = rset_new(0, NULL, NULL, t1, t2, title);
+    rset = rset_new(0, NULL, NULL, t1, t2, title, NULL);
+
     if (rset == NULL) {
 	return -1;
     }
@@ -2597,7 +2602,8 @@ static void configure_chow_dlg (GtkToggleButton *b, struct range_setting *rset)
     }
 }
 
-int chow_dialog (int tmin, int tmax, int *t, int *dumv)
+int chow_dialog (int tmin, int tmax, int *t, int *dumv,
+		 GtkWidget *parent)
 {
     const gchar *olabel = N_("Observation at which to split the sample:");
     const gchar *dlabel = N_("Name of dummy variable to use:");
@@ -2610,7 +2616,9 @@ int chow_dialog (int tmin, int tmax, int *t, int *dumv)
 
     dumlist = get_dummy_list(&thisdum);
 
-    rset = rset_new(0, NULL, NULL, t, NULL, _("gretl: Chow test"));
+    rset = rset_new(0, NULL, NULL, t, NULL, _("gretl: Chow test"),
+		    parent);
+
     if (rset == NULL) {
 	return -1;
     }
@@ -2890,7 +2898,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 		     int t2min, int t2max, int *t2,
 		     int *k, int pmin, int pmax, int *p,
 		     int flags, gretlopt *optp,
-		     double *conf, MODEL *pmod)
+		     double *conf, MODEL *pmod,
+		     GtkWidget *parent)
 {
     const char *pre_txt = N_("Number of pre-forecast observations "
 			     "to graph");
@@ -2910,7 +2919,9 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     struct range_setting *rset;
     int i, ret = 0;
 
-    rset = rset_new(0, NULL, pmod, t1, t2, _("gretl: forecast"));
+    rset = rset_new(0, NULL, pmod, t1, t2, _("gretl: forecast"),
+		    parent);
+
     if (rset == NULL) {
 	return -1;
     }
@@ -3571,9 +3582,9 @@ static int compact_methods_set (void)
     return ret;
 }
 
-void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
-			  int *mon_start, CompactMethod *method,
-			  int *repday)
+void data_compact_dialog (int spd, int *target_pd, int *mon_start, 
+			  CompactMethod *method, int *repday, 
+			  GtkWidget *parent)
 {
     GtkWidget *dlg, *tmp, *vbox, *hbox;
     int show_pd_buttons = 0;
@@ -3583,7 +3594,8 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     struct compaction_info cinfo;
     gchar *labelstr = NULL;
 
-    dlg = gretl_dialog_new(_("gretl: compact data"), w, GRETL_DLG_BLOCK);
+    dlg = gretl_dialog_new(_("gretl: compact data"), parent, 
+			   GRETL_DLG_BLOCK);
 
     cinfo.target_pd = target_pd;
     cinfo.repday = repday;
@@ -3724,12 +3736,12 @@ static void abort_expand (GtkWidget *w, gpointer data)
     *k = -1;
 }
 
-void data_expand_dialog (GtkWidget *w, int spd, int *interpol)
+void data_expand_dialog (int spd, int *interpol, GtkWidget *parent)
 {
     GtkWidget *d, *tmp, *vbox, *hbox;
     const gchar *msg = NULL;
 
-    d = gretl_dialog_new(_("gretl: expand data"), w, GRETL_DLG_BLOCK);
+    d = gretl_dialog_new(_("gretl: expand data"), parent, GRETL_DLG_BLOCK);
 
     if (spd == 1) {
 	msg = N_("Expand annual data to quarterly");
@@ -3770,25 +3782,35 @@ static void set_radio_opt (GtkWidget *w, int *opt)
     *opt = widget_get_int(w, "action");
 }
 
+static void real_radio_ok (GtkWidget *button, gpointer data)
+{
+    int *radio_val = g_object_get_data(G_OBJECT(button), "radio_val");
+    int *ret = g_object_get_data(G_OBJECT(button), "ret");
+
+    *ret = *radio_val;
+    gtk_widget_destroy(GTK_WIDGET(data));
+}
+
 /* Returns -1 on cancel, otherwise the 0-based index of the radio
    option selected */
 
 int real_radio_dialog (const char *title, const char *label,
 		       const char **opts, int nopts, int deflt, int hcode,
 		       int *extravar, const char *extratxt,
-		       int spinmin, int spinmax)
+		       int spinmin, int spinmax, GtkWidget *parent)
 {
     GtkWidget *dialog;
     GtkWidget *vbox, *hbox, *tmp;
     GtkWidget *button = NULL;
     GSList *group = NULL;
+    int radio_val = deflt;
     int i, ret = -1;
 
     if (maybe_raise_dialog()) {
 	return ret;
     }
 
-    dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
+    dialog = gretl_dialog_new(title, parent, GRETL_DLG_BLOCK);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
@@ -3805,10 +3827,9 @@ int real_radio_dialog (const char *title, const char *label,
 	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
 	if (i == deflt) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
-	    ret = i;
 	}
 	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(set_radio_opt), &ret);
+			 G_CALLBACK(set_radio_opt), &radio_val);
 	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER(i));
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
@@ -3833,8 +3854,10 @@ int real_radio_dialog (const char *title, const char *label,
 
     /* "OK" button */
     tmp = ok_button(hbox);
+    g_object_set_data(G_OBJECT(tmp), "radio_val", &radio_val);
+    g_object_set_data(G_OBJECT(tmp), "ret", &ret);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
-		     G_CALLBACK(delete_widget), dialog);
+		     G_CALLBACK(real_radio_ok), dialog);
     gtk_widget_grab_default(tmp);
 
     /* Create a "Help" button? */
@@ -3850,27 +3873,30 @@ int real_radio_dialog (const char *title, const char *label,
 }
 
 int radio_dialog (const char *title, const char *label, const char **opts, 
-		  int nopts, int deflt, int hcode)
+		  int nopts, int deflt, int hcode, GtkWidget *parent)
 {
     return real_radio_dialog(title, label, opts, nopts, deflt, hcode,
-			     NULL, NULL, 0, 0);
+			     NULL, NULL, 0, 0, parent);
 }
 
 int radio_dialog_with_spinner (const char *title, const char **opts, 
 			       int nopts, int deflt, int hcode,
 			       int *spinvar, const char *spintxt,
-			       int spinmin, int spinmax)
+			       int spinmin, int spinmax,
+			       GtkWidget *parent)
 {
     return real_radio_dialog(title, NULL, opts, nopts, deflt, hcode,
-			     spinvar, spintxt, spinmin, spinmax);
+			     spinvar, spintxt, spinmin, spinmax,
+			     parent);
 }
 
 int radio_dialog_with_check (const char *title, const char *label, 
 			     const char **opts, int nopts, int deflt, 
-			     int hcode, int *checkvar, const char *checktxt)
+			     int hcode, int *checkvar, const char *checktxt,
+			     GtkWidget *parent)
 {
     return real_radio_dialog(title, label, opts, nopts, deflt, hcode,
-			     checkvar, checktxt, 0, 0);
+			     checkvar, checktxt, 0, 0, parent);
 }
 
 
@@ -4138,6 +4164,12 @@ static void checks_dialog_ok (GtkButton *button, GtkWidget *dialog)
     }
 
     if (done) {
+	int *retptr = g_object_get_data(G_OBJECT(button), "retptr");
+
+	if (retptr != NULL) {
+	    /* signal the all clear */
+	    *retptr = 0;
+	}
 	gtk_widget_destroy(dialog);
     } else {
 	/* Right now this is used only for ADF test, in which case
@@ -4171,7 +4203,8 @@ build_checks_dialog (const char *title, const char *blurb,
 		     int nradios, int *rvar, 
 		     int *spinvar, const char *spintxt, 
 		     int spinmin, int spinmax, 
-		     int hcode, int *ret)
+		     int hcode, GtkWidget *parent,
+		     int *ret)
 {
     GtkWidget *dialog, *tmp;
     GtkWidget *vbox, *hbox, *okb;
@@ -4181,7 +4214,7 @@ build_checks_dialog (const char *title, const char *blurb,
 	return NULL;
     }
 
-    dialog = gretl_dialog_new(title, mdata->main, GRETL_DLG_BLOCK);
+    dialog = gretl_dialog_new(title, parent, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     if (nradios < 0) {
@@ -4233,6 +4266,9 @@ build_checks_dialog (const char *title, const char *blurb,
 
     /* "OK" button */
     okb = ok_button(hbox);
+    if (ret != NULL) {
+	g_object_set_data(G_OBJECT(okb), "retptr", ret);
+    }
     g_signal_connect(G_OBJECT(okb), "clicked", 
 		     G_CALLBACK(checks_dialog_ok), 
 		     dialog);
@@ -4260,10 +4296,10 @@ int checks_dialog (const char *title, const char *blurb,
 		   int nradios, int *rvar, 
 		   int *spinvar, const char *spintxt, 
 		   int spinmin, int spinmax, 
-		   int hcode)
+		   int hcode, GtkWidget *parent)
 {
     GtkWidget *dlg;
-    int ret = 0;
+    int ret = -1;
 
     dlg = build_checks_dialog(title, blurb, opts, 
 			      nchecks, active, 
@@ -4271,48 +4307,45 @@ int checks_dialog (const char *title, const char *blurb,
 			      nradios, rvar, 
 			      spinvar, spintxt,
 			      spinmin, spinmax, 
-			      hcode, &ret);
+			      hcode, parent, &ret);
 
-    if (dlg == NULL) {
-	return -1;
+    if (dlg != NULL) {
+	gtk_widget_show_all(dlg);
     }
-
-    gtk_widget_show_all(dlg);
 
     return ret;
 }
 
 int checks_only_dialog (const char *title, const char *blurb,
-			const char **opts, int nopts,
-			int *active, int hcode)
+			const char **opts, int nopts, int *active, 
+			int hcode, GtkWidget *parent)
 {
     GtkWidget *dlg;
-    int ret = 0;
+    int ret = -1;
 
     dlg = build_checks_dialog(title, blurb, 
 			      opts, nopts, active, 0, 0,
 			      0, NULL,    /* no radios */
 			      NULL, NULL, /* no spinners */
-			      0, 0, hcode, &ret);
+			      0, 0, hcode, parent, &ret);
 
-    if (dlg == NULL) {
-	return -1;
+    if (dlg != NULL) {
+	gtk_widget_show_all(dlg);
     }
-
-    gtk_widget_show_all(dlg);
 
     return ret;
 }
 
 int spin_dialog (const char *title, const char *blurb,
 		 int *spinvar, const char *spintxt, 
-		 int spinmin, int spinmax, int hcode)
+		 int spinmin, int spinmax, int hcode,
+		 GtkWidget *parent)
 {
     return checks_dialog(title, blurb, 
 			 NULL, 0, NULL, 0, 0, /* no checks */
 			 0, NULL,             /* no radios */
-			 spinvar, spintxt,
-			 spinmin, spinmax, hcode);
+			 spinvar, spintxt, spinmin, spinmax, 
+			 hcode, parent);
 }
 
 static void pergm_set_bartlett (GtkToggleButton *button, gretlopt *opt)
@@ -5001,87 +5034,6 @@ void file_write_errbox (const char *fname)
     }
 }
 
-struct lmax_opt {
-    GtkWidget *dlg;
-    GtkWidget *entry;
-    double *lmax;
-    double ymax;
-};
-
-static void lmax_opt_finalize (GtkWidget *w, struct lmax_opt *opt)
-{
-    const gchar *numstr;
-    char *test;
-    double x;
-
-    numstr = gtk_entry_get_text(GTK_ENTRY(opt->entry));
-    x = strtod(numstr, &test);
-
-    if (*test != 0 || x <= opt->ymax) {
-	errbox(_("The maximum must be greater than %g"), opt->ymax);
-	*opt->lmax = NADBL;
-    } else {
-	*opt->lmax = x;
-	gtk_widget_destroy(opt->dlg);
-    }
-}
-
-static void lmax_opt_cancel (GtkWidget *w, struct lmax_opt *opt)
-{
-    *opt->lmax = 0.0;
-    gtk_widget_destroy(opt->dlg);
-}
-
-void lmax_dialog (double *lmax, double ymax)
-{
-    GtkWidget *tmp, *vbox, *hbox;
-    GtkWidget *entry;
-    gchar *numstr;
-    struct lmax_opt opt;
-
-    opt.dlg = gretl_dialog_new(_("Logistic model"), NULL, GRETL_DLG_BLOCK);
-    opt.lmax = lmax;
-    opt.ymax = ymax;
-
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(opt.dlg));
-
-    /* label */
-    hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new (_("Maximum (asymptote) for the\n"
-			   "dependent variable"));
-    gtk_label_set_justify(GTK_LABEL(tmp), GTK_JUSTIFY_CENTER);
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-
-    /* lmax entry */
-    hbox = gtk_hbox_new(FALSE, 5);
-    entry = gtk_entry_new();
-    gtk_entry_set_width_chars(GTK_ENTRY(entry), 12);
-    numstr = g_strdup_printf("%g", *lmax);
-    gtk_entry_set_text(GTK_ENTRY(entry), numstr);
-    g_free(numstr);
-    gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
-    gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
-    gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    opt.entry = entry;
-
-    hbox = gtk_dialog_get_action_area(GTK_DIALOG(opt.dlg));
-
-    /* Cancel button */
-    tmp = cancel_button(hbox);
-    g_signal_connect(G_OBJECT (tmp), "clicked", 
-		     G_CALLBACK(lmax_opt_cancel), &opt);
-
-    /* "OK" button */
-    tmp = ok_button(hbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(lmax_opt_finalize), &opt);
-
-    gretl_dialog_keep_above(opt.dlg);
-    gtk_widget_show_all(opt.dlg);
-}
-
 static void name_entry_finalize (GtkWidget *w, GtkWidget *dlg)
 {
     GtkWidget *entry = g_object_get_data(G_OBJECT(dlg), "entry");
@@ -5284,8 +5236,11 @@ static char get_tex_conv (const char *s)
     return c;
 }
 
-void tex_format_dialog (void)
+/* callback from model-window menu */
+
+void tex_format_dialog (GtkAction *action, gpointer data)
 {
+    windata_t *vwin = (windata_t *) data;
     const char *labels[] = {
 	N_("Coefficient"),
 	N_("Standard error"),
@@ -5306,7 +5261,7 @@ void tex_format_dialog (void)
 	if (*fmt) nset++;
     }
 
-    dlg = gretl_dialog_new(_("gretl: TeX tabular format"), NULL,
+    dlg = gretl_dialog_new(_("gretl: TeX tabular format"), vwin->main,
 			   GRETL_DLG_BLOCK);
 
     dvbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
