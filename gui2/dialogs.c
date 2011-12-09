@@ -4181,7 +4181,7 @@ build_checks_dialog (const char *title, const char *blurb,
 	return NULL;
     }
 
-    dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
+    dialog = gretl_dialog_new(title, mdata->main, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     if (nradios < 0) {

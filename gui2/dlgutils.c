@@ -323,7 +323,10 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
     if (parent != NULL) {
 	g_signal_connect(G_OBJECT(d), "show", 
 			 G_CALLBACK(dialog_set_destruction), parent);
-    }
+    } else {
+	g_signal_connect(G_OBJECT(d), "show", 
+			 G_CALLBACK(dialog_set_destruction), mdata->main);
+    }	
 
     if (flags & GRETL_DLG_BLOCK) {
 	g_signal_connect(G_OBJECT(d), "show", 
@@ -473,7 +476,7 @@ struct dialog_t_ {
     gretlopt opt;
 };
 
-static void destroy_dialog_data (GtkWidget *w, gpointer data) 
+static void destroy_edit_dialog (GtkWidget *w, gpointer data) 
 {
     dialog_t *d = (dialog_t *) data;
 
@@ -514,7 +517,7 @@ static gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key,
     }
 }
 
-static dialog_t *dialog_data_new (gpointer p, int ci, 
+static dialog_t *edit_dialog_new (gpointer p, int ci, 
 				  int hlpcode,
 				  const char *title,
 				  int *canceled)
@@ -529,22 +532,14 @@ static dialog_t *dialog_data_new (gpointer p, int ci,
     d->ci = ci;
     d->opt = OPT_NONE;
     d->popup = NULL;
+    d->blocking = 0;
 
-    d->blocking = (canceled != NULL);
-
-    if (hlpcode > 0 && d->blocking) {
-	/* allow help to appear above the dialog under metacity */
-	d->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gretl_emulated_dialog_add_structure(d->dialog,
-					    &d->vbox,
-					    &d->bbox);
-    } else {
-	d->dialog = gtk_dialog_new();
-	d->vbox = gtk_dialog_get_content_area(GTK_DIALOG(d->dialog));
-	d->bbox = gtk_dialog_get_action_area(GTK_DIALOG(d->dialog));
-    }
+    d->dialog = gtk_dialog_new();
+    d->vbox = gtk_dialog_get_content_area(GTK_DIALOG(d->dialog));
+    d->bbox = gtk_dialog_get_action_area(GTK_DIALOG(d->dialog));
 
     if (canceled != NULL) {
+	d->blocking = 1;
 	g_signal_connect(G_OBJECT(d->dialog), "delete-event",
 			 G_CALLBACK(cancel_on_delete), 
 			 canceled);
@@ -563,9 +558,11 @@ static dialog_t *dialog_data_new (gpointer p, int ci,
     gtk_window_set_position(GTK_WINDOW(d->dialog), GTK_WIN_POS_MOUSE);
 
     g_signal_connect(G_OBJECT(d->dialog), "destroy", 
-		     G_CALLBACK(destroy_dialog_data), d);
+		     G_CALLBACK(destroy_edit_dialog), d);
     g_signal_connect(G_OBJECT(d->dialog), "key-press-event", 
 		     G_CALLBACK(esc_kills_window), canceled);
+    g_signal_connect(G_OBJECT(d->dialog), "show", 
+		     G_CALLBACK(dialog_set_destruction), mdata->main);
 
     return d;
 }
@@ -1280,7 +1277,7 @@ blocking_edit_dialog (const char *title, const char *info, const char *deflt,
     }
 
     hlpcode = edit_dialog_help_code(ci, okptr);
-    d = dialog_data_new(okptr, ci, hlpcode, title, canceled);
+    d = edit_dialog_new(okptr, ci, hlpcode, title, canceled);
     if (d == NULL) return;
 
     open_edit_dialog = d->dialog;
