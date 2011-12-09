@@ -2532,54 +2532,6 @@ void sample_restrict_dialog (GtkAction *action, gpointer p)
     gtk_widget_show_all(rset->dlg);
 }
 
-/* general purpose dialog box for getting from the user either one or
-   two observations (e.g. for setting the start and/or end of a sample
-   range)
-*/
-
-int get_obs_dialog (const char *title, const char *text,
-		    const char *t1str, const char *t2str,
-		    int t1min, int t1max, int *t1, 
-		    int t2min, int t2max, int *t2)
-{
-    GtkWidget *tmp, *vbox, *hbox;
-    struct range_setting *rset;
-    int ret = 0;
-
-    rset = rset_new(0, NULL, NULL, t1, t2, title, NULL);
-
-    if (rset == NULL) {
-	return -1;
-    }
-
-    tmp = obs_spinbox(rset, text, t1str, t2str, 
-		      t1min, t1max, t1, 
-		      t2min, t2max, t2,
-		      SPIN_LABEL_ABOVE);
-
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
-    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
-
-    hbox = gtk_dialog_get_action_area(GTK_DIALOG(rset->dlg));
-
-    /* Cancel button */
-    cancel_options_button(hbox, rset->dlg, &ret);
-
-    /* "OK" button */
-    tmp = ok_button(hbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(set_obs_from_dialog), rset);
-    gtk_widget_grab_default(tmp);
-
-    g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
-		     G_CALLBACK(free_rsetting), rset);
-
-    gretl_set_window_modal(rset->dlg);
-    gtk_widget_show_all(rset->dlg);
-
-    return ret;
-}
-
 static void chow_dumv_callback (GtkComboBox *box, int *dumv)
 {
     gchar *vname = combo_box_get_active_text(box);
@@ -3141,7 +3093,7 @@ static gboolean set_add_obs (GtkWidget *w, struct add_obs_info *ainfo)
     return TRUE;
 }
 
-int add_obs_dialog (const char *blurb, int addmin)
+int add_obs_dialog (const char *blurb, int addmin, GtkWidget *parent)
 {
     int step, panel = dataset_is_panel(dataset);
     struct add_obs_info ainfo;
@@ -3157,7 +3109,7 @@ int add_obs_dialog (const char *blurb, int addmin)
 	step = 1;
     }
 
-    ainfo.dlg = gretl_dialog_new(_("Add observations"), NULL,
+    ainfo.dlg = gretl_dialog_new(_("Add observations"), parent,
 				 GRETL_DLG_MODAL | GRETL_DLG_BLOCK);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(ainfo.dlg));

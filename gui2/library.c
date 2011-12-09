@@ -1693,7 +1693,7 @@ int out_of_sample_info (int add_ok, int *t2)
     int err = 0;
 
     if (add_ok) {
-	int n = add_obs_dialog(_(can_add), 0);
+	int n = add_obs_dialog(_(can_add), 0, NULL);
 
 	if (n < 0) {
 	    err = 1;
@@ -5432,7 +5432,7 @@ void add_index (GtkAction *action)
 
 void do_add_obs (void)
 {
-    int n = add_obs_dialog(NULL, 1);
+    int n = add_obs_dialog(NULL, 1, NULL);
     int err = 0;
 
     if (n > 0) {

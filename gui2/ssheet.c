@@ -1087,7 +1087,7 @@ static void sheet_add_obs_direct (Spreadsheet *sheet)
     if (dataset->markers) {
 	new_case_dialog(sheet);
     } else if (sheet->point == SHEET_AT_END) {
-	int n = add_obs_dialog(NULL, 1);
+	int n = add_obs_dialog(NULL, 1, sheet->win);
 
 	if (n > 0) {
 	    real_add_new_obs(sheet, NULL, n);

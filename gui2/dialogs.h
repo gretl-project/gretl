@@ -79,8 +79,6 @@ void sample_range_dialog (GtkAction *action, gpointer p);
 
 void sample_restrict_dialog (GtkAction *action, gpointer p);
 
-void panel_structure_dialog (DATASET *pdinfo);
-
 int panel_graph_dialog (int *t1, int *t2);
 
 void data_compact_dialog (int spd, int *target_pd, int *mon_start,
@@ -142,12 +140,7 @@ int combo_selector_dialog (GList *list, const char *msg,
 
 int yes_no_help_dialog (const char *msg, int hcode);
 
-int get_obs_dialog (const char *title, const char *text,
-		    const char *t1str, const char *t2str,
-		    int t1min, int t1max, int *t1, 
-		    int t2min, int t2max, int *t2);
-
-int add_obs_dialog (const char *blurb, int addmin);
+int add_obs_dialog (const char *blurb, int addmin, GtkWidget *parent);
 
 int forecast_dialog (int t1min, int t1max, int *t1, 
 		     int t2min, int t2max, int *t2,
