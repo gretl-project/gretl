@@ -3870,15 +3870,15 @@ static void system_test_call (GtkAction *action, gpointer p)
     }
 
     if (code == SYS_AUTOCORR_TEST || code == SYS_ARCH_TEST) {
+	int resp;
+
 	order = default_lag_order(dataset);
-	set_window_busy(vwin);
-	err = spin_dialog((code == SYS_AUTOCORR_TEST)?
-			  _("gretl: autocorrelation") :
-			  _("gretl: ARCH test"), NULL,
-			  &order, _("Lag order for test:"),
-			  1, dataset->n / 2, 0, vwin->main);
-	unset_window_busy(vwin);
-	if (err < 0) {
+	resp = spin_dialog((code == SYS_AUTOCORR_TEST)?
+			   _("gretl: autocorrelation") :
+			   _("gretl: ARCH test"), NULL,
+			   &order, _("Lag order for test:"),
+			   1, dataset->n / 2, 0, vwin->main);
+	if (canceled(resp)) {
 	    gretl_print_destroy(prn);
 	    return;
 	}

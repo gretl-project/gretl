@@ -3202,7 +3202,7 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
     GtkWidget *rb;
     GtkWidget *w;
     int maxdim = 1000;
-    int canceled = 0;
+    int ret = GRETL_CANCEL;
 
     dlg = gretl_dialog_new("Matrix", mdata->main, 
 			   GRETL_DLG_BLOCK | GRETL_DLG_MODAL);
@@ -3319,14 +3319,14 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
 
     /* control buttons */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
-    w = cancel_delete_button(hbox, dlg, &canceled);
-    w = ok_button(hbox);
+    w = cancel_delete_button(hbox, dlg);
+    w = ok_validate_button(hbox, &ret, NULL);
     g_signal_connect(G_OBJECT(w), "clicked", G_CALLBACK(matrix_dialog_ok), &mdlg);
     gtk_widget_grab_default(w);
 
     gtk_widget_show_all(dlg);
 
-    return canceled;
+    return ret;
 }
 
 static int gui_matrix_from_list (selector *sr)
@@ -3499,12 +3499,12 @@ static void real_gui_new_matrix (gretl_matrix *m, const char *name)
 {
     struct gui_matrix_spec spec;
     int block = (m == NULL);
-    int cancel = 0;
+    int resp;
 
     gui_matrix_spec_init(&spec, m, name);
 
-    cancel = new_matrix_dialog(&spec);
-    if (cancel) {
+    resp = new_matrix_dialog(&spec);
+    if (canceled(resp)) {
 	return;
     }
 

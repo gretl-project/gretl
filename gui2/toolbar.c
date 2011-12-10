@@ -526,7 +526,7 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
     /* Cancel button */
-    cancel_options_button(hbox, dialog, NULL);
+    cancel_delete_button(hbox, dialog);
 
     g_object_set_data(G_OBJECT(dialog), "vwin", vwin);
     g_object_set_data(G_OBJECT(dialog), "xptr", &x);

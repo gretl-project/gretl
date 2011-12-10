@@ -1108,7 +1108,7 @@ void bundle_add_as_icon (GtkAction *action, gpointer p)
     resp = object_name_entry_dialog(vname, GRETL_TYPE_BUNDLE, 
 				    blurb, pshow, vwin->main);
 
-    if (resp >= 0) {    
+    if (!canceled(resp)) {    
 	int err = gretl_bundle_set_name(bundle, vname);
 	int flipit = 1;
 

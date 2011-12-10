@@ -92,17 +92,16 @@ void vbox_add_hsep (GtkWidget *vbox);
 
 void pack_in_hbox (GtkWidget *w, GtkWidget *vbox, int vspace);
 
-GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ,
-				 int *canceled);
-
-GtkWidget *cancel_options_button (GtkWidget *hbox, GtkWidget *targ,
-				  int *opt);
+GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ);
 
 GtkWidget *cancel_button (GtkWidget *hbox);
 
 GtkWidget *close_button (GtkWidget *hbox);
 
 GtkWidget *ok_button (GtkWidget *hbox);
+
+GtkWidget *ok_validate_button (GtkWidget *hbox, int *retptr,
+			       int *valptr);
 
 GtkWidget *apply_button (GtkWidget *hbox);
 

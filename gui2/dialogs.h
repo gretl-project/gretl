@@ -23,6 +23,7 @@
 #include <stdarg.h>
 
 #define GRETL_CANCEL (-1)
+#define canceled(r) (r == -1)
 
 enum {
     GRETL_YES,
@@ -64,7 +65,7 @@ int csv_options_dialog (int ci, gretlopt *optp);
 
 void rand_seed_dialog (void);
 
-void select_list_dialog (char *listname, int *cancel);
+int select_list_dialog (char *listname);
 
 void database_description_dialog (const char *binname);
 
@@ -87,8 +88,7 @@ void data_compact_dialog (int spd, int *target_pd, int *mon_start,
 
 void data_expand_dialog (int spd, int *interpol, GtkWidget *parent);
 
-void pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
-		   int *cancel);
+int pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax);
 
 int density_dialog (int vnum, double *bw);
 
@@ -160,14 +160,14 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
 			int *ast_opt, int *figs, char *fmt,
 			GtkWidget *parent);
 
-void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
-		       gretlopt *popt, int *cancelled);
+int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
+		      gretlopt *popt);
 
 int chow_dialog (int tmin, int tmax, int *t, int *dumv,
 		 GtkWidget *parent);
 
-void iter_control_dialog (int *optim, int *pmaxit, double *ptol, 
-			  int *plmem, int *cancel, GtkWidget *parent);
+int iter_control_dialog (int *optim, int *pmaxit, double *ptol, 
+			 int *plmem, GtkWidget *parent);
 
 void tex_format_dialog (GtkAction *action, gpointer data);
 

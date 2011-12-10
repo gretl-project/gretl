@@ -608,6 +608,17 @@ static void series_view_set_fmt (GtkComboBox *cb, char *format)
     *format = (i == 0)? 'g' : 'f';
 }
 
+static void sv_reformat_callback (GtkButton *b, windata_t *vwin)
+{
+    series_view *sview = (series_view *) vwin->data;
+
+    if (sview->list != NULL) {
+	multi_series_view_print(vwin);
+    } else {
+	single_series_view_print(vwin);
+    }
+}
+
 static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
 				     series_view *sview)
 {
@@ -681,26 +692,17 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
 
     /* Cancel button */
-    cancel_options_button(hbox, dlg, &sview->digits);
+    cancel_delete_button(hbox, dlg);
    
     /* OK button */
     tmp = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(sv_reformat_callback), vwin);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(delete_widget), dlg);
     gtk_widget_grab_default(tmp);
 
     gtk_widget_show_all(dlg);
-
-    if (sview->digits > 0) {
-	if (sview->list != NULL) {
-	    multi_series_view_print(vwin);
-	} else {
-	    single_series_view_print(vwin);
-	}
-    } else { 
-	/* canceled */
-	sview->digits = 6;
-    }
 }
 
 void series_view_format_dialog (GtkWidget *src, windata_t *vwin)

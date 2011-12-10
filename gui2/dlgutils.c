@@ -89,84 +89,17 @@ void pack_in_hbox (GtkWidget *w, GtkWidget *vbox, int vspace)
 
 /* Various buttons, usable in several sorts of dialogs */
 
-static void set_canceled (GtkWidget *w, int *c)
-{
-    if (c != NULL) {
-	*c = -1;
-    }
-}
-
-static void maybe_set_canceled (GtkDialog *d, int resp, int *c)
-{
-    if (resp == GTK_RESPONSE_DELETE_EVENT ||
-	resp == GTK_RESPONSE_CANCEL) {
-	*c = -1;
-    }
-}
-
-GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ,
-				 int *canceled)
+GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ)
 {
     GtkWidget *button;
 
     button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
-
-    if (canceled != NULL) {
-	g_signal_connect(G_OBJECT(button), "clicked", 
-			 G_CALLBACK(set_canceled), 
-			 canceled);
-	if (GTK_IS_DIALOG(targ)) {
-	    g_signal_connect(GTK_DIALOG(targ), "response", 
-			     G_CALLBACK(maybe_set_canceled), 
-			     canceled);
-	}
-    }
-
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     targ);
 	
-    return button;
-}
-
-static void invalidate_opt (GtkWidget *w, int *opt)
-{
-    *opt = -1;
-}
-
-static void maybe_invalidate_opt (GtkDialog *d, int resp, int *opt)
-{
-    if (resp == GTK_RESPONSE_NONE || 
-	resp == GTK_RESPONSE_DELETE_EVENT ||
-	resp == GTK_RESPONSE_CANCEL) {
-	*opt = -1;
-    }
-}
-
-GtkWidget *cancel_options_button (GtkWidget *hbox, GtkWidget *targ,
-				  int *opt)
-{
-    GtkWidget *button;
-
-    button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    gtk_widget_set_can_default(button, TRUE);
-    gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
-
-    if (opt != NULL) {
-	g_signal_connect(G_OBJECT(button), "clicked", 
-			 G_CALLBACK(invalidate_opt), 
-			 opt);
-	g_signal_connect(GTK_DIALOG(targ), "response", 
-			 G_CALLBACK(maybe_invalidate_opt), 
-			 opt);
-    }
-
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(delete_widget), 
-		     targ);
-
     return button;
 }
 
@@ -179,6 +112,34 @@ GtkWidget *ok_button (GtkWidget *hbox)
     gtk_container_add(GTK_CONTAINER(hbox), w);
 
     return w;
+}
+
+static void set_valid_response (GtkButton *b, int *valptr)
+{
+    int *retptr = g_object_get_data(G_OBJECT(b), "retptr");
+
+    if (valptr == NULL) {
+	*retptr = 0;
+    } else {
+	*retptr = *valptr;
+    }
+}
+
+/* on "OK": if @valptr is non-NULL, copy the valid value from 
+   @valptr to @retptr; otherwise signal all-clear by copying
+   0 to @retptr
+*/
+
+GtkWidget *ok_validate_button (GtkWidget *hbox, int *retptr,
+			       int *valptr)
+{
+    GtkWidget *button = ok_button(hbox);
+
+    g_object_set_data(G_OBJECT(button), "retptr", retptr);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(set_valid_response), valptr);
+
+    return button;
 }
 
 GtkWidget *apply_button (GtkWidget *hbox)
@@ -1011,7 +972,7 @@ static void mle_gmm_iters_dialog (GtkWidget *w, dialog_t *d)
 {
     int maxit, lmem = 0, optim = BFGS_MAX;
     double tol;
-    int cancel = 0;
+    int resp;
 
     BFGS_defaults(&maxit, &tol, d->ci);
     lmem = libset_get_int(LBFGS_MEM);
@@ -1024,10 +985,10 @@ static void mle_gmm_iters_dialog (GtkWidget *w, dialog_t *d)
 	optim = LBFGS_MAX;
     }
 
-    iter_control_dialog(&optim, &maxit, &tol, &lmem, &cancel,
-			d->dialog);
+    resp = iter_control_dialog(&optim, &maxit, &tol, &lmem,
+			       d->dialog);
 
-    if (!cancel) {
+    if (!canceled(resp)) {
 	int err;
 
 	err = libset_set_int(BFGS_MAXITER, maxit);
@@ -1271,6 +1232,9 @@ blocking_edit_dialog (const char *title, const char *info, const char *deflt,
     int hlpcode, modal = 0;
     int clear = 0;
 
+    /* this will be undone by the OK button */
+    *canceled = 1;
+
     if (open_edit_dialog != NULL && ci != MINIBUF) {
 	gtk_window_present(GTK_WINDOW(open_edit_dialog));
 	return;
@@ -1397,10 +1361,10 @@ blocking_edit_dialog (const char *title, const char *info, const char *deflt,
     }    
 
     /* "Cancel" button */
-    cancel_delete_button(d->bbox, d->dialog, canceled);
+    cancel_delete_button(d->bbox, d->dialog);
 
     /* "OK" button */
-    w = ok_button(d->bbox);
+    w = ok_validate_button(d->bbox, canceled, NULL);
     if (okfunc != NULL) {
 	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(okfunc), d);

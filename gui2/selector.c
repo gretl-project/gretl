@@ -4840,7 +4840,7 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
     selector *sr;
     int active, maxit, lmem = 0;
     double tol;
-    int cancel = 0;
+    int resp;
 
     if (w == NULL) {
 	/* clean-up signal */
@@ -4869,10 +4869,10 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 	optim = LBFGS_MAX;
     }
 
-    iter_control_dialog(&optim, &maxit, &tol, &lmem, &cancel,
-			sr->dlg);
+    resp = iter_control_dialog(&optim, &maxit, &tol, 
+			       &lmem, sr->dlg);
 
-    if (!cancel) {
+    if (!canceled(resp)) {
 	int err = 0;
 
 	if (optim == BHHH_MAX) {
@@ -7373,13 +7373,6 @@ static void lagsel_spin_connect (GtkWidget *button)
     gtk_entry_set_activates_default(GTK_ENTRY(button), TRUE);
 }
 
-static void lags_set_OK (GtkWidget *w, gpointer p)
-{
-    int *resp = (int *) p;
-
-    *resp = GRETL_YES;
-}
-
 static void resensitize_selector (GtkWidget *w, gpointer p)
 {
     if (open_selector != NULL) {
@@ -7571,14 +7564,12 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 	
     /* "Cancel" button */
-    tmp = cancel_delete_button(hbox, dialog, NULL);
+    tmp = cancel_delete_button(hbox, dialog);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(delete_widget), dialog);
 
     /* "OK" button */
-    tmp = ok_button(hbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked", 
-		     G_CALLBACK(lags_set_OK), &ret);
+    tmp = ok_validate_button(hbox, &ret, NULL);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(lag_toggle_register), &vlinfo[0]);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
@@ -8030,7 +8021,7 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
     resp = lags_dialog(list, vlinfo, sr);
 
     /* register any changes made by the user */
-    if (resp != GRETL_CANCEL) {
+    if (!canceled(resp)) {
 	for (j=0; j<nvl; j++) {
 	    int changed = set_lags_for_var(&vlinfo[j], yxlags, ywlags);
 

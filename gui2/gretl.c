@@ -1083,11 +1083,11 @@ static void mdata_select_list (void)
 	return;
     } else {
 	char lname[32];
-	int cancel = 0;
+	int resp;
 
-	select_list_dialog(lname, &cancel);
+	resp = select_list_dialog(lname);
 
-	if (!cancel) {
+	if (!canceled(resp)) {
 	    int *list = get_list_by_name(lname);
 
 	    if (list != NULL) {

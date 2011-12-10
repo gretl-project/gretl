@@ -1537,7 +1537,7 @@ void count_missing (void)
     resp = checks_only_dialog(_("gretl: missing values info"), NULL,
 			      opts, 1, &active, 0, NULL);
 
-    if (resp < 0 || bufopen(&prn)) {
+    if (canceled(resp) || bufopen(&prn)) {
 	return;
     }
 
@@ -1789,16 +1789,13 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	kptr = &k;
     }
 
-    set_window_busy(vwin);
     resp = forecast_dialog(t1min, t2, &t1,
 			   0, t2, &t2, kptr,
 			   0, premax, &pre_n,
 			   flags, &gopt, &conf,
 			   pmod, vwin->main);
-    unset_window_busy(vwin);
 
-    if (resp < 0) {
-	/* canceled */
+    if (canceled(resp)) {
 	gopt = OPT_P | OPT_H;
 	return;
     }
@@ -1893,11 +1890,10 @@ void do_bootstrap (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     gretlopt opt = OPT_NONE;
-    int cancel = 0;
     int B = 1000;
     int k = 0;
     PRN *prn;
-    int err;
+    int resp, err;
 
     err = model_sample_problem(pmod, dataset);
     if (err) {
@@ -1905,11 +1901,9 @@ void do_bootstrap (GtkAction *action, gpointer p)
 	return;
     }
 
-    set_window_busy(vwin);
-    bootstrap_dialog(vwin, &k, &B, &opt, &cancel);
-    unset_window_busy(vwin);
+    resp = bootstrap_dialog(vwin, &k, &B, &opt);
 
-    if (cancel || bufopen(&prn)) {
+    if (canceled(resp) || bufopen(&prn)) {
 	return;
     }
 
@@ -2355,7 +2349,7 @@ void do_arch (GtkAction *action, gpointer p)
 		       &order, _("Lag order for ARCH test:"),
 		       1, dataset->n / 2, 0, vwin->main);
 
-    if (resp < 0 || bufopen(&prn)) { 
+    if (canceled(resp) || bufopen(&prn)) { 
 	return;
     }
 
@@ -2579,7 +2573,7 @@ void do_qqplot (void)
 			QQPLOT, NULL);
     g_free(title);
 
-    if (resp < 0) {
+    if (canceled(resp)) {
 	return;
     }
 
@@ -2612,19 +2606,19 @@ void do_kernel (void)
     gretlopt opt = OPT_NONE;
     double bw = 1.0;
     int v = mdata_active_var();
-    int err;
+    int resp, err = 0;
 
     if (sample_size(dataset) < 30) {
 	gui_errmsg(E_TOOFEW);
 	return;
     }
 
-    err = density_dialog(v, &bw);
-    if (err < 0) {
+    resp = density_dialog(v, &bw);
+    if (canceled(resp)) {
 	return;
     }
 
-    if (err > 0) {
+    if (resp > 0) {
 	opt |= OPT_O;
     }
 
@@ -2687,15 +2681,11 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 	int resp;
 
 	splitbrk = (pmod->t2 - pmod->t1) / 2;
-	set_window_busy(vwin);
 	resp = chow_dialog(pmod->t1 + 1, pmod->t2 - 1, &splitbrk, &splitdum,
 			   vwin->main);
-	unset_window_busy(vwin);
-
-	if (resp < 0) {
+	if (canceled(resp)) {
 	    return;
 	}
-
 	if (splitdum > 0) {
 	    lib_command_sprintf("chow %s --dummy", dataset->varname[splitdum]);
 	    opt |= OPT_D;
@@ -2780,12 +2770,9 @@ void do_reset (GtkAction *action, gpointer p)
 			_("RESET specification test"),
 			optstrs, 4, 0, RESET, NULL);
 
-    if (resp < 0) {
-	/* canceled */
+    if (canceled(resp) || bufopen(&prn)) {
 	return;
     }
-
-    if (bufopen(&prn)) return;
 
     dset = maybe_get_model_data(pmod, OPT_NONE, &err);
     if (err) {
@@ -2841,7 +2828,8 @@ void do_autocorr (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     PRN *prn;
-    int order, err = 0;
+    int order;
+    int resp, err;
 
     if (gui_exact_fit_check(pmod)) {
 	return;
@@ -2849,13 +2837,11 @@ void do_autocorr (GtkAction *action, gpointer p)
 
     order = default_lag_order(dataset);
 
-    set_window_busy(vwin);
-    err = spin_dialog(_("gretl: autocorrelation"), NULL,
-		      &order, _("Lag order for test:"),
-		      1, dataset->n / 2, 0, vwin->main);
-    unset_window_busy(vwin);
+    resp = spin_dialog(_("gretl: autocorrelation"), NULL,
+		       &order, _("Lag order for test:"),
+		       1, dataset->n / 2, 0, vwin->main);
 
-    if (err < 0 || bufopen(&prn)) {
+    if (canceled(resp) || bufopen(&prn)) {
 	return;
     }
 
@@ -3060,11 +3046,11 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 
     if (opt & OPT_B) {
 	gretlopt bootopt = OPT_NONE;
-	int cancel = 0;
+	int resp;
 	int B = 1000;
 
-	bootstrap_dialog(vwin, NULL, &B, &bootopt, &cancel);
-	if (cancel) {
+	resp = bootstrap_dialog(vwin, NULL, &B, &bootopt);
+	if (canceled(resp)) {
 	    /* command context? */
 	    destroy_restriction_set(my_rset);
 	    return;
@@ -4668,7 +4654,7 @@ void do_freq_dist (void)
     if (nbins == 0) {
 	double xmax, xmin;
 	char *bintxt;
-	int n;
+	int n, resp;
 
 	if (discrete) {
 	    n = gretl_minmax(dataset->t1, dataset->t2, y, 
@@ -4693,20 +4679,19 @@ void do_freq_dist (void)
 
 	if (discrete) {
 	    /* minimal dialog */
-	    err = freq_dialog(tmp, bintxt, NULL, 0, NULL, NULL, 
-			      xmin, xmax, &dist, &plot);
+	    resp = freq_dialog(tmp, bintxt, NULL, 0, NULL, NULL, 
+			       xmin, xmax, &dist, &plot);
 	} else {
 	    /* full dialog */
 	    if (n % 2 == 0) n--;
-	    err = freq_dialog(tmp, bintxt, &nbins, n, &fmin, &fwid, 
-			      xmin, xmax, &dist, &plot);
+	    resp = freq_dialog(tmp, bintxt, &nbins, n, &fmin, &fwid, 
+			       xmin, xmax, &dist, &plot);
 	}
 
 	g_free(bintxt);
 	g_free(tmp);
 
-	if (err < 0) {
-	    /* canceled */
+	if (canceled(resp)) {
 	    return;
 	}
 
@@ -5006,7 +4991,7 @@ void do_range_mean (void)
     resp = checks_only_dialog(_("gretl: range-mean graph"), NULL,
 			      opts, 1, &active, 0, NULL);
 
-    if (resp < 0) {
+    if (canceled(resp)) {
 	return;
     }
 
@@ -5174,13 +5159,14 @@ static void real_do_pergm (DATASET *dset, int code)
     PRN *prn;
     int T = sample_size(dset);
     gretlopt opt = OPT_NONE;
-    int width, cancel;
+    int width, resp;
     int err = 0;
 
     width = auto_spectrum_order(T, OPT_O);
-    pergm_dialog(&opt, &width, 2, T / 2, &cancel);
 
-    if (cancel || bufopen(&prn)) {
+    resp = pergm_dialog(&opt, &width, 2, T / 2);
+
+    if (canceled(resp) || bufopen(&prn)) {
 	return;
     }  
 
@@ -5517,7 +5503,7 @@ void add_logs_etc (int ci)
 	resp = spin_dialog(_("gretl: generate lags"), NULL,
 			   &order, _("Number of lags to create:"), 
 			   1, dataset->n - 1, 0, NULL);
-	if (resp < 0) {
+	if (canceled(resp)) {
 	    free(liststr);
 	    return;
 	}
@@ -5547,7 +5533,7 @@ void add_logs_etc (int ci)
 
 	if (err < list[0]) {
 	    resp = dummify_dialog(&opt);
-	    if (resp < 0) {
+	    if (canceled(resp)) {
 		quit = 1;
 	    }
 	} else {
@@ -7058,7 +7044,7 @@ static void run_R_script (gchar *buf, GtkWidget *parent)
 			    parent);
     }
 
-    if (resp >= 0) {
+    if (!canceled(resp)) {
 	start_R(buf, send_data, resp);
     }
 }
@@ -7360,7 +7346,7 @@ void gui_resample_data (void)
 		       1, 1000000, 0, NULL);
     g_free(title);
 
-    if (resp != GRETL_CANCEL) {
+    if (!canceled(resp)) {
 	gchar *nstr = g_strdup_printf("%d", n);
 	int err;
 
@@ -7384,6 +7370,7 @@ static int db_write_response (const char *filename, const int *list)
 			  _("OK to overwrite?"));
 
     resp = yes_no_dialog("gretl", msg, 0);
+
     if (resp == GRETL_NO) {
 	ret = 1;
     } else {

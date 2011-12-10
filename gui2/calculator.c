@@ -3212,7 +3212,7 @@ static void plot_curve (void)
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     
     /* "Cancel" button */
-    cancel_delete_button(hbox, dialog, NULL);
+    cancel_delete_button(hbox, dialog);
 
     /* "OK" button */
     button = ok_button(hbox);
@@ -3340,7 +3340,7 @@ static void plot_cdf (GtkWidget *parent)
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     
     /* "Cancel" button */
-    cancel_delete_button(hbox, dialog, NULL);
+    cancel_delete_button(hbox, dialog);
 
     /* "OK" button */
     button = ok_button(hbox);
