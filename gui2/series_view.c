@@ -618,8 +618,8 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     GSList *group;
     int std;
 
-    dlg = gretl_dialog_new(_("gretl: data format"), NULL,
-			   GRETL_DLG_BLOCK | GRETL_DLG_MODAL);
+    dlg = gretl_dialog_new(_("gretl: data format"), vwin->main,
+			   GRETL_DLG_BLOCK);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 

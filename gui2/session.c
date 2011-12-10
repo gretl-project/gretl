@@ -1105,7 +1105,8 @@ void bundle_add_as_icon (GtkAction *action, gpointer p)
     free(defname);
     blurb = "Save bundle\nName (max. 15 characters):";
     pshow = (iconlist == NULL)? &show : NULL;
-    resp = object_name_entry_dialog(vname, GRETL_TYPE_BUNDLE, blurb, pshow);
+    resp = object_name_entry_dialog(vname, GRETL_TYPE_BUNDLE, 
+				    blurb, pshow, vwin->main);
 
     if (resp >= 0) {    
 	int err = gretl_bundle_set_name(bundle, vname);

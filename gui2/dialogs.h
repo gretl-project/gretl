@@ -157,7 +157,8 @@ int freq_dialog (const char *title, const char *blurb,
 		 double xmin, double xmax, int *dist, int *plot);
 
 int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
-			int *ast_opt, int *figs, char *fmt);
+			int *ast_opt, int *figs, char *fmt,
+			GtkWidget *parent);
 
 void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 		       gretlopt *popt, int *cancelled);
@@ -171,7 +172,7 @@ void iter_control_dialog (int *optim, int *pmaxit, double *ptol,
 void tex_format_dialog (GtkAction *action, gpointer data);
 
 int object_name_entry_dialog (char *name, GretlType type,
-			      const char *labeltxt,
-			      int *show);
+			      const char *labeltxt, int *show,
+			      GtkWidget *parent);
 
 #endif /* DIALOGS_H */

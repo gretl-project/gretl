@@ -4734,7 +4734,8 @@ static void model_table_set_figs (GtkSpinButton *spin, int *figs)
 */
 
 int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
-			int *ast_opt, int *figs, char *fmt)
+			int *ast_opt, int *figs, char *fmt,
+			GtkWidget *parent)
 {
     static char *col_opts[] = {
 	"(1), (2), (3), ...",
@@ -4756,7 +4757,7 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
 	return ret;
     }
 
-    dialog = gretl_dialog_new("gretl", NULL, GRETL_DLG_BLOCK);
+    dialog = gretl_dialog_new("gretl", parent, GRETL_DLG_BLOCK);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
@@ -5023,14 +5024,17 @@ static int do_show_check (int *show, GretlType type)
 }
 
 int object_name_entry_dialog (char *name, GretlType type,
-			      const char *labeltxt,
-			      int *show)
+			      const char *labeltxt, int *show, 
+			      GtkWidget *parent)
 {
     GtkWidget *dlg, *tmp, *vbox, *hbox;
     GtkWidget *entry;
     int ret = 0;
 
-    dlg = gretl_dialog_new(_("gretl: name variable"), NULL, GRETL_DLG_BLOCK);
+    /* FIXME default ret to -1 and set to 0 on "OK" */
+
+    dlg = gretl_dialog_new(_("gretl: name variable"), parent, 
+			   GRETL_DLG_BLOCK);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 

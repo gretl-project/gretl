@@ -94,6 +94,9 @@ void about_dialog (void)
 
     dialog = gtk_dialog_new();
     gtk_window_set_title(GTK_WINDOW(dialog),_("About gretl")); 
+    gtk_window_set_transient_for(GTK_WINDOW(dialog), 
+				 GTK_WINDOW(mdata->main));
+
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     abox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 

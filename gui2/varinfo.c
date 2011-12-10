@@ -714,7 +714,8 @@ void varinfo_dialog (int varnum)
     }
 
     flags = GRETL_DLG_BLOCK | GRETL_DLG_RESIZE;
-    vset->dlg = gretl_dialog_new(_("gretl: variable attributes"), NULL, flags);
+    vset->dlg = gretl_dialog_new(_("gretl: variable attributes"), 
+				 NULL, flags);
     gui_varinfo_init(vset, varnum);
 
     is_parent = series_is_parent(dataset, varnum);
@@ -964,7 +965,8 @@ void name_new_variable_dialog (char *vname, char *descrip,
     }
 
     flags = GRETL_DLG_MODAL | GRETL_DLG_BLOCK | GRETL_DLG_RESIZE;
-    nset->dlg = gretl_dialog_new(_("gretl: variable attributes"), NULL, flags);
+    nset->dlg = gretl_dialog_new(_("gretl: variable attributes"), 
+				 NULL, flags);
 
     make_varname_unique(vname, 0, dataset);
     name_setter_init(nset, vname, descrip, cancel);

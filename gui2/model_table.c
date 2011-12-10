@@ -1338,7 +1338,7 @@ void format_model_table (windata_t *vwin)
     int resp;
 
     resp = model_table_dialog(&colhead_opt, &se_opt, &pv_opt, &ast_opt,
-			      &figs, &fmt);
+			      &figs, &fmt, vwin->main);
 
     if (resp == GRETL_CANCEL) {
 	return;
