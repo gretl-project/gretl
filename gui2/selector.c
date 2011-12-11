@@ -4398,8 +4398,13 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
     vbox_add_vwedge(right_vbox);
 }
 
+enum {
+    SELECTOR_SIMPLE,
+    SELECTOR_FULL
+};
+
 static void selector_init (selector *sr, guint ci, const char *title,
-			   gpointer p, int (*callback)())
+			   gpointer p, int (*callback)(), int selcode)
 {
     double x;
     int dlgx = -1, dlgy = 340;
@@ -4507,10 +4512,20 @@ static void selector_init (selector *sr, guint ci, const char *title,
 	sr->state_pushed = 1;
     }
 
-    sr->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    open_selector = sr;
+    if (selcode == SELECTOR_SIMPLE) {
+	sr->dlg = gretl_dialog_new(title, NULL, GRETL_DLG_RESIZE);
+	sr->vbox = gtk_dialog_get_content_area(GTK_DIALOG(sr->dlg));
+	sr->action_area = 
+	    gtk_dialog_get_action_area(GTK_DIALOG(sr->dlg));
+    } else {
+	sr->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
+	gretl_emulated_dialog_add_structure(sr->dlg, 
+					    &sr->vbox,
+					    &sr->action_area);
+    }
 
-    gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
+    open_selector = sr;
 
     x = (double) dlgy * gui_scale;
     dlgy = x;
@@ -4528,10 +4543,6 @@ static void selector_init (selector *sr, guint ci, const char *title,
     g_signal_connect(G_OBJECT(sr->dlg), "destroy", 
 		     G_CALLBACK(destroy_selector), 
 		     sr);
-
-    gretl_emulated_dialog_add_structure(sr->dlg, 
-					&sr->vbox,
-					&sr->action_area);
 } 
 
 static void option_callback (GtkWidget *w, selector *sr)
@@ -6153,7 +6164,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
 	return NULL;
     }
 
-    selector_init(sr, ci, title, NULL, callback);
+    selector_init(sr, ci, title, NULL, callback, SELECTOR_FULL);
 
     selection_dialog_add_top_label(sr);
 
@@ -6625,7 +6636,7 @@ selector *simple_selection (const char *title, int (*callback)(),
 	return NULL;
     }
 
-    selector_init(sr, ci, title, p, callback);
+    selector_init(sr, ci, title, p, callback, SELECTOR_FULL);
 
     tmp = simple_selection_top_label(ci);
     if (tmp != NULL) {
