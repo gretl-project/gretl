@@ -34,7 +34,11 @@ selector *selection_dialog (const char *title, int (*callback)(),
 			    guint cmdcode);
 
 selector *simple_selection (const char *title, int (*callback)(), 
-			    guint cmdcode, gpointer p);
+			    guint ci, gpointer p);
+
+selector *
+simple_selection_with_parent (const char *title, int (*callback)(), 
+			      guint ci, windata_t *vwin);
 
 void modelspec_dialog (int ci);
 

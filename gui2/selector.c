@@ -6436,14 +6436,6 @@ static GtkWidget *simple_selection_top_label (int ci)
     return label;
 }
 
-static gboolean remove_busy_signal (GtkWidget *w, windata_t *vwin)
-{
-    if (vwin != NULL) {
-	unset_window_busy(vwin);
-    }
-    return FALSE;
-}
-
 static void 
 add_to_rvars1_from_named_list (selector *sr, const int *list,
 			       int clear)
@@ -6612,8 +6604,8 @@ static void maybe_prefill_RHS (selector *sr)
     free(list);
 }
 
-selector *simple_selection (const char *title, int (*callback)(), guint ci,
-			    gpointer p) 
+selector *simple_selection (const char *title, int (*callback)(), 
+			    guint ci, gpointer p) 
 {
     GtkListStore *store;
     GtkTreeIter iter;
@@ -6674,9 +6666,6 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
     if (ci == OMIT || ci == ADD || ci == COEFFSUM ||
 	ci == ELLIPSE || ci == VAROMIT) {
         nleft = add_omit_list(p, sr);
-	g_signal_connect(G_OBJECT(sr->dlg), "destroy", 
-			 G_CALLBACK(remove_busy_signal), 
-			 p);
     } else {
 	int start = (ci == DEFINE_LIST || ci == DEFINE_MATRIX)? 0 : 1;
 
@@ -6793,6 +6782,32 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
 
     if (sr->ci == DEFINE_MATRIX) {
 	selector_set_blocking(sr, 1);
+    }
+
+    return sr;
+}
+
+static gboolean remove_busy_signal (GtkWidget *w, windata_t *vwin)
+{
+    if (vwin != NULL) {
+	unset_window_busy(vwin);
+    }
+    return FALSE;
+}
+
+selector *
+simple_selection_with_parent (const char *title, int (*callback)(), 
+			      guint ci, windata_t *vwin)
+{
+    selector *sr;
+    
+    sr = simple_selection(title, callback, ci, vwin);
+
+    if (sr != NULL) {
+	set_window_busy(vwin);
+	g_signal_connect(sr->dlg, "destroy", 
+			 G_CALLBACK(remove_busy_signal), 
+			 vwin);
     }
 
     return sr;

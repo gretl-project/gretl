@@ -27,8 +27,7 @@
 
 enum {
     GRETL_YES,
-    GRETL_NO,
-    HELP_BUTTON
+    GRETL_NO
 } buttons;
 
 #ifndef BUILDING_PLUGIN

@@ -425,10 +425,6 @@ void selector_callback (GtkAction *action, gpointer data)
 
     ci = selector_callback_code(s);
 
-    if (ci == ADD || ci == OMIT || ci == COEFFSUM || ci == ELLIPSE) {
-	set_window_busy(vwin);
-    }
-
     if (ci == COINT || ci == COINT2) {
 	selection_dialog(_("gretl: cointegration test"), do_coint, ci);
     } else if (ci == VAR || ci == VECM) {
@@ -466,15 +462,21 @@ void selector_callback (GtkAction *action, gpointer data)
 	}
 	selection_dialog(_("gretl: define graph"), selfunc, ci);
     } else if (ci == ADD || ci == OMIT) {
-	simple_selection(_("gretl: model tests"), do_add_omit, ci, vwin);
+	simple_selection_with_parent(_("gretl: model tests"), 
+				     do_add_omit, ci, vwin);
     } else if (ci == VAROMIT) {
-	simple_selection(_("gretl: model tests"), do_VAR_omit, ci, vwin);
+	simple_selection_with_parent(_("gretl: model tests"), 
+				     do_VAR_omit, ci, vwin);
     } else if (ci == COEFFSUM) {
-	simple_selection(_("gretl: model tests"), do_coeff_sum, ci, vwin);
+	simple_selection_with_parent(_("gretl: model tests"), 
+				     do_coeff_sum, ci, vwin);
     } else if (ci == ELLIPSE) {
-	simple_selection(_("gretl: model tests"), do_confidence_region, ci, vwin);
+	simple_selection_with_parent(_("gretl: model tests"), 
+				     do_confidence_region, ci, 
+				     vwin);
     } else if (ci == GR_PLOT) {
-	simple_selection(_("gretl: define graph"), do_graph_from_selector, ci, NULL);
+	simple_selection(_("gretl: define graph"), do_graph_from_selector, 
+			 ci, NULL);
     } else if (ci == TSPLOTS) {
 	simple_selection(_("gretl: define graph"), do_scatters, ci, vwin);
     } else if (ci == SPEARMAN) {
