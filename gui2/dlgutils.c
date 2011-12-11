@@ -28,22 +28,6 @@
 #include "system.h"
 #include "gretl_bfgs.h"
 
-void set_window_busy (windata_t *vwin)
-{
-    vwin->flags |= VWIN_BUSY;
-    if (vwin->mbar != NULL) {
-	gtk_widget_set_sensitive(vwin->mbar, FALSE);
-    }
-}
-
-void unset_window_busy (windata_t *vwin)
-{
-    vwin->flags &= ~VWIN_BUSY;
-    if (vwin->mbar != NULL) {
-	gtk_widget_set_sensitive(vwin->mbar, TRUE);
-    }
-}
-
 dialog_opts *dialog_opts_new (int n, int type, 
 			      gretlopt *optp,
 			      const gretlopt *vals,
@@ -454,23 +438,10 @@ static void destroy_edit_dialog (GtkWidget *w, gpointer data)
     if (active_edit_text) active_edit_text = NULL;
 }
 
-static gboolean cancel_on_delete (GtkWidget *w, GdkEvent *event, 
-				  int *cancel)
-{
-    *cancel = -1;
-
-    return FALSE;
-}
-
 static gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key, 
-				  gpointer data)
+				  gpointer p)
 {
     if (key->keyval == GDK_Escape) {
-	if (data != NULL) {
-	    int *cancel = (int *) data;
-	    
-	    *cancel = -1;
-	}
         gtk_widget_destroy(w);
 	return TRUE;
     } else {
@@ -478,7 +449,7 @@ static gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key,
     }
 }
 
-static dialog_t *edit_dialog_new (gpointer p, int ci, 
+static dialog_t *edit_dialog_new (gpointer data, int ci, 
 				  int hlpcode,
 				  const char *title,
 				  int *canceled)
@@ -489,7 +460,7 @@ static dialog_t *edit_dialog_new (gpointer p, int ci,
 	return NULL;
     }
 
-    d->data = p;
+    d->data = data;
     d->ci = ci;
     d->opt = OPT_NONE;
     d->popup = NULL;
@@ -501,9 +472,6 @@ static dialog_t *edit_dialog_new (gpointer p, int ci,
 
     if (canceled != NULL) {
 	d->blocking = 1;
-	g_signal_connect(G_OBJECT(d->dialog), "delete-event",
-			 G_CALLBACK(cancel_on_delete), 
-			 canceled);
     }
 
     if (!strncmp(title, "gretl", 5)) {
@@ -521,9 +489,13 @@ static dialog_t *edit_dialog_new (gpointer p, int ci,
     g_signal_connect(G_OBJECT(d->dialog), "destroy", 
 		     G_CALLBACK(destroy_edit_dialog), d);
     g_signal_connect(G_OBJECT(d->dialog), "key-press-event", 
-		     G_CALLBACK(esc_kills_window), canceled);
+		     G_CALLBACK(esc_kills_window), NULL);
     g_signal_connect(G_OBJECT(d->dialog), "show", 
 		     G_CALLBACK(dialog_set_destruction), mdata->main);
+    if (d->blocking) {
+	g_signal_connect(G_OBJECT(d->dialog), "show", 
+			 G_CALLBACK(gtk_main), NULL);
+    }
 
     return d;
 }
@@ -1232,8 +1204,10 @@ blocking_edit_dialog (const char *title, const char *info, const char *deflt,
     int hlpcode, modal = 0;
     int clear = 0;
 
-    /* this will be undone by the OK button */
-    *canceled = 1;
+    if (canceled != NULL) {
+	/* this will be undone by the OK button */
+	*canceled = 1;
+    }
 
     if (open_edit_dialog != NULL && ci != MINIBUF) {
 	gtk_window_present(GTK_WINDOW(open_edit_dialog));
@@ -1364,7 +1338,11 @@ blocking_edit_dialog (const char *title, const char *info, const char *deflt,
     cancel_delete_button(d->bbox, d->dialog);
 
     /* "OK" button */
-    w = ok_validate_button(d->bbox, canceled, NULL);
+    if (canceled != NULL) {
+	w = ok_validate_button(d->bbox, canceled, NULL);
+    } else {
+	w = ok_button(d->bbox);
+    }
     if (okfunc != NULL) {
 	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(okfunc), d);
@@ -1393,11 +1371,6 @@ blocking_edit_dialog (const char *title, const char *info, const char *deflt,
 	g_signal_connect(G_OBJECT(d->dialog), "show", 
 			 G_CALLBACK(gretl_set_window_modal), NULL);
     }    
-
-    if (d->blocking) {
-	g_signal_connect(G_OBJECT(d->dialog), "show", 
-			 G_CALLBACK(gtk_main), NULL);
-    }
 
     gtk_widget_show_all(d->dialog); 
 }
@@ -1585,7 +1558,9 @@ void gretl_emulated_dialog_add_structure (GtkWidget *dlg,
     gtk_container_set_border_width(GTK_CONTAINER(*pvbox), 5);
     gtk_box_set_spacing(GTK_BOX(*pvbox), 5);
 
+#if 0
     vbox_add_hsep(base);
+#endif
 
     *pbbox = gtk_hbutton_box_new();
     gtk_button_box_set_layout(GTK_BUTTON_BOX(*pbbox), 

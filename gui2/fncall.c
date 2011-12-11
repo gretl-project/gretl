@@ -666,20 +666,20 @@ int do_make_list (selector *sr)
     return err;
 } 
 
-static void launch_list_maker (GtkWidget *w, GtkWidget *entry)
+static void launch_list_maker (GtkWidget *button, GtkWidget *entry)
 {
-    selector *sr;
-    GtkWidget *dlg;
+    call_info *cinfo;
 
-    sr = simple_selection(_("Define list"), do_make_list, DEFINE_LIST, 
-			  entry);
-    dlg = selector_get_window(sr);
-    gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);
+    cinfo = g_object_get_data(G_OBJECT(button), "cinfo");
+    simple_selection_with_data(DEFINE_LIST, _("Define list"), 
+			       do_make_list, cinfo->dlg, 
+			       entry);
 }
 
 void gui_define_list (void)
 {
-    launch_list_maker(NULL, NULL);
+    simple_selection_with_data(DEFINE_LIST, _("Define list"), 
+			       do_make_list, NULL, NULL);
 }
 
 static void launch_matrix_maker (GtkWidget *button, call_info *cinfo)
@@ -1288,6 +1288,7 @@ static void function_call_dialog (call_info *cinfo)
 	    button = add_object_button(ptype, sel);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    widget_set_int(entry, "argnum", i);
+	    g_object_set_data(G_OBJECT(button), "cinfo", cinfo);
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_list_maker),
 			     entry);

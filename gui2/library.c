@@ -841,20 +841,26 @@ void menu_op_action (GtkAction *action, gpointer p)
     int ci = menu_op_ci(action);
 
     if (ci == VAR_SUMMARY || ci == NORMTEST) {
-	/* single-variable action */
+	/* a single-variable action */
 	do_menu_op(ci, NULL, OPT_NONE);
-    } else if (ci == SUMMARY || ci == MAHAL) {
-	char *buf = main_window_selection_as_string();
-
-	if (buf != NULL) {
-	    do_menu_op(ci, buf, OPT_NONE);
-	    free(buf);
-	} 
     } else {
-	gchar *title = gretl_window_title(gretl_command_word(ci));
+	const char *title = NULL;
 
-	simple_selection(title, menu_op_wrapper, ci, NULL);
-	g_free(title);
+	if (ci == PCA) {
+	    title = N_("Principal Components Analysis");
+	} else if (ci == MAHAL) {
+	    title = N_("Mahalanobis distances");
+	} else if (ci == SUMMARY) {
+	    title = N_("Descriptive statistics");
+	} else if (ci == CORR) {
+	    title = N_("Correlations");
+	} else if (ci == QQPLOT) {
+	    title = N_("Q-Q plot");
+	} else if (ci == XTAB) {
+	    title = N_("cross tabulation");
+	}
+
+	simple_selection(ci, _(title), menu_op_wrapper, NULL);
     } 
 }
 

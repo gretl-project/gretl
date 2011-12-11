@@ -426,12 +426,12 @@ void selector_callback (GtkAction *action, gpointer data)
     ci = selector_callback_code(s);
 
     if (ci == COINT || ci == COINT2) {
-	selection_dialog(_("gretl: cointegration test"), do_coint, ci);
+	selection_dialog(ci, _("gretl: cointegration test"), do_coint);
     } else if (ci == VAR || ci == VECM) {
-	selection_dialog((ci == VAR)? _("gretl: VAR") : _("gretl: VECM"),
-			 do_vector_model, ci);
+	selection_dialog(ci, (ci == VAR)? _("gretl: VAR") : _("gretl: VECM"),
+			 do_vector_model);
     } else if (ci == VLAGSEL) {
-	selection_dialog(_("gretl: VAR lag selection"), do_vector_model, ci);
+	selection_dialog(ci, _("gretl: VAR lag selection"), do_vector_model);
     } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY ||
 	       ci == SCATTERS || ci == GR_3D || ci == GR_XYZ ||
 	       ci == GR_FBOX) {
@@ -460,37 +460,36 @@ void selector_callback (GtkAction *action, gpointer data)
 	default:
 	    return;
 	}
-	selection_dialog(_("gretl: define graph"), selfunc, ci);
+	selection_dialog(ci, _("gretl: define graph"), selfunc);
     } else if (ci == ADD || ci == OMIT) {
-	simple_selection_with_parent(_("gretl: model tests"), 
-				     do_add_omit, ci, vwin);
+	simple_selection_for_viewer(ci, _("gretl: model tests"), 
+				    do_add_omit, vwin);
     } else if (ci == VAROMIT) {
-	simple_selection_with_parent(_("gretl: model tests"), 
-				     do_VAR_omit, ci, vwin);
+	simple_selection_for_viewer(ci, _("gretl: model tests"), 
+				    do_VAR_omit, vwin);
     } else if (ci == COEFFSUM) {
-	simple_selection_with_parent(_("gretl: model tests"), 
-				     do_coeff_sum, ci, vwin);
+	simple_selection_for_viewer(ci, _("gretl: model tests"), 
+				    do_coeff_sum, vwin);
     } else if (ci == ELLIPSE) {
-	simple_selection_with_parent(_("gretl: model tests"), 
-				     do_confidence_region, ci, 
-				     vwin);
+	simple_selection_for_viewer(ci, _("gretl: model tests"), 
+				    do_confidence_region, vwin);
     } else if (ci == GR_PLOT) {
-	simple_selection(_("gretl: define graph"), do_graph_from_selector, 
-			 ci, NULL);
+	simple_selection(ci, _("gretl: define graph"), do_graph_from_selector, 
+			 NULL);
     } else if (ci == TSPLOTS) {
-	simple_selection(_("gretl: define graph"), do_scatters, ci, vwin);
+	simple_selection(ci, _("gretl: define graph"), do_scatters, NULL);
     } else if (ci == SPEARMAN) {
 	char title[64];
 	
 	strcpy(title, "gretl: ");
 	strcat(title, _("rank correlation"));
-	simple_selection(title, do_rankcorr, ci, vwin);
+	simple_selection(ci, title, do_rankcorr, NULL);
     } else if (ci == LOESS || ci == NADARWAT) {
 	char title[64];
 	
 	strcpy(title, "gretl: ");
 	strcat(title, (ci == LOESS)? _("Loess") : _("Nadaraya-Watson"));
-	selection_dialog(title, do_nonparam_model, ci);
+	selection_dialog(ci, title, do_nonparam_model);
     } else {
 	errbox("selector_callback: code was not recognized");
     }
@@ -641,8 +640,8 @@ void menu_boxplot_callback (int varnum)
 	do_boxplot_var(varnum, OPT_O);
     } else if (ret == 2) {
 	selector_set_varnum(varnum);
-	selection_dialog(_("gretl: define graph"), 
-			 do_factorized_boxplot, GR_FBOX);
+	selection_dialog(GR_FBOX, _("gretl: define graph"), 
+			 do_factorized_boxplot);
     }
 }
 
@@ -748,7 +747,7 @@ void xcorrgm_callback (void)
 
 	strcpy(title, "gretl: ");
 	strcat(title, _("cross-correlogram"));
-	simple_selection(title, do_xcorrgm, XCORRGM, NULL);
+	simple_selection(XCORRGM, title, do_xcorrgm, NULL);
     }
 }
 

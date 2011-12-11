@@ -1084,7 +1084,7 @@ void model_add_as_icon (GtkAction *action, gpointer p)
 
     if (!err) {
 	mark_session_changed();
-	if (close_on_add(action) && !window_is_busy(vwin)) {
+	if (close_on_add(action)) {
 	    gtk_widget_destroy(vwin->main);
 	}
     } 	
@@ -1121,7 +1121,7 @@ void bundle_add_as_icon (GtkAction *action, gpointer p)
 		view_session();
 	    }
 	    mark_session_changed();
-	    if (close_on_add(action) && !window_is_busy(vwin)) {
+	    if (close_on_add(action)) {
 		gtk_widget_destroy(vwin->main);
 		flipit = 0;
 	    }

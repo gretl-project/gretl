@@ -3510,8 +3510,9 @@ static void real_gui_new_matrix (gretl_matrix *m, const char *name)
 
     if (spec.uselist) {
 	/* matrix from listed vars */
-	simple_selection(_("Define matrix"), gui_matrix_from_list, 
-			 DEFINE_MATRIX, &spec);
+	simple_selection_with_data(DEFINE_MATRIX, _("Define matrix"), 
+				   gui_matrix_from_list, 
+				   NULL, &spec);
     } else if (spec.formula != NULL) {
 	/* matrix from genr-style formula */
 	matrix_from_formula(&spec);

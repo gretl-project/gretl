@@ -43,11 +43,10 @@
 
 enum windata_flags {
     VWIN_HELP_ACTIVE     = 1 << 0,
-    VWIN_BUSY            = 1 << 1,
-    VWIN_DELETE_FNAME    = 1 << 2,
-    VWIN_STICKY          = 1 << 3,
-    VWIN_CONTENT_CHANGED = 1 << 4,
-    VWIN_SESSION_GRAPH   = 1 << 5
+    VWIN_DELETE_FNAME    = 1 << 1,
+    VWIN_STICKY          = 1 << 2,
+    VWIN_CONTENT_CHANGED = 1 << 3,
+    VWIN_SESSION_GRAPH   = 1 << 4
 };
 
 typedef struct _windata_t windata_t;
@@ -94,8 +93,6 @@ struct GretlToolItem_ {
     GCallback func;
     int flag;
 };
-
-#define window_is_busy(w)    (w->flags & VWIN_BUSY)
 
 #define window_help_is_active(w)    (w->flags & VWIN_HELP_ACTIVE)
 #define set_window_help_active(w)   (w->flags |= VWIN_HELP_ACTIVE)

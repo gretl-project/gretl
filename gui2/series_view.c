@@ -576,23 +576,24 @@ series_view *multi_series_view_new (const int *list)
 }
 
 struct view_toggler {
-    char *view;
     GtkWidget *spin;
     GtkWidget *combo;
+    char view;
+    int digits;
+    char format;
+    windata_t *target_vwin;
 };
 
-/* toggle between standard and custom views */
+/* toggle for standard versus custom view */
 
 static void series_view_toggle_view (GtkWidget *w, struct view_toggler *vt)
 {
-    gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "view"));
+    gboolean std = button_is_active(w);
 
-    if (button_is_active(w)) {
-        *vt->view = i;
-	gtk_widget_set_sensitive(vt->spin, i == VIEW_CUSTOM);
-	if (vt->combo != NULL) {
-	    gtk_widget_set_sensitive(vt->combo, i == VIEW_CUSTOM);
-	}
+    vt->view = std ? VIEW_STANDARD : VIEW_CUSTOM;
+    gtk_widget_set_sensitive(vt->spin, !std);
+    if (vt->combo != NULL) {
+	gtk_widget_set_sensitive(vt->combo, !std);
     }
 }
 
@@ -608,14 +609,18 @@ static void series_view_set_fmt (GtkComboBox *cb, char *format)
     *format = (i == 0)? 'g' : 'f';
 }
 
-static void sv_reformat_callback (GtkButton *b, windata_t *vwin)
+static void sv_reformat_callback (GtkButton *b, struct view_toggler *vt)
 {
-    series_view *sview = (series_view *) vwin->data;
+    series_view *sview = (series_view *) vt->target_vwin->data;
+
+    sview->digits = vt->digits;
+    sview->format = vt->format;
+    sview->view = vt->view;
 
     if (sview->list != NULL) {
-	multi_series_view_print(vwin);
+	multi_series_view_print(vt->target_vwin);
     } else {
-	single_series_view_print(vwin);
+	single_series_view_print(vt->target_vwin);
     }
 }
 
@@ -635,7 +640,11 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
     std = (sview->view == VIEW_STANDARD);
-    vt.view = &sview->view;
+
+    vt.view = sview->view;
+    vt.digits = sview->digits;
+    vt.format = sview->format;
+    vt.target_vwin = vwin;
 
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Select data format"));
@@ -645,7 +654,6 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     /* standard format radio option */
     hbox = gtk_hbox_new(FALSE, 5);
     b1 = gtk_radio_button_new_with_label(NULL, _("Standard format"));
-    g_object_set_data(G_OBJECT(b1), "view", GINT_TO_POINTER(VIEW_STANDARD));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), std);
     gtk_box_pack_start(GTK_BOX(hbox), b1, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
@@ -654,7 +662,6 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     hbox = gtk_hbox_new(FALSE, 5);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Show"));
-    g_object_set_data(G_OBJECT(b2), "view", GINT_TO_POINTER(VIEW_CUSTOM));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), !std);
     gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 5);
 
@@ -662,7 +669,7 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     vt.spin = gtk_spin_button_new_with_range(1, 15, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(vt.spin), sview->digits);
     g_signal_connect(G_OBJECT(vt.spin), "value-changed",
-		     G_CALLBACK(series_view_set_digits), &sview->digits);
+		     G_CALLBACK(series_view_set_digits), &vt.digits);
     gtk_widget_set_sensitive(vt.spin, !std);
     gtk_box_pack_start(GTK_BOX(hbox), vt.spin, FALSE, FALSE, 0);
 
@@ -676,14 +683,12 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
 	gtk_combo_box_set_active(GTK_COMBO_BOX(vt.combo), 1);
     }
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(vt.combo)), "changed",
-		     G_CALLBACK(series_view_set_fmt), &sview->format);
+		     G_CALLBACK(series_view_set_fmt), &vt.format);
     gtk_widget_set_sensitive(vt.combo, !std);
     gtk_box_pack_start(GTK_BOX(hbox), vt.combo, FALSE, FALSE, 5);
 
-    /* connect toggle signals */
+    /* connect toggle signal */
     g_signal_connect(G_OBJECT(b1), "toggled",
-                     G_CALLBACK(series_view_toggle_view), &vt);
-    g_signal_connect(G_OBJECT(b2), "toggled",
                      G_CALLBACK(series_view_toggle_view), &vt);
 
     /* pack the custom line */
@@ -697,7 +702,7 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     /* OK button */
     tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(sv_reformat_callback), vwin);
+		     G_CALLBACK(sv_reformat_callback), &vt);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(delete_widget), dlg);
     gtk_widget_grab_default(tmp);

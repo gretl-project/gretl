@@ -79,10 +79,6 @@ void raise_and_focus_dialog (GtkEditable *entry,
 
 typedef struct combo_opts_ combo_opts;
 
-void set_window_busy (windata_t *vwin);
-
-void unset_window_busy (windata_t *vwin);
-
 GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 			     unsigned char flags);
 

@@ -30,15 +30,18 @@ struct iterinfo_t {
 
 void clear_selector (void);
 
-selector *selection_dialog (const char *title, int (*callback)(), 
-			    guint cmdcode);
+selector *selection_dialog (int ci, const char *title, int (*callback)());
 
-selector *simple_selection (const char *title, int (*callback)(), 
-			    guint ci, gpointer p);
+selector *simple_selection (int ci, const char *title, int (*callback)(), 
+			    GtkWidget *parent);
 
 selector *
-simple_selection_with_parent (const char *title, int (*callback)(), 
-			      guint ci, windata_t *vwin);
+simple_selection_for_viewer (int ci, const char *title, int (*callback)(), 
+			     windata_t *vwin);
+
+selector *
+simple_selection_with_data (int ci, const char *title, int (*callback)(), 
+			    GtkWidget *parent, gpointer data);
 
 void modelspec_dialog (int ci);
 

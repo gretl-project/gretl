@@ -414,7 +414,7 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
 	gchar *title;
 
 	title = g_strdup_printf("gretl: %s", gretl_command_word(ci));
-	simple_selection(title, menu_op_wrapper, ci, NULL);
+	simple_selection(ci, title, menu_op_wrapper, NULL);
 	g_free(title);
     } else if (ci != 0) {
 	char *buf = main_window_selection_as_string();

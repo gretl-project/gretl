@@ -471,7 +471,7 @@ void selector_set_varnum (int v)
 
 void modelspec_dialog (int ci)
 {
-    selection_dialog(_("gretl: specify model"), do_model, ci);
+    selection_dialog(ci, _("gretl: specify model"), do_model);
 }
 
 static int varnum_from_keystring (MODEL *pmod, const char *key)
@@ -802,8 +802,8 @@ void selector_from_model (void *ptr, int ci)
 	    default_order += 1;
 	}
 
-	selection_dialog((ci == VAR)? _("gretl: VAR") : _("gretl: VECM"),
-			 do_vector_model, ci);
+	selection_dialog(ci, (ci == VAR)? _("gretl: VAR") : _("gretl: VECM"),
+			 do_vector_model);
     } else if (ci == SYSTEM) {
 	revise_system_model(ptr);
     }
@@ -4403,8 +4403,34 @@ enum {
     SELECTOR_FULL
 };
 
+static GtkWidget *selector_dialog_new (selector *sr)
+{
+    GtkWidget *d = gtk_dialog_new();
+    GtkWidget *base, *ca, *aa;
+
+    base = gtk_dialog_get_content_area(GTK_DIALOG(d));
+    gtk_box_set_homogeneous(GTK_BOX(base), FALSE);
+    gtk_box_set_spacing(GTK_BOX(base), 5);
+
+    ca = gtk_vbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(base), ca, TRUE, TRUE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(ca), 5);
+    gtk_box_set_spacing(GTK_BOX(ca), 5);
+    
+    aa = gtk_dialog_get_action_area(GTK_DIALOG(d));
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(aa), GTK_BUTTONBOX_END);
+    gtk_box_set_spacing(GTK_BOX(aa), 10);
+    gtk_container_set_border_width(GTK_CONTAINER(aa), 5);
+
+    sr->vbox = ca;
+    sr->action_area = aa;
+
+    return d;
+}
+
 static void selector_init (selector *sr, guint ci, const char *title,
-			   gpointer p, int (*callback)(), int selcode)
+			   int (*callback)(), GtkWidget *parent, 
+			   gpointer data, int selcode)
 {
     double x;
     int dlgx = -1, dlgy = 340;
@@ -4413,7 +4439,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     sr->blocking = 0;
     sr->ci = ci;
     sr->opts = (ci == PANEL_WLS)? OPT_W : OPT_NONE;
-    sr->data = p;
+    sr->data = data;
     
     if (MODEL_CODE(ci)) {
 	if (dataset->v > 9) {
@@ -4513,18 +4539,24 @@ static void selector_init (selector *sr, guint ci, const char *title,
     }
 
     if (selcode == SELECTOR_SIMPLE) {
-	sr->dlg = gretl_dialog_new(title, NULL, GRETL_DLG_RESIZE);
-	sr->vbox = gtk_dialog_get_content_area(GTK_DIALOG(sr->dlg));
-	sr->action_area = 
-	    gtk_dialog_get_action_area(GTK_DIALOG(sr->dlg));
+	sr->dlg = selector_dialog_new(sr);
+	if (parent != NULL) {
+	    gtk_window_set_transient_for(GTK_WINDOW(sr->dlg), 
+					 GTK_WINDOW(parent));
+	    gtk_window_set_destroy_with_parent(GTK_WINDOW(sr->dlg), 
+					       TRUE);
+	} else {
+	    gtk_window_set_transient_for(GTK_WINDOW(sr->dlg), 
+					 GTK_WINDOW(mdata->main));
+	}
     } else {
 	sr->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
 	gretl_emulated_dialog_add_structure(sr->dlg, 
 					    &sr->vbox,
 					    &sr->action_area);
     }
 
+    gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
     open_selector = sr;
 
     x = (double) dlgy * gui_scale;
@@ -6139,7 +6171,7 @@ static void selector_set_focus (selector *sr)
     }
 }
 
-selector *selection_dialog (const char *title, int (*callback)(), guint ci)
+selector *selection_dialog (int ci, const char *title, int (*callback)())
 {
     GtkListStore *store;
     GtkTreeIter iter;
@@ -6164,7 +6196,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
 	return NULL;
     }
 
-    selector_init(sr, ci, title, NULL, callback, SELECTOR_FULL);
+    selector_init(sr, ci, title, callback, NULL, NULL, SELECTOR_FULL);
 
     selection_dialog_add_top_label(sr);
 
@@ -6303,6 +6335,7 @@ static char *get_topstr (int cmdnum)
 	return N_("Select variables to display");
     case GR_PLOT: 
     case GR_BOX: 
+    case TSPLOTS:
 	return N_("Select variables to plot");
     case SAVE_DATA:
     case SAVE_DATA_AS:
@@ -6435,14 +6468,20 @@ static void functions_list (selector *sr)
 		      GINT_TO_POINTER(1));
 }
 
-static GtkWidget *simple_selection_top_label (int ci)
+static GtkWidget *
+simple_selection_top_label (int ci, const char *title)
 {
     GtkWidget *label = NULL;
-    const char *str = get_topstr(ci);
+    const char *s = get_topstr(ci);
 
-    if (str != NULL && *str != '\0') {
-	label = gtk_label_new(_(str));
-    } 
+    if (s != NULL && *s != '\0') {
+	label = gtk_label_new(_(s));
+    } else if (title != NULL) {
+	if (!strncmp(title, "gretl: ", 7)) {
+	    title += 7;
+	}
+	label = gtk_label_new(title);
+    }
 
     return label;
 }
@@ -6615,8 +6654,9 @@ static void maybe_prefill_RHS (selector *sr)
     free(list);
 }
 
-selector *simple_selection (const char *title, int (*callback)(), 
-			    guint ci, gpointer p) 
+selector *
+simple_selection_with_data (int ci, const char *title, int (*callback)(), 
+			    GtkWidget *parent, gpointer data) 
 {
     GtkListStore *store;
     GtkTreeIter iter;
@@ -6636,9 +6676,9 @@ selector *simple_selection (const char *title, int (*callback)(),
 	return NULL;
     }
 
-    selector_init(sr, ci, title, p, callback, SELECTOR_FULL);
+    selector_init(sr, ci, title, callback, parent, data, SELECTOR_SIMPLE);
 
-    tmp = simple_selection_top_label(ci);
+    tmp = simple_selection_top_label(ci, title);
     if (tmp != NULL) {
 	gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
     } 
@@ -6676,7 +6716,7 @@ selector *simple_selection (const char *title, int (*callback)(),
 
     if (ci == OMIT || ci == ADD || ci == COEFFSUM ||
 	ci == ELLIPSE || ci == VAROMIT) {
-        nleft = add_omit_list(p, sr);
+        nleft = add_omit_list(data, sr);
     } else {
 	int start = (ci == DEFINE_LIST || ci == DEFINE_MATRIX)? 0 : 1;
 
@@ -6798,28 +6838,36 @@ selector *simple_selection (const char *title, int (*callback)(),
     return sr;
 }
 
-static gboolean remove_busy_signal (GtkWidget *w, windata_t *vwin)
+selector *simple_selection (int ci, const char *title, int (*callback)(), 
+			    GtkWidget *parent)
 {
-    if (vwin != NULL) {
-	unset_window_busy(vwin);
+    return simple_selection_with_data(ci, title, callback, parent, NULL);
+}
+
+
+static void restore_vwin_menu (GtkWidget *w, windata_t *vwin)
+{
+    if (vwin != NULL && vwin->mbar != NULL) {
+	gtk_widget_set_sensitive(vwin->mbar, TRUE);
     }
-    return FALSE;
 }
 
 selector *
-simple_selection_with_parent (const char *title, int (*callback)(), 
-			      guint ci, windata_t *vwin)
+simple_selection_for_viewer (int ci, const char *title, int (*callback)(), 
+			     windata_t *vwin)
 {
     selector *sr;
     
-    sr = simple_selection(title, callback, ci, vwin);
+    sr = simple_selection_with_data(ci, title, callback, vwin->main,
+				    vwin);
 
-    if (sr != NULL) {
-	set_window_busy(vwin);
+    if (sr != NULL && vwin->mbar != NULL) {
+	gtk_widget_set_sensitive(vwin->mbar, FALSE);
 	g_signal_connect(sr->dlg, "destroy", 
-			 G_CALLBACK(remove_busy_signal), 
+			 G_CALLBACK(restore_vwin_menu), 
 			 vwin);
-    }
+	    
+    }	
 
     return sr;
 }
@@ -7013,11 +7061,10 @@ void data_export_selection_wrapper (int file_ci)
 
     set_selector_storelist(NULL);
 
-    sr = simple_selection((file_ci == COPY_CSV)? 
+    sr = simple_selection(file_ci, (file_ci == COPY_CSV)? 
 			  _("Copy data") : _("Export data"), 
 			  data_export_selection_callback, 
-			  file_ci, NULL);
-
+			  NULL);
     if (sr != NULL) {
 	selector_set_blocking(sr, 0);
     }
@@ -7034,10 +7081,8 @@ void functions_selection_wrapper (void)
     if (!err) {
 	selector *sr;
 
-	sr = selection_dialog(_("Save functions"), 
-			      functions_selected_callback, 
-			      SAVE_FUNCTIONS);
-
+	sr = selection_dialog(SAVE_FUNCTIONS, _("Save functions"), 
+			      functions_selected_callback);
 	if (sr != NULL) {
 	    selector_set_blocking(sr, 1);
 	}
@@ -7060,8 +7105,8 @@ void add_remove_functions_dialog (char **names1, int n1,
 	title = _("Edit package list");
     }
 
-    sr = selection_dialog(title, pkg_add_remove_callback, 
-			  EDIT_FUNCTIONS);
+    sr = selection_dialog(EDIT_FUNCTIONS, title, 
+			  pkg_add_remove_callback); 
 
     if (sr != NULL) {
 	GtkWidget *w;
@@ -8046,8 +8091,11 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
     /* show the user the lags dialog box */
     resp = lags_dialog(list, vlinfo, sr);
 
-    /* register any changes made by the user */
-    if (!canceled(resp)) {
+    if (canceled(resp)) {
+	y_x_lags_enabled = yxlags;
+	y_w_lags_enabled = ywlags;
+    } else {
+	/* register any changes made by the user */
 	for (j=0; j<nvl; j++) {
 	    int changed = set_lags_for_var(&vlinfo[j], yxlags, ywlags);
 

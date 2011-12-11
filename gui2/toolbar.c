@@ -583,11 +583,6 @@ static void delete_file_viewer (GtkWidget *widget, windata_t *vwin)
 {
     gint resp = 0;
 
-    if (window_is_busy(vwin)) {
-	maybe_raise_dialog();
-	return;
-    }
-
     if (vwin_is_editing(vwin) && vwin_content_changed(vwin)) {
 	resp = query_save_text(NULL, NULL, vwin);
     }
@@ -1023,9 +1018,8 @@ static void tbar_xy_graph (void)
 	} else if (mdata_selection_count() == 2) {
 	    plot_from_selection(GR_XY);
 	} else {
-	    selection_dialog(_("gretl: define graph"), 
-			     do_graph_from_selector,
-			     GR_XY);
+	    selection_dialog(GR_XY, _("gretl: define graph"), 
+			     do_graph_from_selector);
 	}
     } else {
 	warnbox(_("Please open a data file first"));
@@ -1035,7 +1029,7 @@ static void tbar_xy_graph (void)
 static void tbar_model (void)
 {
     if (data_status) {
-	selection_dialog(_("gretl: specify model"), do_model, OLS);
+	selection_dialog(OLS, _("gretl: specify model"), do_model);
     } else {
 	warnbox(_("Please open a data file first"));
     }

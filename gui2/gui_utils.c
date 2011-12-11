@@ -78,11 +78,7 @@ static void close_model (GtkAction *action, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
-    if (window_is_busy(vwin)) {
-	maybe_raise_dialog();
-    } else {
-	gtk_widget_destroy(vwin->main);
-    }
+    gtk_widget_destroy(vwin->main);
 }
 
 static int arma_by_x12a (const MODEL *pmod)
@@ -2166,20 +2162,6 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     return vwin;
 }
 
-static gint 
-check_delete_model_window (GtkWidget *w, GdkEvent *e, gpointer p)
-{
-    windata_t *vwin = (windata_t *) p;
-    gint ret = FALSE;
-
-    if (window_is_busy(vwin)) {
-	maybe_raise_dialog();
-	ret = TRUE;
-    }
-
-    return ret;
-}
-
 windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
 		       char *title) 
 {
@@ -2234,14 +2216,7 @@ windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
 		     G_CALLBACK(text_popup_handler), vwin);
 
-    /* don't allow deletion of model window when a model
-       test dialog is active */
-    g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
-		     G_CALLBACK(check_delete_model_window), 
-		     vwin);
-
     gtk_widget_show_all(vwin->main);
-
     cursor_to_top(vwin);
 
     return vwin;
