@@ -206,7 +206,7 @@ static void login_init_or_free (login_info *linfo, int freeit)
     } else {
 	linfo->login = (login == NULL)? NULL : g_strdup(login);
 	linfo->pass = (pass == NULL)? NULL : g_strdup(pass);
-	linfo->canceled = 0;
+	linfo->canceled = 1;
     }
 }
 
@@ -364,12 +364,6 @@ static void finfo_save_callback (GtkWidget *w, function_info *finfo)
 static void finfo_destroy (GtkWidget *w, function_info *finfo)
 {
     finfo_free(finfo);
-}
-
-static void login_cancel (GtkWidget *w, login_info *linfo)
-{
-    linfo->canceled = 1;
-    gtk_widget_destroy(linfo->dlg);
 }
 
 static gboolean update_active_func (GtkComboBox *menu, 
@@ -1246,7 +1240,7 @@ static void web_get_login (GtkWidget *w, gpointer p)
     browser_open("http://gretl.ecn.wfu.edu/apply/");
 }
 
-static void login_dialog (login_info *linfo)
+static void login_dialog (login_info *linfo, GtkWidget *parent)
 {
     GtkWidget *button, *label;
     GtkWidget *tbl, *vbox, *hbox;
@@ -1254,11 +1248,10 @@ static void login_dialog (login_info *linfo)
 
     login_init(linfo);
 
-    linfo->dlg = gretl_dialog_new(_("gretl: upload"), NULL, GRETL_DLG_BLOCK);
+    linfo->dlg = gretl_dialog_new(_("gretl: upload"), parent, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(linfo->dlg));
 
     hbox = label_hbox(vbox, _("Upload function package"));
-    gtk_widget_show(hbox);
 
     tbl = gtk_table_new(2, 2, FALSE);
     gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 5);
@@ -1271,7 +1264,6 @@ static void login_dialog (login_info *linfo)
 	gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, i, i+1,
 			 GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL,
 			 5, 5);
-	gtk_widget_show(label);
 
 	entry = gtk_entry_new();
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), 34);
@@ -1280,7 +1272,6 @@ static void login_dialog (login_info *linfo)
 	if (src != NULL) {
 	    gtk_entry_set_text(GTK_ENTRY(entry), src);
 	}
-	gtk_widget_show(entry); 
 
 	if (i == 0) {
 	    linfo->login_entry = entry;
@@ -1290,14 +1281,11 @@ static void login_dialog (login_info *linfo)
 	}
     }
 
-    gtk_widget_show(tbl);
-
     hbox = label_hbox(vbox, 
 		      _("If you don't have a login to the gretl server\n"
 			"please see http://gretl.ecn.wfu.edu/apply/.\n"
 			"The 'Website' button below should open this page\n"
 			"in your web browser."));
-    gtk_widget_show(hbox);
 
     /* control button area */
 
@@ -1306,15 +1294,13 @@ static void login_dialog (login_info *linfo)
     /* Cancel */
     button = cancel_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(login_cancel), linfo);
-    gtk_widget_show(button);
+		     G_CALLBACK(delete_widget), linfo->dlg);
 
     /* OK */
-    button = ok_button(hbox);
+    button = ok_validate_button(hbox, &linfo->canceled, NULL);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(login_finalize), linfo);
     gtk_widget_grab_default(button);
-    gtk_widget_show(button);
 
     /* Website */
     button = gtk_button_new_with_label("Website");
@@ -1324,9 +1310,8 @@ static void login_dialog (login_info *linfo)
 				       button, TRUE);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(web_get_login), NULL);
-    gtk_widget_show(button);
 
-    gtk_widget_show(linfo->dlg);
+    gtk_widget_show_all(linfo->dlg);
 }
 
 /* Check the package file against gretlfunc.dtd. We call
@@ -1403,7 +1388,7 @@ static int validate_package_file (const char *fname, int verbose)
     return err;
 }
 
-static void do_upload (const char *fname)
+static void do_pkg_upload (function_info *finfo, const char *fname)
 {
     gchar *buf = NULL;
     char *retbuf = NULL;
@@ -1420,7 +1405,7 @@ static void do_upload (const char *fname)
 	return;
     }
 
-    login_dialog(&linfo);
+    login_dialog(&linfo, finfo->dlg);
 
     if (linfo.canceled) {
 	linfo_free(&linfo);
@@ -1602,7 +1587,7 @@ int save_function_package (const char *fname, gpointer p)
 	gtk_widget_set_sensitive(finfo->validate, TRUE);
 	maybe_update_func_files_window(EDIT_FN_PKG);
 	if (finfo->upload) {
-	    do_upload(fname);
+	    do_pkg_upload(finfo, fname);
 	}
     }
 
