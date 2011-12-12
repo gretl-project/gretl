@@ -826,7 +826,7 @@ static void name_new_var (GtkWidget *widget, dialog_t *dlg)
     *varname = 0;
     strncat(varname, buf, VNAMELEN - 1);
 
-    close_dialog(dlg);
+    edit_dialog_close(dlg);
 
     if (real_add_new_series(sheet, varname)) {
 	nomem();
@@ -845,26 +845,26 @@ static void name_new_obs (GtkWidget *widget, dialog_t *dlg)
     *obsmarker = 0;
     strncat(obsmarker, buf, OBSLEN - 1);
 
-    close_dialog(dlg);
+    edit_dialog_close(dlg);
     real_add_new_obs(sheet, obsmarker, 1);
 }
 
 static void name_var_dialog (Spreadsheet *sheet) 
 {
-    edit_dialog(_("gretl: name variable"), 
+    edit_dialog(0, _("gretl: name variable"), 
 		_("Enter name for new variable\n"
-		  "(max. 15 characters)"),
-		NULL, name_new_var, sheet, 
-		0, VARCLICK_NONE);
+		  "(max. 15 characters)"), NULL,
+		name_new_var, sheet, 
+		VARCLICK_NONE, sheet->win);
 }
 
 static void new_case_dialog (Spreadsheet *sheet) 
 {
-    edit_dialog(_("gretl: case marker"), 
+    edit_dialog(0, _("gretl: case marker"), 
 		_("Enter case marker for new obs\n"
-		  "(max. 8 characters)"),
-		NULL, name_new_obs, sheet, 
-		0, VARCLICK_NONE);
+		  "(max. 8 characters)"), NULL,
+		name_new_obs, sheet, 
+		VARCLICK_NONE, sheet->win);
 }
 
 static void name_matrix_col (GtkWidget *widget, dialog_t *dlg) 
@@ -882,7 +882,7 @@ static void name_matrix_col (GtkWidget *widget, dialog_t *dlg)
     strncat(tmp, buf, 12);
     double_underscores(colname, tmp);
 
-    close_dialog(dlg);
+    edit_dialog_close(dlg);
 
     old = gtk_tree_view_column_get_title(col);
 
@@ -895,14 +895,15 @@ static void name_matrix_col (GtkWidget *widget, dialog_t *dlg)
     }
 }
 
-static void name_column_dialog (GtkTreeViewColumn *col, gpointer p) 
+static void name_column_dialog (GtkTreeViewColumn *column, 
+				Spreadsheet *sheet) 
 {
-    edit_dialog(_("gretl: name column"), 
+    edit_dialog(0, _("gretl: name column"), 
 		_("Enter name for column\n"
 		  "(max. 12 characters)"),
-		gtk_tree_view_column_get_title(col),
-		name_matrix_col, col, 
-		0, VARCLICK_NONE);
+		gtk_tree_view_column_get_title(column),
+		name_matrix_col, column, 
+		VARCLICK_NONE, sheet->win);
 }
 
 static GtkListStore *make_sheet_liststore (Spreadsheet *sheet)
@@ -1003,16 +1004,18 @@ static int add_data_column (Spreadsheet *sheet)
 static void sheet_get_scalar (GtkWidget *w, dialog_t *dlg)
 {
     double x, *px = (double *) edit_dialog_get_data(dlg);
-    const gchar *buf;
+    const gchar *buf = edit_dialog_get_text(dlg);
     int err = 0;
 
-    buf = edit_dialog_get_text(dlg);
-    if (buf == NULL) return;
+    if (buf != NULL) {
+	x = gui_double_from_string(buf, &err);
+    }
 
-    x = gui_double_from_string(buf, &err);
-    if (!err) {
+    if (buf == NULL || err) {
+	edit_dialog_reset(dlg);
+    } else {
 	*px = x;
-	close_dialog(dlg);
+	edit_dialog_close(dlg);
     }
 }
 
@@ -1026,10 +1029,11 @@ static void matrix_edit_callback (GtkAction *action, gpointer data)
     if (!strcmp(s, "ScalarMult") || !strcmp(s, "ScalarDiv")) {
 	int cancel = 0;
 
-	blocking_edit_dialog(_("gretl: specify scalar"), 
+	blocking_edit_dialog(0, _("gretl: specify scalar"), 
 			     _("Enter a numerical value"),
 			     NULL, sheet_get_scalar, &x, 
-			     0, VARCLICK_NONE, &cancel);
+			     VARCLICK_NONE, sheet->win,
+			     &cancel);
 	if (cancel || na(x)) {
 	    return;
 	}
@@ -1432,13 +1436,12 @@ static void matrix_new_name (GtkWidget *w, dialog_t *dlg)
     const gchar *buf = edit_dialog_get_text(dlg);
 
     if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_MATRIX)) {
-	return;
+	edit_dialog_reset(dlg);
+    } else {
+	*newname = '\0';
+	strncat(newname, buf, VNAMELEN - 1);
+	edit_dialog_close(dlg);
     }
-
-    *newname = 0;
-    strncat(newname, buf, VNAMELEN - 1);
-
-    close_dialog(dlg);
 }
 
 static void matrix_save_as (GtkWidget *w, Spreadsheet *sheet)
@@ -1446,10 +1449,11 @@ static void matrix_save_as (GtkWidget *w, Spreadsheet *sheet)
     char newname[VNAMELEN];
     int cancel = 0;
 
-    blocking_edit_dialog(_("gretl: save matrix"), 
-			 _("Enter a name"),
-			 NULL, matrix_new_name, newname, 
-			 0, VARCLICK_NONE, &cancel);
+    blocking_edit_dialog(0, _("gretl: save matrix"), 
+			 _("Enter a name"), NULL,
+			 matrix_new_name, newname, 
+			 VARCLICK_NONE, sheet->win,
+			 &cancel);
     
     if (!cancel) {
 	gretl_matrix *m;
@@ -1585,7 +1589,7 @@ static int rejig_sheet_cols (Spreadsheet *sheet)
 	gtk_tree_view_column_set_clickable(col, TRUE);
 	g_object_set_data(G_OBJECT(col), "sheet", sheet);
 	g_signal_connect(G_OBJECT(col), "clicked",
-			 G_CALLBACK(name_column_dialog), col);
+			 G_CALLBACK(name_column_dialog), sheet);
     }
 
     return 0;
@@ -2354,7 +2358,7 @@ static int build_sheet_view (Spreadsheet *sheet)
 	    g_object_set_data(G_OBJECT(column), "sheet", sheet);
 	    gtk_tree_view_column_set_clickable(column, TRUE);
 	    g_signal_connect(G_OBJECT(column), "clicked",
-			     G_CALLBACK(name_column_dialog), column);
+			     G_CALLBACK(name_column_dialog), sheet);
 	}
 	sheet->colnames = NULL;
     } else if (editing_scalars(sheet)) {

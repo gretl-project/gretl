@@ -844,23 +844,26 @@ void menu_op_action (GtkAction *action, gpointer p)
 	/* a single-variable action */
 	do_menu_op(ci, NULL, OPT_NONE);
     } else {
-	const char *title = NULL;
+	const char *str = NULL;
+	gchar *title;
 
 	if (ci == PCA) {
-	    title = N_("Principal Components Analysis");
+	    str = N_("Principal Components Analysis");
 	} else if (ci == MAHAL) {
-	    title = N_("Mahalanobis distances");
+	    str = N_("Mahalanobis distances");
 	} else if (ci == SUMMARY) {
-	    title = N_("Descriptive statistics");
+	    str = N_("Descriptive statistics");
 	} else if (ci == CORR) {
-	    title = N_("Correlations");
+	    str = N_("Correlations");
 	} else if (ci == QQPLOT) {
-	    title = N_("Q-Q plot");
+	    str = N_("Q-Q plot");
 	} else if (ci == XTAB) {
-	    title = N_("cross tabulation");
+	    str = N_("cross tabulation");
 	}
 
-	simple_selection(ci, _(title), menu_op_wrapper, NULL);
+	title = gretl_window_title(_(str));
+	simple_selection(ci, title, menu_op_wrapper, NULL);
+	g_free(title);
     } 
 }
 
@@ -2997,7 +3000,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
     }
 
     if (pmod == NULL && vecm == NULL && sys == NULL) {
-	close_dialog(dlg);
+	edit_dialog_close(dlg);
 	return;
     }
 
@@ -3048,7 +3051,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 	return;
     }
 
-    close_dialog(dlg);
+    edit_dialog_close(dlg);
 
     if (opt & OPT_B) {
 	gretlopt bootopt = OPT_NONE;
@@ -3223,7 +3226,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	return;
     }
 
-    close_dialog(dlg);
+    edit_dialog_close(dlg);
 
     if (bufopen(&prn)) {
 	g_free(buf);
@@ -3266,7 +3269,7 @@ void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
     opt = edit_dialog_get_opt(dlg);
     my_sys->method = get_sys_method_from_opt(&opt);
 
-    close_dialog(dlg);
+    edit_dialog_close(dlg);
 
     if (bufopen(&prn)) {
 	return; 
@@ -3335,7 +3338,7 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 	gchar *txt;
 
 	if (dlg != NULL) {
-	    close_dialog(dlg);
+	    edit_dialog_close(dlg);
 	}
 
 	if (pmod != NULL) {
@@ -3526,7 +3529,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 		add_command_to_stack(lines[i]);
 	    }
 	}
-	close_dialog(dlg);
+	edit_dialog_close(dlg);
 	attach_subsample_to_model(pmod, dataset);
 	view_model(prn, pmod, 78, 420, NULL);
     }
@@ -4259,7 +4262,7 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
     lib_command_sprintf("%s", buf);
 
     if (dlg != NULL) {
-	close_dialog(dlg);
+	edit_dialog_close(dlg);
     }
 
     if (MODEL_COMMAND(ci)) {
@@ -4454,7 +4457,7 @@ void do_global_setmiss (GtkWidget *w, dialog_t *dlg)
     missval = atof(buf);
     count = real_do_setmiss(missval, 0);
 
-    close_dialog(dlg);
+    edit_dialog_close(dlg);
 
     if (count) {
 	infobox(_("Set %d values to \"missing\""), count);
@@ -4482,7 +4485,7 @@ void do_variable_setmiss (GtkWidget *w, dialog_t *dlg)
     missval = atof(buf);
     count = real_do_setmiss(missval, v);
 
-    close_dialog(dlg);
+    edit_dialog_close(dlg);
 
     if (count) {
 	infobox(_("Set %d observations to \"missing\""), count);
@@ -5762,14 +5765,14 @@ static void set_scalar_name (GtkWidget *widget, dialog_t *dlg)
     const gchar *s = edit_dialog_get_text(dlg);
 
     if (s == NULL || gui_validate_varname(s, GRETL_TYPE_DOUBLE)) {
-	return;
+	edit_dialog_reset(dlg);
+    } else {
+	strcpy(vname, s);
+	edit_dialog_close(dlg);
     }
-
-    strcpy(vname, s);
-    close_dialog(dlg);
 }
 
-void add_model_stat (MODEL *pmod, int which)
+void add_model_stat (MODEL *pmod, int which, GtkWidget *parent)
 {
     char vname[VNAMELEN];
     double val = NADBL;
@@ -5836,9 +5839,9 @@ void add_model_stat (MODEL *pmod, int which)
 			      "Name (max. 15 characters):"),
 			    pmod->ID, _(descrip), val);
 
-    blocking_edit_dialog(_("add scalar"), blurb, vname, 
+    blocking_edit_dialog(0, _("add scalar"), blurb, vname, 
 			 set_scalar_name, vname, 
-			 0, VARCLICK_NONE, &cancel);
+			 VARCLICK_NONE, parent, &cancel);
 
     g_free(blurb);
 
@@ -6504,7 +6507,7 @@ void do_box_graph (GtkWidget *w, dialog_t *dlg)
     gui_graph_handler(err);
     
     if (!err) {
-	close_dialog(dlg);
+	edit_dialog_close(dlg);
     }
 }
 

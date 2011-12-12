@@ -718,20 +718,20 @@ static void launch_series_maker (GtkWidget *button, call_info *cinfo)
 {
     GtkWidget *combo = g_object_get_data(G_OBJECT(button), "combo");
 
-    edit_dialog(_("add series"), 
-		_("Enter name=formula for new series"),
-		NULL, do_fncall_genr, combo, 
-		GENR, VARCLICK_INSERT_NAME);  
+    edit_dialog(GENR, _("add series"), 
+		_("Enter name=formula for new series"), NULL,
+		do_fncall_genr, combo, 
+		VARCLICK_INSERT_NAME, cinfo->dlg);  
 }
 
 static void launch_scalar_maker (GtkWidget *button, call_info *cinfo)
 {
     GtkWidget *combo = g_object_get_data(G_OBJECT(button), "combo");
 
-    edit_dialog(_("add scalar"), 
-		_("Enter name=formula for new scalar"),
-		NULL, do_fncall_genr, combo, 
-		GENR, VARCLICK_INSERT_NAME);  
+    edit_dialog(GENR, _("add scalar"), 
+		_("Enter name=formula for new scalar"), NULL,
+		do_fncall_genr, combo, 
+		VARCLICK_INSERT_NAME, cinfo->dlg);  
 }
 
 static GtkWidget *bool_arg_selector (call_info *cinfo, int i)

@@ -33,9 +33,9 @@ void gretl_callback (GtkAction *action, gpointer data);
 
 void model_genr_callback (GtkAction *action, gpointer data);
 
-void revise_nl_model (MODEL *pmod);
+void revise_nl_model (MODEL *pmod, GtkWidget *parent);
 
-void revise_system_model (void *ptr);
+void revise_system_model (void *ptr, GtkWidget *parent);
 
 void newdata_callback (void);
 

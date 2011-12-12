@@ -359,7 +359,7 @@ void model_stat_callback (GtkAction *action, gpointer data)
 	code = M_HQC;
     }
 
-    add_model_stat(pmod, code);
+    add_model_stat(pmod, code, vwin->main);
 }
 
 void model_callback (GtkAction *action, gpointer data) 
@@ -373,10 +373,10 @@ void model_genr_callback (GtkAction *action, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
-    edit_dialog(_("gretl: add var"), 
+    edit_dialog(MODEL_GENR, _("gretl: add var"), 
 		_("Enter formula for new variable:"),
 		"", do_model_genr, vwin, 
-		MODEL_GENR, VARCLICK_INSERT_NAME);   
+		VARCLICK_INSERT_NAME, vwin->main);   
 }
 
 static int selector_callback_code (const gchar *s)
@@ -613,12 +613,12 @@ void gretl_callback (GtkAction *action, gpointer data)
     }
 
     if (dynquery != NULL) {
-	edit_dialog(_(title), dynquery, defstr, okfunc, data, 
-		    ci, click);
+	edit_dialog(ci, _(title), dynquery, defstr, okfunc, data, 
+		    click, NULL);
 	g_free(dynquery);
     } else {
-	edit_dialog(_(title), _(query), defstr, okfunc, data, 
-		    ci, click);
+	edit_dialog(ci, _(title), _(query), defstr, okfunc, data, 
+		    click, NULL);
     }
 }
 
@@ -645,7 +645,7 @@ void menu_boxplot_callback (int varnum)
     }
 }
 
-void revise_nl_model (MODEL *pmod)
+void revise_nl_model (MODEL *pmod, GtkWidget *parent)
 {
     const char *title = NULL;
     const char *query = NULL;
@@ -672,21 +672,19 @@ void revise_nl_model (MODEL *pmod)
 
     defstr = gretl_model_get_data(pmod, "nlinfo");
 
-    edit_dialog(_(title), _(query), defstr, okfunc, pmod, 
-		pmod->ci, VARCLICK_INSERT_TEXT);   
+    edit_dialog(pmod->ci, _(title), _(query), defstr, okfunc, pmod, 
+		VARCLICK_INSERT_TEXT, parent);   
 }
 
-void revise_system_model (void *ptr)
+void revise_system_model (void *ptr, GtkWidget *parent)
 {
     equation_system *sys = (equation_system *) ptr;
 
-    edit_dialog(_("gretl: simultaneous equations system"), 
-		_("Specify simultaneous equations:"),
-		NULL,
-		do_eqn_system,
-		sys,
-		SYSTEM,
-		VARCLICK_INSERT_TEXT);
+    edit_dialog(SYSTEM, _("gretl: simultaneous equations system"), 
+		_("Specify simultaneous equations:"), NULL,
+		do_eqn_system, sys,
+		VARCLICK_INSERT_TEXT,
+		parent);
 }
 
 void genr_callback (void)
@@ -700,17 +698,17 @@ void genr_callback (void)
 		 "(or just a name, to enter data manually)");
     }
 
-    edit_dialog(_("gretl: add var"), _(msg),
+    edit_dialog(GENR, _("gretl: add var"), _(msg),
 		NULL, do_genr, NULL, 
-		GENR, VARCLICK_INSERT_NAME);   
+		VARCLICK_INSERT_NAME, NULL);   
 }
 
 void minibuf_callback (void)
 {
-    edit_dialog(_("gretl: command entry"),
-		_("Type a command:"),
-		NULL, do_minibuf, NULL, 
-		MINIBUF, VARCLICK_NONE);   
+    edit_dialog(MINIBUF, _("gretl: command entry"),
+		_("Type a command:"), NULL, 
+		do_minibuf, NULL, 
+		VARCLICK_NONE, NULL);   
 }
 
 void newdata_callback (void) 

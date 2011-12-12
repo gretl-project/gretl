@@ -47,7 +47,7 @@ void modelspec_dialog (int ci);
 
 void selector_set_varnum (int v);
 
-void selector_from_model (void *ptr, int ci);
+void selector_from_model (windata_t *vwin);
 
 char *main_window_selection_as_string (void);
 

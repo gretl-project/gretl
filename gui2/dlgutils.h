@@ -77,6 +77,9 @@ void set_active_edit_name (GtkWidget *w);
 void raise_and_focus_dialog (GtkEditable *entry, 
 			     GtkWidget *parent);
 
+gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key, 
+			   gpointer p);
+
 typedef struct combo_opts_ combo_opts;
 
 GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
@@ -121,14 +124,18 @@ GtkWidget *gretl_option_check_button_switched (const char *label,
 					       gretlopt *popt,
 					       gretlopt val);
 
-void 
-blocking_edit_dialog (const char *title, const char *info, const char *deflt, 
-		      void (*okfunc)(), void *okptr,
-		      int ci, Varclick click, int *canceled);
+void blocking_edit_dialog (int ci, const char *title, 
+			   const char *info, const char *deflt, 
+			   void (*okfunc)(), void *okptr,
+			   Varclick click, GtkWidget *parent,
+			   int *canceled);
 
-void edit_dialog (const char *title, const char *info, const char *deflt, 
+void edit_dialog (int ci, const char *title, 
+		  const char *info, const char *deflt, 
 		  void (*okfunc)(), void *okptr,
-		  int ci, Varclick click);
+		  Varclick click, GtkWidget *parent);
+
+void edit_dialog_reset (dialog_t *dlg);
 
 const gchar *edit_dialog_get_text (dialog_t *dlg);
 
@@ -140,7 +147,7 @@ gretlopt edit_dialog_get_opt (const dialog_t *dlg);
 
 gpointer edit_dialog_get_data (dialog_t *dlg);
 
-void close_dialog (dialog_t *dlg);
+void edit_dialog_close (dialog_t *dlg);
 
 gchar *entry_box_get_trimmed_text (GtkWidget *w);
 

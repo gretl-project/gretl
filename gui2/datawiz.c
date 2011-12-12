@@ -144,13 +144,14 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *dlg)
     buf = edit_dialog_get_text(dlg);
 
     if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_SERIES)) {
+	edit_dialog_reset(dlg);
 	return;
     }
 
     dataset->varname[1][0] = 0;
     strncat(dataset->varname[1], buf, VNAMELEN - 1);
 
-    close_dialog(dlg);
+    edit_dialog_close(dlg);
 
     /* blank out the auto "index" variable */
     for (t=0; t<dataset->n; t++) {
@@ -165,12 +166,11 @@ static void maybe_start_editing (void)
 {
     int cancel = 0;
 
-    blocking_edit_dialog(_("gretl: name variable"), 
+    blocking_edit_dialog(CREATE_DATASET, _("gretl: name variable"), 
 			 _("Enter name for first variable\n"
 			   "(max. 15 characters)"),
 			 NULL, prep_spreadsheet, NULL, 
-			 CREATE_DATASET, VARCLICK_NONE, 
-			 &cancel);
+			 VARCLICK_NONE, NULL, &cancel);
 
     if (cancel) {
 	/* accept the default blank dataset */

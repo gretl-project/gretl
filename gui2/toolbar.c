@@ -301,41 +301,39 @@ static void toolbar_refresh (GtkWidget *w, windata_t *vwin)
     }
 }
 
-static void matrix_savename (GtkWidget *w, dialog_t *dlg)
+static void set_matrix_name (GtkWidget *widget, dialog_t *dlg)
 {
-    char *newname = (char *) edit_dialog_get_data(dlg);
-    const gchar *buf = edit_dialog_get_text(dlg);
+    char *vname = (char *) edit_dialog_get_data(dlg);
+    const gchar *s = edit_dialog_get_text(dlg);
 
-    if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_MATRIX)) {
-	return;
+    if (s == NULL || gui_validate_varname(s, GRETL_TYPE_MATRIX)) {
+	edit_dialog_reset(dlg);
+    } else {
+	strcpy(vname, s);
+	edit_dialog_close(dlg);
     }
-
-    *newname = 0;
-    strncat(newname, buf, VNAMELEN - 1);
-
-    close_dialog(dlg);
 }
 
 static void add_matrix_callback (GtkWidget *w, windata_t *vwin)
 {
-    gretl_matrix *m = NULL;
-    char mname[VNAMELEN];
-    int err, cancel = 0;
-
     if (vwin->role == XTAB) {
-	m = xtab_to_matrix(vwin->data);
-	if (m == NULL) {
-	    nomem();
-	} else {
-	    blocking_edit_dialog(_("gretl: save matrix"), 
-				 _("Enter a name"),
-				 NULL, matrix_savename, mname, 
-				 0, VARCLICK_NONE, &cancel);
-	    if (cancel) {
-		gretl_matrix_free(m);
+	gretl_matrix *m;
+	char mname[VNAMELEN];
+	int err, cancel = 0;
+
+	blocking_edit_dialog(0, _("gretl: save matrix"), 
+			     _("Enter a name"), NULL,
+			     set_matrix_name, mname, 
+			     VARCLICK_NONE, vwin->main,
+			     &cancel);
+	if (!cancel) {
+	    m = xtab_to_matrix(vwin->data);
+	    if (m == NULL) {
+		nomem();
 	    } else {
 		err = add_or_replace_user_matrix(m, mname);
 		if (err) {
+		    gretl_matrix_free(m);
 		    gui_errmsg(err);
 		} else {
 		    infobox(_("Saved matrix as %s"), mname);

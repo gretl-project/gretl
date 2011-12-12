@@ -3290,22 +3290,24 @@ static int sys_add_structural_form (equation_system *sys)
     return err;
 }
 
-static gretl_matrix *sys_companion_matrix (equation_system *sys)
+static gretl_matrix *sys_companion_matrix (equation_system *sys,
+					   int *err)
 {
-    gretl_matrix *C;
     int m = sys->A->rows;
     int n = sys->A->cols;
+    gretl_matrix *C;
 
     if (m == n) {
-	return sys->A;
-    }
-
-    C = gretl_zero_matrix_new(n, n);
-
-    if (C != NULL) {
-	gretl_matrix_inscribe_matrix(C, sys->A, 0, 0,
-				     GRETL_MOD_NONE);
-	gretl_matrix_inscribe_I(C, m, 0, n - m);
+	C = sys->A;
+    } else {
+	C = gretl_zero_matrix_new(n, n);
+	if (C == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    gretl_matrix_inscribe_matrix(C, sys->A, 0, 0,
+					 GRETL_MOD_NONE);
+	    gretl_matrix_inscribe_I(C, m, 0, n - m);
+	}
     }
 
 #if SYSDEBUG   
@@ -3315,41 +3317,50 @@ static gretl_matrix *sys_companion_matrix (equation_system *sys)
     return C;
 }
 
-static gretl_matrix *
-sys_get_fcast_se (equation_system *sys, int periods)
+static gretl_matrix *sys_get_fcast_se (equation_system *sys, 
+				       int periods, int *err)
 {
-    int k = sys->A->cols;
     int n = sys->neqns + sys->nidents;
     gretl_matrix *Tmp = NULL;
     gretl_matrix *V0 = NULL, *Vt = NULL;
     gretl_matrix *C = NULL, *se = NULL;
     double vti;
-    int i, t, err = 0;
+    int i, k, t;
 
     if (periods <= 0) {
 	fprintf(stderr, "Invalid number of periods\n");
+	*err = E_DATA;
 	return NULL;
     }
 
-    C = sys_companion_matrix(sys);
-    if (C == NULL) {
+    if (sys->A == NULL) {
+	fprintf(stderr, "sys->A is NULL\n");
+	*err = E_DATA;
+	return NULL;
+    }
+
+    C = sys_companion_matrix(sys, err);
+    if (*err) {
 	return NULL;
     }
 
     se = gretl_zero_matrix_new(periods, n);
     if (se == NULL) {
+	*err = E_ALLOC;
 	if (C != sys->A) {
 	    gretl_matrix_free(C);
 	}
 	return NULL;
     }
+
+    k = sys->A->cols;
     
     Vt = gretl_matrix_alloc(k, k);
     V0 = gretl_zero_matrix_new(k, k);
     Tmp = gretl_matrix_alloc(k, k);
 
     if (Vt == NULL || V0 == NULL || Tmp == NULL) {
-	err = E_ALLOC;
+	*err = E_ALLOC;
 	goto bailout;
     }
 
@@ -3377,11 +3388,12 @@ sys_get_fcast_se (equation_system *sys, int periods)
     gretl_matrix_free(V0);
     gretl_matrix_free(Vt);
     gretl_matrix_free(Tmp);
+
     if (C != sys->A) {
 	gretl_matrix_free(C);
     }
     
-    if (err) {
+    if (*err) {
 	gretl_matrix_free(se);
 	se = NULL;
     }
@@ -3400,9 +3412,8 @@ static int sys_add_fcast_variance (equation_system *sys, gretl_matrix *F,
     int err = 0;
 
     if (k > 0) {
-	se = sys_get_fcast_se(sys, k);
-	if (se == NULL) {
-	    err = E_ALLOC;
+	se = sys_get_fcast_se(sys, k, &err);
+	if (err) {
 	    goto bailout;
 	}
     }

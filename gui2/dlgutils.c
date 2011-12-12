@@ -265,13 +265,12 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 			 G_CALLBACK(dialog_unblock), NULL);
     }
 
-    if (parent != NULL) {
-	g_signal_connect(G_OBJECT(d), "show", 
-			 G_CALLBACK(dialog_set_destruction), parent);
-    } else {
-	g_signal_connect(G_OBJECT(d), "show", 
-			 G_CALLBACK(dialog_set_destruction), mdata->main);
-    }	
+    if (parent == NULL) {
+	parent = mdata->main;
+    }
+
+    g_signal_connect(G_OBJECT(d), "show", 
+		     G_CALLBACK(dialog_set_destruction), parent);
 
     if (flags & GRETL_DLG_BLOCK) {
 	g_signal_connect(G_OBJECT(d), "show", 
@@ -410,15 +409,17 @@ void set_active_edit_name (GtkWidget *w)
 }
 
 struct dialog_t_ {
+    int ci;
+    void (*okfunc)();
+    void *data;
+    int blocking;
+    int *cancel;
+    gretlopt opt;
     GtkWidget *dialog;
     GtkWidget *vbox;
     GtkWidget *bbox;
     GtkWidget *edit;
     GtkWidget *popup;
-    gpointer data;
-    gint ci;
-    gint blocking;
-    gretlopt opt;
 };
 
 static void destroy_edit_dialog (GtkWidget *w, gpointer data) 
@@ -438,8 +439,8 @@ static void destroy_edit_dialog (GtkWidget *w, gpointer data)
     if (active_edit_text) active_edit_text = NULL;
 }
 
-static gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key, 
-				  gpointer p)
+gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key, 
+			   gpointer p)
 {
     if (key->keyval == GDK_Escape) {
         gtk_widget_destroy(w);
@@ -449,9 +450,9 @@ static gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key,
     }
 }
 
-static dialog_t *edit_dialog_new (gpointer data, int ci, 
-				  int hlpcode,
-				  const char *title,
+static dialog_t *edit_dialog_new (int ci, const char *title,
+				  void (*okfunc)(), void *data,
+				  int helpcode, GtkWidget *parent,
 				  int *canceled)
 {
     dialog_t *d = mymalloc(sizeof *d);
@@ -460,17 +461,20 @@ static dialog_t *edit_dialog_new (gpointer data, int ci,
 	return NULL;
     }
 
-    d->data = data;
     d->ci = ci;
+    d->okfunc = okfunc;
+    d->data = data;
     d->opt = OPT_NONE;
     d->popup = NULL;
     d->blocking = 0;
+    d->cancel = canceled;
 
     d->dialog = gtk_dialog_new();
     d->vbox = gtk_dialog_get_content_area(GTK_DIALOG(d->dialog));
     d->bbox = gtk_dialog_get_action_area(GTK_DIALOG(d->dialog));
 
     if (canceled != NULL) {
+	*canceled = 1; /* will be undone by "OK" */
 	d->blocking = 1;
     }
 
@@ -486,12 +490,16 @@ static dialog_t *edit_dialog_new (gpointer data, int ci,
     gtk_box_set_homogeneous(GTK_BOX(d->bbox), TRUE); 
     gtk_window_set_position(GTK_WINDOW(d->dialog), GTK_WIN_POS_MOUSE);
 
+    if (parent == NULL) {
+	parent = mdata->main;
+    }
+
     g_signal_connect(G_OBJECT(d->dialog), "destroy", 
 		     G_CALLBACK(destroy_edit_dialog), d);
     g_signal_connect(G_OBJECT(d->dialog), "key-press-event", 
 		     G_CALLBACK(esc_kills_window), NULL);
     g_signal_connect(G_OBJECT(d->dialog), "show", 
-		     G_CALLBACK(dialog_set_destruction), mdata->main);
+		     G_CALLBACK(dialog_set_destruction), parent);
     if (d->blocking) {
 	g_signal_connect(G_OBJECT(d->dialog), "show", 
 			 G_CALLBACK(gtk_main), NULL);
@@ -500,7 +508,7 @@ static dialog_t *edit_dialog_new (gpointer data, int ci,
     return d;
 }
 
-void close_dialog (dialog_t *dlg)
+void edit_dialog_close (dialog_t *dlg)
 {
     gtk_widget_destroy(dlg->dialog);
 }
@@ -1150,7 +1158,11 @@ static void clear_dlg_previous (GtkWidget *w, dialog_t *d)
 
 static void edit_dialog_ok (GtkWidget *w, dialog_t *d)
 {
-    gtk_widget_destroy(d->dialog);
+    if (d->okfunc != NULL) {
+	d->okfunc(w, d);
+    } else {
+	gtk_widget_destroy(d->dialog);
+    }
 }
 
 static gboolean cancel_vwin_edit (GtkWidget *w, gpointer p)
@@ -1194,28 +1206,26 @@ static void edit_dialog_add_note (const char *s, GtkWidget *vbox)
 }
 
 void 
-blocking_edit_dialog (const char *title, const char *info, const char *deflt, 
+blocking_edit_dialog (int ci, const char *title, 
+		      const char *info, const char *deflt, 
 		      void (*okfunc)(), void *okptr,
-		      int ci, Varclick click, int *canceled)
+		      Varclick click, GtkWidget *parent,
+		      int *canceled)
 {
     dialog_t *d;
     GtkWidget *w;
     MODEL *pmod = NULL;
-    int hlpcode, modal = 0;
+    int helpcode, modal = 0;
     int clear = 0;
-
-    if (canceled != NULL) {
-	/* this will be undone by the OK button */
-	*canceled = 1;
-    }
 
     if (open_edit_dialog != NULL && ci != MINIBUF) {
 	gtk_window_present(GTK_WINDOW(open_edit_dialog));
 	return;
     }
 
-    hlpcode = edit_dialog_help_code(ci, okptr);
-    d = edit_dialog_new(okptr, ci, hlpcode, title, canceled);
+    helpcode = edit_dialog_help_code(ci, okptr);
+    d = edit_dialog_new(ci, title, okfunc, okptr, helpcode,
+			parent, canceled);
     if (d == NULL) return;
 
     open_edit_dialog = d->dialog;
@@ -1274,8 +1284,7 @@ blocking_edit_dialog (const char *title, const char *info, const char *deflt,
 
 	/* make the Enter key do the business */
 	if (okfunc != NULL) {
-	    g_signal_connect(G_OBJECT(d->edit), "activate", 
-			     G_CALLBACK(okfunc), d);
+	    gtk_entry_set_activates_default(GTK_ENTRY(d->edit), TRUE);
 	}
 
 	if (deflt != NULL && *deflt != '\0') {
@@ -1320,7 +1329,7 @@ blocking_edit_dialog (const char *title, const char *info, const char *deflt,
 	modal = 1;
     }
 
-    if (click == VARCLICK_NONE && !hlpcode) {
+    if (click == VARCLICK_NONE && helpcode == 0) {
 	gtk_window_set_keep_above(GTK_WINDOW(d->dialog), TRUE);
     } 
 
@@ -1343,18 +1352,13 @@ blocking_edit_dialog (const char *title, const char *info, const char *deflt,
     } else {
 	w = ok_button(d->bbox);
     }
-    if (okfunc != NULL) {
-	g_signal_connect(G_OBJECT(w), "clicked", 
-			 G_CALLBACK(okfunc), d);
-    } else {
-	g_signal_connect(G_OBJECT(w), "clicked", 
-			 G_CALLBACK(edit_dialog_ok), d);
-    }
+    g_signal_connect(G_OBJECT(w), "clicked", 
+		     G_CALLBACK(edit_dialog_ok), d);
     gtk_widget_grab_default(w);
 
     /* "Help" button, if wanted */
-    if (hlpcode > 0) {
-	context_help_button(d->bbox, hlpcode);
+    if (helpcode > 0) {
+	context_help_button(d->bbox, helpcode);
 	modal = 0;
     } 
 
@@ -1375,12 +1379,20 @@ blocking_edit_dialog (const char *title, const char *info, const char *deflt,
     gtk_widget_show_all(d->dialog); 
 }
 
-void edit_dialog (const char *title, const char *info, const char *deflt, 
-		  void (*okfunc)(), void *okptr, int ci, 
-		  Varclick click)
+void edit_dialog (int ci, const char *title, 
+		  const char *info, const char *deflt, 
+		  void (*okfunc)(), void *okptr, 
+		  Varclick click, GtkWidget *parent)
 {
-    blocking_edit_dialog(title, info, deflt, okfunc, okptr, ci,
-			 click, NULL);
+    blocking_edit_dialog(ci, title, info, deflt, okfunc, okptr,
+			 click, parent, NULL);
+}
+
+void edit_dialog_reset (dialog_t *dlg)
+{
+    if (dlg->cancel != NULL) {
+	*dlg->cancel = 1;
+    }
 }
 
 gchar *entry_box_get_trimmed_text (GtkWidget *w)

@@ -130,7 +130,7 @@ static void model_revise_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     
-    selector_from_model(vwin->data, vwin->role);
+    selector_from_model(vwin);
 }
 
 #if 0

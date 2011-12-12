@@ -624,8 +624,11 @@ static void retrieve_tobit_info (MODEL *pmod)
 
 /* support for the "Modify model..." menu item */
 
-void selector_from_model (void *ptr, int ci)
+void selector_from_model (windata_t *vwin)
 {
+    void *ptr = vwin->data;
+    int ci = vwin->role;
+
     model_opt = OPT_NONE;
 
     if (ci == ARBOND) {
@@ -640,7 +643,7 @@ void selector_from_model (void *ptr, int ci)
 	int dv = -1, gotinst = 0;
 
 	if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM) {
-	    revise_nl_model(pmod);
+	    revise_nl_model(pmod, vwin->main);
 	    return;
 	}
 
@@ -805,7 +808,7 @@ void selector_from_model (void *ptr, int ci)
 	selection_dialog(ci, (ci == VAR)? _("gretl: VAR") : _("gretl: VECM"),
 			 do_vector_model);
     } else if (ci == SYSTEM) {
-	revise_system_model(ptr);
+	revise_system_model(ptr, vwin->main);
     }
 
     model_opt = OPT_NONE;
@@ -4408,6 +4411,9 @@ static GtkWidget *selector_dialog_new (selector *sr)
     GtkWidget *d = gtk_dialog_new();
     GtkWidget *base, *ca, *aa;
 
+    g_signal_connect(G_OBJECT(d), "key-press-event", 
+		     G_CALLBACK(esc_kills_window), NULL);
+
     base = gtk_dialog_get_content_area(GTK_DIALOG(d));
     gtk_box_set_homogeneous(GTK_BOX(base), FALSE);
     gtk_box_set_spacing(GTK_BOX(base), 5);
@@ -5960,10 +5966,10 @@ void selector_register_genr (int newvars, gpointer p)
 
 static void new_var_callback (GtkWidget *w, selector *sr)
 {
-    edit_dialog(_("gretl: add var"), 
+    edit_dialog(GENR, _("gretl: add var"), 
 		_("Enter formula for new variable"),
 		NULL, do_selector_genr, sr, 
-		GENR, VARCLICK_INSERT_NAME);  
+		VARCLICK_INSERT_NAME, sr->dlg);  
 }
 
 static GtkWidget *add_var_button (selector *sr)
