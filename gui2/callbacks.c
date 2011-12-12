@@ -527,6 +527,8 @@ static int gretl_callback_code (const gchar *s)
 
 void gretl_callback (GtkAction *action, gpointer data)
 {
+    windata_t *vwin = (windata_t *) data;
+    GtkWidget *parent = NULL;
     const char *title = NULL;
     const char *query = NULL;
     const char *defstr = NULL;
@@ -600,6 +602,7 @@ void gretl_callback (GtkAction *action, gpointer data)
 	title = N_("gretl: linear restrictions");
 	query = N_("Specify restrictions:");
 	okfunc = do_restrict;
+	parent = vwin->main;
 	break;	
     case MINIBUF:
 	title = N_("gretl: command entry");
@@ -614,11 +617,11 @@ void gretl_callback (GtkAction *action, gpointer data)
 
     if (dynquery != NULL) {
 	edit_dialog(ci, _(title), dynquery, defstr, okfunc, data, 
-		    click, NULL);
+		    click, parent);
 	g_free(dynquery);
     } else {
 	edit_dialog(ci, _(title), _(query), defstr, okfunc, data, 
-		    click, NULL);
+		    click, parent);
     }
 }
 

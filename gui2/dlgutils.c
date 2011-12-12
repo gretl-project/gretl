@@ -1165,15 +1165,6 @@ static void edit_dialog_ok (GtkWidget *w, dialog_t *d)
     }
 }
 
-static gboolean cancel_vwin_edit (GtkWidget *w, gpointer p)
-{
-    if (open_edit_dialog != NULL) {
-	gtk_widget_destroy(open_edit_dialog);
-    }
-
-    return FALSE;
-}
-
 static int ols_model_window (windata_t *vwin)
 {
     if (vwin->role == VIEW_MODEL) {
@@ -1215,7 +1206,7 @@ blocking_edit_dialog (int ci, const char *title,
     dialog_t *d;
     GtkWidget *w;
     MODEL *pmod = NULL;
-    int helpcode, modal = 0;
+    int helpcode;
     int clear = 0;
 
     if (open_edit_dialog != NULL && ci != MINIBUF) {
@@ -1325,9 +1316,7 @@ blocking_edit_dialog (int ci, const char *title,
 	active_edit_name = d->edit;
     } else if (click == VARCLICK_INSERT_TEXT) { 
 	active_edit_text = d->edit;
-    } else if (ci != ESTIMATE) {
-	modal = 1;
-    }
+    } 
 
     if (click == VARCLICK_NONE && helpcode == 0) {
 	gtk_window_set_keep_above(GTK_WINDOW(d->dialog), TRUE);
@@ -1359,22 +1348,7 @@ blocking_edit_dialog (int ci, const char *title,
     /* "Help" button, if wanted */
     if (helpcode > 0) {
 	context_help_button(d->bbox, helpcode);
-	modal = 0;
     } 
-
-    if (ci == MODEL_GENR || ci == RESTRICT) {
-	windata_t *vwin = (windata_t *) okptr;
-
-	/* schedule destruction */
-	g_signal_connect(G_OBJECT(vwin->main), "destroy",
-			 G_CALLBACK(cancel_vwin_edit), 
-			 NULL);
-    } 
-
-    if (modal) {
-	g_signal_connect(G_OBJECT(d->dialog), "show", 
-			 G_CALLBACK(gretl_set_window_modal), NULL);
-    }    
 
     gtk_widget_show_all(d->dialog); 
 }
