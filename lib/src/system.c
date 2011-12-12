@@ -26,6 +26,7 @@
 #include "objstack.h"
 #include "usermat.h"
 #include "gretl_xml.h"
+#include "gretl_func.h"
 #include "tsls.h"
 
 #define SYSDEBUG 0
@@ -1525,6 +1526,26 @@ static int sys_make_biglist (equation_system *sys)
     return 0;
 }
 
+static int sys_get_lag_src (const char *vname, const DATASET *dset)
+{
+    int fd, src = series_index(dset, vname);
+
+    if (src == dset->v && (fd = gretl_function_depth()) > 0) {
+	int i;
+
+	for (i=1; i<dset->v; i++) { 
+	    if (fd == STACK_LEVEL(dset, i) &&
+		var_is_listarg(dset, i) && 
+		!strcmp(dset->varname[i], vname)) {
+		src = i;
+		break;
+	    }
+	}
+    }
+
+    return src;
+}
+
 /* prior to system estimation, get all the required lists of variables
    in order
 */
@@ -1697,7 +1718,7 @@ static int sys_check_lists (equation_system *sys,
 	lag = dset->varinfo[vj]->lag;
 	if (lag > 0) {
 	    vname = dset->varinfo[vj]->parent;
-	    src = series_index(dset, vname);
+	    src = sys_get_lag_src(vname, dset);
 	    if (in_gretl_list(sys->ylist, src)) {
 		err = add_predet_to_sys(sys, dset, vj, src, lag);
 		gretl_list_delete_at_pos(xplist, j--);
