@@ -2475,6 +2475,8 @@ static int parse_forecast_string (const char *s,
     } 
 
     if (!err) {
+	/* in case we hit any "temporary" errors above */
+	gretl_error_clear();
 	*pt1 = t1;
 	*pt2 = t2;
     }
