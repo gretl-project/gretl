@@ -1520,7 +1520,7 @@ char *gretl_addpath (char *fname, int script)
 
 	if (*gpath != '\0') {
 	    /* try looking where the last-opened script was found */
-	    if ((fname = search_dir(fname, gpath, CURRENT_DIR))) {
+	    if (search_dir(fname, gpath, CURRENT_DIR) != NULL) {
 		return fname;
 	    }
 	}
@@ -1533,20 +1533,20 @@ char *gretl_addpath (char *fname, int script)
 	    /* try searching some standard gretl paths */
 	    if (script) {
 		sprintf(trydir, "%sscripts", gpath);
-		if ((fname = search_dir(fname, trydir, SCRIPT_SEARCH))) { 
+		if (search_dir(fname, trydir, SCRIPT_SEARCH) != NULL) { 
 		    return fname;
 		} else {
 		    fname = tmp;
 		    strcpy(fname, orig);
 		    sprintf(trydir, "%sfunctions", gpath);
-		    if ((fname = search_dir(fname, trydir, FUNCS_SEARCH))) { 
+		    if (search_dir(fname, trydir, FUNCS_SEARCH) != NULL) { 
 			return fname;
 		    }
 		}
 	    } else {
 		/* data file */
 		sprintf(trydir, "%sdata", gpath);
-		if ((fname = search_dir(fname, trydir, DATA_SEARCH))) { 
+		if (search_dir(fname, trydir, DATA_SEARCH) != NULL) { 
 		    return fname;
 		}
 	    } 
@@ -1561,23 +1561,23 @@ char *gretl_addpath (char *fname, int script)
 #endif
 
 	if (*gpath != '\0') {
-	    /* try looking in dotdir */
+	    /* try looking in ~/Library or dotdir */
 	    if (script) {
 		sprintf(trydir, "%sscripts", gpath);
-		if ((fname = search_dir(fname, trydir, SCRIPT_SEARCH))) { 
+		if (search_dir(fname, trydir, SCRIPT_SEARCH) != NULL) { 
 		    return fname;
 		} else {
 		    fname = tmp;
 		    strcpy(fname, orig);
 		    sprintf(trydir, "%sfunctions", gpath);
-		    if ((fname = search_dir(fname, trydir, FUNCS_SEARCH))) { 
+		    if (search_dir(fname, trydir, FUNCS_SEARCH) != NULL) { 
 			return fname;
 		    }
 		}
 	    } else {
 		/* data file */
 		sprintf(trydir, "%sdata", gpath);
-		if ((fname = search_dir(fname, trydir, DATA_SEARCH))) { 
+		if (search_dir(fname, trydir, DATA_SEARCH) != NULL) { 
 		    return fname;
 		}
 	    } 
@@ -1589,28 +1589,21 @@ char *gretl_addpath (char *fname, int script)
 
 	if (*gpath != '\0') {
 	    /* try looking in user's dir (and subdirs) */
-	    if ((fname = search_dir(fname, gpath, USER_SEARCH))) { 
+	    if (search_dir(fname, gpath, USER_SEARCH) != NULL) { 
 		return fname;
 	    }
 	}
-    }
 
-    /* try looking in default workdir? */
-    if (1) {
-	const char *dwork = maybe_get_default_workdir();
+	fname = tmp;
+	strcpy(fname, orig);
+	gpath = maybe_get_default_workdir();
 
-	if (dwork != NULL) {
-	    int ok = 0;
-
-	    fname = tmp;
-	    strcpy(fname, orig);
-	    if ((fname = search_dir(fname, dwork, USER_SEARCH))) { 
-		ok = 1;
-	    }
-	    if (ok) {
+	if (gpath != NULL && *gpath != '\0') {
+	    /* try looking in default workdir? */
+	    if (search_dir(fname, gpath, USER_SEARCH) != NULL) { 
 		return fname;
 	    }
-	}
+	}	    
     }
 
 #ifdef WIN32
