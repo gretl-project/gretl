@@ -549,6 +549,13 @@ static int build_file_collections (void)
 	if (!err) {
 	    err = seek_file_collections(gretl_app_support_dir(), SCRIPT_SEARCH);
 	}	
+#else
+	if (!err) {
+	    err = seek_file_collections(gretl_dotdir(), DATA_SEARCH);
+	}
+	if (!err) {
+	    err = seek_file_collections(gretl_dotdir(), SCRIPT_SEARCH);
+	}
 #endif
 	if (!err) {
 	    err = seek_file_collections(gretl_workdir(), USER_SEARCH);
@@ -1888,39 +1895,6 @@ read_fn_files_in_dir (DIR *dir, const char *path,
     }
 }
 
-static gint 
-compare_pkgnames (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
-		  gpointer p)
-{
-    gchar *t1, *t2;
-    gint ret;
-
-    gtk_tree_model_get(model, a, 0, &t1, -1);
-    gtk_tree_model_get(model, b, 0, &t2, -1);
-
-    lower(t1);
-    lower(t2);
-
-    ret = strcmp(t1, t2);
-
-    g_free(t1);
-    g_free(t2);
-
-    return ret;    
-}
-
-static void sort_pkglist (windata_t *vwin)
-{
-    GtkTreeModel *model;
-
-    model = gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox));
-
-    gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(model), 
-					 0, GTK_SORT_ASCENDING);
-    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(model), 0,
-				    compare_pkgnames, NULL, NULL);
-}
-
 static int dirname_done (char **dnames, int ndirs, char *dirname)
 {
     int i;
@@ -2012,7 +1986,7 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	return 1;
     } else {
 	g_object_set_data(G_OBJECT(vwin->listbox), "nfn", GINT_TO_POINTER(nfn));
-	sort_pkglist(vwin);
+	presort_treelist(vwin);
     }
 
     return 0;
@@ -2334,7 +2308,7 @@ static GtkWidget *files_notebook (windata_t *vwin, int code)
 }
 
 /* below: fill out a set of notebook pages (for data files
-   or scripts files), entering the details into the page.
+   or script files), entering the details into the page.
 */
 
 static int populate_notebook_filelists (windata_t *vwin, 

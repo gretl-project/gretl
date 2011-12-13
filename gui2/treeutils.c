@@ -131,6 +131,41 @@ static gint db_series_compare (GtkTreeModel *model,
     return ret;
 }
 
+static gint 
+compare_treenames (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
+		   gpointer p)
+{
+    gchar *s1, *s2;
+    gint ret;
+
+    gtk_tree_model_get(model, a, 0, &s1, -1);
+    gtk_tree_model_get(model, b, 0, &s2, -1);
+
+    ret = strcmp(lower(s1), lower(s2));
+
+    g_free(s1);
+    g_free(s2);
+
+    return ret;    
+}
+
+/* sort in ascending order by the strings in the first column
+   of the treeview in @vwin
+*/
+
+void presort_treelist (windata_t *vwin)
+{
+    GtkTreeModel *model;
+
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox));
+
+    gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(model), 
+					 0, GTK_SORT_ASCENDING);
+    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(model), 0,
+				    compare_treenames, NULL, NULL);
+}
+
+
 static gboolean no_select_row_zero (GtkTreeSelection *selection,
 				    GtkTreeModel *model,
 				    GtkTreePath *path,

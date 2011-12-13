@@ -2979,6 +2979,8 @@ gint populate_dbfilelist (windata_t *vwin)
     if (ndb == 0) {
 	errbox(_("No database files found"));
 	err = 1;
+    } else {
+	presort_treelist(vwin);
     }
 
     return err;
