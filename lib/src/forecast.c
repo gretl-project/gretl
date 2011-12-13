@@ -2328,6 +2328,7 @@ static int fcast_get_limit (const char *s, DATASET *dset)
     }
 
     if (x < 1 || x > dset->n) {
+	gretl_error_clear();
 	gretl_errmsg_set(_("Observation number out of bounds"));
 	t = -1;
     } else {

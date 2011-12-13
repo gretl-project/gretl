@@ -10538,7 +10538,8 @@ static int LHS_matrix_reusable (parser *p)
     } else if (p->ret->t == MAT) {
 	gretl_matrix *rm = p->ret->v.m;
 
-	ok = (rm != NULL && m->rows == rm->rows && 
+	ok = (rm != NULL && rm->info == NULL &&
+	      m->rows == rm->rows && 
 	      m->cols == rm->cols);
     }
 
@@ -10567,13 +10568,6 @@ static void assign_to_matrix (parser *p)
 	    }
 	} else {
 	    gretl_matrix_copy_values(m, p->ret->v.m);
-	    if (gretl_matrix_is_dated(p->ret->v.m)) {
-		int t1 = gretl_matrix_get_t1(p->ret->v.m);
-		int t2 = gretl_matrix_get_t2(p->ret->v.m);
-
-		gretl_matrix_set_t1(m, t1);
-		gretl_matrix_set_t2(m, t2);
-	    }
 	}
     } else {
 	/* replace the old matrix with result */
