@@ -1551,6 +1551,37 @@ char *gretl_addpath (char *fname, int script)
 		}
 	    } 
 	}
+
+	fname = tmp;
+	strcpy(fname, orig);
+#ifdef OSX_BUILD
+	gpath = gretl_app_support_dir();
+#else
+	gpath = gretl_dotdir();
+#endif
+
+	if (*gpath != '\0') {
+	    /* try looking in dotdir */
+	    if (script) {
+		sprintf(trydir, "%sscripts", gpath);
+		if ((fname = search_dir(fname, trydir, SCRIPT_SEARCH))) { 
+		    return fname;
+		} else {
+		    fname = tmp;
+		    strcpy(fname, orig);
+		    sprintf(trydir, "%sfunctions", gpath);
+		    if ((fname = search_dir(fname, trydir, FUNCS_SEARCH))) { 
+			return fname;
+		    }
+		}
+	    } else {
+		/* data file */
+		sprintf(trydir, "%sdata", gpath);
+		if ((fname = search_dir(fname, trydir, DATA_SEARCH))) { 
+		    return fname;
+		}
+	    } 
+	}	
     
 	fname = tmp;
 	strcpy(fname, orig);

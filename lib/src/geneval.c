@@ -10538,7 +10538,7 @@ static int LHS_matrix_reusable (parser *p)
     } else if (p->ret->t == MAT) {
 	gretl_matrix *rm = p->ret->v.m;
 
-	ok = (rm != NULL && rm->info == NULL &&
+	ok = (rm != NULL &&
 	      m->rows == rm->rows && 
 	      m->cols == rm->cols);
     }
@@ -10546,7 +10546,7 @@ static int LHS_matrix_reusable (parser *p)
     return ok;
 }
 
-/* generating a matrix: there's a pre-existing LHS matrix */
+/* generating a matrix, and there's a pre-existing LHS matrix */
 
 static void assign_to_matrix (parser *p)
 {
@@ -10567,7 +10567,7 @@ static void assign_to_matrix (parser *p)
 		m->val[i] = na(x)? M_NA : x;
 	    }
 	} else {
-	    gretl_matrix_copy_values(m, p->ret->v.m);
+	    p->err = gretl_matrix_copy_data(m, p->ret->v.m);
 	}
     } else {
 	/* replace the old matrix with result */

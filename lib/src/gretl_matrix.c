@@ -68,6 +68,8 @@ struct gretl_matrix_block_ {
 #define SVD_SMIN 1.0e-9
 
 static int add_scalar_to_matrix (gretl_matrix *targ, double x);
+static int gretl_matrix_copy_info (gretl_matrix *targ,
+				   const gretl_matrix *src);
 
 /* matrix metadata struct, not allocated by default */
 
@@ -1869,6 +1871,33 @@ int gretl_matrix_copy_values (gretl_matrix *targ,
     }
 
     return 0;
+}
+
+/**
+ * gretl_matrix_copy_data:
+ * @targ: target matrix.
+ * @src: source matrix.
+ *
+ * Copies all data from @src to @targ: this does the same
+ * as gretl_matrix_copy_values() but also transcribes
+ * t1, t2, colnames and rownames information, if present.
+ * 
+ * Returns: 0 on successful completion, non-zero code on
+ * failure.
+ */
+
+int gretl_matrix_copy_data (gretl_matrix *targ, 
+			    const gretl_matrix *src)
+{
+    int err;
+
+    err = gretl_matrix_copy_values(targ, src);
+
+    if (!err) {
+	err = gretl_matrix_copy_info(targ, src);
+    }
+
+    return err;
 }
 
 /**
@@ -8704,6 +8733,52 @@ int gretl_matrix_inplace_lag (gretl_matrix *targ,
     }
 
     return 0;
+}
+
+static int gretl_matrix_copy_info (gretl_matrix *targ,
+				   const gretl_matrix *src)
+{
+    int err = 0;
+
+    if (is_block_matrix(targ) || is_block_matrix(src)) {
+	return E_DATA;
+    }
+
+    if (src->info == NULL) {
+	if (targ->info != NULL) {
+	    gretl_matrix_destroy_info(targ);
+	}
+	return 0;
+    }
+
+    if (targ->info == NULL) {
+	targ->info = malloc(sizeof *targ->info);
+    }
+
+    if (targ->info == NULL) {
+	err = E_ALLOC;
+    } else {
+	targ->info->t1 = src->info->t1;
+	targ->info->t2 = src->info->t2;
+	targ->info->colnames = NULL;
+	targ->info->rownames = NULL;
+	if (src->info->colnames != NULL) {
+	    targ->info->colnames = strings_array_dup(src->info->colnames, 
+						     src->cols);
+	    if (targ->info->colnames == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+	if (!err && src->info->rownames != NULL) {
+	    targ->info->rownames = strings_array_dup(src->info->rownames, 
+						     src->rows);
+	    if (targ->info->rownames == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+    }
+
+    return err;
 }
 
 static int gretl_matrix_add_info (gretl_matrix *m)

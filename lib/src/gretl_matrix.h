@@ -323,6 +323,9 @@ int gretl_vector_copy_values (gretl_vector *targ,
 int gretl_matrix_copy_values (gretl_matrix *targ, 
 			      const gretl_matrix *src);
 
+int gretl_matrix_copy_data (gretl_matrix *targ, 
+			    const gretl_matrix *src);
+
 int gretl_matrix_copy_values_shaped (gretl_matrix *targ, 
 				     const gretl_matrix *src);
 
