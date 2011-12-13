@@ -191,6 +191,7 @@ enum file_ops {
     SET_FDIR,
     SET_DBDIR,
     SAVE_DATA_PKG,
+    SAVE_REMOTE_DB,
     FILE_OP_MAX
 };
 

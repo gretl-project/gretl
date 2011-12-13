@@ -1881,35 +1881,63 @@ static void offer_db_open (char *target)
     }
 }
 
-#ifdef OSX_BUILD
-
 static int get_target_in_home (char *targ, int code, 
 			       const char *objname,
 			       const char *ext)
 {
-    const char *suppdir = gretl_app_support_dir();
+#ifdef OSX_BUILD
+    const char *savedir = gretl_app_support_dir();
+#else
+    const char *savedir = gretl_dotdir();
+#endif
     int err = 0;
 
-    fprintf(stderr, "suppdir='%s'\n", suppdir);
-
-    if (suppdir == NULL || *suppdir == '\0') {
+    if (savedir == NULL || *savedir == '\0') {
 	err = E_FOPEN;
     } else {
+	int subdir = 0;
+
 	if (code == REMOTE_FUNC_FILES) {
-	    sprintf(targ, "%sfunctions/%s%s", suppdir, objname, ext);
+	    sprintf(targ, "%sfunctions", savedir);
+	    subdir = 1;
 	} else if (code == REMOTE_DB) {
-	    sprintf(targ, "%sdb/%s%s", suppdir, objname, ext);
+	    sprintf(targ, "%sdb", savedir);
+	    subdir = 1;
 	} else if (code == REMOTE_DATA_PKGS) {
-	    sprintf(targ, "%sdata/%s%s", suppdir, objname, ext);
+	    sprintf(targ, "%sdata", savedir);
+	    subdir = 1;
 	} else {
-	    sprintf(targ, "%s%s%s", suppdir, objname, ext);
+	    sprintf(targ, "%s%s%s", savedir, objname, ext);
+	}
+
+	if (subdir) {
+	    err = gretl_mkdir(targ);
+	    if (!err) {
+		strcat(targ, SLASHSTR);
+		strcat(targ, objname);
+		strcat(targ, ext);
+	    }
 	}
     }
 
     return err;
 }
 
-#endif
+static void get_system_target (char *targ, int code, 
+			       const char *objname,
+			       const char *ext)
+{
+    if (code == REMOTE_DB) {
+	get_default_dir(targ, SAVE_REMOTE_DB);
+    } else if (code == REMOTE_DATA_PKGS) {
+	get_default_dir(targ, SAVE_DATA_PKG);
+    } else if (code == REMOTE_FUNC_FILES) {
+	get_default_dir(targ, SAVE_FUNCTIONS);
+    }
+
+    strcat(targ, objname);
+    strcat(targ, ext);
+}
 
 enum {
     REAL_INSTALL,
@@ -1926,14 +1954,19 @@ static char *get_writable_target (int code, int op, char *objname,
 {
     const char *ext;
     char *targ;
+    int done_home = 0;
     int err = 0;
 
+#if 0
     fprintf(stderr, "get_writable_target\n");
+#endif
 
     targ = mymalloc(MAXLEN);
     if (targ == NULL) {
 	return NULL;
     }
+
+    *targ = '\0';
 
     if (code == REMOTE_DB) {
 	ext = ".ggz";
@@ -1943,64 +1976,39 @@ static char *get_writable_target (int code, int op, char *objname,
 	ext = ".tar.gz";
     }
 
+    if (op == TMP_INSTALL) {
+	build_path(targ, gretl_dotdir(), "dltmp", NULL);
+	err = gretl_tempname(targ);
+	done_home = 1;
+    } else {
 #ifdef OSX_BUILD
-    /* we prefer writing to ~/Library/Application Support
-       rather than /Applications/Gretl.app 
-    */
-    if (op != TMP_INSTALL) {
+	/* we prefer writing to ~/Library/Application Support
+	   rather than /Applications/Gretl.app 
+	*/
 	err = get_target_in_home(targ, code, objname, ext);
-	goto path_done;
-    }
+	done_home = 1;
+#else
+	get_system_target(targ, code, objname, ext);
 #endif
-
-    if (code == REMOTE_DB) {
-	char dbdir[MAXLEN];
-
-	build_path(dbdir, gretl_home(), "db", NULL);
-	build_path(targ, dbdir, objname, ext);
-    } else if (code == REMOTE_DATA_PKGS) {
-	char pkgdir[MAXLEN];
-
-	get_default_dir(pkgdir, SAVE_DATA_PKG);
-	build_path(targ, pkgdir, objname, ext);
-    } else if (code == REMOTE_FUNC_FILES) {
-	if (op == TMP_INSTALL) {
-	    build_path(targ, gretl_dotdir(), "dltmp", NULL);
-	    err = gretl_tempname(targ);
-	} else {
-	    char pkgdir[MAXLEN];
-
-	    get_default_dir(pkgdir, SAVE_FUNCTIONS);
-	    build_path(targ, pkgdir, objname, ext);
-	}
     } 
 
-#ifdef OSX_BUILD
- path_done:
-#endif
-
-    if (err) {
-	free(targ);
-	targ = NULL;
-    } else {
-	FILE *fp;
-
-	errno = 0;
-	fp = gretl_fopen(targ, "w");
-
-	if (fp == NULL) {
-	    if (errno == EACCES) { 
-		/* write to working dir instead? */
-		build_path(targ, gretl_workdir(), objname, ext);
-	    } else {
-		file_write_errbox(targ);
-		free(targ);
-		targ = NULL;
-	    }
-	} else {
-	    fclose(fp);
+    if (!err) {
+	err = gretl_test_fopen_for_write(targ);
+	if (err == EACCES && !done_home) { 
+	    /* permissions problem: write to home dir instead */
+	    err = get_target_in_home(targ, code, objname, ext);
 	}
     }
+
+    if (err) {
+	file_write_errbox(targ);
+	free(targ);
+	targ = NULL;
+    } 
+
+#if 0
+    fprintf(stderr, "writable targ: '%s'\n", targ);
+#endif
 
     return targ;
 }

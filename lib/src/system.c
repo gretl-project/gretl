@@ -3678,12 +3678,22 @@ static int sys_add_forecast (equation_system *sys,
     T = t2 - t1 + 1;
     ncols = 2 * n;
 
+    /* At which observation (tdyn) does the forecast turn 
+       dynamic, if at all? */
+
     if (opt & OPT_S) {
+	/* got the --static option: never */
 	tdyn = t2 + 1;
     } else if (opt & OPT_D) {
+	/* got the --dynamic option: from the start */
 	tdyn = t1;
-    } else {
+    } else if (sys->A != NULL) {
+	/* by default, for a model with dynamics: just after 
+	   the estimation sample ends */
 	tdyn = sys->t2 + 1;
+    } else {
+	/* no dynamics in system: never */
+	tdyn = t2 + 1;
     }
 
     y = gretl_matrix_alloc(n, 1);

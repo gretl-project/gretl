@@ -415,13 +415,19 @@ struct panel_info pan_info[] = {
     { PANEL_UNKNOWN,         N_("Use index variables") }
 };
 
-static const char *ts_frequency_string (int pd)
+static const char *ts_frequency_string (const DATASET *dwinfo)
 {
-    int i;
+    int i, pd = dwinfo->pd;
 
-    for (i=0; i<TS_INFO_MAX; i++) {
-	if (ts_info[i].pd == pd) {
-	    return ts_info[i].label;
+    if (pd == PD_SPECIAL) {
+	return N_("Other");
+    } else if (dwinfo->structure == SPECIAL_TIME_SERIES) {
+	return N_("Time series");
+    } else {
+	for (i=0; i<TS_INFO_MAX; i++) {
+	    if (ts_info[i].pd == pd) {
+		return ts_info[i].label;
+	    }
 	}
     }
 
@@ -558,7 +564,7 @@ static void make_confirmation_text (char *ctxt, DATASET *dwinfo, gretlopt *flags
 	char endobs[OBSLEN];
 	const char *tslabel;
 
-	tslabel = _(ts_frequency_string(dwinfo->pd));
+	tslabel = _(ts_frequency_string(dwinfo));
 
 	if (lastobs > dwinfo->n - 1) {
 	    dwinfo->n = lastobs + 1;
@@ -1103,7 +1109,7 @@ static GtkWidget *dwiz_spinner (GtkWidget *hbox, DATASET *dwinfo, int step)
     int spinmin, spinmax, spinstart;
 
     if (step == DW_STARTING_OBS) {
-	GtkWidget *label = gtk_label_new(_(ts_frequency_string(dwinfo->pd)));
+	GtkWidget *label = gtk_label_new(_(ts_frequency_string(dwinfo)));
 
 	gtk_widget_show(label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);

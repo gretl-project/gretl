@@ -90,6 +90,8 @@ FILE *gretl_fopen_with_recode (const char *fname, const char *mode,
 
 FILE *gretl_try_fopen (const char *fname, const char *mode);
 
+int gretl_test_fopen_for_write (const char *fname);
+
 FILE *gretl_read_user_file (const char *fname);
 
 int gretl_open (const char *pathname, int flags);

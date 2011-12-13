@@ -805,7 +805,7 @@ a regression model.  Autoregressive Conditional Heteroskedasticity
 variance of the error displays autoregressive behavior; for instance,
 the time series exhibits successive periods where the error variance
 is relatively large, and successive periods where it is relatively
-small.  This sort of behavior is reckoned to be quite common in asset
+small.  This sort of behavior is reckoned to be common in asset
 markets: an unsettling piece of news can lead to a period of increased
 volatility in the market.
 
@@ -829,15 +829,15 @@ latter can be written as
 u_t = \rho u_{t-1} + \varepsilon_t; \qquad -1 < \rho < 1
 \]
 where the $\varepsilon_t$s are independently and identically
-distributed with mean zero and variance $\sigma^2$.  With an
-AR(1) error, if $\rho$ is positive then a positive value of $u_t$ will
-tend to be followed, with probability greater than 0.5, by a positive
-$u_{t+1}$.  With an ARCH error process, a disturbance $u_t$ of large
-absolute value will tend to be followed by further large absolute
-values, but with no presumption that the successive values will be of
-the same sign.  ARCH in asset prices is a ``stylized fact'' and is
-consistent with market efficiency; on the other hand autoregressive
-behavior of asset prices would violate market efficiency.
+distributed with mean zero and variance $\sigma^2$.  With an AR(1)
+error, if $\rho$ is positive then a positive value of $u_t$ will tend
+to be followed by a positive $u_{t+1}$.  With an ARCH error process, a
+disturbance $u_t$ of large absolute value will tend to be followed by
+further large absolute values, but with no presumption that the
+successive values will be of the same sign.  ARCH in asset prices is a
+``stylized fact'' and is consistent with market efficiency; on the
+other hand autoregressive behavior of asset prices would violate
+market efficiency.
 
 One can test for ARCH of order $q$ in the following
 way:

@@ -251,6 +251,46 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 }
 
 /**
+ * gretl_test_fopen_for_write:
+ * @fname: name of file to be opened.
+ *
+ * Attempts to open @fname for writing; if the opening
+ * is successful the stream is then closed.
+ *
+ * Returns: 0 on success, -1 on filename encoding
+ * failure, or the system errno on failure of fopen().
+ */
+
+int gretl_test_fopen_for_write (const char *fname)
+{
+    gchar *fconv = NULL;
+    FILE *fp = NULL;
+    int err;
+
+    gretl_error_clear();
+    err = maybe_recode_path(fname, stdio_use_utf8, &fconv);
+
+    if (err) {
+	gretl_error_clear();
+	err = -1;
+    } else {
+	if (fconv != NULL) {
+	    fp = fopen(fconv, "w");
+	    g_free(fconv);
+	} else {
+	    fp = fopen(fname, "w");
+	}
+	if (fp != NULL) {
+	    fclose(fp);
+	} else {
+	    err = errno;
+	}
+    }
+
+    return err;
+}
+
+/**
  * gretl_fopen_with_recode:
  * @fname: name of file to be opened.
  * @mode: mode in which to open the file.
@@ -1303,6 +1343,12 @@ char **get_plausible_search_dirs (int type, int *n_dirs)
     if (!err) {
 	/* the user's ~/Library */
 	build_path(dirname, gretl_app_support_dir(), subdir, NULL);
+	err = strings_array_add(&dirs, n_dirs, dirname);
+    }
+#else
+    if (!err) {
+	/* the user's dotdir */
+	build_path(dirname, gretl_dotdir(), subdir, NULL);
 	err = strings_array_add(&dirs, n_dirs, dirname);
     }
 #endif
