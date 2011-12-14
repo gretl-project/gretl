@@ -58,6 +58,7 @@ struct ocset_ {
     int noc;              /* total number of orthogonality conds. */
     int step;             /* number of estimation steps */
     int userwts;          /* got weights matrix from user (1/0) */
+    double scale_wt;      /* auto-scaling for weights matrix  */
     hac_info hinfo;       /* HAC characteristics */
     char Wname[VNAMELEN]; /* name of weighting matrix */
     char **lnames;        /* names of LHS terms in O.C.s */
@@ -116,6 +117,7 @@ static ocset *oc_set_new (void)
 	oc->noc = 0;
 	oc->step = 0;
 	oc->userwts = 0;
+	oc->scale_wt = 1;
 	*oc->Wname = '\0';
 	oc->lnames = NULL;
 	oc->rnames = NULL;
@@ -1648,6 +1650,7 @@ static int maybe_prescale_weights (nlspec *s)
 	    m = pow(10, -m);
 	    fprintf(stderr, "GMM weights matrix: scaling by %g\n", m);
 	    gretl_matrix_multiply_by_scalar(s->oc->W, m);
+	    s->oc->scale_wt = m;
 	}
     }
 
@@ -1746,6 +1749,15 @@ int gmm_calculate (nlspec *s, PRN *prn)
 	fprintf(stderr, "Total gradient evaluations = %d\n", full_grcount);
 #endif
     }
+
+#if 1
+    if (!err && !(s->opt & (OPT_T | OPT_I))) {
+	/* we automatically scaled the identity matrix for weighting
+	   purposes: undo the scaling here
+	*/
+	s->crit /= s->oc->scale_wt;
+    }
+#endif
 
     if (oldcoeff != NULL) {
 	free(oldcoeff);
