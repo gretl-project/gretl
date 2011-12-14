@@ -1176,10 +1176,17 @@ static int find_in_subdir (const char *topdir, char *fname, int code)
 
 #endif /* win32 vs posix */
 
+#define SEARCH_DEBUG 0
+
 static char *search_dir (char *fname, const char *topdir, int code)
 {
     FILE *fp;
     char orig[MAXLEN];
+
+#if SEARCH_DEBUG
+    fprintf(stderr, "search_dir: trying '%s' for '%s'\n",
+	    topdir, fname);
+#endif
 
     strcpy(orig, fname);
 
@@ -1495,6 +1502,11 @@ char *gretl_addpath (char *fname, int script)
     char *tmp = fname;
     FILE *test;
 
+#if SEARCH_DEBUG
+    fprintf(stderr, "gretl_addpath: fname='%s', script=%d\n",
+	    fname, script);
+#endif
+
     strcpy(orig, fname);
 
     if (dotpath(fname) && shelldir_open_dotfile(fname, orig)) {
@@ -1751,6 +1763,9 @@ int getopenfile (const char *line, char *fname, gretlopt opt)
     }
 
     /* try a basic path search on this filename */
+#if SEARCH_DEBUG
+    fprintf(stderr, "getopenfile: calling addpath\n");
+#endif
     fullname = gretl_addpath(fname, script);
 
     if (fullname != NULL && (opt & OPT_S)) {

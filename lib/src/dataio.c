@@ -1872,6 +1872,10 @@ int gretl_get_data (char *fname, DATASET *dset,
 	gzsuff = has_suffix(fname, ".gz");
     }
 
+#if 0
+    fprintf(stderr, "gretl_get_data (1): calling addpath\n");
+#endif
+
     if (gretl_addpath(fname, 0) == NULL) { 
 	/* not found yet */
 	char tryfile[MAXLEN];
@@ -1891,7 +1895,7 @@ int gretl_get_data (char *fname, DATASET *dset,
 	/* or maybe the file is gzipped but lacks a .gz extension?
 	   (backward compatibility) 
 	*/
-	if (!found && !gzsuff) { 
+	if (!found && !gdtsuff && !gzsuff) { 
 	    sprintf(tryfile, "%s.gz", fname);
 	    if (gretl_addpath(tryfile, 0) != NULL) {
 		gzsuff = 1;
