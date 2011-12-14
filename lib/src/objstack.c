@@ -579,6 +579,14 @@ gretl_get_object_and_type (const char *name, void **pp, GretlObjType *type)
 	}
     }
 
+    if (err && !strcmp(name, "$system")) {
+	*pp = get_anonymous_equation_system();
+	if (*pp != NULL) {
+	    *type = GRETL_OBJ_SYS; 
+	    err = 0;
+	}
+    }	
+
     return err;
 }
 

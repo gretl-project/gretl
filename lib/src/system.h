@@ -58,6 +58,7 @@ typedef struct liml_data_ liml_data;
 struct equation_system_ {
     char *name;                 /* user-specified name for system, or NULL */
     int refcount;               /* for saving/deleting */
+    int fd;                     /* function execution depth */
     int t1;                     /* starting observation number */
     int t2;                     /* ending observation number */
     int T;                      /* number of observations per equation */
@@ -106,6 +107,8 @@ equation_system *equation_system_start (const char *line,
 
 char *get_system_name_from_line (const char *s, int context);
 
+equation_system *get_anonymous_equation_system (void);
+
 int equation_system_append (equation_system *sys, const int *list);
 
 int equation_system_append_multi (equation_system *sys, 
@@ -130,6 +133,8 @@ int estimate_named_system (const char *line,
 			   gretlopt opt, PRN *prn);
 
 void equation_system_destroy (equation_system *sys);
+
+void delete_anonymous_equation_system (int level);
 
 int system_want_df_corr (const equation_system *sys);
 

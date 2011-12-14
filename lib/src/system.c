@@ -29,6 +29,8 @@
 #include "gretl_func.h"
 #include "tsls.h"
 
+#include <glib.h>
+
 #define SYSDEBUG 0
 
 enum {
@@ -118,6 +120,70 @@ static int
 add_predet_to_sys (equation_system *sys, const DATASET *dset,
 		   int id, int src, int lag);
 static int sys_check_lists (equation_system *sys, const DATASET *dset);
+
+#define sys_anonymous(s) (strcmp(s, "$system") == 0)
+
+static GList *sysstack;
+
+static equation_system *get_anon_system_at_depth (int fd)
+{
+    equation_system *sys;
+    GList *tmp = sysstack;
+
+    while (tmp != NULL) {
+	sys = tmp->data;
+	if (sys->fd == fd) {
+	    return sys;
+	}
+	tmp = tmp->next;
+    }
+
+    return NULL;
+}
+
+equation_system *get_anonymous_equation_system (void)
+{
+    int fd = gretl_function_depth();
+
+    return get_anon_system_at_depth(fd);
+}
+
+/* The use-case for push_anon_system() is when a function
+   writer wants to define a system and then estimate it
+   by more than one method, or set it as a target for
+   "restrict" before estimation. Inside functions the
+   "name <- system" mechanism is not available, so we
+   save the system "anonymously" instead (under a name
+   of "$system").
+*/
+
+static void push_anon_system (equation_system *sys)
+{
+    equation_system *old = get_anon_system_at_depth(sys->fd);
+
+    if (old != NULL) {
+	sysstack = g_list_remove(sysstack, old);
+	gretl_object_unref(old, GRETL_OBJ_SYS);
+    }
+
+    gretl_object_ref(sys, GRETL_OBJ_SYS);
+    sysstack = g_list_append(sysstack, sys);
+}
+
+/* For use when terminating function execution: if an
+   anonymous equation system was set up at the given
+   level of function execution, trash it.
+*/
+
+void delete_anonymous_equation_system (int level)
+{
+    equation_system *sys = get_anon_system_at_depth(level);
+
+    if (sys != NULL) {
+	sysstack = g_list_remove(sysstack, sys);
+	gretl_object_unref(sys, GRETL_OBJ_SYS);
+    }
+}
 
 static void 
 print_system_equation (const int *list, const DATASET *dset, 
@@ -213,7 +279,7 @@ print_equation_system_info (const equation_system *sys,
     int header = (opt & OPT_H);
     int i, vi, lag;
     
-    if (header && sys->name != NULL) {
+    if (header && sys->name != NULL && !sys_anonymous(sys->name)) {
 	pprintf(prn, "%s %s\n", _("Equation system"), sys->name);
     }
 
@@ -321,6 +387,7 @@ equation_system_new (int method, const char *name, int *err)
     }
 
     sys->refcount = 0;
+    sys->fd = gretl_function_depth();
     sys->method = method;
 
     sys->t1 = sys->t2 = 0;
@@ -939,6 +1006,7 @@ equation_system *equation_system_start (const char *line,
 {
     equation_system *sys = NULL;
     char *sysname = NULL;
+    int anon_sys = 0;
     int method;
 
 #if SYSDEBUG > 1
@@ -966,6 +1034,7 @@ equation_system *equation_system_start (const char *line,
 	/* neither a method nor a name was specified */
 	if (gretl_function_depth() > 0) {
 	    sysname = gretl_strdup("$system");
+	    anon_sys = 1;
 	} else {
 	    gretl_errmsg_set(_(badsystem));
 	    *err = E_DATA;
@@ -979,6 +1048,9 @@ equation_system *equation_system_start (const char *line,
 
     if (!*err) {
 	sys = equation_system_new(method, sysname, err);
+	if (!*err && anon_sys) {
+	    push_anon_system(sys);
+	}
     }
 
     if (sys != NULL) {
@@ -996,8 +1068,12 @@ equation_system *equation_system_start (const char *line,
 #endif
 
     if (sysname != NULL) {
-	if (name != NULL && *name == '\0') {
-	    strcpy(name, sysname);
+	if (name != NULL) {
+	    if (anon_sys) {
+		*name = '\0';
+	    } else if (*name == '\0') {
+		strcpy(name, sysname);
+	    }
 	}
 	free(sysname);
     }
@@ -1771,6 +1847,12 @@ static int sys_check_lists (equation_system *sys,
     return err;
 }
 
+static int sys_has_user_name (equation_system *sys)
+{
+    return (sys->name != NULL && *sys->name != '\0' &&
+	    !sys_anonymous(sys->name));
+}
+
 /**
  * equation_system_finalize:
  * @sys: pre-defined equation system.
@@ -1815,7 +1897,7 @@ int equation_system_finalize (equation_system *sys, DATASET *dset,
 
     err = sys_check_lists(sys, dset);
 
-    if (!err && !(opt & OPT_S) && sys->name != NULL && *sys->name != '\0') {
+    if (!err && !(opt & OPT_S) && sys_has_user_name(sys)) {
 	/* save the system for subsequent estimation: but note that we
 	   should not do this if given OPT_S, for single-equation
 	   LIML */
@@ -1861,8 +1943,13 @@ int estimate_named_system (const char *line, DATASET *dset,
     equation_system *sys = NULL;
     char *sysname = NULL;
     int method;
+    int err = 0;
 
     sysname = get_system_name_from_line(line, SYSNAME_EST);
+
+#if SYSDEBUG
+    fprintf(stderr, "*** estimate_named_system: '%s'\n", sysname);
+#endif
 
     if (sysname == NULL || !strncmp(sysname, "method=", 7)) {
 	/* no name: try for an anonymous system */
@@ -1880,7 +1967,11 @@ int estimate_named_system (const char *line, DATASET *dset,
     if (sys == NULL) {
 	/* we really need a valid sysname */
 	if (sysname != NULL) {
-	    sys = get_equation_system_by_name(sysname);
+	    if (sys_anonymous(sysname)) {
+		sys = get_anonymous_equation_system();
+	    } else {
+		sys = get_equation_system_by_name(sysname);
+	    }
 	    if (sys == NULL) {
 		gretl_errmsg_sprintf(_("'%s': unrecognized name"), sysname);
 		free(sysname);
@@ -1900,12 +1991,17 @@ int estimate_named_system (const char *line, DATASET *dset,
 
     if (method < 0 || method >= SYS_METHOD_MAX) {
 	gretl_errmsg_set("estimate: no valid method was specified");
-	return E_DATA;
+	err = E_DATA;
+    } else {
+	sys->method = method;
+	err = equation_system_estimate(sys, dset, opt, prn);
     }
 
-    sys->method = method;
+#if SYSDEBUG
+    fprintf(stderr, "*** estimate_named_system: returning %d\n", err);
+#endif
 
-    return equation_system_estimate(sys, dset, opt, prn);
+    return err;
 }
 
 /* effective list length, allowance made for IVREG-style lists */
@@ -4030,6 +4126,7 @@ static int sys_print_reconstituted_models (const equation_system *sys,
 int gretl_system_print (equation_system *sys, const DATASET *dset, 
 			gretlopt opt, PRN *prn)
 {
+    const char *name = sys->name;
     int tex = tex_format(prn);
     int nr = system_n_restrictions(sys);
     int i;
@@ -4040,10 +4137,15 @@ int gretl_system_print (equation_system *sys, const DATASET *dset,
 	sys_attach_ldata(sys);
     }
 
+    if (name != NULL && sys_anonymous(name)) {
+	/* don't print internal reference name */
+	name = NULL;
+    }
+
     if (tex) {
 	pputs(prn, "\\begin{center}\n");
-	if (sys->name != NULL) {
-	    pprintf(prn, "%s, %s\\\\\n", I_("Equation system"), sys->name);
+	if (name != NULL) {
+	    pprintf(prn, "%s, %s\\\\\n", I_("Equation system"), name);
 	    pprintf(prn, "%s: %s", I_("Estimator"), 
 		    system_get_full_string(sys, 1));
 	} else {
@@ -4052,8 +4154,8 @@ int gretl_system_print (equation_system *sys, const DATASET *dset,
 	}
     } else {
 	pputc(prn, '\n');
-	if (sys->name != NULL) {
-	    pprintf(prn, "%s, %s\n", _("Equation system"), sys->name);
+	if (name != NULL) {
+	    pprintf(prn, "%s, %s\n", _("Equation system"), name);
 	    pprintf(prn, "%s: %s\n", _("Estimator"), 
 		    system_get_full_string(sys, 0));
 	} else {

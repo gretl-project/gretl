@@ -32,6 +32,7 @@
 #include "gretl_bundle.h"
 #include "flow_control.h"
 #include "kalman.h"
+#include "system.h"
 
 #include <errno.h>
 #include <glib.h>
@@ -6151,6 +6152,9 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 
     /* if any bundles were defined but not returned, clean up */
     destroy_saved_bundles_at_level(d);
+
+    /* if any anonymous equations system defined: clean up */
+    delete_anonymous_equation_system(d);
 
     pop_program_state();
 

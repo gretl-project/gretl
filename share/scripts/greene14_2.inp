@@ -1,6 +1,6 @@
 # replicate Example 14.2 (SUR system) from Greene's 5th edition
 open greene13_1.gdt
-system type=sur
+system method=sur
  equation I_GM const F_GM C_GM
  equation I_CH const F_CH C_CH
  equation I_GE const F_GE C_GE

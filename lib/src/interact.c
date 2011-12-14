@@ -4108,8 +4108,8 @@ static void gui_save_system (ExecState *s)
        all we have to do is invoke the GUI callback, if
        appropriate
     */
-    if (s->callback != NULL && *s->cmd->savename != '\0' &&
-	gretl_in_gui_mode()) {
+    if (gretl_in_gui_mode() && s->callback != NULL && 
+	*s->cmd->savename != '\0') {
 	s->callback(s, s->sys, GRETL_OBJ_SYS);
     }    
 }
