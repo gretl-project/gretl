@@ -10546,7 +10546,15 @@ static int LHS_matrix_reusable (parser *p)
     return ok;
 }
 
-/* generating a matrix, and there's a pre-existing LHS matrix */
+/* Generating a matrix, and there's a pre-existing LHS matrix:
+   note that some functionality in nls.c works on the assumption
+   that when a new matrix is generated and assigned to
+   an existing matrix of the same dimensions, the existing
+   (left-hand side) gretl_matrix will be reused (its content
+   updated but the original pointer preserved). This may be
+   too fragile, but unless it's changed it is important not
+   to mess with the LHS_matrix_reusable() criterion.
+*/
 
 static void assign_to_matrix (parser *p)
 {

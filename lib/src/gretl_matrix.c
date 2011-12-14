@@ -8735,6 +8735,12 @@ int gretl_matrix_inplace_lag (gretl_matrix *targ,
     return 0;
 }
 
+/* the most common use-case here will be updating the t1 and t2
+   members of targ's info based on src's info: this naturally
+   arises when a new m x n matrix is generated and its content is
+   assigned to an existing m x n matrix
+*/
+
 static int gretl_matrix_copy_info (gretl_matrix *targ,
 				   const gretl_matrix *src)
 {
