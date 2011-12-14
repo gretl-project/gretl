@@ -71,9 +71,11 @@ void database_description_dialog (const char *binname);
 int select_var_from_list_with_opt (const int *list, 
 				   const char *query,
 				   dialog_opts *opts,
-				   int hcode);
+				   int hcode,
+				   GtkWidget *parent);
 
-int select_var_from_list (const int *list, const char *query);
+int select_var_from_list (const int *list, const char *query,
+			  GtkWidget *parent);
 
 void sample_range_dialog (GtkAction *action, gpointer p);
 
@@ -87,7 +89,8 @@ void data_compact_dialog (int spd, int *target_pd, int *mon_start,
 
 void data_expand_dialog (int spd, int *interpol, GtkWidget *parent);
 
-int pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax);
+int pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
+		  GtkWidget *parent);
 
 int density_dialog (int vnum, double *bw);
 

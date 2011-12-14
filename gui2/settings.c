@@ -429,13 +429,7 @@ static int write_OK (gchar *dirname)
 	gchar  *target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
 
 	if (target != NULL) {
-	    FILE *fp = gretl_try_fopen(target, "w");
-
-	    if (fp != NULL) {
-		ok = 1;
-		fclose(fp);
-		gretl_remove(target);
-	    }
+	    ok = (gretl_test_fopen(target, "w") == 0);
 	    g_free(target);
 	}
     }

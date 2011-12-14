@@ -1993,7 +1993,7 @@ static char *get_writable_target (int code, int op, char *objname,
     } 
 
     if (!err) {
-	err = gretl_test_fopen_for_write(targ);
+	err = gretl_test_fopen(targ, "w");
 	if (err == EACCES && !done_home) { 
 	    /* permissions problem: write to home dir instead */
 	    err = get_target_in_home(targ, code, objname, ext);

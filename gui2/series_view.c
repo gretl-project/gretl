@@ -411,7 +411,8 @@ void multi_series_view_sort_by (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-    v = select_var_from_list(sview->list, _("Variable to sort by"));
+    v = select_var_from_list(sview->list, _("Variable to sort by"),
+			     vwin->main);
     if (v < 0) {
 	/* canceled */
 	return;

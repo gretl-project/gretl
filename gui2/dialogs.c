@@ -3230,9 +3230,9 @@ static void dialog_add_opts (dialog_opts *opts, GtkWidget *vbox)
 int select_var_from_list_with_opt (const int *list, 
 				   const char *query,
 				   dialog_opts *opts,
-				   int hcode)
+				   int hcode,
+				   GtkWidget *parent)
 {
-    unsigned char flags;
     GtkWidget *tmp, *vbox, *hbox;
     GtkWidget *dlg, *combo;
     gchar *title;
@@ -3240,8 +3240,7 @@ int select_var_from_list_with_opt (const int *list,
 
     title = g_strdup_printf("gretl: %s", _("select variable"));
 
-    flags = (hcode)? GRETL_DLG_BLOCK : (GRETL_DLG_MODAL | GRETL_DLG_BLOCK);
-    dlg = gretl_dialog_new(title, NULL, flags);
+    dlg = gretl_dialog_new(title, parent, GRETL_DLG_BLOCK);
     g_free(title);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
@@ -3293,9 +3292,11 @@ int select_var_from_list_with_opt (const int *list,
     return selvar;
 }
 
-int select_var_from_list (const int *list, const char *query)
+int select_var_from_list (const int *list, const char *query,
+			  GtkWidget *parent)
 {
-    return select_var_from_list_with_opt(list, query, NULL, 0);
+    return select_var_from_list_with_opt(list, query, NULL, 0,
+					 parent);
 }
 
 /* material relating to the data compaction dialog */
@@ -4357,7 +4358,8 @@ static void pergm_set_bandwidth (GtkSpinButton *spin, int *bw)
     *bw = gtk_spin_button_get_value_as_int(spin);
 }
 
-int pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax)
+int pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
+		  GtkWidget *parent)
 {
     GtkWidget *dialog, *vbox, *hbox;
     GtkWidget *button, *spin, *w;
@@ -4368,7 +4370,7 @@ int pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax)
 	return ret;
     }
 
-    dialog = gretl_dialog_new(_("gretl: periodogram"), NULL, 
+    dialog = gretl_dialog_new(_("gretl: periodogram"), parent, 
 			      GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 

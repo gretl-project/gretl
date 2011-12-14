@@ -1151,18 +1151,16 @@ void set_gretl_tex_preamble (void)
 {
     const char *wdir = gretl_workdir();
     char local[16], test[MAXLEN];
-    FILE *fp;
-    int gotit = 0;
+    int err, gotit = 0;
 
     get_gretltex_local(local);
 
     /* localized preamble file in working dir? */
     if (*local != '\0') {
 	sprintf(test, "%s%s", wdir, local);
-	fp = gretl_try_fopen(test, "r");
-	if (fp != NULL) {
+	err = gretl_test_fopen(test, "r");
+	if (!err) {
 	    strcpy(tex_preamble_file, test);
-	    fclose(fp);
 	    gotit = 1;
 	}
     }
@@ -1170,10 +1168,9 @@ void set_gretl_tex_preamble (void)
     if (!gotit) {
 	/* regular preamble file in working dir? */
 	sprintf(test, "%sgretlpre.tex", wdir);
-	fp = gretl_try_fopen(test, "r");
-	if (fp != NULL) {
+	err = gretl_test_fopen(test, "r");
+	if (!err) {
 	    strcpy(tex_preamble_file, test);
-	    fclose(fp);
 	    gotit = 1;
 	}
     }
@@ -1185,10 +1182,9 @@ void set_gretl_tex_preamble (void)
 	    /* localized preamble file in standard working dir? */
 	    if (*local != '\0') {
 		sprintf(test, "%s%s", ddir, local);
-		fp = gretl_try_fopen(test, "r");
-		if (fp != NULL) {
+		err = gretl_test_fopen(test, "r");
+		if (!err) {
 		    strcpy(tex_preamble_file, test);
-		    fclose(fp);
 		    gotit = 1;
 		}
 	    }
@@ -1196,10 +1192,9 @@ void set_gretl_tex_preamble (void)
 	    if (!gotit) {
 		/* regular preamble file in standard working dir */
 		sprintf(test, "%sgretlpre.tex", ddir);
-		fp = gretl_try_fopen(test, "r");
-		if (fp != NULL) {
+		err = gretl_test_fopen(test, "r");
+		if (!err) {
 		    strcpy(tex_preamble_file, test);
-		    fclose(fp);
 		    gotit = 1;
 		}
 	    }

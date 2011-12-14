@@ -251,17 +251,18 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 }
 
 /**
- * gretl_test_fopen_for_write:
+ * gretl_test_fopen:
  * @fname: name of file to be opened.
+ * @mode: mode as used with fopen().
  *
- * Attempts to open @fname for writing; if the opening
+ * Attempts to open @fname in the given mode; if the opening
  * is successful the stream is then closed.
  *
  * Returns: 0 on success, -1 on filename encoding
  * failure, or the system errno on failure of fopen().
  */
 
-int gretl_test_fopen_for_write (const char *fname)
+int gretl_test_fopen (const char *fname, const char *mode)
 {
     gchar *fconv = NULL;
     FILE *fp = NULL;
@@ -273,15 +274,24 @@ int gretl_test_fopen_for_write (const char *fname)
     if (err) {
 	gretl_error_clear();
 	err = -1;
-    } else {
-	if (fconv != NULL) {
-	    fp = fopen(fconv, "w");
-	    g_free(fconv);
-	} else {
-	    fp = fopen(fname, "w");
-	}
+    } else if (fconv != NULL) {
+	fp = fopen(fconv, mode);
 	if (fp != NULL) {
 	    fclose(fp);
+	    if (*mode == 'w') {
+		gretl_remove(fconv);
+	    }
+	} else {
+	    err = errno;
+	}
+	g_free(fconv);
+    } else {
+	fp = fopen(fname, mode);
+	if (fp != NULL) {
+	    fclose(fp);
+	    if (*mode == 'w') {
+		gretl_remove(fname);
+	    }
 	} else {
 	    err = errno;
 	}
@@ -343,39 +353,6 @@ FILE *gretl_fopen_with_recode (const char *fname, const char *mode,
 
     if (errno != 0) {
 	gretl_errmsg_set_from_errno(fname);
-    }
-
-    return fp;
-}
-
-/**
- * gretl_try_fopen:
- * @fname: name of file to be opened.
- * @mode: mode in which to open the file.
- *
- * Basically the same as gretl_fopen(), except that no
- * error message is logged if @fname cannot be opened.
- *
- * Returns: file pointer, or %NULL on failure.
- */
-
-FILE *gretl_try_fopen (const char *fname, const char *mode)
-{
-    gchar *fconv = NULL;
-    FILE *fp = NULL;
-    int err;
-
-    gretl_error_clear();
-
-    err = maybe_recode_path(fname, stdio_use_utf8, &fconv);
-
-    if (!err) {
-	if (fconv != NULL) {
-	    fp = fopen(fconv, mode);
-	    g_free(fconv);
-	} else {
-	    fp = fopen(fname, mode);
-	}
     }
 
     return fp;
@@ -1001,10 +978,9 @@ int gretl_path_prepend (char *file, const char *path)
 static int try_open_file (char *targ, const char *finddir, 
 			  WIN32_FIND_DATA *fdata, int code)
 {
-    FILE *fp = NULL;
     char tmp[MAXLEN];
     int n = strlen(finddir);
-    int found = 0;
+    int err, found = 0;
     
     strcpy(tmp, finddir);
     tmp[n-1] = '\0';
@@ -1012,15 +988,14 @@ static int try_open_file (char *targ, const char *finddir,
     strcat(tmp, "\\");
     strcat(tmp, targ);
 
-    fp = gretl_try_fopen(tmp, "r");
-    if (fp == NULL && code == DATA_SEARCH) {
+    err = gretl_test_fopen(tmp, "r");
+    if (err && code == DATA_SEARCH) {
 	if (add_suffix(tmp, ".gdt")) {
-	    fp = gretl_try_fopen(tmp, "r");
+	    err = gretl_test_fopen(tmp, "r");
 	}
     }
 
-    if (fp != NULL) {
-	fclose(fp);
+    if (!err) {
 	strcpy(targ, tmp);
 	found = 1;
     }	
@@ -1095,24 +1070,22 @@ static int find_in_subdir (const char *topdir, char *fname, int code)
 static int try_open_file (char *targ, const char *finddir, 
 			  struct dirent *dirent, int code)
 {
-    FILE *fp = NULL;
     char tmp[MAXLEN];
-    int found = 0;
+    int err, found = 0;
     
     strcpy(tmp, finddir);
     strcat(tmp, dirent->d_name);
     strcat(tmp, "/");
     strcat(tmp, targ);
 
-    fp = gretl_try_fopen(tmp, "r");
-    if (fp == NULL && code == DATA_SEARCH) {
+    err = gretl_test_fopen(tmp, "r");
+    if (err && code == DATA_SEARCH) {
 	if (add_suffix(tmp, ".gdt")) {
-	    fp = gretl_try_fopen(tmp, "r");
+	    err = gretl_test_fopen(tmp, "r");
 	}
     }
 
-    if (fp != NULL) {
-	fclose(fp);
+    if (!err) {
 	strcpy(targ, tmp);
 	found = 1;
     }	
@@ -1180,8 +1153,8 @@ static int find_in_subdir (const char *topdir, char *fname, int code)
 
 static char *search_dir (char *fname, const char *topdir, int code)
 {
-    FILE *fp;
     char orig[MAXLEN];
+    int err;
 
 #if SEARCH_DEBUG
     fprintf(stderr, "search_dir: trying '%s' for '%s'\n",
@@ -1191,21 +1164,18 @@ static char *search_dir (char *fname, const char *topdir, int code)
     strcpy(orig, fname);
 
     if (gretl_path_prepend(fname, topdir) == 0) {
-	fp = gretl_try_fopen(fname, "r");
-	if (fp != NULL) {
-	    fclose(fp);
+	err = gretl_test_fopen(fname, "r");
+	if (!err) {
 	    return fname;
 	}
 	if (code == DATA_SEARCH && add_suffix(fname, ".gdt")) {
-	    fp = gretl_try_fopen(fname, "r");
-	    if (fp != NULL) {
-		fclose(fp);
+	    err = gretl_test_fopen(fname, "r");
+	    if (!err) {
 		return fname;
 	    }
 	} else if (code == FUNCS_SEARCH && add_suffix(fname, ".gfn")) {
-	    fp = gretl_try_fopen(fname, "r");
-	    if (fp != NULL) {
-		fclose(fp);
+	    err = gretl_test_fopen(fname, "r");
+	    if (!err) {
 		return fname;
 	    }
 	}	    
@@ -1415,7 +1385,7 @@ char *gretl_function_package_get_path (const char *name,
     char *ret = NULL;
     char path[FILENAME_MAX];
     char **dirs;
-    int found = 0;
+    int err, found = 0;
     int i, n_dirs;
 
     *path = '\0';
@@ -1439,13 +1409,10 @@ char *gretl_function_package_get_path (const char *name,
 	    while ((dirent = readdir(dir)) != NULL && !found) {
 		dname = dirent->d_name;
 		if (!strcmp(dname, name)) {
-		    FILE *fp;
-
 		    sprintf(path, "%s%c%s%c%s.gfn", fndir, SLASH, 
 			    dname, SLASH, dname);
-		    fp = gretl_try_fopen(path, "r");
-		    if (fp != NULL) {
-			fclose(fp);
+		    err = gretl_test_fopen(path, "r");
+		    if (!err) {
 			found = 1;
 		    } else {
 			*path = '\0';
@@ -1500,7 +1467,7 @@ char *gretl_addpath (char *fname, int script)
 {
     char orig[MAXLEN];
     char *tmp = fname;
-    FILE *test;
+    int err;
 
 #if SEARCH_DEBUG
     fprintf(stderr, "gretl_addpath: fname='%s', script=%d\n",
@@ -1514,11 +1481,10 @@ char *gretl_addpath (char *fname, int script)
     }  
 
     /* try opening filename as given */
-    test = gretl_try_fopen(fname, "r");
+    err = gretl_test_fopen(fname, "r");
 
-    if (test != NULL) { 
+    if (!err) { 
 	/* fine, got it */
-	fclose(test); 
 	if (!fname_has_path(fname)) {
 	    make_path_absolute(fname, orig);
 	}

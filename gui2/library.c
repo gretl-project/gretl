@@ -2777,7 +2777,7 @@ void do_reset (GtkAction *action, gpointer p)
 
     resp = radio_dialog(_("gretl: RESET test"),
 			_("RESET specification test"),
-			optstrs, 4, 0, RESET, NULL);
+			optstrs, 4, 0, RESET, vwin->main);
 
     if (canceled(resp) || bufopen(&prn)) {
 	return;
@@ -5074,7 +5074,8 @@ enum {
     MODEL_VAR
 };
 
-static void real_do_corrgm (DATASET *dset, int code)
+static void real_do_corrgm (DATASET *dset, int code,
+			    GtkWidget *parent)
 {
     gchar *title;
     int T = sample_size(dset);
@@ -5085,7 +5086,7 @@ static void real_do_corrgm (DATASET *dset, int code)
     title = gretl_window_title(_("correlogram"));
 
     err = spin_dialog(title, NULL, &order, _("Maximum lag:"),
-		      1, T - 1, CORRGM, NULL);
+		      1, T - 1, CORRGM, parent);
 
     if (err < 0 || bufopen(&prn)) {
 	g_free(title);
@@ -5122,7 +5123,7 @@ static void real_do_corrgm (DATASET *dset, int code)
 
 void do_corrgm (void)
 {
-    real_do_corrgm(dataset, SELECTED_VAR);
+    real_do_corrgm(dataset, SELECTED_VAR, NULL);
 }
 
 static int tmp_add_fit_resid (MODEL *pmod, DATASET *dset, int code)
@@ -5154,7 +5155,7 @@ void residual_correlogram (GtkAction *action, gpointer p)
 	return;
     }
 
-    real_do_corrgm(dset, MODEL_VAR);
+    real_do_corrgm(dset, MODEL_VAR, vwin->main);
 
     trim_dataset(pmod, origv);
 }
@@ -5165,7 +5166,8 @@ void residual_correlogram (GtkAction *action, gpointer p)
    as the last series.
 */
 
-static void real_do_pergm (DATASET *dset, int code)
+static void real_do_pergm (DATASET *dset, int code,
+			   GtkWidget *parent)
 {
     PRN *prn;
     int T = sample_size(dset);
@@ -5175,7 +5177,7 @@ static void real_do_pergm (DATASET *dset, int code)
 
     width = auto_spectrum_order(T, OPT_O);
 
-    resp = pergm_dialog(&opt, &width, 2, T / 2);
+    resp = pergm_dialog(&opt, &width, 2, T / 2, parent);
 
     if (canceled(resp) || bufopen(&prn)) {
 	return;
@@ -5213,7 +5215,7 @@ static void real_do_pergm (DATASET *dset, int code)
 
 void do_pergm (GtkAction *action)
 {
-    real_do_pergm(dataset, SELECTED_VAR);
+    real_do_pergm(dataset, SELECTED_VAR, NULL);
 }
 
 void residual_periodogram (GtkAction *action, gpointer p)
@@ -5231,7 +5233,7 @@ void residual_periodogram (GtkAction *action, gpointer p)
     }
 
     if (!err) {
-	real_do_pergm(dset, MODEL_VAR);
+	real_do_pergm(dset, MODEL_VAR, vwin->main);
 	trim_dataset(pmod, origv); 
     }
 }
@@ -6689,7 +6691,7 @@ static int maybe_reorder_list (char *liststr)
     if (err) {
 	return err;
     } else {
-	int xvar = select_var_from_list(list, query);
+	int xvar = select_var_from_list(list, query, NULL);
 
 	if (xvar < 0) {
 	    /* the user cancelled */
@@ -7331,7 +7333,7 @@ void gui_sort_data (void)
 	}
 
 	v = select_var_from_list_with_opt(list, _("Select sort key"),
-					  opts, DATASORT);
+					  opts, DATASORT, NULL);
 	if (v > 0) {
 	    int list[] = { 1, v };
 
