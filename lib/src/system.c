@@ -587,6 +587,19 @@ static int sys_check_sepcount (const int *list, int n)
     return err;
 }
 
+static int sys_check_eqn_list (const int *list)
+{
+    int dupv = gretl_list_duplicates(list, EQUATION);
+
+    if (dupv >= 0) {
+	gretl_errmsg_sprintf(_("variable %d duplicated in the "
+			       "command list."), dupv);
+	return E_DATA;
+    } else {
+	return 0;
+    }
+}
+
 /* @LY is a simple list of g regressands; @LX is either a common
    list of regressors or it should contain g sub-lists, one
    per equation.
@@ -653,6 +666,7 @@ static int add_equations_from_lists (equation_system *sys,
 		    }
 		} 
 	    }
+	    err = sys_check_eqn_list(list);
 	}
     }
 
@@ -678,6 +692,9 @@ static int add_equations_from_matrix (equation_system *sys,
 
     for (i=0; i<m->rows && !err; i++) {
 	list = matrix_row_to_list(m, i, dset, &err);
+	if (!err) {
+	    err = sys_check_eqn_list(list);
+	}
 	if (!err) {
 	    sys->lists[n++] = list;
 	}
@@ -871,19 +888,11 @@ static int get_estimation_method_from_line (const char *s)
     char mstr[9];
     int method = -1;
 
-    if (p != NULL) {
-	p += 7;
-    } else {
-	p = strstr(s, " type");
-	if (p != NULL) {
-	    p += 5;
-	}
-    }
-
     if (p == NULL) {
 	return -1;
-    }
+    } 
 
+    p += 7;
     while (isspace((unsigned char) *p) || *p == '=') {
 	p++;
     }
@@ -900,9 +909,8 @@ static int get_estimation_method_from_line (const char *s)
  * equation_system_start:
  * @line: command line.
  * @name: On input, name to be given to system, if any (otherwise
- * may be NULL or an empty string). On output, see below.
- * on output, if non-NULL, name given via "name=foo" mechanism in
- * @line, if present.
+ * may be NULL or an empty string). On output, if non-NULL, the name 
+ * given via "name=foo" mechanism in @line, if present.
  * @opt: may include OPT_I for iterative estimation (will be
  * ignored if the the estimation method does not support it).
  * @err: location to receive error code.
@@ -956,8 +964,12 @@ equation_system *equation_system_start (const char *line,
 
     if (method < 0 && sysname == NULL) {
 	/* neither a method nor a name was specified */
-	gretl_errmsg_set(_(badsystem));
-	*err = E_DATA;
+	if (gretl_function_depth() > 0) {
+	    sysname = gretl_strdup("$system");
+	} else {
+	    gretl_errmsg_set(_(badsystem));
+	    *err = E_DATA;
+	}
     }
 
     if (strstr(line, "save=")) {
@@ -1584,6 +1596,9 @@ static int sys_check_lists (equation_system *sys,
     k = 0;
 
     for (i=0; i<sys->neqns; i++) {
+#if SYSDEBUG
+	printlist(ylist, "incoming equation sys->list");
+#endif
 	slist = sys->lists[i];
 	vj = slist[1];
 	if (!in_gretl_list(ylist, vj)) {
@@ -1660,7 +1675,6 @@ static int sys_check_lists (equation_system *sys,
 	}
     }
 
-
     /* By elimination from biglist, using ylist, compose a maximal
        list of exogenous and predetermined variables, "xplist".
     */
@@ -1676,7 +1690,13 @@ static int sys_check_lists (equation_system *sys,
     for (j=1; j<=sys->biglist[0]; j++) {
 	vj = sys->biglist[j];
 	if (!in_gretl_list(sys->ylist, vj)) {
-	    xplist[++k] = vj;
+	    if (k == nxp) {
+		fprintf(stderr, "xplist list overflow\n");
+		err = E_DATA;
+		goto bailout;
+	    } else {
+		xplist[++k] = vj;
+	    }
 	}
     }
 

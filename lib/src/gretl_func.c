@@ -5825,6 +5825,9 @@ static int unlocalize_list (const char *lname, struct fnarg *arg,
     } else {
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
+	    if (vi == LISTSEP) {
+		continue;
+	    }
 	    if (var_is_listarg(dset, vi)) {
 		unset_var_listarg(dset, vi);
 		STACK_LEVEL(dset, vi) = upd;
