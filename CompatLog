@@ -5,12 +5,6 @@ regressors (that is, exogenous terms that are restricted to the
 cointegration space) as per Ox and PcGive: we don't lag these
 terms in the initial OLS regressions, as we did before.
 
-A long, long time ago some gzipped gretl data files may have
-had the double suffix ".gdt.gz". Such files will no longer be
-found automatically. If you have any such files, rename them
-to have the plain ".gdt" extension (it's OK if they are gzipped,
-that is handled by gretl).
-
 The optional "ymax" parameter to the "logistic" estimation
 command is now treated as a regular option. This means that
 any scripts that use the old syntax "ymax=value" should be
