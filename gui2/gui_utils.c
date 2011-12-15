@@ -1634,7 +1634,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 {
     static windata_t *script_out;
     windata_t *vwin;
-    int record, w, nlines;
+    int record, width, nlines;
 
     if (role == SCRIPT_OUT && script_out != NULL) {
 	return reuse_script_out(script_out, prn);
@@ -1684,10 +1684,10 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
     }
 
-    gretl_print_get_size(prn, &w, &nlines);
+    gretl_print_get_size(prn, &width, &nlines);
 #if 1
-    if (role != SCRIPT_OUT && w > 0 && w + 4 < hsize) {
-	hsize = w + 4;
+    if (role != SCRIPT_OUT && width > 0 && width + 2 < hsize) {
+	hsize = width + 2;
     }
 #endif
 
@@ -2047,8 +2047,9 @@ static void add_text_closer (windata_t *vwin)
    popups.
 */
 
-windata_t *view_formatted_text_buffer (const gchar *title, const char *buf, 
-				       int width, int height)
+windata_t *view_formatted_text_buffer (const gchar *title, 
+				       const char *buf, 
+				       int hsize, int vsize)
 {
     int minimal = (title == NULL);
     windata_t *vwin;
@@ -2062,7 +2063,7 @@ windata_t *view_formatted_text_buffer (const gchar *title, const char *buf,
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
 
-    create_text(vwin, width, height, 0, FALSE);
+    create_text(vwin, hsize, vsize, 0, FALSE);
 
     if (minimal) {
 	/* no scrolling apparatus */
@@ -2167,7 +2168,7 @@ windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 {
     windata_t *vwin;
     const char *buf;
-    int w, nlines;
+    int width, nlines;
 
     if (title == NULL) {
 	gchar *s = g_strdup_printf(_("gretl: model %d"), pmod->ID);
@@ -2194,9 +2195,9 @@ windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
 
-    gretl_print_get_size(prn, &w, &nlines);
-    if (w + 2 < hsize) {
-	hsize = w + 2;
+    gretl_print_get_size(prn, &width, &nlines);
+    if (width > 0 && width + 2 < hsize) {
+	hsize = width + 2;
     }
 
     create_text(vwin, hsize, vsize, nlines, FALSE);

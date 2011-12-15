@@ -92,6 +92,8 @@ char *maybe_iso_gettext (const char *msgid);
 
 void set_gretl_charset (void);
 
+void get_suitable_tex_encoding (char *encfile);
+
 char *sprint_l2_to_ascii (char *targ, const char *s, size_t len);
 
 int get_utf_width (const char *str, int width);
@@ -103,7 +105,7 @@ int chinese_locale (void);
 # define UTF_WIDTH(s, w) get_utf_width(s, w) 
 # define TRANSLATED_WIDTH(s) get_translated_width(s)
 
-#else
+#else /* !ENABLE_NLS */
 
 #define gettext(s) s
 #define iso_gettext(s) s

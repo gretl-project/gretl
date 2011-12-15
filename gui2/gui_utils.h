@@ -95,8 +95,9 @@ view_file_with_title (const char *filename, int editable, int del_file,
 		      int hsize, int vsize, int role, 
 		      const char *given_title);
 
-windata_t *view_formatted_text_buffer (const gchar *title, const char *buf, 
-				       int width, int height);
+windata_t *view_formatted_text_buffer (const gchar *title, 
+				       const char *buf, 
+				       int hsize, int vsize);
 
 gchar *gretl_window_title (const char *s);
 

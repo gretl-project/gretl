@@ -37,12 +37,12 @@ formatting.  Typically this is either:
 \begin{itemize}
 \item a program called \app{latex} that generates so-called DVI
   (device-independent) output, or
-\item a program called \app{pdflatex} that generates PDF
-  output.\footnote{Experts will be aware of something called ``plain
-    \TeX'', which is processed using the program \app{tex}.  The great
-    majority of \TeX\ users, however, use the \LaTeX\ macros,
-    initially developed by Leslie Lamport.  \app{Gretl} does not
-    support plain \TeX.}
+\item (more commonly nowadays) a program called \app{pdflatex} that
+  generates PDF output.\footnote{Experts will be aware of something
+    called ``plain \TeX'', which is processed using the program
+    \app{tex}.  The great majority of \TeX\ users, however, use the
+    \LaTeX\ macros, initially developed by Leslie Lamport.
+    \app{Gretl} does not support plain \TeX.}
 \end{itemize}
 
 For previewing, one uses either a DVI viewer (typically \app{xdvi} on
@@ -274,8 +274,8 @@ changed if \app{gretl} finds itself running on a system where UTF-8
 is the default character encoding --- see section~\ref{tex-encode}
 below.
 
-In addition, if you should wish to typeset \app{gretl} output in more
-than one language, you can set up per-language preamble files.  A
+In addition, if you wish to typeset \app{gretl} output in more than
+one language, you can set up per-language preamble files.  A
 ``localized'' preamble file is identified by a name of the form
 \verb|gretlpre_xx.tex|, where \texttt{xx} is replaced by the first two
 letters of the current setting of the \texttt{LANG} environment

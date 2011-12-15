@@ -1131,7 +1131,7 @@ static PRN *make_rtf_prn (int ID, char *fname, int *err)
 
 static char tex_preamble_file[MAXLEN];
 
-static const char *get_gretltex_local (char *local)
+static const char *set_tex_locale_filename (char *local)
 {
     char *lang = getenv("LANG");
 
@@ -1147,17 +1147,14 @@ static const char *get_gretltex_local (char *local)
     return local;
 }
 
-void set_gretl_tex_preamble (void)
+static int find_gretlpre (const char *path, const char *localname)
 {
-    const char *wdir = gretl_workdir();
-    char local[16], test[MAXLEN];
+    char test[MAXLEN];
     int err, gotit = 0;
 
-    get_gretltex_local(local);
-
-    /* localized preamble file in working dir? */
-    if (*local != '\0') {
-	sprintf(test, "%s%s", wdir, local);
+    if (*localname != '\0') {
+	/* localized preamble file? */
+	sprintf(test, "%s%s", path, localname);
 	err = gretl_test_fopen(test, "r");
 	if (!err) {
 	    strcpy(tex_preamble_file, test);
@@ -1166,8 +1163,8 @@ void set_gretl_tex_preamble (void)
     }
 
     if (!gotit) {
-	/* regular preamble file in working dir? */
-	sprintf(test, "%sgretlpre.tex", wdir);
+	/* regular preamble file? */
+	sprintf(test, "%sgretlpre.tex", path);
 	err = gretl_test_fopen(test, "r");
 	if (!err) {
 	    strcpy(tex_preamble_file, test);
@@ -1175,31 +1172,34 @@ void set_gretl_tex_preamble (void)
 	}
     }
 
+    return gotit;
+}
+
+void set_gretl_tex_preamble (void)
+{
+    const char *path = gretl_workdir();
+    char localname[16];
+    int gotit;
+
+    set_tex_locale_filename(localname);
+
+    gotit = find_gretlpre(path, localname);
+
     if (!gotit) {
-	const char *ddir = maybe_get_default_workdir();
-
-	if (ddir != NULL) {
-	    /* localized preamble file in standard working dir? */
-	    if (*local != '\0') {
-		sprintf(test, "%s%s", ddir, local);
-		err = gretl_test_fopen(test, "r");
-		if (!err) {
-		    strcpy(tex_preamble_file, test);
-		    gotit = 1;
-		}
-	    }
-
-	    if (!gotit) {
-		/* regular preamble file in standard working dir */
-		sprintf(test, "%sgretlpre.tex", ddir);
-		err = gretl_test_fopen(test, "r");
-		if (!err) {
-		    strcpy(tex_preamble_file, test);
-		    gotit = 1;
-		}
-	    }
+	path = maybe_get_default_workdir();
+	if (path != NULL) {
+	    gotit = find_gretlpre(path, localname);
 	}
-    } 
+    }
+    
+    if (!gotit) {
+#ifdef OSX_BUILD
+	path = gretl_app_support_dir();
+#else
+	path = gretl_dotdir();
+#endif
+	gotit = find_gretlpre(path, localname);
+    }
 
     gretl_error_clear();
 }
@@ -1287,9 +1287,17 @@ void gretl_tex_preamble (PRN *prn, int fmt)
 	if (tex_use_utf) {
 	    pputs(prn, "\\usepackage{ucs}\n");
 	    pputs(prn, "\\usepackage[utf8x]{inputenc}\n");
-	} else {
-	    pputs(prn, "\\usepackage[latin1]{inputenc}\n");
+	} 
+
+#ifdef ENABLE_NLS
+	if (!tex_use_utf) {
+	    char encfile[16];
+
+	    get_suitable_tex_encoding(encfile);
+	    pprintf(prn, "\\usepackage[%s]{inputenc}\n", encfile);
 	}
+#endif
+
 	if (lang != NULL && !strncmp(lang, "ru", 2)) {
 	    pputs(prn, "\\usepackage[russian]{babel}\n");
 	}

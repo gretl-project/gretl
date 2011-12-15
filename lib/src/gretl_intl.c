@@ -272,7 +272,28 @@ static const char *get_gretl_charset (void)
     return NULL;
 }
 
-#endif
+void get_suitable_tex_encoding (char *encfile)
+{
+    int done = 0;
+
+# ifdef WIN32
+    if (gretl_cpage > 0) {
+	sprintf(encfile, "cp%d", gretl_cpage);
+	done = 1;
+    }
+# else
+    if (gretl_cset_maj == 8859 && gretl_cset_min > 0) {
+	sprintf(encfile, "latin%d", gretl_cset_min);
+	done = 1;
+    } 
+# endif
+
+    if (!done) {
+	strcpy(encfile, "latin1");
+    }
+}
+
+#endif /* ENABLE_NLS */
 
 int iso_latin_version (void)
 {

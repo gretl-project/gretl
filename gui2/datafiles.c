@@ -396,7 +396,7 @@ static int get_file_collections_from_dir (const char *dname, DIR *dir,
 #endif
 	    if (!strcmp(dirent->d_name + len - 12, "descriptions")) {
 		coll = file_collection_new(dname, dirent->d_name, err);
-		if (coll != NULL && !*err) {
+		if (coll != NULL) {
 		    *err = push_collection(coll);
 		    if (!*err) {
 			n++;
@@ -554,7 +554,7 @@ static int build_file_collections (void)
 	    }
 	}
 	if (!err && n == 0) {
-	    err = 1;
+	    err = E_DATA;
 	}
 	if (!err) {
 	    sort_data_stack();
@@ -567,10 +567,6 @@ static int build_file_collections (void)
     print_data_collections();
     print_script_collections();
 #endif
-
-    if (err) {
-	errbox("Error building file collections");
-    }
 
     return err;
 }
@@ -1601,6 +1597,11 @@ void display_files (int code, gpointer p)
 	filebox = files_window(vwin);
     }
 
+    if (filebox == NULL) {
+	gtk_widget_destroy(vwin->main);
+	return;
+    }
+
     gtk_box_pack_start(GTK_BOX(vwin->vbox), filebox, TRUE, TRUE, 0);
 
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
@@ -2244,13 +2245,17 @@ static GtkWidget *files_notebook (windata_t *vwin, int code)
     GtkWidget *label;
     char wnum[4];
     file_collection *coll;
-    int j;
+    int j, err = 0;
 
     if (code != TEXTBOOK_DATA && code != PS_FILES) {
 	return NULL;
     }
 
-    build_file_collections(); /* FIXME check for errors */
+    err = build_file_collections();
+    if (err) {
+	gui_errmsg(err);
+	return NULL;
+    }
 
     notebook = gtk_notebook_new();
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);

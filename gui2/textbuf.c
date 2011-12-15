@@ -707,12 +707,16 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     gtk_widget_modify_font(GTK_WIDGET(vwin->text), fixed_font);
 
     cw = get_char_width(vwin->text);
-    hsize *= cw;
-    hsize += 48;
-
     set_source_tabs(vwin->text, cw);
 
-    gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize); 
+    if (hsize > 0) {
+	hsize *= cw;
+	hsize += 48; /* ?? */
+    }
+
+    if (hsize > 0 && vsize > 0) {
+	gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize); 
+    }
     gtk_text_view_set_editable(view, editable);
     gtk_text_view_set_cursor_visible(view, editable);
 
@@ -3075,7 +3079,9 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	}
     }
 
-    gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize); 
+    if (hsize > 0 && vsize > 0) {
+	gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize);
+    } 
     gtk_text_view_set_editable(GTK_TEXT_VIEW(w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), editable);
 }

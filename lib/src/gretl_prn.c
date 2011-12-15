@@ -522,29 +522,35 @@ const char *gretl_print_get_trimmed_buffer (PRN *prn)
  * 
  * If @prn has a non-null buffer attached, provides
  * the width and/or height of the buffer, the width in
- * characters and the height in lines.
+ * characters and the height in lines. This function is
+ * intended for use with text designed for printing in
+ * a GUI window, and with "reasonable" line lengths for
+ * that context; if the lines are too long (more than 
+ * 120 UTF-8 characters) the values written to @width
+ * and/or @height will be zero.
  */
 
 void gretl_print_get_size (PRN *prn, int *width, int *height)
 {
     int w = 0, h = 0;
 
-    if (prn != NULL && prn->buf != NULL) {
-	const char *s = prn->buf;
-	int lw = 0;
+    if (prn != NULL && prn->buf != NULL) { 
+	char line[128];
+	int lw;
 
-	while (*s) {
-	    if (*s == '\n') {
-		h++;
-		if (lw > w) {
-		    w = lw;
-		}
-		lw = 0;
-	    } else {
-		lw++;
+	bufgets_init(prn->buf);
+	while (bufgets(line, sizeof line, prn->buf)) {
+	    lw = g_utf8_strlen(line, -1) - 1;
+	    if (lw > 120) {
+		w = h = 0;
+		break;
 	    }
-	    s++;
+	    if (lw > w) {
+		w = lw;
+	    }
+	    h++;
 	}
+	bufgets_finalize(prn->buf);
     }
 
     if (width != NULL) {
