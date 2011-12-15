@@ -3104,8 +3104,6 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
     } else {
 	gchar *title = gretl_window_title(_("linear restrictions"));
 	
-	fprintf(stderr, "HERE\n");
-
 	view_buffer_with_parent(vwin, prn, 78, height, title, 
 				PRINT, NULL);
 	g_free(title);

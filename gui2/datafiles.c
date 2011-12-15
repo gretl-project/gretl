@@ -79,12 +79,6 @@ enum {
 };
 
 enum {
-    RECOG_OK,
-    RECOG_ERROR,
-    RECOG_NOT
-};
-
-enum {
     COLL_NONE,
     COLL_DATA,
     COLL_PS
@@ -134,7 +128,7 @@ static char *full_path (char *s1, const char *s2)
 	sprintf(fpath, "%s%c%s", s1, SLASH, s2);
     }
 
-#if COLL_DEBUG
+#if COLL_DEBUG > 1
     fprintf(stderr, "full_path: got '%s' from '%s' + '%s'\n",
 	    fpath, s1, s2);
 #endif
@@ -142,73 +136,67 @@ static char *full_path (char *s1, const char *s2)
     return fpath;
 }
 
-static int recognized_collection (file_collection *coll)
+static int is_standard_collection (file_collection *coll, int *err)
 {
-    const file_collection recognized_data[] = {
+    const file_collection std_data[] = {
 	{ "wooldridge", "jw_descriptions", "Wooldridge", COLL_DATA, NULL },
 	{ "gujarati", "dg_descriptions", "Gujarati", COLL_DATA, NULL },
 	{ "pwt56", "descriptions", "PWT 56", COLL_DATA, NULL },
 	{ NULL, NULL, NULL, COLL_DATA, NULL }
     }; 
-    const file_collection recognized_ps[] = {
+    const file_collection std_ps[] = {
 	{ "pwt56", "ps_descriptions", "PWT 56", COLL_PS, NULL },
 	{ NULL, NULL, NULL, COLL_PS, NULL }
     }; 
     int i;
 
-    for (i=0; recognized_data[i].path != NULL; i++) {
-	if (strstr(coll->path, recognized_data[i].path) &&
-	    !strcmp(coll->descfile, recognized_data[i].descfile)) {
-	    coll->title = malloc(strlen(recognized_data[i].title) + 1);
+    for (i=0; std_data[i].path != NULL; i++) {
+	if (strstr(coll->path, std_data[i].path) &&
+	    !strcmp(coll->descfile, std_data[i].descfile)) {
+	    coll->title = gretl_strdup(std_data[i].title);
 	    if (coll->title == NULL) {
-		return RECOG_ERROR;
+		*err = E_ALLOC;
+	    } else {
+		coll->which = COLL_DATA;
 	    }
-	    strcpy(coll->title, recognized_data[i].title);
-	    coll->which = COLL_DATA;
-	    return RECOG_OK;
+	    return 1;
 	}
     }
 
-    for (i=0; recognized_ps[i].path != NULL; i++) {
-	if (strstr(coll->path, recognized_ps[i].path) &&
-	    !strcmp(coll->descfile, recognized_ps[i].descfile)) {
-	    coll->title = malloc(strlen(recognized_ps[i].title) + 1);
+    for (i=0; std_ps[i].path != NULL; i++) {
+	if (strstr(coll->path, std_ps[i].path) &&
+	    !strcmp(coll->descfile, std_ps[i].descfile)) {
+	    coll->title = gretl_strdup(std_ps[i].title);
 	    if (coll->title == NULL) {
-		return RECOG_ERROR;
+		*err = E_ALLOC;
+	    } else {
+		coll->which = COLL_PS;
 	    }
-	    strcpy(coll->title, recognized_ps[i].title);
-	    coll->which = COLL_PS;
-	    return RECOG_OK;
+	    return 1;
 	}
     }
 
-    return RECOG_NOT;
+    return 0;
 } 
+
+/* return non-zero only on fatal error */
 
 static int get_title_from_descfile (file_collection *coll)
 {
-    FILE *fp;
-    char *test;
     char line[64], title[24];
+    char *test;
+    FILE *fp;
     int err = 0;
 
     test = full_path(coll->path, coll->descfile);
-
     fp = gretl_fopen(test, "r");
 
-    if (fp == NULL) {
-	err = 1;
-    } else if (fgets(line, sizeof line, fp) == NULL) {
-	err = 1;
-    } else {
+    if (fp != NULL && fgets(line, sizeof line, fp) != NULL) {
 	chopstr(line);
-
-	if (sscanf(line, "# %23[^:]", title) != 1) {
-	    err = 1;
-	} else {
-	    coll->title = g_strdup(title);
+	if (sscanf(line, "# %23[^:]", title) == 1) {
+	    coll->title = gretl_strdup(title);
 	    if (coll->title == NULL) {
-		err = 1;
+		err = E_ALLOC;
 	    }
 	}
     } 
@@ -224,9 +212,7 @@ static void free_file_collection (file_collection *coll)
 {
     free(coll->path);
     free(coll->descfile);
-    if (coll->title != NULL) {
-	free(coll->title);
-    }
+    free(coll->title);
     free(coll);
 }  
 
@@ -234,52 +220,36 @@ static file_collection *file_collection_new (const char *path,
 					     const char *descfile,
 					     int *err)
 {
-    file_collection *coll;
-    int chk;
+    file_collection *coll = malloc(sizeof *coll);
 
-    *err = 0;
-
-    coll = malloc(sizeof *coll);
     if (coll == NULL) {
-	*err = 1;
+	*err = E_ALLOC;
 	return NULL;
     }
 
+    coll->which = COLL_NONE;
     coll->title = NULL;
-    
     coll->path = gretl_strdup(path);
-    if (coll->path == NULL) {
-	free(coll);
-	*err = 1;
-	return NULL;
-    }
-
     coll->descfile = gretl_strdup(descfile);
-    if (coll->descfile == NULL) {
-	free(coll->path);
-	free(coll);
-	*err = 1;
-	return NULL;
-    }  
 
-    if (strstr(coll->descfile, "ps_")) {
-	coll->which = COLL_PS;
+    if (coll->path == NULL || coll->descfile == NULL) {
+	*err = E_ALLOC;
     } else {
-	coll->which = COLL_DATA;
+	int std = is_standard_collection(coll, err);
+
+	if (!*err && !std) {
+	    if (strstr(coll->descfile, "ps_")) {
+		coll->which = COLL_PS;
+	    } else {
+		coll->which = COLL_DATA;
+	    }
+	    *err = get_title_from_descfile(coll);
+	}
     }
 
-    chk = recognized_collection(coll);
-
-    if (chk == RECOG_ERROR) {
+    if (*err || coll->title == NULL) {
 	free_file_collection(coll);
-	*err = 1;
 	coll = NULL;
-    } else if (chk == RECOG_NOT) {
-	chk = get_title_from_descfile(coll);
-	if (chk) {
-	    free_file_collection(coll);
-	    coll = NULL;
-	}
     }
     
     return coll;
@@ -405,29 +375,38 @@ static void sort_ps_stack (void)
     collection_stack(NULL, STACK_SORT_PS);
 }
 
-static int get_file_collections_from_dir (const char *dname, DIR *dir)
+/* Returns the number of file collections found and pushed;
+   writes non-zero to @err if something show-stopping
+   occurs
+*/
+
+static int get_file_collections_from_dir (const char *dname, DIR *dir,
+					  int *err)
 {
     file_collection *coll;
     struct dirent *dirent;
-    size_t n;
-    int err = 0;
+    int n = 0;
 
-    while (!err && (dirent = readdir(dir))) { 
+    while (!*err && (dirent = readdir(dir))) { 
 	if (strstr(dirent->d_name, "descriptions")) {
+	    size_t len = strlen(dirent->d_name);
+
 #if COLL_DEBUG
 	    fprintf(stderr, "   %s: looking at '%s'\n", dname, dirent->d_name);
 #endif
-	    n = strlen(dirent->d_name);
-	    if (!strcmp(dirent->d_name + n - 12, "descriptions")) {
-		coll = file_collection_new(dname, dirent->d_name, &err);
-		if (coll != NULL && !err) {
-		    err = push_collection(coll);
+	    if (!strcmp(dirent->d_name + len - 12, "descriptions")) {
+		coll = file_collection_new(dname, dirent->d_name, err);
+		if (coll != NULL && !*err) {
+		    *err = push_collection(coll);
+		    if (!*err) {
+			n++;
+		    }
 		}
 	    }
 	}
     }
 
-    return err;
+    return n;
 }
 
 static int dont_go_there (const char *s)
@@ -442,60 +421,77 @@ static int dont_go_there (const char *s)
     return ret;
 }
 
-static int seek_file_collections (const char *basedir, int type)
+/* Returns the number of collections found; @err is set to
+   non-zero only if something show-stopping occurs
+*/
+
+static int seek_file_collections (const char *basedir, int type,
+				  int *err)
 {
-    char *tmp = NULL;
-    char *subdir;
-    DIR *dir, *try;      
+    char *path = NULL;
+    DIR *topdir;      
     struct dirent *dirent;
-    int err = 0;
+    int n_coll = 0;
+
+    if (*err) {
+	/* a fatal error occurred already, skip it */
+	return 0;
+    }
 
     if (type == DATA_SEARCH) {
-	tmp = gretl_strdup_printf("%sdata", basedir);
+	path = gretl_strdup_printf("%sdata", basedir);
     } else if (type == SCRIPT_SEARCH) {
-	tmp = gretl_strdup_printf("%sscripts", basedir);
-    } else if (type == USER_SEARCH) {
-	tmp = gretl_strdup(basedir);
-	trim_slash(tmp);
+	path = gretl_strdup_printf("%sscripts", basedir);
     } else {
-	return 1;
-    }
+	/* USER_SEARCH */
+	path = gretl_strdup(basedir);
+	trim_slash(path);
+    } 
 
-    dir = gretl_opendir(tmp);
-    if (dir == NULL) {
-	free(tmp);
-	return 1;
+    topdir = gretl_opendir(path);
+    if (topdir == NULL) {
+	free(path);
+	return 0;
     }
 
 #if COLL_DEBUG
-    fprintf(stderr, "seeking file collections in '%s'\n", tmp);
+    fprintf(stderr, "*** seeking file collections in '%s'\n", path);
 #endif
 
-    while (!err && (dirent = readdir(dir))) {
+    while (!*err && (dirent = readdir(topdir))) {
 	if (!dont_go_there(dirent->d_name)) {
+	    char *subpath;
+	    DIR *subdir;
+
 	    if (strcmp(dirent->d_name, ".")) {
-		subdir = full_path(tmp, dirent->d_name);
+		subpath = full_path(path, dirent->d_name);
 	    } else {
-		subdir = tmp;
+		subpath = path;
 	    }
-	    try = gretl_opendir(subdir);
-	    if (try != NULL) {
+	    subdir = gretl_opendir(subpath);
+	    if (subdir != NULL) {
 #if COLL_DEBUG
-		fprintf(stderr, " trying in subdir '%s'\n", subdir);
+		fprintf(stderr, " trying in subdir '%s'\n", subpath);
 #endif
-		err = get_file_collections_from_dir(subdir, try);
+		n_coll += get_file_collections_from_dir(subpath, subdir, err);
 #if COLL_DEBUG
-		fprintf(stderr, " result: err = %d\n", err);
+		if (*err) {
+		    fprintf(stderr, " result: err = %d\n", *err);
+		}
 #endif
-		closedir(try);
+		closedir(subdir);
 	    }
 	}
     }
 
-    closedir(dir);
-    free(tmp);
+    closedir(topdir);
+    free(path);
 
-    return err;
+#if COLL_DEBUG
+    fprintf(stderr, "*** found %d collections\n", n_coll);
+#endif
+
+    return n_coll;
 }
 
 #if COLL_DEBUG
@@ -537,35 +533,28 @@ static int build_file_collections (void)
     static int built;
     static int err;
 
-    if (!built) {
-	err = seek_file_collections(gretl_home(), DATA_SEARCH);
-	if (!err) {
-	    err = seek_file_collections(gretl_home(), SCRIPT_SEARCH);
-	}
-#ifdef OSX_BUILD
-	if (!err) {
-	    err = seek_file_collections(gretl_app_support_dir(), DATA_SEARCH);
-	}
-	if (!err) {
-	    err = seek_file_collections(gretl_app_support_dir(), SCRIPT_SEARCH);
-	}	
-#else
-	if (!err) {
-	    err = seek_file_collections(gretl_dotdir(), DATA_SEARCH);
-	}
-	if (!err) {
-	    err = seek_file_collections(gretl_dotdir(), SCRIPT_SEARCH);
-	}
-#endif
-	if (!err) {
-	    err = seek_file_collections(gretl_workdir(), USER_SEARCH);
-	}
-	if (!err) {
-	    const char *wd = maybe_get_default_workdir();
+    if (!built && !err) {
+	const char *wd;
+	int n = 0;
 
+	n += seek_file_collections(gretl_home(), DATA_SEARCH, &err);
+	n += seek_file_collections(gretl_home(), SCRIPT_SEARCH, &err);
+#ifdef OSX_BUILD
+	n += seek_file_collections(gretl_app_support_dir(), DATA_SEARCH, &err);
+	n += seek_file_collections(gretl_app_support_dir(), SCRIPT_SEARCH, &err);
+#else
+	n += seek_file_collections(gretl_dotdir(), DATA_SEARCH, &err);
+	n += seek_file_collections(gretl_dotdir(), SCRIPT_SEARCH, &err);
+#endif
+	n += seek_file_collections(gretl_workdir(), USER_SEARCH, &err);
+	if (!err) {
+	    wd = maybe_get_default_workdir();
 	    if (wd != NULL) {
-		err = seek_file_collections(wd, USER_SEARCH);
+		n += seek_file_collections(wd, USER_SEARCH, &err);
 	    }
+	}
+	if (!err && n == 0) {
+	    err = 1;
 	}
 	if (!err) {
 	    sort_data_stack();
@@ -578,6 +567,10 @@ static int build_file_collections (void)
     print_data_collections();
     print_script_collections();
 #endif
+
+    if (err) {
+	errbox("Error building file collections");
+    }
 
     return err;
 }
