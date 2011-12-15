@@ -2281,7 +2281,7 @@ int latex_compile (char *texshort)
     int err = LATEX_OK;
 
 #ifdef G_OS_WIN32
-    if (*latex_path == 0 && get_latex_path(latex_path)) {
+    if (*latex_path == '\0' && get_latex_path(latex_path)) {
 	win_show_last_error();
 	return LATEX_EXEC_FAILED;
     }
