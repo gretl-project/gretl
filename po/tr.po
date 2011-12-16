@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-12-05 10:43-0500\n"
-"PO-Revision-Date: 2011-12-07 11:09+0200\n"
+"PO-Revision-Date: 2011-12-16 18:16+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -8065,7 +8065,7 @@ msgstr "Göster"
 #: gui2/database.c:777 gui2/database.c:808 gui2/session.c:801
 #: gui2/toolbar.c:650
 msgid "Graph"
-msgstr "Çizit"
+msgstr "Çiz"
 
 #: gui2/database.c:780
 msgid "Import"
@@ -8127,7 +8127,7 @@ msgstr ""
 #: gui2/database.c:2152 gui2/database.c:2684 gui2/datafiles.c:997
 #: gui2/datafiles.c:1045
 msgid "Installed"
-msgstr "Kurulu"
+msgstr "Kuruldu"
 
 #: gui2/database.c:2155 gui2/database.c:2178 gui2/database.c:2396
 msgid "Up to date"
@@ -8238,7 +8238,7 @@ msgstr "Kur"
 
 #: gui2/datafiles.c:1237 gui2/datafiles.c:1244 gui2/datafiles.c:1327
 msgid "List series"
-msgstr "Seriyi listele"
+msgstr "Serileri listele"
 
 #: gui2/datafiles.c:1240 gui2/datafiles.c:1250 gui2/toolbar.c:639
 msgid "Find..."
