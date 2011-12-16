@@ -358,7 +358,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 
     if (!strcmp(item, _("Display values"))) 
 	display_var();
-    if (!strcmp(item, _("Descriptive statistics"))) 
+    if (!strcmp(item, _("Summary statistics"))) 
 	do_menu_op(VAR_SUMMARY, NULL, OPT_NONE);
     else if (!strcmp(item, _("Time series plot"))) 
 	do_graph_var(v);
@@ -404,7 +404,7 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     gchar *item = (gchar *) p;
     int ci = 0;
 
-    if (!strcmp(item, _("Descriptive statistics"))) {
+    if (!strcmp(item, _("Summary statistics"))) {
 	ci = SUMMARY;
     } else if (!strcmp(item, _("Correlation matrix"))) {
 	ci = CORR;
@@ -450,7 +450,7 @@ GtkWidget *build_var_popup (void)
 {
     const char *items[] = {
 	N_("Display values"),
-	N_("Descriptive statistics"),
+	N_("Summary statistics"),
 	N_("Time series plot"),
 	N_("Panel plot..."),
 	N_("Frequency distribution"),
@@ -507,13 +507,13 @@ GtkWidget *build_selection_popup (void)
 {
     const char *items[] = {
 	N_("Display values"),
-	N_("Descriptive statistics"),
+	N_("Summary statistics"),
 	N_("Correlation matrix"),
 	N_("Cross-correlogram"),
 	N_("Time series plot"),
 	N_("XY scatterplot"),
-	N_("Copy to clipboard"),
 	N_("Edit values"),
+	N_("Copy to clipboard"),
 	N_("Delete"),
 	NULL,
 	N_("Add logs"),

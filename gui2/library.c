@@ -839,11 +839,24 @@ static int menu_op_ci (GtkAction *action)
 void menu_op_action (GtkAction *action, gpointer p)
 {
     int ci = menu_op_ci(action);
+    int done = 0;
 
     if (ci == VAR_SUMMARY || ci == NORMTEST) {
 	/* a single-variable action */
 	do_menu_op(ci, NULL, OPT_NONE);
-    } else {
+	done = 1;
+    } else if (ci == SUMMARY) {
+	/* no help or options, just use the selection */
+	char *liststr = main_window_selection_as_string();
+
+	if (liststr != NULL && *liststr != '\0') {
+	    do_menu_op(ci, liststr, OPT_NONE);
+	    done = 1;
+	}
+	free(liststr);
+    } 
+
+    if (!done) {
 	const char *str = NULL;
 	gchar *title;
 
@@ -852,7 +865,7 @@ void menu_op_action (GtkAction *action, gpointer p)
 	} else if (ci == MAHAL) {
 	    str = N_("Mahalanobis distances");
 	} else if (ci == SUMMARY) {
-	    str = N_("Descriptive statistics");
+	    str = N_("Summary statistics");
 	} else if (ci == CORR) {
 	    str = N_("Correlations");
 	} else if (ci == QQPLOT) {

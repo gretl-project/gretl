@@ -136,21 +136,24 @@ static char *full_path (char *s1, const char *s2)
     return fpath;
 }
 
-static int is_standard_collection (file_collection *coll, int *err)
+/* check for a few known, older, file collections whose
+   descriptions files do not conform to the now-standard
+   pattern
+*/
+
+static int is_oldstyle_collection (file_collection *coll, int *err)
 {
     const file_collection std_data[] = {
 	{ "wooldridge", "jw_descriptions", "Wooldridge", COLL_DATA, NULL },
 	{ "gujarati", "dg_descriptions", "Gujarati", COLL_DATA, NULL },
-	{ "pwt56", "descriptions", "PWT 56", COLL_DATA, NULL },
-	{ NULL, NULL, NULL, COLL_DATA, NULL }
+	{ "pwt56", "descriptions", "PWT 56", COLL_DATA, NULL }
     }; 
-    const file_collection std_ps[] = {
-	{ "pwt56", "ps_descriptions", "PWT 56", COLL_PS, NULL },
-	{ NULL, NULL, NULL, COLL_PS, NULL }
+    const file_collection std_ps = {
+	"pwt56", "ps_descriptions", "PWT 56", COLL_PS, NULL
     }; 
     int i;
 
-    for (i=0; std_data[i].path != NULL; i++) {
+    for (i=0; i<3; i++) {
 	if (strstr(coll->path, std_data[i].path) &&
 	    !strcmp(coll->descfile, std_data[i].descfile)) {
 	    coll->title = gretl_strdup(std_data[i].title);
@@ -163,17 +166,15 @@ static int is_standard_collection (file_collection *coll, int *err)
 	}
     }
 
-    for (i=0; std_ps[i].path != NULL; i++) {
-	if (strstr(coll->path, std_ps[i].path) &&
-	    !strcmp(coll->descfile, std_ps[i].descfile)) {
-	    coll->title = gretl_strdup(std_ps[i].title);
-	    if (coll->title == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		coll->which = COLL_PS;
-	    }
-	    return 1;
+    if (strstr(coll->path, std_ps.path) &&
+	!strcmp(coll->descfile, std_ps.descfile)) {
+	coll->title = gretl_strdup(std_ps.title);
+	if (coll->title == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    coll->which = COLL_PS;
 	}
+	return 1;
     }
 
     return 0;
@@ -235,9 +236,9 @@ static file_collection *file_collection_new (const char *path,
     if (coll->path == NULL || coll->descfile == NULL) {
 	*err = E_ALLOC;
     } else {
-	int std = is_standard_collection(coll, err);
+	int os = is_oldstyle_collection(coll, err);
 
-	if (!*err && !std) {
+	if (!*err && !os) {
 	    if (strstr(coll->descfile, "ps_")) {
 		coll->which = COLL_PS;
 	    } else {
@@ -380,7 +381,7 @@ static void sort_ps_stack (void)
    occurs
 */
 
-static int get_file_collections_from_dir (const char *dname, DIR *dir,
+static int get_file_collections_from_dir (const char *path, DIR *dir,
 					  int *err)
 {
     file_collection *coll;
@@ -388,14 +389,15 @@ static int get_file_collections_from_dir (const char *dname, DIR *dir,
     int n = 0;
 
     while (!*err && (dirent = readdir(dir))) { 
+	/* we're looking for a filename that ends with "descriptions" */
 	if (strstr(dirent->d_name, "descriptions")) {
 	    size_t len = strlen(dirent->d_name);
 
 #if COLL_DEBUG
-	    fprintf(stderr, "   %s: looking at '%s'\n", dname, dirent->d_name);
+	    fprintf(stderr, "   %s: looking at '%s'\n", path, dirent->d_name);
 #endif
 	    if (!strcmp(dirent->d_name + len - 12, "descriptions")) {
-		coll = file_collection_new(dname, dirent->d_name, err);
+		coll = file_collection_new(path, dirent->d_name, err);
 		if (coll != NULL) {
 		    *err = push_collection(coll);
 		    if (!*err) {
@@ -597,6 +599,23 @@ char *strip_extension (char *s)
     return s;
 }
 
+static int validate_desc_strings (const char *s1, 
+				  const char *s2,
+				  const char *s3)
+{
+    int err = 0;
+
+    if (!g_utf8_validate(s1, -1, NULL)) {
+	err = E_DATA;
+    } else if (!g_utf8_validate(s2, -1, NULL)) {
+	err = E_DATA;
+    } else if (s3 != NULL && !g_utf8_validate(s3, -1, NULL)) {
+	err = E_DATA;
+    }
+
+    return err;
+}
+
 static int read_file_descriptions (windata_t *win, gpointer p)
 {
     FILE *fp;
@@ -606,18 +625,19 @@ static int read_file_descriptions (windata_t *win, gpointer p)
     char line[MAXLEN];
     char *index;
     file_collection *coll = (file_collection *) p;
+    int err = 0;
 
     index = full_path(coll->path, coll->descfile);
 
     fp = gretl_fopen(index, "r");
     if (fp == NULL) {
-	return 1;
+	return E_FOPEN;
     }
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(win->listbox)));
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
     
-    while (fgets(line, sizeof line, fp)) {
+    while (!err && fgets(line, sizeof line, fp)) {
 	char fname[24], descrip[80], data[64];
 
 	if (*line == '#') continue;
@@ -625,31 +645,39 @@ static int read_file_descriptions (windata_t *win, gpointer p)
 	if (win->role == TEXTBOOK_DATA) {
 	    if (sscanf(line, " \"%23[^\"]\",\"%79[^\"]\"", 
 		       fname, descrip) == 2) {
-		gtk_list_store_append(store, &iter);
-		gtk_list_store_set(store, &iter, 
-				   0, strip_extension(fname), 
-				   1, descrip, -1);
+		err = validate_desc_strings(fname, descrip, NULL);
+		if (!err) {
+		    gtk_list_store_append(store, &iter);
+		    gtk_list_store_set(store, &iter, 
+				       0, strip_extension(fname), 
+				       1, descrip, -1);
+		}
 	    }
 	} else { /* script files */
 	    if (sscanf(line, " \"%23[^\"]\",\"%79[^\"]\",\"%63[^\"]\"", 
 		       fname, descrip, data) == 3) {
-		gtk_list_store_append(store, &iter);
-		gtk_list_store_set(store, &iter, 
-				   0, strip_extension(fname), 
-				   1, descrip, 
-				   2, data, -1);
+		err = validate_desc_strings(fname, descrip, data);
+		if (!err) {
+		    gtk_list_store_append(store, &iter);
+		    gtk_list_store_set(store, &iter, 
+				       0, strip_extension(fname), 
+				       1, descrip, 
+				       2, data, -1);
+		}
 	    }
 	}
     }
 
     fclose(fp);
 
-    /* select the first row */
-    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(win->listbox));
-    gtk_tree_selection_select_iter(selection, &iter);
+    if (!err) {
+	/* select the first row */
+	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(win->listbox));
+	gtk_tree_selection_select_iter(selection, &iter);
+    }
     
-    return 0;
+    return err;
 }
 
 static void show_datafile_info (GtkWidget *w, gpointer data)
