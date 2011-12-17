@@ -88,6 +88,8 @@ int test_locale (const char *langstr);
 
 char *iso_gettext (const char *msgid);
 
+char *tex_gettext (const char *msgid);
+
 char *maybe_iso_gettext (const char *msgid);
 
 void set_gretl_charset (void);

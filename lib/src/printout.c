@@ -950,8 +950,8 @@ print_contemp_covariance_matrix (const gretl_matrix *m,
 
     if (tex) {
 	pputs(prn, "\\begin{center}\n");
-	pprintf(prn, "%s \\\\\n", I_("Cross-equation VCV for residuals"));
-	pprintf(prn, "(%s)\n\n", I_("correlations above the diagonal"));
+	pprintf(prn, "%s \\\\\n", T_("Cross-equation VCV for residuals"));
+	pprintf(prn, "(%s)\n\n", T_("correlations above the diagonal"));
 	pputs(prn, "\\[\n\\begin{array}{");
 	for (j=0; j<cols; j++) {
 	    pputc(prn, 'c');
@@ -996,10 +996,10 @@ print_contemp_covariance_matrix (const gretl_matrix *m,
     if (!na(ldet)) {
 	if (tex) {
 	    if (ldet < 0) {
-		pprintf(prn, "\n%s = ", I_("log determinant"));
+		pprintf(prn, "\n%s = ", T_("log determinant"));
 		pprintf(prn, "$-$%g\n", -ldet);
 	    } else {
-		pprintf(prn, "\n%s = %g\n", I_("log determinant"), ldet);
+		pprintf(prn, "\n%s = %g\n", T_("log determinant"), ldet);
 	    }
 	} else {
 	    pprintf(prn, "\n%s = %g\n", _("log determinant"), ldet);

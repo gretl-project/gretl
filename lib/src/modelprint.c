@@ -171,7 +171,7 @@ static void garch_variance_line (const MODEL *pmod, PRN *prn)
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_(varstr), v);
     } else if (tex_format(prn)) {
-	pprintf(prn, "%s = %g \\\\\n", I_(varstr), v);
+	pprintf(prn, "%s = %g \\\\\n", T_(varstr), v);
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%.15g\n", I_(varstr), prn_delim(prn), v);
     }
@@ -261,11 +261,11 @@ static void print_intreg_info (const MODEL *pmod,
 	    pprintf(prn, " (%g)", se_sigma);
 	}
 	pputs(prn, " \\\\\n");
-	pprintf(prn, "%s: %d%s \\\\\n", I_(nstrs[0]), nl, lstr == NULL ? "" : lstr);
-	pprintf(prn, "%s: %d%s \\\\\n", I_(nstrs[1]), nr, rstr == NULL ? "" : rstr);
+	pprintf(prn, "%s: %d%s \\\\\n", T_(nstrs[0]), nl, lstr == NULL ? "" : lstr);
+	pprintf(prn, "%s: %d%s \\\\\n", T_(nstrs[1]), nr, rstr == NULL ? "" : rstr);
 	if (nb >= 0 && np >= 0) {
-	    pprintf(prn, "%s: %d \\\\\n", I_(nstrs[2]), nb);
-	    pprintf(prn, "%s: %d \\\\\n", I_(nstrs[3]), np);
+	    pprintf(prn, "%s: %d \\\\\n", T_(nstrs[2]), nb);
+	    pprintf(prn, "%s: %d \\\\\n", T_(nstrs[3]), np);
 	}
     } else if (csv_format(prn)) {
 	int d = prn_delim(prn);
@@ -319,7 +319,7 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 	ensure_vsep(prn);
 	if (!pmod->aux) {
 	    if (tex_format(prn)) {
-		pprintf(prn, "%s = %g\\\\\n", I_("Smallest eigenvalue"), lmin);
+		pprintf(prn, "%s = %g\\\\\n", T_("Smallest eigenvalue"), lmin);
 	    } else {
 		pprintf(prn, "%s = %g\n", _("Smallest eigenvalue"), lmin);
 	    }
@@ -330,7 +330,7 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 
 	    if (tex_format(prn)) {
 		pprintf(prn, "%s: $\\chi^2(%d)$ = %g [%.4f] \\\\\n", 
-			I_("LR over-identification test"), idf, X2, pv);
+			T_("LR over-identification test"), idf, X2, pv);
 	    } else if (rtf_format(prn)) {
 		pprintf(prn, "%s: ", I_("LR over-identification test"));
 		pprintf(prn, "%s(%d) = %g [%.4f]\n\n", I_("Chi-square"),
@@ -341,9 +341,13 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 			idf, X2, pv);
 	    }
 	} else if (idf == 0) {
-	    pprintf(prn, "%s\n\n", 
+	    if (tex_format(prn)) {
+		pprintf(prn, "%s\n\n", T_("Equation is just identified"));
+	    } else {
+		pprintf(prn, "%s\n\n", 
 		    (plain_format(prn))? _("Equation is just identified") :
-		    I_("Equation is just identified"));
+			I_("Equation is just identified"));
+	    }
 	}
     }
 }
@@ -358,13 +362,14 @@ static void print_panel_AR_test (double z, int order, PRN *prn)
 
     if (plain_format(prn)) {
 	pprintf(prn, _("Test for AR(%d) errors:"), order);
-    } else {
+    } else if (!tex_format(prn)) {
 	pprintf(prn, I_("Test for AR(%d) errors:"), order);
     }
 
     if (tex_format(prn)) {
 	char numstr[32];
 
+	pprintf(prn, T_("Test for AR(%d) errors:"), order);
 	tex_sprint_double_digits(z, numstr, 4);
 	pprintf(prn, " & $z$ = %s [%.4f]", numstr, pv);
     } else {
@@ -423,7 +428,7 @@ print_model_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
     }
 
     if (tex_format(prn)) {
-	pprintf(prn, "%s: ", I_(texstrs[j]));
+	pprintf(prn, "%s: ", T_(texstrs[j]));
 	pprintf(prn, " $\\chi^2(%d)$ = %g [%.4f]", df, x, pv);
     } else if (plain_format(prn)) {
 	if (gmm_model(pmod)) {
@@ -456,7 +461,7 @@ static int GMM_crit_line (const MODEL *pmod, PRN *prn)
 	tex_sprint_double(Q, x1);
 	tex_sprint_double(TQ, x2);
 	pprintf(prn, "%s, $Q$ = %s ($TQ$ = %s)\\\\\n",
-		I_("GMM criterion"), x1, x2);
+		T_("GMM criterion"), x1, x2);
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%.15g\n", I_("GMM criterion"), 
 		prn_delim(prn), Q);
@@ -497,6 +502,8 @@ static void print_DPD_stats (const MODEL *pmod, PRN *prn)
     if (k > 0) {
 	if (plain_format(prn)) {
 	    pprintf(prn, _("Number of instruments = %d"), k);
+	} else if (tex_format(prn)) {
+	    pprintf(prn, T_("Number of instruments = %d"), k);
 	} else {
 	    pprintf(prn, I_("Number of instruments = %d"), k);
 	}
@@ -759,19 +766,19 @@ static void print_aux_string (const MODEL *pmod, PRN *prn)
 	pputs(prn, tr(N_("Augmented regression for Chow test")));
     } else if (aux == AUX_COINT) {
 	if (tex_format(prn)) {
-	    pputs(prn, I_("Cointegrating regression -- "));
+	    pputs(prn, T_("Cointegrating regression -- "));
 	} else {
 	    pputs(prn, tr(N_("Cointegrating regression - ")));
 	}
     } else if (aux == AUX_ADF) {
 	if (tex_format(prn)) {
-	    pputs(prn, I_("Augmented Dickey--Fuller regression"));
+	    pputs(prn, T_("Augmented Dickey--Fuller regression"));
 	} else {
 	    pputs(prn, tr(N_("Augmented Dickey-Fuller regression")));
 	}
     } else if (aux == AUX_DF) {
 	if (tex_format(prn)) {
-	    pputs(prn, I_("Dickey--Fuller regression"));
+	    pputs(prn, T_("Dickey--Fuller regression"));
 	} else {
 	    pputs(prn, tr(N_("Dickey-Fuller regression")));
 	}
@@ -1056,7 +1063,7 @@ static void maybe_print_weak_insts_test (const MODEL *pmod, PRN *prn)
     if (plain_format(prn)) {
 	pprintf(prn, "%s - \n", _(head));
     } else if (tex_format(prn)) {
-	pprintf(prn, "%s -- \\\\\n", I_(head));
+	pprintf(prn, "%s -- \\\\\n", T_(head));
     } else if (rtf_format(prn)) {
 	pprintf(prn, "%s - \\par\n", I_(head));
     }
@@ -1087,7 +1094,7 @@ static void maybe_print_weak_insts_test (const MODEL *pmod, PRN *prn)
 	    char x1str[32];
 
 	    tex_sprint_double(g, x1str);
-	    pprintf(prn, "\\quad  %s = %s \\\\\n", I_("Cragg--Donald minimum eigenvalue"), 
+	    pprintf(prn, "\\quad  %s = %s \\\\\n", T_("Cragg--Donald minimum eigenvalue"), 
 		    x1str);
 	} else if (rtf_format(prn)) {
 	    pprintf(prn, "  %s = %g\n", I_("Cragg-Donald minimum eigenvalue"), g);
@@ -1191,7 +1198,13 @@ print_ivreg_instruments (const MODEL *pmod, const DATASET *dset, PRN *prn)
 	    continue;
 	}
 
-	ccount = pprintf(prn, "%s: ", I_(strs[j]));
+	if (plain_format(prn)) {
+	    ccount = pprintf(prn, "%s: ", _(strs[j]));
+	} else if (tex) {
+	    ccount = pprintf(prn, "%s: ", T_(strs[j]));
+	} else {
+	    ccount = pprintf(prn, "%s: ", I_(strs[j]));
+	}
     
 	for (i=imin; i<=list[0]; i++) {
 	    vi = list[i];
@@ -1234,6 +1247,8 @@ static void dpd_asy_vcv_line (PRN *prn)
 	pprintf(prn, "\"%s\"", I_("Asymptotic standard errors"));
     } else if (plain_format(prn)) {
 	pputs(prn, _("Asymptotic standard errors"));
+    } else if (tex_format(prn)) {
+	pputs(prn, T_("Asymptotic standard errors"));
     } else {
 	pputs(prn, I_("Asymptotic standard errors"));
     } 
@@ -1248,6 +1263,8 @@ static void panel_vcv_line (const VCVInfo *vi, PRN *prn)
 	    pprintf(prn, "\"%s\"", I_("Robust (HAC) standard errors"));
 	} else if (plain_format(prn)) {
 	    pputs(prn, _("Robust (HAC) standard errors"));
+	} else if (tex_format(prn)) {
+	    pputs(prn, T_("Robust (HAC) standard errors"));
 	} else {
 	    pputs(prn, I_("Robust (HAC) standard errors"));
 	} 
@@ -1258,7 +1275,7 @@ static void panel_vcv_line (const VCVInfo *vi, PRN *prn)
 	} else if (plain_format(prn)) {
 	    pputs(prn, _("Beck-Katz standard errors"));
 	} else if (tex_format(prn)) {
-	    pputs(prn, I_("Beck--Katz standard errors"));
+	    pputs(prn, T_("Beck--Katz standard errors"));
 	} else {
 	    pputs(prn, I_("Beck-Katz standard errors"));
 	} 	
@@ -1357,6 +1374,8 @@ static void ml_vcv_line (const VCVInfo *vi, PRN *prn)
     if (s != NULL) {
 	if (csv_format(prn)) {
 	    pprintf(prn, "\"%s\"\n", I_(s));
+	} else if (tex) {
+	    pprintf(prn, "%s\n", T_(s));
 	} else {
 	    pprintf(prn, "%s\n", I_(s));
 	}
@@ -1387,6 +1406,8 @@ static void rq_vcv_line (const MODEL *pmod, PRN *prn)
 
     if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"", I_(s));
+    } else if (tex_format(prn)) {
+	pprintf(prn, "%s", T_(s));
     } else {
 	pprintf(prn, "%s", I_(s));
     }
@@ -1684,7 +1705,7 @@ static void maybe_print_T (const MODEL *pmod,
 	    const char *nstr = xsect ? nstrs[0] : nstrs[1];
 
 	    if (tex_format(prn)) {
-		pprintf(prn, " ($%s$ = %d)", I_(nstr), pmod->nobs);
+		pprintf(prn, " ($%s$ = %d)", T_(nstr), pmod->nobs);
 	    } else {
 		pprintf(prn, " (%s = %d)", _(nstr), pmod->nobs);
 	    }
@@ -1973,9 +1994,9 @@ static void print_model_heading (const MODEL *pmod,
 	    pputs(prn, "\\\\\n");
 	}
 	if (gretl_model_get_int(pmod, "iters")) {
-	    pprintf(prn, I_("Allowing for groupwise heteroskedasticity"));
+	    pprintf(prn, T_("Allowing for groupwise heteroskedasticity"));
 	} else {
-	    pprintf(prn, I_("Weights based on per-unit error variances"));
+	    pprintf(prn, T_("Weights based on per-unit error variances"));
 	}
 	pputc(prn, '\n');
     } else if (pmod->ci == WLS && !pmod->aux) {
@@ -2266,9 +2287,9 @@ static void alternate_stats_message (int i, PRN *prn)
     if (plain_format(prn)) {
 	pprintf(prn, "%s:\n\n", _(msg[i]));
     } else if (tex_format(prn)) {
-	pprintf(prn, "\\vspace{1em}%s:\n\n", _(msg[i]));
+	pprintf(prn, "\\vspace{1em}%s:\n\n", T_(msg[i]));
     } else if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"\n", _(msg[i]));
+	pprintf(prn, "\"%s\"\n", I_(msg[i]));
     } else { 
 	/* RTF */
 	pprintf(prn, "\\par \\qc\n%s:\n\n", I_(msg[i]));	
@@ -2291,9 +2312,9 @@ static void print_whites_results (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
 		I_("with p-value"), I_("Chi-square"), df, X, pv);
     } else if (tex_format(prn)) {
-	pprintf(prn, "\n%s: $TR^2$ = %f,\n", I_("Test statistic"), X);
+	pprintf(prn, "\n%s: $TR^2$ = %f,\n", T_("Test statistic"), X);
 	pprintf(prn, "%s = $P$($\\chi^2(%d)$ > %f) = %f\n\n",
-		I_("with p-value"), df, X, pv);
+		T_("with p-value"), df, X, pv);
     }
 }
 
@@ -2318,9 +2339,9 @@ static void print_bp_results (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
 		I_("with p-value"), I_("Chi-square"), df, X, pv);
     } else if (tex_format(prn)) {
-	pprintf(prn, "\n%s: LM = %f,\n", I_("Test statistic"), X);
+	pprintf(prn, "\n%s: LM = %f,\n", T_("Test statistic"), X);
 	pprintf(prn, "%s = $P$($\\chi^2(%d)$ > %f) = %f\n\n",
-		I_("with p-value"), df, X, pv);
+		T_("with p-value"), df, X, pv);
     }
 }
 
@@ -2339,9 +2360,9 @@ static void print_HET_1_results (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "%s = 2 * P(z > %f) = %.3g\n\n", 
 		I_("with p-value"), z, pv);
     } else if (tex_format(prn)) {
-	pprintf(prn, "\n%s: \verb|HET_1| = %f,\n", I_("Test statistic"), z);
+	pprintf(prn, "\n%s: \verb|HET_1| = %f,\n", T_("Test statistic"), z);
 	pprintf(prn, "%s = $2 \times P$($z$ > %f) = %f\n\n",
-		I_("with p-value"), z, pv);
+		T_("with p-value"), z, pv);
     }
 }
 
@@ -2613,12 +2634,12 @@ static void middle_table_row (struct middletab *mt, int j, PRN *prn)
     if (tex_format(prn)) {
 	if (mt->multi) {
 	    pprintf(prn, "%s & %s \\\\\n%s & %s \\\\\n",
-		    _(s1), print_fifteen(x1, mt->val[j], mt->minus),
-		    _(s2), print_fifteen(x2, mt->val[k], mt->minus));
+		    T_(s1), print_fifteen(x1, mt->val[j], mt->minus),
+		    T_(s2), print_fifteen(x2, mt->val[k], mt->minus));
 	} else {
 	    pprintf(prn, "%s & %s & %s & %s \\\\\n",
-		    _(s1), print_eight(x1, mt, j),
-		    _(s2), print_eight(x2, mt, k));
+		    T_(s1), print_eight(x1, mt, j),
+		    T_(s2), print_eight(x2, mt, k));
 	}
     } else if (rtf_format(prn)) {
 	if (mt->multi) {
@@ -2636,8 +2657,8 @@ static void middle_table_row (struct middletab *mt, int j, PRN *prn)
 	}
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%s%c\"%s\"%c%s\n",
-		_(s1), mt->d, print_csv(x1, mt->val[j]), mt->d,
-		_(s2), mt->d, print_csv(x2, mt->val[k]));
+		I_(s1), mt->d, print_csv(x1, mt->val[j]), mt->d,
+		I_(s2), mt->d, print_csv(x2, mt->val[k]));
     } else {
 	if (mt->nls || mt->multi) {
 	    middletab_prepare_format(mt, j);
@@ -3447,7 +3468,7 @@ static void print_coeff_separator (const char *s, int n, PRN *prn)
     } else if (tex_format(prn)) {
 	if (havestr) {
 	    pputs(prn, "\\\\ [-8pt]\n");
-	    pprintf(prn, "\\multicolumn{%d}{c}{%s} \\\\[1ex]\n", n, I_(s));
+	    pprintf(prn, "\\multicolumn{%d}{c}{%s} \\\\[1ex]\n", n, T_(s));
 	} else {
 	    pputs(prn, "\\\\ \n");
 	}
@@ -4687,7 +4708,7 @@ static void print_root (double rx, double ix, double mod, double fr,
 	 pprintf(prn, root_fmt, _("Root"), i, rx, ix, mod, fr);
      } else if (tex_format(prn)) {
 	 pprintf(prn, "& %s & %d & $%.4f$ & $%.4f$ & $%.4f$ & $%.4f$ \\\\ ",
-		 I_("Root"), i, rx, ix, mod, fr);
+		 T_("Root"), i, rx, ix, mod, fr);
 	 if (hline) {
 	     pputs(prn, "\\hline\n");
 	 } else {
@@ -4709,7 +4730,7 @@ static void root_start (const char *tag, PRN *prn)
     if (plain_format(prn)) {
 	pprintf(prn, "  %s\n", _(tag));
     } else if (tex_format(prn)) {
-	pprintf(prn, "%s \\\\ \n", _(tag));
+	pprintf(prn, "%s \\\\ \n", T_(tag));
     } else if (rtf_format(prn)) {
 	pputs(prn, RTF_ROOT_ROW);
 	pprintf(prn, "\\ql %s\\cell\\ql \\cell\\ql \\cell\\ql \\cell\\ql \\cell"
@@ -4735,7 +4756,7 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
 	    pputs(prn, "\n\\vspace{1em}\n\n");
 	    pputs(prn, "\\begin{tabular}{llrrrrr}\n");
 	    pprintf(prn, "& & & %s & %s & %s & %s \\\\ \\hline\n", 
-		    I_("Real"), I_("Imaginary"), I_("Modulus"), I_("Frequency"));
+		    T_("Real"), T_("Imaginary"), T_("Modulus"), T_("Frequency"));
 	} else if (rtf_format(prn)) {
 	    pputs(prn, "\n\\par\n{" RTF_ROOT_ROW);
 	    pprintf(prn, "\\qr \\cell \\qc \\cell"
@@ -4854,8 +4875,8 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn)
 	pprintf(prn, RTFTAB "%s: %d (%.1f%%)\n", I_("Censored observations"), 
 		cenobs, cenpc);
     } else if (tex_format(prn)) {
-	pprintf(prn, "%s: %d \\\\\n", _("Total observations"), totobs);
-	pprintf(prn, "%s: %d (%.1f\\%%) \\\\\n", _("Censored observations"), 
+	pprintf(prn, "%s: %d \\\\\n", T_("Total observations"), totobs);
+	pprintf(prn, "%s: %d (%.1f\\%%) \\\\\n", T_("Censored observations"), 
 		cenobs, cenpc);
     }
 }

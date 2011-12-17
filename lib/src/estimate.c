@@ -2006,7 +2006,7 @@ static int hilu_plot (double *ssr, double *rho, int n)
     fputs("# hildreth-lu\n", fp);
     fputs("set xlabel 'rho'\n", fp);
 
-    fprintf(fp, "set ylabel '%s'\n", I_("ESS"));
+    fprintf(fp, "set ylabel '%s'\n", _("ESS"));
 
     fputs("set nokey\n", fp);
     fputs("set xrange [-1.0:1.0]\n", fp);

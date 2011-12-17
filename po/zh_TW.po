@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-12-16 11:09-0500\n"
+"POT-Creation-Date: 2011-12-16 14:21-0500\n"
 "PO-Revision-Date: 2011-10-01 15:10-0400\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
@@ -3164,12 +3164,12 @@ msgstr "開啟資料檔(_O)"
 msgid "annual"
 msgstr "年資料"
 
-#: lib/src/gretl_intl.c:629 gui2/gretl.c:1324 gui2/gui_utils.c:179
+#: lib/src/gretl_intl.c:635 gui2/gretl.c:1324 gui2/gui_utils.c:179
 #: gui2/gui_utils.c:309 gui2/gui_utils.c:359
 msgid "_File"
 msgstr "檔案(_F)"
 
-#: lib/src/gretl_intl.c:676
+#: lib/src/gretl_intl.c:682
 #, c-format
 msgid "%s: locale is not supported on this system"
 msgstr ""
@@ -11559,14 +11559,16 @@ msgid "Coefficient covariance matrix"
 msgstr "係數共變數矩陣"
 
 #: gui2/guiprint.c:1212
-#, c-format
+#, fuzzy, c-format
 msgid "Correlation coefficients, using the observations %s--%s"
-msgstr ""
+msgstr "敘述統計, 所使用的樣本為 %s - %s"
 
 #: gui2/guiprint.c:1219
-#, c-format
+#, fuzzy, c-format
 msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
 msgstr ""
+"   p值 (雙尾 two-tailed) = %g\n"
+"\n"
 
 #: gui2/guiprint.c:1313
 msgid "Theil's $U$"
@@ -11595,10 +11597,11 @@ msgid "Standard error of residuals = %g"
 msgstr "非條件殘差變異數"
 
 #: gui2/guiprint.c:1461
+#, fuzzy
 msgid ""
 "\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
 "\n"
-msgstr ""
+msgstr "Note: * 表示殘差超過 2.5 倍的標準誤 "
 
 #: gui2/guiprint.c:1522
 msgid "Note: * denotes a residual in excess of 2.5 standard errors"

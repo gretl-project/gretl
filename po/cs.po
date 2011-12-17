@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-12-16 11:09-0500\n"
+"POT-Creation-Date: 2011-12-16 14:21-0500\n"
 "PO-Revision-Date: 2011-10-01 14:27-0400\n"
 "Last-Translator: Pavla Nikolovova <nikolovova@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -3149,12 +3149,12 @@ msgstr "_Otevřít data"
 msgid "annual"
 msgstr "roční"
 
-#: lib/src/gretl_intl.c:629 gui2/gretl.c:1324 gui2/gui_utils.c:179
+#: lib/src/gretl_intl.c:635 gui2/gretl.c:1324 gui2/gui_utils.c:179
 #: gui2/gui_utils.c:309 gui2/gui_utils.c:359
 msgid "_File"
 msgstr "_Soubor"
 
-#: lib/src/gretl_intl.c:676
+#: lib/src/gretl_intl.c:682
 #, c-format
 msgid "%s: locale is not supported on this system"
 msgstr "%s: lokální disk není v tomto systému podporován"

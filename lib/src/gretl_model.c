@@ -3097,12 +3097,16 @@ static int gretl_test_print_heading (const ModelTest *test, PRN *prn)
     if (param != NULL) {
 	if (plain_format(prn)) {
 	    pprintf(prn, _(descrip), param);
+	} else if (tex_format(prn)) {
+	    pprintf(prn, T_(descrip), param);
 	} else {
 	    pprintf(prn, I_(descrip), param);
 	}
     } else {
 	if (plain_format(prn)) {
 	    pputs(prn, _(descrip));
+	} else if (tex_format(prn)) {
+	    pputs(prn, T_(descrip));
 	} else {
 	    pputs(prn, I_(descrip));
 	}

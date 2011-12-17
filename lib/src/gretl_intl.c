@@ -414,6 +414,12 @@ char *iso_gettext (const char *msgid)
     return ret;
 } 
 
+char *tex_gettext (const char *msgid)
+{
+    /* FIXME! */
+    return iso_gettext(msgid);
+}
+
 #endif /* ENABLE_NLS */
 
 #ifdef WIN32

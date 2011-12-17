@@ -29,6 +29,28 @@
 #include <shlobj.h>
 #include <aclapi.h>
 
+static void win_print_last_error (void)
+{
+    DWORD dw = GetLastError();
+    LPVOID buf;
+
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+		  FORMAT_MESSAGE_FROM_SYSTEM | 
+		  FORMAT_MESSAGE_IGNORE_INSERTS,
+		  NULL,
+		  dw,
+		  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		  (LPTSTR) &buf,
+		  0,
+		  NULL); 
+
+    if (buf != NULL) {
+	fprintf(stderr, "Windows says: %s\n", (char *) buf);
+    }
+
+    LocalFree(buf);
+}
+
 /* returns 0 on success */
 
 int read_reg_val (HKEY tree, const char *base, 
@@ -36,18 +58,22 @@ int read_reg_val (HKEY tree, const char *base,
 {
     unsigned long datalen = MAXLEN;
     char regpath[64];
-    int err = 0;
+    LONG ret;
     HKEY regkey;
+    int err = 0;
 
     sprintf(regpath, "Software\\%s", base);
 
-    if (RegOpenKeyEx(tree,                        /* handle to open key */
-                     regpath,                     /* subkey name */
-                     0,                           /* reserved */
-                     KEY_READ,                    /* access mask */
-                     &regkey                      /* key handle */
-                     ) != ERROR_SUCCESS) {
-        fprintf(stderr, "Couldn't read registry path %s\n", regpath);
+    ret = RegOpenKeyEx(tree,      /* handle to open key */
+		       regpath,   /* subkey name */
+		       0,         /* reserved */
+		       KEY_READ,  /* access mask */
+		       &regkey    /* key handle */
+		       );
+
+    if (ret != ERROR_SUCCESS) {
+	fprintf(stderr, "Couldn't read registry path %s\n", regpath);
+	win_print_last_error();
         return 1;
     }
 
