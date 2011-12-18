@@ -180,7 +180,7 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
 	SetMapMode(dc, MM_TEXT);
 	/* make simple header */
 	if (hdrstart != NULL) {
-	    sprintf(hdr, I_("%s, page %d"), hdrstart, page++);
+	    sprintf(hdr, I_("%s, page %d"), hdrstart, page++); 
 	} else {
 	    sprintf(hdr, "%d", page++);
 	}
@@ -650,16 +650,16 @@ void rtf_print_obs_marker (int t, const DATASET *pdinfo, PRN *prn)
 #define STATS_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                    "\\cellx2700\\cellx4000\\cellx6700\\cellx8000\n\\intbl"
 
-static void printfrtf (double zz, PRN *prn, int endrow)
+static void printf_rtf (double zz, PRN *prn, int endrow)
 {
     /* was using "qr", for right alignment */
 
     if (na(zz)) {
 	if (endrow) {
 	    pprintf(prn, "\\qc %s\\cell\\intbl \\row\n",
-		    I_("undefined"));
+		    A_("undefined"));
 	} else {
-	    pprintf(prn, "\\qc %s\\cell", I_("undefined"));
+	    pprintf(prn, "\\qc %s\\cell", A_("undefined"));
 	}
 	return;
     }
@@ -687,23 +687,23 @@ rtfprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     ntodate(date1, pdinfo->t1, pdinfo);
     ntodate(date2, pdinfo->t2, pdinfo);
 
-    sprintf(tmp, I_("Summary Statistics, using the observations %s - %s"),
+    sprintf(tmp, A_("Summary Statistics, using the observations %s - %s"),
 	    date1, date2);
 
     pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n", tmp);
     
     if (summ->list[0] == 1) {
-	sprintf(tmp, I_("for the variable %s (%d valid observations)"), 
+	sprintf(tmp, A_("for the variable %s (%d valid observations)"), 
 		pdinfo->varname[summ->list[1]], summ->n);
 	pprintf(prn, "%s\\par\n\n", tmp);
 	pputs(prn, "{" VAR_SUMM_ROW "\\intbl ");
     } else {
 	if (summ->missing) {
-	    strcpy(tmp, I_("(missing values were skipped)"));
+	    strcpy(tmp, A_("(missing values were skipped)"));
 	    pprintf(prn, "%s\\par\n\n", tmp); /* FIXME */
 	}
 	pprintf(prn, "{" SUMM_ROW
-		"\\intbl \\qc %s\\cell", I_("Variable"));
+		"\\intbl \\qc %s\\cell", A_("Variable"));
     }
 
     pprintf(prn, 
@@ -712,21 +712,21 @@ rtfprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\intbl \\row\n",
-	    I_("Mean"), I_("Median"), I_("Minimum"), I_("Maximum"));
+	    A_("Mean"), A_("Median"), A_("Minimum"), A_("Maximum"));
 
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
 	if (summ->list[0] > 1) {
 	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[vi]);
 	}
-	printfrtf(summ->mean[i], prn, 0);
-	printfrtf(summ->median[i], prn, 0);
-	printfrtf(summ->low[i], prn, 0);
-	printfrtf(summ->high[i], prn, 1);
+	printf_rtf(summ->mean[i], prn, 0);
+	printf_rtf(summ->median[i], prn, 0);
+	printf_rtf(summ->low[i], prn, 0);
+	printf_rtf(summ->high[i], prn, 1);
     }
 
     if (summ->list[0] > 1) pprintf(prn, "\\intbl \\qc %s\\cell",
-				   I_("Variable"));
+				   A_("Variable"));
 
     pprintf(prn, 
 	    " \\qc %s\\cell"
@@ -734,17 +734,17 @@ rtfprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\intbl \\row\n",
-	    I_("Std. Dev."), I_("C.V."), I_("Skewness"), I_("Ex. kurtosis"));
+	    A_("Std. Dev."), A_("C.V."), A_("Skewness"), A_("Ex. kurtosis"));
 
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
 	if (summ->list[0] > 1) {
 	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[vi]);
 	}
-	printfrtf(summ->sd[i], prn, 0);
-	printfrtf(summ->cv[i], prn, 0);
-	printfrtf(summ->skew[i], prn, 0);
-	printfrtf(summ->xkurt[i], prn, 1);
+	printf_rtf(summ->sd[i], prn, 0);
+	printf_rtf(summ->cv[i], prn, 0);
+	printf_rtf(summ->skew[i], prn, 0);
+	printf_rtf(summ->xkurt[i], prn, 1);
     }
 
     pputs(prn, "}}\n");
@@ -841,10 +841,10 @@ int text_print_equation (const MODEL *pmod, const DATASET *pdinfo,
 	}
     } else {
 	if (!na(pmod->adjrsq)) {
-	    pprintf(prn, ", %s = %.3f ", I_("R-squared"), pmod->rsq);
+	    pprintf(prn, ", %s = %.3f ", _("R-squared"), pmod->rsq);
 	} else if (!na(pmod->lnL)) {
 	    eqn_numstr(pmod->lnL, xstr);
-	    pprintf(prn, ", %s = %s ", I_("loglikelihood"), xstr);
+	    pprintf(prn, ", %s = %s ", _("loglikelihood"), xstr);
 	}
 	x = gretl_model_get_double(pmod, "rho_in");
 	if (!na(x)) {
@@ -853,8 +853,8 @@ int text_print_equation (const MODEL *pmod, const DATASET *pdinfo,
     }
 
     pprintf(prn, "\n(%s)\n",
-	    (opt & OPT_T)? I_("t-ratios in parentheses") :
-	    I_("standard errors in parentheses"));
+	    (opt & OPT_T)? _("t-ratios in parentheses") :
+	    _("standard errors in parentheses"));
 
     return 0;
 }
@@ -942,7 +942,7 @@ static void tex_matnum (double x, PRN *prn)
     pprintf(prn, "%s & ", s);
 }
 
-static void printftex (double x, PRN *prn, int endrow)
+static void printf_tex (double x, PRN *prn, int endrow)
 {
     if (na(x)) {
 	if (endrow) {
@@ -1008,10 +1008,10 @@ texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	    tex_escape(vname, pdinfo->varname[vi]);
 	    pprintf(prn, "%s & ", vname);
 	}
-	printftex(summ->mean[i], prn, 0);
-	printftex(summ->median[i], prn, 0);
-	printftex(summ->low[i], prn, 0);
-	printftex(summ->high[i], prn, 1);
+	printf_tex(summ->mean[i], prn, 0);
+	printf_tex(summ->median[i], prn, 0);
+	printf_tex(summ->low[i], prn, 0);
+	printf_tex(summ->high[i], prn, 1);
 	if (i == summ->list[0] - 1) {
 	    pputs(prn, "[10pt]\n\n");
 	} else {
@@ -1035,10 +1035,10 @@ texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	    tex_escape(vname, pdinfo->varname[vi]);
 	    pprintf(prn, "%s & ", vname);
 	}
-	printftex(summ->sd[i], prn, 0);
-	printftex(summ->cv[i], prn, 0);
-	printftex(summ->skew[i], prn, 0);
-	printftex(summ->xkurt[i], prn, 1);
+	printf_tex(summ->sd[i], prn, 0);
+	printf_tex(summ->cv[i], prn, 0);
+	printf_tex(summ->skew[i], prn, 0);
+	printf_tex(summ->xkurt[i], prn, 1);
 	pputc(prn, '\n');
     }
 
@@ -1048,6 +1048,8 @@ texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 void special_print_summary (const Summary *summ, const DATASET *pdinfo,
 			    PRN *prn)
 {
+    set_alt_gettext_mode(prn);
+
     if (tex_format(prn)) {
 	texprint_summary(summ, pdinfo, prn);
     } else if (rtf_format(prn)) {
@@ -1067,7 +1069,7 @@ static void tex_outxx (double xx, PRN *prn)
 static void rtf_outxx (double xx, PRN *prn)
 {
     if (na(xx)) {
-	pprintf(prn, "\\qc %s\\cell ", I_("undefined"));
+	pprintf(prn, "\\qc %s\\cell ", A_("undefined"));
     } else {
 	pprintf(prn, "\\qc %.4f\\cell ", xx);	
     }
@@ -1116,18 +1118,18 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
 	ntodate(date1, vmat->t1, pdinfo);
 	ntodate(date2, vmat->t2, pdinfo);
 
-	sprintf(tmp, I_("Correlation coefficients, using the observations "
+	sprintf(tmp, A_("Correlation coefficients, using the observations "
 			"%s - %s"), date1, date2);
 	pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n", tmp);
 	if (vmat->missing) {
-	    pprintf(prn, "%s\\par\n", I_("(missing values were skipped)"));
+	    pprintf(prn, "%s\\par\n", A_("(missing values were skipped)"));
 	}
-	sprintf(tmp, I_("5%% critical value (two-tailed) = %.4f for n = %d"), 
+	sprintf(tmp, A_("5%% critical value (two-tailed) = %.4f for n = %d"), 
 		rhocrit95(n), n);
 	pprintf(prn, "%s\\par\n\\par\n{", tmp);
     } else {
 	pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n\\par\n{",
-		I_("Coefficient covariance matrix"));
+		A_("Coefficient covariance matrix"));
     }
     
     for (i=0; i<=blockmax; i++) {
@@ -1161,7 +1163,7 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
 		if (vmat->ci == CORR) {
 		    rtf_outxx(vmat->vec[idx], prn);
 		} else {
-		    printfrtf(vmat->vec[idx], prn, 0);
+		    printf_rtf(vmat->vec[idx], prn, 0);
 		}
 	    }
 	    pprintf(prn, "\\ql %s\\cell \\intbl \\row\n", vmat->names[j]);
@@ -1177,7 +1179,7 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
 		if (vmat->ci == CORR) {
 		    rtf_outxx(vmat->vec[idx], prn);
 		} else {
-		    printfrtf(vmat->vec[idx], prn, 0);
+		    printf_rtf(vmat->vec[idx], prn, 0);
 		}
 	    }
 	    pprintf(prn, "\\ql %s\\cell \\intbl \\row\n", vmat->names[ij2]);
@@ -1292,6 +1294,8 @@ texprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
 void special_print_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, 
 			    PRN *prn)
 {
+    set_alt_gettext_mode(prn);
+
     if (tex_format(prn)) {
 	texprint_vmatrix(vmat, pdinfo, prn);
     } else if (rtf_format(prn)) {
@@ -1333,7 +1337,7 @@ static int texprint_fcast_stats (const FITRESID *fr,
 
     len = gretl_vector_get_length(m);
 
-    pputs(prn, _("Forecast evaluation statistics"));
+    pputs(prn, A_("Forecast evaluation statistics"));
     pputs(prn, "\\\\[1ex]\n\n");
 
     pputs(prn, "\\begin{tabular}{ll}\n");
@@ -1386,10 +1390,10 @@ void rtf_fit_resid_head (const FITRESID *fr, const DATASET *pdinfo,
     ntodate(date2, fr->t2, pdinfo);
 
     pputs(prn, "{\\rtf1\\par\n\\qc ");
-    pputs(prn, I_("Model estimation range:")); 
+    pputs(prn, A_("Model estimation range:")); 
     pprintf(prn, " %s - %s\\par\n", date1, date2);
 
-    sprintf(tmp, I_("Standard error of residuals = %g"), 
+    sprintf(tmp, A_("Standard error of residuals = %g"), 
 	    fr->sigma);
     pprintf(prn, "\\qc %s\\par\n\\par\n", tmp);
 }
@@ -1489,7 +1493,7 @@ static void rtfprint_fit_resid (const FITRESID *fr,
 	    " \\qc %s\\cell"
 	    " \\ql \\cell"
 	    " \\intbl \\row\n",
-	    fr->depvar, I_("fitted"), I_("residual"));
+	    fr->depvar, A_("fitted"), A_("residual"));
 
     for (t=fr->t1; t<=fr->t2; t++) {
 	rtf_print_obs_marker(t, pdinfo, prn);
@@ -1497,7 +1501,7 @@ static void rtfprint_fit_resid (const FITRESID *fr,
 	    pputs(prn, "\\qc \\cell \\qc \\cell \\qc \\cell \\ql \\cell"
 		  " \\intbl \\row\n"); 
 	} else if (na(fr->fitted[t])) {	 
-	    printfrtf(fr->actual[t], prn, 0);
+	    printf_rtf(fr->actual[t], prn, 0);
 	    pputs(prn, "\\qc \\cell \\qc \\cell \\ql \\cell"
 		  " \\intbl \\row\n"); 
 	} else {
@@ -1508,9 +1512,9 @@ static void rtfprint_fit_resid (const FITRESID *fr,
 	    if (ast) {
 		anyast = 1;
 	    }
-	    printfrtf(fr->actual[t], prn, 0);
-	    printfrtf(fr->fitted[t], prn, 0);
-	    printfrtf(xx, prn, 0);
+	    printf_rtf(fr->actual[t], prn, 0);
+	    printf_rtf(fr->fitted[t], prn, 0);
+	    printf_rtf(xx, prn, 0);
 	    pprintf(prn, "\\ql %s\\cell \\intbl \\row\n", 
 		    (ast)? "*" : "");
 	}
@@ -1519,7 +1523,7 @@ static void rtfprint_fit_resid (const FITRESID *fr,
     pputs(prn, "}\n");
     if (anyast) {
 	pprintf(prn, "\\par\n\\qc %s \\par\n",
-		I_("Note: * denotes a residual in excess of 2.5 standard errors"));
+		A_("Note: * denotes a residual in excess of 2.5 standard errors"));
     }
     pputs(prn, "}\n");
 }
@@ -1528,6 +1532,8 @@ void special_print_fit_resid (const FITRESID *fr,
 			      const DATASET *pdinfo, 
 			      PRN *prn)
 {
+    set_alt_gettext_mode(prn);
+
     if (tex_format(prn)) {
 	texprint_fit_resid(fr, pdinfo, prn);
     } else if (rtf_format(prn)) {
@@ -1683,12 +1689,12 @@ static void rtfprint_fcast_without_errs (const FITRESID *fr,
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\intbl \\row\n", 
-	    I_("Obs"), fr->depvar, I_("prediction")); 
+	    A_("Obs"), fr->depvar, A_("prediction")); 
 
     for (t=fr->t1; t<=fr->t2; t++) {
 	rtf_print_obs_marker(t, pdinfo, prn);
-	printfrtf(fr->actual[t], prn, 0);
-	printfrtf(fr->fitted[t], prn, 0);
+	printf_rtf(fr->actual[t], prn, 0);
+	printf_rtf(fr->fitted[t], prn, 0);
     }
 
     pputs(prn, "}}\n");
@@ -1705,16 +1711,16 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
 
     if (fr->asymp) {
 	tval = normal_critval(fr->alpha / 2);
-	sprintf(tmp, I_("For %g%% confidence intervals, z(%g) = %.2f"), 
+	sprintf(tmp, A_("For %g%% confidence intervals, z(%g) = %.2f"), 
 		conf, fr->alpha / 2, tval);
     } else {
 	tval = student_critval(fr->df, fr->alpha / 2);
-	sprintf(tmp, I_("For %g%% confidence intervals, t(%d, %g) = %.3f"), 
+	sprintf(tmp, A_("For %g%% confidence intervals, t(%d, %g) = %.3f"), 
 		conf, fr->df, fr->alpha / 2, tval);
     }
     pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n\\par\n", tmp);
 
-    sprintf(tmp, I_("%g%% interval"), conf);
+    sprintf(tmp, A_("%g%% interval"), conf);
 
     pputs(prn, "{" FCE_ROW "\\intbl ");
     pprintf(prn, 
@@ -1724,16 +1730,16 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\intbl \\row\n", 
-	    I_("Obs"), fr->depvar, I_("prediction"), 
-	    I_("std. error"),
+	    A_("Obs"), fr->depvar, A_("prediction"), 
+	    A_("std. error"),
 	    tmp);
 
     for (t=fr->t1; t<=fr->t2; t++) {
 	rtf_print_obs_marker(t, pdinfo, prn);
 	maxerr = tval * fr->sderr[t];
-	printfrtf(fr->actual[t], prn, 0);
-	printfrtf(fr->fitted[t], prn, 0);
-	printfrtf(fr->sderr[t], prn, 0);
+	printf_rtf(fr->actual[t], prn, 0);
+	printf_rtf(fr->fitted[t], prn, 0);
+	printf_rtf(fr->sderr[t], prn, 0);
 	if (na(fr->sderr[t])) {
 	    pputs(prn, "\\qc \\cell \\intbl \\row\n");
 	} else {
@@ -1751,6 +1757,8 @@ void special_print_forecast (const FITRESID *fr,
 			     const DATASET *pdinfo, 
 			     PRN *prn)
 {
+    set_alt_gettext_mode(prn);
+
     if (tex_format(prn)) {
 	if (fr->sderr != NULL) {
 	    texprint_fcast_with_errs(fr, pdinfo, prn);
@@ -1832,10 +1840,10 @@ rtfprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
     pprintf(prn, "\\qc %s\\cell", cf->names[i]);
 
-    printfrtf(cf->coeff[i], prn, 0);
+    printf_rtf(cf->coeff[i], prn, 0);
 
     if (isnan(cf->maxerr[i])) {
-	pprintf(prn, "\\qc %s\\cell ", I_("undefined"));
+	pprintf(prn, "\\qc %s\\cell ", A_("undefined"));
     } else {
 	pprintf(prn, "\\qc (%#.*g, %#.*g)\\cell ", 
 		GRETL_DIGITS, cf->coeff[i] - cf->maxerr[i], 
@@ -1856,7 +1864,7 @@ static void rtfprint_confints (const CoeffIntervals *cf, PRN *prn)
     pprintf(prn, "{\\rtf1\\par\n\\qc t(%d, %g) = %.3f\\par\n\\par\n", 
 	    cf->df, tail, cf->t);
 
-    cstr = g_strdup_printf(I_("%g\\%% confidence interval"), 100 * (1 - cf->alpha));
+    cstr = g_strdup_printf(A_("%g\\%% confidence interval"), 100 * (1 - cf->alpha));
 
     pputs(prn, "{" CF_ROW "\\intbl ");
     pprintf(prn, 
@@ -1864,7 +1872,7 @@ static void rtfprint_confints (const CoeffIntervals *cf, PRN *prn)
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\intbl \\row\n", 
-	    I_("Variable"), I_("Coefficient"), 
+	    A_("Variable"), A_("Coefficient"), 
 	    cstr);
 
     g_free(cstr);
@@ -1878,6 +1886,8 @@ static void rtfprint_confints (const CoeffIntervals *cf, PRN *prn)
 
 void special_print_confints (const CoeffIntervals *cf, PRN *prn)
 {
+    set_alt_gettext_mode(prn);
+
     if (tex_format(prn)) {
 	texprint_confints(cf, prn);
     } else if (rtf_format(prn)) {

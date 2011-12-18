@@ -3183,14 +3183,14 @@ static void gretl_test_print_h_0 (const ModelTest *test, int heading,
 	pprintf(prn, "\n  %s: ", _("Null hypothesis"));
 	pputs(prn, _(H0));
     } else if (tex_format(prn)) {
-	pprintf(prn, "\\\\\n\\quad %s: ", I_("Null hypothesis"));
+	pprintf(prn, "\\\\\n\\quad %s: ", A_("Null hypothesis"));
 	if (!strcmp(H0, "rho = 0")) {
 	    pputs(prn, "$\\rho = 0$");
 	} else {
 	    pputs(prn, I_(H0));
 	}
     } else if (rtf_format(prn)) {
-	pprintf(prn, "\\par\n %s: ", I_("Null hypothesis"));
+	pprintf(prn, "\\par\n %s: ", A_("Null hypothesis"));
 	pputs(prn, I_(H0));
     }
 
@@ -3246,7 +3246,7 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
     case GRETL_STAT_WALD_CHISQ:
 	if (tex) {
 	    if (na(test->value)) {
-		sprintf(str, "$\\chi^2(%d)$ = NA (%s)", test->dfn, I_("failed"));
+		sprintf(str, "$\\chi^2(%d)$ = NA (%s)", test->dfn, A_("failed"));
 	    } else {
 		sprintf(str, "$\\chi^2(%d)$ = %g", test->dfn, test->value);
 	    } 
@@ -3335,6 +3335,8 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
     const char *tstr;
     char buf[512];
 
+    set_alt_gettext_mode(prn);
+
     if (rtf_format(prn)) {
 	pputs(prn, "\\par \\ql ");
     }
@@ -3364,9 +3366,9 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
 	if (plain_format(prn)) {
 	    pprintf(prn, "  %s = %s\n\n", _("with p-value"), buf);
 	} else if (tex_format(prn)) {
-	    pprintf(prn, "\\quad %s = %s\\\\\n", I_("with p-value"), buf);
+	    pprintf(prn, "\\quad %s = %s\\\\\n", A_("with p-value"), buf);
 	} else if (rtf_format(prn)) {
-	    pprintf(prn, " %s = %s\\par\n\n", I_("with p-value"), buf);
+	    pprintf(prn, " %s = %s\\par\n\n", A_("with p-value"), buf);
 	}
     } else if (!na(test->crit) && !na(test->alpha)) {
 	double a = test->alpha * 100.0;
@@ -3375,10 +3377,10 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
 	    sprintf(buf, _("%g percent critical value"), a);
 	    pprintf(prn, "  (%s = %.2f)\n\n", buf, test->crit);
 	} else if (tex_format(prn)) {
-	    sprintf(buf, I_("%g percent critical value"), a);
+	    sprintf(buf, A_("%g percent critical value"), a);
 	    pprintf(prn, "\\quad (%s = %.2f)\\\\\n", buf, test->crit);
 	} else if (rtf_format(prn)) {
-	    sprintf(buf, I_("%g percent critical value"), a);
+	    sprintf(buf, A_("%g percent critical value"), a);
 	    pprintf(prn, " (%s = %.2f)\\par\n\n", buf, test->crit);
 	}
     } else {

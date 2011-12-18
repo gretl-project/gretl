@@ -1315,7 +1315,7 @@ static double logit_pdf (double x)
 {
     double l, z = exp(-x);
 
-    l = z / ((1.0 + z) * (1.0 + z));
+    l = z / ((1 + z) * (1 + z));
 
 #if LPDEBUG
     if (x > 40 || x < -40) {
@@ -1648,6 +1648,192 @@ static int perfect_pred_check (const double *y, MODEL *dmod,
     return ret;
 }
 
+#if 0 /* not yet */
+
+static int binary_compute_probs (const double *theta, op_container *OC)
+{
+    double e;
+    int t, s = 0;
+
+    for (t=OC->pmod->t1; t<=OC->pmod->t2; t++) {
+	if (na(OC->pmod->uhat[t])) {
+	    continue;
+	}
+	if (OC->ci == PROBIT) {
+	    if (OC->y[s] != 0.0) {
+		OC->dP[s] = normal_cdf(OC->ndx[s]);
+	    } else {
+		OC->dP[s] = normal_cdf(-OC->ndx[s]);
+	    }
+	} else {
+	    e = 1.0 / (1 + exp(-OC->ndx[s]));
+	    OC->dP[s] = (OC->y[s] != 0)? e : 1 - e;
+	}
+	s++;
+    }
+
+    return 0;
+}
+
+static int binary_neg_hessian (gretl_matrix *H, const double *y,
+			       const double *ndx, const gretl_matrix *X,
+			       int ci)
+{
+    double w, p, xtj;
+    int t;
+
+    for (t=t1; t<=t2; t++) {
+	if (ci == PROBIT) {
+	    w = (y[t] != 0) ? invmills(-ndx[t]) : -invmills(ndx[t]);
+	    p = w * (ndx[t] + w);
+	} else {
+	    p = 1.0 / (1 + exp(-ndx[t]));
+	    p = p * (1-p);
+	}
+	for (j=0; j<X->cols; j++) {
+	    xtj = gretl_matrix_get(X, t, j);
+	    gretl_matrix_set(mX, t, j, p * xtj);
+	}
+    }
+
+    gretl_matrix_multiply_mod(mX, GRETL_MOD_TRANSPOSE,
+			      X, GRETL_MOD_NONE,
+			      H, GRETL_MOD_NONE);
+
+    return 0;
+}
+
+static double binary_loglik (const double *theta, void *ptr)
+{
+    op_container *OC = (op_container *) ptr;
+    double x, ll = 0.0;
+    int i, s, t, v;
+    int err;
+
+    s = 0;
+    for (t=OC->t1; t<=OC->t2; t++) {
+	if (na(OC->pmod->uhat[t])) {
+	    continue;
+	}
+	x = 0.0;
+	for (i=0; i<OC->nx; i++) {
+	    /* the independent variables */
+	    v = OC->list[i+2];
+	    x -= OC->theta[i] * OC->Z[v][t];
+	}
+	OC->ndx[s++] = x;
+    }
+    
+    err = binary_compute_probs(OC->theta, OC);
+
+    if (err) {
+	ll = NADBL;
+    } else {
+	s = 0;
+	for (t=OC->t1; t<=OC->t2; t++) {
+	    if (!na(OC->pmod->uhat[t])) {
+		ll += log(OC->dP[s++]);
+	    }
+	}
+    }
+
+    return ll;
+}
+
+static int binary_score (double *theta, double *g, int npar, BFGS_CRIT_FUNC ll, 
+			 void *ptr)
+{
+    op_container *OC = (op_container *) ptr;
+    double e, w, xtj;
+    int t, j, s = 0;
+
+    for (t=OC->pmod->t1; t<=OC->pmod->t2; t++) {
+	if (na(OC->pmod->uhat[t])) {
+	    continue;
+	}
+	if (OC->ci == PROBIT) {
+	    w = (OC->y[s] != 0) ? invmills(-OC->ndx[s]) : -invmills(OC->ndx[s]);
+	} else {
+	    e = 1.0 / (1 + exp(-OC->ndx[s]));
+	    w = OC->y[s] - e;
+	}
+	g[s] = 0.0;
+	for (j=0; j<X->cols; j++) {
+	    xtj = gretl_matrix_get(X, s, j);
+	    gretl_matrix_set(OC->G, s, j, w * xtj);
+	    g[s] += w * xtj;
+	}
+	s++;
+    }
+
+    return 0;
+}
+
+/* Main binary estimation function */
+
+static int do_binary (int ci, DATASET *dset, 
+		      MODEL *pmod, const int *list, 
+		      gretlopt opt, PRN *prn)
+{
+    double crittol = 1.0e-7;
+    double gradtol = 1.0e-7;
+    int maxit = 1000;
+    int fncount = 0;
+    int grcount = 0;
+    op_container *OC;
+    int i, npar;
+    gretl_matrix *V = NULL;
+    double *theta = NULL;
+    double toler;
+    int err;
+
+    OC = op_container_new(ci, 0, dset->Z, pmod, opt);
+    if (OC == NULL) {
+	return E_ALLOC;
+    }
+
+    npar = OC->k;
+
+    theta = malloc(npar * sizeof *theta);
+    if (theta == NULL) {
+	op_container_destroy(OC);
+	return E_ALLOC;
+    }
+
+    /* initialize slopes */
+    for (i=0; i<OC->nx; i++) {
+	OC->theta[i] = 0.0001;
+    }
+
+    err = newton_raphson_max(theta, npar, maxit, 
+			     crittol, gradtol, &fncount, 
+			     C_LOGLIK, binary_loglik, 
+			     binary_score, NULL, OC, 
+			     (prn != NULL)? OPT_V : OPT_NONE,
+			     prn);
+
+    if (err) {
+	goto bailout;
+    } 
+
+    V = bprobit_vcv(OC, &err);
+
+    if (!err) {
+	fill_binary_model(pmod, list, dset, OC, V, 
+			  fncount, grcount);
+    }
+
+ bailout:
+
+    free(theta);
+    gretl_matrix_free(V);
+    op_container_destroy(OC);
+
+    return err;
+}
+
+#endif /* not yet */
+
 /* BRMR, Davidson and MacKinnon, ETM, p. 461 */
 
 static int do_BRMR (const int *list, MODEL *dmod, int ci, 
@@ -1738,7 +1924,7 @@ static int do_BRMR (const int *list, MODEL *dmod, int ci,
 
 	llbak = dmod->lnL;
 
-	err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
+	err = gretl_matrix_SVD_ols(y, X, b, NULL, NULL, NULL);
 
 	if (err) {
 	    fprintf(stderr, "logit_probit: err = %d\n", err);

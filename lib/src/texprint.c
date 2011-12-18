@@ -1235,7 +1235,7 @@ static void landscape_modify_line (char *line)
     }
 }
 
-static int tex_use_utf;
+static int tex_use_utf = 1;
 
 void set_tex_use_utf (int s)
 {
@@ -1284,17 +1284,15 @@ void gretl_tex_preamble (PRN *prn, int fmt)
 
 	pputs(prn, "{article}\n");
 
-	if (tex_use_utf) {
-	    pputs(prn, "\\usepackage{ucs}\n");
-	    pputs(prn, "\\usepackage[utf8x]{inputenc}\n");
-	} 
-
 #ifdef ENABLE_NLS
 	if (!tex_use_utf) {
+	    /* not currently activated, but maybe allow a "set" variable? */
 	    char encfile[16];
 
 	    get_suitable_tex_encoding(encfile);
 	    pprintf(prn, "\\usepackage[%s]{inputenc}\n", encfile);
+	} else {
+	    pputs(prn, "\\usepackage[utf8]{inputenc}\n");
 	}
 #endif
 
@@ -1359,6 +1357,8 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
     if (pmod->ci == HECKIT) {
 	return E_NOTIMP;
     }
+
+    set_alt_gettext_mode(prn);
 
     if (COUNT_MODEL(pmod->ci)) {
 	offvar = gretl_model_get_int(pmod, "offset_var");

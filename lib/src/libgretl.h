@@ -61,13 +61,11 @@
 # define _(String) gettext (String)
 # define N_(String) gettext_noop (String)
 # define I_(String) iso_gettext (String) 
-# define M_(String) maybe_iso_gettext (String)
 # define A_(String) alt_gettext (String)
 #else
 # define _(String)  ((char *) String)
 # define N_(String) String
 # define I_(String) ((char *) String)
-# define M_(String) ((char *) String)
 # define A_(String) ((char *) String)
 #endif /* ENABLE_NLS */
 

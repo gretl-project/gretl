@@ -64,17 +64,11 @@ char *utf8_to_latin (const char *s);
 
 int iso_latin_version (void);
 
-void check_for_console (PRN *prn);
-
-void console_off (void);
-
 int lang_id_from_name (const char *s);
 
 int lang_id_from_code (const char *s);
 
-void set_gui_native_printing (void);
-
-void unset_gui_native_printing (void);
+void set_alt_gettext_mode (PRN *prn);
 
 void set_lcnumeric (int langid, int lcnumeric);
 
@@ -89,8 +83,6 @@ int test_locale (const char *langstr);
 char *iso_gettext (const char *msgid);
 
 char *alt_gettext (const char *msgid);
-
-char *maybe_iso_gettext (const char *msgid);
 
 void set_gretl_charset (void);
 
@@ -111,7 +103,7 @@ int chinese_locale (void);
 
 #define gettext(s) s
 #define iso_gettext(s) s
-#define maybe_iso_gettext(s) s
+#define alt_gettext(s) s
 
 # define UTF_WIDTH(s, w) w
 # define TRANSLATED_WIDTH(s) strlen(s)

@@ -2360,8 +2360,8 @@ static void record_transform_info (DATASET *dset, double version)
 
 static void data_read_message (const char *fname, DATASET *dset, PRN *prn)
 {
-    pprintf(prn, M_("\nRead datafile %s\n"), fname);
-    pprintf(prn, M_("periodicity: %d, maxobs: %d\n"
+    pprintf(prn, A_("\nRead datafile %s\n"), fname);
+    pprintf(prn, A_("periodicity: %d, maxobs: %d\n"
 		    "observations range: %s-%s\n"), 
 	    (custom_time_series(dset))? 1 : dset->pd, 
 	    dset->n, dset->stobs, dset->endobs);
@@ -2440,7 +2440,7 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 	}
     }
 
-    check_for_console(prn);
+    set_alt_gettext_mode(prn);
 
     tmpset = datainfo_new();
     if (tmpset == NULL) {
@@ -2566,8 +2566,6 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
     if (err && tmpset != NULL) {
 	destroy_dataset(tmpset);
     }
-
-    console_off();
 
 #if GDT_DEBUG
     fprintf(stderr, "gretl_read_gdt: returning %d\n", err);

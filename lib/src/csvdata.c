@@ -424,22 +424,22 @@ static int check_daily_dates (DATASET *dset, int *pd,
 	    err = 1;
 	} else {
 	    nmiss = fulln - T;
-	    pprintf(prn, M_("Observations: %d; days in sample: %d\n"), 
+	    pprintf(prn, A_("Observations: %d; days in sample: %d\n"), 
 		    T, fulln);
 	    if (nmiss > 300 * T) {
-		pprintf(prn, M_("Probably annual data\n"));
+		pprintf(prn, A_("Probably annual data\n"));
 		*pd = 1;
 	    } else if (nmiss > 50 * T) {
-		pprintf(prn, M_("Probably quarterly data\n"));
+		pprintf(prn, A_("Probably quarterly data\n"));
 		*pd = 4;
 	    } else if (nmiss > 20 * T) {
-		pprintf(prn, M_("Probably monthly data\n"));
+		pprintf(prn, A_("Probably monthly data\n"));
 		*pd = 12;
 	    } else if (nmiss > 3 * T) {
-		pprintf(prn, M_("Probably weekly data\n"));
+		pprintf(prn, A_("Probably weekly data\n"));
 		*pd = dset->pd = 52;
 	    } else {
-		pprintf(prn, M_("Missing daily observations: %d\n"), nmiss);
+		pprintf(prn, A_("Missing daily observations: %d\n"), nmiss);
 	    }
 	}
     }
@@ -691,7 +691,7 @@ void reverse_data (DATASET *dset, PRN *prn)
     int T = dset->n / 2;
     int i, t, s;
 
-    pprintf(prn, M_("reversing the data!\n"));
+    pprintf(prn, A_("reversing the data!\n"));
 
     for (t=0; t<T; t++) {
 	s = dset->n - 1 - t;
@@ -730,19 +730,19 @@ csv_daily_date_check (DATASET *dset, int *reversed,
     tryagain:
 
 	if (dorder == YYYYMMDD) {
-	    pputs(prn, M_("Trying date order YYYYMMDD\n"));
+	    pputs(prn, A_("Trying date order YYYYMMDD\n"));
 	    mon1 = d1[1];
 	    day1 = d1[2];
 	    mon2 = d2[1];
 	    day2 = d2[2];
 	} else if (dorder == DDMMYYYY) {
-	    pputs(prn, M_("Trying date order DDMMYYYY\n"));
+	    pputs(prn, A_("Trying date order DDMMYYYY\n"));
 	    day1 = d1[0];
 	    mon1 = d1[1];
 	    day2 = d2[0];
 	    mon2 = d2[1];
 	} else {
-	    pputs(prn, M_("Trying date order MMDDYYYY\n"));
+	    pputs(prn, A_("Trying date order MMDDYYYY\n"));
 	    mon1 = d1[0];
 	    day1 = d1[1];
 	    mon2 = d2[0];
@@ -759,7 +759,7 @@ csv_daily_date_check (DATASET *dset, int *reversed,
 		    return -1;
 		}
 	    }
-	    pprintf(prn, M_("Could be %s - %s\n"), lbl1, lbl2);
+	    pprintf(prn, A_("Could be %s - %s\n"), lbl1, lbl2);
 	    ret = check_daily_dates(dset, &pd, reversed, prn);
 	    if (ret >= 0 && pd > 0) {
 		if (pd == 52) {
@@ -784,7 +784,7 @@ csv_daily_date_check (DATASET *dset, int *reversed,
 	    return ret;
 	}
     } else {
-	pprintf(prn, M_("'%s' and '%s': couldn't get dates\n"), lbl1, lbl2);
+	pprintf(prn, A_("'%s' and '%s': couldn't get dates\n"), lbl1, lbl2);
     }
 
     return -1;
@@ -802,15 +802,15 @@ static int pd_from_date_label (const char *lbl, char *year, char *subp,
     try = atoi(year);
 
     if (try > 0 && try < 3000) {
-	pprintf(prn, M_("   %s: probably a year... "), year);
+	pprintf(prn, A_("   %s: probably a year... "), year);
     } else {
-	pprintf(prn, M_("   %s: probably not a year\n"), year);
+	pprintf(prn, A_("   %s: probably not a year\n"), year);
     }
 
     if (len == 5) {
-	pputs(prn, M_("   but I can't make sense of the extra bit\n"));
+	pputs(prn, A_("   but I can't make sense of the extra bit\n"));
     } else if (len == 4) {
-	pputs(prn, M_("and just a year\n"));
+	pputs(prn, A_("and just a year\n"));
 	pd = 1;
     } else {
 	char sep = lbl[4];
@@ -825,7 +825,7 @@ static int pd_from_date_label (const char *lbl, char *year, char *subp,
 		if (len == 7) s++;
 		p = atoi(s);
 		if (p > 0 && p < 5) {
-		    pprintf(prn, M_("quarter %s?\n"), s);
+		    pprintf(prn, A_("quarter %s?\n"), s);
 		    pd = 4;
 		} else {
 		    pprintf(prn, "quarter %d: not possible\n", p);
@@ -833,7 +833,7 @@ static int pd_from_date_label (const char *lbl, char *year, char *subp,
 	    } else if (len == 7) {
 		p = atoi(s);
 		if (p > 0 && p < 13) {
-		    pprintf(prn, M_("month %s?\n"), s);
+		    pprintf(prn, A_("month %s?\n"), s);
 		    pd = 12;
 		} else {
 		    pprintf(prn, "month %d: not possible\n", p);
@@ -868,7 +868,7 @@ static int time_series_label_check (DATASET *dset, int reversed,
 	    dset->sd0 = atof(dset->stobs);
 	    strcpy(dset->endobs, lbl2);
 	} else {
-	    pputs(prn, M_("   but the dates are not complete and consistent\n"));
+	    pputs(prn, A_("   but the dates are not complete and consistent\n"));
 	    pd = -1;
 	}
     } else if (pd == 4 || pd == 12) {
@@ -886,7 +886,7 @@ static int time_series_label_check (DATASET *dset, int reversed,
 	    dset->sd0 = obs_str_to_double(dset->stobs);
 	    ntodate(dset->endobs, dset->n - 1, dset);
 	} else {
-	    pputs(prn, M_("   but the dates are not complete and consistent\n"));
+	    pputs(prn, A_("   but the dates are not complete and consistent\n"));
 	    pd = -1;
 	}
     }
@@ -908,7 +908,7 @@ static int dates_maybe_reversed (const char *s1, const char *s2,
     ret = atoi(d1) > atoi(d2);
 
     if (ret) {
-	pputs(prn, M_("   dates are reversed?\n"));
+	pputs(prn, A_("   dates are reversed?\n"));
     }
     
     return ret;
@@ -1014,7 +1014,7 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
 	return time_series_label_check(dset, *reversed, skipstr, prn);
     }
 
-    pprintf(prn, M_("   first row label \"%s\", last label \"%s\"\n"), 
+    pprintf(prn, A_("   first row label \"%s\", last label \"%s\"\n"), 
 	    lbl1, lbl2);
 
     /* are the labels (probably) just 1, 2, 3 etc.? */
@@ -1031,11 +1031,11 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
 
     /* labels are of different lengths? */
     if (len1 != strlen(lbl2)) {
-	pputs(prn, M_("   label strings can't be consistent dates\n"));
+	pputs(prn, A_("   label strings can't be consistent dates\n"));
 	return -1;
     }
 
-    pputs(prn, M_("trying to parse row labels as dates...\n"));
+    pputs(prn, A_("trying to parse row labels as dates...\n"));
 
     if (len1 == 8 || len1 == 10) {
 	/* daily data? */
@@ -1049,7 +1049,7 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
 	    *reversed = dates_maybe_reversed(lbl1, lbl2, prn);
 	    pd = time_series_label_check(dset, *reversed, skipstr, prn);
 	} else {
-	    pputs(prn, M_("   definitely not a four-digit year\n"));
+	    pputs(prn, A_("   definitely not a four-digit year\n"));
 	}
     }
 
@@ -1134,7 +1134,7 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 	cbak = c;
 	if (!isspace((unsigned char) c) && !isprint((unsigned char) c) &&
 	    !(c == CTRLZ) && !utf8_ok(fp, cc)) {
-	    pprintf(prn, M_("Binary data (%d) encountered (line %d:%d): "
+	    pprintf(prn, A_("Binary data (%d) encountered (line %d:%d): "
 			    "this is not a valid text file\n"), 
 		    c, lines, cc);
 	    return -1;
@@ -1157,9 +1157,9 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
     }
 
     if (maxlen == 0) {
-	pprintf(prn, M_("Data file is empty\n"));
+	pprintf(prn, A_("Data file is empty\n"));
     } else if (csv_has_trailing_comma(cdata)) {
-	pprintf(prn, M_("Data file has trailing commas\n"));
+	pprintf(prn, A_("Data file has trailing commas\n"));
     }
 
     if (maxlen > 0) {
@@ -1291,10 +1291,10 @@ static void check_first_field (const char *line, csvdata *c, PRN *prn)
 	field1[i] = '\0';
 	iso_to_ascii(field1);
 
-	pprintf(prn, M_("   first field: '%s'\n"), field1);
+	pprintf(prn, A_("   first field: '%s'\n"), field1);
 
 	if (import_obs_label(field1)) {
-	    pputs(prn, M_("   seems to be observation label\n"));
+	    pputs(prn, A_("   seems to be observation label\n"));
 	    csv_set_obs_column(c);
 	}
     }
@@ -1307,7 +1307,7 @@ static int csv_missval (const char *str, int i, int t,
 
     if (*str == '\0') {
 	if (t < 80 || *miss_shown < i) {
-	    pprintf(prn, M_("   the cell for variable %d, obs %d "
+	    pprintf(prn, A_("   the cell for variable %d, obs %d "
 			    "is empty: treating as missing value\n"), 
 		    i, t);
 	    *miss_shown += 1;
@@ -1317,7 +1317,7 @@ static int csv_missval (const char *str, int i, int t,
 
     if (import_na_string(str)) {
 	if (t < 80 || *miss_shown < i) {
-	    pprintf(prn, M_("   warning: missing value for variable "
+	    pprintf(prn, A_("   warning: missing value for variable "
 			    "%d, obs %d\n"), i, t);
 	    *miss_shown += 1;
 	}
@@ -1396,7 +1396,7 @@ static int non_numeric_check (csvdata *c, PRN *prn)
 			"(%.2f percent)\n", v, c->dset->varname[v], 
 			nnon, 100 * nnfrac);
 		if (!csv_force_nonnum(c) && (nnon < 2 || nnfrac < 0.01)) {
-		    pprintf(prn, M_("ERROR: variable %d (%s), observation %d, "
+		    pprintf(prn, A_("ERROR: variable %d (%s), observation %d, "
 				    "non-numeric value\n"), 
 			    v, c->dset->varname[v], tn);
 		    err = E_DATA;
@@ -1623,9 +1623,9 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 	chkcols = count_csv_fields(c->line, c->delim);
 	if (c->ncols == 0) {
 	    c->ncols = chkcols;
-	    pprintf(prn, M_("   number of columns = %d\n"), c->ncols);	    
+	    pprintf(prn, A_("   number of columns = %d\n"), c->ncols);	    
 	} else if (chkcols != c->ncols) {
-	    pprintf(prn, M_("   ...but row %d has %d fields: aborting\n"),
+	    pprintf(prn, A_("   ...but row %d has %d fields: aborting\n"),
 		    c->nrows, chkcols);
 	    err = E_DATA;
 	}
@@ -1673,7 +1673,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     int i, k, numcount;
     int err = 0;
 
-    pputs(mprn, M_("scanning for variable names...\n"));
+    pputs(mprn, A_("scanning for variable names...\n"));
 
     while (csv_fgets(c->line, c->maxlen, fp)) {
 	if (*c->line == '#' || string_is_blank(c->line)) {
@@ -1688,7 +1688,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     p = c->line;
     if (c->delim == ' ' && *p == ' ') p++;
     iso_to_ascii(p);
-    pprintf(mprn, M_("   line: %s\n"), p);
+    pprintf(mprn, A_("   line: %s\n"), p);
     
     numcount = 0;
 
@@ -1712,8 +1712,8 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	    nv = (csv_skip_column(c))? k : k + 1;
 
 	    if (*c->str == '\0') {
-		pprintf(prn, M_("   variable name %d is missing: aborting\n"), nv);
-		pputs(prn, M_(csv_msg));
+		pprintf(prn, A_("   variable name %d is missing: aborting\n"), nv);
+		pputs(prn, A_(csv_msg));
 		err = E_DATA;
 	    } else {
 		c->dset->varname[nv][0] = 0;
@@ -1739,7 +1739,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 
     if (numcount == c->dset->v - 1 || 
 	obs_labels_no_varnames(obscol, c->dset, numcount)) {
-	pputs(prn, M_("it seems there are no variable names\n"));
+	pputs(prn, A_("it seems there are no variable names\n"));
 	/* then we undercounted the observations by one */
 	if (add_single_obs(c->dset)) {
 	    err = E_ALLOC;
@@ -1880,7 +1880,7 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 		if (i < CSVSTRLEN - 1) {
 		    c->str[i++] = *p;
 		} else {
-		    pprintf(prn, M_("warning: truncating data at row %d, column %d\n"),
+		    pprintf(prn, A_("warning: truncating data at row %d, column %d\n"),
 			    t+1, k+1);
 		}
 		p++;
@@ -1928,7 +1928,7 @@ static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     int reversed = csv_data_reversed(c);
     int err;
 
-    pputs(mprn, M_("scanning for row labels and data...\n"));
+    pputs(mprn, A_("scanning for row labels and data...\n"));
     err = real_read_labels_and_data(c, fp, prn);
 
     if (!err && csv_skip_column(c)) {
@@ -1947,10 +1947,10 @@ static void print_csv_parsing_header (const char *fname, PRN *prn)
     if (!g_utf8_validate(fname, -1, NULL)) {
 	gchar *trfname = g_locale_to_utf8(fname, -1, NULL, NULL, NULL);
 
-	pprintf(prn, "%s %s...\n", M_("parsing"), trfname);
+	pprintf(prn, "%s %s...\n", A_("parsing"), trfname);
 	g_free(trfname);
     } else {
-	pprintf(prn, "%s %s...\n", M_("parsing"), fname);
+	pprintf(prn, "%s %s...\n", A_("parsing"), fname);
     }
 }
 
@@ -1993,7 +1993,7 @@ int import_csv (const char *fname, DATASET *dset,
     }
 
     if (prn != NULL) {
-	check_for_console(prn);
+	set_alt_gettext_mode(prn);
     }
 
     if (gretl_messages_on()) {
@@ -2002,7 +2002,7 @@ int import_csv (const char *fname, DATASET *dset,
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
-	pprintf(prn, M_("Couldn't open %s\n"), fname);
+	pprintf(prn, A_("Couldn't open %s\n"), fname);
 	err = E_FOPEN;
 	goto csv_bailout;
     }
@@ -2015,7 +2015,7 @@ int import_csv (const char *fname, DATASET *dset,
 
     if (cols != NULL && *cols != '\0') {
 	fixed_format = 1;
-	pprintf(mprn, M_("using fixed column format\n"));
+	pprintf(mprn, A_("using fixed column format\n"));
 	err = csvdata_add_cols_list(c, cols);
 	if (err) {
 	    goto csv_bailout;
@@ -2054,10 +2054,10 @@ int import_csv (const char *fname, DATASET *dset,
  alt_delim:
 
     if (!fixed_format) {
-	pprintf(mprn, M_("using delimiter '%c'\n"), c->delim);
+	pprintf(mprn, A_("using delimiter '%c'\n"), c->delim);
     }
 
-    pprintf(mprn, M_("   longest line: %d characters\n"), c->maxlen - 1);
+    pprintf(mprn, A_("   longest line: %d characters\n"), c->maxlen - 1);
 
     if (csv_has_trailing_comma(c) && c->delim != ',') {
 	csv_unset_trailing_comma(c);
@@ -2073,7 +2073,7 @@ int import_csv (const char *fname, DATASET *dset,
 	    err = 0;
 	    goto alt_delim;
 	}
-	pputs(prn, M_(csv_msg));
+	pputs(prn, A_(csv_msg));
 	goto csv_bailout;
     }
 
@@ -2085,11 +2085,11 @@ int import_csv (const char *fname, DATASET *dset,
 	c->dset->v = (csv_skip_column(c))? c->ncols : c->ncols + 1;
     }
 
-    pprintf(mprn, M_("   number of variables: %d\n"), c->dset->v - 1);
-    pprintf(mprn, M_("   number of non-blank lines: %d\n"), c->nrows);
+    pprintf(mprn, A_("   number of variables: %d\n"), c->dset->v - 1);
+    pprintf(mprn, A_("   number of non-blank lines: %d\n"), c->nrows);
 
     if (c->dset->n == 0) {
-	pputs(prn, M_("Invalid data file\n"));
+	pputs(prn, A_("Invalid data file\n"));
 	err = E_DATA;
 	goto csv_bailout;
     }
@@ -2170,7 +2170,7 @@ int import_csv (const char *fname, DATASET *dset,
     c->dset->t2 = c->dset->n - 1;
 
     if (c->markerpd > 0) {
-	pputs(mprn, M_("taking date information from row labels\n\n"));
+	pputs(mprn, A_("taking date information from row labels\n\n"));
 	if (csv_skipping(c)) {
 	    pprintf(prn, "WARNING: Check your data! gretl has stripped out "
 		    "what appear to be\nextraneous lines in a %s dataset: " 
@@ -2178,7 +2178,7 @@ int import_csv (const char *fname, DATASET *dset,
 		    (c->dset->pd == 4)? "quarterly" : "monthly");
 	}
     } else {
-	pputs(mprn, M_("treating these as undated data\n\n"));
+	pputs(mprn, A_("treating these as undated data\n\n"));
 	dataset_obs_info_default(c->dset);
     }
 
@@ -2205,7 +2205,7 @@ int import_csv (const char *fname, DATASET *dset,
 	    sprintf(c->dset->varname[i], "v%d", i);
 	}
     } else if (fix_varname_duplicates(c->dset)) {
-	pputs(prn, M_("warning: some variable names were duplicated\n"));
+	pputs(prn, A_("warning: some variable names were duplicated\n"));
     }
 
     err = merge_or_replace_data(dset, &c->dset, opt, prn);
@@ -2228,10 +2228,8 @@ int import_csv (const char *fname, DATASET *dset,
     csvdata_free(c);
 
     if (err == E_ALLOC) {
-	pputs(prn, M_("Out of memory\n"));
+	pputs(prn, A_("Out of memory\n"));
     }    
-
-    console_off();
 
     return err;
 }

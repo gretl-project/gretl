@@ -222,8 +222,8 @@ gretl_string_table_index (gretl_string_table *st, const char *s, int col,
 	/* no table for this column yet: start one now */
 	ct = gretl_string_table_add_column(st, col);
 	if (ct != NULL) {
-	    pprintf(prn, M_("variable %d: translating from strings to "
-			    "code numbers\n"), col);
+	    pprintf(prn, _("variable %d: translating from strings to "
+			   "code numbers\n"), col);
 	}
     }
 
@@ -343,18 +343,18 @@ int gretl_string_table_print (gretl_string_table *st, DATASET *dset,
 
     if (st->n_cols > 0) {
 	fputc('\n', fp);
-	fputs(M_("One or more non-numeric variables were found.\n"
-		 "Gretl cannot handle such variables directly, so they\n"
-		 "have been given numeric codes as follows.\n\n"), fp);
+	fputs(_("One or more non-numeric variables were found.\n"
+		"Gretl cannot handle such variables directly, so they\n"
+		"have been given numeric codes as follows.\n\n"), fp);
 	if (st->extra != NULL) {
-	    fputs(M_("In addition, some mappings from numerical values to string\n"
-		     "labels were found, and are printed below.\n\n"), fp);
+	    fputs(_("In addition, some mappings from numerical values to string\n"
+		    "labels were found, and are printed below.\n\n"), fp);
 	}
     }
     
     for (i=0; i<st->n_cols; i++) {
 	ct = st->cols[i];
-	fprintf(fp, M_("String code table for variable %d (%s):\n"), 
+	fprintf(fp, _("String code table for variable %d (%s):\n"), 
 		ct->idx, dset->varname[ct->idx]);
 	for (j=0; j<ct->n_strs; j++) {
 	    fprintf(fp, "%3d = '%s'\n", j+1, ct->strs[j]);
@@ -365,7 +365,7 @@ int gretl_string_table_print (gretl_string_table *st, DATASET *dset,
 	fputs(st->extra, fp);
     }
 
-    pprintf(prn, M_("String code table written to\n %s\n"), stname);
+    pprintf(prn, _("String code table written to\n %s\n"), stname);
 
     fclose(fp);
     set_string_table_written();

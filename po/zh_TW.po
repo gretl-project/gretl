@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-12-16 14:21-0500\n"
+"POT-Creation-Date: 2011-12-18 14:28-0500\n"
 "PO-Revision-Date: 2011-10-01 15:10-0400\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
@@ -82,17 +82,17 @@ msgstr "含常數項及二次趨勢項 (quadratic trend)"
 #: lib/src/adf_kpss.c:394 lib/src/adf_kpss.c:399 lib/src/adf_kpss.c:1632
 #: lib/src/adf_kpss.c:1634 lib/src/bootstrap.c:417 lib/src/compare.c:364
 #: lib/src/compare.c:371 lib/src/compare.c:378 lib/src/compare.c:384
-#: lib/src/compare.c:389 lib/src/compare.c:393 lib/src/modelprint.c:2132
-#: lib/src/modelprint.c:2148 lib/src/modelprint.c:2168
-#: lib/src/modelprint.c:2812 lib/src/modelprint.c:3905
-#: lib/src/modelprint.c:4220 lib/src/modelprint.c:5087
-#: lib/src/modelprint.c:5089 gui2/dialogs.c:5224 gui2/library.c:2914
+#: lib/src/compare.c:389 lib/src/compare.c:393 lib/src/modelprint.c:2103
+#: lib/src/modelprint.c:2119 lib/src/modelprint.c:2139
+#: lib/src/modelprint.c:2781 lib/src/modelprint.c:3874
+#: lib/src/modelprint.c:4189 lib/src/modelprint.c:5056
+#: lib/src/modelprint.c:5058 gui2/dialogs.c:5224 gui2/library.c:2914
 #: plugin/anova.c:151 plugin/anova.c:153 plugin/johansen.c:1560
 #: plugin/johansen.c:1561 plugin/johansen.c:1580 plugin/johansen.c:1607
 msgid "p-value"
 msgstr "p-value"
 
-#: lib/src/adf_kpss.c:394 lib/src/modelprint.c:3341 lib/src/modelprint.c:3406
+#: lib/src/adf_kpss.c:394 lib/src/modelprint.c:3310 lib/src/modelprint.c:3375
 #: lib/src/subsample.c:2147
 msgid "unknown"
 msgstr "未知 (unknown)"
@@ -239,13 +239,13 @@ msgstr "落後期 (lag truncation parameter) = %d\n"
 #: lib/src/compare.c:1832 lib/src/compare.c:2050 lib/src/compare.c:2221
 #: lib/src/compare.c:3273 lib/src/describe.c:5511 lib/src/estimate.c:2688
 #: lib/src/estimate.c:2701 lib/src/estimate.c:2709 lib/src/estimate.c:3477
-#: lib/src/estimate.c:3480 lib/src/gretl_intl.c:103 lib/src/gretl_model.c:3345
+#: lib/src/estimate.c:3480 lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3351
 #: lib/src/gretl_panel.c:3816 lib/src/gretl_restrict.c:2200
-#: lib/src/gretl_restrict.c:2209 lib/src/modelprint.c:2285
-#: lib/src/modelprint.c:2289 lib/src/modelprint.c:2294
-#: lib/src/modelprint.c:2312 lib/src/modelprint.c:2316
-#: lib/src/modelprint.c:2321 lib/src/modelprint.c:2333
-#: lib/src/modelprint.c:2338 lib/src/modelprint.c:2342 lib/src/vartest.c:721
+#: lib/src/gretl_restrict.c:2209 lib/src/modelprint.c:2254
+#: lib/src/modelprint.c:2258 lib/src/modelprint.c:2263
+#: lib/src/modelprint.c:2281 lib/src/modelprint.c:2285
+#: lib/src/modelprint.c:2290 lib/src/modelprint.c:2302
+#: lib/src/modelprint.c:2307 lib/src/modelprint.c:2311 lib/src/vartest.c:721
 msgid "Test statistic"
 msgstr "Test statistic"
 
@@ -452,19 +452,19 @@ msgstr "基本假設檢定(_T)"
 #: lib/src/compare.c:392 lib/src/compare.c:958 lib/src/compare.c:2228
 #: lib/src/compare.c:2234 lib/src/compare.c:2692 lib/src/describe.c:1550
 #: lib/src/estimate.c:2713 lib/src/estimate.c:3483 lib/src/graphing.c:3841
-#: lib/src/gretl_model.c:3238 lib/src/gretl_model.c:3251
-#: lib/src/gretl_model.c:3254 lib/src/gretl_model.c:3279
+#: lib/src/gretl_model.c:3242 lib/src/gretl_model.c:3255
+#: lib/src/gretl_model.c:3258 lib/src/gretl_model.c:3283
 #: lib/src/gretl_panel.c:3568 lib/src/gretl_panel.c:3823
-#: lib/src/modelprint.c:168 lib/src/modelprint.c:336 lib/src/modelprint.c:340
-#: lib/src/modelprint.c:433 lib/src/modelprint.c:436 lib/src/modelprint.c:2287
-#: lib/src/modelprint.c:2292 lib/src/modelprint.c:2314
-#: lib/src/modelprint.c:2319 lib/src/modelprint.c:2809
-#: lib/src/modelprint.c:4950 lib/src/modelprint.c:4973 lib/src/printout.c:324
+#: lib/src/modelprint.c:168 lib/src/modelprint.c:332 lib/src/modelprint.c:336
+#: lib/src/modelprint.c:423 lib/src/modelprint.c:426 lib/src/modelprint.c:2256
+#: lib/src/modelprint.c:2261 lib/src/modelprint.c:2283
+#: lib/src/modelprint.c:2288 lib/src/modelprint.c:2778
+#: lib/src/modelprint.c:4919 lib/src/modelprint.c:4942 lib/src/printout.c:324
 #: lib/src/pvalues.c:1869 lib/src/pvalues.c:2507 lib/src/system.c:1165
 #: lib/src/system.c:1218 lib/src/system.c:3107 lib/src/system.c:3129
 #: lib/src/system.c:3160 lib/src/system.c:3178 lib/src/system.c:4272
-#: lib/src/varprint.c:853 lib/src/varprint.c:857 lib/src/varprint.c:1262
-#: lib/src/varprint.c:1270 lib/src/vartest.c:75 lib/src/vartest.c:722
+#: lib/src/varprint.c:847 lib/src/varprint.c:851 lib/src/varprint.c:1235
+#: lib/src/varprint.c:1243 lib/src/vartest.c:75 lib/src/vartest.c:722
 #: plugin/johansen.c:1795 plugin/jrestrict.c:2822
 msgid "Chi-square"
 msgstr "卡方分配 (Chi-square)"
@@ -509,8 +509,8 @@ msgstr "加入變數"
 
 #: lib/src/compare.c:898 lib/src/compare.c:2167 lib/src/graphing.c:3021
 #: lib/src/graphing.c:3030 lib/src/graphing.c:3106 lib/src/graphing.c:4815
-#: lib/src/gretl_panel.c:3669 lib/src/printout.c:1193 gui2/guiprint.c:1432
-#: gui2/guiprint.c:1492 gui2/library.c:5932 plugin/leverage.c:302
+#: lib/src/gretl_panel.c:3669 lib/src/printout.c:1193 gui2/guiprint.c:1436
+#: gui2/guiprint.c:1496 gui2/library.c:5932 plugin/leverage.c:302
 #, fuzzy
 msgid "residual"
 msgstr "殘差"
@@ -528,15 +528,15 @@ msgstr ""
 #: lib/src/compare.c:2693 lib/src/compare.c:2695 lib/src/compare.c:2699
 #: lib/src/describe.c:4033 lib/src/describe.c:4059 lib/src/describe.c:6467
 #: lib/src/describe.c:6470 lib/src/estimate.c:2690 lib/src/estimate.c:2713
-#: lib/src/estimate.c:3483 lib/src/gretl_model.c:3361
-#: lib/src/gretl_model.c:3363 lib/src/gretl_model.c:3365
+#: lib/src/estimate.c:3483 lib/src/gretl_model.c:3367
+#: lib/src/gretl_model.c:3369 lib/src/gretl_model.c:3371
 #: lib/src/gretl_panel.c:1569 lib/src/gretl_panel.c:3569
 #: lib/src/gretl_panel.c:3817 lib/src/gretl_panel.c:3822
-#: lib/src/modelprint.c:2287 lib/src/modelprint.c:2292
-#: lib/src/modelprint.c:2296 lib/src/modelprint.c:2314
-#: lib/src/modelprint.c:2319 lib/src/modelprint.c:2323
-#: lib/src/modelprint.c:2336 lib/src/modelprint.c:2340
-#: lib/src/modelprint.c:2344 lib/src/printout.c:325 lib/src/printout.c:331
+#: lib/src/modelprint.c:2256 lib/src/modelprint.c:2261
+#: lib/src/modelprint.c:2265 lib/src/modelprint.c:2283
+#: lib/src/modelprint.c:2288 lib/src/modelprint.c:2292
+#: lib/src/modelprint.c:2305 lib/src/modelprint.c:2309
+#: lib/src/modelprint.c:2313 lib/src/printout.c:325 lib/src/printout.c:331
 #: lib/src/vartest.c:75
 #, fuzzy
 msgid "with p-value"
@@ -558,7 +558,7 @@ msgid " Dropping %-16s (p-value %.3f)\n"
 msgstr " 消去 %-16s (p 值 %.3f)\n"
 
 #: lib/src/compare.c:1746 lib/src/estimate.c:2705 lib/src/gretl_model.c:3052
-#: lib/src/gretl_model.c:3058 lib/src/modelprint.c:752 gui2/library.c:2778
+#: lib/src/gretl_model.c:3058 lib/src/modelprint.c:729 gui2/library.c:2778
 msgid "squares only"
 msgstr "只含平方項"
 
@@ -1012,7 +1012,7 @@ msgid "parsing"
 msgstr "進行資料剖析 (parsing)..."
 
 #: lib/src/csvdata.c:2005 lib/src/dataio.c:1017 lib/src/dataio.c:1029
-#: lib/src/dataio.c:3074 lib/src/dataio.c:3148 lib/src/dbread.c:1642
+#: lib/src/dataio.c:3072 lib/src/dataio.c:3144 lib/src/dbread.c:1642
 #, c-format
 msgid "Couldn't open %s\n"
 msgstr "無法開啟 %s 檔\n"
@@ -1293,26 +1293,26 @@ msgstr "   樣本數: %d\n"
 msgid "   number of data blocks: %d\n"
 msgstr "   data blocks 之數目: %d\n"
 
-#: lib/src/dataio.c:3097 lib/src/dataio.c:3164 gui2/gui_utils.c:921
+#: lib/src/dataio.c:3095 lib/src/dataio.c:3160 gui2/gui_utils.c:921
 msgid "Unrecognized data type"
 msgstr "無法辨識之資料型態"
 
-#: lib/src/dataio.c:3367 lib/src/dataio.c:3410
+#: lib/src/dataio.c:3361 lib/src/dataio.c:3404
 #, c-format
 msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' -- 沒有任何數值轉換被執行!"
 
-#: lib/src/dataio.c:3373 lib/src/dataio.c:3416
+#: lib/src/dataio.c:3367 lib/src/dataio.c:3410
 #, c-format
 msgid "Extraneous character '%c' in data"
 msgstr "資料中有奇怪的字元: '%c' "
 
-#: lib/src/dataio.c:3375 lib/src/dataio.c:3418
+#: lib/src/dataio.c:3369 lib/src/dataio.c:3412
 #, c-format
 msgid "Extraneous character (0x%x) in data"
 msgstr "資料中有奇怪的字元 (0x%x)"
 
-#: lib/src/dataio.c:3381 lib/src/dataio.c:3424
+#: lib/src/dataio.c:3375 lib/src/dataio.c:3418
 #, c-format
 msgid "'%s' -- number out of range!"
 msgstr "'%s' -- 超過樣本範圍"
@@ -1735,7 +1735,7 @@ msgid "%s, using the observations %s - %s"
 msgstr "%s, 使用中之子樣本範圍 %s - %s"
 
 #: lib/src/describe.c:4358 lib/src/describe.c:5301 gui2/guiprint.c:702
-#: gui2/guiprint.c:990 gui2/guiprint.c:1123 gui2/guiprint.c:1216
+#: gui2/guiprint.c:990 gui2/guiprint.c:1125 gui2/guiprint.c:1218
 msgid "(missing values were skipped)"
 msgstr "(排除遺漏值之變數 (missing values))"
 
@@ -1809,19 +1809,19 @@ msgstr ""
 msgid "corr: needs at least two non-constant arguments"
 msgstr ""
 
-#: lib/src/describe.c:5256 lib/src/modelprint.c:3310 lib/src/modelprint.c:3322
-#: lib/src/modelprint.c:3323 lib/src/modelprint.c:3324
-#: lib/src/modelprint.c:3333 lib/src/modelprint.c:3343
-#: lib/src/modelprint.c:3375 lib/src/modelprint.c:3388
-#: lib/src/modelprint.c:3397 lib/src/modelprint.c:3408
-#: lib/src/modelprint.c:5047 lib/src/modelprint.c:5073
-#: lib/src/modelprint.c:5079 lib/src/printout.c:176 lib/src/printout.c:184
+#: lib/src/describe.c:5256 lib/src/modelprint.c:3279 lib/src/modelprint.c:3291
+#: lib/src/modelprint.c:3292 lib/src/modelprint.c:3293
+#: lib/src/modelprint.c:3302 lib/src/modelprint.c:3312
+#: lib/src/modelprint.c:3344 lib/src/modelprint.c:3357
+#: lib/src/modelprint.c:3366 lib/src/modelprint.c:3377
+#: lib/src/modelprint.c:5016 lib/src/modelprint.c:5042
+#: lib/src/modelprint.c:5048 lib/src/printout.c:176 lib/src/printout.c:184
 #: lib/src/texprint.c:580 lib/src/texprint.c:598 lib/src/texprint.c:615
 #: lib/src/texprint.c:628 lib/src/texprint.c:707 lib/src/texprint.c:718
 #: lib/src/texprint.c:724 gui2/guiprint.c:660 gui2/guiprint.c:662
-#: gui2/guiprint.c:949 gui2/guiprint.c:951 gui2/guiprint.c:1061
-#: gui2/guiprint.c:1070 gui2/guiprint.c:1778 gui2/guiprint.c:1787
-#: gui2/guiprint.c:1838 plugin/anova.c:146 plugin/leverage.c:330
+#: gui2/guiprint.c:949 gui2/guiprint.c:951 gui2/guiprint.c:1063
+#: gui2/guiprint.c:1072 gui2/guiprint.c:1786 gui2/guiprint.c:1795
+#: gui2/guiprint.c:1846 plugin/anova.c:146 plugin/leverage.c:330
 msgid "undefined"
 msgstr "undefined"
 
@@ -1839,7 +1839,7 @@ msgstr ""
 msgid "t(%d) = %g, with two-tailed p-value %.4f\n"
 msgstr ""
 
-#: lib/src/describe.c:5268 lib/src/describe.c:5306 gui2/guiprint.c:1125
+#: lib/src/describe.c:5268 lib/src/describe.c:5306 gui2/guiprint.c:1127
 #, c-format
 msgid "5%% critical value (two-tailed) = %.4f for n = %d"
 msgstr ""
@@ -1925,10 +1925,10 @@ msgstr ""
 msgid "   Ratio of sample variances = %g\n"
 msgstr "   Ratio of sample variances = %g\n"
 
-#: lib/src/describe.c:5509 lib/src/gretl_model.c:3179
-#: lib/src/gretl_model.c:3182 lib/src/gretl_model.c:3189
-#: lib/src/nonparam.c:975 lib/src/nonparam.c:1112 lib/src/varprint.c:1253
-#: lib/src/varprint.c:1259 lib/src/varprint.c:1267
+#: lib/src/describe.c:5509 lib/src/gretl_model.c:3183
+#: lib/src/gretl_model.c:3186 lib/src/gretl_model.c:3193
+#: lib/src/nonparam.c:975 lib/src/nonparam.c:1112 lib/src/varprint.c:1226
+#: lib/src/varprint.c:1232 lib/src/varprint.c:1240
 msgid "Null hypothesis"
 msgstr "Null hypothesis"
 
@@ -2119,11 +2119,11 @@ msgstr ""
 msgid "                 ITER       RHO        ESS"
 msgstr ""
 
-#: lib/src/estimate.c:2687 lib/src/gretl_model.c:3037 lib/src/modelprint.c:757
+#: lib/src/estimate.c:2687 lib/src/gretl_model.c:3037 lib/src/modelprint.c:734
 msgid "Pesaran-Taylor test for heteroskedasticity"
 msgstr ""
 
-#: lib/src/estimate.c:2697 lib/src/gretl_model.c:3016 lib/src/modelprint.c:755
+#: lib/src/estimate.c:2697 lib/src/gretl_model.c:3016 lib/src/modelprint.c:732
 msgid "Breusch-Pagan test for heteroskedasticity"
 msgstr ""
 
@@ -2131,7 +2131,7 @@ msgstr ""
 msgid "with Koenker robust variance estimator"
 msgstr ""
 
-#: lib/src/estimate.c:2703 lib/src/gretl_model.c:3013 lib/src/modelprint.c:750
+#: lib/src/estimate.c:2703 lib/src/gretl_model.c:3013 lib/src/modelprint.c:727
 #, fuzzy
 msgid "White's test for heteroskedasticity"
 msgstr ""
@@ -2160,7 +2160,7 @@ msgstr ""
 msgid "Test for ARCH of order"
 msgstr "ADF 檢定落後階次 (lag order):"
 
-#: lib/src/estimate.c:3502 lib/src/modelprint.c:1737
+#: lib/src/estimate.c:3502 lib/src/modelprint.c:1708
 #, fuzzy, c-format
 msgid "Test for ARCH of order %d"
 msgstr "ADF 檢定落後階次 (lag order):"
@@ -2675,7 +2675,7 @@ msgid "actual"
 msgstr "actual"
 
 #: lib/src/graphing.c:3121 lib/src/graphing.c:3125 lib/src/printout.c:1192
-#: gui2/guiprint.c:898 gui2/guiprint.c:1432 gui2/guiprint.c:1492
+#: gui2/guiprint.c:898 gui2/guiprint.c:1436 gui2/guiprint.c:1496
 #: gui2/library.c:4044
 msgid "fitted"
 msgstr "fitted"
@@ -2855,12 +2855,12 @@ msgstr "在 %d 次反覆運後已經停止\n"
 msgid "norm of gradient = %g"
 msgstr ""
 
-#: lib/src/gretl_bfgs.c:1573 lib/src/modelprint.c:2993
+#: lib/src/gretl_bfgs.c:1573 lib/src/modelprint.c:2962
 #, c-format
 msgid "Function evaluations: %d\n"
 msgstr "Function evaluations: %d\n"
 
-#: lib/src/gretl_bfgs.c:1574 lib/src/modelprint.c:2994
+#: lib/src/gretl_bfgs.c:1574 lib/src/modelprint.c:2963
 #, c-format
 msgid "Evaluations of gradient: %d\n"
 msgstr ""
@@ -3155,21 +3155,21 @@ msgstr "錯誤訊息來自於 %s:\n"
 msgid "\"%s\" is not defined.\n"
 msgstr "\"%s\" 並未定義.\n"
 
-#: lib/src/gretl_intl.c:102 gui2/gretl.c:1325
+#: lib/src/gretl_intl.c:103 gui2/gretl.c:1325
 msgid "_Open data"
 msgstr "開啟資料檔(_O)"
 
-#: lib/src/gretl_intl.c:104 lib/src/subsample.c:2131
+#: lib/src/gretl_intl.c:105 lib/src/subsample.c:2131
 #, fuzzy
 msgid "annual"
 msgstr "年資料"
 
-#: lib/src/gretl_intl.c:635 gui2/gretl.c:1324 gui2/gui_utils.c:179
+#: lib/src/gretl_intl.c:706 gui2/gretl.c:1324 gui2/gui_utils.c:179
 #: gui2/gui_utils.c:309 gui2/gui_utils.c:359
 msgid "_File"
 msgstr "檔案(_F)"
 
-#: lib/src/gretl_intl.c:682
+#: lib/src/gretl_intl.c:753
 #, c-format
 msgid "%s: locale is not supported on this system"
 msgstr ""
@@ -3296,7 +3296,7 @@ msgstr "非線性檢定: 加入平方項 (sqiares)"
 msgid "heteroskedasticity not present"
 msgstr "   %s: 可能不是1年\n"
 
-#: lib/src/gretl_model.c:3019 lib/src/modelprint.c:389
+#: lib/src/gretl_model.c:3019 lib/src/modelprint.c:379
 msgid "Sargan over-identification test"
 msgstr ""
 
@@ -3362,44 +3362,44 @@ msgstr "穩健估計法"
 msgid "Distribution free Wald test for heteroskedasticity"
 msgstr ""
 
-#: lib/src/gretl_model.c:3220
+#: lib/src/gretl_model.c:3224
 #, fuzzy, c-format
 msgid "max F(%d, %d) = %g at observation %s"
 msgstr "要選擇的樣本數 (最多 %d)"
 
-#: lib/src/gretl_model.c:3245 lib/src/gretl_model.c:3252
+#: lib/src/gretl_model.c:3249 lib/src/gretl_model.c:3256
 #, fuzzy
 msgid "failed"
 msgstr "預測"
 
-#: lib/src/gretl_model.c:3344
+#: lib/src/gretl_model.c:3350
 #, fuzzy
 msgid "Asymptotic test statistic"
 msgstr "基本假設檢定(_T)"
 
-#: lib/src/gretl_model.c:3371 lib/src/gretl_model.c:3374
-#: lib/src/gretl_model.c:3377
+#: lib/src/gretl_model.c:3377 lib/src/gretl_model.c:3380
+#: lib/src/gretl_model.c:3383
 #, c-format
 msgid "%g percent critical value"
 msgstr "%g percent 臨界值"
 
-#: lib/src/gretl_model.c:5402
+#: lib/src/gretl_model.c:5408
 msgid "Can't retrieve uhat: data set has changed"
 msgstr "無法取得殘差 (uhat): 資料檔已變更"
 
-#: lib/src/gretl_model.c:5404
+#: lib/src/gretl_model.c:5410
 msgid "Can't retrieve yhat: data set has changed"
 msgstr "無法取得預測值 (yhat): 資料檔已變更"
 
-#: lib/src/gretl_model.c:5406
+#: lib/src/gretl_model.c:5412
 msgid "Can't retrieve ht: data set has changed"
 msgstr "無法取得條件變異數 (h): 資料檔已變更"
 
-#: lib/src/gretl_model.c:5407
+#: lib/src/gretl_model.c:5413
 msgid "Can't retrieve series: data set has changed"
 msgstr "無法取得資料變數 (series): 資料檔已變更"
 
-#: lib/src/gretl_model.c:5888 gui2/library.c:469
+#: lib/src/gretl_model.c:5894 gui2/library.c:469
 msgid "The model exhibits an exact linear fit"
 msgstr ""
 
@@ -3664,7 +3664,7 @@ msgstr ""
 msgid "Restricted estimates"
 msgstr ""
 
-#: lib/src/gretl_restrict.c:1922 lib/src/modelprint.c:2677
+#: lib/src/gretl_restrict.c:1922 lib/src/modelprint.c:2646
 #: lib/src/printout.c:1183 gui2/library.c:5821
 msgid "Standard error of the regression"
 msgstr "Standard error of the regression"
@@ -3763,7 +3763,7 @@ msgstr "無法刪除 '%s'"
 msgid "Deleted string %s"
 msgstr "%s 已被刪除"
 
-#: lib/src/gretl_string_table.c:779 lib/src/gretl_win32.c:633
+#: lib/src/gretl_string_table.c:779 lib/src/gretl_win32.c:659
 #: lib/src/interact.c:3270
 msgid "The shell command is not activated."
 msgstr "Shell 指令無法啟動"
@@ -3892,12 +3892,12 @@ msgstr ""
 msgid "HTTP proxy: first field must be an IP number"
 msgstr "HTTP proxy: 第1欄必須為 IP 網址"
 
-#: lib/src/gretl_xml.c:91 lib/src/gretl_xml.c:2626
+#: lib/src/gretl_xml.c:91 lib/src/gretl_xml.c:2624
 #, fuzzy, c-format
 msgid "xmlParseFile failed on %s"
 msgstr "從伺服器資料庫讀取資料(_s)"
 
-#: lib/src/gretl_xml.c:98 lib/src/gretl_xml.c:2631
+#: lib/src/gretl_xml.c:98 lib/src/gretl_xml.c:2629
 #, c-format
 msgid "%s: empty document"
 msgstr ""
@@ -4371,890 +4371,887 @@ msgid "Right-censored observations"
 msgstr "移除樣本(_R)"
 
 #: lib/src/modelprint.c:234 lib/src/modelprint.c:247 lib/src/modelprint.c:273
-#: lib/src/modelprint.c:2884
+#: lib/src/modelprint.c:2853
 msgid "sigma"
 msgstr ""
 
-#: lib/src/modelprint.c:289 lib/src/modelprint.c:2678 gui2/library.c:5806
+#: lib/src/modelprint.c:289 lib/src/modelprint.c:2647 gui2/library.c:5806
 msgid "Unadjusted R-squared"
 msgstr ""
 
-#: lib/src/modelprint.c:297 lib/src/modelprint.c:2676 gui2/library.c:5801
+#: lib/src/modelprint.c:296 lib/src/modelprint.c:2645 gui2/library.c:5801
 #, fuzzy
 msgid "Sum of squared residuals"
 msgstr "累計殘差平方和"
 
-#: lib/src/modelprint.c:307
+#: lib/src/modelprint.c:304
 #, fuzzy
 msgid "Explained sum of squares"
 msgstr "累計殘差平方和"
 
-#: lib/src/modelprint.c:322 lib/src/modelprint.c:324 lib/src/modelprint.c:2847
+#: lib/src/modelprint.c:318 lib/src/modelprint.c:320 lib/src/modelprint.c:2816
 msgid "Smallest eigenvalue"
 msgstr ""
 
-#: lib/src/modelprint.c:333 lib/src/modelprint.c:335 lib/src/modelprint.c:339
+#: lib/src/modelprint.c:329 lib/src/modelprint.c:331 lib/src/modelprint.c:335
 #: lib/src/system.c:3089 lib/src/system.c:3104
 msgid "LR over-identification test"
 msgstr ""
 
-#: lib/src/modelprint.c:345 lib/src/modelprint.c:346
+#: lib/src/modelprint.c:340
 msgid "Equation is just identified"
 msgstr ""
 
-#: lib/src/modelprint.c:360 lib/src/modelprint.c:362
+#: lib/src/modelprint.c:353
 #, fuzzy, c-format
 msgid "Test for AR(%d) errors:"
 msgstr ""
 "\n"
 "DF 檢定 對變數 %s\n"
 
-#: lib/src/modelprint.c:390 lib/src/modelprint.c:397
+#: lib/src/modelprint.c:380 lib/src/modelprint.c:387
 #, fuzzy
 msgid "Wald (joint) test"
 msgstr "基本假設檢定(_T)"
 
-#: lib/src/modelprint.c:391 lib/src/modelprint.c:398
+#: lib/src/modelprint.c:381 lib/src/modelprint.c:388
 #, fuzzy
 msgid "Wald (time dummies)"
 msgstr "加上季節虛擬變數"
 
-#: lib/src/modelprint.c:392 lib/src/modelprint.c:399
+#: lib/src/modelprint.c:382 lib/src/modelprint.c:389
 #, fuzzy
 msgid "J test"
 msgstr "%s 檢定"
 
-#: lib/src/modelprint.c:393 lib/src/modelprint.c:400
+#: lib/src/modelprint.c:383 lib/src/modelprint.c:390
 #, fuzzy
 msgid "Overdispersion test"
 msgstr "常態性檢定(_N)"
 
-#: lib/src/modelprint.c:396
+#: lib/src/modelprint.c:386
 #, fuzzy
 msgid "Sargan test"
 msgstr "常態性檢定(_N)"
 
-#: lib/src/modelprint.c:448 lib/src/modelprint.c:451 lib/src/modelprint.c:459
-#: lib/src/modelprint.c:461 lib/src/printout.c:2642
+#: lib/src/modelprint.c:438 lib/src/modelprint.c:441 lib/src/modelprint.c:449
+#: lib/src/modelprint.c:451 lib/src/printout.c:2642
 #, fuzzy
 msgid "GMM criterion"
 msgstr "樣本篩選(_R)"
 
-#: lib/src/modelprint.c:499 lib/src/modelprint.c:501
+#: lib/src/modelprint.c:488
 #, fuzzy, c-format
 msgid "Number of instruments = %d"
 msgstr "   樣本數: %d\n"
 
-#: lib/src/modelprint.c:587
+#: lib/src/modelprint.c:573
 msgid "Warning: solution is probably not unique"
 msgstr ""
 
-#: lib/src/modelprint.c:595
+#: lib/src/modelprint.c:581
 #, fuzzy
 msgid "Warning: couldn't compute numerical Hessian"
 msgstr "無法計算 Hessian 數值"
 
-#: lib/src/modelprint.c:613 lib/src/modelprint.c:631 lib/src/modelprint.c:639
+#: lib/src/modelprint.c:599 lib/src/modelprint.c:617 lib/src/modelprint.c:625
 #, fuzzy
 msgid "'Within' variance"
 msgstr ""
 "\n"
 "殘差變異數: %g/(%d - %d) = %g\n"
 
-#: lib/src/modelprint.c:614 lib/src/modelprint.c:632 lib/src/modelprint.c:640
+#: lib/src/modelprint.c:600 lib/src/modelprint.c:618 lib/src/modelprint.c:626
 #, fuzzy
 msgid "'Between' variance"
 msgstr ""
 "\n"
 "殘差變異數: %g/(%d - %d) = %g\n"
 
-#: lib/src/modelprint.c:616 lib/src/modelprint.c:634 lib/src/modelprint.c:642
+#: lib/src/modelprint.c:602 lib/src/modelprint.c:620 lib/src/modelprint.c:628
 msgid "theta used for quasi-demeaning"
 msgstr ""
 
-#: lib/src/modelprint.c:708
+#: lib/src/modelprint.c:694
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
 msgstr "除了常數項 (const) 之外, p-值 最大的變數代碼是 %d (變數 %s)"
 
-#: lib/src/modelprint.c:711
+#: lib/src/modelprint.c:697
 #, c-format
 msgid "P-value was highest for variable %d (%s)"
 msgstr "P-值最大的變數代碼是 %d (變數名稱 %s)"
 
-#: lib/src/modelprint.c:742
+#: lib/src/modelprint.c:719
 msgid "Auxiliary regression for non-linearity test (squared terms)"
 msgstr ""
 "非線性檢定 (non-linearity test with squared terms) 的輔助迴歸 (Auxiliary "
 "regression)"
 
-#: lib/src/modelprint.c:745
+#: lib/src/modelprint.c:722
 msgid "Auxiliary regression for non-linearity test (log terms)"
 msgstr ""
 "非線性檢定 (non-linearity test with log terms) 的輔助迴歸 (Auxiliary "
 "regression)"
 
-#: lib/src/modelprint.c:748
+#: lib/src/modelprint.c:725
 #, fuzzy
 msgid "Auxiliary regression for added variables"
 msgstr "RESET 形式檢定 (specification test) 之輔助迴歸 (Auxiliary regression)"
 
-#: lib/src/modelprint.c:759
+#: lib/src/modelprint.c:736
 msgid "Augmented regression for Chow test"
 msgstr "加入虛擬變數之 Chow 結構轉變檢定迴歸 (Augmented regression) )"
 
-#: lib/src/modelprint.c:762
+#: lib/src/modelprint.c:739
 #, fuzzy
 msgid "Cointegrating regression -- "
 msgstr "步驟 %d: 共整合迴歸\n"
 
-#: lib/src/modelprint.c:764
+#: lib/src/modelprint.c:741
 #, fuzzy
 msgid "Cointegrating regression - "
 msgstr "步驟 %d: 共整合迴歸\n"
 
-#: lib/src/modelprint.c:768
+#: lib/src/modelprint.c:745
 msgid "Augmented Dickey--Fuller regression"
 msgstr "ADF 檢定迴歸式(Augmented Dickey--Fuller regression)"
 
-#: lib/src/modelprint.c:770
+#: lib/src/modelprint.c:747
 msgid "Augmented Dickey-Fuller regression"
 msgstr "ADF 檢定迴歸式(Augmented Dickey-Fuller regression)"
 
-#: lib/src/modelprint.c:774
+#: lib/src/modelprint.c:751
 #, fuzzy
 msgid "Dickey--Fuller regression"
 msgstr "ADF 檢定"
 
-#: lib/src/modelprint.c:776
+#: lib/src/modelprint.c:753
 #, fuzzy
 msgid "Dickey-Fuller regression"
 msgstr "ADF 檢定"
 
-#: lib/src/modelprint.c:779
+#: lib/src/modelprint.c:756
 msgid "KPSS regression"
 msgstr "KPSS 檢定迴歸"
 
-#: lib/src/modelprint.c:781
+#: lib/src/modelprint.c:758
 msgid "Auxiliary regression for RESET specification test"
 msgstr "RESET 形式檢定 (specification test) 之輔助迴歸 (Auxiliary regression)"
 
-#: lib/src/modelprint.c:783
+#: lib/src/modelprint.c:760
 msgid "Groupwise heteroskedasticity"
 msgstr "群組異質變異 (Groupwise heteroskedasticity)"
 
-#: lib/src/modelprint.c:785
+#: lib/src/modelprint.c:762
 #, fuzzy
 msgid "Augmented regression for common factor test"
 msgstr "加入虛擬變數之 Chow 結構轉變檢定迴歸 (Augmented regression) )"
 
-#: lib/src/modelprint.c:803 lib/src/system.c:97 lib/src/varprint.c:1069
-#: lib/src/varprint.c:1078 lib/src/varprint.c:1086 gui2/selector.c:3481
+#: lib/src/modelprint.c:780 lib/src/system.c:97 lib/src/varprint.c:1047
+#: lib/src/varprint.c:1056 lib/src/varprint.c:1064 gui2/selector.c:3481
 msgid "OLS"
 msgstr "OLS"
 
-#: lib/src/modelprint.c:804 lib/src/modelprint.c:866 lib/src/system.c:99
+#: lib/src/modelprint.c:781 lib/src/modelprint.c:843 lib/src/system.c:99
 #: gui2/model_table.c:413
 msgid "WLS"
 msgstr "加權最小平方法 (WLS)"
 
-#: lib/src/modelprint.c:805
+#: lib/src/modelprint.c:782
 msgid "WLS (ARCH)"
 msgstr "加權最小平方法 (ARCH)"
 
-#: lib/src/modelprint.c:806
+#: lib/src/modelprint.c:783
 msgid "Heteroskedasticity-corrected"
 msgstr "殘差異質變異校正 WLS "
 
-#: lib/src/modelprint.c:807 lib/src/modelprint.c:4751
+#: lib/src/modelprint.c:784 lib/src/modelprint.c:4720
 msgid "AR"
 msgstr "AR"
 
-#: lib/src/modelprint.c:808 lib/src/modelprint.c:919 gui2/selector.c:3543
+#: lib/src/modelprint.c:785 lib/src/modelprint.c:896 gui2/selector.c:3543
 msgid "LAD"
 msgstr "最小絕對誤差法 LAD"
 
-#: lib/src/modelprint.c:809
+#: lib/src/modelprint.c:786
 msgid "High-Precision OLS"
 msgstr "High-Precision OLS"
 
-#: lib/src/modelprint.c:810 lib/src/modelprint.c:907 gui2/selector.c:3497
+#: lib/src/modelprint.c:787 lib/src/modelprint.c:884 gui2/selector.c:3497
 msgid "Probit"
 msgstr "Probit"
 
-#: lib/src/modelprint.c:811 lib/src/modelprint.c:901 gui2/selector.c:3491
+#: lib/src/modelprint.c:788 lib/src/modelprint.c:878 gui2/selector.c:3491
 msgid "Logit"
 msgstr "Logit"
 
-#: lib/src/modelprint.c:812 gui2/selector.c:3501
+#: lib/src/modelprint.c:789 gui2/selector.c:3501
 msgid "Tobit"
 msgstr "Tobit"
 
-#: lib/src/modelprint.c:813 gui2/selector.c:3503
+#: lib/src/modelprint.c:790 gui2/selector.c:3503
 msgid "Heckit"
 msgstr "Heckit"
 
-#: lib/src/modelprint.c:814 gui2/selector.c:3648
+#: lib/src/modelprint.c:791 gui2/selector.c:3648
 #, fuzzy
 msgid "Poisson"
 msgstr "poisson 波氐分配"
 
-#: lib/src/modelprint.c:815 lib/src/modelprint.c:931
+#: lib/src/modelprint.c:792 lib/src/modelprint.c:908
 msgid "Negative Binomial"
 msgstr ""
 
-#: lib/src/modelprint.c:816
+#: lib/src/modelprint.c:793
 #, fuzzy
 msgid "Duration"
 msgstr "增加樣本(_A)"
 
-#: lib/src/modelprint.c:817
+#: lib/src/modelprint.c:794
 msgid "NLS"
 msgstr "非線性最小平方法 (NLS)"
 
-#: lib/src/modelprint.c:818
+#: lib/src/modelprint.c:795
 msgid "ML"
 msgstr "最大概似法 (ML)"
 
-#: lib/src/modelprint.c:819
+#: lib/src/modelprint.c:796
 #, fuzzy
 msgid "GMM"
 msgstr "GMM一般動差法(_G)"
 
-#: lib/src/modelprint.c:820 gui2/selector.c:3507
+#: lib/src/modelprint.c:797 gui2/selector.c:3507
 msgid "Logistic"
 msgstr "Logistic"
 
-#: lib/src/modelprint.c:821 gui2/selector.c:3535 plugin/addons-i18n.c:14
+#: lib/src/modelprint.c:798 gui2/selector.c:3535 plugin/addons-i18n.c:14
 #, fuzzy
 msgid "GARCH"
 msgstr "GARCH一般自我相關異質變異模型 (_A)"
 
-#: lib/src/modelprint.c:822
+#: lib/src/modelprint.c:799
 #, fuzzy
 msgid "Interval estimates"
 msgstr "%g%% 信賴區間 = %g to %g"
 
-#: lib/src/modelprint.c:823
+#: lib/src/modelprint.c:800
 #, fuzzy
 msgid "Dynamic panel"
 msgstr "/模型/最大概似法(_M)"
 
-#: lib/src/modelprint.c:824 gui2/selector.c:3505
+#: lib/src/modelprint.c:801 gui2/selector.c:3505
 msgid "Bivariate probit"
 msgstr ""
 
-#: lib/src/modelprint.c:826
+#: lib/src/modelprint.c:803
 msgid "Arellano--Bond"
 msgstr "Arellano--Bond"
 
-#: lib/src/modelprint.c:827
+#: lib/src/modelprint.c:804
 msgid "Arellano-Bond"
 msgstr "Arellano-Bond"
 
-#: lib/src/modelprint.c:837
+#: lib/src/modelprint.c:814
 msgid "Hildreth--Lu"
 msgstr "Hildreth--Lu"
 
-#: lib/src/modelprint.c:838 gui2/selector.c:3487
+#: lib/src/modelprint.c:815 gui2/selector.c:3487
 msgid "Hildreth-Lu"
 msgstr "Hildreth-Lu"
 
-#: lib/src/modelprint.c:840
+#: lib/src/modelprint.c:817
 msgid "Prais--Winsten"
 msgstr "Prais--Winsten"
 
-#: lib/src/modelprint.c:841 gui2/selector.c:3489
+#: lib/src/modelprint.c:818 gui2/selector.c:3489
 msgid "Prais-Winsten"
 msgstr "Prais-Winsten"
 
-#: lib/src/modelprint.c:843
+#: lib/src/modelprint.c:820
 msgid "Cochrane--Orcutt"
 msgstr "Cochrane--Orcutt 轉換"
 
-#: lib/src/modelprint.c:844 gui2/selector.c:3485
+#: lib/src/modelprint.c:821 gui2/selector.c:3485
 msgid "Cochrane-Orcutt"
 msgstr "Cochrane-Orcutt 轉換"
 
-#: lib/src/modelprint.c:848
+#: lib/src/modelprint.c:825
 msgid "ARMAX"
 msgstr "ARMAX"
 
-#: lib/src/modelprint.c:851 gui2/selector.c:3531 plugin/tramo_options.c:702
+#: lib/src/modelprint.c:828 gui2/selector.c:3531 plugin/tramo_options.c:702
 msgid "ARIMA"
 msgstr "ARIMA"
 
-#: lib/src/modelprint.c:853
+#: lib/src/modelprint.c:830
 msgid "ARMA"
 msgstr "ARMA"
 
-#: lib/src/modelprint.c:856
+#: lib/src/modelprint.c:833
 msgid "Pooled OLS"
 msgstr "Pooled OLS"
 
-#: lib/src/modelprint.c:859
+#: lib/src/modelprint.c:836
 msgid "Fixed-effects"
 msgstr "固定效果"
 
-#: lib/src/modelprint.c:861
+#: lib/src/modelprint.c:838
 msgid "Random-effects (GLS)"
 msgstr "隨機效果 (GLS)"
 
-#: lib/src/modelprint.c:864
+#: lib/src/modelprint.c:841
 #, fuzzy
 msgid "Maximum Likelihood"
 msgstr "最大概似法(_M)"
 
-#: lib/src/modelprint.c:869
+#: lib/src/modelprint.c:846
 msgid "Between-groups"
 msgstr "Between-groups"
 
-#: lib/src/modelprint.c:873
+#: lib/src/modelprint.c:850
 #, fuzzy
 msgid "2-step Arellano-Bond"
 msgstr "步驟 %d: 共整合迴歸\n"
 
-#: lib/src/modelprint.c:875
+#: lib/src/modelprint.c:852
 #, fuzzy
 msgid "1-step Arellano-Bond"
 msgstr "步驟 %d: 共整合迴歸\n"
 
-#: lib/src/modelprint.c:879
+#: lib/src/modelprint.c:856
 #, fuzzy
 msgid "2-step dynamic panel"
 msgstr "步驟 %d: 共整合迴歸\n"
 
-#: lib/src/modelprint.c:881
+#: lib/src/modelprint.c:858
 #, fuzzy
 msgid "1-step dynamic panel"
 msgstr "步驟 %d: 共整合迴歸\n"
 
-#: lib/src/modelprint.c:885 lib/src/modelprint.c:889
+#: lib/src/modelprint.c:862 lib/src/modelprint.c:866
 #, fuzzy
 msgid "2-step GMM"
 msgstr "步驟 %d: 共整合迴歸\n"
 
-#: lib/src/modelprint.c:887 lib/src/modelprint.c:891
+#: lib/src/modelprint.c:864 lib/src/modelprint.c:868
 msgid "Iterated GMM"
 msgstr "Iterated GMM"
 
-#: lib/src/modelprint.c:893
+#: lib/src/modelprint.c:870
 #, fuzzy
 msgid "1-step GMM"
 msgstr "步驟 %d: 共整合迴歸\n"
 
-#: lib/src/modelprint.c:897 gui2/selector.c:3493
+#: lib/src/modelprint.c:874 gui2/selector.c:3493
 msgid "Ordered Logit"
 msgstr "Ordered Logit"
 
-#: lib/src/modelprint.c:899 gui2/selector.c:3495
+#: lib/src/modelprint.c:876 gui2/selector.c:3495
 msgid "Multinomial Logit"
 msgstr "Multinomial Logit"
 
-#: lib/src/modelprint.c:905 gui2/selector.c:3499
+#: lib/src/modelprint.c:882 gui2/selector.c:3499
 msgid "Ordered Probit"
 msgstr "Ordered Probit"
 
-#: lib/src/modelprint.c:911
+#: lib/src/modelprint.c:888
 #, fuzzy
 msgid "Two-step Heckit"
 msgstr "步驟 %d: 共整合迴歸\n"
 
-#: lib/src/modelprint.c:913
+#: lib/src/modelprint.c:890
 msgid "ML Heckit"
 msgstr "ML Heckit"
 
-#: lib/src/modelprint.c:917
+#: lib/src/modelprint.c:894
 #, fuzzy
 msgid "Quantile estimates"
 msgstr "分量迴歸(_Q)"
 
-#: lib/src/modelprint.c:923 lib/src/system.c:96
+#: lib/src/modelprint.c:900 lib/src/system.c:96
 msgid "LIML"
 msgstr "LIML"
 
-#: lib/src/modelprint.c:925 lib/src/system.c:98
+#: lib/src/modelprint.c:902 lib/src/system.c:98
 msgid "TSLS"
 msgstr "TSLS"
 
-#: lib/src/modelprint.c:929
+#: lib/src/modelprint.c:906
 msgid "Negative Binomial 1"
 msgstr ""
 
-#: lib/src/modelprint.c:935
+#: lib/src/modelprint.c:912
 #, fuzzy
 msgid "Duration (exponential)"
 msgstr "_Hurst exponent"
 
-#: lib/src/modelprint.c:937
+#: lib/src/modelprint.c:914
 #, fuzzy
 msgid "Duration (log-logistic)"
 msgstr "取對數再一階差分(_L)"
 
-#: lib/src/modelprint.c:939
+#: lib/src/modelprint.c:916
 #, fuzzy
 msgid "Duration (log-normal)"
 msgstr "取對數再一階差分(_L)"
 
-#: lib/src/modelprint.c:941
+#: lib/src/modelprint.c:918
 msgid "Duration (Weibull)"
 msgstr ""
 
-#: lib/src/modelprint.c:945
+#: lib/src/modelprint.c:922
 #, fuzzy
 msgid "Restricted OLS"
 msgstr "含(限制)趨勢項 (Restricted trend)"
 
-#: lib/src/modelprint.c:995
+#: lib/src/modelprint.c:972
 msgid "Critical values for TSLS bias relative to OLS:\n"
 msgstr ""
 
-#: lib/src/modelprint.c:998
+#: lib/src/modelprint.c:975
 #, no-c-format
 msgid ""
 "Critical values for desired LIML maximal size, when running\n"
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
 
-#: lib/src/modelprint.c:1002
+#: lib/src/modelprint.c:979
 #, no-c-format
 msgid ""
 "Critical values for desired TSLS maximal size, when running\n"
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
 
-#: lib/src/modelprint.c:1006
+#: lib/src/modelprint.c:983
 #, fuzzy
 msgid "bias"
 msgstr "試抽樣次數"
 
-#: lib/src/modelprint.c:1006
+#: lib/src/modelprint.c:983
 msgid "size"
 msgstr "樣本大小"
 
-#: lib/src/modelprint.c:1010 gui2/calculator.c:2012
+#: lib/src/modelprint.c:987 gui2/calculator.c:2012
 msgid "value"
 msgstr "臨界值"
 
-#: lib/src/modelprint.c:1023
+#: lib/src/modelprint.c:1000
 #, c-format
 msgid "Relative bias is probably less than %g%%"
 msgstr ""
 
-#: lib/src/modelprint.c:1025
+#: lib/src/modelprint.c:1002
 #, c-format
 msgid "Maximal size is probably less than %g%%"
 msgstr ""
 
-#: lib/src/modelprint.c:1035
+#: lib/src/modelprint.c:1012
 #, c-format
 msgid "Relative bias may exceed %g%%"
 msgstr ""
 
-#: lib/src/modelprint.c:1037
+#: lib/src/modelprint.c:1014
 #, c-format
 msgid "Maximal size may exceed %g%%"
 msgstr ""
 
-#: lib/src/modelprint.c:1046
+#: lib/src/modelprint.c:1023
 #, fuzzy
 msgid "Weak instrument test"
 msgstr "基本假設檢定(_T)"
 
-#: lib/src/modelprint.c:1070 lib/src/modelprint.c:1078
+#: lib/src/modelprint.c:1047 lib/src/modelprint.c:1055
 #, fuzzy
 msgid "First-stage F-statistic"
 msgstr "基本假設檢定(_T)"
 
-#: lib/src/modelprint.c:1084 lib/src/modelprint.c:1093
+#: lib/src/modelprint.c:1061 lib/src/modelprint.c:1070
 msgid "Cragg-Donald minimum eigenvalue"
 msgstr ""
 
-#: lib/src/modelprint.c:1090
+#: lib/src/modelprint.c:1067
 msgid "Cragg--Donald minimum eigenvalue"
 msgstr ""
 
-#: lib/src/modelprint.c:1131
+#: lib/src/modelprint.c:1108
 msgid "A value < 10 may indicate weak instruments"
 msgstr ""
 
-#: lib/src/modelprint.c:1164
+#: lib/src/modelprint.c:1141
 msgid "Instrumented"
 msgstr ""
 
-#: lib/src/modelprint.c:1165 gui2/selector.c:4183 gui2/selector.c:7535
+#: lib/src/modelprint.c:1142 gui2/selector.c:4183 gui2/selector.c:7535
 msgid "Instruments"
 msgstr ""
 
-#: lib/src/modelprint.c:1234 lib/src/modelprint.c:1236
-#: lib/src/modelprint.c:1238 gui2/selector.c:5136
+#: lib/src/modelprint.c:1211 lib/src/modelprint.c:1213 gui2/selector.c:5136
 msgid "Asymptotic standard errors"
 msgstr "漸進標準誤"
 
-#: lib/src/modelprint.c:1248 lib/src/modelprint.c:1250
-#: lib/src/modelprint.c:1252
+#: lib/src/modelprint.c:1223 lib/src/modelprint.c:1225
 msgid "Robust (HAC) standard errors"
 msgstr ""
 
-#: lib/src/modelprint.c:1257 lib/src/modelprint.c:1259
-#: lib/src/modelprint.c:1263
+#: lib/src/modelprint.c:1230 lib/src/modelprint.c:1234
 msgid "Beck-Katz standard errors"
 msgstr ""
 
-#: lib/src/modelprint.c:1261
+#: lib/src/modelprint.c:1232
 msgid "Beck--Katz standard errors"
 msgstr ""
 
-#: lib/src/modelprint.c:1272
+#: lib/src/modelprint.c:1243
 msgid "Could not compute Beck-Katz standard errors"
 msgstr ""
 
-#: lib/src/modelprint.c:1280
+#: lib/src/modelprint.c:1251
 msgid "Bartlett kernel"
 msgstr ""
 
-#: lib/src/modelprint.c:1281
+#: lib/src/modelprint.c:1252
 msgid "Parzen kernel"
 msgstr ""
 
-#: lib/src/modelprint.c:1282
+#: lib/src/modelprint.c:1253
 msgid "QS kernel"
 msgstr ""
 
-#: lib/src/modelprint.c:1286
+#: lib/src/modelprint.c:1257
 #, c-format
 msgid "HAC standard errors, bandwidth %.2f"
 msgstr ""
 
-#: lib/src/modelprint.c:1289
+#: lib/src/modelprint.c:1260
 #, c-format
 msgid "HAC standard errors, bandwidth %d"
 msgstr ""
 
-#: lib/src/modelprint.c:1296
+#: lib/src/modelprint.c:1267
 msgid "prewhitened"
 msgstr ""
 
-#: lib/src/modelprint.c:1313
+#: lib/src/modelprint.c:1284
 msgid "Heteroskedasticity-robust standard errors"
 msgstr ""
 "異質變異-穩健標準誤 (Heteroskedasticity-robust standard errors-Robust "
 "standard errors)"
 
-#: lib/src/modelprint.c:1314
+#: lib/src/modelprint.c:1285
 msgid "variant"
 msgstr ""
 
-#: lib/src/modelprint.c:1332
+#: lib/src/modelprint.c:1303
 msgid "Standard errors based on Hessian"
 msgstr ""
 
-#: lib/src/modelprint.c:1335
+#: lib/src/modelprint.c:1306
 msgid "Standard errors based on Information Matrix"
 msgstr ""
 
-#: lib/src/modelprint.c:1338
+#: lib/src/modelprint.c:1309
 msgid "Standard errors based on Outer Products matrix"
 msgstr ""
 
-#: lib/src/modelprint.c:1341
+#: lib/src/modelprint.c:1312
 msgid "QML standard errors"
 msgstr "QML 標準誤"
 
-#: lib/src/modelprint.c:1345
+#: lib/src/modelprint.c:1316
 msgid "Bollerslev--Wooldridge standard errors"
 msgstr ""
 
-#: lib/src/modelprint.c:1347
+#: lib/src/modelprint.c:1318
 msgid "Bollerslev-Wooldridge standard errors"
 msgstr ""
 
-#: lib/src/modelprint.c:1351
+#: lib/src/modelprint.c:1322
 #, fuzzy
 msgid "Warning: could not compute standard errors"
 msgstr "計算標準差"
 
-#: lib/src/modelprint.c:1375
+#: lib/src/modelprint.c:1346
 #, c-format
 msgid "With robust %g percent confidence intervals"
 msgstr ""
 
-#: lib/src/modelprint.c:1378
+#: lib/src/modelprint.c:1349
 #, c-format
 msgid "With %g percent confidence intervals"
 msgstr ""
 
-#: lib/src/modelprint.c:1383
+#: lib/src/modelprint.c:1354
 msgid "Robust (sandwich) standard errors"
 msgstr ""
 
-#: lib/src/modelprint.c:1385
+#: lib/src/modelprint.c:1356
 msgid "Asymptotic standard errors assuming IID errors"
 msgstr ""
 
-#: lib/src/modelprint.c:1490
+#: lib/src/modelprint.c:1461
 msgid "Omitted because all values were zero:"
 msgstr ""
 
-#: lib/src/modelprint.c:1504
+#: lib/src/modelprint.c:1475
 msgid "Omitted due to exact collinearity:"
 msgstr ""
 
-#: lib/src/modelprint.c:1516
+#: lib/src/modelprint.c:1487
 msgid "Redundant instruments:"
 msgstr ""
 
-#: lib/src/modelprint.c:1578 lib/src/modelprint.c:1857
-#: lib/src/modelprint.c:1860 lib/src/modelprint.c:1870
-#: lib/src/modelprint.c:1873 lib/src/modelprint.c:1908 gui2/model_table.c:1116
+#: lib/src/modelprint.c:1549 lib/src/modelprint.c:1828
+#: lib/src/modelprint.c:1831 lib/src/modelprint.c:1841
+#: lib/src/modelprint.c:1844 lib/src/modelprint.c:1879 gui2/model_table.c:1116
 #: gui2/model_table.c:1210 gui2/selector.c:3886
 msgid "Dependent variable"
 msgstr "應變數 (Dependent variable)"
 
-#: lib/src/modelprint.c:1586
+#: lib/src/modelprint.c:1557
 msgid "Estimated using X-12-ARIMA"
 msgstr ""
 
-#: lib/src/modelprint.c:1588 lib/src/modelprint.c:1598
+#: lib/src/modelprint.c:1559 lib/src/modelprint.c:1569
 msgid "exact ML"
 msgstr "完全最大概似法 exact ML"
 
-#: lib/src/modelprint.c:1588 lib/src/modelprint.c:1603
-#: lib/src/modelprint.c:1608
+#: lib/src/modelprint.c:1559 lib/src/modelprint.c:1574
+#: lib/src/modelprint.c:1579
 msgid "conditional ML"
 msgstr "最大概似法 conditional ML"
 
-#: lib/src/modelprint.c:1591 lib/src/modelprint.c:1601
+#: lib/src/modelprint.c:1562 lib/src/modelprint.c:1572
 msgid "Estimated using least squares"
 msgstr "用最小平方法估計"
 
-#: lib/src/modelprint.c:1593
+#: lib/src/modelprint.c:1564
 #, fuzzy
 msgid "= MLE"
 msgstr "MLE"
 
-#: lib/src/modelprint.c:1596
+#: lib/src/modelprint.c:1567
 msgid "Estimated using Kalman filter"
 msgstr ""
 
-#: lib/src/modelprint.c:1606
+#: lib/src/modelprint.c:1577
 msgid "Estimated using BHHH method"
 msgstr ""
 
-#: lib/src/modelprint.c:1619
+#: lib/src/modelprint.c:1590
 #, c-format
 msgid "Godfrey (1994) test for autocorrelation up to order %d"
 msgstr ""
 
-#: lib/src/modelprint.c:1622
+#: lib/src/modelprint.c:1593
 msgid "Godfrey (1994) test for first-order autocorrelation"
 msgstr ""
 
-#: lib/src/modelprint.c:1626
+#: lib/src/modelprint.c:1597
 #, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
 msgstr ""
 
-#: lib/src/modelprint.c:1629
+#: lib/src/modelprint.c:1600
 msgid "Breusch-Godfrey test for first-order autocorrelation"
 msgstr ""
 
-#: lib/src/modelprint.c:1660
+#: lib/src/modelprint.c:1631
 msgid "Lower limit"
 msgstr ""
 
-#: lib/src/modelprint.c:1661
+#: lib/src/modelprint.c:1632
 msgid "Upper limit"
 msgstr ""
 
 #. TRANSLATORS: 'n' denotes sample size
-#: lib/src/modelprint.c:1680 gui2/model_table.c:717 gui2/model_table.c:719
+#: lib/src/modelprint.c:1651 gui2/model_table.c:717 gui2/model_table.c:719
 #: gui2/model_table.c:721 plugin/anova.c:192 plugin/anova.c:201
 msgid "n"
 msgstr ""
 
 #. TRANSLATORS: 'T' denotes time-series sample size
-#: lib/src/modelprint.c:1682
+#: lib/src/modelprint.c:1653
 msgid "T"
 msgstr ""
 
-#: lib/src/modelprint.c:1741 lib/src/modelprint.c:1744
-#: lib/src/modelprint.c:1747 lib/src/system.c:4267 lib/src/system.c:4287
+#: lib/src/modelprint.c:1712 lib/src/modelprint.c:1715
+#: lib/src/modelprint.c:1718 lib/src/system.c:4267 lib/src/system.c:4287
 #: lib/src/vartest.c:65 lib/src/vartest.c:129
 msgid "Equation"
 msgstr ""
 
-#: lib/src/modelprint.c:1767 lib/src/modelprint.c:1769 lib/src/objstack.c:644
+#: lib/src/modelprint.c:1738 lib/src/modelprint.c:1740 lib/src/objstack.c:644
 #: lib/src/objstack.c:676 lib/src/objstack.c:678
 #, fuzzy
 msgid "Model"
 msgstr "模型(_M)"
 
-#: lib/src/modelprint.c:1778 lib/src/modelprint.c:1793
+#: lib/src/modelprint.c:1749 lib/src/modelprint.c:1764
 #, c-format
 msgid "%s, using observations %s%s%s"
 msgstr "%s, 使用中之子樣本範圍: %s%s%s"
 
-#: lib/src/modelprint.c:1788
+#: lib/src/modelprint.c:1759
 #, fuzzy, c-format
 msgid "%s, obs. %s%s%s"
 msgstr "新增樣本(_A)"
 
-#: lib/src/modelprint.c:1807
+#: lib/src/modelprint.c:1778
 msgid "Missing or incomplete observations dropped"
 msgstr ""
 
-#: lib/src/modelprint.c:1816 plugin/panurc.c:584
+#: lib/src/modelprint.c:1787 plugin/panurc.c:584
 #, fuzzy, c-format
 msgid "%s, using %d observations"
 msgstr "增加樣本(_A)"
 
-#: lib/src/modelprint.c:1820
+#: lib/src/modelprint.c:1791
 #, c-format
 msgid "Included %d cross-sectional units"
 msgstr "橫斷面單位數 = %d "
 
-#: lib/src/modelprint.c:1825
+#: lib/src/modelprint.c:1796
 #, c-format
 msgid "Time-series length = %d"
 msgstr "時間序列長度 = %d"
 
-#: lib/src/modelprint.c:1827
+#: lib/src/modelprint.c:1798
 #, c-format
 msgid "Time-series length: minimum %d, maximum %d"
 msgstr ""
 
-#: lib/src/modelprint.c:1866
+#: lib/src/modelprint.c:1837
 #, c-format
 msgid "scaled %s (Koenker robust variant)"
 msgstr ""
 
-#: lib/src/modelprint.c:1868
+#: lib/src/modelprint.c:1839
 #, c-format
 msgid "scaled %s"
 msgstr ""
 
-#: lib/src/modelprint.c:1949 gui2/selector.c:3572
+#: lib/src/modelprint.c:1920 gui2/selector.c:3572
 msgid "Selection variable"
 msgstr "變數選擇"
 
-#: lib/src/modelprint.c:1976
+#: lib/src/modelprint.c:1947
 msgid "Allowing for groupwise heteroskedasticity"
 msgstr ""
 
-#: lib/src/modelprint.c:1978
+#: lib/src/modelprint.c:1949
 msgid "Weights based on per-unit error variances"
 msgstr ""
 
-#: lib/src/modelprint.c:1987 lib/src/modelprint.c:1994
+#: lib/src/modelprint.c:1958 lib/src/modelprint.c:1965
 msgid "Variable used as weight"
 msgstr ""
 
-#: lib/src/modelprint.c:2040
+#: lib/src/modelprint.c:2011
 msgid "Weight var is a dummy variable, effective obs ="
 msgstr ""
 
-#: lib/src/modelprint.c:2103
+#: lib/src/modelprint.c:2074
 msgid "$z$"
 msgstr ""
 
-#: lib/src/modelprint.c:2103 lib/src/modelprint.c:3924
-#: lib/src/modelprint.c:4250
+#: lib/src/modelprint.c:2074 lib/src/modelprint.c:3893
+#: lib/src/modelprint.c:4219
 msgid "z"
 msgstr ""
 
-#: lib/src/modelprint.c:2105
+#: lib/src/modelprint.c:2076
 msgid "$t$-ratio"
 msgstr "$t$-ratio"
 
-#: lib/src/modelprint.c:2105 lib/src/modelprint.c:3507
-#: lib/src/modelprint.c:3904 lib/src/modelprint.c:4219 gui2/dialogs.c:5223
+#: lib/src/modelprint.c:2076 lib/src/modelprint.c:3476
+#: lib/src/modelprint.c:3873 lib/src/modelprint.c:4188 gui2/dialogs.c:5223
 #: plugin/panurc.c:561
 #, fuzzy
 msgid "t-ratio"
 msgstr "H0: Ratio of variances 變異數比率 = 1"
 
-#: lib/src/modelprint.c:2124 lib/src/modelprint.c:2127
-#: lib/src/modelprint.c:2135 lib/src/modelprint.c:2139
-#: lib/src/modelprint.c:2143 lib/src/modelprint.c:2147
-#: lib/src/modelprint.c:3503 lib/src/modelprint.c:3902
-#: lib/src/modelprint.c:4042 lib/src/modelprint.c:4217 plugin/panurc.c:560
+#: lib/src/modelprint.c:2095 lib/src/modelprint.c:2098
+#: lib/src/modelprint.c:2106 lib/src/modelprint.c:2110
+#: lib/src/modelprint.c:2114 lib/src/modelprint.c:2118
+#: lib/src/modelprint.c:3472 lib/src/modelprint.c:3871
+#: lib/src/modelprint.c:4011 lib/src/modelprint.c:4186 plugin/panurc.c:560
 #, fuzzy
 msgid "coefficient"
 msgstr "Gini 係數(_G)"
 
-#: lib/src/modelprint.c:2124 lib/src/modelprint.c:2127
-#: lib/src/modelprint.c:2131 lib/src/modelprint.c:2143
-#: lib/src/modelprint.c:2147 lib/src/modelprint.c:3506
-#: lib/src/modelprint.c:3903 lib/src/modelprint.c:4043
-#: lib/src/modelprint.c:4218 lib/src/varprint.c:453 lib/src/varprint.c:455
-#: lib/src/varprint.c:457 gui2/guiprint.c:1631 gui2/guiprint.c:1728
+#: lib/src/modelprint.c:2095 lib/src/modelprint.c:2098
+#: lib/src/modelprint.c:2102 lib/src/modelprint.c:2114
+#: lib/src/modelprint.c:2118 lib/src/modelprint.c:3475
+#: lib/src/modelprint.c:3872 lib/src/modelprint.c:4012
+#: lib/src/modelprint.c:4187 lib/src/varprint.c:453 lib/src/varprint.c:455
+#: lib/src/varprint.c:457 gui2/guiprint.c:1637 gui2/guiprint.c:1734
 #: plugin/fractals.c:270
 #, fuzzy
 msgid "std. error"
 msgstr "資料錯誤"
 
-#: lib/src/modelprint.c:2128
+#: lib/src/modelprint.c:2099
 #, fuzzy
 msgid "slope at mean"
 msgstr "全距-均數圖()R)"
 
-#: lib/src/modelprint.c:2131 lib/src/modelprint.c:4274
+#: lib/src/modelprint.c:2102 lib/src/modelprint.c:4243
 #, fuzzy
 msgid "estimate"
 msgstr "點估計"
 
-#: lib/src/modelprint.c:2135 lib/src/modelprint.c:2139
-#: lib/src/modelprint.c:3504 lib/src/modelprint.c:4222
+#: lib/src/modelprint.c:2106 lib/src/modelprint.c:2110
+#: lib/src/modelprint.c:3473 lib/src/modelprint.c:4191
 msgid "lower"
 msgstr "lower"
 
-#: lib/src/modelprint.c:2136 lib/src/modelprint.c:2140
-#: lib/src/modelprint.c:3505 lib/src/modelprint.c:4223
+#: lib/src/modelprint.c:2107 lib/src/modelprint.c:2111
+#: lib/src/modelprint.c:3474 lib/src/modelprint.c:4192
 msgid "upper"
 msgstr "upper"
 
-#: lib/src/modelprint.c:2155
+#: lib/src/modelprint.c:2126
 #, fuzzy
 msgid "Estimate"
 msgstr "點估計"
 
-#: lib/src/modelprint.c:2155 gui2/dialogs.c:994 gui2/dialogs.c:5221
-#: gui2/guiprint.c:1817 gui2/guiprint.c:1867
+#: lib/src/modelprint.c:2126 gui2/dialogs.c:994 gui2/dialogs.c:5221
+#: gui2/guiprint.c:1825 gui2/guiprint.c:1875
 msgid "Coefficient"
 msgstr "Coefficient"
 
-#: lib/src/modelprint.c:2158 lib/src/modelprint.c:2162
+#: lib/src/modelprint.c:2129 lib/src/modelprint.c:2133
 msgid "Lower"
 msgstr "Lower"
 
-#: lib/src/modelprint.c:2159 lib/src/modelprint.c:2163
+#: lib/src/modelprint.c:2130 lib/src/modelprint.c:2134
 msgid "Upper"
 msgstr "Upper"
 
-#: lib/src/modelprint.c:2161 lib/src/modelprint.c:3502
+#: lib/src/modelprint.c:2132 lib/src/modelprint.c:3471
 msgid "tau"
 msgstr ""
 
-#: lib/src/modelprint.c:2165
+#: lib/src/modelprint.c:2136
 #, fuzzy
 msgid "Std.\\ Error"
 msgstr "資料錯誤"
 
-#: lib/src/modelprint.c:2165
+#: lib/src/modelprint.c:2136
 #, fuzzy
 msgid "Std. Error"
 msgstr "資料錯誤"
 
-#: lib/src/modelprint.c:2168 plugin/fractals.c:285
+#: lib/src/modelprint.c:2139 plugin/fractals.c:285
 msgid "Slope"
 msgstr "Slope"
 
-#: lib/src/modelprint.c:2219
+#: lib/src/modelprint.c:2190
 msgid "Warning: data matrix close to singularity!"
 msgstr "警告: 資料矩陣近似奇異 (singularity)"
 
-#: lib/src/modelprint.c:2243
+#: lib/src/modelprint.c:2212
 msgid ""
 "WARNING: The constant was present among the regressors but not among the\n"
 "instruments, so it has been automatically added to the instrument list.\n"
@@ -5266,48 +5263,48 @@ msgstr ""
 "This behavior may change in future versions, so you may want to adjust your\n"
 "scripts accordingly.\n"
 
-#: lib/src/modelprint.c:2260
+#: lib/src/modelprint.c:2229
 msgid "Statistics based on the original data"
 msgstr ""
 
-#: lib/src/modelprint.c:2261
+#: lib/src/modelprint.c:2230
 msgid "Statistics based on the weighted data"
 msgstr ""
 
-#: lib/src/modelprint.c:2262
+#: lib/src/modelprint.c:2231
 msgid "Statistics based on the rho-differenced data"
 msgstr ""
 
-#: lib/src/modelprint.c:2263
+#: lib/src/modelprint.c:2232
 msgid "Statistics based on the transformed data"
 msgstr ""
 
-#: lib/src/modelprint.c:2356
+#: lib/src/modelprint.c:2325
 #, fuzzy, c-format
 msgid "Log-likelihood for %s"
 msgstr "檢查有無更新版(_u)"
 
-#: lib/src/modelprint.c:2674
+#: lib/src/modelprint.c:2643
 #, fuzzy
 msgid "Mean of dependent variable"
 msgstr "產生新變數(_n)"
 
-#: lib/src/modelprint.c:2675
+#: lib/src/modelprint.c:2644
 #, fuzzy
 msgid "Standard deviation of dep. var."
 msgstr "假設母體標準差相同"
 
-#: lib/src/modelprint.c:2683
+#: lib/src/modelprint.c:2652
 #, fuzzy
 msgid "Akaike information criterion"
 msgstr "樣本篩選(_R)"
 
-#: lib/src/modelprint.c:2684 gui2/library.c:5836
+#: lib/src/modelprint.c:2653 gui2/library.c:5836
 #, fuzzy
 msgid "Schwarz Bayesian criterion"
 msgstr "樣本篩選(_R)"
 
-#: lib/src/modelprint.c:2685 gui2/library.c:5841
+#: lib/src/modelprint.c:2654 gui2/library.c:5841
 msgid "Hannan-Quinn Information Criterion"
 msgstr ""
 
@@ -5316,307 +5313,307 @@ msgstr ""
 #. OK to leave it untranslated, in which case it will not be
 #. printed.
 #.
-#: lib/src/modelprint.c:2714
+#: lib/src/modelprint.c:2683
 msgid "note on model statistics abbreviations here"
 msgstr ""
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2721
+#: lib/src/modelprint.c:2690
 #, fuzzy
 msgid "Mean dependent var"
 msgstr "選擇VAR落後期(_V)"
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2723
+#: lib/src/modelprint.c:2692
 #, fuzzy
 msgid "S.D. dependent var"
 msgstr "向量自我迴歸之殘差"
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2725 lib/src/modelprint.c:2868
+#: lib/src/modelprint.c:2694 lib/src/modelprint.c:2837
 #, fuzzy
 msgid "Sum squared resid"
 msgstr "累計殘差平方和"
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2727
+#: lib/src/modelprint.c:2696
 #, fuzzy
 msgid "S.E. of regression"
 msgstr "分量迴歸(_Q)"
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2729 lib/src/modelprint.c:3116 gui2/guiprint.c:844
+#: lib/src/modelprint.c:2698 lib/src/modelprint.c:3085 gui2/guiprint.c:844
 #: gui2/model_table.c:758
 msgid "R-squared"
 msgstr ""
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2731
+#: lib/src/modelprint.c:2700
 msgid "Adjusted R-squared"
 msgstr ""
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2734
+#: lib/src/modelprint.c:2703
 msgid "P-value(F)"
 msgstr "P-value(F)"
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2736 lib/src/system.c:4178 lib/src/system.c:4185
-#: lib/src/texprint.c:1064 lib/src/varprint.c:1105 lib/src/varprint.c:1114
+#: lib/src/modelprint.c:2705 lib/src/system.c:4178 lib/src/system.c:4185
+#: lib/src/texprint.c:1064 lib/src/varprint.c:1083 lib/src/varprint.c:1092
 #: gui2/library.c:5826 plugin/johansen.c:1548
 #, fuzzy
 msgid "Log-likelihood"
 msgstr "最大概似法(_M)"
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2738
+#: lib/src/modelprint.c:2707
 #, fuzzy
 msgid "Akaike criterion"
 msgstr "樣本篩選(_R)"
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2740
+#: lib/src/modelprint.c:2709
 #, fuzzy
 msgid "Schwarz criterion"
 msgstr "樣本篩選(_R)"
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2742
+#: lib/src/modelprint.c:2711
 msgid "Hannan-Quinn"
 msgstr ""
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2744 lib/src/modelprint.c:2886
+#: lib/src/modelprint.c:2713 lib/src/modelprint.c:2855
 msgid "rho"
 msgstr ""
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2746 gui2/library.c:2911
+#: lib/src/modelprint.c:2715 gui2/library.c:2911
 msgid "Durbin-Watson"
 msgstr ""
 
-#: lib/src/modelprint.c:2785
+#: lib/src/modelprint.c:2754
 msgid "Adjusted $R^2$"
 msgstr ""
 
-#: lib/src/modelprint.c:2786
+#: lib/src/modelprint.c:2755
 msgid "P-value($F$)"
 msgstr "p值($F$)"
 
-#: lib/src/modelprint.c:2818
+#: lib/src/modelprint.c:2787
 msgid "Uncentered $R^2$"
 msgstr ""
 
-#: lib/src/modelprint.c:2819
+#: lib/src/modelprint.c:2788
 msgid "Uncentered R-squared"
 msgstr ""
 
-#: lib/src/modelprint.c:2820
+#: lib/src/modelprint.c:2789
 msgid "Centered $R^2$"
 msgstr ""
 
-#: lib/src/modelprint.c:2821
+#: lib/src/modelprint.c:2790
 msgid "Centered R-squared"
 msgstr ""
 
-#: lib/src/modelprint.c:2824
+#: lib/src/modelprint.c:2793
 msgid "McFadden $R^2$"
 msgstr ""
 
-#: lib/src/modelprint.c:2825
+#: lib/src/modelprint.c:2794
 msgid "McFadden R-squared"
 msgstr ""
 
-#: lib/src/modelprint.c:2855
+#: lib/src/modelprint.c:2824
 #, fuzzy
 msgid "Mean of innovations"
 msgstr "樣本均數"
 
-#: lib/src/modelprint.c:2857
+#: lib/src/modelprint.c:2826
 msgid "S.D. of innovations"
 msgstr ""
 
-#: lib/src/modelprint.c:2864
+#: lib/src/modelprint.c:2833
 #, fuzzy
 msgid "Median depend. var"
 msgstr "選擇VAR落後期(_V)"
 
-#: lib/src/modelprint.c:2866
+#: lib/src/modelprint.c:2835
 #, fuzzy
 msgid "Sum absolute resid"
 msgstr "最小絕對誤差法(_A)"
 
-#: lib/src/modelprint.c:2911
+#: lib/src/modelprint.c:2880
 msgid "Durbin's $h$"
 msgstr ""
 
-#: lib/src/modelprint.c:2911
+#: lib/src/modelprint.c:2880
 msgid "Durbin's h"
 msgstr ""
 
-#: lib/src/modelprint.c:2986 lib/src/system.c:4170 lib/src/system.c:4172
+#: lib/src/modelprint.c:2955 lib/src/system.c:4170 lib/src/system.c:4172
 #, c-format
 msgid "Convergence achieved after %d iterations\n"
 msgstr ""
 "在 %d 次反覆運 (iterations) 後, 已經滿足設定之收歛標準 (convergence "
 "achieved)\n"
 
-#: lib/src/modelprint.c:3002 lib/src/texprint.c:1072 lib/src/varprint.c:1109
-#: lib/src/varprint.c:1117
+#: lib/src/modelprint.c:2971 lib/src/texprint.c:1072 lib/src/varprint.c:1087
+#: lib/src/varprint.c:1095
 msgid "AIC"
 msgstr "AIC"
 
-#: lib/src/modelprint.c:3002 lib/src/texprint.c:1073 lib/src/varprint.c:1110
-#: lib/src/varprint.c:1118
+#: lib/src/modelprint.c:2971 lib/src/texprint.c:1073 lib/src/varprint.c:1088
+#: lib/src/varprint.c:1096
 msgid "BIC"
 msgstr "BIC"
 
-#: lib/src/modelprint.c:3002 lib/src/texprint.c:1074 lib/src/varprint.c:1111
-#: lib/src/varprint.c:1119
+#: lib/src/modelprint.c:2971 lib/src/texprint.c:1074 lib/src/varprint.c:1089
+#: lib/src/varprint.c:1097
 msgid "HQC"
 msgstr "HQC"
 
-#: lib/src/modelprint.c:3115
+#: lib/src/modelprint.c:3084
 #, fuzzy
 msgid "SSR"
 msgstr "殘差平方和"
 
-#: lib/src/modelprint.c:4197
+#: lib/src/modelprint.c:4166
 #, fuzzy
 msgid "Sum of AR coefficients"
 msgstr "迴歸係數之共變數矩陣"
 
-#: lib/src/modelprint.c:4221
+#: lib/src/modelprint.c:4190
 msgid "slope"
 msgstr "邊際機率 (slope)"
 
-#: lib/src/modelprint.c:4677
+#: lib/src/modelprint.c:4646
 msgid "                        Real  Imaginary    Modulus  Frequency"
 msgstr "                        Real  Imaginary    Modulus  Frequency"
 
-#: lib/src/modelprint.c:4687 lib/src/modelprint.c:4690
-#: lib/src/modelprint.c:4703
+#: lib/src/modelprint.c:4656 lib/src/modelprint.c:4659
+#: lib/src/modelprint.c:4672
 msgid "Root"
 msgstr ""
 
-#: lib/src/modelprint.c:4738 lib/src/modelprint.c:4746
+#: lib/src/modelprint.c:4707 lib/src/modelprint.c:4715
 msgid "Real"
 msgstr ""
 
-#: lib/src/modelprint.c:4738 lib/src/modelprint.c:4746
+#: lib/src/modelprint.c:4707 lib/src/modelprint.c:4715
 msgid "Imaginary"
 msgstr ""
 
-#: lib/src/modelprint.c:4738 lib/src/modelprint.c:4746
+#: lib/src/modelprint.c:4707 lib/src/modelprint.c:4715
 msgid "Modulus"
 msgstr ""
 
-#: lib/src/modelprint.c:4738 lib/src/modelprint.c:4746
+#: lib/src/modelprint.c:4707 lib/src/modelprint.c:4715
 #: lib/src/subsample.c:2173 lib/src/subsample.c:2195 lib/src/subsample.c:2245
 msgid "Frequency"
 msgstr "資料頻率"
 
-#: lib/src/modelprint.c:4771
+#: lib/src/modelprint.c:4740
 #, fuzzy
 msgid "AR (seasonal)"
 msgstr "加上季節虛擬變數"
 
-#: lib/src/modelprint.c:4791
+#: lib/src/modelprint.c:4760
 msgid "MA"
 msgstr ""
 
-#: lib/src/modelprint.c:4811
+#: lib/src/modelprint.c:4780
 #, fuzzy
 msgid "MA (seasonal)"
 msgstr "加上季節虛擬變數"
 
-#: lib/src/modelprint.c:4848 lib/src/modelprint.c:4853
-#: lib/src/modelprint.c:4857
+#: lib/src/modelprint.c:4817 lib/src/modelprint.c:4822
+#: lib/src/modelprint.c:4826
 #, fuzzy
 msgid "Total observations"
 msgstr "增加樣本(_A)"
 
-#: lib/src/modelprint.c:4849 lib/src/modelprint.c:4854
-#: lib/src/modelprint.c:4858
+#: lib/src/modelprint.c:4818 lib/src/modelprint.c:4823
+#: lib/src/modelprint.c:4827
 #, fuzzy
 msgid "Censored observations"
 msgstr "增加樣本(_A)"
 
-#: lib/src/modelprint.c:4879 lib/src/modelprint.c:4887
+#: lib/src/modelprint.c:4848 lib/src/modelprint.c:4856
 #, fuzzy
 msgid "Actual"
 msgstr "實際"
 
-#: lib/src/modelprint.c:4882
+#: lib/src/modelprint.c:4851
 #, fuzzy
 msgid "Predicted"
 msgstr "預測值"
 
-#: lib/src/modelprint.c:4941 lib/src/modelprint.c:4964
+#: lib/src/modelprint.c:4910 lib/src/modelprint.c:4933
 msgid "Number of cases 'correctly predicted'"
 msgstr ""
 
-#: lib/src/modelprint.c:4945 lib/src/modelprint.c:4968
+#: lib/src/modelprint.c:4914 lib/src/modelprint.c:4937
 msgid "at mean of independent vars"
 msgstr ""
 
-#: lib/src/modelprint.c:4950 lib/src/modelprint.c:4973
-#: lib/src/modelprint.c:4991 lib/src/varprint.c:1256 lib/src/varprint.c:1261
-#: lib/src/varprint.c:1269
+#: lib/src/modelprint.c:4919 lib/src/modelprint.c:4942
+#: lib/src/modelprint.c:4960 lib/src/varprint.c:1229 lib/src/varprint.c:1234
+#: lib/src/varprint.c:1242
 msgid "Likelihood ratio test"
 msgstr "概似值比例檢定 (Likelihood ratio test)"
 
-#: lib/src/modelprint.c:4960 lib/src/modelprint.c:4980
+#: lib/src/modelprint.c:4929 lib/src/modelprint.c:4949
 #, fuzzy
 msgid "Evaluated at the mean"
 msgstr "全距-均數圖()R)"
 
-#: lib/src/modelprint.c:4986
+#: lib/src/modelprint.c:4955
 msgid "Number of cases `correctly predicted'"
 msgstr ""
 
-#: lib/src/modelprint.c:5009 plugin/anova.c:500
+#: lib/src/modelprint.c:4978 plugin/anova.c:500
 msgid "Analysis of Variance"
 msgstr "變異數分析"
 
-#: lib/src/modelprint.c:5018 lib/src/modelprint.c:5027
-#: lib/src/modelprint.c:5029 plugin/anova.c:82 plugin/anova.c:91
+#: lib/src/modelprint.c:4987 lib/src/modelprint.c:4996
+#: lib/src/modelprint.c:4998 plugin/anova.c:82 plugin/anova.c:91
 #: plugin/anova.c:93
 #, fuzzy
 msgid "Sum of squares"
 msgstr "累計殘差平方和"
 
-#: lib/src/modelprint.c:5019 lib/src/modelprint.c:5030
-#: lib/src/modelprint.c:5032 lib/src/varprint.c:956 lib/src/varprint.c:960
-#: lib/src/varprint.c:964 gui2/calculator.c:1977 gui2/calculator.c:1980
+#: lib/src/modelprint.c:4988 lib/src/modelprint.c:4999
+#: lib/src/modelprint.c:5001 lib/src/varprint.c:940 lib/src/varprint.c:944
+#: lib/src/varprint.c:948 gui2/calculator.c:1977 gui2/calculator.c:1980
 #: plugin/anova.c:83 plugin/anova.c:94 plugin/anova.c:96
 msgid "df"
 msgstr "自由度"
 
-#: lib/src/modelprint.c:5020 lib/src/modelprint.c:5033
-#: lib/src/modelprint.c:5035 plugin/anova.c:84 plugin/anova.c:97
+#: lib/src/modelprint.c:4989 lib/src/modelprint.c:5002
+#: lib/src/modelprint.c:5004 plugin/anova.c:84 plugin/anova.c:97
 #: plugin/anova.c:99
 #, fuzzy
 msgid "Mean square"
 msgstr "卡方分配"
 
-#: lib/src/modelprint.c:5042 lib/src/modelprint.c:5044
+#: lib/src/modelprint.c:5011 lib/src/modelprint.c:5013
 #, fuzzy
 msgid "Regression"
 msgstr "分量迴歸(_Q)"
 
-#: lib/src/modelprint.c:5055 lib/src/modelprint.c:5057 plugin/anova.c:127
+#: lib/src/modelprint.c:5024 lib/src/modelprint.c:5026 plugin/anova.c:127
 #: plugin/anova.c:129
 #, fuzzy
 msgid "Residual"
 msgstr "殘差"
 
-#: lib/src/modelprint.c:5064 lib/src/modelprint.c:5066 plugin/anova.c:136
+#: lib/src/modelprint.c:5033 lib/src/modelprint.c:5035 plugin/anova.c:136
 #: plugin/anova.c:138
 msgid "Total"
 msgstr ""
 
-#: lib/src/modelprint.c:5147 lib/src/nls.c:1599
+#: lib/src/modelprint.c:5118 lib/src/nls.c:1599
 #, fuzzy, c-format
 msgid "modprint: expected %d names"
 msgstr "變數名稱衝突"
@@ -5805,8 +5802,8 @@ msgstr ""
 msgid "Tolerance = %g\n"
 msgstr ""
 
-#: lib/src/nonparam.c:259 lib/src/printout.c:2509 gui2/guiprint.c:1568
-#: gui2/guiprint.c:1630 gui2/guiprint.c:1686 gui2/guiprint.c:1727
+#: lib/src/nonparam.c:259 lib/src/printout.c:2509 gui2/guiprint.c:1574
+#: gui2/guiprint.c:1636 gui2/guiprint.c:1692 gui2/guiprint.c:1733
 #, fuzzy
 msgid "Obs"
 msgstr "新增樣本(_A)"
@@ -6283,27 +6280,27 @@ msgstr "Listing %d variables:\n"
 msgid "list is empty"
 msgstr "list is empty"
 
-#: lib/src/printout.c:2305 gui2/guiprint.c:1307
+#: lib/src/printout.c:2305 gui2/guiprint.c:1311
 msgid "Mean Error"
 msgstr "平均誤差 (mean error)"
 
-#: lib/src/printout.c:2306 gui2/guiprint.c:1308
+#: lib/src/printout.c:2306 gui2/guiprint.c:1312
 msgid "Mean Squared Error"
 msgstr "Mean Squared Error"
 
-#: lib/src/printout.c:2307 gui2/guiprint.c:1309
+#: lib/src/printout.c:2307 gui2/guiprint.c:1313
 msgid "Root Mean Squared Error"
 msgstr "Root Mean Squared Error"
 
-#: lib/src/printout.c:2308 gui2/guiprint.c:1310
+#: lib/src/printout.c:2308 gui2/guiprint.c:1314
 msgid "Mean Absolute Error"
 msgstr "Mean Absolute Error"
 
-#: lib/src/printout.c:2309 gui2/guiprint.c:1311
+#: lib/src/printout.c:2309 gui2/guiprint.c:1315
 msgid "Mean Percentage Error"
 msgstr "Mean Percentage Error"
 
-#: lib/src/printout.c:2310 gui2/guiprint.c:1312
+#: lib/src/printout.c:2310 gui2/guiprint.c:1316
 msgid "Mean Absolute Percentage Error"
 msgstr "Mean Absolute Percentage Error"
 
@@ -6323,7 +6320,7 @@ msgstr "Regression proportion, UR"
 msgid "Disturbance proportion, UD"
 msgstr "Disturbance proportion, UD"
 
-#: lib/src/printout.c:2352 gui2/guiprint.c:1336
+#: lib/src/printout.c:2352 gui2/guiprint.c:1340
 msgid "Forecast evaluation statistics"
 msgstr "預測評估統計量 (Forecast evaluation statistics)"
 
@@ -6341,8 +6338,8 @@ msgstr " For %g%% confidence intervals, z(%g) = %.2f\n"
 msgid " For %g%% confidence intervals, t(%d, %g) = %.3f\n"
 msgstr " For %g%% confidence intervals, t(%d, %g) = %.3f\n"
 
-#: lib/src/printout.c:2511 gui2/guiprint.c:1568 gui2/guiprint.c:1631
-#: gui2/guiprint.c:1686 gui2/guiprint.c:1727
+#: lib/src/printout.c:2511 gui2/guiprint.c:1574 gui2/guiprint.c:1637
+#: gui2/guiprint.c:1692 gui2/guiprint.c:1733
 msgid "prediction"
 msgstr ""
 
@@ -6814,12 +6811,11 @@ msgstr "估計法"
 msgid "Ljung-Box Q'"
 msgstr "Ljung-Box Q'"
 
-#: lib/src/texprint.c:880 lib/src/varprint.c:748 lib/src/varprint.c:749
-#: gui2/gui_utils.c:4045
+#: lib/src/texprint.c:880 lib/src/varprint.c:744 gui2/gui_utils.c:4045
 msgid "Cross-equation covariance matrix"
 msgstr "Cross-equation 共變數矩陣"
 
-#: lib/src/texprint.c:919 lib/src/varprint.c:805
+#: lib/src/texprint.c:919 lib/src/varprint.c:800
 msgid "determinant"
 msgstr "矩陣行列式 (determinant)"
 
@@ -6827,10 +6823,9 @@ msgstr "矩陣行列式 (determinant)"
 msgid "Cointegrating vectors"
 msgstr "共整合向量 (Cointegrating vectors)"
 
-#: lib/src/texprint.c:953 lib/src/texprint.c:1009 lib/src/texprint.c:1559
-#: lib/src/varprint.c:618 lib/src/varprint.c:619 lib/src/varprint.c:676
-#: lib/src/varprint.c:677 gui2/guiprint.c:857 plugin/jrestrict.c:2831
-#: plugin/jrestrict.c:2864
+#: lib/src/texprint.c:953 lib/src/texprint.c:1009 lib/src/texprint.c:1558
+#: lib/src/varprint.c:618 lib/src/varprint.c:674 gui2/guiprint.c:857
+#: plugin/jrestrict.c:2831 plugin/jrestrict.c:2864
 msgid "standard errors in parentheses"
 msgstr "小括號中數字為標準誤(standard errors)"
 
@@ -6838,11 +6833,11 @@ msgstr "小括號中數字為標準誤(standard errors)"
 msgid "Adjustment vectors"
 msgstr ""
 
-#: lib/src/texprint.c:1068 lib/src/varprint.c:1107 lib/src/varprint.c:1116
+#: lib/src/texprint.c:1068 lib/src/varprint.c:1085 lib/src/varprint.c:1094
 msgid "Determinant of covariance matrix"
 msgstr "共變數矩陣行列式 (determinant)"
 
-#: lib/src/texprint.c:1558 gui2/model_table.c:1145
+#: lib/src/texprint.c:1557 gui2/model_table.c:1145
 #, fuzzy
 msgid "$t$-statistics in parentheses"
 msgstr "錯誤的資料表示:  %s"
@@ -7017,124 +7012,123 @@ msgstr ""
 msgid "Case 5: Unrestricted trend and constant"
 msgstr "含常數項及二次趨勢項"
 
-#: lib/src/varprint.c:615 lib/src/varprint.c:616
+#: lib/src/varprint.c:616
 #, fuzzy
 msgid "cointegrating vectors"
 msgstr "步驟 %d: 共整合迴歸\n"
 
-#: lib/src/varprint.c:673 lib/src/varprint.c:674
+#: lib/src/varprint.c:672
 msgid "adjustment vectors"
 msgstr ""
 
-#: lib/src/varprint.c:817
+#: lib/src/varprint.c:811
 #, fuzzy
 msgid "Restrictions on beta:"
 msgstr "從伺服器資料庫讀取資料(_s)"
 
-#: lib/src/varprint.c:829
+#: lib/src/varprint.c:823
 #, fuzzy
 msgid "Restrictions on alpha:"
 msgstr "從伺服器資料庫讀取資料(_s)"
 
-#: lib/src/varprint.c:877 lib/src/varprint.c:879
+#: lib/src/varprint.c:870
 msgid "Relative to prior restriction"
 msgstr ""
 
-#: lib/src/varprint.c:891
+#: lib/src/varprint.c:881
 #, c-format
 msgid "Unrestricted loglikelihood $(l_u) = %.8g$"
 msgstr ""
 
-#: lib/src/varprint.c:893
+#: lib/src/varprint.c:883
 #, c-format
 msgid "Restricted loglikelihood $(l_r) = %.8g$"
 msgstr ""
 
-#: lib/src/varprint.c:895 lib/src/varprint.c:899
+#: lib/src/varprint.c:885
 #, c-format
 msgid "Unrestricted loglikelihood (lu) = %.8g"
 msgstr ""
 
-#: lib/src/varprint.c:897 lib/src/varprint.c:901
+#: lib/src/varprint.c:887
 #, c-format
 msgid "Restricted loglikelihood (lr) = %.8g"
 msgstr ""
 
-#: lib/src/varprint.c:920
+#: lib/src/varprint.c:905
 msgid "Cointegration rank"
 msgstr "共整合 rank"
 
-#: lib/src/varprint.c:955 lib/src/varprint.c:959 lib/src/varprint.c:963
+#: lib/src/varprint.c:939 lib/src/varprint.c:943 lib/src/varprint.c:947
 #, fuzzy
 msgid "Portmanteau test"
 msgstr "常態性檢定(_N)"
 
-#: lib/src/varprint.c:989 lib/src/varprint.c:1177 lib/src/varprint.c:1182
-#: lib/src/varprint.c:1189
+#: lib/src/varprint.c:973 lib/src/varprint.c:1155 lib/src/varprint.c:1160
+#: lib/src/varprint.c:1167
 #, fuzzy, c-format
 msgid "All lags of %s"
 msgstr "全選(_a)"
 
-#: lib/src/varprint.c:992 lib/src/varprint.c:1202 lib/src/varprint.c:1207
-#: lib/src/varprint.c:1214
+#: lib/src/varprint.c:976 lib/src/varprint.c:1180 lib/src/varprint.c:1185
+#: lib/src/varprint.c:1192
 #, fuzzy, c-format
 msgid "All vars, lag %d"
 msgstr "選擇VAR落後期(_V)"
 
-#: lib/src/varprint.c:1053 lib/src/varprint.c:1055
+#: lib/src/varprint.c:1038
 #, fuzzy, c-format
 msgid "VECM system, lag order %d"
 msgstr "ADF 檢定落後階次 (lag order):"
 
-#: lib/src/varprint.c:1059 lib/src/varprint.c:1061
+#: lib/src/varprint.c:1040
 #, fuzzy, c-format
 msgid "VAR system, lag order %d"
 msgstr "ADF 檢定落後階次 (lag order):"
 
-#: lib/src/varprint.c:1068
+#: lib/src/varprint.c:1046
 #, fuzzy, c-format
 msgid "%s estimates, observations %s--%s ($T=%d$)"
 msgstr "增加樣本(_A)"
 
-#: lib/src/varprint.c:1069 lib/src/varprint.c:1078 lib/src/varprint.c:1086
+#: lib/src/varprint.c:1047 lib/src/varprint.c:1056 lib/src/varprint.c:1064
 msgid "Maximum likelihood"
 msgstr "最大概似值 (Maximum likelihood)"
 
-#: lib/src/varprint.c:1077 lib/src/varprint.c:1085
+#: lib/src/varprint.c:1055 lib/src/varprint.c:1063
 #, fuzzy, c-format
 msgid "%s estimates, observations %s-%s (T = %d)"
 msgstr "增加樣本(_A)"
 
-#: lib/src/varprint.c:1142 lib/src/varprint.c:1146 lib/src/varprint.c:1149
+#: lib/src/varprint.c:1120 lib/src/varprint.c:1124 lib/src/varprint.c:1127
 #, fuzzy
 msgid "Equation for "
 msgstr "檢查有無更新版(_u)"
 
-#: lib/src/varprint.c:1161 lib/src/varprint.c:1164 lib/src/varprint.c:1166
+#: lib/src/varprint.c:1139 lib/src/varprint.c:1142 lib/src/varprint.c:1144
 #, fuzzy
 msgid "F-tests of zero restrictions"
 msgstr "gretl: 無母數檢定(_N)"
 
-#: lib/src/varprint.c:1242 lib/src/varprint.c:1243 lib/src/varprint.c:1245
-#: lib/src/varprint.c:1246
+#: lib/src/varprint.c:1219 lib/src/varprint.c:1220
 #, fuzzy, c-format
 msgid "the longest lag is %d"
 msgstr "選擇VAR落後期(_V)"
 
-#: lib/src/varprint.c:1252 lib/src/varprint.c:1258 lib/src/varprint.c:1266
+#: lib/src/varprint.c:1225 lib/src/varprint.c:1231 lib/src/varprint.c:1239
 msgid "For the system as a whole"
 msgstr ""
 
-#: lib/src/varprint.c:1254 lib/src/varprint.c:1260 lib/src/varprint.c:1268
+#: lib/src/varprint.c:1227 lib/src/varprint.c:1233 lib/src/varprint.c:1241
 #, fuzzy
 msgid "Alternative hypothesis"
 msgstr "gretl: 假設檢定"
 
-#: lib/src/varprint.c:1273
+#: lib/src/varprint.c:1246
 msgid "Comparison of information criteria"
 msgstr ""
 
-#: lib/src/varprint.c:1275 lib/src/varprint.c:1279
+#: lib/src/varprint.c:1248 lib/src/varprint.c:1252
 #, fuzzy, c-format
 msgid "Lag order %*d"
 msgstr "落後期 %d\n"
@@ -7697,8 +7691,8 @@ msgid "Variable %d"
 msgstr "變數 %d"
 
 #: gui2/calculator.c:2329 gui2/guiprint.c:706 gui2/guiprint.c:729
-#: gui2/guiprint.c:996 gui2/guiprint.c:1023 gui2/guiprint.c:1817
-#: gui2/guiprint.c:1867 gui2/selector.c:7513 plugin/pca.c:203 plugin/pca.c:214
+#: gui2/guiprint.c:996 gui2/guiprint.c:1023 gui2/guiprint.c:1825
+#: gui2/guiprint.c:1875 gui2/selector.c:7513 plugin/pca.c:203 plugin/pca.c:214
 #, fuzzy
 msgid "Variable"
 msgstr "變數(_V)"
@@ -10465,7 +10459,7 @@ msgstr "預覽 (preview)"
 msgid "The graph page is full"
 msgstr ""
 
-#: gui2/graph_page.c:465 gui2/guiprint.c:2251 gui2/guiprint.c:2366
+#: gui2/graph_page.c:465 gui2/guiprint.c:2261 gui2/guiprint.c:2376
 msgid "Failed to process TeX file"
 msgstr ""
 
@@ -11549,110 +11543,110 @@ msgstr "Std.\\ Dev."
 msgid "Ex.\\ kurtosis"
 msgstr "Ex.\\ kurtosis"
 
-#: gui2/guiprint.c:1119
+#: gui2/guiprint.c:1121
 #, c-format
 msgid "Correlation coefficients, using the observations %s - %s"
 msgstr ""
 
-#: gui2/guiprint.c:1130 gui2/guiprint.c:1224
+#: gui2/guiprint.c:1132 gui2/guiprint.c:1226
 msgid "Coefficient covariance matrix"
 msgstr "係數共變數矩陣"
 
-#: gui2/guiprint.c:1212
+#: gui2/guiprint.c:1214
 #, fuzzy, c-format
 msgid "Correlation coefficients, using the observations %s--%s"
 msgstr "敘述統計, 所使用的樣本為 %s - %s"
 
-#: gui2/guiprint.c:1219
+#: gui2/guiprint.c:1221
 #, fuzzy, c-format
 msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
 msgstr ""
 "   p值 (雙尾 two-tailed) = %g\n"
 "\n"
 
-#: gui2/guiprint.c:1313
+#: gui2/guiprint.c:1317
 msgid "Theil's $U$"
 msgstr ""
 
-#: gui2/guiprint.c:1314
+#: gui2/guiprint.c:1318
 msgid "Bias proportion, $U^M$"
 msgstr "Bias proportion, $U^M$"
 
-#: gui2/guiprint.c:1315
+#: gui2/guiprint.c:1319
 msgid "Regression proportion, $U^R$"
 msgstr "Regression proportion, $U^R$"
 
-#: gui2/guiprint.c:1316
+#: gui2/guiprint.c:1320
 msgid "Disturbance proportion, $U^D$"
 msgstr "Disturbance proportion, $U^D$"
 
-#: gui2/guiprint.c:1371 gui2/guiprint.c:1389
+#: gui2/guiprint.c:1375 gui2/guiprint.c:1393
 #, fuzzy
 msgid "Model estimation range:"
 msgstr "恢復為全樣本(_R)"
 
-#: gui2/guiprint.c:1374 gui2/guiprint.c:1392
+#: gui2/guiprint.c:1378 gui2/guiprint.c:1396
 #, fuzzy, c-format
 msgid "Standard error of residuals = %g"
 msgstr "非條件殘差變異數"
 
-#: gui2/guiprint.c:1461
+#: gui2/guiprint.c:1465
 #, fuzzy
 msgid ""
 "\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
 "\n"
 msgstr "Note: * 表示殘差超過 2.5 倍的標準誤 "
 
-#: gui2/guiprint.c:1522
+#: gui2/guiprint.c:1526
 msgid "Note: * denotes a residual in excess of 2.5 standard errors"
 msgstr "Note: * 表示殘差超過 2.5 倍的標準誤 "
 
-#: gui2/guiprint.c:1600
+#: gui2/guiprint.c:1606
 #, fuzzy, c-format
 msgid ""
 "For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
 "\n"
 msgstr "%g%% 信賴區間 = %g to %g"
 
-#: gui2/guiprint.c:1604
+#: gui2/guiprint.c:1610
 #, fuzzy, c-format
 msgid ""
 "For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
 "\n"
 msgstr "%g%% 信賴區間 = %g to %g"
 
-#: gui2/guiprint.c:1624
+#: gui2/guiprint.c:1630
 #, fuzzy, c-format
 msgid "%g\\%% interval"
 msgstr "%g%% 信賴區間 = %g to %g"
 
-#: gui2/guiprint.c:1708
+#: gui2/guiprint.c:1714
 #, fuzzy, c-format
 msgid "For %g%% confidence intervals, z(%g) = %.2f"
 msgstr "%g%% 信賴區間 = %g to %g"
 
-#: gui2/guiprint.c:1712
+#: gui2/guiprint.c:1718
 #, fuzzy, c-format
 msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
 msgstr "%g%% 信賴區間 = %g to %g"
 
-#: gui2/guiprint.c:1717
+#: gui2/guiprint.c:1723
 #, fuzzy, c-format
 msgid "%g%% interval"
 msgstr "%g%% 信賴區間 = %g to %g"
 
-#: gui2/guiprint.c:1812 gui2/guiprint.c:1859
+#: gui2/guiprint.c:1820 gui2/guiprint.c:1867
 #, fuzzy, c-format
 msgid "%g\\%% confidence interval"
 msgstr "%g%% 信賴區間 = %g to %g"
 
-#: gui2/guiprint.c:1897
+#: gui2/guiprint.c:1907
 msgid ""
 "You can't use the same character for the column delimiter and the decimal "
 "point"
 msgstr "不能使用和欄「分隔符號」相同的符號當做小數點符號"
 
-#: gui2/guiprint.c:2068
+#: gui2/guiprint.c:2078
 msgid "No scalar variables are currently defined"
 msgstr "目前沒有定義任何數值變數"
 
@@ -13462,7 +13456,7 @@ msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
 msgstr ""
 "對 logit 和 probit 模型而言, R{\\super 2} 係指 McFadden's pseudo-R{\\super 2}"
 
-#: gui2/model_table.c:1274
+#: gui2/model_table.c:1276
 msgid "No model is available"
 msgstr "無任何 model"
 

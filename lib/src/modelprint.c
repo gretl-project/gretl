@@ -570,7 +570,7 @@ static void print_biprobit_rho (const MODEL *pmod, PRN *prn)
 static void maybe_print_lad_warning (const MODEL *pmod, PRN *prn)
 {
     if (gretl_model_get_int(pmod, "nonunique")) {
-	pputs(prn, _("Warning: solution is probably not unique"));
+	pputs(prn, A_("Warning: solution is probably not unique"));
 	pputc(prn, '\n');
     }
 }
@@ -578,7 +578,7 @@ static void maybe_print_lad_warning (const MODEL *pmod, PRN *prn)
 static void maybe_print_hessian_warning (const MODEL *pmod, PRN *prn)
 {
     if (gretl_model_get_int(pmod, "hess-error")) {
-	pputs(prn, _("Warning: couldn't compute numerical Hessian"));
+	pputs(prn, A_("Warning: couldn't compute numerical Hessian"));
 	pputc(prn, '\n');
     }
 }
@@ -703,20 +703,11 @@ static void pval_max_line (const MODEL *pmod, const DATASET *dset,
 
 static void print_aux_string (const MODEL *pmod, PRN *prn)
 {
-#ifdef ENABLE_NLS
-    char *(*tr) (const char *);
-#endif
     int aux = pmod->aux;
     int plain = plain_format(prn);
     int tex = tex_format(prn);
     int csv = csv_format(prn);
     int close = 1;
-
-#ifdef ENABLE_NLS
-    tr = (plain)? gettext : iso_gettext;
-#else
-# define tr(s) s
-#endif
 
     if (plain || tex) {
 	pputc(prn, '\n');
@@ -725,50 +716,50 @@ static void print_aux_string (const MODEL *pmod, PRN *prn)
     } 
 
     if (aux == AUX_SQ) {
-	pputs(prn, tr(N_("Auxiliary regression for non-linearity test "
-			 "(squared terms)")));
+	pputs(prn, A_("Auxiliary regression for non-linearity test "
+		      "(squared terms)"));
     } else if (aux == AUX_LOG) {
-	pputs(prn, tr(N_("Auxiliary regression for non-linearity test "
-			 "(log terms)")));
+	pputs(prn, A_("Auxiliary regression for non-linearity test "
+		      "(log terms)"));
     } else if (aux == AUX_ADD) {
-	pputs(prn, tr(N_("Auxiliary regression for added variables")));
+	pputs(prn, A_("Auxiliary regression for added variables"));
     } else if (aux == AUX_WHITE) {
-	pputs(prn, tr(N_("White's test for heteroskedasticity")));
+	pputs(prn, A_("White's test for heteroskedasticity"));
 	if (pmod->opt & OPT_X) {
-	    pprintf(prn, " (%s)", tr(N_("squares only")));
+	    pprintf(prn, " (%s)", A_("squares only"));
 	} 
     } else if (aux == AUX_BP) {
-	pputs(prn, tr(N_("Breusch-Pagan test for heteroskedasticity")));
+	pputs(prn, A_("Breusch-Pagan test for heteroskedasticity"));
     } else if (aux == AUX_HET_1) {
-	pputs(prn, tr(N_("Pesaran-Taylor test for heteroskedasticity")));
+	pputs(prn, A_("Pesaran-Taylor test for heteroskedasticity"));
     } else if (aux == AUX_CHOW) {
-	pputs(prn, tr(N_("Augmented regression for Chow test")));
+	pputs(prn, A_("Augmented regression for Chow test"));
     } else if (aux == AUX_COINT) {
 	if (tex_format(prn)) {
 	    pputs(prn, A_("Cointegrating regression -- "));
 	} else {
-	    pputs(prn, tr(N_("Cointegrating regression - ")));
+	    pputs(prn, A_("Cointegrating regression - "));
 	}
     } else if (aux == AUX_ADF) {
 	if (tex_format(prn)) {
 	    pputs(prn, A_("Augmented Dickey--Fuller regression"));
 	} else {
-	    pputs(prn, tr(N_("Augmented Dickey-Fuller regression")));
+	    pputs(prn, A_("Augmented Dickey-Fuller regression"));
 	}
     } else if (aux == AUX_DF) {
 	if (tex_format(prn)) {
 	    pputs(prn, A_("Dickey--Fuller regression"));
 	} else {
-	    pputs(prn, tr(N_("Dickey-Fuller regression")));
+	    pputs(prn, A_("Dickey-Fuller regression"));
 	}
     } else if (aux == AUX_KPSS) {
-	pputs(prn, tr(N_("KPSS regression")));
+	pputs(prn, A_("KPSS regression"));
     } else if (aux == AUX_RESET) {
-	pputs(prn, tr(N_("Auxiliary regression for RESET specification test")));
+	pputs(prn, A_("Auxiliary regression for RESET specification test"));
     } else if (aux == AUX_GROUPWISE) {
-	pputs(prn, tr(N_("Groupwise heteroskedasticity")));
+	pputs(prn, A_("Groupwise heteroskedasticity"));
     } else if (aux == AUX_COMFAC) {
-	pputs(prn, tr(N_("Augmented regression for common factor test")));
+	pputs(prn, A_("Augmented regression for common factor test"));
     } else {
 	close = 0;
     }
@@ -1249,7 +1240,7 @@ static void panel_vcv_line (const VCVInfo *vi, PRN *prn)
 static void beck_katz_failed_line (PRN *prn)
 {
     if (plain_format(prn)) {
-	pputs(prn, _("Could not compute Beck-Katz standard errors"));
+	pputs(prn, A_("Could not compute Beck-Katz standard errors"));
 	pputc(prn, '\n');
     }
 }
@@ -1444,7 +1435,7 @@ static void print_extra_list (const char *tag, const int *list,
 {
     int i, v, len;
 
-    len = pputs(prn, _(tag));
+    len = pputs(prn, A_(tag));
 
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
@@ -1493,7 +1484,7 @@ static void print_ivreg_droplist (const MODEL *pmod,
     const int *dlist = gretl_model_get_data(pmod, "inst_droplist");
     int i, v;
 
-    pputs(prn, _("Redundant instruments:"));
+    pputs(prn, A_("Redundant instruments:"));
     for (i=1; i<=dlist[0]; i++) {
 	v = dlist[i];
 	if (v < dset->v) {
@@ -2043,9 +2034,7 @@ static void model_format_start (PRN *prn)
 	} else {
 	    pputs(prn, "\\par\n\\qc ");
 	}
-    } else if (plain_format(prn)) {
-	set_gui_native_printing();
-    }
+    } 
 }
 
 #define RTF_MULTICOL  "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
@@ -2213,8 +2202,6 @@ static void model_format_end (PRN *prn)
 	}
     } else if (rtf_doc_format(prn)) {
 	pputs(prn, "\n}\n");
-    } else if (plain_format(prn)) {
-	unset_gui_native_printing();
     }
 } 
 
@@ -2788,7 +2775,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	val[7] = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
     } else if (!na(pmod->chisq)) {
 	/* alternative: chi-square and its p-value */
-	sprintf(teststr, "%s(%d)", _("Chi-square"), pmod->dfn);
+	sprintf(teststr, "%s(%d)", A_("Chi-square"), pmod->dfn);
 	key[6] = teststr;  
 	val[6] = pmod->chisq;
 	key[7] = N_("p-value");  
@@ -2965,15 +2952,15 @@ static void print_model_iter_info (const MODEL *pmod, PRN *prn)
 
     if (iters > 0) {
 	pputc(prn, '\n');
-	pprintf(prn, _("Convergence achieved after %d iterations\n"), iters);
+	pprintf(prn, A_("Convergence achieved after %d iterations\n"), iters);
     } else {
 	int fncount = gretl_model_get_int(pmod, "fncount");
 	int grcount = gretl_model_get_int(pmod, "grcount");
 
 	if (fncount > 0) {
 	    pputc(prn, '\n');
-	    pprintf(prn, _("Function evaluations: %d\n"), fncount);
-	    pprintf(prn, _("Evaluations of gradient: %d\n"), grcount);
+	    pprintf(prn, A_("Function evaluations: %d\n"), fncount);
+	    pprintf(prn, A_("Evaluations of gradient: %d\n"), grcount);
 	}
     }
 }
@@ -2990,7 +2977,7 @@ static void aux_print_info_criteria (const MODEL *pmod, PRN *prn)
 	    if (n > 0) {
 		pputc(prn, ' ');
 	    }	
-	    pprintf(prn, "  %s: %g", _(istrs[i]), pmod->criterion[i]);
+	    pprintf(prn, "  %s: %g", A_(istrs[i]), pmod->criterion[i]);
 	    n++;
 	}
     }
@@ -3094,8 +3081,8 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
     if (opt & OPT_S) {
 	/* --simple-print */
 	if (pmod->ci == OLS && !na(pmod->rsq) && plain_format(prn)) {
-	    pprintf(prn, "%s = %g, %s = %f\n\n", _("SSR"), 
-		    pmod->ess, _("R-squared"), pmod->rsq);
+	    pprintf(prn, "%s = %g, %s = %f\n\n", A_("SSR"), 
+		    pmod->ess, A_("R-squared"), pmod->rsq);
 	}
 	goto close_format;
     }

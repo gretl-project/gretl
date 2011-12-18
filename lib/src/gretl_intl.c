@@ -163,7 +163,7 @@ int get_local_decpoint (void)
 /* fudges for strings that should not be in utf-8 under some
    conditions: under GTK translations always come out in utf-8 in the
    GUI, but when we're sending stuff to stderr we may have to put it
-   into ISO-8859-N.
+   into ISO-8859-N or some MS Code Page.
 */
 
 static int gretl_cset_maj;
@@ -171,7 +171,8 @@ static int gretl_cset_min;
 # ifdef WIN32
 static int gretl_cpage;
 # endif
-static int using_utf8;
+static int native_utf8;
+
 
 /* Use g_get_charset() to determine the current local character set,
    and record this information.  If we get an "ISO-XXXX-Y" locale,
@@ -185,16 +186,15 @@ void set_gretl_charset (void)
     const char *charset = NULL;
     char gretl_charset[32];
 
-    using_utf8 = g_get_charset(&charset);
+    native_utf8 = g_get_charset(&charset);
 
-    if (using_utf8) {
-	set_tex_use_utf(1);
+    if (native_utf8) {
 	set_stdio_use_utf8();
     }
 
     *gretl_charset = '\0';
 
-    if (!using_utf8 && charset != NULL && *charset != '\0') {
+    if (!native_utf8 && charset != NULL && *charset != '\0') {
 	char *p;
 
 	strncat(gretl_charset, charset, 31);
@@ -347,18 +347,6 @@ int chinese_locale (void)
 #endif
 }
 
-static int gui_native_printing;
-
-void set_gui_native_printing (void)
-{
-    gui_native_printing = 1;
-}
-
-void unset_gui_native_printing (void)
-{
-    gui_native_printing = 0;
-}
-
 #ifdef ENABLE_NLS
 
 char *iso_gettext (const char *msgid)
@@ -385,8 +373,9 @@ char *iso_gettext (const char *msgid)
     /* iso_switch: we'll reckon that if the system character set is
        not UTF-8, and is an ISO-8859-N or Windows CP12NN 8-bit set,
        then we should probably recode when printing translated strings
-       in the context of writing TeX, CSV and RTF files.  If
-       iso_switch is non-zero (once it's determinate) this makes the
+       in the context of writing CSV and RTF files.  
+
+       If iso_switch is non-zero (once it's determinate) this makes the
        I_() gettext macro use the system encoding, otherwise I_() is
        equivalent to plain _(), which always spits out UTF-8.  There's
        a possible gotcha here: I suspect that a UTF-8 encoded RTF file 
@@ -404,7 +393,7 @@ char *iso_gettext (const char *msgid)
 	iso_switch = (cset != NULL);
     }
 
-    if (iso_switch && !gui_native_printing) {
+    if (iso_switch) {
 	bind_textdomain_codeset(PACKAGE, cset);
 	ret = gettext(msgid);
 	bind_textdomain_codeset(PACKAGE, "UTF-8");
@@ -415,13 +404,22 @@ char *iso_gettext (const char *msgid)
     return ret;
 } 
 
-static char *utf_gettext (const char *msgid)
+/* return translated @msgid in UTF-8, when this is not
+   the default operation for plain gettext()
+*/
+
+static char *force_utf8_gettext (const char *msgid)
 {
+    static const char *cset;
     char *ret;
+
+    if (cset == NULL) {
+	cset = get_gretl_charset();
+    }
 
     bind_textdomain_codeset(PACKAGE, "UTF-8");
     ret = gettext(msgid);
-    bind_textdomain_codeset(PACKAGE, get_gretl_charset());
+    bind_textdomain_codeset(PACKAGE, cset);
 
     return ret;
 } 
@@ -430,61 +428,66 @@ static char *utf_gettext (const char *msgid)
 
    (1) The system-native encoding is UTF-8: in that case all output
    should be in UTF-8, with the possible exception of RTF; and all
-   output _will_ be in UTF-8 if we just call gettext().
+   output _will_ be in UTF-8 if we just call plain gettext().
 
    (2) The system-native encoding is not UTF-8 (this means
    MS Windows -- or possibly ancient Linux?). Then we have two
    sub-cases.
 
    (2a) We're in the GUI program: plain gettext() will have been
-   coerced to produce UTF-8 for the sake of GTK. But what about
-   RTF and CSV?
+   coerced to produce UTF-8 for the sake of GTK. But we should
+   probably arrange for RTF and CSV output to be in the locale
+   encoding, and also any output going to the console.
 
-   (2b) We're at the command line (gretlcli): plain gettext() output
-   will be in the system locale, but under the "new scheme" (December
-   2011) TeX output should be coerced to UTF-8 (?)
+   (2b) We're at the command line (gretlcli): gettext() output will
+   be in the system locale, but under the "new scheme" (December
+   2011) TeX output should be coerced to UTF-8. All other output
+   should use plain gettext().
 */
 
 enum {
     GETTEXT_DEFAULT,
-    GETTEXT_UTF8,
-    GETTEXT_ISO
+    GETTEXT_FORCE_UTF8,
+    GETTEXT_FORCE_LOCALE
 };
 
 static int gettext_mode;
 
 void set_alt_gettext_mode (PRN *prn)
 {
-    if (prn != NULL) {
-	if (plain_format(prn)) {
-	    if (gretl_in_gui_mode()) {
-		gettext_mode = GETTEXT_UTF8;
-	    } else {
-		gettext_mode = GETTEXT_DEFAULT;
+    gettext_mode = GETTEXT_DEFAULT;
+
+    if (prn != NULL && !native_utf8) {
+	if (gretl_in_gui_mode()) {
+	    if (rtf_format(prn) || csv_format(prn) || 
+		printing_to_standard_stream(prn)) {
+		gettext_mode = GETTEXT_FORCE_LOCALE;
 	    }
 	} else if (tex_format(prn)) {
-	    gettext_mode = GETTEXT_UTF8;
-	} else if (rtf_format(prn)) {
-	    gettext_mode = GETTEXT_ISO;
-	} else if (csv_format(prn)) {
-	    gettext_mode = GETTEXT_DEFAULT;
+	    /* CLI mode, writing TeX */
+	    gettext_mode = GETTEXT_FORCE_UTF8;
 	}
     }
 }
 
 char *alt_gettext (const char *msgid)
 {
-    if (gettext_mode == GETTEXT_UTF8) {
-	if (gretl_in_gui_mode()) {
-	    return gettext(msgid);
-	} else {
-	    return utf_gettext(msgid);
-	}
-    } else if (gettext_mode == GETTEXT_ISO) {
+    if (gettext_mode == GETTEXT_DEFAULT) {
+	return gettext(msgid);
+    } else if (gettext_mode == GETTEXT_FORCE_UTF8) {
+	return force_utf8_gettext(msgid);
+    } else if (gettext_mode == GETTEXT_FORCE_LOCALE) {
 	return iso_gettext(msgid);
     } else {
 	return gettext(msgid);
     }
+}
+
+#else /* !ENABLE_NLS */
+
+void set_alt_gettext_mode (PRN *prn)
+{
+    return;
 }
 
 #endif /* ENABLE_NLS */
@@ -1195,33 +1198,4 @@ int get_translated_width (const char *str)
 
     return w;
 }
-
-static int printing_to_console;
-
-#ifdef ENABLE_NLS
-
-char *maybe_iso_gettext (const char *msgid)
-{
-   if (printing_to_console) {
-       return iso_gettext(msgid);
-   } else {
-       return gettext(msgid);
-   }
-} 
-
-#endif
-
-void check_for_console (PRN *prn)
-{
-    if (prn != NULL) {
-	printing_to_console = 
-	    printing_to_standard_stream(prn);
-    }
-}
-
-void console_off (void)
-{
-    printing_to_console = 0;
-}
-
 

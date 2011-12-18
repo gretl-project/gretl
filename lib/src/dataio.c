@@ -2070,7 +2070,7 @@ int open_nulldata (DATASET *dset, int data_status, int length,
     }
 
     /* print out basic info */
-    pprintf(prn, M_("periodicity: %d, maxobs: %d\n"
+    pprintf(prn, A_("periodicity: %d, maxobs: %d\n"
 	   "observations range: %s-%s\n"), dset->pd, dset->n,
 	   dset->stobs, dset->endobs);
 
@@ -2838,7 +2838,7 @@ static int get_max_line_length (FILE *fp, PRN *prn)
 	}
 	if (!isspace((unsigned char) c) && !isprint((unsigned char) c) &&
 	    !(c == CTRLZ)) {
-	    pprintf(prn, M_("Binary data (%d) encountered: this is not a valid "
+	    pprintf(prn, A_("Binary data (%d) encountered: this is not a valid "
 			   "text file\n"), c);
 	    return -1;
 	}
@@ -2846,7 +2846,7 @@ static int get_max_line_length (FILE *fp, PRN *prn)
     }
 
     if (maxlen == 0) {
-	pprintf(prn, M_("Data file is empty\n"));
+	pprintf(prn, A_("Data file is empty\n"));
     } 
 
     if (maxlen > 0) {
@@ -2869,7 +2869,7 @@ static int import_octave (const char *fname, DATASET *dset,
     int maxlen, got_type = 0, got_name = 0;
     int i, t, err = 0;
 
-    pprintf(prn, "%s %s...\n", M_("parsing"), fname);
+    pprintf(prn, "%s %s...\n", A_("parsing"), fname);
 
     maxlen = get_max_line_length(fp, prn);
     if (maxlen <= 0) {
@@ -2883,7 +2883,7 @@ static int import_octave (const char *fname, DATASET *dset,
 	goto oct_bailout;
     }
 
-    pprintf(prn, M_("   longest line: %d characters\n"), maxlen - 1);
+    pprintf(prn, A_("   longest line: %d characters\n"), maxlen - 1);
 
     rewind(fp);
 
@@ -2924,7 +2924,7 @@ static int import_octave (const char *fname, DATASET *dset,
 			err = 1;
 		    } else {
 			ncols += bcols;
-			pprintf(prn, M_("   Found matrix '%s' with "
+			pprintf(prn, A_("   Found matrix '%s' with "
 					"%d rows, %d columns\n"), name, brows, bcols);
 		    }
 		    continue;
@@ -2941,7 +2941,7 @@ static int import_octave (const char *fname, DATASET *dset,
     }
 
     if (err || nrows == 0 || ncols == 0) {
-	pputs(prn, M_("Invalid data file\n"));
+	pputs(prn, A_("Invalid data file\n"));
 	err = E_DATA;
 	goto oct_bailout;
     } 
@@ -2950,7 +2950,7 @@ static int import_octave (const char *fname, DATASET *dset,
 
     octset = datainfo_new();
     if (octset == NULL) {
-	pputs(prn, M_("Out of memory!\n"));
+	pputs(prn, A_("Out of memory!\n"));
 	err = E_ALLOC;
 	goto oct_bailout;
     }
@@ -2959,16 +2959,16 @@ static int import_octave (const char *fname, DATASET *dset,
     octset->v = ncols + 1;
 
     if (start_new_Z(octset, 0)) {
-	pputs(prn, M_("Out of memory!\n"));
+	pputs(prn, A_("Out of memory!\n"));
 	err = E_ALLOC;
 	goto oct_bailout;
     }  
 
     rewind(fp);
 
-    pprintf(prn, M_("   number of variables: %d\n"), ncols);
-    pprintf(prn, M_("   number of observations: %d\n"), nrows);
-    pprintf(prn, M_("   number of data blocks: %d\n"), nblocks); 
+    pprintf(prn, A_("   number of variables: %d\n"), ncols);
+    pprintf(prn, A_("   number of observations: %d\n"), nrows);
+    pprintf(prn, A_("   number of data blocks: %d\n"), nblocks); 
 
     i = 1;
     t = 0;
@@ -3019,7 +3019,7 @@ static int import_octave (const char *fname, DATASET *dset,
     }
 
     if (err) {
-	pputs(prn, M_("Invalid data file\n"));
+	pputs(prn, A_("Invalid data file\n"));
 	err = E_DATA;
 	goto oct_bailout;
     } 
@@ -3039,8 +3039,6 @@ static int import_octave (const char *fname, DATASET *dset,
     if (octset != NULL) {
 	clear_datainfo(octset, CLEAR_FULL);
     }
-
-    console_off();
 
     return err;
 }
@@ -3067,11 +3065,11 @@ int import_other (const char *fname, GretlFileType ftype,
 		     gretlopt, PRN *);
     int err = 0;
 
-    check_for_console(prn);
+    set_alt_gettext_mode(prn);
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
-	pprintf(prn, M_("Couldn't open %s\n"), fname);
+	pprintf(prn, A_("Couldn't open %s\n"), fname);
 	err = E_FOPEN;
 	goto bailout;
     }
@@ -3094,7 +3092,7 @@ int import_other (const char *fname, GretlFileType ftype,
     } else if (ftype == GRETL_JMULTI) {
 	importer = get_plugin_function("jmulti_get_data", &handle);
     } else {
-	pprintf(prn, M_("Unrecognized data type"));
+	pprintf(prn, A_("Unrecognized data type"));
 	pputc(prn, '\n');
 	return E_DATA;
     }
@@ -3107,8 +3105,6 @@ int import_other (const char *fname, GretlFileType ftype,
     }
 
  bailout:
-
-    console_off();
 
     return err;
 }
@@ -3140,12 +3136,12 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
 		     DATASET *, gretlopt, PRN *);
     int err = 0;
 
-    check_for_console(prn);
+    set_alt_gettext_mode(prn);
 
     fp = gretl_fopen(fname, "r");
 
     if (fp == NULL) {
-	pprintf(prn, M_("Couldn't open %s\n"), fname);
+	pprintf(prn, A_("Couldn't open %s\n"), fname);
 	err = E_FOPEN;
 	goto bailout;
     }
@@ -3161,7 +3157,7 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
     } else if (ftype == GRETL_ODS) {
 	importer = get_plugin_function("ods_get_data", &handle);
     } else {
-	pprintf(prn, M_("Unrecognized data type"));
+	pprintf(prn, A_("Unrecognized data type"));
 	pputc(prn, '\n');
 	return E_DATA;
     }
@@ -3174,8 +3170,6 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
     }
 
  bailout:
-
-    console_off();
 
     return err;
 }
@@ -3364,21 +3358,21 @@ int check_atof (const char *numstr)
     if (*test == '\0' && errno != ERANGE) return 0;
 
     if (!strcmp(numstr, test)) {
-	gretl_errmsg_sprintf(M_("'%s' -- no numeric conversion performed!"), numstr);
+	gretl_errmsg_sprintf(_("'%s' -- no numeric conversion performed!"), numstr);
 	return 1;
     }
 
     if (*test != '\0') {
 	if (isprint(*test)) {
-	    gretl_errmsg_sprintf(M_("Extraneous character '%c' in data"), *test);
+	    gretl_errmsg_sprintf(_("Extraneous character '%c' in data"), *test);
 	} else {
-	    gretl_errmsg_sprintf(M_("Extraneous character (0x%x) in data"), *test);
+	    gretl_errmsg_sprintf(_("Extraneous character (0x%x) in data"), *test);
 	}
 	return 1;
     }
 
     if (errno == ERANGE) {
-	gretl_errmsg_sprintf(M_("'%s' -- number out of range!"), numstr);
+	gretl_errmsg_sprintf(_("'%s' -- number out of range!"), numstr);
     }
 
     return 1;
@@ -3407,21 +3401,21 @@ int check_atoi (const char *numstr)
     if (*test == '\0' && errno != ERANGE) return 0;
 
     if (!strcmp(numstr, test)) {
-	gretl_errmsg_sprintf(M_("'%s' -- no numeric conversion performed!"), numstr);
+	gretl_errmsg_sprintf(_("'%s' -- no numeric conversion performed!"), numstr);
 	return 1;
     }
 
     if (*test != '\0') {
 	if (isprint(*test)) {
-	    gretl_errmsg_sprintf(M_("Extraneous character '%c' in data"), *test);
+	    gretl_errmsg_sprintf(_("Extraneous character '%c' in data"), *test);
 	} else {
-	    gretl_errmsg_sprintf(M_("Extraneous character (0x%x) in data"), *test);
+	    gretl_errmsg_sprintf(_("Extraneous character (0x%x) in data"), *test);
 	}
 	return 1;
     }
 
     if (errno == ERANGE || val <= INT_MIN || val >= INT_MAX) {
-	gretl_errmsg_sprintf(M_("'%s' -- number out of range!"), numstr);
+	gretl_errmsg_sprintf(_("'%s' -- number out of range!"), numstr);
     }
 
     return 1;
