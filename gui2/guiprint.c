@@ -946,9 +946,9 @@ static void printftex (double x, PRN *prn, int endrow)
 {
     if (na(x)) {
 	if (endrow) {
-	    pprintf(prn, "\\multicolumn{2}{c}{%s}\\\\", T_("undefined"));
+	    pprintf(prn, "\\multicolumn{2}{c}{%s}\\\\", A_("undefined"));
 	} else {
-	    pprintf(prn, "\\multicolumn{2}{c}{%s} & ", T_("undefined"));
+	    pprintf(prn, "\\multicolumn{2}{c}{%s} & ", A_("undefined"));
 	}
     } else {
 	char s[32];
@@ -973,34 +973,34 @@ texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     ntodate(date1, pdinfo->t1, pdinfo);
     ntodate(date2, pdinfo->t2, pdinfo);
 
-    sprintf(tmp, T_("Summary Statistics, using the observations %s--%s"),
+    sprintf(tmp, A_("Summary Statistics, using the observations %s--%s"),
 	    date1, date2);
 
     pprintf(prn, "\\begin{center}\n%s\\\\\n", tmp);
     
     if (summ->list[0] == 1) {
 	tex_escape(vname, pdinfo->varname[summ->list[1]]);
-	sprintf(tmp, T_("for the variable %s (%d valid observations)"), 
+	sprintf(tmp, A_("for the variable %s (%d valid observations)"), 
 		vname, summ->n);
 	pprintf(prn, "%s\\\\[8pt]\n\n", tmp);
 	pprintf(prn, "\\begin{tabular}{r@{%c}lr@{%c}lr@{%c}lr@{%c}l}\n",
 		pt, pt, pt, pt);
     } else {
 	if (summ->missing) {
-	    pprintf(prn, "%s\\\\[8pt]\n\n", T_("(missing values were skipped)"));
+	    pprintf(prn, "%s\\\\[8pt]\n\n", A_("(missing values were skipped)"));
 	} else {
 	    pputs(prn, "\n\\vspace{8pt}\n\n");
 	}
 	pprintf(prn, "\\begin{tabular}{lr@{%c}lr@{%c}lr@{%c}lr@{%c}l}\n",
 		pt, pt, pt, pt);
-	pprintf(prn, "%s &", T_("Variable"));
+	pprintf(prn, "%s &", A_("Variable"));
     }
 
     pprintf(prn, " \\multicolumn{2}{c}{%s}%%\n"
 	    " & \\multicolumn{2}{c}{%s}%%\n"
 	    "  & \\multicolumn{2}{c}{%s}%%\n"
 	    "   & \\multicolumn{2}{c}{%s} \\\\[1ex]\n",
-	    T_("Mean"), T_("Median"), T_("Minimum"), T_("Maximum"));
+	    A_("Mean"), A_("Median"), A_("Minimum"), A_("Maximum"));
 
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
@@ -1020,14 +1020,14 @@ texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     }
 
     if (summ->list[0] > 1) {
-	pprintf(prn, "%s & ", T_("Variable"));
+	pprintf(prn, "%s & ", A_("Variable"));
     }
 
     pprintf(prn, " \\multicolumn{2}{c}{%s}%%\n"
 	    " & \\multicolumn{2}{c}{%s}%%\n"
 	    "  & \\multicolumn{2}{c}{%s}%%\n"
 	    "   & \\multicolumn{2}{c}{%s} \\\\[1ex]\n",
-	    T_("Std.\\ Dev."), T_("C.V."), T_("Skewness"), T_("Ex.\\ kurtosis"));
+	    A_("Std.\\ Dev."), A_("C.V."), A_("Skewness"), A_("Ex.\\ kurtosis"));
 
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
@@ -1058,7 +1058,7 @@ void special_print_summary (const Summary *summ, const DATASET *pdinfo,
 static void tex_outxx (double xx, PRN *prn)
 {
     if (na(xx)) {
-	pprintf(prn, "%s & ", T_("undefined"));
+	pprintf(prn, "%s & ", A_("undefined"));
     } else {
 	pprintf(prn, "$%.4f$ & ", xx);
     }
@@ -1209,19 +1209,19 @@ texprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
 	ntodate(date2, vmat->t2, pdinfo);
 
 	pputs(prn, "\\begin{center}\n");
-	pprintf(prn, T_("Correlation coefficients, using the observations "
+	pprintf(prn, A_("Correlation coefficients, using the observations "
 			"%s--%s"), date1, date2);
 	pputs(prn, "\\\\\n");
 	if (vmat->missing) {
-	    pputs(prn, T_("(missing values were skipped)"));
+	    pputs(prn, A_("(missing values were skipped)"));
 	    pputs(prn, "\\\\\n");
 	}
-	pprintf(prn, T_("5\\%% critical value (two-tailed) = %.4f for n = %d"), 
+	pprintf(prn, A_("5\\%% critical value (two-tailed) = %.4f for n = %d"), 
 		rhocrit95(n), n);
 	pputs(prn, "\\\\\n");
     } else {
 	pprintf(prn, "\\begin{center}\n%s\\\\\n", 
-		T_("Coefficient covariance matrix"));
+		A_("Coefficient covariance matrix"));
     }
 
     pputs(prn, "\\vspace{8pt}\n");
@@ -1342,10 +1342,10 @@ static int texprint_fcast_stats (const FITRESID *fr,
     for (i=0; i<len; i++) {
 	x = gretl_vector_get(m, i);
 	if (!isnan(x)) {
-	    pprintf(prn, "%s & %s%.5g \\\\\n", T_(strs[j]), (x < 0)? "$-$" : "", 
+	    pprintf(prn, "%s & %s%.5g \\\\\n", A_(strs[j]), (x < 0)? "$-$" : "", 
 		    fabs(x));
 	    if (i == 1) {
-		pprintf(prn, "%s & %.5g \\\\\n", T_(strs[j+1]), sqrt(x));	
+		pprintf(prn, "%s & %.5g \\\\\n", A_(strs[j+1]), sqrt(x));	
 	    }
 	}
 	j += (i == 1)? 2 : 1;
@@ -1368,10 +1368,10 @@ void tex_fit_resid_head (const FITRESID *fr, const DATASET *pdinfo,
     ntodate(date2, fr->t2, pdinfo);
 
     pputs(prn, "\\begin{raggedright}\n");
-    pputs(prn, T_("Model estimation range:"));
+    pputs(prn, A_("Model estimation range:"));
     pprintf(prn, " %s--%s \\\\ \n", date1, date2);
 
-    pprintf(prn, T_("Standard error of residuals = %g"), fr->sigma);
+    pprintf(prn, A_("Standard error of residuals = %g"), fr->sigma);
     pputs(prn, "\n\\end{raggedright}\n");
 }
 
@@ -1429,7 +1429,7 @@ static void texprint_fit_resid (const FITRESID *fr,
 	    " \\multicolumn{1}{c}{%s} & \n"
 	    "  \\multicolumn{1}{c}{%s} & \n"
 	    "   \\multicolumn{1}{c}{%s}\\\\\n",
-	    vname, T_("fitted"), T_("residual"));
+	    vname, A_("fitted"), A_("residual"));
 
     for (t=fr->t1; t<=fr->t2; t++) {
 	tex_print_obs_marker(t, pdinfo, prn);
@@ -1458,7 +1458,7 @@ static void texprint_fit_resid (const FITRESID *fr,
     pputs(prn, "\\end{longtable}\n\n");
 
     if (anyast) {
-	pputs(prn, T_("\\textit{Note}: * denotes a residual "
+	pputs(prn, A_("\\textit{Note}: * denotes a residual "
 		      "in excess of 2.5 standard errors\n\n"));
     }
 
@@ -1489,7 +1489,7 @@ static void rtfprint_fit_resid (const FITRESID *fr,
 	    " \\qc %s\\cell"
 	    " \\ql \\cell"
 	    " \\intbl \\row\n",
-	    fr->depvar, T_("fitted"), T_("residual"));
+	    fr->depvar, I_("fitted"), I_("residual"));
 
     for (t=fr->t1; t<=fr->t2; t++) {
 	rtf_print_obs_marker(t, pdinfo, prn);
@@ -1565,7 +1565,7 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
     tex_escape(vname, fr->depvar);
 
     pprintf(prn, "%s & %s & \\multicolumn{1}{c}{%s} \\\\ [4pt] \n",
-	    T_("Obs"), vname, T_("prediction"));
+	    A_("Obs"), vname, A_("prediction"));
 
     for (t=fr->t1; t<=fr->t2; t++) {
 	texprint_fcast_x(fr->actual[t], fr->pmax, actual);
@@ -1597,11 +1597,11 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 
     if (fr->asymp) {
 	tval = normal_critval(fr->alpha / 2);
-	pprintf(prn, T_("For %g\\%% confidence intervals, $z(%g) = %.2f$\n\n"), 
+	pprintf(prn, A_("For %g\\%% confidence intervals, $z(%g) = %.2f$\n\n"), 
 		conf, fr->alpha / 2, tval);
     } else {
 	tval = student_critval(fr->df, fr->alpha / 2);
-	pprintf(prn, T_("For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n\n"), 
+	pprintf(prn, A_("For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n\n"), 
 		conf, fr->df, fr->alpha / 2, tval);
     }
 
@@ -1621,14 +1621,14 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 	    pt, pt, pt, pt, pt);
 
     tex_escape(vname, fr->depvar);
-    sprintf(hi, T_("%g\\%% interval"), conf);
+    sprintf(hi, A_("%g\\%% interval"), conf);
 
     pprintf(prn, "%s & \\multicolumn{2}{c}{%s} "
 	    " & \\multicolumn{2}{c}{%s}\n"
 	    "  & \\multicolumn{2}{c}{%s}\n"
 	    "   & \\multicolumn{4}{c}{%s} \\\\[1ex]\n",
-	    T_("Obs"), vname,
-	    T_("prediction"), T_("std. error"),
+	    A_("Obs"), vname,
+	    A_("prediction"), A_("std. error"),
 	    hi);
 
     if (pmax < 4) {
@@ -1775,7 +1775,7 @@ texprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
     pprintf(prn, " %s & ", vname);
 
     if (isnan(cf->coeff[i])) {
-	pprintf(prn, "\\multicolumn{2}{c}{%s} & ", T_("undefined"));
+	pprintf(prn, "\\multicolumn{2}{c}{%s} & ", A_("undefined"));
     } else {
 	char coeff[32];
 
@@ -1784,7 +1784,7 @@ texprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
     }
 
     if (isnan(cf->maxerr[i])) {
-	pprintf(prn, "\\multicolumn{4}{c}{%s}", T_("undefined"));
+	pprintf(prn, "\\multicolumn{4}{c}{%s}", A_("undefined"));
     } else {
 	char lo[32], hi[32];
 
@@ -1809,12 +1809,12 @@ static void texprint_confints (const CoeffIntervals *cf, PRN *prn)
 	    "\\begin{tabular}{rr@{%c}lr@{%c}lr@{%c}l}\n",
 	    pt, pt, pt);
 
-    cstr = g_strdup_printf(T_("%g\\%% confidence interval"), 100 * (1 - cf->alpha));
+    cstr = g_strdup_printf(A_("%g\\%% confidence interval"), 100 * (1 - cf->alpha));
 
     pprintf(prn, " %s%%\n"
 	    " & \\multicolumn{2}{c}{%s}%%\n"
 	    "  & \\multicolumn{4}{c}{%s}\\\\[1ex]\n",
-	    T_("Variable"), T_("Coefficient"),
+	    A_("Variable"), A_("Coefficient"),
 	    cstr);
 
     g_free(cstr);

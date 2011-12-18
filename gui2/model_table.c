@@ -925,7 +925,7 @@ static void print_estimator_strings (int colwidth, PRN *prn)
 	if (table_models[i] != NULL) {
 	    s = short_estimator_string(table_models[i], prn);
 	    if (tex_format(prn)) {
-		strcpy(est, T_(s));
+		strcpy(est, A_(s));
 		pprintf(prn, " & %s ", est);
 	    } else if (rtf_format(prn)) {
 		strcpy(est, I_(s));
@@ -963,7 +963,7 @@ static void print_model_head (const MODEL *pmod, int j, int colwidth,
 	    tex_escape(tmp, targ);
 	    strcpy(targ, tmp);
 	} else {
-	    sprintf(targ, T_("Model %d"), pmod->ID);
+	    sprintf(targ, A_("Model %d"), pmod->ID);
 	}
     } else if (rtf_format(prn)) {
 	if (pmod->name != NULL) {
@@ -1107,13 +1107,13 @@ static int tex_print_model_table (PRN *prn)
 
     if (ci > 0) {
 	/* all models use same estimation procedure */
-	pprintf(prn, T_("%s estimates"), 
-		T_(estimator_string(table_models[0], prn)));
+	pprintf(prn, A_("%s estimates"), 
+		A_(estimator_string(table_models[0], prn)));
 	pputs(prn, "\\\\\n");
     }
 
     tex_escape(tmp, dataset->varname[depvarnum]);
-    pprintf(prn, "%s: %s \\\\\n", T_("Dependent variable"), tmp);
+    pprintf(prn, "%s: %s \\\\\n", A_("Dependent variable"), tmp);
 
     pputs(prn, "\\vspace{1em}\n\n");
     pputs(prn, "\\begin{longtable}{l");
@@ -1142,24 +1142,24 @@ static int tex_print_model_table (PRN *prn)
     pputs(prn, "\\vspace{1em}\n");
 
     if (use_tstats) {
-	pprintf(prn, "%s\\\\\n", T_("$t$-statistics in parentheses"));
+	pprintf(prn, "%s\\\\\n", A_("$t$-statistics in parentheses"));
     } else {
-	pprintf(prn, "%s\\\\\n", T_("Standard errors in parentheses"));
+	pprintf(prn, "%s\\\\\n", A_("Standard errors in parentheses"));
     }
 
     if (do_pvals) {
-	pprintf(prn, "%s\\\\\n", T_("$p$-values in brackets"));
+	pprintf(prn, "%s\\\\\n", A_("$p$-values in brackets"));
     }
 
     if (do_asts) {
 	pprintf(prn, "{}%s\\\\\n", 
-		T_("* indicates significance at the 10 percent level"));
+		A_("* indicates significance at the 10 percent level"));
 	pprintf(prn, "{}%s\\\\\n", 
-		T_("** indicates significance at the 5 percent level"));
+		A_("** indicates significance at the 5 percent level"));
     }
 
     if (binary) {
-	pprintf(prn, "%s\\\\\n", T_("For logit and probit, $R^2$ is "
+	pprintf(prn, "%s\\\\\n", A_("For logit and probit, $R^2$ is "
 				    "McFadden's pseudo-$R^2$"));
     }
 

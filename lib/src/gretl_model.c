@@ -3098,7 +3098,7 @@ static int gretl_test_print_heading (const ModelTest *test, PRN *prn)
 	if (plain_format(prn)) {
 	    pprintf(prn, _(descrip), param);
 	} else if (tex_format(prn)) {
-	    pprintf(prn, T_(descrip), param);
+	    pprintf(prn, A_(descrip), param);
 	} else {
 	    pprintf(prn, I_(descrip), param);
 	}
@@ -3106,7 +3106,7 @@ static int gretl_test_print_heading (const ModelTest *test, PRN *prn)
 	if (plain_format(prn)) {
 	    pputs(prn, _(descrip));
 	} else if (tex_format(prn)) {
-	    pputs(prn, T_(descrip));
+	    pputs(prn, A_(descrip));
 	} else {
 	    pputs(prn, I_(descrip));
 	}

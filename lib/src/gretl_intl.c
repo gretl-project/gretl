@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "texprint.h"
+#include "libset.h"
 
 #include <glib.h>
 
@@ -414,10 +415,76 @@ char *iso_gettext (const char *msgid)
     return ret;
 } 
 
-char *tex_gettext (const char *msgid)
+static char *utf_gettext (const char *msgid)
 {
-    /* FIXME! */
-    return iso_gettext(msgid);
+    char *ret;
+
+    bind_textdomain_codeset(PACKAGE, "UTF-8");
+    ret = gettext(msgid);
+    bind_textdomain_codeset(PACKAGE, get_gretl_charset());
+
+    return ret;
+} 
+
+/* Cases to consider below:
+
+   (1) The system-native encoding is UTF-8: in that case all output
+   should be in UTF-8, with the possible exception of RTF; and all
+   output _will_ be in UTF-8 if we just call gettext().
+
+   (2) The system-native encoding is not UTF-8 (this means
+   MS Windows -- or possibly ancient Linux?). Then we have two
+   sub-cases.
+
+   (2a) We're in the GUI program: plain gettext() will have been
+   coerced to produce UTF-8 for the sake of GTK. But what about
+   RTF and CSV?
+
+   (2b) We're at the command line (gretlcli): plain gettext() output
+   will be in the system locale, but under the "new scheme" (December
+   2011) TeX output should be coerced to UTF-8 (?)
+*/
+
+enum {
+    GETTEXT_DEFAULT,
+    GETTEXT_UTF8,
+    GETTEXT_ISO
+};
+
+static int gettext_mode;
+
+void set_alt_gettext_mode (PRN *prn)
+{
+    if (prn != NULL) {
+	if (plain_format(prn)) {
+	    if (gretl_in_gui_mode()) {
+		gettext_mode = GETTEXT_UTF8;
+	    } else {
+		gettext_mode = GETTEXT_DEFAULT;
+	    }
+	} else if (tex_format(prn)) {
+	    gettext_mode = GETTEXT_UTF8;
+	} else if (rtf_format(prn)) {
+	    gettext_mode = GETTEXT_ISO;
+	} else if (csv_format(prn)) {
+	    gettext_mode = GETTEXT_DEFAULT;
+	}
+    }
+}
+
+char *alt_gettext (const char *msgid)
+{
+    if (gettext_mode == GETTEXT_UTF8) {
+	if (gretl_in_gui_mode()) {
+	    return gettext(msgid);
+	} else {
+	    return utf_gettext(msgid);
+	}
+    } else if (gettext_mode == GETTEXT_ISO) {
+	return iso_gettext(msgid);
+    } else {
+	return gettext(msgid);
+    }
 }
 
 #endif /* ENABLE_NLS */
