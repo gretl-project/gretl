@@ -2740,7 +2740,7 @@ static void binary_model_stats (MODEL *pmod, bin_info *bin,
     double F;
     int i, s, t;
 
-    /* space for actual/predicted matrix */
+    /* add space for actual/predicted matrix */
     act_pred = malloc(4 * sizeof *act_pred);
     if (act_pred != NULL) {
 	for (i=0; i<4; i++) {
