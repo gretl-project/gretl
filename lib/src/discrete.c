@@ -710,9 +710,10 @@ static int oprobit_normtest (MODEL *pmod, op_container *OC)
 	    X2 -= (1 - y->val[t]) * (1 - y->val[t]);
 	}
 
-	gretl_model_add_normality_test(pmod, X2);
+	if (X2 > 0) {
+	    gretl_model_add_normality_test(pmod, X2);
+	}
     }
-
 
  bailout:
 
@@ -2622,7 +2623,9 @@ static int binary_probit_normtest (MODEL *pmod, bin_info *bin)
 	    X2 -= (1 - y->val[t]) * (1 - y->val[t]);
 	}
 
-	gretl_model_add_normality_test(pmod, X2);
+	if (X2 > 0) {
+	    gretl_model_add_normality_test(pmod, X2);
+	}
     }
     
     gretl_matrix_block_destroy(B);
@@ -2983,9 +2986,7 @@ static MODEL binary_model (int ci, const int *inlist,
 MODEL binary_logit (int *list, DATASET *dset, 
 		    gretlopt opt, PRN *prn)
 {
-    PRN *vprn = (opt & OPT_V)? prn : NULL;
-
-    return binary_model(LOGIT, list, dset, opt, vprn);
+    return binary_model(LOGIT, list, dset, opt, prn);
 }
 
 /**
