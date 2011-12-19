@@ -2846,6 +2846,7 @@ static MODEL binary_model (int ci, const int *inlist,
 			   DATASET *dset, gretlopt opt, 
 			   PRN *prn)
 {
+    gretlopt max_opt = OPT_NONE;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int *list = NULL;
@@ -2856,6 +2857,7 @@ static MODEL binary_model (int ci, const int *inlist,
     int fncount = 0;
     MODEL mod;
     bin_info *bin = NULL;
+    PRN *vprn = NULL;
     int depvar;
     int i, vi, t, s;
 
@@ -2887,10 +2889,16 @@ static MODEL binary_model (int ci, const int *inlist,
     }
 
     if (!mod.errcode) {
-	mod = lsq(list, dset, OLS, OPT_A);
-	if (mod.errcode == 0 && mod.ncoeff < list[0] - 1) {
-	    mod.errcode = E_SINGULAR;
+	gretlopt ols_opt = OPT_A;
+
+	/* if we're doing logit/probit as an auxiliary regression,
+	   it might be safer to abort on perfect collinearity;
+	   otherwise we'll try automatic elimination
+	*/
+	if (opt & OPT_A) {
+	    ols_opt |= OPT_Z;
 	}
+	mod = lsq(list, dset, OLS, ols_opt);
 #if LPDEBUG
 	printmodel(&mod, dset, OPT_NONE, prn);
 #endif
@@ -2913,12 +2921,12 @@ static MODEL binary_model (int ci, const int *inlist,
     s = 0;
     for (t=mod.t1; t<=mod.t2; t++) {
 	if (!na(mod.yhat[t])) {
-	    bin->y->val[s++] = dset->Z[list[1]][t];
+	    bin->y->val[s++] = dset->Z[depvar][t];
 	}
     }
 
     for (i=0; i<bin->k; i++) {
-	vi = list[i+2];
+	vi = mod.list[i+2];
 	s = 0;
 	for (t=mod.t1; t<=mod.t2; t++) {
 	    if (!na(mod.yhat[t])) {
@@ -2927,12 +2935,16 @@ static MODEL binary_model (int ci, const int *inlist,
 	}
     } 
 
+    if (opt & OPT_V) {
+	max_opt = OPT_V;
+	vprn = prn;
+    }
+
     mod.errcode = newton_raphson_max(bin->theta, bin->k, maxit, 
 				     crittol, gradtol, &fncount, 
 				     C_LOGLIK, binary_loglik, 
 				     binary_score, binary_hessian, bin,
-				     (prn != NULL)? OPT_V : OPT_NONE,
-				     prn);
+				     max_opt, vprn);
 
     if (!mod.errcode) {
 	binary_model_finish(bin, &mod, dset, opt);
@@ -2996,9 +3008,7 @@ MODEL binary_logit (int *list, DATASET *dset,
 MODEL binary_probit (int *list, DATASET *dset, 
 		     gretlopt opt, PRN *prn)
 {
-    PRN *vprn = (opt & OPT_V)? prn : NULL;
-
-    return binary_model(PROBIT, list, dset, opt, vprn);
+    return binary_model(PROBIT, list, dset, opt, prn);
 }
 
 /**
@@ -3019,9 +3029,7 @@ MODEL binary_probit (int *list, DATASET *dset,
 MODEL ordered_logit (int *list, DATASET *dset, 
 		     gretlopt opt, PRN *prn)
 {
-    PRN *vprn = (opt & OPT_V)? prn : NULL;
-
-    return ordered_estimate(list, dset, LOGIT, opt, vprn);
+    return ordered_estimate(list, dset, LOGIT, opt, prn);
 }
 
 /**
