@@ -2203,9 +2203,7 @@ static int loop_store_save (LOOP_STORE *lstore, PRN *prn)
     }
 
     lstore->dset->t2 = lstore->n - 1;
-
     pprintf(prn, _("store: using filename %s\n"), lstore->fname);
-
     err = write_data(lstore->fname, list, lstore->dset, lstore->opt, 0);
 
     if (!err) {
@@ -2467,7 +2465,7 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
 	    gretl_scalar_set_value(loop->idxname, loop->idxval);
 	}
 
-	/* initialization in case this loop is being run more than
+	/* initialization, in case this loop is being run more than
 	   once (i.e. it's embedded in an outer loop) */
 
 	if (loop_is_progressive(loop)) {

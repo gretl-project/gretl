@@ -1171,7 +1171,7 @@ static int end_block_ci (const char *s)
 
 gretlopt get_gretl_options (char *line, int *err)
 {
-    gretlopt oflags = 0L;
+    gretlopt oflags = 0;
     gretlopt opt;
     char cmdword[9] = {0};
     int endblock = 0;
@@ -1182,10 +1182,15 @@ gretlopt get_gretl_options (char *line, int *err)
     }
 
     if (strlen(line) < 2 || *line == '#') {
-	return oflags;
+	return 0;
     }
 
     get_cmdword(line, cmdword);
+
+    if (!strcmp(cmdword, "catch")) {
+	*cmdword = '\0';
+	get_cmdword(line + 6, cmdword);
+    }
 
     if (!strcmp(cmdword, "end")) {
 	endblock = 1;
