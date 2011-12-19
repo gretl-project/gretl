@@ -3453,17 +3453,23 @@ static int binary_probit_normtest (MODEL *pmod, bin_info *bin)
 	return E_ALLOC;
     }
 
-    for (t=0; t<bin->T; t++) {
-	s = t + pmod->t1;
-	et = pmod->uhat[s];
-	Xb = gretl_vector_get(bin->Xb, t);
+    for (t=pmod->t1, s=0; t<=pmod->t2; t++) {
+
+	if (model_missing(pmod, t)) {
+	    continue;
+	} 
+
+	et = pmod->uhat[t];
+	Xb = gretl_vector_get(bin->Xb, s);
 	for (i=0; i<bin->k; i++) {
-	    xti = gretl_matrix_get(bin->X, t, i);
-	    gretl_matrix_set(X, t, i, et * xti);
+	    xti = gretl_matrix_get(bin->X, s, i);
+	    gretl_matrix_set(X, s, i, et * xti);
 	}
-	gretl_matrix_set(X, t, k, et * Xb * Xb);
-	gretl_matrix_set(X, t, k+1, et * Xb * Xb * Xb);
-	gretl_vector_set(y, t, 1);
+	gretl_matrix_set(X, s, k, et * Xb * Xb);
+	gretl_matrix_set(X, s, k+1, et * Xb * Xb * Xb);
+	gretl_vector_set(y, s, 1);
+
+	s++;
     }
 
     err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
@@ -3589,7 +3595,7 @@ static void binary_model_stats (MODEL *pmod, bin_info *bin,
     int *act_pred;
     double *ll;
     double F;
-    int i, t;
+    int i, s, t;
 
     /* space for actual/predicted matrix */
     act_pred = malloc(4 * sizeof *act_pred);
@@ -3606,13 +3612,14 @@ static void binary_model_stats (MODEL *pmod, bin_info *bin,
 	}
     }
 
-    for (t=0; t<bin->T; t++) {
-	double ndx = gretl_vector_get(bin->Xb, t);
-	int y = gretl_vector_get(bin->y, t);
+    for (t=pmod->t1, s=0; t<=pmod->t2; t++) {
 
 	if (model_missing(pmod, t)) {
 	    continue;
-	}
+	} 
+
+	double ndx = gretl_vector_get(bin->Xb, s);
+	int y = gretl_vector_get(bin->y, s++);
 
 	if (act_pred != NULL) {
 	    i = 2 * y + (ndx > 0.0);
