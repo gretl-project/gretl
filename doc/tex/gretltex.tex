@@ -14,13 +14,12 @@ further processing with \TeX.
 
 This chapter explains the finer points of \app{gretl}'s \TeX-related
 functionality.  The next section describes the relevant menu items;
-section~\ref{tex-tune} discusses ways of fine-tuning \TeX\ output;
-section~\ref{tex-encode} explains how to handle the encoding of
-characters not found in English; and section~\ref{tex-install} gives
-some pointers on installing (and learning) \TeX\ if you do not already
-have it on your computer.  (Just to be clear: \TeX\ is not included
-with the \app{gretl} distribution; it is a separate package, including
-several programs and a large number of supporting files.)
+section~\ref{tex-tune} discusses ways of fine-tuning \TeX\ output; and
+section~\ref{tex-install} gives some pointers on installing (and
+learning) \TeX\ if you do not already have it on your computer.  (Just
+to be clear: \TeX\ is not included with the \app{gretl} distribution;
+it is a separate package, including several programs and a large
+number of supporting files.)
 
 Before proceeding, however, it may be useful to set out briefly the
 stages of production of a final document using \TeX.  For the most
@@ -256,7 +255,7 @@ to the \TeX\ source.  The default value of the preamble is as follows:
     
 \begin{code}
 \documentclass[11pt]{article}
-\usepackage[latin1]{inputenc} %% but see below
+\usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{dcolumn,longtable}
 \begin{document}
@@ -268,11 +267,6 @@ Note that the \verb+amsmath+ and \verb+dcolumn+ packages are required.
 needed.)  Beyond that you can, for instance, change the type size or
 the font by altering the \texttt{documentclass} declaration or
 including an alternative font package.
-
-The line \verb|\usepackage[latin1]{inputenc}| is automatically
-changed if \app{gretl} finds itself running on a system where UTF-8
-is the default character encoding --- see section~\ref{tex-encode}
-below.
 
 In addition, if you wish to typeset \app{gretl} output in more than
 one language, you can set up per-language preamble files.  A
@@ -350,34 +344,6 @@ it does not use any non-standard style packages.  Besides the standard
 \LaTeX\ document classes, the only files needed are, as noted above,
 the \verb+amsmath+, \verb+dcolumn+ and \verb+longtable+ packages.
 These should be included in any reasonably full \TeX\ implementation.
-
-
-\section{Character encodings}
-\label{tex-encode}
-
-People using \app{gretl} in English-speaking locales are unlikely to
-have a problem with this, but if you're generating \TeX\ output in a
-locale where accented characters (not in the ASCII character set) are
-employed, you may want to pay attention here.
-
-\app{Gretl} generates \TeX\ output using whatever character encoding
-is standard on the local system.  If the system encoding is in the
-ISO-8859 family, this will probably be OK wihout any special effort on
-the part of the user.  Newer GNU/Linux systems, however, typically use
-Unicode (UTF-8).  This is also OK so long as your \TeX\ system can
-handle UTF-8 input, which requires use of the \app{latex-ucs} package.
-So: if you are using \app{gretl} to generate \TeX\ in a non-English
-locale, where the system encoding is UTF-8, you will need to ensure
-that the \app{latex-ucs} package is installed.  This package may or
-may not be installed by default when you install \TeX{}.
-
-For reference, if \app{gretl} detects a UTF-8 environment, the
-following lines are used in the \TeX\ preamble:
-%
-\begin{code}
-\usepackage{ucs}
-\usepackage[utf8x]{inputenc}
-\end{code}
 
 
 \section{Installing and learning \TeX}

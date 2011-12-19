@@ -38,7 +38,6 @@
  */
 
 #define LPDEBUG 0
-#define NEWSTYLE_BINARY 0
 
 #define CHOL_TINY 1.0e-13
 
@@ -70,11 +69,6 @@ struct sorter {
     double x;
     int t;
 };
-
-#if !NEWSTYLE_BINARY
-static int neginv (const double *xpx, double *diag, int nv);
-static int cholesky_decomp (double *xpx, int nv);
-#endif
 
 static double lp_cdf (double x, int ci)
 {
@@ -1348,7 +1342,9 @@ static char *classifier_check (int *list, const DATASET *dset,
 	if (v == 0) {
 	    continue;
 	}
+
 	ni = gretl_isdummy(dset->t1, dset->t2, dset->Z[v]);
+
 	if (ni > 0) {
 	    int same[2] = {0};
 	    int diff[2] = {0};
@@ -1409,854 +1405,6 @@ static char *classifier_check (int *list, const DATASET *dset,
 
     return mask;
 }
-
-#if !NEWSTYLE_BINARY
-
-static void Lr_chisq (MODEL *pmod, const double **Z)
-{
-    int t, zeros, ones = 0, m = pmod->nobs;
-    double Lr, chisq;
-
-    if (pmod->ncoeff == 1 && pmod->ifc) {
-	/* constant-only model */
-	pmod->chisq = NADBL;
-	pmod->rsq = 0;
-	pmod->adjrsq = NADBL;
-	return;
-    }
-    
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!model_missing(pmod, t)) {
-	    if (Z[pmod->list[1]][t] == 1.0) {
-		ones++;
-	    }
-	} 
-    }
-
-    zeros = m - ones;
-
-    Lr = ones * log(ones / (double) m);
-    Lr += zeros * log(zeros /(double) m);
-
-    chisq = 2.0 * (pmod->lnL - Lr);
-
-    if (chisq < 0) {
-	pmod->rsq = pmod->adjrsq = pmod->chisq = NADBL;
-    } else {
-	int K = pmod->ncoeff;
-
-	pmod->chisq = chisq;
-	/* McFadden pseudo-R^2 */
-	pmod->rsq = 1.0 - pmod->lnL / Lr;
-	pmod->adjrsq = 1.0 - (pmod->lnL - K) / Lr;
-    }
-}
-
-static double logit_probit_loglik (const double *y, const MODEL *pmod, 
-				   int ci)
-{
-    double q, ll = 0.0;
-    int t;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!na(pmod->yhat[t])) {
-	    q = 2.0 * y[t] - 1.0;
-	    ll += log(lp_cdf(q * pmod->yhat[t], ci));
-	}
-    }
-
-    return ll;
-}
-
-static double *hess_wts (MODEL *pmod, const double **Z, int ci) 
-{
-    int t, tw, n = pmod->t2 - pmod->t1 + 1;
-    double q, bx, xx;
-    double *w;
-
-    w = malloc(n * sizeof *w);
-    if (w == NULL) {
-	return NULL;
-    }
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	tw = t - pmod->t1;
-	if (model_missing(pmod, t)) {
-	    w[tw] = NADBL;
-	    continue;
-	}
-
-	q = 2.0 * Z[pmod->list[1]][t] - 1.0;
-	bx = pmod->yhat[t];
-
-	if (ci == LOGIT) {
-	    w[tw] = -1.0 * logit(bx) * (1.0 - logit(bx));
-	} else {
-	    xx = q * invmills(-q * bx);
-	    w[tw] = -xx * (xx + bx);
-	}
-    }
-
-    return w;
-}
-
-static double *lp_hessian (MODEL *pmod, const double **Z, int ci) 
-{
-    int i, j, li, lj, m, t;
-    const int l0 = pmod->list[0];
-    double xx, *wt, *xpx;
-
-    i = l0 - 1;
-    m = i * (i + 1) / 2;
-
-    xpx = malloc(m * sizeof *xpx);
-    if (xpx == NULL) {
-	return NULL;
-    }
-
-    wt = hess_wts(pmod, Z, ci);
-    if (wt == NULL) {
-	free(xpx);
-	return NULL;
-    }
-
-    m = 0;
-    for (i=2; i<=l0; i++) {
-	li = pmod->list[i];
-	for (j=i; j<=l0; j++) {
-	    lj = pmod->list[j];
-	    xx = 0.0;
-	    for (t=pmod->t1; t<=pmod->t2; t++) {
-		if (!model_missing(pmod, t)) {
-		    xx += wt[t - pmod->t1] * Z[li][t] * Z[lj][t];
-		}
-	    }
-	    if (floateq(xx, 0.0) && li == lj) {
-		free(xpx);
-		free(wt);
-		return NULL;
-	    }
-	    xpx[m++] = -xx;
-	}
-    }
-
-    free(wt);
-
-    return xpx; 
-}
-
-static int 
-compute_QML_vcv (MODEL *pmod, const double **Z)
-{
-    gretl_matrix *G = NULL;
-    gretl_matrix *H = NULL;
-    gretl_matrix *S = NULL;
-    gretl_matrix *V = NULL;
-
-    const double *y = Z[pmod->list[1]];
-    const double *xi;
-
-    double x;
-    int k = pmod->ncoeff;
-    int T = pmod->nobs;
-    int i, j, t, gt, err = 0;
-
-    G = gretl_matrix_alloc(k, T);
-    H = gretl_matrix_alloc(k, k);
-    S = gretl_matrix_alloc(k, k);
-    V = gretl_matrix_alloc(k, k);
-
-    if (G == NULL || H == NULL || S == NULL || V == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    /* compute gradient or score matrix */
-    for (i=0; i<k; i++) {
-	xi = Z[pmod->list[i+2]];
-	gt = 0;
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (!na(pmod->yhat[t])) {
-		/* score for obs t */
-		if (pmod->ci == LOGIT) {
-		    x = (y[t] - logit(pmod->yhat[t])) * xi[t];
-		} else {
-		    double c = normal_cdf(pmod->yhat[t]);
-
-		    x = (y[t] - c) * normal_pdf(pmod->yhat[t]) * xi[t] /
-			(c * (1.0 - c));
-		}
-		gretl_matrix_set(G, i, gt++, x);
-	    }
-	}
-    }
-
-    /* transcribe Hessian from model */
-    for (i=0; i<k; i++) {
-	for (j=0; j<=i; j++) {
-	    x = pmod->xpx[ijton(i, j, k)];
-	    gretl_matrix_set(H, i, j, x);
-	    if (i != j) {
-		gretl_matrix_set(H, j, i, x);
-	    }
-	}
-    }   
-
-    gretl_invert_symmetric_matrix(H);
-    gretl_matrix_multiply_by_scalar(H, -1.0);
-
-    /* form S = GG' */
-    gretl_matrix_multiply_mod(G, GRETL_MOD_NONE,
-			      G, GRETL_MOD_TRANSPOSE,
-			      S, GRETL_MOD_NONE);
-
-    /* form sandwich: V = H^{-1} S H^{-1} */
-    gretl_matrix_qform(H, GRETL_MOD_NONE, S,
-		       V, GRETL_MOD_NONE);
-
-    err = gretl_model_write_vcv(pmod, V, -1);
-
-    if (!err) {
-	gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
-	pmod->opt |= OPT_R;
-    }
-
- bailout:
-
-    gretl_matrix_free(G);
-    gretl_matrix_free(H);
-    gretl_matrix_free(S);
-    gretl_matrix_free(V);
-
-    return err;
-}
-
-/* calculate standard errors etc using the Hessian */
-
-static int logit_probit_vcv (MODEL *dmod, gretlopt opt, const double **Z)
-{
-    int i, err = 0;
-
-    if (dmod->vcv != NULL) {
-	free(dmod->vcv);
-	dmod->vcv = NULL;
-    }
-
-    if (dmod->xpx != NULL) {
-	free(dmod->xpx);
-    }
-
-    dmod->xpx = lp_hessian(dmod, Z, dmod->ci);
-    if (dmod->xpx == NULL) {
-	gretl_errmsg_set(_("Failed to construct Hessian matrix"));
-	return E_ALLOC;
-    } 
-
-    if (opt & OPT_R) {
-	err = compute_QML_vcv(dmod, Z);
-	if (err) {
-	    return err;
-	}
-    } else {    
-	/* obtain negative inverse of Hessian */
-	double *xpx = NULL, *diag = NULL;
-
-	cholesky_decomp(dmod->xpx, dmod->ncoeff); 
-
-	diag = malloc(dmod->ncoeff * sizeof *diag); 
-	if (diag == NULL) {
-	    return E_ALLOC;
-	}
-
-	xpx = copyvec(dmod->xpx, dmod->ncoeff * (dmod->ncoeff + 1) / 2);
-	if (xpx == NULL) {
-	    free(diag);
-	    return E_ALLOC;
-	}
-
-	neginv(xpx, diag, dmod->ncoeff);
-
-	for (i=0; i<dmod->ncoeff; i++) {
-	    dmod->sderr[i] = sqrt(diag[i]);
-	}
-
-	free(diag);
-	free(xpx);
-    }
-
-    return err;
-}
-
-/*
-  If min1 > max0, then there exists a separating hyperplane between
-  all the zeros and all the ones; in this case, the likelihood has
-  no maximum (despite having a supremum at 1) and no MLE exists.
-*/
-
-static int perfect_pred_check (const double *y, MODEL *dmod,
-			       double *beta, PRN *prn)
-{
-    double max0 = -1.0e200;
-    double min1 = 1.0e200;
-    double yht;
-    int t, ret;
-
-    for (t=dmod->t1; t<=dmod->t2; t++) {
-	yht = dmod->yhat[t];
-	if (!na(yht)) {
-	    if (y[t] == 0 && yht > max0) {
-		max0 = yht;
-	    } 
-	    if (y[t] == 1 && yht < min1) {
-		min1 = yht;
-	    }
-	}
-    }
-
-    ret = (min1 > max0);
-
-    if (ret) {
-	pputs(prn, "\nPerfect prediction obtained with\n\n");
-	for (t=0; t<dmod->ncoeff; t++) {
-	    pprintf(prn, " beta[%d] = % .15g\n", t, beta[t]);
-	}
-	pprintf(prn, "\ny = 1 when 1/(1+exp(-X*beta)) > %.15g\n\n", 
-		1/(1+exp(-max0)));
-    }
-
-    return ret;
-}
-
-/* BRMR, Davidson and MacKinnon, ETM, p. 461 */
-
-static int do_BRMR (const int *list, MODEL *dmod, int ci, 
-		    double *beta, const DATASET *dset, 
-		    PRN *prn)
-{
-    gretl_matrix *X = NULL;
-    gretl_matrix *y = NULL;
-    gretl_matrix *b = NULL;
-    const double *yvar = dset->Z[list[1]];
-    double lldiff, llbak = -1.0e9;
-    double wt, yt, fx, Fx;
-    double tol = 1.0e-9;
-    int itermax = 250;
-    int nc = dmod->ncoeff;
-    int i, s, t, v, iter;
-    int err = 0;
-
-    X = gretl_matrix_alloc(dmod->nobs, nc);
-    y = gretl_column_vector_alloc(dmod->nobs);
-    b = gretl_column_vector_alloc(nc);
-
-    if (X == NULL || y == NULL || b == NULL) {
-	gretl_matrix_free(X);
-	gretl_matrix_free(y);
-	gretl_matrix_free(b);
-	return E_ALLOC;
-    }
-
-    for (iter=0; iter<itermax; iter++) {
-
-	if (perfect_pred_check(yvar, dmod, beta, prn)) {
-	    gretl_errmsg_sprintf("Perfect prediction detected at iteration %d;\nno MLE exists",
-				 iter);
-	    err = E_NOCONV;
-	    break;
-	}
-
-	/* (re-)construct BRMR dataset */
-	s = 0;
-	for (t=dmod->t1; t<=dmod->t2; t++) {
-	    yt = dmod->yhat[t];
-	    if (!na(yt)) {
-		if (ci == LOGIT) {
-		    fx = logit_pdf(yt);
-		    Fx = logit(yt);
-		} else {
-		    fx = normal_pdf(yt);
-		    Fx = normal_cdf(yt);
-		}
-
-		if (Fx < 1.0) {
-		    wt = 1.0 / sqrt(Fx * (1.0 - Fx));
-		} else {
-		    wt = 0.0;
-		}
-
-		gretl_vector_set(y, s, wt * (yvar[t] - Fx));
-		wt *= fx;
-		for (i=0; i<nc; i++) {
-		    v = list[i+2];
-		    gretl_matrix_set(X, s, i, wt * dset->Z[v][t]);
-		}
-		s++;
-	    }
-	}
-
-	if (s != dmod->nobs) {
-	    fprintf(stderr, "logit_probit: data error\n");
-	    err = E_DATA;
-	    break;
-	}
-
-	dmod->lnL = logit_probit_loglik(yvar, dmod, ci);
-
-	lldiff = fabs(dmod->lnL - llbak);
-	if (lldiff < tol) {
-	    break; 
-	}
-
-	if (na(dmod->lnL)) {
-	    pprintf(prn, _("Iteration %d: log likelihood = NA"), iter);	
-	} else {
-	    pprintf(prn, _("Iteration %d: log likelihood = %#.12g"), 
-		    iter, dmod->lnL);
-	}
-	pputc(prn, '\n');
-
-	llbak = dmod->lnL;
-
-	err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
-
-	if (err) {
-	    fprintf(stderr, "logit_probit: err = %d\n", err);
-	    if (iter > 0) {
-		err = E_NOCONV;
-	    }
-	    break;
-	}
-
-#if LPDEBUG > 1
-	gretl_matrix_print(y, "y, in BRMR");
-	gretl_matrix_print(X, "X, in BRMR");
-	gretl_matrix_print(b, "b, from BRMR");
-#endif
-
-	/* update coefficient estimates */
-	for (i=0; i<nc; i++) {
-	    beta[i] += b->val[i];
-	}
-
-	/* calculate yhat */
-	for (t=dmod->t1; t<=dmod->t2; t++) {
-	    if (!na(dmod->yhat[t])) {
-		dmod->yhat[t] = 0.0;
-		for (i=0; i<nc; i++) {
-		    v = list[i+2];
-		    dmod->yhat[t] += beta[i] * dset->Z[v][t];
-		}
-	    }
-	}
-    }
-
-    if (!err && lldiff > tol) {
-	err = E_NOCONV;
-    }
-
-    if (!err) {
-	gretl_model_set_int(dmod, "iters", iter);
-	pputc(prn, '\n');
-    }
-
-    gretl_matrix_free(X);
-    gretl_matrix_free(y);
-    gretl_matrix_free(b);
-
-    return err;
-}
-
-/* construct an array holding the means of the independent variables
-   in the binary model */
-
-static double *model_get_x_means (MODEL *pmod, const double **Z)
-{
-    double *xbar;
-    int i, vi, t;
-
-    xbar = malloc(pmod->ncoeff * sizeof *xbar);
-    if (xbar == NULL) {
-	return NULL;
-    }
-
-    for (i=0; i<pmod->ncoeff; i++) {
-	vi = pmod->list[i+2];
-	if (vi == 0) {
-	    xbar[i] = 1.0;
-	} else {
-	    xbar[i] = 0.0;
-	    for (t=pmod->t1; t<=pmod->t2; t++) {
-		if (!model_missing(pmod, t)) {
-		    xbar[i] += Z[vi][t];
-		}
-	    }
-	    xbar[i] /= pmod->nobs;
-	}
-    }
-
-    return xbar;
-}
-
-/* f(Xb) calculated at the means of the independent variables */
-
-static double binary_fXb (MODEL *pmod, const double **Z)
-{
-    double *xbar;
-    double Xb = 0.0;
-    int i;
-
-    xbar = model_get_x_means(pmod, Z);
-    if (xbar == NULL) {
-	return NADBL;
-    }
-
-    for (i=0; i<pmod->ncoeff; i++) {
-	Xb += pmod->coeff[i] * xbar[i];
-    }
-
-    free(xbar);
-
-    return (pmod->ci == LOGIT)? logit_pdf(Xb) : normal_pdf(Xb);
-}
-
-/* Special "slope" calculation for a dummy regressor in binary model:
-   this is F(~Xb + b_j) - F(~Xb) where ~Xb denotes the sum of
-   (coefficient times mean) for all regressors other than the dummy in
-   question and b_j indicates the coefficient on the dummy.  That is,
-   the calculation measures the effect on the probability of Y = 1 of
-   the discrete change 0 to 1 in x_j.
-*/
-
-static double dumslope (MODEL *pmod, const double *xbar, int j)
-{
-    double s, Xb = 0.0;
-    int i;
-
-    for (i=0; i<pmod->ncoeff; i++) {
-	if (i != j) {
-	    Xb += pmod->coeff[i] * xbar[i];
-	}
-    } 
-
-    if (pmod->ci == LOGIT) {
-	s = logit(Xb + pmod->coeff[j]) - logit(Xb);
-    } else {
-	s = normal_cdf(Xb + pmod->coeff[j]) - normal_cdf(Xb);
-    }
-
-    return s;
-}
-
-static int add_slopes_to_model (MODEL *pmod, const double **Z)
-{
-    double *xbar, *slopes;
-    double Xb, fXb;
-    size_t ssize;
-    int i, vi, err = 0;
-
-    xbar = model_get_x_means(pmod, Z);
-    if (xbar == NULL) {
-	return E_ALLOC;
-    }    
-
-    ssize = pmod->ncoeff * sizeof *slopes;
-    slopes = malloc(ssize);
-    if (slopes == NULL) {
-	free(xbar);
-	return E_ALLOC;
-    }
-
-    Xb = 0.0;
-    for (i=0; i<pmod->ncoeff; i++) {
-	Xb += pmod->coeff[i] * xbar[i];
-    }
-
-    fXb = (pmod->ci == LOGIT)? logit_pdf(Xb) : normal_pdf(Xb);
-    pmod->sdy = fXb;
-
-    for (i=0; i<pmod->ncoeff; i++) {
-	vi = pmod->list[i+2];
-	if (vi == 0) {
-	    slopes[i] = 0.0;
-	} else if (gretl_isdummy(pmod->t1, pmod->t2, Z[vi])) {
-	    slopes[i] = dumslope(pmod, xbar, i);
-	} else {
-	    slopes[i] = pmod->coeff[i] * fXb;
-	}
-    }
-
-    err = gretl_model_set_data(pmod, "slopes", slopes, 
-			       GRETL_TYPE_DOUBLE_ARRAY,
-			       ssize);
-
-    free(xbar);
-    if (err) {
-	free(slopes);
-    }
-
-    return err;
-}
-
-/* Binary probit normality test as in Jarque, Bera and Lee (1984),
-   also quoted in Verbeek, chapter 7: we regress a column of 1s on the
-   products of the generalized residual with X, (X\beta)^2 and
-   (X\beta)^3.  The test statistic is T times the uncentered
-   R-squared, and is distributed as chi-square(2). It can be shown
-   that this test is numerically identical to the Chesher-Irish (87)
-   test in the probit case (although C&I make no mention of this in
-   their article).  
-*/
-
-static int binary_probit_normtest (MODEL *pmod, double **Z)
-{
-    gretl_matrix *X, *y, *b = NULL;
-    double Xb, et;
-    int i, vi, s, t;
-    int k = pmod->ncoeff;
-    int err = 0;
-
-    X = gretl_matrix_alloc(pmod->nobs, k + 2);
-    y = gretl_unit_matrix_new(pmod->nobs, 1);
-    b = gretl_matrix_alloc(k+2, 1);
-
-    if (X == NULL || y == NULL || b == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    s = 0;
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (na(pmod->uhat[t])) {
-	    continue;
-	}
-	et = pmod->uhat[t];
-	Xb = 0;
-	for (i=0; i<k; i++) {
-	    vi = pmod->list[i+2];
-	    Xb += pmod->coeff[i] * Z[vi][t];
-	    gretl_matrix_set(X, s, i, et * Z[vi][t]);
-	}
-	gretl_matrix_set(X, s, k, et * Xb * Xb);
-	gretl_matrix_set(X, s, k+1, et * Xb * Xb * Xb);
-	s++;
-    }
-
-    err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
-
-    if (!err) {
-	double X2 = pmod->nobs;
-
-	gretl_matrix_multiply(X, b, y);
-	for (t=0; t<y->rows; t++) {
-	    X2 -= (1 - y->val[t]) * (1 - y->val[t]);
-	}
-
-	gretl_model_add_normality_test(pmod, X2);
-    }
-	
- bailout:
-    
-    gretl_matrix_free(X);
-    gretl_matrix_free(y);
-    gretl_matrix_free(b);    
-
-    return err;
-}
-
-static void binary_model_add_stats (MODEL *pmod, int depvar, 
-				    DATASET *dset)
-{
-    const double *y = dset->Z[depvar];
-    int *act_pred;
-    double *llt;
-    double F, xx = 0.0;
-    int i, t;
-
-    /* space for actual/predicted matrix */
-    act_pred = malloc(4 * sizeof *act_pred);
-    if (act_pred != NULL) {
-	for (i=0; i<4; i++) {
-	    act_pred[i] = 0;
-	}
-    }
-
-    llt = malloc(dset->n * sizeof *llt);
-    if (llt != NULL) {
-	for (i=0; i<dset->n; i++) {
-	    llt[i] = NADBL;
-	}
-    }
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	double xb = pmod->yhat[t];
-	int yt;
-
-	if (model_missing(pmod, t)) {
-	    continue;
-	}
-
-	yt = (int) y[t];
-	xx += yt;
-
-	if (act_pred != NULL) {
-	    i = 2 * yt + (xb > 0.0);
-	    act_pred[i] += 1;
-	}
-
-	if (pmod->ci == LOGIT) {
-	    F = exp(xb) / (1.0 + exp(xb));
-	    pmod->yhat[t] = F; 
-	    pmod->uhat[t] = yt - pmod->yhat[t];
-	} else {
-	    F = normal_cdf(xb);
-	    pmod->yhat[t] = F; 
-	    pmod->uhat[t] = (yt != 0)? invmills(-xb) : -invmills(xb);
-	}
-
-	if (llt != NULL) {
-	    llt[t] = (yt != 0)? log(F) : log(1-F);
-	}
-    }
-
-    pmod->ybar = xx / pmod->nobs;
-
-    if (act_pred != NULL) {
-	gretl_model_set_data(pmod, "discrete_act_pred", act_pred, 
-			     GRETL_TYPE_INT_ARRAY, 
-			     4 * sizeof *act_pred);
-    }
-
-    if (llt != NULL) {
-	gretl_model_set_data(pmod, "llt", llt, 
-			     GRETL_TYPE_DOUBLE_ARRAY,
-			     dset->n * sizeof *llt);
-    }
-
-    mle_criteria(pmod, 0);
-
-    if (pmod->ci == PROBIT) {
-	binary_probit_normtest(pmod, dset->Z);
-    }
-}
-
-static MODEL 
-binary_logit_probit (const int *inlist, DATASET *dset, 
-		     int ci, gretlopt opt, PRN *prn)
-{
-    int oldt1 = dset->t1;
-    int oldt2 = dset->t2;
-    int *list = NULL;
-    char *mask = NULL;
-    double *beta = NULL;
-    MODEL dmod;
-    int i, depvar, nx;
-
-    /* FIXME do we need to insist on a constant in this sort
-       of model? */
-
-    gretl_model_init(&dmod);
-
-    depvar = inlist[1];
-
-    if (!gretl_isdummy(dset->t1, dset->t2, dset->Z[depvar])) {
-	gretl_errmsg_sprintf(_("'%s' is not a binary variable"), 
-			     dset->varname[depvar]);
-	dmod.errcode = E_DATA;
-	goto bailout;
-    }
-
-    list = gretl_list_copy(inlist);
-    if (list == NULL) {
-	dmod.errcode = E_ALLOC;
-	goto bailout;
-    }
-
-    /* FIXME should the return value be ignored here? */
-    list_adjust_sample(list, &dset->t1, &dset->t2, dset);
-
-    mask = classifier_check(list, dset, prn, &dmod.errcode);
-    if (dmod.errcode) {
-	goto bailout;
-    }
-
-    nx = list[0] - 1;
-
-    if (mask != NULL) {
-	dmod.errcode = copy_to_reference_missmask(mask);
-    }
-
-    if (!dmod.errcode) {
-	dmod = lsq(list, dset, OLS, OPT_A);
-	if (dmod.errcode == 0 && dmod.ncoeff < nx) {
-	    dmod.errcode = E_SINGULAR;
-	}
-    }
-
-    if (dmod.errcode) {
-	goto bailout;
-    }
-
-#if LPDEBUG
-    printmodel(&dmod, dset, OPT_NONE, prn);
-#endif
-
-    beta = copyvec(dmod.coeff, dmod.ncoeff);
-
-    if (beta == NULL) {
-	dmod.errcode = E_ALLOC;
-    } else {
-	dmod.errcode = do_BRMR(dmod.list, &dmod, ci, beta, dset,
-			       (opt & OPT_V)? prn : NULL);
-    }
-
-    if (dmod.errcode) {
-	goto bailout;
-    }
-
-    /* transcribe coefficients */
-    for (i=0; i<dmod.ncoeff; i++) {
-	dmod.coeff[i] = beta[i];
-    }
-
-    dmod.lnL = logit_probit_loglik(dset->Z[depvar], &dmod, ci);
-    Lr_chisq(&dmod, (const double **) dset->Z);
-    dmod.ci = ci;
-
-    /* calculate standard errors etc */
-    dmod.errcode = logit_probit_vcv(&dmod, opt, (const double **) dset->Z);
-
-    if (!dmod.errcode) {
-	if (opt & OPT_P) {
-	    /* showing p-values, not slopes */
-	    dmod.opt |= OPT_P;
-	    dmod.sdy = binary_fXb(&dmod, (const double **) dset->Z);
-	} else {
-	    dmod.errcode = add_slopes_to_model(&dmod, (const double **) dset->Z);
-	}
-    }
-
-    if (!dmod.errcode) {
-	binary_model_add_stats(&dmod, depvar, dset);
-	if (opt & OPT_A) {
-	    dmod.aux = AUX_AUX;
-	} else {
-	    dmod.ID = model_count_plus();
-	}
-    }
-
- bailout:
-
-    free(beta);
-    free(list);
-    free(mask);
-
-    dset->t1 = oldt1;
-    dset->t2 = oldt2;
-
-    return dmod;
-}
-
-#endif /* !NEWSTYLE_BINARY */
 
 /* struct for holding multinomial logit info */
 
@@ -3122,11 +2270,7 @@ MODEL biprobit_model (int *list, DATASET *dset,
     return bpmod;
 }
 
-#if NEWSTYLE_BINARY
-
-/* === new style handling for binary probit/logit === */
-
-/* struct for holding multinomial logit info */
+/* struct for holding binary probit/logit info */
 
 typedef struct bin_info_ bin_info;
 
@@ -3155,11 +2299,11 @@ static void bin_info_destroy (bin_info *bin)
 static bin_info *bin_info_new (int ci, int k, int T)
 {
     bin_info *bin = malloc(sizeof *bin);
-    int i;
 
     if (bin != NULL) {
 	bin->ci = ci;
 	bin->k = k;
+	bin->T = T;
 	bin->theta = malloc(k * sizeof *bin->theta);
 	if (bin->theta == NULL) {
 	    free(bin);
@@ -3174,13 +2318,8 @@ static bin_info *bin_info_new (int ci, int k, int T)
 	if (bin->B == NULL) {
 	    free(bin->theta);
 	    free(bin);
-	    return NULL;
-	} else {
-	    for (i=0; i<bin->k; i++) {
-		bin->theta[i] = 0.0;
-	    }
-	    bin->T = T;
-	}
+	    bin = NULL;
+	} 
     }
 
     return bin;
@@ -3258,7 +2397,8 @@ static int binary_score (double *theta, double *s, int k,
 /* binary probit/logit: form the negative of the analytical
    Hessian */
 
-static int bin_hessian (double *theta, gretl_matrix *H, void *data)
+static int binary_hessian (double *theta, gretl_matrix *H, 
+			   void *data)
 {
     bin_info *bin = data;
     double w, p, ndx, xtj;
@@ -3287,7 +2427,7 @@ static int bin_hessian (double *theta, gretl_matrix *H, void *data)
     return 0;
 }
 
-static gretl_matrix *bin_hessian_inverse (bin_info *bin, int *err)
+static gretl_matrix *binary_hessian_inverse (bin_info *bin, int *err)
 {
     gretl_matrix *H;
 
@@ -3295,7 +2435,7 @@ static gretl_matrix *bin_hessian_inverse (bin_info *bin, int *err)
     if (H == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = bin_hessian(bin->theta, H, bin);
+	*err = binary_hessian(bin->theta, H, bin);
     }
 
     if (!*err) {
@@ -3305,7 +2445,7 @@ static gretl_matrix *bin_hessian_inverse (bin_info *bin, int *err)
     return H;
 }
 
-static gretl_matrix *bin_opg_matrix (bin_info *bin, int *err)
+static gretl_matrix *binary_opg_matrix (bin_info *bin, int *err)
 {
     gretl_matrix *G;
     gretl_matrix *GG;
@@ -3345,21 +2485,21 @@ static gretl_matrix *bin_opg_matrix (bin_info *bin, int *err)
     return GG;
 }
 
-static int bin_add_variance_matrix (MODEL *pmod, bin_info *bin,
-				    gretlopt opt)
+static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
+				   gretlopt opt)
 {
     gretl_matrix *H = NULL;
     gretl_matrix *G = NULL;
     gretl_matrix *V = NULL;
     int err = 0;
 
-    H = bin_hessian_inverse(bin, &err);
+    H = binary_hessian_inverse(bin, &err);
     if (err) {
 	return err;
     }
 
     if (opt & OPT_R) {
-	G = bin_opg_matrix(bin, &err);
+	G = binary_opg_matrix(bin, &err);
 	if (!err) {
 	    V = gretl_matrix_alloc(bin->k, bin->k);
 	    if (V == NULL) {
@@ -3393,7 +2533,7 @@ static int bin_add_variance_matrix (MODEL *pmod, bin_info *bin,
     return err;
 }
 
-static void binary_chisq (bin_info *bin, MODEL *pmod)
+static void binary_model_chisq (bin_info *bin, MODEL *pmod)
 {
     int t, zeros, ones = 0;
     double Lr, chisq;
@@ -3518,7 +2658,7 @@ static double dumslope (MODEL *pmod, const gretl_matrix *xbar, int j)
     return s;
 }
 
-static int add_slopes_to_model (MODEL *pmod, bin_info *bin)
+static int binary_model_add_slopes (MODEL *pmod, bin_info *bin)
 {
     gretl_matrix *xbar;
     const double *Xi;
@@ -3545,7 +2685,7 @@ static int add_slopes_to_model (MODEL *pmod, bin_info *bin)
     }
 
     fXb = (bin->ci == LOGIT)? logit_pdf(Xb) : normal_pdf(Xb);
-    pmod->sdy = fXb;
+    gretl_model_set_double(pmod, "fXb", fXb);
 
     Xi = bin->X->val;
 
@@ -3613,13 +2753,15 @@ static void binary_model_stats (MODEL *pmod, bin_info *bin,
     }
 
     for (t=pmod->t1, s=0; t<=pmod->t2; t++) {
+	double ndx;
+	int y;
 
 	if (model_missing(pmod, t)) {
 	    continue;
 	} 
 
-	double ndx = gretl_vector_get(bin->Xb, s);
-	int y = gretl_vector_get(bin->y, s++);
+	ndx = gretl_vector_get(bin->Xb, s);
+	y = gretl_vector_get(bin->y, s++);
 
 	if (act_pred != NULL) {
 	    i = 2 * y + (ndx > 0.0);
@@ -3660,9 +2802,9 @@ static void binary_model_stats (MODEL *pmod, bin_info *bin,
     }
 }
 
-static int bin_finish (bin_info *bin, MODEL *pmod,
-		       const DATASET *dset,
-		       gretlopt opt)
+static int binary_model_finish (bin_info *bin, MODEL *pmod,
+				const DATASET *dset,
+				gretlopt opt)
 {
     int i;
 
@@ -3671,18 +2813,20 @@ static int bin_finish (bin_info *bin, MODEL *pmod,
     }
 
     pmod->lnL = binary_loglik(pmod->coeff, bin);
-    binary_chisq(bin, pmod);
+    binary_model_chisq(bin, pmod);
     pmod->ci = bin->ci;
 
-    pmod->errcode = bin_add_variance_matrix(pmod, bin, opt);
+    pmod->errcode = binary_variance_matrix(pmod, bin, opt);
 
     if (!pmod->errcode) {
 	if (opt & OPT_P) {
 	    /* showing p-values, not slopes */
+	    double fXb = binary_model_fXb(bin);
+
 	    pmod->opt |= OPT_P;
-	    pmod->sdy = binary_model_fXb(bin);
+	    gretl_model_set_double(pmod, "fXb", fXb);
 	} else {
-	    pmod->errcode = add_slopes_to_model(pmod, bin);
+	    pmod->errcode = binary_model_add_slopes(pmod, bin);
 	}
     }
 
@@ -3698,9 +2842,9 @@ static int bin_finish (bin_info *bin, MODEL *pmod,
     return pmod->errcode;
 }
 
-static MODEL bin_model (int ci, const int *inlist, 
-			DATASET *dset, gretlopt opt, 
-			PRN *prn)
+static MODEL binary_model (int ci, const int *inlist, 
+			   DATASET *dset, gretlopt opt, 
+			   PRN *prn)
 {
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
@@ -3722,7 +2866,7 @@ static MODEL bin_model (int ci, const int *inlist,
 	gretl_errmsg_sprintf(_("'%s' is not a binary variable"), 
 			     dset->varname[depvar]);
 	mod.errcode = E_DATA;
-	goto bailout;
+	return mod;
     }
 
     list = gretl_list_copy(inlist);
@@ -3786,12 +2930,12 @@ static MODEL bin_model (int ci, const int *inlist,
     mod.errcode = newton_raphson_max(bin->theta, bin->k, maxit, 
 				     crittol, gradtol, &fncount, 
 				     C_LOGLIK, binary_loglik, 
-				     binary_score, bin_hessian, bin,
+				     binary_score, binary_hessian, bin,
 				     (prn != NULL)? OPT_V : OPT_NONE,
 				     prn);
 
     if (!mod.errcode) {
-	bin_finish(bin, &mod, dset, opt);
+	binary_model_finish(bin, &mod, dset, opt);
     }  
 
  bailout:  
@@ -3807,11 +2951,6 @@ static MODEL bin_model (int ci, const int *inlist,
     return mod;
 }
 
-/* === end of new style handling for binary probit/logit === */
-
-#endif
-
-
 /**
  * binary_logit:
  * @list: binary dependent variable plus list of regressors.
@@ -3824,8 +2963,7 @@ static MODEL bin_model (int ci, const int *inlist,
  * wanted (in which case add OPT_V to @opt).
  *
  * Computes estimates of the logit model specified by @list,
- * using the BRMR auxiliary regression; see Davidson 
- * and MacKinnon.
+ * using Newton-Raphson.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
@@ -3833,13 +2971,9 @@ static MODEL bin_model (int ci, const int *inlist,
 MODEL binary_logit (int *list, DATASET *dset, 
 		    gretlopt opt, PRN *prn)
 {
-#if NEWSTYLE_BINARY
     PRN *vprn = (opt & OPT_V)? prn : NULL;
 
-    return bin_model(LOGIT, list, dset, opt, vprn);
-#else
-    return binary_logit_probit(list, dset, LOGIT, opt, prn);
-#endif
+    return binary_model(LOGIT, list, dset, opt, vprn);
 }
 
 /**
@@ -3854,8 +2988,7 @@ MODEL binary_logit (int *list, DATASET *dset,
  * wanted (in which case add OPT_V to @opt).
  *
  * Computes estimates of the probit model specified by @list,
- * using the BRMR auxiliary regression; see Davidson 
- * and MacKinnon.
+ * using Newton-Raphson.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
@@ -3863,13 +2996,9 @@ MODEL binary_logit (int *list, DATASET *dset,
 MODEL binary_probit (int *list, DATASET *dset, 
 		     gretlopt opt, PRN *prn)
 {
-#if NEWSTYLE_BINARY
     PRN *vprn = (opt & OPT_V)? prn : NULL;
 
-    return bin_model(PROBIT, list, dset, opt, vprn);
-#else
-    return binary_logit_probit(list, dset, PROBIT, opt, prn);
-#endif
+    return binary_model(PROBIT, list, dset, opt, vprn);
 }
 
 /**
@@ -3913,9 +3042,7 @@ MODEL ordered_logit (int *list, DATASET *dset,
 MODEL ordered_probit (int *list, DATASET *dset, 
 		      gretlopt opt, PRN *prn)
 {
-    PRN *vprn = (opt & OPT_V)? prn : NULL;
-
-    return ordered_estimate(list, dset, PROBIT, opt, vprn);
+    return ordered_estimate(list, dset, PROBIT, opt, prn);
 }
 
 /**
@@ -3936,116 +3063,8 @@ MODEL ordered_probit (int *list, DATASET *dset,
 MODEL multinomial_logit (int *list, DATASET *dset, 
 			 gretlopt opt, PRN *prn)
 {
-    PRN *vprn = (opt & OPT_V)? prn : NULL;
-
-    return mnl_model(list, dset, opt, vprn);    
+    return mnl_model(list, dset, opt, prn);    
 }
-
-#if !NEWSTYLE_BINARY
-
-/* Solves for diagonal elements of X'X inverse matrix.
-   X'X must be Cholesky-decomposed already.
-*/
-
-static int neginv (const double *xpx, double *diag, int n)
-{
-    int kk, l, m, k, i, j;
-    const int nxpx = n * (n + 1) / 2;
-    double *tmp;
-    double d, e;
-
-    tmp = malloc((n + 1) * sizeof *tmp);
-    if (tmp == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<=n; i++) {
-	tmp[i] = 0.0;
-    }
-
-    kk = 0;
-
-    for (l=1; l<=n-1; l++) {
-        d = xpx[kk];
-        tmp[l] = d;
-        e = d * d;
-        m = 0;
-        if (l > 1) {
-	    for (j=1; j<=l-1; j++) {
-		m += n - j;
-	    }
-	}
-        for (i=l+1; i<=n; i++) {
-            d = 0.0;
-            k = i + m - 1;
-            for (j=l; j<=i-1; j++) {
-                d += tmp[j] * xpx[k];
-                k += n - j;
-            }
-            d = -d * xpx[k];
-            tmp[i] = d;
-            e += d * d;
-        }
-        kk += n + 1 - l;
-        diag[l-1] = e;
-    }
-
-    diag[n - 1] = xpx[nxpx - 1] * xpx[nxpx - 1];
-
-    free(tmp);
-
-    return 0;
-}
-
-/* Cholesky decomposition of X'X */
-
-static int cholesky_decomp (double *xpx, int nv)
-{
-    int i, j, k, kk, l, jm1;
-    double e, d, d1, test, xx;
-
-    e = 1.0 / sqrt(xpx[0]);
-    xpx[0] = e;
-
-    for (i=1; i<nv; i++) {
-	xpx[i] *= e;
-    }
-
-    kk = nv;
-
-    for (j=2; j<=nv; j++) {
-	/* diagonal elements */
-        d = d1 = 0.0;
-        k = jm1 = j - 1;
-        for (l=1; l<=jm1; l++) {
-            xx = xpx[k];
-            d += xx * xx;
-            k += nv-l;
-        }
-        test = xpx[kk] - d;
-        if (test / xpx[kk] < CHOL_TINY) {
-	    return 1;
-	}
-        e = 1 / sqrt(test);
-        xpx[kk] = e;
-        /* off-diagonal elements */
-        for (i=j+1; i<=nv; i++) {
-            kk++;
-            d = 0.0;
-            k = j - 1;
-            for (l=1; l<=jm1; l++) {
-                d += xpx[k] * xpx[k-j+i];
-                k += nv - l;
-            }
-            xpx[kk] = (xpx[kk] - d) * e;
-        }
-        kk++;
-    }
-
-    return 0; 
-}
-
-#endif /* !NEWSTYLE_BINARY */
 
 /**
  * logistic_ymax_lmax:

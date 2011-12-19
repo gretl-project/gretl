@@ -2,6 +2,8 @@ version 1.9.7, in progress
 - Add two nonparametric estimators: William Cleveland's loess and the
   Nadaraya-Watson estimator; these are available via the new functions
   loess() and nadarwat(), and they're also in the GUI Model menu
+- Binary logit and probit: re-implement using Newton-Raphson for
+  greater numerical stability
 - Documentation updates, including a new chapter on Nonparametric
   methods in the User's Guide
 - "store" command: add a --decimal-comma option to export "CSV" data 
@@ -19,6 +21,7 @@ version 1.9.7, in progress
 - New function simann() provides user access to simulated annealing
 - Speed up the production of bootstrapped confidence bands for impulse 
   responses in VECM models
+- Internationalized TeX output: always use UTF-8 encoding
 - Online help: ensure that option flags don't break across lines (and
   also colorize them for emphasis)
 - Cointegration testing: treat restricted exogenous terms as per Ox and

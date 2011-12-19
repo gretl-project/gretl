@@ -5887,10 +5887,8 @@
       <para>
 	If the dependent variable is a binary variable (all values are 0
 	or 1) maximum likelihood estimates of the coefficients on
-	<repl>indepvars</repl> are obtained via the <quote>binary response
-	model regression</quote> (BRMR) method outlined by <cite
-	key="davidson-mackinnon04">Davidson and MacKinnon
-	(2004)</cite>. As the model is nonlinear the slopes depend on the
+	<repl>indepvars</repl> are obtained via the Newton&ndash;Raphson
+	method. As the model is nonlinear the slopes depend on the
 	values of the independent variables.  By default the slopes with
 	respect to each of the independent variables are calculated (at
 	the means of those variables) and these slopes replace the usual
@@ -8192,10 +8190,8 @@
       <para>
 	If the dependent variable is a binary variable (all values are 0
 	or 1) maximum likelihood estimates of the coefficients on
-	<repl>indepvars</repl> are obtained via the <quote>binary response
-	model regression</quote> (BRMR) method outlined by <cite
-	key="davidson-mackinnon04">Davidson and MacKinnon
-	(2004)</cite>. As the model is nonlinear the slopes depend on the
+	<repl>indepvars</repl> are obtained via the Newton&ndash;Raphson
+	method. As the model is nonlinear the slopes depend on the
 	values of the independent variables.  By default the slopes with
 	respect to each of the independent variables are calculated (at
 	the means of those variables) and these slopes replace the usual

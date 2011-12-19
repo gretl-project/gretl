@@ -21,6 +21,10 @@ been removed and should be replaced as indicated:
  "lmtest"    modtest
  "testuhat"  modtest --normality
 
+In internationalized TeX output, gretl now always uses UTF-8
+encoding (before we used the specific locale encoding on
+platforms where UTF-8 was not "native").
+
 GUI: the menu item /View/Scalars has been merged into the
 Icon view window (under /View/Icon view).
 

@@ -4911,8 +4911,12 @@ static void logit_probit_stats (const MODEL *pmod, PRN *prn)
 		    correct, pc_correct);
 	}
 	if (binary) {
-	    pprintf(prn, "f(beta'x) %s = %.3f\n", _("at mean of independent vars"), 
-		    pmod->sdy);
+	    double fXb = gretl_model_get_double(pmod, "fXb");
+
+	    if (!na(fXb)) {
+		pprintf(prn, "f(beta'x) %s = %.3f\n", _("at mean of independent vars"), 
+			fXb);
+	    }
 	}
 	if (df) {
 	    pprintf(prn, "%s: %s(%d) = %g [%.4f]\n", 
