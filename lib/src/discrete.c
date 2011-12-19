@@ -38,6 +38,7 @@
  */
 
 #define LPDEBUG 0
+#define NEWSTYLE_BINARY 0
 
 #define CHOL_TINY 1.0e-13
 
@@ -70,8 +71,10 @@ struct sorter {
     int t;
 };
 
+#if !NEWSTYLE_BINARY
 static int neginv (const double *xpx, double *diag, int nv);
 static int cholesky_decomp (double *xpx, int nv);
+#endif
 
 static double lp_cdf (double x, int ci)
 {
@@ -1333,6 +1336,82 @@ static double logit_pdf (double x)
     return l;
 }
 
+static char *classifier_check (int *list, const DATASET *dset,
+			       PRN *prn, int *err)
+{
+    char *mask = NULL;
+    const double *y = dset->Z[list[1]];
+    int i, v, ni, t;
+
+    for (i=2; i<=list[0]; i++) {
+	v = list[i];
+	if (v == 0) {
+	    continue;
+	}
+	ni = gretl_isdummy(dset->t1, dset->t2, dset->Z[v]);
+	if (ni > 0) {
+	    int same[2] = {0};
+	    int diff[2] = {0};
+	    int maskval, pc = 1;
+
+	    for (t=dset->t1; t<=dset->t2 && pc; t++) {
+		if (dset->Z[v][t] > 0) {
+		    if (y[t] > 0) {
+			same[0] += 1;
+		    } else {
+			diff[0] += 1;
+		    }
+		} else {
+		    if (y[t] == 0) {
+			same[1] += 1;
+		    } else {
+			diff[1] += 1;
+		    }
+		}
+		if (same[0] && diff[0] && same[1] && diff[1]) {
+		    pc = 0;
+		}
+	    }
+
+	    if (pc) {
+		if (!(same[0] && diff[0])) {
+		    maskval = 1;
+		    pprintf(prn, "Note: %s != 0 predicts %s perfectly\n",
+			    dset->varname[v], (same[0])? "success" : "failure");
+		} else {
+		    maskval = 0;
+		    pprintf(prn, "Note: %s == 0 predicts %s perfectly\n",
+			    dset->varname[v], (diff[1])? "success" : "failure");
+		}
+
+		if (mask == NULL) {
+		    mask = malloc(dset->n + 1);
+		    if (mask == NULL) {
+			*err = E_ALLOC;
+		    } else {
+			memset(mask, '0', dset->n);
+			mask[dset->n] = 0;
+		    }
+		}
+
+		if (mask != NULL) {
+		    for (t=dset->t1; t<=dset->t2; t++) {
+			if (dset->Z[v][t] == maskval) {
+			    mask[t-dset->t1] = '1';
+			}
+		    }
+		    pprintf(prn, "%d observations not used\n", ni);
+		}
+		gretl_list_delete_at_pos(list, i--);
+	    }
+	}
+    }
+
+    return mask;
+}
+
+#if !NEWSTYLE_BINARY
+
 static void Lr_chisq (MODEL *pmod, const double **Z)
 {
     int t, zeros, ones = 0, m = pmod->nobs;
@@ -1787,80 +1866,6 @@ static int do_BRMR (const int *list, MODEL *dmod, int ci,
     return err;
 }
 
-static char *classifier_check (int *list, const DATASET *dset,
-			       PRN *prn, int *err)
-{
-    char *mask = NULL;
-    const double *y = dset->Z[list[1]];
-    int i, v, ni, t;
-
-    for (i=2; i<=list[0]; i++) {
-	v = list[i];
-	if (v == 0) {
-	    continue;
-	}
-	ni = gretl_isdummy(dset->t1, dset->t2, dset->Z[v]);
-	if (ni > 0) {
-	    int same[2] = {0};
-	    int diff[2] = {0};
-	    int maskval, pc = 1;
-
-	    for (t=dset->t1; t<=dset->t2 && pc; t++) {
-		if (dset->Z[v][t] > 0) {
-		    if (y[t] > 0) {
-			same[0] += 1;
-		    } else {
-			diff[0] += 1;
-		    }
-		} else {
-		    if (y[t] == 0) {
-			same[1] += 1;
-		    } else {
-			diff[1] += 1;
-		    }
-		}
-		if (same[0] && diff[0] && same[1] && diff[1]) {
-		    pc = 0;
-		}
-	    }
-
-	    if (pc) {
-		if (!(same[0] && diff[0])) {
-		    maskval = 1;
-		    pprintf(prn, "Note: %s != 0 predicts %s perfectly\n",
-			    dset->varname[v], (same[0])? "success" : "failure");
-		} else {
-		    maskval = 0;
-		    pprintf(prn, "Note: %s == 0 predicts %s perfectly\n",
-			    dset->varname[v], (diff[1])? "success" : "failure");
-		}
-
-		if (mask == NULL) {
-		    mask = malloc(dset->n + 1);
-		    if (mask == NULL) {
-			*err = E_ALLOC;
-		    } else {
-			memset(mask, '0', dset->n);
-			mask[dset->n] = 0;
-		    }
-		}
-
-		if (mask != NULL) {
-		    for (t=dset->t1; t<=dset->t2; t++) {
-			if (dset->Z[v][t] == maskval) {
-			    mask[t-dset->t1] = '1';
-			}
-		    }
-		    pprintf(prn, "%d observations not used\n", ni);
-		}
-		gretl_list_delete_at_pos(list, i--);
-	    }
-	}
-    }
-
-    return mask;
-}
-
 /* construct an array holding the means of the independent variables
    in the binary model */
 
@@ -2250,6 +2255,8 @@ binary_logit_probit (const int *inlist, DATASET *dset,
 
     return dmod;
 }
+
+#endif /* !NEWSTYLE_BINARY */
 
 /* struct for holding multinomial logit info */
 
@@ -3115,7 +3122,7 @@ MODEL biprobit_model (int *list, DATASET *dset,
     return bpmod;
 }
 
-#define NEWSTYLE_BINARY 0
+#if NEWSTYLE_BINARY
 
 /* === new style handling for binary probit/logit === */
 
@@ -3534,7 +3541,9 @@ static int bin_finish (bin_info *bin, MODEL *pmod,
 	    pmod->opt |= OPT_P;
 	    pmod->sdy = binary_model_fXb(bin);
 	} else {
+#if 0 /* FIXME, rewrite this */
 	    pmod->errcode = add_slopes_to_model(pmod, (const double **) dset->Z);
+#endif
 	}
     }
 
@@ -3660,6 +3669,8 @@ static MODEL bin_model (int ci, const int *inlist,
 }
 
 /* === end of new style handling for binary probit/logit === */
+
+#endif
 
 
 /**
@@ -3791,6 +3802,8 @@ MODEL multinomial_logit (int *list, DATASET *dset,
     return mnl_model(list, dset, opt, vprn);    
 }
 
+#if !NEWSTYLE_BINARY
+
 /* Solves for diagonal elements of X'X inverse matrix.
    X'X must be Cholesky-decomposed already.
 */
@@ -3892,6 +3905,8 @@ static int cholesky_decomp (double *xpx, int nv)
 
     return 0; 
 }
+
+#endif /* !NEWSTYLE_BINARY */
 
 /**
  * logistic_ymax_lmax:
