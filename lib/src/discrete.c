@@ -3141,7 +3141,6 @@ struct bin_info_ {
     gretl_matrix *pX; /* for use with Hessian */
     gretl_matrix *b;  /* coefficients in matrix form */
     gretl_matrix *Xb; /* index function values */
-    gretl_matrix *P;  /* probabilities */
 };
 
 static void bin_info_destroy (bin_info *bin)
@@ -3171,7 +3170,6 @@ static bin_info *bin_info_new (int ci, int k, int T)
 					&bin->pX, T, k,
 					&bin->b, k, 1,
 					&bin->Xb, T, 1,
-					&bin->P, T, 1,
 					NULL);
 	if (bin->B == NULL) {
 	    free(bin->theta);
@@ -3210,10 +3208,9 @@ static double binary_loglik (const double *theta, void *ptr)
 	if (bin->ci == PROBIT) {
 	    p = y ? normal_cdf(ndx) : normal_cdf(-ndx);
 	} else {
-	    e = 1.0/(1+exp(-ndx));
+	    e = logit(ndx);
 	    p = y ? e : 1-e;
 	}
-	gretl_vector_set(bin->P, t, p);
 	ll += log(p);
     }
 
@@ -3228,7 +3225,7 @@ static int binary_score (double *theta, double *s, int k,
 			 BFGS_CRIT_FUNC ll, void *ptr)
 {
     bin_info *bin = (bin_info *) ptr;
-    double ndx, e, w;
+    double ndx, w;
     int t, j, y;
     int err = 0;
 
@@ -3244,8 +3241,7 @@ static int binary_score (double *theta, double *s, int k,
 	if (bin->ci == PROBIT) {
 	    w = y ? invmills(-ndx) : -invmills(ndx);
 	} else {
-	    e = 1.0/(1+exp(-ndx));
-	    w = y - e;
+	    w = y - logit(ndx);
 	}
 	for (j=0; j<bin->k; j++) {
 	    s[j] += w * gretl_matrix_get(bin->X, t, j);
@@ -3275,7 +3271,7 @@ static int bin_hessian (double *theta, gretl_matrix *H, void *data)
 	    w = y ? invmills(-ndx) : -invmills(ndx);
 	    p = w * (ndx + w);
 	} else {
-	    p = 1/(1+exp(-ndx));
+	    p = logit(ndx);
 	    p = p * (1-p);
 	}
 	for (j=0; j<bin->k; j++) {
@@ -3313,11 +3309,12 @@ static gretl_matrix *bin_opg_matrix (bin_info *bin, int *err)
 {
     gretl_matrix *G;
     gretl_matrix *GG;
-    double w, e, ndx, xtj;
+    double w, ndx, xtj;
     int y, j, t;
 
     G = gretl_matrix_alloc(bin->T, bin->k);
     GG = gretl_matrix_alloc(bin->k, bin->k);
+
     if (G == NULL || GG == NULL) {
 	gretl_matrix_free(G);
 	gretl_matrix_free(GG);
@@ -3331,8 +3328,7 @@ static gretl_matrix *bin_opg_matrix (bin_info *bin, int *err)
 	if (bin->ci == PROBIT) {
 	    w = y ? invmills(-ndx) : -invmills(ndx);
 	} else {
-	    e = 1.0/(1+exp(-ndx));
-	    w = y - e;
+	    w = y - logit(ndx);
 	}
 	for (j=0; j<bin->k; j++) {
 	    xtj = gretl_matrix_get(bin->X, t, j);
@@ -3430,6 +3426,146 @@ static void binary_chisq (bin_info *bin, MODEL *pmod)
     }
 }
 
+/* Binary probit normality test as in Jarque, Bera and Lee (1984),
+   also quoted in Verbeek, chapter 7: we regress a column of 1s on the
+   products of the generalized residual with X, (X\beta)^2 and
+   (X\beta)^3.  The test statistic is T times the uncentered
+   R-squared, and is distributed as chi-square(2). It can be shown
+   that this test is numerically identical to the Chesher-Irish (87)
+   test in the probit case (although C&I make no mention of this in
+   their article).  
+*/
+
+static int binary_probit_normtest (MODEL *pmod, bin_info *bin)
+{
+    gretl_matrix_block *B;
+    gretl_matrix *X, *y, *b;
+    double xti, Xb, et;
+    int k = bin->k;
+    int i, s, t;
+    int err = 0;
+
+    B = gretl_matrix_block_new(&X, bin->T, k+2,
+			       &y, bin->T, 1,
+			       &b, k+2, 1,
+			       NULL);
+    if (B == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=0; t<bin->T; t++) {
+	s = t + pmod->t1;
+	et = pmod->uhat[s];
+	Xb = gretl_vector_get(bin->Xb, t);
+	for (i=0; i<bin->k; i++) {
+	    xti = gretl_matrix_get(bin->X, t, i);
+	    gretl_matrix_set(X, t, i, et * xti);
+	}
+	gretl_matrix_set(X, t, k, et * Xb * Xb);
+	gretl_matrix_set(X, t, k+1, et * Xb * Xb * Xb);
+	gretl_vector_set(y, t, 1);
+    }
+
+    err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
+
+    if (!err) {
+	double X2 = bin->T;
+
+	gretl_matrix_multiply(X, b, y);
+	for (t=0; t<y->rows; t++) {
+	    X2 -= (1 - y->val[t]) * (1 - y->val[t]);
+	}
+
+	gretl_model_add_normality_test(pmod, X2);
+    }
+    
+    gretl_matrix_block_destroy(B);
+
+    return err;
+}
+
+/* Special "slope" calculation for a dummy regressor in binary model:
+   this is F(~Xb + b_j) - F(~Xb) where ~Xb denotes the sum of
+   (coefficient times mean) for all regressors other than the dummy in
+   question and b_j indicates the coefficient on the dummy.  That is,
+   the calculation measures the effect on the probability of Y = 1 of
+   the discrete change 0 to 1 in x_j.
+*/
+
+static double dumslope (MODEL *pmod, const gretl_matrix *xbar, int j)
+{
+    double s, Xb = 0.0;
+    int i;
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	if (i != j) {
+	    Xb += pmod->coeff[i] * xbar->val[i];
+	}
+    } 
+
+    if (pmod->ci == LOGIT) {
+	s = logit(Xb + pmod->coeff[j]) - logit(Xb);
+    } else {
+	s = normal_cdf(Xb + pmod->coeff[j]) - normal_cdf(Xb);
+    }
+
+    return s;
+}
+
+static int add_slopes_to_model (MODEL *pmod, bin_info *bin)
+{
+    gretl_matrix *xbar;
+    const double *Xi;
+    double *slopes;
+    double Xb, fXb;
+    size_t ssize;
+    int i, err = 0;
+
+    xbar = gretl_matrix_column_mean(bin->X, &err);
+    if (err) {
+	return err;
+    }    
+
+    ssize = pmod->ncoeff * sizeof *slopes;
+    slopes = malloc(ssize);
+    if (slopes == NULL) {
+	gretl_matrix_free(xbar);
+	return E_ALLOC;
+    }
+
+    Xb = 0.0;
+    for (i=0; i<pmod->ncoeff; i++) {
+	Xb += pmod->coeff[i] * xbar->val[i];
+    }
+
+    fXb = (bin->ci == LOGIT)? logit_pdf(Xb) : normal_pdf(Xb);
+    pmod->sdy = fXb;
+
+    Xi = bin->X->val;
+
+    for (i=0; i<bin->k; i++) {
+	if (pmod->list[i+2] == 0) {
+	    slopes[i] = 0.0;
+	} else if (gretl_isdummy(0, bin->T-1, Xi)) {
+	    slopes[i] = dumslope(pmod, xbar, i);
+	} else {
+	    slopes[i] = pmod->coeff[i] * fXb;
+	}
+	Xi += bin->T;
+    }
+
+    err = gretl_model_set_data(pmod, "slopes", slopes, 
+			       GRETL_TYPE_DOUBLE_ARRAY,
+			       ssize);
+
+    gretl_matrix_free(xbar);
+    if (err) {
+	free(slopes);
+    }
+
+    return err;
+}
+
 static double binary_model_fXb (bin_info *bin)
 {
     double xbar, Xb = 0.0;
@@ -3512,11 +3648,9 @@ static void binary_model_stats (MODEL *pmod, bin_info *bin,
 
     mle_criteria(pmod, 0);
 
-#if 0 /* FIXME */
     if (pmod->ci == PROBIT) {
-	binary_probit_normtest(pmod, dset->Z);
+	binary_probit_normtest(pmod, bin);
     }
-#endif
 }
 
 static int bin_finish (bin_info *bin, MODEL *pmod,
@@ -3541,9 +3675,7 @@ static int bin_finish (bin_info *bin, MODEL *pmod,
 	    pmod->opt |= OPT_P;
 	    pmod->sdy = binary_model_fXb(bin);
 	} else {
-#if 0 /* FIXME, rewrite this */
-	    pmod->errcode = add_slopes_to_model(pmod, (const double **) dset->Z);
-#endif
+	    pmod->errcode = add_slopes_to_model(pmod, bin);
 	}
     }
 
