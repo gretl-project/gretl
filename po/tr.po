@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-12-18 14:28-0500\n"
-"PO-Revision-Date: 2011-12-16 11:11-0500\n"
+"PO-Revision-Date: 2011-12-19 11:51+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -151,7 +151,7 @@ msgstr "%s bir sabit"
 
 #: lib/src/adf_kpss.c:1061
 msgid "Choi meta-tests:"
-msgstr "Choi üst-sınamaları:"
+msgstr "Choi meta-sınamaları:"
 
 #: lib/src/adf_kpss.c:1062
 msgid "Inverse chi-square"
@@ -2134,17 +2134,17 @@ msgstr "YİNELEME         KKT           DEĞİŞİM%"
 
 #: lib/src/estimate.c:3479 lib/src/vartest.c:124
 msgid "Test for ARCH of order"
-msgstr "ÖBKF (ARCH) sınaması derece"
+msgstr "ARCH sınaması derece"
 
 #: lib/src/estimate.c:3502 lib/src/modelprint.c:1708
 #, c-format
 msgid "Test for ARCH of order %d"
-msgstr "%d. dereceden ÖBKF (ARCH) sınaması"
+msgstr "%d. dereceden ARCH sınaması"
 
 #: lib/src/estimate.c:3579 lib/src/estimate.c:3723
 #, c-format
 msgid "Invalid lag order for arch (%d)"
-msgstr "ÖBKF (%d) için geçersiz gecikme derecesi"
+msgstr "ARCH (%d) için geçersiz gecikme derecesi"
 
 #: lib/src/estimate.c:4063 lib/src/genfuncs.c:869 plugin/tramo-x12a.c:1314
 #, c-format
@@ -2761,7 +2761,7 @@ msgstr "%s için yordama varyans ayrıştırması"
 
 #: lib/src/graphing.c:5570
 msgid "VAR residuals"
-msgstr "YÖB kalıntıları"
+msgstr "VAR kalıntıları"
 
 #: lib/src/graphing.c:5572 gui2/gui_utils.c:3093
 msgid "System residuals"
@@ -2777,7 +2777,7 @@ msgstr "EC terimi"
 
 #: lib/src/graphing.c:5798
 msgid "VAR inverse roots in relation to the unit circle"
-msgstr "YÖB ters kökleri, birim çembere göre"
+msgstr "VAR ters kökleri, birim çembere göre"
 
 #: lib/src/graphing.c:5883
 #, c-format
@@ -3177,11 +3177,11 @@ msgstr "Değişkenler için katsayılar sıfırdır"
 #: lib/src/gretl_model.c:2977
 #, c-format
 msgid "Test for ARCH of order %s"
-msgstr "%s. dereceden ÖBKF (ARCH) sınaması"
+msgstr "%s. dereceden ARCH sınaması"
 
 #: lib/src/gretl_model.c:2978
 msgid "no ARCH effect is present"
-msgstr "ÖBKF (ARCH) etkisi bulunmuyor"
+msgstr "ARCH etkisi bulunmuyor"
 
 #: lib/src/gretl_model.c:2980
 #, c-format
@@ -4306,7 +4306,7 @@ msgstr "Kalıntılar ölçünlendi"
 
 #: lib/src/modelprint.c:166
 msgid "Likelihood ratio test for (G)ARCH terms"
-msgstr "(G)ÖBKF terimleri için olabilirlik oranı sınaması"
+msgstr "(G)ARCH terimleri için olabilirlik oranı sınaması"
 
 #: lib/src/modelprint.c:185
 msgid "Left-unbounded observations"
@@ -4365,7 +4365,7 @@ msgstr "Denklem tam-özdeşlemeli"
 #: lib/src/modelprint.c:353
 #, c-format
 msgid "Test for AR(%d) errors:"
-msgstr "ÖB(%d) hataları sınaması:"
+msgstr "AR(%d) hataları sınaması:"
 
 #: lib/src/modelprint.c:380 lib/src/modelprint.c:387
 msgid "Wald (joint) test"
@@ -4495,7 +4495,7 @@ msgstr "AEK (WLS)"
 
 #: lib/src/modelprint.c:782
 msgid "WLS (ARCH)"
-msgstr "AEK (ÖBKF)"
+msgstr "AEK (ARCH)"
 
 #: lib/src/modelprint.c:783
 msgid "Heteroskedasticity-corrected"
@@ -4503,7 +4503,7 @@ msgstr "farklıserpilimsellik-düzeltmeli bağlanım"
 
 #: lib/src/modelprint.c:784 lib/src/modelprint.c:4720
 msgid "AR"
-msgstr "ÖB (AR)"
+msgstr "AR"
 
 #: lib/src/modelprint.c:785 lib/src/modelprint.c:896 gui2/selector.c:3543
 msgid "LAD"
@@ -4559,7 +4559,7 @@ msgstr "lojistik"
 
 #: lib/src/modelprint.c:798 gui2/selector.c:3535 plugin/addons-i18n.c:14
 msgid "GARCH"
-msgstr "GÖBKF (GARCH)"
+msgstr "GARCH"
 
 #: lib/src/modelprint.c:799
 msgid "Interval estimates"
@@ -4607,15 +4607,15 @@ msgstr "Cochrane-Orcutt"
 
 #: lib/src/modelprint.c:825
 msgid "ARMAX"
-msgstr "ÖBHOD (ARMAX)"
+msgstr "ARMAX"
 
 #: lib/src/modelprint.c:828 gui2/selector.c:3531 plugin/tramo_options.c:702
 msgid "ARIMA"
-msgstr "ÖBTHO (ARIMA)"
+msgstr "ARIMA"
 
 #: lib/src/modelprint.c:830
 msgid "ARMA"
-msgstr "ÖBHO (ARMA)"
+msgstr "ARMA"
 
 #: lib/src/modelprint.c:833
 msgid "Pooled OLS"
@@ -5367,7 +5367,7 @@ msgstr "KKT"
 
 #: lib/src/modelprint.c:4166
 msgid "Sum of AR coefficients"
-msgstr "ÖB katsayıları toplamı"
+msgstr "AR katsayıları toplamı"
 
 #: lib/src/modelprint.c:4190
 msgid "slope"
@@ -5401,15 +5401,15 @@ msgstr "Sıklık"
 
 #: lib/src/modelprint.c:4740
 msgid "AR (seasonal)"
-msgstr "ÖB (mevsimsel)"
+msgstr "AR (mevsimsel)"
 
 #: lib/src/modelprint.c:4760
 msgid "MA"
-msgstr "HO"
+msgstr "MA"
 
 #: lib/src/modelprint.c:4780
 msgid "MA (seasonal)"
-msgstr "HO (mevsimsel)"
+msgstr "MA (mevsimsel)"
 
 #: lib/src/modelprint.c:4817 lib/src/modelprint.c:4822
 #: lib/src/modelprint.c:4826
@@ -5854,7 +5854,7 @@ msgstr "olasılık"
 #: lib/src/objstack.c:650 lib/src/objstack.c:686 lib/src/objstack.c:688
 #: gui2/selector.c:3537
 msgid "VAR"
-msgstr "YÖB"
+msgstr "VAR"
 
 #: lib/src/objstack.c:652 lib/src/objstack.c:692 lib/src/objstack.c:694
 #: gui2/selector.c:3541
@@ -6825,7 +6825,7 @@ msgstr "Kalıntılar için örneklem varyans-kovaryans dizeyleri"
 
 #: lib/src/var.c:2540
 msgid "VAR system in first differences"
-msgstr "Birinci farklarda YÖB sistemi"
+msgstr "Birinci farklarda VAR sistemi"
 
 #: lib/src/var.c:2548
 msgid "System with levels as dependent variable"
@@ -6953,7 +6953,7 @@ msgstr "YHDM (VECM) sistemi, gecikme derecesi %d"
 #: lib/src/varprint.c:1040
 #, c-format
 msgid "VAR system, lag order %d"
-msgstr "YÖB sistemi, gecikme derecesi %d"
+msgstr "VAR sistemi, gecikme derecesi %d"
 
 #: lib/src/varprint.c:1046
 #, c-format
@@ -7002,7 +7002,7 @@ msgstr "Gecikme derecesi %*d"
 #: lib/src/vartest.c:278
 #, c-format
 msgid "VAR system, maximum lag order %d"
-msgstr "YÖB sistemi, ençok gecikme derecesi %d"
+msgstr "VAR sistemi, ençok gecikme derecesi %d"
 
 #: lib/src/vartest.c:281
 msgid ""
@@ -7802,7 +7802,7 @@ msgstr "gretl: eştümleşim sınaması"
 
 #: gui2/callbacks.c:431 gui2/selector.c:808
 msgid "gretl: VAR"
-msgstr "gretl: YÖB (VAR)"
+msgstr "gretl: VAR"
 
 #: gui2/callbacks.c:431 gui2/library.c:3116 gui2/library.c:4144
 #: gui2/selector.c:808
@@ -7811,7 +7811,7 @@ msgstr "gretl: YHDM (VECM)"
 
 #: gui2/callbacks.c:434 gui2/library.c:4132
 msgid "gretl: VAR lag selection"
-msgstr "gretl: YÖB (VAR) gecikme seçimi"
+msgstr "gretl: VAR gecikme seçimi"
 
 #: gui2/callbacks.c:463 gui2/callbacks.c:477 gui2/callbacks.c:480
 #: gui2/callbacks.c:637 gui2/callbacks.c:646 gui2/library.c:6756
@@ -9311,7 +9311,7 @@ msgstr "%2$s %1$d dönem hareketli ortalaması"
 #: gui2/filters.c:211
 #, c-format
 msgid "Residual from %d-period MA of %s"
-msgstr "%2$s %1$d dönem HO kalıntıları"
+msgstr "%2$s %1$d dönem MA kalıntıları"
 
 #: gui2/filters.c:216
 #, c-format
@@ -9321,7 +9321,7 @@ msgstr "%s üstel hareketli ortalaması (şu anki ağırlık %g)"
 #: gui2/filters.c:219
 #, c-format
 msgid "Residual from EMA of %s (current weight %g)"
-msgstr "%s üstel HO kalıntıları (şu anki ağırlık %g)"
+msgstr "%s üstel MA kalıntıları (şu anki ağırlık %g)"
 
 #: gui2/filters.c:224
 #, c-format
@@ -9372,7 +9372,7 @@ msgstr "Çıktıyı farklı kaydet"
 
 #: gui2/filters.c:345
 msgid "Save smoothed series as"
-msgstr "Düzleştirmeli seriyi farklı kaydet"
+msgstr "Düzgünleştirmeli seriyi farklı kaydet"
 
 #: gui2/filters.c:349
 msgid "Save cyclical component as"
@@ -9388,7 +9388,7 @@ msgstr "Üst sıklık sınırı:"
 
 #: gui2/filters.c:427
 msgid "The first EMA value is"
-msgstr "Birinci ÜHO değeri şu olsun:"
+msgstr "Birinci üstel MA değeri şu olsun:"
 
 #: gui2/filters.c:436
 msgid "the mean of the first n observations"
@@ -9484,7 +9484,7 @@ msgstr "Farkı alınan seriyi çiz"
 
 #: gui2/filters.c:793
 msgid "Graph original and smoothed series"
-msgstr "Özgün ve düzleştirmeli serileri çiz"
+msgstr "Özgün ve düzgünleştirmeli serileri çiz"
 
 #: gui2/filters.c:795
 msgid "Graph residual or cycle series"
@@ -9502,7 +9502,7 @@ msgstr "%s (özgün veriler)"
 #: gui2/filters.c:912 gui2/filters.c:938
 #, c-format
 msgid "%s (smoothed)"
-msgstr "%s (düzleştirmeli)"
+msgstr "%s (düzgünleştirmeli)"
 
 #: gui2/filters.c:923 gui2/filters.c:950
 #, c-format
@@ -9799,7 +9799,7 @@ msgstr "siyah-beyaz"
 
 #: gui2/gpt_control.c:3293 gui2/gpt_control.c:3564 gui2/gpt_control.c:3570
 msgid "Save as Windows metafile (EMF)..."
-msgstr "Windows metafile (EMF) olarak kaydet..."
+msgstr "Windows meta dosyası (EMF) olarak kaydet..."
 
 #: gui2/gpt_control.c:3300 gui2/gpt_control.c:3573 gui2/menustate.c:390
 #: gui2/menustate.c:432 gui2/menustate.c:462 gui2/menustate.c:516
@@ -11044,11 +11044,11 @@ msgstr "_Özbağlanımlı tahmin..."
 
 #: gui2/gretl.c:1553
 msgid "ARI_MA..."
-msgstr "ÖB_BHO (ARIMA)..."
+msgstr "ARI_MA..."
 
 #: gui2/gretl.c:1554
 msgid "_GARCH..."
-msgstr "_GÖBKF (GARCH)..."
+msgstr "_GARCH..."
 
 #: gui2/gretl.c:1555
 msgid "_Vector Autoregression..."
@@ -11056,7 +11056,7 @@ msgstr "_Yöney Özbağlanım (VAR)..."
 
 #: gui2/gretl.c:1556
 msgid "VAR _lag selection..."
-msgstr "_YÖB (VAR) gecikme seçimi..."
+msgstr "VAR _gecikme seçimi..."
 
 #: gui2/gretl.c:1557
 msgid "V_ECM..."
@@ -11603,7 +11603,7 @@ msgstr "_Durbin-Watson p-değeri"
 
 #: gui2/gui_utils.c:225 gui2/gui_utils.c:3994
 msgid "A_RCH"
-msgstr "_ÖBKF (ARCH)"
+msgstr "A_RCH"
 
 #: gui2/gui_utils.c:226
 msgid "_QLR test"
@@ -11894,7 +11894,7 @@ msgstr "Tau dizisi"
 
 #: gui2/gui_utils.c:3085
 msgid "gretl: VAR covariance matrix"
-msgstr "gretl: YÖB kovaryans dizeyi"
+msgstr "gretl: VAR kovaryans dizeyi"
 
 #: gui2/gui_utils.c:3088
 msgid "gretl: system covariance matrix"
@@ -11943,7 +11943,7 @@ msgstr "gretl: özilinti"
 #: gui2/gui_utils.c:3854 gui2/gui_utils.c:3875 gui2/library.c:2370
 #: gui2/library.c:2388
 msgid "gretl: ARCH test"
-msgstr "gretl: ÖBKF (ARCH) sınaması"
+msgstr "gretl: ARCH sınaması"
 
 #: gui2/gui_utils.c:3855 gui2/library.c:2863
 msgid "Lag order for test:"
@@ -11995,7 +11995,7 @@ msgstr "Birleşik EC çizimi"
 
 #: gui2/gui_utils.c:4099
 msgid "VAR inverse roots"
-msgstr "YÖB ters kökleri"
+msgstr "VAR ters kökleri"
 
 #: gui2/gui_utils.c:4107
 msgid "Impulse responses (combined)"
@@ -12488,7 +12488,7 @@ msgstr "gretl: ortak çarpan sınaması"
 
 #: gui2/library.c:2371
 msgid "Lag order for ARCH test:"
-msgstr "ÖBKF sınaması için gecikme derecesi:"
+msgstr "ARCH sınaması için gecikme derecesi:"
 
 #: gui2/library.c:2417
 msgid "gretl: panel model diagnostics"
@@ -12586,7 +12586,7 @@ msgstr "Üzgünüm, daha eklenmedi!"
 
 #: gui2/library.c:3712
 msgid "gretl: GARCH"
-msgstr "gretl: GÖBKF (GARCH)"
+msgstr "gretl: GARCH"
 
 #: gui2/library.c:3902
 msgid "loess"
@@ -12750,7 +12750,7 @@ msgstr "Seçili kesikli değişken yok"
 #: gui2/library.c:5750
 #, c-format
 msgid "residual from VAR system, equation %d"
-msgstr "YÖB sistem kalıntıları, denklem %d"
+msgstr "VAR sistem kalıntıları, denklem %d"
 
 #: gui2/library.c:5753
 #, c-format
@@ -12998,7 +12998,7 @@ msgstr "Dönemçizit"
 
 #: gui2/menustate.c:377
 msgid "ARIMA model"
-msgstr "ÖBTHO modeli"
+msgstr "ARIMA modeli"
 
 #: gui2/menustate.c:380
 msgid "Dickey-Fuller test"
@@ -13103,7 +13103,7 @@ msgstr "FSP (HSK)"
 
 #: gui2/model_table.c:408 gui2/selector.c:3533 plugin/addons-i18n.c:7
 msgid "ARCH"
-msgstr "ÖBKF (ARCH)"
+msgstr "ARCH"
 
 #: gui2/model_table.c:411
 msgid "MLE"
@@ -13370,7 +13370,7 @@ msgstr "Ardışık bağlanımlı model"
 
 #: gui2/selector.c:3539
 msgid "VAR lag selection"
-msgstr "YÖB gecikme seçimi"
+msgstr "VAR gecikme seçimi"
 
 #: gui2/selector.c:3545
 msgid "Quantile regression"
@@ -13406,7 +13406,7 @@ msgstr "İkinci bağımlı değişken"
 
 #: gui2/selector.c:3576
 msgid "List of AR lags"
-msgstr "ÖB gecikme listesi"
+msgstr "AR gecikme listesi"
 
 #: gui2/selector.c:3578
 msgid "Desired quantile(s)"
@@ -13498,11 +13498,11 @@ msgstr "ençok gecikme:"
 
 #: gui2/selector.c:4023
 msgid "ARCH order:"
-msgstr "ÖBKF derecesi:"
+msgstr "ARCH derecesi:"
 
 #: gui2/selector.c:4028 gui2/selector.c:4712
 msgid "AR order:"
-msgstr "ÖB derecesi:"
+msgstr "AR derecesi:"
 
 #: gui2/selector.c:4054
 msgid "Z-axis variable"
@@ -13570,11 +13570,11 @@ msgstr "\"Leave one out\" kullan"
 
 #: gui2/selector.c:4645
 msgid "GARCH p:"
-msgstr "GÖBKF p:"
+msgstr "GARCH p:"
 
 #: gui2/selector.c:4646
 msgid "ARCH q:"
-msgstr "ÖBKF q:"
+msgstr "ARCH q:"
 
 #: gui2/selector.c:4671
 msgid "Non-seasonal"
@@ -13590,7 +13590,7 @@ msgstr "Fark:"
 
 #: gui2/selector.c:4714
 msgid "MA order:"
-msgstr "HO derecesi:"
+msgstr "MA derecesi:"
 
 #: gui2/selector.c:4735 gui2/selector.c:4764
 msgid "or specific lags"
@@ -14422,7 +14422,7 @@ msgstr "Panel verileri için"
 
 #: gui2/settings.c:256
 msgid "For GARCH estimation"
-msgstr "GÖBKF tahmini için"
+msgstr "GARCH tahmini için"
 
 #: gui2/settings.c:258
 msgid "PDF manual preference"
@@ -15113,7 +15113,7 @@ msgstr "gig"
 
 #: plugin/addons-i18n.c:5
 msgid "APARCH"
-msgstr "BÜÖBKF (APARCH)"
+msgstr "APARCH"
 
 #: plugin/addons-i18n.c:6
 msgid "AR lags"
@@ -15137,7 +15137,7 @@ msgstr "Dağılım"
 
 #: plugin/addons-i18n.c:13
 msgid "EGARCH"
-msgstr "ÜGÖBKF (EGARCH)"
+msgstr "EGARCH"
 
 #: plugin/addons-i18n.c:15
 msgid "GED"
@@ -15161,7 +15161,7 @@ msgstr "Model türü"
 
 #: plugin/addons-i18n.c:20
 msgid "NARCH"
-msgstr "DÖBKF (NARCH)"
+msgstr "NARCH"
 
 #: plugin/addons-i18n.c:21
 msgid "Normal"
@@ -15189,11 +15189,11 @@ msgstr "Çarpık t"
 
 #: plugin/addons-i18n.c:27
 msgid "TARCH"
-msgstr "EÖBKF (TARCH)"
+msgstr "TARCH"
 
 #: plugin/addons-i18n.c:28
 msgid "Taylor/Schwert GARCH"
-msgstr "Taylor/Schwert GÖBKF (GARCH)"
+msgstr "Taylor/Schwert GARCH"
 
 #: plugin/addons-i18n.c:30
 msgid "Variance regressors"
@@ -15307,7 +15307,7 @@ msgstr "%s, tepki = %s, işlem = %s:"
 #: plugin/arma.c:1451 plugin/arma_init.c:347 plugin/arma_init.c:1141
 #: plugin/arma_init.c:1219 plugin/arma_init.c:1222
 msgid "ARMA initialization"
-msgstr "ÖBHO ilklendirmesi"
+msgstr "ARMA ilklendirmesi"
 
 #: plugin/arma.c:1452
 msgid "user-specified values"
@@ -15323,15 +15323,15 @@ msgstr "Hannan-Rissanen yöntemi"
 
 #: plugin/arma_init.c:1142
 msgid "small MA values"
-msgstr "küçük HO değerleri"
+msgstr "küçük MA değerleri"
 
 #: plugin/arma_init.c:1220
 msgid "using nonlinear AR model"
-msgstr "doğrusal-dışı ÖB modeli kullanıldı"
+msgstr "doğrusal-dışı AR modeli kullanıldı"
 
 #: plugin/arma_init.c:1223
 msgid "using linear AR model"
-msgstr "doğrusal ÖB modeli kullanıldı"
+msgstr "doğrusal AR modeli kullanıldı"
 
 #: plugin/arma_x12.c:910
 msgid "Failed to execute x12arima"
@@ -15476,12 +15476,12 @@ msgstr "Tahmin edilen Hurst üstü"
 
 #: plugin/garch.c:633
 msgid "GARCH: p > 0 and q = 0: the model is unidentified"
-msgstr "GÖBKF: p > 0 ve q = 0: model özdeşlemesiz"
+msgstr "GARCH: p > 0 ve q = 0: model özdeşlemesiz"
 
 #: plugin/garch.c:640
 #, c-format
 msgid "GARCH: p + q must not exceed %d"
-msgstr "GÖBKF: p + q %d değerini aşmamalı"
+msgstr "GARCH: p + q %d değerini aşmamalı"
 
 #: plugin/gnumeric_import.c:294
 #, c-format
@@ -16074,19 +16074,19 @@ msgstr "Mevsimsel farklar:"
 
 #: plugin/tramo_options.c:734
 msgid "Non-seasonal AR terms:"
-msgstr "Mevsimsel-dışı ÖB terimleri:"
+msgstr "Mevsimsel-dışı AR terimleri:"
 
 #: plugin/tramo_options.c:738
 msgid "Seasonal AR terms:"
-msgstr "Mevsimsel ÖB terimleri:"
+msgstr "Mevsimsel AR terimleri:"
 
 #: plugin/tramo_options.c:751
 msgid "Non-seasonal MA terms:"
-msgstr "Mevsimsel-dışı HO terimleri:"
+msgstr "Mevsimsel-dışı MA terimleri:"
 
 #: plugin/tramo_options.c:755
 msgid "Seasonal MA terms:"
-msgstr "Mevsimsel HO terimleri:"
+msgstr "Mevsimsel MA terimleri:"
 
 #: plugin/tramo-x12a.c:64
 #, c-format
