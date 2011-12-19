@@ -1412,17 +1412,17 @@ static char *classifier_check (int *list, const DATASET *dset,
 typedef struct mnl_info_ mnl_info;
 
 struct mnl_info_ {
+    int n;            /* number of categories (excluding base) */
+    int k;            /* number of coeffs per category */
+    int npar;         /* total number of parameters */
+    int T;            /* number of observations */
+    double *theta;    /* coeffs for BFGS */
     gretl_matrix_block *B;
     gretl_matrix *y;  /* dependent variable */
     gretl_matrix *X;  /* regressors */
     gretl_matrix *b;  /* coefficients, matrix form */
     gretl_matrix *Xb; /* coeffs times regressors */
     gretl_matrix *P;  /* probabilities */
-    double *theta;    /* coeffs for BFGS */
-    int n;            /* number of categories (excluding base) */
-    int k;            /* number of coeffs per category */
-    int npar;         /* total number of parameters */
-    int T;            /* number of observations */
 };
 
 static void mnl_info_destroy (mnl_info *mnl)
@@ -1440,6 +1440,9 @@ static mnl_info *mnl_info_new (int n, int k, int T)
     int i;
 
     if (mnl != NULL) {
+	mnl->n = n;
+	mnl->k = k;
+	mnl->T = T;
 	mnl->npar = k * n;
 	mnl->theta = malloc(mnl->npar * sizeof *mnl->theta);
 	if (mnl->theta == NULL) {
@@ -1455,14 +1458,11 @@ static mnl_info *mnl_info_new (int n, int k, int T)
 	if (mnl->B == NULL) {
 	    free(mnl->theta);
 	    free(mnl);
-	    return NULL;
+	    mnl = NULL;
 	} else {
 	    for (i=0; i<mnl->npar; i++) {
 		mnl->theta[i] = 0.0;
 	    }
-	    mnl->n = n;
-	    mnl->k = k;
-	    mnl->T = T;
 	}
     }
 
@@ -3030,7 +3030,9 @@ MODEL binary_probit (int *list, DATASET *dset,
 MODEL ordered_logit (int *list, DATASET *dset, 
 		     gretlopt opt, PRN *prn)
 {
-    return ordered_estimate(list, dset, LOGIT, opt, prn);
+    PRN *vprn = (opt & OPT_V)? prn : NULL;
+
+    return ordered_estimate(list, dset, LOGIT, opt, vprn);
 }
 
 /**
@@ -3051,7 +3053,9 @@ MODEL ordered_logit (int *list, DATASET *dset,
 MODEL ordered_probit (int *list, DATASET *dset, 
 		      gretlopt opt, PRN *prn)
 {
-    return ordered_estimate(list, dset, PROBIT, opt, prn);
+    PRN *vprn = (opt & OPT_V)? prn : NULL;
+
+    return ordered_estimate(list, dset, PROBIT, opt, vprn);
 }
 
 /**
@@ -3072,7 +3076,9 @@ MODEL ordered_probit (int *list, DATASET *dset,
 MODEL multinomial_logit (int *list, DATASET *dset, 
 			 gretlopt opt, PRN *prn)
 {
-    return mnl_model(list, dset, opt, prn);    
+    PRN *vprn = (opt & OPT_V)? prn : NULL;
+
+    return mnl_model(list, dset, opt, vprn);    
 }
 
 /**
