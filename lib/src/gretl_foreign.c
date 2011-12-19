@@ -487,7 +487,7 @@ static int write_data_for_octave (const DATASET *dset,
     int err;
 
     mdata = g_strdup_printf("%smdata.tmp", gretl_dotdir());
-    err = write_data(mdata, NULL, dset, OPT_M | OPT_F, 0);
+    err = write_data(mdata, NULL, dset, OPT_M, 0);
  
     if (err) {
 	gretl_errmsg_sprintf("write_data_for_octave: failed with err = %d\n", err);

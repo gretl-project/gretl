@@ -45,27 +45,18 @@
  */
 
 typedef enum {
-    GRETL_FMT_FLOAT = 1, /* single-precision binary data */
-    GRETL_FMT_DOUBLE,    /* double-precision binary data */
+    GRETL_FMT_GDT,       /* standard gretl XML data */
     GRETL_FMT_OCTAVE,    /* data in Gnu Octave format */
     GRETL_FMT_CSV,       /* data in Comma Separated Values format */
     GRETL_FMT_R,         /* data in Gnu R format */
     GRETL_FMT_GZIPPED,   /* gzipped data */
-    GRETL_FMT_TRAD,      /* traditional (ESL-style) data */
+    GRETL_FMT_ESL,       /* traditional ESL-style data */
     GRETL_FMT_DAT,       /* data in PcGive format */
     GRETL_FMT_DB,        /* gretl native database format */
     GRETL_FMT_JM         /* JMulti ascii data */
 } GretlDataFormat;
 
 #define IS_DATE_SEP(c) (c == '.' || c == ':' || c == ',')
-
-static int writelbl (const char *lblfile, const int *list, 
-		     const DATASET *dset);
-static int writehdr (const char *hdrfile, const int *list, 
-		     const DATASET *dset, int opt);
-
-static char STARTCOMMENT[3] = "(*";
-static char ENDCOMMENT[3] = "*)";
 
 #define PROGRESS_BAR "progress_bar"
 
@@ -99,7 +90,10 @@ double get_date_x (int pd, const char *obs)
    otherwise 1.
 */
 
-static int skipcomments (FILE *fp, const char *str)
+#define STARTCOMMENT "(*"
+#define ENDCOMMENT   "*)"
+
+static int skip_esl_comments (FILE *fp, const char *str)
 {
     char word[MAXLEN];  /* should be big enough to accommodate
 			   strings among the comments? */
@@ -116,43 +110,43 @@ static int skipcomments (FILE *fp, const char *str)
     return 1;
 }
 
-static int comment_lines (FILE *fp, char **pbuf)
+static char *get_esl_comment_lines (FILE *fp)
 {
-    char s[MAXLEN], *mybuf = NULL;
+    char s[MAXLEN], *buf = NULL;
     int count = 0, bigger = 1;
 
     if (fgets(s, sizeof s, fp) == NULL) {
-	return 0;
+	return NULL;
     }
 
     if (!strncmp(s, STARTCOMMENT, 2)) {
-	*pbuf = malloc(20 * MAXLEN);
+	buf = malloc(20 * MAXLEN);
 
-	if (*pbuf == NULL) {
-	    return -1;
+	if (buf == NULL) {
+	    return NULL;
 	}
 
-	**pbuf = '\0';
-
+	*buf = '\0';
 	while (fgets(s, sizeof s, fp)) {
 	    if (!strncmp(s, ENDCOMMENT, 2)) {
 		break;
 	    }
 	    if (++count > 20 * bigger) {
 		size_t bufsize = 20 * MAXLEN * ++bigger;
+		char *tmp = realloc(buf, bufsize);
 
-		mybuf = realloc(*pbuf, bufsize);
-		if (mybuf == NULL) {
-		    return -1;
+		if (tmp == NULL) {
+		    free(buf);
+		    return NULL;
 		} else {
-		    *pbuf = mybuf;
+		    buf = tmp;
 		}
 	    }
-	    strcat(*pbuf, s);
+	    strcat(buf, s);
 	} 
     }
 
-    return count;
+    return buf;
 }
 
 static void eatspace (FILE *fp)
@@ -168,8 +162,7 @@ static void eatspace (FILE *fp)
     }
 }
 
-static int readdata (FILE *fp, const DATASET *dset,
-		     int binary, int old_byvar)
+static int read_esl_data (FILE *fp, const DATASET *dset, int byvar)
 {
     int i, t, n = dset->n;
     char c, marker[OBSLEN];
@@ -177,43 +170,8 @@ static int readdata (FILE *fp, const DATASET *dset,
 
     gretl_error_clear();
 
-    if (binary == 1) { 
-	/* single-precision binary data */
-	float x;
-
-	for (i=1; i<dset->v; i++) {
-	    for (t=0; t<n; t++) {
-		if (!fread(&x, sizeof x, 1, fp)) {
-		    gretl_errmsg_sprintf(_("WARNING: binary data read error at "
-					   "var %d"), i);
-		    return 1;
-		}
-		if (x == -999.0) {
-		    dset->Z[i][t] = NADBL;
-		} else {
-		    dset->Z[i][t] = (double) x;
-		}
-	    }
-	}
-    } else if (binary == 2) { 
-	/* double-precision binary data */
-	double x;
-
-	for (i=1; i<dset->v; i++) {
-	    for (t=0; t<n; t++) {
-		if (!fread(&x, sizeof x, 1, fp)) {
-		    gretl_errmsg_sprintf(_("WARNING: binary data read error at var %d"), i);
-		    return 1;
-		}
-		if (x == -999.0) {
-		    dset->Z[i][t] = NADBL;
-		} else {
-		    dset->Z[i][t] = x;
-		}
-	    }
-	}
-    } else if (old_byvar) {
-	/* ascii data by variable */
+    if (byvar) {
+	/* data by variable */
 	for (i=1; i<dset->v; i++) {
 	    for (t=0; t<n && !err; t++) {
 		if ((fscanf(fp, "%lf", &dset->Z[i][t])) != 1) {
@@ -228,7 +186,7 @@ static int readdata (FILE *fp, const DATASET *dset,
 	    }
 	}	       
     } else { 
-	/* ascii data by observation */
+	/* data by observation */
 	char sformat[8];
 
 	sprintf(sformat, "%%%ds", OBSLEN - 1);
@@ -266,102 +224,6 @@ static int readdata (FILE *fp, const DATASET *dset,
 		} 
 	    }
 	}
-
-	gretl_pop_c_numeric_locale();
-    }
-
-    return err;
-}
-
-static int gz_readdata (gzFile fz, DATASET *dset, int binary)
-{
-    int i, t, n = dset->n;
-    int err = 0;
-    
-    gretl_error_clear();
-
-    if (binary == 1) { 
-	/* single-precision binary data */
-	float xx;
-
-	for (i=1; i<dset->v; i++) {
-	    for (t=0; t<n; t++) {
-		if (!gzread(fz, &xx, sizeof xx)) {
-		    gretl_errmsg_sprintf(_("WARNING: binary data read error at "
-					   "var %d"), i);
-		    return 1;
-		}
-		dset->Z[i][t] = (double) xx;
-	    }
-	}
-    } else if (binary == 2) { 
-	/* double-precision binary data */
-	for (i=1; i<dset->v; i++) {
-	    if (!gzread(fz, &dset->Z[i][0], n * sizeof(double))) {
-		gretl_errmsg_sprintf(_("WARNING: binary data read error at var %d"), i);
-		return 1;
-	    }
-	}
-    } else { 
-	/* ascii data */
-	char *line, numstr[24], sformat[8];
-	int llen = dset->v * 32;
-	size_t offset;
-
-	line = malloc(llen);
-	if (line == NULL) {
-	    return E_ALLOC;
-	}
-
-	sprintf(sformat, "%%%ds", OBSLEN - 1);
-
-	gretl_push_c_numeric_locale();
-
-	for (t=0; t<n; t++) {
-	    offset = 0L;
-	    if (!gzgets(fz, line, llen - 1)) {
-		gretl_errmsg_sprintf(_("WARNING: ascii data read error at "
-				       "obs %d"), t + 1);
-		err = 1;
-		break;
-	    }
-
-	    chopstr(line);
-	    compress_spaces(line);
-	    if (line[0] == '#') {
-		t--;
-		continue;
-	    }
-
-	    if (dset->markers) {
-		if (sscanf(line, sformat, dset->S[t]) != 1) {
-		    gretl_errmsg_sprintf(_("WARNING: failed to read case marker for "
-					   "obs %d"), t + 1);
-		    err = 1;
-		    break;
-		}
-		dset->S[t][OBSLEN-1] = 0;
-		offset += strlen(dset->S[t]) + 1;
-	    }
-
-	    for (i=1; i<dset->v; i++) {
-		if (sscanf(line + offset, "%23s", numstr) != 1) {
-		    gretl_errmsg_sprintf(_("WARNING: ascii data read error at var %d, "
-					   "obs %d"), i, t + 1);
-		    err = 1;
-		    break;
-		}
-		numstr[23] = 0;
-		dset->Z[i][t] = atof(numstr);
-		if (i < dset->v - 1) {
-		    offset += strlen(numstr) + 1;
-		}
-	    }
-
-	    if (err) break;
-	}
-
-	free(line);
 
 	gretl_pop_c_numeric_locale();
     }
@@ -433,12 +295,12 @@ int check_varname (const char *varname)
     return ret;
 }   
 
-static int readhdr (const char *hdrfile, DATASET *dset, 
-		    int *binary, int *old_byvar)
+static int read_esl_hdr (const char *hdrfile, DATASET *dset, int *byvar)
 {
     FILE *fp;
-    int n, i = 0, panel = 0, descrip = 0;
     char str[MAXLEN], byobs[6], option[8];
+    int n, i, descrip = 0;
+    int err = 0;
 
     gretl_error_clear();
 
@@ -449,9 +311,9 @@ static int readhdr (const char *hdrfile, DATASET *dset,
     }
 
     fscanf(fp, "%s", str);
-    i += skipcomments(fp, str); 
+    i = skip_esl_comments(fp, str); 
 
-    /* find number of variables */
+    /* find the number of variables */
 
     while (1) {
         if (fscanf(fp, "%s", str) != 1) {
@@ -466,48 +328,48 @@ static int readhdr (const char *hdrfile, DATASET *dset,
 	if (str[n-1] == ';') {
 	    if (n > 1) i++;
 	    break;
-	} else i++;
+	} else {
+	    i++;
+	}
     }
 
     dset->v = i + 1;
-    fclose(fp);
 
     if (dataset_allocate_varnames(dset)) {
+	fclose(fp);
 	return E_ALLOC;
     }
 
     i = 1;
-    fp = gretl_fopen(hdrfile, "r");
+    rewind(fp);
 
-    str[0] = 0;
+    *str = '\0';
     fscanf(fp, "%s", str);
-    if (skipcomments(fp, str)) {
+    if (skip_esl_comments(fp, str)) {
         safecpy(dset->varname[i], str, VNAMELEN - 1);
-	if (check_varname(dset->varname[i++])) {
-	    goto varname_error;
-	}
+	err = check_varname(dset->varname[i++]);
     } else {
 	descrip = 1; /* comments were found */
     }
 
-    while (1) {
+    while (!err) {
         fscanf(fp, "%s", str);
 	n = strlen(str);
 	if (str[n-1] != ';') {
             safecpy(dset->varname[i], str, VNAMELEN - 1);
-	    if (check_varname(dset->varname[i++])) {
-		goto varname_error;
-	    }
+	    err = check_varname(dset->varname[i++]);
         } else {
 	    if (n > 1) {
 		safecpy(dset->varname[i], str, n-1);
 		dset->varname[i][n] = '\0';
-		if (check_varname(dset->varname[i])) {
-		    goto varname_error; 
-		}
+		err = check_varname(dset->varname[i]);
 	    }
 	    break;
 	}
+    }
+
+    if (err) {
+	goto bailout;
     }
 
     fscanf(fp, "%d", &dset->pd);
@@ -519,81 +381,56 @@ static int readhdr (const char *hdrfile, DATASET *dset,
 
     dset->sd0 = get_date_x(dset->pd, dset->stobs);
 
-    if (dset->sd0 >= 2.0) {
-        dset->structure = TIME_SERIES; /* actual time series? */
-    } else if (dset->sd0 > 1.0) {
-	dset->structure = STACKED_TIME_SERIES; /* panel data? */
-    } else {
-	dset->structure = CROSS_SECTION;
-    }
+    if (dset->sd0 >= 1.0) {
+	if (dset->pd == 1 || dset->pd == 4 || dset->pd == 12 ||
+	    dset->pd == 24) {
+	    dset->structure = TIME_SERIES;
+	} else {
+	    dset->structure = SPECIAL_TIME_SERIES;
+	}
+    } 
 
     dset->n = -1;
     dset->n = dateton(dset->endobs, dset) + 1;
 
-    *binary = 0;
     dset->markers = NO_MARKERS;
 
     n = fscanf(fp, "%5s %7s", byobs, option);
 
     if (n == 1 && strcmp(byobs, "BYVAR") == 0) {
-	*old_byvar = 1;
+	*byvar = 1;
     } else if (n == 2) {
-	if (strcmp(option, "SINGLE") == 0) {
-	    *binary = 1;
-	} else if (strcmp(option, "BINARY") == 0) {
-	    *binary = 2;
+	if (!strcmp(option, "SINGLE") || !strcmp(option, "BINARY")) {
+	    gretl_errmsg_set("Old-style binary datafile, not supported");
+	    err = E_DATA;
+	    goto bailout;
 	} else if (strcmp(option, "MARKERS") == 0) {
 	    dset->markers = 1;
-	} else if (strcmp(option, "PANEL2") == 0) {
-	    panel = 1;
-	    dset->structure = STACKED_TIME_SERIES;
-	} else if (strcmp(option, "PANEL3") == 0) {
-	    panel = 1;
-	    dset->structure = STACKED_CROSS_SECTION;
-	}
+	} 
     } 
-
-    if (!panel && fscanf(fp, "%6s", option) == 1) {
-	if (strcmp(option, "PANEL2") == 0) {
-	    dset->structure = STACKED_TIME_SERIES;
-	} else if (strcmp(option, "PANEL3") == 0) {
-	    dset->structure = STACKED_CROSS_SECTION;
-	}
-    }
-
-    if (fp != NULL) {
-	fclose(fp);
-    }
 
     /* last pass, to pick up data description */
-    dset->descrip = NULL;
     if (descrip) {
-	char *dbuf = NULL;
-	int lines;
+	char *dbuf;
 
-	fp = gretl_fopen(hdrfile, "r");
-	if (fp == NULL) return 0;
-	if ((lines = comment_lines(fp, &dbuf)) > 0) {
+	rewind(fp);
+	dbuf = get_esl_comment_lines(fp);
+	if (dbuf != NULL) {
 	    delchar('\r', dbuf);
-	    dset->descrip = malloc(strlen(dbuf) + 1);
-	    if (dset->descrip != NULL) {
-		strcpy(dset->descrip, dbuf);
-	    }
+	    dset->descrip = gretl_strdup(dbuf);
 	    free(dbuf);
-	} else if (lines < 0) {
-	    fputs(I_("Failed to store data comments\n"), stderr);
 	}
-	fclose(fp);
     } 
 
-    return 0;
-
-    varname_error:
+ bailout:
 
     fclose(fp);
-    clear_datainfo(dset, CLEAR_FULL);
 
-    return E_DATA;
+    if (err) {
+	clear_datainfo(dset, CLEAR_FULL);
+    }
+
+    return err;
 }
 
 static int bad_date_string (const char *s)
@@ -1057,26 +894,55 @@ int get_info (const char *hdrfile, PRN *prn)
     return 0;
 }
 
-static int writehdr (const char *hdrfile, const int *list, 
-		     const DATASET *dset, int opt)
+static int write_esl_lbl (const char *lblfile, const int *list, 
+			  const DATASET *dset)
+{
+    int i, vi, labels = 0;
+    int err = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	vi = list[i];
+	if (vi != 0 && strlen(VARLABEL(dset, vi)) > 2) {
+	    labels = 1;
+	    break;
+	}
+    }
+
+    if (labels) {
+	FILE *fp = gretl_fopen(lblfile, "w");
+
+	if (fp == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    /* spit out varnames and labels */
+	    for (i=1; i<=list[0]; i++) {
+		vi = list[i];
+		if (vi != 0 && strlen(VARLABEL(dset, vi)) > 2) {
+		    fprintf(fp, "%s %s\n", dset->varname[vi],
+			    VARLABEL(dset, vi));
+		}
+	    }
+	    fclose(fp);
+	}
+    }
+
+    return err;
+}
+
+static int write_esl_hdr (const char *hdrfile, const int *list, 
+			  const DATASET *dset, int opt)
 {
     FILE *fp;
     char startdate[OBSLEN], enddate[OBSLEN];
-    int i, binary = 0;
+    int i;
 
-    if (opt == GRETL_FMT_FLOAT) {
-	binary = 1;
-    } else if (opt == GRETL_FMT_DOUBLE) {
-	binary = 2;
+    fp = gretl_fopen(hdrfile, "w");
+    if (fp == NULL) {
+	return E_FOPEN;
     }
 
     ntodate(startdate, dset->t1, dset);
     ntodate(enddate, dset->t2, dset);
-
-    fp = gretl_fopen(hdrfile, "w");
-    if (fp == NULL) {
-	return 1;
-    }
 
     /* write description of data set, if any */
     if (dset->descrip != NULL) {
@@ -1088,7 +954,7 @@ static int writehdr (const char *hdrfile, const int *list,
 	}
     }
 
-    /* then list of variables */
+    /* then the list of variables */
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == 0) {
 	    continue;
@@ -1101,14 +967,12 @@ static int writehdr (const char *hdrfile, const int *list,
   
     fputs(";\n", fp);
 
-    /* then obs line */
+    /* then the obs line */
     fprintf(fp, "%d %s %s\n", dset->pd, startdate, enddate);
     
     /* and flags as required */
-    if (binary == 1) {
-	fputs("BYVAR\nSINGLE\n", fp);
-    } else if (binary == 2) {
-	fputs("BYVAR\nBINARY\n", fp);
+    if (opt & OPT_V) {
+	fputs("BYVAR\n", fp);
     } else { 
 	fputs("BYOBS\n", fp);
 	if (dset->markers) {
@@ -1204,7 +1068,7 @@ format_from_opt_or_name (gretlopt opt, const char *fname,
     GretlDataFormat fmt = 0;
     
     if (opt & OPT_T) {
-	fmt = GRETL_FMT_TRAD;
+	fmt = GRETL_FMT_ESL;
     } else if (opt & OPT_M) {
 	fmt = GRETL_FMT_OCTAVE;
     } else if (opt & OPT_R) {
@@ -1254,6 +1118,8 @@ static void date_maj_min (int t, const DATASET *dset, int *maj, int *min)
     }
 }
 
+#define NO_PMAX(p,k) (p == NULL || p[k-1] == PMAX_NOT_AVAILABLE)
+
 static void csv_data_out (const DATASET *dset, const int *list,
 			  int print_obs, int digits, int *pmax, 
 			  char decpoint, char delim, FILE *fp)
@@ -1289,7 +1155,7 @@ static void csv_data_out (const DATASET *dset, const int *list,
 	    if (na(xt)) {
 		fputs(NA, fp);
 	    } else {
-		if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
+		if (NO_PMAX(pmax, i)) {
 		    sprintf(tmp, "%.*g", digits, xt);
 		} else {
 		    sprintf(tmp, "%.*f", pmax[i-1], xt);
@@ -1322,7 +1188,7 @@ static void R_data_out (const DATASET *dset, const int *list,
 	    xt = dset->Z[list[i]][t];
 	    if (na(xt)) {
 		fputs("NA", fp);
-	    } else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
+	    } else if (NO_PMAX(pmax, i)) {
 		fprintf(fp, "%.*g", digits, xt);
 	    } else {
 		fprintf(fp, "%.*f", pmax[i-1], xt);
@@ -1389,10 +1255,9 @@ int write_data (const char *fname, int *list, const DATASET *dset,
     fmt = format_from_opt_or_name(opt, fname, &delim);
     fname = gretl_maybe_switch_dir(fname);
 
-    if (fmt == 0 || fmt == GRETL_FMT_GZIPPED) {
-	err = gretl_write_gdt(fname, list, dset, 
-			      (fmt == GRETL_FMT_GZIPPED)? OPT_Z : OPT_NONE,
-			      progress);
+    if (fmt == GRETL_FMT_GDT || fmt == GRETL_FMT_GZIPPED) {
+	/* write standard XML .gdt file */
+	err = gretl_write_gdt(fname, list, dset, opt, progress);
 	goto write_exit;
     }
 
@@ -1403,23 +1268,16 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 
     strcpy(datfile, fname);
 
-    /* write header and label files if not exporting to other formats */
-    if (fmt != GRETL_FMT_R && fmt != GRETL_FMT_CSV && 
-	fmt != GRETL_FMT_OCTAVE && fmt != GRETL_FMT_DAT && 
-	fmt != GRETL_FMT_JM) {
-	if (!has_suffix(datfile, ".gz")) {
-	    switch_ext(hdrfile, datfile, "hdr");
-	    switch_ext(lblfile, datfile, "lbl");
-	} else {
-	    gz_switch_ext(hdrfile, datfile, "hdr");
-	    gz_switch_ext(lblfile, datfile, "lbl");
-	}
-	if (writehdr(hdrfile, list, dset, fmt)) {
+    /* write header and label files if writing in old ESL format */
+    if (fmt == GRETL_FMT_ESL) {
+	switch_ext(hdrfile, datfile, "hdr");
+	switch_ext(lblfile, datfile, "lbl");
+	if (write_esl_hdr(hdrfile, list, dset, fmt)) {
 	    fputs(I_("Write of header file failed"), stderr);
 	    err = E_FOPEN;
 	    goto write_exit;
 	}
-	if (writelbl(lblfile, list, dset)) {
+	if (write_esl_lbl(lblfile, list, dset)) {
 	    fputs(I_("Write of labels file failed"), stderr);
 	    err = E_FOPEN;
 	    goto write_exit;
@@ -1433,32 +1291,19 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 	goto write_exit;
     }
 
-    if (fmt == GRETL_FMT_CSV || fmt == GRETL_FMT_OCTAVE || 
-	GRETL_FMT_R || fmt == GRETL_FMT_TRAD || 
-	fmt == GRETL_FMT_DAT || fmt == GRETL_FMT_JM) { 
-	/* an ASCII variant of some sort */
-	csv_digits = libset_get_int(CSV_DIGITS);
+    csv_digits = libset_get_int(CSV_DIGITS);
 
+    if (csv_digits == 0) {
+	/* the user has not overriden the default */
 	pmax = malloc(l0 * sizeof *pmax);
-	if (pmax == NULL) {
-	    fclose(fp);
-	    err = E_ALLOC;
-	    goto write_exit;
-	}	
-
-	if (csv_digits == 0) {
-	    /* the user has not overriden the default */
-	    for (i=1; i<=l0; i++) {
-		v = list[i];
-		pmax[i-1] = get_precision(&dset->Z[v][dset->t1], tsamp, 
-					  DEFAULT_CSV_DIGITS);
-	    }
-	    csv_digits = DEFAULT_CSV_DIGITS;
-	} else {
+	if (pmax != NULL) {
 	    for (i=0; i<l0; i++) {
-		pmax[i] = PMAX_NOT_AVAILABLE;
+		v = list[i+1];
+		pmax[i] = get_precision(&dset->Z[v][dset->t1], tsamp, 
+					DEFAULT_CSV_DIGITS);
 	    }
 	}
+	csv_digits = DEFAULT_CSV_DIGITS;
     }
 
     if (fmt != GRETL_FMT_CSV) {
@@ -1467,7 +1312,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 	pop_locale = 1;
     }
 
-    if (fmt == GRETL_FMT_TRAD) { 
+    if (fmt == GRETL_FMT_ESL) { 
 	/* plain ASCII */
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (dataset_has_markers(dset)) {
@@ -1477,7 +1322,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 		v = list[i];
 		if (na(dset->Z[v][t])) {
 		    fprintf(fp, "-999 ");
-		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
+		} else if (NO_PMAX(pmax, i)) {
 		    fprintf(fp, "%.*g ", csv_digits, dset->Z[v][t]);
 		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], dset->Z[v][t]);
@@ -1548,7 +1393,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 		xx = dset->Z[v][t];
 		if (na(xx)) {
 		    fputs("NaN ", fp);
-		} else 	if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
+		} else 	if (NO_PMAX(pmax, i)) {
 		    fprintf(fp, "%.15g ", xx);
 		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], xx); 
@@ -1583,7 +1428,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 		xx = dset->Z[v][t];
 		if (na(xx)) {
 		    fprintf(fp, "-9999.99");
-		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
+		} else if (NO_PMAX(pmax, i)) {
 		    fprintf(fp, "%.*g", csv_digits, xx);
 		} else {
 		    fprintf(fp, "%.*f", pmax[i-1], xx);
@@ -1620,7 +1465,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 		v = list[i];
 		if (na(dset->Z[v][t])) {
 		    fputs("NaN ", fp);
-		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
+		} else if (NO_PMAX(pmax, i)) {
 		    fprintf(fp, "%.*g ", csv_digits, dset->Z[v][t]);
 		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], dset->Z[v][t]);
@@ -1672,7 +1517,7 @@ static int no_case_series_index (const DATASET *dset,
 
 /* read data "labels" from file */
 
-static int readlbl (const char *lblfile, DATASET *dset)
+static void read_esl_labels (const char *lblfile, DATASET *dset)
 {
     FILE * fp;
     char line[MAXLEN], varname[VNAMELEN];
@@ -1683,7 +1528,8 @@ static int readlbl (const char *lblfile, DATASET *dset)
 
     fp = gretl_fopen(lblfile, "r");
     if (fp == NULL) {
-	return 0;
+	/* doesn't exist, that's OK */
+	return;
     }
 
     while (fgets(line, MAXLEN, fp)) {
@@ -1707,46 +1553,9 @@ static int readlbl (const char *lblfile, DATASET *dset)
     }
 
     fclose(fp);
-
-    return 0;
 }
 
-static int writelbl (const char *lblfile, const int *list, 
-		     const DATASET *dset)
-{
-    FILE *fp;
-    int i, lblcount = 0;
 
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == 0) {
-	    continue;
-	}
-	if (strlen(VARLABEL(dset, list[i])) > 2) {
-	    lblcount++;
-	    break;
-	}
-    }
-
-    if (lblcount == 0) return 0;
-
-    fp = gretl_fopen(lblfile, "w");
-    if (fp == NULL) return 1;
-
-    /* spit out varnames and labels (if filled out) */
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == 0) {
-	    continue;
-	}
-	if (strlen(VARLABEL(dset, list[i])) > 2) {
-	    fprintf(fp, "%s %s\n", dset->varname[list[i]],
-		    VARLABEL(dset, list[i]));
-	}
-    }
-    
-    if (fp != NULL) fclose(fp);
-
-    return 0;
-}
 
 /**
  * is_gzipped:
@@ -1782,46 +1591,80 @@ int is_gzipped (const char *fname)
     return gz;
 }
 
-/**
- * gz_switch_ext:
- * @targ: target or "output" filename (must be pre-allocated).
- * @src: source or "input" filename.
- * @ext: suffix to add to filename.
- * 
- * Copy @src filename to @targ, without the existing suffix (if any),
- * and adding the supplied extension or suffix.
- * 
- */
-
-void gz_switch_ext (char *targ, char *src, char *ext)
+static int import_esl (const char *datafile, char *auxfile,
+		       DATASET *dset, gretlopt opt, PRN *prn)
 {
-    size_t i = dotpos(src), j = slashpos(src), k;
+    DATASET *tmpset;
+    int byvar = 0;
+    int err = 0;
 
-    strcpy(targ, src);
-    targ[i] = '\0';
+    tmpset = datainfo_new();
+    if (tmpset == NULL) {
+	return E_ALLOC;
+    }
+	
+    /* try reading the header file */
+    err = read_esl_hdr(auxfile, tmpset, &byvar);
+    if (err) {
+	free(tmpset);
+	return err;
+    } 
 
-    k = dotpos(targ);
-    if (j > 0 && k < strlen(targ) && k > j) {
-	i = k;
+    pprintf(prn, I_("\nReading header file %s\n"), auxfile);
+
+    /* allocate data storage */
+    err = allocate_Z(tmpset);
+
+    if (!err && tmpset->markers) {
+	/* deal with case where first column of the data file contains
+	   "marker" strings */
+	err = dataset_allocate_obs_markers(tmpset);
     }
 
-    targ[i] = '.';
-    targ[i + 1] = '\0';
-    strcat(targ, ext);
-}
+    if (!err) {
+	/* read the actual data */
+	FILE *fp = gretl_fopen(datafile, "r");
 
-static void try_gdt (char *fname)
-{
-    char *suff;
-
-    if (fname != NULL) {
-	suff = strrchr(fname, '.');
-	if (suff != NULL && !strcmp(suff, ".dat")) {
-	    strcpy(suff, ".gdt");
+	if (fp == NULL) {
+	    err = E_FOPEN;
 	} else {
-	    strcat(fname, ".gdt");
+	    err = read_esl_data(fp, tmpset, byvar); 
+	    fclose(fp);
 	}
     }
+
+    if (!err) {
+	/* print out basic info from the files read */
+	pprintf(prn, I_("periodicity: %d, maxobs: %d\n"
+			"observations range: %s-%s\n"), tmpset->pd, tmpset->n,
+		tmpset->stobs, tmpset->endobs);
+
+	pputs(prn, I_("\nReading "));
+	pputs(prn, dataset_is_time_series(tmpset) ? I_("time-series") : 
+	      I_("cross-sectional"));
+	pputs(prn, I_(" datafile"));
+	if (strlen(datafile) > 40) {
+	    pputc(prn, '\n');
+	}
+	pprintf(prn, " %s\n\n", datafile);
+
+	/* Set sample range to entire length of dataset by default */
+	tmpset->t1 = 0; 
+	tmpset->t2 = tmpset->n - 1;
+
+	switch_ext(auxfile, datafile, "lbl");
+	read_esl_labels(auxfile, tmpset);
+    }
+
+    if (!err) {
+	err = merge_or_replace_data(dset, &tmpset, opt, prn);
+    }
+
+    if (err) {
+	destroy_dataset(tmpset);
+    }
+
+    return err;
 }
 
 /**
@@ -1839,7 +1682,7 @@ static void try_gdt (char *fname)
  * path-searching on @fname, and will try adding the .gdt
  * extension to @fname if this is not given.
  *
- * A more straightforward function for reading a current
+ * Note that a more straightforward function for reading a current
  * gretl XML data file (.gdt), given the correct path,
  * is gretl_read_gdt().
  *
@@ -1855,170 +1698,54 @@ static void try_gdt (char *fname)
 int gretl_get_data (char *fname, DATASET *dset, 
 		    gretlopt opt, PRN *prn) 
 {
-    DATASET *tmpset = NULL;
-    FILE *dat = NULL;
-    gzFile fz = NULL;
-    char hdrfile[MAXLEN], lblfile[MAXLEN];
-    int gdtsuff, gzsuff = 0;
-    int binary = 0, old_byvar = 0;
+    gretlopt append_opt = OPT_NONE;
+    int gdtsuff;
     int err = 0;
 
     gretl_error_clear();
-
-    *hdrfile = '\0';
-
     gdtsuff = has_suffix(fname, ".gdt");
-    if (!gdtsuff) {
-	gzsuff = has_suffix(fname, ".gz");
-    }
 
 #if 0
-    fprintf(stderr, "gretl_get_data (1): calling addpath\n");
+    fprintf(stderr, "gretl_get_data: calling addpath\n");
 #endif
 
-    if (gretl_addpath(fname, 0) == NULL) { 
-	/* not found yet */
+    if (gretl_addpath(fname, 0) == NULL && !gdtsuff) { 
+	/* not found: try appending the .gdt suffix? */
 	char tryfile[MAXLEN];
-	int found = 0;
 
-	if (!gdtsuff) {
-	    /* try using the .gdt suffix? */
-	    *tryfile = '\0';
-	    strncat(tryfile, fname, MAXLEN-1);
-	    try_gdt(tryfile); 
-	    found = (gretl_addpath(tryfile, 0) != NULL);
-	    if (found) {
-		gdtsuff = 1;
-	    }
-	}
-
-	/* or maybe the file is gzipped but lacks a .gz extension?
-	   (backward compatibility) 
-	*/
-	if (!found && !gdtsuff && !gzsuff) { 
-	    sprintf(tryfile, "%s.gz", fname);
-	    if (gretl_addpath(tryfile, 0) != NULL) {
-		gzsuff = 1;
-		found = 1;
-	    }
-	}
-
-	if (!found) {
+	*tryfile = '\0';
+	strncat(tryfile, fname, MAXLEN-5);
+	strncat(tryfile, ".gdt", 4);
+	if (gretl_addpath(tryfile, 0) != NULL) {
+	    strcpy(fname, tryfile);
+	    gdtsuff = 1;
+	} else {
 	    gretl_errmsg_sprintf(_("Couldn't open file %s"), fname);
 	    return E_FOPEN;
-	} else {
-	    strcpy(fname, tryfile);
-	}
+	} 
     }
 
-    /* catch XML files that have strayed in here? */
+    if (opt & OPT_T) {
+	append_opt = OPT_T;
+    }
+
     if (gdtsuff && gretl_is_xml_file(fname)) {
-	return gretl_read_gdt(fname, dset, OPT_NONE, prn);
-    }
+	/* specific processing for XML .gdt datafiles  */
+	err = gretl_read_gdt(fname, dset, append_opt, prn);
+    } else {
+	char hdrfile[MAXLEN];
 
-    tmpset = datainfo_new();
-    if (tmpset == NULL) {
-	return E_ALLOC;
-    }
-	
-    if (!gzsuff) {
+	/* are we looking at an ESL data file? */
 	switch_ext(hdrfile, fname, "hdr");
-	switch_ext(lblfile, fname, "lbl");
-    } else {
-	gz_switch_ext(hdrfile, fname, "hdr");
-	gz_switch_ext(lblfile, fname, "lbl");
-    }
+	err = gretl_test_fopen(hdrfile, "r");
 
-    /* try reading data header file */
-    err = readhdr(hdrfile, tmpset, &binary, &old_byvar);
-    if (err) {
-	free(tmpset);
-    }
-
-    if (err == E_FOPEN) {
-	/* no header file, so maybe it's just an ascii datafile */
-	return import_csv(fname, dset, OPT_NONE, prn);
-    } else if (err) {
-	return err;
-    } else { 
-	pprintf(prn, I_("\nReading header file %s\n"), hdrfile);
-    }
-
-    /* deal with case where first col. of data file contains
-       "marker" strings */
-    tmpset->S = NULL;
-    if (tmpset->markers && dataset_allocate_obs_markers(tmpset)) {
-	return E_ALLOC; 
-    }
-    
-    /* allocate dataset */
-    if (allocate_Z(tmpset)) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    /* Invoke data (Z) reading function */
-    if (gzsuff) {
-	fz = gretl_gzopen(fname, "rb");
-	if (fz == NULL) {
-	    err = E_FOPEN;
-	    goto bailout;
-	}
-    } else {
-	if (binary) {
-	    dat = gretl_fopen(fname, "rb");
+	if (err) {
+	    /* no header file, so try a "csv"-type import */
+	    err = import_csv(fname, dset, append_opt, prn);
 	} else {
-	    dat = gretl_fopen(fname, "r");
+	    /* treat as ESL data */
+	    err = import_esl(fname, hdrfile, dset, append_opt, prn);
 	}
-	if (dat == NULL) {
-	    err = E_FOPEN;
-	    goto bailout;
-	}
-    }
-
-    if (gzsuff) {
-	err = gz_readdata(fz, tmpset, binary); 
-	gzclose(fz);
-    } else {
-	err = readdata(dat, tmpset, binary, old_byvar); 
-	fclose(dat);
-    }
-
-    if (err) goto bailout;
-
-    if (tmpset->structure == STACKED_CROSS_SECTION) {
-	err = switch_panel_orientation(tmpset);
-    }
-
-    if (err) goto bailout;
-
-    /* print out basic info from the files read */
-    pprintf(prn, I_("periodicity: %d, maxobs: %d\n"
-	   "observations range: %s-%s\n"), tmpset->pd, tmpset->n,
-	   tmpset->stobs, tmpset->endobs);
-
-    pputs(prn, I_("\nReading "));
-    pputs(prn, (tmpset->structure == TIME_SERIES) ? 
-	    I_("time-series") : _("cross-sectional"));
-    pputs(prn, I_(" datafile"));
-    if (strlen(fname) > 40) {
-	pputc(prn, '\n');
-    }
-    pprintf(prn, " %s\n\n", fname);
-
-    /* Set sample range to entire length of dataset by default */
-    tmpset->t1 = 0; 
-    tmpset->t2 = tmpset->n - 1;
-
-    err = readlbl(lblfile, tmpset);
-    if (err) goto bailout;
-
-    err = merge_or_replace_data(dset, &tmpset, opt, prn);
-
- bailout:
-
-    if (err && tmpset != NULL) {
-	destroy_dataset(tmpset);
     }
 
     return err;
