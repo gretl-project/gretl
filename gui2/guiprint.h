@@ -64,15 +64,16 @@ int text_equation_ok (const MODEL *pmod);
 int text_print_x_y_fitted (int vx, int vy, const double *f, 
 			   const DATASET *dset, PRN *prn);
 
-int csv_to_clipboard (void);
+int csv_to_clipboard (GtkWidget *parent);
 
 int csv_selected_to_clipboard (void);
 
 int copy_vars_formatted (windata_t *vwin, int fmt, int action);
 
-int scalars_to_clipboard_as_csv (void);
+int scalars_to_clipboard_as_csv (GtkWidget *parent);
 
-int matrix_to_clipboard_as_csv (const gretl_matrix *m);
+int matrix_to_clipboard_as_csv (const gretl_matrix *m,
+				GtkWidget *parent);
 
 int font_has_symbol (PangoFontDescription *desc, int symbol);
 

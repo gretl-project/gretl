@@ -356,43 +356,48 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     gchar *item = (gchar *) p;
     int v = mdata_active_var();
 
-    if (!strcmp(item, _("Display values"))) 
+    if (!strcmp(item, _("Display values"))) { 
 	display_var();
-    if (!strcmp(item, _("Summary statistics"))) 
+    } else if (!strcmp(item, _("Summary statistics"))) { 
 	do_menu_op(VAR_SUMMARY, NULL, OPT_NONE);
-    else if (!strcmp(item, _("Time series plot"))) 
+    } else if (!strcmp(item, _("Time series plot"))) { 
 	do_graph_var(v);
-    else if (!strcmp(item, _("Panel plot..."))) 
+    } else if (!strcmp(item, _("Panel plot..."))) { 
 	do_graph_var(v);
-    else if (!strcmp(item, _("Frequency distribution"))) 
+    } else if (!strcmp(item, _("Frequency distribution"))) { 
 	do_freq_dist();
-    else if (!strcmp(item, _("Boxplot")))
+    } else if (!strcmp(item, _("Boxplot"))) {
 	menu_boxplot_callback(v);
-    else if (!strcmp(item, _("Gini coefficient")))
+    } else if (!strcmp(item, _("Gini coefficient"))) {
 	do_gini();
-    else if (!strcmp(item, _("Correlogram")))
+    } else if (!strcmp(item, _("Correlogram"))) {
 	do_corrgm();
-    else if (!strcmp(item, _("Periodogram"))) 
+    } else if (!strcmp(item, _("Periodogram"))) { 
 	do_pergm(NULL);
-    else if (!strcmp(item, _("ARIMA model"))) {
+    } else if (!strcmp(item, _("ARIMA model"))) {
 	selector_set_varnum(v);
 	modelspec_dialog(ARMA);
-    } else if (!strcmp(item, _("Dickey-Fuller test"))) 
+    } else if (!strcmp(item, _("Dickey-Fuller test"))) { 
 	unit_root_test(ADF);
-    else if (!strcmp(item, _("KPSS test"))) 
+    } else if (!strcmp(item, _("KPSS test"))) { 
 	unit_root_test(KPSS);
-    else if (!strcmp(item, _("Hurst exponent"))) 
+    } else if (!strcmp(item, _("Hurst exponent"))) { 
 	do_hurst();
-    else if (!strcmp(item, _("Edit attributes")))  
+    } else if (!strcmp(item, _("Edit attributes"))) {  
 	varinfo_dialog(v);
-    else if (!strcmp(item, _("Edit values")))  
+    } else if (!strcmp(item, _("Edit values"))) {  
 	show_spreadsheet(SHEET_EDIT_VARLIST);
-    else if (!strcmp(item, _("Copy to clipboard"))) 
+    } else if (!strcmp(item, _("Copy to clipboard"))) { 
 	csv_selected_to_clipboard();
-    else if (!strcmp(item, _("Delete"))) 
+    } else if (!strcmp(item, _("Delete"))) { 
 	delete_single_var(v);
-    else if (!strcmp(item, _("Define new variable..."))) 
+    } else if (!strcmp(item, _("Add logs"))) {
+	add_logs_etc(LOGS, v);
+    } else if (!strcmp(item, _("Add differences"))) {
+	add_logs_etc(DIFF, v);
+    } else if (!strcmp(item, _("Define new variable..."))) { 
 	genr_callback();
+    }
 
     gtk_widget_destroy(mdata->popup);
 
@@ -436,9 +441,11 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     } else if (!strcmp(item, _("Delete")))  {
 	delete_selected_vars();
     } else if (!strcmp(item, _("Add logs")))  {
-	add_logs_etc(LOGS);
+	add_logs_etc(LOGS, 0);
     } else if (!strcmp(item, _("Add differences")))  {
-	add_logs_etc(DIFF);
+	add_logs_etc(DIFF, 0);
+    } else if (!strcmp(item, _("Define new variable..."))) { 
+	genr_callback();
     }
 
     gtk_widget_destroy(mdata->popup);
@@ -462,6 +469,8 @@ GtkWidget *build_var_popup (void)
 	N_("Copy to clipboard"),
 	N_("Delete"),
 	NULL,
+	N_("Add logs"),
+	N_("Add differences"),
 	N_("Define new variable...")
     };
     GtkWidget *menu;
@@ -489,7 +498,7 @@ GtkWidget *build_var_popup (void)
 	if ((i == 6 || i == 7) && !dataset_is_time_series(dataset)) {
 	    continue;
 	}
-	if (i == 2 && !extended_ts(dataset)) {
+	if ((i == 2 || i == 14) && !extended_ts(dataset)) {
 	    continue;
 	}
 	item = gtk_menu_item_new_with_label(_(items[i]));
@@ -517,7 +526,8 @@ GtkWidget *build_selection_popup (void)
 	N_("Delete"),
 	NULL,
 	N_("Add logs"),
-	N_("Add differences")
+	N_("Add differences"),
+	N_("Define new variable...")
     };
     GtkWidget *menu;
     GtkWidget *item;

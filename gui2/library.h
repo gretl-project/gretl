@@ -245,7 +245,7 @@ void do_add_obs (void);
 
 void do_remove_obs (void);
 
-void add_logs_etc (int ci);
+void add_logs_etc (int ci, int varnum);
 
 void logs_etc_callback (GtkAction *action);
 
@@ -308,7 +308,11 @@ void do_new_script (int code);
 
 void new_script_callback (GtkAction *action);
 
-int do_store (char *mydatfile, int action, gpointer data);
+int do_store (char *filename, int action, gpointer data);
+
+void set_csv_exclude_obs (gboolean s);
+
+gboolean get_csv_exclude_obs (void);
 
 void do_save_text (char *fname, MODEL *pmod);
 

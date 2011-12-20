@@ -388,13 +388,14 @@ static GtkWidget *csv_na_combo (void)
     return hbox;
 }
 
-/* CSV files: setting the delimiter */
+/* CSV files: setting the delimiter, etc. */
 
 typedef struct {
     GtkWidget *semic_button;
     GtkWidget *comma_sep;
-    gint delim;
-    gint decpoint;
+    gint delim;     /* delimiter (comma, etc.) */
+    gint decpoint;  /* decimal character */
+    gboolean xobs;  /* exclude obs column on export? */
 } csv_stuff;
 
 static void set_dec (GtkWidget *w, csv_stuff *csv)
@@ -428,10 +429,16 @@ static void set_delim (GtkWidget *w, csv_stuff *csv)
     }
 }
 
+static void toggle_csv_xobs (GtkToggleButton *b, csv_stuff *csv)
+{
+    csv->xobs = !gtk_toggle_button_get_active(b);
+}
+
 static void really_set_csv_stuff (GtkWidget *w, csv_stuff *csv)
 {
     set_data_export_delimiter(csv->delim);
     set_data_export_decimal_comma(csv->decpoint == ',');
+    set_csv_exclude_obs(csv->xobs);
 }
 
 static void destroy_delim_dialog (GtkWidget *w, gint *p)
@@ -439,14 +446,12 @@ static void destroy_delim_dialog (GtkWidget *w, gint *p)
     free(p);
 }
 
-int csv_options_dialog (int ci, gretlopt *optp)
+int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
 {
     GtkWidget *dialog, *vbox, *hbox;
     GtkWidget *tmp, *button;
     GSList *group;
     csv_stuff *csvp = NULL;
-    gretlopt opt = OPT_NONE;
-    int reading = (ci == OPEN_CSV || ci == APPEND_CSV);
     int ret = GRETL_CANCEL;
 
     if (maybe_raise_dialog()) {
@@ -460,12 +465,9 @@ int csv_options_dialog (int ci, gretlopt *optp)
 
     csvp->delim = ',';
     csvp->decpoint = '.';
+    csvp->xobs = get_csv_exclude_obs();
 
-    if (optp != NULL) {
-	opt = *optp;
-    }
-
-    dialog = gretl_dialog_new(_("gretl: data delimiter"), NULL, 
+    dialog = gretl_dialog_new(_("gretl: data delimiter"), parent, 
 			      GRETL_DLG_BLOCK);
 
     g_signal_connect(G_OBJECT(dialog), "destroy", 
@@ -516,8 +518,8 @@ int csv_options_dialog (int ci, gretlopt *optp)
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(';'));   
 
-    if (reading) {
-	/* add option to auto-detect separator */
+    if (ci == OPEN_CSV || ci == APPEND_CSV) {
+	/* on input only, add option to auto-detect separator */
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 	button = gtk_radio_button_new_with_label(group, _("auto-detect"));
 	pack_in_hbox(button, vbox, 0);
@@ -553,19 +555,29 @@ int csv_options_dialog (int ci, gretlopt *optp)
 			  GINT_TO_POINTER(',')); 
     }
 
-    if (!reading && !(opt & (OPT_M | OPT_S))) {
-	/* on output of series only (not matrix or scalars) */
+    if (otype == GRETL_OBJ_DSET && (ci == EXPORT_CSV || ci == COPY_CSV)) {
+	/* On export/copt of series data only: allow choice to exclude
+	   the observations column, and/or on representation of NAs, 
+	   if applicable.
+	 */
+	int hsep_done = 0;
+
 	if (dataset_is_time_series(dataset) || dataset->S != NULL) {
 	    vbox_add_hsep(vbox);
-	    tmp = gretl_option_check_button_switched(_("include observations column"),
-						     optp, OPT_X);
+	    hsep_done = 1;
+	    tmp = gtk_check_button_new_with_label(_("include observations column"));
+	    g_signal_connect(G_OBJECT(tmp), "toggled",
+			     G_CALLBACK(toggle_csv_xobs), csvp);
 	    pack_in_hbox(tmp, vbox, 0);
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), !csvp->xobs);
+	}
 
-	    if (any_missing_user_values(dataset)) {
-		tmp = csv_na_combo();
-		pack_in_hbox(tmp, vbox, 0);
+	if (any_missing_user_values(dataset)) {
+	    if (!hsep_done) {
+		vbox_add_hsep(vbox);
 	    }
+	    tmp = csv_na_combo();
+	    pack_in_hbox(tmp, vbox, 0);
 	}
     }
 
@@ -715,7 +727,6 @@ tab_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 		     G_CALLBACK(set_copy_format), finfo);
     g_object_set_data(G_OBJECT(button), "format", 
 		      GINT_TO_POINTER(GRETL_FORMAT_TAB)); 
-
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
 				 (pref == GRETL_FORMAT_TAB));
 

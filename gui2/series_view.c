@@ -256,11 +256,14 @@ static void multi_series_view_print_sorted (windata_t *vwin)
 	return;
     }
 
-    err = print_data_in_columns(sview->list, obsvec, dataset, prn);
+    err = print_data_in_columns(sview->list, obsvec, dataset, 
+				OPT_NONE, prn);
     if (err) {
 	gui_errmsg(err);
     } else {
-	textview_set_text(vwin->text, gretl_print_get_trimmed_buffer(prn));
+	const char *buf = gretl_print_get_trimmed_buffer(prn);
+
+	textview_set_text(vwin->text, buf);
     }
 
     free(obsvec);
@@ -330,7 +333,8 @@ PRN *vwin_print_sorted_with_format (windata_t *vwin, PrnFormat fmt)
     }
 
     gretl_print_set_format(prn, fmt);
-    err = print_data_in_columns(sview->list, obsvec, dataset, prn);
+    err = print_data_in_columns(sview->list, obsvec, dataset, 
+				OPT_NONE, prn);
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);

@@ -5509,13 +5509,18 @@ static int dummify_dialog (gretlopt *opt)
     return ret;
 }
 
-void add_logs_etc (int ci)
+void add_logs_etc (int ci, int varnum)
 {
     char *liststr;
     int order = 0;
     int err = 0;
 
-    liststr = main_window_selection_as_string();
+    if (varnum > 0 && varnum < dataset->v) {
+	liststr = gretl_strdup_printf(" %s", dataset->varname[varnum]);
+    } else {
+	liststr = main_window_selection_as_string();
+    }
+
     if (liststr == NULL) {
 	return;
     }
@@ -5632,7 +5637,7 @@ void logs_etc_callback (GtkAction *action)
 {
     int ci = logs_etc_code(action);
     
-    add_logs_etc(ci);
+    add_logs_etc(ci, 0);
 }
 
 int save_fit_resid (MODEL *pmod, int code)
@@ -7548,6 +7553,22 @@ static gretlopt store_action_to_opt (const char *fname, int action,
     return opt;
 }
 
+/* suppress inclusion of observations column when exporting
+   data as CSV? */
+static gboolean csv_exclude_obs;
+
+/* apparatus for use by the CSV options dialog */
+
+void set_csv_exclude_obs (gboolean s)
+{
+    csv_exclude_obs = s;
+}
+
+gboolean get_csv_exclude_obs (void)
+{
+    return csv_exclude_obs;
+}
+
 /* This is called from the file selector when doing a
    data save, and also from the callback from Ctrl-S
    in the main gretl window.
@@ -7595,9 +7616,9 @@ int do_store (char *filename, int action, gpointer data)
 	; /* inside a session: "exporting" gdt */
     } else if (opt != OPT_NONE) { 
 	/* not a bog-standard native save */
-	if (action == EXPORT_CSV && data != NULL) {
+	if (action == EXPORT_CSV && csv_exclude_obs) {
 	    /* pick up option to exclude obs column */
-	    opt |= GPOINTER_TO_INT(data);
+	    opt |= OPT_X;
 	}
 	lib_command_strcat(print_flags(opt, STORE));
     } else if (has_suffix(filename, ".dat")) { 

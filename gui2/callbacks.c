@@ -196,23 +196,20 @@ static int open_data_code (const gchar *s)
 
 void open_data (GtkAction *action)
 {
-    int code;
+    if (!dataset_locked()) {
+	int code = open_data_code(gtk_action_get_name(action));
 
-    if (dataset_locked()) {
-	return;
-    }
+	if (code == OPEN_CSV || code == APPEND_CSV) {
+	    /* allow specification of separator */
+	    int resp = csv_options_dialog(code, GRETL_OBJ_DSET, NULL);
 
-    code = open_data_code(gtk_action_get_name(action));
-
-    if (code == OPEN_CSV || code == APPEND_CSV) {
-	/* allow spec. of separator */
-	if (csv_options_dialog(code, NULL)) {
-	    /* canceled */
-	    return;
+	    if (canceled(resp)) {
+		return;
+	    }
 	}
-    }
 
-    file_selector(code, FSEL_DATA_NONE, NULL);
+	file_selector(code, FSEL_DATA_NONE, NULL);
+    }
 }
 
 void file_save (windata_t *vwin, int ci)

@@ -7002,7 +7002,6 @@ static int functions_selected_callback (selector *sr)
 
 static int data_export_selection_callback (selector *sr)
 {
-    gpointer data = NULL;
     int ci = sr->ci;
 
     if ((sr->cmdlist == NULL || *sr->cmdlist == '\0') && sr->n_left == 0) {
@@ -7039,23 +7038,17 @@ static int data_export_selection_callback (selector *sr)
     gtk_widget_destroy(sr->dlg);
 
     if (ci == EXPORT_CSV) {
-	gretlopt opt = OPT_NONE;
-	int cancel;
+	int resp = csv_options_dialog(EXPORT_CSV, GRETL_OBJ_DSET,
+				      NULL);
 
-	/* allow possibility of picking up OPT_X to exclude
-	   the obserations column when exporting CSV
-	*/
-	cancel = csv_options_dialog(EXPORT_CSV, &opt);
-	if (cancel) {
+	if (canceled(resp)) {
 	    set_selector_storelist(NULL);
 	    return 0;
-	} else {
-	    data = GINT_TO_POINTER(opt);
-	}
+	} 
     }
 
     if (ci != COPY_CSV) {
-	file_selector(ci, FSEL_DATA_MISC, data);
+	file_selector(ci, FSEL_DATA_NONE, NULL);
     }
 
     return 0;

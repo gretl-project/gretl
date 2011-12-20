@@ -1935,29 +1935,35 @@ static int data_to_buf_as_rtf (const int *list, PRN *prn)
     int err;
 
     gretl_print_set_format(prn, GRETL_FORMAT_RTF);
-    err = print_data_in_columns(list, NULL, dataset, prn);
+    err = print_data_in_columns(list, NULL, dataset, OPT_NONE, prn);
     return err;
 }
 
-static int data_to_buf_as_csv (const int *list, PRN *prn)
+static int data_to_buf_as_csv (const int *list, gretlopt opt,
+			       PRN *prn)
 {
     int err;
 
     gretl_print_set_format(prn, GRETL_FORMAT_CSV);
-    err = print_data_in_columns(list, NULL, dataset, prn);
+    err = print_data_in_columns(list, NULL, dataset, opt, prn);
     return err;
 }
 
 static int real_csv_to_clipboard (const int *list)
 {
     PRN *prn = NULL;
+    gretlopt opt = OPT_NONE;
     int err = 0;
 
     if (bufopen(&prn)) {
 	return 1;
     }
 
-    err = data_to_buf_as_csv(list, prn);
+    if (get_csv_exclude_obs()) {
+	opt = OPT_X;
+    }
+
+    err = data_to_buf_as_csv(list, opt, prn);
     if (!err) {
 	err = prn_to_clipboard(prn, GRETL_FORMAT_CSV);
 	if (err) {
@@ -1978,11 +1984,11 @@ int csv_selected_to_clipboard (void)
     int err = 0;
 
     if (list != NULL) {
-	if (csv_options_dialog(COPY_CSV, NULL)) {
-	    /* canceled */
-	    return 0;
+	int resp = csv_options_dialog(COPY_CSV, GRETL_OBJ_DSET, NULL);
+
+	if (!canceled(resp)) {
+	    err = real_csv_to_clipboard(list);
 	}
-	err = real_csv_to_clipboard(list);
 	free(list);
     }
 
@@ -1991,7 +1997,7 @@ int csv_selected_to_clipboard (void)
 
 /* called from session.c: copy data to clipboard */
 
-int csv_to_clipboard (void)
+int csv_to_clipboard (GtkWidget *parent)
 {
     gchar *liststr;
     int cancel, err = 0;
@@ -2003,7 +2009,8 @@ int csv_to_clipboard (void)
 	int *list = gretl_list_from_string(liststr, &err);	
 
 	if (list != NULL) {
-	    cancel = csv_options_dialog(COPY_CSV, NULL);
+	    cancel = csv_options_dialog(COPY_CSV, GRETL_OBJ_DSET,
+					parent);
 	    if (!cancel) {
 		err = real_csv_to_clipboard(list);
 	    }
@@ -2043,57 +2050,51 @@ static void matrix_print_as_csv (const gretl_matrix *m, PRN *prn)
     gretl_pop_c_numeric_locale();
 }
 
-int matrix_to_clipboard_as_csv (const gretl_matrix *m)
+int matrix_to_clipboard_as_csv (const gretl_matrix *m,
+				GtkWidget *parent)
 {
-    PRN *prn = NULL;
-    gretlopt opt = OPT_M;
+    if (m != NULL) {
+	int resp = csv_options_dialog(COPY_CSV, GRETL_OBJ_MATRIX,
+				      parent);
+	PRN *prn = NULL;
 
-    if (m == NULL) {
-	return 0;
+	if (canceled(resp)) {
+	    return 0;
+	} else if (bufopen(&prn)) {
+	    return 1;
+	} else {
+	    matrix_print_as_csv(m, prn);
+	    prn_to_clipboard(prn, GRETL_FORMAT_CSV);
+	    gretl_print_destroy(prn);
+	}
     }
-
-    if (csv_options_dialog(COPY_CSV, &opt)) {
-	/* canceled */
-	return 0;
-    }
-
-    if (bufopen(&prn)) {
-	return 1;
-    }
-
-    matrix_print_as_csv(m, prn);
-    prn_to_clipboard(prn, GRETL_FORMAT_CSV);
-    gretl_print_destroy(prn);
 
     return 0;
 }
 
-int scalars_to_clipboard_as_csv (void)
+int scalars_to_clipboard_as_csv (GtkWidget *parent)
 {
-    PRN *prn = NULL;
-    gretlopt opt = OPT_S;
     int err = 0;
 
     if (n_saved_scalars() == 0) {
 	warnbox(_("No scalar variables are currently defined"));
-	return 0;
-    }
+    } else {
+	int resp = csv_options_dialog(COPY_CSV, GRETL_OBJ_SCALARS,
+				      parent);
+	PRN *prn = NULL;
 
-    if (csv_options_dialog(COPY_CSV, &opt)) {
-	/* canceled */
-	return 0;
+	if (canceled(resp)) {
+	    return 0;
+	} else if (bufopen(&prn)) {
+	    return 1;
+	} else {
+	    err = scalars_to_prn(prn);
+	    if (!err) {
+		prn_to_clipboard(prn, GRETL_FORMAT_CSV);
+	    }
+	    gretl_print_destroy(prn);
+	}
     }
-
-    if (bufopen(&prn)) {
-	return 1;
-    }
-
-    err = scalars_to_prn(prn);
-    if (!err) {
-	prn_to_clipboard(prn, GRETL_FORMAT_CSV);
-    }
-
-    gretl_print_destroy(prn);
 
     return err;
 }
@@ -2116,7 +2117,9 @@ int copy_vars_formatted (windata_t *vwin, int fmt, int action)
 	    }
 	}
 
-	if (fmt == GRETL_FORMAT_TAB) {
+	if (fmt == GRETL_FORMAT_CSV) {
+	    set_data_export_delimiter(',');
+	} else if (fmt == GRETL_FORMAT_TAB) {
 	    fmt |= GRETL_FORMAT_CSV;
 	    set_data_export_delimiter('\t');
 	}
@@ -2134,7 +2137,7 @@ int copy_vars_formatted (windata_t *vwin, int fmt, int action)
 	    if (fmt == GRETL_FORMAT_RTF) {
 		err = data_to_buf_as_rtf(list, prn);
 	    } else {
-		err = data_to_buf_as_csv(list, prn);
+		err = data_to_buf_as_csv(list, OPT_NONE, prn);
 	    }
 	}
 

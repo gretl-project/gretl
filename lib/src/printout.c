@@ -1206,7 +1206,9 @@ static void varheading (const int *list, int leader, int wid,
     int i, vi;
 
     if (delim) {
-	pprintf(prn, "obs%c", delim);
+	if (leader >= 0) {
+	    pprintf(prn, "obs%c", delim);
+	}
 	for (i=1; i<=list[0]; i++) { 
 	    vi = list[i];
 	    pputs(prn, dset->varname[vi]);
@@ -1817,7 +1819,7 @@ static int print_by_obs (int *list,
 			 PRN *prn)
 {
     int i, j, j0, k, t, nrem;
-    int colwidth, obslen;
+    int colwidth, obslen = 0;
     int *pmax = NULL;
     char obslabel[OBSLEN];
     char buf[128];
@@ -2143,13 +2145,13 @@ static void rtf_print_row_spec (int ncols, int type, PRN *prn)
     }    
 }
 
-#define prn_delimited(p) (prn_format(p) & (GRETL_FORMAT_CSV | GRETL_FORMAT_TAB))
-
 /**
  * print_data_in_columns:
  * @list: list of variables to print.
  * @obsvec: list of observation numbers (or %NULL)
  * @dset: dataset struct.
+ * @opt: may include OPT_X to exclude the observations
+ * column that is usually printed first.
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list.  If @obsvec is not %NULL,
@@ -2164,10 +2166,13 @@ static void rtf_print_row_spec (int ncols, int type, PRN *prn)
  */
 
 int print_data_in_columns (const int *list, const int *obsvec, 
-			   const DATASET *dset, PRN *prn)
+			   const DATASET *dset, gretlopt opt,
+			   PRN *prn)
 {
-    int delimited = prn_delimited(prn);
+    int csv = csv_format(prn);
     int rtf = rtf_format(prn);
+    const char *csv_na = "";
+    int print_obs = 1;
     char delim = 0;
     int *pmax = NULL; 
     double xx;
@@ -2184,7 +2189,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
 	T = sample_size(dset);
     }
 
-    /* must have a non-empty list of variables */
+    /* we must have a non-empty list of variables */
     if (list == NULL || list[0] < 1) {
 	return E_DATA;
     }
@@ -2206,13 +2211,17 @@ int print_data_in_columns (const int *list, const int *obsvec,
 	return E_ALLOC;
     }
 
-    if (delimited) {
-	if (csv_format(prn)) {
-	    gprec = 15;
-	}
+    if (csv) {
+	/* columns delimited by some character */
+	gprec = 15;
 	delim = get_data_export_delimiter();
 	if (get_local_decpoint() == ',' && delim == ',') {
 	    delim = ';';
+	}
+	csv_na = get_csv_na_string();
+	if (opt & OPT_X) {
+	    print_obs = 0;
+	    obslen = -1;
 	}
     } else if (rtf) {
 	ncols = list[0] + 1;
@@ -2234,31 +2243,32 @@ int print_data_in_columns (const int *list, const int *obsvec,
 
     /* print data by observations */
     for (s=0; s<T; s++) {
-	if (obsvec != NULL) {
-	    t = obsvec[s+1];
-	} else {
-	    t = dset->t1 + s;
-	}
+	t = (obsvec != NULL)? obsvec[s+1] : (dset->t1 + s);
 	if (t >= dset->n) {
 	    continue;
 	}
+
 	if (rtf) {
 	    rtf_print_row_spec(ncols, RTF_HEADER, prn);
 	    pputc(prn, '{');
 	}
-	get_obs_string(obs_string, t, dset);
-	if (delimited) {
-	    pprintf(prn, "%s%c", obs_string, delim);
-	} else if (rtf) {
-	    pprintf(prn, "%s\\cell ", obs_string);
-	} else {
-	    pprintf(prn, "%*s", obslen, obs_string);
+
+	if (print_obs) {
+	    get_obs_string(obs_string, t, dset);
+	    if (csv) {
+		pprintf(prn, "%s%c", obs_string, delim);
+	    } else if (rtf) {
+		pprintf(prn, "%s\\cell ", obs_string);
+	    } else {
+		pprintf(prn, "%*s", obslen, obs_string);
+	    }
 	}
+
 	for (i=1; i<=list[0]; i++) {
 	    xx = dset->Z[list[i]][t];
 	    if (na(xx)) {
-		if (delimited) {
-		    pputs(prn, "NA");
+		if (csv) {
+		    pputs(prn, csv_na);
 		} else if (rtf) {
 		    pputs(prn, "\\qr NA\\cell ");
 		} else {
@@ -2273,7 +2283,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
 		    pputs(prn, buf);
 		}
 	    }
-	    if (delimited && i < list[0]) {
+	    if (csv && i < list[0]) {
 		pputc(prn, delim);
 	    }
 	}

@@ -1313,7 +1313,6 @@ int write_data (const char *fname, int *list, const DATASET *dset,
     }
 
     if (fmt == GRETL_FMT_ESL) { 
-	/* plain ASCII */
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (dataset_has_markers(dset)) {
 		fprintf(fp, "%s ", dset->S[t]);

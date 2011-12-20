@@ -3064,7 +3064,7 @@ static void matrix_popup_callback (GtkWidget *widget, gpointer data)
 	view_matrix_properties(m, name);
     } else if (!strcmp(item, _("Copy as CSV..."))) {
 	m = user_matrix_get_matrix(u);
-	matrix_to_clipboard_as_csv(m);
+	matrix_to_clipboard_as_csv(m, iconview);
     } else if (!strcmp(item, _("Rename"))) {
 	rename_object_dialog(obj);
     } else if (!strcmp(item, _("Delete"))) {
@@ -3095,7 +3095,7 @@ static void data_popup_callback (GtkWidget *widget, gpointer data)
     } else if (!strcmp(item, _("Export as CSV..."))) {
 	file_save(mdata, EXPORT_CSV);
     } else if (!strcmp(item, _("Copy as CSV..."))) {
-	csv_to_clipboard();
+	csv_to_clipboard(iconview);
     }
 }
 
@@ -3106,7 +3106,7 @@ static void scalars_popup_callback (GtkWidget *widget, gpointer data)
     if (!strcmp(item, _("Edit"))) {
 	edit_scalars();
     } else if (!strcmp(item, _("Copy as CSV..."))) {
-	scalars_to_clipboard_as_csv();
+	scalars_to_clipboard_as_csv(iconview);
     }
 }
 
