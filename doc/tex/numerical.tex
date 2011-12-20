@@ -3,12 +3,12 @@
 
 Several functions are available to aid in the construction of
 special-purpose estimators: one group of functions are used to
-maximize user-supplied functions by using numerical methods: BFGS,
-Newton--Raphson and Simulated Annealing.  Another function is
+maximize user-supplied functions via numerical methods: BFGS,
+Newton--Raphson and Simulated Annealing.  Another relevant function is
 \texttt{fdjac}, which produces a forward-difference approximation to
 the Jacobian.
 
-\section{The maximizer functions}
+\section{BFGS}
 \label{sec:BFGSmax}
 
 The \texttt{BFGSmax} function has two required arguments: a vector
@@ -47,7 +47,7 @@ function scalar Rosenbrock(matrix *param)
   return -(1-x)^2 - 100 * (y - x^2)^2
 end function
 
-matrix theta = { 0 , 0 }
+matrix theta = { 0, 0 }
 
 set max_verbose 1
 M = BFGSmax(theta, Rosenbrock(&theta))
@@ -56,8 +56,8 @@ print theta
 \end{scode}
 \end{script}
 
-The operation of the BFGS maximizer can be adjusted using the
-\texttt{set} variables \verb+bfgs_maxiter+ and \verb+bfgs_toler+ (see
+The operation of BFGS can be adjusted using the \texttt{set} variables
+\verb+bfgs_maxiter+ and \verb+bfgs_toler+ (see
 Chapter~\ref{chap:mle}).  In addition you can provoke verbose output
 from the maximizer by assigning a positive value to
 \verb|max_verbose|, again via the \cmd{set} command.
@@ -76,7 +76,7 @@ The function has a global minimum at $(x,y) = (1,1)$ where $f(x,y) =
 discovers the minimum using \texttt{BFGSmax} (giving a verbose account
 of progress).  
 
-\section{Supplying analytical derivatives for BFGS}
+\subsection{Supplying analytical derivatives for BFGS}
 \label{sec:BFGSgrad}
 
 An optional third argument to the \texttt{BFGSmax} function enables
@@ -137,6 +137,146 @@ M = BFGSmax(theta, Rosenbrock(&theta), Rosen_grad(&grad, &theta))
 
 print theta
 print grad
+\end{scode}
+\end{script}
+
+\section{Newton--Raphson}
+\label{sec:newton-raphson}
+
+BFGS, discussed above, is an excellent all-purpose maximizer, and
+about as robust as it is possible to be given the limitations of
+digital computer arithmetic. The Newton--Raphson maximizer is not as
+robust, but for problems where the maximand is reasonably well behaved
+(and in particular, where it is anything like quadratic), it may
+converge much faster than BFGS. The case for using Newton--Raphson is
+enhanced if it is possible to supply a function to calculate the
+Hessian analytically.
+
+The \app{gretl} function \texttt{NRmax}, which implements the
+Newton--Raphson method, has a maximum of four arguments. The first two
+(required) arguments are exactly as for BFGS: an initial parameter
+vector, and a function call which returns the maximand given the
+parameters. The (optional) third argument is again as in BFGS: a
+function call that calculates the gradient. Specific to \texttt{NRmax}
+is an optional fourth argument, namely a function call to calculate
+the (negative) Hessian. The first argument of this function must be a
+pre-defined matrix of the right dimension to hold the Hessian --- that
+is, a $k \times k$ matrix, where $k$ is the length of the parameter
+vector --- given in ``pointer'' form. The second argument should be
+the parameter vector (optionally in pointer form). Other data may be
+passed as additional arguments as needed. Similarly to the case with
+the gradient, if the fourth argument to \texttt{NRmax} is omitted then
+a numerical approximation to the Hessian is constructed.
+
+What is ultimately required in Newton--Raphson is the negative inverse
+of the Hessian. Note that if you give the optional fourth argument,
+your function should compute the negative Hessian, but should not
+invert it; \texttt{NRmax} takes care of inversion, with special
+handling for the case where the matrix is not negative definite, which
+can happen far from the maximum.
+
+Script~\ref{rosen-newton} extends the Rosenbrock example, using
+\texttt{NRmax} with a function \verb+Rosen_hess+ to compute the
+Hessian. The functions \texttt{Rosenbrock} and \verb+Rosen_grad+ are
+just the same as in Example~\ref{rosen-analytical} and are omitted for
+brevity.
+
+\begin{script}[htbp]
+  \caption{Rosenbrock function via Newton--Raphson}
+  \label{rosen-newton}
+\begin{scode}
+function void Rosen_hess (matrix *H, matrix *param)
+  scalar x = param[1]
+  scalar y = param[2]
+  H[1,1] = 2 - 400*y + 1200*x^2
+  H[1,2] = -400*x
+  H[2,1] = -400*x
+  H[2,2] = 200
+end function
+
+matrix theta = { 0, 0 }
+matrix g = { 0, 0 }
+matrix H = zeros(2, 2)
+
+set max_verbose 1
+M = NRmax(theta, Rosenbrock(&theta), Rosen_grad(&g, &theta), 
+          Rosen_hess(&H, &theta))
+
+print theta
+print grad
+\end{scode}
+\end{script}
+
+\section{Simulated Annealing}
+\label{sec:sim-anneal}
+
+Simulated annealing --- as implemented by the \app{gretl} function
+\texttt{simann} --- is not a full-blown maximization method in its own
+right, but can be a useful auxiliary tool in maximization problems
+where convergence depends sensitively on the initial values of the
+parameters. The idea is that you supply initial values and the
+simulated annealing mechanism tries to improve on them via controlled
+randomization.
+
+The \texttt{simann} function takes three arguments. The first two are
+the same as for \texttt{BFGSmax} and \texttt{NRmax}: an initial
+parameter vector and a function that computes the maximand. The third
+is a positive integer giving the maximum number of iterations, $n$.
+
+Starting from the specified point in the parameter space, for each of
+$n$ iterations we select at random a new point within a certain radius
+of the previous one, and determine the value of the criterion at the
+new point. If the criterion is higher, we jump to the new point;
+otherwise, we jump with probability $P$ (and remain at the previous
+point with probability $1-P$).  As the iterations proceed, the system
+gradually ``cools'' --- that is, the radius of the random perturbation
+is reduced, as is the probability of making a jump when the criterion
+fails to increase.
+
+In the course of this procedure many points in the parameter space are
+evaluated: call them $\theta_i, i=0,\dots,n$, where $\theta_0$ is the
+initial value given by the user. Let $\theta^*$ denote the ``best''
+point among $\theta_1, \dots, \theta_n$ (highest criterion value). The
+value written into the parameter vector on completion is then
+$\theta^*$ if $\theta^*$ is better than $\theta_0$, otherwise
+$\theta_n$. In other words, failing an actual improvement in the
+criterion, \texttt{simann} randomizes the starting point, which may
+be helpful in tricky optimization problems.
+
+Example~\ref{ex:simann} shows \texttt{simann} at work as a helper for
+\texttt{BFGSmax} in finding the maximum of a bimodal function.
+Unaided, \texttt{BFGSmax} requires 60 function evaluations and
+55 evaluations of the gradient, while after simulated annealing
+the maximum is found with 7 function evaluations and 6 evaluations
+of the gradient.\footnote{Your mileage may vary: these figures
+are somewhat compiler- and machine-dependent.}
+
+\begin{script}[htbp]
+  \caption{BFGS with initialization via Simulated Annealing}
+  \label{ex:simann}
+\begin{scode}
+function scalar bimodal (matrix x, matrix A)
+    scalar ret = exp(-qform((x-1)', A))
+    ret += 2*exp(-qform((x+4)', A))
+    return ret
+end function
+
+set seed 12334
+set max_verbose on
+
+scalar k = 2
+matrix A = 0.1 * I(k)
+matrix x0 = {3; -5}
+
+x = x0
+u = BFGSmax(x, bimodal(x, A))
+print x
+
+x = x0
+u = simann(x, bimodal(x, A), 1000)
+print x
+u = BFGSmax(x, bimodal(x, A))
+print x
 \end{scode}
 \end{script}
 

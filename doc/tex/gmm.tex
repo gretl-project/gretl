@@ -177,13 +177,13 @@ The code snippet contained in Example~\ref{gmm-ols-ex} uses
 /* initialize stuff */
 series e = 0
 scalar beta = 0
-matrix V = I(1)
+matrix W = I(1)
 
 /* proceed with estimation */
 gmm 
   series e = y - x*beta
   orthog e ; x
-  weights V
+  weights W
   params beta
 end gmm
 \end{code}
@@ -222,10 +222,14 @@ must be updated in the process of iterative estimation), while the
 term on the right is a constant function of the data.
 
 The \texttt{weights} statement is used to specify the initial
-weighting matrix and its syntax is straightforward.  Note, however,
-that when more than one step is required that matrix will contain the
-\emph{final} weight matrix, which most likely will be different from
-its initial value. 
+weighting matrix and its syntax is straightforward. But please
+note\dots
+
+\tip{In cases other than one-step estimation the specified weights
+  matrix will be overwritten with the \emph{final} weights on
+  completion of the \texttt{gmm} command. If you wish to execute more
+  than one GMM block with a common starting-point it is therefore
+  necessary to reinitialize the weights matrix between runs.}
 
 The \texttt{params} statement specifies the parameters with respect to
 which the GMM criterion should be minimized; it follows the same logic
@@ -234,9 +238,7 @@ and rules as in the \texttt{mle} and \texttt{nls} commands.
 The minimum is found through numerical minimization via BFGS (see
 chapters~\ref{chap-numerical} and~\ref{chap:mle}).  The
 progress of the optimization procedure can be observed by appending
-the \option{verbose} switch to the \texttt{end gmm} line.  (In this
-example GMM estimation is clearly a rather silly thing to do, since a
-closed form solution is easily given by OLS.)
+the \option{verbose} switch to the \texttt{end gmm} line.
 
 \section{TSLS as GMM}
 \label{sec:gmm-tsls}
@@ -341,45 +343,6 @@ e = lpackpc - b0 - b1*lravgprs - b2*lperinc
   GMM criterion = 0.0110046
 \end{code}
 \end{script}
-
-\begin{script}[htbp]
-  \caption{Spurious dependence of the results on the ordering of the the orthogonality conditions}
-  \label{script:OC-order}
-\begin{code}
-nulldata 100
-series y = normal()
-series x = normal()
-series e = NA
-scalar b = 0
-matrix W = I(2)
-
-gmm e = y - b*x
-    orthog e ; const
-    orthog e ; x
-    weights W
-    params b
-end gmm --two-step
-
-gmm e = y - b*x
-    orthog e ; x
-    orthog e ; const
-    weights W
-    params b
-end gmm
-\end{code}
-\end{script}
-
-Two-stage least squares is arguably the simplest example of a model
-which may be over-identified (that is, the number of parameters may be
-smaller than the number of orthogonality conditions). In these cases,
-it is important to take into account that for 2-step and iterative GMM
-the weights matrix gets overwritten on exit. Otherwise, one could
-mistakenly conclude that the order in which the orthogonality
-conditions are listed matters \emph{per se}. Consider, for example,
-script \ref{script:OC-order}. The two \cmd{gmm} blocks will produce
-different estimates of \texttt{b}. This happens because, after the
-first block, the matrix \texttt{W} gets overwritten with the weights
-matrix for the second step.
 
 
 \section{Covariance matrix options}
