@@ -5875,7 +5875,7 @@ static void build_selector_buttons (selector *sr)
 {
     GtkWidget *tmp;
 
-    if (sr->ci != PRINT && !FNPKG_CODE(sr->ci) &&
+    if (sr->ci != PRINT && sr->ci != SUMMARY && !FNPKG_CODE(sr->ci) &&
 	sr->ci != DEFINE_LIST && sr->ci != DEFINE_MATRIX &&
 	sr->ci != ELLIPSE && !SAVE_DATA_ACTION(sr->ci)) {
 	/* add a Help button if appropriate */

@@ -839,24 +839,12 @@ static int menu_op_ci (GtkAction *action)
 void menu_op_action (GtkAction *action, gpointer p)
 {
     int ci = menu_op_ci(action);
-    int done = 0;
 
     if (ci == VAR_SUMMARY || ci == NORMTEST) {
 	/* a single-variable action */
 	do_menu_op(ci, NULL, OPT_NONE);
-	done = 1;
-    } else if (ci == SUMMARY) {
-	/* no help or options, just use the selection */
-	char *liststr = main_window_selection_as_string();
-
-	if (liststr != NULL && *liststr != '\0') {
-	    do_menu_op(ci, liststr, OPT_NONE);
-	    done = 1;
-	}
-	free(liststr);
-    } 
-
-    if (!done) {
+    } else {
+	/* potentially a multi-variable option */
 	const char *str = NULL;
 	gchar *title;
 
