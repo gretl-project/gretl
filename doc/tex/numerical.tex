@@ -233,15 +233,15 @@ gradually ``cools'' --- that is, the radius of the random perturbation
 is reduced, as is the probability of making a jump when the criterion
 fails to increase.
 
-In the course of this procedure many points in the parameter space are
-evaluated: call them $\theta_i, i=0,\dots,n$, where $\theta_0$ is the
-initial value given by the user. Let $\theta^*$ denote the ``best''
-point among $\theta_1, \dots, \theta_n$ (highest criterion value). The
-value written into the parameter vector on completion is then
-$\theta^*$ if $\theta^*$ is better than $\theta_0$, otherwise
+In the course of this procedure $n+1$ points in the parameter space
+are evaluated: call them $\theta_i, i=0,\dots,n$, where $\theta_0$ is
+the initial value given by the user. Let $\theta^*$ denote the
+``best'' point among $\theta_1, \dots, \theta_n$ (highest criterion
+value). The value written into the parameter vector on completion is
+then $\theta^*$ if $\theta^*$ is better than $\theta_0$, otherwise
 $\theta_n$. In other words, failing an actual improvement in the
-criterion, \texttt{simann} randomizes the starting point, which may
-be helpful in tricky optimization problems.
+criterion, \texttt{simann} randomizes the starting point, which may be
+helpful in tricky optimization problems.
 
 Example~\ref{ex:simann} shows \texttt{simann} at work as a helper for
 \texttt{BFGSmax} in finding the maximum of a bimodal function.
@@ -286,11 +286,11 @@ print x
 \app{Gretl} offers the possibility of differentiating numerically a
 user-defined function via the \texttt{fdjac} function. 
 
-This function again takes two arguments: an $n \times 1$ matrix
-holding initial parameter values and a function call that calculates
-and returns an $m \times 1$ matrix, given the current parameter values
-and any other relevant data.  On successful completion it returns an
-$m \times n$ matrix holding the Jacobian.  For example,
+This function takes two arguments: an $n \times 1$ matrix holding
+initial parameter values and a function call that calculates and
+returns an $m \times 1$ matrix, given the current parameter values and
+any other relevant data.  On successful completion it returns an $m
+\times n$ matrix holding the Jacobian.  For example,
 %
 \begin{code}
 matrix Jac = fdjac(theta, SumOC(&theta, &X))
