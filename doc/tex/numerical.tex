@@ -19,16 +19,9 @@ object is in fact minimization, this function should return the
 negative of the criterion.  On successful completion, \texttt{BFGSmax}
 returns the maximized value of the criterion and the matrix given via
 the first argument holds the parameter values which produce the
-maximum.  Here is an example:
-%
-\begin{code}
-matrix X = { dataset }
-matrix theta = { 1, 100 }'
-scalar J = BFGSmax(theta, ObjFunc(&theta, &X))
-\end{code}
-%
-It is assumed here that \texttt{ObjFunc} is a user-defined function
-(see Chapter~\ref{chap:functions}) with the following general set-up:
+maximum.  It is assumed here that the objective function is a
+user-defined function (see Chapter~\ref{chap:functions}) with the
+following general set-up:
 %
 \begin{code}
 function scalar ObjFunc (matrix *theta, matrix *X)
@@ -36,6 +29,16 @@ function scalar ObjFunc (matrix *theta, matrix *X)
   return val
 end function
 \end{code}
+
+The first argument contains the arguments upon which the maximization
+has to take place, while the second argument may be used to hold
+``extra'' values that are necessary to compute the objective function,
+but are not the variables of the optimization problem. For example, if
+the objective function were a loglikelihood, the first argument would
+contain the parameters and the second one the data. Or, for more
+economic-theory inclined readers, if the objective function were the
+utility of a consumer, the first argument would contain the quantities
+of goods and the second one their prices and disposable income.
 
 \begin{script}[htbp]
   \caption{Finding the minimum of the Rosenbrock function}
@@ -74,7 +77,9 @@ contour lines are banana-shaped. It is defined by:
 The function has a global minimum at $(x,y) = (1,1)$ where $f(x,y) =
 0$.  Example~\ref{rosenbrock} shows a \app{gretl} script that
 discovers the minimum using \texttt{BFGSmax} (giving a verbose account
-of progress).  
+of progress). Note that, in this particular case, the function to be
+maximized only depends on the parameters, so the second parameter is
+omitted from the definition of the function \texttt{Rosenbrock}. 
 
 \subsection{Supplying analytical derivatives for BFGS}
 \label{sec:BFGSgrad}
@@ -98,7 +103,7 @@ affect the results.)
 
 In addition the gradient function must have as one of its argument the
 parameter vector.  This may be given in pointer form (which enhances
-eficiency) but that is not required.  Additional arguments may be
+efficiency) but that is not required.  Additional arguments may be
 specified if necessary.
 
 Given the current parameter values, the function call must fill out
@@ -206,6 +211,45 @@ print theta
 print grad
 \end{scode}
 \end{script}
+
+The idea behind Newton-Raphson is to exploit a quadratic approximation
+to the maximand, under the assumption that it is concave. If this is
+true, the method is very effective. However, if the algorithm happens
+to evaluate the function at a point where the Hessian is not definite
+negative, things may go wrong. Script \ref{ex:BFGS-vs-NR} exemplifies
+this by using a normal density, which is concave in the interval
+$(-1,1)$ and convex elsewhere. If the algorithm is started from within
+the interval, everything goes well and NR is (slightly) more effective
+than BFGS. If, however, the Hessian is positive at the starting point
+BFGS converges with only little more difficulty, while Newton-Raphson
+fails.
+
+\begin{script}[htbp]
+  \caption{Maximization of a Gaussian density}
+  \label{ex:BFGS-vs-NR}
+\begin{scode}
+function scalar ND(matrix x)
+    scalar z = x[1]
+    return exp(-0.5*z*z)
+end function
+
+set max_verbose 1
+
+x = {0.75}
+A = BFGSmax(x, ND(x))
+
+x = {0.75}
+A = NRmax(x, ND(x))
+
+x = {1.5}
+A = BFGSmax(x, ND(x))
+
+x = {1.5}
+A = NRmax(x, ND(x))
+\end{scode}
+\end{script}
+
+
 
 \section{Simulated Annealing}
 \label{sec:sim-anneal}
