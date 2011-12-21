@@ -2634,7 +2634,7 @@ static int binary_probit_normtest (MODEL *pmod, bin_info *bin)
 
 	et = pmod->uhat[t];
 	Xb = gretl_vector_get(bin->Xb, s);
-	for (i=0; i<bin->k; i++) {
+	for (i=0; i<k; i++) {
 	    xti = gretl_matrix_get(bin->X, s, i);
 	    gretl_matrix_set(X, s, i, et * xti);
 	}
@@ -2982,9 +2982,10 @@ static MODEL binary_model (int ci, const int *inlist,
 				     max_opt, vprn);
 
     if (bin->err) {
+	/* trash any existing error message */
 	gretl_error_clear();
 	mod.errcode = E_NOCONV;
-	gretl_errmsg_set(_("Perfect prediction obtained: no MLE exists");
+	gretl_errmsg_set(_("Perfect prediction obtained: no MLE exists"));
     }
 
     if (!mod.errcode) {
