@@ -6880,55 +6880,66 @@ simple_selection_for_viewer (int ci, const char *title, int (*callback)(),
 
 struct list_maker {
     char *liststr;
-    int n_items;
     size_t len;
     int overflow;
 };
+
+static void selection_strlen (GtkTreeModel *model, GtkTreePath *path,
+			      GtkTreeIter *iter, struct list_maker *lmkr)
+{
+    gchar *varnum = NULL;
+
+    gtk_tree_model_get(model, iter, 0, &varnum, -1);
+    lmkr->len += strlen(varnum) + 1;
+    g_free(varnum);
+
+    if (lmkr->len > MAXLEN - 32) {
+	lmkr->overflow = 1;
+    }
+}
 
 static void selection_add_item (GtkTreeModel *model, GtkTreePath *path,
 				GtkTreeIter *iter, struct list_maker *lmkr)
 {
     gchar *varnum = NULL;
 
-    if (lmkr->len > MAXLEN - 12) {
-	lmkr->overflow = 1;
-	return;
-    }
-
-    gtk_tree_model_get (model, iter, 0, &varnum, -1);
+    gtk_tree_model_get(model, iter, 0, &varnum, -1);
     strcat(lmkr->liststr, " ");
     strcat(lmkr->liststr, varnum);
-    lmkr->len += strlen(varnum) + 1;
     g_free(varnum);
-    lmkr->n_items += 1;
 }
 
 char *main_window_selection_as_string (void) 
 {
     GtkTreeSelection *select;
     struct list_maker lmkr;
+    char *ret = NULL;
 
-    lmkr.liststr = mymalloc(MAXLEN);
-    if (lmkr.liststr == NULL) {
-	return NULL;
-    }
-
-    lmkr.liststr[0] = 0;
-    lmkr.n_items = lmkr.overflow = 0;
-    lmkr.len = 0;
+    lmkr.liststr = NULL;
+    lmkr.len = 1;
+    lmkr.overflow = 0;
 
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
+
     gtk_tree_selection_selected_foreach(select, 
 					(GtkTreeSelectionForeachFunc) 
-					selection_add_item,
+					selection_strlen,
 					&lmkr); 
-
     if (lmkr.overflow) {
 	errbox(_("Too many items were selected"));
-	lmkr.liststr[0] = 0;
-    }
+    } else {
+	lmkr.liststr = mymalloc(lmkr.len);
+	if (lmkr.liststr != NULL) {
+	    lmkr.liststr[0] = '\0';
+	    gtk_tree_selection_selected_foreach(select, 
+						(GtkTreeSelectionForeachFunc) 
+						selection_add_item,
+						&lmkr);
+	    ret = lmkr.liststr;
+	} 
+    }	
 
-    return lmkr.liststr;
+    return ret;
 }
 
 static gchar *get_or_set_storelist (const char *s, int reset)

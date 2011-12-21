@@ -2344,8 +2344,7 @@ static int perfect_prediction_check (bin_info *bin)
     for (t=0; t<bin->T; t++) {
 	if (y[t] == 0 && ndx[t] > max0) {
 	    max0 = ndx[t];
-	} 
-	if (y[t] == 1 && ndx[t] < min1) {
+	} else if (y[t] == 1 && ndx[t] < min1) {
 	    min1 = ndx[t];
 	}
     }
@@ -3209,12 +3208,11 @@ static int rewrite_logistic_stats (const DATASET *dset,
 
     for (t=0; t<dset->n; t++) {
 	x = pmod->yhat[t];
-	if (na(x)) {
-	    continue;
+	if (!na(x)) {
+	    pmod->yhat[t] = lmax / (1.0 + exp(-x));
+	    pmod->uhat[t] = dset->Z[dv][t] - pmod->yhat[t];
+	    ess += pmod->uhat[t] * pmod->uhat[t];
 	}
-	pmod->yhat[t] = lmax / (1.0 + exp(-x));
-	pmod->uhat[t] = dset->Z[dv][t] - pmod->yhat[t];
-	ess += pmod->uhat[t] * pmod->uhat[t];
     }
 
     sigma = sqrt(ess / pmod->dfd);

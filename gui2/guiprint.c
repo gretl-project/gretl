@@ -2102,6 +2102,10 @@ int scalars_to_clipboard_as_csv (GtkWidget *parent)
 #include "series_view.h"
 #include "fileselect.h"
 
+/* callback from "series view" window, for use when
+   the delimited or RTF options are chosen
+*/
+
 int copy_vars_formatted (windata_t *vwin, int fmt, int action)
 {
     char save_delim = get_data_export_delimiter();
@@ -2120,7 +2124,7 @@ int copy_vars_formatted (windata_t *vwin, int fmt, int action)
 	if (fmt == GRETL_FORMAT_CSV) {
 	    set_data_export_delimiter(',');
 	} else if (fmt == GRETL_FORMAT_TAB) {
-	    fmt |= GRETL_FORMAT_CSV;
+	    fmt = GRETL_FORMAT_CSV;
 	    set_data_export_delimiter('\t');
 	}
 
@@ -2131,13 +2135,12 @@ int copy_vars_formatted (windata_t *vwin, int fmt, int action)
 	    }
 	} else {
 	    err = bufopen(&prn);
-	}
-
-	if (!err) {
-	    if (fmt == GRETL_FORMAT_RTF) {
-		err = data_to_buf_as_rtf(list, prn);
-	    } else {
-		err = data_to_buf_as_csv(list, OPT_NONE, prn);
+	    if (!err) {
+		if (fmt == GRETL_FORMAT_RTF) {
+		    err = data_to_buf_as_rtf(list, prn);
+		} else {
+		    err = data_to_buf_as_csv(list, OPT_NONE, prn);
+		}
 	    }
 	}
 

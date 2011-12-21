@@ -117,40 +117,6 @@ static int series_view_allocate (series_view *sview)
     return err;
 }
 
-static PRN *single_series_view_print_formatted (windata_t *vwin, 
-						PrnFormat fmt)
-{
-    series_view *sview = (series_view *) vwin->data;
-    char dchar = get_data_export_delimiter();
-    char obslabel[OBSLEN];
-    double x;
-    PRN *prn;
-    int i, t;
-
-    if (bufopen(&prn)) {
-	return NULL;
-    }
-
-    pprintf(prn, "obs%c%s\n", dchar, dataset->varname[sview->varnum]);
-
-    for (i=0; i<sview->npoints; i++) {
-	t = sview->points[i].obsnum;
-	x = sview->points[i].val;
-	if (dataset_has_markers(dataset)) {
-	    strcpy(obslabel, dataset->S[t]);
-	} else {
-	    ntodate(obslabel, t, dataset);
-	}
-	if (na(x)) {
-	    pprintf(prn, "%s%cNA\n", obslabel, dchar);
-	} else {
-	    pprintf(prn, "\"%s\"%c%.8g\n", obslabel, dchar, x);
-	}
-    }
-
-    return prn;
-}
-
 /* for printing sorted or reformatted data, for a window displaying
    a single series */
 
@@ -310,17 +276,10 @@ int series_view_is_sorted (windata_t *vwin)
 
 PRN *vwin_print_sorted_with_format (windata_t *vwin, PrnFormat fmt)
 {
-    series_view *sview;
+    series_view *sview = (series_view *) vwin->data;
     int *obsvec;
     PRN *prn;
     int err = 0;
-
-    if (vwin->role == VIEW_SERIES) {
-	/* a single series */
-	return single_series_view_print_formatted(vwin, fmt);
-    }
-
-    sview = (series_view *) vwin->data;
 
     obsvec = make_obsvec(sview);
     if (obsvec == NULL) {
@@ -333,8 +292,18 @@ PRN *vwin_print_sorted_with_format (windata_t *vwin, PrnFormat fmt)
     }
 
     gretl_print_set_format(prn, fmt);
-    err = print_data_in_columns(sview->list, obsvec, dataset, 
-				OPT_NONE, prn);
+
+    if (sview->varnum > 0) {
+	/* single series, no list */
+	int list[2] = {1, sview->varnum};
+
+	err = print_data_in_columns(list, obsvec, dataset, 
+				    OPT_NONE, prn);
+    } else {
+	err = print_data_in_columns(sview->list, obsvec, dataset, 
+				    OPT_NONE, prn);
+    }
+
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);

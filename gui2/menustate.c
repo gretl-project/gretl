@@ -404,6 +404,29 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     return FALSE;
 }
 
+static int missvals_in_selection (void)
+{
+    int *list = main_window_selection_as_list();
+    int miss = 0;
+
+    if (list != NULL) {
+	int i, vi, t;
+
+	for (i=1; i<=list[0] && !miss; i++) {
+	    vi = list[i];
+	    for (t=dataset->t1; t<=dataset->t2; t++) {
+		if (na(dataset->Z[vi][t])) {
+		    miss = 1;
+		    break;
+		}
+	    }
+	}
+	free(list);
+    }
+
+    return miss;
+}
+
 static gint selection_popup_click (GtkWidget *w, gpointer p)
 {
     gchar *item = (gchar *) p;
@@ -415,17 +438,19 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
 	ci = CORR;
     }
 
-    if (ci == CORR) {
+    if (ci == CORR && missvals_in_selection()) {
 	gchar *title;
 
-	title = g_strdup_printf("gretl: %s", gretl_command_word(ci));
+	title = g_strdup_printf("gretl: %s", item);
 	simple_selection(ci, title, menu_op_wrapper, NULL);
 	g_free(title);
     } else if (ci != 0) {
 	char *buf = main_window_selection_as_string();
 	
-	do_menu_op(ci, buf, OPT_NONE);
-	free(buf);
+	if (buf != NULL) {
+	    do_menu_op(ci, buf, OPT_NONE);
+	    free(buf);
+	}
     } else if (!strcmp(item, _("Display values"))) { 
 	display_selected(); 
     } else if (!strcmp(item, _("Cross-correlogram")))  {
