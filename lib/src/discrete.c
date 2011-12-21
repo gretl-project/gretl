@@ -2279,7 +2279,7 @@ struct bin_info_ {
     int ci;           /* PROBIT or LOGIT */
     int k;            /* number of parameters */
     int T;            /* number of observations */
-    int err;          /* to record perfect-prediction error */
+    int pp_err;       /* to record perfect-prediction error */
     double *theta;    /* coeffs for Newton-Raphson */
     gretl_matrix_block *B;
     gretl_matrix *y;  /* dependent variable */
@@ -2306,7 +2306,7 @@ static bin_info *bin_info_new (int ci, int k, int T)
 	bin->ci = ci;
 	bin->k = k;
 	bin->T = T;
-	bin->err = 0;
+	bin->pp_err = 0;
 	bin->theta = malloc(k * sizeof *bin->theta);
 	if (bin->theta == NULL) {
 	    free(bin);
@@ -2360,6 +2360,7 @@ static double binary_loglik (const double *theta, void *ptr)
     bin_info *bin = (bin_info *) ptr;
     double e, ndx, p, ll = 0.0;
     int y, i, t;
+    int ppcheck = 1;
 
     errno = 0;
 
@@ -2370,7 +2371,7 @@ static double binary_loglik (const double *theta, void *ptr)
     gretl_matrix_multiply(bin->X, bin->b, bin->Xb);
 
     if (perfect_prediction_check(bin)) {
-	bin->err = 1;
+	bin->pp_err = 1;
 	return NADBL;
     }
 
@@ -2981,7 +2982,7 @@ static MODEL binary_model (int ci, const int *inlist,
 				     binary_score, binary_hessian, bin,
 				     max_opt, vprn);
 
-    if (bin->err) {
+    if (bin->pp_err) {
 	/* trash any existing error message */
 	gretl_error_clear();
 	mod.errcode = E_NOCONV;
