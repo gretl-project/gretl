@@ -148,6 +148,7 @@ int print_subst (const char *verstr)
 
     fp = fopen(substfile, "w");
     if (fp == NULL) {
+	fprintf(stderr, "Couldn't open '%s'\n", substfile);
 	return 1;
     }
 
@@ -197,15 +198,20 @@ int syscmd_to_string (const char *syscmd, char *targ, const char *tmpfile)
 {
     FILE *fp;
     char line[64];
-    int err = 0;
+    int ret, err = 0;
 
-    system(syscmd);
+    ret = system(syscmd);
+
+#if 0
+    fprintf(stderr, "ret=%d from '%s'\n", ret, syscmd);
+#endif
 
     /* open tmpfile and retrieve the result */
 
     fp = fopen(tmpfile, "r");
 
     if (fp == NULL) {
+	fprintf(stderr, "Couldn't open '%s'\n", tmpfile);
 	err = 1;
     } else {
 	if (fgets(line, sizeof line, fp) == NULL) {
@@ -227,7 +233,7 @@ int syscmd_to_string (const char *syscmd, char *targ, const char *tmpfile)
 
 int make_subst_file (const char *verstr, const char *progdate)
 {
-    char syscmd[32];
+    char syscmd[64];
     const char *tmpfile = "tmp.txt";
     int i, err = 0;
 
@@ -667,6 +673,10 @@ int set_working_directories (void)
 	strcpy(WEBDIR, "/home/cottrell/stats/esl/website");
 	strcpy(SRCDIR, "/home/cottrell/src");
 	strcpy(WEBSRC, "/home/cottrell/src/doc/website");
+    } else if (!strcmp(home, "/home/allin")) {
+	strcpy(WEBDIR, "/home/allin/stats/esl/website");
+	strcpy(SRCDIR, "/home/allin/src");
+	strcpy(WEBSRC, "/home/allin/src/doc/website");
     } else {
 	sprintf(WEBDIR, "%s/src/gretl/doc/website", home);
 	sprintf(SRCDIR, "%s/src/gretl", home);
