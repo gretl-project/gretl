@@ -749,7 +749,7 @@ int main (int argc, char **argv)
 
     lang_strings_init();
 
-    if (0 && up_to_date) {
+    if (up_to_date) {
 	err = read_subst_file();
     } else {
 	err = make_subst_file(src_version, progdate);
