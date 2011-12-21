@@ -2360,7 +2360,6 @@ static double binary_loglik (const double *theta, void *ptr)
     bin_info *bin = (bin_info *) ptr;
     double e, ndx, p, ll = 0.0;
     int y, i, t;
-    int ppcheck = 1;
 
     errno = 0;
 
