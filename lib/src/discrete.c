@@ -2279,6 +2279,7 @@ struct bin_info_ {
     int ci;           /* PROBIT or LOGIT */
     int k;            /* number of parameters */
     int T;            /* number of observations */
+    int err;          /* to record perfect-prediction error */
     double *theta;    /* coeffs for Newton-Raphson */
     gretl_matrix_block *B;
     gretl_matrix *y;  /* dependent variable */
@@ -2305,6 +2306,7 @@ static bin_info *bin_info_new (int ci, int k, int T)
 	bin->ci = ci;
 	bin->k = k;
 	bin->T = T;
+	bin->err = 0;
 	bin->theta = malloc(k * sizeof *bin->theta);
 	if (bin->theta == NULL) {
 	    free(bin);
@@ -2326,6 +2328,31 @@ static bin_info *bin_info_new (int ci, int k, int T)
     return bin;
 }
 
+/*
+  If min1 > max0, then there exists a separating hyperplane between
+  all the zeros and all the ones; in this case no MLE exists.
+*/
+
+static int perfect_prediction_check (bin_info *bin)
+{
+    double max0 = -1.0e200;
+    double min1 = 1.0e200;
+    const double *y = bin->y->val;
+    const double *ndx = bin->Xb->val;
+    int t;
+
+    for (t=0; t<bin->T; t++) {
+	if (y[t] == 0 && ndx[t] > max0) {
+	    max0 = ndx[t];
+	} 
+	if (y[t] == 1 && ndx[t] < min1) {
+	    min1 = ndx[t];
+	}
+    }
+
+    return (min1 > max0);
+}
+
 /* compute loglikelihood for binary probit/logit */
 
 static double binary_loglik (const double *theta, void *ptr)
@@ -2341,6 +2368,11 @@ static double binary_loglik (const double *theta, void *ptr)
     }
 
     gretl_matrix_multiply(bin->X, bin->b, bin->Xb);
+
+    if (perfect_prediction_check(bin)) {
+	bin->err = 1;
+	return NADBL;
+    }
 
     for (t=0; t<bin->T && !errno; t++) {
 	y = gretl_vector_get(bin->y, t);
@@ -2948,6 +2980,12 @@ static MODEL binary_model (int ci, const int *inlist,
 				     C_LOGLIK, binary_loglik, 
 				     binary_score, binary_hessian, bin,
 				     max_opt, vprn);
+
+    if (bin->err) {
+	gretl_error_clear();
+	mod.errcode = E_NOCONV;
+	gretl_errmsg_set(_("Perfect prediction obtained: no MLE exists");
+    }
 
     if (!mod.errcode) {
 	binary_model_finish(bin, &mod, dset, opt);
