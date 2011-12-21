@@ -155,9 +155,9 @@ int print_subst (const char *verstr)
     fprintf(fp, "VERSION %s\n", verstr);
 
     for (i=0; i<NLANGS; i++) {
-	fprintf(fp, "lang = %s LONGDATE %s", lang_strings[i].lang,
+	fprintf(fp, "lang = %s LONGDATE %s\n", lang_strings[i].lang,
 		lang_strings[i].longdate);
-	fprintf(fp, "lang = %s SHORTDATE %s", lang_strings[i].lang,
+	fprintf(fp, "lang = %s SHORTDATE %s\n", lang_strings[i].lang,
 		lang_strings[i].shortdate);
     }
 
@@ -185,7 +185,7 @@ int get_intl_progdate (const char *s, int i)
 	tm.tm_mday = day;
 
 	setlocale(LC_TIME, lang_strings[i].lang);
-	strftime(pdate, sizeof pdate, "%b %e, %Y\n", &tm);
+	strftime(pdate, sizeof pdate, "%b %e, %Y", &tm);
 	setlocale(LC_TIME, "C");
 
 	strcpy(lang_strings[i].shortdate, pdate);
@@ -196,7 +196,7 @@ int get_intl_progdate (const char *s, int i)
 
 int syscmd_to_string (const char *syscmd, char *targ, const char *tmpfile)
 {
-    FILE *fp;
+    FILE *fp = NULL;
     char line[64];
     int ret, err = 0;
 
@@ -213,17 +213,19 @@ int syscmd_to_string (const char *syscmd, char *targ, const char *tmpfile)
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't open '%s'\n", tmpfile);
 	err = 1;
+    } else if (fgets(line, sizeof line, fp) == NULL) {
+	fprintf(stderr, "syscmd_to_string: failed\n");
+	err = 1;
     } else {
-	if (fgets(line, sizeof line, fp) == NULL) {
-	    fprintf(stderr, "syscmd_to_string: failed\n");
-	    err = 1;
-	} else {
-	    strcpy(targ, line);
-	}
+	tail_strip(line);
+	strcpy(targ, line);
+    }
 
+    if (fp != NULL) {
 	fclose(fp);
-	remove(tmpfile);
-    }    
+    }
+
+    remove(tmpfile);
 
     return err;
 }
@@ -716,6 +718,7 @@ int main (int argc, char **argv)
 
     if (argc == 3) {
 	progdate = argv[2];
+	fprintf(stderr, "Got '%s' for progdate\n", progdate);
     } else {
 	progdate = NULL;
     }
@@ -746,7 +749,7 @@ int main (int argc, char **argv)
 
     lang_strings_init();
 
-    if (up_to_date) {
+    if (0 && up_to_date) {
 	err = read_subst_file();
     } else {
 	err = make_subst_file(src_version, progdate);
