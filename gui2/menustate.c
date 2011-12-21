@@ -427,6 +427,25 @@ static int missvals_in_selection (void)
     return miss;
 }
 
+static int uniform_corr_option (const gchar *title, gretlopt *popt)
+{
+    const char *opts[] = {
+	N_("Ensure uniform sample size"),
+	NULL
+    };
+    int uniform = 0;
+    int resp;
+
+    resp = checks_only_dialog(title, NULL, opts, 1, 
+			      &uniform, CORR, NULL);
+
+    if (!canceled(resp) && uniform) {
+	*popt = OPT_U;
+    }
+
+    return resp;
+}
+
 static gint selection_popup_click (GtkWidget *w, gpointer p)
 {
     gchar *item = (gchar *) p;
@@ -439,10 +458,19 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     }
 
     if (ci == CORR && missvals_in_selection()) {
-	gchar *title;
+	gchar *title = g_strdup_printf("gretl: %s", item);
+	gretlopt opt = OPT_NONE;
+	int resp;
 
-	title = g_strdup_printf("gretl: %s", item);
-	simple_selection(ci, title, menu_op_wrapper, NULL);
+	resp = uniform_corr_option(title, &opt);
+	if (!canceled(resp)) {
+	    char *buf = main_window_selection_as_string();
+
+	    if (buf != NULL) {
+		do_menu_op(ci, buf, opt);
+		free(buf);
+	    }
+	}	    
 	g_free(title);
     } else if (ci != 0) {
 	char *buf = main_window_selection_as_string();

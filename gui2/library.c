@@ -683,7 +683,7 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 
     switch (ci) {
     case CORR:
-	lib_command_sprintf("corr%s", liststr, flagstr);
+	lib_command_sprintf("corr%s%s", liststr, flagstr);
 	strcat(title, _("correlation matrix"));
 	break;
     case ALL_CORR:
@@ -692,7 +692,7 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 	ci = CORR;
 	break;
     case PCA:
-	lib_command_sprintf("pca%s", liststr, flagstr);
+	lib_command_sprintf("pca%s%s", liststr, flagstr);
 	strcat(title, _("principal components"));
 	break;
     case MAHAL:
