@@ -5500,6 +5500,7 @@ static int dummify_dialog (gretlopt *opt)
 void add_logs_etc (int ci, int varnum)
 {
     char *liststr;
+    int *tmplist = NULL;
     int order = 0;
     int err = 0;
 
@@ -5577,17 +5578,25 @@ void add_logs_etc (int ci, int varnum)
 	return;
     }
 
-    if (ci == LAGS) {
-	err = list_laggenr(&libcmd.list, order, dataset);
-    } else if (ci == LOGS) {
-	err = list_loggenr(libcmd.list, dataset);
-    } else if (ci == SQUARE) {
-	err = list_xpxgenr(&libcmd.list, dataset, OPT_NONE);
-    } else if (ci == DIFF || ci == LDIFF || ci == SDIFF) {
-	err = list_diffgenr(libcmd.list, ci, dataset);
-    } else if (ci == DUMMIFY) {
-	err = list_dumgenr(&libcmd.list, dataset, libcmd.opt);
+    tmplist = gretl_list_copy(libcmd.list);
+    if (tmplist == NULL) {
+	nomem();
+	return;
     }
+
+    if (ci == LAGS) {
+	err = list_laggenr(&tmplist, order, dataset);
+    } else if (ci == LOGS) {
+	err = list_loggenr(tmplist, dataset);
+    } else if (ci == SQUARE) {
+	err = list_xpxgenr(&tmplist, dataset, OPT_NONE);
+    } else if (ci == DIFF || ci == LDIFF || ci == SDIFF) {
+	err = list_diffgenr(tmplist, ci, dataset);
+    } else if (ci == DUMMIFY) {
+	err = list_dumgenr(&tmplist, dataset, libcmd.opt);
+    }
+
+    free(tmplist);
 
     if (err) {
 	errbox(_("Error adding variables"));
