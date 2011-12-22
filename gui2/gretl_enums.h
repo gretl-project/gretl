@@ -249,7 +249,8 @@ enum register_data_flags {
     OPENED_VIA_CLI,
     OPENED_VIA_SESSION,
     DATA_APPENDED,
-    NULLDATA_STARTED
+    NULLDATA_STARTED,
+    DATA_PASTED
 };
 
 enum drag_types {

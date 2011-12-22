@@ -962,8 +962,8 @@
 	  arguments are optional.
 	</para>
 	<para>
-	  For more details and examples see the chapter on special functions
-	  in <lit>genr</lit> in <guideref targ="chap-numerical"/>.
+	  For more details and examples see the chapter on numerical
+	  methods in <guideref targ="chap-numerical"/>.
 	  <seelist>
 	    <fncref targ="NRmax"/>
 	    <fncref targ="fdjac"/>
@@ -5387,22 +5387,32 @@
       <fnargs>
 	<fnarg type="vector">b</fnarg>
 	<fnarg type="fncall">f</fnarg>
-	<fnarg type="scalar">maxit</fnarg>
+	<fnarg type="scalar" optional="true">maxit</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Implements simulated annealing, which may be helpful in
 	  improving the initialization for a numerical optimization
-	  problem (see <fncref targ="BFGSmax"/>).
+	  problem.
 	</para>
 	<para>
-	  The first argument holds the intial value of a parameter vector,
-	  the second argument specifies a function call which returns the
-	  (scalar) value of the maximand, and the third argument specifies
-	  the maximum number of iterations. On successful completion,
-	  <lit>simann</lit> returns the final value of the maximand. FIXME
-	  more details are needed here.
+	  The first argument holds the intial value of a parameter
+	  vector and the second argument specifies a function call
+	  which returns the (scalar) value of the maximand. The
+	  optional third argument specifies the maximum number of
+	  iterations (which defaults to 1024). On successful
+	  completion, <lit>simann</lit> returns the final value of the
+	  maximand.
 	</para>
+	<para>
+	  For more details and an example see the chapter on numerical
+	  methods in <guideref targ="chap-numerical"/>.
+	  <seelist>
+	    <fncref targ="BFGSmax"/>
+	    <fncref targ="NRmax"/>
+	  </seelist>
+	</para>
+
       </description>
     </function>
 

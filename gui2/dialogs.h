@@ -173,6 +173,8 @@ int iter_control_dialog (int *optim, int *pmaxit, double *ptol,
 
 void tex_format_dialog (GtkAction *action, gpointer data);
 
+int paste_data_dialog (int *append);
+
 int object_name_entry_dialog (char *name, GretlType type,
 			      const char *labeltxt, int *show,
 			      GtkWidget *parent);

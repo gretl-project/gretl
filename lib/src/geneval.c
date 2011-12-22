@@ -2048,14 +2048,20 @@ static NODE *simann_node (NODE *l, NODE *m, NODE *r, parser *p)
     if (starting(p)) {
 	gretl_matrix *b = l->v.m;
 	const char *sf = m->v.str;
-	int maxit;
+	int maxit = 0;
 
 	if (gretl_is_null_matrix(b)) {
 	    p->err = E_DATA;
 	} else if (!is_function_call(sf)) {
 	    p->err = E_TYPES;
-	} else {
-	    maxit = node_get_int(r, p);
+	} 
+
+	if (!p->err) {
+	    if (scalar_node(r)) {
+		maxit = node_get_int(r, p);
+	    } else if (!null_or_empty(r)) {
+		p->err = E_TYPES;
+	    }
 	}
 
 	if (p->err) {
@@ -8973,7 +8979,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_SIMANN:
 	/* matrix, plus string and int args */
-	if (l->t == MAT && m->t == STR && scalar_node(r)) {
+	if (l->t == MAT && m->t == STR) {
 	    ret = simann_node(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;

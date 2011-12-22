@@ -82,6 +82,7 @@ static void show_sample_callback (void);
 static void mdata_select_all (void);
 static void mdata_select_list (void);
 static int gui_query_stop (void);
+static void mdata_handle_paste (void);
 
 GtkTargetEntry gretl_drag_targets[] = {
     { "text/uri-list",  0, GRETL_FILENAME },
@@ -755,6 +756,12 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
     int k = key->keyval;
+
+    if ((mods & GDK_CONTROL_MASK) && k == GDK_v) {
+	/* Ctrl-V for paste */
+	mdata_handle_paste();
+	return TRUE;
+    }
 
     if (k == GDK_h || k == GDK_F1) {
 	/* invoke help */
@@ -1500,6 +1507,9 @@ GtkActionEntry main_entries[] = {
     { "normtest", NULL, N_("_Normality test"), NULL, NULL, G_CALLBACK(menu_op_action) },
     { "FreqDist", NULL, N_("_Frequency distribution..."), NULL, NULL, G_CALLBACK(do_freq_dist) },
     { "Density", NULL, N_("Estimated _density plot..."), NULL, NULL, G_CALLBACK(do_kernel) },
+#if 0 /* not yet */
+    { "Boxplot", NULL, N_("_Boxplot"), NULL, NULL, G_CALLBACK(boxplot_callback) },
+#endif
     { "qqplot", NULL, N_("Normal _Q-Q plot..."), NULL, NULL, G_CALLBACK(do_qqplot) },
     { "Gini", NULL, N_("_Gini coefficient"), NULL, NULL, G_CALLBACK(do_gini) },
     { "rmplot", NULL, N_("_Range-mean graph"), NULL, NULL, G_CALLBACK(do_range_mean) },
@@ -2205,6 +2215,46 @@ static void auto_store (void)
 	    file_selector(SAVE_DATA, FSEL_DATA_NONE, NULL);
 	}
     }	
+}
+
+static void mdata_text_received (GtkClipboard *cb,
+				 const gchar *text,
+				 gpointer data)
+{
+    if (text != NULL) {
+	char fullname[FILENAME_MAX];
+	PRN *prn = NULL;
+	int append = 0;
+	int err, resp;
+
+	resp = paste_data_dialog(&append);
+	if (canceled(resp)) {
+	    return;
+	}
+	
+	err = user_fopen(CLIPTEMP, fullname, &prn);
+
+	if (!err) {
+	    int ci = append ? APPEND_CSV : OPEN_CSV;
+
+	    pputs(prn, text);
+	    gretl_print_destroy(prn);
+	    strcpy(tryfile, fullname);
+	    do_open_data(NULL, ci);
+	    gretl_remove(fullname);
+	}
+    }
+}
+
+static void mdata_handle_paste (void)
+{
+    static GtkClipboard *cb;
+
+    if (cb == NULL) {
+	cb = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+    }
+
+    gtk_clipboard_request_text(cb, mdata_text_received, NULL);
 }
 
 int mdata_selection_count (void)

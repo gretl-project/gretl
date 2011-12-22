@@ -1,4 +1,4 @@
-version 1.9.7, in progress
+2011-12-22 version 1.9.7
 
 In cointegration analysis gretl now treats restricted exogenous 
 regressors (that is, exogenous terms that are restricted to the

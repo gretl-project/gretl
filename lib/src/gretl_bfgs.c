@@ -2203,6 +2203,10 @@ int gretl_simann (double *theta, int n, int maxit,
     int improved = 0;
     int i, err = 0;
 
+    if (maxit <= 0) {
+	maxit = 1024;
+    }
+
     set_up_matrix(&b, theta, n, 1);
 
     b0 = gretl_matrix_copy(&b);

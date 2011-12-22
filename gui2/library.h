@@ -274,6 +274,8 @@ int do_factorized_boxplot (selector *sr);
 
 void ts_plot_callback (void);
 
+void boxplot_callback (void);
+
 int do_scatters (selector *sr);
 
 int do_graph_from_selector (selector *sr);

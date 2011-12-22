@@ -828,11 +828,14 @@ static void finalize_data_open (const char *fname, int ftype,
 	return;
     } 
 
-    if (fname != datafile) {
-	strcpy(datafile, fname);
+    if (strstr(fname, CLIPTEMP)) {
+	real_register_data(DATA_PASTED, NULL, plist);
+    } else {
+	if (fname != datafile) {
+	    strcpy(datafile, fname);
+	}
+	real_register_data(DATAFILE_OPENED, NULL, plist);
     }
-
-    real_register_data(DATAFILE_OPENED, NULL, plist);
 
     if (import && !dataset_is_time_series(dataset) && 
 	!dataset_is_panel(dataset) && mdata != NULL) {

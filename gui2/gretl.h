@@ -95,6 +95,7 @@
 
 #define GRETL_BUFSIZE 8192
 #define MAXSTR FILENAME_MAX
+#define CLIPTEMP "cliptmp.txt"
 
 /* basic global program vars */
 extern DATASET *dataset;

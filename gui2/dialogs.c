@@ -3964,6 +3964,67 @@ int density_dialog (int vnum, double *bw)
     return ret;
 }
 
+int paste_data_dialog (int *append)
+{
+    GtkWidget *dialog;
+    GtkWidget *vbox;
+    GtkWidget *hbox;
+    GtkWidget *tmp;
+    int ret = GRETL_CANCEL;
+
+    dialog = gretl_dialog_new(_("paste data from clipboard"), NULL,
+			      GRETL_DLG_BLOCK);
+    
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    tmp = gtk_label_new(_("Try pasting data from clipboard?"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+
+    if (dataset != NULL && dataset->v > 0) {
+	/* clear/append buttons, if applicable */
+	GtkWidget *button;
+	GSList *group;
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	button = gtk_radio_button_new_with_label(NULL, _("Clear current dataset first"));
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 10);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_radio_opt), append);
+	g_object_set_data(G_OBJECT(button), "action", 
+			  GINT_TO_POINTER(0));
+
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+	hbox = gtk_hbox_new(FALSE, 5);
+	button = gtk_radio_button_new_with_label(group, _("Try appending to current dataset"));
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 10);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_radio_opt), append);
+	g_object_set_data(G_OBJECT(button), "action", 
+			  GINT_TO_POINTER(1));
+    }
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+
+    /* "Cancel" button */
+    cancel_delete_button(hbox, dialog);
+
+    /* "OK" button */
+    tmp = ok_validate_button(hbox, &ret, NULL);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     dialog);
+    gtk_widget_grab_default(tmp);
+
+    gtk_widget_show_all(dialog);
+
+    return ret;
+}
+
 static void option_spin_set (GtkWidget *w, int *ivar)
 {
     *ivar = spinner_get_int(w);

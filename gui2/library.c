@@ -853,9 +853,9 @@ void menu_op_action (GtkAction *action, gpointer p)
 	} else if (ci == MAHAL) {
 	    str = N_("Mahalanobis distances");
 	} else if (ci == SUMMARY) {
-	    str = N_("Summary statistics");
+	    str = N_("summary statistics");
 	} else if (ci == CORR) {
-	    str = N_("Correlations");
+	    str = N_("correlation matrix");
 	} else if (ci == QQPLOT) {
 	    str = N_("Q-Q plot");
 	} else if (ci == XTAB) {
@@ -6468,6 +6468,11 @@ void do_boxplot_var (int varnum, gretlopt opt)
     if (!err) {
 	record_lib_command();
     }
+}
+
+void boxplot_callback (void)
+{
+    do_boxplot_var(mdata_active_var(), OPT_NONE);
 }
 
 int do_scatters (selector *sr)

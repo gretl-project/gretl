@@ -458,7 +458,7 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     }
 
     if (ci == CORR && missvals_in_selection()) {
-	gchar *title = g_strdup_printf("gretl: %s", item);
+	gchar *title = g_strdup_printf("gretl: %s", _("correlation matrix"));
 	gretlopt opt = OPT_NONE;
 	int resp;
 

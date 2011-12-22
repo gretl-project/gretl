@@ -1,4 +1,4 @@
-version 1.9.7, in progress
+2011-12-22 version 1.9.7
 - Add two nonparametric estimators: William Cleveland's loess and the
   Nadaraya-Watson estimator; these are available via the new functions
   loess() and nadarwat(), and they're also in the GUI Model menu
