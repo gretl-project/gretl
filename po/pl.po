@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-12-18 14:28-0500\n"
-"PO-Revision-Date: 2011-12-16 09:59-0500\n"
+"PO-Revision-Date: 2011-12-22 00:30-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -6034,8 +6034,8 @@ msgstr ""
 #: lib/src/printout.c:322
 msgid "Test for null hypothesis of normal distribution"
 msgstr ""
-"Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny. Test "
-"Doornika-Hansena (1994)- transformowana skośność i kurtoza"
+"Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny. "
+"Test Doornika-Hansena (1994)- transformowana skośność i kurtoza"
 
 #: lib/src/printout.c:329
 msgid "Test for null hypothesis of gamma distribution"
@@ -15545,9 +15545,9 @@ msgid "Selection equation"
 msgstr "Równanie selekcji próby"
 
 #: plugin/import_common.c:53
-#, fuzzy, c-format
+#, c-format
 msgid "At row %d, column %d:\n"
-msgstr "Wiersz %d, kolumna %d"
+msgstr "Od wiersza %d, kolumny %d:\n"
 
 #: plugin/import_common.c:56
 msgid ""
@@ -15624,9 +15624,8 @@ msgid "Exogenous regressor(s)"
 msgstr "Zmienne egzogeniczne"
 
 #: plugin/johansen.c:1549
-#, fuzzy
 msgid "including constant term"
-msgstr "Włącz wyraz wolny"
+msgstr "włączony wyraz wolny"
 
 #: plugin/johansen.c:1556
 msgid "Cointegration tests, ignoring exogenous variables"
@@ -15765,9 +15764,8 @@ msgstr ""
 "Nie znaleziono dźwigniowych obserwacji (leverage points), h(i)<2(k+1)/n"
 
 #: plugin/leverage.c:347 plugin/leverage.c:487
-#, fuzzy
 msgid "Cross-validation criterion"
-msgstr "Kryt. inform. Akaike'a"
+msgstr "Kryterium Cross-validation"
 
 #: plugin/mailer.c:582
 msgid "To:"
@@ -16225,9 +16223,9 @@ msgid "Unexpected error reading the file\n"
 msgstr "Nieoczekiwany błąd czytania pliku\n"
 
 #: plugin/xlsx_import.c:1063
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no such worksheet"
-msgstr "%s: nie jest takim obiektem"
+msgstr "'%s': nie jest nazwą arkusza"
 
 #: doc/commands/matfuncs.c:50
 msgid "Creation and I/O"
@@ -16252,28 +16250,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "The maximum must be greater than %g"
-#~ msgstr "Maksimum musi być większe od %g"
-
-#~ msgid "Logistic model"
-#~ msgstr "Model logistyczny"
-
-#~ msgid ""
-#~ "Maximum (asymptote) for the\n"
-#~ "dependent variable"
-#~ msgstr ""
-#~ "Maksimum (asymptota) dla\n"
-#~ "zmiennej zależnej"
-
-#~ msgid "Descriptive statistics"
-#~ msgstr "Statystyki opisowe"
-
-#~ msgid "Fixed font..."
-#~ msgstr "Czcionka tekstu..."
-
-#~ msgid "Menu font..."
-#~ msgstr "Czcionka menu..."
-
-#~ msgid "Working directory..."
-#~ msgstr "Katalog roboczy gretla..."
