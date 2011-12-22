@@ -3121,7 +3121,8 @@ static int *function_package_get_list (fnpkg *pkg, int code, int n)
 		    } else if (code == PUBLIST && !priv) {
 			list[j++] = i;
 		    } else if (code == GUILIST && !priv) {
-			if (ufuns[i]->pkg_role == UFUN_BUNDLE_PRINT) {
+			if (ufuns[i]->pkg_role == UFUN_BUNDLE_PRINT ||
+			    ufuns[i]->pkg_role == UFUN_BUNDLE_PLOT) {
 			    subtract = 1;
 			} else {
 			    list[j++] = i;

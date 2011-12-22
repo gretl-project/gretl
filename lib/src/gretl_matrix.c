@@ -780,17 +780,6 @@ void gretl_matrix_fill (gretl_matrix *m, double x)
     }
 }
 
-/* note: this is called only if we've checked that @src
-   has its "info" member allocated and set
-*/
-
-static void gretl_matrix_copy_t1_t2 (gretl_matrix *targ,
-				     const gretl_matrix *src)
-{
-    gretl_matrix_set_t1(targ, src->info->t1);
-    gretl_matrix_set_t2(targ, src->info->t2);
-}
-
 static gretl_matrix *
 gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 {
@@ -834,10 +823,7 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 	int n = rows * cols;
 
 	memcpy(c->val, m->val, n * sizeof *m->val);
-
-	if (gretl_matrix_is_dated(m)) {
-	    gretl_matrix_copy_t1_t2(c, m);
-	}
+	gretl_matrix_copy_info(c, m);
     }
 
     return c;

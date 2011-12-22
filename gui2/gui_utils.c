@@ -4392,7 +4392,7 @@ static void add_bundle_menu_items (windata_t *vwin)
 	} else {
 	    /* no plotting options to show */
 	    item.name = plotfunc;
-	    item.label = plotfunc;
+	    item.label = _("show plot");
 	    item.callback = G_CALLBACK(bundle_plot_call);
 	    vwin_menu_add_item(vwin, "/menubar/Graph", &item);
 	}
