@@ -202,9 +202,9 @@ int syscmd_to_string (const char *syscmd, char *targ, const char *tmpfile)
 
     ret = system(syscmd);
 
-#if 0
-    fprintf(stderr, "ret=%d from '%s'\n", ret, syscmd);
-#endif
+    if (ret != 0) {
+        fprintf(stderr, "ret=%d from '%s'\n", ret, syscmd);
+    }
 
     /* open tmpfile and retrieve the result */
 
