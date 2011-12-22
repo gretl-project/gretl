@@ -6174,7 +6174,7 @@ static void set_pkgdir (fnpkg *pkg)
 
     if (p != NULL) {
 	char *pkgdir = gretl_strndup(pkg->fname, p - pkg->fname);
-
+	
 	gretl_insert_builtin_string("pkgdir", pkgdir);
 	free(pkgdir);
     }
