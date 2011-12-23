@@ -935,7 +935,9 @@ static void maybe_set_eps_pdf_dims (char *s, PlotType ptype, GptFlags flags)
     if (w > 0 && h > 0) {
 	char size_str[32];
 
+	gretl_push_c_numeric_locale();
 	sprintf(size_str, " size %.2f,%.2f", w, h);
+	gretl_pop_c_numeric_locale();
 	strcat(s, size_str);
     }    
 }
