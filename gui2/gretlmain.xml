@@ -195,6 +195,7 @@
       <menuitem action="normtest"/>
       <menuitem action="FreqDist"/>
       <menuitem action="Density"/>
+      <menuitem action="boxplot"/>
       <menuitem action="qqplot"/>
       <menuitem action="Gini"/>
       <menuitem action="rmplot"/>

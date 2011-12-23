@@ -1507,9 +1507,7 @@ GtkActionEntry main_entries[] = {
     { "normtest", NULL, N_("_Normality test"), NULL, NULL, G_CALLBACK(menu_op_action) },
     { "FreqDist", NULL, N_("_Frequency distribution..."), NULL, NULL, G_CALLBACK(do_freq_dist) },
     { "Density", NULL, N_("Estimated _density plot..."), NULL, NULL, G_CALLBACK(do_kernel) },
-#if 0 /* not yet */
-    { "Boxplot", NULL, N_("_Boxplot"), NULL, NULL, G_CALLBACK(boxplot_callback) },
-#endif
+    { "boxplot", NULL, N_("_Boxplot"), NULL, NULL, G_CALLBACK(boxplot_callback) },
     { "qqplot", NULL, N_("Normal _Q-Q plot..."), NULL, NULL, G_CALLBACK(do_qqplot) },
     { "Gini", NULL, N_("_Gini coefficient"), NULL, NULL, G_CALLBACK(do_gini) },
     { "rmplot", NULL, N_("_Range-mean graph"), NULL, NULL, G_CALLBACK(do_range_mean) },

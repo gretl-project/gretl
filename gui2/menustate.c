@@ -391,9 +391,9 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	csv_selected_to_clipboard();
     } else if (!strcmp(item, _("Delete"))) { 
 	delete_single_var(v);
-    } else if (!strcmp(item, _("Add logs"))) {
+    } else if (!strcmp(item, _("Add log"))) {
 	add_logs_etc(LOGS, v);
-    } else if (!strcmp(item, _("Add differences"))) {
+    } else if (!strcmp(item, _("Add difference"))) {
 	add_logs_etc(DIFF, v);
     } else if (!strcmp(item, _("Define new variable..."))) { 
 	genr_callback();
@@ -552,6 +552,10 @@ GtkWidget *build_var_popup (void)
 	    continue;
 	}
 	if ((i == 2 || i == 14) && !extended_ts(dataset)) {
+	    continue;
+	}
+	if (i == 5 && dataset_is_time_series(dataset)) {
+	    /* skip boxplot option */
 	    continue;
 	}
 	item = gtk_menu_item_new_with_label(_(items[i]));
