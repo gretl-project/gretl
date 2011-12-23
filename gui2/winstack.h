@@ -36,6 +36,9 @@ GtkWidget *match_window_by_filename (const char *fname);
 
 GtkWidget *match_db_window_by_filename (const char *fname);
 
+void maybe_close_window_for_data (const gpointer p,
+				  GretlObjType otype);
+
 int vwin_on_stack (const windata_t *vwin);
 
 int highest_numbered_variable_in_winstack (void);

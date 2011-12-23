@@ -8331,7 +8331,8 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	    }
 	} else if (*cmd->param != '\0') {
 	    /* note that this does not catch the case where objects
-	       are deleted within a loop
+	       are deleted within a loop; but that is handled via
+	       callbacks from libgretl (usermat and gretl_bundle)
 	    */
 	    if (get_matrix_by_name(cmd->param)) {
 		err = session_matrix_destroy_by_name(cmd->param);

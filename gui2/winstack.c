@@ -242,6 +242,26 @@ GtkWidget *match_window_by_data (const gpointer p)
     return w;
 }
 
+void maybe_close_window_for_data (const gpointer p,
+				  GretlObjType otype)
+{
+    GtkWidget *w = NULL;
+
+    winstack(STACK_QUERY, NULL, p, &w);
+    if (w != NULL) {
+	if (otype == GRETL_OBJ_BUNDLE) {
+	    windata_t *vwin = g_object_get_data(G_OBJECT(w),
+						"vwin");
+	    if (vwin != NULL) {
+		vwin->data = NULL;
+	    }
+	} else if (otype == GRETL_OBJ_MATRIX) {
+	    g_object_set_data(G_OBJECT(w), "object", NULL);
+	}
+	gtk_widget_destroy(w);
+    }
+}
+
 GtkWidget *match_window_by_filename (const char *fname)
 {
     GtkWidget *w = NULL;

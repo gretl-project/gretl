@@ -2384,13 +2384,11 @@ int session_matrix_destroy_by_name (const char *name)
 
     if (u == NULL) {
 	err = E_UNKVAR;
-    } else if (winstack_match_data(u)) {
-	errbox(_("%s: please close this object's window first"), name);
-	return 0;
     } else {
-	gui_obj *obj = get_gui_obj_by_data(u);
+	maybe_close_window_for_data(u, GRETL_OBJ_MATRIX);
+	if (iconlist != NULL) {
+	    gui_obj *obj = get_gui_obj_by_data(u);
 
-	if (obj != NULL) {
 	    session_delete_icon(obj);
 	}
 	err = user_matrix_destroy(u);
@@ -2412,13 +2410,11 @@ int session_bundle_destroy_by_name (const char *name)
 
     if (b == NULL) {
 	err = E_UNKVAR;
-    } else if (winstack_match_data(b)) {
-	errbox(_("%s: please close this object's window first"), name);
-	return 0;
     } else {
-	gui_obj *obj = get_gui_obj_by_data(b);
+	maybe_close_window_for_data(b, GRETL_OBJ_BUNDLE);
+	if (iconlist != NULL) {
+	    gui_obj *obj = get_gui_obj_by_data(b);
 
-	if (obj != NULL) {
 	    session_delete_icon(obj);
 	}
 	err = user_bundle_destroy(b);
