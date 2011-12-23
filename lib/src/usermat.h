@@ -31,11 +31,6 @@ enum {
     SEL_NULL
 };
 
-enum {
-    USER_MATRIX_ADD,
-    USER_MATRIX_DELETE
-};
-
 typedef struct user_matrix_ user_matrix;
 
 typedef struct matrix_subspec_ matrix_subspec;
@@ -201,6 +196,12 @@ int matrix_XTX_in_place (gretl_matrix *m);
 
 void write_matrices_to_file (FILE *fp);
 
-void set_matrix_add_delete_callback (void (*callback));
+typedef void (*MATRIX_ADD_FUNC) (const char *);
+typedef int (*MATRIX_DEL_FUNC) (const char *);
+
+void set_matrix_add_callback (MATRIX_ADD_FUNC);
+
+void set_matrix_delete_callback (MATRIX_DEL_FUNC);
+
 
 #endif /* USERMAT_H_ */

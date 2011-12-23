@@ -8334,9 +8334,9 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	       are deleted within a loop
 	    */
 	    if (get_matrix_by_name(cmd->param)) {
-		err = session_matrix_destroy_by_name(cmd->param, prn);
+		err = session_matrix_destroy_by_name(cmd->param);
 	    } else if (gretl_is_bundle(cmd->param)) {
-		err = session_bundle_destroy_by_name(cmd->param, prn);
+		err = session_bundle_destroy_by_name(cmd->param);
 	    } else {
 		err = gretl_delete_var_by_name(cmd->param, prn);
 	    }

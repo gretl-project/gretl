@@ -1015,6 +1015,42 @@ int gretl_bundle_set_creator (gretl_bundle *bundle, const char *name)
     return err;
 }
 
+/* callback for adding icons representing bundles to the GUI
+   session window */
+
+static BUNDLE_ADD_FUNC bundle_add_callback;
+static BUNDLE_DEL_FUNC bundle_delete_callback;
+
+/**
+ * set_bundle_add_callback:
+ * @callback: function function to put in place.
+ *
+ * Sets the callback function to be invoked when a
+ * bundle is added to the stack of saved objects.  Intended
+ * for synchronizing the GUI program with the saved object
+ * state.
+ */
+
+void set_bundle_add_callback (BUNDLE_ADD_FUNC callback)
+{
+    bundle_add_callback = callback; 
+}
+
+/**
+ * set_bundle_delete_callback:
+ * @callback: function function to put in place.
+ *
+ * Sets the callback function to be invoked when a
+ * bundle is to be removed from the stack of saved objects.  Intended
+ * for synchronizing the GUI program with the saved object
+ * state.
+ */
+
+void set_bundle_delete_callback (BUNDLE_DEL_FUNC callback)
+{
+    bundle_delete_callback = callback; 
+}
+
 /**
  * save_named_bundle:
  * @name: name to give the bundle.
@@ -1042,30 +1078,16 @@ int save_named_bundle (const char *name)
 	    strcpy(b->name, name);
 	    b->level = level;
 	    err = gretl_bundle_push(b, 0);
+    
+	    if (!err && bundle_add_callback != NULL && 
+		!bundle_name_is_temp(b->name) &&
+		gretl_function_depth() == 0) {
+		(*bundle_add_callback)(b);
+	    }
 	}
     }
 
     return err;
-}
-
-/* callback for adding icons representing bundles to the GUI
-   session window */
-
-static void (*bundle_add_callback)(gretl_bundle *);
-
-/**
- * set_bundle_add_callback:
- * @callback: function function to out in place.
- *
- * Sets the callback function to be invoked when a
- * bundle is added to the stack of saved objects.  Intended
- * for synchronizing the GUI program with the saved object
- * state.
- */
-
-void set_bundle_add_callback (void (*callback))
-{
-    bundle_add_callback = callback; 
 }
 
 /* For use by geneval: take @bundle, created on the fly, and stack
@@ -1480,6 +1502,25 @@ int gretl_bundle_unlocalize (const char *localname,
     return err;
 }
 
+/* provide an alternative to gretl_bundle_delete_by_name(),
+   below, that does NOT invoke bundle_delete_callback,
+   so that it is usable by that callback
+*/
+
+int user_bundle_destroy (gretl_bundle *b)
+{
+    int i, err = E_UNKVAR;
+
+    for (i=0; i<n_saved_bundles; i++) {
+	if (bundles[i] == b) {
+	    err = real_unstack_bundle(i, UNSTACK_AND_FREE);
+	    break;
+	}
+    }
+
+    return err;
+}
+
 /**
  * gretl_bundle_delete_by_name:
  * @name: name of bundle to delete.
@@ -1495,6 +1536,13 @@ int gretl_bundle_delete_by_name (const char *name, PRN *prn)
 {
     int level = gretl_function_depth();
     int i, err = E_UNKVAR;
+
+    if (bundle_delete_callback != NULL && 
+	!bundle_name_is_temp(name) &&
+	gretl_function_depth() == 0) {
+	/* run this through the GUI so things stay in sync */
+	return (*bundle_delete_callback)(name);
+    }
 
     for (i=0; i<n_saved_bundles; i++) {
 	if (bundles[i]->level == level && 

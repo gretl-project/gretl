@@ -97,7 +97,13 @@ int gretl_bundle_set_note (gretl_bundle *bundle, const char *key,
 
 int gretl_bundle_delete_data (gretl_bundle *bundle, const char *key);
 
-void set_bundle_add_callback (void (*callback));
+typedef void (*BUNDLE_ADD_FUNC) (gretl_bundle *);
+typedef int (*BUNDLE_DEL_FUNC) (const char *);
+
+
+void set_bundle_add_callback (BUNDLE_ADD_FUNC callback);
+
+void set_bundle_delete_callback (BUNDLE_DEL_FUNC callback);
 
 int gretl_bundle_add_or_replace (gretl_bundle *bundle, const char *name);
 
@@ -110,6 +116,8 @@ gretl_bundle *gretl_bundle_copy (const gretl_bundle *bundle, int *err);
 int copy_bundle_arg_as (const gretl_bundle *b, const char *newname);
 
 int gretl_bundle_delete_by_name (const char *name, PRN *prn);
+
+int user_bundle_destroy (gretl_bundle *b);
 
 int gretl_bundle_set_name (gretl_bundle *b, const char *name);
 

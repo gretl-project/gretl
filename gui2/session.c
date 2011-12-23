@@ -260,7 +260,7 @@ static gboolean session_view_click (GtkWidget *widget,
 static int real_delete_model_from_session (SESSION_MODEL *model);
 static void make_short_label_string (char *targ, const char *src);
 static gui_obj *get_gui_obj_by_data (void *finddata);
-static void add_del_user_matrix_callback (const char *mname, int delete);
+static void add_user_matrix_callback (const char *mname);
 static void add_bundle_callback (gretl_bundle *bundle);
 
 static int session_graph_count;
@@ -1510,8 +1510,11 @@ void session_init (void)
 
     winstack_init();
 
-    set_matrix_add_delete_callback(add_del_user_matrix_callback); 
+    set_matrix_add_callback(add_user_matrix_callback);
+    set_matrix_delete_callback(session_matrix_destroy_by_name);
+
     set_bundle_add_callback(add_bundle_callback);
+    set_bundle_delete_callback(session_bundle_destroy_by_name);
 }
 
 void free_session (void)
@@ -2367,7 +2370,13 @@ static gui_obj *get_gui_obj_by_data (void *targ)
     return NULL;
 }
 
-int session_matrix_destroy_by_name (const char *name, PRN *prn)
+/* This callback is invoked when a named matrix is deleted via script
+   or console.  Note that we call user_matrix_destroy() below, and NOT
+   user_matrix_destroy_by_name() -- calling the latter would lead to a
+   loop back to here.  
+*/
+
+int session_matrix_destroy_by_name (const char *name)
 {
     user_matrix *u = get_user_matrix_by_name(name);
     int err;
@@ -2389,7 +2398,13 @@ int session_matrix_destroy_by_name (const char *name, PRN *prn)
     return err;
 }
 
-int session_bundle_destroy_by_name (const char *name, PRN *prn)
+/* This callback is invoked when a named bundle is deleted via script
+   or console. As with session_matrix_destroy_by_name() we invoke
+   user_bundle_destroy() rather than gretl_bundle_delete_by_name()
+   to avoid looping back.
+*/
+
+int session_bundle_destroy_by_name (const char *name)
 {
     gretl_bundle *b = get_gretl_bundle_by_name(name);
     int err;
@@ -2405,7 +2420,7 @@ int session_bundle_destroy_by_name (const char *name, PRN *prn)
 	if (obj != NULL) {
 	    session_delete_icon(obj);
 	}
-	err = gretl_bundle_delete_by_name(name, NULL);
+	err = user_bundle_destroy(b);
     } 
     
     return err;
@@ -2722,35 +2737,16 @@ static void batch_pack_icons (void)
     }
 }
 
-static void add_del_user_matrix_callback (const char *mname,
-					  int action)
+static void add_user_matrix_callback (const char *mname)
 {
-    if (action == USER_MATRIX_DELETE) {
-	if (iconview != NULL) {
-	    gui_obj *obj;
+    if (iconview != NULL) {
+	user_matrix *u = get_user_matrix_by_name(mname);
 
-	    obj = get_gui_obj_by_name_and_sort(mname, GRETL_OBJ_MATRIX);
-	    if (obj != NULL) {
-		GtkWidget *w = match_window_by_data(obj->data);
-
-		if (w != NULL) {
-		    /* if there's an open editing window for this
-		       matrix, destroy it */
-		    gtk_widget_destroy(w);
-		}
-		session_delete_icon(obj);
-	    }
+	if (u != NULL) {
+	    session_add_icon(u, GRETL_OBJ_MATRIX, ICON_ADD_SINGLE);
 	}
-    } else {
-	if (iconview != NULL) {
-	    user_matrix *u = get_user_matrix_by_name(mname);
-
-	    if (u != NULL) {
-		session_add_icon(u, GRETL_OBJ_MATRIX, ICON_ADD_SINGLE);
-	    }
-	} else if (autoicon_on()) {
-	    view_session();
-	}
+    } else if (autoicon_on()) {
+	view_session();
     }
 
     mark_session_changed();
