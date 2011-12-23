@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-12-23 11:59-0500\n"
-"PO-Revision-Date: 2011-12-16 09:59-0500\n"
+"PO-Revision-Date: 2011-12-23 21:37+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -1991,7 +1991,7 @@ msgstr "'%s' non è una variabile binaria"
 
 #: lib/src/discrete.c:2987
 msgid "Perfect prediction obtained: no MLE exists"
-msgstr ""
+msgstr "Ottenuta una previsione perfetta: non esiste MLE"
 
 #: lib/src/discrete.c:3150
 msgid "Illegal non-positive value of the dependent variable"
@@ -9071,23 +9071,20 @@ msgid "bandwidth adjustment factor:"
 msgstr "Fattore di aggiustamento della banda:"
 
 #: gui2/dialogs.c:3975
-#, fuzzy
 msgid "paste data from clipboard"
-msgstr "Copia negli appunti"
+msgstr "incolla dati dagli appunti"
 
 #: gui2/dialogs.c:3982
 msgid "Try pasting data from clipboard?"
-msgstr ""
+msgstr "Provare a incollare i dati dagli appunti?"
 
 #: gui2/dialogs.c:3991
-#, fuzzy
 msgid "Clear current dataset first"
-msgstr "Aprire un file di dati per prima cosa"
+msgstr "Cancellare il dataset attuale per prima cosa"
 
 #: gui2/dialogs.c:4002
-#, fuzzy
 msgid "Try appending to current dataset"
-msgstr "OK, conservato il dataset attuale\n"
+msgstr "Prova ad aggiungere al dataset attuale"
 
 #: gui2/dialogs.c:4223
 msgid "No model is specified"
@@ -10921,9 +10918,8 @@ msgid "Estimated _density plot..."
 msgstr "Grafico _densità stimata"
 
 #: gui2/gretl.c:1510
-#, fuzzy
 msgid "_Boxplot"
-msgstr "Boxplot"
+msgstr "_Boxplot"
 
 #: gui2/gretl.c:1511
 msgid "Normal _Q-Q plot..."
@@ -13079,12 +13075,10 @@ msgid "Edit values"
 msgstr "Modifica valori"
 
 #: gui2/menustate.c:392 gui2/menustate.c:523
-#, fuzzy
 msgid "Add log"
 msgstr "Aggiungi logaritmi"
 
 #: gui2/menustate.c:394 gui2/menustate.c:524
-#, fuzzy
 msgid "Add difference"
 msgstr "Aggiungi differenze"
 
@@ -14206,9 +14200,9 @@ msgid "versus"
 msgstr "Rispetto a"
 
 #: gui2/session.c:2329 gui2/session.c:2388 gui2/session.c:2416
-#, fuzzy, c-format
+#, c-format
 msgid "%s: please close this object's window first"
-msgstr "Occorre prima chiudere la finestra di questo oggetto"
+msgstr "%s: occorre prima chiudere la finestra di questo oggetto"
 
 #: gui2/session.c:2501
 #, c-format
