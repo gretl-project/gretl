@@ -1,3 +1,8 @@
+version 1.9.8, in progress
+- Graphing i18n fix: avoid "decimal comma" in setting size of PDF plots
+- Function packages: prevent a package's "bundle-plot" function from
+  appearing in the initial GUI listing of public functions
+
 2011-12-22 version 1.9.7
 - Add two nonparametric estimators: William Cleveland's loess and the
   Nadaraya-Watson estimator; these are available via the new functions
