@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-12-18 14:28-0500\n"
-"PO-Revision-Date: 2011-12-21 09:49+0200\n"
+"PO-Revision-Date: 2011-12-23 15:59+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -2374,7 +2374,7 @@ msgstr "model %d kalıntılar"
 #: lib/src/genfuncs.c:2926
 #, c-format
 msgid "fitted value from model %d"
-msgstr "model %d yakıştırılan değer"
+msgstr "model %d yakıştırılan değerler"
 
 #: lib/src/genfuncs.c:2931
 #, c-format
@@ -6588,7 +6588,7 @@ msgstr "Sınırlı Bilgi Ençok Olabilirlik"
 
 #: lib/src/system.c:108
 msgid "Ordinary Least Squares"
-msgstr "Sıradan En küçük Kareler"
+msgstr "Sıradan Enküçük Kareler"
 
 #: lib/src/system.c:109
 msgid "Two-Stage Least Squares"
@@ -7713,11 +7713,11 @@ msgstr "H0: orantılar farkı = 0"
 
 #: gui2/calculator.c:2710 gui2/dialogs.c:1079
 msgid "Show graph of sampling distribution"
-msgstr "Örneklem dağılımı çizgesini göster"
+msgstr "Örneklem dağılımı çizimini göster"
 
 #: gui2/calculator.c:2939 gui2/calculator.c:2983
 msgid "gretl: add distribution graph"
-msgstr "gretl: dağılım çizgesi ekle"
+msgstr "gretl: dağılım çizimi ekle"
 
 #: gui2/calculator.c:2978
 msgid "gretl: p-value finder"
@@ -7733,7 +7733,7 @@ msgstr "gretl: değiştirgesel-dışı sınamalar"
 
 #: gui2/calculator.c:2982
 msgid "gretl: distribution graphs"
-msgstr "gretl: dağılım çizgeleri"
+msgstr "gretl: dağılım çizimleri"
 
 #: gui2/calculator.c:2984
 msgid "gretl: add random variable"
@@ -7817,7 +7817,7 @@ msgstr "gretl: VAR gecikme seçimi"
 #: gui2/callbacks.c:637 gui2/callbacks.c:646 gui2/library.c:6756
 #: gui2/toolbar.c:1019
 msgid "gretl: define graph"
-msgstr "gretl: çizge tanımla"
+msgstr "gretl: çizim tanımla"
 
 #: gui2/callbacks.c:465 gui2/callbacks.c:468 gui2/callbacks.c:471
 #: gui2/callbacks.c:474
@@ -8063,7 +8063,7 @@ msgstr "Göster"
 #: gui2/database.c:779 gui2/database.c:810 gui2/session.c:801
 #: gui2/toolbar.c:643
 msgid "Graph"
-msgstr "Çizge"
+msgstr "Çizim"
 
 #: gui2/database.c:782
 msgid "Import"
@@ -8815,7 +8815,7 @@ msgstr "tekli çizim: kümeler dizili (N <= 80)"
 
 #: gui2/dialogs.c:2332
 msgid "multiple plots in grid (N <= 16)"
-msgstr "ızgara düzeninde çoklu çizimler (N <= 16)"
+msgstr "çoklu çizimler ızgara düzeninde (N <= 16)"
 
 #: gui2/dialogs.c:2333
 msgid "multiple plots arranged vertically (N <= 6)"
@@ -9777,7 +9777,7 @@ msgstr "gnuplot komutu başarısız"
 
 #: gui2/gpt_control.c:1167
 msgid "Gnuplot error creating graph"
-msgstr "Çizge oluşturulurken gnuplot hatası"
+msgstr "Çizim oluşturulurken gnuplot hatası"
 
 #: gui2/gpt_control.c:1651 gui2/gpt_control.c:1688 gui2/gpt_control.c:1765
 #: gui2/gpt_control.c:1771 gui2/gpt_control.c:1777 gui2/gpt_control.c:2473
@@ -9790,7 +9790,7 @@ msgstr "Çizim dosyası bozuk"
 
 #: gui2/gpt_control.c:3127
 msgid "Couldn't access graph info"
-msgstr "Çizge bilgisine erişilemedi"
+msgstr "Çizim bilgisine erişilemedi"
 
 #: gui2/gpt_control.c:3289 gui2/gpt_control.c:3532 gui2/graphics.c:301
 #: gui2/graph_page.c:610
@@ -9903,15 +9903,15 @@ msgstr "renkli"
 
 #: gui2/gpt_control.c:4094
 msgid "Malformed PNG file for graph"
-msgstr "Çizge için kusurlu PNG dosyası"
+msgstr "Çizim için kusurlu PNG dosyası"
 
 #: gui2/gpt_control.c:4690
 msgid "gretl: graph"
-msgstr "gretl: çizge"
+msgstr "gretl: çizim"
 
 #: gui2/gpt_control.c:4765
 msgid " Click on graph for pop-up menu"
-msgstr " Açılır menü için çizgeye tıklayınız"
+msgstr " Açılır menü için çizime tıklayınız"
 
 #: gui2/gpt_control.c:5020
 msgid "Couldn't find a usable terminal program"
@@ -9943,7 +9943,7 @@ msgstr "yarı-log: log y = a + b*x"
 
 #: gui2/gpt_dialog.c:300
 msgid "gretl: graph color selection"
-msgstr "gretl: çizge renk seçimi"
+msgstr "gretl: çizim renk seçimi"
 
 #: gui2/gpt_dialog.c:327 gui2/gpt_dialog.c:397
 msgid "Select color"
@@ -9966,7 +9966,7 @@ msgstr "yazı tipi: %s"
 
 #: gui2/gpt_dialog.c:1262
 msgid "Font for graphs"
-msgstr "Çizge yazı tipi"
+msgstr "Çizim yazı tipi"
 
 #: gui2/gpt_dialog.c:1470
 msgid "Fill color"
@@ -10192,7 +10192,7 @@ msgid ""
 "These colors will be used unless overridden\n"
 "by graph-specific choices\n"
 msgstr ""
-"Çizgeye özel seçimlerle geçersiz kılınmadıkça\n"
+"Çizime özel seçimlerle geçersiz kılınmadıkça\n"
 "aşağıdaki renkler kullanılacaktır\n"
 
 #: gui2/gpt_dialog.c:3680
@@ -10229,7 +10229,7 @@ msgstr "çizgi genişlik çarpanı"
 
 #: gui2/graphics.c:452
 msgid "save graph"
-msgstr "Çizgeyi kaydet"
+msgstr "Çizimi kaydet"
 
 #: gui2/graphics.c:461
 msgid "EPS file"
@@ -10253,7 +10253,7 @@ msgstr "Önizleme"
 
 #: gui2/graph_page.c:274
 msgid "The graph page is full"
-msgstr "Çizge sayfası dolu"
+msgstr "Çizim sayfası dolu"
 
 #: gui2/graph_page.c:465 gui2/guiprint.c:2261 gui2/guiprint.c:2376
 msgid "Failed to process TeX file"
@@ -10261,11 +10261,11 @@ msgstr "TeX dosyası işleme başarısız"
 
 #: gui2/graph_page.c:617 gui2/session.c:2924
 msgid "The graph page is empty"
-msgstr "Çizge sayfası boş"
+msgstr "Çizim sayfası boş"
 
 #: gui2/graph_page.c:621
 msgid "graph page options"
-msgstr "çizge sayfası seçenekleri"
+msgstr "çizim sayfası seçenekleri"
 
 #: gui2/gretl.c:112
 msgid ""
@@ -10535,7 +10535,7 @@ msgstr "_P-değeri bulucu"
 
 #: gui2/gretl.c:1396
 msgid "_Distribution graphs"
-msgstr "_Dağılım çizgeleri"
+msgstr "_Dağılım çizimleri"
 
 #: gui2/gretl.c:1397
 msgid "_Plot a curve"
@@ -10728,7 +10728,7 @@ msgstr "_3B çizimi..."
 
 #: gui2/gretl.c:1451
 msgid "_Multiple graphs"
-msgstr "_Çoklu çizgeler"
+msgstr "_Çoklu çizimler"
 
 #: gui2/gretl.c:1452
 msgid "X-Y _scatters..."
@@ -10884,7 +10884,7 @@ msgstr "_Gini katsayısı"
 
 #: gui2/gretl.c:1505
 msgid "_Range-mean graph"
-msgstr "_Aralık-ortalama çizgesi"
+msgstr "_Aralık-ortalama çizimi"
 
 #: gui2/gretl.c:1506
 msgid "_Time series plot"
@@ -10984,7 +10984,7 @@ msgstr "_Model"
 
 #: gui2/gretl.c:1538
 msgid "_Ordinary Least Squares..."
-msgstr "_Sıradan En küçük Kareler"
+msgstr "_Sıradan enküçük kareler"
 
 #: gui2/gretl.c:1539
 msgid "_Instrumental variables"
@@ -11503,7 +11503,7 @@ msgstr "Ka_ydet"
 
 #: gui2/gui_utils.c:195 gui2/gui_utils.c:321
 msgid "_Graphs"
-msgstr "_Çizgeler"
+msgstr "_Çizimler"
 
 #: gui2/gui_utils.c:196
 msgid "_Residual plot"
@@ -12106,7 +12106,7 @@ msgstr "Tahmin"
 
 #: gui2/helpfiles.c:174
 msgid "Graphs"
-msgstr "Çizgeler"
+msgstr "Çizimler"
 
 #: gui2/helpfiles.c:175
 msgid "Prediction"
@@ -12652,7 +12652,7 @@ msgstr "Alt-örneklemlerde ençok ve enaz değerleri kırp"
 
 #: gui2/library.c:5013
 msgid "gretl: range-mean graph"
-msgstr "gretl: aralık-ortalama çizgesi"
+msgstr "gretl: aralık-ortalama çizimi"
 
 #: gui2/library.c:5047
 msgid "gretl: range-mean statistics"
@@ -12830,11 +12830,11 @@ msgstr "X-ekseni değişkeni"
 
 #: gui2/library.c:6751
 msgid "on a single graph"
-msgstr "Tek bir çizge üzerinde"
+msgstr "Tek bir çizim üzerinde"
 
 #: gui2/library.c:6752
 msgid "in separate small graphs"
-msgstr "Ayrı küçük çizgeler içinde"
+msgstr "Ayrı küçük çizimler şeklinde"
 
 #: gui2/library.c:6757
 msgid "Plot the series"
@@ -13658,7 +13658,7 @@ msgstr "Sıralamaları göster"
 
 #: gui2/selector.c:5145
 msgid "Ensure uniform sample size"
-msgstr "Tekbiçim örneklem büyüklüğü sağla"
+msgstr "Düzenli örneklem büyüklüğü sağla"
 
 #: gui2/selector.c:5151
 msgid "Parameter covariance matrix via Hessian"
@@ -14090,7 +14090,7 @@ msgstr "Özellikler"
 
 #: gui2/session.c:844 gui2/session.c:908 gui2/session.c:927
 msgid "Failed to copy graph file"
-msgstr "Çizge dosyasını kopyalama başarısız"
+msgstr "Çizim dosyasını kopyalama başarısız"
 
 #: gui2/session.c:1063
 msgid "Model is already saved"
@@ -14169,7 +14169,7 @@ msgstr "Model çizelge"
 
 #: gui2/session.c:3355
 msgid "Graph page"
-msgstr "Çizge sayfası"
+msgstr "Çizim sayfası"
 
 #: gui2/session.c:3582
 msgid "icon view"
@@ -14398,7 +14398,7 @@ msgstr "Menü yazı tipi"
 
 #: gui2/settings.c:232
 msgid "PNG graph font"
-msgstr "PNG çizge yazı tipi"
+msgstr "PNG çizim yazı tipi"
 
 #: gui2/settings.c:234
 msgid "Gnuplot colors"
@@ -14983,7 +14983,7 @@ msgstr "komut başvuru belgesi"
 
 #: gui2/toolbar.c:1065
 msgid "X-Y graph"
-msgstr "X-Y çizgesi"
+msgstr "X-Y çizimi"
 
 #: gui2/toolbar.c:1066
 msgid "OLS model"
@@ -15089,7 +15089,7 @@ msgstr "Formül:"
 
 #: gui2/varinfo.c:834
 msgid "Display name (shown in graphs):"
-msgstr "Çizgelerde gösterilecek ad:"
+msgstr "Çizimlerde gösterilecek ad:"
 
 #: gui2/varinfo.c:860
 msgid "Compaction method (for reducing frequency):"
@@ -15897,7 +15897,7 @@ msgstr "aralık"
 
 #: plugin/range-mean.c:203
 msgid "Sample is too small for range-mean graph\n"
-msgstr "Örneklem, aralık-ortalama çizgesi için aşırı küçük\n"
+msgstr "Aralık-ortalama çizimi için örneklem aşırı küçük\n"
 
 #: plugin/range-mean.c:221
 #, c-format
@@ -16013,7 +16013,7 @@ msgstr "Veri setine kaydet:"
 
 #: plugin/tramo_options.c:493 plugin/tramo-x12a.c:318
 msgid "Generate graph"
-msgstr "Çizge oluştur"
+msgstr "Çizim oluştur"
 
 #: plugin/tramo_options.c:514 plugin/tramo-x12a.c:255
 msgid "Log transformation"
