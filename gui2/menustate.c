@@ -381,8 +381,6 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	unit_root_test(ADF);
     } else if (!strcmp(item, _("KPSS test"))) { 
 	unit_root_test(KPSS);
-    } else if (!strcmp(item, _("Hurst exponent"))) { 
-	do_hurst();
     } else if (!strcmp(item, _("Edit attributes"))) {  
 	varinfo_dialog(v);
     } else if (!strcmp(item, _("Edit values"))) {  
@@ -522,8 +520,8 @@ GtkWidget *build_var_popup (void)
 	N_("Copy to clipboard"),
 	N_("Delete"),
 	NULL,
-	N_("Add logs"),
-	N_("Add differences"),
+	N_("Add log"),
+	N_("Add difference"),
 	N_("Define new variable...")
     };
     GtkWidget *menu;

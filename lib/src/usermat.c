@@ -117,24 +117,25 @@ static int matrix_is_saved (const gretl_matrix *m)
     return 0;
 }
 
-/* callback for adding icons representing matrices to the GUI
-   session window */
+/* callback for adding or deleting icons representing 
+   matrices in the GUI session window */
 
-static void (*matrix_add_callback)(void);
+static void (*matrix_add_delete_callback)(const char *name,
+					  int action);
 
 /**
- * set_matrix_add_callback:
+ * set_matrix_add_delete_callback:
  * @callback: function function to out in place.
  *
  * Sets the callback function to be invoked when a user-defined
- * matrix is added to the stack of saved objects.  Intended
- * for synchronizing the GUI program with the saved object
+ * matrix is added to or removed from the stack of saved objects.  
+ * Intended for synchronizing the GUI program with the saved object
  * state.
  */
 
-void set_matrix_add_callback (void (*callback))
+void set_matrix_add_delete_callback (void (*callback))
 {
-    matrix_add_callback = callback; 
+    matrix_add_delete_callback = callback; 
 }
 
 static user_matrix *real_user_matrix_add (gretl_matrix *M, 
@@ -180,9 +181,9 @@ static user_matrix *real_user_matrix_add (gretl_matrix *M,
 	    gretl_matrix_rows(M), gretl_matrix_cols(M));
 #endif
 
-    if (callback_ok && matrix_add_callback != NULL && 
+    if (callback_ok && matrix_add_delete_callback != NULL && 
 	gretl_function_depth() == 0) {
-	(*matrix_add_callback)();
+	(*matrix_add_delete_callback)(name, USER_MATRIX_ADD);
     }
 
     return u;
@@ -1235,6 +1236,11 @@ int user_matrix_destroy_by_name (const char *name, PRN *prn)
 	pprintf(prn, _("Deleted matrix %s"), name);
 	pputc(prn, '\n');
     }
+
+    if (matrix_add_delete_callback != NULL && 
+	gretl_function_depth() == 0) {
+	(*matrix_add_delete_callback)(name, USER_MATRIX_DELETE);
+    }    
 
     return err;
 }

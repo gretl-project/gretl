@@ -6470,11 +6470,6 @@ void do_boxplot_var (int varnum, gretlopt opt)
     }
 }
 
-void boxplot_callback (void)
-{
-    do_boxplot_var(mdata_active_var(), OPT_NONE);
-}
-
 int do_scatters (selector *sr)
 {
     const char *buf = selector_list(sr);
@@ -8335,6 +8330,9 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 		sync_db_windows();
 	    }
 	} else if (*cmd->param != '\0') {
+	    /* note that this does not catch the case where objects
+	       are deleted within a loop
+	    */
 	    if (get_matrix_by_name(cmd->param)) {
 		err = session_matrix_destroy_by_name(cmd->param, prn);
 	    } else if (gretl_is_bundle(cmd->param)) {

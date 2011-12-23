@@ -260,7 +260,7 @@ static gboolean session_view_click (GtkWidget *widget,
 static int real_delete_model_from_session (SESSION_MODEL *model);
 static void make_short_label_string (char *targ, const char *src);
 static gui_obj *get_gui_obj_by_data (void *finddata);
-static void add_user_matrix_callback (void);
+static void add_del_user_matrix_callback (const char *mname, int delete);
 static void add_bundle_callback (gretl_bundle *bundle);
 
 static int session_graph_count;
@@ -1510,7 +1510,7 @@ void session_init (void)
 
     winstack_init();
 
-    set_matrix_add_callback(add_user_matrix_callback); 
+    set_matrix_add_delete_callback(add_del_user_matrix_callback); 
     set_bundle_add_callback(add_bundle_callback);
 }
 
@@ -2334,14 +2334,15 @@ static void maybe_delete_session_object (gui_obj *obj)
     }
 }
 
-static gui_obj *get_gui_obj_by_name (const char *name)
+static gui_obj *get_gui_obj_by_name_and_sort (const char *name,
+					      int sort)
 {
     GList *mylist = g_list_first(iconlist);
     gui_obj *obj = NULL;
 
     while (mylist != NULL) {
 	obj = (gui_obj *) mylist->data;
-	if (!strcmp(name, obj->name)) {
+	if (!strcmp(name, obj->name) && obj->sort == sort) {
 	    return obj;
 	}
 	mylist = mylist->next;
@@ -2721,17 +2722,35 @@ static void batch_pack_icons (void)
     }
 }
 
-static void add_user_matrix_callback (void)
+static void add_del_user_matrix_callback (const char *mname,
+					  int action)
 {
-    if (iconview != NULL) {
-	int n = n_user_matrices();
+    if (action == USER_MATRIX_DELETE) {
+	if (iconview != NULL) {
+	    gui_obj *obj;
 
-	if (n > 0) {
-	    session_add_icon(get_user_matrix_by_index(n-1), GRETL_OBJ_MATRIX, 
-			     ICON_ADD_SINGLE);
+	    obj = get_gui_obj_by_name_and_sort(mname, GRETL_OBJ_MATRIX);
+	    if (obj != NULL) {
+		GtkWidget *w = match_window_by_data(obj->data);
+
+		if (w != NULL) {
+		    /* if there's an open editing window for this
+		       matrix, destroy it */
+		    gtk_widget_destroy(w);
+		}
+		session_delete_icon(obj);
+	    }
 	}
-    } else if (autoicon_on()) {
-	view_session();
+    } else {
+	if (iconview != NULL) {
+	    user_matrix *u = get_user_matrix_by_name(mname);
+
+	    if (u != NULL) {
+		session_add_icon(u, GRETL_OBJ_MATRIX, ICON_ADD_SINGLE);
+	    }
+	} else if (autoicon_on()) {
+	    view_session();
+	}
     }
 
     mark_session_changed();
@@ -2742,7 +2761,7 @@ static void add_bundle_callback (gretl_bundle *bundle)
     if (iconview != NULL) {
 	/* first check for replacement of an existing bundle */
 	const char *name = gretl_bundle_get_name(bundle);
-	gui_obj *obj = get_gui_obj_by_name(name);
+	gui_obj *obj = get_gui_obj_by_name_and_sort(name, GRETL_OBJ_BUNDLE);
 
 	if (obj != NULL) {
 	    obj->data = bundle;
@@ -2760,9 +2779,8 @@ int have_session_objects (void)
 {
     int n = data_status;
 
-#if 1
-    /* Note: we could do something like the following here, to enable
-       the icon view even when there's no dataset present.
+    /* Note: the following lines enable the icon view even when
+       there's no dataset present.
     */
 
     if (n == 0) {
@@ -2772,7 +2790,6 @@ int have_session_objects (void)
     if (n == 0) {
 	n = n_user_matrices() + n_user_bundles() + n_saved_scalars();
     }
-#endif
 
     return n > 0;
 }

@@ -49,6 +49,8 @@ void minibuf_callback (void);
 
 void menu_boxplot_callback (int varnum);
 
+void boxplot_callback (void);
+
 #if defined (ENABLE_MAILER) && !defined(G_OS_WIN32)
 void send_file (char *fullname);
 #endif

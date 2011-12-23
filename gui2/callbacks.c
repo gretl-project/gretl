@@ -645,6 +645,11 @@ void menu_boxplot_callback (int varnum)
     }
 }
 
+void boxplot_callback (void)
+{
+    menu_boxplot_callback(mdata_active_var());
+}
+
 void revise_nl_model (MODEL *pmod, GtkWidget *parent)
 {
     const char *title = NULL;
