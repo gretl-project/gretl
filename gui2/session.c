@@ -2326,7 +2326,8 @@ static void maybe_delete_session_object (gui_obj *obj)
     }
 
     if (busy) {
-	warnbox(_("Please close this object's window first"));
+	warnbox(_("%s: please close this object's window first"),
+		obj->name);
     } else {	    
 	gchar *msg = g_strdup_printf(_("Really delete %s?"), obj->name);
 
@@ -2384,7 +2385,7 @@ int session_matrix_destroy_by_name (const char *name)
     if (u == NULL) {
 	err = E_UNKVAR;
     } else if (winstack_match_data(u)) {
-	errbox(_("Please close this object's window first"));
+	errbox(_("%s: please close this object's window first"), name);
 	return 0;
     } else {
 	gui_obj *obj = get_gui_obj_by_data(u);
@@ -2412,7 +2413,7 @@ int session_bundle_destroy_by_name (const char *name)
     if (b == NULL) {
 	err = E_UNKVAR;
     } else if (winstack_match_data(b)) {
-	errbox(_("Please close this object's window first"));
+	errbox(_("%s: please close this object's window first"), name);
 	return 0;
     } else {
 	gui_obj *obj = get_gui_obj_by_data(b);

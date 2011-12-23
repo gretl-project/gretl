@@ -219,7 +219,14 @@ void winstack_destroy (void)
 
 int winstack_match_data (const gpointer p)
 {
-    return winstack(STACK_QUERY, NULL, p, NULL);
+    GtkWidget *w = NULL;
+    int ret = winstack(STACK_QUERY, NULL, p, &w);
+    
+    if (w != NULL) {
+	gtk_window_present(GTK_WINDOW(w));
+    }
+
+    return ret;
 }
 
 int vwin_on_stack (const windata_t *vwin)
