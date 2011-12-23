@@ -22,6 +22,7 @@
 #define FULL_XML_HEADERS
 
 #include "libgretl.h"
+#include "version.h"
 #include "gretl_xml.h"
 #include "importer.h"
 #include "csvdata.h"

@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "version.h"
 
 static const int rank_sum_lower[39][3] = {
   /* (nA, nB) 0.01, 0.05, 0.1 */

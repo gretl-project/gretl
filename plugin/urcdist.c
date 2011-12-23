@@ -14,6 +14,7 @@
 */
 
 #include "libgretl.h"
+#include "version.h"
 
 #define URDEBUG 0
 

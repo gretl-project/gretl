@@ -27,6 +27,7 @@
 #include <float.h>
 
 #include "libgretl.h"
+#include "version.h"
 
 #ifdef LONGLEY_ONLY
 # define MAX_DIGITS 12

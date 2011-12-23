@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "libgretl.h"
+#include "version.h"
 
 #if WORDS_BIGENDIAN
 # include "swap_bytes.h"

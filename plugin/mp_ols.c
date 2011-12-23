@@ -20,6 +20,7 @@
 /* mp_ols.c - gretl least squares with multiple precision (GMP) */
 
 #include "libgretl.h"
+#include "version.h"
 #include "libset.h"
 
 #include <float.h>

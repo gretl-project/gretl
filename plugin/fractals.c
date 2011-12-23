@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "version.h"
 #include "libset.h"
 
 #define MINSAMP 8

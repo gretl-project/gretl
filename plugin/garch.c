@@ -22,6 +22,7 @@
 */
 
 #include "libgretl.h"
+#include "version.h"
 #include "libset.h"
 #include "var.h"
 

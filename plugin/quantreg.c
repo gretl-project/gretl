@@ -23,6 +23,7 @@
 */
 
 #include "libgretl.h"
+#include "version.h"
 #include "gretl_f2c.h"
 #include "usermat.h"
 #include "matrix_extra.h"

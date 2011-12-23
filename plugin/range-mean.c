@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "version.h"
 #include "libset.h"
 
 static int get_range_and_mean (int t1, int t2, const double *x,

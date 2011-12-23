@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "version.h"
 #include "matrix_extra.h"
 
 #define ADEBUG 0

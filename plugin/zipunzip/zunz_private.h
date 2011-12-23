@@ -10,6 +10,7 @@
 #define ZUNZ_PRIVATE_H_
 
 #include "libgretl.h"
+#include "version.h"
 
 #include <stddef.h>
 #include <string.h>

@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "version.h"
 
 #define KDEBUG 0
 

@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "version.h"
 #include "matrix_extra.h"
 #include "gretl_bfgs.h"
 #include "libset.h"

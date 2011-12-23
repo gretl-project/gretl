@@ -25,6 +25,7 @@
 #include <dirent.h>
 
 #include "libgretl.h"
+#include "version.h"
 #include "monte_carlo.h"
 #include "var.h"
 #include "system.h"

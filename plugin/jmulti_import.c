@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include "libgretl.h"
+#include "version.h"
 
 static int try_fix_varname (char *name)
 {

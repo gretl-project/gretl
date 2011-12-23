@@ -22,6 +22,7 @@
    copyright notice. */
 
 #include "libgretl.h"
+#include "version.h"
 
 #include <gtk/gtk.h>
 #include <stdlib.h>

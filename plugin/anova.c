@@ -18,6 +18,8 @@
  */
 
 #include "libgretl.h"
+#include "version.h"
+
 #include <glib.h>
 
 /* provides for one-way and two-way ANOVA */

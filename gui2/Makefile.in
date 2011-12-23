@@ -184,7 +184,7 @@ all: $(PROG) $(GRETL_LANG)
 	$(AMP)$(CC) -c $(CFLAGS) $<
 	$(AMP)$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
-$(PROG): .deps $(OBJS) $(HACK_OBJ) $(GRETLLIB)
+$(PROG): .deps $(OBJS) $(HACK_OBJ)
 	$(LDECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(OBJS) \
 	$(HACK_OBJ) $(LIBS) $(INETLIB) $(CARBONLIB)

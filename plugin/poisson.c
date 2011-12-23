@@ -20,6 +20,7 @@
 /* models for count data, Poisson and Negative Binomial */
 
 #include "libgretl.h"
+#include "version.h"
 #include "matrix_extra.h"
 #include "libset.h"
 #include "gretl_bfgs.h"

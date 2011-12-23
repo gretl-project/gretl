@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "version.h"
 #include "gretl_matrix.h"
 
 #include <gtk/gtk.h>

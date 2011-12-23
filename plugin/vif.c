@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "version.h"
 
 #include "gretl_f2c.h"
 #include "clapack_double.h"

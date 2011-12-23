@@ -17,6 +17,7 @@
  */
 
 #include "libgretl.h"
+#include "version.h"
 #include "libset.h"
 #include "kalman.h"
 #include "matrix_extra.h"

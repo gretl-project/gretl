@@ -25,6 +25,7 @@
 #include <ctype.h>
 
 #include "libgretl.h"
+#include "version.h"
 
 #include "miditypes.h"
 #include "midi_utils.h"
