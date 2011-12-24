@@ -6,7 +6,7 @@
 </head>
 
 <body>
-  
+
 <p>[<a href="http://gretl.sourceforge.net/gretl_italiano.html">pagina principale</a>]</p>
 
 <center>
@@ -14,206 +14,125 @@
 <h2>per Mac OS X</h2>
 </center>
 
-<h2>Usare un'immagine disco gi?pronta</h2>
+<h2>Passo 0</h2>
 
-<p>Il modo pi?semplice di installare gretl per OS X su piattaforma Intel, se
-funziona nel vostro caso, prevede di usare l'immagine disco  
+<p>Nel corso della procedura seguente, alcuni passi dipendono dal tipo di Mac
+che è in uso. Se non si è sicuri a riguardo, basta fare clic sull'icona Apple
+nell'angolo superiore sinistro dello schermo e selezionare &quot;About this Mac&quot;.
+Apparirà una finestra che contiene il numero di versione di OS X e il tipo di
+processore, Intel o PowerPC (PPC).</p>
 
-<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.dmg.gz">gretl-VERSION-intel.dmg.gz</a>.
-(circa 9MB). Scaricate l'immagine sul vostro desktop,
-fate doppio clic su di essa per aprirla, quindi trascinate la cartella
-Gretl contenuta all'interno in una posizione adatta all'installazione
-(ad esempio, la propria cartella Programmi).
-Questo pacchetto dipende dal <a href="http://r.research.att.com/gtk2-framework.dmg">GTK+ Framework</a>.
+<h2>Passo 1</h2>
+
+<p>Per usare gretl occorre installare il sistema X11 window. Nelle versioni recenti di OS X questo
+è già installato, ma se si sta usando una versione precedente può essere
+necessario dover installare X11.</p>
+
+<p>Per controllare se X11 è installato, basta aprire Finder e aprire <kbd>Applications</kbd>, 
+<kbd>Utilities</kbd>: se X11 è installato apparirà in fondo alla lista.</p>
+
+<h2>Passo 2</h2>
+
+<p>Gretl ha bisogno anche di alcune librerie di supporto, ossia GTK e librerie correlate.
+Se si usa OS X 10.6 (Snow Leopard) o successivo su un Mac Intel, installare GTK
+usando
+<a href="http://sourceforge.net/projects/gretl/files/osx/GTK+.framework.dmg/download">GTK+.framework.dmg</a>.
+Se si usa un Mac PowerPC, o una versione precedente di OS X, installare
+<a href="http://r.research.att.com/gtk2-framework.dmg">questa versione</a> di GTK
+(disponibile anche <a href="http://ricardo.ecn.wfu.edu/pub/gretl/gtk2-framework.dmg">qui</a>).
+</p>
+ 
+<h2>Passo 3</h2> 
+
+<p>E ora gretl: scaricare e installare l'ultima versione rilasciata, oppure lo "snapshot" attuale.
+Quest'ultimo è più aggiornato: spesso contiene correzioni a bug, ma talvolta
+contiene nuovi bug. Per vedere le novità contenute nello snapshot, si può vedere
+il <a href="../ChangeLog.html">Change log di gretl</a> (la voce "in progress").</p>
+
+<table cellpadding="4">
+<tr><td>&nbsp;</td><td><p><i>Intel Mac</i></p></td><td><p>O</p></td>
+<td><p><i>PPC Mac</i></p></td></tr>
+<tr>
+<td><p>ultima versione rilasciata (SHORTDATE)</p></td>
+<td><p>
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-intel.dmg.gz">gretl-VERSION-intel.dmg.gz</a>
+</p></td>
+<td>&nbsp;</td>
+<td><p>
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-ppc.dmg.gz">gretl-VERSION-ppc.dmg.gz</a>
+</p></td>
+</tr>
+
+<tr>
+<td><p>O snapshot attuale</p></td>
+<td><p>
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-intel.dmg.gz/download">gretl-intel.dmg.gz</a>
+</p></td>
+<td>&nbsp;</td>
+<td><p>
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-ppc.dmg.gz/download">gretl-ppc.dmg.gz</a>
+</p></td>
+</tr>
+</table>
+
+<p>Finito il download, fare doppio clic sul file <kbd>dmg.gz</kbd> per scompattarlo: si otterrà
+il file <kbd>dmg</kbd>; fare doppio clic su di esso per montare l'immagine
+disco. Aprire l'immagine con Finder e trascinare Gretl su Applications.
+<i>Attenzione</i>: se si sta aggiornando un'installazione esistente di gretl occorre per prima cosa aprire
+Applications in Finder e cancellare la vecchia voce Gretl.
+Fatto questo, è possibile rimuovere l'immagine disco e cancellare i file <kbd>dmg</kbd> e
+<kbd>dmg.gz</kbd>.
 </p>
 
-<p>Questa procedura ?stata testata su OS X v10.4.11. L'immagine disco ?documentata brevemente nel file
+<p>L'immagine disco di gretl è documentata brevemente nel file
 <a href="./README.pdf">README.pdf</a>, che contiene suggerimenti da seguire nel caso
-in cui i caratteri non appaiano correttamente. Se gretl non funziona correttamente
-su OS X, ?possibile fare il debug in questo modo: aprire una finestra di terminale
-X11, andare nella directory in cui ?stato installato il pacchetto (es.
-<kbd>cd Gretl.app</kbd>), andare nella directory <kbd>Contents/Resources/bin</kbd> ed
-eseguire il comando</p>
+si presentino problemi. Se gretl non funziona correttamente su OS X, è possibile fare
+il debug in questo modo: aprire una finestra di terminale X11, andare nella directory
+in cui è stato installato il pacchetto (es. <kbd>cd Gretl.app</kbd>),
+andare nella directory <kbd>Contents/Resources/bin</kbd> ed eseguire il comando</p>
 <pre>
 ./gretl
 </pre>
 <p>Dovrebbero apparire alcune indicazioni utili per capire cosa c'?che non va.</p>
 
-<p><i>Nota:</i> questo pacchetto dipende dal sistema X11 di Apple (il porting per
-Mac del sistema X Window). Questo ?disponibile sui DVD di installazione di OS X.</p>
+<h2>Componenti aggiuntivi opzionali</h2>
 
-<p><i>Nota:</i> come indicato sopra, l'immagine disco fornita funziona sui Mac con
-processore <b>Intel</b>. Cerchiamo un volontario che possa compilare gretl per
-l'architettura PPC. Nel frattempo, per l'architettura PPC ?disponibile la
-<a href="http://downloads.sourceforge.net/gretl/gretl-1.6.5.dmg">versione 1.6.5
-  di gretl</a>.</p>
+<p>E' possibile installare X-12-ARIMA e/o TRAMO/SEATS, programmi specializzati per l'analisi
+di serie storiche stagionali, nella versione compatibile con gretl.
+</p>
 
-<h2>Metodo alternativo: compilare usando Fink</h2>
+<center>
+<table cellpadding="4">
 
-<p>Se l'immagine precompilata non funziona, o se si vuole un maggior controllo
-sulla compilazione, ?possibile compilare gretl dal sorgente. Per questo ?richiesto,
-oltre all'X11 di Apple e a un certo grado di famigliarit?con i comandi unix, il sistema
-Fink disponibile da:
-<a
-  href="http://fink.sourceforge.net/download/">http://fink.sourceforge.net/download/</a>.</p>
+<tr>
+<td><p>X-12-ARIMA per Intel Mac</p></td>
+<td><p><a
+href="http://sourceforge.net/projects/gretl/files/x12a/x12arima-intel.dmg/download">x12arima-intel.dmg</a></p></td>
+</tr>
 
-<p>Oltre all'installazione base di Fink, per compilare ed eseguire gretl
-occorre assicurarsi che i seguenti pacchetti Fink siano installati e
-aggiornati (alcuni potrebbero gi?esserlo, nel qual caso Fink avvertir?l'utente). Dopo ogni pacchetto ?indicato il comando da eseguire (al
-prompt dei comandi in un xterm o nel programma Mac Terminal) per
-l'installazione:</p>
+<tr>
+<td><p>X-12-ARIMA per PowerPC Mac</p></td>
+<td><p><a
+href="http://sourceforge.net/projects/gretl/files/x12a/x12arima-ppc.dmg/download">x12arima-ppc.dmg</a></p></td>
+</tr>
 
-<table cellspacing=8>
-  <tr>
-    <td><p class="in-cell">system-xfree86</p></td>
-    <td><kbd>fink install system-xfree86</kbd></td>
-    </tr>
-  <tr>
-    <td><p class="in-cell">gtk+2</p></td>
-    <td><kbd>fink install gtk+2</kbd></td>
-    </tr>
-  <tr>
-    <td><p class="in-cell">gtk+2-dev</p></td>
-    <td><kbd>fink install gtk+2-dev</kbd></td>
-    </tr>
-  <tr>
-    <td><p class="in-cell">libxml2</p></td>
-    <td><kbd>fink install libxml2</kbd></td>
-    </tr>
-  <tr>
-    <td><p class="in-cell">gnuplot</p></td>
-    <td><kbd>fink install gnuplot</kbd></td>
-    </tr>
-  <tr>
-    <td><p class="in-cell">fftw3</p></td>
-    <td><kbd>fink install fftw3</kbd></td>
-    </tr>
+<tr>
+<td><p>TRAMO/SEATS per Intel Mac</p></td>
+<td><p><a 
+href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats-intel.dmg/download">tramo-seats-intel.dmg</a></p></td>
+</tr>
+
+<tr>
+<td><p>TRAMO/SEATS per PowerPC Mac</p></td>
+<td><p><a href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats.dmg/download">tramo-seats.dmg</a></p></td>
+</tr>
+
 </table>
+</center>
 
-<p>In particolare, occorre controllare che gnuplot sia aggiornato
-(il numero di versione dev'essere almeno superiore a 4.0 per poter
-funzionare con gretl).</p>
-
-<p>In passato erano richiesti anche questi pacchetti, ma ora sembrano
-essere non pi?essenziali:</p>
-
-<table cellspacing=8>
-  <tr>
-    <td><p class="in-cell">dlcompat</p></td><td>
-    <kbd>fink install dlcompat</kbd></td>
-    </tr>
-  <tr>
-    <td><p class="in-cell">dlcompat-dev</p></td>
-    <td><kbd>fink install dlcompat-dev</kbd></td>
-    </tr>
-</table>
-
-<h2>Variabili di ambiente</h2>
-
-<p>Per compilare gretl usando fink, occorre assicurarsi che 
-l'<i>ambiente</i> sia impostato correttamente prima di eseguire lo 
-script configure di gretl. Ci?richiede di impostare alcune variabili
-d'ambiente, e il modo esatto per farlo dipende dalla shell usata, 
-tcsh o bash (tcsh era la shell predefinita in OS X prima di Panther,
-ma penso che dopo Panther quella predefinita sia bash). ?possibile
-eseguire i comandi seguenti uno alla volta, oppure (meglio) metterli nel
-file di inizializzazione della shell, <kbd>.tcshrc</kbd> o <kbd>.bashrc</kbd>,
-nella propria directory home.</p>
-
-<p>versione tcsh:</p>
-
-<pre>
-setenv CFLAGS -I/sw/include
-setenv LDFLAGS -L/sw/lib
-setenv CXXFLAGS $CFLAGS
-setenv CPPFLAGS $CXXFLAGS
-setenv ACLOCAL_FLAGS "-I/sw/share/aclocal"
-setenv PKG_CONFIG_PATH "/sw/lib/pkgconfig"
-</pre>
-
-<p>versione bash:</p>
-
-<pre>
-export CFLAGS=-I/sw/include
-export LDFLAGS=-L/sw/lib
-export CXXFLAGS=$CFLAGS
-export CPPFLAGS=$CXXFLAGS
-export ACLOCAL_FLAGS="-I/sw/share/aclocal"
-export PKG_CONFIG_PATH="/sw/lib/pkgconfig"
-</pre>
-
-<p>Occorre anche fare "source" sul file <kbd>init.sh</kbd> fornito con
-fink:</p>
-
-<pre>
-source /sw/bin/init.sh
-</pre>
-
-<p>Pu?essere utile leggere la
-<a href="http://fink.sourceforge.net/faq/usage-general.php">fink FAQ</a>.</p>
-
-<h2>Configurazione e compilazione</h2>
-
-<p>Una volta installate le versioni corrette di OS X, X11 di Apple, Fink, i
-pacchetti Fink richiesti, e una volta configurato correttamente l'ambiente,
-installare gretl dovrebbe essere abbastanza immediato. Spero di poter
-rendere disponibile presto un pacchetto Fink per gretl, ma per ora occorre
-installarlo dai sorgenti. Ecco come fare:</p>
-
-<ol>
-<li><p class-"in-list">Scaricare il pacchetto dei sorgenti:<br>
-
-   <kbd>curl -O http://ricardo.ecn.wfu.edu/pub/gretl/gretl-VERSION.tar.bz2</kbd>
-    </p></li>
-
-<li><p class-"in-list">Decomprimere i sorgenti:<br>
-
-   <kbd>tar xvfj gretl-VERSION.tar.bz2</kbd>
-    </p></li>
-
-<li><p class-"in-list">Andare nella directory dei sorgenti di gretl:<br> 
-
-   <kbd>cd gretl-VERSION</kbd></p></li>
-
-<li><p class-"in-list">Configurare il codice:<br>
-
-   <kbd>./configure --prefix=/sw --disable-png-comments</kbd></p></li>
-
-<li><p class-"in-list">Eseguire <kbd>make</kbd> per compilare gretl e attendere la fine dell'esecuzione.</p></li>
-
-<li><p class-"in-list">Eseguire <kbd>sudo make install</kbd> per installare gretl.</p></li>
-</ol>
-
-<p>Se pu?essere utile, ecco tutti i comandi riuniti in uno script di shell:</p>
-
-<pre>
-#!/bin/sh
-# inizializza fink
-. /sw/bin/init.sh
-# imposta l'ambiente di compilazione
-export CFLAGS="-O2 -I/sw/include"
-export LDFLAGS=-L/sw/lib
-export CXXFLAGS=$CFLAGS
-export CPPFLAGS=$CXXFLAGS
-export ACLOCAL_FLAGS="-I/sw/share/aclocal"
-export PKG_CONFIG_PATH="/sw/lib/pkgconfig"
-# scarica i sorgenti di gretl
-curl -O http://ricardo.ecn.wfu.edu/pub/gretl/gretl-VERSION.tar.bz2
-# spacchetta l'archivio dei sorgenti
-tar xvfj gretl-VERSION.tar.bz2
-# va nella directory dei sorgenti di gretl
-cd gretl-VERSION
-# configura
-./configure --prefix=/sw
-# compila il programma
-make
-# installa gretl (occorre la password di root)
-sudo make install
-</pre>
- 
-
-<p>Fatto questo, dovrebbe essere possibile eseguire gretl scrivendo "gretl" sulla riga di comando
-in un xterm (lanciato dopo aver avviato X11 di Apple).</p>
+<p>
+&nbsp;
+</p>
 
 </body>
 </html>
