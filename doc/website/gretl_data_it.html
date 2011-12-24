@@ -13,16 +13,13 @@
 
 <table cellspacing=8>
 <tr>
-  <td><img alt="gretl image" 
-            src="./images/gretl-image.png"></td>
+  <td><img alt="gretl image" src="./images/gretl-image.png"></td>
   <td align=left>
-     <font face="sans-serif" size="-1">
       <p><a href="#db">Database per gretl</a>
       <p><a href="#jw">Dataset da libri di testo</a>
       <p><a href="#df">Grandi dataset</a>
       <p><a href="#custom">Raccolte di dati personalizzate</a>
-      <p><a href="#perl">Utilità per il trattamento dei dati</a>
-      </font> 
+      <p><a href="#utils">Utilità per il trattamento dei dati</a>
   </td>
 </tr>  
 </table>
@@ -46,7 +43,7 @@ di solito ha un'estensione <kbd>.gdt</kbd> ed è in formato XML, conforme
 al DTD contenuto in <a href="./gretldata.dtd">gretldata.dtd</a>.</p>
 
 <p>Per ulteriori dettagli si veda il <a
-  href="http://ricardo.ecn.wfu.edu/pub/gretl/manual/">manuale di gretl</a>.</p> 
+  href="http://sourceforge.net/projects/gretl/files/manual/">manuale di gretl</a>.</p> 
 
 <h2><a name="db">1. Database per gretl</a></h2>
 
@@ -60,119 +57,176 @@ database</kbd> (se si è connessi a internet).</p>
 
 <h2><a name="jw">2. Dataset da libri di testo</a></h2>
 
-<p>Dataset e script applicativi per <a
-href="http://econ.ucsd.edu/~rramanat/embook5.htm"><i>Introductory Econometrics
-with Applications</i></a> di Ramu Ramanathan, e una selezione di dati per 
-<a href="http://pages.stern.nyu.edu/~wgreene/Text/econometricanalysis.htm"><i>Econometric
-Analysis</i></a> di William Greene sono forniti con il pacchetto base di gretl.
-Sono disponibili ulteriori dataset:</p>
+<p>Sono disponibili dataset (e in alcuni casi script applicativi) per molti
+diffusi libri di testo di econometria, elencati nella tabella seguente.
+Si noti che i file <b>.exe</b> sono auto-installanti, da usare solo su
+MS Windows; i file <b>.tar.gz</b> e <b>.zip</b> sono archivi compressi usabili
+su qualsiasi sistema operativo. Sotto la tabella ci sono note aggiuntive
+sull'installazione dei file.</p>
 
-<p><i>Wooldridge</i>: gretl offre supporto per i dataset usati nel libro di testo di
-Jeffrey Wooldridge <a
-  href="http://www.swlearning.com/economics/wooldridge/wooldridge2e/wooldridge2e.html"><i>Introductory
-  Econometrics: A Modern Approach</i></a>.
-I dataset sono disponibili come file auto-installante per Windows
-<a href="http://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.exe">wooldridge_data.exe</a>, 
-o come archivio compresso
-<a href="http://ricardo.ecn.wfu.edu/pub/gretl/wooldridge.tar.gz">wooldridge.tar.gz</a>.
-Sono inclusi i dati aggiunti nella quarta edizione del libro.
-</p>
+<p>Inoltre, <a href="http://www.learneconometrics.com/gretl.html">Lee Adkins</a> fornisce
+dataset e script gretl per la terza edizione di <a
+  href="http://he-cda.wiley.com/WileyCDA/HigherEdTitle/productCd-0471723606.html"><i>Principles
+  of Econometrics</i></a> di Hill, Griffiths e Lim.
+E' anche disponibile liberamente un libro pdf: <i>Using gretl for Principles of Econometrics</i>.</p>
 
-<p><i>Gujarati</i>: gretl supporta anche i dataset relativi a
-<a href="http://www.mhhe.com/economics/gujarati4/">Basic Econometrics</a> di Damodar Gujarati.
-Si veda <a href="./gujarati/index.html">questa pagina</a> per i dettagli.</p>
+<table width="90%" border=0 cellspacing=4 cellpadding=4>
+<tr><th align=left>Autore</th>
+  <th align=left>Titolo</th>
+    <th align=left>File</th></tr> 
+<tr bgcolor="#E0E0E0">
+  <td><p>Ramu Ramanathan</p></td>
+  <td><p><a href="http://econ.ucsd.edu/~rramanat/embook5.htm"><i>Introductory Econometrics 
+        with Applications</i></a></p></td>
+  <td><p>Dati e script forniti con gretl</p></td>
+ </tr>
+<tr bgcolor="#E0E0E0">
+  <td><p>William Greene</p></td>
+  <td><p><a href="http://pages.stern.nyu.edu/~wgreene/Text/econometricanalysis.htm"><i>Econometric
+       Analysis</i></a></p></td>
+  <td><p>Alcuni dati forniti con gretl</p></td>
+ </tr>
+<tr bgcolor="#E0E0E0">
+  <td><p>Jeffrey Wooldridge</p></td>
+  <td><p><a href="http://www.swlearning.com/economics/wooldridge/wooldridge2e/wooldridge2e.html"><i>Introductory
+       Econometrics: A Modern Approach</i></a></p></td>
+  <td>
+  <p>
+   <a href="http://sourceforge.net/projects/gretl/files/datafiles/wooldridge_data.exe/download">wooldridge_data.exe</a>
+   <img alt="MS Windows" src="./images/mswin.png"/><br>
+   <a href="http://sourceforge.net/projects/gretl/files/datafiles/wooldridge.tar.gz/download">wooldridge.tar.gz</a>
+  </p>
+  </td>
+ </tr>
+<tr bgcolor="#E0E0E0">
+  <td><p>Damodar Gujarati</p></td>
+  <td><p><a href="http://www.mhhe.com/economics/gujarati4/"><i>Basic Econometrics</i></a></p></td>
+  <td>
+   <p>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/gujarati_data.exe/download">gujarati_data.exe</a>
+<img alt="MS Windows" src="./images/mswin.png"/><br>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/gujarati.tar.gz/download">gujarati.tar.gz</a>
+   </p>
+  </td>
+ </tr>
+<tr bgcolor="#E0E0E0">
+  <td><p>Stock and Watson</p></td>
+  <td><p><a href="http://wps.aw.com/aw_stockwatsn_economtrcs_1"><i>Introduction to Econometrics</i></a></p></td>
+  <td>
+   <p>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/stock_watson.exe/download">stock_watson.exe</a>
+<img alt="MS Windows" src="./images/mswin.png"/><br>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/stock_watson_2.exe/download">stock_watson_2.exe</a>
+<img alt="MS Windows" src="./images/mswin.png"/><br>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/stock_watson.tar.gz/download">stock_watson.tar.gz</a><br>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/stock_watson_2.tar.gz/download">stock_watson_2.tar.gz</a><br>
+<a href="http://ricardo.ecn.wfu.edu/pub/gretl/stock_watson_scripts.zip">stock_watson_scripts.zip</a>
+   </p>
+  </td>
+ </tr>
+<tr bgcolor="#E0E0E0">
+  <td><p>Christopher Dougherty</p></td>
+  <td><p><a href="http://www.oup.com/us/catalog/general/subject/Economics/Econometrics/?view=usa&ci=9780199280964"><i>Introduction 
+    to Econometrics</i></a></p></td>
+  <td>
+  <p>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/dougherty_data.exe/download">dougherty_data.exe</a>
+<img alt="MS Windows" src="./images/mswin.png"/><br>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/dougherty.tar.gz/download">dougherty.tar.gz</a>
+  </p>
+  </td>
+ </tr>
+<tr bgcolor="#E0E0E0">
+  <td><p>Marno Verbeek</p></td>
+  <td><p><a href="http://www.econ.kuleuven.ac.be/gme/"><i>Guide to Modern Econometrics</i></a></p></td>
+  <td><p>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/verbeek_data.exe/download">verbeek_data.exe</a>
+<img alt="MS Windows" src="./images/mswin.png"/><br>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/verbeek.tar.gz/download">verbeek.tar.gz</a>
+ </p></td>
+ </tr>
+<tr bgcolor="#E0E0E0">
+  <td><p>Davidson e MacKinnon</p></td>
+  <td><p><a href="http://www.econ.queensu.ca/ETM/"><i>Econometric Theory and Methods</i></a></p></td>
+  <td><p>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/ETM_data.exe/download">ETM_data.exe</a>
+<img alt="MS Windows" src="./images/mswin.png"/><br>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/ETM.tar.gz/download">ETM.tar.gz</a>
+  </p></td>
+ </tr>
+<tr bgcolor="#E0E0E0">
+  <td><p>Gary Koop</p></td>
+  <td><p><a href="http://eu.wiley.com/legacy/wileychi/koopdata2ed/"><i>Analysis of Economic Data</i></a></p></td>
+  <td><p>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/koop_data.exe/download">koop_data.exe</a>
+<img alt="MS Windows" src="./images/mswin.png"/><br>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/koop.tar.gz/download">koop.tar.gz</a>
+  </p></td>
+ </tr>
+<tr bgcolor="#E0E0E0">
+  <td><p>Christopher Dougherty</p></td>
+  <td><p><a href="http://www.oup.com/us/catalog/general/subject/Economics/Econometrics/?view=usa&ci=9780199280964"><i>Introduction to Econometrics</i></a></p></td>
+  <td><p>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/dougherty_data.exe/download">dougherty_data.exe</a>
+<img alt="MS Windows" src="./images/mswin.png"/><br>
+<a href="http://sourceforge.net/projects/gretl/files/datafiles/dougherty.tar.gz/download">dougherty.tar.gz</a>
+  </p></td>
+ </tr>
+</table>
 
-<p><i>Stock and Watson</i>: gretl supporta i dataset di <a
-href="http://wps.aw.com/aw_stockwatsn_economtrcs_1"><i>Introduction to
-Econometrics</i></a> di James Stock e Mark Watson. Sono forniti anche degli script
-che replicano gli esempi. Il pacchetto è disponibile come archivio auto-installante
-per Windows,
-<a href="http://ricardo.ecn.wfu.edu/pub/gretl/stock_watson.exe">stock_watson.exe</a>, 
-o come archivio compresso,
-<a href="http://ricardo.ecn.wfu.edu/pub/gretl/stock_watson.tar.gz">stock_watson.tar.gz</a>.</p>
-
-<p><b>Nuovo</b>: sono disponibili anche i dataset per la seconda edizione del libro di 
-Stock e Watson, in formato compresso per Windows,
-<a href="http://ricardo.ecn.wfu.edu/pub/gretl/stock_watson_2.exe">stock_watson_2.exe</a>, 
-o come archivio tar.gz,
-<a href="http://ricardo.ecn.wfu.edu/pub/gretl/stock_watson_2.tar.gz">stock_watson_2.tar.gz</a>.</p>
-
-<p><i>Verbeek</i>: i dataset della seconda edizione di <a
-  href="http://www.zanichelli.it/f_catalog.asp?url=cataloghi/risposta.asp?fxtipo%3DAUTORE%26fxtesto%3Dverbeek%26CATALOGO%3DSEL%5FTOT%26back%3Dcat%5Ftot%2Easp%26AUTORE%3Dverbeek%26TITOLO%3D">Econometria</a>
-di Marno Verbeek (edizione originale: <a
-  href="http://www.wiley.com/WileyCDA/WileyTitle/productCd-0470857730.html">Guide
-  to Modern Econometrics</a>) sono disponibili per Windows,
-<a
- href="http://ricardo.ecn.wfu.edu/pub/gretl/verbeek_data.exe">verbeek_data.exe</a>, o come archivio compresso, <a
- href="http://ricardo.ecn.wfu.edu/pub/gretl/verbeek.tar.gz">verbeek.tar.gz</a>.</p>
-
-
-<p><i>Davidson and MacKinnon</i>: gretl supporta i dataset relativi al loro libro
-<a href="http://www.econ.queensu.ca/ETM/">Econometric Theory and Methods</a>.
-I dataset sono disponibili come file auto-installante per Windows
-<a href="http://ricardo.ecn.wfu.edu/pub/gretl/ETM_data.exe">ETM_data.exe</a>, 
-o come archivio compresso
-<a href="http://ricardo.ecn.wfu.edu/pub/gretl/ETM.tar.gz">ETM.tar.gz</a>.</p>
-
-<p><i>Hill, Griffiths and Lim</i>: <a
-  href="http://www.learneconometrics.com/gretl.html">Lee Adkins</a> fornisce
-dataset e script per la terza edizione di <a
-  href="http://he-cda.wiley.com/WileyCDA/HigherEdTitle/productCd-0471723606.html">Principles
-  of Econometrics</a>. I file sono accompagnati da un libro scaricabile liberamente: <i>Using gretl
-for Principles of Econometrics</i>.
+<h3>Installazione dei dati dei libri di testo</h3>
 
 <p>Per quanto riguarda i pacchetti auto-installanti per Windows, basta scaricarli sul
 desktop e fare doppio clic sull'icona (una volta installati i dataset, è possibile rimuvere
 il pacchetto scaricato).</p>
 
 <p>I pacchetti compressi con gzip devono essere decompressi nella directory "share" di gretl.
-Ad esempio, se gretl è installato in <kbd>/usr</kbd>, per installare i dati e
-gli script di Stock e Watson basta eseguire i seguenti comandi (come utente root):</p>
+Ad esempio, se gretl è installato in <kbd>/usr</kbd>, per installare i dati di Stock e Watson
+basta eseguire i seguenti comandi (come utente root):</p>
 
 <pre>
-cd /usr/share/gretl
+cd /usr/share/gretl/data
 wget http://ricardo.ecn.wfu.edu/pub/gretl/stock_watson.tar.gz
 tar xvfz stock_watson.tar.gz
 rm stock_watson.tar.gz
 </pre>
 
+<p>
+Il pacchetto degli script di Stock e Watson va scompattato in
+<kbd>/usr/share/gretl/scripts</kbd> (o cartella corrispondente se gretl non è
+installato sotto <kbd>/usr</kbd>).
+</p>
+
 <h2><a name="df">3. Grandi dataset</a></h2>
 
-<p>I pacchetti seguenti contengono uno o più file di dati per gretl, con annessi
-file di descrizione e di marcatori. Per usarli, basta decomprimerli nella directory
-utente di gretl (che per impostazione predefinita è <kbd>$HOME/gretl</kbd> sui sistemi
-di tipo unix, o <kbd>c:\userdata\gretl\user</kbd> su MS Windows).</p>
-
 <table width="90%" border=0 cellspacing=4 cellpadding=4>
-<tr><th align=left>Fonte (con l'elenco delle serie)</th>
+<tr><th align=left>Fonte</th>
   <th align=left>Descrizione</th>
-    <th align=left>File zip (FTP)</th>
-      <th align=left>Dimensione (byte)</th></tr> 
+    <th align=left>File</th>
 <tr bgcolor="#E0E0E0">
   <td><p><a href="http://pwt.econ.upenn.edu/">U. Penn</a></p></td>
     <td><p>Penn World Table, PWT56 (dati panel macroeconomici per più nazioni)</p></td>
      <td><p>
 	 <a
-	 href="http://ricardo.ecn.wfu.edu/pub/gretldata/pwt56.tar.gz">pwt56.tar.gz</a></p>
+	 href="http://sourceforge.net/projects/gretl/files/datafiles/pwt56.tar.gz/download">pwt56.tar.gz</a></p>
 	 </td>
-   <td align=right><p>560791&nbsp;</p></td></tr>
+   </tr>
 <tr bgcolor="#E0E0E0">
   <td><p><a href="http://www.nber.org/databases/jones-obstfeld/index.html">NBER</a></td>
     <td><p>Jones-Obstfeld: dati su risparmio e investimenti per 13 paesi (panel storico)</td>
      <td><p>
 	 <a
-	 href="http://ricardo.ecn.wfu.edu/pub/gretldata/jones_obst.zip">jones_obst.zip</a></p>
+	 href="http://sourceforge.net/projects/gretl/files/datafiles/jones_obst.gdt/download">jones_obst.gdt</a></p>
      </td>
-   <td align=right><p>40863&nbsp;</p></td></tr>
+   </tr>
 <tr bgcolor="#E0E0E0">
   <td><p><a href="http://www.nber.org/nberprod/">NBER</a></p></td>
     <td><p>NBER-CES/Census Manufacturing Industry Productivity Data, 2000
 	(copre circa 400 settori)</p></td>
       <td><p><a
-	 href="http://ricardo.ecn.wfu.edu/pub/gretldata/nberprod87.zip">nberprod87.zip</a></p>
+	 href="http://sourceforge.net/projects/gretl/files/datafiles/nberprod87.gdt/download">nberprod87.gdt</a></p>
 	 </td>
-   <td align=right><p>1146716&nbsp;</p></td></tr>
-   <tr><td>&nbsp;</td></tr>
+   </tr>
 </table>
 
 <p>Per avere più dettagli sui questi dataset, si consiglia di consultare i link
@@ -204,31 +258,19 @@ mancanti, ma non creano eccessivi problemi.</p></li>
 <p>Il pacchetto comprende la documentazione completa e dei file di comandi utilizzabili
 per analizzare i dati.</p> 
 
-<p>Per avere ulteriori informazioni su come trattare i dati panel, si consiglia di
-consultare il <a href="http://ricardo.ecn.wfu.edu/pub/gretl/manual/">manuale di gretl</a>.</p>
-
-
 <h2><a name="custom">4. Raccolte di dati personalizzate</a></h2>
 
 <p>Se si usa gretl nell'attività didattica, può essere utile costruire una raccolta personalizzata
 di file di dati (o di comandi) ad uso degli studenti. 
 <a href="./collections_it.html">Questa pagina</a> contiene istruzioni dettagliate per farlo.</p>
 
-<h2><a name="perl">5. Utilità per il trattamento dei dati</a></h2>
+<h2><a name="utils">5. Utilità per il trattamento dei dati</a></h2>
 
 <p>Oltre a offrire database preconfezionati, gretl include alcuni script
 che possono essere usati per creare database a partire da dati disponibili in
 internet. Gli script si trovano nella sotto-directory <kbd>utils</kbd> del pacchetto
 dei sorgenti di gretl (si veda la <a href="./gretl_italiano.html">pagina principale</a>
-di gretl). Per eseguirli, occorre avere installato perl sul proprio computer ed essere
-connessi a internet.</p>
-
-<hr noshade>
-
-<p>
-<address>
-Allin Cottrell <a href="mailto:cottrell@wfu.edu">&lt;cottrell@wfu.edu&gt;</a></address>
-</p>
+di gretl).</p>
 
 </body>
 </html>
