@@ -4,6 +4,7 @@ version 1.9.8, in progress
   appearing in the initial GUI listing of public functions
 - Deletion of matrices within a loop: ensure that the GUI icon view is
   updated if it's open at the time
+- "labels" command: fix the --to-file option
 
 2011-12-22 version 1.9.7
 - Add two nonparametric estimators: William Cleveland's loess and the
