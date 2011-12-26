@@ -227,6 +227,12 @@ static struct flag_and_key pkg_lookups[] = {
     { -1,                NULL }
 };
 
+#define pkg_aux_role(r) (r == UFUN_BUNDLE_PRINT || \
+			 r == UFUN_BUNDLE_PLOT ||  \
+			 r == UFUN_BUNDLE_TEST ||  \
+			 r == UFUN_BUNDLE_FCAST || \
+			 r == UFUN_BUNDLE_EXTRA)
+
 static int pkg_key_get_role (const char *key)
 {
     int i;
@@ -3121,8 +3127,10 @@ static int *function_package_get_list (fnpkg *pkg, int code, int n)
 		    } else if (code == PUBLIST && !priv) {
 			list[j++] = i;
 		    } else if (code == GUILIST && !priv) {
-			if (ufuns[i]->pkg_role == UFUN_BUNDLE_PRINT ||
-			    ufuns[i]->pkg_role == UFUN_BUNDLE_PLOT) {
+			if (pkg_aux_role(ufuns[i]->pkg_role)) {
+			    /* in the GUI list of public funtions, don't
+			       display post-processing functions
+			    */
 			    subtract = 1;
 			} else {
 			    list[j++] = i;
