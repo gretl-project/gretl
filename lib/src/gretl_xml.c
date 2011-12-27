@@ -458,7 +458,7 @@ void gretl_xml_put_matrix (const gretl_matrix *m, const char *name,
 	int mt1 = gretl_matrix_get_t1(m);
 	int mt2 = gretl_matrix_get_t2(m);
 
-	fprintf(fp, " t1=\"%d\" t2=\"%d", mt1, mt2);
+	fprintf(fp, " t1=\"%d\" t2=\"%d\"", mt1, mt2);
     }
 
     fputs(">\n", fp);
