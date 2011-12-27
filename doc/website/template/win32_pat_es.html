@@ -14,7 +14,64 @@
 <h2>Versión para MS Windows</h2>
 </center>
 
-<h2>Requerimientos del sistema</h2>
+<h2>Requisitos del sistema</h2>
+
+<p>Desde la versión 1.9.4, gretl requiere Windows XP o superior y un procesador que pueda utilizar el conjunto 
+de instrucciones SSE2. Todos los procesadores modernos soportan el uso de SSE2; no lo hacen los procesadores AMD
+anteriores al Athlon 64, y los procesadores Intel más antiguos que el Pentium 4. Si desea utilizar gretl en sistemas antiguos 
+<a href="#old-windows">mire abajo</a>.</p>
+
+
+
+<h2>Descarga</h2>
+
+<p>Si en Windows tiene los derechos de un super-usuario o mejores, elija un fichero de autoinstalación en la 
+primera columna de abajo; basta con descargarlo y ejecutar el fichero <kbd>exe</kbd>. Esto es de aplicación para 
+la mayoría de los usuarios.</p> 
+
+<p>Si Vd no tiene en Windows derechos de administrador elija un fichero zip de la segunda columna;
+descomprima ese fichero zip en cualquier directorio en el que Vd tenga permisos de escritura. <i>Nota</i>: debe
+preservar la estructura interna de directorios que hay dentro del archivo zip o si no gretl no funcionará. En los programas de descompresión
+esta opción se suele denominar "permitir carpetas". El archivo completo se encuentra en un directorio denominado
+<kbd>gretl</kbd>. Por ejemplo, si Vd descomprime el archivo zip en un directorio llamado <kbd>c:\userdata</kbd>, el 
+programa GUI de gretl estará en <kbd>c:\userdata\gretl\gretlw32.exe</kbd>. </p>
+
+<p>La versión actual "instantánea" de gretl está más actualizada que la versión oficial: normalmente suele contener 
+correcciones de errores pero, a veces, contendrá nuevos errores. Para ver que háy de nuevo en la vesrión "instantánea",
+puede echar un vistazo al <a href="../ChangeLog.html">Historial de cambios</a> (el elemento "in progress").</p>
+
+
+
+<table cellpadding="4">
+<tr><td>&nbsp;</td><td><p><i>Archivo auto-instalable</i></p></td><td><p>O</p></td>
+<td><p><i>archivo zip (sin derechos de administrador)</i></p></td></tr>
+<tr>
+<td><p>última versión oficial (22 Dic 2011)</p></td>
+<td><p>
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-1.9.7.exe">gretl-1.9.7.exe</a>
+</p></td>
+<td>&nbsp;</td>
+<td><p>
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-1.9.7-win32.zip">gretl-1.9.7-win32.zip</a>
+
+</p></td>
+</tr>
+
+<tr>
+<td><p>O versión "instantánea" actual</p></td>
+<td><p>
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl_install.exe/download">gretl_install.exe</a>
+</p></td>
+<td>&nbsp;</td>
+<td><p>
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-win32.zip/download">gretl-win32.zip</a>
+</p></td>
+</tr>
+</table>
+
+<p>Los ficheros ejecutables se compilaron bajo GNU/Linux usando <a href="http://www.mingw.org/">mingw32</a> y el 
+<a href="http://www.gtk.org/download/win32.php">GTK para Windows</a> (¡Gracias a Tor Lillqvist!). El programa de instalación, también software libre, es cortesía de 
+<a href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
 
 <p>Por favor, tenga en cuenta que desde la versión 1.9.4, 
 gretl necesita Windows XP o superior y un procesador que admita el conjunto de 
@@ -63,20 +120,22 @@ está en un directorio denominado <kbd>gretl</kbd>. Así, por ejemplo,
 si Vd. descomprime el archivo a un directorio denominado
 <kbd>c:\userdata</kbd>, el programa del interfaz gráfico de gretl
 estará en <kbd>c:\userdata\gretl\gretlw32.exe</kbd>.  </p>
+>>>>>>> 1.12
 
 <h2>Opciones extra que es posible que Vd. desee instalar:</h2>
 
 <center>
 <table cellpadding="4">
-<tbody><tr>
-<td><p>X-12-ARIMA (corrección de estacionalidad, modelos ARIMA)</p></td>
+<<<<<<< win32_pat_es.html
+
+<tr>
+<td><p>X-12-ARIMA (corrección estacional, modelos ARIMA)</p></td>
 <td><p><a
 href="http://sourceforge.net/projects/gretl/files/x12a/x12a_install.exe/download">x12a_install.exe</a></p></td>
 </tr>
 
 <tr>
-<td><p>TRAMO/SEATS (corrección de estacionalidad, detección de outliers, interpolación de valores ausentes, 
-modelos ARIMA)</p></td>
+<td><p>TRAMO/SEATS (corrección estacional, modelos ARIMA)</p></td>
 <td><p><a 
 href="http://sourceforge.net/projects/gretl/files/tramo/ts_install.exe/download">ts_install.exe</a></p></td>
 </tr>
@@ -85,6 +144,7 @@ href="http://sourceforge.net/projects/gretl/files/tramo/ts_install.exe/download"
  <td><p>Conjuntos de datos del libro de Wooldridge, 
  <a href="http://www.swlearning.com/economics/wooldridge/wooldridge2e/wooldridge2e.html"><i>Introductory
   Econometrics</i></a></p>
+
  </td>
  <td><p><a 
    href="http://sourceforge.net/projects/gretl/files/datafiles/wooldridge_data.exe/download">wooldridge_data.exe</a></p>
@@ -97,17 +157,19 @@ href="http://sourceforge.net/projects/gretl/files/tramo/ts_install.exe/download"
  </td>
  <td><p><a 
    href="http://sourceforge.net/projects/gretl/files/datafiles/gujarati_data.exe/download">gujarati_data.exe</a></p>
+
  </td>
 </tr>
 
 <tr>
- <td><p>Conjuntos de datos + guiones del libro de Stock and Watson,
+ <td><p>Conjuntos de datos + guiones de instrucciones del libro de Stock y Watson,
   <a href="http://wps.aw.com/aw_stockwatsn_economtrcs_1"><i>Introduction to Econometrics</i></a></p>
  </td>
  <td><p><a 
    href="http://sourceforge.net/projects/gretl/files/datafiles/stock_watson.exe/download">stock_watson.exe</a>,
- <a href="http://sourceforge.net/projects/gretl/files/datafiles/stock_watson_2.exe/download">stock_watson_2.exe</a>,
-</p>
+   <a href="http://sourceforge.net/projects/gretl/files/datafiles/stock_watson_2.exe/download">stock_watson_2.exe</a>
+   </p>
+
  </td>
 </tr>
 
@@ -129,27 +191,13 @@ href="http://sourceforge.net/projects/gretl/files/tramo/ts_install.exe/download"
  </td>
 </tr>
 
-</tbody>
 </table>
 </center>
 
 <p>Todos los de arriba son ficheros auto-instalables.  Vd. debe instalar Gretl antes de instalar 
 las opciones extra.</p>
 
-<p>Los ficheros ejecutables se compilaron bajo GNU/Linux usando <a
-href="http://www.mingw.org/">mingw32</a> y el <a
-href="http://www.gtk.org/download/win32.php">GTK para Windows</a>
-(¡gracias a Tor Lillqvist!). El programa de instalación, también
-software libre, es cortesía de <a
-href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
 
-<h2><a name="old-windows">gretl para sistemas más antiguos</a></h2>
-
-<p>Para sistemas antiguos, 
-<a href="http://sourceforge.net/projects/gretl/files/gretl/1.9.3/gretl-1.9.3.exe/download">gretl 
-1.9.3</a> funciona sobre Windows 2000 (y no requiere SSE2) y 
-<a href="http://sourceforge.net/projects/gretl/files/gretl/1.6.5/gretl-1.6.5.exe/download">gretl 
-1.6.5</a> es la versión más reciente que funciona sobre Windows 98.</p>
 
 <h2>Soporte para varios idiomas</h2>
 
@@ -166,16 +214,14 @@ control.</p>
 
 <h2>Actualizaciones de Gretl</h2>
 
-<p>Cuendo se actualiza una versión existente de Gretl, es buena idea
-ejecutar antes el programa desinstalador <kbd>unins000.exe</kbd>, que
-debería Vd. encontrar en el directorio principal de Gretl. Esto
-evitará que gretl funcione mal debido al uso de DLLs antiguos o
-inscripciones anteriores en el registro de Windows. Nótese que al
-ejecutar el desinstalador no se tocará ningún fichero de usuario que
-Vd. haya creado en el directorio gretl de usuario, pero se borrará la
-configuración personal que haya determinado utilizando el menú
-'preferencias', así que tendrá Vd. que restablecerla cuando ejecute la
-nueva versión del programa.</p>
+<p>Cuando se actualiza una versión existente de Gretl, es buena idea ejecutar 
+antes el programa desinstalador <kbd>unins000.exe</kbd>, que debería Vd. encontrar en el 
+directorio principal de Gretl. Esto evitará que gretl funcione mal debido al uso de DLLs antiguos o inscripciones 
+anteriores en el registro de Windows. Nótese que al ejecutar el desinstalador no se tocará ningún fichero de 
+usuario que Vd. haya creado en el directorio gretl de usuario, pero se borrará la configuración personal 
+que haya determinado utilizando el menú 'preferencias', así que tendrá Vd. que restablecerla cuando ejecute 
+la nueva versión del programa.
+</p>
 
 <h2>Ejecutando Gretl en red</h2>
 
