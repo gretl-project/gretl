@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-12-23 11:59-0500\n"
-"PO-Revision-Date: 2011-12-26 13:26+0100\n"
+"PO-Revision-Date: 2011-12-29 15:36+0100\n"
 "Last-Translator: \n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: \n"
@@ -1762,7 +1762,7 @@ msgstr "vonesa"
 
 #: lib/src/describe.c:2886
 msgid "Residual ACF"
-msgstr "Mbetja e ACF"
+msgstr " ACF i mbetjes"
 
 #: lib/src/describe.c:2888
 msgid "ACF for"
@@ -1770,7 +1770,7 @@ msgstr "ACF për"
 
 #: lib/src/describe.c:2904
 msgid "Residual PACF"
-msgstr "Mbetja e PACF"
+msgstr "PACF i mbetjes"
 
 #: lib/src/describe.c:2906
 msgid "PACF for"
@@ -7215,11 +7215,11 @@ msgstr "orare"
 
 #: lib/src/subsample.c:2139
 msgid "weekly"
-msgstr "e përjavshme"
+msgstr "javore"
 
 #: lib/src/subsample.c:2143
 msgid "daily"
-msgstr "e përditshme"
+msgstr "ditore"
 
 #: lib/src/subsample.c:2145
 msgid "decennial"
@@ -7259,6 +7259,7 @@ msgstr "Nën-kampion të dhënash"
 msgid "Full range"
 msgstr "Kampioni i plotë"
 
+# të testohet
 #: lib/src/subsample.c:2228
 #, c-format
 msgid ""
@@ -7266,7 +7267,7 @@ msgid ""
 "as of"
 msgstr ""
 "Të dhënat %s\n"
-"si"
+"sipas"
 
 #: lib/src/subsample.c:2229
 msgid "(unsaved)"
@@ -9295,7 +9296,7 @@ msgstr "Frekuenca e serive kohore"
 
 #: gui2/datawiz.c:98
 msgid "Daily date to represent week"
-msgstr "Data e përditshme që përfaqëson javën"
+msgstr "Dita që përfaqëson javën"
 
 #: gui2/datawiz.c:99
 msgid "Starting observation"
@@ -9340,50 +9341,50 @@ msgstr "Asnjë ndryshim nuk u bë"
 #: gui2/dialogs.c:3388
 #: gui2/menustate.c:664
 msgid "Annual"
-msgstr "Të dhëna vjetore"
+msgstr "Vjetore"
 
 #: gui2/datawiz.c:396
 #: gui2/dialogs.c:3387
 #: gui2/menustate.c:666
 msgid "Quarterly"
-msgstr "Të dhëna tremujore"
+msgstr "Tremujore"
 
 #: gui2/datawiz.c:397
 #: gui2/dialogs.c:3393
 #: gui2/menustate.c:668
 msgid "Monthly"
-msgstr "Të dhëna mujore"
+msgstr "Mujore"
 
 #: gui2/datawiz.c:398
 #: gui2/dialogs.c:3392
 #: gui2/menustate.c:672
 msgid "Weekly"
-msgstr "Të dhëna javore"
+msgstr "Javore"
 
 #: gui2/datawiz.c:399
 #: gui2/dialogs.c:3399
 msgid "Daily (5 days)"
-msgstr "Të dhëna të përditshme (5 ditë në javë)"
+msgstr "Ditore (5 ditë në javë)"
 
 #: gui2/datawiz.c:400
 #: gui2/dialogs.c:3400
 msgid "Daily (6 days)"
-msgstr "Të dhëna të përditshme (6 ditë në javë))"
+msgstr "Ditore (6 ditë në javë))"
 
 #: gui2/datawiz.c:401
 #: gui2/dialogs.c:3398
 msgid "Daily (7 days)"
-msgstr "Të dhëna të përditshme (7 ditë në javë)"
+msgstr "Ditore (7 ditë në javë)"
 
 #: gui2/datawiz.c:402
 #: gui2/menustate.c:670
 msgid "Hourly"
-msgstr "Të dhëna orare"
+msgstr "Orare"
 
 #: gui2/datawiz.c:403
 #: gui2/menustate.c:678
 msgid "Decennial"
-msgstr "Të dhëna 10-vjeçare"
+msgstr "10-vjeçare"
 
 #: gui2/datawiz.c:404
 #: gui2/datawiz.c:423
@@ -10969,7 +10970,7 @@ msgstr "gretl: grafik"
 
 #: gui2/gpt_control.c:4765
 msgid " Click on graph for pop-up menu"
-msgstr " Kliko mbi grafik për të shfaqur mënynë e grafikut"
+msgstr " Kliko mbi grafik për të shfaqur menunë e grafikut"
 
 #: gui2/gpt_control.c:5020
 msgid "Couldn't find a usable terminal program"
@@ -13130,7 +13131,7 @@ msgstr "Hiq ndryshore të pavarura..."
 
 #: gui2/gui_utils.c:4025
 msgid "Residuals from equation"
-msgstr "Mbetja e dala nga  ekuacioni"
+msgstr "Mbetja e ekuacionit"
 
 #: gui2/gui_utils.c:4034
 msgid "Display residuals, all equations"
@@ -13884,7 +13885,7 @@ msgstr "gretl: eksponenti Hurst"
 
 #: gui2/library.c:5085
 msgid "correlogram"
-msgstr "corelogram"
+msgstr "korrelogram"
 
 #: gui2/library.c:5087
 msgid "Maximum lag:"
@@ -14302,7 +14303,7 @@ msgstr "Shto diferencat"
 
 #: gui2/menustate.c:676
 msgid "Daily"
-msgstr "Të përditshme"
+msgstr "Ditore"
 
 #: gui2/menustate.c:680
 msgid "Unknown"
