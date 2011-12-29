@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-12-23 11:59-0500\n"
-"PO-Revision-Date: 2011-12-23 15:59+0200\n"
+"PO-Revision-Date: 2011-12-29 10:42+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -1976,7 +1976,7 @@ msgstr "'%s' bir ikili değişken değil"
 
 #: lib/src/discrete.c:2987
 msgid "Perfect prediction obtained: no MLE exists"
-msgstr ""
+msgstr "Kusursuz kestirim elde edildi: EO tahmini yok"
 
 #: lib/src/discrete.c:3150
 msgid "Illegal non-positive value of the dependent variable"
@@ -4240,7 +4240,7 @@ msgstr "Zaman serisi"
 #: lib/src/libset.c:1570
 #, c-format
 msgid "Pseudo-random number generator seeded with %d\n"
-msgstr "Sahte-rastsal sayı oluşturucusu %d ile tohumlandı\n"
+msgstr "Sahte-rastsal sayı oluşturucu %d ile tohumlandı\n"
 
 #: lib/src/matrix_extra.c:817
 msgid "Non-positive values encountered"
@@ -9016,23 +9016,20 @@ msgid "bandwidth adjustment factor:"
 msgstr "kuşakgenişliği ayarlama çarpanı:"
 
 #: gui2/dialogs.c:3975
-#, fuzzy
 msgid "paste data from clipboard"
-msgstr "Panoya kopyala"
+msgstr "panodan veri yapıştır"
 
 #: gui2/dialogs.c:3982
 msgid "Try pasting data from clipboard?"
-msgstr ""
+msgstr "Panodan veri yapıştırmak denensin mi?"
 
 #: gui2/dialogs.c:3991
-#, fuzzy
 msgid "Clear current dataset first"
-msgstr "Lütfen ilk önce bir veri dosyası açınız"
+msgstr "Önce şu anki veri setini temizleyiniz"
 
 #: gui2/dialogs.c:4002
-#, fuzzy
 msgid "Try appending to current dataset"
-msgstr "Tamam, şu anki veri seti kalıyor\n"
+msgstr "Şu anki veri setine iliştirmeyi dene"
 
 #: gui2/dialogs.c:4223
 msgid "No model is specified"
@@ -10539,7 +10536,7 @@ msgstr "De_ğiştirgesel-dışı sınamalar"
 
 #: gui2/gretl.c:1407
 msgid "_Seed for random numbers"
-msgstr "Rastsal sayılar _tohumu"
+msgstr "Rastsal sayı _tohumu"
 
 #: gui2/gretl.c:1408
 msgid "_Command log"
@@ -10863,9 +10860,8 @@ msgid "Estimated _density plot..."
 msgstr "Tahmin edilen _yoğunluk çizimi..."
 
 #: gui2/gretl.c:1510
-#, fuzzy
 msgid "_Boxplot"
-msgstr "Kutuçizimi"
+msgstr "_Kutuçizimi"
 
 #: gui2/gretl.c:1511
 msgid "Normal _Q-Q plot..."
@@ -13008,14 +13004,12 @@ msgid "Edit values"
 msgstr "Değerleri düzenle"
 
 #: gui2/menustate.c:392 gui2/menustate.c:523
-#, fuzzy
 msgid "Add log"
-msgstr "Log ekle"
+msgstr "Logunu ekle"
 
 #: gui2/menustate.c:394 gui2/menustate.c:524
-#, fuzzy
 msgid "Add difference"
-msgstr "Fark ekle"
+msgstr "Farkını ekle"
 
 #: gui2/menustate.c:396 gui2/menustate.c:498 gui2/menustate.c:525
 #: gui2/menustate.c:585
@@ -13036,11 +13030,11 @@ msgstr "X-Y serpilim çizimi"
 
 #: gui2/menustate.c:494 gui2/menustate.c:583
 msgid "Add logs"
-msgstr "Log ekle"
+msgstr "Loglarını ekle"
 
 #: gui2/menustate.c:496 gui2/menustate.c:584
 msgid "Add differences"
-msgstr "Fark ekle"
+msgstr "Farklarını ekle"
 
 #: gui2/menustate.c:676
 msgid "Daily"
@@ -14123,9 +14117,9 @@ msgid "versus"
 msgstr "karşı"
 
 #: gui2/session.c:2329 gui2/session.c:2388 gui2/session.c:2416
-#, fuzzy, c-format
+#, c-format
 msgid "%s: please close this object's window first"
-msgstr "Lütfen ilk önce bu nesnenin penceresini kapatınız"
+msgstr "%s: lütfen önce bu nesnenin penceresini kapatınız"
 
 #: gui2/session.c:2501
 #, c-format
