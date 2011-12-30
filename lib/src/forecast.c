@@ -2741,8 +2741,10 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
     int f0 = 0, fn = fT;
     int e0 = 0, en = eT;
     double x;
-    int i, j, mt1;
+    int i, j, Ft1, mt1;
     int err = 0;
+
+    Ft1 = gretl_matrix_get_t1(F);
 
     if (imin == imax) {
 	/* extract one pair of columns */
@@ -2772,7 +2774,7 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
 	return E_ALLOC;
     }
 
-    mt1 = gretl_matrix_get_t1(F) + f0;
+    mt1 = Ft1 + f0;
     gretl_matrix_set_t1(f, mt1);
     gretl_matrix_set_t2(f, mt1 + fT - 1);
 
@@ -2783,7 +2785,7 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
 	if (e == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    mt1 = gretl_matrix_get_t1(F) + e0;
+	    mt1 = Ft1 + e0;
 	    gretl_matrix_set_t1(e, mt1);
 	    gretl_matrix_set_t2(e, mt1 + eT - 1);
 	}	    

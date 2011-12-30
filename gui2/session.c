@@ -856,7 +856,7 @@ int gui_add_graph_to_session (char *fname, char *fullname, int type)
     } 
 
     gretl_remove(fname);
-    strcpy(fname, shortname);
+    strcpy(fname, fullname); /* was @shortname */
 
     err = real_add_graph_to_session(shortname, graphname, type);
     if (err == ADD_OBJECT_FAIL) {
