@@ -3310,14 +3310,14 @@
 	The default is to give a static forecast for any portion of
 	the forecast range that lies within the sample range over which
 	the model was estimated, and a dynamic forecast (if relevant)
-	out of sample.  The <lit>dynamic</lit> option requests a
+	out of sample.  The <opt>--dynamic</opt> option requests a
 	dynamic forecast from the earliest possible date, and the
-	<opt>static</opt> option requests a static forecast even out
+	<opt>--static</opt> option requests a static forecast even out
 	of sample.  
       </para>
 
       <para context="cli">
-	The <opt>rolling</opt> option is presently available only for
+	The <opt>--rolling</opt> option is presently available only for
 	single-equation models estimated via OLS.  When this option is given
 	the forecasts are recursive. That is, each forecast is generated from
 	an estimate of the given model using data from a fixed starting point
@@ -3326,7 +3326,7 @@
 	number of steps ahead, which must be given in the
 	<repl>steps-ahead</repl> argument. The forecasts are always dynamic if
 	this is applicable.  Note that the <repl>steps-ahead</repl> argument
-	should be given only in conjunction with the <opt>rolling</opt>
+	should be given only in conjunction with the <opt>--rolling</opt>
 	option.
       </para>
 
