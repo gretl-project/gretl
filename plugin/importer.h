@@ -56,6 +56,7 @@ enum {
 
 struct wbook_ {
     int version;
+    int codepage;
     int nsheets;
     int selected;
     int col_offset, row_offset;

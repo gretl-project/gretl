@@ -246,13 +246,14 @@ static char *convert16to7 (const unsigned char *s, int count)
 }
 
 static char *
-copy_unicode_string (unsigned char *src, int remlen, 
+copy_unicode_string (wbook *book, unsigned char *src, int remlen, 
 		     int *skip, int *slop) 
 {
     int count = MS_OLE_GET_GUINT16(src);
     unsigned char flags = *(src + 2);
     int this_skip = 3, skip_to_next = 3;
     int csize = (flags & 0x01)? 2 : 1;
+    gchar *ret = NULL;
 
     dbprintf("copy_unicode_string: count = %d, csize = %d\n",
 	    count, csize);
@@ -302,13 +303,32 @@ copy_unicode_string (unsigned char *src, int remlen,
 
     if (count > 64) {
 	/* let's not mess with excessive strings */
-	return g_strdup("bigstr");
+	ret = g_strdup("bigstr");
     } else if (csize == 1) {
 	dbprintf("original string = '%s'\n", src + this_skip);
-	return convert8to7((char *) src + this_skip, count);
-    } else { 
-	return convert16to7(src + this_skip, count);
+	ret = convert8to7((char *) src + this_skip, count);
+    } else {
+	if (book->codepage == 1200) {
+	    GError *gerr = NULL;
+	    gsize written;
+
+	    ret = g_convert((const gchar *) src + this_skip, 2*count, 
+			    "UTF-8", "UTF-16", NULL, &written, &gerr);    
+	    if (gerr != NULL) {
+		fprintf(stderr, "%s\n", gerr->message);
+		g_error_free(gerr);
+		g_free(ret);
+		ret = NULL;
+	    }
+	}
+
+	if (ret == NULL) {
+	    /* fallback */
+	    ret = convert16to7(src + this_skip, count);
+	}
     }
+
+    return ret;
 }
 
 static char *make_string (char *str) 
@@ -588,7 +608,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    if (remlen <= 0) {
 		break;
 	    }
-	    sst[k] = copy_unicode_string(ptr, remlen, &skip, &slop);
+	    sst[k] = copy_unicode_string(book, ptr, remlen, &skip, &slop);
 	    ptr += skip;
 	}
 
@@ -620,7 +640,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 		    break;
 		}
 		dbprintf("Working on sst[%d], remlen = %d\n", k, remlen);
-		sst[k] = copy_unicode_string(ptr, remlen, &skip, &slop);
+		sst[k] = copy_unicode_string(book, ptr, remlen, &skip, &slop);
 		ptr += skip;
 	    }
 	    if (k < sstsize) {
@@ -752,7 +772,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	if (string_targ == NULL) {
 	    dbprintf("String record without preceding string formula\n");
 	} else {
-	    char *tmp = copy_unicode_string(q->data, 0, NULL, NULL);
+	    char *tmp = copy_unicode_string(book, q->data, 0, NULL, NULL);
 
 	    *string_targ = make_string(tmp);
 	    dbprintf("Filled out string formula with '%s'\n", *string_targ);	
@@ -922,6 +942,13 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
 	    dbprintf("Got BIFF_ROW\n");
 	} else if (q->opcode == BIFF_DBCELL) {
 	    dbprintf("Got BIFF_DBCELL\n");
+	} else if (q->opcode == 0x42) {
+	    if (q->length == 2 && q->data != NULL) {
+		int cp = MS_OLE_GET_GUINT16(q->data);
+
+		fprintf(stderr, "CODEPAGE: got %d\n", cp);
+		book->codepage = cp;
+	    }
 	} else {
 	    dbprintf("skipping unhandled opcode 0x%02x\n", q->opcode);
 	}

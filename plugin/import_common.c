@@ -415,6 +415,7 @@ static void wbook_init (wbook *book, const int *list, char *sheetname)
 {
     book->version = 0;
     book->nsheets = 0;
+    book->codepage = 0;
     book->col_offset = book->row_offset = 0;
     book->targname = NULL;
     book->sheetnames = NULL;
