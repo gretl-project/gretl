@@ -851,9 +851,21 @@ void ms_ole_destroy (MsOle **ptr)
 	    g_free(f->mem);
 	    f->mem = NULL;
 	}
-
+	
 	destroy_pps(f->pps);
 	f->pps = NULL;
+
+#if 1 /* added to plug leaks, 2012-01-01, AC */
+	if (f->bb != NULL) {
+	    g_array_free(f->bb, TRUE);
+	}
+	if (f->sb != NULL) {
+	    g_array_free(f->sb, TRUE);
+	}
+	if (f->sbf != NULL) {
+	    g_array_free(f->sbf, TRUE);
+	}
+#endif
 
 	close(f->file_des);
 	g_free(f);

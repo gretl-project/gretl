@@ -56,7 +56,7 @@ static void make_debug_fname (void);
 
 struct sheetrow {
     int last, end;
-    char **cells;
+    gchar **cells;
 };	
 
 enum {
@@ -67,7 +67,7 @@ enum {
     VARNAMES_NONE
 } varname_errors;
 
-char **sst = NULL;
+gchar **sst = NULL;
 int sstsize = 0, sstnext = 0;
 struct sheetrow *rows = NULL;
 int nrows = 0;
@@ -245,7 +245,7 @@ static char *convert16to7 (const unsigned char *s, int count)
     return dest;    
 }
 
-static char *
+static gchar *
 copy_unicode_string (wbook *book, unsigned char *src, int remlen, 
 		     int *skip, int *slop) 
 {
@@ -331,13 +331,13 @@ copy_unicode_string (wbook *book, unsigned char *src, int remlen,
     return ret;
 }
 
-static char *make_string (char *str) 
+static gchar *make_string (gchar *str) 
 {
-    char *ret = NULL;
+    gchar *ret = NULL;
 
     if (str != NULL) {
 	ret = g_strdup_printf("\"%s", str);
-	free(str);
+	g_free(str);
     } else {
 	ret = g_strdup("\"");
     }
@@ -407,7 +407,7 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 
 	if (len > 0 && digits > 0) {
 	    /* may be numerical? */
-	    char *p, *q = malloc(len + 1);
+	    char *p, *q = g_malloc(len + 1);
 
 	    if (q == NULL) return 1;
 
@@ -438,7 +438,7 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 		prow->cells[col] = q;
 		return 0;
 	    } else {
-		free(q);
+		g_free(q);
 	    }
 	} 
     }
@@ -586,7 +586,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 
 	sz = MS_OLE_GET_GUINT16(q->data + 4);
 	sstsize += sz;
-	sst = realloc(sst, sstsize * sizeof *sst);
+	sst = g_realloc(sst, sstsize * sizeof *sst);
 	if (sst == NULL) {
 	    return 1;
 	}
@@ -678,7 +678,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 		check_copy_string(prow, i, j, sidx, sst[sidx]);
 	    } else {
 		dbprintf("sst[%d] seems to be NULL, leaving string blank\n", (int) sidx);
-		prow->cells[j] = malloc(2);
+		prow->cells[j] = g_malloc(2);
 		if (prow->cells[j] != NULL) {
 		    prow->cells[j][0] = '\0';
 		}
@@ -772,7 +772,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	if (string_targ == NULL) {
 	    dbprintf("String record without preceding string formula\n");
 	} else {
-	    char *tmp = copy_unicode_string(book, q->data, 0, NULL, NULL);
+	    gchar *tmp = copy_unicode_string(book, q->data, 0, NULL, NULL);
 
 	    *string_targ = make_string(tmp);
 	    dbprintf("Filled out string formula with '%s'\n", *string_targ);	
@@ -971,7 +971,7 @@ static void row_init (struct sheetrow *row)
 static int allocate_row_col (int i, int j, wbook *book) 
 {
     struct sheetrow *myrows = NULL;
-    char **cells = NULL;
+    gchar **cells = NULL;
     int new_nrows, newcol, k;
     static int started;
 
@@ -1008,7 +1008,7 @@ static int allocate_row_col (int i, int j, wbook *book)
     if (j >= rows[i].end) {
 	newcol = (j / 16 + 1) * 16;
 	dbprintf("allocate: reallocing rows[%d].cells to size %d\n", i, newcol);
-	cells = realloc(rows[i].cells, newcol * sizeof *cells);
+	cells = g_realloc(rows[i].cells, newcol * sizeof *cells);
 
 	if (cells == NULL) {
 	    return 1;
@@ -1038,9 +1038,11 @@ static void free_sheet (void)
     /* free shared string table */
     if (sst != NULL) {
 	for (i=0; i<sstsize; i++) {
-	    if (sst[i] != NULL) free(sst[i]);
+	    if (sst[i] != NULL) {
+		g_free(sst[i]);
+	    }
 	}
-	free(sst);
+	g_free(sst);
     }
 
     /* free cells */
@@ -1054,11 +1056,11 @@ static void free_sheet (void)
 		if (rows[i].cells[j] != NULL) {
 		    dbprintf("Freeing rows[%d].cells[%d] at %p\n",
 			     i, j, (void *) rows[i].cells[j]);
-		    free(rows[i].cells[j]); 
+		    g_free(rows[i].cells[j]); 
 		}
 	    }
 	    dbprintf("Freeing rows[%d].cells at %p\n", i, (void *) rows[i].cells);
-	    free(rows[i].cells);
+	    g_free(rows[i].cells);
 	}
 	free(rows);
 	rows = NULL;
@@ -1648,7 +1650,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	    i = book->col_offset;
 	    for (t=0; t<newset->n; t++) {
 		int ts = t + 1 + book->row_offset;
-		char *src = rows[ts].cells[i];
+		gchar *src = rows[ts].cells[i];
 
 		if (src != NULL) {
 		    strncat(newset->S[t], src + 1, OBSLEN - 1);
