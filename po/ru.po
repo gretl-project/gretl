@@ -2,13 +2,13 @@
 # #-#-#-#-#  ru.po (ru)  #-#-#-#-#
 # Alexander B. Gedranovich <gedranovich@gmail.com>, 2008, 2009.
 # moradan, 2008.
-# Alexander Gedranovich, 2009, 2010, 2011.
+# Alexander Gedranovich, 2009, 2010, 2011, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-12-23 11:59-0500\n"
-"PO-Revision-Date: 2011-12-16 10:00-0500\n"
+"PO-Revision-Date: 2012-01-02 18:36+0300\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -31,8 +31,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:290
 msgid "lagged differences"
@@ -1147,9 +1147,9 @@ msgid "Bad character %d in date string"
 msgstr "Запрещенный символ %d в строке даты"
 
 #: lib/src/dataio.c:602 lib/src/dataio.c:607 lib/src/dataio.c:620
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid observation index"
-msgstr "%s, использовано наблюдений - %d"
+msgstr "'%s': неверный индекс наблюдения"
 
 #: lib/src/dataio.c:639 lib/src/forecast.c:2332 lib/src/genfuncs.c:3115
 msgid "Observation number out of bounds"
@@ -4258,9 +4258,8 @@ msgid "Pseudo-random number generator seeded with %d\n"
 msgstr "Датчик псевдослучайных чисел инициализирован значением  %d\n"
 
 #: lib/src/matrix_extra.c:817
-#, fuzzy
 msgid "Non-positive values encountered"
-msgstr "Пропущеные значения учтены"
+msgstr "Найдены нулевые или отрицательные значения"
 
 #: lib/src/missing.c:778
 #, c-format
@@ -7084,11 +7083,9 @@ msgid "OK, staying with current data set\n"
 msgstr "ОК, продолжаем работать с текущим набором данных\n"
 
 #: cli/gretlcli.c:801 gui2/library.c:8161
-#, fuzzy, c-format
+#, c-format
 msgid "Read datafile %s\n"
-msgstr ""
-"\n"
-"Чтение файла данных %s\n"
+msgstr "Чтение файла данных %s\n"
 
 #: cli/gretlcli.c:911 gui2/library.c:8284
 #, c-format
@@ -9008,23 +9005,20 @@ msgid "bandwidth adjustment factor:"
 msgstr "Фактор коррекции ширины окна:"
 
 #: gui2/dialogs.c:3975
-#, fuzzy
 msgid "paste data from clipboard"
-msgstr "Копировать в буфер обмена"
+msgstr "Копировать из буфера обмена"
 
 #: gui2/dialogs.c:3982
 msgid "Try pasting data from clipboard?"
 msgstr ""
 
 #: gui2/dialogs.c:3991
-#, fuzzy
 msgid "Clear current dataset first"
-msgstr "Пожалуйста, сначала откройте файл с данными"
+msgstr "Вначале очистить файл с данными"
 
 #: gui2/dialogs.c:4002
-#, fuzzy
 msgid "Try appending to current dataset"
-msgstr "ОК, продолжаем работать с текущим набором данных\n"
+msgstr "Попробовать добавить к текущему файлу данных"
 
 #: gui2/dialogs.c:4223
 msgid "No model is specified"
@@ -9911,9 +9905,8 @@ msgid "loess (locally weighted fit)"
 msgstr "loess (взвешенная локальная регрессия)"
 
 #: gui2/gpt_dialog.c:135
-#, fuzzy
 msgid "semilog: log y = a + b*x"
-msgstr "линейная: y = a + b*x"
+msgstr "лог-линейная: log y = a + b*x"
 
 #: gui2/gpt_dialog.c:300
 msgid "gretl: graph color selection"
@@ -9924,9 +9917,9 @@ msgid "Select color"
 msgstr "Выбрать цвет"
 
 #: gui2/gpt_dialog.c:572
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with semilog fit)"
-msgstr "%s от %s (с подбором локальной регрессии)"
+msgstr "%s от %s (с подбором лог-линейной регрессии)"
 
 #: gui2/gpt_dialog.c:677 gui2/gpt_dialog.c:716
 msgid "Invalid position, must be X Y"
@@ -10002,14 +9995,12 @@ msgid "horizontal"
 msgstr ""
 
 #: gui2/gpt_dialog.c:1906
-#, fuzzy
 msgid "vertical"
-msgstr "Математические"
+msgstr ""
 
 #: gui2/gpt_dialog.c:1907
-#, fuzzy
 msgid "both"
-msgstr "Нормальное и логистическое"
+msgstr ""
 
 #: gui2/gpt_dialog.c:1914
 msgid "Show grid"
@@ -10847,9 +10838,8 @@ msgid "Estimated _density plot..."
 msgstr "График _ядерной оценки плотности..."
 
 #: gui2/gretl.c:1510
-#, fuzzy
 msgid "_Boxplot"
-msgstr "Коробчатая диаграмма"
+msgstr "_Коробчатая диаграмма"
 
 #: gui2/gretl.c:1511
 msgid "Normal _Q-Q plot..."
@@ -11144,9 +11134,8 @@ msgid "_Rank correlation..."
 msgstr "_Ранговая корреляция..."
 
 #: gui2/gretl.c:1595
-#, fuzzy
 msgid "_Loess..."
-msgstr "_Прогнозы..."
+msgstr ""
 
 #: gui2/gretl.c:1596
 msgid "_Nadaraya-Watson..."
@@ -12560,14 +12549,14 @@ msgid "Series length does not match the dataset"
 msgstr ""
 
 #: gui2/library.c:4044
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s with loess fit"
-msgstr "%s от %s (с подбором локальной регрессии)"
+msgstr "%s от %s (с подбором loess)"
 
 #: gui2/library.c:4047
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s with Nadaraya_Watson fit"
-msgstr "%s от %s (с подбором квадратичной зависимости)"
+msgstr ""
 
 #: gui2/library.c:4464
 #, c-format
@@ -12614,9 +12603,8 @@ msgid "Trim maximum and minimum in sub-samples"
 msgstr ""
 
 #: gui2/library.c:5001
-#, fuzzy
 msgid "gretl: range-mean graph"
-msgstr "График _разброс-среднее"
+msgstr "gretl: график разброс-среднее"
 
 #: gui2/library.c:5035
 msgid "gretl: range-mean statistics"
@@ -12635,7 +12623,6 @@ msgid "Maximum lag:"
 msgstr "Максимальный лаг:"
 
 #: gui2/library.c:5207
-#, fuzzy
 msgid "periodogram"
 msgstr "Периодограмма"
 
@@ -12980,14 +12967,12 @@ msgid "Edit values"
 msgstr "Изменить значения"
 
 #: gui2/menustate.c:392 gui2/menustate.c:523
-#, fuzzy
 msgid "Add log"
-msgstr "Добавить логарифмы"
+msgstr "Добавить логарифм"
 
 #: gui2/menustate.c:394 gui2/menustate.c:524
-#, fuzzy
 msgid "Add difference"
-msgstr "Добавить разности"
+msgstr "Добавить разность"
 
 #: gui2/menustate.c:396 gui2/menustate.c:498 gui2/menustate.c:525
 #: gui2/menustate.c:585
@@ -13268,9 +13253,8 @@ msgid "You must specify a treatment variable"
 msgstr "Вы должны указать переменную воздействия (treatment)"
 
 #: gui2/selector.c:3051
-#, fuzzy
 msgid "You must specify an independent variable"
-msgstr "Необходимо выбрать вторую зависимую переменную"
+msgstr "Необходимо указать независимую переменную"
 
 #: gui2/selector.c:3203
 msgid "You must select a Z-axis variable"
@@ -13405,9 +13389,8 @@ msgid "Treatment variable"
 msgstr "Переменная воздействия (treatment)"
 
 #: gui2/selector.c:3589
-#, fuzzy
 msgid "Independent variable"
-msgstr "Независимые переменные"
+msgstr "Независимая переменныя"
 
 #: gui2/selector.c:3600 gui2/selector.c:6068
 msgid "Y-axis variables"
@@ -13534,19 +13517,16 @@ msgid "right bound"
 msgstr "верхняя граница"
 
 #: gui2/selector.c:4300
-#, fuzzy
 msgid "Polynomial order"
-msgstr "Полиномиальный тренд"
+msgstr "Полиномиальный порядок"
 
 #: gui2/selector.c:4315
-#, fuzzy
 msgid "Bandwidth"
-msgstr "Ширина столбца:"
+msgstr "Ширина столбца"
 
 #: gui2/selector.c:4322
-#, fuzzy
 msgid "Use robust weights"
-msgstr "Показать веса"
+msgstr "Использовать робастные веса"
 
 #: gui2/selector.c:4323
 msgid "Use \"leave one out\""
@@ -13673,9 +13653,8 @@ msgid "Compute confidence intervals"
 msgstr "Вычислить доверительные интервалы"
 
 #: gui2/selector.c:5316
-#, fuzzy
 msgid "Automatic maximum"
-msgstr "Авто"
+msgstr "Авто-максимум"
 
 #: gui2/selector.c:5321
 msgid "Specified maximum"
@@ -14107,9 +14086,9 @@ msgid "versus"
 msgstr "от"
 
 #: gui2/session.c:2329 gui2/session.c:2388 gui2/session.c:2416
-#, fuzzy, c-format
+#, c-format
 msgid "%s: please close this object's window first"
-msgstr "Пожалуйста, вначале закройте окно объекта"
+msgstr "%s: пожалуйста, вначале закройте окно объекта"
 
 #: gui2/session.c:2501
 #, c-format
@@ -15101,14 +15080,12 @@ msgid "APARCH"
 msgstr "APARCH"
 
 #: plugin/addons-i18n.c:6
-#, fuzzy
 msgid "AR lags"
-msgstr "Лаги"
+msgstr "AR лаги"
 
 #: plugin/addons-i18n.c:8 plugin/addons-i18n.c:47
-#, fuzzy
 msgid "Constant"
-msgstr "Без константы"
+msgstr ""
 
 #: plugin/addons-i18n.c:9
 msgid "Covariance estimator"
@@ -15215,17 +15192,14 @@ msgid "regressors"
 msgstr "Регрессоры"
 
 #: plugin/addons-i18n.c:45
-#, fuzzy
 msgid "AB-model"
-msgstr "модель"
+msgstr "AB-модель"
 
 #: plugin/addons-i18n.c:46
-#, fuzzy
 msgid "C-model"
-msgstr "модель"
+msgstr "C-модель"
 
 #: plugin/addons-i18n.c:48
-#, fuzzy
 msgid "Exogenous regressors"
 msgstr "Экзогенные регрессоры"
 
@@ -15246,21 +15220,18 @@ msgid "Lags"
 msgstr ""
 
 #: plugin/addons-i18n.c:55
-#, fuzzy
 msgid "Time trend"
-msgstr "_Временной тренд"
+msgstr "Временной тренд"
 
 #: plugin/addons-i18n.c:56
-#, fuzzy
 msgid "VAR variables"
-msgstr "Переменные"
+msgstr "VAR переменные"
 
 #: plugin/addons-i18n.c:57
 msgid "horizon"
 msgstr ""
 
 #: plugin/addons-i18n.c:58
-#, fuzzy
 msgid "plain"
 msgstr "Простой текст"
 
@@ -15285,14 +15256,12 @@ msgid "Grand mean"
 msgstr "Общее среднее"
 
 #: plugin/anova.c:377
-#, fuzzy
 msgid "anova: the treatment variable must be discrete"
-msgstr "%s: зависимая переменная должна быть счетной"
+msgstr "anova: инструментальная переменная должна быть счетной"
 
 #: plugin/anova.c:383
-#, fuzzy
 msgid "anova: the block variable must be discrete"
-msgstr "Дискретная переменная"
+msgstr ""
 
 #: plugin/anova.c:501
 #, c-format
@@ -15499,9 +15468,9 @@ msgid "Selection equation"
 msgstr ""
 
 #: plugin/import_common.c:53
-#, fuzzy, c-format
+#, c-format
 msgid "At row %d, column %d:\n"
-msgstr "Строка %d, столбец %d"
+msgstr "В строке %d, столбце %d:\n"
 
 #: plugin/import_common.c:56
 msgid ""
@@ -15578,9 +15547,8 @@ msgid "Exogenous regressor(s)"
 msgstr "Экзогенные регрессоры"
 
 #: plugin/johansen.c:1550
-#, fuzzy
 msgid "including constant term"
-msgstr "Включить константу"
+msgstr "Включая константу"
 
 #: plugin/johansen.c:1557
 msgid "Cointegration tests, ignoring exogenous variables"
@@ -15716,9 +15684,8 @@ msgid "No leverage points were found"
 msgstr "Точки левериджа не обнаружены"
 
 #: plugin/leverage.c:348 plugin/leverage.c:488
-#, fuzzy
 msgid "Cross-validation criterion"
-msgstr "Информационный критерий Акаике"
+msgstr ""
 
 #: plugin/mailer.c:583
 msgid "To:"
@@ -16174,9 +16141,9 @@ msgid "Unexpected error reading the file\n"
 msgstr "Непредвиденная ошибка чтения файла\n"
 
 #: plugin/xlsx_import.c:1064
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no such worksheet"
-msgstr "%s: нет такого объекта"
+msgstr "'%s': нет такого листа"
 
 #: doc/commands/matfuncs.c:50
 msgid "Creation and I/O"
