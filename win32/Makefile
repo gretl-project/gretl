@@ -527,7 +527,7 @@ midi_utils.o: midi_utils.c $(topsrc)/plugin/midi_utils.h
 # Distribution executable
 
 dist.stamp:
-	sh ./mkwindist $(BUILDTYPE)
+	bash ./mkwindist $(BUILDTYPE)
 
 .PHONY:
 
