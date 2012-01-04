@@ -35,7 +35,24 @@
 #include "biff.h"
 #include "build.h"
 
-static void free_sheet (wbook *book);
+typedef struct xls_info_ xls_info;
+
+struct sheetrow {
+    int last, end;
+    gchar **cells;
+};
+
+struct xls_info_ {
+    int codepage;
+    gchar **sst;
+    int sstsize;
+    int sstnext;
+};
+
+int nrows;
+struct sheetrow *rows;
+
+static void free_xls_info (xls_info *xi);
 static int allocate_row_col (int row, int col, wbook *book);
 
 int debug_print;
@@ -54,11 +71,6 @@ static void make_debug_fname (void);
                         r == BIFF_FORMULA || \
                         r == BIFF_LABELSST)
 
-struct sheetrow {
-    int last, end;
-    gchar **cells;
-};	
-
 enum {
     VARNAMES_OK = 0,
     VARNAMES_NULL,
@@ -66,10 +78,6 @@ enum {
     VARNAMES_INVALID,
     VARNAMES_NONE
 } varname_errors;
-
-int sstnext = 0;
-struct sheetrow *rows = NULL;
-int nrows = 0;
 
 #define EXCEL_IMPORTER
 #include "import_common.c"
@@ -245,7 +253,7 @@ static gchar *convert16to7 (const unsigned char *s, int count)
 }
 
 static gchar *
-copy_unicode_string (wbook *book, unsigned char *src, int remlen, 
+copy_unicode_string (xls_info *xi, unsigned char *src, int remlen, 
 		     int *skip, int *slop) 
 {
     int count = MS_OLE_GET_GUINT16(src);
@@ -307,7 +315,7 @@ copy_unicode_string (wbook *book, unsigned char *src, int remlen,
 	dbprintf("original string = '%s'\n", src + this_skip);
 	ret = convert8to7((char *) src + this_skip, count);
     } else { 
-	if (book->codepage == 1200) {
+	if (xi->codepage == 1200) {
 	    GError *gerr = NULL;
 	    gsize written;
 
@@ -539,7 +547,8 @@ static void check_for_date_formula (BiffQuery *q, wbook *book)
 
 #undef FORMAT_INFO
 
-static int process_item (BiffQuery *q, wbook *book, PRN *prn) 
+static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
+			 PRN *prn) 
 {
     struct sheetrow *prow = NULL;
     static char **string_targ;
@@ -575,53 +584,53 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
     switch (q->ls_op) {
 
     case BIFF_SST: {
-	int k, skip, remlen, oldsz = book->sstsize;
+	int k, skip, remlen, oldsz = xi->sstsize;
 	guint16 sz;
 
-	if (book->sst != NULL) {
+	if (xi->sst != NULL) {
 	    fprintf(stderr, "Got a second string table: this is nonsense\n");
 	    return 1;
 	}
 
 	sz = MS_OLE_GET_GUINT16(q->data + 4);
-	book->sstsize += sz;
-	book->sst = realloc(book->sst, book->sstsize * sizeof *book->sst);
-	if (book->sst == NULL) {
+	xi->sstsize += sz;
+	xi->sst = realloc(xi->sst, xi->sstsize * sizeof *xi->sst);
+	if (xi->sst == NULL) {
 	    return 1;
 	}
 
 	dbprintf("Got SST: allocated for %d strings (%d bytes), %p\n", 
-		 book->sstsize, book->sstsize * sizeof *book->sst, (void *) book->sst);
+		 xi->sstsize, xi->sstsize * sizeof *xi->sst, (void *) xi->sst);
 
-	for (k=oldsz; k<book->sstsize; k++) {
+	for (k=oldsz; k<xi->sstsize; k++) {
 	    /* careful: initialize all pointers to NULL */
-	    book->sst[k] = NULL;
+	    xi->sst[k] = NULL;
 	}
 
 	ptr = q->data + 8;
 
-	for (k=oldsz; k<book->sstsize; k++) {
+	for (k=oldsz; k<xi->sstsize; k++) {
 	    remlen = q->length - (ptr - q->data);
 	    dbprintf("Working on sst[%d], data offset=%d, remlen=%d\n", 
 		     k, (int) (ptr - q->data), remlen);
 	    if (remlen <= 0) {
 		break;
 	    }
-	    book->sst[k] = copy_unicode_string(book, ptr, remlen, &skip, &slop);
+	    xi->sst[k] = copy_unicode_string(xi, ptr, remlen, &skip, &slop);
 	    ptr += skip;
 	}
 
-	if (k < book->sstsize) {
-	    sstnext = k;
+	if (k < xi->sstsize) {
+	    xi->sstnext = k;
 	}
 
 	break;
     }	
 
     case BIFF_CONTINUE: 
-	dbprintf("Got CONTINUE, sstnext = %d, len = %d\n", 
-		 sstnext, (int) q->length);
-	if (sstnext > 0) {
+	dbprintf("Got CONTINUE, xi->sstnext = %d, len = %d\n", 
+		 xi->sstnext, (int) q->length);
+	if (xi->sstnext > 0) {
 	    int k, skip, remlen;
 
 	    ptr = q->data;
@@ -633,17 +642,17 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 			 (int) csize);
 		ptr += 1 + csize * slop;
 	    }
-	    for (k=sstnext; k<book->sstsize; k++) {
+	    for (k=xi->sstnext; k<xi->sstsize; k++) {
 		remlen = q->length - (ptr - q->data);
 		if (remlen <= 0) {
 		    break;
 		}
 		dbprintf("Working on sst[%d], remlen = %d\n", k, remlen);
-		book->sst[k] = copy_unicode_string(book, ptr, remlen, &skip, &slop);
+		xi->sst[k] = copy_unicode_string(xi, ptr, remlen, &skip, &slop);
 		ptr += skip;
 	    }
-	    if (k < book->sstsize) {
-		sstnext = k;
+	    if (k < xi->sstsize) {
+		xi->sstnext = k;
 	    }
 	}
 	break;
@@ -670,11 +679,11 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    unsigned int sidx = MS_OLE_GET_GUINT16(q->data + 6);
 
 	    prow = rows + i;
-	    if (sidx >= book->sstsize) {
+	    if (sidx >= xi->sstsize) {
 		pprintf(prn, _("String index too large"));
 		pputc(prn, '\n');
-	    } else if (book->sst[sidx] != NULL) {
-		check_copy_string(prow, i, j, sidx, book->sst[sidx]);
+	    } else if (xi->sst[sidx] != NULL) {
+		check_copy_string(prow, i, j, sidx, xi->sst[sidx]);
 	    } else {
 		dbprintf("sst[%d] seems to be NULL, leaving string blank\n", (int) sidx);
 		prow->cells[j] = g_malloc(2);
@@ -771,7 +780,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	if (string_targ == NULL) {
 	    dbprintf("String record without preceding string formula\n");
 	} else {
-	    gchar *tmp = copy_unicode_string(book, q->data, 0, NULL, NULL);
+	    gchar *tmp = copy_unicode_string(xi, q->data, 0, NULL, NULL);
 
 	    *string_targ = make_string(tmp);
 	    dbprintf("Filled out string formula with '%s'\n", *string_targ);	
@@ -869,11 +878,11 @@ static int handled_record (BiffQuery *q)
     return 0;
 }
 
-static int process_sheet (const char *filename, wbook *book, PRN *prn) 
+static int process_sheet (const char *filename, wbook *book, xls_info *xi,
+			  PRN *prn) 
 {    
     int err = 0, gotbof = 0, eofcount = 0;
     long offset = book->byte_offsets[book->selected];
-
     MsOleStream *stream;
     MsOleErr result;
     BiffQuery *q;
@@ -936,7 +945,7 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
 	} 
 
 	if (handled_record(q)) {
-	    err = process_item(q, book, prn);
+	    err = process_item(q, book, xi, prn);
 	} else if (q->ms_op == 0x02 && q->ls_op == BIFF_ROW) {
 	    dbprintf("Got BIFF_ROW\n");
 	} else if (q->opcode == BIFF_DBCELL) {
@@ -946,7 +955,7 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
 		int cp = MS_OLE_GET_GUINT16(q->data);
 
 		fprintf(stderr, "CODEPAGE: got %d\n", cp);
-		book->codepage = cp;
+		xi->codepage = cp;
 	    }
 	} else {
 	    dbprintf("skipping unhandled opcode 0x%02x\n", q->opcode);
@@ -970,7 +979,6 @@ static void row_init (struct sheetrow *row)
 static int allocate_row_col (int i, int j, wbook *book) 
 {
     struct sheetrow *myrows = NULL;
-    gchar **cells = NULL;
     int new_nrows, newcol, k;
     static int started;
 
@@ -987,7 +995,6 @@ static int allocate_row_col (int i, int j, wbook *book)
 	new_nrows = (i / 16 + 1) * 16;
 
 	myrows = realloc(rows, new_nrows * sizeof *myrows);
-
 	if (myrows == NULL) {
 	    return 1;
 	}
@@ -1005,6 +1012,8 @@ static int allocate_row_col (int i, int j, wbook *book)
     dbprintf("allocate: col=%d and rows[%d].end = %d\n", j, i, rows[i].end);
 
     if (j >= rows[i].end) {
+	gchar **cells;
+
 	newcol = (j / 16 + 1) * 16;
 	dbprintf("allocate: reallocing rows[%d].cells to size %d\n", i, newcol);
 	cells = g_realloc(rows[i].cells, newcol * sizeof *cells);
@@ -1028,19 +1037,26 @@ static int allocate_row_col (int i, int j, wbook *book)
     return 0;
 }
 
-static void free_sheet (wbook *book) 
+static void xls_info_init (xls_info *xi)
+{
+    xi->codepage = 0;
+    xi->sst = NULL;
+    xi->sstsize = 0;
+}
+
+static void free_xls_info (xls_info *xi) 
 {
     int i, j;
 
-    dbprintf("free_sheet(), nrows=%d\n", nrows);
+    dbprintf("free_xls_info(), nrows=%d\n", nrows);
 
     /* free shared string table */
-    if (book->sst != NULL) {
-	for (i=0; i<book->sstsize; i++) {
-	    g_free(book->sst[i]);
+    if (xi->sst != NULL) {
+	for (i=0; i<xi->sstsize; i++) {
+	    g_free(xi->sst[i]);
 	}
-	free(book->sst);
-	book->sst = NULL;
+	free(xi->sst);
+	xi->sst = NULL;
     }
 
     /* free cells */
@@ -1461,12 +1477,23 @@ static void book_time_series_setup (wbook *book, DATASET *newinfo, int pd)
     book_unset_obs_labels(book);
 }
 
+#if 0 /* not yet */
+static const char *get_label (int i, int j, void *p)
+{
+    struct sheetrow *rows = p;
+
+    return rows[i].cells != NULL ? rows[i].cells[j] : NULL;
+}
+#endif
+
 int xls_get_data (const char *fname, int *list, char *sheetname,
 		  DATASET *dset, gretlopt opt, PRN *prn)
 {
     int gui = (opt & OPT_G);
     wbook xbook;
     wbook *book = &xbook;
+    xls_info xlsi;
+    xls_info *xi = &xlsi;
     DATASET *newset;
     int datacols, totcols;
     struct string_err strerr;
@@ -1490,7 +1517,11 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 
     gretl_push_c_numeric_locale();
 
+    rows = NULL;
+    nrows = 0;
+
     wbook_init(book, list, sheetname);
+    xls_info_init(xi);
 
     if (excel_book_get_info(fname, book)) {
 	pputs(prn, _("Failed to get workbook info"));
@@ -1528,7 +1559,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     if (err) goto getout;
 
     /* processing for specific worksheet */
-    err = process_sheet(fname, book, prn);
+    err = process_sheet(fname, book, xi, prn);
 
     if (err) {
 	const char *buf = gretl_print_get_buffer(prn);
@@ -1674,7 +1705,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
  getout:
     
     free(blank_col);
-    free_sheet(book);
+    free_xls_info(xi);
     wbook_free(book);
 
     gretl_pop_c_numeric_locale();
@@ -1691,6 +1722,3 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 
     return err;
 }  
-
-
-

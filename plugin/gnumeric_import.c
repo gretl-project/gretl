@@ -574,6 +574,15 @@ static int labels_numeric (char **S, int n)
     return 1;
 }
 
+#if 0 /* not yet */
+static const char *get_label (int i, int j, void *p)
+{
+    char **labels = p;
+
+    return labels[i];
+}
+#endif
+
 int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 		       DATASET *dset, gretlopt opt, PRN *prn)
 {

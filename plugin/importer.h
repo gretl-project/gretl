@@ -56,15 +56,12 @@ enum {
 
 struct wbook_ {
     int version;
-    int codepage;
     int nsheets;
     int selected;
     int col_offset, row_offset;
     char *targname;
     char **sheetnames;
     guint32 *byte_offsets;
-    gchar **sst;
-    gint sstsize;
     void *colspin, *rowspin;
     int *xf_list;
     BookFlag flags;
