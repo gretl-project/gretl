@@ -63,6 +63,8 @@ struct wbook_ {
     char *targname;
     char **sheetnames;
     guint32 *byte_offsets;
+    gchar **sst;
+    gint sstsize;
     void *colspin, *rowspin;
     int *xf_list;
     BookFlag flags;

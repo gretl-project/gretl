@@ -35,7 +35,7 @@
 #include "biff.h"
 #include "build.h"
 
-static void free_sheet (void);
+static void free_sheet (wbook *book);
 static int allocate_row_col (int row, int col, wbook *book);
 
 int debug_print;
@@ -67,8 +67,7 @@ enum {
     VARNAMES_NONE
 } varname_errors;
 
-gchar **sst = NULL;
-int sstsize = 0, sstnext = 0;
+int sstnext = 0;
 struct sheetrow *rows = NULL;
 int nrows = 0;
 
@@ -194,9 +193,9 @@ static double biff_get_rk (const unsigned char *ptr)
     return NADBL;
 }
 
-static char *convert8to7 (const char *s, int count) 
+static gchar *convert8to7 (const char *s, int count) 
 {
-    char *dest;
+    gchar *dest;
     int n = strspn(s, " \t");
 
     count -= n;
@@ -207,7 +206,7 @@ static char *convert8to7 (const char *s, int count)
 	if (count > VNAMELEN - 1) {
 	    count = VNAMELEN - 1;
 	}
-	dest = malloc(VNAMELEN);
+	dest = g_malloc(VNAMELEN);
 	*dest = '\0';
 	s += n;
 	strncat(dest, s, count);
@@ -220,12 +219,12 @@ static char *convert8to7 (const char *s, int count)
     return dest;
 }
 
-static char *convert16to7 (const unsigned char *s, int count) 
+static gchar *convert16to7 (const unsigned char *s, int count) 
 {
     char *dest;
     int i, u, j = 0;
 
-    dest = malloc(VNAMELEN);
+    dest = g_malloc(VNAMELEN);
     if (dest == NULL) {
 	return NULL;
     }
@@ -307,7 +306,7 @@ copy_unicode_string (wbook *book, unsigned char *src, int remlen,
     } else if (csize == 1) {
 	dbprintf("original string = '%s'\n", src + this_skip);
 	ret = convert8to7((char *) src + this_skip, count);
-    } else {
+    } else { 
 	if (book->codepage == 1200) {
 	    GError *gerr = NULL;
 	    gsize written;
@@ -331,7 +330,7 @@ copy_unicode_string (wbook *book, unsigned char *src, int remlen,
     return ret;
 }
 
-static gchar *make_string (gchar *str) 
+static gchar *make_string (char *str) 
 {
     gchar *ret = NULL;
 
@@ -576,43 +575,43 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
     switch (q->ls_op) {
 
     case BIFF_SST: {
-	int k, skip, remlen, oldsz = sstsize;
+	int k, skip, remlen, oldsz = book->sstsize;
 	guint16 sz;
 
-	if (sst != NULL) {
+	if (book->sst != NULL) {
 	    fprintf(stderr, "Got a second string table: this is nonsense\n");
 	    return 1;
 	}
 
 	sz = MS_OLE_GET_GUINT16(q->data + 4);
-	sstsize += sz;
-	sst = g_realloc(sst, sstsize * sizeof *sst);
-	if (sst == NULL) {
+	book->sstsize += sz;
+	book->sst = realloc(book->sst, book->sstsize * sizeof *book->sst);
+	if (book->sst == NULL) {
 	    return 1;
 	}
 
 	dbprintf("Got SST: allocated for %d strings (%d bytes), %p\n", 
-		 sstsize, sstsize * sizeof *sst, (void *) sst);
+		 book->sstsize, book->sstsize * sizeof *book->sst, (void *) book->sst);
 
-	for (k=oldsz; k<sstsize; k++) {
+	for (k=oldsz; k<book->sstsize; k++) {
 	    /* careful: initialize all pointers to NULL */
-	    sst[k] = NULL;
+	    book->sst[k] = NULL;
 	}
 
 	ptr = q->data + 8;
 
-	for (k=oldsz; k<sstsize; k++) {
+	for (k=oldsz; k<book->sstsize; k++) {
 	    remlen = q->length - (ptr - q->data);
 	    dbprintf("Working on sst[%d], data offset=%d, remlen=%d\n", 
 		     k, (int) (ptr - q->data), remlen);
 	    if (remlen <= 0) {
 		break;
 	    }
-	    sst[k] = copy_unicode_string(book, ptr, remlen, &skip, &slop);
+	    book->sst[k] = copy_unicode_string(book, ptr, remlen, &skip, &slop);
 	    ptr += skip;
 	}
 
-	if (k < sstsize) {
+	if (k < book->sstsize) {
 	    sstnext = k;
 	}
 
@@ -634,16 +633,16 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 			 (int) csize);
 		ptr += 1 + csize * slop;
 	    }
-	    for (k=sstnext; k<sstsize; k++) {
+	    for (k=sstnext; k<book->sstsize; k++) {
 		remlen = q->length - (ptr - q->data);
 		if (remlen <= 0) {
 		    break;
 		}
 		dbprintf("Working on sst[%d], remlen = %d\n", k, remlen);
-		sst[k] = copy_unicode_string(book, ptr, remlen, &skip, &slop);
+		book->sst[k] = copy_unicode_string(book, ptr, remlen, &skip, &slop);
 		ptr += skip;
 	    }
-	    if (k < sstsize) {
+	    if (k < book->sstsize) {
 		sstnext = k;
 	    }
 	}
@@ -671,11 +670,11 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    unsigned int sidx = MS_OLE_GET_GUINT16(q->data + 6);
 
 	    prow = rows + i;
-	    if (sidx >= sstsize) {
+	    if (sidx >= book->sstsize) {
 		pprintf(prn, _("String index too large"));
 		pputc(prn, '\n');
-	    } else if (sst[sidx] != NULL) {
-		check_copy_string(prow, i, j, sidx, sst[sidx]);
+	    } else if (book->sst[sidx] != NULL) {
+		check_copy_string(prow, i, j, sidx, book->sst[sidx]);
 	    } else {
 		dbprintf("sst[%d] seems to be NULL, leaving string blank\n", (int) sidx);
 		prow->cells[j] = g_malloc(2);
@@ -1029,20 +1028,19 @@ static int allocate_row_col (int i, int j, wbook *book)
     return 0;
 }
 
-static void free_sheet (void) 
+static void free_sheet (wbook *book) 
 {
     int i, j;
 
     dbprintf("free_sheet(), nrows=%d\n", nrows);
 
     /* free shared string table */
-    if (sst != NULL) {
-	for (i=0; i<sstsize; i++) {
-	    if (sst[i] != NULL) {
-		g_free(sst[i]);
-	    }
+    if (book->sst != NULL) {
+	for (i=0; i<book->sstsize; i++) {
+	    g_free(book->sst[i]);
 	}
-	g_free(sst);
+	free(book->sst);
+	book->sst = NULL;
     }
 
     /* free cells */
@@ -1225,7 +1223,7 @@ check_data_block (wbook *book, int totcols, const char *blank_col,
 		ret = -1;
 	    } else if (IS_STRING(rows[i].cells[j])) {
 		if (missval_string(rows[i].cells[j])) {
-		    free(rows[i].cells[j]);
+		    g_free(rows[i].cells[j]);
 		    rows[i].cells[j] = g_strdup("-999");
 		    ret = -1;
 		} else {
@@ -1650,7 +1648,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	    i = book->col_offset;
 	    for (t=0; t<newset->n; t++) {
 		int ts = t + 1 + book->row_offset;
-		gchar *src = rows[ts].cells[i];
+		char *src = rows[ts].cells[i];
 
 		if (src != NULL) {
 		    strncat(newset->S[t], src + 1, OBSLEN - 1);
@@ -1676,8 +1674,8 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
  getout:
     
     free(blank_col);
+    free_sheet(book);
     wbook_free(book);
-    free_sheet();
 
     gretl_pop_c_numeric_locale();
 

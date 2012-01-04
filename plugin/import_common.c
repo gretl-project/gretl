@@ -420,6 +420,8 @@ static void wbook_init (wbook *book, const int *list, char *sheetname)
     book->targname = NULL;
     book->sheetnames = NULL;
     book->byte_offsets = NULL;
+    book->sst = NULL;
+    book->sstsize = 0;
     book->selected = 0;
     book->flags = 0;
     book->xf_list = NULL;
