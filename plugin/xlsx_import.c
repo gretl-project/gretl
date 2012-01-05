@@ -837,6 +837,8 @@ static int xlsx_workbook_get_sheetnames (xlsx_info *xinfo,
 			    strings_array_add(&xinfo->filenames, 
 					      &ns, ID);
 			}
+			free(ID);
+			free(sheetname);
 		    }
 		    c1 = c1->next;
 		}
