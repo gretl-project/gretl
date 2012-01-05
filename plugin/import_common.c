@@ -284,37 +284,31 @@ static int worksheet_start_dataset (DATASET *newinfo)
     }
 }
 
-#ifdef EXCEL_IMPORTER
-# define cell_string(i,j) ((rows[i].cells != NULL)? rows[i].cells[j] : NULL)
-#else
-# define cell_string(i,j) (labels[i])
-#endif
-
 static int 
-importer_dates_check (int row_offset, int col_offset, 
-		      BookFlag *pflags, char **labels, 
-		      DATASET *newinfo, PRN *prn, int *err)
+importer_dates_check (char **labels, BookFlag *pflags,
+		      DATASET *newset, PRN *prn, 
+		      int *err)
 {
     int d, t;
     char dstr[12];
     char *s;
     int ret = 0;
 
-    for (t=0; t<newinfo->n; t++) {
-	s = cell_string(t + row_offset, col_offset);
+    for (t=0; t<newset->n; t++) {
+	s = labels[t];
 	if (s == NULL || *s == '\0') {
 	    fprintf(stderr, "importer_dates_check: got blank label\n");
 	    return 0;
 	}
     }
 
-    *err = dataset_allocate_obs_markers(newinfo);
+    *err = dataset_allocate_obs_markers(newset);
     if (*err) {
 	return 0;
     }
 
-    for (t=0; t<newinfo->n && !*err; t++) {
-	s = cell_string(t + row_offset, col_offset);
+    for (t=0; t<newset->n && !*err; t++) {
+	s = labels[t];
 	if (*s == '"' || *s == '\'') s++;
 	if (*pflags & BOOK_NUMERIC_DATES) {
 	    if (sscanf(s, "%d", &d)) {
@@ -325,20 +319,20 @@ importer_dates_check (int row_offset, int col_offset,
 		*err = E_DATA;
 	    }
 	}
-	strncat(newinfo->S[t], s, OBSLEN - 1);
+	strncat(newset->S[t], s, OBSLEN - 1);
     }
 
     if (!*err) {
 	int reversed = 0;
 
-	ret = test_markers_for_dates(newinfo, &reversed, NULL, prn);
+	ret = test_markers_for_dates(newset, &reversed, NULL, prn);
 	if (reversed) {
 	    *pflags |= BOOK_DATA_REVERSED;
 	}
     }
 
-    if (newinfo->markers != DAILY_DATE_STRINGS) {
-	dataset_destroy_obs_markers(newinfo);
+    if (newset->markers != DAILY_DATE_STRINGS) {
+	dataset_destroy_obs_markers(newset);
     }
 
     return ret;

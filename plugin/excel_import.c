@@ -47,13 +47,16 @@ struct xls_info_ {
     gchar **sst;
     int sstsize;
     int sstnext;
+    int datacols;
+    int totcols;
+    int nrows;
+    struct sheetrow *rows;
+    char *blank_col;
 };
 
-int nrows;
-struct sheetrow *rows;
-
 static void free_xls_info (xls_info *xi);
-static int allocate_row_col (int row, int col, wbook *book);
+static int allocate_row_col (int row, int col, wbook *book,
+			     xls_info *xi);
 
 int debug_print;
 
@@ -659,12 +662,12 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 			   
     case BIFF_LABEL: 
 	dbprintf("Got LABEL, row=%d, col=%d\n", i, j);
-	if (allocate_row_col(i, j, book)) {
+	if (allocate_row_col(i, j, book, xi)) {
 	    return 1;
 	} else {
 	    unsigned int len = MS_OLE_GET_GUINT16(q->data + 6);
 	
-	    prow = rows + i;
+	    prow = xi->rows + i;
 	    ptr = q->data + 8;
 	    fprintf(stderr, "BIFF_LABEL: calling convert8to7\n");
 	    prow->cells[j] = make_string(convert8to7((char *) ptr, len));
@@ -673,12 +676,12 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
   
     case BIFF_LABELSST:
 	dbprintf("Got LABELSST, row=%d, col=%d\n", i, j);
-	if (allocate_row_col(i, j, book)) {
+	if (allocate_row_col(i, j, book, xi)) {
 	    return 1;
 	} else {
 	    unsigned int sidx = MS_OLE_GET_GUINT16(q->data + 6);
 
-	    prow = rows + i;
+	    prow = xi->rows + i;
 	    if (sidx >= xi->sstsize) {
 		pprintf(prn, _("String index too large"));
 		pputc(prn, '\n');
@@ -695,22 +698,22 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 	break;
 
     case BIFF_NUMBER: 
-	if (allocate_row_col(i, j, book)) {
+	if (allocate_row_col(i, j, book, xi)) {
 	    return 1;
 	} else {
 	    val = get_le_double(q->data + 6);
-	    prow = rows + i;
+	    prow = xi->rows + i;
 	    prow->cells[j] = g_strdup_printf("%.15g", val);
 	    dbprintf("Got NUMBER (%g), row=%d, col=%d\n", val, i, j);
 	}
 	break;
 
     case BIFF_RK: 
-	if (allocate_row_col(i, j, book)) {
+	if (allocate_row_col(i, j, book, xi)) {
 	    return 1;
 	} else {
 	    val = biff_get_rk(q->data + 6);
-	    prow = rows + i;
+	    prow = xi->rows + i;
 	    prow->cells[j] = g_strdup_printf("%.15g", val);
 	    dbprintf("Got RK (%g), row=%d, col=%d\n", val, i, j);
 	}
@@ -721,11 +724,11 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 
 	dbprintf("Got MULRK, row=%d, first_col=%d, ncols=%d\n", i, j, ncols);
 	for (k=0; k<ncols; k++) {
-	    if (allocate_row_col(i, j, book)) {
+	    if (allocate_row_col(i, j, book, xi)) {
 		return 1;
 	    }
 	    val = biff_get_rk(q->data + 6 + 6 * k);
-	    prow = rows + i; /* might have moved */
+	    prow = xi->rows + i; /* might have moved */
 	    prow->cells[j] = g_strdup_printf("%.15g", val);
 	    dbprintf(" MULRK[col=%d] = %g\n", j, val);
 	    j++;
@@ -735,11 +738,11 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 
     case BIFF_FORMULA:  
 	dbprintf("Got FORMULA, row=%d, col=%d\n", i, j);
-	if (allocate_row_col(i, j, book)) {
+	if (allocate_row_col(i, j, book, xi)) {
 	    return 1;
 	} else {
 	    ptr = q->data + 6;
-	    prow = rows + i;
+	    prow = xi->rows + i;
 	    if (ptr[6] == 0xff && ptr[7] == 0xff) {
 		unsigned char fcode = ptr[0];
 
@@ -789,7 +792,7 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 	break;
 
     case BIFF_BOF: 
-	if (rows != NULL) {
+	if (xi->rows != NULL) {
 	    fprintf(stderr, "BOF when current sheet is not flushed\n");
 	    return 1;
 	}
@@ -976,7 +979,8 @@ static void row_init (struct sheetrow *row)
     row->cells = NULL;
 }
 
-static int allocate_row_col (int i, int j, wbook *book) 
+static int allocate_row_col (int i, int j, wbook *book,
+			     xls_info *xi) 
 {
     struct sheetrow *myrows = NULL;
     int new_nrows, newcol, k;
@@ -989,49 +993,49 @@ static int allocate_row_col (int i, int j, wbook *book)
 
     started = 1;
 
-    dbprintf("allocate: row=%d, col=%d, nrows=%d\n", i, j, nrows);
+    dbprintf("allocate: row=%d, col=%d, nrows=%d\n", i, j, xi->nrows);
 
-    if (i >= nrows) {
+    if (i >= xi->nrows) {
 	new_nrows = (i / 16 + 1) * 16;
 
-	myrows = realloc(rows, new_nrows * sizeof *myrows);
+	myrows = realloc(xi->rows, new_nrows * sizeof *myrows);
 	if (myrows == NULL) {
 	    return 1;
 	}
 
-	rows = myrows;
+	xi->rows = myrows;
 
-	for (k=nrows; k<new_nrows; k++) {
+	for (k=xi->nrows; k<new_nrows; k++) {
 	    dbprintf("allocate: initing rows[%d]\n", k);
-	    row_init(&rows[k]);
-	    dbprintf("rows[%d].end=%d\n", i, rows[k].end);
+	    row_init(&xi->rows[k]);
+	    dbprintf("rows[%d].end=%d\n", i, xi->rows[k].end);
 	}
-	nrows = new_nrows;
+	xi->nrows = new_nrows;
     }
 
-    dbprintf("allocate: col=%d and rows[%d].end = %d\n", j, i, rows[i].end);
+    dbprintf("allocate: col=%d and rows[%d].end = %d\n", j, i, xi->rows[i].end);
 
-    if (j >= rows[i].end) {
+    if (j >= xi->rows[i].end) {
 	gchar **cells;
 
 	newcol = (j / 16 + 1) * 16;
 	dbprintf("allocate: reallocing rows[%d].cells to size %d\n", i, newcol);
-	cells = g_realloc(rows[i].cells, newcol * sizeof *cells);
+	cells = g_realloc(xi->rows[i].cells, newcol * sizeof *cells);
 
 	if (cells == NULL) {
 	    return 1;
 	}
 
-	rows[i].cells = cells;
+	xi->rows[i].cells = cells;
 
-	for (k=rows[i].end; k<newcol; k++) {
-	    rows[i].cells[k] = NULL;
+	for (k=xi->rows[i].end; k<newcol; k++) {
+	    xi->rows[i].cells[k] = NULL;
 	}
-	rows[i].end = newcol;
+	xi->rows[i].end = newcol;
     } 
  
-    if (j > rows[i].last) {
-	rows[i].last = j;
+    if (j > xi->rows[i].last) {
+	xi->rows[i].last = j;
     }
 
     return 0;
@@ -1042,13 +1046,18 @@ static void xls_info_init (xls_info *xi)
     xi->codepage = 0;
     xi->sst = NULL;
     xi->sstsize = 0;
+    xi->datacols = 0;
+    xi->totcols = 0;
+    xi->nrows = 0;
+    xi->rows = NULL;
+    xi->blank_col = NULL;
 }
 
 static void free_xls_info (xls_info *xi) 
 {
     int i, j;
 
-    dbprintf("free_xls_info(), nrows=%d\n", nrows);
+    dbprintf("free_xls_info(), nrows=%d\n", xi->nrows);
 
     /* free shared string table */
     if (xi->sst != NULL) {
@@ -1060,27 +1069,29 @@ static void free_xls_info (xls_info *xi)
     }
 
     /* free cells */
-    if (rows != NULL) {
-	for (i=0; i<nrows; i++) {
-	    if (rows[i].cells == NULL) {
+    if (xi->rows != NULL) {
+	for (i=0; i<xi->nrows; i++) {
+	    if (xi->rows[i].cells == NULL) {
 		dbprintf("rows[%d].cells = NULL, skipping free\n", i);
 		continue;
 	    }
-	    for (j=0; j<rows[i].end; j++) {
-		if (rows[i].cells[j] != NULL) {
+	    for (j=0; j<xi->rows[i].end; j++) {
+		if (xi->rows[i].cells[j] != NULL) {
 		    dbprintf("Freeing rows[%d].cells[%d] at %p\n",
-			     i, j, (void *) rows[i].cells[j]);
-		    g_free(rows[i].cells[j]); 
+			     i, j, (void *) xi->rows[i].cells[j]);
+		    g_free(xi->rows[i].cells[j]); 
 		}
 	    }
-	    dbprintf("Freeing rows[%d].cells at %p\n", i, (void *) rows[i].cells);
-	    g_free(rows[i].cells);
+	    dbprintf("Freeing rows[%d].cells at %p\n", i, (void *) xi->rows[i].cells);
+	    g_free(xi->rows[i].cells);
 	}
-	free(rows);
-	rows = NULL;
+	free(xi->rows);
+	xi->rows = NULL;
     }
 
-    nrows = 0;
+    free(xi->blank_col);
+
+    xi->nrows = 0;
 }
 
 #define IS_STRING(v) ((v[0] == '"'))
@@ -1089,7 +1100,7 @@ static void free_xls_info (xls_info *xi)
    be at an offset into the worksheet)
  */
 
-static int first_col_strings (wbook *book)
+static int first_col_strings (wbook *book, xls_info *xi)
 {
     int i, j = book->col_offset;
     int startrow = book->row_offset + 1;
@@ -1097,18 +1108,18 @@ static int first_col_strings (wbook *book)
 
     dbprintf("checking for first column strings...\n");
 
-    for (i=startrow; i<nrows; i++) {
+    for (i=startrow; i<xi->nrows; i++) {
 	dbprintf("book->row_offset=%d, i=%d\n", book->row_offset, i);
-	dbprintf("rows = %p\n", (void *) rows);
-	if (rows == NULL || rows[i].cells == NULL || 
-	    rows[i].cells[j] == NULL ||
-	    !IS_STRING(rows[i].cells[j])) {
+	dbprintf("rows = %p\n", (void *) xi->rows);
+	if (xi->rows == NULL || xi->rows[i].cells == NULL || 
+	    xi->rows[i].cells[j] == NULL ||
+	    !IS_STRING(xi->rows[i].cells[j])) {
 	    dbprintf("no: not a string at row %d\n", i);
 	    ret = 0;
 	    break;
 	}
 	dbprintf("first_col_strings: rows[%d].cells[%d]: '%s'\n", i, j,
-		 rows[i].cells[j]);
+		 xi->rows[i].cells[j]);
     }
 
     if (ret) {
@@ -1120,9 +1131,7 @@ static int first_col_strings (wbook *book)
 
 #define obs_string(s) (!strcmp(s, "obs") || !strcmp(s, "id"))
 
-static int 
-check_all_varnames (wbook *book, int totcols, const char *blank_col,
-		    PRN *prn)
+static int check_all_varnames (wbook *book, xls_info *xi, PRN *prn)
 {
     int j, i = book->row_offset;
     int startcol = book->col_offset;
@@ -1136,21 +1145,21 @@ check_all_varnames (wbook *book, int totcols, const char *blank_col,
 	gotcols = 1;
     }
 
-    if (rows[i].cells == NULL) {
+    if (xi->rows[i].cells == NULL) {
 	fprintf(stderr, "Row %d is empty, trying lower...\n", i);
-	while (i < nrows - 1 && rows[i].cells == NULL) {
+	while (i < xi->nrows - 1 && xi->rows[i].cells == NULL) {
 	    book->row_offset += 1;
 	    i++;
 	}
     }
 
-    for (j=startcol; j<totcols; j++) { 
-	if (blank_col[j]) {
+    for (j=startcol; j<xi->totcols; j++) { 
+	if (xi->blank_col[j]) {
 	    gotcols++;
 	    continue;
 	}
 
-	if (rows[i].cells[j] == NULL) {
+	if (xi->rows[i].cells[j] == NULL) {
 	    dbprintf("got_varnames: rows[%d].cells[%d] is NULL\n", i, j);
 	    break;
 	}
@@ -1158,11 +1167,11 @@ check_all_varnames (wbook *book, int totcols, const char *blank_col,
 	gotcols++;
 
 	dbprintf("got_varnames: rows[%d].cells[%d] is '%s'\n", i, j, 
-		 rows[i].cells[j]);
+		 xi->rows[i].cells[j]);
 
-	if (IS_STRING(rows[i].cells[j])) {
+	if (IS_STRING(xi->rows[i].cells[j])) {
 	    /* skip beyond the quote */
-	    char *test = rows[i].cells[j] + 1;
+	    char *test = xi->rows[i].cells[j] + 1;
 
 	    /* "obs" or "id" is OK in the first col of the selection, 
 	       but not thereafter */
@@ -1206,8 +1215,7 @@ struct string_err {
 /* check for invalid data in the selected data block */
 
 static int 
-check_data_block (wbook *book, int totcols, const char *blank_col,
-		  struct string_err *err)
+check_data_block (wbook *book, xls_info *xi, struct string_err *err)
 {
     int startcol = book->col_offset;
     int startrow = book->row_offset + 1;
@@ -1221,31 +1229,32 @@ check_data_block (wbook *book, int totcols, const char *blank_col,
     err->column = 0;
     err->str = NULL;
 
-    for (j=startcol; j<totcols; j++) {
-	if (blank_col[j]) {
+    for (j=startcol; j<xi->totcols; j++) {
+	if (xi->blank_col[j]) {
 	    continue;
 	}
-	for (i=startrow; i<nrows; i++) {
-	    dbprintf("data_block: looking at rows[%d], end = %d\n", i, rows[i].end);
-	    if (rows[i].cells  == NULL) {
+	for (i=startrow; i<xi->nrows; i++) {
+	    dbprintf("data_block: looking at rows[%d], end = %d\n", i, 
+		     xi->rows[i].end);
+	    if (xi->rows[i].cells  == NULL) {
 		dbprintf("data_block: rows[%d].cells = NULL\n", i);
 		ret = -1;
-	    } else if (j >= rows[i].end) {
+	    } else if (j >= xi->rows[i].end) {
 		dbprintf("data_block: short row, fell off the end\n");
 		ret = -1;
-	    } else if (rows[i].cells[j] == NULL) {
+	    } else if (xi->rows[i].cells[j] == NULL) {
 		dbprintf("data_block: rows[%d].cells[%d] = NULL\n", i, j);
-		rows[i].cells[j] = g_strdup("-999");
+		xi->rows[i].cells[j] = g_strdup("-999");
 		ret = -1;
-	    } else if (IS_STRING(rows[i].cells[j])) {
-		if (missval_string(rows[i].cells[j])) {
-		    g_free(rows[i].cells[j]);
-		    rows[i].cells[j] = g_strdup("-999");
+	    } else if (IS_STRING(xi->rows[i].cells[j])) {
+		if (missval_string(xi->rows[i].cells[j])) {
+		    g_free(xi->rows[i].cells[j]);
+		    xi->rows[i].cells[j] = g_strdup("-999");
 		    ret = -1;
 		} else {
 		    err->row = i + 1;
 		    err->column = j + 1;
-		    err->str = g_strdup(rows[i].cells[j]);
+		    err->str = g_strdup(xi->rows[i].cells[j]);
 		    return 1;
 		}
 	    }
@@ -1281,9 +1290,9 @@ n_vars_from_col (wbook *book, int totcols, char *blank_col)
     return nv;
 }
 
-static int transcribe_data (wbook *book, DATASET *dset, 
-			    int totcols, char *blank_col, 
-			    PRN *prn)
+static int 
+transcribe_data (wbook *book, xls_info *xi, DATASET *dset, 
+		 PRN *prn)
 {
     int startcol = book->col_offset;
     int roff = book->row_offset;
@@ -1294,10 +1303,10 @@ static int transcribe_data (wbook *book, DATASET *dset,
 	startcol++;
     } 
 
-    for (i=startcol; i<totcols; i++) {
+    for (i=startcol; i<xi->totcols; i++) {
 	int ts;
 
-	if (blank_col[i]) {
+	if (xi->blank_col[i]) {
 	    continue;
 	}
 
@@ -1308,15 +1317,15 @@ static int transcribe_data (wbook *book, DATASET *dset,
 	dset->varname[j][0] = 0;
 	if (book_auto_varnames(book)) {
 	    sprintf(dset->varname[j], "v%d", j);
-	} else if (rows[roff].cells[i] == NULL) {
+	} else if (xi->rows[roff].cells[i] == NULL) {
 	    sprintf(dset->varname[j], "v%d", j);
-	} else if (i >= rows[roff].end) {
+	} else if (i >= xi->rows[roff].end) {
 	    sprintf(dset->varname[j], "v%d", j);
 	} else {
-	    strncat(dset->varname[j], rows[roff].cells[i] + 1, 
+	    strncat(dset->varname[j], xi->rows[roff].cells[i] + 1, 
 		    VNAMELEN - 1);
 	    dbprintf("accessing rows[%d].cells[%d] at %p\n",
-		     roff, i, (void *) rows[roff].cells[i]);
+		     roff, i, (void *) xi->rows[roff].cells[i]);
 	}
 
 	/* remedial: replace space with underscore */
@@ -1332,17 +1341,17 @@ static int transcribe_data (wbook *book, DATASET *dset,
 
 	for (t=0; t<dset->n; t++) {
 	    ts = t + 1 + roff;
-	    if (rows[ts].cells == NULL || i >= rows[ts].end ||
-		rows[ts].cells[i] == NULL) {
+	    if (xi->rows[ts].cells == NULL || i >= xi->rows[ts].end ||
+		xi->rows[ts].cells[i] == NULL) {
 		continue;
 	    }
 
 	    dbprintf("accessing rows[%d].cells[%d] at %p\n", ts, i,
-		     (void *) rows[ts].cells[i]);
+		     (void *) xi->rows[ts].cells[i]);
 	    dbprintf("setting Z[%d][%d] = rows[%d].cells[%d] "
-		     "= '%s'\n", j, t, i, ts, rows[ts].cells[i]);
+		     "= '%s'\n", j, t, i, ts, xi->rows[ts].cells[i]);
 
-	    dset->Z[j][t] = atof(rows[ts].cells[i]);
+	    dset->Z[j][t] = atof(xi->rows[ts].cells[i]);
 	    if (dset->Z[j][t] == -999 || dset->Z[j][t] == -9999) {
 		dset->Z[j][t] = NADBL;
 	    }
@@ -1354,53 +1363,47 @@ static int transcribe_data (wbook *book, DATASET *dset,
     return err;
 }
 
-static int 
-get_sheet_dimensions (wbook *book, int *totcols, int *datacols, 
-		      char **blank_col, PRN *prn)
+static int get_sheet_dimensions (wbook *book, xls_info *xi, PRN *prn)
 {
     char *blanks = NULL;
     int i, j;
 
-    *totcols = 0;
-    *datacols = 0;
-    *blank_col = NULL;
-
     /* trim any trailing blank rows */
-    for (i=nrows-1; i>=0; i--) {
-	if (rows[i].cells == NULL) {
-	    nrows--;
+    for (i=xi->nrows-1; i>=0; i--) {
+	if (xi->rows[i].cells == NULL) {
+	    xi->nrows -= 1;
 	} else {
 	    break;
 	}
     }
 	
-    for (i=0; i<nrows; i++) {
-	if (rows[i].cells != NULL) {
-	    if (rows[i].last + 1 > *totcols) {
-		*totcols = rows[i].last + 1;
+    for (i=0; i<xi->nrows; i++) {
+	if (xi->rows[i].cells != NULL) {
+	    if (xi->rows[i].last + 1 > xi->totcols) {
+		xi->totcols = xi->rows[i].last + 1;
 	    }
 	}
     }
 
-    if (*totcols <= 0 || nrows < 1) {
+    if (xi->totcols <= 0 || xi->nrows < 1) {
 	pputs(prn, _("No data found.\n"));
 	pputs(prn, _(adjust_rc));
 	return 1;
     }
 
-    blanks = malloc(*totcols);
+    blanks = malloc(xi->totcols);
     if (blanks == NULL) {
 	return E_ALLOC;
     }
 
-    memset(blanks, 1, *totcols);
+    memset(blanks, 1, xi->totcols);
 
-    for (i=0; i<nrows; i++) {
-	if (rows[i].cells == NULL) {
+    for (i=0; i<xi->nrows; i++) {
+	if (xi->rows[i].cells == NULL) {
 	    continue;
 	}
-	for (j=0; j<=rows[i].last; j++) {
-	    if (rows[i].cells[j] != NULL) {
+	for (j=0; j<=xi->rows[i].last; j++) {
+	    if (xi->rows[i].cells[j] != NULL) {
 		if (blanks[j]) {
 		    blanks[j] = 0;
 		}
@@ -1408,31 +1411,31 @@ get_sheet_dimensions (wbook *book, int *totcols, int *datacols,
 	}
     }
 
-    for (i=0; i<*totcols; i++) {
+    for (i=0; i<xi->totcols; i++) {
 	if (!blanks[i]) {
-	    *datacols += 1;
+	    xi->datacols += 1;
 	}
     }
 
     if (book_numeric_dates(book)) {
-	*datacols -= 1;
+	xi->datacols -= 1;
     }
 
-    printf("rows=%d, total cols=%d, data cols=%d\n", nrows, 
-	   *totcols, *datacols);
+    printf("rows=%d, total cols=%d, data cols=%d\n", xi->nrows, 
+	   xi->totcols, xi->datacols);
 
-    if (*datacols < 1) {
+    if (xi->datacols < 1) {
 	pputs(prn, _("No data found.\n"));
 	pputs(prn, _(adjust_rc));
 	return 1;
     }
 
-    *blank_col = blanks;
+    xi->blank_col = blanks;
 
     return 0;
 }
 
-static int col0_is_numeric (int nrows, int row_offset, int col_offset)
+static int col0_is_numeric (xls_info *xi, int row_offset, int col_offset)
 {
     int t, tstart = 1 + row_offset;
     int nx = 0;
@@ -1441,8 +1444,8 @@ static int col0_is_numeric (int nrows, int row_offset, int col_offset)
     fprintf(stderr, "testing for all numerical values in col %d\n", 
 	    col_offset);
 
-    for (t=tstart; t<nrows; t++) {
-	test = rows[t].cells[col_offset];
+    for (t=tstart; t<xi->nrows; t++) {
+	test = xi->rows[t].cells[col_offset];
 	if (!numeric_string(test)) {
 	    fprintf(stderr, " no: non-numeric cell at row %d\n", t + 1);
 	    return 0;
@@ -1477,14 +1480,39 @@ static void book_time_series_setup (wbook *book, DATASET *newinfo, int pd)
     book_unset_obs_labels(book);
 }
 
-#if 0 /* not yet */
-static const char *get_label (int i, int j, void *p)
-{
-    struct sheetrow *rows = p;
+/* Make a contiguous array of observation labels for the
+   purpose of checking for dated observations. All we need
+   here is a "shell"; the actual strings are already
+   allocated.
+*/
 
-    return rows[i].cells != NULL ? rows[i].cells[j] : NULL;
+static char **labels_array (xls_info *xi, int row_offset, int j,
+			    DATASET *newset)
+{
+    char *s, **labels = NULL;
+    int i, t, ok = 1;
+
+    for (t=0; t<newset->n; t++) {
+	i = t + row_offset;
+	s = xi->rows[i].cells != NULL ? xi->rows[i].cells[j] : NULL;
+	if (s == NULL || *s == '\0') {
+	    ok = 0;
+	    break;
+	}
+    }
+
+    if (ok) {
+	labels = malloc(newset->n * sizeof *labels);
+	if (labels != NULL) {
+	    for (t=0; t<newset->n; t++) {
+		i = t + row_offset;
+		labels[t] = xi->rows[i].cells[j];
+	    }
+	}
+    }
+
+    return labels;
 }
-#endif
 
 int xls_get_data (const char *fname, int *list, char *sheetname,
 		  DATASET *dset, gretlopt opt, PRN *prn)
@@ -1495,9 +1523,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     xls_info xlsi;
     xls_info *xi = &xlsi;
     DATASET *newset;
-    int datacols, totcols;
     struct string_err strerr;
-    char *blank_col = NULL;
     int ts_markers = 0;
     char **ts_S = NULL;
     int r0, c0;
@@ -1516,9 +1542,6 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     }
 
     gretl_push_c_numeric_locale();
-
-    rows = NULL;
-    nrows = 0;
 
     wbook_init(book, list, sheetname);
     xls_info_init(xi);
@@ -1573,22 +1596,22 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     }
 
     /* get sizes and locate any blank columns */
-    err = get_sheet_dimensions(book, &totcols, &datacols, &blank_col, prn);
+    err = get_sheet_dimensions(book, xi, prn);
 
     if (err) goto getout;
 
     /* check feasibility of offsets */
-    if (book->row_offset >= nrows) {
+    if (book->row_offset >= xi->nrows) {
 	pputs(prn, _("Starting row is out of bounds.\n"));
 	err = 1;
-    } else if (book->col_offset >= totcols) {
+    } else if (book->col_offset >= xi->totcols) {
 	pputs(prn, _("Starting column is out of bounds.\n"));
 	err = 1;
     }
 
     if (err) goto getout;
 
-    if (first_col_strings(book)) {
+    if (first_col_strings(book, xi)) {
 	puts("found label strings in first imported column");
     } else if (book_numeric_dates(book)) {
 	puts("found calendar dates in first imported column");
@@ -1597,7 +1620,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     }
 
     /* any bad or missing variable names? */
-    err = check_all_varnames(book, totcols, blank_col, prn);
+    err = check_all_varnames(book, xi, prn);
 
     if (err == VARNAMES_NULL || err == VARNAMES_NOTSTR) {
 	pputs(prn, _("One or more variable names are missing.\n"));
@@ -1612,7 +1635,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     if (err) goto getout; 
 
     /* any bad data? */
-    err = check_data_block(book, totcols, blank_col, &strerr);
+    err = check_data_block(book, xi, &strerr);
 
     if (err == 1) {
 	pprintf(prn, _("Expected numeric data, found string:\n"
@@ -1628,25 +1651,31 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 
     r0 = book->row_offset;
     c0 = book->col_offset;
-    newset->n = nrows - 1 - book->row_offset;
+    newset->n = xi->nrows - 1 - book->row_offset;
 
     if (book_numeric_dates(book) || 
-	(!book_auto_varnames(book) && import_obs_label(rows[r0].cells[c0]))) {
-	pd = importer_dates_check(book->row_offset + 1, book->col_offset, 
-				  &book->flags, NULL, newset, prn, &err);
+	(!book_auto_varnames(book) && import_obs_label(xi->rows[r0].cells[c0]))) {
+	char **labels = labels_array(xi, book->row_offset + 1, book->col_offset,
+				     newset);
+
+	if (labels != NULL) {
+	    pd = importer_dates_check(labels, &book->flags, newset, prn, &err);
+	    free(labels);
+	}
+
 	if (pd > 0) {
 	    /* got time-series info from dates/labels */
 	    book_time_series_setup(book, newset, pd);
 	    ts_markers = newset->markers;
 	    ts_S = newset->S;
-	} else if (!book_numeric_dates(book) && alpha_cell(rows[r0].cells[c0]) && 
-	    col0_is_numeric(nrows, r0, c0)) {
+	} else if (!book_numeric_dates(book) && alpha_cell(xi->rows[r0].cells[c0]) && 
+	    col0_is_numeric(xi, r0, c0)) {
 	    book_unset_obs_labels(book);
 	}
     }
 
     /* dimensions of the dataset */
-    newset->v = n_vars_from_col(book, totcols, blank_col);
+    newset->v = n_vars_from_col(book, xi->totcols, xi->blank_col);
     fprintf(stderr, "newset->v = %d, newset->n = %d\n",
 	    newset->v, newset->n);
 
@@ -1664,7 +1693,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     } 
 
     /* OK: actually populate the dataset */
-    err = transcribe_data(book, newset, totcols, blank_col, prn);
+    err = transcribe_data(book, xi, newset, prn);
     if (err) {
 	goto getout;
     }
@@ -1679,7 +1708,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	    i = book->col_offset;
 	    for (t=0; t<newset->n; t++) {
 		int ts = t + 1 + book->row_offset;
-		char *src = rows[ts].cells[i];
+		char *src = xi->rows[ts].cells[i];
 
 		if (src != NULL) {
 		    strncat(newset->S[t], src + 1, OBSLEN - 1);
@@ -1704,7 +1733,6 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 
  getout:
     
-    free(blank_col);
     free_xls_info(xi);
     wbook_free(book);
 
