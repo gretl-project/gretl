@@ -167,4 +167,6 @@ int gretl_string_ends_with (const char *s, const char *test);
 
 void get_column_widths (const char **strs, int *widths, int n);
 
+char *gretl_utf8_strncat (char *dest, const char *src, size_t n);
+
 #endif /* STRUTILS_H */

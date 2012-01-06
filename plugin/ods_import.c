@@ -506,7 +506,7 @@ static int real_read_cell (xmlNodePtr cur,
 	}
 
 	if (!err) {
-	    strncat(sheet->dset->S[t], val, OBSLEN - 1);
+	    gretl_utf8_strncat(sheet->dset->S[t], val, OBSLEN - 1);
 	}
 
 	free(val);

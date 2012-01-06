@@ -651,6 +651,9 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 		    break;
 		}
 		dbprintf("Working on sst[%d], remlen = %d\n", k, remlen);
+		if (xi->sst[k] != NULL) {
+		    g_free(xi->sst[k]);
+		}
 		xi->sst[k] = copy_unicode_string(xi, ptr, remlen, &skip, &slop);
 		ptr += skip;
 	    }
@@ -1710,7 +1713,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 		char *src = xls_cell(xi, ts, i);
 
 		if (src != NULL) {
-		    strncat(newset->S[t], src + 1, OBSLEN - 1);
+		    gretl_utf8_strncat(newset->S[t], src + 1, OBSLEN - 1);
 		}
 	    }
 	}

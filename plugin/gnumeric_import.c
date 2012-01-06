@@ -305,7 +305,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 		if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
 		    if (i == 0) {
 			/* first column: write content to labels */
-			strncat(sheet->label[t], tmp, OBSLEN - 1);
+			gretl_utf8_strncat(sheet->label[t], tmp, OBSLEN - 1);
 		    }
 		}
 

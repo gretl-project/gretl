@@ -331,7 +331,7 @@ static void
 xlsx_real_set_obs_string (xlsx_info *xinfo, int t, const char *s)
 {
     *xinfo->dset->S[t] = '\0';
-    strncat(xinfo->dset->S[t], s, OBSLEN - 1);
+    gretl_utf8_strncat(xinfo->dset->S[t], s, OBSLEN - 1);
 }
 
 static int xlsx_set_obs_string (xlsx_info *xinfo, int t, const char *s)

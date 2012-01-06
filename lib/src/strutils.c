@@ -2170,3 +2170,33 @@ void get_column_widths (const char **strs, int *widths, int n)
 	}
     }
 }
+
+/**
+ * gretl_utf8_strncat:
+ * @dest: destination string.
+ * @src: source string.
+ * @n: maximum number of bytes to append.
+ *
+ * Works just like strncat(), except that it ensures that we
+ * don't end up with an incomplete UTF-8 character preceding
+ * the terminating NUL byte.
+ */
+
+char *gretl_utf8_strncat (char *dest, const char *src, size_t n)
+{
+    const char *p = src;
+    size_t b, b0 = 0;
+
+    while (p && *p) {
+	p = g_utf8_next_char(p);
+	if (p) {
+	    b = p - src;
+	    if (b > n) {
+		break;
+	    }
+	    b0 = b;
+	}
+    }
+
+    return strncat(dest, src, b0);
+}
