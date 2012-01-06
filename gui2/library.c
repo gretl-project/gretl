@@ -7543,8 +7543,13 @@ static gretlopt store_action_to_opt (const char *fname, int action,
 	}
     }    
 
-    if (action == SAVE_DATA_AS && session_file_is_open()) {
-	opt |= OPT_X; /* "exporting" to gdt (FIXME?) */
+    if (action == SAVE_DATA_AS) {
+	if (session_file_is_open()) {
+	    opt |= OPT_X; /* "exporting" to gdt (FIXME?) */
+	} else if (data_status & IMPORT_DATA) {
+	    /* saving data that were imported */
+	    *exporting = 0;
+	}
     }
 
     return opt;
