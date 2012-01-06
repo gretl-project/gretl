@@ -7,6 +7,7 @@ version 1.9.8, in progress
 - "labels" command: fix the --to-file option
 - Fix bug in serialization of matrices as XML (which broke, for example,
   saving of VARs in gretl session files)
+- Various small fixes for spreadsheet data importers
 
 2011-12-22 version 1.9.7
 - Add two nonparametric estimators: William Cleveland's loess and the
