@@ -654,7 +654,7 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 		gchar *tr = recode_stata_string(label);
 
 		if (tr != NULL) {
-		    strncat(VARLABEL(dset, i+1), tr, MAXLABEL - 1);
+		    gretl_utf8_strncat(VARLABEL(dset, i+1), tr, MAXLABEL - 1);
 		    g_free(tr);
 		}
 	    } 

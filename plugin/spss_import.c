@@ -355,7 +355,7 @@ static int recode_sav_string (char *targ, const char *src,
     *targ = '\0';
 
     if (g_utf8_validate(src, -1, NULL)) {
-	strncat(targ, src, maxlen);
+	gretl_utf8_strncat(targ, src, maxlen);
     } else if (encoding >= 500 && encoding <= 9999) {
 	/* try Windows codepage? */
 	char cpage[8];
@@ -366,7 +366,7 @@ static int recode_sav_string (char *targ, const char *src,
 	conv = g_convert(src, -1, "UTF-8", cpage,
 			 NULL, &wrote, NULL);
 	if (conv != NULL) {
-	    strncat(targ, conv, maxlen);
+	    gretl_utf8_strncat(targ, conv, maxlen);
 	    g_free(conv);
 	} else {
 	    err = E_DATA;
