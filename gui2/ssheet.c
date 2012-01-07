@@ -1796,7 +1796,6 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd c)
 	    gtk_list_store_set(store, &iter, 1, "", -1);
 	} else {
 	    char numstr[32];
-	    int colnum = 0;
 	    int vi;
 
 	    for (i=1; i<=sheet->varlist[0]; i++) {
@@ -1806,7 +1805,7 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd c)
 		} else {
 		    sprintf(numstr, "%.*g", DBL_DIG, dataset->Z[vi][t]);
 		}
-		gtk_list_store_set(store, &iter, ++colnum, numstr, -1);
+		gtk_list_store_set(store, &iter, i, numstr, -1);
 	    }
 	}
 	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
@@ -2685,19 +2684,23 @@ static void size_scalars_window (Spreadsheet *sheet)
     gtk_window_resize(GTK_WINDOW(sheet->win), w, h);    
 }
 
-static void size_data_window (Spreadsheet *sheet)
+static void size_data_window (Spreadsheet *sheet, int hscroll)
 {
-    int ocw = get_obs_col_width();
-    int dcw = get_data_col_width();
-    int extra = 40;
-    int nc, w, h = 400;
+    int w, h = 400;
 
-    nc = (sheet->varlist[0] > 4)? 4 : sheet->varlist[0];
-    if (nc < 2) {
-	extra += 40;
+    if (hscroll) {
+	int nc = (sheet->varlist[0] > 4)? 4 : sheet->varlist[0];
+	int ocw = get_obs_col_width();
+	int dcw = get_data_col_width();
+	int extra = 40;
+
+	if (nc < 2) {
+	    extra += 40;
+	}
+	w = ocw + nc * dcw + extra;
+    } else {
+	w = -1;
     }
-
-    w = ocw + nc * dcw + extra;
 
     gtk_window_set_default_size(GTK_WINDOW(sheet->win), w, h);
 }
@@ -2841,6 +2844,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 {
     Spreadsheet *sheet = *psheet;
     GtkWidget *tmp, *scroller, *main_vbox;
+    int hscroll = 1;
     int err = 0;
 
     sheet->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -2864,8 +2868,13 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	size_matrix_window(sheet);
     } else if (c == SHEET_EDIT_SCALARS) {
 	size_scalars_window(sheet);
+	hscroll = 0;
     } else {
-	size_data_window(sheet);
+	if (sheet->varlist != NULL && sheet->varlist[0] < 3) {
+	    /* make columns full "natural" width */
+	    hscroll = 0;
+	}
+	size_data_window(sheet, hscroll);
     }
 
     if (block) {
@@ -2891,9 +2900,8 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
-				   c == SHEET_EDIT_SCALARS ?
-				   GTK_POLICY_NEVER :
-				   GTK_POLICY_AUTOMATIC, 
+				   hscroll ? GTK_POLICY_AUTOMATIC :
+				   GTK_POLICY_NEVER,
 				   GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scroller),
 					GTK_SHADOW_IN);    
