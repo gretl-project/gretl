@@ -1555,23 +1555,33 @@ static char *bufprintnum (char *buf, double x, int signif,
  */
 
 static int oprintlen = 8;
+static int non_ascii_obs = 0;
 
 void obs_marker_init (const DATASET *dset)
 {
-    int t, datestrs = 0;
+    int t, len, datestrs = 0;
+
+    non_ascii_obs = 0;
 
     if (dset->markers) {
 	for (t=0; t<dset->n; t++) {
-	    if (strlen(dset->S[t]) == 10 && 
+	    len = strlen(dset->S[t]);
+	    if (len == 10 && 
 		isdigit(dset->S[t][0]) &&
 		strchr(dset->S[t], '/')) {
 		datestrs = 1;
 		break;
 	    }
+	    if (g_utf8_strlen(dset->S[t], -1) < len) {
+		non_ascii_obs = 1;
+		break;
+	    }
 	}
     } 
 
-    if (datestrs) {
+    if (non_ascii_obs) {
+	oprintlen = 8;
+    } else if (datestrs) {
 	oprintlen = 10;
     } else {
 	oprintlen = 8;
@@ -1591,7 +1601,10 @@ void print_obs_marker (int t, const DATASET *dset, PRN *prn)
 {
     char tmp[OBSLEN] = {0};
 
-    if (dset->markers) { 
+    if (non_ascii_obs) {
+	ntodate(tmp, t, dset);
+	pprintf(prn, "%8s ", tmp);
+    } else if (dset->markers) { 
 	strncat(tmp, dset->S[t], oprintlen);
 	pprintf(prn, "%*s ", oprintlen, tmp); 
     } else {
@@ -2392,7 +2405,6 @@ int text_print_fit_resid (const FITRESID *fr, const DATASET *dset,
     int err = 0;
 
     fit_resid_head(fr, dset, prn); 
-
     obs_marker_init(dset);
 
     for (t=fr->t1; t<=fr->t2; t++) {
