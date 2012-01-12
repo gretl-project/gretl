@@ -8,6 +8,8 @@ version 1.9.8, in progress
 - Fix bug in serialization of matrices as XML (which broke, for example,
   saving of VARs in gretl session files)
 - Various small fixes for spreadsheet data importers
+- Compaction of daily to weekly data: enable this even if the daily data
+  are not dated
 
 2011-12-22 version 1.9.7
 - Add two nonparametric estimators: William Cleveland's loess and the
