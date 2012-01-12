@@ -20,12 +20,12 @@
 #include "libgretl.h"
 #include "version.h"
 #include "gretl_matrix.h"
+#include "libset.h"
 #include "system.h"
 #include "tsls.h"
 #include "sysml.h"
 
 #define SDEBUG 0
-#define SYS_USE_SVD 0
 
 #define sys_ols_ok(s) (s->method == SYS_METHOD_SUR || \
                        s->method == SYS_METHOD_OLS || \
@@ -307,7 +307,7 @@ calculate_sys_coeffs (equation_system *sys,
 		      gretl_matrix *X, gretl_matrix *y, 
 		      int mk, int nr, int do_iteration)
 {
-    int do_bdiff = ((sys->method == SYS_METHOD_3SLS) && do_iteration);
+    int do_bdiff = (sys->method == SYS_METHOD_3SLS && do_iteration);
     double bij, oldb, bnum = 0.0, bden = 0.0;
     gretl_matrix *vcv = NULL;
     gretl_matrix *b = NULL;
@@ -319,6 +319,11 @@ calculate_sys_coeffs (equation_system *sys,
 	return E_ALLOC;
     }
 
+#if SDEBUG
+    gretl_matrix_print(X, "sys X");
+    gretl_matrix_print(y, "sys y");
+#endif    
+
     err = gretl_LU_solve(X, y);
     if (err) {
 	return err;
@@ -328,12 +333,11 @@ calculate_sys_coeffs (equation_system *sys,
     gretl_matrix_print(y, "in calc_coeffs, betahat");
 #endif
 
-#if SYS_USE_SVD
-    /* memory-intensive for big matrices */
-    err = gretl_SVD_invert_matrix(vcv);
-#else    
-    err = gretl_invert_general_matrix(vcv);
-#endif
+    if (libset_get_bool(USE_SVD)) {
+	err = gretl_SVD_invert_matrix(vcv);
+    } else {
+	err = gretl_invert_general_matrix(vcv);
+    }
 
 #if SDEBUG
     fprintf(stderr, "calculate_sys_coeffs: invert, err=%d\n", err);
@@ -834,7 +838,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
     double llbak = -1.0e9;
     int single_equation = 0;
     int do_iteration = 0;
-    int rtsls = 0;
+    int rsingle = 0;
     int err = 0;
 
     sys->iters = 0;
@@ -850,11 +854,19 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	single_equation = 1;
     }
 
-    if (nr > 0 && method == SYS_METHOD_3SLS) {
-	/* doing 3SLS with restrictions: we want to obtain
-	   restricted TSLS estimates as a starting point */
-	rtsls = 1;
-    }
+    if (nr > 0) {
+	if (method == SYS_METHOD_3SLS) {
+	    /* doing 3SLS with restrictions: we want to obtain
+	       restricted TSLS estimates as a starting point 
+	    */
+	    rsingle = 1;
+	} else if (method == SYS_METHOD_SUR) {
+	    /* doing SUR with restrictions: we want to obtain
+	       restricted OLS estimates as a starting point 
+	    */
+	    rsingle = 1;
+	}	    
+    } 
 
     /* get uniform sample starting and ending points and check for
        missing data */
@@ -977,7 +989,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
     if (method == SYS_METHOD_WLS) {
 	gretl_matrix_zero(X);
 	err = gretl_invert_diagonal_matrix(sys->S);
-    } else if (single_equation || rtsls) {
+    } else if (single_equation || rsingle) {
 	gretl_matrix_zero(X);
     } else {
 	err = gretl_invert_symmetric_matrix(sys->S);    
@@ -989,7 +1001,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 
     if (err) goto cleanup;
 
-    /* the initial tests against NULL here allow for the possibility
+    /* the tests against NULL here allow for the possibility
        that we're iterating */
 
     if (Xi == NULL) {
@@ -1022,7 +1034,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	    double sij;
 
 	    if (i != j) {
-		if (single_equation || rtsls) {
+		if (single_equation || rsingle) {
 		    kcol += models[j]->ncoeff;
 		    continue;
 		}
@@ -1042,7 +1054,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 					    Xk, GRETL_MOD_NONE, 
 					    M, GRETL_MOD_NONE);
 
-	    if (rtsls || (single_equation && method != SYS_METHOD_WLS)) {
+	    if (rsingle || (single_equation && method != SYS_METHOD_WLS)) {
 		sij = 1.0;
 	    } else {
 		sij = gretl_matrix_get(sys->S, i, j);
@@ -1065,7 +1077,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	augment_X_with_restrictions(X, mk, sys);
     }
 
-    if (!do_iteration && !rtsls) {
+    if (!do_iteration && !rsingle) {
 	/* we're not coming back this way, so free some storage */
 	gretl_matrix_free(Xj);
 	Xj = NULL;
@@ -1087,7 +1099,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	    double yv = 0.0;
 	    int lmin = 0, lmax = sys->neqns;
 
-	    if (single_equation || rtsls) {
+	    if (single_equation || rsingle) {
 		/* no cross terms wanted */
 		lmin = i;
 		lmax = i + 1;
@@ -1110,7 +1122,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 		    xx += gretl_matrix_get(Xi, t, j) * yl[t + sys->t1];
 		}
 
-		if (rtsls || (single_equation && method != SYS_METHOD_WLS)) {
+		if (rsingle || (single_equation && method != SYS_METHOD_WLS)) {
 		    sil = 1.0;
 		} else {
 		    sil = gretl_matrix_get(sys->S, i, l);
@@ -1127,11 +1139,6 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	augment_y_with_restrictions(y, mk, nr, sys);
     }
 
-#if SDEBUG
-    gretl_matrix_print(X, "sys X");
-    gretl_matrix_print(y, "sys y");
-#endif    
-
     /* The estimates calculated below will be SUR, 3SLS or LIML,
        depending on how the data matrices above were constructed --
        unless, that is, we're just doing restricted OLS, WLS or TSLS
@@ -1143,8 +1150,8 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	goto cleanup;
     }
 
-    if (rtsls) {
-	rtsls = 0;
+    if (rsingle) {
+	rsingle = 0;
 	goto iteration_start;
     }
 
