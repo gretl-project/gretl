@@ -1328,7 +1328,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
     int newvars = sheet->added_vars;
     int newobs = sheet->datarows - sheet->orig_nobs;
     int missobs = 0;
-    int i, colnum, s, t;
+    int i, s, t;
 
 #if SSDEBUG
     fprintf(stderr, "update_dataset_from_sheet: oldv=%d, newvars=%d, newobs=%d\n",
@@ -1337,7 +1337,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 
     model = gtk_tree_view_get_model(view);
 
-    /* first extend series length, if needed */
+    /* first extend the series length, if needed */
 
     if (newobs > 0) {
 	if (dataset_add_observations(newobs, dataset, OPT_A) ||
@@ -1366,8 +1366,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 		nomem();
 		return;
 	    }
-	    colnum = v0 + 1 + i;
-	    column = gtk_tree_view_get_column(view, colnum);
+	    column = gtk_tree_view_get_column(view, v0 + 1 + i);
 	    newname = gtk_tree_view_column_get_title(column);
 	    strcpy(dataset->varname[vi], newname); 
 #if SSDEBUG
@@ -1379,7 +1378,6 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 
     /* copy data values from spreadsheet */
 
-    colnum = 1;
     for (i=1; i<=sheet->varlist[0]; i++) {
 	int vi = sheet->varlist[i];
 	gchar *numstr;
@@ -1388,11 +1386,11 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 
 #if SSDEBUG
 	fprintf(stderr, " updating data for var %d (%s) from column %d\n",
-		vi, dataset->varname[vi], colnum);
+		vi, dataset->varname[vi], i);
 #endif
 	t = dataset->t1;
 	for (s=0; s<sheet->datarows; s++) {
-	    gtk_tree_model_get(model, &iter, colnum, &numstr, -1);
+	    gtk_tree_model_get(model, &iter, i, &numstr, -1);
 	    if (*numstr != '\0') {
 		dataset->Z[vi][t++] = atof(numstr); 
 	    } else {
@@ -1402,7 +1400,6 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 	    g_free(numstr);
 	    gtk_tree_model_iter_next(model, &iter);
 	}
-	colnum++;
     }
 
     /* copy observation markers, if relevant */
@@ -1428,6 +1425,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 
     sheet_set_modified(sheet, FALSE);
     sheet->added_vars -= newvars; /* record that these are handled */
+    sheet->orig_nobs += newobs;   /* and these too */
 }
 
 static void matrix_new_name (GtkWidget *w, dialog_t *dlg)
@@ -2532,11 +2530,11 @@ static Spreadsheet *spreadsheet_new (SheetCmd c, int varnum)
 	return sheet;
     }
 
-    if (dataset->t1 != 0 || dataset->t2 < dataset->n - 1) {
+    sheet->orig_nobs = sample_size(dataset);
+
+    if (sheet->orig_nobs < dataset->n) {
 	sheet->flags |= SHEET_SUBSAMPLED;
     }
-
-    sheet->orig_nobs = dataset->t2 - dataset->t1 + 1;
 
     if (sheet->cmd == SHEET_NEW_DATASET) {
 	sheet->varlist = gretl_list_new(1);

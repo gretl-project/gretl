@@ -3017,6 +3017,19 @@ static void set_compact_info_from_default (int method)
     }
 }
 
+static const char *method_string (CompactMethod method)
+{
+    if (method == COMPACT_SUM) {
+	return "sum";
+    } else if (method == COMPACT_SOP) {
+	return "first";
+    } else if (method == COMPACT_EOP) {
+	return "last";
+    } else {
+	return NULL;
+    }
+}
+
 void do_compact_data_set (void)
 {
     CompactMethod method = COMPACT_AVG;
@@ -3045,6 +3058,15 @@ void do_compact_data_set (void)
     if (err) {
 	gui_errmsg(err);
     } else {
+	const char *mstr = method_string(method);
+
+	if (mstr != NULL) {
+	    lib_command_sprintf("dataset compact %d %s", newpd, mstr);
+	} else {
+	    lib_command_sprintf("dataset compact %d", newpd);
+	}
+	record_command_verbatim();
+
 	mark_dataset_as_modified();
 	set_compact_info_from_default(method);
     }
