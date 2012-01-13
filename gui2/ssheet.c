@@ -90,6 +90,8 @@ typedef struct {
     SheetFlags flags;
     guint cid;
     guint point;
+    int *edits;
+    int *inserts;
 } Spreadsheet;
 
 #define editing_series(s) (s->cmd == SHEET_EDIT_VARLIST || \
@@ -97,6 +99,7 @@ typedef struct {
                            s->cmd == SHEET_NEW_DATASET)
 
 #define MATRIX_DIGITS DBL_DIG
+#define SERIES_DIGITS 8
 
 static void set_up_sheet_column (GtkTreeViewColumn *column, gint width, 
 				 gboolean expand);
@@ -184,6 +187,10 @@ static void sheet_set_modified (Spreadsheet *sheet, gboolean s)
 	sheet->flags |= SHEET_MODIFIED;
     } else {
 	sheet->flags &= ~SHEET_MODIFIED;
+	free(sheet->edits);
+	sheet->edits = NULL;
+	free(sheet->inserts);
+	sheet->inserts = NULL;
     }
 
     if (sheet->save != NULL) {
@@ -191,6 +198,90 @@ static void sheet_set_modified (Spreadsheet *sheet, gboolean s)
     } else if (sheet->apply != NULL) {
 	gtk_widget_set_sensitive(sheet->apply, s);
     }
+}
+
+/* record the fact that the value at @col and @row as been
+   changed */
+
+static int sheet_push_edit (Spreadsheet *sheet, int col, int row)
+{
+    int n_edits = (sheet->edits != NULL)? sheet->edits[0] : 0;
+    int *ed = realloc(sheet->edits, (n_edits + 3) * sizeof *ed);
+
+    if (ed == NULL) {
+	nomem();
+	return E_ALLOC;
+    } else {
+	sheet->edits = ed;
+	n_edits += 2;
+	sheet->edits[0] = n_edits;
+	sheet->edits[n_edits-1] = col;
+	sheet->edits[n_edits] = row;
+	sheet_set_modified(sheet, TRUE);
+	return 0;
+    }
+}
+
+/* record the fact that a new row (observation) has been inserted
+   at @row */
+
+static int sheet_push_insert (Spreadsheet *sheet, int row)
+{
+    int *test = gretl_list_append_term(&sheet->inserts, row);
+
+    if (test == NULL) {
+	nomem();
+	sheet->inserts = NULL;
+	return E_ALLOC;
+    } else {
+	sheet_set_modified(sheet, TRUE);
+	return 0;
+    }
+}
+
+static void sheet_revise_edit_rows (Spreadsheet *sheet, int new_row)
+{
+    int n_edits = (sheet->edits != NULL)? sheet->edits[0] : 0;
+
+    if (n_edits > 0) {
+	int i;
+
+	for (i=2; i<=n_edits; i+=2) {
+	    if (sheet->edits[i] >= new_row) {
+		sheet->edits[i] += 1;
+	    }
+	}
+    }
+}
+
+static int data_column_edited (Spreadsheet *sheet, int col)
+{
+    if (sheet->edits != NULL) {
+	int j;
+
+	for (j=1; j<sheet->edits[0]; j+=2) {
+	    if (sheet->edits[j] == col) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+static int data_cell_edited (Spreadsheet *sheet, int col, int row)
+{
+    if (sheet->edits != NULL) {
+	int j;
+
+	for (j=1; j<sheet->edits[0]; j+=2) {
+	    if (sheet->edits[j] == col && sheet->edits[j+1] == row) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
 }
 
 static char *single_underscores (char *targ, const char *src)
@@ -482,12 +573,11 @@ maybe_update_store (Spreadsheet *sheet, const gchar *new_text,
 
 	if (sheet->matrix != NULL) {
 	    update_sheet_matrix_element(sheet, new_text, path_string, colnum);
-	} 
-
-	if (editing_scalars(sheet)) {
+	    sheet_set_modified(sheet, TRUE);
+	} else if (editing_scalars(sheet)) {
 	    update_scalars_from_sheet(sheet);
 	} else {
-	    sheet_set_modified(sheet, TRUE);
+	    sheet_push_edit(sheet, colnum, atoi(path_string));
 	}
     }
 
@@ -780,14 +870,18 @@ real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
     } else {
 	for (i=1; i<=sheet->datacols; i++) {
 	    gtk_list_store_set(store, &iter, i, "", -1);
+	    sheet_push_edit(sheet, i, rownum);
 	}
     }	
 
-    if (sheet->point == SHEET_AT_POINT && !dataset->markers) {
-	for (i=rownum; i<sheet->datarows; i++) {
-	    get_obs_string(rowlabel, i, dataset);
-	    gtk_list_store_set(store, &iter, 0, rowlabel, -1);
-	    gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+    if (sheet->point == SHEET_AT_POINT) {
+	sheet_revise_edit_rows(sheet, rownum);
+	if (!dataset->markers) {
+	    for (i=rownum; i<sheet->datarows; i++) {
+		get_obs_string(rowlabel, i, dataset);
+		gtk_list_store_set(store, &iter, 0, rowlabel, -1);
+		gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+	    }
 	}
     } 
 
@@ -802,6 +896,7 @@ real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
 	gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &insiter, path);
 	gtk_list_store_set(store, &insiter, 1, "", -1);
 	gtk_tree_path_free(path);
+	sheet_push_insert(sheet, rownum);
     }
 
     if (pstr != NULL) {
@@ -1315,6 +1410,26 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
     } 
 }
 
+/* handle the case where observations have been inserted (not just
+   appended); we need to shift the original dataset observations
+   "down" by one place for each insertion
+*/
+
+static void process_inserts_for_series (Spreadsheet *sheet, int v)
+{
+    double *src;
+    int n = sheet->orig_nobs;
+    int i, t;
+
+    for (i=1; i<=sheet->inserts[0]; i++) {
+	/* the starting point for the values to be moved */
+	t = dataset->t1 + sheet->inserts[i];
+	src = dataset->Z[v] + t;
+	memmove(src + 1, src, (n - t) * sizeof *src);
+	n++;
+    }
+}
+
 /* pull modified values from the data-editing spreadsheet
    into the main dataset */
 
@@ -1328,7 +1443,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
     int newvars = sheet->added_vars;
     int newobs = sheet->datarows - sheet->orig_nobs;
     int missobs = 0;
-    int i, s, t;
+    int i, j, t;
 
 #if SSDEBUG
     fprintf(stderr, "update_dataset_from_sheet: oldv=%d, newvars=%d, newobs=%d\n",
@@ -1347,10 +1462,10 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 	}
     }
 
-    /* then add any new variables to data set */
+    /* then add any new series to the dataset */
 
     if (newvars > 0) {
-	int vi, v0 = sheet->varlist[0];
+	int vj, v0 = sheet->varlist[0];
 	const gchar *newname;
 
 	if (dataset_add_series(newvars, dataset)) {
@@ -1358,47 +1473,63 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 	    return;
 	}
 
-	for (i=0; i<newvars; i++) { 
+	for (j=0; j<newvars; j++) { 
 	    newname = NULL;
-	    vi = oldv + i;
-	    gretl_list_append_term(&sheet->varlist, vi);
+	    vj = oldv + j;
+	    gretl_list_append_term(&sheet->varlist, vj);
 	    if (sheet->varlist == NULL) {
 		nomem();
 		return;
 	    }
-	    column = gtk_tree_view_get_column(view, v0 + 1 + i);
+	    column = gtk_tree_view_get_column(view, v0 + 1 + j);
 	    newname = gtk_tree_view_column_get_title(column);
-	    strcpy(dataset->varname[vi], newname); 
+	    strcpy(dataset->varname[vj], newname); 
+	    for (i=0; i<dataset->n; i++) {
+		dataset->Z[vj][i] = NADBL;
+	    }
 #if SSDEBUG
 	    fprintf(stderr, " added var %d (%s) from column %d\n",
-		    vi, newname, colnum);
+		    vj, newname, v0 + 1 + j);
 #endif
 	}
     }
 
-    /* copy data values from spreadsheet */
+    /* now copy data values from spreadsheet, as needed */
 
-    for (i=1; i<=sheet->varlist[0]; i++) {
-	int vi = sheet->varlist[i];
-	gchar *numstr;
-
-	gtk_tree_model_get_iter_first(model, &iter);
+    for (j=1; j<=sheet->varlist[0]; j++) {
+	int vj = sheet->varlist[j];
+	int var_added = (vj >= oldv);
 
 #if SSDEBUG
-	fprintf(stderr, " updating data for var %d (%s) from column %d\n",
-		vi, dataset->varname[vi], i);
+	fprintf(stderr, " update data for var %d (%s) from column %d?\n",
+		vj, dataset->varname[vj], j);
 #endif
-	t = dataset->t1;
-	for (s=0; s<sheet->datarows; s++) {
-	    gtk_tree_model_get(model, &iter, i, &numstr, -1);
-	    if (*numstr != '\0') {
-		dataset->Z[vi][t++] = atof(numstr); 
-	    } else {
-		dataset->Z[vi][t++] = NADBL;
-		missobs = 1;
+
+	if (!var_added && sheet->inserts != NULL) {
+	    process_inserts_for_series(sheet, vj);
+	}
+
+	if (var_added || data_column_edited(sheet, j)) {
+	    gchar *numstr;
+
+#if SSDEBUG
+	    fprintf(stderr, " yes, %s\n", var_added ? "added" : "modified");
+#endif
+	    gtk_tree_model_get_iter_first(model, &iter);
+	    for (i=0; i<sheet->datarows; i++) {
+		if (var_added || data_cell_edited(sheet, j, i)) {
+		    t = dataset->t1 + i;
+		    gtk_tree_model_get(model, &iter, j, &numstr, -1);
+		    if (*numstr != '\0') {
+			dataset->Z[vj][t] = atof(numstr); 
+		    } else {
+			dataset->Z[vj][t] = NADBL;
+			missobs = 1;
+		    }
+		    g_free(numstr);
+		}
+		gtk_tree_model_iter_next(model, &iter);
 	    }
-	    g_free(numstr);
-	    gtk_tree_model_iter_next(model, &iter);
 	}
     }
 
@@ -1409,7 +1540,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 
 	gtk_tree_model_get_iter_first(model, &iter);
 	t = dataset->t1;
-	for (s=0; s<sheet->datarows; s++) {
+	for (i=0; i<sheet->datarows; i++) {
 	    gtk_tree_model_get(model, &iter, 0, &marker, -1);
 	    strcpy(dataset->S[t++], marker);
 	    g_free(marker);
@@ -1801,7 +1932,7 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd c)
 		if (na(dataset->Z[vi][t])) {
 		    *numstr = '\0';
 		} else {
-		    sprintf(numstr, "%.*g", DBL_DIG, dataset->Z[vi][t]);
+		    sprintf(numstr, "%.*g", SERIES_DIGITS, dataset->Z[vi][t]);
 		}
 		gtk_list_store_set(store, &iter, i, numstr, -1);
 	    }
@@ -2289,22 +2420,6 @@ static int build_sheet_view (Spreadsheet *sheet)
     gchar tmpstr[32];
     gint i, width, colnum;
 
-    if (sheet->varlist != NULL) {
-	sheet->datacols = 0;
-
-	for (i=sheet->varlist[0]; i>0; i--) {
-	    if (var_is_hidden(dataset, sheet->varlist[i])) {
-		gretl_list_delete_at_pos(sheet->varlist, i);
-	    } else {
-		sheet->datacols += 1;
-	    }
-	}  
-
-	if (sheet->varlist[0] < dataset->v - 1) {
-	    sheet->flags |= SHEET_SHORT_VARLIST;
-	}
-    }
-
     if (get_local_decpoint() == ',') {
 	sheet->flags |= SHEET_USE_COMMA;
     }
@@ -2384,6 +2499,7 @@ static int build_sheet_view (Spreadsheet *sheet)
 	set_treeview_column_number(column, 2);
 	g_object_set_data(G_OBJECT(column), "sheet", sheet);
     } else {
+	/* editing data series */
 	colnum = 0;
 	for (i=1; i<=sheet->varlist[0]; i++) {
 	    int vi = sheet->varlist[i];
@@ -2431,6 +2547,8 @@ static void free_spreadsheet (GtkWidget *widget, Spreadsheet **psheet)
     }
 
     free(sheet->varlist);
+    free(sheet->edits);
+    free(sheet->inserts);
 
     if (editing_series(sheet)) {
 	set_dataset_locked(FALSE);
@@ -2524,6 +2642,9 @@ static Spreadsheet *spreadsheet_new (SheetCmd c, int varnum)
     sheet->cmd = c;
     sheet->flags = 0;
 
+    sheet->edits = NULL;
+    sheet->inserts = NULL;
+
     sheet->mname[0] = '\0';
 
     if (c == SHEET_EDIT_MATRIX || c == SHEET_EDIT_SCALARS) {
@@ -2531,7 +2652,6 @@ static Spreadsheet *spreadsheet_new (SheetCmd c, int varnum)
     }
 
     sheet->orig_nobs = sample_size(dataset);
-
     if (sheet->orig_nobs < dataset->n) {
 	sheet->flags |= SHEET_SUBSAMPLED;
     }
@@ -2730,7 +2850,7 @@ button_entered (GtkWidget *w, GdkEventCrossing *e, Spreadsheet *sheet)
 
 static void adjust_add_menu_state (Spreadsheet *sheet)
 {
-    sheet->flags |= SHEET_ADD_OBS_OK | SHEET_INSERT_OBS_OK;
+    sheet->flags |= (SHEET_ADD_OBS_OK | SHEET_INSERT_OBS_OK);
 
     if (complex_subsampled() || dataset->t2 < dataset->n - 1) {
 	sheet->flags &= ~SHEET_ADD_OBS_OK;
@@ -2891,6 +3011,22 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	sheet_add_matrix_menu(sheet, main_vbox);
 	sheet_add_matrix_locator(sheet, main_vbox);
     } else if (c != SHEET_EDIT_SCALARS) {
+	if (sheet->varlist != NULL) {
+	    int i;
+
+	    sheet->datacols = 0;
+
+	    for (i=sheet->varlist[0]; i>0; i--) {
+		if (var_is_hidden(dataset, sheet->varlist[i])) {
+		    gretl_list_delete_at_pos(sheet->varlist, i);
+		} else {
+		    sheet->datacols += 1;
+		}
+	    } 
+	    if (sheet->varlist[0] < dataset->v - 1) {
+		sheet->flags |= SHEET_SHORT_VARLIST;
+	    }
+	}
 	sheet_add_toolbar(sheet, main_vbox);
     }
 
