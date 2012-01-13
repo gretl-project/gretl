@@ -317,11 +317,14 @@ struct gretl_option gretl_opts[] = {
     { OMIT,     OPT_I, "silent", 0 },
     { OMIT,     OPT_W, "test-only", 0 },
     { OPEN,     OPT_B, "progress-bar", 0 },
-    { OPEN,     OPT_C, "coded", 0 },
+    { OPEN,     OPT_N, "coded", 0 },
     { OPEN,     OPT_D, "drop-empty", 0 },
     { OPEN,     OPT_F, "cols", 2 },    
     { OPEN,     OPT_O, "odbc", 0 },
     { OPEN,     OPT_P, "preserve", 0 },
+#if 0 /* not yet */
+    { OPEN,     OPT_S, "sheet", 2 },
+#endif
     { OPEN,     OPT_W, "www", 0 },
     { OUTFILE,  OPT_A, "append", 0 },
     { OUTFILE,  OPT_C, "close", 0 },

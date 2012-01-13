@@ -86,7 +86,6 @@ struct csvdata_ {
 #define csv_set_got_semi(c)         (c->flags |= CSV_GOTSEMI)
 #define csv_set_got_delim(c)        (c->flags |= CSV_GOTDELIM)
 #define csv_set_autoname(c)         (c->flags |= CSV_AUTONAME)
-#define csv_set_force_nonnum(c)     (c->flags |= CSV_NONNUM)
 #define csv_set_data_reversed(c)    (c->flags |= CSV_REVERSED)
 #define csv_set_dotsub(c)           (c->flags |= CSV_DOTSUB)
 
@@ -136,7 +135,7 @@ static csvdata *csvdata_new (DATASET *dset, gretlopt opt)
 	return NULL;
     }
 
-    c->flags = (opt & OPT_C)? CSV_NONNUM : 0;
+    c->flags = (opt & OPT_N)? CSV_NONNUM : 0;
     c->delim = '\t';
     c->markerpd = -1;
     c->maxlen = 0;
@@ -1031,7 +1030,9 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
 
     /* labels are of different lengths? */
     if (len1 != strlen(lbl2)) {
+#if 0
 	pputs(prn, A_("   label strings can't be consistent dates\n"));
+#endif
 	return -1;
     }
 
@@ -1433,6 +1434,8 @@ static double csv_atof (csvdata *c, const char *s)
 	x = strtod(s, &test);
 	if (*test == '\0' && errno == 0) {
 	    return x;
+	} else {
+	    x = NON_NUMERIC;
 	}
     } else if (csv_do_dotsub(c) && strlen(s) <= 31) {
 	/* substitute dot for comma */
@@ -1442,9 +1445,11 @@ static double csv_atof (csvdata *c, const char *s)
 	charsub(tmp, ',', '.');
 
 	x = strtod(tmp, &test);
-	if (*test == '\0' || errno == 0) {
+	if (*test == '\0' && errno == 0) {
 	    return x;
-	} 
+	} else {
+	    x = NON_NUMERIC;
+	}
     }
 
     if (c->decpoint == '.' && strchr(s, ',') != NULL && strlen(s) <= 31) {
@@ -1958,8 +1963,8 @@ static void print_csv_parsing_header (const char *fname, PRN *prn)
  * import_csv:
  * @fname: name of CSV file.
  * @dset: dataset struct.
- * @opt: use OPT_C to force interpretation of data colums containing
- * strings as coded values and not errors; for use of OPT_T see
+ * @opt: use OPT_N to force interpretation of data colums containing
+ * strings as coded (non-numeric) values and not errors; for use of OPT_T see
  * the help for "append".
  * @prn: gretl printing struct (or NULL).
  * 

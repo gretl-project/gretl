@@ -872,6 +872,8 @@ int seasonally_adjust_series (const double *x, double *y,
 	}
     }
 
+    gretl_error_clear();
+
     adjust_series = get_plugin_function("adjust_series", &handle);
     
     if (adjust_series == NULL) {
