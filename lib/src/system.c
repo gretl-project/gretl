@@ -31,7 +31,7 @@
 
 #include <glib.h>
 
-#define SYSDEBUG 1
+#define SYSDEBUG 0
 
 enum {
     OP_PLUS,
