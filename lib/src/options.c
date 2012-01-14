@@ -388,6 +388,8 @@ struct gretl_option gretl_opts[] = {
     { SET,      OPT_T, "to-file", 2 },
     { SETINFO,  OPT_C, "continuous", 0 },
     { SETINFO,  OPT_D, "discrete", 0 },
+    { SETINFO,  OPT_I, "description", 2 },
+    { SETINFO,  OPT_G, "graph-name", 2 },
     { SETOBS,   OPT_C, "stacked-cross-section", 0 },
     { SETOBS,   OPT_P, "panel-vars", 0 },
     { SETOBS,   OPT_R, "restructure", 0 },
@@ -1358,7 +1360,9 @@ const char *print_flags (gretlopt oflags, int ci)
 	    if (gretl_opts[i].parminfo) {
 		parm = get_optval_string(ci, opt);
 		if (parm != NULL && *parm != '\0') {
-		    if (quote_option_parm(ci, opt, parm)) {
+		    if (strchr(parm, ' ')) {
+			pprintf(flagprn, "=\"%s\"", parm);
+		    } else if (quote_option_parm(ci, opt, parm)) {
 			pprintf(flagprn, "=\"%s\"", parm);
 		    } else {
 			pprintf(flagprn, "=%s", parm);

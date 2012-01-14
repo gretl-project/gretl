@@ -9773,10 +9773,18 @@
     <usage>
       <arguments>
         <argument>series</argument>
-        <argument flag="-d ">description</argument>
-        <argument flag="-n ">displayname</argument>
       </arguments>
       <options>
+	<option>
+	  <flag>--description</flag>
+	  <optparm>string</optparm>
+	  <effect>set description</effect>
+	</option>
+	<option>
+	  <flag>--graph-name</flag>
+	  <optparm>string</optparm>
+	  <effect>set graph name</effect>
+	</option>
 	<option>
 	  <flag>--discrete</flag>
 	  <effect>mark series as discrete</effect>
@@ -9787,7 +9795,8 @@
 	</option>
       </options>
       <examples>
-        <example>setinfo x1 -d "Description of x1" -n "Graph name"</example>
+        <example>setinfo x1 --description="Description of x1"</example>
+        <example>setinfo y --graph-name="Some string"</example>
 	<example>setinfo z --discrete</example>
       </examples>
     </usage>
@@ -9799,18 +9808,17 @@
       </para>
 
       <para>
-	If the <lit>-d</lit> flag is given followed by a string in double
-	quotes, that string is used to set the variable's descriptive
-	label. This label is shown in response to the <cmdref
-	  targ="labels"/> command, and is also shown in the main window of
-	the GUI program.
+	If the <opt>--description</opt> flag is given followed by a
+	string in double quotes, that string is used to set the
+	variable's descriptive label. This label is shown in response
+	to the <cmdref targ="labels"/> command, and is also shown in
+	the main window of the GUI program.
       </para>
 
       <para>
-	If the <lit>-n</lit> flag is given followed by a quoted string,
-	that string is used to set the variable's <quote>display
-	  name</quote>, which is then used in place of the variable's name
-	in graphs.
+	If the <opt>--graph-name</opt> flag is given followed by a
+	quoted string, that string will be used in place of the
+	variable's name in graphs.
       </para>
 
       <para>

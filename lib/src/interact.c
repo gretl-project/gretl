@@ -3808,7 +3808,7 @@ static int set_var_info (const char *line, gretlopt opt,
 			 DATASET *dset)
 {
     char *p, vname[VNAMELEN];
-    int v;
+    int v, err = 0;
 
     if (dset == NULL || dset->varinfo == NULL) {
 	return E_NODATA;
@@ -3849,19 +3849,41 @@ static int set_var_info (const char *line, gretlopt opt,
 	set_var_discrete(dset, v, 0);
     }
 
-    p = get_flag_field(line, 'd');
-    if (p != NULL) {
-	var_set_description(dset, v, p);
-	free(p);
+    if (opt & OPT_I) {
+	const char *s = get_optval_string(SETINFO, OPT_I);
+
+	if (s == NULL) {
+	    err = E_ARGS;
+	} else {
+	    var_set_description(dset, v, s);
+	}
+    } else if (strstr(line, " -d ")) {
+	/* backward compatibility */
+	p = get_flag_field(line, 'd');
+	if (p != NULL) {
+	    var_set_description(dset, v, p);
+	    free(p);
+	}
     }
 
-    p = get_flag_field(line, 'n');
-    if (p != NULL) {
-	var_set_display_name(dset, v, p);
-	free(p);
-    } 
+    if (opt & OPT_G) {
+	const char *s = get_optval_string(SETINFO, OPT_G);
 
-    return 0;
+	if (s == NULL) {
+	    err = E_ARGS;
+	} else {
+	    var_set_display_name(dset, v, s);
+	}
+    } else if (strstr(line, " -n ")) {
+	/* backward compatibility */
+	p = get_flag_field(line, 'n');
+	if (p != NULL) {
+	    var_set_display_name(dset, v, p);
+	    free(p);
+	}
+    }    
+
+    return err;
 }
 
 static void showlabels (const int *list, const DATASET *dset, PRN *prn)

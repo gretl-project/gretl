@@ -1936,6 +1936,7 @@ static int check_freq_opts (gretlopt opt, int *n_bins,
 			    double *fmin, double *fwid)
 {
     double x;
+    int err = 0;
 
     if (opt & OPT_N) {
 	/* number of bins given */
@@ -1943,13 +1944,17 @@ static int check_freq_opts (gretlopt opt, int *n_bins,
 	    /* can't give min, width spec */
 	    return E_BADOPT;
 	} else {
-	    x = get_optval_double(FREQ, OPT_N);
-	    if (na(x)) {
-		return E_ARGS;
-	    } else if (x < 2 || x > 10000) {
-		return E_INVARG;
-	    } else {
-		*n_bins = (int) x;
+	    int n = get_optval_int(FREQ, OPT_N, &err);
+
+	    if (!err) {
+		if (n < 2 || n > 10000) {
+		    err = E_INVARG;
+		} else {
+		    *n_bins = n;
+		}
+	    }
+	    if (err) {
+		return err;
 	    }
 	}
     }
