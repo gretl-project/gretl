@@ -1507,8 +1507,6 @@ int execute_set_line (const char *line, DATASET *dset,
 	    return set_matmask(line, dset, prn);
 	} else if (!strcmp(setobj, "shelldir")) {
 	    return set_shelldir(line);
-	} else if (!strcmp(setobj, "codevars")) {
-	    return set_codevars(line);
 	} else if (!strcmp(setobj, "workdir")) {
 	    return set_workdir(line);
 	} 

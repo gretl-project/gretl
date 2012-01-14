@@ -99,6 +99,9 @@ struct gretl_option gretl_opts[] = {
     { AR1,      OPT_H, "hilu", 0 },
     { AR1,      OPT_P, "pwe", 0 },
     { APPEND,   OPT_T, "time-series", 0 },
+    { APPEND,   OPT_R, "rowoffset", 2 },
+    { APPEND,   OPT_C, "coloffset", 2 },
+    { APPEND,   OPT_S, "sheet", 2 },
     { ARBOND,   OPT_A, "asymptotic", 0 },
     { ARBOND,   OPT_D, "time-dummies", 0 },
     { ARBOND,   OPT_H, "orthdev", 0 },
@@ -317,14 +320,13 @@ struct gretl_option gretl_opts[] = {
     { OMIT,     OPT_I, "silent", 0 },
     { OMIT,     OPT_W, "test-only", 0 },
     { OPEN,     OPT_B, "progress-bar", 0 },
-    { OPEN,     OPT_N, "coded", 0 },
     { OPEN,     OPT_D, "drop-empty", 0 },
     { OPEN,     OPT_F, "cols", 2 },    
     { OPEN,     OPT_O, "odbc", 0 },
     { OPEN,     OPT_P, "preserve", 0 },
-#if 0 /* not yet */
+    { OPEN,     OPT_R, "rowoffset", 2 },
+    { OPEN,     OPT_C, "coloffset", 2 },
     { OPEN,     OPT_S, "sheet", 2 },
-#endif
     { OPEN,     OPT_W, "www", 0 },
     { OUTFILE,  OPT_A, "append", 0 },
     { OUTFILE,  OPT_C, "close", 0 },
@@ -871,6 +873,41 @@ double get_optval_double (int ci, gretlopt opt)
     return ret;
 }
 
+/**
+ * get_optval_int:
+ * @ci: gretl command index.
+ * @opt: gretl option value.
+ * @err: location to receive error code.
+ *
+ * Returns: the integer ancillary value currently 
+ * associated with option @opt for command @ci, if any,
+ * otherwise 0 (with a non-zero value written to @err).
+ */
+
+int get_optval_int (int ci, gretlopt opt, int *err)
+{
+    optparm *op = matching_optparm(ci, opt);
+    int ret = 0;
+
+    if (op != NULL && op->val != NULL) {
+	if (integer_string(op->val)) {
+	    ret = atoi(op->val);
+	} else {
+	    double x = gretl_scalar_get_value(op->val);
+
+	    if (na(x)) {
+		*err = E_DATA;
+	    } else {
+		ret = (int) x;
+	    }
+	}
+    } else {
+	*err = E_DATA;
+    }
+
+    return ret;
+}
+
 /* called via GUI */
 
 /**
@@ -968,10 +1005,6 @@ gretlopt valid_long_opt (int ci, const char *lopt, OptStatus *status)
     return opt;
 }
 
-#define data_open_special(s) (!strcmp(s, "sheet") || \
-                              !strcmp(s, "coloffset") || \
-			      !strcmp(s, "rowoffset"))
-
 /* extract an option parameter value following '=' */
 
 static int handle_optval (char *s, int ci, gretlopt opt, int status)
@@ -1051,9 +1084,6 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 	    if (match > 0) {
 		/* recognized an acceptable option flag */
 		ret |= match;
-	    } else if ((ci == OPEN || ci == APPEND) && 
-		       data_open_special(longopt)) {
-		; /* no-op here: handled elsewhere (FIXME) */
 	    } else {
 		/* not a valid flag, or not applicable in context */
 		gretl_errmsg_sprintf(_("Invalid option '--%s'"), longopt);

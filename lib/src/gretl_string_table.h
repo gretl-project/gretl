@@ -65,10 +65,6 @@ void destroy_user_strings (void);
 
 int destroy_saved_strings_at_level (int d);
 
-int is_codevar (const char *s);
-
-int set_codevars (const char *s);
-
 char *gretl_getenv (const char *key, int *defined, int *err);
 
 char *retrieve_date_string (int t, const DATASET *dset, int *err);

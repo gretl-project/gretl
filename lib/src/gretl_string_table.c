@@ -39,8 +39,6 @@ struct _gretl_string_table {
     char *extra;      /* extra information */
 };
 
-static void clean_up_codevars (void);
-
 static col_table *col_table_new (int colnum)
 {
     col_table *ct = malloc(sizeof *ct);
@@ -674,8 +672,6 @@ void saved_strings_cleanup (void)
     n_saved_strings = 0;
 
     gretl_free_builtin_strings();
-
-    clean_up_codevars();
 }
 
 void destroy_user_strings (void)
@@ -689,8 +685,6 @@ void destroy_user_strings (void)
     free(saved_strings);
     saved_strings = NULL;
     n_saved_strings = 0;
-
-    clean_up_codevars();
 }
 
 /* called on exiting a user-defined function to clean
@@ -1140,63 +1134,6 @@ int substitute_named_strings (char *line, int *subst)
 	}
 	s++;
 	i++;
-    }
-
-    return err;
-}
-
-/* setting of names of imported variables that should be treated
-   as string codes */
-
-static char **codevars;
-static int n_codevars;
-
-static void clean_up_codevars (void)
-{
-    if (codevars != NULL && n_codevars > 0) {
-	free_strings_array(codevars, n_codevars);
-	codevars = NULL;
-	n_codevars = 0;
-    }
-}
-
-int is_codevar (const char *s)
-{
-    int i;
-
-    for (i=0; i<n_codevars; i++) {
-	if (!strcmp(s, codevars[i])) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-int set_codevars (const char *s)
-{
-    char chunk[32];
-    const char *p;
-    int err = 0;
-
-    p = strstr(s, "codevars");
-    if (p != NULL) {
-	s = p + 9;
-    }
-
-    *chunk = '\0';
-    sscanf(s, "%31s", chunk);
-
-    if (*chunk == '\0') {
-	err = E_DATA;
-    } else {
-	clean_up_codevars();
-	if (strcmp(chunk, "null")) {
-	    codevars = gretl_string_split(s, &n_codevars);
-	    if (codevars == NULL) {
-		err = E_ALLOC;
-	    } 
-	}
     }
 
     return err;

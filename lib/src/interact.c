@@ -1554,83 +1554,81 @@ static void parse_outfile_cmd (const char *s, CMD *cmd)
     }
 }
 
-static int read_dash_param (const char **ps, CMD *cmd)
+static int small_int (const char *s)
 {
-    const char *s = *ps;
-    char *test;
-    int i, parm = -1;
-    int ok = 0;
+    if (integer_string(s)) {
+	int k = atoi(s);
 
-    if (!strncmp(s, "--sheet=", 8)) {
-	s += 8;
-	if (*s == '"' || *s == '\'') {
-	    free(cmd->extra);
-	    cmd->extra = gretl_quoted_string_strdup(s, (const char **) &test);
-	    parm = 0;
-	} else {
-	    parm = strtol(s, &test, 10);
-	}
-	i = 1;
-    } else if (!strncmp(s, "--coloffset=", 12)) {
-	s += 12;
-	parm = strtol(s, &test, 10);
-	i = 2;
-    } else if (!strncmp(s, "--rowoffset=", 12)) {
-	s += 12;
-	parm = strtol(s, &test, 10);
-	i = 3;
-    } 
-
-    if (parm >= 0 && (*test == '\0' || *test == ' ') && 
-	!(cmd->list[0] == 3 && cmd->list[i] > 0)) { 
-	ok = 1;
-	*ps = test;
-	if (cmd->list[0] < 3) {
-	    free(cmd->list);
-	    cmd->list = gretl_list_new(3);
-	    if (cmd->list == NULL) {
-		cmd->err = E_ALLOC;
-	    }
-	}
-	if (!cmd->err) {
-	    cmd->list[i] = parm;
+	if (k >= 0 && k < 10) {
+	    return 1;
 	}
     }
 
-    return ok;
+    return 0;
 }
 
-static void parse_data_open_params (const char *s, CMD *cmd)
+static void handle_spreadsheet_params (const char *rem, CMD *cmd)
 {
-    int i, ok = 1;
+    int err = 0;
 
-    /* skip blanks */
-    s += strspn(s, " ");
-
-    if (*s == '"') {
-	s = strchr(s+1, '"');
-	if (s == NULL) {
-	    cmd->err = E_PARSE;
-	    return;
-	}
-	s++;
-    } else {
-	s += strcspn(s, " ");
+    if (cmd->opt & OPT_O) {
+	/* odbc: spreadsheet-specific options not acceptable */
+	err = incompatible_options(cmd->opt, OPT_O | OPT_C |
+				   OPT_R | OPT_S);
+    } else if (cmd->opt & OPT_W) {
+	/* web database: ditto */
+	err = incompatible_options(cmd->opt, OPT_W | OPT_C |
+				   OPT_R | OPT_S);
     }
 
-    s += strspn(s, " ");
+    if (!err) {
+	err = incompatible_options(cmd->opt, OPT_O | OPT_W);
+    }
 
-    for (i=0; *s && i<3 && ok; i++) {
-	ok = read_dash_param(&s, cmd);
-	if (cmd->err) {
-	    break;
-	} else if (!ok) {
-	    gretl_errmsg_sprintf(_("Parse error in '%s'"), s);
-	    cmd->err = E_PARSE;
-	} else {
-	    s += strspn(s, " ");
+    if (!err && (cmd->opt & (OPT_R | OPT_C | OPT_S))) {
+	int r0 = 0, c0 = 0;
+	const char *s = NULL;
+
+	if (cmd->opt & OPT_R) {
+	    /* --rowoffset */
+	    r0 = get_optval_int(cmd->ci, OPT_R, &err);
+	}
+
+	if (!err && (cmd->opt & OPT_C)) {
+	    /* --coloffset */
+	    c0 = get_optval_int(cmd->ci, OPT_C, &err);
+	}
+
+	if (!err && (cmd->opt & OPT_S)) {
+	    /* --sheet */
+	    s = get_optval_string(cmd->ci, OPT_S);
+	    if (s == NULL) {
+		err = E_DATA;
+	    } 
+	}
+
+	if (!err) {
+	    int slist[4] = {3, 0, c0, r0};
+
+	    free(cmd->list);
+	    cmd->list = gretl_list_copy(slist);
+	    if (cmd->list == NULL) {
+		err = E_ALLOC;
+	    } else {
+		if (small_int(s)) {
+		    cmd->list[1] = atoi(s);
+		} else if (s != NULL) {
+		    free(cmd->extra);
+		    cmd->extra = gretl_strdup(s);
+		    if (cmd->extra == NULL) {
+			err = E_ALLOC;
+		    }
+		}
+	    }
 	}
     }
+
+    cmd->err = err;
 }
 
 #define FIELDLEN 512
@@ -2551,11 +2549,9 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 	parse_rename_cmd(rem, cmd, dset);
     } else if (cmd->ci == OPEN || cmd->ci == APPEND) {
 	/* "open" and "append" may have spreadsheet parameters */
-	if (!(cmd->opt & OPT_O)) {
-	    parse_data_open_params(rem, cmd);
-	    if (cmd->err) {
-		return cmd->err;
-	    }
+	handle_spreadsheet_params(rem, cmd);
+	if (cmd->err) {
+	    return cmd->err;
 	}
     } 
 

@@ -39,9 +39,8 @@ enum {
     CSV_OBS1     = 1 << 5,
     CSV_TRAIL    = 1 << 6,
     CSV_AUTONAME = 1 << 7,
-    CSV_NONNUM   = 1 << 8,
-    CSV_REVERSED = 1 << 9,
-    CSV_DOTSUB   = 1 << 10
+    CSV_REVERSED = 1 << 8,
+    CSV_DOTSUB   = 1 << 9
 };
 
 typedef struct csvdata_ csvdata;
@@ -74,7 +73,6 @@ struct csvdata_ {
 #define csv_autoname(c)           (c->flags & CSV_AUTONAME)
 #define csv_skip_column(c)        (c->flags & (CSV_OBS1 | CSV_BLANK1))
 #define csv_have_data(c)          (c->flags & CSV_HAVEDATA)
-#define csv_force_nonnum(c)       (c->flags & CSV_NONNUM)
 #define csv_data_reversed(c)      (c->flags & CSV_REVERSED)
 #define csv_do_dotsub(c)          (c->flags & CSV_DOTSUB)
 
@@ -127,7 +125,7 @@ static void csvdata_free (csvdata *c)
     free(c);
 }
 
-static csvdata *csvdata_new (DATASET *dset, gretlopt opt)
+static csvdata *csvdata_new (DATASET *dset)
 {
     csvdata *c = malloc(sizeof *c);
 
@@ -135,7 +133,7 @@ static csvdata *csvdata_new (DATASET *dset, gretlopt opt)
 	return NULL;
     }
 
-    c->flags = (opt & OPT_N)? CSV_NONNUM : 0;
+    c->flags = 0;
     c->delim = '\t';
     c->markerpd = -1;
     c->maxlen = 0;
@@ -1335,14 +1333,10 @@ static int non_numeric_check (csvdata *c, PRN *prn)
     int err = 0;
 
     for (i=1; i<c->dset->v; i++) {
-	if (is_codevar(c->dset->varname[i])) {
-	    nn++;
-	} else {
-	    for (t=0; t<c->dset->n; t++) {
-		if (c->dset->Z[i][t] == NON_NUMERIC) {
-		    nn++;
-		    break;
-		}
+	for (t=0; t<c->dset->n; t++) {
+	    if (c->dset->Z[i][t] == NON_NUMERIC) {
+		nn++;
+		break;
 	    }
 	}
     }
@@ -1357,14 +1351,10 @@ static int non_numeric_check (csvdata *c, PRN *prn)
     if (list != NULL) {
 	j = 1;
 	for (i=1; i<c->dset->v; i++) {
-	    if (is_codevar(c->dset->varname[i])) {
-		list[j++] = i;
-	    } else {
-		for (t=0; t<c->dset->n; t++) {
-		    if (c->dset->Z[i][t] == NON_NUMERIC) {
-			list[j++] = i;
-			break;
-		    }
+	    for (t=0; t<c->dset->n; t++) {
+		if (c->dset->Z[i][t] == NON_NUMERIC) {
+		    list[j++] = i;
+		    break;
 		}
 	    }
 	}
@@ -1372,36 +1362,32 @@ static int non_numeric_check (csvdata *c, PRN *prn)
 	printlist(list, "non-numeric vars list");
 
 	for (i=1; i<=list[0]; i++) {
+	    double nnfrac;
+	    int nnon = 0;
+	    int nok = 0;
+	    int tn = 0;
 	    int v = list[i];
-	    int cv = is_codevar(c->dset->varname[v]);
 
 	    series_set_flag(c->dset, v, VAR_DISCRETE);
 
-	    if (!cv) {
-		double nnfrac;
-		int nnon = 0;
-		int nok = 0;
-		int tn = 0;
-
-		for (t=0; t<c->dset->n; t++) {
-		    if (c->dset->Z[v][t] == NON_NUMERIC) {
-			if (!tn) tn = t + 1;
-			nnon++;
-		    } else if (!na(c->dset->Z[v][t])) {
-			nok++;
-		    }
+	    for (t=0; t<c->dset->n; t++) {
+		if (c->dset->Z[v][t] == NON_NUMERIC) {
+		    if (!tn) tn = t + 1;
+		    nnon++;
+		} else if (!na(c->dset->Z[v][t])) {
+		    nok++;
 		}
+	    }
 
-		nnfrac = (nok == 0)? 1.0 : (double) nnon / (nnon + nok);
-		pprintf(prn, "variable %d (%s): non-numeric values = %d "
-			"(%.2f percent)\n", v, c->dset->varname[v], 
-			nnon, 100 * nnfrac);
-		if (!csv_force_nonnum(c) && (nnon < 2 || nnfrac < 0.01)) {
-		    pprintf(prn, A_("ERROR: variable %d (%s), observation %d, "
-				    "non-numeric value\n"), 
-			    v, c->dset->varname[v], tn);
-		    err = E_DATA;
-		}
+	    nnfrac = (nok == 0)? 1.0 : (double) nnon / (nnon + nok);
+	    pprintf(prn, "variable %d (%s): non-numeric values = %d "
+		    "(%.2f percent)\n", v, c->dset->varname[v], 
+		    nnon, 100 * nnfrac);
+	    if (nnon < 2 || nnfrac < 0.01) {
+		pprintf(prn, A_("ERROR: variable %d (%s), observation %d, "
+				"non-numeric value\n"), 
+			v, c->dset->varname[v], tn);
+		err = E_DATA;
 	    }
 	}
 
@@ -2012,7 +1998,7 @@ int import_csv (const char *fname, DATASET *dset,
 	goto csv_bailout;
     }
 
-    c = csvdata_new(dset, opt);
+    c = csvdata_new(dset);
     if (c == NULL) {
 	err = E_ALLOC;
 	goto csv_bailout;
