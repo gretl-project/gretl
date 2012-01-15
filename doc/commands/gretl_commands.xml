@@ -3092,7 +3092,7 @@
 	independent parameters in each equation.
       </para>
       <para>
-	If the <opt>verbose</opt> option is given and an iterative
+	If the <opt>--verbose</opt> option is given and an iterative
 	method is specified, details of the iterations are printed.
       </para>
     </description>
