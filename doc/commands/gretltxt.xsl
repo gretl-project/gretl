@@ -2,7 +2,7 @@
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
-  <!-- Stylesheet for CLI plain text "online" help -->
+  <!-- Stylesheet for gretlcli plain text "online" help -->
 
 <xsl:param name="hlp">cli</xsl:param>
 <xsl:param name="lang" select="'en'"/>
@@ -376,7 +376,15 @@
 </xsl:template>
 
 <xsl:template match="opt">
-  <xsl:apply-templates/>
+  <xsl:choose>
+    <xsl:when test="substring(text(),1,2)='--'">
+      <xsl:apply-templates/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>--</xsl:text> 
+      <xsl:apply-templates/>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="math">

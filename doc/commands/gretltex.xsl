@@ -610,7 +610,15 @@
 
 <xsl:template match="opt">
   <xsl:text>\verb@</xsl:text>
-  <xsl:apply-templates/>
+  <xsl:choose>
+    <xsl:when test="substring(text(),1,2)='--'">
+      <xsl:apply-templates/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>--</xsl:text> 
+      <xsl:apply-templates/>
+    </xsl:otherwise>
+  </xsl:choose>
   <xsl:text>@</xsl:text>
 </xsl:template>
 

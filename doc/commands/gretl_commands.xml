@@ -55,7 +55,7 @@
 	<lit>$uhat</lit> or doing further tests.
       </para>
       <para context="cli">
-	Alternatively, given the <opt>--lm</opt> option (available
+	Alternatively, given the <opt>lm</opt> option (available
 	only for the models estimated via OLS), an LM test is
 	performed. An auxiliary regression is run in which the
 	dependent variable is the residual from the last model and the
@@ -68,7 +68,7 @@
 	not replaced.
       </para>
       <para context="cli">
-	The <opt>--both</opt> option is specific to two-stage
+	The <opt>both</opt> option is specific to two-stage
 	least squares: it specifies that the new variables
 	should be added both to the list of regressors and the
 	list of instruments, the default in this case being to
@@ -188,7 +188,7 @@
       <para context="cli">
 	Computes a set of Dickey&ndash;Fuller tests on each of the the
 	listed variables, the null hypothesis being that the variable in
-	question has a unit root.  (But if the <opt>--difference</opt>
+	question has a unit root.  (But if the <opt>difference</opt>
 	flag is given, the first difference of the variable is taken prior
 	to testing, and the discussion below must be taken as referring to
 	the transformed variable.)

@@ -396,7 +396,14 @@
     the double-dash and the following string.
   </xsl:comment>
   <xsl:text>&lt;@opt="--&#x2060;</xsl:text>
-  <xsl:value-of select='substring-after(text(),"--")'/>
+  <xsl:choose>
+    <xsl:when test="substring(text(),1,2)='--'">
+      <xsl:value-of select='substring-after(text(),"--")'/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:apply-templates/>
+    </xsl:otherwise>
+  </xsl:choose>
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
