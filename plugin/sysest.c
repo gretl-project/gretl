@@ -854,7 +854,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	single_equation = 1;
     }
 
-    if (nr > 0) {
+    if (nr > 0 && !(opt & OPT_U)) {
 	if (method == SYS_METHOD_3SLS) {
 	    /* doing 3SLS with restrictions: we want to obtain
 	       restricted TSLS estimates as a starting point 
