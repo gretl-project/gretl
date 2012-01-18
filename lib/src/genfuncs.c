@@ -902,6 +902,7 @@ static int new_unit (const DATASET *dset, int t)
 }
 
 #define panel_obs_ok(x,t,m) ((m == NULL || m[t] != 0) && !na(x[t])) 
+#define panel_obs_masked(t,m) (m != NULL && m[t] == 0)
 
 /**
  * panel_statistic:
@@ -909,7 +910,7 @@ static int new_unit (const DATASET *dset, int t)
  * @y: target into which to write.
  * @dset: data set information.
  * @k: code representing the desired statistic: F_PNOBS,
- * F_PMIN, F_PMAX, F_PMEAN or F_PSD.
+ * F_PMIN, F_PMAX, F_PMEAN, F_PXSUM or F_PSD.
  * @mask: either NULL or a series with 0s for observations
  * to be excluded from the calculations, non-zero values
  * at other observations.
@@ -1087,6 +1088,36 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		    Ti++;
 		}
 	    }
+	}
+    } else if (k == F_PXSUM) {
+	/* the sum of cross-sectional values for each period */
+	double *yt = malloc(dset->pd * sizeof *yt);
+	int i, N = dset->n / dset->pd;
+
+	if (yt == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (t=0; t<dset->pd; t++) {
+		yt[t] = 0.0;
+		for (i=0; i<N; i++) {
+		    s = t + i * dset->pd;
+		    if (panel_obs_masked(s, mask)) {
+			continue;
+		    } else if (na(x[s])) {
+			yt[t] = NADBL;
+			break;
+		    } else {
+			yt[t] += x[s];
+		    }
+		}
+	    }
+	    for (t=0; t<dset->pd; t++) {
+		for (i=0; i<N; i++) {
+		    s = t + i * dset->pd;
+		    y[s] = yt[t];
+		}
+	    }	    
+	    free(yt);
 	}
     } else {
 	/* unsupported option */

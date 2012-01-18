@@ -216,6 +216,7 @@ struct str_table funcs[] = {
     { F_PMIN,     "pmin" },      /* panel min */
     { F_PMAX,     "pmax" },      /* panel max */
     { F_PMEAN,    "pmean" },     /* panel mean */
+    { F_PXSUM,    "pxsum" },     /* panel x-sectional sum */
     { F_PSD,      "psd" },       /* panel std dev */
     { F_PSHRINK,  "pshrink" },
     { F_HPFILT,   "hpfilt" },    /* Hodrick-Prescott filter */

@@ -4482,6 +4482,7 @@
 	    <fncref targ="pmean"/>
 	    <fncref targ="pnobs"/>
 	    <fncref targ="psd"/>
+	    <fncref targ="pxsum"/>
 	  </seelist>
 	</para>
       </description>
@@ -4519,6 +4520,7 @@
 	    <fncref targ="pmin"/>
 	    <fncref targ="pnobs"/>
 	    <fncref targ="psd"/>
+	    <fncref targ="pxsum"/>
 	    <fncref targ="pshrink"/>
 	  </seelist>
 	</para>
@@ -4775,6 +4777,37 @@
 	    <fncref targ="urcpval"/>
 	    <fncref targ="imhof"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="pxsum" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="series" optional="true">mask</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Only applicable if the currently open dataset has a panel
+	  structure. Computes a series holding the sum of the values
+	  of <argname>y</argname> for each cross-sectional unit in
+	  each period.
+	</para>
+	<para context="tex">
+	  Only applicable if the currently open dataset has a panel
+	  structure. Computes the cross-sectional sum for variable
+	  <argname>y</argname> in each period; that is, 
+	  \[ \tilde{y}_t = \sum_{i=1}^{N} y_{i,t}\] 
+	  where $N$ is the number of cross-sectional units.
+	</para>
+	<para>
+	  If the optional second argument is provided then
+	  observations for which the value of <argname>mask</argname>
+	  is zero are ignored.
+	</para>
+	<para>
+	  Note that this function works in a different dimension from
+	  the <fncref targ="pmean"/> function.
 	</para>
       </description>
     </function>

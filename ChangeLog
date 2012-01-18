@@ -1,4 +1,6 @@
 version 1.9.8, in progress
+- New function pxsum(): computes the cross-sectional sum of a series in
+  the context of panel data
 - Graphing i18n fix: avoid "decimal comma" in setting size of PDF plots
 - Function packages: prevent a package's "bundle-plot" function from
   appearing in the initial GUI listing of public functions

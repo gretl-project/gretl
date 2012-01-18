@@ -984,7 +984,7 @@ double matrix_get_element (const gretl_matrix *M, int i, int j,
 	*err = E_DATA;
     } else if (i < 0 || i >= M->rows || j < 0 || j >= M->cols) {
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 
-			     (i < 0 || i >= M->rows)? (j+1) : (i+1));
+			     (i < 0 || i >= M->rows)? (i+1) : (j+1));
 	*err = 1;
     } else {
 	x = gretl_matrix_get(M, i, j);

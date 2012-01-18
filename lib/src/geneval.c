@@ -4885,6 +4885,7 @@ static NODE *series_matrix_func (NODE *n, int f, parser *p)
 			  f == F_PMIN ||  \
 			  f == F_PMAX ||  \
 			  f == F_PMEAN || \
+			  f == F_PXSUM ||  \
 			  f == F_PSD)
 
 /* Functions taking a series as argument and returning a series.
@@ -4988,6 +4989,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	case F_PMIN:
 	case F_PMAX:
 	case F_PMEAN:
+	case F_PXSUM:
 	case F_PSD:
 	    p->err = panel_statistic(x, y, p->dset, f, z); 
 	    break;
@@ -8695,6 +8697,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_PMIN:
     case F_PMAX:
     case F_PMEAN:
+    case F_PXSUM:
     case F_PSD:
     case F_DESEAS:
 	/* series argument needed */
