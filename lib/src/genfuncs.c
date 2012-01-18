@@ -902,7 +902,7 @@ static int new_unit (const DATASET *dset, int t)
 }
 
 #define panel_obs_ok(x,t,m) ((m == NULL || m[t] != 0) && !na(x[t])) 
-#define panel_obs_masked(t,m) (m != NULL && m[t] == 0)
+#define panel_obs_masked(m,t) (m != NULL && m[t] == 0)
 
 /**
  * panel_statistic:
@@ -1101,7 +1101,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		yt[t] = 0.0;
 		for (i=0; i<N; i++) {
 		    s = t + i * dset->pd;
-		    if (panel_obs_masked(s, mask)) {
+		    if (panel_obs_masked(mask, s)) {
 			continue;
 		    } else if (na(x[s])) {
 			yt[t] = NADBL;
@@ -1111,10 +1111,10 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		    }
 		}
 	    }
-	    for (t=0; t<dset->pd; t++) {
-		for (i=0; i<N; i++) {
-		    s = t + i * dset->pd;
-		    y[s] = yt[t];
+	    s = 0;
+	    for (i=0; i<N; i++) {
+		for (t=0; t<dset->pd; t++) {
+		    y[s++] = yt[t];
 		}
 	    }	    
 	    free(yt);
