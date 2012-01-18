@@ -205,9 +205,12 @@ gamma_LR_T_pval (double trace, JohansenCode det, int n, int T)
   @T:  sample size minus number of parameters, or
        0 for the asymptotic result
 
-  The Doornik gamma-approximation approach with 
-  correction for the case of a "partial system" as
-  discussed in Harbo, Johansen, Nielsen and Rahbek.
+  The Doornik gamma-approximation approach with correction for the
+  case of a "partial system" as discussed in Harbo, Johansen, Nielsen
+  and Rahbek, "Asymptotic Inference on Cointegrating Rank in Partial
+  Systems" (Journal of Business and Economic Statistics 16/4, October
+  1998). The critical values were re-simulated in gretl with 50,000
+  replications.  
 */
 
 static double
@@ -1597,9 +1600,8 @@ compute_coint_test (GRETL_VAR *jvar, const DATASET *dset,
 	    pv = gamma_harbo_trace_pval(trace, det, n, nrexo, i, jvar->df);
 	    pprintf(prn, " [%6.4f]\n", pv);
 	}
-    } 
-
-    if (!partial) {
+    } else {
+	/* !partial */
 	double pv;
 
 	pputc(prn, '\n');
