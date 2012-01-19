@@ -2,13 +2,13 @@
 # Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 # This file is distributed under the same license as the gretl package.
 #
-# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011.
+# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-12-23 11:59-0500\n"
-"PO-Revision-Date: 2011-12-16 09:58-0500\n"
+"PO-Revision-Date: 2012-01-19 17:17+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -1983,7 +1983,7 @@ msgstr "'%s' no es una variable binaria"
 
 #: lib/src/discrete.c:2987
 msgid "Perfect prediction obtained: no MLE exists"
-msgstr ""
+msgstr "Se obtuvo una predicción perfecta: no existe MLE?"
 
 #: lib/src/discrete.c:3150
 msgid "Illegal non-positive value of the dependent variable"
@@ -9095,23 +9095,20 @@ msgid "bandwidth adjustment factor:"
 msgstr "factor de ajuste del ancho de banda:"
 
 #: gui2/dialogs.c:3975
-#, fuzzy
 msgid "paste data from clipboard"
-msgstr "Copiar al portapapeles"
+msgstr "copiar los datos desde el portapapeles"
 
 #: gui2/dialogs.c:3982
 msgid "Try pasting data from clipboard?"
-msgstr ""
+msgstr "¿Intenta pegar los datos desde el portapapeles?"
 
 #: gui2/dialogs.c:3991
-#, fuzzy
 msgid "Clear current dataset first"
-msgstr "Por favor, abra primero un archivo de datos"
+msgstr "Primero vacíe el conjunto de datos actual"
 
 #: gui2/dialogs.c:4002
-#, fuzzy
 msgid "Try appending to current dataset"
-msgstr "De acuerdo, nos quedamos con el conjunto de datos actual\n"
+msgstr "Intentar añadiendo al conjunto de datos actual"
 
 #: gui2/dialogs.c:4223
 msgid "No model is specified"
@@ -10944,9 +10941,8 @@ msgid "Estimated _density plot..."
 msgstr "Gráfico de la _densidad estimada..."
 
 #: gui2/gretl.c:1510
-#, fuzzy
 msgid "_Boxplot"
-msgstr "Gráfico de cajas"
+msgstr "Gráfico de c_aja"
 
 #: gui2/gretl.c:1511
 msgid "Normal _Q-Q plot..."
@@ -13094,12 +13090,10 @@ msgid "Edit values"
 msgstr "Editar valores"
 
 #: gui2/menustate.c:392 gui2/menustate.c:523
-#, fuzzy
 msgid "Add log"
 msgstr "Añadir logaritmos"
 
 #: gui2/menustate.c:394 gui2/menustate.c:524
-#, fuzzy
 msgid "Add difference"
 msgstr "Añadir diferencias"
 
@@ -14211,9 +14205,9 @@ msgid "versus"
 msgstr "con respecto a"
 
 #: gui2/session.c:2329 gui2/session.c:2388 gui2/session.c:2416
-#, fuzzy, c-format
+#, c-format
 msgid "%s: please close this object's window first"
-msgstr "Por favor, primero cierre la ventana de este objeto"
+msgstr "%s: Por favor, primero cierre la ventana de este objeto"
 
 #: gui2/session.c:2501
 #, c-format
