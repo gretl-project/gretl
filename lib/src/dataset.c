@@ -2259,6 +2259,29 @@ static int missing_tail (const double *x, int n)
     return nmiss;
 }
 
+static int *list_to_array (const int *list, int *err)
+{
+    int nv = list[0];
+    int *arr = NULL;
+
+    if (nv <= 0) {
+	*err = E_DATA;
+    } else {
+	arr = malloc(nv * sizeof *arr);
+	if (arr == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    int i;
+
+	    for (i=0; i<nv; i++) {
+		arr[i] = list[i+1];
+	    }
+	}
+    }
+
+    return arr;
+}
+
 /**
  * dataset_stack_variables:
  * @vname: name for new variable, to be produced by stacking.
@@ -2266,7 +2289,7 @@ static int missing_tail (const double *x, int n)
  * @dset: dataset struct.
  * @prn: printing apparatus.
  *
- * Really for internal use.  Don't worry about it.
+ * Really for internal use. Don't worry about it.
  *
  * Returns: 0 on success, non-zero code on error.
  */
@@ -2324,17 +2347,13 @@ int dataset_stack_variables (const char *vname, const char *line,
     stacklist = get_list_by_name(s);
     if (stacklist != NULL) {
 	nv = stacklist[0];
-	if (nv == 0) {
+	if (nv <= 0) {
 	    err = E_DATA;
 	    goto bailout;
 	}
-	vnum = malloc(nv * sizeof *vnum);
-	if (vnum == NULL) {
-	    err = E_ALLOC;
+	vnum = list_to_array(stacklist, &err);
+	if (err) {
 	    goto bailout;
-	}
-	for (i=0; i<nv; i++) {
-	    vnum[i] = stacklist[i+1];
 	}
 	done = 1;
     }
@@ -2360,8 +2379,20 @@ int dataset_stack_variables (const char *vname, const char *line,
 	}
     }
 
+    if (!done && strchr(s, '*') != NULL) {
+	/* or perhaps a wildcard thing? */
+	int *list = generate_list(s, dset, &err);
+
+	if (!err) {
+	    nv = list[0];
+	    vnum = list_to_array(list, &err);
+	    free(list);
+	}
+	done = 1;
+    }    
+
     if (!done) {
-	/* or a comma-separated list of vars? */
+	/* or (special) a comma-separated list of vars? */
 	char *p = s;
 
 	while (*p) {

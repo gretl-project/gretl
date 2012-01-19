@@ -485,7 +485,10 @@ store panel.gdt x1 x2
 
 The second line illustrates the syntax of the \cmd{stack} function.
 The double dots within the parentheses indicate a range of variables
-to be stacked: here we want to stack all 5 columns (for all 5 years).
+to be stacked: here we want to stack all 5 columns (for all 5
+years).\footnote{You can also specify a list of series using
+  the wildcard `\texttt{*}'; for example \texttt{stack(p*)} would
+  stack all series whose names begin with `p'.} 
 The full data set contains 100 rows; in the stacking of variable
 \varname{x1} we wish to read only the first 50 rows from each column:
 we achieve this by adding \verb+--length=50+.  Note that if you want

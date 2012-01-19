@@ -1,6 +1,7 @@
 version 1.9.8, in progress
 - New function pxsum(): computes the cross-sectional sum of a series in
   the context of panel data
+- stack() function for panel data: allow '*' in forming list of series
 - Graphing i18n fix: avoid "decimal comma" in setting size of PDF plots
 - Function packages: prevent a package's "bundle-plot" function from
   appearing in the initial GUI listing of public functions
@@ -201,6 +202,7 @@ version 1.9.8, in progress
   missing observations
 - Fix bug 3285196 (respect indicated encoding when importing SPSS data)
 - Fix bug: gretl could crash on start-up with no datafile specified
+- MS Windows: update netlib lapack/blas to version 3.3.1
 
 2011-02-24 version 1.9.4
 - Change the default random number generator from GLib's 
