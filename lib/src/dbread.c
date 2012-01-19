@@ -2897,6 +2897,8 @@ static double *extend_series (const double *z, int n)
     return x;
 }
 
+#define DMDEBUG 0
+
 static double *
 daily_series_to_monthly (DATASET *dset, int i, 
 			 int nm, int yr, int mon, int offset, 
@@ -2906,8 +2908,7 @@ daily_series_to_monthly (DATASET *dset, int i,
     const double *src = dset->Z[i];
     const double *z;
     double *tmp = NULL;
-    int t, mdbak;
-    int sopt, eopt;
+    int t, sop_t, eop_t;
 
     x = malloc(nm * sizeof *x);
     if (x == NULL) {
@@ -2926,49 +2927,68 @@ daily_series_to_monthly (DATASET *dset, int i,
 	z = src;
     }
 
-    /* note: we can't necessarily assume that the first obs
-       is the first day of a month  
+    /* Note: we can't necessarily assume that the first obs
+       is the first day of a month. The @offset value gives the
+       number of daily observations (allowing for the number of
+       observed days in the week) in the first month of the daily
+       data, prior to the data actually starting.
     */
 
-    /* the "one day's slack" business with start-of-period
-       and end-of-period compaction is designed to allow for
-       the possibility that the first (or last) day of the
-       month may not have been a trading day
+    /* The "one day's slack" business below, with start-of-period and
+       end-of-period compaction is designed to allow for the
+       possibility that the first (or last) day of the month may not
+       have been a trading day.
     */
 
-    mdbak = 0;
-    sopt = offset;
-    eopt = offset - 1;
+    /* first obs for start-of-period */
+    sop_t = offset;
 
-#if 0
-    printf("offset=%d, sopt=%d\n", offset, sopt);
+    /* first obs for end-of-period */
+    if (sop_t > 0) {
+	eop_t = offset - 1;
+    } else {
+	/* the first obs starts a month */
+	eop_t = get_days_in_month(mon, yr, dset->pd) - 1;
+    }
+
+#if DMDEBUG
+    fprintf(stderr, "starting: offset=%d, any_eop=%d, sop_t=%d, eop_t=%d\n", 
+	    offset, any_eop, sop_t, eop_t);
 #endif
 
     for (t=0; t<nm; t++) {
+	/* loop across the months in the compacted data */
 	int mdays = get_days_in_month(mon, yr, dset->pd);
 
-	sopt += mdbak;
-	eopt += mdays;
+	if (t > 0) {
+	    eop_t += mdays;
+	}
 
-	if (t == 0 && offset > 0 && any_eop &&
-	    method != COMPACT_EOP) {
+#if DMDEBUG
+	fprintf(stderr, "t=%d: mon=%d, mdays=%d, sop_t=%d, eop_t=%d\n", 
+		t, mon, mdays, sop_t, eop_t);
+#endif
+
+	if (t == 0 && offset > 0 && any_eop && method != COMPACT_EOP) {
+	    /* we started with an incomplete month: so any
+	       method other than EOP yields an NA */
 	    x[t] = NADBL;
 	} else if (method == COMPACT_SOP) {
 	    /* allow one days's slack */
-	    if (na(z[sopt]) && sopt < dset->n - 1) {
-		x[t] = z[sopt + 1];
+	    if (na(z[sop_t]) && sop_t < dset->n - 1) {
+		x[t] = z[sop_t + 1];
 	    } else {
-		x[t] = z[sopt];
+		x[t] = z[sop_t];
 	    }
 	} else if (method == COMPACT_EOP) {
-	    if (eopt >= dset->n) {
+	    if (eop_t >= dset->n) {
 		x[t] = NADBL;
 	    } else {
 		/* allow one days's slack */
-		if (na(z[eopt]) && eopt > 0) {
-		    x[t] = z[eopt - 1];
+		if (na(z[eop_t]) && eop_t > 0) {
+		    x[t] = z[eop_t - 1];
 		} else {
-		    x[t] = z[eopt];
+		    x[t] = z[eop_t];
 		}
 	    }
 	} else if (method == COMPACT_SUM ||
@@ -2979,7 +2999,7 @@ daily_series_to_monthly (DATASET *dset, int i,
 	    x[t] = 0.0;
 
 	    for (j=0; j<mdays; j++) {
-		dayt = sopt + j;
+		dayt = sop_t + j;
 		if (dayt >= dset->n) {
 		    x[t] = NADBL;
 		    break;
@@ -3007,7 +3027,7 @@ daily_series_to_monthly (DATASET *dset, int i,
 	    }
 	}
 
-	mdbak = mdays;
+	sop_t += mdays;
 
 	if (mon == 12) {
 	    mon = 1;
@@ -3163,7 +3183,7 @@ static int get_obs_maj_min (const char *obs, int *maj, int *min)
 
 static int get_daily_offset (const DATASET *dset,
 			     int y, int m, int d, 
-			     int skip)
+			     int skip, int any_eop)
 {
     int ret = 0;
 
@@ -3171,9 +3191,15 @@ static int get_daily_offset (const DATASET *dset,
 	/* moving to start of next month: offset = no. of
 	   observations in the first month */
 	ret = days_in_month_after(y, m, d, dset->pd) + 1;
+    } else if (any_eop && !day_starts_month(d, m, y, dset->pd, NULL)) {
+	ret = days_in_month_after(y, m, d, dset->pd) + 1;
     } else {
 	/* offset = no. of obs missing at start of first month */
 	ret = days_in_month_before(y, m, d, dset->pd);
+#if DMDEBUG
+	fprintf(stderr, "days_in_month_before %d-%02d-%02d = %d "
+		"for pd=%d\n", y, m, d, ret, dset->pd);
+#endif
     }
 
     return ret;
@@ -3217,6 +3243,13 @@ static int get_n_ok_months (const DATASET *dset,
     *endyr = y2;
     *endmon = m2;
 
+#if DMDEBUG
+    fprintf(stderr, "get_n_ok_months: any_sop=%d, any_eop=%d, "
+	    "all_same=%d\n", any_sop, any_eop, all_same);
+    fprintf(stderr, "y1=%d m1=%d d1=%d; y2=%d m2=%d d2=%d\n", 
+	    y1, m1, d1, y2, m2, d2);
+#endif
+
     if (!day_starts_month(d1, m1, y1, dset->pd, &pad) && !any_eop) {
 	if (*startmon == 12) {
 	    *startmon = 1;
@@ -3238,10 +3271,16 @@ static int get_n_ok_months (const DATASET *dset,
 	nm--;
     }
 
+#if DMDEBUG
+    fprintf(stderr, "after adjustment: range %d:%02d to %d:%02d, "
+	    "pad=%d, skip=%d\n", *startyr, *startmon, *endyr, *endmon, 
+	    pad, skip);
+#endif
+
     if (pad) {
 	*offset = -1;
     } else {
-	*offset = get_daily_offset(dset, y1, m1, d1, skip);
+	*offset = get_daily_offset(dset, y1, m1, d1, skip, any_eop);
     }
 
     *p_any_eop = any_eop;
