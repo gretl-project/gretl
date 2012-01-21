@@ -1,0 +1,158 @@
+\chapter{Multivariate models}
+\label{chap:system}
+
+By a multivariate model we mean one that includes more than one
+dependent variable. Certain specific types of multivariate model for
+time-series data are discussed elsewhere: chapter~\ref{chap:var} deals
+with VARs and chapter~\ref{chap:vecm} with VECMs. Here we discuss two
+general sorts of multivariate model, implemented in \app{gretl} via
+the \cmd{system} command: SUR systems (Seemingly Unrelated
+Regressions), in which all the regressors are taken to be exogenous
+and interest centers on the covariance of the error term across
+equations, and simultaneous systems, in which some regressors are
+assumed to be endogenous.
+
+We begin with an account of the syntax and use of the \cmd{system}
+command in its regular form (along with its companions
+\texttt{restrict} and \texttt{estimate}); we then describe some
+extensions of this command that may be useful for people writing
+functions.
+
+\section{The system command}
+\label{sec:system-regular}
+
+The specification of a multivariate system takes the form of a block
+of statements, starting with \texttt{system} and ending with
+\texttt{end system}. 
+
+\subsection{Starting a system block}
+
+The first line should be augmented in either of two ways (but see also
+section~\ref{sec:system-functions} below):
+
+\begin{itemize}
+\item An estimation method is specified for the system. This is done
+  by following \texttt{system} with an expression of the form
+  \texttt{method=}\textsl{estimator}, where \textsl{estimator} must be
+  one of \texttt{ols} (Ordinary Least Squares), \texttt{tsls}
+  (Two-Stage Least Squares), \texttt{sur} (Seemingly Unrelated
+  Regressions), \texttt{3sls} (Three-Stage Least Squares),
+  \texttt{liml} (Limited Information Maximum Likelihood) or
+  \texttt{fiml} (Full Information Maximum Likelihood). Two examples:
+\begin{code}
+system method=sur
+system method=fiml
+\end{code}
+OLS, TSLS and LIML are, of course, single-equation methods rather than
+true system estimators; they are included to facilitate comparisons.
+\item The system is assigned a name. This is done by giving the name
+  first, followed by a back-arrow, ``\verb|<-|'', followed by
+  \texttt{system}.  If the name contains spaces it must be enclosed in
+  double-quotes. Here are two examples:
+\begin{code}
+mysys <- system
+"my system" <- system
+\end{code}
+\end{itemize}
+
+If the initial \texttt{system} line is augmented in the first way, the
+effect is that the following system is estimated as soon as its
+specification is completed. The effect of the second formulation is
+that the system is defined and saved, but it is not estimated until an
+\texttt{estimate} command is executed. These two possibilities can be
+combined, as in
+\begin{code}
+mysys <- system method=3sls
+\end{code}
+in which case the system is estimated immediately, via the specified
+method, but is also available under the specified name for use with
+further invocations of \texttt{restrict} and \texttt{estimate}.
+
+\subsection{The body of a system block}
+
+The most basic element in the body of a \texttt{system} block is the
+\texttt{equation} statement, which is used to specify a given equation
+within the system. This takes the same form as the regression
+specification for single-equation estimators, namely a list of series
+with the dependent variable given first, followed by the regressors,
+with the series given either by name or by ID number (order in the
+dataset).
+
+TODO: finish this bit!
+
+\section{Extensions for use in functions}
+\label{sec:system-functions}
+
+It is also possible to define a multivariate system in a programmatic
+way. This is useful if the precise specification of the system depends
+on some input parameters that are not known in advance, but are given
+when the script is actually run. (This feature was added in version
+1.9.7 of \app{gretl}.)
+
+The relevant syntax is given by the \texttt{equations} keyword (note
+the plural), which replaces the block of \texttt{equation} lines in
+the standard form. An \texttt{equations} line requires two list
+arguments. The first list must contain all series on the left-hand
+side of the system; thus the number of elements in this first list
+determines the number of equations in the system. The second list is a
+``list of lists'', which is a special variant of the list data type.
+That is, for each equation of the system you must provide a list of
+right-hand side variables, and the lists for all equations must be
+joined by assigning them to another list object; in that assignment,
+they must be separated by a semicolon.  Here is an example for a
+two-equation system:
+
+\begin{code}
+list syslist = xlist1 ; xlist2
+\end{code}
+
+Therefore, specifying a system generically in this way just involves 
+building the necessary list arguments, as shown in the following
+example:
+
+\begin{code}
+open denmark
+list LHS = LRM LRY
+list RHS1 = const LRM(-1) IBO(-1) IDE(-1)
+list RHS2 = const LRY(-1) IBO(-1)
+list RHS = RHS1 ; RHS2
+system method=ols
+     equations LHS RHS
+end system
+\end{code}
+
+Another issue when programming a multi-equation system in a flexible
+way is how to save and reuse a system specification inside a function.
+(You cannot use the \verb|<-| name assignment syntax there, because
+that would alter the session icon view, and that is not allowed from
+inside functions.) Instead you simply have to omit the
+``\texttt{method=}\textsl{estimator}'' specifier from the
+\texttt{system} line. Then the \texttt{system} block creates an
+anonymous system which you can afterwards address with the
+\texttt{estimate} and \texttt{restrict} commands by using the
+\verb|$system| accessor. Only the system which was specified last can
+be accessed in this way. For example:
+
+\begin{code}
+function void anonsys(series x, series y)
+     system
+         equation x const
+         equation y const
+     end system
+     estimate $system method=ols
+     estimate $system method=sur
+     restrict $system
+         b[1,1]=1
+     end restrict
+     estimate $system method=ols
+end function
+
+open denmark
+anonsys(LRY,LRM)
+\end{code}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+
