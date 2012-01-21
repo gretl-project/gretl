@@ -53,7 +53,8 @@ TEXSRC = cli.tex \
 	var.tex \
 	tsfilter.tex \
 	numerical.tex \
-	nonparam.tex
+	nonparam.tex \
+	system.tex
 
 BIBSRC = gretl.bib gretl.bst
 
