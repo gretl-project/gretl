@@ -9,7 +9,7 @@ general sorts of multivariate model, implemented in \app{gretl} via
 the \cmd{system} command: SUR systems (Seemingly Unrelated
 Regressions), in which all the regressors are taken to be exogenous
 and interest centers on the covariance of the error term across
-equations, and simultaneous systems, in which some regressors are
+equations; and simultaneous systems, in which some regressors are
 assumed to be endogenous.
 
 We begin with an account of the syntax and use of the \cmd{system}
@@ -71,12 +71,35 @@ further invocations of \texttt{restrict} and \texttt{estimate}.
 \subsection{The body of a system block}
 
 The most basic element in the body of a \texttt{system} block is the
-\texttt{equation} statement, which is used to specify a given equation
+\texttt{equation} statement, which is used to specify each equation
 within the system. This takes the same form as the regression
 specification for single-equation estimators, namely a list of series
 with the dependent variable given first, followed by the regressors,
 with the series given either by name or by ID number (order in the
-dataset).
+dataset). A system block must contain at least two \texttt{equation}
+statements, and for systems without endogenous regressors these
+statements are all that is required. So, for example, a minimal
+SUR specification might look like this:
+
+\begin{code}
+system method=sur
+  equation y1 const x1
+  equation y2 const x2
+end system
+\end{code}
+
+For simultaneous systems it is necessary to specify which regressors
+are endogenous. This may be done in three ways:
+\begin{itemize}
+\item Any variable that appears as the dependent variable in one
+  equation is automatically treated as endogeous if it appears as
+  a regressor elsewhere.
+\item An explicit list of endogenous regressors may be supplied
+  following the \texttt{equations} lines: this takes the form of the
+  keyword \texttt{endog} followed by the names or ID numbers of the
+  relevant regressors.
+\item XXX
+\end{itemize}
 
 TODO: finish this bit!
 

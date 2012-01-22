@@ -565,14 +565,32 @@ void equation_system_destroy (equation_system *sys)
     free(sys);
 }
 
-static void sys_rearrange_eqn_lists (equation_system *sys,
-				     const DATASET *dset)
+static int sys_rearrange_eqn_lists (equation_system *sys,
+				    const DATASET *dset)
 {
-    int i;
+    int i, err = 0;
 
     for (i=0; i<sys->neqns; i++) {
 	reglist_check_for_const(sys->lists[i], dset);
     }
+
+    if (sys->method != SYS_METHOD_TSLS && 
+	sys->method != SYS_METHOD_3SLS) {
+	/* we can't have ';' in equation lists */
+	int j;
+
+	for (i=0; i<sys->neqns && !err; i++) {
+	    for (j=0; j<=sys->lists[i][0] && !err; j++) {
+		if (sys->lists[i][j] == LISTSEP) {
+		    gretl_errmsg_sprintf("%s: tsls-style lists not supported",
+					 gretl_system_short_strings[sys->method]);
+		    err = E_DATA;
+		}
+	    }
+	}
+    }
+
+    return err;
 }
 
 /* Form a list from row @i of matrix @m, ignoring trailing
@@ -1475,12 +1493,16 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
     /* AC 2010-12-04; we were doing the following only for SUR,
        but it seems we have to do it generally.
     */
-    sys_rearrange_eqn_lists(sys, dset);
+    err = sys_rearrange_eqn_lists(sys, dset);
 
-    system_est = get_plugin_function("system_estimate", &handle);
+    if (!err) {
+	system_est = get_plugin_function("system_estimate", &handle);
+	if (system_est == NULL) {
+	    err = 1;
+	}
+    }
 
-    if (system_est == NULL) {
-	err = 1;
+    if (err) {
 	goto system_bailout;
     }
 
