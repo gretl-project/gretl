@@ -2669,14 +2669,16 @@ system_parse_line (equation_system *sys, const char *line,
     fprintf(stderr, "*** system_parse_line: '%s'\n", line);
 #endif
 
-    if (strncmp(line, "identity", 8) == 0) {
+    line += strspn(line, " ");
+
+    if (!strncmp(line, "identity ", 9)) {
 	err = add_identity_to_sys(sys, line + 8, dset);
-    } else if (strncmp(line, "endog", 5) == 0) {
+    } else if (!strncmp(line, "endog ", 6)) {
 	err = add_aux_list_to_sys(sys, line + 5, dset, ENDOG_LIST);
-    } else if (strncmp(line, "instr", 5) == 0) {
+    } else if (!strncmp(line, "instr ", 6)) {
 	err = add_aux_list_to_sys(sys, line + 5, dset, INSTR_LIST);
-    } else if (strncmp(line, "system", 6) == 0) {
-	err = E_DATA;
+    } else {
+	err = E_PARSE;
     }
 
     if (err) {

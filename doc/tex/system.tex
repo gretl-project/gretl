@@ -88,20 +88,36 @@ system method=sur
 end system
 \end{code}
 
-For simultaneous systems it is necessary to specify which regressors
-are endogenous. This may be done in three ways:
-\begin{itemize}
-\item Any variable that appears as the dependent variable in one
-  equation is automatically treated as endogeous if it appears as
-  a regressor elsewhere.
-\item An explicit list of endogenous regressors may be supplied
-  following the \texttt{equations} lines: this takes the form of the
-  keyword \texttt{endog} followed by the names or ID numbers of the
-  relevant regressors.
-\item XXX
-\end{itemize}
+For simultaneous systems it is necessary to determine which regressors
+are endogenous and which are exogenous. By default all regressors are
+treated as exogenous, except that any variable that appears as the
+dependent variable in one equation is automatically treated as
+endogeous if it appears as a regressor elsewhere. However, an explicit
+list of endogenous regressors may be supplied following the
+\texttt{equations} lines: this takes the form of the keyword
+\texttt{endog} followed by the names or ID numbers of the relevant
+regressors.
 
-TODO: finish this bit!
+When estimation is via TSLS or 3SLS it is possible to specify a
+particular set of instruments for each equation. This is done by
+giving the \texttt{equation} lists in the format used with the
+\texttt{tsls} command: first the dependent variable, then the
+regressors, then a semicolon, then the instruments, as in
+
+\begin{code}
+system method=3sls
+  equation y1 const x11 x12 ; const x11 z1
+  equation y2 const x21 x22 ; const x21 z2
+end system
+\end{code}
+
+In this case, as in \texttt{tsls}, any regressors that are not also
+listed as instruments are treated as endogenous, so in the example
+above \texttt{x11} and \texttt{x21} are treated as exogenous while
+\texttt{x21} and \texttt{x22} are endogenous, and instrumented by
+\texttt{z1} and \texttt{z2} respectively.
+
+TODO: talk about \texttt{identity}
 
 \section{Extensions for use in functions}
 \label{sec:system-functions}

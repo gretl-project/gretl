@@ -3182,7 +3182,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	    break;
 	}	    
 
-	if (!strncmp(bufline, "system", 6)) {
+	if (!strncmp(bufline, "system ", 7)) {
 	    maybe_grab_system_name(bufline, sysname);
 	    continue;
 	} 
@@ -3199,7 +3199,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	    break;
 	}
 
-	if (!strncmp(bufline, "equation", 8)) {
+	if (!strncmp(bufline, "equation ", 9)) {
 	    slist = command_list_from_string(bufline);
 	    if (slist == NULL) {
 		err = 1;
