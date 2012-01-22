@@ -27,7 +27,7 @@ of statements, starting with \texttt{system} and ending with
 
 \subsection{Starting a system block}
 
-The first line should be augmented in either of two ways (but see also
+The first line may be augmented in either of two ways (but see also
 section~\ref{sec:system-functions} below):
 
 \begin{itemize}
@@ -50,8 +50,8 @@ true system estimators; they are included to facilitate comparisons.
   \texttt{system}.  If the name contains spaces it must be enclosed in
   double-quotes. Here are two examples:
 \begin{code}
-mysys <- system
-"my system" <- system
+sys1 <- system
+"System 1" <- system
 \end{code}
 \end{itemize}
 
@@ -89,7 +89,7 @@ end system
 \end{code}
 
 For simultaneous systems it is necessary to determine which regressors
-are endogenous and which are exogenous. By default all regressors are
+are endogenous and which exogenous. By default all regressors are
 treated as exogenous, except that any variable that appears as the
 dependent variable in one equation is automatically treated as
 endogeous if it appears as a regressor elsewhere. However, an explicit
@@ -117,7 +117,11 @@ above \texttt{x11} and \texttt{x21} are treated as exogenous while
 \texttt{x21} and \texttt{x22} are endogenous, and instrumented by
 \texttt{z1} and \texttt{z2} respectively.
 
-TODO: talk about \texttt{identity}
+One more sort of statement is allowed in a \texttt{system} block:
+that is, the keyword \texttt{identity} followed by an equation 
+in terms of pre-defined series: this is specific to estimation
+via FIML, and defines an accounting relationship, rather then a
+stochastic one, between series.
 
 \section{Extensions for use in functions}
 \label{sec:system-functions}
