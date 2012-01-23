@@ -117,11 +117,18 @@ above \texttt{x11} and \texttt{x21} are treated as exogenous while
 \texttt{x21} and \texttt{x22} are endogenous, and instrumented by
 \texttt{z1} and \texttt{z2} respectively.
 
-One more sort of statement is allowed in a \texttt{system} block:
-that is, the keyword \texttt{identity} followed by an equation 
-in terms of pre-defined series: this is specific to estimation
-via FIML, and defines an accounting relationship, rather then a
-stochastic one, between series.
+One more sort of statement is allowed in a \texttt{system} block: that
+is, the keyword \texttt{identity} followed by an equation that defines
+an accounting relationship, rather then a stochastic one, between
+variables. For example,
+
+\begin{code}
+  identity Y = C + I + G + X
+\end{code}
+
+There can be more than one \texttt{identity} in a system block. But
+note that these statements are specific to estimation via FIML; they
+are ignored for other estimators.
 
 \section{Extensions for use in functions}
 \label{sec:system-functions}
