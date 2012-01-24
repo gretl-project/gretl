@@ -989,37 +989,53 @@ static int get_estimation_method_from_line (const char *s)
     return method;
 }
 
+/* parse "system name=<name>", with or without spaces around the '='
+   and with or without double-quotes around <name>
+*/
+
 static char *old_style_name_from_line (const char *line,
 				       int *err)
 {
-    char *s = strstr(line, " name");
+    const char *s;
     char *ret = NULL;
     int len = 0;
+
+    if (!strncmp(line, "system", 6)) {
+	line += 6;
+    }
+
+    line += strspn(line, " ");
     
-    if (s != NULL) {
-	s += 5;
-	s += strspn(s, " ");
+    if (!strncmp(line, "name", 4)) {
+	s = line + 4;
+	s += strspn(s, " "); /* eat space before '=' */
 	if (*s != '=') {
 	    *err = E_PARSE;
 	    return NULL;
 	}
 	s++;
+	s += strspn(s, " "); /* eat space after '=' */
 	if (*s == '"') {
-	    char *p;
+	    /* quoted name */
+	    char *p = strchr(s + 1, '"');
 
-	    s++;
-	    p = strchr(s, '"');
 	    if (p == NULL) {
 		*err = E_PARSE;
 	    } else {
+		s++;
 		len = p - s;
 	    }
 	} else {
+	    /* unquoted name */
 	    len = strcspn(s, " ");
 	}
     }
 
     if (len > 0) {
+	if (len >= MAXSAVENAME) {
+	    /* name too long */
+	    len = MAXSAVENAME - 1;
+	}
 	ret = gretl_strndup(s, len);
     }
 
@@ -1080,6 +1096,7 @@ equation_system *equation_system_start (const char *line,
 	/* "foo <- system" */
 	sysname = gretl_strdup(name);
     } else {
+	/* backward compatibility */
 	sysname = old_style_name_from_line(line, err);
 	if (*err) {
 	    return NULL;
