@@ -911,33 +911,32 @@ int equation_system_append (equation_system *sys, const int *list)
 /* retrieve the name -- possibly quoted with embedded spaces -- for
    an equation system */
 
-char *get_system_name_from_line (const char *s, int context)
+char *get_system_name_from_line (const char *s)
 {
-    char *tests[] = {
-	" name",
-	"estimate ",
-	"restrict "
-    };
     const char *p = NULL;
     char *name = NULL;
     int pchars = 0;
 
-    if (context < 0 || context > 2) {
-	return NULL;
-    }
+    if (!strncmp(s, "method", 6)) {
+	/* skip "method = whatever", with possible 
+	   spaces around '=' 
+	*/
+	char c = *(s+6);
 
-    p = strstr(s, tests[context]);
+	if (c == ' ' || c == '=') {
+	    p = s + 6;
+	    p += strspn(s, " ");
+	    if (*p == '=') p++;
+	    p += strspn(s, " ");
+	    p += strcspn(s, " ");
+	    p += strspn(s, " ");
+	    s = p;
+	}
+    }     
 
-    if (p == NULL) {
-	return NULL;
-    }
-
-    p += strlen(tests[context]);
-
-    s = p;
-    while (isspace((unsigned char) *s) || *s == '=') {
-	s++;
-    }
+#if SYSDEBUG
+    fprintf(stderr, "get_system_name_from_line: s = '%s'\n", s);
+#endif
 
     if (*s == '"') {
 	if (*(s + 1) != '\0') s++;
@@ -969,22 +968,22 @@ char *get_system_name_from_line (const char *s, int context)
 
 static int get_estimation_method_from_line (const char *s)
 {
-    const char *p = strstr(s, " method");
-    char mstr[9];
+    const char *p = strstr(s, "method");
     int method = -1;
 
-    if (p == NULL) {
-	return -1;
-    } 
+    if (p != NULL) {
+	p += 6;
+	p += strspn(s, " ");
+	if (*p == '=') {
+	    char mstr[9];
 
-    p += 7;
-    while (isspace((unsigned char) *p) || *p == '=') {
-	p++;
-    }
-
-    if (sscanf(p, "%8s", mstr) == 1) {
-	lower(mstr);
-	method = system_method_from_string(mstr);
+	    p++;
+	    p += strspn(s, " ");
+	    if (sscanf(p, "%8s", mstr) == 1) {
+		lower(mstr);
+		method = system_method_from_string(mstr);
+	    }
+	}
     }
 
     return method;
@@ -1043,14 +1042,11 @@ equation_system *equation_system_start (const char *line,
     if (name != NULL && *name != '\0') {
 	/* "foo <- system" */
 	sysname = gretl_strdup(name);
-    } else {
-	/* "system name=foo" (old-style, maybe) */
-	sysname = get_system_name_from_line(line, SYSNAME_NEW);
     }
 
     if (method < 0 && sysname == NULL) {
 	/* neither a method nor a name was specified */
-	if (gretl_function_depth() > 0) {
+	if (1 || gretl_function_depth() > 0) {
 	    sysname = gretl_strdup("$system");
 	    anon_sys = 1;
 	} else {
@@ -1967,13 +1963,17 @@ int estimate_named_system (const char *line, DATASET *dset,
     int method;
     int err = 0;
 
-    sysname = get_system_name_from_line(line, SYSNAME_EST);
+    if (!strncmp(line, "estimate ", 9)) {
+	line += 9;
+    }
+
+    sysname = get_system_name_from_line(line);
 
 #if SYSDEBUG
     fprintf(stderr, "*** estimate_named_system: '%s'\n", sysname);
 #endif
 
-    if (sysname == NULL || !strncmp(sysname, "method=", 7)) {
+    if (sysname == NULL) {
 	/* no name: try for an anonymous system */
 	GretlObjType type = GRETL_OBJ_NULL;
 	void *ptr;
@@ -1981,7 +1981,7 @@ int estimate_named_system (const char *line, DATASET *dset,
 	ptr = get_last_model(&type);
 	if (type == GRETL_OBJ_SYS) {
 	    sys = (equation_system *) ptr;
-	} else {
+	} else if (ptr != NULL) {
 	    return E_DATA;
 	}
     }
@@ -2000,7 +2000,10 @@ int estimate_named_system (const char *line, DATASET *dset,
 		return E_DATA;
 	    }
 	} else {
-	    return E_DATA;
+	    sys = get_anonymous_equation_system();
+	    if (sys == NULL) {
+		return E_DATA;
+	    }	    
 	}
     }
 

@@ -1831,8 +1831,8 @@ restriction_set_start (const char *line, gretlopt opt, int *err)
     fprintf(stderr, "restriction_set_start: line='%s'\n", line);
 #endif
 
-    if (!strncmp(line, "restrict", 8)) {
-	name = get_system_name_from_line(line, SYSNAME_RST);
+    if (!strncmp(line, "restrict ", 9)) {
+	name = get_system_name_from_line(line + 9);
     }
 
     if (name != NULL) {

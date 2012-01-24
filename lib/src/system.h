@@ -44,12 +44,6 @@ enum {
     SYSTEM_QUIET       = 1 << 8
 };
 
-enum {
-    SYSNAME_NEW,
-    SYSNAME_EST,
-    SYSNAME_RST
-};
-
 typedef struct id_atom_ id_atom;
 typedef struct identity_ identity;
 typedef struct predet_ predet;
@@ -105,7 +99,7 @@ equation_system *equation_system_start (const char *line,
 					gretlopt opt,
 					int *err);
 
-char *get_system_name_from_line (const char *s, int context);
+char *get_system_name_from_line (const char *s);
 
 equation_system *get_anonymous_equation_system (void);
 
