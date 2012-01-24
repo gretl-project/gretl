@@ -989,6 +989,43 @@ static int get_estimation_method_from_line (const char *s)
     return method;
 }
 
+static char *old_style_name_from_line (const char *line,
+				       int *err)
+{
+    char *s = strstr(line, " name");
+    char *ret = NULL;
+    int len = 0;
+    
+    if (s != NULL) {
+	s += 5;
+	s += strspn(s, " ");
+	if (*s != '=') {
+	    *err = E_PARSE;
+	    return NULL;
+	}
+	s++;
+	if (*s == '"') {
+	    char *p;
+
+	    s++;
+	    p = strchr(s, '"');
+	    if (p == NULL) {
+		*err = E_PARSE;
+	    } else {
+		len = p - s;
+	    }
+	} else {
+	    len = strcspn(s, " ");
+	}
+    }
+
+    if (len > 0) {
+	ret = gretl_strndup(s, len);
+    }
+
+    return ret;
+}
+
 /**
  * equation_system_start:
  * @line: command line.
@@ -1042,6 +1079,11 @@ equation_system *equation_system_start (const char *line,
     if (name != NULL && *name != '\0') {
 	/* "foo <- system" */
 	sysname = gretl_strdup(name);
+    } else {
+	sysname = old_style_name_from_line(line, err);
+	if (*err) {
+	    return NULL;
+	}
     }
 
     if (method < 0 && sysname == NULL) {
