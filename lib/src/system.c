@@ -2018,8 +2018,7 @@ int estimate_named_system (const char *line, DATASET *dset,
 			   gretlopt opt, PRN *prn)
 {
     equation_system *sys = NULL;
-    char *sysname = NULL;
-    int method;
+    char *sysname;
     int err = 0;
 
     if (!strncmp(line, "estimate ", 9)) {
@@ -2032,53 +2031,37 @@ int estimate_named_system (const char *line, DATASET *dset,
     fprintf(stderr, "*** estimate_named_system: '%s'\n", sysname);
 #endif
 
-    if (sysname == NULL) {
-	/* no name: try for an anonymous system */
-	GretlObjType type = GRETL_OBJ_NULL;
-	void *ptr;
-
-	ptr = get_last_model(&type);
-	if (type == GRETL_OBJ_SYS) {
-	    sys = (equation_system *) ptr;
-	} else if (ptr != NULL) {
-	    return E_DATA;
+    if (sysname != NULL && !sys_anonymous(sysname)) {
+	/* look for a genuine named system */
+	sys = get_equation_system_by_name(sysname);
+	if (sys == NULL) {
+	    err = E_DATA;
 	}
-    }
-
-    if (sys == NULL) {
-	/* we really need a valid sysname */
-	if (sysname != NULL) {
-	    if (sys_anonymous(sysname)) {
-		sys = get_anonymous_equation_system();
-	    } else {
-		sys = get_equation_system_by_name(sysname);
-	    }
-	    if (sys == NULL) {
-		gretl_errmsg_sprintf(_("'%s': unrecognized name"), sysname);
-		free(sysname);
-		return E_DATA;
-	    }
-	} else {
-	    sys = get_anonymous_equation_system();
-	    if (sys == NULL) {
-		return E_DATA;
-	    }	    
-	}
+    } else {
+	/* no name, or dummy name: try for an anonymous system */
+	sys = get_anonymous_equation_system();
+	if (sys == NULL) {
+	    gretl_errmsg_sprintf(_("'%s': unrecognized name"), sysname);
+	    err = E_DATA;
+	}	    
     }
 
     free(sysname);
 
-    method = get_estimation_method_from_line(line);
-    if (method < 0 || method >= SYS_METHOD_MAX) {
-	method = sys->method;
-    }
+    if (!err) {
+	int method = get_estimation_method_from_line(line);
 
-    if (method < 0 || method >= SYS_METHOD_MAX) {
-	gretl_errmsg_set("estimate: no valid method was specified");
-	err = E_DATA;
-    } else {
-	sys->method = method;
-	err = equation_system_estimate(sys, dset, opt, prn);
+	if (method < 0 || method >= SYS_METHOD_MAX) {
+	    method = sys->method;
+	}
+
+	if (method < 0 || method >= SYS_METHOD_MAX) {
+	    gretl_errmsg_set("estimate: no valid method was specified");
+	    err = E_DATA;
+	} else {
+	    sys->method = method;
+	    err = equation_system_estimate(sys, dset, opt, prn);
+	}
     }
 
 #if SYSDEBUG

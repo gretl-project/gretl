@@ -1843,7 +1843,13 @@ restriction_set_start (const char *line, gretlopt opt, int *err)
 	}
     } else {
 	/* get pointer to last-created object */
-	ptr = get_last_model(&type);  
+	ptr = get_last_model(&type);
+	if (ptr == NULL) {
+	    ptr = get_anonymous_equation_system();
+	    if (ptr != NULL) {
+		type = GRETL_OBJ_SYS;
+	    }
+	}
     }
 
     if (ptr == NULL) {

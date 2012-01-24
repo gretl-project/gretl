@@ -4134,7 +4134,17 @@ static void gui_save_system (ExecState *s)
 
 static int model_test_check (CMD *cmd, DATASET *dset, PRN *prn)
 {
-    return last_model_test_ok(cmd->ci, cmd->opt, dset, prn);
+    int err = last_model_test_ok(cmd->ci, cmd->opt, dset, prn);
+
+    if (err == E_DATA && cmd->ci == RESTRICT && *cmd->param == '\0') {
+	/* try for a not-yet estimated anonymous system */
+	if (get_anonymous_equation_system() != NULL) {
+	    gretl_error_clear();
+	    err = 0;
+	}
+    }
+
+    return err;
 }
 
 static int get_line_continuation (char *line, FILE *fp, PRN *prn)
@@ -5097,7 +5107,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case RESTRICT:
-	/* joint hypothesis test on model or system */
+	/* joint hypothesis test on model */
 	if (s->rset == NULL) {
 	    if (*cmd->param == '\0') {
 		/* if param is non-blank, we're restricting a named system */
