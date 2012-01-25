@@ -2056,6 +2056,17 @@ int estimate_named_system (const char *line, DATASET *dset,
 	}
     }
 
+#if 1 /* do we really want this? */
+    if (err) {
+	/* we haven't found a system to estimate yet */
+	sys = get_anonymous_equation_system();
+	if (sys != NULL) {
+	    gretl_error_clear();
+	    err = 0;
+	}
+    }
+#endif
+
     if (!err) {
 	int method = get_estimation_method_from_line(line);
 
