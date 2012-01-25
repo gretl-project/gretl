@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-12-23 11:59-0500\n"
-"PO-Revision-Date: 2011-12-28 23:49-0300\n"
+"PO-Revision-Date: 2012-01-25 00:38-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -1760,19 +1760,19 @@ msgstr "defasagem"
 
 #: lib/src/describe.c:2886
 msgid "Residual ACF"
-msgstr "ACF Residual"
+msgstr "FAC dos Resíduos"
 
 #: lib/src/describe.c:2888
 msgid "ACF for"
-msgstr "ACF para"
+msgstr "FAC para"
 
 #: lib/src/describe.c:2904
 msgid "Residual PACF"
-msgstr "Resíduo PACF"
+msgstr "FACP dos Resíduos"
 
 #: lib/src/describe.c:2906
 msgid "PACF for"
-msgstr "PACF para"
+msgstr "FACP para"
 
 #: lib/src/describe.c:2945
 #: gui2/menustate.c:373
@@ -1800,7 +1800,7 @@ msgstr "Função de autocorrelação para %s"
 
 #: lib/src/describe.c:3062
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
-msgstr " Defas.   ACF          PACF         Estat. Q [p-valor]"
+msgstr " Defas.   FAC          FACP         Estat. Q [p-valor]"
 
 #: lib/src/describe.c:3175
 msgid "Argument is a constant"
@@ -1829,7 +1829,7 @@ msgstr "Função de correlação cruzada para %s e %s"
 
 #: lib/src/describe.c:3547
 msgid "  LAG      XCF"
-msgstr "Defasagem  XCF"
+msgstr " Defas.   XCF"
 
 #: lib/src/describe.c:3854
 #: lib/src/graphing.c:5291
@@ -7775,7 +7775,7 @@ msgstr ""
 
 #: lib/src/vartest.c:286
 msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
-msgstr "defasagens  log.L     p(LR)      AIC          BIC          HQC"
+msgstr "defas.     log.L    p(LR)       AIC          BIC          HQC"
 
 #: lib/src/vartest.c:715
 msgid ""
@@ -7866,7 +7866,7 @@ msgstr "Digitar \"open nome_arquivo\" para abrir um conjunto de dados\n"
 #: cli/gretlcli.c:753
 #, c-format
 msgid "Opening a new data file closes the present one.  Proceed? (y/n) "
-msgstr "Abrir um novo arquivo de dados fecha o atual.  Prosseguir? (sim (y) / não (n))"
+msgstr "Abrir um novo arquivo de dados fechará o atual.  Prosseguir? (sim (y) / não (n))"
 
 #: cli/gretlcli.c:757
 msgid "OK, staying with current data set\n"
@@ -7949,7 +7949,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 28 de dezembro de 2011."
+"Tradução de 25 de janeiro de 2012."
 
 #: gui2/about.c:169
 msgid "License"
@@ -8970,7 +8970,7 @@ msgstr "Estado da Rede: OK"
 #: gui2/database.c:1056
 #, c-format
 msgid "Database parse error at variable '%s'"
-msgstr "Erro de processamento em base de dados na variável '%s'"
+msgstr "Erro de processamento na base de dados na variável '%s'"
 
 #: gui2/database.c:1389
 #: gui2/ssheet.c:2326
@@ -9025,12 +9025,12 @@ msgstr "Não instalado"
 #: gui2/database.c:2980
 #: gui2/database.c:3005
 msgid "No database files found"
-msgstr "Não se encontrou arquivos de bases de dados"
+msgstr "Não foram encontrados arquivos de bases de dados"
 
 #: gui2/database.c:2768
 #: gui2/database.c:2863
 msgid "No function packages found"
-msgstr "Não se encontrou pacotes de funções"
+msgstr "Não foram encontradas pacotes de funções"
 
 #: gui2/database.c:2941
 msgid "No data packages found"
@@ -14752,12 +14752,12 @@ msgstr "defasagem máxima:"
 
 #: gui2/selector.c:4023
 msgid "ARCH order:"
-msgstr "ordem ARCH:"
+msgstr "Ordem ARCH:"
 
 #: gui2/selector.c:4028
 #: gui2/selector.c:4712
 msgid "AR order:"
-msgstr "ordem AR:"
+msgstr "Ordem AR:"
 
 #: gui2/selector.c:4054
 msgid "Z-axis variable"
@@ -15561,7 +15561,7 @@ msgstr "Determinante"
 
 #: gui2/session.c:3890
 msgid "Eigenvalues"
-msgstr "autovalores"
+msgstr "Autovalores"
 
 #: gui2/settings.c:136
 msgid "Main gretl directory"
@@ -16053,19 +16053,20 @@ msgstr "Usar tabulações \"inteligentes\""
 
 #: gui2/textbuf.c:2514
 msgid "Comment line"
-msgstr "Comentar linha"
+msgstr "Transformar linha em comentário"
 
 #: gui2/textbuf.c:2515
+#, fuzzy
 msgid "Uncomment line"
 msgstr "Remover comentário da linha"
 
 #: gui2/textbuf.c:2516
 msgid "Comment region"
-msgstr "Comentar região"
+msgstr "Transformar região em comentário"
 
 #: gui2/textbuf.c:2517
 msgid "Uncomment region"
-msgstr "Retirar comentário da região"
+msgstr "Remover comentário da região"
 
 #: gui2/textbuf.c:2553
 msgid "Execute region"
@@ -16937,7 +16938,7 @@ msgstr "Autovalor"
 #: plugin/johansen.c:1581
 #: plugin/johansen.c:1607
 msgid "Trace test"
-msgstr "Teste Traço"
+msgstr "Teste traço"
 
 #: plugin/johansen.c:1562
 msgid "Lmax test"
