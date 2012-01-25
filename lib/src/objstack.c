@@ -559,8 +559,7 @@ void *gretl_get_object_by_name (const char *name)
 int 
 gretl_get_object_and_type (const char *name, void **pp, GretlObjType *type)
 {
-    const char *test;
-    int i, err = E_DATA;
+    int err = E_DATA;
 
     *pp = NULL;
     *type = 0;
@@ -569,23 +568,26 @@ gretl_get_object_and_type (const char *name, void **pp, GretlObjType *type)
 	return err;
     }
 
-    for (i=0; i<n_obj; i++) {
-	test = gretl_object_get_name(ostack[i].ptr, ostack[i].type);
-	if (!strcmp(name, test)) {
-	    *pp = ostack[i].ptr;
-	    *type = ostack[i].type;
-	    err = 0;
-	    break;
-	}
-    }
-
-    if (err && !strcmp(name, "$system")) {
+    if (!strcmp(name, "$system")) {
 	*pp = get_anonymous_equation_system();
 	if (*pp != NULL) {
 	    *type = GRETL_OBJ_SYS; 
 	    err = 0;
 	}
-    }	
+    } else {
+	const char *test;
+	int i;
+
+	for (i=0; i<n_obj; i++) {
+	    test = gretl_object_get_name(ostack[i].ptr, ostack[i].type);
+	    if (!strcmp(name, test)) {
+		*pp = ostack[i].ptr;
+		*type = ostack[i].type;
+		err = 0;
+		break;
+	    }
+	}
+    }
 
     return err;
 }

@@ -148,12 +148,14 @@ equation_system *get_anonymous_equation_system (void)
     return get_anon_system_at_depth(fd);
 }
 
-/* The use-case for push_anon_system() is when a function
-   writer wants to define a system and then estimate it
-   by more than one method, or set it as a target for
-   "restrict" before estimation. Inside functions the
-   "name <- system" mechanism is not available, so we
-   save the system "anonymously" instead (under a name
+/* The use-case for push_anon_system() is when a user wants to define
+   a system and then estimate it by more than one method (or set it as
+   a target for "restrict" before estimation) but does not care to
+   give it a specific name via the "name <- system" mechanism -- or
+   we're inside a user-defined function where this naming mechanism is
+   not available.
+
+   In this case we save the system "anonymously" instead (under a name
    of "$system").
 */
 
@@ -1103,15 +1105,10 @@ equation_system *equation_system_start (const char *line,
 	}
     }
 
-    if (method < 0 && sysname == NULL) {
-	/* neither a method nor a name was specified */
-	if (1 || gretl_function_depth() > 0) {
-	    sysname = gretl_strdup("$system");
-	    anon_sys = 1;
-	} else {
-	    gretl_errmsg_set(_(badsystem));
-	    *err = E_DATA;
-	}
+    if (sysname == NULL) {
+	/* no name was specified: treat the system as "anonymous" */
+	sysname = gretl_strdup("$system");
+	anon_sys = 1;
     }
 
     if (strstr(line, "save=")) {
@@ -2018,10 +2015,12 @@ int estimate_named_system (const char *line, DATASET *dset,
 			   gretlopt opt, PRN *prn)
 {
     equation_system *sys = NULL;
-    char *sysname;
+    char *sysname = NULL;
     int err = 0;
 
-    if (!strncmp(line, "estimate ", 9)) {
+    if (!strcmp(line, "estimate")) {
+	line += 8;
+    } else if (!strncmp(line, "estimate ", 9)) {
 	line += 9;
     }
 
@@ -2031,22 +2030,31 @@ int estimate_named_system (const char *line, DATASET *dset,
     fprintf(stderr, "*** estimate_named_system: '%s'\n", sysname);
 #endif
 
-    if (sysname != NULL && !sys_anonymous(sysname)) {
-	/* look for a genuine named system */
-	sys = get_equation_system_by_name(sysname);
-	if (sys == NULL) {
-	    err = E_DATA;
+    if (sysname != NULL) {
+	/* we got a name */
+	if (sys_anonymous(sysname)) {
+	    sys = get_anonymous_equation_system();
+	} else {
+	    sys = get_equation_system_by_name(sysname);
 	}
-    } else {
-	/* no name, or dummy name: try for an anonymous system */
-	sys = get_anonymous_equation_system();
 	if (sys == NULL) {
 	    gretl_errmsg_sprintf(_("'%s': unrecognized name"), sysname);
 	    err = E_DATA;
-	}	    
-    }
+	}
+	free(sysname);
+    } else {
+	/* no name given: try "last model"? */
+	GretlObjType type;
+	void *ptr;
 
-    free(sysname);
+	ptr = get_last_model(&type);
+	if (ptr == NULL || type != GRETL_OBJ_SYS) {
+	    gretl_errmsg_sprintf(_("%s: no system was specified"), "estimate");
+	    err = E_DATA;
+	} else {
+	    sys = ptr;
+	}
+    }
 
     if (!err) {
 	int method = get_estimation_method_from_line(line);
