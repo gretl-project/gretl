@@ -328,6 +328,8 @@ void stop_wait_for_output (GtkWidget *w);
 
 /* other */
 
+gchar *maybe_fix_decimal_comma (const gchar *s);
+
 int menu_op_wrapper (selector *sr);
 
 int max_untouchable_series_ID (void);

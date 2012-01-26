@@ -1562,9 +1562,17 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 
     if (rset->opt & OPT_R) {
 	/* boolean restriction */
-	const gchar *restr = gtk_entry_get_text(GTK_ENTRY(rset->entry));
+	const gchar *s = gtk_entry_get_text(GTK_ENTRY(rset->entry));
+	gchar *tmp;
+
+	if (get_local_decpoint() == ',' && strchr(s, ',') != NULL) {
+	    tmp = maybe_fix_decimal_comma(s);
+	} else {
+	    tmp = g_strdup(s);
+	}	
 	
-	lib_command_sprintf("smpl %s --restrict%s", restr, replace);
+	lib_command_sprintf("smpl %s --restrict%s", tmp, replace);
+	g_free(tmp);
 
 	if (parse_lib_command()) {
 	    return TRUE;

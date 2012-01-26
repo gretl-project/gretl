@@ -4306,7 +4306,7 @@ static int starts_with_type_word (const char *s)
     return 0;
 }
 
-static gchar *maybe_fix_decimal_comma (const gchar *s)
+gchar *maybe_fix_decimal_comma (const gchar *s)
 {
     gchar *cpy = g_strdup(s);
     gchar *p = cpy;

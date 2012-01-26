@@ -651,7 +651,8 @@ static int restriction_set_form_matrices (gretl_restriction *rset)
 	err = equation_form_matrices(rset);
     } else if (rset->otype == GRETL_OBJ_VAR) {
 	err = vecm_form_matrices(rset);
-    } else {
+    } else if (rset->g > 0) {
+	/* mutivariate system */
 	err = sys_form_matrices(rset);
     }
 
