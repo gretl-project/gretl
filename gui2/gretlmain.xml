@@ -102,6 +102,7 @@
     </menu>
     <menu action="Data">
       <menuitem action="DataSelectAll"/>
+      <menuitem action="VarFind"/>
       <separator/>
       <menuitem action="DefineList"/>
       <menuitem action="SelectList"/>
@@ -120,11 +121,9 @@
       <menuitem action="DataExpand"/>
       <menuitem action="DataTranspose"/>
       <menuitem action="DataSort"/>
+      <separator/>
       <menuitem action="GSETMISS"/>
       <menuitem action="CountMissing"/>
-      <separator/>
-      <menuitem action="VarFind"/>
-      <menuitem action="DataRefresh"/>
     </menu>
     <menu action="View">
       <menuitem action="IconView"/>

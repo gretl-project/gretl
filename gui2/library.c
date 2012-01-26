@@ -4306,9 +4306,37 @@ static int starts_with_type_word (const char *s)
     return 0;
 }
 
+static gchar *maybe_fix_decimal_comma (const gchar *s)
+{
+    gchar *cpy = g_strdup(s);
+    gchar *p = cpy;
+    int inbrackets = 0;
+    int inparens = 0;
+
+    while (*p) {
+	if (*p == '[') {
+	    inbrackets++;
+	} else if (*p == ']') {
+	    inbrackets--;
+	} else if (*p == '(') {
+	    inparens++;
+	} else if (*p == ')') {
+	    inparens--;
+	} 
+	if (!inparens && !inbrackets && *p == ',' && isdigit(*(p+1))) {
+	    *p = '.';
+	}
+	p++;
+    }
+
+    return cpy;
+}
+
 void do_genr (GtkWidget *w, dialog_t *dlg) 
 {
     const gchar *s = edit_dialog_get_text(dlg);
+    gchar *tmp;
+    int decom = (get_local_decpoint() == ',');
     int err, edit = 0;
 
     if (s == NULL) {
@@ -4317,15 +4345,23 @@ void do_genr (GtkWidget *w, dialog_t *dlg)
 
     while (isspace((unsigned char) *s)) s++;
 
-    if (starts_with_type_word(s)) {
-	lib_command_strcpy(s);
-    } else if (strchr(s, '=') == NULL && !genr_special_word(s)) {
+    if (decom) {
+	tmp = maybe_fix_decimal_comma(s);
+    } else {
+	tmp = g_strdup(s);
+    }
+
+    if (starts_with_type_word(tmp)) {
+	lib_command_strcpy(tmp);
+    } else if (strchr(tmp, '=') == NULL && !genr_special_word(tmp)) {
 	/* bare varname? */
-	lib_command_sprintf("series %s = NA", s);
+	lib_command_sprintf("series %s = NA", tmp);
 	edit = 1;
     } else {
-	lib_command_sprintf("genr %s", s);
+	lib_command_sprintf("genr %s", tmp);
     }
+
+    g_free(tmp);
 
     err = finish_genr(NULL, dlg);
 

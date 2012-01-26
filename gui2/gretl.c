@@ -1423,6 +1423,7 @@ GtkActionEntry main_entries[] = {
     /* Data */
     { "Data", NULL, N_("_Data"), NULL, NULL, NULL },
     { "DataSelectAll", NULL, N_("Select _all"), "<control>A", NULL, G_CALLBACK(mdata_select_all) },
+    { "VarFind", GTK_STOCK_FIND, N_("_Find variable..."), NULL, NULL, G_CALLBACK(listbox_find) },
     { "DefineList", NULL, N_("Define or edit _list..."), NULL, NULL, G_CALLBACK(gui_define_list) },
     { "SelectList", NULL, N_("_Set selection from list..."), NULL, NULL, G_CALLBACK(mdata_select_list) },
     { "DisplayValues", NULL, N_("_Display values"), NULL, NULL, G_CALLBACK(display_selected) },
@@ -1438,8 +1439,6 @@ GtkActionEntry main_entries[] = {
     { "DataTranspose", NULL, N_("_Transpose data..."), NULL, NULL, G_CALLBACK(gui_transpose_data) },
     { "DataSort", NULL, N_("_Sort data..."), NULL, NULL, G_CALLBACK(gui_sort_data) },
     { "GSETMISS", NULL, N_("Set missing _value code..."), NULL, NULL, G_CALLBACK(gretl_callback) },
-    { "VarFind", GTK_STOCK_FIND, N_("_Find variable..."), NULL, NULL, G_CALLBACK(listbox_find) },
-    { "DataRefresh", NULL, N_("_Refresh window"), NULL, NULL, G_CALLBACK(refresh_data) },
 
     /* View */
     { "View", NULL, N_("_View"), NULL, NULL, NULL },
