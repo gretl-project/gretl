@@ -4338,7 +4338,6 @@ void do_genr (GtkWidget *w, dialog_t *dlg)
 {
     const gchar *s = edit_dialog_get_text(dlg);
     gchar *tmp;
-    int decom = (get_local_decpoint() == ',');
     int err, edit = 0;
 
     if (s == NULL) {
@@ -4347,7 +4346,7 @@ void do_genr (GtkWidget *w, dialog_t *dlg)
 
     while (isspace((unsigned char) *s)) s++;
 
-    if (decom) {
+    if (get_local_decpoint() == ',' && strchr(s, ',') != NULL) {
 	tmp = maybe_fix_decimal_comma(s);
     } else {
 	tmp = g_strdup(s);
