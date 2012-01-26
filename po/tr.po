@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-12-23 11:59-0500\n"
-"PO-Revision-Date: 2012-01-06 09:31+0200\n"
+"PO-Revision-Date: 2012-01-26 13:59+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -469,14 +469,14 @@ msgstr "LÇ (LM) sınaması"
 #, c-format
 msgid "Adding variables improved %d of %d model selection statistics.\n"
 msgstr ""
-"Değişken eklemek %d model seçim istatistiği içinden %d tanesini "
+"Değişken eklemek %2$d model seçim istatistiği içinden %1$d tanesini "
 "iyileştirdi.\n"
 
 #: lib/src/compare.c:402
 #, c-format
 msgid "Omitting variables improved %d of %d model selection statistics.\n"
 msgstr ""
-"Değişken çıkarmak %d model seçim istatistiği içinden %d tanesini "
+"Değişken çıkarmak %2$d model seçim istatistiği içinden %1$d tanesini "
 "iyileştirdi.\n"
 
 #: lib/src/compare.c:551
@@ -2476,7 +2476,7 @@ msgstr "%s dizgisi oluşturuldu"
 #: lib/src/genmain.c:165
 #, c-format
 msgid "Replaced after model %d: "
-msgstr "model %d sonrası değiştirildi: "
+msgstr "model %d sonrası değiştirilen "
 
 #: lib/src/genmain.c:270 lib/src/interact.c:2295
 #, c-format
@@ -5122,7 +5122,7 @@ msgstr "Eğim"
 
 #: lib/src/modelprint.c:2190
 msgid "Warning: data matrix close to singularity!"
-msgstr "Uyarı: Veriler dizeyi tekilliğe yakın!"
+msgstr "Uyarı: Veri dizeyi tekilliğe yakın!"
 
 #: lib/src/modelprint.c:2212
 msgid ""
