@@ -4312,6 +4312,8 @@ gchar *maybe_fix_decimal_comma (const gchar *s)
     gchar *p = cpy;
     int inbrackets = 0;
     int inparens = 0;
+    int inbraces = 0;
+    int inquotes = 0;
 
     /* experimental */
 
@@ -4324,8 +4326,15 @@ gchar *maybe_fix_decimal_comma (const gchar *s)
 	    inparens++;
 	} else if (*p == ')') {
 	    inparens--;
-	} 
-	if (!inparens && !inbrackets && *p == ',' && isdigit(*(p+1))) {
+	} else if (*p == '{') {
+	    inbraces++;
+	} else if (*p == '}') {
+	    inbraces--;
+	} else if (*p == '"') {
+	    inquotes = !inquotes;
+	}
+	if (*p == ',' && !inparens && !inbrackets && 
+	    !inbraces && !inquotes && isdigit(*(p+1))) {
 	    *p = '.';
 	}
 	p++;
