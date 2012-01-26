@@ -4313,6 +4313,8 @@ static gchar *maybe_fix_decimal_comma (const gchar *s)
     int inbrackets = 0;
     int inparens = 0;
 
+    /* experimental */
+
     while (*p) {
 	if (*p == '[') {
 	    inbrackets++;
