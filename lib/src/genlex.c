@@ -698,6 +698,8 @@ void context_error (int c, parser *p)
 	    pputs(p->prn, _("(for logical AND, use '&&')\n"));
 	} else if (c == '|') {
 	    pputs(p->prn, _("(for logical OR, use '||')\n"));
+	} else if (c == ',') {
+	    p->err = E_BADCOMMA;
 	}
     } else {
 	const char *s = getsymb(p->sym, p);

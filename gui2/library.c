@@ -1453,6 +1453,7 @@ void gui_warnmsg (int errcode)
 
 int bool_subsample (gretlopt opt)
 {
+    const char *msg;
     PRN *prn;
     int err = 0;
 
@@ -1468,11 +1469,11 @@ int bool_subsample (gretlopt opt)
 			      opt, prn);
     }
 
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	const char *msg = gretl_print_get_buffer(prn);
+    msg = gretl_print_get_buffer(prn);
 
+    if (err) {
+	errmsg_plus(err, msg);
+    } else {
 	if (msg != NULL && *msg != '\0') {
 	    infobox(msg);
 	} else {
@@ -3285,23 +3286,38 @@ void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
     view_buffer(prn, 78, 450, my_sys->name, SYSTEM, my_sys);
 }
 
-/* Try for the most informative possible error message,
-   but also try to avoid duplication
+/* Try for the most informative possible error message
+   from genr, but also try to avoid duplication. In context, 
+   @plus is (or may be) a specific message from "genr".
 */
 
-static void errmsg_plus (int err, const char *plus)
+void errmsg_plus (int err, const char *plus)
 {
     int handled = 0;
 
     if (plus != NULL && *plus != '\0') {
 	const char *s1 = errmsg_get_with_default(err);
 	gchar *s2 = g_strstrip(g_strdup(plus));
+	const char *s3 = NULL;
+
+	if (err == E_BADCOMMA && get_local_decpoint() == ',') {
+	    s3 = N_("Please note: the decimal character must be '.'\n"
+		    "in this context");
+	}
 
 	if (*s1 != '\0' && *s2 != '\0' && strcmp(s1, s2)) {
-	    errbox("%s\n%s", s1, s2);
+	    if (s3 != NULL) {
+		errbox("%s\n\n%s", s1, _(s3));
+	    } else {   
+		errbox("%s\n\n%s", s1, s2);
+	    }
 	    handled = 1;
 	} else if (*s1 == '\0' && *s2 != '\0') {
-	    errbox(s2);
+	    if (s3 != NULL) {
+		errbox("%s\n\n%s", s2, _(s3));
+	    } else {
+		errbox(s2);
+	    }
 	    handled = 1;
 	}
 
@@ -3309,6 +3325,7 @@ static void errmsg_plus (int err, const char *plus)
     } 
 
     if (!handled) {
+	/* fallback */
 	gui_errmsg(err);
     }
 }
@@ -4306,47 +4323,9 @@ static int starts_with_type_word (const char *s)
     return 0;
 }
 
-gchar *maybe_fix_decimal_comma (const gchar *s)
-{
-    gchar *cpy = g_strdup(s);
-    gchar *p = cpy;
-    int inbrackets = 0;
-    int inparens = 0;
-    int inbraces = 0;
-    int inquotes = 0;
-
-    /* experimental */
-
-    while (*p) {
-	if (*p == '[') {
-	    inbrackets++;
-	} else if (*p == ']') {
-	    inbrackets--;
-	} else if (*p == '(') {
-	    inparens++;
-	} else if (*p == ')') {
-	    inparens--;
-	} else if (*p == '{') {
-	    inbraces++;
-	} else if (*p == '}') {
-	    inbraces--;
-	} else if (*p == '"') {
-	    inquotes = !inquotes;
-	}
-	if (*p == ',' && !inparens && !inbrackets && 
-	    !inbraces && !inquotes && isdigit(*(p+1))) {
-	    *p = '.';
-	}
-	p++;
-    }
-
-    return cpy;
-}
-
 void do_genr (GtkWidget *w, dialog_t *dlg) 
 {
     const gchar *s = edit_dialog_get_text(dlg);
-    gchar *tmp;
     int err, edit = 0;
 
     if (s == NULL) {
@@ -4355,23 +4334,15 @@ void do_genr (GtkWidget *w, dialog_t *dlg)
 
     while (isspace((unsigned char) *s)) s++;
 
-    if (get_local_decpoint() == ',' && strchr(s, ',') != NULL) {
-	tmp = maybe_fix_decimal_comma(s);
-    } else {
-	tmp = g_strdup(s);
-    }
-
-    if (starts_with_type_word(tmp)) {
-	lib_command_strcpy(tmp);
-    } else if (strchr(tmp, '=') == NULL && !genr_special_word(tmp)) {
+    if (starts_with_type_word(s)) {
+	lib_command_strcpy(s);
+    } else if (strchr(s, '=') == NULL && !genr_special_word(s)) {
 	/* bare varname? */
-	lib_command_sprintf("series %s = NA", tmp);
+	lib_command_sprintf("series %s = NA", s);
 	edit = 1;
     } else {
-	lib_command_sprintf("genr %s", tmp);
+	lib_command_sprintf("genr %s", s);
     }
-
-    g_free(tmp);
 
     err = finish_genr(NULL, dlg);
 

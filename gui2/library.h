@@ -73,6 +73,8 @@ void gui_errmsg (int errcode);
 
 void gui_warnmsg (int errcode);
 
+void errmsg_plus (int err, const char *plus);
+
 void gui_graph_handler (int err);
 
 /* sample-related functions */
@@ -327,8 +329,6 @@ void stop_wait_for_output (GtkWidget *w);
 #endif
 
 /* other */
-
-gchar *maybe_fix_decimal_comma (const gchar *s);
 
 int menu_op_wrapper (selector *sr);
 
