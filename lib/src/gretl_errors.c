@@ -85,6 +85,7 @@ static const char *gretl_error_messages[] = {
     N_("Insufficient observations for this operation"),          /* E_TOOFEW */
     N_("Error executing function"),                              /* E_FUNCERR */
     N_("Execution aborted by request"),                          /* E_STOP */
+    N_("Syntax error in genr formula"),                          /* E_BADCOMMA */
     NULL,                                                        /* E_DB_DUP */
     NULL,                                                        /* E_OK */
     NULL                                                         /* E_MAX */
