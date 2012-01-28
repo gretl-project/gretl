@@ -36,8 +36,16 @@ void action_entry_init (GtkActionEntry *entry);
 int vwin_add_ui (windata_t *vwin, GtkActionEntry *entries,
 		 gint n_entries, const gchar *ui_info);
 
-int vwin_menu_add_item (windata_t *vwin, const gchar *path, 
-			GtkActionEntry *entry);
+GtkActionGroup *get_ad_hoc_group (GtkUIManager *uim,
+				  int *newgroup);
+
+int vwin_menu_add_item_unique (windata_t *vwin, 
+			       const gchar *aname, 
+			       const gchar *path, 
+			       GtkActionEntry *entry);
+
+void vwin_menu_add_item (windata_t *vwin, const gchar *path, 
+			 GtkActionEntry *entry);
 
 int vwin_menu_add_items (windata_t *vwin, const gchar *path, 
 			 GtkActionEntry *entries, int n);

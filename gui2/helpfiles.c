@@ -1023,17 +1023,20 @@ static void add_help_tool_by_name (windata_t *hwin,
     }
 
     if (item != NULL) {
-	guint id = gtk_ui_manager_new_merge_id(hwin->ui);
 	GtkActionGroup *actions;
+	int newgroup = 1;
+	guint id;
 
-	actions = gtk_action_group_new("AdHoc");
-	gtk_action_group_set_translation_domain(actions, "gretl");
+	actions = get_ad_hoc_group(hwin->ui, &newgroup);
 	gtk_action_group_add_actions(actions, item, 1, hwin);
+	id = gtk_ui_manager_new_merge_id(hwin->ui);
 	gtk_ui_manager_add_ui(hwin->ui, id, "/toolbar", 
 			      item->name, item->name,
 			      GTK_UI_MANAGER_TOOLITEM, FALSE);
-	gtk_ui_manager_insert_action_group(hwin->ui, actions, 0);
-	g_object_unref(actions);
+	if (newgroup) {
+	    gtk_ui_manager_insert_action_group(hwin->ui, actions, 0);
+	    g_object_unref(actions);
+	}
     }
 }
 

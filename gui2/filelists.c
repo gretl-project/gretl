@@ -528,7 +528,7 @@ static void real_add_files_to_menus (int ftype)
 		alabel = g_strdup_printf("%d. %s", k+1, endbit(tmp, fname, 1));
 		entry.name = aname;
 		entry.label = alabel;
-		id[i] = vwin_menu_add_item(mdata, mpath[j], &entry);
+		id[i] = vwin_menu_add_item_unique(mdata, aname, mpath[j], &entry);
 		apath = g_strdup_printf("%s/%s", mpath[j], aname);
 		w = gtk_ui_manager_get_widget(mdata->ui, apath);
 		if (w != NULL) {

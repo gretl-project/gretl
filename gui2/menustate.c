@@ -816,42 +816,111 @@ int vwin_add_ui (windata_t *vwin, GtkActionEntry *entries,
     return 0;
 }
 
-int vwin_menu_add_item (windata_t *vwin, const gchar *path, 
-			GtkActionEntry *entry)
+int vwin_menu_add_item_unique (windata_t *vwin, 
+			       const gchar *aname, 
+			       const gchar *path, 
+			       GtkActionEntry *entry)
 {
-    guint id = gtk_ui_manager_new_merge_id(vwin->ui);
+    GList *list = gtk_ui_manager_get_action_groups(vwin->ui);
     GtkActionGroup *actions;
+    guint id;
 
-    actions = gtk_action_group_new("AdHoc");
+    while (list != NULL) {
+	GtkActionGroup *group = list->data;
+
+	if (!strcmp(aname, gtk_action_group_get_name(group))) {
+	    gtk_ui_manager_remove_action_group(vwin->ui, group);
+	    break;
+	}
+	list = list->next;
+    }
+
+    id = gtk_ui_manager_new_merge_id(vwin->ui);
+    actions = gtk_action_group_new(aname);
     gtk_action_group_set_translation_domain(actions, "gretl");
 
     gtk_action_group_add_actions(actions, entry, 1, vwin);
     gtk_ui_manager_add_ui(vwin->ui, id, path, entry->name, entry->name,
 			  GTK_UI_MANAGER_MENUITEM, FALSE);
+
     gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
     g_object_unref(actions);
-
+	
     return id;
+}
+
+/* retrieve existing "AdHoc" action group from @uim, or add a 
+   new group of this name to the UIManager */
+
+GtkActionGroup *get_ad_hoc_group (GtkUIManager *uim,
+				  int *newgroup)
+{
+    GList *list = gtk_ui_manager_get_action_groups(uim); 
+    GtkActionGroup *actions = NULL;
+
+    while (list != NULL) {
+	GtkActionGroup *group = list->data;
+
+	if (!strcmp(gtk_action_group_get_name(group), "AdHoc")) {
+	    actions = group;
+	    break;
+	}
+	list = list->next;
+    } 
+
+    if (actions == NULL) {
+	actions = gtk_action_group_new("AdHoc");
+	gtk_action_group_set_translation_domain(actions, "gretl");
+	*newgroup = 1;
+    } else {
+	*newgroup = 0;
+    }
+
+    return actions;
+}
+
+void vwin_menu_add_item (windata_t *vwin, const gchar *path, 
+			 GtkActionEntry *entry)
+{
+    GtkActionGroup *actions;
+    int newgroup = 1;
+    guint id;
+
+    actions = get_ad_hoc_group(vwin->ui, &newgroup);
+    gtk_action_group_add_actions(actions, entry, 1, vwin);
+    id = gtk_ui_manager_new_merge_id(vwin->ui); 
+
+    gtk_ui_manager_add_ui(vwin->ui, id, path, entry->name, entry->name,
+			  GTK_UI_MANAGER_MENUITEM, FALSE);
+
+    if (newgroup) {
+	gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
+	g_object_unref(actions);
+    }
 }
 
 int vwin_menu_add_items (windata_t *vwin, const gchar *path, 
 			 GtkActionEntry *entries, int n)
 {
-    guint id = gtk_ui_manager_new_merge_id(vwin->ui);
     GtkActionGroup *actions;
+    int newgroup = 1;
+    guint id;
     int i;
 
-    actions = gtk_action_group_new("AdHoc");
-    gtk_action_group_set_translation_domain(actions, "gretl");
-
+    actions = get_ad_hoc_group(vwin->ui, &newgroup);
     gtk_action_group_add_actions(actions, entries, n, vwin);
+    id = gtk_ui_manager_new_merge_id(vwin->ui);
+
     for (i=0; i<n; i++) {
 	gtk_ui_manager_add_ui(vwin->ui, id, path, 
 			      entries[i].name, entries[i].name,
 			      GTK_UI_MANAGER_MENUITEM, FALSE);
     }
-    gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
-    g_object_unref(actions);
+
+    if (newgroup) {
+	gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
+	g_object_unref(actions);
+    }
 
     return id;
 }
