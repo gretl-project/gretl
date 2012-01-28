@@ -239,7 +239,7 @@ static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
 
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
-#ifdef G_OS_WIN32 */
+#ifdef G_OS_WIN32
     /* gtsourceview printing is screwed on Windows */
     window_print(NULL, vwin);
 #else
