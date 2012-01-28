@@ -26,6 +26,7 @@ endif
 # GTK version switch: set HAVE_GTK_SPINNER to yes if you
 # are building (and running) with GTK version 2.20.0 or higher
 HAVE_GTK_SPINNER = no
+# HAVE_GTK_SPINNER = yes
 
 # libxml2 includes: adjust to match your system
 XML2_INC = $(MGWDIR)/include/libxml2

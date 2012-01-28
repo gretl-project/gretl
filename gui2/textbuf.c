@@ -2742,6 +2742,23 @@ static void insert_tagged_text (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	break;
     }
 
+#ifdef G_OS_WIN32
+    if (ins == INSERT_OPT) {
+	/* Unicode word joiner not supported? Try zero width 
+	   non breaking space instead */
+	char tmp[32];
+
+	strcpy(tmp, s);
+	tmp[2] = 0xEF;
+	tmp[3] = 0xBB;
+	tmp[4] = 0xBF;
+
+	gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, tmp, -1,
+						 ftag, indent, NULL);
+	return;
+    }
+#endif
+
     if (ftag != NULL) {
 	gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, s, -1,
 						 ftag, indent, NULL);

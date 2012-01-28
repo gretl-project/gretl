@@ -25,6 +25,10 @@
 
 #ifdef USE_SSE2
 # define HAVE_SSE2
+#else
+# ifdef HAVE_SSE2
+#  undef HAVE_SSE2
+# endif
 #endif
 
 #include "../../rng/SFMT.c"
