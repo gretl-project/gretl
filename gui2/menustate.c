@@ -816,6 +816,34 @@ int vwin_add_ui (windata_t *vwin, GtkActionEntry *entries,
     return 0;
 }
 
+static GtkActionGroup *get_named_group (GtkUIManager *uim,
+					const char *name, 
+					int *newgroup)
+{
+    GList *list = gtk_ui_manager_get_action_groups(uim); 
+    GtkActionGroup *actions = NULL;
+
+    while (list != NULL) {
+	GtkActionGroup *group = list->data;
+
+	if (!strcmp(gtk_action_group_get_name(group), name)) {
+	    actions = group;
+	    break;
+	}
+	list = list->next;
+    } 
+
+    if (actions == NULL) {
+	actions = gtk_action_group_new(name);
+	gtk_action_group_set_translation_domain(actions, "gretl");
+	*newgroup = 1;
+    } else {
+	*newgroup = 0;
+    }
+
+    return actions;
+}
+
 int vwin_menu_add_item_unique (windata_t *vwin, 
 			       const gchar *aname, 
 			       const gchar *path, 
@@ -849,38 +877,22 @@ int vwin_menu_add_item_unique (windata_t *vwin,
     return id;
 }
 
-/* retrieve existing "AdHoc" action group from @uim, or add a 
-   new group of this name to the UIManager */
+/* Retrieve existing "AdHoc" action group from @uim, or add a 
+   new group of this name to the UIManager and return it.
+*/
 
 GtkActionGroup *get_ad_hoc_group (GtkUIManager *uim,
 				  int *newgroup)
 {
-    GList *list = gtk_ui_manager_get_action_groups(uim); 
-    GtkActionGroup *actions = NULL;
-
-    while (list != NULL) {
-	GtkActionGroup *group = list->data;
-
-	if (!strcmp(gtk_action_group_get_name(group), "AdHoc")) {
-	    actions = group;
-	    break;
-	}
-	list = list->next;
-    } 
-
-    if (actions == NULL) {
-	actions = gtk_action_group_new("AdHoc");
-	gtk_action_group_set_translation_domain(actions, "gretl");
-	*newgroup = 1;
-    } else {
-	*newgroup = 0;
-    }
-
-    return actions;
+    return get_named_group(uim, "AdHoc", newgroup);
 }
 
-void vwin_menu_add_item (windata_t *vwin, const gchar *path, 
-			 GtkActionEntry *entry)
+/* Adds the specified @entry to vwin->ui at @path; returns
+   the "merge_id", which can be used to remove the item
+*/
+
+int vwin_menu_add_item (windata_t *vwin, const gchar *path, 
+			GtkActionEntry *entry)
 {
     GtkActionGroup *actions;
     int newgroup = 1;
@@ -897,7 +909,13 @@ void vwin_menu_add_item (windata_t *vwin, const gchar *path,
 	gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
 	g_object_unref(actions);
     }
+
+    return id;
 }
+
+/* Adds the specified @entries to vwin->ui at @path; returns
+   the "merge_id", which can be used to remove the items
+*/
 
 int vwin_menu_add_items (windata_t *vwin, const gchar *path, 
 			 GtkActionEntry *entries, int n)

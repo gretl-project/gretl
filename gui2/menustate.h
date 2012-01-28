@@ -44,8 +44,8 @@ int vwin_menu_add_item_unique (windata_t *vwin,
 			       const gchar *path, 
 			       GtkActionEntry *entry);
 
-void vwin_menu_add_item (windata_t *vwin, const gchar *path, 
-			 GtkActionEntry *entry);
+int vwin_menu_add_item (windata_t *vwin, const gchar *path, 
+			GtkActionEntry *entry);
 
 int vwin_menu_add_items (windata_t *vwin, const gchar *path, 
 			 GtkActionEntry *entries, int n);
