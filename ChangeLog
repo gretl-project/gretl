@@ -1,4 +1,5 @@
 version 1.9.8, in progress
+- Fix configure script for non-sse2 build
 - New function pxsum(): computes the cross-sectional sum of a series in
   the context of panel data
 - stack() function for panel data: allow '*' in forming list of series
@@ -13,6 +14,7 @@ version 1.9.8, in progress
 - Various small fixes for spreadsheet data importers
 - Compaction of daily to weekly data: enable this even if the daily data
   are not dated
+- "system" command: various small fixes
 
 2011-12-22 version 1.9.7
 - Add two nonparametric estimators: William Cleveland's loess and the
