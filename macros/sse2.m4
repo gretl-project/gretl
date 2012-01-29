@@ -20,7 +20,7 @@ AC_DEFUN([AC_C_SSE2],
   sse2_result=no
   save_CFLAGS=$CFLAGS
   SSE2_CFLAGS=
-  if test ! "$enable_sse2" = no; then
+  if test "$enable_sse2" != "no" ; then
     if test "x$SSE2_CFLAGS" = "x" ; then
       if test "x$SUNCC" = "xyes"; then
         # SSE2 is enabled by default in the Sun Studio 64-bit environment
@@ -72,6 +72,8 @@ int main (void)
  
     if test "$sse2_result" = "yes" ; then      
        AC_DEFINE(USE_SSE2)
+    else
+       SSE2_CFLAGS=""
     fi 
   fi
   CFLAGS="$save_CFLAGS"

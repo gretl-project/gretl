@@ -238,7 +238,7 @@ void time_series_menu_state (gboolean s)
     /* Variable menu */
     flip(mdata->ui, "/menubar/Variable/URTests", ur); 
     if (ur && !s) {
-	/* a time-series only "ur" option */
+/* a time-series only "ur" option */
 	flip(mdata->ui, "/menubar/Variable/URTests/fractint", s);
     }
     flip(mdata->ui, "/menubar/Variable/URTests/levinlin", ur && panel);
