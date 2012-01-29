@@ -1,15 +1,15 @@
-# Polish translation for gretl-1.9.6cvs
+# Polish translation for gretl-1.9.7cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
-# Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2011
-# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2011
-# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2011
+# Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2012
+# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2012
+# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2012
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.9.6\n"
+"Project-Id-Version: gretl-1.9.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-01-27 09:24-0500\n"
-"PO-Revision-Date: 2011-12-22 00:30-0500\n"
+"PO-Revision-Date: 2012-01-29 08:30-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -6639,9 +6639,9 @@ msgid "'%s': unrecognized name"
 msgstr "nierozpoznane polecenie: '%s'"
 
 #: lib/src/system.c:2052
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no system was specified"
-msgstr "%s: niewyspecyfikowane parametry"
+msgstr "%s: niewyspecyfikowany system"
 
 #: lib/src/system.c:2249 lib/src/system.c:2251
 #, c-format
@@ -9038,23 +9038,20 @@ msgid "bandwidth adjustment factor:"
 msgstr "szerokość funkcji bazowej:"
 
 #: gui2/dialogs.c:3975
-#, fuzzy
 msgid "paste data from clipboard"
-msgstr "Kopiuj do schowka"
+msgstr "wklej dane ze schowka"
 
 #: gui2/dialogs.c:3982
 msgid "Try pasting data from clipboard?"
-msgstr ""
+msgstr "Wkleić dane ze schowka?"
 
 #: gui2/dialogs.c:3991
-#, fuzzy
 msgid "Clear current dataset first"
-msgstr "Proszę najpierw otworzyć plik danych"
+msgstr "Proszę najpierw wyczycić bieżący zbiór danych"
 
 #: gui2/dialogs.c:4002
-#, fuzzy
 msgid "Try appending to current dataset"
-msgstr "OK, pozostaje bieżący zbiór danych\n"
+msgstr "Dodać do bieżącego zbioru danych?"
 
 #: gui2/dialogs.c:4223
 msgid "No model is specified"
@@ -10872,24 +10869,23 @@ msgstr "_Zmienna"
 
 #: gui2/gretl.c:1506
 msgid "_Normality test"
-msgstr "Testy normalności rozkładu"
+msgstr "Testy _normalności rozkładu"
 
 #: gui2/gretl.c:1507
 msgid "_Frequency distribution..."
-msgstr "_Rozkład częstości..."
+msgstr "Rozkład _częstości..."
 
 #: gui2/gretl.c:1508
 msgid "Estimated _density plot..."
-msgstr "Wykres gęs_tości..."
+msgstr "Wykres gę_stości..."
 
 #: gui2/gretl.c:1509
-#, fuzzy
 msgid "_Boxplot"
-msgstr "Wykres pudełkowy"
+msgstr "Wykres _pudełkowy"
 
 #: gui2/gretl.c:1510
 msgid "Normal _Q-Q plot..."
-msgstr "Wykres normalności Q-Q..."
+msgstr "Wykres normalności _Q-Q..."
 
 #: gui2/gretl.c:1511
 msgid "_Gini coefficient"
@@ -10901,7 +10897,7 @@ msgstr "Śre_dnie przedziałowe"
 
 #: gui2/gretl.c:1513
 msgid "_Time series plot"
-msgstr "Wykr_es szeregu czasowego"
+msgstr "Wykres _szeregu czasowego"
 
 #: gui2/gretl.c:1514
 msgid "_Panel plot..."
@@ -10913,7 +10909,7 @@ msgstr "Testy pierwiastka _jednostkowego"
 
 #: gui2/gretl.c:1516
 msgid "_Augmented Dickey-Fuller test"
-msgstr "Test A_DF..."
+msgstr "Test _ADF..."
 
 #: gui2/gretl.c:1517
 msgid "ADF-GLS test"
@@ -12588,6 +12584,8 @@ msgid ""
 "Please note: the decimal character must be '.'\n"
 "in this context"
 msgstr ""
+"Uwaga: w tym przypadku znakiem\n"
+"dziesiętnym musi być '.' (kropka)"
 
 #: gui2/library.c:3378
 #, c-format
@@ -13041,14 +13039,12 @@ msgid "Edit values"
 msgstr "Edycja wartości"
 
 #: gui2/menustate.c:392 gui2/menustate.c:523
-#, fuzzy
 msgid "Add log"
-msgstr "Dodaj logarytmy"
+msgstr "Dodaj logarytmy zmiennej"
 
 #: gui2/menustate.c:394 gui2/menustate.c:524
-#, fuzzy
 msgid "Add difference"
-msgstr "Dodaj różnice"
+msgstr "Dodaj pierwsze różnice zmiennej"
 
 #: gui2/menustate.c:396 gui2/menustate.c:498 gui2/menustate.c:525
 #: gui2/menustate.c:585
@@ -14162,9 +14158,9 @@ msgid "versus"
 msgstr "względem"
 
 #: gui2/session.c:2329
-#, fuzzy, c-format
+#, c-format
 msgid "%s: please close this object's window first"
-msgstr "Proszę zamknij najpierw okna obiektów"
+msgstr "%s: proszę zamknij najpierw okna obiektów"
 
 #: gui2/session.c:2497
 #, c-format
