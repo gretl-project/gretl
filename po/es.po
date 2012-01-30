@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-01-27 09:24-0500\n"
-"PO-Revision-Date: 2012-01-19 17:17+0100\n"
+"PO-Revision-Date: 2012-01-30 17:52+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -6686,9 +6686,9 @@ msgid "'%s': unrecognized name"
 msgstr "'%s': nombre no reconocido"
 
 #: lib/src/system.c:2052
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no system was specified"
-msgstr "%s: No se han especificado parámetros"
+msgstr "%s: No se ha especificado ningún sistema"
 
 #: lib/src/system.c:2249 lib/src/system.c:2251
 #, c-format
@@ -12639,6 +12639,8 @@ msgid ""
 "Please note: the decimal character must be '.'\n"
 "in this context"
 msgstr ""
+"Por favor, tenga en cuenta que el separador decimal en este contexto\n"
+"debe ser '.'"
 
 #: gui2/library.c:3378
 #, c-format
