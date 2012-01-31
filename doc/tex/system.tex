@@ -211,14 +211,14 @@ for multivariate systems as compared with single-equation models.
 In the single-equation case, \texttt{restrict} refers to the
 last-estimated model, and once the command is completed the
 restriction is tested. In the multivariate case, you must give the
-name of the system to which restriction is to be applied (or
+name of the system to which the restriction is to be applied (or
 \verb|$system| to refer to the last-defined system), and the effect of
-the command is to attach the restriction to the system; testing is not
-done until the \texttt{estimate} command is given.  In addition, in
-the system case the default is to produce full estimates of the
-restricted model; if you are not interested in the full estimates and
-just want the test statistic you can append the \verb|--quiet| 
-option to \texttt{estimate}.
+the command is just to attach the restriction to the system; testing
+is not done until the next \texttt{estimate} command is given.  In
+addition, in the system case the default is to produce full estimates
+of the restricted model; if you are not interested in the full
+estimates and just want the test statistic you can append the
+\verb|--quiet| option to \texttt{estimate}.
 
 A given system restriction remains in force until it is replaced or
 removed. To return a system to its unrestricted state you can give
@@ -318,7 +318,7 @@ matrices can be retrieved as \verb|$sysGamma|, \verb|$sysA| and
 \verb|$sysB| respectively. If $y_t$ is $m \times 1$ and $x_t$ is $n
 \times 1$, then $\Gamma$ is $m \times m$ and $B$ is $m \times n$. If
 the system contains no lags of the endogenous variables then the $A$
-matrix is not present, otherwise $A$ is the horizontal concatenation
+matrix is not defined, otherwise $A$ is the horizontal concatenation
 of $A_1,\dots,A_p$, and is therefore $m \times mp$.
 
 TODO: add an example of use of the structural-form matrices
