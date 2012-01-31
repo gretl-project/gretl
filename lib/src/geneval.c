@@ -5632,6 +5632,29 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 
 #endif
 
+static gretl_matrix *complex_array_to_matrix (cmplx *c, int sz,
+					      parser *p)
+{
+    gretl_matrix *m = NULL;
+    int i, n = sz / sizeof *c;
+
+    if (n <= 0) {
+	p->err = E_DATA;
+    } else {
+	m = gretl_matrix_alloc(n, 2);
+	if (m == NULL) {
+	    p->err = E_ALLOC;
+	} else {
+	    for (i=0; i<n; i++) {
+		gretl_matrix_set(m, i, 0, c[i].r);
+		gretl_matrix_set(m, i, 1, c[i].i);
+	    }
+	}
+    }
+
+    return m;
+}
+
 /* Getting an object from within a bundle: on the left is the
    bundle reference, on the right should be a string -- the
    key to look up to get content. 
@@ -5706,6 +5729,11 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	    ret->v.b = gretl_bundle_copy((gretl_bundle *) val,
 					 &p->err);
 	} 
+    } else if (type == GRETL_TYPE_CMPLX_ARRAY) {
+	ret = aux_matrix_node(p);
+	if (ret != NULL) {
+	    ret->v.m = complex_array_to_matrix((cmplx *) val, size, p);
+	}
     } else if (type == GRETL_TYPE_SERIES) {
 	const double *x = val;
 
