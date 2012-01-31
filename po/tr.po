@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-01-27 09:24-0500\n"
-"PO-Revision-Date: 2012-01-26 13:59+0200\n"
+"PO-Revision-Date: 2012-01-31 15:58+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -4696,7 +4696,7 @@ msgid ""
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
 "Sayısal olarak % 5 anlamlılık düzeyindeki sınamalar için,\n"
-"arzulanan KBEO ençoksal büyüklüğü kritik değerleri:\n"
+"arzulanan SBEO ençoksal büyüklüğü kritik değerleri:\n"
 
 #: lib/src/modelprint.c:979
 #, no-c-format
@@ -6619,9 +6619,9 @@ msgid "'%s': unrecognized name"
 msgstr "'%s': tanınamayan ad"
 
 #: lib/src/system.c:2052
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no system was specified"
-msgstr "%s: Belirtilmiş değiştirge yok"
+msgstr "%s: Belirtilmiş sistem yok"
 
 #: lib/src/system.c:2249 lib/src/system.c:2251
 #, c-format
@@ -11471,7 +11471,7 @@ msgstr "_Kopyala"
 
 #: gui2/gui_utils.c:188
 msgid "_Modify model..."
-msgstr "_Modeli kiple (modify)..."
+msgstr "_Modeli kiple..."
 
 #: gui2/gui_utils.c:191
 msgid "_Restore model sample"
@@ -12553,6 +12553,8 @@ msgid ""
 "Please note: the decimal character must be '.'\n"
 "in this context"
 msgstr ""
+"Lütfen dikkat: Bu bağlamda ondalık ayraçı '.'\n"
+"şeklinde olmalıdır."
 
 #: gui2/library.c:3378
 #, c-format
@@ -13543,11 +13545,11 @@ msgstr "Gecikmeler..."
 
 #: gui2/selector.c:4265
 msgid "left bound"
-msgstr "soldan bağlı"
+msgstr "sol sınır"
 
 #: gui2/selector.c:4266
 msgid "right bound"
-msgstr "sağdan bağlı"
+msgstr "sağ sınır"
 
 #: gui2/selector.c:4300
 msgid "Polynomial order"
@@ -14622,7 +14624,7 @@ msgstr "Gözlem Ekle"
 
 #: gui2/ssheet.c:1256
 msgid "Insert Observation"
-msgstr "Gözlem Sok"
+msgstr "Araya gözlem ekle"
 
 #: gui2/ssheet.c:1554 gui2/ssheet.c:2707
 msgid "Warning: there were missing observations"
