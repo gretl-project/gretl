@@ -12,11 +12,10 @@ and interest centers on the covariance of the error term across
 equations; and simultaneous systems, in which some regressors are
 assumed to be endogenous.
 
-We begin with an account of the syntax and use of the \cmd{system}
-command in its regular form (along with its companions
-\texttt{restrict} and \texttt{estimate}); we then describe some
-extensions of this command that may be useful for people writing
-functions.
+In this chapter we give an account of the syntax and use of the
+\texttt{system} command and its companions, \texttt{restrict}
+and \texttt{estimate}; we also explain the options and accessors
+available in connection with multivariate models.
 
 \section{The system command}
 \label{sec:system-regular}
@@ -142,8 +141,7 @@ There can be more than one \texttt{identity} in a system block. But
 note that these statements are specific to estimation via FIML; they
 are ignored for other estimators.
 
-\section{Equation systems within functions}
-\label{sec:system-functions}
+\subsection{Equation systems within functions}
 
 It is also possible to define a multivariate system in a programmatic
 way. This is useful if the precise specification of the system depends
@@ -322,6 +320,8 @@ matrices can be retrieved as \verb|$sysGamma|, \verb|$sysA| and
 the system contains no lags of the endogenous variables then the $A$
 matrix is not present, otherwise $A$ is the horizontal concatenation
 of $A_1,\dots,A_p$, and is therefore $m \times mp$.
+
+TODO: add an example of use of the structural-form matrices
 
 %%% Local Variables: 
 %%% mode: latex
