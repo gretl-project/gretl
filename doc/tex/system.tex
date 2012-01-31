@@ -198,14 +198,130 @@ function void anonsys(series x, series y)
      estimate $system method=ols
      estimate $system method=sur
      restrict $system
-         b[1,1]=1
+         b[1,1] - b[2,1] = 0
      end restrict
      estimate $system method=ols
 end function
-
-open denmark
-anonsys(LRY,LRM)
 \end{code}
+
+\section{Restriction and estimation}
+\label{sec:sys-est}
+
+The behavior of the \texttt{restrict} command is a little different
+for multivariate systems as compared with single-equation models.
+
+In the single-equation case, \texttt{restrict} refers to the
+last-estimated model, and once the command is completed the
+restriction is tested. In the multivariate case, you must give the
+name of the system to which restriction is to be applied (or
+\verb|$system| to refer to the last-defined system), and the effect of
+the command is to attach the restriction to the system; testing is not
+done until the \texttt{estimate} command is given.  In addition, in
+the system case the default is to produce full estimates of the
+restricted model; if you are not interested in the full estimates and
+just want the test statistic you can append the \verb|--quiet| 
+option to \texttt{estimate}.
+
+A given system restriction remains in force until it is replaced or
+removed. To return a system to its unrestricted state you can give
+an empty restrict block, as in
+
+\begin{code}
+restrict sysname
+end restrict
+\end{code}
+
+As illustrated above, you can use the \texttt{method} tag to specify
+an estimation method with the \texttt{estimate} command. If the system
+has already been estimated you can omit this tag and the previous
+method is used again. 
+
+The \texttt{estimate} command is the main locus for options regarding
+the details of estimation. The available options are as follows:
+
+\begin{itemize}
+\item If the estimation method is SUR or 3SLS and the \verb|--iterate|
+  flag is given, the estimator will be iterated. In the case of SUR,
+  if the procedure converges the results are maximum likelihood
+  estimates. Iteration of three-stage least squares, however, does not
+  in general converge on the full-information maximum likelihood
+  results. This flag is ignored for other estimators.
+\item If the equation-by-equation estimators OLS or TSLS are chosen,
+  the default is to apply a degrees of freedom correction when
+  calculating standard errors. This can be suppressed using the
+  \verb|--no-df-corr| flag. This flag has no effect with the other
+  estimators; no degrees of freedom correction is applied in any case.
+\item By default, the formula used in calculating the elements of the
+  cross-equation covariance matrix is
+\[
+\hat{\sigma}_{ij} = \frac{\hat{u}'_i \hat{u}_j}{T}
+\]
+where $T$ is the sample size and $\hat{u}_i$ is the vector of
+residuals from equation $i$. But if the \verb|--geomean| flag is
+given, a degrees of freedom correction is applied: the formula is
+\[
+\hat{\sigma}_{ij} = \frac{\hat{u}'_i \hat{u}_j}{\sqrt{(T-k_i)(T-k_j)}}
+\]
+where $k_i$ denotes the number of independent parameters in equation
+$i$.
+\item If an iterative method is specified, the \verb|--verbose| option
+  calls for printing of the details of the iterations.
+\item When the system estimator is SUR or 3SLS the cross-equation
+  covariance matrix is initially estimated via OLS or TSLS,
+  respectively. In the case of a system subject to restrictions the
+  question arises: should the initial single-equation estimator be
+  restricted or unrestricted? The default is the former, but the
+  \verb|--unrestrict-init| flag can be used to select unrestricted
+  initialization. (Note that this is unlikely to make much difference
+  if the \verb|--iterate| option is given.)
+\end{itemize}
+
+\section{System accessors}
+\label{sec:sys-access}
+
+After system estimation various matrices may be retrieved for further
+analysis.  Let $g$ denote the number of equations in the system and
+let $K$ denote the total number of estimated parameters ($K = \sum_i
+k_i$). The accessors \verb|$uhat| and \verb|$yhat| get $T \times g$
+matrices holding the residuals and fitted values respectively. The
+accessor \verb|$coeff| gets the stacked $K$-vector of parameter
+estimates; \verb|$vcv| gets the $K \times K$ variance matrix of the
+parameter estimates; and \verb|$sigma| gets the $g \times g$
+cross-equation covariance matrix, $\hat{\Sigma}$.
+
+A test statistic for the hypothesis that $\Sigma$ is diagonal can be
+retrieved as \verb|$diagtest| and its p-value as
+\verb|$diagpval|. This is the Breusch--Pagan test except when the
+estimator is (unrestricted) iterated SUR, in which case it's a
+Likelihood Ratio test. The Breusch--Pagan test is computed as
+\[
+\mbox{LM} = T \sum_{i=2}^g \sum_{j=1}^{i-1} r^2_{ij}
+\]
+where $r_{ij} = \hat{\sigma}_{ij} /
+\sqrt{\hat{\sigma}_{ii}\hat{\sigma}_{jj}}$; the LR test is
+\[
+\mbox{LR} = T \left(\sum_{i=1}^g \log \hat{\sigma}^2_i -\log 
+ |\hat{\Sigma}| \right)
+\]
+where $\hat{\sigma}^2_i$ is $\hat{u}'_i \hat{u}_i / T$ from the
+individual OLS regressions. In both cases the test statistic is
+distributed asymptotically as $\chi^2$ with $g(g-1)/2$ degrees of
+freedom. 
+
+Systems of simultaneous systems can be represented in structural form
+as
+\[
+\Gamma y_t = A_1 y_{t-1} + A_2 y_{t-2} + \cdots + A_p y_{t-p}
+ + B x_t + \epsilon_t
+\]
+where $y_t$ represents the vector of endogenous variables in period
+$t$ and $x_t$ the vector of exogenous variables.  The structural-form
+matrices can be retrieved as \verb|$sysGamma|, \verb|$sysA| and
+\verb|$sysB| respectively. If $y_t$ is $m \times 1$ and $x_t$ is $n
+\times 1$, then $\Gamma$ is $m \times m$ and $B$ is $m \times n$. If
+the system contains no lags of the endogenous variables then the $A$
+matrix is not present, otherwise $A$ is the horizontal concatenation
+of $A_1,\dots,A_p$, and is therefore $m \times mp$.
 
 %%% Local Variables: 
 %%% mode: latex

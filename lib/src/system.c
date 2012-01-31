@@ -3220,6 +3220,47 @@ print_system_overid_test (const equation_system *sys, PRN *prn)
     }
 }
 
+int system_diag_test (const equation_system *sys, double *test,
+		      double *pval)
+{
+    int k, df, err = 0;
+
+    if (sys->S == NULL) {
+	return E_BADSTAT;
+    }
+
+    k = sys->S->rows;
+    df = k * (k - 1) / 2;
+
+    if (sys->method == SYS_METHOD_SUR && sys->iters > 0) {
+	/* iterated SUR */
+	if (!na(sys->ldet) && sys->diag != 0.0) {
+	    double lr = sys->T * (sys->diag - sys->ldet);
+
+	    if (test != NULL) {
+		*test = lr;
+	    }
+	    if (pval != NULL) {
+		*pval = chisq_cdf_comp(df, lr);
+	    }	    
+	} else {
+	    err = E_BADSTAT;
+	}
+    } else if (sys->diag > 0) {
+	/* other estimators */
+	if (test != NULL) {
+	    *test = sys->diag;
+	}
+	if (pval != NULL) {
+	    *pval = chisq_cdf_comp(df, sys->diag);
+	}		
+    } else {
+	err = E_BADSTAT;
+    }
+
+    return err;
+}
+
 int system_print_sigma (const equation_system *sys, PRN *prn)
 {
     int tex = tex_format(prn);

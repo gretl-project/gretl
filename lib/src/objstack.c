@@ -971,6 +971,10 @@ static double real_get_obj_scalar (void *p, GretlObjType type,
 	    x = sys->ess;
 	} else if (idx == M_DF) {
 	    x = sys->df;
+	} else if (idx == M_DIAGTEST) {
+	    err = system_diag_test(sys, &x, NULL);
+	} else if (idx == M_DIAGPVAL) {
+	    err = system_diag_test(sys, NULL, &x);
 	}
     } else if (type == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) p;

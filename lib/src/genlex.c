@@ -107,6 +107,8 @@ struct str_table mvars[] = {
     { M_DWPVAL,  "$dwpval" },
     { M_FSTT,    "$Fstat" },
     { M_CHISQ,   "$chisq" },
+    { M_DIAGTEST, "$diagtest" },
+    { M_DIAGPVAL, "$diagpval" },
     { M_UHAT,    "$uhat" },
     { M_YHAT,    "$yhat" },
     { M_LLT,     "$llt" },

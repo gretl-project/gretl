@@ -192,6 +192,9 @@ int system_wald_test (const equation_system *sys,
 		      gretlopt opt,
 		      PRN *prn);
 
+int system_diag_test (const equation_system *sys, double *test,
+		      double *pval);
+
 double *system_get_resid_series (equation_system *sys, int eqnum,
 				 DATASET *dset, int *err);
 

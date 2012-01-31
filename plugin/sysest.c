@@ -148,11 +148,11 @@ make_sys_X_block (gretl_matrix *X, const MODEL *pmod,
    per-equation residuals */
 
 static int
-gls_sigma_from_uhat (equation_system *sys, gretl_matrix *sigma)
+gls_sigma_from_uhat (equation_system *sys, gretl_matrix *sigma,
+		     int do_diag)
 {
     const gretl_matrix *e = sys->E;
     int m = sys->neqns;
-    int T = sys->T;
     int geomean = system_vcv_geomean(sys);
     int i, j, t;
     double xx;
@@ -160,13 +160,13 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *sigma)
     for (i=0; i<m; i++) {
 	for (j=i; j<m; j++) {
 	    xx = 0.0;
-	    for (t=0; t<T; t++) {
+	    for (t=0; t<sys->T; t++) {
 		xx += gretl_matrix_get(e, t, i) * gretl_matrix_get(e, t, j);
 	    }
 	    if (geomean) {
 		xx /= system_vcv_denom(sys, i, j);
 	    } else {
-		xx /= T;
+		xx /= sys->T;
 	    }
 	    gretl_matrix_set(sigma, i, j, xx);
 	    if (j != i) {
@@ -175,8 +175,10 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *sigma)
 	}
     }
 
-    if (sys->method == SYS_METHOD_OLS && sys->diag == 0.0) {
+    if (do_diag) {
 	double sii, sij, sjj;
+
+	sys->diag = 0.0;
 
 	for (i=1; i<m; i++) {
 	    sii = gretl_matrix_get(sigma, i, i);
@@ -186,7 +188,7 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *sigma)
 		sys->diag += (sij * sij) / (sii * sjj);
 	    }
 	}
-	sys->diag *= T;
+	sys->diag *= sys->T;
     }
 
     return 0;
@@ -597,7 +599,7 @@ double sur_ll (equation_system *sys)
 	return NADBL;
     }
 
-    gls_sigma_from_uhat(sys, tmp);
+    gls_sigma_from_uhat(sys, tmp, 0);
     ldet = gretl_vcv_log_determinant(tmp);
 
     if (na(ldet)) {
@@ -839,6 +841,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
     int single_equation = 0;
     int do_iteration = 0;
     int rsingle = 0;
+    int do_diag = 0;
     int err = 0;
 
     sys->iters = 0;
@@ -980,7 +983,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
     */
  iteration_start:
 
-    gls_sigma_from_uhat(sys, sys->S);
+    gls_sigma_from_uhat(sys, sys->S, 0);
 
 #if SDEBUG > 1
     gretl_matrix_print(sys->S, "gls_sigma_from_uhat");
@@ -1171,8 +1174,10 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	hansen_sargan_test(sys, dset);
     }
 
+    do_diag = !(method == SYS_METHOD_SUR && do_iteration);
+
     /* refresh sigma (non-inverted) */
-    gls_sigma_from_uhat(sys, sys->S);
+    gls_sigma_from_uhat(sys, sys->S, do_diag);
 
     if (method == SYS_METHOD_FIML) {
 	/* compute FIML estimates */
