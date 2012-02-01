@@ -582,7 +582,7 @@ static int skipcat (int id)
 	/* Business Lending, Bond Market Indexes, Construction */
 	skip = 1;
     } else if (id == 32429) {
-	/* "Manufacturing", extra rel. to 2011-04-20 */
+	/* "Manufacturing", extra relative to 2011-04-20 */
 	skip = 1;
     } else if (id == 32406 || id == 32361 || id == 32370 ||
 	       id == 32379 || id == 32388 || id == 32397) {
@@ -740,6 +740,9 @@ static int parse_fred_xml (FREDbuf *fb, FILE *fidx, FILE *fbin)
 	    } else {
 		fprintf(stderr, "parse_fred_xml: expected 'categories', got '%s'\n",
 			(char *) node->name);
+		if (!strcmp((const char *) node->name, "error")) {
+		    fprintf(stderr, "buf='%s'\n", fb->buf);
+		}
 	    }
 	} else if (fb->task == FRED_SERIES) {
 	    if (!xmlStrcmp(node->name, (XUC) "seriess")) {
@@ -925,30 +928,20 @@ static int get_api_key (const char *keyopt)
 
    - get the observations for each series
 
-   As of 2010-09-30 the following top-level categories are
-   present in FRED:
-
-    1 Business/Fiscal
-    9 Consumer Price Indexes (CPI)
-   10 Employment & Population
-   13 U.S. Trade & International Transactions
-   15 Exchange Rates
-   18 Gross Domestic Product (GDP) and Components
-   22 Interest Rates
-   23 Banking
-   24 Monetary Aggregates
-   31 Producer Price Indexes (PPI)
-   45 Reserves and Monetary Base
-   46 U.S. Financial Data
-
-    3008 Regional Data
-   32145 Foreign Exchange Intervention 
-
-   Also note: JOLTS is category 32241
-
-   This list can be updated via
+   The following list of top-level categories can be updated via
    http://api.stlouisfed.org/fred/category/children?category_id=0&api_key=$KEY
 
+   As of 2012-02-01:
+
+   1     Production & Business Activity
+   10    Population, Employment, & Labor Markets
+   3008  U.S. Regional Data
+   32455 Prices
+   32263 International Data
+   32991 Money, Banking, & Finance
+   32992 National Accounts
+
+   Also note: JOLTS is category 32241
 */
 
 int main (int argc, char **argv)
@@ -960,7 +953,8 @@ int main (int argc, char **argv)
     };
 #else
     int main_cats[] = {
-	1, 9, 10, 13, 15, 18, 22, 23, 24, 31, 45, 46, -1
+	/* 1, 9, 10, 13, 15, 18, 22, 23, 24, 31, 45, 46, -1 */
+	1, 10, 32455, 32991, 32992, -1
     };
     int intl_cats[] = {
 	32263, -1
@@ -1035,11 +1029,17 @@ int main (int argc, char **argv)
     xmlInitParser(); 
 
     for (i=0; topcats[i]>=0 && !err; i++) {
+#if DEBUG
+	fprintf(stderr, "looking at topcats[%d] = %d\n", i, topcats[i]);
+#endif
 	fb = fredget(FRED_SUBCATS, topcats[i], NULL, fidx, &err);
 	if (err) {
 	    fprintf(stderr, "fredget: err = %d\n", err);
 	} else {
 	    err = parse_fred_xml(fb, fidx, fbin);
+	    if (err) {
+		fprintf(stderr, "parse_fred_xml: err = %d\n", err);
+	    }
 	    FREDbuf_free(fb);
 	}
     }
