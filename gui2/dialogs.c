@@ -1562,9 +1562,14 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 
     if (rset->opt & OPT_R) {
 	/* boolean restriction */
-	const gchar *s = gtk_entry_get_text(GTK_ENTRY(rset->entry));
+	gchar *s = get_genr_string(rset->entry, NULL);
+
+	if (s == NULL) {
+	    return TRUE;
+	}
 
 	lib_command_sprintf("smpl %s --restrict%s", s, replace);
+	g_free(s);
 
 	if (parse_lib_command()) {
 	    return TRUE;

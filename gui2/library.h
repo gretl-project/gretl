@@ -330,6 +330,8 @@ void stop_wait_for_output (GtkWidget *w);
 
 /* other */
 
+gchar *get_genr_string (GtkWidget *entry, dialog_t *dlg);
+
 int menu_op_wrapper (selector *sr);
 
 int max_untouchable_series_ID (void);

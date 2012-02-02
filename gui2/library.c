@@ -4310,6 +4310,72 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
     }
 }
 
+static gchar *maybe_fix_decimal_comma (const gchar *s)
+{
+    gchar *cpy = g_strdup(s);
+    gchar *p = cpy;
+    int inbrackets = 0;
+    int inparens = 0;
+    int inbraces = 0;
+    int inquotes = 0;
+
+    /* experimental */
+
+    while (*p) {
+	if (*p == '[') {
+	    inbrackets++;
+	} else if (*p == ']') {
+	    inbrackets--;
+	} else if (*p == '(') {
+	    inparens++;
+	} else if (*p == ')') {
+	    inparens--;
+	} else if (*p == '{') {
+	    inbraces++;
+	} else if (*p == '}') {
+	    inbraces--;
+	} else if (*p == '"') {
+	    inquotes = !inquotes;
+	}
+	if (*p == ',' && !inparens && !inbrackets && 
+	    !inbraces && !inquotes && isdigit(*(p+1))) {
+	    *p = '.';
+	}
+	p++;
+    }
+
+    return cpy;
+}
+
+#define REPLACE_COMMA_HACK 1
+
+gchar *get_genr_string (GtkWidget *entry, dialog_t *dlg)
+{
+    const gchar *s = NULL;
+    gchar *gstr = NULL;
+
+    if (dlg != NULL) {
+	s = edit_dialog_get_text(dlg);
+    } else if (entry != NULL) {
+	s = gtk_entry_get_text(GTK_ENTRY(entry));
+    }
+
+    if (s != NULL && *s != '\0') {
+	while (isspace((unsigned char) *s)) s++;
+#if REPLACE_COMMA_HACK
+	if (get_local_decpoint() == ',' && strchr(s, ',') != NULL) {
+	    gstr = maybe_fix_decimal_comma(s);
+	} else {
+	    gstr = g_strdup(s);
+	}
+#else
+	gstr = g_strdup(s);
+#endif
+    }
+
+    return gstr;
+}
+
 static int starts_with_type_word (const char *s)
 {
     int n = strlen(s);
@@ -4325,24 +4391,24 @@ static int starts_with_type_word (const char *s)
 
 void do_genr (GtkWidget *w, dialog_t *dlg) 
 {
-    const gchar *s = edit_dialog_get_text(dlg);
+    gchar *s = get_genr_string(NULL, dlg);
     int err, edit = 0;
 
     if (s == NULL) {
 	return;
     }
 
-    while (isspace((unsigned char) *s)) s++;
-
     if (starts_with_type_word(s)) {
 	lib_command_strcpy(s);
     } else if (strchr(s, '=') == NULL && !genr_special_word(s)) {
-	/* bare varname? */
+	/* a bare varname? */
 	lib_command_sprintf("series %s = NA", s);
 	edit = 1;
     } else {
 	lib_command_sprintf("genr %s", s);
     }
+    
+    g_free(s);
 
     err = finish_genr(NULL, dlg);
 
@@ -4354,7 +4420,7 @@ void do_genr (GtkWidget *w, dialog_t *dlg)
 
 void do_selector_genr (GtkWidget *w, dialog_t *dlg) 
 {
-    const gchar *s = edit_dialog_get_text(dlg);
+    gchar *s = get_genr_string(NULL, dlg);
     gpointer p = edit_dialog_get_data(dlg);
     int err, oldv = dataset->v;
 
@@ -4362,13 +4428,13 @@ void do_selector_genr (GtkWidget *w, dialog_t *dlg)
 	return;
     }
 
-    while (isspace((unsigned char) *s)) s++;
-
     if (starts_with_type_word(s)) {
 	lib_command_strcpy(s);
     } else {
 	lib_command_sprintf("genr %s", s);
     }
+
+    g_free(s);
 
     err = finish_genr(NULL, dlg);
 
