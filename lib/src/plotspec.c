@@ -1576,6 +1576,14 @@ void set_plotfit_line (char *title, char *formula,
     } else if (f == PLOT_FIT_LOGLIN) {
 	sprintf(title, "logY = %#.3g %c %#.3g%c", b[0],
 		(b[1] > 0)? '+' : '-', fabs(b[1]), xc);
+	if (xc == 't' && (pd == 1 || pd == 4 || pd == 12)) {
+	    /* display annual growth rate in title */
+	    double g = 100 * (pow(exp(b[1]), pd) - 1);
+	    char gstr[32];
+
+	    sprintf(gstr, "\\n(%s %.2f%%)", _("annual growth"), g);
+	    strcat(title, gstr);
+	}
     }
 
     /* then set the formula itself */

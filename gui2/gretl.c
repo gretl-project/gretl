@@ -1997,6 +1997,7 @@ int gui_restore_sample (DATASET *dset)
 	    gui_errmsg(err);
 	} else {
 	    restore_sample_state(FALSE);
+	    mark_session_changed();
 	}
     }
 
