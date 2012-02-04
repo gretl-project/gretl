@@ -4314,19 +4314,6 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
 
 #if REPLACE_COMMA_HACK
 
-static int is_funcname_char (gchar *s, int i)
-{
-    if (i > 0) {
-	unsigned char c = s[i-1];
-
-	if (isalnum(c) || c == '_') {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
 static gchar *maybe_fix_decimal_comma (const gchar *s)
 {
     gchar *cpy = g_strdup(s);
@@ -4335,7 +4322,6 @@ static gchar *maybe_fix_decimal_comma (const gchar *s)
     int inparens = 0;
     int inbraces = 0;
     int inquotes = 0;
-    int i = 0;
 
     /* experimental */
 
@@ -4344,9 +4330,9 @@ static gchar *maybe_fix_decimal_comma (const gchar *s)
 	    inbrackets++;
 	} else if (*p == ']') {
 	    inbrackets--;
-	} else if (*p == '(' && is_funcname_char(cpy, i)) {
+	} else if (*p == '(') {
 	    inparens++;
-	} else if (*p == ')' && inparens) {
+	} else if (*p == ')') {
 	    inparens--;
 	} else if (*p == '{') {
 	    inbraces++;
@@ -4360,7 +4346,6 @@ static gchar *maybe_fix_decimal_comma (const gchar *s)
 	    *p = '.';
 	}
 	p++;
-	i++;
     }
 
     return cpy;
