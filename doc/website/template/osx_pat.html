@@ -1,8 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html> <head>
 <title>gretl on OS X</title>
-<LINK REL=STYLESHEET TYPE="text/css" 
-HREF="./css-gretl.html">
+<LINK REL=STYLESHEET TYPE="text/css" HREF="css-gretl.html">
 </head>
 
 <body>
@@ -14,128 +13,24 @@ HREF="./css-gretl.html">
 <h2>for Mac OS X</h2>
 </center>
 
-<h2>Step 0</h2>
-
-<p>At some points below, the appropriate choice depends on what sort of Mac you're
-running. If you're unsure about this, click on the Apple icon at the top left
-of your screen and select &quot;About this Mac&quot;. In the window that appears you'll find
-the OS X version number and also the processor version, Intel or PowerPC (PPC).</p>
-
-<h2>Step 1</h2>
-
-<p>To run gretl, you need to have the X11 window system installed on your Mac. This should be 
-automatic on recent OS X, but if you're using an earlier version you may have
-to go back to the installation DVD to install X11.</p>
-
-<p>How to tell if X11 is installed? Open the Finder and go to <kbd>Applications</kbd>. Under
-Applications, find the <kbd>Utilities</kbd> folder, open it and scan to the end: if X11 is installed
-it should appear there as an icon.</p>
-
-<h2>Step 2</h2>
-
-<p>Some additional libraries are needed to support gretl, namely GTK and friends. 
-If you are running OS X 10.6 (Snow Leopard) or higher on an Intel Mac, install
-GTK using 
-<a href="http://sourceforge.net/projects/gretl/files/osx/GTK+.framework.dmg/download">GTK+.framework.dmg</a>.
-If you are on a PowerPC Mac, or run an earlier OS X version, you should install
-<a href="http://r.research.att.com/gtk2-framework.dmg">this version</a> of GTK
-(or <a href="http://ricardo.ecn.wfu.edu/pub/gretl/gtk2-framework.dmg">alternate download</a>).
+<p>
+ First you need to determine if your Mac has an Intel or a PPC processor.
+ Newer Macs (since 2006) all run Intel. If you have an older Mac and are not sure,
+ click on the Apple icon at the top left of your screen and select "About this Mac". 
+ In the window that appears you'll find the OS X version number and also the processor 
+ type.
 </p>
- 
-<h2>Step 3</h2> 
-
-<p>Now for gretl itself: grab and install either the latest release or the current "snapshot".
-The snapshot is more up to date: often it will contain bug-fixes but sometimes it will contain 
-newly introduced bugs. To see what's new in the snapshot, take a look at the gretl
-<a href="../ChangeLog.html">Change log</a> (the "in progress" entry).</p>
-
-<table cellpadding="4">
-<tr><td>&nbsp;</td><td><p><i>Intel Mac</i></p></td><td><p>OR</p></td>
-<td><p><i>PPC Mac</i></p></td></tr>
-<tr>
-<td><p>latest release (SHORTDATE)</p></td>
-<td><p>
-<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-intel.dmg.gz">gretl-VERSION-intel.dmg.gz</a>
-</p></td>
-<td>&nbsp;</td>
-<td><p>
-<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-ppc.dmg.gz">gretl-VERSION-ppc.dmg.gz</a>
-</p></td>
-</tr>
-
-<tr>
-<td><p>OR current snapshot</p></td>
-<td><p>
-<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-intel.dmg.gz/download">gretl-intel.dmg.gz</a>
-</p></td>
-<td>&nbsp;</td>
-<td><p>
-<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-ppc.dmg.gz/download">gretl-ppc.dmg.gz</a>
-</p></td>
-</tr>
-</table>
-
-<p>After downloading, double-click on the gretl <kbd>dmg.gz</kbd> file to unzip it.
-This will produce a <kbd>dmg</kbd> file; double-click on that to mount the
-disk image. Open the disk image in the Finder and drag Gretl onto Applications.
-<i>But note</i>: if you're updating an existing installation of gretl you should
-first open Applications in the Finder and delete the old Gretl item.
-Once that's all done you can eject the disk image and delete the <kbd>dmg</kbd> and
-<kbd>dmg.gz</kbd> files.
-</p>
-
-<p>The gretl disk image (<kbd>dmg</kbd>) is briefly documented in 
-<a href="./README.pdf">README.pdf</a>, which contains some suggestions for 
-trouble-shooting.  Briefly, if you want to debug a non-functioning
-gretl on OS X, please try this: open an X11 terminal window; change directory
-(<kbd>cd</kbd>) to <kbd>Gretl.app</kbd> (where you installed the package); 
-change directory to <kbd>Contents/Resources/bin</kbd> and run the command</p>
-
-<pre>
-./gretl
-</pre>
-
-<p>This should give you some feedback on what is going wrong.</p>
-
-<h2>Optional extras</h2>
-
-<p>You may wish to install X-12-ARIMA and/or TRAMO/SEATS. These are specialized programs for
-analysis of seasonal time series data, in versions compatible with gretl.
-</p>
-
-<center>
-<table cellpadding="4">
-
-<tr>
-<td><p>X-12-ARIMA for Intel Mac</p></td>
-<td><p><a
-href="http://sourceforge.net/projects/gretl/files/x12a/x12arima-intel.dmg/download">x12arima-intel.dmg</a></p></td>
-</tr>
-
-<tr>
-<td><p>X-12-ARIMA for PowerPC Mac</p></td>
-<td><p><a
-href="http://sourceforge.net/projects/gretl/files/x12a/x12arima-ppc.dmg/download">x12arima-ppc.dmg</a></p></td>
-</tr>
-
-<tr>
-<td><p>TRAMO/SEATS for Intel Mac</p></td>
-<td><p><a 
-href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats-intel.dmg/download">tramo-seats-intel.dmg</a></p></td>
-</tr>
-
-<tr>
-<td><p>TRAMO/SEATS for PowerPC Mac</p></td>
-<td><p><a 
-href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats.dmg/download">tramo-seats.dmg</a></p></td>
-</tr>
-
-</table>
-</center>
 
 <p>
-&nbsp;
+ When you're ready, select one of the links below.
 </p>
+
+<div id="menucontent">
+ <ul class="menu">
+  <li><a href="mac-intel.html">Intel Mac (new)</a></li>
+  <li><a href="mac-ppc.html">PPC Mac (old)</a></li>
+ </ul>
+</div>
 
 </body>
 </html>

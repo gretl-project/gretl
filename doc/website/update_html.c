@@ -445,7 +445,9 @@ int process_templates (char *verstr)
     struct from_to templates[] = {
 	{ "index_pat.html",           "index.html" },
 	{ "win32_pat.html",           "win32/index.html" },
-	{ "osx_pat.html",             "osx.html" },	
+	{ "osx_pat.html",             "osx.html" },
+	{ "mac-intel_pat.html",       "mac-intel.html" },
+	{ "mac-ppc_pat.html",         "mac-ppc.html" },
 	{ "gretl_espanol_pat.html",   "gretl_espanol.html" },
 	{ "win32_pat_es.html",        "win32/index_es.html", },
 	{ "osx_pat_es.html",          "osx_es.html" },
