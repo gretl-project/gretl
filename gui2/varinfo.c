@@ -251,6 +251,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 
     if (vset->changed[VSET_VARNAME]) {
 	newstr = entry_get_trimmed_text(vset->name_entry);
+	/* note: do_rename_var() logs the corresponding command */
 	err = do_rename_variable(v, newstr);
 	g_free(newstr);
     }
@@ -290,6 +291,12 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
     if (!err && vset->changed[VSET_DISCRETE]) {
 	ival = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(vset->discrete_check));
 	set_var_discrete(dataset, v, ival);
+	if (ival) {
+	    lib_command_sprintf("setinfo %s --discrete", dataset->varname[v]);
+	} else {
+	    lib_command_sprintf("setinfo %s --continuous", dataset->varname[v]);
+	}
+	record_command_verbatim();
     }  
 
     if (!err) {

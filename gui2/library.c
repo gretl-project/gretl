@@ -4611,7 +4611,7 @@ int do_rename_variable (int v, const char *newname)
 
 int record_varlabel_change (int v)
 {
-    lib_command_sprintf("setinfo %s -d \"%s\" -n \"%s\"", 
+    lib_command_sprintf("setinfo %s --description=\"%s\" --graph-name=\"%s\"", 
 			dataset->varname[v],
 			VARLABEL(dataset, v), 
 			DISPLAYNAME(dataset, v));
