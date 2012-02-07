@@ -2413,7 +2413,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 	    cmd->flags &= ~CMD_SUBST;
 	}
     }
- 
+
     if (cmd->context == FOREIGN && !end_foreign(line)) {
 	cmd_set_nolist(cmd);
 	cmd->opt = OPT_NONE;
@@ -2421,7 +2421,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 	return 0;
     }
 
-    if (!gretl_looping_currently()) {
+    if ((cmd->flags & CMD_SUBST) || !gretl_looping_currently()) {
 	/* normalize line spaces */
 	compress_spaces(line);
 	
@@ -3601,13 +3601,10 @@ void echo_cmd (const CMD *cmd, const DATASET *dset, const char *line,
        for commands whose list may pertain to a temporary loop-special
        dataset */
     if (gretl_looping_progressive()) {
-	if (cmd->ci == PRINT) {
+	if (cmd->ci == PRINT || cmd->ci == STORE) {
 	    pprintf(prn, "? %s\n", line);
 	    return;
-	} else if (cmd->ci == STORE) {
-	    pprintf(prn, "? store %s%s\n", cmd->param, line);
-	    return;
-	}
+	} 
     }
 
     /* special case: "store" command: record as comment */

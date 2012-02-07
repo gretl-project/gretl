@@ -15,6 +15,8 @@ version 1.9.8, in progress
 - Compaction of daily to weekly data: enable this even if the daily data
   are not dated
 - "system" command: various small fixes and enhancements
+- Fix bug: misbehavior of substitution of named strings in some loop
+  contexts
 
 2011-12-22 version 1.9.7
 - Add two nonparametric estimators: William Cleveland's loess and the
