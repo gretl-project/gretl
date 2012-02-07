@@ -14,7 +14,7 @@ version 1.9.8, in progress
 - Various small fixes for spreadsheet data importers
 - Compaction of daily to weekly data: enable this even if the daily data
   are not dated
-- "system" command: various small fixes
+- "system" command: various small fixes and enhancements
 
 2011-12-22 version 1.9.7
 - Add two nonparametric estimators: William Cleveland's loess and the
