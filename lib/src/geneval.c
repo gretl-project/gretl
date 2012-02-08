@@ -2689,7 +2689,7 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
-	int cols, rows = node_get_int(l, p);
+	int cols = 0, rows = node_get_int(l, p);
 
 	if (!p->err) {
 	    cols = (f == F_IMAT)? rows : node_get_int(r, p);
