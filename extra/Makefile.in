@@ -2,13 +2,15 @@ topsrc = @top_srcdir@
 
 VPATH = $(topsrc)/extra
 
-CFLAGS = -g -O2 -Wall `pkg-config --cflags gretl`
-LDFLAGS = `pkg-config --libs gretl`
+PREFIX = $(shell pkg-config --variable=prefix gretl)
+GRETL_CFLAGS = $(shell pkg-config --cflags gretl)
+CFLAGS = -g -O2 -Wall $(GRETL_CFLAGS) -DPREFIX=\"$(PREFIX)\"
+LDFLAGS = $(shell pkg-config --libs gretl)
 
-all: simple_client
+all: simple_client arma_example nls_example
 
 clean:
-	rm -f ./simple_client core 
+	rm -f simple_client arma_example nls_example 
 
 distclean: clean
 	rm -f Makefile
