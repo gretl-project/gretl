@@ -2086,6 +2086,16 @@ int unzip_package_file (const char *zipname, const char *path)
     return err;
 }
 
+#define SHOW_AUTHOR 0
+
+#if SHOW_AUTHOR
+# define STATUS_COLUMN  4
+# define ZIPFILE_COLUMN 5
+#else
+# define STATUS_COLUMN  3
+# define ZIPFILE_COLUMN 4
+#endif
+
 /* note : 'vwin' here is the source viewer window displaying the
    remote file (database or datafiles package or function package)
    that is being installed onto the local machine.
@@ -2113,7 +2123,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 			     vwin->active_var, 0, &objname);
 	if (vwin->role == REMOTE_FUNC_FILES) {
 	    tree_view_get_bool(GTK_TREE_VIEW(vwin->listbox), 
-			       vwin->active_var, 4, &zipfile);
+			       vwin->active_var, ZIPFILE_COLUMN, &zipfile);
 	}
     }
 
@@ -2161,7 +2171,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	if (vwin->role == REMOTE_FUNC_FILES) {
 	    infobox(_("Installed"));
 	    list_store_set_string(GTK_TREE_VIEW(vwin->listbox),
-				  vwin->active_var, 3,
+				  vwin->active_var, STATUS_COLUMN,
 				  _("Up to date"));
 	    if (local != NULL) {
 		populate_filelist(local, NULL);
@@ -2816,6 +2826,9 @@ gint populate_remote_func_list (windata_t *vwin)
     while (bufgets(line, sizeof line, getbuf)) {
 	char *descrip = NULL;
 	char *version = NULL;
+#if SHOW_AUTHOR
+	char *author = NULL;
+#endif
 	gboolean zipfile;
 
 	if (read_remote_filetime(line, fname, &remtime, NULL)) {
@@ -2833,17 +2846,51 @@ gint populate_remote_func_list (windata_t *vwin)
 	    descrip = gretl_strdup(line + 2);
 	} 
 
+#if SHOW_AUTHOR
+	if (bufgets(line, sizeof line, getbuf)) {
+	    tailstrip(line);
+	    version = gretl_strdup(line + 2);
+	} 
+
+	if (bufgets(line, sizeof line, getbuf)) {
+	    char *p;
+
+	    tailstrip(line);
+	    author = line + 2;
+	    p = strchr(author, '(');
+	    if (p != NULL) {
+		*p = '\0';
+	    }
+	}
+	if (descrip == NULL || version == NULL || author == NULL) {
+	    free(descrip);
+	    free(version);
+	    continue;
+	}	
+#else
 	if (bufgets(line, sizeof line, getbuf)) {
 	    tailstrip(line);
 	    version = line + 2;
-	} 
-
+	}	
 	if (descrip == NULL || version == NULL) {
 	    free(descrip);
 	    continue;
 	}
+#endif
 
 	gtk_list_store_append(store, &iter);
+
+#if SHOW_AUTHOR
+	gtk_list_store_set(store, &iter, 
+			   0, basename, 
+			   1, version,
+			   2, author,
+			   3, descrip, 
+			   4, _(status),
+			   5, zipfile,
+			   -1);
+	free(version);
+#else
 	gtk_list_store_set(store, &iter, 
 			   0, basename, 
 			   1, version,
@@ -2851,7 +2898,7 @@ gint populate_remote_func_list (windata_t *vwin)
 			   3, _(status),
 			   4, zipfile,
 			   -1);
-
+#endif
 	free(descrip);
 	n++;
     }

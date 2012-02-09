@@ -2089,6 +2089,8 @@ gint populate_filelist (windata_t *vwin, gpointer p)
     }
 }
 
+#define SHOW_AUTHOR 0
+
 static GtkWidget *files_window (windata_t *vwin) 
 {
     const char *data_titles[] = {
@@ -2120,12 +2122,22 @@ static GtkWidget *files_window (windata_t *vwin)
 	N_("Summary"), 
 	N_("Loaded?")
     };
+#if SHOW_AUTHOR
+    const char *remote_func_titles[] = {
+	N_("Package"), 
+	N_("Version"),
+	N_("Author"),
+	N_("Summary"), 
+	N_("Local status")
+    };
+#else
     const char *remote_func_titles[] = {
 	N_("Package"), 
 	N_("Version"),
 	N_("Summary"), 
 	N_("Local status")
     };
+#endif
     const char *addons_titles[] = {
 	N_("Package"), 
 	N_("Version"),
@@ -2142,21 +2154,32 @@ static GtkWidget *files_window (windata_t *vwin)
 	G_TYPE_STRING,
 	G_TYPE_STRING
     };
-    GType types_5s[] = {
+    GType func_types[] = {
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_BOOLEAN,
 	G_TYPE_STRING   /* hidden string: directory */
     };
-    GType types_5b[] = {
+#if SHOW_AUTHOR
+    GType remote_func_types[] = {
+	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_BOOLEAN  /* hidden boolean: zipfile? */
     };
-    GType types_5c[] = {
+#else
+    GType remote_func_types[] = {
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_BOOLEAN  /* hidden boolean: zipfile? */
+    };
+#endif
+    GType addons_types[] = {
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
@@ -2199,23 +2222,23 @@ static GtkWidget *files_window (windata_t *vwin)
 	break;
     case FUNC_FILES:
 	titles = func_titles;
-	cols = 5;
-	types = types_5s;
+	types = func_types;
+	cols = G_N_ELEMENTS(func_types);
 	hidden_col = TRUE;
 	full_width = 560;
 	file_height = 320;
 	break;
     case REMOTE_FUNC_FILES:
 	titles = remote_func_titles;
-	cols = 5;
-	types = types_5b;
+	types = remote_func_types;
+	cols = G_N_ELEMENTS(remote_func_types);
 	hidden_col = TRUE;
 	full_width = 580;
 	break;
     case REMOTE_ADDONS:
 	titles = addons_titles;
-	cols = 5;
-	types = types_5c;
+	types = addons_types;
+	cols = G_N_ELEMENTS(addons_types);
 	hidden_col = TRUE;
 	full_width = 400;
 	break;	
