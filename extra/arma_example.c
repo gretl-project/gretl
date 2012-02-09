@@ -59,10 +59,6 @@ int main (void)
 
     libgretl_init();
 
-    /* this may not be necessary; but note that PREFIX is 
-       defined in the Makefile */
-    //set_gretl_plugin_path(PREFIX "/lib/gretl-gtk2");
-
     dset = datainfo_new();
     prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
 
