@@ -1921,9 +1921,26 @@ const char *gretl_lib_path (void)
 	char *epath = getenv("GRETL_PLUGIN_PATH");
 
 	if (epath != NULL) {
-	    paths.libpath[0] = '\0';
+	    *paths.libpath = '\0';
 	    strncat(paths.libpath, epath, MAXLEN - 1);
 	}
+
+#if defined(LIBDIR) || defined(GRETL_PREFIX)
+	/* if blank, try drawing on compiled-in values */
+	if (*paths.libpath == '\0') {
+# ifdef LIBDIR
+	    strcat(paths.libpath, LIBDIR);
+# else
+	    strcat(paths.libpath, GRETL_PREFIX);
+	    slash_terminate(paths.libpath);
+	    strcat(paths.libpath, "lib");
+# endif
+	    slash_terminate(paths.libpath);
+	    strcat(paths.libpath, PLUGIN_SFX);
+	    slash_terminate(paths.libpath);
+	}
+#endif /* LIBDIR or GRETL_PREFIX defined */
+
 	set = 1;
     }
 
@@ -2432,7 +2449,8 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
 	/* environment setting, if any, takes precedence */
 	strcpy(paths.gretldir, ghome);
 	slash_terminate(paths.gretldir);
-    } else if (*dirname != '\0' && *paths.gretldir == '\0') {
+    } else if (dirname != NULL && *dirname != '\0' && 
+	       *paths.gretldir == '\0') {
 	/* use value from config/registry, unless we already got
 	   a value somehow */
 	strcpy(paths.gretldir, dirname);
@@ -2464,6 +2482,28 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
     }
 
     strcpy(dirname, paths.gretldir);
+}
+
+/**
+ * set_gretl_plugin_path:
+ * @path: path to the gretl plugins.
+ *
+ * For use by third-party code: the purpose of this function
+ * is to ensure that libgretl can find its plugins. 
+ *
+ * @prefix, if given, should be the path under which the plugins
+ * are installed. On a unix-type system this might be, for example,
+ * /usr/local/lib/gretl-gtk2; on MS Windows it might be
+ * c:\program files\gretl\plugins.
+ **/
+
+void set_gretl_plugin_path (const char *path)
+{
+    if (path != NULL) {
+	*paths.libpath = '\0';
+	strncat(paths.libpath, path, MAXLEN - 2);
+	slash_terminate(paths.libpath);
+    }
 }
 
 /* Called at start-up only: set the "hidden" working dir,

@@ -39,12 +39,12 @@
  *
  * Note that if you wish to make use of gretl plugins in your own
  * program, you will have to build and install the plugins (of
- * course) and you will also have to tell libgretl where to
- * find them. This can be done via the environment variable
- * GRETL_PLUGIN_PATH.  If gretl has been installed under
- * /usr/local then in a C program you could do:
+ * course) and you may also have to tell libgretl where to
+ * find them. This can be done via the libgretl function
+ * set_gretl_plugin_path(). For example, if the plugins are
+ * in /opt/gretl/lib/gretl-gtk2 then in a C program you could do:
  *
- * gretl_setenv("GRETL_PLUGIN_PATH", "/usr/local/lib/gretl-gtk2/");
+ * set_gretl_plugin_path("/opt/gretl/lib/gretl-gtk2");
  *
  */
 
