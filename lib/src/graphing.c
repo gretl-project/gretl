@@ -1330,6 +1330,9 @@ static FILE *gp_set_up_batch (char *fname, PlotType ptype,
 	    print_term_string(fmt, ptype, flags, fp);
 	    print_set_output(gnuplot_outname, fp);
 	}
+	if (get_local_decpoint() == ',') {
+	    fputs("set decimalsign ','\n", fp);
+	}
     }
 
     return fp;
