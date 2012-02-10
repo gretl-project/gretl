@@ -1728,6 +1728,14 @@ double gretl_stopwatch (void)
 
 /* library init and cleanup functions */
 
+/**
+ * libgretl_init:
+ *
+ * In a program that uses libgretl, this function should be 
+ * called once, before any other libgretl functions are
+ * used. See also libgretl_cleanup().
+ **/
+
 void libgretl_init (void)
 {
     libset_init();
@@ -1764,6 +1772,17 @@ void libgretl_session_cleanup (int mode)
 	destroy_user_strings();
     }
 }
+
+/**
+ * libgretl_cleanup:
+ *
+ * In a program that uses libgretl, this function may be 
+ * called to free various chunks of memory after the program 
+ * is finished with libgretl. Do not attempt to call any
+ * other libgretl functions after invoking this cleanup.
+ *
+ * See also libgretl_init().
+ **/
 
 void libgretl_cleanup (void)
 {
