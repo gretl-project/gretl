@@ -17,6 +17,7 @@ version 1.9.8, in progress
 - "system" command: various small fixes and enhancements
 - Fix bug: misbehavior of substitution of named strings in some loop
   contexts
+- Fix bug: breakage in handling of string-valued variables in CVS import
 - For third-party users of libgretl: improve handling of search for the
   gretl plugins
 
