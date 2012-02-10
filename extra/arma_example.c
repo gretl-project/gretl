@@ -62,8 +62,10 @@ int main (void)
     dset = datainfo_new();
     prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
 
-    /* give the full path to the gretl datafile unless it's 
-       in the current working directory */
+    /* Give the full path to the gretl datafile unless it's 
+       in the current working directory. Note that PREFIX is
+       defined in the Makefile 
+    */
     err = gretl_read_native_data(PREFIX "/share/gretl/data/data9-7.gdt", dset);
 
     if (err) {
