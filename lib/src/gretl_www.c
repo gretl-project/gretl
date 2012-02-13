@@ -29,10 +29,10 @@
 #ifndef STANDALONE
 # include "libgretl.h"
 # include "libset.h"
+# include "build.h"
 #endif
 
 #include "version.h"
-#include "build.h"
 
 #define WBUFSIZE 8192
 
@@ -1391,7 +1391,11 @@ static void url_init (urlinfo *u)
     u->upsize = 0;
     u->fp = NULL;
 
+#ifdef BUILD_DATE
     sprintf(u->agent, "gretl-%s-%s", GRETL_VERSION, BUILD_DATE);
+#else
+    sprintf(u->agent, "gretl-%s", GRETL_VERSION);
+#endif
 
 #if defined(STANDALONE) || defined (WIN32)
     /* the linux test updater program pretends to be Windows */

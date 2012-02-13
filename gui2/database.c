@@ -2843,15 +2843,10 @@ gint populate_remote_func_list (windata_t *vwin)
 	} 
 
 	if (bufgets(line, sizeof line, getbuf)) {
-	    char *p;
-
 	    tailstrip(line);
 	    author = line + 2;
-	    p = strchr(author, '(');
-	    if (p != NULL) {
-		*p = '\0';
-	    }
 	}
+
 	if (descrip == NULL || version == NULL || author == NULL) {
 	    free(descrip);
 	    free(version);
