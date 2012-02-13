@@ -2089,8 +2089,6 @@ gint populate_filelist (windata_t *vwin, gpointer p)
     }
 }
 
-#define SHOW_AUTHOR 0
-
 static GtkWidget *files_window (windata_t *vwin) 
 {
     const char *data_titles[] = {
@@ -2122,7 +2120,6 @@ static GtkWidget *files_window (windata_t *vwin)
 	N_("Summary"), 
 	N_("Loaded?")
     };
-#if SHOW_AUTHOR
     const char *remote_func_titles[] = {
 	N_("Package"), 
 	N_("Version"),
@@ -2130,14 +2127,6 @@ static GtkWidget *files_window (windata_t *vwin)
 	N_("Summary"), 
 	N_("Local status")
     };
-#else
-    const char *remote_func_titles[] = {
-	N_("Package"), 
-	N_("Version"),
-	N_("Summary"), 
-	N_("Local status")
-    };
-#endif
     const char *addons_titles[] = {
 	N_("Package"), 
 	N_("Version"),
@@ -2161,7 +2150,6 @@ static GtkWidget *files_window (windata_t *vwin)
 	G_TYPE_BOOLEAN,
 	G_TYPE_STRING   /* hidden string: directory */
     };
-#if SHOW_AUTHOR
     GType remote_func_types[] = {
 	G_TYPE_STRING,
 	G_TYPE_STRING,
@@ -2170,15 +2158,6 @@ static GtkWidget *files_window (windata_t *vwin)
 	G_TYPE_STRING,
 	G_TYPE_BOOLEAN  /* hidden boolean: zipfile? */
     };
-#else
-    GType remote_func_types[] = {
-	G_TYPE_STRING,
-	G_TYPE_STRING,
-	G_TYPE_STRING,
-	G_TYPE_STRING,
-	G_TYPE_BOOLEAN  /* hidden boolean: zipfile? */
-    };
-#endif
     GType addons_types[] = {
 	G_TYPE_STRING,
 	G_TYPE_STRING,

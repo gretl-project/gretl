@@ -32,6 +32,7 @@
 #endif
 
 #include "version.h"
+#include "build.h"
 
 #define WBUFSIZE 8192
 
@@ -1390,7 +1391,7 @@ static void url_init (urlinfo *u)
     u->upsize = 0;
     u->fp = NULL;
 
-    sprintf(u->agent, "gretl-%s", GRETL_VERSION);
+    sprintf(u->agent, "gretl-%s-%s", GRETL_VERSION, BUILD_DATE);
 
 #if defined(STANDALONE) || defined (WIN32)
     /* the linux test updater program pretends to be Windows */

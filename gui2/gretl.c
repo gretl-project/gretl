@@ -435,7 +435,8 @@ int main (int argc, char **argv)
     *filearg = '\0';
 
 #if GUI_DEBUG
-    fprintf(stderr, "starting gretl %s, %s\n", GRETL_VERSION, BUILD_DATE);
+    fprintf(stderr, "starting gretl %s, %s build date %s\n", GRETL_VERSION, 
+	    BUILD_DATE);
 #endif
 
     gtk_init_with_args(&argc, &argv, _(param_msg), options, "gretl", &opterr);

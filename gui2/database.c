@@ -2086,15 +2086,8 @@ int unzip_package_file (const char *zipname, const char *path)
     return err;
 }
 
-#define SHOW_AUTHOR 0
-
-#if SHOW_AUTHOR
-# define STATUS_COLUMN  4
-# define ZIPFILE_COLUMN 5
-#else
-# define STATUS_COLUMN  3
-# define ZIPFILE_COLUMN 4
-#endif
+#define STATUS_COLUMN  4
+#define ZIPFILE_COLUMN 5
 
 /* note : 'vwin' here is the source viewer window displaying the
    remote file (database or datafiles package or function package)
@@ -2826,9 +2819,7 @@ gint populate_remote_func_list (windata_t *vwin)
     while (bufgets(line, sizeof line, getbuf)) {
 	char *descrip = NULL;
 	char *version = NULL;
-#if SHOW_AUTHOR
 	char *author = NULL;
-#endif
 	gboolean zipfile;
 
 	if (read_remote_filetime(line, fname, &remtime, NULL)) {
@@ -2846,7 +2837,6 @@ gint populate_remote_func_list (windata_t *vwin)
 	    descrip = gretl_strdup(line + 2);
 	} 
 
-#if SHOW_AUTHOR
 	if (bufgets(line, sizeof line, getbuf)) {
 	    tailstrip(line);
 	    version = gretl_strdup(line + 2);
@@ -2867,20 +2857,9 @@ gint populate_remote_func_list (windata_t *vwin)
 	    free(version);
 	    continue;
 	}	
-#else
-	if (bufgets(line, sizeof line, getbuf)) {
-	    tailstrip(line);
-	    version = line + 2;
-	}	
-	if (descrip == NULL || version == NULL) {
-	    free(descrip);
-	    continue;
-	}
-#endif
 
 	gtk_list_store_append(store, &iter);
 
-#if SHOW_AUTHOR
 	gtk_list_store_set(store, &iter, 
 			   0, basename, 
 			   1, version,
@@ -2890,15 +2869,6 @@ gint populate_remote_func_list (windata_t *vwin)
 			   5, zipfile,
 			   -1);
 	free(version);
-#else
-	gtk_list_store_set(store, &iter, 
-			   0, basename, 
-			   1, version,
-			   2, descrip, 
-			   3, _(status),
-			   4, zipfile,
-			   -1);
-#endif
 	free(descrip);
 	n++;
     }

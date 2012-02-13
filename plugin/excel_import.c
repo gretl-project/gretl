@@ -134,7 +134,8 @@ static int dbprintf (const char *format, ...)
 
 static void print_version (void)
 {
-    dbprintf("gretl, version %s, %s\n", GRETL_VERSION, BUILD_DATE);
+    dbprintf("gretl, version %s, %s %s\n", GRETL_VERSION, 
+	     _("build date"), BUILD_DATE);
 }
 
 static double get_le_double (const unsigned char *rec) 
