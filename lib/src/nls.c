@@ -1141,7 +1141,11 @@ static int get_mle_gradient (double *b, double *g, int n,
 #endif
 
 	if (matrix_deriv(spec, j)) {
-	    m = spec->params[j].dmat;
+	    /* 2012-02-13: don't assume that dmat never moves --
+	       but why is it moving?
+	    */
+	    m = spec->params[j].dmat = get_matrix_by_name(spec->params[j].dname);
+	    /* m = spec->params[j].dmat; */
 #if ML_DEBUG > 1
 	    gretl_matrix_print(m, "deriv matrix");
 #endif
