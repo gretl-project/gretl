@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-02-04 09:24-0500\n"
-"PO-Revision-Date: 2012-01-31 15:58+0200\n"
+"PO-Revision-Date: 2012-02-13 12:56+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -2284,17 +2284,17 @@ msgstr ""
 #: lib/src/genfuncs.c:2317
 #, c-format
 msgid "= 1 if quarter = %d, 0 otherwise"
-msgstr ": 1 eğer çeyrek = %d ise, 0 değilse"
+msgstr "1 eğer çeyrek = %d ise, 0 değilse"
 
 #: lib/src/genfuncs.c:2320
 #, c-format
 msgid "= 1 if month = %d, 0 otherwise"
-msgstr ": 1 eğer ay = %d ise, 0 değilse"
+msgstr "1 eğer ay = %d ise, 0 değilse"
 
 #: lib/src/genfuncs.c:2330
 #, c-format
 msgid "%s = 1 if period is %d, 0 otherwise"
-msgstr "%s: 1 eğer dönem %d ise, 0 değilse"
+msgstr "%s = 1 eğer dönem %d ise, 0 değilse"
 
 #: lib/src/genfuncs.c:2360 lib/src/gretl_errors.c:82 lib/src/nls.c:3035
 msgid "No dataset is in place"
@@ -2307,7 +2307,7 @@ msgstr "Bu komut şu anki dönemsellik altında çalışmaz"
 #: lib/src/genfuncs.c:2522 lib/src/genfuncs.c:2549
 #, c-format
 msgid "%s = 1 if %s is %d, 0 otherwise"
-msgstr "%s: 1 eğer %s = %d ise, 0 değilse"
+msgstr "%s = 1 eğer %s %d ise, 0 değilse"
 
 #: lib/src/genfuncs.c:2523 lib/src/varprint.c:139 lib/src/varprint.c:141
 #: lib/src/varprint.c:143
@@ -5313,17 +5313,17 @@ msgstr "Yakınsama, %d yineleme sonunda elde edildi.\n"
 #: lib/src/modelprint.c:2971 lib/src/texprint.c:1072 lib/src/varprint.c:1087
 #: lib/src/varprint.c:1095
 msgid "AIC"
-msgstr "ABÖ"
+msgstr "AIC"
 
 #: lib/src/modelprint.c:2971 lib/src/texprint.c:1073 lib/src/varprint.c:1088
 #: lib/src/varprint.c:1096
 msgid "BIC"
-msgstr "BBÖ"
+msgstr "BIC"
 
 #: lib/src/modelprint.c:2971 lib/src/texprint.c:1074 lib/src/varprint.c:1089
 #: lib/src/varprint.c:1097
 msgid "HQC"
-msgstr "HQÖ"
+msgstr "HQC"
 
 #: lib/src/modelprint.c:3084
 msgid "SSR"
@@ -5926,9 +5926,8 @@ msgid "center"
 msgstr "orta"
 
 #: lib/src/plotspec.c:1584
-#, fuzzy
 msgid "annual growth"
-msgstr "yıllık"
+msgstr "yıllık büyüme"
 
 #: lib/src/plotspec.c:1923
 msgid "Dates file does not conform to the specification"
@@ -6901,7 +6900,7 @@ msgstr "Sınırlamalı log-olabilirlik  (lr) = %.8g"
 
 #: lib/src/varprint.c:905
 msgid "Cointegration rank"
-msgstr "Eştümleşim sırası"
+msgstr "Eştümleşim derecesi"
 
 #: lib/src/varprint.c:939 lib/src/varprint.c:943 lib/src/varprint.c:947
 msgid "Portmanteau test"
@@ -6985,8 +6984,8 @@ msgid ""
 "BIC = Schwarz Bayesian criterion and HQC = Hannan-Quinn criterion."
 msgstr ""
 "Aşağıdaki yıldız imleri, bağlı oldukları bilgi ölçütüne ait en iyi (yani\n"
-"enaz olan) değerleri göstermektedir. ABÖ = Akaike ölçütü,\n"
-"BBÖ = Schwarz Bayesçi ölçüt, HQÖ = Hannan-Quinn ölçütü."
+"enaz olan) değerleri göstermektedir. AIC = Akaike bilgi ölçütü,\n"
+"BIC = Schwarz Bayesçi ölçüt, HQC = Hannan-Quinn ölçütü."
 
 #: lib/src/vartest.c:286
 msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
@@ -9150,7 +9149,7 @@ msgstr "gretl: TeX çizelge biçimi"
 
 #: gui2/dialogs.c:5324 gui2/series_view.c:630
 msgid "Standard format"
-msgstr "Ölçünlü biçim"
+msgstr "Özgün biçim"
 
 #: gui2/dialogs.c:5327
 msgid "Custom format"
@@ -9929,7 +9928,7 @@ msgstr "loess (yerel ağırlıklı yakıştırma)"
 
 #: gui2/gpt_dialog.c:135
 msgid "semilog: log y = a + b*x"
-msgstr "yarı-log: log y = a + b*x"
+msgstr "log-doğ: log y = a + b*x"
 
 #: gui2/gpt_dialog.c:300
 msgid "gretl: graph color selection"
@@ -9942,7 +9941,7 @@ msgstr "Renk seçiniz"
 #: gui2/gpt_dialog.c:572
 #, c-format
 msgid "%s versus %s (with semilog fit)"
-msgstr "%s ve %s (yarı-log yakıştırma ile)"
+msgstr "%s ve %s (log-doğ yakıştırma ile)"
 
 #: gui2/gpt_dialog.c:677 gui2/gpt_dialog.c:716
 msgid "Invalid position, must be X Y"
@@ -11476,7 +11475,7 @@ msgstr "_Kopyala"
 
 #: gui2/gui_utils.c:188
 msgid "_Modify model..."
-msgstr "_Modeli kiple..."
+msgstr "_Belirtimi gözden geçir"
 
 #: gui2/gui_utils.c:191
 msgid "_Restore model sample"
@@ -12369,11 +12368,11 @@ msgstr "gretl: eksik değerler bilgisi"
 
 #: gui2/library.c:1612
 msgid "Export the markers to file"
-msgstr "Durum imleçlerini dışa aktar"
+msgstr "İmleçleri dışa aktar"
 
 #: gui2/library.c:1613
 msgid "Remove the markers"
-msgstr "Durum imleçlerini kaldır"
+msgstr "İmleçleri kaldır"
 
 #: gui2/library.c:1617
 msgid ""
@@ -13143,7 +13142,7 @@ msgstr "Ayr. R{\\super 2}"
 
 #: gui2/model_table.c:759
 msgid "Adj. R**2"
-msgstr "Ayr. R**2"
+msgstr "Ayar. R^2"
 
 #: gui2/model_table.c:901 gui2/model_table.c:966 gui2/model_table.c:973
 #: gui2/model_table.c:980
@@ -13678,7 +13677,7 @@ msgstr "Kalıntıları ölçünle"
 
 #: gui2/selector.c:5165
 msgid "Use Fiorentini et al algorithm"
-msgstr "Fiorentini et al çözüm yolunu kullan"
+msgstr "Fiorentini v.d. çözüm yolunu kullan"
 
 #: gui2/selector.c:5200
 msgid "Show lagged variables"
