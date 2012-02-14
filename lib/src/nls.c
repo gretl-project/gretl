@@ -2398,6 +2398,9 @@ static int mle_calculate (nlspec *s, PRN *prn)
 	}
 
 	if (err) {
+	    pprintf(prn,_("\nError: Hessian non-negative definite? (err = %d); "
+			  "dropping back to OPG\n"), err);
+
 	    /* try dropping back to OPG */
 	    pprintf(prn, "Failed to calculate Hessian inverse\n");
 	    s->opt &= ~OPT_H;
