@@ -9839,11 +9839,7 @@ static void do_decl (parser *p)
 		    strcpy(p->dset->varname[v], S[i]);
 		}
 	    } else if (p->targ == LIST) {
-		int *nlist = gretl_null_list();
-
-		/* fprintf(stderr, "declared list '%s'\n", S[i]); */
-
-		p->err = remember_list(nlist, S[i], p->prn);
+		p->err = declare_list(S[i]);
 	    } else if (p->targ == STR) {
 		p->err = save_named_string(S[i], "", NULL);
 	    } else if (p->targ == BUNDLE) {
@@ -10586,13 +10582,7 @@ static int LHS_matrix_reusable (parser *p)
 }
 
 /* Generating a matrix, and there's a pre-existing LHS matrix:
-   note that some functionality in nls.c works on the assumption
-   that when a new matrix is generated and assigned to
-   an existing matrix of the same dimensions, the existing
-   (left-hand side) gretl_matrix will be reused (its content
-   updated but the original pointer preserved). This may be
-   too fragile, but unless it's changed it is important not
-   to mess with the LHS_matrix_reusable() criterion.
+   we re-use the left-hand side matrix if possible.
 */
 
 static void assign_to_matrix (parser *p)

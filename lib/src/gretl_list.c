@@ -80,7 +80,7 @@ static saved_list *saved_list_new (const int *list, const char *name)
 	    free(sl);
 	    sl = NULL;
 	} else {
-	    *sl->name = 0;
+	    *sl->name = '\0';
 	    strncat(sl->name, name, VNAMELEN - 1);
 	}
     }
@@ -312,8 +312,13 @@ int replace_list_by_name (const char *targ, const int *src)
     return err;
 }
 
+enum {
+    LIST_ADD_NORMAL,
+    LIST_FORCE_NEW
+};
+
 static int real_remember_list (const int *list, const char *name, 
-			       int force_new, PRN *prn)
+			       int flag, PRN *prn)
 {
     saved_list *orig = NULL;
     int err = 0;
@@ -323,18 +328,18 @@ static int real_remember_list (const int *list, const char *name,
     }
 
 #if LDEBUG
-    fprintf(stderr, "remember_list (in): name='%s', force_new=%d,"
-	    " n_lists=%d\n", name, force_new, n_lists);
+    fprintf(stderr, "remember_list (in): name='%s', flag=%d,"
+	    " n_lists=%d\n", name, flag, n_lists);
 #endif
 
-    /* Note: 'force_new' means that we'll add a new list even if it
+    /* Note: if @flag = LIST_FORCE_NEW we'll add a new list even if it
        has the same name as an existing one.  This makes sense only if
        we're copying a list in the context of running a user-defined
        function, since in that case the new list will exist at a
        different "stack level" from any prior list.
     */
 
-    if (!force_new) {
+    if (flag != LIST_FORCE_NEW) {
 	orig = get_saved_list_by_name(name);
     }
 
@@ -365,7 +370,7 @@ static int real_remember_list (const int *list, const char *name,
 	if (list_stack[n_lists] == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    if (gretl_messages_on()) {
+	    if (prn != NULL && gretl_messages_on()) {
 		const char *realname = list_stack[n_lists]->name;
 
 		if (list[0] > 0) {
@@ -406,7 +411,24 @@ static int real_remember_list (const int *list, const char *name,
 
 int remember_list (const int *list, const char *name, PRN *prn)
 {
-    return real_remember_list(list, name, 0, prn);
+    return real_remember_list(list, name, LIST_ADD_NORMAL, prn);
+}
+
+/**
+ * declare_list:
+ * @name: name to be given to the list.
+ *
+ * Implements bare declaration of a list in the "genr" context:
+ * adds a null list under the given @name.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int declare_list (const char *name)
+{
+    int tmp[] = {0};
+
+    return real_remember_list(tmp, name, LIST_ADD_NORMAL, NULL);
 }
 
 static int destroy_saved_list (saved_list *sl)
@@ -500,17 +522,16 @@ int rename_saved_list (const char *orig, const char *newname)
 
 int *copy_list_as (const int *list, const char *name)
 {
-    int err = real_remember_list(list, name, 1, NULL);
-    int *ret = NULL;
+    int err = real_remember_list(list, name, LIST_FORCE_NEW, NULL);
 
     if (!err) {
 	saved_list *sl = list_stack[n_lists - 1];
 
 	sl->level += 1;
-	ret = sl->list;
+	return sl->list;
+    } else {
+	return NULL;
     }
-
-    return ret;
 }
 
 /**
@@ -529,24 +550,19 @@ int *copy_list_as (const int *list, const char *name)
 
 int *create_named_null_list (const char *name)
 {
-    int *list = gretl_null_list();
+    int tmp[] = {0};
+    int err;
 
-    if (list != NULL) {
-	saved_list *sl; 
-	int err;
+    err = real_remember_list(tmp, name, LIST_FORCE_NEW, NULL);
 
-	err = real_remember_list(list, name, 1, NULL);
-	free(list);
-	list = NULL;
+    if (!err) {
+	saved_list *sl = list_stack[n_lists - 1];
 
-	if (!err) {
-	    sl = list_stack[n_lists - 1];
-	    sl->level += 1;
-	    list = sl->list;
-	} 
+	sl->level += 1;
+	return sl->list;
+    } else {
+	return NULL;
     }
-
-    return list;
 }
 
 /**
@@ -567,25 +583,19 @@ int *create_named_null_list (const char *name)
 
 int *create_named_singleton_list (int varnum, const char *name)
 {
-    int *list = gretl_list_new(1);
+    int tmp[] = {1, varnum};
+    int err;
+
+    err = real_remember_list(tmp, name, LIST_FORCE_NEW, NULL);
  
-    if (list != NULL) {
-	saved_list *sl;
-	int err;
-	
-	list[1] = varnum;
-	err = real_remember_list(list, name, 1, NULL);
-	free(list);
-	list = NULL;
+    if (!err) {
+	saved_list *sl = list_stack[n_lists - 1]; 
 
-	if (!err) {
-	    sl = list_stack[n_lists - 1];
-	    sl->level += 1;
-	    list = sl->list;
-	}
+	sl->level += 1;
+	return sl->list;
+    } else {
+	return NULL;
     }
-
-    return list;
 }
 
 /**
@@ -603,24 +613,12 @@ int *create_named_singleton_list (int varnum, const char *name)
 int destroy_saved_lists_at_level (int level)
 {
     saved_list **lstack;
-    int i, j, nl = 0;
-    int err = 0;
+    int nl = n_lists;
+    int i, j, err = 0;
 
-#if 0
-    nl = n_lists;
-    for (i=n_lists-1; i>=0; i--) {
-	if (list_stack[i]->level == level) {
-	    free_saved_list(list_stack[i]);
-	    for (j=i; j<n_lists - 1; j++) {
-		list_stack[j] = list_stack[j+1];
-	    }
-	    list_stack[n_lists - 1] = NULL;
-	    nl--;
-	} 
-    }    
-#else
     for (i=0; i<n_lists; i++) {
 	if (list_stack[i] == NULL) {
+	    /* we reached the end of the (occupied) stack */
 	    break;
 	}
 	if (list_stack[i]->level == level) {
@@ -628,13 +626,11 @@ int destroy_saved_lists_at_level (int level)
 	    for (j=i; j<n_lists - 1; j++) {
 		list_stack[j] = list_stack[j+1];
 	    }
-	    list_stack[n_lists - 1] = NULL;
+	    list_stack[n_lists-1] = NULL;
 	    i--;
-	} else {
-	    nl++;
-	}
+	    nl--;
+	} 
     }
-#endif
 
     if (nl < n_lists) {
 	n_lists = nl;

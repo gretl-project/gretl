@@ -61,19 +61,20 @@ enum {
 struct parm_ {
     char name[VNAMELEN];  /* name of parameter */
     int type;             /* type of parameter (scalar or vector) */
+    int dtype;            /* type of derivative for parameter */
     char *deriv;          /* string representation of derivative of regression
 			     function with respect to param (or NULL) */
-    int dnum;             /* ID number of variable holding the derivative */
+    int dnum;             /* ID number of series holding the derivative, or 0 */
     int nc;               /* number of individual coefficients associated
 			     with the parameter */
     char dname[VNAMELEN]; /* name of variable holding the derivative */
+    GENERATOR *dgenr;     /* generator for derivative */
     gretl_matrix *vec;    /* pointer to vector parameter */
-    gretl_matrix *dmat;   /* pointer to matrix derivative */
 };
 
 #define scalar_param(s,i) (s->params[i].type == GRETL_TYPE_DOUBLE)
-#define matrix_deriv(s,i) (s->params[i].dmat != NULL)
-#define scalar_deriv(s,i) (gretl_is_scalar(s->params[i].dname))
+#define matrix_deriv(s,i) (s->params[i].dtype == GRETL_TYPE_MATRIX)
+#define scalar_deriv(s,i) (s->params[i].dtype == GRETL_TYPE_DOUBLE)
 
 #define numeric_mode(s) (!(s->flags & NL_ANALYTICAL))
 #define analytic_mode(s) (s->flags & NL_ANALYTICAL)
@@ -117,6 +118,17 @@ static int check_lhs_vec (nlspec *s)
     }
 
     return 0;
+}
+
+static gretl_matrix *get_derivative_matrix (nlspec *s, int i, int *err)
+{
+    gretl_matrix *m = genr_get_output_matrix(s->params[i].dgenr);
+
+    if (m == NULL) {
+	*err = E_DATA;
+    }
+
+    return m;
 }
 
 static int check_derivative_matrix (int i, gretl_matrix *m,
@@ -181,13 +193,13 @@ static int nls_dynamic_check (nlspec *s, char *formula)
 static int scalar_acceptable (nlspec *s, int i, const char *dername)
 {
     if (i < s->naux) {
-	/* auxiliary variable */
+	/* an auxiliary variable: scalars OK */
 	return 1;
     } else if (i == s->naux) {
-	/* criterion value */
+	/* the criterion value: accept a scalar for loglikelihood */
 	return s->ci == MLE;
     } else {
-	/* i > s->naux: derivative */
+	/* i > s->naux: a derivative */
 	return dername != NULL && gretl_is_scalar(dername);
     }
 }
@@ -307,6 +319,7 @@ static int nls_genr_setup (nlspec *s)
 	}
 
 	if (i == s->naux) {
+	    /* the criterion */
 	    if (m != NULL) {
 		s->lvec = m;
 		s->lhtype = GRETL_TYPE_MATRIX;
@@ -320,10 +333,19 @@ static int nls_genr_setup (nlspec *s)
 		err = E_TYPES;
 	    }
 	} else if (j > 0) {
+	    /* derivatives */
 	    int k = j - 1;
 
+	    if (v > 0) {
+		s->params[k].dtype = GRETL_TYPE_SERIES;
+	    } else if (m != NULL) {
+		s->params[k].dtype = GRETL_TYPE_MATRIX;
+	    } else {
+		s->params[k].dtype = GRETL_TYPE_DOUBLE;
+	    }
+
 	    s->params[k].dnum = v;
-	    s->params[k].dmat = m;
+	    s->params[k].dgenr = genrs[i];
 
 	    if (m != NULL || !scalar_param(s, k)) {
 		err = check_derivative_matrix(k, m, s);
@@ -523,12 +545,13 @@ static int nlspec_push_param (nlspec *s, const char *name, char *deriv)
     p->name[0] = '\0';
     strncat(p->name, name, VNAMELEN - 1);
     p->type = GRETL_TYPE_DOUBLE;
+    p->dtype = GRETL_TYPE_NONE;
     p->deriv = deriv;
     p->dnum = 0;
     p->nc = 1;
     p->dname[0] = '\0';
+    p->dgenr = NULL;
     p->vec = NULL;
-    p->dmat = NULL;
 
 #if NLS_DEBUG
     fprintf(stderr, "added param[%d] = '%s'\n", np, p->name);
@@ -1032,8 +1055,12 @@ static int get_nls_derivs (int T, int offset, double *g, double **G,
 #endif
 
 	if (matrix_deriv(spec, j)) {
-	    gretl_matrix *m = spec->params[j].dmat;
+	    gretl_matrix *m = get_derivative_matrix(spec, j, &err);
 	    int i;
+
+	    if (err) {
+		return err;
+	    }
 
 #if NLS_DEBUG
 	    fprintf(stderr, "param[%d]: matrix at %p (%d x %d)\n", j, 
@@ -1141,11 +1168,13 @@ static int get_mle_gradient (double *b, double *g, int n,
 #endif
 
 	if (matrix_deriv(spec, j)) {
-	    /* 2012-02-13: don't assume that dmat never moves */
-	    m = spec->params[j].dmat = get_matrix_by_name(spec->params[j].dname);
+	    m = get_derivative_matrix(spec, j, &err);
 #if ML_DEBUG > 1
 	    gretl_matrix_print(m, "deriv matrix");
 #endif
+	    if (err) {
+		break;
+	    }
 	    for (k=0; k<m->cols; k++) {
 		g[i] = 0.0;
 		for (t=0; t<m->rows; t++) {
@@ -1366,7 +1395,10 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
 	j = 0;
 	for (i=0; i<spec->nparam; i++) {
 	    if (matrix_deriv(spec, i)) {
-		m = spec->params[i].dmat;
+		m = get_derivative_matrix(spec, i, &err);
+		if (err) {
+		    break;
+		}
 		for (s=0; s<m->cols; s++) {
 		    x = gretl_matrix_get(m, 0, s);
 		    for (t=0; t<T; t++) {
@@ -1392,6 +1424,10 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
 		j++;
 	    } 
 	}		
+    }
+
+    if (err) {
+	goto bailout;
     }
 
     gretl_matrix_multiply_mod(G, GRETL_MOD_NONE,
@@ -1424,6 +1460,8 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
 	err = gretl_model_write_vcv(pmod, V, -1);
     }
 
+ bailout:
+
     gretl_matrix_free(G);
     gretl_matrix_free(V);
 
@@ -1436,6 +1474,7 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
     int err = 0;
 
     if (spec->opt & OPT_A) {
+	/* auxiliary model */
 	int i;
 
 	for (i=0; i<pmod->ncoeff; i++) {
@@ -2057,8 +2096,6 @@ static void clear_nlspec (nlspec *spec)
     if (spec->params != NULL) {
 	for (i=0; i<spec->nparam; i++) {
 	    free(spec->params[i].deriv);
-	    spec->params[i].vec = NULL;
-	    spec->params[i].dmat = NULL;
 	}
 	free(spec->params);
 	spec->params = NULL;
@@ -2362,6 +2399,7 @@ static int mle_calculate (nlspec *s, PRN *prn)
 
 	if (err) {
 	    /* try dropping back to OPG */
+	    pprintf(prn, "Failed to calculate Hessian inverse\n");
 	    s->opt &= ~OPT_H;
 	    s->opt &= ~OPT_R;
 	    err = 0;

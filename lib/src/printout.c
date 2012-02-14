@@ -2760,32 +2760,42 @@ static readbuf *matching_buffer (const char *s)
     return NULL;
 }
 
-static int rbuf_push (const char *s)
+/**
+ * bufgets_init:
+ * @buf: source buffer.
+ *
+ * Initializes a text buffer for use with bufgets(). 
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int bufgets_init (const char *buf)
 {
     readbuf *tmp = NULL;
     int i, err = 0;
 
-    tmp = matching_buffer(s);
+    tmp = matching_buffer(buf);
     if (tmp != NULL) {
 	fprintf(stderr, "GRETL ERROR: buffer at %p is already "
-		"initialized\n", (void *) s);
+		"initialized\n", (void *) buf);
 	return 1;
     }
 
     for (i=0; i<n_bufs; i++) {
 	if (rbuf[i].start == NULL) {
-	    /* re-use existing slot */
-	    rbuf[i].start = rbuf[i].point = s;
+	    /* OK, re-use an existing slot */
+	    rbuf[i].start = rbuf[i].point = buf;
 	    return 0;
 	}
     }    
 
     tmp = realloc(rbuf, (n_bufs + 1) * sizeof *tmp);
+
     if (tmp == NULL) {
 	err = E_ALLOC;
     } else {
 	rbuf = tmp;
-	rbuf[n_bufs].start = rbuf[n_bufs].point = s;
+	rbuf[n_bufs].start = rbuf[n_bufs].point = buf;
 	n_bufs++;
     }
 
@@ -2808,9 +2818,16 @@ static void rbuf_set_point (const char *s, const char *p)
     }
 }
 
-static void rbuf_finalize (const char *s)
+/**
+ * bufgets_finalize:
+ * @buf: source buffer.
+ *
+ * Signals that we are done reading from @buf.
+ */
+
+void bufgets_finalize (const char *buf)
 {
-    readbuf *rbuf = matching_buffer(s);
+    readbuf *rbuf = matching_buffer(buf);
 
     if (rbuf != NULL) {
 	rbuf->start = rbuf->point = NULL;
@@ -2952,30 +2969,6 @@ long buftell (const char *buf)
     readbuf *rbuf = matching_buffer(buf);
 
     return (rbuf == NULL)? 0 : rbuf->point - rbuf->start;
-}
-
-/**
- * bufgets_init:
- * @buf: source buffer.
- *
- * Initializes a text buffer for use with bufgets(). 
- */
-
-void bufgets_init (const char *buf)
-{
-    rbuf_push(buf);
-}
-
-/**
- * bufgets_finalize:
- * @buf: source buffer.
- *
- * Signals that we are done reading from @buf.
- */
-
-void bufgets_finalize (const char *buf)
-{
-    rbuf_finalize(buf);
 }
 
 /* for internal use */
