@@ -2843,18 +2843,6 @@ char *bufgets (char *s, size_t size, const char *buf)
     int i, status = 0;
     const char *p;
 
-    if (s == NULL && size == 1) {
-	/* signal for end-of-read */
-	rbuf_finalize(buf);
-	return NULL;
-    }
-
-    if (s == NULL || size == 0) {
-	/* signal for initialization */
-	rbuf_push(buf);
-	return NULL;
-    }
-
     p = rbuf_get_point(buf);
     if (p == NULL) {
 	return NULL;
@@ -2975,7 +2963,7 @@ long buftell (const char *buf)
 
 void bufgets_init (const char *buf)
 {
-    bufgets(NULL, 0, buf);
+    rbuf_push(buf);
 }
 
 /**
@@ -2987,7 +2975,16 @@ void bufgets_init (const char *buf)
 
 void bufgets_finalize (const char *buf)
 {
-    bufgets(NULL, 1, buf);
+    rbuf_finalize(buf);
 }
 
+/* for internal use */
 
+void bufgets_cleanup (void)
+{
+    if (n_bufs > 0) {
+	free(rbuf);
+	rbuf = NULL;
+	n_bufs = 0;
+    }
+}

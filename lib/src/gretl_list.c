@@ -606,6 +606,19 @@ int destroy_saved_lists_at_level (int level)
     int i, j, nl = 0;
     int err = 0;
 
+#if 0
+    nl = n_lists;
+    for (i=n_lists-1; i>=0; i--) {
+	if (list_stack[i]->level == level) {
+	    free_saved_list(list_stack[i]);
+	    for (j=i; j<n_lists - 1; j++) {
+		list_stack[j] = list_stack[j+1];
+	    }
+	    list_stack[n_lists - 1] = NULL;
+	    nl--;
+	} 
+    }    
+#else
     for (i=0; i<n_lists; i++) {
 	if (list_stack[i] == NULL) {
 	    break;
@@ -621,6 +634,7 @@ int destroy_saved_lists_at_level (int level)
 	    nl++;
 	}
     }
+#endif
 
     if (nl < n_lists) {
 	n_lists = nl;

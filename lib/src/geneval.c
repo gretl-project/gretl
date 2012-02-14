@@ -9841,6 +9841,8 @@ static void do_decl (parser *p)
 	    } else if (p->targ == LIST) {
 		int *nlist = gretl_null_list();
 
+		/* fprintf(stderr, "declared list '%s'\n", S[i]); */
+
 		p->err = remember_list(nlist, S[i], p->prn);
 	    } else if (p->targ == STR) {
 		p->err = save_named_string(S[i], "", NULL);

@@ -115,3 +115,5 @@ void buf_rewind (const char *buf);
 int bufseek (const char *buf, long int offset);
 
 long buftell (const char *buf);
+
+void bufgets_cleanup (void);

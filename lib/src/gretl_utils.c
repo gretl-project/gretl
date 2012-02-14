@@ -1799,6 +1799,7 @@ void libgretl_cleanup (void)
     option_flags_cleanup();
     kalman_cleanup();
     gnuplot_cleanup();
+    bufgets_cleanup();
 
 #ifdef USE_RLIB
     gretl_R_cleanup();
