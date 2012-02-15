@@ -80,6 +80,8 @@ void *bundled_item_get_data (bundled_item *item, GretlType *type,
 
 const char *bundled_item_get_note (bundled_item *item);
 
+int bundled_matrix_access_ok (const gretl_matrix *m);
+
 int gretl_bundle_set_data (gretl_bundle *bundle, const char *key,
 			   void *ptr, GretlType type, int size);
 
@@ -94,6 +96,8 @@ int gretl_bundle_set_series (gretl_bundle *bundle, const char *key,
 
 int gretl_bundle_set_note (gretl_bundle *bundle, const char *key,
 			   const char *note);
+
+void gretl_bundle_set_const_access (gretl_bundle *b, int s);
 
 int gretl_bundle_delete_data (gretl_bundle *bundle, const char *key);
 
@@ -135,10 +139,12 @@ gretl_bundle *gretl_bundle_pull_from_stack (const char *name,
 					    int *err);
 
 int gretl_bundle_localize (const char *origname,
-			   const char *localname);
+			   const char *localname,
+			   int *const_access);
 
 int gretl_bundle_unlocalize (const char *localname,
-			     const char *origname);
+			     const char *origname,
+			     int const_access);
 
 gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
 				  const gretl_bundle *bundle2,

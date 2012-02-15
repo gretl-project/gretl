@@ -96,15 +96,17 @@ static void set_analytic_mode (nlspec *s)
     s->flags |= NL_ANALYTICAL;
 }
 
-static void destroy_genrs_array (GENERATOR **genrs, int n)
+static void destroy_genrs_array (nlspec *s)
 {
     int i;
 
-    for (i=0; i<n; i++) {
-	destroy_genr(genrs[i]);
+    for (i=0; i<s->ngenrs; i++) {
+	destroy_genr(s->genrs[i]);
     }
 
-    free(genrs);
+    free(s->genrs);
+    s->genrs = NULL;
+    s->ngenrs = 0;
 }
 
 static int check_lhs_vec (nlspec *s)
@@ -204,47 +206,57 @@ static int scalar_acceptable (nlspec *s, int i, const char *dername)
     }
 }
 
+static int allocate_generators (nlspec *s)
+{
+    int np = analytic_mode(s) ? s->nparam : 0;
+    int i, nlf = (s->nlfunc != NULL);
+    int err = 0;
+
+    s->ngenrs = s->naux + nlf + np;
+    s->genrs = malloc(s->ngenrs * sizeof *s->genrs);
+
+    if (s->genrs == NULL) {
+	s->ngenrs = 0;
+	err = E_ALLOC;
+    } else {
+	for (i=0; i<s->ngenrs; i++) {
+	    s->genrs[i] = NULL;
+	}
+    }
+
+    return err;
+}
+
 /* we "compile" the required equations first, so we can subsequently
    execute the compiled versions for maximum efficiency 
 */
 
 static int nls_genr_setup (nlspec *s)
 {
-    GENERATOR **genrs;
-    gretl_matrix *m;
     char formula[MAXLINE];
-    int i, j, ngen, np;
-    int v, err = 0;
+    gretl_matrix *m;
+    int i, j, v;
+    int err = 0;
 
-    s->ngenrs = 0;
-    np = (analytic_mode(s))? s->nparam : 0;
-    ngen = s->naux + np;
-    if (s->nlfunc != NULL) {
-	ngen++;
+    err = allocate_generators(s);
+    if (err) {
+	return err;
     }
 
-#if NLS_DEBUG
-    fprintf(stderr, "nls_genr_setup: current v = %d, n_gen = %d\n", 
-	    s->dset->v, ngen);
-#endif
+    /* We now loop across the "generators", setting them up
+       and checking them. We hook up any auxiliary genrs
+       first, then the criterion function, then the anaytical
+       derivatives, if any.
+    */
 
-    genrs = malloc(ngen * sizeof *genrs);
-    if (genrs == NULL) {
-	return E_ALLOC;
-    }
+    j = -1; /* index for derivatives */
 
-    for (i=0; i<ngen; i++) {
-	genrs[i] = NULL;
-    }
-
-    j = 0;
-
-    for (i=0; i<ngen && !err; i++) {
+    for (i=0; i<s->ngenrs && !err; i++) {
 	char *dname = NULL;
 	int gentype = 0;
 
 	if (i < s->naux) {
-	    /* auxiliary variables */
+	    /* auxiliary variables first */
 	    strcpy(formula, s->aux[i]);
 	} else if (i == s->naux) {
 	    /* residual or likelihood function */
@@ -257,7 +269,7 @@ static int nls_genr_setup (nlspec *s)
 		sprintf(formula, "$nl_y = %s", s->nlfunc);
 	    }
 	} else {
-	    /* derivatives/gradients */
+	    j++; /* increment derivative index */
 	    sprintf(s->params[j].dname, "$nl_x%d", i);
 	    if (scalar_param(s, j)) {
 		sprintf(formula, "%s = %s", s->params[j].dname, 
@@ -267,16 +279,15 @@ static int nls_genr_setup (nlspec *s)
 			s->params[j].deriv);
 	    }
 	    dname = s->params[j].dname;
-	    j++;
 	}
 
 	if (!err) {
-	    genrs[i] = genr_compile(formula, s->dset, OPT_P, &err);
+	    s->genrs[i] = genr_compile(formula, s->dset, OPT_P, &err);
 	}
 
 	if (err) {
 	    fprintf(stderr, "genr_compile: genrs[%d] = %p, err = %d\n", i, 
-		    (void *) genrs[i], err);
+		    (void *) s->genrs[i], err);
 	    fprintf(stderr, "formula: '%s'\n", formula);
 	    fprintf(stderr, "%s\n", gretl_errmsg_get());
 	    break;
@@ -285,26 +296,26 @@ static int nls_genr_setup (nlspec *s)
 	/* see if the formula actually works, and flush out NAs
 	   while we're at it
 	*/
-	genr_set_na_check(genrs[i]);
-	err = execute_genr(genrs[i], s->dset, s->prn);
-	genr_unset_na_check(genrs[i]);
+	genr_set_na_check(s->genrs[i]);
+	err = execute_genr(s->genrs[i], s->dset, s->prn);
+	genr_unset_na_check(s->genrs[i]);
 
 	if (err) {
-	    fprintf(stderr, "execute_genr: genrs[%d] = %p, err = %d\n", i, 
-		    (void *) genrs[i], err);
+	    fprintf(stderr, "execute_genr: s->genrs[%d] = %p, err = %d\n", i, 
+		    (void *) s->genrs[i], err);
 	    fprintf(stderr, "formula: '%s'\n", formula);
 	    break;
 	}
 
-	v = genr_get_output_varnum(genrs[i]);
-	m = genr_get_output_matrix(genrs[i]);
+	v = genr_get_output_varnum(s->genrs[i]);
+	m = genr_get_output_matrix(s->genrs[i]);
 
 	if (v == 0 && m == NULL) {
-	    if (genr_is_print(genrs[i])) {
+	    if (genr_is_print(s->genrs[i])) {
 		continue;
 	    }
 	    /* not a series, not a matrix: should be scalar */
-	    gentype = genr_get_output_type(genrs[i]);
+	    gentype = genr_get_output_type(s->genrs[i]);
 	    if (gentype != GRETL_TYPE_DOUBLE) {
 		fprintf(stderr, "got bad gentype %d\n", gentype);
 		fprintf(stderr, "formula: '%s'\n", formula);
@@ -319,7 +330,7 @@ static int nls_genr_setup (nlspec *s)
 	}
 
 	if (i == s->naux) {
-	    /* the criterion */
+	    /* the criterion function */
 	    if (m != NULL) {
 		s->lvec = m;
 		s->lhtype = GRETL_TYPE_MATRIX;
@@ -332,23 +343,21 @@ static int nls_genr_setup (nlspec *s)
 	    } else {
 		err = E_TYPES;
 	    }
-	} else if (j > 0) {
+	} else if (j >= 0) {
 	    /* derivatives */
-	    int k = j - 1;
-
 	    if (v > 0) {
-		s->params[k].dtype = GRETL_TYPE_SERIES;
+		s->params[j].dtype = GRETL_TYPE_SERIES;
 	    } else if (m != NULL) {
-		s->params[k].dtype = GRETL_TYPE_MATRIX;
+		s->params[j].dtype = GRETL_TYPE_MATRIX;
 	    } else {
-		s->params[k].dtype = GRETL_TYPE_DOUBLE;
+		s->params[j].dtype = GRETL_TYPE_DOUBLE;
 	    }
 
-	    s->params[k].dnum = v;
-	    s->params[k].dgenr = genrs[i];
+	    s->params[j].dnum = v;
+	    s->params[j].dgenr = s->genrs[i];
 
-	    if (m != NULL || !scalar_param(s, k)) {
-		err = check_derivative_matrix(k, m, s);
+	    if (m != NULL || !scalar_param(s, j)) {
+		err = check_derivative_matrix(j, m, s);
 	    } 
 	}
 
@@ -371,10 +380,7 @@ static int nls_genr_setup (nlspec *s)
     }	
 
     if (err) {
-	destroy_genrs_array(genrs, ngen);
-    } else {
-	s->ngenrs = ngen;
-	s->genrs = genrs;
+	destroy_genrs_array(s);
     }
 
     return err;
@@ -2398,11 +2404,9 @@ static int mle_calculate (nlspec *s, PRN *prn)
 	}
 
 	if (err) {
-	    pprintf(prn,_("\nError: Hessian non-negative definite? (err = %d); "
+	    pprintf(prn, _("\nError: Hessian non-negative definite? (err = %d); "
 			  "dropping back to OPG\n"), err);
-
 	    /* try dropping back to OPG */
-	    pprintf(prn, "Failed to calculate Hessian inverse\n");
 	    s->opt &= ~OPT_H;
 	    s->opt &= ~OPT_R;
 	    err = 0;

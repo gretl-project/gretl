@@ -162,7 +162,8 @@ struct fnpkg_ {
 
 enum {
     ARG_OPTIONAL = 1 << 0,
-    ARG_CONST    = 1 << 1
+    ARG_CONST    = 1 << 1,
+    ARG_ACCESS   = 1 << 2
 };
 
 /* structure representing an argument to a user-defined function */
@@ -5307,7 +5308,7 @@ static void maybe_set_arg_const (struct fnarg *arg, fn_param *fp)
 	/* param is CONST by inheritance */
 	arg->name = fp->name;
 	arg->flags |= ARG_CONST;
-    }	
+    }
 }
 
 static int localize_const_matrix (struct fnarg *arg, fn_param *fp)
@@ -5365,6 +5366,7 @@ static int localize_bundle_ref (fnargs *args, int i,
 {
     struct fnarg *arg = args->arg[i];
     const char *alt, *bname = arg->val.str;
+    int const_access = 0;
     int j, err = 0;
 
     for (j=0; j<i; j++) {
@@ -5379,7 +5381,15 @@ static int localize_bundle_ref (fnargs *args, int i,
     if (arg->upname == NULL) {
 	err = E_ALLOC;
     } else {
-	err = gretl_bundle_localize(bname, fp->name);
+	err = gretl_bundle_localize(bname, fp->name, &const_access);
+    }
+
+    if (!err) {
+	maybe_set_arg_const(arg, fp);
+	if (const_access) {
+	    /* save as flag for use on exit */
+	    arg->flags |= ARG_ACCESS;
+	}
     }
 
     return err;
@@ -5998,7 +6008,9 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 		user_matrix_adjust_level(u, -1);
 		user_matrix_set_name(u, arg->upname);
 	    } else if (arg->type == GRETL_TYPE_BUNDLE_REF) {
-		gretl_bundle_unlocalize(fp->name, arg->upname);
+		int ca = arg->flags & ARG_ACCESS;
+
+		gretl_bundle_unlocalize(fp->name, arg->upname, ca);
 	    }
 	} else if (fp->type == GRETL_TYPE_MATRIX && arg->upname != NULL) {
 	    user_matrix *u = get_user_matrix_by_data(arg->val.m);
@@ -6083,13 +6095,22 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 #endif
     }
 
+    /* if any bundles were defined but not returned, clean up */
+    anyerr = destroy_saved_bundles_at_level(d);
+    if (anyerr && !err) {
+	err = anyerr;
+#if FN_DEBUG
+	fprintf(stderr, "destroy_saved_bundles_at_level(%d): err = %d\n", d, err);
+#endif
+    }    
+
     anyerr = destroy_user_matrices_at_level(d);
     if (anyerr && !err) {
 	err = anyerr;
 #if FN_DEBUG
 	fprintf(stderr, "destroy_user_matrices_at_level(%d): err = %d\n", d, err);
 #endif
-    }  
+    }
 
     anyerr = destroy_saved_strings_at_level(d);
     if (anyerr && !err) {
@@ -6097,7 +6118,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 #if FN_DEBUG
 	fprintf(stderr, "destroy_saved_strings_at_level(%d): err = %d\n", d, err);
 #endif
-    }  
+    } 
 
     /* below: delete variables local to the function, taking care not to
        delete any local vars that have been "promoted" to caller
@@ -6158,9 +6179,6 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 
     /* if the function defined a Kalman filter, clean that up */
     delete_kalman(NULL);
-
-    /* if any bundles were defined but not returned, clean up */
-    destroy_saved_bundles_at_level(d);
 
     /* if any anonymous equations system defined: clean up */
     delete_anonymous_equation_system(d);

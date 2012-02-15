@@ -117,6 +117,24 @@ static int matrix_is_saved (const gretl_matrix *m)
     return 0;
 }
 
+static int should_add_as_copy (const gretl_matrix *m)
+{
+    int i;
+
+    for (i=0; i<n_matrices; i++) {
+	if (m == matrices[i]->M) {
+	    return 1;
+	}
+    }
+
+    if (data_is_bundled((void *) m) && 
+	!bundled_matrix_access_ok(m)) {
+	return 1;
+    }
+
+    return 0;
+}
+
 /* callbacks for adding or deleting icons representing 
    matrices in the GUI session window */
 
@@ -172,7 +190,7 @@ static user_matrix *real_user_matrix_add (gretl_matrix *M,
 	matrices = tmp;
     }
 
-    if (matrix_is_saved(M)) {
+    if (should_add_as_copy(M)) {
 	/* ensure uniqueness of matrix pointers */
 	gretl_matrix *Mcpy = gretl_matrix_copy(M);
 
@@ -288,13 +306,6 @@ user_matrix *get_user_matrix_by_index (int idx)
     }
 }
 
-static void usermat_destroy_matrix (user_matrix *u)
-{
-    if (!data_is_bundled(u->M)) {
-	gretl_matrix_free(u->M);
-    }
-}
-
 int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
 {
     if (u == NULL) {
@@ -302,11 +313,13 @@ int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
     }
 
     if (M != u->M) {
+	if (!data_is_bundled(u->M)) {
 #if MDEBUG
-	fprintf(stderr, " freeing u->M at %p, replacing with "
-		"matrix at %p\n", u->M, M);
+	    fprintf(stderr, " %s: freeing matrix at %p, replacing with "
+		    "matrix at %p\n", u->name, u->M, M);
 #endif
-	usermat_destroy_matrix(u);
+	    gretl_matrix_free(u->M);
+	}	
 	u->M = M;
     }
 
@@ -1067,12 +1080,14 @@ static void destroy_user_matrix (user_matrix *u)
 	return;
     }
 
+    if (!data_is_bundled(u->M)) {
 #if MDEBUG
-    fprintf(stderr, "destroy_user_matrix: freeing matrix at %p...", 
-	    (void *) u->M);
+	fprintf(stderr, "destroy_user_matrix %s: freeing matrix at %p...\n", 
+		u->name, (void *) u->M);
 #endif
+	gretl_matrix_free(u->M);
+    }
 
-    usermat_destroy_matrix(u);
     free(u);
 
 #if MDEBUG

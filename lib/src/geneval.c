@@ -5675,8 +5675,10 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 #endif
 
     if (!strcmp(name, "$")) {
+	/* special: treat the 'last model' as a bundle */
 	val = last_model_get_data(key, &type, &size, &p->err);
     } else {
+	/* regular named bundle */
 	bundle = get_gretl_bundle_by_name(name);
 	if (bundle == NULL) {
 	    p->err = E_UNKVAR;
@@ -5760,6 +5762,21 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	}
     } else {
 	p->err = E_DATA;
+    }
+
+    return ret;
+}
+
+static NODE *bundle_set_access (NODE *l, parser *p)
+{
+    gretl_bundle *bundle = get_gretl_bundle_by_name(l->v.str);
+    NODE *ret = aux_scalar_node(p);
+
+    if (bundle == NULL) {
+	ret->v.xval = 1;
+    } else {
+	gretl_bundle_set_const_access(bundle, 1);
+	ret->v.xval = 0;
     }
 
     return ret;
@@ -8697,6 +8714,13 @@ static NODE *eval (NODE *t, parser *p)
 	/* name of bundle plus key */
 	ret = get_named_bundle_value(l, r, p);
 	break;
+    case F_ACCESS:
+	if (l->t == BUNDLE) {
+	    ret = bundle_set_access(l, p);
+	} else {
+	    node_type_error(t->t, 0, BUNDLE, l, p);
+	}
+	break;
     case F_INBUNDLE:
 	if (l->t == BUNDLE && r->t == STR) {
 	    ret = test_bundle_key(l, r, p);
@@ -10462,7 +10486,8 @@ static gretl_matrix *list_to_matrix (const char *name, int *err)
     return v;
 }
 
-static gretl_matrix *grab_or_copy_matrix_result (parser *p)
+static gretl_matrix *grab_or_copy_matrix_result (parser *p,
+						 int *prechecked)
 {
     NODE *r = p->ret;
     gretl_matrix *m = NULL;
@@ -10509,16 +10534,26 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
 	    } else {
 		p->err = E_TYPES;
 	    }
+	} else if (bundled_matrix_access_ok(r->v.m)) {
+	    /* share the bundled matrix with the caller */
+#if EDEBUG
+	    fprintf(stderr, "sharing bundled matrix at %p as %s\n", 
+		    (void *) r->v.m, p->lh.name);
+#endif
+	    m = r->v.m;
 	} else {
 	    /* must make a copy to keep pointers distinct */
-#if EDEBUG
-	    fprintf(stderr, "matrix result (%p) is pre-existing, copying it\n",
-		    (void *) r->v.m);
-#endif
 	    m = gretl_matrix_copy(r->v.m);
+#if EDEBUG
+	    fprintf(stderr, "matrix result (%p) is pre-existing, copied to %p\n",
+		    (void *) r->v.m, (void *) m);
+#endif
 	    if (m == NULL) {
 		p->err = E_ALLOC;
 	    }
+	}
+	if (prechecked != NULL) {
+	    *prechecked = 1;
 	}
     } else if (r->t == LIST) {
 	m = list_to_matrix(r->v.str, &p->err);
@@ -10532,7 +10567,8 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
 
 /* generating a matrix, no pre-existing matrix of that name */
 
-static gretl_matrix *matrix_from_scratch (parser *p, int tmp)
+static gretl_matrix *matrix_from_scratch (parser *p, int tmp,
+					  int *prechecked)
 {
     gretl_matrix *m = NULL;
 
@@ -10542,7 +10578,7 @@ static gretl_matrix *matrix_from_scratch (parser *p, int tmp)
 	    p->err = E_ALLOC;
 	} 
     } else {
-	m = grab_or_copy_matrix_result(p);
+	m = grab_or_copy_matrix_result(p, prechecked);
     }
 
     if (!tmp && !p->err) {
@@ -10585,7 +10621,7 @@ static int LHS_matrix_reusable (parser *p)
    we re-use the left-hand side matrix if possible.
 */
 
-static void assign_to_matrix (parser *p)
+static void assign_to_matrix (parser *p, int *prechecked)
 {
     gretl_matrix *m;
     double x;
@@ -10608,7 +10644,7 @@ static void assign_to_matrix (parser *p)
 	}
     } else {
 	/* replace the old matrix with result */
-	m = grab_or_copy_matrix_result(p);
+	m = grab_or_copy_matrix_result(p, prechecked);
 	if (!p->err) {
 	    p->err = user_matrix_replace_matrix_by_name(p->lh.name, m);
 	    p->lh.m0 = NULL; /* invalidate pointer */
@@ -10638,7 +10674,7 @@ static void assign_to_matrix_mod (parser *p)
 	    p->err = E_TYPES;
 	}
     } else {
-	b = matrix_from_scratch(p, 1);
+	b = matrix_from_scratch(p, 1, NULL);
 	if (b != NULL) {
 	    m = real_matrix_calc(a, b, p->op, &p->err);
 	    gretl_matrix_free(b);
@@ -10664,7 +10700,7 @@ static void edit_matrix (parser *p)
 
     if (p->ret->t != NUM) {
 	/* not a scalar: get the replacement matrix */
-	m = grab_or_copy_matrix_result(p);
+	m = grab_or_copy_matrix_result(p, NULL);
 	if (m == NULL) {
 	    return;
 	}
@@ -11182,10 +11218,10 @@ static int save_generated_var (parser *p, PRN *prn)
 
 	if (p->lh.m0 == NULL) {
 	    /* there's no pre-existing left-hand side matrix */
-	    matrix_from_scratch(p, 0);
+	    matrix_from_scratch(p, 0, &prechecked);
 	} else if (p->lh.substr == NULL && p->op == B_ASN) {
 	    /* uninflected assignment to an existing matrix */
-	    assign_to_matrix(p);
+	    assign_to_matrix(p, &prechecked);
 	} else if (p->lh.substr == NULL) {
 	    /* inflected assignment to entire existing matrix */
 	    assign_to_matrix_mod(p);

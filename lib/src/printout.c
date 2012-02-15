@@ -1735,7 +1735,6 @@ static void print_listed_objects (const char *s,
 	} else if ((p = get_string_by_name(name)) != NULL) {
 	    pprintf(prn, "%s\n", p);	
 	} 
-	    
 	free(name);
     }
 }
