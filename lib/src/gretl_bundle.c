@@ -42,7 +42,6 @@ struct gretl_bundle_ {
     char *creator;
     GHashTable *ht;      /* holds key/value pairs */
     int level;           /* level of function execution */
-    int const_access;    /* allow direct access to matrices */
 };
 
 /**
@@ -124,13 +123,6 @@ int gretl_bundle_set_name (gretl_bundle *b, const char *name)
     strncat(b->name, name, VNAMELEN - 1);
 
     return 0;
-}
-
-void gretl_bundle_set_const_access (gretl_bundle *b, int s)
-{
-    if (b != NULL) {
-	b->const_access = (s != 0);
-    }
 }
 
 int gretl_bundle_is_stacked (gretl_bundle *b)
@@ -255,10 +247,7 @@ static void bundled_item_destroy (gpointer data)
 	free(item->data);
 	break;
     case GRETL_TYPE_MATRIX:
-	if (!get_user_matrix_by_data(item->data)) {
-	    // fprintf(stderr, "*** bundle: freeing matrix %p\n", item->data);
-	    gretl_matrix_free((gretl_matrix *) item->data);
-	}
+	gretl_matrix_free((gretl_matrix *) item->data);
 	break;
     case GRETL_TYPE_MATRIX_REF:
 	item->data = NULL;
@@ -306,7 +295,6 @@ gretl_bundle *gretl_bundle_new (void)
 	*b->name = '\0';
 	b->creator = NULL;
 	b->level = 0;
-	b->const_access = 0;
 	b->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
 				      g_free, bundled_item_destroy);
     }
@@ -1400,37 +1388,6 @@ int data_is_bundled (void *ptr)
     return ret;
 }
 
-/**
- * bundled_matrix_access_ok:
- * @m: matrix to check.
- *
- * Returns: 1 if @m is contained within a gretl bundle
- * and the bundle settings allow for direct access (as
- * opposed to copying out), otherwise 0.
- */
-
-int bundled_matrix_access_ok (const gretl_matrix *m)
-{
-    int ret = 0;
-
-    if (bundles != NULL) {
-	gpointer p;
-	int i;
-
-	for (i=0; i<n_saved_bundles; i++) {
-	    if (bundles[i] != NULL) {
-		p = g_hash_table_find(bundles[i]->ht, match_by_data, (void *) m);
-		if (p != NULL) {
-		    ret = bundles[i]->const_access;
-		    break;
-		}
-	    }
-	}
-    }
-
-    return ret;
-}
-
 /* Called from gretl_func.c on return, to remove
    a given bundle from the stack of named bundles in
    preparation for handing it over to the caller,
@@ -1490,7 +1447,6 @@ int copy_bundle_arg_as (const gretl_bundle *b, const char *newname)
  * gretl_bundle_localize:
  * @origname: name of bundle at caller level.
  * @localname: name to be used within function.
- * @const_access: location to receive flag (1/0) indicating
  * whether the bundle currently allows direct access to
  * bundled matrices.
  *
@@ -1502,8 +1458,7 @@ int copy_bundle_arg_as (const gretl_bundle *b, const char *newname)
  */
 
 int gretl_bundle_localize (const char *origname,
-			   const char *localname,
-			   int *const_access)
+			   const char *localname)
 {
     gretl_bundle *b;
     int err = 0;
@@ -1515,8 +1470,6 @@ int gretl_bundle_localize (const char *origname,
     } else {
 	strcpy(b->name, localname);
 	b->level += 1;
-	*const_access = b->const_access;
-	b->const_access = 0;
     }
 
      return err;
@@ -1526,18 +1479,15 @@ int gretl_bundle_localize (const char *origname,
  * gretl_bundle_unlocalize:
  * @localname: name of bundle within function.
  * @origname: name used at caller level.
- * @const_access: allow direct access to matrices (0/1).
  *
  * On exit from a function, restores the original name and
  * level of a bundle which has been made available as an argument.
- * Also restore the original "const access" status. 
  * 
  * Returns: 0 on success, non-zero on error.
  */
 
 int gretl_bundle_unlocalize (const char *localname,
-			     const char *origname,
-			     int const_access)
+			     const char *origname)
 {
     gretl_bundle *b;
     int err = 0;
@@ -1549,7 +1499,6 @@ int gretl_bundle_unlocalize (const char *localname,
     } else {
 	strcpy(b->name, origname);
 	b->level -= 1;
-	b->const_access = (const_access != 0);
     }
 
     return err;

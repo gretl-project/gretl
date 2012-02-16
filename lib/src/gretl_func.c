@@ -162,8 +162,7 @@ struct fnpkg_ {
 
 enum {
     ARG_OPTIONAL = 1 << 0,
-    ARG_CONST    = 1 << 1,
-    ARG_ACCESS   = 1 << 2
+    ARG_CONST    = 1 << 1
 };
 
 /* structure representing an argument to a user-defined function */
@@ -5366,7 +5365,6 @@ static int localize_bundle_ref (fnargs *args, int i,
 {
     struct fnarg *arg = args->arg[i];
     const char *alt, *bname = arg->val.str;
-    int const_access = 0;
     int j, err = 0;
 
     for (j=0; j<i; j++) {
@@ -5381,15 +5379,11 @@ static int localize_bundle_ref (fnargs *args, int i,
     if (arg->upname == NULL) {
 	err = E_ALLOC;
     } else {
-	err = gretl_bundle_localize(bname, fp->name, &const_access);
+	err = gretl_bundle_localize(bname, fp->name);
     }
 
     if (!err) {
 	maybe_set_arg_const(arg, fp);
-	if (const_access) {
-	    /* save as flag for use on exit */
-	    arg->flags |= ARG_ACCESS;
-	}
     }
 
     return err;
@@ -6008,9 +6002,7 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 		user_matrix_adjust_level(u, -1);
 		user_matrix_set_name(u, arg->upname);
 	    } else if (arg->type == GRETL_TYPE_BUNDLE_REF) {
-		int ca = arg->flags & ARG_ACCESS;
-
-		gretl_bundle_unlocalize(fp->name, arg->upname, ca);
+		gretl_bundle_unlocalize(fp->name, arg->upname);
 	    }
 	} else if (fp->type == GRETL_TYPE_MATRIX && arg->upname != NULL) {
 	    user_matrix *u = get_user_matrix_by_data(arg->val.m);

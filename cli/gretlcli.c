@@ -965,7 +965,7 @@ static int exec_line (ExecState *s, DATASET *dset)
 
 	    err = dataset_drop_listed_variables(cmd->list, dset, 
 						&nv, prn);
-	    if (!err && nv > 0) {
+	    if (!err && nv > 0 && !batch) {
 		pputs(prn, _("Take note: variables have been renumbered"));
 		pputc(prn, '\n');
 		maybe_list_vars(dset, prn);

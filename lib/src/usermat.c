@@ -117,24 +117,6 @@ static int matrix_is_saved (const gretl_matrix *m)
     return 0;
 }
 
-static int should_add_as_copy (const gretl_matrix *m)
-{
-    int i;
-
-    for (i=0; i<n_matrices; i++) {
-	if (m == matrices[i]->M) {
-	    return 1;
-	}
-    }
-
-    if (data_is_bundled((void *) m) && 
-	!bundled_matrix_access_ok(m)) {
-	return 1;
-    }
-
-    return 0;
-}
-
 /* callbacks for adding or deleting icons representing 
    matrices in the GUI session window */
 
@@ -190,7 +172,7 @@ static user_matrix *real_user_matrix_add (gretl_matrix *M,
 	matrices = tmp;
     }
 
-    if (should_add_as_copy(M)) {
+    if (matrix_is_saved(M)) {
 	/* ensure uniqueness of matrix pointers */
 	gretl_matrix *Mcpy = gretl_matrix_copy(M);
 

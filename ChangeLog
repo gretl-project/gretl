@@ -18,6 +18,7 @@ version 1.9.8, in progress
 - Fix bug: misbehavior of substitution of named strings in some loop
   contexts
 - Fix bug: breakage in handling of string-valued variables in CVS import
+- Fix bug: possible crash in mle if a derivatives matrix is resized
 - For third-party users of libgretl: improve handling of search for the
   gretl plugins
 

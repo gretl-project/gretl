@@ -5767,21 +5767,6 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *bundle_set_access (NODE *l, parser *p)
-{
-    gretl_bundle *bundle = get_gretl_bundle_by_name(l->v.str);
-    NODE *ret = aux_scalar_node(p);
-
-    if (bundle == NULL) {
-	ret->v.xval = 1;
-    } else {
-	gretl_bundle_set_const_access(bundle, 1);
-	ret->v.xval = 0;
-    }
-
-    return ret;
-}
-
 static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
 {
     gretl_bundle *bundle = node_get_bundle(l, p);
@@ -8714,13 +8699,6 @@ static NODE *eval (NODE *t, parser *p)
 	/* name of bundle plus key */
 	ret = get_named_bundle_value(l, r, p);
 	break;
-    case F_ACCESS:
-	if (l->t == BUNDLE) {
-	    ret = bundle_set_access(l, p);
-	} else {
-	    node_type_error(t->t, 0, BUNDLE, l, p);
-	}
-	break;
     case F_INBUNDLE:
 	if (l->t == BUNDLE && r->t == STR) {
 	    ret = test_bundle_key(l, r, p);
@@ -10534,13 +10512,6 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p,
 	    } else {
 		p->err = E_TYPES;
 	    }
-	} else if (bundled_matrix_access_ok(r->v.m)) {
-	    /* share the bundled matrix with the caller */
-#if EDEBUG
-	    fprintf(stderr, "sharing bundled matrix at %p as %s\n", 
-		    (void *) r->v.m, p->lh.name);
-#endif
-	    m = r->v.m;
 	} else {
 	    /* must make a copy to keep pointers distinct */
 	    m = gretl_matrix_copy(r->v.m);
