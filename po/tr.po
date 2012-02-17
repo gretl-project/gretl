@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-02-04 09:24-0500\n"
-"PO-Revision-Date: 2012-02-13 12:56+0200\n"
+"PO-Revision-Date: 2012-02-17 17:58+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -3141,7 +3141,7 @@ msgstr "Değişken ekleme için sınama"
 
 #: lib/src/gretl_model.c:2975 lib/src/gretl_model.c:3005
 msgid "parameters are zero for the variables"
-msgstr "Değişkenler için katsayılar sıfırdır"
+msgstr "Değişkenler için katsayılar sıfır"
 
 #: lib/src/gretl_model.c:2977
 #, c-format
@@ -5731,12 +5731,12 @@ msgid ""
 "and negative values, R follows N(%g, %g)\n"
 msgstr ""
 "Bağımsızlık ve artı ve eksi değerlerin eşit olasılığı varsayımı\n"
-"altında R, N(%g, %g dağılımına uyar\n"
+"altında R, N(%g; %g) dağılımına uyar\n"
 
 #: lib/src/nonparam.c:842
 #, c-format
 msgid "Under the null hypothesis of independence, R follows N(%g, %g)\n"
-msgstr "Bağımsızlık sıfır önsavı altında R, N(%g, %g) dağılımına uyar\n"
+msgstr "Bağımsızlık sıfır önsavı altında R, N(%g; %g) dağılımına uyar\n"
 
 #: lib/src/nonparam.c:845
 #, c-format
@@ -5754,11 +5754,11 @@ msgstr "%s ve %s arasındaki farkın sınanması"
 
 #: lib/src/nonparam.c:974
 msgid "Wilcoxon Signed-Rank Test"
-msgstr "Wilcoxon İşaretli-Sıra sınaması"
+msgstr "Wilcoxon işaretli-sıra sınaması"
 
 #: lib/src/nonparam.c:976
 msgid "the median difference is zero"
-msgstr "ortanca farkı sıfırdır"
+msgstr "ortanca farkı sıfır"
 
 #: lib/src/nonparam.c:1005
 msgid "zero differences"
@@ -5766,7 +5766,7 @@ msgstr "sıfır farklar"
 
 #: lib/src/nonparam.c:1006
 msgid "non-zero ties"
-msgstr "sıfır-dışı eşit kalmalar"
+msgstr "sıfır-dışı eşit çiftler"
 
 #: lib/src/nonparam.c:1012
 msgid "Expected value"
@@ -5782,7 +5782,7 @@ msgstr "Örneklem, istatistiksel anlamlılık için aşırı küçük"
 
 #: lib/src/nonparam.c:1111
 msgid "Wilcoxon Rank-Sum Test"
-msgstr "Wilcoxon Sıra-Toplamı sınaması"
+msgstr "Wilcoxon sıra-toplamı sınaması"
 
 #: lib/src/nonparam.c:1113
 msgid "the two medians are equal"
@@ -5809,7 +5809,7 @@ msgstr "%s > %s olan durum sayısı: w = %d (%%%.2f)\n"
 #: lib/src/nonparam.c:1197
 #, c-format
 msgid "Under the null hypothesis of no difference, W follows B(%d, %.1f)\n"
-msgstr "Fark olmadığı sıfır önsavı altında W, B(%d, %.1f) dağılımına uyar\n"
+msgstr "Fark olmadığı sıfır önsavı altında W, B(%d; %.1f) dağılımına uyar\n"
 
 #: lib/src/nonparam.c:1199 lib/src/nonparam.c:1206 gui2/calculator.c:1992
 msgid "Prob"
@@ -6143,27 +6143,27 @@ msgstr "liste boş"
 
 #: lib/src/printout.c:2328 gui2/guiprint.c:1311
 msgid "Mean Error"
-msgstr "Ortalama Hata"
+msgstr "Ortalama hata"
 
 #: lib/src/printout.c:2329 gui2/guiprint.c:1312
 msgid "Mean Squared Error"
-msgstr "Hata karesi ortalaması"
+msgstr "Ortalama hata kareleri"
 
 #: lib/src/printout.c:2330 gui2/guiprint.c:1313
 msgid "Root Mean Squared Error"
-msgstr "Hata karesi ortalaması kökü"
+msgstr "Ortalama hata kareleri kökü"
 
 #: lib/src/printout.c:2331 gui2/guiprint.c:1314
 msgid "Mean Absolute Error"
-msgstr "Mutlak hata ortalaması"
+msgstr "Ortalama mutlak hata"
 
 #: lib/src/printout.c:2332 gui2/guiprint.c:1315
 msgid "Mean Percentage Error"
-msgstr "Ortalama Yüzde Hata"
+msgstr "Ortalama yüzde hata"
 
 #: lib/src/printout.c:2333 gui2/guiprint.c:1316
 msgid "Mean Absolute Percentage Error"
-msgstr "Ortalama Mutlak Yüzde Hata"
+msgstr "Ortalama yüzde mutlak hata"
 
 #: lib/src/printout.c:2334
 msgid "Theil's U"
@@ -13493,7 +13493,7 @@ msgstr "gecikme derecesi:"
 
 #: gui2/selector.c:3955
 msgid "cointegration rank:"
-msgstr "eştümleşim sırası:"
+msgstr "eştümleşim derecesi:"
 
 #: gui2/selector.c:3980
 msgid "maximum lag:"
