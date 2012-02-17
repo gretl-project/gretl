@@ -338,6 +338,7 @@ struct gretl_option gretl_opts[] = {
     { PANEL,    OPT_H, "hausman-reg", 0 }, /* backward compatibility */
     { PANEL,    OPT_I, "iterate", 0 },
     { PANEL,    OPT_M, "matrix-diff", 0 },
+    { PANEL,    OPT_N, "nerlove", 0 },
     { PANEL,    OPT_O, "vcv", 0 },
     { PANEL,    OPT_P, "pooled", 0 },
     { PANEL,    OPT_R, "robust", 0 },

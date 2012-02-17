@@ -7605,6 +7605,10 @@
 	  <effect>random effects or GLS model</effect>
         </option>
         <option>
+	  <flag>--nerlove</flag>
+	  <effect>use the Nerlove transformation</effect>
+        </option>
+        <option>
 	  <flag>--between</flag>
 	  <effect>estimate the between-groups model</effect>
         </option>
@@ -7646,12 +7650,16 @@
 	the original data.
       </para>
       <para context="cli">
-	If the <opt>--random-effects</opt> flag is given, random effects
-	estimates are computed, using the method of Swamy and Arora. In this
-	case (only) the option <opt>--matrix-diff</opt> forces use of the
-	matrix-difference method (as opposed to the regression method) for
-	carrying out the Hausman test for the consistency of the random
-	effects estimator.
+	If the <opt>--random-effects</opt> flag is given, random
+	effects estimates are computed, by default using the method of
+	<cite key="swamy72">Swamy and Arora (1972)</cite>. In this
+	case (only) the option <opt>--matrix-diff</opt> forces use of
+	the matrix-difference method (as opposed to the regression
+	method) for carrying out the Hausman test for the consistency
+	of the random effects estimator. Also specific to the random
+	effects estimator is the <opt>--nerlove</opt> flag, which
+	selects the method of <cite key="nerlove71">Nerlove
+	(1971)</cite> as opposed to Swamy and Arora.
       </para>
       <para context="cli">
 	Alternatively, if the <opt>--unit-weights</opt> flag is given, the

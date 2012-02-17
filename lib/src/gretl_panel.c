@@ -1673,8 +1673,7 @@ static void fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 	(wmod->ess * pan->Fdfn);
 }
 
-static int
-fix_panelmod_list (MODEL *targ, panelmod_t *pan)
+static int fix_panelmod_list (MODEL *targ, panelmod_t *pan)
 {
     int i;
 
@@ -1764,7 +1763,6 @@ static int fe_model_add_ahat (MODEL *pmod, const DATASET *dset,
 			      panelmod_t *pan)
 {
     double *ahat = NULL;
-    double ahi;
     int i, j, t, v, bigt;
     int err = 0;
 
@@ -1779,6 +1777,7 @@ static int fe_model_add_ahat (MODEL *pmod, const DATASET *dset,
 
     for (i=0; i<pan->nunits; i++) {
 	int Ti = pan->unit_obs[i];
+	double a = 0.0;
 
 	if (Ti == 0) {
 	    continue;
@@ -1786,24 +1785,24 @@ static int fe_model_add_ahat (MODEL *pmod, const DATASET *dset,
 
 	/* a = y - Xb, where the 'b' is based on de-meaned data */
 
-	ahi = 0.0;
+	a = 0.0;
 	for (t=0; t<pan->T; t++) {
 	    bigt = panel_index(i, t);
 	    if (!na(pmod->uhat[bigt])) {
-		ahi += dset->Z[pmod->list[1]][bigt];
+		a += dset->Z[pmod->list[1]][bigt];
 		for (j=1; j<pmod->ncoeff; j++) {
 		    v = pmod->list[j+2];
-		    ahi -= pmod->coeff[j] * dset->Z[v][bigt];
+		    a -= pmod->coeff[j] * dset->Z[v][bigt];
 		}
 	    }
 	}
 
-	ahi /= Ti;
+	a /= Ti;
 
 	for (t=0; t<pan->T; t++) {
 	    bigt = panel_index(i, t);
 	    if (!na(pmod->uhat[bigt])) {
-		ahat[bigt] = ahi;
+		ahat[bigt] = a;
 	    }
 	}
     }
@@ -1811,6 +1810,86 @@ static int fe_model_add_ahat (MODEL *pmod, const DATASET *dset,
     err = gretl_model_set_data(pmod, "ahat", ahat, 
 			       GRETL_TYPE_DOUBLE_ARRAY, 
 			       dset->n * sizeof *ahat);
+
+    return err;
+}
+
+static int *real_FE_list (panelmod_t *pan)
+{
+    int *list = gretl_list_copy(pan->pooled->list);
+    int i;
+
+    if (list != NULL) {
+	/* purge any non-time-varying variables */
+	for (i=2; i<=list[0]; i++) {
+	    if (!in_gretl_list(pan->vlist, list[i])) {
+		gretl_list_delete_at_pos(list, i--);
+	    }
+	}
+    }
+
+    return list;
+}
+
+static int nerlove_s2u (MODEL *pmod, const DATASET *dset,
+			panelmod_t *pan)
+{
+    double amean, *ahat;
+    int i, j, t, v, k, bigt;
+    int *list;
+    int err = 0;
+
+    ahat = malloc(pan->effn * sizeof *ahat);
+    if (ahat == NULL) {
+	return E_ALLOC;
+    }
+
+    list = real_FE_list(pan);
+    if (list == NULL) {
+	free(ahat);
+	return E_ALLOC;
+    }    
+
+    amean = 0.0;
+    k = 0;
+
+    for (i=0; i<pan->nunits; i++) {
+	int Ti = pan->unit_obs[i];
+	double a = 0.0;
+
+	if (Ti == 0) {
+	    continue;
+	}
+
+	/* a = y - Xb, where the 'b' is based on de-meaned data */
+
+	for (t=0; t<pan->T; t++) {
+	    bigt = panel_index(i, t);
+	    if (!na(pmod->uhat[bigt])) {
+		a += dset->Z[list[1]][bigt];
+		for (j=1; j<pmod->ncoeff; j++) {
+		    v = list[j+2];
+		    a -= pmod->coeff[j] * dset->Z[v][bigt];
+		}
+	    }
+	}
+
+	a /= Ti;
+	ahat[k++] = a;
+	amean += a;
+    }
+
+    amean /= pan->effn;
+    pan->s2u = 0.0;
+
+    for (i=0; i<pan->effn; i++) {
+	pan->s2u += (ahat[i] - amean) * (ahat[i] - amean);
+    }
+
+    pan->s2u /= pan->effn - 1;
+
+    free(ahat);
+    free(list);
 
     return err;
 }
@@ -1989,6 +2068,8 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
 	    } else {
 		femod_regular_vcv(&femod);
 	    }
+	} else if (pan->opt & OPT_N) {
+	    femod.errcode = nerlove_s2u(&femod, dset, pan);
 	}
     }
 
@@ -2189,8 +2270,15 @@ static int within_variance (panelmod_t *pan,
 	err = femod.errcode;
 	clear_model(&femod);
     } else {
-	/* Greene: nT - n - K */
-	int den = femod.nobs - pan->effn - (pan->vlist[0] - 2);
+	int den;
+
+	if (pan->opt & OPT_N) {
+	    /* Nerlove */
+	    den = femod.nobs;
+	} else {
+	    /* as per Greene: nT - n - K */
+	    den = femod.nobs - pan->effn - (pan->vlist[0] - 2);
+	}
 
 	pan->s2e = femod.ess / den;
 #if PDEBUG
@@ -2301,16 +2389,24 @@ static int random_effects (panelmod_t *pan,
 	    free(relist);
 	    return E_ALLOC;
 	}
-    }    
-
-    /* Calculate the quasi-demeaning coefficient, theta, using the
-       Swamy and Arora method.  Note: for unbalanced panels, theta
-       will actually vary across the units in the final calculation.
-    */
-    pan->s2u = pan->between_s2 - pan->s2e / pan->Tbar;
-    if (pan->s2u < 0) {
-	pan->s2u = 0.0;
     }
+
+    /* If OPT_N (--nerlove) was given, we've already calculated
+       pan->s2u as the variance of the fixed effects. Otherwise
+       we're using the Swamy and Arora method, and pan->s2u still 
+       needs to be computed.
+
+       Note: for unbalanced panels, theta will actually vary across 
+       the units in the final calculation.
+    */
+    if (!(pan->opt & OPT_N)) {
+	pan->s2u = pan->between_s2 - pan->s2e / pan->Tbar;
+	if (pan->s2u < 0) {
+	    pan->s2u = 0.0;
+	}
+    }
+
+    /* theta, the quasi-demeaning coefficient */
     pan->theta = 1.0 - sqrt(pan->s2e / (pan->Tmax * pan->s2u + pan->s2e));
 
 #if PDEBUG

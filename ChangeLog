@@ -14,6 +14,8 @@ version 1.9.8, in progress
 - Various small fixes for spreadsheet data importers
 - Compaction of daily to weekly data: enable this even if the daily data
   are not dated
+- "panel" command: add --nerlove option to use Nerlove's transformation
+  in the context of the random effects estimator
 - "system" command: various small fixes and enhancements
 - Fix bug: misbehavior of substitution of named strings in some loop
   contexts
