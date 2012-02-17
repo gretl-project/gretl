@@ -1786,6 +1786,10 @@ static void print_model_heading (const MODEL *pmod,
 
 	pprintf(prn, A_("%s, using %d observations"),
 		A_(estimator_string(pmod, prn)), pmod->nobs);
+	if ((pmod->opt & OPT_U) && (pmod->opt & OPT_N)) {
+	    gretl_prn_newline(prn);
+	    pprintf(prn, A_("Using Nerlove's transformation"));
+	}
 	if (effn > 0) {
 	    gretl_prn_newline(prn);
 	    pprintf(prn, A_("Included %d cross-sectional units"), effn);

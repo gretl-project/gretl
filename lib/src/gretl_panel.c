@@ -2228,7 +2228,11 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
 	}
 	gretl_model_add_panel_varnames(pmod, dset, NULL);
 	fix_panel_hatvars(pmod, pan, Z);
-	fix_gls_stats(pmod, pan);	
+	fix_gls_stats(pmod, pan);
+	if (pan->opt & OPT_N) {
+	    /* record use of Nerlove transformation */
+	    pmod->opt |= OPT_N;
+	}
     }
 
     /* compose list of dropped variables, if any */

@@ -3445,6 +3445,13 @@ static void compose_cmdlist (selector *sr)
 	    sr->opts |= OPT_X;
 	}
 
+	/* panel: scrub --nerlove if not doing random effects */
+	if (sr->ci == PANEL) {
+	    if ((sr->opts & OPT_N) && !(sr->opts & OPT_U)) {
+		sr->opts &= ~OPT_N;
+	    }
+	}
+
 	verbose = (sr->opts & OPT_V)? 1 : 0;
     }
 
@@ -4849,9 +4856,9 @@ static void hc_config (GtkWidget *w, selector *sr)
     options_dialog(TAB_VCV, NULL, sr->dlg);
 }
 
-static void pack_switch (GtkWidget *b, selector *sr,
-			 gboolean checked, gboolean reversed, 
-			 gretlopt opt, int child)
+static GtkWidget *pack_switch (GtkWidget *b, selector *sr,
+			       gboolean checked, gboolean reversed, 
+			       gretlopt opt, int child)
 {
     GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
     gint offset = (child)? 15 : 0;
@@ -4881,6 +4888,8 @@ static void pack_switch (GtkWidget *b, selector *sr,
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
 
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), checked);
+
+    return hbox;
 }
 
 static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
@@ -5520,9 +5529,18 @@ static void build_omit_test_radios (selector *sr)
     }
 }
 
+static void toggle_nerlove (GtkComboBox *box, selector *sr)
+{
+    if (gtk_combo_box_get_active(box)) {
+	sr->opts |= OPT_N;
+    } else {
+	sr->opts &= ~OPT_N;
+    }
+}
+
 static void build_panel_radios (selector *sr)
 {
-    GtkWidget *b1, *b2;
+    GtkWidget *b1, *b2, *hbox, *w;
     GSList *group;
     gboolean fe = TRUE;
 
@@ -5540,10 +5558,21 @@ static void build_panel_radios (selector *sr)
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Random effects"));
-    pack_switch(b2, sr, !fe, FALSE, OPT_U, 0);
+    hbox = pack_switch(b2, sr, !fe, FALSE, OPT_U, 0);
 
     sr->radios[0] = b1;
     sr->radios[1] = b2;
+
+    /* random effects transformation selector */
+    w = gtk_combo_box_text_new();
+    combo_box_append_text(w, _("Swamy-Arora"));
+    combo_box_append_text(w, _("Nerlove"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
+    gtk_widget_set_sensitive(w, !fe);
+    g_signal_connect(G_OBJECT(w), "changed",
+		     G_CALLBACK(toggle_nerlove), sr);
+    sensitize_conditional_on(w, b2);
 }
 
 static void build_dpanel_radios (selector *sr)
