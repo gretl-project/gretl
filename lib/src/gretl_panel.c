@@ -1763,7 +1763,8 @@ static int fe_model_add_ahat (MODEL *pmod, const DATASET *dset,
 			      panelmod_t *pan)
 {
     double *ahat = NULL;
-    int i, j, t, v, bigt;
+    const double *x;
+    int i, j, t, bigt;
     int err = 0;
 
     ahat = malloc(dset->n * sizeof *ahat);
@@ -1776,33 +1777,30 @@ static int fe_model_add_ahat (MODEL *pmod, const DATASET *dset,
     }
 
     for (i=0; i<pan->nunits; i++) {
-	int Ti = pan->unit_obs[i];
-	double a = 0.0;
+	if (pan->unit_obs[i] > 0) {
+	    double a = 0.0;
 
-	if (Ti == 0) {
-	    continue;
-	}
+	    /* a = y - Xb, where the 'b' is based on de-meaned data */
 
-	/* a = y - Xb, where the 'b' is based on de-meaned data */
-
-	a = 0.0;
-	for (t=0; t<pan->T; t++) {
-	    bigt = panel_index(i, t);
-	    if (!na(pmod->uhat[bigt])) {
-		a += dset->Z[pmod->list[1]][bigt];
-		for (j=1; j<pmod->ncoeff; j++) {
-		    v = pmod->list[j+2];
-		    a -= pmod->coeff[j] * dset->Z[v][bigt];
+	    a = 0.0;
+	    for (t=0; t<pan->T; t++) {
+		bigt = panel_index(i, t);
+		if (!na(pmod->uhat[bigt])) {
+		    a += dset->Z[pmod->list[1]][bigt];
+		    for (j=1; j<pmod->ncoeff; j++) {
+			x = dset->Z[pmod->list[j+2]];
+			a -= pmod->coeff[j] * x[bigt];
+		    }
 		}
 	    }
-	}
 
-	a /= Ti;
+	    a /= pan->unit_obs[i];
 
-	for (t=0; t<pan->T; t++) {
-	    bigt = panel_index(i, t);
-	    if (!na(pmod->uhat[bigt])) {
-		ahat[bigt] = a;
+	    for (t=0; t<pan->T; t++) {
+		bigt = panel_index(i, t);
+		if (!na(pmod->uhat[bigt])) {
+		    ahat[bigt] = a;
+		}
 	    }
 	}
     }
@@ -1862,7 +1860,7 @@ static int nerlove_s2u (MODEL *pmod, const DATASET *dset,
 
 	    for (t=0; t<pan->T; t++) {
 		bigt = panel_index(i, t);
-		if (!na(pmod->uhat[bigt])) {
+		if (!na(pan->pooled->uhat[bigt])) {
 		    a += dset->Z[list[1]][bigt];
 		    for (j=1; j<pmod->ncoeff; j++) {
 			x = dset->Z[list[j+2]];
@@ -1981,20 +1979,20 @@ fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
 
 #if PDEBUG > 1
 
-static void verbose_femod_print (MODEL *femod, double **wZ,
-				 DATASET *winfo, PRN *prn)
+static void verbose_femod_print (MODEL *femod, DATASET *wset, 
+				 PRN *prn)
 {
     int i, j;
 
     pprintf(prn, "*** initial FE model (on within data)\n");
-    printmodel(femod, winfo, OPT_O, prn);
+    printmodel(femod, wset, OPT_O, prn);
 
-    fprintf(stderr, "femod: data series length = %d\n", winfo->n);
-    for (i=0; i<winfo->n; i++) {
+    fprintf(stderr, "femod: data series length = %d\n", wset->n);
+    for (i=0; i<wset->n; i++) {
 	fprintf(stderr, "femod.uhat[%d] = %g, ", i, femod->uhat[i]);
 	fprintf(stderr, "data: ");
-	for (j=0; j<winfo->v; j++) {
-	    fprintf(stderr, "%g ", wZ[j][i]);
+	for (j=0; j<wset->v; j++) {
+	    fprintf(stderr, "%g ", wset->Z[j][i]);
 	}
 	fputc('\n', stderr);
     }    
@@ -2474,7 +2472,7 @@ static int random_effects (panelmod_t *pan,
 
 #if PDEBUG > 1
     if (remod.errcode == 0) {
-	printmodel(&remod, reinfo, OPT_NONE, prn);
+	printmodel(&remod, rset, OPT_NONE, prn);
     }
 #endif	
 
@@ -4607,7 +4605,7 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
     fprintf(stderr, "set_panel_structure_from_vars:\n "
 	    "using var %d ('%s') for unit, var %d ('%s') for time\n",
 	    uv, dset->varname[uv], tv, dset->varname[tv]);
-    print_unit_var(uv, Z, n, 0);
+    print_unit_var(uv, dset->Z, n, 0);
 #endif
 
     uid = copyvec(dset->Z[uv], n);
@@ -4648,7 +4646,7 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
     err = panel_data_sort_by(dset, uv, tv, &ustrs);
 
 #if PDEBUG
-    print_unit_var(uv, Z, n, 1);
+    print_unit_var(uv, dset->Z, n, 1);
 #endif
 
     if (!err && totmiss > 0) {
