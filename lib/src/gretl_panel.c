@@ -1831,11 +1831,14 @@ static int *real_FE_list (panelmod_t *pan)
     return list;
 }
 
+/* computation of $\hat{\sigma}^2_u$ a la Nerlove, if wanted */
+
 static int nerlove_s2u (MODEL *pmod, const DATASET *dset,
 			panelmod_t *pan)
 {
     double amean, *ahat;
-    int i, j, t, v, k, bigt;
+    const double *x;
+    int i, j, t, k, bigt;
     int *list;
     int err = 0;
 
@@ -1854,29 +1857,24 @@ static int nerlove_s2u (MODEL *pmod, const DATASET *dset,
     k = 0;
 
     for (i=0; i<pan->nunits; i++) {
-	int Ti = pan->unit_obs[i];
-	double a = 0.0;
+	if (pan->unit_obs[i] > 0) {
+	    double a = 0.0;
 
-	if (Ti == 0) {
-	    continue;
-	}
-
-	/* a = y - Xb, where the 'b' is based on de-meaned data */
-
-	for (t=0; t<pan->T; t++) {
-	    bigt = panel_index(i, t);
-	    if (!na(pmod->uhat[bigt])) {
-		a += dset->Z[list[1]][bigt];
-		for (j=1; j<pmod->ncoeff; j++) {
-		    v = list[j+2];
-		    a -= pmod->coeff[j] * dset->Z[v][bigt];
+	    for (t=0; t<pan->T; t++) {
+		bigt = panel_index(i, t);
+		if (!na(pmod->uhat[bigt])) {
+		    a += dset->Z[list[1]][bigt];
+		    for (j=1; j<pmod->ncoeff; j++) {
+			x = dset->Z[list[j+2]];
+			a -= pmod->coeff[j] * x[bigt];
+		    }
 		}
 	    }
-	}
 
-	a /= Ti;
-	ahat[k++] = a;
-	amean += a;
+	    a /= pan->unit_obs[i];
+	    ahat[k++] = a;
+	    amean += a;
+	}
     }
 
     amean /= pan->effn;
