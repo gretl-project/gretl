@@ -183,17 +183,25 @@ $\sigma^2_v$.  (These are often referred to as the ``within'' and
 ``between'' variances respectively, since the former refers to
 variation within each cross-sectional unit and the latter to variation
 between the units).  Several means of estimating these magnitudes have
-been suggested in the literature \citep[see][]{baltagi95}; \app{gretl} uses
-the method of \cite{swamy72}: $\sigma^2_\varepsilon$ is
-estimated by the residual variance from the fixed effects model, and
-the sum $\sigma^2_\varepsilon + T_i \sigma^2_v$ is estimated as $T_i$
-times the residual variance from the ``between'' estimator,
+been suggested in the literature \citep[see][]{baltagi95}; by default
+\app{gretl} uses the method of \cite{swamy72}: $\sigma^2_\varepsilon$
+is estimated by the residual variance from the fixed effects model,
+and the sum $\sigma^2_\varepsilon + T_i \sigma^2_v$ is estimated as
+$T_i$ times the residual variance from the ``between'' estimator,
 \[
 \bar{y}_i = \bar{X}_i \beta + e_i
 \]
 The latter regression is implemented by constructing a data set
 consisting of the group means of all the relevant variables.
-
+Alternatively, if the \option{nerlove} option is given, \app{gretl}
+uses the method suggested by \cite{nerlove71}. In this case
+$\sigma^2_v$ is estimated as the sample variance of the fixed effects,
+\[
+\hat{\sigma}^2_v = \frac{1}{n-1} \sum_{i=1}^n 
+  \left(\alpha_i - \bar{\alpha}\right)^2 
+\]
+where $n$ is the number of individuals and $\bar{\alpha}$ is the mean
+of the fixed effects.
 
 \subsection{Choice of estimator}
 \label{panel-choice}
