@@ -1185,7 +1185,7 @@ static char *get_literal_or_stringvar (const char **src, int *err)
 	ret = tmp;
 	s++;
     } else if (svar) {
-	char *p = get_string_by_name(tmp);
+	const char *p = get_string_by_name(tmp);
 
 	if (p == NULL) {
 	    *err = E_UNKVAR;

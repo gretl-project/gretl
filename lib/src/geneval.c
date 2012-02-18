@@ -5820,7 +5820,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	    free_key = 1;
 	}
     } else if (gretl_is_string(p->lh.substr)) {
-	key = get_string_by_name(p->lh.substr);
+	key = (char *) get_string_by_name(p->lh.substr);
     } else {
 	err = E_DATA;
     }

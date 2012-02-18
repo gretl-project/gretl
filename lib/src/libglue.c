@@ -458,7 +458,7 @@ int do_modprint (const char *line, gretlopt opt, PRN *prn)
 		s += strspn(s, " ");
 	    }
 	} else if (sscanf(s, "%15s", name) == 1) {
-	    parnames = get_string_by_name(name);
+	    parnames = (char *) get_string_by_name(name);
 	    if (parnames == NULL) {
 		err = E_UNKVAR;
 	    } else {

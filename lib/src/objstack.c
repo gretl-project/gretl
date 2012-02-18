@@ -1365,12 +1365,10 @@ char *last_model_get_vcv_type (void)
 	if (vi != NULL && vi->vmaj == VCV_ML) {
 	    if (vi->vmin == VCV_HESSIAN) {
 		strcpy(ret, "Hessian");
-	    } else if (vi->vmin == VCV_IM) {
-		strcpy(ret, "Information Matrix");
 	    } else if (vi->vmin == VCV_OP) {
 		strcpy(ret, "OPG");
 	    } else if (vi->vmin == VCV_QML) {
-		strcpy(ret, "QML");
+		strcpy(ret, "Sandwich");
 	    }
 	}
     }

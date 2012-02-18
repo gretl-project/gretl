@@ -45,7 +45,7 @@ int save_named_string (const char *name, const char *s, PRN *prn);
 
 int add_string_as (const char *s, const char *name);
 
-char *get_string_by_name (const char *name);
+const char *get_string_by_name (const char *name);
 
 int process_string_command (const char *line, 
 			    double ***pZ, DATASET *dset,

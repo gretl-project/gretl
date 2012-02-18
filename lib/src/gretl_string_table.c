@@ -506,7 +506,7 @@ static saved_string *get_saved_string_by_name (const char *name,
  * if there is no such variable.
  */
 
-char *get_string_by_name (const char *name)
+const char *get_string_by_name (const char *name)
 {
     int i, n, d;
 

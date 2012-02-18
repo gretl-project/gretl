@@ -2013,7 +2013,8 @@ static int parse_odbc_format (char *fmt)
 
 static char *odbc_get_query (char *s, int *err)
 {
-    char *p, *query = NULL;
+    char *query = NULL;
+    const char *p;
 
     if (*s == '"') {
 	query = gretl_quoted_string_strdup(s, NULL);
