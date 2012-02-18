@@ -69,7 +69,7 @@ struct panelmod_t_ {
     gretl_matrix *Sigma;  /* Hausman covariance matrix */
     double between_s2;    /* group-means or "between" error variance */
     double s2e;           /* \hat{sigma}^2_e, from fixed-effects estimator */
-    double s2u;           /* \hat{sigma}^2_u measure */
+    double s2v;           /* \hat{sigma}^2_v measure */
     int *small2big;       /* data indexation array */
     int *big2small;       /* reverse data indexation array */
     MODEL *pooled;        /* reference model (pooled OLS) */
@@ -1225,7 +1225,7 @@ random_effects_dataset (const DATASET *dset, const DATASET *gset,
 	}
 
 	if (Ti != pan->Tmax) {
-	    theta_i = 1.0 - sqrt(pan->s2e / (Ti * pan->s2u + pan->s2e));
+	    theta_i = 1.0 - sqrt(pan->s2e / (Ti * pan->s2v + pan->s2e));
 	} else {
 	    theta_i = pan->theta;
 	}
@@ -1831,7 +1831,7 @@ static int *real_FE_list (panelmod_t *pan)
 
 /* computation of $\hat{\sigma}^2_u$ a la Nerlove, if wanted */
 
-static int nerlove_s2u (MODEL *pmod, const DATASET *dset,
+static int nerlove_s2v (MODEL *pmod, const DATASET *dset,
 			panelmod_t *pan)
 {
     double amean, *ahat;
@@ -1876,13 +1876,13 @@ static int nerlove_s2u (MODEL *pmod, const DATASET *dset,
     }
 
     amean /= pan->effn;
-    pan->s2u = 0.0;
+    pan->s2v = 0.0;
 
     for (i=0; i<pan->effn; i++) {
-	pan->s2u += (ahat[i] - amean) * (ahat[i] - amean);
+	pan->s2v += (ahat[i] - amean) * (ahat[i] - amean);
     }
 
-    pan->s2u /= pan->effn - 1;
+    pan->s2v /= pan->effn - 1;
 
     free(ahat);
     free(list);
@@ -2065,7 +2065,7 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
 		femod_regular_vcv(&femod);
 	    }
 	} else if (pan->opt & OPT_N) {
-	    femod.errcode = nerlove_s2u(&femod, dset, pan);
+	    femod.errcode = nerlove_s2v(&femod, dset, pan);
 	}
     }
 
@@ -2392,25 +2392,25 @@ static int random_effects (panelmod_t *pan,
     }
 
     /* If OPT_N (--nerlove) was given, we've already calculated
-       pan->s2u as the variance of the fixed effects. Otherwise
-       we're using the Swamy and Arora method, and pan->s2u still 
+       pan->s2v as the variance of the fixed effects. Otherwise
+       we're using the Swamy and Arora method, and pan->s2v still 
        needs to be computed.
 
        Note: for unbalanced panels, theta will actually vary across 
        the units in the final calculation.
     */
     if (!(pan->opt & OPT_N)) {
-	pan->s2u = pan->between_s2 - pan->s2e / pan->Tbar;
-	if (pan->s2u < 0) {
-	    pan->s2u = 0.0;
+	pan->s2v = pan->between_s2 - pan->s2e / pan->Tbar;
+	if (pan->s2v < 0) {
+	    pan->s2v = 0.0;
 	}
     }
 
     /* theta, the quasi-demeaning coefficient */
-    pan->theta = 1.0 - sqrt(pan->s2e / (pan->Tmax * pan->s2u + pan->s2e));
+    pan->theta = 1.0 - sqrt(pan->s2e / (pan->Tmax * pan->s2v + pan->s2e));
 
 #if PDEBUG
-    fprintf(stderr, "s_u = %.8g, s_e = %.8g\n", sqrt(pan->s2u), sqrt(pan->s2e));
+    fprintf(stderr, "s_v = %.8g, s_e = %.8g\n", sqrt(pan->s2v), sqrt(pan->s2e));
     fprintf(stderr, "random_effects theta = %g\n", pan->theta);
 #endif
 

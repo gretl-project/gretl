@@ -1349,6 +1349,35 @@ void *last_model_get_data (const char *key, GretlType *type,
     return ret;
 }
 
+char *last_model_get_vcv_type (void)
+{
+    stacker *smatch = find_smatch(NULL);
+    static char ret[16];
+
+    *ret = '\0';
+
+    if (smatch != NULL && smatch->type == GRETL_OBJ_EQN) {
+	const MODEL *pmod = smatch->ptr;
+	VCVInfo *vi;
+
+	vi = gretl_model_get_data(pmod, "vcv_info");
+
+	if (vi != NULL && vi->vmaj == VCV_ML) {
+	    if (vi->vmin == VCV_HESSIAN) {
+		strcpy(ret, "Hessian");
+	    } else if (vi->vmin == VCV_IM) {
+		strcpy(ret, "Information Matrix");
+	    } else if (vi->vmin == VCV_OP) {
+		strcpy(ret, "OPG");
+	    } else if (vi->vmin == VCV_QML) {
+		strcpy(ret, "QML");
+	    }
+	}
+    }
+
+    return (*ret != '\0')? ret : NULL;
+}
+
 static int namechar_spn_with_space (const char *s)
 {
     const char *ok = "abcdefghijklmnopqrstuvwxyz"

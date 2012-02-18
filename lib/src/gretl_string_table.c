@@ -512,6 +512,8 @@ char *get_string_by_name (const char *name)
 
     if (!strcmp(name, "dirsep")) {
 	return dsep.s;
+    } else if (!strcmp(name, "vcvtype")) {
+	return last_model_get_vcv_type();
     }
 
     n = sizeof built_ins / sizeof built_ins[0];

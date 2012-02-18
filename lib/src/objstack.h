@@ -134,6 +134,8 @@ last_model_get_irf_matrix (int targ, int shock, double alpha,
 void *last_model_get_data (const char *key, GretlType *type, 
 			   int *size, int *err);
 
+char *last_model_get_vcv_type (void);
+
 int *saved_object_get_list (const char *oname, int idx, int *err);
 
 char *saved_object_get_string (const char *oname, int idx, 
