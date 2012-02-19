@@ -5,20 +5,20 @@
 # Helio Guilherme <helio.guilherme@bluebottle.com>, 2006, 2007.
 # Hélio Guilherme <helio.guilherme@bluebottle.com>, 2007, 2008.
 # Hélio Guilherme <helio_guilherme@hotmail.com>, 2008, 2009, 2010.
-# Helio Guilherme <helio_guilherme@hotmail.com>, 2010, 2011.
+# Helio Guilherme <helio_guilherme@hotmail.com>, 2010, 2011, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-02-04 09:24-0500\n"
-"PO-Revision-Date: 2011-12-16 10:00-0500\n"
-"Last-Translator: \n"
+"PO-Revision-Date: 2012-02-19 16:55+0000\n"
+"Last-Translator: Helio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.2\n"
+"Language: \n"
+"X-Generator: Lokalize 1.0\n"
 "X-Poedit-Language: Portuguese\n"
 "X-Poedit-Country: PORTUGAL\n"
 "X-Poedit-SourceCharset: iso-8859-15\n"
@@ -1514,8 +1514,8 @@ msgstr "Teste de Doornik-Hansen"
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
 msgstr ""
-"Dados insuficientes para obter a distribuição de frequência para a variável "
-"%s"
+"Dados insuficientes para obter a distribuição de frequência para a variável %"
+"s"
 
 #: lib/src/describe.c:2047
 msgid "gnuplot command failed\n"
@@ -1987,7 +1987,7 @@ msgstr "'%s' não é uma variável binária"
 
 #: lib/src/discrete.c:2987
 msgid "Perfect prediction obtained: no MLE exists"
-msgstr ""
+msgstr "Foi obtida uma predição perfeita: não existe MLE"
 
 #: lib/src/discrete.c:3150
 msgid "Illegal non-positive value of the dependent variable"
@@ -5968,9 +5968,8 @@ msgid "center"
 msgstr "centro"
 
 #: lib/src/plotspec.c:1584
-#, fuzzy
 msgid "annual growth"
-msgstr "anual"
+msgstr "crescimento anual"
 
 #: lib/src/plotspec.c:1923
 msgid "Dates file does not conform to the specification"
@@ -6673,9 +6672,9 @@ msgid "'%s': unrecognized name"
 msgstr "'%s': nome desconhecido"
 
 #: lib/src/system.c:2052
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no system was specified"
-msgstr "%s: não foram especificados nenhuns parâmetros"
+msgstr "%s: não foi especificado um sistema"
 
 #: lib/src/system.c:2249 lib/src/system.c:2251
 #, c-format
@@ -7207,7 +7206,7 @@ msgstr "Acerca de gretl"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 5 de dezembro de 2011."
+"Tradução de 19 de fevereiro de 2012."
 
 #: gui2/about.c:169
 msgid "License"
@@ -9074,23 +9073,20 @@ msgid "bandwidth adjustment factor:"
 msgstr "factor de ajustamento de largura-de-banda:"
 
 #: gui2/dialogs.c:3980
-#, fuzzy
 msgid "paste data from clipboard"
-msgstr "Copiar para a memória de edição"
+msgstr "Colar dados da memória de edição"
 
 #: gui2/dialogs.c:3987
 msgid "Try pasting data from clipboard?"
-msgstr ""
+msgstr "Tente colar dados da memória de edição?"
 
 #: gui2/dialogs.c:3996
-#, fuzzy
 msgid "Clear current dataset first"
-msgstr "Por favor primeiro abra um ficheiro de dados"
+msgstr "Primeiro apague o conjunto de dados corrente"
 
 #: gui2/dialogs.c:4007
-#, fuzzy
 msgid "Try appending to current dataset"
-msgstr "OK, mantendo o conjunto de dados actual\n"
+msgstr "Tente acrescentar ao conjunto de dados actual"
 
 #: gui2/dialogs.c:4228
 msgid "No model is specified"
@@ -10919,9 +10915,8 @@ msgid "Estimated _density plot..."
 msgstr "Gráfico de _densidade estimada..."
 
 #: gui2/gretl.c:1509
-#, fuzzy
 msgid "_Boxplot"
-msgstr "Caixa de bigodes"
+msgstr "Caixa de _bigodes"
 
 #: gui2/gretl.c:1510
 msgid "Normal _Q-Q plot..."
@@ -12618,6 +12613,8 @@ msgid ""
 "Please note: the decimal character must be '.'\n"
 "in this context"
 msgstr ""
+"Note que neste contexto, \n"
+"o símbolo decimal tem que ser o '.'"
 
 #: gui2/library.c:3378
 #, c-format
@@ -13071,14 +13068,12 @@ msgid "Edit values"
 msgstr "Editar valores"
 
 #: gui2/menustate.c:392 gui2/menustate.c:523
-#, fuzzy
 msgid "Add log"
-msgstr "Acrescentar logs"
+msgstr "Acrescentar log"
 
 #: gui2/menustate.c:394 gui2/menustate.c:524
-#, fuzzy
 msgid "Add difference"
-msgstr "Acrescentar diferenças"
+msgstr "Acrescentar diferença"
 
 #: gui2/menustate.c:396 gui2/menustate.c:498 gui2/menustate.c:525
 #: gui2/menustate.c:585
@@ -14190,9 +14185,9 @@ msgid "versus"
 msgstr "versus"
 
 #: gui2/session.c:2329
-#, fuzzy, c-format
+#, c-format
 msgid "%s: please close this object's window first"
-msgstr "Por favor primeiro feche a janela deste objecto"
+msgstr "%s: por favor primeiro feche a janela deste objecto"
 
 #: gui2/session.c:2497
 #, c-format
