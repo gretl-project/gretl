@@ -4515,7 +4515,7 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
 		    bik = gretl_matrix_get(B, i, k);
 		    gretl_matrix_set(C, i, joff + k, aij*bik);
 		}
-	    }
+	    } 
 	}
     }
 
@@ -4556,7 +4556,7 @@ gretl_matrix_hdproduct_new (const gretl_matrix *A,
     q = A->cols;
     r = B->cols;    
     
-    K = gretl_matrix_alloc(p, q * r);
+    K = gretl_zero_matrix_new(p, q * r);
 
     if (K == NULL) {
 	*err = E_ALLOC;
