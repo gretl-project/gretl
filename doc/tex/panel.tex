@@ -150,9 +150,9 @@ individual $i$, has a variance--covariance matrix given by
 where $J$ is a square matrix with all elements equal to 1. It can be
 shown that the matrix
 \[
-  K_i = I - \frac{\theta}{T_i} J,
+  K_i = I - \frac{\theta_i}{T_i} J,
 \]
-where $\theta = 1 -
+where $\theta_i = 1 -
 \sqrt{\frac{\sigma^2_{\varepsilon}}{\sigma^2_{\varepsilon} + T_i
     \sigma^2_{v}}}$, has the property
 \[
@@ -166,16 +166,19 @@ K_i \mathbf{y}_{i} = K_i \mathbf{X}_{i} \beta + K_i \mathbf{u}_i
 satisfies the Gauss--Markov conditions, and OLS estimation of
 (\ref{eq:REGLS}) provides efficient inference. But since 
 \[
-  K_i \mathbf{y}_{i} = \mathbf{y}_{i} - \theta \bar{\mathbf{y}}_{i}
+  K_i \mathbf{y}_{i} = \mathbf{y}_{i} - \theta_i \bar{\mathbf{y}}_{i}
 \]
 GLS estimation is equivalent to OLS using ``quasi-demeaned''
 variables; that is, variables from which we subtract a fraction
-$\theta$ of their average. Notice that for $\sigma^2_{\varepsilon} \to
-0$, $\theta \to 1$, while for $\sigma^2_{v} \to 0$, $\theta \to 0$.
-This means that if all the variance is attributable to the individual
-effects, then the fixed effects estimator is optimal; if, on the other
-hand, individual effects are negligible, then pooled OLS turns out,
-unsurprisingly, to be the optimal estimator.
+$\theta$ of their average.\footnote{In a balanced panel, the value of
+  $\theta$ is common to all individuals, otherwise it differs
+  depending on the value of $T_i$.} Notice that for
+$\sigma^2_{\varepsilon} \to 0$, $\theta \to 1$, while for
+$\sigma^2_{v} \to 0$, $\theta \to 0$.  This means that if all the
+variance is attributable to the individual effects, then the fixed
+effects estimator is optimal; if, on the other hand, individual
+effects are negligible, then pooled OLS turns out, unsurprisingly, to
+be the optimal estimator.
 
 To implement the GLS approach we need to calculate $\theta$, which in
 turn requires estimates of the variances $\sigma^2_{\varepsilon}$ and

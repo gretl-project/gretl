@@ -67,7 +67,7 @@ struct panelmod_t_ {
     double H;             /* Hausman test statistic */
     gretl_matrix *bdiff;  /* array of coefficient differences */
     gretl_matrix *Sigma;  /* Hausman covariance matrix */
-    double between_s2;    /* group-means or "between" error variance */
+    double s2b;           /* "between" error variance */
     double s2e;           /* \hat{sigma}^2_e, from fixed-effects estimator */
     double s2v;           /* \hat{sigma}^2_v measure */
     int *small2big;       /* data indexation array */
@@ -994,7 +994,7 @@ static void print_panel_coeff (const MODEL *pmod,
 static void print_re_model_top (const panelmod_t *pan, PRN *prn)
 {
     pputs(prn, "Variance estimators:\n");
-    pprintf(prn, " between = %g\n", pan->between_s2);
+    pprintf(prn, " between = %g\n", pan->s2b);
     pprintf(prn, " within = %g\n", pan->s2e);
 
     if (pan->balanced) {
@@ -1407,7 +1407,7 @@ static int between_variance (panelmod_t *pan, DATASET *gset)
     bmod = lsq(blist, gset, OLS, bopt);
 
     if (bmod.errcode == 0) {
-	pan->between_s2 = bmod.sigma * bmod.sigma;
+	pan->s2b = bmod.sigma * bmod.sigma;
     } else {
 	err = bmod.errcode;
 #if PDEBUG
@@ -2218,7 +2218,7 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
 	/* random effects */
 	pmod->opt |= OPT_U;
 	gretl_model_set_double(pmod, "within-variance", pan->s2e);
-	gretl_model_set_double(pmod, "between-variance", pan->between_s2);
+	gretl_model_set_double(pmod, "between-variance", pan->s2b);
 	if (pan->balanced) {
 	    gretl_model_set_double(pmod, "gls-theta", pan->theta);
 	}
@@ -2400,14 +2400,14 @@ static int random_effects (panelmod_t *pan,
        the units in the final calculation.
     */
     if (!(pan->opt & OPT_N)) {
-	pan->s2v = pan->between_s2 - pan->s2e / pan->Tbar;
+	pan->s2v = pan->s2b - pan->s2e / pan->Tbar;
 	if (pan->s2v < 0) {
 	    pan->s2v = 0.0;
 	}
     }
 
     /* theta, the quasi-demeaning coefficient */
-    pan->theta = 1.0 - sqrt(pan->s2e / (pan->Tmax * pan->s2v + pan->s2e));
+    pan->theta = 1.0 - sqrt(pan->s2e / (pan->s2e + pan->Tmax * pan->s2v));
 
 #if PDEBUG
     fprintf(stderr, "s_v = %.8g, s_e = %.8g\n", sqrt(pan->s2v), sqrt(pan->s2e));

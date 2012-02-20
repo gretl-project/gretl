@@ -64,7 +64,9 @@ OUTPUT_DIR = $(SHAREDIR)
 
 TOPICDEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
 
-progs: xsltrans skeleton reflow bbl2txt validate topiclist tables matfuncs us2a4
+CPROGS = xsltrans skeleton reflow bbl2txt validate topiclist tables matfuncs us2a4
+
+progs: $(CPROGS)
 
 xsltrans: xsltrans.c 
 	$(CC) $(CFLAGS) $(XSLT_CFLAGS) -o $@ $^ $(XSLT_LIBS)
@@ -301,6 +303,6 @@ docclean:
 	 rm -f *.txt
 
 clean: docclean
-	rm -f $(progs) *.o
+	rm -f $(CPROGS) *.o
 	rm -f textables cmdtex* functex* topiclist_*
 	rm -rf .libs
