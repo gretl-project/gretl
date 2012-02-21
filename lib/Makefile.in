@@ -251,7 +251,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS)
 	$(AMP)$(COMPILE) -o $@ $<
 	$(AMP)$(CCV) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d
 
-$(LIBGRETL): .deps buildstamp $(LOBJS) $(AUX_LOBJ)
+$(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ)
 	$(LDECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(LOBJS) $(AUX_LOBJ) \
 	-rpath $(RPATH) $(LIBS) -version-info $(CURRENT):$(REVISION):$(AGE)
@@ -262,9 +262,6 @@ $(LIBGRETL): .deps buildstamp $(LOBJS) $(AUX_LOBJ)
 -include .deps/*.d
 
 .PHONY: 
-
-buildstamp: 
-	make -C .. buildstamp
 
 install: $(LIBGRETL) install-data
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $< $(DESTDIR)$(libdir)/$<

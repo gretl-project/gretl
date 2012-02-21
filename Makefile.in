@@ -58,7 +58,7 @@ pdfdocs:
 
 clean:
 	for d in $(ALLSUBDIRS) ; do $(MAKE) -C $$d clean; done
-	rm -f build.h
+	rm -f build.h builddate
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(libdir) $(includedir) $(bindir)
@@ -102,9 +102,10 @@ osx-dist:
 	$(MAKE) -C osx postinst
 
 # dependency for parallel builds
+lib: buildstamp
 cli: lib
-$(GUIDIR): lib buildstamp
-plugin: lib buildstamp
+$(GUIDIR): lib
+plugin: lib
 tests: lib
 
 
