@@ -7684,7 +7684,9 @@
       </para>
       <para context="gui">
 	If the "Random effects" button is checked, random effects
-	GLS estimates are computed, using the method of Swamy and Arora.
+	(GLS) estimates are computed. By default the method of Swamy
+	and Arora is used for the GLS transformation, but the Nerlove
+	method is available as an option.
       </para>
       <para>
 	For more details on panel estimation, please see <guideref
