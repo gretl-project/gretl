@@ -2160,7 +2160,7 @@ static void check_special_comments (ufunc *fun)
 static int set_uf_array_from_names (fnpkg *pkg, char **names, 
 				    int n, int priv)
 {
-    ufunc **uf;
+    ufunc **uf = NULL;
     ufunc *fun;
     int i;
 
@@ -2188,12 +2188,19 @@ static int set_uf_array_from_names (fnpkg *pkg, char **names,
     /* then connect the specified functions */
 
     if (priv) {
-	uf = realloc(pkg->priv, n * sizeof *uf);
+	if (n == 0) {
+	    if (pkg->priv != NULL) {
+		free(pkg->priv);
+		pkg->priv = NULL;
+	    }
+	} else {
+	    uf = realloc(pkg->priv, n * sizeof *uf);
+	}
     } else {
 	uf = realloc(pkg->pub, n * sizeof *uf);
     } 
 
-    if (uf == NULL) {
+    if (n > 0 && uf == NULL) {
 	return E_ALLOC;
     }
 
@@ -2235,13 +2242,11 @@ int function_package_connect_funcs (fnpkg *pkg,
 				    char **pubnames, int n_pub,
 				    char **privnames, int n_priv) 
 {
-    int err = 0;
+    int err;
 
-    if (n_pub > 0) {
-	err = set_uf_array_from_names(pkg, pubnames, n_pub, 0);
-    }
+    err = set_uf_array_from_names(pkg, pubnames, n_pub, 0);
 
-    if (!err && n_priv > 0) {
+    if (!err) {
 	err = set_uf_array_from_names(pkg, privnames, n_priv, 1);
     }
 
@@ -2271,12 +2276,21 @@ fnpkg *function_package_new (const char *fname,
 			     char **privnames, int n_priv, 
 			     int *err)
 {
-    fnpkg *pkg = function_package_alloc(fname);
+    fnpkg *pkg = NULL;
 
-    if (pkg == NULL) {
-	*err = E_ALLOC;
-	return NULL;
+    if (n_pub <= 0) {
+	/* we need at least one public function */
+	*err = E_DATA;
+    } else {
+	pkg = function_package_alloc(fname);
+	if (pkg == NULL) {
+	    *err = E_ALLOC;
+	}
     } 
+
+    if (*err) {
+	return NULL;
+    }
 
     name_package_from_filename(pkg);
 

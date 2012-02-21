@@ -46,7 +46,6 @@ struct panelmod_t_ {
     gretlopt opt;         /* option flags */
     int nunits;           /* total cross-sectional units in sample range */
     int effn;             /* effective (included) cross-section units */
-    int N_fe;             /* number of units included in fixed effects model */
     int T;                /* times-series length of panel */
     int Tmax;             /* effective times-series length (max usable obs per unit) */
     int Tmin;             /* shortest usable times-series */
@@ -60,7 +59,6 @@ struct panelmod_t_ {
     int nbeta;            /* number of slope coeffs for Hausman test */
     int Fdfn;             /* numerator df, F for differing intercepts */
     int Fdfd;             /* denominator df, F for differing intercepts */
-    double sigma_e;       /* fixed-effects standard error */
     double theta;         /* quasi-demeaning coefficient */
     double F;             /* joint significance of differing unit intercepts */
     double BP;            /* Breusch-Pagan test statistic */
@@ -140,7 +138,6 @@ static void panelmod_init (panelmod_t *pan)
 {
     pan->nunits = 0;
     pan->effn = 0;
-    pan->N_fe = 0;
     pan->T = 0;
     pan->Tmax = 0;
     pan->Tmin = 0;
@@ -154,7 +151,6 @@ static void panelmod_init (panelmod_t *pan)
 
     pan->balanced = 1;
     pan->nbeta = 0;
-    pan->sigma_e = NADBL;
     pan->theta = NADBL;
 
     pan->F = NADBL;
@@ -224,7 +220,7 @@ static void panelmod_free (panelmod_t *pan)
 
 /* test variable number v against the (possibly reduced) regression
    list which contains only time-varying regressors
- */
+*/
 
 static int var_is_varying (const panelmod_t *pan, int v)
 {
@@ -1666,7 +1662,7 @@ static void save_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 
 static void fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 {
-    pan->Fdfn = pan->N_fe - 1;
+    pan->Fdfn = pan->effn - 1;
     pan->Fdfd = wmod->dfd;
 
     pan->F = (pan->pooled->ess - wmod->ess) * pan->Fdfd / 
@@ -2052,7 +2048,7 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
     } else {
 	/* we estimated a bunch of group means, and have to
 	   subtract degrees of freedom */
-	panel_df_correction(&femod, pan->N_fe - 1);
+	panel_df_correction(&femod, pan->effn - 1);
 #if PDEBUG > 1
 	verbose_femod_print(&femod, wset, prn);
 #endif
@@ -2298,7 +2294,6 @@ static int within_variance (panelmod_t *pan,
 		pan->bdiff->val[i-1] = femod.coeff[i];
 	    }
 	    femod_regular_vcv(&femod);
-	    pan->sigma_e = femod.sigma;
 	    vcv_slopes(pan, &femod, VCV_INIT);
 	}
 
@@ -2612,7 +2607,6 @@ static int panel_obs_accounts (panelmod_t *pan)
 
     pan->NT = 0;
     pan->effn = 0;
-    pan->N_fe = 0;
     pan->Tmax = 0;
     pan->Tmin = pan->T;
 
@@ -2637,9 +2631,6 @@ static int panel_obs_accounts (panelmod_t *pan)
 		pan->Tmin = uobs[i];
 	    }
 	    pan->NT += uobs[i];
-	}
-	if (uobs[i] > 0) {
-	    pan->N_fe += 1;
 	}
     }
 

@@ -7128,11 +7128,12 @@ void functions_selection_wrapper (void)
     }
 }
 
-void add_remove_functions_dialog (char **names1, int n1,
-				  char **names2, int n2,
+void add_remove_functions_dialog (char **pubnames, int npub,
+				  char **privnames, int npriv,
 				  void *p1, void *p2)
 {
     fnpkg *pkg = p1;
+    void *finfo = p2;
     const char *title = NULL;
     selector *sr = NULL;
 
@@ -7156,7 +7157,7 @@ void add_remove_functions_dialog (char **names1, int n1,
 	char **names;
 	int i, j, n, idx;
 
-	sr->data = p2;
+	sr->data = finfo;
 
 	if (pkg != NULL) {
 	    /* some functions will be attached to pkg, and we'll
@@ -7169,13 +7170,15 @@ void add_remove_functions_dialog (char **names1, int n1,
 
 	for (j=0; j<2; j++) {
 	    if (j == 0) {
+		/* public functions */
 		w = sr->rvars1;
-		names = names1;
-		n = n1;
+		names = pubnames;
+		n = npub;
 	    } else {
+		/* private functions */
 		w = sr->rvars2;
-		names = names2;
-		n = n2;
+		names = privnames;
+		n = npriv;
 	    }
 
 	    if (n == 0) continue;

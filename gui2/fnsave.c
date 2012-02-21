@@ -113,6 +113,7 @@ function_info *finfo_new (void)
     finfo->active = NULL;
     finfo->samplewin = NULL;
     finfo->codewins = NULL;
+    finfo->codesel = NULL;
     finfo->popup = NULL;
 
     finfo->help = NULL;
@@ -484,7 +485,11 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
 
     fun = get_function_from_package(finfo->active, finfo->pkg);
     if (fun == NULL) {
-	errbox(_("Can't find the function '%s'"), finfo->active);
+	/* the package may not be saved yet */
+	fun = get_user_function_by_name(finfo->active);
+	if (fun == NULL) {
+	    errbox(_("Can't find the function '%s'"), finfo->active);
+	}
     }
 
     if (bufopen(&prn)) {
@@ -792,10 +797,11 @@ static int finfo_set_function_names (function_info *finfo,
 static void func_selector_set_strings (function_info *finfo, 
 				       GtkWidget *ifmenu)
 {
-    int i;
+    int i, n = 0;
 
     for (i=0; i<finfo->n_pub; i++) {
 	combo_box_append_text(ifmenu, finfo->pubnames[i]);
+	n++;
     }
 
     for (i=0; i<finfo->n_priv; i++) {
@@ -803,9 +809,11 @@ static void func_selector_set_strings (function_info *finfo,
 
 	combo_box_append_text(ifmenu, s);
 	g_free(s);
+	n++;
     }
 
     gtk_combo_box_set_active(GTK_COMBO_BOX(ifmenu), 0);
+    gtk_widget_set_sensitive(ifmenu, n > 1);
 }
 
 static GtkWidget *active_func_selector (function_info *finfo)
@@ -1150,12 +1158,10 @@ static void finfo_dialog (function_info *finfo)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(edit_code_callback), finfo);
 
-    if (finfo->n_pub + finfo->n_priv > 1) {
-	finfo->codesel = active_func_selector(finfo);
-	gtk_box_pack_start(GTK_BOX(hbox), finfo->codesel, FALSE, FALSE, 5);
-	g_signal_connect(G_OBJECT(finfo->codesel), "changed",
-			 G_CALLBACK(update_active_func), finfo);
-    } 
+    finfo->codesel = active_func_selector(finfo);
+    gtk_box_pack_start(GTK_BOX(hbox), finfo->codesel, FALSE, FALSE, 5);
+    g_signal_connect(G_OBJECT(finfo->codesel), "changed",
+		     G_CALLBACK(update_active_func), finfo);
 
     update_active_func(NULL, finfo);
 
@@ -1819,6 +1825,9 @@ void revise_function_package (void *p)
 	func_selector_set_strings(finfo, finfo->codesel);
 	finfo_set_modified(finfo, TRUE);
     }
+
+    fprintf(stderr, "finfo->n_pub=%d, finfo->n_priv=%d\n", 
+	    finfo->n_pub, finfo->n_priv);
 
     free(publist);
     free(privlist);
