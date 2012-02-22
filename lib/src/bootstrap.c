@@ -184,11 +184,9 @@ static int make_bs_flags (gretlopt opt)
 
     if (opt & OPT_S) {
 	flags |= BOOT_SILENT;
-    }    
-
-#if BDEBUG > 1
-    flags |= BOOT_VERBOSE;
-#endif
+    } else if (opt & OPT_V) {
+	flags |= BOOT_VERBOSE;
+    }
 
     return flags;
 }
@@ -219,6 +217,32 @@ int maybe_adjust_B (int B, double a, int flags)
 
     return B;
 }
+
+#if 0 /* not yet */
+
+static int make_bs_lag_info (boot *b, const MODEL *pmod,
+			     const DATASET *dset)
+{
+    int xnum, ynum = pmod->list[1];
+    int i, p, nly = 0;
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	xnum = pmod->list[i+2];
+	p = is_standard_lag_of(xnum, ynum, dset);
+	if (p != 0) {
+	    fprintf(stderr, "*** x[%d] is lag %d of y\n", i, p);
+	    nly++;
+	}
+    }
+
+    if (nly > 0) {
+	;
+    }
+
+    return 0;
+}
+
+#endif
 
 static boot *boot_new (const MODEL *pmod,
 		       const DATASET *dset,
@@ -255,6 +279,7 @@ static boot *boot_new (const MODEL *pmod,
     bs->p = 0;
     bs->g = 0;
 
+    /* FIXME */
     ldv = gretl_model_get_int(pmod, "ldepvar");
     if (ldv > 0) {
 	bs->flags |= BOOT_LDV;
@@ -831,6 +856,10 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	    gretl_matrix_copy_values(V, XTXI);
 	    gretl_matrix_multiply_by_scalar(V, s2);
 	    test = bs_F_test(b, V, bs, &err);
+	    if (verbose(bs)) {
+		pprintf(prn, "round %d: test = %g%s\n", i+1, test,
+			test > bs->test0 ? "*" : "");
+	    }
 	    if (test > bs->test0) {
 		tail++;
 	    }
@@ -1023,7 +1052,10 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
     if (opt & OPT_S) {
 	/* silent */
 	bopt |= OPT_S;
-    }    
+    } else if (opt & OPT_V) {
+	/* verbose */
+	bopt |= OPT_V;
+    }
 
     gretl_restriction_get_boot_params(&B, &bopt);
 

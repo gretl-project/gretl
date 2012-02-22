@@ -209,6 +209,34 @@ int is_standard_lag (int v, const DATASET *dset, int *parent)
 }
 
 /**
+ * is_standard_lag_of:
+ * @v: ID number of series to test.
+ * @parent: potential parent series.
+ * @dset: dataset information.
+ *
+ * Returns: the lag order, if the series @v is marked as 
+ * a lag of @parent, otherwise 0.
+ */
+
+int is_standard_lag_of (int v, int parent, const DATASET *dset)
+{
+    int pv = 0, ret = 0;
+
+    if (dset == NULL || v <= 0 || v >= dset->v) {
+	return 0;
+    }
+
+    if (dset->varinfo[v]->transform == LAGS) {
+	pv = series_index(dset, dset->varinfo[v]->parent);
+	if (pv == parent) {
+	    ret = dset->varinfo[v]->lag;
+	}
+    }
+
+    return ret;
+}
+
+/**
  * is_standard_diff:
  * @v: ID number of variable to test.
  * @dset: dataset information.
