@@ -2150,54 +2150,9 @@ static void check_special_comments (ufunc *fun)
     }
 }
 
-/* Given an array of @n function names in @names, set up a
-   corresponding array of pointers to the named functions in @pkg,
-   Flag an error if any of the function names are bad, or if
-   allocation fails.  If we're revising an existing function package
-   we start by disconnecting the currently connected functions.  
+/* before revising the function members of an existing
+   package, detach all its current functions
 */
-
-static int set_uf_array_from_names (fnpkg *pkg, char **names, 
-				    int n, int priv)
-{
-    ufunc **uf = NULL;
-    ufunc *fun;
-    int i, err = 0;
-
-    /* allocate storage */
-
-    if (n > 0) {
-	uf = malloc(n * sizeof *uf);
-	if (uf == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
-    /* then connect the specified functions */
-
-    for (i=0; i<n && !err; i++) {
-	fun = get_uf_array_member(names[i], NULL);
-	if (fun != NULL) {
-	    fun->pkg = pkg;
-	    set_function_private(fun, priv);
-	    check_special_comments(fun);
-	    uf[i] = fun;
-	} else {
-	    fprintf(stderr, "%s: function not found!\n", names[i]);
-	    err = E_DATA;
-	}
-    }
-
-    if (priv) {
-	pkg->priv = uf;
-	pkg->n_priv = n;
-    } else {
-	pkg->pub = uf;
-	pkg->n_pub = n;
-    }
-
-    return err;
-}
 
 static void package_disconnect_funcs (fnpkg *pkg)
 {
@@ -2221,6 +2176,56 @@ static void package_disconnect_funcs (fnpkg *pkg)
 	pkg->priv = NULL;
 	pkg->n_priv = 0;
     }
+}
+
+/* Given an array of @n function names in @names, set up a
+   corresponding array of pointers to the named functions in @pkg,
+   Flag an error if any of the function names are bad, or if
+   allocation fails.
+*/
+
+static int set_uf_array_from_names (fnpkg *pkg, char **names, 
+				    int n, int priv)
+{
+    ufunc **uf = NULL;
+    ufunc *fun;
+    int i;
+
+    /* check the supplied names */
+    for (i=0; i<n; i++) {
+	if (get_uf_array_member(names[i], NULL) == NULL) {
+	    fprintf(stderr, "%s: function not found!\n", names[i]);
+	    return E_DATA;
+	}
+    }
+
+    /* allocate storage */
+    if (n > 0) {
+	uf = malloc(n * sizeof *uf);
+	if (uf == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    /* connect the specified functions */
+    for (i=0; i<n; i++) {
+	fun = get_uf_array_member(names[i], NULL);
+	fun->pkg = pkg;
+	set_function_private(fun, priv);
+	check_special_comments(fun);
+	uf[i] = fun;
+    }
+
+    /* set up the package info */
+    if (priv) {
+	pkg->priv = uf;
+	pkg->n_priv = n;
+    } else {
+	pkg->pub = uf;
+	pkg->n_pub = n;
+    }
+
+    return 0;
 }
 
 /**
