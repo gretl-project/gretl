@@ -2162,54 +2162,30 @@ static int set_uf_array_from_names (fnpkg *pkg, char **names,
 {
     ufunc **uf = NULL;
     ufunc *fun;
-    int i;
+    int i, err = 0;
 
-    /* error-checking first */
-    
-    for (i=0; i<n; i++) {
-	if (get_uf_array_member(names[i], pkg) == NULL) {
-	    return E_DATA;
-	}
-    }    
+    /* allocate storage */
 
-    /* then disconnect current functions, if any */
-
-    if (priv) {
-	for (i=0; i<pkg->n_priv; i++) {
-	    pkg->priv[i]->pkg = NULL;
-	    set_function_private(pkg->priv[i], FALSE);
+    if (n > 0) {
+	uf = malloc(n * sizeof *uf);
+	if (uf == NULL) {
+	    return E_ALLOC;
 	}
-    } else {
-	for (i=0; i<pkg->n_pub; i++) {
-	    pkg->pub[i]->pkg = NULL;
-	}
-    }	
+    }
 
     /* then connect the specified functions */
 
-    if (priv) {
-	if (n == 0) {
-	    if (pkg->priv != NULL) {
-		free(pkg->priv);
-		pkg->priv = NULL;
-	    }
-	} else {
-	    uf = realloc(pkg->priv, n * sizeof *uf);
-	}
-    } else {
-	uf = realloc(pkg->pub, n * sizeof *uf);
-    } 
-
-    if (n > 0 && uf == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<n; i++) {
+    for (i=0; i<n && !err; i++) {
 	fun = get_uf_array_member(names[i], NULL);
-	fun->pkg = pkg;
-	set_function_private(fun, priv);
-	check_special_comments(fun);
-	uf[i] = fun;
+	if (fun != NULL) {
+	    fun->pkg = pkg;
+	    set_function_private(fun, priv);
+	    check_special_comments(fun);
+	    uf[i] = fun;
+	} else {
+	    fprintf(stderr, "%s: function not found!\n", names[i]);
+	    err = E_DATA;
+	}
     }
 
     if (priv) {
@@ -2220,7 +2196,31 @@ static int set_uf_array_from_names (fnpkg *pkg, char **names,
 	pkg->n_pub = n;
     }
 
-    return 0;
+    return err;
+}
+
+static void package_disconnect_funcs (fnpkg *pkg)
+{
+    int i;
+
+    if (pkg->pub != NULL) {
+	for (i=0; i<pkg->n_pub; i++) {
+	    pkg->pub[i]->pkg = NULL;
+	}
+	free(pkg->pub);
+	pkg->pub = NULL;
+	pkg->n_pub = 0;
+    }
+
+    if (pkg->priv != NULL) {
+	for (i=0; i<pkg->n_priv; i++) {
+	    pkg->priv[i]->pkg = NULL;
+	    set_function_private(pkg->priv[i], FALSE);
+	}
+	free(pkg->priv);
+	pkg->priv = NULL;
+	pkg->n_priv = 0;
+    }
 }
 
 /**
@@ -2243,6 +2243,9 @@ int function_package_connect_funcs (fnpkg *pkg,
 				    char **privnames, int n_priv) 
 {
     int err;
+
+    /* clear the decks first */
+    package_disconnect_funcs(pkg);  
 
     err = set_uf_array_from_names(pkg, pubnames, n_pub, 0);
 
