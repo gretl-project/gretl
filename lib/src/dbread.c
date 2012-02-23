@@ -3484,7 +3484,7 @@ static int shorten_the_constant (double **Z, int n)
 }
 
 /* conversion to weekly using a "representative day", e.g. use
-   each Wednesday value.  repday is 0-based on Sunday.
+   each Wednesday value: @repday is 0-based on Sunday.
 */
 
 static int daily_dataset_to_weekly (DATASET *dset, int repday)
@@ -3847,8 +3847,9 @@ int compact_data_set (DATASET *dset, int newpd,
     ntodate(dset->endobs, dset->t2, dset);
     
     if (oldpd >= 5 && oldpd <= 7 && dset->markers) {
-	/* remove any daily date strings */
+	/* remove any daily date strings; revise endobs */
 	dataset_destroy_obs_markers(dset);
+	ntodate(dset->endobs, dset->t2, dset);
     }
 
     err = shorten_the_constant(dset->Z, dset->n);
