@@ -43,8 +43,10 @@ enum {
 
 #define resampling(b) (b->flags & BOOT_RESAMPLE_U)
 #define verbose(b) (b->flags & BOOT_VERBOSE)
+#define boot_Ftest(b) (b->flags & BOOT_F_FORM)
 
 typedef struct boot_ boot;
+typedef struct ldvinfo_ ldvinfo;
 
 struct boot_ {
     int flags;          /* option flags */
@@ -54,7 +56,6 @@ struct boot_ {
     int p;              /* index number of coeff to examine */
     int g;              /* number of restrictions */
     int mci;            /* model command index */
-    int ldvpos;         /* col. number of lagged dep var in X matrix */
     gretl_matrix *y;    /* holds original, then artificial, dep. var. */
     gretl_matrix *X;    /* independent variables */
     gretl_matrix *b0;   /* coefficients used to generate dep var */
@@ -70,10 +71,19 @@ struct boot_ {
     double a;           /* alpha, for confidence interval */
     double pval;        /* p-value for test */
     char vname[VNAMELEN]; /* name of variable analysed */
+    ldvinfo *ldv;       /* lagged depvar info, if applicable */
+};
+
+struct ldvinfo_ {
+    int n;      /* number of lagged dependent variable terms */
+    int *xcol;  /* location of such terms (0-based column of X) */
+    int *lag;   /* log order of each such term */
 };
 
 static gretl_vector *bs_data;
 static char bs_vname[VNAMELEN];
+
+static void free_ldvinfo (ldvinfo *ldv);
 
 static void boot_destroy (boot *bs)
 {
@@ -87,6 +97,8 @@ static void boot_destroy (boot *bs)
 	gretl_matrix_free(bs->R);
 	gretl_matrix_free(bs->q);
     }
+
+    free_ldvinfo(bs->ldv);
 
     free(bs);
 }
@@ -218,41 +230,97 @@ int maybe_adjust_B (int B, double a, int flags)
     return B;
 }
 
-#if 0 /* not yet */
+static void free_ldvinfo (ldvinfo *ldv)
+{
+    if (ldv != NULL) {
+	free(ldv->xcol);
+	free(ldv->lag);
+	free(ldv);
+    }
+}
 
-static int make_bs_lag_info (boot *b, const MODEL *pmod,
-			     const DATASET *dset)
+/* add information on lagged dependent variables among the
+   regressors in a model to be subject to bootstrap
+   analysis
+*/
+
+static int add_ldvinfo (boot *b, int n)
+{
+    ldvinfo *ldv;
+
+    ldv = malloc(sizeof *ldv);
+    if (ldv == NULL) {
+	return E_ALLOC;
+    }
+
+    ldv->xcol = malloc(n * sizeof *ldv->xcol);
+    ldv->lag = malloc(n * sizeof *ldv->lag);
+
+    if (ldv->xcol == NULL || ldv->lag == NULL) {
+	free_ldvinfo(ldv);
+	return E_ALLOC;
+    }
+
+    ldv->n = n;
+    b->ldv = ldv;
+
+    return 0;
+}
+
+static int make_boot_ldvinfo (boot *b, const MODEL *pmod,
+			      const DATASET *dset)
 {
     int xnum, ynum = pmod->list[1];
     int i, p, nly = 0;
+    int err = 0;
 
     for (i=0; i<pmod->ncoeff; i++) {
 	xnum = pmod->list[i+2];
 	p = is_standard_lag_of(xnum, ynum, dset);
-	if (p != 0) {
+	if (p > 0) {
 	    fprintf(stderr, "*** x[%d] is lag %d of y\n", i, p);
 	    nly++;
 	}
     }
 
     if (nly > 0) {
-	;
+	int k = 0;
+
+	err = add_ldvinfo(b, nly);
+
+	if (!err) {
+	    for (i=0; i<pmod->ncoeff; i++) {
+		xnum = pmod->list[i+2];
+		p = is_standard_lag_of(xnum, ynum, dset);
+		if (p > 0) {
+		    b->ldv->xcol[k] = i;
+		    b->ldv->lag[k] = p;
+		    k++;
+		}
+	    }	    
+	}
     }
 
-    return 0;
+    return err;
 }
-
-#endif
 
 static boot *boot_new (const MODEL *pmod,
 		       const DATASET *dset,
 		       int B, gretlopt opt)
 {
     boot *bs;
-    int ldv;
+    int err;
 
     bs = malloc(sizeof *bs);
     if (bs == NULL) {
+	return NULL;
+    }
+
+    bs->ldv = NULL;
+
+    err = make_boot_ldvinfo(bs, pmod, dset);
+    if (err) {
+	free(bs);
 	return NULL;
     }
 
@@ -279,15 +347,6 @@ static boot *boot_new (const MODEL *pmod,
     bs->p = 0;
     bs->g = 0;
 
-    /* FIXME */
-    ldv = gretl_model_get_int(pmod, "ldepvar");
-    if (ldv > 0) {
-	bs->flags |= BOOT_LDV;
-	bs->ldvpos = ldv - 2;
-    } else {
-	bs->ldvpos = -1;
-    }
-
     *bs->vname = '\0';
 
     bs->SE = NADBL;
@@ -303,10 +362,27 @@ static boot *boot_new (const MODEL *pmod,
     return bs;
 }
 
+static int ldv_lag (boot *bs, int k)
+{
+    if (bs->ldv == NULL) {
+	return 0;
+    } else {
+	int i;
+
+	for (i=0; i<bs->ldv->n; i++) {
+	    if (bs->ldv->xcol[i] == k) {
+		return bs->ldv->lag[i];
+	    }
+	}
+    }
+
+    return 0;
+}
+
 static void make_normal_y (boot *bs)
 {
     double xti;
-    int i, t;
+    int i, t, p;
 
     /* generate scaled normal errors */
     gretl_matrix_random_fill(bs->y, D_NORMAL);
@@ -315,8 +391,9 @@ static void make_normal_y (boot *bs)
     /* construct y recursively */
     for (t=0; t<bs->X->rows; t++) {
 	for (i=0; i<bs->X->cols; i++) {
-	    if (t > 0 && i == bs->ldvpos) {
-		gretl_matrix_set(bs->X, t, i, bs->y->val[t-1]);
+	    p = ldv_lag(bs, i);
+	    if (p > 0 && t >= p) {
+		gretl_matrix_set(bs->X, t, i, bs->y->val[t-p]);
 	    } 
 	    xti = gretl_matrix_get(bs->X, t, i);
 	    bs->y->val[t] += bs->b0->val[i] * xti;
@@ -341,7 +418,7 @@ resample_vector (const gretl_matrix *u0, gretl_matrix *u, int *z)
 static void make_resampled_y (boot *bs, int *z)
 {
     double xti;
-    int i, t;
+    int i, t, p;
 
     /* resample the residuals, into y */
     resample_vector(bs->u0, bs->y, z);
@@ -349,8 +426,9 @@ static void make_resampled_y (boot *bs, int *z)
     /* construct y recursively */
     for (t=0; t<bs->X->rows; t++) {
 	for (i=0; i<bs->X->cols; i++) {
-	    if (t > 0 && i == bs->ldvpos) {
-		gretl_matrix_set(bs->X, t, i, bs->y->val[t-1]);
+	    p = ldv_lag(bs, i);
+	    if (p > 0 && t >= p) {
+		gretl_matrix_set(bs->X, t, i, bs->y->val[t-p]);
 	    }
 	    xti = gretl_matrix_get(bs->X, t, i);
 	    bs->y->val[t] += bs->b0->val[i] * xti;
@@ -705,6 +783,12 @@ static int hsk_transform_data (boot *bs, gretl_matrix *b,
 
 #endif
 
+static void print_test_round (boot *bs, int i, double test, PRN *prn)
+{
+    pprintf(prn, "round %d: test = %g%s\n", i, test,
+	    test > bs->test0 ? " *" : "");
+}
+
 /* do the actual bootstrap analysis: the objective is either to form a
    confidence interval or to compute a p-value; the methodology is
    either to resample the original residuals or to simulate normal
@@ -785,7 +869,11 @@ static int real_bootstrap (boot *bs, PRN *prn)
     }
 
     if (verbose(bs)) {
-	pprintf(prn, "%13s %13s\n", "b", "tval");
+	if (boot_Ftest(bs)) {
+	    pputc(prn, '\n');
+	} else {
+	    pprintf(prn, "%13s %13s\n", "b", "tval");
+	}
     }
 
     /* carry out B replications */
@@ -803,11 +891,18 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	    make_resampled_y(bs, z); 
 	}
 
-	if (bs->ldvpos >= 0) {
-	    /* X matrix includes lagged dependent variable, so it has
+	if (bs->ldv != NULL) {
+	    /* X matrix includes lagged dependent variable(s), so it has
 	       to be modified */
-	    for (t=1; t<bs->T; t++) {
-		gretl_matrix_set(bs->X, t, bs->ldvpos, bs->y->val[t-1]);
+	    int j, p;
+
+	    for (j=0; j<bs->X->cols; j++) {
+		p = ldv_lag(bs, j);
+		if (p > 0) {
+		    for (t=p; t<bs->T; t++) {
+			gretl_matrix_set(bs->X, t, j, bs->y->val[t-p]);
+		    }
+		}
 	    }
 	    gretl_matrix_multiply_mod(bs->X, GRETL_MOD_TRANSPOSE,
 				      bs->X, GRETL_MOD_NONE,
@@ -857,8 +952,7 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	    gretl_matrix_multiply_by_scalar(V, s2);
 	    test = bs_F_test(b, V, bs, &err);
 	    if (verbose(bs)) {
-		pprintf(prn, "round %d: test = %g%s\n", i+1, test,
-			test > bs->test0 ? "*" : "");
+		print_test_round(bs, i, test, prn);
 	    }
 	    if (test > bs->test0) {
 		tail++;
