@@ -86,6 +86,10 @@ static void free_ldvinfo (ldvinfo *ldv);
 
 static void boot_destroy (boot *bs)
 {
+    if (bs == NULL) {
+	return;
+    }
+
     gretl_matrix_free(bs->y);
     gretl_matrix_free(bs->X);
     gretl_matrix_free(bs->b0);
@@ -271,17 +275,26 @@ static int make_boot_ldvinfo (boot *b, const MODEL *pmod,
 {
     int xnum, ynum = pmod->list[1];
     int i, p, nly = 0;
+    int leads = 0;
     int err = 0;
 
-    for (i=0; i<pmod->ncoeff; i++) {
+    for (i=0; i<pmod->ncoeff && !err; i++) {
 	xnum = pmod->list[i+2];
 	p = is_standard_lag_of(xnum, ynum, dset);
 	if (p > 0) {
 	    nly++;
+	} else if (p < 0) {
+	    leads++;
 	}
     }
 
-    if (nly > 0) {
+    if (nly > 0 && leads > 0) {
+	gretl_errmsg_set("model contains leads of the dependent "
+			 "variable: not supported");
+	err = E_DATA;
+    }	
+
+    if (!err && nly > 0) {
 	int k = 0;
 
 	err = add_ldvinfo(b, nly);
@@ -304,10 +317,10 @@ static int make_boot_ldvinfo (boot *b, const MODEL *pmod,
 
 static boot *boot_new (const MODEL *pmod,
 		       const DATASET *dset,
-		       int B, gretlopt opt)
+		       int B, gretlopt opt,
+		       int *err)
 {
     boot *bs;
-    int err;
 
     bs = malloc(sizeof *bs);
     if (bs == NULL) {
@@ -316,8 +329,8 @@ static boot *boot_new (const MODEL *pmod,
 
     bs->ldv = NULL;
 
-    err = make_boot_ldvinfo(bs, pmod, dset);
-    if (err) {
+    *err = make_boot_ldvinfo(bs, pmod, dset);
+    if (*err) {
 	free(bs);
 	return NULL;
     }
@@ -499,7 +512,9 @@ static int bs_store_result (boot *bs, double *xi)
 
 static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 {
-    if (bs->flags & BOOT_RESTRICT) {
+    if (bs->flags & BOOT_F_FORM) {
+	pprintf(prn, "\n%s: ", _("bootstrap F-test"));
+    } else if (bs->flags & BOOT_RESTRICT) {
 	pputs(prn, "\n  ");
     } else {
 	pprintf(prn, _("For the coefficient on %s (point estimate %g)"), 
@@ -780,7 +795,7 @@ static int hsk_transform_data (boot *bs, gretl_matrix *b,
 
 static void print_test_round (boot *bs, int i, double test, PRN *prn)
 {
-    pprintf(prn, "round %d: test = %g%s\n", i, test,
+    pprintf(prn, "round %d: test = %g%s\n", i+1, test,
 	    test > bs->test0 ? " *" : "");
 }
 
@@ -1065,10 +1080,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B,
 	return E_DATA;
     }
 
-    bs = boot_new(pmod, dset, B, opt);
-    if (bs == NULL) {
-	err = E_ALLOC;
-    }  
+    bs = boot_new(pmod, dset, B, opt, &err);
 
     if (!err && (bs->flags & BOOT_PVAL)) {
 	err = bs_add_restriction(bs, p);
@@ -1114,9 +1126,9 @@ int bootstrap_analysis (MODEL *pmod, int p, int B,
  *
  * Calculates a bootstrap p-value for the restriction on the
  * coefficients of @pmod represented by the matrices @R and @q.
- * If the first lag of the dependent variable is present as a
- * regressor it is handled correctly but more complex lag
- * autoregressive schemes are not (yet) handled.
+ * If lags of the dependent variable are present as 
+ * regressors they should be handled correctly so long as
+ * the lagged terms were generated in the standard gretl manner.
  * 
  * Returns: 0 on success, non-zero code on error.
  */
@@ -1148,10 +1160,7 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
 
     gretl_restriction_get_boot_params(&B, &bopt);
 
-    bs = boot_new(pmod, dset, B, bopt);
-    if (bs == NULL) {
-	err = E_ALLOC;
-    } 
+    bs = boot_new(pmod, dset, B, bopt, &err);
 
     if (!err) {
 	bs->R = R;

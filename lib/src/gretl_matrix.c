@@ -1295,6 +1295,7 @@ gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
     gretl_matrix *R = NULL;
     int *z = NULL;
     double x;
+    int t1;
     int i, j, k, r;
 
     if (gretl_is_null_matrix(m)) {
@@ -1325,6 +1326,12 @@ gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
 	}
     }
 
+    t1 = gretl_matrix_get_t1(m);
+    if (t1 > 0) {
+	gretl_matrix_set_t1(R, t1);
+	gretl_matrix_set_t2(R, t1 + r - 1);
+    }	
+
     free(z);
 
     return R;
@@ -1350,6 +1357,7 @@ gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
     int *z = NULL;
     double x;
     int b, n, s, r, rmax;
+    int t1;
     int i, j, k;
 
     if (gretl_is_null_matrix(m) || blocklen <= 0) {
@@ -1403,6 +1411,12 @@ gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
 		break;
 	    }
 	}
+    }
+
+    t1 = gretl_matrix_get_t1(m);
+    if (t1 > 0) {
+	gretl_matrix_set_t1(R, t1);
+	gretl_matrix_set_t2(R, t1 + r - 1);
     }
 
     free(z);
@@ -11847,6 +11861,16 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
     }
 
     *err = gretl_matrix_transpose_in_place(X);
+    
+    if (!*err) {
+	/* set dates on output matrix if possible */
+	int t1 = gretl_matrix_get_t1(U) - p;
+
+	if (t1 > 0) {
+	    gretl_matrix_set_t1(X, t1);
+	    gretl_matrix_set_t2(X, t1 + T - 1);
+	}
+    }
 
     gretl_matrix_free(A2);
     gretl_matrix_free(UT);
