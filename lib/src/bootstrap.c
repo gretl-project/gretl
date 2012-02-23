@@ -32,13 +32,12 @@ enum {
     BOOT_NORMAL_U    = 1 << 3,  /* simulate normal residuals */
     BOOT_STUDENTIZE  = 1 << 4,  /* studentize, when doing confidence interval */
     BOOT_GRAPH       = 1 << 5,  /* graph the distribution */
-    BOOT_LDV         = 1 << 6,  /* model includes lagged dep var */
-    BOOT_RESTRICT    = 1 << 7,  /* called via "restrict" command */
-    BOOT_F_FORM      = 1 << 8,  /* compute F-statistics */
-    BOOT_FREE_RQ     = 1 << 9,  /* free restriction matrices */
-    BOOT_SAVE        = 1 << 10, /* save results vector */
-    BOOT_VERBOSE     = 1 << 11, /* for debugging */
-    BOOT_SILENT      = 1 << 12  /* suppress printed output */
+    BOOT_RESTRICT    = 1 << 6,  /* called via "restrict" command */
+    BOOT_F_FORM      = 1 << 7,  /* compute F-statistics */
+    BOOT_FREE_RQ     = 1 << 8,  /* free restriction matrices */
+    BOOT_SAVE        = 1 << 9,  /* save results vector */
+    BOOT_VERBOSE     = 1 << 10, /* verbose output */
+    BOOT_SILENT      = 1 << 11  /* suppress printed output */
 };
 
 #define resampling(b) (b->flags & BOOT_RESAMPLE_U)
@@ -77,7 +76,7 @@ struct boot_ {
 struct ldvinfo_ {
     int n;      /* number of lagged dependent variable terms */
     int *xcol;  /* location of such terms (0-based column of X) */
-    int *lag;   /* log order of each such term */
+    int *lag;   /* lag order of each such term */
 };
 
 static gretl_vector *bs_data;
@@ -278,7 +277,6 @@ static int make_boot_ldvinfo (boot *b, const MODEL *pmod,
 	xnum = pmod->list[i+2];
 	p = is_standard_lag_of(xnum, ynum, dset);
 	if (p > 0) {
-	    fprintf(stderr, "*** x[%d] is lag %d of y\n", i, p);
 	    nly++;
 	}
     }
@@ -364,9 +362,7 @@ static boot *boot_new (const MODEL *pmod,
 
 static int ldv_lag (boot *bs, int k)
 {
-    if (bs->ldv == NULL) {
-	return 0;
-    } else {
+    if (bs->ldv != NULL) {
 	int i;
 
 	for (i=0; i<bs->ldv->n; i++) {
@@ -457,7 +453,6 @@ static int do_restricted_ols (boot *bs)
 	    fprintf(stderr, "b[%d] = %g\n", i, bs->b0->val[i]);
 	}
 	fprintf(stderr, "s2 = %g\n", s2);
-	fprintf(stderr, "bs->ldvpos = %d\n", bs->ldvpos);
     }
 #endif
 
@@ -551,7 +546,7 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
     }
     pputc(prn, '\n');
 
-    if (bs->flags & BOOT_LDV) {
+    if (bs->ldv != NULL) {
 	pprintf(prn, "(%s)",  _("recognized lagged dependent variable"));
 	pputc(prn, '\n');
     }
