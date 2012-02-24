@@ -90,7 +90,8 @@ enum {
     SPLIT_ITEM,
     EDITOR_ITEM,
     NOTES_ITEM,
-    STOP_ITEM
+    STOP_ITEM,
+    NEW_ITEM
 } viewbar_flags;
 
 static GtkIconFactory *gretl_stock_ifac;
@@ -619,7 +620,7 @@ static void vwin_cut_callback (GtkWidget *w, windata_t *vwin)
 }
 
 static GretlToolItem viewbar_items[] = {
-    { N_("New window"), GTK_STOCK_NEW, G_CALLBACK(toolbar_new_callback), OPEN_ITEM },
+    { N_("New window"), GTK_STOCK_NEW, G_CALLBACK(toolbar_new_callback), NEW_ITEM },
     { N_("Open..."), GTK_STOCK_OPEN, G_CALLBACK(file_open_callback), OPEN_ITEM },
     { N_("Save"), GTK_STOCK_SAVE, G_CALLBACK(vwin_save_callback), SAVE_ITEM },
     { N_("Save as..."), GTK_STOCK_SAVE_AS, G_CALLBACK(save_as_callback), SAVE_AS_ITEM },
@@ -669,6 +670,9 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 	            r == EDIT_PKG_SAMPLE)
 
 #define open_ok(r) (vwin_editing_script(r))
+
+#define new_ok(r) (r == vwin_editing_script(r) || \
+		   r == VIEW_SCRIPT)
 
 #define edit_ok(r) (vwin_editing_script(r) || \
 		    vwin_editing_buffer(r) || \
@@ -722,6 +726,8 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
     } else if (!edit_ok(r) && f == EDIT_ITEM) {
 	return NULL;
     } else if (!open_ok(r) && f == OPEN_ITEM) {
+	return NULL;
+    } else if (!new_ok(r) && f == NEW_ITEM) {
 	return NULL;
     } else if (!exec_ok(r) && f == EXEC_ITEM) {
 	return NULL;

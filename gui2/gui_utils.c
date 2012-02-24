@@ -1508,7 +1508,7 @@ static gchar *make_viewer_title (int role, const char *fname)
     case VIEW_FILE:
     case VIEW_CODEBOOK:
 	if (strstr(fname, "script_tmp") || strstr(fname, "session.inp")) {
-	    title = g_strdup(_("gretl: command script"));
+	    title = g_strdup(_("gretl: untitled"));
 	} else {
 	    title = title_from_filename(fname);
 	} 
