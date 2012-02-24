@@ -9754,63 +9754,34 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
     return err;
 }
 
-/* build matrices needed for estimation via restricted OLS */
+/* construct W = X'X augmented by R and R': we need this if we're
+   calculating the covariance matrix for restricted least squares
+*/
 
-static int build_augmented_regression_matrices (const gretl_matrix *y,
-						const gretl_matrix *X,
-						const gretl_matrix *R,
-						const gretl_matrix *q,
-						gretl_matrix **pXTX,
-						gretl_matrix **pV,
-						gretl_matrix **pW)
+static gretl_matrix *build_augmented_XTX (const gretl_matrix *X,
+					  const gretl_matrix *R,
+					  int *err)
 {
-    gretl_matrix *XTX;
-    gretl_matrix *V;
-    gretl_matrix *W;    
-    double x;
+    gretl_matrix *XTX, *W;    
     int k = X->cols;
-    int nr = R->rows;
-    int ldW = k + nr;
-    int i, j, err = 0;
+    int kW = k + R->rows;
 
     XTX = gretl_matrix_XTX_new(X);
-    V = gretl_column_vector_alloc(ldW);
-    W = gretl_zero_matrix_new(ldW, ldW);
+    W = gretl_zero_matrix_new(kW, kW);
 
-    if (XTX == NULL || V == NULL || W == NULL) {
+    if (XTX == NULL || W == NULL) {
 	gretl_matrix_free(XTX);
-	gretl_matrix_free(V);
 	gretl_matrix_free(W);
-	return E_ALLOC;
+	*err = E_ALLOC;
+	return NULL;
     }
 
-    /* construct V matrix: X'y augmented by q (or by a 0
-       matrix if q is NULL)
-    */
+    if (!*err) {
+	double x;
+	int i, j;
 
-    if (!err) {
-	V->rows = k;
-	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-					y, GRETL_MOD_NONE,
-					V, GRETL_MOD_NONE);
-	V->rows = ldW;
-    }
-
-    if (!err) {
-	for (i=k; i<ldW; i++) {
-	    if (q != NULL) {
-		V->val[i] = q->val[i-k];
-	    } else {
-		V->val[i] = 0.0;
-	    }
-	}
-    }
-
-    /* construct W matrix: X'X augmented by R and R' */
-
-    if (!err) {
-	for (i=0; i<XTX->rows; i++) {
-	    for (j=0; j<XTX->cols; j++) {
+	for (i=0; i<k; i++) {
+	    for (j=0; j<k; j++) {
 		x = gretl_matrix_get(XTX, i, j);
 		gretl_matrix_set(W, i, j, x);
 	    }
@@ -9819,19 +9790,80 @@ static int build_augmented_regression_matrices (const gretl_matrix *y,
 	    for (j=0; j<R->cols; j++) {
 		x = gretl_matrix_get(R, i, j);
 		gretl_matrix_set(W, i+k, j, x);
-	    }
-	}
-	for (i=0; i<R->cols; i++) {
-	    for (j=0; j<R->rows; j++) {
-		x = gretl_matrix_get(R, j, i);
-		gretl_matrix_set(W, i, j+k, x);
+		gretl_matrix_set(W, j, i+k, x);
 	    }
 	}
     } 
 
-    *pXTX = XTX;
-    *pV = V;
-    *pW = W;
+    gretl_matrix_free(XTX);
+
+    return W;
+}
+
+/* constrained least squares: 
+
+    minimize || y - X*b ||_2  subject to R*b = q 
+*/
+
+static int gretl_matrix_gglse (const gretl_vector *y, const gretl_matrix *X,
+			       const gretl_matrix *R, const gretl_vector *q,
+			       gretl_vector *b)
+{
+    gretl_matrix *A, *B, *c, *d;
+    integer info;
+    integer m = X->rows;
+    integer n = X->cols;
+    integer p = R->rows;
+    integer lwork = -1;
+    double *work;
+    int err = 0;
+
+    /* all the input matrices get overwritten */
+    A = gretl_matrix_copy(X);
+    B = gretl_matrix_copy(R);
+    c = gretl_matrix_copy(y);
+    d = gretl_matrix_copy(q);
+
+    work = lapack_malloc(sizeof *work);
+
+    if (A == NULL || B == NULL || c == NULL || 
+	d == NULL || work == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* determine optimal workspace */
+    dgglse_(&m, &n, &p, A->val, &m, B->val, &p, c->val, 
+	    d->val, b->val, work, &lwork, &info);
+
+    if (info != 0) {
+	err = wspace_fail(info, work[0]);
+    } else {
+	lwork = (integer) work[0];
+	work = lapack_realloc(work, lwork * sizeof *work);
+	if (work == NULL) {
+	    err = E_ALLOC;
+	}
+    } 
+
+    if (!err) {
+	/* do constrained calculation */
+	dgglse_(&m, &n, &p, A->val, &m, B->val, &p, c->val, 
+		d->val, b->val, work, &lwork, &info);
+	if (info != 0) {
+	    fprintf(stderr, "dgglse gave info = %d\n", (int) info);
+	    err = (info < 0)? E_DATA : E_SINGULAR;
+	}
+    }
+
+    lapack_free(work);
+
+ bailout:
+
+    gretl_matrix_free(A);
+    gretl_matrix_free(B);
+    gretl_matrix_free(c);
+    gretl_matrix_free(d);
 
     return err;
 }
@@ -9849,9 +9881,9 @@ static int build_augmented_regression_matrices (const gretl_matrix *y,
  * @s2: pointer to receive residual variance, or NULL.  If vcv is non-NULL
  * and s2 is NULL, the vcv estimate is just W^{-1}.
  *
- * Computes OLS estimates restricted by R and q, using LU factorization, 
- * and puts the coefficient estimates in @b.  Optionally, calculates the
- * covariance matrix in @vcv.
+ * Computes OLS estimates restricted by R and q, using the lapack 
+ * function dgglse(), and puts the coefficient estimates in @b.  
+ * Optionally, calculates the covariance matrix in @vcv.
  * 
  * Returns: 0 on success, non-zero error code on failure.
  */
@@ -9862,10 +9894,7 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 			     gretl_vector *b, gretl_matrix *vcv,
 			     gretl_vector *uhat, double *s2)
 {
-    gretl_matrix *XTX = NULL;
-    gretl_vector *V = NULL;
     gretl_matrix *W = NULL;
-    gretl_matrix *S = NULL;
     double x;
     int k = X->cols;
     int nr = R->rows;
@@ -9877,51 +9906,39 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 	err = E_NONCONF;
     }
 
-    if (!err) {
-	err = build_augmented_regression_matrices(y, X, R, q,
-						  &XTX, &V, &W);
-    }
-
     if (!err && vcv != NULL) {
-	S = gretl_matrix_copy(W);
-	if (S == NULL) {
-	    err = E_ALLOC;
-	}
+	W = build_augmented_XTX(X, R, &err);
     }
 
     if (!err) {
-	err = gretl_LU_solve(W, V);
+	err = gretl_matrix_gglse(y, X, R, q, b);
     }
 
     if (!err) {
 	int i;
-	
-	for (i=0; i<k; i++) {
-	    b->val[i] = V->val[i];
-	}
+
 	if (s2 != NULL) {
 	    *s2 = get_ols_error_variance(y, X, b, nr);
 	}
-	if (S != NULL) {
-	    err = get_ols_vcv(S, s2);
+	if (W != NULL) {
+	    err = get_ols_vcv(W, s2);
 	    if (!err) {
 		for (i=0; i<k; i++) {
 		    for (j=0; j<k; j++) {
-			x = gretl_matrix_get(S, i, j);
+			x = gretl_matrix_get(W, i, j);
 			gretl_matrix_set(vcv, i, j, x);
 		    }
 		}		
 	    }
-	    gretl_matrix_free(S);
 	}
 	if (uhat != NULL) {
 	    get_ols_uhat(y, X, b, uhat);
 	}
     }
 
-    if (XTX != NULL) gretl_matrix_free(XTX);
-    if (V != NULL) gretl_matrix_free(V);
-    if (W != NULL) gretl_matrix_free(W);
+    if (W != NULL) {
+	gretl_matrix_free(W);
+    }
 
     return err;
 }

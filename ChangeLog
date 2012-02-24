@@ -25,7 +25,7 @@ version 1.9.8, in progress
   function to a package containing a single function
 - For third-party users of libgretl: improve handling of search for the
   gretl plugins
-- MS Windows build: upate cross-compiler to gcc-4.6.2
+- MS Windows build: update cross-compiler to gcc-4.6.2
 
 2011-12-22 version 1.9.7
 - Add two nonparametric estimators: William Cleveland's loess and the

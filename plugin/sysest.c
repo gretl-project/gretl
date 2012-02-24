@@ -324,7 +324,7 @@ calculate_sys_coeffs (equation_system *sys,
 #if SDEBUG
     gretl_matrix_print(X, "sys X");
     gretl_matrix_print(y, "sys y");
-#endif    
+#endif  
 
     err = gretl_LU_solve(X, y);
     if (err) {
