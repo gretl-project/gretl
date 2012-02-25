@@ -9818,11 +9818,16 @@ static int gretl_matrix_gglse (const gretl_vector *y, const gretl_matrix *X,
     double *work;
     int err = 0;
 
-    /* all the input matrices get overwritten */
+    /* note: all the input matrices get overwritten */
     A = gretl_matrix_copy(X);
     B = gretl_matrix_copy(R);
     c = gretl_matrix_copy(y);
-    d = gretl_matrix_copy(q);
+
+    if (q != NULL) {
+	d = gretl_matrix_copy(q);
+    } else {
+	d = gretl_zero_matrix_new(p, 1);
+    }
 
     work = lapack_malloc(sizeof *work);
 
@@ -9873,7 +9878,7 @@ static int gretl_matrix_gglse (const gretl_vector *y, const gretl_matrix *X,
  * @y: dependent variable vector.
  * @X: matrix of independent variables.
  * @R: left-hand restriction matrix, as in Rb = q.
- * @q: right-hand restriction vector.
+ * @q: right-hand restriction vector or NULL.
  * @b: vector to hold coefficient estimates.
  * @vcv: matrix to hold the covariance matrix of the coefficients,
  * or NULL if this is not needed.
@@ -9883,7 +9888,8 @@ static int gretl_matrix_gglse (const gretl_vector *y, const gretl_matrix *X,
  *
  * Computes OLS estimates restricted by R and q, using the lapack 
  * function dgglse(), and puts the coefficient estimates in @b.  
- * Optionally, calculates the covariance matrix in @vcv.
+ * Optionally, calculates the covariance matrix in @vcv. If @q is
+ * NULL this is taken as equivalent to a zero vector.
  * 
  * Returns: 0 on success, non-zero error code on failure.
  */
