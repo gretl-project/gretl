@@ -49,12 +49,14 @@ enum windata_flags {
     VWIN_SESSION_GRAPH   = 1 << 4
 };
 
-typedef struct _windata_t windata_t;
+typedef struct windata_t_ windata_t;
+typedef struct tabwin_t_  tabwin_t;
 
 #include <gtksourceview/gtksourceview.h>
 
-struct _windata_t {
+struct windata_t_ {
     GtkWidget *main;      /* top-level GTK window */
+    GtkWidget *topmain;   /* for use when embedded in tabs */
     GtkWidget *vbox;      /* vbox within main */
     GtkWidget *text;      /* text or sourceview object */
     GtkWidget *listbox;   /* or: box containing tree or list */
@@ -73,6 +75,11 @@ struct _windata_t {
     unsigned char flags;
     char fname[MAXLEN];
     GtkSourceBuffer *sbuf;
+};
+
+struct tabwin_t_ {
+    GtkWidget *main;      /* top-level GTK window */
+    GtkWidget *tabs;      /* notebook for tabs */
 };
 
 typedef struct dialog_opts_ dialog_opts;

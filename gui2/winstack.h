@@ -51,8 +51,14 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 			      const gchar *title, 
 			      gpointer data, int record);
 
+windata_t *gretl_tabbed_viewer_new (int role, const gchar *title, 
+				    const gchar *tabtitle, 
+				    gpointer data, int record);
+
 windata_t *gretl_browser_new (int role, const gchar *title,
 			      int record);
+
+GtkWidget *vwin_toplevel (windata_t *vwin);
 
 #endif
 

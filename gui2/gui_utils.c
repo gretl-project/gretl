@@ -63,6 +63,8 @@
 # include "gretlwin32.h"
 #endif
 
+#define TABTEST 0
+
 static void set_up_model_view_menu (GtkWidget *window, windata_t *vwin);
 static void add_system_menu_items (windata_t *vwin, int vecm);
 static void add_bundle_menu_items (windata_t *vwin);
@@ -1551,12 +1553,18 @@ static void attach_content_changed_signal (windata_t *vwin)
 static void viewer_box_config (windata_t *vwin)
 {
     vwin->vbox = gtk_vbox_new(FALSE, 1);
-    gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
-    gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
+
+    if (vwin->topmain != NULL) {
+	gtk_box_set_spacing(GTK_BOX(vwin->vbox), 0);
+    } else {
+	gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
+	gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
+    }
+
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
     
 #ifndef G_OS_WIN32
-    set_wm_icon(vwin->main);
+    set_wm_icon(vwin_toplevel(vwin));
 #endif
 }
 
@@ -1782,8 +1790,14 @@ view_file_with_title (const char *filename, int editable, int del_file,
     } else {
 	gchar *title = make_viewer_title(role, filename);
 
+#if TABTEST
+	vwin = gretl_tabbed_viewer_new(role, _("gretl: script editor"), 
+				       filename, NULL,
+				       record_on_winstack(role));
+#else
 	vwin = gretl_viewer_new(role, (title != NULL)? title : filename, 
 				NULL, record_on_winstack(role));
+#endif
 	g_free(title);
     }
 
@@ -1839,8 +1853,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
 			 G_CALLBACK(delete_file), (gpointer) fname);
     }
 
-    gtk_widget_show(vwin->vbox);
-    gtk_widget_show(vwin->main);
+    gtk_widget_show_all(vwin_toplevel(vwin));
 
     g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
 		     G_CALLBACK(text_popup_handler), vwin);

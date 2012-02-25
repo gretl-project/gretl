@@ -304,6 +304,7 @@ void winstack_remove (GtkWidget *w)
 static void windata_init (windata_t *vwin, int role, gpointer data)
 {
     vwin->main = NULL;
+    vwin->topmain = NULL;
     vwin->vbox = NULL;
     vwin->text = NULL;
     vwin->listbox = NULL;
@@ -364,11 +365,93 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
     return vwin;
 }
 
+static void free_tabwin (tabwin_t *twin)
+{
+    return;
+}
+
+static windata_t *
+gretl_tabbed_viewer_new_with_parent (windata_t *parent, int role, 
+				     const gchar *title, 
+				     const gchar *tabtitle, 
+				     gpointer data, int record)
+{
+    tabwin_t *twin = mymalloc(sizeof *twin);
+    windata_t *vwin;
+    GtkWidget *label;
+    const gchar *p;
+
+    if (twin == NULL) {
+	return NULL;
+    }
+
+    vwin = mymalloc(sizeof *vwin);
+    if (vwin == NULL) {
+	free(twin);
+	return NULL;
+    }
+
+    windata_init(vwin, role, data);
+    vwin->main = gtk_hbox_new(FALSE, 0);
+#if 0 /* FIXME */
+    g_signal_connect(G_OBJECT(vwin->main), "destroy", 
+		     G_CALLBACK(free_windata), vwin);
+#endif
+
+    twin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(twin->main), title);
+    g_signal_connect(G_OBJECT(twin->main), "destroy", 
+		     G_CALLBACK(free_tabwin), vwin);
+
+    twin->tabs = gtk_notebook_new();
+    gtk_container_add(GTK_CONTAINER(twin->main), twin->tabs);
+    p = strrchr(tabtitle, SLASH);
+    if (p != NULL) {
+	tabtitle = p + 1;
+    }
+    label = gtk_label_new(tabtitle);
+    gtk_notebook_append_page(GTK_NOTEBOOK(twin->tabs), vwin->main, label);
+    vwin->topmain = twin->main;
+
+    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
+
+#if 0 /* FIXME */
+    if (record) {
+	g_object_set_data(G_OBJECT(vwin->main), "object", data);
+	g_object_set_data(G_OBJECT(vwin->main), "role", 
+			  GINT_TO_POINTER(vwin->role));
+	winstack_add(vwin->main);
+    } 
+
+    if (parent != NULL) {
+	vwin_add_child(parent, vwin);
+    }
+#endif
+
+    add_window_list_item(twin->main, role);
+
+    return vwin;
+}
+
 windata_t *gretl_viewer_new (int role, const gchar *title, 
 			     gpointer data, int record)
 {
     return gretl_viewer_new_with_parent(NULL, role, title,
 					data, record);
+}
+
+windata_t *gretl_tabbed_viewer_new (int role, const gchar *title, 
+				    const gchar *tabtitle,
+				    gpointer data, int record)
+{
+    return gretl_tabbed_viewer_new_with_parent(NULL, role, title,
+					       tabtitle, data, 
+					       record);
+}
+
+GtkWidget *vwin_toplevel (windata_t *vwin)
+{
+    return vwin->topmain != NULL ? vwin->topmain : vwin->main;
 }
 
 static gint catch_winlist_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
