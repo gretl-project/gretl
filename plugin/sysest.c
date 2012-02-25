@@ -31,25 +31,38 @@
                        s->method == SYS_METHOD_OLS || \
                        s->method == SYS_METHOD_WLS)
 
-/* insert the elements of sub-matrix @M, multiplied by @scale, in the
-   appropriate position within the big matrix @X */
+/* Insert the elements of sub-matrix @M, multiplied by @scale, in the
+   appropriate position within the big matrix @X. We're building
+   a symmetric matrix here so we insert off-diagonal elements both
+   above and below the diagonal.
+*/
 
 static void 
-kronecker_place (gretl_matrix *X, const gretl_matrix *M,
-		 int startrow, int startcol, double scale)
+insert_sys_X_block (gretl_matrix *X, const gretl_matrix *M,
+		    int startrow, int startcol, double scale)
 {
-    int i, j;
-    int row, col;
-    double x;
+    int r, c, i, j;
+    double mij;
     
     for (i=0; i<M->rows; i++) {
-	row = startrow + i;
+	r = startrow + i;
 	for (j=0; j<M->cols; j++) {
-	    col = startcol + j;
-	    x = gretl_matrix_get(M, i, j);
-	    gretl_matrix_set(X, row, col, x * scale);
+	    c = startcol + j;
+	    mij = gretl_matrix_get(M, i, j);
+	    gretl_matrix_set(X, r, c, mij * scale);
 	}
     }
+    
+    if (startrow != startcol) {
+	for (i=0; i<M->rows; i++) {
+	    c = startrow + i;
+	    for (j=0; j<M->cols; j++) {
+		r = startcol + j;
+		mij = gretl_matrix_get(M, i, j);
+		gretl_matrix_set(X, r, c, mij * scale);
+	    }
+	}
+    }	
 }
 
 /* Retrieve the data placed on @pmod in the course of 2sls estimation:
@@ -120,8 +133,8 @@ static int
 make_sys_X_block (gretl_matrix *X, const MODEL *pmod,
 		  DATASET *dset, int t1, int method)
 {
-    int i, t;
     const double *Xi;
+    int i, t;
 
     X->cols = pmod->ncoeff;
 
@@ -148,43 +161,44 @@ make_sys_X_block (gretl_matrix *X, const MODEL *pmod,
    per-equation residuals */
 
 static int
-gls_sigma_from_uhat (equation_system *sys, gretl_matrix *sigma,
+gls_sigma_from_uhat (equation_system *sys, gretl_matrix *S,
 		     int do_diag)
 {
-    const gretl_matrix *e = sys->E;
-    int m = sys->neqns;
     int geomean = system_vcv_geomean(sys);
+    double eti, etj, sij;
+    int m = sys->neqns;
     int i, j, t;
-    double xx;
 
     for (i=0; i<m; i++) {
 	for (j=i; j<m; j++) {
-	    xx = 0.0;
+	    sij = 0.0;
 	    for (t=0; t<sys->T; t++) {
-		xx += gretl_matrix_get(e, t, i) * gretl_matrix_get(e, t, j);
+		eti = gretl_matrix_get(sys->E, t, i);
+		etj = gretl_matrix_get(sys->E, t, j);
+		sij += eti * etj;
 	    }
 	    if (geomean) {
-		xx /= system_vcv_denom(sys, i, j);
+		sij /= system_vcv_denom(sys, i, j);
 	    } else {
-		xx /= sys->T;
+		sij /= sys->T;
 	    }
-	    gretl_matrix_set(sigma, i, j, xx);
+	    gretl_matrix_set(S, i, j, sij);
 	    if (j != i) {
-		gretl_matrix_set(sigma, j, i, xx);
+		gretl_matrix_set(S, j, i, sij);
 	    }
 	}
     }
 
     if (do_diag) {
-	double sii, sij, sjj;
+	double sii, sjj;
 
 	sys->diag = 0.0;
 
 	for (i=1; i<m; i++) {
-	    sii = gretl_matrix_get(sigma, i, i);
+	    sii = gretl_matrix_get(S, i, i);
 	    for (j=0; j<i; j++) {
-		sij = gretl_matrix_get(sigma, i, j);
-		sjj = gretl_matrix_get(sigma, j, j);
+		sij = gretl_matrix_get(S, i, j);
+		sjj = gretl_matrix_get(S, j, j);
 		sys->diag += (sij * sij) / (sii * sjj);
 	    }
 	}
@@ -311,13 +325,14 @@ calculate_sys_coeffs (equation_system *sys,
 {
     int do_bdiff = (sys->method == SYS_METHOD_3SLS && do_iteration);
     double bij, oldb, bnum = 0.0, bden = 0.0;
-    gretl_matrix *vcv = NULL;
+    gretl_matrix *V = NULL;
     gretl_matrix *b = NULL;
     int i, j, k, j0;
+    int posdef = 0;
     int err = 0;
 
-    vcv = gretl_matrix_copy(X);
-    if (vcv == NULL) {
+    V = gretl_matrix_copy(X);
+    if (V == NULL) {
 	return E_ALLOC;
     }
 
@@ -326,7 +341,22 @@ calculate_sys_coeffs (equation_system *sys,
     gretl_matrix_print(y, "sys y");
 #endif  
 
-    err = gretl_LU_solve(X, y);
+    /* calculate the coefficients */
+
+    if (sys->R == NULL) {
+	/* hopefully X may be positive definite */
+	err = gretl_cholesky_decomp_solve(X, y);
+	if (err) {
+	    /* nope; try falling back to the LU solver */
+	    gretl_matrix_copy_values(X, V);
+	    err = gretl_LU_solve(X, y);
+	} else {
+	    posdef = 1;
+	}
+    } else {
+	err = gretl_LU_solve(X, y);
+    }
+
     if (err) {
 	return err;
     }
@@ -335,10 +365,15 @@ calculate_sys_coeffs (equation_system *sys,
     gretl_matrix_print(y, "in calc_coeffs, betahat");
 #endif
 
+    /* calculate the covariance matrix */
+
     if (libset_get_bool(USE_SVD)) {
-	err = gretl_SVD_invert_matrix(vcv);
+	err = gretl_SVD_invert_matrix(V);
+    } else if (posdef) {
+	gretl_matrix_copy_values(V, X);
+	err = gretl_cholesky_invert(V);
     } else {
-	err = gretl_invert_general_matrix(vcv);
+	err = gretl_invert_general_matrix(V);
     }
 
 #if SDEBUG
@@ -350,8 +385,10 @@ calculate_sys_coeffs (equation_system *sys,
     }
 
 #if SDEBUG > 1
-    gretl_matrix_print(vcv, "in calc_coeffs, vcv");
+    gretl_matrix_print(V, "in calc_coeffs, vcv");
 #endif
+
+    /* transcribe stuff */
 
     j0 = 0;
     for (i=0; i<sys->neqns; i++) {
@@ -375,9 +412,9 @@ calculate_sys_coeffs (equation_system *sys,
 
     if (sys->method == SYS_METHOD_OLS || 
 	sys->method == SYS_METHOD_TSLS) {
-	single_eq_scale_vcv(sys, vcv);
+	single_eq_scale_vcv(sys, V);
     } else if (sys->method == SYS_METHOD_LIML) {
-	liml_scale_vcv(sys, vcv);
+	liml_scale_vcv(sys, V);
     }
 
     /* now set the model standard errors */
@@ -385,7 +422,7 @@ calculate_sys_coeffs (equation_system *sys,
     for (i=0; i<sys->neqns; i++) {
 	for (j=0; j<sys->models[i]->ncoeff; j++) {
 	    k = j0 + j;
-	    sys->models[i]->sderr[j] = sqrt(gretl_matrix_get(vcv, k, k));
+	    sys->models[i]->sderr[j] = sqrt(gretl_matrix_get(V, k, k));
 	}
 	j0 += sys->models[i]->ncoeff;
     }
@@ -393,7 +430,7 @@ calculate_sys_coeffs (equation_system *sys,
     /* save the coefficient vector and covariance matrix */
     b = gretl_matrix_copy(y);
     system_attach_coeffs(sys, b);
-    system_attach_vcv(sys, vcv);
+    system_attach_vcv(sys, V);
 
     return err;
 }
@@ -621,25 +658,14 @@ static int
 augment_X_with_restrictions (gretl_matrix *X, int mk, 
 			     equation_system *sys)
 {
-    double rij;
-    int nr, nc;
-    int i, j;
+    int nr, i, j;
 
     if (sys->R == NULL) return 1;
 
     nr = sys->R->rows;
-    nc = sys->R->cols;
 
     /* place the R matrix */
-    kronecker_place(X, sys->R, mk, 0, 1.0);
-
-    /* place R-transpose */
-    for (i=0; i<nr; i++) {
-	for (j=0; j<nc; j++) {
-	    rij = gretl_matrix_get(sys->R, i, j);
-	    gretl_matrix_set(X, j, i + mk, rij);
-	}
-    }
+    insert_sys_X_block(X, sys->R, mk, 0, 1.0);
 
     /* zero the bottom right-hand block */
     for (i=mk; i<mk+nr; i++) {
@@ -1032,7 +1058,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 
 	err = make_sys_X_block(Xi, models[i], dset, sys->t1, method);
 
-	for (j=0; j<sys->neqns && !err; j++) { 
+	for (j=0; j<=i && !err; j++) { 
 	    const gretl_matrix *Xk;
 	    double sij;
 
@@ -1063,7 +1089,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 		sij = gretl_matrix_get(sys->S, i, j);
 	    }
 
-	    kronecker_place(X, M, krow, kcol, sij);
+	    insert_sys_X_block(X, M, krow, kcol, sij);
 	    kcol += models[j]->ncoeff;
 	}
 

@@ -3500,7 +3500,7 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
     } 
 
     if (!err) {
-	work = malloc(3 * n * sizeof *work);
+	work = lapack_malloc(3 * n * sizeof *work);
 	iwork = malloc(n * sizeof *iwork);
 	if (work == NULL || iwork == NULL) {
 	    err = E_ALLOC;
@@ -3525,7 +3525,7 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
 	}  
     }  
 
-    free(work);
+    lapack_free(work);
     free(iwork);
 
     return err;
@@ -3563,6 +3563,37 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
 
     return 0;
 } 
+
+/**
+ * gretl_cholesky_invert:
+ * @a: Cholesky-decomposed symmetric positive-definite matrix.
+ *
+ * Inverts @a, which must contain the pre-computed Cholesky 
+ * decomposition of a p.d. matrix, as may be obtained using 
+ * gretl_cholesky_decomp_solve(). For speed there's no error 
+ * checking of the input -- the caller should make sure it's OK.
+ * 
+ * Returns: 0 on successful completion, or non-zero code on error.
+ */
+
+int gretl_cholesky_invert (gretl_matrix *a)
+{
+    integer info, n = a->cols;
+    char uplo = 'L';
+    int err = 0;
+
+    dpotri_(&uplo, &n, a->val, &n, &info);
+
+    if (info != 0) {
+	err = E_SINGULAR;
+	fprintf(stderr, "gretl_cholesky_invert:\n"
+		" dpotri failed with info = %d\n", (int) info);
+    } else {
+	gretl_matrix_mirror(a, uplo);
+    }
+
+    return err;
+}
 
 /* translation to C of tsld1.f in the netlib toeplitz package,
    code as of 07/23/82; see http://www.netlib.org/toeplitz/
@@ -6127,7 +6158,6 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
     integer *iwork = NULL;
     doublereal *tau = NULL;
     doublereal *work = NULL;
-    doublereal *work2;
     integer *jpvt = NULL;
 
     int i, j;
@@ -6164,13 +6194,11 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
 
     /* optimally sized work array */
     lwork = (integer) work[0];
-    work2 = realloc(work, (size_t) lwork * sizeof *work);
-    if (work2 == NULL) {
+    work = lapack_realloc(work, (size_t) lwork * sizeof *work);
+    if (work == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
-
-    work = work2;
 
     /* run actual QR factorization */
     dgeqp3_(&m, &n, M->val, &lda, jpvt, tau, work, &lwork, &info);
@@ -6252,7 +6280,6 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
     integer lwork = -1;
     doublereal *tau = NULL;
     doublereal *work = NULL;
-    doublereal *work2;
     int i, j;
     int err = 0;
 
@@ -6290,13 +6317,11 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
 
     /* optimally sized work array */
     lwork = (integer) work[0];
-    work2 = lapack_realloc(work, (size_t) lwork * sizeof *work);
-    if (work2 == NULL) {
+    work = lapack_realloc(work, (size_t) lwork * sizeof *work);
+    if (work == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
-
-    work = work2;
 
     /* run actual QR factorization */
     dgeqrf_(&m, &n, M->val, &lda, tau, work, &lwork, &info);
@@ -6995,7 +7020,7 @@ int gretl_invpd (gretl_matrix *a)
  * the inverse. Uses the lapack functions dpotrf and dpotri.
  * Little checking is done, for speed: we assume the caller
  * knows what he's doing.  Unlike gretl_invpd() this function
- * does not sump error messages to %stderr in case the matrix
+ * does not dump error messages to %stderr in case the matrix
  * is not in fact positive definite.
  *
  * Returns: 0 on success; non-zero error code on failure.
@@ -7269,7 +7294,7 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     integer n, info, lwork;
     integer nvr, nvl = 2;
     char jvr, jvl = 'N';
-    double *work, *work2;
+    double *work;
     double *wr = NULL, *wi = NULL, *vr = NULL;
     double nullvl[2] = {0.0};
     double nullvr[2] = {0.0};
@@ -7331,13 +7356,11 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 
     lwork = (integer) work[0];
 
-    work2 = lapack_realloc(work, lwork * sizeof *work);
-    if (work2 == NULL) {
+    work = lapack_realloc(work, lwork * sizeof *work);
+    if (work == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
-    } else {
-	work = work2;
-    }
+    } 
 
     dgeev_(&jvl, &jvr, &n, m->val, &n, wr, wi, nullvl, 
 	   &nvl, vr, &nvr, work, &lwork, &info);
@@ -7467,7 +7490,6 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     integer n, info, lwork;
     gretl_matrix *evals = NULL;
     double *work = NULL;
-    double *work2 = NULL;
     double *w = NULL;
     char uplo = 'U', jobz = (eigenvecs)? 'V' : 'N';
 
@@ -7511,14 +7533,13 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 
     lwork = (integer) work[0];
 
-    work2 = lapack_realloc(work, lwork * sizeof *work);
-    if (work2 == NULL) {
+    work = lapack_realloc(work, lwork * sizeof *work);
+    if (work == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     } 
 
     if (!*err) {
-	work = work2;
 	dsyev_(&jobz, &uplo, &n, m->val, &n, 
 	       w, work, &lwork, &info);
 	if (info != 0) {
@@ -7790,7 +7811,6 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     gretl_matrix *vt = NULL;
     double xu, xvt;
     char jobu = 'N', jobvt = 'N';
-    double *work2 = NULL;
     double *uval = &xu, *vtval = &xvt;
     double *work = NULL;
     int k, err = 0;
@@ -7872,12 +7892,11 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 
     lwork = (integer) work[0];
 
-    work2 = lapack_realloc(work, lwork * sizeof *work);
-    if (work2 == NULL) {
+    work = lapack_realloc(work, lwork * sizeof *work);
+    if (work == NULL) {
 	err = E_ALLOC; 
 	goto bailout;
     } 
-    work = work2;
 
     /* actual computation */
     dgesvd_(&jobu, &jobvt, &m, &n, b->val, &lda, s->val, uval, &ldu, 
@@ -9120,7 +9139,6 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
     integer info;
     double rcond = 0.0;
     double *work = NULL;
-    double *work2 = NULL;
     double *s = NULL;
     int err = 0;
 
@@ -9174,13 +9192,11 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
 
     lwork = (integer) work[0];
 
-    work2 = lapack_realloc(work, lwork * sizeof *work);
-    if (work2 == NULL) {
+    work = lapack_realloc(work, lwork * sizeof *work);
+    if (work == NULL) {
 	err = E_ALLOC; 
 	goto bailout;
     } 
-
-    work = work2;
 
     /* get actual solution */
     dgelss_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
@@ -9258,7 +9274,6 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     integer info;
     double rcond = -1.0;
     double *work = NULL;
-    double *work2 = NULL;
     double *s = NULL;
     int err = 0;
 
@@ -9317,13 +9332,11 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
 
     lwork = (integer) work[0];
 
-    work2 = lapack_realloc(work, lwork * sizeof *work);
-    if (work2 == NULL) {
+    work = lapack_realloc(work, lwork * sizeof *work);
+    if (work == NULL) {
 	err = E_ALLOC; 
 	goto bailout;
     } 
-
-    work = work2;
 
     /* get actual solution */
     dgelss_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
@@ -9800,13 +9813,15 @@ static gretl_matrix *build_augmented_XTX (const gretl_matrix *X,
     return W;
 }
 
-/* constrained least squares: 
+/* constrained least squares using lapack: 
 
     minimize || y - X*b ||_2  subject to R*b = q 
 */
 
-static int gretl_matrix_gglse (const gretl_vector *y, const gretl_matrix *X,
-			       const gretl_matrix *R, const gretl_vector *q,
+static int gretl_matrix_gglse (const gretl_vector *y, 
+			       const gretl_matrix *X,
+			       const gretl_matrix *R, 
+			       const gretl_vector *q,
 			       gretl_vector *b)
 {
     gretl_matrix *A, *B, *c, *d;
