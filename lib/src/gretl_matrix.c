@@ -1618,11 +1618,10 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
     gretl_matrix *N = NULL;
     gretl_matrix *D = NULL;
     gretl_matrix *W = NULL;
-    
     double xa, c, j, delta = 1.0e-13;
     int q, k, n;
 
-    if (gretl_is_null_matrix(m)) {
+    if (gretl_is_null_matrix(m) || m->rows != m->cols) {
 	*err = E_DATA;
 	return NULL;
     }
@@ -1675,7 +1674,7 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
 	}
     }
 
-    /* "solve DF = N for F" */
+    /* solve DF = N for F */
     *err = gretl_LU_solve(D, N);
 
     if (!*err) {
@@ -3288,38 +3287,39 @@ static int QR_solve (gretl_matrix *a, gretl_matrix *b,
 }
 
 /**
- * gretl_LU_solve_plus:
- * @a: gretl_matrix.
- * @b: gretl_matrix.
+ * gretl_LU_solve_invert:
+ * @a: square matrix.
+ * @b: matrix.
  *
- * Solves ax = b for the unknown x, using LU decomposition.
+ * Solves ax = b for the unknown x, using LU decomposition,
+ * then proceeds to use the decomposition to invert @a. Calls
+ * the lapack functions dgetrf(), dgetrs() and dgetri(); the
+ * decomposition proceeds via partial pivoting with row
+ * interchanges.
+ *
  * On exit, @b is replaced by the solution and @a is replaced 
- * by its inverse, based on the LU decomposition.
+ * by its inverse.
  * 
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
-int gretl_LU_solve_plus (gretl_matrix *a, gretl_matrix *b)
+int gretl_LU_solve_invert (gretl_matrix *a, gretl_matrix *b)
 {
     char trans = 'N';
     integer info;
-    integer m, n;
-    integer ldb, nrhs = 1;
+    integer n, ldb, nrhs = 1;
     integer lwork = -1;
     double *work = NULL;
     integer *ipiv;
     int err = 0;
 
-    if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
+    if (gretl_is_null_matrix(a) || 
+	gretl_is_null_matrix(b) ||
+	a->rows != a->cols) {
 	return E_DATA;
     }
 
-    m = a->rows;
-    n = a->cols;
-
-    if (m != n) {
-	return E_DATA;
-    }
+    n = a->rows;
 
     if (b->cols == 1) {
 	ldb = b->rows;
@@ -3335,10 +3335,10 @@ int gretl_LU_solve_plus (gretl_matrix *a, gretl_matrix *b)
 	return E_ALLOC;
     }
 
-    dgetrf_(&m, &n, a->val, &n, ipiv, &info);
+    dgetrf_(&n, &n, a->val, &n, ipiv, &info);
 
     if (info != 0) {
-	fprintf(stderr, "gretl_LU_solve_plus: dgetrf gave info = %d\n", 
+	fprintf(stderr, "gretl_LU_solve_invert: dgetrf gave info = %d\n", 
 		(int) info);
 	err = (info < 0)? E_DATA : E_SINGULAR;
     }
@@ -3346,7 +3346,7 @@ int gretl_LU_solve_plus (gretl_matrix *a, gretl_matrix *b)
     if (!err) {
 	dgetrs_(&trans, &n, &nrhs, a->val, &n, ipiv, b->val, &ldb, &info);
 	if (info != 0) {
-	    fprintf(stderr, "gretl_LU_solve_plus: dgetrs gave info = %d\n", 
+	    fprintf(stderr, "gretl_LU_solve_invert: dgetrs gave info = %d\n", 
 		    (int) info);
 	    err = E_DATA;
 	}
@@ -3375,7 +3375,7 @@ int gretl_LU_solve_plus (gretl_matrix *a, gretl_matrix *b)
     if (!err) {
 	dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
 	if (info != 0) {
-	    fprintf(stderr, "gretl_LU_solve_plus: dgetri gave info = %d\n", 
+	    fprintf(stderr, "gretl_LU_solve_invert: dgetri gave info = %d\n", 
 		    (int) info);
 	    err = E_DATA;
 	}
@@ -3389,12 +3389,14 @@ int gretl_LU_solve_plus (gretl_matrix *a, gretl_matrix *b)
 
 /**
  * gretl_LU_solve:
- * @a: gretl_matrix.
- * @b: gretl_matrix.
-  *
- * Solves ax = b for the unknown x, using LU decomposition.
+ * @a: square matrix.
+ * @b: matrix.
+ *
+ * Solves ax = b for the unknown x, via LU decomposition
+ * using partial piviting with row interchanges.
  * On exit, @b is replaced by the solution and @a is replaced 
- * by its LU decomposition.
+ * by its decomposition. Calls the lapack functions dgetrf() 
+ * and dgetrs().
  * 
  * Returns: 0 on successful completion, non-zero code on error.
  */
@@ -3403,16 +3405,16 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
 {
     char trans = 'N';
     integer info;
-    integer m, n;
-    integer ldb, nrhs = 1;
+    integer n, ldb, nrhs = 1;
     integer *ipiv;
     int err = 0;
 
-    if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
+    if (gretl_is_null_matrix(a) || 
+	gretl_is_null_matrix(b) ||
+	a->rows != a->cols) {
 	return E_DATA;
     }
 
-    m = a->rows;
     n = a->cols;
 
     if (b->cols == 1) {
@@ -3424,18 +3426,12 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
 	ldb = b->rows;
     }
 
-    if (m > n) {
-	return QR_solve(a, b, m, n, nrhs, ldb);
-    } else if (m < n) {
-	return E_DATA;
-    }
-
     ipiv = malloc(n * sizeof *ipiv);
     if (ipiv == NULL) {
 	return E_ALLOC;
     }
 
-    dgetrf_(&m, &n, a->val, &n, ipiv, &info);
+    dgetrf_(&n, &n, a->val, &n, ipiv, &info);
 
     if (info != 0) {
 	fprintf(stderr, "gretl_LU_solve: dgetrf gave info = %d\n", 
@@ -3455,6 +3451,47 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
     free(ipiv);
 
     return err;
+}
+
+/*
+ * gretl_matrix_solve:
+ * @a: m x n matrix, with m >= n.
+ * @b: gretl_matrix.
+ *
+ * Solves ax = b for the unknown x. If @a is square the method
+ * is LU decomposition, on which see also gretl_LU_solve().
+ * If m > n the QR decomposition is used to find the least
+ * squares solution.
+ *
+ * On exit, @b is replaced by the solution and @a is replaced 
+ * by its decomposition.
+ * 
+ * Returns: 0 on successful completion, non-zero code on error.
+ */
+
+static int gretl_matrix_solve (gretl_matrix *a, gretl_matrix *b)
+{
+    if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
+	return E_DATA;
+    }
+
+    if (a->rows == a->cols) {
+	return gretl_LU_solve(a, b);
+    } else if (a->rows > a->cols) {
+	integer ldb, nrhs = 1;
+
+	if (b->cols == 1) {
+	    ldb = b->rows;
+	} else if (b->rows == 1) {
+	    ldb = b->cols;
+	} else {
+	    nrhs = b->cols;
+	    ldb = b->rows;
+	}
+	return QR_solve(a, b, a->rows, a->cols, nrhs, ldb);
+    } else {
+	return E_DATA;
+    }
 }
 
 #define CHOL_TINY  8.0e-09
@@ -5884,7 +5921,7 @@ gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a,
  * of columns.
  *
  * Returns: the "quotient" matrix, or NULL on failure.
-  */
+ */
 
 gretl_matrix *gretl_matrix_divide (const gretl_matrix *a, 
 				   const gretl_matrix *b,
@@ -5952,7 +5989,7 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
 	if (Tmp == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    *err = gretl_LU_solve(Tmp, Q);
+	    *err = gretl_matrix_solve(Tmp, Q);
 	    gretl_matrix_free(Tmp);
 	}
     }

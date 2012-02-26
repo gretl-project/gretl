@@ -76,24 +76,23 @@ insert_sys_X_block (gretl_matrix *X, const gretl_matrix *M,
 double *model_get_Xi (const MODEL *pmod, DATASET *dset, int i)
 {
     const char *endog = gretl_model_get_data(pmod, "endog");
-    double **X;
     double *xi = NULL;
 
     if (endog == NULL || !endog[i]) {
-	/* return the original data */
-	return dset->Z[pmod->list[i+2]];
-    }
+	/* use the original data */
+	xi = dset->Z[pmod->list[i+2]];
+    } else {
+	double **X = gretl_model_get_data(pmod, "tslsX");
 
-    X = gretl_model_get_data(pmod, "tslsX");
+	if (X != NULL) {
+	    /* find and return the correct column */
+	    int j, k = 0;
 
-    if (X != NULL) {
-	/* find and return the correct column */
-	int j, k = 0;
-
-	for (j=0; j<i; j++) {
-	    if (endog[j]) k++;
+	    for (j=0; j<i; j++) {
+		if (endog[j]) k++;
+	    }
+	    xi = X[k];
 	}
-	xi = X[k];
     }
 
     return xi;
@@ -107,38 +106,40 @@ double *model_get_Xi (const MODEL *pmod, DATASET *dset, int i)
 static int make_liml_X_block (gretl_matrix *X, const MODEL *pmod,
 			      DATASET *dset, int t1)
 {
-    int i, t;
     const double *Xi;
+    int i, t, err = 0;
 
     X->cols = pmod->ncoeff;
 
-    for (i=0; i<X->cols; i++) {
+    for (i=0; i<X->cols && !err; i++) {
 	Xi = model_get_Xi(pmod, dset, i);
 	if (Xi == NULL) {
-	    return 1;
-	}
-	for (t=0; t<X->rows; t++) {
-	    gretl_matrix_set(X, t, i, Xi[t+t1]);
+	    err = E_DATA;
+	} else {
+	    for (t=0; t<X->rows; t++) {
+		gretl_matrix_set(X, t, i, Xi[t+t1]);
+	    }
 	}
     }
 
-    return 0;
+    return err;
 }
 
 /* construct the X data block pertaining to a specific equation, using
    either the original data or fitted values from regression on a set
-   of instruments */
+   of instruments 
+*/
 
 static int 
 make_sys_X_block (gretl_matrix *X, const MODEL *pmod,
 		  DATASET *dset, int t1, int method)
 {
     const double *Xi;
-    int i, t;
+    int i, t, err = 0;
 
     X->cols = pmod->ncoeff;
 
-    for (i=0; i<X->cols; i++) {
+    for (i=0; i<X->cols && !err; i++) {
 	if (method == SYS_METHOD_3SLS || 
 	    method == SYS_METHOD_FIML || 
 	    method == SYS_METHOD_TSLS) {
@@ -147,18 +148,22 @@ make_sys_X_block (gretl_matrix *X, const MODEL *pmod,
 	    Xi = dset->Z[pmod->list[i+2]];
 	}
 	if (Xi == NULL) {
-	    return E_DATA;
-	}
-	for (t=0; t<X->rows; t++) {
-	    gretl_matrix_set(X, t, i, Xi[t+t1]);
+	    err = E_DATA;
+	} else {
+	    for (t=0; t<X->rows; t++) {
+		gretl_matrix_set(X, t, i, Xi[t+t1]);
+	    }
 	}
     }
 
-    return 0;
+    return err;
 }
 
-/* populate the cross-equation covariance matrix based on the
-   per-equation residuals */
+/* populate the cross-equation covariance matrix, @S, based on
+   the per-equation residuals: if @do_diag is non-zero we also
+   want to compute the Breusch-Pagan test for diagonality
+   of the matrix
+*/
 
 static int
 gls_sigma_from_uhat (equation_system *sys, gretl_matrix *S,
@@ -190,6 +195,7 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *S,
     }
 
     if (do_diag) {
+	/* B-P test statistic */
 	double sii, sjj;
 
 	sys->diag = 0.0;
@@ -207,13 +213,6 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *S,
 
     return 0;
 }
-
-/* Note: this was changed in Revision 1.86 of Fri Apr 30 2010. Up till
-   then we were reporting the regular R^2 for models estimated as part
-   of a system, which seems wrong.
-*/
-
-#define SYS_CORR_RSQ 1
 
 /* compute residuals, for all cases other than FIML */
 
@@ -247,15 +246,11 @@ sys_resids (equation_system *sys, int eq, const DATASET *dset)
     }
 
     if (pmod->ifc && pmod->tss > 0) {
-	/* R-squared */
+	/* R-squared based on actual-fitted correlation */
 	double r;
 
-#if SYS_CORR_RSQ
 	pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, dset->Z[yno], 
 				   pmod->yhat);
-#else
-	pmod->rsq = 1 - (pmod->ess / pmod->tss);
-#endif
 	r = 1 - pmod->rsq;
 	pmod->adjrsq = 1.0 - (r * (pmod->nobs - 1) / pmod->dfd);
     } else {
@@ -268,16 +263,14 @@ sys_resids (equation_system *sys, int eq, const DATASET *dset)
 */
 
 static void
-single_eq_scale_vcv (MODEL *pmod, gretl_matrix *V, int offset)
+single_eqn_scale_vcv (MODEL *pmod, gretl_matrix *V, int offset)
 {
-    double s2 = pmod->sigma * pmod->sigma;
-    double vij;
-    int ii, jj;
-    int i, j;
+    double vij, s2 = pmod->sigma * pmod->sigma;
+    int i, j, ii, jj;
 
     for (i=0; i<pmod->ncoeff; i++) {
+	ii = i + offset;
 	for (j=i; j<pmod->ncoeff; j++) {
-	    ii = i + offset;
 	    jj = j + offset;
 	    vij = gretl_matrix_get(V, ii, jj);
 	    vij *= s2;
@@ -287,7 +280,7 @@ single_eq_scale_vcv (MODEL *pmod, gretl_matrix *V, int offset)
     }
 }
 
-/* write results from system estimation into the inidivdual
+/* write results from system estimation into the individual
    model structs 
 */
 
@@ -296,7 +289,7 @@ static void transcribe_sys_results (equation_system *sys,
 				    int do_iters)
 {
     int do_bdiff = (sys->method == SYS_METHOD_3SLS && do_iters);
-    double bij, oldb, bnum = 0.0, bden = 0.0;
+    double bij, oldb, bnum = 0, bden = 0;
     int offset = 0;
     int i, j, k;
 
@@ -316,16 +309,16 @@ static void transcribe_sys_results (equation_system *sys,
 	}
 	/* update residuals (and sigma-hat) */
 	sys_resids(sys, i, dset);
-	/* for single-equation methods, V needs scaling by
+	/* for single-equation methods, vcv needs scaling by
 	   an estimate of the residual variance
 	*/
 	if (sys->method == SYS_METHOD_OLS || 
 	    sys->method == SYS_METHOD_TSLS ||
 	    sys->method == SYS_METHOD_LIML) {
-	    single_eq_scale_vcv(pmod, sys->vcv, offset);
+	    single_eqn_scale_vcv(pmod, sys->vcv, offset);
 	}
 	/* update standard errors */
-	for (j=0; j<sys->models[i]->ncoeff; j++) {
+	for (j=0; j<pmod->ncoeff; j++) {
 	    k = j + offset;
 	    pmod->sderr[j] = sqrt(gretl_matrix_get(sys->vcv, k, k));
 	}
@@ -338,16 +331,15 @@ static void transcribe_sys_results (equation_system *sys,
 }
 
 /* compute SUR, 3SLS or LIML parameter estimates (or restricted OLS,
-   TSLS, WLS) */
+   TSLS, WLS) 
+*/
 
 static int 
-calculate_sys_coeffs (equation_system *sys,
-		      const DATASET *dset,
+calculate_sys_coeffs (equation_system *sys, const DATASET *dset,
 		      gretl_matrix *X, gretl_matrix *y, 
 		      int mk, int nr, int do_iters)
 {
-    gretl_matrix *V = NULL;
-    gretl_matrix *b = NULL;
+    gretl_matrix *V;
     int posdef = 0;
     int err = 0;
 
@@ -377,34 +369,27 @@ calculate_sys_coeffs (equation_system *sys,
     }
 
     if (!posdef) {
-	/* FIXME do some more checking on this, which
-	   should be more efficient if it's right 
-	*/
-#if 1
-	err = gretl_LU_solve_plus(X, y);
-#else
-	err = gretl_LU_solve(X, y);
-	if (!err) {
-	    gretl_invert_general_matrix(V);
-	    gretl_matrix_copy_values(X, V);
+	err = gretl_LU_solve_invert(X, y);
+    }
+
+    if (!err) {
+	/* save the coefficient vector and covariance matrix */
+	gretl_matrix *b = gretl_matrix_copy(y);
+
+	if (b == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    system_attach_coeffs(sys, b);
+	    gretl_matrix_copy_values(V, X);
+	    system_attach_vcv(sys, V);
+	    /* transcribe stuff to the included models */
+	    transcribe_sys_results(sys, dset, do_iters);
 	}
-#endif
     }
 
     if (err) {
-	return err;
+	gretl_matrix_free(V);
     }
-
-    /* transcribe the covariance matrix */
-    gretl_matrix_copy_values(V, X);
-
-    /* save the coefficient vector and covariance matrix */
-    b = gretl_matrix_copy(y);
-    system_attach_coeffs(sys, b);
-    system_attach_vcv(sys, V);
-
-    /* transcribe stuff to the included models */
-    transcribe_sys_results(sys, dset, do_iters);
 
     return err;
 }
@@ -598,7 +583,7 @@ static int basic_system_allocate (equation_system *sys,
 
 /* compute log-likelihood for iterated SUR estimator */
 
-double sur_ll (equation_system *sys)
+double sur_loglik (equation_system *sys)
 {
     int m = sys->neqns;
     int T = sys->T;
@@ -628,15 +613,11 @@ double sur_ll (equation_system *sys)
 /* if we're estimating with a specified set of linear restrictions,
    Rb = q, augment the X matrix with R and R-transpose */
 
-static int 
+static void
 augment_X_with_restrictions (gretl_matrix *X, int mk, 
 			     equation_system *sys)
 {
-    int nr, i, j;
-
-    if (sys->R == NULL) return 1;
-
-    nr = sys->R->rows;
+    int i, nr = sys->R->rows;
 
     /* place the R matrix */
     insert_sys_X_block(X, sys->R, mk, 0, 1.0);
@@ -647,8 +628,6 @@ augment_X_with_restrictions (gretl_matrix *X, int mk,
 	    gretl_matrix_set(X, i, j, 0.0);
 	}
     }
-
-    return 0;
 }
 
 /* when estimating with a specified set of linear restrictions,
@@ -678,19 +657,18 @@ augment_y_with_restrictions (gretl_matrix *y, int mk, int nr,
 /* check for convergence of iteration: we use the change in the
    log-likelihood when iterating SUR to the ML solution, or
    a measure of the change in the coefficients when iterating
-   three-stage least squares
+   3SLS
 */
 
-static int sys_converged (equation_system *sys, 
-			  double *llbak, int *err,
-			  gretlopt opt, PRN *prn)
+static int sys_converged (equation_system *sys, double *llbak,
+			  gretlopt opt, PRN *prn, int *err)
 {
     double crit, tol = 0.0;
     int met = 0;
 
     if (sys->method == SYS_METHOD_SUR || 
 	sys->method == SYS_METHOD_WLS) {
-	double ll = sur_ll(sys);
+	double ll = sur_loglik(sys);
 
 	tol = SYS_LL_TOL;
 	crit = ll - *llbak;
@@ -818,6 +796,22 @@ static gretlopt sys_tsls_opt (const equation_system *sys)
     }
 
     return opt;
+}
+
+static int allocate_Xi_etc (gretl_matrix **Xi,
+			    gretl_matrix **Xj,
+			    gretl_matrix **M,
+			    int T, int k)
+{
+    *Xi = gretl_matrix_alloc(T, k);
+    *Xj = gretl_matrix_alloc(T, k);
+    *M = gretl_matrix_alloc(k, k);
+
+    if (*Xi == NULL || *Xj == NULL || *M == NULL) {
+	return E_ALLOC;
+    } else {
+	return 0;
+    }
 }
 
 /* general function that forms the basis for all specific system
@@ -1002,25 +996,14 @@ int system_estimate (equation_system *sys, DATASET *dset,
     fprintf(stderr, "system_estimate: on invert, err=%d\n", err);
 #endif
 
+    if (!err && Xi == NULL) {
+	/* the test against NULL here allows for the possibility
+	   that we're iterating 
+	*/
+	err = allocate_Xi_etc(&Xi, &Xj, &M, T, k);
+    }
+
     if (err) goto cleanup;
-
-    /* the tests against NULL here allow for the possibility
-       that we're iterating */
-
-    if (Xi == NULL) {
-	Xi = gretl_matrix_alloc(T, k);
-    }
-    if (Xj == NULL) {
-	Xj = gretl_matrix_alloc(T, k);
-    } 
-    if (M == NULL) {
-	M = gretl_matrix_alloc(k, k);
-    }
-
-    if (Xi == NULL || Xj == NULL || M == NULL) {
-	err = E_ALLOC;
-	goto cleanup;
-    }
 
     /* form the big stacked X matrix: Xi = data matrix for equation i, 
        specified in lists[i] 
@@ -1149,25 +1132,24 @@ int system_estimate (equation_system *sys, DATASET *dset,
     */
     err = calculate_sys_coeffs(sys, dset, X, y, mk, nr, 
 			       do_iteration);
-    if (err) {
-	goto cleanup;
-    }
 
-    if (rsingle) {
+    if (!err && rsingle) {
+	/* take one more pass */
 	rsingle = 0;
 	goto iteration_start;
     }
 
-    if (do_iteration) {
-	if (!sys_converged(sys, &llbak, &err, opt, prn)) {
-	    if (err) {
-		goto cleanup;
-	    } else {
+    if (!err && do_iteration) {
+	/* check for convergence */
+	if (!sys_converged(sys, &llbak, opt, prn, &err)) {
+	    if (!err) {
 		sys->iters += 1;
 		goto iteration_start;
 	    }
 	}
     }
+
+    if (err) goto cleanup;
 
     if (nr == 0 && (method == SYS_METHOD_3SLS || method == SYS_METHOD_SUR)) {
 	/* compute this test while we have sigma-inverse available */
