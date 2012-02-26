@@ -2314,7 +2314,7 @@ void system_attach_coeffs (equation_system *sys, gretl_matrix *b)
 void system_attach_vcv (equation_system *sys, gretl_matrix *vcv)
 {
     gretl_matrix_replace(&sys->vcv, vcv);
-    gretl_matrix_xtr_symmetric(sys->vcv);
+    /* gretl_matrix_xtr_symmetric(sys->vcv); */
 }
 
 void system_attach_sigma (equation_system *sys, gretl_matrix *S)

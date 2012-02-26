@@ -263,55 +263,78 @@ sys_resids (equation_system *sys, int eq, const DATASET *dset)
     }
 }
 
-static void
-liml_scale_vcv (equation_system *sys, gretl_matrix *vcv)
-{
-    double s2, vij;
-    int vmin = 0;
-    int vi, vj;
-    int i, j, k;
-
-    for (i=0; i<sys->neqns; i++) {
-	s2 = sys->models[i]->sigma * sys->models[i]->sigma;
-	for (j=0; j<sys->models[i]->ncoeff; j++) {
-	    for (k=j; k<sys->models[i]->ncoeff; k++) {
-		vi = j + vmin;
-		vj = k + vmin;
-		vij = gretl_matrix_get(vcv, vi, vj);
-		vij *= s2;
-		gretl_matrix_set(vcv, vi, vj, vij);
-		gretl_matrix_set(vcv, vj, vi, vij);
-	    }
-	}
-	vmin += sys->models[i]->ncoeff;
-    }		
-}
-
 /* use the per-equation residual standard deviations for scaling
    the covariance matrix, block by diagonal block
 */
 
-static void 
-single_eq_scale_vcv (equation_system *sys, gretl_matrix *vcv)
+static void
+single_eq_scale_vcv (MODEL *pmod, gretl_matrix *V, int offset)
 {
-    MODEL *pmod;
-    double s2, vij;
-    int ioff = 0, joff = 0;
-    int i, k, ii, jj;
+    double s2 = pmod->sigma * pmod->sigma;
+    double vij;
+    int ii, jj;
+    int i, j;
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	for (j=i; j<pmod->ncoeff; j++) {
+	    ii = i + offset;
+	    jj = j + offset;
+	    vij = gretl_matrix_get(V, ii, jj);
+	    vij *= s2;
+	    gretl_matrix_set(V, ii, jj, vij);
+	    gretl_matrix_set(V, jj, ii, vij);
+	}
+    }
+}
+
+/* write results from system estimation into the inidivdual
+   model structs 
+*/
+
+static void transcribe_sys_results (equation_system *sys,
+				    const DATASET *dset,
+				    int do_iters)
+{
+    int do_bdiff = (sys->method == SYS_METHOD_3SLS && do_iters);
+    double bij, oldb, bnum = 0.0, bden = 0.0;
+    int offset = 0;
+    int i, j, k;
 
     for (i=0; i<sys->neqns; i++) {
-	pmod = sys->models[i];
-	s2 = pmod->sigma * pmod->sigma;
-	k = pmod->ncoeff;
-	for (ii=0; ii<k; ii++) {
-	    for (jj=0; jj<k; jj++) {
-		vij = gretl_matrix_get(vcv, ioff + ii, joff + jj);
-		gretl_matrix_set(vcv, ioff + ii, joff + jj, vij * s2);
+	MODEL *pmod = sys->models[i];
+
+	/* update the coefficients */
+	for (j=0; j<pmod->ncoeff; j++) {
+	    k = j + offset;
+	    bij = gretl_vector_get(sys->b, k);
+	    if (do_bdiff) {
+		oldb = pmod->coeff[j];
+		bnum += (bij - oldb) * (bij - oldb);
+		bden += oldb * oldb;
 	    }
+	    pmod->coeff[j] = bij;
 	}
-	ioff += k;
-	joff += k;
-    }    
+	/* update residuals (and sigma-hat) */
+	sys_resids(sys, i, dset);
+	/* for single-equation methods, V needs scaling by
+	   an estimate of the residual variance
+	*/
+	if (sys->method == SYS_METHOD_OLS || 
+	    sys->method == SYS_METHOD_TSLS ||
+	    sys->method == SYS_METHOD_LIML) {
+	    single_eq_scale_vcv(pmod, sys->vcv, offset);
+	}
+	/* update standard errors */
+	for (j=0; j<sys->models[i]->ncoeff; j++) {
+	    k = j + offset;
+	    pmod->sderr[j] = sqrt(gretl_matrix_get(sys->vcv, k, k));
+	}
+	offset += pmod->ncoeff;
+    }
+
+    if (do_bdiff) {
+	sys->bdiff = sqrt(bnum / bden);
+    }
 }
 
 /* compute SUR, 3SLS or LIML parameter estimates (or restricted OLS,
@@ -321,13 +344,10 @@ static int
 calculate_sys_coeffs (equation_system *sys,
 		      const DATASET *dset,
 		      gretl_matrix *X, gretl_matrix *y, 
-		      int mk, int nr, int do_iteration)
+		      int mk, int nr, int do_iters)
 {
-    int do_bdiff = (sys->method == SYS_METHOD_3SLS && do_iteration);
-    double bij, oldb, bnum = 0.0, bden = 0.0;
     gretl_matrix *V = NULL;
     gretl_matrix *b = NULL;
-    int i, j, k, j0;
     int posdef = 0;
     int err = 0;
 
@@ -347,90 +367,44 @@ calculate_sys_coeffs (equation_system *sys,
 	/* hopefully X may be positive definite */
 	err = gretl_cholesky_decomp_solve(X, y);
 	if (err) {
-	    /* nope; try falling back to the LU solver */
+	    /* nope; we'll fall back to the LU solver */
 	    gretl_matrix_copy_values(X, V);
-	    err = gretl_LU_solve(X, y);
+	    err = 0;
 	} else {
 	    posdef = 1;
+	    err = gretl_cholesky_invert(X);
 	}
-    } else {
+    }
+
+    if (!posdef) {
+	/* FIXME do some more checking on this, which
+	   should be more efficient if it's right 
+	*/
+#if 1
+	err = gretl_LU_solve_plus(X, y);
+#else
 	err = gretl_LU_solve(X, y);
+	if (!err) {
+	    gretl_invert_general_matrix(V);
+	    gretl_matrix_copy_values(X, V);
+	}
+#endif
     }
 
     if (err) {
 	return err;
     }
 
-#if SDEBUG > 1
-    gretl_matrix_print(y, "in calc_coeffs, betahat");
-#endif
-
-    /* calculate the covariance matrix */
-
-    if (libset_get_bool(USE_SVD)) {
-	err = gretl_SVD_invert_matrix(V);
-    } else if (posdef) {
-	gretl_matrix_copy_values(V, X);
-	err = gretl_cholesky_invert(V);
-    } else {
-	err = gretl_invert_general_matrix(V);
-    }
-
-#if SDEBUG
-    fprintf(stderr, "calculate_sys_coeffs: invert, err=%d\n", err);
-#endif
-
-    if (err) {
-	return err;
-    }
-
-#if SDEBUG > 1
-    gretl_matrix_print(V, "in calc_coeffs, vcv");
-#endif
-
-    /* transcribe stuff */
-
-    j0 = 0;
-    for (i=0; i<sys->neqns; i++) {
-	for (j=0; j<sys->models[i]->ncoeff; j++) {
-	    k = j0 + j;
-	    bij = gretl_vector_get(y, k);
-	    if (do_bdiff) {
-		oldb = sys->models[i]->coeff[j];
-		bnum += (bij - oldb) * (bij - oldb);
-		bden += oldb * oldb;
-	    }
-	    sys->models[i]->coeff[j] = bij;
-	}
-	sys_resids(sys, i, dset);
-	j0 += sys->models[i]->ncoeff;
-    }
-
-    if (do_bdiff) {
-	sys->bdiff = sqrt(bnum / bden);
-    }
-
-    if (sys->method == SYS_METHOD_OLS || 
-	sys->method == SYS_METHOD_TSLS) {
-	single_eq_scale_vcv(sys, V);
-    } else if (sys->method == SYS_METHOD_LIML) {
-	liml_scale_vcv(sys, V);
-    }
-
-    /* now set the model standard errors */
-    j0 = 0;
-    for (i=0; i<sys->neqns; i++) {
-	for (j=0; j<sys->models[i]->ncoeff; j++) {
-	    k = j0 + j;
-	    sys->models[i]->sderr[j] = sqrt(gretl_matrix_get(V, k, k));
-	}
-	j0 += sys->models[i]->ncoeff;
-    }
+    /* transcribe the covariance matrix */
+    gretl_matrix_copy_values(V, X);
 
     /* save the coefficient vector and covariance matrix */
     b = gretl_matrix_copy(y);
     system_attach_coeffs(sys, b);
     system_attach_vcv(sys, V);
+
+    /* transcribe stuff to the included models */
+    transcribe_sys_results(sys, dset, do_iters);
 
     return err;
 }

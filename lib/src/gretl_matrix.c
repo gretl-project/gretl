@@ -3288,10 +3288,110 @@ static int QR_solve (gretl_matrix *a, gretl_matrix *b,
 }
 
 /**
- * gretl_LU_solve:
+ * gretl_LU_solve_plus:
  * @a: gretl_matrix.
  * @b: gretl_matrix.
  *
+ * Solves ax = b for the unknown x, using LU decomposition.
+ * On exit, @b is replaced by the solution and @a is replaced 
+ * by its inverse, based on the LU decomposition.
+ * 
+ * Returns: 0 on successful completion, non-zero code on error.
+ */
+
+int gretl_LU_solve_plus (gretl_matrix *a, gretl_matrix *b)
+{
+    char trans = 'N';
+    integer info;
+    integer m, n;
+    integer ldb, nrhs = 1;
+    integer lwork = -1;
+    double *work = NULL;
+    integer *ipiv;
+    int err = 0;
+
+    if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
+	return E_DATA;
+    }
+
+    m = a->rows;
+    n = a->cols;
+
+    if (m != n) {
+	return E_DATA;
+    }
+
+    if (b->cols == 1) {
+	ldb = b->rows;
+    } else if (b->rows == 1) {
+	ldb = b->cols;
+    } else {
+	nrhs = b->cols;
+	ldb = b->rows;
+    }
+
+    ipiv = malloc(n * sizeof *ipiv);
+    if (ipiv == NULL) {
+	return E_ALLOC;
+    }
+
+    dgetrf_(&m, &n, a->val, &n, ipiv, &info);
+
+    if (info != 0) {
+	fprintf(stderr, "gretl_LU_solve_plus: dgetrf gave info = %d\n", 
+		(int) info);
+	err = (info < 0)? E_DATA : E_SINGULAR;
+    }
+
+    if (!err) {
+	dgetrs_(&trans, &n, &nrhs, a->val, &n, ipiv, b->val, &ldb, &info);
+	if (info != 0) {
+	    fprintf(stderr, "gretl_LU_solve_plus: dgetrs gave info = %d\n", 
+		    (int) info);
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	work = lapack_malloc(sizeof *work);
+	if (work == NULL) {
+	    err = E_ALLOC;
+	}
+    } 
+
+    if (!err) {
+	dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
+	if (info != 0) {
+	    err = wspace_fail(info, work[0]);
+	} else {
+	    lwork = (integer) work[0];
+	    work = lapack_realloc(work, lwork * sizeof *work);
+	    if (work == NULL) {
+		err = E_ALLOC;
+	    }
+	}	    
+    }
+
+    if (!err) {
+	dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
+	if (info != 0) {
+	    fprintf(stderr, "gretl_LU_solve_plus: dgetri gave info = %d\n", 
+		    (int) info);
+	    err = E_DATA;
+	}
+    }    
+
+    free(ipiv);
+    lapack_free(work);
+
+    return err;
+}
+
+/**
+ * gretl_LU_solve:
+ * @a: gretl_matrix.
+ * @b: gretl_matrix.
+  *
  * Solves ax = b for the unknown x, using LU decomposition.
  * On exit, @b is replaced by the solution and @a is replaced 
  * by its LU decomposition.
@@ -6545,31 +6645,27 @@ int gretl_invert_triangular_matrix (gretl_matrix *a, char uplo)
  * 
  * Computes the inverse of a general matrix using LU
  * factorization.  On exit @a is overwritten with the inverse.
- * Uses the lapack functions dgetrf and dgetri.
+ * Uses the lapack functions dgetrf() and dgetri().
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
 
 int gretl_invert_general_matrix (gretl_matrix *a)
 {
-    integer m, n;
+    integer n;
     integer info;
     integer lwork;
     integer *ipiv;
-    int lipiv;
-    int err = 0;
     double *work;
+    int err = 0;
 
-    if (gretl_is_null_matrix(a)) {
+    if (gretl_is_null_matrix(a) || (a->rows != a->cols)) {
 	return E_DATA;
     }
     
-    m = a->rows;
-    n = a->cols;
-
-    lipiv = (m <= n)? m : n;
-
-    ipiv = malloc(lipiv * sizeof *ipiv);
+    n = a->rows;
+ 
+    ipiv = malloc(n * sizeof *ipiv);
     if (ipiv == NULL) {
 	return E_ALLOC;
     }
@@ -6580,7 +6676,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
 	return E_ALLOC;
     }    
 
-    dgetrf_(&m, &n, a->val, &m, ipiv, &info);   
+    dgetrf_(&n, &n, a->val, &n, ipiv, &info);   
 
     if (info != 0) {
 	free(ipiv);
