@@ -617,7 +617,7 @@ static void
 augment_X_with_restrictions (gretl_matrix *X, int mk, 
 			     equation_system *sys)
 {
-    int i, nr = sys->R->rows;
+    int i, j, nr = sys->R->rows;
 
     /* place the R matrix */
     insert_sys_X_block(X, sys->R, mk, 0, 1.0);

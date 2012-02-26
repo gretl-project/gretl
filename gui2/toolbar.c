@@ -31,6 +31,7 @@
 #include "cmdstack.h"
 #include "dlgutils.h"
 #include "fileselect.h"
+#include "winstack.h"
 #include "toolbar.h"
 
 #include "usermat.h"
@@ -62,6 +63,9 @@
 #include "../pixmaps/mini.model.xpm"
 #include "../pixmaps/mini.func.xpm"
 #include "../pixmaps/mini.db.xpm"
+
+/* for window-finder */
+#include "../pixmaps/mini.gretl.xpm"
 
 enum {
     SAVE_ITEM = 1,
@@ -123,7 +127,8 @@ void gretl_stock_icons_init (void)
 	{ mini_split_v_xpm, GRETL_STOCK_SPLIT_V },
 	{ mini_compass_xpm, GRETL_STOCK_COMPASS },
 	{ mini_spreadsheet_xpm, GRETL_STOCK_SHEET },
-	{ mini_db_xpm, GRETL_STOCK_DB}
+	{ mini_db_xpm, GRETL_STOCK_DB},
+	{ mini_gretl_xpm, GRETL_STOCK_GRETL}
     };
     int n = G_N_ELEMENTS(stocks);
 
@@ -671,8 +676,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define open_ok(r) (vwin_editing_script(r))
 
-#define new_ok(r) (r == vwin_editing_script(r) || \
-		   r == VIEW_SCRIPT)
+#define new_ok(r) (vwin_editing_script(r) || r == VIEW_SCRIPT)
 
 #define edit_ok(r) (vwin_editing_script(r) || \
 		    vwin_editing_buffer(r) || \
@@ -780,7 +784,7 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
 	} else if (multiple_formats_ok(vwin) || (r == PRINT && vwin->data != NULL)) {
 	    func = G_CALLBACK(multi_save_as_callback);
 	}
-    } 
+    }
 
     return func;
 }
@@ -904,20 +908,14 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 
 void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags)
 {
-    GtkWidget *hbox;
-
     if ((flags & VIEWBAR_HAS_TEXT) || vwin->role == SCRIPT_OUT) {
 	g_object_set_data(G_OBJECT(vwin->main), "text_out", GINT_TO_POINTER(1));
     }
 
-    hbox = gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
-
     vwin->mbar = gretl_toolbar_new();
     viewbar_add_items(vwin, flags);
 
-    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
-    gtk_widget_show_all(hbox);
+    vwin_pack_toolbar(vwin);
 }
 
 static void remove_child (GtkWidget *child, GtkWidget *cont)

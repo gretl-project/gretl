@@ -1550,24 +1550,6 @@ static void attach_content_changed_signal (windata_t *vwin)
 		     G_CALLBACK(content_changed), vwin);
 }
 
-static void viewer_box_config (windata_t *vwin)
-{
-    vwin->vbox = gtk_vbox_new(FALSE, 1);
-
-    if (vwin->topmain != NULL) {
-	gtk_box_set_spacing(GTK_BOX(vwin->vbox), 0);
-    } else {
-	gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
-	gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
-    }
-
-    gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
-    
-#ifndef G_OS_WIN32
-    set_wm_icon(vwin_toplevel(vwin));
-#endif
-}
-
 #define viewing_source(r) (r == VIEW_PKG_CODE || \
 			   r == EDIT_PKG_CODE || \
 			   r == EDIT_PKG_SAMPLE)
@@ -1667,8 +1649,6 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     if (vwin == NULL) {
 	return NULL;
     }
-
-    viewer_box_config(vwin);
 
     if (role == VAR || role == VECM || role == SYSTEM) {
 	/* special case: use a text-based menu bar */
@@ -1791,7 +1771,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
 	gchar *title = make_viewer_title(role, filename);
 
 #if TABTEST
-	vwin = gretl_tabbed_viewer_new(role, _("gretl: script editor"), 
+	vwin = gretl_tabbed_viewer_new(role, _("gretl: script manager"), 
 				       filename, NULL,
 				       record_on_winstack(role));
 #else
@@ -1806,8 +1786,6 @@ view_file_with_title (const char *filename, int editable, int del_file,
     }
 
     strcpy(vwin->fname, filename);
-
-    viewer_box_config(vwin);
 
     if (editable) {
 	vflags = VIEWBAR_EDITABLE;
@@ -1880,7 +1858,6 @@ windata_t *console_window (int hsize, int vsize)
 	return NULL;
     }
 
-    viewer_box_config(vwin);
     vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
     create_text(vwin, hsize, vsize, 0, 1);
     text_table_setup(vwin->vbox, vwin->text);
@@ -1940,8 +1917,6 @@ windata_t *view_help_file (const char *filename, int role)
 
     strcpy(vwin->fname, filename);
     vwin->data = fbuf;
-
-    viewer_box_config(vwin);
 
     if (role != GUI_HELP && role != GUI_HELP_EN) {
 	set_up_helpview_menu(vwin);
@@ -2074,11 +2049,6 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 					NULL, 0);
     if (vwin == NULL) return NULL;
 
-    vwin->vbox = gtk_vbox_new(FALSE, 1);
-    gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
-    gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
-    gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
-
     create_text(vwin, hsize, vsize, 0, FALSE);
 
     if (minimal) {
@@ -2106,7 +2076,7 @@ windata_t *view_formatted_text_buffer (const gchar *title,
     return vwin;
 }
 
-void view_window_set_editable (windata_t *vwin)
+void viewer_set_editable (windata_t *vwin)
 {
     gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->text), TRUE);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->text), TRUE);
@@ -2146,8 +2116,6 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     if (vwin == NULL) {
 	return NULL;
     }
-
-    viewer_box_config(vwin); 
 
     /* add a tool bar */
     vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
@@ -2201,8 +2169,6 @@ windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     /* Take responsibility for one reference to this model */
     gretl_object_ref(pmod, GRETL_OBJ_EQN);
-
-    viewer_box_config(vwin);
 
     set_up_model_view_menu(vwin->main, vwin);
 

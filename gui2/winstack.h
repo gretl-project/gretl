@@ -60,5 +60,7 @@ windata_t *gretl_browser_new (int role, const gchar *title,
 
 GtkWidget *vwin_toplevel (windata_t *vwin);
 
+void vwin_pack_toolbar (windata_t *vwin);
+
 #endif
 

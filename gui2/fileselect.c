@@ -30,6 +30,7 @@
 #include "datafiles.h"
 #include "guiprint.h"
 #include "graphics.h"
+#include "winstack.h"
 #include "bootstrap.h"
 
 #include <sys/stat.h>
@@ -267,7 +268,7 @@ static void script_window_update (windata_t *vwin, const char *fname)
 
     /* make the window editable */
     if (!gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->text))) {
-	view_window_set_editable(vwin);
+	viewer_set_editable(vwin);
     }
 }
 
@@ -331,8 +332,12 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 {
     if (vwin != NULL) {
 	/* we're called from an existing script editor window */
-	strcpy(tryfile, fname);
-	sourceview_insert_file(vwin, fname);
+	if (vwin->topmain != NULL) {
+	    fprintf(stderr, "Should add a tab here!\n");
+	} else {
+	    strcpy(tryfile, fname);
+	    sourceview_insert_file(vwin, fname);
+	}
     } else if (has_suffix(fname, ".R")) {
 	view_file(fname, 1, 0, 78, 370, EDIT_R);
     } else if (has_suffix(fname, ".plt")) {
@@ -933,7 +938,7 @@ void file_selector (int action, FselDataSrc src, gpointer data)
     if (src == FSEL_DATA_VWIN) {
 	windata_t *vwin = (windata_t *) data;
 
-	w = vwin->main;
+	w = vwin_toplevel(vwin);
     }
 
     gtk_file_selector(action, src, data, w);

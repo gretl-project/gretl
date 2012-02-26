@@ -40,14 +40,15 @@
 #define GRETL_STOCK_COMPASS "gretl-compass"
 #define GRETL_STOCK_SHEET   "gretl-sheet"
 #define GRETL_STOCK_DB      "gretl-db"
+#define GRETL_STOCK_GRETL   "gretl-gretl"
 
-enum windata_flags {
+typedef enum {
     VWIN_HELP_ACTIVE     = 1 << 0,
     VWIN_DELETE_FNAME    = 1 << 1,
     VWIN_STICKY          = 1 << 2,
     VWIN_CONTENT_CHANGED = 1 << 3,
     VWIN_SESSION_GRAPH   = 1 << 4
-};
+} windata_flags;
 
 typedef struct windata_t_ windata_t;
 typedef struct tabwin_t_  tabwin_t;
@@ -72,13 +73,14 @@ struct windata_t_ {
     int role;
     int n_model_tests;
     int n_gretl_children;
-    unsigned char flags;
+    windata_flags flags;
     char fname[MAXLEN];
     GtkSourceBuffer *sbuf;
 };
 
 struct tabwin_t_ {
     GtkWidget *main;      /* top-level GTK window */
+    GtkWidget *vbox;      /* vertical container */
     GtkWidget *tabs;      /* notebook for tabs */
 };
 

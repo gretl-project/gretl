@@ -1746,7 +1746,9 @@ static const gchar *window_list_icon (int role)
 {
     const gchar *id = NULL;
 
-    if (role == VIEW_MODEL) {
+    if (role == MAINWIN) {
+	id = GRETL_STOCK_GRETL;
+    } else if (role == VIEW_MODEL) {
 	id = GRETL_STOCK_MODEL;
     } else if (role == CONSOLE) {
 	id = GRETL_STOCK_CONSOLE;
@@ -1837,12 +1839,43 @@ static gchar *get_parent_path (GtkWidget *w)
     return path;
 }
 
+static char *winname_double_underscores (const gchar *src)
+{
+    const gchar *p = src;
+    char *s, *targ;
+    int u = 0;
+
+    while (*p) {
+	if (*p == '_') {
+	    u++;
+	}
+	p++;
+    }
+
+    targ = malloc(strlen(src) + u + 1);
+    s = targ;
+
+    while (*src) {
+	if (*src == '_') {
+	    *s++ = '_';
+	    *s++ = '_';
+	} else {
+	    *s++ = *src;
+	}
+	src++;
+    }
+    *s = '\0';
+
+    return targ;
+}
+
 void add_window_list_item (GtkWidget *w, int role)
 {
     GtkActionEntry entry = { 
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gretl_window_raise) 
     };
     const gchar *s = get_window_title(w);
+    char *label = NULL;
     gchar *aname;
     guint merge_id;
 
@@ -1856,7 +1889,13 @@ void add_window_list_item (GtkWidget *w, int role)
     aname = g_strdup_printf("%p", (void *) w);
     entry.name = aname;
     entry.stock_id = window_list_icon(role);
-    entry.label = s;
+
+    if (strchr(s, '_') == NULL) {
+	entry.label = s;
+    } else {
+	label = winname_double_underscores(s);
+	entry.label = label;
+    }
 
     /* add new action entry to group, and to ui */
     gtk_action_group_add_actions(window_list, &entry, 1, mdata);
@@ -1879,6 +1918,7 @@ void add_window_list_item (GtkWidget *w, int role)
 	g_free(apath);
     }
 
+    free(label);
     g_free(aname);
 }
 
@@ -1905,7 +1945,8 @@ static gint sort_window_items (gconstpointer a, gconstpointer b)
 
 void window_list_popup (GtkWidget *src)
 {
-    static GtkWidget *menu;    
+    static GtkAction *main_action;
+    static GtkWidget *menu;
 
     if (menu != NULL) {
 	gtk_widget_destroy(menu);
@@ -1921,12 +1962,15 @@ void window_list_popup (GtkWidget *src)
 
 	menu = gtk_menu_new();
 
+	if (main_action == NULL) {
+	    main_action = gtk_action_new("mainwin", _("Main window"),
+					 NULL, GRETL_STOCK_GRETL);
+	}
+
 	while (list) {
 	    if (n_items == 0) {
 		/* at top: item for main window */
-		w = gtk_menu_item_new_with_label(_("Main window"));
-		g_signal_connect(G_OBJECT(w), "activate",
-				 G_CALLBACK(raise_main_window), NULL);
+		w = gtk_action_create_menu_item(main_action);
 		gtk_widget_show(w);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), w);
 		n_items++;

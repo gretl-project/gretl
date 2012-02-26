@@ -325,6 +325,19 @@ static void windata_init (windata_t *vwin, int role, gpointer data)
     vwin->sbuf = NULL;
 }
 
+static void viewer_box_config (windata_t *vwin)
+{
+    vwin->vbox = gtk_vbox_new(FALSE, 1);
+    gtk_box_set_spacing(GTK_BOX(vwin->vbox), 0);
+    gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
+    gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
+    gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
+    
+#ifndef G_OS_WIN32
+    set_wm_icon(vwin_toplevel(vwin));
+#endif
+}
+
 windata_t *
 gretl_viewer_new_with_parent (windata_t *parent, int role, 
 			      const gchar *title, 
@@ -339,6 +352,7 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
     windata_init(vwin, role, data);
 
     if (role == MAINWIN) {
+	/* gets special treatment in gretl.c */
 	return vwin;
     }
 
@@ -360,6 +374,7 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 	vwin_add_child(parent, vwin);
     }
 
+    viewer_box_config(vwin);
     add_window_list_item(vwin->main, role);
 
     return vwin;
@@ -370,16 +385,57 @@ static void free_tabwin (tabwin_t *twin)
     return;
 }
 
-static windata_t *
-gretl_tabbed_viewer_new_with_parent (windata_t *parent, int role, 
-				     const gchar *title, 
-				     const gchar *tabtitle, 
-				     gpointer data, int record)
+static void destroy_viewer_tab (GtkWidget *w, windata_t *vwin)
+{
+    gtk_widget_destroy(vwin->main);
+}
+
+static GtkWidget *
+make_viewer_tab (windata_t *vwin, const gchar *filename)
+{
+    gchar *title = NULL;
+    const gchar *p;
+    GtkWidget *tab;
+    GtkWidget *label;
+    GtkWidget *img;
+    GtkWidget *button;
+
+    tab = gtk_hbox_new(FALSE, 0);
+
+    if (strstr(filename, "script_tmp") != NULL) {
+	title = g_strdup("untitled");
+    } else if ((p = strrchr(filename, SLASH)) != NULL) {
+	title = g_strdup(p + 1);
+    } else {
+	title = g_strdup(filename);
+    }
+
+    label = gtk_label_new(title);
+    gtk_container_add(GTK_CONTAINER(tab), label);
+    g_free(title);
+
+    img = gtk_image_new_from_stock(GTK_STOCK_CLOSE, 
+				   GTK_ICON_SIZE_MENU);
+    button = gtk_button_new();
+    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    gtk_container_add(GTK_CONTAINER(button), img);
+    g_signal_connect(button, "clicked", G_CALLBACK(destroy_viewer_tab), 
+		     vwin);
+
+    gtk_container_add(GTK_CONTAINER(tab), button);
+    gtk_widget_show_all(tab);
+    
+    return tab;
+}
+
+windata_t *gretl_tabbed_viewer_new (int role, const gchar *title, 
+				    const gchar *filename, 
+				    gpointer data, int record)
 {
     tabwin_t *twin = mymalloc(sizeof *twin);
     windata_t *vwin;
-    GtkWidget *label;
-    const gchar *p;
+    GtkWidget *hbox;
+    GtkWidget *tab;
 
     if (twin == NULL) {
 	return NULL;
@@ -393,24 +449,32 @@ gretl_tabbed_viewer_new_with_parent (windata_t *parent, int role,
 
     windata_init(vwin, role, data);
     vwin->main = gtk_hbox_new(FALSE, 0);
-#if 0 /* FIXME */
     g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
-#endif
 
     twin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(twin->main), title);
     g_signal_connect(G_OBJECT(twin->main), "destroy", 
 		     G_CALLBACK(free_tabwin), vwin);
+    g_object_set_data(G_OBJECT(twin->main), "twin", twin);
+
+    /* vertically oriented container */
+    twin->vbox = gtk_vbox_new(FALSE, 1);
+    gtk_box_set_spacing(GTK_BOX(twin->vbox), 0);
+    gtk_box_set_spacing(GTK_BOX(twin->vbox), 4);
+    gtk_container_set_border_width(GTK_CONTAINER(twin->vbox), 4);
+    gtk_container_add(GTK_CONTAINER(twin->main), twin->vbox);
+
+    /* hbox to hold menu bar */
+    hbox = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(twin->vbox), hbox, FALSE, FALSE, 0);
+    g_object_set_data(G_OBJECT(twin->main), "hbox", hbox);
 
     twin->tabs = gtk_notebook_new();
-    gtk_container_add(GTK_CONTAINER(twin->main), twin->tabs);
-    p = strrchr(tabtitle, SLASH);
-    if (p != NULL) {
-	tabtitle = p + 1;
-    }
-    label = gtk_label_new(tabtitle);
-    gtk_notebook_append_page(GTK_NOTEBOOK(twin->tabs), vwin->main, label);
+    gtk_container_add(GTK_CONTAINER(twin->vbox), twin->tabs);
+
+    tab = make_viewer_tab(vwin, filename);
+    gtk_notebook_append_page(GTK_NOTEBOOK(twin->tabs), vwin->main, tab);
     vwin->topmain = twin->main;
 
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
@@ -422,12 +486,9 @@ gretl_tabbed_viewer_new_with_parent (windata_t *parent, int role,
 			  GINT_TO_POINTER(vwin->role));
 	winstack_add(vwin->main);
     } 
-
-    if (parent != NULL) {
-	vwin_add_child(parent, vwin);
-    }
 #endif
 
+    viewer_box_config(vwin);
     add_window_list_item(twin->main, role);
 
     return vwin;
@@ -440,18 +501,24 @@ windata_t *gretl_viewer_new (int role, const gchar *title,
 					data, record);
 }
 
-windata_t *gretl_tabbed_viewer_new (int role, const gchar *title, 
-				    const gchar *tabtitle,
-				    gpointer data, int record)
-{
-    return gretl_tabbed_viewer_new_with_parent(NULL, role, title,
-					       tabtitle, data, 
-					       record);
-}
-
 GtkWidget *vwin_toplevel (windata_t *vwin)
 {
     return vwin->topmain != NULL ? vwin->topmain : vwin->main;
+}
+
+void vwin_pack_toolbar (windata_t *vwin)
+{
+    GtkWidget *hbox;
+
+    if (vwin->topmain != NULL) {
+	hbox = g_object_get_data(G_OBJECT(vwin->topmain), "hbox");
+	gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
+    } else {    
+	hbox = gtk_hbox_new(FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
+	gtk_widget_show_all(hbox);
+    }
 }
 
 static gint catch_winlist_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
