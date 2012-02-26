@@ -1322,6 +1322,8 @@ static void make_main_window (void)
 	gtk_window_move(GTK_WINDOW(mdata->main), main_x, main_y);
     }
 
+    add_window_list_item(mdata->main, MAINWIN);
+
 #if GUI_DEBUG
     fprintf(stderr, "  possible window_move done\n");
 #endif
@@ -1933,7 +1935,11 @@ static gint sort_window_items (gconstpointer a, gconstpointer b)
     gint ret = 0;
 
     if (va != NULL && vb != NULL) {
-	if (va->gretl_parent == vb) {
+	if (va == mdata) {
+	    ret = -1;
+	} else if (vb == mdata) {
+	    ret = 1;
+	} else if (va->gretl_parent == vb) {
 	    ret = 1;
 	} else if (vb->gretl_parent == va) {
 	    ret = -1;
@@ -1945,7 +1951,6 @@ static gint sort_window_items (gconstpointer a, gconstpointer b)
 
 void window_list_popup (GtkWidget *src)
 {
-    static GtkAction *main_action;
     static GtkWidget *menu;
 
     if (menu != NULL) {
@@ -1958,40 +1963,21 @@ void window_list_popup (GtkWidget *src)
 	GList *list = g_list_sort(wlist, sort_window_items);
 	GtkAction *a;
 	GtkWidget *w;
-	int n_items = 0;
 
 	menu = gtk_menu_new();
 
-	if (main_action == NULL) {
-	    main_action = gtk_action_new("mainwin", _("Main window"),
-					 NULL, GRETL_STOCK_GRETL);
-	}
-
 	while (list) {
-	    if (n_items == 0) {
-		/* at top: item for main window */
-		w = gtk_action_create_menu_item(main_action);
-		gtk_widget_show(w);
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu), w);
-		n_items++;
-	    }
 	    a = (GtkAction *) list->data;
 	    w = gtk_action_create_menu_item(a);
 	    gtk_widget_show(w);
 	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), w);
-	    n_items++;
 	    list = list->next;
 	}
 
 	g_list_free(wlist);
 
-	if (n_items > 0) {
-	    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
-			   0, gtk_get_current_event_time());
-	} else {
-	    gtk_widget_destroy(menu);
-	    menu = NULL;
-	}
+	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
+		       0, gtk_get_current_event_time());
     }
 }
 
