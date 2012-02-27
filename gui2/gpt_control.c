@@ -140,6 +140,7 @@ struct png_plot_t {
 static int render_pngfile (png_plot *plot, int view);
 static int repaint_png (png_plot *plot, int view);
 static int zoom_replaces_plot (png_plot *plot);
+static void prepare_for_zoom (png_plot *plot);
 static int get_plot_ranges (png_plot *plot);
 static void graph_display_pdf (GPT_SPEC *spec);
 #ifdef G_OS_WIN32
@@ -223,6 +224,67 @@ double plot_get_ymin (png_plot *plot)
 {
     return (plot != NULL)? plot->ymin : -1;
 }
+
+/* apparatus for graph toolbar */
+
+static GtkWidget *small_tool_button (GretlToolItem *item,
+				     gpointer data)
+{
+    GtkWidget *img, *button = gtk_button_new();
+
+    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    img = gtk_image_new_from_stock(item->icon, GTK_ICON_SIZE_MENU);
+    gtk_container_add(GTK_CONTAINER(button), img);
+    gtk_widget_set_tooltip_text(GTK_WIDGET(button), _(item->tip));
+    g_signal_connect(button, "clicked", item->func, data);
+    gtk_widget_show_all(button);
+
+    return button;
+}
+
+static void graph_edit_callback (GtkWidget *w, gpointer data)
+{
+    start_editing_png_plot((png_plot *) data);
+}
+
+static void graph_zoom_callback (GtkWidget *w, gpointer data)
+{
+    prepare_for_zoom((png_plot *) data);
+}
+
+static void windows_callback (GtkWidget *w, gpointer data)
+{
+    window_list_popup(NULL);
+}
+
+static GretlToolItem plotbar_items[] = {
+    { N_("Windows"), GRETL_STOCK_COMPASS, G_CALLBACK(windows_callback), 0 },
+    { N_("Edit"),    GTK_STOCK_EDIT,      G_CALLBACK(graph_edit_callback), 0 },
+    { N_("Zoom..."), GTK_STOCK_ZOOM_IN,   G_CALLBACK(graph_zoom_callback), 0 },
+};
+
+static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
+{
+    GtkWidget *button;
+    GretlToolItem *item;
+    int i, n = G_N_ELEMENTS(plotbar_items);
+
+    for (i=0; i<n; i++) {
+	item = &plotbar_items[i];
+	if (item->func == G_CALLBACK(graph_edit_callback) &&
+	    plot_not_editable(plot)) {
+	    continue;
+	}
+	if (item->func == G_CALLBACK(graph_zoom_callback)) {
+	    /* not ready yet */
+	    continue;
+	}
+	button = small_tool_button(item, plot);
+	gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+    }	
+}
+
+/* end apparatus for graph toolbar */
 
 /* Provide the data coordinates for a gretl/gnuplot
    graph, if they are all positive, otherwise return 
@@ -3115,9 +3177,9 @@ static void set_plot_format_flags (png_plot *plot)
     }    
 }
 
-/* called from png plot popup menu */
+/* called from png plot popup menu, also toolbar item */
 
-static void start_editing_png_plot (png_plot *plot)
+void start_editing_png_plot (png_plot *plot)
 {
 #if GPDEBUG
     fprintf(stderr, "start_editing_png_plot: plot = %p\n", (void *) plot);
@@ -4712,11 +4774,11 @@ static int gnuplot_show_png (const char *fname, const char *name,
     plot->statusarea = gtk_event_box_new();
     gtk_box_pack_start(GTK_BOX(vbox), plot->statusarea, FALSE, FALSE, 0);
 
-    status_hbox = gtk_hbox_new (FALSE, 2);
+    status_hbox = gtk_hbox_new(FALSE, 2);
     gtk_container_add(GTK_CONTAINER(plot->statusarea), status_hbox);
-    gtk_widget_show (status_hbox);
-    gtk_container_set_resize_mode (GTK_CONTAINER (status_hbox),
-				   GTK_RESIZE_QUEUE);
+    gtk_widget_show(status_hbox);
+    gtk_container_set_resize_mode(GTK_CONTAINER (status_hbox),
+				  GTK_RESIZE_QUEUE);
 
     /* Create drawing-area widget */
     plot->canvas = gtk_drawing_area_new();
@@ -4778,7 +4840,9 @@ static int gnuplot_show_png (const char *fname, const char *name,
 	gtk_box_pack_start(GTK_BOX(status_hbox), label_frame, FALSE, FALSE, 0);
     }
 
-    gtk_box_pack_start(GTK_BOX(status_hbox), plot->statusbar, TRUE, TRUE, 0); 
+    gtk_box_pack_start(GTK_BOX(status_hbox), plot->statusbar, TRUE, TRUE, 0);
+
+    add_graph_toolbar(status_hbox, plot);
 
     /* show stuff */
     gtk_widget_show(plot->canvas);

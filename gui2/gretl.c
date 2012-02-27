@@ -1876,7 +1876,6 @@ void add_window_list_item (GtkWidget *w, int role)
     GtkActionEntry entry = { 
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gretl_window_raise) 
     };
-    const gchar *s = get_window_title(w);
     char *label = NULL;
     gchar *aname;
     guint merge_id;
@@ -1892,11 +1891,17 @@ void add_window_list_item (GtkWidget *w, int role)
     entry.name = aname;
     entry.stock_id = window_list_icon(role);
 
-    if (strchr(s, '_') == NULL) {
-	entry.label = s;
+    if (w == mdata->main) {
+	entry.label = _("Main window");
     } else {
-	label = winname_double_underscores(s);
-	entry.label = label;
+	const gchar *s = get_window_title(w);
+
+	if (strchr(s, '_') == NULL) {
+	    entry.label = s;
+	} else {
+	    label = winname_double_underscores(s);
+	    entry.label = label;
+	}
     }
 
     /* add new action entry to group, and to ui */
@@ -1924,29 +1929,42 @@ void add_window_list_item (GtkWidget *w, int role)
     g_free(aname);
 }
 
+/* GCompareFunc: returns "a negative integer if the first value comes
+   before the second, 0 if they are equal, or a positive integer if
+   the first value comes after the second." 
+*/
+
 static gint sort_window_items (gconstpointer a, gconstpointer b)
 {
     const gchar *aname = gtk_action_get_name((GtkAction *) a);
     const gchar *bname = gtk_action_get_name((GtkAction *) b);
     GtkWidget *wa = (GtkWidget *) strtol(aname, NULL, 16);
     GtkWidget *wb = (GtkWidget *) strtol(bname, NULL, 16);
-    windata_t *va = g_object_get_data(G_OBJECT(wa), "vwin");
-    windata_t *vb = g_object_get_data(G_OBJECT(wb), "vwin");
-    gint ret = 0;
+    windata_t *va, *vb;
+
+    /* sort main window first */
+    if (wa == mdata->main) {
+	return -1;
+    } else if (wb == mdata->main) {
+	return 1;
+    }
+
+    va = g_object_get_data(G_OBJECT(wa), "vwin");
+    vb = g_object_get_data(G_OBJECT(wb), "vwin");
 
     if (va != NULL && vb != NULL) {
-	if (va == mdata) {
-	    ret = -1;
-	} else if (vb == mdata) {
-	    ret = 1;
-	} else if (va->gretl_parent == vb) {
-	    ret = 1;
-	} else if (vb->gretl_parent == va) {
-	    ret = -1;
-	}
+	if (va == vb->gretl_parent) {
+	    /* sort @a first (parent of b) */
+	    return -1;
+	} else if (vb == va->gretl_parent) {
+	    /* sort @b first (parent of a) */
+	    return 1;
+	} 
     }
+
+    /* otherwise we don't really care */
     
-    return ret;
+    return 0;
 }
 
 void window_list_popup (GtkWidget *src)
@@ -1960,9 +1978,13 @@ void window_list_popup (GtkWidget *src)
 
     if (n_listed_windows > 0) {
 	GList *wlist = gtk_action_group_list_actions(window_list);
-	GList *list = g_list_sort(wlist, sort_window_items);
+	GList *list = wlist;
 	GtkAction *a;
 	GtkWidget *w;
+
+	if (n_listed_windows > 1) {
+	    list = g_list_sort(wlist, sort_window_items);
+	}
 
 	menu = gtk_menu_new();
 
@@ -1990,7 +2012,7 @@ gboolean window_list_exit_check (void)
 {
     gboolean ret = FALSE;
 
-    if (n_listed_windows > 0) {
+    if (n_listed_windows > 1) {
 	GList *list = gtk_action_group_list_actions(window_list);
 	const gchar *name;
 	GtkAction *action;
@@ -2001,12 +2023,13 @@ gboolean window_list_exit_check (void)
 	    action = (GtkAction *) list->data;
 	    name = gtk_action_get_name(action);
 	    w = (GtkWidget *) strtol(name, NULL, 16);
-	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
-
-	    if (vwin != NULL) {
-		if (vwin_is_editing(vwin) && vwin_content_changed(vwin)) {
-		    gtk_window_present(GTK_WINDOW(vwin->main));
-		    ret = query_save_text(NULL, NULL, vwin);
+	    if (w != mdata->main) {
+		vwin = g_object_get_data(G_OBJECT(w), "vwin");
+		if (vwin != NULL) {
+		    if (vwin_is_editing(vwin) && vwin_content_changed(vwin)) {
+			gtk_window_present(GTK_WINDOW(vwin->main));
+			ret = query_save_text(NULL, NULL, vwin);
+		    }
 		}
 	    }
 	    list = list->next;

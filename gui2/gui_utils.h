@@ -115,6 +115,8 @@ windata_t *vwin_first_child (windata_t *vwin);
 windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
 		       char *title);
 
+void set_model_save_state (windata_t *vwin, gboolean s);
+
 void viewer_set_editable (windata_t *vwin);
 
 int gui_validate_varname (const char *varname, GretlType t);

@@ -1060,7 +1060,12 @@ void model_add_as_icon (GtkAction *action, gpointer p)
 #endif
 
     if (get_session_model_by_data(ptr)) {
-	infobox(_("Model is already saved"));
+	/* "can't happen" */
+	if (close_on_add(action)) {
+	    gtk_widget_destroy(vwin->main);
+	} else {
+	    infobox(_("Model is already saved"));
+	}
 	return;
     }
     
@@ -1086,6 +1091,8 @@ void model_add_as_icon (GtkAction *action, gpointer p)
 	mark_session_changed();
 	if (close_on_add(action)) {
 	    gtk_widget_destroy(vwin->main);
+	} else {
+	    set_model_save_state(vwin, FALSE);
 	}
     } 	
 }

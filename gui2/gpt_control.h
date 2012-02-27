@@ -38,6 +38,8 @@ void plot_position_click (GtkWidget *w, png_plot *plot);
 
 int redisplay_edited_plot (png_plot *plot);
 
+void start_editing_png_plot (png_plot *plot);
+
 void set_plot_has_y2_axis (png_plot *plot, gboolean s);
 
 int plot_is_saved (const png_plot *plot);

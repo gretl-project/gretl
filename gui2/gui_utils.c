@@ -1603,10 +1603,10 @@ static windata_t *reuse_script_out (windata_t *vwin, PRN *prn)
     return vwin;
 }
 
-static void model_save_state (GtkUIManager *ui, gboolean s)
+void set_model_save_state (windata_t *vwin, gboolean s)
 {
-    flip(ui, "/menubar/File/SaveAsIcon", s);
-    flip(ui, "/menubar/File/SaveAndClose", s);
+    flip(vwin->ui, "/menubar/File/SaveAsIcon", s);
+    flip(vwin->ui, "/menubar/File/SaveAndClose", s);
 }
 
 static gboolean nullify_script_out (GtkWidget *w, windata_t **pvwin)
@@ -1653,7 +1653,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     if (role == VAR || role == VECM || role == SYSTEM) {
 	/* special case: use a text-based menu bar */
 	vwin_add_ui(vwin, system_items, n_system_items, sys_ui);
-	model_save_state(vwin->ui, !is_session_model(vwin->data));
+	set_model_save_state(vwin, !is_session_model(vwin->data));
 	add_system_menu_items(vwin, role);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
 	if (role == VAR || role == VECM) {
@@ -2349,7 +2349,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 
     /* disallow saving an already-saved model */
     if (pmod->name != NULL) {
-	model_save_state(vwin->ui, FALSE);
+	set_model_save_state(vwin, FALSE);
     }
 
     if (RQ_SPECIAL_MODEL(pmod)) {
@@ -2926,6 +2926,21 @@ static const gchar *model_ui =
     " </menubar>"
     "</ui>";
 
+static void model_show_winlist (GtkWidget *m, gpointer p)
+{
+    window_list_popup(NULL);
+    gtk_item_deselect(GTK_ITEM(m));
+}
+
+static void model_menu_add_winlist (windata_t *vwin)
+{
+    GtkWidget *m = gtk_menu_item_new_with_label(_("_Windows"));
+
+    gtk_menu_item_set_use_underline(GTK_MENU_ITEM(m), TRUE);
+    gtk_menu_shell_append(GTK_MENU_SHELL(vwin->mbar), m);
+    g_signal_connect(m, "select", G_CALLBACK(model_show_winlist), NULL);
+}
+
 static void 
 set_up_model_view_menu (GtkWidget *window, windata_t *vwin) 
 {
@@ -3016,6 +3031,9 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
 
     /* disable some menu items if need be */
     adjust_model_menu_state(vwin, pmod);
+
+    /* add window-list menu item */
+    model_menu_add_winlist(vwin);
 }
 
 enum {

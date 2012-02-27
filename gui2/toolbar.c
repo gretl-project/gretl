@@ -791,9 +791,8 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
 
 GtkWidget *gretl_toolbar_new (void)
 {
-    GtkWidget *tb;
+    GtkWidget *tb = gtk_toolbar_new();
 
-    tb = gtk_toolbar_new();
     gtk_toolbar_set_icon_size(GTK_TOOLBAR(tb), GTK_ICON_SIZE_MENU);
     gtk_toolbar_set_style(GTK_TOOLBAR(tb), GTK_TOOLBAR_ICONS);
     gtk_toolbar_set_show_arrow(GTK_TOOLBAR(tb), FALSE);
@@ -825,23 +824,23 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str)
 #endif /* GTK variants */
 
 GtkToolItem *gretl_toolbar_insert (GtkWidget *tbar,
-				   GretlToolItem *item,
+				   GretlToolItem *tool,
 				   GCallback func,
 				   gpointer data,
 				   gint pos)
 {
-    GtkToolItem *button;
+    GtkToolItem *item;
 
-    button = gtk_tool_button_new_from_stock(item->icon);
+    item = gtk_tool_button_new_from_stock(tool->icon);
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
-    gtk_tool_item_set_tooltip(button, gretl_tips, _(item->tip), NULL);
+    gtk_tool_item_set_tooltip(item, gretl_tips, _(tool->tip), NULL);
 #else
-    gtk_widget_set_tooltip_text(GTK_WIDGET(button), _(item->tip));
+    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tool->tip));
 #endif
-    g_signal_connect(button, "clicked", func, data);
-    gtk_toolbar_insert(GTK_TOOLBAR(tbar), button, pos);
+    g_signal_connect(item, "clicked", func, data);
+    gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, pos);
 
-    return button;
+    return item;
 }
 
 static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
@@ -1064,6 +1063,7 @@ static GretlToolItem mainbar_items[] = {
     { N_("new script"),         GTK_STOCK_EDIT,      G_CALLBACK(tbar_new_script), 0 },
     { N_("open gretl console"), GRETL_STOCK_CONSOLE, G_CALLBACK(gretl_console), 0 },
     { N_("session icon view"),  GRETL_STOCK_ICONS,   G_CALLBACK(tbar_iconview), 0 },
+    { N_("Windows"),            GRETL_STOCK_COMPASS, G_CALLBACK(compass_callback), 0 },
     { N_("function packages"),  GRETL_STOCK_FUNC,    G_CALLBACK(tbar_show_funcs), 0 },
     { N_("user's guide"),       GRETL_STOCK_PDF,     G_CALLBACK(tbar_users_guide), 0 },
     { N_("command reference"),  GTK_STOCK_HELP,      G_CALLBACK(tbar_command_ref), 0 },
@@ -1090,3 +1090,4 @@ void add_mainwin_toolbar (GtkWidget *vbox)
     gtk_box_pack_start(GTK_BOX(hbox), toolbar, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
+
