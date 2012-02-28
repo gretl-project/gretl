@@ -25,6 +25,8 @@ typedef enum {
     VIEWBAR_HAS_TEXT = 1 << 1
 } ViewbarFlags;
 
+#define winlist_item(i) (strcmp(i->icon, GRETL_STOCK_COMPASS) == 0)
+
 void gretl_stock_icons_init (void);
 
 void add_mainwin_toolbar (GtkWidget *vbox);
@@ -48,5 +50,11 @@ GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
 				 GCallback func,
 				 gpointer data,
 				 gint pos);
+
+GtkWidget *gretl_toolbar_insert_winlist (GtkWidget *tbar,
+					 GretlToolItem *tool,
+					 GCallback func,
+					 GtkWidget *win,
+					 gint pos);
 
 #endif /* TOOLBAR_H */

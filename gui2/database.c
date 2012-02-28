@@ -811,6 +811,7 @@ static GretlToolItem db_items[] = {
     { N_("Add to dataset"), GTK_STOCK_ADD,    G_CALLBACK(db_import_series), 0 },
     { N_("Delete"),         GTK_STOCK_DELETE, G_CALLBACK(db_delete_callback), DEL_BTN },
     { N_("Codebook"),       GRETL_STOCK_BOOK, G_CALLBACK(db_view_codebook), CB_BTN },
+    { N_("Windows"),        GRETL_STOCK_COMPASS, G_CALLBACK(window_list_popup), 0 },
     { N_("Close"),          GTK_STOCK_CLOSE,  G_CALLBACK(db_close), 0 }
 };
 
@@ -834,7 +835,12 @@ static void make_db_toolbar (windata_t *vwin, int cb, int del)
 	} if (!cb && item->flag == CB_BTN) {
 	    continue;
 	}
-	gretl_toolbar_insert(vwin->mbar, item, item->func, vwin, -1);
+	if (winlist_item(item)) {
+	    gretl_toolbar_insert_winlist(vwin->mbar, item, item->func, 
+					 vwin->main, -1);
+	} else {
+	    gretl_toolbar_insert(vwin->mbar, item, item->func, vwin, -1);
+	}
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);

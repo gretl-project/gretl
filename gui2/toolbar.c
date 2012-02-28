@@ -823,6 +823,39 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str)
 
 #endif /* GTK variants */
 
+/* This variant of gretl_toolbar_insert is intended for
+   use when the tool item creates a popup menu. 
+   The @win argument must be the top-level window of the
+   GUI element from which this function is called, and
+   tool's callback must have the signature associated
+   with GTK's "button-press-event"; @win is passed as
+   the third (user_data) argument to the callback.
+*/
+
+GtkWidget *gretl_toolbar_insert_winlist (GtkWidget *tbar,
+					 GretlToolItem *tool,
+					 GCallback func,
+					 GtkWidget *win,
+					 gint pos)
+{
+    GtkWidget *img, *button = gtk_button_new();
+    GtkToolItem *item = gtk_tool_item_new();
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
+    gtk_tool_item_set_tooltip(item, gretl_tips, _(tool->tip), NULL);
+#else
+    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tool->tip));
+#endif
+    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    img = gtk_image_new_from_stock(tool->icon, GTK_ICON_SIZE_MENU);
+    gtk_container_add(GTK_CONTAINER(button), img);
+    gtk_container_add(GTK_CONTAINER(item), button);
+    g_signal_connect(button, "button-press-event", func, win);
+    gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, pos);
+
+    return GTK_WIDGET(item);
+}
+
 GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
 				 GretlToolItem *tool,
 				 GCallback func,
@@ -838,31 +871,6 @@ GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
     gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tool->tip));
 #endif
     g_signal_connect(item, "clicked", func, data);
-    gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, pos);
-
-    return GTK_WIDGET(item);
-}
-
-static GtkWidget *
-gretl_toolbar_insert_special (GtkWidget *tbar,
-			      GretlToolItem *tool,
-			      GCallback func,
-			      GtkWidget *win,
-			      gint pos)
-{
-    GtkWidget *img, *button = gtk_button_new();
-    GtkToolItem *item = gtk_tool_item_new();
-
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
-    gtk_tool_item_set_tooltip(item, gretl_tips, _(tool->tip), NULL);
-#else
-    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tool->tip));
-#endif
-    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    img = gtk_image_new_from_stock(tool->icon, GTK_ICON_SIZE_MENU);
-    gtk_container_add(GTK_CONTAINER(button), img);
-    gtk_container_add(GTK_CONTAINER(item), button);
-    g_signal_connect(button, "button-press-event", func, win);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, pos);
 
     return GTK_WIDGET(item);
@@ -893,8 +901,8 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	    set_plot_icon(item, vwin->role);
 	}
 
-	if (!strcmp(item->icon, GRETL_STOCK_COMPASS)) {
-	    button = gretl_toolbar_insert_special(vwin->mbar, item, func, 
+	if (winlist_item(item)) {
+	    button = gretl_toolbar_insert_winlist(vwin->mbar, item, func, 
 						  vwin->main, -1);
 	} else {
 	    button = gretl_toolbar_insert(vwin->mbar, item, func, vwin, -1);
