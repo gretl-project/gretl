@@ -2929,7 +2929,11 @@ static const gchar *model_ui =
 static void model_show_winlist (GtkWidget *m, gpointer p)
 {
     window_list_popup(NULL);
+#if GTK_MAJOR_VERSION > 2
+    gtk_menu_item_deselect(GTK_MENU_ITEM(m));
+#else
     gtk_item_deselect(GTK_ITEM(m));
+#endif
 }
 
 static void model_menu_add_winlist (windata_t *vwin)

@@ -193,7 +193,7 @@ static int wf1_read_values (FILE *fp, int ftype,
 
     if (sz != nobs * sizeof(double)) {
 	fprintf(stderr, "trouble: data size only %d bytes (at most %d doubles)\n", 
-		(int) sz, (int) sz / sizeof(double));
+		(int) sz, (int) sz / (int) sizeof(double));
 #if EVDEBUG
 	/* try soldiering on */
 	nobs = sz / sizeof(double);
