@@ -68,7 +68,9 @@ void text_undo (GtkWidget *w, windata_t *vwin);
 
 int text_can_undo (windata_t *vwin);
 
-void text_zoom (GtkAction *action, gpointer data);
+void text_larger (GtkWidget *w, gpointer data);
+
+void text_smaller (GtkWidget *w, gpointer data);
 
 void textview_set_text_colorized (GtkWidget *view, const char *buf);
 

@@ -25,6 +25,7 @@
 #include "treeutils.h"
 #include "dlgutils.h"
 #include "menustate.h"
+#include "toolbar.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -43,8 +44,8 @@ static char *en_gui_helpfile;
 static char *en_cli_helpfile;
 
 static windata_t *real_do_help (int idx, int pos, int role);
-static void en_help_callback (GtkAction *action, windata_t *hwin);
-static void delete_help_viewer (GtkAction *a, windata_t *hwin);
+static void en_help_callback (GtkWidget *w, windata_t *hwin);
+static void delete_help_viewer (GtkWidget *w, windata_t *hwin);
 static char *funcs_helpfile (void);
 static void helpwin_set_topic_index (windata_t *hwin, int idx);
 
@@ -65,20 +66,17 @@ static GtkWidget *find_dialog = NULL;
 static GtkWidget *find_entry;
 static char *needle;
 
-const gchar *help_tools_ui = 
-    "<ui>"
-    "  <toolbar/>"
-    "</ui>";
+enum {
+    EN_ITEM = 1
+};
 
-GtkActionEntry help_tools[] = {
-    { "ZoomIn", GTK_STOCK_ZOOM_IN, NULL, NULL, N_("Larger"),
-      G_CALLBACK(text_zoom) },
-    { "ZoomOut", GTK_STOCK_ZOOM_OUT, NULL, NULL, N_("Smaller"),
-      G_CALLBACK(text_zoom) },
-    { "EnHelp", GRETL_STOCK_EN, NULL, NULL, N_("Show English help"), 
-      G_CALLBACK(en_help_callback) },
-    { "Close", GTK_STOCK_CLOSE, NULL, NULL, N_("Close"),
-      G_CALLBACK(delete_help_viewer) }
+static GretlToolItem help_tools[] = {
+    { N_("Larger"), GTK_STOCK_ZOOM_IN, G_CALLBACK(text_larger), 0},
+    { N_("Smaller"), GTK_STOCK_ZOOM_OUT, G_CALLBACK(text_smaller), 0},
+    { N_("Show English help"), GRETL_STOCK_EN, G_CALLBACK(en_help_callback), 
+      EN_ITEM },
+    { N_("Windows"), GRETL_STOCK_COMPASS, G_CALLBACK(window_list_popup), 0 },
+    { N_("Close"), GTK_STOCK_CLOSE, G_CALLBACK(delete_help_viewer), 0 }
 };
 
 static gint n_help_tools = G_N_ELEMENTS(help_tools);
@@ -707,7 +705,7 @@ static gboolean help_iter_from_index (int idx, int role,
     return FALSE;
 }
 
-static void en_help_callback (GtkAction *action, windata_t *hwin)
+static void en_help_callback (GtkWidget *w, windata_t *hwin)
 {
     int pos, idx = hwin->active_var;
     int role = (hwin->role == CLI_HELP)? CLI_HELP_EN :
@@ -723,7 +721,7 @@ static void en_help_callback (GtkAction *action, windata_t *hwin)
     real_do_help(idx, pos, role);
 }
 
-static void delete_help_viewer (GtkAction *a, windata_t *hwin) 
+static void delete_help_viewer (GtkWidget *w, windata_t *hwin) 
 {
     gtk_widget_destroy(hwin->main); 
 }
@@ -1009,84 +1007,42 @@ void vwin_add_finder (windata_t *vwin)
 		     vwin);
 }
 
-static void add_help_tool_by_name (windata_t *hwin, 
-				   const char *aname)
-{
-    GtkActionEntry *item = NULL;
-    int i;
-
-    for (i=0; i<n_help_tools; i++) {
-	if (!strcmp(help_tools[i].name, aname)) {
-	    item = &help_tools[i];
-	    break;
-	}
-    }
-
-    if (item != NULL) {
-	GtkActionGroup *actions;
-	int newgroup = 1;
-	guint id;
-
-	actions = get_ad_hoc_group(hwin->ui, &newgroup);
-	gtk_action_group_add_actions(actions, item, 1, hwin);
-	id = gtk_ui_manager_new_merge_id(hwin->ui);
-	gtk_ui_manager_add_ui(hwin->ui, id, "/toolbar", 
-			      item->name, item->name,
-			      GTK_UI_MANAGER_TOOLITEM, FALSE);
-	if (newgroup) {
-	    gtk_ui_manager_insert_action_group(hwin->ui, actions, 0);
-	    g_object_unref(actions);
-	}
-    }
-}
-
 #define SHOW_FINDER(r)    (r != GUI_HELP && r != GUI_HELP_EN)
 #define SHOW_EN_BUTTON(r) (translated_helpfile && \
                            (r == CLI_HELP || r == GUI_HELP))
 
 void set_up_helpview_menu (windata_t *hwin) 
 {
-    GtkWidget *hbox, *tbar;
-    GError *err = NULL;
+    GretlToolItem *item = NULL;
+    GtkWidget *hbox;
+    int i;
 
-    hwin->ui = gtk_ui_manager_new();
-
-    /* add skeleton toolbar ui */
-    gtk_ui_manager_add_ui_from_string(hwin->ui, help_tools_ui, -1, &err);
-
-    if (err != NULL) {
-	fprintf(stderr, "building helpview ui failed: %s", err->message);
-	g_error_free(err);
-	return;
-    }
-
-    /* add buttons to toolbar depending on context */
-    add_help_tool_by_name(hwin, "ZoomIn");
-    add_help_tool_by_name(hwin, "ZoomOut");
-    if (SHOW_EN_BUTTON(hwin->role)) {
-	add_help_tool_by_name(hwin, "EnHelp");
-    }
-    add_help_tool_by_name(hwin, "Close");
-
-    /* hbox holding toolbar */
     hbox = gtk_hbox_new(FALSE, 0);
+    hwin->mbar = gretl_toolbar_new();
+
+    for (i=0; i<n_help_tools; i++) {
+	item = &help_tools[i];
+	if (!SHOW_EN_BUTTON(hwin->role) && item->flag == EN_ITEM) {
+	    continue;
+	}
+	if (winlist_item(item)) {
+	    gretl_toolbar_insert_winlist(hwin->mbar, item, 
+					 item->func, hwin->main,
+					 -1);
+	} else {
+	    gretl_toolbar_insert(hwin->mbar, item, item->func,
+				 hwin, -1);
+	}
+    }	
+
     gtk_box_pack_start(GTK_BOX(hwin->vbox), hbox, FALSE, FALSE, 0);
-    tbar = gtk_ui_manager_get_widget(hwin->ui, "/toolbar");
-    gtk_box_pack_start(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), hwin->mbar, FALSE, FALSE, 0);
 
-    gtk_toolbar_set_icon_size(GTK_TOOLBAR(tbar), GTK_ICON_SIZE_MENU);
-    gtk_toolbar_set_style(GTK_TOOLBAR(tbar), GTK_TOOLBAR_ICONS);
-    gtk_toolbar_set_show_arrow(GTK_TOOLBAR(tbar), FALSE);
-    hwin->mbar = tbar;
-
-    if (SHOW_FINDER(hwin->role)) {
+     if (SHOW_FINDER(hwin->role)) {
 	vwin_add_finder(hwin);
     }
 
     gtk_widget_show_all(hbox);
-
-    gtk_window_add_accel_group(GTK_WINDOW(hwin->main), 
-			       gtk_ui_manager_get_accel_group(hwin->ui));
 }
 
 static char *funcs_helpfile (void)

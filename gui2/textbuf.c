@@ -743,10 +743,8 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     }	
 }
 
-void text_zoom (GtkAction *action, gpointer data)
+static void text_change_size (windata_t *vwin, int larger)
 {
-    const gchar *s = gtk_action_get_name(action);
-    windata_t *vwin = (windata_t *) data;
     static PangoFontDescription *hpf;
     static gint fsize;
 
@@ -755,14 +753,24 @@ void text_zoom (GtkAction *action, gpointer data)
 	fsize = pango_font_description_get_size(hpf) / PANGO_SCALE;
     }
 
-    if (!strcmp(s, "ZoomIn")) {
+    if (larger) {
 	fsize++;
-    } else if (!strcmp(s, "ZoomOut")) {
+    } else {
 	fsize--;
     } 
 
     pango_font_description_set_size(hpf, fsize * PANGO_SCALE);
     gtk_widget_modify_font(vwin->text, hpf);
+}
+
+void text_larger (GtkWidget *w, gpointer data)
+{
+    text_change_size((windata_t *) data, 1);
+}
+
+void text_smaller (GtkWidget *w, gpointer data)
+{
+    text_change_size((windata_t *) data, 0);
 }
 
 #define helpfont "sans"
