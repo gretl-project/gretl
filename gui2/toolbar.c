@@ -564,11 +564,6 @@ static void set_output_sticky (GtkWidget *w, windata_t *vwin)
     }
 }
 
-static void compass_callback (GtkWidget *w, windata_t *vwin)
-{
-    window_list_popup(w, NULL, vwin->main);
-}
-
 static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->role == VIEW_SERIES) {
@@ -1089,7 +1084,7 @@ static GretlToolItem mainbar_items[] = {
     { N_("new script"),         GTK_STOCK_EDIT,      G_CALLBACK(tbar_new_script), 0 },
     { N_("open gretl console"), GRETL_STOCK_CONSOLE, G_CALLBACK(gretl_console), 0 },
     { N_("session icon view"),  GRETL_STOCK_ICONS,   G_CALLBACK(tbar_iconview), 0 },
-    { N_("Windows"),            GRETL_STOCK_COMPASS, G_CALLBACK(compass_callback), 0 },
+    { N_("Windows"),            GRETL_STOCK_COMPASS, G_CALLBACK(window_list_popup), 0 },
     { N_("function packages"),  GRETL_STOCK_FUNC,    G_CALLBACK(tbar_show_funcs), 0 },
     { N_("user's guide"),       GRETL_STOCK_PDF,     G_CALLBACK(tbar_users_guide), 0 },
     { N_("command reference"),  GTK_STOCK_HELP,      G_CALLBACK(tbar_command_ref), 0 },
@@ -1109,7 +1104,12 @@ void add_mainwin_toolbar (GtkWidget *vbox)
 
     for (i=0; i<n; i++) {
 	item = &mainbar_items[i];
-	gretl_toolbar_insert(toolbar, item, item->func, mdata, -1);
+	if (winlist_item(item)) {
+	    gretl_toolbar_insert_winlist(toolbar, item, item->func, 
+					 mdata->main, -1);
+	} else {
+	    gretl_toolbar_insert(toolbar, item, item->func, mdata, -1);
+	}
     }
 
     hbox = gtk_hbox_new(FALSE, 0);
