@@ -1968,6 +1968,32 @@ static void make_bullet (char *bullet)
     }
 }
 
+#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 16
+
+static const gchar *gtk_action_get_label (GtkAction *action)
+{
+    static char aname[32];
+    gchar *tmp = NULL;
+
+    g_object_get(action, "label", &tmp, NULL);
+
+    *aname = '\0';
+    if (tmp != NULL) {
+	strncat(aname, tmp, 31);
+	g_free(tmp);
+    }
+
+    return aname;
+}
+
+static void gtk_action_set_label (GtkAction *action,
+				  const gchar *label)
+{
+    g_object_set(action, "label", label, NULL);
+}
+
+#endif /* remedial functions for older GTK */
+
 /* show a bullet or asterisk next to the entry for 
    the current window */
 
