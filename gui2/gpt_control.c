@@ -30,6 +30,7 @@
 #include "textbuf.h"
 #include "graphics.h"
 #include "boxplots.h"
+#include "dlgutils.h"
 
 #define GPDEBUG 0
 #define POINTS_DEBUG 0
@@ -228,7 +229,7 @@ double plot_get_ymin (png_plot *plot)
 /* apparatus for graph toolbar */
 
 static GtkWidget *small_tool_button (GretlToolItem *item,
-				     gpointer data)
+				     png_plot *plot)
 {
     GtkWidget *img, *button = gtk_button_new();
 
@@ -236,7 +237,11 @@ static GtkWidget *small_tool_button (GretlToolItem *item,
     img = gtk_image_new_from_stock(item->icon, GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_widget_set_tooltip_text(GTK_WIDGET(button), _(item->tip));
-    g_signal_connect(button, "clicked", item->func, data);
+    if (!strcmp(item->icon, GRETL_STOCK_COMPASS)) {
+	g_signal_connect(button, "button-press-event", item->func, plot->shell);
+    } else {
+	g_signal_connect(button, "clicked", item->func, plot);
+    }
     gtk_widget_show_all(button);
 
     return button;
@@ -252,13 +257,8 @@ static void graph_zoom_callback (GtkWidget *w, gpointer data)
     prepare_for_zoom((png_plot *) data);
 }
 
-static void windows_callback (GtkWidget *w, gpointer data)
-{
-    window_list_popup(NULL);
-}
-
 static GretlToolItem plotbar_items[] = {
-    { N_("Windows"), GRETL_STOCK_COMPASS, G_CALLBACK(windows_callback), 0 },
+    { N_("Windows"), GRETL_STOCK_COMPASS, G_CALLBACK(window_list_popup), 0 },
     { N_("Edit"),    GTK_STOCK_EDIT,      G_CALLBACK(graph_edit_callback), 0 },
     { N_("Zoom..."), GTK_STOCK_ZOOM_IN,   G_CALLBACK(graph_zoom_callback), 0 },
 };
@@ -4031,9 +4031,13 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
     }
 
     if (!plot->err) {
-	build_plot_menu(plot);
-	gtk_menu_popup(GTK_MENU(plot->popup), NULL, NULL, NULL, NULL,
-		       event->button, event->time);
+	GdkModifierType mods = widget_get_pointer_mask(widget);
+
+	if (RIGHT_CLICK(mods)) {
+	    build_plot_menu(plot);
+	    gtk_menu_popup(GTK_MENU(plot->popup), NULL, NULL, NULL, NULL,
+			   event->button, event->time);
+	}
     }
 
     return TRUE;
@@ -4824,7 +4828,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
     if (!plot->err) {
 	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar),
-			   plot->cid, _(" Click on graph for pop-up menu"));
+			   plot->cid, _(" Right-click on graph for menu"));
     }
     
     if (plot_has_xrange(plot)) {

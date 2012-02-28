@@ -620,7 +620,7 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     } else if (mods & GDK_MOD1_MASK) {
 	/* Alt */
 	if (upkey == GDK_W) {
-	    window_list_popup(vwin->main);
+	    window_list_popup(w, NULL, vwin->main);
 	    return TRUE;
 	}
     }
@@ -2926,9 +2926,9 @@ static const gchar *model_ui =
     " </menubar>"
     "</ui>";
 
-static void model_show_winlist (GtkWidget *m, gpointer p)
+static void model_show_winlist (GtkWidget *m, windata_t *vwin)
 {
-    window_list_popup(NULL);
+    window_list_popup(m, NULL, vwin->main);
 #if GTK_MAJOR_VERSION > 2
     gtk_menu_item_deselect(GTK_MENU_ITEM(m));
 #else
@@ -2942,7 +2942,7 @@ static void model_menu_add_winlist (windata_t *vwin)
 
     gtk_menu_item_set_use_underline(GTK_MENU_ITEM(m), TRUE);
     gtk_menu_shell_append(GTK_MENU_SHELL(vwin->mbar), m);
-    g_signal_connect(m, "select", G_CALLBACK(model_show_winlist), NULL);
+    g_signal_connect(m, "select", G_CALLBACK(model_show_winlist), vwin);
 }
 
 static void 

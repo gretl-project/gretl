@@ -2886,7 +2886,7 @@ static void sheet_add_toolbar (Spreadsheet *sheet, GtkWidget *vbox)
 {
     GtkWidget *hbox, *tbar;
     GretlToolItem *item;
-    GtkToolItem *button;
+    GtkWidget *button;
     int i;
 
     hbox = gtk_hbox_new(FALSE, 0);
@@ -2896,7 +2896,7 @@ static void sheet_add_toolbar (Spreadsheet *sheet, GtkWidget *vbox)
 	item = &series_items[i];
 	button = gretl_toolbar_insert(tbar, item, item->func, sheet, -1);
 	if (item->flag == SERIES_APPLY_BTN) {
-	    sheet->apply = GTK_WIDGET(button);
+	    sheet->apply = button;
 	    gtk_widget_set_sensitive(sheet->apply, FALSE);
 	} 
 	if (item->flag != SERIES_ADD_BTN) {

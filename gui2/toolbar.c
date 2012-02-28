@@ -566,7 +566,7 @@ static void set_output_sticky (GtkWidget *w, windata_t *vwin)
 
 static void compass_callback (GtkWidget *w, windata_t *vwin)
 {
-    window_list_popup(vwin->main);
+    window_list_popup(w, NULL, vwin->main);
 }
 
 static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
@@ -660,7 +660,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_x12a_help), X12A_HELP_ITEM },
-    { N_("Windows"), GRETL_STOCK_COMPASS, G_CALLBACK(compass_callback), 0 },
+    { N_("Windows"), GRETL_STOCK_COMPASS, G_CALLBACK(window_list_popup), 0 },
     { N_("Close"), GTK_STOCK_CLOSE, G_CALLBACK(delete_file_viewer), 0 }
 };
 
@@ -823,11 +823,11 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str)
 
 #endif /* GTK variants */
 
-GtkToolItem *gretl_toolbar_insert (GtkWidget *tbar,
-				   GretlToolItem *tool,
-				   GCallback func,
-				   gpointer data,
-				   gint pos)
+GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
+				 GretlToolItem *tool,
+				 GCallback func,
+				 gpointer data,
+				 gint pos)
 {
     GtkToolItem *item;
 
@@ -840,7 +840,32 @@ GtkToolItem *gretl_toolbar_insert (GtkWidget *tbar,
     g_signal_connect(item, "clicked", func, data);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, pos);
 
-    return item;
+    return GTK_WIDGET(item);
+}
+
+static GtkWidget *
+gretl_toolbar_insert_special (GtkWidget *tbar,
+			      GretlToolItem *tool,
+			      GCallback func,
+			      GtkWidget *win,
+			      gint pos)
+{
+    GtkWidget *img, *button = gtk_button_new();
+    GtkToolItem *item = gtk_tool_item_new();
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
+    gtk_tool_item_set_tooltip(item, gretl_tips, _(tool->tip), NULL);
+#else
+    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tool->tip));
+#endif
+    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    img = gtk_image_new_from_stock(tool->icon, GTK_ICON_SIZE_MENU);
+    gtk_container_add(GTK_CONTAINER(button), img);
+    gtk_container_add(GTK_CONTAINER(item), button);
+    g_signal_connect(button, "button-press-event", func, win);
+    gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, pos);
+
+    return GTK_WIDGET(item);
 }
 
 static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
@@ -850,7 +875,7 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
     int latex_ok = latex_is_ok();
     int save_ok = (flags & VIEWBAR_EDITABLE);
     GtkWidget *hpane = NULL, *vpane = NULL;
-    GtkToolItem *button;
+    GtkWidget *button;
     GretlToolItem *item;
     GCallback func;
     int i;
@@ -868,13 +893,18 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	    set_plot_icon(item, vwin->role);
 	}
 
-	button = gretl_toolbar_insert(vwin->mbar, item, func, vwin, -1);
+	if (!strcmp(item->icon, GRETL_STOCK_COMPASS)) {
+	    button = gretl_toolbar_insert_special(vwin->mbar, item, func, 
+						  vwin->main, -1);
+	} else {
+	    button = gretl_toolbar_insert(vwin->mbar, item, func, vwin, -1);
+	}
 
 	if (func == (GCallback) split_pane_callback) {
 	    if (hpane == NULL) {
-		hpane = GTK_WIDGET(button);
+		hpane = button;
 	    } else {
-		vpane = GTK_WIDGET(button);
+		vpane = button;
 	    }
 	}
 
@@ -882,17 +912,17 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	    if (vwin->role != CONSOLE) {
 		/* nothing to save just yet */
 		g_object_set_data(G_OBJECT(vwin->mbar), "save_button", button); 
-		gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
+		gtk_widget_set_sensitive(button, FALSE);
 	    }
 	} else if (item->flag == SAVE_AS_ITEM) {
 	    g_object_set_data(G_OBJECT(vwin->mbar), "save_as_button", button);
 	    if (strstr(vwin->fname, "script_tmp")) {
-		gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
+		gtk_widget_set_sensitive(button, FALSE);
 	    }
 	} else if (item->flag == STOP_ITEM) {
 	    /* nothing to stop yet */
 	    g_object_set_data(G_OBJECT(vwin->mbar), "stop_button", button); 
-	    gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
+	    gtk_widget_set_sensitive(button, FALSE);
 	}
     }
 
@@ -969,18 +999,6 @@ GtkWidget *build_text_popup (windata_t *vwin)
 	    gtk_widget_show(w);
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
 	}
-    }
-
-    if (vwin->role != EDIT_SCRIPT) {
-	w = gtk_separator_menu_item_new();
-	gtk_widget_show(w);
-	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
-
-	w = gtk_menu_item_new_with_label(_("Main window"));
-	g_signal_connect(G_OBJECT(w), "activate", 
-			 G_CALLBACK(raise_main_window), NULL);
-	gtk_widget_show(w);
-	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
     }
 
     return pmenu;

@@ -159,8 +159,8 @@ void mdata_select_last_var (void);
 int gui_restore_sample (DATASET *dset);
 
 void add_window_list_item (GtkWidget *w, int role);
-void window_list_popup (GtkWidget *src);
-void raise_main_window (void);
+void window_list_popup (GtkWidget *src, GdkEventButton *event, 
+			gpointer p);
 int get_n_listed_windows (void);
 gboolean window_list_exit_check (void);
 void do_stop_script (GtkWidget *w, windata_t *vwin);

@@ -43,10 +43,10 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str);
 
 GtkWidget *gretl_toolbar_new (void);
 
-GtkToolItem *gretl_toolbar_insert (GtkWidget *tbar,
-				   GretlToolItem *item,
-				   GCallback func,
-				   gpointer data,
-				   gint pos);
+GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
+				 GretlToolItem *item,
+				 GCallback func,
+				 gpointer data,
+				 gint pos);
 
 #endif /* TOOLBAR_H */

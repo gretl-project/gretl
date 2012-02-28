@@ -526,7 +526,7 @@ static gint catch_winlist_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     GdkModifierType mods = widget_get_pointer_mask(w);
 
     if ((mods & GDK_MOD1_MASK) && key->keyval == GDK_w) {
-	window_list_popup(vwin->main);
+	window_list_popup(w, NULL, vwin->main);
 	return TRUE;
     }
 

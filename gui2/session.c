@@ -3047,7 +3047,7 @@ static void global_popup_callback (GtkWidget *widget, gpointer data)
     } else if (!strcmp(item, _("Arrange icons"))) {
 	rearrange_icons();
     } else if (!strcmp(item, _("Windows"))) {
-	window_list_popup(iconview);
+	window_list_popup(widget, NULL, iconview);
     } else if (!strcmp(item, _("Close window"))) {
 	gtk_widget_destroy(iconview);
     }

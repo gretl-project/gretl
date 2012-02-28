@@ -2179,7 +2179,7 @@ int font_has_symbol (PangoFontDescription *desc, int symbol)
     int ret = 0;
 
     if (desc == NULL) {
-	return -1;
+	return 0;
     }
 
     widget = gtk_label_new("");  

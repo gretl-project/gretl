@@ -177,27 +177,6 @@ void iconview_menubar_state (gboolean s)
     flip(mdata->ui, "/menubar/View/IconView", s);
 }
 
-void window_list_state (gboolean s)
-{
-    if (s) {
-	GtkAction *a = gtk_ui_manager_get_action(mdata->ui, "/menubar/View");
-
-	if (a != NULL && !gtk_action_get_sensitive(a)) {
-	    /* the /View menu is currently disabled: so enable it,
-	       but disable all its subitems except /View/Windows
-	    */
-	    gtk_action_set_sensitive(a, TRUE);
-	    view_items_state(FALSE);
-	}
-	flip(mdata->ui, "/menubar/View/Windows", TRUE);
-    } else if (!have_session_objects()) {
-	/* if /View/Windows was the only enabled item
-	   under /View, then disable /View 
-	*/
-	flip(mdata->ui, "/menubar/View", FALSE);
-    }
-}
-
 #define COMPACTABLE(d) (d->structure == TIME_SERIES && \
                         (d->pd == 4 || d->pd == 12 || \
                          d->pd == 5 || d->pd == 6 || \
