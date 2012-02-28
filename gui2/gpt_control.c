@@ -247,20 +247,26 @@ static GtkWidget *small_tool_button (GretlToolItem *item,
     return button;
 }
 
-static void graph_edit_callback (GtkWidget *w, gpointer data)
+static void graph_edit_callback (GtkWidget *w, png_plot *plot)
 {
-    start_editing_png_plot((png_plot *) data);
+    start_editing_png_plot(plot);
 }
 
-static void graph_zoom_callback (GtkWidget *w, gpointer data)
+static void graph_zoom_callback (GtkWidget *w, png_plot *plot)
 {
-    prepare_for_zoom((png_plot *) data);
+    prepare_for_zoom(plot);
+}
+
+static void show_pdf_callback (GtkWidget *w, png_plot *plot)
+{
+    graph_display_pdf(plot->spec);
 }
 
 static GretlToolItem plotbar_items[] = {
-    { N_("Windows"), GRETL_STOCK_COMPASS, G_CALLBACK(window_list_popup), 0 },
-    { N_("Edit"),    GTK_STOCK_EDIT,      G_CALLBACK(graph_edit_callback), 0 },
-    { N_("Zoom..."), GTK_STOCK_ZOOM_IN,   G_CALLBACK(graph_zoom_callback), 0 },
+    { N_("Windows"),     GRETL_STOCK_COMPASS, G_CALLBACK(window_list_popup), 0 },
+    { N_("Edit"),        GTK_STOCK_EDIT,      G_CALLBACK(graph_edit_callback), 0 },
+    { N_("Zoom..."),     GTK_STOCK_ZOOM_IN,   G_CALLBACK(graph_zoom_callback), 0 },
+    { N_("Display PDF"), GRETL_STOCK_PDF,     G_CALLBACK(show_pdf_callback), 0 },
 };
 
 static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
