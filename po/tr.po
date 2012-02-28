@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-02-04 09:24-0500\n"
-"PO-Revision-Date: 2012-02-17 17:58+0200\n"
+"PO-Revision-Date: 2012-02-28 10:19+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -5758,7 +5758,7 @@ msgstr "Wilcoxon işaretli-sıra sınaması"
 
 #: lib/src/nonparam.c:976
 msgid "the median difference is zero"
-msgstr "ortanca farkı sıfır"
+msgstr "ortanca farklar sıfır"
 
 #: lib/src/nonparam.c:1005
 msgid "zero differences"
@@ -10737,7 +10737,7 @@ msgstr "Çapraz çi_zelgeleme"
 
 #: gui2/gretl.c:1463
 msgid "_Principal components"
-msgstr "_Baş bileşenler"
+msgstr "_Temel bileşenler"
 
 #: gui2/gretl.c:1464
 msgid "_Mahalanobis distances"
@@ -11145,7 +11145,7 @@ msgstr "Sağla_m tahmin"
 
 #: gui2/gretl.c:1591
 msgid "Least _Absolute Deviation..."
-msgstr "_En küçük Mutlak Sapma..."
+msgstr "_Enküçük mutlak sapma..."
 
 #: gui2/gretl.c:1592
 msgid "_Quantile regression..."
@@ -12238,7 +12238,7 @@ msgstr "ilinti dizeyi"
 
 #: gui2/library.c:696
 msgid "principal components"
-msgstr "baş bileşenler"
+msgstr "temel bileşenler"
 
 #: gui2/library.c:705 gui2/library.c:862
 msgid "cross tabulation"
@@ -12258,7 +12258,7 @@ msgstr "normallik sınaması"
 
 #: gui2/library.c:852 plugin/pca.c:171
 msgid "Principal Components Analysis"
-msgstr "Baş bileşen çözümlemesi"
+msgstr "Temel bileşen çözümlemesi"
 
 #: gui2/library.c:948 gui2/library.c:964 gui2/library.c:1031
 msgid "test down from maximum lag order"
@@ -13569,7 +13569,7 @@ msgstr "Sağlam ağırlıklar kullan"
 
 #: gui2/selector.c:4323
 msgid "Use \"leave one out\""
-msgstr "\"Leave one out\" kullan"
+msgstr "\"Sağlam\" değişkeyi kullan"
 
 #: gui2/selector.c:4645
 msgid "GARCH p:"
