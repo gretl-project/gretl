@@ -2938,11 +2938,8 @@ static void model_show_winlist (GtkWidget *m, windata_t *vwin)
 
 static void model_menu_add_winlist (windata_t *vwin)
 {
-    GtkWidget *m = gtk_menu_item_new_with_label(_("_Windows"));
+    GtkWidget *m = gtk_menu_item_new_with_mnemonic(_("_Windows"));
 
-#if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 16
-    gtk_menu_item_set_use_underline(GTK_MENU_ITEM(m), TRUE);
-#endif
     gtk_menu_shell_append(GTK_MENU_SHELL(vwin->mbar), m);
     g_signal_connect(m, "select", G_CALLBACK(model_show_winlist), vwin);
 }
