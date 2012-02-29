@@ -1087,6 +1087,9 @@ static int gretl_Rlib_init (void)
 	};
 	int ok, argc = 3;
 
+#if FDEBUG
+	fprintf(stderr, "calling R_initEmbeddedR\n");
+#endif
 	ok = R_initEmbeddedR(argc, argv);
 	if (ok) {
 	    VR_GlobalEnv = *PR_GlobalEnv;
@@ -1103,7 +1106,7 @@ static int gretl_Rlib_init (void)
  bailout:
 
 #if FDEBUG
-    printf("gretl_Rlib_init: returning %d\n", err);
+    fprintf(stderr, "gretl_Rlib_init: returning %d\n", err);
 #endif
 
     return err;
