@@ -350,7 +350,8 @@ struct gretl_option gretl_opts[] = {
     { POISSON,  OPT_V, "verbose", 0 },
     { PCA,      OPT_C, "covariance", 0 },
     { PCA,      OPT_A, "save-all", 0 },
-    { PCA,      OPT_O, "save", 0 },
+    { PCA,      OPT_O, "save", 1 },
+    { PCA,      OPT_Q, "quiet", 0 },
     { PERGM,    OPT_O, "bartlett", 0 },
     { PERGM,    OPT_L, "log", 0 },
     { PERGM,    OPT_R, "radians", 0 },
@@ -760,7 +761,7 @@ static optparm *matching_optparm (int ci, gretlopt opt)
 }
 
 /* for a given @ci, @opt pair, determine its status with regard
-   to a parameter value (not allowed, allowed, or required)
+   to a parameter value: 0 = not allowed, 1 = allowed, 2 = required
 */
 
 static int option_parm_status (int ci, gretlopt opt)
@@ -891,6 +892,7 @@ double get_optval_double (int ci, gretlopt opt)
 int get_optval_int (int ci, gretlopt opt, int *err)
 {
     optparm *op = matching_optparm(ci, opt);
+    int status = option_parm_status(ci, opt);
     int ret = 0;
 
     if (op != NULL && op->val != NULL) {
@@ -905,7 +907,8 @@ int get_optval_int (int ci, gretlopt opt, int *err)
 		ret = (int) x;
 	    }
 	}
-    } else {
+    } else if (status == 2) {
+	/* parameter is required */
 	*err = E_DATA;
     }
 

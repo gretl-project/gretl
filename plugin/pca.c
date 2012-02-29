@@ -210,7 +210,7 @@ static void pca_print (VMatrix *cmat, gretl_matrix *E,
     todo = n;
 
     while (todo > 0) {
-	int ncols = (todo > PCA_COLS)? PCA_COLS : todo; 
+	int ncols = todo > PCA_COLS ? PCA_COLS : todo; 
 
 	pprintf(prn, "%-*s", namelen + 1, _("Variable"));
 
@@ -255,51 +255,39 @@ static int standardize (double *y, const double *x, int n)
     return 0;
 }
 
-/* add PCs to the dataset, either "major" ones or all */
+/* Add components to the dataset, either "major" ones (eigenvalues
+   greater than 1.0), or a specified number (if @nsave > 0), or 
+   all of them.
+*/
 
 static int pca_save_components (VMatrix *cmat, 
-				gretl_matrix *E, gretl_matrix *C, 
+				gretl_matrix *E, 
+				gretl_matrix *C, 
 				DATASET *dset,
+				int nsave,
 				gretlopt opt)
 {
     int save_all = (opt & OPT_A);
-    double **sZ = NULL;
-    double x;
-    int *plist = NULL;
-    int m, v = dset->v;
+    double x, **sZ = NULL;
+    int m = 0, v = dset->v;
     int k = cmat->dim;
     int i, j, t, vi;
     int err = 0;
 
     if (save_all) {
 	m = k;
+    } else if (nsave > 0) {
+	m = nsave > k ? k : nsave;
     } else {
-	m = 0;
-	for (i=0; i<k; i++) {
-	    if (E->val[i] > 1.0) {
-		m++;
-	    }
-	}
+	for (i=0; E->val[i] > 1.0; i++) {
+	    m++;
+	} 
     }
 
-    plist = gretl_list_new(m);
-    if (plist == NULL) {
-	err = E_ALLOC;
-    }
+    err = dataset_add_series(m, dset);
 
     if (!err) {
-	/* build list of PCs */
-	j = 1;
-	for (i=0; i<k; i++) {
-	    if (save_all || E->val[i] > 1.0) {
-		plist[j++] = i;
-	    }
-	}
-	err = dataset_add_series(m, dset);
-    }
-
-    if (!err) {
-	/* construct standardized versions of variables */
+	/* construct standardized versions of all variables */
 	sZ = doubles_array_new(k, dset->n); 
 	if (sZ == NULL) {
 	    err = E_ALLOC;
@@ -312,17 +300,15 @@ static int pca_save_components (VMatrix *cmat,
     }
 
     if (!err) {
-	for (i=1; i<=plist[0]; i++) {
-	    int pi = plist[i];
-	    double load;
+	double load;
 
-	    vi = v + i - 1;
-	    sprintf(dset->varname[vi], "PC%d", i);
+	for (i=0; i<m; i++) {
+	    vi = v + i;
+	    sprintf(dset->varname[vi], "PC%d", i+1);
 	    make_varname_unique(dset->varname[vi], vi, dset);
 	    sprintf(VARLABEL(dset, vi), 
 		    _("Component with eigenvalue = %.4f"), 
-		    E->val[pi]);
-
+		    E->val[i]);
 	    for (t=0; t<dset->n; t++) {
 		dset->Z[vi][t] = 0.0;
 		for (j=0; j<k; j++) {
@@ -331,7 +317,7 @@ static int pca_save_components (VMatrix *cmat,
 			dset->Z[vi][t] = NADBL;
 			break;
 		    } else {
-			load = gretl_matrix_get(C, j, pi);
+			load = gretl_matrix_get(C, j, i);
 			dset->Z[vi][t] += load * x;
 		    }
 		}
@@ -339,26 +325,27 @@ static int pca_save_components (VMatrix *cmat,
 	}
     }
 
-    free(plist);
     doubles_array_free(sZ, k);
 
     return err;
 }
 
-/* The incoming option here: When this function is called from the
-   CLI, the option may be OPT_O (save the first component), or OPT_A
-   (save all the components), or none.  The results are printed in all
-   cases.  As for the GUI, we either get no option (simply display the
-   results) or OPT_D.  The latter means that we should not display the
-   results, but should put up a dialog box allowing the user to decide
-   what to save.
+/* The incoming options here: 
 
-   Note that depending on the original option supplied to the "pca"
+   CLI: the option may be OPT_O (save the first XX components) or
+   OPT_A (save all the components). OPT_Q suppresses printing of
+   the results.
+
+   GUI: no option (simply display the results) or OPT_D. The latter
+   means that we should not display the results, but should put up a 
+   dialog box allowing the user to decidewhat to save. 
+
+   Note that depending on the original option supplied to the pca
    command, the incoming matrix may be either a correlation matrix
    (the default) or a covariance matrix.  This prior option is not
-   included in the gretlopt passed here; it's encoded in the "ci"
+   included in the @opt passed here; rather it's encoded in the ci
    member of the VMatrix struct.
- */
+*/
 
 int pca_from_cmatrix (VMatrix *cmat, DATASET *dset, 
 		      gretlopt opt, PRN *prn)
@@ -367,6 +354,7 @@ int pca_from_cmatrix (VMatrix *cmat, DATASET *dset,
     gretl_matrix *evals = NULL;
     gretlopt saveopt = opt;
     int k = cmat->dim;
+    int nsave = 0;
     int i, j, idx;
     double x;
     int err = 0;
@@ -377,7 +365,12 @@ int pca_from_cmatrix (VMatrix *cmat, DATASET *dset,
 	    /* canceled */
 	    return 0; 
 	}
-    }    
+    } else if (opt & OPT_O) {
+	nsave = get_optval_int(PCA, OPT_O, &err);
+	if (err) {
+	    return err;
+	}
+    }
 
     C = gretl_matrix_alloc(k, k);
 
@@ -399,12 +392,17 @@ int pca_from_cmatrix (VMatrix *cmat, DATASET *dset,
 
     evals = gretl_symm_matrix_eigenvals_descending(C, 1, &err);
 
-    if (!err && prn != NULL) {
+#if PCA_DEBUG
+    gretl_matrix_print(C, "revised C (eigenvecs)");
+#endif
+
+    if (!err && !(opt & OPT_Q) && prn != NULL) {
 	pca_print(cmat, evals, C, prn);
     }
 
     if (!err && saveopt) {
-	err = pca_save_components(cmat, evals, C, dset, saveopt);
+	err = pca_save_components(cmat, evals, C, dset, nsave,
+				  saveopt);
     }
 
     gretl_matrix_free(evals);

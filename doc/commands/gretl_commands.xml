@@ -7798,11 +7798,16 @@
         </option>	
         <option>
 	  <flag>--save</flag>
+	  <optparm optional="true">n</optparm>
 	  <effect>save major components</effect>
         </option>	
         <option>
 	  <flag>--save-all</flag>
 	  <effect>save all components</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>don't print results</effect>
         </option>
       </options>
     </usage>
@@ -7824,26 +7829,36 @@
 
     <description context="cli">
       <para>
-	Principal Components Analysis.  Prints the eigenvalues of the
-	correlation matrix (or the covariance matrix if the
-	<flag>--covariance</flag> option is given) for the variables in
-	<repl>varlist</repl>, along with the proportion of the joint variance
-	accounted for by each component.  Also prints the corresponding
-	eigenvectors (or <quote>component loadings</quote>).
+	Principal Components Analysis. Unless the <opt>--quiet</opt>
+	option is given, prints the eigenvalues of the correlation
+	matrix (or the covariance matrix if the
+	<opt>--covariance</opt> option is given) for the variables
+	in <repl>varlist</repl>, along with the proportion of the
+	joint variance accounted for by each component. Also prints
+	the corresponding eigenvectors (or <quote>component
+	loadings</quote>).
       </para>
       <para>
-	If the <opt>--save</opt> flag is given, components with eigenvalues
-	greater than the mean (which means greater than 1.0 if the analysis is
-	based on the correlation matrix) are saved to the dataset as
-	series, with names <lit>PC1</lit>, <lit>PC2</lit> and so on.  These
-	artificial variables are formed as the sum of (component loading)
-	times (standardized <lit>Xi</lit>), where <lit>Xi</lit> denotes the
-	<math>i</math>th variable in <repl>varlist</repl>.
+	If you give the <opt>--save-all</opt> option then all
+	components are saved to the dataset as series, with names
+	<lit>PC1</lit>, <lit>PC2</lit> and so on. These artificial
+	variables are formed as the sum of (component loading) times
+	(standardized <math>X</math><sub>i</sub>), where
+	<math>X</math><sub>i</sub> denotes the <math>i</math>th
+	variable in <repl>varlist</repl>.
       </para>
       <para>
-	If the <opt>--save-all</opt> flag is given, all of the components are
-	saved as described above.
-      </para> 
+	If you give the <opt>--save</opt> option without a parameter
+	value, components with eigenvalues greater than the mean
+	(which means greater than 1.0 if the analysis is based on the
+	correlation matrix) are saved to the dataset as described
+	above. If you provide a value for <repl>n</repl> with this
+	option then the most important <repl>n</repl> components are
+	saved.
+      </para>
+      <para>
+	See also the <fncref targ="princomp"/> function.
+      </para>
     </description>
 
     <gui-access>

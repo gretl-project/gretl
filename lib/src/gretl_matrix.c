@@ -7624,7 +7624,8 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     gretl_matrix *evals = NULL;
     double *work = NULL;
     double *w = NULL;
-    char uplo = 'U', jobz = (eigenvecs)? 'V' : 'N';
+    char jobz = eigenvecs ? 'V' : 'N';
+    char uplo = 'U';
 
     *err = 0;
 
