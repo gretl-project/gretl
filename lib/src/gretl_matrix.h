@@ -712,7 +712,8 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
 				   int mm, int rc, int idx,
 				   int *err);
 
-gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err);
+gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, 
+				gretlopt opt, int *err);
 
 gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x, 
 				 const double *y, int *err);

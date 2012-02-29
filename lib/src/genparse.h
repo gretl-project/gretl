@@ -281,7 +281,6 @@ enum {
     F_EIGGEN,
     F_FDJAC,
     F_LRVAR,
-    F_PRINCOMP,
     F_QUANTILE,
     F_CMULT,	  /* complex multiplication */
     F_HDPROD,     /* horizontal direct product */
@@ -325,6 +324,7 @@ enum {
     F_PSD,
     F_RANDINT,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
+    F_PRINCOMP,
     F_BFGSMAX,
     F_MSHAPE,
     F_SVD,

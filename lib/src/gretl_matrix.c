@@ -10807,7 +10807,8 @@ int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
 
 static gretl_matrix *
 real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
-			      gretl_matrix **pxbar, gretl_matrix **pssx,
+			      gretl_matrix **pxbar, 
+			      gretl_matrix **pssx,
 			      int *err)
 {
     gretl_matrix *V = NULL;
@@ -10843,7 +10844,7 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
 	goto bailout;
     }
 
-    if (corr) {
+    if (corr || pssx != NULL) {
 	ssx = gretl_vector_alloc(k);
 	if (ssx == NULL) {
 	    myerr = E_ALLOC;
@@ -10877,7 +10878,7 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
 		y = gretl_matrix_get(m, t, j);
 		vv += (x - xbar->val[i]) * (y - xbar->val[j]);
 	    }
-	    if (ssx != NULL) {
+	    if (corr) {
 		if (vv != 0.0) {
 		    x = ssx->val[i] * ssx->val[j];
 		    vv /= sqrt(x);
@@ -11268,7 +11269,10 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
  * gretl_matrix_pca:
  * @X: T x m data matrix.
  * @p: number of principal components to return: 0 < p <= m,
- * or p = -1 to return components for eigenvalues > 1.0.
+ * or p = -1 to return components for eigenvalues greater than
+ * the mean.
+ * @opt: if OPT_C, use the covariance matrix rather than the
+ * correlation matrix as basis.
  * @err: location to receive error code.
  *
  * Carries out a Principal Components analysis of @X and
@@ -11279,14 +11283,15 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
  * Returns: the generated matrix, or NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err)
+gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, 
+				gretlopt opt, int *err)
 {
     gretl_matrix *C = NULL;
     gretl_matrix *P = NULL;
     gretl_matrix *xbar = NULL;
     gretl_matrix *ssx = NULL;
     gretl_matrix *evals = NULL;
-    int T, m;
+    int T, m, corr = 1;
     double x, load, val;
     int i, j, k;
 
@@ -11298,6 +11303,11 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err)
     T = X->rows;
     m = X->cols;
 
+    if (p <= 0 || p > m) {
+	*err = E_DATA;
+	return NULL;
+    }
+
     if (m == 1) {
 	/* match wit to wit */
 	P = gretl_matrix_copy(X);
@@ -11307,13 +11317,12 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err)
 	return P;
     }
 
-    if (p <= 0) {
-	p = 1;
-    } else if (p > m) {
-	p = m;
+    if (opt & OPT_C) {
+	/* use covariance matrix */
+	corr = 0;
     }
 
-    C = real_gretl_covariance_matrix(X, 1, &xbar, &ssx, err);
+    C = real_gretl_covariance_matrix(X, corr, &xbar, &ssx, err);
     if (*err) {
 	return NULL;
     }

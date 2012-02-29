@@ -4621,6 +4621,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar">p</fnarg>
+	<fnarg optional="true" type="scalar">covmat</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4631,16 +4632,23 @@
 	    c="p"/> matrix, <math>P</math>, holding the first <math>p</math>
 	  principal components of <argname>X</argname>.
 	</para>
+	<para>
+	  The optional third argument acts as a boolean switch: if it is
+	  non-zero the principal components are computed on the basis of
+	  the covariance matrix of the columns of <argname>X</argname>
+	  (the default is to use the correlation matrix).
+	</para>
 	<para context="notex">
 	  The elements of <math>P</math> are computed as the sum from
-	  <math>i</math> to <math>k</math> of <math>Z</math><sub>ti</sub>
-	  times <math>v</math><sub>ji</sub>, where
+	  <math>i</math> to <math>k</math> of
+	  <math>Z</math><sub>ti</sub> times
+	  <math>v</math><sub>ji</sub>, where
 	  <math>Z</math><sub>ti</sub> is the standardized value of
 	  variable <math>i</math> at observation <math>t</math> and
-	  <math>v</math><sub>ji</sub> is the <math>j</math>th eigenvector
-	  of the correlation matrix of the <math>X</math><sub>i</sub>s,
-	  with the eigenvectors ordered by decreasing value of the
-	  corresponding eigenvalues.
+	  <math>v</math><sub>ji</sub> is the <math>j</math>th
+	  eigenvector of the correlation (or covariance) matrix of the
+	  <math>X</math><sub>i</sub>s, with the eigenvectors ordered
+	  by decreasing value of the corresponding eigenvalues.
 	</para>
 	<para context="tex">
 	  The elements of $P$ are computed as 
@@ -4648,9 +4656,9 @@
 	  where $Z_{ti}$ is the standardized value
 	  of variable $i$ at observation $t$, $Z_{ti} = (X_{ti} -
 	  \bar{X}_i) / \hat{\sigma}_i$, and $v^{(j)}$ is the $j$th
-	  eigenvector of the correlation matrix of the $X_i$s, with the
-	  eigenvectors ordered by decreasing value of the corresponding
-	  eigenvalues.
+	  eigenvector of the correlation (or covariance) matrix of the
+	  $X_i$s, with the eigenvectors ordered by decreasing value 
+	  of the corresponding eigenvalues.
 	</para>	
 	<para>
 	  <seelist>

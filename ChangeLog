@@ -17,6 +17,10 @@ version 1.9.8, in progress
 - "panel" command: add --nerlove option to use Nerlove's transformation
   in the context of the random effects estimator
 - "system" command: various small fixes and enhancements
+- "pca" command: add --quiet option and parameter to allow specification
+  of the number of components to save
+- princomp() function: add an optional switch to use the covariance
+  matrix
 - Fix bug: misbehavior of substitution of named strings in some loop
   contexts
 - Fix bug: breakage in handling of string-valued variables in CVS import

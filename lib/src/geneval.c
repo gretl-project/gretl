@@ -2390,7 +2390,7 @@ static NODE *matrix_princomp (NODE *l, NODE *r, parser *p)
 	int k = node_get_int(r, p);
 
 	if (!p->err) {
-	    ret->v.m = gretl_matrix_pca(m, k, &p->err);
+	    ret->v.m = gretl_matrix_pca(m, k, OPT_NONE, &p->err);
 	}
     }
 
@@ -6293,7 +6293,25 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 					 ret->v.xvec);
 	    }
 	}
-    }	
+    } else if (f == F_PRINCOMP) {
+	if (l->t != MAT) {
+	    node_type_error(f, 1, MAT, l, p);
+	} else if (m->t != NUM) {
+	    node_type_error(f, 2, NUM, m, p);
+	} else if (r->t != EMPTY && r->t != NUM) {
+	    /* optional boolean */
+	    node_type_error(f, 3, NUM, r, p);
+	} else {
+	    int cov = (r->t == EMPTY)? 0 : node_get_int(r, p);
+	    int k = node_get_int(m, p);
+
+	    if (!p->err) {
+		A = gretl_matrix_pca(l->v.m, k, 
+				     cov ? OPT_C : OPT_NONE,
+				     &p->err);
+	    }
+	}
+    }	    
 
     if (f != F_STRNCMP && f != F_WEEKDAY && 
 	f != F_MONTHLEN && f != F_EPOCHDAY &&
@@ -9018,7 +9036,6 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	} 
 	break;
-    case F_PRINCOMP:
     case F_IMHOF:
 	/* matrix, scalar as second arg */
 	if (l->t == MAT && scalar_node(r)) {
@@ -9079,6 +9096,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MLAG:
     case F_EIGSOLVE:
     case F_NADARWAT:
+    case F_PRINCOMP:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);

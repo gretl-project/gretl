@@ -201,18 +201,13 @@ static void pca_print (VMatrix *cmat, gretl_matrix *E,
 
     pprintf(prn, "%s\n\n", _("Eigenvectors (component loadings)"));
 
-    nl = g_utf8_strlen(_("Variable"), -1);
-    if (nl > namelen) {
-	namelen = nl;
-    }
-
     done = 0;
     todo = n;
 
     while (todo > 0) {
 	int ncols = todo > PCA_COLS ? PCA_COLS : todo; 
 
-	pprintf(prn, "%-*s", namelen + 1, _("Variable"));
+	pprintf(prn, "%-*s", namelen + 1, " ");
 
 	for (j=0; j<ncols; j++) {
 	    sprintf(pcname, "PC%d", done + j + 1);
@@ -240,19 +235,14 @@ static int standardize (double *y, const double *x, int n)
     int i, err;
 
     err = gretl_moments(0, n-1, x, &xbar, &sd, NULL, NULL, 1);
-    if (err) {
-	return err;
-    }
 
-    for (i=0; i<n; i++) {
-	if (na(x[i])) {
-	    y[i] = NADBL;
-	} else {
-	    y[i] = (x[i] - xbar) / sd;
+    if (!err) {
+	for (i=0; i<n; i++) {
+	    y[i] = na(x[i]) ? NADBL : (x[i] - xbar) / sd;
 	}
     }
 
-    return 0;
+    return err;
 }
 
 /* Add components to the dataset, either "major" ones (eigenvalues
