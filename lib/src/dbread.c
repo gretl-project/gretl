@@ -50,21 +50,21 @@
 
 #define DB_DEBUG 0
 
-#define RECNUM long
+#define RECNUM gint32
 #define NAMELENGTH 16
 #define RATSCOMMENTLENGTH 80
 #define RATSCOMMENTS 2
 #define RATS_PARSE_ERROR -999
 
 typedef struct {
-    long daynumber;                /* Number of days from 1-1-90
+    gint32 daynumber;              /* Number of days from 1-1-90
 				      to year, month, day */
     short panel;                   /* 1 for panel set, 2 for intraday
 				      date set , 0 o.w. */
 #define LINEAR    0                /* Single time direction */
 #define RATSPANEL 1                /* panel:period */    
 #define INTRADAY  2                /* date:intraday period */
-    long panelrecord;              /* Size of panel or 
+    gint32 panelrecord;            /* Size of panel or 
 				      number of periods per day */
     short dclass;                  /* See definitions below */
 #define UNDATEDCLASS   0           /* No time series properties */
@@ -72,7 +72,7 @@ typedef struct {
 #define PERYEARCLASS   2           /* x periods / year */
 #define PERWEEKCLASS   3           /* x periods / week */
 #define DAILYCLASS     4           /* x days / period */
-    long info;                     /* Number of periods per year or
+    gint32 info;                   /* Number of periods per year or
 				      per week */
     short digits;                  /* Digits for representing panel
 				      or intraday period */
@@ -87,7 +87,7 @@ typedef struct {
     RECNUM first_data;             /* First data record */
     char series_name[NAMELENGTH];  /* Series name */
     DATEINFO date_info;            /* Dating scheme for this series */
-    long datapoints;               /* Number of data points */
+    gint32 datapoints;             /* Number of data points */
     short data_type;               /* real, char, complex.
                                       Reserved.  Should be 0 */
     short digits;                  /* . + digit count for representation
@@ -736,8 +736,8 @@ static int dinfo_sanity_check (const DATEINFO *dinfo)
     if (err) {
 	gretl_errmsg_set(_("This is not a valid RATS 4.0 database"));
 	fprintf(stderr, "rats database: failed dinfo_sanity_check:\n"
-		" info=%ld, year=%d, month=%d, day=%d\n",
-		dinfo->info, (int) dinfo->year, (int) dinfo->month, 
+		" info=%d, year=%d, month=%d, day=%d\n",
+		(int) dinfo->info, (int) dinfo->year, (int) dinfo->month, 
 		(int) dinfo->day);
     }
 
@@ -867,6 +867,10 @@ static RECNUM read_rats_directory (FILE *fp, const char *series_name,
     fprintf(stderr, "read_rats_directory: name='%s'\n", rdir.series_name);
 #endif
 
+    if (!isprint(rdir.series_name[0])) {
+	return RATS_PARSE_ERROR;
+    }
+
     if (series_name != NULL && strcmp(series_name, rdir.series_name)) {
 	/* specific series not found yet: keep going */
 	return rdir.forward_point;
@@ -876,13 +880,13 @@ static RECNUM read_rats_directory (FILE *fp, const char *series_name,
 
     /* skip long, short, long, short */
     fseek(fp, 12, SEEK_CUR);
-    fread(&dinfo.info, sizeof(long), 1, fp);
+    fread(&dinfo.info, sizeof(gint32), 1, fp);
     fread(&dinfo.digits, sizeof(short), 1, fp);
     fread(&dinfo.year, sizeof(short), 1, fp);
     fread(&dinfo.month, sizeof(short), 1, fp);
     fread(&dinfo.day, sizeof(short), 1, fp);
 
-    fread(&rdir.datapoints, sizeof(long), 1, fp);
+    fread(&rdir.datapoints, sizeof(gint32), 1, fp);
     fseek(fp, sizeof(short) * 4L, SEEK_CUR);  /* skip 4 shorts */
 
 #if DB_DEBUG
@@ -2297,9 +2301,9 @@ int db_get_series (char *line, DATASET *dset,
     }
 
 #if DB_DEBUG
-    fprintf(stderr, "db_get_series: line='%s', pZ=%p, dset=%p\n", 
-	    line, (void *) pZ, (void *) dset);
-    fprintf(stderr, "db_name = '%s'\n", db_name);
+    fprintf(stderr, "db_get_series: line='%s', dset=%p\n", 
+	    line, (void *) dset);
+    fprintf(stderr, "db_name = '%s'\n", saved_db_name);
 #endif
 
     if (*saved_db_name == '\0') {
