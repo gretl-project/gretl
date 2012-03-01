@@ -4711,7 +4711,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     return ok;
 }
 
-static int gretl_model_count;
+static int gretl_model_count = 0;
 
 int get_model_count (void)
 {
