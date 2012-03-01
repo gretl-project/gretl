@@ -1,35 +1,38 @@
 version 1.9.8, in progress
-- Fix configure script for non-sse2 build
 - New function pxsum(): computes the cross-sectional sum of a series in
   the context of panel data
 - stack() function for panel data: allow '*' in forming list of series
-- Graphing i18n fix: avoid "decimal comma" in setting size of PDF plots
-- Function packages: prevent a package's "bundle-plot" function from
-  appearing in the initial GUI listing of public functions
-- Deletion of matrices within a loop: ensure that the GUI icon view is
-  updated if it's open at the time
-- "labels" command: fix the --to-file option
-- Fix bug in serialization of matrices as XML (which broke, for example,
-  saving of VARs in gretl session files)
-- Various small fixes for spreadsheet data importers
 - Compaction of daily to weekly data: enable this even if the daily data
   are not dated
 - "panel" command: add --nerlove option to use Nerlove's transformation
   in the context of the random effects estimator
-- "system" command: various small fixes and enhancements
+- "system" command: various small fixes and enhancements, including 
+  greater computational efficiency
 - "pca" command: add --quiet option and parameter to allow specification
   of the number of components to save
 - princomp() function: add an optional switch to use the covariance
   matrix
+- Function packages: prevent a package's "bundle-plot" function from
+  appearing in the initial GUI listing of public functions
+- Fix bug: avoid introducing "decimal commas" in setting size of PDF 
+  plots in gnuplot
+- Fix bug: deletion of matrices within a loop: ensure that the GUI icon 
+  view is updated properly if it's open at the time
+- Fix bug in serialization of matrices as XML (which broke, for example
+  saving of VARs in gretl session files) 
+- Fix bug: the --to-file option for "labels" was broken
 - Fix bug: misbehavior of substitution of named strings in some loop
   contexts
 - Fix bug: breakage in handling of string-valued variables in CVS import
 - Fix bug: possible crash in mle if a derivatives matrix is resized
 - Fix bug: possible crash in GUI function package editor on adding a
   function to a package containing a single function
+- Fix bug: data import from RATS databases broken on 64-bit systems
+- Various small fixes for spreadsheet data importers
 - For third-party users of libgretl: improve handling of search for the
   gretl plugins
 - MS Windows build: update cross-compiler to gcc-4.6.2
+- Building from source: fix configure script for non-sse2 build
 
 2011-12-22 version 1.9.7
 - Add two nonparametric estimators: William Cleveland's loess and the
