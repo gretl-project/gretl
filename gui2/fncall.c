@@ -580,7 +580,7 @@ static void update_combo_selectors (call_info *cinfo,
     g_list_free(newlist);
 }
 
-int do_make_list (selector *sr)
+static int do_make_list (selector *sr)
 {
     const char *buf = selector_list(sr);
     const char *lname = selector_entry_text(sr);

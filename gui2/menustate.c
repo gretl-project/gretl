@@ -103,10 +103,6 @@ void variable_menu_state (gboolean s)
 
 static void view_items_state (gboolean s)
 {
-    /* note: viewpaths below lists all the items under
-       /View except for /View/Windows, which needs
-       special handling
-    */
     const char *viewpaths[] = {
 	"GraphVars",
 	"MultiPlots",
@@ -217,7 +213,7 @@ void time_series_menu_state (gboolean s)
     /* Variable menu */
     flip(mdata->ui, "/menubar/Variable/URTests", ur); 
     if (ur && !s) {
-/* a time-series only "ur" option */
+	/* a time-series only "ur" option */
 	flip(mdata->ui, "/menubar/Variable/URTests/fractint", s);
     }
     flip(mdata->ui, "/menubar/Variable/URTests/levinlin", ur && panel);
@@ -474,6 +470,8 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
 	add_logs_etc(LOGS, 0);
     } else if (!strcmp(item, _("Add differences")))  {
 	add_logs_etc(DIFF, 0);
+    } else if (!strcmp(item, _("Define list"))) { 
+	make_list_from_main();
     } else if (!strcmp(item, _("Define new variable..."))) { 
 	genr_callback();
     }
@@ -561,6 +559,8 @@ GtkWidget *build_selection_popup (void)
 	NULL,
 	N_("Add logs"),
 	N_("Add differences"),
+	NULL,
+	N_("Define list"),
 	N_("Define new variable...")
     };
     GtkWidget *menu;

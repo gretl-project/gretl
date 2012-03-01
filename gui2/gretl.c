@@ -2118,6 +2118,72 @@ gboolean window_list_exit_check (void)
 
 /* end of window-listing apparatus */
 
+static void name_new_list (GtkWidget *widget, dialog_t *dlg) 
+{
+    char *lname = (char *) edit_dialog_get_data(dlg);
+    const gchar *buf = edit_dialog_get_text(dlg);
+
+    if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_LIST)) {
+	return;
+    }
+
+    strncat(lname, buf, VNAMELEN - 1);
+    edit_dialog_close(dlg);
+}
+
+static void real_make_mainwin_list (const int *list,
+				    const char *lname)
+{
+    int err = remember_list(list, lname, NULL);
+    char *lstr = NULL;
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	lstr = gretl_list_to_string(list);
+    }
+
+    if (lstr != NULL) {
+	/* record to command log */
+	lib_command_sprintf("list %s =%s", lname, lstr);
+	record_command_verbatim();
+	free(lstr);
+    }
+}
+
+/* respond to "Define list", selected from main window
+   right-click popup menu when two or more series are
+   selected 
+*/
+
+void make_list_from_main (void)
+{
+    int *list = main_window_selection_as_list();
+
+    if (list != NULL) {
+	char lname[VNAMELEN];
+	int cancel = 0;
+	gchar *msg;
+
+	*lname = '\0';
+	msg = g_strdup_printf(_("Enter name for list of series\n (%s ... %s)"),
+			      dataset->varname[list[1]],
+			      dataset->varname[list[list[0]]]);
+
+	blocking_edit_dialog(0, _("gretl: name list"), msg,
+			     NULL, name_new_list, lname, 
+			     VARCLICK_NONE, mdata->main,
+			     &cancel);
+	g_free(msg);
+
+	if (!cancel && *lname != '\0') {
+	    real_make_mainwin_list(list, lname);
+	}
+
+	free(list);
+    }
+}
+
 int gui_restore_sample (DATASET *dset)
 {
     int err = 0;

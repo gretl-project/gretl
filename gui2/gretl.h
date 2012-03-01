@@ -157,6 +157,7 @@ void populate_varlist (void);
 void clear_varlist (GtkWidget *widget);
 void mdata_select_last_var (void);
 int gui_restore_sample (DATASET *dset);
+void make_list_from_main (void);
 
 void add_window_list_item (GtkWidget *w, int role);
 void window_list_popup (GtkWidget *src, GdkEventButton *event, 
