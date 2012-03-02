@@ -2166,8 +2166,10 @@ void make_list_from_main (void)
 	gchar *msg;
 
 	*lname = '\0';
-	msg = g_strdup_printf(_("Enter name for list of series\n (%s ... %s)"),
+	msg = g_strdup_printf("%s\n (%s%s%s)",
+			      _("Enter name for list of series"),
 			      dataset->varname[list[1]],
+			      (list[0] == 2)? " " : " ... ",
 			      dataset->varname[list[list[0]]]);
 
 	blocking_edit_dialog(0, _("gretl: name list"), msg,
