@@ -6281,7 +6281,7 @@ static void selector_set_focus (selector *sr)
 		/* don't select the constant: skip a row */
 		do_sel = gtk_tree_model_iter_next(mod, &iter);
 	    }
-	    while (do_sel) {
+	    while (do_sel && MODEL_CODE(sr->ci)) {
 		gtk_tree_model_get(mod, &iter, COL_ID, &v, -1);
 		if (v > 0) {
 		    break;
@@ -6352,7 +6352,7 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
 	functions_list(sr);
     } else {
 	for (i=0; i<dataset->v; i++) {
-	    if (i == 1 && MODEL_CODE(ci)) {
+	    if (i == 1 && (MODEL_CODE(ci) || VEC_CODE(ci))) {
 		list_append_named_lists(store, &iter);
 	    }
 	    if (list_show_var(i, ci, 0)) {
