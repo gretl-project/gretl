@@ -83,6 +83,13 @@ struct _selector {
     int (*callback)();
 };
 
+enum {
+    COL_ID = 0,
+    COL_LAG,
+    COL_NAME,
+    COL_FLAG
+};
+
 #define EXTRA_LAGS (N_EXTRA - 1)
 
 /* single-equation estimation commands plus some GUI extensions */
@@ -321,13 +328,7 @@ static void selector_set_blocking (selector *sr, int modal)
 
 static int selection_at_max (selector *sr, int nsel)
 {
-    int ret = 0;
-
-    if (TWO_VARS_CODE(sr->ci) && nsel == 2) {
-	ret = 1;
-    } 
-
-    return ret;
+    return (TWO_VARS_CODE(sr->ci) && nsel == 2);
 }
 
 static int sr_get_lag_context (selector *sr, int locus)
@@ -866,10 +867,10 @@ static void set_varflag_from_parent (int v, int lag, GtkTreeModel *mod,
 
     if (gtk_tree_model_get_iter_first(mod, &piter)) {
 	while (1) {
-	    gtk_tree_model_get(mod, &piter, 0, &pv, 1, &plag, -1);
+	    gtk_tree_model_get(mod, &piter, COL_ID, &pv, COL_LAG, &plag, -1);
 	    if (pv == v && plag != lag) {
-		gtk_tree_model_get(mod, &piter, 3, &flag, -1);
-		gtk_list_store_set(GTK_LIST_STORE(mod), iter, 3, flag, -1);
+		gtk_tree_model_get(mod, &piter, COL_FLAG, &flag, -1);
+		gtk_list_store_set(GTK_LIST_STORE(mod), iter, COL_FLAG, flag, -1);
 		done = 1;
 		g_free(flag);
 		break;
@@ -882,7 +883,7 @@ static void set_varflag_from_parent (int v, int lag, GtkTreeModel *mod,
     }
 
     if (!done) {
-	gtk_list_store_set(GTK_LIST_STORE(mod), iter, 3, varflag, -1);
+	gtk_list_store_set(GTK_LIST_STORE(mod), iter, COL_FLAG, varflag, -1);
     }
 }
 
@@ -893,20 +894,20 @@ real_varlist_set_var (int v, int lag, GtkTreeModel *mod, GtkTreeIter *iter)
     GtkListStore *store = GTK_LIST_STORE(mod);
 
     if (lag == 0) {
-	gtk_list_store_set(store, iter, 0, v, 1, 0, 
-			   2, dataset->varname[v], 
+	gtk_list_store_set(store, iter, COL_ID, v, COL_LAG, 0, 
+			   COL_NAME, dataset->varname[v], 
 			   -1);
     } else {
 	char vstr[VNAMELEN + 8];
 
 	sprintf(vstr, "%s(-%d)", dataset->varname[v], lag);
-	gtk_list_store_set(store, iter, 0, v, 1, lag, 
-			   2, vstr, -1);
+	gtk_list_store_set(store, iter, COL_ID, v, COL_LAG, lag, 
+			   COL_NAME, vstr, -1);
     }
 
     if (ncols == 4) {
 	if (lag == 0) {
-	    gtk_list_store_set(store, iter, 3, varflag, -1);
+	    gtk_list_store_set(store, iter, COL_FLAG, varflag, -1);
 	} else {
 	    set_varflag_from_parent(v, lag, mod, iter);
 	}
@@ -928,7 +929,7 @@ varlist_remove_var_full (int v, GtkTreeModel *mod, GtkTreeIter *iter)
     if (gtk_tree_model_get_iter_first(mod, iter)) {
 	last = iter;
 	while (1) {
-	    gtk_tree_model_get(mod, iter, 0, &tv, -1);
+	    gtk_tree_model_get(mod, iter, COL_ID, &tv, -1);
 #if VLDEBUG
 	    fprintf(stderr, "row %d: checking against %d\n", i, tv);
 #endif
@@ -1026,14 +1027,15 @@ static gboolean set_active_var (GtkWidget *widget, GdkEventButton *event,
 	gint varnum, row;
 
 	gtk_tree_model_get_iter(model, &iter, path);
-	gtk_tree_model_get(model, &iter, 0, &varnum, -1);
+	gtk_tree_model_get(model, &iter, COL_ID, &varnum, -1);
 	if (sr != NULL) {
 	    sr->active_var = varnum;
 	}
 	row = tree_path_get_row_number(path);
+	gtk_tree_path_free(path);
+	/* note: the following is used in listbox_drag() */
 	g_object_set_data(G_OBJECT(widget), "active_row",
 			  GINT_TO_POINTER(row));
-	gtk_tree_path_free(path);
     }
 
     return FALSE;
@@ -1044,7 +1046,11 @@ static void list_append_var_simple (GtkListStore *store, GtkTreeIter *iterp, int
     const char *vname = dataset->varname[v];
 
     gtk_list_store_append(store, iterp);    
-    gtk_list_store_set(store, iterp, 0, v, 1, 0, 2, vname, -1);
+    gtk_list_store_set(store, iterp, 
+		       COL_ID, v,
+		       COL_LAG, 0,
+		       COL_NAME, vname,
+		       -1);
 }
 
 static void list_append_var (GtkTreeModel *mod, GtkTreeIter *iter,
@@ -1076,14 +1082,32 @@ static void list_append_var (GtkTreeModel *mod, GtkTreeIter *iter,
     }
 }
 
+static void render_varname (GtkTreeViewColumn *column,
+			    GtkCellRenderer *renderer,
+			    GtkTreeModel *model,
+			    GtkTreeIter *iter,
+			    gpointer p)
+{
+    gint id;
+ 
+    gtk_tree_model_get(model, iter, COL_ID, &id, -1);
+    if (id < 0) {
+	/* g_object_set(renderer, "foreground", "blue", NULL); */
+	g_object_set(renderer, "weight", PANGO_WEIGHT_BOLD, NULL);
+    } else {
+	/* g_object_set(renderer, "foreground", "black", NULL); */
+	g_object_set(renderer, "weight", PANGO_WEIGHT_NORMAL, NULL);
+    }
+}
+
 /* build a new liststore and associated tree view, and pack into the
-   given box */
+   given @box */
 
 static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus) 
 {
     GtkListStore *store; 
     GtkWidget *view, *scroller;
-    GtkCellRenderer *renderer; 
+    GtkCellRenderer *renderer;
     GtkTreeViewColumn *column;
     GtkTreeSelection *select;
     gboolean flagcol = FALSE;
@@ -1091,10 +1115,12 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
     int height = -1;
     
     if (USE_RXLIST(sr->ci) && locus == SR_RVARS2) {
+	/* VECM special, with restricted/unrestricted flag column */
 	store = gtk_list_store_new(4, G_TYPE_INT, G_TYPE_INT, 
 				   G_TYPE_STRING, G_TYPE_STRING);
 	flagcol = TRUE;
     } else {
+	/* ID number, lag, varname */
 	store = gtk_list_store_new(3, G_TYPE_INT, G_TYPE_INT, G_TYPE_STRING);
     }
 
@@ -1108,17 +1134,23 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
     g_object_set(renderer, "ypad", 0, NULL);
     column = gtk_tree_view_column_new_with_attributes(NULL,
 						      renderer,
-						      "text", 2,
+						      "text", 
+						      COL_NAME,
 						      NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);	
+    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column); 
 
     if (flagcol) {
 	column = gtk_tree_view_column_new_with_attributes(NULL,
 							  renderer,
-							  "text", 3,
+							  "text", 
+							  COL_FLAG,
 							  NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
-    }	
+    } else {
+	gtk_tree_view_column_set_cell_data_func(column, renderer, 
+						render_varname, 
+						NULL, NULL);
+    }
 
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
     gtk_tree_view_set_reorderable(GTK_TREE_VIEW(view), FALSE);
@@ -1179,7 +1211,7 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
     return view;
 }
 
-static int non_binary_var_check (int vnum, const char *vname)
+static int binary_var_check (int vnum, const char *vname)
 {
     if (!gretl_isdummy(dataset->t1, dataset->t2, dataset->Z[vnum])) {
 	errbox(_("The variable '%s' is not a 0/1 variable."), vname);
@@ -1197,10 +1229,14 @@ static void real_set_extra_var (GtkTreeModel *model, GtkTreePath *path,
     gint vnum;
     gchar *vname;
 
-    gtk_tree_model_get(model, iter, 0, &vnum, 2, &vname, -1);
+    gtk_tree_model_get(model, iter, COL_ID, &vnum, COL_NAME, &vname, -1);
+
+    if (vnum < 0) {
+	return;
+    }
 
     if (sr->ci == HECKIT || sr->ci == BIPROBIT) {
-	if (non_binary_var_check(vnum, vname)) {
+	if (binary_var_check(vnum, vname)) {
 	    return;
 	}
     } else if (NONPARAM_CODE(sr->ci)) {
@@ -1235,7 +1271,7 @@ static void real_set_third_var (GtkTreeModel *model, GtkTreePath *path,
     gint vnum;
     gchar *vname;
     
-    gtk_tree_model_get(model, iter, 0, &vnum, 2, &vname, -1);
+    gtk_tree_model_get(model, iter, COL_ID, &vnum, COL_NAME, &vname, -1);
     gtk_entry_set_text(GTK_ENTRY(sr->rvars1), vname);
     g_free(vname);
     g_object_set_data(G_OBJECT(sr->rvars1), "data",
@@ -1278,18 +1314,21 @@ static void dual_selection_fix_conflicts (selector *sr, int new_locus)
 	targ = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars1));
     }
 
+    /* construct list of vars in @src */
+
     if (gtk_tree_model_get_iter_first(src, &iter)) {
 	do {
-	    ok = TRUE;
-	    gtk_tree_model_get(src, &iter, 0, &v, -1);
+	    gtk_tree_model_get(src, &iter, COL_ID, &v, -1);
 	    gretl_list_append_term(&srclist, v);
-        } while (ok && gtk_tree_model_iter_next(src, &iter));
+        } while (gtk_tree_model_iter_next(src, &iter));
     }
+
+    /* check @srclist against @targ */
 
     if (srclist != NULL && gtk_tree_model_get_iter_first(targ, &iter)) {
 	do {
 	    ok = TRUE;
-	    gtk_tree_model_get(targ, &iter, 0, &v, -1);
+	    gtk_tree_model_get(targ, &iter, COL_ID, &v, -1);
 	    if (in_gretl_list(srclist, v)) {
 		ok = gtk_list_store_remove(GTK_LIST_STORE(targ), &iter);
 	    }
@@ -1346,7 +1385,7 @@ maybe_insert_or_revise_depvar_lags (selector *sr, int v, int lcontext,
 
 	if (gtk_tree_model_get_iter_first(mod, &iter)) {
 	    do {
-		gtk_tree_model_get(mod, &iter, 0, &modv, -1);
+		gtk_tree_model_get(mod, &iter, COL_ID, &modv, -1);
 		if (modv > 0) {
 		    append = 0;
 		    break;
@@ -1392,7 +1431,7 @@ static void remove_as_indep_var (selector *sr, gint v)
     if (gtk_tree_model_get_iter_first(model, &iter)) {
 	do {
 	    ok = TRUE;
-	    gtk_tree_model_get(model, &iter, 0, &xnum, -1);
+	    gtk_tree_model_get(model, &iter, COL_ID, &xnum, -1);
 	    if (xnum == v) {
 		ok = gtk_list_store_remove(GTK_LIST_STORE(model), &iter);
 	    }
@@ -1430,14 +1469,16 @@ static void np_xvar_cleanup (selector *sr, int newy)
 static int set_dependent_var_from_active (selector *sr)
 {
     gint vnum = sr->active_var;
-    char *vname = dataset->varname[vnum];
+    const char *vname;
 
-    if (sr->depvar == NULL) {
+    if (vnum < 0 || vnum >= dataset->v || sr->depvar == NULL) {
 	return 1;
-    }
+    } 
+
+    vname = dataset->varname[vnum];
 
     if (sr->ci == PROBIT || sr->ci == BIPROBIT) {
-	if (non_binary_var_check(vnum, vname)) {
+	if (binary_var_check(vnum, vname)) {
 	    return 1;
 	}
     }
@@ -1467,10 +1508,14 @@ static void real_set_dependent_var (GtkTreeModel *model, GtkTreePath *path,
     gchar *vname;
     gint vnum;
 
-    gtk_tree_model_get(model, iter, 0, &vnum, 2, &vname, -1);
+    gtk_tree_model_get(model, iter, COL_ID, &vnum, COL_NAME, &vname, -1);
+    
+    if (vnum < 0) {
+	return;
+    }
 
     if (sr->ci == PROBIT || sr->ci == BIPROBIT) {
-	if (non_binary_var_check(vnum, vname)) {
+	if (binary_var_check(vnum, vname)) {
 	    return;
 	}
     }
@@ -1507,7 +1552,7 @@ static void set_right_var_from_main (GtkTreeModel *model, GtkTreePath *path,
     gchar *vnum = NULL;
     int v;
 
-    gtk_tree_model_get(model, iter, 0, &vnum, -1);
+    gtk_tree_model_get(model, iter, COL_ID, &vnum, -1);
 
     rmod = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars1));
     if (rmod == NULL) {
@@ -1561,12 +1606,13 @@ static void select_singleton (selector *sr)
     }
 
     gtk_tree_model_get_iter_first(lmod, &iter);
-    gtk_tree_model_get(lmod, &iter, 0, &v, -1);
+    gtk_tree_model_get(lmod, &iter, COL_ID, &v, -1);
 
     gtk_tree_model_get_iter_first(rmod, &iter);
     gtk_list_store_append(GTK_LIST_STORE(rmod), &iter);
     gtk_list_store_set(GTK_LIST_STORE(rmod), &iter, 
-		       0, v, 1, 0, 2, dataset->varname[v], -1);
+		       COL_ID, v, COL_LAG, 0, 
+		       COL_NAME, dataset->varname[v], -1);
 }
 
 static int varflag_dialog (int v, GtkWidget *parent)
@@ -1639,7 +1685,8 @@ static int rvars1_n_vars (selector *sr)
     return nv;
 }
 
-/* add a variable to the listbox at @locus */
+/* add a variable (or possibly a list of variables) to the listbox 
+   at @locus */
 
 static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter, 
 			      selector *sr, int locus)
@@ -1648,11 +1695,13 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
     GtkTreeModel *model;
     GtkTreeIter iter;
     gchar *vname = NULL;
+    const int *vlist = NULL;
     gint v, xnum;
-    gint already_there = 0;
     gint at_max = 0;
     gint keep_names = 0;
+    int i, addvars = 1;
     int nvars = 0;
+    int err = 0;
 
     w = (locus == SR_RVARS2)? sr->rvars2 : sr->rvars1;
 
@@ -1665,57 +1714,86 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
 	return;
     }
 
-    keep_names = 
-	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->lvars), 
-					  "keep_names"));
+    /* get the 'source' info */
+    gtk_tree_model_get(srcmodel, srciter, COL_ID, &v, COL_NAME, &vname, -1);
 
-    if (keep_names) {
-	gtk_tree_model_get(srcmodel, srciter, 0, &v, 2, &vname, -1);
+    if (v < 0) {
+	/* we should have a gretl list, not a single variable */
+	vlist = get_list_by_name(vname);
+	if (vlist == NULL) {
+	    err = E_DATA;
+	} else {
+	    addvars = vlist[0];
+	}
     } else {
-	gtk_tree_model_get(srcmodel, srciter, 0, &v, -1);
+	keep_names = 
+	    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->lvars), 
+					      "keep_names"));
     }
 
-    nvars = 0;
+    if (err) {
+	gui_errmsg(err);
+	return;
+    } 
 
-    if (gtk_tree_model_get_iter_first(model, &iter)) {
-	do {
-	    nvars++;
-	    if (!at_max && selection_at_max(sr, nvars)) {
+    if (!keep_names) {
+	g_free(vname);
+	vname = NULL;
+    }
+
+    for (i=0; i<addvars && !at_max; i++) {
+	int already_there = 0;
+
+	if (vlist != NULL) {
+	    v = vlist[i+1];
+	}
+
+	/* first check if we're maxed out, or if the variable to
+	   add is already present */
+
+	if (gtk_tree_model_get_iter_first(model, &iter)) {
+	    do {
+		if (i == 0 && selection_at_max(sr, ++nvars)) {
+		    at_max = 1;
+		}
+		if (!at_max && !already_there) {
+		    gtk_tree_model_get(model, &iter, COL_ID, &xnum, -1);
+		    if (xnum == v) {
+			already_there = 1; 
+		    }
+		}
+	    } while (gtk_tree_model_iter_next(model, &iter));
+	}
+
+	if (!already_there && !at_max) {
+	    /* OK to append */
+	    if (keep_names) {
+		int ncols = gtk_tree_model_get_n_columns(model);
+
+		gtk_list_store_append(GTK_LIST_STORE(model), &iter);
+		gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
+				   COL_ID, v, COL_LAG, 0, COL_NAME, vname, -1);
+		if (ncols == 4) {
+		    gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
+				       COL_FLAG, varflag, -1);
+		} 
+		g_free(vname);
+	    } else {
+		if (locus == SR_RVARS2 && USE_RXLIST(sr->ci)) {
+		    if (varflag_dialog(v, sr->dlg) < 0) {
+			return;
+		    }
+		}
+#if VLDEBUG
+		fprintf(stderr, "real_add_generic: calling varlist_insert_var_full\n");
+#endif
+		varlist_insert_var_full(v, model, &iter, sr, locus);
+	    }
+
+	    if (selection_at_max(sr, ++nvars)) {
 		at_max = 1;
 	    }
-	    if (!already_there) {
-		gtk_tree_model_get(model, &iter, 0, &xnum, -1);
-		if (xnum == v) {
-		    already_there = 1; 
-		}
-	    }
-	} while (gtk_tree_model_iter_next(model, &iter));
-    }
-
-    if (!already_there && !at_max) {
-	if (vname != NULL) {
-	    int ncols = gtk_tree_model_get_n_columns(model);
-
-	    gtk_list_store_append(GTK_LIST_STORE(model), &iter);
-	    gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
-			       0, v, 1, 0, 2, vname, -1);
-	    if (ncols == 4) {
-		gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
-				   3, varflag, -1);
-	    } 
-	    g_free(vname);
-	} else {
-	    if (locus == SR_RVARS2 && USE_RXLIST(sr->ci)) {
-		if (varflag_dialog(v, sr->dlg) < 0) {
-		    return;
-		}
-	    }
-#if VLDEBUG
-	    fprintf(stderr, "real_add_generic: calling varlist_insert_var_full\n");
-#endif
-	    varlist_insert_var_full(v, model, &iter, sr, locus);
 	}
-	nvars++;
     }
 
     if (sr->add_button != NULL && at_max) {
@@ -1732,10 +1810,9 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
 	if (sr->ci == ARMA) {
 	    xdiff_button_set_sensitive(sr, TRUE);
 	}
-    }
-
-    if (USE_VECXLIST(sr->ci) || FNPKG_CODE(sr->ci)) {
-	dual_selection_fix_conflicts(sr, locus);
+	if (USE_VECXLIST(sr->ci) || FNPKG_CODE(sr->ci)) {
+	    dual_selection_fix_conflicts(sr, locus);
+	}	
     }
 }
 
@@ -1746,7 +1823,7 @@ static void add_to_rvars1 (GtkTreeModel *model, GtkTreePath *path,
 	/* don't add the regressand to the list of regressors */
 	gint xnum, ynum;
     
-	gtk_tree_model_get(model, iter, 0, &xnum, -1);
+	gtk_tree_model_get(model, iter, COL_ID, &xnum, -1);
 	ynum = selector_get_depvar_number(sr);
 	if (xnum == ynum) {
 	    return;
@@ -1841,7 +1918,7 @@ static void remove_from_right_callback (GtkWidget *w, gpointer data)
 	    if (context) {
 		gint v, lag;
 
-		gtk_tree_model_get(model, &last, 0, &v, 1, &lag, -1);
+		gtk_tree_model_get(model, &last, COL_ID, &v, COL_LAG, &lag, -1);
 		remove_specific_lag(v, lag, context);
 	    }
 	    gtk_list_store_remove(GTK_LIST_STORE(model), &last);
@@ -1905,12 +1982,12 @@ static void maybe_flip_vecm_flag (GtkTreeModel *model, GtkTreePath *path,
     gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "opt"));
     gchar *orig = NULL, *repl = NULL;
 
-    gtk_tree_model_get(model, iter, 3, &orig, -1);
+    gtk_tree_model_get(model, iter, COL_FLAG, &orig, -1);
 
     if (orig != NULL) {
 	repl = (i == 0)? "U" : "R";
 	if (strcmp(orig, repl)) {
-	    gtk_list_store_set(GTK_LIST_STORE(model), iter, 3, repl, -1);
+	    gtk_list_store_set(GTK_LIST_STORE(model), iter, COL_FLAG, repl, -1);
 	}
 	g_free(orig);
     }
@@ -1986,7 +2063,7 @@ static int selection_get_row_info (GtkTreeModel *model,
     if (gtk_tree_model_get_iter_first(model, &iter)) {
 	gint id;
 
-	gtk_tree_model_get(model, &iter, 0, &id, -1);
+	gtk_tree_model_get(model, &iter, COL_ID, &id, -1);
 	if (id == 0) {
 	    /* don't shift const from position 0 */
 	    *rmin = 1;
@@ -2022,7 +2099,7 @@ static void set_selection_from_list (GtkTreeView *view,
     gtk_tree_model_get_iter_first(model, &iter);
 
     while (gtk_tree_model_iter_next(model, &iter) && nsel < list[0]) {
-	gtk_tree_model_get(model, &iter, 0, &id, -1);
+	gtk_tree_model_get(model, &iter, COL_ID, &id, -1);
 	if (in_gretl_list(list, id)) {
 	    gtk_tree_selection_select_iter(sel, &iter);
 	    nsel++;
@@ -2037,19 +2114,23 @@ static int swap_row_content (GtkTreeModel *model, GtkTreeIter *iter0,
     gint id0, id1, l0, l1;
     gchar *s0, *s1;
 
-    gtk_tree_model_get(model, iter0, 0, &id0, 1, &l0, 2, &s0, -1);
-    gtk_tree_model_get(model, iter1, 0, &id1, 1, &l1, 2, &s1, -1);
-    gtk_list_store_set(store, iter0, 0, id1, 1, l1, 2, s1, -1);
-    gtk_list_store_set(store, iter1, 0, id0, 1, l0, 2, s0, -1);
+    gtk_tree_model_get(model, iter0, COL_ID, &id0, COL_LAG, &l0, 
+		       COL_NAME, &s0, -1);
+    gtk_tree_model_get(model, iter1, COL_ID, &id1, COL_LAG, &l1, 
+		       COL_NAME, &s1, -1);
+    gtk_list_store_set(store, iter0, COL_ID, id1, COL_LAG, l1, 
+		       COL_NAME, s1, -1);
+    gtk_list_store_set(store, iter1, COL_ID, id0, COL_LAG, l0, 
+		       COL_NAME, s0, -1);
 
     g_free(s0);
     g_free(s1);
 
     if (flags) {
-	gtk_tree_model_get(model, iter0, 3, &s0);
-	gtk_tree_model_get(model, iter1, 3, &s1);
-	gtk_list_store_set(store, iter0, 3, s1);
-	gtk_list_store_set(store, iter1, 3, s0);
+	gtk_tree_model_get(model, iter0, COL_FLAG, &s0);
+	gtk_tree_model_get(model, iter1, COL_FLAG, &s1);
+	gtk_list_store_set(store, iter0, COL_FLAG, s1);
+	gtk_list_store_set(store, iter1, COL_FLAG, s0);
 
 	g_free(s0);
 	g_free(s1);
@@ -2187,7 +2268,7 @@ static void varlist_insert_const (GtkWidget *w)
     gtk_tree_model_get_iter_first(mod, &iter);
     gtk_list_store_append(GTK_LIST_STORE(mod), &iter);
     gtk_list_store_set(GTK_LIST_STORE(mod), &iter, 
-		       0, 0, 1, 0, 2, "const", -1);
+		       COL_ID, 0, COL_LAG, 0, COL_NAME, "const", -1);
 }
 
 static void clear_vars (GtkWidget *w, selector *sr)
@@ -2275,7 +2356,7 @@ static gint varlist_row_count (selector *sr, int locus, int *realrows)
 	    do {
 		n++;
 		if (lcontext) {
-		    gtk_tree_model_get(mod, &iter, 0, &v, 1, &lag, -1);
+		    gtk_tree_model_get(mod, &iter, COL_ID, &v, COL_LAG, &lag, -1);
 		    if (!is_lag_dummy(v, lag, lcontext)) {
 			*realrows += 1;
 		    }
@@ -2628,7 +2709,7 @@ static void get_rvars1_data (selector *sr, int rows, int context)
     gtk_tree_model_get_iter_first(model, &iter);
 
     for (i=0; i<rows; i++) {
-	gtk_tree_model_get(model, &iter, 0, &rvar, 1, &lag, -1);
+	gtk_tree_model_get(model, &iter, COL_ID, &rvar, COL_LAG, &lag, -1);
 
 	if (is_lag_dummy(rvar, lag, context)) {
 	    gtk_tree_model_iter_next(model, &iter);
@@ -2712,7 +2793,8 @@ static int get_vecm_exog_list (selector *sr, int rows,
 	flag = NULL;
 	lag = 0;
 
-	gtk_tree_model_get(mod, &iter, 0, &v, 1, &lag, 3, &flag, -1);
+	gtk_tree_model_get(mod, &iter, COL_ID, &v, COL_LAG, &lag, 
+			   COL_FLAG, &flag, -1);
 
 	if (flag == NULL) {
 	    err = E_DATA;
@@ -2810,7 +2892,7 @@ static int get_rvars2_data (selector *sr, int rows, int context)
 
     for (i=0; i<rows; i++) {
 
-	gtk_tree_model_get(model, &iter, 0, &exog, 1, &lag, -1);
+	gtk_tree_model_get(model, &iter, COL_ID, &exog, COL_LAG, &lag, -1);
 
 	if (IV_MODEL(sr->ci) && exog == ynum && lag == 0) { /* HECKIT? */
 	    errbox(_("You can't use the dependent variable as an instrument"));
@@ -6190,12 +6272,20 @@ static void selector_set_focus (selector *sr)
 	GtkTreeSelection *sel;
 	GtkTreeIter iter;
 	gboolean do_sel;
+	int v;
 
 	gtk_widget_grab_focus(sr->lvars);
 	do_sel = gtk_tree_model_get_iter_first(mod, &iter);
 	if (do_sel) {
 	    if (!FNPKG_CODE(sr->ci) && list_show_var(0, sr->ci, 0)) {
-		/* don't select the constant */
+		/* don't select the constant: skip a row */
+		do_sel = gtk_tree_model_iter_next(mod, &iter);
+	    }
+	    while (do_sel) {
+		gtk_tree_model_get(mod, &iter, COL_ID, &v, -1);
+		if (v > 0) {
+		    break;
+		}
 		do_sel = gtk_tree_model_iter_next(mod, &iter);
 	    }
 	}
@@ -6203,6 +6293,20 @@ static void selector_set_focus (selector *sr)
 	    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(sr->lvars));
 	    gtk_tree_selection_select_iter(sel, &iter);
 	}
+    }
+}
+
+static void list_append_named_lists (GtkListStore *store,
+				     GtkTreeIter *iterp)
+{
+    int i, n = n_saved_lists();
+    const char *lname;
+
+    for (i=0; i<n; i++) {
+	gtk_list_store_append(store, iterp);
+	lname = get_list_name_by_index(i);
+	gtk_list_store_set(store, iterp, COL_ID, -1, COL_LAG, 0,
+			   COL_NAME, lname, -1);
     }
 }
 
@@ -6248,6 +6352,9 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
 	functions_list(sr);
     } else {
 	for (i=0; i<dataset->v; i++) {
+	    if (i == 1 && MODEL_CODE(ci)) {
+		list_append_named_lists(store, &iter);
+	    }
 	    if (list_show_var(i, ci, 0)) {
 		list_append_var_simple(store, &iter, i);
 	    }
@@ -6421,8 +6528,8 @@ static int add_omit_list (gpointer p, selector *sr)
 	    gretl_model_get_param_name(pmod, dataset, i, pname);
 	    gtk_list_store_append(store, &iter);
 	    gtk_list_store_set(store, &iter, 
-			       0, i, 1, 0,
-			       2, pname,
+			       COL_ID, i, COL_LAG, 0,
+			       COL_NAME, pname,
 			       -1);
 	    nvars++;
 	}
@@ -6443,8 +6550,8 @@ static int add_omit_list (gpointer p, selector *sr)
 		    !var_is_hidden(dataset, i)) {
 		    gtk_list_store_append(store, &iter);
 		    gtk_list_store_set(store, &iter, 
-				       0, i, 1, 0, 
-				       2, dataset->varname[i],
+				       COL_ID, i, COL_LAG, 0, 
+				       COL_NAME, dataset->varname[i],
 				       -1);
 		    nvars++;
 		}
@@ -6453,8 +6560,8 @@ static int add_omit_list (gpointer p, selector *sr)
 	    for (i=1; i<=xlist[0]; i++) {
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter, 
-				   0, xlist[i], 1, 0,
-				   2, dataset->varname[xlist[i]],
+				   COL_ID, xlist[i], COL_LAG, 0,
+				   COL_NAME, dataset->varname[xlist[i]],
 				   -1);
 		nvars++;
 	    }
@@ -6468,8 +6575,8 @@ static int add_omit_list (gpointer p, selector *sr)
 	    for (i=1; i<=xlist[0]; i++) {
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter, 
-				   0, xlist[i], 1, 0,
-				   2, dataset->varname[xlist[i]],
+				   COL_ID, xlist[i], COL_LAG, 0,
+				   COL_NAME, dataset->varname[xlist[i]],
 				   -1);
 		nvars++;
 	    }	    
@@ -6495,8 +6602,8 @@ static void functions_list (selector *sr)
     while ((fnname = next_available_function_name(&idx)) != NULL) {
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter,
-			   0, idx, 1, 0,
-			   2, fnname, -1);
+			   COL_ID, idx, COL_LAG, 0,
+			   COL_NAME, fnname, -1);
     }
 
     g_object_set_data(G_OBJECT(sr->lvars), "keep_names",
@@ -6544,7 +6651,8 @@ add_to_rvars1_from_named_list (selector *sr, const int *list,
 	v = list[i];
 	gtk_list_store_append(GTK_LIST_STORE(mod), &iter);
 	gtk_list_store_set(GTK_LIST_STORE(mod), &iter, 
-			   0, v, 1, 0, 2, dataset->varname[v], -1);
+			   COL_ID, v, COL_LAG, 0, 
+			   COL_NAME, dataset->varname[v], -1);
     }
 }
 
@@ -6918,7 +7026,7 @@ static void selection_strlen (GtkTreeModel *model, GtkTreePath *path,
 {
     gchar *varnum = NULL;
 
-    gtk_tree_model_get(model, iter, 0, &varnum, -1);
+    gtk_tree_model_get(model, iter, COL_ID, &varnum, -1);
     lmkr->len += strlen(varnum) + 1;
     g_free(varnum);
 
@@ -6932,7 +7040,7 @@ static void selection_add_item (GtkTreeModel *model, GtkTreePath *path,
 {
     gchar *varnum = NULL;
 
-    gtk_tree_model_get(model, iter, 0, &varnum, -1);
+    gtk_tree_model_get(model, iter, COL_ID, &varnum, -1);
     strcat(lmkr->liststr, " ");
     strcat(lmkr->liststr, varnum);
     g_free(varnum);
@@ -7192,13 +7300,13 @@ void add_remove_functions_dialog (char **pubnames, int npub,
 		if (idx < 0) continue;
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter,
-				   0, idx, 1, 0,
-				   2, names[i], -1);
+				   COL_ID, idx, COL_LAG, 0,
+				   COL_NAME, names[i], -1);
 		if (lstore != NULL) {
 		    gtk_list_store_append(lstore, &liter);
 		    gtk_list_store_set(lstore, &liter,
-				       0, idx, 1, 0,
-				       2, names[i], -1);
+				       COL_ID, idx, COL_LAG, 0,
+				       COL_NAME, names[i], -1);
 		}
 	    }
 	}
@@ -7716,7 +7824,7 @@ revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
     gtk_tree_model_get_iter_first(mod, &iter);
 
     do {
-	gtk_tree_model_get(mod, &iter, 0, &modv, -1);
+	gtk_tree_model_get(mod, &iter, COL_ID, &modv, -1);
 	if (modv == vlinfo->v) {
 #if VLDEBUG
 	    fprintf(stderr, "revise_var_string: calling varlist_insert_var_full\n");
@@ -7752,7 +7860,7 @@ static int get_laggable_vars (GtkWidget *w, int context, int *list, int *i)
 	do {
 	    int laggable = 1;
 
-	    gtk_tree_model_get(model, &iter, 0, &v, 1, &lag, -1);
+	    gtk_tree_model_get(model, &iter, COL_ID, &v, COL_LAG, &lag, -1);
 
 	    if (v == 0 || !strcmp(dataset->varname[v], "time") ||
 		!strcmp(dataset->varname[v], "timesq")) {

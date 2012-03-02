@@ -327,10 +327,10 @@ static void windata_init (windata_t *vwin, int role, gpointer data)
 
 static void viewer_box_config (windata_t *vwin)
 {
-    vwin->vbox = gtk_vbox_new(FALSE, 1);
-    gtk_box_set_spacing(GTK_BOX(vwin->vbox), 0);
-    gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
-    gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
+    gint spacing = vwin->topmain != NULL ? 1 : 4;
+
+    vwin->vbox = gtk_vbox_new(FALSE, spacing);
+    gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), spacing);
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
     
 #ifndef G_OS_WIN32
@@ -380,9 +380,11 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
     return vwin;
 }
 
+/* experimental "tabbed script editor" material */
+
 static void free_tabwin (tabwin_t *twin)
 {
-    return;
+    return; /* FIXME */
 }
 
 static void destroy_viewer_tab (GtkWidget *w, windata_t *vwin)
@@ -390,17 +392,31 @@ static void destroy_viewer_tab (GtkWidget *w, windata_t *vwin)
     gtk_widget_destroy(vwin->main);
 }
 
-static GtkWidget *
-make_viewer_tab (windata_t *vwin, const gchar *filename)
+static void viewer_tab_add_closer (GtkWidget *tab, windata_t *vwin)
+{
+    GtkWidget *img, *button;
+	
+    img = gtk_image_new_from_stock(GTK_STOCK_CLOSE, 
+				   GTK_ICON_SIZE_MENU);
+    button = gtk_button_new();
+    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    gtk_container_set_border_width(GTK_CONTAINER(button), 0);
+    gtk_container_add(GTK_CONTAINER(button), img);
+    g_signal_connect(button, "clicked", G_CALLBACK(destroy_viewer_tab), 
+		     vwin);
+    gtk_container_add(GTK_CONTAINER(tab), button);
+}
+
+static GtkWidget *make_viewer_tab (tabwin_t *twin, windata_t *vwin, 
+				   const gchar *filename)
 {
     gchar *title = NULL;
     const gchar *p;
     GtkWidget *tab;
     GtkWidget *label;
-    GtkWidget *img;
-    GtkWidget *button;
 
     tab = gtk_hbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(tab), 0);
 
     if (strstr(filename, "script_tmp") != NULL) {
 	title = g_strdup("untitled");
@@ -414,15 +430,10 @@ make_viewer_tab (windata_t *vwin, const gchar *filename)
     gtk_container_add(GTK_CONTAINER(tab), label);
     g_free(title);
 
-    img = gtk_image_new_from_stock(GTK_STOCK_CLOSE, 
-				   GTK_ICON_SIZE_MENU);
-    button = gtk_button_new();
-    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    gtk_container_add(GTK_CONTAINER(button), img);
-    g_signal_connect(button, "clicked", G_CALLBACK(destroy_viewer_tab), 
-		     vwin);
+    if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(twin->tabs)) > 0) {
+	viewer_tab_add_closer(tab, vwin);
+    }
 
-    gtk_container_add(GTK_CONTAINER(tab), button);
     gtk_widget_show_all(tab);
     
     return tab;
@@ -461,8 +472,7 @@ windata_t *gretl_tabbed_viewer_new (int role, const gchar *title,
     /* vertically oriented container */
     twin->vbox = gtk_vbox_new(FALSE, 1);
     gtk_box_set_spacing(GTK_BOX(twin->vbox), 0);
-    gtk_box_set_spacing(GTK_BOX(twin->vbox), 4);
-    gtk_container_set_border_width(GTK_CONTAINER(twin->vbox), 4);
+    gtk_container_set_border_width(GTK_CONTAINER(twin->vbox), 0);
     gtk_container_add(GTK_CONTAINER(twin->main), twin->vbox);
 
     /* hbox to hold menu bar */
@@ -473,7 +483,7 @@ windata_t *gretl_tabbed_viewer_new (int role, const gchar *title,
     twin->tabs = gtk_notebook_new();
     gtk_container_add(GTK_CONTAINER(twin->vbox), twin->tabs);
 
-    tab = make_viewer_tab(vwin, filename);
+    tab = make_viewer_tab(twin, vwin, filename);
     gtk_notebook_append_page(GTK_NOTEBOOK(twin->tabs), vwin->main, tab);
     vwin->topmain = twin->main;
 
@@ -493,6 +503,8 @@ windata_t *gretl_tabbed_viewer_new (int role, const gchar *title,
 
     return vwin;
 }
+
+/* end tabbed editor material */
 
 windata_t *gretl_viewer_new (int role, const gchar *title, 
 			     gpointer data, int record)
