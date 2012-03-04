@@ -56,8 +56,7 @@ TEXSRC = cli.tex \
 	tsfilter.tex \
 	numerical.tex \
 	nonparam.tex \
-	system.tex \
-	gretl-keys.tex
+	system.tex 
 
 BIBSRC = gretl.bib gretl.bst
 
@@ -111,6 +110,9 @@ gretl-guide.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
 
 gretl-ref.tex:
+	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
+
+gretl-keys.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
 
 letter: $(GUIDE) $(REF) $(KBD)
