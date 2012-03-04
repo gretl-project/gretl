@@ -20286,7 +20286,7 @@ fi
 
 
 if test "${build_docs}" = "yes" ; then
-  ac_config_files="$ac_config_files doc/Makefile doc/gretl.sty doc/commands/Makefile doc/tex/Makefile doc/tex_it/Makefile doc/tex_es/Makefile doc/tex_pt/Makefile"
+  ac_config_files="$ac_config_files doc/Makefile doc/gretl.sty doc/gretl-lite.sty doc/commands/Makefile doc/tex/Makefile doc/tex_it/Makefile doc/tex_es/Makefile doc/tex_pt/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -21310,6 +21310,7 @@ do
     "redhat/gretl.spec") CONFIG_FILES="$CONFIG_FILES redhat/gretl.spec" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
     "doc/gretl.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl.sty" ;;
+    "doc/gretl-lite.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl-lite.sty" ;;
     "doc/commands/Makefile") CONFIG_FILES="$CONFIG_FILES doc/commands/Makefile" ;;
     "doc/tex/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex/Makefile" ;;
     "doc/tex_it/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex_it/Makefile" ;;

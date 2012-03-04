@@ -5,8 +5,10 @@ MAKE = @MAKE@
 
 GUIDE = gretl-guide.pdf
 REF = gretl-ref.pdf
+KBD = gretl-keys.pdf
 ALTGUIDE = gretl-guide-a4.pdf
 ALTREF = gretl-ref-a4.pdf
+ALTKBD = gretl-keys-a4.pdf
 
 TEXSRC = cli.tex \
 	criteria.tex \
@@ -54,7 +56,8 @@ TEXSRC = cli.tex \
 	tsfilter.tex \
 	numerical.tex \
 	nonparam.tex \
-	system.tex
+	system.tex \
+	gretl-keys.tex
 
 BIBSRC = gretl.bib gretl.bst
 
@@ -80,6 +83,9 @@ $(REF): gretl-ref.tex links cmdtex functex textables topiclist \
 	bibtex gretl-ref
 	pdflatex $<
 	pdflatex $<
+	
+$(KBD): gretl-keys.tex links $(STYSRC)
+	pdflatex $<
 
 $(ALTGUIDE): gretl-guide-a4.tex links textables date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
@@ -97,6 +103,9 @@ $(ALTREF): gretl-ref-a4.tex links cmdtex functex textables topiclist \
 	bibtex gretl-ref-a4
 	pdflatex $<
 	pdflatex $<
+	
+$(ALTKBD): gretl-keys-a4.tex links $(STYSRC)
+	pdflatex $<
 
 gretl-guide.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
@@ -104,20 +113,24 @@ gretl-guide.tex:
 gretl-ref.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
 
-letter: $(GUIDE) $(REF)
+letter: $(GUIDE) $(REF) $(KBD)
 
-a4: $(ALTGUIDE) $(ALTREF)
+a4: $(ALTGUIDE) $(ALTREF) $(ALTKBD)
 
 gretl-guide-a4.tex: $(docsrc)/tex/gretl-guide.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
 gretl-ref-a4.tex: $(docsrc)/tex/gretl-ref.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
+	
+gretl-keys-a4.tex: $(docsrc)/tex/gretl-keys.tex ../commands/us2a4
+	../commands/us2a4 < $< > $@
 
 .PHONY : links cmdtex functex textables alt onepass refpass topiclist install clean
 
 links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
+	rm -f gretl-lite.sty && ln -s ../gretl-lite.sty ./gretl-lite.sty
 	rm -f figures && ln -s $(docsrc)/figures ./figures
 	for f in $(TEXSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
@@ -157,7 +170,7 @@ bibpass: onepass refpass
 clean:
 	rm -f *.aux *.log *.out *.toc *.pdf *.bbl *.blg
 	rm -f refbody.tex funcbody.tex cmdtopics.tex
-	rm -f gretl-guide-a4.tex gretl-ref-a4.tex
+	rm -f gretl-guide-a4.tex gretl-ref-a4.tex gretl-keys-a4.tex
 	rm -f ../commands/textables ../commands/topiclist_en 
 	rm -f ../commands/cmdtex ../commands/functex
 

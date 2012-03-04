@@ -1,0 +1,37 @@
+\documentclass{article}
+\usepackage{gretl-lite}
+\usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
+
+\begin{document}
+
+\begin{center}
+\textbf{Keyboard shortcuts}
+\end{center}
+
+\textsf{Gretl} offers keyboard shortcuts for various commands. Some of
+these are standard, and are indicated in the menus --- for example,
+\texttt{Ctrl-s} in the main window saves the current dataset, as
+indicated under the \textsf{File} menu. Others are specific to
+\textsf{gretl} and do not appear in the menus; here we document the
+latter.
+
+\begin{center}
+\begin{tabular}{lll}
+\textit{Context} & \textit{Key} & \textit{Effect} \\[6pt]
+Most windows & \texttt{Alt-w} & 
+  pop up a menu listing open \textsf{gretl} windows \\[6pt]
+Main window & \texttt{g} & 
+  open dialog for defining a new variable \\
+ & \texttt{Alt-x} & 
+open dialog for executing a single command
+
+% console: up, down: history
+% console: ctrl-a: start of line
+% console: tab: command completion (or varname)
+% datafiles window: enter: open selected file
+
+
+\end{tabular}
+\end{center}
+
+\end{document}

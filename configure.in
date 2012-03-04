@@ -733,6 +733,7 @@ if test "${build_docs}" = "yes" ; then
   AC_OUTPUT([
     doc/Makefile
     doc/gretl.sty
+    doc/gretl-lite.sty
     doc/commands/Makefile
     doc/tex/Makefile
     doc/tex_it/Makefile
