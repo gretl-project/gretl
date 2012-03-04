@@ -1,0 +1,28 @@
+%% gretl-lite.sty, Allin Cottrell, <2012/03/03>
+
+@FONTREQ@
+\ProvidesPackage{gretl-lite}
+
+\newcommand{\app}[1]{\textsf{#1}}
+\newcommand{\ttsl}[1]{\ttfamily{\textsl{#1}}\normalfont}
+
+\renewcommand{\arraystretch}{1.2}
+
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+                                   {-3ex \@plus -1ex \@minus -.2ex}%
+                                   {.5ex \@plus .2ex}%
+                                   {\normalfont\large\sffamily}}
+
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+                                     {-2.5ex\@plus -1ex \@minus -.2ex}%
+                                     {.2ex \@plus .5ex}%
+                                     {\normalfont\bfseries}}
+
+\renewcommand\subsubsection{\@startsection{subsubsection}{2}{\z@}%
+                                     {-2ex\@plus -1ex \@minus -.2ex}%
+                                     {.2ex \@plus .2ex}%
+                                     {\normalfont\normalsize\itshape}}
+
+                           
+\endinput
+%% end of gretl-lite.sty
