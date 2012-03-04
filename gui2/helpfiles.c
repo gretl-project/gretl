@@ -1882,7 +1882,8 @@ enum {
     GRETL_GUIDE = 1,
     GRETL_REF,
     GNUPLOT_REF,
-    X12A_REF
+    X12A_REF,
+    GRETL_KEYS
 };
 
 static int get_writable_path (char *path, const char *fname, int code)
@@ -1984,6 +1985,10 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	"gretl-ref-it.pdf",
 	"gretl-ref-es.pdf"  
     };
+    const char *kbd_files[] = {
+	"gretl-keys.pdf",
+	"gretl-keys-a4.pdf"
+    };
     const char *fname;
     char *tmp = NULL;
     FILE *fp;
@@ -1998,6 +2003,9 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	fname = guide_files[i];
     } else if (code == GRETL_REF) {
 	fname = ref_files[i];
+    } else if (code == GRETL_KEYS) {
+	if (i > 1) i = 1; /* no translations */
+	fname = kbd_files[i];
     } else if (code == GNUPLOT_REF) {
 	fname = "gnuplot.pdf";
     } else if (code == X12A_REF) {
@@ -2078,11 +2086,14 @@ void display_pdf_help (GtkAction *action)
     int err, code = GRETL_GUIDE;
 
     if (action != NULL) {
-	if (strcmp(gtk_action_get_name(action), "UserGuide")) {
-	    /* PDF command ref wanted */
+	if (!strcmp(gtk_action_get_name(action), "PDFCmdRef")) {
 	    code = GRETL_REF;
-	} 
+	} else if (!strcmp(gtk_action_get_name(action), "KbdRef")) {
+	    code = GRETL_KEYS;
+	}
     }
+
+    fprintf(stderr, "display_pdf_help: code = %d\n", code);
 
     err = find_or_download_pdf(code, get_manpref(), fname);
 

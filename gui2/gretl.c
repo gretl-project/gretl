@@ -1607,6 +1607,7 @@ GtkActionEntry main_entries[] = {
     { "FuncRef",   NULL, N_("_Function reference"), NULL, NULL, G_CALLBACK(genr_funcs_ref) },
     { "UserGuide", GRETL_STOCK_PDF, N_("_User's guide"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "PDFCmdRef", GRETL_STOCK_PDF, N_("_Command reference"), NULL, NULL, G_CALLBACK(display_pdf_help) },
+    { "KbdRef", GRETL_STOCK_PDF, N_("_Keyboard shortcuts"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "UpdateCheck", GTK_STOCK_NETWORK, N_("Check for _updates"), NULL, NULL, G_CALLBACK(update_query) },
     { "SFAddons", NULL, N_("Check for _addons"), NULL, NULL, G_CALLBACK(show_files) },
     { "About", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL, G_CALLBACK(about_dialog) }

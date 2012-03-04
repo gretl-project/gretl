@@ -4,32 +4,48 @@
 
 \begin{document}
 
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+\thispagestyle{empty}
+
 \begin{center}
-\textbf{Keyboard shortcuts}
+{\large \textbf{Keyboard shortcuts}}
 \end{center}
 
-\textsf{Gretl} offers keyboard shortcuts for various commands. Some of
-these are standard, and are indicated in the menus --- for example,
+\textsf{Gretl} provides keyboard shortcuts for various commands. Some of
+these are standard and are indicated in the menus; for example
 \texttt{Ctrl-s} in the main window saves the current dataset, as
 indicated under the \textsf{File} menu. Others are specific to
-\textsf{gretl} and do not appear in the menus; here we document the
-latter.
+\textsf{gretl} and do not appear in the menus; these are documented
+below.
 
 \begin{center}
-\begin{tabular}{lll}
+\begin{tabular}{p{.2\textwidth}lp{.6\textwidth}}
 \textit{Context} & \textit{Key} & \textit{Effect} \\[6pt]
+
 Most windows & \texttt{Alt-w} & 
   pop up a menu listing open \textsf{gretl} windows \\[6pt]
+
 Main window & \texttt{g} & 
   open dialog for defining a new variable \\
- & \texttt{Alt-x} & 
-open dialog for executing a single command
+ & \texttt{h} & open command reference \\
+ & \texttt{c} & open the console \\
+ & \texttt{e} & edit properties of the selected series \\
+ & \texttt{t} & time-series plot of selected series (if applicable) \\
+ & \texttt{Alt-x} & open dialog for executing a single command \\
+ & Ctrl-v & paste data from clipboard (CSV or similar) \\
+ & \texttt{Delete} & delete the selected series \\[6pt]
 
-% console: up, down: history
-% console: ctrl-a: start of line
-% console: tab: command completion (or varname)
-% datafiles window: enter: open selected file
+Graph window & \texttt{q} & close \\
+ & \texttt{s} & save to session \\
+ & \texttt{z} & start zooming \\
+ & \texttt{a} & render audio graph (if supported) \\[6pt]
 
+Data files window & \texttt{Enter} & Open the selected file \\[6pt]
+
+Console window & \texttt{Up} & Navigate the command history, back \\
+ & \texttt{Down} & Navigate the command history, forward \\
+ & \texttt{Tab} & Command completion \\
 
 \end{tabular}
 \end{center}

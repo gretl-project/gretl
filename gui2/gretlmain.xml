@@ -290,6 +290,7 @@
       <separator/>
       <menuitem action="UserGuide"/>
       <menuitem action="PDFCmdRef"/>
+      <menuitem action="KbdRef"/>
       <separator/>
       <menuitem action="UpdateCheck"/>
       <menuitem action="SFAddons"/>
