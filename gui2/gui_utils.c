@@ -57,13 +57,12 @@
 #include "selector.h"
 #include "guiprint.h"
 #include "fncall.h"
+#include "tabwin.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
 # include "gretlwin32.h"
 #endif
-
-#define TABTEST 0
 
 static void set_up_model_view_menu (GtkWidget *window, windata_t *vwin);
 static void add_system_menu_items (windata_t *vwin, int vecm);
@@ -1752,6 +1751,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
 {
     windata_t *vwin;
     ViewbarFlags vflags = 0;
+    int use_tabs = use_tabbed_editor();
     FILE *fp;
 
     /* first check that we can open the specified file */
@@ -1763,21 +1763,17 @@ view_file_with_title (const char *filename, int editable, int del_file,
 	fclose(fp);
     }
 
-    if (given_title != NULL) {
+    if (role == EDIT_SCRIPT && use_tabs) {
+	vwin = editor_tab_new(filename);
+    } else if (given_title != NULL) {
 	/* this is the case when editing the plot commands for
 	   a graph saved as a session icon */
 	vwin = gretl_viewer_new(role, given_title, NULL, 1);
     } else {
 	gchar *title = make_viewer_title(role, filename);
 
-#if TABTEST
-	vwin = gretl_tabbed_viewer_new(role, _("gretl: script manager"), 
-				       filename, NULL,
-				       record_on_winstack(role));
-#else
 	vwin = gretl_viewer_new(role, (title != NULL)? title : filename, 
 				NULL, record_on_winstack(role));
-#endif
 	g_free(title);
     }
 
@@ -1795,7 +1791,10 @@ view_file_with_title (const char *filename, int editable, int del_file,
 	vflags |= VIEWBAR_HAS_TEXT;
     }
 
-    vwin_add_viewbar(vwin, vflags);
+    if (vwin->mbar == NULL) {
+	/* not handled already */
+	vwin_add_viewbar(vwin, vflags);
+    }
 
     if (textview_use_highlighting(role) || editable) {
 	create_source(vwin, hsize, vsize, editable);
@@ -1831,7 +1830,11 @@ view_file_with_title (const char *filename, int editable, int del_file,
 			 G_CALLBACK(delete_file), (gpointer) fname);
     }
 
-    gtk_widget_show_all(vwin_toplevel(vwin));
+    if (vwin->topmain != NULL) {
+	show_tabbed_viewer(vwin->main);
+    } else {
+	gtk_widget_show_all(vwin->main);
+    }
 
     g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
 		     G_CALLBACK(text_popup_handler), vwin);

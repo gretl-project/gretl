@@ -79,6 +79,7 @@ static int manpref;
 static int autoicon = 1;
 static int session_prompt = 1;
 static int keep_folder = 1;
+static int tabbed_editor;
 char gpcolors[64];
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
@@ -158,6 +159,8 @@ RCVAR rc_vars[] = {
     { "shellok", N_("Allow shell commands"), NULL, &shellok, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "autoicon", N_("Show icon view automatically"), NULL, &autoicon, 
+      BOOLSET, 0, TAB_MAIN, NULL },
+    { "tabedit", N_("Script editor uses tabs"), NULL, &tabbed_editor, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "session_prompt", N_("Prompt to save session"), NULL, &session_prompt, 
       BOOLSET, 0, TAB_MAIN, NULL },
@@ -299,6 +302,11 @@ int autoicon_on (void)
     } else {
 	return 0;
     }
+}
+
+int use_tabbed_editor (void)
+{
+    return tabbed_editor;
 }
 
 int session_prompt_on (void)

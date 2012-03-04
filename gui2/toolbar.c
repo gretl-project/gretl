@@ -32,6 +32,7 @@
 #include "dlgutils.h"
 #include "fileselect.h"
 #include "winstack.h"
+#include "tabwin.h"
 #include "toolbar.h"
 
 #include "usermat.h"
@@ -582,6 +583,11 @@ static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 static void delete_file_viewer (GtkWidget *widget, windata_t *vwin) 
 {
     gint resp = 0;
+
+    if (vwin->topmain != NULL) {
+	maybe_destroy_tabwin(vwin->topmain);
+	return;
+    }
 
     if (vwin_is_editing(vwin) && vwin_content_changed(vwin)) {
 	resp = query_save_text(NULL, NULL, vwin);

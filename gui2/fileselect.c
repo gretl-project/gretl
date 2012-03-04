@@ -330,14 +330,11 @@ static void filesel_save_prn_buffer (PRN *prn, const char *fname)
 
 static void filesel_open_script (const char *fname, windata_t *vwin)
 {
-    if (vwin != NULL) {
-	/* we're called from an existing script editor window */
-	if (vwin->topmain != NULL) {
-	    fprintf(stderr, "Should add a tab here!\n");
-	} else {
-	    strcpy(tryfile, fname);
-	    sourceview_insert_file(vwin, fname);
-	}
+    if (vwin != NULL && vwin->topmain == NULL) {
+	/* we're called from an existing (and untabbed) script 
+	   editor window */
+	strcpy(tryfile, fname);
+	sourceview_insert_file(vwin, fname);
     } else if (has_suffix(fname, ".R")) {
 	view_file(fname, 1, 0, 78, 370, EDIT_R);
     } else if (has_suffix(fname, ".plt")) {

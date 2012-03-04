@@ -39,6 +39,8 @@ GtkWidget *match_db_window_by_filename (const char *fname);
 void maybe_close_window_for_data (const gpointer p,
 				  GretlObjType otype);
 
+windata_t *vwin_new (int role, gpointer data);
+
 int vwin_on_stack (const windata_t *vwin);
 
 int highest_numbered_variable_in_winstack (void);
@@ -50,10 +52,6 @@ windata_t *
 gretl_viewer_new_with_parent (windata_t *parent, int role, 
 			      const gchar *title, 
 			      gpointer data, int record);
-
-windata_t *gretl_tabbed_viewer_new (int role, const gchar *title, 
-				    const gchar *tabtitle, 
-				    gpointer data, int record);
 
 windata_t *gretl_browser_new (int role, const gchar *title,
 			      int record);

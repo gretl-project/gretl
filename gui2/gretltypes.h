@@ -51,7 +51,6 @@ typedef enum {
 } windata_flags;
 
 typedef struct windata_t_ windata_t;
-typedef struct tabwin_t_  tabwin_t;
 
 #include <gtksourceview/gtksourceview.h>
 
@@ -76,12 +75,6 @@ struct windata_t_ {
     windata_flags flags;
     char fname[MAXLEN];
     GtkSourceBuffer *sbuf;
-};
-
-struct tabwin_t_ {
-    GtkWidget *main;      /* top-level GTK window */
-    GtkWidget *vbox;      /* vertical container */
-    GtkWidget *tabs;      /* notebook for tabs */
 };
 
 typedef struct dialog_opts_ dialog_opts;
