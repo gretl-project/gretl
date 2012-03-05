@@ -1427,7 +1427,10 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gretl_remove(vwin->fname);
 	}
 
-	winstack_remove(vwin->main);
+	if (vwin->topmain == NULL) {
+	    winstack_remove(vwin->main);
+	}
+
 	free(vwin);
     }
 }
@@ -1751,7 +1754,6 @@ view_file_with_title (const char *filename, int editable, int del_file,
 {
     windata_t *vwin;
     ViewbarFlags vflags = 0;
-    int use_tabs = use_tabbed_editor();
     FILE *fp;
 
     /* first check that we can open the specified file */
@@ -1763,7 +1765,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
 	fclose(fp);
     }
 
-    if (role == EDIT_SCRIPT && use_tabs) {
+    if (role == EDIT_SCRIPT && use_tabbed_editor()) {
 	vwin = editor_tab_new(filename);
     } else if (given_title != NULL) {
 	/* this is the case when editing the plot commands for
@@ -1791,10 +1793,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
 	vflags |= VIEWBAR_HAS_TEXT;
     }
 
-    if (vwin->mbar == NULL) {
-	/* not handled already */
-	vwin_add_viewbar(vwin, vflags);
-    }
+    vwin_add_viewbar(vwin, vflags);
 
     if (textview_use_highlighting(role) || editable) {
 	create_source(vwin, hsize, vsize, editable);

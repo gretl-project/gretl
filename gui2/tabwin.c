@@ -35,7 +35,6 @@ static tabwin_t *tabedit;
 
 static void tabedit_destroy (GtkWidget *w, gpointer data)
 {
-    /* FIXME more stuff needed here? */
     free(tabedit);
     tabedit = NULL;
 }
@@ -94,7 +93,7 @@ static void viewer_tab_hide_closer (GtkWidget *tab)
     }
 }
 
-/* active the tab's closer button */
+/* activate the tab's closer button */
 
 static void viewer_tab_show_closer (GtkWidget *tab)
 {
@@ -105,31 +104,59 @@ static void viewer_tab_show_closer (GtkWidget *tab)
     }
 }
 
-/* callback for tab-specific close button */
+/* callback for tab-specific close button: this should be
+   invoked only if there's at least one tab left after
+   trashing the selected one
+*/
 
-static void editor_tab_destroy (GtkWidget *w, GtkWidget *vmain)
+static void editor_tab_destroy (GtkWidget *w, windata_t *vwin)
 {
     GtkNotebook *notebook = GTK_NOTEBOOK(tabedit->tabs);
-    gint pg = gtk_notebook_page_num(notebook, vmain);
+    gint pg = gtk_notebook_page_num(notebook, vwin->main);
     gint np = gtk_notebook_get_n_pages(notebook);
 
-    if (np == 1) {
-	/* shouldn't happen */
-	gtk_widget_destroy(tabedit->main);
-    } else {
-	gtk_notebook_remove_page(notebook, pg);
-	if (np == 2) {
-	    GtkWidget *child = gtk_notebook_get_nth_page(notebook, 0);
-	    GtkWidget *tab = gtk_notebook_get_tab_label(notebook, child);
+    /* note: vwin->mbar is packed under tabedit, so it will not
+       get destroyed automatically when the page is removed
+    */
+    if (tabedit->mbar == vwin->mbar) {
+	tabedit->mbar = NULL;
+    }
+    gtk_widget_destroy(vwin->mbar);
+    vwin->mbar = NULL;
 
-	    viewer_tab_hide_closer(tab);
-	}
+    gtk_notebook_remove_page(notebook, pg);
+
+    if (np == 2) {
+	GtkWidget *page = gtk_notebook_get_nth_page(notebook, 0);
+	GtkWidget *tab = gtk_notebook_get_tab_label(notebook, page);
+
+	viewer_tab_hide_closer(tab);
+    }
+}
+
+/* avoid excessive padding in a tab's close button */
+
+static void no_button_padding (GtkWidget *w)
+{
+    static int style_done;
+
+    gtk_widget_set_name(w, "closer");
+
+    if (!style_done) {
+	gtk_rc_parse_string("style \"closer-style\"\n{\n"
+			    "  GtkWidget::focus-padding = 0\n"
+			    "  GtkWidget::focus-line-width = 0\n"
+			    "  xthickness = 0\n"
+			    "  ythickness = 0\n"
+			    "}\n"
+			    "widget \"*.closer\" style \"closer-style\"");
+	style_done = 1;
     }
 }
 
 /* put a tab-specific close button next to the tab's label */
 
-static void viewer_tab_add_closer (GtkWidget *tab, GtkWidget *vmain)
+static void viewer_tab_add_closer (GtkWidget *tab, windata_t *vwin)
 {
     GtkWidget *img, *button;
 	
@@ -138,12 +165,15 @@ static void viewer_tab_add_closer (GtkWidget *tab, GtkWidget *vmain)
     button = gtk_button_new();
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
     gtk_container_set_border_width(GTK_CONTAINER(button), 0);
+    no_button_padding(button);
     gtk_container_add(GTK_CONTAINER(button), img);
     g_signal_connect(button, "clicked", G_CALLBACK(editor_tab_destroy), 
-		     vmain);
+		     vwin);
     gtk_container_add(GTK_CONTAINER(tab), button);
     g_object_set_data(G_OBJECT(tab), "button", button);
 }
+
+/* add tab with filename and closer button */
 
 static GtkWidget *make_viewer_tab (tabwin_t *twin, 
 				   windata_t *vwin, 
@@ -155,7 +185,7 @@ static GtkWidget *make_viewer_tab (tabwin_t *twin,
     GtkWidget *tab;
     GtkWidget *label;
 
-    tab = gtk_hbox_new(FALSE, 0);
+    tab = gtk_hbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(tab), 0);
 
     if (strstr(filename, "script_tmp") != NULL) {
@@ -170,7 +200,7 @@ static GtkWidget *make_viewer_tab (tabwin_t *twin,
     gtk_container_add(GTK_CONTAINER(tab), label);
     g_free(title);
 
-    viewer_tab_add_closer(tab, vwin->main);
+    viewer_tab_add_closer(tab, vwin);
     gtk_widget_show_all(tab);
 
     if (starting) {
@@ -191,38 +221,28 @@ static void tab_box_config (windata_t *vwin)
 #endif
 }
 
-#if 0
-static void retarget_toolbar (void)
-{
-    GtkToolbar *tbar = GTK_TOOLBAR(tabedit->tbar);
-    GtkToolItem *item;
-    int i, n;
-    
-    n = gtk_toolbar_get_n_items(tbar);
-
-    for (i=0; i<n; i++) {
-	item = gtk_toolbar_get_nth_item(tbar, i);
-	g_signal_connect(item, "clicked", func, data);
-    }
-}
-#endif
-
-/* on switching the current page, connect the new vwin
-   to tabedit's toolbar 
+/* on switching the current page, put the new page's
+   toolbar into place in tabedit (and hide the old
+   one)
 */
 
 static gboolean tabedit_switch_page (GtkNotebook *tabs,
-				     gpointer arg1,
-				     gint newpage,
+				     GtkNotebook *page,
+				     gint pgnum,
 				     tabwin_t *twin)
 {
-    GtkWidget *w = gtk_notebook_get_nth_page(tabs, newpage);
-    windata_t *vwin;
+    if (page != NULL) {
+	windata_t *vwin;
 
-    if (w != NULL) {
-	vwin = g_object_get_data(G_OBJECT(w), "vwin");
+	vwin = g_object_get_data(G_OBJECT(page), "vwin");
 	if (vwin != NULL) {
-	    vwin->mbar = tabedit->mbar;
+	    if (tabedit->mbar != NULL) {
+		gtk_widget_hide(tabedit->mbar);
+	    }
+	    tabedit->mbar = vwin->mbar;
+	    if (tabedit->mbar != NULL) {
+		gtk_widget_show(tabedit->mbar);
+	    }
 	}
     }
 
@@ -310,7 +330,7 @@ windata_t *editor_tab_new (const char *filename)
     tab_box_config(vwin);
 
     if (starting) {
-	add_window_list_item(tabedit->main, EDIT_SCRIPT); /* FIXME */
+	add_window_list_item(tabedit->main, EDIT_SCRIPT); /* FIXME? */
     } 
 
     return vwin;
@@ -321,8 +341,12 @@ void tabwin_register_toolbar (windata_t *vwin)
     GtkWidget *hbox;
 
     hbox = g_object_get_data(G_OBJECT(vwin->topmain), "hbox");
+    if (tabedit->mbar != NULL) {
+	gtk_widget_hide(tabedit->mbar);
+    }
     gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, TRUE, TRUE, 0);
     tabedit->mbar = vwin->mbar;
+    gtk_widget_show_all(tabedit->mbar);
 }
 
 void show_tabbed_viewer (GtkWidget *vmain)
@@ -345,7 +369,13 @@ void show_tabbed_viewer (GtkWidget *vmain)
 	}
     }
 
+#if GTK_MAJOR_VERSION == 2 && GTK_MAJOR_VERSION < 18
+    if (!GTK_WIDGET_VISIBLE(tabedit->main)) {
+	gtk_widget_show_all(tabedit->main);
+    }
+#else
     if (!gtk_widget_get_visible(tabedit->main)) {
 	gtk_widget_show_all(tabedit->main);
     }
+#endif
 }

@@ -1786,6 +1786,8 @@ static const gchar *window_list_icon (int role)
 	id = GTK_STOCK_EXECUTE;
     } else if (role == OPEN_SESSION) {
 	id = GRETL_STOCK_ICONS;
+    } else if (role == PRINT) {
+	id = GTK_STOCK_JUSTIFY_LEFT;
     }
 
     return id;

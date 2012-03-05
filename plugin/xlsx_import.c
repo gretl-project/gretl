@@ -252,14 +252,12 @@ static int letter_val (char c)
 }
 
 /* Given an Excel cell reference such as "AB65" split it out
-   into 1-based row and column indices. If @xinfo is not
-   NULL we keep a running record of the maxima of these 
-   indices in xinfo->maxrow and xinfo->maxcol.
+   into 1-based row and column indices.
 */
 
 static int xlsx_cell_get_coordinates (const char *s, 
-				      xlsx_info *xinfo,
-				      int *row, int *col)
+				      int *row, 
+				      int *col)
 {
     char colref[8];
     int i, k, v;
@@ -289,15 +287,6 @@ static int xlsx_cell_get_coordinates (const char *s,
 	}
 	i--;
     }
-
-    if (!err && xinfo != NULL) {
-	if (*row > xinfo->maxrow) {
-	    xinfo->maxrow = *row;
-	}
-	if (*col > xinfo->maxcol) {
-	    xinfo->maxcol = *col;
-	} 
-    }   
 	
     return err;
 }
@@ -412,7 +401,7 @@ static int xlsx_var_index (xlsx_info *xinfo, int col)
 	i++; /* skip the constant in position 0 */
     }
 
-#if XDEBUG
+#if XDEBUG > 2
     fprintf(stderr, "xlsx_var_index: labels = %d, col = %d, i = %d\n", 
 	    (xinfo->flags & BOOK_OBS_LABELS)? 1 : 0, col, i);
 #endif
@@ -428,7 +417,7 @@ static int xlsx_obs_index (xlsx_info *xinfo, int row)
 	t--; /* the first row holds varnames */
     }
 
-#if XDEBUG
+#if XDEBUG > 2
     fprintf(stderr, "xlsx_obs_index: varnames = %d, row = %d, t = %d\n", 
 	    (xinfo->flags & BOOK_AUTO_VARNAMES)? 0 : 1, row, t);
 #endif
@@ -494,7 +483,7 @@ static void xlsx_maybe_handle_formula (xlsx_info *xinfo,
 		return;
 	    } 
 
-	    err = xlsx_cell_get_coordinates(cref, NULL, &st, &col);
+	    err = xlsx_cell_get_coordinates(cref, &st, &col);
 	    if (err || col != xinfo->xoffset + 1) {
 		return;
 	    }
@@ -518,6 +507,17 @@ static void xlsx_maybe_handle_formula (xlsx_info *xinfo,
     }
 }
 
+static void xlsx_set_dims (xlsx_info *xinfo, int r, int c)
+{
+    if (r > xinfo->maxrow) {
+	xinfo->maxrow = r;
+    }
+
+    if (c > xinfo->maxcol) {
+	xinfo->maxcol = c;
+    } 
+}
+
 /* Read the cells in a given row: the basic info we want from
    each cell is its reference ("r"), e.g. "A2"; its type
    ("t"), e.g. "s", if present; and its value, which is
@@ -529,12 +529,15 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
     PRN *myprn = NULL;
     xmlNodePtr val;
     char *tmp;
-    int row, col;
+    int row = -1, col = -1;
+    int pass, empty = 1;
     int err = 0;
+
+    pass = xinfo->dset == NULL ? 1 : 2;
 
 #if XDEBUG
     myprn = prn;
-    pprintf(myprn, "*** Reading row...\n");    
+    pprintf(myprn, "*** Reading row (pass %d)...\n", pass);
 #endif
 
     cur = cur->xmlChildrenNode;
@@ -558,11 +561,15 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		break;
 	    } 
 
-	    err = xlsx_cell_get_coordinates(cref, xinfo, &row, &col);
+	    err = xlsx_cell_get_coordinates(cref, &row, &col);
 	    if (err) {
 		pprintf(myprn, ": couldn't find coordinates\n", row, col);
 	    } else {
 		pprintf(myprn, "(%d, %d)", row, col);
+	    }
+
+	    if (pass == 2 && row > xinfo->maxrow) {
+		goto skipit;
 	    }
 
 	    tmp = (char *) xmlGetProp(cur, (XUC) "t");
@@ -614,7 +621,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 	    if (err) {
 		pprintf(myprn, ": (%s) error", cref);
 	    } else if (!gotv) {
-		pprintf(myprn, ": (%s) no data", cref);
+		pprintf(myprn, ": (%s) no data value", cref);
 		if (gotf) {
 		    pprintf(myprn, "; formula = '%s'\n", formula);
 		} else {
@@ -643,10 +650,24 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		}
 	    }
 
+	    if (gotv || gotf) {
+		empty = 0;
+	    }
+
+	skipit:
+
 	    free(cref);
 	    free(formula);
 	}
 	cur = cur->next;
+    }
+
+    if (!err) {
+	if (empty) {
+	    pputs(myprn, " xlsx_read_row: empty row!\n");
+	} else if (pass == 1) {
+	    xlsx_set_dims(xinfo, row, col);
+	}
     }
 
     if (err) {
@@ -1039,7 +1060,7 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo,
 	fprintf(stderr, "Found these worksheets:\n");
 	for (i=0; i<xinfo->n_sheets; i++) {
 	    sname = xinfo->sheetnames[i];
-	    fprintf(stderr, "%d: %s (%s)\n", i+1, sname, xinfo->filenames[i]);
+	    fprintf(stderr, "%d: '%s' (%s)\n", i+1, sname, xinfo->filenames[i]);
 	    if (have_insheet_name) {
 		if (insheet_idx < 0 && !strcmp(insheet, sname)) {
 		    /* found the name we were looking for */
@@ -1163,6 +1184,10 @@ static void xlsx_dates_check (DATASET *dset)
     int t, maybe_dates = 1;
     int d, dmin = 0, dmax = 0;
 
+#if XDEBUG
+    fprintf(stderr, "xlsx_dates_check: starting\n");
+#endif
+
     /* We're dealing here with the case where our prior heuristics
        suggest we got an "observations" column, yet the values we
        found there were numeric (and we converted them to strings).
@@ -1177,6 +1202,9 @@ static void xlsx_dates_check (DATASET *dset)
 
     for (t=0; t<dset->n && maybe_dates; t++) {
 	if (!integer_string(dset->S[t])) {
+#if XDEBUG
+	    fprintf(stderr, "S[%d] = '%s', giving up\n", t, dset->S[t]);
+#endif
 	    maybe_dates = 0;
 	} else if (t == 0) {
 	    if (!strcmp(dset->S[0], "1")) {
@@ -1194,15 +1222,15 @@ static void xlsx_dates_check (DATASET *dset)
 	}
     }
 
-    if (dmax < 0) {
+    if (maybe_dates && dmax < 0) {
 	/* allow for the possibility that time runs backwards */
 	int tmp = dmin;
 
 	dmin = -dmax;
 	dmax = -tmp;
+	fprintf(stderr, "xlsx_dates_check: diffmin=%d, diffmax=%d\n", 
+		dmin, dmax);
     }
-
-    fprintf(stderr, "xlsx_dates_check: dmin=%d, dmax=%d\n", dmin, dmax);
 
     if (maybe_dates) {
 	if (dmin >= 364 && dmax <= 365) {
@@ -1220,6 +1248,10 @@ static void xlsx_dates_check (DATASET *dset)
 	    maybe_dates = 0;
 	} 
     }
+
+#if XDEBUG
+    fprintf(stderr, "xlsx_dates_check: maybe_dates = %d\n", maybe_dates);
+#endif
 
     if (maybe_dates) {
 	char datestr[OBSLEN];

@@ -275,6 +275,7 @@ GUISRC = about.c \
 	session.c \
 	settings.c \
 	ssheet.c \
+	tabwin.c \
 	textbuf.c \
 	textutil.c \
 	toolbar.c \

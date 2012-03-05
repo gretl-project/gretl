@@ -160,10 +160,8 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_MAIN, NULL },
     { "autoicon", N_("Show icon view automatically"), NULL, &autoicon, 
       BOOLSET, 0, TAB_MAIN, NULL },
-#if 0 /* not yet */   
     { "tabedit", N_("Script editor uses tabs"), NULL, &tabbed_editor, 
       BOOLSET, 0, TAB_MAIN, NULL },
-#endif      
     { "session_prompt", N_("Prompt to save session"), NULL, &session_prompt, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "oxsupport", N_("Enable Ox support"), NULL, &ox_support, 

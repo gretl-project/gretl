@@ -1092,10 +1092,8 @@ static void render_varname (GtkTreeViewColumn *column,
  
     gtk_tree_model_get(model, iter, COL_ID, &id, -1);
     if (id < 0) {
-	/* g_object_set(renderer, "foreground", "blue", NULL); */
 	g_object_set(renderer, "weight", PANGO_WEIGHT_BOLD, NULL);
     } else {
-	/* g_object_set(renderer, "foreground", "black", NULL); */
 	g_object_set(renderer, "weight", PANGO_WEIGHT_NORMAL, NULL);
     }
 }
