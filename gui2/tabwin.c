@@ -191,6 +191,22 @@ static void tab_box_config (windata_t *vwin)
 #endif
 }
 
+#if 0
+static void retarget_toolbar (void)
+{
+    GtkToolbar *tbar = GTK_TOOLBAR(tabedit->tbar);
+    GtkToolItem *item;
+    int i, n;
+    
+    n = gtk_toolbar_get_n_items(tbar);
+
+    for (i=0; i<n; i++) {
+	item = gtk_toolbar_get_nth_item(tbar, i);
+	g_signal_connect(item, "clicked", func, data);
+    }
+}
+#endif
+
 /* on switching the current page, connect the new vwin
    to tabedit's toolbar 
 */
