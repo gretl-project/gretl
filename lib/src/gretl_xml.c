@@ -166,7 +166,7 @@ static char *simple_fname (char *dest, const char *src)
     return dest;
 }
 
-static int alt_puts (const char *s, FILE *fp, gzFile *fz)
+static int alt_puts (const char *s, FILE *fp, gzFile fz)
 {
     int ret = 0;
 
@@ -1439,7 +1439,7 @@ int gretl_write_matrix_as_gdt (const char *fname,
 			       const char **varnames, 
 			       const char **labels)
 {
-    gzFile *fz = Z_NULL;
+    gzFile fz = Z_NULL;
     char datname[MAXLEN];
     void *handle = NULL;
     char *xmlbuf = NULL;
@@ -1556,7 +1556,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 		     int progress)
 {
     FILE *fp = NULL;
-    gzFile *fz = Z_NULL;
+    gzFile fz = Z_NULL;
     int gz = (opt & OPT_Z);
     int tsamp = dset->t2 - dset->t1 + 1;
     int *pmax = NULL;

@@ -238,7 +238,7 @@ static int untar (gzFile in)
 
 int gretl_untar (const char *fname)
 {
-    gzFile *fz = gzopen(fname, "rb");
+    gzFile fz = gzopen(fname, "rb");
     int err = 0;
 
     if (fz == NULL) {
