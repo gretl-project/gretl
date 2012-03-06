@@ -603,7 +603,7 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 		vwin_save_callback(NULL, vwin);
 		return TRUE;
 	    } else if (upkey == GDK_Q || upkey == GDK_W) {
-		if (vwin->topmain == NULL) {
+		if (!window_is_tab(vwin)) {
 		    /* Ctrl-Q or Ctrl-W, quit: but not for tabbed windows */
 		    if (vwin_content_changed(vwin)) {
 			/* conditional: we have unsaved changes */
@@ -1429,7 +1429,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gretl_remove(vwin->fname);
 	}
 
-	if (vwin->topmain == NULL) {
+	if (!window_is_tab(vwin)) {
 	    winstack_remove(vwin->main);
 	}
 
@@ -1831,7 +1831,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
 			 G_CALLBACK(delete_file), (gpointer) fname);
     }
 
-    if (vwin->topmain != NULL) {
+    if (window_is_tab(vwin)) {
 	show_tabbed_viewer(vwin->main);
     } else {
 	gtk_widget_show_all(vwin->main);

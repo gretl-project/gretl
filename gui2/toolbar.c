@@ -585,8 +585,8 @@ static void delete_file_viewer (GtkWidget *widget, windata_t *vwin)
 {
     gint resp = 0;
 
-    if (vwin->topmain != NULL) {
-	maybe_destroy_tabwin(vwin->topmain);
+    if (window_is_tab(vwin)) {
+	maybe_destroy_tabwin(vwin);
 	return;
     }
 

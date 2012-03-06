@@ -250,7 +250,7 @@ static void script_window_update (windata_t *vwin, const char *fname)
 	trfname = my_filename_to_utf8(fname);
     }
 
-    if (vwin->topmain != NULL) {
+    if (window_is_tab(vwin)) {
 	/* update the tab label */
 	tabwin_set_tab_title(vwin, trfname);
     } else {
@@ -337,7 +337,7 @@ static void filesel_save_prn_buffer (PRN *prn, const char *fname)
 
 static void filesel_open_script (const char *fname, windata_t *vwin)
 {
-    if (vwin != NULL && vwin->topmain == NULL) {
+    if (vwin != NULL && !window_is_tab(vwin)) {
 	/* we're called from an existing (and untabbed) script 
 	   editor window */
 	strcpy(tryfile, fname);

@@ -28,6 +28,6 @@ void tabwin_set_tab_title (windata_t *vwin, gchar *fname);
 
 void show_tabbed_viewer (GtkWidget *vmain);
 
-void maybe_destroy_tabwin (GtkWidget *tmain);
+void maybe_destroy_tabwin (windata_t *vwin);
 
 #endif /* TABWIN_H_ */

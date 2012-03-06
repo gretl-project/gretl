@@ -47,7 +47,8 @@ typedef enum {
     VWIN_DELETE_FNAME    = 1 << 1,
     VWIN_STICKY          = 1 << 2,
     VWIN_CONTENT_CHANGED = 1 << 3,
-    VWIN_SESSION_GRAPH   = 1 << 4
+    VWIN_SESSION_GRAPH   = 1 << 4,
+    VWIN_TABBED          = 1 << 5
 } windata_flags;
 
 typedef struct windata_t_ windata_t;
@@ -99,6 +100,7 @@ struct GretlToolItem_ {
 #define window_help_is_active(w)    (w->flags & VWIN_HELP_ACTIVE)
 #define set_window_help_active(w)   (w->flags |= VWIN_HELP_ACTIVE)
 #define unset_window_help_active(w) (w->flags &= ~VWIN_HELP_ACTIVE)
+#define window_is_tab(w)            (w->flags & VWIN_TABBED)
 
 #define window_delete_filename(w)       (w->flags & VWIN_DELETE_FNAME)
 #define set_window_delete_filename(w)   (w->flags |= VWIN_DELETE_FNAME)

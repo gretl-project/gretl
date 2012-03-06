@@ -337,17 +337,6 @@ windata_t *vwin_new (int role, gpointer data)
     return vwin;
 }
 
-static void viewer_box_config (windata_t *vwin)
-{
-    vwin->vbox = gtk_vbox_new(FALSE, 4);
-    gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
-    gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
-    
-#ifndef G_OS_WIN32
-    set_wm_icon(vwin->main);
-#endif
-}
-
 windata_t *
 gretl_viewer_new_with_parent (windata_t *parent, int role, 
 			      const gchar *title, 
@@ -371,19 +360,27 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 
+    vwin->vbox = gtk_vbox_new(FALSE, 4);
+    gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
+    gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
+
+
     if (record) {
 	g_object_set_data(G_OBJECT(vwin->main), "object", data);
 	g_object_set_data(G_OBJECT(vwin->main), "role", 
 			  GINT_TO_POINTER(vwin->role));
 	winstack_add(vwin->main);
-    } 
+    }
 
     if (parent != NULL) {
 	vwin_add_child(parent, vwin);
     }
 
-    viewer_box_config(vwin);
     add_window_list_item(vwin->main, role);
+
+#ifndef G_OS_WIN32
+    set_wm_icon(vwin->main);
+#endif
 
     return vwin;
 }
