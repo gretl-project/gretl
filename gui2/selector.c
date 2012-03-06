@@ -122,6 +122,8 @@ enum {
 
 #define FNPKG_CODE(c) (c == SAVE_FUNCTIONS || c == EDIT_FUNCTIONS)
 
+#define SHOW_LISTS_CODE(c) (c == SUMMARY || c == CORR || c == MAHAL || c == PCA)
+
 #define WANT_TOGGLES(c) (c == DPANEL || \
                          c == ARMA || \
                          c == COINT || \
@@ -6867,6 +6869,9 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
 	int start = (ci == DEFINE_LIST || ci == DEFINE_MATRIX)? 0 : 1;
 
 	for (i=start; i<dataset->v; i++) {
+	    if (i == 1 && SHOW_LISTS_CODE(ci)) {
+		list_append_named_lists(store, &iter);
+	    }
 	    if (list_show_var(i, ci, 0)) {
 		list_append_var_simple(store, &iter, i);
 		nleft++;

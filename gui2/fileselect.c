@@ -31,6 +31,7 @@
 #include "guiprint.h"
 #include "graphics.h"
 #include "winstack.h"
+#include "tabwin.h"
 #include "bootstrap.h"
 
 #include <sys/stat.h>
@@ -239,6 +240,9 @@ static void script_window_update (windata_t *vwin, const char *fname)
     gchar *trfname, *title;
     const char *p = strrchr(fname, SLASH);
 
+    /* update internal filename record */
+    strcpy(vwin->fname, fname);
+
     /* ensure UTF-8 filename for display */
     if (p != NULL) {
 	trfname = my_filename_to_utf8(p + 1);
@@ -246,14 +250,17 @@ static void script_window_update (windata_t *vwin, const char *fname)
 	trfname = my_filename_to_utf8(fname);
     }
 
-    /* update the window title */
-    title = g_strdup_printf("gretl: %s", trfname);
-    gtk_window_set_title(GTK_WINDOW(vwin->main), title);
-    g_free(trfname);
-    g_free(title);
+    if (vwin->topmain != NULL) {
+	/* update the tab label */
+	tabwin_set_tab_title(vwin, trfname);
+    } else {
+	/* update the window title */
+	title = g_strdup_printf("gretl: %s", trfname);
+	gtk_window_set_title(GTK_WINDOW(vwin->main), title);
+	g_free(title);
+    }
 
-    /* and update internal filename record */
-    strcpy(vwin->fname, fname);
+    g_free(trfname);
 
     if (vwin->role == VIEW_LOG || vwin->role == VIEW_SCRIPT ||
 	vwin->role == VIEW_PKG_CODE) {

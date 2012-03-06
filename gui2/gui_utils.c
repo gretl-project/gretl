@@ -603,18 +603,20 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 		vwin_save_callback(NULL, vwin);
 		return TRUE;
 	    } else if (upkey == GDK_Q || upkey == GDK_W) {
-		/* Ctrl-Q or Ctrl-W, quit */
-		if (vwin_content_changed(vwin)) {
-		    /* conditional: we have unsaved changes */
-		    if (query_save_text(NULL, NULL, vwin) == FALSE) {
+		if (vwin->topmain == NULL) {
+		    /* Ctrl-Q or Ctrl-W, quit: but not for tabbed windows */
+		    if (vwin_content_changed(vwin)) {
+			/* conditional: we have unsaved changes */
+			if (query_save_text(NULL, NULL, vwin) == FALSE) {
+			    gtk_widget_destroy(w);
+			}
+		    } else { 
+			/* unconditional */
 			gtk_widget_destroy(w);
 		    }
-		} else { 
-		    /* unconditional */
-		    gtk_widget_destroy(w);
-		}
-		return TRUE;
-	    } 
+		    return TRUE;
+		} 
+	    }
 	} 
     } else if (mods & GDK_MOD1_MASK) {
 	/* Alt */
@@ -788,7 +790,9 @@ static void real_register_data (int flag, const char *user_fname,
     /* Record the opening of the data file in the GUI recent files
        list and command log; note that we don't do this if the file
        was opened via script or console, or if it was opened as a
-       side effect of re-opening a saved session.
+       side effect of re-opening a saved session. And we can't do 
+       it if the data file was opened via the initial command line,
+       and the gretl GUI is not yet built.
     */
     if (mdata != NULL && flag == DATAFILE_OPENED) {
 	gui_record_data_opening(user_fname, list);
@@ -814,7 +818,7 @@ void register_startup_data (const char *fname)
 
 static void finalize_data_open (const char *fname, int ftype,
 				int import, int append, 
-				const int *plist)
+				const int *list)
 {
     if (import) {
 	if (ftype == GRETL_CSV || ftype == GRETL_DTA || 
@@ -830,12 +834,12 @@ static void finalize_data_open (const char *fname, int ftype,
     } 
 
     if (strstr(fname, CLIPTEMP)) {
-	real_register_data(DATA_PASTED, NULL, plist);
+	real_register_data(DATA_PASTED, NULL, list);
     } else {
 	if (fname != datafile) {
 	    strcpy(datafile, fname);
 	}
-	real_register_data(DATAFILE_OPENED, NULL, plist);
+	real_register_data(DATAFILE_OPENED, NULL, list);
     }
 
     if (import && !dataset_is_time_series(dataset) && 
@@ -875,7 +879,7 @@ int get_imported_data (char *fname, int ftype, int append)
 {
     void *handle = NULL;
     PRN *prn = NULL;
-    int list[4] = {3, 1, 0, 0};
+    int list[4] = {3, 0, 0, 0};
     int *plist = NULL;
     int (*ss_importer) (const char *, int *, char *, DATASET *, 
 			gretlopt, PRN *);
@@ -897,7 +901,6 @@ int get_imported_data (char *fname, int ftype, int append)
     } else if (ftype == GRETL_XLSX) {
 	ss_importer = gui_get_plugin_function("xlsx_get_data",
 					      &handle);
-	list[1] = 0; /* XLSX sheet filename issue */
 	plist = list;
     } else if (ftype == GRETL_GNUMERIC) {
 	ss_importer = gui_get_plugin_function("gnumeric_get_data",
@@ -1267,9 +1270,7 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	mark_vwin_content_saved(vwin);
 	mark_session_changed();
     } else {
-	FILE *fp;
-
-	fp = gretl_fopen(vwin->fname, "w");
+	FILE *fp = gretl_fopen(vwin->fname, "w");
 
 	if (fp == NULL) {
 	    file_write_errbox(vwin->fname);

@@ -1055,11 +1055,11 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo,
 	if (insheet != NULL && *insheet != '\0') {
 	    /* try looking for a worksheet specified by name */
 	    have_insheet_name = 1;
-	    insheet_idx = -1;
+	    insheet_idx = -1; /* invalidate index */
 	} else if (list != NULL && list[0] >= 1 && list[1] > 0) {
 	    /* or sheet specified by (1-based) sequence number */
 	    target_sheet_number = list[1];
-	    insheet_idx = -1;
+	    insheet_idx = -1; /* invalidate index */
 	}
 
 	fprintf(stderr, "Found these worksheets:\n");
@@ -1078,7 +1078,7 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo,
 	}
 
 	if (insheet_idx < 0) {
-	    /* sheet was specified but not found */
+	    /* a sheet was pre-specified but was not found */
 	    if (have_insheet_name && integer_string(insheet)) {
 		/* try interpreting as plain integer index? */
 		insheet_idx = atoi(insheet) - 1;
@@ -1099,6 +1099,7 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo,
 
 	if (!err) {
 	    if (have_insheet_name || target_sheet_number > 0) {
+		/* avoid the expense of checking all sheets */
 		err = xlsx_verify_specific_sheet(xinfo, insheet_idx, prn);
 	    } else {
 		err = xlsx_verify_sheets(xinfo, prn);
@@ -1319,8 +1320,16 @@ static int finalize_xlsx_import (DATASET *dset,
     return err;
 }
 
-/* Public driver function for retrieving data from OOXML
-   workbook file.
+/* Public driver function for retrieving data from OOXML workbook
+   file.
+
+   If we're coming from the command line @sheetname may be non-NULL
+   and/or @list may contain specification of sheet number (1-based),
+   row offset and/or column offset.
+
+   If we're coming from the GUI @sheetname will be NULL but @list will
+   be non-NULL, and is used to record choices made here via the
+   function xlsx_sheet_dialog().
 */
 
 int xlsx_get_data (const char *fname, int *list, char *sheetname,

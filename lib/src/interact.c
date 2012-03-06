@@ -1554,12 +1554,12 @@ static void parse_outfile_cmd (const char *s, CMD *cmd)
     }
 }
 
-static int small_int (const char *s)
+static int small_positive_int (const char *s)
 {
     if (integer_string(s)) {
 	int k = atoi(s);
 
-	if (k >= 0 && k < 10) {
+	if (k > 0 && k <= 10) {
 	    return 1;
 	}
     }
@@ -1586,6 +1586,7 @@ static void handle_spreadsheet_params (const char *rem, CMD *cmd)
     }
 
     if (!err && (cmd->opt & (OPT_R | OPT_C | OPT_S))) {
+	/* row offset, column offset, sheet name/number */
 	int r0 = 0, c0 = 0;
 	const char *s = NULL;
 
@@ -1615,9 +1616,12 @@ static void handle_spreadsheet_params (const char *rem, CMD *cmd)
 	    if (cmd->list == NULL) {
 		err = E_ALLOC;
 	    } else {
-		if (small_int(s)) {
+		if (small_positive_int(s)) {
+		    /* take the --sheet spec as giving a sheet
+		       number (1-based) */
 		    cmd->list[1] = atoi(s);
 		} else if (s != NULL) {
+		    /* take it as giving a sheet name */
 		    free(cmd->extra);
 		    cmd->extra = gretl_strdup(s);
 		    if (cmd->extra == NULL) {

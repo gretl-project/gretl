@@ -1,4 +1,7 @@
 version 1.9.8, in progress
+- GUI: support use of named lists in the model specification dialog and
+  other contexts
+- Add keyboard shortcut help file
 - New function pxsum(): computes the cross-sectional sum of a series in
   the context of panel data
 - stack() function for panel data: allow '*' in forming list of series

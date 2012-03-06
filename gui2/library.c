@@ -5955,6 +5955,9 @@ void add_model_stat (MODEL *pmod, int which, GtkWidget *parent)
 	if (!err) {
 	    lib_command_sprintf("scalar %s = %s", vname, statname);
 	    record_model_command_verbatim(pmod->ID);
+	    if (autoicon_on()) {
+		view_session();
+	    }
 	}
     }
 

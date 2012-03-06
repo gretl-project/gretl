@@ -198,6 +198,7 @@ static GtkWidget *make_viewer_tab (tabwin_t *twin,
 
     label = gtk_label_new(title);
     gtk_container_add(GTK_CONTAINER(tab), label);
+    g_object_set_data(G_OBJECT(tab), "label", label);
     g_free(title);
 
     viewer_tab_add_closer(tab, vwin);
@@ -347,6 +348,19 @@ void tabwin_register_toolbar (windata_t *vwin)
     gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, TRUE, TRUE, 0);
     tabedit->mbar = vwin->mbar;
     gtk_widget_show_all(tabedit->mbar);
+}
+
+void tabwin_set_tab_title (windata_t *vwin, gchar *fname)
+{
+    GtkWidget *tab, *label;
+
+    tab = gtk_notebook_get_tab_label(GTK_NOTEBOOK(tabedit->tabs), 
+				     vwin->main);
+    label = g_object_get_data(G_OBJECT(tab), "label");
+    
+    if (label != NULL) {
+	gtk_label_set_text(GTK_LABEL(label), fname);
+    }
 }
 
 void show_tabbed_viewer (GtkWidget *vmain)

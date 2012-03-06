@@ -26,6 +26,7 @@
 #include "dlgutils.h"
 #include "menustate.h"
 #include "toolbar.h"
+#include "winstack.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -1775,7 +1776,7 @@ static void cancel_find (GtkWidget *button, GtkWidget *dialog)
 
 static void parent_find (GtkWidget *finder, windata_t *caller)
 {
-    GtkWidget *w = caller->main;
+    GtkWidget *w = vwin_toplevel(caller);
 
     if (w != NULL) {
 	gtk_window_set_transient_for(GTK_WINDOW(finder), GTK_WINDOW(w));

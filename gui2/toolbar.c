@@ -219,7 +219,8 @@ static void mail_script_callback (GtkWidget *w, windata_t *vwin)
 }
 
 /* callback for the "Open" icon in a script editing window,
-   which enables the user to switch to a different script
+   which enables the user to switch to a different script,
+   or to open another tab if the editor is tab-enabled
 */
 
 static void file_open_callback (GtkWidget *w, windata_t *vwin)
@@ -247,7 +248,7 @@ static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
 #ifdef G_OS_WIN32
-    /* gtsourceview printing is screwed on Windows */
+    /* gtksourceview printing is screwed on Windows */
     window_print(NULL, vwin);
 #else
     if (textview_use_highlighting(vwin->role)) {

@@ -405,6 +405,11 @@ static void wbook_record_params (wbook *book, int *list)
 
 #endif /* !ODS_IMPORTER */
 
+/* @list may contain sheet number, row and/or column offset;
+   @sheetname may contain the name of a specific sheet; but
+   both may be NULL
+*/
+
 static void wbook_init (wbook *book, const int *list, char *sheetname)
 {
     book->version = 0;

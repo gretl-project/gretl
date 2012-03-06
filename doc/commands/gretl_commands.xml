@@ -7442,14 +7442,16 @@
 	database in the third example above.
       </para>
       <para>
-	When opening a spreadsheet file (Gnumeric, Open Document or XLS), you
-	may give up to three additional parameters following the filename.
-	First, you can select a particular worksheet within the file.  This is
-	done either by giving its (1-based) number, using the syntax, &eg;,
-	<opt>--sheet=2</opt>, or, if you know the name of the sheet, by giving
-	the name in double quotes, as in <opt>--sheet="MacroData"</opt>. The
-	default is to read the first worksheet. You can also specify a column
-	and/or row offset into the worksheet via, &eg;,
+	When opening a spreadsheet file (Gnumeric, Open Document or MS
+	Excel), you may give up to three additional parameters
+	following the filename.  First, you can select a particular
+	worksheet within the file.  This is done either by giving its
+	(1-based) number, using the syntax, &eg;,
+	<opt>--sheet=2</opt>, or, if you know the name of the sheet,
+	by giving the name in double quotes, as in
+	<opt>--sheet="MacroData"</opt>. The default is to read the
+	first worksheet. You can also specify a column and/or row
+	offset into the worksheet via, &eg;,
       </para>
       <code>
 	--coloffset=3 --rowoffset=2

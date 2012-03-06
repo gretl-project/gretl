@@ -24,6 +24,8 @@ windata_t *editor_tab_new (const char *filename);
 
 void tabwin_register_toolbar (windata_t *vwin);
 
+void tabwin_set_tab_title (windata_t *vwin, gchar *fname);
+
 void show_tabbed_viewer (GtkWidget *vmain);
 
 void maybe_destroy_tabwin (GtkWidget *tmain);
