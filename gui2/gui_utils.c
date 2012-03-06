@@ -897,6 +897,7 @@ int get_imported_data (char *fname, int ftype, int append)
     } else if (ftype == GRETL_XLSX) {
 	ss_importer = gui_get_plugin_function("xlsx_get_data",
 					      &handle);
+	list[1] = 0;
 	plist = list;
     } else if (ftype == GRETL_GNUMERIC) {
 	ss_importer = gui_get_plugin_function("gnumeric_get_data",

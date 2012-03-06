@@ -736,6 +736,11 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
     sprintf(xinfo->sheetfile, "xl%c%s", SLASH, 
 	    xinfo->filenames[xinfo->selsheet]);
 
+#if XDEBUG
+    fprintf(stderr, "xlsx_read_worksheet: sheetnum=%d, name='%s'\n",
+	    xinfo->selsheet, xinfo->filenames[xinfo->selsheet]);
+#endif
+
     sprintf(xinfo->stringsfile, "xl%csharedStrings.xml", SLASH);
 
     err = gretl_xml_open_doc_root(xinfo->sheetfile, "worksheet", 
@@ -1173,6 +1178,11 @@ static int xlsx_sheet_dialog (xlsx_info *xinfo)
 	xinfo->selsheet = 0;
     }
 
+#if XDEBUG
+    fprintf(stderr, "xlsx_sheet_dialog: selected=%d, xoff=%d, yoff=%d\n",
+	    book.selected, book.col_offset, book.row_offset);
+#endif    
+
     xinfo->xoffset = book.col_offset;
     xinfo->yoffset = book.row_offset;
 
@@ -1326,6 +1336,11 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
     if (err) {
 	return err;
     }
+
+#if XDEBUG
+    fprintf(stderr, "xlsx_get_data: sheet='%s'\n", sheetname);
+    printlist(list, "xlsx list");
+#endif
 
     xlsx_info_init(&xinfo);
 
