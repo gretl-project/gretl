@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 16:13-0500\n"
-"PO-Revision-Date: 2012-02-28 10:19+0200\n"
+"PO-Revision-Date: 2012-03-07 17:11+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -4983,9 +4983,8 @@ msgid "%s, using %d observations"
 msgstr "%2$d gözlem kullanılarak bulunan %1$s"
 
 #: lib/src/modelprint.c:1791
-#, fuzzy
 msgid "Using Nerlove's transformation"
-msgstr "Log dönüştürmesiz"
+msgstr "Nerlove dönüşümü kullanarak"
 
 #: lib/src/modelprint.c:1795
 #, c-format
@@ -5601,6 +5600,7 @@ msgid ""
 "\n"
 "Error: Hessian non-negative definite? (err = %d); dropping back to OPG\n"
 msgstr ""
+"\n Hata: Hesseyen eksi tanımlı değil? (err = %d); OPG'ye geri geçiliyor\n"
 
 #: lib/src/nls.c:2457 lib/src/nls.c:2558
 msgid "Invalid NLS specification"
@@ -7161,9 +7161,8 @@ msgid "About gretl"
 msgstr "gretl hakkında"
 
 #: gui2/about.c:126 plugin/excel_import.c:138
-#, fuzzy
 msgid "build date"
-msgstr "Tüm veri seti"
+msgstr "oluşturma tarihi"
 
 #: gui2/about.c:159 gui2/about.c:161
 msgid "translator_credits"
@@ -9923,9 +9922,8 @@ msgid "gretl: graph"
 msgstr "gretl: çizim"
 
 #: gui2/gpt_control.c:4837
-#, fuzzy
 msgid " Right-click on graph for menu"
-msgstr " Açılır menü için çizime tıklayınız"
+msgstr " Menü için çizime sağ-tıklayınız"
 
 #: gui2/gpt_control.c:5094
 msgid "Couldn't find a usable terminal program"
@@ -11210,7 +11208,7 @@ msgstr "_Kullanım kılavuzu"
 
 #: gui2/gretl.c:1610
 msgid "_Keyboard shortcuts"
-msgstr ""
+msgstr "_Klavye kısayolları"
 
 #: gui2/gretl.c:1611
 msgid "Check for _updates"
@@ -11229,14 +11227,12 @@ msgid "Main window"
 msgstr "Ana pencere"
 
 #: gui2/gretl.c:2173
-#, fuzzy
 msgid "Enter name for list of series"
-msgstr "Yeni seri için ad=formül giriniz"
+msgstr "Seriler listesi için ad giriniz"
 
 #: gui2/gretl.c:2178
-#, fuzzy
 msgid "gretl: name list"
-msgstr "gretl: ad sütunu"
+msgstr "gretl: liste tanımla"
 
 #: gui2/gretl.c:2230
 msgid "sample status"
@@ -11772,9 +11768,8 @@ msgid "gretl: command log"
 msgstr "gretl: komut kayıt defteri"
 
 #: gui2/gui_utils.c:1517
-#, fuzzy
 msgid "gretl: untitled"
-msgstr "gretl: gönder"
+msgstr "gretl: adsız"
 
 #: gui2/gui_utils.c:1523 gui2/session.c:509
 msgid "gretl: session notes"
@@ -13805,11 +13800,11 @@ msgstr "Rastsal etkiler"
 
 #: gui2/selector.c:5654
 msgid "Swamy-Arora"
-msgstr ""
+msgstr "Swamy-Arora"
 
 #: gui2/selector.c:5655
 msgid "Nerlove"
-msgstr ""
+msgstr "Nerlove"
 
 #: gui2/selector.c:5695
 msgid "Maximum likelihood estimation"
@@ -14326,7 +14321,7 @@ msgstr "gretl güncellemelerini bildir"
 
 #: gui2/settings.c:144
 msgid "Remember main window size"
-msgstr "Ana pencere boyutunu hatırla"
+msgstr "Ana pencere boyutunu anımsa"
 
 #: gui2/settings.c:148
 msgid "Use locale setting for decimal point"
@@ -14350,7 +14345,7 @@ msgstr "Simge görünümünü kendiliğinden göster"
 
 #: gui2/settings.c:163
 msgid "Script editor uses tabs"
-msgstr ""
+msgstr "Betik düzenleyici sekme kullansın"
 
 #: gui2/settings.c:165
 msgid "Prompt to save session"
@@ -14771,12 +14766,11 @@ msgstr "Veri seti şu an kiplenemiyor (modify)"
 #: gui2/tabwin.c:48
 #, c-format
 msgid "Editing %d scripts: really quit?"
-msgstr ""
+msgstr "%d betik düzenleniyor: gerçekten çıkılsın mı?"
 
 #: gui2/tabwin.c:49 gui2/tabwin.c:256
-#, fuzzy
 msgid "gretl: script editor"
-msgstr "gretl betiği"
+msgstr "gretl: betik düzenleyici"
 
 #: gui2/textbuf.c:288
 msgid "No redo information available"
