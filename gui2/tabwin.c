@@ -232,7 +232,7 @@ static gchar *untitled_title (tabwin_t *twin)
     }
 }
 
-/* add tab with filename and closer button */
+/* create and add tab with filename and closer button */
 
 static GtkWidget *make_viewer_tab (tabwin_t *twin, 
 				   windata_t *vwin, 
@@ -354,7 +354,7 @@ static tabwin_t *make_tabedit (void)
 }
 
 /* Create an editor tab, as an alternative to a stand-alone editor
-   window. We build the tabed editor if need be, otherwise we
+   window. We build the tabbed editor if need be, otherwise we
    stick a new tab into the existing editor.
 */
 
@@ -556,6 +556,7 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     gint pg = gtk_notebook_page_num(notebook, vwin->main);
     gulong handler_id;
     GtkWidget *mainwin;
+    gchar *title;
 
     /* we'll not do this is there's only one page in the
        editor
@@ -577,7 +578,9 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 
     /* build new shell for @vwin's vbox */
     mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(mainwin), "gretl: oof!");
+    title = title_from_filename(vwin->fname);
+    gtk_window_set_title(GTK_WINDOW(mainwin), title);
+    g_free(title);
     g_signal_connect(G_OBJECT(mainwin), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
     g_object_set_data(G_OBJECT(mainwin), "vwin", vwin);
