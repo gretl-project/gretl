@@ -21,10 +21,7 @@ ols calwage 0 uswage
 genr ut = $uhat
 genr ut1 = ut(-1)
 genr diffut = diff(ut)
-genr diffut_1 = diffut(-1)
-genr diffut_2 = diffut(-2)
-genr diffut_3 = diffut(-3)
-genr diffut_4 = diffut(-4)
+lags 4 ; diffut
 # suppress the first five observations
 smpl 1965 1994
 ols diffut ut1 diffut_1 diffut_2 diffut_3 diffut_4
