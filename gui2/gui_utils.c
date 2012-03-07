@@ -577,9 +577,13 @@ gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin)
 static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
-    guint upkey = gdk_keyval_to_upper(key->keyval);
+    guint upkey = key->keyval;
     int editing = vwin_is_editing(vwin);
     int Ctrl = (mods & GDK_CONTROL_MASK);
+
+    if (!gdk_keyval_is_upper(key->keyval)) {
+	upkey = gdk_keyval_to_upper(key->keyval);
+    }
 
     if (Ctrl) {
 	if (upkey == GDK_F) {
@@ -616,6 +620,17 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 		    }
 		    return TRUE;
 		} 
+	    } else if (upkey == GDK_T) {
+		if (window_is_tab(vwin)) {
+		    /* Ctrl-T: open new tab */
+		    do_new_script(vwin->role);
+		    return TRUE;
+		}
+	    } else if (upkey == GDK_greater || upkey == GDK_less) {
+		if (window_is_tab(vwin)) {
+		    tabwin_navigate(vwin, upkey);
+		    return TRUE;
+		}
 	    }
 	} 
     } else if (mods & GDK_MOD1_MASK) {
@@ -1187,6 +1202,9 @@ void mark_vwin_content_changed (windata_t *vwin)
 	    gtk_widget_set_sensitive(w, TRUE);
 	}
 	vwin->flags |= VWIN_CONTENT_CHANGED;
+	if (window_is_tab(vwin)) {
+	    tabwin_set_tab_status(vwin);
+	}
     }
 }
 
@@ -1199,6 +1217,9 @@ void mark_vwin_content_saved (windata_t *vwin)
     }
 
     vwin->flags &= ~VWIN_CONTENT_CHANGED;
+    if (window_is_tab(vwin)) {
+	tabwin_set_tab_status(vwin);
+    }
 
     w = g_object_get_data(G_OBJECT(vwin->mbar), "save_as_button");
     if (w != NULL) {
@@ -1386,6 +1407,13 @@ void free_windata (GtkWidget *w, gpointer data)
 	}
 	if (vwin->ui != NULL) {
 	    g_object_unref(G_OBJECT(vwin->ui));
+	}
+
+	/* tabbed toolbar */
+	if (window_is_tab(vwin)) {
+	    if (vwin->mbar != NULL) {
+		g_object_unref(vwin->mbar);
+	    }
 	}
 
 	/* data specific to certain windows */
@@ -1819,8 +1847,10 @@ view_file_with_title (const char *filename, int editable, int del_file,
        set up alert for unsaved changes on exit */
     if (vwin_editing_script(role)) {
 	attach_content_changed_signal(vwin);
-	g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
-			 G_CALLBACK(query_save_text), vwin);
+	if (!window_is_tab(vwin)) {
+	    g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
+			     G_CALLBACK(query_save_text), vwin);
+	}
     }
 
     /* clean up when dialog is destroyed */

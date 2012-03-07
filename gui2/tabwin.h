@@ -26,8 +26,16 @@ void tabwin_register_toolbar (windata_t *vwin);
 
 void tabwin_set_tab_title (windata_t *vwin, gchar *fname);
 
+void tabwin_set_tab_status (windata_t *vwin);
+
 void show_tabbed_viewer (GtkWidget *vmain);
 
 void maybe_destroy_tabwin (windata_t *vwin);
+
+void tabwin_navigate (windata_t *vwin, guint key);
+
+void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin);
+
+gboolean window_is_undockable (windata_t *vwin);
 
 #endif /* TABWIN_H_ */

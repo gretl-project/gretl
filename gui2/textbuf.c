@@ -21,6 +21,7 @@
 #include "textbuf.h"
 #include "toolbar.h"
 #include "dlgutils.h"
+#include "tabwin.h"
 #include "gretl_func.h"
 
 #ifdef G_OS_WIN32
@@ -717,7 +718,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     if (hsize > 0 && vsize > 0) {
 	if (window_is_tab(vwin)) {
 	    gtk_window_set_default_size(GTK_WINDOW(vwin->topmain), 
-					hsize, vsize + 10);
+					hsize, vsize + 15);
 	} else {
 	    gtk_window_set_default_size(GTK_WINDOW(vwin->main), 
 					hsize, vsize);
@@ -2625,6 +2626,15 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 	item = gtk_menu_item_new_with_label(_("Toggle line numbers"));
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(line_numbers_cb),
+			 vwin);
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+    }
+
+    if (window_is_undockable(vwin)) {
+	item = gtk_menu_item_new_with_label(_("Move to new window"));
+	g_signal_connect(G_OBJECT(item), "activate",
+			 G_CALLBACK(undock_tabbed_viewer),
 			 vwin);
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
