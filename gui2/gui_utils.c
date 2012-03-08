@@ -570,11 +570,23 @@ gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin)
     return TRUE;
 }
 
+static int numeric_keyval (guint key)
+{
+    if (key >= GDK_1 && key <= GDK_9) {
+	return key - GDK_0;
+    } else if (key >= GDK_KP_1 && key <= GDK_KP_9) {
+	return key - GDK_KP_0;
+    } else {
+	return 0;
+    }
+}
+
 /* Signal attached to editor/viewer windows: note that @w is always
    the GtkWidget vwin->main.
 */
 
-static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, 
+			      windata_t *vwin)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
     guint upkey = key->keyval;
@@ -638,6 +650,14 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	if (upkey == GDK_W) {
 	    window_list_popup(w, NULL, vwin->main);
 	    return TRUE;
+	}
+	if (window_is_tab(vwin)) {
+	    int k = numeric_keyval(upkey);
+	    
+	    if (k > 0) {
+		tabwin_navigate(vwin, k);
+		return TRUE;
+	    }
 	}
     }
 

@@ -521,24 +521,26 @@ void show_tabbed_viewer (GtkWidget *vmain)
 #endif
 }
 
-/* move left or right among the editor tabs via keyboard */
+/* move among the editor tabs via keyboard */
 
 void tabwin_navigate (windata_t *vwin, guint key)
 {
     GtkNotebook *notebook = GTK_NOTEBOOK(tabedit->tabs);
     int pgnum = gtk_notebook_get_current_page(notebook);
+    int np = gtk_notebook_get_n_pages(notebook);
 
     if (key == GDK_less) {
 	if (pgnum > 0) {
 	    gtk_notebook_set_current_page(notebook, pgnum - 1);
 	}
     } else if (key == GDK_greater) {
-	int np = gtk_notebook_get_n_pages(notebook);
-
 	if (pgnum < np - 1) {
 	    gtk_notebook_set_current_page(notebook, pgnum + 1);
 	}
-    }	
+    } else {
+	/* numeric value, 1 to 9 */
+	gtk_notebook_set_current_page(notebook, key - 1);
+    }
 }
 
 static void size_new_toplevel (GtkWidget *w, windata_t *vwin)
