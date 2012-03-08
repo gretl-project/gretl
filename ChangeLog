@@ -13,6 +13,8 @@ version 1.9.8, in progress
   greater computational efficiency
 - "pca" command: add --quiet option and parameter to allow specification
   of the number of components to save
+- "coint" command: add --verbose option and fix printout of model at
+  last step of Engle-Granger test
 - princomp() function: add an optional switch to use the covariance
   matrix
 - Function packages: prevent a package's "bundle-plot" function from

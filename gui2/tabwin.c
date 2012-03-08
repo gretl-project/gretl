@@ -20,6 +20,7 @@
 #include "gretl.h"
 #include "winstack.h"
 #include "textbuf.h"
+#include "tabwin.h"
 
 #define TDEBUG 0
 
@@ -84,26 +85,21 @@ void maybe_destroy_tabwin (windata_t *vwin)
     }
 }
 
-/* called if there's only one tab left: don't show a tab-specific
-   close button */
+/* activate or de-activate a tab's closer button */
 
-static void viewer_tab_hide_closer (GtkWidget *tab)
+static void viewer_tab_show_closer (GtkNotebook *notebook,
+				    GtkWidget *tab, 
+				    gboolean show)
 {
-    GtkWidget *button = g_object_get_data(G_OBJECT(tab), "button");
+    GtkWidget *lbl = gtk_notebook_get_tab_label(notebook, tab);    
+    GtkWidget *button = g_object_get_data(G_OBJECT(lbl), "button");
 
     if (button != NULL) {
-	gtk_widget_hide(button);
-    }
-}
-
-/* activate the tab's closer button */
-
-static void viewer_tab_show_closer (GtkWidget *tab)
-{
-    GtkWidget *button = g_object_get_data(G_OBJECT(tab), "button");
-
-    if (button != NULL) {
-	gtk_widget_show(button);
+	if (show) {
+	    gtk_widget_show(button);
+	} else {
+	    gtk_widget_hide(button);
+	}
     }
 }
 
@@ -128,6 +124,53 @@ static void tabedit_insert_toolbar (windata_t *vwin)
     tabedit->mbar = vwin->mbar;
 }
 
+static void page_removed_callback (GtkNotebook *notebook,
+				   GtkWidget *child,
+				   gint pgnum,
+				   gpointer data)
+{
+    int np = gtk_notebook_get_n_pages(notebook);
+
+    if (np < 5) {
+	gtk_notebook_popup_disable(notebook);
+    }    
+
+    if (np == 1) {
+	/* only one tab left after removal: this page should
+	   not display its own closer button, nor should it
+	   be detachable.
+	*/
+	GtkWidget *tab = gtk_notebook_get_nth_page(notebook, 0);
+
+	gtk_notebook_set_tab_detachable(notebook, tab, FALSE);
+	viewer_tab_show_closer(notebook, tab, FALSE);
+    }
+}
+
+static void page_added_callback (GtkNotebook *notebook,
+				 GtkWidget *child,
+				 gint pgnum,
+				 gpointer data)
+{
+    int i, np = gtk_notebook_get_n_pages(notebook);
+    GtkWidget *tab;
+
+    if (np >= 5) {
+	gtk_notebook_popup_enable(notebook);
+    }
+
+    if (np > 1) {
+	for (i=0; i<np; i++) {
+	    tab = gtk_notebook_get_nth_page(notebook, i);
+	    gtk_notebook_set_tab_detachable(notebook, tab, TRUE);
+	    viewer_tab_show_closer(notebook, tab, TRUE);
+	}
+    } else {
+	tab = gtk_notebook_get_nth_page(notebook, 0);
+	viewer_tab_show_closer(notebook, tab, FALSE);
+    }
+}
+
 /* callback for tab-specific close button: this should be
    invoked only if there's at least one tab left after
    trashing the selected one
@@ -137,7 +180,10 @@ static void editor_tab_destroy (GtkWidget *w, windata_t *vwin)
 {
     GtkNotebook *notebook = GTK_NOTEBOOK(tabedit->tabs);
     gint pg = gtk_notebook_page_num(notebook, vwin->main);
-    gint np = gtk_notebook_get_n_pages(notebook);
+
+#if TDEBUG
+    fprintf(stderr, "*** editor_tab_destroy: vwin = %p\n", (void *) vwin);
+#endif
 
     /* note: vwin->mbar is packed under tabedit, so it will not
        get destroyed automatically when the page is removed
@@ -148,25 +194,61 @@ static void editor_tab_destroy (GtkWidget *w, windata_t *vwin)
 
     /* relinquish the extra reference */
 #if TDEBUG
-    fprintf(stderr, "*** unreffing toolbar at %p\n", (void *) vwin->mbar);
+    fprintf(stderr, " unrefing toolbar at %p\n", (void *) vwin->mbar);
 #endif
-    g_object_unref(vwin->mbar);
+    g_object_unref(G_OBJECT(vwin->mbar));
 
     gtk_notebook_remove_page(notebook, pg);
+}
 
-    if (np == 2) {
-	/* so only one page left after removal: this page should
-	   not display its own closer button 
-	*/
-	GtkWidget *page = gtk_notebook_get_nth_page(notebook, 0);
-	GtkWidget *tab = gtk_notebook_get_tab_label(notebook, page);
+/* on switching the current page, put the new page's
+   toolbar into place in tabedit (and remove the old
+   one, if present)
+*/
 
-	viewer_tab_hide_closer(tab);
+static gboolean tabedit_switch_page (GtkNotebook *tabs,
+				     gpointer arg1,
+				     gint pgnum,
+				     tabwin_t *twin)
+{
+    GtkWidget *tab = gtk_notebook_get_nth_page(tabs, pgnum);
+    windata_t *vwin = NULL;
+
+    if (tab != NULL) {
+	vwin = g_object_get_data(G_OBJECT(tab), "vwin");
     }
 
-    if (np < 5) {
-	gtk_notebook_popup_disable(notebook);
+#if TDEBUG
+    fprintf(stderr, "*** tabedit_switch_page: tab=%p, vwin=%p\n",
+	    (void *) tab, (void *) vwin);
+#endif
+
+    if (vwin != NULL) {
+	if (tabedit->mbar != NULL && tabedit->mbar != vwin->mbar) {
+	    /* there's an "old" toolbar in place */
+	    tabedit_remove_toolbar();
+	}
+	if (vwin->mbar != NULL && vwin->mbar != tabedit->mbar) {
+	    /* a "new" toolbar should be shown */
+	    tabedit_insert_toolbar(vwin);
+	}
+    }    
+
+    return FALSE;
+}
+
+static GtkNotebook *detach_tab_callback (GtkNotebook *book,
+					 GtkWidget *page,
+					 gint x, gint y,
+					 gpointer data)
+{
+    windata_t *vwin = g_object_get_data(G_OBJECT(page), "vwin");
+
+    if (vwin != NULL) {
+	undock_tabbed_viewer(NULL, vwin);
     }
+
+    return NULL;
 }
 
 /* avoid excessive padding in a tab's close button */
@@ -239,6 +321,7 @@ static GtkWidget *make_viewer_tab (tabwin_t *twin,
 				   const gchar *filename,
 				   int starting)
 {
+    GtkNotebook *notebook;
     gchar *title = NULL;
     const gchar *p;
     GtkWidget *tab;
@@ -266,44 +349,11 @@ static GtkWidget *make_viewer_tab (tabwin_t *twin,
     viewer_tab_add_closer(tab, vwin);
     gtk_widget_show_all(tab);
 
-    if (starting) {
-	viewer_tab_hide_closer(tab);
-    }
-
-    gtk_notebook_append_page_menu(GTK_NOTEBOOK(twin->tabs), 
-				  vwin->main, tab, mlabel);
+    notebook = GTK_NOTEBOOK(twin->tabs);
+    gtk_notebook_append_page_menu(notebook, vwin->main, 
+				  tab, mlabel);
 
     return tab;
-}
-
-/* on switching the current page, put the new page's
-   toolbar into place in tabedit (and remove the old
-   one, if present)
-*/
-
-static gboolean tabedit_switch_page (GtkNotebook *tabs,
-				     GtkNotebook *page,
-				     gint pgnum,
-				     tabwin_t *twin)
-{
-    windata_t *vwin = NULL;
-
-    if (page != NULL) {
-	vwin = g_object_get_data(G_OBJECT(page), "vwin");
-    }
-
-    if (vwin != NULL) {
-	if (tabedit->mbar != NULL && tabedit->mbar != vwin->mbar) {
-	    /* there's an "old" toolbar in place */
-	    tabedit_remove_toolbar();
-	}
-	if (vwin->mbar != NULL && vwin->mbar != tabedit->mbar) {
-	    /* a "new" toolbar should be shown */
-	    tabedit_insert_toolbar(vwin);
-	}
-    }    
-
-    return FALSE;
 }
 
 /* build the tabbed editor for gretl scripts */
@@ -326,7 +376,6 @@ static tabwin_t *make_tabedit (void)
 		     G_CALLBACK(tabedit_quit_check), tabedit);
     g_signal_connect(G_OBJECT(tabedit->main), "destroy", 
 		     G_CALLBACK(tabedit_destroy), tabedit);
-    g_object_set_data(G_OBJECT(tabedit->main), "tabedit", tabedit);
 
     /* vertically oriented container */
     vbox = gtk_vbox_new(FALSE, 1);
@@ -344,6 +393,12 @@ static tabwin_t *make_tabedit (void)
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(tabedit->tabs), TRUE);
     g_signal_connect(tabedit->tabs, "switch-page",
 		     G_CALLBACK(tabedit_switch_page), tabedit);
+    g_signal_connect(tabedit->tabs, "create-window",
+		     G_CALLBACK(detach_tab_callback), tabedit);
+    g_signal_connect(tabedit->tabs, "page-added",
+		     G_CALLBACK(page_added_callback), tabedit);
+    g_signal_connect(tabedit->tabs, "page-removed",
+		     G_CALLBACK(page_removed_callback), tabedit);
     gtk_container_add(GTK_CONTAINER(vbox), tabedit->tabs);
 
 #ifndef G_OS_WIN32
@@ -385,6 +440,11 @@ windata_t *editor_tab_new (const char *filename)
     g_object_set_data(G_OBJECT(vwin->main), "handler-id",
 		      GUINT_TO_POINTER(handler_id));
 
+#if TDEBUG
+    fprintf(stderr, "*** editor_tab_new: vwin=%p, main hbox=%p\n", 
+	    (void *) vwin, (void *) vwin->main);
+#endif
+
     make_viewer_tab(tabedit, vwin, filename, starting);
     vwin->topmain = tabedit->main;
 
@@ -394,13 +454,7 @@ windata_t *editor_tab_new (const char *filename)
 
     if (starting) {
 	add_window_list_item(tabedit->main, EDIT_SCRIPT);
-    } else {
-	GtkNotebook *notebook = GTK_NOTEBOOK(tabedit->tabs);
-
-	if (gtk_notebook_get_n_pages(notebook) > 5) {
-	    gtk_notebook_popup_enable(notebook);
-	}
-    }
+    } 
 
     return vwin;
 }
@@ -422,7 +476,7 @@ void tabwin_register_toolbar (windata_t *vwin)
                      G_CALLBACK(gtk_widget_destroyed), &vwin->mbar);
 
 #if TDEBUG
-    fprintf(stderr, "*** vwin at %p: has toolbar at %p\n",
+    fprintf(stderr, "*** register_toolbar: vwin=%p has toolbar=%p\n",
 	    (void *) vwin, (void *) vwin->mbar);
 #endif
 
@@ -501,13 +555,6 @@ void show_tabbed_viewer (GtkWidget *vmain)
 	int pgnum = gtk_notebook_page_num(notebook, vmain);
 
 	gtk_notebook_set_current_page(notebook, pgnum);
-
-	if (pgnum == 1) {
-	    GtkWidget *page = gtk_notebook_get_nth_page(notebook, 0);
-	    GtkWidget *tab = gtk_notebook_get_tab_label(notebook, page);
-
-	    viewer_tab_show_closer(tab);
-	}
     }
 
 #if GTK_MAJOR_VERSION == 2 && GTK_MAJOR_VERSION < 18
@@ -519,6 +566,8 @@ void show_tabbed_viewer (GtkWidget *vmain)
 	gtk_widget_show_all(tabedit->main);
     }
 #endif
+
+    gtk_window_present(GTK_WINDOW(tabedit->main));
 }
 
 /* move among the editor tabs via keyboard */
@@ -526,17 +575,11 @@ void show_tabbed_viewer (GtkWidget *vmain)
 void tabwin_navigate (windata_t *vwin, guint key)
 {
     GtkNotebook *notebook = GTK_NOTEBOOK(tabedit->tabs);
-    int pgnum = gtk_notebook_get_current_page(notebook);
-    int np = gtk_notebook_get_n_pages(notebook);
 
     if (key == GDK_less) {
-	if (pgnum > 0) {
-	    gtk_notebook_set_current_page(notebook, pgnum - 1);
-	}
+	gtk_notebook_prev_page(notebook);
     } else if (key == GDK_greater) {
-	if (pgnum < np - 1) {
-	    gtk_notebook_set_current_page(notebook, pgnum + 1);
-	}
+	gtk_notebook_next_page(notebook);
     } else {
 	/* numeric value, 1 to 9 */
 	gtk_notebook_set_current_page(notebook, key - 1);
@@ -570,7 +613,7 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     /* take a reference to the guts of @vwin, undo the attachment
        to its holder, and extract from the tabbed context
     */
-    g_object_ref(vwin->vbox);
+    g_object_ref(G_OBJECT(vwin->vbox));
     g_object_set_data(G_OBJECT(vwin->main), "vwin", NULL);
     handler_id = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(vwin->main),
 						    "handler-id"));
@@ -601,12 +644,12 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
        toolbar up top)
     */
     vwin_pack_toolbar(vwin);
-    g_object_unref(vwin->mbar);
+    g_object_unref(G_OBJECT(vwin->mbar));
     vwin->flags &= ~VWIN_TABBED;
 
     /* put vbox into new top-level window and drop extra ref. */
     gtk_container_add(GTK_CONTAINER(mainwin), vwin->vbox);
-    g_object_unref(vwin->vbox);
+    g_object_unref(G_OBJECT(vwin->vbox));
 
     /* connect toplevel and set signals */
     vwin->main = mainwin;

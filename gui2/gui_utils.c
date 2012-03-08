@@ -1515,18 +1515,23 @@ gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 
 gchar *title_from_filename (const char *fname)
 {
-    const char *p = strrchr(fname, SLASH);
-    gchar *trfname, *title = NULL;
+    gchar *title = NULL;
 
-    if (p != NULL) {
-	trfname = my_filename_to_utf8(p + 1);
+    if (strstr(fname, "script_tmp") || strstr(fname, "session.inp")) {
+	title = g_strdup(_("gretl: untitled"));
     } else {
-	trfname = my_filename_to_utf8(fname);
+	const char *p = strrchr(fname, SLASH);
+	gchar *trfname;
+
+	if (p != NULL) {
+	    trfname = my_filename_to_utf8(p + 1);
+	} else {
+	    trfname = my_filename_to_utf8(fname);
+	}
+
+	title = g_strdup_printf("gretl: %s", trfname);
+	g_free(trfname);
     }
-
-    title = g_strdup_printf("gretl: %s", trfname);
-
-    g_free(trfname);
 
     return title;
 }
@@ -1561,11 +1566,7 @@ static gchar *make_viewer_title (int role, const char *fname)
     case VIEW_SCRIPT:	
     case VIEW_FILE:
     case VIEW_CODEBOOK:
-	if (strstr(fname, "script_tmp") || strstr(fname, "session.inp")) {
-	    title = g_strdup(_("gretl: untitled"));
-	} else {
-	    title = title_from_filename(fname);
-	} 
+	title = title_from_filename(fname);
 	break;
     case EDIT_NOTES:
 	title = g_strdup(_("gretl: session notes")); break;
