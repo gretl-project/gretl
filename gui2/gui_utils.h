@@ -101,7 +101,7 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 
 gchar *gretl_window_title (const char *s);
 
-gchar *title_from_filename (const char *fname);
+gchar *title_from_filename (const char *fname, gboolean prepend);
 
 windata_t *console_window (int hsize, int vsize);
 

@@ -1070,7 +1070,7 @@ static void finfo_dialog (function_info *finfo)
     gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 640, 500);
 
     if (finfo->fname != NULL) {
-	gchar *title = title_from_filename(finfo->fname);
+	gchar *title = title_from_filename(finfo->fname, TRUE);
 
 	gtk_window_set_title(GTK_WINDOW(finfo->dlg), title);
 	g_free(title);

@@ -1513,7 +1513,7 @@ gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
     return FALSE;
 }
 
-gchar *title_from_filename (const char *fname)
+gchar *title_from_filename (const char *fname, gboolean prepend)
 {
     gchar *title = NULL;
 
@@ -1529,8 +1529,12 @@ gchar *title_from_filename (const char *fname)
 	    trfname = my_filename_to_utf8(fname);
 	}
 
-	title = g_strdup_printf("gretl: %s", trfname);
-	g_free(trfname);
+	if (prepend) {
+	    title = g_strdup_printf("gretl: %s", trfname);
+	    g_free(trfname);
+	} else {
+	    title = trfname;
+	}
     }
 
     return title;
@@ -1538,7 +1542,7 @@ gchar *title_from_filename (const char *fname)
 
 void vwin_set_filename (windata_t *vwin, const char *fname)
 {
-    gchar *title = title_from_filename(fname);
+    gchar *title = title_from_filename(fname, TRUE);
 
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     g_free(title);
@@ -1566,7 +1570,7 @@ static gchar *make_viewer_title (int role, const char *fname)
     case VIEW_SCRIPT:	
     case VIEW_FILE:
     case VIEW_CODEBOOK:
-	title = title_from_filename(fname);
+	title = title_from_filename(fname, TRUE);
 	break;
     case EDIT_NOTES:
 	title = g_strdup(_("gretl: session notes")); break;

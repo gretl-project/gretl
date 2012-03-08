@@ -46,6 +46,7 @@
 #include "fncall.h"
 #include "selector.h"
 #include "guiprint.h"
+#include "tabwin.h"
 
 #include <dirent.h>
 
@@ -2109,6 +2110,9 @@ gboolean window_list_exit_check (void)
 		    gtk_window_present(GTK_WINDOW(vwin->main));
 		    ret = query_save_text(NULL, NULL, vwin);
 		}
+	    }
+	    if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabedit")) {
+		ret = tabwin_exit_check(w);
 	    }
 	    list = list->next;
 	}

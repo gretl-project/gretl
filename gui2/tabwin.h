@@ -38,4 +38,6 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin);
 
 gboolean window_is_undockable (windata_t *vwin);
 
+gboolean tabwin_exit_check (GtkWidget *w);
+
 #endif /* TABWIN_H_ */

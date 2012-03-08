@@ -28,7 +28,7 @@ typedef struct tabwin_t_  tabwin_t;
 
 struct tabwin_t_ {
     GtkWidget *main;  /* top-level GTK window */
-    GtkWidget *mbox;  /* hbox to hold menu bar */
+    GtkWidget *mbox;  /* horizontal box to hold menu bar */
     GtkWidget *mbar;  /* menu bar */
     GtkWidget *tabs;  /* notebook for tabs */
 };
@@ -43,7 +43,7 @@ static void tabedit_destroy (GtkWidget *w, gpointer data)
     tabedit = NULL;
 }
 
-static gboolean maybe_block_tabedit_quit (void)
+static gboolean maybe_block_tabedit_quit (GtkWindow *topwin)
 {
     GtkNotebook *notebook = GTK_NOTEBOOK(tabedit->tabs);
     int np = gtk_notebook_get_n_pages(notebook);
@@ -51,8 +51,13 @@ static gboolean maybe_block_tabedit_quit (void)
 
     if (np > 1) {
 	gchar *msg = g_strdup_printf(_("Editing %d scripts: really quit?"), np);
-	gint resp = yes_no_dialog(_("gretl: script editor"), msg, 0);
+	gint resp;
 
+	if (topwin != NULL) {
+	    gtk_window_present(topwin);
+	}
+
+	resp = yes_no_dialog(_("gretl: script editor"), msg, 0);
 	if (resp != GRETL_YES) {
 	    ret = TRUE;
 	}
@@ -64,6 +69,9 @@ static gboolean maybe_block_tabedit_quit (void)
 	    windata_t *vwin = g_object_get_data(G_OBJECT(page), "vwin");
     
 	    if (vwin_content_changed(vwin)) {
+		if (topwin != NULL) {
+		    gtk_window_present(topwin);
+		}
 		ret = query_save_text(NULL, NULL, vwin);
 	    }
 	}
@@ -72,15 +80,26 @@ static gboolean maybe_block_tabedit_quit (void)
     return ret;
 }
 
+/* called on program exit */
+
+gboolean tabwin_exit_check (GtkWidget *w)
+{
+    return maybe_block_tabedit_quit(GTK_WINDOW(w));
+}
+
+/* called on delete-event */
+
 static gboolean tabedit_quit_check (GtkWidget *w, GdkEvent *event, 
 				    tabwin_t *twin)
 {
-    return maybe_block_tabedit_quit();
+    return maybe_block_tabedit_quit(NULL);
 }
+
+/* called by top-level toolbar closer button */
 
 void maybe_destroy_tabwin (windata_t *vwin)
 {
-    if (!maybe_block_tabedit_quit()) {
+    if (!maybe_block_tabedit_quit(NULL)) {
 	gtk_widget_destroy(vwin->topmain);
     }
 }
@@ -290,6 +309,9 @@ static void viewer_tab_add_closer (GtkWidget *tab, windata_t *vwin)
     g_object_set_data(G_OBJECT(tab), "button", button);
 }
 
+/* try to ensure unique dummy title strings for unsaved
+   new scripts */
+
 static gchar *untitled_title (tabwin_t *twin)
 {
     GtkNotebook *notebook = GTK_NOTEBOOK(twin->tabs);
@@ -323,7 +345,6 @@ static GtkWidget *make_viewer_tab (tabwin_t *twin,
 {
     GtkNotebook *notebook;
     gchar *title = NULL;
-    const gchar *p;
     GtkWidget *tab;
     GtkWidget *label;
     GtkWidget *mlabel;
@@ -333,10 +354,8 @@ static GtkWidget *make_viewer_tab (tabwin_t *twin,
 
     if (strstr(filename, "script_tmp") != NULL) {
 	title = untitled_title(twin);
-    } else if ((p = strrchr(filename, SLASH)) != NULL) {
-	title = g_strdup(p + 1);
     } else {
-	title = g_strdup(filename);
+	title = title_from_filename(filename, FALSE);
     }
 
     label = gtk_label_new(title);
@@ -376,6 +395,7 @@ static tabwin_t *make_tabedit (void)
 		     G_CALLBACK(tabedit_quit_check), tabedit);
     g_signal_connect(G_OBJECT(tabedit->main), "destroy", 
 		     G_CALLBACK(tabedit_destroy), tabedit);
+    g_object_set_data(G_OBJECT(tabedit->main), "tabedit", tabedit);
 
     /* vertically oriented container */
     vbox = gtk_vbox_new(FALSE, 1);
@@ -388,7 +408,7 @@ static tabwin_t *make_tabedit (void)
     gtk_box_pack_start(GTK_BOX(vbox), tabedit->mbox, FALSE, FALSE, 0);
     tabedit->mbar = NULL;
 
-    /* notebook */
+    /* notebook with its signal handlers */
     tabedit->tabs = gtk_notebook_new();
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(tabedit->tabs), TRUE);
     g_signal_connect(tabedit->tabs, "switch-page",
@@ -623,7 +643,7 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 
     /* build new shell for @vwin's vbox */
     mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    title = title_from_filename(vwin->fname);
+    title = title_from_filename(vwin->fname, TRUE);
     gtk_window_set_title(GTK_WINDOW(mainwin), title);
     g_free(title);
     g_signal_connect(G_OBJECT(mainwin), "destroy", 
@@ -679,3 +699,4 @@ gboolean window_is_undockable (windata_t *vwin)
 
     return FALSE;
 }
+
