@@ -20,7 +20,8 @@
 #ifndef TABWIN_H_
 #define TABWIN_H_
 
-windata_t *editor_tab_new (const char *filename);
+windata_t *viewer_tab_new (int role, const char *filename,
+			   gpointer data);
 
 void tabwin_register_toolbar (windata_t *vwin);
 
@@ -28,7 +29,7 @@ void tabwin_set_tab_title (windata_t *vwin, gchar *fname);
 
 void tabwin_set_tab_status (windata_t *vwin);
 
-void show_tabbed_viewer (GtkWidget *vmain);
+void show_tabbed_viewer (windata_t *vwin);
 
 void maybe_destroy_tabwin (windata_t *vwin);
 

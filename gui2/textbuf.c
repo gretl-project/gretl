@@ -3111,8 +3111,15 @@ void create_text (windata_t *vwin, int hsize, int vsize,
     }
 
     if (hsize > 0 && vsize > 0) {
-	gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize);
-    } 
+	if (window_is_tab(vwin)) {
+	    gtk_window_set_default_size(GTK_WINDOW(vwin->topmain), 
+					hsize, vsize + 15);
+	} else {
+	    gtk_window_set_default_size(GTK_WINDOW(vwin->main), 
+					hsize, vsize);
+	} 
+    }
+
     gtk_text_view_set_editable(GTK_TEXT_VIEW(w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), editable);
 }

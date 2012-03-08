@@ -2111,7 +2111,7 @@ gboolean window_list_exit_check (void)
 		    ret = query_save_text(NULL, NULL, vwin);
 		}
 	    }
-	    if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabedit")) {
+	    if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabwin")) {
 		ret = tabwin_exit_check(w);
 	    }
 	    list = list->next;

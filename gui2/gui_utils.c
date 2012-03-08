@@ -64,7 +64,7 @@
 # include "gretlwin32.h"
 #endif
 
-static void set_up_model_view_menu (GtkWidget *window, windata_t *vwin);
+static void set_up_model_view_menu (windata_t *vwin);
 static void add_system_menu_items (windata_t *vwin, int vecm);
 static void add_bundle_menu_items (windata_t *vwin);
 static void add_x12_output_menu_item (windata_t *vwin);
@@ -1821,7 +1821,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
     }
 
     if (role == EDIT_SCRIPT && use_tabbed_editor()) {
-	vwin = editor_tab_new(filename);
+	vwin = viewer_tab_new(role, filename, NULL);
     } else if (given_title != NULL) {
 	/* this is the case when editing the plot commands for
 	   a graph saved as a session icon */
@@ -1887,7 +1887,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
     }
 
     if (window_is_tab(vwin)) {
-	show_tabbed_viewer(vwin->main);
+	show_tabbed_viewer(vwin);
     } else {
 	gtk_widget_show_all(vwin->main);
     }
@@ -2213,6 +2213,9 @@ windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     const char *buf;
     int width, nlines;
 
+#if 0
+    vwin = viewer_tab_new(VIEW_MODEL, NULL, pmod);
+#else
     if (title == NULL) {
 	gchar *s = g_strdup_printf(_("gretl: model %d"), pmod->ID);
 
@@ -2221,6 +2224,7 @@ windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     } else {
 	vwin = gretl_viewer_new(VIEW_MODEL, title, pmod, 1);
     }
+#endif
 
     if (vwin == NULL) {
 	return NULL;
@@ -2229,12 +2233,7 @@ windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     /* Take responsibility for one reference to this model */
     gretl_object_ref(pmod, GRETL_OBJ_EQN);
 
-    set_up_model_view_menu(vwin->main, vwin);
-
-    g_signal_connect(G_OBJECT(vwin->mbar), "button-press-event", 
-		     G_CALLBACK(check_model_menu), vwin);
-
-    gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
+    set_up_model_view_menu(vwin);
 
     gretl_print_get_size(prn, &width, &nlines);
     if (width > 0 && width + 2 < hsize) {
@@ -2253,12 +2252,17 @@ windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     vwin->n_model_tests = pmod->ntests;
 
     /* attach shortcuts */
-    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+    g_signal_connect(G_OBJECT(vwin_toplevel(vwin)), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
     g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
 		     G_CALLBACK(text_popup_handler), vwin);
 
-    gtk_widget_show_all(vwin->main);
+    if (window_is_tab(vwin)) {
+	show_tabbed_viewer(vwin);
+    } else {
+	gtk_widget_show_all(vwin->main);
+    }
+
     cursor_to_top(vwin);
 
     return vwin;
@@ -3003,11 +3007,11 @@ static void model_menu_add_winlist (windata_t *vwin)
     g_signal_connect(m, "select", G_CALLBACK(model_show_winlist), vwin);
 }
 
-static void 
-set_up_model_view_menu (GtkWidget *window, windata_t *vwin) 
+static void set_up_model_view_menu (windata_t *vwin) 
 {
     MODEL *pmod = (MODEL *) vwin->data;
     GtkActionGroup *actions;
+    GtkWidget *toplevel;
     GError *err = NULL;
 
     actions = gtk_action_group_new("ModelActions");
@@ -3084,8 +3088,10 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
 	add_dummies_to_plot_menu(vwin);
     }
 
-    if (vwin->main != NULL) {
-	gtk_window_add_accel_group(GTK_WINDOW(vwin->main), 
+    toplevel = vwin_toplevel(vwin);
+    if (toplevel != NULL) {
+	/* FIXME tabbed case? */
+	gtk_window_add_accel_group(GTK_WINDOW(toplevel), 
 				   gtk_ui_manager_get_accel_group(vwin->ui));
     }
 
@@ -3096,6 +3102,16 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
 
     /* add window-list menu item */
     model_menu_add_winlist(vwin);
+
+    g_signal_connect(G_OBJECT(vwin->mbar), "button-press-event", 
+		     G_CALLBACK(check_model_menu), vwin);
+
+    if (window_is_tab(vwin)) {
+	tabwin_register_toolbar(vwin);
+    } else {
+	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, 
+			   FALSE, FALSE, 0);
+    }
 }
 
 enum {
