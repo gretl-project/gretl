@@ -412,16 +412,19 @@ print_adf_results (int order, int pmax, double DFt, double pv,
 	*blurb_done = 1;
     }
 
-    if (!(flags & ADF_EG_RESIDS)) {
+    if (flags & ADF_EG_RESIDS) {
+	/* last step of Engle-Granger test */
+	pprintf(prn, "   %s: %s\n", _("model"), 
+		(order > 0)? ADF_model_string(0) : DF_model_string(0));
+    } else {
 	pprintf(prn, "   %s ", _(DF_test_string(i)));
 	if (nseas > 0 && i > 0) {
 	    pputs(prn, _("plus seasonal dummies"));
 	}
 	pputc(prn, '\n');
+	pprintf(prn, "   %s: %s\n", _("model"), 
+		(order > 0)? ADF_model_string(i) : DF_model_string(i));
     }
-
-    pprintf(prn, "   %s: %s\n", _("model"), 
-	    (order > 0)? ADF_model_string(i) : DF_model_string(i));
 
     if (!na(dfmod->rho)) {
 	pprintf(prn, "   %s: %.3f\n", _("1st-order autocorrelation coeff. for e"), 
@@ -694,8 +697,13 @@ static int real_adf_test (int varno, int order, int niv,
 	   p-value is based on the deterministic terms in the cointegrating
 	   regression, represented by "eg_opt".
 	 */
+	int verbose = (opt & OPT_V);
+
 	eg_opt = opt;
 	opt = OPT_N;
+	if (verbose) {
+	    opt |= OPT_V;
+	}
     }
 
 #if 0
@@ -1892,7 +1900,8 @@ static int coint_set_sample (const int *list, int nv, int order,
  * OPT_T include constant and linear trend; OPT_R, include
  * quadratic trend; OPT_S, skip DF tests for individual variables; 
  * OPT_E, test down from maximum lag order (see the entry for
- * "adf" in the Gretl Command Reference for details).
+ * "adf" in the Gretl Command Reference for details); OPT_V,
+ * verbose operation.
  *
  * Returns: 0 on successful completion, non-zero code
  * on error.
@@ -1933,6 +1942,11 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
     if (order < 0) {
 	order = -order;
 	adf_opt |= OPT_E;
+    }
+
+    /* verbosity? */
+    if (opt & OPT_V) {
+	adf_opt |= OPT_V;
     }
 
     gretl_model_init(&cmod);

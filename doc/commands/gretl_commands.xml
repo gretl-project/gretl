@@ -1501,6 +1501,10 @@
 	  <flag>--test-down</flag>
 	  <effect>automatic lag order</effect>
 	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print extra details of regressions</effect>
+	</option>
       </options>
       <examples>
 	<example>coint 4 y x1 x2</example>
