@@ -145,12 +145,12 @@ void dataset_menubar_state (gboolean s)
 
     view_items_state(s);
 
-    if (s || (get_n_listed_windows() == 0 && !have_session_objects())) {
+    if (s || !have_session_objects()) {
 	/* Either we're enabling dataset items, in which
 	   case we should also enable the /View menu, or
-	   we're disabling the dataset items and there's 
-	   nothing in the window list, in which case
-	   /View should be disabled.
+	   we're disabling the dataset items and there are 
+	   no session objects, in which case /View should 
+	   be disabled.
 	*/
 	flip(mdata->ui, "/menubar/View", s);
     }

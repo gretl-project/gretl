@@ -2226,7 +2226,7 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     const char *buf;
     int width, nlines;
 
-#if 0
+#if 0 /* just experimental, for now */
     vwin = viewer_tab_new(VIEW_MODEL, NULL, pmod);
 #else
     if (title == NULL) {
