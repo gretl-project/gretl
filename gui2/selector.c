@@ -1268,14 +1268,16 @@ static void set_extra_var_callback (GtkWidget *w, selector *sr)
 static void real_set_third_var (GtkTreeModel *model, GtkTreePath *path,
 				GtkTreeIter *iter, selector *sr)
 {
-    gchar *vname;
+    gchar *vname = NULL;
     gint v;
 
+    gtk_tree_model_get(model, iter, COL_ID, &v, COL_NAME, &vname, -1);    
+
     if (v < 0) {
+	g_free(vname);
 	return;
     }
-    
-    gtk_tree_model_get(model, iter, COL_ID, &v, COL_NAME, &vname, -1);
+
     gtk_entry_set_text(GTK_ENTRY(sr->rvars1), vname);
     g_free(vname);
     g_object_set_data(G_OBJECT(sr->rvars1), "data",
