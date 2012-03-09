@@ -707,14 +707,15 @@ char *gretl_fix_exponent (char *s)
     int n;
 
     if ((p = strstr(s, "+00")) || (p = strstr(s, "-00"))) {
-	if (*(p + 3)) {
+	if (*(p+3)) {
 	    memmove(p+1, p+2, strlen(p+1));
 	}
     }
 
     n = strlen(s);
     if (s[n-1] == '.' || s[n-1] == ',') {
-	s[n-1] = 0;
+	/* delete trailing junk */
+	s[n-1] = '\0';
     }
 
     return s;
@@ -824,6 +825,8 @@ void gretl_sprint_fullwidth_double (double x, int digits, char *targ,
     char decpoint;
     int n;
 
+    *targ = '\0';
+
     if (na(x)) {
 	strcpy(targ, "NA");
 	return;
@@ -850,7 +853,7 @@ void gretl_sprint_fullwidth_double (double x, int digits, char *targ,
 
     n = strlen(targ) - 1;
     if (targ[n] == decpoint) {
-	targ[n] = 0;
+	targ[n] = '\0';
     }
 
     cut_extra_zero(targ, digits);

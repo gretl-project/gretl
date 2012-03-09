@@ -279,6 +279,8 @@ static gboolean switch_page_callback (GtkNotebook *tabs,
     return FALSE;
 }
 
+/* callback for the "create-window" signal */
+
 static GtkNotebook *detach_tab_callback (GtkNotebook *book,
 					 GtkWidget *page,
 					 gint x, gint y,
@@ -363,7 +365,7 @@ static gchar *untitled_title (tabwin_t *tabwin)
 
 static GtkWidget *make_viewer_tab (tabwin_t *tabwin, 
 				   windata_t *vwin, 
-				   const gchar *filename,
+				   const gchar *info,
 				   int starting)
 {
     GtkNotebook *notebook;
@@ -375,14 +377,16 @@ static GtkWidget *make_viewer_tab (tabwin_t *tabwin,
     tab = gtk_hbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(tab), 0);
 
-    if (filename != NULL) {
-	if (strstr(filename, "script_tmp") != NULL) {
+    if (tabwin->role == EDIT_SCRIPT) {
+	if (strstr(info, "script_tmp") != NULL) {
 	    title = untitled_title(tabwin);
 	} else {
-	    title = title_from_filename(filename, FALSE);
+	    title = title_from_filename(info, FALSE);
 	}
+    } else if (info != NULL) {
+	title = g_strdup(info);
     } else {
-	title = g_strdup("testing");
+	title = g_strdup("unknown");
     }
 
     label = gtk_label_new(title);
@@ -419,12 +423,14 @@ static tabwin_t *make_tabbed_viewer (int role)
 
     /* top-level window */
     tabwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(tabwin->main), 
-			 _("gretl: script editor"));
     if (role == EDIT_SCRIPT) {
-	g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
+	gtk_window_set_title(GTK_WINDOW(tabwin->main), 
+			     _("gretl: script editor"));
+ 	g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
 			 G_CALLBACK(tabedit_quit_check), tabwin);
-    }
+    } else {
+	gtk_window_set_title(GTK_WINDOW(tabwin->main), _("gretl: models"));
+    }	
     g_signal_connect(G_OBJECT(tabwin->main), "destroy", 
 		     G_CALLBACK(tabwin_destroy), tabwin);
     g_object_set_data(G_OBJECT(tabwin->main), "tabwin", tabwin);
@@ -488,7 +494,7 @@ static tabwin_t *get_tabwin_for_role (int role, int *starting)
    stick a new tab into the existing editor.
 */
 
-windata_t *viewer_tab_new (int role, const char *filename,
+windata_t *viewer_tab_new (int role, const char *info,
 			   gpointer data)
 {
     tabwin_t *tabwin;
@@ -519,7 +525,7 @@ windata_t *viewer_tab_new (int role, const char *filename,
 	    (void *) vwin, (void *) vwin->main);
 #endif
 
-    make_viewer_tab(tabwin, vwin, filename, starting);
+    make_viewer_tab(tabwin, vwin, info, starting);
     vwin->topmain = tabwin->main;
 
     vwin->vbox = gtk_vbox_new(FALSE, 1);
@@ -732,7 +738,7 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     gtk_container_add(GTK_CONTAINER(mainwin), vwin->vbox);
     g_object_unref(G_OBJECT(vwin->vbox));
 
-    /* connect toplevel and set signals */
+     /* connect toplevel and set signals */
     vwin->main = mainwin;
     g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 		     G_CALLBACK(query_save_text), vwin);
@@ -762,4 +768,3 @@ gboolean window_is_undockable (windata_t *vwin)
 
     return FALSE;
 }
-

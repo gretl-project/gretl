@@ -20,7 +20,7 @@
 #ifndef TABWIN_H_
 #define TABWIN_H_
 
-windata_t *viewer_tab_new (int role, const char *filename,
+windata_t *viewer_tab_new (int role, const char *info,
 			   gpointer data);
 
 void tabwin_register_toolbar (windata_t *vwin);
