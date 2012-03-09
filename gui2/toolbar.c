@@ -162,9 +162,10 @@ void gretl_stock_icons_init (void)
 
 static void save_as_callback (GtkWidget *w, windata_t *vwin)
 {
+    GtkWidget *vmain = vwin_toplevel(vwin);
     guint u = 0;
 
-    if (g_object_get_data(G_OBJECT(vwin->main), "text_out")) {
+    if (g_object_get_data(G_OBJECT(vmain), "text_out")) {
 	const char *opts[] = {
 	    N_("Save to file"),
 	    N_("Save to session as icon")
@@ -172,7 +173,7 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
 	int resp;
 
 	resp = radio_dialog(_("gretl: save text"), _("Save text"), 
-			    opts, 2, 0, 0, vwin->main);
+			    opts, 2, 0, 0, vmain);
 	if (resp < 0) {
 	    return;
 	} else if (resp == 1) {
@@ -326,14 +327,15 @@ static void set_matrix_name (GtkWidget *widget, dialog_t *dlg)
 static void add_matrix_callback (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->role == XTAB) {
-	gretl_matrix *m;
 	char mname[VNAMELEN];
+	gretl_matrix *m;
 	int err, cancel = 0;
 
 	blocking_edit_dialog(0, _("gretl: save matrix"), 
 			     _("Enter a name"), NULL,
 			     set_matrix_name, mname, 
-			     VARCLICK_NONE, vwin->main,
+			     VARCLICK_NONE, 
+			     vwin_toplevel(vwin),
 			     &cancel);
 	if (!cancel) {
 	    m = xtab_to_matrix(vwin->data);
@@ -470,7 +472,7 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
     }
 
     dialog = gretl_dialog_new(_("gretl: coefficient confidence intervals"), 
-			      vwin->main, GRETL_DLG_BLOCK);
+			      vwin_toplevel(vwin), GRETL_DLG_BLOCK);
 
     hbox = gtk_hbox_new(FALSE, 5);
     hb2 = gtk_hbox_new(FALSE, 5);
@@ -557,7 +559,8 @@ static void set_output_sticky (GtkWidget *w, windata_t *vwin)
 
     deflt = (vwin->flags & VWIN_STICKY)? 1 : 0;
 
-    resp = radio_dialog(NULL, NULL, opts, 2, deflt, 0, vwin->main);
+    resp = radio_dialog(NULL, NULL, opts, 2, deflt, 0, 
+			vwin_toplevel(vwin));
 
     if (resp == 0) {
 	vwin->flags &= ~VWIN_STICKY;
@@ -662,7 +665,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_x12a_help), X12A_HELP_ITEM },
-    { N_("Windows"), GRETL_STOCK_COMPASS, G_CALLBACK(window_list_popup), 0 },
+    { N_("Windows"), GRETL_STOCK_COMPASS, GNULL, 0 },
     { N_("Close"), GTK_STOCK_CLOSE, G_CALLBACK(delete_file_viewer), 0 }
 };
 
@@ -825,37 +828,23 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str)
 
 #endif /* GTK variants */
 
-/* This variant of gretl_toolbar_insert is intended for
-   use when the tool item creates a popup menu. 
-   The @win argument must be the top-level window of the
-   GUI element from which this function is called, and
-   tool's callback must have the signature associated
-   with GTK's "button-press-event"; @win is passed as
-   the third (user_data) argument to the callback.
-*/
-
-GtkWidget *gretl_toolbar_insert_winlist (GtkWidget *tbar,
-					 GretlToolItem *tool,
-					 GCallback func,
-					 GtkWidget *win,
-					 gint pos)
+void vwin_toolbar_insert_winlist (windata_t *vwin)
 {
     GtkWidget *img, *button = gtk_button_new();
     GtkToolItem *item = gtk_tool_item_new();
 
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
-    gtk_tool_item_set_tooltip(item, gretl_tips, _(tool->tip), NULL);
+    gtk_tool_item_set_tooltip(item, gretl_tips, _("Windows"), NULL);
 #else
-    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tool->tip));
+    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("Windows"));
 #endif
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    img = gtk_image_new_from_stock(tool->icon, GTK_ICON_SIZE_MENU);
+    img = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_container_add(GTK_CONTAINER(item), button);
-    g_signal_connect(button, "button-press-event", func, win);
-    gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, pos);
-
-    return GTK_WIDGET(item);
+    g_signal_connect(button, "button-press-event", 
+		     G_CALLBACK(vwin_winlist_popup), vwin);
+    gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), item, -1);
 }
 
 GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
@@ -893,6 +882,11 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
     for (i=0; i<n_viewbar_items; i++) {
 	item = &viewbar_items[i];
 
+	if (winlist_item(item)) {
+	    vwin_toolbar_insert_winlist(vwin);
+	    continue;
+	}
+
 	func = item_get_callback(item, vwin, latex_ok, sortby_ok,
 				 format_ok, save_ok);
 	if (func == NULL) {
@@ -903,12 +897,7 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	    set_plot_icon(item, vwin->role);
 	}
 
-	if (winlist_item(item)) {
-	    button = gretl_toolbar_insert_winlist(vwin->mbar, item, func, 
-						  vwin->main, -1);
-	} else {
-	    button = gretl_toolbar_insert(vwin->mbar, item, func, vwin, -1);
-	}
+	button = gretl_toolbar_insert(vwin->mbar, item, func, vwin, -1);
 
 	if (func == (GCallback) split_pane_callback) {
 	    if (hpane == NULL) {
@@ -948,7 +937,8 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags)
 {
     if ((flags & VIEWBAR_HAS_TEXT) || vwin->role == SCRIPT_OUT) {
-	g_object_set_data(G_OBJECT(vwin->main), "text_out", GINT_TO_POINTER(1));
+	g_object_set_data(G_OBJECT(vwin->main), "text_out", 
+			  GINT_TO_POINTER(1));
     }
 
     vwin->mbar = gretl_toolbar_new();
@@ -1091,7 +1081,7 @@ static GretlToolItem mainbar_items[] = {
     { N_("new script"),         GTK_STOCK_EDIT,      G_CALLBACK(tbar_new_script), 0 },
     { N_("open gretl console"), GRETL_STOCK_CONSOLE, G_CALLBACK(gretl_console), 0 },
     { N_("session icon view"),  GRETL_STOCK_ICONS,   G_CALLBACK(tbar_iconview), 0 },
-    { N_("Windows"),            GRETL_STOCK_COMPASS, G_CALLBACK(window_list_popup), 0 },
+    { N_("Windows"),            GRETL_STOCK_COMPASS, GNULL, 0 },
     { N_("function packages"),  GRETL_STOCK_FUNC,    G_CALLBACK(tbar_show_funcs), 0 },
     { N_("user's guide"),       GRETL_STOCK_PDF,     G_CALLBACK(tbar_users_guide), 0 },
     { N_("command reference"),  GTK_STOCK_HELP,      G_CALLBACK(tbar_command_ref), 0 },
@@ -1103,24 +1093,23 @@ static GretlToolItem mainbar_items[] = {
 
 void add_mainwin_toolbar (GtkWidget *vbox)
 {
-    GtkWidget *hbox, *toolbar;
     GretlToolItem *item;
+    GtkWidget *hbox;
     int i, n = G_N_ELEMENTS(mainbar_items);
 
-    toolbar = gretl_toolbar_new();
+    mdata->mbar = gretl_toolbar_new();
 
     for (i=0; i<n; i++) {
 	item = &mainbar_items[i];
 	if (winlist_item(item)) {
-	    gretl_toolbar_insert_winlist(toolbar, item, item->func, 
-					 mdata->main, -1);
+	    vwin_toolbar_insert_winlist(mdata);
 	} else {
-	    gretl_toolbar_insert(toolbar, item, item->func, mdata, -1);
+	    gretl_toolbar_insert(mdata->mbar, item, item->func, mdata, -1);
 	}
     }
 
     hbox = gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), toolbar, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), mdata->mbar, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 

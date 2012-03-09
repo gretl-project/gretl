@@ -320,13 +320,9 @@ void do_save_text (char *fname, MODEL *pmod);
 
 int gui_exec_line (ExecState *s, DATASET *dset);
 
-#if USE_GTK_SPINNER
-
-void start_wait_for_output (GtkWidget *w, int big);
+void start_wait_for_output (GtkWidget *w, gboolean big);
 
 void stop_wait_for_output (GtkWidget *w);
-
-#endif
 
 /* other */
 

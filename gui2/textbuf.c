@@ -21,6 +21,7 @@
 #include "textbuf.h"
 #include "toolbar.h"
 #include "dlgutils.h"
+#include "winstack.h"
 #include "tabwin.h"
 #include "gretl_func.h"
 
@@ -191,7 +192,7 @@ gchar *textview_get_trimmed_text (GtkWidget *view)
 }
 
 gchar *textview_get_selection_or_all (GtkWidget *view,
-				      int *sel)
+				      gboolean *selection)
 {
     GtkTextBuffer *tbuf;
     GtkTextIter start, end;
@@ -204,9 +205,9 @@ gchar *textview_get_selection_or_all (GtkWidget *view,
     }
 
     if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
-	*sel = 1;
+	*selection = TRUE;
     } else {
-	*sel = 0;
+	*selection = FALSE;
 	gtk_text_buffer_get_start_iter(tbuf, &start);
 	gtk_text_buffer_get_end_iter(tbuf, &end);
     }
@@ -466,6 +467,7 @@ void sourceview_print (windata_t *vwin)
     GtkSourcePrintCompositor *comp;
     GtkPrintOperation *print;
     GtkPrintOperationResult res;
+    GtkWidget *mainwin;
     GError *error = NULL;
 
     comp = gtk_source_print_compositor_new_from_view(view);
@@ -483,15 +485,17 @@ void sourceview_print (windata_t *vwin)
     g_signal_connect(print, "begin_print", G_CALLBACK(begin_print), comp);
     g_signal_connect(print, "draw_page", G_CALLBACK(draw_page), comp);
 
+    mainwin = vwin_toplevel(vwin);
+
     res = gtk_print_operation_run(print, 
 				  GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
-				  GTK_WINDOW(vwin->main), 
+				  GTK_WINDOW(mainwin), 
 				  &error);
 
     if (res == GTK_PRINT_OPERATION_RESULT_ERROR) {
 	GtkWidget *dlg; 
 
-	dlg = gtk_message_dialog_new(GTK_WINDOW(vwin->main),
+	dlg = gtk_message_dialog_new(GTK_WINDOW(mainwin),
 				     GTK_DIALOG_DESTROY_WITH_PARENT,
 				     GTK_MESSAGE_ERROR,
 				     GTK_BUTTONS_CLOSE,
@@ -716,14 +720,14 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     }
 
     if (hsize > 0 && vsize > 0) {
+	GtkWidget *vmain = vwin_toplevel(vwin);
+
 	if (window_is_tab(vwin)) {
-	    gtk_window_set_default_size(GTK_WINDOW(vwin->topmain), 
-					hsize, vsize + 15);
-	} else {
-	    gtk_window_set_default_size(GTK_WINDOW(vwin->main), 
-					hsize, vsize);
-	} 
+	    vsize += 15;
+	}
+	gtk_window_set_default_size(GTK_WINDOW(vmain), hsize, vsize);
     }
+
     gtk_text_view_set_editable(view, editable);
     gtk_text_view_set_cursor_visible(view, editable);
 
@@ -1181,17 +1185,16 @@ static void make_bibitem_window (const char *buf,
 				 GtkWidget *tview)
 {
     windata_t *vwin;
-    GtkWidget *top;
+    GtkWidget *top, *vmain;
 
     vwin = view_formatted_text_buffer(NULL, buf, 64, 100);
+    vmain = vwin_toplevel(vwin);
     top = gtk_widget_get_toplevel(tview);
-    gtk_window_set_transient_for(GTK_WINDOW(vwin->main),
-				 GTK_WINDOW(top));
-    gtk_window_set_destroy_with_parent(GTK_WINDOW(vwin->main), 
-				       TRUE);
-    gtk_window_set_position(GTK_WINDOW(vwin->main), 
+    gtk_window_set_transient_for(GTK_WINDOW(vmain), GTK_WINDOW(top));
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(vmain), TRUE);
+    gtk_window_set_position(GTK_WINDOW(vmain), 
 			    GTK_WIN_POS_CENTER_ON_PARENT);
-    gtk_widget_show(vwin->main);
+    gtk_widget_show(vmain);
 }
 
 static void open_bibitem_link (GtkTextTag *tag, GtkWidget *tview)
@@ -2051,7 +2054,7 @@ void script_tabs_dialog (GtkWidget *w, windata_t *vwin)
 			 &opt, 1, &smt, 0, 0,
 			 0, NULL, /* no radio buttons */
 			 &tsp, spintxt, 2, 8, 0,
-			 vwin->main);
+			 vwin_toplevel(vwin));
 
     if (resp != GRETL_CANCEL) {
 	tabwidth = tsp;
@@ -3111,13 +3114,12 @@ void create_text (windata_t *vwin, int hsize, int vsize,
     }
 
     if (hsize > 0 && vsize > 0) {
+	GtkWidget *vmain = vwin_toplevel(vwin);
+
 	if (window_is_tab(vwin)) {
-	    gtk_window_set_default_size(GTK_WINDOW(vwin->topmain), 
-					hsize, vsize + 15);
-	} else {
-	    gtk_window_set_default_size(GTK_WINDOW(vwin->main), 
-					hsize, vsize);
-	} 
+	    vsize += 15;
+	}
+	gtk_window_set_default_size(GTK_WINDOW(vmain), hsize, vsize);
     }
 
     gtk_text_view_set_editable(GTK_TEXT_VIEW(w), editable);
@@ -3171,12 +3173,14 @@ void viewer_split_pane (windata_t *vwin, int vertical)
     GtkWidget *vbox = vwin->vbox;
     GtkWidget *view1 = vwin->text;
     GtkWidget *sw, *paned, *view2;
+    GtkWidget *vmain;
     GtkTextBuffer *tbuf;
     gint width, height;
 
     sw = g_object_get_data(G_OBJECT(vbox), "sw");
 
-    gtk_window_get_size(GTK_WINDOW(vwin->main), &width, &height);
+    vmain = vwin_toplevel(vwin);
+    gtk_window_get_size(GTK_WINDOW(vmain), &width, &height);
 
     g_object_ref(G_OBJECT(sw));
     gtk_container_remove(GTK_CONTAINER(vwin->vbox), sw);

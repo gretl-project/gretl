@@ -1531,6 +1531,7 @@ static void set_genr_model_from_vwin (windata_t *vwin)
 static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 {
     ExecState state;
+    GtkWidget *hbox;
     char fnline[MAXLINE];
     char *tmpname = NULL;
     const char *funname;
@@ -1591,17 +1592,17 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	set_genr_model_from_vwin(cinfo->vwin);
     }
 
-#if USE_GTK_SPINNER
-    if (cinfo->top_hbox != NULL) {
-	start_wait_for_output(cinfo->top_hbox, 0);
+    hbox = cinfo->top_hbox;
+
+    if (hbox != NULL) {
+	start_wait_for_output(hbox, FALSE);
     }
-#endif
+
     err = gui_exec_line(&state, dataset);
-#if USE_GTK_SPINNER
-    if (cinfo->top_hbox != NULL) {
-	stop_wait_for_output(cinfo->top_hbox);
+
+    if (hbox != NULL) {
+	stop_wait_for_output(hbox);
     }
-#endif
 
     if (cinfo->flags & MODEL_CALL) {
 	unset_genr_model();

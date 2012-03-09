@@ -51,10 +51,6 @@ GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
 				 gpointer data,
 				 gint pos);
 
-GtkWidget *gretl_toolbar_insert_winlist (GtkWidget *tbar,
-					 GretlToolItem *tool,
-					 GCallback func,
-					 GtkWidget *win,
-					 gint pos);
+void vwin_toolbar_insert_winlist (windata_t *vwin);
 
 #endif /* TOOLBAR_H */

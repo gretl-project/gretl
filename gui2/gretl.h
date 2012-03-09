@@ -162,6 +162,8 @@ void make_list_from_main (void);
 void add_window_list_item (GtkWidget *w, int role);
 void window_list_popup (GtkWidget *src, GdkEventButton *event, 
 			gpointer p);
+void vwin_winlist_popup (GtkWidget *src, GdkEventButton *event, 
+			 windata_t *vwin);
 int get_n_listed_windows (void);
 gboolean window_list_exit_check (void);
 void do_stop_script (GtkWidget *w, windata_t *vwin);

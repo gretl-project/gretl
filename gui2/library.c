@@ -78,10 +78,8 @@
 #include "filelists.h"
 #include "fnsave.h"
 
-#if USE_GTK_SPINNER
-# if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 20
-#  include "spinner.h"
-# endif
+#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 20
+# include "spinner.h"
 #endif
 
 #define CMD_DEBUG 0
@@ -6967,14 +6965,12 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
     return 0;
 }
 
-#if USE_GTK_SPINNER
-
 /* Start a spinner as visual indication that there's
    something going on: the argument @w should be of
    type GTK_BOX, into which a spinner may be packed.
 */
 
-void start_wait_for_output (GtkWidget *w, int big)
+void start_wait_for_output (GtkWidget *w, gboolean big)
 {
     GtkWidget *spinner = g_object_get_data(G_OBJECT(w), "spinner");
 
@@ -7007,66 +7003,9 @@ void stop_wait_for_output (GtkWidget *w)
     gdk_flush();
 }
 
-#else
-
-/* set "busy" cursor as visual indication that there's
-   something going on */
-
-static void start_busy_cursor (GtkWidget *w, GdkWindow **wcurrent)
-{
-    static GdkCursor *busy_cursor;
-    GdkWindow *text_window = NULL;
-    GdkDisplay *display;
-
-    if (busy_cursor == NULL) {
-	busy_cursor = gdk_cursor_new(GDK_WATCH);
-    }
-
-    if (GTK_IS_TEXT_VIEW(w)) {
-	text_window = gtk_text_view_get_window(GTK_TEXT_VIEW(w),
-					       GTK_TEXT_WINDOW_TEXT);    
-	gdk_window_set_cursor(text_window, busy_cursor);
-    }    
-
-    if ((display = gdk_display_get_default()) != NULL) {
-	*wcurrent = gdk_display_get_window_at_pointer(display, NULL, NULL);
-	if (*wcurrent != text_window) {
-	    gdk_window_set_cursor(*wcurrent, busy_cursor);
-	} else {
-	    *wcurrent = NULL;
-	}
-    }
-
-    gdk_flush();
-}
-
-/* done: reset regular cursor */
-
-static void stop_busy_cursor (GtkWidget *w, GdkWindow *wcurrent)
-{
-    if (GTK_IS_TEXT_VIEW(w)) {
-	GdkWindow *text_window = 
-	    gtk_text_view_get_window(GTK_TEXT_VIEW(w),
-				     GTK_TEXT_WINDOW_TEXT);
-
-	gdk_window_set_cursor(text_window, NULL);
-    }     
-    
-    if (wcurrent != NULL) {
-	gdk_window_set_cursor(wcurrent, NULL);
-    }
-}
-
-#endif /* USE_GTK_SPINNER or not */
-
 static void stop_button_set_sensitive (windata_t *vwin,
 				       gboolean s)
 {
-#if 1
-    fprintf(stderr, "stop-button: vwin=%p, vwin->mbar=%p, s=%d\n",
-	    (void *) vwin, (void *) vwin->mbar, s);
-#endif
-
     if (vwin != NULL && vwin->mbar != NULL) {
 	GtkWidget *b = g_object_get_data(G_OBJECT(vwin->mbar), 
 					 "stop_button");
@@ -7078,15 +7017,14 @@ static void stop_button_set_sensitive (windata_t *vwin,
 }
 
 /* Execute a script from the buffer in a viewer window.  The script
-   may be executed in full or in part (in case @sel is non-zero)
+   may be executed in full or in part (in case @selection is true)
 */
 
-static void run_native_script (windata_t *vwin, gchar *buf, int sel)
+static void run_native_script (windata_t *vwin, gchar *buf, 
+			       gboolean selection)
 {
-#if !USE_GTK_SPINNER
-    GdkWindow *wcurr = NULL;
-#endif
     gpointer vp = NULL;
+    GtkWidget *hbox;
     PRN *prn;
     int save_batch;
     int shown = 0;
@@ -7096,35 +7034,29 @@ static void run_native_script (windata_t *vwin, gchar *buf, int sel)
 	return;
     }
 
-    if (sel) {
-	/* doing selected portion of script */
+    if (selection) {
+	/* running a selected portion of a script */
 	if (vwin_first_child(vwin) != NULL) {
 	    suppress_logo = 1;
 	}
     }
 
+    hbox = gtk_widget_get_parent(vwin->mbar);
+
     stop_button_set_sensitive(vwin, TRUE);
-#if USE_GTK_SPINNER
-    start_wait_for_output(gtk_widget_get_parent(vwin->mbar), 1);
-#else
-    start_busy_cursor(vwin->text, &wcurr);
-#endif
+    start_wait_for_output(hbox, TRUE);
 
     save_batch = gretl_in_batch_mode();
     err = execute_script(NULL, buf, prn, SCRIPT_EXEC);
     gretl_set_batch_mode(save_batch);
 
+    stop_wait_for_output(hbox);
     stop_button_set_sensitive(vwin, FALSE);
-#if USE_GTK_SPINNER
-    stop_wait_for_output(gtk_widget_get_parent(vwin->mbar));
-#else
-    stop_busy_cursor(vwin->text, wcurr);
-#endif
 
     refresh_data();
     suppress_logo = 0;
 
-    if (sel) {
+    if (selection) {
 	if (send_output_to_kid(vwin, prn)) {
 	    shown = 1;
 	} else {
@@ -7136,7 +7068,7 @@ static void run_native_script (windata_t *vwin, gchar *buf, int sel)
 	view_buffer(prn, 78, 450, NULL, SCRIPT_OUT, vp);
     }
 
-    if (!err && !sel && vwin->role != EDIT_PKG_SAMPLE &&
+    if (!err && !selection && vwin->role != EDIT_PKG_SAMPLE &&
 	*vwin->fname != '\0' && !strstr(vwin->fname, "script_tmp")) {
 	mkfilelist(FILE_LIST_SCRIPT, vwin->fname);
 	lib_command_sprintf("run %s", vwin->fname);
@@ -7185,8 +7117,8 @@ static void ensure_newline_termination (gchar **ps)
 
 void do_run_script (GtkWidget *w, windata_t *vwin)
 {
-    gchar *buf;
-    int sel = 0;
+    gboolean selection = FALSE;
+    gchar *buf = NULL;
 
     if (vwin->role == EDIT_GP || 
 	vwin->role == EDIT_R || 
@@ -7197,7 +7129,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
     } else if (vwin->role == EDIT_PKG_SAMPLE) {
 	buf = package_sample_get_script(vwin);
     } else {
-	buf = textview_get_selection_or_all(vwin->text, &sel);
+	buf = textview_get_selection_or_all(vwin->text, &selection);
     }
 
     if (buf == NULL || *buf == '\0') {
@@ -7223,7 +7155,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
     } else if (vwin->role == EDIT_X12A) {
 	run_x12a_script(buf);
     } else {
-	run_native_script(vwin, buf, sel);
+	run_native_script(vwin, buf, selection);
     }
 
     g_free(buf);
@@ -7233,7 +7165,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 
 void run_script_fragment (windata_t *vwin, gchar *buf)
 {
-    run_native_script(vwin, buf, 1);
+    run_native_script(vwin, buf, TRUE);
 }
 
 void do_open_script (int action)

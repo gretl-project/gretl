@@ -76,7 +76,7 @@ static void make_main_window (void);
 
 static gboolean main_popup_handler (GtkWidget *w, GdkEventButton *event,
 				    gpointer data);
-static int set_up_main_menu (void);
+static GtkWidget *make_main_menu (void);
 static void start_R_callback (void);
 static void auto_store (void);
 static void restore_sample_callback (void);
@@ -1189,6 +1189,7 @@ static void make_main_window (void)
     GtkWidget *main_vbox;
     GtkWidget *box, *dlabel;
     GtkWidget *align;
+    GtkWidget *menu;
     const char *titles[] = {
 	N_("ID #"), 
 	N_("Variable name"), 
@@ -1241,12 +1242,13 @@ static void make_main_window (void)
     gtk_container_add(GTK_CONTAINER(mdata->main), main_vbox);
     g_object_set_data(G_OBJECT(mdata->main), "vbox", main_vbox);
 
-    if (set_up_main_menu()) {
+    menu = make_main_menu();
+    if (menu == NULL) {
 	exit(EXIT_FAILURE);
     }
 
     /* put the main menu bar in place */
-    gtk_box_pack_start(GTK_BOX(main_vbox), mdata->mbar, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(main_vbox), menu, FALSE, TRUE, 0);
 
     /* label for name of datafile */
     dlabel = gtk_label_new(_(" No datafile loaded ")); 
@@ -1315,7 +1317,7 @@ static void make_main_window (void)
     fprintf(stderr, "  add_mainwin_toolbar done\n");
 #endif
 
-    gtk_widget_show_all(mdata->main); 
+    gtk_widget_show_all(mdata->main);
 
 #if GUI_DEBUG
     fprintf(stderr, "  gtk_widget_show_all done\n");
@@ -1679,16 +1681,16 @@ static gchar *get_main_ui (void)
     return err ? NULL : main_ui;
 }
 
-static int set_up_main_menu (void)
+static GtkWidget *make_main_menu (void)
 {
+    GtkWidget *menu = NULL;
     GtkActionGroup *actions;
     gchar *main_ui = NULL;
     GError *error = NULL;
-    int err = 0;
 
     main_ui = get_main_ui();
     if (main_ui == NULL) {
-	return 1;
+	return NULL;
     }
 
     mdata->ui = gtk_ui_manager_new();
@@ -1706,20 +1708,18 @@ static int set_up_main_menu (void)
     if (!gtk_ui_manager_add_ui_from_string(mdata->ui, main_ui, -1, &error)) {
 	g_message("building menus failed: %s", error->message);
 	g_error_free(error);
-	err = 1;
     } else {
 	add_conditional_items(mdata);
-	mdata->mbar = gtk_ui_manager_get_widget(mdata->ui, "/menubar");
-	if (mdata->mbar == NULL) {
+	menu = gtk_ui_manager_get_widget(mdata->ui, "/menubar");
+	if (menu == NULL) {
 	    fprintf(stderr, "/menubar widget is NULL!\n");
-	    err = 1;
 	} else {
 	    GtkWidget *dataitem;
 
 	    dataitem = gtk_ui_manager_get_widget(mdata->ui, "/menubar/Data");
 	    if (dataitem == NULL) {
 		fprintf(stderr, "/menubar/Data widget is NULL!\n");
-		err = 1;
+		menu = NULL;
 	    } else {
 		g_signal_connect(G_OBJECT(dataitem), "activate",
 				 G_CALLBACK(check_var_labels_state), mdata);
@@ -1728,7 +1728,7 @@ static int set_up_main_menu (void)
 	}
     }
 
-    return err;
+    return menu;
 }
 
 /* Below: apparatus for keeping track of open windows so
@@ -2086,6 +2086,12 @@ void window_list_popup (GtkWidget *src, GdkEventButton *event, gpointer p)
 			   0, gtk_get_current_event_time());
 	}
     }
+}
+
+void vwin_winlist_popup (GtkWidget *src, GdkEventButton *event, 
+			 windata_t *vwin)
+{
+    window_list_popup(src, event, vwin_toplevel(vwin));
 }
 
 /* on exiting, check for any editing windows with unsaved

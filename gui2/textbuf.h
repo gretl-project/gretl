@@ -48,7 +48,7 @@ gchar *textview_get_text (GtkWidget *view);
 gchar *textview_get_trimmed_text (GtkWidget *view);
 
 gchar *textview_get_selection_or_all (GtkWidget *view,
-				      int *sel);
+				      gboolean *selection);
 
 gchar *textview_get_current_line (GtkWidget *view);
 

@@ -242,7 +242,7 @@ static void editor_tab_destroy (GtkWidget *w, windata_t *vwin)
 #if TDEBUG
     fprintf(stderr, " unrefing toolbar at %p\n", (void *) vwin->mbar);
 #endif
-    g_object_unref(G_OBJECT(vwin->mbar));
+    g_object_unref(vwin->mbar);
 
     gtk_notebook_remove_page(notebook, pg);
 }
@@ -558,7 +558,7 @@ void tabwin_register_toolbar (windata_t *vwin)
        its auto-destruction; also ensure that the pointer
        goes to NULL on destruction
     */
-    g_object_ref(G_OBJECT(vwin->mbar));
+    g_object_ref(vwin->mbar);
     handler_id = g_signal_connect(G_OBJECT(vwin->mbar), "destroy",
 				  G_CALLBACK(gtk_widget_destroyed), 
 				  &vwin->mbar);
@@ -680,22 +680,41 @@ void tabwin_navigate (windata_t *vwin, guint key)
     }
 }
 
-static void size_new_toplevel (GtkWidget *w, windata_t *vwin)
+static void size_new_toplevel (windata_t *vwin)
 {
     int cw = get_char_width(vwin->text);
     int hsize = 78 * cw + 48;
     int vsize = 370;
 
-    gtk_window_set_default_size(GTK_WINDOW(w), hsize, vsize);    
+    gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize);    
 }
+
+#if TDEBUG
+
+static void dcheck1 (GtkWidget *w, gpointer p)
+{
+    fprintf(stderr, "destroy: vwin->main %p\n", (void *) w);
+}
+
+static void dcheck2 (GtkWidget *w, gpointer p)
+{
+    fprintf(stderr, "destroy: vwin->vbox %p\n", (void *) w);
+}
+
+static void dcheck3 (GtkWidget *w, gpointer p)
+{
+    fprintf(stderr, "destroy: vwin->mbar %p\n", (void *) w);
+}
+
+#endif
 
 void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 {
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
     GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
     gint pg = gtk_notebook_page_num(notebook, vwin->main);
+    GtkWidget *hbox = vwin->main;
     gulong handler_id;
-    GtkWidget *mainwin;
     gchar *title;
 
     /* we'll not do this if there's only one page in the
@@ -705,57 +724,62 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-    /* take a reference to the guts of @vwin, undo the attachment
-       to its holder, and extract from the tabbed context
-    */
-    g_object_ref(G_OBJECT(vwin->vbox));
-    g_object_set_data(G_OBJECT(vwin->main), "vwin", NULL);
-    handler_id = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(vwin->main),
+    /* disconnect */
+    vwin->main = vwin->topmain = NULL;
+
+    /* remove signals and data from hbox (ex vwin->main) */
+    g_object_set_data(G_OBJECT(hbox), "vwin", NULL);
+    handler_id = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(hbox),
 						    "destroy-id"));
-    g_signal_handler_disconnect(vwin->main, handler_id);
+    g_signal_handler_disconnect(hbox, handler_id);
     handler_id = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(vwin->mbar),
 						    "destroy-id"));
     g_signal_handler_disconnect(vwin->mbar, handler_id);
-    gtk_container_remove(GTK_CONTAINER(vwin->main), vwin->vbox);
+
+    /* extract vwin->vbox from its tabbed holder */
+    g_object_ref(vwin->vbox);
+    gtk_container_remove(GTK_CONTAINER(hbox), vwin->vbox);
     gtk_notebook_remove_page(notebook, pg);
-
-    /* build new shell for @vwin's vbox */
-    mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    title = title_from_filename(vwin->fname, TRUE);
-    gtk_window_set_title(GTK_WINDOW(mainwin), title);
-    g_free(title);
-    g_signal_connect(G_OBJECT(mainwin), "destroy", 
-		     G_CALLBACK(free_windata), vwin);
-    g_object_set_data(G_OBJECT(mainwin), "vwin", vwin);
-    size_new_toplevel(mainwin, vwin);
-
-    /* disconnect tabbed top-level */
-    vwin->topmain = NULL;
 
     /* tweak vbox params */
     gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
 
+    /* build new shell for @vwin */
+    vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    title = title_from_filename(vwin->fname, TRUE);
+    gtk_window_set_title(GTK_WINDOW(vwin->main), title);
+    g_free(title);
+    g_signal_connect(G_OBJECT(vwin->main), "destroy", 
+		     G_CALLBACK(free_windata), vwin);
+    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
+    size_new_toplevel(vwin);
+
+#if TDEBUG
+    fprintf(stderr, "new vwin->main at %p\n", (void *) vwin->main);
+    g_signal_connect(vwin->main, "destroy", G_CALLBACK(dcheck1), NULL);
+    g_signal_connect(vwin->vbox, "destroy", G_CALLBACK(dcheck2), NULL);
+    g_signal_connect(vwin->mbar, "destroy", G_CALLBACK(dcheck3), NULL);
+#endif
+
     /* add box for toolbar, pack it, drop extra ref., then
        remove the "tabbed" flag (note that the tabbed flag
        is wanted so that vwin_pack_toolbar() will put the
        toolbar up top)
-    */
+    */    
     vwin_pack_toolbar(vwin);
-    g_object_unref(G_OBJECT(vwin->mbar)); /* OK? */
+    g_object_unref(vwin->mbar);
     vwin->flags &= ~VWIN_TABBED;
 
     /* put vbox into new top-level window and drop extra ref. */
-    gtk_container_add(GTK_CONTAINER(mainwin), vwin->vbox);
-    g_object_unref(G_OBJECT(vwin->vbox));
+    gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
+    g_object_unref(vwin->vbox);
 
-     /* connect toplevel and set signals */
-    vwin->main = mainwin;
+    /* set signals */
     g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 		     G_CALLBACK(query_save_text), vwin);
     g_object_set_data(G_OBJECT(vwin->main), "role", 
 		      GINT_TO_POINTER(vwin->role));
-    winstack_add(vwin->main);
 
     add_window_list_item(vwin->main, vwin->role);
 

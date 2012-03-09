@@ -400,16 +400,18 @@ GtkWidget *vwin_toplevel (windata_t *vwin)
 void vwin_pack_toolbar (windata_t *vwin)
 {
     if (vwin->topmain != NULL) {
+	/* vwin is embedded in a tabbed window */
 	tabwin_register_toolbar(vwin);
     } else {    
 	GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
 
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
-	gtk_widget_show_all(hbox);
 	if (window_is_tab(vwin)) {
+	    /* here we're re-packing vwin->mbar: move it up top */
 	    gtk_box_reorder_child(GTK_BOX(vwin->vbox), hbox, 0);
-	} 	    
+	}
+	gtk_widget_show_all(hbox);
     }
 }
 

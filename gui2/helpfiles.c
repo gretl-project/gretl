@@ -76,7 +76,7 @@ static GretlToolItem help_tools[] = {
     { N_("Smaller"), GTK_STOCK_ZOOM_OUT, G_CALLBACK(text_smaller), 0},
     { N_("Show English help"), GRETL_STOCK_EN, G_CALLBACK(en_help_callback), 
       EN_ITEM },
-    { N_("Windows"), GRETL_STOCK_COMPASS, G_CALLBACK(window_list_popup), 0 },
+    { N_("Windows"), GRETL_STOCK_COMPASS, GNULL, 0 },
     { N_("Close"), GTK_STOCK_CLOSE, G_CALLBACK(delete_help_viewer), 0 }
 };
 
@@ -1027,9 +1027,7 @@ void set_up_helpview_menu (windata_t *hwin)
 	    continue;
 	}
 	if (winlist_item(item)) {
-	    gretl_toolbar_insert_winlist(hwin->mbar, item, 
-					 item->func, hwin->main,
-					 -1);
+	    vwin_toolbar_insert_winlist(hwin);
 	} else {
 	    gretl_toolbar_insert(hwin->mbar, item, item->func,
 				 hwin, -1);
