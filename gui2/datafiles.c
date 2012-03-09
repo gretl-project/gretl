@@ -745,7 +745,7 @@ void browser_open_ps (GtkWidget *w, gpointer data)
 
     set_scriptpage(coll->title);
 
-    view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
+    view_script(scriptfile, 0, VIEW_SCRIPT);
 } 
 
 static gint enter_opens_file (GtkWidget *w, GdkEventKey *key, 

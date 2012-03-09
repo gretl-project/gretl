@@ -1178,7 +1178,7 @@ static void open_script_link (GtkTextTag *tag)
 
     g_free(fname);
 
-    view_file(fullname, 0, 0, 78, 370, VIEW_SCRIPT);
+    view_script(fullname, 0, VIEW_SCRIPT);
 }
 
 static void make_bibitem_window (const char *buf,

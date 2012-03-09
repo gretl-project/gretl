@@ -97,6 +97,11 @@
 #define MAXSTR FILENAME_MAX
 #define CLIPTEMP "cliptmp.txt"
 
+#define SCRIPT_WIDTH 78
+#define SCRIPT_HEIGHT 370
+#define MODEL_WIDTH 78
+#define MODEL_HEIGHT 420 
+
 /* basic global program vars */
 extern DATASET *dataset;
 extern MODEL *model;

@@ -112,8 +112,10 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 
 windata_t *vwin_first_child (windata_t *vwin);
 
-windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
-		       char *title);
+windata_t *view_model (PRN *prn, MODEL *pmod, char *title);
+
+windata_t *view_script (const char *filename, int editable, 
+			int role);
 
 void set_model_save_state (windata_t *vwin, gboolean s);
 

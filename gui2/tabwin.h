@@ -41,4 +41,6 @@ gboolean window_is_undockable (windata_t *vwin);
 
 gboolean tabwin_exit_check (GtkWidget *w);
 
+void model_tab_destroy (windata_t *vwin);
+
 #endif /* TABWIN_H_ */

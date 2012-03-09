@@ -35,7 +35,8 @@ struct tabwin_t_ {
 };
 
 /* We support one tabbed editor, for gretl scripts --
-   and we may support a tabbed viewer for models */
+   and we _may_ support a tabbed viewer for models
+   at some point */
 
 static tabwin_t *tabedit;
 static tabwin_t *tabmod;
@@ -221,14 +222,14 @@ static void page_added_callback (GtkNotebook *notebook,
    trashing the selected one
 */
 
-static void editor_tab_destroy (GtkWidget *w, windata_t *vwin)
+static void tabwin_tab_destroy (GtkWidget *w, windata_t *vwin)
 {
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
     GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
     gint pg = gtk_notebook_page_num(notebook, vwin->main);
 
 #if TDEBUG
-    fprintf(stderr, "*** editor_tab_destroy: vwin = %p\n", (void *) vwin);
+    fprintf(stderr, "*** tabwin_tab_destroy: vwin = %p\n", (void *) vwin);
 #endif
 
     /* note: vwin->mbar is packed under tabwin, so it will not
@@ -245,6 +246,24 @@ static void editor_tab_destroy (GtkWidget *w, windata_t *vwin)
     g_object_unref(vwin->mbar);
 
     gtk_notebook_remove_page(notebook, pg);
+}
+
+void model_tab_destroy (windata_t *vwin)
+{
+    tabwin_t *tabwin = vwin_get_tabwin(vwin);
+    GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
+    
+    if (gtk_notebook_get_n_pages(notebook) > 1) {
+	gint pg = gtk_notebook_page_num(notebook, vwin->main);
+
+	if (tabwin->mbar != NULL && tabwin->mbar == vwin->mbar) {
+	    tabwin_remove_toolbar(tabwin);
+	}
+	g_object_unref(vwin->mbar);
+	gtk_notebook_remove_page(notebook, pg);
+    } else {
+	gtk_widget_destroy(vwin->topmain);
+    }
 }
 
 /* on switching the current page, put the new page's
@@ -332,7 +351,7 @@ static void viewer_tab_add_closer (GtkWidget *tab, windata_t *vwin)
     gtk_container_set_border_width(GTK_CONTAINER(button), 0);
     no_button_padding(button);
     gtk_container_add(GTK_CONTAINER(button), img);
-    g_signal_connect(button, "clicked", G_CALLBACK(editor_tab_destroy), 
+    g_signal_connect(button, "clicked", G_CALLBACK(tabwin_tab_destroy), 
 		     vwin);
     gtk_container_add(GTK_CONTAINER(tab), button);
     g_object_set_data(G_OBJECT(tab), "button", button);
@@ -683,30 +702,21 @@ void tabwin_navigate (windata_t *vwin, guint key)
 static void size_new_toplevel (windata_t *vwin)
 {
     int cw = get_char_width(vwin->text);
-    int hsize = 78 * cw + 48;
-    int vsize = 370;
+    int hsize, vsize;
+
+    if (vwin->role == EDIT_SCRIPT) {
+	hsize = SCRIPT_WIDTH;
+	vsize = SCRIPT_HEIGHT;
+    } else {
+	hsize = 63; /* MODEL_WIDTH ? */
+	vsize = MODEL_HEIGHT;
+    }
+
+    hsize *= cw;
+    hsize += 48;
 
     gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize);    
 }
-
-#if TDEBUG
-
-static void dcheck1 (GtkWidget *w, gpointer p)
-{
-    fprintf(stderr, "destroy: vwin->main %p\n", (void *) w);
-}
-
-static void dcheck2 (GtkWidget *w, gpointer p)
-{
-    fprintf(stderr, "destroy: vwin->vbox %p\n", (void *) w);
-}
-
-static void dcheck3 (GtkWidget *w, gpointer p)
-{
-    fprintf(stderr, "destroy: vwin->mbar %p\n", (void *) w);
-}
-
-#endif
 
 void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 {
@@ -756,10 +766,8 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     size_new_toplevel(vwin);
 
 #if TDEBUG
-    fprintf(stderr, "new vwin->main at %p\n", (void *) vwin->main);
-    g_signal_connect(vwin->main, "destroy", G_CALLBACK(dcheck1), NULL);
-    g_signal_connect(vwin->vbox, "destroy", G_CALLBACK(dcheck2), NULL);
-    g_signal_connect(vwin->mbar, "destroy", G_CALLBACK(dcheck3), NULL);
+    fprintf(stderr, "*** undock_tabbed_viewer: new vwin->main at %p\n", 
+	    (void *) vwin->main);
 #endif
 
     /* add box for toolbar, pack it, drop extra ref., then
@@ -780,6 +788,10 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 		     G_CALLBACK(query_save_text), vwin);
     g_object_set_data(G_OBJECT(vwin->main), "role", 
 		      GINT_TO_POINTER(vwin->role));
+
+    if (vwin->role == VIEW_MODEL) {
+	winstack_add(vwin->main);
+    }
 
     add_window_list_item(vwin->main, vwin->role);
 

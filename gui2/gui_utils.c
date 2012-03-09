@@ -79,7 +79,11 @@ static void close_model (GtkAction *action, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
-    gtk_widget_destroy(vwin->main);
+    if (window_is_tab(vwin)) {
+	model_tab_destroy(vwin);
+    } else {
+	gtk_widget_destroy(vwin->main);
+    }
 }
 
 static int arma_by_x12a (const MODEL *pmod)
@@ -1908,6 +1912,14 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 				hsize, vsize, role, NULL);
 }
 
+windata_t *view_script (const char *filename, int editable, 
+			int role)
+{
+    return view_file_with_title(filename, editable, 0,
+				SCRIPT_WIDTH, SCRIPT_HEIGHT,
+				role, NULL);
+}
+
 windata_t *console_window (int hsize, int vsize)
 {
     windata_t *vwin;
@@ -2206,9 +2218,10 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     return vwin;
 }
 
-windata_t *view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
-		       char *title) 
+windata_t *view_model (PRN *prn, MODEL *pmod, char *title) 
 {
+    int hsize = MODEL_WIDTH;
+    int vsize = MODEL_HEIGHT;
     windata_t *vwin;
     const char *buf;
     int width, nlines;

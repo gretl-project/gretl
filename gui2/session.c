@@ -2087,7 +2087,7 @@ static int display_session_model (SESSION_MODEL *sm)
 	MODEL *pmod = (MODEL *) sm->ptr;
 
 	printmodel(pmod, dataset, OPT_NONE, prn);
-	view_model(prn, pmod, 78, 400, sm->name);
+	view_model(prn, pmod, sm->name);
     } else if (sm->type == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) sm->ptr;
 

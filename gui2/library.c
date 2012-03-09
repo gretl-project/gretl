@@ -2131,7 +2131,7 @@ int do_add_omit (selector *sr)
 		attach_subsample_to_model(newmod, dataset);
 	    }
 	    printmodel(newmod, dataset, OPT_NONE, prn);
-	    view_model(prn, newmod, 78, 420, NULL);
+	    view_model(prn, newmod, NULL);
 	} else {
 	    view_buffer_with_parent(vwin, prn, 78, 400,
 				    (ci == OMIT)?
@@ -3547,7 +3547,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	}
 	edit_dialog_close(dlg);
 	attach_subsample_to_model(pmod, dataset);
-	view_model(prn, pmod, 78, 420, NULL);
+	view_model(prn, pmod, NULL);
     }
 
     free_strings_array(lines, n_lines);
@@ -3719,7 +3719,7 @@ static int real_do_model (int action)
     } else {
 	record_model_command(pmod->ID);
 	attach_subsample_to_model(pmod, dataset);
-	view_model(prn, pmod, 78, 420, NULL); 
+	view_model(prn, pmod, NULL); 
     }
 
     return err;
@@ -4246,7 +4246,7 @@ void do_graph_model (const int *list, int fit)
 	/* note: paired with parse_lib_command() above */
 	record_lib_command();
 	attach_subsample_to_model(pmod, dataset);
-	view_model(prn, pmod, 78, 420, NULL);
+	view_model(prn, pmod, NULL);
     }  
 }
 
@@ -7190,12 +7190,12 @@ void do_open_script (int action)
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 	gretl_set_current_dir(scriptfile);
 	if (has_system_prefix(scriptfile, SCRIPT_SEARCH)) {
-	    view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
+	    view_script(scriptfile, 0, VIEW_SCRIPT);
 	} else {
-	    view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT);
+	    view_script(scriptfile, 1, EDIT_SCRIPT);
 	}
     } else {
-	view_file(tryfile, 1, 0, 78, 370, action);
+	view_script(tryfile, 1, action);
     } 
 }
 
@@ -7224,7 +7224,7 @@ void do_new_script (int code)
 	strcpy(scriptfile, temp);
     }
     
-    view_file(temp, 1, 1, 78, 370, action);
+    view_file(temp, 1, 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, action);
 }
 
 void new_script_callback (GtkAction *action) 

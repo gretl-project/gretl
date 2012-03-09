@@ -343,16 +343,16 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	strcpy(tryfile, fname);
 	sourceview_insert_file(vwin, fname);
     } else if (has_suffix(fname, ".R")) {
-	view_file(fname, 1, 0, 78, 370, EDIT_R);
+	view_script(fname, 1, EDIT_R);
     } else if (has_suffix(fname, ".plt")) {
-	view_file(fname, 1, 0, 78, 370, EDIT_GP);
+	view_script(fname, 1, EDIT_GP);
     } else if (ox_support && has_suffix(fname, ".ox")) {
-	view_file(fname, 1, 0, 78, 370, EDIT_OX);
+	view_script(fname, 1, EDIT_OX);
     } else if (has_suffix(fname, ".m")) {
-	view_file(fname, 1, 0, 78, 370, EDIT_OCTAVE);
+	view_script(fname, 1, EDIT_OCTAVE);
     } else {
 	strcpy(tryfile, fname);
-	if (view_file(tryfile, 1, 0, 78, 370, EDIT_SCRIPT) != NULL) {
+	if (view_script(tryfile, 1, EDIT_SCRIPT) != NULL) {
 	    strcpy(scriptfile, tryfile);
 	    mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 	    gretl_set_current_dir(scriptfile);
@@ -371,9 +371,9 @@ static void filesel_open_session (const char *fname)
 	windata_t *vwin;
 
 	if (has_system_prefix(tryfile, SCRIPT_SEARCH)) {
-	    vwin = view_file(tryfile, 0, 0, 78, 370, VIEW_SCRIPT);
+	    vwin = view_script(tryfile, 0, VIEW_SCRIPT);
 	} else {
-	    vwin = view_file(tryfile, 1, 0, 78, 370, EDIT_SCRIPT);
+	    vwin = view_script(tryfile, 1, EDIT_SCRIPT);
 	}
 
 	if (vwin != NULL) {
