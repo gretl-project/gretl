@@ -22,7 +22,7 @@
 #include "textbuf.h"
 #include "tabwin.h"
 
-#define TDEBUG 1
+#define TDEBUG 0
 
 typedef struct tabwin_t_  tabwin_t;
 
