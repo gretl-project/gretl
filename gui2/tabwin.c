@@ -172,6 +172,10 @@ static void page_removed_callback (GtkNotebook *notebook,
 {
     int np = gtk_notebook_get_n_pages(notebook);
 
+#if TDEBUG
+    fprintf(stderr, "*** page_removed_callback: child=%p\n", (void *) child);
+#endif
+
     if (np < 5) {
 	gtk_notebook_popup_disable(notebook);
     }    
@@ -517,7 +521,7 @@ windata_t *viewer_tab_new (int role, const char *info,
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
     handler_id = g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 				  G_CALLBACK(free_windata), vwin);
-    g_object_set_data(G_OBJECT(vwin->main), "handler-id",
+    g_object_set_data(G_OBJECT(vwin->main), "destroy-id",
 		      GUINT_TO_POINTER(handler_id));
 
 #if TDEBUG
@@ -548,14 +552,18 @@ windata_t *viewer_tab_new (int role, const char *info,
 void tabwin_register_toolbar (windata_t *vwin)
 {
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
+    gulong handler_id;
 
     /* take out a reference to @vwin's toolbar to prevent
        its auto-destruction; also ensure that the pointer
        goes to NULL on destruction
     */
     g_object_ref(G_OBJECT(vwin->mbar));
-    g_signal_connect(G_OBJECT(vwin->mbar), "destroy",
-                     G_CALLBACK(gtk_widget_destroyed), &vwin->mbar);
+    handler_id = g_signal_connect(G_OBJECT(vwin->mbar), "destroy",
+				  G_CALLBACK(gtk_widget_destroyed), 
+				  &vwin->mbar);
+    g_object_set_data(G_OBJECT(vwin->mbar), "destroy-id",
+		      GUINT_TO_POINTER(handler_id));
 
 #if TDEBUG
     fprintf(stderr, "*** register_toolbar: vwin=%p has toolbar=%p\n",
@@ -703,8 +711,11 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     g_object_ref(G_OBJECT(vwin->vbox));
     g_object_set_data(G_OBJECT(vwin->main), "vwin", NULL);
     handler_id = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(vwin->main),
-						    "handler-id"));
+						    "destroy-id"));
     g_signal_handler_disconnect(vwin->main, handler_id);
+    handler_id = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(vwin->mbar),
+						    "destroy-id"));
+    g_signal_handler_disconnect(vwin->mbar, handler_id);
     gtk_container_remove(GTK_CONTAINER(vwin->main), vwin->vbox);
     gtk_notebook_remove_page(notebook, pg);
 
@@ -731,7 +742,7 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
        toolbar up top)
     */
     vwin_pack_toolbar(vwin);
-    g_object_unref(G_OBJECT(vwin->mbar));
+    g_object_unref(G_OBJECT(vwin->mbar)); /* OK? */
     vwin->flags &= ~VWIN_TABBED;
 
     /* put vbox into new top-level window and drop extra ref. */
