@@ -22,7 +22,7 @@
 #include "textbuf.h"
 #include "tabwin.h"
 
-#define TDEBUG 0
+#define TDEBUG 1
 
 typedef struct tabwin_t_  tabwin_t;
 
@@ -690,7 +690,7 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     GtkWidget *mainwin;
     gchar *title;
 
-    /* we'll not do this is there's only one page in the
+    /* we'll not do this if there's only one page in the
        editor
     */
     if (gtk_notebook_get_n_pages(notebook) < 2) {

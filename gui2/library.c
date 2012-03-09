@@ -7063,7 +7063,8 @@ static void stop_button_set_sensitive (windata_t *vwin,
 				       gboolean s)
 {
     if (vwin != NULL && vwin->mbar != NULL) {
-	GtkWidget *b = g_object_get_data(G_OBJECT(vwin->mbar), "stop_button");
+	GtkWidget *b = g_object_get_data(G_OBJECT(vwin->mbar), 
+					 "stop_button");
 
 	if (b != NULL) {
 	    gtk_widget_set_sensitive(b, s);
