@@ -7062,7 +7062,7 @@ static void stop_busy_cursor (GtkWidget *w, GdkWindow *wcurrent)
 static void stop_button_set_sensitive (windata_t *vwin,
 				       gboolean s)
 {
-#if 0
+#if 1
     fprintf(stderr, "stop-button: vwin=%p, vwin->mbar=%p, s=%d\n",
 	    (void *) vwin, (void *) vwin->mbar, s);
 #endif
