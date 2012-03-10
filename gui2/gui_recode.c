@@ -121,7 +121,6 @@ gchar *my_filename_from_utf8 (char *fname)
 gchar *my_filename_to_utf8 (const char *fname)
 {
     GError *err = NULL;
-    gsize bytes;
     gchar *ret = NULL;
 
     if (g_utf8_validate(fname, -1, NULL)) {
@@ -132,6 +131,8 @@ gchar *my_filename_to_utf8 (const char *fname)
 	   a native Windows source will be in the
 	   locale charset 
 	*/
+	gsize bytes;
+
 #ifdef G_OS_WIN32
 	ret = g_locale_to_utf8(fname, -1, NULL, &bytes, &err);
 #else
