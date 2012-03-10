@@ -1802,7 +1802,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 			   0, t2, &t2, kptr,
 			   0, premax, &pre_n,
 			   flags, &gopt, &conf,
-			   pmod, vwin->main);
+			   pmod, vwin_toplevel(vwin));
 
     if (canceled(resp)) {
 	gopt = OPT_P | OPT_H;
@@ -2356,7 +2356,8 @@ void do_arch (GtkAction *action, gpointer p)
 
     resp = spin_dialog(_("gretl: ARCH test"), NULL,
 		       &order, _("Lag order for ARCH test:"),
-		       1, dataset->n / 2, 0, vwin->main);
+		       1, dataset->n / 2, 0, 
+		       vwin_toplevel(vwin));
 
     if (canceled(resp) || bufopen(&prn)) { 
 	return;
@@ -2406,18 +2407,15 @@ void do_panel_tests (GtkAction *action, gpointer p)
     }
 }
 
-static void set_model_id_on_window (GtkWidget *w, int ID)
+static void set_model_id_on_vwin (windata_t *vwin, int ID)
 {
-    g_object_set_data(G_OBJECT(w), "model_ID", 
-		      GINT_TO_POINTER(ID));
+    widget_set_int(vwin->main, "model_ID", ID);
 }
 
-static int get_model_id_from_window (GtkWidget *w)
+static int get_model_id_from_vwin (windata_t *vwin)
 {
-    return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "model_ID"));
+    return widget_get_int(vwin->main, "model_ID");
 }
-
-
 
 void add_leverage_data (windata_t *vwin)
 {
@@ -2443,7 +2441,7 @@ void add_leverage_data (windata_t *vwin)
     if (err) {
 	gui_errmsg(err);
     } else {
-	int ID = get_model_id_from_window(vwin->main);
+	int ID = get_model_id_from_vwin(vwin);
 
 	lib_command_strcpy("leverage --save");
 	record_model_command_verbatim(ID);
@@ -2483,12 +2481,12 @@ void do_leverage (GtkAction *action, gpointer p)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	windata_t *w;
+	windata_t *vbuf;
 
-	w = view_buffer_with_parent(vwin, prn, 78, 400, 
-				    _("gretl: leverage and influence"), 
-				    LEVERAGE, m); 
-	set_model_id_on_window(w->main, pmod->ID);
+	vbuf = view_buffer_with_parent(vwin, prn, 78, 400, 
+				       _("gretl: leverage and influence"), 
+				       LEVERAGE, m); 
+	set_model_id_on_vwin(vbuf, pmod->ID);
 	make_and_display_graph();
 	lib_command_strcpy("leverage");
 	record_model_command_verbatim(pmod->ID);
@@ -2691,7 +2689,7 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 
 	splitbrk = (pmod->t2 - pmod->t1) / 2;
 	resp = chow_dialog(pmod->t1 + 1, pmod->t2 - 1, &splitbrk, &splitdum,
-			   vwin->main);
+			   vwin_toplevel(vwin));
 	if (canceled(resp)) {
 	    return;
 	}
@@ -2777,7 +2775,8 @@ void do_reset (GtkAction *action, gpointer p)
 
     resp = radio_dialog(_("gretl: RESET test"),
 			_("RESET specification test"),
-			optstrs, 4, 0, RESET, vwin->main);
+			optstrs, 4, 0, RESET, 
+			vwin_toplevel(vwin));
 
     if (canceled(resp) || bufopen(&prn)) {
 	return;
@@ -2848,7 +2847,8 @@ void do_autocorr (GtkAction *action, gpointer p)
 
     resp = spin_dialog(_("gretl: autocorrelation"), NULL,
 		       &order, _("Lag order for test:"),
-		       1, dataset->n / 2, 0, vwin->main);
+		       1, dataset->n / 2, 0, 
+		       vwin_toplevel(vwin));
 
     if (canceled(resp) || bufopen(&prn)) {
 	return;
@@ -5239,7 +5239,7 @@ void residual_correlogram (GtkAction *action, gpointer p)
 	return;
     }
 
-    real_do_corrgm(dset, MODEL_VAR, vwin->main);
+    real_do_corrgm(dset, MODEL_VAR, vwin_toplevel(vwin));
 
     trim_dataset(pmod, origv);
 }
@@ -5317,7 +5317,7 @@ void residual_periodogram (GtkAction *action, gpointer p)
     }
 
     if (!err) {
-	real_do_pergm(dset, MODEL_VAR, vwin->main);
+	real_do_pergm(dset, MODEL_VAR, vwin_toplevel(vwin));
 	trim_dataset(pmod, origv); 
     }
 }
@@ -5874,7 +5874,7 @@ static void set_scalar_name (GtkWidget *widget, dialog_t *dlg)
     }
 }
 
-void add_model_stat (MODEL *pmod, int which, GtkWidget *parent)
+void add_model_stat (MODEL *pmod, int which, windata_t *vwin)
 {
     char vname[VNAMELEN];
     double val = NADBL;
@@ -5942,8 +5942,8 @@ void add_model_stat (MODEL *pmod, int which, GtkWidget *parent)
 			    pmod->ID, _(descrip), val);
 
     blocking_edit_dialog(0, _("add scalar"), blurb, vname, 
-			 set_scalar_name, vname, 
-			 VARCLICK_NONE, parent, &cancel);
+			 set_scalar_name, vname, VARCLICK_NONE, 
+			 vwin_toplevel(vwin), &cancel);
 
     g_free(blurb);
 
@@ -7147,7 +7147,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
     if (vwin->role == EDIT_GP) {
 	run_gp_script(buf);
     } else if (vwin->role == EDIT_R) {
-	run_R_script(buf, vwin->main);
+	run_R_script(buf, vwin_toplevel(vwin));
     } else if (vwin->role == EDIT_OX) {
 	run_ox_script(buf);
     } else if (vwin->role == EDIT_OCTAVE) {

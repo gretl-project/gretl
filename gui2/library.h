@@ -258,7 +258,7 @@ int save_fit_resid (MODEL *pmod, int code);
 int save_bundled_series (const double *x, const char *key,
 			 const char *note);
 
-void add_model_stat (MODEL *pmod, int which, GtkWidget *parent);
+void add_model_stat (MODEL *pmod, int which, windata_t *vwin);
 
 void resid_plot (GtkAction *action, gpointer p);
 

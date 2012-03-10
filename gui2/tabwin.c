@@ -718,47 +718,6 @@ static void size_new_toplevel (windata_t *vwin)
     gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize);    
 }
 
-#if 0 /* trying to track what I think is a gtk3 bug */
-static void foopath (windata_t *vwin)
-{
-    GList *list0, *list1, *list2, *list3;
-    GtkWidget *w0, *w1, *w2, *w3;
-
-    list0 = gtk_container_get_children(GTK_CONTAINER(vwin->main));
-
-    while (list0) {
-	w0 = GTK_WIDGET(list0->data);
-	fprintf(stderr, "w(0) = %p\n", (void *) w0);
-	list1 = gtk_container_get_children(GTK_CONTAINER(w0));
-	while (list1) {
-	    w1 = GTK_WIDGET(list1->data);
-	    fprintf(stderr, " w(1) = %p\n", (void *) w1);
-	    list2 = gtk_container_get_children(GTK_CONTAINER(w1));
-	    while (list2) {
-		w2 = GTK_WIDGET(list2->data);
-		fprintf(stderr, "  w(2) = %p\n", (void *) w2);
-		if (GTK_IS_CONTAINER(w2)) {
-		    list3 = gtk_container_get_children(GTK_CONTAINER(w2));
-		    while (list3) {
-			w3 = GTK_WIDGET(list3->data);
-			fprintf(stderr, "   w(3) = %p\n", (void *) w3);
-			list3 = list3->next;
-		    }
-		    g_list_free(list2);
-		}
-		list2 = list2->next;
-	    }
-	    g_list_free(list2);
-	    list1 = list1->next;
-	}
-	g_list_free(list1);
-	list0 = list0->next;
-    }
-
-    g_list_free(list0);
-}
-#endif
-
 void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 {
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
@@ -774,6 +733,10 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     if (gtk_notebook_get_n_pages(notebook) < 2) {
 	return;
     }
+
+#if TDEBUG
+    fprintf(stderr, "undock_tabbed_viewer: starting\n");
+#endif
 
     /* disconnect */
     vwin->main = vwin->topmain = NULL;
@@ -834,10 +797,6 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 	winstack_add(vwin->main);
     }
 
-#if 0
-    foopath(vwin);
-#endif
-
     add_window_list_item(vwin->main, vwin->role);
 
 #ifndef G_OS_WIN32
@@ -846,6 +805,10 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 
     gtk_widget_show_all(vwin->main);
     gtk_widget_grab_focus(vwin->text);
+
+#if TDEBUG
+    fprintf(stderr, "undock_tabbed_viewer: done\n");
+#endif
 }
 
 gboolean window_is_undockable (windata_t *vwin)

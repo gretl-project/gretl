@@ -356,7 +356,7 @@ void model_stat_callback (GtkAction *action, gpointer data)
 	code = M_HQC;
     }
 
-    add_model_stat(pmod, code, vwin->main);
+    add_model_stat(pmod, code, vwin);
 }
 
 void model_callback (GtkAction *action, gpointer data) 
@@ -373,7 +373,8 @@ void model_genr_callback (GtkAction *action, gpointer data)
     edit_dialog(MODEL_GENR, _("gretl: add var"), 
 		_("Enter formula for new variable:"),
 		"", do_model_genr, vwin, 
-		VARCLICK_INSERT_NAME, vwin->main);   
+		VARCLICK_INSERT_NAME, 
+		vwin_toplevel(vwin));   
 }
 
 static int selector_callback_code (const gchar *s)
@@ -599,7 +600,7 @@ void gretl_callback (GtkAction *action, gpointer data)
 	title = N_("gretl: linear restrictions");
 	query = N_("Specify restrictions:");
 	okfunc = do_restrict;
-	parent = vwin->main;
+	parent = vwin_toplevel(vwin);
 	break;	
     case MINIBUF:
 	title = N_("gretl: command entry");
