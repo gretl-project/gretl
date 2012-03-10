@@ -2849,18 +2849,12 @@ gint populate_remote_func_list (windata_t *vwin)
 
 	if (bufgets(line, sizeof line, getbuf)) {
 	    tailstrip(line);
-	    author = line + 2;
+	    author = gretl_strdup(line + 2);
 	}
 
-	if (descrip == NULL || version == NULL || author == NULL) {
-	    free(descrip);
-	    free(version);
-	    continue;
-	}	
-
-	gtk_list_store_append(store, &iter);
-
-	gtk_list_store_set(store, &iter, 
+	if (descrip != NULL && version != NULL && author != NULL) {
+	    gtk_list_store_append(store, &iter);
+	    gtk_list_store_set(store, &iter, 
 			   0, basename, 
 			   1, version,
 			   2, author,
@@ -2868,9 +2862,12 @@ gint populate_remote_func_list (windata_t *vwin)
 			   4, _(status),
 			   5, zipfile,
 			   -1);
+	    n++;
+	}
+
 	free(version);
 	free(descrip);
-	n++;
+	free(author);
     }
 
     bufgets_finalize(getbuf);
