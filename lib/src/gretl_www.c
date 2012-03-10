@@ -1401,6 +1401,9 @@ static void url_init (urlinfo *u)
     /* the linux test updater program pretends to be Windows */
     strcat(u->agent, "w");
 #endif
+#if 0
+    fprintf(stderr, "url_init: agent = '%s'\n", u->agent);
+#endif
 }
 
 static urlinfo *urlinfo_new (void)
