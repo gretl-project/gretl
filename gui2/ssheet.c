@@ -3148,8 +3148,9 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 
     gtk_widget_show(sheet->win);
     
-    if (c != SHEET_EDIT_SCALARS) {
-	add_window_list_item(sheet->win, 0);
+    if (1 || (c != SHEET_EDIT_SCALARS)) {
+	/* FIXME? */
+	window_list_add(sheet->win, 0);
     }
 
     if (editing_series(sheet)) {
@@ -3631,9 +3632,6 @@ static void edit_matrix (gretl_matrix *m, const char *name,
 
 	if (u != NULL) {
 	    g_object_set_data(G_OBJECT(sheet->win), "object", u);
-	    g_signal_connect(G_OBJECT(sheet->win), "destroy", 
-			     G_CALLBACK(winstack_remove), sheet->win);
-	    winstack_add(sheet->win);
 	}
     }
 }
@@ -3688,7 +3686,7 @@ void edit_user_matrix_by_name (const char *name)
 
     /* do we already have a window open, editing this
        matrix? */
-    w = match_window_by_data(u);
+    w = get_window_for_data(u);
     if (w != NULL) {
 	gtk_window_present(GTK_WINDOW(w));
 	return;

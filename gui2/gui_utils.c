@@ -79,11 +79,7 @@ static void close_model (GtkAction *action, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
-    if (window_is_tab(vwin)) {
-	model_tab_destroy(vwin);
-    } else {
-	gtk_widget_destroy(vwin->main);
-    }
+    gretl_viewer_destroy(vwin);
 }
 
 static int arma_by_x12a (const MODEL *pmod)
@@ -1481,10 +1477,6 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gretl_remove(vwin->fname);
 	}
 
-	if (!window_is_tab(vwin)) {
-	    winstack_remove(vwin->main);
-	}
-
 	free(vwin);
     }
 }
@@ -1676,10 +1668,6 @@ static gboolean nullify_script_out (GtkWidget *w, windata_t **pvwin)
     return FALSE;
 }
 
-#define view_buffer_record(r) (r != SCRIPT_OUT && \
-	                       r != EDIT_PKG_CODE && \
-	                       r != EDIT_PKG_SAMPLE)
-
 windata_t *
 view_buffer_with_parent (windata_t *parent, PRN *prn, 
 			 int hsize, int vsize, 
@@ -1688,22 +1676,20 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 {
     static windata_t *script_out;
     windata_t *vwin;
-    int record, width, nlines;
+    int width, nlines;
 
     if (role == SCRIPT_OUT && script_out != NULL) {
 	return reuse_script_out(script_out, prn);
     }
 
-    record = view_buffer_record(role);
-
     if (title != NULL) {
 	vwin = gretl_viewer_new_with_parent(parent, role, title, 
-					    data, record);
+					    data);
     } else {
 	gchar *tmp = make_viewer_title(role, NULL);
 
 	vwin = gretl_viewer_new_with_parent(parent, role, tmp, 
-					    data, record);
+					    data);
 	g_free(tmp);
     }
 
@@ -1800,10 +1786,6 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 				   role, data);
 } 
 
-#define record_on_winstack(r) (!vwin_editing_script(r) && \
-                               r != VIEW_LOG && \
-                               r != VIEW_SCRIPT)
-
 #define text_out_ok(r) (r == VIEW_DATA || r == VIEW_FILE)
 
 windata_t *
@@ -1829,12 +1811,12 @@ view_file_with_title (const char *filename, int editable, int del_file,
     } else if (given_title != NULL) {
 	/* this is the case when editing the plot commands for
 	   a graph saved as a session icon */
-	vwin = gretl_viewer_new(role, given_title, NULL, 1);
+	vwin = gretl_viewer_new(role, given_title, NULL);
     } else {
 	gchar *title = make_viewer_title(role, filename);
 
 	vwin = gretl_viewer_new(role, (title != NULL)? title : filename, 
-				NULL, record_on_winstack(role));
+				NULL);
 	g_free(title);
     }
 
@@ -1919,11 +1901,7 @@ windata_t *view_script (const char *filename, int editable,
 	windata_t *vwin = get_editor_for_file(filename);
 
 	if (vwin != NULL) {
-	    if (window_is_tab(vwin)) {
-		tabwin_tab_present(vwin);
-	    } else {
-		gtk_window_present(GTK_WINDOW(vwin->main));
-	    }
+	    gretl_viewer_present(vwin);
 	    return vwin;
 	}
     }
@@ -1937,7 +1915,7 @@ windata_t *console_window (int hsize, int vsize)
 {
     windata_t *vwin;
 
-    vwin = gretl_viewer_new(CONSOLE, _("gretl console"), NULL, 0);
+    vwin = gretl_viewer_new(CONSOLE, _("gretl console"), NULL);
     if (vwin == NULL) {
 	return NULL;
     }
@@ -1994,7 +1972,7 @@ windata_t *view_help_file (const char *filename, int role)
     }
 
     title = make_viewer_title(role, NULL);
-    vwin = gretl_viewer_new(role, title, NULL, 0);
+    vwin = gretl_viewer_new(role, title, NULL);
     g_free(title);
 
     if (vwin == NULL) return NULL;
@@ -2130,7 +2108,7 @@ windata_t *view_formatted_text_buffer (const gchar *title,
     windata_t *vwin;
 
     vwin = gretl_viewer_new_with_parent(NULL, PRINT, title,
-					NULL, 0);
+					NULL);
     if (vwin == NULL) return NULL;
 
     create_text(vwin, hsize, vsize, 0, FALSE);
@@ -2196,7 +2174,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 {
     windata_t *vwin;
 
-    vwin = gretl_viewer_new(role, title, pbuf, 1);
+    vwin = gretl_viewer_new(role, title, pbuf);
     if (vwin == NULL) {
 	return NULL;
     }
@@ -2245,10 +2223,10 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     if (title == NULL) {
 	gchar *s = g_strdup_printf(_("gretl: model %d"), pmod->ID);
 
-	vwin = gretl_viewer_new(VIEW_MODEL, s, pmod, 1);
+	vwin = gretl_viewer_new(VIEW_MODEL, s, pmod);
 	g_free(s);
     } else {
-	vwin = gretl_viewer_new(VIEW_MODEL, title, pmod, 1);
+	vwin = gretl_viewer_new(VIEW_MODEL, title, pmod);
     }
 #endif
 

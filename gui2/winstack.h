@@ -20,38 +20,46 @@
 #ifndef WINSTACK_H_
 #define WINSTACK_H_
 
-void winstack_init (void);
+void window_list_add (GtkWidget *w, int role);
 
-void winstack_destroy (void);
+void window_list_popup (GtkWidget *src, GdkEventButton *event, 
+			gpointer p);
 
-void winstack_add (GtkWidget *w);
+void vwin_winlist_popup (GtkWidget *src, GdkEventButton *event, 
+			 windata_t *vwin);
 
-void winstack_remove (GtkWidget *w);
+int get_n_listed_windows (void);
 
-int winstack_match_data (const gpointer p);
+gboolean window_list_exit_check (void);
 
-GtkWidget *match_window_by_data (const gpointer p);
+windata_t *get_editor_for_file (const char *filename);
 
-GtkWidget *match_window_by_filename (const char *fname);
+windata_t *get_browser_for_database (const char *filename);
 
-GtkWidget *match_db_window_by_filename (const char *fname);
+windata_t *get_browser_for_gretl_database (const char *filename);
 
-void maybe_close_window_for_data (const gpointer p,
+windata_t *get_viewer_for_data (const gpointer data);
+
+GtkWidget *get_window_for_data (const gpointer data);
+
+GtkWidget *get_window_for_plot (const char *plotfile);
+
+void maybe_close_window_for_data (const gpointer data,
 				  GretlObjType otype);
 
-windata_t *vwin_new (int role, gpointer data);
+void close_session_windows (void);
 
-int vwin_on_stack (const windata_t *vwin);
+windata_t *vwin_new (int role, gpointer data);
 
 int highest_numbered_variable_in_winstack (void);
 
 windata_t *gretl_viewer_new (int role, const gchar *title, 
-			     gpointer data, int record);
+			     gpointer data);
 
 windata_t *
 gretl_viewer_new_with_parent (windata_t *parent, int role, 
 			      const gchar *title, 
-			      gpointer data, int record);
+			      gpointer data);
 
 windata_t *gretl_browser_new (int role, const gchar *title,
 			      int record);
@@ -59,6 +67,12 @@ windata_t *gretl_browser_new (int role, const gchar *title,
 GtkWidget *vwin_toplevel (windata_t *vwin);
 
 void vwin_pack_toolbar (windata_t *vwin);
+
+void gretl_viewer_present (windata_t *vwin);
+
+void gretl_viewer_destroy (windata_t *vwin);
+
+void gretl_viewer_set_title (windata_t *vwin, const char *title);
 
 #endif
 

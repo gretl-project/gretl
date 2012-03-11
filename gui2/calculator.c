@@ -34,6 +34,7 @@
 #include "gpt_control.h"
 #include "lib_private.h"
 #include "cmdstack.h"
+#include "winstack.h"
 
 typedef struct CalcChild_ CalcChild;
 typedef struct test_t_ test_t;
@@ -3059,7 +3060,7 @@ static void real_stats_calculator (int code, gpointer data)
     }
 
     gtk_widget_show_all(child->dlg);
-    add_window_list_item(child->dlg, STAT_TABLE);
+    window_list_add(child->dlg, STAT_TABLE);
 }
 
 /* for gnuplot: convert '^' to '**' for exponentiation */

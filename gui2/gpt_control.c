@@ -31,6 +31,7 @@
 #include "graphics.h"
 #include "boxplots.h"
 #include "dlgutils.h"
+#include "winstack.h"
 
 #define GPDEBUG 0
 #define POINTS_DEBUG 0
@@ -4213,57 +4214,6 @@ static int render_pngfile (png_plot *plot, int view)
     return 0;
 }
 
-/* keep track of open plot windows */
-
-static GList *plot_list;
-
-static void close_plot_window (GtkWidget *w, gpointer p)
-{
-    gtk_widget_destroy(w);
-}
-
-void close_plot_windows (void)
-{
-    g_list_foreach(plot_list, (GFunc) close_plot_window, NULL);
-}
-
-int plot_file_is_busy (const char *fname)
-{
-    int ret = 0;
-
-    if (plot_list != NULL) {
-	GList *mylist = g_list_first(plot_list);
-	GtkWidget *w;
-	gchar *test;
-
-	while (mylist && !ret) {
-	    w = mylist->data;
-	    if (w != NULL) {
-		test = g_object_get_data(G_OBJECT(w), "fname");
-		if (test != NULL) {
-		    if (strstr(test, fname) != NULL) {
-			ret = 1;
-		    }
-		}
-	    }
-	    mylist = g_list_next(mylist);
-	}
-    }
-
-    return ret;
-}
-
-static void register_plot_window (GtkWidget *w)
-{
-    plot_list = g_list_append(plot_list, w);
-    add_window_list_item(w, GNUPLOT);
-}
-
-static void unregister_plot_window (GtkWidget *w)
-{
-    plot_list = g_list_remove(plot_list, w);
-}
-
 static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 {
     /* delete temporary plot source file? */
@@ -4288,7 +4238,6 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
     }
 #endif
 
-    unregister_plot_window(plot->shell);
     g_object_unref(plot->shell);
 
     free(plot);
@@ -4878,10 +4827,11 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
     gtk_widget_show(vbox);
 
-    g_object_set_data(G_OBJECT(plot->shell), "fname", 
+    g_object_set_data(G_OBJECT(plot->shell), "plot-filename", 
 		      plot->spec->fname);
-    gtk_widget_show(plot->shell);  
-    register_plot_window(plot->shell);
+
+    gtk_widget_show(plot->shell);
+    window_list_add(plot->shell, GNUPLOT);
 
     /* set the focus to the canvas area */
     gtk_widget_grab_focus(plot->canvas);  

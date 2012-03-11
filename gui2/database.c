@@ -537,14 +537,10 @@ void sync_db_windows (void)
     const char *dname = get_db_name();
 
     if (*dname != '\0') {
-	GtkWidget *w = match_db_window_by_filename(dname);
+	windata_t *vwin = get_browser_for_gretl_database(dname);
 
-	if (w != NULL) {
-	    windata_t *vwin = g_object_get_data(G_OBJECT(w), "vwin");
-
-	    if (vwin != NULL) {
-		add_local_db_series_list(vwin);
-	    }
+	if (vwin != NULL) {
+	    add_local_db_series_list(vwin);
 	}
     }
 }
@@ -847,16 +843,6 @@ static void make_db_toolbar (windata_t *vwin, int cb, int del)
     gtk_widget_show_all(hbox);
 }
 
-static void destroy_db_win (GtkWidget *w, windata_t *vwin)
-{
-    if (vwin != NULL) {
-	if (vwin->popup != NULL) {
-	    gtk_widget_destroy(vwin->popup);
-	}
-	free(vwin);
-    }
-}
-
 static int db_has_codebook (const char *fname)
 {
     char testname[MAXLEN];
@@ -939,19 +925,19 @@ maybe_adjust_descrip_column (windata_t *vwin)
 }
 
 static int 
-make_db_series_window (int action, char *fname, char *buf)
+make_db_index_window (int action, char *fname, char *buf)
 {
-    GtkWidget *w, *listbox;
+    GtkWidget *listbox;
     gchar *title;
     windata_t *vwin;
     int db_width = 700, db_height = 420;
     int cb = 0, del = 0;
-    int record, err = 0;
+    int err = 0;
 
-    w = match_db_window_by_filename(fname);
+    vwin = get_browser_for_database(fname);
 
-    if (w != NULL) {
-	gtk_window_present(GTK_WINDOW(w));
+    if (vwin != NULL) {
+	gtk_window_present(GTK_WINDOW(vwin->main));
 	return 0;
     }
 
@@ -965,9 +951,7 @@ make_db_series_window (int action, char *fname, char *buf)
 	title = fname;
     } 
 
-    record = (action == NATIVE_SERIES);
-
-    vwin = gretl_browser_new(action, title, record);
+    vwin = gretl_browser_new(action, title, 1);
     if (vwin == NULL) {
 	return 1;
     }
@@ -976,11 +960,6 @@ make_db_series_window (int action, char *fname, char *buf)
     db_height *= gui_scale;
     gtk_window_set_default_size(GTK_WINDOW(vwin->main), db_width, db_height);
     
-    if (action != NATIVE_SERIES) {
-	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
-			 G_CALLBACK(destroy_db_win), vwin);
-    }
-
     if (action == NATIVE_SERIES || action == PCGIVE_SERIES) {
 	strip_extension(fname);
     }
@@ -1034,12 +1013,12 @@ make_db_series_window (int action, char *fname, char *buf)
 
 void open_rats_window (char *fname)
 {
-    make_db_series_window(RATS_SERIES, fname, NULL);
+    make_db_index_window(RATS_SERIES, fname, NULL);
 }
 
 void open_bn7_window (char *fname)
 {
-    make_db_series_window(PCGIVE_SERIES, fname, NULL);
+    make_db_index_window(PCGIVE_SERIES, fname, NULL);
 }
 
 static int check_serinfo (char *str, char *sername, int *nobs)
@@ -1617,7 +1596,7 @@ void open_named_db_index (char *dbname)
 	file_read_errbox(dbname);
     } else {
 	fclose(fp);
-	make_db_series_window(action, dbname, NULL);
+	make_db_index_window(action, dbname, NULL);
     } 
 }
 
@@ -1633,7 +1612,7 @@ void open_named_remote_db_index (char *dbname)
     } else if (getbuf != NULL && !strncmp(getbuf, "Couldn't open", 13)) {
 	errbox(getbuf);
     } else {
-	make_db_series_window(REMOTE_SERIES, dbname, getbuf);
+	make_db_index_window(REMOTE_SERIES, dbname, getbuf);
 	/* check for error */
     }
 
@@ -1662,7 +1641,7 @@ void open_db_index (GtkWidget *w, gpointer data)
     g_free(fname);
     g_free(dbdir);
 
-    make_db_series_window(action, dbfile, NULL); 
+    make_db_index_window(action, dbfile, NULL); 
 }
 
 void open_remote_db_index (GtkWidget *w, gpointer data)
@@ -1693,7 +1672,7 @@ void open_remote_db_index (GtkWidget *w, gpointer data)
 	show_network_error(vwin);
     } else {
 	update_statusline(vwin, "OK");
-	make_db_series_window(REMOTE_SERIES, fname, getbuf);
+	make_db_index_window(REMOTE_SERIES, fname, getbuf);
     }
 
     g_free(fname);

@@ -1006,11 +1006,11 @@ int add_model_to_session_callback (void *ptr, GretlObjType type)
     targ = get_session_model_by_name(name); 
 
     if (targ != NULL) {
-	GtkWidget *w = match_window_by_data(targ->ptr);
+	windata_t *vwin = get_viewer_for_data(targ->ptr);
 
-	if (w != NULL) {
+	if (vwin != NULL) {
 	    /* current model window is "orphaned" */
-	    gtk_widget_destroy(w);
+	    gretl_viewer_destroy(vwin);
 	}
 
 	targ->ptr = ptr;
@@ -1062,7 +1062,7 @@ void model_add_as_icon (GtkAction *action, gpointer p)
     if (get_session_model_by_data(ptr)) {
 	/* "can't happen" */
 	if (close_on_add(action)) {
-	    gtk_widget_destroy(vwin->main);
+	    gretl_viewer_destroy(vwin);
 	} else {
 	    infobox(_("Model is already saved"));
 	}
@@ -1090,7 +1090,7 @@ void model_add_as_icon (GtkAction *action, gpointer p)
     if (!err) {
 	mark_session_changed();
 	if (close_on_add(action)) {
-	    gtk_widget_destroy(vwin->main);
+	    gretl_viewer_destroy(vwin);
 	} else {
 	    set_model_save_state(vwin, FALSE);
 	}
@@ -1515,8 +1515,6 @@ void session_init (void)
     *session.name = '\0';
     *session.dirname = '\0';
 
-    winstack_init();
-
     set_matrix_add_callback(add_user_matrix_callback);
     set_matrix_delete_callback(session_matrix_destroy_by_name);
 
@@ -1680,8 +1678,7 @@ void close_session (gretlopt opt)
     session.show_notes = 0;
     commands_recorded = 0;
 
-    winstack_destroy();
-    close_plot_windows();
+    close_session_windows();
     selector_cleanup();
     function_call_cleanup();
     edit_dialog_special_get_text(NULL);
@@ -2058,17 +2055,16 @@ static gchar *graph_str (SESSION_GRAPH *graph)
     return buf;
 }
 
-static int maybe_raise_object_window (gpointer p)
+static int maybe_raise_object_window (gpointer data)
 {
-    GtkWidget *w = match_window_by_data(p);
-    int ret = 0;
+    windata_t *vwin = get_viewer_for_data(data);
 
-    if (w != NULL) {
-	gtk_window_present(GTK_WINDOW(w));
-	ret = 1;
+    if (vwin != NULL) {
+	gretl_viewer_present(vwin);
+	return 1;
+    } else {
+	return 0;
     }
-
-    return ret;
 }
 
 static int display_session_model (SESSION_MODEL *sm)
@@ -2313,8 +2309,8 @@ static void maybe_delete_session_object (gui_obj *obj)
 	char fullname[MAXLEN];
 
 	session_file_make_path(fullname, graph->fname);
-	busy = plot_file_is_busy(fullname);
-	if (!busy && match_window_by_filename(fullname)) {
+	if (get_window_for_plot(fullname) || 
+	    get_editor_for_file(fullname)) {
 	    busy = 1;
 	}
     } else {
@@ -2329,7 +2325,7 @@ static void maybe_delete_session_object (gui_obj *obj)
 	    p = obj->data;
 	}
 
-	busy = (p != NULL && winstack_match_data(p));
+	busy = (p != NULL && get_viewer_for_data(p) != NULL);
     }
 
     if (busy) {
@@ -2445,12 +2441,12 @@ static void rename_session_graph (SESSION_GRAPH *graph, const char *newname)
 
 static void maybe_sync_model_window_name (SESSION_MODEL *sm)
 {
-    GtkWidget *w = match_window_by_data(sm->ptr);
+    windata_t *vwin = get_viewer_for_data(sm->ptr);
 
-    if (w != NULL) {
+    if (vwin != NULL) {
 	gchar *title = g_strdup_printf("gretl: %s", sm->name);
 
-	gtk_window_set_title(GTK_WINDOW(w), title);
+	gretl_viewer_set_title(vwin, title);
 	g_free(title);
     }
 }
@@ -3631,7 +3627,7 @@ void view_session (void)
     gtk_widget_show(hbox);
     gtk_widget_show(iconview);
 
-    add_window_list_item(iconview, OPEN_SESSION);
+    window_list_add(iconview, OPEN_SESSION);
 
     gtk_container_foreach(GTK_CONTAINER(scroller), 
 			  (GtkCallback) white_bg_style, 

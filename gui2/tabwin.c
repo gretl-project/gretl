@@ -222,14 +222,14 @@ static void page_added_callback (GtkNotebook *notebook,
    trashing the selected one
 */
 
-static void tabwin_tab_destroy (GtkWidget *w, windata_t *vwin)
+static void tabwin_tab_close (GtkWidget *w, windata_t *vwin)
 {
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
     GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
     gint pg = gtk_notebook_page_num(notebook, vwin->main);
 
 #if TDEBUG
-    fprintf(stderr, "*** tabwin_tab_destroy: vwin = %p\n", (void *) vwin);
+    fprintf(stderr, "*** tabwin_tab_close: vwin = %p\n", (void *) vwin);
 #endif
 
     /* note: vwin->mbar is packed under tabwin, so it will not
@@ -248,7 +248,7 @@ static void tabwin_tab_destroy (GtkWidget *w, windata_t *vwin)
     gtk_notebook_remove_page(notebook, pg);
 }
 
-void model_tab_destroy (windata_t *vwin)
+void tabwin_tab_destroy (windata_t *vwin)
 {
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
     GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
@@ -351,7 +351,7 @@ static void viewer_tab_add_closer (GtkWidget *tab, windata_t *vwin)
     gtk_container_set_border_width(GTK_CONTAINER(button), 0);
     no_button_padding(button);
     gtk_container_add(GTK_CONTAINER(button), img);
-    g_signal_connect(button, "clicked", G_CALLBACK(tabwin_tab_destroy), 
+    g_signal_connect(button, "clicked", G_CALLBACK(tabwin_tab_close), 
 		     vwin);
     gtk_container_add(GTK_CONTAINER(tab), button);
     g_object_set_data(G_OBJECT(tab), "button", button);
@@ -556,7 +556,7 @@ windata_t *viewer_tab_new (int role, const char *info,
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
 
     if (starting) {
-	add_window_list_item(tabwin->main, role);
+	window_list_add(tabwin->main, role);
     } 
 
     return vwin;
@@ -596,10 +596,11 @@ void tabwin_register_toolbar (windata_t *vwin)
     tabwin_insert_toolbar(tabwin, vwin);
 }
 
-/* for an "untitled" tab: set its real filename when it is
-   saved */
+/* This is used, inter alia, for an "untitled" tab: 
+   to set its real filename when it is saved 
+*/
 
-void tabwin_set_tab_title (windata_t *vwin, gchar *fname)
+void tabwin_set_tab_title (windata_t *vwin, const char *title)
 {
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
     GtkWidget *tab, *label;
@@ -609,12 +610,12 @@ void tabwin_set_tab_title (windata_t *vwin, gchar *fname)
 
     label = g_object_get_data(G_OBJECT(tab), "label");
     if (label != NULL) {
-	gtk_label_set_text(GTK_LABEL(label), fname);
+	gtk_label_set_text(GTK_LABEL(label), title);
     }
 
     label = g_object_get_data(G_OBJECT(tab), "mlabel");
     if (label != NULL) {
-	gtk_label_set_text(GTK_LABEL(label), fname);
+	gtk_label_set_text(GTK_LABEL(label), title);
     }
 }
 
@@ -793,11 +794,7 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     g_object_set_data(G_OBJECT(vwin->main), "role", 
 		      GINT_TO_POINTER(vwin->role));
 
-    if (vwin->role == VIEW_MODEL) {
-	winstack_add(vwin->main);
-    }
-
-    add_window_list_item(vwin->main, vwin->role);
+    window_list_add(vwin->main, vwin->role);
 
 #ifndef G_OS_WIN32
     set_wm_icon(vwin->main);

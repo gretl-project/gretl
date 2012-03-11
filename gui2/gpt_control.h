@@ -78,8 +78,4 @@ void launch_gnuplot_interactive (void);
 int dump_plot_buffer (const char *buf, const char *fname,
 		      int addpause);
 
-void close_plot_windows (void);
-
-int plot_file_is_busy (const char *fname);
-
 #endif /* GPT_CONTROL_H */

@@ -20,235 +20,585 @@
 #include "gretl.h"
 #include "var.h"
 #include "dlgutils.h"
+#include "guiprint.h"
 #include "tabwin.h"
 #include "winstack.h"
 
 #define WDEBUG 0
 
-/* Below: Keep a record of (most) windows that are open, so they can
-   be destroyed en masse when a new data file is opened, to prevent
-   weirdness that could arise if (e.g.) a model window that pertains
-   to a previously opened data file remains open after the data set
-   has been changed. Script windows are exempt, otherwise they are
-   likely to disappear when their "run" control is activated, which we
-   don't want.
+/* Below: apparatus for keeping track of open windows so
+   as to be able to present a pop-up list of same as
+   a means of navigating the multi-window gretl GUI
 */
 
-enum winstack_codes {
-    STACK_INIT,
-    STACK_ADD,
-    STACK_REMOVE,
-    STACK_DESTROY,
-    STACK_QUERY,
-    STACK_MATCH_FNAME,
-    STACK_MATCH_FNAME_MOD,
-    STACK_MATCH_VWIN,
-    STACK_MAXVAR
-};
+/* get the top-level widget associated with pre-defined
+   @action 
+*/
 
-static int max_var_in_stacked_models (GtkWidget **wstack, int nwin)
+static GtkWidget *window_from_action (GtkAction *action)
 {
-    int i, role, mvm, vmax = 0;
+    const gchar *s = gtk_action_get_name(action);
+    unsigned long lptr = strtoul(s, NULL, 16);
 
-    for (i=0; i<nwin; i++) {
-	if (wstack[i] != NULL) {
-	    role = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(wstack[i]), "role"));
-	    if (role == VIEW_MODEL) {
-		const MODEL *pmod;
-
-		pmod = g_object_get_data(G_OBJECT(wstack[i]), "object");
-		if (pmod != NULL) {
-		    mvm = highest_numbered_var_in_model(pmod, dataset);
-		    if (mvm > vmax) {
-			vmax = mvm;
-		    }
-		}
-	    } else if (role == VAR || role == VECM) {
-		const GRETL_VAR *var;
-
-		var = g_object_get_data(G_OBJECT(wstack[i]), "object");
-		if (var != NULL) {
-		    mvm = gretl_VAR_get_highest_variable(var);
-		    if (mvm > vmax) {
-			vmax = mvm;
-		    }		    
-		}
-	    } 
-	}
-    }    
-
-    return vmax;
+    return (GtkWidget *) lptr;
 }
 
-static int got_filename_match (GtkWidget *w, const char *s,
-			       int code)
+/* callback to bring a selected window to the top */
+
+static void gretl_window_raise (GtkAction *action, gpointer data)
 {
-    windata_t *vwin = g_object_get_data(G_OBJECT(w), "vwin");
+    GtkWidget *w = window_from_action(action);
 
-    if (vwin != NULL && *vwin->fname != '\0') {
-	if (code == STACK_MATCH_FNAME) {
-	    return !strcmp(s, vwin->fname);
-	} else {
-	    /* vwin->fname may have the suffix removed */
-	    return !strncmp(s, vwin->fname, strlen(vwin->fname));
-	}
-    } else {
-	return 0;
-    }
-}
-
-static int 
-winstack (int code, GtkWidget *w, gconstpointer ptest, GtkWidget **pw)
-{
-    static int n_windows;
-    static GtkWidget **wstack;
-    int i, ret = 0;
-
-    switch (code) {
-
-    case STACK_DESTROY:	
-	for (i=0; i<n_windows; i++) {
-	    if (wstack[i] != NULL) {
-#if WDEBUG
-		fprintf(stderr, "winstack: destroying widget at %p\n", 
-			(void *) wstack[i]);
-#endif
-		gtk_widget_destroy(wstack[i]);
-	    }
-	}
-	free(wstack);
-	/* fall-through intended */
-
-    case STACK_INIT:
-	wstack = NULL;
-	n_windows = 0;
-	break;
-
-    case STACK_ADD:
-	for (i=0; i<n_windows; i++) {
-	    if (wstack[i] == NULL) {
-		wstack[i] = w;
-		break;
-	    }
-	}
-	if (i == n_windows) {
-	    GtkWidget **newstack;
-
-	    newstack = myrealloc(wstack, (n_windows + 1) * sizeof *wstack);
-	    if (newstack != NULL) { 
-		wstack = newstack;
-		wstack[n_windows] = w;
-		n_windows++;
-	    }
-	}
-	break;
-
-    case STACK_REMOVE:
-	for (i=0; i<n_windows; i++) {
-	    if (wstack[i] == w) {
-		wstack[i] = NULL;
-		ret = 1;
-		break;
-	    }
-	}
-	break;
-
-    case STACK_QUERY:
-	for (i=0; i<n_windows; i++) {
-	    if (wstack[i] != NULL) {
-		gpointer p = g_object_get_data(G_OBJECT(wstack[i]), "object");
-
-		if (p == ptest) {
-		    if (pw != NULL) {
-			*pw = wstack[i];
-		    }
-		    ret = 1;
-		    break;
-		}
-	    }
-	}
-	break;
-
-    case STACK_MATCH_VWIN:
-	for (i=0; i<n_windows; i++) {
-	    if (wstack[i] == ptest) {
-		ret = 1;
-		break;
-	    }
-	}
-	break;
-
-    case STACK_MATCH_FNAME:
-    case STACK_MATCH_FNAME_MOD:
-	if (wstack != NULL) {
-	    const char *ctest = (const char *) ptest;
-
-	    for (i=0; i<n_windows; i++) {
-		if (wstack[i] != NULL) {
-		    if (got_filename_match(wstack[i], ctest, code)) {
-			if (pw != NULL) {
-			    *pw = wstack[i];
-			}
-			ret = 1;
-			break;
-		    }
-		}
-	    }
-	}
-	break;
-
-    case STACK_MAXVAR:
-	ret = max_var_in_stacked_models(wstack, n_windows);
-	break;	
-
-    default:
-	break;
-    }
-
-    return ret;
-}
-
-void winstack_init (void)
-{
-    winstack(STACK_INIT, NULL, NULL, NULL);
-}
-    
-void winstack_destroy (void)
-{
-    winstack(STACK_DESTROY, NULL, NULL, NULL);
-}
-
-int winstack_match_data (const gpointer p)
-{
-    GtkWidget *w = NULL;
-    int ret = winstack(STACK_QUERY, NULL, p, &w);
-    
-    if (w != NULL) {
+    if (GTK_IS_WINDOW(w)) {
 	gtk_window_present(GTK_WINDOW(w));
     }
+}
+
+/* select an icon to represent a window playing
+   a given GUI role */
+
+static const gchar *window_list_icon (int role)
+{
+    const gchar *id = NULL;
+
+    if (role == MAINWIN) {
+	id = GRETL_STOCK_GRETL;
+    } else if (role == VIEW_MODEL) {
+	id = GRETL_STOCK_MODEL;
+    } else if (role == CONSOLE) {
+	id = GRETL_STOCK_CONSOLE;
+    } else if (role >= EDIT_HEADER && 
+	       role < EDIT_MAX) {
+	id = GTK_STOCK_EDIT;
+    } else if (role == GNUPLOT) {
+	id = GRETL_STOCK_SCATTER;
+    } else if (BROWSER_ROLE(role)) {
+	id = GTK_STOCK_INDEX;
+    } else if (HELP_ROLE(role)) {
+	id = GRETL_STOCK_BOOK;
+    } else if (role == STAT_TABLE) {
+	id = GRETL_STOCK_CALC;
+    } else if (role == VIEW_SCRIPT) {
+	id = GTK_STOCK_EXECUTE;
+    } else if (role == OPEN_SESSION) {
+	id = GRETL_STOCK_ICONS;
+    } else if (role == PRINT) {
+	id = GTK_STOCK_JUSTIFY_LEFT;
+    }
+
+    return id;
+}
+
+static int n_listed_windows;
+static GtkActionGroup *window_list;
+
+int get_n_listed_windows (void)
+{
+    return n_listed_windows;
+}
+
+static const gchar *get_window_title (GtkWidget *w)
+{
+    const gchar *s = NULL;
+
+    if (GTK_IS_WINDOW(w)) {
+	s = gtk_window_get_title(GTK_WINDOW(w));
+
+	if (s != NULL && !strncmp(s, "gretl", 5)) {
+	    s += 5;
+	    s += strspn(s, " ");
+	    if (*s == ':') {
+		s++;
+		s += strspn(s, " ");
+	    }
+	}
+    }
+
+    return s;
+}
+
+/* callback to be invoked just before destroying a window that's 
+   on the list of open windows: remove its entry from the list
+*/
+
+static void window_list_remove (GtkWidget *w, GtkActionGroup *group)
+{
+    gchar *aname = g_strdup_printf("%p", (void *) w);
+    GtkAction *action;
+
+    action = gtk_action_group_get_action(group, aname);
+    if (action != NULL) {
+	gtk_action_group_remove_action(group, action);
+	n_listed_windows--;
+    }    
+
+    g_free(aname);
+}
+
+static char *winname_double_underscores (const gchar *src)
+{
+    char *s, *targ;
+    int i, u = 0;
+
+    for (i=0; src[i]; i++) {
+	if (src[i] == '_') {
+	    u++;
+	}
+    }
+
+    targ = malloc(strlen(src) + u + 1);
+    s = targ;
+
+    for (i=0; src[i]; i++) {
+	if (src[i] == '_' && src[i+1] != '_') {
+	    *s++ = '_';
+	    *s++ = '_';
+	} else {
+	    *s++ = src[i];
+	}
+    }
+
+    *s = '\0';
+
+    return targ;
+}
+
+void window_list_add (GtkWidget *w, int role)
+{
+    GtkActionEntry entry = { 
+	/* name, stock_id, label, accelerator, tooltip, callback */
+	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gretl_window_raise) 
+    };
+    const char *label;
+    char *modlabel = NULL;
+    gchar *aname;
+
+    if (window_list == NULL) {
+	/* create the window_list action group */
+	window_list = gtk_action_group_new("WindowList");
+    }
+
+    /* set up an action entry for window @w */
+
+    aname = g_strdup_printf("%p", (void *) w);
+    entry.name = aname;
+    entry.stock_id = window_list_icon(role);
+
+    if (w == mdata->main) {
+	label = _("Main window");
+    } else {
+	label = get_window_title(w);
+	if (strchr(label, '_') != NULL) {
+	    modlabel = winname_double_underscores(label);
+	}
+    }
+
+    entry.label = modlabel != NULL ? modlabel : label,
+
+    /* add new action entry to group */
+    gtk_action_group_add_actions(window_list, &entry, 1, NULL);
+
+    /* attach callback to remove from window list */
+    g_signal_connect(G_OBJECT(w), "destroy", 
+		     G_CALLBACK(window_list_remove), 
+		     window_list);
+
+    n_listed_windows++;
+
+    free(modlabel);
+    g_free(aname);
+}
+
+/* GCompareFunc: returns "a negative integer if the first value comes
+   before the second, 0 if they are equal, or a positive integer if
+   the first value comes after the second." 
+*/
+
+static gint sort_window_items (gconstpointer a, gconstpointer b)
+{
+    GtkWidget *wa = window_from_action((GtkAction *) a);
+    GtkWidget *wb = window_from_action((GtkAction *) b);
+    windata_t *va = g_object_get_data(G_OBJECT(wa), "vwin");
+    windata_t *vb = g_object_get_data(G_OBJECT(wb), "vwin");
+
+    /* sort main window first and parents before their
+       children; other than that we don't really care
+    */
+
+    if (va == mdata) return -1;
+    if (vb == mdata) return 1;
+    
+    if (va != NULL && vb != NULL) {
+	if (va == vb->gretl_parent) {
+	    /* sort @a first */
+	    return -1;
+	} else if (vb == va->gretl_parent) {
+	    /* sort @b first */
+	    return 1;
+	} 
+    }
+    
+    return 0;
+}
+
+/* use real UTF-8 bullet character if possible, otherwise asterisk */
+
+static void make_bullet (char *bullet)
+{
+    GtkSettings *settings = gtk_settings_get_default();
+    gchar *fontname = NULL;
+
+    g_object_get(G_OBJECT(settings), "gtk-font-name", &fontname, NULL);
+
+    if (fontname != NULL) {
+	PangoFontDescription *desc;
+
+	desc = pango_font_description_from_string(fontname);
+	if (font_has_symbol(desc, 0x2022)) {
+	    sprintf(bullet, " %c%c%c", 0xE2, 0x80, 0xA2);
+	} 
+	if (desc != NULL) {
+	    pango_font_description_free(desc);
+	}
+    }
+
+    if (*bullet == '\0') {
+	strcpy(bullet, " *");
+    }
+}
+
+#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 16
+
+static const gchar *gtk_action_get_label (GtkAction *action)
+{
+    static char aname[32];
+    gchar *tmp = NULL;
+
+    g_object_get(action, "label", &tmp, NULL);
+
+    *aname = '\0';
+    if (tmp != NULL) {
+	strncat(aname, tmp, 31);
+	g_free(tmp);
+    }
+
+    return aname;
+}
+
+static void gtk_action_set_label (GtkAction *action,
+				  const gchar *label)
+{
+    g_object_set(action, "label", label, NULL);
+}
+
+#endif /* remedial functions for older GTK */
+
+/* show a bullet or asterisk next to the entry for 
+   the current window */
+
+static void maybe_revise_action_label (GtkAction *action,
+				       GtkWidget *test)
+{
+    static char bullet[5];
+    static int blen;
+    const gchar *label = gtk_action_get_label(action);
+    gchar *repl = NULL;
+    int n = strlen(label);
+    int marked = 0;
+
+    if (*bullet == '\0') {
+	make_bullet(bullet);
+	blen = strlen(bullet);
+    }
+
+    if (n > blen && !strcmp(label + n - blen, bullet)) {
+	marked = 1;
+    }
+
+    if (test == window_from_action(action)) {
+	if (!marked) {
+	    /* add asterisk */
+	    repl = g_strdup_printf("%s %s", label, bullet);
+	}
+    } else if (marked) {
+	/* remove asterisk */
+	repl = g_strndup(label, strlen(label) - blen);
+    }
+    
+    if (repl != NULL) {
+	gtk_action_set_label(action, repl);
+	g_free(repl);
+    }	
+}
+
+/* pop up a list of open windows from which the user can
+   select one to raise and focus */
+
+void window_list_popup (GtkWidget *src, GdkEventButton *event, gpointer p)
+{
+    static GtkWidget *menu;
+
+    if (menu != NULL) {
+	/* we need to make sure this is up to date */
+	gtk_widget_destroy(menu);
+	menu = NULL;
+    }
+
+    if (n_listed_windows > 0) {
+	GList *wlist = gtk_action_group_list_actions(window_list);
+	GList *list = wlist;
+	GtkWidget *item, *win = NULL;
+	GtkAction *action;
+
+	if (n_listed_windows > 1) {
+	    list = g_list_sort(wlist, sort_window_items);
+	    if (p != NULL) {
+		win = GTK_WIDGET(p);
+	    }
+	}
+
+	menu = gtk_menu_new();
+
+	while (list) {
+	    action = (GtkAction *) list->data;
+	    if (win != NULL) {
+		maybe_revise_action_label(action, win);
+	    }
+	    gtk_action_set_accel_path(action, NULL);
+	    item = gtk_action_create_menu_item(action);
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	    list = list->next;
+	}
+
+	g_list_free(wlist);
+
+	if (event != NULL) {
+	    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
+			   event->button, event->time);
+	} else {
+	    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
+			   0, gtk_get_current_event_time());
+	}
+    }
+}
+
+void vwin_winlist_popup (GtkWidget *src, GdkEventButton *event, 
+			 windata_t *vwin)
+{
+    window_list_popup(src, event, vwin_toplevel(vwin));
+}
+
+/* on exiting, check for any editing windows with unsaved
+   changes, and if we find any give the user a chance to
+   save the changes, or to cancel the exit
+*/
+
+gboolean window_list_exit_check (void)
+{
+    gboolean ret = FALSE;
+
+    if (n_listed_windows > 1) {
+	GList *list = gtk_action_group_list_actions(window_list);
+	windata_t *vwin;
+	GtkWidget *w;
+
+	while (list) {
+	    w = window_from_action((GtkAction *) list->data);
+	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
+	    if (vwin != NULL && vwin_is_editing(vwin)) {
+		if (vwin_content_changed(vwin)) {
+		    gtk_window_present(GTK_WINDOW(vwin->main));
+		    ret = query_save_text(NULL, NULL, vwin);
+		}
+	    }
+	    if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabwin")) {
+		ret = tabwin_exit_check(w);
+	    }
+	    list = list->next;
+	}
+
+	g_list_free(list);
+    }
 
     return ret;
 }
 
-int vwin_on_stack (const windata_t *vwin)
+#define other_dont_close(r) (r == SCRIPT_OUT ||		\
+			     r == EDIT_PKG_CODE  ||	\
+			     r == EDIT_PKG_SAMPLE ||	\
+			     r == VIEW_LOG ||		\
+			     r == VIEW_SCRIPT ||	\
+			     r == CONSOLE)
+
+void close_session_windows (void)
 {
-    return winstack(STACK_MATCH_VWIN, NULL, vwin->main, NULL);
+    if (n_listed_windows > 1) {
+	GList *list = gtk_action_group_list_actions(window_list);
+	windata_t *vwin;
+	GtkWidget *w;
+
+	while (list) {
+	    w = window_from_action((GtkAction *) list->data);
+	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
+	    if (vwin == mdata) {
+		; /* no-op */
+	    } else if (vwin != NULL && (vwin_editing_script(vwin->role) ||
+					other_dont_close(vwin->role))) {
+		; /* no-op */
+	    } else if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabwin")) {
+		; /* FIXME tabbed models */
+	    } else {
+		gtk_widget_destroy(vwin->main);
+	    }
+	    list = list->next;
+	}
+
+	g_list_free(list);
+    }
 }
 
-GtkWidget *match_window_by_data (const gpointer p)
+static int is_editor (windata_t *vwin)
 {
-    GtkWidget *w = NULL;
-
-    winstack(STACK_QUERY, NULL, p, &w);
-    return w;
+    return vwin != NULL && vwin_is_editing(vwin);
 }
 
-void maybe_close_window_for_data (const gpointer p,
+windata_t *get_editor_for_file (const char *filename)
+{
+    windata_t *ret = NULL;
+
+    if (n_listed_windows > 1) {
+	GList *list = gtk_action_group_list_actions(window_list);
+	windata_t *vwin;
+	GtkWidget *w;
+
+	while (list != NULL && ret == NULL) {
+	    w = window_from_action((GtkAction *) list->data);
+	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
+	    if (is_editor(vwin)) {
+		if (!strcmp(filename, vwin->fname)) {
+		    ret = vwin;
+		}
+	    }
+	    if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabwin")) {
+		ret = tabwin_get_editor_for_file(filename, w);
+	    }
+	    list = list->next;
+	}
+	g_list_free(list);
+    }
+
+    return ret;
+}
+
+static int db_role_match (windata_t *vwin, int code)
+{
+    int ret = 0;
+
+    if (code == NATIVE_SERIES) {
+	ret = vwin->role == code;
+    } else {
+	ret = (vwin->role == NATIVE_SERIES ||
+	       vwin->role == RATS_SERIES ||
+	       vwin->role == PCGIVE_SERIES ||
+	       vwin->role == REMOTE_SERIES);
+    }
+
+    if (ret) {
+	ret = *vwin->fname != '\0';
+    }
+
+    return ret;
+}
+
+static windata_t *
+real_get_browser_for_database (const char *filename, int code)
+{
+    windata_t *ret = NULL;
+
+    if (n_listed_windows > 1) {
+	GList *list = gtk_action_group_list_actions(window_list);
+	windata_t *vwin;
+	GtkWidget *w;
+
+	while (list != NULL && ret == NULL) {
+	    w = window_from_action((GtkAction *) list->data);
+	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
+	    if (vwin != NULL && db_role_match(vwin, code)) {
+		if (!strncmp(filename, vwin->fname, 
+			     strlen(vwin->fname))) {
+		    ret = vwin;
+		}
+	    }
+	    list = list->next;
+	}
+	g_list_free(list);
+    }
+
+    return ret;
+}
+
+windata_t *get_browser_for_database (const char *filename)
+{
+    return real_get_browser_for_database(filename, 0);
+}
+
+windata_t *get_browser_for_gretl_database (const char *filename)
+{
+    return real_get_browser_for_database(filename, NATIVE_SERIES);
+}
+
+windata_t *get_viewer_for_data (const gpointer data)
+{
+    windata_t *ret = NULL;
+
+    if (n_listed_windows > 1) {
+	GList *list = gtk_action_group_list_actions(window_list);
+	windata_t *vwin;
+	GtkWidget *w;
+
+	while (list != NULL && ret == NULL) {
+	    w = window_from_action((GtkAction *) list->data);
+	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
+	    if (vwin != NULL && vwin->data == data) {
+		ret = vwin;
+	    }
+	    list = list->next;
+	}
+	g_list_free(list);
+    }
+
+    return ret;
+}
+
+GtkWidget *get_window_for_data (const gpointer data)
+{
+    GtkWidget *ret = NULL;
+
+    if (n_listed_windows > 1) {
+	GList *list = gtk_action_group_list_actions(window_list);
+	GtkWidget *w;
+	gpointer p;
+
+	while (list != NULL && ret == NULL) {
+	    w = window_from_action((GtkAction *) list->data);
+	    p = g_object_get_data(G_OBJECT(w), "object");
+	    if (p == data) {
+		ret = w;
+	    }
+	    list = list->next;
+	}
+	g_list_free(list);
+    }
+
+    return ret;
+}
+
+void maybe_close_window_for_data (const gpointer data,
 				  GretlObjType otype)
 {
-    GtkWidget *w = NULL;
+    GtkWidget *w = get_window_for_data(data);
 
-    winstack(STACK_QUERY, NULL, p, &w);
     if (w != NULL) {
 	if (otype == GRETL_OBJ_BUNDLE) {
 	    windata_t *vwin = g_object_get_data(G_OBJECT(w),
@@ -263,43 +613,64 @@ void maybe_close_window_for_data (const gpointer p,
     }
 }
 
-GtkWidget *match_window_by_filename (const char *fname)
+GtkWidget *get_window_for_plot (const char *plotfile)
 {
-    GtkWidget *w = NULL;
+    GtkWidget *ret = NULL;
 
-    winstack(STACK_MATCH_FNAME, NULL, fname, &w);
-    return w;
+    if (n_listed_windows > 1) {
+	GList *list = gtk_action_group_list_actions(window_list);
+	GtkWidget *w;
+	gchar *test;
+
+	while (list != NULL && ret == NULL) {
+	    w = window_from_action((GtkAction *) list->data);
+	    test = g_object_get_data(G_OBJECT(w), "plot-filename");
+	    if (test != NULL && strstr(test, plotfile) != NULL) {
+		ret = w;
+	    }	    
+	    list = list->next;
+	}
+	g_list_free(list);
+    }
+
+    return ret;
 }
 
-GtkWidget *match_db_window_by_filename (const char *fname)
-{
-    GtkWidget *w = NULL;
-
-    winstack(STACK_MATCH_FNAME_MOD, NULL, fname, &w);
-    return w;
-}
+/* end of window-listing apparatus */
 
 int highest_numbered_variable_in_winstack (void)
 {
-    return winstack(STACK_MAXVAR, NULL, NULL, NULL);
-}
+    int m_vmax, vmax = 0;
 
-void winstack_add (GtkWidget *w)
-{
-#if WDEBUG
-    fprintf(stderr, "winstack add: %p (%s)\n", (void *) w,
-	    gtk_window_get_title(GTK_WINDOW(w)));
-#endif
-    winstack(STACK_ADD, w, NULL, NULL);
-}
+    if (n_listed_windows > 1) {
+	GList *list = gtk_action_group_list_actions(window_list);
+	windata_t *vwin;
+	GtkWidget *w;
 
-void winstack_remove (GtkWidget *w)
-{
-#if WDEBUG
-    fprintf(stderr, "winstack remove: %p (%s)\n", (void *) w,
-	    gtk_window_get_title(GTK_WINDOW(w)));    
-#endif
-    winstack(STACK_REMOVE, w, NULL, NULL);
+	while (list != NULL) {
+	    w = window_from_action((GtkAction *) list->data);
+	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
+	    if (vwin != NULL && vwin->role == VIEW_MODEL) {
+		const MODEL *pmod = vwin->data;
+
+		m_vmax = highest_numbered_var_in_model(pmod, dataset);
+		if (m_vmax > vmax) {
+		    vmax = m_vmax;
+		}
+	    } else if (vwin != NULL && (vwin->role == VAR || vwin->role == VECM)) {
+		const GRETL_VAR *var = vwin->data;
+
+		m_vmax = gretl_VAR_get_highest_variable(var);
+		if (m_vmax > vmax) {
+		    vmax = m_vmax;
+		}		    
+	    }
+	    list = list->next;
+	}
+	g_list_free(list);
+    }
+
+    return vmax;
 }
 
 static void vwin_init (windata_t *vwin, int role, gpointer data)
@@ -340,7 +711,7 @@ windata_t *vwin_new (int role, gpointer data)
 windata_t *
 gretl_viewer_new_with_parent (windata_t *parent, int role, 
 			      const gchar *title, 
-			      gpointer data, int record)
+			      gpointer data)
 {
     windata_t *vwin = vwin_new(role, data);
 
@@ -364,19 +735,11 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
 
-
-    if (record) {
-	g_object_set_data(G_OBJECT(vwin->main), "object", data);
-	g_object_set_data(G_OBJECT(vwin->main), "role", 
-			  GINT_TO_POINTER(vwin->role));
-	winstack_add(vwin->main);
-    }
-
     if (parent != NULL) {
 	vwin_add_child(parent, vwin);
     }
 
-    add_window_list_item(vwin->main, role);
+    window_list_add(vwin->main, role);
 
 #ifndef G_OS_WIN32
     set_wm_icon(vwin->main);
@@ -386,10 +749,10 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 }
 
 windata_t *gretl_viewer_new (int role, const gchar *title, 
-			     gpointer data, int record)
+			     gpointer data)
 {
     return gretl_viewer_new_with_parent(NULL, role, title,
-					data, record);
+					data);
 }
 
 GtkWidget *vwin_toplevel (windata_t *vwin)
@@ -428,7 +791,8 @@ static gint catch_winlist_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     return FALSE;
 }
 
-windata_t *gretl_browser_new (int role, const gchar *title, int record)
+windata_t *gretl_browser_new (int role, const gchar *title,
+			      int auto_destroy)
 {
     windata_t *vwin = vwin_new(role, NULL);
 
@@ -442,16 +806,44 @@ windata_t *gretl_browser_new (int role, const gchar *title, int record)
     g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(catch_winlist_key), vwin);
 
-    if (record) {
-	g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
-	g_object_set_data(G_OBJECT(vwin->main), "role", 
-			  GINT_TO_POINTER(vwin->role));
-	winstack_add(vwin->main);
+    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
+
+    if (auto_destroy) {
 	g_signal_connect(G_OBJECT(vwin->main), "destroy",
 			 G_CALLBACK(free_windata), vwin);
-    } 
+    }
 
-    add_window_list_item(vwin->main, role);
+    window_list_add(vwin->main, role);
 
     return vwin;
+}
+
+void gretl_viewer_present (windata_t *vwin)
+{
+    if (window_is_tab(vwin)) {
+	tabwin_tab_present(vwin);
+    } else {
+	gtk_window_present(GTK_WINDOW(vwin->main));
+    }
+}
+
+void gretl_viewer_destroy (windata_t *vwin)
+{
+    if (window_is_tab(vwin)) {
+	tabwin_tab_destroy(vwin);
+    } else {
+	gtk_widget_destroy(vwin->main);
+    }
+}
+
+void gretl_viewer_set_title (windata_t *vwin, const char *title)
+{
+    if (window_is_tab(vwin)) {
+	if (!strncmp(title, "gretl: ", 7)) {
+	    title += 7;
+	}
+	tabwin_set_tab_title(vwin, title);
+    } else {
+	gtk_window_set_title(GTK_WINDOW(vwin->main), title);
+    }
 }

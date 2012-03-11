@@ -30,6 +30,7 @@
 #include "database.h"
 #include "selector.h"
 #include "fileselect.h"
+#include "winstack.h"
 #include "gretl_panel.h"
 #include "texprint.h"
 #include "forecast.h"

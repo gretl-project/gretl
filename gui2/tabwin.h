@@ -25,7 +25,7 @@ windata_t *viewer_tab_new (int role, const char *info,
 
 void tabwin_register_toolbar (windata_t *vwin);
 
-void tabwin_set_tab_title (windata_t *vwin, gchar *fname);
+void tabwin_set_tab_title (windata_t *vwin, const char *title);
 
 void tabwin_set_tab_status (windata_t *vwin);
 
@@ -41,7 +41,7 @@ gboolean window_is_undockable (windata_t *vwin);
 
 gboolean tabwin_exit_check (GtkWidget *w);
 
-void model_tab_destroy (windata_t *vwin);
+void tabwin_tab_destroy (windata_t *vwin);
 
 windata_t *tabwin_get_editor_for_file (const char *filename,
 				       GtkWidget *w);
