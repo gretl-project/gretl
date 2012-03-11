@@ -172,6 +172,7 @@ void vwin_winlist_popup (GtkWidget *src, GdkEventButton *event,
 int get_n_listed_windows (void);
 gboolean window_list_exit_check (void);
 void do_stop_script (GtkWidget *w, windata_t *vwin);
+windata_t *get_editor_for_file (const char *filename);
 
 /* functions defined in files other than gretl.c */
 void about_dialog (void);

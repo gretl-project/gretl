@@ -31,6 +31,7 @@
 #include "ssheet.h"
 #include "treeutils.h"
 #include "datawiz.h"
+#include "winstack.h"
 
 #include "boxplots.h"
 

@@ -43,4 +43,9 @@ gboolean tabwin_exit_check (GtkWidget *w);
 
 void model_tab_destroy (windata_t *vwin);
 
+windata_t *tabwin_get_editor_for_file (const char *filename,
+				       GtkWidget *w);
+
+void tabwin_tab_present (windata_t *vwin);
+
 #endif /* TABWIN_H_ */

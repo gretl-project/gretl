@@ -823,3 +823,48 @@ gboolean window_is_undockable (windata_t *vwin)
 
     return FALSE;
 }
+
+windata_t *tabwin_get_editor_for_file (const char *filename,
+				       GtkWidget *w)
+{
+    windata_t *ret = NULL;
+
+    if (w == tabedit->main) {
+	GtkNotebook *notebook = GTK_NOTEBOOK(tabedit->tabs);
+	int i, n = gtk_notebook_get_n_pages(notebook);
+	GtkWidget *tab;
+	windata_t *vwin;
+
+	for (i=0; i<n; i++) {
+	    tab = gtk_notebook_get_nth_page(notebook, i);
+	    vwin = g_object_get_data(G_OBJECT(tab), "vwin");
+	    if (vwin != NULL && !strcmp(filename, vwin->fname)) {
+		ret = vwin;
+		break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+void tabwin_tab_present (windata_t *vwin)
+{
+    tabwin_t *tabwin = g_object_get_data(G_OBJECT(vwin->topmain), 
+					 "tabwin");
+    GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
+    int i, n = gtk_notebook_get_n_pages(notebook);
+    GtkWidget *tab;
+
+    for (i=0; i<n; i++) {
+	tab = gtk_notebook_get_nth_page(notebook, i);
+	if (vwin == g_object_get_data(G_OBJECT(tab), "vwin")) {
+	    gint pg = gtk_notebook_page_num(notebook, vwin->main);
+
+	    gtk_notebook_set_current_page(notebook, pg);
+	    break;
+	}
+    }
+
+    gtk_window_present(GTK_WINDOW(vwin->topmain));
+}

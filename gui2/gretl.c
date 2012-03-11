@@ -2111,14 +2111,43 @@ gboolean window_list_exit_check (void)
 	while (list) {
 	    w = window_from_action((GtkAction *) list->data);
 	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
-	    if (vwin != NULL && vwin != mdata) {
-		if (vwin_is_editing(vwin) && vwin_content_changed(vwin)) {
+	    if (vwin != NULL && vwin_is_editing(vwin)) {
+		if (vwin_content_changed(vwin)) {
 		    gtk_window_present(GTK_WINDOW(vwin->main));
 		    ret = query_save_text(NULL, NULL, vwin);
 		}
 	    }
 	    if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabwin")) {
 		ret = tabwin_exit_check(w);
+	    }
+	    list = list->next;
+	}
+
+	g_list_free(list);
+    }
+
+    return ret;
+}
+
+windata_t *get_editor_for_file (const char *filename)
+{
+    windata_t *ret = NULL;
+
+    if (n_listed_windows > 1) {
+	GList *list = gtk_action_group_list_actions(window_list);
+	windata_t *vwin;
+	GtkWidget *w;
+
+	while (list != NULL && ret == NULL) {
+	    w = window_from_action((GtkAction *) list->data);
+	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
+	    if (vwin != NULL && vwin_is_editing(vwin)) {
+		if (!strcmp(filename, vwin->fname)) {
+		    ret = vwin;
+		}
+	    }
+	    if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabwin")) {
+		ret = tabwin_get_editor_for_file(filename, w);
 	    }
 	    list = list->next;
 	}

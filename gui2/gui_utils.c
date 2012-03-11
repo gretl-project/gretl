@@ -1915,6 +1915,19 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 windata_t *view_script (const char *filename, int editable, 
 			int role)
 {
+    if (editable) {
+	windata_t *vwin = get_editor_for_file(filename);
+
+	if (vwin != NULL) {
+	    if (window_is_tab(vwin)) {
+		tabwin_tab_present(vwin);
+	    } else {
+		gtk_window_present(GTK_WINDOW(vwin->main));
+	    }
+	    return vwin;
+	}
+    }
+
     return view_file_with_title(filename, editable, 0,
 				SCRIPT_WIDTH, SCRIPT_HEIGHT,
 				role, NULL);
