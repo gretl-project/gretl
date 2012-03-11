@@ -252,7 +252,7 @@ static void script_window_update (windata_t *vwin, const char *fname)
 
     if (window_is_tab(vwin)) {
 	/* update the tab label */
-	tabwin_set_tab_title(vwin, trfname);
+	tabwin_tab_set_title(vwin, trfname);
     } else {
 	/* update the window title */
 	title = g_strdup_printf("gretl: %s", trfname);

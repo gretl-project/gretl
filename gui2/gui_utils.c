@@ -1223,7 +1223,7 @@ void mark_vwin_content_changed (windata_t *vwin)
 	}
 	vwin->flags |= VWIN_CONTENT_CHANGED;
 	if (window_is_tab(vwin)) {
-	    tabwin_set_tab_status(vwin);
+	    tabwin_tab_set_status(vwin);
 	}
     }
 }
@@ -1238,7 +1238,7 @@ void mark_vwin_content_saved (windata_t *vwin)
 
     vwin->flags &= ~VWIN_CONTENT_CHANGED;
     if (window_is_tab(vwin)) {
-	tabwin_set_tab_status(vwin);
+	tabwin_tab_set_status(vwin);
     }
 
     w = g_object_get_data(G_OBJECT(vwin->mbar), "save_as_button");

@@ -28,7 +28,9 @@
 
 /* Below: apparatus for keeping track of open windows so
    as to be able to present a pop-up list of same as
-   a means of navigating the multi-window gretl GUI
+   a means of navigating the multi-window gretl GUI,
+   and also to have a central repository of stuff to be
+   closed when the gretl session is switched,
 */
 
 /* get the top-level widget associated with pre-defined
@@ -55,7 +57,7 @@ static void gretl_window_raise (GtkAction *action, gpointer data)
 }
 
 /* select an icon to represent a window playing
-   a given GUI role */
+   the given @role in the gretl GUI */
 
 static const gchar *window_list_icon (int role)
 {
@@ -424,12 +426,19 @@ gboolean window_list_exit_check (void)
     return ret;
 }
 
+/* windows that should not be automatically closed when
+   closing the current gretl session (e.g. on opening a
+   new data file
+*/
+
 #define other_dont_close(r) (r == SCRIPT_OUT ||		\
 			     r == EDIT_PKG_CODE  ||	\
 			     r == EDIT_PKG_SAMPLE ||	\
 			     r == VIEW_LOG ||		\
 			     r == VIEW_SCRIPT ||	\
 			     r == CONSOLE)
+
+/* called from session.c on switching the session */
 
 void close_session_windows (void)
 {
@@ -442,7 +451,7 @@ void close_session_windows (void)
 	    w = window_from_action((GtkAction *) list->data);
 	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
 	    if (vwin == mdata) {
-		; /* no-op */
+		; /* main window: no-op! */
 	    } else if (vwin != NULL && (vwin_editing_script(vwin->role) ||
 					other_dont_close(vwin->role))) {
 		; /* no-op */
@@ -458,11 +467,6 @@ void close_session_windows (void)
     }
 }
 
-static int is_editor (windata_t *vwin)
-{
-    return vwin != NULL && vwin_is_editing(vwin);
-}
-
 windata_t *get_editor_for_file (const char *filename)
 {
     windata_t *ret = NULL;
@@ -475,7 +479,7 @@ windata_t *get_editor_for_file (const char *filename)
 	while (list != NULL && ret == NULL) {
 	    w = window_from_action((GtkAction *) list->data);
 	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
-	    if (is_editor(vwin)) {
+	    if (vwin != NULL && vwin_is_editing(vwin)) {
 		if (!strcmp(filename, vwin->fname)) {
 		    ret = vwin;
 		}
@@ -491,7 +495,7 @@ windata_t *get_editor_for_file (const char *filename)
     return ret;
 }
 
-static int db_role_match (windata_t *vwin, int code)
+static int db_role_matches (windata_t *vwin, int code)
 {
     int ret = 0;
 
@@ -524,7 +528,7 @@ real_get_browser_for_database (const char *filename, int code)
 	while (list != NULL && ret == NULL) {
 	    w = window_from_action((GtkAction *) list->data);
 	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
-	    if (vwin != NULL && db_role_match(vwin, code)) {
+	    if (vwin != NULL && db_role_matches(vwin, code)) {
 		if (!strncmp(filename, vwin->fname, 
 			     strlen(vwin->fname))) {
 		    ret = vwin;
@@ -575,6 +579,11 @@ GtkWidget *get_window_for_data (const gpointer data)
 {
     GtkWidget *ret = NULL;
 
+    /* this handles the case where the window in question
+       is not part of a windata_t "viewer": e.g. a
+       spreadsheet window editing a matrix
+    */
+
     if (n_listed_windows > 1) {
 	GList *list = gtk_action_group_list_actions(window_list);
 	GtkWidget *w;
@@ -599,6 +608,8 @@ void maybe_close_window_for_data (const gpointer data,
 {
     GtkWidget *w = get_window_for_data(data);
 
+    /* special for bundle windows and matrix editor */
+
     if (w != NULL) {
 	if (otype == GRETL_OBJ_BUNDLE) {
 	    windata_t *vwin = g_object_get_data(G_OBJECT(w),
@@ -616,6 +627,8 @@ void maybe_close_window_for_data (const gpointer data,
 GtkWidget *get_window_for_plot (const char *plotfile)
 {
     GtkWidget *ret = NULL;
+
+    /* special for plot windows */
 
     if (n_listed_windows > 1) {
 	GList *list = gtk_action_group_list_actions(window_list);
@@ -635,8 +648,6 @@ GtkWidget *get_window_for_plot (const char *plotfile)
 
     return ret;
 }
-
-/* end of window-listing apparatus */
 
 int highest_numbered_variable_in_winstack (void)
 {
@@ -672,6 +683,8 @@ int highest_numbered_variable_in_winstack (void)
 
     return vmax;
 }
+
+/* end of window-list apparatus */
 
 static void vwin_init (windata_t *vwin, int role, gpointer data)
 {
@@ -842,7 +855,7 @@ void gretl_viewer_set_title (windata_t *vwin, const char *title)
 	if (!strncmp(title, "gretl: ", 7)) {
 	    title += 7;
 	}
-	tabwin_set_tab_title(vwin, title);
+	tabwin_tab_set_title(vwin, title);
     } else {
 	gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     }

@@ -25,9 +25,9 @@ windata_t *viewer_tab_new (int role, const char *info,
 
 void tabwin_register_toolbar (windata_t *vwin);
 
-void tabwin_set_tab_title (windata_t *vwin, const char *title);
+void tabwin_tab_set_title (windata_t *vwin, const char *title);
 
-void tabwin_set_tab_status (windata_t *vwin);
+void tabwin_tab_set_status (windata_t *vwin);
 
 void show_tabbed_viewer (windata_t *vwin);
 

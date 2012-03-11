@@ -600,7 +600,7 @@ void tabwin_register_toolbar (windata_t *vwin)
    to set its real filename when it is saved 
 */
 
-void tabwin_set_tab_title (windata_t *vwin, const char *title)
+void tabwin_tab_set_title (windata_t *vwin, const char *title)
 {
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
     GtkWidget *tab, *label;
@@ -624,7 +624,7 @@ void tabwin_set_tab_title (windata_t *vwin, const char *title)
    editor
 */
 
-void tabwin_set_tab_status (windata_t *vwin)
+void tabwin_tab_set_status (windata_t *vwin)
 {
     gboolean unsaved = (vwin->flags & VWIN_CONTENT_CHANGED);
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
