@@ -566,11 +566,9 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     }
 
     g_signal_connect(G_OBJECT(view), "key-press-event",
-		     G_CALLBACK(catch_listbox_key),
-		     vwin);
+		     G_CALLBACK(catch_listbox_key), vwin);
     g_signal_connect(G_OBJECT(view), "button-press-event",
-		     G_CALLBACK(listbox_double_click),
-		     vwin);
+		     G_CALLBACK(listbox_double_click), vwin);
 
     /* set sort properties on the tree model */
     if (vwin == mdata && tstore != NULL) {

@@ -116,7 +116,7 @@ enum extra_cmds {
     GUI_CMD_MAX
 };
 
-#define HELP_ROLE(r) (r >= CLI_HELP && r <= FUNCS_HELP)
+#define help_role(r) (r >= CLI_HELP && r <= FUNCS_HELP)
 
 enum file_ops {
     OPEN_DATA = GUI_CMD_MAX + 1, /* don't collide with extra_cmds */

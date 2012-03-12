@@ -38,6 +38,8 @@ windata_t *get_browser_for_database (const char *filename);
 
 windata_t *get_browser_for_gretl_database (const char *filename);
 
+windata_t *get_browser_for_role (int role);
+
 windata_t *get_viewer_for_data (const gpointer data);
 
 GtkWidget *get_window_for_data (const gpointer data);
@@ -61,8 +63,7 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 			      const gchar *title, 
 			      gpointer data);
 
-windata_t *gretl_browser_new (int role, const gchar *title,
-			      int record);
+windata_t *gretl_browser_new (int role, const gchar *title);
 
 GtkWidget *vwin_toplevel (windata_t *vwin);
 

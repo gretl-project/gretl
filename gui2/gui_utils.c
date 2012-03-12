@@ -1464,7 +1464,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gretl_object_unref(vwin->data, GRETL_OBJ_SYS);
 	} else if (vwin->role == PRINT && vwin->data != NULL) {
 	    free_series_view(vwin->data);
-	} else if (HELP_ROLE(vwin->role)) {
+	} else if (help_role(vwin->role)) {
 	    g_free(vwin->data); /* help file text */
 	} else if (vwin->role == VIEW_BUNDLE) {
 	    gretl_bundle_destroy_if_temp(vwin->data);
@@ -2215,20 +2215,22 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     int vsize = MODEL_HEIGHT;
     windata_t *vwin;
     const char *buf;
+    gchar *tmp;
+    int tabbed_models = 0;
     int width, nlines;
 
-#if 0 /* just experimental, for now */
-    vwin = viewer_tab_new(VIEW_MODEL, NULL, pmod);
-#else
-    if (title == NULL) {
-	gchar *s = g_strdup_printf(_("gretl: model %d"), pmod->ID);
-
-	vwin = gretl_viewer_new(VIEW_MODEL, s, pmod);
-	g_free(s);
-    } else {
+    if (tabbed_models) {
+	/* for now, totally experimental! */
+	tmp = g_strdup_printf(_("model %d"), pmod->ID);
+	vwin = viewer_tab_new(VIEW_MODEL, tmp, pmod);
+	g_free(tmp);
+    } else if (title != NULL) {
 	vwin = gretl_viewer_new(VIEW_MODEL, title, pmod);
+    } else {
+	tmp = g_strdup_printf(_("gretl: model %d"), pmod->ID);
+	vwin = gretl_viewer_new(VIEW_MODEL, tmp, pmod);
+	g_free(tmp);
     }
-#endif
 
     if (vwin == NULL) {
 	return NULL;

@@ -45,7 +45,7 @@ void destroy_file_collections (void);
 
 void show_files (GtkAction *action, gpointer p);
 
-void display_files (int code, gpointer p);
+void display_files (int role, gpointer p);
 
 void show_native_dbs (void);
 

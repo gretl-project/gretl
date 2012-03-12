@@ -951,7 +951,7 @@ make_db_index_window (int action, char *fname, char *buf)
 	title = fname;
     } 
 
-    vwin = gretl_browser_new(action, title, 1);
+    vwin = gretl_browser_new(action, title);
     if (vwin == NULL) {
 	return 1;
     }

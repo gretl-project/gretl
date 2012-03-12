@@ -27,6 +27,7 @@
 #include "fnsave.h"
 #include "treeutils.h"
 #include "toolbar.h"
+#include "winstack.h"
 #include "lagpref.h"
 
 #include "var.h"
@@ -646,7 +647,7 @@ void selector_from_model (windata_t *vwin)
 	int dv = -1, gotinst = 0;
 
 	if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM) {
-	    revise_nl_model(pmod, vwin->main);
+	    revise_nl_model(pmod, vwin_toplevel(vwin));
 	    return;
 	}
 
@@ -811,7 +812,7 @@ void selector_from_model (windata_t *vwin)
 	selection_dialog(ci, (ci == VAR)? _("gretl: VAR") : _("gretl: VECM"),
 			 do_vector_model);
     } else if (ci == SYSTEM) {
-	revise_system_model(ptr, vwin->main);
+	revise_system_model(ptr, vwin_toplevel(vwin));
     }
 
     model_opt = OPT_NONE;
@@ -7011,7 +7012,8 @@ simple_selection_for_viewer (int ci, const char *title, int (*callback)(),
 {
     selector *sr;
     
-    sr = simple_selection_with_data(ci, title, callback, vwin->main,
+    sr = simple_selection_with_data(ci, title, callback, 
+				    vwin_toplevel(vwin),
 				    vwin);
 
     if (sr != NULL && vwin->mbar != NULL) {

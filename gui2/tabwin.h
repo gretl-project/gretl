@@ -48,4 +48,6 @@ windata_t *tabwin_get_editor_for_file (const char *filename,
 
 void tabwin_tab_present (windata_t *vwin);
 
+void tabwin_close_models_viewer (GtkWidget *w);
+
 #endif /* TABWIN_H_ */

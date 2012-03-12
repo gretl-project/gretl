@@ -719,6 +719,17 @@ static void size_new_toplevel (windata_t *vwin)
     gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize);    
 }
 
+static gchar *title_from_vwin (windata_t *vwin)
+{
+    if (vwin->role == VIEW_MODEL) {
+	MODEL *pmod = vwin->data;
+
+	return g_strdup_printf(_("gretl: model %d"), pmod->ID);
+    } else {
+	return title_from_filename(vwin->fname, TRUE);
+    }
+}
+
 void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 {
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
@@ -728,10 +739,9 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     gulong handler_id;
     gchar *title;
 
-    /* we'll not do this if there's only one page in the
-       editor
-    */
     if (gtk_notebook_get_n_pages(notebook) < 2) {
+	/* we'll not do this if there's only one page in the
+	   viewer */
 	return;
     }
 
@@ -762,7 +772,7 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 
     /* build new shell for @vwin */
     vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    title = title_from_filename(vwin->fname, TRUE);
+    title = title_from_vwin(vwin);
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     g_free(title);
     g_signal_connect(G_OBJECT(vwin->main), "destroy", 
@@ -864,4 +874,11 @@ void tabwin_tab_present (windata_t *vwin)
     }
 
     gtk_window_present(GTK_WINDOW(vwin->topmain));
+}
+
+void tabwin_close_models_viewer (GtkWidget *w)
+{
+    if (tabmod != NULL && w == tabmod->main) {
+	gtk_widget_destroy(w);
+    }
 }

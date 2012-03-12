@@ -26,11 +26,15 @@
 
 #define WDEBUG 0
 
-/* Below: apparatus for keeping track of open windows so
-   as to be able to present a pop-up list of same as
-   a means of navigating the multi-window gretl GUI,
-   and also to have a central repository of stuff to be
-   closed when the gretl session is switched,
+/* Below: apparatus for keeping track of open gretl windows.
+
+   This provides the basis for a pop-up listing of windows as
+   a means of navigating the multi-window gretl GUI; it also
+   gives the basis for checking whether a window performing
+   a given role is already open, so as to avoid duplication,
+   and for closing any windows that are "invalidated" when
+   the gretl session is switched (e.g. by opening a new
+   data file).
 */
 
 /* get the top-level widget associated with pre-defined
@@ -76,7 +80,7 @@ static const gchar *window_list_icon (int role)
 	id = GRETL_STOCK_SCATTER;
     } else if (BROWSER_ROLE(role)) {
 	id = GTK_STOCK_INDEX;
-    } else if (HELP_ROLE(role)) {
+    } else if (help_role(role)) {
 	id = GRETL_STOCK_BOOK;
     } else if (role == STAT_TABLE) {
 	id = GRETL_STOCK_CALC;
@@ -436,9 +440,13 @@ gboolean window_list_exit_check (void)
 			     r == EDIT_PKG_SAMPLE ||	\
 			     r == VIEW_LOG ||		\
 			     r == VIEW_SCRIPT ||	\
+	                     r == TEXTBOOK_DATA ||	\
 			     r == CONSOLE)
 
-/* called from session.c on switching the session */
+/* called from session.c on switching the session: close all
+   windows that ought to be closed, but be careful not to
+   close ones that need to stay open!
+*/
 
 void close_session_windows (void)
 {
@@ -453,10 +461,13 @@ void close_session_windows (void)
 	    if (vwin == mdata) {
 		; /* main window: no-op! */
 	    } else if (vwin != NULL && (vwin_editing_script(vwin->role) ||
+					help_role(vwin->role) ||
 					other_dont_close(vwin->role))) {
 		; /* no-op */
 	    } else if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabwin")) {
-		; /* FIXME tabbed models */
+		/* tabbed script editor stays open, but tabbed model
+		   viewer should be closed */
+		tabwin_close_models_viewer(w);
 	    } else {
 		gtk_widget_destroy(vwin->main);
 	    }
@@ -565,6 +576,29 @@ windata_t *get_viewer_for_data (const gpointer data)
 	    w = window_from_action((GtkAction *) list->data);
 	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
 	    if (vwin != NULL && vwin->data == data) {
+		ret = vwin;
+	    }
+	    list = list->next;
+	}
+	g_list_free(list);
+    }
+
+    return ret;
+}
+
+windata_t *get_browser_for_role (int role)
+{
+    windata_t *ret = NULL;
+
+    if (n_listed_windows > 1) {
+	GList *list = gtk_action_group_list_actions(window_list);
+	windata_t *vwin;
+	GtkWidget *w;
+
+	while (list != NULL && ret == NULL) {
+	    w = window_from_action((GtkAction *) list->data);
+	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
+	    if (vwin != NULL && vwin->role == role) {
 		ret = vwin;
 	    }
 	    list = list->next;
@@ -778,7 +812,13 @@ void vwin_pack_toolbar (windata_t *vwin)
     if (vwin->topmain != NULL) {
 	/* vwin is embedded in a tabbed window */
 	tabwin_register_toolbar(vwin);
-    } else {    
+    } else if (window_is_tab(vwin) && vwin->role == VIEW_MODEL) {
+	/* making a stand-alone model viewer: the menubar does not
+	   live in an hbox */
+	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, 
+			   FALSE, FALSE, 0);
+	gtk_box_reorder_child(GTK_BOX(vwin->vbox), vwin->mbar, 0);
+    } else {
 	GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
 
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
@@ -804,8 +844,7 @@ static gint catch_winlist_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     return FALSE;
 }
 
-windata_t *gretl_browser_new (int role, const gchar *title,
-			      int auto_destroy)
+windata_t *gretl_browser_new (int role, const gchar *title)
 {
     windata_t *vwin = vwin_new(role, NULL);
 
@@ -815,18 +854,18 @@ windata_t *gretl_browser_new (int role, const gchar *title,
 
     vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
+    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 
     g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(catch_winlist_key), vwin);
-
-    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
-
-    if (auto_destroy) {
-	g_signal_connect(G_OBJECT(vwin->main), "destroy",
-			 G_CALLBACK(free_windata), vwin);
-    }
+    g_signal_connect(G_OBJECT(vwin->main), "destroy",
+		     G_CALLBACK(free_windata), vwin);
 
     window_list_add(vwin->main, role);
+
+#ifndef G_OS_WIN32
+    set_wm_icon(vwin->main);
+#endif
 
     return vwin;
 }
