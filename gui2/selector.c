@@ -7011,6 +7011,8 @@ simple_selection_for_viewer (int ci, const char *title, int (*callback)(),
 			     windata_t *vwin)
 {
     selector *sr;
+
+    /* FIXME tabbed viewer */
     
     sr = simple_selection_with_data(ci, title, callback, 
 				    vwin_toplevel(vwin),

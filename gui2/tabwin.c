@@ -885,9 +885,9 @@ void tabwin_close_models_viewer (GtkWidget *w)
 
 static void reactivate_tabwin (GtkWidget *w, tabwin_t *tabwin)
 {
-    if (tabwin != NULL && tabwin == tabmod) {
-	/* FIXME: @tabwin will be an invalid pointer if
-	   it got a delete-event before execution got
+    if (tabwin != NULL && (tabwin == tabmod || tabwin == tabedit)) {
+	/* @tabwin will be an invalid pointer if it
+	   got a delete-event before execution gets
 	   here
 	*/
 	GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
@@ -904,11 +904,11 @@ static void reactivate_tabwin (GtkWidget *w, tabwin_t *tabwin)
     }
 }
 
-/* Experimental: to be called when a tabbed model viewer spawns
-   a dialog that becomes invalid if the model in question is
-   destroyed. Since that will happen if the model tab's
-   closer button is clicked, the button must be disabled for 
-   the duration. For good measure, we disable all such buttons.
+/* Experimental: to be called when a tabbed viewer spawns
+   a dialog that becomes invalid if the tab in question is
+   destroyed. Since that will happen if the tab's closer
+   button is clicked, the button must be disabled for the
+   duration. For good measure, we disable all such buttons.
 */
 
 void maybe_disable_tab_commands (GtkWidget *w, gpointer p)
