@@ -90,6 +90,8 @@ static const gchar *window_list_icon (int role)
 	id = GRETL_STOCK_ICONS;
     } else if (role == PRINT) {
 	id = GTK_STOCK_JUSTIFY_LEFT;
+    } else if (role == SSHEET) {
+	id = GRETL_STOCK_TABLE;
     }
 
     return id;

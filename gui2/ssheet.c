@@ -3147,15 +3147,12 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     select_first_editable_cell(sheet);
 
     gtk_widget_show(sheet->win);
-    
-    if (1 || (c != SHEET_EDIT_SCALARS)) {
-	/* FIXME? */
-	window_list_add(sheet->win, 0);
-    }
+    window_list_add(sheet->win, SSHEET);
 
     if (editing_series(sheet)) {
 	/* we can't have the user making confounding changes elsewhere,
-	   while editing the dataset here */
+	   while editing the dataset here 
+	*/
 	set_dataset_locked(TRUE);
     }
 

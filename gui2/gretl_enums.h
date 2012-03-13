@@ -113,6 +113,7 @@ enum extra_cmds {
     X12AHELP,
     LOESS,
     NADARWAT,
+    SSHEET,
     GUI_CMD_MAX
 };
 

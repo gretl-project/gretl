@@ -2219,6 +2219,10 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     int tabbed_models = 0;
     int width, nlines;
 
+    if (getenv("TABBED_MODELS") != NULL) {
+	tabbed_models = 1;
+    }
+
     if (tabbed_models) {
 	/* for now, totally experimental! */
 	tmp = g_strdup_printf(_("model %d"), pmod->ID);

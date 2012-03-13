@@ -882,3 +882,51 @@ void tabwin_close_models_viewer (GtkWidget *w)
 	gtk_widget_destroy(w);
     }
 }
+
+static void reactivate_tabwin (GtkWidget *w, tabwin_t *tabwin)
+{
+    if (tabwin != NULL && tabwin == tabmod) {
+	/* FIXME: @tabwin will be an invalid pointer if
+	   it got a delete-event before execution got
+	   here
+	*/
+	GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
+	int i, n = gtk_notebook_get_n_pages(notebook);
+	GtkWidget *tab, *lbl;
+
+	gtk_widget_set_sensitive(GTK_WIDGET(tabwin->mbar), TRUE);
+
+	for (i=0; i<n; i++) {
+	    tab = gtk_notebook_get_nth_page(notebook, i);
+	    lbl = gtk_notebook_get_tab_label(notebook, tab);
+	    gtk_widget_set_sensitive(lbl, TRUE);
+	}
+    }
+}
+
+/* Experimental: to be called when a tabbed model viewer spawns
+   a dialog that becomes invalid if the model in question is
+   destroyed. Since that will happen if the model tab's
+   closer button is clicked, the button must be disabled for 
+   the duration. For good measure, we disable all such buttons.
+*/
+
+void maybe_disable_tab_commands (GtkWidget *w, gpointer p)
+{
+    tabwin_t *tabwin = g_object_get_data(G_OBJECT(p), "tabwin");
+    GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
+    int i, n = gtk_notebook_get_n_pages(notebook);
+    GtkWidget *tab, *lbl;
+
+    gtk_widget_set_sensitive(tabwin->mbar, FALSE);
+
+    for (i=0; i<n; i++) {
+	tab = gtk_notebook_get_nth_page(notebook, i);
+	lbl = gtk_notebook_get_tab_label(notebook, tab);
+	gtk_widget_set_sensitive(lbl, FALSE);
+    }
+	
+    g_signal_connect(G_OBJECT(w), "destroy", 
+		     G_CALLBACK(reactivate_tabwin), 
+		     tabwin);
+}
