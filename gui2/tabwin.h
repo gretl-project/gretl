@@ -50,6 +50,6 @@ void tabwin_tab_present (windata_t *vwin);
 
 void tabwin_close_models_viewer (GtkWidget *w);
 
-void maybe_disable_tab_commands (GtkWidget *w, gpointer p);
+void tabwin_register_dialog (GtkWidget *w, gpointer p);
 
 #endif /* TABWIN_H_ */

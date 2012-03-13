@@ -132,6 +132,7 @@ enum {
 static GretlToolItem series_items[] = {
     { N_("Add..."), GTK_STOCK_ADD,    G_CALLBACK(sheet_show_popup),    SERIES_ADD_BTN },
     { N_("Apply"),  GTK_STOCK_APPLY,  G_CALLBACK(get_data_from_sheet), SERIES_APPLY_BTN },
+    { N_("Windows"), GRETL_STOCK_COMPASS, GNULL, 0 },
     { N_("Close"),  GTK_STOCK_CLOSE,  G_CALLBACK(maybe_exit_sheet),    0 }
 };
 
@@ -2882,6 +2883,26 @@ static void series_sheet_add_locator (Spreadsheet *sheet,
     gtk_box_pack_end(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 }
 
+static void sheet_toolbar_insert_winlist (Spreadsheet *sheet,
+					  GtkWidget *tbar)
+{
+    GtkWidget *img, *button = gtk_button_new();
+    GtkToolItem *item = gtk_tool_item_new();
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
+    gtk_tool_item_set_tooltip(item, gretl_tips, _("Windows"), NULL);
+#else
+    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("Windows"));
+#endif
+    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    img = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, GTK_ICON_SIZE_MENU);
+    gtk_container_add(GTK_CONTAINER(button), img);
+    gtk_container_add(GTK_CONTAINER(item), button);
+    g_signal_connect(button, "button-press-event", 
+		     G_CALLBACK(window_list_popup), sheet->win);
+    gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
+}
+
 static void sheet_add_toolbar (Spreadsheet *sheet, GtkWidget *vbox)
 {
     GtkWidget *hbox, *tbar;
@@ -2894,14 +2915,18 @@ static void sheet_add_toolbar (Spreadsheet *sheet, GtkWidget *vbox)
 
     for (i=0; i<n_series_items; i++) {
 	item = &series_items[i];
-	button = gretl_toolbar_insert(tbar, item, item->func, sheet, -1);
-	if (item->flag == SERIES_APPLY_BTN) {
-	    sheet->apply = button;
-	    gtk_widget_set_sensitive(sheet->apply, FALSE);
-	} 
-	if (item->flag != SERIES_ADD_BTN) {
-	    g_signal_connect(G_OBJECT(button), "enter-notify-event",
-			     G_CALLBACK(button_entered), sheet);
+	if (winlist_item(item)) {
+	    sheet_toolbar_insert_winlist(sheet, tbar);
+	} else {
+	    button = gretl_toolbar_insert(tbar, item, item->func, sheet, -1);
+	    if (item->flag == SERIES_APPLY_BTN) {
+		sheet->apply = button;
+		gtk_widget_set_sensitive(sheet->apply, FALSE);
+	    } 
+	    if (item->flag != SERIES_ADD_BTN) {
+		g_signal_connect(G_OBJECT(button), "enter-notify-event",
+				 G_CALLBACK(button_entered), sheet);
+	    }
 	}
     }
 

@@ -28,6 +28,7 @@
 #include "treeutils.h"
 #include "toolbar.h"
 #include "winstack.h"
+#include "tabwin.h"
 #include "lagpref.h"
 
 #include "var.h"
@@ -7012,18 +7013,19 @@ simple_selection_for_viewer (int ci, const char *title, int (*callback)(),
 {
     selector *sr;
 
-    /* FIXME tabbed viewer */
-    
     sr = simple_selection_with_data(ci, title, callback, 
 				    vwin_toplevel(vwin),
 				    vwin);
 
     if (sr != NULL && vwin->mbar != NULL) {
-	gtk_widget_set_sensitive(vwin->mbar, FALSE);
-	g_signal_connect(sr->dlg, "destroy", 
-			 G_CALLBACK(restore_vwin_menu), 
-			 vwin);
-	    
+	if (window_is_tab(vwin)) {
+	    tabwin_register_dialog(sr->dlg, vwin_toplevel(vwin));
+	} else {
+	    gtk_widget_set_sensitive(vwin->mbar, FALSE);
+	    g_signal_connect(sr->dlg, "destroy", 
+			     G_CALLBACK(restore_vwin_menu), 
+			     vwin);
+	}
     }	
 
     return sr;

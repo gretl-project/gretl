@@ -27,11 +27,13 @@
 typedef struct tabwin_t_  tabwin_t;
 
 struct tabwin_t_ {
-    int role;         /* what's tabwin doing? */ 
-    GtkWidget *main;  /* top-level GTK window */
-    GtkWidget *mbox;  /* horizontal box to hold menu bar */
-    GtkWidget *mbar;  /* menu bar */
-    GtkWidget *tabs;  /* notebook for tabs */
+    int role;             /* what's tabwin doing? */ 
+    GtkWidget *main;      /* top-level GTK window */
+    GtkWidget *mbox;      /* horizontal box to hold menu bar */
+    GtkWidget *mbar;      /* menu bar */
+    GtkWidget *tabs;      /* notebook for tabs */
+    GtkWidget *dialog;    /* associated dialog */
+    GtkWidget *dlg_owner; /* the tab that "owns" dialog */
 };
 
 /* We support one tabbed editor, for gretl scripts --
@@ -134,7 +136,7 @@ static void viewer_tab_show_closer (GtkNotebook *notebook,
 				    gboolean show)
 {
     GtkWidget *lbl = gtk_notebook_get_tab_label(notebook, tab);    
-    GtkWidget *button = g_object_get_data(G_OBJECT(lbl), "button");
+    GtkWidget *button = g_object_get_data(G_OBJECT(lbl), "closer");
 
     if (button != NULL) {
 	if (show) {
@@ -232,6 +234,12 @@ static void tabwin_tab_close (GtkWidget *w, windata_t *vwin)
     fprintf(stderr, "*** tabwin_tab_close: vwin = %p\n", (void *) vwin);
 #endif
 
+    if (vwin->main == tabwin->dlg_owner) {
+	/* this tab has a dialog open: don't close it */
+	gtk_window_present(GTK_WINDOW(tabwin->dialog));
+	return;
+    }
+
     /* note: vwin->mbar is packed under tabwin, so it will not
        get destroyed automatically when the page is removed
     */
@@ -252,6 +260,10 @@ void tabwin_tab_destroy (windata_t *vwin)
 {
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
     GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
+
+#if TDEBUG
+    fprintf(stderr, "*** tabwin_tab_destroy: vwin = %p\n", (void *) vwin);
+#endif
     
     if (gtk_notebook_get_n_pages(notebook) > 1) {
 	gint pg = gtk_notebook_page_num(notebook, vwin->main);
@@ -354,7 +366,7 @@ static void viewer_tab_add_closer (GtkWidget *tab, windata_t *vwin)
     g_signal_connect(button, "clicked", G_CALLBACK(tabwin_tab_close), 
 		     vwin);
     gtk_container_add(GTK_CONTAINER(tab), button);
-    g_object_set_data(G_OBJECT(tab), "button", button);
+    g_object_set_data(G_OBJECT(tab), "closer", button);
 }
 
 /* try to ensure unique dummy title strings for unsaved
@@ -443,6 +455,8 @@ static tabwin_t *make_tabbed_viewer (int role)
     }
 
     tabwin->role = role;
+    tabwin->dialog = NULL;
+    tabwin->dlg_owner = NULL;
 
     /* top-level window */
     tabwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -749,7 +763,7 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     fprintf(stderr, "undock_tabbed_viewer: starting\n");
 #endif
 
-    /* disconnect */
+    /* disconnect stuff */
     vwin->main = vwin->topmain = NULL;
 
     /* remove signals and data from hbox (ex vwin->main) */
@@ -883,50 +897,55 @@ void tabwin_close_models_viewer (GtkWidget *w)
     }
 }
 
-static void reactivate_tabwin (GtkWidget *w, tabwin_t *tabwin)
+static void tabwin_unregister_dialog (GtkWidget *w, tabwin_t *tabwin)
 {
     if (tabwin != NULL && (tabwin == tabmod || tabwin == tabedit)) {
 	/* @tabwin will be an invalid pointer if it
 	   got a delete-event before execution gets
 	   here
 	*/
-	GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
-	int i, n = gtk_notebook_get_n_pages(notebook);
-	GtkWidget *tab, *lbl;
+	GtkWidget *tab = tabwin->dlg_owner;
 
-	gtk_widget_set_sensitive(GTK_WIDGET(tabwin->mbar), TRUE);
+#if TDEBUG
+	fprintf(stderr, "*** tabwin_dialog_gone: owner = %p\n", (void *) tab);
+#endif
 
-	for (i=0; i<n; i++) {
-	    tab = gtk_notebook_get_nth_page(notebook, i);
-	    lbl = gtk_notebook_get_tab_label(notebook, tab);
-	    gtk_widget_set_sensitive(lbl, TRUE);
+	if (tab != NULL) {
+	    GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
+	    windata_t *vwin = g_object_get_data(G_OBJECT(tab), "vwin");
+
+	    gtk_widget_set_sensitive(GTK_WIDGET(vwin->mbar), TRUE);
+	    if (gtk_notebook_get_n_pages(notebook) > 1) {
+		gtk_notebook_set_tab_detachable(notebook, tab, TRUE);
+	    }
+	    tabwin->dlg_owner = NULL;
 	}
+	tabwin->dialog = NULL;
     }
 }
 
-/* Experimental: to be called when a tabbed viewer spawns
-   a dialog that becomes invalid if the tab in question is
-   destroyed. Since that will happen if the tab's closer
-   button is clicked, the button must be disabled for the
-   duration. For good measure, we disable all such buttons.
+/* Called when a tabbed viewer spawns a dialog that becomes 
+   invalid if the currently active tab is destroyed. We must 
+   make the current tab undetachable for the duration, and
+   arrange matters so that if the tab is destroyed, the dialog
+   is also detroyed.
 */
 
-void maybe_disable_tab_commands (GtkWidget *w, gpointer p)
+void tabwin_register_dialog (GtkWidget *w, gpointer p)
 {
     tabwin_t *tabwin = g_object_get_data(G_OBJECT(p), "tabwin");
     GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
-    int i, n = gtk_notebook_get_n_pages(notebook);
-    GtkWidget *tab, *lbl;
+    gint pg = gtk_notebook_get_current_page(notebook);
+    GtkWidget *tab = gtk_notebook_get_nth_page(notebook, pg);
+    windata_t *vwin = g_object_get_data(G_OBJECT(tab), "vwin");
 
-    gtk_widget_set_sensitive(tabwin->mbar, FALSE);
+    gtk_widget_set_sensitive(vwin->mbar, FALSE);
+    gtk_notebook_set_tab_detachable(notebook, tab, FALSE);
 
-    for (i=0; i<n; i++) {
-	tab = gtk_notebook_get_nth_page(notebook, i);
-	lbl = gtk_notebook_get_tab_label(notebook, tab);
-	gtk_widget_set_sensitive(lbl, FALSE);
-    }
-	
-    g_signal_connect(G_OBJECT(w), "destroy", 
-		     G_CALLBACK(reactivate_tabwin), 
+    tabwin->dialog = w;
+    tabwin->dlg_owner = tab;
+
+    g_signal_connect(G_OBJECT(w), "destroy",
+		     G_CALLBACK(tabwin_unregister_dialog), 
 		     tabwin);
 }

@@ -227,7 +227,7 @@ static gint dialog_set_destruction (GtkWidget *w, gpointer p)
     gtk_window_set_destroy_with_parent(GTK_WINDOW(w), TRUE);
 
     if (g_object_get_data(G_OBJECT(p), "tabwin") != NULL) {
-	maybe_disable_tab_commands(w, p);
+	tabwin_register_dialog(w, p);
     }
 
     return FALSE;
