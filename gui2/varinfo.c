@@ -23,6 +23,7 @@
 #include "dlgutils.h"
 #include "ssheet.h"
 #include "toolbar.h"
+#include "winstack.h"
 #include "varinfo.h"
 
 #define VSET_MAX_FIELDS 6
@@ -107,6 +108,7 @@ static void name_setter_init (name_setter *nset, char *vname,
     nset->descrip = descrip;
     nset->changed[0] = 0;
     nset->changed[1] = 0;
+    *cancel = 1;
 }
 
 /* see if anything has been changed via the varinfo dialog */
@@ -334,6 +336,8 @@ static void set_series_name_and_desc (GtkWidget *w, name_setter *nset)
     gchar *s = NULL;
     int err = 0;
 
+    *nset->cancel = 0;
+
     if (nset->changed[0]) {
 	/* series name: take care in allowing overwrite of existing 
 	   series */
@@ -402,6 +406,7 @@ static void name_setter_cancel (GtkWidget *w, name_setter *nset)
 
 static void free_name_setter (GtkWidget *w, name_setter *nset)
 {
+    set_dataset_locked(FALSE);
     free(nset);
 }
 
@@ -955,8 +960,8 @@ void varinfo_dialog (int varnum)
     gtk_widget_show(vset->dlg);
 }
 
-void name_new_variable_dialog (char *vname, char *descrip,
-			       int *cancel)
+void name_new_series_dialog (char *vname, char *descrip,
+			     windata_t *vwin, int *cancel)
 {
     GtkWidget *tmp, *vbox, *hbox;
     name_setter *nset;
@@ -971,9 +976,9 @@ void name_new_variable_dialog (char *vname, char *descrip,
 	return;
     }
 
-    flags = GRETL_DLG_MODAL | GRETL_DLG_BLOCK | GRETL_DLG_RESIZE;
+    flags = GRETL_DLG_BLOCK | GRETL_DLG_RESIZE;
     nset->dlg = gretl_dialog_new(_("gretl: variable attributes"), 
-				 NULL, flags);
+				 vwin_toplevel(vwin), flags);
 
     make_varname_unique(vname, 0, dataset);
     name_setter_init(nset, vname, descrip, cancel);
@@ -1045,6 +1050,7 @@ void name_new_variable_dialog (char *vname, char *descrip,
     gtk_widget_show(tmp);
 
     gtk_widget_show_all(hbox);
+    set_dataset_locked(TRUE);
     gtk_widget_show(nset->dlg);
 }
 

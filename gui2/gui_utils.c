@@ -2219,7 +2219,7 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     int tabbed_models = 0;
     int width, nlines;
 
-    if (getenv("TABBED_MODELS") != NULL) {
+    if (use_tabbed_model_viewer()) {
 	tabbed_models = 1;
     }
 
@@ -4304,7 +4304,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
     if (type == GRETL_TYPE_SERIES && size == dataset->n) {
 	const double *x = (double *) val;
 
-	save_bundled_series(x, key, note);
+	save_bundled_series(x, key, note, vwin);
     } else {
 	char vname[VNAMELEN];
 	gchar *blurb;

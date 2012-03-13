@@ -80,6 +80,7 @@ static int autoicon = 1;
 static int session_prompt = 1;
 static int keep_folder = 1;
 static int tabbed_editor;
+static int tabbed_models;
 char gpcolors[64];
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
@@ -161,6 +162,8 @@ RCVAR rc_vars[] = {
     { "autoicon", N_("Show icon view automatically"), NULL, &autoicon, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "tabedit", N_("Script editor uses tabs"), NULL, &tabbed_editor, 
+      BOOLSET, 0, TAB_MAIN, NULL },
+    { "tabmodels", N_("Model viewer uses tabs"), NULL, &tabbed_models, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "session_prompt", N_("Prompt to save session"), NULL, &session_prompt, 
       BOOLSET, 0, TAB_MAIN, NULL },
@@ -307,6 +310,11 @@ int autoicon_on (void)
 int use_tabbed_editor (void)
 {
     return tabbed_editor;
+}
+
+int use_tabbed_model_viewer (void)
+{
+    return tabbed_models;
 }
 
 int session_prompt_on (void)

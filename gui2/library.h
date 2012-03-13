@@ -253,10 +253,10 @@ void logs_etc_callback (GtkAction *action);
 
 void add_system_resid (GtkAction *action, gpointer p);
 
-int save_fit_resid (MODEL *pmod, int code);
+int save_fit_resid (windata_t *vwin, int code);
 
 int save_bundled_series (const double *x, const char *key,
-			 const char *note);
+			 const char *note, windata_t *vwin);
 
 void add_model_stat (MODEL *pmod, int which, windata_t *vwin);
 

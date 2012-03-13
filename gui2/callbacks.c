@@ -309,8 +309,7 @@ static int model_action_code (GtkAction *action)
 void fit_resid_callback (GtkAction *action, gpointer data)
 {
     const gchar *s = gtk_action_get_name(action);
-    windata_t *mydata = (windata_t *) data; 
-    MODEL *pmod = mydata->data;
+    windata_t *vwin = (windata_t *) data; 
     int code = M_UHAT; 
 
     if (!strcmp(s, "yhat")) {
@@ -325,7 +324,7 @@ void fit_resid_callback (GtkAction *action, gpointer data)
 	code = M_AHAT;
     }
 
-    save_fit_resid(pmod, code);
+    save_fit_resid(vwin, code);
 }
 
 /* callback for adding a scalar from a model */

@@ -534,7 +534,7 @@ void add_mahalanobis_data (windata_t *vwin)
     strcpy(vname, "mdist");
     strcpy(descrip, _("Mahalanobis distances"));
 
-    name_new_variable_dialog(vname, descrip, &cancel);
+    name_new_series_dialog(vname, descrip, vwin, &cancel);
 
     if (cancel) {
 	return;
@@ -605,7 +605,7 @@ void VECM_add_EC_data (GtkAction *action, gpointer p)
     sprintf(vname, "EC%d", j);
     sprintf(descrip, "error correction term %d from VECM %d", j, id);
 
-    name_new_variable_dialog(vname, descrip, &cancel);
+    name_new_series_dialog(vname, descrip, vwin, &cancel);
     if (cancel) {
 	free(x);
 	return;
@@ -641,7 +641,7 @@ void add_fcast_data (windata_t *vwin)
 
     sprintf(descrip, _("forecast of %s"), fr->depvar);
 
-    name_new_variable_dialog(vname, descrip, &cancel);
+    name_new_series_dialog(vname, descrip, vwin, &cancel);
     if (cancel) {
 	return;
     }
@@ -3967,7 +3967,7 @@ void add_nonparam_data (windata_t *vwin)
 		    yname, xname, h);
 	}	
 
-	name_new_variable_dialog(vname, descrip, &cancel);
+	name_new_series_dialog(vname, descrip, vwin, &cancel);
 
 	if (!cancel) {
 	    err = add_or_replace_series(m, vname, descrip, 
@@ -5722,8 +5722,9 @@ void logs_etc_callback (GtkAction *action)
     add_logs_etc(ci, 0);
 }
 
-int save_fit_resid (MODEL *pmod, int code)
+int save_fit_resid (windata_t *vwin, int code)
 {
+    MODEL *pmod = vwin->data;
     char vname[VNAMELEN];
     char descrip[MAXLABEL];
     double *x = NULL;
@@ -5742,7 +5743,7 @@ int save_fit_resid (MODEL *pmod, int code)
 	return err;
     }
 
-    name_new_variable_dialog(vname, descrip, &cancel);
+     name_new_series_dialog(vname, descrip, vwin, &cancel);
 
     if (cancel) {
 	free(x);
@@ -5775,7 +5776,7 @@ int save_fit_resid (MODEL *pmod, int code)
 }
 
 int save_bundled_series (const double *x, const char *key,
-			 const char *note)
+			 const char *note, windata_t *vwin)
 {
     char vname[VNAMELEN];
     char descrip[MAXLABEL];
@@ -5787,7 +5788,8 @@ int save_bundled_series (const double *x, const char *key,
     if (note != NULL) {
 	strncat(descrip, note, MAXLABEL - 1);
     }
-    name_new_variable_dialog(vname, descrip, &cancel);
+
+    name_new_series_dialog(vname, descrip, vwin, &cancel);
 
     if (cancel) {
 	return 0;
@@ -5843,7 +5845,7 @@ void add_system_resid (GtkAction *action, gpointer p)
 	sprintf(descrip, _("system residual, equation %d"), j);
     }
 
-    name_new_variable_dialog(vname, descrip, &cancel);
+    name_new_series_dialog(vname, descrip, vwin, &cancel);
 
     if (cancel) {
 	free(uhat);

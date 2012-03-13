@@ -22,7 +22,8 @@
 
 void varinfo_dialog (int varnum);
 
-void name_new_variable_dialog (char *vname, char *descrip, int *cancel);
+void name_new_series_dialog (char *vname, char *descrip, 
+			     windata_t *vwin, int *cancel);
 
 void maybe_reset_varinfo_dialog (void);
 

@@ -25,6 +25,8 @@ int autoicon_on (void);
 
 int use_tabbed_editor (void);
 
+int use_tabbed_model_viewer (void);
+
 int session_prompt_on (void);
 
 void set_session_prompt (int val);

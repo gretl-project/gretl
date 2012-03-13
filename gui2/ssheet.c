@@ -118,6 +118,7 @@ static void sheet_show_popup (GtkWidget *w, Spreadsheet *sheet);
 static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet);
 static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet);
 
+static void add_scalar_callback (GtkWidget *w, Spreadsheet *sheet);
 static void update_scalars_from_sheet (Spreadsheet *sheet);
 static void scalars_changed_callback (void);
 
@@ -125,18 +126,25 @@ static void
 spreadsheet_scroll_to_foot (Spreadsheet *sheet, int row, int col);
 
 enum {
-    SERIES_ADD_BTN,
-    SERIES_APPLY_BTN
+    SHEET_ADD_BTN,
+    SHEET_APPLY_BTN
 };
 
 static GretlToolItem series_items[] = {
-    { N_("Add..."), GTK_STOCK_ADD,    G_CALLBACK(sheet_show_popup),    SERIES_ADD_BTN },
-    { N_("Apply"),  GTK_STOCK_APPLY,  G_CALLBACK(get_data_from_sheet), SERIES_APPLY_BTN },
+    { N_("Add..."), GTK_STOCK_ADD,    G_CALLBACK(sheet_show_popup),    SHEET_ADD_BTN },
+    { N_("Apply"),  GTK_STOCK_APPLY,  G_CALLBACK(get_data_from_sheet), SHEET_APPLY_BTN },
     { N_("Windows"), GRETL_STOCK_COMPASS, GNULL, 0 },
     { N_("Close"),  GTK_STOCK_CLOSE,  G_CALLBACK(maybe_exit_sheet),    0 }
 };
 
+static GretlToolItem scalar_items[] = {
+    { N_("Add..."),  GTK_STOCK_ADD,    G_CALLBACK(add_scalar_callback), 0 },
+    { N_("Windows"), GRETL_STOCK_COMPASS, GNULL, 0 },
+    { N_("Close"),   GTK_STOCK_CLOSE,  G_CALLBACK(maybe_exit_sheet), 0 }
+};
+
 static int n_series_items = G_N_ELEMENTS(series_items);
+static int n_scalar_items = G_N_ELEMENTS(scalar_items);
 
 const gchar *matrix_ui = 
     "<ui>"
@@ -2906,36 +2914,50 @@ static void sheet_toolbar_insert_winlist (Spreadsheet *sheet,
 static void sheet_add_toolbar (Spreadsheet *sheet, GtkWidget *vbox)
 {
     GtkWidget *hbox, *tbar;
+    GretlToolItem *items;
     GretlToolItem *item;
     GtkWidget *button;
-    int i;
+    int i, n_items;
 
     hbox = gtk_hbox_new(FALSE, 0);
     tbar = gretl_toolbar_new();
 
-    for (i=0; i<n_series_items; i++) {
-	item = &series_items[i];
+    if (editing_scalars(sheet)) {
+	items = scalar_items;
+	n_items = n_scalar_items;
+    } else {
+	items = series_items;
+	n_items = n_series_items;
+    }
+
+    for (i=0; i<n_items; i++) {
+	item = &items[i];
 	if (winlist_item(item)) {
 	    sheet_toolbar_insert_winlist(sheet, tbar);
 	} else {
 	    button = gretl_toolbar_insert(tbar, item, item->func, sheet, -1);
-	    if (item->flag == SERIES_APPLY_BTN) {
-		sheet->apply = button;
-		gtk_widget_set_sensitive(sheet->apply, FALSE);
-	    } 
-	    if (item->flag != SERIES_ADD_BTN) {
-		g_signal_connect(G_OBJECT(button), "enter-notify-event",
-				 G_CALLBACK(button_entered), sheet);
+	    if (!editing_scalars(sheet)) {
+		if (item->flag == SHEET_APPLY_BTN) {
+		    sheet->apply = button;
+		    gtk_widget_set_sensitive(sheet->apply, FALSE);
+		} 
+		if (item->flag != SHEET_ADD_BTN) {
+		    g_signal_connect(G_OBJECT(button), "enter-notify-event",
+				     G_CALLBACK(button_entered), sheet);
+		}
 	    }
 	}
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
-    series_sheet_add_locator(sheet, hbox);
-
+    if (!editing_scalars(sheet)) {
+	series_sheet_add_locator(sheet, hbox);
+    }
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
-    adjust_add_menu_state(sheet);
+    if (!editing_scalars(sheet)) {
+	adjust_add_menu_state(sheet);
+    }
 }
 
 static void sheet_add_matrix_menu (Spreadsheet *sheet, GtkWidget *vbox)
@@ -3035,21 +3057,23 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     if (sheet->matrix != NULL) {
 	sheet_add_matrix_menu(sheet, main_vbox);
 	sheet_add_matrix_locator(sheet, main_vbox);
-    } else if (c != SHEET_EDIT_SCALARS) {
-	if (sheet->varlist != NULL) {
-	    int i;
+    } else {
+	if (c != SHEET_EDIT_SCALARS) {
+	    if (sheet->varlist != NULL) {
+		int i;
 
-	    sheet->datacols = 0;
+		sheet->datacols = 0;
 
-	    for (i=sheet->varlist[0]; i>0; i--) {
-		if (var_is_hidden(dataset, sheet->varlist[i])) {
-		    gretl_list_delete_at_pos(sheet->varlist, i);
-		} else {
-		    sheet->datacols += 1;
+		for (i=sheet->varlist[0]; i>0; i--) {
+		    if (var_is_hidden(dataset, sheet->varlist[i])) {
+			gretl_list_delete_at_pos(sheet->varlist, i);
+		    } else {
+			sheet->datacols += 1;
+		    }
+		} 
+		if (sheet->varlist[0] < dataset->v - 1) {
+		    sheet->flags |= SHEET_SHORT_VARLIST;
 		}
-	    } 
-	    if (sheet->varlist[0] < dataset->v - 1) {
-		sheet->flags |= SHEET_SHORT_VARLIST;
 	    }
 	}
 	sheet_add_toolbar(sheet, main_vbox);
@@ -3083,8 +3107,8 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 			 G_CALLBACK(free_spreadsheet), psheet);
     } 
 
-    if (sheet->matrix != NULL || c == SHEET_EDIT_SCALARS) {
-	/* control buttons (we don't use these for editing series) */
+    if (sheet->matrix != NULL) {
+	/* control buttons (for edting matrices only) */
 	GtkWidget *button_box;
 
 	button_box = gtk_hbutton_box_new();
