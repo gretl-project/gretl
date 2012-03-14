@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 16:13-0500\n"
-"PO-Revision-Date: 2012-01-30 17:52+0100\n"
+"PO-Revision-Date: 2012-03-14 17:02+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -5027,9 +5027,8 @@ msgid "%s, using %d observations"
 msgstr "%s, utilizando %d observaciones"
 
 #: lib/src/modelprint.c:1791
-#, fuzzy
 msgid "Using Nerlove's transformation"
-msgstr "No hacer transformación logarítmica"
+msgstr "Utilizando la trasformación de Nerlove"
 
 #: lib/src/modelprint.c:1795
 #, c-format
@@ -5656,6 +5655,9 @@ msgid ""
 "\n"
 "Error: Hessian non-negative definite? (err = %d); dropping back to OPG\n"
 msgstr ""
+"\n"
+"Error: ¿la matriz Hessiana no es definida negativa? (err = %d); saltando de "
+"nuevo al método OPG\n"
 
 #: lib/src/nls.c:2457 lib/src/nls.c:2558
 msgid "Invalid NLS specification"
@@ -6004,9 +6006,8 @@ msgid "center"
 msgstr "centro"
 
 #: lib/src/plotspec.c:1584
-#, fuzzy
 msgid "annual growth"
-msgstr "anual"
+msgstr "crecimiento anual"
 
 #: lib/src/plotspec.c:1923
 msgid "Dates file does not conform to the specification"
@@ -7236,9 +7237,8 @@ msgid "About gretl"
 msgstr "Acerca de gretl"
 
 #: gui2/about.c:126 plugin/excel_import.c:138
-#, fuzzy
 msgid "build date"
-msgstr "Conjunto de datos completo"
+msgstr "fecha de creación"
 
 #: gui2/about.c:159 gui2/about.c:161
 msgid "translator_credits"
@@ -10004,9 +10004,8 @@ msgid "gretl: graph"
 msgstr "gretl: gráfico"
 
 #: gui2/gpt_control.c:4837
-#, fuzzy
 msgid " Right-click on graph for menu"
-msgstr "Hacer 'click' en el gráfico para ver un menú emergente"
+msgstr "Pulsar con el botón derecho del ratón en el gráfico para ver un menú"
 
 #: gui2/gpt_control.c:5094
 msgid "Couldn't find a usable terminal program"
@@ -11292,7 +11291,7 @@ msgstr "Guía del _usuario"
 
 #: gui2/gretl.c:1610
 msgid "_Keyboard shortcuts"
-msgstr ""
+msgstr "A_tajos de teclado"
 
 #: gui2/gretl.c:1611
 msgid "Check for _updates"
@@ -11311,14 +11310,12 @@ msgid "Main window"
 msgstr "Ventana principal"
 
 #: gui2/gretl.c:2173
-#, fuzzy
 msgid "Enter name for list of series"
-msgstr "Introduzca una expresión nombre=fórmula para la nueva serie"
+msgstr "Introduzca un nombre para la lista de series"
 
 #: gui2/gretl.c:2178
-#, fuzzy
 msgid "gretl: name list"
-msgstr "gretl: nombrar la columna"
+msgstr "gretl: nombre de lista"
 
 #: gui2/gretl.c:2230
 msgid "sample status"
@@ -11857,9 +11854,8 @@ msgid "gretl: command log"
 msgstr "gretl: historial de instrucciones"
 
 #: gui2/gui_utils.c:1517
-#, fuzzy
 msgid "gretl: untitled"
-msgstr "gretl: subir"
+msgstr "gretl: sin nombre"
 
 #: gui2/gui_utils.c:1523 gui2/session.c:509
 msgid "gretl: session notes"
@@ -13894,11 +13890,11 @@ msgstr "Efectos aleatorios"
 
 #: gui2/selector.c:5654
 msgid "Swamy-Arora"
-msgstr ""
+msgstr "Swamy-Arora"
 
 #: gui2/selector.c:5655
 msgid "Nerlove"
-msgstr ""
+msgstr "Nerlove"
 
 #: gui2/selector.c:5695
 msgid "Maximum likelihood estimation"
@@ -14439,7 +14435,7 @@ msgstr "Mostrar automáticamente la vista de iconos"
 
 #: gui2/settings.c:163
 msgid "Script editor uses tabs"
-msgstr ""
+msgstr "Quel el editor de guiones use pestañas"
 
 #: gui2/settings.c:165
 msgid "Prompt to save session"
@@ -14863,12 +14859,11 @@ msgstr "En este momento no se puede modificar el conjunto de datos"
 #: gui2/tabwin.c:48
 #, c-format
 msgid "Editing %d scripts: really quit?"
-msgstr ""
+msgstr "Editando %d guiones: ¿realmente desea dejarlo?"
 
 #: gui2/tabwin.c:49 gui2/tabwin.c:256
-#, fuzzy
 msgid "gretl: script editor"
-msgstr "Guion de Gretl"
+msgstr "gretl: editor de guiones"
 
 #: gui2/textbuf.c:288
 msgid "No redo information available"
