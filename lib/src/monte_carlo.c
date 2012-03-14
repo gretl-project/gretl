@@ -30,6 +30,7 @@
 #include "gretl_scalar.h"
 #include "flow_control.h"
 #include "system.h"
+#include "genparse.h"
 
 #include <time.h>
 #include <unistd.h>
@@ -2279,14 +2280,13 @@ static void print_loop_results (LOOPSET *loop, const DATASET *dset,
     }
 }
 
-static int 
-substitute_dollar_targ (char *str, int maxlen, 
-			const LOOPSET *loop,
-			const DATASET *dset,
-			int *subst)
+static int substitute_dollar_targ (char *str, int maxlen, 
+				   const LOOPSET *loop,
+				   const DATASET *dset,
+				   int *subst)
 {
     char insert[32], targ[VNAMELEN + 3] = {0};
-    char *p, *ins, *q;
+    char *p, *ins, *q, *s;
     int targlen, inslen, idx = 0;
     int incr, cumlen = 0;
     int err = 0;
@@ -2357,7 +2357,12 @@ substitute_dollar_targ (char *str, int maxlen,
 
     /* crawl along str, replacing targ with ins */
 
-    while ((p = strstr(str, targ)) != NULL && !err) {
+    s = str;
+    while ((p = strstr(s, targ)) != NULL && !err) {
+	if (is_gretl_accessor(p)) {
+	    s++;
+	    continue;
+	}
 	if (incr > 0) {
 	    cumlen += incr;
 	    if (cumlen >= maxlen) {
@@ -2372,6 +2377,7 @@ substitute_dollar_targ (char *str, int maxlen,
 	if (subst != NULL) {
 	    *subst = 1;
 	}
+	s++; /* += strlen(ins)? */
     }
 
     free(q);

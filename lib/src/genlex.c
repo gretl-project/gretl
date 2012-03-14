@@ -845,6 +845,27 @@ static void look_up_string_variable (const char *s, parser *p)
     }
 }
 
+int is_gretl_accessor (const char *s)
+{
+    int i, n;
+
+    for (i=0; dvars[i].id != 0; i++) {
+	n = strlen(dvars[i].str);
+	if (!strncmp(s, dvars[i].str, n)) {
+	    return !isalpha(s[n]);
+	}
+    }
+
+    for (i=0; mvars[i].id != 0; i++) {
+	n = strlen(mvars[i].str);
+	if (!strncmp(s, mvars[i].str, n)) {
+	    return !isalpha(s[n]);
+	}
+    }
+
+    return 0;
+}
+
 static void look_up_dollar_word (const char *s, parser *p)
 {
     p->idnum = dvar_lookup(s);
