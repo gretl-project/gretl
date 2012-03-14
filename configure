@@ -2643,7 +2643,6 @@ try_gtk3="no"
 build_docs="no"
 use_lucida="no"
 build_po="no"
-have_pkgconfig="no"
 have_readline="no"
 new_readline="no"
 have_zlib="no"
@@ -16832,9 +16831,11 @@ fi
 
 fi
 if test "$PKG_CONFIG" = "no" ; then
-   build_gui="no"
-else
-   have_pkgconfig="yes"
+   echo "
+   Please install pkg-config and then reconfigure gretl.
+   pkg-config is available from http://www.freedesktop.org/
+   "
+   exit
 fi
 
 orig_CFLAGS=$CFLAGS
@@ -22661,13 +22662,7 @@ fi
 
 fi
 
-if test "${have_pkgconfig}" = "no" ; then
-echo "
-Please install pkg-config and then reconfigure gretl.
-pkg-config is available from http://www.freedesktop.org/
-"
-
-elif test "${have_zlib}" = "no" ; then
+if test "${have_zlib}" = "no" ; then
 echo "
 Please install zlib (compression library) and then reconfigure gretl.
 zlib is available via http://www.info-zip.org/pub/infozip/zlib/
