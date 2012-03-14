@@ -34,7 +34,7 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
 # ifdef G_OS_WIN32
 int win32_print_graph (char *emfname);
 # else
-void gtk_print_graph (const char *fname);
+void gtk_print_graph (const char *fname, GtkWidget *parent);
 # endif
 
 void special_print_summary (const Summary *summ,

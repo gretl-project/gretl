@@ -28,6 +28,7 @@
 #include "fileselect.h"
 #include "texprint.h"
 #include "system.h"
+#include "winstack.h"
 
 #if USE_GTKSOURCEVIEW_2
 # include <gtksourceview/gtksourceiter.h>
@@ -263,8 +264,7 @@ static void replace_string_dialog (windata_t *vwin)
     gtk_text_buffer_get_start_iter(s->buf, &s->iter);
 
     s->w = gtk_dialog_new();
-    gtk_window_set_transient_for(GTK_WINDOW(s->w), GTK_WINDOW(vwin->main));
-    gtk_window_set_destroy_with_parent(GTK_WINDOW(s->w), TRUE);
+    gretl_dialog_set_destruction(s->w, vwin_toplevel(vwin));
     g_signal_connect(G_OBJECT(s->w), "destroy",
 		     G_CALLBACK(destroy_replacer), s);
 
@@ -425,7 +425,7 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	    int action = (fmt & GRETL_FORMAT_TEX)? SAVE_TEX : SAVE_RTF;
 
 	    file_selector_with_parent(action, FSEL_DATA_PRN, 
-				      prn, vwin->main);
+				      prn, vwin_toplevel(vwin));
 	}
     }
 
@@ -452,7 +452,7 @@ void window_tex_callback (GtkWidget *w, windata_t *vwin)
     }
 
     opt = radio_dialog("gretl: LaTeX", NULL, opts, 3, 0, 0,
-		       vwin->main);
+		       vwin_toplevel(vwin));
 
     if (opt >= 0) {
 	int fmt = GRETL_FORMAT_TEX;
@@ -602,8 +602,8 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 	    int fcode = (fmt == GRETL_FORMAT_RTF_TXT)? 
 		SAVE_RTF : SAVE_OUTPUT;
 
-	    file_selector_with_parent(fcode, FSEL_DATA_PRN, 
-				      textprn, vwin->main);
+	    file_selector_with_parent(fcode, FSEL_DATA_PRN, textprn, 
+				      vwin_toplevel(vwin));
 	}
 	gretl_print_destroy(textprn);
     }	

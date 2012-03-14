@@ -131,7 +131,7 @@ static void get_char_width_and_height (GtkWidget *widget,
     pl = pango_layout_new(pc);
     pango_layout_set_text(pl, "X", -1);
     pango_layout_get_pixel_size(pl, &w, &h);
-    g_object_unref(G_OBJECT(pl));
+    g_object_unref(pl);
 
     if (width != NULL) {
 	*width = w;
@@ -2720,7 +2720,7 @@ static void insert_help_figure (GtkTextBuffer *tbuf, GtkTextIter *iter,
 
     if (pixbuf != NULL) {
 	gtk_text_buffer_insert_pixbuf(tbuf, iter, pixbuf);
-	g_object_unref(G_OBJECT(pixbuf));
+	g_object_unref(pixbuf);
     }
 }
 
@@ -3182,7 +3182,7 @@ void viewer_split_pane (windata_t *vwin, int vertical)
     vmain = vwin_toplevel(vwin);
     gtk_window_get_size(GTK_WINDOW(vmain), &width, &height);
 
-    g_object_ref(G_OBJECT(sw));
+    g_object_ref(sw);
     gtk_container_remove(GTK_CONTAINER(vwin->vbox), sw);
 
     if (vertical) {
@@ -3205,7 +3205,7 @@ void viewer_split_pane (windata_t *vwin, int vertical)
 		     G_CALLBACK(text_popup_handler), vwin);
 
     gtk_paned_add1(GTK_PANED(paned), sw);
-    g_object_unref(G_OBJECT(sw));
+    g_object_unref(sw);
 
     sw = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
@@ -3235,7 +3235,7 @@ void viewer_close_pane (windata_t *vwin)
 
     /* grab the first child and reference it */
     sw = gtk_paned_get_child1(GTK_PANED(paned));
-    g_object_ref(G_OBJECT(sw));
+    g_object_ref(sw);
     gtk_container_remove(GTK_CONTAINER(paned), sw);
 
     /* remove the "paned" widget */
@@ -3246,6 +3246,6 @@ void viewer_close_pane (windata_t *vwin)
     gtk_container_add(GTK_CONTAINER(vwin->vbox), sw);
     g_object_set_data(G_OBJECT(vwin->vbox), "sw", sw);
     gtk_widget_show(sw);
-    g_object_unref(G_OBJECT(sw));
+    g_object_unref(sw);
 }
 

@@ -432,6 +432,7 @@ static GtkWidget *make_viewer_tab (tabwin_t *tabwin,
     g_free(title);
 
     viewer_tab_add_closer(tab, vwin);
+    gtk_widget_set_size_request(tab, -1, 18);
     gtk_widget_show_all(tab);
 
     notebook = GTK_NOTEBOOK(tabwin->tabs);
@@ -907,7 +908,7 @@ static void tabwin_unregister_dialog (GtkWidget *w, tabwin_t *tabwin)
 	GtkWidget *tab = tabwin->dlg_owner;
 
 #if TDEBUG
-	fprintf(stderr, "*** tabwin_dialog_gone: owner = %p\n", (void *) tab);
+	fprintf(stderr, "*** unregister_dialog: owner = %p\n", (void *) tab);
 #endif
 
 	if (tab != NULL) {
@@ -925,10 +926,9 @@ static void tabwin_unregister_dialog (GtkWidget *w, tabwin_t *tabwin)
 }
 
 /* Called when a tabbed viewer spawns a dialog that becomes 
-   invalid if the currently active tab is destroyed. We must 
-   make the current tab undetachable for the duration, and
-   arrange matters so that if the tab is destroyed, the dialog
-   is also detroyed.
+   invalid if the currently active tab is destroyed. We make 
+   make the current tab undestroyable and undetachable for the 
+   duration.
 */
 
 void tabwin_register_dialog (GtkWidget *w, gpointer p)
@@ -938,6 +938,11 @@ void tabwin_register_dialog (GtkWidget *w, gpointer p)
     gint pg = gtk_notebook_get_current_page(notebook);
     GtkWidget *tab = gtk_notebook_get_nth_page(notebook, pg);
     windata_t *vwin = g_object_get_data(G_OBJECT(tab), "vwin");
+
+#if TDEBUG
+    fprintf(stderr, "*** tabwin_register_dialog: w = %p, tab=%p\n", 
+	    (void *) w, (void *) tab);
+#endif
 
     gtk_widget_set_sensitive(vwin->mbar, FALSE);
     gtk_notebook_set_tab_detachable(notebook, tab, FALSE);

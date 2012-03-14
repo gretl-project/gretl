@@ -221,7 +221,7 @@ static gint dialog_unblock (GtkWidget *w, gpointer p)
     return FALSE;
 }
 
-static gint dialog_set_destruction (GtkWidget *w, gpointer p)
+gint gretl_dialog_set_destruction (GtkWidget *w, gpointer p)
 {
     gtk_window_set_transient_for(GTK_WINDOW(w), GTK_WINDOW(p));
     gtk_window_set_destroy_with_parent(GTK_WINDOW(w), TRUE);
@@ -275,7 +275,8 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
     }
 
     g_signal_connect(G_OBJECT(d), "show", 
-		     G_CALLBACK(dialog_set_destruction), parent);
+		     G_CALLBACK(gretl_dialog_set_destruction), 
+		     parent);
 
     if (flags & GRETL_DLG_BLOCK) {
 	g_signal_connect(G_OBJECT(d), "show", 
@@ -504,7 +505,7 @@ static dialog_t *edit_dialog_new (int ci, const char *title,
     g_signal_connect(G_OBJECT(d->dialog), "key-press-event", 
 		     G_CALLBACK(esc_kills_window), NULL);
     g_signal_connect(G_OBJECT(d->dialog), "show", 
-		     G_CALLBACK(dialog_set_destruction), parent);
+		     G_CALLBACK(gretl_dialog_set_destruction), parent);
     if (d->blocking) {
 	g_signal_connect(G_OBJECT(d->dialog), "show", 
 			 G_CALLBACK(gtk_main), NULL);

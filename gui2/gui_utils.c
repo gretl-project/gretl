@@ -1426,7 +1426,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gtk_widget_destroy(vwin->popup);
 	}
 	if (vwin->ui != NULL) {
-	    g_object_unref(G_OBJECT(vwin->ui));
+	    g_object_unref(vwin->ui);
 	}
 
 	/* tabbed toolbar */
@@ -3434,7 +3434,7 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
     gtk_box_pack_start(GTK_BOX(hbox), bbox, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    g_object_unref(G_OBJECT(store));
+    g_object_unref(store);
 }
 
 static int 

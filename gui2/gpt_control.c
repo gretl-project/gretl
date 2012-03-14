@@ -3565,7 +3565,7 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
     }
 #ifdef GTK_PRINTING
     else if (!strcmp(item_string, _("Print..."))) { 
-	gtk_print_graph(plot->spec->fname);
+	gtk_print_graph(plot->spec->fname, plot->shell);
     }
 #endif 
     else if (!strcmp(item_string, _("Display PDF"))) { 
@@ -3646,7 +3646,7 @@ static void build_plot_menu (png_plot *plot)
 	N_("All data labels"),
 	N_("Clear data labels"),
 	N_("Zoom..."),
-#if defined GTK_PRINTING
+#if defined(GTK_PRINTING)
 	N_("Print..."),
 #elif defined(G_OS_WIN32)
 	N_("Print"),

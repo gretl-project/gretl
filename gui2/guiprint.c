@@ -22,6 +22,7 @@
 
 #include "gretl.h"
 #include "selector.h"
+#include "winstack.h"
 #include "textutil.h"
 #include "treeutils.h"
 #include "forecast.h"
@@ -468,7 +469,8 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     g_signal_connect(op, "draw-page", G_CALLBACK(draw_text_page), &pinfo);
 
     res = gtk_print_operation_run(op, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
-				  GTK_WINDOW(vwin->main), &err);
+				  GTK_WINDOW(vwin_toplevel(vwin)), 
+				  &err);
 
     if (res == GTK_PRINT_OPERATION_RESULT_ERROR) {
 	errbox("Error printing:\n%s", err->message);
@@ -587,7 +589,7 @@ draw_image (GtkPrintOperation *op, GtkPrintContext *context,
     cairo_paint(cr);
 }
 
-void gtk_print_graph (const char *fname)
+void gtk_print_graph (const char *fname, GtkWidget *parent)
 {
     char pngname[FILENAME_MAX];
     GtkPrintOperation *op;
@@ -612,7 +614,7 @@ void gtk_print_graph (const char *fname)
     g_signal_connect(op, "draw-page", G_CALLBACK(draw_image), NULL);
 
     res = gtk_print_operation_run(op, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
-				  GTK_WINDOW(mdata->main), &err);
+				  GTK_WINDOW(parent), &err);
 
     if (res == GTK_PRINT_OPERATION_RESULT_ERROR) {
 	errbox("Error printing:\n%s", err->message);

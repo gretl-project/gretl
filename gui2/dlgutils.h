@@ -85,6 +85,8 @@ typedef struct combo_opts_ combo_opts;
 GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 			     unsigned char flags);
 
+gint gretl_dialog_set_destruction (GtkWidget *w, gpointer p);
+
 int maybe_raise_dialog (void);
 
 void vbox_add_hsep (GtkWidget *vbox);

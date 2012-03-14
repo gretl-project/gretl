@@ -995,6 +995,10 @@ GtkWidget *build_text_popup (windata_t *vwin)
 		}
 	    } else if (func == G_CALLBACK(text_undo) && !text_can_undo(vwin)) {
 		continue;
+	    } else if (func == G_CALLBACK(delete_file_viewer)) {
+		if (window_is_tab(vwin)) {
+		    continue;
+		}
 	    }
 	    w = gtk_menu_item_new_with_label(_(item->tip));
 	    g_signal_connect(G_OBJECT(w), "activate", func, vwin);
