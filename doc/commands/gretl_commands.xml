@@ -11524,8 +11524,12 @@
       </para>
 
       <para context="cli">
-	For retrieval of a specified impulse response function in matrix
-	form, see the <fncref targ="irf"/> function.
+	Following estimation of a VECM some special accessors are
+	available: <lit>$jalpha</lit>, <lit>$jbeta</lit> and
+	<lit>$jvbeta</lit> retrieve, respectively, the &agr; and &bgr;
+	matrices and the estimated variance of &bgr;.  For retrieval
+	of a specified impulse response function in matrix form, see
+	the <fncref targ="irf"/> function.
       </para>      
     </description>
 
