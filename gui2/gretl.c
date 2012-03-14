@@ -437,7 +437,7 @@ int main (int argc, char **argv)
     *filearg = '\0';
 
 #if GUI_DEBUG
-    fprintf(stderr, "starting gretl %s, %s build date %s\n", GRETL_VERSION, 
+    fprintf(stderr, "starting gretl %s, build date %s\n", GRETL_VERSION, 
 	    BUILD_DATE);
 #endif
 
