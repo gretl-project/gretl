@@ -47,20 +47,20 @@ static void gretl_tests_cleanup (void);
 
 /**
  * date:
- * @nt: observation number (zero-based).
+ * @t: observation number (zero-based).
  * @pd: data periodicity or frequency.
  * @sd0: floating point representation of starting date.
  *
- * Returns: the date corresponding to @nt, as a double-precision number.
+ * Returns: the date corresponding to @t, as a double-precision number.
  */
 
-double date (int nt, int pd, const double sd0)
+double date (int t, int pd, double sd0)
 {
     int ysd = (int) sd0, yy, pp, yp;
     int p10 = 10;
 
     if (pd == 1) {
-	return (double) (ysd + nt);  
+	return (double) (ysd + t);  
     } 
 
     pp = pd;
@@ -68,12 +68,12 @@ double date (int nt, int pd, const double sd0)
 	p10 *= 10;
     }
 
-    pp = nt % pd + p10 * (sd0 - ysd) + .5;
+    pp = t % pd + p10 * (sd0 - ysd) + .5;
     if (pp != pd)  {
-        yy = ysd + nt/pd  + pp/pd + .5;
+        yy = ysd + t/pd  + pp/pd + .5;
         yp = pp % pd;
     }  else {
-        yy = ysd + nt/pd + .5;
+        yy = ysd + t/pd + .5;
         yp = pp;
     }
 

@@ -677,6 +677,8 @@ void set_sample_label (DATASET *pdinfo)
 	return;
     }
 
+    *t1str = *t2str = '\0';
+
     /* set the sensitivity of various menu items */
 
     time_series_menu_state(dataset_is_time_series(pdinfo));

@@ -44,7 +44,7 @@ void libgretl_session_cleanup (int mode);
 
 void libgretl_cleanup (void);
 
-double date (int nt, int pd, const double sd0);
+double date (int t, int pd, double sd0);
 
 /* checks on variables */
 
