@@ -206,7 +206,7 @@ static int maybe_recode_path (const char *path, int want_utf8, char **pconv)
  * @fname: name of file to be opened.
  * @mode: mode in which to open the file.
  *
- * A wrapper for  the C library's fopen(), making allowance for
+ * A wrapper for the C library's fopen(), making allowance for
  * the possibility that @fname has to be converted from
  * UTF-8 to the locale encoding or vice versa.
  *
@@ -246,6 +246,81 @@ FILE *gretl_fopen (const char *fname, const char *mode)
     if (errno != 0) {
 	gretl_errmsg_set_from_errno(fname);
     }
+
+    return fp;
+}
+
+#ifdef G_OS_WIN32
+
+/* work around missing mkstemp() on mingw: use the GLib
+   implementation instead */
+
+static int win32_mkstemp (char *tmpl)
+{
+    int fd = -1;
+
+    if (!g_utf8_validate(tmpl, -1, NULL)) {
+	/* g_mkstemp requires UTF-8 input */
+	gchar *pconv;
+	gsize bytes;
+
+	pconv = g_locale_to_utf8(tmpl, -1, NULL, &bytes, NULL);
+	if (pconv != NULL) {
+	    strcpy(tmpl, pconv);
+	    fd = g_mkstemp(tmpl);
+	    g_free(pconv);
+	    pconv = g_locale_from_utf8(tmpl, -1, NULL, &bytes, NULL);
+	    if (pconv != NULL) {
+		strcpy(tmpl, pconv);
+		g_free(pconv);
+	    }
+	}	
+    } else {
+	fd = g_mkstemp(tmpl);
+    }
+
+    return fd;
+}
+
+#endif
+
+/**
+ * gretl_mktemp:
+ * @template: template for filename; must end with "XXXXXX".
+ * @mode: e.g. "w" for text use or "wb" for binary mode.
+ *
+ * A wrapper for the combination of mkstemp() and fdopen(),
+ * making allowance for the possibility that @template has to 
+ * be converted from UTF-8 to the locale encoding or vice versa.
+ * On successful exit @template holds the name of the newly
+ * created file.
+ *
+ * Returns: file pointer, or %NULL on failure.
+ */
+
+FILE *gretl_mktemp (char *template, const char *mode)
+{
+    FILE *fp = NULL;
+    int fd = -1;
+
+    gretl_error_clear();
+
+#ifdef G_OS_WIN32
+    fd = win32_mkstemp(template);
+#else
+    fd = mkstemp(template); 
+#endif
+
+    if (errno != 0) {
+	gretl_errmsg_set_from_errno(NULL);
+    } else if (fd != -1) {
+	fp = fdopen(fd, mode);
+    }
+
+#if 1
+    fprintf(stderr, "gretl_mktemp: name='%s', fd=%d, fp=%p\n",
+	    template, fd, (void *) fp);
+#endif
 
     return fp;
 }
@@ -679,41 +754,6 @@ int gretl_mkdir (const char *path)
     }
     
     return !done;
-}
-
-/**
- * gretl_mkstemp:
- * @tmpl: template filename.
- *
- * Returns: A file handle (as from open()) to the file opened for 
- * reading and writing, or -1 on failure.
- */
-
-int gretl_mkstemp (char *tmpl)
-{
-    int fd = -1;
-
-    if (!g_utf8_validate(tmpl, -1, NULL)) {
-	/* g_mkstemp requires UTF-8 input */
-	gchar *pconv;
-	gsize bytes;
-
-	pconv = g_locale_to_utf8(tmpl, -1, NULL, &bytes, NULL);
-	if (pconv != NULL) {
-	    strcpy(tmpl, pconv);
-	    fd = g_mkstemp(tmpl);
-	    g_free(pconv);
-	    pconv = g_locale_from_utf8(tmpl, -1, NULL, &bytes, NULL);
-	    if (pconv != NULL) {
-		strcpy(tmpl, pconv);
-		g_free(pconv);
-	    }
-	}	
-    } else {
-	fd = g_mkstemp(tmpl);
-    }
-
-    return fd;
 }
 
 #else /* !win32 */

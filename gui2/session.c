@@ -1741,8 +1741,6 @@ static int real_save_session_dataset (const char *dname)
     if (!err) {
 	session_file_make_path(tmpname, dname);
 	write_err = gretl_write_gdt(tmpname, NULL, dataset, OPT_NONE, 1);
-	fprintf(stderr, "Save session datafile as '%s', err = %d\n",
-		tmpname, write_err);
     }
 
     if (mask != NULL) {
@@ -1764,6 +1762,8 @@ static int real_save_session_dataset (const char *dname)
 	/* flag the fact that the data are saved */
 	data_status &= ~MODIFIED_DATA;
     }
+
+    fprintf(stderr, "real_save_session_dataset: err=%d\n", err);
     
     return err;
 }
@@ -1889,6 +1889,7 @@ int save_session (char *fname)
     }
     
     if (!err) {
+	fprintf(stderr, "making zipfile\n");
 	gretl_make_zipfile = gui_get_plugin_function("gretl_make_zipfile", 
 						     &handle);
 	if (gretl_make_zipfile == NULL) {
@@ -1897,6 +1898,7 @@ int save_session (char *fname)
 
 	/* make zipfile containing session files */
 	err = (*gretl_make_zipfile)(fname, dirname, &gerr);
+	fprintf(stderr, "gretl_make_zipfile: err = %d\n", err);
 	close_plugin(handle);
     }
 
@@ -1913,6 +1915,8 @@ int save_session (char *fname)
 	}
 	mark_session_saved();
     }
+
+    fprintf(stderr, "save_session; returning %d\n", err);
 
     return err;
 }

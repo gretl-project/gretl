@@ -3009,7 +3009,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 
     bufgets_init(buf);
 
-    while (bufgets(bufline, MAXLINE, buf) && !err) {
+    while (bufgets(bufline, sizeof bufline, buf) && !err) {
 	if (string_is_blank(bufline)) {
 	    continue;
 	}
@@ -3169,7 +3169,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
     bufgets_init(buf);
     *sysname = 0;
 
-    while (bufgets(bufline, MAXLINE, buf) && !err) {
+    while (bufgets(bufline, sizeof bufline, buf) && !err) {
 	if (string_is_blank(bufline) || *bufline == '#') {
 	    continue;
 	}

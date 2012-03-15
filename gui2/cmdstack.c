@@ -76,7 +76,7 @@ void free_command_stack (void)
 
 static int session_logfile_init (void)
 {
-    char timestr[48];
+    char timestr[64];
     FILE *fp;
 
     fp = gretl_fopen(logname, "a");
@@ -109,15 +109,13 @@ static int session_logfile_init (void)
 static int scratch_logfile_init (void)
 {
     const char *fname;
-    char timestr[48];
+    char timestr[64];
     int err = 0;
 
     n_cmds = prev_ID = 0;
-
     *logname = '\0';
 
     logprn = gretl_print_new_with_tempfile(&err); 
-    
     if (err) {
 	return err;
     }

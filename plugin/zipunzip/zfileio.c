@@ -338,38 +338,6 @@ int get_file_attributes (const char *fname)
     return (stat(fname, &s) == 0)? (int) s.st_mode : 0;
 }
 
-#define lastchar(s) ((*(s) == '\0')? '\0' : s[strlen(s)-1])
-
-/* make a temporary file name, using tempath */
-
-char *ztempname (const char *tempath)
-{
-    char *tmp = NULL;
-    char *ret = NULL;
-
-    if (tempath != NULL) {
-	tmp = malloc(strlen(tempath) + 12);
-	if (tmp != NULL) {
-	    strcpy(tmp, tempath);
-	    if (lastchar(tmp) != '/') {
-		strcat(tmp, "/");
-	    }
-	}
-    } else {
-	tmp = malloc(12);
-	if (tmp != NULL) {
-	    *tmp = 0;
-	}
-    }
-
-    if (tmp != NULL) {
-	strcat(tmp, "ziXXXXXX");
-	ret = mktemp(tmp);
-    }
-
-    return ret;
-}
-
 /* Copy n bytes from file *f to file *g, or until EOF if n == -1.  Return
    an error code in the ZE_ class. */
 

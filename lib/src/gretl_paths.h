@@ -92,6 +92,8 @@ int gretl_test_fopen (const char *fname, const char *mode);
 
 FILE *gretl_read_user_file (const char *fname);
 
+FILE *gretl_mktemp (char *template, const char *mode);
+
 int gretl_open (const char *pathname, int flags);
 
 int gretl_rename (const char *oldpath, const char *newpath);
@@ -198,8 +200,6 @@ void set_gretl_png_font (const char *s);
 #ifdef WIN32
 
 void win32_set_gretldir (const char *progname);
-
-int gretl_mkstemp (char *tmpl);
 
 #else
 

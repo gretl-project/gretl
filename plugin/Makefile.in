@@ -324,7 +324,7 @@ gnumeric_import.la: gnumeric_import.lo
 leverage.la: leverage.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
 
-mailer.la: mailer.lo codes.lo encode.lo md5c.lo
+mailer.la: mailer.lo encode.lo md5c.lo
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) 
 
 ods_import.la: ods_import.lo

@@ -85,6 +85,8 @@ int add_filenames (const char *fname, zfile *zf)
     struct stat s; 
     int err = 0;
 
+    fprintf(stderr, "add_filenames: '%s'\n", fname);
+
     if (lsstat(fname, &s, zf)) {
 	/* Not a file or directory */
 	trace(2, "add_filenames: ignoring '%s'\n", fname);
@@ -106,21 +108,23 @@ int add_filenames (const char *fname, zfile *zf)
     if ((s.st_mode & S_IFDIR) == S_IFDIR) {
 	char *path, *dpath;
 	const char *dirname;
+        int sz, n = strlen(fname);
 	DIR *d; 
 
 	trace(2, "add_filenames: running newname on directory '%s'\n", fname);
 
-	path = malloc(strlen(fname) + 2);
+        sz = (n + 2 < 8)? 8 : n + 2;
+	path = calloc(sz, 1);
 	if (path == NULL) {
 	    return ZE_MEM;
 	}
 
 	if (!strcmp(fname, ".")) {
-	    *path = '\0';  /* avoid "./" prefix and do not create zip entry */
+	    ;  /* avoid "./" prefix and do not create zip entry */
 	} else {
-	    /* Add trailing / to the directory name */
+	    /* ensure trailing / on the directory name */
 	    strcpy(path, fname);
-	    if (path[strlen(path) - 1] != '/') {
+	    if (path[n-1] != '/') {
 		strcat(path, "/");
 	    }
 	    err = newname(path, zf);

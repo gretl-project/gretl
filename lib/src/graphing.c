@@ -1250,12 +1250,6 @@ void reset_plot_count (void)
     gretl_plot_count = 0;
 }
 
-static int make_temp_plot_name (char *fname)
-{
-    sprintf(fname, "%sgpttmp.XXXXXX", gretl_dotdir());
-    return (mktemp(fname) == NULL)? E_FOPEN : 0;
-}
-
 static void print_set_output (const char *path, FILE *fp)
 {
 #ifdef WIN32
@@ -1306,21 +1300,23 @@ static FILE *gp_set_up_batch (char *fname, PlotType ptype,
 	    /* input needs processing */
 	    strcpy(gnuplot_outname, optname);
 	    gretl_maybe_prepend_dir(gnuplot_outname);
-	    make_temp_plot_name(fname);
+	    sprintf(fname, "%sgpttmp.XXXXXX", gretl_dotdir());
+	    fp = gretl_mktemp(fname, "w");
 	} else {
 	    /* just passing commands through */
+	    this_term_type = GP_TERM_PLT;
 	    strcpy(fname, optname);
 	    gretl_maybe_prepend_dir(fname);
-	    this_term_type = GP_TERM_PLT;
+	    fp = gretl_fopen(fname, "w");
 	}
     } else {
 	/* auto-constructed gnuplot commands filename */
+	this_term_type = GP_TERM_PLT;
 	sprintf(fname, "gpttmp%02d.plt", ++gretl_plot_count);
 	gretl_maybe_prepend_dir(fname);
-	this_term_type = GP_TERM_PLT;
+	fp = gretl_fopen(fname, "w");
     }
 
-    fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
 	*err = E_FOPEN;
     } else {
@@ -1346,13 +1342,13 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 
     if (gui) {
 	/* the filename should be unique */
-	make_temp_plot_name(fname);
+	sprintf(fname, "%sgpttmp.XXXXXX", gretl_dotdir());
+	fp = gretl_mktemp(fname, "w");
     } else {
 	/* gretlcli: no need for uniqueness */
 	sprintf(fname, "%sgpttmp.plt", gretl_dotdir());
+	fp = gretl_fopen(fname, "w");
     }
-
-    fp = gretl_fopen(fname, "w");
 
     if (fp == NULL) {
 	*err = E_FOPEN;

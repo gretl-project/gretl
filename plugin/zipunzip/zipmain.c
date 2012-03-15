@@ -267,16 +267,24 @@ static void zfile_init (zfile *zf, int level, ZipOption opt)
     tzset();
 }
 
-static gchar *make_tempath (const char *fname)
+#define lastchar(s) ((*(s) == '\0')? '\0' : s[strlen(s)-1])
+
+static FILE *ztempfile (char *templ)
 {
-    gchar *p, *path = NULL;
+    char *p = strrchr(templ, G_DIR_SEPARATOR);
+    FILE *fp = NULL;
 
-    p = strrchr(fname, G_DIR_SEPARATOR);
     if (p != NULL) {
-	path = g_strndup(fname, p - fname);
-    }
+	*p = '\0';
+	if (lastchar(templ) != '/') {
+	    strcat(templ, "/");
+	}
+    } 
 
-    return path;
+    strcat(templ, "ziXXXXXX");
+    fp = gretl_mktemp(templ, "wb");
+
+    return fp;
 }
 
 static zlist *zlist_entry_new (flist *f)
@@ -497,11 +505,14 @@ static int real_archive_files (const char *targ, const char **filenames,
     guint32 t;            /* file time, length of central directory */
     zlist **w;            /* pointer to last link in zfiles list */
     zlist *z;             /* steps through zfiles linked list */
-    char *tempath = NULL; /* path for temporary files */
-    char *tempzip = NULL; /* filename for temp zipfile */
     FILE *fr = NULL;      /* for reading from original zipfile */
+    char tempzip[FILENAME_MAX]; /* name for temporary zipfile */
     int err = 0;
     zfile zf;
+
+    fprintf(stderr, "*** real_archive_files\n");
+
+    *tempzip = '\0';
 
     if (level < 0 || level > 9) {
 	fprintf(stderr, "invalid compression level %d: setting to 6\n", level);
@@ -553,8 +564,6 @@ static int real_archive_files (const char *targ, const char **filenames,
 	zf.zsort = NULL;
     }
 
-    tempath = make_tempath(zf.fname);
-
     /* For each marked entry, check if it exists, and, if updating,
        compare date with entry in existing zipfile.  Unmark if it
        doesn't exist or is too old, else update marked count.
@@ -596,14 +605,8 @@ static int real_archive_files (const char *targ, const char **filenames,
 	}
     }
 
-    tempzip = ztempname(tempath);
-    if (tempzip == NULL) {
-	err = ziperr(ZE_MEM, "allocating temp filename");
-	goto bailout;
-    }
-
-    trace(1, "opening %s for writing\n", tempzip);
-    zf.fp = fopen(tempzip, "wb");
+    strcpy(tempzip, zf.fname);
+    zf.fp = ztempfile(tempzip);
     if (zf.fp == NULL) {
 	err = ziperr(ZE_TEMP, tempzip);
 	goto bailout;
@@ -684,13 +687,10 @@ static int real_archive_files (const char *targ, const char **filenames,
 
     zlib_deflate_free(&zf);
 
-    if (err && tempzip != NULL) {
+    if (err && *tempzip != '\0') {
 	/* clean up */
 	gretl_remove(tempzip);
     }
-
-    free(tempath);
-    free(tempzip);
 
     zip_finish(&zf);
 
@@ -845,7 +845,7 @@ int zipinfo_print_all (zipinfo *zinfo, FILE *fp)
 	return ZE_NONE;
     }
 
-    /* ouput emulates "unzip -l" */
+    /* output emulates "unzip -l" */
 
     fprintf(fp, "Archive:  %s\n", zinfo->name);
     fputs(" Length    Date    Time    Name\n", fp);
@@ -1058,11 +1058,10 @@ static int real_delete_files (zfile *zf)
 {
     int attr = 0;         /* attributes of zip file */
     FILE *fr = NULL;      /* for reading from original zipfile */
-    char *tempath = NULL; /* path for temporary files */
-    char *tempzip = NULL; /* filename for temp zipfile */
+    char tempzip[FILENAME_MAX]; /* filename for temp zipfile */
     int err = 0;
 
-    tempath = make_tempath(zf->fname);
+    *tempzip = '\0';
 
     err = zipfile_write_check(zf, ZIP_DO_DELETE, &attr);
     if (err) {
@@ -1075,18 +1074,11 @@ static int real_delete_files (zfile *zf)
 	return ziperr(ZE_NAME, zf->fname);
     }
 
-    tempzip = ztempname(tempath);
-    if (tempzip == NULL) {
-	fclose(fr);
-	return ziperr(ZE_MEM, "allocating temp filename");
-    }
-
-    trace(1, "opening %s for writing\n", tempzip);
-    zf->fp = fopen(tempzip, "wb");
+    strcpy(tempzip, zf->fname);
+    zf->fp = ztempfile(tempzip);
     if (zf->fp == NULL) {
 	fclose(fr);
 	ziperr(ZE_TEMP, tempzip);
-	free(tempzip);
 	return ZE_TEMP;
     }
 
@@ -1114,13 +1106,10 @@ static int real_delete_files (zfile *zf)
 	}
     }
 
-    if (err && tempzip != NULL) {
+    if (err && *tempzip != '\0') {
 	/* clean up */
 	gretl_remove(tempzip);
     }
-
-    free(tempath);
-    free(tempzip);
 
     return err;
 }

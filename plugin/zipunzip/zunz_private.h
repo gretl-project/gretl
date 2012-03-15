@@ -264,7 +264,6 @@ int is_symlink (guint32 attr);
 
 int replace_file (char *dest, char *src);
 int get_file_attributes (const char *fname);
-char *ztempname (const char *tempath);
 int fcopy (FILE *f, FILE *g, guint32 n);
 
 /* system.c */

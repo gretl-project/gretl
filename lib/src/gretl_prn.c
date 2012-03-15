@@ -64,7 +64,7 @@ struct PRN_ {
     char *fname;       /* file name, or NULL */
 };
 
-#undef PRN_DEBUG
+#define PRN_DEBUG 0
 
 /**
  * gretl_print_destroy:
@@ -84,10 +84,15 @@ void gretl_print_destroy (PRN *prn)
     fpdup = (prn->fp == prn->fpaux);
 
     if (prn->fp != NULL && prn->fp != stdout && prn->fp != stderr) {
+#if PRN_DEBUG
+  	fprintf(stderr, "gretl_print_destroy: prn=%p, closing fp at %p\n", 
+		(void *) prn, (void *) prn->fp); 
+#endif
 	fclose(prn->fp);
     }
 
     if (prn->fname != NULL) {
+	/* prn had a tempfile attached */
 	gretl_remove(prn->fname);
 	free(prn->fname);
     }
@@ -110,36 +115,28 @@ void gretl_print_destroy (PRN *prn)
 
 static int prn_add_tempfile (PRN *prn)
 {
-    char fname[MAXLEN];
-    int fd, err = 0;
+    const char *dotdir = gretl_dotdir();
+    int n = strlen(dotdir) + 16;
+    int err = 0;
 
-    errno = 0;
+    prn->fname = malloc(n);
+    if (prn->fname == NULL) {
+	return E_ALLOC;
+    }
 
-    sprintf(fname, "%sprntmp.XXXXXX", gretl_dotdir());
+    sprintf(prn->fname, "%sprntmp.XXXXXX", dotdir);
+    prn->fp = gretl_mktemp(prn->fname, "w");
 
-#ifdef WIN32
-    fd = gretl_mkstemp(fname);
-#else
-    fd = mkstemp(fname);
+#if PRN_DEBUG
+    fprintf(stderr, "prn_add_tempfile: '%s' at %p\n",
+	    prn->fname, (void *) prn->fp);
 #endif
 
-    if (fd == -1) {
+    if (prn->fp == NULL) {
+	free(prn->fname);
+	prn->fname = NULL;
 	err = E_FOPEN;
-    } else {
-	prn->fname = gretl_strdup(fname);
-	if (prn->fname == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    prn->fp = fdopen(fd, "w");
-	    if (prn->fp == NULL) {
-		err = E_FOPEN;
-	    }
-	}
-    }
-
-    if (errno != 0) {
-	gretl_errmsg_set_from_errno("prn_add_tempfile");
-    }
+    } 
 
     return err;
 }
@@ -159,11 +156,6 @@ static PRN *real_gretl_print_new (PrnType ptype,
 	}
 	return NULL;
     }
-
-#if PRN_DEBUG
-    fprintf(stderr, "real_gretl_print_new: type=%d, fname='%s', buf=%p, fp=%d\n",
-	    ptype, fname, (void *) buf, (void *) fp);
-#endif    
 
     prn->fp = NULL;
     prn->fpaux = NULL;
@@ -212,11 +204,14 @@ static PRN *real_gretl_print_new (PrnType ptype,
 		free(prn);
 		prn = NULL;
 	    }
-#if PRN_DEBUG
-	    fprintf(stderr, "new prn buffer, p = %d\n", p);
-#endif
 	}
     }
+
+#if PRN_DEBUG
+    fprintf(stderr, "real_gretl_print_new at %p: type=%d, fname='%s', "
+	    "buf=%p, fp=%p\n", (void *) prn, ptype, fname, 
+	    (void *) buf, (void *) fp);
+#endif    
 
     if (perr != NULL) {
 	*perr = err;
@@ -412,7 +407,19 @@ int gretl_print_rename_file (PRN *prn, const char *oldpath,
 	return E_DATA;
     }
 
+#if PRN_DEBUG
+    fprintf(stderr, "gretl_print_rename_file, prn at %p::\n oldpath='%s'\n"
+	    " newpath='%s'\n prn->fp=%p (closing)\n", (void *) prn,
+	    oldpath, newpath, (void *) prn->fp);
+    fprintf(stderr, " (old prn->fname = '%s')\n", prn->fname);
+#endif
+
     fclose(prn->fp);
+    prn->fp = NULL;
+
+#if PRN_DEBUG
+    fprintf(stderr, "gretl_print_rename_file: fp closed\n");
+#endif
 
     if (oldpath == NULL && prn->fname != NULL) {
 	/* renaming from tempfile */
@@ -422,7 +429,11 @@ int gretl_print_rename_file (PRN *prn, const char *oldpath,
     }
 
     if (!err) {
+	/* re-open the stream under its new name */
 	prn->fp = gretl_fopen(newpath, "a");
+#if PRN_DEBUG
+	fprintf(stderr, "gretl_print_rename_file: new fp=%p\n", prn->fp);
+#endif
 	if (prn->fname != NULL) {
 	    /* @prn originally used a tempfile: the record of
 	       the temporary filename should be deleted 
@@ -880,7 +891,7 @@ int pprintf (PRN *prn, const char *format, ...)
 	}
     }
 
-#if PRN_DEBUG
+#if PRN_DEBUG > 1
     fprintf(stderr, "printing at %p\n", (void *) (prn->buf + prn->blen));
 #endif
 
@@ -937,9 +948,9 @@ int pputs (PRN *prn, const char *s)
 	bytesleft = prn->bufsize - prn->blen;
     }	
 
-#if PRN_DEBUG
+#if PRN_DEBUG > 1
     fprintf(stderr, "pputs: bufsize=%d, blen=%d, bytesleft=%d, copying %d bytes\n", 
-	    (int) prn->bufsize, (int) blen, bytesleft, slen);
+	    (int) prn->bufsize, (int) prn->blen, bytesleft, slen);
 #endif
 
     strcpy(prn->buf + prn->blen, s);
@@ -978,7 +989,7 @@ int pputc (PRN *prn, int c)
 	}
     }
 
-#if PRN_DEBUG
+#if PRN_DEBUG > 1
     fprintf(stderr, "pputc: adding char at %p\n", (void *) (prn->buf + prn->blen));
 #endif
 

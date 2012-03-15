@@ -116,21 +116,36 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
 
 static int add_unique_output_file (MODEL *pmod, const char *path)
 {
-    char fname[FILENAME_MAX];
+    char outname[FILENAME_MAX];
     char unique[FILENAME_MAX];
-    int err;
+    char line[256];
+    FILE *f0, *f1;
 
-    sprintf(fname, "%s.out", path);
-    sprintf(unique, "%s.XXXXXX", fname);
-    if (mktemp(unique) == NULL) return 1;
+    sprintf(outname, "%s.out", path);
+    f0 = gretl_fopen(outname, "r");
+    if (f0 == NULL) {
+	return E_FOPEN;
+    }
 
-    err = gretl_rename(fname, unique);
-    if (!err) {
-	gretl_model_set_data(pmod, "x12a_output", g_strdup(unique),
-			     GRETL_TYPE_STRING, strlen(fname) + 1);
-    } 
+    sprintf(unique, "%s.XXXXXX", outname);
+    f1 = gretl_mktemp(unique, "w");
+    if (f1 == NULL) {
+	fclose(f0);
+	return E_FOPEN;
+    }
 
-    return err;
+    while (fgets(line, sizeof line, f0)) {
+	fputs(line, f1);
+    }
+
+    fclose(f0);
+    fclose(f1);
+    gretl_remove(outname);
+
+    gretl_model_set_data(pmod, "x12a_output", g_strdup(unique),
+			 GRETL_TYPE_STRING, strlen(unique) + 1);
+
+    return 0;
 }
 
 static int print_iterations (const char *path, PRN *prn)

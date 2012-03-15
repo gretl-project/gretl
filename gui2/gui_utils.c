@@ -423,46 +423,16 @@ int copyfile (const char *src, const char *dest)
 
 FILE *gretl_tempfile_open (char *fname)
 {
-    FILE *fp = NULL;
-    int fd;
+    FILE *fp;
 
     strcat(fname, ".XXXXXX");
-#ifdef G_OS_WIN32
-    fd = gretl_mkstemp(fname);
-#else
-    fd = mkstemp(fname);
-#endif
-    if (fd != -1) {
-	fp = fdopen(fd, "w+");
-	if (fp == NULL) {
-	    file_write_errbox(fname);
-	    close(fd);
-	    gretl_remove(fname);
-	}
+    fp = gretl_mktemp(fname, "w+");
+
+    if (fp == NULL) {
+	errbox(_("Couldn't open temp file"));
     }
 
     return fp;
-}
-
-int gretl_tempname (char *fname)
-{
-    int fd, err = 0;
-
-    strcat(fname, ".XXXXXX");
-#ifdef G_OS_WIN32
-    fd = gretl_mkstemp(fname);
-#else
-    fd = mkstemp(fname);
-#endif
-    if (fd == -1) {
-	file_write_errbox(fname);
-	err = 1;
-    } else {
-	close(fd);
-	gretl_remove(fname);
-    }
-
-    return err;
 }
 
 static void delete_file (GtkWidget *widget, char *fname) 
@@ -2924,6 +2894,7 @@ static void x12_output_callback (GtkAction *action, gpointer p)
     if (pmod == NULL) return;
 
     fname = gretl_model_get_data(pmod, "x12a_output");
+
     if (fname != NULL) {
 	char *p = strrchr(fname, '.');
 

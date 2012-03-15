@@ -38,6 +38,7 @@ version 1.9.8, in progress
 - For third-party users of libgretl: improve handling of search for the
   gretl plugins
 - MS Windows build: update cross-compiler to gcc-4.6.2
+- Build tools: update to libtool 2.4.2
 - Building from source: fix configure script for non-sse2 build
 
 2011-12-22 version 1.9.7

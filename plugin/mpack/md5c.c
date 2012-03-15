@@ -23,6 +23,7 @@ These notices must be retained in any copies of any part of this
 documentation and/or software.
  */
 
+#include <string.h>
 #include "md5.h"
 
 /* Constants for MD5Transform routine */
@@ -93,6 +94,7 @@ static unsigned char PADDING[64] = {
 void MD5Init (MD5_CTX *context)
 {
     context->count[0] = context->count[1] = 0;
+
     /* Load magic initialization constants */
     context->state[0] = 0x67452301;
     context->state[1] = 0xefcdab89;

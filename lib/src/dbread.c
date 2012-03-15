@@ -2403,27 +2403,13 @@ int db_get_series (char *line, DATASET *dset,
 
 static FILE *tempfile_open (char *fname, int *err)
 {
-    FILE *fp = NULL;
-    int fd;
+    FILE *fp;
 
     strcat(fname, ".XXXXXX");
-#ifdef WIN32
-    fd = gretl_mkstemp(fname);
-#else
-    fd = mkstemp(fname);
-#endif
-
-    if (fd < 0) {
+    fp = gretl_mktemp(fname, "w+");
+    if (fp == NULL) {
 	*err = E_FOPEN;
-    } else {
-	fp = fdopen(fd, "w+");
-	if (fp == NULL) {
-	    *err = E_FOPEN;
-	    gretl_errmsg_sprintf(_("Couldn't open %s"), fname);
-	    close(fd);
-	    gretl_remove(fname);
-	}
-    } 
+    }
 
     return fp;
 }

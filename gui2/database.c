@@ -1933,7 +1933,7 @@ enum {
    data files, or function package 
 */
 
-static char *get_writable_target (int code, int op, char *objname,
+static char *get_writable_target (int code, char *objname,
 				  gboolean zipfile)
 {
     const char *ext;
@@ -1960,21 +1960,15 @@ static char *get_writable_target (int code, int op, char *objname,
 	ext = ".tar.gz";
     }
 
-    if (op == TMP_INSTALL) {
-	build_path(targ, gretl_dotdir(), "dltmp", NULL);
-	err = gretl_tempname(targ);
-	done_home = 1;
-    } else {
 #ifdef OSX_BUILD
-	/* we prefer writing to ~/Library/Application Support
-	   rather than /Applications/Gretl.app 
-	*/
-	err = get_target_in_home(targ, code, objname, ext);
-	done_home = 1;
+    /* we prefer writing to ~/Library/Application Support
+       rather than /Applications/Gretl.app 
+    */
+    err = get_target_in_home(targ, code, objname, ext);
+    done_home = 1;
 #else
-	get_system_target(targ, code, objname, ext);
+    get_system_target(targ, code, objname, ext);
 #endif
-    } 
 
     if (!err) {
 	err = gretl_test_fopen(targ, "w");
@@ -2109,7 +2103,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	return;
     } 
 
-    path = get_writable_target(vwin->role, REAL_INSTALL, objname, zipfile);
+    path = get_writable_target(vwin->role, objname, zipfile);
     if (path == NULL) {
 	g_free(objname);
 	return;
@@ -2188,19 +2182,13 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 
 void pkg_info_from_server (GtkWidget *w, windata_t *vwin)
 {
-    gchar *objname = NULL;
-    char *path = NULL;
+    static int idx;
+    gchar *path, *objname = NULL;
     int err = 0;
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, 0, &objname);
-
-    path = get_writable_target(vwin->role, TMP_INSTALL, objname, FALSE);
-    if (path == NULL) {
-	g_free(objname);
-	return;
-    }
-
+    path = g_strdup_printf("%sdltmp.%d", gretl_dotdir(), idx++);
     err = retrieve_remote_function_package(objname, path);
 
     if (err) {
@@ -2210,7 +2198,7 @@ void pkg_info_from_server (GtkWidget *w, windata_t *vwin)
     }
 
     g_free(objname);
-    free(path);
+    g_free(path);
 }
 
 static gchar *

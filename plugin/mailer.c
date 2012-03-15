@@ -1194,53 +1194,59 @@ smtp_send_mail (FILE *infile, char *sender, char *recipient,
     return err;
 }
 
-static int pack_and_mail (const char *fname, struct msg_info *msg,
-			  struct mail_info *minfo, char *tmpfname)
+static int pack_and_mail (const char *fname, 
+			  struct msg_info *msg,
+			  struct mail_info *minfo, 
+			  const char *userdir)
 {
-    const char *ctype;
-    FILE *fp;
+    char tmpfname[FILENAME_MAX];
+    FILE *fpin, *fpout;
     int err = 0;
 
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
+    fpin = gretl_fopen(fname, "r");
+    if (fpin == NULL) {
 	perror(fname);
 	err = 1;
     }
 
-    if (is_data_file(fname)) {
-	ctype = "application/x-gretldata";
-    } else {
-	ctype = "application/x-gretlscript";
+    sprintf(tmpfname, "%smpack.XXXXXX", userdir);
+    fpout = gretl_mktemp(tmpfname, "wb");
+    if (fpout == NULL) {
+	err = 1;
     }
 
     if (!err) {
-	err = encode(fp, fname, msg->note, msg->subj, msg->recip,
-		     msg->sender, ctype, tmpfname);
+	const char *ctype = is_data_file(fname) ? 
+	    "application/x-gretldata" : "application/x-gretlscript";
+
+	err = mpack_encode(fpin, fname, msg->note, msg->subj, msg->recip,
+			   msg->sender, ctype, fpout);
+    }
+
+    if (fpin != NULL) {
+	fclose(fpin);
+    }
+
+    if (fpout != NULL) {
+	fclose(fpout);
     }
 
     if (!err) {
-	fp = gretl_fopen(tmpfname, "r");
-	if (fp == NULL) {
+	fpin = gretl_fopen(tmpfname, "r");
+	if (fpin == NULL) {
 	    perror(tmpfname);
 	    err = 1;
-	} 
-    }
-
-#if 0 /* testing */
-    err = pop_login(minfo);
-    fclose(fp);
-#else
-    if (!err) {
-	err = smtp_send_mail(fp, msg->sender, msg->recip, minfo);
-	if (err == SMTP_POP_FIRST) {
-	    err = pop_login(minfo);
-	    if (!err) {
-		err = smtp_send_mail(fp, msg->sender, msg->recip, minfo);
+	} else {
+	    err = smtp_send_mail(fpin, msg->sender, msg->recip, minfo);
+	    if (err == SMTP_POP_FIRST) {
+		err = pop_login(minfo);
+		if (!err) {
+		    err = smtp_send_mail(fpin, msg->sender, msg->recip, minfo);
+		}
 	    }
+	    fclose(fpin);
 	}
-	fclose(fp);
     }
-#endif
 
     gretl_remove(tmpfname);
 
@@ -1251,7 +1257,6 @@ int email_file (const char *fname, const char *userdir)
 {
     struct mail_info *minfo = NULL;
     struct msg_info *msg = NULL;
-    char temp[FILENAME_MAX];
     gchar *errmsg = NULL;
     int err = 0;
 
@@ -1264,24 +1269,18 @@ int email_file (const char *fname, const char *userdir)
 	return E_ALLOC;
     }
 
-    sprintf(temp, "%smpack.XXXXXX", userdir);
-    if (mktemp(temp) == NULL) {
-	err = 1;
-    }
+    mail_to_dialog(fname, minfo, msg);
 
-    if (!err) {
-	mail_to_dialog(fname, minfo, msg);
-	if (minfo->err == MAIL_NO_RECIPIENT) {
-	    errmsg = g_strdup("No address was given");
-	} else if (minfo->err == MAIL_NO_SERVER) {
-	    errmsg = g_strdup("No SMTP was given");
-	} else if (minfo->err == MAIL_NO_SENDER) {
-	    errmsg = g_strdup("No sender address was given");
-	} else if (minfo->err == MAIL_NO_MEM) {
-	    errmsg = g_strdup("Out of memory");
-	} else if (minfo->err == MAIL_OK) {
-	    err = pack_and_mail(fname, msg, minfo, temp);
-	}
+    if (minfo->err == MAIL_NO_RECIPIENT) {
+	errmsg = g_strdup("No address was given");
+    } else if (minfo->err == MAIL_NO_SERVER) {
+	errmsg = g_strdup("No SMTP was given");
+    } else if (minfo->err == MAIL_NO_SENDER) {
+	errmsg = g_strdup("No sender address was given");
+    } else if (minfo->err == MAIL_NO_MEM) {
+	errmsg = g_strdup("Out of memory");
+    } else if (minfo->err == MAIL_OK) {
+	err = pack_and_mail(fname, msg, minfo, userdir);
     }
 
     if (errmsg != NULL) {
