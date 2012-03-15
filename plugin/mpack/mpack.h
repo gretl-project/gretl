@@ -26,12 +26,9 @@
 #ifndef MPACK_H
 #define MPACK_H
 
-int encode (FILE *fpin, const char *fname, const char *note, 
-	    const char *subject, const char *recipient,  const char *reply_to,
-	    const char *type, char *tmpfname);
-
-int to64 (FILE *infile, FILE *outfile);
-
-void md5digest(FILE *infile, char *digest);
+int mpack_encode (FILE *fpin, const char *fname, const char *note, 
+		  const char *subject, const char *recipient,  
+		  const char *reply_to, const char *type, 
+		  FILE *fpout);
 
 #endif /* MPACK_H */

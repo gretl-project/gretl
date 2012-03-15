@@ -33,35 +33,111 @@
 #include <fcntl.h>
 
 #include "mpack.h"
+#include "md5.h"
 
-static FILE *createnewfile (char *fname)
+static char basis_64[] =
+   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+static void output64chunk (int c1, int c2, int c3, int pads, FILE *outfile)
 {
-    FILE *ret = NULL;
-    int fd;
-     
-#ifdef O_EXCL
-    fd = open(fname, O_RDWR|O_CREAT|O_EXCL, 0644);
-#else
-    fd = open(fname, O_RDWR|O_CREAT|O_TRUNC, 0644);
-#endif
+    putc(basis_64[c1>>2], outfile);
+    putc(basis_64[((c1 & 0x3)<< 4) | ((c2 & 0xF0) >> 4)], outfile);
 
-    if (fd != -1) {
-	ret = fdopen(fd, "w");
+    if (pads == 2) {
+        putc('=', outfile);
+        putc('=', outfile);
+    } else if (pads) {
+        putc(basis_64[((c2 & 0xF) << 2) | ((c3 & 0xC0) >>6)], outfile);
+        putc('=', outfile);
+    } else {
+        putc(basis_64[((c2 & 0xF) << 2) | ((c3 & 0xC0) >>6)], outfile);
+        putc(basis_64[c3 & 0x3F], outfile);
+    }
+}
+
+static int to64 (FILE *infile, FILE *outfile)
+{
+    int c1, c2, c3, ct=0, written=0;
+
+    while ((c1 = getc(infile)) != EOF) {
+        c2 = getc(infile);
+        if (c2 == EOF) {
+            output64chunk(c1, 0, 0, 2, outfile);
+        } else {
+            c3 = getc(infile);
+            if (c3 == EOF) {
+                output64chunk(c1, c2, 0, 1, outfile);
+            } else {
+                output64chunk(c1, c2, c3, 0, outfile);
+            }
+        }
+        ct += 4;
+        if (ct > 71) {
+            putc('\n', outfile);
+	    written += 73;
+            ct = 0;
+        }
     }
 
-    return ret;
+    if (ct) {
+	putc('\n', outfile);
+	ct++;
+    }
+
+    return written + ct;
+}
+
+static void md5contextTo64 (MD5_CTX *context, char *encodedDigest)
+{
+    unsigned char digest[18];
+    int i;
+    char *p;
+
+    MD5Final(digest, context);
+    digest[sizeof(digest)-1] = digest[sizeof(digest)-2] = 0;
+
+    p = encodedDigest;
+
+    for (i=0; i < sizeof(digest); i+=3) {
+	*p++ = basis_64[digest[i]>>2];
+	*p++ = basis_64[((digest[i] & 0x3)<<4) | ((digest[i+1] & 0xF0)>>4)];
+	*p++ = basis_64[((digest[i+1] & 0xF)<<2) | ((digest[i+2] & 0xC0)>>6)];
+	*p++ = basis_64[digest[i+2] & 0x3F];
+    }
+
+    *p-- = '\0';
+    *p-- = '=';
+    *p-- = '=';
+}    
+
+static void md5digest (FILE *infile, char *digest)
+{
+    MD5_CTX context;
+    unsigned char buf[1000];
+    long length = 0;
+    int nbytes;
+    
+    MD5Init(&context);
+
+    while ((nbytes = fread(buf, 1, sizeof(buf), infile))) {
+	length += nbytes;
+	MD5Update(&context, buf, nbytes);
+    }
+
+    rewind(infile);
+
+    md5contextTo64(&context, digest);
 }
 
 /* Encode a file into a MIME message */
 
-int encode (FILE *fpin, const char *fname, const char *note, 
-	    const char *subject, const char *recipient, const char *reply_to,
-	    const char *type, char *tmpfname)
+int mpack_encode (FILE *fpin, const char *fname, const char *note, 
+		  const char *subject, const char *recipient, 
+		  const char *reply_to, const char *type, 
+		  FILE *fpout)
 {
-    FILE *fpout;
     const char *cleanfname, *p;
     char digest[25];
-    char buf[1024];
 
     /* Clean up fname for printing */
     cleanfname = fname;
@@ -71,13 +147,6 @@ int encode (FILE *fpin, const char *fname, const char *note,
 
     /* Compute MD5 digests */
     md5digest(fpin, digest);
-
-    /* Open output file */
-    fpout = createnewfile(tmpfname);
-    if (!fpout) {
-	perror(buf);
-	return 1;
-    }
 
     fprintf(fpout, "Mime-Version: 1.0\n");
     fprintf(fpout, "From: %s\n", reply_to);
@@ -106,8 +175,6 @@ int encode (FILE *fpin, const char *fname, const char *note,
     to64(fpin, fpout);
 
     fputs("\n-----\n", fpout);
-	
-    fclose(fpout);    
 
     return 0;
 }
