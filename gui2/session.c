@@ -304,6 +304,11 @@ int get_commands_recorded (void)
     return commands_recorded;
 }
 
+int widget_is_iconview (GtkWidget *w)
+{
+    return w == iconview;
+}
+
 /* constructors and destructors for session data-objects */
 
 static void free_session_text (SESSION_TEXT *text)

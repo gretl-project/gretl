@@ -621,6 +621,10 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
 	    window_list_popup(w, NULL, vwin->main);
 	    return TRUE;
 	}
+	if (upkey == GDK_C && vwin->role == SCRIPT_OUT) {
+	    cascade_session_windows();
+	    return TRUE;
+	}
 	if (window_is_tab(vwin)) {
 	    int k = numeric_keyval(upkey);
 	    

@@ -21,6 +21,7 @@
 #include "var.h"
 #include "dlgutils.h"
 #include "guiprint.h"
+#include "session.h"
 #include "tabwin.h"
 #include "winstack.h"
 
@@ -88,17 +89,17 @@ static const gchar *window_list_icon (int role)
 	id = GTK_STOCK_EXECUTE;
     } else if (role == OPEN_SESSION) {
 	id = GRETL_STOCK_ICONS;
-    } else if (role == PRINT) {
+    } else if (role == PRINT || role == SCRIPT_OUT) {
 	id = GTK_STOCK_JUSTIFY_LEFT;
     } else if (role == SSHEET) {
 	id = GRETL_STOCK_TABLE;
-    }
+    } 
 
     return id;
 }
 
 static int n_listed_windows;
-static GtkActionGroup *window_list;
+static GtkActionGroup *window_group;
 
 int get_n_listed_windows (void)
 {
@@ -181,9 +182,9 @@ void window_list_add (GtkWidget *w, int role)
     char *modlabel = NULL;
     gchar *aname;
 
-    if (window_list == NULL) {
-	/* create the window_list action group */
-	window_list = gtk_action_group_new("WindowList");
+    if (window_group == NULL) {
+	/* create the window list action group */
+	window_group = gtk_action_group_new("WindowList");
     }
 
     /* set up an action entry for window @w */
@@ -204,12 +205,12 @@ void window_list_add (GtkWidget *w, int role)
     entry.label = modlabel != NULL ? modlabel : label,
 
     /* add new action entry to group */
-    gtk_action_group_add_actions(window_list, &entry, 1, NULL);
+    gtk_action_group_add_actions(window_group, &entry, 1, NULL);
 
     /* attach callback to remove from window list */
     g_signal_connect(G_OBJECT(w), "destroy", 
 		     G_CALLBACK(window_list_remove), 
-		     window_list);
+		     window_group);
 
     n_listed_windows++;
 
@@ -229,12 +230,16 @@ static gint sort_window_items (gconstpointer a, gconstpointer b)
     windata_t *va = g_object_get_data(G_OBJECT(wa), "vwin");
     windata_t *vb = g_object_get_data(G_OBJECT(wb), "vwin");
 
-    /* sort main window first and parents before their
-       children; other than that we don't really care
+    /* sort main window first, icon view second, and parents 
+       before their children; other than that we don't 
+       really care
     */
 
     if (va == mdata) return -1;
     if (vb == mdata) return 1;
+
+    if (widget_is_iconview(wa)) return -1;
+    if (widget_is_iconview(wb)) return 1;
     
     if (va != NULL && vb != NULL) {
 	if (va == vb->gretl_parent) {
@@ -243,7 +248,7 @@ static gint sort_window_items (gconstpointer a, gconstpointer b)
 	} else if (vb == va->gretl_parent) {
 	    /* sort @b first */
 	    return 1;
-	} 
+	}
     }
     
     return 0;
@@ -353,7 +358,7 @@ void window_list_popup (GtkWidget *src, GdkEventButton *event, gpointer p)
     }
 
     if (n_listed_windows > 0) {
-	GList *wlist = gtk_action_group_list_actions(window_list);
+	GList *wlist = gtk_action_group_list_actions(window_group);
 	GList *list = wlist;
 	GtkWidget *item, *win = NULL;
 	GtkAction *action;
@@ -381,6 +386,16 @@ void window_list_popup (GtkWidget *src, GdkEventButton *event, gpointer p)
 
 	g_list_free(wlist);
 
+	if (n_listed_windows > 1) {
+	    /* add "cascade" menu item */
+	    item = gtk_menu_item_new_with_label(_("Arrange"));
+	    g_signal_connect(G_OBJECT(item), "activate", 
+			     G_CALLBACK(cascade_session_windows), 
+			     NULL);
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	}
+
 	if (event != NULL) {
 	    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
@@ -407,7 +422,7 @@ gboolean window_list_exit_check (void)
     gboolean ret = FALSE;
 
     if (n_listed_windows > 1) {
-	GList *list = gtk_action_group_list_actions(window_list);
+	GList *list = gtk_action_group_list_actions(window_group);
 	windata_t *vwin;
 	GtkWidget *w;
 
@@ -453,7 +468,7 @@ gboolean window_list_exit_check (void)
 void close_session_windows (void)
 {
     if (n_listed_windows > 1) {
-	GList *list = gtk_action_group_list_actions(window_list);
+	GList *list = gtk_action_group_list_actions(window_group);
 	windata_t *vwin;
 	GtkWidget *w;
 
@@ -480,12 +495,34 @@ void close_session_windows (void)
     }
 }
 
+void cascade_session_windows (void)
+{
+    if (n_listed_windows > 1) {
+	GList *list = gtk_action_group_list_actions(window_group);
+	GList *slist = g_list_sort(list, sort_window_items);
+	GtkWidget *w;
+	gint x = 50, y = 50;
+	gint d = 20;
+
+	while (slist) {
+	    w = window_from_action((GtkAction *) slist->data);
+	    gtk_window_move(GTK_WINDOW(w), x, y);
+	    gtk_window_present(GTK_WINDOW(w));
+	    x += d;
+	    y += d;
+	    slist = slist->next;
+	}
+
+	g_list_free(list);
+    }
+}
+
 windata_t *get_editor_for_file (const char *filename)
 {
     windata_t *ret = NULL;
 
     if (n_listed_windows > 1) {
-	GList *list = gtk_action_group_list_actions(window_list);
+	GList *list = gtk_action_group_list_actions(window_group);
 	windata_t *vwin;
 	GtkWidget *w;
 
@@ -534,7 +571,7 @@ real_get_browser_for_database (const char *filename, int code)
     windata_t *ret = NULL;
 
     if (n_listed_windows > 1) {
-	GList *list = gtk_action_group_list_actions(window_list);
+	GList *list = gtk_action_group_list_actions(window_group);
 	windata_t *vwin;
 	GtkWidget *w;
 
@@ -570,7 +607,7 @@ windata_t *get_viewer_for_data (const gpointer data)
     windata_t *ret = NULL;
 
     if (n_listed_windows > 1) {
-	GList *list = gtk_action_group_list_actions(window_list);
+	GList *list = gtk_action_group_list_actions(window_group);
 	windata_t *vwin;
 	GtkWidget *w;
 
@@ -593,7 +630,7 @@ windata_t *get_browser_for_role (int role)
     windata_t *ret = NULL;
 
     if (n_listed_windows > 1) {
-	GList *list = gtk_action_group_list_actions(window_list);
+	GList *list = gtk_action_group_list_actions(window_group);
 	windata_t *vwin;
 	GtkWidget *w;
 
@@ -621,7 +658,7 @@ GtkWidget *get_window_for_data (const gpointer data)
     */
 
     if (n_listed_windows > 1) {
-	GList *list = gtk_action_group_list_actions(window_list);
+	GList *list = gtk_action_group_list_actions(window_group);
 	GtkWidget *w;
 	gpointer p;
 
@@ -667,7 +704,7 @@ GtkWidget *get_window_for_plot (const char *plotfile)
     /* special for plot windows */
 
     if (n_listed_windows > 1) {
-	GList *list = gtk_action_group_list_actions(window_list);
+	GList *list = gtk_action_group_list_actions(window_group);
 	GtkWidget *w;
 	gchar *test;
 
@@ -690,7 +727,7 @@ int highest_numbered_variable_in_winstack (void)
     int m_vmax, vmax = 0;
 
     if (n_listed_windows > 1) {
-	GList *list = gtk_action_group_list_actions(window_list);
+	GList *list = gtk_action_group_list_actions(window_group);
 	windata_t *vwin;
 	GtkWidget *w;
 

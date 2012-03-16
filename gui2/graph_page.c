@@ -322,21 +322,40 @@ static int gnuplot_compile (const char *fname)
     char plotcmd[MAXLEN];
     int err = 0;
 
-# ifdef WIN32
+#ifdef G_OS_WIN32
     sprintf(plotcmd, "\"%s\" \"%s\"", gnuplot, fname);
-# else
+#else
     sprintf(plotcmd, "%s \"%s\"", gnuplot, fname);
-# endif
+#endif
 
     err = gretl_spawn(plotcmd);
 
     return err;
 }
 
+static double gp_fontscale = 1.0;
+
+static int graph_page_set_font_scale (const char *s)
+{
+    double x;
+
+    s += strspn(s, " ");
+    x = dot_atof(s);
+
+    if (x > 0.0 && x < 4.0) {
+	gp_fontscale = x;
+	return 0;
+    } else {
+	gretl_errmsg_sprintf("'%s': invalid fontscale", s);
+	return E_DATA;
+    }
+}
+
 static int gp_make_outfile (const char *gfname, int i, double scale)
 {
     int latin = 0;
     int pdfterm = 0;
+    int fontsize = 5;
     char *fname;
     FILE *fp, *fq;
     int err = 0;
@@ -369,12 +388,18 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 	fprintf(fq, "set encoding iso_8859_%d\n", latin);
     }
 
+    if (gp_fontscale != 1.0) {
+	fontsize *= gp_fontscale;
+	if (fontsize < 4) {
+	    fontsize = 4;
+	}
+    }
+
     gretl_push_c_numeric_locale();
     
     if (gpage.term == GP_TERM_PDF) {
 	if (pdfterm == GP_PDF_CAIRO) {
-	    /* FIXME font size? */
-	    fprintf(fq, "set term pdfcairo font \"sans,5\"%s", 
+	    fprintf(fq, "set term pdfcairo font \"sans,%d\"%s", fontsize,
 		    (gpage.mono)? " monochrome dashed" : " ");
 	} else {
 	    fprintf(fq, "set term pdf%s", (gpage.mono)? " monochrome dashed" : " color");
@@ -474,7 +499,7 @@ static int spawn_dvips (char *texsrc)
     return ret;
 }
 
-#endif
+#endif /* Windows or not */
 
 int dvips_compile (char *texshort)
 {
@@ -736,10 +761,10 @@ int save_graph_page (const char *fname)
 
 int graph_page_parse_line (const char *line)
 {
-    char cmdword[9];
+    char cmdword[16];
     int err = 0;
 
-    if (sscanf(line, "%*s %8s", cmdword) != 1) {
+    if (sscanf(line, "%*s %15s", cmdword) != 1) {
 	return E_PARSE;
     }
 
@@ -751,6 +776,10 @@ int graph_page_parse_line (const char *line)
 	if (gpage.ngraphs > 0) {
 	    clear_graph_page(0);
 	}
+    } else if (!strcmp(cmdword, "fontscale")) {
+	const char *s = strstr(line, "fontscale");
+
+	err = graph_page_set_font_scale(s + 9);
     }
 
     return err;

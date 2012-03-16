@@ -51,6 +51,8 @@ void maybe_close_window_for_data (const gpointer data,
 
 void close_session_windows (void);
 
+void cascade_session_windows (void);
+
 windata_t *vwin_new (int role, gpointer data);
 
 int highest_numbered_variable_in_winstack (void);

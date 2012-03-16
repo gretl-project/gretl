@@ -4568,10 +4568,17 @@
       </code>
 
       <para>
-	Also in script mode you can call for display of the graph page using
-	the command <lit>graphpg show</lit>, and can clear the page via
-	<lit>graphpg free</lit>.
+	Also in script mode you can call for display of the graph page
+	using the command <lit>graphpg show</lit>, and can clear the
+	page via <lit>graphpg free</lit>. In addition you can adjust
+	the scale of the font used in the graph page via <lit>graphpg
+	fontscale</lit> <repl>scale</repl>, where <repl>scale</repl>
+	is a multiplier (with a default of 1.0). Thus to make
+	the font size 50 percent bigger than the default you can do
       </para>
+      <code>
+	graphpg fontscale 1.5
+      </code>
 
       <para>
 	Note that on systems other than MS Windows, you may have to adjust the

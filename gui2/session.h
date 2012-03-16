@@ -59,6 +59,8 @@ void session_menu_state (gboolean s);
 
 int have_session_objects (void);
 
+int widget_is_iconview (GtkWidget *w);
+
 const char *get_session_dirname (void);
 
 int real_add_text_to_session (PRN *prn, const char *tname);
