@@ -66,7 +66,7 @@ ifeq ($(LN),)
   LN = ln -sf
 endif
 
-ifeq ($(have_gnome),2.0)
+ifeq ($(have_gnome),yes)
   query_install_gnome = install-gnome
   GNOMEDEF = -DDATADIR=\"$(gnome_prefix)/share\"
 endif

@@ -632,13 +632,21 @@ fi
 dnl Check for gnome, if we haven't been told not to
 if test "$build_gui" = "yes" && test "$try_gnome" = "yes" ; then
     PKG_CHECK_MODULES(GNOME, libgnome-2.0,
-       have_gnome="2.0"
+       have_gnome="yes"
        if test "${gnome_prefix}" = "NA" ; then
            gnome_prefix=`pkg-config --variable=prefix libgnome-2.0`
        fi,
-       echo "no"
        have_gnome="no"
-    )   
+    )
+    if test "$have_gnome" = "no" ; then
+      PKG_CHECK_MODULES(GNOME, gnome-desktop-3.0,
+         have_gnome="yes"
+         if test "${gnome_prefix}" = "NA" ; then
+           gnome_prefix=`pkg-config --variable=prefix gnome-desktop-3.0`
+         fi,
+         have_gnome="no"
+      )
+    fi
     AC_SUBST(have_gnome)
     AC_SUBST(gnome_prefix)
 fi
@@ -715,6 +723,7 @@ gretl.pc
 gui2/Makefile
 gui2/debug
 gnome/Makefile
+gnome/gretl.desktop 
 gnome/gretl.keys 
 cli/Makefile 
 cli/debug

@@ -17674,23 +17674,95 @@ fi
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-                echo "no"
-       have_gnome="no"
+                have_gnome="no"
 
 elif test $pkg_failed = untried; then
-	echo "no"
-       have_gnome="no"
+	have_gnome="no"
 
 else
 	GNOME_CFLAGS=$pkg_cv_GNOME_CFLAGS
 	GNOME_LIBS=$pkg_cv_GNOME_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	have_gnome="2.0"
+	have_gnome="yes"
        if test "${gnome_prefix}" = "NA" ; then
            gnome_prefix=`pkg-config --variable=prefix libgnome-2.0`
        fi
 fi
+    if test "$have_gnome" = "no" ; then
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GNOME" >&5
+$as_echo_n "checking for GNOME... " >&6; }
+
+if test -n "$GNOME_CFLAGS"; then
+    pkg_cv_GNOME_CFLAGS="$GNOME_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gnome-desktop-3.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gnome-desktop-3.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GNOME_CFLAGS=`$PKG_CONFIG --cflags "gnome-desktop-3.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$GNOME_LIBS"; then
+    pkg_cv_GNOME_LIBS="$GNOME_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gnome-desktop-3.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gnome-desktop-3.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GNOME_LIBS=`$PKG_CONFIG --libs "gnome-desktop-3.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        GNOME_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "gnome-desktop-3.0" 2>&1`
+        else
+	        GNOME_PKG_ERRORS=`$PKG_CONFIG --print-errors "gnome-desktop-3.0" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$GNOME_PKG_ERRORS" >&5
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                have_gnome="no"
+
+elif test $pkg_failed = untried; then
+	have_gnome="no"
+
+else
+	GNOME_CFLAGS=$pkg_cv_GNOME_CFLAGS
+	GNOME_LIBS=$pkg_cv_GNOME_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	have_gnome="yes"
+         if test "${gnome_prefix}" = "NA" ; then
+           gnome_prefix=`pkg-config --variable=prefix gnome-desktop-3.0`
+         fi
+fi
+    fi
 
 
 fi
@@ -17975,7 +18047,7 @@ _ACEOF
 
 
 CFLAGS="$orig_CFLAGS"
-ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/debug gnome/Makefile gnome/gretl.keys cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile osx/Makefile osx/fixlinks.sh redhat/gretl.spec"
+ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/debug gnome/Makefile gnome/gretl.desktop gnome/gretl.keys cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile osx/Makefile osx/fixlinks.sh redhat/gretl.spec"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -18983,6 +19055,7 @@ do
     "gui2/Makefile") CONFIG_FILES="$CONFIG_FILES gui2/Makefile" ;;
     "gui2/debug") CONFIG_FILES="$CONFIG_FILES gui2/debug" ;;
     "gnome/Makefile") CONFIG_FILES="$CONFIG_FILES gnome/Makefile" ;;
+    "gnome/gretl.desktop") CONFIG_FILES="$CONFIG_FILES gnome/gretl.desktop" ;;
     "gnome/gretl.keys") CONFIG_FILES="$CONFIG_FILES gnome/gretl.keys" ;;
     "cli/Makefile") CONFIG_FILES="$CONFIG_FILES cli/Makefile" ;;
     "cli/debug") CONFIG_FILES="$CONFIG_FILES cli/debug" ;;
@@ -21349,6 +21422,7 @@ do
     "gui2/Makefile") CONFIG_FILES="$CONFIG_FILES gui2/Makefile" ;;
     "gui2/debug") CONFIG_FILES="$CONFIG_FILES gui2/debug" ;;
     "gnome/Makefile") CONFIG_FILES="$CONFIG_FILES gnome/Makefile" ;;
+    "gnome/gretl.desktop") CONFIG_FILES="$CONFIG_FILES gnome/gretl.desktop" ;;
     "gnome/gretl.keys") CONFIG_FILES="$CONFIG_FILES gnome/gretl.keys" ;;
     "cli/Makefile") CONFIG_FILES="$CONFIG_FILES cli/Makefile" ;;
     "cli/debug") CONFIG_FILES="$CONFIG_FILES cli/debug" ;;

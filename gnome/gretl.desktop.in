@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=gretl
+Comment=Econometrics program
+Exec=@prefix@/bin/gretl %f
+Icon=@gnome_prefix@/share/pixmaps/gretl.xpm
+Terminal=0
+Type=Application
+Categories=Application;Science;Education;Econometrics;
+

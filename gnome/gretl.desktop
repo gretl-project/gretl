@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=gretl
-Comment=Econometrics program
-Exec=gretl %f
-Icon=gretl.xpm
-Terminal=0
-Type=Application
-Categories=Application;Science;Econometrics
-
