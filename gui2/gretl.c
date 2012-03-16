@@ -172,7 +172,7 @@ char Rcommand[MAXSTR] = "/usr/X11R6/bin/xterm -e R";
 #else
 char Browser[MAXSTR] = "mozilla";
 char calculator[MAXSTR] = "xcalc";
-char latex[MAXSTR] = "latex";
+char latex[MAXSTR] = "pdflatex";
 char viewdvi[MAXSTR] = "xdvi";
 char viewpdf[MAXSTR] = "acroread";
 char viewps[MAXSTR] = "gv";

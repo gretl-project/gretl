@@ -52,15 +52,16 @@ output, typically using the program \app{dvips} to generate a
 PostScript file.  If the PDF route is taken, the output is ready for
 printing without any further processing.
 
-On the MS Windows and Mac OS X platforms, \app{gretl} calls
-\app{pdflatex} to process the source file, and expects the operating
-system to be able to find the default viewer for PDF output; DVI is
-not supported.  On GNU/Linux the default is to take the DVI route, but
-if you prefer to use PDF you can do the following: select the menu
-item ``Tools, Preferences, General'' then the ``Programs'' tab.  Find
-the item titled ``Command to compile TeX files'', and set this to
-\texttt{pdflatex}.  Make sure the ``Command to view PDF files'' is set
-to something appropriate.  
+On MS Windows and Mac OS X, \app{gretl} calls \app{pdflatex} to
+process the source file, and expects the operating system to be able
+to find the default viewer for PDF output; DVI is not supported.  On
+GNU/Linux the default is also to produce PDF, but if you prefer the
+DVI/PostScript route you can do the following: select the menu item
+``Tools, Preferences, General'' then the ``Programs'' tab.  Find the
+item titled ``Command to compile TeX files'', and set this to
+\texttt{latex}.  In the same window, Make sure the commands to view
+DVI and PostScript files are set to something appropriate for your
+system.
 
 \section{\TeX-related menu items}
 \label{tex-menus}
