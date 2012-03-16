@@ -471,7 +471,7 @@ void close_session_windows (void)
 		   viewer should be closed */
 		tabwin_close_models_viewer(w);
 	    } else {
-		gtk_widget_destroy(vwin->main);
+		gtk_widget_destroy(w);
 	    }
 	    list = list->next;
 	}
