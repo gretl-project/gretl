@@ -229,12 +229,31 @@ double plot_get_ymin (png_plot *plot)
 
 /* apparatus for graph toolbar */
 
+static void gp_button_sizing (GtkWidget *w)
+{
+    static int style_done;
+
+    gtk_widget_set_name(w, "gp_button");
+
+    if (!style_done) {
+	gtk_rc_parse_string("style \"gp-style\"\n{\n"
+			    "  GtkWidget::focus-padding = 1\n"
+			    "  GtkWidget::focus-line-width = 0\n"
+			    "  xthickness = 2\n"
+			    "  ythickness = 1\n"
+			    "}\n"
+			    "widget \"*.gp_button\" style \"gp-style\"");
+	style_done = 1;
+    }
+}
+
 static GtkWidget *small_tool_button (GretlToolItem *item,
 				     png_plot *plot)
 {
     GtkWidget *img, *button = gtk_button_new();
 
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    gp_button_sizing(button);
     img = gtk_image_new_from_stock(item->icon, GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_widget_set_tooltip_text(GTK_WIDGET(button), _(item->tip));
@@ -263,7 +282,13 @@ static void show_pdf_callback (GtkWidget *w, png_plot *plot)
     graph_display_pdf(plot->spec);
 }
 
+static void close_plot_callback (GtkWidget *w, png_plot *plot)
+{
+    gtk_widget_destroy(plot->shell);
+}
+
 static GretlToolItem plotbar_items[] = {
+    { N_("Close"),       GTK_STOCK_CLOSE,     G_CALLBACK(close_plot_callback), 0 },
     { N_("Windows"),     GRETL_STOCK_COMPASS, G_CALLBACK(window_list_popup), 0 },
     { N_("Edit"),        GTK_STOCK_EDIT,      G_CALLBACK(graph_edit_callback), 0 },
     { N_("Zoom..."),     GTK_STOCK_ZOOM_IN,   G_CALLBACK(graph_zoom_callback), 0 },
