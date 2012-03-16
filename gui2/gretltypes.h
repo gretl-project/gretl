@@ -42,6 +42,7 @@
 #define GRETL_STOCK_DB      "gretl-db"
 #define GRETL_STOCK_GRETL   "gretl-gretl"
 #define GRETL_STOCK_TABLE   "gretl-table"
+#define GRETL_STOCK_PAGE    "gretl-page"
 
 typedef enum {
     VWIN_HELP_ACTIVE     = 1 << 0,

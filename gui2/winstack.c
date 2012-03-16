@@ -90,7 +90,7 @@ static const gchar *window_list_icon (int role)
     } else if (role == OPEN_SESSION) {
 	id = GRETL_STOCK_ICONS;
     } else if (role == PRINT || role == SCRIPT_OUT) {
-	id = GTK_STOCK_JUSTIFY_LEFT;
+	id = GRETL_STOCK_PAGE;
     } else if (role == SSHEET) {
 	id = GRETL_STOCK_TABLE;
     } 
@@ -212,6 +212,10 @@ void window_list_add (GtkWidget *w, int role)
 		     G_CALLBACK(window_list_remove), 
 		     window_group);
 
+    /* attach time to window */
+    g_object_set_data(G_OBJECT(w), "time", 
+		      GUINT_TO_POINTER(time(NULL)));
+
     n_listed_windows++;
 
     free(modlabel);
@@ -227,31 +231,22 @@ static gint sort_window_items (gconstpointer a, gconstpointer b)
 {
     GtkWidget *wa = window_from_action((GtkAction *) a);
     GtkWidget *wb = window_from_action((GtkAction *) b);
-    windata_t *va = g_object_get_data(G_OBJECT(wa), "vwin");
-    windata_t *vb = g_object_get_data(G_OBJECT(wb), "vwin");
+    guint ta, tb;
 
-    /* sort main window first, icon view second, and parents 
-       before their children; other than that we don't 
-       really care
+    /* sort main window first, icon view second, otherwise
+       by time when the window was created
     */
 
-    if (va == mdata) return -1;
-    if (vb == mdata) return 1;
+    if (wa == mdata->main) return -1;
+    if (wb == mdata->main) return 1;
 
     if (widget_is_iconview(wa)) return -1;
     if (widget_is_iconview(wb)) return 1;
-    
-    if (va != NULL && vb != NULL) {
-	if (va == vb->gretl_parent) {
-	    /* sort @a first */
-	    return -1;
-	} else if (vb == va->gretl_parent) {
-	    /* sort @b first */
-	    return 1;
-	}
-    }
-    
-    return 0;
+
+    ta = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wa), "time"));
+    tb = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wb), "time"));
+
+    return ta - tb;
 }
 
 /* use real UTF-8 bullet character if possible, otherwise asterisk */
@@ -502,7 +497,7 @@ void cascade_session_windows (void)
 	GList *slist = g_list_sort(list, sort_window_items);
 	GtkWidget *w;
 	gint x = 50, y = 50;
-	gint d = 20;
+	gint d = 30;
 
 	while (slist) {
 	    w = window_from_action((GtkAction *) slist->data);
