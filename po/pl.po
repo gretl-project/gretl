@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-06 16:13-0500\n"
-"PO-Revision-Date: 2012-01-29 08:30-0500\n"
+"PO-Revision-Date: 2012-03-16 16:30-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -1982,7 +1982,7 @@ msgstr "'%s' nie jest zmienną zero-jedynkową"
 
 #: lib/src/discrete.c:2987
 msgid "Perfect prediction obtained: no MLE exists"
-msgstr ""
+msgstr "Perfect prediction obtained: no MLE exists"
 
 #: lib/src/discrete.c:3150
 msgid "Illegal non-positive value of the dependent variable"
@@ -4897,7 +4897,7 @@ msgstr "Nadmiarowa lista instrumentów:"
 #: lib/src/modelprint.c:1848 lib/src/modelprint.c:1883 gui2/model_table.c:1116
 #: gui2/model_table.c:1210 gui2/selector.c:3979
 msgid "Dependent variable"
-msgstr "Zmienna zależna"
+msgstr "Zmienna zależna (Y)"
 
 #: lib/src/modelprint.c:1557
 msgid "Estimated using X-12-ARIMA"
@@ -4996,9 +4996,8 @@ msgid "%s, using %d observations"
 msgstr "Estymacja %s, z wykorzystaniem %d obserwacji"
 
 #: lib/src/modelprint.c:1791
-#, fuzzy
 msgid "Using Nerlove's transformation"
-msgstr "Bez transformacji logarytmicznej"
+msgstr "Wykorzystano transformację Nerlove'a"
 
 #: lib/src/modelprint.c:1795
 #, c-format
@@ -5617,6 +5616,8 @@ msgid ""
 "\n"
 "Error: Hessian non-negative definite? (err = %d); dropping back to OPG\n"
 msgstr ""
+"\n"
+"Błąd: Hessian non-negative definite? (err = %d); dropping back to OPG\n"
 
 #: lib/src/nls.c:2457 lib/src/nls.c:2558
 msgid "Invalid NLS specification"
@@ -5954,9 +5955,8 @@ msgid "center"
 msgstr "pośrodku"
 
 #: lib/src/plotspec.c:1584
-#, fuzzy
 msgid "annual growth"
-msgstr "roczne"
+msgstr "roczny wzrost"
 
 #: lib/src/plotspec.c:1923
 msgid "Dates file does not conform to the specification"
@@ -6622,7 +6622,7 @@ msgstr "Zmienne endogeniczne:"
 
 #: lib/src/system.c:309
 msgid "Predetermined variables:"
-msgstr "Zmienne deterministyczne:"
+msgstr "Zmienne endogeniczne opóźnione:"
 
 #: lib/src/system.c:318
 msgid "Exogenous variables:"
@@ -9948,9 +9948,8 @@ msgid "gretl: graph"
 msgstr "gretl: wykres"
 
 #: gui2/gpt_control.c:4837
-#, fuzzy
 msgid " Right-click on graph for menu"
-msgstr "  Kliknij na wykres a uzyskasz menu"
+msgstr "  Kliknij na wykres prawym przypiskiem myszy a uzyskasz menu"
 
 #: gui2/gpt_control.c:5094
 msgid "Couldn't find a usable terminal program"
@@ -10094,7 +10093,7 @@ msgstr "NBER recessions"
 
 #: gui2/gpt_dialog.c:2022 gui2/selector.c:4006
 msgid "Set as default"
-msgstr "Ustaw jako domyślną zmienną (Y)"
+msgstr "Ustaw jako domyślną"
 
 #: gui2/gpt_dialog.c:2077 gui2/gpt_dialog.c:2443
 #, c-format
@@ -11235,7 +11234,7 @@ msgstr "_Przewodnik użytkownika - Manual PDF"
 
 #: gui2/gretl.c:1610
 msgid "_Keyboard shortcuts"
-msgstr ""
+msgstr "_Skróty klawiszowe"
 
 #: gui2/gretl.c:1611
 msgid "Check for _updates"
@@ -11254,14 +11253,12 @@ msgid "Main window"
 msgstr "Okno główne"
 
 #: gui2/gretl.c:2173
-#, fuzzy
 msgid "Enter name for list of series"
-msgstr "Wprowadź nazwę i formułę wyliczania nowej zmiennej"
+msgstr "Wprowadź nazwę dla listy zmiennych"
 
 #: gui2/gretl.c:2178
-#, fuzzy
 msgid "gretl: name list"
-msgstr "gretl: nazwa kolumny"
+msgstr "gretl: nazwa listy"
 
 #: gui2/gretl.c:2230
 msgid "sample status"
@@ -11804,9 +11801,8 @@ msgid "gretl: command log"
 msgstr "gretl: dziennik poleceń"
 
 #: gui2/gui_utils.c:1517
-#, fuzzy
 msgid "gretl: untitled"
-msgstr "gretl: zapisanie pakietu funkcji"
+msgstr "gretl: bez nazwy"
 
 #: gui2/gui_utils.c:1523 gui2/session.c:509
 msgid "gretl: session notes"
@@ -13843,11 +13839,11 @@ msgstr "Losowe efekty"
 
 #: gui2/selector.c:5654
 msgid "Swamy-Arora"
-msgstr ""
+msgstr "Swamy-Arora"
 
 #: gui2/selector.c:5655
 msgid "Nerlove"
-msgstr ""
+msgstr "Nerlove"
 
 #: gui2/selector.c:5695
 msgid "Maximum likelihood estimation"
@@ -14388,7 +14384,7 @@ msgstr "Pokaż ikony automatycznie"
 
 #: gui2/settings.c:163
 msgid "Script editor uses tabs"
-msgstr ""
+msgstr "Okno edycji skryptu z zakładkami"
 
 #: gui2/settings.c:165
 msgid "Prompt to save session"
@@ -14807,12 +14803,11 @@ msgstr "Dane nie mogą być modyfikowane teraz"
 #: gui2/tabwin.c:48
 #, c-format
 msgid "Editing %d scripts: really quit?"
-msgstr ""
+msgstr "Edytujesz %d skryptów. Czy chcesz zakończyć edycję?"
 
 #: gui2/tabwin.c:49 gui2/tabwin.c:256
-#, fuzzy
 msgid "gretl: script editor"
-msgstr "skrypt gretla"
+msgstr "gretl: edytor skryptu gretla"
 
 #: gui2/textbuf.c:288
 msgid "No redo information available"
@@ -16313,36 +16308,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "gretl: command script"
-#~ msgstr "gretl: polecenia skryptu"
-
-#~ msgid "Parse error in '%s'"
-#~ msgstr "Błędna analiza w '%s'"
-
-#~ msgid "_Refresh window"
-#~ msgstr "_Odśwież okno danych"
-
-#~ msgid "Hurst exponent"
-#~ msgstr "Wykładnik Hursta"
-
-#~ msgid "WARNING: binary data read error at var %d"
-#~ msgstr "UWAGA: błędny odczyt danych dla zmiennej %d"
-
-#~ msgid "WARNING: ascii data read error at obs %d"
-#~ msgstr "UWAGA: błędny odczyt danych dla obserwacji %d"
-
-#~ msgid "WARNING: failed to read case marker for obs %d"
-#~ msgstr "UWAGA: błędny odczyt danych dla obserwacji %d"
-
-#~ msgid "Failed to store data comments\n"
-#~ msgstr "Błąd w zapisie komentarzy\n"
-
-#~ msgid "Failed to construct Hessian matrix"
-#~ msgstr "Błąd w konstruowaniu macierzy Hessian"
-
-#~ msgid "Iteration %d: log likelihood = NA"
-#~ msgstr "Iteracja %d: Logarytm wiarygodności = NA"
-
-#~ msgid "Iteration %d: log likelihood = %#.12g"
-#~ msgstr "Iteracja %d: Logarytm wiarygodności = %#.12g"
