@@ -317,7 +317,7 @@ FILE *gretl_mktemp (char *template, const char *mode)
 	fp = fdopen(fd, mode);
     }
 
-#if 1
+#if 0
     fprintf(stderr, "gretl_mktemp: name='%s', fd=%d, fp=%p\n",
 	    template, fd, (void *) fp);
 #endif
@@ -543,6 +543,11 @@ int gretl_rename (const char *oldpath, const char *newpath)
 	    err = rename(oldpath, newconv);
 	}
     }
+
+#if 0
+    fprintf(stderr, "oldpath='%s'\nnewpath='%s'\n"
+	    "err=%d\n", oldpath, newpath, err);
+#endif
 
     if (oldconv != NULL || newconv != NULL) {
 	g_free(oldconv);

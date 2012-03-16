@@ -510,8 +510,6 @@ static int real_archive_files (const char *targ, const char **filenames,
     int err = 0;
     zfile zf;
 
-    fprintf(stderr, "*** real_archive_files\n");
-
     *tempzip = '\0';
 
     if (level < 0 || level > 9) {

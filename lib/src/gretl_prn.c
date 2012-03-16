@@ -407,8 +407,8 @@ int gretl_print_rename_file (PRN *prn, const char *oldpath,
 	return E_DATA;
     }
 
-#if PRN_DEBUG
-    fprintf(stderr, "gretl_print_rename_file, prn at %p::\n oldpath='%s'\n"
+#if 1 || PRN_DEBUG
+    fprintf(stderr, "gretl_print_rename_file, prn at %p:\n oldpath='%s'\n"
 	    " newpath='%s'\n prn->fp=%p (closing)\n", (void *) prn,
 	    oldpath, newpath, (void *) prn->fp);
     fprintf(stderr, " (old prn->fname = '%s')\n", prn->fname);
@@ -417,10 +417,6 @@ int gretl_print_rename_file (PRN *prn, const char *oldpath,
     fclose(prn->fp);
     prn->fp = NULL;
 
-#if PRN_DEBUG
-    fprintf(stderr, "gretl_print_rename_file: fp closed\n");
-#endif
-
     if (oldpath == NULL && prn->fname != NULL) {
 	/* renaming from tempfile */
 	err = gretl_rename(prn->fname, newpath);
@@ -428,10 +424,12 @@ int gretl_print_rename_file (PRN *prn, const char *oldpath,
 	err = gretl_rename(oldpath, newpath);
     }
 
-    if (!err) {
+    if (err) {
+	fprintf(stderr, "%s\n", gretl_errmsg_get());
+    } else {
 	/* re-open the stream under its new name */
 	prn->fp = gretl_fopen(newpath, "a");
-#if PRN_DEBUG
+#if 1 || PRN_DEBUG
 	fprintf(stderr, "gretl_print_rename_file: new fp=%p\n", prn->fp);
 #endif
 	if (prn->fname != NULL) {
@@ -801,7 +799,8 @@ static int realloc_prn_buffer (PRN *prn)
 
 #if PRN_DEBUG
     fprintf(stderr, "%d bytes left\ndoing realloc(%p, %d)\n",
-	    prn->bufsize - prn->blen, prn->buf, 2 * prn->bufsize);
+	    (int) (prn->bufsize - prn->blen), prn->buf, 
+	    (int) (2 * prn->bufsize));
 #endif
 
     newlen = prn->bufsize * 2;
@@ -814,7 +813,7 @@ static int realloc_prn_buffer (PRN *prn)
 	prn->buf = tmp;
 #if PRN_DEBUG
 	fprintf(stderr, "realloc: prn->buf is %d bytes at %p\n",
-		prn->bufsize, (void *) prn->buf);
+		(int) prn->bufsize, (void *) prn->buf);
 #endif
     }
 
@@ -831,8 +830,8 @@ static int pprintf_init (PRN *prn)
     prn->buf = malloc(prn->bufsize);
 
 #if PRN_DEBUG
-    fprintf(stderr, "pprintf: malloc'd %d bytes at %p\n", prn->bufsize,  
-	    (void *) prn->buf); 
+    fprintf(stderr, "pprintf: malloc'd %d bytes at %p\n", 
+	    (int) prn->bufsize, (void *) prn->buf); 
 #endif
 
     if (prn->buf == NULL) {
@@ -1313,7 +1312,7 @@ int gretl_print_alloc (PRN *prn, size_t s)
 	    memset(prn->buf + prn->blen, 0, 1);
 #if PRN_DEBUG
 	    fprintf(stderr, "gretl_print_alloc: realloc'd prn->buf "
-		    "to %d bytes\n", newlen);
+		    "to %d bytes\n", (int) newlen);
 #endif
 	}
     }

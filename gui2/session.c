@@ -1889,7 +1889,6 @@ int save_session (char *fname)
     }
     
     if (!err) {
-	fprintf(stderr, "making zipfile\n");
 	gretl_make_zipfile = gui_get_plugin_function("gretl_make_zipfile", 
 						     &handle);
 	if (gretl_make_zipfile == NULL) {

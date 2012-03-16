@@ -85,9 +85,7 @@ int add_filenames (const char *fname, zfile *zf)
     struct stat s; 
     int err = 0;
 
-    fprintf(stderr, "add_filenames: '%s'\n", fname);
-
-    if (lsstat(fname, &s, zf)) {
+     if (lsstat(fname, &s, zf)) {
 	/* Not a file or directory */
 	trace(2, "add_filenames: ignoring '%s'\n", fname);
 	return 0; /* ZE_MISS? */

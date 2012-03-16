@@ -296,17 +296,23 @@ void set_session_log (const char *dirname, int code)
 #endif
 
     if (code == LOG_SAVE) {
-	strcpy(tmp, dirname);
-	strcat(tmp, "session.inp");
-	if (strcmp(logname, tmp)) {
-	    if (logprn != NULL) {
-		err = gretl_print_rename_file(logprn, logname, tmp);
-		if (err) {
-		    free_command_stack();
+	if (gretl_print_has_tempfile(logprn)) {
+	    /* if logprn is not a tempfile-prn, it will already
+	       have been renamed, via the renaming of the
+	       session directory on save
+	    */
+	    strcpy(tmp, dirname);
+	    strcat(tmp, "session.inp");
+	    if (strcmp(logname, tmp)) {
+		if (logprn != NULL) {
+		    err = gretl_print_rename_file(logprn, logname, tmp);
+		    if (err) {
+			free_command_stack();
+		    }
 		}
+		strcpy(logname, tmp);
+		session_open = 1;
 	    }
-	    strcpy(logname, tmp);
-	    session_open = 1;
 	}
     } else if (code == LOG_OPEN) {
 	free_command_stack();
