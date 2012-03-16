@@ -293,7 +293,7 @@ static int maybe_adjust_cairo (char *line)
     char *s = line + 12;
     int ret = 0;
 
-    if (!strncmp(s, "cairo", 5)) {
+     if (!strncmp(s, "cairo", 5)) {
 	if (gnuplot_png_terminal() != GP_PNG_CAIRO) {
 	    /* drop back to non-cairo PNG term */
 	    shift_string_left(s + 5, 5);
@@ -302,10 +302,39 @@ static int maybe_adjust_cairo (char *line)
     } else if (gnuplot_png_terminal() == GP_PNG_CAIRO &&
 	       strlen(line) < 512 - 5) {
 	/* substitute the preferred cairo PNG term */
-	char tmp[512];
+	char *p, tmp[512];
 
 	strcpy(tmp, "set term pngcairo");
-	strcat(tmp, s);
+	s += strspn(s, " ");
+	if (!strncmp(s, "truecolor ", 10)) {
+	    /* invalid */
+	    s += 10;
+	}
+	if (!strncmp(s, "font", 4)) {
+	    /* attempt to fix up old gnuplot font spec */
+	    char fname[32], fsize[6];
+
+	    s += 4;
+	    s += strspn(s, " ");
+	    if (*s != '"') {
+		if (sscanf(s, "%31s %5s", fname, fsize) == 2) {
+		    strcat(tmp, " font \"");
+		    strcat(tmp, fname);
+		    strcat(tmp, ",");
+		    strcat(tmp, fsize);
+		    strcat(tmp, "\" ");
+		}
+	    }
+	    p = strstr(s, " size ");
+	    if (p != NULL) {
+		strcat(tmp, p + 1);
+	    } else {
+		strncat(tmp, "\n", 1);
+	    }
+	} else {
+	    /* hope for the best */
+	    strcat(tmp, s);
+	}
 	strcpy(line, tmp);
 	ret = 1;
     }
