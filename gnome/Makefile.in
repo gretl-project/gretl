@@ -36,7 +36,7 @@ install-images:
 
 install-misc:
 	$(tooldir)/mkinstalldirs $(desktopdir)
-	$(INSTALL_DATA) $(topsrc)/gnome/gretl.desktop $(desktopdir)
+	$(INSTALL_DATA) gretl.desktop $(desktopdir)
 	$(tooldir)/mkinstalldirs $(mimedir)
 	$(INSTALL_DATA) $(topsrc)/gnome/gretl.mime $(mimedir)
 	$(INSTALL_DATA) gretl.keys $(mimedir)
