@@ -547,7 +547,12 @@ int restore_full_sample (DATASET *dset, ExecState *state)
 	return E_NODATA;
     }
 
+#if 0 
+    /* 2012-03-18: this can mask errors in functions in which
+       sub-sampling occurs, making script debugging difficult 
+    */
     gretl_error_clear();
+#endif
 
     if (!complex_subsampled()) {
 	int t1min, t2max;
