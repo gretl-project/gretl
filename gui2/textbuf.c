@@ -2641,7 +2641,14 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 			 vwin);
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
-    }
+    } else if (window_is_redockable(vwin)) {
+	item = gtk_menu_item_new_with_label(_("Move to tabbed window"));
+	g_signal_connect(G_OBJECT(item), "activate",
+			 G_CALLBACK(redock_tabbed_viewer),
+			 vwin);
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+    }	
 
     return pmenu;
 }

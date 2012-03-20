@@ -809,7 +809,6 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
-
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 
     vwin->vbox = gtk_vbox_new(FALSE, 4);
@@ -860,9 +859,8 @@ void vwin_pack_toolbar (windata_t *vwin)
 	if (window_is_tab(vwin)) {
 	    /* here we're re-packing vwin->mbar: move it up top */
 	    gtk_box_reorder_child(GTK_BOX(vwin->vbox), hbox, 0);
-	} else {
-	    gtk_widget_show_all(hbox);
 	}
+	gtk_widget_show_all(hbox);
     }
 }
 
