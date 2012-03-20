@@ -481,7 +481,9 @@ else
       else
         GPMAJOR=`echo $GPVERSION | cut -c1 2>/dev/null`
         GPMINOR=`echo $GPVERSION | cut -c3 2>/dev/null`
-        if test $GPMAJOR -eq 4 && test $GPMINOR -gt 1 ; then
+        if test $GPMAJOR -gt 4 ; then
+          AC_MSG_RESULT(yes)
+        elif test $GPMAJOR -eq 4 && test $GPMINOR -ge 2 ; then
           AC_MSG_RESULT(yes)
         else
           have_gnuplot=no

@@ -351,11 +351,39 @@ static int graph_page_set_font_scale (const char *s)
     }
 }
 
+static int gp_pdfcairo_fontsize (void)
+{
+#ifdef G_OS_WIN32
+    int basesize = 10;
+#else
+    static int basesize;
+#endif
+    int fontsize;
+
+#ifndef G_OS_WIN32
+    if (basesize == 0) {
+	double gpver = gnuplot_get_version();
+
+	basesize = (gpver > 4.4)? 10 : 5;
+    }
+#endif
+
+    if (gp_fontscale != 1.0) {
+	fontsize = basesize * gp_fontscale;
+	if (fontsize < 4) {
+	    fontsize = 4;
+	}
+    } else {
+	fontsize = basesize;
+    }
+
+    return fontsize;
+}
+
 static int gp_make_outfile (const char *gfname, int i, double scale)
 {
     int latin = 0;
     int pdfterm = 0;
-    int fontsize = 5;
     char *fname;
     FILE *fp, *fq;
     int err = 0;
@@ -388,17 +416,12 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 	fprintf(fq, "set encoding iso_8859_%d\n", latin);
     }
 
-    if (gp_fontscale != 1.0) {
-	fontsize *= gp_fontscale;
-	if (fontsize < 4) {
-	    fontsize = 4;
-	}
-    }
-
     gretl_push_c_numeric_locale();
     
     if (gpage.term == GP_TERM_PDF) {
 	if (pdfterm == GP_PDF_CAIRO) {
+	    int fontsize = gp_pdfcairo_fontsize();
+
 	    fprintf(fq, "set term pdfcairo font \"sans,%d\"%s", fontsize,
 		    (gpage.mono)? " monochrome dashed" : " ");
 	} else {

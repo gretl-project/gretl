@@ -118,10 +118,29 @@ static void set_pdf_ps_dims (struct pdf_ps_saver *s, GPT_SPEC *spec)
     s->pheight = h;
 }
 
+#ifndef G_OS_WIN32
+static void pdffontsize_init (void)
+{
+    static int basesize;
+
+    if (basesize == 0) {
+	double gpver = gnuplot_get_version();
+
+	pdffontsize = (gpver > 4.4)? 10 : 5;
+    }
+}
+#endif
+
 static void saver_init (struct pdf_ps_saver *s,
 			GtkWidget *w,
 			GPT_SPEC *spec)
 {
+#ifndef G_OS_WIN32
+    if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
+	pdffontsize_init();
+    }
+#endif
+
     s->dialog = w;
     s->spec = spec;
     s->pdfcairo = 0;
@@ -136,7 +155,7 @@ static void saver_init (struct pdf_ps_saver *s,
     set_pdf_ps_dims(s, spec);
 
     if (!s->stdsize) {
-	s->pdffontsize = 8;
+	s->pdffontsize *= 0.8;
     } 
 
     if (spec->termtype == GP_TERM_PDF && 

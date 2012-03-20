@@ -320,6 +320,7 @@ void gnuplot_png_set_use_aa (int s);
 
 #ifndef WIN32
 int gnuplot_has_wxt (void);
+double gnuplot_get_version (void);
 #endif
 
 #endif /* GRAPHING_H */

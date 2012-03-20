@@ -155,7 +155,7 @@ int gnuplot_test_command (const char *cmd)
 	NULL
     };
 
-    if (*gnuplot_path == 0) {
+    if (*gnuplot_path == '\0') {
 	strcpy(gnuplot_path, gretl_gnuplot_path());
     }
 
@@ -223,6 +223,50 @@ int gnuplot_test_command (const char *cmd)
 # endif
 
     return ret;
+}
+
+double gnuplot_get_version (void)
+{
+    static double vnum = 0.0;
+
+    if (vnum == 0.0) {
+	gboolean ok;
+	gchar *sout = NULL;
+	gchar *argv[] = {
+	    NULL,
+	    NULL,
+	    NULL
+	};
+
+	if (*gnuplot_path == '\0') {
+	    strcpy(gnuplot_path, gretl_gnuplot_path());
+	}
+
+	argv[0] = gnuplot_path;
+	argv[1] = "--version";
+
+	ok = g_spawn_sync (NULL,
+			   argv,
+			   NULL,
+			   G_SPAWN_SEARCH_PATH |
+			   G_SPAWN_STDERR_TO_DEV_NULL,
+			   NULL,
+			   NULL,
+			   &sout,
+			   NULL,
+			   NULL,
+			   NULL);
+
+	if (ok && sout != NULL) {
+	    if (!strncmp(sout, "gnuplot ", 8)) {
+		/* e.g. "gnuplot 4.7 patchlevel 0" */
+		vnum = dot_atof(sout + 8);
+	    }
+	    g_free(sout);
+	}
+    }
+
+    return vnum;
 }
 
 #endif /* !WIN32 */
@@ -947,7 +991,15 @@ const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags)
     static char pdf_term_line[128];
 
     if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
+#ifdef G_OS_WIN32
 	strcpy(pdf_term_line, "set term pdfcairo font \"sans,10\"");
+#else
+	if (gnuplot_get_version() > 4.4) {
+	    strcpy(pdf_term_line, "set term pdfcairo font \"sans,10\"");
+	} else {
+	    strcpy(pdf_term_line, "set term pdfcairo font \"sans,5\"");
+	}
+#endif
     } else {
 	strcpy(pdf_term_line, "set term pdf");
     }
