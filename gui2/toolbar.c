@@ -1009,6 +1009,14 @@ GtkWidget *build_text_popup (windata_t *vwin)
 	}
     }
 
+    if (vwin->role != EDIT_SCRIPT) {
+	if (window_is_undockable(vwin)) {
+	    add_undock_popup_item(pmenu, vwin);
+	} else if (window_is_redockable(vwin)) {
+	    add_redock_popup_item(pmenu, vwin);
+	}
+    }
+
     return pmenu;
 }
 

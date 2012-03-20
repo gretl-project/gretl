@@ -22,7 +22,7 @@
 #include "textbuf.h"
 #include "tabwin.h"
 
-#define TDEBUG 1
+#define TDEBUG 0
 
 typedef struct tabwin_t_  tabwin_t;
 
@@ -768,13 +768,15 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     vwin->main = vwin->topmain = NULL;
 
     /* remove signals and data from hbox (ex vwin->main) */
-    g_object_set_data(G_OBJECT(hbox), "vwin", NULL);
+    g_object_steal_data(G_OBJECT(hbox), "vwin");
     handler_id = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(hbox),
 						    "destroy-id"));
     g_signal_handler_disconnect(hbox, handler_id);
+    g_object_steal_data(G_OBJECT(hbox), "destroy-id");
     handler_id = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(vwin->mbar),
 						    "destroy-id"));
     g_signal_handler_disconnect(vwin->mbar, handler_id);
+    g_object_steal_data(G_OBJECT(vwin->mbar), "destroy-id");
 
     /* extract vwin->vbox from its tabbed holder */
     g_object_ref(vwin->vbox);
@@ -845,20 +847,13 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 #endif
 }
 
-void vwin_remove_hbox (GtkWidget *widget, gpointer data)
-{
-    if (GTK_IS_HBOX(widget)) {
-	fprintf(stderr, "removing hbox\n");
-	gtk_container_remove(GTK_CONTAINER(data), widget);
-    }
-}
-
 void redock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 {
     tabwin_t *tabwin;
     GtkWidget *oldmain;
-    guint handler_id;
-    const gchar *info = NULL;
+    GtkWidget *box;
+    gulong handler_id;
+    gchar *info = NULL;
 
     tabwin = (vwin->role == VIEW_MODEL)? tabmod : tabedit;
     if (tabwin == NULL) {
@@ -876,11 +871,27 @@ void redock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     /* disconnect */
     vwin->main = NULL;
 
-    /* remove signals and data from current vwin->main (FIXME!) */
-    g_object_set_data(G_OBJECT(oldmain), "vwin", NULL);
+    /* remove signals and data from current vwin->main */
+    g_object_steal_data(G_OBJECT(oldmain), "vwin");
     handler_id = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(oldmain),
 						    "destroy-id"));
     g_signal_handler_disconnect(oldmain, handler_id);
+    g_object_steal_data(G_OBJECT(oldmain), "destroy-id");
+    g_signal_handlers_disconnect_by_func(oldmain,
+					 query_save_text,
+					 vwin);
+
+    /* grab info for title */
+    if (vwin->role == EDIT_SCRIPT) {
+	info = g_strdup(vwin->fname);
+    } else {
+	const gchar *tmp = gtk_window_get_title(GTK_WINDOW(oldmain));
+
+	if (!strncmp(tmp, "gretl: ", 7)) {
+	    tmp += 7;
+	}
+	info = g_strdup(tmp);
+    }    
 
     /* extract vwin->vbox from oldmain and trash oldmain */
     g_object_ref(vwin->vbox);
@@ -904,8 +915,8 @@ void redock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 
     /* extract vwin->mbar */
     g_object_ref(vwin->mbar);
-    gtk_container_foreach(GTK_CONTAINER(vwin->vbox),
-			  vwin_remove_hbox, vwin->vbox);
+    box = g_object_get_data(G_OBJECT(vwin->mbar), "container");
+    gtk_container_remove(GTK_CONTAINER(box), vwin->mbar);
 
     /* create new vwin->main, etc. */
     vwin->main = gtk_hbox_new(FALSE, 0);
@@ -915,18 +926,10 @@ void redock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     g_object_set_data(G_OBJECT(vwin->main), "destroy-id",
 		      GUINT_TO_POINTER(handler_id));
 
-    if (vwin->role == EDIT_SCRIPT) {
-	info = vwin->fname;
-    }
-
-    fprintf(stderr, "calling make_viewer_tab\n");
-
     make_viewer_tab(tabwin, vwin, info);
     vwin->topmain = tabwin->main;
     vwin->flags = VWIN_TABBED;
-
-    fprintf(stderr, "done make_viewer_tab\n");
-    fprintf(stderr, "inserting vbox\n");
+    g_free(info);
 
     /* tweak vbox params and insert */
     gtk_box_set_spacing(GTK_BOX(vwin->vbox), 1);
@@ -934,17 +937,11 @@ void redock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
     g_object_unref(vwin->vbox);
 
-    fprintf(stderr, "repacking mbar\n");
-
     /* repack toolbar in tabwin */
     tabwin_register_toolbar(vwin);
     g_object_unref(vwin->mbar);
 
-    fprintf(stderr, "done repack mbar\n");
-    fprintf(stderr, "vwin->mbar: %p, widget? %s\n",
-	    (void *) vwin->mbar, GTK_IS_WIDGET(vwin->mbar)? "yes" : "no");
-
-    gtk_widget_show_all(vwin->main);
+    show_tabbed_viewer(vwin);
     gtk_widget_grab_focus(vwin->text);
 
 #if TDEBUG
@@ -967,7 +964,6 @@ gboolean window_is_undockable (windata_t *vwin)
 
 gboolean window_is_redockable (windata_t *vwin)
 {
-#if 0 /* not yet */
     if (vwin->topmain == NULL) {
 	if (vwin->role == EDIT_SCRIPT && tabedit != NULL) {
 	    return TRUE;
@@ -975,9 +971,32 @@ gboolean window_is_redockable (windata_t *vwin)
 	    return TRUE;
 	}
     }
-#endif
 
     return FALSE;
+}
+
+void add_undock_popup_item (GtkWidget *menu, windata_t *vwin)
+{
+    GtkWidget *item;
+
+    item = gtk_menu_item_new_with_label(_("Move to new window"));
+    g_signal_connect(G_OBJECT(item), "activate",
+		     G_CALLBACK(undock_tabbed_viewer),
+		     vwin);
+    gtk_widget_show(item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+}
+
+void add_redock_popup_item (GtkWidget *menu, windata_t *vwin)
+{
+    GtkWidget *item;
+
+    item = gtk_menu_item_new_with_label(_("Move to tabbed window"));
+    g_signal_connect(G_OBJECT(item), "activate",
+		     G_CALLBACK(redock_tabbed_viewer),
+		     vwin);
+    gtk_widget_show(item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 }
 
 windata_t *tabwin_get_editor_for_file (const char *filename,

@@ -2190,14 +2190,9 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     windata_t *vwin;
     const char *buf;
     gchar *tmp;
-    int tabbed_models = 0;
     int width, nlines;
 
     if (use_tabbed_model_viewer()) {
-	tabbed_models = 1;
-    }
-
-    if (tabbed_models) {
 	/* for now, totally experimental! */
 	tmp = g_strdup_printf(_("model %d"), pmod->ID);
 	vwin = viewer_tab_new(VIEW_MODEL, tmp, pmod);
