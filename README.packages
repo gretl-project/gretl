@@ -11,6 +11,14 @@ to validate and expand to new distributions.
 
 Hélio Guilherme, 23 September 2011 
 
+Linux Mint 12          (contrib. 2012-02-26)
+Ubuntu oneiric (11.10) (contrib. 2012-02-09, helio_guilherme@hotmail.com)
+# dependencies
+sudo apt-get install gnuplot libfftw3-dev liblapack-dev gfortran libxml2 \
+ zlib1g-dev libreadline-gplv2-dev libgtksourceview2.0-dev libgmp3-dev
+
+# documentation build (optional)
+
 Ubuntu natty (11.04) (contrib. 2011-09-23, helio_guilherme@hotmail.com)
 # dependencies
 sudo apt-get install gnuplot libfftw3-dev liblapack-dev gfortran libxml2 \
