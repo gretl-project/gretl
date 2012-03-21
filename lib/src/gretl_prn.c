@@ -407,7 +407,7 @@ int gretl_print_rename_file (PRN *prn, const char *oldpath,
 	return E_DATA;
     }
 
-#if 1 || PRN_DEBUG
+#if PRN_DEBUG
     fprintf(stderr, "gretl_print_rename_file, prn at %p:\n oldpath='%s'\n"
 	    " newpath='%s'\n prn->fp=%p (closing)\n", (void *) prn,
 	    oldpath, newpath, (void *) prn->fp);
@@ -429,7 +429,7 @@ int gretl_print_rename_file (PRN *prn, const char *oldpath,
     } else {
 	/* re-open the stream under its new name */
 	prn->fp = gretl_fopen(newpath, "a");
-#if 1 || PRN_DEBUG
+#if PRN_DEBUG
 	fprintf(stderr, "gretl_print_rename_file: new fp=%p\n", prn->fp);
 #endif
 	if (prn->fname != NULL) {
