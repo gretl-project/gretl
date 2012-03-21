@@ -59,6 +59,8 @@ struct series_view_t {
     data_point *points;
 };
 
+static series_view static_sview;
+
 static void series_view_unsort (series_view *sview);
 
 void free_series_view (gpointer p)
@@ -315,6 +317,29 @@ PRN *vwin_print_sorted_with_format (windata_t *vwin, PrnFormat fmt)
     return prn;
 }
 
+static void summary_print_formatted (windata_t *vwin, series_view *sview)
+{
+    Summary *summ = vwin->data;
+    int digits = 0, places = 0;
+    PRN *prn;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    if (sview->view != VIEW_STANDARD && sview->digits > 0) {
+	if (sview->format == 'g') {
+	    digits = sview->digits;
+	} else {
+	    places = sview->digits;
+	}
+    }
+
+    print_summary_single(summ, digits, places, dataset, prn);
+    textview_set_text(vwin->text, gretl_print_get_trimmed_buffer(prn));
+    gretl_print_destroy(prn);
+}    
+
 static int sort_points (const void *a, const void *b)
 {
     const data_point *pa = (const data_point *) a;
@@ -495,14 +520,32 @@ int can_format_data (windata_t *vwin)
 	series_view *sview = vwin->data;
 
 	return (sview->list != NULL);
+    } else if (vwin->role == SUMMARY && vwin->data != NULL) {
+	Summary *s = vwin->data;
+
+	return (s->list != NULL && s->list[0] == 1);
     } else {
 	return 0;
     }
 }
 
+static void series_view_init (series_view *sview)
+{
+    sview->varnum = 0;
+    sview->sortvar = 0;
+    sview->npoints = 0;
+    sview->view = VIEW_STANDARD;
+    sview->digits = 6;
+    sview->format = 'g';
+    sview->sorted = 0;
+    sview->points = NULL;
+    sview->list = NULL;
+}
+
 static series_view *series_view_new (int varnum, const int *list)
 {
     series_view *sview = NULL;
+    int *svlist = NULL;
 
     if (varnum == 0 && list == NULL) {
 	return NULL;
@@ -513,25 +556,18 @@ static series_view *series_view_new (int varnum, const int *list)
 	return NULL;
     }
 
-    if (list == NULL) {
-	sview->list = NULL;
-    } else {
-	sview->list = gretl_list_copy(list);
-	if (sview->list == NULL) {
+    if (list != NULL) {
+	svlist = gretl_list_copy(list);
+	if (svlist == NULL) {
 	    free(sview);
 	    sview = NULL;
 	}
-    } 
+    }	
 
     if (sview != NULL) {
+	series_view_init(sview);
 	sview->varnum = varnum;
-	sview->sortvar = 0;
-	sview->npoints = 0;
-	sview->view = VIEW_STANDARD;
-	sview->digits = 6;
-	sview->format = 'g';
-	sview->sorted = 0;
-	sview->points = NULL;
+	sview->list = svlist;
     }
 
     return sview;
@@ -556,6 +592,7 @@ struct view_toggler {
     int digits;
     char format;
     windata_t *target_vwin;
+    series_view *sview;
 };
 
 /* toggle for standard versus custom view */
@@ -583,23 +620,25 @@ static void series_view_set_fmt (GtkComboBox *cb, char *format)
     *format = (i == 0)? 'g' : 'f';
 }
 
-static void sv_reformat_callback (GtkButton *b, struct view_toggler *vt)
+static void reformat_callback (GtkButton *b, struct view_toggler *vt)
 {
-    series_view *sview = (series_view *) vt->target_vwin->data;
+    windata_t *vwin = vt->target_vwin;
+    series_view *sview = vt->sview;
 
     sview->digits = vt->digits;
     sview->format = vt->format;
     sview->view = vt->view;
 
-    if (sview->list != NULL) {
-	multi_series_view_print(vt->target_vwin);
+    if (vwin->role == SUMMARY) {
+	summary_print_formatted(vwin, sview);
+    } else if (sview->list != NULL) {
+	multi_series_view_print(vwin);
     } else {
-	single_series_view_print(vt->target_vwin);
+	single_series_view_print(vwin);
     }
 }
 
-static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
-				     series_view *sview)
+static void real_view_format_dialog (windata_t *vwin, series_view *sview)
 {
     struct view_toggler vt;
     GtkWidget *dlg, *vbox;
@@ -619,6 +658,7 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     vt.digits = sview->digits;
     vt.format = sview->format;
     vt.target_vwin = vwin;
+    vt.sview = sview;
 
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Select data format"));
@@ -676,7 +716,7 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     /* OK button */
     tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(sv_reformat_callback), &vt);
+		     G_CALLBACK(reformat_callback), &vt);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(delete_widget), dlg);
     gtk_widget_grab_default(tmp);
@@ -684,14 +724,29 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     gtk_widget_show_all(dlg);
 }
 
-void series_view_format_dialog (GtkWidget *src, windata_t *vwin)
+void series_view_format_dialog (windata_t *vwin)
 {
-    series_view *sview = (series_view *) vwin->data;
+    series_view *sview;
 
-    if (vwin->role == VIEW_SERIES && series_view_allocate(sview)) {
+    if (vwin->role == VIEW_SERIES) {
+	sview = (series_view *) vwin->data;
+
+	if (series_view_allocate(sview)) {
+	    return;
+	}
+    } else if (vwin->role == SUMMARY) {
+	static int initted;
+
+	if (!initted) {
+	    series_view_init(&static_sview);
+	    initted = 1;
+	}
+	sview = &static_sview;
+    } else {
+	/* huh? */
 	return;
     }
 
-    real_view_format_dialog(src, vwin, sview);
+    real_view_format_dialog(vwin, sview);
 }
 

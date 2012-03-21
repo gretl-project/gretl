@@ -4365,9 +4365,32 @@ static void prhdr (const char *str, const DATASET *dset,
     }
 }
 
-static void print_summary_single (const Summary *s, int j,
-				  const DATASET *dset,
-				  PRN *prn)
+static void summary_print_val (double x, int digits, int places,
+			       PRN *prn)
+{
+    pputc(prn, ' ');
+
+    if (na(x)) {
+	pprintf(prn, "%*s", UTF_WIDTH(_("NA"), 14), _("NA"));
+    } else if (digits > 0 || places > 0) {
+	int prec = (digits > 0)? digits : places;
+	int len = prec + 9;
+	char *s = (digits > 0)? "#" : "";
+	char t = (digits > 0)? 'g' : 'f';
+	char fmt[16];
+
+	sprintf(fmt, "%%%s%d.%d%c", s, len, prec, t);
+	pprintf(prn, fmt, x);
+    } else {
+	/* the default */
+	pprintf(prn, "%#14.5g", x);
+    }
+}
+
+void print_summary_single (const Summary *s,
+			   int digits, int places,
+			   const DATASET *dset,
+			   PRN *prn)
 {
     char obs1[OBSLEN], obs2[OBSLEN], tmp[128];
     double vals[8];
@@ -4391,17 +4414,17 @@ static void print_summary_single (const Summary *s, int j,
 
     prhdr(_("Summary statistics"), dset, 0, prn);
     sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
-	    dset->varname[s->list[j+1]], s->n);
+	    dset->varname[s->list[1]], s->n);
     output_line(tmp, prn, 1);
 
-    vals[0] = s->mean[j];
-    vals[1] = s->median[j];
-    vals[2] = s->low[j];
-    vals[3] = s->high[j];
-    vals[4] = s->sd[j];
-    vals[5] = s->cv[j];
-    vals[6] = s->skew[j];
-    vals[7] = s->xkurt[j];
+    vals[0] = s->mean[0];
+    vals[1] = s->median[0];
+    vals[2] = s->low[0];
+    vals[3] = s->high[0];
+    vals[4] = s->sd[0];
+    vals[5] = s->cv[0];
+    vals[6] = s->skew[0];
+    vals[7] = s->xkurt[0];
 
     for (i=0; i<8; i++) {
 	if ((s->opt & OPT_S) && simple_skip[i]) {
@@ -4418,17 +4441,17 @@ static void print_summary_single (const Summary *s, int j,
 	    continue;
 	}
 	pprintf(prn, "  %-*s", UTF_WIDTH(_(labels[i]), slen), _(labels[i]));
-	printf15(vals[i], prn);
+	summary_print_val(vals[i], digits, places, prn);
 	pputc(prn, '\n');
     }
 
     if (!na(s->sw) && !na(s->sb)) {
 	pputc(prn, '\n');
 	pprintf(prn, "  %-*s", UTF_WIDTH(_(wstr), slen), _(wstr));
-	printf15(s->sw, prn);
+	summary_print_val(s->sw, digits, places, prn);
 	pputc(prn, '\n');
 	pprintf(prn, "  %-*s", UTF_WIDTH(_(bstr), slen), _(bstr));
-	printf15(s->sb, prn);
+	summary_print_val(s->sb, digits, places, prn);
     }  
 
     pputs(prn, "\n\n");    
@@ -4455,7 +4478,7 @@ void print_summary (const Summary *summ,
     }
 
     if (summ->list[0] == 1 && !(summ->opt & OPT_B)) {
-	print_summary_single(summ, 0, dset, prn);
+	print_summary_single(summ, 0, 0, dset, prn);
 	return;
     }
 

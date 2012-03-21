@@ -207,6 +207,11 @@ void print_summary (const Summary *summ,
 		    const DATASET *dset,
 		    PRN *prn); 
 
+void print_summary_single (const Summary *s,
+			   int digits, int places,
+			   const DATASET *dset,
+			   PRN *prn);
+
 void free_summary (Summary *summ);
 
 VMatrix *corrlist (int *list, const DATASET *dset,

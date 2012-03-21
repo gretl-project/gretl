@@ -424,7 +424,7 @@ static void reformat_callback (GtkWidget *w, windata_t *vwin)
     if (vwin->role == VIEW_MODELTABLE) {
 	format_model_table(vwin);
     } else {
-	series_view_format_dialog(w, vwin);
+	series_view_format_dialog(vwin);
     }
 }
 

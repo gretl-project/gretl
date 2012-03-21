@@ -551,6 +551,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	/* saving CSV, graphs etc.; check overwrite */
 	quit = overwrite_stop(fname);
     } else if (action == SAVE_DATA_AS && strcmp(fname, datafile)) {
+	/* "saving as" over an existing gdt file */
 	quit = overwrite_stop(fname);
     }
 

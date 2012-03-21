@@ -38,7 +38,7 @@ void series_view_edit (GtkWidget *w, windata_t *vwin);
 
 void series_view_refresh (GtkWidget *w, windata_t *vwin);
 
-void series_view_format_dialog (GtkWidget *src, windata_t *vwin);
+void series_view_format_dialog (windata_t *vwin);
 
 void series_view_toggle_sort (GtkWidget *w, windata_t *vwin);
 
