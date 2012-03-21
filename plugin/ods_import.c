@@ -1092,11 +1092,13 @@ static int ods_sheet_dialog (ods_sheet *sheet, int *err)
 }
 
 static int finalize_ods_import (DATASET *dset,
-				ods_sheet *sheet, 
+				ods_sheet *sheet,
+				const char *fname, 
 				gretlopt opt,
 				PRN *prn)
 {
     int err = import_prune_columns(sheet->dset);
+    int merge = (dset->Z != NULL);
 
     if (!err && sheet->dset->S != NULL) {
 	import_ts_check(sheet->dset);
@@ -1105,6 +1107,10 @@ static int finalize_ods_import (DATASET *dset,
     if (!err) {
 	err = merge_or_replace_data(dset, &sheet->dset, opt, prn);
     }  
+
+    if (!err && !merge) {
+	dataset_add_import_info(dset, fname, GRETL_ODS);
+    }    
 
     return err;
 }
@@ -1160,7 +1166,7 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
     }
 
     if (!err) {
-	err = finalize_ods_import(dset, sheet, opt, prn); 
+	err = finalize_ods_import(dset, sheet, fname, opt, prn); 
 	if (!err && gui) {
 	    record_ods_params(sheet, list);
 	}
