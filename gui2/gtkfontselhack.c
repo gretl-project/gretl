@@ -37,10 +37,7 @@
 		      deal with gettext */
 #include "dlgutils.h"
 #include "gtkfontselhack.h"
-
-#if 1
-# include "fontfilter.h"
-#endif
+#include "fontfilter.h"
 
 #define GTK_TYPE_FNTHACK              (gtk_fontsel_hack_get_type ())
 #define GTK_FNTHACK(obj)              (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_FNTHACK, GtkFontselHack))
@@ -1238,34 +1235,6 @@ gtk_fontsel_hack_set_preview_text (GtkFontselHack *fontsel,
  * GtkFontselHackDialog
  *****************************************************************************/
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
-/* no GtkBuildable */
-
-GtkType gtk_fontsel_hack_dialog_get_type (void)
-{
-    static GtkType fontsel_hack_dialog_type = 0;
-  
-    if (!fontsel_hack_dialog_type) {
-	GtkTypeInfo fontsel_diag_info = {
-	    "GtkFontselHackDialog",
-	    sizeof (GtkFontselHackDialog),
-	    sizeof (GtkFontselHackDialogClass),
-	    (GtkClassInitFunc) gtk_fontsel_hack_dialog_class_init,
-	    (GtkObjectInitFunc) gtk_fontsel_hack_dialog_init,
-	    /* reserved_1 */ NULL,
-	    /* reserved_2 */ NULL,
-	    (GtkClassInitFunc) NULL,
-	};
-      
-	fontsel_hack_dialog_type = gtk_type_unique(GTK_TYPE_DIALOG,
-						   &fontsel_diag_info);
-    }
-  
-    return fontsel_hack_dialog_type;
-}
-
-#else
-
 static void gtk_fontsel_hack_dialog_buildable_interface_init     (GtkBuildableIface *iface);
 static GObject * gtk_fontsel_hack_dialog_buildable_get_internal_child (GtkBuildable *buildable,
 								       GtkBuilder   *builder,
@@ -1301,8 +1270,6 @@ gtk_fontsel_hack_dialog_buildable_get_internal_child (GtkBuildable *buildable,
 
     return parent_buildable_iface->get_internal_child(buildable, builder, childname);
 }
-
-#endif
 
 static void
 gtk_fontsel_hack_dialog_class_init (GtkFontselHackDialogClass *klass)

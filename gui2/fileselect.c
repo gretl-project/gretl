@@ -489,6 +489,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 			      gpointer data)
 {
     char fname[FILENAME_MAX];
+    int quit = 0;
     int err = 0;
 
     *fname = 0;
@@ -548,9 +549,13 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     if (EXPORT_ACTION(action, src) || action == EXPORT_GDT ||
 	(action > END_SAVE_DATA && action < END_SAVE_OTHER)) {
 	/* saving CSV, graphs etc.; check overwrite */
-	if (overwrite_stop(fname)) {
-	    return;
-	}
+	quit = overwrite_stop(fname);
+    } else if (action == SAVE_DATA_AS && strcmp(fname, datafile)) {
+	quit = overwrite_stop(fname);
+    }
+
+    if (quit) {
+	return;
     }
 
     if (action == SAVE_TEX) {

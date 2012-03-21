@@ -685,7 +685,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define open_ok(r) (vwin_editing_script(r))
 
-#define new_ok(r) (vwin_editing_script(r) || r == VIEW_SCRIPT)
+#define new_ok(r) (vwin_editing_script(r))
 
 #define edit_ok(r) (vwin_editing_script(r) || \
 		    vwin_editing_buffer(r) || \
@@ -710,10 +710,10 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 			r == VIEW_SCRIPT || \
 			r == VIEW_LOG)
 
-#define sort_ok(r)    (r == VIEW_SERIES)
+#define sort_ok(r) (r == VIEW_SERIES)
 
-#define plot_ok(r)    (r == VIEW_SERIES || \
-		       r == LOESS || r == NADARWAT)
+#define plot_ok(r) (r == VIEW_SERIES || \
+		    r == LOESS || r == NADARWAT)
 
 #define add_data_ok(r) (r == PCA || r == LEVERAGE || \
                         r == MAHAL || r == FCAST || \
@@ -809,39 +809,17 @@ GtkWidget *gretl_toolbar_new (void)
     return tb;
 }
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
-
-void gretl_tooltips_add (GtkWidget *w, const gchar *str)
-{
-    static GtkTooltips *gretl_tips;
-
-    if (gretl_tips == NULL) {
-	gretl_tips = gtk_tooltips_new();
-	gtk_tooltips_enable(gretl_tips); /* redundant? */
-    }
-
-    gtk_tooltips_set_tip(gretl_tips, w, str, NULL);
-}
-
-#else /* new tooltips API */
-
 void gretl_tooltips_add (GtkWidget *w, const gchar *str)
 {
     gtk_widget_set_tooltip_text(w, str);
 }
-
-#endif /* GTK variants */
 
 void vwin_toolbar_insert_winlist (windata_t *vwin)
 {
     GtkWidget *img, *button = gtk_button_new();
     GtkToolItem *item = gtk_tool_item_new();
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
-    gtk_tool_item_set_tooltip(item, gretl_tips, _("Windows"), NULL);
-#else
     gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("Windows"));
-#endif
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
     img = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
@@ -860,13 +838,28 @@ GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
     GtkToolItem *item;
 
     item = gtk_tool_button_new_from_stock(tool->icon);
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
-    gtk_tool_item_set_tooltip(item, gretl_tips, _(tool->tip), NULL);
-#else
     gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tool->tip));
-#endif
     g_signal_connect(item, "clicked", func, data);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, pos);
+
+    return GTK_WIDGET(item);
+}
+
+static GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
+				       GCallback func,
+				       windata_t *vwin,
+				       gint pos)
+{
+    GtkToolItem *item;
+
+    item = gtk_tool_button_new_from_stock(tool->icon);
+    if (tool->flag == NEW_ITEM && window_is_tab(vwin)) {
+	gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("New tab"));
+    } else {
+	gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tool->tip));
+    }
+    g_signal_connect(item, "clicked", func, vwin);
+    gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), item, pos);
 
     return GTK_WIDGET(item);
 }
@@ -901,7 +894,7 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	    set_plot_icon(item, vwin->role);
 	}
 
-	button = gretl_toolbar_insert(vwin->mbar, item, func, vwin, -1);
+	button = vwin_toolbar_insert(item, func, vwin, -1);
 
 	if (func == (GCallback) split_pane_callback) {
 	    if (hpane == NULL) {
@@ -962,6 +955,11 @@ void viewbar_add_edit_items (windata_t *vwin)
 			  (GtkCallback) remove_child, vwin->mbar);
     viewbar_add_items(vwin, VIEWBAR_EDITABLE);
     gtk_widget_show_all(vwin->mbar);
+
+    if (vwin->role == EDIT_SCRIPT && use_tabbed_editor() && 
+	!window_is_tab(vwin)) {
+	script_editor_show_new_open(vwin, FALSE);
+    }
 }
 
 GtkWidget *build_text_popup (windata_t *vwin)
@@ -1012,8 +1010,8 @@ GtkWidget *build_text_popup (windata_t *vwin)
     if (vwin->role != EDIT_SCRIPT) {
 	if (window_is_undockable(vwin)) {
 	    add_undock_popup_item(pmenu, vwin);
-	} else if (window_is_redockable(vwin)) {
-	    add_redock_popup_item(pmenu, vwin);
+	} else if (window_is_dockable(vwin)) {
+	    add_dock_popup_item(pmenu, vwin);
 	}
     }
 

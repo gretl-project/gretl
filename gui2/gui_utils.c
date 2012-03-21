@@ -4842,8 +4842,6 @@ void run_octave_script (gchar *buf)
 
 #else /* some non-Windows functions follow */
 
-# if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 14
-
 static int alt_show (const char *uri)
 {
     GError *err = NULL;
@@ -4859,8 +4857,6 @@ static int alt_show (const char *uri)
     return ret;
 }
 
-# endif
-
 int browser_open (const char *url)
 {
 # if defined(OSX_BUILD)
@@ -4869,11 +4865,9 @@ int browser_open (const char *url)
     gchar *urlcmd;
     int err;
 
-#  if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 14
     if (getenv("ALTSHOW") != NULL) {
 	return alt_show(url);
     }
-#  endif
     
     urlcmd = g_strdup_printf("%s -remote \"openURLNewWindow(%s)\"", Browser, url);
     err = gretl_spawn(urlcmd);

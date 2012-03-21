@@ -2897,11 +2897,7 @@ static void sheet_toolbar_insert_winlist (Spreadsheet *sheet,
     GtkWidget *img, *button = gtk_button_new();
     GtkToolItem *item = gtk_tool_item_new();
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
-    gtk_tool_item_set_tooltip(item, gretl_tips, _("Windows"), NULL);
-#else
     gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("Windows"));
-#endif
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
     img = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);

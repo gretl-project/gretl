@@ -851,8 +851,6 @@ void vwin_pack_toolbar (windata_t *vwin)
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, 
 			   FALSE, FALSE, 0);
 	gtk_box_reorder_child(GTK_BOX(vwin->vbox), vwin->mbar, 0);
-	g_object_set_data(G_OBJECT(vwin->mbar), "container",
-			  vwin->vbox);
     } else {
 	GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
 
@@ -861,8 +859,6 @@ void vwin_pack_toolbar (windata_t *vwin)
 	if (window_is_tab(vwin)) {
 	    /* here we're re-packing vwin->mbar: move it up top */
 	    gtk_box_reorder_child(GTK_BOX(vwin->vbox), hbox, 0);
-	    g_object_set_data(G_OBJECT(vwin->mbar), "container",
-			      hbox);
 	}
 	gtk_widget_show_all(hbox);
     }

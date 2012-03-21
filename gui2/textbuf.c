@@ -2636,8 +2636,8 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 
     if (window_is_undockable(vwin)) {
 	add_undock_popup_item(pmenu, vwin);
-    } else if (window_is_redockable(vwin)) {
-	add_redock_popup_item(pmenu, vwin);
+    } else if (window_is_dockable(vwin)) {
+	add_dock_popup_item(pmenu, vwin);
     }	
 
     return pmenu;

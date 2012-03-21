@@ -1510,13 +1510,7 @@ GdkModifierType parent_get_pointer_mask (GtkWidget *w)
 gboolean widget_get_pointer_info (GtkWidget *w, gint *x, gint *y,
 				  GdkModifierType *mask)
 {
-    GdkWindow *window;
-
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)    
-    window = w->window;
-#else
-    window = gtk_widget_get_window(w);
-#endif
+    GdkWindow *window = gtk_widget_get_window(w);
 
     if (window == NULL) {
 	return FALSE;

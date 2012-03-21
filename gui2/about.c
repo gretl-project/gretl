@@ -64,14 +64,8 @@ static void license_callback (GtkWidget *w, gpointer p)
 
 static void show_link_cursor (GtkWidget *w, gpointer p)
 {
-    GdkWindow *window;
+    GdkWindow *window = gtk_widget_get_window(w);
     GdkCursor *c;
-
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)    
-    window = w->window;
-#else
-    window = gtk_widget_get_window(w);
-#endif
 
     c = gdk_cursor_new(GDK_HAND2);
     gdk_window_set_cursor(window, c);

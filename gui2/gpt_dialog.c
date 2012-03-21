@@ -1202,11 +1202,6 @@ static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
 
 #else /* !G_OS_WIN32 */
 
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14
-#define gtk_font_selection_dialog_get_ok_button(f) (f->ok_button)
-#define gtk_font_selection_dialog_get_cancel_button(f) (f->cancel_button)
-#endif
-
 /* callback from OK button in graph font selector */
 
 static void graph_font_selection_ok (GtkWidget *w, GtkFontSelectionDialog *fs)
