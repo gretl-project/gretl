@@ -991,6 +991,38 @@ static int write_esl_hdr (const char *hdrfile, const int *list,
     return 0;
 }
 
+static int alt_get_dec_places (double zmin, double zmax, int d)
+{
+    char *s, numstr[32];
+    int d1 = 0, d2 = 0;
+
+    /* see if we get a (close to) common number of decimal places if we
+       print to precision @d without forcing the inclusion of trailing
+       zeros
+    */
+
+    gretl_push_c_numeric_locale();
+
+    sprintf(numstr, "%.*g", d, zmin);
+    s = strrchr(numstr, '.');
+    if (s != NULL && strchr(numstr, 'e') == NULL) {
+	d1 = strlen(s) - 1;
+	sprintf(numstr, "%.*g", d, zmax);
+	s = strrchr(numstr, '.');
+	if (s != NULL && strchr(numstr, 'e') == NULL) {
+	    d2 = strlen(s) - 1;
+	}
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    if (d1 > 0 && d2 > 0 && abs(d1 - d2) < 2) {
+	return d1 > d2 ? d1 : d2;
+    } else {
+	return 0;
+    }
+}
+
 /**
  * get_precision:
  * @x: data vector.
@@ -1008,37 +1040,53 @@ int get_precision (const double *x, int n, int placemax)
 {
     int t, p, pmax = 0;
     char *s, numstr[64];
+    double zmin = 0, zmax = 0;
     int n_ok = 0;
     double z;
 
     for (t=0; t<n; t++) {
-	if (na(x[t])) {
-	    continue;
-	}
-
-	n_ok++;
-	z = fabs(x[t]);
-
-	/* escape clause: numbers are too big or too small for
-	   this treatment */
-	if (z > 0 && (z < 1.0e-6 || z > 1.0e+8)) {
-	    return PMAX_NOT_AVAILABLE;
-	}
-
-	p = placemax;
-	sprintf(numstr, "%.*f", p, z);
-	/* go to the end and drop trailing zeros */
-	s = numstr + strlen(numstr) - 1;
-	while (*s-- == '0') {
-	    p--;
-	}
-	if (p > pmax) {
-	    pmax = p;
+	if (!na(x[t])) {
+	    z = fabs(x[t]);
+	    /* escape clause: numbers are too big or too small for
+	       this treatment */
+	    if (z > 0 && (z < 1.0e-6 || z > 1.0e+8)) {
+		return PMAX_NOT_AVAILABLE;
+	    }
+	    if (n_ok == 0) {
+		zmin = zmax = z;
+	    } else {
+		if (z < zmin) zmin = z;
+		if (z > zmax) zmax = z;
+	    }		
+	    n_ok++;
 	}
     }
 
     if (n_ok == 0) {
-	pmax = PMAX_NOT_AVAILABLE;
+	return PMAX_NOT_AVAILABLE;
+    }
+
+    if (placemax >= 10 && placemax < 24) {
+	/* interpret @placemax as number of significant digits */
+	p = alt_get_dec_places(zmin, zmax, placemax);
+	if (p > 0) {
+	    return p;
+	}
+    }
+
+    for (t=0; t<n; t++) {
+	if (!na(x[t])) {
+	    p = placemax;
+	    sprintf(numstr, "%.*f", p, fabs(x[t]));
+	    /* go to the end and drop trailing zeros */
+	    s = numstr + strlen(numstr) - 1;
+	    while (*s-- == '0') {
+		p--;
+	    }
+	    if (p > pmax) {
+		pmax = p;
+	    }
+	}
     }
 
     return pmax;
