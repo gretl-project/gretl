@@ -390,9 +390,9 @@ static gchar *untitled_title (tabwin_t *tabwin)
     }
 
     if (idx > 0) {
-	return g_strdup_printf("untitled(%d)", idx);
+	return g_strdup_printf("%s(%d)", _("untitled"), idx);
     } else {
-	return g_strdup("untitled");
+	return g_strdup(_("untitled"));
     }
 }
 
