@@ -39,6 +39,7 @@ version 1.9.8, in progress
   gretl plugins
 - Configure check for gnome desktop: support gnome 3.0
 - Temporary files: use mkstemp() instead of mktemp()
+- MS Windows and OS X: update to gnuplot 4.6.0
 - MS Windows build: update cross-compiler to gcc-4.6.2
 - Build tools: update to libtool 2.4.2
 - Building from source: fix configure script for non-sse2 build
