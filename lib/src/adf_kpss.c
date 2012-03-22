@@ -1725,6 +1725,7 @@ int kpss_test (int order, const int *list, DATASET *dset,
 {
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
+    int orig_nvars = dset->v;
     int err = 0;
 
     if (multi_unit_panel_sample(dset)) {
@@ -1748,6 +1749,9 @@ int kpss_test (int order, const int *list, DATASET *dset,
 
     dset->t1 = save_t1;
     dset->t2 = save_t2;
+
+    /* added 2012-03-22 for consistency with adf test */
+    dataset_drop_last_variables(dset->v - orig_nvars, dset);
 
     return err;
 }

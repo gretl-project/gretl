@@ -93,7 +93,9 @@ static const gchar *window_list_icon (int role)
 	id = GRETL_STOCK_PAGE;
     } else if (role == SSHEET) {
 	id = GRETL_STOCK_TABLE;
-    } 
+    } else if (role == SAVE_FUNCTIONS) {
+	id = GRETL_STOCK_TOOLS;
+    }
 
     return id;
 }
@@ -455,6 +457,18 @@ gboolean window_list_exit_check (void)
 	                     r == TEXTBOOK_DATA ||	\
 			     r == CONSOLE)
 
+
+static int keep_window_open (GtkWidget *w)
+{
+    const gchar *wname = gtk_widget_get_name(w);
+
+    if (wname != NULL && strcmp(wname, "pkg-editor") == 0) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 /* called from session.c on switching the session: close all
    windows that ought to be closed, but be careful not to
    close ones that need to stay open!
@@ -480,7 +494,7 @@ void close_session_windows (void)
 		/* tabbed script editor stays open, but tabbed model
 		   viewer should be closed */
 		tabwin_close_models_viewer(w);
-	    } else {
+	    } else if (!keep_window_open(w)) {
 		gtk_widget_destroy(w);
 	    }
 	    list = list->next;

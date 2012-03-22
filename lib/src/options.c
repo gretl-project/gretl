@@ -146,6 +146,7 @@ struct gretl_option gretl_opts[] = {
     { CORR,     OPT_S, "spearman", 0 },
     { CORR,     OPT_U, "uniform", 0 },
     { CORR,     OPT_V, "verbose", 0 },
+    { CORRGM,   OPT_G, "gui-graph", 0 },
     { CUSUM,    OPT_R, "squares", 0 },
     { DATA,     OPT_O, "odbc", 0 },
     { DATAMOD,  OPT_P, "preserve", 0 },

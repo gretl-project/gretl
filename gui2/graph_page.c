@@ -409,7 +409,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 
     if (gpage.term == GP_TERM_PDF) {
 	pdfterm = gnuplot_pdf_terminal();
-    } 
+    }
 
     if (gpage.term == GP_TERM_EPS || pdfterm != GP_PDF_CAIRO) {
 	latin = iso_latin_version();
@@ -431,19 +431,17 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 	} else {
 	    fprintf(fq, "set term pdf%s", (gpage.mono)? " monochrome dashed" : " color");
 	}
-	if (scale != 1.0) {
-	    fprintf(fq, " size %g,%g\n", scale * 5.0, scale * 3.0);
-	} else {
-	    fputc('\n', fq);
-	}	
 	fname = gpage_fname(".pdf", i);
     } else {
-	fprintf(fq, "set term postscript eps%s\n", (gpage.mono)? " monochrome" : " color");
-	if (scale != 1.0) {
-	    fprintf(fq, "set size %g,%g\n", scale, scale);
-	}
+	fprintf(fq, "set term postscript eps%s", (gpage.mono)? " monochrome" : " color");
 	fname = gpage_fname(".ps", i);
     }
+
+    if (scale != 1.0) {
+	fprintf(fq, " size %g,%g\n", scale * 5.0, scale * 3.5);
+    } else {
+	fputc('\n', fq);
+    }    
 
     gretl_pop_c_numeric_locale();
 

@@ -142,7 +142,6 @@ typedef enum {
 
 typedef enum {
     GP_PNG_NONE,  /* no PNG terminal available */
-    GP_PNG_OLD,   /* old driver from gnuplot 3.N */
     GP_PNG_GD1,   /* libgd driver, no truecolor option */
     GP_PNG_GD2,   /* libgd with truecolor option */
     GP_PNG_CAIRO  /* newer cairo-based driver */
@@ -153,6 +152,12 @@ typedef enum {
     GP_PDF_PDFLIB,
     GP_PDF_CAIRO
 } PDFTerm;
+
+typedef enum {
+    GP_EPS_NONE,
+    GP_EPS_PS,
+    GP_EPS_CAIRO
+} EPSTerm;
 
 #define maybe_big_multiplot(c) (c == PLOT_MULTI_IRF || \
 				c == PLOT_MULTI_SCATTER || \
@@ -287,6 +292,8 @@ int is_auto_fit_string (const char *s);
 int gnuplot_has_ttf (int reset);
 
 int gnuplot_pdf_terminal (void);
+
+int gnuplot_eps_terminal (void);
 
 int gnuplot_png_terminal (void);
 

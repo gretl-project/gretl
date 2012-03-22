@@ -69,6 +69,7 @@
 #include "../pixmaps/mini.gretl.xpm"
 #include "../pixmaps/mini.table.xpm"
 #include "../pixmaps/mini.page.xpm"
+#include "../pixmaps/mini.tools.xpm"
 
 enum {
     SAVE_ITEM = 1,
@@ -133,7 +134,8 @@ void gretl_stock_icons_init (void)
 	{ mini_db_xpm, GRETL_STOCK_DB},
 	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
 	{ mini_table_xpm, GRETL_STOCK_TABLE},
-	{ mini_page_xpm, GRETL_STOCK_PAGE}
+	{ mini_page_xpm, GRETL_STOCK_PAGE},
+	{ mini_tools_xpm, GRETL_STOCK_TOOLS}
     };
     int n = G_N_ELEMENTS(stocks);
 

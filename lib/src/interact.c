@@ -4416,6 +4416,23 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
     return err;
 }
 
+static void maybe_schedule_graph_callback (ExecState *s)
+{
+    int gui_mode = gretl_in_gui_mode();
+
+    if (graph_written_to_file()) {
+	if (gui_mode && *s->cmd->savename != '\0' &&
+	    get_current_gp_term() == GP_TERM_PLT) {
+	    /* got plotname <- gnuplot ... in GUI */
+	    schedule_callback(s);
+	} else {
+	    report_plot_written(s->prn);
+	}
+    } else if (gui_mode) {
+	schedule_callback(s);
+    }
+}
+
 static void exec_state_prep (ExecState *s)
 {
 #if 0
@@ -4566,6 +4583,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case CORRGM:
 	err = corrgram(cmd->list[1], cmd->order, 0, dset, 
 		       cmd->opt | OPT_A, prn);
+	if (!err && (cmd->opt & OPT_G)) {
+	    /* experimental */
+	    maybe_schedule_graph_callback(s);
+	}
 	break;
 
     case XCORRGM:
@@ -5272,19 +5293,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = boxplots(cmd->list, dset, cmd->opt);
 	}
 	if (!err) {
-	    int gui_mode = gretl_in_gui_mode();
-
-	    if (graph_written_to_file()) {
-		if (gui_mode && *cmd->savename != '\0' &&
-		    get_current_gp_term() == GP_TERM_PLT) {
-		    /* got plotname <- gnuplot ... in GUI */
-		    schedule_callback(s);
-		} else {
-		    report_plot_written(prn);
-		}
-	    } else if (gui_mode) {
-		schedule_callback(s);
-	    }
+	    maybe_schedule_graph_callback(s);
 	} 
 	break;
 

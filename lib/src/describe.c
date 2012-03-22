@@ -3038,8 +3038,14 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	acf[k-1] = gretl_acf(k, t1, t2, dset->Z[varno], ybar);
     }
 
+    if ((opt & OPT_A) && (opt & OPT_G)) {
+	/* experimental: --gui-graph overrides the internal 
+	   ascii option */
+	opt &= ~OPT_A;
+    }
+
     if ((opt & OPT_A) && !(opt & OPT_Q)) { 
-	/* use ASCII graphics, not gnuplot */
+	/* use ASCII graphics */
 	corrgm_ascii_plot(vname, acf, m, prn);
     } 
 

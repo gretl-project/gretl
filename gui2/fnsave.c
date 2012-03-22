@@ -1079,6 +1079,7 @@ static void finfo_dialog (function_info *finfo)
 			     _("gretl: function package editor"));
     } 
 
+    gtk_widget_set_name(finfo->dlg, "pkg-editor");
     g_signal_connect(G_OBJECT(finfo->dlg), "delete-event",
 		     G_CALLBACK(query_save_package), finfo);
     g_signal_connect(G_OBJECT(finfo->dlg), "destroy", 

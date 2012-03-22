@@ -2021,7 +2021,7 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	ed->fontcheck = b;
     } 
 
-    if (gnuplot_png_terminal() != GP_PNG_OLD && frequency_plot_code(spec->code)) {
+    if (frequency_plot_code(spec->code)) {
 	/* give option of setting fill color */
 	GtkWidget *hsep = gtk_hseparator_new();
 

@@ -481,6 +481,11 @@ int gnuplot_pdf_terminal (void)
     return GP_PDF_CAIRO;
 }
 
+int gnuplot_eps_terminal (void)
+{
+    return GP_EPS_CAIRO;
+}
+
 int gnuplot_png_terminal (void)
 {
     return GP_PNG_CAIRO;
@@ -601,6 +606,23 @@ int gnuplot_pdf_terminal (void)
     return ret;
 }
 
+int gnuplot_eps_terminal (void)
+{
+    static int ret = -1;
+
+    if (ret == -1) {
+	int err = gnuplot_test_command("set term epscairo");
+
+	if (!err) {
+	    ret = GP_EPS_CAIRO;
+	} else {
+	    ret = GP_EPS_PS;
+	}
+    }
+
+    return ret;
+}
+
 static int gnuplot_has_x11 (void)
 {
     static int err = -1; 
@@ -634,17 +656,9 @@ int gnuplot_png_terminal (void)
 	    fprintf(stderr, "gnuplot: using pngcairo driver\n");
 	    ret = GP_PNG_CAIRO;
 	} else {
-	    /* try the old-style command: if it fails, we have 
-	       the libgd driver, we hope! */
-	    err = gnuplot_test_command("set term png color");
-	    if (!err) {
-		fprintf(stderr, "gnuplot: got old png driver\n");
-		ret = GP_PNG_OLD;
-	    } else {
-		fprintf(stderr, "gnuplot: using libgd png driver\n");
-		err = gnuplot_test_command("set term png truecolor");
-		ret = (err)? GP_PNG_GD1 : GP_PNG_GD2;
-	    }
+	    fprintf(stderr, "gnuplot: using libgd png driver\n");
+	    err = gnuplot_test_command("set term png truecolor");
+	    ret = (err)? GP_PNG_GD1 : GP_PNG_GD2;
 	}
     }
 

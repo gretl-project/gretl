@@ -748,7 +748,7 @@ static int term_uses_utf8 (int ttype, int gp_has_utf8)
 
 #define is_color_line(s) (strstr(s, "set style line") && strstr(s, "rgb"))
 
-void filter_gnuplot_file (int ttype, int latin, int mono, 
+void filter_gnuplot_file (int ttype, int latin, int mono,
 			  FILE *fpin, FILE *fpout)
 {
     char pline[512];
