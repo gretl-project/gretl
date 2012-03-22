@@ -1270,6 +1270,14 @@ void gretl_tex_preamble (PRN *prn, int fmt)
     }
 
     if (!userfile) {
+	const char *paper = in_usa()? "letterpaper" : "a4paper";
+	const char *driver = use_pdf ? "pdftex" : "dvips";
+	const char *margin = "";
+
+	if (fmt & GRETL_FORMAT_MODELTAB) {
+	    margin = "margin=2cm,";
+	}
+
 	pputs(prn, "\\documentclass");
 	
 	if (fmt & GRETL_FORMAT_MODELTAB) {
@@ -1300,20 +1308,16 @@ void gretl_tex_preamble (PRN *prn, int fmt)
 	    pputs(prn, "\\usepackage[russian]{babel}\n");
 	}
 
+	pprintf(prn, "\\usepackage[%s,%s%s]{geometry}\n", paper, margin,
+		driver);
+
 	if (fmt & GRETL_FORMAT_EQN) {
-	    pputs(prn, "\\usepackage{amsmath}\n\n");
-	} else if (fmt & GRETL_FORMAT_MODELTAB) {
-	    pputs(prn, "\\usepackage{longtable}\n");
-	    if (use_pdf) {
-		pputs(prn, "\\usepackage[margin=2cm,pdftex]{geometry}\n\n");
-	    } else {
-		pputs(prn, "\\usepackage[margin=2cm,dvips]{geometry}\n\n");
-	    }
+	    pputs(prn, "\\usepackage{amsmath}\n");
 	} else {
-	    pputs(prn, "\\usepackage{longtable}\n\n");
+	    pputs(prn, "\\usepackage{longtable}\n");
 	}
 
-	pputs(prn, "\\begin{document}\n\n"
+	pputs(prn, "\n\\begin{document}\n\n"
 	      "\\thispagestyle{empty}\n\n");
     }
 }

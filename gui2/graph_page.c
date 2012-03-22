@@ -107,11 +107,15 @@ static void graph_page_init (void)
 
 static void doctop (FILE *fp)
 {
-    int letter = in_usa();
+    const char *paper = in_usa()? "letterpaper" : "a4paper";
+    const char *driver = "pdftex";
 
-    fprintf(fp, "\\documentclass%s{article}\n", (letter)? "" : "[a4paper]");
-    fprintf(fp, "\\usepackage[%s]{graphicx}\n", 
-	    (gpage.term == GP_TERM_EPS)? "dvips" : "pdftex");
+    if (gpage.term == GP_TERM_EPS) {
+	driver = "dvips";
+    }
+
+    fprintf(fp, "\\documentclass[%s]{article}\n", paper);
+    fprintf(fp, "\\usepackage[%s]{graphicx}\n", driver);
 }
 
 /* A4 is 210mm * 297mm */
