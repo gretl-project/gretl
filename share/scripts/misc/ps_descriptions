@@ -20,6 +20,7 @@
 "kmenta","System estimation","US macro plus artificial data"
 "leverage","Influential observations","artificial data"
 "longley","Multicollinearity","US employment"
+"mle-advanced","Maximum Likelihood estimation","artificial data"
 "mrw","Solow growth model (Mankiw, Romer, Weil)","cross-country"
 "mrw_qr","Quantile regression","cross-country growth"
 "murder_rates","Perfect prediction problem","Murder rates"

@@ -1,0 +1,102 @@
+# ------------------------------------------------------
+# This script exemplifies the advanced use of mle, with
+# analytical first and second derivatives plus the choice 
+# of the numerical optimization algorithm
+# ------------------------------------------------------
+
+# ----- functions --------------------------------------
+
+function matrix score(matrix b, series y, list X)
+    /* computes the score by observation for a Probit
+       model, which is returned as a (T x k) matrix */
+    series ndx = lincomb(X, b)
+    series m = y ? invmills(-ndx) : -invmills(ndx)
+    return {m} .* {X}
+end function
+    
+function void Hess(matrix *H, matrix b, series y, list X) 
+    /* computes the negative Hessian for a Probit
+    model, which is stored as a (k x k) matrix pointed 
+    by the first argument of the function */
+    series ndx = lincomb(X, b)
+    series m = y ? invmills(-ndx) : -invmills(ndx)
+    series m2 = m*(m+ndx)
+    matrix mX = {X}    
+    H = (mX .* {m2})'mX
+end function
+
+function matrix totalscore(matrix *b, series y, list X) 
+    /* computes the total score; this function is not 
+    needed in the actual optimization, it is just used 
+    by the "check" function (see below) */
+    return sumc(score(b, y, X))
+end function
+
+function void check(matrix b, series y, list X)
+    /* compares the analytical Hessian to its numerical
+    approximation */
+    matrix aH
+    Hess(&aH, b, y, X) # stores the analytical Hessian into aH
+    
+    matrix nH = fdjac(b, "totalscore(&b, y, X)")
+    nH = 0.5*(nH + nH') # force symmetry
+    
+    printf "Numerical Hessian\n%16.6f\n", nH 
+    printf "Analytical Hessian (negative)\n%16.6f\n", aH 
+    printf "Check (should be zero)\n%16.6f\n", nH + aH
+end function
+
+# ----- main ----------------------------------------------
+
+nulldata 1000
+set optimizer bfgs
+
+# generate artificial data
+series x1 = normal()
+series x2 = normal()
+series x3 = normal()
+list X = const x1 x2 x3
+
+series ystar = x1 + x2 + x3 + normal()
+series y = (ystar > 0)
+
+matrix b = zeros(nelem(X),1) # initialize b at 0
+check(b, y, X)               # check Hessian at 0
+
+# BFGS - numerical
+mle logl = y*ln(P) + (1-y)*ln(1-P)
+    series ndx = lincomb(X, b)
+    series P = cnorm(ndx)
+    params b
+end mle --verbose 
+
+check(b, y, X) # check Hessian at maximum
+
+# BFGS - analytical
+matrix b = zeros(nelem(X),1)
+
+mle logl = y*ln(P) + (1-y)*ln(1-P)
+    series ndx = lincomb(X, b)
+    series P = cnorm(ndx)
+    deriv b = score(b, y, X)
+end mle --verbose 
+
+# Newton-Raphson - numerical
+set optimizer newton
+
+matrix b = zeros(nelem(X),1)
+mle logl = y*ln(P) + (1-y)*ln(1-P)
+    series ndx = lincomb(X, b)
+    series P = cnorm(ndx)
+    params b
+end mle --verbose 
+
+# Newton-Raphson - analytical
+matrix H = {}
+matrix b = zeros(nelem(X),1)
+mle logl = y*ln(P) + (1-y)*ln(1-P)
+    series ndx = lincomb(X, b)
+    series P = cnorm(ndx)
+    deriv b = score(b, y, X)
+    hessian Hess(&H, b, y, X)
+end mle --verbose
