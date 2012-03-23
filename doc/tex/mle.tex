@@ -853,15 +853,15 @@ designing scripts for this purpose is:
 In the rest of this section, we will expand on the probit example of
 section \ref{sec:anal-der} to give the reader an idea of what a
 ``heavy-duty'' application of \cmd{mle} looks like. Most of the code
-fragments come from the \verb|mle-advanced.inp|, which is one of the
+fragments come from \verb|mle-advanced.inp|, which is one of the
 sample scripts supplied with the standard installation of \app{gretl}
-(see under \emph{File $>$ Script File $>$ Practice files}).
+(see under \emph{File $>$ Script files $>$ Practice File}).
 
 \subsection{BFGS with and without analytical derivatives}
 \label{sec:mle-adv-bfgs}
 
 The example in section \ref{sec:anal-der} can be made more general by
-using user-written functions and matrices. Consider the following code
+using matrices and user-written functions. Consider the following code
 fragment:
 \begin{code}
 list X = const x1 x2 x3
@@ -885,7 +885,7 @@ by:
 \item using the \texttt{nelem()} function to initialize $b$, so that
   its dimension is kept track of automatically;
 \item using the \texttt{lincomb()} function to compute the index
-  function;
+  function.
 \end{enumerate}
 
 A parallel enhancement could be achieved in the case of analytically
@@ -903,10 +903,11 @@ mle logl = y*ln(P) + (1-y)*ln(1-P)
 end mle
 \end{code}
 in which the \verb|{}| operator was used to turn series and lists into
-matrices. However, proceeding in this way may imply inserting into the
-\cmd{mle} block a long series of instructions; the example above
-merely happens to be short because the score matrix for the probit
-model is very easy to write in matrix form.
+matrices (see chapter \ref{chap:matrices}). However, proceeding in
+this way may imply inserting into the \cmd{mle} block a long series of
+instructions; the example above merely happens to be short because the
+score matrix for the probit model is very easy to write in matrix
+form.
 
 A better solution is writing a user-level function to compute the
 score and using that inside the \cmd{mle} block, as in
@@ -927,6 +928,9 @@ mle logl = y*ln(P) + (1-y)*ln(1-P)
     deriv b = score(b, y, X)
 end mle
 \end{code}
+In this way, no matter how complex the computation of the score is,
+the \cmd{mle} block remains nicely compact.
+
 
 %%% Local Variables: 
 %%% mode: latex
