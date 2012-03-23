@@ -598,11 +598,11 @@ as follows:
 mle logl = y*ln(P) + (1-y)*ln(1-P)
   series ndx = b0 + b1*x1 + b2*x2 + b3*x3
   series P = cnorm(ndx)
-  series tmp = dnorm(ndx)*(y/P - (1-y)/(1-P))
-  deriv b0 = tmp
-  deriv b1 = tmp*x1
-  deriv b2 = tmp*x2
-  deriv b3 = tmp*x3
+  series m = dnorm(ndx)*(y/P - (1-y)/(1-P))
+  deriv b0 = m
+  deriv b1 = m*x1
+  deriv b2 = m*x2
+  deriv b3 = m*x3
 end mle --verbose
 \end{code}
 
@@ -632,14 +632,14 @@ the regular \texttt{print} command.  The command word \texttt{print}
 should be followed by the name of just one variable (a scalar, series
 or matrix).
 
-In the last example above a key variable named \texttt{tmp} was
+In the last example above a key variable named \texttt{m} was
 generated, forming the basis for the analytical derivatives.  To track
 the progress of this variable one could add a print statement within
 the ML block, as in
 %
 \begin{code}
-series tmp = dnorm(ndx)*(y/P - (1-y)/(1-P))
-print tmp
+series m = dnorm(ndx)*(y/P - (1-y)/(1-P))
+print m
 \end{code}
 
 \section{Using functions}
@@ -845,8 +845,8 @@ preferred inference method).
 The strategy that, as of this writing, has proven most successful in
 designing scripts for this purpose is:
 \begin{itemize}
-\item Modularize your code as much as possible;
-\item Use analytical derivatives whenever possible;
+\item Modularize your code as much as possible.
+\item Use analytical derivatives whenever possible.
 \item Choose your estimation method wisely.
 \end{itemize}
 
@@ -857,7 +857,76 @@ fragments come from the \verb|mle-advanced.inp|, which is one of the
 sample scripts supplied with the standard installation of \app{gretl}
 (see under \emph{File $>$ Script File $>$ Practice files}).
 
-\ldots to be continued \ldots
+\subsection{BFGS with and without analytical derivatives}
+\label{sec:mle-adv-bfgs}
+
+The example in section \ref{sec:anal-der} can be made more general by
+using user-written functions and matrices. Consider the following code
+fragment:
+\begin{code}
+list X = const x1 x2 x3
+matrix b = zeros(nelem(X),1)
+
+mle logl = y*ln(P) + (1-y)*ln(1-P)
+    series ndx = lincomb(X, b)
+    series P = cnorm(ndx)
+    params b
+end mle
+\end{code}
+
+In this context, the fact that the model we are estimating has four
+explanatory variables is totally incidental: the code is written in
+such a way that we could change the content of the list \texttt{X}
+without having to make any other modification. This was made possible
+by:
+\begin{enumerate}
+\item gathering the parameters to estimate into a single vector $b$
+  rather than using separate scalars;
+\item using the \texttt{nelem()} function to initialize $b$, so that
+  its dimension is kept track of automatically;
+\item using the \texttt{lincomb()} function to compute the index
+  function;
+\end{enumerate}
+
+A parallel enhancement could be achieved in the case of analytically
+computed derivatives: since $b$ is now a vector, \cmd{mle} expects the
+argument to the \cmd{deriv} keyword to be a matrix, in which each
+column is the partial derivative to the corresponding element of
+$b$. This could be easily achieved via 
+\begin{code}
+mle logl = y*ln(P) + (1-y)*ln(1-P)
+    series ndx = lincomb(X, b)
+    series P = cnorm(ndx)
+    series m = y ? invmills(-ndx) : -invmills(ndx)
+    matrix mX = {X}
+    deriv b = mX .* {m}
+end mle
+\end{code}
+in which the \verb|{}| operator was used to turn series and lists into
+matrices. However, proceeding in this way may imply inserting into the
+\cmd{mle} block a long series of instructions; the example above
+merely happens to be short because the score matrix for the probit
+model is very easy to write in matrix form.
+
+A better solution is writing a user-level function to compute the
+score and using that inside the \cmd{mle} block, as in
+\begin{code}
+function matrix score(matrix b, series y, list X)
+    /* computes the score by observation for a Probit
+       model, which is returned as a (T x k) matrix */
+    series ndx = lincomb(X, b)
+    series m = y ? invmills(-ndx) : -invmills(ndx)
+    return {m} .* {X}
+end function
+    
+[...]
+
+mle logl = y*ln(P) + (1-y)*ln(1-P)
+    series ndx = lincomb(X, b)
+    series P = cnorm(ndx)
+    deriv b = score(b, y, X)
+end mle
+\end{code}
 
 %%% Local Variables: 
 %%% mode: latex
