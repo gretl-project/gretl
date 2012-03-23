@@ -20,6 +20,7 @@ const char *special_keyword[] = {
     "deriv",
     "orthog",
     "weights",
+    "hessian",
     NULL
 };
 
