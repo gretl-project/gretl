@@ -2,7 +2,10 @@ version 1.9.8, in progress
 - GUI: support use of named lists in the model specification dialog and
   other contexts
 - GUI: add option of making the script editor use tabs
-- Add keyboard shortcut help file
+- GUI: add "reformat" option to summary statistics window for single
+  series
+- GUI: ddd keyboard shortcut help file
+- Add a new practice script illustrating advanced use of mle command
 - New function pxsum(): computes the cross-sectional sum of a series in
   the context of panel data
 - stack() function for panel data: allow '*' in forming list of series
@@ -39,7 +42,7 @@ version 1.9.8, in progress
   gretl plugins
 - Configure check for gnome desktop: support gnome 3.0
 - Temporary files: use mkstemp() instead of mktemp()
-- MS Windows and OS X: update to gnuplot 4.6.0
+- MS Windows and OS X: update packaged gnuplot to version 4.6.0
 - MS Windows build: update cross-compiler to gcc-4.6.2
 - Build tools: update to libtool 2.4.2
 - Building from source: fix configure script for non-sse2 build

@@ -3595,8 +3595,9 @@ static int do_straight_anova (void)
 
 static int real_do_model (int action) 
 {
-    PRN *prn;
+    int orig_v = dataset->v;
     MODEL *pmod;
+    PRN *prn;
     int err = 0;
 
 #if 0
@@ -3720,6 +3721,10 @@ static int real_do_model (int action)
 	record_model_command(pmod->ID);
 	attach_subsample_to_model(pmod, dataset);
 	view_model(prn, pmod, NULL); 
+    }
+
+    if (dataset->v > orig_v) {
+	refresh_data();
     }
 
     return err;
@@ -4203,9 +4208,10 @@ static char *alt_list_buf (const int *inlist, int fit)
 
 void do_graph_model (const int *list, int fit)
 {
+    MODEL *pmod = NULL;
     char *buf = NULL;
     PRN *prn;
-    MODEL *pmod = NULL;
+    int orig_v = dataset->v;
     int err = 0;
 
     if (list == NULL || list[1] >= dataset->v || list[2] >= dataset->v) {
@@ -4247,7 +4253,11 @@ void do_graph_model (const int *list, int fit)
 	record_lib_command();
 	attach_subsample_to_model(pmod, dataset);
 	view_model(prn, pmod, NULL);
-    }  
+    }
+    
+    if (dataset->v > orig_v) {
+	refresh_data();
+    }
 }
 
 /* budget version of gretl console */
