@@ -59,8 +59,6 @@ struct series_view_t {
     data_point *points;
 };
 
-static series_view static_sview;
-
 static void series_view_unsort (series_view *sview);
 
 void free_series_view (gpointer p)
@@ -96,6 +94,10 @@ static void series_view_fill_points (series_view *sview)
 static int series_view_allocate (series_view *sview)
 {
     int err = 0;
+
+    if (sview == NULL) {
+	return E_DATA;
+    }
 
     if (sview->points != NULL) {
 	/* already allocated */
@@ -726,15 +728,10 @@ static void real_view_format_dialog (windata_t *vwin, series_view *sview)
 
 void series_view_format_dialog (windata_t *vwin)
 {
+    static series_view static_sview;
     series_view *sview;
 
-    if (vwin->role == VIEW_SERIES) {
-	sview = (series_view *) vwin->data;
-
-	if (series_view_allocate(sview)) {
-	    return;
-	}
-    } else if (vwin->role == SUMMARY) {
+    if (vwin->role == SUMMARY) {
 	static int initted;
 
 	if (!initted) {
@@ -742,10 +739,13 @@ void series_view_format_dialog (windata_t *vwin)
 	    initted = 1;
 	}
 	sview = &static_sview;
-    } else {
-	/* huh? */
-	return;
-    }
+    } else {    
+	sview = (series_view *) vwin->data;
+
+	if (series_view_allocate(sview)) {
+	    return;
+	}
+    } 
 
     real_view_format_dialog(vwin, sview);
 }
