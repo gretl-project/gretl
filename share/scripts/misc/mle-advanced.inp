@@ -1,3 +1,6 @@
+set echo off
+set messages off
+
 # ------------------------------------------------------
 # This script exemplifies the advanced use of mle, with
 # analytical first and second derivatives plus the choice 
@@ -48,7 +51,7 @@ end function
 
 # ----- main ----------------------------------------------
 
-nulldata 1000
+nulldata 10000
 set optimizer bfgs
 
 # generate artificial data
@@ -64,39 +67,79 @@ matrix b = zeros(nelem(X),1) # initialize b at 0
 check(b, y, X)               # check Hessian at 0
 
 # BFGS - numerical
+set stopwatch
 mle logl = y*ln(P) + (1-y)*ln(1-P)
     series ndx = lincomb(X, b)
     series P = cnorm(ndx)
     params b
 end mle --verbose 
+tbnum = $stopwatch
+
+check(b, y, X) # check Hessian at maximum
+
+# BFGS - numerical (Richardson)
+set bfgs_richardson on
+matrix b = zeros(nelem(X),1)
+
+set stopwatch
+mle logl = y*ln(P) + (1-y)*ln(1-P)
+    series ndx = lincomb(X, b)
+    series P = cnorm(ndx)
+    params b
+end mle --verbose 
+tric = $stopwatch
+set bfgs_richardson off
 
 check(b, y, X) # check Hessian at maximum
 
 # BFGS - analytical
 matrix b = zeros(nelem(X),1)
 
+set stopwatch
 mle logl = y*ln(P) + (1-y)*ln(1-P)
     series ndx = lincomb(X, b)
     series P = cnorm(ndx)
     deriv b = score(b, y, X)
 end mle --verbose 
+tban = $stopwatch
 
 # Newton-Raphson - numerical
 set optimizer newton
 
 matrix b = zeros(nelem(X),1)
+set stopwatch
 mle logl = y*ln(P) + (1-y)*ln(1-P)
     series ndx = lincomb(X, b)
     series P = cnorm(ndx)
     params b
 end mle --verbose 
+tnrn = $stopwatch
 
-# Newton-Raphson - analytical
+# Newton-Raphson - analytical gradient
+matrix b = zeros(nelem(X),1)
+set stopwatch
+mle logl = y*ln(P) + (1-y)*ln(1-P)
+    series ndx = lincomb(X, b)
+    series P = cnorm(ndx)
+    deriv b = score(b, y, X)
+end mle --verbose
+tnra1 = $stopwatch
+
+# Newton-Raphson - analytical Hessian
 matrix H = {}
 matrix b = zeros(nelem(X),1)
+set stopwatch
 mle logl = y*ln(P) + (1-y)*ln(1-P)
     series ndx = lincomb(X, b)
     series P = cnorm(ndx)
     deriv b = score(b, y, X)
     hessian Hess(&H, b, y, X)
 end mle --verbose
+tnra2 = $stopwatch
+
+printf "BFGS (numerical):             %5.3f seconds\n", tbnum
+printf "BFGS (Richardson):            %5.3f seconds\n", tric
+printf "BFGS (analytical gradient):   %5.3f seconds\n", tban
+printf "Newton (numerical):           %5.3f seconds\n", tnrn
+printf "Newton (analytical gradient): %5.3f seconds\n", tnra1
+printf "Newton (analytical Hessian):  %5.3f seconds\n", tnra2

@@ -88,8 +88,8 @@ another in the way they compute the direction vector
 $d(\mathbf{g}(\theta_0))$, to ensure that $\LogLik(\theta_1) >
 \LogLik(\theta_0)$ (so that we eventually end up on the maximum).
 
-The method \app{gretl} uses to maximize the log-likelihood is a
-gradient-based algorithm known as the \textbf{BFGS} (Broyden,
+The default method \app{gretl} uses to maximize the log-likelihood is
+a gradient-based algorithm known as the \textbf{BFGS} (Broyden,
 Fletcher, Goldfarb and Shanno) method. This technique is used in most
 econometric and statistical packages, as it is well-established and
 remarkably powerful. Clearly, in order to make this technique
@@ -97,7 +97,10 @@ operational, it must be possible to compute the vector
 $\mathbf{g}(\theta)$ for any value of $\theta$. In some cases this
 vector can be written explicitly as a function of $\mathbf{Y}$. If
 this is not possible or too difficult the gradient may be evaluated
-numerically.
+numerically. The alternative \textbf{Newton-Raphson} algorithm is also
+available, which is more effective under some circumstances but is
+also more fragile; see section \ref{sec:mle-adv} and chapter
+\ref{chap-numerical} for details.
 
 The choice of the starting value, $\theta_0$, is crucial in some contexts
 and inconsequential in others. In general, however, it is
@@ -419,13 +422,15 @@ mle logl = ln(cnorm(e*lambda/ss)) - (ln(ss) + 0.5*(e/ss)^2)
 end mle
 \end{scode}
 \end{script}
-
+%$
 \section{GARCH models}
 \label{sec:garch}
 
 GARCH models are handled by gretl via a native function. However, it is
 instructive to see how they can be estimated through the \texttt{mle}
-command.
+command.\footnote{The \texttt{gig} addon, which handles other variants
+of conditionally heteroskedastic models, uses \texttt{mle} as its
+internal engine.}
 
 The following equations provide the simplest example of a GARCH(1,1)
 model:
@@ -514,10 +519,19 @@ derivative, namely
 \]
 where $h$ is a small number. 
 
-In many situations, this is rather efficient and accurate. However,
-one might want to avoid the approximation and specify an exact
-function for the derivatives. As an example, consider the following
-script:
+In many situations, this is rather efficient and accurate. A better
+approximation to the true derivative may be obtained by forcing
+\cmd{mle} to use a technique known as \emph{Richardson Extrapolation},
+which gives extremely precise results, but is considerably more
+CPU-intensive. This feature may be turned on by using the \cmd{set}
+command as in
+\begin{code}
+  set bfgs_richardson on
+\end{code}
+
+However, one might want to avoid the approximation and specify an
+exact function for the derivatives. As an example, consider the
+following script:
 %
 \begin{code}
 nulldata 1000
@@ -818,6 +832,32 @@ Zero-inflated Poisson model:
 A further step may then be creating a function package for accessing
 your new \texttt{zip()} function via \app{gretl}'s graphical interface. For
 details on how to do this, see section \ref{sec:func-packages}.
+
+\section{Advanced use of \texttt{mle}: functions, analytical
+  derivatives, algorithm choice}
+\label{sec:mle-adv}
+
+All the techniques decribed in the previous sections may be combined,
+and \cmd{mle} can be used for solving non-standard estimation problems
+(provided, of course, that one chooses maximum likelihood as the
+preferred inference method).
+
+The strategy that, as of this writing, has proven most successful in
+designing scripts for this purpose is:
+\begin{itemize}
+\item Modularize your code as much as possible;
+\item Use analytical derivatives whenever possible;
+\item Choose your estimation method wisely.
+\end{itemize}
+
+In the rest of this section, we will expand on the probit example of
+section \ref{sec:anal-der} to give the reader an idea of what a
+``heavy-duty'' application of \cmd{mle} looks like. Most of the code
+fragments come from the \verb|mle-advanced.inp|, which is one of the
+sample scripts supplied with the standard installation of \app{gretl}
+(see under \emph{File $>$ Script File $>$ Practice files}).
+
+\ldots to be continued \ldots
 
 %%% Local Variables: 
 %%% mode: latex

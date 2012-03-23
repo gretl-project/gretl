@@ -9559,6 +9559,13 @@
 	    permissive value of 5.0.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>bfgs_richardson</lit>: <lit>on</lit> or
+	  <lit>off</lit> (the default). Use Richardson extrapolation
+	  when computing numerical derivatives in the context of BFGS
+	  maximization.
+	  </para>
+	</li>
 	<li>	  
 	  <para><lit>initvals</lit>: a pre-specified matrix. Allows manual
 	    setting of the initial parameter estimates for numerical
