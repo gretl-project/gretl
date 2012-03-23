@@ -90,8 +90,6 @@ end mle --verbose
 tric = $stopwatch
 set bfgs_richardson off
 
-check(b, y, X) # check Hessian at maximum
-
 # BFGS - analytical
 matrix b = zeros(nelem(X),1)
 
