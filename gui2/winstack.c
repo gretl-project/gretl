@@ -137,6 +137,10 @@ static void window_list_remove (GtkWidget *w, GtkActionGroup *group)
     gchar *aname = g_strdup_printf("%p", (void *) w);
     GtkAction *action;
 
+#if WDEBUG
+    fprintf(stderr, "window_list_remove: %s\n", aname);
+#endif
+
     action = gtk_action_group_get_action(group, aname);
     if (action != NULL) {
 	gtk_action_group_remove_action(group, action);
@@ -194,6 +198,10 @@ void window_list_add (GtkWidget *w, int role)
     aname = g_strdup_printf("%p", (void *) w);
     entry.name = aname;
     entry.stock_id = window_list_icon(role);
+
+#if WDEBUG
+    fprintf(stderr, "window_list_add: %s\n", aname);
+#endif
 
     if (w == mdata->main) {
 	label = _("Main window");
@@ -415,28 +423,6 @@ void vwin_winlist_popup (GtkWidget *src, GdkEventButton *event,
     window_list_popup(src, event, vwin_toplevel(vwin));
 }
 
-#if 0
-void vwin_menu_add_winlist (GtkWidget *w, windata_t *vwin)
-{
-    GtkActionGroup *actions = window_group;
-    guint id = gtk_ui_manager_new_merge_id(vwin->ui);
-    GList *list = gtk_action_group_list_actions(actions);
-    GtkAction *action;
-    const gchar *path = "/menubar/Windows";
-    const gchar *aname;
-
-    while (list) {
-	action = (GtkAction *) list->data;
-	aname = gtk_action_get_name(action);
-	gtk_ui_manager_add_ui(vwin->ui, id, path, aname, aname,
-			      GTK_UI_MANAGER_MENUITEM, FALSE);
-	list = list->next;
-    }
-
-    g_list_free(list);
-}
-#endif
-
 /* on exiting, check for any editing windows with unsaved
    changes, and if we find any give the user a chance to
    save the changes, or to cancel the exit
@@ -522,7 +508,7 @@ void close_session_windows (void)
 		/* tabbed script editor stays open, but tabbed model
 		   viewer should be closed */
 		tabwin_close_models_viewer(w);
-	    } else if (!keep_window_open(w)) {
+	    } else if (w != NULL && !keep_window_open(w)) {
 		gtk_widget_destroy(w);
 	    }
 	    list = list->next;
@@ -882,22 +868,39 @@ GtkWidget *vwin_toplevel (windata_t *vwin)
     return vwin->topmain != NULL ? vwin->topmain : vwin->main;
 }
 
+static void model_menu_add_winlist (windata_t *vwin)
+{
+    GtkWidget *img, *button = gtk_button_new();
+    GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
+
+    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    img = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, 
+				   GTK_ICON_SIZE_MENU);
+    gtk_container_add(GTK_CONTAINER(button), img);
+    gtk_widget_set_tooltip_text(GTK_WIDGET(button), _("Windows"));
+    g_signal_connect(button, "button-press-event",
+		     G_CALLBACK(window_list_popup), 
+		     vwin_toplevel(vwin));
+    gtk_widget_show_all(button);
+    gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+}
+
 void vwin_pack_toolbar (windata_t *vwin)
 {
     if (vwin->topmain != NULL) {
-	/* vwin is embedded in a tabbed window */
+	/* @vwin is embedded in a tabbed window */
 	tabwin_register_toolbar(vwin);
-    } else if (window_is_tab(vwin) && vwin->role == VIEW_MODEL) {
-	/* making a stand-alone model viewer: the menubar does not
-	   live in an hbox */
-	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, 
-			   FALSE, FALSE, 0);
-	gtk_box_reorder_child(GTK_BOX(vwin->vbox), vwin->mbar, 0);
+	if (vwin->role == VIEW_MODEL && viewer_n_siblings(vwin) == 0) {
+	    model_menu_add_winlist(vwin);
+	}
     } else {
 	GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
 
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
+	if (vwin->role == VIEW_MODEL) {
+	    model_menu_add_winlist(vwin);
+	}
 	if (window_is_tab(vwin)) {
 	    /* here we're re-packing vwin->mbar: move it up top */
 	    gtk_box_reorder_child(GTK_BOX(vwin->vbox), hbox, 0);

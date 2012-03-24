@@ -2981,27 +2981,6 @@ static const gchar *model_ui =
     " </menubar>"
     "</ui>";
 
-static void model_show_winlist (GtkWidget *m, windata_t *vwin)
-{
-    window_list_popup(m, NULL, vwin->main);
-#if GTK_MAJOR_VERSION > 2
-    gtk_menu_item_deselect(GTK_MENU_ITEM(m));
-#else
-    gtk_item_deselect(GTK_ITEM(m));
-#endif
-}
-
-static void model_menu_add_winlist (windata_t *vwin)
-{
-    GtkWidget *m = gtk_menu_item_new_with_mnemonic(_("_Windows"));
-
-    gtk_menu_shell_append(GTK_MENU_SHELL(vwin->mbar), m);
-    g_signal_connect(m, "select", G_CALLBACK(model_show_winlist), vwin);
-#if 0
-    g_signal_connect(m, "select", G_CALLBACK(vwin_menu_add_winlist), vwin);
-#endif
-}
-
 static void set_up_model_view_menu (windata_t *vwin) 
 {
     MODEL *pmod = (MODEL *) vwin->data;
@@ -3095,18 +3074,10 @@ static void set_up_model_view_menu (windata_t *vwin)
     /* disable some menu items if need be */
     adjust_model_menu_state(vwin, pmod);
 
-    /* add window-list menu item */
-    model_menu_add_winlist(vwin);
-
     g_signal_connect(G_OBJECT(vwin->mbar), "button-press-event", 
 		     G_CALLBACK(check_model_menu), vwin);
 
-    if (window_is_tab(vwin)) {
-	tabwin_register_toolbar(vwin);
-    } else {
-	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, 
-			   FALSE, FALSE, 0);
-    }
+    vwin_pack_toolbar(vwin);
 }
 
 enum {

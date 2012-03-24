@@ -838,7 +838,7 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     size_new_toplevel(vwin);
 
 #if TDEBUG
-    fprintf(stderr, "*** undock_tabbed_viewer: new main = %p, mbar = %p\n", 
+    fprintf(stderr, "*** undock_tabbed_viewer: new main=%p, mbar=%p\n", 
 	    (void *) vwin->main, (void *) vwin->mbar);
 #endif
 
@@ -859,7 +859,7 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
     g_object_unref(vwin->vbox);
 
-    /* set delete signal for single-script window */
+    /* connect delete signal for single-script window */
     g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 		     G_CALLBACK(query_save_text), vwin);
     /* and key-catcher for single-script window */
@@ -1134,3 +1134,15 @@ void tabwin_register_dialog (GtkWidget *w, gpointer p)
 		     tabwin);
 }
 
+int viewer_n_siblings (windata_t *vwin) 
+{
+    tabwin_t *tabwin = vwin_get_tabwin(vwin);
+    int n = 0;
+
+    if (tabwin != NULL) {
+	n = gtk_notebook_get_n_pages(GTK_NOTEBOOK(tabwin->tabs));
+	if (n > 0) n--;
+    }
+
+    return n;
+}
