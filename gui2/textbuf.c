@@ -1254,7 +1254,8 @@ static void open_external_link (GtkTextTag *tag)
     }
 }
 
-static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
+static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, 
+			    gpointer en_ptr)
 {
     GSList *tags = NULL, *tagp = NULL;
 
@@ -1264,7 +1265,7 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 	GtkTextTag *tag = tagp->data;
 	gint page = object_get_int(tag, "page");
 	gint xref = object_get_int(tag, "xref");
-	gint en = GPOINTER_TO_INT(p);
+	gint en = GPOINTER_TO_INT(en_ptr);
 
 	if (page != 0 || xref != 0) {
 	    if (page == GUIDE_PAGE) {
@@ -1305,7 +1306,7 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 /* Help links can be activated by pressing Enter */
 
 static gboolean cmdref_key_press (GtkWidget *tview, GdkEventKey *ev,
-				  gpointer p)
+				  gpointer en_ptr)
 {
     GtkTextIter iter;
     GtkTextBuffer *tbuf;
@@ -1316,7 +1317,7 @@ static gboolean cmdref_key_press (GtkWidget *tview, GdkEventKey *ev,
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tview));
 	gtk_text_buffer_get_iter_at_mark(tbuf, &iter, 
 					 gtk_text_buffer_get_insert(tbuf));
-	follow_if_link(tview, &iter, p);
+	follow_if_link(tview, &iter, en_ptr);
 	break;
     default:
 	break;
@@ -1328,7 +1329,7 @@ static gboolean cmdref_key_press (GtkWidget *tview, GdkEventKey *ev,
 /* Help links can be activated by clicking */
 
 static gboolean cmdref_event_after (GtkWidget *w, GdkEvent *ev,
-				    gpointer p)
+				    gpointer en_ptr)
 {
     GtkTextIter start, end, iter;
     GtkTextView *view;
@@ -1359,7 +1360,7 @@ static gboolean cmdref_event_after (GtkWidget *w, GdkEvent *ev,
 
     gtk_text_view_get_iter_at_location(view, &iter, x, y);
 
-    follow_if_link(w, &iter, p);
+    follow_if_link(w, &iter, en_ptr);
 
     return FALSE;
 }

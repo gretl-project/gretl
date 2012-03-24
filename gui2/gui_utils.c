@@ -573,7 +573,7 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
 	    return TRUE;
 	} else if (upkey == GDK_C) {
 	    /* Ctrl-C: copy */
-	    if (vwin_is_editing(vwin)) {
+	    if (editing) {
 		/* let GTK handle this */
 		return FALSE;
 	    } else {
@@ -1825,7 +1825,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
     }
 
     /* catch some special keystrokes */
-    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+    g_signal_connect(G_OBJECT(vwin_toplevel(vwin)), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     /* editing script or graph commands: grab the "changed" signal and
@@ -1971,7 +1971,7 @@ windata_t *view_help_file (const char *filename, int role)
 	help_panes_setup(vwin, vwin->text);
     } 
 
-    g_signal_connect(G_OBJECT(vwin->text), "key-press-event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     if (vwin->role == CLI_HELP || vwin->role == CLI_HELP_EN ||

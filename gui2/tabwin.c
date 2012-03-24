@@ -745,7 +745,8 @@ static gchar *title_from_vwin (windata_t *vwin)
 }
 
 /* show or hide the New and Open toolbar items, which occupy
-   the first two places */
+   the first two slots on the toolbar
+*/
 
 void script_editor_show_new_open (windata_t *vwin, gboolean show)
 {
@@ -763,6 +764,10 @@ void script_editor_show_new_open (windata_t *vwin, gboolean show)
     }	
 }
 
+/* response to pulling a script or model out of the tabbed
+   context: we need to give the content its own window
+*/
+
 void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 {
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
@@ -773,7 +778,7 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     gchar *title;
 
     if (gtk_notebook_get_n_pages(notebook) < 2) {
-	/* we'll not do this if there's only one page in the
+	/* we won't do this if there's only one page in the
 	   viewer */
 	return;
     }
@@ -841,11 +846,9 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
     g_object_unref(vwin->vbox);
 
-    /* set signals */
+    /* set delete signal for single-script window */
     g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 		     G_CALLBACK(query_save_text), vwin);
-    g_object_set_data(G_OBJECT(vwin->main), "role", 
-		      GINT_TO_POINTER(vwin->role));
 
     window_list_add(vwin->main, vwin->role);
 
@@ -892,7 +895,7 @@ static void dock_viewer (GtkWidget *w, windata_t *vwin)
 					 vwin);
     g_signal_handlers_disconnect_by_func(oldmain,
 					 query_save_text,
-					 vwin); /* FIXME? */
+					 vwin);
 
     /* grab info for title */
     if (vwin->role == EDIT_SCRIPT) {
