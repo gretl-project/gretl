@@ -222,9 +222,11 @@ void window_list_add (GtkWidget *w, int role)
 		     G_CALLBACK(window_list_remove), 
 		     window_group);
 
-    /* attach time to window */
-    g_object_set_data(G_OBJECT(w), "time", 
-		      GUINT_TO_POINTER(time(NULL)));
+    if (w != mdata->main && !widget_is_iconview(w)) {
+	/* attach time to window */
+	g_object_set_data(G_OBJECT(w), "time", 
+			  GUINT_TO_POINTER(time(NULL)));
+    }
 
     n_listed_windows++;
 
