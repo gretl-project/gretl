@@ -503,16 +503,37 @@ void audio_render_window (windata_t *vwin, int key)
 
 #endif
 
-static int vwin_selection_present (gpointer p)
+static gboolean not_space (gunichar c, gpointer p)
+{
+    return !g_unichar_isspace(c);
+}
+
+static int vwin_subselection_present (gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
+    GtkTextIter selstart, selend;
     GtkTextBuffer *buf;
     int ret = 0;
 
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 
-    if (gtk_text_buffer_get_selection_bounds(buf, NULL, NULL)) {
-	ret = 1;
+    if (gtk_text_buffer_get_selection_bounds(buf, &selstart, &selend)) {
+	GtkTextIter start, end;
+
+	gtk_text_buffer_get_bounds(buf, &start, &end);
+	if (gtk_text_iter_equal(&selstart, &start) &&
+	    gtk_text_iter_equal(&selend, &end)) {
+	    ret = 0;
+	} else {
+	    gtk_text_iter_forward_find_char(&start, not_space,
+					    NULL, &selstart);
+	    gtk_text_iter_backward_find_char(&end, not_space,
+					     NULL, &selend);
+	    if (!gtk_text_iter_equal(&selstart, &start) ||
+		!gtk_text_iter_equal(&selend, &end)) {
+		ret = 1;
+	    }
+	}
     }
 
     return ret;
@@ -529,7 +550,7 @@ int vwin_is_editing (windata_t *vwin)
 
 gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin)
 {
-    if (vwin_selection_present(vwin)) {
+    if (vwin_subselection_present(vwin)) {
 	window_copy(vwin, GRETL_FORMAT_SELECTION);
     } else if (vwin_is_editing(vwin)) {
 	window_copy(vwin, GRETL_FORMAT_TXT);
