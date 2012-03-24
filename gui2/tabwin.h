@@ -60,6 +60,4 @@ void tabwin_register_dialog (GtkWidget *w, gpointer p);
 
 void script_editor_show_new_open (windata_t *vwin, gboolean show);
 
-windata_t *current_sibling_viewer (windata_t *vwin);
-
 #endif /* TABWIN_H_ */

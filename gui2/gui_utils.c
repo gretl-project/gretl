@@ -551,6 +551,21 @@ static int numeric_keyval (guint key)
     }
 }
 
+static gint jump_to_finder (guint keyval, windata_t *vwin)
+{
+    gchar *letter = gdk_keyval_name(keyval);
+
+    if (letter != NULL) {
+	/* snap to search box */
+	gtk_widget_grab_focus(vwin->finder);
+	gtk_entry_set_text(GTK_ENTRY(vwin->finder), letter);
+	gtk_editable_set_position(GTK_EDITABLE(vwin->finder), -1);
+	return TRUE; /* handled */
+    }
+
+    return FALSE;
+}
+
 /* Signal attached to editor/viewer windows. Note that @w is 
    generally the top-level GtkWidget vwin->main; exceptions
    are (a) tabbed windows, where @w is the embedding window,
@@ -561,16 +576,12 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
 		       windata_t *vwin)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
+    int Ctrl = (mods & GDK_CONTROL_MASK);
     guint upkey = key->keyval;
     int editing = vwin_is_editing(vwin);
-    int Ctrl = (mods & GDK_CONTROL_MASK);
 
     if (!gdk_keyval_is_upper(key->keyval)) {
 	upkey = gdk_keyval_to_upper(key->keyval);
-    }
-
-    if (window_is_tab(vwin)) {
-	vwin = current_sibling_viewer(vwin);
     }
 
     if (Ctrl) {
@@ -614,13 +625,15 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
 		    do_new_script(vwin->role);
 		    return TRUE;
 		}
-	    } else if (upkey == GDK_greater || upkey == GDK_less) {
-		if (window_is_tab(vwin)) {
-		    tabwin_navigate(vwin, upkey);
-		    return TRUE;
-		}
+	    } 
+	}
+	if (window_is_tab(vwin)) {
+	    /* note: still conditional on Ctrl */
+	    if (upkey == GDK_greater || upkey == GDK_less) {
+		tabwin_navigate(vwin, upkey);
+		return TRUE;
 	    }
-	} 
+	}
     } else if (mods & GDK_MOD1_MASK) {
 	/* Alt */
 	if (upkey == GDK_W) {
@@ -649,14 +662,8 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
     } 
 
     if (!mods && vwin->finder != NULL && GTK_IS_ENTRY(vwin->finder)) {
-	gchar *letter = gdk_keyval_name(key->keyval);
-
-	if (letter != NULL) {
-	    /* snap to search box */
-	    gtk_widget_grab_focus(vwin->finder);
-	    gtk_entry_set_text(GTK_ENTRY(vwin->finder), letter);
-	    gtk_editable_set_position(GTK_EDITABLE(vwin->finder), -1);
-	    return TRUE; /* handled */
+	if (jump_to_finder(key->keyval, vwin)) {
+	    return TRUE;
 	}
     }
 
@@ -1832,10 +1839,6 @@ view_file_with_title (const char *filename, int editable, int del_file,
 	textview_insert_file(vwin, filename);
     }
 
-    /* catch some special keystrokes */
-    g_signal_connect(G_OBJECT(vwin_toplevel(vwin)), "key-press-event", 
-		     G_CALLBACK(catch_viewer_key), vwin);
-
     /* editing script or graph commands: grab the "changed" signal and
        set up alert for unsaved changes on exit */
     if (vwin_editing_script(role)) {
@@ -1857,6 +1860,8 @@ view_file_with_title (const char *filename, int editable, int del_file,
     if (window_is_tab(vwin)) {
 	show_tabbed_viewer(vwin);
     } else {
+	g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+			 G_CALLBACK(catch_viewer_key), vwin);
 	gtk_widget_show_all(vwin->main);
     }
 
@@ -1995,7 +2000,7 @@ windata_t *view_help_file (const char *filename, int role)
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->main);
 
-    /* make the helpfile variant discernible via vwin->text */
+    /* make the helpfile variant discoverable via vwin->text */
     g_object_set_data(G_OBJECT(vwin->text), "role", 
 		      GINT_TO_POINTER(vwin->role));
 
@@ -2237,15 +2242,15 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     /* sync number of model tests */
     vwin->n_model_tests = pmod->ntests;
 
-    /* attach shortcuts */
-    g_signal_connect(G_OBJECT(vwin_toplevel(vwin)), "key-press-event", 
-		     G_CALLBACK(catch_viewer_key), vwin);
+    /* attach popup */
     g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
 		     G_CALLBACK(text_popup_handler), vwin);
 
     if (window_is_tab(vwin)) {
 	show_tabbed_viewer(vwin);
     } else {
+	g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+			 G_CALLBACK(catch_viewer_key), vwin);
 	gtk_widget_show_all(vwin->main);
     }
 
@@ -2992,6 +2997,9 @@ static void model_menu_add_winlist (windata_t *vwin)
 
     gtk_menu_shell_append(GTK_MENU_SHELL(vwin->mbar), m);
     g_signal_connect(m, "select", G_CALLBACK(model_show_winlist), vwin);
+#if 0
+    g_signal_connect(m, "select", G_CALLBACK(vwin_menu_add_winlist), vwin);
+#endif
 }
 
 static void set_up_model_view_menu (windata_t *vwin) 

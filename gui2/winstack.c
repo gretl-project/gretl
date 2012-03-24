@@ -385,7 +385,13 @@ void window_list_popup (GtkWidget *src, GdkEventButton *event, gpointer p)
 
 	if (n_listed_windows > 1) {
 	    /* add "cascade" menu item */
-	    item = gtk_menu_item_new_with_label(_("Arrange"));
+	    GtkWidget *image;
+
+	    item = gtk_image_menu_item_new_with_label(_("Arrange"));
+	    image = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, 
+					     GTK_ICON_SIZE_MENU);
+	    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), 
+					  image);
 	    g_signal_connect(G_OBJECT(item), "activate", 
 			     G_CALLBACK(cascade_session_windows), 
 			     NULL);
@@ -408,6 +414,28 @@ void vwin_winlist_popup (GtkWidget *src, GdkEventButton *event,
 {
     window_list_popup(src, event, vwin_toplevel(vwin));
 }
+
+#if 0
+void vwin_menu_add_winlist (GtkWidget *w, windata_t *vwin)
+{
+    GtkActionGroup *actions = window_group;
+    guint id = gtk_ui_manager_new_merge_id(vwin->ui);
+    GList *list = gtk_action_group_list_actions(actions);
+    GtkAction *action;
+    const gchar *path = "/menubar/Windows";
+    const gchar *aname;
+
+    while (list) {
+	action = (GtkAction *) list->data;
+	aname = gtk_action_get_name(action);
+	gtk_ui_manager_add_ui(vwin->ui, id, path, aname, aname,
+			      GTK_UI_MANAGER_MENUITEM, FALSE);
+	list = list->next;
+    }
+
+    g_list_free(list);
+}
+#endif
 
 /* on exiting, check for any editing windows with unsaved
    changes, and if we find any give the user a chance to

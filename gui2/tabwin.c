@@ -441,6 +441,17 @@ static GtkWidget *make_viewer_tab (tabwin_t *tabwin,
     return tab;
 }
 
+static gint catch_tabwin_key (GtkWidget *w, GdkEventKey *key, 
+			      tabwin_t *tabwin)
+{
+    GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
+    gint pg = gtk_notebook_get_current_page(notebook);
+    GtkWidget *tab = gtk_notebook_get_nth_page(notebook, pg);
+    windata_t *vwin = g_object_get_data(G_OBJECT(tab), "vwin");
+
+    return catch_viewer_key(w, key, vwin);
+}
+
 /* build a tabbed viewer/editor */
 
 static tabwin_t *make_tabbed_viewer (int role)
@@ -470,6 +481,8 @@ static tabwin_t *make_tabbed_viewer (int role)
     }	
     g_signal_connect(G_OBJECT(tabwin->main), "destroy", 
 		     G_CALLBACK(tabwin_destroy), tabwin);
+    g_signal_connect(G_OBJECT(tabwin->main), "key-press-event", 
+		     G_CALLBACK(catch_tabwin_key), tabwin);
     g_object_set_data(G_OBJECT(tabwin->main), "tabwin", tabwin);
 
     /* vertically oriented container */
@@ -1121,12 +1134,3 @@ void tabwin_register_dialog (GtkWidget *w, gpointer p)
 		     tabwin);
 }
 
-windata_t *current_sibling_viewer (windata_t *vwin)
-{
-    tabwin_t *tabwin = vwin_get_tabwin(vwin);
-    GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
-    gint pg = gtk_notebook_get_current_page(notebook);
-    GtkWidget *tab = gtk_notebook_get_nth_page(notebook, pg);
-
-    return g_object_get_data(G_OBJECT(tab), "vwin");
-}

@@ -823,7 +823,8 @@ void vwin_toolbar_insert_winlist (windata_t *vwin)
 
     gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("Windows"));
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    img = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, GTK_ICON_SIZE_MENU);
+    img = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, 
+				   GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_container_add(GTK_CONTAINER(item), button);
     g_signal_connect(button, "button-press-event", 
