@@ -551,12 +551,14 @@ static int numeric_keyval (guint key)
     }
 }
 
-/* Signal attached to editor/viewer windows: note that @w is always
-   the GtkWidget vwin->main.
+/* Signal attached to editor/viewer windows. Note that @w is 
+   generally the top-level GtkWidget vwin->main; exceptions
+   are (a) tabbed windows, where @w is the embedding window,
+   and (b) help windows, where @w is the text area.
 */
 
-static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, 
-			      windata_t *vwin)
+gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, 
+		       windata_t *vwin)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
     guint upkey = key->keyval;
@@ -565,6 +567,10 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
 
     if (!gdk_keyval_is_upper(key->keyval)) {
 	upkey = gdk_keyval_to_upper(key->keyval);
+    }
+
+    if (window_is_tab(vwin)) {
+	vwin = current_sibling_viewer(vwin);
     }
 
     if (Ctrl) {
@@ -637,7 +643,7 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
 
     if (editing) {
 	/* we set up "special" responses to some plain keystrokes 
-	   below: this won't do if we're editing text 
+	   below: this won't do if we're in editing mode 
 	*/
 	return FALSE;
     } 
@@ -654,8 +660,10 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
 	}
     }
 
-    if (upkey == GDK_Q || (upkey == GDK_W && Ctrl)) { 
-        gtk_widget_destroy(w);
+    if (upkey == GDK_Q || (upkey == GDK_W && Ctrl)) {
+	if (w == vwin->main) {
+	    gtk_widget_destroy(w);
+	}
     } else if (upkey == GDK_S && data_status && vwin->role == VIEW_MODEL) {
 	model_add_as_icon(NULL, vwin);
     } 
@@ -1971,7 +1979,7 @@ windata_t *view_help_file (const char *filename, int role)
 	help_panes_setup(vwin, vwin->text);
     } 
 
-    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+    g_signal_connect(G_OBJECT(vwin->text), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     if (vwin->role == CLI_HELP || vwin->role == CLI_HELP_EN ||
@@ -2193,7 +2201,6 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     int width, nlines;
 
     if (use_tabbed_model_viewer()) {
-	/* for now, totally experimental! */
 	tmp = g_strdup_printf(_("model %d"), pmod->ID);
 	vwin = viewer_tab_new(VIEW_MODEL, tmp, pmod);
 	g_free(tmp);

@@ -115,6 +115,9 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title);
 windata_t *view_script (const char *filename, int editable, 
 			int role);
 
+gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, 
+		       windata_t *vwin);
+
 void set_model_save_state (windata_t *vwin, gboolean s);
 
 void viewer_set_editable (windata_t *vwin);

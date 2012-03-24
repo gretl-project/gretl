@@ -849,6 +849,9 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     /* set delete signal for single-script window */
     g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 		     G_CALLBACK(query_save_text), vwin);
+    /* and key-catcher for single-script window */
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+		     G_CALLBACK(catch_viewer_key), vwin);
 
     window_list_add(vwin->main, vwin->role);
 
@@ -1116,4 +1119,14 @@ void tabwin_register_dialog (GtkWidget *w, gpointer p)
     g_signal_connect(G_OBJECT(w), "destroy",
 		     G_CALLBACK(tabwin_unregister_dialog), 
 		     tabwin);
+}
+
+windata_t *current_sibling_viewer (windata_t *vwin)
+{
+    tabwin_t *tabwin = vwin_get_tabwin(vwin);
+    GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
+    gint pg = gtk_notebook_get_current_page(notebook);
+    GtkWidget *tab = gtk_notebook_get_nth_page(notebook, pg);
+
+    return g_object_get_data(G_OBJECT(tab), "vwin");
 }
