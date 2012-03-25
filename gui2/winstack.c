@@ -918,9 +918,20 @@ static void model_menu_add_winlist (windata_t *vwin)
     GtkWidget *img, *button = gtk_button_new();
     GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
 
-    /* FIXME gtk2 vs. gtk3? */
+#if 0 /* is GTK broken on this? */
+    GtkStyle *style = gtk_widget_get_style(vwin->mbar);
+    GValue val = G_VALUE_INIT;
+    
+    gtk_style_get_style_property(style,
+				 GTK_TYPE_MENU_BAR,
+				 "shadow-type", 
+				 &val);
+    fprintf(stderr, "stype = %d\n", g_value_get_int(&val));
+#endif		 
 
-    // gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+#if GTK_MAJOR_VERSION > 2 /* FIXME? */
+    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+#endif
     img = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, 
 				   GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
