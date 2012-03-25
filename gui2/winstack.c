@@ -947,7 +947,7 @@ void vwin_pack_toolbar (windata_t *vwin)
 
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 	if (vwin->role == VIEW_MODEL) {
-	    /* the menubar always extends full-length */
+	    /* model viewer: the menubar extends full-length */
 	    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, TRUE, TRUE, 0);
 	    model_menu_add_winlist(vwin);
 	} else {
