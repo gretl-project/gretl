@@ -354,9 +354,14 @@ static void maybe_revise_action_label (GtkAction *action,
 /* pop up a list of open windows from which the user can
    select one to raise and focus */
 
-void window_list_popup (GtkWidget *src, GdkEventButton *event, gpointer p)
+void window_list_popup (GtkWidget *src, GdkEventButton *event, 
+			gpointer p)
 {
     static GtkWidget *menu;
+    GList *wlist = gtk_action_group_list_actions(window_group);
+    GList *list = wlist;
+    GtkWidget *item, *win = NULL;
+    GtkAction *action;
 
     if (menu != NULL) {
 	/* we need to make sure this is up to date */
@@ -364,58 +369,51 @@ void window_list_popup (GtkWidget *src, GdkEventButton *event, gpointer p)
 	menu = NULL;
     }
 
-    if (n_listed_windows > 0) {
-	GList *wlist = gtk_action_group_list_actions(window_group);
-	GList *list = wlist;
-	GtkWidget *item, *win = NULL;
-	GtkAction *action;
-
-	if (n_listed_windows > 1) {
-	    list = g_list_sort(wlist, sort_window_items);
-	    if (p != NULL) {
-		win = GTK_WIDGET(p);
-	    }
+    if (n_listed_windows > 1) {
+	list = g_list_sort(wlist, sort_window_items);
+	if (p != NULL) {
+	    win = GTK_WIDGET(p);
 	}
+    }
 
-	menu = gtk_menu_new();
+    menu = gtk_menu_new();
 
-	while (list) {
-	    action = (GtkAction *) list->data;
-	    if (win != NULL) {
-		maybe_revise_action_label(action, win);
-	    }
-	    gtk_action_set_accel_path(action, NULL);
-	    item = gtk_action_create_menu_item(action);
-	    gtk_widget_show(item);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	    list = list->next;
+    while (list) {
+	action = (GtkAction *) list->data;
+	if (win != NULL) {
+	    maybe_revise_action_label(action, win);
 	}
+	gtk_action_set_accel_path(action, NULL);
+	item = gtk_action_create_menu_item(action);
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	list = list->next;
+    }
 
-	g_list_free(wlist);
+    g_list_free(wlist);
 
-	if (n_listed_windows > 1) {
-	    /* add "cascade" menu item */
-	    GtkWidget *image;
+    if (n_listed_windows > 1) {
+	/* add "cascade" menu item */
+	GtkWidget *image;
 
-	    item = gtk_image_menu_item_new_with_label(_("Arrange"));
-	    image = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, 
-					     GTK_ICON_SIZE_MENU);
-	    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), 
-					  image);
-	    g_signal_connect(G_OBJECT(item), "activate", 
-			     G_CALLBACK(cascade_session_windows), 
-			     NULL);
-	    gtk_widget_show(item);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	}
+	item = gtk_image_menu_item_new_with_label(_("Arrange"));
+	image = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, 
+					 GTK_ICON_SIZE_MENU);
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), 
+				      image);
+	g_signal_connect(G_OBJECT(item), "activate", 
+			 G_CALLBACK(cascade_session_windows), 
+			 NULL);
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+    }
 
-	if (event != NULL) {
-	    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
-			   event->button, event->time);
-	} else {
-	    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
-			   0, gtk_get_current_event_time());
-	}
+    if (event != NULL) {
+	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
+		       event->button, event->time);
+    } else {
+	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
+		       0, gtk_get_current_event_time());
     }
 }
 
@@ -870,12 +868,59 @@ GtkWidget *vwin_toplevel (windata_t *vwin)
     return vwin->topmain != NULL ? vwin->topmain : vwin->main;
 }
 
+#if 0 /* trying to make the "Windows" menu item behave
+	 like a regular drop-down menu -- may be hopeless */
+
+static void model_show_winlist (GtkWidget *m, windata_t *vwin)
+{
+    window_list_popup(m, NULL, vwin->main);
+#if GTK_MAJOR_VERSION > 2
+    gtk_menu_item_deselect(GTK_MENU_ITEM(m));
+#else
+    gtk_item_deselect(GTK_ITEM(m));
+#endif
+}
+
+static gboolean enter_winlist (GtkWidget *w, GdkEvent *event,
+			       gpointer p)
+{
+    fprintf(stderr, "winlist item entered\n");
+    return FALSE;
+}
+
+static gboolean leave_winlist (GtkWidget *w, GdkEvent *event,
+			       gpointer p)
+{
+    fprintf(stderr, "winlist item left\n");
+    return FALSE;
+}
+
+static void model_menu_add_winlist (windata_t *vwin)
+{
+    GtkWidget *m = gtk_menu_item_new_with_mnemonic(_("_Windows"));
+
+    gtk_menu_shell_append(GTK_MENU_SHELL(vwin->mbar), m);
+    g_object_set_data(G_OBJECT(vwin->mbar), "m", m);
+    gtk_widget_add_events(m, GDK_ENTER_NOTIFY_MASK |
+			  GDK_LEAVE_NOTIFY_MASK);
+    g_signal_connect(m, "enter-notify-event", 
+		     G_CALLBACK(enter_winlist), NULL);
+    g_signal_connect(m, "leave-notify-event", 
+		     G_CALLBACK(leave_winlist), NULL);
+    g_signal_connect(m, "select", G_CALLBACK(model_show_winlist), 
+		     vwin);
+}
+
+#else /* resort to a Windows button on the right */
+
 static void model_menu_add_winlist (windata_t *vwin)
 {
     GtkWidget *img, *button = gtk_button_new();
     GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
 
-    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    /* FIXME gtk2 vs. gtk3? */
+
+    // gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
     img = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, 
 				   GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
@@ -886,6 +931,8 @@ static void model_menu_add_winlist (windata_t *vwin)
     gtk_widget_show_all(button);
     gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 }
+
+#endif
 
 void vwin_pack_toolbar (windata_t *vwin)
 {
@@ -899,9 +946,12 @@ void vwin_pack_toolbar (windata_t *vwin)
 	GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
 
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
 	if (vwin->role == VIEW_MODEL) {
+	    /* the menubar always extends full-length */
+	    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, TRUE, TRUE, 0);
 	    model_menu_add_winlist(vwin);
+	} else {
+	    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
 	}
 	if (window_is_tab(vwin)) {
 	    /* here we're re-packing vwin->mbar: move it up top */

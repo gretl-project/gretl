@@ -2276,6 +2276,7 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     }
 
     cursor_to_top(vwin);
+    gtk_widget_grab_focus(vwin->text);
 
     return vwin;
 }
