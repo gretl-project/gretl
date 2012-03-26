@@ -2,6 +2,8 @@
 \label{chap:mle}
 
 \section{Generic ML estimation with gretl}
+\label{sec:mle-intro}
+
 
 Maximum likelihood estimation is a cornerstone of modern inferential
 procedures. Gretl provides a way to implement this method for a wide
@@ -847,7 +849,7 @@ designing scripts for this purpose is:
 \begin{itemize}
 \item Modularize your code as much as possible.
 \item Use analytical derivatives whenever possible.
-\item Choose your estimation method wisely.
+\item Choose your optimization method wisely.
 \end{itemize}
 
 In the rest of this section, we will expand on the probit example of
@@ -931,6 +933,54 @@ end mle
 In this way, no matter how complex the computation of the score is,
 the \cmd{mle} block remains nicely compact.
 
+\subsection{Newton's method and the analytical Hessian}
+\label{sec:mle-adv-bfgs}
+
+Since version 1.9.7, \app{gretl} offers the user the option of using
+Newton's method for maximizing the log-likelihood. In terms of the
+notation used in section \ref{sec:mle-intro}, the direction for
+updating the inital parameter vector $\theta_0$ is given by
+\begin{equation}
+  \label{eq:mle-newton}
+  d(\mathbf{g}(\theta_0)) = -\lambda
+  \mathbf{H}(\theta_0)^{-1}\mathbf{g}(\theta_0) ,
+\end{equation}
+where $\mathbf{H}(\theta)$ is the Hessian of the total loglikelihood
+computed at $\theta$ and $0 < \lambda < 1$ is a scalar called the
+\emph{step length}.
+
+The above expression makes a few points clear:
+\begin{enumerate}
+\item At each step, it must be possible to compute not only the score
+  $\mathbf{g}(\theta)$, but also its derivative $\mathbf{H}(\theta)$;
+\item the matrix $\mathbf{H}(\theta)$ should be nonsingular;
+\item it is assumed that for some positive value of $\lambda$,
+  $\LogLik(\theta_1) > \LogLik(\theta_0)$; in other words, that going
+  in the direction $d(\mathbf{g}(\theta_0))$ leads up for some step
+  length.
+\end{enumerate}
+
+The strength of Newton's method lies in the fact that, if the
+loglikelihood is globally concave, then \eqref{eq:mle-newton} enjoys
+certain optimality properties such that the number of iterations
+required to reach the maximum is often much smaller than it would be
+with other methods, such as BFGS. However, it may have the following
+disadvantages: for a start, the Hessian $\mathbf{H}(\theta)$ may be
+difficult or very expensive to compute; moreover, the loglikelihood
+may not be globally concave, so for some values of $\theta$, the
+matrix $\mathbf{H}(\theta)$ is non-negative definite or perhaps even
+singular.  In those cases, a number of adverse consequences may occur,
+which range from \emph{longer} computation time for optimization to
+non-convergence of the algorithm.
+
+As a consequence, using Newton's method is advisable only when 
+\begin{itemize}
+\item the computation of the Hessian is numerically not too demanding;
+\item the nature of the estimator is such that it is known in advance
+  that the loglikelihood is globally concave.
+\end{itemize}
+The probit models satisfies both requisires, so we will expand the
+preceding example to illustrate how to use Newton's method in \app{gretl}.
 
 %%% Local Variables: 
 %%% mode: latex
