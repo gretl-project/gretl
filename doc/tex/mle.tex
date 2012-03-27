@@ -894,7 +894,28 @@ A parallel enhancement could be achieved in the case of analytically
 computed derivatives: since $b$ is now a vector, \cmd{mle} expects the
 argument to the \cmd{deriv} keyword to be a matrix, in which each
 column is the partial derivative to the corresponding element of
-$b$. This could be easily achieved via 
+$b$. It is useful to re-write the score for the $i$-th observation as
+\begin{equation}
+  \label{eq:mle-probscore}
+  \pder{\LogLik_i}{\beta} = m_i \mathbf{x}_i'
+\end{equation}
+where $m_i$ is the ``signed Mills' ratio'', that is 
+\[
+m_i = y_i \frac{\phi(\mathbf{x}_i'\beta)}{\Phi(\mathbf{x}_i'\beta)} - 
+(1-y_i) \frac{\phi(\mathbf{x}_i'\beta)}{1 - \Phi(\mathbf{x}_i'\beta)} ,
+\]
+which was computed in section \ref{sec:anal-der} via
+\begin{code}
+  series P = cnorm(ndx)
+  series m = dnorm(ndx)*(y/P - (1-y)/(1-P))
+\end{code}
+Here, we will code it in a somewhat terser way as
+\begin{code}
+  series m = y ? invmills(-ndx) : -invmills(ndx)
+\end{code}
+and make use of the conditional assignment operator and of the
+specialized function \cmd{invmills()} for efficiency.  Building the
+score matrix is now easy achieved via
 \begin{code}
 mle logl = y*ln(P) + (1-y)*ln(1-P)
     series ndx = lincomb(X, b)
@@ -906,10 +927,10 @@ end mle
 \end{code}
 in which the \verb|{}| operator was used to turn series and lists into
 matrices (see chapter \ref{chap:matrices}). However, proceeding in
-this way may imply inserting into the \cmd{mle} block a long series of
-instructions; the example above merely happens to be short because the
-score matrix for the probit model is very easy to write in matrix
-form.
+this way for more complex models than probit may imply inserting into
+the \cmd{mle} block a long series of instructions; the example above
+merely happens to be short because the score matrix for the probit
+model is very easy to write in matrix form.
 
 A better solution is writing a user-level function to compute the
 score and using that inside the \cmd{mle} block, as in
@@ -956,31 +977,111 @@ The above expression makes a few points clear:
 \item the matrix $\mathbf{H}(\theta)$ should be nonsingular;
 \item it is assumed that for some positive value of $\lambda$,
   $\LogLik(\theta_1) > \LogLik(\theta_0)$; in other words, that going
-  in the direction $d(\mathbf{g}(\theta_0))$ leads up for some step
-  length.
+  in the direction $d(\mathbf{g}(\theta_0))$ leads upwards for some
+  step length.
 \end{enumerate}
 
 The strength of Newton's method lies in the fact that, if the
 loglikelihood is globally concave, then \eqref{eq:mle-newton} enjoys
 certain optimality properties such that the number of iterations
 required to reach the maximum is often much smaller than it would be
-with other methods, such as BFGS. However, it may have the following
+with other methods, such as BFGS. However, it may have some
 disadvantages: for a start, the Hessian $\mathbf{H}(\theta)$ may be
 difficult or very expensive to compute; moreover, the loglikelihood
 may not be globally concave, so for some values of $\theta$, the
-matrix $\mathbf{H}(\theta)$ is non-negative definite or perhaps even
+matrix $\mathbf{H}(\theta)$ is not negative definite or perhaps even
 singular.  In those cases, a number of adverse consequences may occur,
 which range from \emph{longer} computation time for optimization to
 non-convergence of the algorithm.
 
 As a consequence, using Newton's method is advisable only when 
 \begin{itemize}
-\item the computation of the Hessian is numerically not too demanding;
+\item the computation of the Hessian is not too CPU-intensive;
 \item the nature of the estimator is such that it is known in advance
   that the loglikelihood is globally concave.
 \end{itemize}
-The probit models satisfies both requisires, so we will expand the
+The probit models satisfies both requisites, so we will expand the
 preceding example to illustrate how to use Newton's method in \app{gretl}.
+
+A first example may be given simply by issuing the command
+\begin{code}
+  set optimizer newton
+\end{code}
+before the \cmd{mle} block.\footnote{To go back to BFGS, you use
+  \cmd{set optimizer bfgs}.} This will instruct \app{gretl} to use
+Newton's method instead of BFGS. If the \cmd{deriv} keyword is used,
+\app{gretl} will differentiate the score function numerically;
+otherwise, if the score has to be computed itself numerically,
+\app{gretl} will calculate $\mathbf{H}(\theta)$ by differentiating the
+loglikelihood numerically twice. The latter solution, though, is
+generally to be avoided, as may be extremely time-consuming and may
+yield imprecise results.
+
+A much better option is to calculate the Hessian analytically and have
+\app{gretl} use its true value rather than a numerical
+approximation. In most cases, this is both much faster and numerically
+stable, but of course comes at the price of having to differentiate
+the loglikelihood twice to respect with the parameters and translate
+the resulting expressions into efficient \app{hansl} code.
+
+Luckily, both tasks are relatively easy in the probit case: the matrix
+of second derivatives of $\LogLik_i$ may be written as
+\[
+  \pder{{}^2\LogLik_i}{\beta \partial \beta'} = 
+  - m_i \left( m_i + \mathbf{x}_i'\beta \right) \mathbf{x}_i \mathbf{x}_i'
+\]
+so the total Hessian is 
+\begin{equation}
+  \label{eq:mle-tothess}
+  \sum_{i=1}^n \pder{{}^2\LogLik_i}{\beta \partial \beta'} = 
+  - X' \left[
+    \begin{array}{cccc}
+      w_1 & & & \\
+      & w_2 & & \\
+      & & \ddots & \\
+      & & & w_n
+    \end{array}
+  \right] X 
+\end{equation}
+where $w_i = m_i \left( m_i + \mathbf{x}_i'\beta \right)$. It can be
+shown that $w_i > 0$, so the Hessian is guaranteed to be negative
+definite in all sensible cases and the conditions are ideal for
+applying Newton's method. 
+
+A \app{hansl} translation of equation \eqref{eq:mle-tothess} may look
+like
+\begin{code}
+function void Hess(matrix *H, matrix b, series y, list X) 
+    /* computes the negative Hessian for a Probit
+    model, which is stored as a (k x k) matrix pointed 
+    by the first argument of the function */
+    series ndx = lincomb(X, b)
+    series m = y ? invmills(-ndx) : -invmills(ndx)
+    series w = m*(m+ndx)
+    matrix mX = {X}    
+    H = (mX .* {w})'mX
+end function
+\end{code}
+
+This function becomes usable from within an \cmd{mle} block by the
+keyword \cmd{hessian}. The syntax is 
+\begin{code}
+mle ...
+    ...
+    hessian funcname(&mat_addr, ...)
+end mle
+\end{code}
+In other words, the \cmd{hessian} keyword must be followed by the call
+to a function whose first argument is a matrix pointer which is
+supposed to be filled with the \emph{negative} of the Hessian at $\theta$.
+
+\subsection{FIXME: TODO}
+\begin{itemize}
+\item how \app{gretl} handles cases when $-H$ is not pd
+\item how to check analytical derivatives vs numerical ones
+\item something on starting values, perhaps?
+\end{itemize}
+
 
 %%% Local Variables: 
 %%% mode: latex

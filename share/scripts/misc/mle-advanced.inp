@@ -23,9 +23,9 @@ function void Hess(matrix *H, matrix b, series y, list X)
     by the first argument of the function */
     series ndx = lincomb(X, b)
     series m = y ? invmills(-ndx) : -invmills(ndx)
-    series m2 = m*(m+ndx)
+    series w = m*(m+ndx)
     matrix mX = {X}    
-    H = (mX .* {m2})'mX
+    H = (mX .* {w})'mX
 end function
 
 function matrix totalscore(matrix *b, series y, list X) 
@@ -37,7 +37,7 @@ end function
 
 function void check(matrix b, series y, list X)
     /* compares the analytical Hessian to its numerical
-    approximation */
+    approximation obtained via fdjac */
     matrix aH
     Hess(&aH, b, y, X) # stores the analytical Hessian into aH
     
