@@ -700,12 +700,12 @@ static int copy_dummy_to_mask (char *mask, const double *x, int n)
 static int mask_from_temp_dummy (const char *s, DATASET *dset, 
 				 char *mask, PRN *prn)
 {
-    char formula[MAXLEN];
+    char formula[MAXLINE];
     double *x;
     int err = 0;
 
     *formula = '\0';
-    strncat(formula, s, MAXLEN - 1);
+    strncat(formula, s, MAXLINE - 1);
 
     x = generate_series(formula, dset, prn, &err);
 
