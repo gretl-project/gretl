@@ -37,6 +37,8 @@ version 1.9.8, in progress
 - Fix bug: possible crash in GUI function package editor on adding a
   function to a package containing a single function
 - Fix bug: data import from RATS databases broken on 64-bit systems
+- Fix bug: the "smpl" command with --restrict option should support the
+  full maximum length of the gretl command line (16K bytes)
 - Various small fixes for spreadsheet data importers
 - For third-party users of libgretl: improve handling of search for the
   gretl plugins
