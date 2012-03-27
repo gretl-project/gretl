@@ -1130,7 +1130,7 @@ static GList *find_in_pps (GList *l, const char *name)
 /**
  * path_to_pps:
  * @pps:  pointer to pps to return value in.
- * @f:    ole file hande.
+ * @f:    ole file handle.
  * @path: path to find.
  * @file: file to find in path.
  *
