@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-22 16:51-0400\n"
-"PO-Revision-Date: 2012-03-21 21:24+0000\n"
+"PO-Revision-Date: 2012-03-27 21:12+0100\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -7225,7 +7225,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 21 de março de 2012."
+"Tradução de 27 de março de 2012."
 
 #: gui2/about.c:164
 msgid "License"
@@ -11762,9 +11762,8 @@ msgid "_Graph"
 msgstr "_Gráfico"
 
 #: gui2/gui_utils.c:432
-#, fuzzy
 msgid "Couldn't open temp file"
-msgstr "Impossível abrir o ficheiro %s"
+msgstr "Não se conseguiu abrir ficheiro temporário"
 
 #: gui2/gui_utils.c:858 gui2/gui_utils.c:1155 gui2/library.c:8146
 msgid "gretl: open data"
@@ -11867,9 +11866,9 @@ msgid "gretl console"
 msgstr "consola gretl"
 
 #: gui2/gui_utils.c:2197
-#, fuzzy, c-format
+#, c-format
 msgid "model %d"
-msgstr "Modelo %d"
+msgstr "modelo %d"
 
 #: gui2/gui_utils.c:2203 gui2/tabwin.c:741
 #, c-format
@@ -14420,7 +14419,7 @@ msgstr "O editor de sequência de comandos usa separadores"
 
 #: gui2/settings.c:166
 msgid "Model viewer uses tabs"
-msgstr ""
+msgstr "Visionador de modelos usa separadores "
 
 #: gui2/settings.c:168
 msgid "Prompt to save session"
@@ -14849,23 +14848,20 @@ msgid "gretl: script editor"
 msgstr "gretl: editor de sequências de comandos"
 
 #: gui2/tabwin.c:393 gui2/tabwin.c:395
-#, fuzzy
 msgid "untitled"
-msgstr "gretl: sem nome"
+msgstr "sem nome"
 
 #: gui2/tabwin.c:469
-#, fuzzy
 msgid "gretl: models"
-msgstr "gretl: modelo %d"
+msgstr "gretl: modelos"
 
 #: gui2/tabwin.c:989
-#, fuzzy
 msgid "Move to new window"
-msgstr "Nova janela"
+msgstr "Mover para uma nova janela"
 
 #: gui2/tabwin.c:1001
 msgid "Move to tabbed window"
-msgstr ""
+msgstr "Mover para uma janela com separadores"
 
 #: gui2/textbuf.c:290
 msgid "No redo information available"
@@ -15105,9 +15101,8 @@ msgid "Help on command"
 msgstr "Ajuda sobre o comando"
 
 #: gui2/toolbar.c:859
-#, fuzzy
 msgid "New tab"
-msgstr "Nova variável"
+msgstr "Novo separador"
 
 #: gui2/toolbar.c:1096
 msgid "launch calculator"
@@ -15269,9 +15264,8 @@ msgid "Main window"
 msgstr "Janela principal"
 
 #: gui2/winstack.c:388
-#, fuzzy
 msgid "Arrange"
-msgstr "amplitude"
+msgstr "Organizar"
 
 #: plugin/addons-i18n.c:4
 msgid "gig"
