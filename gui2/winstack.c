@@ -751,13 +751,23 @@ int highest_numbered_variable_in_winstack (void)
 
     if (n_listed_windows > 1) {
 	GList *list = gtk_action_group_list_actions(window_group);
+	tabwin_t *tabwin;
 	windata_t *vwin;
 	GtkWidget *w;
 
 	while (list != NULL) {
+	    vwin = NULL;
 	    w = window_from_action((GtkAction *) list->data);
-	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
-	    if (vwin != NULL && vwin->role == VIEW_MODEL) {
+	    tabwin = g_object_get_data(G_OBJECT(w), "tabwin");
+	    if (tabwin == NULL) {
+		vwin = g_object_get_data(G_OBJECT(w), "vwin");
+	    }
+	    if (tabwin != NULL) {
+		m_vmax = highest_numbered_var_in_tabwin(tabwin, dataset);
+		if (m_vmax > vmax) {
+		    vmax = m_vmax;
+		}
+	    } else if (vwin != NULL && vwin->role == VIEW_MODEL) {
 		const MODEL *pmod = vwin->data;
 
 		m_vmax = highest_numbered_var_in_model(pmod, dataset);

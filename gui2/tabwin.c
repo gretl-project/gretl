@@ -24,8 +24,6 @@
 
 #define TDEBUG 0
 
-typedef struct tabwin_t_  tabwin_t;
-
 struct tabwin_t_ {
     int role;             /* what's tabwin doing? */ 
     GtkWidget *main;      /* top-level GTK window */
@@ -1145,4 +1143,31 @@ int viewer_n_siblings (windata_t *vwin)
     }
 
     return n;
+}
+
+int highest_numbered_var_in_tabwin (tabwin_t *tabwin, 
+				    const DATASET *dset)
+{
+    int vmax = 0;
+
+    if (tabwin->role == VIEW_MODEL) {
+	GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
+	int n = gtk_notebook_get_n_pages(notebook);
+	const MODEL *pmod;
+	windata_t *vwin;
+	GtkWidget *tab;
+	int i, m_vmax;
+	
+	for (i=0; i<n; i++) {
+	    tab = gtk_notebook_get_nth_page(notebook, i);
+	    vwin = g_object_get_data(G_OBJECT(tab), "vwin");
+	    pmod = vwin->data;
+	    m_vmax = highest_numbered_var_in_model(pmod, dset);
+	    if (m_vmax > vmax) {
+		vmax = m_vmax;
+	    }
+	}
+    }
+
+    return vmax;
 }
