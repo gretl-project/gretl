@@ -936,8 +936,6 @@ A better solution is writing a user-level function to compute the
 score and using that inside the \cmd{mle} block, as in
 \begin{code}
 function matrix score(matrix b, series y, list X)
-    /* computes the score by observation for a Probit
-       model, which is returned as a (T x k) matrix */
     series ndx = lincomb(X, b)
     series m = y ? invmills(-ndx) : -invmills(ndx)
     return {m} .* {X}
@@ -1063,8 +1061,12 @@ function void Hess(matrix *H, matrix b, series y, list X)
 end function
 \end{code}
 
-This function becomes usable from within an \cmd{mle} block by the
-keyword \cmd{hessian}. The syntax is 
+Two characteristics worth noting of the function above are: for a
+start, it does return anything. The result of the computation is
+simply stored in the matrix pointed at by the first argument of the
+function; second, the result is not the Hessian proper, but rather its
+negative. This function becomes usable from within an \cmd{mle} block
+by the keyword \cmd{hessian}. The syntax is
 \begin{code}
 mle ...
     ...
