@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-22 16:51-0400\n"
-"PO-Revision-Date: 2012-03-07 17:11+0200\n"
+"PO-Revision-Date: 2012-03-28 08:32+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -11707,9 +11707,8 @@ msgid "_Graph"
 msgstr "_Çiz"
 
 #: gui2/gui_utils.c:432
-#, fuzzy
 msgid "Couldn't open temp file"
-msgstr "%s dosyası açılamadı"
+msgstr "temp dosyası açılamadı"
 
 #: gui2/gui_utils.c:858 gui2/gui_utils.c:1155 gui2/library.c:8146
 msgid "gretl: open data"
@@ -11811,9 +11810,9 @@ msgid "gretl console"
 msgstr "gretl uçbirimi"
 
 #: gui2/gui_utils.c:2197
-#, fuzzy, c-format
+#, c-format
 msgid "model %d"
-msgstr "Model %d"
+msgstr "model %d"
 
 #: gui2/gui_utils.c:2203 gui2/tabwin.c:741
 #, c-format
@@ -12644,7 +12643,7 @@ msgstr "%s ve %s (loess yakıştırma ile)"
 #: gui2/library.c:4062
 #, c-format
 msgid "%s versus %s with Nadaraya_Watson fit"
-msgstr "%s ve %s (Nadaraya_Watson yakıştırması ile)"
+msgstr "%s ve %s (Nadaraya-Watson yakıştırması ile)"
 
 #: gui2/library.c:4549
 #, c-format
@@ -14336,7 +14335,7 @@ msgstr "Ana pencere boyutunu anımsa"
 
 #: gui2/settings.c:149
 msgid "Use locale setting for decimal point"
-msgstr "Ondalık ayıraçı için yerel ayarları kullan"
+msgstr "Ondalık ayıraçı için yerel ayarı kullan"
 
 #: gui2/settings.c:153
 msgid "Emulate Windows look"
@@ -14352,15 +14351,15 @@ msgstr "Kabuk komutlarına izin ver"
 
 #: gui2/settings.c:162
 msgid "Show icon view automatically"
-msgstr "Simge görünümünü kendiliğinden göster"
+msgstr "Simge görünümünü kendiliğinden aç"
 
 #: gui2/settings.c:164
 msgid "Script editor uses tabs"
-msgstr "Betik düzenleyici sekme kullansın"
+msgstr "Betik düzenleyicide sekme kullan"
 
 #: gui2/settings.c:166
 msgid "Model viewer uses tabs"
-msgstr ""
+msgstr "Model penceresinde sekme kullan"
 
 #: gui2/settings.c:168
 msgid "Prompt to save session"
@@ -14788,23 +14787,20 @@ msgid "gretl: script editor"
 msgstr "gretl: betik düzenleyici"
 
 #: gui2/tabwin.c:393 gui2/tabwin.c:395
-#, fuzzy
 msgid "untitled"
-msgstr "gretl: adsız"
+msgstr "adsız"
 
 #: gui2/tabwin.c:469
-#, fuzzy
 msgid "gretl: models"
-msgstr "gretl: model %d"
+msgstr "gretl: modeller"
 
 #: gui2/tabwin.c:989
-#, fuzzy
 msgid "Move to new window"
-msgstr "Yeni pencere"
+msgstr "Yeni pencereye taşı"
 
 #: gui2/tabwin.c:1001
 msgid "Move to tabbed window"
-msgstr ""
+msgstr "Sekmeli pencereye taşı"
 
 #: gui2/textbuf.c:290
 msgid "No redo information available"
@@ -15044,9 +15040,8 @@ msgid "Help on command"
 msgstr "Komut yardımı"
 
 #: gui2/toolbar.c:859
-#, fuzzy
 msgid "New tab"
-msgstr "Yeni değişken"
+msgstr "Yeni sekme"
 
 #: gui2/toolbar.c:1096
 msgid "launch calculator"
@@ -15207,9 +15202,8 @@ msgid "Main window"
 msgstr "Ana pencere"
 
 #: gui2/winstack.c:388
-#, fuzzy
 msgid "Arrange"
-msgstr "aralık"
+msgstr "Düzenle"
 
 #: plugin/addons-i18n.c:4
 msgid "gig"
@@ -15373,7 +15367,7 @@ msgstr "uzaklık"
 
 #: plugin/addons-i18n.c:58
 msgid "plain"
-msgstr "düz"
+msgstr "basit"
 
 #: plugin/addons-i18n.c:59
 msgid "template"
