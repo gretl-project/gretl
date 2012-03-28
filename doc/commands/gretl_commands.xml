@@ -6299,10 +6299,10 @@
 
     <description context="gui">
       <para>
-	Performs Maximum Likelihood (ML) estimation using the BFGS
-	(Broyden, Fletcher, Goldfarb, Shanno) or Newton's
-	algorithms. You must specify the log-likelihood function; it
-	is recommended that you also supply expressions for the
+	Performs Maximum Likelihood (ML) estimation using either the
+	BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm or
+	Newton's method. You must specify the log-likelihood function;
+	it is recommended that you also supply expressions for the
 	derivatives of this function with respect to each of the
 	parameters if possible.
       </para>
@@ -6355,15 +6355,15 @@
 
     <description context="cli">
       <para>
-	Performs Maximum Likelihood (ML) estimation using the BFGS
-	(Broyden, Fletcher, Goldfarb, Shanno) or Newton's
-	algorithms. The user must specify the log-likelihood function.
-	The parameters of this function must be declared and given
-	starting values (using the
-	<cmd>genr</cmd> command) prior to estimation.  Optionally, the
-	user may specify the derivatives of the log-likelihood function
-	with respect to each of the parameters; if analytical derivatives
-	are not supplied, a numerical approximation is computed.
+	Performs Maximum Likelihood (ML) estimation using either the
+	BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm or
+	Newton's method. The user must specify the log-likelihood
+	function.  The parameters of this function must be declared
+	and given starting values (using the <cmd>genr</cmd> command)
+	prior to estimation.  Optionally, the user may specify the
+	derivatives of the log-likelihood function with respect to
+	each of the parameters; if analytical derivatives are not
+	supplied, a numerical approximation is computed.
       </para>
       <para>
 	Simple example: Suppose we have a series <lit>X</lit> with
