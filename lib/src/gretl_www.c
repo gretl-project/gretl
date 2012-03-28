@@ -61,8 +61,13 @@
 #define DBHLEN 64
 
 static int wproxy;
+#if 0 /* testing */
+static char dbhost[DBHLEN]       = "dev.gretl.ecn.wfu.edu";
+static char gretlhost[DBHLEN]    = "dev.gretl.ecn.wfu.edu";
+#else 
 static char dbhost[DBHLEN]       = "ricardo.ecn.wfu.edu";
 static char gretlhost[DBHLEN]    = "ricardo.ecn.wfu.edu";
+#endif
 static char datacgi[DBHLEN]      = "/gretl/cgi-bin/gretldata.cgi";
 static char updatecgi[DBHLEN]    = "/gretl/cgi-bin/gretl_update.cgi";
 static char manual_path[DBHLEN]  = "/project/gretl/manual/";
