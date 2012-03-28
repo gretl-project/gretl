@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-22 16:51-0400\n"
-"PO-Revision-Date: 2012-03-14 17:02+0100\n"
+"PO-Revision-Date: 2012-03-28 17:37+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -11791,9 +11791,8 @@ msgid "_Graph"
 msgstr "_Representar"
 
 #: gui2/gui_utils.c:432
-#, fuzzy
 msgid "Couldn't open temp file"
-msgstr "No se pudo abrir el fichero %s"
+msgstr "No se pudo abrir un fichero temporal"
 
 #: gui2/gui_utils.c:858 gui2/gui_utils.c:1155 gui2/library.c:8146
 msgid "gretl: open data"
@@ -11896,9 +11895,9 @@ msgid "gretl console"
 msgstr "consola gretl"
 
 #: gui2/gui_utils.c:2197
-#, fuzzy, c-format
+#, c-format
 msgid "model %d"
-msgstr "Modelo %d"
+msgstr "modelo %d"
 
 #: gui2/gui_utils.c:2203 gui2/tabwin.c:741
 #, c-format
@@ -14449,7 +14448,7 @@ msgstr "Quel el editor de guiones use pestañas"
 
 #: gui2/settings.c:166
 msgid "Model viewer uses tabs"
-msgstr ""
+msgstr "Usar pestañas en el visor de modelos"
 
 #: gui2/settings.c:168
 msgid "Prompt to save session"
@@ -14880,23 +14879,20 @@ msgid "gretl: script editor"
 msgstr "gretl: editor de guiones"
 
 #: gui2/tabwin.c:393 gui2/tabwin.c:395
-#, fuzzy
 msgid "untitled"
-msgstr "gretl: sin nombre"
+msgstr "sin nombre"
 
 #: gui2/tabwin.c:469
-#, fuzzy
 msgid "gretl: models"
-msgstr "gretl: modelo %d"
+msgstr "modelos"
 
 #: gui2/tabwin.c:989
-#, fuzzy
 msgid "Move to new window"
-msgstr "Ventana nueva"
+msgstr "Mover a una ventana nueva"
 
 #: gui2/tabwin.c:1001
 msgid "Move to tabbed window"
-msgstr ""
+msgstr "Mover a una ventana de pestaña"
 
 #: gui2/textbuf.c:290
 msgid "No redo information available"
@@ -15136,9 +15132,8 @@ msgid "Help on command"
 msgstr "Ayuda sobre instrucción"
 
 #: gui2/toolbar.c:859
-#, fuzzy
 msgid "New tab"
-msgstr "Variable nueva"
+msgstr "Nueva pestaña"
 
 #: gui2/toolbar.c:1096
 msgid "launch calculator"
@@ -15302,9 +15297,8 @@ msgid "Main window"
 msgstr "Ventana principal"
 
 #: gui2/winstack.c:388
-#, fuzzy
 msgid "Arrange"
-msgstr "rango"
+msgstr "Organizar"
 
 #: plugin/addons-i18n.c:4
 msgid "gig"
