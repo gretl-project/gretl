@@ -1,3 +1,10 @@
+2012-03-29 version 1.9.8
+
+In performing "$-substitution" for the index variable in the 
+context of loops, $-accessors are now protected. For example 
+"$jalpha" will now not turn into "1alpha" on the first interation 
+of a loop indexed by j.
+
 2011-12-22 version 1.9.7
 
 In cointegration analysis gretl now treats restricted exogenous 

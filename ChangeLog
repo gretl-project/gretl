@@ -1,11 +1,13 @@
-version 1.9.8, in progress
+2012-03-29 version 1.9.8
 - GUI: support use of named lists in the model specification dialog and
   other contexts
-- GUI: add option of making the script editor use tabs
+- GUI: add option of making the script editor and the model viewer
+  windows use tabs
 - GUI: add "reformat" option to summary statistics window for single
   series
-- GUI: ddd keyboard shortcut help file
-- Add a new practice script illustrating advanced use of mle command
+- GUI: add keyboard shortcut help file
+- Add a new practice script illustrating advanced use of mle command,
+  and extend the discussion of mle in the User's Guide
 - New function pxsum(): computes the cross-sectional sum of a series in
   the context of panel data
 - stack() function for panel data: allow '*' in forming list of series
@@ -19,8 +21,12 @@ version 1.9.8, in progress
   of the number of components to save
 - "coint" command: add --verbose option and fix printout of model at
   last step of Engle-Granger test
+- "graphpg" command: add "fonstscale" parameter (but also try harder to
+  get the default font size right for various gnuplot versions)
 - princomp() function: add an optional switch to use the covariance
   matrix
+- matrix manipulation: enable use of the boolean operators "&&" and 
+  "||" as element-wise operations on matrices 
 - Function packages: prevent a package's "bundle-plot" function from
   appearing in the initial GUI listing of public functions
 - Fix bug: avoid introducing "decimal commas" in setting size of PDF 
