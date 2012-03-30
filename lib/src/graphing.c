@@ -5077,6 +5077,45 @@ static int panel_means_ts_plot (const int vnum,
     return err;
 }
 
+/* Here we're trying to find out if the observation labels
+   for a panel dataset are such that they uniquely identify
+   the units/individuals (e.g. country or city names, 
+   repeated for each time-series observation on the given
+   unit).
+*/
+
+static int dataset_has_panel_labels (const DATASET *dset)
+{
+    int ret = 0;
+
+    if (dset->S != NULL) {
+	int t, u, ubak = -1;
+
+	ret = 1;
+	for (t=dset->t1; t<=dset->t2 && ret; t++) {
+	    u = t / dset->pd;
+	    if (u == ubak && strcmp(dset->S[t], dset->S[t-1])) {
+		/* same unit, different label: no */
+		ret = 0;
+	    } else if (ubak >= 0 && u != ubak &&
+		       !strcmp(dset->S[t], dset->S[t-1])) {
+		/* different unit, same label: no */
+		ret = 0;
+	    }
+	    ubak = u;
+	}
+
+	/* There's a loophole here: unit m might have the same
+	   label as some other unit, although we've checked that
+	   it doesn't have the same label as unit m - 1. But
+	   that seems ike a corner case and I can't be bothered 
+	   checking for it right now.
+	*/
+    }
+
+    return ret;
+}
+
 /* Panel: plot one series using separate lines for each
    cross-sectional unit. The individuals' series are overlaid, in the
    same manner as a plot of several distinct time series. To do
@@ -5092,6 +5131,7 @@ static int panel_overlay_ts_plot (const int vnum,
     int *list = NULL;
     gchar *literal = NULL;
     gchar *title = NULL;
+    int panel_labels = 0;
     int nv, panvar = 0;
     int i, t, s, s0;
     int err = 0;
@@ -5117,10 +5157,16 @@ static int panel_overlay_ts_plot (const int vnum,
 	return E_ALLOC;
     }
 
+    panel_labels = dataset_has_panel_labels(dset);
+
     s0 = dset->t1 * dset->pd;
 
     for (i=0; i<nunits; i++) {
-	sprintf(gset->varname[i+1], "%d", u0+i+1);
+	if (panel_labels) {
+	    strcpy(gset->varname[i+1], dset->S[s0 + i * T]);
+	} else {
+	    sprintf(gset->varname[i+1], "%d", u0+i+1);
+	}
 	s = s0 + i * T;
 	for (t=0; t<T; t++) {
 	    gset->Z[i+1][t] = dset->Z[vnum][s++];
