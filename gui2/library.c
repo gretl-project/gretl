@@ -8552,8 +8552,17 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 
     if ((s->flags & CONSOLE_EXEC) && !err) {
 	/* log the specific command */
-	lib_command_strcpy(line);
-	record_command_verbatim();
+	PRN *echo;
+
+	if (bufopen(&echo) == 0) {
+	    const char *buf;
+
+	    echo_cmd(cmd, dataset, line, CMD_RECORDING, echo);
+	    buf = gretl_print_get_buffer(echo);
+	    lib_command_strcpy(buf);
+	    record_command_verbatim();
+	    gretl_print_destroy(echo);
+	}
     }
 
     /* save specific output buffer? */
