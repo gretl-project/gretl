@@ -1553,18 +1553,19 @@
       </description>
     </function>  
 
-    <function name="cum" section="stats" output="asinput">
+    <function name="cum" section="transforms" output="asinput">
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
       </fnargs>
       <description>
 	<para context="notex">
-	  Cumulates <argname>x</argname>. When <argname>x</argname> is a
-	  series, produces a series <math>y</math> each of whose elements is
-	  the sum of the values of <argname>x</argname> to date; the starting
-	  point of the summation is the first non-missing observation in the
-	  currently selected sample. When <argname>x</argname> is a matrix,
-	  its elements are cumulated by columns.
+	  Cumulates <argname>x</argname> (that is, creates a running
+	  sum). When <argname>x</argname> is a series, produces a
+	  series <math>y</math> each of whose elements is the sum of
+	  the values of <argname>x</argname> to date; the starting
+	  point of the summation is the first non-missing observation
+	  in the currently selected sample. When <argname>x</argname>
+	  is a matrix, its elements are cumulated by columns.
 	</para>
 	<para context="tex">
 	  Cumulates <argname>x</argname>. When <math>x</math> is a series,
