@@ -587,6 +587,23 @@ static gint jump_to_finder (guint keyval, windata_t *vwin)
     return FALSE;
 }
 
+static void vwin_select_all (windata_t *vwin)
+{
+    if (vwin != NULL && vwin->text != NULL) {
+	GtkTextBuffer *tbuf;
+
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+
+	if (tbuf != NULL) {
+	    GtkTextIter start, end;
+
+	    gtk_text_buffer_get_start_iter(tbuf, &start);
+	    gtk_text_buffer_get_end_iter(tbuf, &end);
+	    gtk_text_buffer_select_range(tbuf, &start, &end);
+	}
+    }
+}
+
 /* Signal attached to editor/viewer windows. Note that @w is 
    generally the top-level GtkWidget vwin->main; exceptions
    are (a) tabbed windows, where @w is the embedding window,
@@ -598,6 +615,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
     int Ctrl = (mods & GDK_CONTROL_MASK);
+    int Alt = (mods & GDK_MOD1_MASK);
     guint upkey = key->keyval;
     int editing = vwin_is_editing(vwin);
 
@@ -655,8 +673,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
 		return TRUE;
 	    }
 	}
-    } else if (mods & GDK_MOD1_MASK) {
-	/* Alt */
+    } else if (Alt) {
 	if (upkey == GDK_W) {
 	    window_list_popup(w, NULL, vwin->main);
 	    return TRUE;
@@ -688,7 +705,10 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
 	}
     }
 
-    if (upkey == GDK_Q || (upkey == GDK_W && Ctrl)) {
+    if (upkey == GDK_A && Ctrl) {
+	vwin_select_all(vwin);
+	return TRUE;
+    } else if (upkey == GDK_Q || (upkey == GDK_W && Ctrl)) {
 	if (w == vwin->main) {
 	    gtk_widget_destroy(w);
 	}
@@ -697,8 +717,8 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
     } 
 
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
-    /* respond to 'a' and 'x', but not if Alt-modified */
-    else if (!(mods & GDK_MOD1_MASK)) {
+    /* respond to 'a' and 'x', but not if Alt- or Ctrl-modified */
+    else if (!Ctrl && !Alt) {
 	if (upkey == GDK_A) {
 	    audio_render_window(vwin, AUDIO_TEXT);
 	} else if (upkey == GDK_X) {

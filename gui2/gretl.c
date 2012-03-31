@@ -758,9 +758,11 @@ static void mdata_avoid_zero (GtkTreeView *view, gpointer p)
 static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
+    int Ctrl = (mods & GDK_CONTROL_MASK);
+    int Alt = (mods & GDK_MOD1_MASK);
     int k = key->keyval;
 
-    if ((mods & GDK_CONTROL_MASK) && k == GDK_v) {
+    if (Ctrl && k == GDK_v) {
 	/* Ctrl-V for paste */
 	mdata_handle_paste();
 	return TRUE;
@@ -778,7 +780,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	/* launch the console */
 	gretl_console();
 	return TRUE;
-    } else if (mods & GDK_MOD1_MASK) {
+    } else if (Alt) {
 	if (k == GDK_x) {
 	    /* Alt-x: invoke command minibuffer */
 	    minibuf_callback();
@@ -795,7 +797,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     }
 
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
-    if (!(mods & GDK_MOD1_MASK)) {
+    if (!Ctrl && !Alt) {
 	if (k == GDK_a) {
 	    audio_render_window(vwin, AUDIO_LISTBOX);
 	    return TRUE;
