@@ -717,7 +717,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
     } 
 
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
-    /* respond to 'a' and 'x', but not if Alt- or Ctrl-modified */
+    /* respond to 'a' and 'x', but not if Ctrl- or Alt-modified */
     else if (!Ctrl && !Alt) {
 	if (upkey == GDK_A) {
 	    audio_render_window(vwin, AUDIO_TEXT);

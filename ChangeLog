@@ -2,6 +2,7 @@ Version 1.9.9, in progress
 - Fix encoding for Polish translation
 - Fix bug: in logging commands entered via the gretl console, options
   were being omitted
+- Fix behavior of Ctrl-A in non-editable text windows
 
 2012-03-29 version 1.9.8
 - GUI: support use of named lists in the model specification dialog and
