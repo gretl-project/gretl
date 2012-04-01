@@ -70,7 +70,8 @@ static const gchar *window_list_icon (int role)
 
     if (role == MAINWIN) {
 	id = GRETL_STOCK_GRETL;
-    } else if (role == VIEW_MODEL) {
+    } else if (role == VIEW_MODEL || role == VAR ||
+	       role == VECM || role == SYSTEM) {
 	id = GRETL_STOCK_MODEL;
     } else if (role == CONSOLE) {
 	id = GRETL_STOCK_CONSOLE;

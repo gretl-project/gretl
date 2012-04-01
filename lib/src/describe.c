@@ -1415,12 +1415,10 @@ multivariate_normality_test (const gretl_matrix *E,
     gretl_matrix *R = NULL;
     gretl_matrix *evals = NULL;
     gretl_matrix *tmp = NULL;
-
     /* convenience pointers: do not free! */
     gretl_matrix *H;
     gretl_vector *Z1;
     gretl_vector *Z2;
-
     double x, skew, kurt;
     double X2 = NADBL;
     int n, p;
@@ -1428,7 +1426,7 @@ multivariate_normality_test (const gretl_matrix *E,
     int err = 0;
 
     if (E == NULL || Sigma == NULL) {
-	err = 1;
+	err = E_DATA;
 	goto bailout;
     }
 
@@ -1544,11 +1542,13 @@ multivariate_normality_test (const gretl_matrix *E,
     if (na(X2)) {
 	pputs(prn, "Calculation of test statistic failed\n");
     } else {
+	/* print and record result */
 	double pv = chisq_cdf_comp(2 * p, X2);
 
 	pputs(prn, _("Doornik-Hansen test"));
 	pprintf(prn, "\n %s(%d) = %g [%.4f]\n\n", _("Chi-square"), 2 * p, 
 		X2, pv);
+	record_test_result(X2, pv, "Normality");
     }
 
  bailout:

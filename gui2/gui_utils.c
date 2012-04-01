@@ -3967,7 +3967,7 @@ static void system_test_call (GtkAction *action, gpointer p)
 	}
     } else if (code == SYS_NORMALITY_TEST) {
 	title = g_strdup_printf("gretl: %s", _("Test for normality of residual"));
-	cstr = g_strdup("normtest");
+	cstr = g_strdup("modtest --normality");
 	if (var != NULL) {
 	    err = gretl_VAR_normality_test(var, prn);
 	} else {
