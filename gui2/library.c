@@ -8508,7 +8508,6 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	break;
 
     case SMPL:
-	fprintf(stderr, "gui_exec_line: SMPL (%s)\n", line);
  	if (cmd->opt == OPT_F) {
  	    gui_restore_sample(dset);
  	} else if (cmd->opt) {
