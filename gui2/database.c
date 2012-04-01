@@ -2309,21 +2309,23 @@ read_db_files_in_dir (DIR *dir, int dbtype, const char *path,
 {
     struct dirent *dirent;
     const char *fname;
-    char *descrip;
+    gchar *name, *descrip;
     int len, ndb = 0;
 
     while ((dirent = readdir(dir)) != NULL) {
 	fname = dirent->d_name;
 	len = strlen(fname);
 	if (!g_ascii_strcasecmp(fname + len - 4, ".bin")) {
+	    name = g_strndup(fname, len - 4);
 	    descrip = real_get_db_description(NULL, fname, path);
-	    if (descrip != NULL) {
+	    if (name != NULL && descrip != NULL) {
 		gtk_list_store_append(store, iter);
-		gtk_list_store_set(store, iter, 0, fname, 1, descrip, 
+		gtk_list_store_set(store, iter, 0, name, 1, descrip, 
 				   2, path, -1);
-		g_free(descrip);
 		ndb++;
 	    }
+	    g_free(name);
+	    g_free(descrip);
 	}
     }
 
