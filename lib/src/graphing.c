@@ -5084,28 +5084,75 @@ static int panel_means_ts_plot (const int vnum,
    unit).
 */
 
-static int dataset_has_panel_labels (const DATASET *dset)
+static int dataset_has_panel_labels (const DATASET *dset,
+				     int *use, int *strip)
 {
     int ret = 0;
 
     if (dset->S != NULL) {
 	int t, u, ubak = -1;
+	int fail = 0;
 
-	ret = 1;
-	for (t=dset->t1; t<=dset->t2 && ret; t++) {
+	for (t=dset->t1; t<=dset->t2 && !fail; t++) {
 	    u = t / dset->pd;
 	    if (u == ubak && strcmp(dset->S[t], dset->S[t-1])) {
 		/* same unit, different label: no */
-		ret = 0;
+		fail = 1;
 	    } else if (ubak >= 0 && u != ubak &&
 		       !strcmp(dset->S[t], dset->S[t-1])) {
 		/* different unit, same label: no */
-		ret = 0;
+		fail = 2;
 	    }
 	    ubak = u;
 	}
 
-	/* There's a loophole here: unit m might have the same
+	if (!fail) {
+	    ret = 1;
+	} else if (fail == 1) {
+	    const char *s;
+	    int i, n, len2t, len2 = 0;
+	    int obslen = 0;
+
+	    fail = 0;
+	    for (t=dset->t1; t<=dset->t2 && !fail; t++) {
+		s = dset->S[t];
+		n = strlen(s) - 1;
+		len2t = 0;
+		for (i=n; i>0; i--) {
+		    if (isdigit(s[i]) || s[i] == ':' || 
+				s[i] == '-' || s[i] == '_') {
+			len2t++;
+		    } else {
+			break;
+		    }
+		}
+		if (len2t == 0) {
+		    /* no "tail" string (e.g. year) */
+		    fail = 1;
+		} else if (len2 == 0) {
+		    /* starting */
+		    len2 = len2t;
+		    obslen = n;
+		} else if (len2t != len2) {
+		    /* the "tails" don't have a common length */
+		    fail = 1;
+		} else if (n != obslen) {
+		    /* the obs strings are of differing lengths */
+		    obslen = 0;
+		}
+	    }
+
+	    if (!fail) {
+		ret = 1;
+		if (obslen > 0) {
+		    *use = obslen - len2;
+		} else {
+		    *strip = len2;
+		}
+	    }
+	}
+
+	/* There's a loophole above: unit m might have the same
 	   label as some other unit, although we've checked that
 	   it doesn't have the same label as unit m - 1. But
 	   that seems ike a corner case and I can't be bothered 
@@ -5133,6 +5180,7 @@ static int panel_overlay_ts_plot (const int vnum,
     gchar *title = NULL;
     int panel_labels = 0;
     int nv, panvar = 0;
+    int use = 0, strip = 0;
     int i, t, s, s0;
     int err = 0;
 
@@ -5157,17 +5205,24 @@ static int panel_overlay_ts_plot (const int vnum,
 	return E_ALLOC;
     }
 
-    panel_labels = dataset_has_panel_labels(dset);
+    panel_labels = dataset_has_panel_labels(dset, &use, &strip);
 
     s0 = dset->t1 * dset->pd;
 
     for (i=0; i<nunits; i++) {
+	s = s0 + i * T;
 	if (panel_labels) {
-	    strcpy(gset->varname[i+1], dset->S[s0 + i * T]);
+	    if (use > 0) {
+		strncat(gset->varname[i+1], dset->S[s], use);
+	    } else if (strip > 0) {
+		strncat(gset->varname[i+1], dset->S[s],
+			strlen(dset->S[s]) - strip);
+	    } else {
+		strcpy(gset->varname[i+1], dset->S[s]);
+	    }
 	} else {
 	    sprintf(gset->varname[i+1], "%d", u0+i+1);
 	}
-	s = s0 + i * T;
 	for (t=0; t<T; t++) {
 	    gset->Z[i+1][t] = dset->Z[vnum][s++];
 	}
