@@ -4267,7 +4267,7 @@ void do_graph_model (const int *list, int fit)
 
 void do_minibuf (GtkWidget *w, dialog_t *dlg) 
 {
-    const gchar *buf = edit_dialog_get_text(dlg);
+    char *buf = gretl_strdup(edit_dialog_get_text(dlg));
     ExecState state;
     char cword[9];
     int ci, err;
@@ -4275,6 +4275,8 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
     if (buf == NULL) {
 	return;
     }
+
+    edit_dialog_close(dlg);
 
     sscanf(buf, "%8s", cword);
     ci = gretl_command_number(cword);
@@ -4285,25 +4287,23 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
 	ci == NLS || ci == MLE || ci == GMM ||
 	is_model_ref_cmd(ci)) {
 	dummy_call();
+	free(buf);
 	return;
-    }
-
-    lib_command_sprintf("%s", buf);
-
-    if (dlg != NULL) {
-	edit_dialog_close(dlg);
     }
 
     if (MODEL_COMMAND(ci)) {
+	lib_command_strcpy(buf);
 	real_do_model(ci);
+	free(buf);
 	return;
     }
 
-    console_record_sample(dataset);
-
     gretl_exec_state_init(&state, CONSOLE_EXEC, libline, &libcmd, 
 			  model, NULL);
+    lib_command_strcpy(buf);
+    free(buf);
 
+    console_record_sample(dataset);
     err = gui_exec_line(&state, dataset);
 
     if (err) {
@@ -8508,6 +8508,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	break;
 
     case SMPL:
+	fprintf(stderr, "gui_exec_line: SMPL (%s)\n", line);
  	if (cmd->opt == OPT_F) {
  	    gui_restore_sample(dset);
  	} else if (cmd->opt) {
