@@ -1732,12 +1732,11 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	vwin_add_ui(vwin, system_items, n_system_items, sys_ui);
 	set_model_save_state(vwin, !is_session_model(vwin->data));
 	add_system_menu_items(vwin, role);
-	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
+	vwin_pack_toolbar(vwin);
 	if (role == VAR || role == VECM) {
 	    g_signal_connect(G_OBJECT(vwin->mbar), "button-press-event", 
 			     G_CALLBACK(check_VAR_menu), vwin);
 	}
-	gtk_widget_show(vwin->mbar);
 	gretl_object_ref(data, (role == SYSTEM)? GRETL_OBJ_SYS : GRETL_OBJ_VAR);
     } else if (role == VIEW_BUNDLE) {
 	vwin_add_ui(vwin, bundle_items, n_bundle_items, bundle_ui);
@@ -1802,7 +1801,9 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 
     g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
 		     G_CALLBACK(text_popup_handler), vwin);
+
     cursor_to_top(vwin);
+    gtk_widget_grab_focus(vwin->text);
 
     return vwin;
 }

@@ -879,57 +879,12 @@ GtkWidget *vwin_toplevel (windata_t *vwin)
     return vwin->topmain != NULL ? vwin->topmain : vwin->main;
 }
 
-#if 0 /* trying to make the "Windows" menu item behave
-	 like a regular drop-down menu -- may be hopeless */
-
-static void model_show_winlist (GtkWidget *m, windata_t *vwin)
-{
-    window_list_popup(m, NULL, vwin->main);
-#if GTK_MAJOR_VERSION > 2
-    gtk_menu_item_deselect(GTK_MENU_ITEM(m));
-#else
-    gtk_item_deselect(GTK_ITEM(m));
-#endif
-}
-
-static gboolean enter_winlist (GtkWidget *w, GdkEvent *event,
-			       gpointer p)
-{
-    fprintf(stderr, "winlist item entered\n");
-    return FALSE;
-}
-
-static gboolean leave_winlist (GtkWidget *w, GdkEvent *event,
-			       gpointer p)
-{
-    fprintf(stderr, "winlist item left\n");
-    return FALSE;
-}
-
-static void model_menu_add_winlist (windata_t *vwin)
-{
-    GtkWidget *m = gtk_menu_item_new_with_mnemonic(_("_Windows"));
-
-    gtk_menu_shell_append(GTK_MENU_SHELL(vwin->mbar), m);
-    g_object_set_data(G_OBJECT(vwin->mbar), "m", m);
-    gtk_widget_add_events(m, GDK_ENTER_NOTIFY_MASK |
-			  GDK_LEAVE_NOTIFY_MASK);
-    g_signal_connect(m, "enter-notify-event", 
-		     G_CALLBACK(enter_winlist), NULL);
-    g_signal_connect(m, "leave-notify-event", 
-		     G_CALLBACK(leave_winlist), NULL);
-    g_signal_connect(m, "select", G_CALLBACK(model_show_winlist), 
-		     vwin);
-}
-
-#else /* resort to a Windows button on the right */
-
-static void model_menu_add_winlist (windata_t *vwin)
+static void menu_bar_add_winlist (windata_t *vwin)
 {
     GtkWidget *img, *button = gtk_button_new();
     GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
 
-#if 0 /* is GTK broken on this? */
+#if 0 /* doesn't work: is GTK broken on this? */
     GtkStyle *style = gtk_widget_get_style(vwin->mbar);
     GValue val = G_VALUE_INIT;
     
@@ -954,24 +909,23 @@ static void model_menu_add_winlist (windata_t *vwin)
     gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 }
 
-#endif
-
 void vwin_pack_toolbar (windata_t *vwin)
 {
     if (vwin->topmain != NULL) {
 	/* @vwin is embedded in a tabbed window */
 	tabwin_register_toolbar(vwin);
 	if (vwin->role == VIEW_MODEL && viewer_n_siblings(vwin) == 0) {
-	    model_menu_add_winlist(vwin);
+	    menu_bar_add_winlist(vwin);
 	}
     } else {
 	GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
 
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
-	if (vwin->role == VIEW_MODEL) {
+	if (vwin->role == VIEW_MODEL || vwin->role == VAR ||
+	    vwin->role == VECM) {
 	    /* model viewer: the menubar extends full-length */
 	    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, TRUE, TRUE, 0);
-	    model_menu_add_winlist(vwin);
+	    menu_bar_add_winlist(vwin);
 	} else {
 	    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
 	}

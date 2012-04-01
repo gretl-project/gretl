@@ -257,6 +257,9 @@ static void maybe_set_utf_flag (PRN *prn)
 	} else {
 	    /* check for Unicode minus sign, U+2212 */
 	    utf_font = font_has_symbol(fixed_font, 0x2212);
+#if 0
+	    fprintf(stderr, "utf_font = %d\n", utf_font);
+#endif
 	}
     }
 

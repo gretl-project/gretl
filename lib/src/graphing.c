@@ -5087,78 +5087,116 @@ static int panel_means_ts_plot (const int vnum,
 static int dataset_has_panel_labels (const DATASET *dset,
 				     int *use, int *strip)
 {
+    int t, u, ubak = -1;
+    int fail = 0;
     int ret = 0;
 
-    if (dset->S != NULL) {
-	int t, u, ubak = -1;
-	int fail = 0;
+    if (dset->S == NULL) {
+	return 0;
+    }
 
+    for (t=dset->t1; t<=dset->t2 && !fail; t++) {
+	u = t / dset->pd;
+	if (u == ubak && strcmp(dset->S[t], dset->S[t-1])) {
+	    /* same unit, different label: no */
+	    fail = 1;
+	} else if (ubak >= 0 && u != ubak &&
+		   !strcmp(dset->S[t], dset->S[t-1])) {
+	    /* different unit, same label: no */
+	    fail = 2;
+	}
+	ubak = u;
+    }
+
+    if (!fail) {
+	/* fine: the full obs labels satisfy the criterion */
+	ret = 1;
+    } else if (fail == 1) {
+	/* Try for a leading portion of the obs labels: for
+	   example we might have AUS1990, AUS1991, ... 
+	   followed by USA1990, USA1991, ... or some such.
+	   We try to identify a trailing portion of the obs
+	   string that varies by time, and which should be
+	   omitted in forming "panel labels".
+	*/
+	const char *s;
+	int i, n, len2t, len2 = 0;
+	int obslen = 0;
+
+	fail = 0;
 	for (t=dset->t1; t<=dset->t2 && !fail; t++) {
-	    u = t / dset->pd;
-	    if (u == ubak && strcmp(dset->S[t], dset->S[t-1])) {
-		/* same unit, different label: no */
-		fail = 1;
-	    } else if (ubak >= 0 && u != ubak &&
-		       !strcmp(dset->S[t], dset->S[t-1])) {
-		/* different unit, same label: no */
-		fail = 2;
+	    s = dset->S[t];
+	    n = strlen(s);
+	    len2t = 0;
+	    for (i=n-1; i>0; i--) {
+		if (isdigit(s[i]) || s[i] == ':' || 
+		    s[i] == '-' || s[i] == '_') {
+		    len2t++;
+		} else {
+		    break;
+		}
 	    }
-	    ubak = u;
+	    if (len2t == 0) {
+		/* no "tail" string (e.g. year) */
+		fail = 1;
+	    } else if (len2 == 0) {
+		/* starting */
+		len2 = len2t;
+		obslen = n;
+	    } else if (len2t != len2) {
+		/* the "tails" don't have a common length */
+		fail = 1;
+	    } else if (n != obslen) {
+		/* the obs strings are of differing lengths */
+		obslen = 0;
+	    }
 	}
 
 	if (!fail) {
-	    ret = 1;
-	} else if (fail == 1) {
-	    const char *s;
-	    int i, n, len2t, len2 = 0;
-	    int obslen = 0;
+	    char s0[OBSLEN], s1[OBSLEN];
 
-	    fail = 0;
-	    for (t=dset->t1; t<=dset->t2 && !fail; t++) {
-		s = dset->S[t];
-		n = strlen(s) - 1;
-		len2t = 0;
-		for (i=n; i>0; i--) {
-		    if (isdigit(s[i]) || s[i] == ':' || 
-				s[i] == '-' || s[i] == '_') {
-			len2t++;
-		    } else {
-			break;
-		    }
-		}
-		if (len2t == 0) {
-		    /* no "tail" string (e.g. year) */
-		    fail = 1;
-		} else if (len2 == 0) {
-		    /* starting */
-		    len2 = len2t;
-		    obslen = n;
-		} else if (len2t != len2) {
-		    /* the "tails" don't have a common length */
-		    fail = 1;
-		} else if (n != obslen) {
-		    /* the obs strings are of differing lengths */
-		    obslen = 0;
-		}
+	    if (obslen > 0) {
+		*use = obslen - len2;
+	    } else {
+		*strip = len2;
 	    }
-
-	    if (!fail) {
-		ret = 1;
-		if (obslen > 0) {
-		    *use = obslen - len2;
+	    /* now check that the leading portion really
+	       is in common for each unit/individual 
+	    */
+	    *s0 = '\0';
+	    ubak = -1;
+	    for (t=dset->t1; t<=dset->t2 && !fail; t++) {
+		u = t / dset->pd;
+		*s1 = '\0';
+		if (*use > 0) {
+		    strncat(s1, dset->S[t], *use);
 		} else {
-		    *strip = len2;
+		    strncat(s1, dset->S[t], strlen(dset->S[t]) - *strip);
 		}
+		if (u == ubak && strcmp(s1, s0)) {
+		    /* same unit, different label: no */
+		    fail = 1;
+		} else if (ubak >= 0 && u != ubak && !strcmp(s1, s0)) {
+		    /* different unit, same label: no */
+		    fail = 2;
+		}
+		strcpy(s0, s1);
+		ubak = u;
+	    }
+	    if (fail) {
+		*use = *strip = 0;
+	    } else {
+		ret = 1;
 	    }
 	}
-
-	/* There's a loophole above: unit m might have the same
-	   label as some other unit, although we've checked that
-	   it doesn't have the same label as unit m - 1. But
-	   that seems ike a corner case and I can't be bothered 
-	   checking for it right now.
-	*/
     }
+
+    /* There's a loophole above: unit m might have the same
+       label as some other unit, although we've checked that
+       it doesn't have the same label as unit m - 1. But
+       that seems ike a corner case and I can't be bothered 
+       checking for it right now.
+    */
 
     return ret;
 }
@@ -5178,8 +5216,8 @@ static int panel_overlay_ts_plot (const int vnum,
     int *list = NULL;
     gchar *literal = NULL;
     gchar *title = NULL;
-    int panel_labels = 0;
     int nv, panvar = 0;
+    int panel_labels = 0;
     int use = 0, strip = 0;
     int i, t, s, s0;
     int err = 0;
@@ -5205,7 +5243,9 @@ static int panel_overlay_ts_plot (const int vnum,
 	return E_ALLOC;
     }
 
-    panel_labels = dataset_has_panel_labels(dset, &use, &strip);
+    if (dset->S != NULL) {
+	panel_labels = dataset_has_panel_labels(dset, &use, &strip);
+    }
 
     s0 = dset->t1 * dset->pd;
 
@@ -5265,17 +5305,19 @@ static int panel_overlay_ts_plot (const int vnum,
    stack the plots vertically on the "page".
 */
 
-static int panel_sequence_ts_plot (int vnum, 
-				   DATASET *dset,
-				   gretlopt opt) 
+static int panel_grid_ts_plot (int vnum, DATASET *dset,
+			       gretlopt opt) 
 {
     FILE *fp = NULL;
     int w, rows, cols;
     const double *y, *x = NULL;
     const char *vname;
+    char uname[OBSLEN];
     double xt, yt, ymin, ymax, incr;
     int u0, nunits, T = dset->pd;
-    int i, t, t0;
+    int panel_labels = 0;
+    int use = 0, strip = 0;
+    int i, s, t, t0;
     int err = 0;
 
     nunits = panel_sample_size(dset);
@@ -5304,6 +5346,10 @@ static int panel_sequence_ts_plot (int vnum,
 	return err;
     }
 
+    if (dset->S != NULL) {
+	panel_labels = dataset_has_panel_labels(dset, &use, &strip);
+    }
+
     vname = dset->varname[vnum];
     y = dset->Z[vnum];
     gretl_minmax(dset->t1, dset->t2, y, &ymin, &ymax);
@@ -5329,13 +5375,27 @@ static int panel_sequence_ts_plot (int vnum,
     t0 = dset->t1;
 
     for (i=0; i<nunits; i++) {
+	if (panel_labels) {
+	    *uname = '\0';
+	    s = (u0 + i) * dset->pd;
+	    if (use > 0) {
+		strncat(uname, dset->S[s], use);
+	    } else if (strip > 0) {
+		strncat(uname, dset->S[s],
+			strlen(dset->S[s]) - strip);
+	    } else {
+		strcpy(uname, dset->S[s]);
+	    }
+	} else {
+	    sprintf(uname, "%d", u0+i+1);
+	}
 	if (opt & OPT_V) {
 	    gretl_minmax(t0, t0 + T - 1, y, &ymin, &ymax);
 	    incr = (ymax - ymin) / 2.0;
 	    fprintf(fp, "set ytics %g\n", incr);
-	    fprintf(fp, "set ylabel '%s (%d)'\n", vname, u0+i+1);
+	    fprintf(fp, "set ylabel '%s (%s)'\n", vname, uname);
 	} else {
-	    fprintf(fp, "set title '%s (%d)'\n", vname, u0+i+1);
+	    fprintf(fp, "set title '%s (%s)'\n", vname, uname);
 	}
 
 	fputs("plot \\\n'-' using 1:($2) notitle w lines\n", fp);
@@ -5370,8 +5430,7 @@ static int panel_sequence_ts_plot (int vnum,
 int gretl_panel_ts_plot (int vnum, DATASET *dset, gretlopt opt)
 {
     if (opt & OPT_S) {
-	/* sequence */
-	return panel_sequence_ts_plot(vnum, dset, opt);
+	return panel_grid_ts_plot(vnum, dset, opt);
     } else if (opt & OPT_M) {
 	/* group means */
 	opt &= ~OPT_M;
