@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-22 16:51-0400\n"
-"PO-Revision-Date: 2012-03-28 08:32+0300\n"
+"PO-Revision-Date: 2012-04-02 14:35+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -714,7 +714,7 @@ msgstr "('*' % 95 güven kuşağı dışındaki bir değeri göstermektedir)"
 
 #: lib/src/compare.c:3270 lib/src/gretl_model.c:3040
 msgid "Test of common factor restriction"
-msgstr "Ortak çarpan sınırlama sınaması"
+msgstr "Ortak etmen sınırlama sınaması"
 
 #: lib/src/compare.c:3275 lib/src/gretl_restrict.c:2217
 #: lib/src/gretl_restrict.c:2770 lib/src/gretl_restrict.c:2780
@@ -724,7 +724,7 @@ msgstr "(p-değeri = %g)\n"
 
 #: lib/src/compare.c:3292
 msgid "common factor restriction"
-msgstr "ortak çarpan sınırlaması"
+msgstr "ortak etmen sınırlaması"
 
 #: lib/src/compare.c:3327
 msgid "This test is only relevant for pooled models\n"
@@ -4447,7 +4447,7 @@ msgstr "kümeye-göre farklıserpilimsellik"
 
 #: lib/src/modelprint.c:762
 msgid "Augmented regression for common factor test"
-msgstr "Ortak çarpan sınaması için genişletmeli bağlanım"
+msgstr "Ortak etmen sınaması için genişletmeli bağlanım"
 
 #: lib/src/modelprint.c:780 lib/src/system.c:97 lib/src/varprint.c:1047
 #: lib/src/varprint.c:1056 lib/src/varprint.c:1064 gui2/selector.c:3578
@@ -11640,7 +11640,7 @@ msgstr "CUSUM_SQ sınaması"
 
 #: gui2/gui_utils.c:230
 msgid "_Common factor"
-msgstr "_Ortak çarpan"
+msgstr "_Ortak etmen"
 
 #: gui2/gui_utils.c:231
 msgid "_Panel diagnostics"
@@ -12515,7 +12515,7 @@ msgstr "(doğrusal-dışılık)"
 
 #: gui2/library.c:2325
 msgid "gretl: common factor test"
-msgstr "gretl: ortak çarpan sınaması"
+msgstr "gretl: ortak etmen sınaması"
 
 #: gui2/library.c:2358
 msgid "Lag order for ARCH test:"
