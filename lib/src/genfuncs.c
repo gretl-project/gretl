@@ -3588,7 +3588,7 @@ static double imhof_bound (const double *lambda, int k, int *err)
        quickly, we count only the terms on the bigger eigenvalues.
     */
 
-    nl = 0.5 * nl;
+    nl *= 0.5;
     sum = 0.5 * sum + log(M_PI * nl);
     bound = exp(-(sum + log(e1)) / nl);
     bound += 5.0 / nl;
@@ -3686,6 +3686,7 @@ static double imhof_integral (double arg, const double *lambda, int k,
 	    ret = 0.0;
 	} else if (ret < 0) {
 	    fprintf(stderr, "n = %d, Imhof integral gave negative value %g\n", n, ret);
+	    gretl_errmsg_set("Imhof integral gave negative value");
 	    *err = E_DATA;
 	    ret = NADBL;
 	}
@@ -3827,6 +3828,9 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
 
     if (!err) {
 	DW /= uu;
+#if 0
+	fprintf(stderr, "DW = %g\n", DW);
+#endif
 	E = gretl_general_matrix_eigenvals(MA, 0, &err);
     }
 
