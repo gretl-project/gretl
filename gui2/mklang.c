@@ -189,6 +189,15 @@ void output_emacs_block (void)
     puts(")\n  \"Model- and dataset-related variables.\")\n");    
 }
 
+static int compare_options (const void *a, const void *b)
+{
+    const char *sa = *(const char **) a;
+    const char *sb = *(const char **) b;
+    int ret = strcmp(sa, sb);
+
+    return ret == 0 ? ret : -ret;
+}
+
 void output_lang2_file (void)
 {
     char **strs;
@@ -271,6 +280,7 @@ void output_lang2_file (void)
 
     /* command option strings */
     strs = get_all_option_strings(&nopts);
+    qsort(strs, nopts, sizeof *strs, compare_options);
     if (strs != NULL) {
 	puts(" <context id=\"options\" style-ref=\"data-type\">");
 	puts(" <prefix>--</prefix>");
@@ -313,102 +323,10 @@ void output_lang2_file (void)
     puts("</language>");
 }
 
-void output_lang1_file (void)
-{
-    char **strs;
-    int nopts;
-    int i, n;
-
-    puts("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-    puts("<!DOCTYPE language SYSTEM \"language.dtd\">");
-    puts("<language _name=\"gretl\" version=\"1.0\" _section=\"Sources\" "
-	 "mimetypes=\"application/x-gretlscript\">\n");
-
-    puts("<escape-char>\\</escape-char>\n");
-
-    puts("<line-comment _name = \"Line Comment\" style= \"Comment\">");   
-    puts(" <start-regex>#</start-regex>");   
-    puts("</line-comment>\n");   
-
-    puts("<block-comment _name = \"Block Comment\" style = \"Comment\">");
-    puts(" <start-regex>/\\*</start-regex>");
-    puts(" <end-regex>\\*/</end-regex>");
-    puts("</block-comment>\n");
-
-    puts("<string _name = \"String\" style = \"String\" end-at-line-end = \"TRUE\">");
-    puts(" <start-regex>&quot;</start-regex>");
-    puts(" <end-regex>&quot;</end-regex>");
-    puts("</string>\n");
-
-    /* gretl data types */
-    puts("<keyword-list _name = \"Gretl-types\" style = \"Data Type\" case-sensitive=\"TRUE\">");
-    for (i=0; gretl_data_types[i] != NULL; i++) {
-	printf(" <keyword>%s</keyword>\n", gretl_data_types[i]);  
-    }
-    puts("</keyword-list>\n");
-
-    /* gretl commands */
-    puts("<keyword-list _name = \"Commands\" style = \"Keyword\" case-sensitive=\"TRUE\">");
-    for (i=1; i<NC; i++) {
-	printf(" <keyword>%s</keyword>\n", gretl_command_word(i));
-    }
-    /* plus a few specials */
-    for (i=0; special_keyword[i] != NULL; i++) {
-	printf(" <keyword>%s</keyword>\n", special_keyword[i]);
-    }
-    puts("</keyword-list>\n");
-
-    /* functions in "genr" command */
-    puts("<keyword-list _name = \"Genr-functions\" style = \"Function\" case-sensitive=\"TRUE\">");
-    n = gen_func_count();
-    for (i=0; i<n; i++) {
-	printf(" <keyword>%s</keyword>\n", gen_func_name(i));
-    }    
-    puts("</keyword-list>\n");
-
-    /* command option strings */
-    strs = get_all_option_strings(&nopts);
-    if (strs != NULL) {
-	puts("<keyword-list _name = \"Options\" style = \"Data Type\" case-sensitive=\"TRUE\"");
-	puts(" match-empty-string-at-beginning = \"FALSE\" beginning-regex=\"--\">");
-	for (i=1; i<nopts; i++) {
-	    printf(" <keyword>%s</keyword>\n", strs[i]);
-	}    
-	puts("</keyword-list>\n");
-	free_strings_array(strs, nopts);
-    }
-
-    /* dollar variables */
-    puts("<keyword-list _name = \"InternalVars\" style = \"Data Type\" case-sensitive=\"TRUE\"");
-    puts(" match-empty-string-at-beginning = \"FALSE\" match-empty-string-at-end = \"FALSE\"");
-    puts(" beginning-regex=\"\\$\">");
-
-    strs = make_var_name_list(&n);
-    if (strs != NULL) {
-	for (i=0; i<n; i++) {
-	   printf(" <keyword>%s</keyword>\n", strs[i]); 
-	}
-	free_strings_array(strs, n);
-    }
-	
-    puts("</keyword-list>\n");
-
-#if 0
-    puts("<string _name = \"Character Constant\" style = \"String\" end-at-line-end = \"TRUE\">");
-    puts(" <start-regex>&apos;</start-regex>");
-    puts(" <end-regex>&apos;</end-regex>");
-    puts("</string>\n");
-#endif
-
-    puts("</language>");
-}
-
 int main (int argc, char **argv)
 {
     if (argc == 2 && !strcmp(argv[1], "--emacs")) {
 	output_emacs_block();
-    } else if (argc == 2 && !strcmp(argv[1], "--lang1")) {
-	output_lang1_file();
     } else {
 	output_lang2_file();
     }

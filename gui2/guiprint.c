@@ -2195,10 +2195,6 @@ int font_has_symbol (PangoFontDescription *desc, int symbol)
     layout = pango_layout_new(context); 
     lang = pango_language_from_string("eng");
 
-#if 0
-    fprintf(stderr, "lang (eng) = %p\n", (void *) lang);
-#endif
-
     if (layout != NULL && lang != NULL) {
 	pfont = pango_context_load_font(context, desc);
 	if (pfont != NULL) {
