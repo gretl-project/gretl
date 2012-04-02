@@ -257,8 +257,18 @@ void output_lang2_file (void)
     }
     puts(" </context>");
 
-    /* gretl commands (N.B. old case-sensitive="TRUE"?) */
+    /* gretl functions */
+    puts(" <context id=\"genr-functions\" style-ref=\"function\">");
+    n = gen_func_count();
+    for (i=0; i<n; i++) {
+	printf("  <keyword>%s</keyword>\n", gen_func_name(i));
+    }    
+    puts(" </context>");
+
+    /* gretl commands */
     puts(" <context id=\"commands\" style-ref=\"keyword\">");
+    puts("  <prefix>(^|\\040)</prefix>");
+    puts("  <suffix>(?![\\w\\-\\.\\(])</suffix>");
     for (i=1; i<NC; i++) {
 	if (strcmp(gretl_command_word(i), "matrix")) {
 	    printf("  <keyword>%s</keyword>\n", gretl_command_word(i));
@@ -268,14 +278,6 @@ void output_lang2_file (void)
     for (i=0; special_keyword[i] != NULL; i++) {
 	printf("  <keyword>%s</keyword>\n", special_keyword[i]);
     }
-    puts(" </context>");
-
-    /* functions in "genr" command */
-    puts(" <context id=\"genr-functions\" style-ref=\"function\">");
-    n = gen_func_count();
-    for (i=0; i<n; i++) {
-	printf("  <keyword>%s</keyword>\n", gen_func_name(i));
-    }    
     puts(" </context>");
 
     /* command option strings */
