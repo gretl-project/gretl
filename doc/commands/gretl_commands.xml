@@ -10520,6 +10520,11 @@
 	with an equals sign. The string is inserted as a comment into
 	the database index file or at the top of the CSV output.
       </para>
+      <para>
+	The <lit>store</lit> command behaves in a special manner in
+	the context of a <quote>progressive loop</quote>.  See
+	<guideref targ="chap:looping"/> for details.
+      </para>
     </description>
 
     <gui-access>
