@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-22 16:51-0400\n"
-"PO-Revision-Date: 2012-04-02 14:35+0300\n"
+"PO-Revision-Date: 2012-04-02 15:12+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -714,7 +714,7 @@ msgstr "('*' % 95 güven kuşağı dışındaki bir değeri göstermektedir)"
 
 #: lib/src/compare.c:3270 lib/src/gretl_model.c:3040
 msgid "Test of common factor restriction"
-msgstr "Ortak etmen sınırlama sınaması"
+msgstr "Ortak etmen sınırlaması sınaması"
 
 #: lib/src/compare.c:3275 lib/src/gretl_restrict.c:2217
 #: lib/src/gretl_restrict.c:2770 lib/src/gretl_restrict.c:2780
@@ -3266,7 +3266,7 @@ msgstr "Zaman kuklalarının ortak anlamlılığı için Wald sınaması"
 
 #: lib/src/gretl_model.c:3041
 msgid "restriction is acceptable"
-msgstr "sınırlama kabul edilebilir"
+msgstr "sınırlama geçerli"
 
 #: lib/src/gretl_model.c:3043
 msgid "Test of independence"
