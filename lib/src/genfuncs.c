@@ -3686,7 +3686,7 @@ static double imhof_integral (double arg, const double *lambda, int k,
 	    ret = 0.0;
 	} else if (ret < 0) {
 	    fprintf(stderr, "n = %d, Imhof integral gave negative value %g\n", n, ret);
-	    gretl_errmsg_set("Imhof integral gave negative value");
+	    gretl_errmsg_set(_("Imhof integral gave negative value"));
 	    *err = E_DATA;
 	    ret = NADBL;
 	}
