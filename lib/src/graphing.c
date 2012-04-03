@@ -4163,11 +4163,13 @@ int plot_freq (FreqDist *freq, DistCode dist)
     return gnuplot_make_graph();
 }
 
-static void print_y_data (const double *x, const double *y,
-			  const int *order, int t1, int t2, 
+static void print_y_data (const double *x, 
+			  const double *y,
+			  const int *order, 
+			  int t0, int t1, int t2, 
 			  FILE *fp)
 {
-    int i, t, n = t2 - t1 + 1;
+    int i, t, n = t2 - t0 + 1;
     double xt;
 
     for (i=0; i<n; i++) {
@@ -4175,10 +4177,10 @@ static void print_y_data (const double *x, const double *y,
 	    t = order[i];
 	    xt = i + 1;
 	} else {
-	    t = t1 + i;
+	    t = t0 + i;
 	    xt = x[t];
 	}	
-	if (na(y[t])) {
+	if (t < t1 || na(y[t])) {
 	    fprintf(fp, "%.10g ?\n", xt);
 	} else {
 	    fprintf(fp, "%.10g %.10g\n", xt, y[t]);
@@ -4197,9 +4199,10 @@ enum {
 
 static void print_confband_data (const double *x, const double *y,
 				 const double *e, const int *order,
-				 int t1, int t2, int mode, FILE *fp)
+				 int t0, int t1, int t2, 
+				 int mode, FILE *fp)
 {
-    int i, t, n = t2 - t1 + 1;
+    int i, t, n = t2 - t0 + 1;
     double xt;
 
     for (i=0; i<n; i++) {
@@ -4207,10 +4210,10 @@ static void print_confband_data (const double *x, const double *y,
 	    t = order[i];
 	    xt = i + 1;
 	} else {
-	    t = t1 + i;
+	    t = t0 + i;
 	    xt = x[t];
 	}
-	if (na(y[t]) || na(e[t])) {
+	if (t < t1 || na(y[t]) || na(e[t])) {
 	    if (mode == CONF_LOW || mode == CONF_HIGH) {
 		fprintf(fp, "%.10g ?\n", xt);
 	    } else {
@@ -4336,6 +4339,10 @@ static int *get_sorted_fcast_order (const FITRESID *fr,
     return order;
 }
 
+/* note: if @opt includes OPT_H, that says to show fitted 
+   values for the pre-forecast range
+*/
+
 int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 		     const DATASET *dset, gretlopt opt)
 {
@@ -4373,7 +4380,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     n = t2 - t1 + 1;
 
     if (n < 3) {
-	/* won't draw a graph for 2 data points or less */
+	/* we won't draw a graph for 2 data points or less */
 	return 1;
     }
 
@@ -4494,26 +4501,26 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     if (use_fill) {
 	if (do_errs) {
 	    print_confband_data(obs, fr->fitted, maxerr, order,
-				yhmin, t2, CONF_FILL, fp);
+				t1, yhmin, t2, CONF_FILL, fp);
 	}
 	if (depvar_present) {
-	    print_y_data(obs, fr->actual, order, t1, t2, fp);
+	    print_y_data(obs, fr->actual, order, t1, t1, t2, fp);
 	}
-	print_y_data(obs, fr->fitted, order, yhmin, t2, fp);
+	print_y_data(obs, fr->fitted, order, t1, yhmin, t2, fp);
     } else {
 	if (depvar_present) {
-	    print_y_data(obs, fr->actual, order, t1, t2, fp);
+	    print_y_data(obs, fr->actual, order, t1, t1, t2, fp);
 	}
-	print_y_data(obs, fr->fitted, order, yhmin, t2, fp);
+	print_y_data(obs, fr->fitted, order, t1, yhmin, t2, fp);
 	if (do_errs) {
 	    if (use_lines) {
 		print_confband_data(obs, fr->fitted, maxerr, order,
-				    yhmin, t2, CONF_LOW, fp);
+				    t1, yhmin, t2, CONF_LOW, fp);
 		print_confband_data(obs, fr->fitted, maxerr, order,
-				    yhmin, t2, CONF_HIGH, fp);
+				    t1, yhmin, t2, CONF_HIGH, fp);
 	    } else {
 		print_confband_data(obs, fr->fitted, maxerr, order,
-				    yhmin, t2, CONF_BARS, fp);
+				    t1, yhmin, t2, CONF_BARS, fp);
 	    }
 	}	
     }
