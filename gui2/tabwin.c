@@ -1171,3 +1171,22 @@ int highest_numbered_var_in_tabwin (tabwin_t *tabwin,
 
     return vmax;
 }
+
+windata_t *window_get_active_vwin (GtkWidget *window) 
+{
+    windata_t *vwin = g_object_get_data(G_OBJECT(window), "vwin");
+
+    if (vwin == NULL) {
+	tabwin_t *tabwin = g_object_get_data(G_OBJECT(window), "tabwin");
+
+	if (tabwin != NULL) {
+	    GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
+	    gint pg = gtk_notebook_get_current_page(notebook);
+	    GtkWidget *tab = gtk_notebook_get_nth_page(notebook, pg);
+
+	    vwin = g_object_get_data(G_OBJECT(tab), "vwin");
+	}
+    }
+
+    return vwin;
+}

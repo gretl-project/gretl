@@ -352,6 +352,23 @@ static void maybe_revise_action_label (GtkAction *action,
     }	
 }
 
+static gboolean winlist_popup_done (GtkMenuShell *mshell,
+				    GtkWidget *window)
+{
+    windata_t *vwin = window_get_active_vwin(window);
+
+    if (vwin != NULL) {
+	if (vwin->role == VIEW_MODEL || 
+	    vwin->role == VAR || 
+	    vwin->role == VECM) {
+	    /* don't leave focus on the winlist button */
+	    gtk_widget_grab_focus(vwin->text);
+	}
+    }
+
+    return FALSE;
+}
+
 /* pop up a list of open windows from which the user can
    select one to raise and focus */
 
@@ -409,6 +426,12 @@ void window_list_popup (GtkWidget *src, GdkEventButton *event,
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
     }
 
+    if (win != NULL) {
+	g_signal_connect(G_OBJECT(menu), "deactivate", 
+			 G_CALLBACK(winlist_popup_done),
+			 win);
+    }
+
     if (event != NULL) {
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
 		       event->button, event->time);
@@ -421,6 +444,16 @@ void window_list_popup (GtkWidget *src, GdkEventButton *event,
 void vwin_winlist_popup (GtkWidget *src, GdkEventButton *event, 
 			 windata_t *vwin)
 {
+    /* Note: this function may look redundant, given the
+       window_list_popup() function, but it's not. This is
+       due to the presence of tabbed windows whose content
+       (scripts, models) can be dragged out of their
+       tabbed context: in that case @vwin's associated
+       "toplevel" can change between invocations of
+       this function and therefore cannot be "hard-wired"
+       into the callback setup, rather it must be
+       evaluated on each invocation.
+    */
     window_list_popup(src, event, vwin_toplevel(vwin));
 }
 
@@ -883,21 +916,19 @@ static void menu_bar_add_winlist (windata_t *vwin)
 {
     GtkWidget *img, *button = gtk_button_new();
     GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
-
-#if 0 /* doesn't work: is GTK broken on this? */
     GtkStyle *style = gtk_widget_get_style(vwin->mbar);
     GValue val = G_VALUE_INIT;
-    
+
+    g_value_init(&val, G_TYPE_INT);
     gtk_style_get_style_property(style,
 				 GTK_TYPE_MENU_BAR,
 				 "shadow-type", 
 				 &val);
-    fprintf(stderr, "stype = %d\n", g_value_get_int(&val));
-#endif		 
+    if (g_value_get_int(&val) == GTK_SHADOW_NONE) {
+	gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    }
+    g_value_unset(&val);
 
-#if GTK_MAJOR_VERSION > 2 /* FIXME? */
-    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-#endif
     img = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, 
 				   GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
