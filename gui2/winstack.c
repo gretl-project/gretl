@@ -917,7 +917,9 @@ static void menu_bar_add_winlist (windata_t *vwin)
     GtkWidget *img, *button = gtk_button_new();
     GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
     GtkStyle *style = gtk_widget_get_style(vwin->mbar);
-    GValue val = G_VALUE_INIT;
+
+#if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 16
+    GValue val = {0};
 
     g_value_init(&val, G_TYPE_INT);
     gtk_style_get_style_property(style,
@@ -928,6 +930,7 @@ static void menu_bar_add_winlist (windata_t *vwin)
 	gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
     }
     g_value_unset(&val);
+#endif
 
     img = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, 
 				   GTK_ICON_SIZE_MENU);
