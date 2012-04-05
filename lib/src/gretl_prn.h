@@ -49,7 +49,7 @@ typedef enum {
     GRETL_FORMAT_TAB       = 1 << 8,
     GRETL_FORMAT_MODELTAB  = 1 << 9,
     GRETL_FORMAT_LANDSCAPE = 1 << 10,
-    GRETL_FORMAT_UTF       = 1 << 11
+    GRETL_FORMAT_HAS_MINUS = 1 << 11
 } PrnFormat;
 
 /* functions follow */
@@ -99,9 +99,9 @@ void gretl_print_set_format (PRN *prn, PrnFormat format);
 
 void gretl_print_toggle_doc_flag (PRN *prn);
 
-void gretl_print_set_utf_flag (PRN *prn);
+void gretl_print_set_has_minus (PRN *prn);
 
-int gretl_print_supports_utf (PRN *prn);
+int gretl_print_has_minus (PRN *prn);
 
 void gretl_print_set_delim (PRN *prn, char delim);
 

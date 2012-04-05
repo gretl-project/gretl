@@ -108,8 +108,8 @@ static void gretl_clipboard_get (GtkClipboard *clip,
     }
 
     if (info != TARGET_UTF8_STRING) {
-	/* need to remove any UTF-8 minuses? */
-	str = strip_utf_minus(str);
+	/* need to remove any Unicode minuses? */
+	str = strip_unicode_minus(str);
     }
 
     if (info == TARGET_RTF) {
@@ -181,10 +181,10 @@ static gchar *fix_buffer_for_rtf (const char *buf)
 {
     gchar *ret = NULL;
 
-    if (has_utf8_minus((const unsigned char *) buf)) {
+    if (has_unicode_minus((const unsigned char *) buf)) {
 	gchar *tmp = g_strdup(buf);
 	
-	strip_utf_minus(tmp);
+	strip_unicode_minus(tmp);
 	if (string_is_utf8((const unsigned char *) tmp)) {
 	    ret = utf8_to_cp(tmp);
 	    g_free(tmp);

@@ -762,30 +762,32 @@ void gretl_print_toggle_doc_flag (PRN *prn)
 }
 
 /**
- * gretl_print_set_utf_flag:
+ * gretl_print_set_has_minus:
  * @prn: printing struct.
  * 
- * Sets the %GRETL_FORMAT_UTF flag on @prn.
+ * Sets the %GRETL_FORMAT_HAS_MINUS flag on @prn,
+ * indicating that the Unicode minus sign is
+ * supported.
  */
 
-void gretl_print_set_utf_flag (PRN *prn)
+void gretl_print_set_has_minus (PRN *prn)
 {
     if (prn != NULL) {
-	prn->format |= GRETL_FORMAT_UTF;
+	prn->format |= GRETL_FORMAT_HAS_MINUS;
     }
 }
 
 /**
- * gretl_print_supports_utf:
+ * gretl_print_has_minus:
  * @prn: printing struct.
  * 
- * Returns: 1 if @prn supports UTF-8 characters, else 0.
+ * Returns: 1 if @prn supports Unicode minus sign, else 0.
  */
 
-int gretl_print_supports_utf (PRN *prn)
+int gretl_print_has_minus (PRN *prn)
 {
     if (prn != NULL) {
-	return (prn->format & GRETL_FORMAT_UTF)? 1 : 0;
+	return (prn->format & GRETL_FORMAT_HAS_MINUS)? 1 : 0;
     } else {
 	return 0;
     }

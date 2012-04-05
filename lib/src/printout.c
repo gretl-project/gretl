@@ -858,7 +858,7 @@ void gretl_sprint_fullwidth_double (double x, int digits, char *targ,
 
     cut_extra_zero(targ, digits);
 
-    if (*targ == '-' && gretl_print_supports_utf(prn)) {
+    if (*targ == '-' && gretl_print_has_minus(prn)) {
 	char tmp[36];
 
 	strcpy(tmp, targ + 1);

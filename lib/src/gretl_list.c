@@ -2674,25 +2674,23 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
  * @list1: 
  * @list2: 
  *
- * Returns: 1 if there are any elements in common between @list1
- * and @list2, otherwise 0.
+ * Returns: the number of elements that are in common between 
+ * @list1 and @list2.
  */
 
 int gretl_lists_share_members (const int *list1, const int *list2)
 {
-    int i;
+    int i, n = 0;
 
-    if (list1 == NULL || list2 == NULL) {
-	return 0;
-    }
-
-    for (i=1; i<=list1[0]; i++) {
-	if (in_gretl_list(list2, list1[i])) {
-	    return 1;
+    if (list1 != NULL && list2 != NULL) {
+	for (i=1; i<=list1[0]; i++) {
+	    if (in_gretl_list(list2, list1[i])) {
+		n++;
+	    }
 	}
     }
 
-    return 0;
+    return n;
 }
 
 /**

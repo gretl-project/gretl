@@ -772,7 +772,8 @@ static int add_EC_terms_to_X (GRETL_VAR *v, gretl_matrix *X,
 }
 
 /* preparing for OLS conditional on beta: construct the
-   appropriate dependent variable matrix, Y */
+   appropriate dependent variable matrix, Y 
+*/
 
 static int make_vecm_Y (GRETL_VAR *v, const DATASET *dset,
 			const gretl_matrix *Pi)

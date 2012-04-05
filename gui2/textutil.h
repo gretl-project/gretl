@@ -50,8 +50,8 @@ void system_print_buf (const gchar *buf, FILE *fp);
 
 char *dosify_buffer (const char *buf, int format);
 
-char *strip_utf_minus (char *s);
+char *strip_unicode_minus (char *s);
 
-int has_utf8_minus (const unsigned char *s);
+int has_unicode_minus (const unsigned char *s);
 
 #endif /* TEXTUTIL_H */

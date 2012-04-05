@@ -895,6 +895,10 @@ int equation_system_append (equation_system *sys, const int *list)
 	} else {
 	    sys->lists = lists;
 	    sys->lists[n] = gretl_list_copy(list);
+#if SYSDEBUG
+	    fprintf(stderr, "equation_system_append: added list %d\n", n);
+	    printlist(list, "newly added list");
+#endif
 	    if (sys->lists[n] == NULL) {
 		err = E_ALLOC;
 	    } else {
@@ -1151,23 +1155,82 @@ equation_system *equation_system_start (const char *line,
     return sys;
 }
 
+/* determine the degrees of freedom for the unrestricted 
+   estimation of @sys
+*/
+
 static int system_get_dfu (const equation_system *sys)
 {
-    int dfu = sys->T * sys->neqns;
-    int i;
+    int dfu = sys->T * sys->neqns; /* total observations */
+    int i, pos;
 
     for (i=0; i<sys->neqns; i++) {
-	dfu -= sys->lists[i][0] - 1;
+	/* subtract the number of parameters */
+	pos = gretl_list_separator_position(sys->lists[i]);
+	if (pos > 0) {
+	    dfu -= pos - 2;
+	} else {
+	    dfu -= sys->lists[i][0] - 1;
+	}
     }
 
     return dfu;
+}
+
+static int get_eqn_ref (const equation_system *sys, int j)
+{
+    int i, pos, nparm = 0;
+
+    for (i=0; i<sys->neqns; i++) {
+	pos = gretl_list_separator_position(sys->lists[i]);
+	if (pos > 0) {
+	    nparm += pos - 2;
+	} else {
+	    nparm += sys->lists[i][0] - 1;
+	}
+	if (nparm > j) {
+	    return i;
+	}
+    }
+	
+    return -1;
+}
+
+static int maybe_get_single_equation_dfu (const equation_system *sys,
+					  const gretl_matrix *R)
+{
+    int i, j, eq = -1, eqbak = -1;
+    int single = 1;
+    int eq_dfu = 0;
+
+    for (j=0; j<R->cols && single; j++) {
+	for (i=0; i<R->rows && single; i++) {
+	    if (gretl_matrix_get(R, i, j) != 0) {
+		eq = get_eqn_ref(sys, j);
+		if (eqbak == -1) {
+		    eqbak = eq;
+		} else if (eq != eqbak) {
+		    /* the restriction references more than
+		       one equation
+		    */
+		    single = 0;
+		}
+	    }
+	}
+    }
+
+    if (single && eq >= 0) {
+	eq_dfu = sys->T - (sys->lists[eq][0] - 1);
+    }
+
+    return eq_dfu;
 }
 
 /* Asymptotic F-test, as in Greene:
 
    (1/J) * (Rb-q)' * [R*Var(b)*R']^{-1} * (Rb-q) 
 
-   or chi-squared version if given OPT_W
+   or chi-square version if given OPT_W
 */
 
 static int real_system_wald_test (const equation_system *sys,
@@ -1179,7 +1242,7 @@ static int real_system_wald_test (const equation_system *sys,
 				  PRN *prn)
 {
     gretl_matrix *Rbq, *RvR;
-    int Rrows, dfu, dfn;
+    int Rrows, dfn, dfu = 0;
     double test = NADBL;
     int err = 0;
 
@@ -1195,10 +1258,18 @@ static int real_system_wald_test (const equation_system *sys,
 	pputs(prn, "Missing matrix in system Wald test!\n");
 	return E_DATA;
     }
-
+    
     Rrows = gretl_matrix_rows(R);
     dfu = system_get_dfu(sys);
     dfn = gretl_matrix_rows(R);
+
+    if (sys->method == SYS_METHOD_OLS || sys->method == SYS_METHOD_TSLS) {
+	dfu = maybe_get_single_equation_dfu(sys, R);
+    }
+
+    if (dfu == 0) {
+	dfu = system_get_dfu(sys);
+    }
 
     Rbq = gretl_matrix_alloc(Rrows, 1);
     RvR = gretl_matrix_alloc(Rrows, Rrows);
@@ -1374,9 +1445,7 @@ static int estimate_with_test (equation_system *sys, DATASET *dset,
     /* estimate the unrestricted system first */
 
     sys->flags &= ~SYSTEM_RESTRICT;
-
     err = (* system_est) (sys, dset, opt | OPT_Q, prn);
-
     sys->flags ^= SYSTEM_RESTRICT;
 
     if (err) {
@@ -1516,6 +1585,10 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
     int stest = 0;
     int err = 0;
 
+#if SYSDEBUG
+    fprintf(stderr, "*** equation_system_estimate\n");
+#endif
+
     gretl_error_clear();
 
     if (sys->xlist == NULL || sys->biglist == NULL) {
@@ -1570,7 +1643,7 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
     } else {
 	err = (*system_est) (sys, dset, opt, prn);
     }
-    
+
  system_bailout:
 
     if (handle != NULL) {
@@ -1708,6 +1781,97 @@ static int sys_get_lag_src (const char *vname, const DATASET *dset)
     return src;
 }
 
+static int is_tsls_style_instrument (equation_system *sys, int v)
+{
+    int i, j, pos;
+
+    for (i=0; i<sys->neqns; i++) {
+	pos = gretl_list_separator_position(sys->lists[i]);
+	if (pos > 0) {
+	    for (j=pos+1; j<=sys->lists[i][0]; j++) {
+		if (sys->lists[i][j] == v) {
+		    return 1;
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/* Here we deal with the case where the user has specified the 
+   system equations "tsls-style": besides the left-hand side
+   variables, we also need to identify as endogenous any 
+   regressors that do not appear as instruments.
+*/
+
+static int tsls_style_augment_ylist (equation_system *sys, 
+				     int **pylist)
+{
+    const int *list;
+    int pos, ny = (*pylist)[0];
+    int i, j, vj;
+
+    for (i=0; i<sys->neqns; i++) {
+	list = sys->lists[i];
+	pos = gretl_list_separator_position(list);
+	if (pos == 0) {
+	    continue;
+	}
+	for (j=2; j<pos; j++) {
+	    vj = list[j];
+	    if (vj == 0 || in_gretl_list(*pylist, vj)) {
+		continue;
+	    }
+	    if (!is_tsls_style_instrument(sys, vj)) {
+		if (ny < sys->neqns) {
+		    (*pylist)[++ny] = vj;
+		    (*pylist)[0] = ny;
+		} else {
+		    gretl_list_append_term(pylist, vj);
+		    if (*pylist == NULL) {
+			return E_ALLOC;
+		    }
+		    ny++;
+		}
+	    }
+	}
+    }
+
+    return ny >= sys->neqns ? 0 : E_DATA;
+}
+
+/* It's possible to specify instruments per equation, as in tsls,
+   with a two-part regression list. But this cannot be mixed with 
+   any other means of specifying endogeneity/exogeneity of
+   variables.
+*/
+
+static int check_for_tsls_style_lists (equation_system *sys,
+				       int *err)
+{
+    int i, tsls_style = 0;
+
+    for (i=0; i<sys->neqns; i++) {
+	if (gretl_list_separator_position(sys->lists[i]) > 0) {
+	    tsls_style = 1;
+	    break;
+	}
+    }
+
+    if (tsls_style) {
+	if (sys->ylist != NULL || sys->ilist != NULL) {
+	    gretl_errmsg_set("You can't mix tsls-style lists with 'endog' or 'instr'");
+	    *err = E_DATA;
+	} else if (sys->nidents > 0) {
+	    gretl_errmsg_set("You can't mix identities with tsls-style lists");
+	    *err = E_DATA;
+	}	    
+    }
+
+    return tsls_style;
+}
+
 /* prior to system estimation, get all the required lists of variables
    in order
 */
@@ -1722,8 +1886,18 @@ static int sys_check_lists (equation_system *sys,
     int *ylist = NULL;
     int *xplist = NULL;
     int src, lag, nlhs, nxp;
+    int tsls_style;
     int i, j, k, vj;
     int err = 0;
+
+#if SYSDEBUG
+    fprintf(stderr, "*** sys_check_lists\n");
+#endif
+
+    tsls_style = check_for_tsls_style_lists(sys, &err);
+    if (err) {
+	return err;
+    }
 
     /* start an empty list for predetermined variables */
 
@@ -1747,35 +1921,42 @@ static int sys_check_lists (equation_system *sys,
 
     for (i=0; i<sys->neqns; i++) {
 #if SYSDEBUG
-	printlist(ylist, "incoming equation sys->list");
+	printlist(sys->lists[i], "incoming equation list");
 #endif
 	slist = sys->lists[i];
 	vj = slist[1];
 	if (!in_gretl_list(ylist, vj)) {
 	    ylist[++k] = vj;
-	} 
+	}
     }
 
-    for (i=0; i<sys->nidents; i++) {
-	ident = sys->idents[i];
-	vj = ident->depvar;
-	if (!in_gretl_list(ylist, vj)) {
-	    ylist[++k] = vj;
-	} 
-    }    
-
-    ylist[0] = k;
+    if (tsls_style) {
+	ylist[0] = k;
+	err = tsls_style_augment_ylist(sys, &ylist);
+	if (err) {
+	    goto bailout;
+	}	
+    } else {
+	for (i=0; i<sys->nidents; i++) {
+	    ident = sys->idents[i];
+	    vj = ident->depvar;
+	    if (!in_gretl_list(ylist, vj)) {
+		ylist[++k] = vj;
+	    } 
+	}
+	ylist[0] = k;
+    }   
 
 #if SYSDEBUG
     printlist(ylist, "system auto ylist");
 #endif
 
-    /* If the user gave a list of endogenous vars, check that it
-       contains all the presumably endogenous variables we found above
-       (as recorded in ylist).
+    /* If the user gave a list of endogenous vars (in sys->ylist), check 
+       that it contains all the presumably endogenous variables we found 
+       above and recorded in ylist.
     */
 
-    if (sys->ylist != NULL) {
+    if (user_ylist) {
 	for (j=1; j<=ylist[0] && !err; j++) {
 	    vj = ylist[j];
 	    if (!in_gretl_list(sys->ylist, vj)) {
@@ -1900,8 +2081,8 @@ static int sys_check_lists (equation_system *sys,
     printlist(xplist, "final system exog list");
 #endif
 
-    if (!err && sys->ylist[0] != nlhs) {
-	/* Note: added 2009-08-10 */
+    if (!err && !tsls_style && sys->ylist[0] != nlhs) {
+	/* Note: check added 2009-08-10, modified 2012-04-05 */
 	gretl_errmsg_sprintf("Found %d endogenous variables but %d equations",
 			     sys->ylist[0], nlhs);
 	err = E_DATA;
@@ -1949,6 +2130,10 @@ int equation_system_finalize (equation_system *sys, DATASET *dset,
 {
     int mineq = (opt & OPT_S)? 1 : 2;
     int err = 0;
+
+#if SYSDEBUG
+    fprintf(stderr, "*** equation_system_finalize\n");
+#endif
 
     gretl_error_clear();
 
@@ -2907,13 +3092,25 @@ equation_system_get_matrix (const equation_system *sys, int idx,
 	M = gretl_matrix_copy(sys->S);
 	break;
     case M_SYSGAM:
-	M = gretl_matrix_copy(sys->Gamma);
+	if (sys->Gamma == NULL) {
+	    *err = E_BADSTAT;
+	} else {
+	    M = gretl_matrix_copy(sys->Gamma);
+	}
 	break;
     case M_SYSA:
-	M = gretl_matrix_copy(sys->A);
+	if (sys->A == NULL) {
+	    *err = E_BADSTAT;
+	} else {
+	    M = gretl_matrix_copy(sys->A);
+	}
 	break;
     case M_SYSB:
-	M = gretl_matrix_copy(sys->B);
+	if (sys->B == NULL) {
+	    *err = E_BADSTAT;
+	} else {
+	    M = gretl_matrix_copy(sys->B);
+	}
 	break;
     default:
 	*err = E_BADSTAT;
@@ -3384,7 +3581,7 @@ static int sys_add_RF_covariance_matrix (equation_system *sys,
 	}
     } 
 
-    if (sys->nidents > 0) {
+    if (n > sys->S->rows) {
 	S = gretl_zero_matrix_new(n, n);
 	if (S == NULL) {
 	    gretl_matrix_free(G);
@@ -3440,8 +3637,9 @@ static int sys_add_structural_form (equation_system *sys)
     printlist(xlist, "exogenous vars");
 #endif
 
-    if (n != ylist[0]) {
-	return E_DATA;
+    if (n < ylist[0]) {
+	/* is this right? (2012-04-05) */
+	n = ylist[0];
     }
 
     sys->order = sys_max_predet_lag(sys);
@@ -3479,6 +3677,7 @@ static int sys_add_structural_form (equation_system *sys)
 	    x = (j > 1)? pmod->coeff[j-2] : 1.0;
 	    if (type == ENDOG) {
 		if (j == 1) {
+		    /* left-hand side variable */
 		    gretl_matrix_set(sys->Gamma, i, col, 1.0);
 		} else {
 		    gretl_matrix_set(sys->Gamma, i, col, -x);
@@ -3543,13 +3742,13 @@ static int sys_add_structural_form (equation_system *sys)
     if (sys->A != NULL) {
 	gretl_matrix_print(sys->A, "sys->A");
     } else {
-	fputs("No lagged endogenous variables used as instruments\n", stderr);
+	fputs("sys->A: no lagged endog variables used as instruments\n", stderr);
     }
 
     if (sys->B != NULL) {
 	gretl_matrix_print(sys->B, "sys->B");
     } else {
-	fputs("No truly exogenous variables are present\n", stderr);
+	fputs("sys->A: no truly exogenous variables present\n", stderr);
     }
 #endif
 

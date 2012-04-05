@@ -90,7 +90,7 @@ static int char_len (const char *s)
 
 static void plain_print_double (char *s, int d, double x, PRN *prn)
 {
-    if (x < 0 && gretl_print_supports_utf(prn)) {
+    if (x < 0 && gretl_print_has_minus(prn)) {
 	char tmp[32];
 
 	*s = '\0';
@@ -2760,7 +2760,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	key[11] = "Hannan--Quinn";
 	key[12] = "$\\hat{\\rho}$";
 	key[13] = "Durbin--Watson";
-    } else if (!rtf && gretl_print_supports_utf(prn)) {
+    } else if (!rtf && gretl_print_has_minus(prn)) {
 	/* print a 'real' minus sign? */
 	mtab.minus = MINUS_UTF;
     }
@@ -4040,7 +4040,7 @@ static int plain_print_mp_coeffs (const MODEL *pmod,
 	goto bailout;
     }
 
-    minus = (gretl_print_supports_utf(prn))? MINUS_UTF : MINUS_HYPHEN;
+    minus = (gretl_print_has_minus(prn))? MINUS_UTF : MINUS_HYPHEN;
 
     for (i=0; i<nc; i++) {
 	if (xna(b[i])) {

@@ -652,20 +652,20 @@ void window_print (GtkAction *action, windata_t *vwin)
     g_free(selbuf);
 }
 
-#define UTF_MINUS(u,i) (u[i] == 0xE2 && u[i+1] == 0x88 && u[i+2] == 0x92)
+#define U_MINUS(u,i) (u[i] == 0xE2 && u[i+1] == 0x88 && u[i+2] == 0x92)
 
-/* check @s for UTF-8 minus signs (U+2212), and if any are found do an
+/* check @s for Unicode minus signs (U+2212), and if any are found do an
    in-place replacement with ASCII dashes
 */
 
-char *strip_utf_minus (char *s)
+char *strip_unicode_minus (char *s)
 {
     unsigned char *u = (unsigned char *) s;
     int i, n = strlen(s);
     int got_minus = 0;
 
     for (i=0; i<n-3; i++) {
-	if (UTF_MINUS(u, i)) {
+	if (U_MINUS(u, i)) {
 	    got_minus = 1;
 	    break;
 	}
@@ -678,7 +678,7 @@ char *strip_utf_minus (char *s)
 	    int j = 0;
 
 	    for (i=0; i<n; i++) {
-		if (i < n - 3 && UTF_MINUS(u, i)) {
+		if (i < n - 3 && U_MINUS(u, i)) {
 		    tmp[j++] = '-';
 		    i += 2;
 		} else {
@@ -693,13 +693,13 @@ char *strip_utf_minus (char *s)
     return s;
 }
 
-int has_utf8_minus (const unsigned char *s)
+int has_unicode_minus (const unsigned char *s)
 {
     int i, n = strlen((const char *) s);
     int has_minus = 0;
 
     for (i=0; i<n-3; i++) {
-	if (UTF_MINUS(s, i)) {
+	if (U_MINUS(s, i)) {
 	    has_minus = 1;
 	    break;
 	}
