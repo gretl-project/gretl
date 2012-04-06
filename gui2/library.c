@@ -242,53 +242,25 @@ int user_fopen (const char *fname, char *fullname, PRN **pprn)
     return err;
 }
 
-/* FIXME: try doing this on Windows */
-#ifdef G_OS_WIN32
-#define CHECK_FOR_MINUS 0
-#else
-#define CHECK_FOR_MINUS 1
-#endif
-
-#if CHECK_FOR_MINUS
-
-static void maybe_set_has_minus (PRN *prn)
-{
-    static int has_minus = -1;
-
-    if (has_minus < 0) {
-	const gchar *cset;
-
-	if (!g_get_charset(&cset)) {
-	    /* system does not use UTF-8 (FIXME: is this check needed?) */
-	    has_minus = 0;
-	} else {
-	    /* check for Unicode minus sign, U+2212 */
-	    has_minus = font_has_symbol(fixed_font, 0x2212);
-	}
-    }
-
-    if (has_minus > 0) {
-	gretl_print_set_has_minus(prn);
-    }
-}
-
-#endif
-
 gint bufopen (PRN **pprn)
 {
+    static int has_minus = -1;
     int err = 0;
 
     *pprn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
 
     if (err) {
 	gui_errmsg(err);
-    } 
+    } else {
+	if (has_minus < 0) {
+	    /* check for Unicode minus sign, U+2212 */
+	    has_minus = font_has_symbol(fixed_font, 0x2212);
+	}
 
-#if CHECK_FOR_MINUS
-    if (!err) {
-	maybe_set_has_minus(*pprn);
+	if (has_minus > 0) {
+	    gretl_print_set_has_minus(*pprn);
+	}	
     }
-#endif
 
     return err;
 }
