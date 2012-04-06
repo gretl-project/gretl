@@ -1872,6 +1872,14 @@ static int check_for_tsls_style_lists (equation_system *sys,
     return tsls_style;
 }
 
+/* Given a "partial" system, with equations expressed in tsls
+   style and with more endogenous variables than equations, shift
+   the "excess" endogenous terms into @xplist. They will still
+   be instrumented when the equations are estimated, but they
+   will be treated "as if" exogenous when it comes to building
+   the structural form of the system.
+*/
+
 static void tsls_style_shift_vars (equation_system *sys, int *xplist)
 {
     int i, vi, nxp = xplist[0];
@@ -1896,6 +1904,7 @@ static int sys_check_lists (equation_system *sys,
     const char *vname;
     const identity *ident;
     int user_ylist = (sys->ylist != NULL);
+    int user_ilist = (sys->ilist != NULL);
     int *ylist = NULL;
     int *xplist = NULL;
     int src, lag, nlhs;
@@ -1966,29 +1975,21 @@ static int sys_check_lists (equation_system *sys,
 
     /* If the user gave a list of endogenous vars (in sys->ylist), check 
        that it contains all the presumably endogenous variables we found 
-       above and recorded in ylist.
+       above and recorded in ylist; otherwise use the ylist as computed
+       above.
     */
-
     if (user_ylist) {
-	for (j=1; j<=ylist[0] && !err; j++) {
+	for (j=1; j<=ylist[0]; j++) {
 	    vj = ylist[j];
 	    if (!in_gretl_list(sys->ylist, vj)) {
 		gretl_errmsg_sprintf("%s appears on the left-hand side "
 				     "of an equation but is not marked as endogenous", 
 				     dset->varname[vj]);
 		err = E_DATA;
+		goto bailout;
 	    }
 	}
-    }
-
-    if (err) {
-	goto bailout;
-    }
-
-    /* If the user did not give an endogenous list, use the one we
-       computed above.
-    */
-    if (sys->ylist == NULL) {
+    } else {
 	sys->ylist = ylist;
 	ylist = NULL;
     }
@@ -2042,10 +2043,11 @@ static int sys_check_lists (equation_system *sys,
     printlist(xplist, "system auto xplist (exog + predet)");
 #endif
 
-    /* If the user gave a list of instruments, check that it does
-       not contain anything that is in fact clearly endogenous.
-     */
-    if (sys->ilist != NULL) {
+    /* If the user gave a list of instruments (sys->ilist), check 
+       that it does not contain anything that is in fact clearly 
+       endogenous; otherwise use the xplist we computed above.
+    */
+    if (user_ilist) {
 	for (j=1; j<=sys->ilist[0]; j++) {
 	    vj = sys->ilist[j];
 	    if (in_gretl_list(sys->ylist, vj)) {
@@ -2053,14 +2055,10 @@ static int sys_check_lists (equation_system *sys,
 				     "but is endogenous", 
 				     dset->varname[vj]);
 		err = E_DATA;
+		goto bailout;
 	    }
 	}
-    }
-
-    /* If the user did not give a list of instruments, use the
-       one we computed above.
-    */
-    if (!err && sys->ilist == NULL) {
+    } else {
 	sys->ilist = gretl_list_copy(xplist);
 	if (sys->ilist == NULL) {
 	    err = E_ALLOC;
