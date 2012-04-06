@@ -1853,7 +1853,7 @@ static int check_for_tsls_style_lists (equation_system *sys,
     int i, tsls_style = 0;
 
     for (i=0; i<sys->neqns; i++) {
-	if (gretl_list_separator_position(sys->lists[i]) > 0) {
+	if (gretl_list_has_separator(sys->lists[i])) {
 	    tsls_style = 1;
 	    break;
 	}
@@ -3318,6 +3318,7 @@ int equation_system_serialize (equation_system *sys,
 			       SavedObjectFlags flags,
 			       FILE *fp)
 {
+    int tsls_style = 0;
     int i, err = 0;
 
     fprintf(fp, "<gretl-equation-system name=\"%s\" saveflags=\"%d\" method=\"%d\" ",  
@@ -3330,8 +3331,17 @@ int equation_system_serialize (equation_system *sys,
 	gretl_xml_put_tagged_list("eqnlist", sys->lists[i], fp);
     }
 
-    gretl_xml_put_tagged_list("endog_vars", sys->ylist, fp);
-    gretl_xml_put_tagged_list("instr_vars", sys->ilist, fp);
+    for (i=0; i<sys->neqns; i++) {
+	if (gretl_list_has_separator(sys->lists[i])) {
+	    tsls_style = 1;
+	    break;
+	}
+    }
+
+    if (!tsls_style) {
+	gretl_xml_put_tagged_list("endog_vars", sys->ylist, fp);
+	gretl_xml_put_tagged_list("instr_vars", sys->ilist, fp);
+    }
 
     for (i=0; i<sys->nidents; i++) {
 	xml_print_identity(sys->idents[i], fp);
@@ -4634,6 +4644,22 @@ int system_arch_test (equation_system *sys, int order,
     }
 
     return err;
+}
+
+int system_supports_method (equation_system *sys, int method)
+{
+    if (sys != NULL) {
+	int i;
+
+	for (i=0; i<sys->neqns; i++) {
+	    if (gretl_list_has_separator(sys->lists[i])) {
+		return method == SYS_METHOD_TSLS || 
+		    method == SYS_METHOD_3SLS;
+	    }
+	}
+    }
+
+    return 1;
 }
 
 static void finalize_liml_model (MODEL *pmod, equation_system *sys)

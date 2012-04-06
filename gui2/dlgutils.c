@@ -1066,8 +1066,8 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
     equation_system *sys = NULL;
     GtkWidget *w, *hbox;
     gchar *str;
-    int method = 0;
-    int i;
+    int active = 0;
+    int i, j;
 
     if (d->data != NULL) {
 	sys = (equation_system *) d->data;
@@ -1083,13 +1083,17 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
 
     w = gtk_combo_box_text_new();
 
+    j = 0;
     for (i=SYS_METHOD_SUR; i<SYS_METHOD_MAX; i++) {
-	str = g_strdup_printf("%s (%s)", _(system_method_full_string(i)),
-			      system_method_short_string(i));
-	combo_box_append_text(w, str);
-	g_free(str);
-	if (sys != NULL && sys->method == i) {
-	    method = i;
+	if (system_supports_method(sys, i)) {
+	    str = g_strdup_printf("%s (%s)", _(system_method_full_string(i)),
+				  system_method_short_string(i));
+	    combo_box_append_text(w, str);
+	    g_free(str);
+	    if (sys != NULL && sys->method == i) {
+		active = j;
+	    }
+	    j++;
 	}
     }
 
@@ -1098,7 +1102,7 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
     g_signal_connect(G_OBJECT(w), "changed",
 		     G_CALLBACK(set_sys_method), d);
 
-    gtk_combo_box_set_active(GTK_COMBO_BOX(w), method);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), active);
 
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
     gtk_widget_show(w);  
@@ -1236,7 +1240,7 @@ blocking_edit_dialog (int ci, const char *title,
 	/* estimating saved equation system */
 	dlg_display_sys(d);
     } else if (ci == SYSTEM && d->data != NULL) {
-	/* repecifying equation system */
+	/* respecifying equation system */
 	edit_dialog_add_note(info, d->vbox);
 	dlg_display_sys(d);
 	clear = 1;
