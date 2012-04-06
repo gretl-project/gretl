@@ -1872,6 +1872,19 @@ static int check_for_tsls_style_lists (equation_system *sys,
     return tsls_style;
 }
 
+static void tsls_style_shift_vars (equation_system *sys, int *xplist)
+{
+    int i, vi, nxp = xplist[0];
+
+    for (i=sys->ylist[0]; i>sys->neqns; i--) {
+	vi = sys->ylist[i];
+	gretl_list_delete_at_pos(sys->ylist, i);
+	xplist[++nxp] = vi;
+    }
+
+    xplist[0] = nxp;
+}
+
 /* prior to system estimation, get all the required lists of variables
    in order
 */
@@ -1885,7 +1898,7 @@ static int sys_check_lists (equation_system *sys,
     int user_ylist = (sys->ylist != NULL);
     int *ylist = NULL;
     int *xplist = NULL;
-    int src, lag, nlhs, nxp;
+    int src, lag, nlhs;
     int tsls_style;
     int i, j, k, vj;
     int err = 0;
@@ -2010,8 +2023,7 @@ static int sys_check_lists (equation_system *sys,
        list of exogenous and predetermined variables, "xplist".
     */
 
-    nxp = sys->biglist[0] - sys->ylist[0];
-    xplist = gretl_list_new(nxp);
+    xplist = gretl_list_new(sys->biglist[0]);
     if (xplist == NULL) {
 	err = E_ALLOC;
 	goto bailout;
@@ -2021,15 +2033,10 @@ static int sys_check_lists (equation_system *sys,
     for (j=1; j<=sys->biglist[0]; j++) {
 	vj = sys->biglist[j];
 	if (!in_gretl_list(sys->ylist, vj)) {
-	    if (k == nxp) {
-		fprintf(stderr, "xplist list overflow\n");
-		err = E_DATA;
-		goto bailout;
-	    } else {
-		xplist[++k] = vj;
-	    }
+	    xplist[++k] = vj;
 	}
     }
+    xplist[0] = k;
 
 #if SYSDEBUG
     printlist(xplist, "system auto xplist (exog + predet)");
@@ -2081,11 +2088,18 @@ static int sys_check_lists (equation_system *sys,
     printlist(xplist, "final system exog list");
 #endif
 
-    if (!err && !tsls_style && sys->ylist[0] != nlhs) {
+    if (!err && sys->ylist[0] != nlhs) {
 	/* Note: check added 2009-08-10, modified 2012-04-05 */
-	gretl_errmsg_sprintf("Found %d endogenous variables but %d equations",
-			     sys->ylist[0], nlhs);
-	err = E_DATA;
+	if (tsls_style && sys->ylist[0] > nlhs) {
+	    /* from the pov of the structural form, endogenous regressors
+	       without an equation should be treated "as if" exogenous?
+	    */
+	    tsls_style_shift_vars(sys, xplist);
+	} else {
+	    gretl_errmsg_sprintf("Found %d endogenous variables but %d equations",
+				 sys->ylist[0], nlhs);
+	    err = E_DATA;
+	}
     }
 
     if (!err) {
@@ -3569,7 +3583,7 @@ static int get_col_and_lag (int vnum, const equation_system *sys,
 /* reduced-form error covariance matrix */
 
 static int sys_add_RF_covariance_matrix (equation_system *sys,
-					 int n)
+					 int nendo)
 {
     gretl_matrix *G = NULL, *S = NULL;
     int err = 0;
@@ -3581,8 +3595,8 @@ static int sys_add_RF_covariance_matrix (equation_system *sys,
 	}
     } 
 
-    if (n > sys->S->rows) {
-	S = gretl_zero_matrix_new(n, n);
+    if (nendo > sys->S->rows) {
+	S = gretl_zero_matrix_new(nendo, nendo);
 	if (S == NULL) {
 	    gretl_matrix_free(G);
 	    return E_ALLOC;
@@ -3590,7 +3604,7 @@ static int sys_add_RF_covariance_matrix (equation_system *sys,
 	gretl_matrix_inscribe_matrix(S, sys->S, 0, 0, GRETL_MOD_NONE);
     }
 
-    sys->Sr = gretl_matrix_alloc(n, n);
+    sys->Sr = gretl_matrix_alloc(nendo, nendo);
     if (sys->Sr == NULL) {
 	gretl_matrix_free(G);
 	gretl_matrix_free(S);
@@ -3624,6 +3638,7 @@ static int sys_add_structural_form (equation_system *sys)
 {
     const int *ylist = sys->ylist;
     const int *xlist = sys->xlist;
+    int nendo = ylist[0];
     int ne = sys->neqns;
     int ni = sys->nidents;
     int n = ne + ni;
@@ -3637,29 +3652,24 @@ static int sys_add_structural_form (equation_system *sys)
     printlist(xlist, "exogenous vars");
 #endif
 
-    if (n < ylist[0]) {
-	/* is this right? (2012-04-05) */
-	n = ylist[0];
-    }
-
     sys->order = sys_max_predet_lag(sys);
 
     /* allocate coefficient matrices */
 
-    sys->Gamma = gretl_zero_matrix_new(n, n);
+    sys->Gamma = gretl_zero_matrix_new(nendo, nendo);
     if (sys->Gamma == NULL) {
 	return E_ALLOC;
     }
 
     if (sys->order > 0) {
-	sys->A = gretl_zero_matrix_new(n, sys->order * ylist[0]);
+	sys->A = gretl_zero_matrix_new(nendo, sys->order * nendo);
 	if (sys->A == NULL) {
 	    return E_ALLOC;
 	}
     }
 
     if (xlist[0] > 0) {
-	sys->B = gretl_zero_matrix_new(n, xlist[0]);
+	sys->B = gretl_zero_matrix_new(nendo, xlist[0]);
 	if (sys->B == NULL) {
 	    return E_ALLOC;
 	}
@@ -3730,7 +3740,7 @@ static int sys_add_structural_form (equation_system *sys)
     }
 
     if (!err) {
-	err = sys_add_RF_covariance_matrix(sys, n);
+	err = sys_add_RF_covariance_matrix(sys, nendo);
 	if (err) {
 	    fprintf(stderr, "error %d in sys_add_RF_covariance_matrix\n", err);
 	}
@@ -3742,13 +3752,13 @@ static int sys_add_structural_form (equation_system *sys)
     if (sys->A != NULL) {
 	gretl_matrix_print(sys->A, "sys->A");
     } else {
-	fputs("sys->A: no lagged endog variables used as instruments\n", stderr);
+	fputs("sys->A: no lagged endog variables used as instruments\n\n", stderr);
     }
 
     if (sys->B != NULL) {
 	gretl_matrix_print(sys->B, "sys->B");
     } else {
-	fputs("sys->A: no truly exogenous variables present\n", stderr);
+	fputs("sys->B: no truly exogenous variables present\n", stderr);
     }
 #endif
 
@@ -4100,11 +4110,17 @@ static int sys_add_forecast (equation_system *sys,
     }
 
 #if SYSDEBUG
+    fprintf(stderr, "*** sys_add_forecast\n");
     printlist(ylist, "ylist");
     printlist(xlist, "xlist");
     printlist(plist, "plist");
     fprintf(stderr, "sys->order = %d\n", sys->order);
 #endif
+
+    if (sys->Gamma->rows > n) {
+	/* FIXME!! */
+	n = sys->Gamma->rows;
+    }
 
     if (!gretl_is_identity_matrix(sys->Gamma)) {
 	G = gretl_matrix_copy(sys->Gamma);
