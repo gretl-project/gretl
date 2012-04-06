@@ -3592,8 +3592,8 @@ static int get_col_and_lag (int vnum, const equation_system *sys,
 
 /* reduced-form error covariance matrix */
 
-static int sys_add_RF_covariance_matrix (equation_system *sys,
-					 int nendo)
+static int 
+sys_add_RF_covariance_matrix (equation_system *sys, int n)
 {
     gretl_matrix *G = NULL, *S = NULL;
     int err = 0;
@@ -3605,8 +3605,8 @@ static int sys_add_RF_covariance_matrix (equation_system *sys,
 	}
     } 
 
-    if (nendo > sys->S->rows) {
-	S = gretl_zero_matrix_new(nendo, nendo);
+    if (n > sys->S->rows) {
+	S = gretl_zero_matrix_new(n, n);
 	if (S == NULL) {
 	    gretl_matrix_free(G);
 	    return E_ALLOC;
@@ -3614,7 +3614,7 @@ static int sys_add_RF_covariance_matrix (equation_system *sys,
 	gretl_matrix_inscribe_matrix(S, sys->S, 0, 0, GRETL_MOD_NONE);
     }
 
-    sys->Sr = gretl_matrix_alloc(nendo, nendo);
+    sys->Sr = gretl_matrix_alloc(n, n);
     if (sys->Sr == NULL) {
 	gretl_matrix_free(G);
 	gretl_matrix_free(S);
@@ -3648,7 +3648,6 @@ static int sys_add_structural_form (equation_system *sys)
 {
     const int *ylist = sys->ylist;
     const int *xlist = sys->xlist;
-    int nendo = ylist[0];
     int ne = sys->neqns;
     int ni = sys->nidents;
     int n = ne + ni;
@@ -3662,24 +3661,29 @@ static int sys_add_structural_form (equation_system *sys)
     printlist(xlist, "exogenous vars");
 #endif
 
+    if (ylist[0] > n) {
+	gretl_errmsg_set("system: can't add structural form");
+	return E_DATA;
+    }
+
     sys->order = sys_max_predet_lag(sys);
 
     /* allocate coefficient matrices */
 
-    sys->Gamma = gretl_zero_matrix_new(nendo, nendo);
+    sys->Gamma = gretl_zero_matrix_new(n, n);
     if (sys->Gamma == NULL) {
 	return E_ALLOC;
     }
 
     if (sys->order > 0) {
-	sys->A = gretl_zero_matrix_new(nendo, sys->order * nendo);
+	sys->A = gretl_zero_matrix_new(n, sys->order * n);
 	if (sys->A == NULL) {
 	    return E_ALLOC;
 	}
     }
 
     if (xlist[0] > 0) {
-	sys->B = gretl_zero_matrix_new(nendo, xlist[0]);
+	sys->B = gretl_zero_matrix_new(n, xlist[0]);
 	if (sys->B == NULL) {
 	    return E_ALLOC;
 	}
@@ -3750,7 +3754,7 @@ static int sys_add_structural_form (equation_system *sys)
     }
 
     if (!err) {
-	err = sys_add_RF_covariance_matrix(sys, nendo);
+	err = sys_add_RF_covariance_matrix(sys, n);
 	if (err) {
 	    fprintf(stderr, "error %d in sys_add_RF_covariance_matrix\n", err);
 	}
@@ -4115,9 +4119,10 @@ static int sys_add_forecast (equation_system *sys,
     int i, vi, s, t, lag;
     int err = 0;
 
-    if (sys->Gamma == NULL) {
+    if (sys->Gamma == NULL || sys->Gamma->rows != n) {
+	fprintf(stderr, "sys_add_forecast: Gamma is broken!\n");
 	return E_DATA;
-    }
+    } 
 
 #if SYSDEBUG
     fprintf(stderr, "*** sys_add_forecast\n");
@@ -4126,11 +4131,6 @@ static int sys_add_forecast (equation_system *sys,
     printlist(plist, "plist");
     fprintf(stderr, "sys->order = %d\n", sys->order);
 #endif
-
-    if (sys->Gamma->rows > n) {
-	/* FIXME!! */
-	n = sys->Gamma->rows;
-    }
 
     if (!gretl_is_identity_matrix(sys->Gamma)) {
 	G = gretl_matrix_copy(sys->Gamma);
