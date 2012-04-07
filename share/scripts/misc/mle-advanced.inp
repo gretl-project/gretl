@@ -28,6 +28,15 @@ function void Hess(matrix *H, matrix b, series y, list X)
     H = (mX .* {w})'mX
 end function
 
+function void OPG(matrix *H, matrix b, series y, list X) 
+    /* computes the Outer Product of the Gradient for a
+    Probit model via the analytical score function; the 
+    OPG matrix is stored in the (k x k) matrix pointed at 
+    by the first argument of the function */
+    matrix G = score(b, y, X)    
+    H = G'G
+end function
+
 function matrix totalscore(matrix *b, series y, list X) 
     /* computes the total score; this function is not 
     needed in the actual optimization, it is just used 
@@ -135,9 +144,23 @@ mle logl = y*ln(P) + (1-y)*ln(1-P)
 end mle --verbose
 tnra2 = $stopwatch
 
+# BHHH by using OPG instead of real Hessian
+matrix H = {}
+matrix b = zeros(nelem(X),1)
+set stopwatch
+mle logl = y*ln(P) + (1-y)*ln(1-P)
+    series ndx = lincomb(X, b)
+    series P = cnorm(ndx)
+    deriv b = score(b, y, X)
+    hessian OPG(&H, b, y, X)
+end mle --verbose
+tbhhh = $stopwatch
+
 printf "BFGS (numerical):             %5.3f seconds\n", tbnum
 printf "BFGS (Richardson):            %5.3f seconds\n", tric
 printf "BFGS (analytical gradient):   %5.3f seconds\n", tban
 printf "Newton (numerical):           %5.3f seconds\n", tnrn
 printf "Newton (analytical gradient): %5.3f seconds\n", tnra1
 printf "Newton (analytical Hessian):  %5.3f seconds\n", tnra2
+printf "BHHH:                         %5.3f seconds\n", tbhhh
+

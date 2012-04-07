@@ -122,10 +122,11 @@ value, the machine precision to the power 3/4).
 
 By default the covariance matrix of the parameter estimates is
 based on the Outer Product of the Gradient.  That is,
-\[
-\widehat{\mbox{Var}}_{\mbox{\scriptsize OPG}}(\hat{\theta}) =
+\begin{equation}
+  \label{eq:OPGmat}
+  \widehat{\mbox{Var}}_{\mbox{\scriptsize OPG}}(\hat{\theta}) =
   \left(G'(\hat{\theta}) G(\hat{\theta}) \right)^{-1}
-\]
+\end{equation}
 where $G(\hat{\theta})$ is the $T \times k$ matrix of contributions to
 the gradient.  Two other options are available.  If the
 \option{hessian} flag is given, the covariance matrix is computed from
@@ -915,7 +916,7 @@ Here, we will code it in a somewhat terser way as
 \end{code}
 and make use of the conditional assignment operator and of the
 specialized function \cmd{invmills()} for efficiency.  Building the
-score matrix is now easy achieved via
+score matrix is now easily achieved via
 \begin{code}
 mle logl = y*ln(P) + (1-y)*ln(1-P)
     series ndx = lincomb(X, b)
@@ -961,7 +962,7 @@ notation used in section \ref{sec:mle-intro}, the direction for
 updating the inital parameter vector $\theta_0$ is given by
 \begin{equation}
   \label{eq:mle-newton}
-  d(\mathbf{g}(\theta_0)) = -\lambda
+  d\left[\mathbf{g}(\theta_0)\right] = -\lambda
   \mathbf{H}(\theta_0)^{-1}\mathbf{g}(\theta_0) ,
 \end{equation}
 where $\mathbf{H}(\theta)$ is the Hessian of the total loglikelihood
@@ -975,31 +976,37 @@ The above expression makes a few points clear:
 \item the matrix $\mathbf{H}(\theta)$ should be nonsingular;
 \item it is assumed that for some positive value of $\lambda$,
   $\LogLik(\theta_1) > \LogLik(\theta_0)$; in other words, that going
-  in the direction $d(\mathbf{g}(\theta_0))$ leads upwards for some
-  step length.
+  in the direction $d\left[\mathbf{g}(\theta_0)\right]$ leads upwards
+  for some step length.
 \end{enumerate}
 
 The strength of Newton's method lies in the fact that, if the
 loglikelihood is globally concave, then \eqref{eq:mle-newton} enjoys
-certain optimality properties such that the number of iterations
-required to reach the maximum is often much smaller than it would be
-with other methods, such as BFGS. However, it may have some
-disadvantages: for a start, the Hessian $\mathbf{H}(\theta)$ may be
-difficult or very expensive to compute; moreover, the loglikelihood
-may not be globally concave, so for some values of $\theta$, the
-matrix $\mathbf{H}(\theta)$ is not negative definite or perhaps even
-singular.  In those cases, a number of adverse consequences may occur,
-which range from \emph{longer} computation time for optimization to
-non-convergence of the algorithm.
+certain optimality properties and the number of iterations required to
+reach the maximum is often much smaller than it would be with other
+methods, such as BFGS. However, it may have some disadvantages: for a
+start, the Hessian $\mathbf{H}(\theta)$ may be difficult or very
+expensive to compute; moreover, the loglikelihood may not be globally
+concave, so for some values of $\theta$, the matrix
+$\mathbf{H}(\theta)$ is not negative definite or perhaps even
+singular.  Those cases are handled by \app{gretl}'s implementation of
+Newton's algorithm by means of several heuristic
+techniques\footnote{The gist to it is that, if $\mathbf{H}$ is not
+  negative definite, it is substituted by $k \cdot
+  \mathrm{dg}(\mathbf{H}) + (1-k) \cdot \mathbf{H}$, where $k$ is a
+  suitable scalar; however, if you're interested in the precise
+  details, you'll be much better off looking at the source code: the
+  file you'll want to look at is \texttt{lib/src/gretl\_bfgs.c}.}, but
+a number of adverse consequences may occur, which range from
+\emph{longer} computation time for optimization to non-convergence of
+the algorithm.
 
-As a consequence, using Newton's method is advisable only when 
-\begin{itemize}
-\item the computation of the Hessian is not too CPU-intensive;
-\item the nature of the estimator is such that it is known in advance
-  that the loglikelihood is globally concave.
-\end{itemize}
-The probit models satisfies both requisites, so we will expand the
-preceding example to illustrate how to use Newton's method in \app{gretl}.
+As a consequence, using Newton's method is advisable only when the
+computation of the Hessian is not too CPU-intensive and the nature of
+the estimator is such that it is known in advance that the
+loglikelihood is globally concave. The probit models satisfies both
+requisites, so we will expand the preceding example to illustrate how
+to use Newton's method in \app{gretl}.
 
 A first example may be given simply by issuing the command
 \begin{code}
@@ -1050,9 +1057,7 @@ A \app{hansl} translation of equation \eqref{eq:mle-tothess} may look
 like
 \begin{code}
 function void Hess(matrix *H, matrix b, series y, list X) 
-    /* computes the negative Hessian for a Probit
-    model, which is stored as a (k x k) matrix pointed 
-    by the first argument of the function */
+    /* computes the negative Hessian for a Probit model */
     series ndx = lincomb(X, b)
     series m = y ? invmills(-ndx) : -invmills(ndx)
     series w = m*(m+ndx)
@@ -1061,10 +1066,10 @@ function void Hess(matrix *H, matrix b, series y, list X)
 end function
 \end{code}
 
-Two characteristics worth noting of the function above are: for a
-start, it does return anything. The result of the computation is
+There are two characteristics worth noting of the function above. For
+a start, it doesn't return anything: the result of the computation is
 simply stored in the matrix pointed at by the first argument of the
-function; second, the result is not the Hessian proper, but rather its
+function. Second, the result is not the Hessian proper, but rather its
 negative. This function becomes usable from within an \cmd{mle} block
 by the keyword \cmd{hessian}. The syntax is
 \begin{code}
@@ -1077,12 +1082,48 @@ In other words, the \cmd{hessian} keyword must be followed by the call
 to a function whose first argument is a matrix pointer which is
 supposed to be filled with the \emph{negative} of the Hessian at $\theta$.
 
-\subsection{FIXME: TODO}
-\begin{itemize}
-\item how \app{gretl} handles cases when $-H$ is not pd
-\item how to check analytical derivatives vs numerical ones
-\item something on starting values, perhaps?
-\end{itemize}
+Another feature worth noting is that \app{gretl} does not perform any
+numerical check on whether the function computes the Hessian correctly
+or not. On the one hand, this means that you can trick \cmd{mle} into
+using alternatives to the Hessian and thereby implement other
+optimization methods. For example, if you substitute in equation
+\ref{eq:mle-newton} the Hessian $\mathbf{H}$ with the negative of the
+OPG matrix $-\mathbf{G}'\mathbf{G}$, as defined in \eqref{eq:OPGmat},
+you get the so-called BHHH optimization method (see
+\cite{bhhh74}). Again, the sample file \verb|mle-advanced.inp|
+provides an example. On the other hand, you may want to perform a
+check of your analytically-computed $\mathbf{H}$ matrix versus a
+numerical approximation.
+
+If you have a function that computes the score, this is relatively
+simple to do by using the \cmd{fdjac} function, briefly described in
+section \ref{sec:fdjac}, which computes a numerical approximation to a
+derivative. In practice, you need a function computing
+$\mathbf{g}(\theta)$ as a row vector and then use \ref{sec:fdjac} to
+differentiate it numerically with respect to $\theta$. The result can
+then be compared to your analytically-computed Hessian. The code
+fragment below shows an example of how this can be done in the probit
+case:
+\begin{code}
+function matrix totalscore(matrix *b, series y, list X) 
+    /* computes the total score */
+    return sumc(score(b, y, X))
+end function
+
+function void check(matrix b, series y, list X)
+    /* compares the analytical Hessian to its numerical
+    approximation obtained via fdjac */
+    matrix aH
+    Hess(&aH, b, y, X) # stores the analytical Hessian into aH
+    
+    matrix nH = fdjac(b, "totalscore(&b, y, X)")
+    nH = 0.5*(nH + nH') # force symmetry
+    
+    printf "Numerical Hessian\n%16.6f\n", nH 
+    printf "Analytical Hessian (negative)\n%16.6f\n", aH 
+    printf "Check (should be zero)\n%16.6f\n", nH + aH
+end function
+\end{code}
 
 
 %%% Local Variables: 
