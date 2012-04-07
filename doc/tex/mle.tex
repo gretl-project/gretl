@@ -1099,7 +1099,7 @@ If you have a function that computes the score, this is relatively
 simple to do by using the \cmd{fdjac} function, briefly described in
 section \ref{sec:fdjac}, which computes a numerical approximation to a
 derivative. In practice, you need a function computing
-$\mathbf{g}(\theta)$ as a row vector and then use \ref{sec:fdjac} to
+$\mathbf{g}(\theta)$ as a row vector and then use \cmd{fdjac} to
 differentiate it numerically with respect to $\theta$. The result can
 then be compared to your analytically-computed Hessian. The code
 fragment below shows an example of how this can be done in the probit
