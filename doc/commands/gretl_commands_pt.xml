@@ -13,24 +13,24 @@
       </arguments>
       <options>
 	<option>
-	  <flag>--vcv</flag>
-	  <effect>mostrar matriz de covariância</effect>
+	  <flag>--lm</flag>
+	  <effect>fazer um teste LM, apenas para OLS (Ordinary Least Squares)</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>não mostrar estimativas para o modelo aumentado</effect>
+	  <effect>mostrar apenas o resultado básico do teste</effect>
 	</option>
 	<option>
 	  <flag>--silent</flag>
 	  <effect>não mostrar nada</effect>
 	</option>
 	<option>
-	  <flag>--inst</flag>
-	  <effect>acrescentar como instrumento, apenas para TSLS</effect>
+	  <flag>--vcv</flag>
+	  <effect>mostrar matriz de covariância para o modelo aumentado</effect>
 	</option>
 	<option>
 	  <flag>--both</flag>
-	  <effect>acrescentar tanto como regressor como instrumento, apenas para TSLS</effect>
+	  <effect>apenas para estimação IV, ver abaixo</effect>
 	</option>
       </options>
       <examples>
@@ -92,7 +92,7 @@
     <usage>
       <arguments>
         <argument>ordem</argument>
-        <argument>nome-de-variável</argument>
+        <argument>lista-de-variáveis</argument>
       </arguments>
       <options>
 	<option>
@@ -116,12 +116,16 @@
 	  <effect>incluir variáveis sazonais auxiliares</effect>
 	</option>
 	<option>
+	  <flag>--gls</flag>
+	  <effect>atenuar média ou tendência usando GLS</effect>
+	</option>
+	<option>
 	  <flag>--verbose</flag>
 	  <effect>mostrar resultados da regressão</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>não mostrar resultados da regressão</effect>
+	  <effect>não mostrar resultados</effect>
 	</option>
 	<option>
 	  <flag>--difference</flag>
@@ -129,7 +133,7 @@
 	</option>
 	<option>
 	  <flag>--test-down</flag>
-	  <effect>ordem 'lag' automática</effect>
+	  <effect>ordem de desfasamento automática</effect>
 	</option>
       </options>
       <examples>
@@ -292,13 +296,18 @@
 
   </command>
 
-  <command name="append" section="Dataset" 
-    label="Acrescentar dados" context="cli">
+  <command name="append" section="Dataset" label="Acrescentar dados" context="cli">
 
     <usage>
       <arguments>
         <argument>ficheiro-de-dados</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--time-series</flag>
+	  <effect>ver abaixo</effect>
+	</option>
+      </options>
     </usage>
 
     <description>
@@ -306,7 +315,34 @@
 	Abre um ficheiro de dados e acrescenta esse conteúdo ao conjunto 
         de dados actual, se os novos dados forem compatíveis.  O programa
         tentará determinar o formato do ficheiro de dados (nativo, texto 
-        simples, CVS, Gnumeric, Excel, etc.).
+        simples, CSV, Gnumeric, Excel, etc.).
+      </para>
+	<para>
+	Os dados acrescentados podem tomar a forma de observações
+        adicionais em variáveis já existentes, ou em novas variáveis.
+	Caso sejam novas variáveis, estas terão que ser compatíveis de
+	acordo com:
+        (a) o número de observações dos novos dados seja o mesmo que nos
+	dados existentes, ou
+        (b) que os novos dados estejam acompanhados de informação clara
+	sobre as observações de modo que gretl possa decidir onde colocar
+	os valores.  
+      </para>
+      <para>
+	Existe uma funcionalidade especial para acrescentar a um conjunto de
+	dados de painel. Seja <math>n</math> o número de unidades de secção 
+	cruzada no painel, <math>T</math> o número de períodos temporais, e
+	<math>m</math> o número de observações dos novos dados. Se <math>m =
+	  n</math> os novos dados serão tomados como invariantes-temporais,
+	e serão copiados para a posição em cada período temporal. Por outro
+	lado, se <math>m = T</math> os dados serão tratados como sendo 
+	não-variantes a longo das unidades de painel, e serão copiados para a
+	posição em cada unidade. Se o painel é <quote>quadrado</quote>, e
+	<math>m</math> é igual a <math>n</math> e a <math>T</math>, acontece
+	uma ambiguidade. Neste caso, por omissão, trata-se cada novos dados
+	como sendo invariantes-temporais, mas você pode forçar gretl para
+	tratar os novos dados como sendo série temporal ao fornecer a opção
+	<opt>--time-series</opt>.  (Esta opção é ignorada nos outros casos.)
       </para>
 
     </description>
@@ -443,7 +479,7 @@
 
   </command>
 
-  <command name="arbond" section="Estimation" label="Modelos de painel dinâmico">
+  <command name="arbond" section="Estimation" label="Arellano-Bond">
 
     <usage>
       <arguments>
@@ -461,6 +497,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--quiet</flag>
+	  <effect>não mostrar o modelo estimado</effect>
+	</option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>mostrar matriz de covariância</effect>
 	</option>
@@ -474,7 +514,7 @@
         </option>
         <option>
 	  <flag>--asymptotic</flag>
-	  <effect>erros padrão assimptóticos</effect>
+	  <effect>erros padrão assimptóticos não corrigidos</effect>
         </option>
       </options>
       <examples>
@@ -490,16 +530,20 @@
     <description>
       <para>
 	Executa a estimação de modelos de painel dinâmico (ou seja,
-        modelos de painel que contenham um ou mais 'lags' da variável
-        dependente) recorrendo ao método Método Generalizado dos Momentos 
-       (GMM) desenvolvido por Arellano e Bond (1991).  
+        modelos de painel que contenham um ou mais desfasamentos da variável
+        dependente) recorrendo ao método Método Generalizado dos Momentos
+	(GMM-DIF) desenvolvido por <cite
+	key="arellano-bond91">Arellano and Bond (1991)</cite>.
+	Por favor ver <cmdref targ="dpanel"/> para uma versão mais flexível
+	e actualizada deste comando que também usa GMM-SYS para além do 
+	GMM-DIF.
       </para>
-      <para context="cli">
+      <para>
 	O parâmetro <repl>p</repl> representa a ordem da autoregressão 
         para a variável dependente.  O parâmetro opcional <repl>q</repl>
-        indica o máximo 'lag' do nível da variável dependente a ser usada
+        indica o máximo desfasamento do nível da variável dependente a ser usada
         como um instrumento.  Se este argumento for omitido, ou de valor 
-        0, todos os 'lags' disponíveis são usados.
+        0, todos os desfasamentos disponíveis são usados.
       </para>
       <para>
 	A variável dependente deve ser dada na forma de níveis; ela será
@@ -511,26 +555,20 @@
         auxiliares temporais), deve primeiro criar essas diferenças e 
         depois especificar estas como sendo regressoras.
       </para>
-      <para context="cli">
+      <para>
 	O último campo (opcional) do comando serve para especificar 
         instrumentos.  Se não for dado nenhum, então é assumido que todas
         as variáveis independentes são estritamente exógenas.  Se você
         especificar alguns instrumentos, então deve incluir na lista 
         quaisquer variáveis independentes estritamente exógenas.  Para
         regressores predeterminados, você pode usar a função 
-        <lit>GMM</lit> para incluir uma gama de 'lags' especificada no 
-        modo bloco-diagonal.  Isto é ilustrado no terceiro exemplo acima.
-          O primeiro argumento de <lit>GMM</lit> é o nome da variável em 
-        questão, o segundo é o mínimo 'lag' a ser usado como instrumento,
-        e o terceiro é o máximo 'lag'.  Se o terceiro argumento for dado
-        como 0, todos os 'lags' disponíveis são usados.
-      </para>
-      <para context="gui">
-	No que diz respeito à manipulação de instrumentos, por favor 
-        consulte a documentação para a versão de 'script' deste comando.
-	Actualmente você não pode especificar explicitamente os 
-        instrumentos no ambiente gráfico: todas as variáveis independentes
-        são consideradas como sendo estritamente exógenas.
+        <lit>GMM</lit> para incluir uma gama de desfasamentos especificada
+	no modo bloco-diagonal.  Isto é ilustrado no terceiro exemplo acima.
+        O primeiro argumento de <lit>GMM</lit> é o nome da variável em 
+        questão, o segundo é o desfasamento mínimo a ser usado como
+	instrumento, e o terceiro é o desfasamento máximo.  Se o terceiro 
+	argumento for dado como 0, todos os desfasamentos disponíveis são
+	usados.
       </para>
       <para>
 	Por omissão são apresentados os resultados da estimação 1-fase 
@@ -543,16 +581,16 @@
         o modelo, mas que a autocorrelação de segunda-ordem não respeita 
         as assunções estatísticas presentes.
       </para>
-      <para context="cli">
+      <para>
 	No caso da estimação de 2-fases, por omissão, os erros padrão são
         determinados usando a correcção de amostra-finita sugerida por 
-        Windmeijer (2005).  Os erros padrão assimptóticos associados ao 
-        estimador de 2-fases são em geral considerados como guias para 
-        inferência pouco fiáveis, mas se por alguma razão os pretender 
-        ver, você pode usar a opção <lit>--asymptotic</lit> para desligar
-        a correcção de Windmeijer.
+        <cite key="windmeijer05">Windmeijer (2005)</cite>.  Os erros padrão
+	assimptóticos associados ao estimador de 2-fases são em geral 
+	considerados como guias para inferência pouco fiáveis, mas se por
+	alguma razão os pretender ver, você pode usar a opção 
+	<lit>--asymptotic</lit> para desligar a correcção de Windmeijer.
       </para>
-      <para context="cli">
+      <para>
 	Se for dada a opção <lit>--time-dummies</lit>, são acrescentadas
         variáveis auxiliares temporais aos regressores especificados.  
         Para evitar colinearidade perfeita com a constante, o número de 
@@ -634,6 +672,14 @@
 	  <flag>--vcv</flag>
 	  <effect>mostrar matriz de covariância</effect>
         </option>
+	<option>
+	  <flag>--hessian</flag>
+	  <effect>ver abaixo</effect>
+        </option>
+        <option>
+	  <flag>--opg</flag>
+	  <effect>ver abaixo</effect>
+        </option>
         <option>
 	  <flag>--nc</flag>
 	  <effect>não incluir uma constante</effect>
@@ -646,6 +692,18 @@
 	  <flag>--x-12-arima</flag>
 	  <effect>usar X-12-ARIMA para estimação</effect>
         </option>
+	<option>
+	  <flag>--lbfgs</flag>
+	  <effect>usar maximizador L-BFGS-B</effect>
+	</option>
+	<option>
+	  <flag>--y-diff-only</flag>
+	  <effect>ARIMAX especial, ver abaixo</effect>
+	</option>
+	<option>
+	  <flag>--save-ehat</flag>
+	  <effect>ver abaixo</effect>
+	</option>
       </options>
       <examples>
         <example>arima 1 0 2 ; y</example>
@@ -666,13 +724,21 @@
         de 1 em <repl>d</repl>, significa que a primeira diferença da variável
         dependente deve ser obtida antes de estimar os parâmetros ARMA.
       </para>
-
+      <para context="cli">
+	Se você pretender apenas incluir no modelo desfasamentos específicos
+	AR ou MA (e não todos os desfasamentos até uma certa ordem) você pode
+	substituir <repl>p</repl> e/ou <repl>q</repl> de acordo com:
+	(a) o nome de uma matriz pré-definida contendo um conjunto de valores
+	inteiros, ou
+	(b) uma expressão tal como <lit>{1 4}</lit>; ou seja, um conjunto de 
+	desfasamentos separados por espaços dentro de chavetas.
+      </para>
       <para context="cli">
 	Os valores inteiros opcionais,<repl>P</repl>, <repl>D</repl> e
 	<repl>Q</repl> representam respectivamente, a sazonalidade AR,
         a ordem para diferenciação de sazonalidade e a ordem de 
         sazonalidade MA.  Estes são apenas aplicáveis se os dados tiverem
-        uma frequência superior a 1 (por exemplo, quadrimestral ou 
+        uma frequência superior a 1 (por exemplo, trimestral ou 
         mensal). Mais uma vez, estas ordens podem ser dadas na forma 
         numérica ou como variáveis.
       </para>
@@ -704,6 +770,16 @@
         os dados têm uma frequência superior a 1, é apresentada a opção de 
         inclusão de uma componente sazonal.
       </para>
+   
+      <para context="gui">
+	Se você pretender apenas incluir no modelo desfasamentos específicos
+	AR ou MA (e não todos os desfasamentos até uma certa ordem) active a
+	caixa de seleção à direita do seletor de números e escreva no campo de
+	texto uma lista	de desfasamentos, separados por espaços.
+	Alternativamente, se existir uma matriz contendo o conjunto de
+	desfasamentos pretendidos, você pode introduzir o seu nome no campo de
+	texto.
+      </para>
 
       <para>
 	O normal é usar a funcionalidade <quote>nativa</quote> gretl
@@ -714,6 +790,46 @@
         duas opções estão disponíveis apenas se o programa
 	<program>X-12-ARIMA</program> estiver instalado.)  Para detalhes
         sobre estas opções, veja por favor <guideref targ="arma-estimation"/>.
+      </para>
+
+      <para context="cli">
+	Quando o código nativo ML é usado, os erros padrão são por omissão 
+	baseados numa aproximação numérica da (inversa negativa da) Hessiana,
+	ou em recurso, no produto externo do gradiente (OPG) caso falhe o 
+	cálculo da Hessiana numérica. Pdem ser usadas duas opções 
+	(mutualmente exclusivas) para forçar a situação: a opção <opt>--opg</opt> 
+	força o uso do método OPG, sem tentar obter a Hessiana, enquanto a
+	opção <opt>--hessian</opt> desativa o OPG em último recurso.
+	Note que a falha na determinação da Hessiana numérica indica, em geral
+	um modelo incorrectamente especificado.
+      </para>
+
+      <para context="cli">
+	A opção <opt>--lbfgs</opt> é específica para estimação usando
+	código nativo ARMA code e ML exacta:
+	significa o uso do algoritmo de <quote>memória limitada</quote>
+	L-BFGS-B em vez do usual maximizador BFGS.  Isto pode ajudar em
+	alguns casos onde a convergência é díficil de atingir.
+      </para>
+
+      <para context="cli">
+	A opção <opt>--y-diff-only</opt> é específica na estimação de modelos
+	ARIMAX (modelos com uma ordem de integração não-nula e que incluam 
+	regressores exógenos), e aplica-se apenas quando se usa a ML exacta e
+	nativa de gretl. Para esses modelos o comportamento normal é de 
+	diferenciar tanto as variáveis dependentes como as regressoras,
+	mas quando esta opção é fornecida, apenas é diferenciada a variável
+	dependente, mantendo-se as variáveis regressoras na forma de nível.
+      </para>
+
+      <para context="cli">
+	A opção <opt>--save-ehat</opt> é aplicável apenas quando se
+	usa estimação ML nativa e exacta. O efeito é o de disponibilizar
+	um vector contendo a estimativa óptima de período
+	<math>t</math> da perturbação data-<math>t</math> ou inovação:
+	isto pode ser recuperado com o uso do acessor <lit>$ehat</lit>.
+	Estes valores diferem da série dos resíduos (<lit>$uhat</lit>),
+	que contém os erros de predição um-passo-à-frente.
       </para>
 
       <para>O valor AIC retornado em ligação com os modelos ARIMA é
@@ -732,14 +848,54 @@
         tal como o AIC quando a estimação é por ML condicional.
       </para>
 
-      <para>
+      <para context="tex">
+	As raízes AR e MA apresentadas em ligação com a estimação ARMA
+	são baseadas na seguinte representação de um processo ARMA($p,q$):
+	\[
+	(1-\phi_1 L - \phi_2 L^2 - \cdots - \phi_p L^p)Y =
+          c + (1 + \theta_1 L + \theta_2 L^2 + \cdots +
+         \theta_q L^q)\varepsilon_t
+        \]
+        As raízes AR são portanto as soluções de
+        \[
+         1 - \phi_1 z - \phi_2 z^2 - \cdots - \phi_p L^p = 0
+        \]
+        e a estabilidade requer que estas raízes estejam fora do círculo
+	unitário.
+      </para>
+
+      <para context="tex">
 	A imagem da <quote>frequência</quote> apresentada
-	em ligação com as raízes AR e MA é valor &lgr; que resolve
-	  <equation status="display" 
-	  tex="\[z=re^{i2\pi\lambda}\]"
-	  ascii="z = r * exp(i*2*pi*lambda)"
-	  graphic="lambda"/> onde <mathvar>z</mathvar> é a raiz em 
-        questão e <mathvar>r</mathvar> o seu módulo.
+	em ligação com as raízes AR e MA é o valor $\lambda$ que solve 
+	$z=re^{i2\pi\lambda}$, onde $z$ é a raiz em questão
+	e $r$ é o seu módulo.
+      </para>
+
+      <para context="notex">
+	As raízes AR e MA apresentadas em ligação com a estimação ARMA
+	são baseadas na seguinte representação de um processo ARMA(p,q):
+      </para>
+      <mono context="notex">
+	(1 - a_1*L - a_2*L^2 - ... - a_p*L^p)Y =
+          c + (1 + b_1*L + b_2*L^2 + ... + b_q*L^q) e_t
+      </mono>
+      <para context="notex">
+        As raízes AR são portanto as soluções de
+      </para>
+      <mono context="notex">
+         1 - a_1*z - a_2*z^2 - ... - a_p*L^p = 0
+      </mono>
+      <para context="notex">
+        e a estabilidade requer que estas raízes estejam fora do círculo
+	unitário.
+      </para>
+
+      <para context="notex">
+	A imagem da <quote>frequência</quote> apresentada
+	em ligação com as raízes AR e MA é o valor &lgr; que resolve
+	<math>z</math> = <math>r</math> * exp(i*2*&pi;*&lgr;) onde 
+	<mathvar>z</mathvar> é a raiz em questão e <mathvar>r</mathvar>
+	 o seu módulo.
       </para>
     </description>
 
@@ -747,6 +903,7 @@
       <menu-path>/Modelo/Série temporal/ARIMA</menu-path>
       <other-access>Menu de contexto da janela principal (selecção singular)</other-access>
     </gui-access>
+
 
   </command>
 
