@@ -1,32 +1,73 @@
 #ifndef GRETL_MINPACK_H
 #define GRETL_MINPACK_H
 
-int chkder_(integer *m, integer *n, doublereal *x,
-	    doublereal *fvec, doublereal *fjac, integer *ldfjac,
-	    doublereal *xp, doublereal *fvecp, integer *mode,
-	    doublereal *err);
+typedef int logical;
 
-int lmder1_(U_fp fcn, integer *m, integer *n, 
-	    doublereal *x, doublereal *fvec, doublereal *fjac, 
-	    integer *ldfjac, doublereal *tol, integer *info, 
-	    integer *ipvt, doublereal *wa, integer *lwa,
+#ifdef __cplusplus
+typedef int (*S_fp)(...);
+#else
+typedef int (*S_fp)();
+#endif
+
+#ifndef min
+# define min(a,b) ((a) <= (b) ? (a) : (b))
+#endif
+#ifndef max
+# define max(a,b) ((a) >= (b) ? (a) : (b))
+#endif
+
+#define TRUE_ (1)
+#define FALSE_ (0)
+
+int chkder_(int m, int n, double *x,
+	    double *fvec, double *fjac, int ldfjac,
+	    double *xp, double *fvecp, int mode,
+	    double *err);
+
+int lmpar_(int n, double *r, int ldr, 
+	   int *ipvt, double *diag, double *qtb, double *delta, 
+	   double *par, double *x, double *sdiag, double *wa1, 
+	   double *wa2);
+
+int lmder_(S_fp fcn, int m, int n, double *x, 
+	   double *fvec, double *fjac, int ldfjac, double *ftol,
+	   double *xtol, double *gtol, int *maxfev, double *diag, 
+	   int mode, double factor, int *nprint, 
+	   int *info, int *nfev, int *njev, int *ipvt, 
+	   double *qtf, double *wa1, double *wa2, double *wa3, 
+	   double *wa4, void *p);
+
+int lmder1_(S_fp fcn, int m, int n, 
+	    double *x, double *fvec, double *fjac, 
+	    int ldfjac, double *tol, int *info, 
+	    int *ipvt, double *wa, int lwa,
             void *p);
 
-int lmdif_(S_fp fcn, integer *m, integer *n, doublereal *x, 
-	   doublereal *fvec, doublereal *ftol, doublereal *xtol, 
-	   doublereal *gtol, integer *maxfev, doublereal *epsfcn, 
-	   doublereal *diag, integer *mode, doublereal *factor, 
-	   integer *nprint, integer *info, integer *nfev, 
-	   doublereal *fjac, integer *ldfjac, integer *ipvt, 
-	   doublereal *qtf, doublereal *wa1, doublereal *wa2, 
-	   doublereal *wa3, doublereal *wa4, void *p);
+int lmdif_(S_fp fcn, int m, int n, double *x, 
+	   double *fvec, double *ftol, double *xtol, 
+	   double *gtol, int *maxfev, double epsfcn, 
+	   double *diag, int mode, double factor, 
+	   int *nprint, int *info, int *nfev, 
+	   double *fjac, int ldfjac, int *ipvt, 
+	   double *qtf, double *wa1, double *wa2, 
+	   double *wa3, double *wa4, void *p);
 
-int fdjac2_(S_fp fcn, integer *m, integer *n, doublereal *x, 
-	    doublereal *fvec, doublereal *fjac, integer *ldfjac, 
-	    integer *iflag, doublereal *epsfcn, doublereal *wa,
+int fdjac2_(S_fp fcn, int m, int n, double *x, 
+	    double *fvec, double *fjac, int ldfjac, 
+	    int *iflag, double epsfcn, double *wa,
             void *p);
 
-doublereal dpmpar_(integer *i__);
+int qrfac_(int m, int n, double *a, int lda, 
+	   logical *pivot, int *ipvt, int lipvt, 
+	   double *rdiag, double *acnorm, double *wa);
+
+int qrsolv_(int n, double *r, int ldr, 
+	    int *ipvt, double *diag, double *qtb, double *x, 
+	    double *sdiag, double *wa);
+
+double enorm_(int n, double *x);
+
+double dpmpar_(int k);
 
 int setulb_(int *n, int *m, double *x, 
 	    double *l, double *u, int *nbd, double *f, double *g, 

@@ -24,9 +24,6 @@
 #include "qr_estimate.h"
 #include "gretl_bfgs.h"
 
-#include "gretl_f2c.h"
-#include "../../minpack/minpack.h"
-
 #include <errno.h>
 
 #define GMM_DEBUG 0
@@ -1101,11 +1098,8 @@ static double get_gmm_crit (const double *b, void *p)
     return s->crit;
 }
 
-/* GMM callback for Minpack's fdjac2 function */
-
-static int 
-gmm_jacobian_calc (integer *m, integer *n, double *x, double *f,
-		   integer *iflag, void *p)
+static int gmm_jacobian_calc (int m, int n, double *x, double *f,
+			      int *iflag, void *p)
 {
     nlspec *s = (nlspec *) p;
     double fac;
@@ -1131,7 +1125,7 @@ gmm_jacobian_calc (integer *m, integer *n, double *x, double *f,
     T = s->nobs;
     fac = sqrt((double) T) / T;
 
-    for (i=0; i<*m; i++) {
+    for (i=0; i<m; i++) {
 	f[i] = 0.0;
 	for (t=0; t<T; t++) {
 	    f[i] += gretl_matrix_get(s->oc->tmp, t, i);
@@ -1385,16 +1379,14 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
     gretl_matrix *m1, *m2, *m3;
     int i, j, k = s->ncoeff;
     int T = s->nobs;
-    doublereal *wa4;
-    doublereal epsfcn = 0.0; /* could be > 0.0 */
-    integer m, n, ldjac;
-    integer iflag = 0;
+    double *wa4;
+    int m, n;
+    int iflag = 0;
     double *f;
     int err = 0;
 
     m = gretl_matrix_cols(s->oc->tmp);
     n = s->ncoeff;
-    ldjac = m; /* leading dimension of jac array */
 
     wa4 = malloc(m * sizeof *wa4);
     if (wa4 == NULL) {
@@ -1435,8 +1427,8 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 	    f[i] *= Tfac;
 	}
 
-	fdjac2_(gmm_jacobian_calc, &m, &n, s->coeff, f, 
-		J->val, &ldjac, &iflag, &epsfcn, wa4, s);
+	gretl_fdjac(gmm_jacobian_calc, m, n, s->coeff, f, 
+		    J->val, &iflag, wa4, s);
 
 	if (iflag != 0) {
 	    fprintf(stderr, "fdjac2_: iflag = %d\n", (int) iflag);

@@ -94,6 +94,10 @@ double user_simann (gretl_matrix *b,
 		    PRN *prn, 
 		    int *err);
 
+int gretl_fdjac (int (*fcn)(), int m, int n, double *x, 
+		 double *fvec, double *fjac, int *iflag, 
+		 double *w, void *data);
+
 gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 		     DATASET *dset, int *err);
 

@@ -35,7 +35,6 @@
 #include "gretl_bfgs.h"
 #include "tsls.h"
 
-#include "gretl_f2c.h"
 #include "../../minpack/minpack.h"  
 
 /**
@@ -82,7 +81,6 @@ struct parm_ {
 /* file-scope global variables */
 
 static nlspec private_spec;
-static integer one = 1;
 
 static char *adjust_saved_nlfunc (char *s);
 
@@ -2212,8 +2210,8 @@ static void clear_nlspec (nlspec *spec)
 
 /* callback for lm_calculate (below) to be used by minpack */
 
-static int nls_calc (integer *m, integer *n, double *x, double *fvec, 
-		     double *jac, integer *ldjac, integer *iflag,
+static int nls_calc (int m, int n, double *x, double *fvec, 
+		     double *jac, int ldjac, int *iflag,
 		     void *p)
 {
     nlspec *s = (nlspec *) p;
@@ -2233,7 +2231,7 @@ static int nls_calc (integer *m, integer *n, double *x, double *fvec,
 	} 
     } else if (*iflag == 2) {
 	/* calculate jacobian at x, results into jac */
-	if (get_nls_derivs(*m, 0, jac, NULL, p)) {
+	if (get_nls_derivs(m, 0, jac, NULL, p)) {
 	    *iflag = -1; 
 	}
     }
@@ -2252,11 +2250,11 @@ static int check_derivatives (nlspec *spec, PRN *prn)
     double *x = spec->coeff;
     double *fvec = spec->fvec;
     double *jac = spec->jac;
-    integer m = spec->nobs;
-    integer n = spec->ncoeff;
-    integer ldjac = m;
-    integer mode, iflag;
-    doublereal *xp, *xerr, *fvecp;
+    int m = spec->nobs;
+    int n = spec->ncoeff;
+    int ldjac = m;
+    int mode, iflag;
+    double *xp, *xerr, *fvecp;
     int i, badcount = 0, zerocount = 0;
 
     xp = malloc((n + m + m) * sizeof *xp);
@@ -2281,11 +2279,11 @@ static int check_derivatives (nlspec *spec, PRN *prn)
     /* mode 1: x contains the point of evaluation of the function; on
        output xp is set to a neighboring point. */
     mode = 1;
-    chkder_(&m, &n, x, fvec, jac, &ldjac, xp, fvecp, &mode, xerr);
+    chkder_(m, n, x, fvec, jac, ldjac, xp, fvecp, mode, xerr);
 
     /* calculate gradient */
     iflag = 2;
-    nls_calc(&m, &n, x, fvec, jac, &ldjac, &iflag, spec);
+    nls_calc(m, n, x, fvec, jac, ldjac, &iflag, spec);
     if (iflag == -1) goto chkderiv_abort;
 
 #if NLS_DEBUG > 1
@@ -2297,7 +2295,7 @@ static int check_derivatives (nlspec *spec, PRN *prn)
 
     /* calculate function, at neighboring point xp */
     iflag = 1;
-    nls_calc(&m, &n, xp, fvecp, jac, &ldjac, &iflag, spec);
+    nls_calc(m, n, xp, fvecp, jac, ldjac, &iflag, spec);
     if (iflag == -1) goto chkderiv_abort; 
 
     /* mode 2: on input, fvec must contain the functions, the rows of
@@ -2306,7 +2304,7 @@ static int check_derivatives (nlspec *spec, PRN *prn)
        measures of correctness of the respective gradients.
     */
     mode = 2;
-    chkder_(&m, &n, x, fvec, jac, &ldjac, xp, fvecp, &mode, xerr);
+    chkder_(m, n, x, fvec, jac, ldjac, xp, fvecp, mode, xerr);
 
 #if NLS_DEBUG > 1
     fprintf(stderr, "\nchkder, done mode 2:\n");
@@ -2421,13 +2419,13 @@ static int mle_calculate (nlspec *s, PRN *prn)
 
 static int lm_calculate (nlspec *spec, PRN *prn)
 {
-    integer m = spec->nobs;
-    integer n = spec->ncoeff;
-    integer lwa = 5 * n + m; /* work array size */
-    integer ldjac = m;       /* leading dimension of jac array */
-    integer info = 0;
-    integer *ipvt;
-    doublereal *wa;
+    int m = spec->nobs;
+    int n = spec->ncoeff;
+    int lwa = 5 * n + m; /* work array size */
+    int ldjac = m;       /* leading dimension of jac array */
+    int info = 0;
+    int *ipvt;
+    double *wa;
     int err = 0;
 
     wa = malloc(lwa * sizeof *wa);
@@ -2446,8 +2444,8 @@ static int lm_calculate (nlspec *spec, PRN *prn)
     /* note: maxfev is automatically set to 100*(n + 1) */
 
     /* call minpack */
-    lmder1_(nls_calc, &m, &n, spec->coeff, spec->fvec, spec->jac, &ldjac, 
-	    &spec->tol, &info, ipvt, wa, &lwa, spec);
+    lmder1_(nls_calc, m, n, spec->coeff, spec->fvec, spec->jac, ldjac, 
+	    &spec->tol, &info, ipvt, wa, lwa, spec);
 
     switch ((int) info) {
     case -1: 
@@ -2484,8 +2482,8 @@ static int lm_calculate (nlspec *spec, PRN *prn)
 /* callback for lm_approximate (below) to be used by minpack */
 
 static int 
-nls_calc_approx (integer *m, integer *n, double *x, double *fvec,
-		 integer *iflag, void *p)
+nls_calc_approx (int m, int n, double *x, double *fvec,
+		 int *iflag, void *p)
 {
     int erru, errc, err;
 
@@ -2513,18 +2511,18 @@ nls_calc_approx (integer *m, integer *n, double *x, double *fvec,
 
 static int lm_approximate (nlspec *spec, PRN *prn)
 {
-    integer m = spec->nobs;
-    integer n = spec->ncoeff;
-    integer ldjac = m;
-    integer info = 0;
-    integer maxfev = 200 * (n + 1); /* max iterations */
-    integer mode = 1, nprint = 0, nfev = 0;
-    integer iflag = 0;
-    integer *ipvt;
-    doublereal gtol = 0.0;
-    doublereal epsfcn = 0.0, factor = 100.;
-    doublereal *dspace, *diag, *qtf;
-    doublereal *wa1, *wa2, *wa3, *wa4;
+    int m = spec->nobs;
+    int n = spec->ncoeff;
+    int ldjac = m;
+    int info = 0;
+    int maxfev = 200 * (n + 1); /* max iterations */
+    int mode = 1, nprint = 0, nfev = 0;
+    int iflag = 0;
+    int *ipvt;
+    double gtol = 0.0;
+    double epsfcn = 0.0, factor = 100.;
+    double *dspace, *diag, *qtf;
+    double *wa1, *wa2, *wa3, *wa4;
     int err = 0;
     
     dspace = malloc((5 * n + m) * sizeof *dspace);
@@ -2543,9 +2541,9 @@ static int lm_approximate (nlspec *spec, PRN *prn)
     wa4 = wa3 + n;
 
     /* call minpack */
-    lmdif_(nls_calc_approx, &m, &n, spec->coeff, spec->fvec, 
-	   &spec->tol, &spec->tol, &gtol, &maxfev, &epsfcn, diag, 
-	   &mode, &factor, &nprint, &info, &nfev, spec->jac, &ldjac, 
+    lmdif_(nls_calc_approx, m, n, spec->coeff, spec->fvec, 
+	   &spec->tol, &spec->tol, &gtol, &maxfev, epsfcn, diag, 
+	   mode, factor, &nprint, &info, &nfev, spec->jac, ldjac, 
 	   ipvt, qtf, wa1, wa2, wa3, wa4, spec);
 
     spec->iters = nfev;
@@ -2583,8 +2581,8 @@ static int lm_approximate (nlspec *spec, PRN *prn)
 	spec->opt = OPT_NONE;
 
 	/* call minpack again */
-	fdjac2_(nls_calc_approx, &m, &n, spec->coeff, spec->fvec, 
-		spec->jac, &ldjac, &iflag, &epsfcn, wa4, spec);
+	fdjac2_(nls_calc_approx, m, n, spec->coeff, spec->fvec, 
+		spec->jac, ldjac, &iflag, epsfcn, wa4, spec);
 	spec->crit = ess;
 	spec->iters = iters;
 	spec->opt = opt;
@@ -2956,7 +2954,7 @@ static double default_nls_toler;
 double get_default_nls_toler (void)
 {
     if (default_nls_toler == 0.0) {
-	default_nls_toler = pow(dpmpar_(&one), .75);
+	default_nls_toler = pow(dpmpar_(1), .75);
     }
 
     return default_nls_toler;

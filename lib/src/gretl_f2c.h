@@ -11,7 +11,7 @@ typedef float real;
 typedef double doublereal;
 typedef struct { real r, i; } complex;
 typedef struct { doublereal r, i; } doublecomplex;
-typedef long int logical;
+typedef int logical;
 typedef short int shortlogical;
 typedef char logical1;
 typedef char integer1;
@@ -37,43 +37,46 @@ typedef long int ftnlen;
 typedef long int ftnint;
 #endif
 
-/*external read, write*/
+/* external read, write */
 typedef struct
-{	flag cierr;
-	ftnint ciunit;
-	flag ciend;
-	char *cifmt;
-	ftnint cirec;
+{
+    flag cierr;
+    ftnint ciunit;
+    flag ciend;
+    char *cifmt;
+    ftnint cirec;
 } cilist;
 
-/*internal read, write*/
+/* internal read, write */
 typedef struct
-{	flag icierr;
-	char *iciunit;
-	flag iciend;
-	char *icifmt;
-	ftnint icirlen;
-	ftnint icirnum;
+{
+    flag icierr;
+    char *iciunit;
+    flag iciend;
+    char *icifmt;
+    ftnint icirlen;
+    ftnint icirnum;
 } icilist;
 
-/*open*/
+/* open */
 typedef struct
-{	flag oerr;
-	ftnint ounit;
-	char *ofnm;
-	ftnlen ofnmlen;
-	char *osta;
-	char *oacc;
-	char *ofm;
-	ftnint orl;
-	char *oblnk;
+{
+    flag oerr;
+    ftnint ounit;
+    char *ofnm;
+    ftnlen ofnmlen;
+    char *osta;
+    char *oacc;
+    char *ofm;
+    ftnint orl;
+    char *oblnk;
 } olist;
 
-/*close*/
+/* close */
 typedef struct
 {	flag cerr;
-	ftnint cunit;
-	char *csta;
+    ftnint cunit;
+    char *csta;
 } cllist;
 
 /*rewind, backspace, endfile*/
@@ -84,64 +87,63 @@ typedef struct
 
 /* inquire */
 typedef struct
-{	flag inerr;
-	ftnint inunit;
-	char *infile;
-	ftnlen infilen;
-	ftnint	*inex;	/*parameters in standard's order*/
-	ftnint	*inopen;
-	ftnint	*innum;
-	ftnint	*innamed;
-	char	*inname;
-	ftnlen	innamlen;
-	char	*inacc;
-	ftnlen	inacclen;
-	char	*inseq;
-	ftnlen	inseqlen;
-	char 	*indir;
-	ftnlen	indirlen;
-	char	*infmt;
-	ftnlen	infmtlen;
-	char	*inform;
-	ftnint	informlen;
-	char	*inunf;
-	ftnlen	inunflen;
-	ftnint	*inrecl;
-	ftnint	*innrec;
-	char	*inblank;
-	ftnlen	inblanklen;
+{
+    flag inerr;
+    ftnint inunit;
+    char *infile;
+    ftnlen infilen;
+    ftnint	*inex;	/* parameters in standard's order */
+    ftnint	*inopen;
+    ftnint	*innum;
+    ftnint	*innamed;
+    char	*inname;
+    ftnlen	innamlen;
+    char	*inacc;
+    ftnlen	inacclen;
+    char	*inseq;
+    ftnlen	inseqlen;
+    char 	*indir;
+    ftnlen	indirlen;
+    char	*infmt;
+    ftnlen	infmtlen;
+    char	*inform;
+    ftnint	informlen;
+    char	*inunf;
+    ftnlen	inunflen;
+    ftnint	*inrecl;
+    ftnint	*innrec;
+    char	*inblank;
+    ftnlen	inblanklen;
 } inlist;
 
 #define VOID void
 
 union Multitype {	/* for multiple entry points */
-	integer1 g;
-	shortint h;
-	integer i;
-	/* longint j; */
-	real r;
-	doublereal d;
-	complex c;
-	doublecomplex z;
-	};
+    integer1 g;
+    shortint h;
+    integer i;
+    /* longint j; */
+    real r;
+    doublereal d;
+    complex c;
+    doublecomplex z;
+};
 
 typedef union Multitype Multitype;
 
-/*typedef long int Long;*/	/* No longer used; formerly in Namelist */
-
 struct Vardesc {	/* for Namelist */
-	char *name;
-	char *addr;
-	ftnlen *dims;
-	int  type;
-	};
+    char *name;
+    char *addr;
+    ftnlen *dims;
+    int  type;
+};
 typedef struct Vardesc Vardesc;
 
 struct Namelist {
-	char *name;
-	Vardesc **vars;
-	int nvars;
-	};
+    char *name;
+    Vardesc **vars;
+    int nvars;
+};
 typedef struct Namelist Namelist;
 
 #define abs(x) ((x) >= 0 ? (x) : -(x))

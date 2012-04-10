@@ -234,7 +234,7 @@ CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c expx2.c \
 	   yn.c kv.c
 
 MINPACK_SRC = chkder.c dpmpar.c enorm.c fdjac2.c lmder.c lmder1.c \
-	lmdif.c lmpar.c qrfac.c qrsolv.c dlog10.c lbfgsb.c
+	lmdif.c lmpar.c qrfac.c qrsolv.c lbfgsb.c
 
 LOBJS = $(SRCS:.c=.lo)
 AUX_LOBJ = $(CEPHES_SRC:.c=.lo) $(MINPACK_SRC:.c=.lo)

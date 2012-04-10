@@ -1,42 +1,28 @@
-/* chkder.f -- translated by f2c (version 20030306).
-*/
-
-#include "gretl_f2c.h"
 #include "minpack.h"
-#include "math.h"
+#include <math.h>
 
 #define log10e 0.43429448190325182765
 
-static double d_log10(doublereal *x)
+static double d_log10 (double x)
 {
-    return log10e * log(*x);
+    return log10e * log(x);
 }
 
-/* Table of constant values */
-
-static integer c__1 = 1;
-
-/* Subroutine */ int chkder_(integer *m, integer *n, doublereal *x, 
-	doublereal *fvec, doublereal *fjac, integer *ldfjac, doublereal *xp, 
-	doublereal *fvecp, integer *mode, doublereal *err)
+int chkder_(int m, int n, double *x, 
+	    double *fvec, double *fjac, int ldfjac, 
+	    double *xp, double *fvecp, int mode, 
+	    double *err)
 {
-    /* Initialized data */
-
-    static doublereal factor = 100.;
-    static doublereal one = 1.;
-    static doublereal zero = 0.;
+    const double factor = 100.;
 
     /* System generated locals */
-    integer fjac_dim1, fjac_offset, i__1, i__2;
-    doublereal d__1, d__2, d__3, d__4, d__5;
+    int fjac_dim1, fjac_offset;
+    double d;
 
     /* Local variables */
-    static integer i__, j;
-    static doublereal eps, epsf, temp, epsmch;
-    extern doublereal dpmpar_(integer *);
-    static doublereal epslog;
-
-/*     ********** */
+    int i, j;
+    double eps, epsf, temp, epsmch;
+    double epslog;
 
 /*     subroutine chkder */
 
@@ -68,10 +54,10 @@ static integer c__1 = 1;
 
 /*     where */
 
-/*       m is a positive integer input variable set to the number */
+/*       m is a positive int input variable set to the number */
 /*         of functions. */
 
-/*       n is a positive integer input variable set to the number */
+/*       n is a positive int input variable set to the number */
 /*         of variables. */
 
 /*       x is an input array of length n. */
@@ -83,7 +69,7 @@ static integer c__1 = 1;
 /*         the rows of fjac must contain the gradients of */
 /*         the respective functions evaluated at x. */
 
-/*       ldfjac is a positive integer input parameter not less than m */
+/*       ldfjac is a positive int input parameter not less than m */
 /*         which specifies the leading dimension of the array fjac. */
 
 /*       xp is an array of length n. on output when mode = 1, */
@@ -92,7 +78,7 @@ static integer c__1 = 1;
 /*       fvecp is an array of length m. on input when mode = 2, */
 /*         fvecp must contain the functions evaluated at xp. */
 
-/*       mode is an integer input variable set to 1 on the first call */
+/*       mode is an int input variable set to 1 on the first call */
 /*         and 2 on the second. other values of mode are equivalent */
 /*         to mode = 1. */
 
@@ -116,89 +102,60 @@ static integer c__1 = 1;
 /*     argonne national laboratory. minpack project. march 1980. */
 /*     burton s. garbow, kenneth e. hillstrom, jorge j. more */
 
-/*     ********** */
     /* Parameter adjustments */
     --err;
     --fvecp;
     --fvec;
     --xp;
     --x;
-    fjac_dim1 = *ldfjac;
+    fjac_dim1 = ldfjac;
     fjac_offset = 1 + fjac_dim1;
     fjac -= fjac_offset;
 
-    /* Function Body */
-
-/*     epsmch is the machine precision. */
-
-    epsmch = dpmpar_(&c__1);
-
+    epsmch = dpmpar_(1);
     eps = sqrt(epsmch);
 
-    if (*mode == 2) {
-	goto L20;
+    if (mode == 1) {
+	for (j = 1; j <= n; ++j) {
+	    temp = eps * fabs(x[j]);
+	    if (temp == 0.0) {
+		temp = eps;
+	    }
+	    xp[j] = x[j] + temp;
+	}
+    } else {
+	/* mode = 2 */
+	epsf = factor * epsmch;
+	epslog = d_log10(eps);
+	for (i = 1; i <= m; ++i) {
+	    err[i] = 0.0;
+	}
+	for (j = 1; j <= n; ++j) {
+	    temp = fabs(x[j]);
+	    if (temp == 0.0) {
+		temp = 1.0;
+	    }
+	    for (i = 1; i <= m; ++i) {
+		err[i] += temp * fjac[i + j * fjac_dim1];
+	    }
+	}
+	for (i = 1; i <= m; ++i) {
+	    temp = 1.0;
+	    if (fvec[i] != 0.0 && fvecp[i] != 0.0 && 
+		fabs(fvecp[i] - fvec[i]) >= epsf * fabs(fvec[i])) {
+		d = fabs((fvecp[i] - fvec[i]) / eps - err[i]);
+		temp = eps * d / (fabs(fvec[i]) + fabs(fvecp[i]));
+	    }
+	    err[i] = 1.0;
+	    if (temp > epsmch && temp < eps) {
+		err[i] = (d_log10(temp) - epslog) / epslog;
+	    }
+	    if (temp >= eps) {
+		err[i] = 0.0;
+	    }
+	}
     }
-
-/*        mode = 1. */
-
-    i__1 = *n;
-    for (j = 1; j <= i__1; ++j) {
-	temp = eps * (d__1 = x[j], abs(d__1));
-	if (temp == zero) {
-	    temp = eps;
-	}
-	xp[j] = x[j] + temp;
-/* L10: */
-    }
-    goto L70;
-L20:
-
-/*        mode = 2. */
-
-    epsf = factor * epsmch;
-    epslog = d_log10(&eps);
-    i__1 = *m;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	err[i__] = zero;
-/* L30: */
-    }
-    i__1 = *n;
-    for (j = 1; j <= i__1; ++j) {
-	temp = (d__1 = x[j], abs(d__1));
-	if (temp == zero) {
-	    temp = one;
-	}
-	i__2 = *m;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    err[i__] += temp * fjac[i__ + j * fjac_dim1];
-/* L40: */
-	}
-/* L50: */
-    }
-    i__1 = *m;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	temp = one;
-	if (fvec[i__] != zero && fvecp[i__] != zero && (d__2 = fvecp[i__] - 
-		fvec[i__], abs(d__2)) >= epsf * (d__1 = fvec[i__], abs(d__1)))
-		 {
-	    temp = eps * (d__3 = (fvecp[i__] - fvec[i__]) / eps - err[i__], 
-		    abs(d__3)) / ((d__4 = fvec[i__], abs(d__4)) + (d__5 = 
-		    fvecp[i__], abs(d__5)));
-	}
-	err[i__] = one;
-	if (temp > epsmch && temp < eps) {
-	    err[i__] = (d_log10(&temp) - epslog) / epslog;
-	}
-	if (temp >= eps) {
-	    err[i__] = zero;
-	}
-/* L60: */
-    }
-L70:
 
     return 0;
-
-/*     last card of subroutine chkder. */
-
-} /* chkder_ */
+}
 

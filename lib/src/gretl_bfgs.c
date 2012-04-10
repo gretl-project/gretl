@@ -26,7 +26,6 @@
 #include "usermat.h"
 #include "gretl_scalar.h"
 
-#include "gretl_f2c.h"
 #include "../../minpack/minpack.h"  
 
 #define BFGS_DEBUG 0
@@ -1694,14 +1693,14 @@ double user_simann (gretl_matrix *b,
 
 #define JAC_DEBUG 0
 
-static int user_calc_fvec (integer *m, integer *n, double *x, double *fvec,
-			   integer *iflag, void *p)
+static int user_calc_fvec (int m, int n, double *x, double *fvec,
+			   int *iflag, void *p)
 {
     umax *u = (umax *) p;
     gretl_matrix *v;
     int i, err;
 
-    for (i=0; i<*n; i++) {
+    for (i=0; i<n; i++) {
 	u->b->val[i] = x[i];
     }
 
@@ -1725,11 +1724,11 @@ static int user_calc_fvec (integer *m, integer *n, double *x, double *fvec,
     gretl_matrix_print(v, "matrix from u->f");
 #endif
 
-    if (v == NULL || gretl_vector_get_length(v) != *m) {
+    if (v == NULL || gretl_vector_get_length(v) != m) {
 	fprintf(stderr, "user_calc_fvec: got bad matrix\n"); 
 	*iflag = -1;
     } else {
-	for (i=0; i<*m; i++) {
+	for (i=0; i<m; i++) {
 	    fvec[i] = v->val[i];
 	}
     }
@@ -1737,7 +1736,64 @@ static int user_calc_fvec (integer *m, integer *n, double *x, double *fvec,
     return 0;
 }
 
-static int fdjac_allocate (integer m, integer n,
+/**
+ * gretl_fdjac:
+ * @fcn: user-supplied subroutine to calculate the functions.
+ * @m: the number of functions, m >= 1.
+ * @n: the number of variables, 1 <= n <= m.
+ * @x: input array of length @n.
+ * @fvec: input array of length @m containing the functions
+ * evaluated at @x.
+ * @fjac: output @m by @n array which contains the approximation
+ * to the jacobian matrix evaluated at @x.
+ * @iflag: integer flag that can be used to terminate the
+ * execution of fdjac (if set to a negative value by @fcn).
+ * @w: work array of length @m. 
+ * @p: general-purpose pointer made available to @fcn.
+ *
+ * Computes a forward-difference approximation to the @m by @n 
+ * jacobian matrix associated with a specified problem of @m
+ * functions in @n variables. 
+ *
+ * The callback @fcn should have the following signature:
+ *
+ * int fcn(int m, int n, double *x, double *fvec, int *iflag,
+ *         void *data);
+ *
+ * It should calculate the functions at @x, putting the result
+ * into @fvec. To terminate gretl_fdjac(), @fcn should set @iflag 
+ * to a negative value.
+*/
+
+int gretl_fdjac (int (*fcn)(), int m, int n, double *x, 
+		 double *fvec, double *fjac, int *iflag, 
+		 double *w, void *data)
+{
+    /* eps is the square root of the machine precision */
+    double h, xj, eps = sqrt(dpmpar_(1));
+    int i, j;
+
+    for (j=0; j<n; j++) {
+	xj = x[j];
+	h = eps * abs(xj);
+	if (h == 0.0) {
+	    h = eps;
+	}
+	x[j] = xj + h;
+	(*fcn)(m, n, x, w, iflag, data);
+	if (*iflag < 0) {
+	    return 1;
+	}
+	x[j] = xj;
+	for (i=0; i<m; i++) {
+	    fjac[i + j * m] = (w[i] - fvec[i]) / h;
+	}
+    }
+
+    return 0;
+}
+
+static int fdjac_allocate (int m, int n,
 			   gretl_matrix **J, 
 			   double **w, double **f)
 {
@@ -1761,11 +1817,10 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 {
     umax *u;
     gretl_matrix *J = NULL;
-    integer m, n;
-    integer iflag = 0;
+    int m, n;
+    int iflag = 0;
     double *wa = NULL;
     double *fvec = NULL;
-    double epsfcn = 0.0;
     int i;
 
     *err = 0;
@@ -1814,8 +1869,8 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 	fvec[i] = u->fm_out->val[i];
     }
 
-    fdjac2_(user_calc_fvec, &m, &n, theta->val, fvec, J->val, 
-	    &m, &iflag, &epsfcn, wa, u);
+    gretl_fdjac(user_calc_fvec, m, n, theta->val, fvec, J->val, 
+		&iflag, wa, u);
 
  bailout:
 
