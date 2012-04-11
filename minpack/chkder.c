@@ -96,20 +96,18 @@ int chkder_(int m, int n, double *x,
 {
     const double factor = 100.;
 
-    int fjac_dim1, fjac_offset;
+    int fjac_offset;
     double d;
 
     int i, j;
-    double eps, epsf, temp, epsmch;
-    double epslog;
+    double eps, temp, epsmch;
 
     --err;
     --fvecp;
     --fvec;
     --xp;
     --x;
-    fjac_dim1 = ldfjac;
-    fjac_offset = 1 + fjac_dim1;
+    fjac_offset = 1 + ldfjac;
     fjac -= fjac_offset;
 
     epsmch = dpmpar_(1);
@@ -125,8 +123,9 @@ int chkder_(int m, int n, double *x,
 	}
     } else {
 	/* mode = 2 */
-	epsf = factor * epsmch;
-	epslog = d_log10(eps);
+	double epsf = factor * epsmch;
+	double epslog = d_log10(eps);
+
 	for (i = 1; i <= m; ++i) {
 	    err[i] = 0.0;
 	}
@@ -136,7 +135,7 @@ int chkder_(int m, int n, double *x,
 		temp = 1.0;
 	    }
 	    for (i = 1; i <= m; ++i) {
-		err[i] += temp * fjac[i + j * fjac_dim1];
+		err[i] += temp * fjac[i + j * ldfjac];
 	    }
 	}
 	for (i = 1; i <= m; ++i) {

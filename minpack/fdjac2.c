@@ -79,8 +79,7 @@ int fdjac2_(S_fp fcn, int m, int n, double *x,
 	    double *fvec, double *fjac, int ldfjac, int *iflag, 
 	    double epsfcn, double *wa, void *p)
 {
-    int fjac_dim1, fjac_offset;
-
+    int fjac_offset;
     double h;
     int i, j;
     double eps, temp, epsmch;
@@ -88,8 +87,7 @@ int fdjac2_(S_fp fcn, int m, int n, double *x,
     --wa;
     --fvec;
     --x;
-    fjac_dim1 = ldfjac;
-    fjac_offset = 1 + fjac_dim1;
+    fjac_offset = 1 + ldfjac;
     fjac -= fjac_offset;
 
     epsmch = dpmpar_(1);
@@ -108,7 +106,7 @@ int fdjac2_(S_fp fcn, int m, int n, double *x,
 	}
 	x[j] = temp;
 	for (i = 1; i <= m; ++i) {
-	    fjac[i + j * fjac_dim1] = (wa[i] - fvec[i]) / h;
+	    fjac[i + j * ldfjac] = (wa[i] - fvec[i]) / h;
 	}
     }
 

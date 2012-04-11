@@ -47,10 +47,7 @@ double enorm_(int n, double *x)
     double xabs, x1max = 0.0, x3max = 0.0;
     int i;
 
-    /* Parameter adjustments */
-    --x;
-
-    for (i = 1; i <= n; ++i) {
+    for (i = 0; i < n; i++) {
 	xabs = fabs(x[i]);
 	if (xabs > rdwarf && xabs < agiant) {
 	    /* sum for intermediate components */
