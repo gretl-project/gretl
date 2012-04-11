@@ -9930,7 +9930,7 @@
     <usage>
       <altforms>
         <altform><lit>setobs</lit> <repl>periodicity</repl> <repl>startobs</repl></altform>
-	<altform><lit>setobs</lit> <repl>unitvar</repl> <repl>timevar</repl></altform>
+	<altform><lit>setobs</lit> <repl>unitvar</repl> <repl>timevar</repl> <lit>--panel-vars</lit></altform>
 	<altform><lit>setobs --labels=</lit><repl>filename</repl></altform>
       </altforms>
       <options>
