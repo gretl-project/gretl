@@ -1,5 +1,6 @@
 #include "minpack.h"
 #include <math.h>
+#include <float.h>
 
 /*
 c     subroutine qrfac
@@ -100,7 +101,7 @@ int qrfac_(int m, int n, double *a, int lda,
     a -= a_offset;
     --ipvt;
 
-    epsmch = dpmpar_(1);
+    epsmch = DBL_EPSILON;
 
     /* compute the initial column norms and initialize several arrays */
     for (j = 1; j <= n; ++j) {

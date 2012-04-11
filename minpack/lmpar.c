@@ -1,5 +1,6 @@
 #include "minpack.h"
 #include <math.h>
+#include <float.h>
 
 /*
 c     lmpar:
@@ -127,7 +128,7 @@ int lmpar_(int n, double *r, int ldr,
     r -= r_offset;
 
     /* dwarf is the smallest positive magnitude */
-    dwarf = dpmpar_(2);
+    dwarf = DBL_MIN;
 
     /* compute and store in x the gauss-newton direction. if the */
     /* jacobian is rank-deficient, obtain a least squares solution. */

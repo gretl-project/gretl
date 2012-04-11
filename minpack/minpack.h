@@ -62,8 +62,6 @@ int qrsolv_(int n, double *r, int ldr,
 
 double enorm_(int n, double *x);
 
-double dpmpar_(int k);
-
 int setulb_(int *n, int *m, double *x, 
 	    double *l, double *u, int *nbd, double *f, double *g, 
 	    double *factr, double *pgtol, double *wa, int *iwa, 

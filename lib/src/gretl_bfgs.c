@@ -26,7 +26,8 @@
 #include "usermat.h"
 #include "gretl_scalar.h"
 
-#include "../../minpack/minpack.h"  
+#include "../../minpack/minpack.h"
+#include <float.h> 
 
 #define BFGS_DEBUG 0
 
@@ -1769,8 +1770,7 @@ int gretl_fdjac (int (*fcn)(), int m, int n, double *x,
 		 double *fvec, double *fjac, int *iflag, 
 		 double *w, void *data)
 {
-    /* eps is the square root of the machine precision */
-    double h, xj, eps = sqrt(dpmpar_(1));
+    double h, xj, eps = sqrt(DBL_EPSILON);
     int i, j;
 
     for (j=0; j<n; j++) {

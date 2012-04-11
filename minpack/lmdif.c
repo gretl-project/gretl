@@ -1,5 +1,6 @@
 #include "minpack.h"
 #include <math.h>
+#include <float.h>
 
 /*
 c     lmdif:
@@ -224,7 +225,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x,
     fjac_offset = 1 + fjac_dim1;
     fjac -= fjac_offset;
 
-    epsmch = dpmpar_(1);
+    epsmch = DBL_EPSILON;
 
     *info = 0;
     iflag = 0;

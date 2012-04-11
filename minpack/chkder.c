@@ -1,5 +1,6 @@
 #include "minpack.h"
 #include <math.h>
+#include <float.h>
 
 #define log10e 0.43429448190325182765
 
@@ -110,7 +111,7 @@ int chkder_(int m, int n, double *x,
     fjac_offset = 1 + ldfjac;
     fjac -= fjac_offset;
 
-    epsmch = dpmpar_(1);
+    epsmch = DBL_EPSILON;
     eps = sqrt(epsmch);
 
     if (mode == 1) {

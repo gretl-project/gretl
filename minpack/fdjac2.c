@@ -1,5 +1,6 @@
 #include "minpack.h"
 #include <math.h>
+#include <float.h>
 
 /*
 c     fdjac2:
@@ -90,7 +91,7 @@ int fdjac2_(S_fp fcn, int m, int n, double *x,
     fjac_offset = 1 + ldfjac;
     fjac -= fjac_offset;
 
-    epsmch = dpmpar_(1);
+    epsmch = DBL_EPSILON;
     eps = sqrt(max(epsfcn, epsmch));
 
     for (j = 1; j <= n; ++j) {

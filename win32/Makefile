@@ -298,7 +298,7 @@ PROBSRC = airy.c const.c hyp2f1.c igami.c j1.c kn.c pdtr.c struve.c \
 
 PROBOBJ = $(PROBSRC:.c=.o)
 
-MINSRC = chkder.c dpmpar.c enorm.c fdjac2.c lmder1.c lmder.c lmdif.c lmpar.c \
+MINSRC = chkder.c enorm.c fdjac2.c lmder1.c lmder.c lmdif.c lmpar.c \
 	qrfac.c qrsolv.c lbfgsb.c
 MINOBJ = $(MINSRC:.c=.o)
 

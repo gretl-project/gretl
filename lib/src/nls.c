@@ -35,7 +35,8 @@
 #include "gretl_bfgs.h"
 #include "tsls.h"
 
-#include "../../minpack/minpack.h"  
+#include "../../minpack/minpack.h" 
+#include <float.h> 
 
 /**
  * SECTION:nls
@@ -2954,7 +2955,7 @@ static double default_nls_toler;
 double get_default_nls_toler (void)
 {
     if (default_nls_toler == 0.0) {
-	default_nls_toler = pow(dpmpar_(1), .75);
+	default_nls_toler = pow(DBL_EPSILON, .75);
     }
 
     return default_nls_toler;
