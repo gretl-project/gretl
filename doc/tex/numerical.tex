@@ -435,6 +435,140 @@ between the results reported in the original source and what
 \app{gretl} returns are due to the fact that the Jacobian is computed
 numerically, rather than analytically as in the book.
 
+On the subject of numerical versus analytical derivatives, one may
+wonder what difference it makes to use one method or another. Simply
+put, the answer is: analytical derivatives may be painful to derive
+and to translate into code, but in most cases they are much faster
+than using \cmd{fdjac}; as a consequence, if you need to use
+derivatives as part of an algorithm that requires iteration (such as
+numerical optimization, or a Monte Carlo experiment), you'll
+definitely want to use analytical derivatives.
+
+Analytical derivatives are also, in most cases, more precise than
+numerical ones, but this advantage may or may not be negligible in
+practice depending on the practical details: the two fundamental
+aspects to take in consideration are nonlinearity and machine precision.
+
+As an example, consider the derivative of a highly nonlinear function
+such as the matrix inverse. In order to keep the example simple, let's
+focus on $2 \times 2$ matrices and define the function
+\begin{code}
+function matrix vecinv(matrix x)
+    A = mshape(x,2,2)
+    return vec(inv(A))'
+end function
+\end{code}
+which, given $\mathrm{vec}(A)$, returns $\mathrm{vec}(A^{-1})$. As is
+well known (see for example \cite{magneu88}),
+\[
+  \frac{\partial \mathrm{vec}(A^{-1})}{\partial \mathrm{vec}(A)} 
+  = - (A^{-1})' \otimes (A^{-1}),
+\]
+which is rather easy to code in \app{hansl} as
+\begin{code}
+function matrix grad(matrix x)
+    iA = inv(mshape(x,2,2))
+    return -iA' ** iA
+end function  
+\end{code}
+Using the \cmd{fdjac} function to obtain the same result is even
+easier: you just invoke it like
+\begin{code}
+fdjac(a, "vecinv(a)")  
+\end{code}
+
+In order to see what the difference is, in terms of precision, between
+analytical and numerical Jacobians, start from $A =
+\left[\begin{array}{cc} 2 & 1 \\ 1 & 1 \end{array}\right]$; the
+following code
+\begin{code}
+a = {2; 1; 1; 1}
+ia = vecinv(a)
+ag = grad(a)
+ng = fdjac(a, "vecinv(a)")
+dg = ag - ng
+print ag ng dg  
+\end{code}
+gives
+\begin{code}
+ag (4 x 4)
+
+  -1    1    1   -1 
+   1   -2   -1    2 
+   1   -1   -2    2 
+  -1    2    2   -4 
+
+ng (4 x 4)
+
+  -1    1    1   -1 
+   1   -2   -1    2 
+   1   -1   -2    2 
+  -1    2    2   -4 
+
+dg (4 x 4)
+
+ -3.3530e-08  -3.7251e-08  -3.7251e-08  -3.7255e-08 
+  2.6079e-08   5.2150e-08   3.7251e-08   6.7060e-08 
+  2.6079e-08   3.7251e-08   5.2150e-08   6.7060e-08 
+ -2.2354e-08  -5.9600e-08  -5.9600e-08  -1.4902e-07 
+\end{code}
+in which the analytically-computed derivative and its numerical
+approximation are essentially the same. If, however, you set $A =
+\left[\begin{array}{cc} 1.0001 & 1 \\ 1 & 1 \end{array}\right]$ you
+end up evaluating the function at a point in which the function itself
+is considerably more nonlinear since the matrix is much closer to
+being singular. As a consequence, the numerical approximation becomes
+much less satisfactory:
+\begin{code}
+ag (4 x 4)
+
+ -1.0000e+08   1.0000e+08   1.0000e+08  -1.0000e+08 
+  1.0000e+08  -1.0001e+08  -1.0000e+08   1.0001e+08 
+  1.0000e+08  -1.0000e+08  -1.0001e+08   1.0001e+08 
+ -1.0000e+08   1.0001e+08   1.0001e+08  -1.0002e+08 
+
+ng (4 x 4)
+
+ -9.9985e+07   1.0001e+08   1.0001e+08  -9.9985e+07 
+  9.9985e+07  -1.0002e+08  -1.0001e+08   9.9995e+07 
+  9.9985e+07  -1.0001e+08  -1.0002e+08   9.9995e+07 
+ -9.9985e+07   1.0002e+08   1.0002e+08  -1.0001e+08 
+
+dg (4 x 4)
+
+     -14899.      -14901.      -14901.      -14900. 
+      14899.       14903.       14901.       14902. 
+      14899.       14901.       14903.       14902. 
+     -14899.      -14903.      -14903.      -14903. 
+\end{code}
+Moreover, machine precision may have its impact: if you take $A =
+0.00001 \times \left[\begin{array}{cc} 2 & 1\\ 1 &
+    1 \end{array}\right]$, the matrix itself is not singular at
+all, but the order of magnitude of its elements is close enough to
+machine precision to provoke problems:
+\begin{code}
+ag (4 x 4)
+
+ -1.0000e+10   1.0000e+10   1.0000e+10  -1.0000e+10 
+  1.0000e+10  -2.0000e+10  -1.0000e+10   2.0000e+10 
+  1.0000e+10  -1.0000e+10  -2.0000e+10   2.0000e+10 
+ -1.0000e+10   2.0000e+10   2.0000e+10  -4.0000e+10 
+
+ng (4 x 4)
+
+ -1.0000e+10   1.0000e+10   1.0000e+10  -1.0000e+10 
+  1.0000e+10  -2.0000e+10  -1.0000e+10   2.0000e+10 
+  1.0000e+10  -1.0000e+10  -2.0000e+10   2.0000e+10 
+ -1.0000e+10   2.0000e+10   2.0000e+10  -4.0000e+10 
+
+dg (4 x 4)
+
+     -488.30      -390.60      -390.60      -195.33 
+      634.79       781.21       390.60       585.98 
+      634.79       488.26       683.55       585.98 
+     -781.27      -976.52      -781.21      -1367.3 
+\end{code}
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "gretl-guide"
