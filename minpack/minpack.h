@@ -1,8 +1,6 @@
 #ifndef GRETL_MINPACK_H
 #define GRETL_MINPACK_H
 
-typedef int logical;
-
 #ifdef __cplusplus
 typedef int (*S_fp)(...);
 #else
@@ -16,9 +14,6 @@ typedef int (*S_fp)();
 # define max(a,b) ((a) >= (b) ? (a) : (b))
 #endif
 
-#define TRUE_ (1)
-#define FALSE_ (0)
-
 int chkder_(int m, int n, double *x,
 	    double *fvec, double *fjac, int ldfjac,
 	    double *xp, double *fvecp, int mode,
@@ -30,9 +25,9 @@ int lmpar_(int n, double *r, int ldr,
 	   double *wa2);
 
 int lmder_(S_fp fcn, int m, int n, double *x, 
-	   double *fvec, double *fjac, int ldfjac, double *ftol,
-	   double *xtol, double *gtol, int *maxfev, double *diag, 
-	   int mode, double factor, int *nprint, 
+	   double *fvec, double *fjac, int ldfjac, double ftol,
+	   double xtol, double gtol, int *maxfev, double *diag, 
+	   int mode, double factor, int nprint, 
 	   int *info, int *nfev, int *njev, int *ipvt, 
 	   double *qtf, double *wa1, double *wa2, double *wa3, 
 	   double *wa4, void *p);
@@ -44,10 +39,10 @@ int lmder1_(S_fp fcn, int m, int n,
             void *p);
 
 int lmdif_(S_fp fcn, int m, int n, double *x, 
-	   double *fvec, double *ftol, double *xtol, 
-	   double *gtol, int *maxfev, double epsfcn, 
+	   double *fvec, double ftol, double xtol, 
+	   double gtol, int maxfev, double epsfcn, 
 	   double *diag, int mode, double factor, 
-	   int *nprint, int *info, int *nfev, 
+	   int nprint, int *info, int *nfev, 
 	   double *fjac, int ldfjac, int *ipvt, 
 	   double *qtf, double *wa1, double *wa2, 
 	   double *wa3, double *wa4, void *p);
@@ -58,8 +53,8 @@ int fdjac2_(S_fp fcn, int m, int n, double *x,
             void *p);
 
 int qrfac_(int m, int n, double *a, int lda, 
-	   logical *pivot, int *ipvt, int lipvt, 
-	   double *rdiag, double *acnorm, double *wa);
+	   int *ipvt, double *rdiag, double *acnorm, 
+	   double *wa);
 
 int qrsolv_(int n, double *r, int ldr, 
 	    int *ipvt, double *diag, double *qtb, double *x, 

@@ -2542,8 +2542,8 @@ static int lm_approximate (nlspec *spec, PRN *prn)
 
     /* call minpack */
     lmdif_(nls_calc_approx, m, n, spec->coeff, spec->fvec, 
-	   &spec->tol, &spec->tol, &gtol, &maxfev, epsfcn, diag, 
-	   mode, factor, &nprint, &info, &nfev, spec->jac, ldjac, 
+	   spec->tol, spec->tol, gtol, maxfev, epsfcn, diag, 
+	   mode, factor, nprint, &info, &nfev, spec->jac, ldjac, 
 	   ipvt, qtf, wa1, wa2, wa3, wa4, spec);
 
     spec->iters = nfev;

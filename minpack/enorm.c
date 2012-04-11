@@ -1,27 +1,40 @@
 #include "minpack.h"
 #include <math.h>
 
-/* given an n-vector x, this function calculates the
-   euclidean norm of x.
-
-   n is a positive integer input variable.
-
-   x is an input array of length n.
-
-   the euclidean norm is computed by accumulating the sum of
-   squares in three different sums. the sums of squares for the
-   small and large components are scaled so that no overflows
-   occur. non-destructive underflows are permitted. underflows
-   and overflows do not occur in the computation of the unscaled
-   sum of squares for the intermediate components.
-   the definitions of small, intermediate and large components
-   depend on two constants, rdwarf and rgiant. the main
-   restrictions on these constants are that rdwarf**2 not
-   underflow and rgiant**2 not overflow. the constants
-   given here are suitable for every known computer.
-
-   argonne national laboratory. minpack project. march 1980.
-   burton s. garbow, kenneth e. hillstrom, jorge j. more
+/*
+c     enorm:
+c
+c     given an n-vector x, this function calculates the
+c     euclidean norm of x.
+c
+c     the euclidean norm is computed by accumulating the sum of
+c     squares in three different sums. the sums of squares for the
+c     small and large components are scaled so that no overflows
+c     occur. non-destructive underflows are permitted. underflows
+c     and overflows do not occur in the computation of the unscaled
+c     sum of squares for the intermediate components.
+c     the definitions of small, intermediate and large components
+c     depend on two constants, rdwarf and rgiant. the main
+c     restrictions on these constants are that rdwarf**2 not
+c     underflow and rgiant**2 not overflow. the constants
+c     given here are suitable for every known computer.
+c
+c     the function statement is
+c
+c       double precision function enorm(n,x)
+c
+c     where
+c
+c       n is a positive integer input variable.
+c
+c       x is an input array of length n.
+c
+c     subprograms called
+c
+c       fortran-supplied ... dabs,dsqrt
+c
+c     argonne national laboratory. minpack project. march 1980.
+c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 */
 
 double enorm_(int n, double *x)

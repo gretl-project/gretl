@@ -1,75 +1,76 @@
 #include "minpack.h"
 #include <math.h>
 
-/*     subroutine qrsolv
-
-     given an m by n matrix a, an n by n diagonal matrix d, 
-     and an m-vector b, the problem is to determine an x which 
-     solves the system 
-
-           a*x = b ,     d*x = 0 , 
-
-     in the least squares sense. 
-
-     this subroutine completes the solution of the problem 
-     if it is provided with the necessary information from the 
-     qr factorization, with column pivoting, of a. that is, if 
-     a*p = q*r, where p is a permutation matrix, q has orthogonal 
-     columns, and r is an upper triangular matrix with diagonal 
-     elements of nonincreasing magnitude, then qrsolv expects 
-     the full upper triangle of r, the permutation matrix p, 
-     and the first n components of (q transpose)*b. the system 
-     a*x = b, d*x = 0, is then equivalent to 
-
-                  t       t 
-           r*z = q *b ,  p *d*p*z = 0 , 
-
-     where x = p*z. if this system does not have full rank, 
-     then a least squares solution is obtained. on output qrsolv 
-     also provides an upper triangular matrix s such that 
-
-            t   t               t 
-           p *(a *a + d*d)*p = s *s . 
-
-     s is computed within qrsolv and may be of separate interest. 
-
-     the subroutine statement is 
-
-       subroutine qrsolv(n,r,ldr,ipvt,diag,qtb,x,sdiag,wa) 
-
-     where 
-
-       n is a positive integer input variable set to the order of r. 
-
-       r is an n by n array. on input the full upper triangle 
-         must contain the full upper triangle of the matrix r. 
-         on output the full upper triangle is unaltered, and the 
-         strict lower triangle contains the strict upper triangle 
-         (transposed) of the upper triangular matrix s. 
-
-       ldr is a positive integer input variable not less than n 
-         which specifies the leading dimension of the array r. 
-
-       ipvt is an integer input array of length n which defines the 
-         permutation matrix p such that a*p = q*r. column j of p 
-         is column ipvt(j) of the identity matrix. 
-
-       diag is an input array of length n which must contain the 
-         diagonal elements of the matrix d. 
-
-       qtb is an input array of length n which must contain the first 
-         n elements of the vector (q transpose)*b. 
-
-       x is an output array of length n which contains the least 
-         squares solution of the system a*x = b, d*x = 0. 
-
-       sdiag is an output array of length n which contains the 
-         diagonal elements of the upper triangular matrix s. 
-
-       wa is a work array of length n. 
-
-     argonne national laboratory. minpack project. march 1980. 
-     burton s. garbow, kenneth e. hillstrom, jorge j. more 
+/*
+c     qrsolv:
+c
+c     given an m by n matrix a, an n by n diagonal matrix d,
+c     and an m-vector b, the problem is to determine an x which
+c     solves the system
+c
+c           a*x = b ,     d*x = 0 ,
+c
+c     in the least squares sense.
+c
+c     this subroutine completes the solution of the problem
+c     if it is provided with the necessary information from the
+c     qr factorization, with column pivoting, of a. that is, if
+c     a*p = q*r, where p is a permutation matrix, q has orthogonal
+c     columns, and r is an upper triangular matrix with diagonal
+c     elements of nonincreasing magnitude, then qrsolv expects
+c     the full upper triangle of r, the permutation matrix p,
+c     and the first n components of (q transpose)*b. the system
+c     a*x = b, d*x = 0, is then equivalent to
+c
+c                  t       t
+c           r*z = q *b ,  p *d*p*z = 0 ,
+c
+c     where x = p*z. if this system does not have full rank,
+c     then a least squares solution is obtained. on output qrsolv
+c     also provides an upper triangular matrix s such that
+c
+c            t   t               t
+c           p *(a *a + d*d)*p = s *s .
+c
+c     s is computed within qrsolv and may be of separate interest.
+c
+c     the subroutine statement is
+c
+c       subroutine qrsolv(n,r,ldr,ipvt,diag,qtb,x,sdiag,wa)
+c
+c     where
+c
+c       n is a positive integer input variable set to the order of r.
+c
+c       r is an n by n array. on input the full upper triangle
+c         must contain the full upper triangle of the matrix r.
+c         on output the full upper triangle is unaltered, and the
+c         strict lower triangle contains the strict upper triangle
+c         (transposed) of the upper triangular matrix s.
+c
+c       ldr is a positive integer input variable not less than n
+c         which specifies the leading dimension of the array r.
+c
+c       ipvt is an integer input array of length n which defines the
+c         permutation matrix p such that a*p = q*r. column j of p
+c         is column ipvt(j) of the identity matrix.
+c
+c       diag is an input array of length n which must contain the
+c         diagonal elements of the matrix d.
+c
+c       qtb is an input array of length n which must contain the first
+c         n elements of the vector (q transpose)*b.
+c
+c       x is an output array of length n which contains the least
+c         squares solution of the system a*x = b, d*x = 0.
+c
+c       sdiag is an output array of length n which contains the
+c         diagonal elements of the upper triangular matrix s.
+c
+c       wa is a work array of length n.
+c
+c     argonne national laboratory. minpack project. march 1980.
+c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 */
 
 int qrsolv_(int n, double *r, int ldr, 
@@ -79,10 +80,8 @@ int qrsolv_(int n, double *r, int ldr,
     const double p5 = .5;
     const double p25 = .25;
 
-    /* System generated locals */
     int r_dim1, r_offset;
 
-    /* Local variables */
     int i, j, k, l, jp1, kp1;
     double tanx, cosx, sinx, sum, temp, cotan;
     int nsing;
