@@ -80,7 +80,7 @@ int qrsolv_(int n, double *r, int ldr,
     const double p5 = .5;
     const double p25 = .25;
 
-    int r_dim1, r_offset;
+    int r_offset;
 
     int i, j, k, l, jp1, kp1;
     double tanx, cosx, sinx, sum, temp, cotan;
@@ -93,18 +93,17 @@ int qrsolv_(int n, double *r, int ldr,
     --qtb;
     --diag;
     --ipvt;
-    r_dim1 = ldr;
-    r_offset = 1 + r_dim1;
+    r_offset = 1 + ldr;
     r -= r_offset;
 
-    /* copy r and (q transpose)*b to preserve input and initialize s. */
-    /* in particular, save the diagonal elements of r in x. */
+    /* copy r and (q transpose)*b to preserve input and initialize s.
+       in particular, save the diagonal elements of r in x */
 
     for (j = 1; j <= n; ++j) {
 	for (i = j; i <= n; ++i) {
-	    r[i + j * r_dim1] = r[j + i * r_dim1];
+	    r[i + j * ldr] = r[j + i * ldr];
 	}
-	x[j] = r[j + j * r_dim1];
+	x[j] = r[j + j * ldr];
 	wa[j] = qtb[j];
     }
 
@@ -124,9 +123,9 @@ int qrsolv_(int n, double *r, int ldr,
 	}
 	sdiag[j] = diag[l];
 
-	/* the transformations to eliminate the row of d */
-	/* modify only a single element of (q transpose)*b */
-	/* beyond the first n, which is initially zero. */
+	/* the transformations to eliminate the row of d
+	   modify only a single element of (q transpose)*b
+	   beyond the first n, which is initially zero. */
 
 	qtbpj = 0.0;
 	for (k = j; k <= n; ++k) {
@@ -136,12 +135,12 @@ int qrsolv_(int n, double *r, int ldr,
 	    if (sdiag[k] == 0.0) {
 		continue;
 	    }
-	    if (fabs(r[k + k * r_dim1]) < fabs(sdiag[k])) {
-		cotan = r[k + k * r_dim1] / sdiag[k];
+	    if (fabs(r[k + k * ldr]) < fabs(sdiag[k])) {
+		cotan = r[k + k * ldr] / sdiag[k];
 		sinx = p5 / sqrt(p25 + p25 * (cotan * cotan));
 		cosx = sinx * cotan;
 	    } else {
-		tanx = sdiag[k] / r[k + k * r_dim1];
+		tanx = sdiag[k] / r[k + k * ldr];
 		cosx = p5 / sqrt(p25 + p25 * (tanx * tanx));
 		sinx = cosx * tanx;
 	    }
@@ -149,7 +148,7 @@ int qrsolv_(int n, double *r, int ldr,
 	    /* compute the modified diagonal element of r and
 	       the modified element of ((q transpose)*b,0).
 	    */
-	    r[k + k * r_dim1] = cosx * r[k + k * r_dim1] + 
+	    r[k + k * ldr] = cosx * r[k + k * ldr] + 
 		sinx * sdiag[k];
 	    temp = cosx * wa[k] + sinx * qtbpj;
 	    qtbpj = -sinx * wa[k] + cosx * qtbpj;
@@ -159,10 +158,10 @@ int qrsolv_(int n, double *r, int ldr,
 	    kp1 = k + 1;
 	    if (n >= kp1) {
 		for (i = kp1; i <= n; ++i) {
-		    temp = cosx * r[i + k * r_dim1] + sinx * sdiag[i];
-		    sdiag[i] = -sinx * r[i + k * r_dim1] + 
+		    temp = cosx * r[i + k * ldr] + sinx * sdiag[i];
+		    sdiag[i] = -sinx * r[i + k * ldr] + 
 			cosx * sdiag[i];
-		    r[i + k * r_dim1] = temp;
+		    r[i + k * ldr] = temp;
 		}
 	    }
 	}
@@ -171,12 +170,12 @@ int qrsolv_(int n, double *r, int ldr,
 	/* store the diagonal element of s and restore
 	   the corresponding diagonal element of r
 	*/
-	sdiag[j] = r[j + j * r_dim1];
-	r[j + j * r_dim1] = x[j];
+	sdiag[j] = r[j + j * ldr];
+	r[j + j * ldr] = x[j];
     }
 
-    /* solve the triangular system for z. if the system is */
-    /* singular, then obtain a least squares solution. */
+    /* solve the triangular system for z. if the system is
+       singular, then obtain a least squares solution. */
 
     nsing = n;
     for (j = 1; j <= n; ++j) {
@@ -194,7 +193,7 @@ int qrsolv_(int n, double *r, int ldr,
 	    jp1 = j + 1;
 	    if (nsing >= jp1) {
 		for (i = jp1; i <= nsing; ++i) {
-		    sum += r[i + j * r_dim1] * wa[i];
+		    sum += r[i + j * ldr] * wa[i];
 		}
 	    }
 	    wa[j] = (wa[j] - sum) / sdiag[j];

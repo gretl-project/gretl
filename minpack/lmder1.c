@@ -126,7 +126,7 @@ int lmder1_(S_fp fcn, int m, int n, double *x,
 {
     const double factor = 100.;
 
-    int fjac_dim1, fjac_offset;
+    int fjac_offset;
 
     int mode, nfev, njev;
     double ftol, gtol, xtol;
@@ -135,8 +135,7 @@ int lmder1_(S_fp fcn, int m, int n, double *x,
     --fvec;
     --ipvt;
     --x;
-    fjac_dim1 = ldfjac;
-    fjac_offset = 1 + fjac_dim1;
+    fjac_offset = 1 + ldfjac;
     fjac -= fjac_offset;
     --wa;
 

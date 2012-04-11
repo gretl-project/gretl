@@ -189,15 +189,13 @@ int lmdif_(S_fp fcn, int m, int n, double *x,
 	   double *qtf, double *wa1, double *wa2, double *wa3, 
 	   double *wa4, void *p)
 {
-    /* Initialized data */
     const double p1 = .1;
     const double p5 = .5;
     const double p25 = .25;
     const double p75 = .75;
     const double p0001 = 1e-4;
 
-    /* System generated locals */
-    int fjac_dim1, fjac_offset;
+    int fjac_offset;
     double d1, d2, d3;
 
     /* Local variables */
@@ -221,8 +219,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x,
     --ipvt;
     --diag;
     --x;
-    fjac_dim1 = ldfjac;
-    fjac_offset = 1 + fjac_dim1;
+    fjac_offset = 1 + ldfjac;
     fjac -= fjac_offset;
 
     epsmch = DBL_EPSILON;
@@ -327,17 +324,17 @@ int lmdif_(S_fp fcn, int m, int n, double *x,
 	wa4[i] = fvec[i];
     }
     for (j = 1; j <= n; ++j) {
-	if (fjac[j + j * fjac_dim1] != 0.0) {
+	if (fjac[j + j * ldfjac] != 0.0) {
 	    sum = 0.0;
 	    for (i = j; i <= m; ++i) {
-		sum += fjac[i + j * fjac_dim1] * wa4[i];
+		sum += fjac[i + j * ldfjac] * wa4[i];
 	    }
-	    temp = -sum / fjac[j + j * fjac_dim1];
+	    temp = -sum / fjac[j + j * ldfjac];
 	    for (i = j; i <= m; ++i) {
-		wa4[i] += fjac[i + j * fjac_dim1] * temp;
+		wa4[i] += fjac[i + j * ldfjac] * temp;
 	    }
 	}
-	fjac[j + j * fjac_dim1] = wa1[j];
+	fjac[j + j * ldfjac] = wa1[j];
 	qtf[j] = wa4[j];
     }
 
@@ -350,7 +347,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x,
 	    if (wa2[l] != 0.0) {
 		sum = 0.0;
 		for (i = 1; i <= j; ++i) {
-		    sum += fjac[i + j * fjac_dim1] * (qtf[i] / fnorm);
+		    sum += fjac[i + j * ldfjac] * (qtf[i] / fnorm);
 		}
 		d2 = gnorm, d3 = fabs(sum / wa2[l]);
 		gnorm = max(d2,d3);
@@ -419,7 +416,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x,
 	l = ipvt[j];
 	temp = wa1[l];
 	for (i = 1; i <= j; ++i) {
-	    wa3[i] += fjac[i + j * fjac_dim1] * temp;
+	    wa3[i] += fjac[i + j * ldfjac] * temp;
 	}
     }
     temp1 = enorm_(n, &wa3[1]) / fnorm;

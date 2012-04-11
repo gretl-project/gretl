@@ -82,7 +82,7 @@ int qrfac_(int m, int n, double *a, int lda,
 {
     const double p05 = .05;
 
-    int a_dim1, a_offset, i2, i3;
+    int a_offset, i2, i3;
     double d1, d2, d3;
 
     int i, j, k, jp1;
@@ -96,8 +96,7 @@ int qrfac_(int m, int n, double *a, int lda,
     --wa;
     --acnorm;
     --rdiag;
-    a_dim1 = lda;
-    a_offset = 1 + a_dim1;
+    a_offset = 1 + lda;
     a -= a_offset;
     --ipvt;
 
@@ -105,7 +104,7 @@ int qrfac_(int m, int n, double *a, int lda,
 
     /* compute the initial column norms and initialize several arrays */
     for (j = 1; j <= n; ++j) {
-	acnorm[j] = enorm_(m, &a[j * a_dim1 + 1]);
+	acnorm[j] = enorm_(m, &a[j * lda + 1]);
 	rdiag[j] = acnorm[j];
 	wa[j] = rdiag[j];
 	ipvt[j] = j;
@@ -124,9 +123,9 @@ int qrfac_(int m, int n, double *a, int lda,
 	}
 	if (kmax != j) {
 	    for (i = 1; i <= m; ++i) {
-		temp = a[i + j * a_dim1];
-		a[i + j * a_dim1] = a[i + kmax * a_dim1];
-		a[i + kmax * a_dim1] = temp;
+		temp = a[i + j * lda];
+		a[i + j * lda] = a[i + kmax * lda];
+		a[i + kmax * lda] = temp;
 	    }
 	    rdiag[kmax] = rdiag[j];
 	    wa[kmax] = wa[j];
@@ -140,17 +139,17 @@ int qrfac_(int m, int n, double *a, int lda,
 	*/
 
 	i2 = m - j + 1;
-	ajnorm = enorm_(i2, &a[j + j * a_dim1]);
+	ajnorm = enorm_(i2, &a[j + j * lda]);
 	if (ajnorm == 0.0) {
 	    goto L100;
 	}
-	if (a[j + j * a_dim1] < 0.0) {
+	if (a[j + j * lda] < 0.0) {
 	    ajnorm = -ajnorm;
 	}
 	for (i = j; i <= m; ++i) {
-	    a[i + j * a_dim1] /= ajnorm;
+	    a[i + j * lda] /= ajnorm;
 	}
-	a[j + j * a_dim1] += 1.0;
+	a[j + j * lda] += 1.0;
 
 	/* apply the transformation to the remaining columns
 	   and update the norms 
@@ -163,21 +162,21 @@ int qrfac_(int m, int n, double *a, int lda,
 	for (k = jp1; k <= n; ++k) {
 	    sum = 0.0;
 	    for (i = j; i <= m; ++i) {
-		sum += a[i + j * a_dim1] * a[i + k * a_dim1];
+		sum += a[i + j * lda] * a[i + k * lda];
 	    }
-	    temp = sum / a[j + j * a_dim1];
+	    temp = sum / a[j + j * lda];
 	    for (i = j; i <= m; ++i) {
-		a[i + k * a_dim1] -= temp * a[i + j * a_dim1];
+		a[i + k * lda] -= temp * a[i + j * lda];
 	    }
 	    if (rdiag[k] != 0.0) {
-		temp = a[j + k * a_dim1] / rdiag[k];
+		temp = a[j + k * lda] / rdiag[k];
 		d3 = temp;
 		d1 = 0.0, d2 = 1.0 - d3 * d3;
 		rdiag[k] *= sqrt((max(d1,d2)));
 		d1 = rdiag[k] / wa[k];
 		if (p05 * (d1 * d1) <= epsmch) {
 		    i3 = m - j;
-		    rdiag[k] = enorm_(i3, &a[jp1 + k * a_dim1]);
+		    rdiag[k] = enorm_(i3, &a[jp1 + k * lda]);
 		    wa[k] = rdiag[k];
 		}
 	    }

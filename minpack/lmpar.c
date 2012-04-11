@@ -103,7 +103,7 @@ int lmpar_(int n, double *r, int ldr,
     const double p1 = .1;
     const double p001 = .001;
 
-    int r_dim1, r_offset;
+    int r_offset;
     double d1, d2;
 
     int i, j, k, l;
@@ -123,8 +123,7 @@ int lmpar_(int n, double *r, int ldr,
     --qtb;
     --diag;
     --ipvt;
-    r_dim1 = ldr;
-    r_offset = 1 + r_dim1;
+    r_offset = 1 + ldr;
     r -= r_offset;
 
     /* dwarf is the smallest positive magnitude */
@@ -136,7 +135,7 @@ int lmpar_(int n, double *r, int ldr,
     nsing = n;
     for (j = 1; j <= n; ++j) {
 	wa1[j] = qtb[j];
-	if (r[j + j * r_dim1] == 0.0 && nsing == n) {
+	if (r[j + j * ldr] == 0.0 && nsing == n) {
 	    nsing = j - 1;
 	}
 	if (nsing < n) {
@@ -147,12 +146,12 @@ int lmpar_(int n, double *r, int ldr,
     if (nsing >= 1) {
 	for (k = 1; k <= nsing; ++k) {
 	    j = nsing - k + 1;
-	    wa1[j] /= r[j + j * r_dim1];
+	    wa1[j] /= r[j + j * ldr];
 	    temp = wa1[j];
 	    jm1 = j - 1;
 	    if (jm1 >= 1) {
 		for (i = 1; i <= jm1; ++i) {
-		    wa1[i] -= r[i + j * r_dim1] * temp;
+		    wa1[i] -= r[i + j * ldr] * temp;
 		}
 	    }
 	}
@@ -193,10 +192,10 @@ int lmpar_(int n, double *r, int ldr,
 	    jm1 = j - 1;
 	    if (jm1 >= 1) {
 		for (i = 1; i <= jm1; ++i) {
-		    sum += r[i + j * r_dim1] * wa1[i];
+		    sum += r[i + j * ldr] * wa1[i];
 		}
 	    }
-	    wa1[j] = (wa1[j] - sum) / r[j + j * r_dim1];
+	    wa1[j] = (wa1[j] - sum) / r[j + j * ldr];
 	}
 	temp = enorm_(n, &wa1[1]);
 	parl = fp / *delta / temp / temp;
@@ -207,7 +206,7 @@ int lmpar_(int n, double *r, int ldr,
     for (j = 1; j <= n; ++j) {
 	sum = 0.0;
 	for (i = 1; i <= j; ++i) {
-	    sum += r[i + j * r_dim1] * qtb[i];
+	    sum += r[i + j * ldr] * qtb[i];
 	}
 	l = ipvt[j];
 	wa1[j] = sum / diag[l];
@@ -277,7 +276,7 @@ int lmpar_(int n, double *r, int ldr,
 	    jp1 = j + 1;
 	    if (n >= jp1) {
 		for (i = jp1; i <= n; ++i) {
-		    wa1[i] -= r[i + j * r_dim1] * temp;
+		    wa1[i] -= r[i + j * ldr] * temp;
 		}
 	    }
 	}
