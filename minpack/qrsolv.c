@@ -79,25 +79,23 @@ int qrsolv_(int n, double *r, int ldr,
 {
     const double p5 = .5;
     const double p25 = .25;
-
-    int r_offset;
-
+    double tanx, cosx, sinx, cotan;
+    double sum, temp, qtbpj;
     int i, j, k, l, jp1, kp1;
-    double tanx, cosx, sinx, sum, temp, cotan;
     int nsing;
-    double qtbpj;
 
+    int r_offset = 1 + ldr;
+    r -= r_offset;
     --wa;
     --sdiag;
     --x;
     --qtb;
     --diag;
     --ipvt;
-    r_offset = 1 + ldr;
-    r -= r_offset;
 
-    /* copy r and (q transpose)*b to preserve input and initialize s.
-       in particular, save the diagonal elements of r in x */
+    /* copy r and Q'*b to preserve input and initialize s;
+       in particular, save the diagonal elements of r in x 
+    */
 
     for (j = 1; j <= n; ++j) {
 	for (i = j; i <= n; ++i) {
@@ -107,13 +105,12 @@ int qrsolv_(int n, double *r, int ldr,
 	wa[j] = qtb[j];
     }
 
-    /* eliminate the diagonal matrix d using a givens rotation */
+    /* eliminate the diagonal matrix d using a Givens rotation */
 
     for (j = 1; j <= n; ++j) {
 	/* prepare the row of d to be eliminated, locating the
-	   diagonal element using p from the qr factorization 
+	   diagonal element using p from the QR factorization 
 	*/
-
 	l = ipvt[j];
 	if (diag[l] == 0.0) {
 	    goto store;
@@ -124,8 +121,9 @@ int qrsolv_(int n, double *r, int ldr,
 	sdiag[j] = diag[l];
 
 	/* the transformations to eliminate the row of d
-	   modify only a single element of (q transpose)*b
-	   beyond the first n, which is initially zero. */
+	   modify only a single element of Q'*b beyond the 
+	   first n, which is initially zero 
+	*/
 
 	qtbpj = 0.0;
 	for (k = j; k <= n; ++k) {
@@ -146,10 +144,9 @@ int qrsolv_(int n, double *r, int ldr,
 	    }
 
 	    /* compute the modified diagonal element of r and
-	       the modified element of ((q transpose)*b,0).
+	       the modified element of (Q'*b,0).
 	    */
-	    r[k + k * ldr] = cosx * r[k + k * ldr] + 
-		sinx * sdiag[k];
+	    r[k + k * ldr] = cosx * r[k + k * ldr] + sinx * sdiag[k];
 	    temp = cosx * wa[k] + sinx * qtbpj;
 	    qtbpj = -sinx * wa[k] + cosx * qtbpj;
 	    wa[k] = temp;
@@ -174,8 +171,9 @@ int qrsolv_(int n, double *r, int ldr,
 	r[j + j * ldr] = x[j];
     }
 
-    /* solve the triangular system for z. if the system is
-       singular, then obtain a least squares solution. */
+    /* solve the triangular system for z; if the system is
+       singular, then obtain a least squares solution 
+    */
 
     nsing = n;
     for (j = 1; j <= n; ++j) {

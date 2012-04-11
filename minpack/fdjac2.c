@@ -68,10 +68,6 @@ c     subprograms called
 c
 c       user-supplied ...... fcn
 c
-c       minpack-supplied ... dpmpar
-c
-c       fortran-supplied ... dabs,dmax1,dsqrt
-c
 c     argonne national laboratory. minpack project. march 1980.
 c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 */
@@ -80,33 +76,24 @@ int fdjac2_(S_fp fcn, int m, int n, double *x,
 	    double *fvec, double *fjac, int ldfjac, int *iflag, 
 	    double epsfcn, double *wa, void *p)
 {
-    int fjac_offset;
-    double h;
+    double h, eps, temp;
     int i, j;
-    double eps, temp, epsmch;
 
-    --wa;
-    --fvec;
-    --x;
-    fjac_offset = 1 + ldfjac;
-    fjac -= fjac_offset;
+    eps = sqrt(max(epsfcn, DBL_EPSILON));
 
-    epsmch = DBL_EPSILON;
-    eps = sqrt(max(epsfcn, epsmch));
-
-    for (j = 1; j <= n; ++j) {
+    for (j = 0; j < n; j++) {
 	temp = x[j];
 	h = eps * fabs(temp);
 	if (h == 0.0) {
 	    h = eps;
 	}
 	x[j] = temp + h;
-	(*fcn)(m, n, &x[1], &wa[1], iflag, p);
+	(*fcn)(m, n, x, wa, iflag, p);
 	if (*iflag < 0) {
 	    return 0;
 	}
 	x[j] = temp;
-	for (i = 1; i <= m; ++i) {
+	for (i = 0; i < m; i++) {
 	    fjac[i + j * ldfjac] = (wa[i] - fvec[i]) / h;
 	}
     }

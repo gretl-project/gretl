@@ -81,23 +81,17 @@ int qrfac_(int m, int n, double *a, int lda,
 	   double *wa)
 {
     const double p05 = .05;
-
-    int a_offset, i2, i3;
     double d1, d2, d3;
-
+    double sum, temp;
+    double epsmch, ajnorm;
+    int i2, i3, kmax, minmn;
     int i, j, k, jp1;
-    double sum;
-    int kmax;
-    double temp;
-    int minmn;
-    double epsmch;
-    double ajnorm;
 
+    int a_offset = 1 + lda;
+    a -= a_offset;
     --wa;
     --acnorm;
     --rdiag;
-    a_offset = 1 + lda;
-    a -= a_offset;
     --ipvt;
 
     epsmch = DBL_EPSILON;
@@ -110,9 +104,9 @@ int qrfac_(int m, int n, double *a, int lda,
 	ipvt[j] = j;
     }
 
-    /* reduce a to r with Householder transformations. */
+    /* reduce a to r with Householder transformations */
 
-    minmn = min(m,n);
+    minmn = min(m, n);
     for (j = 1; j <= minmn; ++j) {
 	/* bring the column of largest norm into the pivot position */
 	kmax = j;
@@ -134,14 +128,15 @@ int qrfac_(int m, int n, double *a, int lda,
 	    ipvt[kmax] = k;
 	}
 
-	/* compute the householder transformation to reduce the
+	/* compute the Householder transformation to reduce the
 	   j-th column of a to a multiple of the j-th unit vector 
 	*/
 
 	i2 = m - j + 1;
 	ajnorm = enorm_(i2, &a[j + j * lda]);
 	if (ajnorm == 0.0) {
-	    goto L100;
+	    rdiag[j] = -ajnorm;
+	    continue;
 	}
 	if (a[j + j * lda] < 0.0) {
 	    ajnorm = -ajnorm;
@@ -156,32 +151,30 @@ int qrfac_(int m, int n, double *a, int lda,
 	*/
 
 	jp1 = j + 1;
-	if (n < jp1) {
-	    goto L100;
-	}
-	for (k = jp1; k <= n; ++k) {
-	    sum = 0.0;
-	    for (i = j; i <= m; ++i) {
-		sum += a[i + j * lda] * a[i + k * lda];
-	    }
-	    temp = sum / a[j + j * lda];
-	    for (i = j; i <= m; ++i) {
-		a[i + k * lda] -= temp * a[i + j * lda];
-	    }
-	    if (rdiag[k] != 0.0) {
-		temp = a[j + k * lda] / rdiag[k];
-		d3 = temp;
-		d1 = 0.0, d2 = 1.0 - d3 * d3;
-		rdiag[k] *= sqrt((max(d1,d2)));
-		d1 = rdiag[k] / wa[k];
-		if (p05 * (d1 * d1) <= epsmch) {
-		    i3 = m - j;
-		    rdiag[k] = enorm_(i3, &a[jp1 + k * lda]);
-		    wa[k] = rdiag[k];
+	if (n >= jp1) {
+	    for (k = jp1; k <= n; ++k) {
+		sum = 0.0;
+		for (i = j; i <= m; ++i) {
+		    sum += a[i + j * lda] * a[i + k * lda];
+		}
+		temp = sum / a[j + j * lda];
+		for (i = j; i <= m; ++i) {
+		    a[i + k * lda] -= temp * a[i + j * lda];
+		}
+		if (rdiag[k] != 0.0) {
+		    temp = a[j + k * lda] / rdiag[k];
+		    d3 = temp;
+		    d1 = 0.0, d2 = 1.0 - d3 * d3;
+		    rdiag[k] *= sqrt((max(d1,d2)));
+		    d1 = rdiag[k] / wa[k];
+		    if (p05 * (d1 * d1) <= epsmch) {
+			i3 = m - j;
+			rdiag[k] = enorm_(i3, &a[jp1 + k * lda]);
+			wa[k] = rdiag[k];
+		    }
 		}
 	    }
 	}
-    L100:
 	rdiag[j] = -ajnorm;
     }
 

@@ -170,9 +170,7 @@ c     subprograms called
 c
 c       user-supplied ...... fcn
 c
-c       minpack-supplied ... dpmpar,enorm,lmpar,qrfac
-c
-c       fortran-supplied ... dabs,dmax1,dmin1,dsqrt,mod
+c       minpack-supplied ... enorm,lmpar,qrfac
 c
 c     argonne national laboratory. minpack project. march 1980.
 c     burton s. garbow, kenneth e. hillstrom, jorge j. more
@@ -180,7 +178,7 @@ c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 
 int lmder_(S_fp fcn, int m, int n, double *x, 
 	   double *fvec, double *fjac, int ldfjac, double ftol,
-	   double xtol, double gtol, int *maxfev, double *diag, 
+	   double xtol, double gtol, int maxfev, double *diag, 
 	   int mode, double factor, int nprint, int *info, 
 	   int *nfev, int *njev, int *ipvt, double *qtf, 
 	   double *wa1, double *wa2, double *wa3, double *wa4,
@@ -191,51 +189,30 @@ int lmder_(S_fp fcn, int m, int n, double *x,
     const double p25 = .25;
     const double p75 = .75;
     const double p0001 = 1e-4;
-
-    /* System generated locals */
-    int fjac_offset;
-    double d1;
-
-    /* Local variables */
-    int i, j, l;
-    double par, sum;
-    int iter;
+    double d1, par, sum;
     double temp1, temp2;
-    int iflag;
-    double delta;
-    double ratio;
+    double ratio, delta = 0;
     double fnorm, gnorm, pnorm, fnorm1, actred, dirder, 
 	    epsmch, prered;
     double xnorm = 0.0, temp = 0.0;
-
-    --wa4;
-    --fvec;
-    --wa3;
-    --wa2;
-    --wa1;
-    --qtf;
-    --ipvt;
-    --diag;
-    --x;
-    fjac_offset = 1 + ldfjac;
-    fjac -= fjac_offset;
+    int iter, iflag = 0;
+    int i, j, l;
 
     epsmch = DBL_EPSILON;
 
     *info = 0;
-    iflag = 0;
     *nfev = 0;
     *njev = 0;
 
     /* check the input parameters for errors */
 
     if (n <= 0 || m < n || ldfjac < m || ftol < 0.0 || xtol < 0.0 || 
-	    gtol < 0.0 || *maxfev <= 0 || factor <= 0.0) {
+	    gtol < 0.0 || maxfev <= 0 || factor <= 0.0) {
 	goto bailout;
     }
 
     if (mode == 2) {
-	for (j = 1; j <= n; ++j) {
+	for (j = 0; j < n; ++j) {
 	    if (diag[j] <= 0.0) {
 		goto bailout;
 	    }
@@ -246,14 +223,14 @@ int lmder_(S_fp fcn, int m, int n, double *x,
        and calculate its norm */
 
     iflag = 1;
-    (*fcn)(m, n, &x[1], &fvec[1], &fjac[fjac_offset], ldfjac, &iflag, p);
+    (*fcn)(m, n, x, fvec, fjac, ldfjac, &iflag, p);
     *nfev = 1;
     if (iflag < 0) {
 	goto bailout;
     }
-    fnorm = enorm_(m, &fvec[1]);
+    fnorm = enorm_(m, fvec);
 
-    /* initialize levenberg-marquardt parameter and iteration counter */
+    /* initialize Levenberg-Marquardt parameter and iter counter */
     par = 0.0;
     iter = 1;
 
@@ -263,29 +240,25 @@ int lmder_(S_fp fcn, int m, int n, double *x,
     /* calculate the jacobian matrix */
 
     iflag = 2;
-    (*fcn)(m, n, &x[1], &fvec[1], &fjac[fjac_offset], ldfjac, &iflag, p);
-    ++(*njev);
+    (*fcn)(m, n, x, fvec, fjac, ldfjac, &iflag, p);
+    *njev += 1;
     if (iflag < 0) {
 	goto bailout;
     }
 
     /* if requested, call fcn to enable printing of iterates */
-
     if (nprint > 0) {
 	iflag = 0;
 	if ((iter - 1) % nprint == 0) {
-	    (*fcn)(m, n, &x[1], &fvec[1], &fjac[fjac_offset], 
-		   ldfjac, &iflag, p);
+	    (*fcn)(m, n, x, fvec, fjac, ldfjac, &iflag, p);
 	}
 	if (iflag < 0) {
 	    goto bailout;
 	}
     }
 
-    /* compute the QR factorization of the jacobian. */
-
-    qrfac_(m, n, &fjac[fjac_offset], ldfjac, &ipvt[1],
-	   &wa1[1], &wa2[1], &wa3[1]);
+    /* compute the QR factorization of the jacobian */
+    qrfac_(m, n, fjac, ldfjac, ipvt, wa1, wa2, wa3);
 
     /* on the first iteration and if mode is 1, scale according
        to the norms of the columns of the initial jacobian 
@@ -293,42 +266,39 @@ int lmder_(S_fp fcn, int m, int n, double *x,
 
     if (iter == 1) {
 	if (mode != 2) {
-	    for (j = 1; j <= n; ++j) {
+	    for (j = 0; j < n; ++j) {
 		diag[j] = wa2[j];
 		if (wa2[j] == 0.0) {
 		    diag[j] = 1.0;
 		}
 	    }
 	}
-
 	/* on the first iteration, calculate the norm of the scaled x
 	   and initialize the step bound delta 
         */
-	for (j = 1; j <= n; ++j) {
+	for (j = 0; j < n; ++j) {
 	    wa3[j] = diag[j] * x[j];
 	}
-	xnorm = enorm_(n, &wa3[1]);
+	xnorm = enorm_(n, wa3);
 	delta = factor * xnorm;
 	if (delta == 0.0) {
 	    delta = factor;
 	}
     }
 
-    /* form (q transpose)*fvec and store the first n components in
-       qtf 
-    */
+    /* form Q'*fvec and store the first n components in qtf */
 
-    for (i = 1; i <= m; ++i) {
+    for (i = 0; i < m; ++i) {
 	wa4[i] = fvec[i];
     }
-    for (j = 1; j <= n; ++j) {
+    for (j = 0; j < n; ++j) {
 	if (fjac[j + j * ldfjac] != 0.0) {
 	    sum = 0.0;
-	    for (i = j; i <= m; ++i) {
+	    for (i = j; i < m; ++i) {
 		sum += fjac[i + j * ldfjac] * wa4[i];
 	    }
 	    temp = -sum / fjac[j + j * ldfjac];
-	    for (i = j; i <= m; ++i) {
+	    for (i = j; i < m; ++i) {
 		wa4[i] += fjac[i + j * ldfjac] * temp;
 	    }
 	}
@@ -340,11 +310,11 @@ int lmder_(S_fp fcn, int m, int n, double *x,
 
     gnorm = 0.0;
     if (fnorm != 0.0) {
-	for (j = 1; j <= n; ++j) {
-	    l = ipvt[j];
+	for (j = 0; j < n; ++j) {
+	    l = ipvt[j] - 1; /* FIXME ipvt */
 	    if (wa2[l] != 0.0) {
 		sum = 0.0;
-		for (i = 1; i <= j; ++i) {
+		for (i = 0; i <= j; ++i) {
 		    sum += fjac[i + j * ldfjac] * (qtf[i] / fnorm);
 		}
 		d1 = fabs(sum / wa2[l]);
@@ -363,7 +333,7 @@ int lmder_(S_fp fcn, int m, int n, double *x,
 
     /* rescale if necessary */
     if (mode != 2) {
-	for (j = 1; j <= n; ++j) {
+	for (j = 0; j < n; ++j) {
 	    diag[j] = max(diag[j], wa2[j]);
 	}
     }
@@ -373,32 +343,30 @@ int lmder_(S_fp fcn, int m, int n, double *x,
     while (1) {
 
 	/* determine the Levenberg-Marquardt parameter */
-	lmpar_(n, &fjac[fjac_offset], ldfjac, &ipvt[1], &diag[1], 
-	       &qtf[1], &delta, &par, &wa1[1], &wa2[1], &wa3[1], 
-	       &wa4[1]);
+	lmpar_(n, fjac, ldfjac, ipvt, diag, qtf, delta, 
+	       &par, wa1, wa2, wa3, wa4);
 
 	/* store the direction p and x + p; calculate the norm of p */
-	for (j = 1; j <= n; ++j) {
+	for (j = 0; j < n; ++j) {
 	    wa1[j] = -wa1[j];
 	    wa2[j] = x[j] + wa1[j];
 	    wa3[j] = diag[j] * wa1[j];
 	}
-	pnorm = enorm_(n, &wa3[1]);
+	pnorm = enorm_(n, wa3);
 
 	/* on the first iteration, adjust the initial step bound */
 	if (iter == 1) {
-	    delta = min(delta,pnorm);
+	    delta = min(delta, pnorm);
 	}
 
 	/* evaluate the function at x + p and calculate its norm */
 	iflag = 1;
-	(*fcn)(m, n, &wa2[1], &wa4[1], &fjac[fjac_offset], 
-	       ldfjac, &iflag, p);
-	++(*nfev);
+	(*fcn)(m, n, wa2, wa4, fjac, ldfjac, &iflag, p);
+	*nfev += 1;
 	if (iflag < 0) {
 	    goto bailout;
 	}
-	fnorm1 = enorm_(m, &wa4[1]);
+	fnorm1 = enorm_(m, wa4);
 
 	/* compute the scaled actual reduction */
 	actred = -1.0;
@@ -407,23 +375,24 @@ int lmder_(S_fp fcn, int m, int n, double *x,
 	    actred = 1.0 - d1 * d1;
 	}
 
-	/* compute the scaled predicted reduction and */
-	/* the scaled directional derivative. */
-	for (j = 1; j <= n; ++j) {
+	/* compute the scaled predicted reduction and
+	   the scaled directional derivative 
+	*/
+	for (j = 0; j < n; ++j) {
 	    wa3[j] = 0.0;
-	    l = ipvt[j];
+	    l = ipvt[j] - 1; /* FIXME ipvt */
 	    temp = wa1[l];
-	    for (i = 1; i <= j; ++i) {
+	    for (i = 0; i <= j; ++i) {
 		wa3[i] += fjac[i + j * ldfjac] * temp;
 	    }
 	}
-	temp1 = enorm_(n, &wa3[1]) / fnorm;
+	temp1 = enorm_(n, wa3) / fnorm;
 	temp2 = sqrt(par) * pnorm / fnorm;
 	prered = temp1 * temp1 + temp2 * temp2 / p5;
 	dirder = -(temp1 * temp1 + temp2 * temp2);
 
-	/* compute the ratio of the actual to the predicted */
-	/* reduction. */
+	/* compute the ratio of the actual to the predicted
+	   reduction */
 
 	ratio = 0.0;
 	if (prered != 0.0) {
@@ -452,15 +421,15 @@ int lmder_(S_fp fcn, int m, int n, double *x,
 	/* test for successful iteration */
 
 	if (ratio >= p0001) {
-	    /* successful iteration. update x, fvec, and their norms */
-	    for (j = 1; j <= n; ++j) {
+	    /* successful iteration: update x, fvec, and their norms */
+	    for (j = 0; j < n; ++j) {
 		x[j] = wa2[j];
 		wa2[j] = diag[j] * x[j];
 	    }
-	    for (i = 1; i <= m; ++i) {
+	    for (i = 0; i < m; ++i) {
 		fvec[i] = wa4[i];
 	    }
-	    xnorm = enorm_(n, &wa2[1]);
+	    xnorm = enorm_(n, wa2);
 	    fnorm = fnorm1;
 	    ++iter;
 	}
@@ -483,7 +452,7 @@ int lmder_(S_fp fcn, int m, int n, double *x,
 
 	/* tests for termination and stringent tolerances */
 
-	if (*nfev >= *maxfev) {
+	if (*nfev >= maxfev) {
 	    *info = 5;
 	}
 	if (fabs(actred) <= epsmch && prered <= epsmch && p5 * ratio <= 1.0) {
@@ -510,14 +479,14 @@ int lmder_(S_fp fcn, int m, int n, double *x,
 
  bailout:
 
-    /* termination, either normal or user imposed */
+    /* termination, either normal or user-imposed */
 
     if (iflag < 0) {
 	*info = iflag;
     }
     iflag = 0;
     if (nprint > 0) {
-	(*fcn)(m, n, &x[1], &fvec[1], &fjac[fjac_offset], ldfjac, &iflag, p);
+	(*fcn)(m, n, x, fvec, fjac, ldfjac, &iflag, p);
     }
 
     return 0;

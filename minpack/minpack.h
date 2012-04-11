@@ -20,13 +20,13 @@ int chkder_(int m, int n, double *x,
 	    double *err);
 
 int lmpar_(int n, double *r, int ldr, 
-	   int *ipvt, double *diag, double *qtb, double *delta, 
+	   int *ipvt, double *diag, double *qtb, double delta, 
 	   double *par, double *x, double *sdiag, double *wa1, 
 	   double *wa2);
 
 int lmder_(S_fp fcn, int m, int n, double *x, 
 	   double *fvec, double *fjac, int ldfjac, double ftol,
-	   double xtol, double gtol, int *maxfev, double *diag, 
+	   double xtol, double gtol, int maxfev, double *diag, 
 	   int mode, double factor, int nprint, 
 	   int *info, int *nfev, int *njev, int *ipvt, 
 	   double *qtf, double *wa1, double *wa2, double *wa3, 

@@ -87,35 +87,29 @@ c       wa1 and wa2 are work arrays of length n.
 c
 c     subprograms called
 c
-c       minpack-supplied ... dpmpar,enorm,qrsolv
-c
-c       fortran-supplied ... dabs,dmax1,dmin1,dsqrt
+c       minpack-supplied ... enorm,qrsolv
 c
 c     argonne national laboratory. minpack project. march 1980.
 c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 */
 
 int lmpar_(int n, double *r, int ldr, 
-	   int *ipvt, double *diag, double *qtb, double *delta, 
+	   int *ipvt, double *diag, double *qtb, double delta, 
 	   double *par, double *x, double *sdiag, double *wa1, 
 	   double *wa2)
 {
     const double p1 = .1;
     const double p001 = .001;
-
-    int r_offset;
-    double d1, d2;
-
-    int i, j, k, l;
-    double fp;
-    int jm1, jp1;
-    double sum, parc, parl;
-    int iter;
+    double fp, sum, parc, parl;
     double temp, paru, dwarf;
-    int nsing;
-    double gnorm;
-    double dxnorm;
-
+    double gnorm, dxnorm;
+    double d1, d2;
+    int iter, nsing;
+    int jm1, jp1;
+    int i, j, k, l;
+    
+    int r_offset = 1 + ldr;
+    r -= r_offset;
     --wa2;
     --wa1;
     --sdiag;
@@ -123,14 +117,13 @@ int lmpar_(int n, double *r, int ldr,
     --qtb;
     --diag;
     --ipvt;
-    r_offset = 1 + ldr;
-    r -= r_offset;
 
     /* dwarf is the smallest positive magnitude */
     dwarf = DBL_MIN;
 
-    /* compute and store in x the gauss-newton direction. if the */
-    /* jacobian is rank-deficient, obtain a least squares solution. */
+    /* compute and store in x the gauss-newton direction. if the
+       jacobian is rank-deficient, obtain a least squares solution 
+    */
 
     nsing = n;
     for (j = 1; j <= n; ++j) {
@@ -143,7 +136,7 @@ int lmpar_(int n, double *r, int ldr,
 	}
     }
 
-    if (nsing >= 1) {
+    if (nsing > 0) {
 	for (k = 1; k <= nsing; ++k) {
 	    j = nsing - k + 1;
 	    wa1[j] /= r[j + j * ldr];
@@ -162,24 +155,26 @@ int lmpar_(int n, double *r, int ldr,
 	x[l] = wa1[j];
     }
 
-    /* initialize the iteration counter. */
-    /* evaluate the function at the origin, and test */
-    /* for acceptance of the gauss-newton direction. */
+    /* initialize the iteration counter.
+       evaluate the function at the origin, and test
+       for acceptance of the Gauss-Newton direction 
+    */
 
     iter = 0;
     for (j = 1; j <= n; ++j) {
 	wa2[j] = diag[j] * x[j];
     }
     dxnorm = enorm_(n, &wa2[1]);
-    fp = dxnorm - *delta;
-    if (fp <= p1 * *delta) {
+    fp = dxnorm - delta;
+    if (fp <= p1 * delta) {
 	*par = 0.0;
 	return 0;
     }
 
-    /* if the jacobian is not rank deficient, the newton */
-    /* step provides a lower bound, parl, for the zero of */
-    /* the function. otherwise set this bound to zero. */
+    /* if the jacobian is not rank deficient, the Newton
+       step provides a lower bound, parl, for the zero of
+       the function. otherwise set this bound to zero. 
+    */
 
     parl = 0.0;
     if (nsing >= n) {
@@ -198,10 +193,10 @@ int lmpar_(int n, double *r, int ldr,
 	    wa1[j] = (wa1[j] - sum) / r[j + j * ldr];
 	}
 	temp = enorm_(n, &wa1[1]);
-	parl = fp / *delta / temp / temp;
+	parl = fp / delta / temp / temp;
     }
 
-    /* calculate an upper bound, paru, for the zero of the function. */
+    /* calculate an upper bound, paru, for the zero of the function */
 
     for (j = 1; j <= n; ++j) {
 	sum = 0.0;
@@ -212,13 +207,13 @@ int lmpar_(int n, double *r, int ldr,
 	wa1[j] = sum / diag[l];
     }
     gnorm = enorm_(n, &wa1[1]);
-    paru = gnorm / *delta;
+    paru = gnorm / delta;
     if (paru == 0.0) {
-	paru = dwarf / min(*delta,p1);
+	paru = dwarf / min(delta, p1);
     }
 
-    /* if the input par lies outside of the interval (parl, paru), */
-    /* set par to the closer endpoint. */
+    /* if the input par lies outside of the interval (parl, paru),
+       set par to the closer endpoint */
 
     *par = max(*par, parl);
     *par = min(*par, paru);
@@ -251,20 +246,20 @@ int lmpar_(int n, double *r, int ldr,
 
 	dxnorm = enorm_(n, &wa2[1]);
 	temp = fp;
-	fp = dxnorm - *delta;
+	fp = dxnorm - delta;
 
 	/* If the function is small enough, accept the current value
 	   of par. Also test for the exceptional cases where parl
 	   is zero or the number of iterations has reached 10. 
 	*/
 
-	if (fabs(fp) <= p1 * *delta || 
+	if (fabs(fp) <= p1 * delta || 
 	    (parl == 0.0 && fp <= temp && temp < 0.0) ||
 	    iter == 10) {
 	    break;
 	}
 
-	/* compute the newton correction */
+	/* compute the Newton correction */
 
 	for (j = 1; j <= n; ++j) {
 	    l = ipvt[j];
@@ -282,7 +277,7 @@ int lmpar_(int n, double *r, int ldr,
 	}
 
 	temp = enorm_(n, &wa1[1]);
-	parc = fp / *delta / temp / temp;
+	parc = fp / delta / temp / temp;
 
 	/* depending on the sign of the function, update parl or paru */
 	if (fp > 0.0) {

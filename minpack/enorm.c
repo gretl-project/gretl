@@ -29,10 +29,6 @@ c       n is a positive integer input variable.
 c
 c       x is an input array of length n.
 c
-c     subprograms called
-c
-c       fortran-supplied ... dabs,dsqrt
-c
 c     argonne national laboratory. minpack project. march 1980.
 c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 */

@@ -2,13 +2,6 @@
 #include <math.h>
 #include <float.h>
 
-#define log10e 0.43429448190325182765
-
-static double d_log10 (double x)
-{
-    return log10e * log(x);
-}
-
 /*
 c     chkder:
 c
@@ -79,12 +72,6 @@ c         than 0.5 indicates that the i-th gradient is probably
 c         correct, while a value of err(i) less than 0.5 indicates
 c         that the i-th gradient is probably incorrect.
 c
-c     subprograms called
-c
-c       minpack supplied ... dpmpar
-c
-c       fortran supplied ... dabs,dlog10,dsqrt
-c
 c     argonne national laboratory. minpack project. march 1980.
 c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 c
@@ -95,27 +82,15 @@ int chkder_(int m, int n, double *x,
 	    double *xp, double *fvecp, int mode, 
 	    double *err)
 {
-    const double factor = 100.;
-
-    int fjac_offset;
-    double d;
-
+    const double factor = 100;
+    const double epsmch = DBL_EPSILON;
+    double d, eps, temp;
     int i, j;
-    double eps, temp, epsmch;
 
-    --err;
-    --fvecp;
-    --fvec;
-    --xp;
-    --x;
-    fjac_offset = 1 + ldfjac;
-    fjac -= fjac_offset;
-
-    epsmch = DBL_EPSILON;
     eps = sqrt(epsmch);
 
     if (mode == 1) {
-	for (j = 1; j <= n; ++j) {
+	for (j = 0; j < n; j++) {
 	    temp = eps * fabs(x[j]);
 	    if (temp == 0.0) {
 		temp = eps;
@@ -125,21 +100,21 @@ int chkder_(int m, int n, double *x,
     } else {
 	/* mode = 2 */
 	double epsf = factor * epsmch;
-	double epslog = d_log10(eps);
+	double epslog = log10(eps);
 
-	for (i = 1; i <= m; ++i) {
+	for (i = 0; i < m; i++) {
 	    err[i] = 0.0;
 	}
-	for (j = 1; j <= n; ++j) {
+	for (j = 0; j < n; j++) {
 	    temp = fabs(x[j]);
 	    if (temp == 0.0) {
 		temp = 1.0;
 	    }
-	    for (i = 1; i <= m; ++i) {
+	    for (i = 0; i < m; i++) {
 		err[i] += temp * fjac[i + j * ldfjac];
 	    }
 	}
-	for (i = 1; i <= m; ++i) {
+	for (i = 0; i < m; i++) {
 	    temp = 1.0;
 	    if (fvec[i] != 0.0 && fvecp[i] != 0.0 && 
 		fabs(fvecp[i] - fvec[i]) >= epsf * fabs(fvec[i])) {
@@ -148,7 +123,7 @@ int chkder_(int m, int n, double *x,
 	    }
 	    err[i] = 1.0;
 	    if (temp > epsmch && temp < eps) {
-		err[i] = (d_log10(temp) - epslog) / epslog;
+		err[i] = (log10(temp) - epslog) / epslog;
 	    }
 	    if (temp >= eps) {
 		err[i] = 0.0;
