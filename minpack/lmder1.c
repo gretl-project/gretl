@@ -17,7 +17,7 @@
 c     lmder1:
 c
 c     simplified driver for lmder, which sets various control
-c     parameters to defalt values; see lmder for details
+c     parameters to default values; see lmder.c for details
 c
 c     argonne national laboratory. minpack project. march 1980.
 c     burton s. garbow, kenneth e. hillstrom, jorge j. more
@@ -35,8 +35,8 @@ int lmder1_(S_fp fcn, int m, int n, double *x, double *fvec,
     double gtol = 0.0;
     int nprint = 0;
     int mode = 1;
-    /* iteration counts */
-    int nfev, njev;
+    /* evaluation counts */
+    int nfev = 0, njev = 0;
 
     *info = 0;
 

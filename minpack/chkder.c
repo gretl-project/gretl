@@ -94,14 +94,12 @@ int chkder_(int m, int n, double *x, double *fvec,
 	    double *fjac, int ldfjac, double *xp, 
 	    double *fvecp, int mode, double *err)
 {
-    const double factor = 100;
     const double epsmch = DBL_EPSILON;
-    double d, eps, temp;
+    double d, temp, eps = sqrt(epsmch);
     int i, j;
 
-    eps = sqrt(epsmch);
-
     if (mode == 1) {
+	/* mode 1: find a neighboring vector */
 	for (j = 0; j < n; j++) {
 	    temp = eps * fabs(x[j]);
 	    if (temp == 0.0) {
@@ -110,7 +108,8 @@ int chkder_(int m, int n, double *x, double *fvec,
 	    xp[j] = x[j] + temp;
 	}
     } else {
-	/* mode = 2 */
+	/* mode 2: assess validity of gradient */
+	const double factor = 100; 
 	double epsf = factor * epsmch;
 	double epslog = log10(eps);
 
@@ -128,8 +127,9 @@ int chkder_(int m, int n, double *x, double *fvec,
 	}
 	for (i = 0; i < m; i++) {
 	    temp = 1.0;
+	    d = fabs(fvecp[i] - fvec[i]);
 	    if (fvec[i] != 0.0 && fvecp[i] != 0.0 && 
-		fabs(fvecp[i] - fvec[i]) >= epsf * fabs(fvec[i])) {
+		d >= epsf * fabs(fvec[i])) {
 		d = fabs((fvecp[i] - fvec[i]) / eps - err[i]);
 		temp = eps * d / (fabs(fvec[i]) + fabs(fvecp[i]));
 	    }

@@ -51,9 +51,9 @@ double enorm_(int n, double *x)
     const double rdwarf = 3.834e-20;
     const double rgiant = 1.304e19;
     double agiant = rgiant / n;
-    double d1, ret_val = 0.0;
-    double s1 = 0.0, s2 = 0.0, s3 = 0.0;
+    double d, s1 = 0.0, s2 = 0.0, s3 = 0.0;
     double xabs, x1max = 0.0, x3max = 0.0;
+    double ret_val = 0.0;
     int i;
 
     for (i = 0; i < n; i++) {
@@ -64,22 +64,22 @@ double enorm_(int n, double *x)
 	} else if (xabs > rdwarf) {
 	    /* sum for large components */
 	    if (xabs > x1max) {
-		d1 = x1max / xabs;
-		s1 = 1.0 + s1 * (d1 * d1);
+		d = x1max / xabs;
+		s1 = 1.0 + s1 * (d * d);
 		x1max = xabs;
 	    } else {
-		d1 = xabs / x1max;
-		s1 += d1 * d1;
+		d = xabs / x1max;
+		s1 += d * d;
 	    }
 	} else {
 	    /* sum for small components */
 	    if (xabs > x3max) {
-		d1 = x3max / xabs;
-		s3 = 1.0 + s3 * (d1 * d1);
+		d = x3max / xabs;
+		s3 = 1.0 + s3 * (d * d);
 		x3max = xabs;
 	    } else if (xabs != 0.0) {
-		d1 = xabs / x3max;
-		s3 += d1 * d1;
+		d = xabs / x3max;
+		s3 += d * d;
 	    }
 	}
     }
