@@ -1,3 +1,16 @@
+/* 
+   This source file based on Minpack: initially converted from 
+   fortran using f2c, then rendered into relatively idiomatic
+   C with zero-based indexing throughout and pass-by-value for
+   parameters that do not function as pointers. We also rely
+   on <float.h> for the machine precision rather than Minpack's
+   dpmpar().
+
+   See README in this directory for the Minpack Copyright.
+
+   Allin Cottrell, Wake Forest University, April 2012
+*/
+
 #include "minpack.h"
 #include <math.h>
 #include <float.h>
@@ -176,29 +189,27 @@ c     argonne national laboratory. minpack project. march 1980.
 c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 */
 
-int lmder_(S_fp fcn, int m, int n, double *x, 
-	   double *fvec, double *fjac, int ldfjac, double ftol,
-	   double xtol, double gtol, int maxfev, double *diag, 
-	   int mode, double factor, int nprint, int *info, 
-	   int *nfev, int *njev, int *ipvt, double *qtf, 
-	   double *wa1, double *wa2, double *wa3, double *wa4,
-	   void *p)
+int lmder_(S_fp fcn, int m, int n, double *x, double *fvec, 
+	   double *fjac, int ldfjac, double ftol, double xtol, 
+	   double gtol, int maxfev, double *diag, int mode, 
+	   double factor, int nprint, int *info, int *nfev, 
+	   int *njev, int *ipvt, double *qtf, double *wa1, 
+	   double *wa2, double *wa3, double *wa4, void *p)
 {
     const double p1 = .1;
     const double p5 = .5;
     const double p25 = .25;
     const double p75 = .75;
     const double p0001 = 1e-4;
-    double d1, par, sum;
+    const double epsmch = DBL_EPSILON;
+    double d, par, sum;
     double temp1, temp2;
     double ratio, delta = 0;
-    double fnorm, gnorm, pnorm, fnorm1, actred, dirder, 
-	    epsmch, prered;
+    double fnorm, gnorm, pnorm, fnorm1;
+    double actred, dirder, prered;
     double xnorm = 0.0, temp = 0.0;
     int iter, iflag = 0;
     int i, j, l;
-
-    epsmch = DBL_EPSILON;
 
     *info = 0;
     *nfev = 0;
@@ -311,14 +322,14 @@ int lmder_(S_fp fcn, int m, int n, double *x,
     gnorm = 0.0;
     if (fnorm != 0.0) {
 	for (j = 0; j < n; ++j) {
-	    l = ipvt[j] - 1; /* FIXME ipvt */
+	    l = ipvt[j];
 	    if (wa2[l] != 0.0) {
 		sum = 0.0;
 		for (i = 0; i <= j; ++i) {
 		    sum += fjac[i + j * ldfjac] * (qtf[i] / fnorm);
 		}
-		d1 = fabs(sum / wa2[l]);
-		gnorm = max(gnorm, d1);
+		d = fabs(sum / wa2[l]);
+		gnorm = max(gnorm, d);
 	    }
 	}
     }
@@ -371,8 +382,8 @@ int lmder_(S_fp fcn, int m, int n, double *x,
 	/* compute the scaled actual reduction */
 	actred = -1.0;
 	if (p1 * fnorm1 < fnorm) {
-	    d1 = fnorm1 / fnorm;
-	    actred = 1.0 - d1 * d1;
+	    d = fnorm1 / fnorm;
+	    actred = 1.0 - d * d;
 	}
 
 	/* compute the scaled predicted reduction and
@@ -380,7 +391,7 @@ int lmder_(S_fp fcn, int m, int n, double *x,
 	*/
 	for (j = 0; j < n; ++j) {
 	    wa3[j] = 0.0;
-	    l = ipvt[j] - 1; /* FIXME ipvt */
+	    l = ipvt[j];
 	    temp = wa1[l];
 	    for (i = 0; i <= j; ++i) {
 		wa3[i] += fjac[i + j * ldfjac] * temp;
@@ -410,8 +421,8 @@ int lmder_(S_fp fcn, int m, int n, double *x,
 	    if (p1 * fnorm1 >= fnorm || temp < p1) {
 		temp = p1;
 	    }
-	    d1 = pnorm / p1;
-	    delta = temp * min(delta, d1);
+	    d = pnorm / p1;
+	    delta = temp * min(delta, d);
 	    par /= temp;
 	} else if (par == 0.0 || ratio >= p75) {
 	    delta = pnorm / p5;

@@ -1,3 +1,16 @@
+/* 
+   This source file based on Minpack: initially converted from 
+   fortran using f2c, then rendered into relatively idiomatic
+   C with zero-based indexing throughout and pass-by-value for
+   parameters that do not function as pointers. We also rely
+   on <float.h> for the machine precision rather than Minpack's
+   dpmpar().
+
+   See README in this directory for the Minpack Copyright.
+
+   Allin Cottrell, Wake Forest University, April 2012
+*/
+
 #include "minpack.h"
 #include <math.h>
 #include <float.h>
@@ -77,10 +90,9 @@ c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 c
 */
 
-int chkder_(int m, int n, double *x, 
-	    double *fvec, double *fjac, int ldfjac, 
-	    double *xp, double *fvecp, int mode, 
-	    double *err)
+int chkder_(int m, int n, double *x, double *fvec, 
+	    double *fjac, int ldfjac, double *xp, 
+	    double *fvecp, int mode, double *err)
 {
     const double factor = 100;
     const double epsmch = DBL_EPSILON;

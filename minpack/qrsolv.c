@@ -1,3 +1,16 @@
+/* 
+   This source file based on Minpack: initially converted from 
+   fortran using f2c, then rendered into relatively idiomatic
+   C with zero-based indexing throughout and pass-by-value for
+   parameters that do not function as pointers. We also rely
+   on <float.h> for the machine precision rather than Minpack's
+   dpmpar().
+
+   See README in this directory for the Minpack Copyright.
+
+   Allin Cottrell, Wake Forest University, April 2012
+*/
+
 #include "minpack.h"
 #include <math.h>
 
@@ -73,32 +86,23 @@ c     argonne national laboratory. minpack project. march 1980.
 c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 */
 
-int qrsolv_(int n, double *r, int ldr, 
-	    int *ipvt, double *diag, double *qtb, double *x, 
+int qrsolv_(int n, double *r, int ldr, int *ipvt, 
+	    double *diag, double *qtb, double *x, 
 	    double *sdiag, double *wa)
 {
     const double p5 = .5;
     const double p25 = .25;
     double tanx, cosx, sinx, cotan;
     double sum, temp, qtbpj;
-    int i, j, k, l, jp1, kp1;
+    int i, j, k, l;
     int nsing;
-
-    int r_offset = 1 + ldr;
-    r -= r_offset;
-    --wa;
-    --sdiag;
-    --x;
-    --qtb;
-    --diag;
-    --ipvt;
 
     /* copy r and Q'*b to preserve input and initialize s;
        in particular, save the diagonal elements of r in x 
     */
 
-    for (j = 1; j <= n; ++j) {
-	for (i = j; i <= n; ++i) {
+    for (j = 0; j < n; ++j) {
+	for (i = j; i < n; ++i) {
 	    r[i + j * ldr] = r[j + i * ldr];
 	}
 	x[j] = r[j + j * ldr];
@@ -107,7 +111,7 @@ int qrsolv_(int n, double *r, int ldr,
 
     /* eliminate the diagonal matrix d using a Givens rotation */
 
-    for (j = 1; j <= n; ++j) {
+    for (j = 0; j < n; ++j) {
 	/* prepare the row of d to be eliminated, locating the
 	   diagonal element using p from the QR factorization 
 	*/
@@ -115,7 +119,7 @@ int qrsolv_(int n, double *r, int ldr,
 	if (diag[l] == 0.0) {
 	    goto store;
 	}
-	for (k = j; k <= n; ++k) {
+	for (k = j; k < n; ++k) {
 	    sdiag[k] = 0.0;
 	}
 	sdiag[j] = diag[l];
@@ -126,8 +130,8 @@ int qrsolv_(int n, double *r, int ldr,
 	*/
 
 	qtbpj = 0.0;
-	for (k = j; k <= n; ++k) {
-	    /* determine a givens rotation which eliminates the
+	for (k = j; k < n; ++k) {
+	    /* determine a Givens rotation which eliminates the
 	       appropriate element in the current row of d
 	    */
 	    if (sdiag[k] == 0.0) {
@@ -152,14 +156,10 @@ int qrsolv_(int n, double *r, int ldr,
 	    wa[k] = temp;
 
 	    /* accumulate the tranformation in the row of s */
-	    kp1 = k + 1;
-	    if (n >= kp1) {
-		for (i = kp1; i <= n; ++i) {
-		    temp = cosx * r[i + k * ldr] + sinx * sdiag[i];
-		    sdiag[i] = -sinx * r[i + k * ldr] + 
-			cosx * sdiag[i];
-		    r[i + k * ldr] = temp;
-		}
+	    for (i = k+1; i < n; ++i) {
+		temp = cosx * r[i + k * ldr] + sinx * sdiag[i];
+		sdiag[i] = -sinx * r[i + k * ldr] + cosx * sdiag[i];
+		r[i + k * ldr] = temp;
 	    }
 	}
 
@@ -176,23 +176,20 @@ int qrsolv_(int n, double *r, int ldr,
     */
 
     nsing = n;
-    for (j = 1; j <= n; ++j) {
+    for (j = 0; j < n; ++j) {
 	if (sdiag[j] == 0.0 && nsing == n) {
-	    nsing = j - 1;
+	    nsing = j;
 	}
 	if (nsing < n) {
 	    wa[j] = 0.0;
 	}
     }
-    if (nsing >= 1) {
-	for (k = 1; k <= nsing; ++k) {
-	    j = nsing - k + 1;
+    if (nsing > 0) {
+	for (k = 0; k < nsing; ++k) {
+	    j = nsing - k - 1;
 	    sum = 0.0;
-	    jp1 = j + 1;
-	    if (nsing >= jp1) {
-		for (i = jp1; i <= nsing; ++i) {
-		    sum += r[i + j * ldr] * wa[i];
-		}
+	    for (i = j+1; i < nsing; ++i) {
+		sum += r[i + j * ldr] * wa[i];
 	    }
 	    wa[j] = (wa[j] - sum) / sdiag[j];
 	}
@@ -200,7 +197,7 @@ int qrsolv_(int n, double *r, int ldr,
 
     /* permute the components of z back to components of x */
 
-    for (j = 1; j <= n; ++j) {
+    for (j = 0; j < n; ++j) {
 	l = ipvt[j];
 	x[l] = wa[j];
     }

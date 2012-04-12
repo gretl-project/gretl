@@ -1,3 +1,16 @@
+/* 
+   This source file based on Minpack: initially converted from 
+   fortran using f2c, then rendered into relatively idiomatic
+   C with zero-based indexing throughout and pass-by-value for
+   parameters that do not function as pointers. We also rely
+   on <float.h> for the machine precision rather than Minpack's
+   dpmpar().
+
+   See README in this directory for the Minpack Copyright.
+
+   Allin Cottrell, Wake Forest University, April 2012
+*/
+
 #include "minpack.h"
 #include <math.h>
 #include <float.h>
@@ -72,8 +85,8 @@ c     argonne national laboratory. minpack project. march 1980.
 c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 */
 
-int fdjac2_(S_fp fcn, int m, int n, double *x, 
-	    double *fvec, double *fjac, int ldfjac, int *iflag, 
+int fdjac2_(S_fp fcn, int m, int n, double *x, double *fvec, 
+	    double *fjac, int ldfjac, int *iflag, 
 	    double epsfcn, double *wa, void *p)
 {
     double h, eps, temp;

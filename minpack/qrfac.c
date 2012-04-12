@@ -1,3 +1,16 @@
+/* 
+   This source file based on Minpack: initially converted from 
+   fortran using f2c, then rendered into relatively idiomatic
+   C with zero-based indexing throughout and pass-by-value for
+   parameters that do not function as pointers. We also rely
+   on <float.h> for the machine precision rather than Minpack's
+   dpmpar().
+
+   See README in this directory for the Minpack Copyright.
+
+   Allin Cottrell, Wake Forest University, April 2012
+*/
+
 #include "minpack.h"
 #include <math.h>
 #include <float.h>
@@ -68,37 +81,25 @@ c         can coincide with rdiag.
 c
 c     subprograms called
 c
-c       minpack-supplied ... dpmpar,enorm
-c
-c       fortran-supplied ... dmax1,dsqrt,min0
+c       minpack-supplied ... enorm
 c
 c     argonne national laboratory. minpack project. march 1980.
 c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 */
 
-int qrfac_(int m, int n, double *a, int lda, 
-	   int *ipvt, double *rdiag, double *acnorm, 
-	   double *wa)
+int qrfac_(int m, int n, double *a, int lda, int *ipvt, 
+	   double *rdiag, double *acnorm, double *wa)
 {
     const double p05 = .05;
-    double d1, d2, d3;
-    double sum, temp;
-    double epsmch, ajnorm;
-    int i2, i3, kmax, minmn;
+    const double epsmch = DBL_EPSILON;
+    double d, sum, temp;
+    double ajnorm;
+    int kmax, minmn;
     int i, j, k, jp1;
 
-    int a_offset = 1 + lda;
-    a -= a_offset;
-    --wa;
-    --acnorm;
-    --rdiag;
-    --ipvt;
-
-    epsmch = DBL_EPSILON;
-
     /* compute the initial column norms and initialize several arrays */
-    for (j = 1; j <= n; ++j) {
-	acnorm[j] = enorm_(m, &a[j * lda + 1]);
+    for (j = 0; j < n; ++j) {
+	acnorm[j] = enorm_(m, a + j * lda);
 	rdiag[j] = acnorm[j];
 	wa[j] = rdiag[j];
 	ipvt[j] = j;
@@ -107,16 +108,16 @@ int qrfac_(int m, int n, double *a, int lda,
     /* reduce a to r with Householder transformations */
 
     minmn = min(m, n);
-    for (j = 1; j <= minmn; ++j) {
+    for (j = 0; j < minmn; ++j) {
 	/* bring the column of largest norm into the pivot position */
 	kmax = j;
-	for (k = j; k <= n; ++k) {
+	for (k = j; k < n; ++k) {
 	    if (rdiag[k] > rdiag[kmax]) {
 		kmax = k;
 	    }
 	}
 	if (kmax != j) {
-	    for (i = 1; i <= m; ++i) {
+	    for (i = 0; i < m; ++i) {
 		temp = a[i + j * lda];
 		a[i + j * lda] = a[i + kmax * lda];
 		a[i + kmax * lda] = temp;
@@ -132,8 +133,7 @@ int qrfac_(int m, int n, double *a, int lda,
 	   j-th column of a to a multiple of the j-th unit vector 
 	*/
 
-	i2 = m - j + 1;
-	ajnorm = enorm_(i2, &a[j + j * lda]);
+	ajnorm = enorm_(m - j, &a[j + j * lda]);
 	if (ajnorm == 0.0) {
 	    rdiag[j] = -ajnorm;
 	    continue;
@@ -141,7 +141,7 @@ int qrfac_(int m, int n, double *a, int lda,
 	if (a[j + j * lda] < 0.0) {
 	    ajnorm = -ajnorm;
 	}
-	for (i = j; i <= m; ++i) {
+	for (i = j; i < m; ++i) {
 	    a[i + j * lda] /= ajnorm;
 	}
 	a[j + j * lda] += 1.0;
@@ -151,30 +151,31 @@ int qrfac_(int m, int n, double *a, int lda,
 	*/
 
 	jp1 = j + 1;
-	if (n >= jp1) {
-	    for (k = jp1; k <= n; ++k) {
-		sum = 0.0;
-		for (i = j; i <= m; ++i) {
-		    sum += a[i + j * lda] * a[i + k * lda];
+	for (k = jp1; k < n; ++k) {
+	    sum = 0.0;
+	    for (i = j; i < m; ++i) {
+		sum += a[i + j * lda] * a[i + k * lda];
+	    }
+	    temp = sum / a[j + j * lda];
+	    for (i = j; i < m; ++i) {
+		a[i + k * lda] -= temp * a[i + j * lda];
+	    }
+	    if (rdiag[k] != 0.0) {
+		temp = a[j + k * lda] / rdiag[k];
+		d = 1.0 - temp * temp;
+		if (d > 0) {
+		    rdiag[k] *= sqrt(d);
+		} else {
+		    rdiag[k] = 0.0;
 		}
-		temp = sum / a[j + j * lda];
-		for (i = j; i <= m; ++i) {
-		    a[i + k * lda] -= temp * a[i + j * lda];
-		}
-		if (rdiag[k] != 0.0) {
-		    temp = a[j + k * lda] / rdiag[k];
-		    d3 = temp;
-		    d1 = 0.0, d2 = 1.0 - d3 * d3;
-		    rdiag[k] *= sqrt((max(d1,d2)));
-		    d1 = rdiag[k] / wa[k];
-		    if (p05 * (d1 * d1) <= epsmch) {
-			i3 = m - j;
-			rdiag[k] = enorm_(i3, &a[jp1 + k * lda]);
-			wa[k] = rdiag[k];
-		    }
+		d = rdiag[k] / wa[k];
+		if (p05 * (d * d) <= epsmch) {
+		    rdiag[k] = enorm_(m - jp1, &a[jp1 + k * lda]);
+		    wa[k] = rdiag[k];
 		}
 	    }
 	}
+
 	rdiag[j] = -ajnorm;
     }
 

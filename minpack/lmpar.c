@@ -1,3 +1,16 @@
+/* 
+   This source file based on Minpack: initially converted from 
+   fortran using f2c, then rendered into relatively idiomatic
+   C with zero-based indexing throughout and pass-by-value for
+   parameters that do not function as pointers. We also rely
+   on <float.h> for the machine precision rather than Minpack's
+   dpmpar().
+
+   See README in this directory for the Minpack Copyright.
+
+   Allin Cottrell, Wake Forest University, April 2012
+*/
+
 #include "minpack.h"
 #include <math.h>
 #include <float.h>
@@ -93,19 +106,16 @@ c     argonne national laboratory. minpack project. march 1980.
 c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 */
 
-int lmpar_(int n, double *r, int ldr, 
-	   int *ipvt, double *diag, double *qtb, double delta, 
-	   double *par, double *x, double *sdiag, double *wa1, 
-	   double *wa2)
+int lmpar_(int n, double *r, int ldr, int *ipvt, double *diag, 
+	   double *qtb, double delta, double *par, double *x, 
+	   double *sdiag, double *wa1, double *wa2)
 {
     const double p1 = .1;
     const double p001 = .001;
     double fp, sum, parc, parl;
     double temp, paru, dwarf;
-    double gnorm, dxnorm;
-    double d1, d2;
+    double d, gnorm, dxnorm;
     int iter, nsing;
-    int jm1, jp1;
     int i, j, k, l;
     
     /* dwarf is the smallest positive magnitude */
@@ -116,33 +126,29 @@ int lmpar_(int n, double *r, int ldr,
     */
 
     nsing = n;
-    for (j = 1; j <= n; ++j) {
-	k = j - 1; /* testing */
-	wa1[k] = qtb[k];
-	if (r[k + k * ldr] == 0.0 && nsing == n) {
-	    nsing = j - 1;
+    for (j = 0; j < n; ++j) {
+	wa1[j] = qtb[j];
+	if (r[j + j * ldr] == 0.0 && nsing == n) {
+	    nsing = j;
 	}
 	if (nsing < n) {
-	    wa1[k] = 0.0;
+	    wa1[j] = 0.0;
 	}
     }
 
-    if (nsing >= 1) {
-	for (k = 1; k <= nsing; ++k) {
-	    j = nsing - k + 1;
-	    wa1[j-1] /= r[(j-1) + (j-1) * ldr];
-	    temp = wa1[j-1];
-	    jm1 = j - 1;
-	    if (jm1 >= 1) {
-		for (i = 1; i <= jm1; ++i) {
-		    wa1[i-1] -= r[(i-1) + (j-1) * ldr] * temp;
-		}
+    if (nsing > 0) {
+	for (k = 0; k < nsing; ++k) {
+	    j = nsing - k - 1;
+	    wa1[j] /= r[j + j * ldr];
+	    temp = wa1[j];
+	    for (i = 0; i < j; ++i) {
+		wa1[i] -= r[i + j * ldr] * temp;
 	    }
 	}
     }
 
     for (j = 0; j < n; ++j) {
-	l = ipvt[j] - 1; /* FIXME ipvt */
+	l = ipvt[j];
 	x[l] = wa1[j];
     }
 
@@ -168,18 +174,15 @@ int lmpar_(int n, double *r, int ldr,
     */
 
     parl = 0.0;
-    if (nsing >= n) { /* FIXME is this consistent with the above? */
+    if (nsing >= n) {
 	for (j = 0; j < n; ++j) {
-	    l = ipvt[j] - 1; /* FIXME ipvt */
+	    l = ipvt[j];
 	    wa1[j] = diag[l] * (wa2[l] / dxnorm);
 	}
 	for (j = 0; j < n; ++j) {
 	    sum = 0.0;
-	    jm1 = j - 1;
-	    if (jm1 >= 0) {
-		for (i = 0; i <= jm1; ++i) {
-		    sum += r[i + j * ldr] * wa1[i];
-		}
+	    for (i = 0; i < j; ++i) {
+		sum += r[i + j * ldr] * wa1[i];
 	    }
 	    wa1[j] = (wa1[j] - sum) / r[j + j * ldr];
 	}
@@ -194,7 +197,7 @@ int lmpar_(int n, double *r, int ldr,
 	for (i = 0; i <= j; ++i) {
 	    sum += r[i + j * ldr] * qtb[i];
 	}
-	l = ipvt[j] - 1; /* FIXME ipvt */
+	l = ipvt[j];
 	wa1[j] = sum / diag[l];
     }
     gnorm = enorm_(n, wa1);
@@ -220,8 +223,8 @@ int lmpar_(int n, double *r, int ldr,
 	/* evaluate the function at the current value of par */
 
 	if (*par == 0.0) {
-	    d2 = p001 * paru;
-	    *par = max(dwarf, d2);
+	    d = p001 * paru;
+	    *par = max(dwarf, d);
 	}
 	temp = sqrt(*par);
 	for (j = 0; j < n; ++j) {
@@ -252,17 +255,14 @@ int lmpar_(int n, double *r, int ldr,
 	/* compute the Newton correction */
 
 	for (j = 0; j < n; ++j) {
-	    l = ipvt[j] - 1; /* FIXME ipvt */
+	    l = ipvt[j];
 	    wa1[j] = diag[l] * (wa2[l] / dxnorm);
 	}
 	for (j = 0; j < n; ++j) {
 	    wa1[j] /= sdiag[j];
 	    temp = wa1[j];
-	    jp1 = j + 1;
-	    if (n > jp1) {
-		for (i = jp1; i < n; ++i) {
-		    wa1[i] -= r[i + j * ldr] * temp;
-		}
+	    for (i = j+1; i < n; ++i) {
+		wa1[i] -= r[i + j * ldr] * temp;
 	    }
 	}
 
@@ -272,14 +272,13 @@ int lmpar_(int n, double *r, int ldr,
 	/* depending on the sign of the function, update parl or paru */
 	if (fp > 0.0) {
 	    parl = max(parl, *par);
-	}
-	if (fp < 0.0) {
+	} else if (fp < 0.0) {
 	    paru = min(paru, *par);
 	}
 
 	/* compute an improved estimate for par */
-	d1 = parl, d2 = *par + parc;
-	*par = max(d1, d2);
+	d = *par + parc;
+	*par = max(parl, d);
     }
 
     if (iter == 0) {
