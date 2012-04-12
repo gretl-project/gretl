@@ -590,8 +590,13 @@ int restore_full_sample (DATASET *dset, ExecState *state)
     if (dset->submask == RESAMPLED) {
 	err = resample_sync_dataset(dset);
     } else {
-	sync_datainfo_members(dset);
-	err = sync_data_to_full(dset);
+	if (dset->padmask != NULL) {
+	    err = undo_panel_padding(dset);
+	}
+	if (!err) {
+	    sync_datainfo_members(dset);
+	    err = sync_data_to_full(dset);
+	}
     }
 
     if (err == E_NOMERGE) {

@@ -281,6 +281,7 @@ typedef struct DATASET_ {
     char *descrip;      /* to hold info on data sources etc. */
     char *submask;      /* subsampling mask */
     char *restriction;  /* record of sub-sampling restriction */
+    char *padmask;      /* record of padding to re-balance panel data */
 } DATASET;
 
 typedef struct VMatrix_ {

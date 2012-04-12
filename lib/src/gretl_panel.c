@@ -4380,6 +4380,84 @@ static int normalize_uid_tid (const double *tid, int T,
     return 0;
 }
 
+/* handle the case where a sub-sampled panel dataset has been
+   padded to recreate a balanced panel structure: we have to
+   get rid of the padding before wetry restoring the full
+   data range
+*/
+
+int undo_panel_padding (DATASET *dset)
+{
+    char *mask = dset->padmask;
+    double **newZ;
+    char **S = NULL;
+    int n_orig = dset->n;
+    int real_n = dset->n;
+    int i, t;
+    int err = 0;
+
+    fprintf(stderr, "*** undoing panel padding\n");
+
+    for (t=0; t<dset->n; t++) {
+	if (mask[t]) {
+	    real_n--;
+	}
+    }
+
+    if (real_n == n_orig) {
+	fprintf(stderr, "strange, couldn't find any padding!\n");
+	return E_DATA;
+    }
+
+    newZ = doubles_array_new(dset->v, real_n);
+
+    if (newZ == NULL) {
+	err = E_ALLOC;
+    } else {
+	dset->n = real_n;
+	dset->t2 = dset->n - 1;
+	for (i=0; i<dset->v; i++) {
+	    for (t=0; t<real_n; t++) {
+		newZ[i][t] = (i == 0)? 1.0 : NADBL;
+	    }
+	}
+    }
+
+    if (!err && dset->S != NULL) {
+	S = strings_array_new_with_length(dset->n, OBSLEN);
+    }
+
+    if (!err) {
+	/* write rows from padded Z into the right places in newZ */
+	int s = 0;
+
+	for (t=0; t<n_orig; t++) {
+	    if (!mask[t]) {
+		for (i=1; i<dset->v; i++) {
+		    newZ[i][s] = dset->Z[i][t];
+		}
+		if (S != NULL) {
+		    strcpy(S[s], dset->S[t]);
+		}
+		s++;
+	    }
+	}
+
+	/* swap the padded arrays into Z */
+	for (i=0; i<dset->v; i++) {
+	    free(dset->Z[i]);
+	    dset->Z[i] = newZ[i];
+	}
+
+	free(newZ);
+    }
+
+    free(dset->padmask);
+    dset->padmask = NULL;
+
+    return err;
+}
+
 static int pad_panel_dataset (const double *uid, int uv, int nunits,
 			      const double *tid, int tv, int nperiods, 
 			      DATASET *dset, int ustrs, char *mask)
@@ -4389,7 +4467,7 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
     int *nuid = NULL;
     int *ntid = NULL;
     int big_n, n_orig = dset->n;
-    int i, j, s, t;
+    int i, s, t;
     int err = 0;
 
     err = normalize_uid_tid(tid, nperiods, dset, uv, tv, 
@@ -4415,27 +4493,27 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
     }
 
     if (!err) {
-	int buv = 0, btv = 0;
-	int tref = 0;
+	int j, buv = 0, btv = 0;
+
+	if (mask != NULL) {
+	    for (t=0; t<big_n; t++) {
+		mask[t] = 1;
+	    }
+	}
 
 	/* write rows from original Z into the right places in bigZ */
 	for (t=0; t<n_orig; t++) {
-	    j = 1;
 	    s = nuid[t] * nperiods + ntid[t];
 	    for (i=1; i<dset->v; i++) {
-		bigZ[j++][s] = dset->Z[i][t];
+		bigZ[i][s] = dset->Z[i][t];
 	    }
 	    if (S != NULL) {
 		strcpy(S[s], dset->S[t]);
 	    }
-	    if (mask != NULL && s > tref) {
-		/* recording the padding in "mask" */
-		for (j=tref; j<s; j++) {
-		    mask[j] = 1;
-		}
-		tref = s;
+	    if (mask != NULL) {
+		/* record (non-)padding in @mask */
+		mask[s] = 0;
 	    }
-	    tref++;
 	}
 
 	/* where are uv and tv in bigZ? */
@@ -4461,9 +4539,9 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 	}
 
 	/* swap the padded arrays into Z */
-	for (i=0, j=0; i<dset->v; i++) {
+	for (i=0; i<dset->v; i++) {
 	    free(dset->Z[i]);
-	    dset->Z[i] = bigZ[j++];
+	    dset->Z[i] = bigZ[i];
 	}
 
 	free(bigZ);
@@ -4480,6 +4558,7 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 	    dset->markers = NO_MARKERS;
 	} else {
 	    char si[OBSLEN];
+	    int j;
 
 	    for (i=0; i<nunits; i++) {
 		t = i * nperiods;
@@ -4642,7 +4721,7 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
 
     if (!err && totmiss > 0) {
 	/* do we want this? */
-	mask = calloc(fulln, 1);
+	mask = malloc(fulln);
 	rearrange_id_array(uid, nunits, n);
 	rearrange_id_array(tid, nperiods, n);
 	err = pad_panel_dataset(uid, uv, nunits, 
@@ -4659,7 +4738,12 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
 
     free(uid);
     free(tid);
-    free(mask);
+
+    if (!err && complex_subsampled()) {
+	dset->padmask = mask;
+    } else {
+	free(mask);
+    }
 
     return err;
 }

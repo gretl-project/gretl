@@ -45,6 +45,8 @@ int switch_panel_orientation (DATASET *dset);
 
 int balanced_panel (const DATASET *dset);
 
+int undo_panel_padding (DATASET *dset);
+
 int *panel_list_omit (const MODEL *orig, const int *drop, int *err);
 
 int *panel_list_add (const MODEL *orig, const int *add, int *err);

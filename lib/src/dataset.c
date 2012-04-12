@@ -147,6 +147,11 @@ void clear_datainfo (DATASET *dset, int code)
     if (dset->restriction != NULL) {
 	free(dset->restriction);
 	dset->restriction = NULL;
+    }
+
+    if (dset->padmask != NULL) {
+	free(dset->padmask);
+	dset->padmask = NULL;
     }	
 
     /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
@@ -383,6 +388,7 @@ void datainfo_init (DATASET *dset)
     dset->descrip = NULL;
     dset->submask = NULL;
     dset->restriction = NULL;
+    dset->padmask = NULL;
 
     dset->structure = CROSS_SECTION;
 }
@@ -533,6 +539,7 @@ int start_new_Z (DATASET *dset, int resample)
     dset->descrip = NULL;
     dset->submask = NULL;
     dset->restriction = NULL;
+    dset->padmask = NULL;
     
     return 0;
 }

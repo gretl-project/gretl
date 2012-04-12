@@ -121,7 +121,7 @@ int lmpar_(int n, double *r, int ldr,
     /* dwarf is the smallest positive magnitude */
     dwarf = DBL_MIN;
 
-    /* compute and store in x the gauss-newton direction. if the
+    /* compute and store in x the Gauss-Newton direction: if the
        jacobian is rank-deficient, obtain a least squares solution 
     */
 
@@ -136,7 +136,7 @@ int lmpar_(int n, double *r, int ldr,
 	}
     }
 
-    if (nsing > 0) {
+    if (nsing >= 1) {
 	for (k = 1; k <= nsing; ++k) {
 	    j = nsing - k + 1;
 	    wa1[j] /= r[j + j * ldr];
@@ -173,7 +173,7 @@ int lmpar_(int n, double *r, int ldr,
 
     /* if the jacobian is not rank deficient, the Newton
        step provides a lower bound, parl, for the zero of
-       the function. otherwise set this bound to zero. 
+       the function. otherwise set this bound to zero 
     */
 
     parl = 0.0;
@@ -229,8 +229,8 @@ int lmpar_(int n, double *r, int ldr,
 	/* evaluate the function at the current value of par */
 
 	if (*par == 0.0) {
-	    d1 = dwarf, d2 = p001 * paru;
-	    *par = max(d1, d2);
+	    d2 = p001 * paru;
+	    *par = max(dwarf, d2);
 	}
 	temp = sqrt(*par);
 	for (j = 1; j <= n; ++j) {
