@@ -108,16 +108,6 @@ int lmpar_(int n, double *r, int ldr,
     int jm1, jp1;
     int i, j, k, l;
     
-    int r_offset = 1 + ldr;
-    r -= r_offset;
-    --wa2;
-    --wa1;
-    --sdiag;
-    --x;
-    --qtb;
-    --diag;
-    --ipvt;
-
     /* dwarf is the smallest positive magnitude */
     dwarf = DBL_MIN;
 
@@ -127,31 +117,32 @@ int lmpar_(int n, double *r, int ldr,
 
     nsing = n;
     for (j = 1; j <= n; ++j) {
-	wa1[j] = qtb[j];
-	if (r[j + j * ldr] == 0.0 && nsing == n) {
+	k = j - 1; /* testing */
+	wa1[k] = qtb[k];
+	if (r[k + k * ldr] == 0.0 && nsing == n) {
 	    nsing = j - 1;
 	}
 	if (nsing < n) {
-	    wa1[j] = 0.0;
+	    wa1[k] = 0.0;
 	}
     }
 
     if (nsing >= 1) {
 	for (k = 1; k <= nsing; ++k) {
 	    j = nsing - k + 1;
-	    wa1[j] /= r[j + j * ldr];
-	    temp = wa1[j];
+	    wa1[j-1] /= r[(j-1) + (j-1) * ldr];
+	    temp = wa1[j-1];
 	    jm1 = j - 1;
 	    if (jm1 >= 1) {
 		for (i = 1; i <= jm1; ++i) {
-		    wa1[i] -= r[i + j * ldr] * temp;
+		    wa1[i-1] -= r[(i-1) + (j-1) * ldr] * temp;
 		}
 	    }
 	}
     }
 
-    for (j = 1; j <= n; ++j) {
-	l = ipvt[j];
+    for (j = 0; j < n; ++j) {
+	l = ipvt[j] - 1; /* FIXME ipvt */
 	x[l] = wa1[j];
     }
 
@@ -161,10 +152,10 @@ int lmpar_(int n, double *r, int ldr,
     */
 
     iter = 0;
-    for (j = 1; j <= n; ++j) {
+    for (j = 0; j < n; ++j) {
 	wa2[j] = diag[j] * x[j];
     }
-    dxnorm = enorm_(n, &wa2[1]);
+    dxnorm = enorm_(n, wa2);
     fp = dxnorm - delta;
     if (fp <= p1 * delta) {
 	*par = 0.0;
@@ -177,36 +168,36 @@ int lmpar_(int n, double *r, int ldr,
     */
 
     parl = 0.0;
-    if (nsing >= n) {
-	for (j = 1; j <= n; ++j) {
-	    l = ipvt[j];
+    if (nsing >= n) { /* FIXME is this consistent with the above? */
+	for (j = 0; j < n; ++j) {
+	    l = ipvt[j] - 1; /* FIXME ipvt */
 	    wa1[j] = diag[l] * (wa2[l] / dxnorm);
 	}
-	for (j = 1; j <= n; ++j) {
+	for (j = 0; j < n; ++j) {
 	    sum = 0.0;
 	    jm1 = j - 1;
-	    if (jm1 >= 1) {
-		for (i = 1; i <= jm1; ++i) {
+	    if (jm1 >= 0) {
+		for (i = 0; i <= jm1; ++i) {
 		    sum += r[i + j * ldr] * wa1[i];
 		}
 	    }
 	    wa1[j] = (wa1[j] - sum) / r[j + j * ldr];
 	}
-	temp = enorm_(n, &wa1[1]);
+	temp = enorm_(n, wa1);
 	parl = fp / delta / temp / temp;
     }
 
     /* calculate an upper bound, paru, for the zero of the function */
 
-    for (j = 1; j <= n; ++j) {
+    for (j = 0; j < n; ++j) {
 	sum = 0.0;
-	for (i = 1; i <= j; ++i) {
+	for (i = 0; i <= j; ++i) {
 	    sum += r[i + j * ldr] * qtb[i];
 	}
-	l = ipvt[j];
+	l = ipvt[j] - 1; /* FIXME ipvt */
 	wa1[j] = sum / diag[l];
     }
-    gnorm = enorm_(n, &wa1[1]);
+    gnorm = enorm_(n, wa1);
     paru = gnorm / delta;
     if (paru == 0.0) {
 	paru = dwarf / min(delta, p1);
@@ -233,18 +224,17 @@ int lmpar_(int n, double *r, int ldr,
 	    *par = max(dwarf, d2);
 	}
 	temp = sqrt(*par);
-	for (j = 1; j <= n; ++j) {
+	for (j = 0; j < n; ++j) {
 	    wa1[j] = temp * diag[j];
 	}
 
-	qrsolv_(n, &r[r_offset], ldr, &ipvt[1], &wa1[1], &qtb[1], &x[1], 
-		&sdiag[1], &wa2[1]);
+	qrsolv_(n, r, ldr, ipvt, wa1, qtb, x, sdiag, wa2);
 
-	for (j = 1; j <= n; ++j) {
+	for (j = 0; j < n; ++j) {
 	    wa2[j] = diag[j] * x[j];
 	}
 
-	dxnorm = enorm_(n, &wa2[1]);
+	dxnorm = enorm_(n, wa2);
 	temp = fp;
 	fp = dxnorm - delta;
 
@@ -261,22 +251,22 @@ int lmpar_(int n, double *r, int ldr,
 
 	/* compute the Newton correction */
 
-	for (j = 1; j <= n; ++j) {
-	    l = ipvt[j];
+	for (j = 0; j < n; ++j) {
+	    l = ipvt[j] - 1; /* FIXME ipvt */
 	    wa1[j] = diag[l] * (wa2[l] / dxnorm);
 	}
-	for (j = 1; j <= n; ++j) {
+	for (j = 0; j < n; ++j) {
 	    wa1[j] /= sdiag[j];
 	    temp = wa1[j];
 	    jp1 = j + 1;
-	    if (n >= jp1) {
-		for (i = jp1; i <= n; ++i) {
+	    if (n > jp1) {
+		for (i = jp1; i < n; ++i) {
 		    wa1[i] -= r[i + j * ldr] * temp;
 		}
 	    }
 	}
 
-	temp = enorm_(n, &wa1[1]);
+	temp = enorm_(n, wa1);
 	parc = fp / delta / temp / temp;
 
 	/* depending on the sign of the function, update parl or paru */
