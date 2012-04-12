@@ -4382,14 +4382,14 @@ static int normalize_uid_tid (const double *tid, int T,
 
 /* handle the case where a sub-sampled panel dataset has been
    padded to recreate a balanced panel structure: we have to
-   get rid of the padding before wetry restoring the full
+   get rid of the padding before we try restoring the full
    data range
 */
 
 int undo_panel_padding (DATASET *dset)
 {
     char *mask = dset->padmask;
-    double **newZ;
+    double *Zi;
     char **S = NULL;
     int n_orig = dset->n;
     int real_n = dset->n;
@@ -4409,49 +4409,46 @@ int undo_panel_padding (DATASET *dset)
 	return E_DATA;
     }
 
-    newZ = doubles_array_new(dset->v, real_n);
+    Zi = malloc(real_n * sizeof *Zi);
 
-    if (newZ == NULL) {
-	err = E_ALLOC;
-    } else {
-	dset->n = real_n;
-	dset->t2 = dset->n - 1;
-	for (i=0; i<dset->v; i++) {
-	    for (t=0; t<real_n; t++) {
-		newZ[i][t] = (i == 0)? 1.0 : NADBL;
-	    }
-	}
-    }
+    if (Zi == NULL) {
+	return E_ALLOC;
+    } 
 
-    if (!err && dset->S != NULL) {
+    if (dset->S != NULL) {
 	S = strings_array_new_with_length(dset->n, OBSLEN);
     }
 
     if (!err) {
-	/* write rows from padded Z into the right places in newZ */
-	int s = 0;
-
-	for (t=0; t<n_orig; t++) {
-	    if (!mask[t]) {
-		for (i=1; i<dset->v; i++) {
-		    newZ[i][s] = dset->Z[i][t];
-		}
-		if (S != NULL) {
-		    strcpy(S[s], dset->S[t]);
-		}
-		s++;
-	    }
-	}
-
-	/* swap the padded arrays into Z */
+	/* write non-padding rows from Z into the right places 
+	   in the reduced dataset */
+	int s;
+	
 	for (i=0; i<dset->v; i++) {
-	    free(dset->Z[i]);
-	    dset->Z[i] = newZ[i];
+	    s = 0;
+	    for (t=0; t<n_orig; t++) {
+		if (!mask[t]) {
+		   Zi[s] = dset->Z[i][t]; 
+		   if (i == 0 && S != NULL) {
+		       strcpy(S[s], dset->S[t]);
+		   }
+		   s++;
+		}
+	    }
+	    /* copy data back to dset->Z */
+	    memcpy(dset->Z[i], Zi, real_n * sizeof *Zi);
 	}
 
-	free(newZ);
+	if (dset->S != NULL && S != NULL) {
+	    free_strings_array(dset->S, n_orig);
+	    dset->S = S;
+	}
     }
 
+    free(Zi);
+
+    dset->n = real_n;
+    dset->t2 = dset->n - 1;
     free(dset->padmask);
     dset->padmask = NULL;
 

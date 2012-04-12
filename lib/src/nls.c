@@ -2446,7 +2446,7 @@ static int lm_calculate (nlspec *spec, PRN *prn)
 
     /* call minpack */
     lmder1_(nls_calc, m, n, spec->coeff, spec->fvec, spec->jac, ldjac, 
-	    &spec->tol, &info, ipvt, wa, lwa, spec);
+	    spec->tol, &info, ipvt, wa, lwa, spec);
 
     switch ((int) info) {
     case -1: 

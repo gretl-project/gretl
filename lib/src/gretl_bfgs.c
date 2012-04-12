@@ -1139,7 +1139,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 
     while (1) {
 	/* Call the L-BFGS-B code */
-	setulb_(&n, &m, b, l, u, nbd, &f, g, &reltol, &pgtol, wa, iwa, 
+	setulb_(n, m, b, l, u, nbd, &f, g, &reltol, &pgtol, wa, iwa, 
 		task, csave, lsave, isave, dsave);
 
 	iter = isave[29] + 1;
