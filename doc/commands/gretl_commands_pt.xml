@@ -1084,14 +1084,14 @@
 	caixa central contém os 50 porcento dos dados centrais, &ie; está
 	limitada pelos primeiro e terceiro quartis.  Os <quote>bigodes</quote>
         estendem-se até aos valores mínimo e máximo.  É desenhada uma linha
-	que corta a caixa na mediana.   Um símbolo <quote>+</quote> indica a
+	que corta a caixa na mediana.  Um símbolo <quote>+</quote> indica a
 	média.  Se tiver sido selecionada a opção de mostrar o intervalo de
 	confiança para a média, ele é obtido pelo método 'bootstrap' e 
-	apresentado na forma linhas a tracejado acima e abaixo da mediana.
+	apresentado na forma de linhas a tracejado acima e abaixo da mediana.
       </para> 
 
       <para context="gui">
-	A opção <quote>factorized</quote> permite examinar a distribuição 
+	A opção <opt>factorized</opt> permite examinar a distribuição 
 	de uma variável condicionada pelo valor de um fator discreto. Por
 	exemplo, se um conjunto de dados contém salários e uma variável
 	auxiliar para o sexo, você pode selecionar a variável salário como
@@ -1100,11 +1100,11 @@
       </para>
 
        <para context="cli">
-	A opção <quote>factorized</quote> permite examinar a distribuição 
+	A opção <opt>factorized</opt> permite examinar a distribuição 
 	de uma variável condicionada pelo valor de um fator discreto. Por
 	exemplo, se um conjunto de dados contém salários e uma variável
 	auxiliar para o sexo, você pode selecionar a variável salário como
-	alvo e o sexo como fator, para visualizar lado a lado gráficos
+	alvo e o sexo como fator para visualizar lado a lado gráficos
 	caixas-com-bigodes dos salários de homens e mulheres, como em
       </para>
       <code context="cli">
@@ -9475,7 +9475,7 @@
     <usage>
       <altforms>
         <altform><lit>setobs</lit> <repl>periodicity</repl> <repl>startobs</repl></altform>
-	<altform><lit>setobs</lit> <repl>unitvar</repl> <repl>timevar</repl></altform>
+	<altform><lit>setobs</lit> <repl>unitvar</repl> <repl>timevar</repl> <lit>--panel-vars</lit></altform>
 	<altform><lit>setobs --labels=</lit><repl>filename</repl></altform>
       </altforms>
       <options>
