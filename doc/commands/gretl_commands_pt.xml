@@ -1062,50 +1062,78 @@
 	  <flag>--notches</flag>
 	  <effect>mostrar intervalo de 90 porcento para a mediana delimitado por entalhes</effect>
 	</option>
+	<option>
+	  <flag>--factorized</flag>
+	  <effect>ver abaixo</effect>
+	</option>
+	<option>
+	  <flag>--panel</flag>
+	  <effect>ver abaixo</effect>
+	</option>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>nome-de-ficheiro</optparm>
+	  <effect>envia a saída para o ficheiro especificado</effect>
+	</option>
       </options>
     </usage>
 
     <description>
 
-      <para>Estes gráficos (criados por Tukey e Chambers) apresentam a
-        distribuição de uma variável.  A caixa central contém os 50 
-        porcento dos dados centrais, &ie; está limitada pelos primeiro
-        e terceiro quartis.  Os <quote>bigodes</quote> estendem-se até 
-        aos valores mínimo e máximo.  É desenhada uma linha que corta a
-        caixa na mediana.</para> 
+      <para>Estes gráficos apresentam a distribuição de uma variável.  A
+	caixa central contém os 50 porcento dos dados centrais, &ie; está
+	limitada pelos primeiro e terceiro quartis.  Os <quote>bigodes</quote>
+        estendem-se até aos valores mínimo e máximo.  É desenhada uma linha
+	que corta a caixa na mediana.   Um símbolo <quote>+</quote> indica a
+	média.  Se tiver sido selecionada a opção de mostrar o intervalo de
+	confiança para a média, ele é obtido pelo método 'bootstrap' e 
+	apresentado na forma linhas a tracejado acima e abaixo da mediana.
+      </para> 
 
-      <para>No caso de caixas com entalhes, os entalhes representam os 
-        limites do intervalo de confiança para a mediana de cerca de 90
-        porcento.  Isto é obtido usando o método 'bootstrap'.</para>
+      <para context="gui">
+	A opção <quote>factorized</quote> permite examinar a distribuição 
+	de uma variável condicionada pelo valor de um fator discreto. Por
+	exemplo, se um conjunto de dados contém salários e uma variável
+	auxiliar para o sexo, você pode selecionar a variável salário como
+	alvo e o sexo como fator, para visualizar lado a lado gráficos
+	caixas-com-bigodes dos salários de homens e mulheres.
+      </para>
 
-      <para context="gui">A seguir a cada variável indicada no 
-        comando caixa-com-bigodes, pode-se acrescentar uma expressão
-        Booleana para restringir a variável em questão.  Tem que se 
-        inserir um espaço entre o nome da variável ou número, e a 
-        expressão.  Suponha que você dispõe de valores de salários
-        (<lit>salary</lit>) para homens e mulheres, e que tem a variável
-        auxiliar <lit>GENDER</lit> com valor 1 para homens e 0 para mulheres.  
-        Nesse caso você podia ter gráficos caixa-com-bigodes 
-        comparativos com a seguinte linha na janela do comando:</para>
-
-      <para context="cli">A seguir a cada variável indicada no 
-        comando caixa-com-bigodes, pode-se acrescentar uma expressão
-        Booleana para restringir a variável em questão.  Tem que se 
-        inserir um espaço entre o nome da variável ou número, e a 
-        expressão.  Suponha que você dispõe de valores de salários
-        (<lit>salary</lit>) para homens e mulheres, e que tem a variável
-        auxiliar <lit>GENDER</lit> com valor 1 para homens e 0 para mulheres.  
-        Nesse caso você podia ter gráficos caixa-com-bigodes 
-        comparativos com a seguinte <repl
-	  quote="true">lista-de-variáveis</repl>:</para>
-      <code>
-	salary (GENDER=1) salary (GENDER=0)
+       <para context="cli">
+	A opção <quote>factorized</quote> permite examinar a distribuição 
+	de uma variável condicionada pelo valor de um fator discreto. Por
+	exemplo, se um conjunto de dados contém salários e uma variável
+	auxiliar para o sexo, você pode selecionar a variável salário como
+	alvo e o sexo como fator, para visualizar lado a lado gráficos
+	caixas-com-bigodes dos salários de homens e mulheres, como em
+      </para>
+      <code context="cli">
+	boxplot salario sexo --factorized
       </code>
+      <para context="cli">
+	Note que neste caso você tem que especificar exatamente duas
+	variáveis, com a variável fator em segundo lugar.
+      </para>
 
-      <para>Alguns detalhes das caixas-com-bigodes do gretl podem ser
-        controlados por intermédio de um ficheiro (de texto simples)
-        com o nome <filename>.boxplotrc</filename>.  Para mais detalhes
-        sobre isto veja <guideref targ="sect-boxplots"/>.</para>
+      <para context="cli">
+	Se o conjunto de dados atual é de painel, e apenas tiver sido 
+	especificada uma variável, a opção <opt>panel</opt> produz uma
+	série de gráficos caixas-com-bigodes lado a lado, para cada uma
+	das <quote>unidades</quote> do painel ou grupo.
+      </para>
+
+      <para context="cli">
+	Em modo interativo o resultado é mostrado imediatamente. Em
+	modo lote ('batch') o comportamento normal é o de criar um
+	ficheiro de comandos gnuplot na diretoria de trabalho do
+	utilizador, cujo nome segue a forma <filename>gpttmpN.plt</filename>,
+   	iniciando com N = <lit>01</lit>. Esses gráficos poderão ser 
+	posteriormente gerados com o programa <program>gnuplot</program> 
+	(em MS Windows, <program>wgnuplot</program>).  Este comportamento
+	pode ser modificado usando a opção <opt>--output=</opt>
+	<repl>nome-de-ficheiro</repl>.  Para mais detalhes, ver o 
+	comando <cmdref targ="gnuplot"/>.
+      </para>
 
     </description>
 
