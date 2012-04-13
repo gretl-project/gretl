@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-22 16:51-0400\n"
-"PO-Revision-Date: 2012-04-02 15:12+0300\n"
+"PO-Revision-Date: 2012-04-13 10:35+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -6202,7 +6202,7 @@ msgstr "Yordama değerlendirme istatistikleri"
 
 #: lib/src/printout.c:2458
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
-msgstr "Not: '*' 2.5 ölçünlü hatadan daha uzak bir artığı göstermektedir\n"
+msgstr "Not: '*' 2,5 ölçünlü hatadan daha uzak bir kalıntıyı göstermektedir\n"
 
 #: lib/src/printout.c:2520
 #, c-format
@@ -11403,12 +11403,13 @@ msgid ""
 "\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
 "\n"
 msgstr ""
-"\\textit{Not}: '*' 2.5 ölçünlü hatadan daha uzak bir artığı göstermektedir\n"
+"\\textit{Not}: '*' 2,5 ölçünlü hatadan daha uzak bir kalıntıyı "
+"göstermektedir\n"
 "\n"
 
 #: gui2/guiprint.c:1528
 msgid "Note: * denotes a residual in excess of 2.5 standard errors"
-msgstr "Not: '*' 2.5 ölçünlü hatadan daha uzak bir artığı göstermektedir"
+msgstr "Not: '*' 2,5 ölçünlü hatadan daha uzak bir kalıntıyı göstermektedir"
 
 #: gui2/guiprint.c:1608
 #, c-format
@@ -12794,12 +12795,12 @@ msgstr "VAR sistem kalıntıları, denklem %d"
 #: gui2/library.c:5842
 #, c-format
 msgid "residual from VECM system, equation %d"
-msgstr "YHDM sistem artığı, denklem %d"
+msgstr "YHDM sistem kalıntısı, denklem %d"
 
 #: gui2/library.c:5845
 #, c-format
 msgid "system residual, equation %d"
-msgstr "sistem artığı, denklem %d"
+msgstr "sistem kalıntısı, denklem %d"
 
 #: gui2/library.c:5900
 msgid "T*R-squared"
@@ -16255,11 +16256,11 @@ msgstr "Varyans Şişme Çarpanları"
 
 #: plugin/vif.c:238
 msgid "Minimum possible value = 1.0"
-msgstr "Olabilecek enaz değer = 1.0"
+msgstr "Olabilecek enaz değer = 1,0"
 
 #: plugin/vif.c:239
 msgid "Values > 10.0 may indicate a collinearity problem"
-msgstr "10.0'dan büyük değerler, bir eşdoğrusallık sorunu gösteriyor olabilir"
+msgstr "10,0'dan büyük değerler, bir eşdoğrusallık sorunu gösteriyor olabilir"
 
 #: plugin/vif.c:252
 msgid ""
