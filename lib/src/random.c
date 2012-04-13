@@ -457,7 +457,7 @@ union wraprand {
 
 /* Split a 32-bit random value into 4 octets: each octet
    provides a 7-bit value for indexing into the Ziggurat plus a
-   sign bit.  Load a new guint32 when the material is exhausted.
+   sign bit. Load a new guint32 when the material is exhausted.
 
    Passing NULL in place of the @sign pointer is a signal to
    re-initialize; we do this when the user sets the seed, to
