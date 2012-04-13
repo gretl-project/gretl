@@ -87,6 +87,28 @@
 
   </command>
 
+ <command name="addline" section="Graphs" label="Add line to graph"
+    context="gui">
+
+    <description>
+      <para>
+	This dialog box allows you to add a line, defined via a formula,
+	to a graph.  The formula must be an expression acceptable to
+	gnuplot.  Use <lit>x</lit> to denote the value of the variable on
+	the x-axis.  Please note that gnuplot uses <lit>**</lit> for
+	exponentiation (raising to a power), and that the decimal
+	character must be given as <quote>.</quote>.  Examples:
+      </para>
+      <code>
+	10+0.35*x
+	100+5.3*x-0.12*x**2
+	sin(x)
+	exp(sqrt(pi*x))
+      </code>
+    </description>
+  </command>
+
+
   <command name="adf" section="Tests" label="Teste de Dickey-Fuller aumentado">
 
     <usage>
@@ -608,7 +630,7 @@
 
   </command>
 
-  <command name="arch" section="Tests" label="Teste ARCH">
+  <command name="arch" section="Estimation" label="Modelo ARCH">
 
     <usage>
       <arguments>
@@ -622,26 +644,37 @@
     </usage>
 
     <description>
-      <para context="gui">
-	Este comando requer uma ordem de 'lag' inteira.
+	<para>
+	This command is retained at present for backward
+	compatibility, but you are better off using the maximum
+	likelihood estimator offered by the <cmdref targ="garch"/>
+	command; for a plain ARCH model, set the first GARCH
+	parameter to 0.
       </para>
       <para>
-	Testa o modelo em ARCH (Heterosquedicidade Condicional 
-        Autoregressiva) da ordem de 'lag' especificada. Se a 
-        estatística de teste LM tiver um p-value abaixo de 0,10,
-        então a estimação ARCH também é executada.  Se a variância
-        predita de qualquer observação na regressão auxiliar não for
-        positiva, então é usado o correspondente resíduo ao quadrado.
-        Segue-se uma estimação por Mínimos Quadrados com Pesos sobre 
-        o modelo original.
+	Estima a especificação do modelo fornecido aceitando em ARCH
+	(Heterosquedicidade Condicional Autoregressiva).  O modelo é
+	primeiramente estimado em OLS, e depois é efectuada uma 
+	regressão auxiliar, na qual, o quadrado dos resíduos da primeira
+	fase é regredido com os seus próprios valores desfasados.  A fase
+	final é uma estimação por mínimos quadrados com pesos, usando como
+	pesos os recíprocos das variâncias de erro ajustadas da regressão
+	auxiliar.  (Se a variância predita de de alguma observação na 
+	regressão auxiliar for não positiva, então será usada o 
+	correspondente resíduo quadrado).
       </para>
       <para>
-	Ver também <cmdref targ="garch"/>.
+	Os valores <lit>alpha</lit> mostrados abaixo dos coeficientes
+	são os parâmetros estimados do processo ARCH da regressão auxiliar.
+      </para>
+      <para>
+	Ver também <cmdref targ="garch"/> e <cmdref targ="modtest"/> (a opção
+	<opt>--arch</opt>).  
       </para>
     </description>
 
     <gui-access>
-      <menu-path>Janela do modelo, /Testes/ARCH</menu-path>
+      <menu-path>/Modelo/Série temporal/ARCH</menu-path>
     </gui-access>
 
   </command>
@@ -906,6 +939,28 @@
 
 
   </command>
+  <command name="bfgs-config" section="Estimation" label="BFGS options"
+    context="gui">
+    <description>
+      <para>
+	This dialog allows you to control some aspects of the operation of the
+	BFGS maximizer.  In case the maximizer fails to converge it may help
+	matters, in some cases, to increase the number of iterations allowed
+	and/or to increase (make more permissive) the convergence tolerance.
+	However, you should be suspicious of results obtained using a high
+	tolerance and should consider the possibility that the model you
+	are estimating is misspecified. 
+      </para>
+      <para>
+	For most applications we recommend use of the regular BFGS maximizer
+	but for some problems the <quote>limited memory</quote> variant of the
+	algorithm, L-BFGS-B, may produce more rapid convergence.  When
+	L-BFGS-B is selected, you have the option of setting the number of
+	corrections used in the limited memory matrix (between 3 and 20, with
+	a default of 8).
+      </para>
+    </description>
+  </command>
 
   <command name="biprobit" section="Estimation" label="Bivariate probit"
     context="cli">
@@ -1156,6 +1211,63 @@
 
     </description>
 
+  </command>
+
+  <command name="bwfilter" section="Transformations" context="gui"
+    label="Filtro de Butterworth">
+
+    <description>
+      <para>
+	O filtro de Butterworth é uma aproximação a um filtro ideal
+	de onda-quadrada que deixa passar frequencias de uma certa
+	gama com potência máxima enquanto bloqueia todas as outras.
+      </para>
+      <para>
+	Em princípio, valores altos do parâmetro de ordem, <math>n</math>, produzem
+	uma melhor aproximação ao filtro ideal, mas tem uma possível
+	penalidade de instabilidade numérica.  O valor de <quote>corte</quote> 
+	define a banda de passagem e a banda de bloqueio.  Ele é espresso em graus,
+	e tem que ser maior que 0 e menor que 180&deg; (ou &pi;	radianos, 
+	correspondendo à maior frequência nos dados).  Valores menores do corte 
+	produzem uma tendência mais suave (alisamento).
+      </para>
+      <para>
+	Observar o períodograma da série em estudo é uma análise preliminar que é
+	útil quando se pretende aplicar este filtro.  Para mais detalhes ver
+	<guideref targ="chap-genr"/>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variável/Filtro/Butterworth</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="catch" section="Programming" 
+    label="Capturar erros" context="cli">
+    <usage>
+      <syntax>
+        <lit>catch</lit> <repl>command</repl>
+      </syntax>
+    </usage>
+    <description>
+      <para>
+	Isto não é um comando em sentido estrito mas pode ser usado como 
+	um prefixo na maior parte dos comandos: o efeito é o de prevenir
+	a eventual interrupção da execução de comandos (ou de um ficheiro
+	de comandos) quando ocorra um erro num comando.  Se acontecer um 
+	erro, este fica registado como sendo um erro interno que pode ser
+	acedido com <lit>$error</lit> (um valor de zero indica sucesso).
+	O valor de <lit>$error</lit> deve ser sempre verificado 
+	imediatamente a seguir ao uso de <lit>catch</lit>, e deve ser 
+	tomada a ação adequada se o comando falhou.
+      </para> 
+      <para>
+	A palavra reservada <lit>catch</lit> não pode ser usada antes de <lit>if</lit>,
+	<lit>elif</lit> ou <lit>endif</lit>.
+      </para>
+    </description>
   </command>
 
   <command name="chow" section="Tests" label="Teste de Chow">
@@ -1690,36 +1802,6 @@
 
   </command>
 
-  <command name="copy-formats" section="Utilities" context="gui"
-    label="Formatos de exportação de dados">
-
-    <description>
-      <para>
-	Besides plain text, you have two options for copying data
-	from this window.  
-      </para>
-
-      <para>
-	Tab separated: The data are copied as plain text, using tabs to
-	separate the columns.  This is a good choice for pasting data into
-	a word processor.  In MS Word or OpenOffice.org Writer, for
-	example, you can select the copied material and covert it to a
-	properly formatted table, using a menu item such as <quote>Table
-	  autoformat</quote> or <quote>Convert text to table</quote>.
-      </para>
-
-      <para>
-	Comma separated: The data are placed onto the clipboard as
-	comma-separated values (CSV).  Use this format if you want to
-	paste the data into a spreadsheet.
-      </para>
-
-    </description>
- <gui-access>
-      <menu-path>/Ficheiro/Exportar Dados</menu-path>
-    </gui-access>
-  </command>
-
   <command name="corr" section="Statistics" 
     label="Coeficientes de correlação" context="cli">
 
@@ -1799,6 +1881,67 @@
 
   </command>
 
+  <command name="count-model" section="Estimation" context="gui"
+    label="Modelos para a contagem de dados">
+
+    <description>
+      <para>
+	A variável dependente é tida como representando a contagem de 
+	ocorrência de eventos de alguma natureza, e tem que ter apenas
+	valores inteiros não-negativos. Por omissão, usa-se a 
+	distribuição de Poisson, mas o selector de menu permite escolher
+	a distribuição Binomial Negativa. (A variante 'NegBin 2' é 
+	normalmente usada em econometria, mas também está disponível a 
+	menos usada 'NegBin 1').
+      </para>
+      <para>
+	Opcionalmente, você pode acrescentar na especificação uma variável
+	<quote>offset</quote>.  Esta é uma variável de escala, cujo logarítmo
+	é acrescentado à função de regressão linear (implicitamente com um 
+	coeficiente de 1.0).  Isto faz sentido quando você espera que o número
+	de ocorrências do evento em questão seja proporcional a algum factor 
+	conhecido (TODO: other things equal).  Por exemplo, o número de acidentes
+	de trânsito pode ser assumido como proporcional ao volume de trânsito
+	(TODO: other things equal), e nesse caso o volume de trânsito pode ser
+	especificado como um <quote>offset</quote> num modelo de taxa de acidentes.
+	A variável 'offset' tem que ser estritamente positiva.
+      </para>
+      <para>
+	Por omissão os erros padrão são calculados usando uma aproximação numérica
+	da Hessiana por convergência.  Mas se estiver seleccionada a caixa dos
+	<quote>Erros padrão robustos</quote> então serão calculados os erros padrão
+	QML, usando uma <quote>sandwich</quote> da inversa da Hessiana e do produto
+	externo do gradiente.
+      </para>
+    </description>
+  </command>
+
+  <command name="curve" section="Graphs" label="Plot a curve"
+    context="gui">
+
+    <description>
+      <para>
+	This dialog box allows you to create a gnuplot graph by specifying a
+	formula. This must be an expression acceptable to gnuplot.  Use
+	<lit>x</lit> to denote the value of the variable on the x-axis.
+	Please note that gnuplot uses <lit>**</lit> for exponentiation
+	(raising to a power), and that the decimal character must be given as
+	<quote>.</quote>.  Examples:
+      </para>
+      <code>
+	10+0.35*x
+	100+5.3*x-0.12*x**2
+	sin(x)
+	exp(sqrt(pi*x))
+      </code>
+      <para>
+	To put an additional line onto a graph created in this way, click
+	on the graph and select <quote>Edit</quote>, select the
+	<quote>Lines</quote> tab in the graph editing dialog, and use
+	the <quote>Add line</quote> button.
+      </para>
+    </description>
+  </command>
 
   <command name="cusum" section="Tests" label="Teste CUSUM">
 
@@ -5436,6 +5579,31 @@
 
   </command>
 
+  <command name="loess" section="Estimation" label="Loess" context="gui">
+    <description>
+      <para>
+	Performs locally-weighted polynomial regression and produces a
+	series containing predicted values of the dependent variable for
+	each non-missing value of the independent variable. The method is
+	as described by <cite key="cleveland79">William Cleveland
+	(1979)</cite>.
+      </para>
+      <para>
+	The controls allow you to specify the order of the polynomial
+	in the independent variable and the proportion of the data
+	points to be used in each local regression (the
+	bandwidth). Higher values of the bandwidth produce a smoother
+	outcome.
+      </para>
+      <para>
+	If the robust weights box is checked the local regression
+	procedure is iterated twice, with the weights being modified
+	based on the residuals from the previous iteration so as to
+	give less influence to outliers.
+      </para>
+     </description>
+  </command>
+
   <command name="logistic" section="Estimation" label="Logistic regression">
 
     <usage>
@@ -6394,6 +6562,37 @@
       <menu-path>/Model/Other linear models/High precision OLS</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="nadarwat" section="Estimation" label="Nadaraya-Watson" 
+	   context="gui">
+    <description>
+      <para>
+	Computes the Nadaraya&ndash;Watson nonparametric estimator of
+	the conditional mean of the dependent variable,
+	<math>m(x)</math>, for each non-missing value of the
+	independent variable.
+      </para>
+      <para>
+	The kernel function <math>K</math> is given by <math>K =
+	exp(-x</math><sup>2</sup><math> / 2h)</math> for <math>|x|
+	&lt; T</math> and zero otherwise.
+      </para>
+      <para>
+	The bandwidth, usually a small number, controls the smoothness
+	of <math>m(x)</math> (higher values producing a smoother
+	series); the default value is <math>n</math><sup>-0.2</sup>.
+      </para>
+      <para>
+	If the <quote>leave-one-out</quote> box is checked, a variant
+	of the estimator is employed in which the <math>i</math>-th
+	observation is not used in evaluating
+	<math>m(x</math><sub>i</sub><math>)</math>. This makes the
+	Nadaraya&ndash;Watson estimator more robust numerically and
+	its usage is normally advised when the estimator is computed
+	for inference purposes.
+      </para>
+     </description>
   </command>
 
   <command name="negbin" section="Estimation"
