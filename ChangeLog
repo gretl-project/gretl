@@ -6,7 +6,9 @@ Version 1.9.9, in progress
 - Fix breakage of GUI Alt-x command "minibuffer"
 - "modtest" command with --normality option: make the accessors $test
   and $pvalue work when the test is done on a VAR
-- Improvements to gretl's gtksourceview .lang file
+- Improvements to syntax highlighting in script editor 
+- MS Windows build: update cross-compiler to gcc-4.6.3
+- Internals: clean up the Minpack sources that we use for nls
 
 2012-03-29 version 1.9.8
 - GUI: support use of named lists in the model specification dialog and
