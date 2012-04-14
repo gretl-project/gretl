@@ -87,7 +87,7 @@
 
   </command>
 
- <command name="addline" section="Graphs" label="Add line to graph"
+  <command name="addline" section="Graphs" label="Add line to graph"
     context="gui">
 
     <description>
@@ -169,7 +169,7 @@
     </usage>
 
     <description>
-      <para context="gui">Este comando requer uma ordem 'lag' inteira; se
+      <para context="gui">Este comando requer uma ordem desfasamento inteira; se
         a ordem for 0 é executado um teste Dickey&ndash;Fuller padrão 
         (não aumentado).</para>
 
@@ -190,8 +190,8 @@
 
       <para>Em todos os casos a variável dependente é a primeira diferença
         da variável especificada, <mathvar>y</mathvar>,	e a variável independente
-        chave é o primeiro 'lag' de <mathvar>y</mathvar>.  O modelo é construido
-        de modo a que o coeficiente do 'lag' de <mathvar>y</mathvar> iguale 1 
+        chave é o primeiro desfasamento de <mathvar>y</mathvar>.  O modelo é construido
+        de modo a que o coeficiente do desfasamento de <mathvar>y</mathvar> iguale 1 
         menos a raiz em questão.  Por exemplo, o modelo com uma constante pode
         ser escrito como <equation status="display"
 	tex="\[(1-L)y_t=\beta_0+(1-\alpha)y_{t-1}+\epsilon_t\]"
@@ -199,42 +199,42 @@
 	  graphic="adf1"/></para>
 
       <para context="cli">
-	Se a ordem de 'lag', <mathvar>k</mathvar>, é maior que 0, então
-        <mathvar>k</mathvar> 'lags' da variável dependente são incluidos 
+	Se a ordem de desfasamento, <mathvar>k</mathvar>, é maior que 0, então
+        <mathvar>k</mathvar> desfasamentos da variável dependente são incluidos 
         no lado direito das regressões de teste, sujeitos à seguinte
         qualificação.  Se a opção <lit>--test-down</lit> foi dada, 
-        <mathvar>k</mathvar> é considerada como sendo o 'lag' máximo e a
-        ordem de 'lag' efectivamente usada é obtida testando para baixo,
+        <mathvar>k</mathvar> é considerada como sendo o desfasamento máximo e a
+        ordem de desfasamento efectivamente usada é obtida testando para baixo,
         de acordo com o seguinte algoritmo:
       </para>
 
       <para context="gui">
-	Se a ordem de 'lag', <mathvar>k</mathvar>, é maior que 0, então
-        <mathvar>k</mathvar> 'lags' da variável dependente são incluidos 
+	Se a ordem de desfasamento, <mathvar>k</mathvar>, é maior que 0, então
+        <mathvar>k</mathvar> desfasamentos da variável dependente são incluidos 
         no lado direito das regressões de teste, sujeitos à seguinte
         qualificação.  Se estiver seleccionada a opção <quote>testar para 
-        baixo a partir da ordem máxima de "lag"</quote>, a ordem de 'lag'
-        seleccionada é considerada como sendo o 'lag' máximo e a
-        ordem de 'lag' efectivamente usada é obtida testando para baixo,
+        baixo a partir da ordem máxima de "lag"</quote>, a ordem de desfasamento
+        seleccionada é considerada como sendo o desfasamento máximo e a
+        ordem de desfasamento efectivamente usada é obtida testando para baixo,
         de acordo com o seguinte algoritmo:
       </para>
 
       <nlist>
 	<li><para>Estimar a regressão de Dickey&ndash;Fuller com
-	    <mathvar>k</mathvar> 'lags' da variável dependente.
+	    <mathvar>k</mathvar> desfasamentos da variável dependente.
 	  </para>
 	</li>
-	<li><para>O último 'lag' é significante?  Se sim, executar o teste
-            com com a ordem de 'lag', <mathvar>k</mathvar>.  Senão, fazer 
+	<li><para>O último desfasamento é significante?  Se sim, executar o teste
+            com com a ordem de desfasamento, <mathvar>k</mathvar>.  Senão, fazer 
 	    <mathvar>k</mathvar> = <mathvar>k</mathvar> &minus; 1; se 
 	    <mathvar>k</mathvar> for igual a 0, executar o teste com a
-            ordem de 'lag' 0, senão saltar para o passo 1.
+            ordem de desfasamento 0, senão saltar para o passo 1.
 	  </para>
 	</li>
       </nlist>
 
       <para>No contexto do passo 2 acima, <quote>significante</quote>
-	quer dizer que para o último 'lag', a estatística-<mathvar>t</mathvar>,
+	quer dizer que para o último desfasamento, a estatística-<mathvar>t</mathvar>,
         que segue uma distribuição normal, tem um <emphasis>p</emphasis>-value
         bilateral assimptótico menor ou igual a 0,10.</para> 
 
@@ -249,6 +249,7 @@
     </gui-access>
 
   </command>
+
   <command name="anova" label="ANOVA" section="Statistics">
     <usage>
       <arguments>
@@ -259,61 +260,64 @@
       <options>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't print results</effect>
+	  <effect>não mostrar resultados</effect>
 	</option>
       </options>
     </usage>
     <description>
       <para>
-	Analysis of Variance: <repl>response</repl> is a series measuring some
-	effect of interest and <repl>treatment</repl> must be a discrete
-	variable that codes for two or more types of treatment (or
-	non-treatment).  For two-way ANOVA, the <repl>block</repl> variable
-	(which should also be discrete) codes for the values of some control
-	variable.
+	Análise de Variância: <repl>response</repl> é uma série que mede
+	um efeito com interesse e <repl>treatment</repl> tem que ser uma
+	variável discreta que codifica dois ou mais tipos de tratamento
+	(ou não-tratamento).  Para ANOVA de duas-vias, a variável 
+	<repl>block</repl> (que também deve ser discreta) codifica os 
+	valores de uma variável de controlo.
       </para>
       <para context="cli">
-	Unless the <opt>--quiet</opt> option is given, this command prints a
-	table showing the sums of squares and mean squares along with an
-	<math>F</math>-test.  The <math>F</math>-test and its P-value can be
-	retrieved using the accessors <lit>$test</lit> and <lit>$pvalue</lit>
-	respectively.  
+	Quando não se usa a opção <opt>--quiet</opt>, este comando mostra a
+	tabela das somas de quadrados e médias quadradas juntamente com um
+	teste <math>F</math>.  O teste <math>F</math> e o seu valor P podem 
+	ser obtidos usando os acessores <lit>$test</lit> e <lit>$pvalue</lit>
+	respetivamente.
       </para>
       <para>
-	The null hypothesis for the <math>F</math>-test is that the mean
-	response is invariant with respect to the treatment type, or in words
-	that the treatment has no effect.  Strictly speaking, the test
-	is valid only if the variance of the response is the same for
-	all treatment types.
+	A hipótese nula do teste <math>F</math> é de que a resposta média é
+	invariante com o tipo de tratamento, ou por outras palavras, que o 
+	tratamento não produz efeito.  Em termos formais, o teste é apenas
+	válido se a variância da resposta for igual para todos os tipos de 
+	tratamentos.
       </para>
       <para>
-	Note that the results shown by this command are in fact a subset of
-	the information given by the following procedure, which is easily
-	implemented in gretl.  Create a set of dummy variables coding for all
-	but one of the treatment types.  For two-way ANOVA, in addition create
-	a set of dummies coding for all but one of the <quote>blocks</quote>.
-	Then regress <repl>response</repl> on a constant and the dummies using
-	<cmdref targ="ols"/>.  For a one-way design the ANOVA table is printed
-	via the <opt>--anova</opt> option to <lit>ols</lit>.  In the two-way
-	case the relevant <math>F</math>-test is found by using the <cmdref
-	targ="omit"/> command.  For example (assuming <lit>y</lit> is the
-	response, <lit>xt</lit> codes for the treatment, and <lit>xb</lit>
-	codes for blocks):
+	Note que os resultados apresentados por este comando pertencem a um
+	subconjunto da informação resultante do procedimento seguinte, que é
+	facilmente implementável em gretl.  Crie um conjunto de variáveis
+	auxiliares que codifiquem todos os tipos de tratamentos, exceto um.
+	No caso da ANOVA de duas-vias, adicionalmente, crie um conjunto de
+	variáveis auxiliares que codifiquem todos os <quote>blocks</quote>
+	(controlos), exceto um.
+	De seguida efectue uma regressão sobre <repl>response</repl> com uma
+	constante e com as variáveis auxiliares usando <cmdref targ="ols"/>.
+	No caso da ANOVA singular (ou uma-via) a  tabela é produzida passando
+	a opção <opt>--anova</opt> para <lit>ols</lit>.  No caso da ANOVA de 
+	duas-vias o teste F relevante, é obtido usando o comando <cmdref
+	targ="omit"/>.  Por exemplo (assumindo que <lit>y</lit> é a resposta,
+	<lit>xt</lit> codifica os tratamentos, e <lit>xb</lit> codifica os 
+	controlos):
       </para>
       <code>
-	# one-way
+	# uma-via
 	list dxt = dummify(xt)
 	ols y 0 dxt --anova
-	# two-way
+	# duas-vias
 	list dxb = dummify(xb)
 	ols y 0 dxt dxb
-	# test joint significance of dxt
+	# teste da significância conjunta de dxt
 	omit dxt --quiet
       </code>
     </description>
 
     <gui-access>
-      <menu-path>/Model/Other linear models/ANOVA</menu-path>
+      <menu-path>/Modelo/Outros modelos lineares/ANOVA</menu-path>
     </gui-access>
 
   </command>
@@ -379,7 +383,7 @@
 
     <usage>
       <arguments>
-        <argument>'lags'</argument>
+        <argument>desfasamentos</argument>
 	<argument separated="true">variável-dependente</argument>
         <argument>variáveis-independentes</argument>
       </arguments>
@@ -404,7 +408,7 @@
         ou após 20 iterações.</para>
 
       <para context="gui">
-	A <quote>lista de 'lags' AR</quote> especifica a estrutura do
+	A <quote>lista de desfasamentos AR</quote> especifica a estrutura do
 	processo de erro.  Por exemplo, a entrada <quote>1 3
 	  4</quote> corresponde ao processo: 
 	<equation status="display" 
@@ -415,7 +419,7 @@
       </para>
 
       <para context="cli">
-	<repl quote="true">'lags'</repl> é uma lista de 'lags' nos 
+	<repl quote="true">desfasamentos</repl> é uma lista de desfasamentos nos 
         resíduos, terminada por um ponto-e-vírgula. No exemplo acima
         o termo do erro é especificado como
 	<equation status="display" 
@@ -433,29 +437,29 @@
 
   </command>
 
-  <command name="ar1" section="Estimation" label="AR(1) estimation">
+  <command name="ar1" section="Estimation" label="Estimação AR(1)">
 
     <usage>
       <arguments>
-        <argument>depvar</argument>
-        <argument>indepvars</argument>
+	<argument>variável-dependente</argument>
+        <argument>variáveis-independentes</argument>
       </arguments>
       <options>
 	<option>
 	  <flag>--hilu</flag>
-	  <effect>use Hildreth&ndash;Lu procedure</effect>
+	  <effect>usar o procedimento Hildreth&ndash;Lu</effect>
 	</option>
 	<option>
 	  <flag>--pwe</flag>
-	  <effect>use Prais&ndash;Winsten estimator</effect>
+	  <effect>usar o estimador Prais&ndash;Winsten</effect>
 	</option>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
 	</option>
 	<option>
 	  <flag>--no-corc</flag>
-	  <effect>do not fine-tune results with Cochrane-Orcutt</effect>
+	  <effect>não aperfeiçoar os resultados com Cochrane-Orcutt</effect>
 	</option>
       </options>
       <examples>
@@ -467,36 +471,38 @@
 
     <description>
       <para>
-	Computes feasible GLS estimates for a model in which the error term is
-	assumed to follow a first-order autoregressive process.
+	Determina estimativas admissíveis GLS para um modelo em que se
+	assume que o termo de erro segue um processo autoregressivo de
+	primeira-ordem.
       </para>
       <para>
-	The default method is the Cochrane&ndash;Orcutt iterative procedure
-	(see, for example, Section 9.4 of Ramanathan, 2002). Iteration is
-	terminated when successive estimates of the autocorrelation
-	coefficient do not differ by more than 0.001 or after 20 iterations.
+	O métudo por omissão é o procedimento iterativo de Cochrane&ndash;Orcutt
+	(ver, por exemplo, a Secção 9.4 de Ramanathan, 2002). A iteração termina
+	quando as estimativas sucessivas do coeficiente de autocorrelação não 
+	diferirem por mais de 0.001 ou após 20 iterações.
       </para>
       <para>
-	If the <lit>--hilu</lit> option is given, the Hildreth&ndash;Lu search
-	procedure is used.  The results are then fine-tuned using the
-	Cochrane&ndash;Orcutt method, unless the <lit>--no-corc</lit> flag is
-	specified.  (The latter option is ignored if <lit>--hilu</lit>
-	is not specified.)
+	Se tiver sido dada a opção <lit>--hilu</lit>, é utilizado o 
+	procedimento de pesquisa de Hildreth&ndash;Lu.  Os resultados são depois
+	aperfeiçoados usando o método Cochrane&ndash;Orcutt, exceto se tiver sido
+	indicada a opção <lit>--no-corc</lit>.  (Esta última opção é ignorada se
+	 não tiver sido usado <lit>--hilu</lit>).
       </para>
       <para>
-	If the <lit>--pwe</lit> option is given, the Prais&ndash;Winsten
-	estimator is used.  This involves an an iteration similar to
-	Cochrane&ndash;Orcutt; the difference is that while
-	Cochrane&ndash;Orcutt discards the first observation,
-	Prais&ndash;Winsten makes use of it. See, for example, Chapter 13 of
-	Greene's <book>Econometric Analysis</book> (2000) for details.
+	Se tiver sido dada a opção <lit>--pwe</lit>, é usado o estimador 
+	de Prais&ndash;Winsten.  Isto involve uma iteração semelhante à de
+	Cochrane&ndash;Orcutt; a diferença é que equanto 
+	Cochrane&ndash;Orcutt descarta a primeira observação, a de 
+	Prais&ndash;Winsten faz uso dela. Para mais detalhes ver, por 
+	exemplo, o Capítulo 13 do livro de Greene, <book>Econometric Analysis</book>
+	(2000).
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/Cochrane-Orcutt</menu-path>
-      <menu-path>/Model/Time series/Hildreth-Lu</menu-path>
-      <menu-path>/Model/Time series/Prais-Winsten</menu-path>
+      <menu-path>/Modelo/Série temporal/Cochrane-Orcutt</menu-path>
+      <menu-path>/Modelo/Série temporal/Hildreth-Lu</menu-path>
+      <menu-path>/Modelo/Série temporal/Prais-Winsten</menu-path>
     </gui-access>
 
   </command>
@@ -939,25 +945,25 @@
 
 
   </command>
-  <command name="bfgs-config" section="Estimation" label="BFGS options"
+  <command name="bfgs-config" section="Estimation" label="Opções do maximizador BFGS"
     context="gui">
     <description>
       <para>
-	This dialog allows you to control some aspects of the operation of the
-	BFGS maximizer.  In case the maximizer fails to converge it may help
-	matters, in some cases, to increase the number of iterations allowed
-	and/or to increase (make more permissive) the convergence tolerance.
-	However, you should be suspicious of results obtained using a high
-	tolerance and should consider the possibility that the model you
-	are estimating is misspecified. 
+	Esta janela de diálogo permite-lhe controlar alguns aspetos de operação
+	do maximizador BFGS.  Se o maximizador falhar em convergir, em alguns casos, 
+	pode ajudar aumentar o número máximo  de iterações e, ou, aumentar a tolerância
+	de convergência (ser mais permissivo).
+	No entanto, se tiver sido usada uma tolerância muito alta, esses resultados 
+	devem ser encarados com desconfiança pois é possível que o modelo que se está
+	a estimar não tenha sido bem especificado.
       </para>
       <para>
-	For most applications we recommend use of the regular BFGS maximizer
-	but for some problems the <quote>limited memory</quote> variant of the
-	algorithm, L-BFGS-B, may produce more rapid convergence.  When
-	L-BFGS-B is selected, you have the option of setting the number of
-	corrections used in the limited memory matrix (between 3 and 20, with
-	a default of 8).
+	Na maior parte das aplicações nós recomendamos o uso do maximizador 
+	BFGS normal, mas para algums problemas a variante do algoritmo com 
+	<quote>memória limitada</quote>, L-BFGS-B, pode produzir uma 
+	convergência mais rápida.  Quando se seleciona L-BFGS-B, tem-se a 
+	opção de definir o número de correções usadas na matriz de memória 
+	limitada (entre 3 e 20, com um valor por omissão de 8).
       </para>
     </description>
   </command>
@@ -974,7 +980,7 @@
       <options>
         <option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
         </option>
 	<option>
 	  <flag>--robust</flag>
@@ -1344,122 +1350,6 @@
     </description>
   </command>
 
-  <command name="catch" section="Programming" 
-    label="Catch errors" context="cli">
-    <usage>
-      <syntax>
-        <lit>catch</lit> <repl>command</repl>
-      </syntax>
-    </usage>
-    <description>
-      <para>
-	This is not a command in its own right but can be used as a prefix
-	to most regular commands: the effect is to prevent termination of
-	a script if an error occurs in executing the command. If an error
-	does occur, this is registered in an internal error code which can
-	be accessed as <lit>$error</lit> (a zero value indicates success).
-	The value of <lit>$error</lit> should always be checked
-	immediately after using <lit>catch</lit>, and appropriate action
-	taken if the command failed.
-      </para> 
-      <para>
-	The <lit>catch</lit> keyword cannot be used before <lit>if</lit>,
-	<lit>elif</lit> or <lit>endif</lit>.
-      </para>
-    </description>
-  </command>
-
-  <command name="chow" section="Tests" label="Chow test">
-
-    <usage>
-      <altforms>
-        <altform><lit>chow</lit> <repl>obs</repl></altform>
-        <altform><lit>chow</lit> <repl>dummyvar</repl> <lit>--dummy</lit></altform>
-      </altforms>
-      <options>
-	<option>
-	  <flag>--dummy</flag>
-	  <effect>use a pre-existing dummy variable</effect>
-	</option>
-	<option>
-	  <flag>--quiet</flag>
-	  <effect>don't print estimates for augmented model</effect>
-	</option>
-      </options>
-      <examples>
-        <example>chow 25</example>
-        <example>chow 1988:1</example>
-	<example>chow female --dummy</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para context="gui">
-	This command needs either an observation number (or date, with dated
-	data), or the name of a dummy variable.
-      </para>
-
-      <para>
-	Must follow an OLS regression.  If an observation number or date is
-	given, provides a test for the null hypothesis of no structural break
-	at the given split point. The procedure is to create a dummy variable
-	which equals 1 from the split point specified by <repl>obs</repl> to
-	the end of the sample, 0 otherwise, and also interaction terms between
-	this dummy and the original regressors. If a dummy variable is given,
-	tests the null hypothesis of structural homogeneity with respect to
-	that dummy. Again, interaction terms are added.  In either case an
-	augmented regression is run including the additional terms.
-      </para>
-      <para>
-	By default an <math>F</math> statistic is calculated, taking the
-	augmented regression as the unrestricted model and the original as
-	the restricted.  But if the original model used a robust estimator
-	for the covariance matrix, the test statistic is a Wald chi-square
-	value based on a robust estimator of the covariance matrix for the
-	augmented regression.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>Model window, /Tests/Chow test</menu-path>
-    </gui-access>
-  </command>
-
-  <command name="clear" section="Programming" context="cli">
-    <usage>
-      <options>
-	<option>
-	  <flag>--dataset</flag>
-	  <effect>clear dataset only</effect>
-	</option>
-	<option>
-	  <flag>--other</flag>
-	  <effect>clear everything but the dataset</effect>
-	</option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-	With no options, clears all saved objects, including the current
-	dataset if any, out of memory. Note that opening a new dataset, or
-	using the <cmd>nulldata</cmd> command to create an empty dataset,
-	also has this effect, so use of <cmd>clear</cmd> is not usually
-	necessary.
-      </para>
-      <para>
-	If the <lit>--dataset</lit> option is given, then only the dataset
-	is cleared; other saved objects such as named matrices and scalars
-	are preserved.
-      </para>
-      <para>
-	If the <lit>--other</lit> option is given, then the current
-	dataset, if any, is preserved but all other saved objects are
-	destroyed.
-      </para>
-    </description>
-  </command>
-
   <command name="coeffsum" section="Tests" label="Soma de coeficientes">
 
     <usage>
@@ -1544,9 +1434,9 @@
         dada a opção <lit>--skip-df</lit>, o passo (1) é omitido.
       </para>
       <para context="cli">
-	Se a ordem de 'lag' especificada é positiva, todos os testes
+	Se a ordem de desfasamento especificada é positiva, todos os testes
 	Dickey&ndash;Fuller usam essa ordem.  Se a ordem for antecedida
-        de um sinal menos, ela é encarada como sendo o máximo 'lag' e a 
+        de um sinal menos, ela é encarada como sendo o máximo desfasamento e a 
         ordem efectivamente usada em cada caso é obtida testando para
         baixo: ver o comando <cmdref targ="adf"/> para detalhes.
       </para>
@@ -1570,11 +1460,11 @@
         passo (1) são omitidos.
       </para>
       <para context="gui">
-        Se a ordem de 'lag' <mathvar>k</mathvar>, é maior que zero, então
-        são incluídos <mathvar>k</mathvar> 'lags' no lado direito de cada
+        Se a ordem de desfasamento <mathvar>k</mathvar>, é maior que zero, então
+        são incluídos <mathvar>k</mathvar> desfasamentos no lado direito de cada
         regressão de teste, excepto se estiver seleccionada a opção 
-        <quote>Testar para baixo a partir do 'lag' de maior ordem</quote>:
-        nesse caso ela é encarada como sendo o máximo 'lag' e a 
+        <quote>Testar para baixo a partir do desfasamento de maior ordem</quote>:
+        nesse caso ela é encarada como sendo o máximo desfasamento e a 
         efectivamente usada em cada caso é obtida testando para baixo.  
         Ver o comando <cmdref targ="adf"/> para detalhes sobre este 
         procedimento.
@@ -1646,7 +1536,7 @@
     <description>
       <para>
 	Executa o teste de Johansen para a cointegração entre as variáveis
-        listadas para a dada ordem de 'lag'.  Os valores críticos são
+        listadas para a dada ordem de desfasamento.  Os valores críticos são
         determinados usando a aproximação gamma de J. Doornik (Doornik, 1998).
         Para detalhes sobre este teste ver o Capítulo 20 do livro de 
         Hamilton, <book>Time Series Analysis</book> (1994).
@@ -2535,7 +2425,7 @@
 	</option>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
 	</option>
         <option>
 	  <flag>--two-step</flag>
@@ -2737,7 +2627,7 @@
         </option>
         <option>
           <flag>--vcv</flag>
-          <effect>print covariance matrix</effect>
+          <effect>mostrar a matriz de covariância</effect>
         </option>
         <option>
           <flag>--verbose</flag>
@@ -3543,7 +3433,7 @@
         </option>
         <option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
         </option>
         <option>
 	  <flag>--nc</flag>
@@ -4088,7 +3978,7 @@
 	</option>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
 	</option>
 	<option>
 	  <flag>--verbose</flag>
@@ -4695,7 +4585,7 @@
         </option>
         <option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
         </option>
 	<option>
 	  <flag>--verbose</flag>
@@ -4796,7 +4686,7 @@
       <options>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
 	</option>
       </options>
     </usage>
@@ -5309,7 +5199,7 @@
       <options>
         <option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
         </option>
       </options>
     </usage>
@@ -5615,7 +5505,7 @@
       <options>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
 	</option>
       </options>
       <examples>
@@ -5699,7 +5589,7 @@
 	</option>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
 	</option>
 	<option>
 	  <flag>--verbose</flag>
@@ -5883,7 +5773,7 @@
 	</option>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
 	</option>
       </options>
     </usage>
@@ -6087,7 +5977,7 @@
 	</option>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
 	</option>
 	<option>
 	  <flag>--hessian</flag>
@@ -6514,7 +6404,7 @@
       <options>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
         </option>
 	<option>
 	  <flag>--simple-print</flag>
@@ -6619,7 +6509,7 @@
 	</option>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
 	</option>
 	<option>
 	  <flag>--verbose</flag>
@@ -6678,7 +6568,7 @@
         </option>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
 	</option>
 	<option>
 	  <flag>--verbose</flag>
@@ -6942,7 +6832,7 @@
       <options>
         <option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
         </option>
         <option>
 	  <flag>--robust</flag>
@@ -7428,7 +7318,7 @@
       <options>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
 	</option>
         <option>
 	  <flag>--fixed-effects</flag>
@@ -7785,7 +7675,7 @@
         </option>	
         <option>
           <flag>--vcv</flag>
-          <effect>print covariance matrix</effect>
+          <effect>mostrar a matriz de covariância</effect>
         </option>
         <option>
           <flag>--verbose</flag>
@@ -8006,7 +7896,7 @@
 	</option>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
 	</option>
 	<option>
 	  <flag>--verbose</flag>
@@ -8240,7 +8130,7 @@
         </option>
         <option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
@@ -10625,7 +10515,7 @@
         </option>
         <option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
         </option>
         <option>
 	  <flag>--robust</flag>
@@ -10715,7 +10605,7 @@
         </option>	
         <option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
         </option>
 	<option>
 	  <flag>--robust</flag>
@@ -11307,7 +11197,7 @@
       <options>
         <option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
         </option>
 	<option>
 	  <flag>--robust</flag>
