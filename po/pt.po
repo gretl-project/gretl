@@ -4824,15 +4824,15 @@ msgstr "Não se conseguiu calcular os erros padrão de Beck-Katz"
 
 #: lib/src/modelprint.c:1251
 msgid "Bartlett kernel"
-msgstr "Núcleo Bartlett (\"Bartlett kernel\")"
+msgstr "Núcleo Bartlett ('Bartlett kernel')"
 
 #: lib/src/modelprint.c:1252
 msgid "Parzen kernel"
-msgstr "Núcleo Parzen (\"Parzen kernel\")"
+msgstr "Núcleo Parzen ('Parzen kernel')"
 
 #: lib/src/modelprint.c:1253
 msgid "QS kernel"
-msgstr "Núcleo QS (\"QS kernel\") "
+msgstr "Núcleo QS ('QS kernel') "
 
 #: lib/src/modelprint.c:1257
 #, c-format
@@ -7225,7 +7225,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 27 de março de 2012."
+"Tradução de 15 de abril de 2012."
 
 #: gui2/about.c:164
 msgid "License"
@@ -9096,7 +9096,7 @@ msgstr "Núcleo Gaussiano ('Gaussian kernel')"
 
 #: gui2/dialogs.c:3928 plugin/kernel.c:108
 msgid "Epanechnikov kernel"
-msgstr "Núcleo de Epanechnikov (\"Epanechnikov kernel\")"
+msgstr "Núcleo de Epanechnikov ('Epanechnikov kernel')"
 
 #: gui2/dialogs.c:3943
 msgid "bandwidth adjustment factor:"
