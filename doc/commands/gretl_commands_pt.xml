@@ -972,10 +972,10 @@
     context="cli">
     <usage>
       <arguments>
-        <argument>depvar1</argument>
-	<argument>depvar2</argument>
-        <argument>indepvars1</argument>
-	<argument separated="true" optional="true">indepvars2</argument>
+        <argument>variável-dependente1</argument>
+	<argument>variável-dependente2</argument>
+        <argument>variáveis-independentes1</argument>
+	<argument separated="true" optional="true">variáveis-independentes2</argument>
       </arguments>
       <options>
         <option>
@@ -984,19 +984,19 @@
         </option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>erros padrão robustos</effect>
         </option>
 	<option>
 	  <flag>--opg</flag>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
         </option>
 	<option>
 	  <flag>--save-xbeta</flag>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
         </option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>print extra information</effect>
+	  <effect>mostrar informação adicional</effect>
         </option>
       </options>      
       <examples>
@@ -1009,102 +1009,102 @@
     </usage>
     <description>
       <para>
-	Estimates a bivariate probit model, using the
-	Newton&ndash;Raphson method to maximize the likelihood.
+	Estima um modelo probit bivariado, usando o método de
+	Newton&ndash;Raphson para maximizar a verosimilhança.
       </para>
       <para>
-	The argument list starts with the two (binary) dependent
-	variables, followed by a list of regressors. If a second list
-	is given, separated by a semicolon, this is interpreted as a
-	set of regressors specific to the second equation, with
-	<repl>indepvars1</repl> being specific to the first equation;
-	otherwise <repl>indepvars1</repl> is taken to represent a
-	common set of regressors.
+	A lista de argumentos começa com as duas variáveis dependentes
+	(binárias), seguidas pela lista de regressores.  Se a segunda 
+	lista tiver sido dada, separada por um ponto-e-vírgula, ela 
+	será interpretada como sendo o conjunto de regressores para a
+	segunda equação, e as <repl>variáveis-independentes1</repl> são
+	específicas para a primeira equação; caso contrário as 
+	<repl>variáveis-independentes1</repl> são consideradas 
+	representando o conjunto de regressores comum.
       </para>
       <para>
-	By default, standard errors are computed using a numerical
-	approximation to the Hessian at convergence.  But if the
-	<opt>--opg</opt> option is given the covariance matrix is based on
-	the Outer Product of the Gradient (OPG), or if the
-	<opt>--robust</opt> option is given QML standard errors are
-	calculated, using a <quote>sandwich</quote> of the inverse of the
-	Hessian and the OPG.
+	Por omissão, os erros padrão são calculados usando uma aproximação
+	númerica por convergência da Hessiana.  Mas se tiver sido dada a 
+	opção <opt>--opg</opt> a matriz de covariância será baseada no
+	produto externo do gradiente (OPG), ou se a opção 
+	<opt>--robust</opt> tiver sido dada, o erros padrão QML serão calulados
+	usando a <quote>sandwich</quote> entre a inversa da Hessiana e a OPG.
       </para>
       <para>
-	After successful estimation, the accessor <lit>$uhat</lit>
-	retrieves a matrix with two columns holding the generalized
-	residuals for the two equations; that is, the expected values
-	of the disturbances conditional on the observed outcomes and
-	covariates.  By default <lit>$yhat</lit> retrieves a matrix
-	with four columns, holding the estimated probabilities of the
-	four possible joint outcomes for (<math>y</math><sub>1</sub>,
-	<math>y</math><sub>2</sub>), in the order (1,1), (1,0), (0,1),
-	(0,0). Alternatively, if the option <lit>--save-xbeta</lit> is
-	given, <lit>$yhat</lit> has two columns and holds the values
-	of the index functions for the respective equations.
+	Depois duma estimação com sucesso, o acessor <lit>$uhat</lit>
+	obtém uma matriz de duas colunas que são os resíduos
+	generalizados das duas equações; ou seja, os valores esperados
+	das perturbações condicionadas pelos resultados observados e
+	covariados.  Por omissão o <lit>$yhat</lit> obtém a matriz
+	com quatro colunas, que são as probabilidades estimadas para os
+	quatro possíveis resultados conjuntos para (<math>y</math><sub>1</sub>,
+	<math>y</math><sub>2</sub>), e pela ordem (1,1), (1,0), (0,1),
+	(0,0). Alternativamente, se tiver sido usada a opção
+	<lit>--save-xbeta</lit>, o <lit>$yhat</lit> tem duas colunas e 
+	contém os valores das funções de índice para as respectivas equações.
       </para>
       <para>
-	The output includes a likelihood ratio test of the null
-	hypothesis that the disturbances in the two equations are
-	uncorrelated.
+	A saída inclui o teste de razões de verosimilhança para a hipótese
+	nula de que as perturbações nas duas equações são não-correlacionadas.
       </para>
     </description>
   </command>
 
-  <command name="bootstrap" section="Tests" label="Bootstrap options"
+  <command name="bootstrap" section="Tests" label="Opções do Bootstrap"
     context="gui">
 
     <description>
 
-      <para>In this dialog you get to choose:</para>
+      <para>Nesta janela de diálogo você pode escolher:</para>
 
       <ilist>
 	<li>
 	  <para>
-	    The variable/coefficient to examine.  (You can test only one
-	    coefficient at a time using this method.)
+	    A variável ou coeficiente a examinar.  (Com este método, você
+	    apenas pode testar um coeficiente de cada vez.)
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    The sort of analysis to perform.  The default (95 percent)
-	    confidence interval is based directly on the quantiles of the
-	    bootstrap coefficient estimates.  The
-	    <quote>studentized</quote> version is as per Davidson and
-	    MacKinnon's <book>Economic Theory and Methods</book> (ETM),
-	    chapter 5: at each bootstrap replication a
-	    <mathvar>t</mathvar>-ratio is formed as (a) the difference
-	    between the current and the baseline coefficient estimate,
-	    divided by (b) the baseline estimated standard error. Then the
-	    confidence interval is formed based on the quantiles of this
-	    t-ratio, as explained in ETM.  The P-value option is based on
-	    the distribution of the bootstrap <mathvar>t</mathvar>-ratio:
-	    it is the proportion of the replications where the absolute
-	    value of this statistic exceeds the absolute value of the
-	    baseline <mathvar>t</mathvar>-ratio. 
+	    O tipo de análise a efectuar. O intervalo de confiança 
+	    (95 porcento) omissão baseia-se diretamente nos quantis
+	    das estimativas dos coeficientes bootstrap.  A versão
+	    <quote>studentized</quote> segue o texto de Davidson e
+	    MacKinnon <book>Economic Theory and Methods</book> (ETM),
+	    Capítulo 5: em cada replicação bootstrap uma razão-<mathvar>t</mathvar>
+	    é construída como (a) a diferença entre as estimativas do
+	    coeficiente corrente e da linha-base, dividida pela (b) 
+	    estimativa do erro padrão da linha-base. Então o intervalo 
+	    de confiança é construído segundo os quantis desta 
+	    razão-<mathvar>t</mathvar>, tal como explicado no ETM. A opção
+	    valor-P baseia-se na distribuição da razão-<mathvar>t</mathvar>
+	    do bootstrap:
+	    é a proporção de replicações onde o valor absoluto desta 
+	    estatística excede o valor absoluto da razão-<mathvar>t</mathvar>
+	    da linha-base.
 	  </para>
 	</li>
 	<li>
-	  <para>Resampled residuals versus simulate normal errors. In the
-	    first case the original residuals (rescaled as suggested in
-	    ETM) are resampled with replacement.  In the second case
-	    pseudo-random normal values are generated with the original
-	    residual variance.
+	  <para>Resíduos reamostrados versus erros normalizados simulados.
+	    No primeiro caso os resíduos originais (re-escalados como 
+	    sugerido em ETM) são reamostrados com substiuição.  No segundo
+	    caso são gerados valores normalizados pseudo-aleatórios a partir
+	    da variância original dos resíduos.
 	  </para>
 	</li>
 	<li>
-	  <para>The number of replications to perform. Note that when
-	    you're constructing a 95 percent confidence interval it is
-	    desirable that 0.05(<mathvar>B</mathvar> + 1)/2 is an integer
-	    (where <mathvar>B</mathvar> is the number of replications).
-	    So gretl may adjust the chosen number of replications to
-	    ensure this is the case.
+	  <para>O número de replicações a realizar.  Note que quando você
+	    está a construir um intervalo de confiança a 95 porcento, é
+	    desejável que 0.05(<mathvar>B</mathvar> + 1)/2 resulte num valor
+	    inteiro (onde <mathvar>B</mathvar> é o número de replicações).
+	    Portanto o gretl pode ajustar o número de replicações de modo a
+	    garantir isso.
 	  </para>
 	</li>
 	<li>
-	  <para>Whether or not to produce a graph of the bootstrap
-	    distribution. This option employs gretl's kernel density
-	    estimation facility.
+	  <para>Se se produz ou não um gráfico da distribuição bootstrap.
+	    Esta opção usa o mecanismo de estimação de densidade de núcleo
+	    do gretl.
 	  </para>
 	</li>
       </ilist>
@@ -1320,32 +1320,32 @@
       <options>
 	<option>
 	  <flag>--dataset</flag>
-	  <effect>clear dataset only</effect>
+	  <effect>apagar apenas o conjunto de dados</effect>
 	</option>
 	<option>
 	  <flag>--other</flag>
-	  <effect>clear everything but the dataset</effect>
+	  <effect>apagar tudo exceto o conjunto de dados</effect>
 	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	With no options, clears all saved objects, including the current
-	dataset if any, out of memory. Note that opening a new dataset, or
-	using the <cmd>nulldata</cmd> command to create an empty dataset,
-	also has this effect, so use of <cmd>clear</cmd> is not usually
-	necessary.
+	Sem opções, apaga da memória todos os objetos gravados, incluindo o conjunto
+	de dados currente.  Note que ao abrir um novo conjunto de dados, ou ao usar
+	o comando <cmd>nulldata</cmd> para criar um conjunto de dados vazio,
+	obterá o mesmo efeito, por isso o uso de <cmd>clear</cmd> normalmente não
+	é necessário.
       </para>
       <para>
-	If the <lit>--dataset</lit> option is given, then only the dataset
-	is cleared; other saved objects such as named matrices and scalars
-	are preserved.
+	Se tiver sido dada a opção <lit>--dataset</lit>, então apenas o conjunto
+	de dados é apagado; os outros objetos gravados como matrizes e escalares
+	serão preservados.
       </para>
       <para>
-	If the <lit>--other</lit> option is given, then the current
-	dataset, if any, is preserved but all other saved objects are
-	destroyed.
+	Se tiver sido dada a opção <lit>--other</lit>, então o conjunto de dados
+	currente, se existir, será preservado mas todos os outros objetos gravados
+	serão destruidos.
       </para>
     </description>
   </command>
@@ -2807,7 +2807,7 @@
 	</option>
 	<option>
 	  <flag>--geomean</flag>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
@@ -3031,12 +3031,12 @@
         </option>
         <option>
 	  <flag>--rolling</flag>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
         </option>
         <option>
 	  <flag>--plot</flag>
 	  <optparm optional="true">filename</optparm>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
         </option>
       </options>
       <examples>
@@ -3301,7 +3301,7 @@
         </option>
         <option>
 	  <flag>--show-plot</flag>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
         </option>
       </options>
       <examples>
@@ -4085,7 +4085,7 @@
         </option>
         <option>
 	  <flag>--dummy</flag>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
         </option>
         <option>
 	  <flag>--matrix</flag>
@@ -5993,7 +5993,7 @@
 	</option>
 	<option>
 	  <flag>--no-gradient-check</flag>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
 	</option>
 	<option>
 	  <flag>--lbfgs</flag>
@@ -6501,7 +6501,7 @@
 	</option>
 	<option>
 	  <flag>--opg</flag>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
 	</option>
 	<option>
 	  <flag>--robust</flag>
@@ -6840,7 +6840,7 @@
         </option>
         <option>
 	  <flag>--jackknife</flag>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
         </option>
         <option>
 	  <flag>--simple-print</flag>
@@ -6860,7 +6860,7 @@
         </option>
         <option>
 	  <flag>--print-final</flag>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
         </option>
       </options>
       <examples>
@@ -8061,11 +8061,11 @@
       <options>
 	<option>
 	  <flag>--z-scores</flag>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
         </option>
         <option>
 	  <flag>--raw</flag>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
         </option>
       </options>
     </usage>
@@ -9781,7 +9781,7 @@
         </option>
         <option>
 	  <flag>--contiguous</flag>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
         </option>
         <option>
 	  <flag>--random</flag>
@@ -10090,7 +10090,7 @@
         <option>
 	  <flag>--comment</flag>
 	  <optparm>string</optparm>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
         </option>
       </options>
     </usage>
@@ -10168,7 +10168,7 @@
         <option>
 	  <flag>--by</flag>
 	  <optparm>byvar</optparm>
-	  <effect>see below</effect>
+	  <effect>ver abaixo</effect>
         </option>
       </options>
     </usage>
