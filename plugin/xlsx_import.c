@@ -38,6 +38,7 @@
 #include "import_common.c"
 
 #define XDEBUG 0
+#define DATE_DEBUG 0
 
 struct xlsx_info_ {
     int flags;
@@ -1195,7 +1196,7 @@ static void xlsx_dates_check (DATASET *dset)
     int t, maybe_dates = 1;
     int d, dmin = 0, dmax = 0;
 
-#if XDEBUG
+#if DATE_DEBUG
     fprintf(stderr, "xlsx_dates_check: starting\n");
 #endif
 
@@ -1213,7 +1214,7 @@ static void xlsx_dates_check (DATASET *dset)
 
     for (t=0; t<dset->n && maybe_dates; t++) {
 	if (!integer_string(dset->S[t])) {
-#if XDEBUG
+#if DATE_DEBUG
 	    fprintf(stderr, "S[%d] = '%s', giving up\n", t, dset->S[t]);
 #endif
 	    maybe_dates = 0;
@@ -1224,14 +1225,26 @@ static void xlsx_dates_check (DATASET *dset)
 	} else {
 	    d = atoi(dset->S[t]) - atoi(dset->S[t-1]);
 	    if (t == 1) {
+#if DATE_DEBUG
+		fprintf(stderr, " t=1, setting dmin = dmax = %d\n", d);
+#endif		
 		dmin = dmax = d;
 	    } else if (d < dmin) {
+#if DATE_DEBUG
+		fprintf(stderr, " at t=%d, dmin = %d - %d = %d\n",
+			t, atoi(dset->S[t]), atoi(dset->S[t-1]), d);
+#endif
 		dmin = d;
 	    } else if (d > dmax) {
 		dmax = d;
 	    }
 	}
     }
+
+#if DATE_DEBUG
+    fprintf(stderr, "after obs loop, maybe_dates = %d (dmax = %d)\n", 
+	    maybe_dates, dmax);
+#endif
 
     if (maybe_dates && dmax < 0) {
 	/* allow for the possibility that time runs backwards */
@@ -1256,11 +1269,14 @@ static void xlsx_dates_check (DATASET *dset)
 	    ; /* daily? */
 	} else {
 	    /* unsupported frequency or nonsensical */
+#if DATE_DEBUG
+	    fprintf(stderr, "dmax = %d, dmin = %d, unsupported\n", dmax, dmin);
+#endif
 	    maybe_dates = 0;
 	} 
     }
 
-#if XDEBUG
+#if DATE_DEBUG
     fprintf(stderr, "xlsx_dates_check: maybe_dates = %d\n", maybe_dates);
 #endif
 
