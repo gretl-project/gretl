@@ -2245,9 +2245,11 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     windata_t *vwin;
     const char *buf;
     gchar *tmp;
-    int width, nlines;
+    int width, nlines, tabbed;
 
-    if (use_tabbed_model_viewer()) {
+    tabbed = use_tabbed_model_viewer();
+
+    if (tabbed) {
 	tmp = g_strdup_printf(_("model %d"), pmod->ID);
 	vwin = viewer_tab_new(VIEW_MODEL, tmp, pmod);
 	g_free(tmp);
@@ -2269,7 +2271,7 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     set_up_model_view_menu(vwin);
 
     gretl_print_get_size(prn, &width, &nlines);
-    if (width > 0 && width + 2 < hsize) {
+    if (!tabbed && width > 0 && width + 2 < hsize) {
 	hsize = width + 2;
     }
 

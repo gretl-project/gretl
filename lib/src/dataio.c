@@ -3342,10 +3342,10 @@ void dataset_add_import_info (DATASET *dset, const char *fname,
 	if (p != NULL) {
 	    fname = p + 1;
 	}
-	note = g_strdup_printf("Data imported from %s file '%s', %s\n",
+	note = g_strdup_printf(_("Data imported from %s file '%s', %s\n"),
 			       src, fname, tstr);
     } else {
-	note = g_strdup_printf("Data imported from %s, %s\n",
+	note = g_strdup_printf(_("Data imported from %s, %s\n"),
 			       src, tstr);
     }
 
