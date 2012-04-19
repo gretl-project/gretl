@@ -722,9 +722,23 @@ bnum_from_name (gretl_restriction *r, const DATASET *dset,
 {
     int k = -1;
 
-    if (dset == NULL || r->otype != GRETL_OBJ_EQN || r->obj == NULL) {
+    if (dset == NULL || r->obj == NULL) {
 	gretl_errmsg_set(_("Please give a coefficient number"));
-    } else {
+    } else if (r->otype == GRETL_OBJ_VAR) {
+	GRETL_VAR *var = r->obj;
+	int i, v;
+
+	for (i=1; i<=var->ylist[0]; i++) {
+	    v = var->ylist[i];
+	    if (v > 0 && v < dset->v && !strcmp(dset->varname[v], s)) {
+		k = i;
+		break;
+	    }
+	}
+	if (k < 0) {
+	    gretl_errmsg_set(_("Please give a coefficient number"));
+	}
+    } else if (r->otype == GRETL_OBJ_EQN) {
 	const MODEL *pmod = r->obj;
 
 	k = gretl_model_get_param_number(pmod, dset, s);
