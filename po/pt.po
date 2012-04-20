@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-04-17 15:56-0400\n"
-"PO-Revision-Date: 2012-03-27 21:12+0100\n"
+"PO-Revision-Date: 2012-04-20 00:17+0100\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -1293,16 +1293,14 @@ msgid "'%s' -- number out of range!"
 msgstr "'%s' -- número fora dos limites!"
 
 #: lib/src/dataio.c:3345
-#, fuzzy, c-format
+#, c-format
 msgid "Data imported from %s file '%s', %s\n"
-msgstr ""
-"Informações sobre os dados no ficheiro %s:\n"
-"\n"
+msgstr "Dados importados de %s do ficheiro '%s', %s\n"
 
 #: lib/src/dataio.c:3348
 #, c-format
 msgid "Data imported from %s, %s\n"
-msgstr ""
+msgstr "Dados importados de %s, %s\n"
 
 #: lib/src/dataset.c:355
 msgid "auto-generated constant"
@@ -2392,9 +2390,8 @@ msgid "Invalid declaration"
 msgstr "Declaração inválida"
 
 #: lib/src/genfuncs.c:3689
-#, fuzzy
 msgid "Imhof integral gave negative value"
-msgstr "valor negativo ilegal "
+msgstr "O integral de Imhof resultou num valor negativo"
 
 #: lib/src/genfuncs.c:4462
 msgid "model-related"
@@ -7242,7 +7239,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 15 de abril de 2012."
+"Tradução de 19 de abril de 2012."
 
 #: gui2/about.c:164
 msgid "License"
@@ -10789,7 +10786,7 @@ msgstr "X-Y com separação factorizada..."
 
 #: gui2/gretl.c:1461
 msgid "X-Y with _control..."
-msgstr "X-Y com _controlos..."
+msgstr "X-Y com _controlo..."
 
 #: gui2/gretl.c:1462
 msgid "_Boxplots..."
