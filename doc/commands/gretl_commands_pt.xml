@@ -1453,7 +1453,7 @@
 	O teste de cointegração Engle&ndash;Granger.  O procedimento
         por omissão é: (1) efectuar testes de Dickey&ndash;Fuller (DF)
         segundo a hipótese nula de que cada variável listada tem uma
-        raiz unitária; (2) estima a regressão de cointegração; e (3) 
+        raiz unitária; (2) estima a regressão de cointegração; e (3)  
         executar um teste DF sobre os resíduos da regressão de 
         cointegração. No entanto, se estiver seleccionada a opção
         <quote>ignorar os testes iniciais DF</quote> os testes no 
@@ -1630,27 +1630,27 @@
 	<li><para>Média: O valor escrito no conjunto de dados 
             será a média aritmética dos valores relevantes da série
             temporal.  Por exemplo, o valor escrito para o primeiro
-            trimestre de 1990 será a média dos valores de Janeiro, 
-            Fevereiro e Março de 1990.</para>
+            trimestre de 1990 será a média dos valores de janeiro, 
+            fevereiro e março de 1990.</para>
 	</li>
 
 	<li><para>Soma: O valor escrito no conjunto de dados 
             será a soma dos valores de alta-frequência relevantes.
             Por exemplo, o valor escrito para o primeiro
-            trimestre será a soma dos valores de Janeiro, 
-            Fevereiro e Março.</para>
+            trimestre será a soma dos valores de janeiro, 
+            fevereiro e março.</para>
 	</li>
 
 	<li><para>Valores fim-do-período: O valor escrito no conjunto
             de dados será o último valor relevante dos dados de 
             alta-frequência.  Por exemplo, o valor escrito para o
-            primeiro trimestre de 1990 será o valor de Março de 1990.</para>
+            primeiro trimestre de 1990 será o valor de março de 1990.</para>
 	</li>
 
 	<li><para>Valores início-do-período: O valor escrito no conjunto
             de dados será o primeiro valor relevante dos dados de 
             alta-frequência.  Por exemplo, o valor escrito para o
-            primeiro trimestre de 1990 será o valor de Janeiro de 1990.</para>
+            primeiro trimestre de 1990 será o valor de janeiro de 1990.</para>
 	</li>
       </ilist>
 
@@ -1670,23 +1670,24 @@
   </command>
 
   <command name="controlled" section="Graphs" context="gui"
-    label="Scatterplot with control">
+    label="Gráfico X-Y com controlo">
 
     <description>
       <para>
-	This command requires the selection of three variables, one for the X
-	axis, one for the Y axis, and one for which you wish to control (call
-	it Z).  The plot shows adjusted Y against adjusted X, where the
-	adjusted version of the variable is the residual from an OLS
-	regression on Z.  
+	Este comando requer a seleção de três variáveis, uma para o eixo 
+        dos X, uma para o eixo dos Y, e outra para a que você deseja controlar
+        (chamemos-lhe Z). O gráfico apresenta Y ajustado contra X ajustado, 
+        onde a versão ajustada da variável são os resíduos de uma regressão
+        por Mínimos Quadrados (OLS) sobre Z.  
       </para>
       <para>
-	Example: You have data on wages, experience and education level
-	for a sample of people.  You wish to plot wages against education,
-	controlling for experience.  In that case you select wages for
-	the Y axis, education for the X axis, and experience as the control.
-	The plot shows wages against education, with both variables
-	<quote>purged</quote> of the effect of experience.
+	Exemplo: Você tem uma amostra com dados de salários, experiência e 
+	nível de educação de um conjunto de pessoas.  Você pretende ver 
+        um gráfico dos salários contra o nível de educação controlando pela
+        experiência.  Nesse caso você seleciona salários para o eixo dos Y,
+        nível de educação para o eixo dos X, e experiência como controlo.
+	O gráfico apresenta os salários contra a educação, com ambas as 
+        variáveis <quote>purgadas</quote> do efeito experiência.
       </para>
     </description>
 
@@ -1699,16 +1700,68 @@
       <arguments>
         <argument optional="true">lista-de-variáveis</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--uniform</flag>
+	  <effect>garante amostra uniforme</effect>
+	</option>
+	<option>
+	  <flag>--spearman</flag>
+	  <effect>Ró de Spearman</effect>
+	</option>
+	<option>
+	  <flag>--kendall</flag>
+	  <effect>Tau de Kendall</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>mostra classificações ('rankings')</effect>
+	</option>
+      </options>
       <examples>
         <example>corr y x1 x2 x3</example>
+	<example>corr ylist --uniform</example>
+	<example>corr x y --spearman</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Apresenta os coeficientes de correlação emparelhados das variáveis em
-        <repl>lista-de-variáveis</repl>, ou de todas as variáveis no conjunto
-        de dados se não for dada a <repl>lista-de-variáveis</repl>.
+	Apresenta os coeficientes de correlação emparelhados 
+        (correlação momento-produto de Pearson) para as variáveis indicadas.
+        O comportamento normal é usar todas as observações para calcular 
+        cada coeficiente emparelhado, mas se a caixa de seleção estiver
+        selecionada a amostra será limitada (caso seja necessário) de modo
+        que o mesmo conjunto de observações seja usado em todos os 
+        coeficientes.  Esta opção apenas tem efeito se existirem valores
+        omissos em quantidades diferentes para as variáveis usadas.
+      </para>
+    </description>
+
+    <description context="cli">
+      <para>
+	Por omissão, apresenta os coeficientes de correlação emparelhados 
+        (correlação momento-produto de Pearson) para as variáveis 
+        <repl>lista-de-variáveis</repl>, ou para todas as variáveis no 
+        conjunto de dados se não tiver sido indicada <repl>lista-de-variáveis</repl>.
+          O comportamento normal é o de usar todas as observações disponíveis para calcular 
+        cada coeficiente emparelhado, mas se tiver sido dada a opção <flag>--uniform</flag> 
+        a amostra será limitada (caso seja necessário) de modo
+        que o mesmo conjunto de observações seja usado em todos os 
+        coeficientes.  Esta opção apenas tem efeito se existirem valores
+        omissos em quantidades diferentes para as variáveis usadas.
+      </para>
+      <para>
+	As opções (mutualmente exclusivas) <opt>--spearman</opt> e 
+	<opt>--kendall</opt> produzem, respetivamente, o Ró de correlação
+        de Spearman e o Tau de correlação de ordem de Kendall em vez do 
+        usual coeficiente de Pearson.  Quando uma destas opções é dada,
+        a <repl>lista-de-variáveis</repl> deve apenas conter duas variáveis.
+      </para>
+      <para>
+	Ao calcular uma correlação de ordem, pode ser dada a opção 
+        <opt>verbose</opt> para mostrar os dados originais e ordenados
+        (caso contrário esta opção será ignorada).
       </para>
     </description>
 

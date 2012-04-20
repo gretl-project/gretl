@@ -9,7 +9,8 @@
  <gentext           key="opt" text="Opção:      "/>
  <gentext      key="examples" text="Exemplos:   "/>
  <gentext       key="example" text="Exemplo:    "/>
- <gentext     key="guidebook" text="guia de utilização do gretl"/>
+ <gentext     key="guidebook" text="guia de utilização do Gretl"/>
+ <gentext     key="funcchap"  text="manual das funções do Gretl"/>
  <gentext      key="menupath" text="Caminho de Menu:    "/>
  <gentext   key="otheraccess" text="Acesso alternativo: "/>
  <gentext key="scriptcommand" text="Comando:    "/>
