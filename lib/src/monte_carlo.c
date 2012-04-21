@@ -363,7 +363,6 @@ int ok_in_loop (int c)
 	c == OPEN ||
 	c == RMPLOT ||
 	c == RUN ||
-	c == SCATTERS ||
 	c == SETMISS ||
 	c == SETOBS ||
 	c == TABPRINT ||

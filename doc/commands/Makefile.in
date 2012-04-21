@@ -36,10 +36,11 @@ CMDSDIR = $(topsrc)/doc/commands
 SHAREDIR = $(topsrc)/share
 
 CMDDTD = $(CMDSDIR)/gretl_commands.dtd
-CMDSRC = $(CMDSDIR)/gretl_commands.xml \
-	$(CMDSDIR)/gretl_commands_es.xml \
-        $(CMDSDIR)/gretl_commands_pt.xml \
-	$(CMDSDIR)/gretl_commands_it.xml
+
+EN_SRC = $(CMDSDIR)/gretl_commands.xml
+ES_SRC = $(CMDSDIR)/gretl_commands_es.xml
+PT_SRC = $(CMDSDIR)/gretl_commands_pt.xml
+IT_SRC = $(CMDSDIR)/gretl_commands_it.xml
 
 FNCDTD = $(CMDSDIR)/genr_funcs.dtd
 FNCSRC = $(CMDSDIR)/genr_funcs.xml
@@ -56,7 +57,11 @@ XMLSTRS = $(CMDSDIR)/hlp_l10n.xml $(CMDSDIR)/hlpstrs_en.xml \
 EQNLIST = $(CMDSDIR)/eqn_list.xml
 EQNXSL = $(CMDSDIR)/equations.xsl
 
-HLPSTAMP = $(SHAREDIR)/hlp.stamp
+EN_HLPSTAMP = $(SHAREDIR)/hlp.stamp
+ES_HLPSTAMP = $(SHAREDIR)/hlp_es.stamp
+IT_HLPSTAMP = $(SHAREDIR)/hlp_it.stamp
+PT_HLPSTAMP = $(SHAREDIR)/hlp_pt.stamp
+
 FIGSTAMP = $(SHAREDIR)/fig.stamp
 GENSTAMP = $(SHAREDIR)/gen.stamp
 HELPREFS = $(SHAREDIR)/gretlhelp.refs
@@ -125,26 +130,38 @@ $(EQNLIST): $(EQNXSL) $(CMDSDIR)/gretl_commands.xml
 $(FIGSTAMP): $(EQNLIST)
 	$(topsrc)/doc/texmath2png.pl $< $(SHAREDIR)/texfigs && touch $@
 
-# Generate "online" help files
-$(HLPSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) 
+# English "online" help files
+$(EN_HLPSTAMP): xsltrans reflow $(EN_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS)
 	./xsltrans --cmds --plain $(CMDSDIR)/gretl_commands.xml && \
 	./reflow < tmp.txt > $(SHAREDIR)/gretlcli.hlp
 	./xsltrans --cmds --pango $(CMDSDIR)/gretl_commands.xml && \
 	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlcmd.hlp
 	./xsltrans --gui --pango $(CMDSDIR)/gretl_commands.xml && \
-	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlgui.hlp
-	./xsltrans --cmds --plain $(CMDSDIR)/gretl_commands_it.xml && \
-	./reflow < tmp.txt > $(SHAREDIR)/gretlcli.hlp.it
-	./xsltrans --cmds --pango $(CMDSDIR)/gretl_commands_it.xml && \
-	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlcmd.hlp.it
-	./xsltrans --gui --pango $(CMDSDIR)/gretl_commands_it.xml && \
-	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlgui.hlp.it
+	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlgui.hlp && \
+	touch $@
+
+# Spanish "online" help files
+$(ES_HLPSTAMP): xsltrans reflow $(ES_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS)
 	./xsltrans --cmds --plain $(CMDSDIR)/gretl_commands_es.xml && \
 	./reflow < tmp.txt > $(SHAREDIR)/gretlcli.hlp.es
 	./xsltrans --cmds --pango $(CMDSDIR)/gretl_commands_es.xml && \
 	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlcmd.hlp.es
 	./xsltrans --gui --pango $(CMDSDIR)/gretl_commands_es.xml && \
-	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlgui.hlp.es 
+	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlgui.hlp.es && \
+	touch $@
+
+# Italian "online" help files
+$(IT_HLPSTAMP): xsltrans reflow $(IT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS)
+	./xsltrans --cmds --plain $(CMDSDIR)/gretl_commands_it.xml && \
+	./reflow < tmp.txt > $(SHAREDIR)/gretlcli.hlp.it
+	./xsltrans --cmds --pango $(CMDSDIR)/gretl_commands_it.xml && \
+	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlcmd.hlp.it
+	./xsltrans --gui --pango $(CMDSDIR)/gretl_commands_it.xml && \
+	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlgui.hlp.it && \
+	touch $@
+
+# Portuguese "online" help files
+$(PT_HLPSTAMP): xsltrans reflow $(PT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS)
 	./xsltrans --cmds --plain $(CMDSDIR)/gretl_commands_pt.xml && \
 	./reflow < tmp.txt > $(SHAREDIR)/gretlcli.hlp.pt
 	./xsltrans --cmds --pango $(CMDSDIR)/gretl_commands_pt.xml && \
@@ -234,7 +251,7 @@ functex_pt: xsltrans reflow $(FNCSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
 	./reflow < tmp.txt > ../tex_pt/funcbody.tex
 	touch $@
 
-cmdtex: xsltrans reflow $(CMDSRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
+cmdtex: xsltrans reflow $(EN_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
 	cat $(CMDSDIR)/gretl_commands.xml | grep -v DOCTYPE | \
 	grep -v 'xml version' >> tmp.xml && \
@@ -243,7 +260,7 @@ cmdtex: xsltrans reflow $(CMDSRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
 	rm tmp.xml
 	touch $@
 
-cmdtex_it: xsltrans reflow $(CMDSRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
+cmdtex_it: xsltrans reflow $(IT_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
 	cat $(CMDSDIR)/gretl_commands_it.xml | grep -v DOCTYPE | \
 	grep -v 'xml version' >> tmp.xml && \
@@ -252,7 +269,7 @@ cmdtex_it: xsltrans reflow $(CMDSRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
 	rm tmp.xml
 	touch $@
 
-cmdtex_es: xsltrans reflow $(CMDSRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
+cmdtex_es: xsltrans reflow $(ES_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
 	cat $(CMDSDIR)/gretl_commands_es.xml | grep -v DOCTYPE | \
 	grep -v 'xml version' >> tmp.xml && \
@@ -261,7 +278,7 @@ cmdtex_es: xsltrans reflow $(CMDSRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
 	rm tmp.xml
 	touch $@
 
-cmdtex_pt: xsltrans reflow $(CMDSRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
+cmdtex_pt: xsltrans reflow $(PT_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
 	cat $(CMDSDIR)/gretl_commands_pt.xml | grep -v DOCTYPE | \
 	grep -v 'xml version' >> tmp.xml && \
