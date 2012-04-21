@@ -1945,28 +1945,29 @@
   </command>
 
   <command name="data" section="Dataset" 
-    label="Import from database" context="cli">
+    label="Importar de uma base de dados" context="cli">
 
     <usage>
       <arguments>
-        <argument>varlist</argument>
+        <argument>lista-de-variáveis</argument>
       </arguments>
       <options>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't report results except on error</effect>
+	  <effect>não reportar resultados exceto quando hajam erros</effect>
 	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	Reads the variables in <repl>varlist</repl> from a database
-	(gretl, RATS 4.0 or PcGive), which must have been opened
-	previously using the <cmdref targ="open"/> command.  The
-	data frequency and sample range may be established via the
-	<cmdref targ="setobs"/> and <cmdref targ="smpl"/> commands prior
-	to using this command. Here is a full example:</para>
+	Lê as variáveis indicadas na <repl>lista-de-variáveis</repl> a
+	partir de uma base de dados (gretl, RATS 4.0 ou PcGive), que
+	deve ter sido préviamente aberta usando o comando 
+	<cmdref targ="open"/>.  A frequência dos dados e o intervalo da
+	amostra podem ser definidos pelos comandos <cmdref targ="setobs"/> 
+	e <cmdref targ="smpl"/> antes de usar este comando. 
+	Apresenta-se um exemplo completo:</para>
       <code>
 	open macrodat.rat
 	setobs 4 1959:1
@@ -1974,45 +1975,49 @@
 	data GDP_JP GDP_UK
       </code>
       <para>
-	The commands above open a database named
-	<filename>macrodat.rat</filename>, establish a quarterly data set
-	starting in the first quarter of 1959 and ending in the fourth
-	quarter of 1999, and then import the series named
-	<lit>GDP_JP</lit> and <lit>GDP_UK</lit>.</para>
+	Os comandos acima abrem a base de dados com o nome 
+	<filename>macrodat.rat</filename>, definem um conjunto de dados
+	trimestral iniciando no primeiro trimestre de 1959 e terminando
+	no quarto trimestre de 1999, e depois importam as séries temporais
+	com os nomes <lit>GDP_JP</lit> e <lit>GDP_UK</lit>.</para>
       <para>
-	If <lit>setobs</lit> and <lit>smpl</lit> are not specified in this
-	way, the data frequency and sample range are set using the first
-	variable read from the database.
+	Se os comandos <lit>setobs</lit> e <lit>smpl</lit> não tiverem sido
+	especificados deste modo, a frequência dos dados e o intervalo da 
+	amostra serão definidos usando a primeira variável lida da base de
+	dados.
       </para>
       <para>
-	If the series to be read are of higher frequency than the working
-	data set, you may specify a compaction method as below:</para>
+	Se as séries temporais a serem lidas forem de frequência 
+	superior à do conjunto de dados em uso, você pode especificar
+	um método de compactação tal como abaixo:</para>
       <code>
 	data (compact=average) LHUR PUNEW
-      </code>
+      </code> 
       <para>
-	The four available compaction methods are <quote>average</quote>
-	(takes the mean of the high frequency observations),
-	<quote>last</quote> (uses the last observation),
-	<quote>first</quote> and <quote>sum</quote>.  If no method is
-	specified, the default is to use the average.
+	Os quatro métodos de compactação disponíveis são: 
+	Média; <quote>average</quote> (usa a média das observações
+	de maior frequência),
+	Último; <quote>last</quote> (usa a última observação),
+	Primeiro; <quote>first</quote> e 
+	Soma; <quote>sum</quote>.  Se não tiver sido indicado
+	nenhum métod, será usado a Média.
       </para>
 
     </description>
 
     <gui-access>
-      <menu-path>/File/Databases</menu-path>
+      <menu-path>/Ficheiro/Bases de Dados</menu-path>
     </gui-access>
 
   </command>
 
   <command name="dataset" section="Dataset" 
-    label="Manipulate the dataset" context="cli">
+    label="Manipular o conjunto de dados" context="cli">
 
     <usage>
       <arguments>
-        <argument>keyword</argument>
-	<argument>parameters</argument>
+        <argument>palavra-chave</argument>
+	<argument>parâmetros</argument>
       </arguments>
       <examples>
         <example>dataset addobs 24</example>
@@ -2030,119 +2035,121 @@
 
     <description>
       <para>
-	Performs various operations on the data set as a whole,
-	depending on the given <repl>keyword</repl>, which must be
-	<lit>addobs</lit>, <lit>insobs</lit>, <lit>clear</lit>,
+	Efectua diversas operações sobre o conjunto de dados como
+	um todo, dependendo da <repl>palavra-chave</repl>, que tem 
+	que ser <lit>addobs</lit>, <lit>insobs</lit>, <lit>clear</lit>,
 	<lit>compact</lit>, <lit>expand</lit>, <lit>transpose</lit>,
-	<lit>sortby</lit>, <lit>dsortby</lit>, <lit>resample</lit> or
-	<lit>renumber</lit>. Note: with the exception of
-	<lit>clear</lit>, these actions are not available when the
-	dataset is currently subsampled by selection of cases on some
-	Boolean criterion.
+	<lit>sortby</lit>, <lit>dsortby</lit>, <lit>resample</lit> ou
+	<lit>renumber</lit>. Nota: exceptuando <lit>clear</lit>, estas
+	ações não estão disponíveis enquanto o conjunto de dados estiver
+	subamostrado por seleção de casos com algum critério Booleano.
       </para>
       <para>
-	<lit>addobs</lit>: Must be followed by a positive integer.  Adds
-	the specified number of extra observations to the end of the
-	working dataset.  This is primarily intended for forecasting
-	purposes.  The values of most variables over the additional range
-	will be set to missing, but certain deterministic variables are
-	recognized and extended, namely, a simple linear trend and
-	periodic dummy variables. 
+	<lit>addobs</lit>: Tem que ser seguida por um inteiro positivo.
+	Acrescenta o número indicado de observações adicionais no
+	final do conjunto de dados em uso.  Essencialmente, isto é 
+	pretendido para efeitos de predição.  Os valores na maior parte
+	das variáveis no intervalo acrescentado, serão marcados como 
+	omissos, mas certas variáveis determinísticas são reconhecidas
+	e extendidas, nomeadamente, uma tendência linear simples e 
+	variáveis periódicas auxiliares.
       </para>
       <para>
-	<lit>insobs</lit>: Must be followed by a positive integer no
-	greater than the current number of observations. Inserts a
-	single observation at the specified position. All subsequent
-	data are shifted by one place and the dataset is extended by
-	one observation. All variables apart from the constant are
-	given missing values at the new observation. This action is
-	not available for panel datasets.
+	<lit>insobs</lit>: Tem que ser seguida por um inteiro positivo
+	que não seja maior que o número de observações atual. Inserte
+	uma única observação na posição indicada. Todos os dados
+	subsequentes são deslocados uma posição e o conjunto de dados
+	fica extendido com mais uma observação. Todas as variáveis exceto
+	a constante recebem um valor omisso na nova observação. Esta ação
+	não está disponível para conjuntos de dados de painel.
       </para>
       <para>
-	<lit>clear</lit>: No parameter required.  Clears out the current
-	data, returning gretl to its initial <quote>empty</quote> state.
+	<lit>clear</lit>: Não necessita parâmetros.  Limpa o conjunto
+	de dados corrente, ficando gretl no seu estado 
+	<quote>vazio</quote> inicial.
       </para>      
       <para>
-	<lit>compact</lit>: Must be followed by a positive integer
-	representing a new data frequency, which should be lower than the
-	current frequency (for example, a value of 4 when the current
-	frequency is 12 indicates compaction from monthly to quarterly).
-	This command is available for time series data only; it compacts
-	all the series in the data set to the new frequency.  A second
-	parameter may be given, namely one of <lit>sum</lit>,
-	<lit>first</lit> or <lit>last</lit>, to specify, respectively,
-	compaction using the sum of the higher-frequency values,
-	start-of-period values or end-of-period values.  The default
-	is to compact by averaging.
+	<lit>compact</lit>: Tem que ser seguida por um inteiro positivo
+	representando uma nova frequência, que deve ser inferior à
+	frequência atual (por exemplo, um valor 4 quando a frequência
+	corrente é 12, indica a compactação de mensal para trimestral).
+	Este comando apenas está disponível para séries temporais; ele
+	compacta todas as séries temporais do conjunto de dados para a
+	nova frequência.  Pode ser dado um segundo parâmetro, nomeadamente
+	um de <lit>sum</lit>, <lit>first</lit> ou <lit>last</lit>, para
+	especificar, respectivamente, compactação usando a soma dos valores
+	de maior frequência, valores de ínicio e de fim de período. Por 
+	omissão é feita compactação por média.
       </para>
       <para>
-	<lit>expand</lit>: This command is only available for annual or
-	quarterly time series data: annual data can be expanded to
-	quarterly, and quarterly data to monthly frequency. By 
-	default all the series in the data set are padded out to the new
-	frequency by repeating the existing values, but if the
-	modifier <lit>interp</lit> is appended then the series
-	are expanded using Chow-Lin interpolation: the regressors are
-	a constant and quadratic trend and an AR(1) disturbance process
-	is assumed.
+	<lit>expand</lit>: Este comando está apenas disponível
+	para séries temporais anuais ou trimestrais: dados anuais
+	podem ser expandidos para trimestrais, e dados trimestrais
+	para frequência mensal.  Por omissão todas as séries temporais
+	no conjunto de dados são preenchidas com repetição de valores
+	existentes até atingirem a nova frequência, mas se tiver sido 
+	acrescentado o modificador <lit>interp</lit> então as séries
+	temporais serão expandidas usando a interpolação de Chow-Lin: 
+	os regressores são a constante e a tendência quadrada e é
+	assumido um processo de perturbação AR(1).
       </para>
       <para>
-	<lit>transpose</lit>: No additional parameter required.
-	Transposes the current data set.  That is, each observation (row)
-	in the current data set will be treated as a variable (column),
-	and each variable as an observation.  This command may be useful
-	if data have been read from some external source in which the rows
-	of the data table represent variables.
+	<lit>transpose</lit>: Não necessita parâmetros.
+	Transpõe o conjunto de dados actual.  Isto é, cada observação
+	(linha) será tratada como uma variável (coluna), e cada variável
+	como uma observação.  Este comando pode ser útil se quando os dados
+	tenham sido lidos a partir de uma origem externa em que as linhas da
+	tabela de dados representam variáveis.
       </para>
       <para>
-	<lit>sortby</lit>: The name of a single series or list is required. If
-	one series is given, the observations on all variables in the dataset
-	are re-ordered by increasing value of the specified series. If a list
-	is given, the sort proceeds hierarchically: if the observations are
-	tied in sort order with respect to the first key variable then the
-	second key is used to break the tie, and so on until the tie is broken
-	or the keys are exhausted. Note that this command is available only
-	for undated data.
+	<lit>sortby</lit>: É necessário o nome de uma lista ou de uma única 
+	série de dados. Se tiver sido dada uma série de dados, as observações
+	em todas as variáveis do conjunto de dados são re-ordenadas por ordem
+	crescente da série especificada.  Se tiver sido dada uma lista, a 
+	ordenação é hierárquica: se as observações estiverem empatadas no que 
+	diz respeito à primeira variável chave então é usada a segunda chave 
+	para desempatar, e assim sucessivamente até que não haja empates ou 
+	se tenham esgotado as chaves. Note que este comando apenas está
+	disponível para dados sem data.
       </para>
       <para>
-	<lit>dsortby</lit>: Works as <lit>sortby</lit> except that
-	the re-ordering is by decreasing value of the key series.
+	<lit>dsortby</lit>: Funciona como <lit>sortby</lit> exceto que
+	a re-ordenação é por ordem decrescente das séries chave.
       </para>
       <para>
-	<lit>resample</lit>: Constructs a new dataset by random
-	sampling, with replacement, of the rows of the current dataset.
-	One argument is required, namely the number of rows to
-	include.  This may be less than, equal to, or greater than
-	the number of observations in the original data.  The
-	original dataset can be retrieved via the command
-	<lit>smpl full</lit>.  
+	<lit>resample</lit>: Constrói um novo conjunto de dados
+	por amostragem aleatória, com substituição das linhas
+	do conjunto de dados corrente. Requer um argumento, 
+	designadamente o número de linhas a incluir. Este pode ser
+	menor, igual ou maior que o número de observações nos dados
+	originais.  O conjunto de dados original pode ser obtido 
+	usando o comando <lit>smpl full</lit>.  
       </para>
       <para>
-	<lit>renumber</lit>: Requires the name of an existing series
-	followed by an integer between 1 and the number of series in the
-	dataset minus one. Moves the specified series to the specified
-	position in the dataset, renumbering the other series
-	accordingly. (Position 0 is occupied by the constant, which
-	cannot be moved.)
+	<lit>renumber</lit>: Requer o nome de uma de uma série seguido
+	por um inteiro entre 1 e o número de séries no conjunto de dados
+	menos 1. Move a série especificada para a posição indicada dentro
+	do conjunto de dados, renumerando adequadamente as restantes séries.
+	(A posição 0 está ocupada pela constante, que não pode ser movida.)
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Data</menu-path>
+      <menu-path>/Dados</menu-path>
     </gui-access>
 
   </command>
 
   <command name="datasort" section="Dataset" context="gui"
-    label="Sorting data">
+    label="Ordenar dados">
 
     <description>
       <para>
-	The selected variable is used as a sort key for the entire
-	data set.  The observations on all variables are
-	re-ordered by increasing value of the key variable, or by
-	decreasing value if you select the <quote>Descending</quote>
-	option.
+	A variável selecionada é usada como a chave de ordenação
+	para todo o conjunto de dados.  As observações em todas
+	as variáveis são re-ordenadas por ordem crescente dos
+	valores da variável chave, ou por valores decrescentes
+	caso tenha selecionado a opção <quote>Descrescente</quote>.
       </para>
     </description>
   </command>
