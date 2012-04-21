@@ -45,7 +45,7 @@
 	<repl>lista-de-variáveis</repl> são acrescentadas ao modelo anterior
         e o novo modelo é estimado.  É apresentada uma estatística de 
         significância conjunta, juntamente com o seu p-value.  O teste
-        estatístico é o <mathvar>F</mathvar> no caso de estimação por mínimos
+        estatístico é o <math>F</math> no caso de estimação por mínimos
         quadrados (OLS), ou qui-quadrado assimptótico de Wald nos outros
         casos.  Um p-value abaixo de 0,05 significa que os coeficientes são
         conjuntamente significantes num nível de 5 porcento.
@@ -75,7 +75,7 @@
 	modelo é estimado. É apresentada a estatística de teste para a 
 	significância conjunta das variáveis acrescentadas, assim como o respectivo
 	p-value. A estatística de teste no caso de estimação pelos mínimos quadrados
-        (OLS) é a <mathvar>F</mathvar>, ou o qui-quadrado assimptótico de Wald nos
+        (OLS) é a <math>F</math>, ou o qui-quadrado assimptótico de Wald nos
 	restantes casos. Um p-value abaixo de 0,05 significa que os coeficientes
 	são conjuntamente significantes num nível de 5 porcento.
       </para>
@@ -189,9 +189,9 @@
       </para>
 
       <para>Em todos os casos a variável dependente é a primeira diferença
-        da variável especificada, <mathvar>y</mathvar>,	e a variável independente
-        chave é o primeiro desfasamento de <mathvar>y</mathvar>.  O modelo é construido
-        de modo a que o coeficiente do desfasamento de <mathvar>y</mathvar> iguale 1 
+        da variável especificada, <math>y</math>,	e a variável independente
+        chave é o primeiro desfasamento de <math>y</math>.  O modelo é construido
+        de modo a que o coeficiente do desfasamento de <math>y</math> iguale 1 
         menos a raiz em questão.  Por exemplo, o modelo com uma constante pode
         ser escrito como <equation status="display"
 	tex="\[(1-L)y_t=\beta_0+(1-\alpha)y_{t-1}+\epsilon_t\]"
@@ -199,18 +199,18 @@
 	  graphic="adf1"/></para>
 
       <para context="cli">
-	Se a ordem de desfasamento, <mathvar>k</mathvar>, é maior que 0, então
-        <mathvar>k</mathvar> desfasamentos da variável dependente são incluidos 
+	Se a ordem de desfasamento, <math>k</math>, é maior que 0, então
+        <math>k</math> desfasamentos da variável dependente são incluidos 
         no lado direito das regressões de teste, sujeitos à seguinte
         qualificação.  Se a opção <lit>--test-down</lit> foi dada, 
-        <mathvar>k</mathvar> é considerada como sendo o desfasamento máximo e a
+        <math>k</math> é considerada como sendo o desfasamento máximo e a
         ordem de desfasamento efectivamente usada é obtida testando para baixo,
         de acordo com o seguinte algoritmo:
       </para>
 
       <para context="gui">
-	Se a ordem de desfasamento, <mathvar>k</mathvar>, é maior que 0, então
-        <mathvar>k</mathvar> desfasamentos da variável dependente são incluidos 
+	Se a ordem de desfasamento, <math>k</math>, é maior que 0, então
+        <math>k</math> desfasamentos da variável dependente são incluidos 
         no lado direito das regressões de teste, sujeitos à seguinte
         qualificação.  Se estiver seleccionada a opção <quote>testar para 
         baixo a partir da ordem máxima de "lag"</quote>, a ordem de desfasamento
@@ -221,20 +221,20 @@
 
       <nlist>
 	<li><para>Estimar a regressão de Dickey&ndash;Fuller com
-	    <mathvar>k</mathvar> desfasamentos da variável dependente.
+	    <math>k</math> desfasamentos da variável dependente.
 	  </para>
 	</li>
 	<li><para>O último desfasamento é significante?  Se sim, executar o teste
-            com com a ordem de desfasamento, <mathvar>k</mathvar>.  Senão, fazer 
-	    <mathvar>k</mathvar> = <mathvar>k</mathvar> &minus; 1; se 
-	    <mathvar>k</mathvar> for igual a 0, executar o teste com a
+            com com a ordem de desfasamento, <math>k</math>.  Senão, fazer 
+	    <math>k</math> = <math>k</math> &minus; 1; se 
+	    <math>k</math> for igual a 0, executar o teste com a
             ordem de desfasamento 0, senão saltar para o passo 1.
 	  </para>
 	</li>
       </nlist>
 
       <para>No contexto do passo 2 acima, <quote>significante</quote>
-	quer dizer que para o último desfasamento, a estatística-<mathvar>t</mathvar>,
+	quer dizer que para o último desfasamento, a estatística-<math>t</math>,
         que segue uma distribuição normal, tem um <emphasis>p</emphasis>-value
         bilateral assimptótico menor ou igual a 0,10.</para> 
 
@@ -881,7 +881,7 @@
 	<equation status="inline" 
 	  tex="$\ell$" ascii="L"
 	  graphic="ell"/> é o
-	logaritmo da verosimilhança e <mathvar>k</mathvar> é o número
+	logaritmo da verosimilhança e <math>k</math> é o número
         total de parâmetros estimados.  Note-se que o programa 
         <program>X-12-ARIMA</program> não produz critérios de informação
         tal como o AIC quando a estimação é por ML condicional.
@@ -933,7 +933,7 @@
 	A imagem da <quote>frequência</quote> apresentada
 	em ligação com as raízes AR e MA é o valor &lgr; que resolve
 	<math>z</math> = <math>r</math> * exp(i*2*&pi;*&lgr;) onde 
-	<mathvar>z</mathvar> é a raiz em questão e <mathvar>r</mathvar>
+	<math>z</math> é a raiz em questão e <math>r</math>
 	 o seu módulo.
       </para>
     </description>
@@ -1071,16 +1071,16 @@
 	    das estimativas dos coeficientes bootstrap.  A versão
 	    <quote>studentized</quote> segue o texto de Davidson e
 	    MacKinnon <book>Economic Theory and Methods</book> (ETM),
-	    Capítulo 5: em cada replicação bootstrap uma razão-<mathvar>t</mathvar>
+	    Capítulo 5: em cada replicação bootstrap uma razão-<math>t</math>
 	    é construída como (a) a diferença entre as estimativas do
 	    coeficiente corrente e da linha-base, dividida pela (b) 
 	    estimativa do erro padrão da linha-base. Então o intervalo 
 	    de confiança é construído segundo os quantis desta 
-	    razão-<mathvar>t</mathvar>, tal como explicado no ETM. A opção
-	    valor-P baseia-se na distribuição da razão-<mathvar>t</mathvar>
+	    razão-<math>t</math>, tal como explicado no ETM. A opção
+	    valor-P baseia-se na distribuição da razão-<math>t</math>
 	    do bootstrap:
 	    é a proporção de replicações onde o valor absoluto desta 
-	    estatística excede o valor absoluto da razão-<mathvar>t</mathvar>
+	    estatística excede o valor absoluto da razão-<math>t</math>
 	    da linha-base.
 	  </para>
 	</li>
@@ -1095,8 +1095,8 @@
 	<li>
 	  <para>O número de replicações a realizar.  Note que quando você
 	    está a construir um intervalo de confiança a 95 porcento, é
-	    desejável que 0.05(<mathvar>B</mathvar> + 1)/2 resulte num valor
-	    inteiro (onde <mathvar>B</mathvar> é o número de replicações).
+	    desejável que 0.05(<math>B</math> + 1)/2 resulte num valor
+	    inteiro (onde <math>B</math> é o número de replicações).
 	    Portanto o gretl pode ajustar o número de replicações de modo a
 	    garantir isso.
 	  </para>
@@ -1301,7 +1301,7 @@
         caso contrário é 0, e cria também termos de interacção entre
         esta variável auxiliar e as variáveis independentes originais.  
         É executada uma regressão aumentada que inclui estes termos e
-        é calculada a estatística <mathvar>F</mathvar>, considerando 
+        é calculada a estatística <math>F</math>, considerando 
         a regressão aumentada como não restringida e a original como
         restringida.  Esta estatística é apropriada para testar a
         hipótese nula de não existência de quebra estrutural no ponto
@@ -1460,8 +1460,8 @@
         passo (1) são omitidos.
       </para>
       <para context="gui">
-        Se a ordem de desfasamento <mathvar>k</mathvar>, é maior que zero, então
-        são incluídos <mathvar>k</mathvar> desfasamentos no lado direito de cada
+        Se a ordem de desfasamento <math>k</math>, é maior que zero, então
+        são incluídos <math>k</math> desfasamentos no lado direito de cada
         regressão de teste, excepto se estiver seleccionada a opção 
         <quote>Testar para baixo a partir do desfasamento de maior ordem</quote>:
         nesse caso ela é encarada como sendo o máximo desfasamento e a 
@@ -1776,9 +1776,15 @@
 
     <usage>
       <arguments>
-        <argument>variável</argument>
-        <argument optional="true">maxlag</argument>
+        <argument>série-temporal</argument>
+        <argument optional="true">ordem</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>não desenha o gráfico ACF</effect>
+	</option>
+      </options>
       <examples>
         <example>corrgm x 12</example>
       </examples>
@@ -1787,32 +1793,33 @@
     <description>
       <para>
 	Apresenta os valores da função de autocorrelação para a
-	<repl>variável</repl>, que pode ser especificada por nome ou por
+	<repl>série-temporal</repl>, que pode ser especificada por nome ou por
         número.  Os valores são definidos pela equação
 	<equation status="inline" 
 	  tex="$\hat{\rho}(u_t, u_{t-s})$" 
 	  ascii="rho(u(t), u(t-s))" 
 	  graphic="autocorr"/> onde 
-	<mathvar>u<sub>t</sub></mathvar> é a <mathvar>t</mathvar>&ndash;ésima
-	observação da variável <mathvar>u</mathvar> e <mathvar>s</mathvar>
-        é o número de "lags".
+	<math>u<sub>t</sub></math> é a <math>t</math>&ndash;ésima
+	observação da variável <math>u</math> e <math>s</math>
+        é o número de desfasamentos.
       </para>
 
       <para>
 	Também são apresentadas as autocorrelações parciais (obtidas segundo
         o algoritmo de Durbin&ndash;Levinson): estas constituem a rede dos
-        efeitos dos "lags" intervenientes.  O comando também produz o gráfico
-        correlograma e apresenta a estatística de teste 
-        <mathvar>Q</mathvar> de Box&ndash;Pierce, para a hipótese nula de que
+        efeitos dos desfasamentos intervenientes.  Adicionalmente, é 
+        apresentada a estatística de teste <math>Q</math> de 
+        Box&ndash;Pierce. Esta pode ser usada para testar a hipótese nula de que
         a série temporal é <quote>ruído branco</quote>: terá uma distribuição
         qui-quadrado assimptótico com os graus de liberdade iguais ao número de
-        "lags" usados.
+        desfasamentos usados.  O comando também produz o gráfico
+        correlograma se a opção <opt>--quiet</opt> não tiver sido dada.
       </para>
 
       <para>
-	Se o valor <repl>maxlag</repl> for especificado o comprimento do
-        correlograma fica limitado a esse máximo número de "lags", senão o 
-        comprimento é determinado automáticamente, como uma função da
+	Se o valor <repl>ordem</repl> for especificado o comprimento do
+        correlograma fica limitado a esse máximo número de desfasamentos, senão o 
+        comprimento é determinado automaticamente, como uma função da
         frequência dos dados e do número de observações.
       </para>
     </description>
@@ -1832,7 +1839,7 @@
 	A variável dependente é tida como representando a contagem de 
 	ocorrência de eventos de alguma natureza, e tem que ter apenas
 	valores inteiros não-negativos. Por omissão, usa-se a 
-	distribuição de Poisson, mas o selector de menu permite escolher
+	distribuição de Poisson, mas o seletor de menu permite escolher
 	a distribuição Binomial Negativa. (A variante 'NegBin 2' é 
 	normalmente usada em econometria, mas também está disponível a 
 	menos usada 'NegBin 1').
@@ -1859,17 +1866,17 @@
     </description>
   </command>
 
-  <command name="curve" section="Graphs" label="Plot a curve"
+  <command name="curve" section="Graphs" label="Desenha uma curva"
     context="gui">
 
     <description>
       <para>
-	This dialog box allows you to create a gnuplot graph by specifying a
-	formula. This must be an expression acceptable to gnuplot.  Use
-	<lit>x</lit> to denote the value of the variable on the x-axis.
-	Please note that gnuplot uses <lit>**</lit> for exponentiation
-	(raising to a power), and that the decimal character must be given as
-	<quote>.</quote>.  Examples:
+	Esta caixa de diálogo permite-lhe criar um gráfico gnuplot
+        a partir de uma expressão. Esta tem que ser uma expressão 
+        válida para o gnuplot.  Use <lit>x</lit> como o identificador
+	dos valores da variável no eixo dos X. Tenha em atenção que o
+	gnuplot usa <lit>**</lit> para potenciação, e que o caratere
+	dos decimais tem que ser o <quote>.</quote>.  Exemplos:
       </para>
       <code>
 	10+0.35*x
@@ -1878,10 +1885,10 @@
 	exp(sqrt(pi*x))
       </code>
       <para>
-	To put an additional line onto a graph created in this way, click
-	on the graph and select <quote>Edit</quote>, select the
-	<quote>Lines</quote> tab in the graph editing dialog, and use
-	the <quote>Add line</quote> button.
+	Para acrescentar uma linha adicional a um gráfico criado por 
+        este processo, clicar no gráfico e selecionar <quote>Editar</quote>, 
+        selecionar o separador <quote>Linhas</quote> na janela de edição
+        do gráfico, e use o botão <quote>Acrescentar linha...</quote>.
       </para>
     </description>
   </command>
@@ -1894,6 +1901,10 @@
 	  <flag>--squares</flag>
 	  <effect>executa o teste CUSUMSQ</effect>
 	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>apenas mostra o teste Harvey&ndash;Collier</effect>
+	</option>
       </options>
     </usage>
 
@@ -1904,11 +1915,11 @@
         o teste CUSUMSQ &mdash;para a estabilidade dos parâmetros.  É obtida
         uma série temporal de erros de predição um passo-à-frente, pela 
         execução de séries de regressões: a primeira regressão usa as 
-        primeiras <mathvar>k</mathvar> observações e é usada para gerar a
+        primeiras <math>k</math> observações e é usada para gerar a
         predição da variável dependente na observação
-        <mathvar>k</mathvar> + 1; a segunda usa a primeira predição para a
-        observação <mathvar>k</mathvar> + 2, e por aí a diante 
-	(onde <mathvar>k</mathvar> é o número de parâmetros no modelo original).
+        <math>k</math> + 1; a segunda usa a primeira predição para a
+        observação <math>k</math> + 2, e por aí a diante 
+	(onde <math>k</math> é o número de parâmetros no modelo original).
       </para>
       <para>
 	A soma acumulada dos erros de predição escalados, ou os quadrados desses
@@ -1918,11 +1929,12 @@
       </para>
       <para>
 	No caso do teste  CUSUM, é também apresentada a estatística de teste
-        <mathvar>t</mathvar> de Harvey&ndash;Collier, para a hipótese nula
+        <math>t</math> de Harvey&ndash;Collier, para a hipótese nula
         da estabilidade dos parâmetros.  Ver o livro 
         <book>Econometric Analysis</book> de Greene para mais detalhes.  Para
         o teste CUSUMSQ, o intervalo de confiança a 95 porcento é calculado de
-        acordo com o algoritmo apresentado por Edgerton e Wells (1994).
+        acordo com o algoritmo apresentado por 
+	<cite key="edgerton94">Edgerton e Wells (1994)</cite>.
       </para>
     </description>
 
