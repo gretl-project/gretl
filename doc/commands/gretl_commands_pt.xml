@@ -2155,75 +2155,77 @@
   </command>
 
   <command name="debug" section="Programming" context="cli"
-    label="Debugging">
+    label="Despiste de erros de programa">
 
     <usage>
       <arguments>
-        <argument>function</argument>
+        <argument>função</argument>
       </arguments>
     </usage>
 
     <description>
       <para>
-	Experimental debugger for user-defined functions, available in the
-	command-line program, gretlcli, and in the GUI console.  The
-	<lit>debug</lit> command should be invoked after the function in
-	question is defined but before it is called.  The effect is that
-	execution pauses when the function is called and a special prompt is
-	shown.
+	Comando experimental para despiste de erros de programa ('debugger')
+	em funções definidas pelo utilizador, disponível em programas de 
+	linha-de-comandos, gretlcli, e na consola do ambiente gráfico (GUI).
+	O comando <lit>debug</lit> deve ser utilizado antes da chamada da 
+	função, mas depois da definição desta. O efeito é de que a execução
+	é suspensa quando a função é chamada e é activada uma linha de 
+	interação especial.
       </para>
       <para>
-	At the debugging prompt you can type <lit>next</lit> to execute the
-	next command in the function, or <lit>continue</lit> to allow
-	execution of the function to continue unimpeded. These commands can be
-	abbreviated as <lit>n</lit> and <lit>c</lit> respectively.  You can
-	also interpolate an instruction at this prompt, for example a
-	<lit>print</lit> command to reveal the current value of some variable
-	of interest.
+	Na linha de interação, você introduz <lit>next</lit> para executar
+	o comando seguinte dentro da função, ou <lit>continue</lit> para 
+	permitir continuar a execução da função sem impedimentos. Estes
+	comandos podem ser abreviados com <lit>n</lit> e <lit>c</lit> 
+	respetivamente.  Você também pode interpôr uma instrução nesta
+	linha de interação, por exemplo um comando <lit>print</lit> para
+	mostrar o valor atual de alguma variável de interesse.
       </para>
     </description>
   </command>  
 
   <command name="delete" section="Dataset" 
-    label="Delete variables" context="cli">
+    label="Apagar variáveis" context="cli">
 
     <usage>
       <arguments>
-        <argument>varname</argument>
+        <argument>nome-de-variável</argument>
       </arguments>
       <options>
 	<option>
 	  <flag>--db</flag>
-	  <effect>delete series from database</effect>
+	  <effect>apaga séries em base de dados</effect>
 	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	This command is an all-purpose destructor for named variables
-	(whether series, scalars, matrices, strings or bundles). It
-	should be used with caution; no confirmation is asked.
+	Este comando é um destrutor geral para variáveis com nome
+	(quer sejam séries, escalares, matrizes, texto, ou 'bundles').
+	Tem que ser usada com cuidado; não será peguntada nenhuma
+	confirmação.
       </para>
       <para>
-	In the case of series, <repl>varname</repl> may take the form
-	of a named list, in which case all series in the list are
-	deleted, or it may take the form of an explicit list of series
-	given by name or ID number. Note that when you delete series
-	any series with higher ID numbers than those on the deletion
-	list will be re-numbered.
+	No caso de uma série <repl>nome-de-variável</repl> pode tomar a 
+	forma de uma lista com nome, o que faz com que todas as séries
+	nessa lista sejam apagadas, ou pode tomar a forma de uma lista
+	explícita de séries por nome ou número ID.  Note que quando
+	você apaga séries, quaisquer séries com números ID superiores
+	àquelas que estão na lista a apagar serão renumeradas.
       </para>
       <para>
-	If the <opt>--db</opt> option is given, this command deletes the
-	listed series not from the current dataset but from a gretl
-	database, assuming that a database has been opened, and the user
-	has write permission for file in question.  See also the
-	<cmdref targ="open"/> command.
+	Se for dada a opção <opt>--db</opt>, o comando apaga as séries
+	listadas não do conjunto de dados atual mas de uma base de dados
+	gretl, assumindo que a base de dados está aberta e que o utilizador
+	tem permissão de escrita no ficheiro em questão.  Ver também o 
+	comando	<cmdref targ="open"/>.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>Main window pop-up (single selection)</menu-path>
+      <menu-path>Menu de contexto da janela principal (selecção singular)</menu-path>
     </gui-access>
 
   </command>
