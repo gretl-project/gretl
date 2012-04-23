@@ -306,6 +306,8 @@ individual OLS regressions. In both cases the test statistic is
 distributed asymptotically as $\chi^2$ with $g(g-1)/2$ degrees of
 freedom. 
 
+\subsection{Structural and reduced forms}
+
 Systems of simultaneous systems can be represented in structural form
 as
 \[
@@ -313,15 +315,31 @@ as
  + B x_t + \epsilon_t
 \]
 where $y_t$ represents the vector of endogenous variables in period
-$t$ and $x_t$ the vector of exogenous variables.  The structural-form
+$t$, $x_t$ denotes the vector of exogenous variables, and $p$ is the
+maximum lag of the endogenous regressors.  The structural-form
 matrices can be retrieved as \verb|$sysGamma|, \verb|$sysA| and
 \verb|$sysB| respectively. If $y_t$ is $m \times 1$ and $x_t$ is $n
 \times 1$, then $\Gamma$ is $m \times m$ and $B$ is $m \times n$. If
 the system contains no lags of the endogenous variables then the $A$
 matrix is not defined, otherwise $A$ is the horizontal concatenation
 of $A_1,\dots,A_p$, and is therefore $m \times mp$.
+% $
 
-TODO: add an example of use of the structural-form matrices
+From the structural form it is straightforward to obtain the reduced
+form, namely,
+\[
+y_t = \Gamma^{-1} \left(\sum_{i=1}^p A_i y_{t-i}\right)
+ + \Gamma^{-1} B x_t + v_t
+\]
+where $v_t \equiv \Gamma^{-1}\epsilon_t$. The reduced form is used by
+\app{gretl} to generate forecasts in response to the \texttt{fcast}
+command. This means that --- in contrast to single-equation estimation
+--- the values produced via \texttt{fcast} for a static, within-sample
+forecast will in general differ from the fitted values retrieved via
+\verb|$yhat|. The fitted values for equation $i$ represent the
+expectation of $y_{ti}$ conditional on the contemporaneous values of
+all the regressors, while the \texttt{fcast} values are conditional on
+the exogenous and predetermind variables only.
 
 %%% Local Variables: 
 %%% mode: latex

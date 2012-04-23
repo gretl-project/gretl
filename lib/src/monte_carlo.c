@@ -366,8 +366,7 @@ int ok_in_loop (int c)
 	c == SETMISS ||
 	c == SETOBS ||
 	c == TABPRINT ||
-	c == VIF ||
-	c == XCORRGM) {
+	c == VIF)  {
 	return 0;
     }
 

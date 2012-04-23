@@ -725,10 +725,17 @@ end restrict
 \end{code}
 %
 specifies that variables 3 and 4 do not respond to the deviation from
-equilibrium in the previous period. Note that when two indices are
-given in a restriction on $\alpha$ the indexation is consistent with
-that for $\beta$ restrictions: the leading index denotes the
-cointegrating vector and the trailing index the equation number.
+equilibrium in the previous period.\footnote{Note that when two
+  indices are given in a restriction on $\alpha$ the indexation is
+  consistent with that for $\beta$ restrictions: the leading index
+  denotes the cointegrating vector and the trailing index the equation
+  number.} 
+
+A variant on the single-index syntax for common restrictions on
+$\alpha$ and $\beta$ is available: you can replace the index number
+with the name of the corresponding variable, in square brackets. For
+example, instead of \texttt{a3 = 0} one could write \texttt{a[cpr] =
+  0}, if the third variable in the system is named \texttt{cpr}.
 
 Finally, a short-cut is available for setting up complex restrictions (but
 currently only in relation to $\beta$): you can specify $R_b$ and $q$,
