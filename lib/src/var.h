@@ -147,6 +147,8 @@ int set_VAR_model_stats (GRETL_VAR *var, int i);
 
 const int *gretl_VAR_get_exo_list (const GRETL_VAR *var);
 
+const int *gretl_VAR_get_endo_list (const GRETL_VAR *var);
+
 GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig, 
 				DATASET *dset, PRN *prn, int *err);
 
@@ -213,8 +215,6 @@ real_gretl_restricted_vecm (GRETL_VAR *orig,
 			    PRN *prn, int *err);
 
 int gretl_VECM_rank (const GRETL_VAR *vecm);
-
-const int *gretl_VECM_list (const GRETL_VAR *vecm);
 
 int beta_restricted_VECM (const GRETL_VAR *vecm);
 

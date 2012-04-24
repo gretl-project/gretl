@@ -1060,10 +1060,27 @@ real_get_obj_list (void *p, GretlObjType type, int idx, int *err)
 	return list;
     }
 
-    if (type == GRETL_OBJ_EQN && idx == M_XLIST) {
+    if (idx == M_XLIST && type == GRETL_OBJ_EQN) {
 	MODEL *pmod = (MODEL *) p;
 
 	list = gretl_model_get_x_list(pmod);
+    } else if (idx == M_YLIST && (type == GRETL_OBJ_VAR ||
+				  type == GRETL_OBJ_SYS)) {
+	const int *ylist = NULL;
+
+	if (type == GRETL_OBJ_VAR) {
+	    ylist = gretl_VAR_get_endo_list((const GRETL_VAR *) p);
+	} else {
+	    ylist = system_get_endog_vars((const equation_system *) p);
+	}
+	if (ylist == NULL) {
+	    *err = E_BADSTAT;
+	} else {
+	    list = gretl_list_copy(ylist);
+	    if (list == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
     } else {
 	*err = E_BADSTAT;
     }

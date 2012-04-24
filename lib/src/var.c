@@ -3440,11 +3440,6 @@ int gretl_VECM_rank (const GRETL_VAR *vecm)
     return r;
 }
 
-const int *gretl_VECM_list (const GRETL_VAR *vecm)
-{
-    return vecm->ylist;
-}
-
 int beta_restricted_VECM (const GRETL_VAR *vecm)
 {
     if (vecm->jinfo != NULL && vecm->jinfo->R != NULL) {

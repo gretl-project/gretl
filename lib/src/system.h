@@ -135,6 +135,7 @@ int system_want_df_corr (const equation_system *sys);
 int system_n_restrictions (const equation_system *sys);
 
 int system_max_indep_vars (const equation_system *sys);
+
 int system_n_indep_vars (const equation_system *sys);
 
 int *system_get_list (const equation_system *sys, int i);

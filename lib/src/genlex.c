@@ -145,6 +145,7 @@ struct str_table mvars[] = {
     { M_EHAT,    "$ehat" },
     { M_MNLPROBS, "$mnlprobs" },
     { M_XLIST,   "$xlist" },
+    { M_YLIST,   "$ylist" },
     { M_COMMAND, "$command" },
     { M_DEPVAR,  "$depvar" },
     { 0,         NULL }

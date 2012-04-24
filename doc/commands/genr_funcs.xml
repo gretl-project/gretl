@@ -782,6 +782,15 @@
       </description>
     </function>
 
+    <function name="$ylist" section="access" output="list">
+      <description>
+	<para>
+	  If the last model estimated was a VAR, VECM or simultaneous
+	  system, returns the associated list of endogenous variables.
+	</para>
+      </description>
+    </function>
+
   </funclist>
 
   <funclist name="Functions proper" ref="functions">

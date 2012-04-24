@@ -671,7 +671,12 @@ int VAR_wald_omit_tests (GRETL_VAR *var)
 
 const int *gretl_VAR_get_exo_list (const GRETL_VAR *var)
 {
-    return var->xlist;
+    return (var == NULL)? NULL : var->xlist;
+}
+
+const int *gretl_VAR_get_endo_list (const GRETL_VAR *var)
+{
+    return (var == NULL)? NULL : var->ylist;
 }
 
 /* Based on the specification stored in the original VAR struct, 

@@ -1,4 +1,6 @@
 Version 1.9.9, in progress
+- New accessor $ylist: returns the list of endoegnous variables for a
+  VAR, VECM or simultaneous system
 - Fix encoding for Polish translation
 - Fix bug: in logging commands entered via the gretl console, options
   were being omitted
