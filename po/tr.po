@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-04-17 15:56-0400\n"
-"PO-Revision-Date: 2012-04-24 11:08+0300\n"
+"PO-Revision-Date: 2012-04-24 15:17+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -2593,12 +2593,12 @@ msgstr "Bağlanım Kalıntıları (= Gözlenen - Yakıştırılan %s)"
 #: lib/src/graphing.c:1715 lib/src/graphing.c:1719
 #, c-format
 msgid "Actual and fitted %s"
-msgstr "Asıl ve Yakıştırılan %s"
+msgstr "Gözlenen ve Yakıştırılan %s"
 
 #: lib/src/graphing.c:1721
 #, c-format
 msgid "Actual and fitted %s versus %s"
-msgstr "Asıl ve yakıştırılan %s ve %s"
+msgstr "Gözlenen ve yakıştırılan %s ve %s"
 
 #: lib/src/graphing.c:1836 gui2/gpt_dialog.c:569
 #, c-format
@@ -2626,7 +2626,7 @@ msgstr "sol"
 
 #: lib/src/graphing.c:3187 lib/src/graphing.c:3193
 msgid "actual"
-msgstr "asıl"
+msgstr "gözlenen"
 
 #: lib/src/graphing.c:3188 lib/src/graphing.c:3192 lib/src/printout.c:1195
 #: gui2/guiprint.c:900 gui2/guiprint.c:1438 gui2/guiprint.c:1498
@@ -2636,7 +2636,7 @@ msgstr "yakıştırılan"
 
 #: lib/src/graphing.c:3291
 msgid "actual = predicted"
-msgstr "asıl = kestirilen"
+msgstr "gözlenen = kestirilen"
 
 #: lib/src/graphing.c:4008
 #, c-format
@@ -2815,12 +2815,12 @@ msgstr "Düşüm norm sayısı = %g"
 #: lib/src/gretl_bfgs.c:1573 lib/src/modelprint.c:2966
 #, c-format
 msgid "Function evaluations: %d\n"
-msgstr "İşlev değerlendirmeleri: %d\n"
+msgstr "İşlev değerlendirmesi: %d\n"
 
 #: lib/src/gretl_bfgs.c:1574 lib/src/modelprint.c:2967
 #, c-format
 msgid "Evaluations of gradient: %d\n"
-msgstr "Düşüm değerlendirmeleri: %d\n"
+msgstr "Düşüm değerlendirmesi: %d\n"
 
 #: lib/src/gretl_bfgs.c:2092
 msgid "Initial value of objective function is not finite"
@@ -3203,7 +3203,7 @@ msgstr "Kümeye-göre farklıserpilimsellik için olabilirlik oranı sınaması"
 
 #: lib/src/gretl_model.c:2996
 msgid "the units have a common error variance"
-msgstr "birimlerin ortak bir hata varyansı bulunmakta"
+msgstr "birimlerin ortak bir hata varyansı bulunuyor"
 
 #: lib/src/gretl_model.c:2998
 msgid "Non-linearity test (logs)"
@@ -3215,11 +3215,11 @@ msgstr "ilişki doğrusal"
 
 #: lib/src/gretl_model.c:3001 gui2/gui_utils.c:3972
 msgid "Test for normality of residual"
-msgstr "Kalıntıların normallik sınaması"
+msgstr "Kalıntıların normalliği sınaması"
 
 #: lib/src/gretl_model.c:3002
 msgid "error is normally distributed"
-msgstr "hatalar normal dağılmakta"
+msgstr "hatalar normal dağılıyor"
 
 #: lib/src/gretl_model.c:3004
 msgid "Test for omission of variables"
@@ -3264,7 +3264,7 @@ msgstr "Küme sabit terimlerinin farklılığı sınaması"
 
 #: lib/src/gretl_model.c:3029
 msgid "The groups have a common intercept"
-msgstr "Kümelerin ortak bir sabit terimi bulunmakta"
+msgstr "Kümelerin ortak bir sabit terimi bulunuyor"
 
 #: lib/src/gretl_model.c:3031
 msgid "Breusch-Pagan test"
@@ -5429,7 +5429,7 @@ msgstr "Olabilirlik oranı sınaması"
 
 #: lib/src/modelprint.c:4937 lib/src/modelprint.c:4957
 msgid "Evaluated at the mean"
-msgstr "Ortalamada değerlendirmeli"
+msgstr "Eğimler bağımlı değişken ortalamalarında değerlendirilmiştir."
 
 #: lib/src/modelprint.c:4963
 msgid "Number of cases `correctly predicted'"
@@ -6713,7 +6713,7 @@ msgstr "Eştümleşme yöneyleri"
 #: lib/src/varprint.c:618 lib/src/varprint.c:674 gui2/guiprint.c:859
 #: plugin/jrestrict.c:2810 plugin/jrestrict.c:2843
 msgid "standard errors in parentheses"
-msgstr "Ölçünlü hatalar ayraç içerisinde gösterilmiştir"
+msgstr "Ölçünlü hatalar ayraç içerisinde gösterilmiştir."
 
 #: lib/src/texprint.c:1007
 msgid "Adjustment vectors"
@@ -6725,7 +6725,7 @@ msgstr "kovaryans dizey belirleyeni"
 
 #: lib/src/texprint.c:1562 gui2/model_table.c:1145
 msgid "$t$-statistics in parentheses"
-msgstr "$t$-istatistikleri ayraç içerisinde gösterilmiştir"
+msgstr "$t$-istatistikleri ayraç içerisinde gösterilmiştir."
 
 #: lib/src/transforms.c:144
 #, c-format
@@ -8892,7 +8892,7 @@ msgstr "Aralık gösterilecek olan:"
 
 #: gui2/dialogs.c:2819
 msgid "actual Y"
-msgstr "asıl Y"
+msgstr "gözlenen Y"
 
 #: gui2/dialogs.c:2820
 msgid "mean Y"
@@ -11423,7 +11423,7 @@ msgstr ""
 
 #: gui2/guiprint.c:1528
 msgid "Note: * denotes a residual in excess of 2.5 standard errors"
-msgstr "Not: '*' 2,5 ölçünlü hatadan daha uzak bir kalıntıyı göstermektedir"
+msgstr "Not: '*' 2,5 ölçünlü hatadan daha uzak bir kalıntıyı göstermektedir."
 
 #: gui2/guiprint.c:1608
 #, c-format
@@ -11547,7 +11547,7 @@ msgstr "_Kalıntı çizimi"
 
 #: gui2/gui_utils.c:198
 msgid "_Fitted, actual plot"
-msgstr "_Asıl-yakıştırılan çizimi"
+msgstr "_Gözlenen-yakıştırılan çizimi"
 
 #: gui2/gui_utils.c:199 gui2/gui_utils.c:323
 msgid "_Analysis"
@@ -11555,7 +11555,7 @@ msgstr "_Çözümleme"
 
 #: gui2/gui_utils.c:200
 msgid "_Display actual, fitted, residual"
-msgstr "_Asıl, yakıştırılan ve kalıntılar"
+msgstr "_Gözlenen, yakıştırılan ve kalıntılar"
 
 #: gui2/gui_utils.c:202
 msgid "_Forecasts..."
@@ -11905,7 +11905,7 @@ msgstr "_Karşı değişken: %s"
 
 #: gui2/gui_utils.c:2763
 msgid "Actual vs. Fitted"
-msgstr "Asıl ve yakıştırılan"
+msgstr "Gözlenen ve yakıştırılan"
 
 #: gui2/gui_utils.c:2773
 msgid "Residual _correlogram"
@@ -13218,27 +13218,27 @@ msgstr "Bağımlı değişken: %s\n"
 
 #: gui2/model_table.c:1037 gui2/model_table.c:1229
 msgid "t-statistics in parentheses"
-msgstr "t-istatistikleri ayraç içerisinde gösterilmiştir"
+msgstr "t-istatistikleri ayraç içerisinde gösterilmiştir."
 
 #: gui2/model_table.c:1039 gui2/model_table.c:1147 gui2/model_table.c:1231
 msgid "Standard errors in parentheses"
-msgstr "Ölçünlü hatalar ayraç içerisinde gösterilmiştir"
+msgstr "Ölçünlü hatalar ayraç içerisinde gösterilmiştir."
 
 #: gui2/model_table.c:1043 gui2/model_table.c:1235
 msgid "p-values in brackets"
-msgstr "p-değerleri ayraç içerisinde gösterilmiştir"
+msgstr "P-değerleri ayraç içerisinde gösterilmiştir."
 
 #: gui2/model_table.c:1047 gui2/model_table.c:1156 gui2/model_table.c:1240
 msgid "* indicates significance at the 10 percent level"
-msgstr "* yüzde 10 anlamlılık düzeyini göstermektedir"
+msgstr "* yüzde 10 anlamlılık düzeyini göstermektedir."
 
 #: gui2/model_table.c:1048 gui2/model_table.c:1158 gui2/model_table.c:1242
 msgid "** indicates significance at the 5 percent level"
-msgstr "** yüzde 5 anlamlılık düzeyini göstermektedir"
+msgstr "** yüzde 5 anlamlılık düzeyini göstermektedir."
 
 #: gui2/model_table.c:1052
 msgid "For logit and probit, R-squared is McFadden's pseudo-R-squared"
-msgstr "Logbirim ve olabirim için, McFadden sahte-R-kare gösterilmektedir"
+msgstr "Logbirim ve olabirim için, McFadden sahte-R-kare gösterilmektedir."
 
 #: gui2/model_table.c:1063 gui2/model_table.c:1095 gui2/model_table.c:1189
 msgid "The model table is empty"
@@ -13250,16 +13250,16 @@ msgstr "gretl: model çizelgesi"
 
 #: gui2/model_table.c:1151
 msgid "$p$-values in brackets"
-msgstr "$p$-değerleri ayraç içerisinde gösterilmiştir"
+msgstr "$P$-değerleri ayraç içerisinde gösterilmiştir."
 
 #: gui2/model_table.c:1162
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
-msgstr "Logbirim ve olabirim için, McFadden sahte-$R^2$ gösterilmektedir"
+msgstr "Logbirim ve olabirim için, McFadden sahte-$R^2$ gösterilmektedir."
 
 #: gui2/model_table.c:1246
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
 msgstr ""
-"Logbirim ve olabirim için, McFadden sahte-R{\\super 2} gösterilmektedir"
+"Logbirim ve olabirim için, McFadden sahte-R{\\super 2} gösterilmektedir."
 
 #: gui2/model_table.c:1276
 msgid "No model is available"
@@ -13773,7 +13773,7 @@ msgstr "Kovaryans dizeyi kullan"
 
 #: gui2/selector.c:5489
 msgid "Show slopes at mean"
-msgstr "Ortalamada eğimleri göster"
+msgstr "Ortalamadaki eğimleri göster"
 
 #: gui2/selector.c:5511
 msgid "Use points"
@@ -15830,7 +15830,7 @@ msgstr "DFFITS"
 
 #: plugin/leverage.c:343
 msgid "('*' indicates a leverage point)"
-msgstr "('*' kaldıraç noktasını göstermektedir)"
+msgstr "('*' kaldıraç noktasını göstermektedir.)"
 
 #: plugin/leverage.c:345
 msgid "No leverage points were found"
@@ -16278,7 +16278,7 @@ msgid ""
 "between variable j and the other independent variables"
 msgstr ""
 "VŞÇ(j) = 1/(1 - R(j)^2), burada R(j) j değişkeni ve diğer bağımsız\n"
-"değişkenler arasındaki çoklu ilinti katsayısını göstermektedir"
+"değişkenler arasındaki çoklu ilinti katsayısını göstermektedir."
 
 #: plugin/workbook.c:545
 msgid "Password protected workbooks are not supported yet."
