@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-04-17 15:56-0400\n"
-"PO-Revision-Date: 2012-04-13 10:35+0300\n"
+"PO-Revision-Date: 2012-04-24 11:08+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -1284,16 +1284,14 @@ msgid "'%s' -- number out of range!"
 msgstr "'%s' -- sayı sınırlar dışında!"
 
 #: lib/src/dataio.c:3345
-#, fuzzy, c-format
+#, c-format
 msgid "Data imported from %s file '%s', %s\n"
-msgstr ""
-"%s dosyasında veri bilgileri:\n"
-"\n"
+msgstr "'%2$s' adlı %1$s dosyasından içe aktarılan veriler, %3$s\n"
 
 #: lib/src/dataio.c:3348
 #, c-format
 msgid "Data imported from %s, %s\n"
-msgstr ""
+msgstr "İçe aktarılan veriler: %s, %s\n"
 
 #: lib/src/dataset.c:355
 msgid "auto-generated constant"
@@ -2381,9 +2379,8 @@ msgid "Invalid declaration"
 msgstr "Geçersiz bildiri"
 
 #: lib/src/genfuncs.c:3689
-#, fuzzy
 msgid "Imhof integral gave negative value"
-msgstr "Yasak eksi değer"
+msgstr "Imhof tümlevi eksi değer verdi"
 
 #: lib/src/genfuncs.c:4462
 msgid "model-related"
