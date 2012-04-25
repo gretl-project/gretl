@@ -2231,47 +2231,48 @@
   </command>
 
   <command name="density" section="Statistics" context="gui"
-    label="Kernel density estimation">
+    label="Estimação de densidade de núcleo">
 
     <description>
 
-      <para>Kernel density estimation proceeds by defining a set of
-	evenly spaced reference points, over a suitable range in
-	relation to the range of the data, and attributing a density
-	to each reference point based on the actual observations in
-	the vicinity.
+      <para>O procedimento de estimação de densidade de núcleo 
+	cria um conjunto de pontos de referência igualmente
+	espaçados, ao longo de um intervalo adequado em relação
+	ao intervalo dos dados, e atribui uma densidade a cada
+	ponto de referência baseado nas observações reais na
+	vizinhança.
       </para>
-      <para>The formula used to compute the estimated density at each
-	reference point, <math>x</math>, is
+      <para>A função utilizada para determinar a densidade estimada
+	em cada ponto de referência, <math>x</math>, é
       <equation status="display"
 	tex="\[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]"
 	ascii="f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)"
 	graphic="kernel1"/>
-	where <math>n</math> denotes the number of data
-	points, <math>h</math> is a <quote>bandwidth</quote>
-	parameter, and <math>k</math>() is the kernel function.
-	The larger the value of the bandwidth parameter, the smoother
-	the estimated density.
+	onde <math>n</math> é o número de pontos de dados, 
+	<math>h</math> é o parâmetro de <quote>largura de banda</quote>,
+	e <math>k</math>() é a função núcleo.
+	Quanto maior for o valor da largura de banda, mais alisada será
+	a densidade estimada.
       </para>
       <para>
-	You are given the choice of using a Gaussian kernel (the
-	standard normal density) or the Epanechnikov kernel.  By
-	default, the bandwidth is that suggested as a rule of thumb by
-	<cite key="silverman96">Silverman (1986)</cite>, namely
+	Você pode escolher o núcleo Gaussiano (a densidade normal padrão)
+	ou núcleo de Epanechnikov.  Por omissão, a largura de banda é
+	a sugerida pela regra de ouro de 
+	<cite key="silverman96">Silverman (1986)</cite>, nomeadamente
 	<equation status="display"
 	  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{1/5}\]"
 	  ascii="h = 0.9 min(s, IQR/1.349) n^{1/5}"
 	  graphic="kernel2"/>
-	where <math>s</math> denotes the standard deviation
-	of the data and IQR denotes the inter-quartile range.  You can
-	widen or shrink the bandwidth via the <quote>bandwidth
-	  adjustment factor</quote>: the actual bandwidth used is
-	obtained by multiplying the Silverman value by the adjustment
-	factor.
+	onde <math>s</math> designa o desvio padrão dos dados
+	e IQR é a amplitude inter-quartil.  Você pode alargar
+	ou encolher a largura de banda por meio do 
+	<quote>fator de ajustamento de largura de banda</quote>: 
+	a largura de banda final é a obtida pela multiplicação do
+	valor de Silverman pelo fator de ajustamento.
       </para>
       <para>
-	For a good introductory discussion of kernel density
-	estimation see Chapter 15 of Davidson and MacKinnon's
+	Para uma boa introdução sobre a estimação de densidade de
+	núcleo ver o Capítulo 15 do livro de Davidson e MacKinnon,
 	<book>Econometric Theory and Methods</book>.
       </para>
 
@@ -2280,70 +2281,68 @@
   </command>  
 
   <command name="dfgls" section="Tests" context="gui"
-    label="The ADF-GLS test">
+    label="O teste ADF-GLS">
 
     <description>
       <para>
-	The ADF-GLS test is a variant of the Dickey&ndash;Fuller
-	test for a unit root, for the case where the variable
-	to be tested is assumed to have a non-zero mean or to
-	exhibit a linear trend.  The difference is that 
-	the de-meaning or de-trending of the variable is done
-	using the GLS procedure suggested by Elliott, Rothenberg
-	and Stock (1996).  This gives a test of greater power than
-	the standard Dickey&ndash;Fuller approach.
+	O teste ADF-GLS é uma variante do teste de Dickey&ndash;Fuller
+	para uma raiz unitária, para o caso onde se assume que a 
+	variável a ser testada tem uma média não-nula ou manifesta
+	uma tendência linear.  A diferença está no processo de 
+	anulação da média ou da têndencia da variável ser feito com
+	o procedimento GLS sugerido por Elliott, Rothenberg
+	e Stock (1996).  Isto resulta num teste mais potente do que
+	o da abordagem padrão de Dickey&ndash;Fuller.
       </para>
       <para>
-	See also the <cmdref targ="adf"/> command and the <opt>--gls</opt>
-	option.
+	Ver também o comando <cmdref targ="adf"/> e a opção <opt>--gls</opt>.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Variable/ADF-GLS test</menu-path>
+      <menu-path>/Variável/Testes de raiz unitária/Teste ADF-GLS</menu-path>
     </gui-access>
 
   </command>
 
   <command name="dialog" section="Estimation" context="gui"
-    label="Model dialog box">
+    label="Janela de diálogo do modelo">
 
     <description>
-      <para>To select the dependent variable, highlight a variable in
-	the list on the left and press the <quote>Choose</quote>
-	button pointing to the Dependent variable slot.  If you check
-	the <quote>Set as default</quote> box, the selected variable
-	will be pre-selected as dependent when the model dialog is
-	next opened.  Short-cut: double-click on a variable on the
-	left to select it as the dependent variable and also set it as
-	the default.
+      <para>Para selecionar a variável dependente, escolher uma 
+	variável na lista à esquerda e clicar no botão <quote>Escolher</quote>
+	que aponta para o espaço da variável dependente.  Se você activar
+	a caixa de seleção <quote>Definir por omissão</quote>, a variável
+	selecionada ficará pré-selecionada nas próximas vezes que abrir uma
+	janela de diálogo do modelo.  Atalho: Fazer clique-duplo numa variável
+	à esquerda para a selecionar como variável dependente e também 
+	defini-la como por omissão.
       </para>
-      <para>To select independent variables, highlight them on the
-	left and press the <quote>Add</quote> button (or click the
-	right mouse button).  You can highlight several contiguous
-	variables by dragging with the mouse.  You can highlight a
-	group of non-contiguous variables by clicking on them with the
-	<lit>Ctrl</lit> key pressed.
+      <para>Para selecionar as variáveis independentes, escolhê-las na 
+	lista à esquerda e clicar no botão <quote>Acrescentar</quote>
+	(ou clicar o botão direito do rato).  Você pode escolher um grupo
+	não-contínuo de variáveis clicando nelas mantendo a tecla 
+	<lit>Ctrl</lit> pressionada.
       </para>
     </description>
 
   </command>
 
   <command name="diff" section="Transformations" 
-    label="First differences" context="cli">
+    label="Primeiras diferenças" context="cli">
 
     <usage>
       <arguments>
-        <argument>varlist</argument>
+        <argument>lista-de-variáveis</argument>
       </arguments>
     </usage>
 
     <description>
       <para>
-	The first difference of each variable in <repl>varlist</repl>
-	is obtained and the result stored in a new variable with the
-	prefix <lit>d_</lit>.  Thus <cmd>diff x y</cmd> creates the
-	new variables
+	É obtida a primeira diferença de cada variável na
+	<repl>lista-de-variáveis</repl> e o resultado é guardado
+	numa nova variável com o prefixo <lit>d_</lit>.  Portanto
+	<cmd>diff x y</cmd> cria as duas novas variáveis
       </para>
       <mono>
 	d_x = x(t) - x(t-1)
@@ -2352,92 +2351,93 @@
     </description>
 
     <gui-access>
-      <menu-path>/Add/First differences of selected variables</menu-path>
+      <menu-path>/Acrescentar/Primeiras diferenças das variáveis selecionadas</menu-path>
     </gui-access>
 
   </command>
 
   <command name="difftest" section="Tests" 
-    label="Nonparametric tests for differences" context="cli">
+    label="Testes não paramétricos para as diferenças" context="cli">
 
     <usage>
       <arguments>
-        <argument>var1</argument>
-	<argument>var2</argument>
+        <argument>variável1</argument>
+	<argument>variável2</argument>
       </arguments>
       <options>
 	<option>
 	  <flag>--sign</flag>
-	  <effect>Sign test, the default</effect>
+	  <effect>Teste dos Sinais, por omissão</effect>
 	</option>
 	<option>
 	  <flag>--rank-sum</flag>
-	  <effect>Wilcoxon rank-sum test</effect>
+	  <effect>Teste ordinal da soma de Wilcoxon</effect>
 	</option>
 	<option>
 	  <flag>--signed-rank</flag>
-	  <effect>Wilcoxon signed-rank test</effect>
+	  <effect>Teste ordinal dos sinais de Wilcoxon</effect>
 	</option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>print extra output</effect>
+	  <effect>mostrar detalhes</effect>
 	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	Carries out a nonparametric test for a difference between two
-	populations or groups, the specific test depending on the option
-	selected.
+	Realiza um teste não-paramétrico para a diferença entre duas 
+	populações ou grupos, o teste específico depende da opção 
+	selecionada.
       </para>
       <para>
-	With the <opt>--sign</opt> option, the Sign test is performed.
-	This test is based on the fact that if two samples,
-	<math>x</math> and <math>y</math>, are drawn randomly
-	from the same distribution, the probability that
+	Com a opção <opt>--sign</opt>, é executado o teste dos Sinais.
+	Este teste baseia-se no facto de duas amostras <math>x</math> 
+	e <math>y</math>, terem sido extraídas aleatóriamente de uma
+	mesma distribuição, a probabilidade
+	de
 	<math>x</math><sub>i</sub> &gt;
-	<math>y</math><sub>i</sub>, for each observation
-	<math>i</math>, should equal 0.5.  The test statistic is
-	<math>w</math>, the number of observations for which
+	<math>y</math><sub>i</sub>, para cada observação
+	<math>i</math>, deve ser igual a 0,5.  A estatística de teste é
+	<math>w</math>, o número de observações para as quais 
 	<math>x</math><sub>i</sub> &gt;
-	<math>y</math><sub>i</sub>. Under the null hypothesis this
-	follows the Binomial distribution with parameters
-	(<math>n</math>, 0.5), where <math>n</math> is the
-	number of observations.
+	<math>y</math><sub>i</sub>. Sob a hipótese nula de que segue uma
+	distribuição Binomial com os parâmetros
+	(<math>n</math>, 0,5), onde <math>n</math> é o número de observações.
       </para>
       <para>
-	With the <opt>--rank-sum</opt> option, the Wilcoxon rank-sum test
-	is performed.  This test proceeds by ranking the observations from
-	both samples jointly, from smallest to largest, then finding the
-	sum of the ranks of the observations from one of the samples.  The
-	two samples do not have to be of the same size, and if they differ
-	the smaller sample is used in calculating the rank-sum.  Under the
-	null hypothesis that the samples are drawn from populations with
-	the same median, the probability distribution of the rank-sum can
-	be computed for any given sample sizes; and for reasonably large
-	samples a close Normal approximation exists.
+	Com a opção <opt>--rank-sum</opt>, é executado o teste ordinal da soma
+	de Wilcoxon.  Este teste consiste em ordenar as observações de ambas as
+	amostras conjuntamente, da menor para a maior, e depois determinar a
+	soma das ordens de uma das amostras.  As duas amostras não necessitam ser
+	do mesmo tamanho, e se isso acontece então usa-se a de menor dimensão
+	no cálculo da soma das ordens.  Sob a hipótese nula de que as amostras
+	terem sido extraídas de populações com a mesma mediana, a distribuição de
+	probabilidade da soma das ordens pode ser determinada para quaisquer
+	tamanhos das amostras; e para amostras consideravelmente grandes existe
+	uma forte aproximação a uma distribuição Normal.
       </para>
       <para>
-	With the <opt>--signed-rank</opt> option, the Wilcoxon signed-rank
-	test is performed.  This is designed for matched data pairs such
-	as, for example, the values of a variable for a sample of
-	individuals before and after some treatment.  The test proceeds by
-	finding the differences between the paired observations,
+	Com a opção <opt>--signed-rank</opt>, é executado o teste ordinal
+	dos sinais de Wilcoxon.  Este destina-se para pares de dados
+	associados assim como, por exemplo, os valores das variáveis de 
+	uma amostra de indivíduos antes e depois de algum tratamento.
+	O teste começa por encontrar as diferenças entre as observações
+	emparelhadas,
 	<math>x</math><sub>i</sub> &minus;
-	<math>y</math><sub>i</sub>, ranking these differences by
-	absolute value, then assigning to each pair a signed rank, the
-	sign agreeing with the sign of the difference.  One then
-	calculates <math>W</math><sub>+</sub>, the sum of the
-	positive signed ranks.  As with the rank-sum test, this statistic
-	has a well-defined distribution under the null that the median
-	difference is zero, which converges to the Normal for samples
-	of reasonable size.
+	<math>y</math><sub>i</sub>, ordenando estas diferenças por valor
+	absoluto, e então atribuindo a cada par um posto com sinal, 
+	coincidindo o sinal com o sinal da diferença.  De seguida é
+	calculado o <math>W</math><sub>+</sub>, que é a soma dos postos
+	com sinal positivo.  Tal como o teste ordinal da soma, esta
+	estatística tem uma distribuição bem definida, sob a hipótese
+	nula de que a diferença mediana é zero, que converge para a 
+	distribuição Normal em amostras de tamanho razoável.
       </para>
       <para>
-	For the Wilcoxon tests, if the <opt>--verbose</opt> option is
-	given then the ranking is printed.  (This option has no effect if
-	the Sign test is selected.)
+	Para os testes de Wilcoxon, se a opção <opt>--verbose</opt> tiver sido
+	dada então será mostrado as ordens.  (Esta opção não tem efeito se
+	tiver sido selecionado o teste dos Sinais.)
       </para>
     </description>
 
