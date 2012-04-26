@@ -85,6 +85,13 @@ static saved_list *saved_list_new (const int *list, const char *name)
 	}
     }
 
+#if LDEBUG
+    if (sl != NULL) {
+	fprintf(stderr, "saved_list_new: '%s' (level %d)\n", name, sl->level);
+	printlist(sl->list, "sl->list");
+    }
+#endif
+
     return sl;
 }
 
@@ -106,6 +113,11 @@ static saved_list *get_saved_list_by_name (const char *name)
 	if (!strcmp(name, list_stack[i]->name) && 
 	    fsd == list_stack[i]->level) {
 	    sl = list_stack[i];
+#if LDEBUG > 1
+	    fprintf(stderr, "get_saved_list_by_name: found '%s' (level %d)\n", 
+		    sl->name, fsd);
+	    printlist(sl->list, "sl->list");
+#endif
 	    break;
 	}
     }
@@ -205,6 +217,10 @@ int *get_list_by_name (const char *name)
     int *ret = NULL;
     saved_list *sl;
 
+#if LDEBUG > 1
+    fprintf(stderr, "get_list_by_name: '%s'\n", name);
+#endif
+
     if (name != NULL) {
 	sl = get_saved_list_by_name(name);
 	if (sl != NULL) {
@@ -231,6 +247,12 @@ int append_to_list_by_name (const char *targ, const int *add)
     saved_list *sl = get_saved_list_by_name(targ);
     int err = 0;
 
+#if LDEBUG
+    fprintf(stderr, "append_to_list_by_name: '%s'\n", targ);
+    printlist(sl->list, "original (target) list");
+    printlist(add, "list to add");
+#endif
+
     if (sl == NULL) {
 	err = E_UNKVAR;
     } else {
@@ -246,6 +268,10 @@ int append_to_list_by_name (const char *targ, const int *add)
 	    }
 	}
     } 
+
+#if LDEBUG
+    printlist(sl->list, "final list");
+#endif
 
     return err;
 }
@@ -265,6 +291,10 @@ int subtract_from_list_by_name (const char *targ, const int *sub)
 {
     saved_list *sl = get_saved_list_by_name(targ);
     int err = 0;
+
+#if LDEBUG
+    fprintf(stderr, "subtract_from_list_by_name: '%s'\n", targ);
+#endif
 
     if (sl == NULL) {
 	err = E_UNKVAR;
@@ -295,6 +325,10 @@ int replace_list_by_name (const char *targ, const int *src)
 {
     saved_list *sl = get_saved_list_by_name(targ);
     int err = 0;
+
+#if LDEBUG
+    fprintf(stderr, "replace_list_by_name: '%s'\n", targ);
+#endif
 
     if (sl == NULL) {
 	err = E_UNKVAR;
@@ -427,6 +461,10 @@ int remember_list (const int *list, const char *name, PRN *prn)
 int declare_list (const char *name)
 {
     int tmp[] = {0};
+
+#if LDEBUG
+    fprintf(stderr, "declare_list: '%s'\n", name);
+#endif
 
     return real_remember_list(tmp, name, LIST_ADD_NORMAL, NULL);
 }
@@ -693,7 +731,7 @@ int gretl_lists_revise (const int *dlist, int dmin)
     int lmax = 0;
     int i, j, k;
 
-#if 0
+#if LDEBUG
     fprintf(stderr, "gretl_lists_revise: dlist = %p, dmin = %d\n", 
 	    (void *) dlist, dmin);
 #endif
@@ -745,6 +783,10 @@ int gretl_lists_revise (const int *dlist, int dmin)
     /* use mapping to revise saved lists */
     for (j=0; j<n_lists; j++) {
 	list = list_stack[j]->list;
+#if LDEBUG
+	fprintf(stderr, "maybe revising list '%s'\n", list_stack[j]->name);
+	printlist(list, "original list");
+#endif
 	if (list == NULL) {
 	    continue;
 	}
@@ -758,6 +800,9 @@ int gretl_lists_revise (const int *dlist, int dmin)
 		}
 	    }
 	}
+#if LDEBUG
+	printlist(list, "revised?");
+#endif
     }
 
     free(maplist);

@@ -391,6 +391,7 @@ static void state_vars_copy (set_vars *sv)
     sv->bhhh_toler = state->bhhh_toler;
     sv->lbfgs_mem = state->lbfgs_mem;
     sv->garch_vcv = state->garch_vcv;
+    sv->arma_vcv = state->arma_vcv;
     sv->garch_robust_vcv = state->garch_robust_vcv;
     sv->nadarwat_trim = state->nadarwat_trim;
 

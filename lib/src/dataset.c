@@ -372,6 +372,7 @@ void datainfo_init (DATASET *dset)
     dset->v = 0;
     dset->n = 0;
     dset->pd = 1;
+    dset->structure = CROSS_SECTION;
     dset->sd0 = 1.0;
     dset->t1 = 0;
     dset->t2 = 0;
@@ -390,7 +391,7 @@ void datainfo_init (DATASET *dset)
     dset->restriction = NULL;
     dset->padmask = NULL;
 
-    dset->structure = CROSS_SECTION;
+    dset->auxiliary = 0;
 }
 
 /**
@@ -428,9 +429,8 @@ DATASET *datainfo_new (void)
 
 DATASET *create_new_dataset (int nvar, int nobs, int markers)
 {
-    DATASET *dset;
+    DATASET *dset = datainfo_new();
 
-    dset = malloc(sizeof *dset);
     if (dset == NULL) return NULL;
 
     dset->v = nvar;
@@ -450,19 +450,16 @@ DATASET *create_new_dataset (int nvar, int nobs, int markers)
     } 
 
     dataset_obs_info_default(dset);
-    dset->descrip = NULL;
 
     return dset;
 }
 
 DATASET *create_auxiliary_dataset (int nvar, int nobs)
 {
-    DATASET *dset;
-
-    dset = create_new_dataset(nvar, nobs, 0);
+    DATASET *dset = create_new_dataset(nvar, nobs, 0);
 
     if (dset != NULL) {
-	dset->descrip = gretl_strdup("auxiliary");
+	dset->auxiliary = 1;
     }
 
     return dset;
@@ -1652,7 +1649,7 @@ int dataset_drop_listed_variables (int *list,
 				DROP_NORMAL, prn);
 
     if (dlist[0] > 0) {
-	if (!err) {
+	if (!err && !dset->auxiliary) {
 	    err = gretl_lists_revise(dlist, 0);
 	}
 
@@ -2096,6 +2093,14 @@ int dataset_drop_last_variables (int delvars, DATASET *dset)
     }
 #endif
 
+#if 0
+    fprintf(stderr, "dataset_drop_last_variables: origv=%d, newv=%d\n", 
+	    dset->v, newv);
+    for (i=1; i<dset->v; i++) {
+	fprintf(stderr, "before: var[%d] = '%s'\n", i, dset->varname[i]);
+    }
+#endif
+
     for (i=newv; i<dset->v; i++) {
 	free(dset->varname[i]);
 	free_varinfo(dset, i);
@@ -2105,7 +2110,13 @@ int dataset_drop_last_variables (int delvars, DATASET *dset)
 
     err = shrink_dataset_to_size(dset, newv, DROP_NORMAL);
 
-    if (!err) {
+#if 0
+    for (i=1; i<dset->v; i++) {
+	fprintf(stderr, "after: var[%d] = '%s'\n", i, dset->varname[i]);
+    }
+#endif
+
+    if (!err && !dset->auxiliary) {
 	err = gretl_lists_revise(NULL, newv);
     }
 
