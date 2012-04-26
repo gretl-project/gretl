@@ -4367,15 +4367,18 @@ gchar *get_genr_string (GtkWidget *entry, dialog_t *dlg)
     return gstr;
 }
 
-static int starts_with_type_word (const char *s)
+static int is_full_genr_command (const char *s)
 {
-    int n = strlen(s);
+    int sppos = charpos(' ', s);
 
-    if (n > 7 && (!strncmp(s, "series ", 7) ||
-		  !strncmp(s, "scalar ", 7) ||
-		  !strncmp(s, "matrix ", 7))) {
-	return 1;
-    }
+    if (sppos > 1 && sppos < 9) {
+	char word1[9] = {0};
+
+	strncat(word1, s, sppos);
+	if (!strcmp(word1, "genr") || word_is_genr_alias(word1)) {
+	    return 1;
+	}
+    }    
 
     return 0;
 }
@@ -4389,14 +4392,20 @@ void do_genr (GtkWidget *w, dialog_t *dlg)
 	return;
     }
 
-    if (starts_with_type_word(s)) {
+    if (is_full_genr_command(s)) {
+	/* don't mess with what the user typed */
 	lib_command_strcpy(s);
-    } else if (strchr(s, '=') == NULL && !genr_special_word(s)) {
-	/* a bare varname? */
-	lib_command_sprintf("series %s = NA", s);
-	edit = 1;
+    } else if (strchr(s, '=') == NULL) {
+	if (genr_special_word(s)) {
+	    /* as in "genr time", but without the "genr" */
+	    lib_command_sprintf("genr %s", s);
+	} else {
+	    /* a bare varname? */
+	    lib_command_sprintf("series %s = NA", s);
+	    edit = 1;
+	}
     } else {
-	lib_command_sprintf("genr %s", s);
+	lib_command_sprintf("series %s", s);
     }
     
     g_free(s);
@@ -4419,10 +4428,12 @@ void do_selector_genr (GtkWidget *w, dialog_t *dlg)
 	return;
     }
 
-    if (starts_with_type_word(s)) {
+    if (is_full_genr_command(s)) {
 	lib_command_strcpy(s);
-    } else {
+    } else if (strchr(s, '=') == NULL && genr_special_word(s)) {
 	lib_command_sprintf("genr %s", s);
+    } else {
+	lib_command_sprintf("series %s", s);
     }
 
     g_free(s);

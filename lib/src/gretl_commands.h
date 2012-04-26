@@ -228,6 +228,8 @@ int gretl_command_number (const char *s);
 
 const char *gretl_command_word (int i);
 
+int word_is_genr_alias (const char *s);
+
 const char *gretl_command_complete_next (const char *s, int idx);
 
 const char *gretl_command_complete (const char *s);

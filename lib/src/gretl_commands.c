@@ -180,6 +180,20 @@ static struct gretl_cmd gretl_cmd_aliases[] = {
     { NC,   NULL }
 };
 
+int word_is_genr_alias (const char *s)
+{
+    int i;
+
+    for (i=0; gretl_cmd_aliases[i].cword != NULL; i++) {
+	if (!strcmp(s, gretl_cmd_aliases[i].cword) &&
+	    gretl_cmd_aliases[i].cnum == GENR) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 const char *gretl_command_word (int i)
 {
     if (i >= 0 && i < NC) {

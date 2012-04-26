@@ -440,6 +440,13 @@ int genr_special_word (const char *s)
     }
 }
 
+static int genr_last_type;
+
+int genr_get_last_output_type (void)
+{
+    return genr_last_type;
+}
+
 static int gen_special (const char *s, const char *line,
 			DATASET *dset, PRN *prn, parser *p)
 {
@@ -507,6 +514,7 @@ static int gen_special (const char *s, const char *line,
 
     if (dset->v > orig_v) {
 	set_dataset_is_changed();
+	genr_last_type = GRETL_TYPE_SERIES;
     }
 
     return err;
@@ -573,13 +581,6 @@ static int is_gen_special (const char *s, char *spec, const char **rem)
     }
 
     return 0;
-}
-
-static int genr_last_type;
-
-int genr_get_last_output_type (void)
-{
-    return genr_last_type;
 }
 
 #define gen_verbose(f) (!(f & P_PRINT) && \

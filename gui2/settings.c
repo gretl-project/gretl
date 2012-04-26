@@ -185,7 +185,7 @@ RCVAR rc_vars[] = {
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #ifdef G_OS_WIN32 
     { "Rbin", "Path to Rterm.exe", NULL, paths.rbinpath, 
-      MACHSET | INVISET, MAXSTR, TAB_NONE, NULL },
+      MACHSET | BROWSER, MAXSTR, TAB_NONE, NULL },
 #endif
     { "latex", N_("Command to compile TeX files"), NULL, latex, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
