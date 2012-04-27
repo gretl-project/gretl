@@ -1407,6 +1407,8 @@ void gui_errmsg (int errcode)
 
     if (msg != NULL && *msg != '\0') {
 	errbox(msg);
+	/* avoid duplicating this error message */
+	gretl_error_clear();
     } else {
 	errbox(_("Unspecified error"));
     }
