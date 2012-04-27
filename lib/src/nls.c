@@ -3242,7 +3242,9 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 	    dset->v - origv);
 #endif
 
-    dataset_drop_last_variables(dset->v - origv, dset);
+    if (!dset->auxiliary) {
+	dataset_drop_last_variables(dset->v - origv, dset);
+    }
 
     if (!(opt & OPT_A) && !nlmod.errcode) {
 	set_model_id(&nlmod);
