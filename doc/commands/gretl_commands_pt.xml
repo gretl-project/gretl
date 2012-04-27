@@ -2444,58 +2444,58 @@
   </command>
 
   <command name="discrete" section="Transformations" 
-    label="Mark variables as discrete" context="cli">
+    label="Marca variáveis como sendo discretas" context="cli">
 
     <usage>
       <arguments>
-        <argument>varlist</argument>
+        <argument>lista-de-variáveis</argument>
       </arguments>
       <options>
 	<option>
 	  <flag>--reverse</flag>
-	  <effect>mark variables as continuous</effect>
+	  <effect>marca variáveis como sendo contínuas</effect>
 	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	Marks each variable in <repl>varlist</repl> as being discrete. By
-	default all variables are treated as continuous; marking a
-	variable as discrete affects the way the variable is handled in
-	frequency plots, and also allows you to select the variable for
-	the command <cmdref targ="dummify"/>.
+	Marca cada variável em <repl>lista-de-variáveis</repl> como sendo discreta. Por
+	omissão todas as variáveis são tratadas como sendo contínuas; ao
+	marcar uma variável como sendo discreta afeta o modo como a variável
+	é usada em diagramas de frequência, e também permite-lhe selecionar
+	a variável para o comando <cmdref targ="dummify"/>.
       </para>
       <para>
-	If the <opt>--reverse</opt> flag is given, the operation is reversed;
-	that is, the variables in <repl>varlist</repl> are marked as
-	being continuous.
+	Se a opção <opt>--reverse</opt> tiver sido dada, é feito o contrário;
+	ou seja, as variáveis em <repl>lista-de-variáveis</repl> são marcadas
+	como sendo contínuas.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Variable/Edit attributes</menu-path>
+      <menu-path>/Variável/Editar caraterísticas</menu-path>
     </gui-access>
 
   </command>
 
-  <command name="dpanel" section="Estimation" label="Dynamic panel models">
+  <command name="dpanel" section="Estimation" label="Modelos de painel dinâmico">
 
     <usage>
       <arguments>
-	<argument>p</argument>
+	<argument>p</argument> 
 	<argblock separated="true">
-	  <argument>depvar</argument>
-	  <argument>indepvars</argument>
+	  <argument>variável-dependente</argument>
+	  <argument>variáveis-independentes</argument>
 	</argblock>
 	<argblock optional="true" separated="true">
-	  <argument>instruments</argument>
+	  <argument>instrumentos</argument>
 	</argblock>
       </arguments>
       <options>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't show estimated model</effect>
+	  <effect>não mostrar o modelo estimado</effect>
 	</option>
 	<option>
 	  <flag>--vcv</flag>
@@ -2503,23 +2503,23 @@
 	</option>
         <option>
 	  <flag>--two-step</flag>
-	  <effect>perform 2-step GMM estimation</effect>
+	  <effect>efetuar estimação GMM de dois passos</effect>
         </option>
         <option>
 	  <flag>--system</flag>
-	  <effect>add equations in levels</effect>
+	  <effect>acrescentar equações por níveis</effect>
         </option>
         <option>
 	  <flag>--time-dummies</flag>
-	  <effect>add time dummy variables</effect>
+	  <effect>acrescentar variáveis auxiliares tempo</effect>
         </option>
         <option>
 	  <flag>--dpdstyle</flag>
-	  <effect>emulate DPD package for Ox</effect>
+	  <effect>comportamento semelhante ao do pacote DPD do Ox</effect>
         </option>
         <option>
 	  <flag>--asymptotic</flag>
-	  <effect>uncorrected asymptotic standard errors</effect>
+	  <effect>erros padrão assimptóticos não corrigidos</effect>
         </option>
       </options>
       <examples>
@@ -2535,81 +2535,84 @@
 
     <description>
       <para>
-	Carries out estimation of dynamic panel data models (that is,
-	panel models including one or more lags of the dependent
-	variable) using either the GMM-DIF or GMM-SYS method.
+	Efectua a estimação de modelos de dados de painel dinâmico
+	(ou seja, modelos de painel que incluem um ou mais desfasamentos
+	da variável dependente) usando os métodos GMM-DIF ou GMM-SYS.
       </para>
       <para context="cli">
-	The parameter <repl>p</repl> represents the order of the
-	autoregression for the dependent variable. In the simplest
-	case this is a scalar value, but a pre-defined matrix may be
-	given for this argument, to specify a set of (possibly
-	non-contiguous) lags to be used.
+	O parâmetro <repl>p</repl> representa a ordem de autoregressão
+	para a variável dependente.  Na forma mais simples esta é um
+	valor escalar, mas este argumento pode ser uma matriz pré-definida,
+	para especificar um conjunto (eventualmente descontínuo) de 
+	desfasamentos a serem usados.
       </para>
       <para>
-	The dependent variable and regressors should be given in
-	levels form; they will be differenced automatically (since
-	this estimator uses differencing to cancel out the individual
-	effects).
+	A variável dependente e os regressores devem ser dados na 
+	forma de níveis; eles serão automaticamente diferenciados
+	(pois este estimador usa diferenciação para anular os efeitos
+	individuais).
       </para>
       <para context="cli">
-	The last (optional) field in the command is for specifying
-	instruments.  If no instruments are given, it is assumed that all
-	the independent variables are strictly exogenous.  If you specify
-	any instruments, you should include in the list any strictly
-	exogenous independent variables.  For predetermined regressors,
-	you can use the <lit>GMM</lit> function to include a specified
-	range of lags in block-diagonal fashion.  This is illustrated in
-	the third example above.  The first argument to <lit>GMM</lit> is
-	the name of the variable in question, the second is the minimum
-	lag to be used as an instrument, and the third is the maximum lag.
-	The same syntax can be used with the <lit>GMMlevel</lit>
-	function to specify GMM-type instruments for the equations
-	in levels.
+	O último campo (opcional) do comando é para especificar 
+	instrumentos.  Se não tiver sido dado instrumentos, é assumido 
+	que todas as variáveis independentes são estritamente exógenas.
+	Caso você especifique alguns intrumentos, deverá incluir na
+	lista variáveis independentes estritamente exógenas.  Para 
+	regressores pré-determinados, você pode usar a função 
+	<lit>GMM</lit> para incluir a especificação de uma gama de 
+	desfasamentos numa forma bloco-diagonal.  Isto está exemplificado
+	no terceiro exemplo acima.  O primeiro argumento de <lit>GMM</lit> 
+	é o nome da variável em questão, o segundo é o desfasamento mínimo
+	a ser usado como instrumento, e o terceiro é o desfasamento máximo.
+	A mesma sintaxe pode ser utilizada na função <lit>GMMlevel</lit>
+	para especificar instrumentos do tipo GMM para as equações nos 
+	níveis.
       </para>
       <para context="gui">
-	As regards the handling of instruments, please see the
-	documentation for the script version of this command.  Currently
-	you cannot specify instruments explicitly in the GUI: all the
-	independent variables are taken to be strictly exogenous.
+	No que diz respeito à manipulação de instrumentos,
+	veja a documentação da versão de sequência de comandos deste
+	comando.  Presentemente você não pode especificar no interface
+	gráfico (GUI) instrumentos explicítamente: todas as variáveis
+	independentes são consideras como sendo estritamente exógenas.
       </para>
       <para>
-	By default the results of 1-step estimation are reported (with
-	robust standard errors).  You may select 2-step estimation as an
-	option.  In both cases tests for autocorrelation of orders 1 and 2
-	are provided, as well as the Sargan overidentification test and a
-	Wald test for the joint significance of the regressors.  Note that
-	in this differenced model first-order autocorrelation is not a
-	threat to the validity of the model, but second-order
-	autocorrelation violates the maintained statistical assumptions.
+	Por omissão são apresentados os resultados da estimação a um passo
+	(juntamente com erros padrão robustos). Opcionalmente você pode 
+	selecionar a estimação a dois passos.  Em ambos os casos são 
+	determinados os testes de autocorrelação de ordem 1 e 2, assim como
+	o teste de Sargan para a sobre-identificação e o teste de Wald para
+	a significância conjunta dos regressores.  Note que neste modelo
+	diferenciado a autocorrelação de primeira ordem não é um risco para
+	a validade do modelo, mas a autocorrelação de segunda ordem viola
+	as assunções estatísticas presentes.
       </para>
       <para context="cli">
-	In the case of 2-step estimation, standard errors are by default
-	computed using the finite-sample correction suggested by <cite
-	key="windmeijer05">Windmeijer (2005)</cite>.  The standard
-	asymptotic standard errors associated with the 2-step estimator
-	are generally reckoned to be an unreliable guide to inference, but
-	if for some reason you want to see them you can use the
-	<opt>--asymptotic</opt> option to turn off the Windmeijer
-	correction.
+	No caso da estimação em dois passos, os erros padrão são obtidos
+	por omissão usando a correção de amostra-finita sugerida por <cite
+	key="windmeijer05">Windmeijer (2005)</cite>.  Os erros padrão
+	assimptóticos associados ao estimador de dois passos, são em geral,
+	considerados como um guia pouco fiável para inferência, mas se por
+	alguma razão você desejar observá-los você pode usar a opção
+	<opt>--asymptotic</opt> para desligar a correção de Windmeijer.
       </para>
       <para context="cli">
-	If the <opt>--time-dummies</opt> option is given, a set of
-	time dummy variables is added to the specified regressors.  
-	The number of dummies is one less than the maximum number of
-	periods used in estimation, to avoid perfect collinearity with
-	the constant.  The dummies are entered in differenced form unless
-	the <lit>--dpdstyle</lit> option is given, in which case they
-	are entered in levels.
+	Se tiver sido dada a opção <opt>--time-dummies</opt>, uma
+	conjunto de variáveis auxiliares tempo é acrescentado aos
+	regressores especificados. O número de auxiliares é menos um
+	que o número máximo de períodos usados na estimação, para
+	assim se evitar a colinearidade exata com a constante.
+	As variáveis auxiliares entram na forma diferenciada, exceto
+	se tiver sido dada a opção <lit>--dpdstyle</lit>, entrando 
+	nesse caso por níveis.
       </para>
       <para>
-	For further details and examples, please see <guideref
+	Para mais detalhes e exemplos, ver o <guideref
 	targ="chap-dpanel"/>.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Model/Panel/Dynamic panel model</menu-path>
+      <menu-path>/Modelo/Painel/Modelo de painel dinâmico</menu-path>
     </gui-access>
 
   </command>
@@ -6047,7 +6050,7 @@
       <options>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't show estimated model</effect>
+	  <effect>não mostrar o modelo estimado</effect>
 	</option>
 	<option>
 	  <flag>--vcv</flag>
@@ -6634,7 +6637,7 @@
       <options>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't show estimated model</effect>
+	  <effect>não mostrar o modelo estimado</effect>
 	</option>
 	<option>
 	  <flag>--robust</flag>
