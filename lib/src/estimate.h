@@ -75,7 +75,7 @@ int array_arch_test (const double *u, int n, int order,
 int makevcv (MODEL *pmod, double sigma);
 
 int *augment_regression_list (const int *orig, int aux, 
-			      DATASET *dset);
+			      DATASET *dset, int *err);
 
 double *gretl_XTX (const MODEL *pmod, const DATASET *dset, 
 		   int *err);

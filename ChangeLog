@@ -8,6 +8,10 @@ Version 1.9.9, in progress
 - Fix breakage of GUI Alt-x command "minibuffer"
 - "modtest" command with --normality option: make the accessors $test
   and $pvalue work when the test is done on a VAR
+- Fix bug: arima initialization could interfere with formation of
+  named lists
+- Fix bug: nonlinearity test (logs) misbehaving when the original
+  model includes non-positive regressors
 - Improvements to syntax highlighting in script editor 
 - MS Windows build: update cross-compiler to gcc-4.6.3
 - Internals: clean up the Minpack sources that we use for nls

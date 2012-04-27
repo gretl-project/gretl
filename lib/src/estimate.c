@@ -2296,7 +2296,7 @@ static double estimate_rho (const int *list, DATASET *dset,
  */
 
 int *augment_regression_list (const int *orig, int aux, 
-			      DATASET *dset)
+			      DATASET *dset, int *err)
 {
     int *list;
     int listlen;
@@ -2328,6 +2328,7 @@ int *augment_regression_list (const int *orig, int aux,
     }
 
     /* add squares, cross-products or logs of independent vars */
+
     k = list[0];
     for (i=2; i<=orig[0]; i++) {
 	int vnew, vi = orig[i];
@@ -2358,9 +2359,12 @@ int *augment_regression_list (const int *orig, int aux,
 		}
 	    }
 	} else if (aux == AUX_LOG) {
-	    vnew = loggenr(vi, dset);
-	    if (vnew > 0) {
-		list[++k] = vnew;
+	    /* don't try to log series with non-positive values */
+	    if (gretl_ispositive(dset->t1, dset->t2, dset->Z[vi], 1)) {
+		vnew = loggenr(vi, dset);
+		if (vnew > 0) {
+		    list[++k] = vnew;
+		}
 	    }
 	}
     }
@@ -2450,9 +2454,9 @@ static int get_hsk_weights (MODEL *pmod, DATASET *dset)
 
     /* build regression list, adding the squares of the original
        independent vars */
-    list = augment_regression_list(lcpy, AUX_SQ, dset);
-    if (list == NULL) {
-	return E_ALLOC;
+    list = augment_regression_list(lcpy, AUX_SQ, dset, &err);
+    if (err) {
+	return err;
     }
 
     list[1] = oldv; /* the newly added log(uhat-squared) */
@@ -3033,11 +3037,9 @@ int whites_test (MODEL *pmod, DATASET *dset,
 	    /* build aux regression list, adding squares and
 	       (possibly) cross-products of the original 
 	       independent vars */
-	    list = augment_regression_list(pmod->list, aux, dset);
+	    list = augment_regression_list(pmod->list, aux, dset, &err);
 	}
-	if (list == NULL) {
-	    err = E_ALLOC;
-	} else {
+	if (!err){
 	    list[1] = v; /* the newly added uhat-squared */
 	}
     }

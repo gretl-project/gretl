@@ -1024,9 +1024,9 @@ int nonlinearity_test (MODEL *pmod, DATASET *dset, ModelAuxCode aux,
     impose_model_smpl(pmod, dset);
 
     /* add squares or logs */
-    tmplist = augment_regression_list(pmod->list, aux, dset);
-    if (tmplist == NULL) {
-	return E_ALLOC;
+    tmplist = augment_regression_list(pmod->list, aux, dset, &err);
+    if (err) {
+	return err;
     } else if (tmplist[0] == pmod->list[0]) {
 	/* no vars were added */
 	if (aux == AUX_SQ) {
