@@ -24,6 +24,8 @@
 #include "qr_estimate.h"
 #include "gretl_bfgs.h"
 
+#include "../../minpack/minpack.h"
+
 #include <errno.h>
 
 #define GMM_DEBUG 0
@@ -1427,8 +1429,8 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 	    f[i] *= Tfac;
 	}
 
-	gretl_fdjac(gmm_jacobian_calc, m, n, s->coeff, f, 
-		    J->val, &iflag, wa4, s);
+	fdjac2_(gmm_jacobian_calc, m, n, s->coeff, f, 
+		J->val, m, &iflag, 0.0, wa4, s);
 
 	if (iflag != 0) {
 	    fprintf(stderr, "fdjac2_: iflag = %d\n", (int) iflag);
