@@ -2618,53 +2618,54 @@
   </command>
 
   <command name="dummify" section="Transformations" 
-    label="Create sets of dummies" context="cli">
+    label="Cria conjuntos de variáveis auxiliares ('dummies')" context="cli">
 
     <usage>
       <arguments>
-        <argument>varlist</argument>
+        <argument>lista-de-variáveis</argument>
       </arguments>
       <options>
 	<option>
 	  <flag>--drop-first</flag>
-	  <effect>omit lowest value from encoding</effect>
+	  <effect>omitir da codificação o menor valor</effect>
 	</option>
 	<option>
 	  <flag>--drop-last</flag>
-	  <effect>omit highest value from encoding</effect>
+	  <effect>omitir da codificação o maior valor</effect>
 	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	For any suitable variables in <repl>varlist</repl>, creates a set
-	of dummy variables coding for the distinct values of that
-	variable.   Suitable variables are those that have been explicitly
-	marked as discrete, or those that take on a fairly small number of
-	values all of which are <quote>fairly round</quote> (multiples of
-	0.25).
+	Para cada uma das variáveis adequadas em <repl>lista-de-variáveis</repl>,
+	cria um conjunto de variáveis auxiliares codificando para os diferentes 
+	valores dessa variável. É adequado para as variáveis que tenham sido 
+	explícitamente marcadas como sendo discretas, ou aquelas que tomem uma
+	quantidade razoavelmente pequena de valores todos eles 
+	<quote>quase redondos</quote> (múltiplos de 0,25).
       </para>
       <para>
-	By default a dummy variable is added for each distinct value of
-	the variable in question.  For example if a discrete variable
-	<lit>x</lit> has 5 distinct values, 5 dummy variables will be
-	added to the data set, with names <lit>Dx_1</lit>, <lit>Dx_2</lit>
-	and so on.  The first dummy variable will have value 1 for
-	observations where <lit>x</lit> takes on its smallest value, 0
-	otherwise; the next dummy will have value 1 when <lit>x</lit>
-	takes on its second-smallest value, and so on.  If one of the
-	option flags <opt>--drop-first</opt> or <opt>--drop-last</opt>
-	is added, then either the lowest or the highest value of each
-	variable is omitted from the encoding (which may be useful for
-	avoiding the <quote>dummy variable trap</quote>).
+	Por omissão é criada uma variável auxiliar para cada valor
+	distinto na variável em questão. Por exemplo se uma variável
+	discreta <lit>x</lit> tiver 5 valores distintos, serão criadas
+	5 variáveis auxiliares e acrescentadas ao conjunto de dados,
+	com os nomes, <lit>Dx_1</lit>, <lit>Dx_2</lit> e por aí adiante.
+	A primeira variável auxiliar terá o valor 1 para observações onde
+	<lit>x</lit> toma o seu valor mais pequeno, 0 caso contrário; a
+	variável auxiliar seguinte terá o valor 1 quando <lit>x</lit>
+	toma o seu segundo valor mais pequeno, e por aí adiante.  Se uma
+	das opções <opt>--drop-first</opt> ou <opt>--drop-last</opt>
+	tiver sido acrescentada, então o menor ou o maior valor de cada 
+	variável será omitido da codificação (o que pode ser útil para
+	evitar a <quote>armadilha das variáveis auxiliares</quote>).
       </para>
       <para>
-	This command can also be embedded in the context of a regression
-	specification.  For example, the following line specifies a model
-	where <lit>y</lit> is regressed on the set of dummy variables
-	coding for <lit>x</lit>.  (Option flags cannot be passed to
-	<cmd>dummify</cmd> in this context.)
+	Este comando também pode ser introduzido no contexto da 
+	especificação de uma regressão.  Por exemplo, a linha seguinte
+	especifica um modelo onde <lit>y</lit> é regredido sobre o
+	conjunto de variáveis auxiliares codificadas em <lit>x</lit>.
+	(Neste contexto, as opções não podem ser passadas a <cmd>dummify</cmd>.)
       </para>
       <code>
 	ols y dummify(x)
@@ -2673,34 +2674,34 @@
 
   </command>
 
-  <command name="duration" section="Estimation" label="Duration models" 
+  <command name="duration" section="Estimation" label="Modelos de Durações" 
     context="cli">
     <usage>
       <arguments>
-        <argument>depvar</argument>
-        <argument>indepvars</argument>
-        <argument separated="true" optional="true">censvar</argument>
+	  <argument>variável-dependente</argument>
+	  <argument>variáveis-independentes</argument>
+        <argument separated="true" optional="true">variável-censora</argument>
       </arguments>
       <options>
         <option>
           <flag>--exponential</flag>
-          <effect>use exponential distribution</effect>
+          <effect>usar a distribuição exponencial</effect>
         </option>
         <option>
           <flag>--loglogistic</flag>
-          <effect>use log-logistic distribution</effect>
+          <effect>usar a distribuição log-logística</effect>
         </option>
         <option>
           <flag>--lognormal</flag>
-          <effect>use log-normal distribution</effect>
+          <effect>usar a distribuição log-normal</effect>
         </option>
         <option>
           <flag>--medians</flag>
-          <effect>fitted values are medians</effect>
+          <effect>os valores ajustados são medianas</effect>
         </option>
         <option>
           <flag>--robust</flag>
-          <effect>robust (QML) standard errors</effect>
+          <effect>erros padrão robustos (QML)</effect>
         </option>
         <option>
           <flag>--vcv</flag>
@@ -2708,7 +2709,7 @@
         </option>
         <option>
           <flag>--verbose</flag>
-          <effect>print details of iterations</effect>
+          <effect>mostrar detalhes das iterações</effect>
         </option>
       </options>      
       <examples>
@@ -2719,33 +2720,33 @@
 
     <description>
       <para>
-	Estimates a duration model: the dependent variable (which must be
-	positive) represents the duration of some state of affairs, for 
-	example the length of spells of unemployment for a cross-section
-	of respondents. By default the Weibull distribution is used but
-	the exponential, log-logistic and log-normal distributions are
-	also available.
+	Estima um modelo de duração: a variável dependente (que tem que
+	ser positiva) representa a duração de algum tipo de estado num 
+	certo assunto, por exemplo a duração de episódios de desemprego
+	para uma seção-cruzada de inquiridos.  Por omissão é utilizada a
+	distribuição de Weibull, mas é possível usar as distribuições
+	exponencial, log-logística e a log-normal.
       </para>
       <para>
-	If some of the duration measurements are right-censored (&eg; an
-	individual's spell of unemployment has not come to an end within the
-	period of observation) then you should supply the trailing argument
-	<repl>censvar</repl>, a series in which non-zero values indicate
-	right-censored cases.
+	Se alguma das medições de durações estiver censurada ('right-censored')
+	(por exemplo, para um certo índividuo um episódio de desemprego não
+	chegou ao fim dentro do período de observação) então você pode acrescentar
+	como último argumento a <repl>variável-censora</repl>, que é uma série
+	na qual valores diferentes de zero indicam caso censurados.
       </para>
       <para>
-	By default the fitted values obtained via the accessor
-	<lit>$yhat</lit> are the conditional means of the durations, but if
-	the <lit>--medians</lit> option is given then <lit>$yhat</lit>
-	provides the conditional medians instead.
+	Por omissão os valores ajustados obtidos por intermédio do assessor
+	<lit>$yhat</lit> são as médias condicionadas das durações, mas se 
+	tiver sido dada a opção <lit>--medians</lit>, então <lit>$yhat</lit>
+	devolve as medianas condicionadas.
       </para>
       <para>
-	Please see <guideref targ="chap:discr-models"/> for details.
+	Para mais detalhes ver <guideref targ="chap:discr-models"/>.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Model/Nonlinear models/Duration data...</menu-path>
+      <menu-path>/Modelo/Modelos não-lineares/Dados de durações...</menu-path>
     </gui-access>
 
   </command>  
@@ -2892,7 +2893,7 @@
 	</option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>print details of iterations</effect>
+	  <effect>mostrar detalhes das iterações</effect>
 	</option>
       </options>
       <examples>
@@ -3506,7 +3507,7 @@
         </option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>print details of iterations</effect>
+	  <effect>mostrar detalhes das iterações</effect>
         </option>
         <option>
 	  <flag>--vcv</flag>
@@ -4059,7 +4060,7 @@
 	</option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>print details of iterations</effect>
+	  <effect>mostrar detalhes das iterações</effect>
 	</option>
 	<option>
 	  <flag>--lbfgs</flag>
@@ -4961,7 +4962,7 @@
         </option>
         <option>
 	  <flag>--verbose</flag>
-	  <effect>print details of iterations</effect>
+	  <effect>mostrar detalhes das iterações</effect>
         </option>
         <option>
 	  <flag>--robust</flag>
@@ -5670,7 +5671,7 @@
 	</option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>print details of iterations</effect>
+	  <effect>mostrar detalhes das iterações</effect>
 	</option>
 	<option>
 	  <flag>--p-values</flag>
@@ -6066,7 +6067,7 @@
 	</option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>print details of iterations</effect>
+	  <effect>mostrar detalhes das iterações</effect>
 	</option>
 	<option>
 	  <flag>--no-gradient-check</flag>
@@ -6590,7 +6591,7 @@
 	</option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>print details of iterations</effect>
+	  <effect>mostrar detalhes das iterações</effect>
 	</option>
       </options>
     </usage>  
@@ -6649,7 +6650,7 @@
 	</option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>print details of iterations</effect>
+	  <effect>mostrar detalhes das iterações</effect>
 	</option>
       </options>
       <examples>
@@ -7756,7 +7757,7 @@
         </option>
         <option>
           <flag>--verbose</flag>
-          <effect>print details of iterations</effect>
+          <effect>mostrar detalhes das iterações</effect>
         </option>
       </options>      
       <examples>
@@ -7977,7 +7978,7 @@
 	</option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>print details of iterations</effect>
+	  <effect>mostrar detalhes das iterações</effect>
 	</option>
 	<option>
 	  <flag>--p-values</flag>
@@ -10600,7 +10601,7 @@
         </option>
         <option>
 	  <flag>--verbose</flag>
-	  <effect>print details of iterations</effect>
+	  <effect>mostrar detalhes das iterações</effect>
         </option>
       </options>
     </usage>
