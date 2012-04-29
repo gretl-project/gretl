@@ -3084,34 +3084,34 @@
   </command>
 
   <command name="fcast" section="Prediction" 
-    label="Generate forecasts">
+    label="Gerar prdições">
 
     <usage>
       <arguments>
-        <argument optional="true">startobs endobs</argument>
-	<argument optional="true">steps-ahead</argument>
-	<argument optional="true">varname</argument>
+        <argument optional="true">observações-iniciais observações-finais</argument>
+	<argument optional="true">passos-à-frente</argument>
+	<argument optional="true">nome-de-variável</argument>
       </arguments>
       <options>
         <option>
 	  <flag>--dynamic</flag>
-	  <effect>create dynamic forecast</effect>
+	  <effect>criar predição dinâmica</effect>
         </option>
         <option>
 	  <flag>--static</flag>
-	  <effect>create static forecast</effect>
+	  <effect>criar predição estática</effect>
         </option>
         <option>
 	  <flag>--out-of-sample</flag>
-	  <effect>generate post-sample forecast</effect>
+	  <effect>gerar predição fora-da-amostra</effect>
         </option>
         <option>
 	  <flag>--no-stats</flag>
-	  <effect>don't print forecast statistics</effect>
+	  <effect>não mostrar estatísticas de predição</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>don't print anything</effect>
+	  <effect>não mostrar nada</effect>
         </option>
         <option>
 	  <flag>--rolling</flag>
@@ -3119,7 +3119,7 @@
         </option>
         <option>
 	  <flag>--plot</flag>
-	  <optparm optional="true">filename</optparm>
+	  <optparm optional="true">nome-de-ficheiro</optparm>
 	  <effect>ver abaixo</effect>
         </option>
       </options>
@@ -3133,155 +3133,162 @@
     <description>
 
       <para context="gui">
-	Must follow an estimation command.  Forecasts are generated for
-	the specified range of observations. Depending on the nature of
-	the model, standard errors may also be generated (see below).
+	Tem que se seguir a um comando de estimação.  A predições são 
+	geradas para o intervalo de observações especificado. Dependendo
+	da natureza do modelo, também podem ser gerados erros padrão
+	(ver abaixo).
       </para>
 
       <para context="cli">
-	Must follow an estimation command.  Forecasts are generated for a
-	certain range of observations: if <repl>startobs</repl> and
-	<repl>endobs</repl> are given, for that range (if possible); otherwise
-	if the <opt>--out-of-sample</opt> option is given, for observations
-	following the range over which the model was estimated; otherwise over
-	the currently defined sample range.  If an out-of-sample forecast is
-	requested but no relevant observations are available, an error is
-	flagged. Depending on the nature of the model, standard errors may
-	also be generated; see below.  Also see below for the special effect
-	of the <opt>--rolling</opt> option.
+	Tem que se seguir a um comando de estimação.  A predições são 
+	geradas para um certo intervalo de observações: se tiverem sido
+	dados <repl>observações-iniciais</repl> e 
+	<repl>observações-finais</repl>, para esse intervalo (se possível); 
+	caso contrário se a opção <opt>--out-of-sample</opt> tiver sido dada, 
+	para observações a seguir ao intervalo onde o modelo foi estimado;
+	caso contrário pelo intervalo de amostragem corrente.  Se uma 
+	predição fora-da-amostra for pedida mas não haja observações relevantes,
+	será assinalado um erro.  Dependendo da natureza do modelo, poderão ser
+	gerados erros padrão; ver abaixo.  Ver também abaixo o efeito especial
+	da opção <opt>--rolling</opt>.
       </para>
 
       <para context="cli">
-	If the last model estimated is a single equation, then the
-	optional <repl>varname</repl> argument has the following effect:
-	the forecast values are not printed, but are saved to the dataset
-	under the given name.  If the last model is a system of equations,
-	<repl>varname</repl> has a different effect, namely selecting a
-	particular endogenous variable for forecasting (the default being
-	to produce forecasts for all the endogenous variables). In the
-	system case, or if <repl>varname</repl> is not given, the forecast
-	values can be retrieved using the accessor <lit>$fcast</lit>, and
-	the standard errors, if available, via <lit>$fcerr</lit>.
+	Se o último modelo estimado é de uma única equação, então
+	o argumento opcional <repl>nome-de-variável</repl> tem o seguinte
+	efeito: o valores preditos não são mostrado, mas guardados dentro
+	do conjunto de dados no nome fornecido.  Se o último modelo 
+	estimado é um sistema de equações, <repl>nome-de-variável</repl> 
+	tem um efeito diverente, nomeadamente a seleção de uma variável
+	endógena específica para a predição (por omissão são produzidas
+	predições para todas as variáveis endógenas).  No caso do sistema,
+	ou se não tiver sido dado o <repl>nome-de-variável</repl>, os 
+	valores de predição podem ser obtidos usando o assessor 
+	<lit>$fcast</lit>, e os erros padrão, se disponíveis, pelo 
+	<lit>$fcerr</lit>.
       </para>
 
       <para>
-	The choice between a static and a dynamic forecast applies
-	only in the case of dynamic models, with an autoregressive
-	error process or including one or more lagged values of the
-	dependent variable as regressors.  Static forecasts are one
-	step ahead, based on realized values from the previous period,
-	while dynamic forecasts employ the chain rule of forecasting.
-	For example, if a forecast for <math>y</math> in 2008
-	requires as input a value of <math>y</math> for 2007, a
-	static forecast is impossible without actual data for 2007.  A
-	dynamic forecast for 2008 is possible if a prior forecast can
-	be substituted for <math>y</math> in 2007.
+	A escolha entre predições estáticas ou dinâmicas aplica-se
+	apenas no caso de modelos dinâmicos, com processamento 
+	autoregressivo de erros ou que incluam um ou mais valores
+	desfasados da variável dependente como regressores.  As 
+	predições estáticas são um passo à frente, baseadas em valores
+	concretizados no período anterior, enquanto que as predições
+	dinâmicas usam a regra de encadeamento de predição.  Por 
+	exemplo, se uma predição de <math>y</math> em 2008
+	requer como entrada um valor de <math>y</math> em 2007, uma
+	predição estática é impossível sem dados reais para 2007.  Uma
+	predição dinâmica para 2008 é possível se uma predição anterior
+	poder ser substítuida no <math>y</math> em 2007.
       </para>
 
       <para>
-	The default is to give a static forecast for any portion of
-	the forecast range that lies within the sample range over which
-	the model was estimated, and a dynamic forecast (if relevant)
-	out of sample.  The <lit>dynamic</lit> option requests a
-	dynamic forecast from the earliest possible date, and the
-	<opt>static</opt> option requests a static forecast even out
-	of sample.  
+	Por omissão o normal é produzir uma predição estática para
+	alguma parte do intervalo de predição que abrange o 
+	intervalo da amostra onde o modelo foi estimado, e uma predição
+	dinâmica (se relevante) para fora-da-amostra.  A opção
+	 <lit>dynamic</lit> chama uma predição dinâmica a partir da 
+	date mais cedo possível, e a opção <opt>static</opt> chama
+	uma predição estática até para fora-da-amosta.
       </para>
 
       <para context="cli">
-	The <opt>rolling</opt> option is presently available only for
-	single-equation models estimated via OLS.  When this option is given
-	the forecasts are recursive. That is, each forecast is generated from
-	an estimate of the given model using data from a fixed starting point
-	(namely, the start of the sample range for the original estimation) up
-	to the forecast date minus <math>k</math>, where <math>k</math> is the
-	number of steps ahead, which must be given in the
-	<repl>steps-ahead</repl> argument. The forecasts are always dynamic if
-	this is applicable.  Note that the <repl>steps-ahead</repl> argument
-	should be given only in conjunction with the <opt>rolling</opt>
-	option.
+	A opção <opt>rolling</opt> está atualmente apenas disponível para
+	modelos de um única equação estimados por Mínimos Quadrados (OLS).
+	Quando esta opção é dada as predições são recursivas.  Isto é, cada 
+	predição é gerada a partir de uma estimativa do modelo dado usando
+	dados de uma ponto de partida fixo (nomeadamente, a partir do início 
+	do intervalo da amostra da estimação original) até à data de predição
+	menos math>k</math>, onde <math>k</math> é o número de passos à frente
+	que têm que ser dados no argumento <repl>passos-à-frente</repl>.  As
+	predições serão sempre dinâmicas se isso for aplicável.  Note que o
+	argumento <repl>passos-à-frente</repl> deve ser dado apenas em conjunto
+	com a opção <opt>rolling</opt>.
       </para>
 
       <para context="cli">
-	The <opt>--plot</opt> option (available only in the case of
-	single-equation estimation) calls for a plot file to be
-	produced, containing a graphical representation of the
-	forecast.  When no <repl>filename</repl> parameter is given,
-	gretl writes a gnuplot command file with a name on the pattern
-	<lit>gpttmp01.plt</lit> to the user's gretl working directory
-	(with the number incremented for successive plots).  If a
-	<repl>filename</repl> is appended, its extension is used to
-	determine the type of file to be written (<lit>.eps</lit> for
-	EPS, <lit>.pdf</lit> for PDF, or <lit>.png</lit> for PNG; any
-	other extension gives a gnuplot command file).  For example,
+	A opção <opt>--plot</opt> (disponível apenas no caso de 
+	estimação de equação única) invoca a produção de um 
+	ficheiro de gráfico, que contém a representação
+	gráfica da predição.  Quando não é dado o parâmetro
+	<repl>nome-de-ficheiro</repl>, gretl escreve os comandos
+	gnuplot para um ficheiro com nomes do tipo
+	<lit>gpttmp01.plt</lit> na diretoria de trabalho de gretl
+	do utilizador (com o número incrementado em gráficos sucessivos).
+	Se o <repl>nome-de-ficheiro</repl> é acrescentado, a sua 
+	extensão é usada para determinar o tipo de ficheiro a ser
+	escrito (<lit>.eps</lit> para EPS, <lit>.pdf</lit> para PDF, ou
+	<lit>.png</lit> para PNG; qualquer outra extensão resulta num
+	ficheiro de comandos gnuplot).  Por exemplo,
       </para>
       <code>
 	fcast --plot=fc.pdf
       </code>
       <para>
-	will generate a graphic in PDF format.  Absolute pathnames are
-	respected, otherwise files are written to the gretl working directory.
+	produzirá um gráfico em formato PDF.  Serão respeitados caminhos
+	completos para ficheiros, senão os ficheiros são escritos na
+	diretoria de trabalho do gretl.
       </para>
 
       <para>
-	The nature of the forecast standard errors (if available) depends
-	on the nature of the model and the forecast.  For static linear
-	models standard errors are computed using the method outlined by
-	<cite key="davidson-mackinnon04">Davidson and MacKinnon
-	(2004)</cite>; they incorporate both uncertainty due to the error
-	process and parameter uncertainty (summarized in the covariance
-	matrix of the parameter estimates).  For dynamic models, forecast
-	standard errors are computed only in the case of a dynamic
-	forecast, and they do not incorporate parameter uncertainty.  For
-	nonlinear models, forecast standard errors are not presently
-	available.
+	A natureza dos erros padrão de predição (se disponíveis)
+	depende da natureza do modelo e da predição.  Para modelos
+	lineares estáticos os erros padrão são determinados usando o
+	método traçado por <cite key="davidson-mackinnon04">Davidson e MacKinnon
+	(2004)</cite>; eles incorporam tanto a incerteza devida aos 
+	processos de erro como a incerteza dos parâmetros ( resumidos na
+	matriz de covariância das estimativas dos parâmetros).  Para
+	modelos dinâmicos, os erros padrão de predição são apenas
+	calculados no caso de uma predição dinâmica, e eles não
+	incorporam incerteza de parâmetros.  Para modelos não-lineares,
+	os erros padrão de predição não estão disponíveis atualmente.
       </para>	
 
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Analysis/Forecasts</menu-path>
+      <menu-path>Janela de Modelo, /Análise/Predições...</menu-path>
     </gui-access>
 
   </command>
 
   <command name="foreign" section="Programming" 
-    label="Non-native script" context="cli">
+    label="Comandos não-nativos" context="cli">
 
     <usage>
-      <syntax><lit>foreign language=</lit><repl>lang</repl></syntax>
+      <syntax><lit>foreign language=</lit><repl>linguagem</repl></syntax>
       <options>
 	<option>
 	  <flag>--send-data</flag>
-	  <effect>pre-load the current dataset; see below</effect>
+	  <effect>pré-carregar o conjunto de dados corrente; ver abaixo</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>suppress output from foreign program</effect>
+	  <effect>suprimir a saída do programa estrangeiro</effect>
 	</option>
       </options>
     </usage>
 
     <description>
      <para>
-	This command opens a special mode in which commands to be executed
-	by another program are accepted.  You exit this mode with <lit>end
-	  foreign</lit>; at this point the stacked commands are executed.
+	Este comando inicia um modo especial no qual se aceita os comandos a serem
+	executados por outro programa.  Você sai deste modo com <lit>end
+	  foreign</lit>; onde neste ponto são executados os comandos acumulados.
       </para>
       <para>
-	At present three <quote>foreign</quote> programs are supported in this
-	way, GNU R (<lit>language=R</lit>), Jurgen Doornik's Ox
-	(<lit>language=Ox</lit>) and GNU Octave (<lit>language=Octave</lit>).
-	Language names are recognized on a case-insensitive basis.
+	Presentemente são suportados três programas <quote>estrangeiros</quote>,
+ 	GNU R (<lit>language=R</lit>), Ox de Jurgen Doornik 
+	(<lit>language=Ox</lit>) e GNU Octave (<lit>language=Octave</lit>).
+	Os nomes de linguagem são reconhecidos sem considerar capitalização.
       </para>
       <para>
-	The <opt>--send-data</opt> option is valid only in connection with
-	R and Octave; it has the effect of making the entire current gretl
-	dataset available within the target program, under the name
-	<lit>gretldata</lit>.
+	A opção <opt>--send-data</opt> é válida apenas quando em ligação
+	com R e Octave; tem o efeito de tornar o corrente conjunto de dados de
+	gretl disponível dentro do programa alvo, usando o nome <lit>gretldata</lit>.
       </para>
       <para>
-	See <guideref targ="chap:gretlR"/> for details and examples.
+	Para detalhes e exemplos ver <guideref targ="chap:gretlR"/>.
       </para>
     </description>
 
