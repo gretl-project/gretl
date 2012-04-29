@@ -2751,100 +2751,103 @@
 
   </command>  
 
-  <command name="elif" section="Programming" label="Flow control" context="cli">
+  <command name="elif" section="Programming" label="Controlo de fluxo" context="cli">
     <description>
-      <para>See <cmdref targ="if"/>.
+      <para>Ver <cmdref targ="if"/>.
       </para>
     </description>
   </command>
 
   <command name="else" section="Programming" context="cli">
     <description>
-      <para>See <cmdref targ="if"/>. Note that <cmd>else</cmd>
-	requires a line to itself, before the following
-	conditional command. You can append a comment, as in
+      <para>Ver <cmdref targ="if"/>. Note que <cmd>else</cmd>
+	requer uma linha para ele mesmo, antes do comando
+	condicional seguinte.  Você pode juntar um comentário,
+	como em
       </para>
       <code>
-	else # OK, do something different
+	else # Certo, fazer algo diferente
       </code>
       <para>
-	But you cannot append a command, as in
+	Mas não pode juntar a um comando, como em
       </para>
       <code>
-	else x = 5 # wrong!
+	else x = 5 # Errado!
       </code>
     </description>
   </command>
 
   <command name="end" section="Programming" 
-    label="End block of commands" context="cli">
+    label="Termina um bloco de comandos" context="cli">
     <description>
       <para>
-	Ends a block of commands of some sort.  For example, <cmd>end
-	  system</cmd> terminates an equation <cmdref targ="system"/>.
+	Termina diversos tipos de bloco de comandos. Por exemplo, 
+	<cmd>end system</cmd> termina uma equação <cmdref targ="system"/>.
       </para>
     </description>
   </command>
 
-  <command name="endif" section="Programming" label="Flow control" context="cli">
-    <description><para>See <cmdref targ="if"/>.</para>
+  <command name="endif" section="Programming" label="Controlo de fluxo" context="cli">
+    <description><para>Ver <cmdref targ="if"/>.</para>
     </description>
   </command>
 
   <command name="endloop" section="Programming" 
-    label="End a command loop" context="cli">
+    label="Termina um ciclo de comandos" context="cli">
     <description>
       <para>
-	Marks the end of a command loop.  See <cmdref targ="loop"/>.
+	Marca o fim de um ciclo de comandos.  Ver <cmdref targ="loop"/>.
       </para>
     </description>
   </command>
 
   <command name="eqnprint" section="Printing" 
-    label="Print model as equation" context="cli">
+    label="Mostra o modelo como equação" context="cli">
 
     <usage>
       <arguments>
-        <argument optional="true">-f filename</argument>
+        <argument optional="true">-f nome-de-ficheiro</argument>
       </arguments>
       <options>
         <option>
 	  <flag>--complete</flag>
-	  <effect>Create a complete document</effect>
+	  <effect>Cria um documento completo</effect>
         </option>
       </options>
     </usage>
 
     <description>
       <para>
-	Must follow the estimation of a model.  Prints the estimated
-	model in the form of a &latex; equation.  If a filename is
-	specified using the <lit>-f</lit> flag output goes to that
-	file, otherwise it goes to a file with a name of the form
-	<filename>equation_N.tex</filename>, where <lit>N</lit> is the
-	number of models estimated to date in the current session.
-	See also <cmdref targ="tabprint"/>.
+	Tem que ser invocado a seguir à estimação de um modelo.
+	Mostra o modelo estimado na forma de uma equação &latex;.  Se
+	o nome-de-ficheiro tiver sido especificado usando a opção 
+	<lit>-f</lit> a saída é redirecionada para esse ficheiro,
+	caso contrário vai para um ficheiro com o nome no formato
+	<filename>equation_N.tex</filename>, onde <lit>N</lit> é o
+	número de modelos estimados até ao momento na sessão
+	corrente.
+	Ver também <cmdref targ="tabprint"/>.
       </para>
       <para>
-	If the <opt>--complete</opt> flag is given, the &latex; file is
-	a complete document, ready for processing; otherwise it must
-	be included in a document.
+	Se a opção <opt>--complete</opt> tiver sido dada, o ficheiro &latex; é
+	um documento completo, pronto para ser processado; de outro modo ele
+	terá que ser incluído num documento.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>Model window, /LaTeX</menu-path>
+      <menu-path>Janela do Modelo, /LaTeX</menu-path>
     </gui-access>
 
   </command>
 
   <command name="equation" section="Estimation" 
-    label="Define equation within a system" context="cli">
+    label="Define uma equação dentro de um sistema de equações" context="cli">
 
     <usage>
       <arguments>
-        <argument>depvar</argument>
-        <argument>indepvars</argument>
+        <argument>variável-dependente</argument>
+	  <argument>variáveis-independentes</argument>
       </arguments>
       <examples>
         <example>equation y x1 x2 x3 const</example>
@@ -2853,35 +2856,36 @@
 
     <description>
       <para>
-	Specifies an equation within a system of equations (see 
-	<cmdref targ="system"/>).  The syntax for specifying an
-	equation within an SUR system is the same as that for, &eg;, 
-	<cmdref targ="ols"/>.  For an equation within a Three-Stage Least
-	Squares system you may either (a) give an OLS-type equation
-	specification and provide a common list of instruments using the
-	<cmd>instr</cmd> keyword (again, see <cmdref targ="system"/>),
-	or (b) use the same equation syntax as for <cmdref targ="tsls"/>.
+	Especifica uma equação dentro de um sistema de equações (ver 
+	<cmdref targ="system"/>).  A sintaxe para especificar uma 
+	equação dentro de um sistema SUR é o mesmo que em, por exemplo, 
+	<cmdref targ="ols"/>.  Para uma equação dentro de um sistema
+	de Mínimos Quadrados de Três-Fases você tanto pode (a) fornecer
+	uma especificação de equação tipo OLS e dar uma lista comum de 
+	instrumentos usando o comando <cmd>instr</cmd> (mais uma vez, ver
+	 <cmdref targ="system"/>), ou (b) usar a mesma sintaxe de equação
+	como para <cmdref targ="tsls"/>.
       </para>
     </description>
 
   </command>
 
   <command name="estimate" section="Estimation" 
-    label="Estimate system of equations" context="cli">
+    label="Estimar um sistema de equações" context="cli">
 
     <usage>
       <arguments>
-        <argument optional="true">systemname</argument>
-        <argument optional="true">estimator</argument>
+        <argument optional="true">nome-do-sistema</argument>
+        <argument optional="true">estimador</argument>
       </arguments>
       <options>
 	<option>
 	  <flag>--iterate</flag>
-	  <effect>iterate to convergence</effect>
+	  <effect>iterar até à convergência</effect>
 	</option>
 	<option>
 	  <flag>--no-df-corr</flag>
-	  <effect>no degrees of freedom correction</effect>
+	  <effect>não usar correção de graus de liberdade</effect>
 	</option>
 	<option>
 	  <flag>--geomean</flag>
@@ -2889,7 +2893,7 @@
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't print results</effect>
+	  <effect>não mostrar resultados</effect>
 	</option>
 	<option>
 	  <flag>--verbose</flag>
@@ -2905,128 +2909,130 @@
 
     <description>
       <para>
-	Calls for estimation of a system of equations, which must have
-	been previously defined using the <cmdref targ="system"/>
-	command.  The name of the system should be given first,
-	surrounded by double quotes if the name contains spaces.  The
-	estimator, which must be one of <cmd>ols</cmd>,
-	<cmd>tsls</cmd>, <cmd>sur</cmd>, <cmd>3sls</cmd>,
-	<cmd>fiml</cmd> or <cmd>liml</cmd>, is preceded by the string
-	<lit>method=</lit>. These arguments are optional if the
-	system in question has already been estimated and occupies the
-	place of the <quote>last model</quote>; in that case the
-	estimator defaults to the previously used value.
+	Chama a estimação de um sistema de equações, que foi 
+	previamente definido usando o comando <cmdref targ="system"/>.
+	O nome do sistema deve ser dado em primeiro lugar, dentro de
+	aspas caso contenha espaços.  O estimador, que tem que ser um de
+	<cmd>ols</cmd>,	<cmd>tsls</cmd>, <cmd>sur</cmd>, <cmd>3sls</cmd>,
+	<cmd>fiml</cmd> ou <cmd>liml</cmd>, é precedido pelo texto
+	<lit>method=</lit>. Estes argumentos são opcionais se o sistema
+	em questão já foi estimado e ocupa a posição do 
+	<quote>último modelo</quote>; nesse caso o estimador é o mesmo
+	definido anteriormente.
       </para>
       <para>
-	If the system in question has had a set of restrictions
-	applied (see the <cmdref targ="restrict"/> command),
-	estimation will be subject to the specified restrictions.
+	Se o sistema em questão tinha aplicado um conjunto de restrições
+	(ver o comando <cmdref targ="restrict"/>), a estimação estará
+	sujeita às restrições especificadas.
       </para>
       <para>
-	If the estimation method is <cmd>sur</cmd> or <cmd>3sls</cmd>
-	and the <opt>--iterate</opt> flag is given, the estimator will
-	be iterated.  In the case of SUR, if the procedure converges
-	the results are maximum likelihood estimates.  Iteration of
-	three-stage least squares, however, does not in general
-	converge on the full-information maximum likelihood results.
-	The <opt>--iterate</opt> flag is ignored for other methods of
-	estimation.  
+	Se o método de estimação é <cmd>sur</cmd> ou <cmd>3sls</cmd>
+	e a opção <opt>--iterate</opt> tiver sido dada, o estimador
+	será iterado.  No caso do SUR, se o procedimento convergir
+	os resultados são estimativas de máxima vesrosimilhança.  No
+	entanto, a iteração de Mínimos Quadrados de Três-Fases, geralmente não
+ 	converge para resultados de informação-completa de máxima verosimilhança.
+	A opção <opt>--iterate</opt> é ignorada nos outros métodos de estimação.
       </para>
       <para>
-	If the equation-by-equation estimators <cmd>ols</cmd> or
-	<cmd>tsls</cmd> are chosen, the default is to apply a degrees
-	of freedom correction when calculating standard errors. This
-	can be suppressed using the <opt>--no-df-corr</opt> flag. This
-	flag has no effect with the other estimators; no degrees of
-	freedom correction is applied in any case.
+	Se tiverem sido escolhidos os estimadores equação-a-equação <cmd>ols</cmd>
+	ou <cmd>tsls</cmd>, por omissão é aplicada uma correção dos graus de
+	liberdade quando se calcula os erros padrão.  Isto pode ser suprimido
+	usando a opção <opt>--no-df-corr</opt>. Esta opção não tem efeito nos outros
+	estimadores; de qualquer modo não seria aplicada a correção de graus de 
+	liberdade.
       </para>
       <para>
-	By default, the formula used in calculating the
-	elements of the cross-equation covariance matrix is
+	Por omissão, a equação usada no cálculo dos elementos da
+	matriz de covariância das equações cruzadas é
 	<equation status="display"
 	tex="\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{T}\]"
 	ascii="sigma(i,j) = u(i)' * u(j) / T"
 	graphic="syssigma1"/>
-	If the <opt>--geomean</opt> flag is
-	given, a degrees of freedom correction is applied: the
-	formula is
+	Se tiver sido dada a opção <opt>--geomean</opt>, a 
+	correção de graus de liberdade será aplicada: a equação é
 	<equation status="display"
 	tex="\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{\sqrt{(T-k_i)(T-k_j)}}\]"
 	ascii="sigma(i,j) = u(i)' * u(j) / sqrt((T - ki) * (T - kj))"
 	graphic="syssigma2"/>
-	where the <math>k</math>s denote the number of
-	independent parameters in each equation.
+	onde os <math>k</math>s são o número de parâmetros independentes em cada 
+	equação.
       </para>
       <para>
-	If the <opt>verbose</opt> option is given and an iterative
-	method is specified, details of the iterations are printed.
+	Se tiver sido dada a opção <opt>verbose</opt> e ter sido especificado um
+	método iterativo, serão mostrados os detalhes das iterações.
       </para>
     </description>
 
   </command>
 
   <command name="expand" section="Dataset" context="gui"
-    label="Expand data">
+    label="Expandir dados">
 
     <description>
       <para>
-	If you wish to add to a dataset a series that is of lower
-	frequency, it is necessary to <quote>expand</quote> the new
-	series.  For instance, a quarterly series will have to be expanded
-	to fit into a monthly dataset. In addition, you may sometimes want
-	to expand an entire dataset to a higher frequency (perhaps, prior
-	to adding a higher-frequency variable to the dataset).
+	Se você pretender acrescentar a um conjunto de dados uma série
+	que tenha uma frequência inferior, será necessário 
+	<quote>expandir</quote> a nova série.  Por examplo, uma série
+	trimestral terá que ser expandida para caber dentro de um conjunto
+	de dados mensal.  Adicionalmente, você pode desejar expandir
+	a totalidade de um conjunto de dados para uma frequência superior
+	(eventualmente, antes de acrescentar uma variável de 
+	alta-frequência ao conjunto de dados).
       </para>
       <para>
-	Expansion of data should be considered an
-	<quote>expert</quote> option; you need to know what you are
-	doing. When combining series of differing original frequencies
-	within one dataset, you should probably consider compacting
-	the higher-frequency data rather than expanding the
-	lower-frequency series.
+	Expandir dados deve ser considerada uma opção para 
+	<quote>especialistas</quote>; você tem que saber o que está
+	a fazer.  Ao combinar séries de diferentes frequências dentro
+	de um conjunto de dados, você deve preferencialmente compactar
+	os dados de alta-frequência em vez de expandir as séries
+	baixa-frequência.
       </para>
       <para>
-	That said, gretl offers two options: higher-frequency values
-	can be interpolated using the method of Chow and Lin (1971),
-	or the values of the lower-frequency series can be repeated as
-	many times as required.
+	Dito isto, gretl oferece duas opções: valores de 
+	alta-frequência podem ser interpolados usando o método
+	de Chow e Lin (1971), ou os valores de seéries de 
+	baixa-frequência podem ser repetidos o número de vezes 
+	necessárias.
       </para>
       <para>
-	The Chow-Lin method is regression-based, using a constant and
-	quadratic trend and assuming a first-order autoregressive
-	process for the disturbances. Four degrees of freedom are used
-	up by this procedure. As for the repetition of values, suppose
-	we have a quarterly series with the value 35.5 in 1990:1, the
-	first quarter of 1990.  On expansion to monthly, the value
-	35.5 will be assigned to the observations for January,
-	February and March of 1990.  The expanded variable is
-	therefore useless for fine-grained time-series analysis,
-	outside of the special case where you know that the variable
-	in question does in fact remain constant over the sub-periods.
+	O método de Chow-Lin baseia-se em regressão, usando uma 
+	constante e uma tendência quadrática e assumindo um 
+	processo autoregressivo de primeira ordem para as 
+	perturbações. Este procedimento usa quatro graus de liberdade.
+	Quanto à repetição de valores, suponha que temos uma série
+	trimestral com o valor 35,5 em 1990:1, o primeiro trimestre de
+	1990.  Ao expandir para mensal, o valor 35,5 será atribuído
+	às observações de janeiro, fevereiro e março de 1990.  A
+	variável expandida será assim inútil para análises apuradas
+	de séries temporais, excetuando o caso especial onde você
+	sabe que a variável em questão se mantém de fato constante
+	ao longo dos subperíodos.
       </para>
     </description>
   </command>
 
   <command name="export" section="Dataset" context="gui"
-    label="Export data">
+    label="Exportar dados">
 
      <description>
       <para>
-	You may export data in Comma-Separated Values (CSV) format: such
-	data may be opened in spreadsheets and many other application
-	programs. If you select this option you will get some further
-	options regarding the specific format of the CSV file.
+	Voce pode exportar dados no formato Valores Separados por 
+	Vírgulas (CSV): esse tipo de dados pode ser aberto em
+	folhas-de-cálculo e em muitos outros programas.  Se
+	você escolher esta opção poderá selecionar outras
+	opções sobre o formato específico do ficheiro CSV.
       </para>
       <para>
-	You also have the option of exporting data in the form of a
-	<quote>native</quote> gretl datafile, or (if the data are
-	suitable) exporting to a gretl database. See
-	<url>gretl.sourceforge.net/gretl_data.html</url> for an account of
-	gretl databases.
+	Você também tem a possibilidade de exportar dados na forma
+	<quote>nativa</quote> de ficheiro-de-dados gretl, ou (se os dados
+	forem adequandos) exportar para uma base-de-dados gretl. Ver
+	<url>gretl.sourceforge.net/gretl_data.html</url> para uma listagem
+	de bases-de-dados gretl.
       </para>
       <para>
-	You may also export data in a format suitable for use with
-	the following programs:
+	Você também pode exportar os dados num formato adequado
+	para usar nos seguintes programas:
       </para>
       <ilist>
 	<li>
@@ -3044,34 +3050,34 @@
 	</li>
       </ilist>
       <para>
-	If you wish to export data by copying to the clipboard rather than
-	writing to a file on disk, select the series you want to copy in
-	the main window, right-click, and select <quote>Copy to
-	clibboard</quote>. (Only CSV format is supported in this
-	context.) 
+	Se você quiser exportar dados copiando para a memória em vez
+	de escrever para um ficheiro em disco, selecione a série que
+	você quer copiar na janela principal, clique com o botão 
+	direito e selecione <quote>Copiar para a memória de edição</quote>. 
+	(Neste contexto apenas é suportado o formato CSV.) 
       </para>
     </description>
   </command>
 
   <command name="factorized" section="Graphs" context="gui"
-    label="Factorized plot">
+    label="Gráfico com separação fatorizada">
 
     <description>
       <para>
-	This command requires the selection of three variables, the last
-	of which must be a dummy variable (values 1 or 0). The Y variable
-	is plotted against the X variable, with the data points colored
-	differently depending on the value of the third.
+	Este comando requer a seleção de três variáveis sendo a última
+	delas uma variável auxiliar (valores 1 ou 0). A variável Y é
+	representada contra a variável X, com os pontos coloridos
+	diferentemente de acordo com o valor da terceira.
       </para>
       <para>
-	Example: You have data on wages and educational attainment for a
-	sample of people; you also have a dummy variable with value 1 for
-	men and 0 for women (as in Ramanathan's
-	<filename>data7-2</filename>).  A <quote>factorized plot</quote>
-	of <lit>WAGE</lit> against <lit>EDUC</lit> using the
-	<lit>GENDER</lit> dummy as factor will show the data points for
-	men in one color and those for women in another (with a legend to
-	identify them).
+	Examplo: Você tem dados de salários e níveis de educação obtidos
+	numa amostra de pessoas; você tem também uma variável auxiliar
+	com valores 1 para homens e 0 para mulheres (tal como nos dados
+	<filename>data7-2</filename> de Ramanathan).  Um 
+	<quote>gráfico com separação fatorizada</quote> de <lit>WAGE</lit>
+	contra <lit>EDUC</lit> usando a variável auxiliar <lit>GENDER</lit>
+	como fator mostrará os pontos de dados para homens numa cor e os das
+	mulheres noutra (com uma legenda para as identificar).
       </para>
     </description>
 
@@ -4858,7 +4864,7 @@
 
   </command>
 
-  <command name="if" section="Programming" label="Flow control" context="cli">
+  <command name="if" section="Programming" label="Controlo de fluxo" context="cli">
 
     <description>
       <para>Flow control for command execution.  Three sorts of
