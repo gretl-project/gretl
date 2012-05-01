@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-04-17 15:56-0400\n"
-"PO-Revision-Date: 2012-04-25 23:09-0300\n"
+"PO-Revision-Date: 2012-05-01 16:56-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -1624,7 +1624,7 @@ msgstr "a frequência %d não é suportada"
 
 #: lib/src/dbread.c:1136
 msgid "No valid series found"
-msgstr "Não se encontraram séries válidas"
+msgstr "Não foram encontradas séries válidas"
 
 #: lib/src/dbread.c:1148
 #: lib/src/dbread.c:1201
@@ -1684,7 +1684,7 @@ msgid ""
 "with the working data set"
 msgstr ""
 "%s: o intervalo das observações não se sobrepõe\n"
-"no conjunto de dados corrente"
+"ao conjunto de dados corrente"
 
 #: lib/src/dbread.c:2628
 #, c-format
@@ -2851,7 +2851,7 @@ msgstr "Substituído após modelo %d:"
 #: lib/src/interact.c:2297
 #, c-format
 msgid "'%s' may not be used as a variable name"
-msgstr "'%s' pode não ser usada como nome de variável"
+msgstr "'%s' não pode ser usado como nome de variável"
 
 #: lib/src/genmain.c:464
 msgid "Periodic dummy variables generated.\n"
@@ -3354,11 +3354,11 @@ msgstr "A estatística solicitada não está disponível"
 
 #: lib/src/gretl_errors.c:70
 msgid "Missing sub-sample information; can't merge data"
-msgstr "Falta informação de sub-amostragem; não se pode fundir os dados"
+msgstr "Falta informação de sub-amostragem; os dados não podem ser fundidos"
 
 #: lib/src/gretl_errors.c:71
 msgid "The convergence criterion was not met"
-msgstr "Não se atingiu critério de convergência"
+msgstr "O critério de convergência não foi atingido"
 
 #: lib/src/gretl_errors.c:72
 msgid "The operation was canceled"
@@ -4431,7 +4431,7 @@ msgstr "A informação das variáveis não existe"
 
 #: lib/src/gretl_xml.c:2532
 msgid "No observations were found"
-msgstr "Não se encontraram observações"
+msgstr "Não foram encontradas observações"
 
 #: lib/src/interact.c:1239
 msgid "generation of lag variable failed"
@@ -4744,7 +4744,7 @@ msgstr "Marcar %d valores como \"ausentes\"\n"
 
 #: lib/src/missing.c:781
 msgid "Didn't find any matching observations\n"
-msgstr "Não se encontraram quaisquer observações de acordo com o critério\n"
+msgstr "Não foram encontradas observações de acordo com o critério\n"
 
 #: lib/src/missing.c:788
 #, c-format
@@ -4754,7 +4754,7 @@ msgstr "%s: marcadas %d observações como \"omissas\"\n"
 #: lib/src/missing.c:792
 #, c-format
 msgid "%s: Didn't find any matching observations\n"
-msgstr "%s: Não se encontrou nenhuma observação de acordo com o critério\n"
+msgstr "%s: Não foram encontradas observações de acordo com o critério\n"
 
 #: lib/src/modelprint.c:152
 msgid "Unconditional error variance"
@@ -6556,7 +6556,7 @@ msgid ""
 "Can't do: the current data set is different from the one on which\n"
 "the reference model was estimated\n"
 msgstr ""
-"Não se pode fazer: o conjunto de dados atual é diferente daquele\n"
+"Não é possível fazerr: o conjunto de dados atual é diferente daquele\n"
 "a partir do qual o modelo de referência foi estimado\n"
 
 #: lib/src/options.c:1098
@@ -7113,7 +7113,7 @@ msgstr "memória esgotada durante codificação em XML"
 
 #: lib/src/subsample.c:603
 msgid "Missing sub-sample information; can't merge data\n"
-msgstr "Falta informação de sub-amostragem; não se pode fundir os dados\n"
+msgstr "Falta informação de sub-amostragem; não é possível fundir os dados\n"
 
 #: lib/src/subsample.c:720
 #: lib/src/subsample.c:744
@@ -7524,7 +7524,7 @@ msgstr "dummy para %s = %g"
 
 #: lib/src/transforms.c:1588
 msgid "dummify: no suitable variables were found"
-msgstr "auxiliarizar (\"dummify\"): não se encontraram variáveis adequadas"
+msgstr "auxiliarizar (\"dummify\"): não foram encontradas variáveis adequadas"
 
 #: lib/src/tsls.c:766
 #, c-format
@@ -7988,7 +7988,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 25 de abril de 2012."
+"Tradução de 1 de maio de 2012."
 
 #: gui2/about.c:164
 msgid "License"
@@ -14067,7 +14067,7 @@ msgstr "%s previsto"
 #: gui2/library.c:6344
 #, c-format
 msgid "Cannot delete %s; variable is in use"
-msgstr "Não se pode apagar %s, a variável está em uso"
+msgstr "Não é possível apagar %s, a variável está em uso"
 
 #: gui2/library.c:6348
 #: gui2/library.c:6358
@@ -16801,7 +16801,7 @@ msgstr "Texto de índice muito grande"
 #: plugin/excel_import.c:925
 #, c-format
 msgid "%s: No BOF record found"
-msgstr "%s: Não se encontrou registro BOF"
+msgstr "%s: Não foi encontrado registro BOF"
 
 #: plugin/excel_import.c:1392
 #: plugin/excel_import.c:1431
