@@ -92,10 +92,9 @@ int qrfac_(int m, int n, double *a, int lda, int *ipvt,
 {
     const double p05 = .05;
     const double epsmch = DBL_EPSILON;
-    double d, sum, temp;
-    double ajnorm;
-    int kmax, minmn;
-    int i, j, k, jp1;
+    double ajnorm, d, sum, temp;
+    int kmax, minmn, jp1;
+    int i, j, k;
 
     /* compute the initial column norms and initialize several arrays */
     for (j = 0; j < n; ++j) {

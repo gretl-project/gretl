@@ -95,7 +95,7 @@ int chkder_(int m, int n, double *x, double *fvec,
 	    double *fvecp, int mode, double *err)
 {
     const double epsmch = DBL_EPSILON;
-    double d, temp, eps = sqrt(epsmch);
+    double temp, eps = sqrt(epsmch);
     int i, j;
 
     if (mode == 1) {
@@ -110,7 +110,7 @@ int chkder_(int m, int n, double *x, double *fvec,
     } else {
 	/* mode 2: assess validity of gradient */
 	const double factor = 100; 
-	double epsf = factor * epsmch;
+	double d, epsf = factor * epsmch;
 	double epslog = log10(eps);
 
 	for (i = 0; i < m; i++) {

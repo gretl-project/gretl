@@ -208,8 +208,8 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
     double par, sum;
     double d, temp1, temp2;
     double ratio, delta = 0;
-    double fnorm, gnorm;
-    double pnorm, fnorm1, actred, dirder, prered;
+    double fnorm, gnorm, pnorm, fnorm1;
+    double actred, dirder, prered;
     double temp = 0.0, xnorm = 0.0;
     int iter, iflag = 0;
     int i, j, l;
@@ -222,13 +222,13 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
     if (n <= 0 || m < n || ldfjac < m || 
 	ftol < 0.0 || xtol < 0.0 || gtol < 0.0 || 
 	maxfev <= 0 || factor <= 0.0) {
-	goto bailout;
+	goto terminate;
     }
 
     if (mode == 2) {
 	for (j = 0; j < n; ++j) {
 	    if (diag[j] <= 0.0) {
-		goto bailout;
+		goto terminate;
 	    }
 	}
     }
@@ -240,7 +240,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
     (*fcn)(m, n, x, fvec, &iflag, p);
     *nfev = 1;
     if (iflag < 0) {
-	goto bailout;
+	goto terminate;
     }
     fnorm = enorm_(m, fvec);
 
@@ -258,7 +258,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
 	    epsfcn, wa4, p);
     *nfev += n;
     if (iflag < 0) {
-	goto bailout;
+	goto terminate;
     }
 
     /* if requested, call fcn to enable printing of iterates */
@@ -269,7 +269,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
 	    (*fcn)(m, n, x, fvec, &iflag, p);
 	}
 	if (iflag < 0) {
-	    goto bailout;
+	    goto terminate;
 	}
     }
 
@@ -342,7 +342,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
 	*info = 4;
     }
     if (*info != 0) {
-	goto bailout;
+	goto terminate;
     }
 
     /* rescale if necessary */
@@ -377,7 +377,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
     (*fcn)(m, n, wa2, wa4, &iflag, p);
     *nfev += 1;
     if (iflag < 0) {
-	goto bailout;
+	goto terminate;
     }
     fnorm1 = enorm_(m, wa4);
 
@@ -462,7 +462,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
 	*info = 3;
     }
     if (*info != 0) {
-	goto bailout;
+	goto terminate;
     }
 
     /* tests for termination and stringent tolerances */
@@ -480,7 +480,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
 	*info = 8;
     }
     if (*info != 0) {
-	goto bailout;
+	goto terminate;
     }
 
     /* end of inner loop; repeat (only) if iteration unsuccessful */
@@ -491,14 +491,14 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
     /* end of the outer loop */
     goto outer_start;
 
- bailout:
+ terminate:
 
     /* termination, either normal or user-imposed */
     if (iflag < 0) {
 	*info = iflag;
     }
-    iflag = 0;
     if (nprint > 0) {
+	iflag = 0;
 	(*fcn)(m, n, x, fvec, &iflag, p);
     }
 
