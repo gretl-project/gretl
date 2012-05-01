@@ -3200,7 +3200,7 @@
 	predição é gerada a partir de uma estimativa do modelo dado usando
 	dados de uma ponto de partida fixo (nomeadamente, a partir do início 
 	do intervalo da amostra da estimação original) até à data de predição
-	menos math>k</math>, onde <math>k</math> é o número de passos à frente
+	menos <math>k</math>, onde <math>k</math> é o número de passos à frente
 	que têm que ser dados no argumento <repl>passos-à-frente</repl>.  As
 	predições serão sempre dinâmicas se isso for aplicável.  Note que o
 	argumento <repl>passos-à-frente</repl> deve ser dado apenas em conjunto
