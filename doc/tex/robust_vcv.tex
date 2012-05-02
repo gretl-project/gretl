@@ -582,12 +582,16 @@ The Arellano estimator is
 where $X$ is the matrix of regressors (with the group means
 subtracted, in the case of fixed effects) $\hat{u}_i$ denotes the
 vector of residuals for unit $i$, and $n$ is the number of
-cross-sectional units.  \cite{cameron-trivedi05} make a strong case
-for using this estimator; they note that the ordinary White HCCME
-can produce misleadingly small standard errors in the panel context
-because it fails to take autocorrelation into account.
+cross-sectional units.\footnote{This variance estimator is also known
+  as the ``clustered (over entities)'' estimator.}
+\cite{cameron-trivedi05} make a strong case for using this estimator;
+they note that the ordinary White HCCME can produce misleadingly small
+standard errors in the panel context because it fails to take
+autocorrelation into account. In addition \cite{stock-watson08} show
+that the White HCCME is inconsistent in the fixed-effects panel
+context for fixed $T > 2$.
 
-In cases where autocorrelation is not an issue, however, the estimator
+In cases where autocorrelation is not an issue the estimator
 proposed by \cite{beck-katz95} and discussed by Greene
 (\citeyear{greene03}, chapter 13) may be appropriate.  This estimator,
 which takes into account contemporaneous correlation across the units

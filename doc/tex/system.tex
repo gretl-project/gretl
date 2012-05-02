@@ -18,7 +18,7 @@ and \texttt{estimate}; we also explain the options and accessors
 available in connection with multivariate models.
 
 \section{The system command}
-\label{sec:system-regular}
+\label{sec:sys-command}
 
 The specification of a multivariate system takes the form of a block
 of statements, starting with \texttt{system} and ending with
@@ -339,7 +339,20 @@ forecast will in general differ from the fitted values retrieved via
 \verb|$yhat|. The fitted values for equation $i$ represent the
 expectation of $y_{ti}$ conditional on the contemporaneous values of
 all the regressors, while the \texttt{fcast} values are conditional on
-the exogenous and predetermind variables only.
+the exogenous and predetermined variables only.
+
+The above account has to be qualified for the case where a system is
+set up for estimation via TSLS or 3SLS using a specific list of
+instruments per equation, as described in
+section~\ref{sec:sys-command}. In that case it is possible to include
+more endogenous regressors than explicit equations (although, of
+course, there must be sufficient instruments to achieve
+identification). In such systems endogenous regressors that have no
+associated explicit equation are treated ``as if'' exogenous when
+constructing the structural-form matrices. This means that forecasts
+are conditional on the observed values of the ``extra'' endogenous
+regressors rather then solely on the values of the exogenous and
+predetermined variables. 
 
 %%% Local Variables: 
 %%% mode: latex
