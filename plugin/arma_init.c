@@ -770,7 +770,7 @@ static void nls_kickstart (MODEL *pmod, DATASET *dset,
 {
     int list[4];
 
-    if (b0 != 0) {
+    if (b0 != NULL) {
 	list[0] = 3;
 	list[1] = 1;
 	list[2] = 0;
@@ -784,11 +784,14 @@ static void nls_kickstart (MODEL *pmod, DATASET *dset,
     *pmod = lsq(list, dset, OLS, OPT_A | OPT_Z);
 
     if (!pmod->errcode) {
-	if (b0 != 0) {
+	if (b0 != NULL) {
 	    *b0 = pmod->coeff[0];
 	    *by1 = pmod->coeff[1];
 	} else {
 	    *by1 = pmod->coeff[0];
+	}
+	if (*by1 >= 1.0) {
+	   *by1 = 0.95;
 	}
     }
 
