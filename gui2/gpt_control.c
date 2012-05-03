@@ -1292,18 +1292,17 @@ static int chop_comma (char *str)
     return 0;
 }
 
-static int get_gpt_marker (const char *line, char *label)
+static int get_gpt_marker (const char *line, char *label, 
+			   const char *format)
 {
     const char *p = strchr(line, '#');
-    char format[6];
 
 #if GPDEBUG > 1
-    fprintf(stderr, "get_gpt_marker...\n");
+    fprintf(stderr, "get_gpt_marker, p='%s'\n", p);
 #endif
 
     if (p != NULL) {
-	sprintf(format, "%%%ds", OBSLEN - 1);
-	sscanf(p + 1, format, label);
+	sscanf(p + 2, format, label);
 #if GPDEBUG > 1
 	fprintf(stderr, "read marker: '%s'\n", label);
 #endif
@@ -1342,6 +1341,7 @@ static int get_gpt_data (GPT_SPEC *spec, int datacols, int do_markers,
     char *got = NULL;
     double *x[5] = { NULL };
     char test[5][32];
+    char obsfmt[12] = {0};
     int started_data_lines = 0;
     int i, j, t, imin = 0;
     int err = 0;
@@ -1376,6 +1376,10 @@ static int get_gpt_data (GPT_SPEC *spec, int datacols, int do_markers,
 	} else {
 	    err = 1;
 	}
+    }
+
+    if (do_markers) {
+	sprintf(obsfmt, "%%%d[^\r\n]", OBSLEN - 1);
     }
 
     /* then get the regular plot data */
@@ -1447,7 +1451,7 @@ static int get_gpt_data (GPT_SPEC *spec, int datacols, int do_markers,
 	    }
 
 	    if (i <= imin && do_markers) {
-		get_gpt_marker(s, spec->markers[t]);
+		get_gpt_marker(s, spec->markers[t], obsfmt);
 		if (spec->code == PLOT_FACTORIZED && imin == 0) {
 		    imin = 1;
 		}

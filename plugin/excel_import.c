@@ -208,8 +208,10 @@ static double biff_get_rk (const unsigned char *ptr)
 static gchar *convert8to7 (const char *s, int count) 
 {
     gchar *dest;
-    int n = strspn(s, " \t");
+    int n;
 
+    /* we'll skip any leading space */
+    n = strspn(s, " \t");
     count -= n;
 
     if (count <= 0) {
@@ -316,7 +318,11 @@ copy_unicode_string (xls_info *xi, unsigned char *src, int remlen,
 	/* let's not mess with excessive strings */
 	ret = g_strdup("bigstr");
     } else if (csize == 1) {
-	dbprintf("original string = '%s'\n", src + this_skip);
+	char show[68];
+
+	*show = '\0';
+	strncat(show, (char *) src + this_skip, count);
+	dbprintf("original string = '%s'\n", show);
 	ret = convert8to7((char *) src + this_skip, count);
     } else { 
 	if (xi->codepage == 1200) {
