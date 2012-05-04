@@ -75,21 +75,21 @@ insert_sys_X_block (gretl_matrix *X, const gretl_matrix *M,
 
 double *model_get_Xi (const MODEL *pmod, DATASET *dset, int i)
 {
-    const char *endog = gretl_model_get_data(pmod, "endog");
+    gretl_matrix *endog = gretl_model_get_data(pmod, "endog");
     double *xi = NULL;
 
-    if (endog == NULL || !endog[i]) {
+    if (endog == NULL || endog->val[i] == 0) {
 	/* use the original data */
 	xi = dset->Z[pmod->list[i+2]];
     } else {
 	double **X = gretl_model_get_data(pmod, "tslsX");
 
 	if (X != NULL) {
-	    /* find and return the correct column */
+	    /* find and return the correct column of X */
 	    int j, k = 0;
 
 	    for (j=0; j<i; j++) {
-		if (endog[j]) k++;
+		if (endog->val[j] != 0) k++;
 	    }
 	    xi = X[k];
 	}

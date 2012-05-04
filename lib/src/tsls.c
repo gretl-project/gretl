@@ -62,13 +62,13 @@ static void tsls_omitzero (int *list, const DATASET *dset,
 
 void tsls_free_data (const MODEL *pmod)
 {
-    const char *endog = gretl_model_get_data(pmod, "endog");
+    gretl_matrix *endog = gretl_model_get_data(pmod, "endog");
     double **X = gretl_model_get_data(pmod, "tslsX");
     int i, m = 0;
 
     if (endog != NULL && X != NULL) {
 	for (i=0; i<pmod->ncoeff; i++) {
-	    if (endog[i]) m++;
+	    if (endog->val[i] != 0) m++;
 	}
 	for (i=0; i<m; i++) {
 	    free(X[i]);
@@ -85,15 +85,13 @@ static int
 tsls_save_data (MODEL *pmod, const int *hatlist, const int *exolist,
 		DATASET *dset)
 {
+    gretl_matrix *endog = NULL;
     double **X = NULL;
-    char *endog = NULL;
-    int i, v, err = 0;
-    size_t esize, Xsize;
-    size_t xs_old, es_old;
+    size_t Xsize, xs_old;
     int recycle_X = 0;
     int recycle_e = 0;
+    int i, v, err = 0;
 
-    esize = pmod->ncoeff * sizeof *endog;
     Xsize = hatlist[0] * sizeof *X;
 
     /* re-use old pointers if applicable */
@@ -117,19 +115,19 @@ tsls_save_data (MODEL *pmod, const int *hatlist, const int *exolist,
 	}
     }
 
-    endog = gretl_model_get_data_full(pmod, "endog", NULL, &es_old);
+    endog = gretl_model_get_data(pmod, "endog");
     if (endog != NULL) {
-	if (esize == es_old) {
+	if (gretl_vector_get_length(endog) == pmod->ncoeff) {
 	    recycle_e = 1;
 	} else {
 	    gretl_model_detach_data_item(pmod, "endog");
-	    free(endog);
+	    gretl_matrix_free(endog);
 	    endog = NULL;
 	}
     }
 
-    if (!recycle_e && esize > 0) {
-	endog = malloc(esize);
+    if (!recycle_e) {
+	endog = gretl_matrix_alloc(pmod->ncoeff, 1);
 	if (endog == NULL) {
 	    free(X);
 	    return E_ALLOC;
@@ -145,7 +143,7 @@ tsls_save_data (MODEL *pmod, const int *hatlist, const int *exolist,
 
     for (i=0; i<pmod->ncoeff; i++) {
 	v = pmod->list[i+2];
-	endog[i] = !in_gretl_list(exolist, v);
+	endog->val[i] = !in_gretl_list(exolist, v);
     }
 
      /* now attach X and endog to the model */
@@ -154,8 +152,7 @@ tsls_save_data (MODEL *pmod, const int *hatlist, const int *exolist,
 			     Xsize);
     }
     if (!recycle_e && endog != NULL) {
-	gretl_model_set_data(pmod, "endog", endog, GRETL_TYPE_CHAR_ARRAY,
-			     esize);
+	gretl_model_set_matrix_as_data(pmod, "endog", endog);
     }
 
     return err;

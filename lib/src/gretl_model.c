@@ -3481,7 +3481,7 @@ static void serialize_vcv_info (model_data_item *item, FILE *fp)
     fputs("/>\n", fp);
 }
 
-/* FIXME updating and placement of these function */
+/* FIXME updating and placement of these functions */
 
 struct type_mapper {
     int type;
@@ -3496,7 +3496,6 @@ static struct type_mapper mapper[] = {
     { GRETL_TYPE_INT_ARRAY,    "intarray",    "4" },
     { GRETL_TYPE_DOUBLE_ARRAY, "doublearray", "5" },
     { GRETL_TYPE_STRING,       "string",      "6" },
-    { GRETL_TYPE_CHAR_ARRAY,   "chararray",   "7" },
     { GRETL_TYPE_CMPLX_ARRAY,  "cmplxarray",  "8" },
     { GRETL_TYPE_STRUCT,       "struct" ,     "9" },
     { GRETL_TYPE_MATRIX,       "matrix" ,    "10" },
@@ -3514,11 +3513,18 @@ static int type_from_type_string (const char *s)
 		return mapper[i].type;
 	    }
 	}
+	if (*s == '7') {
+	    /* note: was "chararray" */
+	    return GRETL_TYPE_STRING;
+	}	
     } else {
 	for (i=0; mapper[i].type != GRETL_TYPE_NONE; i++) {
 	    if (!strcmp(s, mapper[i].name)) {
 		return mapper[i].type;
 	    }
+	}
+	if (!strcmp(s, "chararray")) {
+	    return GRETL_TYPE_STRING;
 	}
     }
 
