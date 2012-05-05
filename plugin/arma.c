@@ -175,7 +175,7 @@ int ma_out_of_bounds (arma_info *ainfo, const double *theta,
 	im = b->roots[i].i;
 	rt = re * re + im * im;
 	if (rt > DBL_EPSILON && rt <= 1.0) {
-	    pprintf(ainfo->prn, "MA root %d = %g\n", i, rt);
+	    pprintf(ainfo->prn, _("MA root %d = %g\n"), i, rt);
 	    err = 1;
 	    break;
 	}
@@ -909,7 +909,7 @@ static double kalman_arma_ll (const double *b, void *data)
 #endif
 
     if (kalman_do_ma_check && ma_out_of_bounds(ainfo, theta, Theta)) {
-	pputs(kalman_get_printer(K), "arma: MA estimate(s) out of bounds\n");
+	pputs(kalman_get_printer(K), _("MA estimate(s) out of bounds\n"));
 	return NADBL;
     }
 
