@@ -35,10 +35,6 @@ int write_gretl_octave_file (const char *buf, gretlopt opt,
 			     const DATASET *dset,
 			     const char **pfname);
 
-void delete_gretl_ox_file (void);
-
-void delete_gretl_octave_file (void);
-
 #ifdef USE_RLIB
 
 int get_R_function_by_name (const char *name);

@@ -53,11 +53,13 @@ static gchar *gretl_Rout;
 static gchar *gretl_Rmsg;
 static gchar *gretl_Oxprog;
 static gchar *gretl_octave_prog;
+static gchar *gretl_stata_prog;
 
 enum {
     LANG_R = 1,
     LANG_OX,
-    LANG_OCTAVE
+    LANG_OCTAVE,
+    LANG_STATA
 };
 
 static void destroy_foreign (void)
@@ -78,7 +80,9 @@ static int set_foreign_lang (const char *lang, PRN *prn)
     } else if (g_ascii_strcasecmp(lang, "ox") == 0) {
 	foreign_lang = LANG_OX;
     } else if (g_ascii_strcasecmp(lang, "octave") == 0) {
-	foreign_lang = LANG_OCTAVE;	
+	foreign_lang = LANG_OCTAVE;
+    } else if (g_ascii_strcasecmp(lang, "stata") == 0) {
+	foreign_lang = LANG_STATA;
     } else {
 	pprintf(prn, "%s: unknown language\n", lang);
 	err = E_DATA;
@@ -107,6 +111,17 @@ static const gchar *gretl_octave_filename (void)
     }
 
     return gretl_octave_prog;
+}
+
+static const gchar *gretl_stata_filename (void)
+{
+    if (gretl_stata_prog == NULL) {
+	const char *dotdir = gretl_dotdir();
+
+	gretl_stata_prog = g_strdup_printf("%sgretltmp.do", dotdir);
+    }
+
+    return gretl_stata_prog;
 }
 
 static void make_gretl_R_names (void)
@@ -184,6 +199,9 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	path = gretl_octave_path();
 	fname = gretl_octave_filename();
 	cmd = g_strdup_printf("\"%s\" --silent \"%s\"", path, fname);
+    } else if (foreign_lang == LANG_STATA) {
+	fname = gretl_stata_filename();
+	cmd = g_strdup_printf("stata -q < \"%s\"", path, fname);
     } else {
 	return 1;
     }
@@ -279,12 +297,17 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	argv[0] = (char *) gretl_oxl_path();
 	argv[1] = (char *) gretl_ox_filename();
 	argv[2] = NULL;
-    } else {
+    } else if (foreign_lang == LANG_OCTAVE) {
 	argv[0] = (char *) gretl_octave_path();
 	argv[1] = "--silent";
 	argv[2] = (char *) gretl_octave_filename();
 	argv[3] = NULL;
-    }
+    } else if (foreign_lang == LANG_STATA) {
+	argv[0] = "stata";
+	argv[1] = "-q";
+	argv[2] = (char *) gretl_stata_filename();
+	argv[3] = NULL;
+    }	
 
     err = lib_run_prog_sync(argv, opt, prn);
 
@@ -465,6 +488,76 @@ int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname)
 		if (!err && strstr(foreign_lines[i], "oxstd.h")) {
 		    add_gretl_include(fp);
 		}
+	    }
+	}
+	fclose(fp);
+	if (pfname != NULL) {
+	    *pfname = fname;
+	}
+    }
+
+    return 0;
+}
+
+static int write_data_for_stata (const DATASET *dset,
+				 FILE *fp)
+{
+    const char *save_na = get_csv_na_string();
+    gchar *sdata;
+    int err;
+
+    set_csv_na_string(".");
+    sdata = g_strdup_printf("%ssdata.csv", gretl_dotdir());
+    err = write_data(sdata, NULL, dset, OPT_C, 0);
+    set_csv_na_string(save_na);
+ 
+    if (err) {
+	gretl_errmsg_sprintf("write_data_for_stata: failed with err = %d\n", err);
+    } else {
+	fputs("* load data from gretl\n", fp);
+	fprintf(fp, "insheet using \"%s\"\n", sdata);
+    }
+
+    g_free(sdata);
+
+    return err;
+}
+
+int write_gretl_stata_file (const char *buf, gretlopt opt, 
+			    const DATASET *dset,
+			    const char **pfname)
+{
+    const gchar *fname = gretl_stata_filename();
+    FILE *fp = gretl_fopen(fname, "w");
+    int err;
+
+    if (fp == NULL) {
+	return E_FOPEN;
+    } else {
+	if (opt & OPT_D) {
+	    /* --send-data */
+	    fprintf(stderr, "*** writing data for stata\n");
+	    err = write_data_for_stata(dset, fp);
+	    if (err) {
+		fclose(fp);
+		return err;
+	    }
+	}
+	if (buf != NULL) {
+	    /* pass on the material supplied in the 'buf' argument */
+	    char line[1024];
+
+	    bufgets_init(buf);
+	    while (bufgets(line, sizeof line, buf)) {
+		fputs(line, fp);
+	    }
+	    bufgets_finalize(buf);
+	} else {
+	    /* put out the stored 'foreign' lines */
+	    int i;
+
+	    for (i=0; i<foreign_n_lines; i++) { 
+		fprintf(fp, "%s\n", foreign_lines[i]);
 	    }
 	}
 	fclose(fp);
@@ -847,17 +940,24 @@ void delete_gretl_R_files (void)
     }
 }
 
-void delete_gretl_ox_file (void)
+static void delete_gretl_ox_file (void)
 {
     if (gretl_Oxprog != NULL) {
 	gretl_remove(gretl_Oxprog);
     }
 }
 
-void delete_gretl_octave_file (void)
+static void delete_gretl_octave_file (void)
 {
     if (gretl_octave_prog != NULL) {
 	gretl_remove(gretl_octave_prog);
+    }
+}
+
+static void delete_gretl_stata_file (void)
+{
+    if (gretl_stata_prog != NULL) {
+	gretl_remove(gretl_stata_prog);
     }
 }
 
@@ -1557,6 +1657,14 @@ int foreign_execute (const DATASET *dset,
 				      dset, NULL);
 	if (err) {
 	    delete_gretl_octave_file();
+	} else {
+	    err = lib_run_other_sync(foreign_opt, prn);
+	}
+    } else if (foreign_lang == LANG_STATA) {
+	err = write_gretl_stata_file(NULL, foreign_opt, 
+				     dset, NULL);
+	if (err) {
+	    delete_gretl_stata_file();
 	} else {
 	    err = lib_run_other_sync(foreign_opt, prn);
 	}	

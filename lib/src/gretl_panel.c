@@ -452,7 +452,7 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
     int i, j, v, s, t;
     int err = 0;
 
-    e   = gretl_vector_alloc(T);
+    e   = gretl_column_vector_alloc(T);
     Xi  = gretl_matrix_alloc(T, k);
     eXi = gretl_vector_alloc(k);
 

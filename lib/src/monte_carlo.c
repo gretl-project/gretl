@@ -2119,7 +2119,7 @@ static void loop_model_print (LOOP_MODEL *lmod, const DATASET *dset,
     pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
 	    _(estimator_string(lmod->model0, prn)), lmod->model0->nobs, 
 	    startdate, enddate);
-    print_model_vcv_info(lmod->model0, prn);
+    print_model_vcv_info(lmod->model0, dset, prn);
     pprintf(prn, _("Statistics for %d repetitions\n"), lmod->n); 
     pprintf(prn, _("Dependent variable: %s\n\n"), 
 	    gretl_model_get_depvar_name(lmod->model0, dset));

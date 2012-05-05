@@ -49,7 +49,8 @@ typedef enum {
     VCV_HAC,
     VCV_ML,
     VCV_PANEL,
-    VCV_RQ
+    VCV_RQ,
+    VCV_CLUSTER
 } VCVMajorType;
 
 typedef enum {

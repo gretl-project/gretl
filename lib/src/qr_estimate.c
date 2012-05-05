@@ -36,6 +36,9 @@ enum {
     VCV_XPX
 };
 
+static int qr_make_cluster_vcv (MODEL *pmod, DATASET *dset,
+				gretl_matrix *XX);
+
 /* General note: in fortran arrays, column entries are contiguous.
    Columns of data matrix X hold variables, rows hold observations.
    So in a fortran array, entries for a given variable are contiguous.
@@ -1059,6 +1062,9 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 	} else {
 	    qr_make_hccme(pmod, dset, Q, V);
 	}
+    } else if (opt & OPT_C) {
+	pmod->opt |= OPT_C;
+	qr_make_cluster_vcv(pmod, dset, V);
     } else {
 	qr_make_regular_vcv(pmod, V, opt);
     }
@@ -1149,3 +1155,221 @@ int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt)
     return err;    
 }
 
+static int cval_count (MODEL *pmod, double cvi, const double *cZ)
+{
+    int t, cc = 0;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!na(pmod->uhat[t]) && cZ[t] == cvi) {
+	    cc++;
+	}
+    }
+
+    return cc;
+}
+
+static int cval_count_max (MODEL *pmod, const gretl_matrix *cvals, 
+			   const double *cZ)
+{
+    int n = gretl_vector_get_length(cvals);
+    int i, cc, cmax = 0;
+
+    for (i=0; i<n; i++) {
+	cc = cval_count(pmod, cvals->val[i], cZ);
+	if (cc > cmax) {
+	    cmax = cc;
+	}
+    }
+
+    return cmax;
+}
+
+#define CDEBUG 1
+
+static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
+				       int cvar,
+				       gretl_matrix *cvals, 
+				       gretl_matrix *XX,
+				       DATASET *dset,
+				       int *err)
+
+{
+    gretl_matrix *V = NULL;
+    gretl_matrix *W = NULL;
+    gretl_vector *ei = NULL;
+    gretl_matrix *Xi = NULL;
+    gretl_vector *eXi = NULL;
+    const double *cZ;
+    double dfadj;
+    int n_c, M, N, k = pmod->ncoeff;
+    int i, j, v, t;
+
+    cZ = dset->Z[cvar];    
+    N = cval_count_max(pmod, cvals, cZ);
+#if CDEBUG
+    fprintf(stderr, "max cval count = %d\n", N);
+#endif
+
+    V   = gretl_matrix_alloc(k, k);
+    W   = gretl_zero_matrix_new(k, k);
+    ei  = gretl_column_vector_alloc(N);
+    Xi  = gretl_matrix_alloc(N, k);
+    eXi = gretl_vector_alloc(k);
+
+    if (V == NULL || W == NULL || ei == NULL || 
+	Xi == NULL || eXi == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    M = gretl_vector_get_length(cvals);
+    n_c = 0;
+
+    for (i=0; i<M; i++) {
+	double cvi = cvals->val[i];
+	int Ni = cval_count(pmod, cvi, cZ);
+	int s = 0;
+
+	if (Ni == 0) {
+	    continue;
+	}
+
+#if CDEBUG
+	fprintf(stderr, "i=%d, cvi=%g, Ni=%d\n", i, cvi, Ni);
+#endif
+	ei = gretl_matrix_reuse(ei, Ni, -1);
+	Xi = gretl_matrix_reuse(Xi, Ni, -1);
+
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!na(pmod->uhat[t]) && cZ[t] == cvi) {
+		gretl_vector_set(ei, s, pmod->uhat[t]);
+		for (j=0; j<k; j++) {
+		    v = pmod->list[j+2];
+		    gretl_matrix_set(Xi, s, j, dset->Z[v][t]);
+		}
+		s++;
+	    }
+	}
+
+	gretl_matrix_multiply_mod(ei, GRETL_MOD_TRANSPOSE,
+				  Xi, GRETL_MOD_NONE,
+				  eXi, GRETL_MOD_NONE);
+	gretl_matrix_multiply_mod(eXi, GRETL_MOD_TRANSPOSE,
+				  eXi, GRETL_MOD_NONE,
+				  W, GRETL_MOD_CUMULATE);
+#if CDEBUG > 1
+	gretl_matrix_print(ei, "e(i)");
+	gretl_matrix_print(Xi, "X(i)");
+	gretl_matrix_print(W, "W");
+#endif
+	n_c++;
+    }
+
+    if (n_c < 2) {
+	gretl_errmsg_set("Invalid clustering variable");
+	*err = E_DATA;
+	goto bailout;
+    }
+
+    /* form V(W) = (X'X)^{-1} W (X'X)^{-1} */
+    gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
+		       V, GRETL_MOD_NONE);
+
+#if CDEBUG
+    gretl_matrix_print(XX, "X'X^{-1}");
+    gretl_matrix_print(W, "W");
+    gretl_matrix_print(V, "V");
+#endif
+    
+    N = pmod->nobs;
+    /* this is what Stata does for OLS */
+    dfadj = (M/(M-1.0)) * (N-1.0)/(N-k);
+    gretl_matrix_multiply_by_scalar(V, dfadj);
+
+ bailout:
+
+    gretl_matrix_free(W);
+    gretl_matrix_free(ei);
+    gretl_matrix_free(Xi);
+    gretl_matrix_free(eXi);
+
+    if (*err) {
+	gretl_matrix_free(V);
+	V = NULL;
+    }
+
+    return V;
+}
+
+/**
+ * qr_make_cluster_vcv:
+ * @pmod: pointer to model.
+ * @dset: pointer to dataset.
+ * @XX: X'X matrix.
+ * 
+ * Compute and set on @pmod a variance matrix that is "clustered"
+ * by the value of a variable via the --cluster=foo command-line
+ * option.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+static int qr_make_cluster_vcv (MODEL *pmod, DATASET *dset,
+				gretl_matrix *XX)
+{
+    gretl_matrix *cvals = NULL;
+    gretl_matrix *V = NULL;
+    const char *cname;
+    int cvar, err = 0;
+
+    if (pmod->ci != OLS) {
+	/* relax this? */
+	return E_OLSONLY;
+    }
+
+    cname = get_optval_string(OLS, OPT_C); 
+    if (cname == NULL) {
+	return E_PARSE;
+    }
+
+    cvar = current_series_index(dset, cname);
+    if (cvar < 1 || cvar >= dset->v) {
+	err = E_DATA;
+    }
+
+    if (!err) {
+	cvals = gretl_matrix_values(dset->Z[cvar] + pmod->t1,
+				    pmod->nobs, OPT_NONE,
+				    &err);
+	if (!err && gretl_vector_get_length(cvals) < 2) {
+	    err = E_DATA;
+	}
+    }
+
+#if CDEBUG
+    fprintf(stderr, "cluster var = %s (%d)\n", cname, cvar);
+    gretl_matrix_print(cvals, "cvals");
+#endif
+
+    if (!err) {
+	V = cluster_vcv_calc(pmod, cvar, cvals, XX, dset, &err);
+    }
+
+    if (!err) {
+	err = gretl_model_write_vcv(pmod, V, -1);
+    }
+
+    if (!err) {
+	gretl_model_set_vcv_info(pmod, VCV_CLUSTER, cvar);
+    }
+
+    gretl_matrix_free(V);
+    gretl_matrix_free(cvals);
+
+    if (err && pmod->vcv != NULL) {
+	free(pmod->vcv);
+	pmod->vcv = NULL;
+    }
+
+    return err;
+}

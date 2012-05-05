@@ -1038,6 +1038,8 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     int nullmod = 0, ldv = 0;
     int yno, i;
 
+    gretl_model_init(&mdl);
+
     if (list == NULL || dset == NULL || dset->Z == NULL) {
 	fprintf(stderr, "E_DATA: lsq: list = %p, dset = %p\n",
 		(void *) list, (void *) dset);
@@ -1045,7 +1047,12 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
         return mdl;
     }
 
-    gretl_model_init(&mdl);
+    if ((opt & OPT_R) && (opt & OPT_C)) {
+	/* can't specify standard robust + clustering */
+	mdl.errcode = E_BADOPT;
+	return mdl;
+    }    
+
     gretl_model_smpl_init(&mdl, dset);
 
     if (ci == AR1) {
@@ -1190,7 +1197,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     if (nullmod) {
 	gretl_null_regress(&mdl, (const double **) dset->Z);
-    } else if (!jackknife && (opt & (OPT_R | OPT_I | OPT_Q))) { 
+    } else if (!jackknife && (opt & (OPT_R | OPT_C | OPT_I | OPT_Q))) { 
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, dset, opt);
     } else {

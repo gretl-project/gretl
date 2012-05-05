@@ -1237,6 +1237,28 @@ static void panel_vcv_line (const VCVInfo *vi, PRN *prn)
     }
 }
 
+static void cluster_vcv_line (const VCVInfo *vi, const DATASET *dset,
+			      PRN *prn)
+{
+    gchar *cstr;
+
+    if (vi->vmin >= 1 && vi->vmin < dset->v) {
+	cstr = g_strdup_printf(A_("Standard errors clustered by %s"),
+			       dset->varname[vi->vmin]);
+    } else {
+	cstr = g_strdup(A_("Clustered standard errors"));
+    }
+
+    if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"", cstr);
+    } else {
+	pputs(prn, cstr);
+    } 
+    pputc(prn, '\n');
+
+    g_free(cstr);
+}
+
 static void beck_katz_failed_line (PRN *prn)
 {
     if (plain_format(prn)) {
@@ -1395,7 +1417,8 @@ static void tex_dpd_depvar_name (char *s, const char *vname)
     sprintf(s, "$\\Delta$%s", vnesc);
 }
 
-void print_model_vcv_info (const MODEL *pmod, PRN *prn)
+void print_model_vcv_info (const MODEL *pmod, const DATASET *dset,
+			   PRN *prn)
 {
     VCVInfo *vi = NULL;
 
@@ -1423,6 +1446,9 @@ void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 	    break;
 	case VCV_PANEL:
 	    panel_vcv_line(vi, prn);
+	    break;
+	case VCV_CLUSTER:
+	    cluster_vcv_line(vi, dset, prn);
 	    break;
 	default:
 	    break;
@@ -1940,7 +1966,7 @@ static void print_model_heading (const MODEL *pmod,
     }
 
     /* VCV variants */
-    print_model_vcv_info(pmod, prn);
+    print_model_vcv_info(pmod, dset, prn);
 
     if (pmod->ci == PANEL && (pmod->opt & OPT_W) && !pmod->aux) {
 	/* WLS on panel data */

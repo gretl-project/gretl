@@ -317,6 +317,7 @@ struct gretl_option gretl_opts[] = {
     { OLS,      OPT_Q, "quiet", 0 }, /* note: for the sake of documentation */
     { OLS,      OPT_S, "simple-print", 0 },
     { OLS,      OPT_V, "anova", 0 },
+    { OLS,      OPT_C, "cluster", 2 },
     { OMIT,     OPT_A, "auto", 1 },
     { OMIT,     OPT_B, "both", 0 },
     { OMIT,     OPT_X, "chi-square", 0 },
