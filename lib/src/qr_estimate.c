@@ -1058,28 +1058,30 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     if (opt & OPT_R) { 
 	pmod->opt |= OPT_R;
 	if ((opt & OPT_T) && !libset_get_bool(FORCE_HC)) {
-	    qr_make_hac(pmod, dset, V);
+	    err = qr_make_hac(pmod, dset, V);
 	} else {
-	    qr_make_hccme(pmod, dset, Q, V);
+	    err = qr_make_hccme(pmod, dset, Q, V);
 	}
     } else if (opt & OPT_C) {
 	pmod->opt |= OPT_C;
-	qr_make_cluster_vcv(pmod, dset, V);
+	err = qr_make_cluster_vcv(pmod, dset, V);
     } else {
-	qr_make_regular_vcv(pmod, V, opt);
+	err = qr_make_regular_vcv(pmod, V, opt);
     }
 
-    /* get R^2, F */
-    qr_compute_stats(pmod, dset->Z[pmod->list[1]], T, opt);
+    if (!err) {
+	/* get R^2, F */
+	qr_compute_stats(pmod, dset->Z[pmod->list[1]], T, opt);
 
-    /* D-W stat and p-value */
-    if ((opt & OPT_I) && pmod->missmask == NULL) {
-	qr_dw_stats(pmod, dset, Q, y);
-    }
+	/* D-W stat and p-value */
+	if ((opt & OPT_I) && pmod->missmask == NULL) {
+	    qr_dw_stats(pmod, dset, Q, y);
+	}
 
-    /* near-singularity? */
-    if (warn) {
-	gretl_model_set_int(pmod, "near-singular", 1);
+	/* near-singularity? */
+	if (warn) {
+	    gretl_model_set_int(pmod, "near-singular", 1);
+	}
     }
 
  qr_cleanup:
@@ -1184,7 +1186,7 @@ static int cval_count_max (MODEL *pmod, const gretl_matrix *cvals,
     return cmax;
 }
 
-#define CDEBUG 1
+#define CDEBUG 0
 
 static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 				       int cvar,
@@ -1334,7 +1336,7 @@ static int qr_make_cluster_vcv (MODEL *pmod, DATASET *dset,
 
     cvar = current_series_index(dset, cname);
     if (cvar < 1 || cvar >= dset->v) {
-	err = E_DATA;
+	err = E_UNKVAR;
     }
 
     if (!err) {
@@ -1366,9 +1368,18 @@ static int qr_make_cluster_vcv (MODEL *pmod, DATASET *dset,
     gretl_matrix_free(V);
     gretl_matrix_free(cvals);
 
-    if (err && pmod->vcv != NULL) {
-	free(pmod->vcv);
-	pmod->vcv = NULL;
+    if (err) {
+	int i;
+
+	if (pmod->vcv != NULL) {
+	    free(pmod->vcv);
+	    pmod->vcv = NULL;
+	}
+	if (pmod->sderr != NULL) {
+	    for (i=0; i<pmod->ncoeff; i++) {
+		pmod->sderr[i] = NADBL;
+	    }
+	}
     }
 
     return err;
