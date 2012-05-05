@@ -1322,7 +1322,8 @@ static int qr_make_cluster_vcv (MODEL *pmod, DATASET *dset,
     gretl_matrix *cvals = NULL;
     gretl_matrix *V = NULL;
     const char *cname;
-    int cvar, err = 0;
+    int cvar, n_c = 0;
+    int err = 0;
 
     if (pmod->ci != OLS) {
 	/* relax this? */
@@ -1343,8 +1344,11 @@ static int qr_make_cluster_vcv (MODEL *pmod, DATASET *dset,
 	cvals = gretl_matrix_values(dset->Z[cvar] + pmod->t1,
 				    pmod->nobs, OPT_NONE,
 				    &err);
-	if (!err && gretl_vector_get_length(cvals) < 2) {
-	    err = E_DATA;
+	if (!err) {
+	    n_c = gretl_vector_get_length(cvals);
+	    if (n_c < 2) {
+		err = E_DATA;
+	    }
 	}
     }
 
@@ -1363,24 +1367,11 @@ static int qr_make_cluster_vcv (MODEL *pmod, DATASET *dset,
 
     if (!err) {
 	gretl_model_set_vcv_info(pmod, VCV_CLUSTER, cvar);
+	gretl_model_set_int(pmod, "n_clusters", n_c);
     }
 
     gretl_matrix_free(V);
     gretl_matrix_free(cvals);
-
-    if (err) {
-	int i;
-
-	if (pmod->vcv != NULL) {
-	    free(pmod->vcv);
-	    pmod->vcv = NULL;
-	}
-	if (pmod->sderr != NULL) {
-	    for (i=0; i<pmod->ncoeff; i++) {
-		pmod->sderr[i] = NADBL;
-	    }
-	}
-    }
 
     return err;
 }

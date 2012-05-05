@@ -260,6 +260,9 @@ static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
     } else if (sout != NULL) {
 	if (!(opt & OPT_Q)) {
 	    /* with OPT_Q, don't print non-error output */
+#if 0
+	    fprintf(stderr, "sout='%s'\n", sout);
+#endif
 	    pputs(prn, sout);
 	    pputc(prn, '\n');
 	}

@@ -1237,14 +1237,16 @@ static void panel_vcv_line (const VCVInfo *vi, PRN *prn)
     }
 }
 
-static void cluster_vcv_line (const VCVInfo *vi, const DATASET *dset,
-			      PRN *prn)
+static void cluster_vcv_line (MODEL *pmod, const VCVInfo *vi, 
+			      const DATASET *dset, PRN *prn)
 {
     gchar *cstr;
 
     if (vi->vmin >= 1 && vi->vmin < dset->v) {
-	cstr = g_strdup_printf(A_("Standard errors clustered by %s"),
-			       dset->varname[vi->vmin]);
+	int n_c = gretl_model_get_int(pmod, "n_clusters");
+
+	cstr = g_strdup_printf(A_("Standard errors clustered by %d values of %s"),
+			       n_c, dset->varname[vi->vmin]);
     } else {
 	cstr = g_strdup(A_("Clustered standard errors"));
     }
@@ -1448,7 +1450,7 @@ void print_model_vcv_info (const MODEL *pmod, const DATASET *dset,
 	    panel_vcv_line(vi, prn);
 	    break;
 	case VCV_CLUSTER:
-	    cluster_vcv_line(vi, dset, prn);
+	    cluster_vcv_line(pmod, vi, dset, prn);
 	    break;
 	default:
 	    break;
