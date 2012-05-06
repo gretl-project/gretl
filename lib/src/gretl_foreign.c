@@ -200,8 +200,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	fname = gretl_octave_filename();
 	cmd = g_strdup_printf("\"%s\" --silent \"%s\"", path, fname);
     } else if (foreign_lang == LANG_STATA) {
-	fname = gretl_stata_filename();
-	cmd = g_strdup_printf("stata -q < \"%s\"", path, fname);
+	cmd = g_strdup_printf("stata /q /e gretltmp.do");
     } else {
 	return 1;
     }
@@ -228,23 +227,19 @@ static char *win32_dotpath (void)
 
 #else /* !G_OS_WIN32 */
 
-/* trim garbage from Stata's standard output */
+/* print from Stata's batch logfile */
 
-static void do_stata_printout (gchar *s, PRN *prn)
+static void do_stata_printout (PRN *prn)
 {
-    char *p = strchr(s, '.');
-    
-    if (p != NULL) {
-	char *q = strstr(p, "end of do-file");
-	
-	if (q != NULL) {
-	    *q = '\0';
-	}
-	pputs(prn, p);
-    } else {
-	pputs(prn, s);
+    gchar *buf = NULL;
+
+    /* we're located in dotdir at this point */
+
+    if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
+	pputs(prn, buf);
+	g_free(buf);
+	pputc(prn, '\n');
     }
-    pputc(prn, '\n');
 }
 
 static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
@@ -280,7 +275,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
 	if (!(opt & OPT_Q)) {
 	    /* with OPT_Q, don't print non-error output */
 	    if (foreign_lang == LANG_STATA) {
-		do_stata_printout(sout, prn);
+		do_stata_printout(prn);
 	    } else {
 		pputs(prn, sout);
 		pputc(prn, '\n');
@@ -313,7 +308,7 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
 static int lib_run_other_sync (gretlopt opt, PRN *prn)
 {
-    char *argv[4];
+    char *argv[5];
     int err;
 
     if (foreign_lang == LANG_OX) {
@@ -327,9 +322,14 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	argv[3] = NULL;
     } else if (foreign_lang == LANG_STATA) {
 	argv[0] = "stata";
-	argv[1] = "-q";
-	argv[2] = (char *) gretl_stata_filename();
-	argv[3] = NULL;
+	argv[1] = "-b";
+	argv[2] = "-q";
+	argv[3] = "gretltmp.do";
+	argv[4] = NULL;
+	/* otherwise there's no way to control the location
+	   of the state output (gretltmp.log)
+	*/
+	gretl_chdir(gretl_dotdir());
     }	
 
     err = lib_run_prog_sync(argv, opt, prn);
@@ -455,22 +455,14 @@ static int write_stata_io_file (void)
 	if (fp == NULL) {
 	    return E_FOPEN;
 	} else {
-#ifdef G_OS_WIN32
-            gchar *dotcpy = win32_dotpath();
-#endif
 	    fputs("program define gretl_export\n", fp);
+	    /* not sure about req'd version, but see mat2txt.ado */
 	    fputs("version 8.2\n", fp);
 	    fputs("local matrix `1'\n", fp);
 	    fputs("local fname `2'\n", fp);
 	    fputs("tempname myfile\n", fp);
-#ifdef G_OS_WIN32
-	    fprintf(fp, "file open `myfile' using \"%s`fname'\", "
-		    "write text replace\n", dotcpy);
-	    g_free(dotcpy);
-#else
-	    fprintf(fp, "file open `myfile' using \"%s`fname'\", "
-		    "write text replace\n", dotdir);
-#endif
+	    fputs("file open `myfile' using \"`fname'\", "
+		  "write text replace\n", fp);
 	    fputs("local nrows = rowsof(`matrix')\n", fp);
 	    fputs("local ncols = colsof(`matrix')\n", fp);
 	    fputs("file write `myfile' %8.0g (`nrows') %8.0g (`ncols') _n\n", fp);
@@ -585,7 +577,7 @@ static int write_data_for_stata (const DATASET *dset,
     int err;
 
     set_csv_na_string(".");
-    sdata = g_strdup_printf("%ssdata.csv", gretl_dotdir());
+    sdata = g_strdup_printf("%sstata.csv", gretl_dotdir());
     err = write_data(sdata, NULL, dset, OPT_C, 0);
     set_csv_na_string(save_na);
  
@@ -593,7 +585,7 @@ static int write_data_for_stata (const DATASET *dset,
 	gretl_errmsg_sprintf("write_data_for_stata: failed with err = %d\n", err);
     } else {
 	fputs("* load data from gretl\n", fp);
-	fprintf(fp, "insheet using \"%s\"\n", sdata);
+	fputs("insheet using \"stata.csv\"\n", fp);
     }
 
     g_free(sdata);
@@ -619,7 +611,6 @@ int write_gretl_stata_file (const char *buf, gretlopt opt,
 
 	if (opt & OPT_D) {
 	    /* --send-data */
-	    fprintf(stderr, "*** writing data for stata\n");
 	    err = write_data_for_stata(dset, fp);
 	    if (err) {
 		fclose(fp);
@@ -696,7 +687,6 @@ int write_gretl_octave_file (const char *buf, gretlopt opt,
 
 	if (opt & OPT_D) {
 	    /* --send-data */
-	    fprintf(stderr, "*** writing data for octave\n");
 	    err = write_data_for_octave(dset, fp);
 	    if (err) {
 		fclose(fp);
