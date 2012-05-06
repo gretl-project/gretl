@@ -228,6 +228,25 @@ static char *win32_dotpath (void)
 
 #else /* !G_OS_WIN32 */
 
+/* trim garbage from Stata's standard output */
+
+static void do_stata_printout (gchar *s, PRN *prn)
+{
+    char *p = strchr(s, '.');
+    
+    if (p != NULL) {
+	char *q = strstr(p, "end of do-file");
+	
+	if (q != NULL) {
+	    *q = '\0';
+	}
+	pputs(prn, p);
+    } else {
+	pputs(prn, s);
+    }
+    pputc(prn, '\n');
+}
+
 static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
 {
     gchar *sout = NULL;
@@ -260,11 +279,12 @@ static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
     } else if (sout != NULL) {
 	if (!(opt & OPT_Q)) {
 	    /* with OPT_Q, don't print non-error output */
-#if 0
-	    fprintf(stderr, "sout='%s'\n", sout);
-#endif
-	    pputs(prn, sout);
-	    pputc(prn, '\n');
+	    if (foreign_lang == LANG_STATA) {
+		do_stata_printout(sout, prn);
+	    } else {
+		pputs(prn, sout);
+		pputc(prn, '\n');
+	    }
 	}
     } else {
 	pprintf(prn, "%s: %s\n", argv[0], "Got no output");
@@ -419,6 +439,57 @@ static int write_octave_io_file (void)
     return 0;
 }
 
+static int write_stata_io_file (void)
+{
+    static int written;
+
+    if (!written) {
+	const char *dotdir = gretl_dotdir();
+	gchar *fname;
+	FILE *fp;
+
+	fname = g_strdup_printf("%sgretl_export.ado", dotdir);
+	fp = gretl_fopen(fname, "w");
+	g_free(fname);
+
+	if (fp == NULL) {
+	    return E_FOPEN;
+	} else {
+#ifdef G_OS_WIN32
+            gchar *dotcpy = win32_dotpath();
+#endif
+	    fputs("program define gretl_export\n", fp);
+	    fputs("version 8.2\n", fp);
+	    fputs("local matrix `1'\n", fp);
+	    fputs("local fname `2'\n", fp);
+	    fputs("tempname myfile\n", fp);
+#ifdef G_OS_WIN32
+	    fprintf(fp, "file open `myfile' using \"%s`fname'\", "
+		    "write text replace\n", dotcpy);
+	    g_free(dotcpy);
+#else
+	    fprintf(fp, "file open `myfile' using \"%s`fname'\", "
+		    "write text replace\n", dotdir);
+#endif
+	    fputs("local nrows = rowsof(`matrix')\n", fp);
+	    fputs("local ncols = colsof(`matrix')\n", fp);
+	    fputs("file write `myfile' %8.0g (`nrows') %8.0g (`ncols') _n\n", fp);
+	    fputs("forvalues r=1/`nrows' {\n", fp);
+	    fputs("  forvalues c=1/`ncols' {\n", fp);
+	    fputs("    file write `myfile' %15.0e (`matrix'[`r',`c']) _n\n", fp);
+	    fputs("  }\n", fp);
+	    fputs("}\n", fp);
+	    fputs("file close `myfile'\n", fp);
+	    fputs("end\n", fp);
+
+	    fclose(fp);
+	    written = 1;
+	}
+    }
+
+    return 0;
+}
+
 static void add_gretl_include (FILE *fp)
 {
 #ifdef G_OS_WIN32
@@ -432,7 +503,9 @@ static void add_gretl_include (FILE *fp)
 	}
     } else if (foreign_lang == LANG_OCTAVE) {
 	fprintf(fp, "source(\"%sgretl_io.m\")\n", dotcpy);
-    } 
+    } else if (foreign_lang == LANG_STATA) {
+	fprintf(fp, "quietly adopath + \"%s\"\n", dotcpy);
+    }
     g_free(dotcpy);
 #else
     const char *dotdir = gretl_dotdir();
@@ -445,7 +518,9 @@ static void add_gretl_include (FILE *fp)
 	}
     } else if (foreign_lang == LANG_OCTAVE) {
 	fprintf(fp, "source(\"%sgretl_io.m\")\n", dotdir);
-    } 
+    } else if (foreign_lang == LANG_STATA) {
+	fprintf(fp, "quietly adopath + \"%s\"\n", dotdir);
+    }
 #endif
 }
 
@@ -532,11 +607,16 @@ int write_gretl_stata_file (const char *buf, gretlopt opt,
 {
     const gchar *fname = gretl_stata_filename();
     FILE *fp = gretl_fopen(fname, "w");
-    int err;
+    int err = write_stata_io_file();
 
     if (fp == NULL) {
 	return E_FOPEN;
     } else {
+	/* source the I-O functions */
+	if (!err) {
+	    add_gretl_include(fp);
+	}
+
 	if (opt & OPT_D) {
 	    /* --send-data */
 	    fprintf(stderr, "*** writing data for stata\n");
@@ -546,6 +626,7 @@ int write_gretl_stata_file (const char *buf, gretlopt opt,
 		return err;
 	    }
 	}
+
 	if (buf != NULL) {
 	    /* pass on the material supplied in the 'buf' argument */
 	    char line[1024];

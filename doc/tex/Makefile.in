@@ -50,6 +50,7 @@ TEXSRC = cli.tex \
 	gretlR.tex \
 	gretlOx.tex \
 	gretlOctave.tex \
+	gretlStata.tex \
 	datatypes.tex \
 	df.tex \
 	var.tex \

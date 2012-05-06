@@ -1524,7 +1524,8 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
  * %OPT_A if this is an auxiliary reression, %OPT_E if we're
  * estimating one equation within a system, %OPT_H to
  * add "hatlist" to model even under %OPT_E, %OPT_X to skip
- * the set of tests that are usually calculated.
+ * the set of tests that are usually calculated. Also %OPT_C
+ * for clustered standard errors.
  *
  * Estimate the model given in @list by means of Two-Stage Least
  * Squares.  If %OPT_E is given, fitted values from the first-stage
@@ -1735,6 +1736,11 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	/* special: we need to use the original RHS vars to compute
 	   residuals and associated statistics */
 	tsls_residuals(&tsls, reglist, dset, opt);
+    }
+
+    if (opt & OPT_C) {
+	/* clustered implies robust */
+	opt |= OPT_R;
     }
 
     if (opt & OPT_R) {

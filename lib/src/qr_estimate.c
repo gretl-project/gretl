@@ -36,8 +36,10 @@ enum {
     VCV_XPX
 };
 
-static int qr_make_cluster_vcv (MODEL *pmod, DATASET *dset,
-				gretl_matrix *XX);
+static int qr_make_cluster_vcv (MODEL *pmod, int ci,
+				const DATASET *dset,
+				gretl_matrix *XX,
+				gretlopt opt);
 
 /* General note: in fortran arrays, column entries are contiguous.
    Columns of data matrix X hold variables, rows hold observations.
@@ -972,8 +974,8 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     gretl_matrix *V = NULL;
     int rank, warn = 0, err = 0;
 
-    T = pmod->nobs;               /* # of rows (observations) */
-    k = pmod->list[0] - 1;        /* # of cols (variables) */
+    T = pmod->nobs;        /* # of rows (observations) */
+    k = pmod->list[0] - 1; /* # of cols (variables) */
 
     Q = gretl_matrix_alloc(T, k);
     R = gretl_matrix_alloc(k, k);
@@ -1057,20 +1059,19 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     /* VCV and standard errors */
     if (opt & OPT_R) { 
 	pmod->opt |= OPT_R;
-	if ((opt & OPT_T) && !libset_get_bool(FORCE_HC)) {
+	if (opt & OPT_C) {
+	    err = qr_make_cluster_vcv(pmod, OLS, dset, V, opt);
+	} else if ((opt & OPT_T) && !libset_get_bool(FORCE_HC)) {
 	    err = qr_make_hac(pmod, dset, V);
 	} else {
 	    err = qr_make_hccme(pmod, dset, Q, V);
 	}
-    } else if (opt & OPT_C) {
-	pmod->opt |= OPT_C;
-	err = qr_make_cluster_vcv(pmod, dset, V);
     } else {
 	err = qr_make_regular_vcv(pmod, V, opt);
     }
 
     if (!err) {
-	/* get R^2, F */
+	/* get R^2, F-stat */
 	qr_compute_stats(pmod, dset->Z[pmod->list[1]], T, opt);
 
 	/* D-W stat and p-value */
@@ -1106,7 +1107,7 @@ int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt)
     gretl_matrix *V = NULL;
     int k, err = 0;
 
-    k = pmod->list[0] - 1;        /* # of cols (variables) */
+    k = pmod->list[0] - 1;
 
     Q = make_data_X(pmod, dset);
     R = gretl_matrix_alloc(k, k);
@@ -1129,7 +1130,10 @@ int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt)
 
     /* VCV and standard errors */
     if (opt & OPT_R) {
-	if (dataset_is_panel(dset)) {
+	if (opt & OPT_C) {
+	    pmod->opt |= OPT_R;
+	    err = qr_make_cluster_vcv(pmod, IVREG, dset, V, opt);
+	} else if (dataset_is_panel(dset)) {
 	    err = qr_make_regular_vcv(pmod, V, OPT_X);
 	    if (!err) {
 		err = panel_tsls_robust_vcv(pmod, dset);
@@ -1192,7 +1196,7 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 				       int cvar,
 				       gretl_matrix *cvals, 
 				       gretl_matrix *XX,
-				       DATASET *dset,
+				       const DATASET *dset,
 				       int *err)
 
 {
@@ -1202,8 +1206,8 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
     gretl_matrix *Xi = NULL;
     gretl_vector *eXi = NULL;
     const double *cZ;
-    double dfadj;
     int n_c, M, N, k = pmod->ncoeff;
+    int total_obs = 0;
     int i, j, v, t;
 
     cZ = dset->Z[cvar];    
@@ -1265,11 +1269,15 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 	gretl_matrix_print(W, "W");
 #endif
 	n_c++;
+	total_obs += s;
     }
 
     if (n_c < 2) {
 	gretl_errmsg_set("Invalid clustering variable");
 	*err = E_DATA;
+	goto bailout;
+    } else if (total_obs < pmod->nobs) {
+	*err = E_MISSDATA;
 	goto bailout;
     }
 
@@ -1282,11 +1290,19 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
     gretl_matrix_print(W, "W");
     gretl_matrix_print(V, "V");
 #endif
-    
-    N = pmod->nobs;
-    /* this is what Stata does for OLS */
-    dfadj = (M/(M-1.0)) * (N-1.0)/(N-k);
-    gretl_matrix_multiply_by_scalar(V, dfadj);
+
+    if (!(pmod->opt & OPT_N)) {
+	/* apply df adjustment a la Stata */
+	double dfadj;
+
+	N = pmod->nobs;
+	dfadj = (M/(M-1.0)) * (N-1.0)/(N-k);
+	gretl_matrix_multiply_by_scalar(V, dfadj);
+#if CDEBUG
+	gretl_matrix_print(V, "V(adjusted)");
+#endif
+
+    }
 
  bailout:
 
@@ -1306,6 +1322,7 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 /**
  * qr_make_cluster_vcv:
  * @pmod: pointer to model.
+ * @ci: command index (right now, OLS or IVREG).
  * @dset: pointer to dataset.
  * @XX: X'X matrix.
  * 
@@ -1316,8 +1333,10 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
  * Returns: 0 on success, non-zero code on error.
  */
 
-static int qr_make_cluster_vcv (MODEL *pmod, DATASET *dset,
-				gretl_matrix *XX)
+static int qr_make_cluster_vcv (MODEL *pmod, int ci,
+				const DATASET *dset,
+				gretl_matrix *XX,
+				gretlopt opt)
 {
     gretl_matrix *cvals = NULL;
     gretl_matrix *V = NULL;
@@ -1325,12 +1344,12 @@ static int qr_make_cluster_vcv (MODEL *pmod, DATASET *dset,
     int cvar, n_c = 0;
     int err = 0;
 
-    if (pmod->ci != OLS) {
+    if (pmod->ci != OLS && pmod->ci != IVREG) {
 	/* relax this? */
-	return E_OLSONLY;
+	return E_NOTIMP;
     }
 
-    cname = get_optval_string(OLS, OPT_C); 
+    cname = get_optval_string(ci, OPT_C); 
     if (cname == NULL) {
 	return E_PARSE;
     }
@@ -1342,8 +1361,7 @@ static int qr_make_cluster_vcv (MODEL *pmod, DATASET *dset,
 
     if (!err) {
 	cvals = gretl_matrix_values(dset->Z[cvar] + pmod->t1,
-				    pmod->nobs, OPT_NONE,
-				    &err);
+				    pmod->nobs, OPT_S, &err);
 	if (!err) {
 	    n_c = gretl_vector_get_length(cvals);
 	    if (n_c < 2) {

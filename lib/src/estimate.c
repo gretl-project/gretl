@@ -1047,13 +1047,12 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
         return mdl;
     }
 
-    if ((opt & OPT_R) && (opt & OPT_C)) {
-	/* can't specify standard robust + clustering */
-	mdl.errcode = E_BADOPT;
-	return mdl;
-    }    
-
     gretl_model_smpl_init(&mdl, dset);
+
+    if (opt & OPT_C) {
+	/* cluster option implies robust */
+	opt |= OPT_R;
+    }  
 
     if (ci == AR1) {
 	if (opt & OPT_P) {
@@ -1197,7 +1196,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     if (nullmod) {
 	gretl_null_regress(&mdl, (const double **) dset->Z);
-    } else if (!jackknife && (opt & (OPT_R | OPT_C | OPT_I | OPT_Q))) { 
+    } else if (!jackknife && (opt & (OPT_R | OPT_I | OPT_Q))) { 
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, dset, opt);
     } else {
@@ -1265,7 +1264,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 	log_depvar_ll(&mdl, dset);
     }
 
-    /* hccm command or HC3a */
+    /* HCCME version HC3a */
     if (jackknife) {
 	mdl.errcode = jackknife_vcv(&mdl, (const double **) dset->Z);
     }

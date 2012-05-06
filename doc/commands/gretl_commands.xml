@@ -3401,16 +3401,17 @@
 	  foreign</lit>; at this point the stacked commands are executed.
       </para>
       <para>
-	At present three <quote>foreign</quote> programs are supported in this
-	way, GNU R (<lit>language=R</lit>), Jurgen Doornik's Ox
-	(<lit>language=Ox</lit>) and GNU Octave (<lit>language=Octave</lit>).
+	At present the <quote>foreign</quote> programs supported in
+	this way are GNU R (<lit>language=R</lit>), Jurgen Doornik's
+	Ox (<lit>language=Ox</lit>), GNU Octave
+	(<lit>language=Octave</lit>) and, to a lesser extent, Stata.
 	Language names are recognized on a case-insensitive basis.
       </para>
       <para>
-	The <opt>--send-data</opt> option is valid only in connection with
-	R and Octave; it has the effect of making the entire current gretl
-	dataset available within the target program, under the name
-	<lit>gretldata</lit>.
+	In connection with R, Octave and Stata the
+	<opt>--send-data</opt> option has the effect of making the
+	entire current gretl dataset available within the target
+	program.
       </para>
       <para>
 	See <guideref targ="chap:gretlR"/> for details and examples.

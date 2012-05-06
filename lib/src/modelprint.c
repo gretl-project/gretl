@@ -1237,7 +1237,7 @@ static void panel_vcv_line (const VCVInfo *vi, PRN *prn)
     }
 }
 
-static void cluster_vcv_line (MODEL *pmod, const VCVInfo *vi, 
+static void cluster_vcv_line (const MODEL *pmod, const VCVInfo *vi, 
 			      const DATASET *dset, PRN *prn)
 {
     gchar *cstr;
