@@ -3294,101 +3294,100 @@
 
   </command>
 
-  <command name="fractint" section="Statistics" label="Fractional integration">
+  <command name="fractint" section="Statistics" label="Integração fracional">
   
     <usage>
       <arguments>
-        <argument>series</argument>
-	<argument optional="true">order</argument>
+        <argument>série-temporal</argument>
+	<argument optional="true">ordem</argument>
       </arguments>
       <options>
         <option>
 	  <flag>--gph</flag>
-	  <effect>do Geweke and Porter-Hudak test</effect>
+	  <effect>fazer o teste de Geweke e Porter-Hudak</effect>
         </option>
         <option>
 	  <flag>--all</flag>
-	  <effect>do both tests</effect>
+	  <effect>fazer ambos os testes</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>don't print results</effect>
+	  <effect>não mostrar resultados</effect>
         </option>
       </options>
     </usage>
 
     <description>
       <para>
-	Tests the specified series for fractional integration
-	(<quote>long memory</quote>). The null hypothesis is that the
-	integration order of the series is zero.  By default the local
-	Whittle estimator <cite key="robinson95" p="true">(Robinson,
-	1995)</cite> is used but if the <opt>--gph</opt> option is given
-	the GPH test <cite key="GPH83" p="true">(Geweke and
-	Porter-Hudak, 1983)</cite> is performed instead. If the
-	<opt>--all</opt> flag is given then the results of both tests
-	are printed.
+	Testa a integração fracional sobre a série especificada
+	(<quote>memória longa</quote>). A hipótese nula é de que a
+	ordem de integração da série é zero.  Por omissão é usado o
+	estimador local de Whittle <cite key="robinson95" p="true">(Robinson,
+	1995)</cite> mas se tiver sido dada a opção <opt>--gph</opt>
+	será usado o teste GPH <cite key="GPH83" p="true">(Geweke e
+	Porter-Hudak, 1983)</cite>. Se a opção <opt>--all</opt> for 
+	dada então serão mostrados os resultados dos dois testes.
       </para>
       <para>
-	For details on this sort of test, see <cite key="phillips04">Phillips 
-	and Shimotsu (2004)</cite>. 
+	Para mais detalhes sobre este tipo de testes, ver <cite key="phillips04">Phillips 
+	e Shimotsu (2004)</cite>. 
       </para>
       <para>
-	If the optional <repl>order</repl> argument is not given the order
-	for the test(s) is set automatically as the lesser of
-	<math>T</math>/2 and <math>T</math><sup>0.6</sup>.
+	Se não tiver sido dado o argumento opcional <repl>ordem</repl>, a ordem para 
+	os teste(s) é automaticamente definida como sendo o menor de
+	<math>T</math>/2 e <math>T</math><sup>0.6</sup>.
       </para>
       <para>
-	The results can be retrieved using the accessors <lit>$test</lit>
-	and <lit>$pvalue</lit>. These values are based on the Local
-	Whittle Estimator unless the <opt>--gph</opt> option is given.
+	Os resultados podem ser obtidos usando os assessores <lit>$test</lit>
+	e <lit>$pvalue</lit>. Estes valores baseiam-se no estimador local de
+	Whittle exceto quando dada a opção <opt>--gph</opt>.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Variable/Unit root tests/Fractional integration</menu-path>
+      <menu-path>/Variável/Testes de raiz unitária/Integração fracional</menu-path>
     </gui-access>
 
   </command>
 
 
-  <command name="freq" section="Statistics" label="Frequency distribution">
+  <command name="freq" section="Statistics" label="Distribução de frequência">
 
     <usage>
       <arguments>
-        <argument>series</argument>
+        <argument>série</argument>
       </arguments>
       <options>
         <option>
 	  <flag>--nbins</flag>
 	  <optparm>n</optparm>
-	  <effect>specify number of bins</effect>
+	  <effect>especificar o número de classes</effect>
         </option>
         <option>
 	  <flag>--min</flag>
-	  <optparm>minval</optparm>
-	  <effect>specify minimum, see below</effect>
+	  <optparm>valor-mínimo</optparm>
+	  <effect>especificar o mínimo, ver abaixo</effect>
         </option>
         <option>
 	  <flag>--binwidth</flag>
-	  <optparm>width</optparm>
-	  <effect>specify bin width, see below</effect>
+	  <optparm>amplitude</optparm>
+	  <effect>especificar a amplitude das classes, ver abaixo</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>suppress printing of graph</effect>
+	  <effect>não mostrar o gráfico</effect>
         </option>
         <option>
 	  <flag>--normal</flag>
-	  <effect>test for the normal distribution</effect>
+	  <effect>testar a distribuição normal</effect>
         </option>
         <option>
 	  <flag>--gamma</flag>
-	  <effect>test for gamma distribution</effect>
+	  <effect>testar a distribuição gama</effect>
         </option>
         <option>
 	  <flag>--silent</flag>
-	  <effect>don't print anything</effect>
+	  <effect>não mostrar nada</effect>
         </option>
         <option>
 	  <flag>--show-plot</flag>
@@ -3405,82 +3404,83 @@
 
     <description context="cli">
       <para>
-	With no options given, displays the frequency distribution for
-	<repl>series</repl> (given by name or number), with the number
-	of bins and their size chosen automatically.
+	Se não forem dadas opções, mostra a distribuição de frequência
+	da <repl>série</repl> (dada por nome ou por número), com
+	o número de classes e respetivo tamanho escolhidos automaticamente.
       </para>
       <para>
-	To control the presentation of the distribution you may
-	specify <emphasis>either</emphasis> the number of bins or
-	the minimum value plus the width of the bins, as shown in
-	the last two examples above. The <opt>--min</opt> option
-	sets the lower limit of the left-most bin.
+	Para controlar a apresentação da distribuição você pode
+	especificar <emphasis>tanto</emphasis> o número de classes
+	ou o valor mínimo e ainda a amplitude das classes, tal como
+	mostrado nos dois últimos exemplos acima. A opção <opt>--min</opt>
+	define o limite inferior da classe mais à esquerda.
       </para>
       <para>
-	If the <opt>--normal</opt> option is given, the
-	Doornik&ndash;Hansen chi-square test for normality is computed. If
-	the <opt>--gamma</opt> option is given, the test for normality is
-	replaced by Locke's nonparametric test for the null hypothesis
-	that the variable follows the gamma distribution; see <cite
+	Se a opção <opt>--normal</opt> tiver sido dada, será calculado
+	o teste qui-quadrado para a normalidade de Doornik&ndash;Hansen.
+	Se a opção <opt>--gamma</opt> tiver sido dada, o teste de normalidade
+	será substituído pelo teste não paramétrico de Locke para a hipótese
+	nula de que a variável segue uma distribuição gama; ver <cite
 	key="locke76">Locke (1976)</cite>, <cite
-	key="shapiro-chen01">Shapiro and Chen (2001)</cite>.  Note that
-	the parameterization of the gamma distribution used in gretl is
-	(shape, scale).
+	key="shapiro-chen01">Shapiro e Chen (2001)</cite>.  Note que a
+	parametrização da distribuição gama utilizadada em gretl é 
+	(forma, escala).
       </para>
       <para>
-	In interactive mode a graph of the distribution is displayed by
-	default.  The <opt>--quiet</opt> flag can be used to suppress
-	this. Conversely, the graph is not usually shown when the
-	<cmd>freq</cmd> is used in a script, but you can force its
-	display by giving the <opt>--show-plot</opt> option. (This does
-	not apply when using the command-line program,
+	Em modo interactivo, por omissão é apresentado o gráfico da
+	distribuição.  A opção <opt>--quiet</opt> pode ser usada para
+	suprimir isto.  Pelo contrário, normalmente não é mostrado o
+	gráfico quando se usa a opção <cmd>freq</cmd> dentro de uma
+	sequência-de-comandos, mas você pode forçar que seja apresentado
+	usando a opção <opt>--show-plot</opt>. (Isto não se aplica quando
+	se usa o programa em modo de linha-de-comandos,
 	<lit>gretlcli</lit>.)
       </para>
       <para>
-	The <opt>--silent</opt> flag suppresses the usual output entirely.
-	This makes sense only in conjunction with one or other of the
-	distribution test options: the test statistic and its p-value are
-	recorded, and can be retrieved using the accessors
-	<lit>$test</lit> and <lit>$pvalue</lit>.
+	A opção <opt>--silent</opt> suprime toda a saída do programa.
+	Isto apenas faz sentido quando em conjunto com uma das opções
+	de teste de distribuição: a estística de teste e o seu valor p
+	ficam guardados e podem ser obtidos usando os assessores
+	<lit>$test</lit> e <lit>$pvalue</lit>.
       </para>
     </description>
 
     <description context="gui">
       <para>
-	In the frequency plot dialog box you can control the
-	characteristics of the plot in either of two ways.
+	Na janela de diálogo do gráfico de frequência você pode controlar
+	as caraterísticas do gáfico em duas maneiras diferentes.
       </para>
       <para>
-	First, you may choose the number of bins.  In this case the width
-	and placement of the bins are calculated automatically.
+	Primeiro, você pode escolher o número de classes. Neste caso
+	a largura e localização das classes são calculadas automaticamente.
       </para>
       <para>
-	Alternatively, you may specify the lower limit of the left-most
-	bin, and the width of the bins.  In this case the number of bins
-	is calculated automatically.
+	Em alternativa, você pode especificar o limite inferior da classe 
+	mais à esquerda, e a largura das classes.
       </para>
       <para>
-	If you wish to align the bins on round numbers, here is one way to
-	proceed: start by specifying the number of bins you want, and take
-	a look at the plot that is produced.  If it's not to your liking,
-	take note of the modification that is required (for example, make
-	the left-most bin start at 100 and impose a bin width of 200).
-	Then make a second pass where you specify the left-hand limit and
-	bin width.
+	Se você desejar alinhar as classes para números redondos, esta é uma
+	maneira possível: começe por especificar o número de classes, e 
+	observe o gráfico produzido. Se não fôr do seu agrado, anote a 
+	modificação necessária (por exemplo, fazer a classe mais à esquerda
+	iniciar em 100 e impor uma largura de classe de 200).
+	Então efectue uma segunda passagem onde você especifica o limite
+	da classe mais à esquerda e a largura das classes.
       </para>
       <para>
-	This dialog also allows you to select a theoretical distribution to be
-	plotted against the data: either the normal or the gamma.  If the
-	normal option is selected the Doornik&ndash;Hansen test for normality
-	is computed.  If the gamma option is selected, gretl computes Locke's
-	nonparametric test for the null hypothesis that the variable follows
-	the gamma distribution.  Note that the parameterization of the gamma
-	distribution used in gretl is (shape, scale).
+	Este diálogo também permite selecionar a apresentação da curva da
+	distribuição teórica dos dados: a normal ou a gama.  Se a opção
+	normal for selecionada será determinado o teste para normalidade 
+	de Doornik&ndash;Hansen. Se a opção gama é selecionada, gretl
+	calcula o teste não paramétrico de Locke para ahipótese nula de que
+	variável segue uma distribuição gama.  Note que a
+	parametrização da distribuição gama utilizadada em gretl é 
+	(forma, escala).
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Variable/Frequency distribution</menu-path>
+      <menu-path>/Variável/Distribuição de frequência</menu-path>
     </gui-access>
 
   </command>
