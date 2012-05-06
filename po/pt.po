@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-05-05 17:30-0400\n"
-"PO-Revision-Date: 2012-04-20 00:17+0100\n"
+"PO-Revision-Date: 2012-05-06 18:56+0100\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -4833,14 +4833,13 @@ msgid "Beck--Katz standard errors"
 msgstr "Erros padrão de Beck--Katz"
 
 #: lib/src/modelprint.c:1248
-#, fuzzy, c-format
+#, c-format
 msgid "Standard errors clustered by %d values of %s"
-msgstr "Erros padrão baseados na Hessiana"
+msgstr "Erros padrão agrupados por %d valores de %s"
 
 #: lib/src/modelprint.c:1251
-#, fuzzy
 msgid "Clustered standard errors"
-msgstr "Calcular erros padrão"
+msgstr "Erros padrão agrupados"
 
 #: lib/src/modelprint.c:1267
 msgid "Could not compute Beck-Katz standard errors"
@@ -6329,9 +6328,8 @@ msgid "Gradients:  "
 msgstr "Gradientes:  "
 
 #: lib/src/printout.c:2707
-#, fuzzy
 msgid "norm"
-msgstr "normal"
+msgstr "norma"
 
 #: lib/src/printscan.c:732
 msgid "sscanf: numerical target must be scalar"
@@ -7254,7 +7252,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 19 de abril de 2012."
+"Tradução de 6 de maio de 2012."
 
 #: gui2/about.c:164
 msgid "License"
@@ -15491,14 +15489,13 @@ msgid "%s, response = %s, treatment = %s:"
 msgstr "%s, resposta= %s, tratamento = %s:"
 
 #: plugin/arma.c:178
-#, fuzzy, c-format
+#, c-format
 msgid "MA root %d = %g\n"
-msgstr " Prob(x = %d) = %g\n"
+msgstr "raiz MA %d = %g\n"
 
 #: plugin/arma.c:912
-#, fuzzy
 msgid "MA estimate(s) out of bounds\n"
-msgstr "A linha inicial está fora dos limites.\n"
+msgstr "Estimativa(s) MA fora dos limites.\n"
 
 #: plugin/arma.c:1452 plugin/arma_init.c:347 plugin/arma_init.c:1144
 #: plugin/arma_init.c:1222 plugin/arma_init.c:1225
