@@ -688,7 +688,7 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
     int *full_list = NULL;
     char altparm[32] = {0};
     int mc = get_model_count();
-    int repci = orig->ci;
+    int cv, repci = orig->ci;
     int order = 0;
     int first = 1;
 
@@ -698,12 +698,10 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 
     transcribe_option_flags(&myopt, orig->opt, OPT_D | OPT_J | OPT_R);
 
-    if (gretl_model_get_vcv_type(orig) == VCV_CLUSTER) {
-	/* retrieve the clustering variable */
-	VCVInfo *vi = gretl_model_get_data(orig, "vcv_info");
-
+    cv = gretl_model_get_cluster_var(orig);
+    if (cv > 0 && cv < dset->v) {
 	myopt |= OPT_C;
-	set_optval_string(orig->ci, OPT_C, dset->varname[vi->vmin]);
+	set_optval_string(orig->ci, OPT_C, dset->varname[cv]);
     }    
 
     if (orig->ci == AR1) {

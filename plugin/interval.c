@@ -796,7 +796,7 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 	return err;
     }
 
-    vtype = (opt & OPT_R)? VCV_QML : VCV_HESSIAN;
+    vtype = (opt & OPT_R)? ML_QML : ML_HESSIAN;
     gretl_model_set_vcv_info(pmod, VCV_ML, vtype);
 
     /* get the s.e. of sigma via the delta method */

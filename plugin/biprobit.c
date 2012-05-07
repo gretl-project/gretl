@@ -1248,11 +1248,11 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp, DATASET *dset,
 
     if (!err) {
 	if (opt & OPT_R) {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
+	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_QML);
 	} else if (opt & OPT_G) {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_OP);
+	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
 	} else {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
+	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
 	}
     }
 

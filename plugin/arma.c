@@ -944,7 +944,7 @@ static int arma_use_opg (gretlopt opt)
 
     if (opt & OPT_G) {
 	ret = 1;
-    } else if (libset_get_int(ARMA_VCV) == VCV_OP) {
+    } else if (libset_get_int(ARMA_VCV) == ML_OP) {
 	ret = 1;
     }
 
@@ -1041,7 +1041,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	    }
 	    err = gretl_model_write_vcv(pmod, Hinv, -1);
 	    if (!err) {
-		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
+		gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
 	    }
 	} else if (err == E_NOTPD && !(opt & OPT_H)) {
 	    /* try falling back to OPG, if use of the Hessian has not
@@ -1058,7 +1058,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
     if (do_opg) {
 	err = arma_OPG_vcv(pmod, K, b, s2, k, ainfo->T, prn);
 	if (!err) {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_OP);
+	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
 	    pmod->opt |= OPT_G;
 	}
     }	

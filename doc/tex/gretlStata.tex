@@ -15,9 +15,13 @@ current \app{gretl} dataset to \app{Stata} using the
 \verb|gretl_export| command: this takes two arguments, the name of the
 matrix to export and the filename to use; the file is written to the
 user's ``dotdir'', from where it can be retrieved using the
-\texttt{mread()} function. We do not currently offer the complementary
-functionality of \verb|gretl_loadmat| (as for \app{Ox} and
-\app{Octave}).
+\texttt{mread()} function.\footnote{We do not currently offer the
+  complementary functionality of \verb|gretl_loadmat|, which enables
+  reading of matrices written by \app{gretl}'s \texttt{mwrite()}
+  function in \app{Ox} and \app{Octave}. This is not at all easy to
+  implement in \app{Stata} code.} To suppress printed output
+from \app{Stata} you can add the \option{quiet} flag to the
+\texttt{foreign} block.
 
 
 \begin{script}[htbp]

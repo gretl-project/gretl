@@ -293,9 +293,9 @@ static void coded_var_show_opts (const char *s, PRN *prn)
 
 static const char *get_arma_vcv_str (int v)
 {
-    if (v == VCV_HESSIAN) {
+    if (v == ML_HESSIAN) {
 	return arma_vcv_strs[0];
-    } else if (v == VCV_OP) {
+    } else if (v == ML_OP) {
 	return arma_vcv_strs[1];
     } else {
 	return "unknown";
@@ -429,9 +429,9 @@ static void state_vars_init (set_vars *sv)
     sv->bhhh_maxiter = 500;
     sv->bhhh_toler = NADBL;
     sv->lbfgs_mem = 8;
-    sv->garch_vcv = VCV_UNSET;
-    sv->arma_vcv = VCV_HESSIAN;
-    sv->garch_robust_vcv = VCV_UNSET;
+    sv->garch_vcv = ML_UNSET;
+    sv->arma_vcv = ML_HESSIAN;
+    sv->garch_robust_vcv = ML_UNSET;
     sv->nadarwat_trim = 4.0;
 
     *sv->shelldir = '\0';
@@ -795,7 +795,7 @@ static int parse_libset_int_code (const char *key,
     } else if (!g_ascii_strcasecmp(key, HAC_LAG)) {
 	err = parse_hac_lag_variant(val);
     } else if (!g_ascii_strcasecmp(key, GARCH_VCV)) {
-	for (i=0; i<VCV_MAX; i++) {
+	for (i=0; i<ML_VCVMAX; i++) {
 	    if (!g_ascii_strcasecmp(val, garch_vcv_strs[i])) {
 		state->garch_vcv = i;
 		err = 0;
@@ -804,10 +804,10 @@ static int parse_libset_int_code (const char *key,
 	}
     } else if (!g_ascii_strcasecmp(key, ARMA_VCV)) {
 	if (!g_ascii_strcasecmp(val, "op")) {
-	    state->arma_vcv = VCV_OP;
+	    state->arma_vcv = ML_OP;
 	    err = 0;
 	} else if (!g_ascii_strcasecmp(val, "hessian")) {
-	    state->arma_vcv = VCV_HESSIAN;
+	    state->arma_vcv = ML_HESSIAN;
 	    err = 0;
 	}
     } else if (!g_ascii_strcasecmp(key, HAC_KERNEL)) {
@@ -915,9 +915,9 @@ void set_garch_robust_vcv (const char *s)
     if (scpy != NULL) {
 	lower(scpy);
 	if (!strcmp(s, "qml")) {
-	    state->garch_robust_vcv = VCV_QML;
+	    state->garch_robust_vcv = ML_QML;
 	} else if (!strcmp(s, "bw")) {
-	    state->garch_robust_vcv = VCV_BW;
+	    state->garch_robust_vcv = ML_BW;
 	}
 	free(scpy);
     }

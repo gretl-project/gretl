@@ -1323,26 +1323,26 @@ static void ml_vcv_line (const VCVInfo *vi, PRN *prn)
     const char *s = NULL;
 
     switch (vi->vmin) {
-    case VCV_HESSIAN:
+    case ML_HESSIAN:
 	s = N_("Standard errors based on Hessian");
 	break;
-    case VCV_IM:
+    case ML_IM:
 	s = N_("Standard errors based on Information Matrix");
 	break;
-    case VCV_OP:
+    case ML_OP:
 	s = N_("Standard errors based on Outer Products matrix");
 	break;
-    case VCV_QML:
+    case ML_QML:
 	s = N_("QML standard errors");
 	break;
-    case VCV_BW:
+    case ML_BW:
 	if (tex) {
 	    s = N_("Bollerslev--Wooldridge standard errors");
 	} else {
 	    s = N_("Bollerslev-Wooldridge standard errors");
 	}
 	break;
-    case VCV_MAX:
+    case ML_VCVMAX:
 	s = N_("Warning: could not compute standard errors");
 	break;
     default:

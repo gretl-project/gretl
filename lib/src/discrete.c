@@ -761,7 +761,7 @@ static void fill_op_model (MODEL *pmod, const int *list,
     }
 
     if (OC->opt & OPT_R) {
-	gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
+	gretl_model_set_vcv_info(pmod, VCV_ML, ML_QML);
 	pmod->opt |= OPT_R;
     }
 
@@ -1695,13 +1695,13 @@ static int mnl_add_variance_matrix (MODEL *pmod, mnl_info *mnl,
 	if (opt & OPT_R) {
 	    err = gretl_model_write_vcv(pmod, V, -1);
 	    if (!err) {
-		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
+		gretl_model_set_vcv_info(pmod, VCV_ML, ML_QML);
 		pmod->opt |= OPT_R;
 	    }
 	} else {
 	    err = gretl_model_write_vcv(pmod, H, -1);
 	    if (!err) {
-		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
+		gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
 	    }
 	}
     }
@@ -2547,13 +2547,13 @@ static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
 	if (opt & OPT_R) {
 	    err = gretl_model_write_vcv(pmod, V, -1);
 	    if (!err) {
-		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
+		gretl_model_set_vcv_info(pmod, VCV_ML, ML_QML);
 		pmod->opt |= OPT_R;
 	    }
 	} else {
 	    err = gretl_model_write_vcv(pmod, H, -1);
 	    if (!err) {
-		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
+		gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
 	    }
 	}
     }

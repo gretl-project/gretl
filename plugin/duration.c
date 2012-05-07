@@ -714,8 +714,8 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     if (!err) {
 	err = gretl_model_write_vcv(pmod, dinfo->V, -1);
 	if (!err) {
-	    int vtype = (opt & OPT_G) ? VCV_OP :
-		(opt & OPT_R)? VCV_QML : VCV_HESSIAN;
+	    int vtype = (opt & OPT_G) ? ML_OP :
+		(opt & OPT_R)? ML_QML : ML_HESSIAN;
 	    
 	    gretl_model_set_vcv_info(pmod, VCV_ML, vtype);
 	}

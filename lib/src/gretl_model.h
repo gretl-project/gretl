@@ -54,13 +54,13 @@ typedef enum {
 } VCVMajorType;
 
 typedef enum {
-    VCV_UNSET,
-    VCV_HESSIAN,
-    VCV_IM,
-    VCV_OP,
-    VCV_QML,
-    VCV_BW,
-    VCV_MAX
+    ML_UNSET,
+    ML_HESSIAN,
+    ML_IM,
+    ML_OP,
+    ML_QML,
+    ML_BW,
+    ML_VCVMAX
 } MLVCVType;
 
 typedef enum {
@@ -275,6 +275,8 @@ int gretl_model_set_full_vcv_info (MODEL *pmod, int vmaj, int vmin,
 int gretl_model_set_vcv_info (MODEL *pmod, int vmaj, int vmin);
 
 int gretl_model_get_vcv_type (const MODEL *pmod);
+
+int gretl_model_get_cluster_var (const MODEL *pmod);
 
 void *gretl_model_get_data (const MODEL *pmod, const char *key);
 

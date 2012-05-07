@@ -249,6 +249,7 @@ static int *vecxlist;
 
 static char *arlags;
 static char *malags;
+static char cluster_var[VNAMELEN];
 
 static double tobit_lo = 0;
 static double tobit_hi = NADBL;
@@ -444,6 +445,8 @@ void clear_selector (void)
     arlags = NULL;
     free(malags);
     malags = NULL;
+
+    *cluster_var = '\0';
 
     tobit_lo = 0;
     tobit_hi = NADBL;
@@ -645,7 +648,7 @@ void selector_from_model (windata_t *vwin)
 	/* single-equation model */
 	MODEL *pmod = (MODEL *) ptr;
 	int sel_ci = pmod->ci;
-	int dv = -1, gotinst = 0;
+	int cv, dv = -1, gotinst = 0;
 
 	if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM) {
 	    revise_nl_model(pmod, vwin_toplevel(vwin));
@@ -768,6 +771,13 @@ void selector_from_model (windata_t *vwin)
 	if (pmod->opt & OPT_R) {
 	    model_opt |= OPT_R;
 	}
+
+	*cluster_var = '\0';
+	cv = gretl_model_get_cluster_var(pmod);
+	if (cv > 0 && cv < dataset->v) {
+	    model_opt |= OPT_C;
+	    strcpy(cluster_var, dataset->varname[cv]);
+	}  	    
 
 	y_x_lags_enabled = y_w_lags_enabled = 0;
 
@@ -4941,9 +4951,36 @@ static void reset_arma_spinners (selector *sr)
     } 
 }
 
+#define cluster_option_ok(c) (c == OLS || c == IVREG)
+
 static void hc_config (GtkWidget *w, selector *sr)
 {
-    options_dialog(TAB_VCV, NULL, sr->dlg);
+    if (cluster_option_ok(sr->ci)) {
+	int resp;
+
+	if (*cluster_var != '\0') {
+	    int v = current_series_index(dataset, cluster_var);
+
+	    if (v < 1) {
+		*cluster_var = '\0';
+	    }
+	}
+
+	resp = hc_config_dialog(cluster_var, OPT_NONE, sr->dlg);
+
+	/* scrub the clustering option pro tem? */
+	sr->opts &= ~OPT_C;
+
+	if (resp == 0) {
+	    /* regular HCCME options */
+	    options_dialog(TAB_VCV, NULL, sr->dlg);
+	} else if (resp == 1) {
+	    set_optval_string(sr->ci, OPT_C, cluster_var);
+	    sr->opts |= OPT_C;
+	}
+    } else {
+	options_dialog(TAB_VCV, NULL, sr->dlg);
+    }
 }
 
 static GtkWidget *pack_switch (GtkWidget *b, selector *sr,

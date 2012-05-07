@@ -246,15 +246,15 @@ static int get_vopt (int robust)
 
     /* The defaults: QML if "robust" option is in force,
        otherwise negative Hessian */
-    if (vopt == VCV_UNSET) {
+    if (vopt == ML_UNSET) {
 	if (robust) {
-	    if (ropt == VCV_UNSET) {
-		vopt = VCV_QML;
+	    if (ropt == ML_UNSET) {
+		vopt = ML_QML;
 	    } else {
 		vopt = ropt;
 	    }
 	} else {
-	    vopt = VCV_HESSIAN;
+	    vopt = ML_HESSIAN;
 	}
     }
 

@@ -519,7 +519,7 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 	for (i=0; i<nc; i++) {
 	    aa = r_h * g[i][t] + .5 / h[t] * dhdp[i][t] * (r2_h - 1.0);
 	    f->grad[i] += aa;
-	    if (code == VCV_OP) {
+	    if (code == ML_OP) {
 		for (j=0; j<=i; j++) {
 		    bb = r_h * g[j][t] + .5 / h[t] * dhdp[j][t] * (r2_h - 1.0);
 		    x = gretl_matrix_get(V, i, j);
@@ -544,7 +544,7 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 	    nci = nc + i;
 	    aa = .5 / h[t] * dhdp[nci][t] * (r2_h - 1.0);
 	    f->grad[nci] += aa;
-	    if (code == VCV_OP) {
+	    if (code == ML_OP) {
 		for (j=0; j<=i; j++) {
 		    ncj = nc + j;
 		    x = gretl_matrix_get(V, nci, ncj);
@@ -556,7 +556,7 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 	}
     }
 
-    if (code == VCV_IM) {
+    if (code == ML_IM) {
 	for (t=t1; t<=t2; t++) {
 	    double ht2 = h[t] * h[t];
 
@@ -586,7 +586,7 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 	}
     }
 
-    if (code != VCV_HESSIAN) {
+    if (code != ML_HESSIAN) {
 	/* we're done */
 	return 0;
     }
@@ -1015,7 +1015,7 @@ garch_info_matrix (fcpinfo *f, gretl_matrix *V, double toler,
     static double ll1 = 0.0, fs = 0.0;
     int err;
 
-    vcv_setup(f, V, VCV_IM);
+    vcv_setup(f, V, ML_IM);
 
     if (count != NULL) {
 	*count += 1;
@@ -1045,7 +1045,7 @@ garch_hessian (fcpinfo *f, gretl_matrix *V, double toler,
     int i, sign_done = 0;
     int err;
 
-    vcv_setup(f, V, VCV_HESSIAN);
+    vcv_setup(f, V, ML_HESSIAN);
 
     if (count != NULL) {
 	*count += 1;
@@ -1093,23 +1093,23 @@ make_garch_vcv (fcpinfo *f, const gretl_matrix *ihess,
     int err = 0;
 
     /* OP and robust variants need OP matrix */
-    if (vopt == VCV_OP || vopt == VCV_QML || vopt == VCV_BW) {
+    if (vopt == ML_OP || vopt == ML_QML || vopt == ML_BW) {
 	OP = gretl_matrix_alloc(k, k);
 	if (OP == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
 	}
 
-	vcv_setup(f, OP, VCV_OP);
+	vcv_setup(f, OP, ML_OP);
 
-	if (vopt == VCV_OP) {
+	if (vopt == ML_OP) {
 	    gretl_matrix_copy_values(V, OP);
 	    err = gretl_invert_symmetric_matrix(V);
 	}
     }
 
     /* IM and BW variants need the info matrix */
-    if (vopt == VCV_IM || vopt == VCV_BW) {
+    if (vopt == ML_IM || vopt == ML_BW) {
 	iinfo = gretl_matrix_alloc(k, k);
 	if (iinfo == NULL) {
 	    err = E_ALLOC;
@@ -1118,17 +1118,17 @@ make_garch_vcv (fcpinfo *f, const gretl_matrix *ihess,
 
 	garch_info_matrix(f, iinfo, 0.0, NULL);
 
-	if (vopt == VCV_IM) {
+	if (vopt == ML_IM) {
 	    gretl_matrix_copy_values(V, iinfo);
 	} else {
 	    /* Bollerslev-Wooldridge */
 	    gretl_matrix_qform(iinfo, GRETL_MOD_NONE,
 			       OP, V, GRETL_MOD_NONE);
 	}
-    } else if (vopt == VCV_QML) {
+    } else if (vopt == ML_QML) {
 	gretl_matrix_qform(ihess, GRETL_MOD_NONE,
 			   OP, V, GRETL_MOD_NONE);
-    } else if (vopt == VCV_HESSIAN) {
+    } else if (vopt == ML_HESSIAN) {
 	gretl_matrix_copy_values(V, ihess);
     }	
 

@@ -1380,11 +1380,11 @@ char *last_model_get_vcv_type (void)
 	vi = gretl_model_get_data(pmod, "vcv_info");
 
 	if (vi != NULL && vi->vmaj == VCV_ML) {
-	    if (vi->vmin == VCV_HESSIAN) {
+	    if (vi->vmin == ML_HESSIAN) {
 		strcpy(ret, "Hessian");
-	    } else if (vi->vmin == VCV_OP) {
+	    } else if (vi->vmin == ML_OP) {
 		strcpy(ret, "OPG");
-	    } else if (vi->vmin == VCV_QML) {
+	    } else if (vi->vmin == ML_QML) {
 		strcpy(ret, "Sandwich");
 	    }
 	}

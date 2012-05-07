@@ -1442,14 +1442,14 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
     if ((spec->opt & OPT_R) && spec->Hinv != NULL) {
 	/* robust option -> QML */
 	err = QML_vcv(spec, V);
-	*vcvopt = VCV_QML;
+	*vcvopt = ML_QML;
     } else {
 	/* plain OPG */
 	err = gretl_invert_symmetric_matrix(V);
 	if (err) {
 	    gretl_errmsg_set("failed to invert OPG matrix GG'");
 #if 0 /* experiment: show estimates even tho' VCV has failed */
-	    *vcvopt = VCV_MAX;
+	    *vcvopt = ML_VCVMAX;
 	    k = k * k;
 	    for (i=0; i<k; i++) {
 		V->val[i] = 0.0/0.0;
@@ -1457,7 +1457,7 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
 	    err = 0;
 #endif
 	} else {
-	    *vcvopt = VCV_OP;
+	    *vcvopt = ML_OP;
 	}
     }
 
@@ -1475,7 +1475,7 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
 
 static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 {
-    int vcvopt = VCV_OP;
+    int vcvopt = ML_OP;
     int err = 0;
 
     if (spec->opt & OPT_A) {
@@ -1486,7 +1486,7 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 	    pmod->sderr[i] = NADBL;
 	}
     } else if (spec->opt & OPT_H) {
-	vcvopt = VCV_HESSIAN;
+	vcvopt = ML_HESSIAN;
 	err = gretl_model_write_vcv(pmod, spec->Hinv, -1);
     } else {
 	/* either OPG or QML */

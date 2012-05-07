@@ -1608,7 +1608,7 @@ MODEL heckit_estimate (const int *list, DATASET *dset,
     }
 
     if (opt & OPT_R) {
-	gretl_model_set_vcv_info(&hm, VCV_ML, VCV_QML);
+	gretl_model_set_vcv_info(&hm, VCV_ML, ML_QML);
 	hm.opt |= OPT_R;
     }
 

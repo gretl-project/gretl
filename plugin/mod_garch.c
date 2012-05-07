@@ -618,17 +618,17 @@ garch_covariance_matrix (int vopt, double *theta, garch_container *DH,
     gretl_matrix *invhess = NULL;
     int err = 0;
 
-    if (vopt == VCV_OP || vopt == VCV_QML || vopt == VCV_BW) { 
+    if (vopt == ML_OP || vopt == ML_QML || vopt == ML_BW) { 
 	/* GG' needed */
 	GG = garch_opg(DH, &err);
     }
 
-    if (vopt == VCV_IM || vopt == VCV_BW) { 
+    if (vopt == ML_IM || vopt == ML_BW) { 
 	/* information matrix needed */
 	iinfo = garch_iinfo(DH, &err);
     }
 
-    if (vopt == VCV_QML || vopt == VCV_HESSIAN) { 
+    if (vopt == ML_QML || vopt == ML_HESSIAN) { 
 	/* Hessian matrix needed */
 	invhess = garch_ihess(DH, theta, &err);
     }
@@ -638,21 +638,21 @@ garch_covariance_matrix (int vopt, double *theta, garch_container *DH,
     }
 
     switch (vopt) {
-    case VCV_HESSIAN:
+    case ML_HESSIAN:
 	gretl_matrix_copy_values(V, invhess);
 	break;
-    case VCV_IM:
+    case ML_IM:
 	gretl_matrix_copy_values(V, iinfo);
 	break;
-    case VCV_OP:
+    case ML_OP:
 	gretl_matrix_copy_values(V, GG);
 	err = gretl_invert_symmetric_matrix(V);
 	break;
-    case VCV_BW:
+    case ML_BW:
 	gretl_matrix_qform(iinfo, GRETL_MOD_NONE, GG,
 			   V, GRETL_MOD_NONE);
 	break;
-    case VCV_QML:
+    case ML_QML:
 	gretl_matrix_qform(invhess, GRETL_MOD_NONE, GG,
 			   V, GRETL_MOD_NONE);
 	break;
