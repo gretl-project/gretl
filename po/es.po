@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-05-05 17:30-0400\n"
-"PO-Revision-Date: 2012-03-28 17:37+0200\n"
+"PO-Revision-Date: 2012-05-07 09:51+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -1291,16 +1291,14 @@ msgid "'%s' -- number out of range!"
 msgstr "'%s' -- ¡número fuera de rango!"
 
 #: lib/src/dataio.c:3345
-#, fuzzy, c-format
+#, c-format
 msgid "Data imported from %s file '%s', %s\n"
-msgstr ""
-"Información sobre los datos en el fichero %s:\n"
-"\n"
+msgstr "Datos importados desde el fichero %s '%s', %s\n"
 
 #: lib/src/dataio.c:3348
 #, c-format
 msgid "Data imported from %s, %s\n"
-msgstr ""
+msgstr "Datos importados desde %s, %s\n"
 
 #: lib/src/dataset.c:355
 msgid "auto-generated constant"
@@ -2390,9 +2388,8 @@ msgid "Invalid declaration"
 msgstr "Declaración no válida"
 
 #: lib/src/genfuncs.c:3689
-#, fuzzy
 msgid "Imhof integral gave negative value"
-msgstr "valor negativo ilegal"
+msgstr "la integral de Imhof ha dado un valor negativo"
 
 #: lib/src/genfuncs.c:4462
 msgid "model-related"
@@ -4847,14 +4844,13 @@ msgid "Beck--Katz standard errors"
 msgstr "Desviaciones típicas de Beck--Katz"
 
 #: lib/src/modelprint.c:1248
-#, fuzzy, c-format
+#, c-format
 msgid "Standard errors clustered by %d values of %s"
-msgstr "Desviaciones típicas basadas en el Hessiano"
+msgstr "Desviaciones típicas agrupadas en %d valores de %s"
 
 #: lib/src/modelprint.c:1251
-#, fuzzy
 msgid "Clustered standard errors"
-msgstr "Calcular las desviaciones típicas"
+msgstr "Desviaciones típicas agrupadas"
 
 #: lib/src/modelprint.c:1267
 msgid "Could not compute Beck-Katz standard errors"
@@ -6357,9 +6353,8 @@ msgid "Gradients:  "
 msgstr "Gradientes:  "
 
 #: lib/src/printout.c:2707
-#, fuzzy
 msgid "norm"
-msgstr "normal"
+msgstr "norma"
 
 #: lib/src/printscan.c:732
 msgid "sscanf: numerical target must be scalar"
@@ -15526,14 +15521,13 @@ msgid "%s, response = %s, treatment = %s:"
 msgstr "%s, respuesta = %s, tratamiento = %s:"
 
 #: plugin/arma.c:178
-#, fuzzy, c-format
+#, c-format
 msgid "MA root %d = %g\n"
-msgstr " Prob(x = %d) = %g\n"
+msgstr "Raíz MA %d = %g\n"
 
 #: plugin/arma.c:912
-#, fuzzy
 msgid "MA estimate(s) out of bounds\n"
-msgstr "%s: un valor negativo está fuera de los límites.\n"
+msgstr "Las estimaciones de medias móviles están fueran de los límites\n"
 
 #: plugin/arma.c:1452 plugin/arma_init.c:347 plugin/arma_init.c:1144
 #: plugin/arma_init.c:1222 plugin/arma_init.c:1225
