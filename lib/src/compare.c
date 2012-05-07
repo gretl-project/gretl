@@ -698,6 +698,14 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 
     transcribe_option_flags(&myopt, orig->opt, OPT_D | OPT_J | OPT_R);
 
+    if (gretl_model_get_vcv_type(orig) == VCV_CLUSTER) {
+	/* retrieve the clustering variable */
+	VCVInfo *vi = gretl_model_get_data(orig, "vcv_info");
+
+	myopt |= OPT_C;
+	set_optval_string(orig->ci, OPT_C, dset->varname[vi->vmin]);
+    }    
+
     if (orig->ci == AR1) {
 	if (orig->opt & OPT_H) {
 	    myopt |= OPT_H;

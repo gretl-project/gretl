@@ -454,6 +454,24 @@ int gretl_model_set_vcv_info (MODEL *pmod, int vmaj, int vmin)
 }
 
 /**
+ * gretl_model_get_vcv_type:
+ * @pmod: pointer to model.
+ *
+ * Returns: index of variance-covariance matrix type.
+ */
+
+int gretl_model_get_vcv_type (const MODEL *pmod)
+{
+    VCVInfo *vi = gretl_model_get_data(pmod, "vcv_info");
+
+    if (vi != NULL) {
+	return vi->vmaj;
+    } else {
+	return 0;
+    }
+}
+
+/**
  * gretl_model_get_data_full:
  * @pmod: pointer to model.
  * @key: key string.
@@ -4795,6 +4813,14 @@ int highest_numbered_var_in_model (const MODEL *pmod,
 	    /* only the dependent var can be tested */
 	    break;
 	}
+    }
+
+    if (gretl_model_get_vcv_type(pmod) == VCV_CLUSTER) {
+	/* (robust) clustering variable */
+	VCVInfo *vi = gretl_model_get_data(pmod, "vcv_info");
+
+	v = vi->vmin;
+	if (v > vmax) vmax = v;
     }
 
     /* auxiliary variables for some model types */
