@@ -850,6 +850,14 @@ static void option_dialog_canceled (GtkWidget *w, int *c)
     *c = 1;
 }
 
+static void sensitize_prefs_help (GtkNotebook *book,
+				  gpointer arg1,
+				  guint newpg,
+				  GtkWidget *button)
+{
+    gtk_widget_set_sensitive(button, newpg == TAB_VCV - 1);
+} 
+
 int options_dialog (int page, const char *varname, GtkWidget *parent) 
 {
     static GtkWidget *dialog;
@@ -912,6 +920,14 @@ int options_dialog (int page, const char *varname, GtkWidget *parent)
 		     G_CALLBACK(delete_widget), 
 		     dialog);
     gtk_widget_show(button);
+
+    /* Help button */
+    button = context_help_button(hbox, HCCME);
+    gtk_widget_show(button);
+    gtk_widget_set_sensitive(button, page == TAB_VCV);
+    g_signal_connect(G_OBJECT(notebook), "switch-page",
+		     G_CALLBACK(sensitize_prefs_help),
+		     button);
 
     if (page > 1 && page < TAB_MAX) {
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page - 1);
@@ -1407,18 +1423,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_widget_set_sensitive(w, FALSE);
 	    }
 	} 
-    }
-
-    if (tab == TAB_VCV) {
-	/* we need a help button */
-	GtkWidget *bb = gtk_hbutton_box_new();
-
-	gtk_button_box_set_layout(GTK_BUTTON_BOX(bb), 
-				  GTK_BUTTONBOX_END);
-	gtk_box_set_spacing(GTK_BOX(bb), 10);
-	context_help_button(bb, HCCME);
-	gtk_box_pack_start(GTK_BOX(box), bb, FALSE, FALSE, 0);
-	gtk_widget_show_all(bb);
     }
 }
 
