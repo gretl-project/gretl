@@ -276,12 +276,18 @@ static FILE *ztempfile (char *templ)
 
     if (p != NULL) {
 	*p = '\0';
-	if (lastchar(templ) != '/') {
-	    strcat(templ, "/");
+#ifdef G_OS_WIN32
+	if (lastchar(templ) != '\\') {
+	    strncat(templ, "\\", 1);
 	}
+#else
+	if (lastchar(templ) != '/') {
+	    strncat(templ, "/", 1);
+	}
+#endif
     } 
 
-    strcat(templ, "ziXXXXXX");
+    strncat(templ, "ziXXXXXX", 8);
     fp = gretl_mktemp(templ, "wb");
 
     return fp;
@@ -606,6 +612,7 @@ static int real_archive_files (const char *targ, const char **filenames,
     strcpy(tempzip, zf.fname);
     zf.fp = ztempfile(tempzip);
     if (zf.fp == NULL) {
+	fprintf(stderr, " real_archive_files: ztempfile failed\n");
 	err = ziperr(ZE_TEMP, tempzip);
 	goto bailout;
     }
@@ -1075,6 +1082,7 @@ static int real_delete_files (zfile *zf)
     strcpy(tempzip, zf->fname);
     zf->fp = ztempfile(tempzip);
     if (zf->fp == NULL) {
+	fprintf(stderr, " real_delete_files: ztempfile failed\n");
 	fclose(fr);
 	ziperr(ZE_TEMP, tempzip);
 	return ZE_TEMP;

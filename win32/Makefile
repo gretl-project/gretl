@@ -317,10 +317,10 @@ all: buildstamp dirs dlls/libprob.dll dlls/libgretl.dll \
 	$(PLUGINS) gretlcli.exe gretlw32.exe $(MOFILES) $(GRETL_LANG) gretl_updater.exe
 
 gretlcli.exe: $(CLIOBJ)
-	$(CC) -o $@ $^ $(LIBS) $(CLI_LIBS) -lzlib1 -lmingwex -s
+	$(CC) -o $@ $^ $(LIBS) $(CLI_LIBS) -lz -lmingwex -s
 
 gretlw32.exe: $(GUIOBJ) gretlres.o
-	$(CC) -mwindows -o $@ $^ $(LIBS) $(GUI_LIBS) -lzlib1 -lmingwex -s
+	$(CC) -mwindows -o $@ $^ $(LIBS) $(GUI_LIBS) -lz -lmingwex -s
 
 gretlres.o: gretlw32.rc 
 	$(RC) $(RCFLAGS) $< $@
@@ -346,7 +346,7 @@ $(MOFILES):
 dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
-	-o $@ $^ -lm -L$(imports) -lxml2 -lzlib1 -lintl -lprob -lgmp.dll \
+	-o $@ $^ -lm -L$(imports) -lxml2 -lz -lintl -lprob -lgmp.dll \
 	-lmingwex -lwsock32 $(GLIBLIB) $(LAPACK_LIBS) $(FFTW_LIBS)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
@@ -356,7 +356,7 @@ dlls/libprob.dll: $(PROBOBJ) dllinit.o
 
 plugins/stats_tables.dll: stats_tables.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ -lzlib1 $(GRETLLIB)
+	--implib plugins/$(<:.o=.a) $^ -lz $(GRETLLIB)
 
 plugins/range-mean.dll: range-mean.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
@@ -384,7 +384,7 @@ plugins/vif.dll: vif.o dllinit.o
 
 plugins/urcdist.dll: urcdist.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ -lzlib1 -lm -lintl $(GRETLLIB)
+	--implib plugins/$(<:.o=.a) $^ -lz -lm -lintl $(GRETLLIB)
 
 plugins/tramo-x12a.dll: tramo-x12a.o tramo_options.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
@@ -480,7 +480,7 @@ plugins/audio.dll: audio.o midi_utils.o dllinit.o
 plugins/gretlzip.dll: gretlzip.o zfileio.o zipfile.o zipmain.o zipwork.o \
 	zsystem.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GLIBLIB) -lzlib1 $(GRETLLIB)
+	--implib plugins/$(<:.o=.a) $^ $(GLIBLIB) -lz $(GRETLLIB)
 
 plugins/heckit.dll: heckit.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

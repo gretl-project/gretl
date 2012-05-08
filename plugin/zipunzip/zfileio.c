@@ -312,16 +312,18 @@ int replace_file (char *dest, char *src)
 	int err;
 
 	if ((fs = fopen(src, "rb")) == NULL) {
-	    fprintf(stderr," replace: can't open %s\n", src);
+	    fprintf(stderr," replace_file: can't open %s for reading\n", src);
 	    return ZE_TEMP;
 	}
 	if ((fd = fopen(dest, "wb")) == NULL) {
+	    fprintf(stderr," replace_file: can't open %s for writing\n", src);
 	    fclose(fs);
 	    return ZE_CREAT;
 	}
 	err = fcopy(fs, fd, (guint32) -1L);
 	fclose(fs);
 	if (fclose(fd) || err != ZE_OK) {
+	    fprintf(stderr," replace_file: error on fclose (err = %d)\n", err);
 	    gretl_remove(dest);
 	    return err ? (err == ZE_TEMP ? ZE_WRITE : err) : ZE_WRITE;
 	}
@@ -358,13 +360,14 @@ int fcopy (FILE *f, FILE *g, guint32 n)
 
 	if ((k = fread(b, 1, csiz, f)) == 0) {
 	    if (ferror(f)) {
+		fprintf(stderr," fcopy: error on fread\n");
 		return ZE_READ;
 	    } else {
 		break;
 	    }
 	}
 	if (fwrite(b, 1, k, g) != k) {
-	    fprintf(stderr," fcopy: write error\n");
+	    fprintf(stderr," fcopy: error on fwrite\n");
 	    return ZE_TEMP;
 	}
 	copied += k;

@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-05-05 17:30-0400\n"
+"POT-Creation-Date: 2012-05-08 11:21-0400\n"
 "PO-Revision-Date: 2012-03-30 00:42+0100\n"
 "Last-Translator: \n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
@@ -56,20 +56,20 @@ msgid "(max was %d)"
 msgstr "(maksimumi ishte %d)"
 
 #: lib/src/adf_kpss.c:363 gui2/library.c:926 gui2/library.c:1128
-#: gui2/selector.c:5791 plugin/panurc.c:234
+#: gui2/selector.c:5828 plugin/panurc.c:234
 msgid "test without constant"
 msgstr "pa konstante"
 
-#: lib/src/adf_kpss.c:364 gui2/selector.c:5792 plugin/panurc.c:235
+#: lib/src/adf_kpss.c:364 gui2/selector.c:5829 plugin/panurc.c:235
 msgid "test with constant"
 msgstr "me konstante"
 
 #: lib/src/adf_kpss.c:365 gui2/library.c:928 gui2/library.c:939
-#: gui2/library.c:1130 gui2/selector.c:5793 plugin/panurc.c:236
+#: gui2/library.c:1130 gui2/selector.c:5830 plugin/panurc.c:236
 msgid "with constant and trend"
 msgstr "me konstante dhe prirje kohore"
 
-#: lib/src/adf_kpss.c:366 gui2/selector.c:5794
+#: lib/src/adf_kpss.c:366 gui2/selector.c:5831
 msgid "with constant and quadratic trend"
 msgstr "me konstante dhe prirje kohore kuadratike"
 
@@ -166,7 +166,7 @@ msgstr "Testi Logit"
 msgid "Unit"
 msgstr "Individi"
 
-#: lib/src/adf_kpss.c:1141 gui2/selector.c:7638
+#: lib/src/adf_kpss.c:1141 gui2/selector.c:7675
 msgid "lag order"
 msgstr "rendi i vonesës"
 
@@ -174,8 +174,8 @@ msgstr "rendi i vonesës"
 msgid "H0: all groups have unit root"
 msgstr "H0: të gjithë individët paraqesin rrënjë të njësishme"
 
-#: lib/src/adf_kpss.c:1241 lib/src/estimate.c:3873 lib/src/estimate.c:3932
-#: lib/src/estimate.c:4095 lib/src/genfuncs.c:1901 lib/src/gretl_func.c:6572
+#: lib/src/adf_kpss.c:1241 lib/src/estimate.c:3872 lib/src/estimate.c:3931
+#: lib/src/estimate.c:4094 lib/src/genfuncs.c:1901 lib/src/gretl_func.c:6572
 #: lib/src/pvalues.c:1839
 msgid "Couldn't load plugin function\n"
 msgstr "E pamundur të ngarkohet funksioni i plugin-it\n"
@@ -226,11 +226,11 @@ msgstr ""
 msgid "Lag truncation parameter = %d\n"
 msgstr "Kufiri i rendit të vonesës = %d\n"
 
-#: lib/src/adf_kpss.c:1581 lib/src/compare.c:386 lib/src/compare.c:956
-#: lib/src/compare.c:1835 lib/src/compare.c:2053 lib/src/compare.c:2224
-#: lib/src/compare.c:3276 lib/src/describe.c:5545 lib/src/estimate.c:2699
-#: lib/src/estimate.c:2712 lib/src/estimate.c:2720 lib/src/estimate.c:3486
-#: lib/src/estimate.c:3489 lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3351
+#: lib/src/adf_kpss.c:1581 lib/src/compare.c:386 lib/src/compare.c:962
+#: lib/src/compare.c:1841 lib/src/compare.c:2059 lib/src/compare.c:2230
+#: lib/src/compare.c:3282 lib/src/describe.c:5545 lib/src/estimate.c:2698
+#: lib/src/estimate.c:2711 lib/src/estimate.c:2719 lib/src/estimate.c:3485
+#: lib/src/estimate.c:3488 lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3389
 #: lib/src/gretl_panel.c:3903 lib/src/gretl_restrict.c:2215
 #: lib/src/gretl_restrict.c:2224 lib/src/modelprint.c:2286
 #: lib/src/modelprint.c:2290 lib/src/modelprint.c:2295
@@ -433,11 +433,11 @@ msgid "Wald test"
 msgstr "testi Wald"
 
 #: lib/src/compare.c:363 lib/src/compare.c:370 lib/src/compare.c:383
-#: lib/src/compare.c:392 lib/src/compare.c:958 lib/src/compare.c:2231
-#: lib/src/compare.c:2237 lib/src/compare.c:2695 lib/src/describe.c:1549
-#: lib/src/estimate.c:2724 lib/src/estimate.c:3492 lib/src/graphing.c:3908
-#: lib/src/gretl_model.c:3242 lib/src/gretl_model.c:3255
-#: lib/src/gretl_model.c:3258 lib/src/gretl_model.c:3283
+#: lib/src/compare.c:392 lib/src/compare.c:964 lib/src/compare.c:2237
+#: lib/src/compare.c:2243 lib/src/compare.c:2701 lib/src/describe.c:1549
+#: lib/src/estimate.c:2723 lib/src/estimate.c:3491 lib/src/graphing.c:3908
+#: lib/src/gretl_model.c:3280 lib/src/gretl_model.c:3293
+#: lib/src/gretl_model.c:3296 lib/src/gretl_model.c:3321
 #: lib/src/gretl_panel.c:3655 lib/src/gretl_panel.c:3910
 #: lib/src/modelprint.c:168 lib/src/modelprint.c:332 lib/src/modelprint.c:336
 #: lib/src/modelprint.c:423 lib/src/modelprint.c:426 lib/src/modelprint.c:2288
@@ -457,7 +457,7 @@ msgstr "Hi-katror"
 msgid "LR test"
 msgstr "testi LR"
 
-#: lib/src/compare.c:377 lib/src/compare.c:2697
+#: lib/src/compare.c:377 lib/src/compare.c:2703
 msgid "F-form"
 msgstr "F-form"
 
@@ -491,28 +491,28 @@ msgstr "hiq"
 msgid "add"
 msgstr "shto"
 
-#: lib/src/compare.c:898 lib/src/compare.c:2170 lib/src/graphing.c:3088
+#: lib/src/compare.c:904 lib/src/compare.c:2176 lib/src/graphing.c:3088
 #: lib/src/graphing.c:3097 lib/src/graphing.c:3173 lib/src/graphing.c:4889
 #: lib/src/gretl_panel.c:3756 lib/src/printout.c:1196 gui2/guiprint.c:1438
 #: gui2/guiprint.c:1498 gui2/library.c:6026 plugin/leverage.c:303
 msgid "residual"
 msgstr "mbetja"
 
-#: lib/src/compare.c:908
+#: lib/src/compare.c:914
 msgid "Non-linearity test (squared terms)"
 msgstr "Testi i jo-linearitetit (katrori e vlerave)"
 
-#: lib/src/compare.c:910
+#: lib/src/compare.c:916
 msgid "Non-linearity test (log terms)"
 msgstr "Testi i jo-linearitetit (logaritmi e vlerave)"
 
-#: lib/src/compare.c:958 lib/src/compare.c:1836 lib/src/compare.c:2054
-#: lib/src/compare.c:2225 lib/src/compare.c:2230 lib/src/compare.c:2236
-#: lib/src/compare.c:2696 lib/src/compare.c:2698 lib/src/compare.c:2702
+#: lib/src/compare.c:964 lib/src/compare.c:1842 lib/src/compare.c:2060
+#: lib/src/compare.c:2231 lib/src/compare.c:2236 lib/src/compare.c:2242
+#: lib/src/compare.c:2702 lib/src/compare.c:2704 lib/src/compare.c:2708
 #: lib/src/describe.c:4044 lib/src/describe.c:4070 lib/src/describe.c:6501
-#: lib/src/describe.c:6504 lib/src/estimate.c:2701 lib/src/estimate.c:2724
-#: lib/src/estimate.c:3492 lib/src/gretl_model.c:3367
-#: lib/src/gretl_model.c:3369 lib/src/gretl_model.c:3371
+#: lib/src/describe.c:6504 lib/src/estimate.c:2700 lib/src/estimate.c:2723
+#: lib/src/estimate.c:3491 lib/src/gretl_model.c:3405
+#: lib/src/gretl_model.c:3407 lib/src/gretl_model.c:3409
 #: lib/src/gretl_panel.c:1565 lib/src/gretl_panel.c:3656
 #: lib/src/gretl_panel.c:3904 lib/src/gretl_panel.c:3909
 #: lib/src/modelprint.c:2288 lib/src/modelprint.c:2293
@@ -524,81 +524,81 @@ msgstr "Testi i jo-linearitetit (logaritmi e vlerave)"
 msgid "with p-value"
 msgstr "me p. kritik"
 
-#: lib/src/compare.c:974
+#: lib/src/compare.c:980
 msgid "non-linearity"
 msgstr "jo-linearitet"
 
-#: lib/src/compare.c:1354
+#: lib/src/compare.c:1360
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
 msgstr "Eliminim hap pas hapi bazuar në vlerën alfa të dyanshme = %.2f"
 
-#: lib/src/compare.c:1363
+#: lib/src/compare.c:1369
 #, c-format
 msgid " Dropping %-16s (p-value %.3f)\n"
 msgstr " Duke hequr %-16s (p. kritik %.3f)\n"
 
-#: lib/src/compare.c:1749 lib/src/estimate.c:2716 lib/src/gretl_model.c:3052
-#: lib/src/gretl_model.c:3058 lib/src/modelprint.c:729 gui2/library.c:2744
+#: lib/src/compare.c:1755 lib/src/estimate.c:2715 lib/src/gretl_model.c:3090
+#: lib/src/gretl_model.c:3096 lib/src/modelprint.c:729 gui2/library.c:2744
 msgid "squares only"
 msgstr "ndryshoret në katror"
 
-#: lib/src/compare.c:1752 lib/src/gretl_model.c:3054 gui2/library.c:2745
+#: lib/src/compare.c:1758 lib/src/gretl_model.c:3092 gui2/library.c:2745
 msgid "cubes only"
 msgstr "ndryshoret në kub"
 
-#: lib/src/compare.c:1755 gui2/library.c:2743
+#: lib/src/compare.c:1761 gui2/library.c:2743
 msgid "squares and cubes"
 msgstr "ndryshoret në katror dhe në kub"
 
-#: lib/src/compare.c:1828 lib/src/gretl_model.c:3007
+#: lib/src/compare.c:1834 lib/src/gretl_model.c:3045
 msgid "RESET test for specification"
 msgstr "Testi RESET për përcaktimin e modelit"
 
-#: lib/src/compare.c:1876
+#: lib/src/compare.c:1882
 msgid "Godfrey (1994) test for"
 msgstr "Testi Godfrey (1994) për"
 
-#: lib/src/compare.c:1878
+#: lib/src/compare.c:1884
 msgid "Breusch-Godfrey test for"
 msgstr "Testi Breusch-Godfrey për"
 
-#: lib/src/compare.c:1882
+#: lib/src/compare.c:1888
 msgid "autocorrelation up to order"
 msgstr "autokorrelacion deri në rendin"
 
-#: lib/src/compare.c:1885
+#: lib/src/compare.c:1891
 msgid "first-order autocorrelation"
 msgstr "autokorrelacion i rendit të parë"
 
-#: lib/src/compare.c:2011
+#: lib/src/compare.c:2017
 msgid "lagging uhat failed"
 msgstr "e pamundur të llogaritet vonesa e uhat"
 
-#: lib/src/compare.c:2057 lib/src/compare.c:2241
+#: lib/src/compare.c:2063 lib/src/compare.c:2247
 msgid "autocorrelation"
 msgstr "autokorrelacion"
 
-#: lib/src/compare.c:2229 lib/src/gretl_panel.c:3908
+#: lib/src/compare.c:2235 lib/src/gretl_panel.c:3908
 msgid "Alternative statistic"
 msgstr "Statistikë alternative"
 
-#: lib/src/compare.c:2294
+#: lib/src/compare.c:2300
 #, c-format
 msgid "The model already contains %s"
 msgstr "%s ndodhet qëparë në model"
 
-#: lib/src/compare.c:2325
+#: lib/src/compare.c:2331
 msgid "dummy variable for Chow test"
 msgstr "ndryshore treguese për testin Chow"
 
 # BSH: 2011 - Pozicioni konkurrues i ekonomise shqiptare e terma te produktivitetit e te kostos se punes
 # (thyerje të strukturës)
-#: lib/src/compare.c:2403
+#: lib/src/compare.c:2409
 msgid "Chow F-test for break"
 msgstr "Testi Chow për ndryshim të strukturës"
 
-#: lib/src/compare.c:2444
+#: lib/src/compare.c:2450
 msgid ""
 "Quandt likelihood ratio test for structural break at an unknown point,\n"
 "with 15 percent trimming"
@@ -606,36 +606,36 @@ msgstr ""
 "Testi Quandt (raporti i përgjasisë) për ndërprerje të strukturës në një\n"
 "vrojtim të panjohur, duke lënë jashtë 15% të vrojtimeve ekstreme"
 
-#: lib/src/compare.c:2447
+#: lib/src/compare.c:2453
 #, c-format
 msgid "The maximum F(%d, %d) = %g occurs at observation %s"
 msgstr "Vlera maksimale F(%d, %d) = %g u gjet për vrojtimin %s"
 
-#: lib/src/compare.c:2454
+#: lib/src/compare.c:2460
 #, c-format
 msgid "Significant at the %d percent level "
 msgstr "Domethënës për pragun %d%% "
 
-#: lib/src/compare.c:2455
+#: lib/src/compare.c:2461
 #, c-format
 msgid "(%d%% critical value %s %.2f)"
 msgstr "(për pragun %d%% vlera kritike është %s %.2f)"
 
-#: lib/src/compare.c:2459
+#: lib/src/compare.c:2465
 #, c-format
 msgid "10%% critical value for q = 20 is %.2f"
 msgstr "për q = 20, vlera kritike për 10%% është %.2f"
 
-#: lib/src/compare.c:2462
+#: lib/src/compare.c:2468
 msgid "Not significant at the 10 percent level "
 msgstr "Jo domethënës për pragun 10%"
 
-#: lib/src/compare.c:2463
+#: lib/src/compare.c:2469
 #, c-format
 msgid "(10%% value = %.2f)"
 msgstr "(vlera për pragun 10%% = %.2f)"
 
-#: lib/src/compare.c:2469
+#: lib/src/compare.c:2475
 msgid ""
 "This statistic does not follow the standard F distribution;\n"
 "critical values are from Stock and Watson (2003)."
@@ -643,35 +643,35 @@ msgstr ""
 "Kjo statistikë nuk është e shpërndarë sipas ligjit F standard;\n"
 "vlerat kritike janë llogaritur sipas Stock et Watson (2003)."
 
-#: lib/src/compare.c:2685 lib/src/gretl_model.c:2986
+#: lib/src/compare.c:2691 lib/src/gretl_model.c:3024
 #, c-format
 msgid "Chow test for structural difference with respect to %s"
 msgstr "Testi Chow për ndryshim të strukturës në varësi të %s"
 
-#: lib/src/compare.c:2689 lib/src/gretl_model.c:2983
+#: lib/src/compare.c:2695 lib/src/gretl_model.c:3021
 #, c-format
 msgid "Chow test for structural break at observation %s"
 msgstr "Testi Chow për ndryshim të strukturës në vrojtimin %s"
 
-#: lib/src/compare.c:2751 lib/src/compare.c:2782
+#: lib/src/compare.c:2757 lib/src/compare.c:2788
 msgid "Invalid sample split for Chow test"
 msgstr "Ndarja e kampionit për testin Chow është e pavlefshme"
 
-#: lib/src/compare.c:2932
+#: lib/src/compare.c:2938
 msgid "Observation"
 msgstr "Vrojtimi"
 
-#: lib/src/compare.c:2938
+#: lib/src/compare.c:2944
 #, no-c-format
 msgid "CUSUMSQ plot with 95% confidence band"
 msgstr "Grafiku CUSUMSQ me interval besimi 95%"
 
-#: lib/src/compare.c:2946
+#: lib/src/compare.c:2952
 #, no-c-format
 msgid "CUSUM plot with 95% confidence band"
 msgstr "Grafiku CUSUM me interval besimi 95%"
 
-#: lib/src/compare.c:2981
+#: lib/src/compare.c:2987
 #, c-format
 msgid ""
 "\n"
@@ -682,26 +682,26 @@ msgstr ""
 "Testi Harvey-Collier(%d) = %g me p. kritik %.4g\n"
 "\n"
 
-#: lib/src/compare.c:3064
+#: lib/src/compare.c:3070
 msgid "CUSUMSQ test for stability of parameters"
 msgstr "Testi CUSUMSQ për qëndrueshmëri të parametrave"
 
 # cumulated sum = shumatore ?
-#: lib/src/compare.c:3081
+#: lib/src/compare.c:3087
 msgid "Cumulated sum of squared residuals"
 msgstr "Shumatorja e katrorëve të mbetjes"
 
-#: lib/src/compare.c:3085
+#: lib/src/compare.c:3091
 msgid "CUSUM test for stability of parameters"
 msgstr "Testi CUSUM për qëndrueshmëri të parametrave"
 
-#: lib/src/compare.c:3086
+#: lib/src/compare.c:3092
 #, c-format
 msgid "mean of scaled residuals = %g\n"
 msgstr "mesatarja e mbetjes së ponderuar = %g\n"
 
 # të shikoj për hapesirën
-#: lib/src/compare.c:3093
+#: lib/src/compare.c:3099
 #, c-format
 msgid ""
 "sigmahat                 = %g\n"
@@ -710,38 +710,38 @@ msgstr ""
 "sigma-kapuç                        = %g\n"
 "\n"
 
-#: lib/src/compare.c:3100
+#: lib/src/compare.c:3106
 msgid "Cumulated sum of scaled residuals"
 msgstr "Shumatorja e mbetjeve të ponderuara"
 
-#: lib/src/compare.c:3106
+#: lib/src/compare.c:3112
 #, no-c-format
 msgid "('*' indicates a value outside of 95% confidence band)"
 msgstr "('*' shënon një vlerë jashtë intervalit të besimit 95%)"
 
-#: lib/src/compare.c:3273 lib/src/gretl_model.c:3040
+#: lib/src/compare.c:3279 lib/src/gretl_model.c:3078
 msgid "Test of common factor restriction"
 msgstr "Testi i kushtit mbi faktorin e përbashkët"
 
-#: lib/src/compare.c:3278 lib/src/gretl_restrict.c:2231
+#: lib/src/compare.c:3284 lib/src/gretl_restrict.c:2231
 #: lib/src/gretl_restrict.c:2784 lib/src/gretl_restrict.c:2794
 #, c-format
 msgid "with p-value = %g\n"
 msgstr "me p. kritik = %g\n"
 
-#: lib/src/compare.c:3295
+#: lib/src/compare.c:3301
 msgid "common factor restriction"
 msgstr "kusht mbi faktorin e përbashkët"
 
-#: lib/src/compare.c:3330
+#: lib/src/compare.c:3336
 msgid "This test is only relevant for pooled models\n"
 msgstr "Ky test ka kuptim vetëm në rastin e një modeli të stivuar (pooling)\n"
 
-#: lib/src/compare.c:3335
+#: lib/src/compare.c:3341
 msgid "This test requires that the model contains a constant\n"
 msgstr "Ky test kërkon që modeli të përmbajë patjetër një konstante\n"
 
-#: lib/src/compare.c:3340
+#: lib/src/compare.c:3346
 msgid ""
 "Sorry, can't do this test on an unbalanced panel.\n"
 "You need to have the same number of observations\n"
@@ -1904,8 +1904,8 @@ msgstr ""
 msgid "   Ratio of sample variances = %g\n"
 msgstr "   Raporti i variancave të kampioneve = %g\n"
 
-#: lib/src/describe.c:5543 lib/src/gretl_model.c:3183
-#: lib/src/gretl_model.c:3186 lib/src/gretl_model.c:3193
+#: lib/src/describe.c:5543 lib/src/gretl_model.c:3221
+#: lib/src/gretl_model.c:3224 lib/src/gretl_model.c:3231
 #: lib/src/nonparam.c:975 lib/src/nonparam.c:1112 lib/src/varprint.c:1226
 #: lib/src/varprint.c:1232 lib/src/varprint.c:1240
 msgid "Null hypothesis"
@@ -2009,7 +2009,7 @@ msgstr "Vlerë pasaktë për maksimumin e ndryshores së varur"
 msgid "Fisher's Exact Test"
 msgstr "Testi i saktë i Fisher"
 
-#: lib/src/discrete.c:3531 gui2/selector.c:1219
+#: lib/src/discrete.c:3531 gui2/selector.c:1229
 #, c-format
 msgid "The variable '%s' is not a 0/1 variable."
 msgstr "Ndryshorja '%s' nuk është binare, 0/1."
@@ -2036,21 +2036,21 @@ msgstr "Ndryshorja e ponderimit përmban vetëm vlerën 0; llogaritja u ndërpre"
 msgid "Weight variable contains negative values"
 msgstr "Ndryshorja e ponderimit përmban vlera negative"
 
-#: lib/src/estimate.c:1119 plugin/arma.c:1714
+#: lib/src/estimate.c:1118 plugin/arma.c:1714
 #, c-format
 msgid "Missing value encountered for variable %d, obs %d"
 msgstr "Vlerë munguese: ndryshorja %d, vrojtimi %d"
 
-#: lib/src/estimate.c:1679
+#: lib/src/estimate.c:1678
 #, c-format
 msgid "Error sum of squares (%g) is not > 0"
 msgstr "Shuma e katrorit të mbetjes (%g) nuk është > 0"
 
-#: lib/src/estimate.c:2016 lib/src/estimate.c:2129
+#: lib/src/estimate.c:2015 lib/src/estimate.c:2128
 msgid "ESS"
 msgstr "SKM"
 
-#: lib/src/estimate.c:2189
+#: lib/src/estimate.c:2188
 #, c-format
 msgid ""
 "\n"
@@ -2063,7 +2063,7 @@ msgstr ""
 "SKM është minimale për rho = %g\n"
 "\n"
 
-#: lib/src/estimate.c:2220
+#: lib/src/estimate.c:2219
 msgid ""
 "\n"
 "Fine-tune rho using the CORC procedure...\n"
@@ -2073,7 +2073,7 @@ msgstr ""
 "Duke saktësuar vlerën rho nëpërmjet metodës CORC...\n"
 "\n"
 
-#: lib/src/estimate.c:2222
+#: lib/src/estimate.c:2221
 msgid ""
 "\n"
 "Performing iterative calculation of rho...\n"
@@ -2083,58 +2083,58 @@ msgstr ""
 "Njehsim përsëritës i vlerës rho...\n"
 "\n"
 
-#: lib/src/estimate.c:2225
+#: lib/src/estimate.c:2224
 msgid "                 ITER       RHO        ESS"
 msgstr "                 ETAPA    RHO        SKM"
 
-#: lib/src/estimate.c:2698 lib/src/gretl_model.c:3037 lib/src/modelprint.c:734
+#: lib/src/estimate.c:2697 lib/src/gretl_model.c:3075 lib/src/modelprint.c:734
 msgid "Pesaran-Taylor test for heteroskedasticity"
 msgstr "Testi Pesaran-Taylor për heteroskedasticitetin"
 
-#: lib/src/estimate.c:2708 lib/src/gretl_model.c:3016 lib/src/modelprint.c:732
+#: lib/src/estimate.c:2707 lib/src/gretl_model.c:3054 lib/src/modelprint.c:732
 msgid "Breusch-Pagan test for heteroskedasticity"
 msgstr "Testi Breusch-Pagan për heteroskedasticitet"
 
-#: lib/src/estimate.c:2710
+#: lib/src/estimate.c:2709
 msgid "with Koenker robust variance estimator"
 msgstr "vlerësim me variancë të qëndrueshme Koenker "
 
-#: lib/src/estimate.c:2714 lib/src/gretl_model.c:3013 lib/src/modelprint.c:727
+#: lib/src/estimate.c:2713 lib/src/gretl_model.c:3051 lib/src/modelprint.c:727
 msgid "White's test for heteroskedasticity"
 msgstr "Testi White për heteroskedasticitetin"
 
-#: lib/src/estimate.c:2883
+#: lib/src/estimate.c:2882
 msgid "HET_1"
 msgstr "HET_1"
 
-#: lib/src/estimate.c:3107
+#: lib/src/estimate.c:3106
 msgid "White's"
 msgstr "i White"
 
-#: lib/src/estimate.c:3206
+#: lib/src/estimate.c:3205
 msgid "Generalized Cochrane-Orcutt estimation"
 msgstr "Vlerësim i Përgjithësuar Cochrane-Orcutt"
 
-#: lib/src/estimate.c:3209
+#: lib/src/estimate.c:3208
 #, no-c-format
 msgid "ITER             ESS           % CHANGE"
 msgstr "ETAPA          SKM           % NDRYSHIM"
 
-#: lib/src/estimate.c:3488 lib/src/vartest.c:124
+#: lib/src/estimate.c:3487 lib/src/vartest.c:124
 msgid "Test for ARCH of order"
 msgstr "Testi ARCH i rendit"
 
-#: lib/src/estimate.c:3511 lib/src/modelprint.c:1736
+#: lib/src/estimate.c:3510 lib/src/modelprint.c:1736
 #, c-format
 msgid "Test for ARCH of order %d"
 msgstr "Testi ARCH i rendit të %d"
 
-#: lib/src/estimate.c:3588 lib/src/estimate.c:3732
+#: lib/src/estimate.c:3587 lib/src/estimate.c:3731
 #, c-format
 msgid "Invalid lag order for arch (%d)"
 msgstr "Vonesë e pasaktë për ARCH (%d)"
 
-#: lib/src/estimate.c:4072 lib/src/genfuncs.c:869 plugin/tramo-x12a.c:1315
+#: lib/src/estimate.c:4071 lib/src/genfuncs.c:869 plugin/tramo-x12a.c:1315
 #, c-format
 msgid ""
 "X-12-ARIMA can't handle more than %d observations.\n"
@@ -3175,192 +3175,192 @@ msgid "Can't do this: some vars in original model have been redefined"
 msgstr ""
 "E pamundur të bëhet: disa nga ndryshoret fillestare të modelit kanë ndryshuar"
 
-#: lib/src/gretl_model.c:2974
+#: lib/src/gretl_model.c:3012
 msgid "Test for addition of variables"
 msgstr "Test për shtimin e ndryshoreve të reja"
 
-#: lib/src/gretl_model.c:2975 lib/src/gretl_model.c:3005
+#: lib/src/gretl_model.c:3013 lib/src/gretl_model.c:3043
 msgid "parameters are zero for the variables"
 msgstr "parametrat janë zero për të ndryshoret"
 
-#: lib/src/gretl_model.c:2977
+#: lib/src/gretl_model.c:3015
 #, c-format
 msgid "Test for ARCH of order %s"
 msgstr "Testi ARCH i rendit %s"
 
-#: lib/src/gretl_model.c:2978
+#: lib/src/gretl_model.c:3016
 msgid "no ARCH effect is present"
 msgstr "asnjë efekt ARCH i shfaqur"
 
-#: lib/src/gretl_model.c:2980
+#: lib/src/gretl_model.c:3018
 #, c-format
 msgid "LM test for autocorrelation up to order %s"
 msgstr "Testi LM i autokorrelacionit deri në rendin %s"
 
-#: lib/src/gretl_model.c:2981
+#: lib/src/gretl_model.c:3019
 msgid "no autocorrelation"
 msgstr "asnjë autokorrelacion"
 
-#: lib/src/gretl_model.c:2984 lib/src/gretl_model.c:2993
+#: lib/src/gretl_model.c:3022 lib/src/gretl_model.c:3031
 msgid "no structural break"
 msgstr "asnjë këputje strukture"
 
-#: lib/src/gretl_model.c:2987
+#: lib/src/gretl_model.c:3025
 msgid "no structural difference"
 msgstr "asnjë ndryshim strukture"
 
-#: lib/src/gretl_model.c:2989
+#: lib/src/gretl_model.c:3027
 msgid "CUSUM test for parameter stability"
 msgstr "Testi CUSUM mbi stabilitetin e parametrave"
 
-#: lib/src/gretl_model.c:2990
+#: lib/src/gretl_model.c:3028
 msgid "no change in parameters"
 msgstr "asnjë ndryshim në parametra"
 
-#: lib/src/gretl_model.c:2992
+#: lib/src/gretl_model.c:3030
 msgid "QLR test for structural break"
 msgstr "Testi QLR mbi stabilitetin e parametrave"
 
-#: lib/src/gretl_model.c:2995
+#: lib/src/gretl_model.c:3033
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
 msgstr ""
 "Testi i raportit të përgjasisë (LR) për heteroskedasticitetin mes grupeve"
 
 # varianca e mbetjes
-#: lib/src/gretl_model.c:2996
+#: lib/src/gretl_model.c:3034
 msgid "the units have a common error variance"
 msgstr "varianca e gabimit është e njëjta për të gjithë individët"
 
-#: lib/src/gretl_model.c:2998
+#: lib/src/gretl_model.c:3036
 msgid "Non-linearity test (logs)"
 msgstr "Testi i jo-linearitetit (log)"
 
-#: lib/src/gretl_model.c:2999 lib/src/gretl_model.c:3011
+#: lib/src/gretl_model.c:3037 lib/src/gretl_model.c:3049
 msgid "relationship is linear"
 msgstr "lidhja është lineare"
 
-#: lib/src/gretl_model.c:3001 gui2/gui_utils.c:3972
+#: lib/src/gretl_model.c:3039 gui2/gui_utils.c:3972
 msgid "Test for normality of residual"
 msgstr "Testi i normalitetit të mbetjes"
 
-#: lib/src/gretl_model.c:3002
+#: lib/src/gretl_model.c:3040
 msgid "error is normally distributed"
 msgstr "mbetja ndjek ligjin e shpërndarjes normale"
 
-#: lib/src/gretl_model.c:3004
+#: lib/src/gretl_model.c:3042
 msgid "Test for omission of variables"
 msgstr "Test për heqjen e ndryshoreve"
 
-#: lib/src/gretl_model.c:3008
+#: lib/src/gretl_model.c:3046
 msgid "specification is adequate"
 msgstr "modeli është i përshtatshëm"
 
-#: lib/src/gretl_model.c:3010
+#: lib/src/gretl_model.c:3048
 msgid "Non-linearity test (squares)"
 msgstr "Testi i jo-linearitetit (katrorët)"
 
-#: lib/src/gretl_model.c:3014 lib/src/gretl_model.c:3017
-#: lib/src/gretl_model.c:3038
+#: lib/src/gretl_model.c:3052 lib/src/gretl_model.c:3055
+#: lib/src/gretl_model.c:3076
 msgid "heteroskedasticity not present"
 msgstr "mbetja është homoskedastike"
 
-#: lib/src/gretl_model.c:3019 lib/src/modelprint.c:379
+#: lib/src/gretl_model.c:3057 lib/src/modelprint.c:379
 msgid "Sargan over-identification test"
 msgstr "Testi Sargan për mbi-identifikimin"
 
-#: lib/src/gretl_model.c:3020
+#: lib/src/gretl_model.c:3058
 msgid "all instruments are valid"
 msgstr "të gjithë instrumentët janë të vlefshëm"
 
-#: lib/src/gretl_model.c:3022 lib/src/gretl_model.c:3025
+#: lib/src/gretl_model.c:3060 lib/src/gretl_model.c:3063
 msgid "Hausman test"
 msgstr "Testi Hausman"
 
-#: lib/src/gretl_model.c:3023
+#: lib/src/gretl_model.c:3061
 msgid "OLS estimates are consistent"
 msgstr "Vlerësimi KVZ është konvergjent"
 
-#: lib/src/gretl_model.c:3026
+#: lib/src/gretl_model.c:3064
 msgid "GLS estimates are consistent"
 msgstr "Vlerësimi GLS është konvergjent"
 
-#: lib/src/gretl_model.c:3028
+#: lib/src/gretl_model.c:3066
 msgid "Test for differing group intercepts"
 msgstr "Testi i diferencës së konstanteve të grupeve"
 
-#: lib/src/gretl_model.c:3029
+#: lib/src/gretl_model.c:3067
 msgid "The groups have a common intercept"
 msgstr "Grupet kanë konstante të përbashkët"
 
-#: lib/src/gretl_model.c:3031
+#: lib/src/gretl_model.c:3069
 msgid "Breusch-Pagan test"
 msgstr "Testi Breusch-Pagan"
 
 # Varianca e gabimit individual = 0
-#: lib/src/gretl_model.c:3032
+#: lib/src/gretl_model.c:3070
 msgid "Variance of the unit-specific error = 0"
 msgstr "Dispersioni i gabimit individual = 0"
 
-#: lib/src/gretl_model.c:3034
+#: lib/src/gretl_model.c:3072
 msgid "Wald test for joint significance of time dummies"
 msgstr "Testi Wald mbi domethënien e të gjitha ndryshoreve treguese kohore"
 
-#: lib/src/gretl_model.c:3041
+#: lib/src/gretl_model.c:3079
 msgid "restriction is acceptable"
 msgstr "kushti është i pranueshëm"
 
-#: lib/src/gretl_model.c:3043
+#: lib/src/gretl_model.c:3081
 msgid "Test of independence"
 msgstr "Testi i pavarësisë"
 
-#: lib/src/gretl_model.c:3044
+#: lib/src/gretl_model.c:3082
 msgid "rho = 0"
 msgstr "rho = 0"
 
-#: lib/src/gretl_model.c:3062
+#: lib/src/gretl_model.c:3100
 msgid "robust variant"
 msgstr "variancë e qëndrueshme"
 
-#: lib/src/gretl_model.c:3082 lib/src/gretl_panel.c:3654
+#: lib/src/gretl_model.c:3120 lib/src/gretl_panel.c:3654
 msgid "Distribution free Wald test for heteroskedasticity"
 msgstr "Testi Wald për heteroskedasticitetin (shpërndarje e lirë)"
 
-#: lib/src/gretl_model.c:3224
+#: lib/src/gretl_model.c:3262
 #, c-format
 msgid "max F(%d, %d) = %g at observation %s"
 msgstr "maks F(%d, %d) = %g për vrojtimin %s"
 
-#: lib/src/gretl_model.c:3249 lib/src/gretl_model.c:3256
+#: lib/src/gretl_model.c:3287 lib/src/gretl_model.c:3294
 msgid "failed"
 msgstr "dështim"
 
-#: lib/src/gretl_model.c:3350
+#: lib/src/gretl_model.c:3388
 msgid "Asymptotic test statistic"
 msgstr "Statistika e testit asimptotik"
 
-#: lib/src/gretl_model.c:3377 lib/src/gretl_model.c:3380
-#: lib/src/gretl_model.c:3383
+#: lib/src/gretl_model.c:3415 lib/src/gretl_model.c:3418
+#: lib/src/gretl_model.c:3421
 #, c-format
 msgid "%g percent critical value"
 msgstr "vlera kritike për pragun %g%%"
 
-#: lib/src/gretl_model.c:5414
+#: lib/src/gretl_model.c:5456
 msgid "Can't retrieve uhat: data set has changed"
 msgstr "E pamundur të gjej 'uhat': të dhënat kanë ndryshuar"
 
-#: lib/src/gretl_model.c:5416
+#: lib/src/gretl_model.c:5458
 msgid "Can't retrieve yhat: data set has changed"
 msgstr "E pamundur të gjej 'yhat': të dhënat kanë ndryshuar"
 
-#: lib/src/gretl_model.c:5418
+#: lib/src/gretl_model.c:5460
 msgid "Can't retrieve ht: data set has changed"
 msgstr "E pamundur të gjej ht: të dhënat kanë ndryshuar"
 
-#: lib/src/gretl_model.c:5419
+#: lib/src/gretl_model.c:5461
 msgid "Can't retrieve series: data set has changed"
 msgstr "E pamundur të gjej seritë e të dhënave: të dhënat kanë ndryshuar"
 
-#: lib/src/gretl_model.c:5900 gui2/library.c:446
+#: lib/src/gretl_model.c:5942 gui2/library.c:446
 msgid "The model exhibits an exact linear fit"
 msgstr "Modeli prodhon një vlerësim linear të përkryer"
 
@@ -3540,51 +3540,51 @@ msgstr "heteroskedasticiteti mes grupeve"
 msgid "Error: unit %g, period %g: duplicated observation"
 msgstr "Gabim : individi %g, periudha %g : vlerë e duplikuar"
 
-#: lib/src/gretl_paths.c:2105
+#: lib/src/gretl_paths.c:2128
 msgid "User directory is not set"
 msgstr "Skedari i përdoruesit nuk është përcaktuar ende"
 
-#: lib/src/gretl_paths.c:2111
+#: lib/src/gretl_paths.c:2134
 #, c-format
 msgid "Couldn't create directory '%s'"
 msgstr "E pamundur të krijohet skedari  '%s'"
 
-#: lib/src/gretl_paths.c:2122
+#: lib/src/gretl_paths.c:2145
 #, c-format
 msgid "Couldn't write to '%s': gretl will not work properly!"
 msgstr "E pamundur të shkruhet në '%s' : gretl mund të mos punojë si duhet"
 
-#: lib/src/gretl_paths.c:2183
+#: lib/src/gretl_paths.c:2206
 #, c-format
 msgid "wrote %s\n"
 msgstr "u shkrua %s\n"
 
-#: lib/src/gretl_paths.c:2298
+#: lib/src/gretl_paths.c:2321
 #, c-format
 msgid "gretl: using these basic search paths:\n"
 msgstr "gretl: ndiq këto rrugë\n"
 
-#: lib/src/gretl_paths.c:2451 lib/src/gretl_paths.c:2468
+#: lib/src/gretl_paths.c:2474 lib/src/gretl_paths.c:2491
 msgid "gretlcli_hlp.txt"
 msgstr "gretlcli_hlp.txt"
 
-#: lib/src/gretl_paths.c:2454 lib/src/gretl_paths.c:2477
+#: lib/src/gretl_paths.c:2477 lib/src/gretl_paths.c:2500
 msgid "gretlcli.hlp"
 msgstr "gretlcli.hlp"
 
-#: lib/src/gretl_paths.c:2466
+#: lib/src/gretl_paths.c:2489
 msgid "gretlgui_hlp.txt"
 msgstr "gretlgui_hlp.txt"
 
-#: lib/src/gretl_paths.c:2467
+#: lib/src/gretl_paths.c:2490
 msgid "gretlcmd_hlp.txt"
 msgstr "gretlcmd_hlp.txt"
 
-#: lib/src/gretl_paths.c:2476
+#: lib/src/gretl_paths.c:2499
 msgid "gretlgui.hlp"
 msgstr "gretlgui.hlp"
 
-#: lib/src/gretl_paths.c:2478
+#: lib/src/gretl_paths.c:2501
 msgid "gretlcmd.hlp"
 msgstr "gretlcmd.hlp"
 
@@ -4263,7 +4263,7 @@ msgstr "\"help set\" për më tepër hollësi"
 msgid "Program interaction and behavior"
 msgstr "Bashkëveprimi me programin"
 
-#: lib/src/libset.c:1323 gui2/helpfiles.c:392 doc/commands/matfuncs.c:57
+#: lib/src/libset.c:1323 gui2/helpfiles.c:393 doc/commands/matfuncs.c:57
 msgid "Numerical methods"
 msgstr "Metoda numerike"
 
@@ -4501,7 +4501,7 @@ msgid "Augmented regression for common factor test"
 msgstr "Regresion i shtuar për testin e faktorit të përbashkët"
 
 #: lib/src/modelprint.c:780 lib/src/system.c:97 lib/src/varprint.c:1047
-#: lib/src/varprint.c:1056 lib/src/varprint.c:1064 gui2/selector.c:3578
+#: lib/src/varprint.c:1056 lib/src/varprint.c:1064 gui2/selector.c:3588
 msgid "OLS"
 msgstr "KVZ"
 
@@ -4522,7 +4522,7 @@ msgstr "Me korrigjim të heteroskedasticitetit"
 msgid "AR"
 msgstr "AR"
 
-#: lib/src/modelprint.c:785 lib/src/modelprint.c:896 gui2/selector.c:3640
+#: lib/src/modelprint.c:785 lib/src/modelprint.c:896 gui2/selector.c:3650
 msgid "LAD"
 msgstr "LAD"
 
@@ -4530,23 +4530,23 @@ msgstr "LAD"
 msgid "High-Precision OLS"
 msgstr "KVZ të saktësisë së lartë"
 
-#: lib/src/modelprint.c:787 lib/src/modelprint.c:884 gui2/selector.c:3594
+#: lib/src/modelprint.c:787 lib/src/modelprint.c:884 gui2/selector.c:3604
 msgid "Probit"
 msgstr "Probit"
 
-#: lib/src/modelprint.c:788 lib/src/modelprint.c:878 gui2/selector.c:3588
+#: lib/src/modelprint.c:788 lib/src/modelprint.c:878 gui2/selector.c:3598
 msgid "Logit"
 msgstr "Logit"
 
-#: lib/src/modelprint.c:789 gui2/selector.c:3598
+#: lib/src/modelprint.c:789 gui2/selector.c:3608
 msgid "Tobit"
 msgstr "Tobit"
 
-#: lib/src/modelprint.c:790 gui2/selector.c:3600
+#: lib/src/modelprint.c:790 gui2/selector.c:3610
 msgid "Heckit"
 msgstr "Heckit"
 
-#: lib/src/modelprint.c:791 gui2/selector.c:3745
+#: lib/src/modelprint.c:791 gui2/selector.c:3755
 msgid "Poisson"
 msgstr "Poisson"
 
@@ -4570,11 +4570,11 @@ msgstr "ML"
 msgid "GMM"
 msgstr "MPM"
 
-#: lib/src/modelprint.c:797 gui2/selector.c:3604
+#: lib/src/modelprint.c:797 gui2/selector.c:3614
 msgid "Logistic"
 msgstr "Logjistik"
 
-#: lib/src/modelprint.c:798 gui2/selector.c:3632 plugin/addons-i18n.c:14
+#: lib/src/modelprint.c:798 gui2/selector.c:3642 plugin/addons-i18n.c:14
 msgid "GARCH"
 msgstr "GARCH"
 
@@ -4586,7 +4586,7 @@ msgstr "Vlerësim me interval"
 msgid "Dynamic panel"
 msgstr "Paneli dinamik"
 
-#: lib/src/modelprint.c:801 gui2/selector.c:3602
+#: lib/src/modelprint.c:801 gui2/selector.c:3612
 msgid "Bivariate probit"
 msgstr "Probit me 2 ndryshore (bivariate)"
 
@@ -4602,7 +4602,7 @@ msgstr "Arellano-Bond"
 msgid "Hildreth--Lu"
 msgstr "Hildreth--Lu"
 
-#: lib/src/modelprint.c:815 gui2/selector.c:3584
+#: lib/src/modelprint.c:815 gui2/selector.c:3594
 msgid "Hildreth-Lu"
 msgstr "Hildreth-Lu"
 
@@ -4610,7 +4610,7 @@ msgstr "Hildreth-Lu"
 msgid "Prais--Winsten"
 msgstr "Prais--Winsten"
 
-#: lib/src/modelprint.c:818 gui2/selector.c:3586
+#: lib/src/modelprint.c:818 gui2/selector.c:3596
 msgid "Prais-Winsten"
 msgstr "Prais-Winsten"
 
@@ -4618,7 +4618,7 @@ msgstr "Prais-Winsten"
 msgid "Cochrane--Orcutt"
 msgstr "Cochrane--Orcutt"
 
-#: lib/src/modelprint.c:821 gui2/selector.c:3582
+#: lib/src/modelprint.c:821 gui2/selector.c:3592
 msgid "Cochrane-Orcutt"
 msgstr "Cochrane-Orcutt"
 
@@ -4626,7 +4626,7 @@ msgstr "Cochrane-Orcutt"
 msgid "ARMAX"
 msgstr "ARMAX"
 
-#: lib/src/modelprint.c:828 gui2/selector.c:3628 plugin/tramo_options.c:702
+#: lib/src/modelprint.c:828 gui2/selector.c:3638 plugin/tramo_options.c:702
 msgid "ARIMA"
 msgstr "ARIMA"
 
@@ -4682,15 +4682,15 @@ msgstr "MPM përsëritëse"
 msgid "1-step GMM"
 msgstr "MPM në 1 etapë"
 
-#: lib/src/modelprint.c:874 gui2/selector.c:3590
+#: lib/src/modelprint.c:874 gui2/selector.c:3600
 msgid "Ordered Logit"
 msgstr "Logit i renditur"
 
-#: lib/src/modelprint.c:876 gui2/selector.c:3592
+#: lib/src/modelprint.c:876 gui2/selector.c:3602
 msgid "Multinomial Logit"
 msgstr "Logit shumëshifror"
 
-#: lib/src/modelprint.c:882 gui2/selector.c:3596
+#: lib/src/modelprint.c:882 gui2/selector.c:3606
 msgid "Ordered Probit"
 msgstr "Probit i renditur"
 
@@ -4817,11 +4817,11 @@ msgstr "Një vlerë < 10 a mund të jetë shenjë instrumentësh të dobët"
 msgid "Instrumented"
 msgstr "Instrumentimi i"
 
-#: lib/src/modelprint.c:1142 gui2/selector.c:4280 gui2/selector.c:7695
+#: lib/src/modelprint.c:1142 gui2/selector.c:4290 gui2/selector.c:7732
 msgid "Instruments"
 msgstr "Instrumentët"
 
-#: lib/src/modelprint.c:1211 lib/src/modelprint.c:1213 gui2/selector.c:5235
+#: lib/src/modelprint.c:1211 lib/src/modelprint.c:1213 gui2/selector.c:5272
 msgid "Asymptotic standard errors"
 msgstr "Gabim std. asimptotik"
 
@@ -4946,7 +4946,7 @@ msgstr "Instrumentë përsëritës:"
 #: lib/src/modelprint.c:1577 lib/src/modelprint.c:1860
 #: lib/src/modelprint.c:1863 lib/src/modelprint.c:1873
 #: lib/src/modelprint.c:1876 lib/src/modelprint.c:1911 gui2/model_table.c:1116
-#: gui2/model_table.c:1210 gui2/selector.c:3983
+#: gui2/model_table.c:1210 gui2/selector.c:3993
 msgid "Dependent variable"
 msgstr "Ndryshorja e varur"
 
@@ -5075,7 +5075,7 @@ msgstr "%s i ponderuar (varianca e qëndrueshme Koenker)"
 msgid "scaled %s"
 msgstr " %s i ponderuar"
 
-#: lib/src/modelprint.c:1952 gui2/selector.c:3669
+#: lib/src/modelprint.c:1952 gui2/selector.c:3679
 msgid "Selection variable"
 msgstr "Ndryshorja e zgjedhjes"
 
@@ -5788,7 +5788,7 @@ msgstr ""
 "Kampion tepër i vogël për të përdorur shpërndarjen normale për njehsimin e "
 "p. kritik\n"
 
-#: lib/src/nonparam.c:572 gui2/selector.c:5461
+#: lib/src/nonparam.c:572 gui2/selector.c:5498
 msgid "Kendall's tau"
 msgstr "tau i Kendall"
 
@@ -5909,12 +5909,12 @@ msgid "Prob"
 msgstr "Prob"
 
 #: lib/src/objstack.c:652 lib/src/objstack.c:688 lib/src/objstack.c:690
-#: gui2/selector.c:3634
+#: gui2/selector.c:3644
 msgid "VAR"
 msgstr "VAR"
 
 #: lib/src/objstack.c:654 lib/src/objstack.c:694 lib/src/objstack.c:696
-#: gui2/selector.c:3638
+#: gui2/selector.c:3648
 msgid "VECM"
 msgstr "VECM"
 
@@ -5939,17 +5939,17 @@ msgstr ""
 "E pamundur të bëhet: Modeli referencë është vlerësuar mbi një\n"
 "kampion të ndryshëm nga ai në përdorim.\n"
 
-#: lib/src/options.c:1099
+#: lib/src/options.c:1100
 #, c-format
 msgid "Invalid option '--%s'"
 msgstr "Zgjedhje e pavlefshme \"--%s\""
 
-#: lib/src/options.c:1117
+#: lib/src/options.c:1118
 #, c-format
 msgid "The option '--%s' requires a parameter"
 msgstr "Zgjedhja \"--%s\" duhet shoqëruar nga një parametër"
 
-#: lib/src/options.c:1410
+#: lib/src/options.c:1411
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr "Kujdes: %s nuk mund të trajtohet veçse në një llogaritje \"loop\""
@@ -6854,11 +6854,11 @@ msgstr "Numri i instrumentëve(%d) është më i madh se numri i vrojtimeve (%d)"
 msgid "The first-stage fitted values for %s are all zero"
 msgstr "Në etapën e parë, vlerat e përafruara të %s janë zero "
 
-#: lib/src/tsls.c:1492 gui2/selector.c:2906
+#: lib/src/tsls.c:1492 gui2/selector.c:2916
 msgid "You can't use the dependent variable as an instrument"
 msgstr "Ndryshorja e varur nuk mund të përdoret si instrument"
 
-#: lib/src/tsls.c:1502 lib/src/tsls.c:1643
+#: lib/src/tsls.c:1502 lib/src/tsls.c:1644
 #, c-format
 msgid ""
 "The order condition for identification is not satisfied.\n"
@@ -7646,7 +7646,7 @@ msgstr "Ndryshorja %d"
 
 #: gui2/calculator.c:2330 gui2/guiprint.c:708 gui2/guiprint.c:731
 #: gui2/guiprint.c:998 gui2/guiprint.c:1025 gui2/guiprint.c:1827
-#: gui2/guiprint.c:1877 gui2/selector.c:7673
+#: gui2/guiprint.c:1877 gui2/selector.c:7710
 msgid "Variable"
 msgstr "Ndryshorja"
 
@@ -7822,7 +7822,7 @@ msgstr "gretl: grafik i shpërndarjes"
 msgid "gretl: add random variable"
 msgstr "gretl: shto një ndryshore të rastit"
 
-#: gui2/calculator.c:3008 gui2/selector.c:6981 gui2/selector.c:6984
+#: gui2/calculator.c:3008 gui2/selector.c:7018 gui2/selector.c:7021
 msgid "No suitable data are available"
 msgstr "Nuk gjendet asnjë ndryshore e përshtatshme"
 
@@ -7871,7 +7871,7 @@ msgid "Sorry, this item not yet implemented!"
 msgstr "Për fat të keq, veprimi i kërkuar s'është i gatshëm"
 
 #: gui2/callbacks.c:373 gui2/callbacks.c:542 gui2/callbacks.c:707
-#: gui2/selector.c:6088
+#: gui2/selector.c:6125
 msgid "gretl: add var"
 msgstr "gretl: krijo ndryshore"
 
@@ -7883,12 +7883,12 @@ msgstr "Jepni formulën për ndryshoren e re:"
 msgid "gretl: cointegration test"
 msgstr "gretl: testi i kointegrimit"
 
-#: gui2/callbacks.c:429 gui2/selector.c:813
+#: gui2/callbacks.c:429 gui2/selector.c:823
 msgid "gretl: VAR"
 msgstr "gretl: VAR"
 
 #: gui2/callbacks.c:429 gui2/library.c:3084 gui2/library.c:4133
-#: gui2/selector.c:813
+#: gui2/selector.c:823
 msgid "gretl: VECM"
 msgstr "gretl: VECM"
 
@@ -7911,15 +7911,15 @@ msgstr "gret: teste mbi modelin"
 msgid "rank correlation"
 msgstr "korrelacioni i rangjeve"
 
-#: gui2/callbacks.c:489 gui2/selector.c:3651
+#: gui2/callbacks.c:489 gui2/selector.c:3661
 msgid "Loess"
 msgstr "Loess"
 
-#: gui2/callbacks.c:489 gui2/library.c:3892 gui2/selector.c:3653
+#: gui2/callbacks.c:489 gui2/library.c:3892 gui2/selector.c:3663
 msgid "Nadaraya-Watson"
 msgstr "Nadaraya-Watson"
 
-#: gui2/callbacks.c:544 gui2/callbacks.c:701 gui2/selector.c:6089
+#: gui2/callbacks.c:544 gui2/callbacks.c:701 gui2/selector.c:6126
 msgid "Enter formula for new variable"
 msgstr "Jepni formulën për ndryshoren e re"
 
@@ -8883,7 +8883,7 @@ msgstr "Individët"
 msgid "Periods"
 msgstr "Periudhat"
 
-#: gui2/dialogs.c:2021 gui2/selector.c:7729
+#: gui2/dialogs.c:2021 gui2/selector.c:7766
 msgid "to"
 msgstr "në"
 
@@ -9226,7 +9226,7 @@ msgstr "mundësi zgjedhjeje për tabelën e modeleve"
 msgid "column headings"
 msgstr "titujt e shtyllave"
 
-#: gui2/dialogs.c:4915 gui2/selector.c:5493
+#: gui2/dialogs.c:4915 gui2/selector.c:5530
 msgid "Show p-values"
 msgstr "Shfaq p. kritik"
 
@@ -9278,6 +9278,24 @@ msgstr "Format standart"
 msgid "Custom format"
 msgstr "Format personal"
 
+#: gui2/dialogs.c:5444
+#, fuzzy
+msgid "Please specify a cluster variable"
+msgstr "Përcaktoni një ndryshore si kufi të sipërm"
+
+#: gui2/dialogs.c:5446
+#, fuzzy, c-format
+msgid "'%s' is not a known series"
+msgstr "'%s' nuk është emri i një serije"
+
+#: gui2/dialogs.c:5481
+msgid "Select from Regular HCCME options"
+msgstr ""
+
+#: gui2/dialogs.c:5488
+msgid "Cluster by"
+msgstr ""
+
 #: gui2/dlgutils.c:749
 msgid "Add equation"
 msgstr "Shto një ekuacion"
@@ -9302,19 +9320,19 @@ msgstr "Shto një listë me instrumentë"
 msgid "Show interval for median"
 msgstr "Trego intervalin për mesoren"
 
-#: gui2/dlgutils.c:857 gui2/dlgutils.c:1022 gui2/selector.c:3851
+#: gui2/dlgutils.c:857 gui2/dlgutils.c:1022 gui2/selector.c:3861
 msgid "Iterated estimation"
 msgstr "Vlerësime përsëritës"
 
-#: gui2/dlgutils.c:863 gui2/selector.c:5196
+#: gui2/dlgutils.c:863 gui2/selector.c:5233
 msgid "Show details of iterations"
 msgstr "Shfaq hollësitë për çdo etapë njehsimi"
 
-#: gui2/dlgutils.c:866 gui2/selector.c:5146
+#: gui2/dlgutils.c:866 gui2/selector.c:5183
 msgid "Robust standard errors"
 msgstr "Gabime std. të qëndrueshëm"
 
-#: gui2/dlgutils.c:872 gui2/selector.c:5326
+#: gui2/dlgutils.c:872 gui2/selector.c:5363
 msgid "Use bootstrap"
 msgstr "Përdor bootstrap"
 
@@ -9322,11 +9340,11 @@ msgstr "Përdor bootstrap"
 msgid "Show full restricted estimates"
 msgstr "Trego të plotë vlerësimin e kufizuar"
 
-#: gui2/dlgutils.c:1020 gui2/selector.c:3849 gui2/selector.c:5678
+#: gui2/dlgutils.c:1020 gui2/selector.c:3859 gui2/selector.c:5715
 msgid "One-step estimation"
 msgstr "Vlerësim në 1 etapë"
 
-#: gui2/dlgutils.c:1021 gui2/selector.c:3850 gui2/selector.c:5682
+#: gui2/dlgutils.c:1021 gui2/selector.c:3860 gui2/selector.c:5719
 msgid "Two-step estimation"
 msgstr "Vlerësim në 2 etapa"
 
@@ -9687,7 +9705,7 @@ msgstr "shto një numër"
 msgid "Enter name=formula for new scalar"
 msgstr "Shkruani, për numrin e ri, emri= formula"
 
-#: gui2/fncall.c:1107 gui2/selector.c:6101
+#: gui2/fncall.c:1107 gui2/selector.c:6138
 msgid "New variable"
 msgstr "Ndryshore të re"
 
@@ -10166,7 +10184,7 @@ msgstr "Shfaq zona me dritëhije"
 msgid "NBER recessions"
 msgstr "Reçesionet sipas NBER"
 
-#: gui2/gpt_dialog.c:2017 gui2/selector.c:4010
+#: gui2/gpt_dialog.c:2017 gui2/selector.c:4020
 msgid "Set as default"
 msgstr "Përdor gjithmonë këtë zgjedhje"
 
@@ -10179,7 +10197,7 @@ msgstr "vija %d : "
 msgid "No formula was given"
 msgstr "Asnjë formulë nuk u dha"
 
-#: gui2/gpt_dialog.c:2410 gui2/selector.c:4262
+#: gui2/gpt_dialog.c:2410 gui2/selector.c:4272
 msgid "Remove"
 msgstr "Hiq"
 
@@ -12230,132 +12248,132 @@ msgstr "Zvogëlo"
 msgid "Show English help"
 msgstr "Trego udhëzimet (në anglisht)"
 
-#: gui2/helpfiles.c:171
+#: gui2/helpfiles.c:172
 msgid "Dataset"
 msgstr "Të dhënat"
 
-#: gui2/helpfiles.c:172
+#: gui2/helpfiles.c:173
 msgid "Estimation"
 msgstr "Përafrim"
 
-#: gui2/helpfiles.c:173
+#: gui2/helpfiles.c:174
 msgid "Graphs"
 msgstr "Grafikë"
 
-#: gui2/helpfiles.c:174
+#: gui2/helpfiles.c:175
 msgid "Prediction"
 msgstr "Parashikim"
 
-#: gui2/helpfiles.c:175
+#: gui2/helpfiles.c:176
 msgid "Printing"
 msgstr "Shtyp"
 
-#: gui2/helpfiles.c:176
+#: gui2/helpfiles.c:177
 msgid "Programming"
 msgstr "Programim"
 
-#: gui2/helpfiles.c:177
+#: gui2/helpfiles.c:178
 msgid "Statistics"
 msgstr "Statistikat"
 
-#: gui2/helpfiles.c:178
+#: gui2/helpfiles.c:179
 msgid "Tests"
 msgstr "Teste"
 
-#: gui2/helpfiles.c:179 gui2/helpfiles.c:406 plugin/tramo_options.c:508
+#: gui2/helpfiles.c:180 gui2/helpfiles.c:407 plugin/tramo_options.c:508
 #: doc/commands/matfuncs.c:60
 msgid "Transformations"
 msgstr "Transformime"
 
-#: gui2/helpfiles.c:180
+#: gui2/helpfiles.c:181
 msgid "Utilities"
 msgstr "Të ndryshme"
 
-#: gui2/helpfiles.c:388 doc/commands/matfuncs.c:61
+#: gui2/helpfiles.c:389 doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Mjete"
 
-#: gui2/helpfiles.c:390
+#: gui2/helpfiles.c:391
 msgid "Mathematical"
 msgstr "Veprime matematikore"
 
-#: gui2/helpfiles.c:394 doc/commands/matfuncs.c:56
+#: gui2/helpfiles.c:395 doc/commands/matfuncs.c:56
 msgid "Filters"
 msgstr "Filtra"
 
-#: gui2/helpfiles.c:396
+#: gui2/helpfiles.c:397
 msgid "Statistical"
 msgstr "Veprime statistikore"
 
-#: gui2/helpfiles.c:398
+#: gui2/helpfiles.c:399
 msgid "Probability"
 msgstr "Probabilitet"
 
-#: gui2/helpfiles.c:400
+#: gui2/helpfiles.c:401
 msgid "Linear algebra"
 msgstr "Algjebër lineare"
 
-#: gui2/helpfiles.c:402
+#: gui2/helpfiles.c:403
 msgid "Matrix building"
 msgstr "Formimi i matricave"
 
-#: gui2/helpfiles.c:404
+#: gui2/helpfiles.c:405
 msgid "Matrix shaping"
 msgstr "Organizimi i matricave"
 
-#: gui2/helpfiles.c:408 doc/commands/matfuncs.c:55
+#: gui2/helpfiles.c:409 doc/commands/matfuncs.c:55
 msgid "Data utilities"
 msgstr "Mbi të dhënat"
 
-#: gui2/helpfiles.c:410 doc/commands/matfuncs.c:59
+#: gui2/helpfiles.c:411 doc/commands/matfuncs.c:59
 msgid "Strings"
 msgstr "Veprime me tekste"
 
-#: gui2/helpfiles.c:450 gui2/textbuf.c:1621
+#: gui2/helpfiles.c:451 gui2/textbuf.c:1621
 msgid "Index"
 msgstr "Treguesi"
 
-#: gui2/helpfiles.c:855 gui2/helpfiles.c:1593 gui2/helpfiles.c:1720
+#: gui2/helpfiles.c:856 gui2/helpfiles.c:1594 gui2/helpfiles.c:1721
 msgid "Search wrapped"
 msgstr "Kërkimi mbaroi"
 
-#: gui2/helpfiles.c:960
+#: gui2/helpfiles.c:961
 msgid "this page"
 msgstr "në këtë faqe"
 
-#: gui2/helpfiles.c:961
+#: gui2/helpfiles.c:962
 msgid "all pages"
 msgstr "në të gjitha faqet"
 
-#: gui2/helpfiles.c:1000 gui2/textutil.c:277
+#: gui2/helpfiles.c:1001 gui2/textutil.c:277
 msgid "Find:"
 msgstr "Gjej:"
 
-#: gui2/helpfiles.c:1052
+#: gui2/helpfiles.c:1053
 msgid "genrgui.hlp"
 msgstr "genrgui.hlp"
 
-#: gui2/helpfiles.c:1087
+#: gui2/helpfiles.c:1088
 msgid "Sorry, no help is available"
 msgstr "Për fat të keq, asnjë ndihmë për këtë pikë"
 
-#: gui2/helpfiles.c:1436
+#: gui2/helpfiles.c:1437
 msgid "Sorry, help not found"
 msgstr "Për fat të keq, udhëzimet nuk gjenden dot"
 
-#: gui2/helpfiles.c:1810
+#: gui2/helpfiles.c:1811
 msgid "gretl: find"
 msgstr "gretl: kërko"
 
-#: gui2/helpfiles.c:1819
+#: gui2/helpfiles.c:1820
 msgid " Find what:"
 msgstr " Kërko:"
 
-#: gui2/helpfiles.c:1843
+#: gui2/helpfiles.c:1844
 msgid "Variable names only (case sensitive)"
 msgstr "Vetëm emri i ndryshoreve (i ndjeshëm ndaj llojit të gërmave)"
 
-#: gui2/helpfiles.c:2061
+#: gui2/helpfiles.c:2062
 msgid "Failed to download file"
 msgstr "Teleshkarkimi i skedës dështoi"
 
@@ -12582,7 +12600,7 @@ msgstr ""
 "mbi të cilin është ndërtuar modeli (nëpërmjet menusë\n"
 "'Kampioni'."
 
-#: gui2/library.c:2044 gui2/selector.c:7172
+#: gui2/library.c:2044 gui2/selector.c:7209
 msgid "No variables are selected"
 msgstr "Asnjë ndryshore nuk është zgjedhur"
 
@@ -12716,7 +12734,7 @@ msgstr "Numri %s = %g u shtua"
 msgid "Added matrix %s"
 msgstr "Matrica %s u shtua"
 
-#: gui2/library.c:3567 gui2/library.c:5448 gui2/selector.c:6145
+#: gui2/library.c:3567 gui2/library.c:5448 gui2/selector.c:6182
 msgid "ANOVA"
 msgstr "ANOVA"
 
@@ -12964,7 +12982,7 @@ msgstr "Nuk mund të fshihen të gjitha ndryshoret e zgjedhura"
 msgid "You must supply three variables"
 msgstr "Duhet të jepni 3 ndryshore"
 
-#: gui2/library.c:6790 gui2/selector.c:3710 gui2/selector.c:3939
+#: gui2/library.c:6790 gui2/selector.c:3720 gui2/selector.c:3949
 msgid "X-axis variable"
 msgstr "Ndryshorja e boshtit X"
 
@@ -13173,7 +13191,7 @@ msgstr "Shto diferencën"
 msgid "Define new variable..."
 msgstr "Përcakto një ndryshore të re..."
 
-#: gui2/menustate.c:406 gui2/selector.c:5244
+#: gui2/menustate.c:406 gui2/selector.c:5281
 msgid "Ensure uniform sample size"
 msgstr "Përdor të njëjtat vrojtime për të gjitha ndryshoret "
 
@@ -13181,7 +13199,7 @@ msgstr "Përdor të njëjtat vrojtime për të gjitha ndryshoret "
 msgid "Correlation matrix"
 msgstr "Matrica e korrelacioneve"
 
-#: gui2/menustate.c:461 gui2/menustate.c:555 gui2/selector.c:6129
+#: gui2/menustate.c:461 gui2/menustate.c:555 gui2/selector.c:6166
 msgid "XY scatterplot"
 msgstr "Grafik pikash (X;Y)"
 
@@ -13256,7 +13274,7 @@ msgstr "Modeli u shtua në tabelë"
 msgid "HSK"
 msgstr "HSK"
 
-#: gui2/model_table.c:408 gui2/selector.c:3630 plugin/addons-i18n.c:7
+#: gui2/model_table.c:408 gui2/selector.c:3640 plugin/addons-i18n.c:7
 msgid "ARCH"
 msgstr "ARCH"
 
@@ -13366,545 +13384,545 @@ msgstr "Nuk ka asnjë model"
 msgid "%s replaced\n"
 msgstr "%s u zëvendësua\n"
 
-#: gui2/selector.c:479 gui2/toolbar.c:1069
+#: gui2/selector.c:482 gui2/toolbar.c:1069
 msgid "gretl: specify model"
 msgstr "gretl: përcaktimi i modelit"
 
 # 'P' për "i Pakushtëzuar"
 # ka te beje me ndryshoren ne VECM
-#: gui2/selector.c:822
+#: gui2/selector.c:832
 msgid "U"
 msgstr "P"
 
 # 'K' për "i Kushtëzuar"
 # ka te beje me ndryshoren ne VECM
-#: gui2/selector.c:823
+#: gui2/selector.c:833
 msgid "R"
 msgstr "K"
 
-#: gui2/selector.c:1629 gui2/selector.c:2020
+#: gui2/selector.c:1639 gui2/selector.c:2030
 msgid "Unrestricted"
 msgstr "I pakufizuar"
 
-#: gui2/selector.c:1630 gui2/selector.c:2021
+#: gui2/selector.c:1640 gui2/selector.c:2031
 msgid "Restricted"
 msgstr "I kufizuar"
 
-#: gui2/selector.c:1635
+#: gui2/selector.c:1645
 msgid "add exogenous variable"
 msgstr "shto një ndryshore ekzogjene"
 
-#: gui2/selector.c:1636
+#: gui2/selector.c:1646
 #, c-format
 msgid "Status of '%s' in VECM:"
 msgstr "Statusi i '%s' në VECM:"
 
-#: gui2/selector.c:2389
+#: gui2/selector.c:2399
 msgid "You must select an X-axis variable"
 msgstr "Zgjidhni ndryshoren e boshtit X"
 
-#: gui2/selector.c:2392
+#: gui2/selector.c:2402
 msgid "You must select a Y-axis variable"
 msgstr "Zgjidhni ndryshoren e boshtit Y"
 
-#: gui2/selector.c:2395
+#: gui2/selector.c:2405
 msgid "You must select a lower bound variable"
 msgstr "Zgjidhni një ndryshore për limitin e poshtëm"
 
-#: gui2/selector.c:2398 gui2/selector.c:3418
+#: gui2/selector.c:2408 gui2/selector.c:3428
 msgid "You must select a dependent variable"
 msgstr "Zgjidhni një ndryshore të varur"
 
-#: gui2/selector.c:2941
+#: gui2/selector.c:2951
 msgid "You must specify a quantile"
 msgstr "Duhet të përcaktoni një kuantil"
 
-#: gui2/selector.c:2954
+#: gui2/selector.c:2964
 msgid "Invalid quantile specification"
 msgstr "Përcaktimi i kuantilit është i pasaktë"
 
-#: gui2/selector.c:3123
+#: gui2/selector.c:3133
 msgid "You must select a weight variable"
 msgstr "Zgjidhni një ndryshore ponderuese"
 
-#: gui2/selector.c:3126
+#: gui2/selector.c:3136
 msgid "You must specify a list of lags"
 msgstr "Përcaktoni një listë që përmban vonesat"
 
-#: gui2/selector.c:3129
+#: gui2/selector.c:3139
 msgid "You must specify a selection variable"
 msgstr "Përcaktoni një ndryshore si kriter zgjedhjeje"
 
-#: gui2/selector.c:3132
+#: gui2/selector.c:3142
 msgid "You must specify a second dependent variable"
 msgstr "Zgjidhni një ndryshore të dytë të varur"
 
-#: gui2/selector.c:3135
+#: gui2/selector.c:3145
 msgid "You must specify an upper bound variable"
 msgstr "Përcaktoni një ndryshore si kufi të sipërm"
 
-#: gui2/selector.c:3138
+#: gui2/selector.c:3148
 msgid "You must specify a treatment variable"
 msgstr "Përcaktoni ndryshoren e trajtimit"
 
-#: gui2/selector.c:3141
+#: gui2/selector.c:3151
 msgid "You must specify an independent variable"
 msgstr "Zgjidhni një ndryshore të pavarur"
 
-#: gui2/selector.c:3293
+#: gui2/selector.c:3303
 msgid "You must select a Z-axis variable"
 msgstr "Zgjidhni një ndryshore për boshtin Z"
 
-#: gui2/selector.c:3295
+#: gui2/selector.c:3305
 msgid "You must select a factor variable"
 msgstr "Zgjidhni një ndryshore faktorizuese"
 
-#: gui2/selector.c:3297
+#: gui2/selector.c:3307
 msgid "You must select a control variable"
 msgstr "Duhet të zgjidhni një ndryshore kontrolli"
 
-#: gui2/selector.c:3414
+#: gui2/selector.c:3424
 msgid "You must select two or more endogenous variables"
 msgstr "Duhet të zgjidhni të paktën 2 ndryshore endogjene"
 
-#: gui2/selector.c:3422
+#: gui2/selector.c:3432
 msgid "You must specify a public interface"
 msgstr "Duhet të percaktoni një \"public interface\""
 
-#: gui2/selector.c:3462
+#: gui2/selector.c:3472
 msgid "You must specify a set of instrumental variables"
 msgstr "Duhet të përcaktoni një grup ndryshoresh instrmentale"
 
-#: gui2/selector.c:3465
+#: gui2/selector.c:3475
 msgid "You must specify regressors for the selection equation"
 msgstr "Duhet të përcaktoni regresorët për modelin e zgjedhur"
 
-#: gui2/selector.c:3580
+#: gui2/selector.c:3590
 msgid "Heteroskedasticity corrected"
 msgstr "Korrigjim të heteroskedasticitetit"
 
-#: gui2/selector.c:3606
+#: gui2/selector.c:3616
 msgid "Count data model"
 msgstr "Model me numërime"
 
-#: gui2/selector.c:3608
+#: gui2/selector.c:3618
 msgid "Duration model"
 msgstr "Model me kohëzgjatje"
 
-#: gui2/selector.c:3610
+#: gui2/selector.c:3620
 msgid "Panel model"
 msgstr "Model paneli"
 
-#: gui2/selector.c:3612
+#: gui2/selector.c:3622
 msgid "Groupwise WLS"
 msgstr "WLS sipas grupeve"
 
-#: gui2/selector.c:3614
+#: gui2/selector.c:3624
 msgid "Between-groups model"
 msgstr "Modeli between"
 
-#: gui2/selector.c:3616
+#: gui2/selector.c:3626
 msgid "Dynamic panel model"
 msgstr "Model paneli dinamik"
 
-#: gui2/selector.c:3618
+#: gui2/selector.c:3628
 msgid "Weighted least squares"
 msgstr "Katrorët më të Vegjël të Ponderuar - WLS"
 
-#: gui2/selector.c:3620
+#: gui2/selector.c:3630
 msgid "Two-stage least squares"
 msgstr "Katrorët më të Vegjël të Dyfishtë (2KVZ)"
 
-#: gui2/selector.c:3622
+#: gui2/selector.c:3632
 msgid "Limited information maximum likelihood"
 msgstr "Maksimumi i Përgjasisë me Informacion të Kufizuar"
 
-#: gui2/selector.c:3624
+#: gui2/selector.c:3634
 msgid "Generalized method of moments"
 msgstr "Metoda e Përgjithësuar e Momenteve "
 
-#: gui2/selector.c:3626
+#: gui2/selector.c:3636
 msgid "Autoregressive model"
 msgstr "Model autoregresiv - AR"
 
-#: gui2/selector.c:3636
+#: gui2/selector.c:3646
 msgid "VAR lag selection"
 msgstr "Zgjedhja e vonesës për modelin VAR"
 
-#: gui2/selector.c:3642
+#: gui2/selector.c:3652
 msgid "Quantile regression"
 msgstr "Regresion kuantil"
 
-#: gui2/selector.c:3644
+#: gui2/selector.c:3654
 msgid "Interval regression"
 msgstr "Regresion mbi interval"
 
-#: gui2/selector.c:3647
+#: gui2/selector.c:3657
 msgid "Cointegration"
 msgstr "Kointegrim"
 
-#: gui2/selector.c:3649
+#: gui2/selector.c:3659
 msgid "Multiple precision OLS"
 msgstr "KVZ me saktësi shumëshifrore"
 
-#: gui2/selector.c:3663
+#: gui2/selector.c:3673
 msgid "Weight variable"
 msgstr "Ndryshore ponderuese"
 
-#: gui2/selector.c:3665
+#: gui2/selector.c:3675
 msgid "Offset variable"
 msgstr "Ndryshore offset"
 
 # te shihet
-#: gui2/selector.c:3667
+#: gui2/selector.c:3677
 msgid "Censoring variable"
 msgstr "Ndryshore çensuruese"
 
-#: gui2/selector.c:3671
+#: gui2/selector.c:3681
 msgid "Second dependent variable"
 msgstr "Ndryshorja e dytë e varur"
 
-#: gui2/selector.c:3673
+#: gui2/selector.c:3683
 msgid "List of AR lags"
 msgstr "Lista e vonesave për AR"
 
-#: gui2/selector.c:3675
+#: gui2/selector.c:3685
 msgid "Desired quantile(s)"
 msgstr "Kuantilet e dëshiruar"
 
-#: gui2/selector.c:3677
+#: gui2/selector.c:3687
 msgid "Upper bound variable"
 msgstr "Ndryshorja e kufirit të sipërm"
 
-#: gui2/selector.c:3681 gui2/selector.c:3709
+#: gui2/selector.c:3691 gui2/selector.c:3719
 msgid "Y-axis variable"
 msgstr "Ndryshorja e boshtit Y"
 
-#: gui2/selector.c:3683
+#: gui2/selector.c:3693
 msgid "Treatment variable"
 msgstr "Ndryshorja e trajtimit"
 
-#: gui2/selector.c:3686
+#: gui2/selector.c:3696
 msgid "Independent variable"
 msgstr "Ndryshorja e pavarur"
 
-#: gui2/selector.c:3697 gui2/selector.c:6187
+#: gui2/selector.c:3707 gui2/selector.c:6224
 msgid "Y-axis variables"
 msgstr "Ndryshoret e boshtit Y"
 
-#: gui2/selector.c:3699 gui2/selector.c:6189
+#: gui2/selector.c:3709 gui2/selector.c:6226
 msgid "X-axis variables"
 msgstr "Ndryshoret e boshtit X"
 
-#: gui2/selector.c:3746
+#: gui2/selector.c:3756
 msgid "NegBin 2"
 msgstr "NegBin 2"
 
-#: gui2/selector.c:3747
+#: gui2/selector.c:3757
 msgid "NegBin 1"
 msgstr "NegBin 1"
 
-#: gui2/selector.c:3753 gui2/selector.c:3807
+#: gui2/selector.c:3763 gui2/selector.c:3817
 msgid "Distribution:"
 msgstr "Shpërndarja:"
 
-#: gui2/selector.c:3798
+#: gui2/selector.c:3808
 msgid "Weibull"
 msgstr "Weibull"
 
-#: gui2/selector.c:3799
+#: gui2/selector.c:3809
 msgid "Exponential"
 msgstr "Eksponencial"
 
-#: gui2/selector.c:3800
+#: gui2/selector.c:3810
 msgid "Log-logistic"
 msgstr "Log-logjistik"
 
-#: gui2/selector.c:3801
+#: gui2/selector.c:3811
 msgid "Log-normal"
 msgstr "Log-normal"
 
-#: gui2/selector.c:3880
+#: gui2/selector.c:3890
 msgid "Choose"
 msgstr "Zgjidh"
 
 # Ose "për t'u vizatuar"
-#: gui2/selector.c:3935
+#: gui2/selector.c:3945
 msgid "Variable to plot"
 msgstr "Ndryshorja për grafik"
 
-#: gui2/selector.c:3977
+#: gui2/selector.c:3987
 msgid "Lower bound variable"
 msgstr "Ndryshorja e kufirit të poshtëm"
 
-#: gui2/selector.c:3979
+#: gui2/selector.c:3989
 msgid "Response variable"
 msgstr "Ndryshorja e përgjigjes"
 
-#: gui2/selector.c:3981
+#: gui2/selector.c:3991
 msgid "First dependent variable"
 msgstr "Ndryshorja e parë e varur"
 
-#: gui2/selector.c:4051
+#: gui2/selector.c:4061
 msgid "lag order:"
 msgstr "rendi i vonesës:"
 
-#: gui2/selector.c:4052
+#: gui2/selector.c:4062
 msgid "cointegration rank:"
 msgstr "rendi i kointegrimit:"
 
-#: gui2/selector.c:4077
+#: gui2/selector.c:4087
 msgid "maximum lag:"
 msgstr "vonesa më e madhe:"
 
-#: gui2/selector.c:4120
+#: gui2/selector.c:4130
 msgid "ARCH order:"
 msgstr "Rendi i modelit ARCH:"
 
-#: gui2/selector.c:4125 gui2/selector.c:4809
+#: gui2/selector.c:4135 gui2/selector.c:4819
 msgid "AR order:"
 msgstr "Rendi i modelit AR:"
 
-#: gui2/selector.c:4151
+#: gui2/selector.c:4161
 msgid "Z-axis variable"
 msgstr "Ndryshorja e boshtit Z"
 
-#: gui2/selector.c:4153
+#: gui2/selector.c:4163
 msgid "Factor (discrete)"
 msgstr "Faktorizuesi (diskrete)"
 
-#: gui2/selector.c:4155
+#: gui2/selector.c:4165
 msgid "Control variable"
 msgstr "Ndryshorja e kontrollit"
 
-#: gui2/selector.c:4157
+#: gui2/selector.c:4167
 msgid "Block variable (optional)"
 msgstr "Ndryshorja e grupit (jo e domosdoshme)"
 
-#: gui2/selector.c:4235
+#: gui2/selector.c:4245
 msgid "Add"
 msgstr "Shto"
 
-#: gui2/selector.c:4278
+#: gui2/selector.c:4288
 msgid "Exogenous variables"
 msgstr "Ndryshore të pavarura"
 
-#: gui2/selector.c:4282
+#: gui2/selector.c:4292
 msgid "Selection equation regressors"
 msgstr "Regresorët e ekuacionit të zgjedhjes"
 
-#: gui2/selector.c:4284
+#: gui2/selector.c:4294
 msgid "Second equation regressors"
 msgstr "Regresorët e ekuacionit të dytë"
 
-#: gui2/selector.c:4286
+#: gui2/selector.c:4296
 msgid "Helper functions"
 msgstr "Funksione ndihmës"
 
-#: gui2/selector.c:4304 gui2/selector.c:5950 gui2/selector.c:6210
+#: gui2/selector.c:4314 gui2/selector.c:5987 gui2/selector.c:6247
 msgid "lags..."
 msgstr "ndryshore të vonuara..."
 
 # -
-#: gui2/selector.c:4362
+#: gui2/selector.c:4372
 msgid "left bound"
 msgstr "kufiri i poshtëm"
 
-#: gui2/selector.c:4363
+#: gui2/selector.c:4373
 msgid "right bound"
 msgstr "kufiri i sipërm"
 
-#: gui2/selector.c:4397
+#: gui2/selector.c:4407
 msgid "Polynomial order"
 msgstr "Rendi i polinomit"
 
-#: gui2/selector.c:4412
+#: gui2/selector.c:4422
 msgid "Bandwidth"
 msgstr "Gjerësia e klasës"
 
 # ndoshta per t'u përmirësuar
-#: gui2/selector.c:4419
+#: gui2/selector.c:4429
 msgid "Use robust weights"
 msgstr "Përdor ponderime të korrigjuara"
 
-#: gui2/selector.c:4420
+#: gui2/selector.c:4430
 msgid "Use \"leave one out\""
 msgstr "Përdor \"lër njërin jashtë\""
 
-#: gui2/selector.c:4742
+#: gui2/selector.c:4752
 msgid "GARCH p:"
 msgstr "GARCH p:"
 
-#: gui2/selector.c:4743
+#: gui2/selector.c:4753
 msgid "ARCH q:"
 msgstr "ARCH q:"
 
-#: gui2/selector.c:4768
+#: gui2/selector.c:4778
 msgid "Non-seasonal"
 msgstr "Jo-stinor"
 
-#: gui2/selector.c:4769
+#: gui2/selector.c:4779
 msgid "Seasonal"
 msgstr "Stinor"
 
-#: gui2/selector.c:4810
+#: gui2/selector.c:4820
 msgid "Difference:"
 msgstr "Diferenca:"
 
-#: gui2/selector.c:4811
+#: gui2/selector.c:4821
 msgid "MA order:"
 msgstr "Rendi i modelit MA:"
 
-#: gui2/selector.c:4832 gui2/selector.c:4861
+#: gui2/selector.c:4842 gui2/selector.c:4871
 msgid "or specific lags"
 msgstr "ose vonesa të veçanta"
 
 # te rishihet
-#: gui2/selector.c:5089
+#: gui2/selector.c:5126
 msgid "Bits per floating-point value"
 msgstr "Numri i bajteve për vlerë në \"floating-point\""
 
-#: gui2/selector.c:5144
+#: gui2/selector.c:5181
 msgid "Robust standard errors/intervals"
 msgstr "Gabime std./intervale të qëndrueshëm"
 
-#: gui2/selector.c:5169
+#: gui2/selector.c:5206
 msgid "Configure"
 msgstr "Parametrimi"
 
-#: gui2/selector.c:5189 gui2/selector.c:5193 gui2/selector.c:5201
+#: gui2/selector.c:5226 gui2/selector.c:5230 gui2/selector.c:5238
 msgid "Include a constant"
 msgstr "Me konstante"
 
-#: gui2/selector.c:5203
+#: gui2/selector.c:5240
 msgid "Include a trend"
 msgstr "Me prirje kohore"
 
-#: gui2/selector.c:5206
+#: gui2/selector.c:5243
 msgid "Show details of regressions"
 msgstr "Shfaq hollësitë e regresioneve"
 
-#: gui2/selector.c:5209
+#: gui2/selector.c:5246
 msgid "Include seasonal dummies"
 msgstr "Me ndryshore treguese stinore"
 
-#: gui2/selector.c:5217
+#: gui2/selector.c:5254
 msgid "Fine-tune using Cochrane-Orcutt"
 msgstr "Korrigjo me metodën Cochrane-Orcutt"
 
-#: gui2/selector.c:5220
+#: gui2/selector.c:5257
 msgid "Test down from maximum lag order"
 msgstr "Test zbritës nga rendi më i madh i vonesës"
 
-#: gui2/selector.c:5222
+#: gui2/selector.c:5259
 msgid "Skip initial DF tests"
 msgstr "Anashkalo testet fillestare DF"
 
-#: gui2/selector.c:5225
+#: gui2/selector.c:5262
 msgid "Iterated weighted least squares"
 msgstr "Katrorët më të vegjël të ponderuar të përsëritur"
 
-#: gui2/selector.c:5228 gui2/selector.c:5231
+#: gui2/selector.c:5265 gui2/selector.c:5268
 msgid "Include time dummies"
 msgstr "Me ndryshore treguese kohore"
 
-#: gui2/selector.c:5233
+#: gui2/selector.c:5270
 msgid "Include levels equations (GMM-SYS)"
 msgstr "Përfshi ekuacjonet në nivel (GMM-SYS)"
 
-#: gui2/selector.c:5238
+#: gui2/selector.c:5275
 msgid "Show zeros explicitly"
 msgstr "Shfaq zerot"
 
-#: gui2/selector.c:5241
+#: gui2/selector.c:5278
 msgid "Show rankings"
 msgstr "Shfaq rradhitjen"
 
-#: gui2/selector.c:5250
+#: gui2/selector.c:5287
 msgid "Parameter covariance matrix via Hessian"
 msgstr "Matrica e kovariancave të koeficientëve sipas Hesianes"
 
-#: gui2/selector.c:5252
+#: gui2/selector.c:5289
 msgid "Difference the independent variables"
 msgstr "Krijo diferencën e ndryshoreve të varura"
 
-#: gui2/selector.c:5256
+#: gui2/selector.c:5293
 msgid "Use X-12-ARIMA"
 msgstr "Përdor X-12-ARIMA"
 
-#: gui2/selector.c:5262
+#: gui2/selector.c:5299
 msgid "Standardize the residuals"
 msgstr "Standartizo mbetjen"
 
-#: gui2/selector.c:5264
+#: gui2/selector.c:5301
 msgid "Use Fiorentini et al algorithm"
 msgstr "Përdor algoritmin Fiorentini et alii"
 
-#: gui2/selector.c:5299
+#: gui2/selector.c:5336
 msgid "Show lagged variables"
 msgstr "Shfaq ndryshoret e vonuara"
 
-#: gui2/selector.c:5384
+#: gui2/selector.c:5421
 msgid "Compute standard errors"
 msgstr "Llogarit gabimin std."
 
-#: gui2/selector.c:5389
+#: gui2/selector.c:5426
 msgid "Compute confidence intervals"
 msgstr "Llogarit intervalet e besimit"
 
-#: gui2/selector.c:5415
+#: gui2/selector.c:5452
 msgid "Automatic maximum"
 msgstr "Maksimum i llogaritur automatikisht"
 
-#: gui2/selector.c:5420
+#: gui2/selector.c:5457
 msgid "Specified maximum"
 msgstr "Maksimum i përcaktuar"
 
-#: gui2/selector.c:5440 gui2/toolbar.c:485
+#: gui2/selector.c:5477 gui2/toolbar.c:485
 msgid "Confidence level"
 msgstr "Shkalla e besimit"
 
-#: gui2/selector.c:5457
+#: gui2/selector.c:5494
 msgid "Spearman's rho"
 msgstr "rho e Spearman"
 
-#: gui2/selector.c:5473
+#: gui2/selector.c:5510
 msgid "Use correlation matrix"
 msgstr "Përdor matricën e korrelacioneve"
 
-#: gui2/selector.c:5477
+#: gui2/selector.c:5514
 msgid "Use covariance matrix"
 msgstr "Përdor matricën e kovariancave"
 
-#: gui2/selector.c:5489
+#: gui2/selector.c:5526
 msgid "Show slopes at mean"
 msgstr "Trego pjerrtësinë në mesatare"
 
-#: gui2/selector.c:5511
+#: gui2/selector.c:5548
 msgid "Use points"
 msgstr "Përdor pika"
 
-#: gui2/selector.c:5515
+#: gui2/selector.c:5552
 msgid "Use lines"
 msgstr "Përdor vija"
 
-#: gui2/selector.c:5573
+#: gui2/selector.c:5610
 msgid "Estimate augmented model"
 msgstr "Vlerëso modelin e shtuar"
 
-#: gui2/selector.c:5578
+#: gui2/selector.c:5615
 msgid "LM test using auxiliary regression"
 msgstr "Testi LM duke përdorur regresion ndihmës"
 
-#: gui2/selector.c:5592
+#: gui2/selector.c:5629
 msgid "Estimate reduced model"
 msgstr "Vlerëso modelin e reduktuar"
 
-#: gui2/selector.c:5597
+#: gui2/selector.c:5634
 msgid "Wald test, based on covariance matrix"
 msgstr "Testi Wald bazuar në matricën e kovariancave"
 
-#: gui2/selector.c:5603
+#: gui2/selector.c:5640
 msgid ""
 "Sequential elimination of variables\n"
 "using two-sided p-value:"
@@ -13912,279 +13930,279 @@ msgstr ""
 "Eliminim i njëpasnjëshëm i ndryshoreve\n"
 "sipas p. kritik të dyanshëm:"
 
-#: gui2/selector.c:5612
+#: gui2/selector.c:5649
 msgid "Test only selected variables"
 msgstr "Testo vetëm ndryshoret e zgjedhura"
 
-#: gui2/selector.c:5646 plugin/addons-i18n.c:37
+#: gui2/selector.c:5683 plugin/addons-i18n.c:37
 msgid "Fixed effects"
 msgstr "Efekte fikse"
 
-#: gui2/selector.c:5650
+#: gui2/selector.c:5687
 msgid "Random effects"
 msgstr "Efekte të rastësishëm"
 
-#: gui2/selector.c:5658
+#: gui2/selector.c:5695
 msgid "Swamy-Arora"
 msgstr "Swamy-Arora"
 
-#: gui2/selector.c:5659
+#: gui2/selector.c:5696
 msgid "Nerlove"
 msgstr "Nerlove"
 
-#: gui2/selector.c:5699
+#: gui2/selector.c:5736
 msgid "Maximum likelihood estimation"
 msgstr "Vlerësim sipas maksimumit të përgjasisë"
 
-#: gui2/selector.c:5703
+#: gui2/selector.c:5740
 msgid "2-step estimation"
 msgstr "Vlerësim në 2 etapa"
 
-#: gui2/selector.c:5715
+#: gui2/selector.c:5752
 msgid "Plain numerical values"
 msgstr "Vlera numerike të paformatuara"
 
-#: gui2/selector.c:5719
+#: gui2/selector.c:5756
 msgid "Show row percentages"
 msgstr "Trego përqindjet sipas rreshtave"
 
-#: gui2/selector.c:5723
+#: gui2/selector.c:5760
 msgid "Show column percentages"
 msgstr "Trego përqindjet sipas shtyllave"
 
-#: gui2/selector.c:5740 gui2/selector.c:5752
+#: gui2/selector.c:5777 gui2/selector.c:5789
 msgid "Exact Maximum Likelihood"
 msgstr "Maksimumi i Përgjasisë të Saktë"
 
-#: gui2/selector.c:5753
+#: gui2/selector.c:5790
 msgid "Conditional Maximum Likelihood"
 msgstr "Maksimumi i Përgjasisë të Kushtëzuar"
 
-#: gui2/selector.c:5821
+#: gui2/selector.c:5858
 msgid "No constant"
 msgstr "Pa konstante"
 
-#: gui2/selector.c:5822
+#: gui2/selector.c:5859
 msgid "Restricted constant"
 msgstr "Konstante e kufizuar"
 
-#: gui2/selector.c:5823
+#: gui2/selector.c:5860
 msgid "Unrestricted constant"
 msgstr "Konstante e pakufizuar"
 
-#: gui2/selector.c:5824
+#: gui2/selector.c:5861
 msgid "Restricted trend"
 msgstr "Prirje e kufizuar"
 
-#: gui2/selector.c:5825
+#: gui2/selector.c:5862
 msgid "Unrestricted trend"
 msgstr "Prirje e pakufizuar"
 
-#: gui2/selector.c:5856
+#: gui2/selector.c:5893
 msgid "CSV"
 msgstr "CSV"
 
-#: gui2/selector.c:5857
+#: gui2/selector.c:5894
 msgid "gretl datafile (.gdt)"
 msgstr "skedë gretl (.gdt)"
 
-#: gui2/selector.c:5858
+#: gui2/selector.c:5895
 msgid "gretl database (.bin)"
 msgstr "bazë të dhënash gretl (.bin)"
 
-#: gui2/selector.c:5859
+#: gui2/selector.c:5896
 msgid "GNU R"
 msgstr "GNU R"
 
-#: gui2/selector.c:5860
+#: gui2/selector.c:5897
 msgid "Octave"
 msgstr "Octave"
 
-#: gui2/selector.c:5861
+#: gui2/selector.c:5898
 msgid "JMulTi"
 msgstr "JMulTi"
 
-#: gui2/selector.c:5862
+#: gui2/selector.c:5899
 msgid "PcGive"
 msgstr "PcGive"
 
-#: gui2/selector.c:5883
+#: gui2/selector.c:5920
 msgid "Select format"
 msgstr "Zgjidhni llojin"
 
-#: gui2/selector.c:6131
+#: gui2/selector.c:6168
 msgid "plot with impulses"
 msgstr "grafik me impulse"
 
-#: gui2/selector.c:6133
+#: gui2/selector.c:6170
 msgid "3D plot"
 msgstr "Grafik 3D"
 
-#: gui2/selector.c:6135
+#: gui2/selector.c:6172
 msgid "multiple scatterplots"
 msgstr "grafik i shumëfishtë"
 
-#: gui2/selector.c:6137
+#: gui2/selector.c:6174
 msgid "factorized plot"
 msgstr "grafik pikash të grupuara"
 
-#: gui2/selector.c:6139
+#: gui2/selector.c:6176
 msgid "factorized boxplot"
 msgstr "boxplot i faktorizuar"
 
-#: gui2/selector.c:6141
+#: gui2/selector.c:6178
 msgid "scatterplot with control"
 msgstr "grafik pikash të korrigjuara"
 
-#: gui2/selector.c:6143
+#: gui2/selector.c:6180
 msgid "functions to package"
 msgstr "funksioni për paketim"
 
-#: gui2/selector.c:6179
+#: gui2/selector.c:6216
 msgid "Variables to test"
 msgstr "Ndryshoret për t'u testuar"
 
-#: gui2/selector.c:6181
+#: gui2/selector.c:6218
 msgid "Endogenous variables"
 msgstr "Ndryshoret e varura"
 
-#: gui2/selector.c:6183
+#: gui2/selector.c:6220
 msgid "First equation regressors"
 msgstr "Regresorët e ekuacionit të parë"
 
-#: gui2/selector.c:6185
+#: gui2/selector.c:6222
 msgid "Independent variables"
 msgstr "Ndryshoret e pavarura"
 
-#: gui2/selector.c:6191
+#: gui2/selector.c:6228
 msgid "Public functions"
 msgstr "Funksione publikë"
 
-#: gui2/selector.c:6463
+#: gui2/selector.c:6500
 msgid "Select variables for logging"
 msgstr "Zgjidhni ndryshoret për logaritmin"
 
-#: gui2/selector.c:6465
+#: gui2/selector.c:6502
 msgid "Select variables for lagging"
 msgstr "Zgjidhni ndryshoret që doni të vononi"
 
-#: gui2/selector.c:6467
+#: gui2/selector.c:6504
 msgid "Select variables to square"
 msgstr "Zgjidhni ndryshoret që doni të ngrini në katror"
 
-#: gui2/selector.c:6469
+#: gui2/selector.c:6506
 msgid "Select variables to difference"
 msgstr "Zgjidhni ndryshoret për diferencën"
 
-#: gui2/selector.c:6471
+#: gui2/selector.c:6508
 msgid "Select variables to log-difference"
 msgstr "Zgjidhni ndryshoret për diferencën e logaritmeve"
 
-#: gui2/selector.c:6473
+#: gui2/selector.c:6510
 msgid "Select variables to add"
 msgstr "Zgjidhni ndryshoret që doni të shtoni"
 
-#: gui2/selector.c:6476
+#: gui2/selector.c:6513
 msgid "Select variables to omit"
 msgstr "Zgjidhni ndryshoret që doni të hiqni"
 
-#: gui2/selector.c:6478
+#: gui2/selector.c:6515
 msgid "Select coefficients to sum"
 msgstr "Zgjidhni koeficientët që doni të mblidhni"
 
-#: gui2/selector.c:6480
+#: gui2/selector.c:6517
 msgid "Select two variables"
 msgstr "Zgjidhni 2 ndryshore"
 
-#: gui2/selector.c:6482
+#: gui2/selector.c:6519
 msgid "Select one or two variables"
 msgstr "Zgjidhni 1 ose 2 ndryshore"
 
-#: gui2/selector.c:6484
+#: gui2/selector.c:6521
 msgid "Confidence region: select two variables"
 msgstr "Zona e besimit: zgjidhni 2 ndryshore"
 
-#: gui2/selector.c:6486
+#: gui2/selector.c:6523
 msgid "Select variables to display"
 msgstr "Zgjidhni ndryshoret që doni të shikoni"
 
-#: gui2/selector.c:6490
+#: gui2/selector.c:6527
 msgid "Select variables to plot"
 msgstr "Zgjidhni ndryshoret që doni të vizatoni në grafik"
 
-#: gui2/selector.c:6499
+#: gui2/selector.c:6536
 msgid "Select variables to save"
 msgstr "Zgjidhni ndryshoret që doni të ruani"
 
-#: gui2/selector.c:6501
+#: gui2/selector.c:6538
 msgid "Select variables to copy"
 msgstr "Zgjidhni ndryshoret që doni të kopjoni"
 
-#: gui2/selector.c:6503
+#: gui2/selector.c:6540
 msgid "Define named list"
 msgstr "Përcakto listën"
 
-#: gui2/selector.c:6733
+#: gui2/selector.c:6770
 msgid "Name of list:"
 msgstr "Emri i listës:"
 
-#: gui2/selector.c:6847
+#: gui2/selector.c:6884
 msgid "Available vars"
 msgstr "Ndryshoret e mundshme"
 
-#: gui2/selector.c:6853
+#: gui2/selector.c:6890
 msgid "Selected vars"
 msgstr "Ndryshoret e zgjedhura"
 
-#: gui2/selector.c:6898
+#: gui2/selector.c:6935
 msgid "All ->"
 msgstr "Të gjithë ->"
 
-#: gui2/selector.c:7082
+#: gui2/selector.c:7119
 msgid "Too many items were selected"
 msgstr "Zgjedhja përmban tepër elementë"
 
-#: gui2/selector.c:7228
+#: gui2/selector.c:7265
 msgid "Copy data"
 msgstr "Kopjo të dhënat"
 
-#: gui2/selector.c:7228
+#: gui2/selector.c:7265
 msgid "Export data"
 msgstr "Eksporto të dhënat"
 
-#: gui2/selector.c:7247
+#: gui2/selector.c:7284
 msgid "Save functions"
 msgstr "Ruaj funksionet"
 
-#: gui2/selector.c:7269
+#: gui2/selector.c:7306
 msgid "Edit package list"
 msgstr "Trego listën e paketave"
 
-#: gui2/selector.c:7653
+#: gui2/selector.c:7690
 msgid "Lags of endogenous variables"
 msgstr "Vonesat e ndryshores së varur"
 
-#: gui2/selector.c:7669
+#: gui2/selector.c:7706
 msgid "Regressors"
 msgstr "Regresorët"
 
-#: gui2/selector.c:7675
+#: gui2/selector.c:7712
 msgid "lags"
 msgstr "vonesat"
 
-#: gui2/selector.c:7681
+#: gui2/selector.c:7718
 msgid "or"
 msgstr "ose"
 
-#: gui2/selector.c:7683
+#: gui2/selector.c:7720
 msgid "specific lags"
 msgstr "vonesa të veçanta"
 
-#: gui2/selector.c:7698
+#: gui2/selector.c:7735
 msgid "Lags of dependent variable"
 msgstr "Vonesat e ndryshores së varur"
 
-#: gui2/selector.c:7709
+#: gui2/selector.c:7746
 msgid "default"
 msgstr "të gjitha ndryshoret"
 
@@ -14613,91 +14631,91 @@ msgstr ""
 "Mesa duket gretl-i ekzekutohet nga \"root\"-i. A doni të vazhdoni me "
 "veprimin e nisur?"
 
-#: gui2/settings.c:867
+#: gui2/settings.c:875
 msgid "gretl: options"
 msgstr "gretl: mundësi zgjedhjeje"
 
-#: gui2/settings.c:970 gui2/settings.c:2269
+#: gui2/settings.c:986 gui2/settings.c:2273
 msgid "Browse..."
 msgstr "Kërko..."
 
-#: gui2/settings.c:1008
+#: gui2/settings.c:1024
 msgid "English (US letter paper)"
 msgstr "English (fletë format US)"
 
-#: gui2/settings.c:1009
+#: gui2/settings.c:1025
 msgid "English (A4 paper)"
 msgstr "English (fletë format A4)"
 
-#: gui2/settings.c:1010
+#: gui2/settings.c:1026
 msgid "Italian"
 msgstr "Italiano"
 
-#: gui2/settings.c:1011
+#: gui2/settings.c:1027
 msgid "Spanish"
 msgstr "Espagnol"
 
-#: gui2/settings.c:1112 plugin/tramo_options.c:351
+#: gui2/settings.c:1128 plugin/tramo_options.c:351
 msgid "General"
 msgstr "Të përgjithshme"
 
-#: gui2/settings.c:1114
+#: gui2/settings.c:1130
 msgid "Databases"
 msgstr "Bazat e të dhënave"
 
-#: gui2/settings.c:1116
+#: gui2/settings.c:1132
 msgid "Programs"
 msgstr "Programet"
 
-#: gui2/settings.c:1118
+#: gui2/settings.c:1134
 msgid "HCCME"
 msgstr "Metoda për korrigjim të HC"
 
-#: gui2/settings.c:1120
+#: gui2/settings.c:1136
 msgid "Manuals"
 msgstr "Manualet"
 
-#: gui2/settings.c:1552
+#: gui2/settings.c:1556
 msgid "This change will take effect when you restart gretl"
 msgstr "Ndryshimi vihet në jetë pas mbylljes së gretl"
 
-#: gui2/settings.c:2116
+#: gui2/settings.c:2120
 msgid "Font for gretl output windows"
 msgstr "Shkrimi për dritaren e rezultatit të gretl"
 
-#: gui2/settings.c:2120
+#: gui2/settings.c:2124
 msgid "Font for menus and labels"
 msgstr "Shkrimi për menutë dhe etiketat"
 
-#: gui2/settings.c:2254
+#: gui2/settings.c:2258
 msgid "Working directory:"
 msgstr "Skedari i punës:"
 
-#: gui2/settings.c:2278
+#: gui2/settings.c:2282
 msgid "On start-up, gretl should use:"
 msgstr "Kur hapet, gretl-i duhet të përdorë:"
 
-#: gui2/settings.c:2285
+#: gui2/settings.c:2289
 msgid "the directory selected above"
 msgstr "skedarin e zgjedhur më sipër"
 
-#: gui2/settings.c:2292
+#: gui2/settings.c:2296
 msgid "the current directory as determined via the shell"
 msgstr "skedarin në përdorim të përcaktuar nëpërmjet konsolës"
 
-#: gui2/settings.c:2302
+#: gui2/settings.c:2306
 msgid "The file selection dialog should:"
 msgstr "Dritarja për zgjedhjen e skedës duhet të tregojë:"
 
-#: gui2/settings.c:2309
+#: gui2/settings.c:2313
 msgid "remember the last-opened folder"
 msgstr "skedarin e fundit të hapur "
 
-#: gui2/settings.c:2318
+#: gui2/settings.c:2322
 msgid "always start in the working directory"
 msgstr "skedarin e zakonshëm të gretl-it "
 
-#: gui2/settings.c:2372
+#: gui2/settings.c:2376
 msgid "gretl: working directory"
 msgstr "gretl: skedari i punës"
 

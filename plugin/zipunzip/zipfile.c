@@ -587,6 +587,7 @@ int put_local_header (zlist *z, FILE *fp)
 
     if (fwrite(z->iname, 1, z->namelen, fp) != z->namelen ||
 	(z->extlen && fwrite(z->extra, 1, z->extlen, fp) != z->extlen)) {
+	fprintf(stderr, " put_local_header: error on fwrite\n");
 	return ZE_TEMP;
     }
 
@@ -630,6 +631,7 @@ int put_central_header (zlist *z, FILE *fp)
     if (fwrite(z->iname, 1, z->namelen, fp) != z->namelen ||
 	(z->cextlen && fwrite(z->cextra, 1, z->cextlen, fp) != z->cextlen) ||
 	(z->comlen && fwrite(z->comment, 1, z->comlen, fp) != z->comlen)) {
+	fprintf(stderr, " put_central_header: error on fwrite\n");
 	return ZE_TEMP;
     }
 
@@ -654,6 +656,7 @@ int put_end_dir (int nentries, guint32 dirsize, guint32 offset, size_t zcomlen,
 
     /* Write the comment, if any */
     if (zcomlen > 0 && fwrite(comment, 1, zcomlen, fp) != zcomlen) {
+	fprintf(stderr, " put_end_dir: error on fwrite\n");
 	return ZE_TEMP;
     }
 

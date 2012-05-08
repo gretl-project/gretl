@@ -252,8 +252,29 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 
 #ifdef G_OS_WIN32
 
+# if 1
+
+/* Let's see if this is more reliable than the attempt
+   (further below) to use GLib
+*/
+
+static FILE *win32_mktemp (char *tmpl, const char *mode)
+{
+    char *fname = mktemp(tmpl);
+    FILE *fp = NULL;
+
+    if (fname != NULL) {
+	fp = gretl_fopen(fname, mode);
+    }
+
+    return fp;
+}
+
+# else
+
 /* work around missing mkstemp() on mingw: use the GLib
-   implementation instead */
+   implementation instead (messed up?) 
+*/
 
 static int win32_mkstemp (char *tmpl)
 {
@@ -282,6 +303,8 @@ static int win32_mkstemp (char *tmpl)
     return fd;
 }
 
+# endif /* Windows mktemp variants */
+
 #endif
 
 /**
@@ -306,7 +329,7 @@ FILE *gretl_mktemp (char *template, const char *mode)
     gretl_error_clear();
 
 #ifdef G_OS_WIN32
-    fd = win32_mkstemp(template);
+    fp = win32_mktemp(template, mode);
 #else
     fd = mkstemp(template); 
 #endif
