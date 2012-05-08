@@ -1725,8 +1725,9 @@ static void print_listed_objects (const char *s,
     const char *p;
     gretl_bundle *b;
     char *name;
+    int err = 0;
 
-    while ((name = gretl_word_strdup(s, &s)) != NULL) {
+    while ((name = gretl_word_strdup(s, &s, OPT_NONE, &err)) != NULL) {
 	if (gretl_is_scalar(name)) {
 	    print_scalar_by_name(name, prn);
 	} else if ((m = get_matrix_by_name(name)) != NULL) {

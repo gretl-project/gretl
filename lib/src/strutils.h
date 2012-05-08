@@ -75,7 +75,8 @@ char *gretl_strndup (const char *src, size_t n);
 
 char *gretl_strdup_printf (const char *format, ...);
 
-char *gretl_word_strdup (const char *src, const char **ptr);
+char *gretl_word_strdup (const char *src, const char **ptr,
+			 gretlopt opt, int *err);
 
 char *gretl_quoted_string_strdup (const char *s, const char **ptr);
 

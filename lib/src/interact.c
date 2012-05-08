@@ -1271,6 +1271,7 @@ static void parse_laglist_spec (const char *s, int *order, char **lname,
 				int *vnum, const DATASET *dset)
 {
     int len = strcspn(s, ",;");
+    int err = 0;
 
     if (len < strlen(s)) {
 	char ostr[VNAMELEN] = {0};
@@ -1283,18 +1284,18 @@ static void parse_laglist_spec (const char *s, int *order, char **lname,
 	} else if (gretl_is_scalar(ostr)) {
 	    *order = gretl_scalar_get_value(ostr);
 	} else {
-	    /* FIXME error condition */
-	    ;
+	    ; /* FIXME error condition */
 	}
 	sscanf(s + len + 1, "%31[^ )]", word);
 	v = series_index(dset, word);
 	if (v < dset->v) {
 	    *vnum = v;
 	} else {
-	    *lname = gretl_word_strdup(s + len + 1, NULL);
+	    *lname = gretl_word_strdup(s + len + 1, NULL, 
+				       OPT_NONE, &err);
 	}
     } else {
-	*lname = gretl_word_strdup(s, NULL);
+	*lname = gretl_word_strdup(s, NULL, OPT_NONE, &err);
     }
 }
 
@@ -1332,7 +1333,8 @@ static int auto_transform_ok (const char *s, int *lpos,
 		parse_laglist_spec(s, &order, &param, &vnum,
 				   dset);
 	    } else {
-		param = gretl_word_strdup(s, NULL);
+		param = gretl_word_strdup(s, NULL, OPT_NONE, 
+					  &cmd->err);
 	    }
 
 	    if (param != NULL) {
@@ -2721,7 +2723,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 	nf--;
     } else if (cmd->ci == VECM) { 
 	free(cmd->extra);
-	cmd->extra = gretl_word_strdup(rem, NULL);
+	cmd->extra = gretl_word_strdup(rem, NULL, OPT_NONE, &cmd->err);
 	rem += strlen(cmd->extra) + 1;
 	nf--;
     }

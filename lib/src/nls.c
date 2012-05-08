@@ -668,11 +668,9 @@ nlspec_add_params_from_line (nlspec *s, const char *str)
 #endif
 
     for (i=0; i<nf && !err; i++) {
-	char *name = gretl_word_strdup(str, &str);
+	char *name = gretl_word_strdup(str, &str, OPT_S, &err);
 
-	if (name == NULL) {
-	    err = E_ALLOC;
-	} else {
+	if (!err) {
 	    err = check_param_name(name);
 	}
 

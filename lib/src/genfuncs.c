@@ -3190,15 +3190,11 @@ int check_declarations (char ***pS, parser *p)
     }
 
     s = p->lh.substr;
-    for (i=0; i<n; i++) {
-	S[i] = gretl_word_strdup(s, &s);
-	if (S[i] == NULL) {
-	    p->err = E_DATA;
-	    break;
-	}
+    for (i=0; i<n && !p->err; i++) {
+	S[i] = gretl_word_strdup(s, &s, OPT_S, &p->err);
     }
 
-    if (*s != '\0') {
+    if (!p->err && *s != '\0') {
 	p->err = E_DATA;
     }
 

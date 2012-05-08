@@ -624,6 +624,10 @@ char *gretl_str_expand (char **orig, const char *add, const char *sep)
  * gretl_word_strdup:
  * @src: the source string.
  * @ptr: location to receive end of word pointer, or NULL.
+ * @opt: can include OPT_S for "strict" operation: in this
+ * case an error is flagged if @src contains any characters
+ * other than 'word' characters (see below), comma and space.
+ * @err: location to receive error code.
  *
  * Copies the first 'word' found in @src, where a word
  * is defined as consisting of alphanumeric characters
@@ -632,10 +636,11 @@ char *gretl_str_expand (char **orig, const char *add, const char *sep)
  * word.
  *
  * Returns: the allocated word or NULL in case no word is
- * found, or if allocation fails.
+ * found, or on error.
  */
 
-char *gretl_word_strdup (const char *src, const char **ptr)
+char *gretl_word_strdup (const char *src, const char **ptr,
+			 gretlopt opt, int *err)
 {
     char *targ = NULL;
 
@@ -651,8 +656,19 @@ char *gretl_word_strdup (const char *src, const char **ptr)
 	const char *p;
 	int len = 0;
 
-	while (*src && !is_word_char(*src)) {
-	    src++;
+	if (opt & OPT_S) {
+	    /* strict: don't allow any junk */
+	    while (*src && (*src == ' ' || *src == ',')) {
+		src++;
+	    }
+	    if (*src && !is_word_char(*src)) {
+		*err = E_PARSE;
+		return NULL;
+	    }
+	} else {
+	    while (*src && !is_word_char(*src)) {
+		src++;
+	    }
 	}
 
 	p = src;
@@ -668,6 +684,9 @@ char *gretl_word_strdup (const char *src, const char **ptr)
 
 	if (len > 0) {
 	    targ = gretl_strndup(p, len);
+	    if (targ == NULL) {
+		*err = E_ALLOC;
+	    }
 	}
     }
 
