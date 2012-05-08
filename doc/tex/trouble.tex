@@ -4,14 +4,50 @@
 \section{Bug reports}
 \label{trouble-bugs}
 
-Bug reports are welcome. Hopefully, you are unlikely to find bugs in
-the actual calculations done by \app{gretl} (although this statement
-does not constitute any sort of warranty). You may, however, come
-across bugs or oddities in the behavior of the graphical interface.
-Please remember that the usefulness of bug reports is greatly enhanced
-if you can be as specific as possible: what \emph{exactly} went wrong,
-under what conditions, and on what operating system?  If you saw an
-error message, what precisely did it say?
+Bug reports are welcome --- well, if not exactly welcome then useful
+and appreciated. Hopefully, you are unlikely to find bugs in the
+actual calculations done by \app{gretl} (although this statement does
+not constitute any sort of warranty). You may, however, come across
+bugs or oddities in the behavior of the graphical interface.  Please
+remember that the usefulness of bug reports is greatly enhanced if you
+can be as specific as possible: what \emph{exactly} went wrong, under
+what conditions, and on what operating system?  If you saw an error
+message, what precisely did it say?
+
+One way of making a bug report more useful is to run the program in
+such a way that you can see (and copy) any additional information that
+gets printed to the \texttt{stderr} output stream. On Linux and Mac
+OS X that's just a matter of launching \app{gretl} from the command
+prompt in a terminal window. On MS Windows it's a bit more complicated
+since \texttt{stderr} is by default ``invisble.'' However, you can
+quite easily set up a special \app{gretl} shortcut that does the job.
+On the Windows desktop, right-click and select ``New shortcut.'' In the
+dialog box that appears, browse to find \texttt{gretlw32.exe} and
+append the \option{debug} flag, as shown in
+Figure~\ref{fig:gretl-shortcut}.  Note that there are two dashes
+before ``debug''.
+
+\begin{figure}[htbp]
+  \centering
+  \caption{Creating a debugging shortcut}
+  \vspace{1ex}
+  \label{fig:gretl-shortcut}
+  \includegraphics[scale=0.8]{figures/gretl-shortcut}
+\end{figure}
+
+When you start \app{gretl} in this mode, a ``console window'' appears
+as well as the \app{gretl} window, and \texttt{stderr} output goes to
+the console. To copy this output, click at the top left of the console
+window for a menu (Figure~\ref{fig:gretl-debug}): first do ``Select all'',
+then ``Copy.'' You can paste the results into Notepad or similar.
+
+\begin{figure}[htbp]
+  \centering
+  \caption{The program with console window}
+  \label{fig:gretl-debug}
+  \includegraphics[scale=0.8]{figures/gretl-debug}
+\end{figure}
+
 
 \section{Auxiliary programs}
 \label{trouble-programs}
@@ -41,7 +77,7 @@ as shown below.
 \begin{center}
   \begin{tabular}{llll}
     & \textit{Graphing} & \textit{Typesetting} & \textit{GNU R}\\
-    X window system & gnuplot & latex, xdvi & R\\
+    X window system & gnuplot & pdflatex & R\\
     MS Windows & wgnuplot.exe & pdflatex & RGui.exe\\
   \end{tabular}
 \end{center}
