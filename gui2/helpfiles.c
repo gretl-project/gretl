@@ -145,6 +145,7 @@ static struct gui_help_item gui_help_items[] = {
     { X12AHELP,       "x12a" },
     { LOESS,          "loess" },
     { NADARWAT,       "nadarwat" },
+    { CLUSTER,        "cluster" },
     { -1,             NULL },
 };
 

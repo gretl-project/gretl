@@ -5502,20 +5502,16 @@ int hc_config_dialog (char *vname, gretlopt opt, GtkWidget *parent)
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
 	gtk_widget_set_sensitive(entry, FALSE);
     }
+
+    /* Buttons: Cancel, OK, Help */
     
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
-
-    /* Cancel button */
     cancel_delete_button(hbox, dialog);
-
-    /* OK button */
     b1 = ok_button(hbox);
     g_signal_connect(G_OBJECT(b1), "clicked", 
 		     G_CALLBACK(hc_ok_callback), &opts);
     gtk_widget_grab_default(b1);
-
-    /* Help button */
-    context_help_button(hbox, 0);
+    context_help_button(hbox, CLUSTER);
 
     gtk_widget_show_all(dialog);
 
