@@ -1972,15 +1972,27 @@
     <function name="fdjac" section="numerical" output="matrix">
       <fnargs>
 	<fnarg type="cvec">b</fnarg>
-	<fnarg type="fncall">f</fnarg>
+	<fnarg type="fncall">fcall</fnarg>
       </fnargs> 
       <description>
 	<para>
-	  Calculates the (forward-difference approximation to the) Jacobian
-	  associated with the vector <argname>b</argname> and the
-	  transformation function specified by the argument
-	  <argname>f</argname>. For more details and examples see the chapter
-	  on numerical methods in <guideref targ="chap-numerical"/>.
+	  Calculates the (forward-difference approximation to the)
+	  Jacobian associated with the <math>n</math>-vector
+	  <argname>b</argname> and the transformation function
+	  specified by the argument <argname>fcall</argname>.  The
+	  function call should take <argname>b</argname> as its first
+	  argument (either straight or in pointer form), followed by
+	  any additional arguments that may be needed, and it should
+	  return an <by r="m" c="1"/> matrix. On successful completion
+	  <lit>fdjac</lit> returns an <by r="m" c="n"/> matrix holding
+	  the Jacobian. Example:
+	</para>
+	<code>
+	  matrix J = fdjac(theta, myfunc(&amp;theta, X))
+	</code>
+	<para>
+	  For more details and examples see the chapter on numerical
+	  methods in <guideref targ="chap-numerical"/>.
 	</para>
 	<para>
 	  <seelist>
