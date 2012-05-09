@@ -628,6 +628,8 @@ static int split_printf_line (const char *s, char *targ, int *sp,
     return 0;
 }
 
+/* supports both printf and sprintf */
+
 static int real_do_printf (const char *line, DATASET *dset, 
 			   PRN *inprn, int t)
 {
@@ -651,6 +653,9 @@ static int real_do_printf (const char *line, DATASET *dset,
 	return E_PARSE;
     }    
 
+    /* Even for printf we'll buffer the output locally in 
+       case there's an error part way through the printing.
+    */
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
     if (err) {
 	return err;
