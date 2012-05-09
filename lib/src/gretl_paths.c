@@ -252,10 +252,8 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 
 #ifdef G_OS_WIN32
 
-# if 1
-
-/* Let's see if this is more reliable than the attempt
-   (further below) to use GLib
+/* We'll not attempt to use mkstemp(), which is not supported
+   by mingw
 */
 
 static FILE *win32_mktemp (char *tmpl, const char *mode)
@@ -269,41 +267,6 @@ static FILE *win32_mktemp (char *tmpl, const char *mode)
 
     return fp;
 }
-
-# else
-
-/* work around missing mkstemp() on mingw: use the GLib
-   implementation instead (messed up?) 
-*/
-
-static int win32_mkstemp (char *tmpl)
-{
-    int fd = -1;
-
-    if (!g_utf8_validate(tmpl, -1, NULL)) {
-	/* g_mkstemp requires UTF-8 input */
-	gchar *pconv;
-	gsize bytes;
-
-	pconv = g_locale_to_utf8(tmpl, -1, NULL, &bytes, NULL);
-	if (pconv != NULL) {
-	    strcpy(tmpl, pconv);
-	    fd = g_mkstemp(tmpl);
-	    g_free(pconv);
-	    pconv = g_locale_from_utf8(tmpl, -1, NULL, &bytes, NULL);
-	    if (pconv != NULL) {
-		strcpy(tmpl, pconv);
-		g_free(pconv);
-	    }
-	}	
-    } else {
-	fd = g_mkstemp(tmpl);
-    }
-
-    return fd;
-}
-
-# endif /* Windows mktemp variants */
 
 #endif
 

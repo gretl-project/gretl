@@ -259,7 +259,7 @@ static char *get_next_arg (const char *s, int *len, int *err)
 	    *err = E_ALLOC;
 	}
     } else {
-	*err = E_PARSE;
+	*err = E_ARGS;
     }
 
 #if PSDEBUG
@@ -631,7 +631,7 @@ static int split_printf_line (const char *s, char *targ, int *sp,
 static int real_do_printf (const char *line, DATASET *dset, 
 			   PRN *inprn, int t)
 {
-    PRN *prn = inprn;
+    PRN *prn = NULL;
     char targ[VNAMELEN];
     char *format = NULL;
     char *args = NULL;
@@ -646,16 +646,15 @@ static int real_do_printf (const char *line, DATASET *dset,
 	return err;
     }
 
-    if (sp) {
-	/* "sprintf" */
-	if (*targ == '\0') {
-	    return E_PARSE;
-	}
-	prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
-	if (err) {
-	    return err;
-	}
-    } 
+    if (sp && *targ == '\0') {
+	/* sprintf: we need a target stringvar */
+	return E_PARSE;
+    }    
+
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+    if (err) {
+	return err;
+    }    
 
 #if PSDEBUG
     fprintf(stderr, "do_printf: line = '%s'\n", line);
@@ -689,16 +688,19 @@ static int real_do_printf (const char *line, DATASET *dset,
 	}
     }
 
-    if (sp) {
-	if (!err) {
-	   err = save_named_string(targ, gretl_print_get_buffer(prn),
-				   inprn);
+    if (!err) {
+	const char *buf = gretl_print_get_buffer(prn);
+
+	if (sp) {
+	    err = save_named_string(targ, buf, inprn);
+	} else {
+	    pputs(inprn, buf);
 	}
-	gretl_print_destroy(prn);
-    } else if (err) {
-	pputc(prn, '\n');
+    } else if (!sp) {
+	pputc(inprn, '\n');
     }
 
+    gretl_print_destroy(prn);
     free(format);
     free(args);
 
