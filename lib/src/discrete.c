@@ -1720,13 +1720,17 @@ static int mnl_add_variance_matrix (MODEL *pmod, mnl_info *mnl,
    Constructing a "quantitative" residual as y[t] - yhat[t] seems
    spurious, since there's no meaningful metric for the "distance"
    between y and yhat when y is an unordered response.
+
+   Note: @yvals is non-NULL if and only if we had to transform the 
+   dependent variable, because it did not form a 0-based sequence of 
+   consecutive integers.
 */
 
 static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl,
 			   const int *yvals)
 {
     double p, pmax;
-    int i, s, t, iymax;
+    int i, s, t, yidx;
     int ncorrect = 0;
 
     s = 0;
@@ -1735,24 +1739,24 @@ static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl,
 	    continue;
 	}
 	pmax = 0.0;
-	iymax = 0;
+	yidx = 0;
 	for (i=0; i<mnl->n; i++) {
 	    p = gretl_matrix_get(mnl->Xb, s, i);
 	    if (p > pmax) {
 		pmax = p;
-		iymax = i + 1;
+		yidx = i + 1;
 	    }
 	}
-	if (iymax == (int) mnl->y->val[s]) {
+	if (yidx == (int) mnl->y->val[s]) {
 	    ncorrect++;
 	    pmod->uhat[t] = 0;
 	} else {
 	    pmod->uhat[t] = 1;
 	}
 	if (yvals != NULL) {
-	    pmod->yhat[t] = yvals[iymax];
+	    pmod->yhat[t] = yvals[yidx];
 	} else {
-	    pmod->yhat[t] = iymax;
+	    pmod->yhat[t] = yidx;
 	}
 	s++;
     }
