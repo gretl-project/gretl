@@ -10,8 +10,8 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-05-08 11:21-0400\n"
-"PO-Revision-Date: 2012-04-24 15:17+0300\n"
-"Last-Translator: A. Talha Yalta\n"
+"PO-Revision-Date: 2012-05-10 13:13+0300\n"
+"Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -4800,14 +4800,13 @@ msgid "Beck--Katz standard errors"
 msgstr "Beck--Katz ölçünlü hataları"
 
 #: lib/src/modelprint.c:1248
-#, fuzzy, c-format
+#, c-format
 msgid "Standard errors clustered by %d values of %s"
-msgstr "Hesseyen'e dayalı ölçünlü hatalar"
+msgstr "Ölçünlü hatalar %2$s değişkenine ait %1$d değer kullanılarak kümelendi"
 
 #: lib/src/modelprint.c:1251
-#, fuzzy
 msgid "Clustered standard errors"
-msgstr "Ölçünlü hataları hesapla"
+msgstr "Kümelemeli ölçünlü hatalar"
 
 #: lib/src/modelprint.c:1267
 msgid "Could not compute Beck-Katz standard errors"
@@ -6286,9 +6285,8 @@ msgid "Gradients:  "
 msgstr "Düşümler:  "
 
 #: lib/src/printout.c:2707
-#, fuzzy
 msgid "norm"
-msgstr "normal"
+msgstr "norm"
 
 #: lib/src/printscan.c:732
 msgid "sscanf: numerical target must be scalar"
@@ -9215,22 +9213,21 @@ msgid "Custom format"
 msgstr "Özel biçim"
 
 #: gui2/dialogs.c:5444
-#, fuzzy
 msgid "Please specify a cluster variable"
-msgstr "Bir üst sınır değişkeni belirtmelisiniz"
+msgstr "Lütfen bir kümeleme değişkeni seçiniz"
 
 #: gui2/dialogs.c:5446
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a known series"
-msgstr "'%s' bir seri adı değil"
+msgstr "'%s' bilinen bir seri değil"
 
 #: gui2/dialogs.c:5481
 msgid "Select from Regular HCCME options"
-msgstr ""
+msgstr "Olağan HCCME seçenekleri arasından seç"
 
 #: gui2/dialogs.c:5488
 msgid "Cluster by"
-msgstr ""
+msgstr "Kümeleme"
 
 #: gui2/dlgutils.c:749
 msgid "Add equation"
@@ -15447,14 +15444,13 @@ msgid "%s, response = %s, treatment = %s:"
 msgstr "%s, tepki = %s, işlem = %s:"
 
 #: plugin/arma.c:178
-#, fuzzy, c-format
+#, c-format
 msgid "MA root %d = %g\n"
-msgstr " Prob(x = %d) = %g\n"
+msgstr "MA kökü %d = %g\n"
 
 #: plugin/arma.c:912
-#, fuzzy
 msgid "MA estimate(s) out of bounds\n"
-msgstr "%s: eksi değer sınırlar dışında.\n"
+msgstr "MA tahmin(ler)i sınırlar dışında\n"
 
 #: plugin/arma.c:1452 plugin/arma_init.c:347 plugin/arma_init.c:1144
 #: plugin/arma_init.c:1222 plugin/arma_init.c:1225
