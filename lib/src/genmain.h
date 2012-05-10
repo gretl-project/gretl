@@ -115,7 +115,7 @@ typedef enum {
     M_MNLPROBS,   /* case probabilities for multinomial logit */
     M_MBUILD_MAX, /* -- SEPARATOR, end of matrix-builders -- */
     M_XLIST,      /* list of regressors */
-    M_YLIST,      /* list of endogenous variables (for systems) */
+    M_YLIST,      /* list of endogenous variables */
     M_LIST_MAX,   /* -- SEPARATOR, end of lists -- */
     M_COMMAND,    /* model command word */
     M_DEPVAR,     /* name of dependent variable */

@@ -787,6 +787,10 @@
 	<para>
 	  If the last model estimated was a VAR, VECM or simultaneous
 	  system, returns the associated list of endogenous variables.
+	  If the last model was a single equation, this accessor gives
+	  a list with a single element, the dependent variable. In the
+	  special case of the biprobit model the list contains two
+	  elements. 
 	</para>
       </description>
     </function>

@@ -1056,30 +1056,37 @@ real_get_obj_list (void *p, GretlObjType type, int idx, int *err)
     int *list = NULL;
     
     if (idx <= 0) {
-	*err = 1;
-	return list;
+	*err = E_DATA;
+	return NULL;
     }
 
-    if (idx == M_XLIST && type == GRETL_OBJ_EQN) {
-	MODEL *pmod = (MODEL *) p;
-
-	list = gretl_model_get_x_list(pmod);
-    } else if (idx == M_YLIST && (type == GRETL_OBJ_VAR ||
-				  type == GRETL_OBJ_SYS)) {
-	const int *ylist = NULL;
-
-	if (type == GRETL_OBJ_VAR) {
-	    ylist = gretl_VAR_get_endo_list((const GRETL_VAR *) p);
+    if (type == GRETL_OBJ_EQN) {
+	if (idx == M_XLIST) {
+	    list = gretl_model_get_x_list((const MODEL *) p);
+	} else if (idx == M_YLIST) {
+	    list = gretl_model_get_y_list((const MODEL *) p);
 	} else {
-	    ylist = system_get_endog_vars((const equation_system *) p);
-	}
-	if (ylist == NULL) {
 	    *err = E_BADSTAT;
-	} else {
-	    list = gretl_list_copy(ylist);
-	    if (list == NULL) {
-		*err = E_ALLOC;
+	}
+    } else if (type == GRETL_OBJ_VAR || type == GRETL_OBJ_SYS) {
+	if (idx == M_YLIST) {
+	    const int *ylist = NULL;
+
+	    if (type == GRETL_OBJ_VAR) {
+		ylist = gretl_VAR_get_endo_list((const GRETL_VAR *) p);
+	    } else if (type == GRETL_OBJ_SYS) {
+		ylist = system_get_endog_vars((const equation_system *) p);
 	    }
+	    if (ylist == NULL) {
+		*err = E_BADSTAT;
+	    } else {
+		list = gretl_list_copy(ylist);
+		if (list == NULL) {
+		    *err = E_ALLOC;
+		}
+	    }
+	} else {
+	    *err = E_BADSTAT;
 	}
     } else {
 	*err = E_BADSTAT;

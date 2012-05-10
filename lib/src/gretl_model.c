@@ -1714,6 +1714,37 @@ int *gretl_model_get_secondary_list (const MODEL *pmod)
 }
 
 /**
+ * gretl_model_get_y_list:
+ * @pmod: model to examine.
+ *
+ * Retrieve an allocated copy of the list of dependent variables
+ * for @pmod: in almost all cases this will have a single 
+ * element; an exception is biprobit.
+ * 
+ * Returns: allocated list or %NULL on error.
+ */
+
+int *gretl_model_get_y_list (const MODEL *pmod)
+{
+    int *list = NULL;
+    
+    if (pmod->ci == BIPROBIT) {
+	list = gretl_list_new(2);
+	if (list != NULL) {
+	    list[1] = pmod->list[1];
+	    list[2] = pmod->list[2];
+	}
+    } else {
+	list = gretl_list_new(1);
+	if (list != NULL) {
+	    list[1] = pmod->list[1];
+	}
+    }
+
+    return list;
+}
+
+/**
  * gretl_model_allocate_storage:
  * @pmod: pointer to model.
  * 

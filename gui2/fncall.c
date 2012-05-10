@@ -2281,6 +2281,10 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     }
 }
 
+/* read "packages.xml" to find out what's what among packages
+   that offer to place themselves in the gretl menu system
+*/
+
 static int read_addons_info (void)
 {
     char fname[FILENAME_MAX];
@@ -2288,8 +2292,7 @@ static int read_addons_info (void)
     xmlNodePtr cur = NULL;
     int err, n = 0;
 
-    sprintf(fname, "%sfunctions%cpackages.xml", 
-	    gretl_home(), SLASH);
+    sprintf(fname, "%sfunctions%cpackages.xml", gretl_home(), SLASH);
 
     err = gretl_xml_open_doc_root(fname, "gretl-package-info", &doc, &cur);
     if (err) {
@@ -2312,7 +2315,6 @@ static int read_addons_info (void)
 		err = 1;
 	    } else {
 		addons = myrealloc(addons, (n+1) * sizeof *addons);
-
 		if (addons == NULL) {
 		    err = 1;
 		} else {
@@ -2325,14 +2327,12 @@ static int read_addons_info (void)
 		    n++;
 		} 
 	    }
-
 	    if (err) {
 		free(name);
 		free(desc);
 		free(path);
 	    }		
 	}
-
 	if (!err) {
 	    cur = cur->next;
 	}
