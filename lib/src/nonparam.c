@@ -257,17 +257,17 @@ static void print_raw_and_ranked (int vx, int vy,
     int t, i = 0;
 
     pputc(prn, '\n');
-    bufspace(obslen, prn);
-    pprintf(prn, "%13s%13s%13s%13s\n\n", dset->varname[vx], _("rank"),
+    bufspace(obslen + 1, prn);
+    pprintf(prn, "%15s%8s%15s%8s\n\n", dset->varname[vx], _("rank"),
 	    dset->varname[vy], _("rank"));
 
     for (t=0; t<T; t++) {
 	print_obs_marker(t + dset->t1, dset, obslen, prn);
 	if (!(na(x[t])) && !(na(y[t]))) {
-	    gretl_printxn(x[t], 15, prn);
-	    pprintf(prn, "%15g", rx[i]);
-	    gretl_printxn(y[t], 15, prn);
-	    pprintf(prn, "%15g", ry[i]);
+	    pprintf(prn, "%#15g", x[t]);
+	    pprintf(prn, "%8g", rx[i]);
+	    pprintf(prn, "%#15g", y[t]);
+	    pprintf(prn, "%8g", ry[i]);
 	    i++;
 	}
 	pputc(prn, '\n');
