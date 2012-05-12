@@ -2369,7 +2369,7 @@ int text_print_fit_resid (const FITRESID *fr, const DATASET *dset,
     fit_resid_head(fr, dset, obslen, prn); 
 
     for (t=fr->t1; t<=fr->t2; t++) {
-	print_obs_marker(t, dset, obslen, prn);
+	real_print_obs_marker(t, dset, obslen, 0, prn);
 
 	yt = fr->actual[t];
 	yf = fr->fitted[t];
@@ -2398,7 +2398,6 @@ int text_print_fit_resid (const FITRESID *fr, const DATASET *dset,
 		    anyast = 1;
 		}
 	    }
-
 	    if (fr->pmax != PMAX_NOT_AVAILABLE) {
 		pprintf(prn, "%13.*f%13.*f%13.*f%s\n", 
 			fr->pmax, yt, fr->pmax, yf, fr->pmax, et,

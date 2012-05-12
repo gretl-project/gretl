@@ -167,7 +167,9 @@ static void single_series_view_print (windata_t *vwin)
 	t = sview->points[i].obsnum;
 	x = sview->points[i].val;
 	print_obs_marker(t, dataset, obslen, prn);
-	if (!na(x)) {
+	if (na(x)) {
+	    pputc(prn, '\n');
+	} else {
 	    pprintf(prn, num_format, x);
 	} 
     }
