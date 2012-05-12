@@ -1899,6 +1899,52 @@ static int add_scalars_to_sheet (Spreadsheet *sheet)
     return 0;
 }
 
+static void maybe_update_scalars_sheet (Spreadsheet *sheet)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+    int ns = n_saved_scalars();
+    int update = 0;
+
+    if (sheet->datarows != ns) {
+	sheet->datarows = ns;
+	update = 1;
+    } else {
+	GtkTreeIter iter;
+	GtkTreeModel *model;
+	gchar *rowname, *numstr;
+	const char *sname;
+	double sx, rx;
+	int i;
+
+	model = gtk_tree_view_get_model(view);
+	gtk_tree_model_get_iter_first(model, &iter);
+
+	for (i=0; i<sheet->datarows; i++) {
+	    gtk_tree_model_get(model, &iter, 0, &rowname, 1, &numstr, -1);
+	    rx = atof(numstr);
+	    sname = gretl_scalar_get_name(i);
+	    sx = gretl_scalar_get_value_by_index(i);
+	    if (strcmp(rowname, sname) || rx != sx) {
+		update = 1;
+	    }
+	    g_free(rowname);
+	    g_free(numstr);
+	    if (update) {
+		break;
+	    }
+	    gtk_tree_model_iter_next(model, &iter);
+	}
+    }
+
+    if (update) {
+	GtkListStore *store;
+
+	store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
+	gtk_list_store_clear(store);
+	add_scalars_to_sheet(sheet);
+    }
+}
+
 static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd c)
 {
     gchar rowlabel[OBSLEN];
@@ -3253,6 +3299,7 @@ void edit_scalars (void)
     static Spreadsheet *sheet; 
 
     if (sheet != NULL) {
+	maybe_update_scalars_sheet(sheet);
 	gtk_window_present(GTK_WINDOW(sheet->win));
 	return;
     }
@@ -3268,6 +3315,13 @@ void edit_scalars (void)
     sheet->datacols = 1;
 
     real_show_spreadsheet(&sheet, SHEET_EDIT_SCALARS, 0);
+}
+
+void sync_scalars_window (void)
+{
+    if (scalars_sheet != NULL) {
+	maybe_update_scalars_sheet(scalars_sheet);
+    }
 }
 
 struct gui_matrix_spec {

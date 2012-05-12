@@ -34,6 +34,8 @@ void show_spreadsheet_for_series (int varnum);
 
 void edit_scalars (void);
 
+void sync_scalars_window (void);
+
 void gui_new_matrix (void);
 
 void edit_user_matrix_by_name (const char *name);

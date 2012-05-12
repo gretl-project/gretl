@@ -128,11 +128,10 @@ static void single_series_view_print (windata_t *vwin)
 {
     series_view *sview = (series_view *) vwin->data;
     char num_format[32];
-    char obslabel[OBSLEN];
-    int thislen, obslen = 0;
     double x;
     PRN *prn;
-    int i, t, err = 0;
+    int i, t, obslen;
+    int err = 0;
 
     if (bufopen(&prn)) {
 	return;
@@ -153,34 +152,23 @@ static void single_series_view_print (windata_t *vwin)
 	goto finalize;
     }
 
-    obslen = max_obs_label_length(dataset);
-    if (obslen < 2) {
-	obslen = -2;
-    }
+    obslen = max_obs_marker_length(dataset);
 
     if (sview->format == 'g') {
-	sprintf(num_format, "%%*s %%#13.%dg\n", sview->digits);
+	sprintf(num_format, "%%#13.%dg\n", sview->digits);
     } else {
-	sprintf(num_format, "%%*s %%13.%df\n", sview->digits);
+	sprintf(num_format, "%%13.%df\n", sview->digits);
     }
 	
-    pprintf(prn, "\n%*s ", obslen, "");
+    pprintf(prn, "\n%*s ", obslen, " ");
     pprintf(prn, "%13s\n\n", dataset->varname[sview->varnum]);
 
     for (i=0; i<sview->npoints; i++) {
 	t = sview->points[i].obsnum;
 	x = sview->points[i].val;
-	if (dataset_has_markers(dataset)) {
-	    strcpy(obslabel, dataset->S[t]);
-	    thislen = get_utf_width(obslabel, obslen);
-	} else {
-	    ntodate(obslabel, t, dataset);
-	    thislen = obslen;
-	}
-	if (na(x)) {
-	    pprintf(prn, "%*s\n", thislen, obslabel);
-	} else {
-	    pprintf(prn, num_format, thislen, obslabel, x);
+	print_obs_marker(t, dataset, obslen, prn);
+	if (!na(x)) {
+	    pprintf(prn, num_format, x);
 	} 
     }
 

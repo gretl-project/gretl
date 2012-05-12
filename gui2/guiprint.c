@@ -868,6 +868,7 @@ int text_print_x_y_fitted (int vx, int vy, const double *f,
     char label[VNAMELEN];
     const double *x = dset->Z[vx];
     const double *y = dset->Z[vy];
+    int obslen = max_obs_marker_length(dset);
     int t1 = dset->t1;
     int t2 = dset->t2;
     int t, pmax, err = 0;
@@ -892,7 +893,7 @@ int text_print_x_y_fitted (int vx, int vy, const double *f,
     ntodate(obs2, t2, dset);
     pprintf(prn, _("Model estimation range: %s - %s"), obs1, obs2);
     pputc(prn, '\n');
-    pputs(prn, "\n         ");
+    bufspace(obslen, prn);
 
     for (t=0; t<3; t++) {
 	if (t == 0) strcpy(label, dset->varname[vx]);
@@ -904,10 +905,9 @@ int text_print_x_y_fitted (int vx, int vy, const double *f,
     pputs(prn, "\n\n");
 
     pmax = get_precision(y, dset->n, 6);
-    obs_marker_init(dset);
 
     for (t=t1; t<=t2; t++) {
-	print_obs_marker(t, dset, prn);
+	print_obs_marker(t, dset, obslen, prn);
 	if (na(x[t])) {
 	    /* nothing to print */
 	    pputc(prn, '\n');

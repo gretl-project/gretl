@@ -49,11 +49,9 @@ print_contemp_covariance_matrix (const gretl_matrix *m,
 
 int outcovmx (MODEL *pmod, const DATASET *dset, PRN *prn);
 
-int max_obs_label_length (const DATASET *dset);
+int max_obs_marker_length (const DATASET *dset);
 
-void obs_marker_init (const DATASET *dset);
-
-void print_obs_marker (int t, const DATASET *dset, PRN *prn);
+void print_obs_marker (int t, const DATASET *dset, int len, PRN *prn);
 
 void varlist (const DATASET *dset, PRN *prn);
 

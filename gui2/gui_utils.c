@@ -2381,9 +2381,8 @@ static void mnl_probs_callback (GtkAction *action, gpointer p)
 	    gretl_matrix_free(P);
 	} else {
 	    const int *yvals = gretl_model_get_data(pmod, "yvals");
-	    int obslen = max_obs_label_length(dataset);
+	    int obslen = max_obs_marker_length(dataset);
 	    int i, j, t = gretl_matrix_get_t1(P);
-	    char obslabel[OBSLEN];
 	    double x;
 
 	    pprintf(prn, "\nEstimated outcome probabilities for %s\n\n",
@@ -2400,15 +2399,7 @@ static void mnl_probs_callback (GtkAction *action, gpointer p)
 	       observation strings */
 
 	    for (i=0; i<P->rows; i++) {
-		int thislen = obslen;
-
-		if (dataset_has_markers(dataset)) {
-		    strcpy(obslabel, dataset->S[t]);
-		    thislen = get_utf_width(obslabel, obslen);
-		} else {
-		    ntodate(obslabel, t, dataset);
-		}
-		pprintf(prn, "%*s", thislen, obslabel);
+		print_obs_marker(t, dataset, obslen, prn);
 		for (j=0; j<P->cols; j++) {
 		    x = gretl_matrix_get(P, i, j);
 		    if (xna(x)) {

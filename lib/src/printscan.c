@@ -41,28 +41,23 @@ static void printf_series (int v, const DATASET *dset,
 			   int wstar, int pstar,
 			   PRN *prn)
 {
-    char label[OBSLEN];
+    int obslen = max_obs_marker_length(dset);
     double x;
-    int n, t;
-
-    n = max_obs_label_length(dset) + 1;
+    int t;
 
     for (t=dset->t1; t<=dset->t2; t++) {
-	get_obs_string(label, t, dset);
-	pprintf(prn, "%*s ", n, label);
+	print_obs_marker(t, dset, obslen, prn);
 	x = dset->Z[v][t];
-	if (na(x)) {
-	    pputc(prn, '\n');
-	    continue;
-	}
-	x *= (1 + 0x1p-52);
-	if (wstar && pstar) {
-	    pprintf(prn, fmt, wid, prec, x);
-	} else if (wstar || pstar) {
-	    wid = (wstar)? wid : prec;
-	    pprintf(prn, fmt, wid, x);
-	} else {
-	    pprintf(prn, fmt, x);
+	if (!na(x)) {
+	    x *= (1 + 0x1p-52);
+	    if (wstar && pstar) {
+		pprintf(prn, fmt, wid, prec, x);
+	    } else if (wstar || pstar) {
+		wid = (wstar)? wid : prec;
+		pprintf(prn, fmt, wid, x);
+	    } else {
+		pprintf(prn, fmt, x);
+	    }
 	}
 	pputc(prn, '\n');
     }

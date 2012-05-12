@@ -297,24 +297,28 @@ static void leverage_print (const MODEL *pmod,
 			    PRN *prn)
 {
     double lp = 2.0 * pmod->ncoeff / pmod->nobs;
+    int obslen = max_obs_marker_length(dset);
     int t, j, gotlp = 0;
 
-    pputs(prn, "        ");
+    if (obslen < 8) {
+	obslen = 8;
+    }
+
+    bufspace(obslen, prn);
     pprintf(prn, "%*s", UTF_WIDTH(_("residual"), 16), _("residual"));
     pprintf(prn, "%*s", UTF_WIDTH(_("leverage"), 16), _("leverage"));
     pprintf(prn, "%*s", UTF_WIDTH(_("influence"), 16), _("influence"));
     pprintf(prn, "%*s", UTF_WIDTH(_("DFFITS"), 14), _("DFFITS"));
-    pputs(prn, "\n        ");
+    pputc(prn, '\n');
+    bufspace(obslen, prn);
     pputs(prn, "            u          0<=h<=1         u*h/(1-h)\n\n");
-
-    obs_marker_init(dset);
 
     for (t=pmod->t1, j=0; t<=pmod->t2; t++, j++) {
 	double h, st, d, f;
 	char fstr[32];
 
 	if (na(pmod->uhat[t])) {
-	    print_obs_marker(t, dset, prn);
+	    print_obs_marker(t, dset, obslen, prn);
 	    pputc(prn, '\n');
 	    continue;
 	}
@@ -331,7 +335,7 @@ static void leverage_print (const MODEL *pmod,
 	    sprintf(fstr, "%15s", _("undefined"));
 	}
 	    
-	print_obs_marker(t, dset, prn);
+	print_obs_marker(t, dset, obslen, prn);
 	
 	st = gretl_matrix_get(S, j, 2);
 	d = st * sqrt(h / (1.0 - h));

@@ -1888,16 +1888,16 @@ static void print_NR_status (int status, double crittol, double gradtol,
 			     double sumgrad, PRN *prn)
 {
     if (status == GRADTOL_MET) {
-	pprintf(prn, "Gradient within tolerance (%g)\n", gradtol);
+	pprintf(prn, _("Gradient within tolerance (%g)\n"), gradtol);
     } else if (status == CRITTOL_MET) {
-	pprintf(prn, "Successive criterion values within tolerance (%g)\n",
+	pprintf(prn, _("Successive criterion values within tolerance (%g)\n"),
 		crittol);
     } else if (status == STEPMIN_MET) {
 	if (sumgrad > 0) {
-	    pprintf(prn, "Warning: couldn't improve criterion (gradient = %g)\n",
+	    pprintf(prn, _("Warning: couldn't improve criterion (gradient = %g)\n"),
 		    sumgrad);
 	} else {
-	    pprintf(prn, "Warning: couldn't improve criterion\n");
+	    pprintf(prn, _("Warning: couldn't improve criterion\n"));
 	}
     }
 }

@@ -623,11 +623,17 @@ static int tex_print_coeff_custom (const model_coeff *mc, PRN *prn)
 	if (colspec[0][0] || colspec[1][0] || colspec[2][0]) {
 	    pputs(prn, " & ");
 	}
-	/* p-value */
-	if (na(mc->pval)) {
-	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", A_("undefined"));
+	/* p-value (or perhaps slope) */
+	if (mc->show_pval) {
+	    if (na(mc->pval)) {
+		pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", A_("undefined"));
+	    } else {
+		pprintf(prn, colspec[3], mc->pval);
+	    }
+	} else if (!na(mc->slope)) {
+	    pprintf(prn, colspec[3], mc->slope);
 	} else {
-	    pprintf(prn, colspec[3], mc->pval);
+	    pprintf(prn, "\\multicolumn{1}{c}{}");
 	}
     }  
 
@@ -729,7 +735,9 @@ void tex_print_coeff (const model_coeff *mc, PRN *prn)
 
     *col4 = '\0';
 
-    if (!na(mc->slope)) {
+    if (!mc->show_pval && na(mc->slope)) {
+	strcpy(col4, "\\multicolumn{2}{c}{}");
+    } else if (!na(mc->slope)) {
 	tex_rl_double(mc->slope, col4);
     } else if (mc->show_pval) {
 	if (!na(mc->pval)) {

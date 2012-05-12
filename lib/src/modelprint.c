@@ -4987,9 +4987,9 @@ static void logit_probit_stats (const MODEL *pmod, PRN *prn)
 	if (correct > 0 || df) {
 	    pputs(prn, "\\vspace{1em}\n\\begin{raggedright}\n");
 	    if (correct > 0) {
-		pprintf(prn, "%s = %d (%.1f percent)\\\\\n", 
+		pprintf(prn, "%s = %d (%.1f %s)\\\\\n", 
 			A_("Number of cases `correctly predicted'"), 
-			correct, pc_correct);
+			correct, pc_correct, A_("percent"));
 	    }
 	    if (df) {
 		pprintf(prn, "%s: $\\chi^2(%d)$ = %.3f [%.4f]\\\\\n",

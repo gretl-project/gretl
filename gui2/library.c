@@ -7992,6 +7992,7 @@ static int execute_script (const char *runfile, const char *buf,
     }
 
     refresh_data();
+    sync_scalars_window();
     set_iter_print_func(gui_iter_print);
 
     if (exec_err) {
@@ -8555,6 +8556,8 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	    record_command_verbatim();
 	    gretl_print_destroy(echo);
 	}
+	/* and check for display of scalars */
+	sync_scalars_window();
     }
 
     /* save specific output buffer? */

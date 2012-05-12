@@ -219,14 +219,14 @@ void print_centered (const char *s, int width, PRN *prn)
 }
 
 /**
- * max_obs_label_length:
+ * max_obs_marker_length:
  * @dset: dataset information.
  *
- * Returns: the length of the longest observation label
+ * Returns: the length of the longest observation marker
  * within the current sample range.
  */
 
-int max_obs_label_length (const DATASET *dset)
+int max_obs_marker_length (const DATASET *dset)
 {
     char s[OBSLEN];
     int t, n, nmax = 0;
@@ -1156,7 +1156,7 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 
 static void fit_resid_head (const FITRESID *fr, 
 			    const DATASET *dset, 
-			    PRN *prn)
+			    int obslen, PRN *prn)
 {
     char label[16];
     char obs1[OBSLEN], obs2[OBSLEN];
@@ -1187,8 +1187,9 @@ static void fit_resid_head (const FITRESID *fr,
 		    GRETL_DIGITS, fr->sigma);
 	}
     }
-    
-    pputs(prn, "\n         ");
+
+    pputc(prn, '\n');
+    bufspace(obslen, prn);
 
     for (i=1; i<4; i++) {
 	if (i == 1) strcpy(label, fr->depvar);
@@ -1548,46 +1549,23 @@ static char *bufprintnum (char *buf, double x, int signif,
     return buf;
 }
 
-/**
- * obs_marker_init:
- * @dset: data information struct.
- *
- * Check the length to which observation markers should
- * be printed, in a tabular context.  (We don't want to
- * truncate 10-character date strings by chopping off the day.)
- */
-
-static int oprintlen = 8;
-static int non_ascii_obs = 0;
-
-void obs_marker_init (const DATASET *dset)
+static void real_print_obs_marker (int t, const DATASET *dset, 
+				   int len, int pad, PRN *prn)
 {
-    int t, len, datestrs = 0;
+    char tmp[OBSLEN] = {0};
+    int thislen = len;
 
-    non_ascii_obs = 0;
-
-    if (dset->markers) {
-	for (t=0; t<dset->n; t++) {
-	    len = strlen(dset->S[t]);
-	    if (len == 10 && 
-		isdigit(dset->S[t][0]) &&
-		strchr(dset->S[t], '/')) {
-		datestrs = 1;
-		break;
-	    }
-	    if (g_utf8_strlen(dset->S[t], -1) < len) {
-		non_ascii_obs = 1;
-		break;
-	    }
-	}
-    } 
-
-    if (non_ascii_obs) {
-	oprintlen = 8;
-    } else if (datestrs) {
-	oprintlen = 10;
+    if (dataset_has_markers(dset)) {
+	strcpy(tmp, dset->S[t]);
+	thislen = get_utf_width(tmp, len);
     } else {
-	oprintlen = 8;
+	ntodate(tmp, t, dset);
+    }
+
+    if (pad) {
+	pprintf(prn, "%*s ", thislen, tmp);
+    } else {
+	pprintf(prn, "%*s", thislen, tmp);
     }
 }
 
@@ -1595,25 +1573,15 @@ void obs_marker_init (const DATASET *dset)
  * print_obs_marker:
  * @t: observation number.
  * @dset: data information struct.
+ * @len: width to which to print.
  * @prn: gretl printing struct.
  *
  * Print a string (label, date or obs number) representing the given @t.
  */
 
-void print_obs_marker (int t, const DATASET *dset, PRN *prn)
+void print_obs_marker (int t, const DATASET *dset, int len, PRN *prn)
 {
-    char tmp[OBSLEN] = {0};
-
-    if (non_ascii_obs) {
-	ntodate(tmp, t, dset);
-	pprintf(prn, "%8s ", tmp);
-    } else if (dset->markers) { 
-	strncat(tmp, dset->S[t], oprintlen);
-	pprintf(prn, "%*s ", oprintlen, tmp); 
-    } else {
-	ntodate(tmp, t, dset);
-	pprintf(prn, "%8s ", tmp);
-    }
+    real_print_obs_marker(t, dset, len, 1, prn);
 }
 
 /**
@@ -1837,7 +1805,6 @@ static int print_by_obs (int *list,
     int i, j, j0, k, t, nrem;
     int colwidth, obslen = 0;
     int *pmax = NULL;
-    char obslabel[OBSLEN];
     char buf[128];
     int blist[BMAX+1];
     int gprec = 6;
@@ -1852,7 +1819,7 @@ static int print_by_obs (int *list,
     if (opt & OPT_N) {
 	obslen = obslen_from_t(dset->t2);
     } else {
-	obslen = max_obs_label_length(dset);
+	obslen = max_obs_marker_length(dset);
     }
 
     colwidth = column_width_from_list(list, dset);
@@ -1873,24 +1840,15 @@ static int print_by_obs (int *list,
 	varheading(blist, obslen, colwidth, dset, 0, prn);
 	
 	for (t=dset->t1; t<=dset->t2; t++) {
-	    int thislen = obslen;
-
 	    if (screenvar && dset->Z[screenvar][t] == 0.0) {
 		/* screened out by boolean */
 		continue;
 	    }
-
 	    if (opt & OPT_N) {
-		sprintf(obslabel, "%d", t + 1);
-	    } else if (dataset_has_markers(dset)) {
-		strcpy(obslabel, dset->S[t]);
-		thislen = get_utf_width(obslabel, obslen);
+		pprintf(prn, "%*d", obslen, t + 1);
 	    } else {
-		ntodate(obslabel, t, dset);
+		real_print_obs_marker(t, dset, obslen, 0, prn);
 	    }
-
-	    pprintf(prn, "%*s", thislen, obslabel);
-
 	    for (i=1, j=j0; i<=blist[0]; i++, j++) {
 		x = dset->Z[blist[i]][t];
 		if (na(x)) {
@@ -1900,7 +1858,6 @@ static int print_by_obs (int *list,
 		    pputs(prn, buf);
 		}
 	    }
-
 	    pputc(prn, '\n');
 	} 
     } 
@@ -2085,7 +2042,7 @@ int print_series_with_format (const int *list,
 	sprintf(format, "%%#.%dg", digits);
     }
 
-    obslen = max_obs_label_length(dset);
+    obslen = max_obs_marker_length(dset);
 
     k = 1;
 
@@ -2243,7 +2200,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
 	ncols = list[0] + 1;
     } else {
 	colwidth = column_width_from_list(list, dset);
-	obslen = max_obs_label_length(dset);
+	obslen = max_obs_marker_length(dset);
     }
 
     if (rtf) {
@@ -2405,13 +2362,14 @@ int text_print_fit_resid (const FITRESID *fr, const DATASET *dset,
     int kstep = fr->method == FC_KSTEP;
     int t, anyast = 0;
     double yt, yf, et;
+    int obslen;
     int err = 0;
 
-    fit_resid_head(fr, dset, prn); 
-    obs_marker_init(dset);
+    obslen = max_obs_marker_length(dset);
+    fit_resid_head(fr, dset, obslen, prn); 
 
     for (t=fr->t1; t<=fr->t2; t++) {
-	print_obs_marker(t, dset, prn);
+	print_obs_marker(t, dset, obslen, prn);
 
 	yt = fr->actual[t];
 	yf = fr->fitted[t];
@@ -2492,7 +2450,7 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
     int do_errs = (fr->sderr != NULL);
-    int pmax = fr->pmax;
+    int obslen, pmax = fr->pmax;
     int errpmax = fr->pmax;
     int quiet = (opt & OPT_Q);
     double *maxerr = NULL;
@@ -2527,11 +2485,16 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 	}
     }
 
+    obslen = max_obs_marker_length(dset);
+    if (obslen < 8) {
+	obslen = 8;
+    }
+
     if (!quiet) {
 	pputc(prn, '\n');
     }
 
-    pprintf(prn, "     %s ", _("Obs"));
+    bufspace(obslen + 1, prn);
     pprintf(prn, "%12s", fr->depvar);
     pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
 
@@ -2553,10 +2516,8 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 	}
     }
 
-    obs_marker_init(dset);
-
     for (t=fr->t0; t<=fr->t2; t++) {
-	print_obs_marker(t, dset, prn);
+	print_obs_marker(t, dset, obslen, prn);
 	fcast_print_x(fr->actual[t], 15, pmax, prn);
 
 	if (na(fr->fitted[t])) {

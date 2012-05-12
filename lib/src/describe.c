@@ -5686,9 +5686,7 @@ real_mahalanobis_distance (const int *list, DATASET *dset,
 
     if (!err) {
 	int k = gretl_vector_get_length(means);
-	char obs[OBSLEN];
-	int miss, savevar = 0;
-	int thislen, obslen;
+	int miss, obslen, savevar = 0;
 	double m, x, xbar;
 	int i, t, vi;
 
@@ -5704,7 +5702,10 @@ real_mahalanobis_distance (const int *list, DATASET *dset,
 	}
 	pputc(prn, '\n');
 
-	obslen = max_obs_label_length(dset);
+	obslen = max_obs_marker_length(dset);
+	if (obslen < 8) {
+	    obslen = 8;
+	}
 
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    miss = 0;
@@ -5723,15 +5724,7 @@ real_mahalanobis_distance (const int *list, DATASET *dset,
 
 	    m = miss ? NADBL : gretl_scalar_qform(xdiff, S, &err);
 
-	    if (dataset_has_markers(dset)) {
-		strcpy(obs, dset->S[t]);
-		thislen = get_utf_width(obs, obslen);
-	    } else {
-		ntodate(obs, t, dset);
-		thislen = obslen;
-	    }
-
-	    pprintf(prn, "%*s ", thislen, obs);
+	    print_obs_marker(t, dset, obslen, prn);
 
 	    if (err || miss) {
 		pprintf(prn, "NA\n");
