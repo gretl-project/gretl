@@ -3997,10 +3997,10 @@ static NODE *in_list_node (NODE *l, NODE *r, parser *p)
 	    } else {
 		node_type_error(F_INLIST, 2, VEC, r, p);
 	    }
-
 	    if (k >= 0) {
 		ret->v.xval = in_gretl_list(list, k);
-	    }	
+	    }
+	    free(list);
 	}
     }	
 
