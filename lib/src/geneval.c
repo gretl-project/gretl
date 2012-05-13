@@ -2394,8 +2394,8 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
 	    } else {
 		ret->v.xval = umatrix_set_names_from_list(m, list, p->dset,
 							  byrow);
-		free(list);
 	    }
+	    free(list);
 	}
     }
 
@@ -10595,6 +10595,11 @@ static gretl_matrix *matrix_from_scratch (parser *p, int tmp,
 {
     gretl_matrix *m = NULL;
 
+#if EDEBUG
+    fprintf(stderr, "matrix_from_scratch: reusable = %d\n",
+	    reusable(p));
+#endif
+
     if (p->ret->t == NUM) {
 	m = gretl_matrix_from_scalar(p->ret->v.xval);
 	if (m == NULL) {
@@ -11602,7 +11607,11 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 #if EDEBUG
     fprintf(stderr, "realgen: p->tree at %p, type %d\n", (void *) p->tree, 
 	    p->tree->t);
-    fprintf(stderr, " p->ch = '%c', p->sym = %d\n", p->ch, p->sym);
+    if (p->ch == '\0') {
+	fprintf(stderr, " p->ch = NUL, p->sym = %d\n", p->sym);
+    } else {
+	fprintf(stderr, " p->ch = '%c', p->sym = %d\n", p->ch, p->sym);
+    }
 #endif
 
     if (p->sym != EOT || p->ch != 0) {

@@ -294,6 +294,10 @@ int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
 	return E_UNKVAR;
     }
 
+#if MDEBUG
+    fprintf(stderr, "user_matrix_replace_matrix (%s)\n", u->name);
+#endif
+
     if (M != u->M) {
 	if (!data_is_bundled(u->M)) {
 #if MDEBUG

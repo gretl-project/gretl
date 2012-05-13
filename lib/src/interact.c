@@ -1710,7 +1710,7 @@ int plausible_genr_start (const char *s, const DATASET *dset)
 	if (sscanf(s, "%15[^[ .+*/%^~|=-]", word)) {
 	    s += strlen(word);
 	    while (*s == ' ') s++;
-	    if (strspn(s, ok) && check_varname(word) == 0) {
+	    if (strspn(s, ok) > 0 && check_varname(word) == 0) {
 		ret = 1;
 	    }
 	}
