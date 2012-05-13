@@ -10656,6 +10656,9 @@ static void assign_to_matrix (parser *p, int *prechecked)
 
     if (LHS_matrix_reusable(p)) {
 	/* result is conformable with original matrix */
+#if EDEBUG
+	fprintf(stderr, "assign_to_matrix: LHS is reusable\n");
+#endif
 	m = p->lh.m0;
 	if (p->ret->t == NUM) {
 	    x = p->ret->v.xval;
@@ -10672,6 +10675,9 @@ static void assign_to_matrix (parser *p, int *prechecked)
 	}
     } else {
 	/* replace the old matrix with result */
+#if EDEBUG
+	fprintf(stderr, "assign_to_matrix: replacing\n");
+#endif
 	m = grab_or_copy_matrix_result(p, prechecked);
 	if (!p->err) {
 	    p->err = user_matrix_replace_matrix_by_name(p->lh.name, m);

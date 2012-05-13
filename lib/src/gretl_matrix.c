@@ -8912,6 +8912,9 @@ static int gretl_matrix_copy_info (gretl_matrix *targ,
 
     if (targ->info == NULL) {
 	targ->info = malloc(sizeof *targ->info);
+    } else {
+	free_strings_array(targ->info->colnames, targ->cols);
+	free_strings_array(targ->info->rownames, targ->rows);
     }
 
     if (targ->info == NULL) {
