@@ -919,9 +919,9 @@ static void nist_intro (PRN *prn)
 	  "Statistical Software: Part I\", The American Statistician, 52 "
 	  "(1998), pp. 358-366.\n\n");
 
-    pputs(prn, "Each test cases is run twice, once using the standard "
+    pputs(prn, "Each test case is run twice, once using the standard "
 	  "linear regression calculation in the gretl library and once "
-	  "using mulitple precision arithmetic.\n\n");
+	  "in multiple precision arithmetic using the GMP library.\n\n");
 
     pputs(prn, "For more information, please see\n"
 	  "http://www.itl.nist.gov/div898/strd/general/main.html");
