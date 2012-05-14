@@ -1327,8 +1327,8 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
  * @XX: X'X matrix.
  * 
  * Compute and set on @pmod a variance matrix that is "clustered"
- * by the value of a variable via the --cluster=foo command-line
- * option.
+ * by the value of a selected variable via the --cluster=foo 
+ * command-line option.
  *
  * Returns: 0 on success, non-zero code on error.
  */
