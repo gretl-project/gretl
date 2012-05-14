@@ -1,7 +1,7 @@
 Version 1.9.9, in progress
 - Add (limited) support for Stata under the "foreign" command
-- New accessor $ylist: returns the list of endoegnous variables for a
-  VAR, VECM or simultaneous system
+- New accessor $ylist: returns the list of endogenous variables from
+  the last system or model estimated
 - Fix encoding for Polish translation
 - Fix bug: in logging commands entered via the gretl console, options
   were being omitted
@@ -15,6 +15,7 @@ Version 1.9.9, in progress
   model includes non-positive regressors
 - Improvements to syntax highlighting in script editor 
 - MS Windows build: update cross-compiler to gcc-4.6.3
+- MS Windows build: fix inconsistent zlib headers
 - Internals: clean up the Minpack sources that we use for nls
 
 2012-03-29 version 1.9.8
