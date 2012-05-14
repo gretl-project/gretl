@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-05-12 16:36-0400\n"
-"PO-Revision-Date: 2012-05-06 18:56+0100\n"
+"PO-Revision-Date: 2012-05-13 15:57+0100\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -2834,22 +2834,21 @@ msgstr "Cálculos de gradientes: %d\n"
 #: lib/src/gretl_bfgs.c:1891
 #, c-format
 msgid "Gradient within tolerance (%g)\n"
-msgstr ""
+msgstr "Gradiente dentro da tolerância (%g)\n"
 
 #: lib/src/gretl_bfgs.c:1893
 #, c-format
 msgid "Successive criterion values within tolerance (%g)\n"
-msgstr ""
+msgstr "Valores de critério sucessivos dentro da tolerância (%g)\n"
 
 #: lib/src/gretl_bfgs.c:1897
 #, c-format
 msgid "Warning: couldn't improve criterion (gradient = %g)\n"
-msgstr ""
+msgstr "Aviso: não se conseguiu melhorar o critério (gradiente = %g)\n"
 
 #: lib/src/gretl_bfgs.c:1900
-#, fuzzy
 msgid "Warning: couldn't improve criterion\n"
-msgstr "Aviso: Falha no cálculo da Hessiana numérica"
+msgstr "Aviso: não se conseguiu melhorar o critério\n"
 
 #: lib/src/gretl_bfgs.c:2036
 msgid "Initial value of objective function is not finite"
@@ -5499,9 +5498,8 @@ msgid "Number of cases `correctly predicted'"
 msgstr "Número de casos 'correctamente preditos'"
 
 #: lib/src/modelprint.c:4992
-#, fuzzy
 msgid "percent"
-msgstr "Intercepção em"
+msgstr "porcento"
 
 #: lib/src/modelprint.c:5014 plugin/anova.c:502
 msgid "Analysis of Variance"
@@ -7272,7 +7270,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 6 de maio de 2012."
+"Tradução de 13 de maio de 2012."
 
 #: gui2/about.c:164
 msgid "License"
@@ -9286,22 +9284,21 @@ msgid "Custom format"
 msgstr "Formato personalizado"
 
 #: gui2/dialogs.c:5444
-#, fuzzy
 msgid "Please specify a cluster variable"
-msgstr "Tem que especificar uma variável limite superior"
+msgstr "Por favor especifique uma variável agrupada"
 
 #: gui2/dialogs.c:5446
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a known series"
-msgstr "'%s' não é o nome de uma série"
+msgstr "'%s' não é uma série conhecida"
 
 #: gui2/dialogs.c:5481
 msgid "Select from Regular HCCME options"
-msgstr ""
+msgstr "Selecionar a partir das opções HCCME normais"
 
 #: gui2/dialogs.c:5488
 msgid "Cluster by"
-msgstr ""
+msgstr "Agrupar por"
 
 #: gui2/dlgutils.c:749
 msgid "Add equation"
