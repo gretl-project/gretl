@@ -3065,6 +3065,11 @@ static MODEL binary_model (int ci, const int *inlist,
 	goto bailout;
     }
 
+    /* the cluster option implies robust */
+    if (opt & OPT_C) {
+	opt |= OPT_R;
+    }
+
     list_adjust_sample(list, &dset->t1, &dset->t2, dset);
 
     mask = classifier_check(list, dset, prn, &mod.errcode);
