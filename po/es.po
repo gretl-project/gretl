@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-05-12 16:36-0400\n"
-"PO-Revision-Date: 2012-05-07 09:51+0200\n"
+"PO-Revision-Date: 2012-05-16 09:56+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -2838,23 +2838,21 @@ msgstr "Evaluaciones del gradiente: %d\n"
 #: lib/src/gretl_bfgs.c:1891
 #, c-format
 msgid "Gradient within tolerance (%g)\n"
-msgstr ""
+msgstr "Gradiente dentro de la tolerancia (%g)\n"
 
 #: lib/src/gretl_bfgs.c:1893
 #, c-format
 msgid "Successive criterion values within tolerance (%g)\n"
-msgstr ""
+msgstr "Valores sucesivos del criterio dentro de la tolerancia (%g)\n"
 
 #: lib/src/gretl_bfgs.c:1897
 #, c-format
 msgid "Warning: couldn't improve criterion (gradient = %g)\n"
-msgstr ""
+msgstr "Atención: no ha sido posible mejorar el criterio (gradiente = %g)\n"
 
 #: lib/src/gretl_bfgs.c:1900
-#, fuzzy
 msgid "Warning: couldn't improve criterion\n"
-msgstr ""
-"Atención: no ha sido posible computar el Hessiano mediante el método numérico"
+msgstr "Atención: no ha sido posible mejorar el criterio\n"
 
 #: lib/src/gretl_bfgs.c:2036
 msgid "Initial value of objective function is not finite"
@@ -5514,9 +5512,8 @@ msgid "Number of cases `correctly predicted'"
 msgstr "Número de casos 'correctamente predichos'"
 
 #: lib/src/modelprint.c:4992
-#, fuzzy
 msgid "percent"
-msgstr "Intercepto"
+msgstr "por ciento"
 
 #: lib/src/modelprint.c:5014 plugin/anova.c:502
 msgid "Analysis of Variance"
@@ -9314,22 +9311,21 @@ msgid "Custom format"
 msgstr "Formato definido por el usuario"
 
 #: gui2/dialogs.c:5444
-#, fuzzy
 msgid "Please specify a cluster variable"
-msgstr "Se debe especificar una variable de límite superior"
+msgstr "Por favor, especifique una variable de agrupación"
 
 #: gui2/dialogs.c:5446
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a known series"
-msgstr "'%s' no es el nombre de una serie"
+msgstr "'%s' no es una serie conocida"
 
 #: gui2/dialogs.c:5481
 msgid "Select from Regular HCCME options"
-msgstr ""
+msgstr "Seleccionar desde las opciones de HCCME regulares"
 
 #: gui2/dialogs.c:5488
 msgid "Cluster by"
-msgstr ""
+msgstr "Agrupación por"
 
 #: gui2/dlgutils.c:749
 msgid "Add equation"
