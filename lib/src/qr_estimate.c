@@ -1255,6 +1255,10 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 		}
 		s++;
 	    }
+	    if (s == Ni) {
+		/* we've filled this matrix */
+		break;
+	    }
 	}
 
 	gretl_matrix_multiply_mod(ei, GRETL_MOD_TRANSPOSE,

@@ -2481,7 +2481,131 @@ static gretl_matrix *binary_hessian_inverse (bin_info *bin, int *err)
     return H;
 }
 
-static gretl_matrix *binary_opg_matrix (bin_info *bin, int *err)
+static gretl_matrix *discrete_cvals (MODEL *pmod, int cvar, 
+				     const DATASET *dset,
+				     int *err)
+{
+    gretl_matrix *cvals = NULL;
+    double ct, *cdata;
+    int s, t;
+
+    cdata = malloc(pmod->nobs * sizeof *cdata);
+
+    if (cdata == NULL) {
+	*err = E_ALLOC;
+    } else {
+	s = 0;
+	for (t=pmod->t1; t<=pmod->t2 && !*err; t++) {
+	    if (!model_missing(pmod, t)) {
+		ct = dset->Z[cvar][t];
+		if (na(ct)) {
+		    *err = E_MISSDATA;
+		} else {
+		    cdata[s++] = ct;
+		}
+	    }
+	}
+    }
+
+    if (!*err) {
+	cvals = gretl_matrix_values(cdata, pmod->nobs, OPT_S, err);
+	if (!*err && gretl_vector_get_length(cvals) < 2) {
+	    gretl_matrix_free(cvals);
+	    cvals = NULL;
+	    *err = E_DATA;
+	}
+    }
+
+    free(cdata);
+
+    return cvals;
+}
+
+static int discrete_make_cluster_GG (gretl_matrix *G,
+				     gretl_matrix *GG,
+				     int ci,
+				     MODEL *pmod,
+				     const DATASET *dset,
+				     int *pcvar,
+				     int *pnc)
+{
+    gretl_matrix *cvals = NULL;
+    gretl_matrix *Gi = NULL;
+    const double *cZ = NULL;
+    const char *cname;
+    int cvar, n_c = 0;
+    int k = G->cols;
+    int i, j, t;
+    int err = 0;
+
+    cname = get_optval_string(ci, OPT_C); 
+    if (cname == NULL) {
+	return E_PARSE;
+    }
+
+    cvar = current_series_index(dset, cname);
+
+    if (cvar < 1 || cvar >= dset->v) {
+	err = E_UNKVAR;
+    } else {
+	cvals = discrete_cvals(pmod, cvar, dset, &err);
+    }
+
+    if (!err) {
+	Gi = gretl_matrix_alloc(1, k);
+	if (Gi == NULL) {
+	    gretl_matrix_free(cvals);
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
+	return err;
+    }
+
+    n_c = gretl_vector_get_length(cvals);
+    cZ = dset->Z[cvar];
+
+    for (i=0; i<n_c; i++) {
+	double cvi = cvals->val[i];
+	int s = 0;
+
+	gretl_matrix_zero(Gi);
+
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!model_missing(pmod, t)) {
+		if (cZ[t] == cvi) {
+		    for (j=0; j<k; j++) {
+			Gi->val[j] += gretl_matrix_get(G, s, j);
+		    }
+		}
+		s++;
+	    }
+	}
+
+	gretl_matrix_multiply_mod(Gi, GRETL_MOD_TRANSPOSE,
+				  Gi, GRETL_MOD_NONE,
+				  GG, GRETL_MOD_CUMULATE);
+    }
+
+    if (!err) {
+	*pcvar = cvar;
+	*pnc = n_c;
+    }
+
+    gretl_matrix_free(cvals);
+    gretl_matrix_free(Gi);
+
+    return err;
+}
+
+static gretl_matrix *binary_opg_matrix (bin_info *bin, 
+					MODEL *pmod,
+					const DATASET *dset,
+					gretlopt opt,
+					int *cvar,
+					int *n_c,
+					int *err)
 {
     gretl_matrix *G;
     gretl_matrix *GG;
@@ -2512,9 +2636,21 @@ static gretl_matrix *binary_opg_matrix (bin_info *bin, int *err)
 	}
     }
 
-    gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE,
-			      G, GRETL_MOD_NONE,
-			      GG, GRETL_MOD_NONE);
+    if (opt & OPT_C) {
+	/* clustered */
+	gretl_matrix_zero(GG);
+	*err = discrete_make_cluster_GG(G, GG, bin->ci, pmod, 
+					dset, cvar, n_c);
+	if (*err) {
+	    gretl_matrix_free(GG);
+	    GG = NULL;
+	}
+    } else {
+	/* regular OPG formulation */
+	gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE,
+				  G, GRETL_MOD_NONE,
+				  GG, GRETL_MOD_NONE);
+    }
 
     gretl_matrix_free(G);
 
@@ -2522,11 +2658,13 @@ static gretl_matrix *binary_opg_matrix (bin_info *bin, int *err)
 }
 
 static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
+				   const DATASET *dset,
 				   gretlopt opt)
 {
     gretl_matrix *H = NULL;
     gretl_matrix *G = NULL;
     gretl_matrix *V = NULL;
+    int cvar = 0, n_c = 0;
     int err = 0;
 
     H = binary_hessian_inverse(bin, &err);
@@ -2535,7 +2673,7 @@ static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
     }
 
     if (opt & OPT_R) {
-	G = binary_opg_matrix(bin, &err);
+	G = binary_opg_matrix(bin, pmod, dset, opt, &cvar, &n_c, &err);
 	if (!err) {
 	    V = gretl_matrix_alloc(bin->k, bin->k);
 	    if (V == NULL) {
@@ -2543,6 +2681,12 @@ static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
 	    } else {
 		err = gretl_matrix_qform(H, GRETL_MOD_NONE, G,
 					 V, GRETL_MOD_NONE);
+		if (!err && (opt & OPT_C)) {
+		    /* clustering: use stata-style df adjustment */
+		    double dfc = n_c / (n_c - 1.0);
+
+		    gretl_matrix_multiply_by_scalar(V, dfc);
+		}
 	    }
 	}
     }
@@ -2551,7 +2695,13 @@ static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
 	if (opt & OPT_R) {
 	    err = gretl_model_write_vcv(pmod, V, -1);
 	    if (!err) {
-		gretl_model_set_vcv_info(pmod, VCV_ML, ML_QML);
+		if (opt & OPT_C) {
+		    gretl_model_set_int(pmod, "n_clusters", n_c);
+		    gretl_model_set_vcv_info(pmod, VCV_CLUSTER, cvar);
+		    pmod->opt |= OPT_C;
+		} else {
+		    gretl_model_set_vcv_info(pmod, VCV_ML, ML_QML);
+		}
 		pmod->opt |= OPT_R;
 	    }
 	} else {
@@ -2854,7 +3004,7 @@ static int binary_model_finish (bin_info *bin, MODEL *pmod,
     binary_model_chisq(bin, pmod);
     pmod->ci = bin->ci;
 
-    pmod->errcode = binary_variance_matrix(pmod, bin, opt);
+    pmod->errcode = binary_variance_matrix(pmod, bin, dset, opt);
 
     if (!pmod->errcode) {
 	if (opt & OPT_P) {
