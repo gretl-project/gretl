@@ -329,31 +329,20 @@ static int negbin_OPG_vcv (MODEL *pmod, negbin_info *nbinfo)
 
 /* QML sandwich VCV */
 
-static int negbin_robust_vcv (MODEL *pmod, negbin_info *nbinfo)
+static int negbin_robust_vcv (MODEL *pmod, negbin_info *nbinfo,
+			      const DATASET *dset, gretlopt opt)
 {
-    gretl_matrix *H = NULL;
-    gretl_matrix *GG = NULL;
-    int np = nbinfo->k + 1;
+    gretl_matrix *H;
     int err = 0;
-
-    GG = gretl_matrix_alloc(np, np);
-    if (GG == NULL) {
-	return E_ALLOC;
-    }
-
-    gretl_matrix_multiply_mod(nbinfo->G, GRETL_MOD_TRANSPOSE,
-			      nbinfo->G, GRETL_MOD_NONE,
-			      GG, GRETL_MOD_NONE);
 
     H = negbin_nhessian(nbinfo, &err);
 
     if (!err) {
-	err = gretl_matrix_qform(H, GRETL_MOD_NONE,
-				 GG, nbinfo->V, GRETL_MOD_NONE);
-    }	
-
-    gretl_matrix_free(H);
-    gretl_matrix_free(GG);
+	err = gretl_model_add_QML_vcv(pmod, NEGBIN, 
+				      H, nbinfo->G,
+				      dset, opt);
+	gretl_matrix_free(H);
+    }
 
     return err;
 }
@@ -424,7 +413,7 @@ transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
     if (!err) {
 	if (opt & OPT_R) {
 	    pmod->opt |= OPT_R;
-	    err = negbin_robust_vcv(pmod, nbinfo);
+	    err = negbin_robust_vcv(pmod, nbinfo, dset, opt);
 	} else if (opt & OPT_G) {
 	    pmod->opt |= OPT_G;
 	    err = negbin_OPG_vcv(pmod, nbinfo);
@@ -518,46 +507,23 @@ static int do_negbin (MODEL *pmod, offset_info *oinfo,
     return pmod->errcode;
 }
 
-/* sandwich of hessian and OPG */
+/* sandwich of hessian and OPG, or clustered */
 
-static int poisson_robust_vcv (MODEL *pmod, gretl_matrix *G)
+static int poisson_robust_vcv (MODEL *pmod, 
+			       const gretl_matrix *G,
+			       const DATASET *dset, 
+			       gretlopt opt)
 {
-    gretl_matrix *H = NULL;
-    gretl_matrix *GG = NULL;
-    gretl_matrix *V = NULL;
-    int k = G->cols;
+    gretl_matrix *H;
     int err = 0;
 
     H = gretl_vcv_matrix_from_model(pmod, NULL, &err);
 
     if (!err) {
-	GG = gretl_matrix_alloc(k, k);
-	V = gretl_matrix_alloc(k, k);
-	if (GG == NULL || V == NULL) {
-	    err = E_ALLOC;
-	}
+	err = gretl_model_add_QML_vcv(pmod, POISSON, 
+				      H, G, dset, opt);
     }
 
-    if (!err) {
-	gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE,
-				  G, GRETL_MOD_NONE,
-				  GG, GRETL_MOD_NONE);    
-	/* form sandwich: V = H^{-1} GG' H^{-1} */
-	err = gretl_matrix_qform(H, GRETL_MOD_NONE,
-				 GG, V, GRETL_MOD_NONE);
-    }
-
-    if (!err) {
-	err = gretl_model_write_vcv(pmod, V, -1);
-    }
-
-    if (!err) {
-	gretl_model_set_vcv_info(pmod, VCV_ML, ML_QML);
-	pmod->opt |= OPT_R;
-    }
-
-    gretl_matrix_free(V);
-    gretl_matrix_free(GG);
     gretl_matrix_free(H);
 
     return err;
@@ -612,7 +578,7 @@ static int overdispersion_test (MODEL *pmod, const DATASET *dset,
 
     if (opt & OPT_R) {
 	gretl_matrix_reuse(G, n, k);
-	err = poisson_robust_vcv(pmod, G);
+	err = poisson_robust_vcv(pmod, G, dset, opt);
 	gretl_matrix_reuse(G, n, k+1);
     }
 
@@ -967,6 +933,11 @@ int count_data_estimate (MODEL *pmod, int ci, int offvar,
 	    oinfo = &oinfo_t;
 	}
     } 
+
+    if (opt & OPT_C) {
+	/* cluster implies robust */
+	opt |= OPT_R;
+    }
 
     if (opt & OPT_V) {
 	vprn = prn;
