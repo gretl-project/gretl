@@ -2959,11 +2959,17 @@ static gboolean session_view_click (GtkWidget *widget,
 	return FALSE;
     }
 
-    if (!in_icon) { 
-	/* click on window background */
-	gtk_menu_popup(GTK_MENU(global_popup), NULL, NULL, NULL, NULL,
-		       event->button, event->time);
-	return TRUE;
+    mods = widget_get_pointer_mask(widget);
+
+    if (!in_icon) {
+	if (RIGHT_CLICK(mods)) {
+	    /* right-click on window background */
+	    gtk_menu_popup(GTK_MENU(global_popup), NULL, NULL, NULL, NULL,
+			   event->button, event->time);
+	    return TRUE;
+	} else {
+	    return FALSE;
+	}
     }
 
     obj = (gui_obj *) data;
@@ -3015,8 +3021,6 @@ static gboolean session_view_click (GtkWidget *widget,
 	}
 	return TRUE;
     }
-
-    mods = widget_get_pointer_mask(widget);
 
     if (RIGHT_CLICK(mods)) {
 	if (obj->sort == GRETL_OBJ_EQN  || obj->sort == GRETL_OBJ_GRAPH || 

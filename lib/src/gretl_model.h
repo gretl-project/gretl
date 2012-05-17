@@ -348,6 +348,12 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem);
 
 int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V, int k);
 
+int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
+			     const gretl_matrix *H, 
+			     const gretl_matrix *G,
+			     const DATASET *dset,
+			     gretlopt opt);
+
 VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATASET *dset);
 
 int gretl_model_write_coeffs (MODEL *pmod, double *b, int k);

@@ -1918,6 +1918,205 @@ int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V, int k)
     return err;
 }
 
+static gretl_matrix *make_cluster_vals (MODEL *pmod, int cvar, 
+					const DATASET *dset,
+					int *err)
+{
+    gretl_matrix *cvals = NULL;
+    double ct, *cdata;
+    int s, t;
+
+    cdata = malloc(pmod->nobs * sizeof *cdata);
+
+    if (cdata == NULL) {
+	*err = E_ALLOC;
+    } else {
+	s = 0;
+	for (t=pmod->t1; t<=pmod->t2 && !*err; t++) {
+	    if (!model_missing(pmod, t)) {
+		ct = dset->Z[cvar][t];
+		if (na(ct)) {
+		    *err = E_MISSDATA;
+		} else {
+		    cdata[s++] = ct;
+		}
+	    }
+	}
+    }
+
+    if (!*err) {
+	cvals = gretl_matrix_values(cdata, pmod->nobs, OPT_S, err);
+	if (!*err && gretl_vector_get_length(cvals) < 2) {
+	    gretl_matrix_free(cvals);
+	    cvals = NULL;
+	    *err = E_DATA;
+	}
+    }
+
+    free(cdata);
+
+    return cvals;
+}
+
+static int model_make_clustered_GG (MODEL *pmod, int ci,
+				    const gretl_matrix *G,
+				    gretl_matrix *GG,
+				    const DATASET *dset,
+				    int *pcvar,
+				    int *pnc)
+{
+    gretl_matrix *cvals = NULL;
+    gretl_matrix *Gi = NULL;
+    const double *cZ = NULL;
+    const char *cname;
+    int cvar, n_c = 0;
+    int k = G->cols;
+    int i, j, t;
+    int err = 0;
+
+    cname = get_optval_string(ci, OPT_C); 
+    if (cname == NULL) {
+	return E_PARSE;
+    }
+
+    cvar = current_series_index(dset, cname);
+
+    if (cvar < 1 || cvar >= dset->v) {
+	err = E_UNKVAR;
+    } else {
+	cvals = make_cluster_vals(pmod, cvar, dset, &err);
+    }
+
+    if (!err) {
+	Gi = gretl_matrix_alloc(1, k);
+	if (Gi == NULL) {
+	    gretl_matrix_free(cvals);
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
+	return err;
+    }
+
+    n_c = gretl_vector_get_length(cvals);
+    cZ = dset->Z[cvar];
+
+    for (i=0; i<n_c; i++) {
+	double cvi = cvals->val[i];
+	int s = 0;
+
+	gretl_matrix_zero(Gi);
+
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!model_missing(pmod, t)) {
+		if (cZ[t] == cvi) {
+		    for (j=0; j<k; j++) {
+			Gi->val[j] += gretl_matrix_get(G, s, j);
+		    }
+		}
+		s++;
+	    }
+	}
+
+	gretl_matrix_multiply_mod(Gi, GRETL_MOD_TRANSPOSE,
+				  Gi, GRETL_MOD_NONE,
+				  GG, GRETL_MOD_CUMULATE);
+    }
+
+    if (!err) {
+	*pcvar = cvar;
+	*pnc = n_c;
+    }
+
+    gretl_matrix_free(cvals);
+    gretl_matrix_free(Gi);
+
+    return err;
+}
+
+/**
+ * gretl_model_add_QML_vcv:
+ * @pmod: pointer to model.
+ * @ci: command index for model.
+ * @H: inverse of the (negative) Hessian, k x k.
+ * @G: score matrix, T x k.
+ * @dset: pointer to dataset (can be NULL if not doing
+ * clustering).
+ * @opt: may include OPT_C for cluster-robust variant.
+ * 
+ * Write a QML covariance matrix into the model @pmod, and set
+ * the standard errors to the square root of the diagonal
+ * elements of this matrix. 
+ * 
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
+			     const gretl_matrix *H, 
+			     const gretl_matrix *G,
+			     const DATASET *dset,
+			     gretlopt opt)
+{
+    gretl_matrix *GG = NULL;
+    gretl_matrix *V = NULL;
+    int cvar = 0, n_c = 0;
+    int k = H->rows;
+    int err = 0;
+
+    GG = gretl_matrix_alloc(k, k);
+    V = gretl_matrix_alloc(k, k);
+
+    if (GG == NULL || V == NULL) {
+	err = E_ALLOC;
+    }
+
+    if (!err) {
+	if (opt & OPT_C) {
+	    /* clustered */
+	    gretl_matrix_zero(GG);
+	    err = model_make_clustered_GG(pmod, ci, G, GG,
+					  dset, &cvar, &n_c);
+	} else {
+	    /* regular QML using OPG */
+	    gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE,
+				      G, GRETL_MOD_NONE,
+				      GG, GRETL_MOD_NONE);
+	}
+    }
+
+    if (!err) {
+	err = gretl_matrix_qform(H, GRETL_MOD_NONE, GG,
+				 V, GRETL_MOD_NONE);
+	if (!err && (opt & OPT_C)) {
+	    /* clustering: use stata-style df adjustment */
+	    double dfc = n_c / (n_c - 1.0);
+
+	    gretl_matrix_multiply_by_scalar(V, dfc);
+	}
+    }
+
+    if (!err) {
+	err = gretl_model_write_vcv(pmod, V, -1);
+    }
+
+    if (!err) {
+	if (opt & OPT_C) {
+	    gretl_model_set_int(pmod, "n_clusters", n_c);
+	    gretl_model_set_vcv_info(pmod, VCV_CLUSTER, cvar);
+	    pmod->opt |= OPT_C;
+	} else {
+	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_QML);
+	}
+	pmod->opt |= OPT_R;
+    }
+
+    gretl_matrix_free(GG);
+    gretl_matrix_free(V);
+
+    return err;
+}
+
 static double *copy_vcv_subset (const MODEL *pmod)
 {
     double *V;

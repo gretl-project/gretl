@@ -65,7 +65,6 @@ static void duration_free (duration_info *dinfo)
 {
     gretl_matrix_block_destroy(dinfo->B);
     free(dinfo->theta);
-    gretl_matrix_free(dinfo->V);
 }
 
 /* initialize using OLS regression of the log of duration
@@ -117,7 +116,6 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
 
     dinfo->B = NULL;
     dinfo->theta = NULL;
-    dinfo->V = NULL;
 
     if (opt & OPT_E) {
 	/* exponential */
@@ -140,9 +138,8 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
     dinfo->flags = 0;
 
     dinfo->theta = malloc(np * sizeof *dinfo->theta);
-    dinfo->V = gretl_matrix_alloc(np, np);
 
-    if (dinfo->theta == NULL || dinfo->V == NULL) {
+    if (dinfo->theta == NULL) {
 	return E_ALLOC;
     }
 
@@ -415,17 +412,26 @@ static int duration_hessian (double *theta,
     return err;
 }
 
-static int duration_hessian_inverse (double *theta, 
-				     gretl_matrix *H,
-				     void *data)
+static gretl_matrix *duration_hessian_inverse (double *theta, 
+					       void *data,
+					       int *err)
 {
-    int err = duration_hessian(theta, H, data);
+    duration_info *dinfo = data;
+    gretl_matrix *H;
 
-    if (!err) {
-	err = gretl_invert_symmetric_matrix(H);
+    H = gretl_matrix_alloc(dinfo->npar, dinfo->npar);
+
+    if (H == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = duration_hessian(theta, H, data);
     }
 
-    return err;
+    if (!*err) {
+	*err = gretl_invert_symmetric_matrix(H);
+    }
+
+    return H;
 }
 
 /* calculate the OPG matrix at the starting point and use 
@@ -450,51 +456,26 @@ static gretl_matrix *duration_init_H (duration_info *dinfo)
     return H;
 }
 
-/* OPG vcv matrix */
+/* OPG variance matrix */
 
-static int duration_OPG_vcv (duration_info *dinfo)
+static gretl_matrix *duration_OPG_vcv (duration_info *dinfo,
+				       int *err)
 {
-    gretl_matrix_multiply_mod(dinfo->G, GRETL_MOD_TRANSPOSE,
-			      dinfo->G, GRETL_MOD_NONE,
-			      dinfo->V, GRETL_MOD_NONE);
-
-    return gretl_invert_symmetric_matrix(dinfo->V);
-}
-
-/* QML sandwich VCV */
-
-static int duration_robust_vcv (duration_info *dinfo)
-{
-    gretl_matrix *H = NULL;
-    gretl_matrix *GG = NULL;
-    int err = 0;
+    gretl_matrix *GG;
 
     GG = gretl_matrix_alloc(dinfo->npar, dinfo->npar);
+
     if (GG == NULL) {
-	return E_ALLOC;
+	*err = E_ALLOC;
+    } else {
+	gretl_matrix_multiply_mod(dinfo->G, GRETL_MOD_TRANSPOSE,
+				  dinfo->G, GRETL_MOD_NONE,
+				  GG, GRETL_MOD_NONE);
+
+	*err = gretl_invert_symmetric_matrix(GG);
     }
 
-    H = gretl_matrix_alloc(dinfo->npar, dinfo->npar);
-    if (H == NULL) {
-	gretl_matrix_free(GG);
-	return E_ALLOC;
-    }   
-
-    gretl_matrix_multiply_mod(dinfo->G, GRETL_MOD_TRANSPOSE,
-			      dinfo->G, GRETL_MOD_NONE,
-			      GG, GRETL_MOD_NONE);
-
-    err = duration_hessian_inverse(dinfo->theta, H, dinfo);
-
-    if (!err) {
-	err = gretl_matrix_qform(H, GRETL_MOD_NONE,
-				 GG, dinfo->V, GRETL_MOD_NONE);
-    }	
-
-    gretl_matrix_free(GG);
-    gretl_matrix_free(H);
-
-    return err;
+    return GG;
 }
 
 /* This is the last thing we do, after transcribing the 
@@ -646,6 +627,42 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
     }
 }
 
+static int duration_model_add_vcv (MODEL *pmod, duration_info *dinfo,
+				   const DATASET *dset, gretlopt opt)
+{
+    gretl_matrix *GG = NULL;
+    gretl_matrix *H = NULL;
+    int err = 0;
+
+    if (opt & OPT_G) {
+	GG = duration_OPG_vcv(dinfo, &err);
+	if (!err) {
+	    err = gretl_model_write_vcv(pmod, GG, -1);
+	    if (!err) {
+		gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
+	    }
+	    gretl_matrix_free(GG);
+	}
+    } else {
+	H = duration_hessian_inverse(dinfo->theta, dinfo, &err);
+	if (!err) {
+	    if (opt & OPT_R) {
+		err = gretl_model_add_QML_vcv(pmod, DURATION, 
+					      H, dinfo->G,
+					      dset, opt);
+	    } else {
+		err = gretl_model_write_vcv(pmod, H, -1);
+		if (!err) {
+		    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
+		}
+	    }
+	    gretl_matrix_free(H);
+	}
+    }
+
+    return err;
+}
+
 static int 
 transcribe_duration_results (MODEL *pmod, duration_info *dinfo, 
 			     const DATASET *dset, 
@@ -698,28 +715,10 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     } 
 
     err = gretl_model_write_coeffs(pmod, dinfo->theta, np);
-    
-    if (!err) {
-	if (opt & OPT_R) {
-	    pmod->opt |= OPT_R;
-	    err = duration_robust_vcv(dinfo);
-	} else if (opt & OPT_G) {
-	    pmod->opt |= OPT_G;
-	    err = duration_OPG_vcv(dinfo);
-	} else {
-	    err = duration_hessian_inverse(dinfo->theta, dinfo->V, dinfo);
-	} 
-    }
 
     if (!err) {
-	err = gretl_model_write_vcv(pmod, dinfo->V, -1);
-	if (!err) {
-	    int vtype = (opt & OPT_G) ? ML_OP :
-		(opt & OPT_R)? ML_QML : ML_HESSIAN;
-	    
-	    gretl_model_set_vcv_info(pmod, VCV_ML, vtype);
-	}
-    }	
+	err = duration_model_add_vcv(pmod, dinfo, dset, opt);
+    }
 
     if (!err) {
 	duration_set_predictions(pmod, dinfo, dset, opt);
@@ -748,6 +747,11 @@ int duration_estimate (MODEL *pmod, int censvar, const DATASET *dset,
     int grcount = 0;
     int use_bfgs = 0;
     int err = 0;
+
+    if (opt & OPT_C) {
+	/* cluster implies robust */
+	opt |= OPT_R;
+    }
 
     err = duration_init(&dinfo, pmod, censvar, dset, opt, prn);
     if (err) {

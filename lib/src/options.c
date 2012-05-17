@@ -172,6 +172,7 @@ struct gretl_option gretl_opts[] = {
     { DURATION, OPT_M, "medians", 0 },    
     { DURATION, OPT_G, "opg", 0 },
     { DURATION, OPT_R, "robust", 0 },
+    { DURATION, OPT_C, "cluster", 2 },
     { DURATION, OPT_V, "verbose", 0 },
     { EQNPRINT, OPT_O, "complete", 0 },
     { EQNPRINT, OPT_T, "t-ratios", 0 },
