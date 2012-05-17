@@ -673,7 +673,7 @@ static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 
    where g = \frac{\partial ln f(x)}{\partial x}.
    In practice, we just compute explicitly the difference between
-   the OPG and the actual Hessain, and then reconstruct H from 
+   the OPG and the actual Hessian, and then reconstruct H from 
    there.
  */
 
@@ -846,15 +846,26 @@ int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
     return err;
 }
 
-int biprobit_hessian_inverse (double *theta, gretl_matrix *H, void *ptr)
+static gretl_matrix *biprobit_hessian_inverse (double *theta, 
+					       void *ptr,
+					       int *err)
 {
-    int err = biprobit_hessian(theta, H, ptr);
+    bp_container *bp = ptr;
+    gretl_matrix *H;
 
-    if (!err) {
-	err = gretl_invert_symmetric_matrix(H);
+    H = gretl_matrix_alloc(bp->npar, bp->npar);
+    
+    if (H == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = biprobit_hessian(theta, H, ptr);
     }
 
-    return err;
+    if (!*err) {
+	*err = gretl_invert_symmetric_matrix(H);
+    }
+
+    return H;
 }
 
 #if 0
@@ -990,71 +1001,60 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
     return err;
 }
 
-static gretl_matrix *biprobit_vcv (bp_container *bp, gretlopt opt, int *err)
+static gretl_matrix *biprobit_OPG_vcv (bp_container *bp,
+				       int *err)
 {
-    int do_hessian = !(opt & OPT_G);
-    int do_opg = (opt & OPT_R) || (opt & OPT_G);
-    gretl_matrix *Hess = NULL;
-    gretl_matrix *OPG = NULL;
-    gretl_matrix *V = NULL;
+    gretl_matrix *GG = gretl_matrix_XTX_new(bp->score);
 
-    if (do_hessian) {
-	double *theta = make_bp_theta(bp, err);
+    if (GG == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = gretl_invert_symmetric_matrix(GG);
+    }
 
-	if (!*err) {
-	    Hess = gretl_matrix_alloc(bp->npar, bp->npar);
-	    if (Hess == NULL) {
-		*err = E_ALLOC;
+    return GG;
+}
+
+static int biprobit_vcv (MODEL *pmod, bp_container *bp, 
+			 const DATASET *dset, gretlopt opt)
+{
+    gretl_matrix *GG = NULL;
+    gretl_matrix *H = NULL;
+    int err = 0;
+
+    if (opt & OPT_G) {
+	GG = biprobit_OPG_vcv(bp, &err);
+	if (!err) {
+	    err = gretl_model_write_vcv(pmod, GG, -1);
+	    if (!err) {
+		gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
 	    }
 	}
+    } else {
+	double *theta = make_bp_theta(bp, &err);
 
-	if (!*err) {
-	    *err = biprobit_hessian_inverse(theta, Hess, bp);
+	if (!err) {
+	    H = biprobit_hessian_inverse(theta, bp, &err);
 	}
-#if 0
-	gretl_matrix_print(Hess, "iHess");
-#endif
+	if (!err) {
+	    if (opt & OPT_R) {
+		err = gretl_model_add_QML_vcv(pmod, BIPROBIT, 
+					      H, bp->score,
+					      dset, opt);
+	    } else {
+		err = gretl_model_write_vcv(pmod, H, -1);
+		if (!err) {
+		    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
+		}
+	    }
+	}
 	free(theta);
     }
 
-    if (!*err && do_opg) {
-	OPG = gretl_matrix_XTX_new(bp->score);
-	if (OPG == NULL) {
-	    *err = E_ALLOC;
-	}
-#if 0
-	gretl_matrix_print(OPG, "OPG");
-#endif
-    }
+    gretl_matrix_free(GG);
+    gretl_matrix_free(H);
 
-    if (!*err) {
-	if (opt & OPT_G) {
-	    *err = gretl_invert_symmetric_matrix(OPG);
-	    if (!*err) {
-		V = OPG;
-		OPG = NULL;
-	    }
-	} else if (opt & OPT_R) {
-	    V = gretl_matrix_alloc(bp->npar, bp->npar);
-	    if (V == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		*err = gretl_matrix_qform(Hess, GRETL_MOD_NONE, OPG, 
-					  V, GRETL_MOD_NONE);
-	    }
-#if 0
-	    gretl_matrix_print(V, "V");
-#endif
-	} else {
-	    V = Hess;
-	    Hess = NULL;
-	}
-    }
-
-    gretl_matrix_free(OPG);
-    gretl_matrix_free(Hess);
-
-    return V;
+    return err;
 }
 
 static int add_indep_LR_test (MODEL *pmod, double LR)
@@ -1187,10 +1187,10 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
     return err;
 }
 
-static int biprobit_fill_model (MODEL *pmod, bp_container *bp, DATASET *dset,
+static int biprobit_fill_model (MODEL *pmod, bp_container *bp, 
+				const DATASET *dset,
 				gretlopt opt)
 {
-    gretl_matrix *V;
     double *tmp;
     int npar = bp->npar - 1;
     int i, err = 0;
@@ -1240,23 +1240,7 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp, DATASET *dset,
 
     gretl_model_set_coeff_separator(pmod, dset->varname[bp->depvar2], bp->k1);
 
-    V = biprobit_vcv(bp, opt, &err);
-
-    if (!err) {
-	err = gretl_model_write_vcv(pmod, V, npar);
-    }
-
-    if (!err) {
-	if (opt & OPT_R) {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_QML);
-	} else if (opt & OPT_G) {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
-	} else {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
-	}
-    }
-
-    gretl_matrix_free(V);
+    err = biprobit_vcv(pmod, bp, dset, opt);
 
     if (!err) {
 	err = bp_add_hat_matrices(pmod, bp, opt);
@@ -1301,6 +1285,11 @@ MODEL biprobit_estimate (const int *list, DATASET *dset,
     if (mod.errcode) {
 	return mod;
     } 
+
+    if (opt & OPT_C) {
+	/* cluster implies robust */
+	opt |= OPT_R;
+    }
 
     if (opt & OPT_V) {
 	vprn = prn;
