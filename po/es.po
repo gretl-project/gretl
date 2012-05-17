@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-05-12 16:36-0400\n"
-"PO-Revision-Date: 2012-05-16 09:56+0200\n"
+"PO-Revision-Date: 2012-05-17 12:39+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -14507,7 +14507,7 @@ msgstr "Mostrar automáticamente la vista de iconos"
 
 #: gui2/settings.c:164
 msgid "Script editor uses tabs"
-msgstr "Quel el editor de guiones use pestañas"
+msgstr "Usar pestañas en el editor de guiones"
 
 #: gui2/settings.c:166
 msgid "Model viewer uses tabs"
