@@ -641,7 +641,6 @@ static int duration_model_add_vcv (MODEL *pmod, duration_info *dinfo,
 	    if (!err) {
 		gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
 	    }
-	    gretl_matrix_free(GG);
 	}
     } else {
 	H = duration_hessian_inverse(dinfo->theta, dinfo, &err);
@@ -656,9 +655,11 @@ static int duration_model_add_vcv (MODEL *pmod, duration_info *dinfo,
 		    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
 		}
 	    }
-	    gretl_matrix_free(H);
 	}
     }
+
+    gretl_matrix_free(H);
+    gretl_matrix_free(GG);
 
     return err;
 }

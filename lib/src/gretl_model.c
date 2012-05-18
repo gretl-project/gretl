@@ -2220,6 +2220,31 @@ VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATASET *dset)
 }
 
 /**
+ * gretl_model_get_vcv_element:
+ * @pmod: pointer to model.
+ * @i: row (0-based).
+ * @j: column(0-based).
+ * @np: the number of parameters represented in @pmod's
+ * covariance matrix.
+ * 
+ * Returns: the (@i, @j) element of @pmod's covariance matrix,
+ * or #NADBL on failure.
+ */
+
+double gretl_model_get_vcv_element (const MODEL *pmod,
+				    int i, int j, 
+				    int np)
+{
+    if (pmod->vcv == NULL) {
+	return NADBL;
+    } else {
+	int k = ijton(i, j, np);
+
+	return pmod->vcv[k];
+    }
+}
+
+/**
  * gretl_model_write_coeffs:
  * @pmod: pointer to model.
  * @b: array of coefficients.

@@ -490,82 +490,86 @@ int int_ahess (double *theta, gretl_matrix *V, void *ptr)
     return err;
 }
 
-static int 
-int_ahess_inverse (double *theta, gretl_matrix *V, void *ptr)
+static gretl_matrix *int_ahess_inverse (double *theta, 
+					void *ptr,
+					int *err)
 {
-    int err = int_ahess(theta, V, ptr);
+    int_container *IC = ptr;
+    gretl_matrix *H;
 
-    if (!err) {
-	err = gretl_invert_symmetric_matrix(V);
-    }
-
-    return err;
-}
-
-static gretl_matrix *intreg_sandwich (int_container *IC,
-				      gretl_matrix *H,
-				      int *err)
-{
-    gretl_matrix *G, *S, *V;
-    double x;
-    int k = IC->k;
-    int i, j, jj = 0;
-
-    G = gretl_matrix_alloc(IC->nobs, k);
-    S = gretl_matrix_alloc(k, k);
-    V = gretl_matrix_alloc(k, k);
-
-    if (G == NULL || S == NULL || V == NULL) {
-	gretl_matrix_free(V);
-	V = NULL;
-	*err = E_ALLOC;
-	goto bailout;
-    }
-
-    /* form the G matrix */
-    for (j=0; j<k; j++) {
-	for (i=0; i<IC->nobs; i++) {
-	    x = IC->G[j][i];
-	    G->val[jj++] = x;
-	}
-    }
-
-    /* form S = G'G */
-    *err = gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE,
-				     G, GRETL_MOD_NONE,
-				     S, GRETL_MOD_NONE);
-
-    if (!*err) {
-	/* form sandwich: V = H^{-1} S H^{-1} */
-	*err = gretl_matrix_qform(H, GRETL_MOD_NONE, S,
-				  V, GRETL_MOD_NONE);
-    }
-
- bailout:
-    
-    gretl_matrix_free(G);
-    gretl_matrix_free(S);
-    gretl_matrix_free(H);
-
-    return V;
-}
-
-static gretl_matrix *intreg_VCV (int_container *IC, gretlopt opt,
-				 int *err)
-{
-    gretl_matrix *H = gretl_zero_matrix_new(IC->k, IC->k);
+    H = gretl_zero_matrix_new(IC->k, IC->k);
 
     if (H == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = int_ahess_inverse(IC->theta, H, IC);
+	*err = int_ahess(theta, H, ptr);
     }
 
-    if (!*err && (opt & OPT_R)) {
-	return intreg_sandwich(IC, H, err);
-    } else {
-	return H;
+    if (!*err) {
+	*err = gretl_invert_symmetric_matrix(H);
     }
+
+    return H;
+}
+
+static gretl_matrix *intreg_score_matrix (int_container *IC,
+					  int *err)
+{
+    gretl_matrix *G;
+ 
+    G = gretl_matrix_alloc(IC->nobs, IC->k);
+
+    if (G == NULL) {
+	*err = E_ALLOC;
+    } else {
+	int i, j, jj = 0;
+
+	for (j=0; j<IC->k; j++) {
+	    for (i=0; i<IC->nobs; i++) {
+		G->val[jj++] = IC->G[j][i];
+	    }
+	}
+    }
+
+    return G;
+}
+
+static int intreg_model_add_vcv (MODEL *pmod,
+				 int_container *IC, 
+				 const DATASET *dset,
+				 gretlopt opt,
+				 double *x)
+{
+    gretl_matrix *H = NULL;
+    gretl_matrix *G = NULL;
+    int err = 0;
+
+    H = int_ahess_inverse(IC->theta, IC, &err);
+
+    if (!err && (opt & OPT_R)) {
+	G = intreg_score_matrix(IC, &err);
+    }
+
+    if (!err) {
+	if (opt & OPT_R) {
+	    err = gretl_model_add_QML_vcv(pmod, INTREG, H, G,
+					  dset, opt);
+	} else {
+	    err = gretl_model_write_vcv(pmod, H, -1);
+	    if (!err) {
+		gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
+	    }
+	}
+    }
+
+    if (!err) {
+	*x = gretl_model_get_vcv_element(pmod, IC->k, IC->k, H->rows);
+    }
+
+    gretl_matrix_free(H);
+    gretl_matrix_free(G);
+
+    return err;
 }
 
 static void int_compute_gresids (int_container *IC)
@@ -771,7 +775,7 @@ static int intreg_normtest (int_container *IC, double *teststat)
     return err;
 }
 
-static int fill_intreg_model (int_container *IC, gretl_matrix *V,
+static int fill_intreg_model (int_container *IC, 
 			      int fncount, int grcount,
 			      const DATASET *dset,
 			      gretlopt opt)
@@ -779,7 +783,7 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     MODEL *pmod = IC->pmod;
     double x, ndx, u;
     int i, j, k = IC->k;
-    int obstype, vtype;
+    int obstype;
     int err = 0;
 
     pmod->ci = (opt & OPT_T)? TOBIT : INTREG;
@@ -791,23 +795,20 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 	pmod->coeff[i] = IC->theta[i];
     }
 
-    err = gretl_model_write_vcv(pmod, V, IC->nx);
+    err = intreg_model_add_vcv(pmod, IC, dset, opt, &x);
     if (err) {
-	return err;
+	goto bailout;
     }
 
-    vtype = (opt & OPT_R)? ML_QML : ML_HESSIAN;
-    gretl_model_set_vcv_info(pmod, VCV_ML, vtype);
-
-    /* get the s.e. of sigma via the delta method */
-    x = gretl_matrix_get(V, k-1, k-1);
-    x *= pmod->sigma * pmod->sigma;
-    gretl_model_set_double(pmod, "se_sigma", sqrt(x));
+     if (!na(x)) {
+	/* get the s.e. of sigma via the delta method */
+	x *= pmod->sigma * pmod->sigma;
+	gretl_model_set_double(pmod, "se_sigma", sqrt(x));
+    }
 
     int_compute_gresids(IC);
 
     j = 0;
-
     for (i=IC->t1; i<=IC->t2; i++) {
 	if (!na(pmod->uhat[i])) {
 	    obstype = IC->obstype[j];
@@ -845,10 +846,6 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 	gretl_model_set_int(pmod, "n_point", IC->typecount[3]);
     }
 
-    if (opt & OPT_R) {
-	pmod->opt |= OPT_R;
-    }
-
     if (IC->pmod->ifc && IC->nx > 1) {
 	pmod->chisq = chisq_overall_test(IC);
     } else {
@@ -860,14 +857,19 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 	pmod->list[1] = 0;
     }
 
-    return 0;
+ bailout:
+
+    if (err && pmod->errcode == 0) {
+	pmod->errcode = err;
+    }
+
+    return err;
 }
 
 static int do_interval (int *list, DATASET *dset, MODEL *mod, 
 			gretlopt opt, PRN *prn) 
 {
     int_container *IC;
-    gretl_matrix *V = NULL;
     int maxit, fncount, grcount = 0;
     double toler, normtest = NADBL;
     gretlopt maxopt = opt & OPT_V;
@@ -902,12 +904,8 @@ static int do_interval (int *list, DATASET *dset, MODEL *mod,
 	IC->ll = int_loglik(IC->theta, IC);
     }
 
-    if (!err) {
-	V = intreg_VCV(IC, opt, &err);
-    }
-
-    if (!err) {
-	err = fill_intreg_model(IC, V, fncount, grcount, dset, opt);
+     if (!err) {
+	err = fill_intreg_model(IC, fncount, grcount, dset, opt);
     }
 
     if (!err) {
@@ -919,7 +917,6 @@ static int do_interval (int *list, DATASET *dset, MODEL *mod,
 	err = 0;
     }
 
-    gretl_matrix_free(V);
     int_container_destroy(IC);
 
     return err;
@@ -977,6 +974,10 @@ MODEL interval_estimate (int *list, DATASET *dset,
     /* clean up midpoint-y */
     dataset_drop_last_variables(1, dset);
     free(initlist);
+
+    if (opt & OPT_C) {
+	opt |= OPT_R;
+    }
 
     /* do the actual analysis */
     model.errcode = do_interval(list, dset, &model, opt, prn);
@@ -1058,6 +1059,10 @@ MODEL tobit_via_intreg (int *list, double llim, double rlim,
 
     model.errcode = tobit_add_lo_hi(&model, llim, rlim,
 				    dset, &ilist);
+
+    if (opt & OPT_C) {
+	opt |= OPT_R;
+    }
 
     if (!model.errcode) {
 	/* do the actual analysis */

@@ -356,6 +356,10 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 
 VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATASET *dset);
 
+double gretl_model_get_vcv_element (const MODEL *pmod,
+				    int i, int j, 
+				    int np);
+
 int gretl_model_write_coeffs (MODEL *pmod, double *b, int k);
 
 int gretl_model_add_arinfo (MODEL *pmod, int nterms);
