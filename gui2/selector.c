@@ -3083,6 +3083,24 @@ static void read_np_extras (selector *sr)
     }
 }
 
+static void maybe_read_cluster_var (selector *sr)
+{
+    GtkWidget *cbox = sr->extra[N_EXTRA-1];
+ 
+    if (cbox != NULL && gtk_widget_is_sensitive(cbox) &&
+	GTK_IS_COMBO_BOX(cbox)) {
+	gchar *s = combo_box_get_active_text(GTK_COMBO_BOX(cbox));
+
+	if (s != NULL && *s != '\0' && strcmp(s, "none")) {
+	    *cluster_var = '\0';
+	    strncat(cluster_var, s, VNAMELEN - 1);
+	    set_optval_string(sr->ci, OPT_C, cluster_var);
+	    sr->opts |= OPT_C;
+	}
+	g_free(s);
+    }
+}
+
 #define extra_widget_get_int(c) (c == HECKIT ||		\
 	                         c == BIPROBIT ||       \
                                  c == INTREG ||		\
@@ -3097,6 +3115,10 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     const gchar *txt = NULL;
     char numstr[8];
     int k = 0;
+
+    if (cluster_option_ok(sr->ci)) {
+	maybe_read_cluster_var(sr);
+    }
 
     if (sr->ci == QUANTREG) {
 	read_quantreg_extras(sr);
@@ -5210,9 +5232,41 @@ static void build_selector_switches (selector *sr)
 		gtk_widget_set_sensitive(b2, TRUE);
 	    }
 	    gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 0);
-	}
+	} 
 
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+
+	if (!robust_conf(sr->ci) && cluster_option_ok(sr->ci)) {
+	    gchar *txt = g_strdup_printf("  %s", ("Cluster by"));
+	    GtkWidget *label, *cbox, *entry;
+
+	    hbox = gtk_hbox_new(FALSE, 5);
+	    label = gtk_label_new(txt);
+	    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+	    g_free(txt);
+
+	    cbox = gtk_combo_box_text_new_with_entry();
+	    sr->extra[N_EXTRA-1] = cbox;
+	    entry = gtk_bin_get_child(GTK_BIN(cbox));
+	    gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN);
+	    gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMELEN + 2);
+	    combo_box_append_text(cbox, "none");
+	    if (*cluster_var != '\0') {
+		combo_box_append_text(cbox, cluster_var);
+	    }
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(cbox), 0);
+
+	    gtk_widget_set_sensitive(label, using_hc_by_default());
+	    gtk_widget_set_sensitive(cbox, using_hc_by_default());
+	    sensitize_conditional_on(label, b1);
+	    sensitize_conditional_on(cbox, b1);
+	    if (model_opt & OPT_R) {
+		gtk_widget_set_sensitive(label, TRUE);
+		gtk_widget_set_sensitive(cbox, TRUE);
+	    }	    
+	    gtk_box_pack_start(GTK_BOX(hbox), cbox, FALSE, FALSE, 0);
+	    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+	}	    
     }
 
     if (sr->ci == TOBIT || sr->ci == ARMA || sr->ci == GARCH ||
