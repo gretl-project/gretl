@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.9.7cvs
+# Polish translation for gretl-1.9.8cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2012
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2012
@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-05-12 16:36-0400\n"
-"PO-Revision-Date: 2012-03-30 05:00-0500\n"
+"PO-Revision-Date: 2012-05-18 10:03-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -1283,16 +1283,14 @@ msgid "'%s' -- number out of range!"
 msgstr "'%s' -- liczba poza zakresem!"
 
 #: lib/src/dataio.c:3345
-#, fuzzy, c-format
+#, c-format
 msgid "Data imported from %s file '%s', %s\n"
-msgstr ""
-"Informacja o danych w pliku %s\n"
-"\n"
+msgstr "Zaimportowano dane z pliku %s '%s', %s\n"
 
 #: lib/src/dataio.c:3348
 #, c-format
 msgid "Data imported from %s, %s\n"
-msgstr ""
+msgstr "Zaimportowano dane %s, %s\n"
 
 #: lib/src/dataset.c:355
 msgid "auto-generated constant"
@@ -2389,9 +2387,8 @@ msgid "Invalid declaration"
 msgstr "Błąd w deklaracji"
 
 #: lib/src/genfuncs.c:3685
-#, fuzzy
 msgid "Imhof integral gave negative value"
-msgstr "Niewłaściwa ujemna wartość"
+msgstr "Imituje całkowitą ujemna wartość"
 
 #: lib/src/genfuncs.c:4458
 msgid "model-related"
@@ -2836,22 +2833,21 @@ msgstr "Ocena grafientu: %d\n"
 #: lib/src/gretl_bfgs.c:1891
 #, c-format
 msgid "Gradient within tolerance (%g)\n"
-msgstr ""
+msgstr "Gradient z granicą tolerancji (%g)\n"
 
 #: lib/src/gretl_bfgs.c:1893
 #, c-format
 msgid "Successive criterion values within tolerance (%g)\n"
-msgstr ""
+msgstr "Kolejne kryterium z granicą torelacji (%g)\n"
 
 #: lib/src/gretl_bfgs.c:1897
 #, c-format
 msgid "Warning: couldn't improve criterion (gradient = %g)\n"
-msgstr ""
+msgstr "Uwaga: niemożliwe poprwienie kryterium (gradient = %g)\n"
 
 #: lib/src/gretl_bfgs.c:1900
-#, fuzzy
 msgid "Warning: couldn't improve criterion\n"
-msgstr "Uwaga: niemozliwe numeryczne wyznaczanie Hessianu"
+msgstr "Uwaga: niemożliwe poprwienie kryterium\n"
 
 #: lib/src/gretl_bfgs.c:2036
 msgid "Initial value of objective function is not finite"
@@ -4836,14 +4832,13 @@ msgid "Beck--Katz standard errors"
 msgstr "Błędy standardowe Beck--Katz"
 
 #: lib/src/modelprint.c:1248
-#, fuzzy, c-format
+#, c-format
 msgid "Standard errors clustered by %d values of %s"
-msgstr "Błędy standardowe na bazie Hessian"
+msgstr "Standard errors clustered by %d values of %s"
 
 #: lib/src/modelprint.c:1251
-#, fuzzy
 msgid "Clustered standard errors"
-msgstr "Pokaż błędy standardowe"
+msgstr "Clustered standard errors"
 
 #: lib/src/modelprint.c:1267
 msgid "Could not compute Beck-Katz standard errors"
@@ -5482,9 +5477,8 @@ msgid "Number of cases `correctly predicted'"
 msgstr "Liczba przypadków 'poprawnej predykcji'"
 
 #: lib/src/modelprint.c:4992
-#, fuzzy
 msgid "percent"
-msgstr "Stała"
+msgstr "percentyl"
 
 #: lib/src/modelprint.c:5014 plugin/anova.c:502
 msgid "Analysis of Variance"
@@ -6329,9 +6323,8 @@ msgid "Gradients:  "
 msgstr "Gradienty:  "
 
 #: lib/src/printout.c:2668
-#, fuzzy
 msgid "norm"
-msgstr "normalny"
+msgstr "norm"
 
 #: lib/src/printscan.c:734
 msgid "sscanf: numerical target must be scalar"
@@ -7240,9 +7233,8 @@ msgid "About gretl"
 msgstr "O programie gretl"
 
 #: gui2/about.c:120 plugin/excel_import.c:138
-#, fuzzy
 msgid "build date"
-msgstr "Pełny zakres danych"
+msgstr "build date"
 
 #: gui2/about.c:153 gui2/about.c:155
 msgid "translator_credits"
@@ -9261,22 +9253,21 @@ msgid "Custom format"
 msgstr "Format indywidualny"
 
 #: gui2/dialogs.c:5444
-#, fuzzy
 msgid "Please specify a cluster variable"
-msgstr "Należy wybrać górną granicę zmiennej"
+msgstr "Należy wybrać 'claster variable'"
 
 #: gui2/dialogs.c:5446
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a known series"
 msgstr "'%s' nie jest nazwą serii"
 
 #: gui2/dialogs.c:5481
 msgid "Select from Regular HCCME options"
-msgstr ""
+msgstr "Wybierz opcje z 'Regular HCCME'"
 
 #: gui2/dialogs.c:5488
 msgid "Cluster by"
-msgstr ""
+msgstr "Cluster by"
 
 #: gui2/dlgutils.c:749
 msgid "Add equation"
@@ -11718,11 +11709,11 @@ msgstr "test zmian strukturalnych _Chowa"
 
 #: gui2/gui_utils.c:223
 msgid "_Collinearity"
-msgstr "ocena _współliniowości VIF"
+msgstr "Współliniowości"
 
 #: gui2/gui_utils.c:224 gui2/gui_utils.c:4068
 msgid "_Autocorrelation"
-msgstr "testy _autokorelacji (LMF, LM, Q)"
+msgstr "testy _autokorelacji"
 
 #: gui2/gui_utils.c:225
 msgid "_Durbin-Watson p-value"
@@ -15510,14 +15501,13 @@ msgid "%s, response = %s, treatment = %s:"
 msgstr "%s, odpowiedz = %s, analiza = %s:"
 
 #: plugin/arma.c:178
-#, fuzzy, c-format
+#, c-format
 msgid "MA root %d = %g\n"
-msgstr " Prob(x = %d) = %g\n"
+msgstr "MA root %d = %g\n"
 
 #: plugin/arma.c:912
-#, fuzzy
 msgid "MA estimate(s) out of bounds\n"
-msgstr "Startowy wiersz jest poza dopuszczalną granicą.\n"
+msgstr "Oszacowane MA jest poza dopuszczalnymi granicami\n"
 
 #: plugin/arma.c:1452 plugin/arma_init.c:347 plugin/arma_init.c:1144
 #: plugin/arma_init.c:1222 plugin/arma_init.c:1225
@@ -16369,7 +16359,7 @@ msgstr "Nieodpowiednia statystyka dla tego modelu"
 
 #: plugin/vif.c:236
 msgid "Variance Inflation Factors"
-msgstr "Ocena współliniowości VIF - czynnika powiększania wariancji"
+msgstr "Ocena współliniowości VIF - wskaźnik rozdęcia wariancji"
 
 #: plugin/vif.c:238
 msgid "Minimum possible value = 1.0"
@@ -16430,6 +16420,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "_Windows"
-#~ msgstr "_Okna"
