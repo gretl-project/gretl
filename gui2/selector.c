@@ -4951,8 +4951,6 @@ static void reset_arma_spinners (selector *sr)
     } 
 }
 
-#define cluster_option_ok(c) (c == OLS || c == IVREG)
-
 static void hc_config (GtkWidget *w, selector *sr)
 {
     if (cluster_option_ok(sr->ci)) {

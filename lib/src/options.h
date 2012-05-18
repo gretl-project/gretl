@@ -40,6 +40,8 @@ const char **get_opts_for_command (int ci, int *nopt);
 
 int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn);
 
+int cluster_option_ok (int ci);
+
 char **get_all_option_strings (int *pn);
 
 gretlopt transcribe_option_flags (gretlopt *targ, gretlopt src,
