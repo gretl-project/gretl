@@ -5905,6 +5905,11 @@
 	  <effect>robust standard errors</effect>
 	</option>
 	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>clustered standard errors</effect>
+        </option>
+	<option>
 	  <flag>--multinomial</flag>
 	  <effect>estimate multinomial logit</effect>
 	</option>
@@ -5939,12 +5944,16 @@
       </para>
       <para context="cli">
 	By default, standard errors are computed using the negative
-	inverse of the Hessian.  If the <opt>--robust</opt> flag is given,
-	then QML or Huber&ndash;White standard errors are calculated
-	instead. In this case the estimated covariance matrix is a
-	<quote>sandwich</quote> of the inverse of the estimated Hessian
-	and the outer product of the gradient. See chapter 10 of Davidson
-	and MacKinnon for details.
+	inverse of the Hessian.  If the <opt>--robust</opt> flag is
+	given, then QML or Huber&ndash;White standard errors are
+	calculated instead. In this case the estimated covariance
+	matrix is a <quote>sandwich</quote> of the inverse of the
+	estimated Hessian and the outer product of the gradient; see
+	chapter 10 of <cite key="davidson-mackinnon04">Davidson and
+	MacKinnon (2004)</cite>.  But if the <opt>cluster</opt> option
+	is given, then <quote>cluster-robust</quote> standard errors
+	are produced; see <guideref targ="chap-robust-vcv"/> for
+	details.
       </para>
       <para context="gui">
 	By default, standard errors are computed using the negative
@@ -7167,6 +7176,11 @@
 	  <effect>robust standard errors</effect>
         </option>
         <option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>clustered standard errors</effect>
+        </option>
+        <option>
 	  <flag>--jackknife</flag>
 	  <effect>see below</effect>
         </option>
@@ -7252,12 +7266,15 @@
       </para>
 
       <para context="cli">
-	The specific formula used for generating
-	robust standard errors (when the <opt>--robust</opt> option is
-	given) can be adjusted via the <cmdref targ="set"/> command.
-	The <opt>--jackknife</opt> option has the effect of
-	selecting an <lit>hc_version</lit> of <lit>3a</lit>; it is
-	provided to emulate the old <lit>hccm</lit> command.
+	The specific formula (<quote>HC</quote> version) used for
+	generating robust standard errors when the <opt>--robust</opt>
+	option is given can be adjusted via the <cmdref targ="set"/>
+	command.  The <opt>--jackknife</opt> option has the effect of
+	selecting an <lit>hc_version</lit> of <lit>3a</lit>. The
+	<opt>cluster</opt> overrides the selection of HC version, and
+	produces robust standard errors by grouping the observations
+	by the distinct values of <repl>clustvar</repl>; see <guideref
+	targ="chap-robust-vcv"/> for details.
       </para>
     </description>
 
@@ -11022,6 +11039,11 @@
 	  <effect>robust standard errors</effect>
         </option>
 	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>clustered standard errors</effect>
+        </option>
+	<option>
 	  <flag>--liml</flag>
 	  <effect>use Limited Information Maximum Likelihood</effect>
         </option>
@@ -11080,7 +11102,7 @@
       <para>
 	For both TSLS and LIML estimation, an additional test result is
 	shown provided that the model is estimated under the assumption of
-	i.i.d.  errors (that is, the <opt>--robust</opt> option is not
+	i.i.d. errors (that is, the <opt>--robust</opt> option is not
 	selected). This is a test for weakness of the instruments.  Weak
 	instruments can lead to serious problems in IV regression: biased
 	estimates and/or incorrect size of hypothesis tests based on the
@@ -11099,6 +11121,12 @@
 	The R-squared value printed for models estimated via two-stage least
 	squares is the square of the correlation between the dependent
 	variable and the fitted values.
+      </para>
+
+      <para context="cli">
+	For details on the effects of the <opt>robust</opt> and
+	<opt>cluster</opt> options, please see the help for
+	<cmdref targ="ols"/>.
       </para>
 
       <para context="cli">
