@@ -809,7 +809,7 @@ static int rq_write_variance (const gretl_matrix *V,
 	    }
 	}
     } else {
-	err = gretl_model_write_vcv(pmod, V, -1);
+	err = gretl_model_write_vcv(pmod, V);
     }
 
     return err;

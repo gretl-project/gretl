@@ -41,7 +41,7 @@ struct int_container_ {
     double *hi, *lo;  /* limit series for dependent variable */
     int *obstype;     /* dependent variable classifier */
     int typecount[4]; /* no. of obs by category */
-    double **X;       /* regressors */
+    gretl_matrix *X;  /* regressors */
     int *list;        /* dependent vars plus regular regressors */
     int t1;           /* beginning of sample */
     int t2;           /* end of sample */
@@ -54,7 +54,7 @@ struct int_container_ {
     double *dP;       /* probabilities */
     double *f0;       /* normalized density at min */
     double *f1;       /* normalized density at max */
-    double **G;       /* score matrix by observation */
+    gretl_matrix *G;  /* score matrix by observation */
     double *g;        /* total score vector */
 };
 
@@ -68,8 +68,8 @@ static void int_container_destroy (int_container *IC)
     free(IC->obstype);
     free(IC->list);
 
-    doubles_array_free(IC->X, IC->nx);
-    doubles_array_free(IC->G, IC->k);
+    gretl_matrix_free(IC->X);
+    gretl_matrix_free(IC->G);
 
     free(IC);
 }
@@ -79,7 +79,7 @@ static int_container *int_container_new (int *list, DATASET *dset,
 {
     int_container *IC;
     int nobs, i, s, t, vlo = list[1], vhi = list[2];
-    double x0, x1;
+    double x0, x1, xti;
 
     IC = malloc(sizeof *IC);
     if (IC == NULL) {
@@ -114,9 +114,9 @@ static int_container *int_container_new (int *list, DATASET *dset,
     IC->theta = malloc(IC->k * sizeof *IC->theta);
     IC->g = malloc(IC->k * sizeof *IC->g);
 
-    /* two-dimensional doubles arrays */
-    IC->X = doubles_array_new(IC->nx, nobs);
-    IC->G = doubles_array_new(IC->k, nobs);
+    /* big matrices */
+    IC->X = gretl_matrix_alloc(nobs, IC->nx);
+    IC->G = gretl_matrix_alloc(nobs, IC->k);
 
     /* int arrays */
     IC->obstype = malloc(nobs * sizeof *IC->obstype);
@@ -141,7 +141,6 @@ static int_container *int_container_new (int *list, DATASET *dset,
     s = 0;
     for (t=mod->t1; t<=mod->t2; t++) {
 	if (!na(mod->uhat[t])) {
-
 	    x0 = dset->Z[vlo][t];
 	    x1 = dset->Z[vhi][t];
 	    IC->lo[s] = x0;
@@ -158,9 +157,9 @@ static int_container *int_container_new (int *list, DATASET *dset,
 	    }
 
 	    for (i=0; i<IC->nx; i++) {
-		IC->X[i][s] = dset->Z[list[i+3]][t];
+		xti = dset->Z[list[i+3]][t];
+		gretl_matrix_set(IC->X, s, i, xti);
 	    }
-
 	    s++;
 	}
     }
@@ -251,13 +250,14 @@ static int create_midpoint_y (int *list, DATASET *dset,
 static void loglik_prelim (const double *theta, int_container *IC)
 {
     int i, t, k = IC->k;
-    double ndxt, z0, z1, x0, x1;
+    double ndxt, z0, z1, x0, x1, xti;
     double sigma = exp(theta[k-1]);
 
     for (t=0; t<IC->nobs; t++) {
 	ndxt = 0.0;
 	for (i=0; i<IC->nx; i++) {
-	    ndxt += theta[i] * IC->X[i][t];
+	    xti = gretl_matrix_get(IC->X, t, i);
+	    ndxt += theta[i] * xti;
 	}
 
 	IC->ndx[t] = ndxt;
@@ -293,10 +293,10 @@ static void loglik_prelim (const double *theta, int_container *IC)
     }
 }
 
-static double int_loglik (const double *theta, void *ptr)
+static double interval_loglik (const double *theta, void *ptr)
 {
     int_container *IC = (int_container *) ptr;
-    double x0, x1, z0, z1;
+    double x0, x1, z0, z1, gti;
     double derivs = 0.0, derivb = 0.0;
     double sigma, ndxt, ll = 0.0;
     int i, t, k = IC->k;
@@ -340,11 +340,12 @@ static double int_loglik (const double *theta, void *ptr)
 	ll += log(IC->dP[t]);
 
 	for (i=0; i<IC->nx; i++) {
-	    IC->G[i][t] = derivb * IC->X[i][t];
-	    IC->g[i] += IC->G[i][t]; 
+	    gti = derivb * gretl_matrix_get(IC->X, t, i);
+	    gretl_matrix_set(IC->G, t, i, gti);
+	    IC->g[i] += gti; 
 	}
 
-	IC->G[k-1][t] = derivs;
+	gretl_matrix_set(IC->G, t, k-1, derivs);
 	IC->g[k-1] += derivs;
     }
     
@@ -360,8 +361,8 @@ static double int_loglik (const double *theta, void *ptr)
     return ll;
 }
 
-static int int_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll, 
-		      void *ptr)
+static int interval_score (double *theta, double *s, int npar, 
+			   BFGS_CRIT_FUNC ll, void *ptr)
 {
     int_container *IC = (int_container *) ptr;
     int i;
@@ -373,7 +374,7 @@ static int int_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
     return 0;
 }
 
-int int_ahess (double *theta, gretl_matrix *V, void *ptr)
+int interval_hessian (double *theta, gretl_matrix *V, void *ptr)
 {
     int_container *IC = (int_container *) ptr;
     double z0 = 0, z1 = 0, mu = 0;
@@ -394,7 +395,7 @@ int int_ahess (double *theta, gretl_matrix *V, void *ptr)
     }
 
 #if INTDEBUG > 1
-    fprintf(stderr, "int_ahess:\n");
+    fprintf(stderr, "interval_hessian:\n");
     for (i=0; i<k; i++) {
 	fprintf(stderr, "theta[%2d] = %20.16f\n", i, theta[i]);
     }
@@ -443,9 +444,9 @@ int int_ahess (double *theta, gretl_matrix *V, void *ptr)
 	}
 
 	for (i=0; i<IC->nx; i++) {
-	    x0 = IC->X[i][t];
+	    x0 = gretl_matrix_get(IC->X, t, i);
 	    for (j=i; j<IC->nx; j++) {
-		x1 = IC->X[j][t];
+		x1 = gretl_matrix_get(IC->X, t, j);
 		vij = gretl_matrix_get(V, i, j);
 		vij += x * x0 * x1;
 		gretl_matrix_set(V, i, j, vij);
@@ -459,7 +460,7 @@ int int_ahess (double *theta, gretl_matrix *V, void *ptr)
 	}
 
 	for (i=0; i<IC->nx; i++) {
-	    x0 = IC->X[i][t];
+	    x0 = gretl_matrix_get(IC->X, t, i);
 	    vij = gretl_matrix_get(V, i, k-1);
 	    vij += x * x0;
 	    gretl_matrix_set(V, i, k-1, vij);
@@ -490,9 +491,9 @@ int int_ahess (double *theta, gretl_matrix *V, void *ptr)
     return err;
 }
 
-static gretl_matrix *int_ahess_inverse (double *theta, 
-					void *ptr,
-					int *err)
+static gretl_matrix *interval_hessian_inverse (double *theta, 
+					       void *ptr,
+					       int *err)
 {
     int_container *IC = ptr;
     gretl_matrix *H;
@@ -502,7 +503,7 @@ static gretl_matrix *int_ahess_inverse (double *theta,
     if (H == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = int_ahess(theta, H, ptr);
+	*err = interval_hessian(theta, H, ptr);
     }
 
     if (!*err) {
@@ -512,26 +513,28 @@ static gretl_matrix *int_ahess_inverse (double *theta,
     return H;
 }
 
-static gretl_matrix *intreg_score_matrix (int_container *IC,
-					  int *err)
+static void interval_trim_vcv (MODEL *pmod, int k,
+			       gretl_matrix *V)
 {
-    gretl_matrix *G;
- 
-    G = gretl_matrix_alloc(IC->nobs, IC->k);
+    double vij;
+    int n = V->rows;
+    int i, j;
 
-    if (G == NULL) {
-	*err = E_ALLOC;
-    } else {
-	int i, j, jj = 0;
+    gretl_matrix_reuse(V, k, k);
 
-	for (j=0; j<IC->k; j++) {
-	    for (i=0; i<IC->nobs; i++) {
-		G->val[jj++] = IC->G[j][i];
-	    }
+    for (i=0; i<k; i++) {
+	for (j=0; j<=i; j++) {
+	    vij = pmod->vcv[ijton(i, j, n)];
+	    gretl_matrix_set(V, i, j, vij);
 	}
     }
 
-    return G;
+    for (i=0; i<k; i++) {
+	for (j=0; j<=i; j++) {
+	    vij = gretl_matrix_get(V, i, j);
+	    pmod->vcv[ijton(i, j, k)] = vij;
+	}
+    }    
 }
 
 static int intreg_model_add_vcv (MODEL *pmod,
@@ -541,21 +544,16 @@ static int intreg_model_add_vcv (MODEL *pmod,
 				 double *x)
 {
     gretl_matrix *H = NULL;
-    gretl_matrix *G = NULL;
     int err = 0;
 
-    H = int_ahess_inverse(IC->theta, IC, &err);
-
-    if (!err && (opt & OPT_R)) {
-	G = intreg_score_matrix(IC, &err);
-    }
+    H = interval_hessian_inverse(IC->theta, IC, &err);
 
     if (!err) {
 	if (opt & OPT_R) {
-	    err = gretl_model_add_QML_vcv(pmod, INTREG, H, G,
+	    err = gretl_model_add_QML_vcv(pmod, pmod->ci, H, IC->G,
 					  dset, opt);
 	} else {
-	    err = gretl_model_write_vcv(pmod, H, -1);
+	    err = gretl_model_write_vcv(pmod, H);
 	    if (!err) {
 		gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
 	    }
@@ -563,11 +561,13 @@ static int intreg_model_add_vcv (MODEL *pmod,
     }
 
     if (!err) {
-	*x = gretl_model_get_vcv_element(pmod, IC->k, IC->k, H->rows);
+	int k = IC->k - 1;
+
+	*x = gretl_model_get_vcv_element(pmod, k, k, H->rows);
+	interval_trim_vcv(pmod, IC->nx, H);
     }
 
     gretl_matrix_free(H);
-    gretl_matrix_free(G);
 
     return err;
 }
@@ -665,7 +665,7 @@ static gretl_matrix *cond_moments (int_container *IC, double *sm3,
     int k = IC->k;  
     int noc = k + 2;  
     double a, b, phi0, phi1, m1, m2, u, x, y;
-    double m3 = 0.0, m4 = 0.0;
+    double gti, m3 = 0.0, m4 = 0.0;
     double sigma = exp(IC->theta[k - 1]);
     int i, t;
 
@@ -715,7 +715,8 @@ static gretl_matrix *cond_moments (int_container *IC, double *sm3,
 	*sm4 += m4;
 
 	for (i=0; i<k; i++) {
-	    gretl_matrix_set(ret, t, i, IC->G[i][t]);
+	    gti = gretl_matrix_get(IC->G, t, i);
+	    gretl_matrix_set(ret, t, i, gti);
 	}
 
 	gretl_matrix_set(ret, t, k, m3);
@@ -802,8 +803,8 @@ static int fill_intreg_model (int_container *IC,
 
      if (!na(x)) {
 	/* get the s.e. of sigma via the delta method */
-	x *= pmod->sigma * pmod->sigma;
-	gretl_model_set_double(pmod, "se_sigma", sqrt(x));
+	 x *= pmod->sigma * pmod->sigma;
+	 gretl_model_set_double(pmod, "se_sigma", sqrt(x));
     }
 
     int_compute_gresids(IC);
@@ -889,19 +890,20 @@ static int do_interval (int *list, DATASET *dset, MODEL *mod,
 
     if (use_bfgs) {
 	err = BFGS_max(IC->theta, IC->k, maxit, toler, 
-		       &fncount, &grcount, int_loglik, C_LOGLIK,
-		       int_score, IC, NULL, maxopt, prn);
+		       &fncount, &grcount, interval_loglik, C_LOGLIK,
+		       interval_score, IC, NULL, maxopt, prn);
     } else {
 	double crittol = 1.0e-07;
 	double gradtol = 1.0e-07;
 	
 	err = newton_raphson_max(IC->theta, IC->k, maxit, crittol, gradtol,
-				 &fncount, C_LOGLIK, int_loglik, 
-				 int_score, int_ahess, IC, maxopt, prn);
+				 &fncount, C_LOGLIK, interval_loglik, 
+				 interval_score, interval_hessian, 
+				 IC, maxopt, prn);
     }
 
     if (!err) {
-	IC->ll = int_loglik(IC->theta, IC);
+	IC->ll = interval_loglik(IC->theta, IC);
     }
 
      if (!err) {

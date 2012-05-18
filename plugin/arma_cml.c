@@ -531,7 +531,7 @@ conditional_arma_model_prep (MODEL *pmod, arma_info *ainfo,
 	pmod->uhat[t] = ainfo->e[t];
     }
 
-    err = gretl_model_write_vcv(pmod, ainfo->V, -1);
+    err = gretl_model_write_vcv(pmod, ainfo->V);
 
     return err;
 }

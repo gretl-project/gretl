@@ -55,7 +55,6 @@ struct negbin_info_ {
     gretl_matrix *mu;      /* exp(X\beta) */
     gretl_matrix *llt;     /* per-observation likelihood */
     gretl_matrix *G;       /* score matrix */
-    gretl_matrix *V;       /* covariance matrix */
     gretl_vector *offset;  /* offset/exposure vector */
     PRN *prn;              /* verbose printer */
 };
@@ -70,7 +69,6 @@ static void negbin_free (negbin_info *nbinfo)
 {
     gretl_matrix_block_destroy(nbinfo->B);
     free(nbinfo->theta);
-    gretl_matrix_free(nbinfo->V);
     gretl_matrix_free(nbinfo->offset);
 }
 
@@ -88,13 +86,11 @@ static int negbin_init (negbin_info *nbinfo, MODEL *pmod,
     nbinfo->flags = 0;
 
     nbinfo->B = NULL;
-    nbinfo->V = NULL;
     nbinfo->offset = NULL;
 
     nbinfo->theta = malloc(np * sizeof *nbinfo->theta);
-    nbinfo->V = gretl_matrix_alloc(np, np);
     
-    if (nbinfo->theta == NULL || nbinfo->V == NULL) {
+    if (nbinfo->theta == NULL) {
 	return E_ALLOC;
     }
 
@@ -302,7 +298,8 @@ static gretl_matrix *negbin_init_H (negbin_info *nbinfo)
     return H;
 }
 
-static gretl_matrix *negbin_nhessian (negbin_info *nbinfo, int *err)
+static gretl_matrix *negbin_hessian_inverse (negbin_info *nbinfo, 
+					     int *err)
 {
     gretl_matrix *H;
     int np = nbinfo->k + 1;
@@ -316,47 +313,57 @@ static gretl_matrix *negbin_nhessian (negbin_info *nbinfo, int *err)
     return H;
 }
 
-/* OPG vcv matrix */
-
-static int negbin_OPG_vcv (MODEL *pmod, negbin_info *nbinfo)
+static gretl_matrix *negbin_OPG_vcv (negbin_info *nbinfo,
+				     int *err)
 {
-    gretl_matrix_multiply_mod(nbinfo->G, GRETL_MOD_TRANSPOSE,
-			      nbinfo->G, GRETL_MOD_NONE,
-			      nbinfo->V, GRETL_MOD_NONE);
+    int k = nbinfo->G->cols;
+    gretl_matrix *GG = gretl_matrix_alloc(k, k);
 
-    return gretl_invert_symmetric_matrix(nbinfo->V);
-}
-
-/* QML sandwich VCV */
-
-static int negbin_robust_vcv (MODEL *pmod, negbin_info *nbinfo,
-			      const DATASET *dset, gretlopt opt)
-{
-    gretl_matrix *H;
-    int err = 0;
-
-    H = negbin_nhessian(nbinfo, &err);
-
-    if (!err) {
-	err = gretl_model_add_QML_vcv(pmod, NEGBIN, 
-				      H, nbinfo->G,
-				      dset, opt);
-	gretl_matrix_free(H);
+    if (GG == NULL) {
+	*err = E_ALLOC;
+    } else {
+	gretl_matrix_multiply_mod(nbinfo->G, GRETL_MOD_TRANSPOSE,
+				  nbinfo->G, GRETL_MOD_NONE,
+				  GG, GRETL_MOD_NONE);
+	*err = gretl_invert_symmetric_matrix(GG);
     }
 
-    return err;
+    return GG;
 }
 
-static int negbin_hessian_vcv (MODEL *pmod, negbin_info *nbinfo)
+static int negbin_model_add_vcv (MODEL *pmod, negbin_info *nbinfo,
+				 const DATASET *dset, gretlopt opt)
 {
-    gretl_matrix *H;
+    gretl_matrix *GG = NULL;
+    gretl_matrix *H = NULL;
     int err = 0;
 
-    H = negbin_nhessian(nbinfo, &err);
-
-    if (!err) {
-	gretl_matrix_replace(&nbinfo->V, H);
+    if (opt & OPT_G) {
+	GG = negbin_OPG_vcv(nbinfo, &err);
+	if (!err) {
+	    err = gretl_model_write_vcv(pmod, GG);
+	    if (!err) {
+		gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
+	    }
+	}
+    } else {
+	H = negbin_hessian_inverse(nbinfo, &err);
+	if (!err) {
+	    if (opt & OPT_R) {
+		err = gretl_model_add_QML_vcv(pmod, pmod->ci, 
+					      H, nbinfo->G,
+					      dset, opt);
+	    } else {
+		err = gretl_model_write_vcv(pmod, H);
+		if (!err) {
+		    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
+		}
+	    }
+	}
     }
+
+    gretl_matrix_free(H);
+    gretl_matrix_free(GG);
 
     return err;
 }
@@ -411,23 +418,7 @@ transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
     err = gretl_model_write_coeffs(pmod, nbinfo->theta, nc);
     
     if (!err) {
-	if (opt & OPT_R) {
-	    pmod->opt |= OPT_R;
-	    err = negbin_robust_vcv(pmod, nbinfo, dset, opt);
-	} else if (opt & OPT_G) {
-	    pmod->opt |= OPT_G;
-	    err = negbin_OPG_vcv(pmod, nbinfo);
-	} else {
-	    err = negbin_hessian_vcv(pmod, nbinfo);
-	} 
-
-	if (!err) {
-	    int vtype = (opt & OPT_G) ? ML_OP :
-		(opt & OPT_R)? ML_QML : ML_HESSIAN;
-
-	    gretl_model_set_vcv_info(pmod, VCV_ML, vtype);
-	    err = gretl_model_write_vcv(pmod, nbinfo->V, -1);
-	}
+	err = negbin_model_add_vcv(pmod, nbinfo, dset, opt);
     }
 
     if (!err) {

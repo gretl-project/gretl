@@ -1319,6 +1319,30 @@ static gretl_matrix *heckit_init_H (double *theta,
 
 #endif
 
+static void heckit_trim_vcv (MODEL *pmod, int k,
+			     gretl_matrix *V)
+{
+    double vij;
+    int n = V->rows;
+    int i, j;
+
+    gretl_matrix_reuse(V, k, k);
+
+    for (i=0; i<k; i++) {
+	for (j=0; j<=i; j++) {
+	    vij = pmod->vcv[ijton(i, j, n)];
+	    gretl_matrix_set(V, i, j, vij);
+	}
+    }
+
+    for (i=0; i<k; i++) {
+	for (j=0; j<=i; j++) {
+	    vij = gretl_matrix_get(V, i, j);
+	    pmod->vcv[ijton(i, j, k)] = vij;
+	}
+    }    
+}
+
 int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 {
     gretl_matrix *H = NULL;
@@ -1441,8 +1465,11 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
     }
 
     if (!err) {
-	np = HC->vcv->rows - 2;
-	err = gretl_model_write_vcv(hm, HC->vcv, np);
+	err = gretl_model_write_vcv(hm, HC->vcv);
+	if (!err) {
+	    np = HC->vcv->rows - 2;
+	    heckit_trim_vcv(hm, np, HC->vcv);
+	}
     }
 
     free(hess);

@@ -637,7 +637,7 @@ static int duration_model_add_vcv (MODEL *pmod, duration_info *dinfo,
     if (opt & OPT_G) {
 	GG = duration_OPG_vcv(dinfo, &err);
 	if (!err) {
-	    err = gretl_model_write_vcv(pmod, GG, -1);
+	    err = gretl_model_write_vcv(pmod, GG);
 	    if (!err) {
 		gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
 	    }
@@ -650,7 +650,7 @@ static int duration_model_add_vcv (MODEL *pmod, duration_info *dinfo,
 					      H, dinfo->G,
 					      dset, opt);
 	    } else {
-		err = gretl_model_write_vcv(pmod, H, -1);
+		err = gretl_model_write_vcv(pmod, H);
 		if (!err) {
 		    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
 		}

@@ -111,7 +111,7 @@ write_garch_stats (MODEL *pmod, const int *list, const DATASET *dset,
     err = gretl_model_write_coeffs(pmod, theta, npar);
 
     if (!err) {
-	gretl_model_write_vcv(pmod, V, -1);
+	gretl_model_write_vcv(pmod, V);
     }
 
     if (err) {

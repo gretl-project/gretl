@@ -1840,24 +1840,19 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem)
 /**
  * gretl_model_write_vcv:
  * @pmod: pointer to model.
- * @V: full covariance matrix.
- * @k: the number of parameters to include, or -1 for all.
+ * @V: covariance matrix.
  * 
  * Write the covariance matrix @V into the model @pmod, using the
  * special packed format that is required by the MODEL struct,
  * and set the standard errors to the square root of the diagonal
  * elements of this matrix. 
  * 
- * In case @k is less than the dimension of @V, only the first
- * @k rows and columns will be used (except that if an @k value
- * of -1 is given, this says to use all of @V).
- *
  * Returns: 0 on success, non-zero code on error.
  */
 
-int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V, int k)
+int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V)
 {
-    int i, j, n;
+    int i, j, k, n;
     double x, *tmp;
     int err = 0;
 
@@ -1869,14 +1864,7 @@ int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V, int k)
 	return E_NONCONF;
     }
 
-    if (k != -1 && (k < 1 || k > V->rows)) {
-	return E_DATA;
-    }
-
-    if (k == -1) {
-	k = V->rows;
-    }
-
+    k = V->rows;
     n = (k * k + k) / 2; 
 
     /* reallocate model vcv in case it's wrongly sized */
@@ -2097,7 +2085,7 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
     }
 
     if (!err) {
-	err = gretl_model_write_vcv(pmod, V, -1);
+	err = gretl_model_write_vcv(pmod, V);
     }
 
     if (!err) {

@@ -1025,7 +1025,7 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
     if (opt & OPT_G) {
 	GG = biprobit_OPG_vcv(bp, &err);
 	if (!err) {
-	    err = gretl_model_write_vcv(pmod, GG, -1);
+	    err = gretl_model_write_vcv(pmod, GG);
 	    if (!err) {
 		gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
 	    }
@@ -1042,7 +1042,7 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 					      H, bp->score,
 					      dset, opt);
 	    } else {
-		err = gretl_model_write_vcv(pmod, H, -1);
+		err = gretl_model_write_vcv(pmod, H);
 		if (!err) {
 		    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
 		}

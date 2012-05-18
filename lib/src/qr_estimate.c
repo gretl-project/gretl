@@ -1384,7 +1384,7 @@ static int qr_make_cluster_vcv (MODEL *pmod, int ci,
     }
 
     if (!err) {
-	err = gretl_model_write_vcv(pmod, V, -1);
+	err = gretl_model_write_vcv(pmod, V);
     }
 
     if (!err) {

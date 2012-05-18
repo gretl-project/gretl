@@ -346,7 +346,7 @@ int gretl_model_get_coeff_separator (const MODEL *pmod, const char **ps, int *pp
 
 int gretl_model_new_vcv (MODEL *pmod, int *nelem);
 
-int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V, int k);
+int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V);
 
 int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 			     const gretl_matrix *H, 

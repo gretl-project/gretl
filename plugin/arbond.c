@@ -1774,7 +1774,7 @@ static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
 	for (i=0; i<dpd->k; i++) {
 	    pmod->coeff[i] = dpd->beta->val[i];
 	}
-	err = gretl_model_write_vcv(pmod, dpd->vbeta, -1);
+	err = gretl_model_write_vcv(pmod, dpd->vbeta);
     }
 
     /* add uhat, yhat */

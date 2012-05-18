@@ -1460,7 +1460,7 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
     }
 
     if (!err) {
-	err = gretl_model_write_vcv(pmod, V, -1);
+	err = gretl_model_write_vcv(pmod, V);
     }
 
  bailout:
@@ -1485,7 +1485,7 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 	}
     } else if (spec->opt & OPT_H) {
 	vcvopt = ML_HESSIAN;
-	err = gretl_model_write_vcv(pmod, spec->Hinv, -1);
+	err = gretl_model_write_vcv(pmod, spec->Hinv);
     } else {
 	/* either OPG or QML */
 	err = mle_build_vcv(pmod, spec, &vcvopt);
