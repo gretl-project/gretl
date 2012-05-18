@@ -625,6 +625,76 @@ set pcse off
 estimator is not used unless the \option{robust} flag is given, or the
 ``Robust'' box is checked in the GUI program.)
 
+
+\section{The cluster-robust estimator}
+\label{sec:vcv-cluster}
+
+One further variance estimator is available in \app{gretl}, namely the
+``cluster-robust'' estimator. This may be appropriate (for
+cross-sectional data, mostly) when the observations naturally fall
+into groups or clusters, and one suspects that the error term may
+exhibit dependency within the clusters and/or have a variance that
+differs across clusters. Such clusters may be binary (e.g.\ employed
+versus unemployed workers), categorical with several values (e.g.\
+products grouped by manufacturer) or ordinal (e.g.\ individuals with
+low, middle or high education levels). 
+
+For linear regression models estimated via least squares the cluster
+estimator is defined as
+\[
+\hat{\Sigma}_{\rm C} = \left(X'X\right)^{-1} 
+  \left(\sum_{j=1}^m X_j'\hat{u}_j \hat{u}_j' X_j\right)
+  \left(X'X\right)^{-1}
+\]
+where $m$ denotes the number of clusters, and $X_j$ and $\hat{u}_j$
+denote, respectively, the matrix of regressors and the vector of
+residuals that fall within cluster $j$. As noted above, the Arellano
+variance estimator for panel data models is a special case of this,
+where the clustering is by panel unit.
+
+For models estimated by the method of Maximum Likelihood (in which
+case the standard variance estimator is the inverse of the negative
+Hessian, $H$), the cluster estimator is
+\[
+\hat{\Sigma}_{\rm C} = H^{-1} \left(\sum_{j=1}^m G_j' G_j\right)
+  H^{-1}
+\]
+where $G_j$ is the sum of the ``score'' (that is, the derivative of
+the loglikelihood with respect to the parameter estimates) across the
+observations falling within cluster $j$.
+
+It is common to apply a degrees of freedom adjustment to these
+estimators (otherwise the variance may appear misleading small in
+comparison with other estimators, if the number of clusters is small).
+In the least squares case the factor is $(m/(m-1)) \times
+(n-1)/(n-k)$, where $n$ is the total number of observations and $k$ is
+the number of parameters estimated; in the case of ML estimation the
+factor is just $m/(m-1)$.
+
+\subsection{Availability and syntax}
+
+The cluster-robust estimator is currently available for models
+estimated via OLS and TSLS, and also for most ML estimators other
+than those specialized for time-series data: binary logit and probit,
+ordered logit and probit, multinomial logit, Tobit, interval
+regression, biprobit, heckit, count models and duration models. In all
+cases the syntax is the same: you give the option flag
+\option{cluster=} followed by the name of the series to be used to
+define the clusters, as in
+%
+\begin{code}
+ols y 0 x1 x2 --cluster=cvar
+\end{code}
+%
+The specified clustering variable must (a) be defined (not missing) at
+all observations used in estimating the model and (b) take on at least
+two distinct values over the estimation range. The clusters are
+defined as sets of observations having a common value for the
+clustering variable. It is generally expected that the number of
+clusters is substantially less than the total number of observations.
+
+
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "gretl-guide"
