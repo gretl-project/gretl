@@ -5245,7 +5245,7 @@ static void build_selector_switches (selector *sr)
 	    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 	    g_free(txt);
 
-	    cbox = gtk_combo_box_text_new_with_entry();
+	    cbox = combo_box_text_new_with_entry();
 	    sr->extra[N_EXTRA-1] = cbox;
 	    entry = gtk_bin_get_child(GTK_BIN(cbox));
 	    gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN);
