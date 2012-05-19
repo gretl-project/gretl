@@ -313,39 +313,14 @@ static gretl_matrix *negbin_hessian_inverse (negbin_info *nbinfo,
     return H;
 }
 
-static gretl_matrix *negbin_OPG_vcv (negbin_info *nbinfo,
-				     int *err)
-{
-    int k = nbinfo->G->cols;
-    gretl_matrix *GG = gretl_matrix_alloc(k, k);
-
-    if (GG == NULL) {
-	*err = E_ALLOC;
-    } else {
-	gretl_matrix_multiply_mod(nbinfo->G, GRETL_MOD_TRANSPOSE,
-				  nbinfo->G, GRETL_MOD_NONE,
-				  GG, GRETL_MOD_NONE);
-	*err = gretl_invert_symmetric_matrix(GG);
-    }
-
-    return GG;
-}
-
 static int negbin_model_add_vcv (MODEL *pmod, negbin_info *nbinfo,
 				 const DATASET *dset, gretlopt opt)
 {
-    gretl_matrix *GG = NULL;
     gretl_matrix *H = NULL;
     int err = 0;
 
     if (opt & OPT_G) {
-	GG = negbin_OPG_vcv(nbinfo, &err);
-	if (!err) {
-	    err = gretl_model_write_vcv(pmod, GG);
-	    if (!err) {
-		gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
-	    }
-	}
+	err = gretl_model_add_OPG_vcv(pmod, nbinfo->G);
     } else {
 	H = negbin_hessian_inverse(nbinfo, &err);
 	if (!err) {
@@ -354,16 +329,12 @@ static int negbin_model_add_vcv (MODEL *pmod, negbin_info *nbinfo,
 					      H, nbinfo->G,
 					      dset, opt);
 	    } else {
-		err = gretl_model_write_vcv(pmod, H);
-		if (!err) {
-		    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
-		}
+		err = gretl_model_add_hessian_vcv(pmod, H);
 	    }
 	}
     }
 
     gretl_matrix_free(H);
-    gretl_matrix_free(GG);
 
     return err;
 }

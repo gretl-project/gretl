@@ -826,29 +826,25 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
 {
     gretl_matrix *G = NULL;
     gretl_matrix *V = NULL;
-    double rcond;
     int err = 0;
 
-    G = numerical_score_matrix(b, k, T, kalman_arma_llt_callback, 
+    G = numerical_score_matrix(b, T, k, kalman_arma_llt_callback, 
 			       K, &err);
-    if (err) {
-	goto bailout;
+
+    if (!err) {
+	V = gretl_matrix_XTX_new(G);
+	if (V == NULL) {
+	    err = E_ALLOC;
+	}
     }
 
-    V = gretl_matrix_alloc(k, k);
-    if (V == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
+    if (!err) {
+	double rcond = gretl_symmetric_matrix_rcond(V, &err);
 
-    gretl_matrix_multiply_mod(G, GRETL_MOD_NONE,
-			      G, GRETL_MOD_TRANSPOSE,
-			      V, GRETL_MOD_NONE);
-
-    rcond = gretl_symmetric_matrix_rcond(V, &err);
-    if (!err && rcond < 1.0E-10) {
-	pprintf(prn, "OPG: rcond = %g; will try Hessian\n", rcond);
-	err = 1;
+	if (!err && rcond < 1.0E-10) {
+	    pprintf(prn, "OPG: rcond = %g; will try Hessian\n", rcond);
+	    err = 1;
+	}
     }
 
     if (!err) {
@@ -859,8 +855,6 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
 	gretl_matrix_multiply_by_scalar(V, s2);
 	err = gretl_model_write_vcv(pmod, V);
     }
-
- bailout:
 
     gretl_matrix_free(G);
     gretl_matrix_free(V);

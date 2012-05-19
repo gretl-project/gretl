@@ -1316,26 +1316,6 @@ static void add_stats_to_model (MODEL *pmod, nlspec *spec,
     }
 }
 
-static int QML_vcv (nlspec *spec, gretl_matrix *V)
-{
-    gretl_matrix *tmp = NULL;
-    int k = V->rows;
-    
-    tmp = gretl_matrix_alloc(k, k);
-    if (tmp == NULL) {
-	return E_ALLOC;
-    }
-
-    /* form sandwich: V <- H^{-1} V H^{-1} */
-    gretl_matrix_copy_values(tmp, V);
-    gretl_matrix_qform(spec->Hinv, GRETL_MOD_NONE, tmp,
-		       V, GRETL_MOD_NONE);
-
-    gretl_matrix_free(tmp);
-
-    return 0;
-}
-
 /* returns the per-observation contributions to the log
    likelihood */
 
@@ -1362,44 +1342,31 @@ static const double *mle_llt_callback (const double *b, int i, void *p)
     }
 }
 
-/* add variance matrix based on OPG, (GG')^{-1}, or on QML sandwich,
-   H^{-1} GG' H^{-1}
-*/
-
-static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
+static gretl_matrix *ml_gradient_matrix (nlspec *spec, int *err)
 {
     gretl_matrix *G = NULL;
-    gretl_matrix *V = NULL;
-    gretl_matrix *m;
-    double x = 0.0;
     int k = spec->ncoeff;
     int T = spec->nobs;
-    int i, j, v, s, t;
-    int err = 0;
-
-    V = gretl_matrix_alloc(k, k);
-    if (V == NULL) {
-	return E_ALLOC;
-    }
 
     if (numeric_mode(spec)) {
-	G = numerical_score_matrix(spec->coeff, k, T, mle_llt_callback, 
-				   (void *) spec, &err);
-	if (err) {
-	    gretl_matrix_free(V);
-	    return err;
-	}
+	G = numerical_score_matrix(spec->coeff, T, k, mle_llt_callback, 
+				   (void *) spec, err);
     } else {
-	G = gretl_matrix_alloc(k, T);
+	/* using analytical derivatives */
+	gretl_matrix *m;
+	double x = 0.0;
+	int i, j, v, s, t;
+	
+	G = gretl_matrix_alloc(T, k);
 	if (G == NULL) {
-	    gretl_matrix_free(V);
-	    return E_ALLOC;
+	    *err = E_ALLOC;
+	    return NULL;
 	}
 	j = 0;
 	for (i=0; i<spec->nparam; i++) {
 	    if (matrix_deriv(spec, i)) {
-		m = get_derivative_matrix(spec, i, &err);
-		if (err) {
+		m = get_derivative_matrix(spec, i, err);
+		if (*err != 0) {
 		    break;
 		}
 		for (s=0; s<m->cols; s++) {
@@ -1408,72 +1375,32 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
 			if (t > 0 && m->rows > 0) {
 			    x = gretl_matrix_get(m, t, s);
 			}
-			gretl_matrix_set(G, j, t, x);
+			gretl_matrix_set(G, t, j, x);
 		    }
 		    j++;
 		}
 	    } else if (scalar_deriv(spec, i)) {
 		x = gretl_scalar_get_value(spec->params[i].dname);
 		for (t=0; t<T; t++) {
-		    gretl_matrix_set(G, j, t, x);
+		    gretl_matrix_set(G, t, j, x);
 		}
 		j++;
 	    } else {
 		v = spec->params[i].dnum;
 		for (t=0; t<T; t++) {
 		    x = spec->dset->Z[v][t + spec->t1];
-		    gretl_matrix_set(G, j, t, x);
+		    gretl_matrix_set(G, t, j, x);
 		}
 		j++;
 	    } 
 	}		
     }
 
-    if (err) {
-	goto bailout;
-    }
-
-    gretl_matrix_multiply_mod(G, GRETL_MOD_NONE,
-			      G, GRETL_MOD_TRANSPOSE,
-			      V, GRETL_MOD_NONE);
-
-    if ((spec->opt & OPT_R) && spec->Hinv != NULL) {
-	/* robust option -> QML */
-	err = QML_vcv(spec, V);
-	*vcvopt = ML_QML;
-    } else {
-	/* plain OPG */
-	err = gretl_invert_symmetric_matrix(V);
-	if (err) {
-	    gretl_errmsg_set("failed to invert OPG matrix GG'");
-#if 0 /* experiment: show estimates even tho' VCV has failed */
-	    *vcvopt = ML_VCVMAX;
-	    k = k * k;
-	    for (i=0; i<k; i++) {
-		V->val[i] = 0.0/0.0;
-	    }
-	    err = 0;
-#endif
-	} else {
-	    *vcvopt = ML_OP;
-	}
-    }
-
-    if (!err) {
-	err = gretl_model_write_vcv(pmod, V);
-    }
-
- bailout:
-
-    gretl_matrix_free(G);
-    gretl_matrix_free(V);
-
-    return err;
+    return G;
 }
 
 static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 {
-    int vcvopt = ML_OP;
     int err = 0;
 
     if (spec->opt & OPT_A) {
@@ -1484,16 +1411,22 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 	    pmod->sderr[i] = NADBL;
 	}
     } else if (spec->opt & OPT_H) {
-	vcvopt = ML_HESSIAN;
-	err = gretl_model_write_vcv(pmod, spec->Hinv);
+	err = gretl_model_add_hessian_vcv(pmod, spec->Hinv);
     } else {
-	/* either OPG or QML */
-	err = mle_build_vcv(pmod, spec, &vcvopt);
-    }
+	gretl_matrix *G = ml_gradient_matrix(spec, &err);
 
-    if (!err && pmod->vcv != NULL) {
-	gretl_model_set_vcv_info(pmod, VCV_ML, vcvopt);
-    }    
+	if (!err) {
+	    if ((spec->opt & OPT_R) && spec->Hinv != NULL) {
+		/* robust option -> QML */
+		err = gretl_model_add_QML_vcv(pmod, MLE, 
+					      spec->Hinv, G,
+					      NULL, OPT_R);
+	    } else {
+		err = gretl_model_add_OPG_vcv(pmod, G);
+	    }
+	}
+	gretl_matrix_free(G);
+    }
 
     return err;
 }

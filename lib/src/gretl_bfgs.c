@@ -460,12 +460,12 @@ static int NR_fallback_hessian (double *b, gretl_matrix *H,
 
 #define ALT_OPG 0
 
-/* build the G matrix, given a set of coefficient estimates, b, and a
-   function for calculating the per-observation contributions
-   to the loglikelihood, lltfun 
+/* build the T x k G matrix, given a set of coefficient estimates, 
+   @b, and a function for calculating the per-observation contributions
+   to the loglikelihood, @lltfun 
 */
 
-gretl_matrix *numerical_score_matrix (double *b, int k, int T,
+gretl_matrix *numerical_score_matrix (double *b, int T, int k,
 				      BFGS_LLT_FUNC lltfun,
 				      void *data, int *err)
 {
@@ -478,7 +478,7 @@ gretl_matrix *numerical_score_matrix (double *b, int k, int T,
     double bi0, x0;
     int i, t;
 
-    G = gretl_zero_matrix_new(k, T);
+    G = gretl_zero_matrix_new(T, k);
     if (G == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -496,7 +496,7 @@ gretl_matrix *numerical_score_matrix (double *b, int k, int T,
 	    goto bailout;
 	}
 	for (t=0; t<T; t++) {
-	    gretl_matrix_set(G, i, t, x[t]);
+	    gretl_matrix_set(G, t, i, x[t]);
 	}
 	b[i] = bi0 + h;
 	x = lltfun(b, i, data);
@@ -505,8 +505,8 @@ gretl_matrix *numerical_score_matrix (double *b, int k, int T,
 	    goto bailout;
 	}
 	for (t=0; t<T; t++) {
-	    x0 = gretl_matrix_get(G, i, t);
-	    gretl_matrix_set(G, i, t, (x[t] - x0) / (2.0 * h));
+	    x0 = gretl_matrix_get(G, t, i);
+	    gretl_matrix_set(G, t, i, (x[t] - x0) / (2.0 * h));
 	}
 	b[i] = bi0;
 #if NLS_DEBUG

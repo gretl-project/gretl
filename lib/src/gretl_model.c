@@ -2052,24 +2052,28 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
     int k = H->rows;
     int err = 0;
 
-    GG = gretl_matrix_alloc(k, k);
     V = gretl_matrix_alloc(k, k);
 
-    if (GG == NULL || V == NULL) {
-	err = E_ALLOC;
+    if (V == NULL) {
+	return E_ALLOC;
     }
 
     if (!err) {
 	if (opt & OPT_C) {
 	    /* clustered */
-	    gretl_matrix_zero(GG);
-	    err = model_make_clustered_GG(pmod, ci, G, GG,
-					  dset, &cvar, &n_c);
+	    GG = gretl_zero_matrix_new(k, k);
+	    if (GG == NULL) {
+		err = E_ALLOC;
+	    } else {
+		err = model_make_clustered_GG(pmod, ci, G, GG,
+					      dset, &cvar, &n_c);
+	    }
 	} else {
 	    /* regular QML using OPG */
-	    gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE,
-				      G, GRETL_MOD_NONE,
-				      GG, GRETL_MOD_NONE);
+	    GG = gretl_matrix_XTX_new(G);
+	    if (GG == NULL) {
+		err = E_ALLOC;
+	    }	    
 	}
     }
 
@@ -2101,6 +2105,66 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 
     gretl_matrix_free(GG);
     gretl_matrix_free(V);
+
+    return err;
+}
+
+/**
+ * gretl_model_add_hessian_vcv:
+ * @pmod: pointer to model.
+ * @H: inverse of the (negative) Hessian.
+ * 
+ * Write @H into the model @pmod as its covariance matrix, and
+ * set the standard errors to the square roots of the diagonal
+ * elements of this matrix. 
+ * 
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int gretl_model_add_hessian_vcv (MODEL *pmod, 
+				 const gretl_matrix *H) 
+{
+    int err = gretl_model_write_vcv(pmod, H);
+
+    if (!err) {
+	gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
+    }
+
+    return err;
+}
+
+/**
+ * gretl_model_add_OPG_vcv:
+ * @pmod: pointer to model.
+ * @G: T x k gradient matrix.
+ * 
+ * Compute (G'G)^{-1}, write this into @pmod as its covariance matrix,
+ * and set the standard errors to the square roots of the diagonal
+ * elements of this matrix. 
+ * 
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int gretl_model_add_OPG_vcv (MODEL *pmod, 
+			     const gretl_matrix *G) 
+{
+    gretl_matrix *GG = gretl_matrix_XTX_new(G);
+    int err = 0;
+
+    if (GG == NULL) {
+	return E_ALLOC;
+    }
+
+    err = gretl_invert_symmetric_matrix(GG);
+
+    if (!err) {
+	err = gretl_model_write_vcv(pmod, GG);
+	if (!err) {
+	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
+	}
+    }
+
+    gretl_matrix_free(GG);
 
     return err;
 }

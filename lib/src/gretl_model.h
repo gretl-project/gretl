@@ -354,6 +354,12 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 			     const DATASET *dset,
 			     gretlopt opt);
 
+int gretl_model_add_hessian_vcv (MODEL *pmod, 
+				 const gretl_matrix *H);
+
+int gretl_model_add_OPG_vcv (MODEL *pmod, 
+			     const gretl_matrix *G);
+
 VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATASET *dset);
 
 double gretl_model_get_vcv_element (const MODEL *pmod,

@@ -553,10 +553,7 @@ static int intreg_model_add_vcv (MODEL *pmod,
 	    err = gretl_model_add_QML_vcv(pmod, pmod->ci, H, IC->G,
 					  dset, opt);
 	} else {
-	    err = gretl_model_write_vcv(pmod, H);
-	    if (!err) {
-		gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
-	    }
+	    err = gretl_model_add_hessian_vcv(pmod, H);
 	}
     }
 

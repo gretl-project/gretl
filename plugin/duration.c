@@ -456,28 +456,6 @@ static gretl_matrix *duration_init_H (duration_info *dinfo)
     return H;
 }
 
-/* OPG variance matrix */
-
-static gretl_matrix *duration_OPG_vcv (duration_info *dinfo,
-				       int *err)
-{
-    gretl_matrix *GG;
-
-    GG = gretl_matrix_alloc(dinfo->npar, dinfo->npar);
-
-    if (GG == NULL) {
-	*err = E_ALLOC;
-    } else {
-	gretl_matrix_multiply_mod(dinfo->G, GRETL_MOD_TRANSPOSE,
-				  dinfo->G, GRETL_MOD_NONE,
-				  GG, GRETL_MOD_NONE);
-
-	*err = gretl_invert_symmetric_matrix(GG);
-    }
-
-    return GG;
-}
-
 /* This is the last thing we do, after transcribing the 
    MLE results to pmod, so we don't have to worry about 
    saving and then restoring all the original values
@@ -630,18 +608,11 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 static int duration_model_add_vcv (MODEL *pmod, duration_info *dinfo,
 				   const DATASET *dset, gretlopt opt)
 {
-    gretl_matrix *GG = NULL;
     gretl_matrix *H = NULL;
     int err = 0;
 
     if (opt & OPT_G) {
-	GG = duration_OPG_vcv(dinfo, &err);
-	if (!err) {
-	    err = gretl_model_write_vcv(pmod, GG);
-	    if (!err) {
-		gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
-	    }
-	}
+	err = gretl_model_add_OPG_vcv(pmod, dinfo->G);
     } else {
 	H = duration_hessian_inverse(dinfo->theta, dinfo, &err);
 	if (!err) {
@@ -650,16 +621,12 @@ static int duration_model_add_vcv (MODEL *pmod, duration_info *dinfo,
 					      H, dinfo->G,
 					      dset, opt);
 	    } else {
-		err = gretl_model_write_vcv(pmod, H);
-		if (!err) {
-		    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
-		}
+		err = gretl_model_add_hessian_vcv(pmod, H);
 	    }
 	}
     }
 
     gretl_matrix_free(H);
-    gretl_matrix_free(GG);
 
     return err;
 }

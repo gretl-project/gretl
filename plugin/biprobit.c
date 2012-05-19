@@ -1001,35 +1001,14 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
     return err;
 }
 
-static gretl_matrix *biprobit_OPG_vcv (bp_container *bp,
-				       int *err)
-{
-    gretl_matrix *GG = gretl_matrix_XTX_new(bp->score);
-
-    if (GG == NULL) {
-	*err = E_ALLOC;
-    } else {
-	*err = gretl_invert_symmetric_matrix(GG);
-    }
-
-    return GG;
-}
-
 static int biprobit_vcv (MODEL *pmod, bp_container *bp, 
 			 const DATASET *dset, gretlopt opt)
 {
-    gretl_matrix *GG = NULL;
     gretl_matrix *H = NULL;
     int err = 0;
 
     if (opt & OPT_G) {
-	GG = biprobit_OPG_vcv(bp, &err);
-	if (!err) {
-	    err = gretl_model_write_vcv(pmod, GG);
-	    if (!err) {
-		gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
-	    }
-	}
+	err = gretl_model_add_OPG_vcv(pmod, bp->score);
     } else {
 	double *theta = make_bp_theta(bp, &err);
 
@@ -1042,16 +1021,12 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 					      H, bp->score,
 					      dset, opt);
 	    } else {
-		err = gretl_model_write_vcv(pmod, H);
-		if (!err) {
-		    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
-		}
+		err = gretl_model_add_hessian_vcv(pmod, H);
 	    }
 	}
 	free(theta);
     }
 
-    gretl_matrix_free(GG);
     gretl_matrix_free(H);
 
     return err;
