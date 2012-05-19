@@ -1049,6 +1049,11 @@
 	  <effect>robust standard errors</effect>
         </option>
 	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>see <cmdref targ="logit"/> for explanation</effect>
+        </option>
+	<option>
 	  <flag>--opg</flag>
 	  <effect>see below</effect>
         </option>
@@ -2868,6 +2873,11 @@
         <option>
           <flag>--robust</flag>
           <effect>robust (QML) standard errors</effect>
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>see <cmdref targ="logit"/> for explanation</effect>
         </option>
         <option>
           <flag>--vcv</flag>
@@ -5174,7 +5184,12 @@
         <option>
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
-        </option>	
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>see <cmdref targ="logit"/> for explanation</effect>
+        </option>
       </options>
       <examples>
 	<example>intreg lo hi const x1 x2</example>
@@ -6838,12 +6853,17 @@
 	  <effect>use NegBin 1 model</effect>
 	</option>
 	<option>
-	  <flag>--opg</flag>
-	  <effect>see below</effect>
-	</option>
-	<option>
 	  <flag>--robust</flag>
 	  <effect>QML covariance matrix</effect>
+	</option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>see <cmdref targ="logit"/> for explanation</effect>
+        </option>
+	<option>
+	  <flag>--opg</flag>
+	  <effect>see below</effect>
 	</option>
 	<option>
 	  <flag>--vcv</flag>
@@ -8042,7 +8062,12 @@
         <option>
           <flag>--robust</flag>
           <effect>robust standard errors</effect>
-        </option>	
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>see <cmdref targ="logit"/> for explanation</effect>
+        </option>
         <option>
           <flag>--vcv</flag>
           <effect>print covariance matrix</effect>
@@ -8265,6 +8290,11 @@
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
 	</option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>see <cmdref targ="logit"/> for explanation</effect>
+        </option>
 	<option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
@@ -10947,6 +10977,11 @@
         <option>
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>see <cmdref targ="logit"/> for explanation</effect>
         </option>
         <option>
 	  <flag>--verbose</flag>
