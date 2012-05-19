@@ -188,6 +188,13 @@ enum {
 			    (d)->structure == SPECIAL_TIME_SERIES || \
                             (d)->structure == STACKED_TIME_SERIES)
 
+#define robust_conf(c) (c != LOGIT && c != PROBIT &&	\
+                        c != OLOGIT && c != OPROBIT &&	\
+                        c != QUANTREG && c != INTREG && \
+                        c != MLOGIT && c != COUNTMOD && \
+                        c != DURATION && c != HECKIT && \
+			c != BIPROBIT && c != TOBIT)
+
 #define select_lags_primary(c) (MODEL_CODE(c))
 
 #define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA && \
@@ -4626,6 +4633,11 @@ static void selector_init (selector *sr, guint ci, const char *title,
 	dlgy += 50;
     }
 
+    if (cluster_option_ok(ci) && !robust_conf(ci)) {
+	/* extra row under "robust" option */
+	dlgy += 40;
+    }
+
     if (dataset_lags_ok(dataset)) {
 	if (MODEL_CODE(ci) && ci != ARMA) {
 	    /* lag selector button at foot */
@@ -5174,13 +5186,6 @@ void vbox_add_hwedge (GtkWidget *vbox)
     gtk_widget_show(h);
 }
 
-#define robust_conf(c) (c != LOGIT && c != PROBIT &&	\
-                        c != OLOGIT && c != OPROBIT &&	\
-                        c != QUANTREG && c != INTREG && \
-                        c != MLOGIT && c != COUNTMOD && \
-                        c != DURATION && c != HECKIT && \
-			c != BIPROBIT && c != TOBIT)
-
 static void build_selector_switches (selector *sr) 
 {
     GtkWidget *hbox, *tmp;
@@ -5237,6 +5242,7 @@ static void build_selector_switches (selector *sr)
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
 
 	if (!robust_conf(sr->ci) && cluster_option_ok(sr->ci)) {
+	    /* ML estimators that support clustering */
 	    gchar *txt = g_strdup_printf("  %s", ("Cluster by"));
 	    GtkWidget *label, *cbox, *entry;
 
