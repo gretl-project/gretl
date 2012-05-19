@@ -519,6 +519,63 @@ double ordered_model_prediction (const MODEL *pmod, double Xb)
     return (double) pred;
 }
 
+/**
+ * mn_logit_prediction:
+ * @Xt: vector of regressors at observation t.
+ * @b: array of coefficients.
+ * @yvals: vector of dependent variable values.
+  *
+ * Returns: the predicted value of the dependent variable, that
+ * is, the value for which the estimated probability is greatest.
+ */
+
+double mn_logit_prediction (const gretl_matrix *Xt,
+			    const double *b,
+			    const gretl_matrix *yvals)
+{
+    double *eXtb = NULL;
+    double St, pj, pmax;
+    int i, j, k, m, nx;
+    int pidx = 0;
+
+    nx = gretl_vector_get_length(Xt);
+    m = gretl_vector_get_length(yvals);
+
+    eXtb = malloc(m * sizeof *eXtb);
+    if (eXtb == NULL) {
+	return NADBL;
+    }
+
+    /* base case */
+    eXtb[0] = St = 1.0;
+    k = 0;
+
+    /* loop across the other y-values */
+    for (j=1; j<m; j++) {
+	/* accumulate exp(X*beta) */
+	eXtb[j] = 0.0;
+	for (i=0; i<nx; i++) {
+	    eXtb[j] += Xt->val[i] * b[k++];
+	}
+	eXtb[j] = exp(eXtb[j]);
+	St += eXtb[j];
+    }
+
+    pmax = 0.0;
+
+    for (j=0; j<m; j++) {
+	pj = eXtb[j] / St;
+	if (pj > pmax) {
+	    pmax = pj;
+	    pidx = j;
+	}
+    }
+
+    free(eXtb);
+
+    return yvals->val[pidx];
+}
+
 /* compute generalized residual for ordered models */
 
 static double op_gen_resid (op_container *OC, const double *theta, int t) 
@@ -1352,7 +1409,7 @@ struct mnl_info_ {
     int k;            /* number of coeffs per category */
     int npar;         /* total number of parameters */
     int T;            /* number of observations */
-    double *theta;    /* coeffs for BFGS */
+    double *theta;    /* coeffs for Newton/BFGS */
     gretl_matrix_block *B;
     gretl_matrix *y;  /* dependent variable */
     gretl_matrix *X;  /* regressors */
@@ -1698,7 +1755,7 @@ gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
 				      int *err)
 {
     gretl_matrix *P = NULL;
-    const int *yvals = NULL;
+    const gretl_matrix *yvals = NULL;
     double *eXbt = NULL;
     int i, m = 0;
 
@@ -1712,7 +1769,7 @@ gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
 	if (yvals == NULL) {
 	    *err = E_DATA;
 	} else {
-	    m = yvals[0];
+	    m = gretl_vector_get_length(yvals);
 	}
     }
 
@@ -1988,14 +2045,19 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
 	set_model_id(pmod);
     }
 
-    if (!pmod->errcode && yvals != NULL) {
-	int *list = gretl_list_new(mnl->n + 1);
+    if (!pmod->errcode) {
+	/* add a record of the values of the dependent variable */
+	gretl_matrix *yv = gretl_column_vector_alloc(mnl->n + 1);
 
-	if (list != NULL) {
+	if (yv != NULL) {
 	    for (i=0; i<=mnl->n; i++) {
-		list[i+1] = yvals[i];
+		if (yvals != NULL) {
+		    yv->val[i] = yvals[i];
+		} else {
+		    yv->val[i] = i;
+		}
 	    }
-	    gretl_model_set_list_as_data(pmod, "yvals", list);
+	    gretl_model_set_matrix_as_data(pmod, "yvals", yv);
 	}
     }
 

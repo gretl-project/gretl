@@ -3016,8 +3016,6 @@ static int attach_model_params_from_xml (xmlNodePtr node, xmlDocPtr doc,
     int np = 0;
     int err = 0;
 
-    
-
     S = gretl_xml_get_strings_array(node, doc, &np, slop, &err);
 
     if (!err) {
@@ -4449,6 +4447,20 @@ static void maybe_convert_listsep (int *list, const DATASET *dset)
     }
 }
 
+static gretl_matrix *data_list_to_matrix (const int *list)
+{
+    gretl_matrix *y = gretl_column_vector_alloc(list[0]);
+    int i;
+
+    if (y != NULL) {
+	for (i=0; i<y->rows; i++) {
+	    y->val[i] = list[i+1];
+	}
+    }
+
+    return y;
+}
+
 #define XDEBUG 1
 
 static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
@@ -4518,6 +4530,18 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 	    if (!strcmp(key, "xlist")) {
 		/* ad hoc (for forecasting): will be recreated if need be */
 		;
+	    } else if (!strcmp(key, "yvals")) {
+		/* backward compatibility for mnlogit models */
+		int *list = gretl_xml_node_get_list(cur, doc, &err);
+
+		if (!err && list != NULL) {
+		    gretl_matrix *yv = data_list_to_matrix(list);
+
+		    if (yv != NULL) {
+			err = gretl_model_set_matrix_as_data(pmod, key, yv);
+		    }
+		}
+		free(list);
 	    } else {
 		int *list = gretl_xml_node_get_list(cur, doc, &err);
 

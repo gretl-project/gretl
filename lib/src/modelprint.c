@@ -4203,8 +4203,8 @@ static void mn_logit_coeffsep (char *sep, const MODEL *pmod,
 			       const DATASET *dset, int i)
 {
     const char *vname = gretl_model_get_depvar_name(pmod, dset);
-    const int *list = (const int *) gretl_model_get_data(pmod, "yvals");
-    int val = (list != NULL)? list[i+1] : i;
+    const gretl_matrix *y = gretl_model_get_data(pmod, "yvals");
+    int val = (y != NULL)? y->val[i] : i;
 
     sprintf(sep, "%s = %d", vname, val);
 }

@@ -503,7 +503,7 @@ has_real_exog_regressors (MODEL *pmod, const int *dvlags,
 */
 
 static double fcast_get_ldv (Forecast *fc, int i, int t, int lag,
-			     const double **Z)
+			     const DATASET *dset)
 {
     int p = t - lag;
     double ldv;
@@ -512,7 +512,7 @@ static double fcast_get_ldv (Forecast *fc, int i, int t, int lag,
     if (p < 0) {
 	ldv = NADBL;
     } else {
-	ldv = Z[i][p];
+	ldv = dset->Z[i][p];
     }
 
 #if AR_DEBUG
@@ -1094,8 +1094,7 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 	for (i=0; i<xvars; i++) {
 	    v = xlist[i+1];
 	    if ((lag = depvar_lag(fc, i))) {
-		xval = fcast_get_ldv(fc, yno, t, lag, 
-				     (const double **) dset->Z);
+		xval = fcast_get_ldv(fc, yno, t, lag, dset);
 	    } else {
 		xval = dset->Z[v][t];
 	    }
@@ -1731,8 +1730,7 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	for (k=1; k<=arlist[0]; k++) {
 	    rk = pmod->arinfo->rho[k-1];
 	    tk = t - arlist[k];
-	    ylag = fcast_get_ldv(fc, yno, tk, 0, 
-				 (const double **) dset->Z);
+	    ylag = fcast_get_ldv(fc, yno, tk, 0, dset);
 	    if (na(ylag)) {
 		miss = 1;
 	    } else {
@@ -1744,8 +1742,7 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	for (i=0; i<pmod->ncoeff && !miss; i++) {
 	    v = pmod->list[i+2];
 	    if ((dvlag = depvar_lag(fc, i))) {
-		xval = fcast_get_ldv(fc, yno, t, dvlag, 
-				     (const double **) dset->Z);
+		xval = fcast_get_ldv(fc, yno, t, dvlag, dset);
 	    } else {
 		xval = dset->Z[v][t];
 	    }
@@ -1760,8 +1757,7 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 		    rk = pmod->arinfo->rho[k-1];
 		    tk = t - arlist[k];
 		    if (dvlag > 0) {
-			xlag = fcast_get_ldv(fc, yno, tk, dvlag, 
-					     (const double **) dset->Z);
+			xlag = fcast_get_ldv(fc, yno, tk, dvlag, dset);
 		    } else {
 			xlag = dset->Z[v][tk];
 		    }
@@ -1925,13 +1921,58 @@ integrated_fcast (Forecast *fc, const MODEL *pmod, int yno,
     return 0;
 }
 
+static int mlogit_fcast (Forecast *fc, const MODEL *pmod,
+			 const DATASET *dset)
+{
+    const gretl_matrix *yvals;
+    gretl_matrix *Xt;
+    int k, i, vi, t;
+
+    yvals = gretl_model_get_data(pmod, "yvals");
+    if (yvals == NULL) {
+	return E_DATA;
+    }
+
+    k = pmod->list[0] - 1;
+    Xt = gretl_matrix_alloc(1, k);
+    if (Xt == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=fc->t1; t<=fc->t2; t++) {
+	double xti, yht;
+	int miss = 0;
+
+	for (i=0; i<k && !miss; i++) {
+	    vi = pmod->list[i+2];
+	    xti = dset->Z[vi][t];
+	    if (na(xti)) {
+		miss = 1;
+	    } else {
+		Xt->val[i] = xti;
+	    }
+	}
+
+	if (miss) {
+	    fc->yhat[t] = NADBL;
+	} else {
+	    yht = mn_logit_prediction(Xt, pmod->coeff, yvals);
+	    fc->yhat[t] = yht;
+	}
+    }
+
+    gretl_matrix_free(Xt);
+
+    return 0;
+}
+
 /* Compute forecasts for linear models without autoregressive errors.
    We don't compute forecast standard errors, unless we're integrating
    the forecast from a static model estimated via OLS.
 */
 
 static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
-			 const double **Z)
+			 const DATASET *dset)
 {
     const double *offvar = NULL;
     double xval, lmax = NADBL;
@@ -1943,15 +1984,12 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 	int offnum = gretl_model_get_int(pmod, "offset_var");
 
 	if (offnum > 0) {
-	    offvar = Z[offnum];
+	    offvar = dset->Z[offnum];
 	}
     } else if (pmod->ci == LOGISTIC) {
 	lmax = gretl_model_get_double(pmod, "lmax");
     } else if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
-	if (gretl_model_get_int(pmod, "multinom")) {
-	    /* FIXME */
-	    return E_NOTIMP;
-	} else if (gretl_model_get_int(pmod, "ordered")) {
+	if (gretl_model_get_int(pmod, "ordered")) {
 	    /* we need to know how many coeffs are not
 	       just estimated cut-points */
 	    k = gretl_model_get_int(pmod, "nx");
@@ -1970,9 +2008,9 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 
 	    vi = pmod->list[i+2];
 	    if ((lag = depvar_lag(fc, i))) {
-		xval = fcast_get_ldv(fc, yno, t, lag, Z);
+		xval = fcast_get_ldv(fc, yno, t, lag, dset);
 	    } else {
-		xval = Z[vi][t];
+		xval = dset->Z[vi][t];
 	    }
 	    if (na(xval)) {
 		miss = 1;
@@ -2275,8 +2313,10 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	err = garch_fcast(&fc, pmod, dset);
     } else if (integrate) {
 	err = integrated_fcast(&fc, pmod, yno, dset);
+    } else if (pmod->ci == LOGIT && gretl_model_get_int(pmod, "multinom")) {
+	err = mlogit_fcast(&fc, pmod, dset);
     } else {
-	err = linear_fcast(&fc, pmod, yno, (const double **) dset->Z);
+	err = linear_fcast(&fc, pmod, yno, dset);
     }
 
     /* free any auxiliary info */
@@ -2886,12 +2926,7 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 	return E_NOTIMP;
     }
 
-    if (pmod->ci == LOGIT && (gretl_model_get_int(pmod, "multinom"))) {
-	/* FIXME */
-	return E_NOTIMP;
-    }	
-
-    /* Reject in case model was estimated using repacked daily
+     /* Reject in case model was estimated using repacked daily
        data: this case should be handled more elegantly */
     if (gretl_model_get_int(pmod, "daily_repack")) {
 	return E_DATA;

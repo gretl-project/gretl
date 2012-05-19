@@ -67,6 +67,10 @@ gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
 				      const DATASET *dset,
 				      int *err);
 
+double mn_logit_prediction (const gretl_matrix *Xt,
+			    const double *b,
+			    const gretl_matrix *yvals);
+
 #endif /* DISCRETE_H */
 
 
