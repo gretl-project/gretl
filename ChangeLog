@@ -1,4 +1,6 @@
 Version 1.9.9, in progress
+- Add --cluster option (cluster-robust standard errors) for several
+  estimators; see the User's Guide for details
 - Add (limited) support for Stata under the "foreign" command
 - New accessor $ylist: returns the list of endogenous variables from
   the last system or model estimated
