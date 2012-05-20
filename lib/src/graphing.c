@@ -128,7 +128,8 @@ static void make_time_tics (gnuplot_info *gi,
 			    const DATASET *dset,
 			    int many, char *xlabel,
 			    PRN *prn);
-static void get_multiplot_layout (int n, int *rows, int *cols);
+static void get_multiplot_layout (int n, int tseries,
+				  int *rows, int *cols);
     
 #ifndef WIN32
 
@@ -3328,7 +3329,7 @@ int multi_scatters (const int *list, const DATASET *dset,
     const double *x = NULL;
     const double *y = NULL;
     const double *obs = NULL;
-    int rows, cols;
+    int rows, cols, tseries = 0;
     int *plotlist = NULL;
     int pos, nplots = 0;
     FILE *fp = NULL;
@@ -3352,6 +3353,9 @@ int multi_scatters (const int *list, const DATASET *dset,
 	}
 	plotlist = gretl_list_copy(list);
 	flags |= GPT_LINES;
+	if (dataset_is_time_series(dset)) {
+	    tseries = 1;
+	}
     } else if (pos > 2) { 
 	/* plot several yvars against one xvar */
 	plotlist = gretl_list_new(pos - 1);
@@ -3384,7 +3388,7 @@ int multi_scatters (const int *list, const DATASET *dset,
     }
 
     nplots = plotlist[0];
-    get_multiplot_layout(nplots, &rows, &cols);
+    get_multiplot_layout(nplots, tseries, &rows, &cols);
     maybe_set_small_font(nplots);
 
     if (nplots > 12) {
@@ -3633,7 +3637,7 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 	nplots = (m->cols > 16)? 16 : m->cols;
     }
 
-    get_multiplot_layout(nplots, &rows, &cols);
+    get_multiplot_layout(nplots, 0, &rows, &cols);
     maybe_set_small_font(nplots);
 
     if (nplots > 12) {
@@ -4953,11 +4957,17 @@ hurstplot (const int *list, DATASET *dset, PRN *prn)
     return err;
 }
 
-static void get_multiplot_layout (int n, int *rows, int *cols)
+static void get_multiplot_layout (int n, int tseries,
+				  int *rows, int *cols)
 {
     if (n < 3) {
-	*cols = 2;
-	*rows = 1;
+	if (tseries) {
+	    *cols = 1;
+	    *rows = 2;
+	} else {
+	    *cols = 2;
+	    *rows = 1;
+	}
     } else if (n < 5) {
 	*cols = *rows = 2;
     } else if (n < 7) {
@@ -5339,7 +5349,7 @@ static int panel_grid_ts_plot (int vnum, DATASET *dset,
 	cols = 1;
 	rows = nunits;
     } else {
-	get_multiplot_layout(nunits, &rows, &cols);
+	get_multiplot_layout(nunits, 0, &rows, &cols);
     }
 
     if (rows == 0 || cols == 0) {
