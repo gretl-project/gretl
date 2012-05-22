@@ -208,9 +208,14 @@ void window_list_add (GtkWidget *w, int role)
 	label = _("Main window");
     } else {
 	label = get_window_title(w);
-	if (strchr(label, '_') != NULL) {
+	if (label != NULL && strchr(label, '_') != NULL) {
 	    modlabel = winname_double_underscores(label);
 	}
+    }
+
+    if (label == NULL) {
+	g_free(aname);
+	return;
     }
 
     entry.label = modlabel != NULL ? modlabel : label,
