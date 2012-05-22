@@ -2281,22 +2281,29 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     }
 }
 
-/* read "packages.xml" to find out what's what among packages
-   that offer to place themselves in the gretl menu system
-*/
-
-static int read_addons_info (void)
+static int package_is_unseen (const char *name, int n)
 {
-    char fname[FILENAME_MAX];
+    int i;
+
+    for (i=0; i<n; i++) {
+	if (!strcmp(name, addons[i].pkgname)) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+static int real_read_packages_file (const char *fname, int *pn,
+				    int optional)
+{
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
-    int err, n = 0;
-
-    sprintf(fname, "%sfunctions%cpackages.xml", gretl_home(), SLASH);
+    int err, n = *pn;
 
     err = gretl_xml_open_doc_root(fname, "gretl-package-info", &doc, &cur);
     if (err) {
-	return err;
+	return optional ? 0 : err;
     } 
 
     cur = cur->xmlChildrenNode;
@@ -2306,18 +2313,20 @@ static int read_addons_info (void)
 	    int mw = gretl_xml_get_prop_as_bool(cur, "model-window");
 	    int top = gretl_xml_get_prop_as_bool(cur, "toplev");
 	    xmlChar *name, *desc, *path;
+	    int freeit = 1;
 
 	    name = xmlGetProp(cur, (XUC) "name");
 	    desc = xmlGetProp(cur, (XUC) "label");
 	    path = xmlGetProp(cur, (XUC) "path");
 
 	    if (name == NULL || desc == NULL || path == NULL) {
-		err = 1;
-	    } else {
+		err = E_DATA;
+	    } else if (package_is_unseen((const char *) name, n)) {
 		addons = myrealloc(addons, (n+1) * sizeof *addons);
 		if (addons == NULL) {
-		    err = 1;
+		    err = E_ALLOC;
 		} else {
+		    freeit = 0;
 		    addons[n].pkgname = (char *) name;
 		    addons[n].label = (char *) desc;
 		    addons[n].menupath = (char *) path;
@@ -2327,7 +2336,7 @@ static int read_addons_info (void)
 		    n++;
 		} 
 	    }
-	    if (err) {
+	    if (freeit) {
 		free(name);
 		free(desc);
 		free(path);
@@ -2338,14 +2347,36 @@ static int read_addons_info (void)
 	}
     }
 
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+    }    
+
+    *pn = n;
+
+    return err;
+}
+
+/* read "packages.xml" to find out what's what among packages
+   that offer to place themselves in the gretl menu system
+*/
+
+static int read_addons_info (void)
+{
+    char fname[FILENAME_MAX];
+    int err, n = 0;
+
+    sprintf(fname, "%sfunctions%cpackages.xml", gretl_home(), SLASH);
+    err = real_read_packages_file(fname, &n, 0);
+
+    if (!err) {
+	sprintf(fname, "%sfunctions%cpackages.xml", gretl_dotdir(), SLASH);
+	err = real_read_packages_file(fname, &n, 1);
+    }
+
     if (err) {
 	destroy_addons_info();
     } else {
 	n_addons = n;
-    }
-
-    if (doc != NULL) {
-	xmlFreeDoc(doc);
     }
 
     return err;

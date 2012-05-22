@@ -1376,11 +1376,9 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 
 		    if (gretl_xml_get_prop_as_double(cur, "default", &x)) {
 			param->deflt = x;
-		    } else if (param->type == GRETL_TYPE_DOUBLE) {
-			param->deflt = UNSET_VALUE;
 		    } else {
-			param->deflt = NADBL;
-		    }
+			param->deflt = UNSET_VALUE;
+		    } 
 		    if (param->type != GRETL_TYPE_BOOL) {
 			gretl_xml_get_prop_as_double(cur, "min", &param->min);
 			gretl_xml_get_prop_as_double(cur, "max", &param->max);
@@ -1507,11 +1505,13 @@ static void print_min_max_deflt (fn_param *param, PRN *prn)
     if (na(param->min) && na(param->max) && default_unset(param)) {
 	return; /* no-op */
     } else if (na(param->min) && na(param->max)) {
-	/* default value only */
-	if (na(param->deflt)) {
-	    pputs(prn, "[NA]");
-	} else {
-	    pprintf(prn, "[%g]", param->deflt);
+	/* got a default value only? */
+	if (!default_unset(param)) {
+	    if (na(param->deflt)) {
+		pputs(prn, "[NA]");
+	    } else {
+		pprintf(prn, "[%g]", param->deflt);
+	    }
 	}
 	return;
     }
@@ -4684,8 +4684,7 @@ static int parse_fn_definition (char *fname,
 
     /* move to next bit and make a copy */
     str += strspn(str, " (");
-    if (*str == 0) {
-	/* FIXME allow '(' then newline? */
+    if (*str == '\0') {
 	return E_PARSE;
     } else {
 	s = gretl_strdup(str);

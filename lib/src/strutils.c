@@ -1086,15 +1086,15 @@ char *switch_ext_new (const char *src, const char *ext)
  * @maxlen, and @err is not NULL, then E_TOOLONG is written 
  * to @err.
  * 
- * Returns: 1 if a trailing backslash or comma was found, 
- * otherwise 0.
+ * Returns: 1 if a trailing backslash, comma or left parenthesis
+ * was found, otherwise 0.
  */
 
 int top_n_tail (char *str, size_t maxlen, int *err)
 {
     int i, n, cont = 0;
 
-    if (str == NULL || *str == 0 || *str == '\n' || *str == '\r') {
+    if (str == NULL || *str == '\0' || *str == '\n' || *str == '\r') {
 	return 0;
     }
 
@@ -1113,7 +1113,7 @@ int top_n_tail (char *str, size_t maxlen, int *err)
 	}
     }
 
-    if (*str != 0) {
+    if (*str != '\0') {
 	/* Drop any leading spaces, also possible questionmark.  Try
 	   to catch non-breaking spaces too -- ugh, Windows!
 	*/
@@ -1139,6 +1139,8 @@ int top_n_tail (char *str, size_t maxlen, int *err)
 		    str[n] = ' ';
 		    cont = 1;
 		} else if (str[n] == ',') {
+		    cont = 1;
+		} else if (str[n] == '(') {
 		    cont = 1;
 		}
 	    }
