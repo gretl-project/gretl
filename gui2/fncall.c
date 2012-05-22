@@ -2495,7 +2495,6 @@ static int maybe_add_model_pkg (addon_info *addon,
 	    ufunc *func = get_function_from_package(precheck, pkg);
 	    
 	    if (func == NULL || precheck_error(func, vwin)) {
-		fprintf(stderr, "precheck failed\n");
 		err = 1;
 	    }
 	} 

@@ -71,6 +71,7 @@ struct _selector {
     GtkWidget *hess_button;
     GtkWidget *x12a_button;
     GtkWidget *xdiff_button;
+    GtkWidget *hccme_button;
     GtkWidget *extra[N_EXTRA];
     GtkWidget *radios[N_RADIOS];
     int ci;
@@ -3117,13 +3118,16 @@ static void maybe_read_cluster_var (selector *sr)
                                  THREE_VARS_CODE(c) ||  \
 				 NONPARAM_CODE(c))
 
+#define offer_cluster_option(c) (dataset_is_cross_section(dataset) && \
+				 cluster_option_ok(c))
+
 static void parse_extra_widgets (selector *sr, char *endbit)
 {
     const gchar *txt = NULL;
     char numstr[8];
     int k = 0;
 
-    if (cluster_option_ok(sr->ci)) {
+    if (offer_cluster_option(sr->ci)) {
 	maybe_read_cluster_var(sr);
     }
 
@@ -4633,7 +4637,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
 	dlgy += 50;
     }
 
-    if (cluster_option_ok(ci) && !robust_conf(ci)) {
+    if (offer_cluster_option(ci) && !robust_conf(ci)) {
 	/* extra row under "robust" option */
 	dlgy += 40;
     }
@@ -4661,6 +4665,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     sr->hess_button = NULL;
     sr->x12a_button = NULL;
     sr->xdiff_button = NULL;
+    sr->hccme_button = NULL;
 
     for (i=0; i<N_EXTRA; i++) {
 	sr->extra[i] = NULL;
@@ -4987,31 +4992,17 @@ static void reset_arma_spinners (selector *sr)
 
 static void hc_config (GtkWidget *w, selector *sr)
 {
-    if (cluster_option_ok(sr->ci)) {
-	int resp;
+    options_dialog(TAB_VCV, NULL, sr->dlg);
+}
 
-	if (*cluster_var != '\0') {
-	    int v = current_series_index(dataset, cluster_var);
+void selector_register_hc_choice (void)
+{
+    selector *sr = open_selector;
 
-	    if (v < 1) {
-		*cluster_var = '\0';
-	    }
-	}
+    if (sr != NULL && sr->hccme_button != NULL) {
+	const char *txt = get_default_hc_string(sr->ci);
 
-	resp = hc_config_dialog(cluster_var, OPT_NONE, sr->dlg);
-
-	/* scrub the clustering option pro tem? */
-	sr->opts &= ~OPT_C;
-
-	if (resp == 0) {
-	    /* regular HCCME options */
-	    options_dialog(TAB_VCV, NULL, sr->dlg);
-	} else if (resp == 1) {
-	    set_optval_string(sr->ci, OPT_C, cluster_var);
-	    sr->opts |= OPT_C;
-	}
-    } else {
-	options_dialog(TAB_VCV, NULL, sr->dlg);
+	gtk_button_set_label(GTK_BUTTON(sr->hccme_button), txt);
     }
 }
 
@@ -5226,9 +5217,11 @@ static void build_selector_switches (selector *sr)
 	gtk_box_pack_start(GTK_BOX(hbox), b1, FALSE, FALSE, 0);
 
 	if (robust_conf(sr->ci)) {
+	    const char *deftxt;
 	    GtkWidget *b2;
 
-	    b2 = gtk_button_new_with_label(_("Configure"));
+	    deftxt = get_default_hc_string(sr->ci);
+	    sr->hccme_button = b2 = gtk_button_new_with_label(deftxt);
 	    g_signal_connect(G_OBJECT(b2), "clicked",
 			     G_CALLBACK(hc_config), sr);
 	    gtk_widget_set_sensitive(b2, using_hc_by_default());
@@ -5241,8 +5234,8 @@ static void build_selector_switches (selector *sr)
 
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
 
-	if (!robust_conf(sr->ci) && cluster_option_ok(sr->ci)) {
-	    /* ML estimators that support clustering */
+	if (offer_cluster_option(sr->ci)) {
+	    /* estimators that support clustered standard errors */
 	    gchar *txt = g_strdup_printf("  %s", ("Cluster by"));
 	    GtkWidget *label, *cbox, *entry;
 

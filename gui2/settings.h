@@ -71,6 +71,8 @@ const char *get_datapage (void);
 
 const char *get_scriptpage (void);
 
+const char *get_default_hc_string (int ci);
+
 int check_for_prog (const char *prog);
 
 #endif /* SETTINGS_H */

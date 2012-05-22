@@ -87,6 +87,8 @@ void set_selector_storelist (const char *s);
 
 void selector_register_genr (int newvars, gpointer p);
 
+void selector_register_hc_choice (void);
+
 void selector_cleanup (void);
 
 #endif /* SELECTOR_H */

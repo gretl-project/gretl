@@ -27,6 +27,7 @@
 #include "session.h"
 #include "textbuf.h"
 #include "ssheet.h"
+#include "selector.h"
 
 #include "libset.h"
 #include "texprint.h"
@@ -1041,11 +1042,13 @@ static const char **get_radio_setting_strings (void *var, int *n)
     return strs;
 }
 
+static const char *hc_strs[] = {
+    "HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
+};
+
+
 static const char **get_list_setting_strings (void *var, int *n)
 {
-    static const char *hc_strs[] = {
-	"HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
-    };
     static const char *hc_panel_strs[] = {
 	"Arellano", "PCSE"
     };
@@ -1069,6 +1072,32 @@ static const char **get_list_setting_strings (void *var, int *n)
     } 
 
     return strs;
+}
+
+const char *get_default_hc_string (int ci)
+{
+    if (ci == GARCH) {
+	int k = libset_get_int(GARCH_ROBUST_VCV);
+
+	return (k == ML_BW)? "BW" : "QML";
+    } else {
+	int xsect = dataset_is_cross_section(dataset);
+	int tseries = dataset_is_time_series(dataset);
+  
+	if (tseries && libset_get_bool(FORCE_HC)) {
+	    xsect = 1;
+	}
+
+	if (xsect) {
+	    return hc_strs[libset_get_int(HC_VERSION)];
+	} else if (tseries) {
+	    /* (and not forced to an HC variant) */
+	    return "HAC";
+	} else {
+	    /* panel */
+	    return libset_get_bool(PCSE) ? "PCSE" : "Arellano";
+	}
+    }
 }
 
 static void 
@@ -1567,12 +1596,16 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
     write_rc(); /* note: calls gretl_update_paths */
 
-    /* register these for session using libset apparatus */
+    /* register these settings for the current session using 
+       the "libset" apparatus 
+    */
     libset_set_bool(SHELL_OK, shellok);
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
     set_panel_hccme(hc_panel);
     set_garch_robust_vcv(hc_garch);
+
+    selector_register_hc_choice();
 
     gretl_www_init(paths.dbhost, dbproxy, use_proxy);
 }

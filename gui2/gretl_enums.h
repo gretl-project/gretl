@@ -114,7 +114,6 @@ enum extra_cmds {
     LOESS,
     NADARWAT,
     SSHEET,
-    CLUSTER,
     GUI_CMD_MAX
 };
 
