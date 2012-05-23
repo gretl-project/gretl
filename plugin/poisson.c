@@ -794,7 +794,12 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 
 	crit = tmpmod.nobs * tmpmod.rsq;
 
-	pprintf(prn, "%s %3d\tcrit = %g\n", _("iteration"), iter, crit);
+	if (prn != NULL) {
+	    double ll = poisson_ll(y, pmod->yhat, pmod->t1, pmod->t2);
+
+	    print_iter_info(iter, ll, C_LOGLIK, 0, 
+			    NULL, NULL, NADBL, prn);
+	}
 
 	for (i=0; i<tmpmod.ncoeff; i++) { 
 	    pmod->coeff[i] += tmpmod.coeff[i];
@@ -817,8 +822,6 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 	    clear_model(&tmpmod);
 	}
     }
-
-    pputc(prn, '\n');
 
     if (crit > POISSON_TOL) {
 	pmod->errcode = E_NOCONV;

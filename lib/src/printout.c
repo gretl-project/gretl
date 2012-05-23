@@ -2652,27 +2652,33 @@ print_iter_info (int iter, double crit, int type, int k,
     }	
 
     pputc(prn, '\n');
-	
-    pputs(prn, _("Parameters: "));
-    for (i=0; i<k; i++) {
-	print_iter_val(b[i], i, k, prn);
-    }
-    pputc(prn, '\n');
 
-    pputs(prn, _("Gradients:  "));
-    x = 0.0;
-    for (i=0; i<k; i++) {
-	x += fabs(b[i] * g[i]);
-	print_iter_val(g[i], i, k, prn);
-    }
-    pprintf(prn, " (%s %.2e)\n", _("norm"), sqrt(x/k));
-    if (iter >= 0) {
+    if (b != NULL) {
+	pputs(prn, _("Parameters: "));
+	for (i=0; i<k; i++) {
+	    print_iter_val(b[i], i, k, prn);
+	}
 	pputc(prn, '\n');
     }
 
-    if (iter < 0 || (iter % 20 == 0)) {
-	/* experimental */
-	iter_print_callback((iter < 0)? 0 : iter, prn);
+    if (g != NULL) {
+	pputs(prn, _("Gradients:  "));
+	x = 0.0;
+	for (i=0; i<k; i++) {
+	    x += fabs(b[i] * g[i]);
+	    print_iter_val(g[i], i, k, prn);
+	}
+	pprintf(prn, " (%s %.2e)\n", _("norm"), sqrt(x/k));
+	if (iter >= 0) {
+	    pputc(prn, '\n');
+	}
+    }
+
+    if (b != NULL && g != NULL) {
+	if (iter < 0 || (iter % 20 == 0)) {
+	    /* experimental */
+	    iter_print_callback((iter < 0)? 0 : iter, prn);
+	}
     }
 }
 
