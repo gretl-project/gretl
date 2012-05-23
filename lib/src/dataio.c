@@ -1222,14 +1222,34 @@ static void csv_data_out (const DATASET *dset, const int *list,
     }
 }
 
+static int markers_are_unique (const DATASET *dset)
+{
+    int t, s;
+
+    for (t=dset->t1; t<dset->t2; t++) {
+	for (s=t+1; s<=dset->t2; s++) {
+	    if (strcmp(dset->S[t], dset->S[s]) == 0) {
+		return 0;
+	    }
+	}
+    }
+
+    return 1;
+}
+
 static void R_data_out (const DATASET *dset, const int *list,
 			int digits, int *pmax, FILE *fp)
 {
+    int print_markers = 0;
     double xt;
     int t, i;
 
+    if (dset->S != NULL) {
+	print_markers = markers_are_unique(dset);
+    }
+
     for (t=dset->t1; t<=dset->t2; t++) {
-	if (dset->S != NULL) {
+	if (print_markers) {
 	    fprintf(fp, "\"%s\" ", dset->S[t]);
 	} 
 	for (i=1; i<=list[0]; i++) { 
