@@ -4633,11 +4633,6 @@ static void selector_init (selector *sr, guint ci, const char *title,
 	dlgy += 50;
     }
 
-    if (offer_cluster_option(ci)) {
-	/* extra row under "robust" option */
-	dlgy += 40;
-    }
-
     if (dataset_lags_ok(dataset)) {
 	if (MODEL_CODE(ci) && ci != ARMA) {
 	    /* lag selector button at foot */
