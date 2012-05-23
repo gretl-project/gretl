@@ -1046,7 +1046,6 @@ static const char *hc_strs[] = {
     "HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
 };
 
-
 static const char **get_list_setting_strings (void *var, int *n)
 {
     static const char *hc_panel_strs[] = {
@@ -1080,6 +1079,8 @@ const char *get_default_hc_string (int ci)
 	int k = libset_get_int(GARCH_ROBUST_VCV);
 
 	return (k == ML_BW)? "BW" : "QML";
+    } else if (!robust_conf(ci)) {
+	return "QML";
     } else {
 	int xsect = dataset_is_cross_section(dataset);
 	int tseries = dataset_is_time_series(dataset);

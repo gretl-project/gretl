@@ -6,6 +6,7 @@ Version 1.9.9, in progress
   the last system or model estimated
 - "fcast" command: enable for multinomial logit models
 - Fix encoding for Polish translation
+- Fix bug 3525304
 - Fix bug: in logging commands entered via the gretl console, options
   were being omitted
 - Fix behavior of Ctrl-A in non-editable text windows

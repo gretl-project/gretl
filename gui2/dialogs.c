@@ -5457,3 +5457,69 @@ static void hc_ok_callback (GtkWidget *w, struct hc_opts *h)
     gtk_widget_destroy(h->dialog);
 }
 
+int hc_config_dialog (char *vname, gretlopt opt, gboolean robust_conf, 
+		      GtkWidget *parent)
+{
+    struct hc_opts opts;
+    GtkWidget *dialog;
+    GtkWidget *vbox, *hbox;
+    GtkWidget *b1, *b2, *entry;
+    GSList *group = NULL;
+
+    if (maybe_raise_dialog()) {
+	return GRETL_CANCEL;
+    }
+
+    opts.retval = GRETL_CANCEL;
+    opts.targ = vname;
+
+    opts.dialog = dialog = gretl_dialog_new(NULL, parent, GRETL_DLG_BLOCK);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    if (robust_conf) {
+	/* regular HCCME option */
+	b1 = gtk_radio_button_new_with_label(NULL, 
+					     _("Select from Regular HCCME options"));
+    } else {
+	b1 = gtk_radio_button_new_with_label(NULL, "QML");
+    }
+    gtk_box_pack_start(GTK_BOX(hbox), b1, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+	
+
+    /* cluster-robust option */
+    hbox = gtk_hbox_new(FALSE, 5);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    opts.cbutton = b2 = gtk_radio_button_new_with_label(group, _("Cluster by"));
+    gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 5);
+    opts.entry = entry = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN);
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMELEN + 2);
+    gtk_entry_set_text(GTK_ENTRY(entry), vname);
+    gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
+    sensitize_conditional_on(entry, b2);
+    gtk_container_add(GTK_CONTAINER(hbox), entry);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+
+    if ((opt & OPT_C) && *vname != '\0') {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), TRUE);
+    } else {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
+	gtk_widget_set_sensitive(entry, FALSE);
+    }
+
+    /* Buttons: Cancel, OK, Help */
+    
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+    cancel_delete_button(hbox, dialog);
+    b1 = ok_button(hbox);
+    g_signal_connect(G_OBJECT(b1), "clicked", 
+		     G_CALLBACK(hc_ok_callback), &opts);
+    gtk_widget_grab_default(b1);
+    context_help_button(hbox, CLUSTER);
+
+    gtk_widget_show_all(dialog);
+
+    return opts.retval;
+}

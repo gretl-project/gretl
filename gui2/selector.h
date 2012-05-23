@@ -20,6 +20,13 @@
 #ifndef SELECTOR_H
 #define SELECTOR_H
 
+#define robust_conf(c) (c != LOGIT && c != PROBIT &&	\
+                        c != OLOGIT && c != OPROBIT &&	\
+                        c != QUANTREG && c != INTREG && \
+                        c != MLOGIT && c != COUNTMOD && \
+                        c != DURATION && c != HECKIT && \
+			c != BIPROBIT && c != TOBIT)
+
 typedef struct iterinfo_t iterinfo;
 
 struct iterinfo_t {

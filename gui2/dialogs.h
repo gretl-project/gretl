@@ -179,4 +179,7 @@ int object_name_entry_dialog (char *name, GretlType type,
 			      const char *labeltxt, int *show,
 			      GtkWidget *parent);
 
+int hc_config_dialog (char *vname, gretlopt opt, gboolean robust_conf, 
+		      GtkWidget *parent);
+
 #endif /* DIALOGS_H */

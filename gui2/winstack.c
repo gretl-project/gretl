@@ -896,11 +896,12 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 	vwin_add_child(parent, vwin);
     }
 
-    window_list_add(vwin->main, role);
-
+    if (title != NULL) {
+	window_list_add(vwin->main, role);
 #ifndef G_OS_WIN32
-    set_wm_icon(vwin->main);
+	set_wm_icon(vwin->main);
 #endif
+    }
 
     return vwin;
 }

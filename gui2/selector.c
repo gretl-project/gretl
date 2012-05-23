@@ -189,13 +189,6 @@ enum {
 			    (d)->structure == SPECIAL_TIME_SERIES || \
                             (d)->structure == STACKED_TIME_SERIES)
 
-#define robust_conf(c) (c != LOGIT && c != PROBIT &&	\
-                        c != OLOGIT && c != OPROBIT &&	\
-                        c != QUANTREG && c != INTREG && \
-                        c != MLOGIT && c != COUNTMOD && \
-                        c != DURATION && c != HECKIT && \
-			c != BIPROBIT && c != TOBIT)
-
 #define select_lags_primary(c) (MODEL_CODE(c))
 
 #define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA && \
@@ -3091,21 +3084,24 @@ static void read_np_extras (selector *sr)
     }
 }
 
+static int cluster_option_is_active (selector *sr)
+{
+    GtkWidget *hcb = sr->hccme_button;
+ 
+    if (hcb != NULL && gtk_widget_is_sensitive(hcb)) {
+	const gchar *s = gtk_button_get_label(GTK_BUTTON(hcb));
+
+	return s != NULL && strcmp(s, _("Cluster")) == 0;
+    } else {
+	return 0;
+    }
+}
+
 static void maybe_read_cluster_var (selector *sr)
 {
-    GtkWidget *cbox = sr->extra[N_EXTRA-1];
- 
-    if (cbox != NULL && gtk_widget_is_sensitive(cbox) &&
-	GTK_IS_COMBO_BOX(cbox)) {
-	gchar *s = combo_box_get_active_text(GTK_COMBO_BOX(cbox));
-
-	if (s != NULL && *s != '\0' && strcmp(s, "none")) {
-	    *cluster_var = '\0';
-	    strncat(cluster_var, s, VNAMELEN - 1);
-	    set_optval_string(sr->ci, OPT_C, cluster_var);
-	    sr->opts |= OPT_C;
-	}
-	g_free(s);
+    if (cluster_option_is_active(sr)) {
+	set_optval_string(sr->ci, OPT_C, cluster_var);
+	sr->opts |= OPT_C;
     }
 }
 
@@ -4637,7 +4633,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
 	dlgy += 50;
     }
 
-    if (offer_cluster_option(ci) && !robust_conf(ci)) {
+    if (offer_cluster_option(ci)) {
 	/* extra row under "robust" option */
 	dlgy += 40;
     }
@@ -4992,8 +4988,46 @@ static void reset_arma_spinners (selector *sr)
 
 static void hc_config (GtkWidget *w, selector *sr)
 {
-    options_dialog(TAB_VCV, NULL, sr->dlg);
+    if (offer_cluster_option(sr->ci)) {
+	gboolean rconf = robust_conf(sr->ci);
+	gretlopt c_opt = OPT_NONE;
+	int resp;
+
+	if (*cluster_var != '\0') {
+	    int v = current_series_index(dataset, cluster_var);
+
+	    if (v < 1) {
+		*cluster_var = '\0';
+	    } else if (cluster_option_is_active(sr)) {
+		c_opt = OPT_C;
+	    }
+	}
+
+	resp = hc_config_dialog(cluster_var, c_opt, rconf, sr->dlg);
+
+	if (resp == 0) {
+	    /* regular HCCME */
+	    if (rconf) {
+		options_dialog(TAB_VCV, NULL, sr->dlg);
+	    } else {
+		gtk_button_set_label(GTK_BUTTON(sr->hccme_button), 
+				     get_default_hc_string(sr->ci));
+	    }
+	} else if (resp == 1) {
+	    /* cluster option selected */
+	    gtk_button_set_label(GTK_BUTTON(sr->hccme_button), _("Cluster"));
+	}
+    } else {
+	options_dialog(TAB_VCV, NULL, sr->dlg);
+    }
 }
+
+/* Callback for when the user selects something in the VCV
+   tab of the preferences dialog: make sure that if there's
+   a selection dialog open, and it's showing an HCCME
+   button, the text on the button is synced with the
+   user's selection.
+*/
 
 void selector_register_hc_choice (void)
 {
@@ -5216,7 +5250,7 @@ static void build_selector_switches (selector *sr)
 	hbox = gtk_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), b1, FALSE, FALSE, 0);
 
-	if (robust_conf(sr->ci)) {
+	if (robust_conf(sr->ci) || offer_cluster_option(sr->ci)) {
 	    const char *deftxt;
 	    GtkWidget *b2;
 
@@ -5233,39 +5267,6 @@ static void build_selector_switches (selector *sr)
 	} 
 
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-
-	if (offer_cluster_option(sr->ci)) {
-	    /* estimators that support clustered standard errors */
-	    gchar *txt = g_strdup_printf("  %s", ("Cluster by"));
-	    GtkWidget *label, *cbox, *entry;
-
-	    hbox = gtk_hbox_new(FALSE, 5);
-	    label = gtk_label_new(txt);
-	    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-	    g_free(txt);
-
-	    cbox = combo_box_text_new_with_entry();
-	    sr->extra[N_EXTRA-1] = cbox;
-	    entry = gtk_bin_get_child(GTK_BIN(cbox));
-	    gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN);
-	    gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMELEN + 2);
-	    combo_box_append_text(cbox, "none");
-	    if (*cluster_var != '\0') {
-		combo_box_append_text(cbox, cluster_var);
-	    }
-	    gtk_combo_box_set_active(GTK_COMBO_BOX(cbox), 0);
-
-	    gtk_widget_set_sensitive(label, using_hc_by_default());
-	    gtk_widget_set_sensitive(cbox, using_hc_by_default());
-	    sensitize_conditional_on(label, b1);
-	    sensitize_conditional_on(cbox, b1);
-	    if (model_opt & OPT_R) {
-		gtk_widget_set_sensitive(label, TRUE);
-		gtk_widget_set_sensitive(cbox, TRUE);
-	    }	    
-	    gtk_box_pack_start(GTK_BOX(hbox), cbox, FALSE, FALSE, 0);
-	    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-	}	    
     }
 
     if (sr->ci == TOBIT || sr->ci == ARMA || sr->ci == GARCH ||

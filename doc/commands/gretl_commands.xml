@@ -1434,6 +1434,28 @@
     </description>
   </command>
 
+  <command name="cluster" section="Estimation" 
+	   label="Robust variance estimation" context="gui">
+    <description>
+      <para>
+	If you select the second option you must supply the name of a
+	clustering variable. This variable should have at least two
+	distinct values but generally should have substantially fewer
+	distinct values than there are observations in the sample
+	range.
+      </para>
+      <para>
+	The <quote>cluster-robust</quote> variance estimator divides
+	the sample into a number of subsets or clusters according to
+	the value taken on by the selected variable.  In place of the
+	classical assumption that the error term is independently and
+	identically distributed, this estimator allows for the error
+	variance to differ by cluster and also allows for a degree of
+	dependence of the error within each cluster.
+      </para>
+    </description>
+  </command>
+
   <command name="coeffsum" section="Tests" label="Sum of coefficients">
 
     <usage>
