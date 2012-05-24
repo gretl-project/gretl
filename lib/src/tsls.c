@@ -975,7 +975,7 @@ static void tsls_extra_stats (MODEL *pmod, int yno, int overid,
     if (dataset_is_time_series(dset) && !model_has_missing_obs(pmod)) {
 	/* time series, no missing obs within sample range */
 	pmod->rho = rhohat(1, pmod->t1, pmod->t2, pmod->uhat);
-	pmod->dw = dwstat(1, pmod, (const double **) dset->Z);
+	pmod->dw = dwstat(1, pmod, dset);
     } else {
 	pmod->rho = pmod->dw = NADBL;
     }

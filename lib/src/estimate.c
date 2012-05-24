@@ -71,19 +71,19 @@
 
 static void regress (MODEL *pmod, double *xpy, 
 		     double ysum, double ypy, 
-		     const double **Z, 
+		     const DATASET *dset, 
 		     double rho, gretlopt opt);
-static int hatvar (MODEL *pmod, int n, const double **Z);
+static int hatvar (MODEL *pmod, int n, const DATASET *dset);
 static void omitzero (MODEL *pmod, const DATASET *dset,
 		      gretlopt opt);
 static int lagdepvar (const int *list, const DATASET *dset); 
-static int jackknife_vcv (MODEL *pmod, const double **Z);
+static int jackknife_vcv (MODEL *pmod, const DATASET *dset);
 static double estimate_rho (const int *list, DATASET *dset,
 			    gretlopt opt, PRN *prn, int *err);
 
 /* compute statistics for the dependent variable in a model */
 
-static void model_depvar_stats (MODEL *pmod, const double **Z)
+static void model_depvar_stats (MODEL *pmod, DATASET *dset)
 {
     double xx, sum = 0.0;
     int yno = pmod->list[1];
@@ -100,11 +100,11 @@ static void model_depvar_stats (MODEL *pmod, const double **Z)
     }
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (dwt && Z[pmod->nwt][t] == 0.0) {
+	if (dwt && dset->Z[pmod->nwt][t] == 0.0) {
 	    continue;
 	}
 	if (!model_missing(pmod, t)) {
-	    sum += Z[yno][t];
+	    sum += dset->Z[yno][t];
 	} 
     }
 
@@ -112,11 +112,11 @@ static void model_depvar_stats (MODEL *pmod, const double **Z)
 
     sum = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (dwt && Z[pmod->nwt][t] == 0.0) {
+	if (dwt && dset->Z[pmod->nwt][t] == 0.0) {
 	    continue;
 	}	
 	if (!model_missing(pmod, t)) {
-	    sum += (Z[yno][t] - pmod->ybar); 
+	    sum += (dset->Z[yno][t] - pmod->ybar); 
 	}
     }
 
@@ -128,11 +128,11 @@ static void model_depvar_stats (MODEL *pmod, const double **Z)
 
     sum = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (dwt && Z[pmod->nwt][t] == 0.0) {
+	if (dwt && dset->Z[pmod->nwt][t] == 0.0) {
 	    continue;
 	}
 	if (!model_missing(pmod, t)) {
-	    xx = Z[yno][t] - pmod->ybar;
+	    xx = dset->Z[yno][t] - pmod->ybar;
 	    sum += xx * xx;
 	}
     }
@@ -320,7 +320,8 @@ ldepvar_std_errors (MODEL *pmod, DATASET *dset)
 
 /* special computation of statistics for autoregressive models */
 
-static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
+static int compute_ar_stats (MODEL *pmod, const DATASET *dset, 
+			     double rho)
 {
     int i, v, t, yno = pmod->list[1];
     int pwe = (pmod->opt & OPT_P);
@@ -341,26 +342,26 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (t == pmod->t1 && pwe) {
-	    x = pw1 * Z[yno][t];
+	    x = pw1 * dset->Z[yno][t];
 	    for (i=pmod->ifc; i<pmod->ncoeff; i++) {
 		v = pmod->list[i+2];
-		x -= pmod->coeff[i] * pw1 * Z[v][t];
+		x -= pmod->coeff[i] * pw1 * dset->Z[v][t];
 	    }
 	    if (pmod->ifc) {
 		x -= pw1 * pmod->coeff[0];
 	    }
 	} else {
-	    x = Z[yno][t] - rho*Z[yno][t-1];
+	    x = dset->Z[yno][t] - rho*dset->Z[yno][t-1];
 	    for (i=0; i<pmod->ncoeff; i++) {
 		v = pmod->list[i+2];
-		x -= pmod->coeff[i] * (Z[v][t] - rho*Z[v][t-1]);
+		x -= pmod->coeff[i] * (dset->Z[v][t] - rho*dset->Z[v][t-1]);
 	    }
 	}
 	pmod->uhat[t] = x;
-	pmod->yhat[t] = Z[yno][t] - x;
+	pmod->yhat[t] = dset->Z[yno][t] - x;
     }
 
-    pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, Z[yno], pmod->yhat);
+    pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, dset->Z[yno], pmod->yhat);
 
     pmod->adjrsq = 
 	1.0 - ((1.0 - pmod->rsq) * (pmod->t2 - pmod->t1) / 
@@ -371,7 +372,7 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 
 /* calculation of WLS stats in agreement with GNU R */
 
-static void get_wls_stats (MODEL *pmod, const double **Z)
+static void get_wls_stats (MODEL *pmod, const DATASET *dset)
 {
     int dumwt = gretl_model_get_int(pmod, "wt_dummy");
     int t, wobs = pmod->nobs, yno = pmod->list[1];
@@ -381,12 +382,12 @@ static void get_wls_stats (MODEL *pmod, const double **Z)
 	if (model_missing(pmod, t)) {
 	    continue;
 	}
-	if (Z[pmod->nwt][t] == 0.0 && !dumwt) {
+	if (dset->Z[pmod->nwt][t] == 0.0 && !dumwt) {
 	    wobs--;
 	    pmod->dfd -= 1;
 	} else {
-	    wmean += Z[pmod->nwt][t] * Z[yno][t];
-	    wsum += Z[pmod->nwt][t];
+	    wmean += dset->Z[pmod->nwt][t] * dset->Z[yno][t];
+	    wsum += dset->Z[pmod->nwt][t];
 	}
     }
 
@@ -394,11 +395,11 @@ static void get_wls_stats (MODEL *pmod, const double **Z)
     x = 0.0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (model_missing(pmod, t) || Z[pmod->nwt][t] == 0.0) {
+	if (model_missing(pmod, t) || dset->Z[pmod->nwt][t] == 0.0) {
 	    continue;
 	}	
-	dy = Z[yno][t] - wmean;
-	x += Z[pmod->nwt][t] * dy * dy;
+	dy = dset->Z[yno][t] - wmean;
+	x += dset->Z[pmod->nwt][t] * dy * dy;
     }
 
     pmod->fstt = ((x - pmod->ess) * pmod->dfd) / (pmod->dfn * pmod->ess);
@@ -406,13 +407,13 @@ static void get_wls_stats (MODEL *pmod, const double **Z)
     pmod->adjrsq = 1 - ((1 - pmod->rsq) * (pmod->nobs - 1)/pmod->dfd);
 }
 
-static void fix_wls_values (MODEL *pmod, double **Z)
+static void fix_wls_values (MODEL *pmod, const DATASET *dset)
 {
     int t;
 
     if (gretl_model_get_int(pmod, "wt_dummy")) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (Z[pmod->nwt][t] == 0.0) {
+	    if (dset->Z[pmod->nwt][t] == 0.0) {
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
 	    }
 	}
@@ -424,11 +425,11 @@ static void fix_wls_values (MODEL *pmod, double **Z)
 	    if (model_missing(pmod, t)) {
 		continue;
 	    }
-	    if (Z[pmod->nwt][t] == 0.0) {
+	    if (dset->Z[pmod->nwt][t] == 0.0) {
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
 		pmod->nobs -= 1;
 	    } else {
-		sw = sqrt(Z[pmod->nwt][t]);
+		sw = sqrt(dset->Z[pmod->nwt][t]);
 		pmod->yhat[t] /= sw;
 		pmod->uhat[t] /= sw;
 		ess_orig += pmod->uhat[t] * pmod->uhat[t];
@@ -620,7 +621,7 @@ void maybe_shift_ldepvar (MODEL *pmod, DATASET *dset)
  * @list: list of variables in model.
  * @t1: starting observation.
  * @t2: ending observation.
- * @Z: data array.
+ * @dset: pointer to dataset.
  * @nwt: ID number of variable used as weight, or 0.
  * @rho: quasi-differencing coefficent, or 0.0;
  * @pwe: if non-zero, use Prais-Winsten for first observation.
@@ -642,7 +643,8 @@ void maybe_shift_ldepvar (MODEL *pmod, DATASET *dset)
  */
 
 static int XTX_XTy (const int *list, int t1, int t2, 
-		    const double **Z, int nwt, double rho, int pwe,
+		    const DATASET *dset, int nwt, 
+		    double rho, int pwe,
 		    double *xpx, double *xpy, 
 		    double *ysum, double *ypy,
 		    const char *mask)
@@ -667,11 +669,11 @@ static int XTX_XTy (const int *list, int t1, int t2,
     }
 
     /* dependent variable */
-    y = Z[yno];
+    y = dset->Z[yno];
 
     if (nwt) {
 	/* weight variable */
-	w = Z[nwt];
+	w = dset->Z[nwt];
     }
 
     if (xpy != NULL) {
@@ -706,9 +708,9 @@ static int XTX_XTy (const int *list, int t1, int t2,
     if (qdiff) {
 	/* quasi-difference the data */
 	for (i=lmin; i<=lmax; i++) {
-	    xi = Z[list[i]];
+	    xi = dset->Z[list[i]];
 	    for (j=i; j<=lmax; j++) {
-		xj = Z[list[j]];
+		xj = dset->Z[list[j]];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (pwe && t == t1) {
@@ -739,9 +741,9 @@ static int XTX_XTy (const int *list, int t1, int t2,
     } else if (nwt) {
 	/* weight the data */
 	for (i=lmin; i<=lmax; i++) {
-	    xi = Z[list[i]];
+	    xi = dset->Z[list[i]];
 	    for (j=i; j<=lmax; j++) {
-		xj = Z[list[j]];
+		xj = dset->Z[list[j]];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (!masked(mask, t)) {
@@ -766,9 +768,9 @@ static int XTX_XTy (const int *list, int t1, int t2,
     } else {
 	/* no quasi-differencing or weighting wanted */
 	for (i=lmin; i<=lmax; i++) {
-	    xi = Z[list[i]];
+	    xi = dset->Z[list[i]];
 	    for (j=i; j<=lmax; j++) {
-		xj = Z[list[j]];
+		xj = dset->Z[list[j]];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (!masked(mask, t)) {
@@ -843,9 +845,9 @@ double *gretl_XTX (const MODEL *pmod, const DATASET *dset, int *err)
 	rho = 0.0;
     }
 
-    *err = XTX_XTy(xlist, pmod->t1, pmod->t2, 
-		   (const double **) dset->Z, pmod->nwt, 
-		   rho, pwe, xpx, NULL, NULL, NULL, 
+    *err = XTX_XTy(xlist, pmod->t1, pmod->t2, dset, 
+		   pmod->nwt, rho, pwe, xpx, 
+		   NULL, NULL, NULL, 
 		   pmod->missmask);
 
     free(xlist);
@@ -853,7 +855,7 @@ double *gretl_XTX (const MODEL *pmod, const DATASET *dset, int *err)
     return xpx;
 }
 
-static int gretl_choleski_regress (MODEL *pmod, const double **Z, 
+static int gretl_choleski_regress (MODEL *pmod, const DATASET *dset,
 				   double rho, int pwe, gretlopt opt)
 {
     double ysum = 0.0, ypy = 0.0;
@@ -902,8 +904,8 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
     }
 
     /* calculate regression results, Cholesky style */
-    pmod->errcode = XTX_XTy(pmod->list, pmod->t1, pmod->t2, Z, pmod->nwt, 
-			    rho, pwe, pmod->xpx, xpy, 
+    pmod->errcode = XTX_XTy(pmod->list, pmod->t1, pmod->t2, dset, 
+			    pmod->nwt, rho, pwe, pmod->xpx, xpy, 
 			    &ysum, &ypy, pmod->missmask);
 
 #if XPX_DEBUG
@@ -917,7 +919,7 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
 #endif
 
     if (!pmod->errcode) {
-	regress(pmod, xpy, ysum, ypy, Z, rho, opt);
+	regress(pmod, xpy, ysum, ypy, dset, rho, opt);
     }
 
     free(xpy);
@@ -925,7 +927,7 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
     return pmod->errcode;
 }
 
-static int gretl_null_regress (MODEL *pmod, const double **Z)
+static int gretl_null_regress (MODEL *pmod, const DATASET *dset)
 {
     double yt;
     int t;
@@ -949,7 +951,7 @@ static int gretl_null_regress (MODEL *pmod, const double **Z)
     pmod->rsq = pmod->adjrsq = 0.0;
 
     for (t=0; t<pmod->full_n; t++) {
-	yt = Z[pmod->list[1]][t];
+	yt = dset->Z[pmod->list[1]][t];
 	if (t < pmod->t1 || t > pmod->t2 || na(yt)) {
 	    pmod->uhat[t] = pmod->yhat[t] = NADBL;
 	} else {
@@ -1195,12 +1197,12 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
     if (nullmod) {
-	gretl_null_regress(&mdl, (const double **) dset->Z);
+	gretl_null_regress(&mdl, dset);
     } else if (!jackknife && (opt & (OPT_R | OPT_I | OPT_Q))) { 
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, dset, opt);
     } else {
-	gretl_choleski_regress(&mdl, (const double **) dset->Z, rho, pwe, opt);
+	gretl_choleski_regress(&mdl, dset, rho, pwe, opt);
 	if (mdl.errcode == E_SINGULAR && !jackknife) {
 	    /* (near-) perfect collinearity is better handled by QR */
 	    model_free_storage(&mdl);
@@ -1214,11 +1216,11 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
     /* get the mean and sd of dep. var. and make available */
-    model_depvar_stats(&mdl, (const double **) dset->Z);
+    model_depvar_stats(&mdl, dset);
 
     /* Doing an autoregressive procedure? */
     if (ci == AR1) {
-	if (compute_ar_stats(&mdl, (const double **) dset->Z, rho)) { 
+	if (compute_ar_stats(&mdl, dset, rho)) { 
 	    goto lsq_abort;
 	}
 	if (ldv) {
@@ -1236,13 +1238,13 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
        ESS and sigma based on unweighted data
     */
     if (ci == WLS) {
-	get_wls_stats(&mdl, (const double **) dset->Z);
-	fix_wls_values(&mdl, dset->Z);
+	get_wls_stats(&mdl, dset);
+	fix_wls_values(&mdl, dset);
     }
 
     if (mdl.missmask == NULL && (opt & OPT_T) && !(opt & OPT_I)) {
 	mdl.rho = rhohat(1, mdl.t1, mdl.t2, mdl.uhat);
-	mdl.dw = dwstat(1, &mdl, (const double **) dset->Z);
+	mdl.dw = dwstat(1, &mdl, dset);
     } else if (!(opt & OPT_I)) {
 	mdl.rho = mdl.dw = NADBL;
     }
@@ -1266,7 +1268,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     /* HCCME version HC3a */
     if (jackknife) {
-	mdl.errcode = jackknife_vcv(&mdl, (const double **) dset->Z);
+	mdl.errcode = jackknife_vcv(&mdl, dset);
     }
 
  lsq_abort:
@@ -1348,7 +1350,7 @@ MODEL ar1_model (const int *list, DATASET *dset,
     }
 }
 
-static int make_ess (MODEL *pmod, const double **Z)
+static int make_ess (MODEL *pmod, const DATASET *dset)
 {
     int i, t, yno = pmod->list[1], l0 = pmod->list[0];
     int nwt = pmod->nwt;
@@ -1357,7 +1359,7 @@ static int make_ess (MODEL *pmod, const double **Z)
     pmod->ess = 0.0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (nwt && Z[nwt][t] == 0.0) {
+	if (nwt && dset->Z[nwt][t] == 0.0) {
 	    continue;
 	}
 	if (model_missing(pmod, t)) {
@@ -1365,11 +1367,11 @@ static int make_ess (MODEL *pmod, const double **Z)
 	}
 	yhat = 0.0;
 	for (i=2; i<=l0; i++) {
-	    yhat += pmod->coeff[i-2] * Z[pmod->list[i]][t];
+	    yhat += pmod->coeff[i-2] * dset->Z[pmod->list[i]][t];
 	}
-	resid = Z[yno][t] - yhat;
+	resid = dset->Z[yno][t] - yhat;
 	if (nwt) {
-	    resid *= sqrt(Z[nwt][t]);
+	    resid *= sqrt(dset->Z[nwt][t]);
 	}
 	pmod->ess += resid * resid;
     }
@@ -1640,7 +1642,7 @@ static int cholbeta (MODEL *pmod, double *xpy, double *rss)
 
 static void regress (MODEL *pmod, double *xpy, 
 		     double ysum, double ypy,
-		     const double **Z, 
+		     const DATASET *dset,
 		     double rho, gretlopt opt)
 {
     int yno = pmod->list[1];
@@ -1668,7 +1670,7 @@ static void regress (MODEL *pmod, double *xpy,
     if (rho != 0.0) {
 	pmod->ess = ypy - rss;
     } else {
-	make_ess(pmod, Z);
+	make_ess(pmod, dset);
 	rss = ypy - pmod->ess;
     }
 
@@ -1697,15 +1699,15 @@ static void regress (MODEL *pmod, double *xpy,
 	pmod->rsq = pmod->adjrsq = NADBL;
     } 
 
-    hatvar(pmod, n, Z); 
+    hatvar(pmod, n, dset); 
     if (pmod->errcode) return;
 
     if (!(opt & OPT_B)) {
 	/* changed 2008-09-25 */
 	if (pmod->tss > 0.0) {
-	    compute_r_squared(pmod, Z[yno], &ifc);
+	    compute_r_squared(pmod, dset->Z[yno], &ifc);
 	} else if (pmod->tss == 0.0) {
-	    uncentered_r_squared(pmod, Z[yno]);
+	    uncentered_r_squared(pmod, dset->Z[yno]);
 	}
     }
 
@@ -1837,14 +1839,14 @@ int makevcv (MODEL *pmod, double sigma)
  * dwstat:
  * @order: order of autoregression (usually 1).
  * @pmod: pointer to model.
- * @Z: data array.
+ * @dset: pointer to dataset.
  *
  * Computes the Durbin-Watson statistic for @pmod.
  * 
  * Returns: the D-W value, or #NADBL on error.
  */
 
-double dwstat (int order, MODEL *pmod, const double **Z)
+double dwstat (int order, MODEL *pmod, const DATASET *dset)
 {
     double ut, u1;
     double num = 0.0;
@@ -1870,8 +1872,8 @@ double dwstat (int order, MODEL *pmod, const double **Z)
         ut = pmod->uhat[t];
         u1 = pmod->uhat[t-1];
         if (na(ut) || na(u1) ||
-	    (pmod->nwt && (Z[pmod->nwt][t] == 0.0 || 
-			   Z[pmod->nwt][t-1] == 0.0))) { 
+	    (pmod->nwt && (dset->Z[pmod->nwt][t] == 0.0 || 
+			   dset->Z[pmod->nwt][t-1] == 0.0))) { 
 	    continue;
 	}
         num += (ut - u1) * (ut - u1);
@@ -1966,7 +1968,7 @@ double rhohat (int order, int t1, int t2, const double *uhat)
 
 /* compute fitted values and residuals */
 
-static int hatvar (MODEL *pmod, int n, const double **Z)
+static int hatvar (MODEL *pmod, int n, const DATASET *dset)
 {
     int yno = pmod->list[1];
     int xno, i, t;
@@ -1983,15 +1985,15 @@ static int hatvar (MODEL *pmod, int n, const double **Z)
 	pmod->yhat[t] = 0.0;
         for (i=0; i<pmod->ncoeff; i++) {
             xno = pmod->list[i+2];
-	    x = Z[xno][t];
+	    x = dset->Z[xno][t];
 	    if (pmod->nwt) {
-		x *= sqrt(Z[pmod->nwt][t]);
+		x *= sqrt(dset->Z[pmod->nwt][t]);
 	    }
             pmod->yhat[t] += pmod->coeff[i] * x;
         }
-	x = Z[yno][t];
+	x = dset->Z[yno][t];
 	if (pmod->nwt) {
-	    x *= sqrt(Z[pmod->nwt][t]);
+	    x *= sqrt(dset->Z[pmod->nwt][t]);
 	}
         pmod->uhat[t] = x - pmod->yhat[t];
     }
@@ -2569,7 +2571,7 @@ MODEL hsk_model (const int *list, DATASET *dset)
     return hsk;
 }
 
-static int jackknife_vcv (MODEL *pmod, const double **Z)
+static int jackknife_vcv (MODEL *pmod, const DATASET *dset)
 {
     double *st = NULL, *ustar = NULL;
     double **p = NULL;
@@ -2618,7 +2620,7 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
 		} else {
 		    k = ijton(j, i, nc);
 		}
-		xx += pmod->vcv[k] * Z[pmod->list[j+2]][t];
+		xx += pmod->vcv[k] * dset->Z[pmod->list[j+2]][t];
 	    }
 	    p[i][tp++] = xx;
 	}
@@ -2631,7 +2633,7 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
 	}	
 	xx = 0.0;
 	for (i=0; i<nc; i++) {
-	    xx += Z[pmod->list[i+2]][t] * p[i][tp];
+	    xx += dset->Z[pmod->list[i+2]][t] * p[i][tp];
 	}
 	if (floateq(xx, 1.0)) {
 	    xx = 0.0;
@@ -3328,7 +3330,7 @@ MODEL ar_model (const int *list, DATASET *dset,
     ar.fstt = ar.dfd * (tss - ar.ess) / (ar.dfn * ar.ess);
     ar.lnL = NADBL;
     mle_criteria(&ar, 0);
-    ar.dw = dwstat(maxlag, &ar, (const double **) dset->Z);
+    ar.dw = dwstat(maxlag, &ar, dset);
     ar.rho = rhohat(maxlag, ar.t1, ar.t2, ar.uhat);
 
     dataset_drop_last_variables(nvadd, dset);

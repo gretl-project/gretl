@@ -20,7 +20,7 @@
 #ifndef ESTIM_PRIVATE_H
 #define ESTIM_PRIVATE_H
 
-double dwstat (int order, MODEL *pmod, const double **Z);
+double dwstat (int order, MODEL *pmod, const DATASET *dset);
 
 double rhohat (int order, int t1, int t2, const double *uhat);
 
