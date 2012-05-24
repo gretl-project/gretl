@@ -282,6 +282,7 @@ static void script_window_update (windata_t *vwin, const char *fname)
 static void 
 save_editable_content (int action, const char *fname, windata_t *vwin)
 {
+    const gchar *cset;
     FILE *fp;
     gchar *buf;
     gchar *trbuf;
@@ -299,9 +300,13 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	return;
     }
 
+    if (!g_get_charset(&cset)) {
+	/* UTF-8 minuses not wanted for locale */
+	strip_unicode_minus(buf);
+    }
+
     trbuf = my_locale_from_utf8(buf);
     if (trbuf != NULL) {
-	/* UTF minuses? */
 	system_print_buf(trbuf, fp);
 	g_free(trbuf);
     }
@@ -485,8 +490,8 @@ static int overwrite_stop (const char *fname)
 }
 
 static void
-file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
-			      gpointer data)
+file_selector_process_result (const char *in_fname, int action, 
+			      FselDataSrc src, gpointer data)
 {
     char fname[FILENAME_MAX];
     int quit = 0;
