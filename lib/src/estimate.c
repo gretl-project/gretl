@@ -1387,16 +1387,16 @@ static int make_ess (MODEL *pmod, const DATASET *dset)
    relative difference is less than SMALLDIFF.
 */
 
-int check_for_effective_const (MODEL *pmod, const double *y)
+int check_for_effective_const (MODEL *pmod, const DATASET *dset)
 {
-    double x1 = 0.0, x2 = 0.0;
-    double reldiff;
+    double reldiff, x1 = 0.0, x2 = 0.0;
+    int yno = pmod->list[1];
     int t, ret = 0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->yhat[t])) {
 	    x1 += pmod->yhat[t];
-	    x2 += y[t];
+	    x2 += dset->Z[yno][t];
 	}
     }
 
@@ -1417,9 +1417,9 @@ int check_for_effective_const (MODEL *pmod, const double *y)
     return ret;
 }
 
-static void uncentered_r_squared (MODEL *pmod, const double *y)
+static void uncentered_r_squared (MODEL *pmod, const DATASET *dset)
 {
-    double y0 = y[pmod->t1];
+    double y0 = dset->Z[pmod->list[1]][pmod->t1];
 
     /* special computation for the case of TSS = 0, i.e.
        the dependent variable is a constant */
@@ -1432,16 +1432,19 @@ static void uncentered_r_squared (MODEL *pmod, const double *y)
     }
 }
 
-static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
+static void compute_r_squared (MODEL *pmod, const DATASET *dset, 
+			       int *ifc)
 {
+    int yno = pmod->list[1];
+
     pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
 
     if (*ifc == 0) {
-	*ifc = check_for_effective_const(pmod, y);
+	*ifc = check_for_effective_const(pmod, dset);
     }
 
     if (pmod->dfd > 0) {
-	double den = 0.0;
+	double yt, den = 0.0;
 
 	if (*ifc) {
 	    den = pmod->tss * pmod->dfd;
@@ -1452,7 +1455,8 @@ static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
 
 	    for (t=pmod->t1; t<=pmod->t2; t++) {
 		if (!na(pmod->yhat[t])) {
-		    den += y[t] * y[t];
+		    yt = dset->Z[yno][t];
+		    den += yt * yt;
 		}
 	    }
 
@@ -1705,9 +1709,9 @@ static void regress (MODEL *pmod, double *xpy,
     if (!(opt & OPT_B)) {
 	/* changed 2008-09-25 */
 	if (pmod->tss > 0.0) {
-	    compute_r_squared(pmod, dset->Z[yno], &ifc);
+	    compute_r_squared(pmod, dset, &ifc);
 	} else if (pmod->tss == 0.0) {
-	    uncentered_r_squared(pmod, dset->Z[yno]);
+	    uncentered_r_squared(pmod, dset);
 	}
     }
 

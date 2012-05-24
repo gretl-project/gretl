@@ -46,17 +46,18 @@ static int qr_make_cluster_vcv (MODEL *pmod, int ci,
    So in a fortran array, entries for a given variable are contiguous.
 */
 
-static double qr_get_tss (MODEL *pmod, const double *y, int *ifc,
-			  int *yconst)
+static double qr_get_tss (MODEL *pmod, const DATASET *dset,
+			  int *ifc, int *yconst)
 {
+    int yno = pmod->list[1];
     int pwe = (pmod->opt & OPT_P);
-    double y0 = 0.0, ymean = 0.0;
+    double yt, y0 = 0.0, ymean = 0.0;
     double x, tss = 0.0;
     double ctss = 0.0;
     int t;
 
     if (*ifc == 0) {
-	*ifc = check_for_effective_const(pmod, y);
+	*ifc = check_for_effective_const(pmod, dset);
     }
 
     *yconst = 1;
@@ -65,22 +66,22 @@ static double qr_get_tss (MODEL *pmod, const double *y, int *ifc,
 	double ry, d;
 
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    ry = y[t];
+	    ry = dset->Z[yno][t];
 	    if (t == pmod->t1 && pwe) {
 		ry *= sqrt(1.0 - pmod->rho * pmod->rho);
 	    } else {
-		ry -= pmod->rho * y[t-1];
+		ry -= pmod->rho * dset->Z[yno][t-1];
 	    }
 	    ymean += ry;
 	}
 	ymean /= pmod->nobs;
 
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    ry = y[t];
+	    ry = dset->Z[yno][t];
 	    if (t == pmod->t1 && pwe) {
 		ry *= sqrt(1.0 - pmod->rho * pmod->rho);
 	    } else {
-		ry -= pmod->rho * y[t-1];
+		ry -= pmod->rho * dset->Z[yno][t-1];
 	    }
 	    if (t == pmod->t1) {
 		y0 = ry;
@@ -98,23 +99,24 @@ static double qr_get_tss (MODEL *pmod, const double *y, int *ifc,
     } else {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (!na(pmod->yhat[t])) {
-		ymean += y[t];
+		ymean += dset->Z[yno][t];
 	    }
 	}
 	ymean /= pmod->nobs;
 
-	y0 = y[pmod->t1];
+	y0 = dset->Z[yno][pmod->t1];
 
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (!na(pmod->yhat[t])) {
-		if (y[t] != y0) {
+		if (dset->Z[yno][t] != y0) {
 		    *yconst = 0;
 		}
-		x = y[t] - ymean;
+		x = dset->Z[yno][t] - ymean;
 		if (*ifc) {
 		    tss += x * x;
 		} else {
-		    tss += y[t] * y[t];
+		    yt = dset->Z[yno][t];
+		    tss += yt * yt;
 		    ctss += x * x;
 		}
 	    }
@@ -130,16 +132,17 @@ static double qr_get_tss (MODEL *pmod, const double *y, int *ifc,
     return tss;
 }
 
-static void qr_compute_stats (MODEL *pmod, const double *y, int n,
-			      gretlopt opt)
+static void qr_compute_stats (MODEL *pmod, const DATASET *dset,
+			      int n, gretlopt opt)
 {
     int yconst, ifc = pmod->ifc;
+    int yno = pmod->list[1];
 
-    pmod->tss = qr_get_tss(pmod, y, &ifc, &yconst);
+    pmod->tss = qr_get_tss(pmod, dset, &ifc, &yconst);
     pmod->chisq = NADBL;
 
     if (yconst && pmod->dfd > 0) {
-	double y0 = y[pmod->t1];
+	double y0 = dset->Z[yno][pmod->t1];
     
 	if (y0 > 0) {
 	    double tss = pmod->nobs * y0 * y0;
@@ -1072,7 +1075,7 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 
     if (!err) {
 	/* get R^2, F-stat */
-	qr_compute_stats(pmod, dset->Z[pmod->list[1]], T, opt);
+	qr_compute_stats(pmod, dset, T, opt);
 
 	/* D-W stat and p-value */
 	if ((opt & OPT_I) && pmod->missmask == NULL) {

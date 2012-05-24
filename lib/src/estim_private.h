@@ -24,7 +24,7 @@ double dwstat (int order, MODEL *pmod, const DATASET *dset);
 
 double rhohat (int order, int t1, int t2, const double *uhat);
 
-int check_for_effective_const (MODEL *pmod, const double *y);
+int check_for_effective_const (MODEL *pmod, const DATASET *dset);
 
 void maybe_shift_ldepvar (MODEL *pmod, DATASET *dset);
 
