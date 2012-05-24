@@ -987,6 +987,11 @@
 	  <effect>erros padrão robustos</effect>
         </option>
 	<option>
+	  <flag>--cluster</flag>
+	  <optparm>variável-agrupada</optparm>
+	  <effect>ver a explicação em <cmdref targ="logit"/></effect>
+        </option>
+	<option>
 	  <flag>--opg</flag>
 	  <effect>ver abaixo</effect>
         </option>
@@ -1278,13 +1283,25 @@
 
   <command name="chow" section="Tests" label="Teste de Chow">
 
-    <usage>
-      <arguments>
-        <argument>obs</argument>
-      </arguments>
+<usage>
+      <altforms>
+        <altform><lit>chow</lit> <repl>observação</repl></altform>
+        <altform><lit>chow</lit> <repl>variável-auxiliar</repl> <lit>--dummy</lit></altform>
+      </altforms>
+      <options>
+	<option>
+	  <flag>--dummy</flag>
+	  <effect>usar uma variável auxiliar pré-existente</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>não mostrar estimativas para o modelo aumentado</effect>
+	</option>
+      </options>
       <examples>
         <example>chow 25</example>
         <example>chow 1988:1</example>
+	<example>chow female --dummy</example>
       </examples>
     </usage>
 
@@ -1295,17 +1312,13 @@
       </para>
 
       <para>
-	Tem que se seguir a uma regressão de Mínimos Quadrados (OLS).
-        Cria uma variável auxiliar que é igual a 1 a partir do ponto
-        especificado por <repl>obs</repl> até ao final da amostra,
+	Tem que se seguir a uma regressão de Mínimos Quadrados (OLS). Se um número de observação ou uma data tiver sido dado, produz um test sobre a hipótese nula de não haver quebra estrutural no ponto de separação indicado. O procedimento cria uma variável auxiliar que é igual a 1 a partir do ponto
+        especificado por <repl>observação</repl> até ao final da amostra,
         caso contrário é 0, e cria também termos de interacção entre
-        esta variável auxiliar e as variáveis independentes originais.  
-        É executada uma regressão aumentada que inclui estes termos e
+        esta variável auxiliar e as variáveis regressoras originais. Se tiver sido dada uma variável auxiliar, será testada a hipótese nula de homogeneidade estrutural no que diz respeito a essa variável auxiliar. Mais uma vez, os termos de interação são acrescentados. Em quaisquer dos casos, é executada uma regressão aumentada que inclui estes termos e
         é calculada a estatística <math>F</math>, considerando 
         a regressão aumentada como não restringida e a original como
-        restringida.  Esta estatística é apropriada para testar a
-        hipótese nula de não existência de quebra estrutural no ponto
-        de separação dado.
+        restringida.  Mas se o modelo original usou um estimador robusto para a matriz de covariância, a estatística de teste é um valor de qui-quadrado de Wald baseada num estimador robusto da matriz de covariância da regressão aumentada.
       </para>
     </description>
 
@@ -1417,6 +1430,14 @@
 	  <flag>--skip-df</flag>
 	  <effect>não efectuar testes DF nas variáveis individuais</effect>
 	</option>
+	<option>
+	  <flag>--test-down</flag>
+	  <effect>ordem de desfasamento automatica</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>mostrar detalhes adicionais das regressões</effect>
+	</option>
       </options>
       <examples>
 	<example>coint 4 y x1 x2</example>
@@ -1429,16 +1450,14 @@
 	O teste de cointegração Engle&ndash;Granger.  O procedimento 
         por omissão é: (1) efectuar testes de Dickey&ndash;Fuller (DF) 
         segundo a hipótese nula de que cada variável listada tem uma raiz 
-        unitária; (2) estima a regressão de cointegração; e (3)executar um 
+        unitária; (2) estima a regressão de cointegração; e (3) executar um 
         teste DF sobre os resíduos da regressão de cointegração. Se for 
         dada a opção <lit>--skip-df</lit>, o passo (1) é omitido.
       </para>
       <para context="cli">
 	Se a ordem de desfasamento especificada é positiva, todos os testes
-	Dickey&ndash;Fuller usam essa ordem.  Se a ordem for antecedida
-        de um sinal menos, ela é encarada como sendo o máximo desfasamento e a 
-        ordem efectivamente usada em cada caso é obtida testando para
-        baixo: ver o comando <cmdref targ="adf"/> para detalhes.
+	Dickey&ndash;Fuller usam essa ordem, com esta qualificação: se a opção <opt>--test-down</opt> for dada, o valor indicado é tomado como sendo o máximo e a ordem de desfasamento efectivamente usada em cada caso é obtida testando para
+        baixo. Ver o comando <cmdref targ="adf"/> para detalhes sobre este procedimento.
       </para>
       <para context="cli">
 	Por omissão, a regressão de cointegração contém uma constante.  Se
@@ -1493,8 +1512,13 @@
     <usage>
       <arguments>
         <argument>ordem</argument>
-        <argument>variável-dependente</argument>
-	<argument>variáveis-independentes</argument>
+        <argument>listaY</argument>
+      <argblock optional="true" separated="true">
+	  <argument>listaX</argument>
+	</argblock>
+	<argblock optional="true" separated="true">
+	  <argument>listaRx</argument>
+	</argblock>
       </arguments>
       <options>
         <option>
@@ -1504,6 +1528,10 @@
         <option>
 	  <flag>--rc</flag>
 	  <effect>constante restringida</effect>
+        </option>
+<option>
+	  <flag>--uc</flag>
+	  <effect>constante não restringida</effect>
         </option>
         <option>
 	  <flag>--crt</flag>
@@ -1517,9 +1545,17 @@
 	  <flag>--seasonals</flag>
 	  <effect>incluir auxiliares sazonais centradas</effect>
         </option>
+	<option>
+	  <flag>--asy</flag>
+	  <effect>registar valores p assimtóticos</effect>
+        </option>
         <option>
 	  <flag>--quiet</flag>
 	  <effect>apenas mostrar os testes</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>não mostrar nada</effect>
         </option>
         <option>
 	  <flag>--verbose</flag>
@@ -1535,12 +1571,14 @@
 
     <description>
       <para>
-	Executa o teste de Johansen para a cointegração entre as variáveis
-        listadas para a dada ordem de desfasamento.  Os valores críticos são
-        determinados usando a aproximação gamma de J. Doornik (Doornik, 1998).
-        Para detalhes sobre este teste ver o Capítulo 20 do livro de 
-        Hamilton, <book>Time Series Analysis</book> (1994).
+	Executa o teste de Johansen para a cointegração entre as variáveis em <repl>listaY</repl> para a dada ordem de desfasamento.  Para detalhes sobre este teste ver <guideref targ="chap:vecm"/> ou <cite
+	key="hamilton94">Hamilton (1994)</cite>, Capítulo 20. Os valores p são calculados usando a aproximação gama de Doornik <cite key="doornik98" p="true">(Doornik, 1998)</cite>. São mostrados dois conjuntos de valores p para o teste traço, valores assimtóticos imediatos e valores ajustados para o tamanho da amostra.  Por omissão, o acessor <lit>$pvalue</lit> obtém a variante ajustada, mas se opção <opt>--asy</opt> for dada, pode ser usado para registar os valores assimtóticos.
       </para>
+
+      <para context="gui">
+	Efectua o teste de Johansen para a cointegração entre as variáveis listadas para a ordem de desfasamento selecionada.  Para detalhes sobre este teste ver, por exemplo, o livro de Hamilton, <book>Time Series Analysis</book> (1994), Capítulo 20.  Os valores p são calculados usando a aproximação gama de  Doornik.
+      </para>
+
       <para context="cli">
 	A inclusão de termos determinísticos no modelo é controlada por
        intermédio das opções.  Por omissão, se não tiver sido indicada nenhuma
@@ -1553,7 +1591,7 @@
        acima, que são mutualmente exclusivas, produzem respectivamente os
        casos 1, 2, 4, e 5.  O significado destes casos e os critérios para
        seleccionar um caso estão explicados no 
-       <guideref targ="vecm-explanation"/>.
+       <guideref targ="chap:vecm"/>.
       </para>
       <para context="gui">
         A inclusão de termos determinísticos no modelo é controlada por
@@ -1567,8 +1605,19 @@
         outros quatro botões de opções produzem respectivamente os casos 1,
         2, 4, e 5.  O significado destes casos e os critérios para 
         seleccionar um caso estão explicados no
-        <guideref targ="vecm-explanation"/>.
+        <guideref targ="chap:vecm"/>.
       </para>
+
+<para context="cli">
+	As listas opcionais <repl>listaX</repl> e <repl>listaRx</repl>
+	permite-lhe controlar as variáveis exógenas: estas entram no sistema como não restringidas (<repl>listaX</repl>) ou
+	restringidas ao espaço de cointegração (<repl>listaRx</repl>). Estas listas são separadas da  <repl>listaY</repl> e entre elas usando ponto-e-vírgulas.
+      </para>
+
+      <para context="gui">
+	Você pode controlar as variáveis exógenas adicionando-as à lista na caixa inferior.  Por omissão estas entram no modelo na forma não restringida  (indicada por um <lit>U</lit> junto do nome da variável).  Se você pretender que uma certa variável seja restringida ao espaço de cointegração, clique com botão direito sobre ela e selecione <quote>Restringida</quote> do menu de contexto.  O símbolo junto à variável mudará para R.
+      </para>
+
       <para context="cli">
 	A opção <lit>--seasonals</lit>, que pode ser combinada com qualquer
         outra opção, especifica a inclusão de um conjunto de variáveis
@@ -1583,20 +1632,42 @@
         auxiliares que formam o ponto de partida do procedimento da estimação
         de máxima verosimilhança de Johansen.
       </para>
-      <para>
-	A seguinte tabela serve como uma guia à interpretação dos resultados
+      <para context="notex">
+	A seguinte tabela serve como um guia à interpretação dos resultados
         apresentados pelo teste, num caso de 3-variáveis.  <lit>H0</lit>
         significa a hipótese nula, <lit>H1</lit> a hipótese alternativa, e
         <lit>c</lit> o número de relações cointegrantes.</para>
-      <code>
-                 Ordem    Teste Traço        Teste Lmax
-                          H0     H1          H0     H1
-                 ---------------------------------------
-                  0      c = 0  c = 3       c = 0  c = 1
-                  1      c = 1  c = 3       c = 1  c = 2
-                  2      c = 2  c = 3       c = 2  c = 3
-                 ---------------------------------------</code>
+      <mono context="notex">
+         Ordem    Teste Traço        Teste Lmax
+                  H0     H1          H0     H1 
+         ---------------------------------------
+          0      c = 0  c = 3       c = 0  c = 1
+          1      c = 1  c = 3       c = 1  c = 2
+          2      c = 2  c = 3       c = 2  c = 3
+         ---------------------------------------
+      </mono>
+<para context="tex">
+	A seguinte tabela serve como um guia
+        à interpretação dos resultados
+        apresentados pelo teste, num caso de
+        3-variáveis.  $H_0$ significa a hipótese
+        nula, $H_1$ hipótese alternativa, e $c$ o 
+        número de relações cointegrantes	
 
+	\begin{center}
+	\begin{tabular}{cllll}
+	&amp; \multicolumn{2}{c}{Teste Traço} &amp;
+	   \multicolumn{2}{c}{Teste $\lambda$-max} \\
+	Rank &amp;  \multicolumn{1}{c}{$H_0$} &amp; 
+	       \multicolumn{1}{c}{$H_1$} &amp; 
+	       \multicolumn{1}{c}{$H_0$} &amp; 
+	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
+ 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
+	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
+	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3 
+	\end{tabular}
+	\end{center}
+      </para>
       <para>
 	Ver também o comando <cmdref targ="vecm"/>.
       </para>
@@ -2702,6 +2773,11 @@
         <option>
           <flag>--robust</flag>
           <effect>erros padrão robustos (QML)</effect>
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>variável-agrupada</optparm>
+	  <effect>ver a explicação em <cmdref targ="logit"/></effect>
         </option>
         <option>
           <flag>--vcv</flag>
@@ -4170,9 +4246,17 @@
 	  <flag>--quadratic-fit</flag>
 	  <effect>show quadratic fit</effect>
         </option>
+<option>
+	  <flag>--cubic-fit</flag>
+	  <effect>show cubic fit</effect>
+        </option>
         <option>
 	  <flag>--loess-fit</flag>
 	  <effect>show loess fit</effect>
+        </option>
+        <option>
+	  <flag>--semilog-fit</flag>
+	  <effect>show semilog fit</effect>
         </option>
         <option>
 	  <flag>--dummy</flag>
@@ -4980,6 +5064,11 @@
         <option>
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>variável-agrupada</optparm>
+	  <effect>ver a explicação em <cmdref targ="logit"/></effect>
         </option>	
       </options>
       <examples>
@@ -5431,6 +5520,10 @@
 	  <flag>--save</flag>
 	  <effect>save variables</effect>
 	</option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>não mostrar resultados</effect>
+        </option>
       </options>
     </usage>
 
@@ -5595,6 +5688,11 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--ymax</flag>
+	  <optparm>value</optparm>
+	  <effect>specify maximum of dependent variable</effect>
+	</option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>mostrar a matriz de covariância</effect>
 	</option>
@@ -5674,6 +5772,11 @@
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
 	</option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>variável-agrupada</optparm>
+	  <effect>erros padrão agrupados</effect>
+        </option>
 	<option>
 	  <flag>--multinomial</flag>
 	  <effect>estimate multinomial logit</effect>
@@ -6599,6 +6702,11 @@
 	  <effect>QML covariance matrix</effect>
 	</option>
 	<option>
+	  <flag>--cluster</flag>
+	  <optparm>variável-agrupada</optparm>
+	  <effect>ver a explicação em <cmdref targ="logit"/></effect>
+        </option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>mostrar a matriz de covariância</effect>
 	</option>
@@ -6928,6 +7036,11 @@
         <option>
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>variável-agrupada</optparm>
+	  <effect>erros padrão agrupados</effect>
         </option>
         <option>
 	  <flag>--jackknife</flag>
@@ -7420,6 +7533,10 @@
 	  <effect>random effects or GLS model</effect>
         </option>
         <option>
+	  <flag>--nerlove</flag>
+	  <effect>use the Nerlove transformation</effect>
+        </option>
+        <option>
 	  <flag>--between</flag>
 	  <effect>estimate the between-groups model</effect>
         </option>
@@ -7609,6 +7726,10 @@
 	  <flag>--save-all</flag>
 	  <effect>save all components</effect>
         </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>não mostrar resultados</effect>
+        </option>
       </options>
     </usage>
 
@@ -7763,7 +7884,12 @@
         <option>
           <flag>--robust</flag>
           <effect>robust standard errors</effect>
-        </option>	
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>variável-agrupada</optparm>
+	  <effect>ver a explicação em <cmdref targ="logit"/></effect>
+        </option>
         <option>
           <flag>--vcv</flag>
           <effect>mostrar a matriz de covariância</effect>
@@ -7985,6 +8111,11 @@
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
 	</option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>variável-agrupada</optparm>
+	  <effect>ver a explicação em <cmdref targ="logit"/></effect>
+        </option>
 	<option>
 	  <flag>--vcv</flag>
 	  <effect>mostrar a matriz de covariância</effect>
@@ -8711,6 +8842,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--trim</flag>
+	  <effect>see below</effect>
+	</option>	
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>suppress printed output</effect>
 	</option>
@@ -8745,6 +8880,12 @@
 	the null, and the corresponding p-value, are recorded and may be
 	retrieved using the accessors <lit>$test</lit> and <lit>$pvalue</lit>
 	respectively.
+      </para>
+      <para context="cli">
+	If the <opt>--trim</opt> option is given, the minimum and maximum
+	values in each sub-sample are discarded before calculating the
+	mean and range. This makes it less likely that outliers will
+	distort the analysis.
       </para>
       <para context="cli">
 	If the <opt>--quiet</opt> option is given, no graph is shown and no
@@ -8984,6 +9125,11 @@
 	  <flag>--with-lines</flag>
 	  <effect>create line graphs</effect>
 	</option>
+        <option>
+	  <flag>--matrix</flag>
+	  <optparm>name</optparm>
+	  <effect>plot columns of named matrix</effect>
+        </option>
         <option>
 	  <flag>--output</flag>
 	  <optparm>filename</optparm>
@@ -9565,6 +9711,16 @@
         <argument flag="-n ">displayname</argument>
       </arguments>
       <options>
+        <option>
+	  <flag>--description</flag>
+	  <optparm>string</optparm>
+	  <effect>set description</effect>
+	</option>
+	<option>
+	  <flag>--graph-name</flag>
+	  <optparm>string</optparm>
+	  <effect>set graph name</effect>
+	</option>
 	<option>
 	  <flag>--discrete</flag>
 	  <effect>mark series as discrete</effect>
@@ -10170,6 +10326,10 @@
 	  <flag>--dat</flag>
 	  <effect>use PcGive ASCII format</effect>
         </option>
+	<option>
+	  <flag>--decimal-comma</flag>
+	  <effect>use comma as decimal character</effect>
+        </option>
         <option>
 	  <flag>--database</flag>
 	  <effect>use gretl database format</effect>
@@ -10612,6 +10772,11 @@
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
         </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>variável-agrupada</optparm>
+	  <effect>ver a explicação em <cmdref targ="logit"/></effect>
+        </option>
         <option>
 	  <flag>--verbose</flag>
 	  <effect>mostrar detalhes das iterações</effect>
@@ -10701,6 +10866,11 @@
 	<option>
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>variável-agrupada</optparm>
+	  <effect>erros padrão agrupados</effect>
         </option>
 	<option>
 	  <flag>--liml</flag>
@@ -10855,6 +11025,14 @@
         <option>
 	  <flag>--robust-hac</flag>
 	  <effect>HAC standard errors</effect>
+        </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>skip output of individual equations</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
         </option>
         <option>
 	  <flag>--impulse-responses</flag>
@@ -11098,6 +11276,10 @@
 	  <effect>restricted constant</effect>
         </option>
         <option>
+	  <flag>--uc</flag>
+	  <effect>unrestricted constant</effect>
+        </option>
+        <option>
 	  <flag>--crt</flag>
 	  <effect>constant and restricted trend</effect>
         </option>
@@ -11108,6 +11290,14 @@
         <option>
 	  <flag>--seasonals</flag>
 	  <effect>include centered seasonal dummies</effect>
+        </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>skip output of individual equations</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
         </option>
         <option>
 	  <flag>--impulse-responses</flag>
