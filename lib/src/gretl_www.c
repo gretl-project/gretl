@@ -931,7 +931,8 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
     err = make_connection(&sock, conn->host, conn->port);
 
 #if WDEBUG
-    fprintf(stderr, "make_connection returned %d\n", err);
+    fprintf(stderr, "%s, port %d: make_connection returned %d\n", 
+	    conn->host, conn->port, err);
 #endif   
 
     switch (err) {
