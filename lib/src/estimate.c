@@ -1649,7 +1649,6 @@ static void regress (MODEL *pmod, double *xpy,
 		     const DATASET *dset,
 		     double rho, gretlopt opt)
 {
-    int yno = pmod->list[1];
     int ifc = pmod->ifc;
     int n = pmod->full_n;
     double zz, rss = 0.0;

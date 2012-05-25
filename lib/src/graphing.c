@@ -2102,8 +2102,9 @@ static void check_y_tics (gnuplot_info *gi, const double **Z,
    gnuplot.
 */
 
-static void 
-print_x_range_from_list (gnuplot_info *gi, const double **Z, const int *list)
+static void print_x_range_from_list (gnuplot_info *gi, 
+				     const DATASET *dset, 
+				     const int *list)
 {
     const double *x, *d = NULL;
     int k, l0 = list[0];
@@ -2111,14 +2112,14 @@ print_x_range_from_list (gnuplot_info *gi, const double **Z, const int *list)
     if (gi->flags & GPT_DUMMY) {
 	/* the factor variable comes last and the x variable 
 	   is in second-last place */
-	d = Z[list[l0]];
+	d = dset->Z[list[l0]];
 	k = l0 - 1;
     } else {
 	/* the x variable comes last in the list */
 	k = l0;
     }
 
-    x = Z[list[k]];
+    x = dset->Z[list[k]];
 
     if (gretl_isdummy(gi->t1, gi->t2, x)) {
 	fputs("set xrange [-1:2]\n", gi->fp);	
@@ -2134,7 +2135,7 @@ print_x_range_from_list (gnuplot_info *gi, const double **Z, const int *list)
 	    if (!na(x[t]) && (d == NULL || !na(d[t]))) {
 		for (i=1; i<k; i++) {
 		    vy = list[i];
-		    if (!na(Z[vy][t])) {
+		    if (!na(dset->Z[vy][t])) {
 			/* got x obs and at least one y obs */
 			obs_ok = 1;
 			break;
@@ -3118,7 +3119,7 @@ int gnuplot (const int *plotlist, const char *literal,
     if (gi.x != NULL) {
 	print_x_range(&gi, gi.x);
     } else {
-	print_x_range_from_list(&gi, (const double **) dset->Z, list);
+	print_x_range_from_list(&gi, dset, list);
     }
 
     if (*gi.fmt != '\0' && *gi.xtics != '\0') {
@@ -3284,8 +3285,7 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
 
     gretl_push_c_numeric_locale();
 
-    print_x_range_from_list(&gi, (const double **) dset->Z, 
-			    gi.list);
+    print_x_range_from_list(&gi, dset, gi.list);
 
     fputs("plot \\\n", fp);
     fputs(" '-' using 1:($2) notitle w points , \\\n", fp);
