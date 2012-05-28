@@ -57,8 +57,12 @@ static void gpage_filenames_init (const char *base)
 	const char *p;
 
 	strcpy(gpage_base, base);
-	if (has_suffix(gpage_base, ".tex")) {
+	if (has_suffix(gpage_base, ".tex") || 
+	    has_suffix(gpage_base, ".pdf") ||
+	    has_suffix(gpage_base, ".eps")) {
 	    gpage_base[strlen(gpage_base) - 4] = '\0';
+	} else if (has_suffix(gpage_base, ".ps")) {
+	    gpage_base[strlen(gpage_base) - 3] = '\0';
 	}
 	p = strrchr(gpage_base, SLASH);
 	if (p != NULL) {
@@ -702,11 +706,12 @@ int display_graph_page (GtkWidget *parent)
     }
 
     if (!err) {
+	/* compile LaTeX */
 	err = latex_compile_graph_page();
     }
 
     if (!err) {
-	/* compile LaTeX and display output */
+	/* display output file */
 	err = real_display_gpage();
     }
 
@@ -784,12 +789,107 @@ int save_graph_page (const char *fname)
     return err;
 }
 
-int graph_page_parse_line (const char *line)
+static int print_graph_page_direct (const char *fname, 
+				    gretlopt opt)
 {
-    char cmdword[16];
+    char thisdir[MAXLEN];
+    char *latex_orig = NULL;
     int err = 0;
 
-    if (sscanf(line, "%*s %15s", cmdword) != 1) {
+    if (gpage.ngraphs == 0) {
+	gpage_errmsg(_("The graph page is empty"), 1);
+	return 1;
+    }
+
+    if (getcwd(thisdir, MAXLEN - 1) == NULL) {
+	*thisdir = '\0';
+    }
+
+    gpage.mono = (opt & OPT_M) ? 1 : 0;
+
+    gretl_chdir(get_session_dirname());
+
+    gpage_filenames_init(NULL);
+
+    if (has_suffix(fname, ".pdf")) {
+	gpage.term = GP_TERM_PDF;
+    } else {
+	gpage.term = GP_TERM_EPS;
+	if (get_tex_use_pdf()) {
+	    latex_orig = g_strdup(latex);
+	    strcpy(latex, latex_orig + 3);
+	}
+    }	    
+
+    /* write the LaTeX driver file */
+    err = make_graphpage_tex();
+
+    if (!err) {
+	/* transform individual plot files and compile 
+	   using gnuplot */
+	err = make_gp_output();
+    }
+
+    if (!err) {
+	err = latex_compile_graph_page();
+    }
+
+    if (!err) {
+	char *output;
+
+	if (gpage.term == GP_TERM_PDF) {
+	    output = gpage_fname(".pdf", 0);
+	} else {
+	    output = gpage_fname(".ps", 0);
+	}
+	if (*thisdir != '\0') {
+	    /* come back out of dotdir */
+	    chdir(thisdir);
+	}
+	fname = gretl_maybe_switch_dir(fname);
+	err = gretl_copy_file(output, fname);
+	remove(output);
+    }
+
+    if (latex_orig != NULL) {
+	strcpy(latex, latex_orig);
+	g_free(latex_orig);
+    }
+
+    gpage_cleanup();
+
+    if (err) {
+	gui_errmsg(err);
+    }
+
+    return err;
+}
+
+int graph_page_parse_line (const char *line, gretlopt opt)
+{
+    const char *outfile = NULL;
+    char cmdword[16];
+    int gotcmd = 0;
+    int err = 0;
+
+    if (sscanf(line, "%*s %15s", cmdword) == 1) {
+	gotcmd = 1;
+    }
+
+    if (gotcmd && (opt & OPT_O)) {
+	/* the --output option rules out the various
+	   command words */
+	return E_PARSE;
+    } else if (opt & OPT_O) {
+	/* --output="filename" */
+	outfile = get_optval_string(GRAPHPG, OPT_O);
+	if (outfile == NULL) {
+	    return E_PARSE;
+	} else {
+	    print_graph_page_direct(outfile, opt);
+	    return 0;
+	}
+    } else if (!gotcmd) {
 	return E_PARSE;
     }
 

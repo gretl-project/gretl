@@ -13,6 +13,6 @@ int in_graph_page (const char *fname);
 
 int save_graph_page (const char *fname);
 
-int graph_page_parse_line (const char *line);
+int graph_page_parse_line (const char *line, gretlopt opt);
 
 #endif /* GRAPH_PAGE_H */

@@ -234,6 +234,8 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_U, "output", 2 },
     { GNUPLOT,  OPT_Y, "single-yaxis", 0 },
     { GNUPLOT,  OPT_X, "matrix", 2 },
+    { GRAPHPG,  OPT_M, "monochrome", 0 },
+    { GRAPHPG,  OPT_O, "output", 2 },
     { HECKIT,   OPT_M, "ml", 0 },
     { HECKIT,   OPT_R, "robust", 0 },
     { HECKIT,   OPT_T, "two-step", 0 },
