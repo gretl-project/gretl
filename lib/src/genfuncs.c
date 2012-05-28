@@ -4622,6 +4622,9 @@ int nadaraya_watson (const double *y, const double *x, double h,
 	    if (!na(y[t])) {
 		num[t] = k * y[t];
 		den[t] = k;
+	    } else {
+		num[t] = 0;
+		den[t] = 0;
 	    }
 	}
     }
