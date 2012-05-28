@@ -858,10 +858,6 @@ static int print_graph_page_direct (const char *fname,
 
     gpage_cleanup();
 
-    if (err) {
-	gui_errmsg(err);
-    }
-
     return err;
 }
 
@@ -886,8 +882,7 @@ int graph_page_parse_line (const char *line, gretlopt opt)
 	if (outfile == NULL) {
 	    return E_PARSE;
 	} else {
-	    print_graph_page_direct(outfile, opt);
-	    return 0;
+	    return print_graph_page_direct(outfile, opt);
 	}
     } else if (!gotcmd) {
 	return E_PARSE;
