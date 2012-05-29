@@ -848,6 +848,9 @@ static int print_graph_page_direct (const char *fname,
 	}
 	fname = gretl_maybe_switch_dir(fname);
 	err = gretl_copy_file(output, fname);
+	if (!err) {
+	    fprintf(stderr, "graphpg: wrote %s\n", fname);
+	}
 	remove(output);
     }
 
