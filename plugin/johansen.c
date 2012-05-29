@@ -2540,7 +2540,8 @@ static int vecm_beta_test (GRETL_VAR *jvar,
 	goto bailout;
     }
 
-    pputs(prn, "\nTest of restrictions on cointegrating relations\n\n");
+    pprintf(prn, "\n%s\n\n",
+	    _("Test of restrictions on cointegrating relations"));
 
     if (verbose) {
 	gretl_matrix_print_to_prn(H, "Restriction matrix, H", prn);
