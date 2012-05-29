@@ -911,7 +911,7 @@ static int nl_missval_check (nlspec *s, const DATASET *dset)
 }
 
 /* get_mle_ll: callback used by BFGS.  Note that this should return
-   NADBL in case of numerical problems.  This will signal to BFGS to
+   NADBL in case of numerical problems; that signals to BFGS to
    try a smaller step length.
 */
 
