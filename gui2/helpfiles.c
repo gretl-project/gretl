@@ -1632,17 +1632,19 @@ get_tree_model_haystack (GtkTreeModel *mod, GtkTreeIter *iter, int col,
     }
 }
 
-static gboolean real_find_in_listbox (windata_t *vwin, const gchar *s, 
+static gboolean real_find_in_listbox (windata_t *vwin, 
+				      const gchar *s, 
 				      gboolean sensitive,
 				      gboolean vnames)
 {
+    int search_cols[4] = {0, 0, -1, -1};
     int minvar, wrapped = 0;
     char haystack[MAXLEN];
     char pstr[16];
     GtkTreeModel *model = NULL;
     GtkTreeIter iter;
     gboolean got_iter;
-    int pos = -1;
+    int i, pos = -1;
 
     /* first check that there's something to search */
     if (vwin->listbox != NULL) {
@@ -1673,25 +1675,33 @@ static gboolean real_find_in_listbox (windata_t *vwin, const gchar *s,
 	return FALSE;
     }
 
+    if (vnames) {
+	/* case-sensitive search for series names */
+	search_cols[0] = 1;  /* series name */
+	search_cols[1] = -1; /* invalid */
+    } else if (vwin == mdata) {
+	search_cols[0] = 1;  /* series name */
+	search_cols[1] = 2;  /* description */
+    } else if (vwin->role == FUNC_FILES) {
+	search_cols[0] = 0;  /* package name */
+	search_cols[1] = 2;  /* description (skip version #) */
+    } else if (vwin->role == REMOTE_FUNC_FILES) {
+	search_cols[0] = 0;  /* package name */
+	search_cols[1] = 3;  /* description */
+	search_cols[2] = 2;  /* author */
+    } else {
+	/* databases, datafiles */
+	search_cols[0] = 1; /* description */
+	search_cols[1] = 0; /* filename */
+    }
+
  search_wrap:
 
     while (pos < 0) {
-	/* try looking in column 1 first */
-	get_tree_model_haystack(model, &iter, 1, haystack);
-
-	pos = string_match_pos(haystack, needle, sensitive, 0);
-
-	if (pos < 0 && !vnames) {
-	    if (vwin == mdata) {
-		/* then column 2 */
-		get_tree_model_haystack(model, &iter, 2, haystack);
-	    } else {
-		/* then column 0 */
-		get_tree_model_haystack(model, &iter, 0, haystack);
-	    }
+	for (i=0; pos < 0 && search_cols[i] >= 0; i++) {
+	    get_tree_model_haystack(model, &iter, search_cols[i], haystack);
 	    pos = string_match_pos(haystack, needle, sensitive, 0);
 	}
-
 	if (pos >= 0 || !gtk_tree_model_iter_next(model, &iter)) {
 	    break;
 	}
