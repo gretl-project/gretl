@@ -2448,6 +2448,7 @@ static int *maybe_get_lags_list (int order, int *err)
  * @list: specification for the first model in the set.
  * @dset: dataset struct.
  * @opt: if includes %OPT_R, use robust VCV;
+ *       if includes %OPT_H, use HAC VCV;
  *       if includes %OPT_I, print impulse responses;
  *       if includes %OPT_F, print forecast variance decompositions;
  *       if includes %OPT_D, add seasonal dummies;

@@ -447,93 +447,114 @@ static gretl_matrix *VAR_get_hvec (const gretl_matrix *X,
     return hvec;
 }
 
+static gretl_matrix *var_hac_xox (GRETL_VAR *var, int k,
+				  VCVInfo *vi, int *err)
+{
+    gretl_matrix *XOX = NULL;
+    gretl_matrix *uk;
+    int t;
+
+    uk = gretl_column_vector_alloc(var->T);
+
+    if (uk == NULL) {
+	*err = E_ALLOC;
+    } else {
+	for (t=0; t<var->T; t++) {
+	    uk->val[t] = gretl_matrix_get(var->E, t, k);
+	}
+	XOX = HAC_XOX(uk, var->X, vi, err);
+	gretl_matrix_free(uk);
+    }
+
+    return XOX;
+}
+
+static gretl_matrix *var_hc_xox (GRETL_VAR *var, int k,
+				 int hcv, int *err)
+{
+    gretl_matrix *XOX;
+    gretl_matrix *hvec = NULL;
+    int T = var->T;
+    int g = var->ncoeff;
+
+    XOX = gretl_matrix_alloc(g, g);
+
+    if (XOX == NULL) {
+	*err = E_ALLOC;
+    } else if (hcv > 1) {
+	hvec = VAR_get_hvec(var->X, var->XTX, err);
+    }
+
+    if (!*err) {
+	/* form X' \Omega X */
+	double xti, xtj, xij;
+	double utk, u2, ht;
+	int i, j, t;
+
+	for (i=0; i<g; i++) {
+	    for (j=i; j<g; j++) {
+		xij = 0.0;
+		for (t=0; t<T; t++) {
+		    utk = gretl_matrix_get(var->E, t, k);
+		    u2 = utk * utk;
+		    if (hcv > 1) {
+			ht = gretl_vector_get(hvec, t);
+			u2 /= 1.0 - ht;
+			if (hcv > 2) {
+			    u2 /= 1.0 - ht;
+			}
+		    }
+		    xti = gretl_matrix_get(var->X, t, i);
+		    xtj = gretl_matrix_get(var->X, t, j);
+		    xij += u2 * xti * xtj;
+		}
+		if (hcv == 1) {
+		    xij *= (double) T / (T - g);
+		} 
+		gretl_matrix_set(XOX, i, j, xij);
+		if (i != j) {
+		    gretl_matrix_set(XOX, j, i, xij);
+		}
+	    }
+	}
+    }
+
+    gretl_matrix_free(hvec);
+
+    return XOX;
+}
+
 /* (X'X)^{-1} * X'\Omega X * (X'X)^{-1} */
 
 static int VAR_robust_vcv (GRETL_VAR *var, gretl_matrix *V,
 			   MODEL *pmod, int hcv, int k)
 {
     gretl_matrix *XOX = NULL;
-    gretl_matrix *hvec = NULL;
-    double xij, xti, xtj, utk, u2, ht;
     VCVInfo vi = {0};
-    int T = var->T;
-    int g = var->ncoeff;
-    int i, j, t;
     int err = 0;
 
     if (var->robust == VAR_HAC) {
-	gretl_matrix *uk = gretl_column_vector_alloc(T);
-
-	if (uk != NULL) {
-	    for (t=0; t<T; t++) {
-		uk->val[t] = gretl_matrix_get(var->E, t, k);
-	    }
-	    XOX = HAC_XOX(uk, var->X, &vi, &err);
-	    gretl_matrix_free(uk);
-	}
+	XOX = var_hac_xox(var, k, &vi, &err);
     } else {
-	XOX = gretl_matrix_alloc(g, g);
+	XOX = var_hc_xox(var, k, hcv, &err);
     }
 
-    if (XOX == NULL) {
-	return E_ALLOC;
-    }
+    if (!err) {
+	gretl_matrix_qform(var->XTX, GRETL_MOD_TRANSPOSE, XOX,
+			   V, GRETL_MOD_NONE);
 
-    if (var->robust == VAR_HAC) {
-	goto finish;
-    } else if (hcv > 1) {
-	hvec = VAR_get_hvec(var->X, var->XTX, &err);
-	if (err) {
-	    gretl_matrix_free(XOX);
-	    return err;
+	if (var->robust == VAR_HAC) {
+	    gretl_model_set_full_vcv_info(pmod, VCV_HAC, vi.vmin,
+					  vi.order, vi.flags,
+					  vi.bw);
+	} else {
+	    gretl_model_set_vcv_info(pmod, VCV_HC, hcv);
 	}
-    }
-    
-    /* form X' \Omega X */
-    for (i=0; i<g; i++) {
-	for (j=i; j<g; j++) {
-	    xij = 0.0;
-	    for (t=0; t<T; t++) {
-		utk = gretl_matrix_get(var->E, t, k);
-		u2 = utk * utk;
-		if (hcv > 1) {
-		    ht = gretl_vector_get(hvec, t);
-		    u2 /= 1.0 - ht;
-		    if (hcv > 2) {
-			u2 /= 1.0 - ht;
-		    }
-		}
-		xti = gretl_matrix_get(var->X, t, i);
-		xtj = gretl_matrix_get(var->X, t, j);
-		xij += u2 * xti * xtj;
-	    }
-	    if (hcv == 1) {
-		xij *= (double) T / (T - g);
-	    } 
-	    gretl_matrix_set(XOX, i, j, xij);
-	    if (i != j) {
-		gretl_matrix_set(XOX, j, i, xij);
-	    }
-	}
-    }
-
- finish:
-
-    gretl_matrix_qform(var->XTX, GRETL_MOD_TRANSPOSE, XOX,
-		       V, GRETL_MOD_NONE);
-
-    if (var->robust == VAR_HAC) {
-	gretl_model_set_full_vcv_info(pmod, VCV_HAC, vi.vmin,
-				      vi.order, vi.flags,
-				      vi.bw);
-    } else {
-	gretl_model_set_vcv_info(pmod, VCV_HC, hcv);
     }
 
     gretl_matrix_free(XOX);
-    gretl_matrix_free(hvec);
 
-    return 0;
+    return err;
 }
 
 /* Run the various per-equation omit tests (all lags of each var in
@@ -553,6 +574,7 @@ int VAR_wald_omit_tests (GRETL_VAR *var)
     int g = var->ncoeff;
     int dim = (p > n)? p : n;
     int i, j, k, m = 0;
+    int any_F_err = 0;
     int err = 0;
 
     if (var->ifc && var->robust && g - 1 > dim) {
@@ -572,6 +594,7 @@ int VAR_wald_omit_tests (GRETL_VAR *var)
 	MODEL *pmod = var->models[i];
 	int ii, jj, jpos, ipos = var->ifc;
 	double w, vij;
+	int F_err = 0;
 
 	gretl_matrix_reuse(V, g, g);
 
@@ -581,13 +604,15 @@ int VAR_wald_omit_tests (GRETL_VAR *var)
 	    gretl_matrix_copy_values(V, var->XTX);
 	    gretl_matrix_multiply_by_scalar(V, pmod->sigma * pmod->sigma);
 	}
+
+	if (err) {
+	    break;
+	}
 	
-	if (!err) {
-	    /* set (possibly robust) standard errors */
-	    for (j=0; j<g; j++) {
-		vij = gretl_matrix_get(V, j, j);
-		pmod->sderr[j] = sqrt(vij);
-	    }
+	/* set (possibly robust) standard errors */
+	for (j=0; j<g; j++) {
+	    vij = gretl_matrix_get(V, j, j);
+	    pmod->sderr[j] = sqrt(vij);
 	}
 
 	/* exclusion of each var, all lags */
@@ -595,21 +620,23 @@ int VAR_wald_omit_tests (GRETL_VAR *var)
 	gretl_matrix_reuse(C, p, p);
 	gretl_matrix_reuse(b, p, 1);
 
-	for (j=0; j<var->neqns && !err; j++) {
+	for (j=0; j<var->neqns; j++) {
 	    double w = NADBL;
 
 	    gretl_matrix_extract_matrix(C, V, ipos, ipos, GRETL_MOD_NONE);
 	    for (k=0; k<p; k++) {
 		b->val[k] = pmod->coeff[k + ipos];
 	    }
-	    err = gretl_invert_symmetric_matrix(C);
-	    if (!err) {
-		w = gretl_scalar_qform(b, C, &err);
+	    F_err = gretl_invert_symmetric_matrix(C);
+	    if (!F_err) {
+		w = gretl_scalar_qform(b, C, &F_err);
 	    }
-	    if (!err) {
+	    if (F_err) {
+		any_F_err = 1;
+		var->Fvals[m++] = NADBL;
+	    } else {
 		var->Fvals[m++] = w / p;
 	    }
-
 	    ipos += p;
 	}
 
@@ -631,11 +658,14 @@ int VAR_wald_omit_tests (GRETL_VAR *var)
 		ipos += p;
 	    }
 
-	    err = gretl_invert_symmetric_matrix(C);
-	    if (!err) {
-		w = gretl_scalar_qform(b, C, &err);
+	    F_err = gretl_invert_symmetric_matrix(C);
+	    if (!F_err) {
+		w = gretl_scalar_qform(b, C, &F_err);
 	    }
-	    if (!err) {
+	    if (F_err) {
+		any_F_err = 1;
+		var->Fvals[m++] = NADBL;
+	    } else {
 		var->Fvals[m++] = w / n;
 	    }
 	}
@@ -650,11 +680,14 @@ int VAR_wald_omit_tests (GRETL_VAR *var)
 	    for (k=0; k<g-1; k++) {
 		b->val[k] = pmod->coeff[k+1];
 	    }
-	    err = gretl_invert_symmetric_matrix(C);
-	    if (!err) {
-		w = gretl_scalar_qform(b, C, &err);
+	    F_err = gretl_invert_symmetric_matrix(C);
+	    if (!F_err) {
+		w = gretl_scalar_qform(b, C, &F_err);
 	    }
-	    if (!err) {
+	    if (F_err) {
+		any_F_err = 1;
+		pmod->fstt = NADBL;
+	    } else {
 		pmod->fstt = w / (g-1);
 	    }
 	}
@@ -663,6 +696,10 @@ int VAR_wald_omit_tests (GRETL_VAR *var)
     gretl_matrix_free(V);
     gretl_matrix_free(C);
     gretl_matrix_free(b);
+
+    if (!err && any_F_err) {
+	fprintf(stderr, "*** Warning: some F-tests could not be computed\n");
+    }
 
     return err;
 }

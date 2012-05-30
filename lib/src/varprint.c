@@ -1108,6 +1108,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
     k = 0;
 
     for (i=0; i<var->neqns; i++) {
+	double Fval;
 	char Fstr[24];
 
 	if (!quiet) {
@@ -1149,53 +1150,59 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	}
 
 	for (j=0; j<var->neqns; j++) {
-	    pv = snedecor_cdf_comp(nlags, dfd, var->Fvals[k]);
-	    v = (var->models[j])->list[1];
-	    if (tex) {
-		pprintf(prn, A_("All lags of %s"), dset->varname[v]);
-		pputs(prn, " & ");
-		pprintf(prn, "$F(%d, %d) = %g$ & ", nlags, dfd, var->Fvals[k]);
-		pprintf(prn, "[%.4f]\\\\\n", pv);
-	    } else if (rtf) {
-		sprintf(label, A_("All lags of %s"), dset->varname[v]);
-		llen = strlen(label);
-		pputs(prn, label);
-		bufspace(fwidth - llen, prn);
-		pprintf(prn, "F(%d, %d) = %8.5g ", nlags, dfd, var->Fvals[k]);
-		pprintf(prn, "[%.4f]\\par\n", pv);
-	    } else {
-		sprintf(label, _("All lags of %s"), dset->varname[v]);
-		llen = g_utf8_strlen(label, -1);
-		pputs(prn, label);
-		bufspace(fwidth - llen, prn);
-		sprintf(Fstr, "F(%d, %d)", nlags, dfd);
-		pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, var->Fvals[k], pv);
+	    Fval = var->Fvals[k];
+	    if (!na(Fval)) {
+		pv = snedecor_cdf_comp(nlags, dfd, Fval);
+		v = (var->models[j])->list[1];
+		if (tex) {
+		    pprintf(prn, A_("All lags of %s"), dset->varname[v]);
+		    pputs(prn, " & ");
+		    pprintf(prn, "$F(%d, %d) = %g$ & ", nlags, dfd, Fval);
+		    pprintf(prn, "[%.4f]\\\\\n", pv);
+		} else if (rtf) {
+		    sprintf(label, A_("All lags of %s"), dset->varname[v]);
+		    llen = strlen(label);
+		    pputs(prn, label);
+		    bufspace(fwidth - llen, prn);
+		    pprintf(prn, "F(%d, %d) = %8.5g ", nlags, dfd, Fval);
+		    pprintf(prn, "[%.4f]\\par\n", pv);
+		} else {
+		    sprintf(label, _("All lags of %s"), dset->varname[v]);
+		    llen = g_utf8_strlen(label, -1);
+		    pputs(prn, label);
+		    bufspace(fwidth - llen, prn);
+		    sprintf(Fstr, "F(%d, %d)", nlags, dfd);
+		    pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, Fval, pv);
+		}
 	    }
 	    k++;
 	}
 
 	if (var->order > 1) {
-	    pv = snedecor_cdf_comp(var->neqns, dfd, var->Fvals[k]);
-	    if (tex) {
-		pprintf(prn, A_("All vars, lag %d"), maxlag);
-		pputs(prn, " & ");
-		pprintf(prn, "$F(%d, %d) = %g$ & ", var->neqns, dfd, var->Fvals[k]);
-		pprintf(prn, "[%.4f]\\\\\n", pv);
-	    } else if (rtf) {
-		sprintf(label, A_("All vars, lag %d"), maxlag);
-		llen = strlen(label);
-		pputs(prn, label);
-		bufspace(fwidth - llen, prn);
-		pprintf(prn, "F(%d, %d) = %8.5g ", var->neqns, dfd, var->Fvals[k]);
-		pprintf(prn, "[%.4f]\\par\n", pv);
-	    } else {
-		sprintf(label, _("All vars, lag %d"), maxlag);
-		llen = g_utf8_strlen(label, -1);
-		pputs(prn, label);
-		bufspace(fwidth - llen, prn);
-		sprintf(Fstr, "F(%d, %d)", var->neqns, dfd);
-		pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, var->Fvals[k], pv);
-	    } 
+	    Fval = var->Fvals[k];
+	    if (!na(Fval)) {
+		pv = snedecor_cdf_comp(var->neqns, dfd, Fval);
+		if (tex) {
+		    pprintf(prn, A_("All vars, lag %d"), maxlag);
+		    pputs(prn, " & ");
+		    pprintf(prn, "$F(%d, %d) = %g$ & ", var->neqns, dfd, Fval);
+		    pprintf(prn, "[%.4f]\\\\\n", pv);
+		} else if (rtf) {
+		    sprintf(label, A_("All vars, lag %d"), maxlag);
+		    llen = strlen(label);
+		    pputs(prn, label);
+		    bufspace(fwidth - llen, prn);
+		    pprintf(prn, "F(%d, %d) = %8.5g ", var->neqns, dfd, Fval);
+		    pprintf(prn, "[%.4f]\\par\n", pv);
+		} else {
+		    sprintf(label, _("All vars, lag %d"), maxlag);
+		    llen = g_utf8_strlen(label, -1);
+		    pputs(prn, label);
+		    bufspace(fwidth - llen, prn);
+		    sprintf(Fstr, "F(%d, %d)", var->neqns, dfd);
+		    pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, Fval, pv);
+		}
+	    }
 	    k++;
 	}
 
