@@ -256,8 +256,10 @@ static void list_delete_element (int *list, int m)
 */
 
 static int 
-append_db_data_with_replacement (const char *idxname, const char *binname,
-				 int *list, const DATASET *dset) 
+append_db_data_with_replacement (const char *idxname, 
+				 const char *binname,
+				 int *list, 
+				 const DATASET *dset) 
 {
     FILE *fidx = NULL, *fbin = NULL;
     char **oldnames = NULL;
@@ -496,16 +498,18 @@ open_db_files (const char *fname, char *idxname, char *binname,
     return 0;
 }
 
-/* screen out scalars and any empty series, after discounting
-   missing obs.
+/* screen out any empty series, after discounting missing 
+   obsservations
 */
 
-static int *make_db_save_list (const int *list, const DATASET *dset)
+static int *make_db_save_list (const int *list, const DATASET *dset,
+			       int *err)
 {
     int *dlist = gretl_list_new(list[0]);
     int i, t;
 
     if (dlist == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
@@ -514,6 +518,10 @@ static int *make_db_save_list (const int *list, const DATASET *dset)
     for (i=1; i<=list[0]; i++) {
 	int v = list[i];
 	int gotobs = 0;
+
+	/* FIXME should this use the whole data range, or
+	   the current sample range? 
+	*/
 
 	for (t=0; t<dset->n; t++) {
 	    if (!na(dset->Z[v][t])) {
@@ -528,6 +536,12 @@ static int *make_db_save_list (const int *list, const DATASET *dset)
 
 	dlist[0] += 1;
 	dlist[dlist[0]] = v;
+    }
+
+    if (dlist[0] == 0) {
+	*err = E_MISSDATA;
+	free(dlist);
+	dlist = NULL;
     }
 
     return dlist;
@@ -563,10 +577,10 @@ int write_db_data (const char *fname, const int *list, gretlopt opt,
 
     if (dataset_is_time_series(dset)) {
 	if (dset->pd != 1 && dset->pd != 4 && dset->pd != 12) {
-	    return 1;
+	    return E_PDWRONG;
 	}
     } else if (dset->pd != 1) {
-	return 1;
+	return E_PDWRONG;
     }
 
     if (open_db_files(fname, idxname, binname, 
@@ -578,9 +592,8 @@ int write_db_data (const char *fname, const int *list, gretlopt opt,
 #if DB_DEBUG
 	fprintf(stderr, "Appending to existing db\n");
 #endif
-	dlist = make_db_save_list(list, dset);
-	if (dlist == NULL) {
-	    err = E_ALLOC;
+	dlist = make_db_save_list(list, dset, &err);
+	if (err) {
 	    goto bailout;
 	}
 
