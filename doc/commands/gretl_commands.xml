@@ -9790,9 +9790,10 @@
 	  to <quote>on</quote>, this forces calculation of the regular
 	  Heteroskedasticity Consistent Covariance Matrix (HCCM),
 	  which does not take autocorrelation into account. Note that
-	  when a VAR is estimated with the <opt>--robust</opt> option,
-	  the default is regular HCCM, but the <opt>--robust-hac</opt>
-	  option is available to produce a HAC estimator.
+	  VARs are treated as a special case: when the <opt>robust</opt>
+	  option is given the default method is regular HCCM, but the
+	  <opt>robust-hac</opt> flag can be used to force the use of a
+	  HAC estimator.
 	  </para>
 	</li>
 	<li>
@@ -10556,9 +10557,11 @@
 
     <description>
       <para>
-	Saves either the entire dataset or, if a <repl>varlist</repl> is
-	supplied, a specified subset of the series in the current dataset,
-	to the file given by <repl>filename</repl>.
+	Save data to <repl>filename</repl>. By default all currently
+	defined series are saved but the optional <repl>varlist</repl>
+	argument can be used to select a subset of series. If the
+	dataset is sub-sampled, only the observations in the current
+	sample range are saved.
       </para>
       <para>
 	By default the data are saved in <quote>native</quote> gretl
