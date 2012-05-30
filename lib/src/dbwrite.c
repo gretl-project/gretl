@@ -173,19 +173,17 @@ static int output_db_var (int v, const DATASET *dset,
 			  FILE *fidx, FILE *fbin) 
 {
     char stobs[OBSLEN], endobs[OBSLEN];
-    int t, t1, t2;
-    int nobs;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
+    int t, nobs;
     float val;
 
-    t1 = 0;
-    t2 = dset->n - 1;
-
     if (dataset_is_time_series(dset)) {
-	for (t=0; t<dset->n; t++) {
+	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (na(dset->Z[v][t])) t1++;
 	    else break;
 	}
-	for (t=dset->n - 1; t>=t1; t--) {
+	for (t=dset->t2; t>=t1; t--) {
 	    if (na(dset->Z[v][t])) t2--;
 	    else break;
 	}
@@ -217,7 +215,8 @@ static int output_db_var (int v, const DATASET *dset,
     return 0;
 }
 
-static int write_old_bin_chunk (long offset, int nvals, FILE *fin, FILE *fout)
+static int write_old_bin_chunk (long offset, int nvals, 
+				FILE *fin, FILE *fout)
 {
     int i, err = 0;
     float val;
@@ -519,11 +518,7 @@ static int *make_db_save_list (const int *list, const DATASET *dset,
 	int v = list[i];
 	int gotobs = 0;
 
-	/* FIXME should this use the whole data range, or
-	   the current sample range? 
-	*/
-
-	for (t=0; t<dset->n; t++) {
+	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (!na(dset->Z[v][t])) {
 		gotobs = 1;
 		break;

@@ -5,7 +5,10 @@ Version 1.9.9, in progress
 - New accessor $ylist: returns the list of endogenous variables from
   the last system or model estimated
 - "fcast" command: enable for multinomial logit models
+- "store" command: respect sample range when exporting data to gretl
+  database format
 - "graphpg" command: enable printing from script
+- Mark some more strings for translation
 - Fix encoding for Polish translation
 - Fix bug 3525304
 - Fix bug: in logging commands entered via the gretl console, options

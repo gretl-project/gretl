@@ -5273,6 +5273,7 @@ static void build_selector_switches (selector *sr)
 	gtk_box_pack_start(GTK_BOX(hbox), b1, FALSE, FALSE, 0);
 
 	if (sr->ci == VAR) {
+	    /* special: we don't use HAC by default */
 	    GtkWidget *b2 = gtk_combo_box_text_new();
 
 	    sr->hccme_button = b2;
