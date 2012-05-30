@@ -304,7 +304,7 @@ static int varname_error (filter_info *finfo, int i)
 static void filter_dialog_hsep (GtkWidget *dlg)
 {
     GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
-    GtkWidget *hs = gtk_hseparator_new();
+    GtkWidget *hs = gtl_hseparator_new();
     
     gtk_box_pack_start(GTK_BOX(vbox), hs, TRUE, TRUE, 0);
 }
@@ -315,7 +315,7 @@ static void filter_graph_check_button (GtkWidget *dlg, filter_info *finfo,
     GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     GtkWidget *hbox, *w;
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     w = gretl_option_check_button(txt, &finfo->graph_opt, g);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), finfo->graph_opt & g);
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
@@ -332,7 +332,7 @@ static void filter_save_check_buttons (GtkWidget *dlg, filter_info *finfo)
 	imax = 1;
     }
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tab = gtk_table_new(2, 2, FALSE);
     gtk_table_set_col_spacing(GTK_TABLE(tab), 0, 5);
 
@@ -376,7 +376,7 @@ static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
     GtkWidget *tab, *hbox, *w;
     GtkWidget *s1, *s2;
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tab = gtk_table_new(2, 2, FALSE);
     gtk_table_set_col_spacing(GTK_TABLE(tab), 0, 5);
 
@@ -423,12 +423,12 @@ static void ema_obs_radios (GtkWidget *dlg, filter_info *finfo)
     GtkWidget *r1, *r2;
     GSList *group;
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     w = gtk_label_new(_("The first EMA value is"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tab = gtk_table_new(2, 2, FALSE);
     gtk_table_set_col_spacing(GTK_TABLE(tab), 0, 5);
 
@@ -483,7 +483,7 @@ static void add_poly_weights_options (GtkWidget *vbox, filter_info *finfo)
     int i;
 
     /* first row: weighting scheme */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     label = gtk_label_new(_("Weights:"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     combo = gtk_combo_box_text_new();
@@ -503,7 +503,7 @@ static void add_poly_weights_options (GtkWidget *vbox, filter_info *finfo)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
     /* second row: size of central section plus show button */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     label = gtk_label_new(_("Central fraction:"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     finfo->spin2 = gtk_spin_button_new_with_range(0.0, 1.0, 0.1);
@@ -633,7 +633,7 @@ static void filter_dialog (filter_info *finfo)
 		     G_CALLBACK(filter_dialog_quit), NULL);
 
     /* box title */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     w = gtk_label_new(_(filter_get_title(finfo->ftype)));
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);  
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
@@ -645,7 +645,7 @@ static void filter_dialog (filter_info *finfo)
 	int nmax = T / 2;
 
 	/* select number of observations */
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	w = gtk_label_new(_("Number of observations in average:"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	kspin = gtk_spin_button_new_with_range(2, (gdouble) nmax, 1);
@@ -656,7 +656,7 @@ static void filter_dialog (filter_info *finfo)
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
 	/* select centered or not */
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	w = gtk_check_button_new_with_label(_("Centered"));
 	if (finfo->center) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
@@ -667,7 +667,7 @@ static void filter_dialog (filter_info *finfo)
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_EMA) {
 	/* set weight on current observation */
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	w = gtk_label_new(_("Weight on current observation:"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	w = gtk_spin_button_new_with_range(0.001, 0.999, 0.001);
@@ -680,7 +680,7 @@ static void filter_dialog (filter_info *finfo)
 	ema_obs_radios(dlg, finfo);
     } else if (finfo->ftype == FILTER_HP) {
 	/* set H-P "lambda" parameter */
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	w = gtk_label_new(_("lambda (higher values -> smoother trend):"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	w = gtk_spin_button_new_with_range(1.0, 999999, 1);
@@ -691,7 +691,7 @@ static void filter_dialog (filter_info *finfo)
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_BK) {
 	/* set Baxter-King "k" */
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	w = gtk_label_new(_("k (higher values -> better approximation):"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	w = gtk_spin_button_new_with_range(1.0, 4 * finfo->bkk, 1);
@@ -704,7 +704,7 @@ static void filter_dialog (filter_info *finfo)
 	bkbp_frequencies_table(dlg, finfo);
     } else if (finfo->ftype == FILTER_BW) {
 	/* set Butterworth order */
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	w = gtk_label_new(_("n (higher values -> better approximation):"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	finfo->spin1 = w = gtk_spin_button_new_with_range(1.0, 16, 1);
@@ -716,7 +716,7 @@ static void filter_dialog (filter_info *finfo)
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);    
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	/* set cutoff */
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	w = gtk_label_new(_("frequency cutoff (degrees):"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
         finfo->spin2 = w = gtk_spin_button_new_with_range(1, 179, 1);
@@ -727,7 +727,7 @@ static void filter_dialog (filter_info *finfo)
 			 G_CALLBACK(check_bw_feasibility), finfo);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);	
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	w = gtk_button_new_with_label(_("show poles"));
 	g_signal_connect(G_OBJECT(w), "clicked",
 			 G_CALLBACK(butterworth_poles_graph), finfo);
@@ -738,7 +738,7 @@ static void filter_dialog (filter_info *finfo)
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_POLY) {
 	/* set polynomial order */
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	w = gtk_label_new(_("Order:"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	w = gtk_spin_button_new_with_range(1.0, 15, 1);
@@ -752,7 +752,7 @@ static void filter_dialog (filter_info *finfo)
 	add_poly_weights_options(vbox, finfo);
     } else if (finfo->ftype == FILTER_FD) {
 	/* set "d" */
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	w = gtk_label_new(_("differencing parameter:"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	w = gtk_spin_button_new_with_range(0.01, 10, 0.001);
@@ -770,7 +770,7 @@ static void filter_dialog (filter_info *finfo)
 	filter_graph_check_button(dlg, finfo, _("Graph filtered series"),
 				  FILTER_GRAPH_CYCLE);
 	/* save to dataset? */
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	w = gretl_option_check_button(_("Save filtered series as"),
 				      &finfo->save_opt, FILTER_SAVE_CYCLE);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);

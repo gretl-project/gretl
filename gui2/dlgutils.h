@@ -61,9 +61,19 @@ void combo_box_prepend_text (gpointer p, const gchar *s);
 void combo_box_remove (gpointer p, int pos);
 
 #if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 24
+# define gtk_combo_box_text_new gtk_combo_box_new_text
+#endif
 
-#define gtk_combo_box_text_new gtk_combo_box_new_text
-
+#if GTK_MAJOR_VERSION == 2 || GTK_MINOR_VERSION < 4
+# define gtl_hbox_new(h,s) gtk_hbox_new(h,s)
+# define gtl_vbox_new(h,s) gtk_vbox_new(h,s)
+# define gtl_hseparator_new gtk_hseparator_new
+# define gtl_cursor_unref(c) gdk_cursor_unref(c)
+#else
+GtkWidget *gtl_hbox_new (gboolean homog, gint spacing);
+GtkWidget *gtl_vbox_new (gboolean homog, gint spacing);
+GtkWidget *gtl_hseparator_new (void);
+# define gtl_cursor_unref(c) g_object_unref(c)
 #endif
 
 GtkWidget *get_active_edit_id (void);

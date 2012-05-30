@@ -1947,7 +1947,7 @@ static void make_dist_tab (CalcChild *child, int i)
     };
     int d = dist_from_page(child->code, i);
    
-    box = gtk_vbox_new(FALSE, 0);
+    box = gtl_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(box), 10);
     gtk_widget_show(box);
 
@@ -2499,7 +2499,7 @@ static void make_nptest_tab (CalcChild *child, int idx)
 	N_("Runs test")
     };
 
-    box = gtk_vbox_new(FALSE, 0);
+    box = gtl_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(box), 10);
     gtk_widget_show(box);
 
@@ -2605,7 +2605,7 @@ static void make_test_tab (CalcChild *child, int idx)
 	N_("2 proportions")
     };
    
-    box = gtk_vbox_new(FALSE, 0);
+    box = gtl_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(box), 10);
     gtk_widget_show(box);
 
@@ -2867,11 +2867,11 @@ static CalcChild *gretl_child_new (int code, gpointer p)
 
     g_object_set_data(G_OBJECT(child->dlg), "gchild", child);
 
-    base = gtk_vbox_new(FALSE, 0);
+    base = gtl_vbox_new(FALSE, 0);
     gtk_container_add(GTK_CONTAINER(child->dlg), base);
     gtk_widget_show(base);
 
-    child->vbox = gtk_vbox_new(FALSE, 5);
+    child->vbox = gtl_vbox_new(FALSE, 5);
     gtk_container_add(GTK_CONTAINER(base), child->vbox);
     gtk_container_set_border_width(GTK_CONTAINER(child->vbox), 5);
     gtk_widget_show(child->vbox);
@@ -2880,7 +2880,11 @@ static CalcChild *gretl_child_new (int code, gpointer p)
     gtk_box_pack_start(GTK_BOX(child->vbox), child->book, TRUE, TRUE, 0);
     gtk_widget_show(child->book);
 
+#if GTK_MAJOR_VERSION == 3
+    child->bbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
+#else
     child->bbox = gtk_hbutton_box_new();
+#endif
     gtk_button_box_set_layout(GTK_BUTTON_BOX(child->bbox), 
 			      GTK_BUTTONBOX_END);
     gtk_box_set_spacing(GTK_BOX(child->bbox), 10);
@@ -3178,7 +3182,7 @@ static void plot_curve (void)
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     /* gnuplot formula entry box */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("formula"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     plotter.entry = tmp = gtk_entry_new();
@@ -3191,7 +3195,7 @@ static void plot_curve (void)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* x-axis spinners (min and range) */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("x minimum"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     adj = (GtkAdjustment *) gtk_adjustment_new(plotter.xmin, -100, 100, 1, 0, 0);

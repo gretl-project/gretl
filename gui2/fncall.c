@@ -229,7 +229,7 @@ static GtkWidget *label_hbox (call_info *cinfo, GtkWidget *w,
     gchar *label = NULL;
     gchar *buf = NULL;
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 5);
 
     function_package_get_properties(cinfo->pkg, "label",
@@ -1338,7 +1338,7 @@ static void function_call_dialog (call_info *cinfo)
     }
 
     /* option button */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     button = gtk_check_button_new_with_label(_("close this dialog on \"OK\""));
     g_signal_connect(G_OBJECT(button), "toggled",
 		     G_CALLBACK(set_close_on_OK), NULL);

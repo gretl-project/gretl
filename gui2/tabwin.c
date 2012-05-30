@@ -20,6 +20,7 @@
 #include "gretl.h"
 #include "winstack.h"
 #include "textbuf.h"
+#include "dlgutils.h"
 #include "tabwin.h"
 
 #define TDEBUG 0
@@ -406,7 +407,7 @@ static GtkWidget *make_viewer_tab (tabwin_t *tabwin,
     GtkWidget *label;
     GtkWidget *mlabel;
 
-    tab = gtk_hbox_new(FALSE, 5);
+    tab = gtl_hbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(tab), 0);
 
     if (tabwin->role == EDIT_SCRIPT) {
@@ -484,13 +485,13 @@ static tabwin_t *make_tabbed_viewer (int role)
     g_object_set_data(G_OBJECT(tabwin->main), "tabwin", tabwin);
 
     /* vertically oriented container */
-    vbox = gtk_vbox_new(FALSE, 1);
+    vbox = gtl_vbox_new(FALSE, 1);
     gtk_box_set_spacing(GTK_BOX(vbox), 0);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 0);
     gtk_container_add(GTK_CONTAINER(tabwin->main), vbox);
 
     /* box to hold menu bar */
-    tabwin->mbox = gtk_hbox_new(FALSE, 0);
+    tabwin->mbox = gtl_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), tabwin->mbox, FALSE, FALSE, 0);
     tabwin->mbar = NULL;
 
@@ -561,7 +562,7 @@ windata_t *viewer_tab_new (int role, const char *info,
     }
 
     vwin->flags = VWIN_TABBED;
-    vwin->main = gtk_hbox_new(FALSE, 0);
+    vwin->main = gtl_hbox_new(FALSE, 0);
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
     handler_id = g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 				  G_CALLBACK(free_windata), vwin);
@@ -576,7 +577,7 @@ windata_t *viewer_tab_new (int role, const char *info,
     make_viewer_tab(tabwin, vwin, info);
     vwin->topmain = tabwin->main;
 
-    vwin->vbox = gtk_vbox_new(FALSE, 1);
+    vwin->vbox = gtl_vbox_new(FALSE, 1);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 1);
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
 
@@ -943,7 +944,7 @@ static void dock_viewer (GtkWidget *w, windata_t *vwin)
     gtk_container_remove(GTK_CONTAINER(box), vwin->mbar);
 
     /* create new vwin->main, etc. */
-    vwin->main = gtk_hbox_new(FALSE, 0);
+    vwin->main = gtl_hbox_new(FALSE, 0);
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
     handler_id = g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 				  G_CALLBACK(free_windata), vwin);

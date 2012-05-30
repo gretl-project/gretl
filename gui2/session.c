@@ -3614,7 +3614,7 @@ void view_session (void)
 
     session_build_popups();
 
-    hbox = gtk_hbox_new(FALSE,0);
+    hbox = gtl_hbox_new(FALSE,0);
     gtk_container_add(GTK_CONTAINER(iconview), hbox);
     gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);
 

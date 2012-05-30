@@ -1152,7 +1152,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     RCVAR *rc;
     int i;
    
-    box = gtk_vbox_new(FALSE, 0);
+    box = gtl_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(box), 10);
     gtk_widget_show(box);
 
@@ -1287,7 +1287,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_table_resize(GTK_TABLE(b_table), b_len + 1, 2);
 
 	    /* separator for the group? */
-	    w = gtk_hseparator_new();
+	    w = gtl_hseparator_new();
 	    gtk_table_attach_defaults(GTK_TABLE(b_table), w, 
 				      b_col, b_col + 1, 
 				      b_len - 3, b_len - 2);  
@@ -1332,7 +1332,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		   make this section full-width */
 		rcol = b_cols;
 		b_len++;
-		w = gtk_hseparator_new();
+		w = gtl_hseparator_new();
 		gtk_table_attach_defaults(GTK_TABLE(b_table), w, 
 					  0, rcol, b_len - 1, b_len);  
 		gtk_widget_show(w);
@@ -2290,7 +2290,7 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     list = get_working_dir_list();
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     w = gtk_label_new(_("Working directory:"));
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5); 
 
@@ -2314,13 +2314,13 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
 
     vbox_add_hsep(vbox);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     w = gtk_label_new(_("On start-up, gretl should use:"));
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, 0, 0, 5);
 
     /* radio 1 for "next time" */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     w = gtk_radio_button_new_with_label(group, 
 					_("the directory selected above"));
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
@@ -2328,7 +2328,7 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
 
     /* radio 2 for "next time" */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     w = gtk_radio_button_new_with_label(group, _("the current directory "
 						 "as determined via the shell"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), usecwd);
@@ -2338,13 +2338,13 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
 
     vbox_add_hsep(vbox);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     w = gtk_label_new(_("The file selection dialog should:"));
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, 0, 0, 5);
 
     /* radio 1 for "remember folder" */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     w = gtk_radio_button_new_with_label(NULL, 
 					_("remember the last-opened folder"));
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
@@ -2354,7 +2354,7 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     wset->keep_radio = w;
 
     /* radio 2 for "remember folder" */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     w = gtk_radio_button_new_with_label(group, _("always start in the "
 						 "working directory"));
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);

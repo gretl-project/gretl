@@ -1150,7 +1150,7 @@ static GtkWidget *dwiz_spinner (GtkWidget *hbox, DATASET *dwinfo, int step)
 static void dwiz_startobs_spinner (DATASET *dwinfo,
 				   GtkWidget *vbox)
 {
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *hbox = gtl_hbox_new(FALSE, 5);
 
     dwiz_spinner(hbox, dwinfo, DW_STARTING_OBS);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
@@ -1296,7 +1296,7 @@ static void maybe_add_missobs_purger (GtkWidget *vbox, gretlopt *flags)
     }
 
     if (active || (missfrac > 0 && missfrac < 0.12)) {
-	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+	GtkWidget *hbox = gtl_hbox_new(FALSE, 5);
 	GtkWidget *chk;
 
 	chk = gretl_option_check_button(_("purge missing observations"),
@@ -1372,7 +1372,7 @@ static void dwiz_build_radios (int step, DATASET *dwinfo,
 		setval, opts->deflt);
 #endif
 
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	gtk_widget_show(hbox);
 
@@ -1434,7 +1434,7 @@ static void dwiz_panelvars_selector (dw_opts *opts,
 				     DATASET *dwinfo,
 				     GtkWidget *vbox)
 {
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *hbox = gtl_hbox_new(FALSE, 5);
     GtkWidget *table = dwiz_combo(opts->vlist, opts);
 
     gtk_box_pack_start(GTK_BOX(hbox), table, FALSE, FALSE, 5);
@@ -1600,7 +1600,7 @@ static void add_editing_option (GtkWidget *vbox, gretlopt *flags)
     if (g_object_get_data(G_OBJECT(vbox), "edbutton") == NULL) {
 	GtkWidget *hbox, *b;
 
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	b = gretl_option_check_button(_("start entering data values"),
 				      flags, DW_SSHEET);
 	gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
@@ -1735,7 +1735,7 @@ static void dwiz_forward (GtkWidget *b, GtkWidget *dlg)
 
 static void dwiz_confirm_label (GtkWidget *page)
 {
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *hbox = gtl_hbox_new(FALSE, 5);
     GtkWidget *label = gtk_label_new("");
 
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
@@ -1809,7 +1809,7 @@ static void build_dwiz_buttons (GtkWidget *dlg, DATASET *dwinfo)
 
 static void dwiz_page_add_title (GtkWidget *vbox, int i, int smax)
 {
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *hbox = gtl_hbox_new(FALSE, 5);
     GtkWidget *label= gtk_label_new(NULL);
     gchar *buf;
 
@@ -1905,7 +1905,7 @@ static void data_structure_wizard (int create)
 
     /* make all the notebook pages */
     for (i=0; i<=DW_CONFIRM; i++) {
-	page = gtk_vbox_new(FALSE, 5);
+	page = gtl_vbox_new(FALSE, 5);
 	gtk_container_set_border_width(GTK_CONTAINER(page), 5);
 	dwiz_page_add_title(page, i, smax);
 	gtk_notebook_append_page(GTK_NOTEBOOK(nb), page, NULL);

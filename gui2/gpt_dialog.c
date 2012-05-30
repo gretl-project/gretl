@@ -1459,7 +1459,7 @@ static void add_color_selector (int i, GtkWidget *tbl, int cols,
 	cmax = 2;
     }
 
-    hbox = gtk_hbox_new(FALSE, 2);
+    hbox = gtl_hbox_new(FALSE, 2);
 
     if (i == BOXCOLOR) {
 	strcpy(str, _("Fill color"));
@@ -1483,7 +1483,7 @@ static void add_color_selector (int i, GtkWidget *tbl, int cols,
 
     if (i == BOXCOLOR || i == BOXCOLOR - 1) {
 	table_add_row(tbl, rows, TAB_MAIN_COLS);
-	hbox = gtk_hbox_new(FALSE, 2);
+	hbox = gtl_hbox_new(FALSE, 2);
 	button = gtk_button_new_with_label(_("Reset to default"));
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 10);
 	g_signal_connect(G_OBJECT(button), "clicked", 
@@ -1636,7 +1636,7 @@ static GtkWidget *gp_dialog_vbox (void)
 {
     GtkWidget *vbox;
 
-    vbox = gtk_vbox_new(FALSE, 0);
+    vbox = gtl_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
     return vbox;
@@ -1647,7 +1647,7 @@ static GtkWidget *gp_page_vbox (GtkWidget *notebook, char *str)
     GtkWidget *vbox;
     GtkWidget *label;
 
-    vbox = gtk_vbox_new(FALSE, 0);
+    vbox = gtl_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
     gtk_widget_show(vbox);
     label = gtk_label_new(str);
@@ -1991,7 +1991,7 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 
 	/* first a separator */
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);	
-	hsep = gtk_hseparator_new();
+	hsep = gtl_hseparator_new();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hsep, 0, TAB_MAIN_COLS, 
 				  rows-1, rows);  
 	gtk_widget_show(hsep);
@@ -2023,7 +2023,7 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 
     if (frequency_plot_code(spec->code)) {
 	/* give option of setting fill color */
-	GtkWidget *hsep = gtk_hseparator_new();
+	GtkWidget *hsep = gtl_hseparator_new();
 
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hsep, 0, TAB_MAIN_COLS, 
@@ -2056,7 +2056,7 @@ static void gpt_tab_new_line (plot_editor *ed, new_line_info *nlinfo)
     char label_text[32];
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(nlinfo->dlg));
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
 
     tbl = gtk_table_new(tbl_len, 3, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
@@ -2759,7 +2759,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 				  label, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show(label);
 
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	ed->stylecombo[i] = gtk_combo_box_text_new();
 	gtk_box_pack_start(GTK_BOX(hbox), ed->stylecombo[i], FALSE, FALSE, 0);
 
@@ -2843,7 +2843,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	print_field_label(tbl, tbl_len, _("line width"));
 
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	ed->linewidth[i] = gtk_spin_button_new_with_range(1, 6, 1);
 	if (line->width > 1) {
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ed->linewidth[i]),
@@ -2903,7 +2903,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	/* separator */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	sep = gtk_hseparator_new();
+	sep = gtl_hseparator_new();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), sep, 0, 3, 
 				  tbl_len-1, tbl_len);
 	gtk_widget_show(sep);
@@ -3001,7 +3001,7 @@ static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins)
 	print_field_label(tbl, tbl_len, _("position (X Y)"));
 
 	/* holder for entry and button */
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 
 	/* entry for coordinates */
 	ed->labelpos[i] = gtk_entry_new();
@@ -3052,7 +3052,7 @@ static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    /* separator */
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	    sep = gtk_hseparator_new();
+	    sep = gtl_hseparator_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), sep, 0, 3, 
 				      tbl_len-1, tbl_len);
 	    gtk_widget_show(sep);
@@ -3131,7 +3131,7 @@ static void gpt_tab_arrows (plot_editor *ed, GPT_SPEC *spec, int ins)
 
 	/* entries and buttons for (start, stop) coordinates */
 	for (j=0; j<2; j++) {
-	    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+	    GtkWidget *hbox = gtl_hbox_new(FALSE, 5);
 	    GtkWidget *apos;
 
 	    if (j == 0) {
@@ -3191,7 +3191,7 @@ static void gpt_tab_arrows (plot_editor *ed, GPT_SPEC *spec, int ins)
 
 	if (i < ed->gui_narrows - 1) {
 	    /* separator */
-	    sep = gtk_hseparator_new();
+	    sep = gtl_hseparator_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), sep, 0, 3, r-1, r);
 	    r++;
 	}

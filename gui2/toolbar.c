@@ -480,8 +480,8 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
     dialog = gretl_dialog_new(_("gretl: coefficient confidence intervals"), 
 			      vwin_toplevel(vwin), GRETL_DLG_BLOCK);
 
-    hbox = gtk_hbox_new(FALSE, 5);
-    hb2 = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
+    hb2 = gtl_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Confidence level"));
     gtk_box_pack_start(GTK_BOX(hb2), tmp, FALSE, FALSE, 0);
 
@@ -491,8 +491,8 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    hbox = gtk_hbox_new(FALSE, 5);
-    vbox = gtk_vbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
+    vbox = gtl_vbox_new(FALSE, 5);
 
     /* radio button for 90%, 95%, 99% confidence */
 
@@ -517,7 +517,7 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
 
     /* radio button for "other" confidence level, plus spinner */
 
-    hb2 = gtk_hbox_new(FALSE, 0);
+    hb2 = gtl_hbox_new(FALSE, 0);
     b = gtk_radio_button_new_with_label(group, _("Other"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), !defset);
     gtk_box_pack_start(GTK_BOX(hb2), b, FALSE, FALSE, 0);
@@ -1125,7 +1125,7 @@ void add_mainwin_toolbar (GtkWidget *vbox)
 	}
     }
 
-    hbox = gtk_hbox_new(FALSE, 0);
+    hbox = gtl_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), mdata->mbar, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }

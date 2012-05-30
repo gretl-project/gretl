@@ -652,20 +652,20 @@ static void real_view_format_dialog (windata_t *vwin, series_view *sview)
     vt.target_vwin = vwin;
     vt.sview = sview;
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Select data format"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
     /* standard format radio option */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     b1 = gtk_radio_button_new_with_label(NULL, _("Standard format"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), std);
     gtk_box_pack_start(GTK_BOX(hbox), b1, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
     /* custom format radio option */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Show"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), !std);

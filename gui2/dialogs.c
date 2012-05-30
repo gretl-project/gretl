@@ -80,7 +80,7 @@ void gretl_dialog_add_message (GtkWidget *dlg, const char *msg)
     GtkWidget *hbox, *vbox;
     GtkWidget *label;
 
-    hbox = gtk_hbox_new(FALSE, 0);
+    hbox = gtl_hbox_new(FALSE, 0);
     label = gtk_label_new(msg);
     gtk_widget_show(label);
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 12);
@@ -335,7 +335,7 @@ double gui_double_from_string (const char *str, int *err)
 
 static GtkWidget *hboxit (GtkWidget *w, GtkWidget *vbox)
 {
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *hbox = gtl_hbox_new(FALSE, 5);
 
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     if (vbox != NULL) {
@@ -362,7 +362,7 @@ static GtkWidget *csv_na_combo (void)
     int i, n = G_N_ELEMENTS(na_strs);
     int matched = 0;
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     label = gtk_label_new(_("Print missing values as:"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 
@@ -806,9 +806,9 @@ void copy_format_dialog (windata_t *vwin, int action)
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(destroy_format_dialog), finfo);
 
-    vbox = gtk_vbox_new(FALSE, 5);
+    vbox = gtl_vbox_new(FALSE, 5);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = gtk_label_new((action == W_COPY)? _("Copy as:") : _("Save as"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
@@ -847,7 +847,7 @@ void copy_format_dialog (windata_t *vwin, int action)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 #endif
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, TRUE, TRUE, 5);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -1002,8 +1002,8 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 			      GRETL_DLG_BLOCK);
     rs.dlg = dialog;
 
-    vbox = gtk_vbox_new(FALSE, 5);
-    hbox = gtk_hbox_new(FALSE, 5);
+    vbox = gtl_vbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmpstr = g_strdup_printf("%s:", _("Coefficient"));
     tmp = gtk_label_new(tmpstr);
     g_free(tmpstr);
@@ -1074,7 +1074,7 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 
     /* Number of replications */
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Number of replications:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
@@ -1102,7 +1102,7 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 
     /* pack all of the above */
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, TRUE, TRUE, 5);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -1175,7 +1175,7 @@ void database_description_dialog (const char *binname)
     dlg = gretl_dialog_new(_("gretl: database description"), NULL,
 			   GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = gtk_label_new (_("description:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
 
@@ -1237,7 +1237,7 @@ void rand_seed_dialog (void)
     dlg = gretl_dialog_new(_("gretl: seed for random numbers"), NULL,
 			   GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Seed for generator:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
@@ -1304,13 +1304,13 @@ int select_list_dialog (char *listname)
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
     /* label */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Choose named list"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* selector */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     combo = gtk_combo_box_text_new();
     set_combo_box_strings_from_list(combo, llist);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
@@ -1351,13 +1351,13 @@ int combo_selector_dialog (GList *list, const char *msg,
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
     /* label */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = gtk_label_new(msg);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* selector */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     combo = gtk_combo_box_text_new();
     set_combo_box_strings_from_list(combo, list);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), deflt);
@@ -1439,12 +1439,12 @@ int iter_control_dialog (int *optim, int *pmaxit, double *ptol,
     title = (*optim == BHHH_MAX)? N_("BHHH maximizer") : 
 	N_("BFGS maximizer");
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_(title));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Maximum iterations:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     tmp = gtk_spin_button_new_with_range(100, 100000, 100);
@@ -1455,7 +1455,7 @@ int iter_control_dialog (int *optim, int *pmaxit, double *ptol,
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Convergence tolerance:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     tmp = gtk_spin_button_new_with_range(1.00, 9.99, 0.01);
@@ -1478,7 +1478,7 @@ int iter_control_dialog (int *optim, int *pmaxit, double *ptol,
     if (*optim != BHHH_MAX) {
 	GtkWidget *lb;
 
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	lb = gtk_check_button_new_with_label(_("Use L-BFGS-B, memory size:"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(lb),
 				     (*optim == LBFGS_MAX));
@@ -1821,11 +1821,11 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
 
     if (temp) {
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
     } else {
 	lbl = gtk_label_new(_("Panel groups"));
 	gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 5);
-	hbox = gtk_hbox_new(TRUE, 5);
+	hbox = gtl_hbox_new(TRUE, 5);
     }
 
     /* spinner for u1 */
@@ -1840,7 +1840,7 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
 	gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), rset->spin1, FALSE, FALSE, 0);
     } else {
-	vbox = gtk_vbox_new(FALSE, 5);
+	vbox = gtl_vbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
 	gtk_entry_set_activates_default(GTK_ENTRY(rset->spin1), TRUE);
 	gtk_box_pack_start(GTK_BOX(vbox), rset->spin1, FALSE, FALSE, 0);
@@ -1858,7 +1858,7 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
 	gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), rset->spin2, FALSE, FALSE, 0);
     } else {    
-	vbox = gtk_vbox_new(FALSE, 5);
+	vbox = gtl_vbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
 	gtk_entry_set_activates_default(GTK_ENTRY(rset->spin2), TRUE);
 	gtk_box_pack_start(GTK_BOX(vbox), rset->spin2, FALSE, FALSE, 0);
@@ -1995,7 +1995,7 @@ static void panel_new_spinbox (panel_setting *pset)
     pset->Tmax = dataset->pd;
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(pset->dlg));
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
 
     tbl = gtk_table_new(2, 4, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
@@ -2037,7 +2037,7 @@ static void panel_new_spinbox (panel_setting *pset)
     N = pset->u2 - pset->u1 + 1;
     T = pset->t2 - pset->t1 + 1;
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     msg = g_strdup_printf("N=%d, T=%d, NT=%d", N, T, N*T);
     pset->obslabel = lbl = gtk_label_new(msg);
     gtk_box_pack_start(GTK_BOX(hbox), lbl, TRUE, TRUE, 0);
@@ -2117,15 +2117,15 @@ obs_spinbox (struct range_setting *rset, const char *label,
     }
 
     if (label != NULL && align == SPIN_LABEL_INLINE) {
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	lbl = gtk_label_new(label);
 	gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
     } else {
-	hbox = gtk_hbox_new(TRUE, 5);
+	hbox = gtl_hbox_new(TRUE, 5);
     }
 
     /* spinner for t1 */
-    vbox = gtk_vbox_new(FALSE, 5);
+    vbox = gtl_vbox_new(FALSE, 5);
     if (t1str != NULL) {
 	lbl = gtk_label_new(t1str);
 	gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
@@ -2139,7 +2139,7 @@ obs_spinbox (struct range_setting *rset, const char *label,
 
     /* spinner for t2, if wanted */
     if (t2 != NULL) {
-	vbox = gtk_vbox_new(FALSE, 5);
+	vbox = gtl_vbox_new(FALSE, 5);
 	if (t2str != NULL) {
 	    lbl = gtk_label_new(t2str);
 	    gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
@@ -2200,14 +2200,14 @@ static GtkWidget *add_dummies_combo (GList *dumlist,
 
     if (label != NULL) {
 	w = gtk_label_new(label);
-	hbox = gtk_hbox_new(TRUE, 5);
+	hbox = gtl_hbox_new(TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     }
 
     combo = build_dummies_combo(dumlist, thisdum);
 
-    hbox = gtk_hbox_new(TRUE, 5);
+    hbox = gtl_hbox_new(TRUE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
@@ -2236,7 +2236,7 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 	gchar *labtxt;
 	GtkAdjustment *adj;
 
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 
 	labtxt = g_strdup_printf(_("Number of observations to select (max %d)"),
 				 dataset->n - 1);
@@ -2411,7 +2411,7 @@ int panel_graph_dialog (int *t1, int *t2)
     vbox_add_hsep(vbox);
     hbox = panel_sample_spinbox(rset, 1);
     rset->obslabel = gtk_label_new("");
-    w = gtk_hbox_new(FALSE, 5);
+    w = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(w), rset->obslabel, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), w, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
@@ -2501,13 +2501,13 @@ void sample_restrict_dialog (GtkAction *action, gpointer p)
 	w = gtk_label_new(_(btxt));
     }
 
-    hbox = gtk_hbox_new(FALSE, 5);  
+    hbox = gtl_hbox_new(FALSE, 5);  
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* text entry for restriction */
     if (dumlist != NULL) {
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
     }
     rset->entry = gtk_entry_new();
     gtk_entry_set_activates_default(GTK_ENTRY(rset->entry), TRUE);
@@ -2522,7 +2522,7 @@ void sample_restrict_dialog (GtkAction *action, gpointer p)
     }
 
     if (dumlist != NULL) {
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	w = gtk_radio_button_new_with_label(group, _("Use dummy variable:"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	rset->combo = build_dummies_combo(dumlist, thisdum);
@@ -2540,14 +2540,14 @@ void sample_restrict_dialog (GtkAction *action, gpointer p)
 	}
 
 	/* add to current sample restriction */
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	w = gtk_radio_button_new_with_label(NULL, _("add to current restriction"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
 	/* replace current sample restriction */
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
 	w = gtk_radio_button_new_with_label(group, _("replace current restriction"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
@@ -2752,7 +2752,7 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
     g_signal_connect(GTK_SPIN_BUTTON(spin), "value-changed",
 		     G_CALLBACK(set_double_from_spinner), conf);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
@@ -2762,13 +2762,13 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
 	GtkWidget *r1, *r2;
 
 	r1 = gtk_radio_button_new_with_label(NULL, _("shaded area"));
-	hbox1 = gtk_hbox_new(FALSE, 5);
+	hbox1 = gtl_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox1), r1, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox1, FALSE, FALSE, 0);
 
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(r1));
 	r2 = gtk_radio_button_new_with_label(group, _("error bars"));
-	hbox2 = gtk_hbox_new(FALSE, 5);
+	hbox2 = gtl_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox2), r2, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox2, FALSE, FALSE, 5);
 	g_signal_connect(G_OBJECT(r2), "toggled",
@@ -2810,7 +2810,7 @@ static void fcast_toggle_scope (GtkComboBox *cb, gretlopt *optp)
 static void confidence_scope_selector (GtkWidget *dlg, gretlopt *optp)
 {
     GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *hbox = gtl_hbox_new(FALSE, 5);
     GtkWidget *lbl, *combo;
 
     lbl = gtk_label_new(_("Show interval for"));
@@ -2849,7 +2849,7 @@ static GtkWidget *forecast_integrate_option (const MODEL *pmod,
 	dv = gretl_model_get_depvar(pmod);
 	is_standard_diff(dv, dataset, &dvp);
 
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	tbl = gtk_table_new(2, 2, FALSE);
 	gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
 
@@ -2944,7 +2944,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
 
-    tmp = gtk_hseparator_new();
+    tmp = gtl_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
 
     if (flags & FC_INTEGRATE_OK) {
@@ -2968,7 +2968,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 	} 
 
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	button = gtk_radio_button_new_with_label(group, _(opts[i]));
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
 	if (i == 2) {
@@ -3032,9 +3032,9 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     }
 
      /* pre-forecast obs spinner */
-    tmp = gtk_hseparator_new();
+    tmp = gtl_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = option_spinbox(p, _(pre_txt), pmin, pmax, 0, &rset->p);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
@@ -3042,7 +3042,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     gtk_adjustment_value_changed(GTK_ADJUSTMENT(rset->adj1));
 
     /* show fitted values, pre-forecast? */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = gretl_option_check_button(_("Show fitted values for pre-forecast range"),
 				    optp, OPT_H);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
@@ -3083,10 +3083,10 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	ci_opts.vals = opts;
 	ci_opts.optp = optp;
 
-	tmp = gtk_hseparator_new();
+	tmp = gtl_hseparator_new();
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
 
-	hbox = gtk_hbox_new(FALSE, 0);
+	hbox = gtl_hbox_new(FALSE, 0);
 	tmp = gtk_label_new(_("Plot confidence interval using"));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	combo = gretl_opts_combo(&ci_opts, deflt);
@@ -3158,13 +3158,13 @@ int add_obs_dialog (const char *blurb, int addmin, GtkWidget *parent)
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
     if (blurb != NULL) {
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	tmp = gtk_label_new(blurb);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
     }
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Number of observations to add:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
@@ -3222,7 +3222,7 @@ static void dialog_add_opts (dialog_opts *opts, GtkWidget *vbox)
 	GtkWidget *b, *v2, *hbox;
 	int i;
 
-	v2 = gtk_vbox_new(FALSE, 0);
+	v2 = gtl_vbox_new(FALSE, 0);
 
 	for (i=0; i<opts->n; i++) {
 	    b = gtk_radio_button_new_with_label(group, _(opts->strs[i]));
@@ -3234,7 +3234,7 @@ static void dialog_add_opts (dialog_opts *opts, GtkWidget *vbox)
 	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b));
 	}
 
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), v2, TRUE, TRUE, 10);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 	gtk_widget_show(hbox);
@@ -3264,7 +3264,7 @@ int select_var_from_list_with_opt (const int *list,
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
     tmp = gtk_label_new(query);
-    hbox = gtk_hbox_new(TRUE, 5);
+    hbox = gtl_hbox_new(TRUE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
@@ -3276,7 +3276,7 @@ int select_var_from_list_with_opt (const int *list,
     /* select last entry in list */
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), list[0] - 1);
 
-    hbox = gtk_hbox_new(TRUE, 5);
+    hbox = gtl_hbox_new(TRUE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
@@ -3528,7 +3528,7 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
     if (dated_daily_data(dataset) && cinfo->repday != NULL) {
 	GtkWidget *hbox, *daymenu;
 
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
 	button = gtk_radio_button_new_with_label(group, _("Use representative day"));
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
@@ -3805,7 +3805,7 @@ int real_radio_dialog (const char *title, const char *label,
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     if (label != NULL) {
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 	gtk_widget_show(hbox);
 	tmp = gtk_label_new(label);
@@ -3937,7 +3937,7 @@ int density_dialog (int vnum, double *bw)
 
     /* bandwidth adjustment */
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
     tmp = gtk_label_new(_("bandwidth adjustment factor:"));
@@ -3983,7 +3983,7 @@ int paste_data_dialog (int *append)
 			      GRETL_DLG_BLOCK);
     
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     tmp = gtk_label_new(_("Try pasting data from clipboard?"));
@@ -3994,7 +3994,7 @@ int paste_data_dialog (int *append)
 	GtkWidget *button;
 	GSList *group;
 
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	button = gtk_radio_button_new_with_label(NULL, _("Clear current dataset first"));
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 10);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
@@ -4005,7 +4005,7 @@ int paste_data_dialog (int *append)
 			  GINT_TO_POINTER(0));
 
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	button = gtk_radio_button_new_with_label(group, _("Try appending to current dataset"));
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 10);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
@@ -4042,7 +4042,7 @@ static GtkWidget *dialog_blurb_box (const char *text)
     GtkWidget *hbox;
     GtkWidget *label;
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     label = gtk_label_new(text);
     gtk_widget_show(label);
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
@@ -4060,7 +4060,7 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
     GtkAdjustment *adj;
     int step = (ci == FREQ)? 2 : 1;
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
 
     label = gtk_label_new(spintxt);
     gtk_widget_show(label);
@@ -4096,7 +4096,7 @@ static GtkWidget *option_checkbox (int *checkvar, const char *checktxt)
     GtkWidget *hbox;
     GtkWidget *button;
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     button = gtk_check_button_new_with_label(checktxt);
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     gtk_widget_show(button);
@@ -4142,7 +4142,7 @@ static void checks_dialog_add_checks (GtkWidget *dialog, GtkWidget *vbox,
 	}	    
 
 	button = gtk_check_button_new_with_label(_(opts[i]));
-	hbox = gtk_hbox_new(FALSE, 0);
+	hbox = gtl_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
@@ -4179,7 +4179,7 @@ static void checks_dialog_add_radios (GtkWidget *vbox, const char **opts,
     for (i=0; i<nradios; i++) {
 	button = gtk_radio_button_new_with_label(group, _(opts[i]));
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-	hbox = gtk_hbox_new(FALSE, 0);
+	hbox = gtl_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 	g_object_set_data(G_OBJECT(button), "action", 
@@ -4294,7 +4294,7 @@ build_checks_dialog (const char *title, const char *blurb,
     /* create check buttons, if any */
     if (nchecks > 0) {
 	if (radios_first) {
-	    gtk_box_pack_start(GTK_BOX(vbox), gtk_hseparator_new(), TRUE, TRUE, 5);
+	    gtk_box_pack_start(GTK_BOX(vbox), gtl_hseparator_new(), TRUE, TRUE, 5);
 	}
 	checks_dialog_add_checks(dialog, vbox, opts, nchecks, active, 
 				 check_min, check_max);
@@ -4304,7 +4304,7 @@ build_checks_dialog (const char *title, const char *blurb,
     /* create trailing radio buttons, if any */
     if (nradios > 0 && !radios_first) {
 	if (nchecks > 0) {
-	    gtk_box_pack_start(GTK_BOX(vbox), gtk_hseparator_new(), TRUE, TRUE, 5);
+	    gtk_box_pack_start(GTK_BOX(vbox), gtl_hseparator_new(), TRUE, TRUE, 5);
 	}
 	checks_dialog_add_radios(vbox, opts, nradios, rvar);
     }
@@ -4458,7 +4458,7 @@ int pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
     button = gtk_radio_button_new_with_label(NULL, _("Sample periodogram"));
     hboxit(button, vbox);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("Bartlett window, bandwidth:"));
     g_signal_connect(G_OBJECT(button), "toggled",
@@ -4481,7 +4481,7 @@ int pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
     hboxit(button, vbox);
 
     /* frequency axis selector */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     w = gtk_label_new(_("frequency axis scale:"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     w = gtk_combo_box_text_new();
@@ -4758,7 +4758,7 @@ int freq_dialog (const char *title, const char *blurb,
     imax = (xmin < 0)? 2 : 3;
 
     for (i=0; i<imax; i++) {
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	rad = gtk_radio_button_new_with_label(group, _(opts[i]));
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rad));
 	g_object_set_data(G_OBJECT(rad), "fopt", GINT_TO_POINTER(i));
@@ -4771,7 +4771,7 @@ int freq_dialog (const char *title, const char *blurb,
     /* show plot option */
 
     vbox_add_hsep(vbox);
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     tmp = gtk_check_button_new_with_label(_("show plot"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), *plot);
     g_signal_connect(G_OBJECT(tmp), "toggled",
@@ -4862,14 +4862,14 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
     tmp = gtk_label_new(_("model table options"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
     vbox_add_hsep(vbox);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
     tmp = gtk_label_new(_("column headings"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
@@ -4927,7 +4927,7 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
     vbox_add_hsep(vbox);
 
     /* spinner for number of digits */
-    hbox = gtk_hbox_new(FALSE, 5); 
+    hbox = gtl_hbox_new(FALSE, 5); 
     tmp = gtk_label_new(_("Show"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     spin = gtk_spin_button_new_with_range((*fmt == 'g')? 2 : 0, 6, 1);
@@ -5138,14 +5138,14 @@ int object_name_entry_dialog (char *name, GretlType type,
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
     if (labeltxt != NULL) {
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	tmp = gtk_label_new(_(labeltxt));
 	gtk_label_set_justify(GTK_LABEL(tmp), GTK_JUSTIFY_CENTER);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     }
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     entry = gtk_entry_new();
     gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMELEN - 1);
     gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN - 1);
@@ -5161,7 +5161,7 @@ int object_name_entry_dialog (char *name, GretlType type,
 	    N_("show scalars window") :
 	    N_("show icons window");
 
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	tmp = gtk_check_button_new_with_label(_(label));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
@@ -5321,8 +5321,8 @@ void tex_format_dialog (GtkAction *action, gpointer data)
 
     dvbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
-    hbox = gtk_hbox_new(FALSE, 5);
-    vbox = gtk_vbox_new(FALSE, 0);
+    hbox = gtl_hbox_new(FALSE, 5);
+    vbox = gtl_vbox_new(FALSE, 0);
     tmp = gtk_radio_button_new_with_label(NULL, _("Standard format"));
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
@@ -5348,7 +5348,7 @@ void tex_format_dialog (GtkAction *action, gpointer data)
 	int shown = (i == 0 || curr[0] != 0 || nset == 0);
 	int j = i * 3;
 
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	tmp = gtk_label_new(_(labels[i]));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 0, 2, j, j+1);
@@ -5364,7 +5364,7 @@ void tex_format_dialog (GtkAction *action, gpointer data)
 	}
 
 	/* spinner for precision */
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	tmp = gtk_label_new(_("Show"));
 	tf.adj[i] = (GtkAdjustment *) gtk_adjustment_new(p, 0, 15, 1, 1, 0);
 	tf.spin[i] = gtk_spin_button_new(tf.adj[i], 1, 0);
@@ -5372,7 +5372,7 @@ void tex_format_dialog (GtkAction *action, gpointer data)
 	gtk_box_pack_start(GTK_BOX(hbox), tf.spin[i], FALSE, FALSE, 5);
 
 	/* decimal places versus significant figures */
-	vbox = gtk_vbox_new(FALSE, 0);
+	vbox = gtl_vbox_new(FALSE, 0);
 	tf.radio[i].b[0] = gtk_radio_button_new_with_label(NULL, _("decimal places"));
 	gtk_box_pack_start(GTK_BOX(vbox), tf.radio[i].b[0], TRUE, TRUE, 5);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tf.radio[i].b[0]));
@@ -5391,7 +5391,7 @@ void tex_format_dialog (GtkAction *action, gpointer data)
 	gtk_widget_set_sensitive(tf.radio[i].b[1], shown);
 
 	if (i < 3) {
-	    tmp = gtk_hseparator_new();
+	    tmp = gtl_hseparator_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, j+2, j+3);
 	}
     }
@@ -5476,7 +5476,7 @@ int hc_config_dialog (char *vname, gretlopt opt, gboolean robust_conf,
     opts.dialog = dialog = gretl_dialog_new(NULL, parent, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     if (robust_conf) {
 	/* regular HCCME option */
 	b1 = gtk_radio_button_new_with_label(NULL, 
@@ -5489,7 +5489,7 @@ int hc_config_dialog (char *vname, gretlopt opt, gboolean robust_conf,
 	
 
     /* cluster-robust option */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     opts.cbutton = b2 = gtk_radio_button_new_with_label(group, _("Cluster by"));
     gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 5);

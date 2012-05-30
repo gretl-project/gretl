@@ -1968,8 +1968,13 @@ windata_t *console_window (int hsize, int vsize)
 
 void help_panes_setup (windata_t *vwin, GtkWidget *text)
 {
-    GtkWidget *hp = gtk_hpaned_new();
-    GtkWidget *sw;
+    GtkWidget *hp, *sw;
+
+#if GTK_MAJOR_VERSION > 2
+    hp = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+#else
+    hp = gtk_hpaned_new();
+#endif
 
     gtk_container_add(GTK_CONTAINER(vwin->vbox), hp);
 
@@ -2068,7 +2073,7 @@ static gboolean leave_close_button (GtkWidget *button,
 
     /* replace text cursor */
     gdk_window_set_cursor(gtk_widget_get_window(button), cursor);
-    gdk_cursor_unref(cursor);
+    gtl_cursor_unref(cursor);
     return FALSE;
 }
 
@@ -3361,7 +3366,7 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     lbl = gtk_label_new(_("Cholesky ordering:"));
     gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
@@ -3405,7 +3410,7 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
 					GTK_SHADOW_IN);    
     gtk_container_add(GTK_CONTAINER(scroller), view);
 
-    bbox = gtk_vbox_new(FALSE, 5);
+    bbox = gtl_vbox_new(FALSE, 5);
     b1 = up_down_button(1);
     b2 = up_down_button(0);
     gtk_box_pack_start(GTK_BOX(bbox), b1, FALSE, FALSE, 5);
@@ -3421,7 +3426,7 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
     g_signal_connect(G_OBJECT(select), "changed",
 		     G_CALLBACK(sensitize_up_down), view);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), scroller, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), bbox, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);

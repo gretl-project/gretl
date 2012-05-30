@@ -277,7 +277,7 @@ static void reset_arma_spinners (selector *sr);
 
 static void vbox_add_vwedge (GtkWidget *vbox)
 {
-    GtkWidget *h = gtk_hbox_new(FALSE, 0);
+    GtkWidget *h = gtl_hbox_new(FALSE, 0);
     
     gtk_box_pack_start(GTK_BOX(vbox), h, FALSE, FALSE, 2);
     gtk_widget_show(h);
@@ -3806,7 +3806,7 @@ static void build_count_data_popdown (selector *sr)
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(w)), "changed",
 		     G_CALLBACK(set_count_data_option), sr);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     label = gtk_label_new(_("Distribution:"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
@@ -3860,7 +3860,7 @@ static void build_duration_popdown (selector *sr)
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(w)), "changed",
 		     G_CALLBACK(set_duration_option), sr);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     label = gtk_label_new(_("Distribution:"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
@@ -3910,7 +3910,7 @@ static void build_gmm_popdown (selector *sr)
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(w)), "changed",
 		     G_CALLBACK(set_gmm_est_option), sr);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
 
@@ -3957,7 +3957,7 @@ entry_with_label_and_chooser (selector *sr, GtkWidget *vbox,
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 0);
     }
 
-    x_hbox = gtk_hbox_new(FALSE, 5); 
+    x_hbox = gtl_hbox_new(FALSE, 5); 
 
     tmp = choose_button();
     gtk_box_pack_start(GTK_BOX(x_hbox), tmp, TRUE, TRUE, 0);
@@ -4042,7 +4042,7 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
 
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
 
-    depvar_hbox = gtk_hbox_new(FALSE, 5); 
+    depvar_hbox = gtl_hbox_new(FALSE, 5); 
 
     tmp = choose_button();
     gtk_box_pack_start(GTK_BOX(depvar_hbox), tmp, TRUE, TRUE, 0);
@@ -4128,7 +4128,7 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int which)
     }
 
     for (i=0; i<nspin; i++) {
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 
 	if (sr->ci == VLAGSEL) {
 	    tmp = gtk_label_new(_("maximum lag:"));
@@ -4171,7 +4171,7 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
     GtkAdjustment *adj;
     gdouble val, maxlag;
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
 
     if (sr->ci == ARCH) {
 	tmp = gtk_label_new(_("ARCH order:"));
@@ -4347,8 +4347,8 @@ static void secondary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 0);
     }
 
-    hbox = gtk_hbox_new(FALSE, 5);
-    bvbox = gtk_vbox_new(TRUE, 0);
+    hbox = gtl_hbox_new(FALSE, 5);
+    bvbox = gtl_vbox_new(TRUE, 0);
 
     tmp = add_button(sr, bvbox);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
@@ -4425,7 +4425,7 @@ static void tobit_limits_selector (selector *sr, GtkWidget *vbox)
     int i;
 
     for (i=0; i<2; i++) {
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	entry = gtk_entry_new();
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), 5);
 	val = (i == 0)? tobit_lo : tobit_hi;
@@ -4450,7 +4450,7 @@ static void add_np_controls (selector *sr, GtkWidget *vbox)
     int i = 1;
 
     if (sr->ci == LOESS) {
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	w = gtk_label_new(_("Polynomial order"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	adj = (GtkAdjustment *) gtk_adjustment_new(1, 0, 2, 1, 1, 0);
@@ -4465,7 +4465,7 @@ static void add_np_controls (selector *sr, GtkWidget *vbox)
     bmax = 1.0;
 
     /* bandwidth spinner */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     w = gtk_label_new(_("Bandwidth"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     adj = (GtkAdjustment *) gtk_adjustment_new(b0, bmin, bmax, 0.01, 0.1, 0);
@@ -4477,7 +4477,7 @@ static void add_np_controls (selector *sr, GtkWidget *vbox)
 	N_("Use \"leave one out\"");
 
     /* option checkbox */
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     sr->extra[i+1] = gtk_check_button_new_with_label(_(optstr));
     gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i+1], FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 4);
@@ -4572,7 +4572,7 @@ static GtkWidget *selector_dialog_new (selector *sr)
     gtk_box_set_homogeneous(GTK_BOX(base), FALSE);
     gtk_box_set_spacing(GTK_BOX(base), 5);
 
-    ca = gtk_vbox_new(FALSE, 0);
+    ca = gtl_vbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(base), ca, TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(ca), 5);
     gtk_box_set_spacing(GTK_BOX(ca), 5);
@@ -4802,7 +4802,7 @@ static void build_garch_spinners (selector *sr)
     };    
     int i;
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
 
     for (i=0; i<2; i++) {
 	tmp = gtk_label_new(_(strs[i]));
@@ -4827,7 +4827,7 @@ static GtkWidget *arma_aux_label (int i)
 	N_("Seasonal")
     };
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     lbl = gtk_label_new(_(strs[i]));
     gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
 
@@ -4938,7 +4938,7 @@ static void build_arma_spinners (selector *sr)
 	lbl = arma_aux_label(1);
 	gtk_box_pack_start(GTK_BOX(sr->vbox), lbl, FALSE, FALSE, 0);
 
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	for (i=0; i<3; i++) {
 	    lbl = gtk_label_new(_(strs[i]));
 	    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 0);
@@ -5066,7 +5066,7 @@ static GtkWidget *pack_switch (GtkWidget *b, selector *sr,
 			       gboolean checked, gboolean reversed, 
 			       gretlopt opt, int child)
 {
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *hbox = gtl_hbox_new(FALSE, 5);
     gint offset = (child)? 15 : 0;
     gint i = opt;
 
@@ -5201,7 +5201,7 @@ static GtkWidget *mpols_bits_selector (void)
     int bits = get_mp_bits();
     int b, i, deflt = 0;
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     w = gtk_label_new(_("Bits per floating-point value"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 
@@ -5227,7 +5227,7 @@ static GtkWidget *mpols_bits_selector (void)
 
 void vbox_add_hwedge (GtkWidget *vbox)
 {
-    GtkWidget *h = gtk_hbox_new(FALSE, 0);
+    GtkWidget *h = gtl_hbox_new(FALSE, 0);
     
     gtk_box_pack_start(GTK_BOX(vbox), h, FALSE, FALSE, 2);
     gtk_widget_show(h);
@@ -5269,7 +5269,7 @@ static void build_selector_switches (selector *sr)
 	    g_object_set_data(G_OBJECT(sr->dlg), "robust-button", b1);
 	}
 
-	hbox = gtk_hbox_new(FALSE, 5);
+	hbox = gtl_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), b1, FALSE, FALSE, 0);
 
 	if (sr->ci == VAR) {
@@ -5425,7 +5425,7 @@ static void unhide_lags_switch (selector *sr)
     g_signal_connect(G_OBJECT(b), "toggled",
 		     G_CALLBACK(unhide_lags_callback), sr);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
 }
@@ -5452,7 +5452,7 @@ static void test_boot_switch (selector *sr)
     g_signal_connect(G_OBJECT(b), "toggled",
 		     G_CALLBACK(boot_switch_callback), sr);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
 }
@@ -5464,7 +5464,7 @@ static void pack_switch_with_extra (GtkWidget *b, selector *sr,
 				    int child, GtkWidget *extra,
 				    const gchar *extra_text)
 {
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *hbox = gtl_hbox_new(FALSE, 5);
     gint offset = (child)? 15 : 0;
     gint i = opt;
 
@@ -5554,7 +5554,7 @@ static void build_logistic_radios (selector *sr)
 
 static void build_ellipse_spinner (selector *sr)
 {
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *hbox = gtl_hbox_new(FALSE, 5);
     GtkWidget *label;
 
     vbox_add_vwedge(sr->vbox);
@@ -5898,7 +5898,7 @@ static void build_arma_combo (selector *sr)
 				  sr);
     g_object_set_data(G_OBJECT(combo), "selector", sr);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
 
     button = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
@@ -5934,7 +5934,7 @@ static void build_coint_combo (selector *sr)
 
     combo = gretl_opts_combo(&coint_opts, deflt);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
 }
@@ -5965,7 +5965,7 @@ static void build_vecm_combo (selector *sr)
 
     combo = gretl_opts_combo(&vecm_opts, jcase);
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
@@ -6003,7 +6003,7 @@ static void build_data_export_combo (selector *sr)
     export_opts.vals = opts;
     export_opts.optp = &sr->opts;
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
 
     label = gtk_label_new(_("Select format"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
@@ -6070,7 +6070,7 @@ static void build_selector_combo (selector *sr)
 
 static void lag_selector_button (selector *sr)
 {
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *hbox = gtl_hbox_new(FALSE, 5);
 
     sr->lags_button = gtk_button_new_with_label(_("lags..."));
 
@@ -6238,7 +6238,7 @@ static void selection_dialog_add_top_label (selector *sr)
     if (MODEL_CODE(ci) || VEC_CODE(ci) || NONPARAM_CODE(ci)) {
 	GtkWidget *hbox, *button;
 
-	hbox = gtk_hbox_new(FALSE, 0); 
+	hbox = gtl_hbox_new(FALSE, 0); 
 	button = add_var_button(sr);
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 	s = est_str(ci);
@@ -6320,10 +6320,10 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 0);
     }
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
 
     /* push/pull buttons first, in their own little vbox */
-    bvbox = gtk_vbox_new(TRUE, 0);
+    bvbox = gtl_vbox_new(TRUE, 0);
 
     tmp = add_button(sr, bvbox);
     g_signal_connect (G_OBJECT(tmp), "clicked", 
@@ -6474,7 +6474,7 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     selection_dialog_add_top_label(sr);
 
     /* the following encloses LHS lvars, depvar and indepvar stuff */
-    big_hbox = gtk_hbox_new(FALSE, 5); 
+    big_hbox = gtl_hbox_new(FALSE, 5); 
 
     /* LHS: list of elements to choose from */
     sr->lvars = var_list_box_new(GTK_BOX(big_hbox), sr, SR_LVARS);
@@ -6496,7 +6496,7 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     }
 
     /* RHS: vertical holder */
-    right_vbox = gtk_vbox_new(FALSE, 5);
+    right_vbox = gtl_vbox_new(FALSE, 5);
 
     if (MODEL_CODE(ci) || NONPARAM_CODE(ci) || ci == ANOVA) { 
 	/* models: top right -> dependent variable */
@@ -6854,7 +6854,7 @@ static void selector_add_top_entry (selector *sr)
 	lnames = get_list_of_listnames();
     }
 
-    hbox = gtk_hbox_new(FALSE, 0);
+    hbox = gtl_hbox_new(FALSE, 0);
     label = gtk_label_new(_("Name of list:"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 
@@ -6966,7 +6966,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     }
 
     /* for titles */
-    top_hbox = gtk_hbox_new(FALSE, 0); 
+    top_hbox = gtl_hbox_new(FALSE, 0); 
     gtk_box_set_homogeneous(GTK_BOX(top_hbox), TRUE);
 
     tmp = gtk_label_new(_("Available vars"));
@@ -6981,10 +6981,10 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     gtk_box_pack_start(GTK_BOX(sr->vbox), top_hbox, FALSE, FALSE, 5);
 
     /* the following will enclose 3 or more vboxes */
-    big_hbox = gtk_hbox_new(FALSE, 5); 
+    big_hbox = gtl_hbox_new(FALSE, 5); 
 
     /* holds list of elements available for selection */
-    left_vbox = gtk_vbox_new(FALSE, 5);
+    left_vbox = gtl_vbox_new(FALSE, 5);
 
     sr->lvars = var_list_box_new(GTK_BOX(left_vbox), sr, SR_LVARS);
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
@@ -7013,7 +7013,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     gtk_box_pack_start(GTK_BOX(big_hbox), left_vbox, TRUE, TRUE, 0);
     
     /* middle: vertical holder for push/pull buttons */
-    button_vbox = gtk_vbox_new(TRUE, 0);
+    button_vbox = gtl_vbox_new(TRUE, 0);
 
     sr->add_button = add_button(sr, button_vbox);
     g_signal_connect(G_OBJECT(sr->add_button), "clicked", 
@@ -7031,7 +7031,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     gtk_box_pack_start(GTK_BOX(big_hbox), button_vbox, TRUE, TRUE, 0);
 
     /* RHS: vertical holder for selected vars */
-    right_vbox = gtk_vbox_new(FALSE, 5);
+    right_vbox = gtl_vbox_new(FALSE, 5);
 
     sr->rvars1 = var_list_box_new(GTK_BOX(right_vbox), sr, SR_RVARS1);
     g_object_set_data(G_OBJECT(sr->rvars1), "selector", sr);
@@ -7766,7 +7766,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     g_signal_connect(G_OBJECT(dialog), "destroy",
 		     G_CALLBACK(resensitize_selector), NULL);
 
-    myvbox = gtk_vbox_new(FALSE, 5);
+    myvbox = gtl_vbox_new(FALSE, 5);
 
     VAR_special = (vlinfo[0].v == VDEFLT && vlinfo[0].context == LAG_Y_V);
     insts = in_gretl_list(list, LAG_W);
@@ -7823,7 +7823,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 		y_check = gtk_check_button_new_with_label(_("Lags of dependent variable"));
 		gtk_table_attach_defaults(GTK_TABLE(tbl), y_check, 0, 7, i, i+1);
 	    } else {
-		tmp = gtk_hseparator_new();
+		tmp = gtl_hseparator_new();
 		gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 7, i, i+1);
 	    }
 	    continue;
@@ -7905,7 +7905,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 	}
     }
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtl_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), myvbox, TRUE, TRUE, 5);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
