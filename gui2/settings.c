@@ -1087,6 +1087,8 @@ const char *get_default_hc_string (int ci)
   
 	if (tseries && libset_get_bool(FORCE_HC)) {
 	    xsect = 1;
+	} else if (ci == VAR) {
+	    xsect = 1;
 	}
 
 	if (xsect) {

@@ -3088,7 +3088,8 @@ static int cluster_option_is_active (selector *sr)
 {
     GtkWidget *hcb = sr->hccme_button;
  
-    if (hcb != NULL && gtk_widget_is_sensitive(hcb)) {
+    if (hcb != NULL && gtk_widget_is_sensitive(hcb) &&
+	GTK_IS_BUTTON(hcb)) {
 	const gchar *s = gtk_button_get_label(GTK_BUTTON(hcb));
 
 	return s != NULL && strcmp(s, _("Cluster")) == 0;
@@ -3102,6 +3103,20 @@ static void maybe_read_cluster_var (selector *sr)
     if (cluster_option_is_active(sr)) {
 	set_optval_string(sr->ci, OPT_C, cluster_var);
 	sr->opts |= OPT_C;
+    }
+}
+
+static void maybe_read_var_hac_option (selector *sr)
+{
+    GtkWidget *b = sr->hccme_button;
+
+    if (b != NULL && gtk_widget_is_sensitive(b) &&
+	GTK_IS_COMBO_BOX(b)) {
+	gint i = gtk_combo_box_get_active(GTK_COMBO_BOX(b));
+
+	if (i == 1) {
+	    sr->opts |= OPT_H;
+	}
     }
 }
 
@@ -3125,7 +3140,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 
     if (offer_cluster_option(sr->ci)) {
 	maybe_read_cluster_var(sr);
-    }
+    } 
 
     if (sr->ci == QUANTREG) {
 	read_quantreg_extras(sr);
@@ -3414,6 +3429,9 @@ static void compose_cmdlist (selector *sr)
 	add_pdq_vals_to_cmdlist(sr);
     } else if (VEC_CODE(sr->ci)) {
 	vec_get_spinner_data(sr, &order, &dvlags);
+	if (sr->ci == VAR) {
+	    maybe_read_var_hac_option(sr);
+	}
     } else {
 	parse_extra_widgets(sr, endbit);
     }
@@ -5030,8 +5048,17 @@ void selector_register_hc_choice (void)
 
     if (sr != NULL && sr->hccme_button != NULL) {
 	const char *txt = get_default_hc_string(sr->ci);
+	GtkWidget *w = sr->hccme_button;
 
-	gtk_button_set_label(GTK_BUTTON(sr->hccme_button), txt);
+	if (GTK_IS_BUTTON(w)) {
+	    gtk_button_set_label(GTK_BUTTON(w), txt);
+	} else if (GTK_IS_COMBO_BOX(w)) {
+	    gint i = gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+
+	    combo_box_remove(w, 0);
+	    combo_box_prepend_text(w, txt);
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(w), i);
+	}
     }
 }
 
@@ -5245,7 +5272,20 @@ static void build_selector_switches (selector *sr)
 	hbox = gtk_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), b1, FALSE, FALSE, 0);
 
-	if (robust_conf(sr->ci) || offer_cluster_option(sr->ci)) {
+	if (sr->ci == VAR) {
+	    GtkWidget *b2 = gtk_combo_box_text_new();
+
+	    sr->hccme_button = b2;
+	    combo_box_append_text(b2, get_default_hc_string(VAR));
+	    combo_box_append_text(b2, "HAC");
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(b2), 0);
+	    gtk_widget_set_sensitive(b2, using_hc_by_default());
+	    sensitize_conditional_on(b2, b1);
+	    if (model_opt & OPT_R) {
+		gtk_widget_set_sensitive(b2, TRUE);
+	    }
+	    gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 0);
+	} else if (robust_conf(sr->ci) || offer_cluster_option(sr->ci)) {
 	    const char *deftxt;
 	    GtkWidget *b2;
 
