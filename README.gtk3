@@ -1,0 +1,11 @@
+By default the gretl build uses gtk2, even if gtk3 is available
+on the build system. You can switch to gtk3 by using the flag 
+--enable-gtk3 with ./configure.
+
+Most things should work fine with gtk3. You will, however, see 
+a lot of deprecation messages with gtk >= 3.4.0. To cut out the
+noise one can add -Wno-deprecated-declarations to CFLAGS when
+building.
+
+Allin Cottrell
+2012-05-31
