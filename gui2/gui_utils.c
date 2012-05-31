@@ -1966,7 +1966,7 @@ windata_t *console_window (int hsize, int vsize)
     return vwin;
 }
 
-void help_panes_setup (windata_t *vwin, GtkWidget *text)
+static void help_panes_setup (windata_t *vwin, GtkWidget *text)
 {
     GtkWidget *hp, *sw;
 
@@ -1976,12 +1976,13 @@ void help_panes_setup (windata_t *vwin, GtkWidget *text)
     hp = gtk_hpaned_new();
 #endif
 
-    gtk_container_add(GTK_CONTAINER(vwin->vbox), hp);
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), hp,
+		       TRUE, TRUE, 5);
 
     add_help_navigator(vwin, hp);
 
     sw = gtk_scrolled_window_new(NULL, NULL);
-    gtk_paned_pack2(GTK_PANED(hp), sw, TRUE, TRUE);
+    gtk_paned_pack2(GTK_PANED(hp), sw, TRUE, FALSE);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
 				   GTK_POLICY_AUTOMATIC,
 				   GTK_POLICY_AUTOMATIC);

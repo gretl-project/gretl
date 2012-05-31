@@ -386,7 +386,7 @@ static int few_vals (int t1, int t2, const double *x, double *ratio)
 int gretl_isdiscrete (int t1, int t2, const double *x)
 {
     int t, n = 0, d = 1;
-    double r;
+    double r = 0;
 
     for (t=t1; t<=t2; t++) {
 	if (na(x[t])) {
