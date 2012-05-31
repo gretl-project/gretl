@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.9.7\n"
+"Project-Id-Version: gretl-1.9.8\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-05-29 08:04-0400\n"
-"PO-Revision-Date: 2012-05-18 10:03-0400\n"
+"PO-Revision-Date: 2012-05-21 04:03-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -3053,7 +3053,7 @@ msgstr "wygenerowano brakujące dane"
 
 #: lib/src/gretl_errors.c:98
 msgid "generated non-finite values"
-msgstr "wygenerowano nieskończone wartoci"
+msgstr "wygenerowano nieograniczone wartości"
 
 #: lib/src/gretl_errors.c:232 lib/src/gretl_errors.c:237
 msgid "Warning"
@@ -3100,12 +3100,12 @@ msgstr "Usunięto funkcję '%s'\n"
 
 #: lib/src/gretl_func.c:5200
 msgid "You can't change the name of a function here"
-msgstr "Niemożliwa zmiana nazwy funkcji teraz"
+msgstr "Niemożliwa teraz zmiana nazwy funkcji"
 
 #: lib/src/gretl_func.c:5367 lib/src/gretl_func.c:5394
 #: lib/src/gretl_func.c:5423 lib/src/gretl_func.c:5444
 msgid "Duplicated pointer argument: not allowed"
-msgstr "Zduplokowany argument - operacja nie dozwolona"
+msgstr "Zduplikowany argument - operacja nie dozwolona"
 
 #: lib/src/gretl_func.c:6305
 #, c-format
@@ -11709,7 +11709,7 @@ msgstr "test zmian strukturalnych _Chowa"
 
 #: gui2/gui_utils.c:223
 msgid "_Collinearity"
-msgstr "Współliniowości"
+msgstr "ocena _współliniowości"
 
 #: gui2/gui_utils.c:224 gui2/gui_utils.c:4068
 msgid "_Autocorrelation"
@@ -16364,16 +16364,16 @@ msgstr "Nieodpowiednia statystyka dla tego modelu"
 
 #: plugin/vif.c:236
 msgid "Variance Inflation Factors"
-msgstr "Ocena współliniowości VIF - wskaźnik rozdęcia wariancji"
+msgstr "Ocena współliniowości VIF(j) - czynnik j rozdęcia wariancji"
 
 #: plugin/vif.c:238
 msgid "Minimum possible value = 1.0"
-msgstr "Minimalna możliwa wartość = 1.0"
+msgstr "VIF (Variance Inflation Factors) - minimalna możliwa wartość = 1.0"
 
 #: plugin/vif.c:239
 msgid "Values > 10.0 may indicate a collinearity problem"
 msgstr ""
-"Wartości > 10.0 mogą wskazywać na problem współliniowości-rozdęcia wariancji"
+"Wartości > 10.0 mogą wskazywać na problem współliniowości - rozdęcia wariancji"
 
 #: plugin/vif.c:252
 msgid ""
@@ -16425,6 +16425,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "Configure"
-#~ msgstr "konfiguracja"
