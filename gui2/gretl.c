@@ -1239,7 +1239,7 @@ static void make_main_window (void)
     set_wm_icon(mdata->main);
 #endif
 
-    main_vbox = gtl_vbox_new(FALSE, 4);
+    main_vbox = gtk_vbox_new(FALSE, 4);
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 4);
     gtk_container_add(GTK_CONTAINER(mdata->main), main_vbox);
     g_object_set_data(G_OBJECT(mdata->main), "vbox", main_vbox);
@@ -1257,7 +1257,7 @@ static void make_main_window (void)
     g_object_set_data(G_OBJECT(mdata->main), "dlabel", dlabel);
 
     /* this will hold the list of variables */
-    box = gtl_vbox_new(FALSE, 0);
+    box = gtk_vbox_new(FALSE, 0);
 
     align = gtk_alignment_new(0, 0, 0, 0);
     gtk_box_pack_start(GTK_BOX(box), align, FALSE, FALSE, 0);

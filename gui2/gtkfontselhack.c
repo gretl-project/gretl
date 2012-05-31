@@ -506,7 +506,7 @@ gtk_fontsel_hack_init (GtkFontselHack *fontsel)
 		       FALSE, TRUE, 0);
   
     /* This is just used to get a 4-pixel space around the preview entry. */
-    text_box = gtl_hbox_new(FALSE, 0);
+    text_box = gtk_hbox_new(FALSE, 0);
     gtk_widget_show(text_box);
     gtk_container_add(GTK_CONTAINER(text_frame), text_box);
     gtk_container_set_border_width(GTK_CONTAINER(text_box), 4);

@@ -819,7 +819,7 @@ static void make_db_toolbar (windata_t *vwin, int cb, int del)
     GretlToolItem *item;
     int i;
 
-    hbox = gtl_hbox_new(FALSE, 0);
+    hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 
     vwin->mbar = gretl_toolbar_new();
@@ -966,7 +966,7 @@ make_db_index_window (int action, char *fname, char *buf)
 
     strcpy(vwin->fname, fname);
 
-    vwin->vbox = gtl_vbox_new(FALSE, 1);
+    vwin->vbox = gtk_vbox_new(FALSE, 1);
     gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
@@ -983,7 +983,7 @@ make_db_index_window (int action, char *fname, char *buf)
     if (action == REMOTE_SERIES) {
 	GtkWidget *hbox; 
 
-	hbox = gtl_hbox_new(FALSE, 0);
+	hbox = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 	vwin->status = gtk_label_new(_("Network status: OK"));
 	gtk_label_set_justify(GTK_LABEL(vwin->status), GTK_JUSTIFY_LEFT);
@@ -1385,7 +1385,7 @@ static GtkWidget *database_window (windata_t *vwin)
     /* FIXME column widths: we should ensure we show at
        least part of the observation-info column */
 
-    box = gtl_vbox_new(FALSE, 0);
+    box = gtk_vbox_new(FALSE, 0);
     vwin_add_list_box(vwin, GTK_BOX(box), 4, TRUE, types, titles, 0);
     g_signal_connect(G_OBJECT(vwin->listbox), "button-press-event",
 		     G_CALLBACK(popup_menu_handler), 

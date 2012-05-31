@@ -363,7 +363,7 @@ void plot_position_click (GtkWidget *w, png_plot *plot)
 
 	cursor = gdk_cursor_new(GDK_CROSSHAIR);
 	gdk_window_set_cursor(plot->window, cursor);
-	gtl_cursor_unref(cursor);
+	gdk_cursor_unref(cursor);
 	entry = g_object_get_data(G_OBJECT(w), "pos_entry");
 	plot->pos_entry = entry;
 	plot->status |= PLOT_POSITIONING;
@@ -3546,7 +3546,7 @@ static void prepare_for_zoom (png_plot *plot)
     GdkCursor* cursor = gdk_cursor_new(GDK_CROSSHAIR);
 
     gdk_window_set_cursor(plot->window, cursor);
-    gtl_cursor_unref(cursor);
+    gdk_cursor_unref(cursor);
     plot->status |= PLOT_ZOOMING;
     gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
 		       _(" Drag to define zoom rectangle"));
@@ -4745,7 +4745,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
     gtk_window_set_resizable(GTK_WINDOW(plot->shell), FALSE);
 
-    vbox = gtl_vbox_new(FALSE, 2);
+    vbox = gtk_vbox_new(FALSE, 2);
     gtk_container_add(GTK_CONTAINER(plot->shell), vbox);
 
     g_signal_connect(G_OBJECT(plot->shell), "destroy",
@@ -4754,7 +4754,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 		     G_CALLBACK(plot_key_handler), plot);
 
     /* box to hold canvas */
-    canvas_hbox = gtl_hbox_new(FALSE, 1);
+    canvas_hbox = gtk_hbox_new(FALSE, 1);
     gtk_box_pack_start(GTK_BOX(vbox), canvas_hbox, TRUE, TRUE, 0);
     gtk_widget_show(canvas_hbox);
 
@@ -4762,7 +4762,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
     plot->statusarea = gtk_event_box_new();
     gtk_box_pack_start(GTK_BOX(vbox), plot->statusarea, FALSE, FALSE, 0);
 
-    status_hbox = gtl_hbox_new(FALSE, 2);
+    status_hbox = gtk_hbox_new(FALSE, 2);
     gtk_container_add(GTK_CONTAINER(plot->statusarea), status_hbox);
     gtk_widget_show(status_hbox);
     gtk_container_set_resize_mode(GTK_CONTAINER (status_hbox),

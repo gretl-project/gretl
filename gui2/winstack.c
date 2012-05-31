@@ -888,7 +888,12 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 		     G_CALLBACK(free_windata), vwin);
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 
-    vwin->vbox = gtl_vbox_new(FALSE, 4);
+#if 1
+    vwin->vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    gtk_box_set_homogeneous(GTK_BOX(vwin->vbox), FALSE);
+#else
+    vwin->vbox = gtk_vbox_new(FALSE, 4);
+#endif
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
 
@@ -962,7 +967,7 @@ void vwin_pack_toolbar (windata_t *vwin)
 	    menu_bar_add_winlist(vwin);
 	}
     } else {
-	GtkWidget *hbox = gtl_hbox_new(FALSE, 0);
+	GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
 
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 	if (vwin->role == VIEW_MODEL || vwin->role == VAR ||

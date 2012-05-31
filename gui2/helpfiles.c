@@ -1019,7 +1019,7 @@ void set_up_helpview_menu (windata_t *hwin)
     GtkWidget *hbox;
     int i;
 
-    hbox = gtl_hbox_new(FALSE, 0);
+    hbox = gtk_hbox_new(FALSE, 0);
     hwin->mbar = gretl_toolbar_new();
 
     for (i=0; i<n_help_tools; i++) {
@@ -1826,7 +1826,7 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 		     G_CALLBACK(close_find_dialog),
 		     find_dialog);
 
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     label = gtk_label_new(_(" Find what:"));
     gtk_widget_show(label);
     find_entry = gtk_entry_new();
@@ -1850,7 +1850,7 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
     if (vwin == mdata) {
-	hbox = gtl_hbox_new(FALSE, 5);
+	hbox = gtk_hbox_new(FALSE, 5);
 	button = gtk_check_button_new_with_label(_("Variable names only (case sensitive)"));
 	g_signal_connect(G_OBJECT(button), "toggled",
 			 G_CALLBACK(toggle_vname_search), find_dialog);

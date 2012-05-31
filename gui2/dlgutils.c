@@ -58,7 +58,7 @@ void dialog_opts_free (dialog_opts *opts)
 
 void vbox_add_hsep (GtkWidget *vbox)
 {
-    GtkWidget *h = gtl_hseparator_new();
+    GtkWidget *h = gtk_hseparator_new();
     
     gtk_box_pack_start(GTK_BOX(vbox), h, FALSE, FALSE, 0);
     gtk_widget_show(h);
@@ -66,7 +66,7 @@ void vbox_add_hsep (GtkWidget *vbox)
 
 void pack_in_hbox (GtkWidget *w, GtkWidget *vbox, int vspace)
 {
-    GtkWidget *hbox = gtl_hbox_new(FALSE, 5);
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
 
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, vspace);
@@ -877,7 +877,7 @@ static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
     } 
 
     if (b != NULL) {
-	GtkWidget *hbox = gtl_hbox_new(FALSE, 5);
+	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
 
 	gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 5);
 	gtk_widget_show(b);
@@ -1003,7 +1003,7 @@ static void iter_control_button (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
 	}
     }
 
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
 
     button = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
     g_signal_connect(G_OBJECT(button), "clicked",
@@ -1047,7 +1047,7 @@ static void build_gmm_combo (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
 
     combo = gretl_opts_combo(&gmm_opts, deflt);
 
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
 
     /* BFGS controls */
@@ -1073,7 +1073,7 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
 	sys = (equation_system *) d->data;
     }
 
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_show(hbox);
 
@@ -1538,21 +1538,21 @@ void gretl_emulated_dialog_add_structure (GtkWidget *dlg,
     g_signal_connect(G_OBJECT(dlg), "key-press-event", 
 		     G_CALLBACK(esc_kills_window), NULL);
 
-    base = gtl_vbox_new(FALSE, 5);
+    base = gtk_vbox_new(FALSE, 5);
     gtk_container_add(GTK_CONTAINER(dlg), base);
 
-    *pvbox = gtl_vbox_new(FALSE, 0);
+    *pvbox = gtk_vbox_new(FALSE, 0);
 
     /* make (upper) vbox expansible */
     gtk_box_pack_start(GTK_BOX(base), *pvbox, TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(*pvbox), 5);
     gtk_box_set_spacing(GTK_BOX(*pvbox), 5);
 
-#if GTK_MAJOR_VERSION == 3
-    *pbbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
-#else
-    *pbbox = gtk_hbutton_box_new();
+#if 0
+    vbox_add_hsep(base);
 #endif
+
+    *pbbox = gtk_hbutton_box_new();
     gtk_button_box_set_layout(GTK_BUTTON_BOX(*pbbox), 
 			      GTK_BUTTONBOX_END);
     gtk_box_set_spacing(GTK_BOX(*pbbox), 10);
@@ -1560,30 +1560,3 @@ void gretl_emulated_dialog_add_structure (GtkWidget *dlg,
 		       FALSE, FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(*pbbox), 5);
 }
-
-#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 4
-
-GtkWidget *gtl_hbox_new (gboolean homog, gint spacing)
-{
-    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,
-				 spacing);
-
-    gtk_box_set_homogeneous(GTK_BOX(box), homog);
-    return box;
-}
-
-GtkWidget *gtl_vbox_new (gboolean homog, gint spacing)
-{
-    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL,
-				 spacing);
-
-    gtk_box_set_homogeneous(GTK_BOX(box), homog);
-    return box;
-}
-
-GtkWidget *gtl_hseparator_new (void)
-{
-    return gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
-}
-
-#endif

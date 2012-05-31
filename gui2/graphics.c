@@ -262,15 +262,15 @@ static GtkWidget *pdf_ps_size_spinners (struct pdf_ps_saver *s)
     gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), label, 2, 3, 2, 3);
 
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), tbl, TRUE, FALSE, 0);
 
-    vbox = gtl_vbox_new(FALSE, 5);
+    vbox = gtk_vbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, FALSE, 0);
 
     vbox_add_hsep(vbox);
 
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     label = gtk_label_new(_("line width factor"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     b = gtk_spin_button_new_with_range(0.5, 12.0, 0.1);
@@ -290,7 +290,7 @@ static void set_ps_fontsize (GtkSpinButton *b, struct pdf_ps_saver *s)
 
 static GtkWidget *label_in_hbox (const char *s, int center)
 {
-    GtkWidget *hbox = gtl_hbox_new(FALSE, 5);
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
     GtkWidget *label = gtk_label_new(s);
 
     if (center) {
@@ -334,7 +334,7 @@ static GtkWidget *ps_font_selector (struct pdf_ps_saver *s)
 	fontlist = g_list_append(fontlist, (gpointer) psfonts[i]);
     }
 
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
 
     s->combo = combo_box_text_new_with_entry();
     entry = gtk_bin_get_child(GTK_BIN(s->combo));
@@ -490,7 +490,7 @@ void pdf_ps_dialog (GPT_SPEC *spec, GtkWidget *parent)
     if (saver.pdfcairo) {
 	title = g_strdup_printf(_("font: %s"), 
 				pdf_saver_current_font(&saver));
-	hbox = gtl_hbox_new(FALSE, 5);
+	hbox = gtk_hbox_new(FALSE, 5);
 	b = gtk_button_new_with_label(title);
 	gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
 	gtk_container_add(GTK_CONTAINER(vbox), hbox);

@@ -77,7 +77,7 @@ void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 	GdkCursor *cursor = gdk_cursor_new(cspec);
 
 	gdk_window_set_cursor(win, cursor);
-	gtl_cursor_unref(cursor);
+	gdk_cursor_unref(cursor);
     } 
 }
 
@@ -3183,19 +3183,11 @@ void viewer_split_pane (windata_t *vwin, int vertical)
     g_object_ref(sw);
     gtk_container_remove(GTK_CONTAINER(vwin->vbox), sw);
 
-#if GTK_MAJOR_VERSION > 2
-    if (vertical) {
-	paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
-    } else {
-	paned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
-    }
-#else
     if (vertical) {
 	paned = gtk_hpaned_new();
     } else {
 	paned = gtk_vpaned_new();
     }
-#endif
 
     gtk_container_set_border_width(GTK_CONTAINER(paned), 0);
     gtk_container_add(GTK_CONTAINER(vbox), paned);

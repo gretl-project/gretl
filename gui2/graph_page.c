@@ -813,6 +813,10 @@ static int print_graph_page_direct (const char *fname,
 
     if (has_suffix(fname, ".pdf")) {
 	gpage.term = GP_TERM_PDF;
+	if (!get_tex_use_pdf()) {
+	    latex_orig = g_strdup(latex);
+	    sprintf(latex, "pdf%s", latex_orig);
+	}	
     } else {
 	gpage.term = GP_TERM_EPS;
 	if (get_tex_use_pdf()) {

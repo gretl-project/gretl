@@ -22,7 +22,6 @@
 #define COLL_DEBUG 0
 
 #include "gretl.h"
-#include "dlgutils.h"
 #include "datafiles.h"
 #include "database.h"
 #include "filelists.h"
@@ -1374,7 +1373,7 @@ static void make_files_toolbar (windata_t *vwin)
     GretlToolItem *item;
     int i;
 
-    hbox = gtl_hbox_new(FALSE, 0);
+    hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 
     vwin->mbar = gretl_toolbar_new();
@@ -1541,7 +1540,7 @@ void display_files (int role, gpointer data)
     }
 
     /* vertical box to hold file-listing widget and other elements */
-    vwin->vbox = gtl_vbox_new(FALSE, 1);
+    vwin->vbox = gtk_vbox_new(FALSE, 1);
     gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
@@ -1594,7 +1593,7 @@ void display_files (int role, gpointer data)
     if (REMOTE_ACTION(role)) {
 	GtkWidget *hbox;
 
-	hbox = gtl_hbox_new(FALSE, 0);
+	hbox = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 	vwin->status = gtk_label_new(_("Network status: OK"));
 	gtk_label_set_justify(GTK_LABEL(vwin->status), GTK_JUSTIFY_LEFT);
@@ -2150,7 +2149,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
     full_width *= gui_scale;
     file_height *= gui_scale;
 
-    vbox = gtl_vbox_new(FALSE, 0);
+    vbox = gtk_vbox_new(FALSE, 0);
     gtk_widget_set_size_request(vbox, full_width, file_height);
     /* note: the following packs and attaches vwin->listbox */
     vwin_add_list_box(vwin, GTK_BOX(vbox), cols, hidden_col, 

@@ -69,7 +69,7 @@ static void show_link_cursor (GtkWidget *w, gpointer p)
 
     c = gdk_cursor_new(GDK_HAND2);
     gdk_window_set_cursor(window, c);
-    gtl_cursor_unref(c);
+    gdk_cursor_unref(c);
 }
 
 static void show_website (GtkWidget *w, gpointer p)
@@ -100,11 +100,11 @@ void about_dialog (void)
     gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_MOUSE);
 
     /* arrange for a little horizontal padding */
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    vbox = gtl_vbox_new(FALSE, 5);
+    vbox = gtk_vbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
     
     image = open_logo();

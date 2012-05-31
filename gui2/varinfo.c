@@ -739,7 +739,7 @@ void varinfo_dialog (int varnum)
 		     G_CALLBACK(free_vsettings), vset);
 
     /* name of variable */
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Name:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
@@ -802,7 +802,7 @@ void varinfo_dialog (int varnum)
     gtk_widget_show(hbox); 
 
     /* descriptive string, or genr formula */
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_combo_box_text_new();
     combo_box_append_text(tmp, _("Description:"));
     combo_box_append_text(tmp, _("Formula:"));
@@ -824,7 +824,7 @@ void varinfo_dialog (int varnum)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     gtk_widget_show(hbox);
 
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     vset->label_entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(vset->label_entry), MAXLABEL-1);
     gtk_entry_set_text(GTK_ENTRY(vset->label_entry), 
@@ -842,7 +842,7 @@ void varinfo_dialog (int varnum)
     gtk_widget_grab_focus(vset->label_entry);
 
     /* graph display name */
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new (_("Display name (shown in graphs):"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
@@ -868,7 +868,7 @@ void varinfo_dialog (int varnum)
 	/* compaction method */
 	int i;
 
-	hbox = gtl_hbox_new(FALSE, 5);
+	hbox = gtk_hbox_new(FALSE, 5);
 	tmp = gtk_label_new (_("Compaction method (for reducing frequency):"));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	gtk_widget_show(tmp);
@@ -895,7 +895,7 @@ void varinfo_dialog (int varnum)
 	/* graph line width */
 	int w;
 
-	hbox = gtl_hbox_new(FALSE, 5);
+	hbox = gtk_hbox_new(FALSE, 5);
 	tmp = gtk_label_new (_("Graph line width:"));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	gtk_widget_show(tmp);
@@ -919,7 +919,7 @@ void varinfo_dialog (int varnum)
 	/* mark variable as discrete or not */
 	int d = var_is_discrete(dataset, varnum);
 
-	hbox = gtl_hbox_new(FALSE, 5);
+	hbox = gtk_hbox_new(FALSE, 5);
 	tmp = gtk_check_button_new_with_label(_("Treat this variable "
 						"as discrete"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), d);
@@ -987,7 +987,7 @@ void name_new_series_dialog (char *vname, char *descrip,
 		     G_CALLBACK(free_name_setter), nset);
 
     /* read/set name of variable */
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new (_("Name of variable:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
@@ -1009,7 +1009,7 @@ void name_new_series_dialog (char *vname, char *descrip,
     gtk_widget_show(hbox); 
     
     /* set descriptive string */
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Description:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
@@ -1017,7 +1017,7 @@ void name_new_series_dialog (char *vname, char *descrip,
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     gtk_widget_show(hbox);
 
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     nset->label_entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(nset->label_entry), MAXLABEL-1);
     gtk_entry_set_text(GTK_ENTRY(nset->label_entry), nset->descrip);

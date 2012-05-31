@@ -2919,8 +2919,8 @@ static void adjust_add_menu_state (Spreadsheet *sheet)
 static void series_sheet_add_locator (Spreadsheet *sheet, 
 				      GtkWidget *hbox)
 {
-    GtkWidget *vbox = gtl_vbox_new(FALSE, 1);
-    GtkWidget *status_box = gtl_hbox_new(FALSE, 1);
+    GtkWidget *vbox = gtk_vbox_new(FALSE, 1);
+    GtkWidget *status_box = gtk_hbox_new(FALSE, 1);
     gint w = get_obs_col_width();
 
     gtk_container_set_border_width(GTK_CONTAINER(status_box), 0);
@@ -2961,7 +2961,7 @@ static void sheet_add_toolbar (Spreadsheet *sheet, GtkWidget *vbox)
     GtkWidget *button;
     int i, n_items;
 
-    hbox = gtl_hbox_new(FALSE, 0);
+    hbox = gtk_hbox_new(FALSE, 0);
     tbar = gretl_toolbar_new();
 
     if (editing_scalars(sheet)) {
@@ -3025,7 +3025,7 @@ static void sheet_add_matrix_menu (Spreadsheet *sheet, GtkWidget *vbox)
 
 static void sheet_add_matrix_locator (Spreadsheet *sheet, GtkWidget *vbox)
 {
-    GtkWidget *status_box = gtl_hbox_new(FALSE, 1);
+    GtkWidget *status_box = gtk_hbox_new(FALSE, 1);
     gint w = get_row_label_width(NULL);
 
     gtk_container_set_border_width(GTK_CONTAINER(status_box), 0);
@@ -3092,7 +3092,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     g_signal_connect(G_OBJECT(sheet->win), "delete-event",
 		     G_CALLBACK(sheet_delete_event), sheet);
 
-    main_vbox = gtl_vbox_new(FALSE, 5);
+    main_vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 5); 
     gtk_container_add(GTK_CONTAINER(sheet->win), main_vbox);
 
@@ -3153,11 +3153,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	/* control buttons (for edting matrices only) */
 	GtkWidget *button_box;
 
-#if GTK_MAJOR_VERSION == 3
-	button_box = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
-#else
 	button_box = gtk_hbutton_box_new();
-#endif
 	gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), 
 				  GTK_BUTTONBOX_END);
 	gtk_box_set_spacing(GTK_BOX(button_box), 10);
@@ -3460,13 +3456,13 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
     mdlg.formula = NULL;
 
     /* top label */
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     w = gtk_label_new(_("New matrix"));
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* matrix name entry */
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     w = gtk_label_new(_("Name:"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     w = gtk_entry_new();
@@ -3486,7 +3482,7 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
 
     /* option: build from series */
 
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     rb = gtk_radio_button_new_with_label(NULL, _("Build from series"));
     g_signal_connect(G_OBJECT(rb), "clicked", G_CALLBACK(choose_series), &mdlg);
     gtk_box_pack_start(GTK_BOX(hbox), rb, TRUE, TRUE, 0);
@@ -3494,14 +3490,14 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
 
     /* option: build numerically */
 
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb));
     rb = gtk_radio_button_new_with_label(group, _("Build numerically"));
     g_signal_connect(G_OBJECT(rb), "clicked", G_CALLBACK(choose_numeric), &mdlg);
     gtk_box_pack_start(GTK_BOX(hbox), rb, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     tab = gtk_table_new(3, 2, FALSE);
     gtk_table_set_col_spacing(GTK_TABLE(tab), 0, 5);
     
@@ -3544,14 +3540,14 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
 
     /* option: build from formula */
 
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb));
     rb = gtk_radio_button_new_with_label(group, _("Build from formula"));
     g_signal_connect(G_OBJECT(rb), "clicked", G_CALLBACK(choose_formula), &mdlg);
     gtk_box_pack_start(GTK_BOX(hbox), rb, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     
-    hbox = gtl_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     w = gtk_label_new(" ");
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     w = gtk_entry_new();
