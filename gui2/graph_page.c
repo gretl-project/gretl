@@ -657,6 +657,53 @@ static void gpage_cleanup (void)
     gretl_remove(fname);
 }
 
+static gchar *gpage_switch_compiler (int term)
+{
+    gchar *orig = g_strdup(latex);
+    char *p, tmp[MAXSTR];
+    char test[4];
+    int len0, have_pdf;
+
+    strcpy(tmp, latex);
+    p = strrchr(tmp, SLASH);
+    if (p == NULL) {
+	len0 = 0;
+	p = tmp;
+    } else {
+	len0 = p - tmp + 1;
+	p++;
+    }
+
+    *test = '\0';
+    strncat(test, p, 3);
+    lower(test);
+
+    have_pdf = (strcmp(test, "pdf") == 0);
+
+    if (term == GP_TERM_PDF && !have_pdf) {
+	/* switch to pdflatex */
+	*latex = '\0';
+	strncat(latex, tmp, len0);
+	strncat(latex, "pdf", 3);
+	strcat(latex, p);
+    } else if (term != GP_TERM_PDF && have_pdf) {
+	/* switch to plain latex */
+	*latex = '\0';
+	strncat(latex, tmp, len0);
+	strcat(latex, p + 3);
+    }
+
+    return orig;
+}
+
+static void gpage_revert_compiler (gchar *orig)
+{
+    if (orig != NULL) {
+	strcpy(latex, orig);
+	g_free(orig);
+    }
+}
+
 int display_graph_page (GtkWidget *parent)
 {
     const char *opts[] = {
@@ -664,7 +711,7 @@ int display_graph_page (GtkWidget *parent)
 	N_("monochrome")
     };
     const char *sdir = get_session_dirname();
-    char *latex_orig = NULL;
+    gchar *latex_orig = NULL;
     int resp, err = 0;
 
     if (gpage.ngraphs == 0) {
@@ -688,9 +735,8 @@ int display_graph_page (GtkWidget *parent)
 	if (gnuplot_pdf_terminal()) {
 	    gpage.term = GP_TERM_PDF;
 	} else {
-	    latex_orig = g_strdup(latex);
-	    strcpy(latex, latex_orig + 3);
 	    gpage.term = GP_TERM_EPS;
+	    latex_orig = gpage_switch_compiler(gpage.term);
 	}
     } else {
 	gpage.term = GP_TERM_EPS;
@@ -715,11 +761,7 @@ int display_graph_page (GtkWidget *parent)
 	err = real_display_gpage();
     }
 
-    if (latex_orig != NULL) {
-	strcpy(latex, latex_orig);
-	g_free(latex_orig);
-    }
-
+    gpage_revert_compiler(latex_orig);
     gpage_cleanup();
 
     if (err) {
@@ -764,9 +806,8 @@ int save_graph_page (const char *fname)
 	if (gnuplot_pdf_terminal()) {
 	    gpage.term = GP_TERM_PDF;
 	} else {
-	    latex_orig = g_strdup(latex);
-	    strcpy(latex, latex_orig + 3);
 	    gpage.term = GP_TERM_EPS;
+	    latex_orig = gpage_switch_compiler(gpage.term);
 	}
     } else {
 	gpage.term = GP_TERM_EPS;
@@ -781,10 +822,7 @@ int save_graph_page (const char *fname)
 	err = make_gp_output();
     }
 
-    if (latex_orig != NULL) {
-	strcpy(latex, latex_orig);
-	g_free(latex_orig);
-    }
+    gpage_revert_compiler(latex_orig);
 
     return err;
 }
@@ -814,14 +852,12 @@ static int print_graph_page_direct (const char *fname,
     if (has_suffix(fname, ".pdf")) {
 	gpage.term = GP_TERM_PDF;
 	if (!get_tex_use_pdf()) {
-	    latex_orig = g_strdup(latex);
-	    sprintf(latex, "pdf%s", latex_orig);
+	    latex_orig = gpage_switch_compiler(gpage.term);
 	}	
     } else {
 	gpage.term = GP_TERM_EPS;
 	if (get_tex_use_pdf()) {
-	    latex_orig = g_strdup(latex);
-	    strcpy(latex, latex_orig + 3);
+	    latex_orig = gpage_switch_compiler(gpage.term);
 	}
     }	    
 
@@ -858,11 +894,7 @@ static int print_graph_page_direct (const char *fname,
 	remove(output);
     }
 
-    if (latex_orig != NULL) {
-	strcpy(latex, latex_orig);
-	g_free(latex_orig);
-    }
-
+    gpage_revert_compiler(latex_orig);
     gpage_cleanup();
 
     return err;

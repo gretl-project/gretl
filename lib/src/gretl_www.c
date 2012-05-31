@@ -62,16 +62,14 @@
 
 static int wproxy;
 #if 0 /* local testing */
-static char dbhost[DBHLEN]       = "dev.gretl.ecn.wfu.edu";
-static char gretlhost[DBHLEN]    = "dev.gretl.ecn.wfu.edu";
-static char datacgi[DBHLEN]      = "/cgi-bin/gretldata.cgi";
-static char updatecgi[DBHLEN]    = "/cgi-bin/gretl_update.cgi";
-#else 
+static char dbhost[DBHLEN]       = "dev.ricardo.ecn.wfu.edu";
+static char gretlhost[DBHLEN]    = "dev.ricardo.ecn.wfu.edu";
+#else
 static char dbhost[DBHLEN]       = "ricardo.ecn.wfu.edu";
 static char gretlhost[DBHLEN]    = "ricardo.ecn.wfu.edu";
+#endif
 static char datacgi[DBHLEN]      = "/gretl/cgi-bin/gretldata.cgi";
 static char updatecgi[DBHLEN]    = "/gretl/cgi-bin/gretl_update.cgi";
-#endif
 static char manual_path[DBHLEN]  = "/project/gretl/manual/";
 static char dataset_path[DBHLEN] = "/project/gretl/datafiles/";
 
