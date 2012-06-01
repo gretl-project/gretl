@@ -1,3 +1,7 @@
+2012-06-01 version 1.9.9
+
+No intentional backward-incompatible changes
+
 2012-03-29 version 1.9.8
 
 In performing "$-substitution" for the index variable in the 

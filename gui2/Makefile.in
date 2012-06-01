@@ -82,7 +82,7 @@ ifeq ($(USE_NLS),yes)
 endif
 
 ifeq ($(MKLANG),) 
-  MKLANG = mklang
+  MKLANG = ./mklang
 endif
 
 ifeq ($(quiet_build),yes)
@@ -199,7 +199,7 @@ mklang: mklang.o $(GRETLLIB)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $< ../lib/libgretl-1.0.la $(XML_LIBS)
 
 $(GRETL_LANG): $(MKLANG)
-	./mklang > $@
+	$(MKLANG) > $@
 
 .deps:
 	$(AMP)mkdir $@

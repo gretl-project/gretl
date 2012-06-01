@@ -203,6 +203,9 @@ $(PT_GENSTAMP): xsltrans reflow $(PT_FNCSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS)
 $(HELPREFS): bbl2txt $(EN_HLPSTAMP) $(EN_GENSTAMP) ../tex/gretl-ref.bbl
 	./bbl2txt ../tex/gretl-ref.bbl > $@
 
+$(GRETLLIB):
+	$(MAKE) -C ../../lib
+
 ../tex/gretl-ref.bbl:
 	$(MAKE) -C ../tex gretl-ref.pdf
 
