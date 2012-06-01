@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-05-29 08:04-0400\n"
-"PO-Revision-Date: 2012-05-13 15:57+0100\n"
+"PO-Revision-Date: 2012-06-01 20:45+0100\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -7270,7 +7270,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 13 de maio de 2012."
+"Tradução de 1 de junho de 2012."
 
 #: gui2/about.c:164
 msgid "License"
@@ -13434,9 +13434,8 @@ msgid "Invalid quantile specification"
 msgstr "Especificação inválida de quantil"
 
 #: gui2/selector.c:3094 gui2/selector.c:5013
-#, fuzzy
 msgid "Cluster"
-msgstr "Agrupar por"
+msgstr "Agrupar"
 
 #: gui2/selector.c:3162
 msgid "You must select a weight variable"
@@ -15899,7 +15898,7 @@ msgstr "Permitindo a restrição anterior, gl = %d\n"
 
 #: plugin/johansen.c:2544
 msgid "Test of restrictions on cointegrating relations"
-msgstr ""
+msgstr "Teste às restrições das relações de cointegração"
 
 #: plugin/jrestrict.c:1248
 msgid "Switching algorithm: failed"
