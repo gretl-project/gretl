@@ -29,6 +29,12 @@
 #include "calculator.h"
 #include "gpt_dialog.h"
 
+#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 2
+# define USE_GTK_FONT_CHOOSER 1
+#else
+# define USE_GTK_FONT_CHOOSER 0
+#endif
+
 #include "../pixmaps/mouse.xpm"
 #include "gppoints.h"
 
@@ -1200,7 +1206,99 @@ static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
     }
 }
 
-#else /* !G_OS_WIN32 */
+#elif USE_GTK_FONT_CHOOSER
+
+static void graph_font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
+{
+    gchar *fontname = gtk_font_chooser_get_font(fc);
+
+    if (fontname != NULL && *fontname != '\0') {
+	gpointer p = g_object_get_data(G_OBJECT(fc), "parent");
+	gint type = widget_get_int(fc, "parent-type");
+
+	if (type < 2) {
+	    GtkWidget *b = g_object_get_data(G_OBJECT(fc), "launcher");
+	    gchar *title = g_strdup_printf(_("font: %s"), fontname);
+
+	    gtk_button_set_label(GTK_BUTTON(b), title);
+	    g_free(title);
+	}
+
+	if (type == 0) {
+	    plot_editor_set_fontname(p, fontname);
+	} else if (type == 1) {
+	    pdf_saver_set_fontname(p, fontname);
+	} else if (type == 2) {
+	    activate_plot_font_choice(p, fontname);
+	}
+    }
+
+    g_free(fontname);
+    gtk_widget_destroy(GTK_WIDGET(fc));
+}
+
+static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
+				      const char *default_font)
+{
+    static GtkWidget *fontsel = NULL;
+    GtkWidget *b;
+
+    if (fontsel != NULL) {
+	gtk_window_present(GTK_WINDOW(fontsel));
+        return;
+    }
+
+    if (default_font == NULL) {
+	if (type == 1) {
+	    default_font = pdf_saver_current_font(p);
+	} else {
+	    default_font = gretl_png_font();
+	}
+    }
+
+    fontsel = gtk_font_chooser_dialog_new(_("Font for graphs"), NULL);
+    gtk_font_chooser_set_font(GTK_FONT_CHOOSER(fontsel), 
+			      default_font); 
+
+    /* attach data items */
+    if (button != NULL) {
+	g_object_set_data(G_OBJECT(fontsel), "launcher", button);
+    }
+    g_object_set_data(G_OBJECT(fontsel), "parent", p);
+    g_object_set_data(G_OBJECT(fontsel), "parent-type", GINT_TO_POINTER(type));
+
+    gtk_window_set_position(GTK_WINDOW(fontsel), GTK_WIN_POS_MOUSE);
+
+    /* destruction signals */
+    g_signal_connect(G_OBJECT(fontsel), "destroy",
+		     G_CALLBACK(gtk_widget_destroyed),
+		     &fontsel);
+    g_signal_connect(G_OBJECT(fontsel), "destroy",
+		     G_CALLBACK(gtk_main_quit), NULL);
+
+    /* button signals */
+    b = gtk_dialog_get_widget_for_response(GTK_DIALOG(fontsel),
+					   GTK_RESPONSE_OK);
+    if (b != NULL) {
+	g_signal_connect(G_OBJECT(b), "clicked",
+			 G_CALLBACK(graph_font_selection_ok),
+			 fontsel);
+    }
+
+    b = gtk_dialog_get_widget_for_response(GTK_DIALOG(fontsel),
+					   GTK_RESPONSE_CANCEL);
+    if (b != NULL) {
+	g_signal_connect(G_OBJECT(b), "clicked",
+			 G_CALLBACK(delete_widget),
+			 fontsel);
+    }
+
+    gtk_widget_show(fontsel);
+
+    gtk_main();
+}
+
+#else /* using GtkFontSelectionDialog */
 
 /* callback from OK button in graph font selector */
 
@@ -1270,6 +1368,7 @@ static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
 		     &fontsel);
     g_signal_connect(G_OBJECT(fontsel), "destroy",
 		     G_CALLBACK(gtk_main_quit), NULL);
+
     b = gtk_font_selection_dialog_get_ok_button(GTK_FONT_SELECTION_DIALOG(fontsel));
     g_signal_connect(G_OBJECT(b), "clicked", G_CALLBACK(graph_font_selection_ok), 
 		     fontsel);
@@ -1281,6 +1380,10 @@ static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
 
     gtk_main();
 }
+
+#endif /* end aternative font selectors */
+
+#ifndef G_OS_WIN32
 
 static int font_is_ok (const char *fname)
 {

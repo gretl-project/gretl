@@ -20,19 +20,13 @@
 #include "gretl.h"
 #include "fontfilter.h"
 
-enum {
-    FONT_FILTER_NONE,
-    FONT_FILTER_LATIN,
-    FONT_FILTER_LATIN_MONO
-};
-
 #define FDEBUG 0
 
 static GtkWidget *font_test_widget;
 static PangoContext *font_test_context;
 static PangoLanguage *font_test_lang;
 
-static int create_font_test_rig (void)
+int gretl_font_filter_init (void)
 {
     font_test_widget = gtk_label_new(NULL);  
     font_test_context = gtk_widget_get_pango_context(font_test_widget); 
@@ -48,12 +42,16 @@ static int create_font_test_rig (void)
     return 0;
 }
 
-static void destroy_font_test_rig (void)
+void gretl_font_filter_cleanup (void)
 {
-    g_object_unref(G_OBJECT(font_test_context));
-    gtk_widget_destroy(font_test_widget); 
-    font_test_context = NULL;
-    font_test_widget = NULL;
+    if (font_test_context != NULL) {
+	g_object_unref(G_OBJECT(font_test_context));
+	font_test_context = NULL;
+    }
+    if (font_test_widget != NULL) {
+	gtk_widget_destroy(font_test_widget);
+	font_test_widget = NULL;
+    }
 }
 
 enum {
@@ -151,14 +149,19 @@ int validate_font_family (PangoFontFamily *family,
     static int build_cache;
     int ret;
 
+    if (i >= nf) {
+	fprintf(stderr, "validate_font_family: got excess font!\n");
+	return 0;
+    }
+
     if (fcache == NULL) {
 	fcache = calloc(nf, 1);
 	if (fcache == NULL) {
 	    *err = 1;
-	    return 1;
+	    return 0;
 	} 
 	build_cache = 1;
-	create_font_test_rig();
+	gretl_font_filter_init();
     }
 
     if (build_cache) {
@@ -183,7 +186,7 @@ int validate_font_family (PangoFontFamily *family,
     } 
 
     if (build_cache && i == nf - 1) {
-	destroy_font_test_rig();
+	gretl_font_filter_cleanup();
 	build_cache = 0;
     }
 
@@ -198,3 +201,38 @@ int validate_font_family (PangoFontFamily *family,
     return ret;
 }
 
+int validate_single_font (const PangoFontFamily *family,
+			  gint filter)
+{
+    const gchar *famname = 
+	pango_font_family_get_name((PangoFontFamily *) family);
+    int ret, fc = 0;
+
+#if FDEBUG
+    fprintf(stderr, "Checking font '%s'\n", famname);
+#endif
+
+    if (weird_font(famname)) {
+	fc = HACK_WEIRD_FONT;
+    } else {
+	gchar *font = g_strdup_printf("%s 10", famname);
+	PangoFontDescription *desc = pango_font_description_from_string(font);
+
+	if (desc != NULL) {
+	    fc = get_font_characteristics((PangoFontFamily *) family, desc);
+	    pango_font_description_free(desc);
+	}
+	g_free(font);
+    }
+
+
+    if (filter == FONT_FILTER_LATIN) {
+	ret = fc & HACK_LATIN_FONT;
+    } else if (filter == FONT_FILTER_LATIN_MONO) {
+	ret = fc & HACK_MONO_FONT;
+    } else {
+	ret = !(fc & HACK_WEIRD_FONT);
+    }
+
+    return ret;
+}

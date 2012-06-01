@@ -75,7 +75,7 @@ struct _GtkFontselHack
     PangoFontFace *face;        /* Current face */
   
     gint size;
-    GtkFontFilterType filter;
+    FontFilterType filter;
 };
 
 struct _GtkFontselHackClass
@@ -219,9 +219,9 @@ GType gtk_font_filter_get_type (void)
 
     if (etype == 0) {
 	static const GEnumValue values[] = {
-	    { GTK_FONT_HACK_NONE, "GTK_FONT_HACK_NONE", "use no font filter" },
-	    { GTK_FONT_HACK_LATIN, "GTK_FONT_HACK_LATIN", "latin text fonts" },
-	    { GTK_FONT_HACK_LATIN_MONO, "GTK_FONT_HACK_LATIN_MONO", "monospaced latin text fonts" },
+	    { FONT_HACK_NONE, "FONT_HACK_NONE", "use no font filter" },
+	    { FONT_HACK_LATIN, "FONT_HACK_LATIN", "latin text fonts" },
+	    { FONT_HACK_LATIN_MONO, "FONT_HACK_LATIN_MONO", "monospaced latin text fonts" },
 	    { 0, NULL, NULL }
 	};
 
@@ -264,7 +264,7 @@ gtk_fontsel_hack_class_init (GtkFontselHackClass *klass)
 						      _("Filter"),
 						      _("The filter for acceptable fonts."),
 						      GTK_TYPE_FONT_FILTER,
-						      GTK_FONT_HACK_NONE,
+						      FONT_HACK_NONE,
 						      G_PARAM_READWRITE));
 
     gobject_class->finalize = gtk_fontsel_hack_finalize;
@@ -333,7 +333,7 @@ gtk_fontsel_hack_init (GtkFontselHack *fontsel)
     gtk_widget_push_composite_child();
 
     fontsel->size = 12 * PANGO_SCALE;
-    fontsel->filter = GTK_FONT_HACK_NONE;
+    fontsel->filter = FONT_HACK_NONE;
   
     /* Create the table of font, style & size */
     table = gtk_table_new(3, 3, FALSE);
@@ -659,7 +659,8 @@ cmp_families (const void *a, const void *b)
 static void
 gtk_fontsel_hack_show_available_fonts (GtkFontselHack *fontsel)
 {
-    GtkListStore *model;
+    GtkTreeModel *model;
+    GtkListStore *store;
     PangoContext *context; 
     PangoFontFamily **families;
     const gchar *famname;
@@ -667,8 +668,9 @@ gtk_fontsel_hack_show_available_fonts (GtkFontselHack *fontsel)
     GtkTreeIter iter, match_iter;
     gint err = 0;
 
-    model = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(fontsel->family_list)));
-    gtk_list_store_clear(model);
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(fontsel->family_list));
+    store = GTK_LIST_STORE(model);
+    gtk_list_store_clear(store);
 
     context = gtk_widget_get_pango_context(GTK_WIDGET(fontsel));
     pango_context_list_families(context, &families, &nf);
@@ -681,6 +683,8 @@ gtk_fontsel_hack_show_available_fonts (GtkFontselHack *fontsel)
     fontsel->family = NULL;
     got_ok = 0;
 
+    gtk_tree_model_get_iter_first(model, &iter);
+
     for (i=0; i<nf && !err; i++) {
 	famname = pango_font_family_get_name(families[i]);
 
@@ -692,14 +696,14 @@ gtk_fontsel_hack_show_available_fonts (GtkFontselHack *fontsel)
 	    continue;
 	}
 
-	gtk_list_store_append(model, &iter);
-	gtk_list_store_set(model, &iter,
+	gtk_list_store_append(store, &iter);
+	gtk_list_store_set(store, &iter,
 			   FAMILY_COLUMN, families[i],
 			   FAMILY_NAME_COLUMN, famname,
 			   -1);
 
 	if (!got_ok) {
-	    if (fontsel->filter != GTK_FONT_HACK_NONE ||
+	    if (fontsel->filter != FONT_HACK_NONE ||
 		i == 0 || !g_ascii_strcasecmp(famname, "sans")) {
 		got_ok = 1;
 		fontsel->family = families[i];
@@ -787,7 +791,7 @@ gtk_fontsel_hack_show_available_styles (GtkFontselHack *fontsel)
     PangoFontFace **faces;
     PangoFontDescription *old_desc;
     GtkListStore *model;
-    GtkTreeIter match_row;
+    GtkTreeIter iter, match_row;
     PangoFontFace *match_face = NULL;
   
     model = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(fontsel->face_list)));
@@ -802,9 +806,9 @@ gtk_fontsel_hack_show_available_styles (GtkFontselHack *fontsel)
     qsort(faces, n_faces, sizeof *faces, faces_sort_func);
 
     gtk_list_store_clear(model);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(model), &iter);
 
     for (i=0; i<n_faces; i++) {
-	GtkTreeIter iter;
 	const gchar *str = pango_font_face_get_face_name(faces[i]);
 
 	gtk_list_store_append(model, &iter);
@@ -900,11 +904,12 @@ gtk_fontsel_hack_show_available_sizes (GtkFontselHack *fontsel,
 
     /* Insert the standard font sizes */
     if (first_time) {
+	GtkTreeIter iter;
+
 	gtk_list_store_clear (model);
+	gtk_tree_model_get_iter_first (GTK_TREE_MODEL (model), &iter);
 
 	for (i = 0; i < G_N_ELEMENTS (font_sizes); i++) {
-	    GtkTreeIter iter;
-	  
 	    gtk_list_store_append (model, &iter);
 	    gtk_list_store_set (model, &iter, SIZE_COLUMN, font_sizes[i], -1);
 	  
@@ -1206,7 +1211,7 @@ gtk_fontsel_hack_get_filter (GtkFontselHack *fontsel)
 
 void
 gtk_fontsel_hack_set_filter (GtkFontselHack *fontsel, 
-			     GtkFontFilterType filter)
+			     FontFilterType filter)
 {
     fontsel->filter = filter;
     gtk_fontsel_hack_display_fonts(fontsel);
@@ -1362,7 +1367,7 @@ gtk_fontsel_hack_dialog_get_filter (GtkFontselHackDialog *fsd)
 
 void
 gtk_fontsel_hack_dialog_set_filter (GtkFontselHackDialog *fsd,
-				    GtkFontFilterType	  filter)
+				    FontFilterType	  filter)
 {
     gtk_fontsel_hack_set_filter(GTK_FNTHACK(fsd->fontsel), filter);
 }

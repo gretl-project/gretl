@@ -45,10 +45,10 @@ typedef struct _GtkFontselHackDialog GtkFontselHackDialog;
 typedef struct _GtkFontselHackDialogClass GtkFontselHackDialogClass;
 
 typedef enum {
-    GTK_FONT_HACK_NONE,
-    GTK_FONT_HACK_LATIN,
-    GTK_FONT_HACK_LATIN_MONO
-} GtkFontFilterType;
+    FONT_HACK_NONE,
+    FONT_HACK_LATIN,
+    FONT_HACK_LATIN_MONO
+} FontFilterType;
 
 GType	   gtk_fontsel_hack_get_type		(void) G_GNUC_CONST;
 GtkWidget* gtk_fontsel_hack_new		        (void);
@@ -62,7 +62,7 @@ void                  gtk_fontsel_hack_set_preview_text (GtkFontselHack *fontsel
 
 gint gtk_fontsel_hack_get_filter (GtkFontselHack *fontsel);
 void gtk_fontsel_hack_set_filter (GtkFontselHack *fontsel,
-				  GtkFontFilterType filter);
+				  FontFilterType filter);
 
 GType gtk_fontsel_hack_dialog_get_type (void) G_GNUC_CONST;
 
@@ -84,7 +84,7 @@ gint gtk_fontsel_hack_dialog_get_filter(GtkFontselHackDialog *fsd);
 
 /* This sets the font filter for the dialog. */
 void gtk_fontsel_hack_dialog_set_filter (GtkFontselHackDialog *fsd,
-					 GtkFontFilterType filter);
+					 FontFilterType filter);
 
 GtkWidget *gtk_fontsel_hack_dialog_ok_button(GtkWidget *fsd);
 

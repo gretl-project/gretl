@@ -36,10 +36,10 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#if GTK_MAJOR_VERSION == 2 || GTK_MINOR_VERSION < 2
-# define USE_GTK_FONT_CHOOSER 0
+#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 2
+# define USE_GTK_FONT_CHOOSER 1
 #else
-# define USE_GTK_FONT_CHOOSER 0 /* can experiment here */
+# define USE_GTK_FONT_CHOOSER 0
 #endif
 
 #ifdef G_OS_WIN32
@@ -49,7 +49,9 @@
 # include <sys/stat.h>
 # include <fcntl.h>
 # include <errno.h>
-# if !USE_GTK_FONT_CHOOSER
+# if USE_GTK_FONT_CHOOSER
+#  include "fontfilter.h"
+# else
 #  include "gtkfontselhack.h"
 # endif
 #endif
@@ -2123,53 +2125,62 @@ void font_selector (GtkAction *action)
     }
 }
 
-/* font selection via new GTK mechanism (not ready!) */
+/* font selection via GtkFontChooser */
 
 #elif USE_GTK_FONT_CHOOSER
 
-gboolean latin_font_filter (const PangoFontFamily *family,
-			    const PangoFontFace *face,
+gboolean latin_font_filter (PangoFontFamily *family,
+			    PangoFontFace *face,
 			    gpointer data)
 {
-    PangoFontDescription *pfd;
-    int k;
+    const char *facename = pango_font_face_get_face_name(face);
 
-    pfd = pango_font_face_describe(face);
-    // k = get_font_characteristics(family, pfd);
-    pango_font_description_free(pfd);
-
-    return 1; // (k & HACK_LATIN_FONT);
+    if (strstr(facename, "Italic") || strstr(facename, "Bold")) {
+	return FALSE;
+    } else {
+	return validate_single_font(family, FONT_FILTER_LATIN);
+    }
 }
 
-gboolean mono_font_filter (const PangoFontFamily *family,
-			   const PangoFontFace *face,
+gboolean mono_font_filter (PangoFontFamily *family,
+			   PangoFontFace *face,
 			   gpointer data)
 {
-    /* wrong: includes non-text fonts */ 
-    return pango_font_family_is_monospace(family);
+    const char *facename = pango_font_face_get_face_name(face);
+
+    if (strstr(facename, "Italic") || strstr(facename, "Bold") ||
+	strstr(facename, "Oblique")) {
+	return FALSE;
+    } else {
+	return validate_single_font(family, FONT_FILTER_LATIN_MONO);
+    }
+}
+
+static void close_font_chooser (GtkWidget *w, GtkFontChooser *fc)
+{
+    gretl_font_filter_cleanup();
+    gtk_widget_destroy(GTK_WIDGET(fc));
 }
 
 static void font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
 {
-    gchar *fontname;
+    gchar *fontname = gtk_font_chooser_get_font(fc);
 
-    fontname = gtk_font_chooser_get_font(fc);
-
-#if 0
     if (fontname != NULL && *fontname != '\0') {
-	if (1) { /* LATIN MONO */
+	int mono = widget_get_int(fc, "mono");
+
+	if (mono) {
 	    strcpy(fixedfontname, fontname);
 	    set_fixed_font();
 	    write_rc();
-	} else if (1) {
-	    /* LATIN */
+	} else {
 	    set_app_font(fontname);
 	    write_rc();
 	}
     }
-#endif
 
     g_free(fontname);
+    gretl_font_filter_cleanup();
     gtk_widget_destroy(GTK_WIDGET(fc));
 }
 
@@ -2181,7 +2192,7 @@ void font_selector (GtkAction *action)
     int which = fontsel_code(action);
     char *title = NULL;
     const char *fontname = NULL;
-
+ 
     if (fontsel != NULL) {
 	gtk_window_present(GTK_WINDOW(fontsel));
         return;
@@ -2189,13 +2200,15 @@ void font_selector (GtkAction *action)
 
     if (which == FIXED_FONT_SELECTION) {
 	title = _("Font for gretl output windows");
-	filter = mono_font_filter;
+	filter = (GtkFontFilterFunc) &mono_font_filter;
 	fontname = fixedfontname;
     } else if (which == APP_FONT_SELECTION) {
 	title = _("Font for menus and labels");
-	filter = latin_font_filter;
+	filter = (GtkFontFilterFunc) &latin_font_filter;
 	fontname = appfontname;
     }
+
+    gretl_font_filter_init();
 
     fontsel = gtk_font_chooser_dialog_new(title, GTK_WINDOW(mdata->main));
     gtk_font_chooser_set_font(GTK_FONT_CHOOSER(fontsel), 
@@ -2220,7 +2233,7 @@ void font_selector (GtkAction *action)
 						GTK_RESPONSE_CANCEL);
     if (button != NULL) {
 	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(delete_widget),
+			 G_CALLBACK(close_font_chooser),
 			 fontsel);
     }
 
@@ -2238,11 +2251,11 @@ static void font_selection_ok (GtkWidget *w, GtkFontselHackDialog *fs)
     if (fontname != NULL && *fontname != '\0') {
 	int filter = gtk_fontsel_hack_dialog_get_filter(fs); 
 
-	if (filter == GTK_FONT_HACK_LATIN_MONO) {
+	if (filter == FONT_HACK_LATIN_MONO) {
 	    strcpy(fixedfontname, fontname);
 	    set_fixed_font();
 	    write_rc();
-	} else if (filter == GTK_FONT_HACK_LATIN) {
+	} else if (filter == FONT_HACK_LATIN) {
 	    set_app_font(fontname);
 	    write_rc();
 	}
@@ -2266,11 +2279,11 @@ void font_selector (GtkAction *action)
 
     if (which == FIXED_FONT_SELECTION) {
 	title = _("Font for gretl output windows");
-	filter = GTK_FONT_HACK_LATIN_MONO;
+	filter = FONT_HACK_LATIN_MONO;
 	fontname = fixedfontname;
     } else if (which == APP_FONT_SELECTION) {
 	title = _("Font for menus and labels");
-	filter = GTK_FONT_HACK_LATIN;
+	filter = FONT_HACK_LATIN;
 	fontname = appfontname;
     }
 
