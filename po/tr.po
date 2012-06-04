@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-05-29 08:04-0400\n"
-"PO-Revision-Date: 2012-05-10 13:13+0300\n"
+"PO-Revision-Date: 2012-06-04 11:16+0300\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -925,7 +925,7 @@ msgstr ""
 #: lib/src/csvdata.c:1319
 #, c-format
 msgid "   warning: missing value for variable %d, obs %d\n"
-msgstr "   uyarı: %d değişkeni, %d. gözlem değeri eksik\n"
+msgstr "   Uyarı: %d değişkeni, %d. gözlem değeri eksik\n"
 
 #: lib/src/csvdata.c:1387
 #, c-format
@@ -983,7 +983,7 @@ msgstr "değişken ismi yok gibi görünüyor\n"
 #: lib/src/csvdata.c:1874
 #, c-format
 msgid "warning: truncating data at row %d, column %d\n"
-msgstr "uyarı: veriler, %d. satır, %d. sütundan budanıyor\n"
+msgstr "Uyarı: veriler, %d. satır, %d. sütundan budanıyor\n"
 
 #: lib/src/csvdata.c:1922
 msgid "scanning for row labels and data...\n"
@@ -1049,7 +1049,7 @@ msgstr ""
 #: plugin/spss_import.c:1939 plugin/stata_import.c:953
 #: plugin/xlsx_import.c:1317
 msgid "warning: some variable names were duplicated\n"
-msgstr "uyarı: bazı değişken adları tekrarlı\n"
+msgstr "Uyarı: bazı değişken adları tekrarlı\n"
 
 #: lib/src/csvdata.c:2222 plugin/eviews_import.c:521
 #: plugin/eviews_import.c:536 plugin/excel_import.c:1545
@@ -1063,7 +1063,7 @@ msgstr "Bellek yetersiz\n"
 #: lib/src/dataio.c:178 lib/src/dataio.c:217
 #, c-format
 msgid "WARNING: ascii data read error at var %d, obs %d"
-msgstr "UYARI: %d. değişken, %d. gözlem ascii veri okuma hatası"
+msgstr "Uyarı: %d. değişken, %d. gözlem ascii veri okuma hatası"
 
 #: lib/src/dataio.c:274
 #, c-format
@@ -2825,22 +2825,21 @@ msgstr "Düşüm değerlendirmesi: %d\n"
 #: lib/src/gretl_bfgs.c:1891
 #, c-format
 msgid "Gradient within tolerance (%g)\n"
-msgstr ""
+msgstr "Düşüm hoşgörü sınırı içinde (%g)\n"
 
 #: lib/src/gretl_bfgs.c:1893
 #, c-format
 msgid "Successive criterion values within tolerance (%g)\n"
-msgstr ""
+msgstr "Ardışık ölçüt değerleri hoşgörü sınırı içinde (%g)\n"
 
 #: lib/src/gretl_bfgs.c:1897
 #, c-format
 msgid "Warning: couldn't improve criterion (gradient = %g)\n"
-msgstr ""
+msgstr "Uyarı: Ölçüt dah fazla iyileştirilemedi (düşüm = %g)\n"
 
 #: lib/src/gretl_bfgs.c:1900
-#, fuzzy
 msgid "Warning: couldn't improve criterion\n"
-msgstr "Uyarı: sayısal Hesseyen hesaplanamadı"
+msgstr "Uyarı: ölçüt daha fazla iyileştirilemedi\n"
 
 #: lib/src/gretl_bfgs.c:2036
 msgid "Initial value of objective function is not finite"
@@ -5175,7 +5174,7 @@ msgid ""
 "This behavior may change in future versions, so you may want to adjust your\n"
 "scripts accordingly.\n"
 msgstr ""
-"UYARI: Sabit terim bağlayanlar içinde bulunuyordu ama araçlar\n"
+"Uyarı: Sabit terim bağlayanlar içinde bulunuyordu ama araçlar\n"
 "içinde değildi; bu nedenle araç listesine kendiliğinden eklendi.\n"
 "Bu davranış gelecekteki sürümlerde değişebilir. Bu nedenle\n"
 "betiklerinizi uygun doğrultuda ayarlamak isteyebilirsiniz.\n"
@@ -5465,9 +5464,8 @@ msgid "Number of cases `correctly predicted'"
 msgstr "`Doğru kestirilen' durum sayısı"
 
 #: lib/src/modelprint.c:4992
-#, fuzzy
 msgid "percent"
-msgstr "Sabit terim"
+msgstr "yüzde"
 
 #: lib/src/modelprint.c:5014 plugin/anova.c:502
 msgid "Analysis of Variance"
@@ -13379,7 +13377,6 @@ msgid "Invalid quantile specification"
 msgstr "Geçersiz bölüt belirtimi"
 
 #: gui2/selector.c:3094 gui2/selector.c:5013
-#, fuzzy
 msgid "Cluster"
 msgstr "Kümeleme"
 
@@ -15838,7 +15835,7 @@ msgstr "Önsel sınırlama  (sd = %d) göz önüne alındı\n"
 
 #: plugin/johansen.c:2544
 msgid "Test of restrictions on cointegrating relations"
-msgstr ""
+msgstr "Eştümleşme ilişkileri üzerindeki sınırlamaların sınaması"
 
 #: plugin/jrestrict.c:1248
 msgid "Switching algorithm: failed"
