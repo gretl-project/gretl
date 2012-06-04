@@ -1195,6 +1195,9 @@ double invmills (double x)
  * Ripped and adapted from Gnumeric, with a bug corrected for the case
  * (a * b < 0) && (rho < 0).
  *
+ * The algorithm is from Drezner (1978), 'Computation of the Bivariate
+ * Normal Integral', Mathematics of Computation, volume 32, number 141
+ *
  * Returns: for (x, y) a bivariate standard Normal rv with correlation
  * coefficient @rho, the joint probability that (x < @a) and (y < @b), or
  * #NADBL on failure.
