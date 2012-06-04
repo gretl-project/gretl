@@ -1,3 +1,6 @@
+Version 1.9.10, in progress
+- Update translations
+
 2012-06-01 version 1.9.9
 - Add --cluster option (cluster-robust standard errors) for several
   estimators; see the User's Guide for details

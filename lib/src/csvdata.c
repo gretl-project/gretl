@@ -90,6 +90,9 @@ struct csvdata_ {
 #define csv_skipping(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
 
+#define fixed_format(c) (c->cols_list != NULL && c->width_list != NULL)
+#define cols_subset(c) (c->cols_list != NULL && c->width_list == NULL)
+
 static int 
 time_series_label_check (DATASET *dset, int reversed, char *skipstr, PRN *prn);
 
@@ -165,53 +168,72 @@ static csvdata *csvdata_new (DATASET *dset)
     return c;
 }
 
-static int csvdata_add_cols_list (csvdata *c, const char *s)
+/* The interpretation of the "cols" specification depends on
+   @opt: if this includes OPT_L (--delimited) then it should
+   provide a 1-based list of columns to be read; but if @opt
+   is just OPT_F it should provide a fixed-format spec,
+   consisting of pairs (start column, width).
+*/
+
+static int csvdata_add_cols_list (csvdata *c, const char *s,
+				  gretlopt opt)
 {
+    int delimited = (opt & OPT_L);
     int *list, *clist = NULL, *wlist = NULL;
-    int i, n, m, err = 0;
+    int i, n, m = 0;
+    int err = 0;
 
     list = gretl_list_from_string(s, &err);
 
     if (!err) {
 	n = list[0];
-	if (n == 0 || n % 2 != 0) {
+	if (n == 0) {
 	    err = E_DATA;
+	} else if (delimited) {
+	    m = n;
+	    clist = list;
 	} else {
-	    m = n / 2;
-	    clist = gretl_list_new(m);
-	    wlist = gretl_list_new(m);
-	    if (clist == NULL || wlist == NULL) {
-		err = E_ALLOC;
-	    }
-	}
-    }
-
-    if (!err) {
-	int j = 1;
-
-	for (i=1; i<=n; i+=2, j++) {
-	    clist[j] = list[i];
-	    wlist[j] = list[i+1];
-	}
-
-	/* clist = column start list: must be a set of increasing
-	   positive integers; and wlist = respective column widths,
-	   must all be positive 
-	*/
-	for (i=1; i<=m; i++) {
-	    if (wlist[i] <= 0 || clist[i] <= 0 || 
-		(i > 1 && clist[i] <= clist[i-1])) {
+	    /* fixed format: we need two lists */
+	    if (n % 2 != 0) {
 		err = E_DATA;
-		break;
-	    } else if (wlist[i] >= CSVSTRLEN) {
-		fprintf(stderr, "Warning: field %d too wide (%d), truncating\n", 
-			i, wlist[i]);
-		wlist[i] = CSVSTRLEN - 1;
+	    } else {
+		m = n / 2;
+		clist = gretl_list_new(m);
+		wlist = gretl_list_new(m);
+		if (clist == NULL || wlist == NULL) {
+		    err = E_ALLOC;
+		} else {
+		    int j = 1;
+	
+		    for (i=1; i<=n; i+=2, j++) {
+			clist[j] = list[i];
+			wlist[j] = list[i+1];
+		    }
+		}
 	    }
 	}
     }
 
-    free(list);
+    /* clist = column (start) list: must be a set of increasing
+       positive integers; and wlist = respective column widths,
+       must all be positive, if present
+    */
+
+    for (i=1; i<=m && !err; i++) {
+	if (clist[i] <= 0 || (i > 1 && clist[i] <= clist[i-1])) {
+	    err = E_DATA;
+	} else if (wlist != NULL && wlist[i] <= 0) {
+	    err = E_DATA;
+	} else if (wlist != NULL && wlist[i] >= CSVSTRLEN) {
+	    fprintf(stderr, "Warning: field %d too wide (%d), truncating\n", 
+		    i, wlist[i]);
+	    wlist[i] = CSVSTRLEN - 1;
+	}
+    }
+
+    if (list != clist) {
+	free(list);
+    }
 
     if (!err) {
 	c->cols_list = clist;
@@ -1028,9 +1050,6 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
 
     /* labels are of different lengths? */
     if (len1 != strlen(lbl2)) {
-#if 0
-	pputs(prn, A_("   label strings can't be consistent dates\n"));
-#endif
 	return -1;
     }
 
@@ -1590,7 +1609,7 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 	
 	c->nrows += 1;
 
-	if (c->cols_list != NULL) {
+	if (fixed_format(c)) {
 	    tailstrip(c->line);
 	    gotdata = 1;
 	    chkcols = strlen(c->line);
@@ -1619,10 +1638,15 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 	    pprintf(prn, A_("   ...but row %d has %d fields: aborting\n"),
 		    c->nrows, chkcols);
 	    err = E_DATA;
-	}
+	} else if (c->cols_list != NULL) {
+	    if (c->cols_list[c->cols_list[0]] > c->ncols) {
+		gretl_errmsg_set(_("Invalid column specification"));
+		err = E_DATA;
+	    }
+	}		
     }
 
-    if (!err && c->cols_list != NULL) {
+    if (!err && fixed_format(c)) {
 	c->ncols = c->cols_list[0];
     }
 
@@ -1652,6 +1676,17 @@ csv_reconfigure_for_markers (DATASET *dset)
     return dataset_drop_last_variables(1, dset);
 }
 
+static int skip_data_column (csvdata *c, int k)
+{
+    int col = csv_skip_column(c) ? k : k + 1;
+
+    if (!in_gretl_list(c->cols_list, col)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 #define starts_number(c) (isdigit((unsigned char) c) || c == '-' || \
                           c == '+' || c == '.')
 
@@ -1661,7 +1696,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 {
     char *p;
     int obscol = csv_has_obs_column(c);
-    int i, k, numcount;
+    int i, j, k, numcount;
     int err = 0;
 
     pputs(mprn, A_("scanning for variable names...\n"));
@@ -1682,10 +1717,9 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     pprintf(mprn, A_("   line: %s\n"), p);
     
     numcount = 0;
+    j = 1;
 
     for (k=0; k<c->ncols && !err; k++) {
-	int nv = 0;
-
 	i = 0;
 	while (*p && *p != c->delim) {
 	    if (i < CSVSTRLEN - 1) {
@@ -1693,35 +1727,35 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	    }
 	    p++;
 	}
+	c->str[i] = '\0';
 	if (*p == c->delim) p++;
 
-	c->str[i] = 0;
-
 	if (k == 0 && (csv_skip_column(c))) {
-	    ;
+	    ; /* no-op */
+	} else if (cols_subset(c) && skip_data_column(c, k)) {
+	    ; /* no-op */
 	} else {
-	    nv = (csv_skip_column(c))? k : k + 1;
-
 	    if (*c->str == '\0') {
-		pprintf(prn, A_("   variable name %d is missing: aborting\n"), nv);
+		pprintf(prn, A_("   variable name %d is missing: aborting\n"), j);
 		pputs(prn, A_(csv_msg));
 		err = E_DATA;
 	    } else {
-		c->dset->varname[nv][0] = 0;
-		strncat(c->dset->varname[nv], c->str, VNAMELEN - 1);
+		c->dset->varname[j][0] = '\0';
+		strncat(c->dset->varname[j], c->str, VNAMELEN - 1);
 		if (starts_number(*c->str)) {
 		    numcount++;
 		} else {
-		    iso_to_ascii(c->dset->varname[nv]);
-		    strip_illegals(c->dset->varname[nv]);
-		    if (check_varname(c->dset->varname[nv])) {
+		    iso_to_ascii(c->dset->varname[j]);
+		    strip_illegals(c->dset->varname[j]);
+		    if (check_varname(c->dset->varname[j])) {
 			errmsg(1, prn);
 			err = E_DATA;
 		    }
 		}
+		j++;
 	    }
 	}
-	if (nv == c->dset->v - 1) break;
+	if (j == c->dset->v) break;
     }
 
     if (err) {
@@ -1844,7 +1878,7 @@ static int
 real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 {
     char *p;
-    int i, k, nv, t = 0;
+    int i, j, k, t = 0;
     int miss_shown = 0;
     int err = 0;
 
@@ -1865,7 +1899,8 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 	p = c->line;
 	if (c->delim == ' ' && *p == ' ') p++;
 
-	for (k=0; k<c->ncols; k++) {
+	j = 1;
+	for (k=0; k<c->ncols && !err; k++) {
 	    i = 0;
 	    while (*p && *p != c->delim) {
 		if (i < CSVSTRLEN - 1) {
@@ -1891,12 +1926,10 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 		if (!label_is_valid((gchar *) c->dset->S[t])) {
 		    iso_to_ascii(c->dset->S[t]);
 		} 
+	    } else if (cols_subset(c) && skip_data_column(c, k)) {
+		; /* no-op */
 	    } else {
-		nv = (csv_skip_column(c))? k : k + 1;
-		err = process_csv_obs(c, nv, t, &miss_shown, prn);
-		if (err) {
-		    break;
-		}
+		err = process_csv_obs(c, j++, t, &miss_shown, prn);
 	    }
 	}
 
@@ -1968,7 +2001,6 @@ int import_csv (const char *fname, DATASET *dset,
     FILE *fp = NULL;
     PRN *mprn = NULL;
     int newdata = (dset->Z == NULL);
-    int fixed_format = 0;
     int popit = 0;
     long datapos;
     int i, err = 0;
@@ -1979,8 +2011,11 @@ int import_csv (const char *fname, DATASET *dset,
     }
 
     if (opt & OPT_F) {
-	/* fixed format: should have --cols=XXX specification */
+	/* we should have a "--cols=XXX" specification */
 	cols = get_optval_string(OPEN, OPT_F);
+	if (cols == NULL || *cols == '\0') {
+	    return E_PARSE;
+	}
     }
 
     if (prn != NULL) {
@@ -2004,12 +2039,12 @@ int import_csv (const char *fname, DATASET *dset,
 	goto csv_bailout;
     }
 
-    if (cols != NULL && *cols != '\0') {
-	fixed_format = 1;
-	pprintf(mprn, A_("using fixed column format\n"));
-	err = csvdata_add_cols_list(c, cols);
+    if (cols != NULL) {
+	err = csvdata_add_cols_list(c, cols, opt);
 	if (err) {
 	    goto csv_bailout;
+	} else if (fixed_format(c)) {
+	    pprintf(mprn, A_("using fixed column format\n"));
 	}
     }
 
@@ -2024,7 +2059,7 @@ int import_csv (const char *fname, DATASET *dset,
 	goto csv_bailout;
     } 
 
-    if (!fixed_format && !csv_got_delim(c)) {
+    if (!fixed_format(c) && !csv_got_delim(c)) {
 	/* set default delimiter */
 	if (csv_got_tab(c)) {
 	    c->delim = '\t';
@@ -2044,7 +2079,7 @@ int import_csv (const char *fname, DATASET *dset,
 
  alt_delim:
 
-    if (!fixed_format) {
+    if (!fixed_format(c)) {
 	pprintf(mprn, A_("using delimiter '%c'\n"), c->delim);
     }
 
@@ -2058,7 +2093,7 @@ int import_csv (const char *fname, DATASET *dset,
 
     /* read lines, check for consistency in number of fields */
     err = csv_fields_check(fp, c, mprn);
-    if (err && !fixed_format) {
+    if (err && !fixed_format(c)) {
 	if (c->delim != ';' && csv_got_semi(c)) {
 	    c->delim = ';';
 	    err = 0;
@@ -2068,12 +2103,16 @@ int import_csv (const char *fname, DATASET *dset,
 	goto csv_bailout;
     }
 
-    if (fixed_format) {
+    if (fixed_format(c)) {
 	c->dset->n = c->nrows;
 	c->dset->v = c->ncols + 1;
     } else {
 	c->dset->n = c->nrows - 1; /* allow for var headings */
-	c->dset->v = (csv_skip_column(c))? c->ncols : c->ncols + 1;
+	if (cols_subset(c)) {
+	    c->dset->v = c->cols_list[0] + 1;
+	} else {
+	    c->dset->v = (csv_skip_column(c))? c->ncols : c->ncols + 1;
+	}
     }
 
     pprintf(mprn, A_("   number of variables: %d\n"), c->dset->v - 1);
@@ -2102,7 +2141,7 @@ int import_csv (const char *fname, DATASET *dset,
 
     rewind(fp);
 
-    if (fixed_format) {
+    if (fixed_format(c)) {
 	err = fixed_format_read(c, fp, prn);
 	if (err) {
 	    goto csv_bailout;

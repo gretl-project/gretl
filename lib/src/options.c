@@ -340,6 +340,7 @@ struct gretl_option gretl_opts[] = {
     { OPEN,     OPT_C, "coloffset", 2 },
     { OPEN,     OPT_S, "sheet", 2 },
     { OPEN,     OPT_W, "www", 0 },
+    { OPEN,     OPT_L, "delimited", 0 },
     { OUTFILE,  OPT_A, "append", 0 },
     { OUTFILE,  OPT_C, "close", 0 },
     { OUTFILE,  OPT_W, "write", 0 },
