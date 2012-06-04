@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "gretl_string_table.h"
 #include "libset.h"
+#include "usermat.h"
 #include "csvdata.h"
 
 #include <ctype.h>
@@ -168,6 +169,28 @@ static csvdata *csvdata_new (DATASET *dset)
     return c;
 }
 
+static int *cols_list_from_matrix (const char *s, int *err)
+{
+    gretl_matrix *m = get_matrix_by_name(s);
+    int i, n = gretl_vector_get_length(m);
+    int *list = NULL;
+
+    if (n == 0) {
+	*err = E_DATA;
+    } else {
+	list = gretl_list_new(n);
+	if (list == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    for (i=0; i<n; i++) {
+		list[i+1] = gretl_vector_get(m, i);
+	    }
+	}
+    }
+
+    return list;
+}
+
 /* The interpretation of the "cols" specification depends on
    @opt: if this includes OPT_L (--delimited) then it should
    provide a 1-based list of columns to be read; but if @opt
@@ -183,7 +206,11 @@ static int csvdata_add_cols_list (csvdata *c, const char *s,
     int i, n, m = 0;
     int err = 0;
 
-    list = gretl_list_from_string(s, &err);
+    if (gretl_is_matrix(s)) {
+	list = cols_list_from_matrix(s, &err);
+    } else {
+	list = gretl_list_from_string(s, &err);
+    }
 
     if (!err) {
 	n = list[0];
