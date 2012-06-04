@@ -1638,8 +1638,10 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 	    pprintf(prn, A_("   ...but row %d has %d fields: aborting\n"),
 		    c->nrows, chkcols);
 	    err = E_DATA;
-	} else if (c->cols_list != NULL) {
-	    if (c->cols_list[c->cols_list[0]] > c->ncols) {
+	} else if (cols_subset(c)) {
+	    int datacols = csv_skip_column(c) ? (c->ncols - 1) : c->ncols;
+
+	    if (c->cols_list[c->cols_list[0]] > datacols) {
 		gretl_errmsg_set(_("Invalid column specification"));
 		err = E_DATA;
 	    }
@@ -2111,7 +2113,7 @@ int import_csv (const char *fname, DATASET *dset,
 	if (cols_subset(c)) {
 	    c->dset->v = c->cols_list[0] + 1;
 	} else {
-	    c->dset->v = (csv_skip_column(c))? c->ncols : c->ncols + 1;
+	    c->dset->v = csv_skip_column(c) ? c->ncols : c->ncols + 1;
 	}
     }
 
