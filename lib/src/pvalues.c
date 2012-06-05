@@ -1193,8 +1193,8 @@ double invmills (double x)
 /**
  * genz04:
  * @rho: correlation coefficient.
- * @a: abscissa value, first Gaussian r.v.
- * @b: abscissa value, second Gaussian r.v.
+ * @limx: abscissa value, first Gaussian r.v.
+ * @limy: abscissa value, second Gaussian r.v.
  *
  * Based on FORTRAN code by Alan Genz, with minor adaptations.
  * Original source at 
@@ -1207,7 +1207,7 @@ double invmills (double x)
  * for double precision, and for |R| close to 1.
  *
  * Returns: for (x, y) a bivariate standard Normal rv with correlation
- * coefficient @rho, the joint probability that (x < @a) and (y < @b),
+ * coefficient @rho, the joint probability that (x < @limx) and (y < @limy),
  * or #NADBL on failure.
  */
 
@@ -1216,9 +1216,8 @@ static double genz04 (double rho, double limx, double limy)
     double w[10], x[10];
     double absrho = fabs(rho);
     double h, k, hk, bvn, hs, asr;
-    double as, d1, bs, c, d, tmp;
+    double a, b, as, d1, bs, c, d, tmp;
     double sn, xs, rs;
-    double a = 0, b = 0;
     int i, lg, j;
 
     if (absrho < 0.3) {
