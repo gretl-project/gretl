@@ -1221,27 +1221,6 @@ static double genz04 (double rho, double limx, double limy)
     double a = 0, b = 0;
     int i, lg, j;
 
-    if (absrho > 1) {
-	return NADBL;
-    }	
-
-    if (rho == 0.0) {
-	/* joint prob is just the product of the marginals */
-	return normal_cdf(limx) * normal_cdf(limy);
-    }
-
-    if (rho == 1.0) {
-	/* the two variables are in fact the same */
-	return normal_cdf(limx < limy ? limx : limy);
-    }
-    
-    if (rho == -1.0) {
-	/* the two variables are perfectly negatively correlated: 
-	   P(x<a, y<b) = P((x<a) && (x>b)) = P(x \in (b,a))
-	*/
-	return (a <= b) ? 0 : normal_cdf(limx) - normal_cdf(limy);
-    }
-    
     if (absrho < 0.3) {
 
 	w[0] = .1713244923791705;
@@ -1399,28 +1378,6 @@ static double drezner78 (double rho, double a, double b)
     double a1, b1, den;
     int i, j;
 
-    if (fabs(rho) > 1) {
-	return NADBL;
-    }	
-
-    if (rho == 0.0) {
-	/* joint prob is just the product of the marginals */
-	return normal_cdf(a) * normal_cdf(b);
-    }
-
-    if (rho == 1.0) {
-	/* the two variables are in fact the same */
-	return normal_cdf(a<b ? a : b);
-    }
-    
-    if (rho == -1.0) {
-	/* the two variables are perfectly negatively correlated: 
-	   P(x<a, y<b) = P((x<a) && (x>b)) = P(x \in (b,a))
-	*/
-	ret = (a<=b) ? 0 : normal_cdf(a)-normal_cdf(b);
-	return ret;
-    }
-    
     den = sqrt(2.0 * (1 - rho * rho));
 
     a1 = a / den;
@@ -1476,6 +1433,27 @@ static double drezner78 (double rho, double a, double b)
 
 double bvnorm_cdf (double rho, double a, double b)
 {
+    if (fabs(rho) > 1) {
+	return NADBL;
+    }	
+
+    if (rho == 0.0) {
+	/* joint prob is just the product of the marginals */
+	return normal_cdf(a) * normal_cdf(b);
+    }
+
+    if (rho == 1.0) {
+	/* the two variables are in fact the same */
+	return normal_cdf(a < b ? a : b);
+    }
+    
+    if (rho == -1.0) {
+	/* the two variables are perfectly negatively correlated: 
+	   P(x<a, y<b) = P((x<a) && (x>b)) = P(x \in (b,a))
+	*/
+	return (a <= b) ? 0 : normal_cdf(a) - normal_cdf(b);
+    }
+
 #if GENZ_BVN
     return genz04(rho, a, b);
 #else 
