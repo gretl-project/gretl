@@ -303,14 +303,10 @@ static int n_from_row_mask (csvdata *c)
 {
     int i, n = 0;
 
-    for (i=0; i<c->masklen; i++) {
+    for (i=0; i<c->masklen && i<=c->nrows; i++) {
 	if (gretl_vector_get(c->rowmask, i) != 0) {
 	    n++;
 	}
-    }
-
-    if (n > c->nrows) {
-	n = c->nrows;
     }
 
     return n;

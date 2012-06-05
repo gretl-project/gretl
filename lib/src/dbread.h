@@ -111,7 +111,8 @@ float retrieve_float (netfloat nf);
 int get_native_db_data (const char *dbbase, SERIESINFO *sinfo, 
 			double **Z);
 
-int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo, double **Z);
+int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo, 
+			double **Z);
 
 int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo, 
 			double **Z);

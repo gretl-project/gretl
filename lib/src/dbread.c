@@ -25,6 +25,7 @@
 #include "libset.h"
 #include "gretl_string_table.h"
 #include "matrix_extra.h"
+#include "usermat.h"
 #include "dbread.h"
 
 #include <glib.h>
@@ -48,7 +49,7 @@
  * try to remedy this!
  */
 
-#define DB_DEBUG 0
+#define DB_DEBUG 1
 
 #define RECNUM gint32
 #define NAMELENGTH 16
@@ -159,7 +160,6 @@ static FILE *open_binfile (const char *dbbase, int code, int offset, int *err)
  * @sinfo:
  * @Z: data array.
  *
- *
  * Returns: 0 on success, non-zero code on failure.
  */
 
@@ -196,12 +196,59 @@ int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
     return err;
 }
 
+static int db_row_wanted (const gretl_matrix *mask, 
+			  int masklen, int t)
+{
+    if (t >= masklen) {
+	return 0;
+    } else {
+	return gretl_vector_get(mask, t) != 0;
+    }
+}
+
+static int get_native_db_data_masked (const char *dbbase, 
+				      SERIESINFO *sinfo,
+				      double **Z,
+				      const gretl_matrix *mask)
+{
+    char numstr[32];
+    FILE *fp;
+    dbnumber x;
+    int v = sinfo->v;
+    int masklen;
+    int s, t, err = 0;
+
+    fp = open_binfile(dbbase, GRETL_NATIVE_DB, sinfo->offset, &err);
+    if (err) {
+	return err;
+    }
+
+    masklen = gretl_vector_get_length(mask);
+
+    s = 0;
+    for (t=0; t<=sinfo->nobs && !err; t++) {
+	if (fread(&x, sizeof x, 1, fp) != 1) {
+	    err = DB_PARSE_ERROR;
+	} else if (db_row_wanted(mask, masklen, t)) {
+	    sprintf(numstr, "%.7g", (double) x); /* N.B. converting a float */
+	    Z[v][s] = atof(numstr);
+	    if (Z[v][s] == DBNA) {
+		Z[v][s] = NADBL;
+	    }
+	    s++;
+	}
+    }
+
+    fclose(fp);
+
+    return err;
+}
+
 /**
  * get_remote_db_data:
  * @dbbase:
  * @sinfo:
  * @Z: data array.
- *
  *
  * Returns:  0 on success, non-zero code on failure.
  */
@@ -435,7 +482,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
     FILE *fp = NULL;
     char sername[VNAMELEN];
     char s1[256], s2[72];
-    char stobs[11], endobs[11];
+    char stobs[16], endobs[16];
     char pdc;
     int offset = 0;
     int gotit = 0, err = 0;
@@ -501,7 +548,7 @@ get_remote_series_info (const char *series, SERIESINFO *sinfo)
     char *buf = NULL;
     char sername[VNAMELEN];
     char s1[256], s2[72];
-    char stobs[11], endobs[11];
+    char stobs[16], endobs[16];
     char pdc;
     int gotit = 0;
     int err = 0;
@@ -1298,7 +1345,8 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
  * data were found but there were some missing values.
  */
 
-int get_rats_db_data (const char *fname, SERIESINFO *sinfo, double **Z)
+int get_rats_db_data (const char *fname, SERIESINFO *sinfo, 
+		      double **Z)
 {
     FILE *fp;
     int ret = 0;
@@ -2283,6 +2331,42 @@ static int odbc_get_series (char *line, DATASET *dset,
     return err;
 }
 
+static int db_get_row_mask (const gretl_matrix **pmat)
+{
+    const char *rows;
+    int err = 0;
+
+    rows = get_optval_string(DATA, OPT_M);
+    if (rows == NULL || *rows == '\0') {
+	return E_PARSE;
+    }   
+
+    *pmat = get_matrix_by_name(rows);
+    if (*pmat == NULL) {
+	gretl_errmsg_sprintf(_("'%s': no such matrix"), rows);
+	err = E_DATA;
+    } else if (gretl_vector_get_length(*pmat) == 0) {
+	err = E_NONCONF;
+    }
+
+    return err;
+}
+
+static int db_n_from_row_mask (const gretl_matrix *mask,
+			       int n_max)
+{
+    int mlen = gretl_vector_get_length(mask);
+    int i, n = 0;
+
+    for (i=0; i<mlen && i<n_max; i++) {
+	if (gretl_vector_get(mask, i) != 0) {
+	    n++;
+	}
+    }
+
+    return n;
+}
+
 /* main function for getting a series out of a database, using the
    command-line client or in script or console mode
 */
@@ -2290,6 +2374,7 @@ static int odbc_get_series (char *line, DATASET *dset,
 int db_get_series (char *line, DATASET *dset, 
 		   gretlopt opt, PRN *prn)
 {
+    const gretl_matrix *rowmask = NULL;
     char series[VNAMELEN];
     CompactMethod method;
     SERIESINFO sinfo;
@@ -2299,6 +2384,13 @@ int db_get_series (char *line, DATASET *dset,
     if (opt & OPT_O) {
 	return odbc_get_series(line, dset, prn);
     }
+
+    if (opt & OPT_M) {
+	err = db_get_row_mask(&rowmask);
+	if (err) {
+	    return err;
+	}
+    }    
 
 #if DB_DEBUG
     fprintf(stderr, "db_get_series: line='%s', dset=%p\n", 
@@ -2317,7 +2409,7 @@ int db_get_series (char *line, DATASET *dset,
 
     while ((line = get_word_and_advance(line, series, VNAMELEN-1)) && !err) {
 	int v, this_var_method = method; 
-	int newdata = 0;
+	int nobs, newdata = 0;
 
 	series_info_init(&sinfo);
 
@@ -2349,8 +2441,14 @@ int db_get_series (char *line, DATASET *dset,
 	    return 1;
 	}
 
+	if (rowmask != NULL) {
+	    nobs = db_n_from_row_mask(rowmask, sinfo.nobs);
+	} else {
+	    nobs = sinfo.nobs;
+	}
+
 	/* temporary dataset */
-	dbZ = new_dbZ(sinfo.nobs);
+	dbZ = new_dbZ(nobs);
 	if (dbZ == NULL) {
 	    gretl_errmsg_set(_("Out of memory!"));
 	    return 1;
@@ -2358,7 +2456,7 @@ int db_get_series (char *line, DATASET *dset,
 
 #if DB_DEBUG
 	fprintf(stderr, "db_get_series: offset=%d, nobs=%d\n", 
-		sinfo.offset, sinfo.nobs);
+		sinfo.offset, nobs);
 #endif
 
 	if (saved_db_type == GRETL_RATS_DB) {
@@ -2367,6 +2465,9 @@ int db_get_series (char *line, DATASET *dset,
 	    err = get_pcgive_db_data(saved_db_name, &sinfo, dbZ);
 	} else if (saved_db_type == GRETL_NATIVE_DB_WWW) {
 	    err = get_remote_db_data(saved_db_name, &sinfo, dbZ);
+	} else if (rowmask != NULL) {
+	    err = get_native_db_data_masked(saved_db_name, &sinfo, dbZ, 
+					    rowmask);
 	} else {
 	    err = get_native_db_data(saved_db_name, &sinfo, dbZ);
 	} 
@@ -2378,6 +2479,15 @@ int db_get_series (char *line, DATASET *dset,
 	if (err == DB_MISSING_DATA) {
 	    fprintf(stderr, "There were missing data\n");
 	    err = 0;
+	}
+
+	if (!err && rowmask != NULL) {
+	    sinfo.nobs = nobs;
+	    sinfo.t1 = 0;
+	    sinfo.t2 = nobs - 1;
+	    strcpy(sinfo.stobs, "1");
+	    sprintf(sinfo.endobs, "%d", nobs);
+	    sinfo.pd = 1;
 	}
 
 	if (!err) {

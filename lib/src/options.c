@@ -150,6 +150,7 @@ struct gretl_option gretl_opts[] = {
     { CORRGM,   OPT_G, "gui-graph", 0 },
     { CUSUM,    OPT_R, "squares", 0 },
     { DATA,     OPT_O, "odbc", 0 },
+    { DATA,     OPT_M, "rowmask", 2 },
     { DATAMOD,  OPT_P, "preserve", 0 },
     { DELEET,   OPT_D, "db", 0 },
     { DELEET,   OPT_F, "force", 0 },
