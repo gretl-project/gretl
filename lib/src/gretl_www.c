@@ -61,13 +61,8 @@
 #define DBHLEN 64
 
 static int wproxy;
-#if 0 /* local testing */
-static char dbhost[DBHLEN]       = "dev.ricardo.ecn.wfu.edu";
-static char gretlhost[DBHLEN]    = "dev.ricardo.ecn.wfu.edu";
-#else
 static char dbhost[DBHLEN]       = "ricardo.ecn.wfu.edu";
 static char gretlhost[DBHLEN]    = "ricardo.ecn.wfu.edu";
-#endif
 static char datacgi[DBHLEN]      = "/gretl/cgi-bin/gretldata.cgi";
 static char updatecgi[DBHLEN]    = "/gretl/cgi-bin/gretl_update.cgi";
 static char manual_path[DBHLEN]  = "/project/gretl/manual/";
@@ -1709,7 +1704,9 @@ static int maybe_register_type_error (urlinfo *u, CGIOpt opt)
 
 static void maybe_revise_www_paths (void)
 {
-    if (!strcmp(dbhost, "www.wfu.edu")) {
+    if (!strcmp(dbhost, "dev.ricardo.ecn.wfu.edu")) {
+	strcpy(gretlhost, "dev.ricardo.ecn.wfu.edu");
+    } else if (!strcmp(dbhost, "www.wfu.edu")) {
 	strcpy(gretlhost, "www.wfu.edu");
 	strcpy(datacgi, "/~cottrell/gretl/gretldata.cgi");
 	strcpy(updatecgi, "/~cottrell/gretl/gretl_update.cgi");
@@ -1991,6 +1988,8 @@ int upload_function_package (const char *login, const char *pass,
     urlinfo *u;
     uerr_t result;
     int err = 0;
+
+    maybe_revise_www_paths();
 
     u = urlinfo_new();
     if (u == NULL) {
