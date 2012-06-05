@@ -49,7 +49,7 @@
  * try to remedy this!
  */
 
-#define DB_DEBUG 1
+#define DB_DEBUG 0
 
 #define RECNUM gint32
 #define NAMELENGTH 16
@@ -214,8 +214,7 @@ static int get_native_db_data_masked (const char *dbbase,
     char numstr[32];
     FILE *fp;
     dbnumber x;
-    int v = sinfo->v;
-    int masklen;
+    int masklen, v = sinfo->v;
     int s, t, err = 0;
 
     fp = open_binfile(dbbase, GRETL_NATIVE_DB, sinfo->offset, &err);
@@ -230,7 +229,7 @@ static int get_native_db_data_masked (const char *dbbase,
 	if (fread(&x, sizeof x, 1, fp) != 1) {
 	    err = DB_PARSE_ERROR;
 	} else if (db_row_wanted(mask, masklen, t)) {
-	    sprintf(numstr, "%.7g", (double) x); /* N.B. converting a float */
+	    sprintf(numstr, "%.7g", (double) x);
 	    Z[v][s] = atof(numstr);
 	    if (Z[v][s] == DBNA) {
 		Z[v][s] = NADBL;
@@ -2367,6 +2366,25 @@ static int db_n_from_row_mask (const gretl_matrix *mask,
     return n;
 }
 
+static int update_sinfo_masked (SERIESINFO *sinfo, int nobs)
+{
+    int err = 0;
+
+    sinfo->nobs = nobs;
+    sinfo->t1 = 0;
+    sinfo->t2 = nobs - 1;
+
+    if (sinfo->pd != 1) {
+	err = E_PDWRONG;
+    } else if (strcmp(sinfo->stobs, "1")) {
+	err = E_DATA;
+    } else {
+	sprintf(sinfo->endobs, "%d", nobs);
+    }
+
+    return err;
+}
+
 /* main function for getting a series out of a database, using the
    command-line client or in script or console mode
 */
@@ -2482,12 +2500,7 @@ int db_get_series (char *line, DATASET *dset,
 	}
 
 	if (!err && rowmask != NULL) {
-	    sinfo.nobs = nobs;
-	    sinfo.t1 = 0;
-	    sinfo.t2 = nobs - 1;
-	    strcpy(sinfo.stobs, "1");
-	    sprintf(sinfo.endobs, "%d", nobs);
-	    sinfo.pd = 1;
+	    err = update_sinfo_masked(&sinfo, nobs);
 	}
 
 	if (!err) {
