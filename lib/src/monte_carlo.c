@@ -3008,7 +3008,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 			err = execute_genr(genr, dset, prn);
 		    }
 		}
-	    } else if (cmd->ci == DELEET) {
+	    } else if (cmd->ci == DELEET && !(cmd->opt & OPT_F)) {
 		err = loop_delete_object(cmd, prn);
 	    } else {
 		err = gretl_cmd_exec(s, dset);

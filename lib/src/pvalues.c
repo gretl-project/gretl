@@ -1186,8 +1186,194 @@ double invmills (double x)
     return ret;
 }
 
+#define GENZ_BVN 1
+
+#if GENZ_BVN
+
 /**
- * bvnorm_cdf:
+ * genz04:
+ * @rho: correlation coefficient.
+ * @a: abscissa value, first Gaussian r.v.
+ * @b: abscissa value, second Gaussian r.v.
+ *
+ * Based on FORTRAN code by Alan Genz, with minor adaptations.
+ * Original source at 
+ * http://www.math.wsu.edu/faculty/genz/software/fort77/tvpack.f
+ * No apparent license.
+ *
+ * The algorithm is from Drezner and Wesolowsky (1989), 'On the
+ * Computation of the Bivariate Normal Integral', Journal of
+ * Statist. Comput. Simul. 35 pp. 101-107, with major modifications
+ * for double precision, and for |R| close to 1.
+ *
+ * Returns: for (x, y) a bivariate standard Normal rv with correlation
+ * coefficient @rho, the joint probability that (x < @a) and (y < @b),
+ * or #NADBL on failure.
+ */
+
+static double genz04 (double rho, double limx, double limy)
+{
+    double w[10], x[10];
+    double absrho = fabs(rho);
+    double h, k, hk, bvn, hs, asr;
+    double as, d1, bs, c, d, tmp;
+    double sn, xs, rs;
+    double a = 0, b = 0;
+    int i, lg, j;
+
+    if (absrho > 1) {
+	return NADBL;
+    }	
+
+    if (rho == 0.0) {
+	/* joint prob is just the product of the marginals */
+	return normal_cdf(limx) * normal_cdf(limy);
+    }
+
+    if (rho == 1.0) {
+	/* the two variables are in fact the same */
+	return normal_cdf(limx < limy ? limx : limy);
+    }
+    
+    if (rho == -1.0) {
+	/* the two variables are perfectly negatively correlated: 
+	   P(x<a, y<b) = P((x<a) && (x>b)) = P(x \in (b,a))
+	*/
+	return (a <= b) ? 0 : normal_cdf(limx) - normal_cdf(limy);
+    }
+    
+    if (absrho < 0.3) {
+
+	w[0] = .1713244923791705;
+	w[1] = .3607615730481384;
+	w[2] = .4679139345726904;
+
+	x[0] = -.9324695142031522;
+	x[1] = -.6612093864662647;
+	x[2] = -.238619186083197;
+
+	lg = 3;
+    } else if (absrho < 0.75) {
+
+	w[0] = .04717533638651177;
+	w[1] = .1069393259953183;
+	w[2] = .1600783285433464;
+	w[3] = .2031674267230659;
+	w[4] = .2334925365383547;
+	w[5] = .2491470458134029;
+
+	x[0] = -.9815606342467191;
+	x[1] = -.904117256370475;
+	x[2] = -.769902674194305;
+	x[3] = -.5873179542866171;
+	x[4] = -.3678314989981802;
+	x[5] = -.1252334085114692;
+
+	lg = 6;
+    } else {
+
+	w[0] = .01761400713915212;
+	w[1] = .04060142980038694;
+	w[2] = .06267204833410906;
+	w[3] = .08327674157670475;
+	w[4] = .1019301198172404;
+	w[5] = .1181945319615184;
+	w[6] = .1316886384491766;
+	w[7] = .1420961093183821;
+	w[8] = .1491729864726037;
+	w[9] = .1527533871307259;
+
+	x[0] = -.9931285991850949;
+	x[1] = -.9639719272779138;
+	x[2] = -.9122344282513259;
+	x[3] = -.8391169718222188;
+	x[4] = -.7463319064601508;
+	x[5] = -.636053680726515;
+	x[6] = -.5108670019508271;
+	x[7] = -.3737060887154196;
+	x[8] = -.2277858511416451;
+	x[9] = -.07652652113349733;
+
+	lg = 10;
+    }
+
+    h = -limx;
+    k = -limy;
+    hk = h * k;
+    bvn = 0.0;
+
+    if (absrho < 0.925) {
+	hs = (h * h + k * k) / 2;
+	asr = asin(rho);
+	for (i=0; i<lg; i++) {
+	    for (j=0; j<=1; j++) {
+		sn = sin(asr * (1 + (2*j-1)*x[i]) / 2);
+		bvn += w[i] * exp((sn * hk - hs) / (1 - sn * sn));
+	    }
+	}
+	bvn = bvn * asr / (2 * M_2PI); 
+	d1 = -h;
+	bvn += normal_cdf(d1) * normal_cdf(-k);
+    } else {
+	if (rho < 0.0) {
+	    k = -k;
+	    hk = -hk;
+	}
+
+	as = (1 - rho) * (1 + rho);
+	a = sqrt(as);
+	bs = (h - k) * (h - k);
+	c = (4 - hk) / 8;
+	d = (12 - hk) / 16;
+	asr = -(bs / as + hk) / 2;
+	if (asr > -100.0) {
+	    bvn = a * exp(asr) * (1 - c * (bs - as) * (1 - d * bs / 5)
+				  / 3 + c * d * as * as / 5);
+	}
+
+	if (-hk < 100.0) {
+	    b = sqrt(bs);
+	    d1 = -b / a;
+	    bvn -= exp(-hk / 2) * SQRT_2_PI * normal_cdf(d1) * b * 
+		(1 - c * bs * (1 - d * bs / 5) / 3);
+	}
+
+	a /= 2;
+
+	for (i=0; i<lg; i++) {
+	    for (j=0; j<=1; j++) {
+		d1 = a * (1 + (2*j-1)*x[i]);
+		xs = d1 * d1;
+		rs = sqrt(1 - xs);
+		asr = -(bs / xs + hk) / 2;
+		if (asr > -100.0) {
+		    tmp = exp(-hk * (1 - rs) / ((rs + 1) * 2)) / 
+			rs - (c * xs * (d * xs + 1) + 1);
+		    bvn += a * w[i] * exp(asr) * tmp;
+		}
+	    }
+	}
+	
+	bvn = -bvn / M_2PI;
+
+	if (rho > 0.0) {
+	    bvn += normal_cdf((h > k) ? -h : -k);
+	} else {
+	    bvn = -bvn;
+	    if (k > h) {
+		bvn = bvn + normal_cdf(k) - normal_cdf(h);
+	    }
+	}
+    }
+
+    /* sanity check */
+    return (bvn < 0) ? NADBL : bvn;
+}
+
+#else
+
+/**
+ * drezner78:
  * @rho: correlation coefficient.
  * @a: abscissa value, first Gaussian r.v.
  * @b: abscissa value, second Gaussian r.v.
@@ -1196,14 +1382,14 @@ double invmills (double x)
  * (a * b < 0) && (rho < 0).
  *
  * The algorithm is from Drezner (1978), 'Computation of the Bivariate
- * Normal Integral', Mathematics of Computation, volume 32, number 141
+ * Normal Integral', Mathematics of Computation, volume 32, number 141.
  *
  * Returns: for (x, y) a bivariate standard Normal rv with correlation
  * coefficient @rho, the joint probability that (x < @a) and (y < @b), or
  * #NADBL on failure.
  */
 
-double bvnorm_cdf (double rho, double a, double b)
+static double drezner78 (double rho, double a, double b)
 {
     static const double x[] = {0.24840615, 0.39233107, 0.21141819, 
 			       0.03324666, 0.00082485334};
@@ -1273,6 +1459,28 @@ double bvnorm_cdf (double rho, double a, double b)
     }    
 
     return ret;
+}
+
+#endif /* bvnorm variants */
+
+/**
+ * bvnorm_cdf:
+ * @rho: correlation coefficient.
+ * @a: abscissa value, first Gaussian r.v.
+ * @b: abscissa value, second Gaussian r.v.
+ *
+ * Returns: for (x, y) a bivariate standard Normal rv with correlation
+ * coefficient @rho, the joint probability that (x < @a) and (y < @b), or
+ * #NADBL on failure.
+ */
+
+double bvnorm_cdf (double rho, double a, double b)
+{
+#if GENZ_BVN
+    return genz04(rho, a, b);
+#else 
+    return drezner78(rho, a, b);
+#endif
 }
 
 /**

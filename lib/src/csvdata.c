@@ -63,6 +63,8 @@ struct csvdata_ {
     gretl_string_table *st;
     int *cols_list;
     int *width_list;
+    const gretl_matrix *rowmask;
+    int masklen;
 };
 
 #define csv_has_trailing_comma(c) (c->flags & CSV_TRAIL)
@@ -88,11 +90,12 @@ struct csvdata_ {
 #define csv_set_data_reversed(c)    (c->flags |= CSV_REVERSED)
 #define csv_set_dotsub(c)           (c->flags |= CSV_DOTSUB)
 
-#define csv_skipping(c)        (*c->skipstr != '\0')
+#define csv_skip_bad(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
 
 #define fixed_format(c) (c->cols_list != NULL && c->width_list != NULL)
 #define cols_subset(c) (c->cols_list != NULL && c->width_list == NULL)
+#define rows_subset(c) (c->rowmask != NULL)
 
 static int 
 time_series_label_check (DATASET *dset, int reversed, char *skipstr, PRN *prn);
@@ -153,6 +156,8 @@ static csvdata *csvdata_new (DATASET *dset)
     c->st = NULL;
     c->cols_list = NULL;
     c->width_list = NULL;
+    c->rowmask = NULL;
+    c->masklen = 0;
 
     c->dset = datainfo_new();
     if (c->dset == NULL) {
@@ -276,25 +281,59 @@ static int csvdata_add_cols_list (csvdata *c, const char *s,
     return err;
 }
 
+static int csvdata_add_row_mask (csvdata *c, const char *s)
+{
+    int err = 0;
+
+    c->rowmask = get_matrix_by_name(s);
+    if (c->rowmask == NULL) {
+	gretl_errmsg_sprintf(_("'%s': no such matrix"), s);
+	err = E_DATA;
+    } else {
+	c->masklen = gretl_vector_get_length(c->rowmask);
+	if (c->masklen == 0) {
+	    err = E_NONCONF;
+	}
+    }
+
+    return err;
+}
+
+static int n_from_row_mask (csvdata *c)
+{
+    int i, n = 0;
+
+    for (i=0; i<c->masklen; i++) {
+	if (gretl_vector_get(c->rowmask, i) != 0) {
+	    n++;
+	}
+    }
+
+    if (n > c->nrows) {
+	n = c->nrows;
+    }
+
+    return n;
+}
+
 static int add_obs_marker (DATASET *dset, int n)
 {
-    char **S;
+    char **S = realloc(dset->S, n * sizeof *S);
+    int err = 0;
 
-    S = realloc(dset->S, n * sizeof *S);
     if (S == NULL) {
-	return 1;
+	err = E_ALLOC;
+    } else {
+	dset->S = S;
+	dset->S[n-1] = malloc(OBSLEN);
+	if (dset->S[n-1] == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    strcpy(dset->S[n-1], "NA");
+	}
     }
 
-    dset->S = S;
-
-    dset->S[n-1] = malloc(OBSLEN);
-    if (dset->S[n-1] == NULL) {
-	return 1;
-    }
-
-    strcpy(dset->S[n-1], "NA");
-
-    return 0;
+    return err;
 }
 
 static int add_single_obs (DATASET *dset)
@@ -302,25 +341,24 @@ static int add_single_obs (DATASET *dset)
     double *x;
     int i, err = 0;
 
-    for (i=0; i<dset->v; i++) {
+    for (i=0; i<dset->v && !err; i++) {
 	x = realloc(dset->Z[i], (dset->n + 1) * sizeof *x);
 	if (x != NULL) {
 	    dset->Z[i] = x;
 	} else {
-	    return 1;
+	    err = E_ALLOC;
 	}
     }
 
-    dset->n += 1;
-
-    dset->Z[0][dset->n - 1] = 1.0;
-
-    for (i=1; i<dset->v; i++) {
-	dset->Z[i][dset->n - 1] = NADBL;
-    }
-
-    if (dset->S != NULL) {
-	err = add_obs_marker(dset, dset->n);
+    if (!err) {
+	dset->n += 1;
+	dset->Z[0][dset->n - 1] = 1.0;
+	for (i=1; i<dset->v; i++) {
+	    dset->Z[i][dset->n - 1] = NADBL;
+	}
+	if (dset->S != NULL) {
+	    err = add_obs_marker(dset, dset->n);
+	}
     }
 
     return err;
@@ -364,7 +402,7 @@ static int pad_weekly_data (DATASET *dset, int add)
     return err;
 }
 
-/* FIXME the following needs to be made more flexible */
+/* FIXME the following needs to be made more flexible? */
 
 static int csv_weekly_data (DATASET *dset)
 {
@@ -754,9 +792,8 @@ void reverse_data (DATASET *dset, PRN *prn)
     }
 }
 
-static int 
-csv_daily_date_check (DATASET *dset, int *reversed,
-		      char *skipstr, PRN *prn)
+static int csv_daily_date_check (DATASET *dset, int *reversed,
+				 char *skipstr, PRN *prn)
 {
     int d1[3], d2[3];
     char s1, s2;
@@ -1695,14 +1732,15 @@ static void strip_illegals (char *s)
     }
 }
 
-static int 
-csv_reconfigure_for_markers (DATASET *dset)
+static int csv_reconfigure_for_markers (DATASET *dset)
 {
-    if (dataset_allocate_obs_markers(dset)) {
-	return 1;
+    int err = dataset_allocate_obs_markers(dset);
+
+    if (!err) {
+	err = dataset_drop_last_variables(1, dset);
     }
 
-    return dataset_drop_last_variables(1, dset);
+    return err;
 }
 
 static int skip_data_column (csvdata *c, int k)
@@ -1794,16 +1832,16 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     if (numcount == c->dset->v - 1 || 
 	obs_labels_no_varnames(obscol, c->dset, numcount)) {
 	pputs(prn, A_("it seems there are no variable names\n"));
-	/* then we undercounted the observations by one */
-	if (add_single_obs(c->dset)) {
-	    err = E_ALLOC;
-	} else {
+	/* then we undercounted the observations by one? */
+	if (!rows_subset(c)) {
+	    err = add_single_obs(c->dset);
+	}
+	if (!err) {
 	    csv_set_autoname(c);
 	    rewind(fp);
 	    if (obs_labels_no_varnames(obscol, c->dset, numcount)) {
-		if (csv_reconfigure_for_markers(c->dset)) {
-		    err = E_ALLOC;
-		} else {
+		err = csv_reconfigure_for_markers(c->dset);
+		if (!err) {
 		    csv_set_obs_column(c);
 		}
 	    }
@@ -1821,14 +1859,28 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     return err;
 }
 
+static int row_not_wanted (csvdata *c, int t)
+{
+    if (c->rowmask != NULL) {
+	if (t >= c->masklen) {
+	    return 1;
+	} else if (gretl_vector_get(c->rowmask, t) == 0) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /* read numerical data when we've been given a fixed column-reading
    specification */
 
 static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 {
     char *p;
-    int i, k, n, m, t = 0;
     int miss_shown = 0;
+    int t = 0, s = 0;
+    int i, k, n, m;
     int err = 0;
 
     c->real_n = c->dset->n;
@@ -1841,9 +1893,14 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 	    continue;
 	}
 
+	if (row_not_wanted(c, s)) {
+	    s++;
+	    continue;
+	}
+
 	m = strlen(c->line);
 
-	for (i=1; i<=c->ncols; i++) {
+	for (i=1; i<=c->ncols && !err; i++) {
 	    k = c->cols_list[i];
 	    n = c->width_list[i];
 	    if (k + n - 1 > m) {
@@ -1860,9 +1917,16 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 		c->dset->Z[i][t] = NADBL;
 	    } else {
 		c->dset->Z[i][t] = csv_atof(c, c->str);
+		if (c->dset->Z[i][t] == NON_NUMERIC) {
+		    gretl_errmsg_sprintf(_("At row %d, column %d:\n"), t+1, k);
+		    gretl_errmsg_sprintf(_("'%s' -- no numeric conversion performed!"),
+					 c->str);
+		    err = E_DATA;
+		}
 	    }
 	}
 
+	s++;
 	if (++t == c->dset->n) {
 	    break;
 	}
@@ -1907,8 +1971,9 @@ static int
 real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 {
     char *p;
-    int i, j, k, t = 0;
     int miss_shown = 0;
+    int t = 0, s = 0;
+    int i, j, k;
     int err = 0;
 
     c->real_n = c->dset->n;
@@ -1919,8 +1984,13 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 	    continue;
 	}
 
-	if (csv_skipping(c) && strstr(c->line, c->skipstr)) {
+	if (*c->skipstr != '\0' && strstr(c->line, c->skipstr)) {
 	    c->real_n -= 1;
+	    continue;
+	}
+
+	if (row_not_wanted(c, s)) {
+	    s++;
 	    continue;
 	}
 
@@ -1962,6 +2032,7 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 	    }
 	}
 
+	s++;
 	if (++t == c->dset->n) {
 	    break;
 	}
@@ -1984,7 +2055,7 @@ static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     pputs(mprn, A_("scanning for row labels and data...\n"));
     err = real_read_labels_and_data(c, fp, prn);
 
-    if (!err && csv_skip_column(c)) {
+    if (!err && csv_skip_column(c) && !rows_subset(c)) {
 	c->markerpd = test_markers_for_dates(c->dset, &reversed,
 					     c->skipstr, prn);
 	if (reversed) {
@@ -2004,6 +2075,29 @@ static void print_csv_parsing_header (const char *fname, PRN *prn)
 	g_free(trfname);
     } else {
 	pprintf(prn, "%s %s...\n", A_("parsing"), fname);
+    }
+}
+
+static void csv_set_dataset_dimensions (csvdata *c)
+{
+    if (rows_subset(c)) {
+	c->dset->n = n_from_row_mask(c);
+    }
+
+    if (fixed_format(c)) {
+	if (c->dset->n == 0) {
+	    c->dset->n = c->nrows;
+	}
+	c->dset->v = c->ncols + 1;
+    } else {
+	if (c->dset->n == 0) {
+	    c->dset->n = c->nrows - 1; /* allow for varnames row */
+	}
+	if (cols_subset(c)) {
+	    c->dset->v = c->cols_list[0] + 1;
+	} else {
+	    c->dset->v = csv_skip_column(c) ? c->ncols : c->ncols + 1;
+	}
     }
 }
 
@@ -2027,6 +2121,7 @@ int import_csv (const char *fname, DATASET *dset,
 {
     csvdata *c = NULL;
     const char *cols = NULL;
+    const char *rows = NULL;
     FILE *fp = NULL;
     PRN *mprn = NULL;
     int newdata = (dset->Z == NULL);
@@ -2046,6 +2141,14 @@ int import_csv (const char *fname, DATASET *dset,
 	    return E_PARSE;
 	}
     }
+
+    if (opt & OPT_M) {
+	/* we should have a "--rowmask=XXX" specification */
+	rows = get_optval_string(OPEN, OPT_M);
+	if (rows == NULL || *rows == '\0') {
+	    return E_PARSE;
+	}
+    }	
 
     if (prn != NULL) {
 	set_alt_gettext_mode(prn);
@@ -2075,6 +2178,13 @@ int import_csv (const char *fname, DATASET *dset,
 	} else if (fixed_format(c)) {
 	    pprintf(mprn, A_("using fixed column format\n"));
 	}
+    }
+
+    if (rows != NULL) {
+	err = csvdata_add_row_mask(c, rows);
+	if (err) {
+	    goto csv_bailout;
+	} 
     }
 
     if (mprn != NULL) {
@@ -2132,17 +2242,7 @@ int import_csv (const char *fname, DATASET *dset,
 	goto csv_bailout;
     }
 
-    if (fixed_format(c)) {
-	c->dset->n = c->nrows;
-	c->dset->v = c->ncols + 1;
-    } else {
-	c->dset->n = c->nrows - 1; /* allow for var headings */
-	if (cols_subset(c)) {
-	    c->dset->v = c->cols_list[0] + 1;
-	} else {
-	    c->dset->v = csv_skip_column(c) ? c->ncols : c->ncols + 1;
-	}
-    }
+    csv_set_dataset_dimensions(c);
 
     pprintf(mprn, A_("   number of variables: %d\n"), c->dset->v - 1);
     pprintf(mprn, A_("   number of non-blank lines: %d\n"), c->nrows);
@@ -2153,17 +2253,14 @@ int import_csv (const char *fname, DATASET *dset,
 	goto csv_bailout;
     }
 
-    /* initialize datainfo and Z */
-    if (start_new_Z(c->dset, 0)) {
-	err = E_ALLOC;
-	goto csv_bailout;
+    /* initialize CSV dataset */
+    err = start_new_Z(c->dset, 0);
+    if (!err && csv_skip_column(c)) {
+	err = dataset_allocate_obs_markers(c->dset);
     }
 
-    if (csv_skip_column(c)) {
-	if (dataset_allocate_obs_markers(c->dset)) {
-	    err = E_ALLOC;
-	    goto csv_bailout;
-	}
+    if (err) {
+	goto csv_bailout;
     }
 
     /* second pass */
@@ -2196,7 +2293,7 @@ int import_csv (const char *fname, DATASET *dset,
 
     err = csv_read_data(c, fp, prn, mprn);
 
-    if (!err && csv_skipping(c)) {
+    if (!err && csv_skip_bad(c)) {
 	/* try again */
 	fseek(fp, datapos, SEEK_SET);
 	err = csv_read_data(c, fp, prn, NULL);
@@ -2230,7 +2327,7 @@ int import_csv (const char *fname, DATASET *dset,
 
     if (c->markerpd > 0) {
 	pputs(mprn, A_("taking date information from row labels\n\n"));
-	if (csv_skipping(c)) {
+	if (csv_skip_bad(c)) {
 	    pprintf(prn, "WARNING: Check your data! gretl has stripped out "
 		    "what appear to be\nextraneous lines in a %s dataset: " 
 		    "this may not be right.\n\n",

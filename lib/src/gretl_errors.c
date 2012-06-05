@@ -332,8 +332,9 @@ void gretl_errmsg_sprintf (const char *fmt, ...)
 	*/
 	;
     } else {
-	/* the number of characters left */
-	int n = ERRLEN - strlen(gretl_errmsg) - 2;
+	/* find the number of characters left */
+	int len0 = strlen(gretl_errmsg);
+	int n = ERRLEN - len0 - 2;
 
 	if (n > 31) {
 	    char tmp[ERRLEN];
@@ -344,7 +345,9 @@ void gretl_errmsg_sprintf (const char *fmt, ...)
 	    vsnprintf(tmp, n, fmt, ap);
 	    va_end(ap);
 
-	    strncat(gretl_errmsg, "\n", 1);
+	    if (gretl_errmsg[len0 - 1] != '\n') {
+		strncat(gretl_errmsg, "\n", 1);
+	    }
 	    strncat(gretl_errmsg, tmp, strlen(tmp));
 	} 
     }

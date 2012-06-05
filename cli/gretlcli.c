@@ -970,7 +970,6 @@ static int exec_line (ExecState *s, DATASET *dset)
 		pputc(prn, '\n');
 		maybe_list_vars(dset, prn);
 	    }
-		
 	}
 	if (err) {
 	    errmsg(err, prn);

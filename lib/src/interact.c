@@ -5258,8 +5258,14 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case DELEET:
 	if (cmd->list != NULL && cmd->list[0] > 0) {
-	    pputs(prn, _("You cannot delete series in this context\n"));
-	    err = 1;
+	    if (cmd->opt & OPT_F) {
+		/* got the --force option */
+		err = dataset_drop_listed_variables(cmd->list, dset, 
+						    NULL, prn);
+	    } else {
+		pputs(prn, _("You cannot delete series in this context\n"));
+		err = 1;
+	    }
 	} else {
 	    err = gretl_delete_var_by_name(cmd->param, prn);
 	}
