@@ -147,7 +147,8 @@ Copyright 1984, 1987, 1988, 1992, 2000 by Stephen L. Moshier
 
 /* Define this macro to suppress error propagation in exp(x^2)
    by using the expx2 function.  The tradeoff is that doing so
-   generates two calls to the exponential function instead of one.  */
+   generates two calls to the exponential function instead of one. 
+*/
 #define USE_EXPXSQ 0
 
 static double P[] = {
@@ -304,7 +305,8 @@ static double cephes_erfc (double a, int *err)
 /* Exponentially scaled erfc function
    exp(x^2) erfc(x)
    valid for x > 1.
-   Use with ndtr and expx2.  */
+   Use with ndtr and expx2.  
+*/
 
 static double erfce (double x)
 {

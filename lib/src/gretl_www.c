@@ -919,7 +919,7 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
     hs->error = NULL;
 
     /* If we're using a proxy, we connect to the proxy server */
-    conn = (wproxy)? &gretlproxy : u;
+    conn = wproxy ? &gretlproxy : u;
 
     err = make_connection(&sock, conn->host, conn->port);
 
@@ -1272,7 +1272,7 @@ static uerr_t try_http (urlinfo *u)
 #if WDEBUG
 	fprintf(stderr, "try_http: real_get_http returned %d\n"
 		" errbuf = '%s'\n", err,
-		(wproxy)? gretlproxy.errbuf : u->errbuf);
+		wproxy ? gretlproxy.errbuf : u->errbuf);
 	if (err == RETRFINISHED) {
 	    fprintf(stderr, " (%d == RETRFINISHED)\n", err);
 	}
@@ -1571,7 +1571,7 @@ static int open_local_file (urlinfo *u)
     u->fp = gretl_fopen(u->localfile, "wb");
     if (u->fp == NULL) {
 	fprintf(stderr, "Couldn't open local file '%s'\n", u->localfile);
-	err = 1;
+	err = E_FOPEN;
     }
 
     return err;
@@ -1714,16 +1714,31 @@ static void maybe_revise_www_paths (void)
     }
 }
 
-/* grab data from URL.  If saveopt = SAVE_TO_FILE then data is stored
-   to a local file whose name is given by "savefile".  If saveopt =
-   SAVE_TO_BUFFER then "getbuf" is presumed to point to a char buffer
-   to which the data should be written.
+/* grab data from an internet host.  
+
+   @host: name of host to access.
+
+   @opt: specifies the task; see the CGIOpt enumeration.
+
+   @fname: name of file to be downloaded or accessed, or NULL
+   if the request is just a query of some sort.
+
+   @dbseries: name of database series to download, or NULL;
+   used only for certain values of @opt.
+
+   @saveopt: SAVE_NONE, SAVE_TO_BUFFER or SAVE_TO_FILE
+
+   @savefile: name of local file to which data should be
+   written (if @saveopt == SAVE_TO_FILE), or NULL.
+
+   @getbuf: pointer to char *buffer to which data should be
+   written (if @saveopt == SAVE_TO_BUFFER), or NULL.
 */
 
-static int 
-retrieve_url (const char *host, CGIOpt opt, const char *fname, 
-	      const char *dbseries, SaveOpt saveopt, const char *savefile, 
-	      char **getbuf)
+static int retrieve_url (const char *host, CGIOpt opt, 
+			 const char *fname, const char *dbseries, 
+			 SaveOpt saveopt, const char *savefile, 
+			 char **getbuf)
 {
     urlinfo *u;
     uerr_t result;

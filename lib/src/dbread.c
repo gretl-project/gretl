@@ -208,14 +208,14 @@ static int db_row_wanted (const gretl_matrix *mask,
 
 static int get_native_db_data_masked (const char *dbbase, 
 				      SERIESINFO *sinfo,
-				      double **Z,
+				      double **dbZ,
 				      const gretl_matrix *mask)
 {
     char numstr[32];
     FILE *fp;
     dbnumber x;
-    int masklen, v = sinfo->v;
-    int s, t, err = 0;
+    int s, t, masklen;
+    int err = 0;
 
     fp = open_binfile(dbbase, GRETL_NATIVE_DB, sinfo->offset, &err);
     if (err) {
@@ -230,9 +230,9 @@ static int get_native_db_data_masked (const char *dbbase,
 	    err = DB_PARSE_ERROR;
 	} else if (db_row_wanted(mask, masklen, t)) {
 	    sprintf(numstr, "%.7g", (double) x);
-	    Z[v][s] = atof(numstr);
-	    if (Z[v][s] == DBNA) {
-		Z[v][s] = NADBL;
+	    dbZ[1][s] = atof(numstr);
+	    if (dbZ[1][s] == DBNA) {
+		dbZ[1][s] = NADBL;
 	    }
 	    s++;
 	}
@@ -2365,6 +2365,12 @@ static int db_n_from_row_mask (const gretl_matrix *mask,
 
     return n;
 }
+
+/* when a row mask is applied in reading from a gretl
+   database, we rejig the series information such that
+   it's flat (undated) with the observations index
+   running from 1 to the number of rows selected
+*/
 
 static int update_sinfo_masked (SERIESINFO *sinfo, int nobs)
 {
