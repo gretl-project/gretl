@@ -1313,10 +1313,11 @@ static double genz04 (double rho, double limx, double limy)
 	    b = sqrt(bs);
 	    d1 = -b / a;
 	    /*
-	      Note: the condition below is (-hk < 100.0) was not the original
-	      FORTRAN code this was ripped off from. Without it, there are a few
-	      problems for rho very near -1; the version below seems to work 
-	      ok. Could it be a problem with normal_cdf in the left tail?
+	      Note: the condition below was not in the original
+	      FORTRAN code this was ripped off from. Without it, there
+	      are a few problems for rho very near -1; the version
+	      below seems to work ok. Could it be a problem with
+	      normal_cdf in the left tail?
 	    */
 	    if (d1 > -12.0) {
 		bvn -= exp(-hk / 2) * SQRT_2_PI * normal_cdf(d1) * b * 
