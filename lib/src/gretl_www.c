@@ -118,6 +118,20 @@ static void urlinfo_init (urlinfo *u,
 #endif
 }
 
+static void urlinfo_finalize (urlinfo *u, char **getbuf,
+			      int err)
+{
+    if (u->fp != NULL) {
+	fclose(u->fp); 
+    } else if (getbuf != NULL) {
+	*getbuf = u->getbuf;
+    }
+
+    if (err && u->localfile != NULL) {
+	gretl_remove(u->localfile);
+    }
+}
+
 #ifdef STANDALONE
 
 static void urlinfo_set_show_progress (urlinfo *u)
@@ -359,7 +373,7 @@ static int curl_get (urlinfo *u)
 	}
 	curl_easy_setopt(curl, CURLOPT_URL, u->url);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_func);
-	curl_easy_setopt(curl, CURLOPT_FILE, u);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, u);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, u->agent);
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, u->verbose);
@@ -380,10 +394,6 @@ static int curl_get (urlinfo *u)
 
 	if (u->progfunc != NULL) {
 	    stop_progress_bar(u);
-	}
-
-	if (u->fp != NULL) {
-	    fclose(u->fp);
 	}
 
 	if (res != CURLE_OK) {
@@ -468,15 +478,7 @@ static int retrieve_url (const char *hostname,
 
     err = curl_get(&u);
 
-    if (u.fp != NULL) {
-	fclose(u.fp); 
-    } else if (getbuf != NULL) {
-	*getbuf = u.getbuf;
-    }
-
-    if (err && u.localfile != NULL) {
-	remove(u.localfile);
-    }
+    urlinfo_finalize(&u, getbuf, err);
 
     return err;
 }
@@ -511,8 +513,6 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
     char tmp[32];
     int err = 0;
 
-    *saver = NULL;
-
     urlinfo_init(&u, gretlhost, SAVE_TO_BUFFER, NULL);
     strcat(u.url, updatecgi);
 
@@ -527,7 +527,7 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
 
     err = curl_get(&u);
 
-    *saver = u.getbuf;
+    urlinfo_finalize(&u, saver, err);
 
     return err;
 }
@@ -800,6 +800,7 @@ int retrieve_public_file (const char *uri, char *localname)
 	strcpy(u.url, uri);
 	urlinfo_set_show_progress(&u);
 	err = curl_get(&u);
+	urlinfo_finalize(&u, NULL, err);
     }
 
     if (err) {
