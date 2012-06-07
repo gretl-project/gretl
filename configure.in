@@ -336,20 +336,6 @@ if test "$try_readline" = "yes" ; then
 fi
 
 dnl
-dnl See if we need to do anything special about "inet_addr"
-dnl
-INETLIB=''
-AC_CHECK_LIB(c, inet_addr,,seek_inet_addr="yes",)
-if test "$seek_inet_addr" = yes; then
-  AC_CHECK_LIB(bind, inet_addr,INETLIB="-lbind",)
-  if test "$INETLIB" != "-lbind"; then
-    AC_CHECK_LIB(nsl, inet_addr, INETLIB="-lnsl",
-    AC_MSG_ERROR(Can't find a definition of inet_addr),)
-  fi
-fi
-AC_SUBST(INETLIB)
-
-dnl
 dnl Is MMAP available?
 dnl
 AC_MSG_CHECKING([for mmap])
@@ -538,6 +524,13 @@ if test "$PKG_CONFIG" != "no" ; then
 fi
 
 dnl
+dnl libcurl
+dnl
+if test "$PKG_CONFIG" != "no" ; then
+   PKG_CHECK_MODULES(CURL, libcurl >= 7.13.0, have_curl="yes", have_curl="no")
+fi
+
+dnl
 dnl glib 2.0 (needed even if not building GUI)
 dnl
 if test "$PKG_CONFIG" != "no" ; then
@@ -618,6 +611,8 @@ AC_SUBST(build_mailer)
 AC_SUBST(build_po)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
+AC_SUBST(CURL_CFLAGS)
+AC_SUBST(CURL_LIBS)
 
 dnl Check for gdk-pixbuf support
 if test ${build_gui} = "yes" ; then
@@ -782,6 +777,12 @@ elif test "${have_gmp}" = "no" ; then
 echo "
 Please install GMP and then reconfigure gretl.
 GMP is available from http://gmplib.org/
+"
+
+elif test "${have_curl}" = "no" ; then
+echo "
+Please install libcurl and then reconfigure gretl.
+libcurl is available from http://curl.haxx.se/libcurl/
 "
 
 elif test "${have_glib2}" = "no" ; then

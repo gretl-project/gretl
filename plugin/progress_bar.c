@@ -33,96 +33,103 @@ typedef struct _ProgressData {
     GtkWidget *window;
     GtkWidget *label;
     GtkWidget *pbar;
+    int *cancel;
 } ProgressData;
 
 static void destroy_progress (GtkWidget *widget, ProgressData **ppdata)
 {
     (*ppdata)->window = NULL;
-    g_free(*ppdata);
+    free(*ppdata);
     *ppdata = NULL;
 }
 
-static int progress_window (ProgressData **ppdata, int flag)
+#ifdef UPDATER
+
+static void cancel_progress (GtkWidget *widget, ProgressData *pdata)
 {
-    GtkWidget *align;
-    GtkWidget *vbox;
+    *pdata->cancel = 1;
+    gtk_widget_destroy(pdata->window);
+}
+
+#endif
+
+static ProgressData *build_progress_window (int flag, int *cancel)
+{
+    ProgressData *pdata;
+    GtkWidget *align, *vbox;
 #ifdef UPDATER
     GtkWidget *separator;
     GtkWidget *button;
 #endif
 
-    *ppdata = malloc(sizeof **ppdata);
-    if (*ppdata == NULL) return 1;
+    pdata = malloc(sizeof *pdata);
+    if (pdata == NULL) {
+	return NULL;
+    }
 
-    (*ppdata)->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_resizable(GTK_WINDOW((*ppdata)->window), FALSE);
+    pdata->cancel = cancel;
 
-    g_signal_connect(G_OBJECT((*ppdata)->window), "destroy",
-		     G_CALLBACK(destroy_progress),
-		     ppdata);
+    pdata->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_resizable(GTK_WINDOW(pdata->window), FALSE);
 
     if (flag == SP_LOAD_INIT) {
-	gtk_window_set_title(GTK_WINDOW((*ppdata)->window), _("gretl: loading data"));
+	gtk_window_set_title(GTK_WINDOW(pdata->window), _("gretl: loading data"));
     } else if (flag == SP_SAVE_INIT) {
-	gtk_window_set_title(GTK_WINDOW((*ppdata)->window), _("gretl: storing data"));
+	gtk_window_set_title(GTK_WINDOW(pdata->window), _("gretl: storing data"));
     } else if (flag == SP_FONT_INIT) {
-	gtk_window_set_title(GTK_WINDOW((*ppdata)->window), _("gretl: scanning fonts"));
+	gtk_window_set_title(GTK_WINDOW(pdata->window), _("gretl: scanning fonts"));
     }
 	
-    gtk_container_set_border_width(GTK_CONTAINER((*ppdata)->window), 0);
+    gtk_container_set_border_width(GTK_CONTAINER(pdata->window), 0);
 
     vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
-    gtk_container_add(GTK_CONTAINER((*ppdata)->window), vbox);
-    gtk_widget_show(vbox);
+    gtk_container_add(GTK_CONTAINER(pdata->window), vbox);
 
     /* Add a label */
-    (*ppdata)->label = gtk_label_new("");
-    gtk_widget_show((*ppdata)->label);
-    gtk_box_pack_start(GTK_BOX(vbox), (*ppdata)->label, FALSE, FALSE, 0);
+    pdata->label = gtk_label_new("");
+    gtk_box_pack_start(GTK_BOX(vbox), pdata->label, FALSE, FALSE, 0);
         
     /* Create a centering alignment object */
     align = gtk_alignment_new(0.5, 0.5, 0, 0);
     gtk_box_pack_start(GTK_BOX(vbox), align, FALSE, FALSE, 5);
-    gtk_widget_show(align);
 
     /* Create the GtkProgressBar */
-    (*ppdata)->pbar = gtk_progress_bar_new();
-    gtk_container_add(GTK_CONTAINER(align), (*ppdata)->pbar);
-    gtk_widget_show((*ppdata)->pbar);
+    pdata->pbar = gtk_progress_bar_new();
+    gtk_container_add(GTK_CONTAINER(align), pdata->pbar);
 
     /* Add separator and cancel button? */
 #ifdef UPDATER
     separator = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), separator, FALSE, FALSE, 0);
-    gtk_widget_show(separator);
 
     button = gtk_button_new_with_label(_("Cancel"));
-    g_signal_connect_swapped(G_OBJECT(button), "clicked",
-			     G_CALLBACK(gtk_widget_destroy),
-			     (*ppdata)->window);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(cancel_progress),
+		     pdata);
     gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
 
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_widget_grab_default(button);
-    gtk_widget_show(button);
 #endif
 
-    gtk_widget_show((*ppdata)->window);
+    gtk_widget_show_all(pdata->window);
 
-    return 0;
+    return pdata;
 }
 
 int show_progress (long res, long expected, int flag)
 {
     static ProgressData *pdata;
     static long offs;
+    static int cancel;
 
     if (expected == 0) {
 	return SP_RETURN_DONE;
     }
 
     if (res < 0 || flag == SP_FINISH) {
+	/* clean up and get out */
 	if (pdata != NULL && pdata->window != NULL) {
 	    gtk_widget_destroy(GTK_WIDGET(pdata->window)); 
 	    while (gtk_events_pending()) {
@@ -133,12 +140,20 @@ int show_progress (long res, long expected, int flag)
     }
 
     if (flag == SP_LOAD_INIT || flag == SP_SAVE_INIT || flag == SP_FONT_INIT) {
+	/* initialize the progress bar */
 	gchar *bytestr = NULL;
 
 	offs = 0L;
-	if (progress_window(&pdata, flag)) {
+	cancel = 0;
+
+	pdata = build_progress_window(flag, &cancel);
+	if (pdata == NULL) {
 	    return 0; 
 	}
+
+	g_signal_connect(G_OBJECT(pdata->window), "destroy",
+			 G_CALLBACK(destroy_progress),
+			 &pdata);
 
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), (gdouble) 0);
 
@@ -160,11 +175,23 @@ int show_progress (long res, long expected, int flag)
 	}
     }
 
-    if (flag == SP_NONE && (pdata == NULL || pdata->window == NULL)) {
+    if ((flag == SP_NONE || flag == SP_TOTAL) && cancel) {
+	/* the user canceled */
+	cancel = 0;
 	return SP_RETURN_CANCELED;
+    }    
+
+    if ((flag == SP_NONE || flag == SP_TOTAL) &&
+	(pdata == NULL || pdata->window == NULL)) {
+	/* something has gone wrong */
+	return 0;
     }
 
-    offs += res;
+    if (flag == SP_TOTAL) {
+	offs = res;
+    } else {
+	offs += res;
+    }
 
     if (offs > expected && pdata != NULL) {
 	gtk_widget_destroy(GTK_WIDGET(pdata->window)); 
@@ -172,6 +199,7 @@ int show_progress (long res, long expected, int flag)
     }
 
     if (offs <= expected && pdata != NULL) {
+	/* display the completed fraction */
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), 
 				      (gdouble) ((double) offs / expected));
 	while (gtk_events_pending()) {

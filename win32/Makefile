@@ -33,6 +33,7 @@ GRETLLIB = -L$(imports) -lgretl -lintl
 LIBS = -lm $(GRETLLIB) -ladvapi32
 LAPACK_LIBS = -llapack.dll -lblas.dll
 FFTW_LIBS = -lfftw3
+CURL_LIBS = -lcurl.dll
 
 # flags/defines
 CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) -I$(zipdir) \
@@ -347,7 +348,7 @@ dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
 	-o $@ $^ -lm -L$(imports) -lxml2 -lz -lintl -lprob -lgmp.dll \
-	-lmingwex -lwsock32 $(GLIBLIB) $(LAPACK_LIBS) $(FFTW_LIBS)
+	-lmingwex -lwsock32 $(GLIBLIB) $(LAPACK_LIBS) $(FFTW_LIBS) $(CURL_LIBS)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \

@@ -139,7 +139,8 @@ enum ts_codes {
 };
 
 enum progress_flags {
-    SP_NONE, 
+    SP_NONE,
+    SP_TOTAL,
     SP_LOAD_INIT,
     SP_SAVE_INIT,
     SP_FONT_INIT,

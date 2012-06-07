@@ -47,6 +47,8 @@ typedef enum {
 
 int gretl_www_init (const char *host, const char *proxy, int use_proxy);
 
+void gretl_www_cleanup (void);
+
 int list_remote_dbs (char **getbuf);
 
 int list_remote_function_packages (char **getbuf);

@@ -69,11 +69,16 @@ void redirect_io_to_console (void)
 
 static void ws_cleanup (void)
 {
+#if 0
     WSACleanup();
+#else
+    return;
+#endif
 }
 
 static int ws_startup (void)
 {
+#if 0
     WORD requested;
     WSADATA data;
 
@@ -93,7 +98,7 @@ static int ws_startup (void)
 	/* arrange for cleanup on exit */
 	atexit(ws_cleanup);
     }
-
+#endif
     return 0;
 }
 

@@ -31,6 +31,7 @@
 #include "gretl_xml.h"
 #include "forecast.h"
 #include "kalman.h"
+#include "gretl_www.h"
 
 #ifdef USE_RLIB
 # include "gretl_foreign.h"
@@ -1800,6 +1801,7 @@ void libgretl_cleanup (void)
     kalman_cleanup();
     gnuplot_cleanup();
     bufgets_cleanup();
+    gretl_www_cleanup();
 
 #ifdef USE_RLIB
     gretl_R_cleanup();

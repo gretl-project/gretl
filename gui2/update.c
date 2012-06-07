@@ -62,6 +62,8 @@ static time_t get_time_from_stamp_file (const char *fname)
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
+	fprintf(stderr, "get_time_from_stamp_file:\n"
+		" couldn't open '%s'\n", fname);
 	return (time_t) 0;
     }
 
@@ -101,8 +103,8 @@ static void maybe_fork_updater (char *msg)
 
     if (resp == GRETL_YES) {
 	const char *gretldir = gretl_home();
-	gchar *ud;
 	size_t n = strlen(gretldir);
+	gchar *ud;
 
 	if (gretldir[n-1] != SLASH) {
 	    ud = g_strdup_printf("%s\\gretl_updater.exe -g", gretldir);

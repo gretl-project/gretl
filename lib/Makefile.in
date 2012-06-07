@@ -15,6 +15,8 @@ XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
 GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
+CURL_CFLAGS = @CURL_CFLAGS@
+CURL_LIBS = @CURL_LIBS@
 GMP_CFLAGS = @GMP_CFLAGS@
 GMP_LIBS = @GMP_LIBS@
 LAPACK_LIBS = @LAPACK_LIBS@
@@ -67,7 +69,7 @@ INSTALLDIRS = $(DESTDIR)$(libdir) $(DESTDIR)$(includedir) $(DESTDIR)$(pkgconfigd
 LIBGRETL = libgretl-1.0.la 
 
 LIBS = $(LAPACK_LIBS) -lm -ldl -lz $(XML_LIBS) \
-	$(GLIB_LIBS) $(GMP_LIBS) $(FFTW_LIBS)
+	$(GLIB_LIBS) $(GMP_LIBS) $(FFTW_LIBS) $(CURL_LIBS)
 
 #### End of system configuration section. ####
 
@@ -242,7 +244,7 @@ AUX_LOBJ = $(CEPHES_SRC:.c=.lo) $(MINPACK_SRC:.c=.lo)
 LIBTOOL = ../libtool
 
 override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(XML_CFLAGS) $(GLIB_CFLAGS) \
-	$(GMP_CFLAGS) $(FFTW_CFLAGS) $(RLIB_CFLAGS) -DHAVE_CONFIG_H $(LIBDEF)
+	$(GMP_CFLAGS) $(FFTW_CFLAGS) $(CURL_CFLAGS) $(RLIB_CFLAGS) -DHAVE_CONFIG_H $(LIBDEF)
 
 COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS) 
 

@@ -17,6 +17,7 @@
 #define UBUFSIZE 8192
 #define E_ALLOC 15
 #define E_DATA 2
+#define E_FOPEN 3
 
 #include "updater.h"
 
@@ -38,6 +39,23 @@ static int argcount;
 static int prog_opt;
 
 #define GRETLHOST "ricardo.ecn.wfu.edu"
+
+static void gretl_errmsg_set (const char *s)
+{
+    *gretl_errmsg = '\0';
+    strncat(gretl_errmsg, s, ERRLEN-1);
+}
+
+static void gretl_errmsg_sprintf (const char *fmt, ...)
+{
+    va_list ap;
+
+    *gretl_errmsg = '\0';
+
+    va_start(ap, fmt);
+    vsnprintf(gretl_errmsg, ERRLEN, fmt, ap);
+    va_end(ap);
+}
 
 /* include stand-alone versions of two libgretl source files */
 #define STANDALONE
@@ -109,13 +127,16 @@ enum {
 
 static int gretl_run_status;
 
+#if 0
 static void ws_cleanup (void)
 {
     WSACleanup();
 }
+#endif
 
 int ws_startup (void)
 {
+#if 0
     WORD requested;
     WSADATA data;
 
@@ -134,6 +155,7 @@ int ws_startup (void)
     }
 
     atexit(ws_cleanup);
+#endif
 
     return 0;
 }
@@ -333,7 +355,7 @@ int infobox (const char *msg)
 static int files_query (char **getbuf, time_t filedate)
 {
     int use_proxy = 0;
-    char dbproxy[21] = {0};
+    char dbproxy[64] = {0};
 
 #ifdef WIN32
     read_proxy_info(&use_proxy, dbproxy);
@@ -347,7 +369,7 @@ static int files_query (char **getbuf, time_t filedate)
 static int get_remote_file (const char *fname)
 {
     int use_proxy = 0;
-    char dbproxy[21] = {0};
+    char dbproxy[64] = {0};
 
 #ifdef WIN32
     read_proxy_info(&use_proxy, dbproxy);
@@ -355,7 +377,7 @@ static int get_remote_file (const char *fname)
 
     gretl_www_init(GRETLHOST, dbproxy, use_proxy);
 
-    return retrieve_url(GRETLHOST, GRAB_FILE, fname, NULL, SAVE_TO_FILE, 
+    return retrieve_url(GRETLHOST, GRAB_FILE, fname, NULL, 
 			fname, NULL);
 }
 

@@ -8,7 +8,7 @@ CFLAGS = -I../../lib/src -I../../win32/updater
 SRC = update_client.c gretl_www.c gretl_untar.c
 OBJ = update_client.o 
 
-LIBS = -lz -lwsock32
+LIBS = -lcurl.dll -lz -lwsock32
 
 CFLAGS += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
 	pkg-config --cflags gtk+-win32-2.0)
