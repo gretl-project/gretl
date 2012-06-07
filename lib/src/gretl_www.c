@@ -77,6 +77,7 @@ struct urlinfo_ {
     FILE *fp;                /* for saving content locally */
     int (*progfunc)();       /* progress indicator function */
     void *phandle;           /* plugin handle */
+    int pstarted;            /* progress bar status flag */
 };
 
 static void urlinfo_init (urlinfo *u, 
@@ -103,6 +104,7 @@ static void urlinfo_init (urlinfo *u,
 
     u->progfunc = NULL;
     u->phandle = NULL;
+    u->pstarted = 0;
 
 #ifdef BUILD_DATE
     sprintf(u->agent, "gretl-%s-%s", GRETL_VERSION, BUILD_DATE);
@@ -151,20 +153,18 @@ static int progress_func (void *clientp, double dltotal, double dlnow,
     int ret = 0;
 
     if (u->progfunc != NULL && dltotal > 0) {
-	ret = u->progfunc((long) dlnow, (long) dltotal, SP_TOTAL);
+	if (!u->pstarted) {
+	    u->progfunc((long) dlnow, (long) dltotal, SP_LOAD_INIT);
+	    u->pstarted = 1;
+	} else {
+	    ret = u->progfunc((long) dlnow, (long) dltotal, SP_TOTAL);
+	}
     }
 
     return (ret == SP_RETURN_CANCELED) ? 1 : 0;
 }
 
 #endif
-
-static void start_progress_bar (urlinfo *u)
-{
-    if (u->progfunc != NULL) {
-	u->progfunc(1, 1024, SP_LOAD_INIT);
-    }
-}
 
 static void stop_progress_bar (urlinfo *u)
 {
@@ -364,11 +364,14 @@ static int curl_get (urlinfo *u)
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, u->agent);
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, u->verbose);
 
+	if (wproxy && *proxyhost != '\0') {
+	    curl_easy_setopt(curl, CURLOPT_PROXY, proxyhost);
+	}
+
 	if (u->progfunc != NULL) {
 	    curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_func);
 	    curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, u);
 	    curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);
-	    start_progress_bar(u);
 	} else {
 	    curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
 	}
@@ -377,6 +380,10 @@ static int curl_get (urlinfo *u)
 
 	if (u->progfunc != NULL) {
 	    stop_progress_bar(u);
+	}
+
+	if (u->fp != NULL) {
+	    fclose(u->fp);
 	}
 
 	if (res != CURLE_OK) {
@@ -573,6 +580,10 @@ int upload_function_package (const char *login, const char *pass,
 	if (saveopt == SAVE_TO_BUFFER) {
 	    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_func);
 	    curl_easy_setopt(curl, CURLOPT_FILE, &u);
+	}
+
+	if (wproxy && *proxyhost != '\0') {
+	    curl_easy_setopt(curl, CURLOPT_PROXY, proxyhost);
 	}
 	
 	curl_formadd(&post, &last, 

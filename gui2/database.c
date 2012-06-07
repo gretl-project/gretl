@@ -2049,17 +2049,19 @@ int unzip_package_file (const char *zipname, const char *path)
 
     err = (*gretl_unzip_file)(zipname, &gerr);
     if (gerr != NULL) {
-	fprintf(stderr, "gretl_unzip_file: '%s'\n", gerr->message);
+	gretl_errmsg_set(gerr->message);
 	if (!err) {
 	    err = 1;
 	}
 	g_error_free(gerr);
-    } else if (err) {
-	fprintf(stderr, "gretl_unzip_file: err = %d\n", err);
     }
 
     close_plugin(handle);
     gretl_remove(zipname);
+
+    if (err) {
+	fprintf(stderr, "gretl_unzip_file: err = %d\n", err);
+    }
 
     return err;
 }
