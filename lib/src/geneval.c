@@ -377,7 +377,11 @@ static NODE *newlist (void)
 
 static int node_allocate_matrix (NODE *t, int m, int n, parser *p)
 {
-    t->v.m = gretl_matrix_alloc(m, n);
+    if (m == 0 || n == 0) {
+	t->v.m = gretl_null_matrix_new();
+    } else {
+	t->v.m = gretl_matrix_alloc(m, n);
+    }
     if (t->v.m == NULL) {
 	p->err = E_ALLOC;
     }
