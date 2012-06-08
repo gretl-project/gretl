@@ -1659,23 +1659,18 @@ int set_db_name (const char *fname, int filetype, PRN *prn)
 
     fp = gretl_fopen(saved_db_name, "rb");
 
-    if (fp == NULL && !g_path_is_absolute(saved_db_name)) {
+    if (fp == NULL && !g_path_is_absolute(saved_db_name) &&
+	filetype == GRETL_NATIVE_DB) {
 	/* try looking a bit more */
-	const char *path = NULL;
+	const char *path = gretl_binbase();
 
-	if (filetype == GRETL_NATIVE_DB) {
-	    path = gretl_binbase();
-	} else if (filetype == GRETL_RATS_DB) {
-	    path = gretl_ratsbase();
-	}
-
-	if (path != NULL) {
+	if (path != NULL && *path != '\0') {
 	    build_path(saved_db_name, path, fname, NULL);
 	    fp = gretl_fopen(saved_db_name, "rb");
 	}
 
 #ifdef OSX_BUILD
-	if (fp == NULL && filetype == GRETL_NATIVE_DB) {
+	if (fp == NULL) {
 	    gchar *tmp = g_build_path(SLASHSTR, gretl_app_support_dir(), "db",
 				      fname, NULL);
 

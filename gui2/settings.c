@@ -231,14 +231,12 @@ RCVAR rc_vars[] = {
       MACHSET | BROWSER, sizeof paths.oxlpath, TAB_PROGS, NULL},
     { "octave", N_("Path to octave executable"), NULL, paths.octpath, 
       MACHSET | BROWSER, sizeof paths.octpath, TAB_PROGS, NULL},
-    { "ratsbase", N_("RATS data directory"), NULL, paths.ratsbase, 
-      USERSET | BROWSER, sizeof paths.ratsbase, TAB_DBS, NULL },
     { "dbhost", N_("Database server name"), NULL, paths.dbhost, 
-      USERSET, sizeof paths.dbhost, TAB_DBS, NULL },
+      USERSET, sizeof paths.dbhost, TAB_NET, NULL },
     { "dbproxy", N_("HTTP proxy"), NULL, http_proxy, 
-      USERSET, sizeof http_proxy, TAB_DBS, NULL },
+      USERSET, sizeof http_proxy, TAB_NET, NULL },
     { "useproxy", N_("Use HTTP proxy"), NULL, &use_proxy, 
-      BOOLSET, 1, TAB_DBS, NULL },
+      BOOLSET, 1, TAB_NET, NULL },
     { "Fixed_font", N_("Fixed font"), NULL, fixedfontname, 
       USERSET, sizeof fixedfontname, TAB_NONE, NULL },
     { "App_font", N_("Menu font"), NULL, appfontname, 
@@ -541,8 +539,6 @@ void get_default_dir (char *s, int action)
 	get_pkg_save_dir(s, action);
     } else if (action == SAVE_REMOTE_DB) {
 	sprintf(s, "%sdb", gretl_home());
-    } else if (action == OPEN_RATS_DB) {
-	strcpy(s, gretl_ratsbase());
     } else {
 	strcpy(s, gretl_workdir());
     }
@@ -902,7 +898,7 @@ int options_dialog (int page, const char *varname, GtkWidget *parent)
     gtk_widget_show(notebook);
 
     make_prefs_tab(notebook, TAB_MAIN);
-    make_prefs_tab(notebook, TAB_DBS);
+    make_prefs_tab(notebook, TAB_NET);
     make_prefs_tab(notebook, TAB_PROGS);
     make_prefs_tab(notebook, TAB_VCV);
     make_prefs_tab(notebook, TAB_MAN);
@@ -1171,8 +1167,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
     if (tab == TAB_MAIN) {
 	w = gtk_label_new(_("General"));
-    } else if (tab == TAB_DBS) {
-	w = gtk_label_new(_("Databases"));
+    } else if (tab == TAB_NET) {
+	w = gtk_label_new(_("Network"));
     } else if (tab == TAB_PROGS) {
 	w = gtk_label_new(_("Programs"));
     } else if (tab == TAB_VCV) {

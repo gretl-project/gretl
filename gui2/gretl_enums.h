@@ -220,7 +220,7 @@ enum browser_codes {
 enum pref_tabs {
     TAB_NONE = 0,
     TAB_MAIN,
-    TAB_DBS,
+    TAB_NET,
     TAB_PROGS,
     TAB_VCV,
     TAB_MAN,

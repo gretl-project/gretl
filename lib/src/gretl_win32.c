@@ -213,9 +213,6 @@ void cli_read_registry (char *callname)
     /* user's working directory */
     cli_read_gretl_var("userdir", cpaths.workdir, fp, HKEY_CURRENT_USER);
 
-    /* base path for RATS databases */
-    cli_read_gretl_var("ratsbase", cpaths.ratsbase, fp, HKEY_CURRENT_USER);
-
     /* path to X-12-ARIMA */
     done = read_rc_string(fp[0], "x12a", cpaths.x12a);
     if (!done) {

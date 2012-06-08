@@ -53,7 +53,6 @@ typedef struct ConfigPaths_ ConfigPaths;
 struct ConfigPaths_ {
     char gretldir[MAXLEN];
     char workdir[MAXLEN];
-    char ratsbase[MAXLEN];
 #ifndef WIN32
     char gnuplot[MAXLEN];
 #endif
@@ -170,8 +169,6 @@ char *set_gretl_plotfile (const char *fname);
 void report_plot_written (PRN *prn);
 
 const char *gretl_binbase (void);
-
-const char *gretl_ratsbase (void);
 
 const char *gretl_tramo (void);
 
