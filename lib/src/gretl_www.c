@@ -397,7 +397,7 @@ static int curl_get (urlinfo *u)
 	}
 
 	if (res != CURLE_OK) {
-	    gretl_errmsg_sprintf("CURL error %d (%s)", res, 
+	    gretl_errmsg_sprintf("cURL error %d (%s)", res, 
 				 curl_easy_strerror(res));
 	    err = u->err ? u->err : 1;
 	}
@@ -497,6 +497,10 @@ int gretl_www_init (const char *host, const char *proxy, int use_proxy)
     if (use_proxy && proxy != NULL && *proxy != '\0') {
 	*proxyhost = '\0';
 	strncat(proxyhost, proxy, sizeof proxyhost - 1);
+    }
+
+    if (wproxy && *proxyhost == '\0') {
+	wproxy = 0;
     }
 
     return 0;

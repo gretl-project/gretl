@@ -1407,7 +1407,8 @@ static NODE *expr3 (parser *p)
 
     while (!p->err && (p->sym == B_GT || p->sym == B_LT || 
 		       p->sym == B_DOTGT || p->sym == B_DOTLT || 
-		       p->sym == B_GTE || p->sym == B_LTE)) {
+		       p->sym == B_GTE || p->sym == B_LTE ||
+		       p->sym == B_DOTGTE || p->sym == B_DOTLTE)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);

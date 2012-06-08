@@ -1534,6 +1534,8 @@ static int op_symbol (int op)
     case B_DOTEQ:   return '=';
     case B_DOTGT:   return '>';
     case B_DOTLT:   return '<';
+    case B_DOTGTE:  return ']';
+    case B_DOTLTE:  return '[';
     default: return 0;
     }
 }
@@ -1670,6 +1672,8 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     case B_DOTEQ:
     case B_DOTGT:
     case B_DOTLT:
+    case B_DOTGTE:
+    case B_DOTLTE:
 	/* apply operator element-wise */
 	C = gretl_matrix_dot_op(A, B, op_symbol(op), err);
 	break;
@@ -8534,6 +8538,8 @@ static NODE *eval (NODE *t, parser *p)
     case B_DOTEQ:
     case B_DOTGT:
     case B_DOTLT:
+    case B_DOTGTE:
+    case B_DOTLTE:
 	/* matrix-matrix or matrix-scalar binary operators */
 	if ((l->t == MAT && r->t == MAT) ||
 	    (l->t == MAT && r->t == NUM) ||

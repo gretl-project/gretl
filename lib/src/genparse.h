@@ -60,6 +60,8 @@ enum {
               B_DOTEQ,
               B_DOTGT,
   /* 30 */    B_DOTLT,
+	      B_DOTGTE,
+	      B_DOTLTE,
               B_DOTASN,
               B_KRON,     /* Kronecker product */
               B_HCAT,     /* horizontal concatenation */
@@ -67,9 +69,9 @@ enum {
 	      B_LCAT,     /* list concatentation */
 	      B_LDIV,     /* matrix left division */
 	      B_ELLIP,    /* list-generating ellipsis */
-	      B_JOIN,     /* list-joining with separator */
+  /* 40 */    B_JOIN,     /* list-joining with separator */
 	      OP_MAX,     /* SEPARATOR: end of binary operators */
-  /* 40 */    G_LPR,      /* grouping: left paren */
+              G_LPR,      /* grouping: left paren */
 	      G_RPR,      /* right paren */
               G_LBR,      /* left bracket */
               G_RBR,      /* right bracket */
@@ -77,9 +79,9 @@ enum {
 	      G_RCB,      /* right curly bracket */  
 	      P_COM,	  /* punctuation: comma */
 	      P_DOT,	  /* period */
-	      P_SEMI,	  /* semi-colon */
+  /* 50 */    P_SEMI,	  /* semi-colon */
 	      P_COL,	  /* colon */
-  /* 50 */    PUNCT_MAX,  /* SEPARATOR: end of grouping and punctuation marks */
+              PUNCT_MAX,  /* SEPARATOR: end of grouping and punctuation marks */
 	      CON,	  /* named constant */
 	      DUM,	  /* dummy variable */
               USCALAR,	  /* user variable, scalar */
@@ -87,9 +89,9 @@ enum {
 	      UMAT,	  /* user-defined matrix */
 	      UOBJ,	  /* user-defined object (e.g. model) */
 	      NUM,	  /* scalar, evaluated */
-	      VEC,	  /* series, evaluated */
+  /* 60 */    VEC,	  /* series, evaluated */
 	      IVEC,	  /* vector of integers, evaluated */
-  /* 60 */    LVEC,       /* list, as array of ints */
+              LVEC,       /* list, as array of ints */
 	      MAT,	  /* matrix, evaluated */
 	      OBS,	  /* observation from a series */
               MSL,	  /* matrix plus subspec */
@@ -97,9 +99,9 @@ enum {
 	      DMSTR,	  /* "dollar" matrix plus string subspec */
 	      MSL2,	  /* unevaluated matrix subspec */
 	      MSPEC,	  /* evaluated matrix subspec */
-	      SUBSL,	  /* row or column component of MSPEC */
+  /* 70 */    SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
-  /* 70 */    LAG,        /* variable plus lag length */	  
+              LAG,        /* variable plus lag length */	  
 	      DVAR,	  /* $ "dataset" variable (mostly scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
               OVAR,	  /* object variable: variable "under" an object */
@@ -107,9 +109,9 @@ enum {
 	      LISTVAR,    /* variable in list */
 	      STR,	  /* string */
 	      BUNDLE,     /* gretl bundle (hash table) */
-	      BOBJ,       /* object inside a bundle */
+  /* 80 */    BOBJ,       /* object inside a bundle */
 	      FARGS,	  /* set of n function arguments */
-  /* 80 */    EMPTY,      /* "null" */
+              EMPTY,      /* "null" */
 	      ABSENT,
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
               EROOT,	  /* dummy root for (...) expression */
@@ -117,9 +119,9 @@ enum {
 	      RFUN,       /* GNU R function */
               VSTR,       /* string variable */
               INC,   
-	      DEC,
+  /* 90 */    DEC,
 	      QUERY,
-  /* 90 */    EOT,	  /* end of transmission */
+              EOT,	  /* end of transmission */
 	      UNK 
 };
 
