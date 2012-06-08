@@ -3360,9 +3360,11 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
 	return;
     }
 
-    err = gui_validate_varname(etxt, GRETL_TYPE_MATRIX);
-    if (err) {
-	return;
+    if (gtk_widget_is_sensitive(mdlg->nentry)) {
+	err = gui_validate_varname(etxt, GRETL_TYPE_MATRIX);
+	if (err) {
+	    return;
+	}
     }
 
     strcpy(mdlg->spec->name, etxt);
@@ -3434,7 +3436,8 @@ static gint choose_formula (GtkWidget *w, struct mdialog *mdlg)
     return FALSE;
 }
 
-static int new_matrix_dialog (struct gui_matrix_spec *spec)
+static int new_matrix_dialog (struct gui_matrix_spec *spec,
+			      GtkWidget *parent)
 {
     struct mdialog mdlg;
     GSList *group;
@@ -3447,7 +3450,7 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
     int maxdim = 1000;
     int ret = GRETL_CANCEL;
 
-    dlg = gretl_dialog_new("Matrix", mdata->main, 
+    dlg = gretl_dialog_new("Matrix", parent, 
 			   GRETL_DLG_BLOCK | GRETL_DLG_MODAL);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     mdlg.dlg = dlg;
@@ -3735,7 +3738,8 @@ static void edit_matrix (gretl_matrix *m, const char *name,
 /* note that both @m and @name may be NULL depending on how
    we are called */
 
-static void real_gui_new_matrix (gretl_matrix *m, const char *name)
+static void real_gui_new_matrix (gretl_matrix *m, const char *name,
+				 GtkWidget *parent)
 {
     struct gui_matrix_spec spec;
     int block = (m == NULL);
@@ -3743,7 +3747,7 @@ static void real_gui_new_matrix (gretl_matrix *m, const char *name)
 
     gui_matrix_spec_init(&spec, m, name);
 
-    resp = new_matrix_dialog(&spec);
+    resp = new_matrix_dialog(&spec, parent);
     if (canceled(resp)) {
 	return;
     }
@@ -3769,12 +3773,12 @@ static void real_gui_new_matrix (gretl_matrix *m, const char *name)
 
 /* callback for "Define matrix..." in main window */
 
-void gui_new_matrix (void)
+void gui_new_matrix (GtkWidget *parent)
 {
-    real_gui_new_matrix(NULL, NULL);
+    real_gui_new_matrix(NULL, NULL, parent);
 }
 
-void edit_user_matrix_by_name (const char *name)
+void edit_user_matrix_by_name (const char *name, GtkWidget *parent)
 {
     user_matrix *u = get_user_matrix_by_name(name);
     gretl_matrix *m = get_matrix_by_name(name);
@@ -3791,7 +3795,7 @@ void edit_user_matrix_by_name (const char *name)
     if (m == NULL) {
 	errbox(_("Couldn't open '%s'"), name);
     } else if (gretl_is_null_matrix(m)) {
-	real_gui_new_matrix(m, name);
+	real_gui_new_matrix(m, name, parent);
     } else {
 	edit_matrix(m, name, 0);
     }

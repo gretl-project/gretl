@@ -2131,7 +2131,7 @@ static void open_matrix (gui_obj *obj)
     user_matrix *u = (user_matrix *) obj->data;
     const char *name = user_matrix_get_name(u);
 
-    edit_user_matrix_by_name(name);
+    edit_user_matrix_by_name(name, iconview);
 }
 
 static void open_bundle (gui_obj *obj)
@@ -3083,7 +3083,7 @@ static void matrix_popup_callback (GtkWidget *widget, gpointer data)
 	    view_buffer(prn, 78, 400, name, PRINT, NULL);
 	} 
     } else if (!strcmp(item, _("Edit"))) {
-	edit_user_matrix_by_name(name);
+	edit_user_matrix_by_name(name, iconview);
     } else if (!strcmp(item, _("Properties"))) {
 	m = user_matrix_get_matrix(u);
 	view_matrix_properties(m, name);
@@ -3817,7 +3817,10 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
     pprintf(prn, _("Properties of matrix %s"), (name != NULL)? name : "");
     pputs(prn, "\n\n");
 
-    if (m->rows == 1 && m->cols == 1) {
+    if (m->rows == 0 || m->cols == 0) {
+	pprintf(prn, _("Null matrix, %d x %d\n"), m->rows, m->cols);
+	goto done;
+    } else if (m->rows == 1 && m->cols == 1) {
 	pprintf(prn, _("Scalar matrix, value %g\n"), m->val[0]);
 	goto done;
     } else if (gretl_is_identity_matrix(m)) {
@@ -3830,11 +3833,6 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 
     print_int_formatted(_("Rows"), m->rows, prn);
     print_int_formatted(_("Columns"), m->cols, prn);
-
-    if (m->rows == 0 || m->cols == 0) {
-	goto done;
-    }
-
     print_int_formatted(_("Rank"), gretl_matrix_rank(m, &err), prn);
 
     s = gretl_matrix_get_structure(m);

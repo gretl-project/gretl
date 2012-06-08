@@ -686,7 +686,7 @@ static void launch_matrix_maker (GtkWidget *button, call_info *cinfo)
 {
     int n = n_user_matrices();
 
-    gui_new_matrix();
+    gui_new_matrix(cinfo->dlg);
 
     if (n_user_matrices() > n) {
 	GtkWidget *sel = g_object_get_data(G_OBJECT(button), "combo");

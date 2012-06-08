@@ -79,6 +79,11 @@ FILE *gretl_fopen (const char *filename, const char *mode)
     return fopen(filename, mode);
 }
 
+int gretl_remove (const char *filename)
+{
+    return remove(filename);
+}
+
 int show_progress (long res, long expected, int flag)
 {
     return 0;
@@ -261,7 +266,7 @@ static int read_reg_val (HKEY tree, char *keyname, char *keyval)
     return error;
 }
 
-static void read_proxy_info (int *use_proxy, char *dbproxy) 
+static void read_proxy_info (int *use_proxy, char *http_proxy) 
 {
     char val[128];
 
@@ -271,8 +276,14 @@ static void read_proxy_info (int *use_proxy, char *dbproxy)
 	}
     }
 
-    if (use_proxy && read_reg_val(HKEY_CURRENT_USER, "dbproxy", val) == 0) {
-        strncat(dbproxy, val, 20);
+    if (use_proxy) {
+	if (read_reg_val(HKEY_CURRENT_USER, "dbproxy", val) == 0) {
+	    strncat(http_proxy, val, 127);
+	} else if (read_reg_val(HKEY_CURRENT_USER, "http_proxy", val) == 0) {
+	    strncat(http_proxy, val, 127);
+	} else {
+	    *use_proxy = 0;
+	}
     }
 }
 
@@ -354,28 +365,28 @@ int infobox (const char *msg)
 
 static int files_query (char **getbuf, time_t filedate)
 {
+    char http_proxy[128] = {0};
     int use_proxy = 0;
-    char dbproxy[64] = {0};
 
 #ifdef WIN32
-    read_proxy_info(&use_proxy, dbproxy);
+    read_proxy_info(&use_proxy, http_proxy);
 #endif
 
-    gretl_www_init(GRETLHOST, dbproxy, use_proxy);
+    gretl_www_init(GRETLHOST, http_proxy, use_proxy);
 
     return get_update_info(getbuf, filedate, QUERY_SILENT); 
 }
 
 static int get_remote_file (const char *fname)
 {
+    char http_proxy[64] = {0};
     int use_proxy = 0;
-    char dbproxy[64] = {0};
 
 #ifdef WIN32
-    read_proxy_info(&use_proxy, dbproxy);
+    read_proxy_info(&use_proxy, http_proxy);
 #endif
 
-    gretl_www_init(GRETLHOST, dbproxy, use_proxy);
+    gretl_www_init(GRETLHOST, http_proxy, use_proxy);
 
     return retrieve_url(GRETLHOST, GRAB_FILE, fname, NULL, 
 			fname, NULL);

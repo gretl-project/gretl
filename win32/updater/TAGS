@@ -1,58 +1,63 @@
 
-update_client.c,1643
+update_client.c,1802
 #define ERRLEN 15,258
 #define MAXLEN 16,277
 #define UBUFSIZE 17,296
 #define E_ALLOC 18,318
 #define E_DATA 19,337
-FILE *flg;flg23,377
-int logit;24,388
-int debug;25,399
-    UPDATER_DEFAULT,28,418
-    UPDATER_GET_LISTING,29,439
-    UPDATER_GET_FILE30,464
-} program_opts;31,485
-static char get_fname[get_fname33,502
-static char gretl_errmsg[gretl_errmsg34,529
-static int ask_before_download 35,563
-static time_t filedate;36,599
-static int argcount;37,623
-static int prog_opt;38,644
-#define STANDALONE40,666
-# define IDYES 45,748
-# define TRUE 49,786
-FILE *gretl_fopen gretl_fopen56,941
-int show_progress 61,1039
-char *gretl_strdup gretl_strdup66,1112
-static void getout 82,1335
-    GRETL_NOT_RUNNING 102,1639
-    GRETL_RUNNING,103,1666
-    GRETL_RUN_UNKNOWN104,1685
-static int gretl_run_status;107,1711
-static void ws_cleanup 109,1741
-int ws_startup 114,1794
-static int win_error 138,2235
-static int create_child_process 163,2746
-static int yes_no_dialog 191,3763
-static int msgbox 197,3899
-static int read_reg_val 206,4143
-static void read_proxy_info 239,5103
-BOOL CALLBACK record_gretl_running 254,5453
-static int check_for_gretl 272,5823
-static int yes_no_dialog 285,6027
-static int msgbox 292,6115
-static char *get_size_string get_size_string305,6298
-int errbox 320,6655
-int infobox 325,6717
-static int files_query 330,6780
-static int get_remote_file 344,7069
-static void listerr 359,7379
-static void usage 385,7870
-static time_t get_time_from_stamp_file 400,8210
-static int real_program 454,9237
-static void win32_start 601,12152
-static void win32_setup 621,12570
-int main 653,13248
+#define E_FOPEN 20,354
+FILE *flg;flg24,395
+int logit;25,406
+int debug;26,417
+    UPDATER_DEFAULT,29,436
+    UPDATER_GET_LISTING,30,457
+    UPDATER_GET_FILE31,482
+} program_opts;32,503
+static char get_fname[get_fname34,520
+static char gretl_errmsg[gretl_errmsg35,547
+static int ask_before_download 36,581
+static time_t filedate;37,617
+static int argcount;38,641
+static int prog_opt;39,662
+#define GRETLHOST 41,684
+static void gretl_errmsg_set 43,725
+static void gretl_errmsg_sprintf 49,841
+#define STANDALONE61,1095
+# define IDYES 66,1177
+# define TRUE 70,1215
+FILE *gretl_fopen gretl_fopen77,1370
+int gretl_remove 82,1468
+int show_progress 87,1542
+char *gretl_strdup gretl_strdup92,1615
+static void getout 108,1838
+    GRETL_NOT_RUNNING 128,2142
+    GRETL_RUNNING,129,2169
+    GRETL_RUN_UNKNOWN130,2188
+static int gretl_run_status;133,2214
+static void ws_cleanup 136,2250
+int ws_startup 142,2310
+static int win_error 168,2764
+static int create_child_process 193,3275
+static int yes_no_dialog 221,4292
+static int msgbox 227,4428
+static int read_reg_val 236,4672
+static void read_proxy_info 269,5641
+BOOL CALLBACK record_gretl_running 284,5991
+static int check_for_gretl 302,6361
+static int yes_no_dialog 315,6565
+static int msgbox 322,6653
+static char *get_size_string get_size_string335,6836
+int errbox 350,7193
+int infobox 355,7255
+static int files_query 360,7318
+static int get_remote_file 374,7607
+static void listerr 389,7903
+static void usage 415,8394
+static time_t get_time_from_stamp_file 430,8734
+static int real_program 484,9761
+static void win32_start 631,12688
+static void win32_setup 651,13106
+int main 683,13784
 
 winprogress.c,59
 LRESULT CALLBACK DlgProc 8,112

@@ -2,9 +2,10 @@ Version 1.9.10, in progress
 - Update translations
 - "delete" command: add a --force option to permit deletion of
   series in loops (to be used with caution!)
-- Switch to using libcurl for HTTP transation support
+- Switch to using libcurl for HTTP transaction support
 - Add two new element-wise matrix operators, ".>=" and ".<=", 
   (greater than or equal, less than or equal)
+- Fix some buggy behavior in regard to empty matrices
 
 2012-06-01 version 1.9.9
 - Add --cluster option (cluster-robust standard errors) for several

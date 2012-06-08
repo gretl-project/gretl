@@ -17,7 +17,7 @@
  * 
  */
 
-/* progress.c for gretl */
+/* progress bar implementation for gretl */
 
 #include <gtk/gtk.h>
 

@@ -4,13 +4,15 @@
 #define _(String) String
 #define I_(String) String
 
-enum {
-    SP_NONE, 
+enum progress_flags {
+    SP_NONE,
+    SP_TOTAL,
     SP_LOAD_INIT,
     SP_SAVE_INIT,
     SP_FONT_INIT,
+    SP_UPDATER_INIT,
     SP_FINISH 
-} progress_flags;
+};
 
 enum {
     SP_RETURN_OK,
@@ -23,6 +25,7 @@ extern int logit;
 
 char *gretl_strdup (const char *src);
 FILE *gretl_fopen (const char *filename, const char *mode);
+int gretl_remove (const char *filename);
 int errbox (const char *msg);
 int infobox (const char *msg);
 int gretl_untar (const char *fname);

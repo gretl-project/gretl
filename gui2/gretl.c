@@ -209,6 +209,11 @@ static void edit_package_callback (GtkAction *action, gpointer p)
     file_selector(OPEN_GFN, FSEL_DATA_NONE, NULL);
 }
 
+static void new_matrix_callback (GtkAction *action, gpointer p)
+{
+    gui_new_matrix(mdata->main);
+}
+
 static void new_package_callback (GtkAction *action, gpointer p)
 {
     if (no_user_functions_check()) {
@@ -1492,7 +1497,7 @@ GtkActionEntry main_entries[] = {
     { "TimeDums", NULL, N_("_Time dummies"), NULL, NULL, G_CALLBACK(add_dummies) },
     { "dummify", NULL, N_("Dummies for selected _discrete variables"), NULL, NULL, 
       G_CALLBACK(logs_etc_callback) },
-    { "NewMatrix", NULL, N_("_Define matrix..."), NULL, NULL, G_CALLBACK(gui_new_matrix) },
+    { "NewMatrix", NULL, N_("_Define matrix..."), NULL, NULL, G_CALLBACK(new_matrix_callback) },
 
     /* Sample */
     { "Sample", NULL, N_("_Sample"), NULL, NULL, NULL },

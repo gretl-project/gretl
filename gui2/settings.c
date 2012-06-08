@@ -31,6 +31,7 @@
 
 #include "libset.h"
 #include "texprint.h"
+#include "usermat.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -57,7 +58,7 @@
 #endif
 
 static char rcfile[FILENAME_MAX];
-static char dbproxy[21];
+static char http_proxy[128];
 static int use_proxy;
 
 static ConfigPaths paths;
@@ -142,14 +143,14 @@ typedef struct {
    type BOOLSET and not part of a radio group, then a non-zero value
    for len will link the var's toggle button with the sensitivity of
    the preceding rc_var's entry field.  For example, the "use_proxy"
-   button controls the sensitivity of the "dbproxy" entry widget.
+   button controls the sensitivity of the "http_proxy" entry widget.
 */
 
 RCVAR rc_vars[] = {
     { "gretldir", N_("Main gretl directory"), NULL, paths.gretldir, 
-      MACHSET | BROWSER, MAXLEN, TAB_MAIN, NULL },
+      MACHSET | BROWSER, sizeof paths.gretldir, TAB_MAIN, NULL },
     { "userdir", N_("User's gretl directory"), NULL, paths.workdir, 
-      INVISET, MAXLEN, TAB_MAIN, NULL },
+      INVISET, sizeof paths.workdir, TAB_MAIN, NULL },
     { "updater", N_("Tell me about gretl updates"), NULL, &updater, 
       BOOLSET, 0, TAB_MAIN, NULL },
 #ifndef G_OS_WIN32
@@ -216,38 +217,38 @@ RCVAR rc_vars[] = {
       USERSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #ifdef HAVE_X12A
     { "x12a", N_("Path to x12arima"), NULL, paths.x12a, 
-      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
+      MACHSET | BROWSER, sizeof paths.x12a, TAB_PROGS, NULL },
 #endif
 #ifdef HAVE_TRAMO
     { "tramo", N_("Path to tramo"), NULL, paths.tramo, 
-      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
+      MACHSET | BROWSER, sizeof paths.tramo, TAB_PROGS, NULL},
 #endif
 #ifdef USE_RLIB
     { "Rlib", N_("Path to R library"), NULL, paths.rlibpath, 
-      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
+      MACHSET | BROWSER, sizeof paths.rlibpath, TAB_PROGS, NULL},
 #endif
     { "ox", N_("Path to oxl executable"), NULL, paths.oxlpath, 
-      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
+      MACHSET | BROWSER, sizeof paths.oxlpath, TAB_PROGS, NULL},
     { "octave", N_("Path to octave executable"), NULL, paths.octpath, 
-      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
+      MACHSET | BROWSER, sizeof paths.octpath, TAB_PROGS, NULL},
     { "ratsbase", N_("RATS data directory"), NULL, paths.ratsbase, 
-      USERSET | BROWSER, MAXLEN, TAB_DBS, NULL },
+      USERSET | BROWSER, sizeof paths.ratsbase, TAB_DBS, NULL },
     { "dbhost", N_("Database server name"), NULL, paths.dbhost, 
-      USERSET, 32, TAB_DBS, NULL },
-    { "dbproxy", N_("HTTP proxy (ipnumber:port)"), NULL, dbproxy, 
-      USERSET, 21, TAB_DBS, NULL },
+      USERSET, sizeof paths.dbhost, TAB_DBS, NULL },
+    { "dbproxy", N_("HTTP proxy"), NULL, http_proxy, 
+      USERSET, sizeof http_proxy, TAB_DBS, NULL },
     { "useproxy", N_("Use HTTP proxy"), NULL, &use_proxy, 
       BOOLSET, 1, TAB_DBS, NULL },
     { "Fixed_font", N_("Fixed font"), NULL, fixedfontname, 
-      USERSET, MAXLEN, TAB_NONE, NULL },
+      USERSET, sizeof fixedfontname, TAB_NONE, NULL },
     { "App_font", N_("Menu font"), NULL, appfontname, 
-      USERSET, MAXLEN, TAB_NONE, NULL },
+      USERSET, sizeof appfontname, TAB_NONE, NULL },
     { "DataPage", "Default data page", NULL, datapage, 
       INVISET, sizeof datapage, TAB_NONE, NULL },
     { "ScriptPage", "Default script page", NULL, scriptpage, 
       INVISET, sizeof scriptpage, TAB_NONE, NULL },    
     { "Png_font", N_("PNG graph font"), NULL, paths.pngfont, 
-      INVISET, 32, TAB_NONE, NULL },
+      INVISET, sizeof paths.pngfont, TAB_NONE, NULL },
     { "Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, 
       INVISET, sizeof gpcolors, TAB_NONE, NULL },
     { "tabwidth", "spaces per tab", NULL, &tabwidth, 
@@ -312,6 +313,8 @@ const char *get_scriptpage (void)
 int autoicon_on (void)
 {
     if (dataset != NULL && dataset->v > 0) {
+	return autoicon;
+    } else if (n_user_matrices() > 0) {
 	return autoicon;
     } else {
 	return 0;
@@ -1602,7 +1605,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     maybe_revise_tramo_x12a_status();
 #endif
 
-    if (use_proxy && *dbproxy == '\0') {
+    if (use_proxy && *http_proxy == '\0') {
 	/* fix inconsistency */
 	use_proxy = 0;
     }
@@ -1620,7 +1623,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
     selector_register_hc_choice();
 
-    gretl_www_init(paths.dbhost, dbproxy, use_proxy);
+    gretl_www_init(paths.dbhost, http_proxy, use_proxy);
 }
 
 static void boolvar_to_str (void *b, char *s)
@@ -1783,7 +1786,7 @@ static int common_read_rc_setup (void)
 	set_gretl_alarm(0);
     }
 
-    gretl_www_init(paths.dbhost, dbproxy, use_proxy);
+    gretl_www_init(paths.dbhost, http_proxy, use_proxy);
     set_tex_use_pdf(latex);
 
 #if !defined(G_OS_WIN32) && !defined(OSX_BUILD)

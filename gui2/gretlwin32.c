@@ -67,14 +67,12 @@ void redirect_io_to_console (void)
     setvbuf(stderr, NULL, _IONBF, 0);
 }
 
+#if 0
 static void ws_cleanup (void)
 {
-#if 0
     WSACleanup();
-#else
-    return;
-#endif
 }
+#endif
 
 static int ws_startup (void)
 {

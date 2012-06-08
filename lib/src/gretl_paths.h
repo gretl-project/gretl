@@ -63,7 +63,7 @@ struct ConfigPaths_ {
     char rlibpath[MAXLEN];
     char oxlpath[MAXLEN];
     char octpath[MAXLEN];
-    char dbhost[32];
+    char dbhost[64];
     char pngfont[128];
 };
 
