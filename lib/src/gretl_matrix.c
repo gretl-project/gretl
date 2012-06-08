@@ -189,6 +189,8 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
     gretl_matrix *m;
 
     if (rows <= 0 || cols <= 0) {
+	fprintf(stderr, "gretl error: gretl_matrix_alloc: rows=%d, cols=%d\n",
+		rows, cols);
 	return NULL;
     }
 

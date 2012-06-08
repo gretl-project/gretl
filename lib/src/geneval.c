@@ -1912,7 +1912,6 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	    }
 	} else {
 	    if (node_allocate_matrix(ret, m->rows, m->cols, p)) {
-		free_tree(ret, p, "On error");
 		return NULL;
 	    }
 
@@ -5113,7 +5112,6 @@ static NODE *apply_matrix_func (NODE *n, int f, parser *p)
 	double x;
 
 	if (node_allocate_matrix(ret, m->rows, m->cols, p)) {
-	    free_tree(ret, p, "On error");
 	    return NULL;
 	}
 
@@ -6401,7 +6399,6 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
 	    int i, n = x->rows * x->cols;
 
 	    if (node_allocate_matrix(ret, x->rows, x->cols, p)) {
-		free_tree(ret, p, "On error");
 		return NULL;
 	    }
 
