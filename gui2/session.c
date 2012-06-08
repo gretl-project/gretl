@@ -3089,7 +3089,11 @@ static void matrix_popup_callback (GtkWidget *widget, gpointer data)
 	view_matrix_properties(m, name);
     } else if (!strcmp(item, _("Copy as CSV..."))) {
 	m = user_matrix_get_matrix(u);
-	matrix_to_clipboard_as_csv(m, iconview);
+	if (gretl_is_null_matrix(m)) {
+	    warnbox("matrix is null");
+	} else {
+	    matrix_to_clipboard_as_csv(m, iconview);
+	}
     } else if (!strcmp(item, _("Rename"))) {
 	rename_object_dialog(obj);
     } else if (!strcmp(item, _("Delete"))) {
@@ -3826,6 +3830,11 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 
     print_int_formatted(_("Rows"), m->rows, prn);
     print_int_formatted(_("Columns"), m->cols, prn);
+
+    if (m->rows == 0 || m->cols == 0) {
+	goto done;
+    }
+
     print_int_formatted(_("Rank"), gretl_matrix_rank(m, &err), prn);
 
     s = gretl_matrix_get_structure(m);
