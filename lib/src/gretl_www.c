@@ -325,7 +325,6 @@ static void maybe_revise_www_paths (void)
 	strcpy(gretlhost, "www.wfu.edu");
 	strcpy(datacgi, "/~cottrell/gretl/gretldata.cgi");
 	strcpy(updatecgi, "/~cottrell/gretl/gretl_update.cgi");
-	strcpy(manual_path, "/~cottrell/gretl/manual/");
     }
 }
 
@@ -802,7 +801,9 @@ int retrieve_public_file (const char *uri, char *localname)
     if (!err) {
 	urlinfo_init(&u, NULL, SAVE_TO_FILE, localname);
 	strcpy(u.url, uri);
-	urlinfo_set_show_progress(&u);
+	if (gretl_in_gui_mode()) {
+	    urlinfo_set_show_progress(&u);
+	}
 	err = curl_get(&u);
 	urlinfo_finalize(&u, NULL, err);
     }
