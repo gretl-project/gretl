@@ -31,11 +31,11 @@ static char *numeric_locale = NULL;
 /**
  * gretl_push_c_numeric_locale:
  *
- * Description:  Saves the current %LC_NUMERIC locale and sets it to "C"
+ * Description: Saves the current %LC_NUMERIC locale and sets it to "C".
  * This way you can safely read write floating point numbers all in the
- * same format.  You should make sure that code between
- * gretl_push_c_numeric_locale() and gretl_pop_c_numeric_locale()
- * doesn't do any setlocale calls or locale may end up in a strange setting.
+ * same format, using '.' as the decimal character.  You should make sure 
+ * that code between gretl_push_c_numeric_locale() and gretl_pop_c_numeric_locale()
+ * doesn't do any setlocale calls, or locale may end up in a strange setting.
  * Also make sure to always pop the C numeric locale after you've pushed it.
  * The calls can be nested.
  **/
