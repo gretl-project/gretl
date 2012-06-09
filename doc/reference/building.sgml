@@ -49,7 +49,7 @@ How to compile libgretl itself
         The <emphasis>Gretl User's Guide</emphasis> contains
         further details about the build process and ways to influence it;
         see <ulink 
-        uri="http://sourceforge.net/projects/gretl/files/manual/">sourceforge.net</ulink>.
+        url="http://sourceforge.net/projects/gretl/files/manual/">sourceforge.net</ulink>.
       </para>
     </refsect1>
     <refsect1 id="dependencies">
@@ -102,6 +102,16 @@ How to compile libgretl itself
       <listitem>
 	<para>
 	  FFTW; see <ulink url="http://www.fftw.org/">www.fftw.org</ulink>.
+	</para>
+      </listitem> 
+      <listitem>
+	<para>
+	  GMP; see <ulink url="http://gmplib.org/">gmplib.org</ulink>.
+	</para>
+      </listitem> 
+      <listitem>
+	<para>
+	  CURL; see <ulink url="http://curl.haxx.se/libcurl/">curl.haxx.se</ulink>.
 	</para>
       </listitem>      
     </itemizedlist>
