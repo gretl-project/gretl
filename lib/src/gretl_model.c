@@ -2859,8 +2859,8 @@ void gretl_model_destroy_tests (MODEL *pmod)
  * pointer members to %NULL.  Also frees any data pointers attached
  * via gretl_model_set_data().  The model pointer itself is not
  * freed, so this function may be called on a #MODEL which has been 
- * declared directly by the caller (by passing the address of the
- * #MODEL).  
+ * declared directly by the caller; in that case the caller should
+ * pass the address of the #MODEL in question.  
  */
 
 void clear_model (MODEL *pmod)

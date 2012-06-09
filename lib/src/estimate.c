@@ -36,14 +36,50 @@
  * SECTION:estimate
  * @short_description: estimation of regression models
  * @title: Estimation
- * @include: libgretl.h
+ * @include: gretl/libgretl.h
  *
  * Most libgretl functions that estimate regression models are 
  * collected here.
  *
  * Please note that most of these functions return a #MODEL
- * struct. This is literally a struct, not a pointer to one.
- * FIXME add more explanation.
+ * struct -- literally a struct, not a pointer to one.
+ * To handle such a return value in C you should either (a)
+ * declare a MODEL and assign to it, or (b) allocate a MODEL
+ * "on the heap" and then assign to its content using the
+ * indirection operator. The code fragment below illustrates
+ * both approaches.
+ *
+ * <informalexample><programlisting>
+ * #include &lt;gretl/libgretl.h&gt;
+ * 
+ * int ols_using_gretl (const int *list, DATASET *dset,
+ *                      PRN *prn)
+ * {
+ *     MODEL model;
+ *     MODEL *pmod;
+ *     int err;
+ *
+ *     // method (a)
+ *     model = lsq(list, dset, OLS, OPT_NONE);
+ *     err = model.errcode;
+ *     if (!err) {
+ *         printmodel(&amp;model, dset, OPT_NONE, prn);
+ *     }
+ *     clear_model(&amp;model);
+  *
+ *     // method (b)
+ *     pmod = gretl_model_new();
+ *     *pmod = lsq(list, dset, OLS, OPT_NONE);
+ *     err = pmod->errcode;
+ *     if (!err) {
+ *         printmodel(pmod, dset, OPT_NONE, prn);
+ *     }
+ *     gretl_model_free(pmod);
+ *
+ *     return err;
+ * }
+ * </programlisting></informalexample>
+ * 
  */
 
 /* Comment on 'TINY': It's the minimum value for 'test' (see below)

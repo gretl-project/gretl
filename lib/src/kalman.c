@@ -25,6 +25,14 @@
 #include "gretl_scalar.h"
 #include "kalman.h"
 
+/**
+ * SECTION:kalman
+ * @short_description: The Kalman filter
+ * @title: Kalman
+ * @include: gretl/libgretl.h, gretl/kalman.h
+ *
+ */
+
 #define KDEBUG 0
 
 /* notation (quasi-Hamilton):
@@ -2418,7 +2426,7 @@ static const char *kalman_matrix_name (int sym)
     return "matrix";
 }
 
-/**
+/*
  * kalman_parse_line:
  * @line: "kalman" to start, "end kalman" to end; otherwise
  * this string should contain a matrix specification on the 
@@ -3310,7 +3318,7 @@ gretl_matrix *kalman_smooth (kalman *K,
     return S;
 }
 
-/**
+/*
  * user_kalman_smooth:
  * @Pname: name of matrix in which to retrieve the MSE of the
  * smoothed state (or NULL if this is not required).
@@ -3516,7 +3524,7 @@ static int kalman_simulate (kalman *K,
     return err;
 }
 
-/**
+/*
  * user_kalman_simulate:
  * @V: artificial disturbance to state.
  * @W: artificial disturbance to observation.
@@ -3631,7 +3639,7 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
     return Y;
 }
 
-/**
+/*
  * user_kalman_get_loglik:
  * 
  * Retrieves the log-likelhood calculated via the last run of 
@@ -3651,7 +3659,7 @@ double user_kalman_get_loglik (void)
     }
 }
 
-/**
+/*
  * user_kalman_get_matrix:
  * @idx: identifier for matrix.
  * @err: location to receive error code.
@@ -3691,7 +3699,7 @@ gretl_matrix *user_kalman_get_matrix (int idx, int *err)
     return m;
 }
 
-/**
+/*
  * user_kalman_get_s2:
  * 
  * Retrieves the scale factor, \hat{\sigma}^2, calculated 
@@ -3711,7 +3719,7 @@ double user_kalman_get_s2 (void)
     }
 }
 
-/**
+/*
  * user_kalman_get_time_step:
  * 
  * Retrieves the time step, t, from the current run of a

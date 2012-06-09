@@ -48,14 +48,6 @@ int kalman_forecast (kalman *K, PRN *prn);
 
 double kalman_get_loglik (const kalman *K);
 
-double user_kalman_get_loglik (void);
-
-gretl_matrix *user_kalman_get_matrix (int idx, int *err);
-
-double user_kalman_get_s2 (void);
-
-int user_kalman_get_time_step (void);
-
 double kalman_get_arma_variance (const kalman *K);
 
 gretl_matrix *kalman_arma_smooth (kalman *K, int *err);
@@ -75,8 +67,26 @@ void kalman_set_options (kalman *K, int opts);
 
 int kalman_get_options (kalman *K);
 
+void kalman_attach_data (kalman *K, void *data);
+
+void *kalman_get_data (const kalman *K);
+
+void kalman_attach_printer (kalman *K, PRN *prn);
+
+PRN *kalman_get_printer (const kalman *K);
+
+#ifndef __GTK_DOC_IGNORE__
+
 int kalman_parse_line (const char *line, const DATASET *dset, 
 		       gretlopt opt);
+
+double user_kalman_get_loglik (void);
+
+gretl_matrix *user_kalman_get_matrix (int idx, int *err);
+
+double user_kalman_get_s2 (void);
+
+int user_kalman_get_time_step (void);
 
 int user_kalman_run (const char *E, const char *V, const char *S,
 		     const char *P, const char *G, const DATASET *dset, 
@@ -90,16 +100,10 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
 				    const char *Sname, 
 				    PRN *prn, int *err);
 
-void kalman_attach_data (kalman *K, void *data);
-
-void *kalman_get_data (const kalman *K);
-
-void kalman_attach_printer (kalman *K, PRN *prn);
-
-PRN *kalman_get_printer (const kalman *K);
-
 void kalman_cleanup (void);
 
 int delete_kalman (PRN *prn);
+
+#endif /* __GTK_DOC_IGNORE__ */
 
 #endif /* KALMAN_H_ */
