@@ -3187,8 +3187,8 @@ gretl_matrix *kalman_arma_smooth (kalman *K, int *err)
  * @err: location to receive error code.
  * 
  * Runs a filtering pass followed by a backward, smoothing pass. 
- * At present the @Uname argument is experimental and a bodge: it will 
- * not actually do anything unless @Pname is left null.
+ * At present the @pU argument is experimental and a bodge: it will 
+ * not actually do anything unless @pP is left NULL.
  *
  * Returns: matrix containing the smoothed estimate of the
  * state, or NULL on error.
@@ -3386,8 +3386,8 @@ gretl_matrix *user_kalman_smooth (const char *Pname,
 }
 
 /* See the account in Koopman, Shephard and Doornik, Econometrics
-   Journal, 1999, section 4.2, regarding the initialization of the
-   state under simulation.
+   Journal, 1999 (volume 2, pp. 113-166), section 4.2, regarding
+   the initialization of the state under simulation.
 */
 
 static int sim_state_0 (kalman *K, const gretl_matrix *V)
