@@ -59,11 +59,9 @@ typedef struct matrix_info_ matrix_info;
  * gretl_matrix:
  * @rows: number of rows in matrix
  * @cols: number of columns
- * @t1: observation number corresponding to first row (if
- * applicable, otherwise 0)
- * @t2: observation number corresponding to last row (if
- * applicable, otherwise 0)
  * @val: flat array of double-precision values
+ * @info: pointer to opaque struct for holding additional
+ * information.
  *
  * The basic libgretl matrix type; #gretl_vector is an alias
  * that can be used for matrices with @rows or @cols = 1.

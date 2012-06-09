@@ -2295,6 +2295,7 @@ static double estimate_rho (const int *list, DATASET *dset,
  * @orig: list giving original regression specification.
  * @aux: either %AUX_SQ, %AUX_LOG or %AUX_WHITE.
  * @dset: dataset struct.
+ * @err: location to receive error code.
  *
  * Augment the regression list @orig with auxiliary terms.  If @aux 
  * is %AUX_SQ add the squares of the original regressors; if @aux

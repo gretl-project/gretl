@@ -67,39 +67,6 @@ void redirect_io_to_console (void)
     setvbuf(stderr, NULL, _IONBF, 0);
 }
 
-#if 0
-static void ws_cleanup (void)
-{
-    WSACleanup();
-}
-#endif
-
-static int ws_startup (void)
-{
-#if 0
-    WORD requested;
-    WSADATA data;
-
-    requested = MAKEWORD(1, 1);
-
-    if (WSAStartup(requested, &data)) {
-	fprintf(stderr, I_("Couldn't find usable socket driver\n"));
-	return 1;
-    }
-
-    if (LOBYTE (requested) < 1 || (LOBYTE (requested) == 1 &&
-				   HIBYTE (requested) < 1)) {
-	fprintf(stderr, I_("Couldn't find usable socket driver\n"));
-	WSACleanup();
-	return 1;
-    } else {
-	/* arrange for cleanup on exit */
-	atexit(ws_cleanup);
-    }
-#endif
-    return 0;
-}
-
 int real_create_child_process (char *prog, int showerr) 
 { 
     PROCESS_INFORMATION proc_info; 
@@ -365,7 +332,8 @@ void gretl_win32_debug_init (int debug)
 }
 
 /* carry out some Windows-specific start-up tasks, and
-   call read_rc to get configuration info */
+   call read_rc to get configuration info 
+*/
 
 void gretl_win32_init (const char *progname, int debug)
 {
@@ -373,7 +341,6 @@ void gretl_win32_init (const char *progname, int debug)
     wimp_init();
     read_win32_config(debug);
     set_gretl_startdir();
-    ws_startup();
     if (debug) {
 	fprintf(stderr, "gretl_win32_init: done\n");
     }

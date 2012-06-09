@@ -1760,6 +1760,8 @@ static int check_colspec (const char *s)
  *
  * Sets the format with which parameters will be printed, when
  * producing TeX tabular output.
+ *
+ * Returns: 0 on success, non-zero code on error.
  */
 
 int set_tex_param_format (const char *s)

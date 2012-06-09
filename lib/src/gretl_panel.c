@@ -3936,11 +3936,10 @@ int panel_autocorr_test (MODEL *pmod, int order, DATASET *dset,
 
 /**
  * switch_panel_orientation:
- * @dset: dataset struct.
+ * @dset: pointer to dataset struct.
  * 
- * Reorganizes the data array @Z and rewrites the dataset information
- * @dset, transforming from stacked cross sections to stacked
- * time series or vice versa.  If the transformation is from
+ * Reorganizes @dset, transforming from stacked cross sections to
+ * stacked time series or vice versa.  If the transformation is from
  * stacked time series to stacked cross section, the dataset will
  * no longer be acceptable as a panel for gretl's purposes; it
  * may be useful for export purposes, though.

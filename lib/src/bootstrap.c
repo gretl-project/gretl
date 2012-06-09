@@ -1119,8 +1119,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B,
  * @q: right-hand restriction matrix.
  * @test: initial test statistic.
  * @g: number of restrictions.
- * @Z: data array.
- * @dset: dataset information.
+ * @dset: pointer to dataset.
  * @opt: options passed to the restrict command.
  * @prn: printing struct.
  *

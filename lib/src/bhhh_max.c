@@ -242,7 +242,7 @@ int bhhh_max (double *theta, int k,
 #endif
 
 	while (err || ll2 < ll) { 
-	    /* ... if not, halve the steplength */
+	    /* ... or if not, halve the steplength */
 	    stepsize *= 0.5;
 	    if (stepsize < minstep) {
 		fprintf(stderr, "BHHH: hit minimum step size %g\n", minstep);

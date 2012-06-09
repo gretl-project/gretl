@@ -2201,6 +2201,8 @@ void get_column_widths (const char **strs, int *widths, int n)
  * Works just like strncat(), except that it ensures that we
  * don't end up with an incomplete UTF-8 character preceding
  * the terminating NUL byte.
+ *
+ * Returns: the destination string.
  */
 
 char *gretl_utf8_strncat (char *dest, const char *src, size_t n)

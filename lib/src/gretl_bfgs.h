@@ -98,8 +98,8 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 		     DATASET *dset, int *err);
 
 int gretl_simann (double *theta, int n, int maxit,
-		  BFGS_CRIT_FUNC cfunc, int crittype,
-		  void *data, gretlopt opt, PRN *prn);
+		  BFGS_CRIT_FUNC cfunc, void *data,
+		  gretlopt opt, PRN *prn);
 
 void BFGS_defaults (int *maxit, double *tol, int ci);
 

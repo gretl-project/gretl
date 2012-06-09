@@ -1678,8 +1678,8 @@ double user_simann (gretl_matrix *b,
     }
 
     *err = gretl_simann(b->val, u->ncoeff, maxit, 
-			user_get_criterion, C_OTHER,
-			u, opt, prn);
+			user_get_criterion, u, 
+			opt, prn);
 
     if (!*err) {
 	ret = user_get_criterion(b->val, u);	    
@@ -2173,10 +2173,9 @@ static void set_up_matrix (gretl_matrix *m, double *val,
  * @n: length of @theta.
  * @maxit: the maximum number of iterations to perform.
  * @cfunc: the function to be maximized.
- * @crittype: 
  * @data: pointer to be passed to the @cfunc callback.
- * @opt:
- * @prn:
+ * @opt: may include %OPT_V for verbose operation.
+ * @prn: printing struct, or NULL.
  *
  * Simulated annealing: can help to improve the initialization
  * of @theta for numerical optimization. On exit the value of
@@ -2187,8 +2186,8 @@ static void set_up_matrix (gretl_matrix *m, double *val,
  */ 
 
 int gretl_simann (double *theta, int n, int maxit,
-		  BFGS_CRIT_FUNC cfunc, int crittype,
-		  void *data, gretlopt opt, PRN *prn)
+		  BFGS_CRIT_FUNC cfunc, void *data, 
+		  gretlopt opt, PRN *prn)
 {
     gretl_matrix b;
     gretl_matrix *b0 = NULL;

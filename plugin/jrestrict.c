@@ -3093,8 +3093,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	int n = gretl_vector_get_length(J->theta);
 
 	err = gretl_simann(J->theta->val, n, 4096,
-			   Jloglik, C_LOGLIK, J,
-			   opt, prn);
+			   Jloglik, J, opt, prn);
 	if (!err) {
 	    sync_with_theta(J, J->theta->val);
 	}
