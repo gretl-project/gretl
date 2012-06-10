@@ -2041,6 +2041,10 @@ int unzip_package_file (const char *zipname, const char *path)
 	return err;
     }
 
+#ifdef G_OS_WIN32
+    fprintf(stderr, "unzip_package_file: unzipping in '%s'\n", dirname);
+#endif
+
     gretl_unzip_file = gui_get_plugin_function("gretl_unzip_file", 
 					       &handle);
     if (gretl_unzip_file == NULL) {
