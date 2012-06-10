@@ -472,7 +472,11 @@ static fnpkg *function_package_alloc (const char *fname)
     if (pkg->fname == NULL) {
 	free(pkg);
 	return NULL;
-    }     
+    }
+
+#if PKG_DEBUG
+    fprintf(stderr, "function_package_alloc: fname='%s'\n", fname);
+#endif    
 
     pkg->ID = (int) time(NULL);
     pkg->name[0] = '\0';
@@ -3842,7 +3846,7 @@ static fnpkg *read_package_file (const char *fname, int *err)
     xmlNodePtr cur;
 
 #if PKG_DEBUG
-    fprintf(stderr, "read_function_package: got '%s'\n", fname);
+    fprintf(stderr, "read_package_file: got '%s'\n", fname);
 #endif
 
     *err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);

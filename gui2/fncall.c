@@ -445,9 +445,8 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
     char *pdfname = NULL;
 
     if (function_package_has_PDF_doc(cinfo->pkg, &pdfname)) {
-	FILE *fp;
+	FILE *fp = gretl_fopen(pdfname, "r");
 
-	fp = gretl_fopen(pdfname, "r");
 	if (fp != NULL) {
 	    fclose(fp);
 	    gretl_show_pdf(pdfname);
