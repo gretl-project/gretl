@@ -15,7 +15,8 @@ Linux Mint 12          (contrib. 2012-02-26)
 Ubuntu oneiric (11.10) (contrib. 2012-06-10, helio_guilherme@hotmail.com)
 # dependencies
 sudo apt-get install gnuplot libfftw3-dev liblapack-dev gfortran libxml2 \
- zlib1g-dev libreadline-gplv2-dev libgtksourceview2.0-dev libgmp3-dev curl
+ zlib1g-dev libreadline-gplv2-dev libgtksourceview2.0-dev libgmp3-dev curl \
+ libcurl4-gnutls-dev
 
 # documentation build (optional)
 
