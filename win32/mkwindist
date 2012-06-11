@@ -265,6 +265,9 @@ for lang in $LANGS ; do
   add_file mo/$lang.mo gretl/locale/$lang/LC_MESSAGES/gretl.mo
 done
 
+# manifest xml file (for Windows >= Vista)
+add_file ${TOPDIR}/win32/gretlw32.exe.manifest gretl/gretlw32.exe.manifest
+
 # ensure updater is au courant
 make -C updater
 
