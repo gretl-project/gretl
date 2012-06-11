@@ -526,7 +526,9 @@ fi
 dnl
 dnl libcurl
 dnl
-if test "$PKG_CONFIG" != "no" ; then
+if test "x$CURL_CFLAGS" != "x" || test "x$CURL_LIBS" != "x" ; then
+  have_curl="yes"
+elif test "$PKG_CONFIG" != "no" ; then
    PKG_CHECK_MODULES(CURL, libcurl >= 7.13.0, have_curl="yes", have_curl="no")
 fi
 

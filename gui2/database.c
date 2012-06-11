@@ -1486,13 +1486,13 @@ static dbwrapper *get_series_info (windata_t *vwin, int action)
 	row = rowlist[i+1];
 	tree_view_get_int(view, row, 3, &sinfo->offset);
 
-	*sinfo->varname = 0;
+	*sinfo->varname = '\0';
 	tree_view_get_string(view, row, 0, &tmp);
 	strncat(sinfo->varname, tmp, VNAMELEN - 1);
 	g_free(tmp);
 
 	tmp = NULL;
-	*sinfo->descrip = 0;
+	*sinfo->descrip = '\0';
 	tree_view_get_string(view, row, 1, &tmp);
 	if (tmp != NULL) {
 	    strncat(sinfo->descrip, tmp, MAXLABEL - 1);
@@ -2042,7 +2042,14 @@ int unzip_package_file (const char *zipname, const char *path)
     }
 
 #ifdef G_OS_WIN32
-    fprintf(stderr, "unzip_package_file: unzipping in '%s'\n", dirname);
+    if (1) {
+	char *test;
+
+	fprintf(stderr, "unzip_package_file: unzipping in '%s'\n", dirname);
+	*dirname = '\0';
+	test = getcwd(dirname, FILENAME_MAX - 1);
+	fprintf(stderr, " check: getcwd() gives '%s'\n", test);
+    }
 #endif
 
     gretl_unzip_file = gui_get_plugin_function("gretl_unzip_file", 

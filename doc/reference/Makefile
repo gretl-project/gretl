@@ -41,6 +41,8 @@ IGNORE_SRCS = \
 	flow_control.h \
 	gretl_bundle.c \
 	gretl_bundle.h \
+	gretl_intl.c \
+	gretl_intl.h \
 	gretl_func.c \
 	gretl_func.h \
 	gretl_win32.c \

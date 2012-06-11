@@ -16975,7 +16975,9 @@ $as_echo "yes" >&6; }
 fi
 fi
 
-if test "$PKG_CONFIG" != "no" ; then
+if test "x$CURL_CFLAGS" != "x" || test "x$CURL_LIBS" != "x" ; then
+  have_curl="yes"
+elif test "$PKG_CONFIG" != "no" ; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CURL" >&5

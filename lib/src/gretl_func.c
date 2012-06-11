@@ -474,7 +474,7 @@ static fnpkg *function_package_alloc (const char *fname)
 	return NULL;
     }
 
-#if PKG_DEBUG
+#if 1 || PKG_DEBUG
     fprintf(stderr, "function_package_alloc: fname='%s'\n", fname);
 #endif    
 
@@ -7225,6 +7225,8 @@ int function_package_has_PDF_doc (fnpkg *pkg, char **pdfname)
 	    *pdfname = switch_ext_new(pkg->fname, "pdf");
 	    if (*pdfname == NULL) {
 		ret = 0;
+	    } else {
+		fprintf(stderr, "PDF_doc: pdfname='%s'\n", *pdfname);
 	    }
 	}
     }
