@@ -53,6 +53,7 @@ static char datacgi[DBHLEN]      = "/gretl/cgi-bin/gretldata.cgi";
 static char updatecgi[DBHLEN]    = "/gretl/cgi-bin/gretl_update.cgi";
 static char manual_path[DBHLEN]  = "/project/gretl/manual/";
 static char dataset_path[DBHLEN] = "/project/gretl/datafiles/";
+static char datapkg_list[DBHLEN] = "/addons-data/datapkgs.txt";
 
 static int wproxy;
 static char proxyhost[128];
@@ -461,12 +462,15 @@ static int retrieve_url (const char *hostname,
 	strcat(u.url, fname);
     } else if (opt == GRAB_FILE) {
 	strcat(u.url, updatecgi);
+    } else if (opt == LIST_PKGS) {
+	strcat(u.url, datapkg_list);
     } else {
 	strcat(u.url, datacgi);
     }
 
     if (opt != GRAB_PDF && opt != GRAB_FOREIGN &&
-	opt != GRAB_PKG && opt != QUERY_SF) {
+	opt != GRAB_PKG && opt != QUERY_SF &&
+	opt != LIST_PKGS) {
 	/* a gretl-server download */
 	urlinfo_set_params(&u, opt, fname, dbseries);
     }
@@ -645,7 +649,7 @@ int query_sourceforge (const char *query, char **getbuf)
 
 int list_remote_data_packages (char **getbuf)
 {
-    return retrieve_url(gretlhost, LIST_PKGS, NULL, NULL, 
+    return retrieve_url(sfweb, LIST_PKGS, NULL, NULL, 
 			NULL, getbuf);
 }
 
@@ -821,7 +825,3 @@ int retrieve_public_file (const char *uri, char *localname)
 }
 
 #endif /* !STANDALONE */
-
-
-
-
