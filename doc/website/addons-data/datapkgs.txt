@@ -1,0 +1,20 @@
+4879789 Foo May 06 00:00:00 2009 ashenfelter.tar.gz
+# Ashenfelter, Levine and Zimmerman, Statistics and Econometrics
+2045408 Foo Oct 14 00:00:00 2008 dougherty.tar.gz 
+# Christopher Dougherty, Introduction to Econometrics
+106062 Foo Dec 14 00:00:00 2003 ETM.tar.gz
+# Davidson and MacKinnon, Econometric Theory and Methods
+44841 Foo Sep 07 00:00:00 2011 gujarati.tar.gz
+# Damodar Gujarati, Basic Econometrics
+53612 Foo Jan 14 00:00:00 2009 koop.tar.gz
+# Gary Koop, Analysis of Economic Data
+2135467 Foo Jun 29 00:00:00 2011 POE4data.tar.gz
+# Hill, Griffiths and Lim, Principles of Econometrics, 4e
+1203216 Foo Aug 21 00:00:00 2006 stock_watson_2.tar.gz
+# Stock and Watson, Introduction to Econometrics, 2e
+518205 Foo Jul 12 00:00:00 2004 stock_watson.tar.gz
+# Stock and Watson, Introduction to Econometrics
+640949 Foo Dec 30 00:00:00 2006 verbeek.tar.gz
+# Marno Verbeek, Guide to Modern Econometrics
+2558434 Foo Sep 06 00:00:00 2008 wooldridge.tar.gz
+# Jeffrey Wooldridge, Introductory Econometrics
