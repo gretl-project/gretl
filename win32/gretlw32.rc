@@ -12,6 +12,6 @@ icon_2 ICON "icons/icon2.ico"
 /* icon for session files -- alternate two-tone Gretel */
 icon_3 ICON "icons/icon3.ico"
 
-/* embedded manifest file */
-1 RT_MANIFEST "gretlw32.exe.manifest"
+/* embedded manifest file (maybe not a good idea?) */
+/* 1 RT_MANIFEST "gretlw32.exe.manifest" */
 
