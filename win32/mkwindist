@@ -83,6 +83,7 @@ mkdir -p windist/gretl/data/plotbars
 mkdir -p windist/gretl/functions
 mkdir -p windist/gretl/functions/gig
 mkdir -p windist/gretl/functions/ivpanel
+mkdir -p windist/gretl/functions/SVAR
 mkdir -p windist/gretl/scripts
 mkdir -p windist/gretl/scripts/misc
 mkdir -p windist/gretl/db
@@ -304,7 +305,7 @@ fi
 # add the approved gretl addons
 WINDIST=`pwd`
 cd gretl/functions
-for f in gig ivpanel ; do
+for f in gig ivpanel SVAR ; do
   if [ ! -f ${ADDONS}/${f}/${f}.zip ] ; then
     echo "Couldn't find ${f}.zip"
     exit 1
