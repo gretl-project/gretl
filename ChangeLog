@@ -3,10 +3,13 @@ Version 1.9.10, in progress
 - "delete" command: add a --force option to permit deletion of
   series in loops (to be used with caution!)
 - Switch to using libcurl for HTTP transaction support
-- Add two new element-wise matrix operators, ".>=" and ".<=", 
+- Add two new element-wise matrix operators, ".>=" and ".<=",
   (greater than or equal, less than or equal)
 - Fix some buggy behavior in regard to empty matrices
-
+- Allow passing "null" as an argument for lists in user-defined
+  functions
+- Bivariate normal cdf: switch from Drezner(78) to a faster and
+  more robust algorithm
 2012-06-01 version 1.9.9
 - Add --cluster option (cluster-robust standard errors) for several
   estimators; see the User's Guide for details
@@ -30,7 +33,7 @@ Version 1.9.10, in progress
   named lists
 - Fix bug: nonlinearity test (logs) misbehaving when the original
   model includes non-positive regressors
-- Improvements to syntax highlighting in script editor 
+- Improvements to syntax highlighting in script editor
 - Numerous small GUI fixes
 - MS Windows build: update cross-compiler to gcc-4.6.3
 - MS Windows build: fix inconsistent zlib headers

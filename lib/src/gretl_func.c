@@ -6305,6 +6305,8 @@ static int check_function_args (ufunc *u, fnargs *args, PRN *prn)
 	    ; /* OK */
 	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_USERIES) {
 	    ; /* OK */
+	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_NONE) {
+	    ; /* OK */
 	} else if (fp->type != arg->type) {
 	    pprintf(prn, _("%s: argument %d is of the wrong type (is %s, should be %s)\n"), 
 		    u->name, i + 1, gretl_arg_type_name(arg->type), 
