@@ -756,18 +756,18 @@ static BOOL running_as_admin (void)
     PSID admin_group = NULL;
     BOOL ok, ret = FALSE;
 
-    ok = AllocateAndInitializeSid(&auth, 
-				  2, 
+    ok = AllocateAndInitializeSid(&auth, 2,
 				  SECURITY_BUILTIN_DOMAIN_RID, 
 				  DOMAIN_ALIAS_RID_ADMINS, 
 				  0, 0, 0, 0, 0, 0, 
 				  &admin_group);
 
     if (ok) {
-	/* determine whether the SID of administrators group is
-	   enabled in the primary access token of the process
-	*/
 	ok = CheckTokenMembership(NULL, admin_group, &ret);
+    }
+
+    if (!ok) {
+	fprintf(stderr, "running_as_admin: the check failed\n");
     }
  
     if (admin_group != NULL) {
@@ -792,6 +792,7 @@ int windows_uses_virtual_store (void)
     osvi.dwOSVersionInfoSize = sizeof osvi;
 
     GetVersionEx(&osvi);
+    /* VirtualStore came in with Vista */
     ret = osvi.dwMajorVersion > 5;
     
     if (ret && running_as_admin()) {
