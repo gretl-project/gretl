@@ -58,4 +58,6 @@ int win32_open_file (const char *fname);
 
 void win32_font_selector (char *fontname, int flag);
 
+int windows_uses_virtual_store (void);
+
 #endif /* GRETLWIN32_H */

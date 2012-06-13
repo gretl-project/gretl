@@ -444,6 +444,15 @@ char *appdata_path (void)
     return win_special_path(CSIDL_APPDATA);
 }
 
+#if 0 /* not yet? */
+
+char *local_appdata_path (void)
+{
+    return win_special_path(CSIDL_LOCAL_APPDATA);
+}
+
+#endif
+
 char *mydocs_path (void)
 {
     return win_special_path(CSIDL_PERSONAL);

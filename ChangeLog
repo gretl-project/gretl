@@ -6,10 +6,9 @@ Version 1.9.10, in progress
 - Add two new element-wise matrix operators, ".>=" and ".<=",
   (greater than or equal, less than or equal)
 - Fix some buggy behavior in regard to empty matrices
-- Allow passing "null" as an argument for lists in user-defined
-  functions
 - Bivariate normal cdf: switch from Drezner(78) to a faster and
   more robust algorithm
+
 2012-06-01 version 1.9.9
 - Add --cluster option (cluster-robust standard errors) for several
   estimators; see the User's Guide for details

@@ -499,6 +499,7 @@ void set_gretl_startdir (void)
 static void get_pkg_save_dir (char *dirname, int action)
 {
     const char *subdir = NULL;
+    int try_sysdir = 1;
     int ok = 0;
 
     if (action == SAVE_FUNCTIONS) {
@@ -509,10 +510,18 @@ static void get_pkg_save_dir (char *dirname, int action)
 	return;
     }
 
-    /* try 'system' location first */
+#ifdef G_OS_WIN32
+    if (windows_uses_virtual_store()) {
+	/* don't write to virtualized location */
+	try_sysdir = 0;
+    }
+#endif
 
-    sprintf(dirname, "%s%s", gretl_home(), subdir);
-    ok = write_OK(dirname);
+    if (try_sysdir) {
+	/* try 'system' location first */
+	sprintf(dirname, "%s%s", gretl_home(), subdir);
+	ok = write_OK(dirname);
+    }
 
     if (!ok) {
 	/* try user's filespace */

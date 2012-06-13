@@ -747,3 +747,65 @@ void win32_font_selector (char *fontname, int flag)
 	*fontname = '\0';
     }
 }
+
+#if 0 /* not sure if this will do what we want */
+
+static int get_UAC_state (void)
+{
+    unsigned long datalen = MAXLEN;
+    char regpath[128];
+    LONG ret;
+    HKEY regkey;
+    DWORD dval;
+    int UAC = 1; /* we'll suppose it's on by default */
+
+    strcpy(regpath, 
+	   "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System");
+
+    ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+		       regpath,   /* subkey name */
+		       0,         /* reserved */
+		       KEY_READ,  /* access mask */
+		       &regkey    /* key handle */
+		       );
+
+    if (ret != ERROR_SUCCESS) {
+	fprintf(stderr, "Couldn't read registry path %s\n", regpath);
+        return 1;
+    }
+
+    if (RegQueryValueEx(regkey,
+			"EnableLUA",
+			NULL,
+			NULL,
+			&dval,
+			sizeof dval
+			) == ERROR_SUCCESS) {
+	UAC = dval;
+    }
+
+    RegCloseKey(regkey);
+
+    return UAC;
+}
+
+#endif
+
+/* Note: at some point MS will scrap the virtual store
+   apparatus (supposedly), in which case we'll want to
+   add a further condition in this function -- that is,
+   dwMajorVersion < something.
+*/
+
+int windows_uses_virtual_store (void)
+{
+    OSVERSIONINFO osvi;
+
+    ZeroMemory(&osvi, sizeof osvi);
+    osvi.dwOSVersionInfoSize = sizeof osvi;
+
+    GetVersionEx(&osvi);
+
+    return osvi.dwMajorVersion > 5;
+}
+

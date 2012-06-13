@@ -1896,7 +1896,7 @@ enum {
     GRETL_KEYS
 };
 
-static int get_writable_path (char *path, const char *fname, int code)
+static int get_writable_doc_path (char *path, const char *fname)
 {
     static int sysdoc_writable = -1;
     static int userdoc_writable = -1;
@@ -1912,6 +1912,13 @@ static int get_writable_path (char *path, const char *fname, int code)
 	sprintf(path, "%sdoc%c%s", dotdir, SLASH, fname);
 	return 0;
     }
+
+#ifdef G_OS_WIN32
+    if (sysdoc_writable < 0 && windows_uses_virtual_store()) {
+	/* don't write to virtualized location */
+	sysdoc_writable = 0;
+    }
+#endif
 
     if (sysdoc_writable < 0) {
 	sysdoc_writable = 0;
@@ -2045,7 +2052,7 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     }	
 
     if (!gotit) {
-	/* or maybe in user dir? */
+	/* or maybe in user's dotdir? */
 	sprintf(fullpath, "%sdoc%c%s", gretl_dotdir(), SLASH, fname);
 	fp = gretl_fopen(fullpath, "r");
 	if (fp != NULL) {
@@ -2056,7 +2063,7 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 
     if (!gotit) {
 	/* check for download location */
-	err = get_writable_path(fullpath, fname, code);
+	err = get_writable_doc_path(fullpath, fname);
 
 	/* do actual download */
 	if (!err) {
