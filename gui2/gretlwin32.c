@@ -29,6 +29,8 @@
 
 #include <gdk/gdkwin32.h>
 #include <dirent.h>
+
+#include <windows.h>
 #include <mapi.h>
 #include <shlobj.h>
 #include <shellapi.h>
@@ -748,48 +750,32 @@ void win32_font_selector (char *fontname, int flag)
     }
 }
 
-#if 0 /* not sure if this will do what we want */
-
-static int get_UAC_state (void)
+static BOOL running_as_admin (void)
 {
-    unsigned long datalen = MAXLEN;
-    char regpath[128];
-    LONG ret;
-    HKEY regkey;
-    DWORD dval;
-    int UAC = 1; /* we'll suppose it's on by default */
+    SID_IDENTIFIER_AUTHORITY auth = {SECURITY_NT_AUTHORITY};
+    PSID admin_group = NULL;
+    BOOL ok, ret = FALSE;
 
-    strcpy(regpath, 
-	   "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System");
+    ok = AllocateAndInitializeSid(&auth, 
+				  2, 
+				  SECURITY_BUILTIN_DOMAIN_RID, 
+				  DOMAIN_ALIAS_RID_ADMINS, 
+				  0, 0, 0, 0, 0, 0, 
+				  &admin_group);
 
-    ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-		       regpath,   /* subkey name */
-		       0,         /* reserved */
-		       KEY_READ,  /* access mask */
-		       &regkey    /* key handle */
-		       );
-
-    if (ret != ERROR_SUCCESS) {
-	fprintf(stderr, "Couldn't read registry path %s\n", regpath);
-        return 1;
+    if (ok) {
+	/* determine whether the SID of administrators group is
+	   enabled in the primary access token of the process
+	*/
+	ok = CheckTokenMembership(NULL, admin_group, &ret);
     }
-
-    if (RegQueryValueEx(regkey,
-			"EnableLUA",
-			NULL,
-			NULL,
-			&dval,
-			sizeof dval
-			) == ERROR_SUCCESS) {
-	UAC = dval;
+ 
+    if (admin_group != NULL) {
+	FreeSid(admin_group);
     }
-
-    RegCloseKey(regkey);
-
-    return UAC;
+ 
+    return ret;
 }
-
-#endif
 
 /* Note: at some point MS will scrap the virtual store
    apparatus (supposedly), in which case we'll want to
@@ -800,12 +786,18 @@ static int get_UAC_state (void)
 int windows_uses_virtual_store (void)
 {
     OSVERSIONINFO osvi;
+    int ret;
 
     ZeroMemory(&osvi, sizeof osvi);
     osvi.dwOSVersionInfoSize = sizeof osvi;
 
     GetVersionEx(&osvi);
+    ret = osvi.dwMajorVersion > 5;
+    
+    if (ret && running_as_admin()) {
+	ret = 0;
+    }
 
-    return osvi.dwMajorVersion > 5;
+    return ret;
 }
 

@@ -78,4 +78,6 @@
 /* Use the GNU R shared library */
 #define USE_RLIB 1
 
+#define WINVER 0x0500 /* XP */
+
 #endif /* WINCONFIG_H */

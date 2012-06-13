@@ -1343,6 +1343,8 @@ static int dpd_ar_test (ddset *dpd)
 
     if (err) {
 	fprintf(stderr, "dpd_ar_test failed: err = %d\n", err);
+    } else if (na(dpd->AR1) && na(dpd->AR1)) {
+	fprintf(stderr, "dpd_ar_test: no data\n");
     }
 
     return err;
