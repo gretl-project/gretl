@@ -905,7 +905,7 @@ static int dpd_wald_test (ddset *dpd)
     int cpos = dpd_const_pos(dpd);
     int k1, knd;
     int i, j, ri, rj;
-    int err;
+    int err = 0;
 
     /* total number of coefficients excluding any time dummies */
     knd = dpd->k - dpd->ndum;
@@ -975,14 +975,22 @@ static int dpd_wald_test (ddset *dpd)
 
     gretl_matrix_reuse(dpd->kmtmp, dpd->k, dpd->nz);
     gretl_matrix_reuse(dpd->kktmp, dpd->k, dpd->k);
+
+    if (err) {
+	fprintf(stderr, "dpd_wald_test failed: err = %d\n", err);
+    }
     
     return err;
 }
 
 static int dpd_sargan_test (ddset *dpd)
 {
+    int save_rows, save_cols;
     gretl_matrix *Zu;
     int err = 0;
+
+    save_rows = gretl_matrix_rows(dpd->L1);
+    save_cols = gretl_matrix_cols(dpd->L1);
 
     Zu = gretl_matrix_reuse(dpd->L1, dpd->nz, 1);
     gretl_matrix_multiply(dpd->ZT, dpd->uhat, Zu);
@@ -1018,7 +1026,11 @@ static int dpd_sargan_test (ddset *dpd)
     }
 #endif
 
-    gretl_matrix_reuse(dpd->L1, 1, dpd->nz);
+    gretl_matrix_reuse(dpd->L1, save_rows, save_cols);
+    
+    if (err) {
+	fprintf(stderr, "dpd_sargan_test failed: err = %d\n", err);
+    }
 
     return err;
 }
@@ -1084,7 +1096,7 @@ static void make_asy_Hi (ddset *dpd, int i, gretl_matrix *H,
 static int dpd_ar_test (ddset *dpd)
 {
     double x, d0, d1, d2, d3;
-    gretl_matrix_block *B;
+    gretl_matrix_block *B = NULL;
     gretl_matrix *ui, *wi;
     gretl_matrix *Xi, *Zi;
     gretl_matrix *Hi, *ZU;
@@ -1092,11 +1104,15 @@ static int dpd_ar_test (ddset *dpd)
     gretl_matrix *Tmp;
     char *hmask = NULL;
     int HT, T = dpd->maxTi;
+    int save_rows, save_cols;
     int nz = dpd->nz;
     int asy, ZU_cols;
     int i, j, k, s, t;
     int nlags, m = 1;
     int err = 0;
+
+    save_rows = gretl_matrix_rows(dpd->Zi);
+    save_cols = gretl_matrix_cols(dpd->Zi);
 
     /* if non-robust and on first step, Hi is computed differently */
     if ((dpd->flags & DPD_TWOSTEP) || (dpd->flags & DPD_WINCORR)) {
@@ -1107,7 +1123,8 @@ static int dpd_ar_test (ddset *dpd)
 	HT = dpd->T;
 	hmask = malloc(HT);
 	if (hmask == NULL) {
-	    return E_ALLOC;
+	    err = E_ALLOC;
+	    goto finish;
 	}
     }
 
@@ -1126,8 +1143,8 @@ static int dpd_ar_test (ddset *dpd)
 			       NULL);
 
     if (B == NULL) {
-	free(hmask);
-	return E_ALLOC;
+	err = E_ALLOC;
+	goto finish;
     }
 
     Zi = gretl_matrix_reuse(dpd->Zi, T, nz);
@@ -1288,7 +1305,7 @@ static int dpd_ar_test (ddset *dpd)
 
     if (!err) {
 	d2 *= -2.0;
-	/* d3 = w'X * var(\hat{\beta}) * X'w */
+	/* form w'X * var(\hat{\beta}) * X'w */
 	d3 = gretl_scalar_qform(wX, dpd->vbeta, &err);
     }
 
@@ -1322,7 +1339,11 @@ static int dpd_ar_test (ddset *dpd)
     free(hmask);
 
     /* restore original dimensions */
-    gretl_matrix_reuse(dpd->Zi, dpd->max_ni, dpd->nz);
+    gretl_matrix_reuse(dpd->Zi, save_rows, save_cols);
+
+    if (err) {
+	fprintf(stderr, "dpd_ar_test failed: err = %d\n", err);
+    }
 
     return err;
 }

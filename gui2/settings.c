@@ -547,6 +547,7 @@ void get_default_dir (char *s, int action)
     if (action == SAVE_FUNCTIONS || action == SAVE_DATA_PKG) {
 	get_pkg_save_dir(s, action);
     } else if (action == SAVE_REMOTE_DB) {
+	/* FIXME Windows Vista and higher? */
 	sprintf(s, "%sdb", gretl_home());
     } else {
 	strcpy(s, gretl_workdir());
