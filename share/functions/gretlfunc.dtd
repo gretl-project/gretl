@@ -10,8 +10,8 @@
 <!ELEMENT gretl-functions (gretl-function-package?)>
 
 <!ELEMENT gretl-function-package (author, version, date, description, 
-                                  label?, help, gui-help?, gretl-function+,
-                                  sample-script)>
+                                  label?, menu-attachment?, help, gui-help?, 
+                                  gretl-function+, sample-script)>
 <!ATTLIST gretl-function-package
    name CDATA #REQUIRED
    ID CDATA #IMPLIED
@@ -21,7 +21,6 @@
    no-data-ok (true|false) 'false'
    has-pdf-doc (true|false) 'false'
    lives-in-subdir (true|false) 'false'
-   menu-attachment CDATA #IMPLIED
    model-requirement CDATA #IMPLIED
    minver CDATA #IMPLIED
 >
@@ -31,6 +30,7 @@
 <!ELEMENT date        (#PCDATA)>
 <!ELEMENT description (#PCDATA)>
 <!ELEMENT label       (#PCDATA)>
+<!ELEMENT menu-attachment (#PCDATA)>
 <!ATTLIST description
    lang CDATA #IMPLIED
 >

@@ -2448,7 +2448,7 @@ static int package_write_index (fnpkg *pkg, PRN *prn)
     }
 
     if (pkg->uses_subdir) {
-	fprintf(fp, " uses-subdir=\"true\"");
+	fprintf(fp, " lives-in-subdir=\"true\"");
     }    
 
     fputs(">\n", fp);
@@ -2463,7 +2463,7 @@ static int package_write_index (fnpkg *pkg, PRN *prn)
     }
 
     if (pkg->mpath != NULL) {
-	gretl_xml_put_tagged_string("mpath", pkg->mpath, fp);
+	gretl_xml_put_tagged_string("menu-attachment", pkg->mpath, fp);
     }
 
     fputs("</gretl-addon>\n", fp);
@@ -2539,7 +2539,7 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
     }
 
     if (pkg->mpath != NULL) {
-	gretl_xml_put_tagged_string("mpath", pkg->mpath, fp);
+	gretl_xml_put_tagged_string("menu-attachment", pkg->mpath, fp);
     }
 
     if (pkg->help != NULL) {
@@ -2779,8 +2779,8 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		if (!err) got++;
 	    } else if (!strncmp(line, "label", 5)) {
 		err = function_package_set_properties(pkg, "label", p, NULL);
-	    } else if (!strncmp(line, "mpath", 5)) {
-		err = function_package_set_properties(pkg, "mpath", p, NULL);
+	    } else if (!strncmp(line, "menu-attachment", 15)) {
+		err = function_package_set_properties(pkg, "menu-attachment", p, NULL);
 	    } else if (!strncmp(line, "help", 4)) {
 		if (has_suffix(p, ".pdf")) {
 		    pprintf(prn, "Recording help reference %s\n", p);
@@ -2816,7 +2816,7 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 	    } else if (!strncmp(line, "min-version", 11)) {
 		pkg->minver = version_number_from_string(p);
 		got++;
-	    } else if (!strncmp(line, "uses-subdir", 11)) {
+	    } else if (!strncmp(line, "lives-in-subdir", 15)) {
 		pkg->uses_subdir = pkg_boolean_from_string(p);
 	    } else {
 		const char *key;
@@ -3085,7 +3085,7 @@ static int is_string_property (const char *key)
 	!strcmp(key, "date")     ||
 	!strcmp(key, "description") ||
 	!strcmp(key, "label") ||
-	!strcmp(key, "mpath") ||
+	!strcmp(key, "menu-attachment") ||
 	!strcmp(key, "help") ||
 	!strcmp(key, "gui-help") ||
 	!strcmp(key, "sample-script");
@@ -3124,7 +3124,7 @@ int function_package_set_properties (fnpkg *pkg, ...)
 		err = maybe_replace_string_var(&pkg->descrip, cval);
 	    } else if (!strcmp(key, "label")) {
 		err = maybe_replace_string_var(&pkg->label, cval);
-	    } else if (!strcmp(key, "mpath")) {
+	    } else if (!strcmp(key, "menu-attachment")) {
 		err = maybe_replace_string_var(&pkg->mpath, cval);
 	    } else if (!strcmp(key, "help")) {
 		err = maybe_replace_string_var(&pkg->help, cval);
@@ -3291,7 +3291,7 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "label")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->label);
-	} else if (!strcmp(key, "mpath")) {
+	} else if (!strcmp(key, "menu-attachment")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->mpath);
 	} else if (!strcmp(key, "data-requirement")) {
@@ -3303,6 +3303,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "min-version")) {
 	    pi = (int *) ptr;
 	    *pi = pkg->minver;
+	} else if (!strcmp(key, "lives-in-subdir")) {
+	    pi = (int *) ptr;
+	    *pi = pkg->uses_subdir;
 	} else if (!strcmp(key, "publist")) {
 	    plist = (int **) ptr;
 	    *plist = function_package_get_list(pkg, PUBLIST, npub);
@@ -3797,7 +3800,7 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->sample);
 	} else if (!xmlStrcmp(cur->name, (XUC) "label")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->label);
-	} else if (!xmlStrcmp(cur->name, (XUC) "mpath")) {
+	} else if (!xmlStrcmp(cur->name, (XUC) "menu-attachment")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->mpath);
 	}
 
