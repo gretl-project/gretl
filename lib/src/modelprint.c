@@ -344,21 +344,25 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 
 static void print_panel_AR_test (double z, int order, PRN *prn)
 {
-    double pv = normal_pvalue_2(z);
-
-    if (na(pv)) {
-	return;
-    }
-
     pprintf(prn, A_("Test for AR(%d) errors:"), order);
 
-    if (tex_format(prn)) {
-	char numstr[32];
-
-	tex_sprint_double_digits(z, numstr, 4);
-	pprintf(prn, " & $z$ = %s [%.4f]", numstr, pv);
+    if (na(z)) {
+	if (tex_format(prn)) {
+	    pputs(prn, " & $z$ = NA");
+	} else {
+	    pputs(prn, " z = NA");
+	}
     } else {
-	pprintf(prn, " z = %g [%.4f]", z, pv);
+	double pv = normal_pvalue_2(z);
+
+	if (tex_format(prn)) {
+	    char numstr[32];
+
+	    tex_sprint_double_digits(z, numstr, 4);
+	    pprintf(prn, " & $z$ = %s [%.4f]", numstr, pv);
+	} else {
+	    pprintf(prn, " z = %g [%.4f]", z, pv);
+	}
     }
 
     gretl_prn_newline(prn);
@@ -403,6 +407,29 @@ print_model_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
     } else if (j == OVERDISP) {
 	df = 1;
     } else {
+	return;
+    }
+
+    if (na(x)) {
+	if (j == AB_SARGAN || j == AB_WALD) {
+	    if (df < 0) {
+		df = 0;
+	    }
+	    if (tex_format(prn)) {
+		pprintf(prn, "%s: ", A_(texstrs[j]));
+		pprintf(prn, " $\\chi^2(%d)$ = NA", df);
+	    } else if (plain_format(prn)) {
+		if (gmm_model(pmod)) {
+		    pputs(prn, "  ");
+		}
+		pprintf(prn, "%s: ", _(strs[j]));
+		pprintf(prn, "%s(%d) = NA", _("Chi-square"), df);
+	    } else {
+		pprintf(prn, "%s: ", A_(strs[j]));
+		pprintf(prn, "%s(%d) = NA", A_("Chi-square"), df);
+	    }
+	    gretl_prn_newline(prn);
+	}
 	return;
     }
 
@@ -490,24 +517,16 @@ static void print_DPD_stats (const MODEL *pmod, PRN *prn)
     }
 
     x = gretl_model_get_double(pmod, "AR1");
-    if (!na(x)) {
-	print_panel_AR_test(x, 1, prn);
-    }
+    print_panel_AR_test(x, 1, prn);
 
     x = gretl_model_get_double(pmod, "AR2");
-    if (!na(x)) {
-	print_panel_AR_test(x, 2, prn);
-    }
+    print_panel_AR_test(x, 2, prn);
 
     x = gretl_model_get_double(pmod, "sargan");
-    if (!na(x)) {
-	print_model_chi2_test(pmod, x, AB_SARGAN, prn);
-    }
+    print_model_chi2_test(pmod, x, AB_SARGAN, prn);
 
     x = gretl_model_get_double(pmod, "wald");
-    if (!na(x)) {
-	print_model_chi2_test(pmod, x, AB_WALD, prn);
-    }
+    print_model_chi2_test(pmod, x, AB_WALD, prn);
 
     x = gretl_model_get_double(pmod, "wald_time");
     if (!na(x)) {

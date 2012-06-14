@@ -977,7 +977,8 @@ static int dpd_wald_test (ddset *dpd)
     gretl_matrix_reuse(dpd->kktmp, dpd->k, dpd->k);
 
     if (err) {
-	fprintf(stderr, "dpd_wald_test failed: err = %d\n", err);
+	fprintf(stderr, "dpd_wald_test failed: %s\n", 
+		errmsg_get_with_default(err));
     }
     
     return err;
@@ -996,6 +997,11 @@ static int dpd_sargan_test (ddset *dpd)
     gretl_matrix_multiply(dpd->ZT, dpd->uhat, Zu);
     gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
     dpd->sargan = gretl_scalar_qform(Zu, dpd->A, &err);
+
+    if (!err && dpd->sargan < 0) {
+	dpd->sargan = NADBL;
+	err = E_NOTPD;
+    }
 
     if (!err && dpd->step == 1) {
 	/* allow for scale factor in H matrix */
@@ -1029,7 +1035,8 @@ static int dpd_sargan_test (ddset *dpd)
     gretl_matrix_reuse(dpd->L1, save_rows, save_cols);
     
     if (err) {
-	fprintf(stderr, "dpd_sargan_test failed: err = %d\n", err);
+	fprintf(stderr, "dpd_sargan_test failed: %s\n", 
+		errmsg_get_with_default(err));
     }
 
     return err;
@@ -1313,8 +1320,8 @@ static int dpd_ar_test (ddset *dpd)
 	double z, den = d1 + d2 + d3;
 
 #if ADEBUG
-	fprintf(stderr, "ar_test: d0=%g, d1=%g, d2=%g, d3=%g, den=%g\n",
-		d0, d1, d2, d3, den);
+	fprintf(stderr, "ar_test: m=%d, d0=%g, d1=%g, d2=%g, d3=%g, den=%g\n",
+		m, d0, d1, d2, d3, den);
 #endif	
 	if (den <= 0) {
 	    err = E_NAN;
@@ -1342,7 +1349,8 @@ static int dpd_ar_test (ddset *dpd)
     gretl_matrix_reuse(dpd->Zi, save_rows, save_cols);
 
     if (err) {
-	fprintf(stderr, "dpd_ar_test failed: err = %d\n", err);
+	fprintf(stderr, "dpd_ar_test failed: %s\n", 
+		errmsg_get_with_default(err));
     } else if (na(dpd->AR1) && na(dpd->AR1)) {
 	fprintf(stderr, "dpd_ar_test: no data\n");
     }
@@ -1830,12 +1838,12 @@ static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
 	if (!na(dpd->AR2)) {
 	    gretl_model_set_double(pmod, "AR2", dpd->AR2);
 	}
+	gretl_model_set_int(pmod, "sargan_df", dpd->nz - dpd->k);
 	if (!na(dpd->sargan)) {
-	    gretl_model_set_int(pmod, "sargan_df", dpd->nz - dpd->k);
 	    gretl_model_set_double(pmod, "sargan", dpd->sargan);
 	}
+	gretl_model_set_int(pmod, "wald_df", dpd->wdf[0]);
 	if (!na(dpd->wald[0])) {
-	    gretl_model_set_int(pmod, "wald_df", dpd->wdf[0]);
 	    gretl_model_set_double(pmod, "wald", dpd->wald[0]);
 	}
 	if (!na(dpd->wald[1])) {
