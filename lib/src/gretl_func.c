@@ -135,7 +135,9 @@ struct fnpkg_ {
     char *gui_help;   /* GUI-specific help (optional) */
     char *sample;     /* sample caller script */
     char *label;      /* for use in GUI menus */
+    char *mpath;      /* menu path in GUI */
     int minver;       /* minimum required gretl version */
+    int uses_subdir;  /* lives in subdirectory (0/1) */
     FuncDataReq dreq; /* data requirement */
     int modelreq;     /* required model type, if applicable */
     ufunc **pub;      /* pointers to public interfaces */
@@ -488,9 +490,11 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->gui_help = NULL;
     pkg->sample = NULL;
     pkg->label = NULL;
+    pkg->mpath = NULL;
     pkg->dreq = 0;
     pkg->modelreq = 0;
     pkg->minver = 0;
+    pkg->uses_subdir = 0;
     
     pkg->pub = pkg->priv = NULL;
     pkg->n_pub = pkg->n_priv = 0;
@@ -2443,6 +2447,10 @@ static int package_write_index (fnpkg *pkg, PRN *prn)
 	fprintf(fp, " minver=\"%s\"", get_version_string(vstr, pkg->minver));
     }
 
+    if (pkg->uses_subdir) {
+	fprintf(fp, " uses-subdir=\"true\"");
+    }    
+
     fputs(">\n", fp);
 
     gretl_xml_put_tagged_string("author",  pkg->author, fp);
@@ -2452,6 +2460,10 @@ static int package_write_index (fnpkg *pkg, PRN *prn)
 
     if (pkg->label != NULL) {
 	gretl_xml_put_tagged_string("label", pkg->label, fp);
+    }
+
+    if (pkg->mpath != NULL) {
+	gretl_xml_put_tagged_string("mpath", pkg->mpath, fp);
     }
 
     fputs("</gretl-addon>\n", fp);
@@ -2524,6 +2536,10 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 
     if (pkg->label != NULL) {
 	gretl_xml_put_tagged_string("label", pkg->label, fp);
+    }
+
+    if (pkg->mpath != NULL) {
+	gretl_xml_put_tagged_string("mpath", pkg->mpath, fp);
     }
 
     if (pkg->help != NULL) {
@@ -2646,6 +2662,15 @@ static int pkg_set_modelreq (fnpkg *pkg, const char *s)
     }
 }
 
+static int pkg_boolean_from_string (const char *s)
+{
+    if (!strcmp(s, "true")) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static int function_set_pkg_role (const char *name, fnpkg *pkg,
 				  const char *attr, PRN *prn)
 {
@@ -2754,6 +2779,8 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		if (!err) got++;
 	    } else if (!strncmp(line, "label", 5)) {
 		err = function_package_set_properties(pkg, "label", p, NULL);
+	    } else if (!strncmp(line, "mpath", 5)) {
+		err = function_package_set_properties(pkg, "mpath", p, NULL);
 	    } else if (!strncmp(line, "help", 4)) {
 		if (has_suffix(p, ".pdf")) {
 		    pprintf(prn, "Recording help reference %s\n", p);
@@ -2789,6 +2816,8 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 	    } else if (!strncmp(line, "min-version", 11)) {
 		pkg->minver = version_number_from_string(p);
 		got++;
+	    } else if (!strncmp(line, "uses-subdir", 11)) {
+		pkg->uses_subdir = pkg_boolean_from_string(p);
 	    } else {
 		const char *key;
 		int i;
@@ -3056,6 +3085,7 @@ static int is_string_property (const char *key)
 	!strcmp(key, "date")     ||
 	!strcmp(key, "description") ||
 	!strcmp(key, "label") ||
+	!strcmp(key, "mpath") ||
 	!strcmp(key, "help") ||
 	!strcmp(key, "gui-help") ||
 	!strcmp(key, "sample-script");
@@ -3094,6 +3124,8 @@ int function_package_set_properties (fnpkg *pkg, ...)
 		err = maybe_replace_string_var(&pkg->descrip, cval);
 	    } else if (!strcmp(key, "label")) {
 		err = maybe_replace_string_var(&pkg->label, cval);
+	    } else if (!strcmp(key, "mpath")) {
+		err = maybe_replace_string_var(&pkg->mpath, cval);
 	    } else if (!strcmp(key, "help")) {
 		err = maybe_replace_string_var(&pkg->help, cval);
 	    } else if (!strcmp(key, "gui-help")) {
@@ -3259,6 +3291,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "label")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->label);
+	} else if (!strcmp(key, "mpath")) {
+	    ps = (char **) ptr;
+	    *ps = g_strdup(pkg->mpath);
 	} else if (!strcmp(key, "data-requirement")) {
 	    pi = (int *) ptr;
 	    *pi = pkg->dreq;
@@ -3402,6 +3437,7 @@ static void real_function_package_free (fnpkg *pkg, int full)
 	free(pkg->gui_help);
 	free(pkg->sample);
 	free(pkg->label);
+	free(pkg->mpath);
 	free(pkg);
     }
 }
@@ -3761,6 +3797,8 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->sample);
 	} else if (!xmlStrcmp(cur->name, (XUC) "label")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->label);
+	} else if (!xmlStrcmp(cur->name, (XUC) "mpath")) {
+	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->mpath);
 	}
 
 	cur = cur->next;
