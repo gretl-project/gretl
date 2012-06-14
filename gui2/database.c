@@ -31,6 +31,8 @@
 #include "winstack.h"
 #include "toolbar.h"
 #include "dlgutils.h"
+#include "gretl_bundle.h"
+#include "fncall.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -2153,7 +2155,11 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	windata_t *local = get_local_viewer(vwin->role);
 
 	if (vwin->role == REMOTE_FUNC_FILES) {
-	    infobox(_("Installed"));
+	    int ok = maybe_handle_pkg_menu_option(path);
+
+	    if (!ok) {
+		infobox(_("Installed"));
+	    }
 	    list_store_set_string(GTK_TREE_VIEW(vwin->listbox),
 				  vwin->active_var, STATUS_COLUMN,
 				  _("Up to date"));

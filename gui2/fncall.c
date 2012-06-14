@@ -2546,3 +2546,72 @@ void maybe_add_packages_to_model_menus (windata_t *vwin)
 	}
     }
 }
+
+static int pkg_attach_dialog (const gchar *name,
+			      const gchar *label,
+			      const gchar *mpath)
+{
+    const gchar *window_names[] = {
+	N_("main window"),
+	N_("model window")
+    };
+    const gchar *relpath = NULL;
+    int i = -1, resp = -1;
+
+    if (!strncmp(mpath, "MAINWIN/", 8)) {
+	relpath = mpath + 8;
+	i = 0;
+    } else if (!strncmp(mpath, "MODELWIN/", 9)) {
+	relpath = mpath + 9;
+	i = 1;
+    }
+
+    if (relpath != NULL && *relpath != '\0') {
+	gchar *msg;
+
+	msg = g_strdup_printf(_("The package %s can be attached to the "
+				"gretl menus\n"
+				"as \"%s/%s\" in the %s.\n"
+				"Is this OK?"),
+			      name, relpath, _(label),
+			      _(window_names[i]));
+	resp = yes_no_dialog(NULL, msg, 0);
+	g_free(msg);
+    }
+
+    return resp;
+}
+
+/* returns non-zero if we put up a dialog box */
+
+int maybe_handle_pkg_menu_option (const char *path)
+{
+    fnpkg *pkg = NULL;
+    int err = 0, ret = 0;
+
+    pkg = get_function_package_by_filename(path, &err);
+
+    if (!err) {
+	gchar *name = NULL, *mpath = NULL, *label = NULL;
+	int uses_subdir= 0;
+
+	err = function_package_get_properties(pkg,
+					      "name", &name,
+					      "label", &label,
+					      "menu-attachment", &mpath,
+					      "lives-in-subdir", &uses_subdir,
+					      NULL);
+	if (!err && name != NULL && label != NULL && mpath != NULL) {
+	    int resp = pkg_attach_dialog(name, label, mpath);
+
+	    if (resp >= 0) {
+		ret = 1;
+	    }
+	}
+	g_free(name);
+	g_free(label);
+	g_free(mpath);
+    }
+
+    return ret;
+}

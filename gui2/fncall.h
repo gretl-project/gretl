@@ -44,6 +44,8 @@ void maybe_add_packages_to_model_menus (windata_t *vwin);
 
 void maybe_add_packages_to_menus (windata_t *vwin);
 
+int maybe_handle_pkg_menu_option (const char *path);
+
 int query_addons (void);
 
 int download_addon (const char *pkgname, char **local_path);
