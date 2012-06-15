@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-05-29 08:04-0400\n"
-"PO-Revision-Date: 2012-05-29 16:46+0200\n"
+"PO-Revision-Date: 2012-06-15 13:01+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -10596,7 +10596,7 @@ msgstr "Archivos de gu_ion"
 
 #: gui2/gretl.c:1380
 msgid "_Practice file..."
-msgstr "Archivo de _práctica..."
+msgstr "Archivo de e_jemplo..."
 
 #: gui2/gretl.c:1381
 msgid "_New script"
