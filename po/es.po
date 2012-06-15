@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-05-29 08:04-0400\n"
-"PO-Revision-Date: 2012-06-15 13:01+0200\n"
+"PO-Revision-Date: 2012-06-15 13:03+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -8393,7 +8393,7 @@ msgstr "gretl: paquetes de funciones en %s"
 
 #: gui2/datafiles.c:1520
 msgid "gretl: practice files"
-msgstr "gretl: ficheros de práctica"
+msgstr "gretl: ficheros de ejemplo"
 
 #: gui2/datafiles.c:1522
 msgid "gretl: data files"
