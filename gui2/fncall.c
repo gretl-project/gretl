@@ -2554,7 +2554,7 @@ void maybe_add_packages_to_model_menus (windata_t *vwin)
    so (b) that the package is not already "registered" in the user's
    packages.xml file. If both of these conditions are met we put up a
    dialog asking if the user wants to add the package to the menu
-   system. If the answer is "yes" we write an appropriate entry into
+   system. If the answer is Yes we write an appropriate entry into
    packages.xml, or write this file from scratch if it doesn't yet
    exist.
 */
@@ -2563,11 +2563,11 @@ void maybe_add_packages_to_model_menus (windata_t *vwin)
    @mpath string (which gets into the gfn file from its
    associated spec file) should look something like
 
-   MODELWIN/menubar/Analysis or
-   MAINWIN/menubar/Model
+   MODELWIN/Analysis or
+   MAINWIN/Model
 
-   The first portion just tells us which window it attaches
-   to.
+   The first portion just tells us in which window it should
+   appear.
 */
 
 static const gchar *pkg_get_attachment (const gchar *mpath,
@@ -2651,7 +2651,7 @@ static int register_package (const gchar *name,
 {
     int toplev = !uses_subdir;
     gchar *pkgxml;
-    FILE *fp = NULL;
+    FILE *fp;
     int err = 0;
 
     pkgxml = g_strdup_printf("%sfunctions%cpackages.xml", 
