@@ -2547,39 +2547,203 @@ void maybe_add_packages_to_model_menus (windata_t *vwin)
     }
 }
 
+/* Below: apparatus for activation when the user installs a function
+   package (other than a known addon) from the gretl server.
+
+   We check to see if (a) the package offers a menu attachment, and if
+   so (b) that the package is not already "registered" in the user's
+   packages.xml file. If both of these conditions are met we put up a
+   dialog asking if the user wants to add the package to the menu
+   system. If the answer is "yes" we write an appropriate entry into
+   packages.xml, or write this file from scratch if it doesn't yet
+   exist.
+*/
+
+/* Find out where the package is supposed to attach: the
+   @mpath string (which gets into the gfn file from its
+   associated spec file) should look something like
+
+   MODELWIN/menubar/Analysis or
+   MAINWIN/menubar/Model
+
+   The first portion just tells us which window it attaches
+   to.
+*/
+
+static const gchar *pkg_get_attachment (const gchar *mpath,
+					int *modelwin)
+{
+    const gchar *relpath = NULL;
+
+    if (!strncmp(mpath, "MAINWIN/", 8)) {
+	relpath = mpath + 7;
+    } else if (!strncmp(mpath, "MODELWIN/", 9)) {
+	relpath = mpath + 8;
+	*modelwin = 1;
+    }
+
+    return relpath;
+}
+
 static int pkg_attach_dialog (const gchar *name,
 			      const gchar *label,
 			      const gchar *mpath)
 {
-    const gchar *window_names[] = {
-	N_("main window"),
-	N_("model window")
-    };
     const gchar *relpath = NULL;
-    int i = -1, resp = -1;
+    int modelwin = 0;
+    int resp = -1;
 
-    if (!strncmp(mpath, "MAINWIN/", 8)) {
-	relpath = mpath + 8;
-	i = 0;
-    } else if (!strncmp(mpath, "MODELWIN/", 9)) {
-	relpath = mpath + 9;
-	i = 1;
-    }
+    relpath = pkg_get_attachment(mpath, &modelwin);
 
     if (relpath != NULL && *relpath != '\0') {
+	const gchar *window_names[] = {
+	    N_("main window"),
+	    N_("model window")
+	};	
 	gchar *msg;
 
 	msg = g_strdup_printf(_("The package %s can be attached to the "
 				"gretl menus\n"
 				"as \"%s/%s\" in the %s.\n"
-				"Is this OK?"),
+				"Do you want to do this?"),
 			      name, relpath, _(label),
-			      _(window_names[i]));
+			      modelwin ? _(window_names[1]) :
+			      _(window_names[0]));
 	resp = yes_no_dialog(NULL, msg, 0);
 	g_free(msg);
     }
 
     return resp;
+}
+
+static void print_pkg_line (const gchar *name, 
+			    const gchar *label, 
+			    const gchar *mpath, 
+			    int toplev, 
+			    FILE *fp)
+{
+    const gchar *relpath;
+    int modelwin = 0;
+
+    relpath = pkg_get_attachment(mpath, &modelwin);
+
+    fprintf(fp, "<package name=\"%s\" label=\"%s\"", 
+	    name, label);
+    if (modelwin) {
+	fputs(" model-window=\"true\"", fp);
+    }
+    if (!strncmp(relpath, "/menubar", 8)) {
+	fprintf(fp, " path=\"%s\"", relpath);
+    } else {
+	fprintf(fp, " path=\"/menubar%s\"", relpath);
+    }
+    if (toplev) {
+	fputs(" toplev=\"true\"/>\n", fp);
+    } else {
+	fputs("/>\n", fp);
+    }
+}
+
+static int register_package (const gchar *name,
+			     const gchar *label,
+			     const gchar *mpath,
+			     int uses_subdir)
+{
+    int toplev = !uses_subdir;
+    gchar *pkgxml;
+    FILE *fp = NULL;
+    int err = 0;
+
+    pkgxml = g_strdup_printf("%sfunctions%cpackages.xml", 
+			     gretl_dotdir(), SLASH);
+
+    fp = gretl_fopen(pkgxml, "r");
+
+    if (fp == NULL) {
+	/* starting a new packages.xml */
+	fp = gretl_fopen(pkgxml, "w");
+	if (fp == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", fp);
+	    fputs("<gretl-package-info>\n", fp);
+	    print_pkg_line(name, label, mpath, toplev, fp);
+	    fputs("</gretl-package-info>\n", fp);
+	    fclose(fp);
+	}
+    } else {
+	/* adding to an existing packages.xml */
+	gchar *tmpfile;
+	char line[512];
+	FILE *fnew;
+
+	tmpfile = g_strdup_printf("%sfunctions%cpackages.xml.new", 
+				  gretl_dotdir(), SLASH);
+	fnew = gretl_fopen(tmpfile, "w");
+
+	if (fnew == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    while (fgets(line, sizeof line, fp)) {
+		if (strstr(line, "</gretl-package-info>")) {
+		    /* reached the last line */
+		    print_pkg_line(name, label, mpath, toplev, fnew);
+		}
+		fputs(line, fnew);
+	    }
+	    fclose(fnew);
+	}
+	fclose(fp);
+	if (!err) {
+	    err = gretl_copy_file(tmpfile, pkgxml);
+	    gretl_remove(tmpfile);
+	}
+	g_free(tmpfile);
+    } 
+    
+    g_free(pkgxml);
+
+    if (err) {
+	gui_errmsg(err);
+    }
+
+    return err;
+}
+
+/* see if a package is already "registered" in the user's
+   packages.xml file
+*/
+
+static int package_already_registered (const char *name)
+{
+    gchar *pkgxml;
+    FILE *fp;
+    int found = 0;
+
+    pkgxml = g_strdup_printf("%sfunctions%cpackages.xml", 
+			     gretl_dotdir(), SLASH);
+    fp = gretl_fopen(pkgxml, "r");
+
+    if (fp != NULL) {
+	char *s, line[512];
+	int pos;
+
+	while (fgets(line, sizeof line, fp) && !found) {
+	    s = strstr(line, "<package name=");
+	    if (s != NULL) {
+		s += 15;
+		pos = charpos('"', s);
+		if (pos > 0 && strncmp(s, name, pos) == 0) {
+		    found = 1;
+		}
+	    }
+	}
+	fclose(fp);
+    }
+
+    g_free(pkgxml);
+
+    return found;
 }
 
 /* returns non-zero if we put up a dialog box */
@@ -2593,7 +2757,7 @@ int maybe_handle_pkg_menu_option (const char *path)
 
     if (!err) {
 	gchar *name = NULL, *mpath = NULL, *label = NULL;
-	int uses_subdir= 0;
+	int registered = 0, uses_subdir = 0;
 
 	err = function_package_get_properties(pkg,
 					      "name", &name,
@@ -2601,13 +2765,23 @@ int maybe_handle_pkg_menu_option (const char *path)
 					      "menu-attachment", &mpath,
 					      "lives-in-subdir", &uses_subdir,
 					      NULL);
-	if (!err && name != NULL && label != NULL && mpath != NULL) {
+
+	if (!err && name != NULL) {
+	    registered = package_already_registered(name);
+	}
+
+	if (!err && !registered && name != NULL && 
+	    label != NULL && mpath != NULL) {
 	    int resp = pkg_attach_dialog(name, label, mpath);
 
 	    if (resp >= 0) {
 		ret = 1;
 	    }
+	    if (resp == GRETL_YES) {
+		register_package(name, label, mpath, uses_subdir);
+	    }
 	}
+
 	g_free(name);
 	g_free(label);
 	g_free(mpath);
