@@ -360,13 +360,16 @@ int ok_in_loop (int c)
 	c == INCLUDE ||
 	c == LEVERAGE ||
 	c == NULLDATA ||
-	c == OPEN ||
 	c == RMPLOT ||
 	c == RUN ||
 	c == SETMISS ||
 	c == SETOBS ||
 	c == TABPRINT ||
 	c == VIF)  {
+	return 0;
+    }
+
+    if (c == OPEN && gretl_in_gui_mode()) {
 	return 0;
     }
 

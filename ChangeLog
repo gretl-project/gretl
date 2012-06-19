@@ -2,6 +2,7 @@ Version 1.9.10, in progress
 - Update translations
 - "delete" command: add a --force option to permit deletion of
   series in loops (to be used with caution!)
+- Enable use of the "open" command in loops (gretlcli only)
 - "dpanel" and "arbond": indicate in the model printout if the AR,
   Sargan or Wald tests failed
 - Switch to using libcurl for HTTP transaction support

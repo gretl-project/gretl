@@ -42,6 +42,7 @@
 #include "kalman.h"
 #include "flow_control.h"
 #include "libglue.h"
+#include "gretl_www.h"
 
 #include <errno.h>
 #include <glib.h>
@@ -4230,20 +4231,62 @@ static int run_script (const char *fname, ExecState *s,
     return err;
 }
 
-#if 0
+static int lib_try_http (const char *s, char *fname, int *http)
+{
+    int err = 0;
 
-static int lib_open_append (CMD *cmd, const char *line, 
-			    DATASET *dset, MODEL *model,
+    /* skip past command word */
+    s += strcspn(s, " ");
+    s += strspn(s, " ");
+
+    if (strncmp(s, "http://", 7) == 0) {
+	err = retrieve_public_file(s, fname);
+	if (!err) {
+	    *http = 1;
+	} 
+    }
+
+    return err;
+}
+
+static int lib_clear_data (ExecState *s, DATASET *dset)
+{
+    int err = 0;
+
+    if (dset->Z != NULL) {
+	err = restore_full_sample(dset, NULL); 
+	free_Z(dset); 
+    }
+
+    clear_model(s->model);
+    clear_datainfo(dset, CLEAR_FULL);
+    libgretl_session_cleanup(SESSION_CLEAR_DATASET);
+    set_model_count(0);
+    gretl_cmd_destroy_context(s->cmd);
+
+    return err;
+}
+
+static int lib_open_append (ExecState *s, 
+			    DATASET *dset, 
+			    char *newfile,
 			    PRN *prn)
 {
+    CMD *cmd = s->cmd;
     gretlopt opt = cmd->opt;
+    char *line = s->line;
     PRN *vprn = prn;
-    char newfile[MAXLEN] = {0};
     int http = 0, dbdata = 0;
     int ftype;
     int err = 0;
 
-    err = cli_try_http(line, newfile, &http);
+    if (cmd->ci == OPEN && (gretl_in_gui_mode() || gretl_function_depth() > 0)) {
+	gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
+			     gretl_command_word(cmd->ci));
+	return E_DATA;
+    }
+
+    err = lib_try_http(line, newfile, &http);
     if (err) {
 	errmsg(err, prn);
 	return err;
@@ -4272,7 +4315,7 @@ static int lib_open_append (CMD *cmd, const char *line,
 	      ftype == GRETL_ODBC);
 
     if (!dbdata && cmd->ci != APPEND) {
-	cli_clear_data(cmd, dset, model);
+	lib_clear_data(s, dset);
     } 
 
     if (opt & OPT_Q) {
@@ -4320,12 +4363,6 @@ static int lib_open_append (CMD *cmd, const char *line,
 	return err;
     }
 
-    if (!dbdata && !http && cmd->ci != APPEND) {
-	strncpy(datafile, newfile, MAXLEN - 1);
-    }
-
-    data_status = 1;
-
     if (dset->v > 0 && !dbdata && !(opt & OPT_Q)) {
 	varlist(dset, prn);
     }
@@ -4334,38 +4371,11 @@ static int lib_open_append (CMD *cmd, const char *line,
 	remove(newfile);
     }
 
-    return err;
-}
-
-#endif
-
-static int append_data (const char *line, int *list, 
-			char *sheetname,
-			DATASET *dset, 
-			gretlopt opt, PRN *prn)
-{
-    char fname[MAXLEN] = {0};
-    int ftype, err = 0;
-
-    err = getopenfile(line, fname, OPT_NONE);
-    if (err) {
-	errmsg(err, prn);
-	return err;
-    }
-
-    ftype = detect_filetype(fname, OPT_P);
-
-    if (ftype == GRETL_CSV) {
-	err = import_csv(fname, dset, opt, prn);
-    } else if (SPREADSHEET_IMPORT(ftype)) {
-	err = import_spreadsheet(fname, ftype, list, sheetname, 
-				 dset, opt, prn);
-    } else if (OTHER_IMPORT(ftype)) {
-	err = import_other(fname, ftype, dset, opt, prn);
-    } else if (ftype == GRETL_XML_DATA) {
-	err = gretl_read_gdt(fname, dset, opt, prn);
-    } else {
-	err = gretl_get_data(fname, dset, opt, prn);
+    if (dbdata || http) {
+	/* signal to the gretlcli callback that we didn't do
+	   a regular datafile open 
+	*/
+	*newfile = '\0';
     }
 
     return err;
@@ -4383,10 +4393,14 @@ static int callback_scheduled (ExecState *s)
     return (s->flags & CALLBACK_EXEC) ? 1 : 0;
 }
 
-static void callback_exec (ExecState *s, int err)
+static void callback_exec (ExecState *s, char *fname, int err)
 {
     if (!err && s->callback != NULL) {
-	s->callback(s, NULL, 0);
+	if (s->cmd->ci == OPEN) {
+	    s->callback(s, fname, 0);
+	} else {
+	    s->callback(s, NULL, 0);
+	}
     }
 
     s->flags &= ~CALLBACK_EXEC;
@@ -4603,7 +4617,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     char *line = s->line;
     MODEL *model = s->model;
     PRN *prn = s->prn;
-    char runfile[MAXLEN];
+    char readfile[MAXLEN];
     int *listcpy = NULL;
     int err = 0;
 
@@ -4634,6 +4648,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	goto bailout;
     }
 
+    *readfile = '\0';
+
     if (cmd->ci == OLS && dataset_is_panel(dset)) {
 	cmd->ci = PANEL;
 	cmd->opt |= OPT_P; /* panel pooled OLS flag */
@@ -4646,8 +4662,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     switch (cmd->ci) {
 
     case APPEND:
-	err = append_data(line, cmd->list, cmd->extra, dset, 
-			  cmd->opt, prn);
+    case OPEN:
+	err = lib_open_append(s, dset, readfile, prn);
+	if (!err && cmd->ci == OPEN) {
+	    schedule_callback(s);
+	}
 	break;
 
     case ANOVA:
@@ -5331,27 +5350,27 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case RUN:
     case INCLUDE:
 	if (cmd->ci == RUN) {
-	    err = getopenfile(line, runfile, OPT_S);
+	    err = getopenfile(line, readfile, OPT_S);
 	} else {
-	    err = getopenfile(line, runfile, OPT_I);
+	    err = getopenfile(line, readfile, OPT_I);
 	    cmd->opt |= OPT_Q;
 	}
 	if (err) { 
 	    break;
 	} 
 	if (gretl_messages_on()) {
-	    pprintf(prn, " %s\n", runfile);
+	    pprintf(prn, " %s\n", readfile);
 	}
-	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
-	    err = load_user_XML_file(runfile);
+	if (cmd->ci == INCLUDE && gretl_is_xml_file(readfile)) {
+	    err = load_user_XML_file(readfile);
 	    break;
 	}
-	if (!strcmp(runfile, s->runfile)) { 
+	if (!strcmp(readfile, s->runfile)) { 
 	    pprintf(prn, _("Infinite loop detected in script\n"));
 	    err = 1;
 	    break;
 	}
-	err = run_script(runfile, s, dset, cmd->opt, prn);
+	err = run_script(readfile, s, dset, cmd->opt, prn);
 	break;
 
     case FUNCERR:
@@ -5443,7 +5462,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     }
 
     if (callback_scheduled(s)) {
-	callback_exec(s, err);
+	callback_exec(s, readfile, err);
     } 
 
  bailout:

@@ -192,7 +192,7 @@ static int cli_clear_data (CMD *cmd, DATASET *dset, MODEL *model)
 	/* OPT_O means "other", i.e. leave the dataset 
 	   in place but clear all other stuff
 	*/
-	*datafile = 0;
+	*datafile = '\0';
 
 	if (dset->Z != NULL) {
 	    err = restore_full_sample(dset, NULL); 
@@ -672,7 +672,14 @@ static void cli_exec_callback (ExecState *s, void *ptr,
 
     if (ci == MODELTAB || ci == GRAPHPG) {
 	pprintf(s->prn, _("%s: command not available\n"), s->cmd->word);
-    } 
+    } else if (ci == OPEN) {
+	char *fname = (char *) ptr;
+
+	if (fname != NULL && *fname != '\0') {
+	    strncpy(datafile, fname, MAXLEN - 1);
+	}
+	data_status = 1;
+    }
 
     /* otherwise, no-op */
 }
