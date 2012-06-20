@@ -1370,7 +1370,6 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	}
 	if (xlist[0] == 1 && xlist[1] == 0) {
 	    /* just a const, no ARMAX */
-	    mu = pmod->coeff[0];
 	    if (phi0 != NULL) {
 		mu = 1.0;
 		for (i=1; i<=px; i++) {
@@ -1405,7 +1404,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	ar_smax = fc->t2;
 	ma_smax = pmod->t2;
     } else if (fc->method == FC_DYNAMIC) {
-	ar_smax = max(fc->t1 - 1, p);
+	ar_smax = max(fc->t1 - 1, p - 1);
 	ma_smax = max(fc->t1 - 1, q);
     } else {
 	ar_smax = pmod->t2;
@@ -1422,7 +1421,11 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	double yh = 0.0;
 	int miss = 0;
 
-	DPRINTF(("\n *** Doing forecast for obs %d\n", t));
+#if AR_DEBUG
+	char obsstr[OBSLEN];
+	ntodate(obsstr, t, dset);
+#endif
+	DPRINTF(("\n *** Doing forecast for obs %d (%s)\n", t, obsstr));
 
 	/* contribution of const and/or independent variables */
 
@@ -1466,7 +1469,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	    }
 	}
 
-	DPRINTF((" Xb contribution = %g\n", yh));
+	DPRINTF((" Xb contribution: yh = %g\n", yh));
 
 	/* AR contribution (incorporating any differencing) */
 
@@ -1496,6 +1499,8 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 			yh += phi[i] * (yval - Xb[s]);
 		    }
 		} else if (!regarma && !na(mu)) {
+		    DPRINTF(("    !regarma && !na(mu): yh += %g * (%g - %g)\n",
+			     phi[i], yval, mu)); 
 		    yh += phi[i] * (yval - mu);
 		} else {
 		    yh += phi[i] * yval;
