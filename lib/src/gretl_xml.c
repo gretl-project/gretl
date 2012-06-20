@@ -1772,7 +1772,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	} 
 
-	if (var_is_discrete(dset, v)) {
+	if (series_is_discrete(dset, v)) {
 	    alt_puts("\n discrete=\"true\"", fp, fz);
 	}	    
 

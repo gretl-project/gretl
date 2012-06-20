@@ -1111,7 +1111,7 @@ transform_preprocess_list (int *list, const DATASET *dset, int f)
 	} else if (f == DUMMIFY) {
 	    ok = 0; /* reverse burden of proof */
 	    if (v > 0) {
-		if (var_is_discrete(dset, v)) {
+		if (series_is_discrete(dset, v)) {
 		    /* pre-approved */
 		    ok = 1;
 		} else if (gretl_isdiscrete(0, dset->n - 1, dset->Z[v])) {

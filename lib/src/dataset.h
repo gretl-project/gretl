@@ -364,10 +364,6 @@ int is_log_variable (int i, const DATASET *dset, char *parent);
 
 void set_var_discrete (DATASET *dset, int i, int s);
 
-void set_var_scalar (DATASET *dset, int i, int s);
-
-void set_var_hidden (DATASET *dset, int i);
-
 void series_set_linewidth (DATASET *dset, int i, int w);
 
 int series_get_linewidth (const DATASET *dset, int i);
@@ -404,19 +400,17 @@ int check_dataset_is_changed (void);
 
 void set_dataset_is_changed (void);
 
-int var_is_discrete (const DATASET *dset, int i);
+int series_is_discrete (const DATASET *dset, int i);
 
-int var_is_hidden (const DATASET *dset, int i);
+int series_is_hidden (const DATASET *dset, int i);
 
-int var_is_generated (const DATASET *dset, int i);
+int series_is_generated (const DATASET *dset, int i);
 
-int var_is_listarg (const DATASET *dset, int i);
-
-void set_var_listarg (DATASET *dset, int i);
-
-void unset_var_listarg (DATASET *dset, int i);
+int series_is_listarg (const DATASET *dset, int i);
 
 void series_set_flag (DATASET *dset, int i, int flag);
+
+void series_unset_flag (DATASET *dset, int i, int flag);
 
 void series_zero_flags (DATASET *dset, int i);
 

@@ -1770,7 +1770,7 @@ static int sys_get_lag_src (const char *vname, const DATASET *dset)
 
 	for (i=1; i<dset->v; i++) { 
 	    if (fd == series_get_stack_level(dset, i) &&
-		var_is_listarg(dset, i) && 
+		series_is_listarg(dset, i) && 
 		!strcmp(dset->varname[i], vname)) {
 		src = i;
 		break;

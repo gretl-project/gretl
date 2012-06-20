@@ -6170,14 +6170,14 @@ static int list_show_var (int v, int ci, int show_lags)
 	ret = 0;
     } else if (v == 0 && (ci == LOESS || ci == NADARWAT)) {
 	ret = 0;
-    } else if (var_is_hidden(dataset, v)) {
+    } else if (series_is_hidden(dataset, v)) {
 	ret = 0;
     } else if (!show_lags && is_standard_lag(v, dataset, NULL)) {
 	lags_hidden = 1;
 	ret = 0;
     } else if (ci == XTAB) {
 	ret = 0;
-	if (var_is_discrete(dataset, v) || 
+	if (series_is_discrete(dataset, v) || 
 	    gretl_isdiscrete(dataset->t1, dataset->t2, dataset->Z[v])) {
 	    ret = 1;
 	}
@@ -6681,7 +6681,7 @@ static int add_omit_list (gpointer p, selector *sr)
 
 	    for (i=0; i<dataset->v; i++) {
 		if (!in_gretl_list(xlist, i) && i != dv &&
-		    !var_is_hidden(dataset, i)) {
+		    !series_is_hidden(dataset, i)) {
 		    gtk_list_store_append(store, &iter);
 		    gtk_list_store_set(store, &iter, 
 				       COL_ID, i, COL_LAG, 0, 

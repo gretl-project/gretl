@@ -1810,7 +1810,7 @@ FreqDist *get_freq (int varno, const DATASET *dset,
     double binwidth = fwid;
     int t, k, n;
 
-    if (var_is_discrete(dset, varno) || (opt & OPT_D)) {
+    if (series_is_discrete(dset, varno) || (opt & OPT_D)) {
 	return get_discrete_freq(varno, dset, opt, err);
     }
 
@@ -2478,7 +2478,7 @@ int crosstab (const int *list, const DATASET *dset,
     j = 1;
     for (i=1; i<=nrv; i++) {
 	k = list[i];
-	if (var_is_discrete(dset, k) ||
+	if (series_is_discrete(dset, k) ||
 	    gretl_isdiscrete(dset->t1, dset->t2, dset->Z[k])) {
 	    rowvar[j++] = k;
 	} else {
@@ -2500,7 +2500,7 @@ int crosstab (const int *list, const DATASET *dset,
 	    j = 1;
 	    for (i=1; i<=ncv; i++) {
 		k = pos + i;
-		if (var_is_discrete(dset, list[k]) ||
+		if (series_is_discrete(dset, list[k]) ||
 		    gretl_isdiscrete(dset->t1, dset->t2, dset->Z[list[k]])) {
 		    colvar[j++] = list[k];
 		} else {
@@ -2553,13 +2553,13 @@ Xtab *single_crosstab (const int *list, const DATASET *dset,
     rv = list[1];
     cv = list[2];
 
-    if (!var_is_discrete(dset, rv) &&
+    if (!series_is_discrete(dset, rv) &&
 	!gretl_isdiscrete(dset->t1, dset->t2, dset->Z[rv])) {
 	*err = E_DATATYPE;
 	return NULL;
     }
 
-    if (!var_is_discrete(dset, cv) &&
+    if (!series_is_discrete(dset, cv) &&
 	!gretl_isdiscrete(dset->t1, dset->t2, dset->Z[cv])) {
 	*err = E_DATATYPE;
 	return NULL;

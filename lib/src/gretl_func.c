@@ -516,7 +516,7 @@ static void set_listargs_from_call (fncall *call, DATASET *dset)
     }
 
     for (i=1; i<dset->v; i++) {
-	unset_var_listarg(dset, i);
+	series_unset_flag(dset, i, VAR_LISTARG);
     }
 
     if (call != NULL && call->listvars != NULL) {
@@ -526,7 +526,7 @@ static void set_listargs_from_call (fncall *call, DATASET *dset)
 	    fprintf(stderr, "setting listarg status on var %d (%s)\n",
 		    v, dset->varname[v]);
 #endif
-	    set_var_listarg(dset, v);
+	    series_set_flag(dset, v, VAR_LISTARG);
 	}
     }
 }
@@ -5870,7 +5870,7 @@ static int unlocalize_list (const char *lname, struct fnarg *arg,
 	    overwrite = 0;
 	    vi = list[i];
 	    vname = dset->varname[vi];
-	    unset_var_listarg(dset, vi);
+	    series_unset_flag(dset, i, VAR_LISTARG);
 	    if (vi > 0 && vi < dset->v && series_get_stack_level(dset, vi) == d) {
 		for (j=1; j<dset->v; j++) { 
 		    if (series_get_stack_level(dset, j) == upd && 
@@ -5908,8 +5908,8 @@ static int unlocalize_list (const char *lname, struct fnarg *arg,
 	    if (vi == LISTSEP) {
 		continue;
 	    }
-	    if (var_is_listarg(dset, vi)) {
-		unset_var_listarg(dset, vi);
+	    if (series_is_listarg(dset, vi)) {
+		series_unset_flag(dset, vi, VAR_LISTARG);
 		series_set_stack_level(dset, vi, upd);
 	    }
 	}

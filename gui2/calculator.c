@@ -2240,7 +2240,7 @@ static int var_is_ok (int i, int code)
 {
     int ret = 1;
 
-    if (var_is_hidden(dataset, i)) {
+    if (series_is_hidden(dataset, i)) {
 	ret = 0;
     } else if ((code == ONE_PROPN || code == TWO_PROPNS) &&
 	       !gretl_isdummy(dataset->t1, dataset->t2, dataset->Z[i])) {
@@ -2462,7 +2462,7 @@ static int n_ok_series (void)
 
     if (dataset != NULL) {
 	for (i=1; i<dataset->v; i++) {
-	    if (!var_is_hidden(dataset, i)) {
+	    if (!series_is_hidden(dataset, i)) {
 		nv++;
 	    }
 	}
@@ -2477,7 +2477,7 @@ static int n_ok_dummies (void)
 
     if (dataset != NULL) {
 	for (i=1; i<dataset->v; i++) {
-	    if (!var_is_hidden(dataset, i) &&
+	    if (!series_is_hidden(dataset, i) &&
 		gretl_isdummy(dataset->t1, dataset->t2, dataset->Z[i])) {
 		nv++;
 	    }

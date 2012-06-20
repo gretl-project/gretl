@@ -1332,7 +1332,7 @@ static int vars_renumbered (const int *list, DATASET *dset,
     for (i=dmin; i<dset->v; i++) {
 	if (in_gretl_list(list, i)) {
 	    ndel++;
-	} else if (ndel > 0 && !var_is_hidden(dset, i)) {
+	} else if (ndel > 0 && !series_is_hidden(dset, i)) {
 	    return 1;
 	}
     }
@@ -1792,7 +1792,7 @@ int dataset_destroy_hidden_variables (DATASET *dset, int vmin)
     if (vmin <= 1) vmin = 1;
 
     for (i=vmin; i<dset->v; i++) {
-	if (var_is_hidden(dset, i)) {
+	if (series_is_hidden(dset, i)) {
 	    nhid++;
 	}
     }
@@ -1806,7 +1806,7 @@ int dataset_destroy_hidden_variables (DATASET *dset, int vmin)
 	    int j = 1;
 
 	    for (i=vmin; i<dset->v; i++) {
-		if (var_is_hidden(dset, i)) {
+		if (series_is_hidden(dset, i)) {
 		    list[j++] = i;
 		}
 	    }	    
@@ -2661,23 +2661,6 @@ void set_var_discrete (DATASET *dset, int i, int s)
 }
 
 /**
- * set_var_hidden:
- * @dset: pointer to data information struct.
- * @i: index number of variable.
- *
- * Mark a variable as being "hidden" (an automatically
- * generated variable that will not be shown in the main
- * GUI window).
- */
-
-void set_var_hidden (DATASET *dset, int i) 
-{
-    if (i > 0 && i < dset->v) {
-	dset->varinfo[i]->flags |= VAR_HIDDEN;
-    }
-}
-
-/**
  * series_set_linewidth:
  * @dset: pointer to data information struct.
  * @i: index number of variable.
@@ -3359,33 +3342,33 @@ int dataset_purge_missing_rows (DATASET *dset)
 }
 
 /**
- * var_is_discrete:
+ * series_is_discrete:
  * @p: pointer to data information struct.
  * @i: index number of variable.
  *
  * Returns: non-zero iff series @i should be treated as discrete.
  */
 
-int var_is_discrete (const DATASET *dset, int i)
+int series_is_discrete (const DATASET *dset, int i)
 {
     return dset->varinfo[i]->flags & VAR_DISCRETE;
 }
 
 /**
- * var_is_hidden:
+ * series_is_hidden:
  * @dset: pointer to data information struct.
  * @i: index number of variable.
  *
  * Returns: non-zero iff series @i is hidden.
  */
 
-int var_is_hidden (const DATASET *dset, int i)
+int series_is_hidden (const DATASET *dset, int i)
 {
     return dset->varinfo[i]->flags & VAR_HIDDEN;
 }
 
 /**
- * var_is_generated:
+ * series_is_generated:
  * @dset: pointer to data information struct.
  * @i: index number of variable.
  *
@@ -3393,13 +3376,13 @@ int var_is_hidden (const DATASET *dset, int i)
  * a formula or transformation function.
  */
 
-int var_is_generated (const DATASET *dset, int i)
+int series_is_generated (const DATASET *dset, int i)
 {
     return dset->varinfo[i]->flags & VAR_GENERATED;
 }
 
 /**
- * var_is_listarg:
+ * series_is_listarg:
  * @dset: pointer to data information struct.
  * @i: index number of variable.
  *
@@ -3407,69 +3390,54 @@ int var_is_generated (const DATASET *dset, int i)
  * belonging to a list argument to a function.
  */
 
-int var_is_listarg (const DATASET *dset, int i)
+int series_is_listarg (const DATASET *dset, int i)
 {
     return dset->varinfo[i]->flags & VAR_LISTARG;
 }
 
 /**
- * set_var_listarg:
- * @dset: pointer to data information struct.
- * @i: index number of variable.
- *
- * Set the "listarg" flag on series @i.
- */
-
-void set_var_listarg (DATASET *dset, int i)
-{
-    if (i < dset->v) {
-	dset->varinfo[i]->flags |= VAR_LISTARG;
-    }
-}
-
-/**
- * unset_var_listarg:
- * @dset: pointer to data information struct.
- * @i: index number of variable.
- *
- * Removes the "listarg" flag from series @i.
- */
-
-void unset_var_listarg (DATASET *dset, int i)
-{
-    if (i < dset->v) {
-	dset->varinfo[i]->flags &= ~VAR_LISTARG;
-    }
-}
-
-/**
  * series_set_flag:
  * @dset: pointer to data information struct.
  * @i: index number of variable.
  * @flag: flag to set.
  *
- * Sets the given flag on series @i.
+ * Sets the given @flag on series @i.
  */
 
 void series_set_flag (DATASET *dset, int i, int flag)
 {
-    if (i < dset->v) {
+    if (i > 0 && i < dset->v) {
 	dset->varinfo[i]->flags |= flag;
     }
 }
 
 /**
- * series_set_flag:
+ * series_unset_flag:
  * @dset: pointer to data information struct.
  * @i: index number of variable.
- * @flag: flag to set.
+ * @flag: flag to remove.
+ *
+ * Unsets the given @flag on series @i.
+ */
+
+void series_unset_flag (DATASET *dset, int i, int flag)
+{
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->flags &= ~flag;
+    }
+}
+
+/**
+ * series_zero_flags:
+ * @dset: pointer to data information struct.
+ * @i: index number of variable.
  *
  * Sets flags on series @i to zero.
  */
 
 void series_zero_flags (DATASET *dset, int i)
 {
-    if (i < dset->v) {
+    if (i > 0 && i < dset->v) {
 	dset->varinfo[i]->flags = 0;
     }
 }

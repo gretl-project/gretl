@@ -1191,7 +1191,7 @@ static int check_for_missing_dummies (MODEL *pmod, int *dlist)
 
 static int ordered_depvar_check (int v, const DATASET *dset)
 {
-    if (!var_is_discrete(dset, v) && 
+    if (!series_is_discrete(dset, v) && 
 	!gretl_is_oprobit_ok(dset->t1, dset->t2, dset->Z[v])) {
 	gretl_errmsg_sprintf(_("The variable '%s' is not discrete"),
 			     dset->varname[v]);

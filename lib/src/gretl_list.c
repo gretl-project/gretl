@@ -2791,7 +2791,7 @@ int *full_var_list (const DATASET *dset, int *nvars)
     int *list = NULL;
 
     for (i=1; i<dset->v; i++) {
-	if (!var_is_hidden(dset, i) &&
+	if (!series_is_hidden(dset, i) &&
 	    series_get_stack_level(dset, i) == fsd) {
 	    nv++;
 	}
@@ -2808,7 +2808,7 @@ int *full_var_list (const DATASET *dset, int *nvars)
     if (list != NULL) {
 	j = 1;
 	for (i=1; i<dset->v; i++) {
-	    if (!var_is_hidden(dset, i) &&
+	    if (!series_is_hidden(dset, i) &&
 		series_get_stack_level(dset, i) == fsd) {
 		list[j++] = i;
 	    }

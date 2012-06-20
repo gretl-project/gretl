@@ -1494,7 +1494,7 @@ static int any_missing (void)
     int i, t;
 
     for (i=1; i<dataset->v; i++) {
-	if (!var_is_hidden(dataset, i)) {
+	if (!series_is_hidden(dataset, i)) {
 	    for (t=0; t<dataset->n; t++) {
 		if (na(dataset->Z[i][t])) {
 		    return 1;
@@ -4743,7 +4743,7 @@ void do_freq_dist (void)
 
     if (gretl_isdummy(dataset->t1, dataset->t2, y)) {
 	nbins = 3;
-    } else if (var_is_discrete(dataset, v) ||
+    } else if (series_is_discrete(dataset, v) ||
 	       gretl_isdiscrete(dataset->t1, dataset->t2, y)) {
 	discrete = 1;
     }
@@ -5631,7 +5631,7 @@ void add_logs_etc (int ci, int varnum)
 	}
 
 	for (i=1; i<=list[0]; i++) {
-	    if (!var_is_discrete(dataset, list[i])) {
+	    if (!series_is_discrete(dataset, list[i])) {
 		err++; 
 	    }
 	}
@@ -6639,7 +6639,7 @@ int do_factorized_boxplot (selector *sr)
     }
 
     if (libcmd.list[0] != 2 || 
-	(!var_is_discrete(dataset, libcmd.list[2]) &&
+	(!series_is_discrete(dataset, libcmd.list[2]) &&
 	 !gretl_isdiscrete(dataset->t1, dataset->t2, 
 			   dataset->Z[libcmd.list[2]]))) {
 	errbox(_("You must supply two variables, the second of "
@@ -6671,7 +6671,7 @@ int do_dummy_graph (selector *sr)
     }
 
     if (libcmd.list[0] != 3 || 
-	(!var_is_discrete(dataset, libcmd.list[3]) &&
+	(!series_is_discrete(dataset, libcmd.list[3]) &&
 	 !gretl_isdiscrete(dataset->t1, dataset->t2, 
 			   dataset->Z[libcmd.list[3]]))) {
 	errbox(_("You must supply three variables, the last of "

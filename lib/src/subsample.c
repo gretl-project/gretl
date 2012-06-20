@@ -676,7 +676,7 @@ make_missing_mask (const int *list, const DATASET *dset, char *mask)
 	for (t=0; t<dset->n; t++) {
 	    mask[t] = 1;
 	    for (i=1; i<dset->v; i++) {
-		if (!var_is_hidden(dset, i) && na(dset->Z[i][t])) {
+		if (!series_is_hidden(dset, i) && na(dset->Z[i][t])) {
 		    mask[t] = 0;
 		    break;
 		}
@@ -1879,7 +1879,7 @@ int count_missing_values (const DATASET *dset, gretlopt opt,
     for (t=t1; t<=t2; t++) {
 	tmiss = 0;
 	for (i=1; i<dset->v; i++) {
-	    if (var_is_hidden(dset, i)) {
+	    if (series_is_hidden(dset, i)) {
 		continue;
 	    }
 	    if (na(dset->Z[i][t])) {

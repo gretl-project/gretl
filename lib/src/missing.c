@@ -846,7 +846,7 @@ int any_missing_user_values (const DATASET *dset)
     }
 
     for (i=1; i<dset->v; i++) {
-	if (!var_is_hidden(dset, i)) {
+	if (!series_is_hidden(dset, i)) {
 	    for (t=dset->t1; t<=dset->t2; t++) {
 		if (na(dset->Z[i][t])) {
 		    return 1;

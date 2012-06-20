@@ -2559,7 +2559,7 @@ static int build_sheet_view (Spreadsheet *sheet)
 	for (i=1; i<=sheet->varlist[0]; i++) {
 	    int vi = sheet->varlist[i];
 
-	    if (var_is_hidden(dataset, vi)) {
+	    if (series_is_hidden(dataset, vi)) {
 		continue;
 	    }
 	    colnum++;
@@ -3107,7 +3107,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 		sheet->datacols = 0;
 
 		for (i=sheet->varlist[0]; i>0; i--) {
-		    if (var_is_hidden(dataset, sheet->varlist[i])) {
+		    if (series_is_hidden(dataset, sheet->varlist[i])) {
 			gretl_list_delete_at_pos(sheet->varlist, i);
 		    } else {
 			sheet->datacols += 1;

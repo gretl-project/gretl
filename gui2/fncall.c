@@ -388,7 +388,7 @@ static GList *add_series_names (GList *list)
     int i;
 
     for (i=1; i<dataset->v; i++) {
-	if (!var_is_hidden(dataset, i)) {
+	if (!series_is_hidden(dataset, i)) {
 	    list = g_list_append(list, (gpointer) dataset->varname[i]);
 	} 
     }

@@ -141,7 +141,7 @@ static void varinfo_set_field_changed (gui_varinfo *vset, int i,
 
 static int formula_ok (int v)
 {
-    if (var_is_generated(dataset, v)) {
+    if (series_is_generated(dataset, v)) {
 	const char *s = series_get_label(dataset, v);
 	int n = strlen(s);
 
@@ -504,7 +504,7 @@ static void varinfo_insert_info (gui_varinfo *vset, int v)
     } 
 
     if (vset->discrete_check != NULL) {
-	int d2 = 0, d1 = var_is_discrete(dataset, v);
+	int d2 = 0, d1 = series_is_discrete(dataset, v);
 
 	if (!d1) {
 	    d2 = gretl_isdiscrete(0, dataset->n - 1, dataset->Z[v]);
@@ -577,7 +577,7 @@ static void varinfo_apply (GtkButton *b, gui_varinfo *vset)
 static void varinfo_discrete_changed (GtkToggleButton *button, gui_varinfo *vset)
 {
     int d = gtk_toggle_button_get_active(button);
-    int orig = var_is_discrete(dataset, vset->varnum);
+    int orig = series_is_discrete(dataset, vset->varnum);
 
     varinfo_set_field_changed(vset, VSET_DISCRETE, d != orig);
 }
@@ -917,7 +917,7 @@ void varinfo_dialog (int varnum)
 
     if (1) {
 	/* mark variable as discrete or not */
-	int d = var_is_discrete(dataset, varnum);
+	int d = series_is_discrete(dataset, varnum);
 
 	hbox = gtk_hbox_new(FALSE, 5);
 	tmp = gtk_check_button_new_with_label(_("Treat this variable "

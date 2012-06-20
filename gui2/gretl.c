@@ -944,7 +944,7 @@ void populate_varlist (void)
     for (i=0; i<dataset->v; i++) {
 	int pv = 0;
 
-	if (var_is_hidden(dataset, i)) {
+	if (series_is_hidden(dataset, i)) {
 	    continue;
 	}
 	if (i > 0 && (is_standard_lag(i, dataset, &pv) ||

@@ -4495,7 +4495,7 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 
     x = (const double *) dset->Z[v];
 
-    if (!var_is_discrete(dset, v) && !gretl_isdiscrete(dset->t1, dset->t2, x)) {
+    if (!series_is_discrete(dset, v) && !gretl_isdiscrete(dset->t1, dset->t2, x)) {
 	gretl_errmsg_sprintf(_("The variable '%s' is not discrete"), byvar);
 	return E_DATA;
     }
