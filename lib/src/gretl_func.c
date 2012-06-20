@@ -476,7 +476,7 @@ static fnpkg *function_package_alloc (const char *fname)
 	return NULL;
     }
 
-#if 1 || PKG_DEBUG
+#if PKG_DEBUG
     fprintf(stderr, "function_package_alloc: fname='%s'\n", fname);
 #endif    
 
