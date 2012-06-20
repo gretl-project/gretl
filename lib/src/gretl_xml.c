@@ -1917,7 +1917,7 @@ static int process_varlist (xmlNodePtr node, DATASET *dset)
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "displayname");
 	    if (tmp != NULL) {
-		var_set_display_name(dset, i, (char *) tmp);
+		series_set_display_name(dset, i, (char *) tmp);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "parent");
