@@ -9447,7 +9447,7 @@ void parser_ungetc (parser *p)
 /* look ahead to the position of a given character in
    the remaining input stream */
 
-int parser_charpos (parser *p, int c)
+int parser_gretl_charpos (parser *p, int c)
 {
     int i;
 

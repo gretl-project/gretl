@@ -221,7 +221,7 @@ static char *win32_dotpath (void)
 {
     gchar *dotpath = g_strdup(gretl_dotdir());
 
-    charsub(dotpath, '\\', '/');
+    gretl_charsub(dotpath, '\\', '/');
     return dotpath;
 }
 

@@ -2880,7 +2880,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
 	while (fgets(line, sizeof line, fp) && !*err) {
 	    if (!strncmp(line, "public =", 8)) {
 		while (ends_with_backslash(line)) {
-		    charsub(line, '\\', '\0');
+		    gretl_charsub(line, '\\', '\0');
 		    *cont = '\0';
 		    fgets(cont, sizeof cont, fp);
 		    strcat(line, cont);

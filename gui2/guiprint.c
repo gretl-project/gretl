@@ -2039,7 +2039,7 @@ static void matrix_print_as_csv (const gretl_matrix *m, PRN *prn)
 	    x = gretl_matrix_get(m, i, j);
 	    sprintf(numstr, "%.*g", DBL_DIG, x);
 	    if (decpoint != '.') {
-		charsub(numstr, '.', decpoint);
+		gretl_charsub(numstr, '.', decpoint);
 	    }
 	    pputs(prn, numstr);
 	    if (j < m->cols - 1) {
@@ -2375,7 +2375,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 	return;
     }
 
-    dot = dotpos(texfile);
+    dot = gretl_dotpos(texfile);
     *texbase = 0;
     strncat(texbase, texfile, dot);
 

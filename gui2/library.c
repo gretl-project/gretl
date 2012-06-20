@@ -4371,7 +4371,7 @@ gchar *get_genr_string (GtkWidget *entry, dialog_t *dlg)
 
 static int is_full_genr_command (const char *s)
 {
-    int sppos = charpos(' ', s);
+    int sppos = gretl_charpos(' ', s);
 
     if (sppos > 1 && sppos < 9) {
 	char word1[9] = {0};

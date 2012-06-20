@@ -698,7 +698,7 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
 			int rem = MAXLABEL - strlen(sinfo->descrip) - 1;
 
 			if (rem > 0) {
-			    chopstr(line);
+			    gretl_chopstr(line);
 			    strncat(sinfo->descrip, line + 1, rem);
 			}
 		    } else {
@@ -907,7 +907,7 @@ static RECNUM read_rats_directory (FILE *fp, const char *series_name,
     fread(rdir.series_name, NAMELENGTH, 1, fp);  
     rdir.series_name[15] = '\0';
 
-    chopstr(rdir.series_name);
+    gretl_chopstr(rdir.series_name);
 
 #if DB_DEBUG
     fprintf(stderr, "read_rats_directory: name='%s'\n", rdir.series_name);
@@ -950,7 +950,7 @@ static RECNUM read_rats_directory (FILE *fp, const char *series_name,
 	    memset(rdir.comments[i], 0, 80);
 	    fread(rdir.comments[i], 80, 1, fp);
 	    rdir.comments[i][79] = '\0';
-	    chopstr(rdir.comments[i]);
+	    gretl_chopstr(rdir.comments[i]);
 	} else {
 	    rdir.comments[i][0] = 0;
 	    fseek(fp, 80, SEEK_CUR);
@@ -1105,7 +1105,7 @@ static int read_in7_series_info (FILE *fp, dbwrapper *dw)
 			int rem = MAXLABEL - strlen(desc) - 1;
 
 			if (rem > 0) {
-			    chopstr(line);
+			    gretl_chopstr(line);
 			    strncat(desc, line + 1, rem);
 			}
 			pos = ftell(fp);

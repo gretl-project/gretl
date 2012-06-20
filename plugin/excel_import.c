@@ -1338,7 +1338,7 @@ transcribe_data (wbook *book, xls_info *xi, DATASET *dset,
 	}
 
 	/* remedial: replace space with underscore */
-	charsub(dset->varname[j], ' ', '_');
+	gretl_charsub(dset->varname[j], ' ', '_');
 
 	err = check_varname(dset->varname[j]);
 	if (err) {

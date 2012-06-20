@@ -103,7 +103,7 @@ double dot_atof (const char *s)
 }
 
 /**
- * dotpos:
+ * gretl_dotpos:
  * @str: the string to examine.
  *
  * Returns: the integer position of the last "." within @str,
@@ -111,7 +111,7 @@ double dot_atof (const char *s)
  * ends with a (backward or forward) slash.
  */
 
-int dotpos (const char *str)
+int gretl_dotpos (const char *str)
 { 
     int i, p = 0;
 
@@ -131,14 +131,14 @@ int dotpos (const char *str)
 }
 
 /**
- * slashpos:
+ * gretl_slashpos:
  * @str: the string to examine.
  *
  * Returns: the integer position of the last #SLASH within @str,
  * or 0 in case a #SLASH is not found.
  */
 
-int slashpos (const char *str)
+int gretl_slashpos (const char *str)
 { 
     int i, p = 0;
 
@@ -156,7 +156,7 @@ int slashpos (const char *str)
 }
 
 /**
- * delchar:
+ * gretl_delchar:
  * @c: the character to delete.
  * @str: the string from which to delete @c.
  *
@@ -165,7 +165,7 @@ int slashpos (const char *str)
  * Returns: the possibly modified string.
  */
 
-char *delchar (int c, char *str)
+char *gretl_delchar (int c, char *str)
 {
     int i, j;
 
@@ -243,7 +243,7 @@ char *gretl_unquote (char *str, int *err)
 }
 
 /**
- * charpos:
+ * gretl_charpos:
  * @c: the character to look for.
  * @s: the string to examine.
  *
@@ -251,7 +251,7 @@ char *gretl_unquote (char *str, int *err)
  * found.
  */
 
-int charpos (char c, const char *s)
+int gretl_charpos (char c, const char *s)
 {
     int i = 0;
 
@@ -266,7 +266,7 @@ int charpos (char c, const char *s)
 }
 
 /**
- * charsub:
+ * gretl_charsub:
  * @str: the string to operate on.
  * @find: the character to replace.
  * @repl: the replacement character.
@@ -276,7 +276,7 @@ int charpos (char c, const char *s)
  * Returns: the (possibly modified) string.
  */
 
-char *charsub (char *str, char find, char repl)
+char *gretl_charsub (char *str, char find, char repl)
 {
     char *p = str;
 
@@ -981,7 +981,7 @@ char *shift_string_left (char *str, size_t move)
 }
 
 /**
- * chopstr:
+ * gretl_chopstr:
  * @str: the string to process.
  *
  * Removes both leading and trailing space from a string.
@@ -989,7 +989,7 @@ char *shift_string_left (char *str, size_t move)
  * Returns: the possibly modified string.
  */
 
-char *chopstr (char *str)
+char *gretl_chopstr (char *str)
 {
     int i, n = strspn(str, " \t");
 
@@ -1024,7 +1024,7 @@ char *chopstr (char *str)
 
 char *switch_ext (char *targ, const char *src, const char *ext)
 {
-    int i = dotpos(src);
+    int i = gretl_dotpos(src);
 
     if (targ != src) {
         strncpy(targ, src, i);
@@ -1322,25 +1322,6 @@ char *space_to_score (char *s)
     }
 
     return s;
-}
-
-/**
- * safecpy:
- * @targ: target or output string (must be pre-allocated).
- * @src: source or input string.
- * @n: maximum length of target string.
- *
- * Copies at most @n characters from @src to @targ, and ensures that
- * @targ[@n] is a NUL byte.
- * 
- * Returns: the output string.
- */
-
-char *safecpy (char *targ, const char *src, int n)
-{
-    *targ = 0;
-    strncat(targ, src, n);
-    return targ;
 }
 
 /**
@@ -1755,9 +1736,9 @@ char *colonize_obs (char *obs)
 void modify_date_for_csv (char *s, int pd)
 {
     if (pd == 4) {
-	charsub(s, ':', 'Q');
+	gretl_charsub(s, ':', 'Q');
     } else {
-	charsub(s, ':', 'M');
+	gretl_charsub(s, ':', 'M');
     }
 }
 

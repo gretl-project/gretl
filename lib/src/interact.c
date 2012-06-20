@@ -192,7 +192,7 @@ int filter_comments (char *s, CMD *cmd)
 
 static int get_lags_param (CMD *cmd, char **ps)
 {
-    int k = charpos(';', *ps);
+    int k = gretl_charpos(';', *ps);
     int ret = 0;
 
     if (k > 0) {

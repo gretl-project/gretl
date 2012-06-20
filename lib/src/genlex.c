@@ -720,7 +720,7 @@ void context_error (int c, parser *p)
 
 static char *get_quoted_string (parser *p)
 {
-    int n = parser_charpos(p, '"');
+    int n = parser_gretl_charpos(p, '"');
     char *s = NULL;
 
     if (n >= 0) {
@@ -784,7 +784,7 @@ NODE *obs_node (parser *p)
     int special = 0;
     int t = -1;
 
-    close = charpos(']', s);
+    close = gretl_charpos(']', s);
 
 #if LDEBUG
     fprintf(stderr, "obs_node: s='%s', ch='%c', close=%d\n", 
@@ -798,7 +798,7 @@ NODE *obs_node (parser *p)
 	pprintf(p->prn, _("Unmatched '%c'\n"), '[');
 	p->err = E_PARSE;
     } else if (*s == '"' && close < OBSLEN + 2 &&
-	       charpos('"', s+1) == close - 2) {
+	       gretl_charpos('"', s+1) == close - 2) {
 	/* quoted observation label? */
 	strncat(word, s, close);
 	special = 1;

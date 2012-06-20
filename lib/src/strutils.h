@@ -51,13 +51,13 @@ double dot_atof (const char *s);
 
 void set_atof_point (char c);
  
-int dotpos (const char *str);
+int gretl_dotpos (const char *str);
 
-int slashpos (const char *str);
+int gretl_slashpos (const char *str);
 
-char *delchar (int c, char *str);
+char *gretl_delchar (int c, char *str);
 
-int charpos (char c, const char *s);
+int gretl_charpos (char c, const char *s);
 
 int ends_with_backslash (const char *s);
 
@@ -86,7 +86,7 @@ char **gretl_string_split_quoted (const char *s, int *n, int *err);
 
 char *gretl_str_expand (char **orig, const char *add, const char *sep);
 
-char *charsub (char *str, char find, char repl);
+char *gretl_charsub (char *str, char find, char repl);
 
 char *comma_separate_numbers (char *s);
 
@@ -96,7 +96,7 @@ char *lower (char *str);
 
 void clear (char *str, int len);
 
-char *chopstr (char *str);
+char *gretl_chopstr (char *str);
 
 char *switch_ext (char *targ, const char *src, const char *ext);
 
@@ -111,8 +111,6 @@ char *tailstrip (char *str);
 char *compress_spaces (char *s);
 
 char *space_to_score (char *s);
-
-char *safecpy (char *targ, const char *src, int n);
 
 char **strings_array_new (int nstrs);
 

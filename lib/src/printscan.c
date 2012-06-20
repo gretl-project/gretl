@@ -1165,7 +1165,7 @@ static char *get_literal_or_stringvar (const char **src, int *err)
 	s++;
 	n = gretl_namechar_spn(s);
     } else {
-	n = charpos(',', s);
+	n = gretl_charpos(',', s);
 	if (n == gretl_namechar_spn(s)) {
 	    svar = 1;
 	}

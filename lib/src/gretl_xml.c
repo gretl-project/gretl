@@ -2231,7 +2231,7 @@ static int xml_get_startobs (xmlNodePtr node, double *sd0, char *stobs,
 
 	obstr[0] = '\0';
 	strncat(obstr, (char *) tmp, 15);
-	charsub(obstr, ':', '.');
+	gretl_charsub(obstr, ':', '.');
 	
 	if (strchr(obstr, '/') != NULL && caldata) {
 	    long ed = get_epoch_day((char *) tmp);

@@ -163,7 +163,7 @@ int read_rc_string (FILE *fp, const char *key, char *value)
 	n = strlen(keystr);
 
 	while (fgets(line, sizeof line, fp) && !ret) {
-	    chopstr(line);
+	    gretl_chopstr(line);
 	    if (!strncmp(line, keystr, n)) {
 		strcpy(value, line + n);
 		ret = 1;

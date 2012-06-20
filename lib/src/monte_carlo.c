@@ -901,7 +901,7 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATASET *dset,
     } else {
 	char vn1[VNAMELEN], vn2[VNAMELEN];
 	
-	delchar(' ', s);
+	gretl_delchar(' ', s);
 
 	if (sscanf(s, "%15[^.]..%15s", vn1, vn2) != 2) {
 	    err = E_PARSE;

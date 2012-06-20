@@ -1765,7 +1765,7 @@ int getopenfile (const char *line, char *fname, gretlopt opt)
     fullname = gretl_addpath(fname, script);
 
     if (fullname != NULL && (opt & OPT_S)) {
-	int spos = slashpos(fname);
+	int spos = gretl_slashpos(fname);
 
 	if (spos) {
 	    *current_dir = '\0';
@@ -2239,7 +2239,7 @@ const char *gretl_current_dir (void)
 
 void gretl_set_current_dir (const char *s)
 {
-    int spos = slashpos(s);
+    int spos = gretl_slashpos(s);
 
     if (spos) {
 	*current_dir = '\0';
@@ -3193,7 +3193,7 @@ int cli_read_rc (void)
 	    *val = '\0';
 	    /* get the string that follows " = " */ 
 	    strncat(val, line + strlen(key) + 3, MAXLEN - 1);
-	    chopstr(val); 
+	    gretl_chopstr(val); 
 	    if (!strcmp(key, "gretldir")) {
 		strncat(cpaths.gretldir, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "gnuplot")) {

@@ -1759,7 +1759,8 @@ static void read_xtics_setting (GPT_SPEC *spec, const char *val)
 	/* set of specific xtic values */
 	spec->xticstr = gretl_strdup(val);
     } else {
-	safecpy(spec->xtics, val, sizeof(spec->xtics) - 1);
+	*spec->xtics = '\0';
+	strncat(spec->xtics, val, sizeof(spec->xtics) - 1);
     }
 }
 
@@ -1892,10 +1893,12 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 	spec->keyspec = gp_keypos_from_name(val);
     } else if (!strcmp(key, "xtics")) { 
 	read_xtics_setting(spec, val);
-    } else if (!strcmp(key, "mxtics")) { 
-	safecpy(spec->mxtics, val, sizeof(spec->mxtics) - 1);
-    } else if (!strcmp(key, "ytics")) { 
-	safecpy(spec->ytics, val, sizeof(spec->ytics) - 1);
+    } else if (!strcmp(key, "mxtics")) {
+	*spec->mxtics = '\0';
+	strncat(spec->mxtics, val, sizeof(spec->mxtics) - 1);
+    } else if (!strcmp(key, "ytics")) {
+	*spec->ytics = '\0';
+	strncat(spec->ytics, val, sizeof(spec->ytics) - 1);
     } else if (!strcmp(key, "border")) {
 	spec->border = atoi(val);
     } else if (!strcmp(key, "bmargin")) {
@@ -2561,7 +2564,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
     for (i=0; i<4; i++) {
 	if (spec->titles[i][0] != '\0') {
-	    delchar('"', spec->titles[i]);
+	    gretl_delchar('"', spec->titles[i]);
 	}
     }
 
@@ -2760,7 +2763,7 @@ static void x_to_date (double x, int pd, char *str)
 
     t = yr + subper / ((pd < 10)? 10.0 : 100.0);
     sprintf(str, "%.*f", (pd < 10)? 1 : 2, t);
-    charsub(str, decpoint, ':');
+    gretl_charsub(str, decpoint, ':');
 }
 
 static void redraw_plot_rectangle (png_plot *plot, GdkRectangle *r)

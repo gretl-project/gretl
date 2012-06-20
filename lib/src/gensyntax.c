@@ -639,7 +639,7 @@ static NODE *get_middle_string_arg (parser *p)
 
     if (p->ch == '"') {
 	/* special: arg is wrapped in quotes */
-	close = parser_charpos(p, '"');
+	close = parser_gretl_charpos(p, '"');
 	if (close < 0) {
 	    unmatched_symbol_error('"', p);
 	    return NULL;
@@ -987,7 +987,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 
 static void get_ovar_ref (NODE *t, parser *p)
 {
-    if (p->ch != '.' || parser_charpos(p, '$') != 0) {
+    if (p->ch != '.' || parser_gretl_charpos(p, '$') != 0) {
 	p->err = E_PARSE;
 	return;
     }

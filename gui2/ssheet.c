@@ -667,7 +667,7 @@ static void sheet_cell_edited (GtkCellRendererText *cell,
 	} else {
 	    if (sheet->flags & SHEET_USE_COMMA) {
 		/* accept point also: convert to locale */
-		charsub(new_text, '.', ',');
+		gretl_charsub(new_text, '.', ',');
 	    }
 	    err = check_atof(new_text);
 	}

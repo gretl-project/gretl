@@ -26,7 +26,7 @@ static int check_imported_varname (char *vname, int row, int col,
 {
     int err;
 
-    charsub(vname, ' ', '_');
+    gretl_charsub(vname, ' ', '_');
 
     err = check_varname(vname);
 

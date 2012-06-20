@@ -134,7 +134,7 @@ int rc_read_file_lists (FILE *fp, char *prev)
 	    len = strlen(file_sections[i]);
 	    if (!strncmp(line, file_sections[i], len)) {
 		/* found a known "recent files" section */
-		chopstr(line);
+		gretl_chopstr(line);
 		if (*line != '\0') {
 		    write_filename_to_list(i, n[i], line + len + 2);
 		    n[i] += 1;

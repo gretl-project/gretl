@@ -2473,7 +2473,7 @@ static char *arma_lag_string (char *targ, const char *s)
 	sprintf(targ, "{%s} ", s);
     } 
 
-    charsub(targ, ',', ' ');
+    gretl_charsub(targ, ',', ' ');
 
     return targ;
 }
@@ -8209,7 +8209,7 @@ static int set_lags_for_var (var_lag_info *vlinfo, int yxlags, int ywlags)
 #endif
 
     if (vlinfo->lspec != NULL && *vlinfo->lspec != 0) {
-	charsub(vlinfo->lspec, ',', ' ');
+	gretl_charsub(vlinfo->lspec, ',', ' ');
 	llist = gretl_list_from_string(vlinfo->lspec, &err);
 	if (!err) {
 	    err = set_lag_prefs_from_list(vlinfo->v, llist, vlinfo->context,

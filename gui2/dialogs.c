@@ -314,7 +314,7 @@ double gui_double_from_string (const char *str, int *err)
 
     if (get_local_decpoint() != '.') {
 	gretl_push_c_numeric_locale();
-	charsub(s, ',', '.');
+	gretl_charsub(s, ',', '.');
 	sub = 1;
     }
 

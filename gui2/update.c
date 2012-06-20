@@ -32,7 +32,7 @@ static size_t get_bufsize (const char *buf)
     int pos;
     char line[60];
 
-    while ((pos = charpos('\n', buf)) > 0) {
+    while ((pos = gretl_charpos('\n', buf)) > 0) {
 	strncpy(line, buf, pos);
 	line[pos] = 0;
 	sscanf(line, "%*s %u", &i);

@@ -320,7 +320,7 @@ static gboolean update_arg (GtkComboBox *combo,
 
     if (s != NULL && fn_param_type(cinfo->func, i) == GRETL_TYPE_DOUBLE) {
 	if (isdigit(*s) || *s == '-' || *s == '+' || *s == ',') {
-	    charsub(s, ',', '.');
+	    gretl_charsub(s, ',', '.');
 	}
     }
 
@@ -2732,7 +2732,7 @@ static int package_already_registered (const char *name)
 	    s = strstr(line, "<package name=");
 	    if (s != NULL) {
 		s += 15;
-		pos = charpos('"', s);
+		pos = gretl_charpos('"', s);
 		if (pos > 0 && strncmp(s, name, pos) == 0) {
 		    found = 1;
 		}

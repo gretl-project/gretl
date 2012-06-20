@@ -1070,7 +1070,7 @@ static int set_shelldir (const char *s)
 	gretl_insert_builtin_string("shelldir", state->shelldir);
     } else if (*s == '"') {
 	s++;
-	len = charpos('"', s);
+	len = gretl_charpos('"', s);
 	if (len <= 0) {
 	    err = E_PARSE;
 	} 

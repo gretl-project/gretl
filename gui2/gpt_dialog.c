@@ -650,7 +650,7 @@ static void entry_to_gp_double (GtkWidget *w, double *val)
 	if (s != NULL && *s != '\0') {
 	    gchar *tmp = g_strdup(s);
 
-	    charsub(tmp, ',', '.');
+	    gretl_charsub(tmp, ',', '.');
 	    gretl_push_c_numeric_locale();	    
 	    if (check_atof(tmp)) {
 		errbox(gretl_errmsg_get());
@@ -1951,7 +1951,7 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 
 	    for (i=0; fittype_strings[i] != NULL; i++) {
 		strcpy(tmp, _(fittype_strings[i]));
-		charsub(tmp, 'x', 't');
+		gretl_charsub(tmp, 'x', 't');
 		if (i != PLOT_FIT_LOGLIN || semilog_ok) {
 		    combo_box_append_text(ed->fitcombo, tmp);
 		}

@@ -346,7 +346,8 @@ static int read_esl_hdr (const char *hdrfile, DATASET *dset, int *byvar)
     *str = '\0';
     fscanf(fp, "%s", str);
     if (skip_esl_comments(fp, str)) {
-        safecpy(dset->varname[i], str, VNAMELEN - 1);
+	*dset->varname[i] = '\0';
+	strncat(dset->varname[i], str, VNAMELEN - 1);
 	err = check_varname(dset->varname[i++]);
     } else {
 	descrip = 1; /* comments were found */
@@ -356,12 +357,13 @@ static int read_esl_hdr (const char *hdrfile, DATASET *dset, int *byvar)
         fscanf(fp, "%s", str);
 	n = strlen(str);
 	if (str[n-1] != ';') {
-            safecpy(dset->varname[i], str, VNAMELEN - 1);
+	    *dset->varname[i] = '\0';
+            strncat(dset->varname[i], str, VNAMELEN - 1);
 	    err = check_varname(dset->varname[i++]);
         } else {
 	    if (n > 1) {
-		safecpy(dset->varname[i], str, n-1);
-		dset->varname[i][n] = '\0';
+		*dset->varname[i] = '\0';
+		strncat(dset->varname[i], str, n-1);
 		err = check_varname(dset->varname[i]);
 	    }
 	    break;
@@ -416,7 +418,7 @@ static int read_esl_hdr (const char *hdrfile, DATASET *dset, int *byvar)
 	rewind(fp);
 	dbuf = get_esl_comment_lines(fp);
 	if (dbuf != NULL) {
-	    delchar('\r', dbuf);
+	    gretl_delchar('\r', dbuf);
 	    dset->descrip = gretl_strdup(dbuf);
 	    free(dbuf);
 	}
@@ -873,7 +875,7 @@ int get_info (const char *hdrfile, PRN *prn)
 	do {
 	    if (fgets(s, MAXLEN-1, hdr) != NULL && strncmp(s, "*)", 2)) {
 #ifndef WIN32
-		delchar('\r', s);
+		gretl_delchar('\r', s);
 #endif
 		pputs(prn, s);
 		i++;
@@ -1209,7 +1211,7 @@ static void csv_data_out (const DATASET *dset, const int *list,
 		    sprintf(tmp, "%.*f", pmax[i-1], xt);
 		}
 		if (dotsub) {
-		    charsub(tmp, '.', ',');
+		    gretl_charsub(tmp, '.', ',');
 		}
 		fputs(tmp, fp);
 	    }
@@ -3260,7 +3262,7 @@ int transpose_data (DATASET *dset)
 
 	    *targ = '\0';
 	    strncat(targ, dset->S[t], VNAMELEN - 1);
-	    charsub(targ, ' ', '_');
+	    gretl_charsub(targ, ' ', '_');
 	    err = check_varname(targ);
 	    if (err) {
 		sprintf(targ, "v%d", k);

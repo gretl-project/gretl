@@ -790,7 +790,7 @@ static int pick_apart (gretl_restriction *r, const char *s,
 
     *eq = *bnum = -1;
 
-    k = charpos(']', s);
+    k = gretl_charpos(']', s);
     if (k <= 0 || k > 30) {
 	return E_PARSE;
     }

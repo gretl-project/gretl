@@ -1220,7 +1220,7 @@ int *gretl_list_from_string (const char *str, int *err)
 
     q = s; /* copy relevant starting point */
 
-    charsub(s, ',', ' ');
+    gretl_charsub(s, ',', ' ');
 
     errno = 0;
 

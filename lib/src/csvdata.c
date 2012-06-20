@@ -1308,12 +1308,12 @@ static void compress_csv_line (csvdata *c)
     }
 
     if (c->delim != ' ') {
-	delchar(' ', c->line);
+	gretl_delchar(' ', c->line);
     } else {
 	compress_spaces(c->line);
     }
 
-    delchar('"', c->line);
+    gretl_delchar('"', c->line);
 
     if (csv_has_trailing_comma(c)) {
 	/* chop trailing comma */
@@ -1507,7 +1507,7 @@ static double csv_atof (csvdata *c, const char *s)
 	char tmp[32];
 
 	strcpy(tmp, s);
-	charsub(tmp, ',', '.');
+	gretl_charsub(tmp, ',', '.');
 
 	x = strtod(tmp, &test);
 	if (*test == '\0' && errno == 0) {
@@ -1522,7 +1522,7 @@ static double csv_atof (csvdata *c, const char *s)
 	char tmp[32];
 
 	strcpy(tmp, s);
-	charsub(tmp, ',', '.');
+	gretl_charsub(tmp, ',', '.');
 	errno = 0;
 
 	x = strtod(tmp, &test);
