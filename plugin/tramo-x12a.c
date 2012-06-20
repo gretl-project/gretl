@@ -673,7 +673,7 @@ static void copy_variable (DATASET *targ, int targv,
     }
 
     strcpy(targ->varname[targv], src->varname[srcv]);
-    series_set_label(targ, targv, VARLABEL(src, srcv));
+    series_set_label(targ, targv, series_get_label(src, srcv));
 }
 
 static void clear_tramo_files (const char *path, const char *vname)

@@ -155,7 +155,7 @@ void clear_model_table (int on_exit, PRN *prn)
     free(table_models);
     table_models = NULL;
 
-    free_strings_array(pnames, n_params);
+    strings_array_free(pnames, n_params);
     pnames = NULL;
     n_params = 0;
 
@@ -327,7 +327,7 @@ static int make_full_param_list (void)
     int first = 1;
     int i, err = 0;
 
-    free_strings_array(pnames, n_params);
+    strings_array_free(pnames, n_params);
     pnames = NULL;
     n_params = 0;
 

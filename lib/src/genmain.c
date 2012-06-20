@@ -185,7 +185,7 @@ static void gen_write_label (parser *p, int oldv)
     series_set_flag(p->dset, p->lh.v, VAR_GENERATED);
 
 #if GDEBUG
-    fprintf(stderr, "varlabel: '%s'\n", VARLABEL(p->dset, p->lh.v));
+    fprintf(stderr, "varlabel: '%s'\n", series_get_label(p->dset, p->lh.v));
 #endif
 }
 

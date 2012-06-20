@@ -131,7 +131,7 @@ int strings_array_sort (char ***pS, int *n, gretlopt opt);
 
 int strings_array_cmp (char **strs1, char **strs2, int n);
 
-void free_strings_array (char **strs, int nstrs);
+void strings_array_free (char **strs, int nstrs);
 
 char *get_obs_string (char *obs, int t, const DATASET *dset);
 

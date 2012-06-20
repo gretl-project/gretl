@@ -959,7 +959,7 @@ void populate_varlist (void)
 		    gtk_tree_store_set(store, &child_iter, 
 				       0, id, 
 				       1, dataset->varname[i],
-				       2, VARLABEL(dataset, i),
+				       2, series_get_label(dataset, i),
 				       -1);	
 		}	
 	    }
@@ -971,7 +971,7 @@ void populate_varlist (void)
 	    gtk_tree_store_set(store, &iter, 
 			       0, id, 
 			       1, dataset->varname[i],
-			       2, VARLABEL(dataset, i),
+			       2, series_get_label(dataset, i),
 			       -1);
 	}
     } 

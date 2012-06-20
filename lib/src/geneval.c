@@ -9909,7 +9909,7 @@ static void do_decl (parser *p)
 	}
     }
 
-    free_strings_array(S, n);
+    strings_array_free(S, n);
 }
 
 /* create a dummy node to facilitate (a) printing an

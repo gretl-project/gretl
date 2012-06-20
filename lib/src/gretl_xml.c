@@ -1169,7 +1169,7 @@ char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
     }
 
     if (S != NULL && *err) {
-	free_strings_array(S, n);
+	strings_array_free(S, n);
 	S = NULL;
     }
 
@@ -1705,7 +1705,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    fprintf(fp, "<variable name=\"%s\"", xmlbuf);
 	}
 
-	vstr = VARLABEL(dset, v);
+	vstr = series_get_label(dset, v);
 	if (*vstr) {
 	    uerr = gretl_xml_encode_to_buf(xmlbuf, vstr, sizeof xmlbuf);
 	    if (!uerr) {
@@ -1717,7 +1717,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	} 
 
-	vstr = DISPLAYNAME(dset, v);
+	vstr = series_get_display_name(dset, v);
 	if (*vstr) {
 	    uerr = gretl_xml_encode_to_buf(xmlbuf, vstr, sizeof xmlbuf);
 	    if (!uerr) {
@@ -2299,7 +2299,7 @@ static int xml_get_endobs (xmlNodePtr node, char *endobs, int caldata)
 
 static int lag_from_label (int v, const DATASET *dset, int *lag)
 {
-    const char *test = VARLABEL(dset, v);
+    const char *test = series_get_label(dset, v);
     char pm, vname[VNAMELEN];
     int pv = 0;
 
@@ -2313,7 +2313,7 @@ static int lag_from_label (int v, const DATASET *dset, int *lag)
 
 static int dummy_child_from_label (int v, const DATASET *dset)
 {
-    const char *test = VARLABEL(dset, v);
+    const char *test = series_get_label(dset, v);
     char vname[VNAMELEN];
     double val;
     int pv = 0;

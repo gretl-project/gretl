@@ -362,7 +362,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     if (err) {
 	free(xt);
 	free(colbytes);
-	free_strings_array(grabstr, nstrs);
+	strings_array_free(grabstr, nstrs);
 	return err;
     }
 
@@ -480,7 +480,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     if (err) {
 	doubles_array_free(odinfo->X, odinfo->nvars);
 	odinfo->X = NULL;
-	free_strings_array(odinfo->S, nrows);
+	strings_array_free(odinfo->S, nrows);
 	odinfo->S = NULL;
     } else {
 	if (T < nrows && odinfo->S != NULL) {
@@ -496,7 +496,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 
     free(xt);
     free(colbytes);
-    free_strings_array(grabstr, nstrs);
+    strings_array_free(grabstr, nstrs);
 
     if (stmt != NULL) {
 	SQLFreeHandle(SQL_HANDLE_STMT, stmt);

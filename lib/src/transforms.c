@@ -560,7 +560,7 @@ static int transform_handle_duplicate (int ci, int lag, int v,
     int ret = VARNAME_DUPLICATE;
     int t, ok = 0;
 
-    if (!strcmp(label, VARLABEL(dset, v))) {
+    if (!strcmp(label, series_get_label(dset, v))) {
 	/* labels identical, so OK? */
 	ok = 1;
     }
@@ -1147,7 +1147,7 @@ transform_preprocess_list (int *list, const DATASET *dset, int f)
 	    }
 	}
 
-	free_strings_array(S, longnames);
+	strings_array_free(S, longnames);
     }
 
     return err;
@@ -1268,7 +1268,7 @@ int list_laggenr (int **plist, int order, DATASET *dset)
 	    if (lv > 0) {
 #if TRDEBUG > 1
 		fprintf(stderr, "lag var name '%s', label '%s'\n",
-			dset->varname[lv], VARLABEL(dset, lv));
+			dset->varname[lv], series_get_label(dset, lv));
 #endif
 		laglist[j++] = lv;
 		l0++;

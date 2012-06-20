@@ -368,14 +368,14 @@ void set_var_scalar (DATASET *dset, int i, int s);
 
 void set_var_hidden (DATASET *dset, int i);
 
-void var_set_linewidth (DATASET *dset, int i, int w);
+void series_set_linewidth (DATASET *dset, int i, int w);
 
-int var_get_linewidth (const DATASET *dset, int i);
+int series_get_linewidth (const DATASET *dset, int i);
 
-int var_set_display_name (DATASET *dset, int i,
+int series_record_display_name (DATASET *dset, int i,
 			  const char *s); 
 
-int var_set_description (DATASET *dset, int i,
+int series_record_label (DATASET *dset, int i,
 			 const char *s); 
 
 int var_set_compact_method (DATASET *dset, int i,
@@ -420,9 +420,9 @@ void series_set_flag (DATASET *dset, int i, int flag);
 
 void series_zero_flags (DATASET *dset, int i);
 
-const char *VARLABEL (const DATASET *dset, int i);
+const char *series_get_label (const DATASET *dset, int i);
 
-const char *DISPLAYNAME (const DATASET *dset, int i);
+const char *series_get_display_name (const DATASET *dset, int i);
 
 const char *series_get_parent (const DATASET *dset, int i);
 

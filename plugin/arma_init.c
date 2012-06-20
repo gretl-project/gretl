@@ -1056,7 +1056,7 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 
     nlspec_destroy(spec);
     free(parms);
-    free_strings_array(pnames, nparam);
+    strings_array_free(pnames, nparam);
 
     return err;
 }

@@ -2387,7 +2387,7 @@ static void get_local_object_status (const char *fname, int role,
 	} 
     }
 
-    free_strings_array(dirs, n_dirs);
+    strings_array_free(dirs, n_dirs);
 
     if (found) {
 	double dt;
@@ -2982,7 +2982,7 @@ gint populate_dbfilelist (windata_t *vwin)
 	}
     }  
 
-    free_strings_array(dirnames, n_dirs);
+    strings_array_free(dirnames, n_dirs);
 
     if (ndb == 0) {
 	errbox(_("No database files found"));

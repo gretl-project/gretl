@@ -153,11 +153,11 @@ void plotspec_destroy (GPT_SPEC *spec)
     }
 
     if (spec->literal != NULL) {
-	free_strings_array(spec->literal, spec->n_literal);
+	strings_array_free(spec->literal, spec->n_literal);
     }
 
     if (spec->markers != NULL) {
-	free_strings_array(spec->markers, spec->n_markers);
+	strings_array_free(spec->markers, spec->n_markers);
     }
 
     if (spec->labeled != NULL) {

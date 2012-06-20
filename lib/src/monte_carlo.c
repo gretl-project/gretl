@@ -509,7 +509,7 @@ static void gretl_loop_destroy (LOOPSET *loop)
     free(loop->models);
 
     if (loop->eachstrs != NULL) {
-	free_strings_array(loop->eachstrs, loop->itermax);
+	strings_array_free(loop->eachstrs, loop->itermax);
     }
 
     if (loop->lmodels != NULL) {
@@ -803,7 +803,7 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
     }
 
     if (loop->eachstrs != NULL) {
-	free_strings_array(loop->eachstrs, loop->itermax);
+	strings_array_free(loop->eachstrs, loop->itermax);
 	loop->eachstrs = NULL;
     }
 
@@ -934,7 +934,7 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATASET *dset,
 		vi = list[i];
 		loop->eachstrs[i-1] = gretl_strdup(dset->varname[vi]);
 		if (loop->eachstrs[i-1] == NULL) {
-		    free_strings_array(loop->eachstrs, list[0]);
+		    strings_array_free(loop->eachstrs, list[0]);
 		    loop->eachstrs = NULL;
 		    err = E_ALLOC;
 		}
@@ -1007,7 +1007,7 @@ parse_as_each_loop (LOOPSET *loop, const DATASET *dset, char *s)
 
 	    loop->eachstrs[i] = gretl_strndup(s, len);
 	    if (loop->eachstrs[i] == NULL) {
-		free_strings_array(loop->eachstrs, nf);
+		strings_array_free(loop->eachstrs, nf);
 		loop->eachstrs = NULL;
 		err = E_ALLOC;
 	    } else {

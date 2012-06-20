@@ -521,7 +521,7 @@ char **get_all_option_strings (int *pn)
 	for (i=0; i<n; i++) {
 	    optstrs[i] = gretl_strdup(gretl_opts[i].longopt);
 	    if (optstrs[i] == NULL) {
-		free_strings_array(optstrs, n);
+		strings_array_free(optstrs, n);
 		optstrs = NULL;
 		break;
 	    }

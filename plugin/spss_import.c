@@ -1674,7 +1674,7 @@ static void free_labelset (spss_labelset *lset)
     if (lset != NULL) {
 	free(lset->varlist);
 	free(lset->vals);
-	free_strings_array(lset->labels, lset->nlabels);
+	strings_array_free(lset->labels, lset->nlabels);
 	free(lset);
     }
 }

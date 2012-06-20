@@ -161,11 +161,11 @@ static void finfo_free (function_info *finfo)
     g_free(finfo->help);
 
     if (finfo->pubnames != NULL) {
-	free_strings_array(finfo->pubnames, finfo->n_pub);
+	strings_array_free(finfo->pubnames, finfo->n_pub);
     }
 	
     if (finfo->privnames != NULL) {
-	free_strings_array(finfo->privnames, finfo->n_priv);
+	strings_array_free(finfo->privnames, finfo->n_priv);
     }
 
     if (finfo->samplewin != NULL) {
@@ -710,7 +710,7 @@ static char **get_function_names (const int *list, int *err)
     }
 
     if (*err) {
-	free_strings_array(names, n);
+	strings_array_free(names, n);
 	names = NULL;
     }
 
@@ -757,13 +757,13 @@ static int finfo_reset_function_names (function_info *finfo,
     }
 
     if (!*changed) {
-	free_strings_array(pubnames, npub);
-	free_strings_array(privnames, npriv);
+	strings_array_free(pubnames, npub);
+	strings_array_free(privnames, npriv);
     } else if (!err) {
-	free_strings_array(finfo->pubnames, finfo->n_pub);
+	strings_array_free(finfo->pubnames, finfo->n_pub);
 	finfo->pubnames = pubnames;
 	finfo->n_pub = npub;
-	free_strings_array(finfo->privnames, finfo->n_priv);
+	strings_array_free(finfo->privnames, finfo->n_priv);
 	finfo->privnames = privnames;
 	finfo->n_priv = npriv;
 	finfo->active = finfo->pubnames[0];

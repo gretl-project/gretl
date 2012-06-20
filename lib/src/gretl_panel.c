@@ -3756,7 +3756,7 @@ static void panel_copy_var (DATASET *targ, int targv,
 	series_set_label(targ, targv, _("residual"));
     } else {
 	strcpy(targ->varname[targv], src->varname[srcv]);
-	series_set_label(targ, targv, VARLABEL(src, srcv));
+	series_set_label(targ, targv, series_get_label(src, srcv));
     }
 }
 
@@ -4019,7 +4019,7 @@ int switch_panel_orientation (DATASET *dset)
 		    }
 		}
 	    }
-	    free_strings_array(markers, dset->n);
+	    strings_array_free(markers, dset->n);
 	} else {
 	    /* should we flag an error? */
 	    dataset_destroy_obs_markers(dset); 
@@ -4322,7 +4322,7 @@ static int panel_data_sort_by (DATASET *dset, int uv, int tv, int *ustrs)
 		*ustrs = 0;
 	    }
 	}
-	free_strings_array(S, n);
+	strings_array_free(S, n);
     }
 
  bailout:	
@@ -4439,7 +4439,7 @@ int undo_panel_padding (DATASET *dset)
 	}
 
 	if (dset->S != NULL && S != NULL) {
-	    free_strings_array(dset->S, n_orig);
+	    strings_array_free(dset->S, n_orig);
 	    dset->S = S;
 	}
     }
@@ -4549,7 +4549,7 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
     if (dset->S != NULL) {
 	/* expand the obs (unit) marker strings appropriately */
 	if (S == NULL) {
-	    free_strings_array(dset->S, n_orig);
+	    strings_array_free(dset->S, n_orig);
 	    dset->S = NULL;
 	    dset->markers = NO_MARKERS;
 	} else {
@@ -4570,7 +4570,7 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 		    strcpy(S[t++], si);
 		}
 	    }
-	    free_strings_array(dset->S, n_orig);
+	    strings_array_free(dset->S, n_orig);
 	    dset->S = S;
 	}
     }

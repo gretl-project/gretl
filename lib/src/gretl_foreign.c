@@ -64,7 +64,7 @@ enum {
 
 static void destroy_foreign (void)
 {
-    free_strings_array(foreign_lines, foreign_n_lines);
+    strings_array_free(foreign_lines, foreign_n_lines);
     foreign_lines = NULL;
     foreign_started = 0;
     foreign_n_lines = 0;

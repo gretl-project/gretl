@@ -81,7 +81,7 @@ void sort_and_print_text (char **S, int n)
 	}
     }
 
-    free_strings_array(S, n);
+    strings_array_free(S, n);
 }
 
 void print_text_unsorted (char **S, int n)
@@ -97,7 +97,7 @@ void print_text_unsorted (char **S, int n)
 	}
     }
 
-    free_strings_array(S, n);
+    strings_array_free(S, n);
 }
 
 void sort_and_print_tabular (char **S, int n, int cols)
@@ -115,7 +115,7 @@ void sort_and_print_tabular (char **S, int n, int cols)
 
     print_tabfoot(cols, t);
 
-    free_strings_array(S, n);
+    strings_array_free(S, n);
 }
 
 void print_internals (void)

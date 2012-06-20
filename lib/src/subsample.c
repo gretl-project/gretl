@@ -2262,7 +2262,7 @@ int data_report (const DATASET *dset, const char *fname, PRN *prn)
 
     for (i=1; i<dset->v; i++) {
 	pprintf(prn, "%*s  %s\n", VNAMELEN, dset->varname[i], 
-		VARLABEL(dset, i));
+		series_get_label(dset, i));
     }
 
     return 0;

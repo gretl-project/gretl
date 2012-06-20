@@ -1714,7 +1714,7 @@ static int catch_value (char *targ, const char *src, int maxlen)
 
 static void fix_old_roots_plot (GPT_SPEC *spec)
 {
-    free_strings_array(spec->literal, spec->n_literal);
+    strings_array_free(spec->literal, spec->n_literal);
     spec->literal = NULL;
     spec->n_literal = 0;
 

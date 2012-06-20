@@ -2892,7 +2892,7 @@ void clear_model (MODEL *pmod)
 	    clear_ar_info(pmod);
 	}
 	if (pmod->params != NULL) {
-	    free_strings_array(pmod->params, pmod->nparams);
+	    strings_array_free(pmod->params, pmod->nparams);
 	}
 
 	destroy_dataset(pmod->dataset);

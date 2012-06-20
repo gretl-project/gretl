@@ -997,7 +997,7 @@ static int copy_mp_results (const MPMODEL *mpmod, MODEL *pmod,
     err = gretl_model_allocate_storage(pmod);
     if (err) {
 	if (xnames != NULL) { 	 
-	    free_strings_array(xnames, pmod->ncoeff); 	 
+	    strings_array_free(xnames, pmod->ncoeff); 	 
 	} 	 
 	return err;
     }

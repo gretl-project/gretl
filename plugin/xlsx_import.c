@@ -82,9 +82,9 @@ static void xlsx_info_init (xlsx_info *xinfo)
 static void xlsx_info_free (xlsx_info *xinfo)
 {
     if (xinfo != NULL) {
-	free_strings_array(xinfo->sheetnames, xinfo->n_sheets);
-	free_strings_array(xinfo->filenames, xinfo->n_sheets);
-	free_strings_array(xinfo->strings, xinfo->n_strings);
+	strings_array_free(xinfo->sheetnames, xinfo->n_sheets);
+	strings_array_free(xinfo->filenames, xinfo->n_sheets);
+	strings_array_free(xinfo->strings, xinfo->n_strings);
 	destroy_dataset(xinfo->dset);
     }
 }
@@ -202,7 +202,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
     if (!err) {
 	xinfo->n_strings = i;
     } else if (xinfo->strings != NULL) {
-	free_strings_array(xinfo->strings, n);
+	strings_array_free(xinfo->strings, n);
 	xinfo->strings = NULL;
     }
 

@@ -4991,7 +4991,7 @@ void free_vmatrix (VMatrix *vmat)
 {
     if (vmat != NULL) {
 	if (vmat->names != NULL) {
-	    free_strings_array(vmat->names, vmat->dim);
+	    strings_array_free(vmat->names, vmat->dim);
 	}
 	if (vmat->vec != NULL) {
 	    free(vmat->vec);

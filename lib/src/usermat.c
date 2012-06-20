@@ -1291,7 +1291,7 @@ int umatrix_set_names_from_string (gretl_matrix *M,
 	    err = E_ALLOC;
 	} else if (ns != n) {
 	    err = E_NONCONF;
-	    free_strings_array(S, ns);
+	    strings_array_free(S, ns);
 	} else if (byrow) {
 	    gretl_matrix_set_rownames(M, S);
 	} else {
@@ -1339,7 +1339,7 @@ int umatrix_set_names_from_list (gretl_matrix *M,
 	}
 
 	if (err) {
-	    free_strings_array(S, n);
+	    strings_array_free(S, n);
 	} else if (byrow) {
 	    gretl_matrix_set_rownames(M, S);
 	} else {

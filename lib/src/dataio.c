@@ -902,7 +902,7 @@ static int write_esl_lbl (const char *lblfile, const int *list,
 
     for (i=1; i<=list[0]; i++) {
 	vi = list[i];
-	if (vi != 0 && strlen(VARLABEL(dset, vi)) > 2) {
+	if (vi != 0 && strlen(series_get_label(dset, vi)) > 2) {
 	    labels = 1;
 	    break;
 	}
@@ -917,9 +917,9 @@ static int write_esl_lbl (const char *lblfile, const int *list,
 	    /* spit out varnames and labels */
 	    for (i=1; i<=list[0]; i++) {
 		vi = list[i];
-		if (vi != 0 && strlen(VARLABEL(dset, vi)) > 2) {
+		if (vi != 0 && strlen(series_get_label(dset, vi)) > 2) {
 		    fprintf(fp, "%s %s\n", dset->varname[vi],
-			    VARLABEL(dset, vi));
+			    series_get_label(dset, vi));
 		}
 	    }
 	    fclose(fp);
@@ -1511,7 +1511,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 	fputs("/*\n", fp);
 	for (i=1; i<=list[0]; i++) {
 	    v = list[i];
-	    fprintf(fp, " %s: %s\n", dset->varname[v], VARLABEL(dset, v));
+	    fprintf(fp, " %s: %s\n", dset->varname[v], series_get_label(dset, v));
 	}
 	fputs("*/\n", fp);
 	date_maj_min(dset->t1, dset, &maj, &min);
@@ -2415,10 +2415,10 @@ int add_obs_markers_from_file (DATASET *dset, const char *fname)
     }
 
     if (err) {
-	free_strings_array(S, dset->n);
+	strings_array_free(S, dset->n);
     } else {
 	if (dset->S != NULL) {
-	    free_strings_array(dset->S, dset->n);
+	    strings_array_free(dset->S, dset->n);
 	} 
 	dset->markers = REGULAR_MARKERS;
 	dset->S = S;
@@ -2442,13 +2442,13 @@ int dataset_has_var_labels (const DATASET *dset)
 
     if (dset->v > 1) {
 	if (!strcmp(dset->varname[1], "index") &&
-	    !strcmp(VARLABEL(dset, 1), _("index variable"))) {
+	    !strcmp(series_get_label(dset, 1), _("index variable"))) {
 	    imin = 2;
 	}
     }
 
     for (i=imin; i<dset->v; i++) {
-	label = VARLABEL(dset, i);
+	label = series_get_label(dset, i);
 	if (*label != '\0') {
 	    return 1;
 	}
@@ -2479,7 +2479,7 @@ int save_var_labels_to_file (const DATASET *dset, const char *fname)
 	err = E_FOPEN;
     } else {
 	for (i=1; i<dset->v; i++) {
-	    fprintf(fp, "%s\n", VARLABEL(dset, i));
+	    fprintf(fp, "%s\n", series_get_label(dset, i));
 	}
 	fclose(fp);
     }

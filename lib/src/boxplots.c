@@ -427,7 +427,7 @@ static PLOTGROUP *plotgroup_new (const int *list,
 	    grp->nplots = list[0];
 	}
 	if ((opt & OPT_P) && dset != NULL) {
-	    strcpy(grp->ylabel, VARLABEL(dset, 1));
+	    strcpy(grp->ylabel, series_get_label(dset, 1));
 	    strcpy(grp->xlabel, _("group"));
 	}
     }

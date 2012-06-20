@@ -3563,7 +3563,7 @@ static void print_arch_regression (const gretl_matrix *b,
     }
 
     free(se);
-    free_strings_array(names, k);
+    strings_array_free(names, k);
 }
 
 static void 

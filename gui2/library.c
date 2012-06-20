@@ -473,7 +473,7 @@ static int add_or_replace_series (double *x, const char *vname,
 	} else {
 	    v = dataset->v - 1;
 	    strcpy(dataset->varname[v], vname);
-	    var_set_description(dataset, v, descrip);
+	    series_record_label(dataset, v, descrip);
 	    if (flag == DS_COPY_VALUES) {
 		int t;
 
@@ -3531,7 +3531,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	view_model(prn, pmod, NULL);
     }
 
-    free_strings_array(lines, n_lines);
+    strings_array_free(lines, n_lines);
 }
 
 void do_nls_model (GtkWidget *w, dialog_t *dlg)
@@ -4613,8 +4613,8 @@ int record_varlabel_change (int v)
 {
     lib_command_sprintf("setinfo %s --description=\"%s\" --graph-name=\"%s\"", 
 			dataset->varname[v],
-			VARLABEL(dataset, v), 
-			DISPLAYNAME(dataset, v));
+			series_get_label(dataset, v), 
+			series_get_display_name(dataset, v));
 
     return record_command_verbatim();
 }
@@ -7767,7 +7767,7 @@ static void clean_up_varlabels (DATASET *dset)
     int i;
 
     for (i=1; i<dset->v; i++) {
-	label = VARLABEL(dset, i);
+	label = series_get_label(dset, i);
 	if (!g_utf8_validate(label, -1, NULL)) {
 	    conv = g_convert(label, -1,
 			     "UTF-8",

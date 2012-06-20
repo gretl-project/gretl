@@ -142,7 +142,7 @@ static void varinfo_set_field_changed (gui_varinfo *vset, int i,
 static int formula_ok (int v)
 {
     if (var_is_generated(dataset, v)) {
-	const char *s = VARLABEL(dataset, v);
+	const char *s = series_get_label(dataset, v);
 	int n = strlen(s);
 
 	/* note: the test for a trailing dot here is to check
@@ -193,7 +193,7 @@ static void show_varinfo_changes (int v)
     if (iptr != NULL) {
         gtk_tree_store_set(GTK_TREE_STORE(model), iptr, 
                            1, dataset->varname[v],
-                           2, VARLABEL(dataset, v),
+                           2, series_get_label(dataset, v),
                            -1);
     }
 }
@@ -263,7 +263,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 	if (vset->use_formula) {
 	    err = try_regenerate_var(v, newstr);
 	} else {
-	    var_set_description(dataset, v, newstr);
+	    series_record_label(dataset, v, newstr);
 	}
 	g_free(newstr);
     }
@@ -275,7 +275,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 		      "contain double quotes"));
 	    err = E_DATA;
 	} else {
-	    var_set_display_name(dataset, v, newstr);
+	    series_record_display_name(dataset, v, newstr);
 	}
 	g_free(newstr);
     }
@@ -287,7 +287,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 
     if (!err && vset->changed[VSET_LINEWIDTH]) {
 	ival = spinner_get_int(vset->line_spin);
-	var_set_linewidth(dataset, v, ival);
+	series_set_linewidth(dataset, v, ival);
     }
 
     if (!err && vset->changed[VSET_DISCRETE]) {
@@ -489,18 +489,18 @@ static void varinfo_insert_info (gui_varinfo *vset, int v)
     }
 
     gtk_entry_set_text(GTK_ENTRY(vset->label_entry), 
-		       VARLABEL(dataset, v));
+		       series_get_label(dataset, v));
 
     if (vset->display_entry != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(vset->display_entry), 
-			   DISPLAYNAME(dataset, v));
+			   series_get_display_name(dataset, v));
     }
 
     if (vset->line_spin != NULL) { 
 	gtk_combo_box_set_active(GTK_COMBO_BOX(vset->compaction_menu), 
 				 series_get_compact_method(dataset, v));
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(vset->line_spin), 
-				  var_get_linewidth(dataset, v));
+				  series_get_linewidth(dataset, v));
     } 
 
     if (vset->discrete_check != NULL) {
@@ -585,7 +585,7 @@ static void varinfo_discrete_changed (GtkToggleButton *button, gui_varinfo *vset
 static void varinfo_linewidth_changed (GtkSpinButton *spin, gui_varinfo *vset)
 {
     int lw = gtk_spin_button_get_value_as_int(spin);
-    int orig = var_get_linewidth(dataset, vset->varnum);
+    int orig = series_get_linewidth(dataset, vset->varnum);
 
     varinfo_set_field_changed(vset, VSET_LINEWIDTH, lw != orig);
 }
@@ -607,10 +607,10 @@ static void varinfo_text_changed (GtkEditable *e, gui_varinfo *vset)
     gboolean s;
 
     if (w == vset->label_entry) {
-	orig = VARLABEL(dataset, vset->varnum);
+	orig = series_get_label(dataset, vset->varnum);
 	f = VSET_LABEL;
     } else if (w == vset->display_entry) {
-	orig = DISPLAYNAME(dataset, vset->varnum);
+	orig = series_get_display_name(dataset, vset->varnum);
 	f = VSET_DISPLAY;
     }
 
@@ -828,7 +828,7 @@ void varinfo_dialog (int varnum)
     vset->label_entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(vset->label_entry), MAXLABEL-1);
     gtk_entry_set_text(GTK_ENTRY(vset->label_entry), 
-		       VARLABEL(dataset, varnum));
+		       series_get_label(dataset, varnum));
     g_signal_connect(G_OBJECT(vset->label_entry), "changed", 
 		     G_CALLBACK(varinfo_text_changed), vset);
     gtk_box_pack_start(GTK_BOX(hbox), vset->label_entry, TRUE, TRUE, 5);
@@ -853,7 +853,7 @@ void varinfo_dialog (int varnum)
     gtk_entry_set_width_chars(GTK_ENTRY(vset->display_entry), 
 			      MAXDISP+4);
     gtk_entry_set_text(GTK_ENTRY(vset->display_entry), 
-		       DISPLAYNAME(dataset, varnum));
+		       series_get_display_name(dataset, varnum));
     g_signal_connect(G_OBJECT(vset->display_entry), "changed", 
 		     G_CALLBACK(varinfo_text_changed), vset);
     gtk_box_pack_start(GTK_BOX(hbox), 
@@ -901,7 +901,7 @@ void varinfo_dialog (int varnum)
 	gtk_widget_show(tmp);
 
 	tmp = gtk_spin_button_new_with_range(1, 8, 1);
-	w = var_get_linewidth(dataset, varnum);
+	w = series_get_linewidth(dataset, varnum);
 	if (w > 1) {
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), w);
 	}

@@ -167,7 +167,7 @@ void output_emacs_block (void)
 	    n++;
 	}
 	puts(")\n  \"Gretl option flags.\")\n");
-	free_strings_array(strs, nopts);
+	strings_array_free(strs, nopts);
     }
 
     /* internal "dollar" variables */
@@ -183,7 +183,7 @@ void output_emacs_block (void)
 		putchar(' ');
 	    }	    
 	}
-	free_strings_array(strs, n);
+	strings_array_free(strs, n);
     }
 
     puts(")\n  \"Model- and dataset-related variables.\")\n");    
@@ -290,7 +290,7 @@ void output_lang2_file (void)
 	    printf("  <keyword>%s</keyword>\n", strs[i]);
 	}    
 	puts(" </context>");
-	free_strings_array(strs, nopts);
+	strings_array_free(strs, nopts);
     }
 
     /* dollar variables */
@@ -303,7 +303,7 @@ void output_lang2_file (void)
 	for (i=0; i<n; i++) {
 	   printf("  <keyword>%s</keyword>\n", strs[i]); 
 	}
-	free_strings_array(strs, n);
+	strings_array_free(strs, n);
     }
 
     puts(" </context>");	

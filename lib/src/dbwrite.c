@@ -121,7 +121,7 @@ static int get_db_series_names (const char *idxname, char ***pnames,
     fclose(fp);
 
     if (err) {
-	free_strings_array(vnames, nv);
+	strings_array_free(vnames, nv);
     } else {
 	*pnames = vnames;
 	*pnv = nv;
@@ -164,7 +164,7 @@ check_for_db_duplicates (const int *list, const DATASET *dset,
 	}
     }
 
-    free_strings_array(snames, oldv);
+    strings_array_free(snames, oldv);
 
     return ret;
 }
@@ -199,7 +199,7 @@ static int output_db_var (int v, const DATASET *dset,
     dotify(stobs);
     dotify(endobs);	
 
-    fprintf(fidx, "%s  %s\n", dset->varname[v], VARLABEL(dset, v));
+    fprintf(fidx, "%s  %s\n", dset->varname[v], series_get_label(dset, v));
     fprintf(fidx, "%c  %s - %s  n = %d\n", pd_char(dset),
 	    stobs, endobs, nobs);
 
@@ -434,7 +434,7 @@ append_db_data_with_replacement (const char *idxname,
     if (fidx != NULL) fclose(fidx);
     if (fbin != NULL) fclose(fbin);
 
-    free_strings_array(oldnames, oldv);
+    strings_array_free(oldnames, oldv);
     free(mask);
     free(newlist);
 

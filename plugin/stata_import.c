@@ -833,7 +833,7 @@ static int read_dta_data (FILE *fp, DATASET *dset,
     free(types);
 
     if (lvars != NULL) {
-	free_strings_array(lnames, lvars[0]);
+	strings_array_free(lnames, lvars[0]);
 	free(lvars);
     }
 

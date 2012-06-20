@@ -3432,7 +3432,7 @@ static int ivreg_set_params (nlspec *spec, MODEL *pmod)
 
     err = nlspec_add_param_list(spec, np, pmod->coeff, names);
 
-    free_strings_array(names, np);
+    strings_array_free(names, np);
 
     return err;
 }

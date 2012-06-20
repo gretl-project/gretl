@@ -4159,7 +4159,7 @@ static int plain_print_mp_coeffs (const MODEL *pmod,
     }
     free(vals);
 
-    free_strings_array(names, nc);
+    strings_array_free(names, nc);
 
     return err;
 }
@@ -4474,7 +4474,7 @@ static int plain_print_coeffs (const MODEL *pmod,
     }
     free(vals);
 
-    free_strings_array(names, nc);
+    strings_array_free(names, nc);
     free(xb);
     free(xse);
 

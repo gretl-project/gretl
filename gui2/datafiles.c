@@ -1903,7 +1903,7 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	    }
 	}
 
-	free_strings_array(dnames, n_dirs);
+	strings_array_free(dnames, n_dirs);
     } else {
 	dnames = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
 
@@ -1916,7 +1916,7 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	    }
 	}
 
-	free_strings_array(dnames, n_dirs);
+	strings_array_free(dnames, n_dirs);
     }	    
 
     if (nfn == 0) {

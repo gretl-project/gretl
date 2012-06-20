@@ -2372,7 +2372,7 @@ int dummy (DATASET *dset, int center)
     for (vi=0; vi<ndums; vi++) {
 	make_dummy_name_and_label(vi + 1, dset, center, vname, vlabel);
 	di = series_index(dset, vname);
-	if (di >= dset->v || strcmp(vlabel, VARLABEL(dset, di))) {
+	if (di >= dset->v || strcmp(vlabel, series_get_label(dset, di))) {
 	    nnew++;
 	} else if (vi == 0) {
 	    di0 = di;
@@ -3222,7 +3222,7 @@ int check_declarations (char ***pS, parser *p)
 	} else if (!badname) {
 	    gretl_errmsg_set(_("Invalid declaration"));
 	}
-	free_strings_array(S, n);
+	strings_array_free(S, n);
     } else {
 	*pS = S;
     }

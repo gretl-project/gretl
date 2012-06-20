@@ -994,8 +994,8 @@ gretl_matrix *gretl_matrix_reverse_cols (const gretl_matrix *m)
 void gretl_matrix_destroy_info (gretl_matrix *m)
 {
     if (m != NULL && m->info != NULL && !is_block_matrix(m)) {
-	free_strings_array(m->info->colnames, m->cols);
-	free_strings_array(m->info->rownames, m->rows);
+	strings_array_free(m->info->colnames, m->cols);
+	strings_array_free(m->info->rownames, m->rows);
 	free(m->info);
 	m->info = NULL;
     }
@@ -8919,8 +8919,8 @@ static int gretl_matrix_copy_info (gretl_matrix *targ,
     if (targ->info == NULL) {
 	targ->info = malloc(sizeof *targ->info);
     } else {
-	free_strings_array(targ->info->colnames, targ->cols);
-	free_strings_array(targ->info->rownames, targ->rows);
+	strings_array_free(targ->info->colnames, targ->cols);
+	strings_array_free(targ->info->rownames, targ->rows);
     }
 
     if (targ->info == NULL) {
@@ -12095,7 +12095,7 @@ int gretl_matrix_set_colnames (gretl_matrix *m, char **S)
 
     if (m->info != NULL) {
 	if (m->info->colnames != NULL) {
-	    free_strings_array(m->info->colnames, m->cols);
+	    strings_array_free(m->info->colnames, m->cols);
 	}	
 	m->info->colnames = S;
     }
@@ -12130,7 +12130,7 @@ int gretl_matrix_set_rownames (gretl_matrix *m, char **S)
 
     if (m->info != NULL) {
 	if (m->info->rownames != NULL) {
-	    free_strings_array(m->info->rownames, m->rows);
+	    strings_array_free(m->info->rownames, m->rows);
 	}	
 	m->info->rownames = S;
     }

@@ -1199,7 +1199,7 @@ int bootstrap_save_data (const char *fname)
 
     gretl_matrix_free(bs_data);
     bs_data = NULL;
-    free_strings_array(S, ns);
+    strings_array_free(S, ns);
     *bs_vname = '\0';
 
     return err;

@@ -952,7 +952,7 @@ static int set_line_width (const char *s0, const char *s1,
     if (w < 0 || w > 32) {
 	err = E_DATA;
     } else {
-	var_set_linewidth(dset, v, w);
+	series_set_linewidth(dset, v, w);
 	pprintf(prn, _("Line width for %s = %d\n"), 
 		dset->varname[v], w);
     }

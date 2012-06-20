@@ -1918,7 +1918,7 @@ static int print_restricted_estimates (MODEL *pmod,
 
     se = malloc(nc * sizeof *se);
     if (se == NULL) {
-	free_strings_array(names, nc);
+	strings_array_free(names, nc);
 	return E_ALLOC;
     }
 
@@ -1937,7 +1937,7 @@ static int print_restricted_estimates (MODEL *pmod,
     pprintf(prn, "  %s = %.*g\n", _("Standard error of the regression"), 
 	    GRETL_DIGITS, sqrt(s2));
     
-    free_strings_array(names, nc);
+    strings_array_free(names, nc);
     free(se);
 
     return 0;

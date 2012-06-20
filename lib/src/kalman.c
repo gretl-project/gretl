@@ -258,11 +258,11 @@ void kalman_free (kalman *K)
 	    }
 	}
 
-	free_strings_array(K->mnames, K_MMAX);
+	strings_array_free(K->mnames, K_MMAX);
     }    
 
     if (K->matcalls != NULL) {
-	free_strings_array(K->matcalls, NMATCALLS);
+	strings_array_free(K->matcalls, NMATCALLS);
     }
 
     if (K->cross != NULL) {

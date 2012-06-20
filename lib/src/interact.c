@@ -692,7 +692,7 @@ static char **split_lag_fields (char *s, int *ns,
     }
 
     if (cmd->err || no_specials(specials)) {
-	free_strings_array(S, *ns);
+	strings_array_free(S, *ns);
 	S = NULL;
     }
 
@@ -899,7 +899,7 @@ static int maybe_rewrite_lags (char *s, CMD *cmd)
 	handle_arma_lags(cmd, S, ns, specials, s, rem);
     }
 
-    free_strings_array(S, ns);
+    strings_array_free(S, ns);
 
 #if LAGS_DBG
     fprintf(stderr, "revised line = '%s'\n", line);
@@ -3859,13 +3859,13 @@ static int set_var_info (const char *line, gretlopt opt,
 	if (s == NULL) {
 	    err = E_ARGS;
 	} else {
-	    var_set_description(dset, v, s);
+	    series_record_label(dset, v, s);
 	}
     } else if (strstr(line, " -d ")) {
 	/* backward compatibility */
 	p = get_flag_field(line, 'd');
 	if (p != NULL) {
-	    var_set_description(dset, v, p);
+	    series_record_label(dset, v, p);
 	    free(p);
 	}
     }
@@ -3876,13 +3876,13 @@ static int set_var_info (const char *line, gretlopt opt,
 	if (s == NULL) {
 	    err = E_ARGS;
 	} else {
-	    var_set_display_name(dset, v, s);
+	    series_record_display_name(dset, v, s);
 	}
     } else if (strstr(line, " -n ")) {
 	/* backward compatibility */
 	p = get_flag_field(line, 'n');
 	if (p != NULL) {
-	    var_set_display_name(dset, v, p);
+	    series_record_display_name(dset, v, p);
 	    free(p);
 	}
     }    
@@ -3905,7 +3905,7 @@ static void showlabels (const int *list, const DATASET *dset, PRN *prn)
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 	if (v >= 0 && v < dset->v) {
-	    label = VARLABEL(dset, v);
+	    label = series_get_label(dset, v);
 	    if (*label != '\0') {
 		pprintf(prn, " %s: %s\n", dset->varname[v], label);
 	    }

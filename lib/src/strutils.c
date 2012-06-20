@@ -779,7 +779,7 @@ char **gretl_string_split (const char *s, int *n)
 	k = strcspn(s, " ");
 	word = gretl_strndup(s, k);
 	if (word == NULL) {
-	    free_strings_array(S, m);
+	    strings_array_free(S, m);
 	    return NULL;
 	}
 	S[i] = word;
@@ -847,7 +847,7 @@ char **gretl_string_split_quoted (const char *s, int *n, int *err)
 	substr = gretl_strndup(s, len);
 	if (substr == NULL) {
 	    *err = E_ALLOC;
-	    free_strings_array(S, m);
+	    strings_array_free(S, m);
 	    return NULL;
 	}
 	S[i] = substr;
@@ -1485,7 +1485,7 @@ char **strings_array_realloc_with_length (char ***pS,
     }
 
     if (newn <= 0) {
-	free_strings_array(*pS, oldn);
+	strings_array_free(*pS, oldn);
 	*pS = NULL;
 	return NULL;
     }
@@ -1498,7 +1498,7 @@ char **strings_array_realloc_with_length (char ***pS,
 
     S = realloc(*pS, newn * sizeof *S);
     if (S == NULL) {
-	free_strings_array(*pS, oldn);
+	strings_array_free(*pS, oldn);
 	*pS = NULL;
 	return NULL;
     }
@@ -1653,7 +1653,7 @@ int strings_array_cmp (char **strs1, char **strs2, int n)
 }
 
 /**
- * free_strings_array:
+ * strings_array_free:
  * @strs: array of allocated strings.
  * @nstrs: number of strings in array.
  *
@@ -1661,7 +1661,7 @@ int strings_array_cmp (char **strs1, char **strs2, int n)
  * Checks that @strs is not NULL before proceeding.
  */
 
-void free_strings_array (char **strs, int nstrs)
+void strings_array_free (char **strs, int nstrs)
 {
     int i;
 

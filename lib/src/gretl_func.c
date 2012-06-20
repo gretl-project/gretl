@@ -1124,14 +1124,14 @@ static void free_params_array (fn_param *params, int n)
     for (i=0; i<n; i++) {
 	free(params[i].name);
 	free(params[i].descrip);
-	free_strings_array(params[i].labels, params[i].nlabels);
+	strings_array_free(params[i].labels, params[i].nlabels);
     }
     free(params);
 }
 
 static void clear_ufunc_data (ufunc *fun)
 {
-    free_strings_array(fun->lines, fun->n_lines);
+    strings_array_free(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
     
     fun->lines = NULL;
@@ -1145,7 +1145,7 @@ static void clear_ufunc_data (ufunc *fun)
 
 static void ufunc_free (ufunc *fun)
 {
-    free_strings_array(fun->lines, fun->n_lines);
+    strings_array_free(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
 
     free(fun);
@@ -2393,7 +2393,7 @@ static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
 		}
 		fputc('\n', fp);
 	    }
-	    free_strings_array(S, n);
+	    strings_array_free(S, n);
 	}
 	fputs("};\n", fp);
     }
@@ -2938,8 +2938,8 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
 				       privnames, npriv, err);
 	}
 
-	free_strings_array(pubnames, npub);
-	free_strings_array(privnames, npriv);
+	strings_array_free(pubnames, npub);
+	strings_array_free(privnames, npriv);
 
 	if (!*err) {
 	    rewind(fp);
@@ -4466,7 +4466,7 @@ static void trash_param_info (char *name, fn_param *param)
     free(param->descrip);
     param->descrip = NULL;
     if (param->nlabels > 0) {
-	free_strings_array(param->labels, param->nlabels);
+	strings_array_free(param->labels, param->nlabels);
 	param->labels = NULL;
 	param->nlabels = 0;
     }
@@ -5269,11 +5269,11 @@ int update_function_from_script (const char *funname, const char *path,
 
     if (err) {
 	/* didn't work: trash the attempt */
-	free_strings_array(fun->lines, fun->n_lines);
+	strings_array_free(fun->lines, fun->n_lines);
 	free_params_array(fun->params, fun->n_params);
     } else {	
 	/* really replace the original function content */
-	free_strings_array(orig->lines, orig->n_lines);
+	strings_array_free(orig->lines, orig->n_lines);
 	orig->n_lines = fun->n_lines;
 	orig->lines = fun->lines;
 	fun->lines = NULL;
@@ -5885,8 +5885,8 @@ static int unlocalize_list (const char *lname, struct fnarg *arg,
 			dset->Z[j][t] = dset->Z[vi][t];
 		    }
 		    /* replace variable info */
-		    series_set_label(dset, j, VARLABEL(dset, vi));
-		    series_set_display_name(dset, j, DISPLAYNAME(dset, vi));
+		    series_set_label(dset, j, series_get_label(dset, vi));
+		    series_set_display_name(dset, j, series_get_display_name(dset, vi));
 		    /* replace ID number in list */
 		    list[i] = j;
 		} else {
@@ -5951,7 +5951,7 @@ maybe_set_return_description (fncall *call, int rtype,
 	int v = series_index(dset, call->retname);
 
 	if (v < dset->v) {
-	    *descrip = gretl_strdup(VARLABEL(dset, v));
+	    *descrip = gretl_strdup(series_get_label(dset, v));
 	}
     }
 }

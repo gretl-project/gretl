@@ -2837,7 +2837,7 @@ int batch_pvalue (const char *str, DATASET *dset, PRN *prn)
 	}
     }
 
-    free_strings_array(S, n);
+    strings_array_free(S, n);
 
     if (!err) {
 	pv = generate_scalar(line, dset, &err);

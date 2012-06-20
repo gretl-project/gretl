@@ -2375,7 +2375,7 @@ int list_members_replaced (const int *list, const DATASET *dset,
 	    gretl_errmsg_set(_(errmsg));
 	    return E_DATA;
 	}
-	label = VARLABEL(dset, list[j]);
+	label = series_get_label(dset, list[j]);
 	*rword = '\0';
 	sscanf(label, "%15s", rword);
 	if (!strcmp(rword, _("Replaced"))) {

@@ -2031,7 +2031,7 @@ int dataset_sort_by (const int *list, DATASET *dset, gretlopt opt)
 	for (t=0; t<dset->n; t++) {
 	    strcpy(S[t], dset->S[sv[t].obsnum]);
 	}
-	free_strings_array(dset->S, dset->n);
+	strings_array_free(dset->S, dset->n);
 	dset->S = S;
     }
 
@@ -2615,7 +2615,7 @@ static int found_log_parent (const char *s, char *targ)
 
 int is_log_variable (int i, const DATASET *dset, char *parent)
 {
-    const char *s = VARLABEL(dset, i);
+    const char *s = series_get_label(dset, i);
 
     *parent = '\0';
 
@@ -2678,7 +2678,7 @@ void set_var_hidden (DATASET *dset, int i)
 }
 
 /**
- * var_set_linewidth:
+ * series_set_linewidth:
  * @dset: pointer to data information struct.
  * @i: index number of variable.
  * @w: with of plot line.
@@ -2687,7 +2687,7 @@ void set_var_hidden (DATASET *dset, int i)
  * in a line graph.
  */
 
-void var_set_linewidth (DATASET *dset, int i, int w) 
+void series_set_linewidth (DATASET *dset, int i, int w) 
 {
     if (w >= 1 && w <= 32 && i > 0 && i < dset->v) {
 	dset->varinfo[i]->line_width = w;
@@ -2695,7 +2695,7 @@ void var_set_linewidth (DATASET *dset, int i, int w)
 }
 
 /**
- * var_get_linewidth:
+ * series_get_linewidth:
  * @dset: pointer to data information struct.
  * @i: index number of variable.
  *
@@ -2703,7 +2703,7 @@ void var_set_linewidth (DATASET *dset, int i, int w)
  * variable @i.
  */
 
-int var_get_linewidth (const DATASET *dset, int i) 
+int series_get_linewidth (const DATASET *dset, int i) 
 {
     if (i > 0 && i < dset->v) {
 	return dset->varinfo[i]->line_width;
@@ -2712,7 +2712,7 @@ int var_get_linewidth (const DATASET *dset, int i)
     }
 }
 
-int var_set_description (DATASET *dset, int i,
+int series_record_label (DATASET *dset, int i,
 			 const char *s) 
 {
     char *targ = dset->varinfo[i]->label;
@@ -2726,7 +2726,7 @@ int var_set_description (DATASET *dset, int i,
     return 0;
 }
 
-int var_set_display_name (DATASET *dset, int i,
+int series_record_display_name (DATASET *dset, int i,
 			  const char *s) 
 {
     char *targ = dset->varinfo[i]->display_name;
@@ -3475,27 +3475,27 @@ void series_zero_flags (DATASET *dset, int i)
 }
 
 /**
- * VARLABEL:
+ * series_get_label:
  * @dset: pointer to data information struct.
  * @i: index number of variable.
  *
  * Returns: the descriptive label for series @i.
  */
 
-const char *VARLABEL (const DATASET *dset, int i)
+const char *series_get_label (const DATASET *dset, int i)
 {
     return dset->varinfo[i]->label;
 }
 
 /**
- * DISPLAYNAME:
+ * series_get_display_name:
  * @dset: pointer to data information struct.
  * @i: index number of variable.
  *
  * Returns: the display name for series @i.
  */
 
-const char *DISPLAYNAME (const DATASET *dset, int i)
+const char *series_get_display_name (const DATASET *dset, int i)
 {
     return dset->varinfo[i]->display_name;
 }
@@ -3607,4 +3607,3 @@ void series_decrement_stack_level (DATASET *dset, int i)
 {
     dset->varinfo[i]->stack_level -= 1;
 }
-

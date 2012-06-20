@@ -1692,7 +1692,7 @@ static void select_interface (call_info *cinfo, int npub)
 	} else {
 	    cinfo->iface = -1;
 	}
-	free_strings_array(opts, nopts);
+	strings_array_free(opts, nopts);
     } else {
 	resp = combo_selector_dialog(ilist, "select function", 
 				     0, cinfo->dlg);

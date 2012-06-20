@@ -84,11 +84,11 @@ void oc_set_destroy (ocset *oc)
     free(oc->ecols);
 
     if (oc->lnames != NULL) {
-	free_strings_array(oc->lnames, oc->n_names);
+	strings_array_free(oc->lnames, oc->n_names);
     }
 
     if (oc->rnames != NULL) {
-	free_strings_array(oc->rnames, oc->n_names);
+	strings_array_free(oc->rnames, oc->n_names);
     }
 
     if (!oc->userwts) {

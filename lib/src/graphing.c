@@ -2524,7 +2524,7 @@ static void print_gnuplot_flags (int flags, int revised)
 
 static void set_lwstr (const DATASET *dset, int v, char *s)
 {
-    int w = var_get_linewidth(dset, v);
+    int w = series_get_linewidth(dset, v);
 
     if (w > 1) {
 	sprintf(s, " lw %d", w);
@@ -3086,7 +3086,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    }
 	}
 	if (gi.flags & GPT_RESIDS && !(gi.flags & GPT_DUMMY)) { 
-	    make_gtitle(&gi, GTITLE_RESID, VARLABEL(dset, list[1]), NULL);
+	    make_gtitle(&gi, GTITLE_RESID, series_get_label(dset, list[1]), NULL);
 	    fprintf(fp, "set ylabel '%s'\n", _("residual"));
 	} else {
 	    print_axis_label('y', var_get_graph_name(dset, list[1]), fp);
@@ -3095,7 +3095,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    strcpy(keystr, "set nokey\n");
 	}
     } else if ((gi.flags & GPT_RESIDS) && (gi.flags & GPT_DUMMY)) { 
-	make_gtitle(&gi, GTITLE_RESID, VARLABEL(dset, list[1]), NULL);
+	make_gtitle(&gi, GTITLE_RESID, series_get_label(dset, list[1]), NULL);
 	fprintf(fp, "set ylabel '%s'\n", _("residual"));
     } else if (gi.flags & GPT_FA) {
 	if (list[3] == dset->v - 1) { 
@@ -5038,7 +5038,7 @@ static int panel_means_ts_plot (const int vnum,
     list[0] = nv - 1;
 
     strcpy(gset->varname[1], dset->varname[vnum]);
-    series_set_display_name(gset, 1, DISPLAYNAME(dset, vnum));
+    series_set_display_name(gset, 1, series_get_display_name(dset, vnum));
 
     s0 = dset->t1 * dset->pd;
 
@@ -5064,7 +5064,7 @@ static int panel_means_ts_plot (const int vnum,
     if (panvar > 0) {
 	/* time variable for x-axis */
 	strcpy(gset->varname[2], dset->varname[panvar]);
-	series_set_display_name(gset, 2, DISPLAYNAME(dset, panvar));
+	series_set_display_name(gset, 2, series_get_display_name(dset, panvar));
 	for (t=0; t<T; t++) {
 	    gset->Z[2][t] = dset->Z[panvar][t];
 	}

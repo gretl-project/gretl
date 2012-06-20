@@ -1317,7 +1317,7 @@ static int shelldir_open_dotfile (char *fname, char *orig)
  * 
  * Returns: an array of plausible search paths, depending on the 
  * @type of search. The array should be freed when you are done 
- * with it, using free_strings_array().
+ * with it, using strings_array_free().
  */
 
 char **get_plausible_search_dirs (int type, int *n_dirs)
@@ -1472,7 +1472,7 @@ char *gretl_function_package_get_path (const char *name,
 	closedir(dir);
     }
 
-    free_strings_array(dirs, n_dirs);
+    strings_array_free(dirs, n_dirs);
 
     if (*path != '\0') {
 	ret = gretl_strdup(path);

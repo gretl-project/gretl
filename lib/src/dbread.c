@@ -1738,7 +1738,7 @@ static void ODBC_info_clear_read (void)
     doubles_array_free(gretl_odinfo.X, gretl_odinfo.nvars);
     gretl_odinfo.X = NULL;
 
-    free_strings_array(gretl_odinfo.S, gretl_odinfo.nrows);
+    strings_array_free(gretl_odinfo.S, gretl_odinfo.nrows);
     gretl_odinfo.S = NULL;
 
     for (i=0; i<ODBC_OBSCOLS; i++) {
@@ -1746,7 +1746,7 @@ static void ODBC_info_clear_read (void)
     }
 
     if (gretl_odinfo.fmts != NULL) {
-	free_strings_array(gretl_odinfo.fmts, gretl_odinfo.obscols);
+	strings_array_free(gretl_odinfo.fmts, gretl_odinfo.obscols);
 	gretl_odinfo.fmts = NULL;
     }
 
@@ -2131,7 +2131,7 @@ static char **odbc_get_varnames (char **line, int *err)
     }
 
     if (*err) {
-	free_strings_array(vnames, nv);
+	strings_array_free(vnames, nv);
 	vnames = NULL;
     } else {	
 	gretl_odinfo.nvars = nv;
@@ -2321,7 +2321,7 @@ static int odbc_get_series (char *line, DATASET *dset,
 	}
     }
 
-    free_strings_array(vnames, gretl_odinfo.nvars);
+    strings_array_free(vnames, gretl_odinfo.nvars);
     ODBC_info_clear_read();
 
     return err;
@@ -2679,7 +2679,7 @@ static int db_delete_series (char *line, const int *list,
     }
 
     if (snames != NULL) {
-	free_strings_array(snames, ns);
+	strings_array_free(snames, ns);
     }
 
  bailout:

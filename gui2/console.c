@@ -62,7 +62,7 @@ static void command_history_init (void)
 static void command_history_destroy (void)
 {
     if (cmd_history != NULL) {
-	free_strings_array(cmd_history, hlines);
+	strings_array_free(cmd_history, hlines);
 	cmd_history = NULL;
     }
     
