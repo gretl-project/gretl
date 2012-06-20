@@ -637,10 +637,10 @@ static int gettrend (DATASET *dset, int square)
 
     if (square) {
 	strcpy(dset->varname[v], "timesq");
-	strcpy(VARLABEL(dset, v), _("squared time trend variable"));
+	series_set_label(dset, v, _("squared time trend variable"));
     } else {
 	strcpy(dset->varname[v], "time");
-	strcpy(VARLABEL(dset, v), _("time trend variable"));
+	series_set_label(dset, v, _("time trend variable"));
     }
 	    
     return idx;

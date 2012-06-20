@@ -441,7 +441,7 @@ static int add_new_vars_to_full (DATASET *dset)
     for (i=V0; i<dset->v && !err; i++) {
 #if FULLDEBUG
 	fprintf(stderr, "adding to full: var %d (%s, level %d)\n",
-		i, dset->varname[i], STACK_LEVEL(dset, i));
+		i, dset->varname[i], series_get_stack_level(dset, i));
 #endif
 	fullset->Z[i] = malloc(N * sizeof **fullset->Z);
 	if (fullset->Z[i] == NULL) {

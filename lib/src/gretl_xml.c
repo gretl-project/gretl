@@ -1693,6 +1693,9 @@ int gretl_write_gdt (const char *fname, const int *list,
     }
 
     for (i=1; i<=nvars; i++) {
+	const char *vstr;
+	int vprop;
+
 	v = savenum(list, i);
 	gretl_xml_encode_to_buf(xmlbuf, dset->varname[v], sizeof xmlbuf);
 
@@ -1702,8 +1705,9 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    fprintf(fp, "<variable name=\"%s\"", xmlbuf);
 	}
 
-	if (*VARLABEL(dset, v)) {
-	    uerr = gretl_xml_encode_to_buf(xmlbuf, VARLABEL(dset, v), sizeof xmlbuf);
+	vstr = VARLABEL(dset, v);
+	if (*vstr) {
+	    uerr = gretl_xml_encode_to_buf(xmlbuf, vstr, sizeof xmlbuf);
 	    if (!uerr) {
 		if (gz) {
 		    gzprintf(fz, "\n label=\"%s\"", xmlbuf);
@@ -1713,8 +1717,9 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	} 
 
-	if (*DISPLAYNAME(dset, v)) {
-	    uerr = gretl_xml_encode_to_buf(xmlbuf, DISPLAYNAME(dset, v), sizeof xmlbuf);
+	vstr = DISPLAYNAME(dset, v);
+	if (*vstr) {
+	    uerr = gretl_xml_encode_to_buf(xmlbuf, vstr, sizeof xmlbuf);
 	    if (!uerr) {
 		if (gz) {
 		    gzprintf(fz, "\n displayname=\"%s\"", xmlbuf);
@@ -1724,8 +1729,9 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	}
 
-	if (*PARENT(dset, v)) {
-	    uerr = gretl_xml_encode_to_buf(xmlbuf, PARENT(dset, v), sizeof xmlbuf);
+	vstr = series_get_parent(dset, v);
+	if (*vstr) {
+	    uerr = gretl_xml_encode_to_buf(xmlbuf, vstr, sizeof xmlbuf);
 	    if (!uerr) {
 		if (gz) {
 		    gzprintf(fz, "\n parent=\"%s\"", xmlbuf);
@@ -1735,8 +1741,9 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	}
 
-	if (dset->varinfo[i]->transform != 0) {
-	    const char *tr = gretl_command_word(dset->varinfo[i]->transform);
+	vprop = series_get_transform(dset, v);
+	if (vprop != 0) {
+	    const char *tr = gretl_command_word(vprop);
 
 	    if (gz) {
 		gzprintf(fz, "\n transform=\"%s\"", tr);
@@ -1745,16 +1752,18 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	}
 
-	if (dset->varinfo[i]->lag != 0) {
+	vprop = series_get_lag(dset, v);
+	if (vprop != 0) {
 	    if (gz) {
-		gzprintf(fz, "\n lag=\"%d\"", dset->varinfo[i]->lag);
+		gzprintf(fz, "\n lag=\"%d\"", vprop);
 	    } else {
-		fprintf(fp, "\n lag=\"%d\"", dset->varinfo[i]->lag);
+		fprintf(fp, "\n lag=\"%d\"", vprop);
 	    }
-	}	    
+	}
 
-	if (COMPACT_METHOD(dset, v) != COMPACT_NONE) {
-	    const char *meth = compact_method_to_string(COMPACT_METHOD(dset, v));
+	vprop = series_get_compact_method(dset, v);
+	if (vprop != COMPACT_NONE) {
+	    const char *meth = compact_method_to_string(vprop);
 
 	    if (gz) {
 		gzprintf(fz, "\n compact-method=\"%s\"", meth);
@@ -1903,7 +1912,7 @@ static int process_varlist (xmlNodePtr node, DATASET *dset)
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "label");
 	    if (tmp != NULL) {
-		transcribe_string(VARLABEL(dset, i), (char *) tmp, MAXLABEL);
+		series_set_label(dset, i, (char *) tmp);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "displayname");
@@ -1913,25 +1922,25 @@ static int process_varlist (xmlNodePtr node, DATASET *dset)
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "parent");
 	    if (tmp != NULL) {
-		strcpy(dset->varinfo[i]->parent, (char *) tmp); 
+		series_set_parent(dset, i, (char *) tmp); 
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "transform");
 	    if (tmp != NULL) {
 		int ci = gretl_command_number((char *) tmp);
 
-		dset->varinfo[i]->transform = ci; 
+		series_set_transform(dset, i, ci);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "lag");
 	    if (tmp != NULL) {
-		dset->varinfo[i]->lag = atoi((char *) tmp); 
+		series_set_lag(dset, i, atoi((char *) tmp));
 		free(tmp);
 	    }
 
 	    tmp = xmlGetProp(cur, (XUC) "compact-method");
 	    if (tmp != NULL) {
-		COMPACT_METHOD(dset, i) = compact_string_to_int((char *) tmp);
+		series_set_compact_method(dset, i, compact_string_to_int((char *) tmp));
 		free(tmp);
 	    }
 
@@ -1944,20 +1953,6 @@ static int process_varlist (xmlNodePtr node, DATASET *dset)
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "role");
 	    if (tmp != NULL) {
-#if 0 /* FIXME old datafiles? */
-		if (!strcmp((char *) tmp, "scalar")) {
-		    char *val = (char *) xmlGetProp(cur, (XUC) "value");
-		    
-		    if (val) {
-			double xx = atof(val);
-
-			free(val);
-			(*pZ)[i] = malloc(sizeof ***pZ);
-			(*pZ)[i][0] = xx;
-			set_var_scalar(dset, i, 1);
-		    }
-		}
-#endif
 		free(tmp);
 	    }
 	    i++;
@@ -2334,25 +2329,23 @@ static int dummy_child_from_label (int v, const DATASET *dset)
 
 static void record_transform_info (DATASET *dset, double version)
 {
-    VARINFO *vinfo;
     int i, p, pv;
 
     for (i=1; i<dset->v; i++) {
-	vinfo = dset->varinfo[i];
-	if (vinfo->transform == LAGS) {
+	if (series_get_transform(dset, i) == LAGS) {
 	    /* already handled */
 	    continue;
 	}
 	pv = lag_from_label(i, dset, &p);
 	if (pv > 0) {
-	    strcpy(vinfo->parent, dset->varname[pv]);
-	    vinfo->transform = LAGS;
-	    vinfo->lag = p;
+	    series_set_parent(dset, i, dset->varname[pv]);
+	    series_set_transform(dset, i, LAGS);
+	    series_set_lag(dset, i, p);
 	} else if (version < 1.1) {
 	    pv = dummy_child_from_label(i, dset);
 	    if (pv > 0) {
-		strcpy(vinfo->parent, dset->varname[pv]);
-		vinfo->transform = DUMMIFY;
+		series_set_parent(dset, i, dset->varname[pv]);
+		series_set_transform(dset, i, DUMMIFY);
 	    }
 	}
     }
@@ -2386,7 +2379,7 @@ static int remedy_empty_data (DATASET *dset)
 	int t;
 
 	strcpy(dset->varname[1], "index");
-	strcpy(VARLABEL(dset, 1), _("index variable"));
+	series_set_label(dset, 1, _("index variable"));
 	for (t=0; t<dset->n; t++) {
 	    dset->Z[1][t] = (double) (t + 1);
 	}

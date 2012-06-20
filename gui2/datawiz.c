@@ -157,7 +157,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *dlg)
     for (t=0; t<dataset->n; t++) {
 	dataset->Z[1][t] = NADBL;
     }
-    *(VARLABEL(dataset, 1)) = 0;
+    series_set_label(dataset, 1, "");
 
     show_spreadsheet(SHEET_NEW_DATASET);
 }

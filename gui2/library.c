@@ -1640,7 +1640,7 @@ static void gui_remove_var_labels (void)
     int i;
 
     for (i=1; i<dataset->v; i++) {
-	VARLABEL(dataset, i)[0] = '\0';
+	series_set_label(dataset, i, "");
     }
 
     populate_varlist();
@@ -6026,12 +6026,14 @@ void resid_plot (GtkAction *action, gpointer p)
     strcpy(dset->varname[uhatno], _("residual"));
 
     if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
-	strcpy(DISPLAYNAME(dset, uhatno), _("standardized residual"));
+	series_set_display_name(dset, uhatno, _("standardized residual"));
 	opt ^= OPT_R;
     } else {
+	char label[MAXLABEL];
+
 	yno = gretl_model_get_depvar(pmod);
-	sprintf(VARLABEL(dset, uhatno), "residual for %s", 
-		dset->varname[yno]);
+	sprintf(label, "residual for %s", dset->varname[yno]);
+	series_set_label(dset, uhatno, label);
     }
 
     if (xvar) { 
@@ -6061,6 +6063,7 @@ void resid_plot (GtkAction *action, gpointer p)
 
 static void theil_plot (MODEL *pmod, DATASET *dset)
 {
+    char dname[MAXDISP];
     int plotlist[3];
     int dv, fv, err;
 
@@ -6072,8 +6075,8 @@ static void theil_plot (MODEL *pmod, DATASET *dset)
     plotlist[1] = dv = gretl_model_get_depvar(pmod);
     plotlist[2] = fv = dset->v - 1; /* fitted values */
 
-    sprintf(DISPLAYNAME(dset, fv), _("predicted %s"),
-	    dset->varname[dv]);
+    sprintf(dname, _("predicted %s"), dset->varname[dv]);
+    series_set_display_name(dset, fv, dname);
 
     err = theil_forecast_plot(plotlist, dset, OPT_G);
     gui_graph_handler(err);
@@ -7758,7 +7761,7 @@ int osx_open_url (const char *url)
 
 static void clean_up_varlabels (DATASET *dset)
 {
-    char *label;
+    const char *label;
     gchar *conv;
     gsize wrote;
     int i;
@@ -7771,8 +7774,7 @@ static void clean_up_varlabels (DATASET *dset)
 			     "ISO-8859-1",
 			     NULL, &wrote, NULL);
 	    if (conv != NULL) {
-		*label = '\0';
-		strncat(label, conv, MAXLABEL - 1);
+		series_set_label(dset, i, conv);
 		g_free(conv);
 	    }
 	} 

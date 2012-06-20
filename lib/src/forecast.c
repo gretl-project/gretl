@@ -388,7 +388,7 @@ static int has_depvar_lags (MODEL *pmod, const DATASET *dset)
 {
     const char *yname;
     const int *xlist;
-    int i, vi;
+    int i, vi, lag;
 
     xlist = model_xlist(pmod);
     if (xlist == NULL) {
@@ -399,8 +399,8 @@ static int has_depvar_lags (MODEL *pmod, const DATASET *dset)
 
     for (i=1; i<=xlist[0]; i++) {
         vi = xlist[i];
-	if (dset->varinfo[vi]->lag > 0 &&
-	    !strcmp(yname, dset->varinfo[vi]->parent)) {
+	lag = series_get_lag(dset, vi);
+	if (lag > 0 && !strcmp(yname, series_get_parent(dset, vi))) {
 	    return 1;
 	}
     }
@@ -424,7 +424,7 @@ static int process_lagged_depvar (MODEL *pmod,
 {
     const int *xlist = NULL;
     int *dvlags = NULL;
-    int anylags;
+    int lag, anylags;
     int err = 0;
 
     anylags = has_depvar_lags(pmod, dset);
@@ -448,9 +448,9 @@ static int process_lagged_depvar (MODEL *pmod,
 
 	for (i=1; i<=xlist[0]; i++) {
             vi = xlist[i];
-	    if (dset->varinfo[vi]->lag > 0 &&
-		!strcmp(yname, dset->varinfo[vi]->parent)) {
-		dvlags[i-1] = dset->varinfo[vi]->lag;
+	    lag = series_get_lag(dset, vi);
+	    if (lag > 0 && !strcmp(yname, series_get_parent(dset, vi))) {
+		dvlags[i-1] = lag;
 	    } else {
 		dvlags[i-1] = 0;
 	    }
@@ -2894,7 +2894,7 @@ static int add_fcast_to_dataset (FITRESID *fr, const char *vname,
 	    dset->Z[v][t] = fr->fitted[t];
 	}
 
-	strcpy(VARLABEL(dset, v), _("predicted values"));
+	series_set_label(dset, v, _("predicted values"));
 
 	if (gretl_messages_on()) {
 	    if (v < oldv) {
@@ -3421,13 +3421,14 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
     }
 }
 
-static int y_lag (int v, int parent, const DATASET *dset)
+static int y_lag (int v, int parent_id, const DATASET *dset)
 {
-    if (dset->varinfo[v]->transform == LAGS) {
-	int pv = series_index(dset, dset->varinfo[v]->parent);
+    if (series_get_transform(dset, v) == LAGS) {
+	const char *parent = series_get_parent(dset, v);
+	int pv = series_index(dset, parent);
 
-	if (pv == parent) {
-	    return dset->varinfo[v]->lag;
+	if (pv == parent_id) {
+	    return series_get_lag(dset, v);
 	}
     }
 

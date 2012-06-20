@@ -63,6 +63,32 @@ typedef enum {
 } DataCopyFlag;
 
 /**
+ * CompactMethod:
+ * @COMPACT_NONE: no data compaction
+ * @COMPACT_SUM: take sum of higher frequency data
+ * @COMPACT_AVG: take mean of higher frequency data
+ * @COMPACT_SOP: use start-of-period value
+ * @COMPACT_EOP: use end-of-period value
+ * @COMPACT_WDAY: use a specified day of the week
+ * @COMPACT_MAX: sentinel value
+ *
+ * Symbolic codes for various methods of compacting data
+ * series (i.e. converting from a higher to a lower
+ * frequency). %COMPACT_WDAY is applicable only when
+ * converting from daily to weekly frequency.
+ */
+
+typedef enum {
+    COMPACT_NONE,
+    COMPACT_SUM,
+    COMPACT_AVG,
+    COMPACT_SOP,
+    COMPACT_EOP,
+    COMPACT_WDAY,
+    COMPACT_MAX
+} CompactMethod; 
+
+/**
  * dataset_is_cross_section:
  * @p: pointer to data information struct.
  *
@@ -212,73 +238,6 @@ typedef enum {
  * or not (0).
  */
 #define dataset_has_markers(p) (p != NULL && p->markers && p->S != NULL)
-
-/**
- * var_is_discrete:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- *
- * Determine whether a variable should be treated as discrete
- * or not.
- */
-#define var_is_discrete(p, i) (p->varinfo[i]->flags & VAR_DISCRETE)
-
-/**
- * var_is_hidden:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- *
- * Determine whether or not a variable is hidden.
- */
-#define var_is_hidden(p, i) (p->varinfo[i]->flags & VAR_HIDDEN)
-
-/**
- * var_is_generated:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- *
- * Determine whether or not a variable was generated using
- * a formula or transformation function.
- */
-#define var_is_generated(p, i) (p->varinfo[i]->flags & VAR_GENERATED)
-
-/**
- * var_is_listarg:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- *
- * Determine whether or not a variable has been marked as
- * belonging to a list argument to a function.
- */
-#define var_is_listarg(p, i) (p->varinfo[i]->flags & VAR_LISTARG)
-
-/**
- * set_var_listarg:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- *
- * Set the "listarg" flag on the given variable.
- */
-#define set_var_listarg(p, i) (p->varinfo[i]->flags |= VAR_LISTARG)
-
-/**
- * unset_var_listarg:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- *
- * Remove the "listarg" flag from the given variable.
- */
-#define unset_var_listarg(p, i) (p->varinfo[i]->flags &= ~VAR_LISTARG)
-
-/**
- * series_set_flag:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- * @f: flag to set.
- *
- * Set the given flag on the given (series) variable.
- */
-#define series_set_flag(p, i, f) (p->varinfo[i]->flags |= f)
 
 /**
  * sample_size:
@@ -444,5 +403,58 @@ int dataset_purge_missing_rows (DATASET *dset);
 int check_dataset_is_changed (void);
 
 void set_dataset_is_changed (void);
+
+int var_is_discrete (const DATASET *dset, int i);
+
+int var_is_hidden (const DATASET *dset, int i);
+
+int var_is_generated (const DATASET *dset, int i);
+
+int var_is_listarg (const DATASET *dset, int i);
+
+void set_var_listarg (DATASET *dset, int i);
+
+void unset_var_listarg (DATASET *dset, int i);
+
+void series_set_flag (DATASET *dset, int i, int flag);
+
+void series_zero_flags (DATASET *dset, int i);
+
+const char *VARLABEL (const DATASET *dset, int i);
+
+const char *DISPLAYNAME (const DATASET *dset, int i);
+
+const char *series_get_parent (const DATASET *dset, int i);
+
+int series_get_compact_method (const DATASET *dset, int i);
+
+int series_get_stack_level (const DATASET *dset, int i);
+
+int series_get_transform (const DATASET *dset, int i);
+
+int series_get_lag (const DATASET *dset, int i);
+
+void series_set_label (DATASET *dset, int i, 
+		       const char *s);
+
+void series_set_display_name (DATASET *dset, int i, 
+			      const char *s);
+
+void series_set_compact_method (DATASET *dset, int i, 
+				int method);
+
+void series_set_parent (DATASET *dset, int i, 
+			const char *parent);
+
+void series_set_transform (DATASET *dset, int i, 
+			   int transform);
+
+void series_set_lag (DATASET *dset, int i, int lag);
+
+void series_set_stack_level (DATASET *dset, int i, int level);
+
+void series_increment_stack_level (DATASET *dset, int i);
+
+void series_decrement_stack_level (DATASET *dset, int i);
 
 #endif /* DATASET_H */

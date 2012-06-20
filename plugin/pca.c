@@ -290,15 +290,17 @@ static int pca_save_components (VMatrix *cmat,
     }
 
     if (!err) {
+	gchar *label;
 	double load;
 
 	for (i=0; i<m; i++) {
 	    vi = v + i;
 	    sprintf(dset->varname[vi], "PC%d", i+1);
 	    make_varname_unique(dset->varname[vi], vi, dset);
-	    sprintf(VARLABEL(dset, vi), 
-		    _("Component with eigenvalue = %.4f"), 
-		    E->val[i]);
+	    label = g_strdup_printf(_("Component with eigenvalue = %.4f"),
+				    E->val[i]);
+	    series_set_label(dset, vi, label);
+	    g_free(label);
 	    for (t=0; t<dset->n; t++) {
 		dset->Z[vi][t] = 0.0;
 		for (j=0; j<k; j++) {

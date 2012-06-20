@@ -2399,7 +2399,7 @@ int dummy (DATASET *dset, int center)
     for (vi=1, di = di0; vi<=ndums; vi++, di++) {
 	make_dummy_name_and_label(vi, dset, center, vname, vlabel);
 	strcpy(dset->varname[di], vname);
-	strcpy(VARLABEL(dset, di), vlabel);
+	series_set_label(dset, di, vlabel);
     }
 
     if (dataset_is_daily(dset)) {
@@ -2460,7 +2460,7 @@ int dummy (DATASET *dset, int center)
 
 int panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
 {
-    char vname[16];
+    char vname[16], label[MAXLABEL];
     int vi, t, yy, pp, mm;
     int orig_v = dset->v;
     int ndum, nnew;
@@ -2518,9 +2518,9 @@ int panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
 	}
 
 	strcpy(dset->varname[dnum], vname);
-	sprintf(VARLABEL(dset, dnum), 
-		_("%s = 1 if %s is %d, 0 otherwise"), vname, 
+	sprintf(label, _("%s = 1 if %s is %d, 0 otherwise"), vname, 
 		_("period"), vi);
+	series_set_label(dset, dnum, label);
 
 	for (t=0; t<dset->n; t++) {
 	    xx = date(t, dset->pd, dset->sd0);
@@ -2545,9 +2545,9 @@ int panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
 	}	
 
 	strcpy(dset->varname[dnum], vname);
-	sprintf(VARLABEL(dset, dnum), 
-		_("%s = 1 if %s is %d, 0 otherwise"), vname, 
+	sprintf(label, _("%s = 1 if %s is %d, 0 otherwise"), vname, 
 		_("unit"), vi);
+	series_set_label(dset, dnum, label);
 
 	for (t=0; t<dset->n; t++) {
 	    dset->Z[dnum][t] = (t >= dmin && t < dmax)? 1 : 0;
@@ -2585,7 +2585,7 @@ int gen_unit (DATASET *dset)
     }
 
     strcpy(dset->varname[i], "unit");
-    strcpy(VARLABEL(dset, i), _("cross-sectional unit index"));
+    series_set_label(dset, i, _("cross-sectional unit index"));
 
     for (t=0; t<dset->n; t++) {
 	if (t % dset->pd == 0) {
@@ -2664,10 +2664,10 @@ int gen_time (DATASET *dset, int tm)
 
     if (tm) {
 	strcpy(dset->varname[i], "time");
-	strcpy(VARLABEL(dset, i), _("time trend variable"));
+	series_set_label(dset, i, _("time trend variable"));
     } else {
 	strcpy(dset->varname[i], "index");
-	strcpy(VARLABEL(dset, i), _("data index variable"));
+	series_set_label(dset, i, _("data index variable"));
     }
     
     if (tm && dset->structure == STACKED_TIME_SERIES) {
@@ -2710,7 +2710,7 @@ int gen_wkday (DATASET *dset)
     }
 
     strcpy(dset->varname[i], "weekday");
-    strcpy(VARLABEL(dset, i), _("day of week (1 = Monday)"));
+    series_set_label(dset, i, _("day of week (1 = Monday)"));
     
     for (t=0; t<dset->n; t++) {
 	ntodate(datestr, t, dset);
@@ -3009,7 +3009,7 @@ int genr_fit_resid (const MODEL *pmod, DATASET *dset,
 	int v = dset->v - 1;
 
 	strcpy(dset->varname[v], vname);
-	strcpy(VARLABEL(dset, v), vlabel);
+	series_set_label(dset, v, vlabel);
     }
 
     return err;

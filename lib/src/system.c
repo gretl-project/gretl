@@ -1769,7 +1769,7 @@ static int sys_get_lag_src (const char *vname, const DATASET *dset)
 	int i;
 
 	for (i=1; i<dset->v; i++) { 
-	    if (fd == STACK_LEVEL(dset, i) &&
+	    if (fd == series_get_stack_level(dset, i) &&
 		var_is_listarg(dset, i) && 
 		!strcmp(dset->varname[i], vname)) {
 		src = i;
@@ -2071,9 +2071,9 @@ static int sys_check_lists (equation_system *sys,
     */
     for (j=1; j<=xplist[0] && !err; j++) {
 	vj = xplist[j];
-	lag = dset->varinfo[vj]->lag;
+	lag = series_get_lag(dset, vj);
 	if (lag > 0) {
-	    vname = dset->varinfo[vj]->parent;
+	    vname = series_get_parent(dset, vj);
 	    src = sys_get_lag_src(vname, dset);
 	    if (in_gretl_list(sys->ylist, src)) {
 		err = add_predet_to_sys(sys, dset, vj, src, lag);

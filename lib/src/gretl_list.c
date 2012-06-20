@@ -2792,7 +2792,7 @@ int *full_var_list (const DATASET *dset, int *nvars)
 
     for (i=1; i<dset->v; i++) {
 	if (!var_is_hidden(dset, i) &&
-	    STACK_LEVEL(dset, i) == fsd) {
+	    series_get_stack_level(dset, i) == fsd) {
 	    nv++;
 	}
     }
@@ -2809,7 +2809,7 @@ int *full_var_list (const DATASET *dset, int *nvars)
 	j = 1;
 	for (i=1; i<dset->v; i++) {
 	    if (!var_is_hidden(dset, i) &&
-		STACK_LEVEL(dset, i) == fsd) {
+		series_get_stack_level(dset, i) == fsd) {
 		list[j++] = i;
 	    }
 	}
@@ -3094,7 +3094,7 @@ int *varname_match_list (const DATASET *dset, const char *pattern,
     pspec = g_pattern_spec_new(pattern);
 
     for (i=1; i<dset->v; i++) { 
-	if (fd == 0 || fd == STACK_LEVEL(dset, i)) {
+	if (fd == 0 || fd == series_get_stack_level(dset, i)) {
 	    if (g_pattern_match_string(pspec, dset->varname[i])) {
 		n++;
 	    }
@@ -3109,7 +3109,7 @@ int *varname_match_list (const DATASET *dset, const char *pattern,
 	    int j = 1;
 
 	    for (i=1; i<dset->v; i++) { 
-		if (fd == 0 || fd == STACK_LEVEL(dset, i)) {
+		if (fd == 0 || fd == series_get_stack_level(dset, i)) {
 		    if (g_pattern_match_string(pspec, dset->varname[i])) {
 			list[j++] = i;
 		    }
@@ -3146,7 +3146,7 @@ int *ellipsis_list (const DATASET *dset, int v1, int v2, int *err)
     fd = gretl_function_depth();
 
     for (i=v1; i<=v2; i++) { 
-	if (fd == 0 || fd == STACK_LEVEL(dset, i)) {
+	if (fd == 0 || fd == series_get_stack_level(dset, i)) {
 	    n++;
 	}
     }
@@ -3159,7 +3159,7 @@ int *ellipsis_list (const DATASET *dset, int v1, int v2, int *err)
 	    int j = 1;
 
 	    for (i=v1; i<=v2; i++) { 
-		if (fd == 0 || fd == STACK_LEVEL(dset, i)) {
+		if (fd == 0 || fd == series_get_stack_level(dset, i)) {
 		    list[j++] = i;
 		}
 	    }
@@ -3188,7 +3188,7 @@ int varname_match_any (const DATASET *dset, const char *pattern)
     pspec = g_pattern_spec_new(pattern);
 
     for (i=1; i<dset->v; i++) { 
-	if (fd == 0 || fd == STACK_LEVEL(dset, i)) {
+	if (fd == 0 || fd == series_get_stack_level(dset, i)) {
 	    if (g_pattern_match_string(pspec, dset->varname[i])) {
 		ret = 1;
 		break;

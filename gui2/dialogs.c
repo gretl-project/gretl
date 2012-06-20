@@ -3567,7 +3567,7 @@ static int compact_methods_set (void)
     int ret = NO_METHODS_SET;
 
     for (i=1; i<dataset->v; i++) {
-	if (COMPACT_METHOD(dataset, i) != COMPACT_NONE) {
+	if (series_get_compact_method(dataset, i) != COMPACT_NONE) {
 	    nmeth++;
 	}
     }

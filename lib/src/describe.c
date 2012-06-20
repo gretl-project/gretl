@@ -5632,8 +5632,7 @@ static int mdist_saver (DATASET *dset)
 
 	strcpy(dset->varname[v], "mdist");
 	make_varname_unique(dset->varname[v], v, dset);
-
-	strcpy(VARLABEL(dset, v), _("Mahalanobis distances"));	
+	series_set_label(dset, v, _("Mahalanobis distances"));
     }
 		
     return v;

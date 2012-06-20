@@ -139,10 +139,7 @@ static int wf1_read_history (FILE *fp, unsigned pos,
     if (htxt != NULL) {
 	fseek(fp, hpos, SEEK_SET);
 	if (fread(htxt, 1, len, fp) == len) {
-	    char *targ = VARLABEL(dset, i);
-
-	    *targ = '\0';
-	    strncat(targ, htxt, MAXLABEL - 1);
+	    series_set_label(dset, i, htxt);
 	    fprintf(stderr, "%s\n", htxt);
 	}
 	free(htxt);

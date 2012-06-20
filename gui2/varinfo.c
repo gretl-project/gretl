@@ -498,7 +498,7 @@ static void varinfo_insert_info (gui_varinfo *vset, int v)
 
     if (vset->line_spin != NULL) { 
 	gtk_combo_box_set_active(GTK_COMBO_BOX(vset->compaction_menu), 
-				 COMPACT_METHOD(dataset, v));
+				 series_get_compact_method(dataset, v));
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(vset->line_spin), 
 				  var_get_linewidth(dataset, v));
     } 
@@ -593,7 +593,7 @@ static void varinfo_linewidth_changed (GtkSpinButton *spin, gui_varinfo *vset)
 static void varinfo_compact_changed (GtkComboBox *box, gui_varinfo *vset)
 {
     int method = gtk_combo_box_get_active(box);
-    int orig = COMPACT_METHOD(dataset, vset->varnum);
+    int orig = series_get_compact_method(dataset, vset->varnum);
 
     varinfo_set_field_changed(vset, VSET_COMPACT, method != orig);
 }
@@ -881,7 +881,7 @@ void varinfo_dialog (int varnum)
 	}
 	
 	gtk_combo_box_set_active(GTK_COMBO_BOX(vset->compaction_menu), 
-				 COMPACT_METHOD(dataset, varnum));
+				 series_get_compact_method(dataset, varnum));
 	g_signal_connect(G_OBJECT(vset->compaction_menu), "changed",
 			 G_CALLBACK(varinfo_compact_changed), vset);
 	gtk_box_pack_start(GTK_BOX(hbox), vset->compaction_menu, FALSE, FALSE, 5);

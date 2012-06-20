@@ -5335,7 +5335,7 @@ static int localize_list (fncall *call, struct fnarg *arg,
 		if (!in_gretl_list(call->listvars, vi)) {
 		    gretl_list_append_term(&call->listvars, vi);
 		}
-		STACK_LEVEL(dset, vi) = level;
+		series_set_stack_level(dset, vi, level);
 	    }
 	}
 
@@ -5485,7 +5485,7 @@ static int localize_series_ref (fncall *call, struct fnarg *arg,
 {
     int v = arg->val.idnum;
 
-    if (STACK_LEVEL(dset, v) == fn_executing + 1) {
+    if (series_get_stack_level(dset, v) == fn_executing + 1) {
 	gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
 	return E_DATA;
     }
@@ -5495,7 +5495,7 @@ static int localize_series_ref (fncall *call, struct fnarg *arg,
 	return E_ALLOC;
     } 
 
-    STACK_LEVEL(dset, v) += 1;
+    series_increment_stack_level(dset, v);
     strcpy(dset->varname[v], fp->name);
 
     if (!in_gretl_list(call->ptrvars, v)) {
@@ -5848,7 +5848,7 @@ static int unlocalize_list (const char *lname, struct fnarg *arg,
 
     /* 
        If the list we're looking at was given as a function argument
-       we simply shunt all its members to the prior STACK_LEVEL.  But
+       we simply shunt all its members to the prior stack level.  But
        if the list is the direct return value from the function, we
        need to overwrite any variables at caller level that have been
        redefined within the function.  If any series have been
@@ -5871,9 +5871,9 @@ static int unlocalize_list (const char *lname, struct fnarg *arg,
 	    vi = list[i];
 	    vname = dset->varname[vi];
 	    unset_var_listarg(dset, vi);
-	    if (vi > 0 && vi < dset->v && STACK_LEVEL(dset, vi) == d) {
+	    if (vi > 0 && vi < dset->v && series_get_stack_level(dset, vi) == d) {
 		for (j=1; j<dset->v; j++) { 
-		    if (STACK_LEVEL(dset, j) == upd && 
+		    if (series_get_stack_level(dset, j) == upd && 
 			!strcmp(dset->varname[j], vname)) {
 			overwrite = 1;
 			break;
@@ -5885,12 +5885,12 @@ static int unlocalize_list (const char *lname, struct fnarg *arg,
 			dset->Z[j][t] = dset->Z[vi][t];
 		    }
 		    /* replace variable info */
-		    strcpy(VARLABEL(dset, j), VARLABEL(dset, vi));
-		    strcpy(DISPLAYNAME(dset, j), DISPLAYNAME(dset, vi));
+		    series_set_label(dset, j, VARLABEL(dset, vi));
+		    series_set_display_name(dset, j, DISPLAYNAME(dset, vi));
 		    /* replace ID number in list */
 		    list[i] = j;
 		} else {
-		    STACK_LEVEL(dset, vi) = upd;
+		    series_set_stack_level(dset, vi, upd);
 		}
 	    }
 #if UDEBUG
@@ -5910,7 +5910,7 @@ static int unlocalize_list (const char *lname, struct fnarg *arg,
 	    }
 	    if (var_is_listarg(dset, vi)) {
 		unset_var_listarg(dset, vi);
-		STACK_LEVEL(dset, vi) = upd;
+		series_set_stack_level(dset, vi, upd);
 	    }
 	}
 	if (arg->type != GRETL_TYPE_LIST) {
@@ -6058,7 +6058,7 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	    if (arg->type == GRETL_TYPE_SERIES_REF) {
 		int v = arg->val.idnum;
 
-		STACK_LEVEL(dset, v) -= 1;
+		series_decrement_stack_level(dset, v);
 		strcpy(dset->varname[v], arg->upname);
 	    } else if (arg->type == GRETL_TYPE_SCALAR_REF) {
 		gretl_scalar_restore_name(arg->val.idnum, arg->upname);
@@ -6185,7 +6185,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 
     if (dset != NULL) {
 	for (i=orig_v, delv=0; i<dset->v; i++) {
-	    if (STACK_LEVEL(dset, i) == d) {
+	    if (series_get_stack_level(dset, i) == d) {
 		delv++;
 	    }
 	}
@@ -6198,7 +6198,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 		}
 	    } else {
 		for (i=dset->v-1; i>=orig_v; i--) {
-		    if (STACK_LEVEL(dset, i) == d) {
+		    if (series_get_stack_level(dset, i) == d) {
 			anyerr = dataset_drop_variable(i, dset);
 			if (anyerr && !err) {
 			    err = anyerr;

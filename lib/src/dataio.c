@@ -1612,8 +1612,7 @@ static void read_esl_labels (const char *lblfile, DATASET *dset)
 	if (v > 0 && v < dset->v) {
 	    p = line + strlen(varname);
 	    p += strspn(p, " \t");
-	    VARLABEL(dset, v)[0] = '\0';
-	    strncat(VARLABEL(dset, v), p, MAXLABEL - 1);
+	    series_set_label(dset, v, p);
 	} else {
 	    fprintf(stderr, I_("extraneous label for var '%s'\n"), varname);
 	}
@@ -1621,8 +1620,6 @@ static void read_esl_labels (const char *lblfile, DATASET *dset)
 
     fclose(fp);
 }
-
-
 
 /**
  * is_gzipped:
@@ -1858,7 +1855,7 @@ int open_nulldata (DATASET *dset, int data_status, int length,
 
     /* add an index var */
     strcpy(dset->varname[1], "index");
-    strcpy(VARLABEL(dset, 1), _("index variable"));
+    series_set_label(dset, 1, _("index variable"));
     for (t=0; t<dset->n; t++) {
 	dset->Z[1][t] = (double) (t + 1);
     }
@@ -2508,7 +2505,6 @@ int add_var_labels_from_file (DATASET *dset, const char *fname)
 {
     FILE *fp;
     char line[256], label[MAXLABEL];
-    char *targ;
     int nlabels = 0;
     int i, err = 0;
 
@@ -2523,14 +2519,10 @@ int add_var_labels_from_file (DATASET *dset, const char *fname)
 	} else if (sscanf(line, "%127[^\n\r]", label) != 1) {
 	    continue;
 	} else {
-	    targ = VARLABEL(dset, i);
 	    g_strstrip(label);
-	    *targ = '\0';
-	    strncat(targ, label, MAXLABEL - 1);
-	    err = check_imported_string(targ, i+1, MAXLABEL);
-	    if (err) {
-		*targ = '\0';
-	    } else {
+	    err = check_imported_string(label, i+1, MAXLABEL);
+	    if (!err) {
+		series_set_label(dset, i, label);
 		nlabels++;
 	    }
 	}

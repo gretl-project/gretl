@@ -442,7 +442,7 @@ static int SAS_read_data (FILE *fp, struct SAS_fileinfo *finfo,
 
     for (i=0; i<finfo->nvars; i++) {
 	strcpy(dset->varname[i+1], finfo->vars[i].name);
-	strcpy(VARLABEL(dset, i+1), finfo->vars[i].label);
+	series_set_label(dset, i+1, finfo->vars[i].label);
     }
 
     t = 0;

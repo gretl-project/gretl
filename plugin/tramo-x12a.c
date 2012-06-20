@@ -673,7 +673,7 @@ static void copy_variable (DATASET *targ, int targv,
     }
 
     strcpy(targ->varname[targv], src->varname[srcv]);
-    strcpy(VARLABEL(targ, targv), VARLABEL(src, srcv));
+    series_set_label(targ, targv, VARLABEL(src, srcv));
 }
 
 static void clear_tramo_files (const char *path, const char *vname)
@@ -716,6 +716,7 @@ static int add_series_from_file (const char *path, int src,
     FILE *fp;
     char line[128], sfname[MAXLEN];
     char varname[VNAMELEN], date[8];
+    char label[MAXLABEL];
     double x;
     int d, yr, per, err = 0;
     int t;
@@ -787,13 +788,13 @@ static int add_series_from_file (const char *path, int src,
 
     /* copy varname and label into place */
     strcpy(dset->varname[targv], varname);
-    sprintf(VARLABEL(dset, targv), _(tx_descrip_formats[src]), dset->varname[0]);
-
+    sprintf(label, _(tx_descrip_formats[src]), dset->varname[0]);
     if (request->prog == TRAMO_SEATS) {
-	strcat(VARLABEL(dset, targv), " (TRAMO/SEATS)");
+	strcat(label, " (TRAMO/SEATS)");
     } else {
-	strcat(VARLABEL(dset, targv), " (X-12-ARIMA)");
-    }	
+	strcat(label, " (X-12-ARIMA)");
+    }
+    series_set_label(dset, targv, label);
 
     for (t=0; t<dset->n; t++) {
 	dset->Z[targv][t] = NADBL;

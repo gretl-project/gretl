@@ -2145,6 +2145,7 @@ static char **odbc_get_varnames (char **line, int *err)
 static int odbc_transcribe_data (char **vnames, DATASET *dset, 
 				 int vmin, int newvars)
 {
+    char label[MAXLABEL];
     int nv = gretl_odinfo.nvars;
     int n = gretl_odinfo.nrows;
     int nrepl = nv - newvars;
@@ -2165,7 +2166,8 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	if (v < 0) {
 	    v = vmin++;
 	    strcpy(dset->varname[v], vnames[i]);
-	    sprintf(VARLABEL(dset, v), "ODBC series %d", i + 1);
+	    sprintf(label, "ODBC series %d", i + 1);
+	    series_set_label(dset, v, label);
 	} else {
 	    vnew = 0;
 	}
@@ -2435,7 +2437,7 @@ int db_get_series (char *line, DATASET *dset,
 	/* see if the series is already in the dataset */
 	v = series_index(dset, series);
 	if (v < dset->v && method == COMPACT_NONE) {
-	    this_var_method = COMPACT_METHOD(dset, v);
+	    this_var_method = series_get_compact_method(dset, v);
 	}
 
 #if DB_DEBUG
@@ -2861,8 +2863,8 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 
     /* common stuff for adding a var */
     strcpy(dset->varname[dbv], sinfo->varname);
-    strcpy(VARLABEL(dset, dbv), sinfo->descrip);
-    COMPACT_METHOD(dset, dbv) = method;
+    series_set_label(dset, dbv, sinfo->descrip);
+    series_set_compact_method(dset, dbv, method);
     get_db_padding(sinfo, dset, &pad1, &pad2);
 
     if (pad1 > 0) {
@@ -3209,7 +3211,7 @@ get_daily_compact_params (CompactMethod default_method,
     *any_sop = (default_method == COMPACT_SOP)? 1 : 0;
 
     for (i=1; i<dset->v; i++) {
-	CompactMethod method = COMPACT_METHOD(dset, i);
+	CompactMethod method = series_get_compact_method(dset, i);
 
 	if (method != default_method && method != COMPACT_NONE) {
 	    *all_same = 0;
@@ -3256,7 +3258,7 @@ get_global_compact_params (int compfac, int startmin, int endmin,
 		*any_eop = 1;
 	    }
 	} else {
-	    method = COMPACT_METHOD(dset, i);
+	    method = series_get_compact_method(dset, i);
 	    if (method != default_method && method != COMPACT_NONE) {
 		get_startskip_etc(compfac, startmin, endmin, dset->n, 
 				  method, &startskip, &n);
@@ -3708,7 +3710,7 @@ static int daily_dataset_to_monthly (DATASET *dset,
     err = shorten_the_constant(dset->Z, nm);
 
     for (i=1; i<dset->v && !err; i++) {
-	method = COMPACT_METHOD(dset, i);
+	method = series_get_compact_method(dset, i);
 	if (method == COMPACT_NONE) {
 	    method = default_method;
 	}
@@ -3975,8 +3977,10 @@ int compact_data_set (DATASET *dset, int newpd,
 	double *x;
 
 	if (!all_same) {
-	    if (COMPACT_METHOD(dset, i) != COMPACT_NONE) {
-		this_method = COMPACT_METHOD(dset, i);
+	    CompactMethod m_i = series_get_compact_method(dset, i);
+
+	    if (m_i != COMPACT_NONE) {
+		this_method = m_i;
 	    }
 
 	    startskip = compfac - (startmin % compfac) + 1;

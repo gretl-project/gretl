@@ -27,6 +27,18 @@
 #define DDEBUG 0
 #define FULLDEBUG 0
 
+struct VARINFO_ {
+    char label[MAXLABEL];
+    char display_name[MAXDISP];
+    char parent[VNAMELEN];
+    int flags;
+    int transform;
+    int lag;
+    char compact_method;
+    char stack_level; /* FIXME should be int? */
+    char line_width;
+};
+
 static int dataset_changed;
 
 /**
@@ -352,7 +364,7 @@ int dataset_allocate_varnames (DATASET *dset)
 
     if (!err) {
 	strcpy(dset->varname[0], "const");
-	strcpy(VARLABEL(dset, 0), _("auto-generated constant"));
+	series_set_label(dset, 0, _("auto-generated constant"));
     } 
 
     return err;
@@ -1212,7 +1224,7 @@ int dataset_add_series_as (double *x, const char *newname,
 	    dset->Z[v][t] = x[t];
 	}
 	strcpy(dset->varname[v], newname);
-	STACK_LEVEL(dset, v) += 1;
+	dset->varinfo[v]->stack_level += 1;
     }
 
     return err;
@@ -1249,12 +1261,12 @@ int dataset_copy_variable_as (int v, const char *newname,
 	    dset->Z[vnew][t] = dset->Z[v][t];
 	}
 	strcpy(dset->varname[vnew], newname);
-	STACK_LEVEL(dset, vnew) += 1;
+	dset->varinfo[vnew]->stack_level += 1;
 	/* FIXME other varinfo stuff? */
 #if 0
 	fprintf(stderr, "copied var %d ('%s', level %d) as var %d ('%s', level %d): ",
-		v, dset->varname[v], STACK_LEVEL(dset, v),
-		vnew, newname, STACK_LEVEL(dset, vnew));
+		v, dset->varname[v], dset->varinfo[v]->stack_level,
+		vnew, newname, dset->varinfo[vnew]->stack_level);
 	fprintf(stderr, "Z[%d][0] = %g\n", vnew, dset->Z[vnew][0]);
 #endif
     }
@@ -1417,7 +1429,7 @@ int dataset_replace_series (DATASET *dset, int v,
     }
 
     gretl_varinfo_init(dset->varinfo[v]);
-    strcpy(VARLABEL(dset, v), descrip);
+    series_set_label(dset, v, descrip);
 
     if (flag == DS_GRAB_VALUES) {
 	free(dset->Z[v]);
@@ -1871,7 +1883,7 @@ int maybe_prune_dataset (DATASET **pdset, void *p)
 		if (!mask[i]) {
 		    memcpy(newset->Z[k], dset->Z[i], ssize);
 		    strcpy(newset->varname[k], dset->varname[i]);
-		    strcpy(VARLABEL(newset, k), VARLABEL(dset, i));
+		    strcpy(newset->varinfo[k]->label, dset->varinfo[i]->label);
 		    if (st != NULL && k < i) {
 			gretl_string_table_reset_column_id(st, i, k);
 		    }
@@ -2083,11 +2095,11 @@ int dataset_drop_last_variables (int delvars, DATASET *dset)
     for (i=0; i<dset->v; i++) {
 	if (dset->Z[i] == NULL) {
 	    fprintf(stderr, "var %d (%s, level %d, val = NULL) %s\n", 
-		    i, dset->varname[i], STACK_LEVEL(dset, i), 
+		    i, dset->varname[i], dset->varinfo[i]->stack_level, 
 		    (i >= newv)? "deleting" : "");
 	} else {
 	    fprintf(stderr, "var %d (%s, level %d, val[0] = %g) %s\n", 
-		    i, dset->varname[i], STACK_LEVEL(dset, i), 
+		    i, dset->varname[i], dset->varinfo[i]->stack_level, 
 		    dset->Z[i][0], (i >= newv)? "deleting" : "");
 	}
     }
@@ -2561,7 +2573,7 @@ int dataset_stack_variables (const char *vname, const char *line,
     /* complete the details */
     if (!err) {
 	strcpy(dset->varname[genv], vname);
-	make_stack_label(VARLABEL(dset, genv), scpy);
+	make_stack_label(dset->varinfo[genv]->label, scpy);
 	pprintf(prn, "%s %s %s (ID %d)\n", 
 		(genv == dset->v - 1)? _("Generated") : _("Replaced"),
 		_("series"), vname, genv);
@@ -2731,10 +2743,10 @@ int var_set_display_name (DATASET *dset, int i,
 int var_set_compact_method (DATASET *dset, int i,
 			    int method) 
 {
-    int orig = COMPACT_METHOD(dset, i);
+    int orig = series_get_compact_method(dset, i);
 
     if (method != orig) {
-	COMPACT_METHOD(dset, i) = method;
+	dset->varinfo[i]->compact_method = method;
 	set_dataset_is_changed();
     }
 
@@ -3345,3 +3357,254 @@ int dataset_purge_missing_rows (DATASET *dset)
 
     return err;
 }
+
+/**
+ * var_is_discrete:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Returns: non-zero iff series @i should be treated as discrete.
+ */
+
+int var_is_discrete (const DATASET *dset, int i)
+{
+    return dset->varinfo[i]->flags & VAR_DISCRETE;
+}
+
+/**
+ * var_is_hidden:
+ * @dset: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Returns: non-zero iff series @i is hidden.
+ */
+
+int var_is_hidden (const DATASET *dset, int i)
+{
+    return dset->varinfo[i]->flags & VAR_HIDDEN;
+}
+
+/**
+ * var_is_generated:
+ * @dset: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Returns: non-zero iff series @i was generated using
+ * a formula or transformation function.
+ */
+
+int var_is_generated (const DATASET *dset, int i)
+{
+    return dset->varinfo[i]->flags & VAR_GENERATED;
+}
+
+/**
+ * var_is_listarg:
+ * @dset: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Returns: non-zero iff series @i has been marked as
+ * belonging to a list argument to a function.
+ */
+
+int var_is_listarg (const DATASET *dset, int i)
+{
+    return dset->varinfo[i]->flags & VAR_LISTARG;
+}
+
+/**
+ * set_var_listarg:
+ * @dset: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Set the "listarg" flag on series @i.
+ */
+
+void set_var_listarg (DATASET *dset, int i)
+{
+    if (i < dset->v) {
+	dset->varinfo[i]->flags |= VAR_LISTARG;
+    }
+}
+
+/**
+ * unset_var_listarg:
+ * @dset: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Removes the "listarg" flag from series @i.
+ */
+
+void unset_var_listarg (DATASET *dset, int i)
+{
+    if (i < dset->v) {
+	dset->varinfo[i]->flags &= ~VAR_LISTARG;
+    }
+}
+
+/**
+ * series_set_flag:
+ * @dset: pointer to data information struct.
+ * @i: index number of variable.
+ * @flag: flag to set.
+ *
+ * Sets the given flag on series @i.
+ */
+
+void series_set_flag (DATASET *dset, int i, int flag)
+{
+    if (i < dset->v) {
+	dset->varinfo[i]->flags |= flag;
+    }
+}
+
+/**
+ * series_set_flag:
+ * @dset: pointer to data information struct.
+ * @i: index number of variable.
+ * @flag: flag to set.
+ *
+ * Sets flags on series @i to zero.
+ */
+
+void series_zero_flags (DATASET *dset, int i)
+{
+    if (i < dset->v) {
+	dset->varinfo[i]->flags = 0;
+    }
+}
+
+/**
+ * VARLABEL:
+ * @dset: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Returns: the descriptive label for series @i.
+ */
+
+const char *VARLABEL (const DATASET *dset, int i)
+{
+    return dset->varinfo[i]->label;
+}
+
+/**
+ * DISPLAYNAME:
+ * @dset: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Returns: the display name for series @i.
+ */
+
+const char *DISPLAYNAME (const DATASET *dset, int i)
+{
+    return dset->varinfo[i]->display_name;
+}
+
+/**
+ * series_get_parent:
+ * @dset: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Returns: the name of the parent of series @i.
+ */
+
+const char *series_get_parent (const DATASET *dset, int i)
+{
+    return dset->varinfo[i]->parent;
+}
+
+int series_get_lag (const DATASET *dset, int i)
+{
+    return dset->varinfo[i]->lag;
+}
+
+int series_get_transform (const DATASET *dset, int i)
+{
+    return dset->varinfo[i]->transform;
+}
+
+/**
+ * series_get_compact_method:
+ * @dset: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Returns: the compaction method set for series @i.
+ */
+
+int series_get_compact_method (const DATASET *dset, int i)
+{
+    return dset->varinfo[i]->compact_method;
+}
+
+/**
+ * series_get_stack_level:
+ * @dset: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Returns: the stack level of series @i.
+ */
+
+int series_get_stack_level (const DATASET *dset, int i)
+{
+    return dset->varinfo[i]->stack_level;
+}
+
+void series_set_label (DATASET *dset, int i, 
+		       const char *s)
+{
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->label[0] = '\0';
+	strncat(dset->varinfo[i]->label, s, MAXLABEL-1);
+    }
+}
+
+void series_set_display_name (DATASET *dset, int i, 
+			      const char *s)
+{
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->display_name[0] = '\0';
+	strncat(dset->varinfo[i]->display_name, 
+		s, MAXDISP-1);
+    }
+}
+
+void series_set_compact_method (DATASET *dset, int i, 
+				int method)
+{
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->compact_method = method;
+    }
+}
+
+void series_set_parent (DATASET *dset, int i, 
+			const char *parent)
+{
+    strcpy(dset->varinfo[i]->parent, parent);
+}
+
+void series_set_transform (DATASET *dset, int i, 
+			   int transform)
+{
+    dset->varinfo[i]->transform = transform;
+}
+
+void series_set_lag (DATASET *dset, int i, int lag)
+{
+    dset->varinfo[i]->lag = lag;
+}
+
+void series_set_stack_level (DATASET *dset, int i, int level)
+{
+    dset->varinfo[i]->stack_level = level;
+}
+
+void series_increment_stack_level (DATASET *dset, int i)
+{
+    dset->varinfo[i]->stack_level += 1;
+}
+
+void series_decrement_stack_level (DATASET *dset, int i)
+{
+    dset->varinfo[i]->stack_level -= 1;
+}
+

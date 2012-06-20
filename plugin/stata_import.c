@@ -649,12 +649,12 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 	if (*label != '\0') {
 	    pprintf(vprn, "variable %d: label = '%s'\n", i+1, label);
 	    if (g_utf8_validate(label, -1, NULL)) {
-		strncat(VARLABEL(dset, i+1), label, MAXLABEL - 1);
+		series_set_label(dset, i+1, label);
 	    } else {
 		gchar *tr = recode_stata_string(label);
 
 		if (tr != NULL) {
-		    gretl_utf8_strncat(VARLABEL(dset, i+1), tr, MAXLABEL - 1);
+		    series_set_label(dset, i+1, tr);
 		    g_free(tr);
 		}
 	    } 

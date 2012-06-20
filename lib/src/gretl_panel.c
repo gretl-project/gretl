@@ -3753,10 +3753,10 @@ static void panel_copy_var (DATASET *targ, int targv,
 
     if (srcv == -1) {
 	strcpy(targ->varname[targv], "uhat");
-	strcpy(VARLABEL(targ, targv), _("residual"));
+	series_set_label(targ, targv, _("residual"));
     } else {
 	strcpy(targ->varname[targv], src->varname[srcv]);
-	strcpy(VARLABEL(targ, targv), VARLABEL(src, srcv));
+	series_set_label(targ, targv, VARLABEL(src, srcv));
     }
 }
 
@@ -3781,7 +3781,7 @@ static void panel_lag (DATASET *tmpset,
     }
 
     sprintf(tmpset->varname[v], "uhat_%d", lag);
-    *VARLABEL(tmpset, v) = 0;
+    series_set_label(tmpset, v, "");
 }
 
 /* - do some sanity checks

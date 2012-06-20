@@ -901,7 +901,7 @@ static int add_residual_to_dataset (MODEL *pmod, DATASET *dset)
 	}
 
 	strcpy(dset->varname[v], "uhat");
-	strcpy(VARLABEL(dset, v), _("residual"));
+	series_set_label(dset, v, _("residual"));
     }
 
     return err;
@@ -2173,7 +2173,7 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 	    }
 	}
 	strcpy(dset->varname[v], "uhat");
-	strcpy(VARLABEL(dset, v), _("residual"));
+	series_set_label(dset, v, _("residual"));
 	/* then order lags of same */
 	for (i=1; i<=order; i++) {
 	    int s, lv = v + i;
@@ -2328,7 +2328,7 @@ make_chow_list (const MODEL *pmod, DATASET *dset,
 		dset->Z[v][t] = (double) (t >= split); 
 	    }
 	    strcpy(dset->varname[v], "splitdum");
-	    strcpy(VARLABEL(dset, v), _("dummy variable for Chow test"));
+	    series_set_label(dset, v, _("dummy variable for Chow test"));
 	}
 
 	chowlist[l0 + 1] = (dumv > 0)? dumv : v;
@@ -3402,7 +3402,7 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 	}
 	strcpy(dset->varname[v], "lever");
 	make_varname_unique(dset->varname[v], v, dset);
-	strcpy(VARLABEL(dset, v), "leverage values");
+	series_set_label(dset, v, "leverage values");
     }
 
     /* add influence? */
@@ -3419,7 +3419,7 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 	}	
 	strcpy(dset->varname[v], "influ");
 	make_varname_unique(dset->varname[v], v, dset);
-	strcpy(VARLABEL(dset, v), "influence values");
+	series_set_label(dset, v, "influence values");
     }
 
     /* add DFFITS? */
@@ -3446,7 +3446,7 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 	}	
 	strcpy(dset->varname[v], "dffits");
 	make_varname_unique(dset->varname[v], v, dset);
-	strcpy(VARLABEL(dset, v), "DFFITS values");
+	series_set_label(dset, v, "DFFITS values");
     }
 
     return 0;

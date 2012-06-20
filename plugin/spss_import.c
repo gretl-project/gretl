@@ -1579,6 +1579,7 @@ static int read_sav_data (spss_data *sdat, struct sysfile_header *hdr,
 			  DATASET *dset, PRN *prn)
 {
     double *tmp = NULL;
+    char label[MAXLABEL];
     int i, j, t, err = 0;
 
     /* temporary storage for one complete observation */
@@ -1594,8 +1595,9 @@ static int read_sav_data (spss_data *sdat, struct sysfile_header *hdr,
 	if (!CONTD(sdat, i)) {
 	    recode_sav_string(dset->varname[j], sdat->vars[i].name, 
 			      sdat->encoding, VNAMELEN - 1);
-	    recode_sav_string(VARLABEL(dset, j), sdat->vars[i].label,
+	    recode_sav_string(label, sdat->vars[i].label,
 			      sdat->encoding, MAXLABEL - 1);
+	    series_set_label(dset, j, label);
 	    if (has_value_labels(sdat, i)) {
 		set_var_discrete(dset, j, 1);
 	    }

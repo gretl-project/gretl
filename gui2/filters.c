@@ -250,7 +250,7 @@ static void filter_make_varlabel (filter_info *finfo, int v, int i)
 	sprintf(s, "fracdiff(%s, %g)", finfo->vname, finfo->lambda);
     }
 
-    strcpy(VARLABEL(dataset, v), s);
+    series_set_label(dataset, v, s);
 }
 
 static void check_bk_limits1 (GtkWidget *s1, GtkWidget *s2)

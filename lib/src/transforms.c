@@ -185,10 +185,10 @@ int is_standard_lag (int v, const DATASET *dset, int *parent)
 	return 0;
     }
 
-    if (dset->varinfo[v]->transform == LAGS) {
-	pv = series_index(dset, dset->varinfo[v]->parent);
+    if (series_get_transform(dset, v) == LAGS) {
+	pv = series_index(dset, series_get_parent(dset, v));
 	pv = (pv < dset->v)? pv : 0;
-	ret = dset->varinfo[v]->lag;
+	ret = series_get_lag(dset, v);
     }
 
     if (pv > 0) {
@@ -226,10 +226,10 @@ int is_standard_lag_of (int v, int parent, const DATASET *dset)
 	return 0;
     }
 
-    if (dset->varinfo[v]->transform == LAGS) {
-	pv = series_index(dset, dset->varinfo[v]->parent);
+    if (series_get_transform(dset, v) == LAGS) {
+	pv = series_index(dset, series_get_parent(dset, v));
 	if (pv == parent) {
-	    ret = dset->varinfo[v]->lag;
+	    ret = series_get_lag(dset, v);
 	}
     }
 
@@ -256,8 +256,8 @@ int is_standard_diff (int v, const DATASET *dset, int *parent)
 	return 0;
     }
 
-    if (dset->varinfo[v]->transform == DIFF) {
-	pv = series_index(dset, dset->varinfo[v]->parent);
+    if (series_get_transform(dset, v) == DIFF) {
+	pv = series_index(dset, series_get_parent(dset, v));
 	pv = (pv < dset->v)? pv : 0;
 	if (pv > 0) {
 	    if (parent != NULL) {
@@ -287,8 +287,8 @@ int is_dummy_child (int v, const DATASET *dset, int *parent)
     int pv = dset->v;
     int i = 0, ret = 0;
 
-    if (dset->varinfo[v]->transform == DUMMIFY) {
-	pv = series_index(dset, dset->varinfo[v]->parent);
+    if (series_get_transform(dset, v) == DUMMIFY) {
+	pv = series_index(dset, series_get_parent(dset, v));
     } else if (!strncmp(dset->varname[v], "dt_", 3)) {
 	if (sscanf(dset->varname[v] + 3, "%d", &i) && i > 1) {
 	    pv = series_index(dset, "dt_1");
@@ -580,11 +580,11 @@ static int transform_handle_duplicate (int ci, int lag, int v,
 	    dset->Z[v][t] = x[t];
 	}
 	if (*label != '\0') {
-	    strcpy(VARLABEL(dset, v), label);
+	    series_set_label(dset, v, label);
 	}
-	dset->varinfo[v]->transform = ci;
-	dset->varinfo[v]->lag = lag;
-	dset->varinfo[v]->flags = 0;
+	series_set_transform(dset, v, ci);
+	series_set_lag(dset, v, lag);
+	series_zero_flags(dset, v);
 	ret = VAR_EXISTS_OK;
     }	
 
@@ -631,7 +631,7 @@ check_add_transform (int ci, int lag, int vnum, const double *x,
 	    ret = VAR_ADD_FAILED;
 	} else {
 	    strcpy(dset->varname[vnum], vname);
-	    strcpy(VARLABEL(dset, vnum), label);
+	    series_set_label(dset, vnum, label);
 	    for (t=0; t<dset->n; t++) {
 		dset->Z[vnum][t] = x[t];
 	    }
@@ -644,12 +644,11 @@ check_add_transform (int ci, int lag, int vnum, const double *x,
 static int get_lag_ID (int srcv, int lag, const DATASET *dset)
 {
     const char *vname = dset->varname[srcv];
-    VARINFO *vinfo;
-    int i;
+    int i, vlag;
 
     for (i=1; i<dset->v; i++) {
-	vinfo = dset->varinfo[i];
-	if (vinfo->lag == lag && !strcmp(vinfo->parent, vname)) {
+	vlag = series_get_lag(dset, i);
+	if (vlag == lag && !strcmp(vname, series_get_parent(dset, i))) {
 	    return i;
 	}
     }
@@ -753,18 +752,18 @@ static int get_transform (int ci, int v, int aux, double x,
 
     if (!err && vno > 0) {
 	if (ci == DUMMIFY) {
-	    strcpy(dset->varinfo[vno]->parent, dset->varname[v]);
-	    dset->varinfo[vno]->transform = DUMMIFY;
+	    series_set_parent(dset, vno, dset->varname[v]);
+	    series_set_transform(dset, vno, DUMMIFY);
 	    set_var_discrete(dset, vno, 1);
 	} else if (ci == LAGS || ci == DIFF) {
-	    strcpy(dset->varinfo[vno]->parent, dset->varname[v]);
-	    dset->varinfo[vno]->transform = ci;
+	    series_set_parent(dset, vno, dset->varname[v]);
+	    series_set_transform(dset, vno, ci);
 	}
 
 	if (ci == LAGS) {
-	    dset->varinfo[vno]->lag = aux;
+	    series_set_lag(dset, vno, aux);
 	} else {
-	    dset->varinfo[vno]->lag = 0;
+	    series_set_lag(dset, vno, 0);
 	}
     }
 

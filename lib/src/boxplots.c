@@ -894,7 +894,7 @@ static int panel_group_boxplots (int vnum, const DATASET *dset,
     s0 = dset->t1 * dset->pd;
 
     /* record the name of the original variable */
-    strcpy(VARLABEL(gdset, 1), dset->varname[vnum]);
+    series_set_label(gdset, 1, dset->varname[vnum]);
 
     for (i=0; i<nunits; i++) {
 	sprintf(gdset->varname[i+1], "%d", u0+i+1);

@@ -5038,7 +5038,7 @@ static int panel_means_ts_plot (const int vnum,
     list[0] = nv - 1;
 
     strcpy(gset->varname[1], dset->varname[vnum]);
-    strcpy(DISPLAYNAME(gset, 1), DISPLAYNAME(dset, vnum));
+    series_set_display_name(gset, 1, DISPLAYNAME(dset, vnum));
 
     s0 = dset->t1 * dset->pd;
 
@@ -5064,7 +5064,7 @@ static int panel_means_ts_plot (const int vnum,
     if (panvar > 0) {
 	/* time variable for x-axis */
 	strcpy(gset->varname[2], dset->varname[panvar]);
-	strcpy(DISPLAYNAME(gset, 2), DISPLAYNAME(dset, panvar));
+	series_set_display_name(gset, 2, DISPLAYNAME(dset, panvar));
 	for (t=0; t<T; t++) {
 	    gset->Z[2][t] = dset->Z[panvar][t];
 	}
@@ -6407,6 +6407,7 @@ int xy_plot_with_control (const int *list, const char *literal,
 {
     int t1 = dset->t1, t2 = dset->t2;
     int mlist[4] = {3, 0, 0, 0};
+    char dname[MAXDISP];
     MODEL mod;
     DATASET *gset = NULL;
     int vy, vx, vz;
@@ -6447,8 +6448,11 @@ int xy_plot_with_control (const int *list, const char *literal,
 	return E_ALLOC;
     }
 
-    sprintf(gset->varinfo[1]->display_name, _("adjusted %s"), dset->varname[vy]);
-    sprintf(gset->varinfo[2]->display_name, _("adjusted %s"), dset->varname[vx]);
+    sprintf(dname, _("adjusted %s"), dset->varname[vy]);
+    series_set_display_name(gset, 1, dname);
+
+    sprintf(dname, _("adjusted %s"), dset->varname[vx]);
+    series_set_display_name(gset, 2, dname);
     
     s = 0;
     for (t=t1; t<=t2; t++) {

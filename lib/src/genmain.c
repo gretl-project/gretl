@@ -126,10 +126,9 @@ static int maybe_record_lag_info (parser *p)
 	    int pv = series_index(p->dset, vname);
 
 	    if (pv < p->dset->v) {
-		strcpy(p->dset->varinfo[p->lh.v]->parent, 
-		   p->dset->varname[pv]);
-		p->dset->varinfo[p->lh.v]->transform = LAGS;
-		p->dset->varinfo[p->lh.v]->lag = -lag;
+		series_set_parent(p->dset, p->lh.v, p->dset->varname[pv]);
+		series_set_transform(p->dset, p->lh.v, LAGS);
+		series_set_lag(p->dset, p->lh.v, -lag);
 	    }
 	}
     }
@@ -182,8 +181,8 @@ static void gen_write_label (parser *p, int oldv)
 	strncat(tmp, src, MAXLABEL - 1);
     }
 
-    strcpy(VARLABEL(p->dset, p->lh.v), tmp);
-    p->dset->varinfo[p->lh.v]->flags |= VAR_GENERATED;
+    series_set_label(p->dset, p->lh.v, tmp);
+    series_set_flag(p->dset, p->lh.v, VAR_GENERATED);
 
 #if GDEBUG
     fprintf(stderr, "varlabel: '%s'\n", VARLABEL(p->dset, p->lh.v));
@@ -380,7 +379,7 @@ int series_index (const DATASET *dset, const char *varname)
 	       that was passed as an argument.
 	    */
 	    for (i=1; i<dset->v; i++) { 
-		if (fd == STACK_LEVEL(dset, i) &&
+		if (fd == series_get_stack_level(dset, i) &&
 		    !var_is_listarg(dset, i) && 
 		    strcmp(dset->varname[i], s) == 0) {
 		    ret = i;

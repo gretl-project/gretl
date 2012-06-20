@@ -29,32 +29,6 @@ typedef enum {
 } DBError;
 
 /**
- * CompactMethod:
- * @COMPACT_NONE: no data compaction
- * @COMPACT_SUM: take sum of higher frequency data
- * @COMPACT_AVG: take mean of higher frequency data
- * @COMPACT_SOP: use start-of-period value
- * @COMPACT_EOP: use end-of-period value
- * @COMPACT_WDAY: use a specified day of the week
- * @COMPACT_MAX: sentinel value
- *
- * Symbolic codes for various methods of compacting data
- * series (i.e. converting from a higher to a lower
- * frequency). %COMPACT_WDAY is applicable only when
- * converting from daily to weekly frequency.
- */
-
-typedef enum {
-    COMPACT_NONE,
-    COMPACT_SUM,
-    COMPACT_AVG,
-    COMPACT_SOP,
-    COMPACT_EOP,
-    COMPACT_WDAY,
-    COMPACT_MAX
-} CompactMethod; 
-
-/**
  * dbnumber: 
  *
  * The type used for representing primary data in gretl databases.

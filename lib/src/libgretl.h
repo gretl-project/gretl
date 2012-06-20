@@ -251,17 +251,7 @@ typedef struct equation_system_ equation_system;
  * Holds extended information on an individual data series.
  */
 
-typedef struct VARINFO_ {
-    char label[MAXLABEL];
-    char display_name[MAXDISP];
-    char parent[VNAMELEN];
-    int flags;
-    int transform;
-    int lag;
-    char compact_method;
-    char stack_level; /* FIXME should be int? */
-    char line_width;
-} VARINFO;
+typedef struct VARINFO_ VARINFO;
 
 /* information on data set */
 typedef struct DATASET_ { 
@@ -358,12 +348,6 @@ typedef struct MODEL_ {
     int n_data_items;            /* number of extra data items */
     model_data_item **data_items; /* pointer to additional data */
 } MODEL;
-
-#define VARLABEL(p,i)        ((p->varinfo[i])->label)
-#define DISPLAYNAME(p,i)     ((p->varinfo[i])->display_name)
-#define PARENT(p,i)          ((p->varinfo[i])->parent)
-#define COMPACT_METHOD(p,i)  ((p->varinfo[i])->compact_method)
-#define STACK_LEVEL(p,i)     ((p->varinfo[i])->stack_level)
 
 #include "gretl_commands.h"
 #include "gretl_prn.h"

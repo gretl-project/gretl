@@ -386,8 +386,8 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	    }
 	    overwrite = 1;
 	    /* pick up on pre-registered compaction method? */
-	    if (COMPACT_METHOD(dataset, dbv) != COMPACT_NONE) {
-		method = COMPACT_METHOD(dataset, dbv);
+	    if (series_get_compact_method(dataset, dbv) != COMPACT_NONE) {
+		method = series_get_compact_method(dataset, dbv);
 	    }
 	}
 
@@ -446,7 +446,7 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 
 	/* common stuff for adding a var */
 	strcpy(dataset->varname[dbv], sinfo->varname);
-	strcpy(VARLABEL(dataset, dbv), sinfo->descrip);
+	series_set_label(dataset, dbv, sinfo->descrip);
 	get_db_padding(sinfo, dataset, &pad1, &pad2);
 
 	if (pad1 > 0) {
@@ -505,7 +505,7 @@ static void add_dbdata (windata_t *vwin, DATASET *dbset,
 	    sinfo = &dw->sinfo[i-1];
 
 	    strcpy(dataset->varname[i], sinfo->varname);
-	    strcpy(VARLABEL(dataset, i), sinfo->descrip);
+	    series_set_label(dataset, i, sinfo->descrip);
 	    
 	    lib_command_sprintf("data %s", sinfo->varname);
 	    record_command_verbatim();
@@ -726,7 +726,7 @@ static void gui_get_db_series (windata_t *vwin, int cmd)
 	} 
 
 	strcpy(dbset->varname[i+1], sinfo->varname);
-	strcpy(VARLABEL(dbset, i+1), sinfo->descrip);
+	series_set_label(dbset, i+1, sinfo->descrip);
     }
 
     if (cmd == DB_DISPLAY) {
@@ -3019,8 +3019,8 @@ static void set_compact_info_from_default (int method)
     int i;
 
     for (i=1; i<dataset->v; i++) {
-	if (COMPACT_METHOD(dataset, i) == COMPACT_NONE) {
-	    COMPACT_METHOD(dataset, i) = method;
+	if (series_get_compact_method(dataset, i) == COMPACT_NONE) {
+	    series_set_compact_method(dataset, i, method);
 	}
     }
 }

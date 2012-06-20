@@ -1605,7 +1605,7 @@ void varlist (const DATASET *dset, PRN *prn)
     }
 
     for (i=0; i<dset->v; i++) {
-	if (STACK_LEVEL(dset, i) == level) {
+	if (series_get_stack_level(dset, i) == level) {
 	    len = strlen(dset->varname[i]);
 	    if (len > maxlen) {
 		maxlen = len;
@@ -1624,7 +1624,7 @@ void varlist (const DATASET *dset, PRN *prn)
 
     j = 1;
     for (i=0; i<dset->v; i++) {
-	if (level > 0 && STACK_LEVEL(dset, i) != level) {
+	if (level > 0 && series_get_stack_level(dset, i) != level) {
 	    continue;
 	}
 	pprintf(prn, "%3d) %-*s", i, maxlen + 2, dset->varname[i]);
