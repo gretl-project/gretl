@@ -386,7 +386,7 @@ static const int *model_xlist (MODEL *pmod)
 
 static int has_depvar_lags (MODEL *pmod, const DATASET *dset)
 {
-    const char *yname;
+    const char *yname, *parent;
     const int *xlist;
     int i, vi, lag;
 
@@ -400,7 +400,8 @@ static int has_depvar_lags (MODEL *pmod, const DATASET *dset)
     for (i=1; i<=xlist[0]; i++) {
         vi = xlist[i];
 	lag = series_get_lag(dset, vi);
-	if (lag > 0 && !strcmp(yname, series_get_parent(dset, vi))) {
+	parent = series_get_parent_name(dset, vi);
+	if (lag > 0 && parent != NULL && !strcmp(yname, parent)) {
 	    return 1;
 	}
     }
@@ -441,7 +442,7 @@ static int process_lagged_depvar (MODEL *pmod,
     if (dvlags == NULL) {
 	err = E_ALLOC;
     } else {
-	const char *yname;
+	const char *yname, *parent;
 	int i, vi;
 
 	yname = gretl_model_get_depvar_name(pmod, dset);
@@ -449,7 +450,8 @@ static int process_lagged_depvar (MODEL *pmod,
 	for (i=1; i<=xlist[0]; i++) {
             vi = xlist[i];
 	    lag = series_get_lag(dset, vi);
-	    if (lag > 0 && !strcmp(yname, series_get_parent(dset, vi))) {
+	    parent = series_get_parent_name(dset, vi);
+	    if (lag > 0 && parent != NULL && !strcmp(yname, parent)) {
 		dvlags[i-1] = lag;
 	    } else {
 		dvlags[i-1] = 0;
@@ -3424,8 +3426,7 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
 static int y_lag (int v, int parent_id, const DATASET *dset)
 {
     if (series_get_transform(dset, v) == LAGS) {
-	const char *parent = series_get_parent(dset, v);
-	int pv = series_index(dset, parent);
+	int pv = series_get_parent_id(dset, v);
 
 	if (pv == parent_id) {
 	    return series_get_lag(dset, v);

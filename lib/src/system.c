@@ -986,7 +986,7 @@ static int get_estimation_method_from_line (const char *s)
 	    p++;
 	    p += strspn(s, " ");
 	    if (sscanf(p, "%8s", mstr) == 1) {
-		lower(mstr);
+		gretl_lower(mstr);
 		method = system_method_from_string(mstr);
 	    }
 	}
@@ -1765,7 +1765,8 @@ static int sys_get_lag_src (const char *vname, const DATASET *dset)
 {
     int fd, src = series_index(dset, vname);
 
-    if (src == dset->v && (fd = gretl_function_depth()) > 0) {
+    if (src == dset->v && vname != NULL && 
+	(fd = gretl_function_depth()) > 0) {
 	int i;
 
 	for (i=1; i<dset->v; i++) { 
@@ -2073,7 +2074,7 @@ static int sys_check_lists (equation_system *sys,
 	vj = xplist[j];
 	lag = series_get_lag(dset, vj);
 	if (lag > 0) {
-	    vname = series_get_parent(dset, vj);
+	    vname = series_get_parent_name(dset, vj);
 	    src = sys_get_lag_src(vname, dset);
 	    if (in_gretl_list(sys->ylist, src)) {
 		err = add_predet_to_sys(sys, dset, vj, src, lag);

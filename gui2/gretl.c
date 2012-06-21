@@ -861,7 +861,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     return FALSE;
 }
 
-static int lagvar_get_parent_iter (int pv, GtkTreeIter *parent)
+static int series_get_parent_iter (int pv, GtkTreeIter *parent)
 {
     GtkTreeModel *model = 
 	gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
@@ -919,6 +919,28 @@ static int get_line_pos (GtkTreeModel *mod)
     return pos;
 }
 
+static int get_lag_or_dummy_parent (int v)
+{
+    const char *vname = dataset->varname[v];
+    int pv = 0, i = 0;
+
+    if (series_get_lag(dataset, v) != 0) {
+	pv = series_get_parent_id(dataset, v);
+    } else if (series_get_transform(dataset, v) == DUMMIFY) {
+	pv = series_get_parent_id(dataset, v);
+    } else if (!strncmp(vname, "dt_", 3)) {
+	if (sscanf(vname + 3, "%d", &i) && i > 1) {
+	    pv = current_series_index(dataset, "dt_1");
+	}
+    } else if (!strncmp(vname, "du_", 3)) {
+	if (sscanf(vname + 3, "%d", &i) && i > 1) {
+	    pv = current_series_index(dataset, "du_1");
+	}
+    }
+    
+    return pv;
+}
+
 /* populate the list of series in the main gretl window */
 
 void populate_varlist (void)
@@ -947,22 +969,20 @@ void populate_varlist (void)
 	if (series_is_hidden(dataset, i)) {
 	    continue;
 	}
-	if (i > 0 && (is_standard_lag(i, dataset, &pv) ||
-		      is_dummy_child(i, dataset, &pv))) {
-	    if (pv > 0) {
-		GtkTreeIter child_iter, parent_iter;
 
-		if (lagvar_get_parent_iter(pv, &parent_iter)) {
-		    gtk_tree_store_insert_before(store, &child_iter, 
-						 &parent_iter, NULL);
-		    sprintf(id, "%d", i);
-		    gtk_tree_store_set(store, &child_iter, 
-				       0, id, 
-				       1, dataset->varname[i],
-				       2, series_get_label(dataset, i),
-				       -1);	
-		}	
-	    }
+	if (i > 0 && (pv = get_lag_or_dummy_parent(i)) > 0) {
+	    GtkTreeIter child_iter, parent_iter;
+
+	    if (series_get_parent_iter(pv, &parent_iter)) {
+		gtk_tree_store_insert_before(store, &child_iter, 
+					     &parent_iter, NULL);
+		sprintf(id, "%d", i);
+		gtk_tree_store_set(store, &child_iter, 
+				   0, id, 
+				   1, dataset->varname[i],
+				   2, series_get_label(dataset, i),
+				   -1);	
+	    }	
 	}
 
 	if (pv == 0) {

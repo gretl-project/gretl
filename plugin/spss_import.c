@@ -1547,7 +1547,7 @@ static int sav_read_observation (spss_data *sdat,
 		dset->Z[j][t] = ix;
 		v->n_ok_obs += 1;
 		if (t == 0) {
-		    set_var_discrete(dset, j, 1);
+		    series_set_discrete(dset, j, 1);
 		}
 	    } else {
 		dset->Z[j][t] = NADBL;
@@ -1599,7 +1599,7 @@ static int read_sav_data (spss_data *sdat, struct sysfile_header *hdr,
 			      sdat->encoding, MAXLABEL - 1);
 	    series_set_label(dset, j, label);
 	    if (has_value_labels(sdat, i)) {
-		set_var_discrete(dset, j, 1);
+		series_set_discrete(dset, j, 1);
 	    }
 	    j++;
 	}

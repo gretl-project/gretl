@@ -1729,8 +1729,8 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	}
 
-	vstr = series_get_parent(dset, v);
-	if (*vstr) {
+	vstr = series_get_parent_name(dset, v);
+	if (vstr != NULL) {
 	    uerr = gretl_xml_encode_to_buf(xmlbuf, vstr, sizeof xmlbuf);
 	    if (!uerr) {
 		if (gz) {

@@ -22,13 +22,9 @@
 
 int default_lag_order (const DATASET *dset);
 
-int is_standard_lag (int v, const DATASET *dset, int *parent);
-
-int is_standard_lag_of (int v, int parent, const DATASET *dset);
+int standard_lag_of (int v, int parent, const DATASET *dset);
 
 int is_standard_diff (int v, const DATASET *dset, int *parent);
-
-int is_dummy_child (int v, const DATASET *dset, int *parent);
 
 int diffgenr (int v, int ci, DATASET *dset);
 

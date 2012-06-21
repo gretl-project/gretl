@@ -141,7 +141,7 @@ compare_treenames (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
     gtk_tree_model_get(model, a, 0, &s1, -1);
     gtk_tree_model_get(model, b, 0, &s2, -1);
 
-    ret = strcmp(lower(s1), lower(s2));
+    ret = strcmp(gretl_lower(s1), gretl_lower(s2));
 
     g_free(s1);
     g_free(s2);

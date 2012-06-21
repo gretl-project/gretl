@@ -445,7 +445,7 @@ int ends_with_backslash (const char *s)
 }
 
 /**
- * lower:
+ * gretl_lower:
  * @str: the string to transform.
  *
  * Converts any upper case characters in @str to lower case.
@@ -453,7 +453,7 @@ int ends_with_backslash (const char *s)
  * Returns: the possibly modified string.
  */
 
-char *lower (char *str)
+char *gretl_lower (char *str)
 {
     char *p = str;
 
@@ -900,19 +900,6 @@ int gretl_namechar_spn (const char *s)
     }
 
     return ret;
-}
-
-/**
- * clear:
- * @str: the string to clear.
- * @len: the length of the string to be cleared.
- *
- * Sets all bytes in @str to 0.
- */
-
-void clear (char *str, int len)
-{
-    memset(str, 0, len);
 }
 
 /**

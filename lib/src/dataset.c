@@ -2601,9 +2601,9 @@ static int found_log_parent (const char *s, char *targ)
 }
 
 /**
- * is_log_variable:
- * @i: ID number of variable.
+ * series_is_log:
  * @dset: dataset information.
+ * @i: ID number of variable.
  * @parent: location to which to write the name of the
  * "parent" variable if any.
  *
@@ -2613,7 +2613,7 @@ static int found_log_parent (const char *s, char *targ)
  * Returns: 1 if variable @i appears to be a log, else 0.
  */
 
-int is_log_variable (int i, const DATASET *dset, char *parent)
+int series_is_log (const DATASET *dset, int i, char *parent)
 {
     const char *s = series_get_label(dset, i);
 
@@ -2636,7 +2636,7 @@ int is_log_variable (int i, const DATASET *dset, char *parent)
 }
 
 /**
- * set_var_discrete:
+ * series_set_discrete:
  * @dset: pointer to data information struct.
  * @i: index number of variable.
  * @s: non-zero to mark variable as discrete, zero to 
@@ -2645,7 +2645,7 @@ int is_log_variable (int i, const DATASET *dset, char *parent)
  * Mark a variable as being discrete or not.
  */
 
-void set_var_discrete (DATASET *dset, int i, int s) 
+void series_set_discrete (DATASET *dset, int i, int s) 
 {
     if (i > 0 && i < dset->v) {
 	int flags = dset->varinfo[i]->flags;
@@ -2723,29 +2723,15 @@ int series_record_display_name (DATASET *dset, int i,
     return 0;
 }
 
-int var_set_compact_method (DATASET *dset, int i,
-			    int method) 
-{
-    int orig = series_get_compact_method(dset, i);
-
-    if (method != orig) {
-	dset->varinfo[i]->compact_method = method;
-	set_dataset_is_changed();
-    }
-
-    return 0;
-}
-
-const char *var_get_graph_name (const DATASET *dset, int i)
+const char *series_get_graph_name (const DATASET *dset, int i)
 {
     const char *ret = dset->varname[i];
 
     if (dset->varinfo != NULL && dset->varinfo[i] != NULL) {
-	ret = dset->varinfo[i]->display_name;
-	if (ret[0] == '\0') {
-	    ret = dset->varname[i];
+	if (dset->varinfo[i]->display_name[0] != '\0') {
+	    ret = dset->varinfo[i]->display_name;
 	}
-    } 
+    }
 
     return ret;
 }
@@ -3437,7 +3423,7 @@ void series_unset_flag (DATASET *dset, int i, int flag)
 
 void series_zero_flags (DATASET *dset, int i)
 {
-    if (i > 0 && i < dset->v) {
+    if (i >= 0 && i < dset->v) {
 	dset->varinfo[i]->flags = 0;
     }
 }
@@ -3452,7 +3438,11 @@ void series_zero_flags (DATASET *dset, int i)
 
 const char *series_get_label (const DATASET *dset, int i)
 {
-    return dset->varinfo[i]->label;
+    if (i >= 0 && i < dset->v) {
+	return dset->varinfo[i]->label;
+    } else {
+	return NULL;
+    }
 }
 
 /**
@@ -3465,30 +3455,73 @@ const char *series_get_label (const DATASET *dset, int i)
 
 const char *series_get_display_name (const DATASET *dset, int i)
 {
-    return dset->varinfo[i]->display_name;
+    if (i >= 0 && i < dset->v) {
+	return dset->varinfo[i]->display_name;
+    } else {
+	return NULL;
+    }
 }
 
 /**
- * series_get_parent:
+ * series_get_parent_name:
  * @dset: pointer to data information struct.
- * @i: index number of variable.
+ * @i: index number of series.
  *
- * Returns: the name of the parent of series @i.
+ * Returns: the name of the "parent" of series @i
+ * (e.g. if series @i is a lag of some other series)
+ * or NULL if the series has no parent.
  */
 
-const char *series_get_parent (const DATASET *dset, int i)
+const char *series_get_parent_name (const DATASET *dset, int i)
 {
-    return dset->varinfo[i]->parent;
+    if (i > 0 && i < dset->v) {
+	if (dset->varinfo[i]->parent[0] != '\0') {
+	    return dset->varinfo[i]->parent;
+	}
+    }
+
+    return NULL;
+}
+
+/**
+ * series_get_parent_id:
+ * @dset: pointer to data information struct.
+ * @i: index number of series.
+ *
+ * Returns: the ID number of the "parent" of series @i
+ * (e.g. if series @i is a lag of some other series)
+ * or -1 if the series has no parent.
+ */
+
+int series_get_parent_id (const DATASET *dset, int i)
+{
+    if (i > 0 && i < dset->v) {
+	const char *pname = dset->varinfo[i]->parent;
+
+	if (*pname != '\0') {
+	    return current_series_index(dset, pname);
+	}
+    }
+
+    return -1;
 }
 
 int series_get_lag (const DATASET *dset, int i)
 {
-    return dset->varinfo[i]->lag;
+    if (i > 0 && i < dset->v) {
+	return dset->varinfo[i]->lag;
+    } else {
+	return 0;
+    }
 }
 
 int series_get_transform (const DATASET *dset, int i)
 {
-    return dset->varinfo[i]->transform;
+    if (i > 0 && i < dset->v) { 
+	return dset->varinfo[i]->transform;
+    } else {
+	return 0;
+    }
 }
 
 /**
@@ -3501,7 +3534,11 @@ int series_get_transform (const DATASET *dset, int i)
 
 int series_get_compact_method (const DATASET *dset, int i)
 {
-    return dset->varinfo[i]->compact_method;
+    if (i > 0 && i < dset->v) {
+	return dset->varinfo[i]->compact_method;
+    } else {
+	return 0;
+    }
 }
 
 /**
@@ -3514,15 +3551,21 @@ int series_get_compact_method (const DATASET *dset, int i)
 
 int series_get_stack_level (const DATASET *dset, int i)
 {
-    return dset->varinfo[i]->stack_level;
+    if (i >= 0 && i < dset->v) {
+	return dset->varinfo[i]->stack_level;
+    } else {
+	return 0;
+    }
 }
 
 void series_set_label (DATASET *dset, int i, 
 		       const char *s)
 {
     if (i > 0 && i < dset->v) {
-	dset->varinfo[i]->label[0] = '\0';
-	strncat(dset->varinfo[i]->label, s, MAXLABEL-1);
+	char *targ = dset->varinfo[i]->label;
+
+	*targ = '\0';
+	strncat(targ, s, MAXLABEL-1);
     }
 }
 
@@ -3530,9 +3573,10 @@ void series_set_display_name (DATASET *dset, int i,
 			      const char *s)
 {
     if (i > 0 && i < dset->v) {
-	dset->varinfo[i]->display_name[0] = '\0';
-	strncat(dset->varinfo[i]->display_name, 
-		s, MAXDISP-1);
+	char *targ = dset->varinfo[i]->display_name;
+
+	*targ = '\0';
+	strncat(targ, s, MAXDISP-1);
     }
 }
 
@@ -3547,18 +3591,24 @@ void series_set_compact_method (DATASET *dset, int i,
 void series_set_parent (DATASET *dset, int i, 
 			const char *parent)
 {
-    strcpy(dset->varinfo[i]->parent, parent);
+    if (i > 0 && i < dset->v) {
+	strcpy(dset->varinfo[i]->parent, parent);
+    }
 }
 
 void series_set_transform (DATASET *dset, int i, 
 			   int transform)
 {
-    dset->varinfo[i]->transform = transform;
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->transform = transform;
+    }
 }
 
 void series_set_lag (DATASET *dset, int i, int lag)
 {
-    dset->varinfo[i]->lag = lag;
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->lag = lag;
+    }
 }
 
 void series_set_stack_level (DATASET *dset, int i, int level)

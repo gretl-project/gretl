@@ -595,7 +595,7 @@ log_depvar_ll (MODEL *pmod, const DATASET *dset)
 {
     char parent[VNAMELEN];
 
-    if (is_log_variable(pmod->list[1], dset, parent)) {
+    if (series_is_log(dset, pmod->list[1], parent)) {
 	double jll = pmod->lnL;
 	int t;
 

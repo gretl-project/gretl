@@ -281,8 +281,13 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
     }
 
     if (!err && vset->changed[VSET_COMPACT]) {
+	int orig = series_get_compact_method(dataset, v);
+
 	ival = gtk_combo_box_get_active(GTK_COMBO_BOX(vset->compaction_menu));
-	var_set_compact_method(dataset, v, ival);
+	if (ival != orig) {
+	    series_set_compact_method(dataset, v, ival);
+	    set_dataset_is_changed();
+	}
     }
 
     if (!err && vset->changed[VSET_LINEWIDTH]) {
@@ -292,7 +297,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 
     if (!err && vset->changed[VSET_DISCRETE]) {
 	ival = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(vset->discrete_check));
-	set_var_discrete(dataset, v, ival);
+	series_set_discrete(dataset, v, ival);
 	if (ival) {
 	    lib_command_sprintf("setinfo %s --discrete", dataset->varname[v]);
 	} else {

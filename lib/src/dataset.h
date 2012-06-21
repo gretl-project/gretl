@@ -360,9 +360,9 @@ int dataset_stack_variables (const char *vname, const char *line,
 
 int dataset_sort_by (const int *list, DATASET *dset, gretlopt opt);
 
-int is_log_variable (int i, const DATASET *dset, char *parent);
+int series_is_log (const DATASET *dset, int i, char *parent);
 
-void set_var_discrete (DATASET *dset, int i, int s);
+void series_set_discrete (DATASET *dset, int i, int s);
 
 void series_set_linewidth (DATASET *dset, int i, int w);
 
@@ -374,10 +374,7 @@ int series_record_display_name (DATASET *dset, int i,
 int series_record_label (DATASET *dset, int i,
 			 const char *s); 
 
-int var_set_compact_method (DATASET *dset, int i,
-			    int method);
-
-const char *var_get_graph_name (const DATASET *dset, int i);
+const char *series_get_graph_name (const DATASET *dset, int i);
 
 unsigned int get_resampling_seed (void);
 
@@ -418,7 +415,9 @@ const char *series_get_label (const DATASET *dset, int i);
 
 const char *series_get_display_name (const DATASET *dset, int i);
 
-const char *series_get_parent (const DATASET *dset, int i);
+const char *series_get_parent_name (const DATASET *dset, int i);
+
+int series_get_parent_id (const DATASET *dset, int i);
 
 int series_get_compact_method (const DATASET *dset, int i);
 

@@ -1245,8 +1245,8 @@ static char *fname_strstr (char *fname, char *dname)
     *lfname = *ldname = '\0';
     strncat(lfname, fname, MAXLEN - 1);
     strncat(ldname, dname, MAXLEN - 1);
-    lower(lfname);
-    lower(ldname);
+    gretl_lower(lfname);
+    gretl_lower(ldname);
     return strstr(lfname, ldname);
 #else
     return strstr(fname, dname);

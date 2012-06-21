@@ -6172,7 +6172,7 @@ static int list_show_var (int v, int ci, int show_lags)
 	ret = 0;
     } else if (series_is_hidden(dataset, v)) {
 	ret = 0;
-    } else if (!show_lags && is_standard_lag(v, dataset, NULL)) {
+    } else if (!show_lags && series_get_lag(dataset, v)) {
 	lags_hidden = 1;
 	ret = 0;
     } else if (ci == XTAB) {

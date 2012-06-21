@@ -280,7 +280,7 @@ static int make_boot_ldvinfo (boot *b, const MODEL *pmod,
 
     for (i=0; i<pmod->ncoeff && !err; i++) {
 	xnum = pmod->list[i+2];
-	p = is_standard_lag_of(xnum, ynum, dset);
+	p = standard_lag_of(xnum, ynum, dset);
 	if (p > 0) {
 	    nly++;
 	} else if (p < 0) {
@@ -302,7 +302,7 @@ static int make_boot_ldvinfo (boot *b, const MODEL *pmod,
 	if (!err) {
 	    for (i=0; i<pmod->ncoeff; i++) {
 		xnum = pmod->list[i+2];
-		p = is_standard_lag_of(xnum, ynum, dset);
+		p = standard_lag_of(xnum, ynum, dset);
 		if (p > 0) {
 		    b->ldv->xcol[k] = i;
 		    b->ldv->lag[k] = p;

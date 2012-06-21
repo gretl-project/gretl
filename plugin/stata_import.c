@@ -717,7 +717,7 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 		    if (ix > 0) {
 			dset->Z[v][t] = ix;
 			if (t == 0) {
-			    set_var_discrete(dset, v, 1);
+			    series_set_discrete(dset, v, 1);
 			}
 		    }	
 		}

@@ -166,59 +166,16 @@ make_transform_label (char *label, const char *parent,
 }
 
 /**
- * is_standard_lag:
- * @v: ID number of variable to test.
- * @dset: dataset information.
- * @parent: location to receive ID number of parent variable,
- * or NULL.
- *
- * Returns: 1 if the variable @v is marked as being a
- * lag of some "parent" variable in the dataset,
- * otherwise 0.
- */
-
-int is_standard_lag (int v, const DATASET *dset, int *parent)
-{
-    int pv = 0, ret = 0;
-
-    if (dset == NULL || v <= 0 || v >= dset->v) {
-	return 0;
-    }
-
-    if (series_get_transform(dset, v) == LAGS) {
-	pv = series_index(dset, series_get_parent(dset, v));
-	pv = (pv < dset->v)? pv : 0;
-	ret = series_get_lag(dset, v);
-    }
-
-    if (pv > 0) {
-	int n = strcspn(dset->varname[v], "_");
-
-	if (!strncmp(dset->varname[v], dset->varname[pv], n)) {
-	    if (parent != NULL) {
-		*parent = pv;
-	    }
-	} else {
-	    /* if the lag has a "custom" name, don't consider it
-	       a child to parent variable pv */
-	    ret = 0;
-	}
-    }
-
-    return ret;
-}
-
-/**
- * is_standard_lag_of:
+ * standard_lag_of:
  * @v: ID number of series to test.
- * @parent: potential parent series.
+ * @parent: ID of potential parent series.
  * @dset: dataset information.
  *
- * Returns: the lag order, if the series @v is marked as 
+ * Returns: the lag order of series @v, if it is marked as 
  * a lag of @parent, otherwise 0.
  */
 
-int is_standard_lag_of (int v, int parent, const DATASET *dset)
+int standard_lag_of (int v, int parent, const DATASET *dset)
 {
     int pv = 0, ret = 0;
 
@@ -227,7 +184,7 @@ int is_standard_lag_of (int v, int parent, const DATASET *dset)
     }
 
     if (series_get_transform(dset, v) == LAGS) {
-	pv = series_index(dset, series_get_parent(dset, v));
+	pv = series_get_parent_id(dset, v);
 	if (pv == parent) {
 	    ret = series_get_lag(dset, v);
 	}
@@ -257,53 +214,13 @@ int is_standard_diff (int v, const DATASET *dset, int *parent)
     }
 
     if (series_get_transform(dset, v) == DIFF) {
-	pv = series_index(dset, series_get_parent(dset, v));
-	pv = (pv < dset->v)? pv : 0;
+	pv = series_get_parent_id(dset, v);
 	if (pv > 0) {
 	    if (parent != NULL) {
 		*parent = pv;
 	    }
 	    ret = 1;
 	}
-    }
-
-    return ret;
-}
-
-/**
- * is_dummy_child:
- * @v: ID number of variable to test.
- * @dset: dataset information.
- * @parent: location to receive ID number of parent variable,
- * or NULL.
- *
- * Returns: 1 if the variable @v is marked as being a dummy
- * variable that codes for a specific value of some "parent" 
- * variable in the dataset, otherwise 0.
- */
-
-int is_dummy_child (int v, const DATASET *dset, int *parent)
-{
-    int pv = dset->v;
-    int i = 0, ret = 0;
-
-    if (series_get_transform(dset, v) == DUMMIFY) {
-	pv = series_index(dset, series_get_parent(dset, v));
-    } else if (!strncmp(dset->varname[v], "dt_", 3)) {
-	if (sscanf(dset->varname[v] + 3, "%d", &i) && i > 1) {
-	    pv = series_index(dset, "dt_1");
-	}
-    } else if (!strncmp(dset->varname[v], "du_", 3)) {
-	if (sscanf(dset->varname[v] + 3, "%d", &i) && i > 1) {
-	    pv = series_index(dset, "du_1");
-	}
-    }	
-
-    if (pv < dset->v) {
-	*parent = pv;
-	ret = 1;
-    } else {
-	*parent = 0;
     }
 
     return ret;
@@ -643,12 +560,13 @@ check_add_transform (int ci, int lag, int vnum, const double *x,
 
 static int get_lag_ID (int srcv, int lag, const DATASET *dset)
 {
-    const char *vname = dset->varname[srcv];
+    const char *parent, *vname = dset->varname[srcv];
     int i, vlag;
 
     for (i=1; i<dset->v; i++) {
 	vlag = series_get_lag(dset, i);
-	if (vlag == lag && !strcmp(vname, series_get_parent(dset, i))) {
+	parent = series_get_parent_name(dset, i);
+	if (vlag == lag && !strcmp(vname, parent)) {
 	    return i;
 	}
     }
@@ -754,7 +672,7 @@ static int get_transform (int ci, int v, int aux, double x,
 	if (ci == DUMMIFY) {
 	    series_set_parent(dset, vno, dset->varname[v]);
 	    series_set_transform(dset, vno, DUMMIFY);
-	    set_var_discrete(dset, vno, 1);
+	    series_set_discrete(dset, vno, 1);
 	} else if (ci == LAGS || ci == DIFF) {
 	    series_set_parent(dset, vno, dset->varname[v]);
 	    series_set_transform(dset, vno, ci);
@@ -1676,7 +1594,7 @@ int list_makediscrete (const int *list, DATASET *dset, gretlopt opt)
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 	if (v > 0) {
-	    set_var_discrete(dset, v, disc);
+	    series_set_discrete(dset, v, disc);
 	}
     }
 

@@ -3848,9 +3848,9 @@ static int set_var_info (const char *line, gretlopt opt,
     }
 
     if (opt & OPT_D) {
-	set_var_discrete(dset, v, 1);
+	series_set_discrete(dset, v, 1);
     } else if (opt & OPT_C) {
-	set_var_discrete(dset, v, 0);
+	series_set_discrete(dset, v, 0);
     }
 
     if (opt & OPT_I) {

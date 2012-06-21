@@ -198,7 +198,7 @@ void set_gretl_charset (void)
 	char *p;
 
 	strncat(gretl_charset, charset, 31);
-	lower(gretl_charset);
+	gretl_lower(gretl_charset);
 	p = strstr(gretl_charset, "iso");
 	if (p != NULL) {
 	    char numstr[6] = {0};
@@ -708,7 +708,7 @@ set_locale_with_workaround (int langid, const char *lcode)
 	    
 	    langstr = lang_string_from_id(langid);
 	    sscanf(langstr, "%s", tmp);
-	    lower(tmp);
+	    gretl_lower(tmp);
 	    gretl_setenv("LANGUAGE", tmp);
 	}
     }

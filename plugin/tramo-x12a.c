@@ -1469,7 +1469,7 @@ int write_tx_data (char *fname, int varnum,
 		       &request.xopt);
     } else { 
 	/* TRAMO, possibly plus SEATS */
-	lower(vname);
+	gretl_lower(vname);
 	gretl_trunc(vname, 8);
 	sprintf(fname, "%s%c%s", workdir, SLASH, vname);
 	/* next line: this also sets request->prog = TRAMO_ONLY if

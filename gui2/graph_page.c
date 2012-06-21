@@ -676,7 +676,7 @@ static gchar *gpage_switch_compiler (int term)
 
     *test = '\0';
     strncat(test, p, 3);
-    lower(test);
+    gretl_lower(test);
 
     have_pdf = (strcmp(test, "pdf") == 0);
 

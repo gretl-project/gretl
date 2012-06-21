@@ -1571,11 +1571,11 @@ static int no_case_series_index (const DATASET *dset,
 
     *s1 = '\0';
     strncat(s1, vname, VNAMELEN - 1);
-    lower(s1);
+    gretl_lower(s1);
 
     for (i=1; i<dset->v; i++) {
 	strcpy(s2, dset->varname[i]);
-	lower(s2);
+	gretl_lower(s2);
 	if (strcmp(s1, s2) == 0) {
 	    return i;
 	}

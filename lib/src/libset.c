@@ -868,7 +868,7 @@ void set_xsect_hccme (const char *s)
     scpy = gretl_strdup(s);
 
     if (scpy != NULL) {
-	lower(scpy);
+	gretl_lower(scpy);
 	parse_hc_variant(scpy);
 	free(scpy);
     }
@@ -883,7 +883,7 @@ void set_tseries_hccme (const char *s)
     scpy = gretl_strdup(s);
 
     if (scpy != NULL) {
-	lower(scpy);
+	gretl_lower(scpy);
 	if (parse_hc_variant(scpy) == 0) {
 	    libset_set_bool(FORCE_HC, 1);
 	} else {
@@ -913,7 +913,7 @@ void set_garch_robust_vcv (const char *s)
     scpy = gretl_strdup(s);
 
     if (scpy != NULL) {
-	lower(scpy);
+	gretl_lower(scpy);
 	if (!strcmp(s, "qml")) {
 	    state->garch_robust_vcv = ML_QML;
 	} else if (!strcmp(s, "bw")) {
@@ -1532,7 +1532,7 @@ int execute_set_line (const char *line, DATASET *dset,
 	    return 0;
 	}	    
 
-	lower(setarg);
+	gretl_lower(setarg);
 
 	if (libset_boolvar(setobj)) {
 	    if (!strcmp(setobj, SHELL_OK)) {

@@ -1344,7 +1344,7 @@ int import_obs_label (const char *s)
 
     *tmp = '\0';
     strncat(tmp, s, OBSLEN - 1);
-    lower(tmp);
+    gretl_lower(tmp);
 
     return (!strcmp(tmp, "obs") ||
 	    !strcmp(tmp, "date") || 

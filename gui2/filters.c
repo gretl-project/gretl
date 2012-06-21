@@ -1147,7 +1147,7 @@ static int save_filtered_var (filter_info *finfo, double *x, int i,
     } else {
 	free(dataset->Z[v]);
 	dataset->Z[v] = x;
-	set_var_discrete(dataset, v, 0);
+	series_set_discrete(dataset, v, 0);
     }
 
     if (!err) {

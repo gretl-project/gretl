@@ -519,12 +519,15 @@ static int set_lag_prefs_from_xlist (int *list, int dv, char cbase,
 
     for (i=1; i<=list[0] && !err; i++) {
 	vi = list[i];
-	if (vi == LISTSEP) {
+	if (vi == 0 || vi == LISTSEP) {
 	    continue;
 	}
 	pv = 0;
-	lag = (vi == 0)? 0 : is_standard_lag(vi, dataset, &pv);
-	if (lag != 0) {
+	lag = series_get_lag(dataset, vi);
+	if (lag) {
+	    pv = series_get_parent_id(dataset, vi);
+	}	
+	if (pv > 0) {
 	    context = (pv == dv)? cbase + 1 : cbase;
 	    err = set_lag_pref_from_lag(pv, lag, context);
 	    if (!err) {

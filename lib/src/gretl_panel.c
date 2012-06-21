@@ -4835,7 +4835,7 @@ static int may_be_time_name (const char *vname)
     char test[VNAMELEN];
 
     strcpy(test, vname);
-    lower(test);
+    gretl_lower(test);
     
     return strcmp(test, "year") == 0 ||
 	strcmp(test, "period") == 0;

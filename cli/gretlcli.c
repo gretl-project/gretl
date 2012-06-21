@@ -129,7 +129,7 @@ static int file_get_line (ExecState *s)
     char *line = s->line;
     int len = 0;
 
-    clear(line, MAXLINE);
+    memset(line, 0, MAXLINE);
     
     if (fgets(line, MAXLINE, fb) == NULL) {
 	/* no more input from current source */
@@ -514,7 +514,7 @@ int main (int argc, char *argv[])
 	case GRETL_SCRIPT:
 	    runit = 1;
 	    strcpy(runfile, datafile); 
-	    clear(datafile, MAXLEN);
+	    memset(datafile, 0, sizeof datafile);
 	    load_datafile = 0;
 	    break;
 	default:

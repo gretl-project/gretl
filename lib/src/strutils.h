@@ -92,9 +92,7 @@ char *comma_separate_numbers (char *s);
 
 char *shift_string_left (char *str, size_t move);
 
-char *lower (char *str);
-
-void clear (char *str, int len);
+char *gretl_lower (char *str);
 
 char *gretl_chopstr (char *str);
 

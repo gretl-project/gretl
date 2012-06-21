@@ -3012,7 +3012,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	return E_DATA;
     }
 
-    vname = var_get_graph_name(dset, varno);
+    vname = series_get_graph_name(dset, varno);
 
     /* lag order for acf */
     m = order;

@@ -992,7 +992,7 @@ static void panelvar_candidates (GList *vlist, int *uid, int *tid)
     for (i=0; list != NULL; i++) {
 	vname = (const char *) list->data;
 	strcpy(vtest, vname);
-	lower(vtest);
+	gretl_lower(vtest);
 	if (*tid < 0) {
 	    if (!strcmp(vtest, "time") || 
 		!strcmp(vtest, "year") ||

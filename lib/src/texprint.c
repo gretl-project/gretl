@@ -58,7 +58,7 @@ void set_tex_use_pdf (const char *prog)
 
     *test = '\0';
     strncat(test, p, 3);
-    lower(test);
+    gretl_lower(test);
     use_pdf = !strcmp(test, "pdf");
 }
 
