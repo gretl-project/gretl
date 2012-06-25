@@ -324,7 +324,7 @@ dta_make_string_table (int *types, int nvar, int ncols)
 	}
     }
 
-    st = string_table_new_from_cols_list(list);
+    st = gretl_string_table_new(list);
 
     free(list);
 
@@ -459,7 +459,7 @@ static int dta_value_labels_setup (PRN **pprn, gretl_string_table **pst)
 
     if (*pprn != NULL) {
 	if (*pst == NULL) {
-	    *pst = gretl_string_table_new(&err);
+	    *pst = gretl_string_table_new(NULL);
 	    if (*pst == NULL) {
 		gretl_print_destroy(*pprn);
 		*pprn = NULL;

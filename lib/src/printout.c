@@ -1811,9 +1811,11 @@ static int print_by_obs (int *list,
     double x;
     int err = 0;
 
-    pmax = get_pmax_array(list, dset);
-    if (pmax == NULL) {
-	return E_ALLOC;
+    if (!(opt & OPT_S)) {
+	pmax = get_pmax_array(list, dset);
+	if (pmax == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     if (opt & OPT_N) {
@@ -1853,7 +1855,14 @@ static int print_by_obs (int *list,
 		x = dset->Z[blist[i]][t];
 		if (na(x)) {
 		    bufspace(colwidth, prn);
-		} else { 
+		} else if (opt & OPT_S) {
+		    const char *s = series_get_string_val(dset, blist[i], t);
+
+		    if (s != NULL) {
+			bufspace(6, prn);
+			pputs(prn, s);
+		    }
+		} else {
 		    bufprintnum(buf, x, pmax[j-1], gprec, colwidth);
 		    pputs(prn, buf);
 		}
@@ -1967,6 +1976,9 @@ int printdata (const int *list, const char *mstr,
     }
 
     if (opt & OPT_O) {
+	if (plist[0] == 1 && series_has_string_table(dset, plist[1])) {
+	    opt |= OPT_S;
+	}
 	err = print_by_obs(plist, dset, opt, screenvar, prn);
     } else {
 	err = print_by_var(plist, dset, prn);

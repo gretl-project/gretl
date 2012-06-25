@@ -1472,7 +1472,7 @@ static int non_numeric_check (csvdata *c, PRN *prn)
 
 	if (!err) {
 	    pputs(prn, "allocating string table\n");
-	    c->st = string_table_new_from_cols_list(list);
+	    c->st = gretl_string_table_new(list);
 	    if (c->st == NULL) {
 		err = E_ALLOC;
 		free(list);

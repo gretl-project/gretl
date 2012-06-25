@@ -460,7 +460,7 @@ static int SAS_read_data (FILE *fp, struct SAS_fileinfo *finfo,
 		tailstrip(cbuf);
 		if (*cbuf) {
 		    dset->Z[i+1][t] = gretl_string_table_index(st, cbuf, i+1, 
-							 1, prn);
+							       1, prn);
 		} else {
 		    dset->Z[i+1][t] = 0.0;
 		}
@@ -666,7 +666,7 @@ int xport_get_data (const char *fname, DATASET *dset,
     }
 
     if (finfo.maxclen > 0) {
-	st = gretl_string_table_new(&err);
+	st = gretl_string_table_new(NULL);
     }
 
     if (!err) {

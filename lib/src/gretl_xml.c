@@ -26,6 +26,7 @@
 #include "usermat.h"
 #include "gretl_scalar.h"
 #include "gretl_bundle.h"
+#include "gretl_string_table.h"
 #include "dbread.h"
 
 #include <sys/types.h>
@@ -1534,6 +1535,22 @@ int gretl_write_matrix_as_gdt (const char *fname,
     return err;
 }
 
+static int string_table_count (const DATASET *dset,
+			       const int *list,
+			       int nvars)
+{
+    int i, v, n = 0;
+
+    for (i=1; i<=nvars; i++) {
+	v = savenum(list, i);
+	if (series_has_string_table(dset, v)) {
+	    n++;
+	}
+    }
+
+    return n;
+}
+
 #define GDT_DIGITS 17
 
 /**
@@ -1567,7 +1584,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     void *handle = NULL;
     int (*show_progress) (long, long, int) = NULL;
     long sz = 0L;
-    int i, t, v, nvars;
+    int i, t, v, nvars, ntabs;
     int have_markers, in_c_locale = 0;
     int uerr = 0;
     int err = 0;
@@ -1826,7 +1843,46 @@ int gretl_write_gdt (const char *fname, const int *list,
 	}
     }
 
-    alt_puts("</observations>\n</gretldata>\n", fp, fz);
+    alt_puts("</observations>\n", fp, fz);
+
+    if ((ntabs = string_table_count(dset, list, nvars)) > 0) {
+	const char **strs;
+	int j, n_strs;
+
+	if (gz) {
+	    gzprintf(fz, "<string-tables count=\"%d\">\n", ntabs);
+	} else {
+	    fprintf(fp, "<string-tables count=\"%d\">\n", ntabs);
+	}
+
+	for (i=1; i<=nvars; i++) {
+	    v = savenum(list, i);
+	    if (!series_has_string_table(dset, v)) {
+		continue;
+	    }
+	    strs = series_get_string_vals(dset, v, &n_strs);
+	    gretl_xml_encode_to_buf(xmlbuf, dset->varname[v], sizeof xmlbuf);
+	    if (gz) {
+		gzprintf(fz, "<valstrings owner=\"%s\" count=\"%d\">", xmlbuf,
+			 n_strs);
+	    } else {
+		fprintf(fp, "<valstrings owner=\"%s\" count=\"%d\">", xmlbuf,
+			n_strs);
+	    }
+	    for (j=0; j<n_strs; j++) {
+		gretl_xml_encode_to_buf(xmlbuf, strs[j], sizeof xmlbuf);
+		if (gz) {
+		    gzprintf(fz, "\"%s\" ", xmlbuf);
+		} else {
+		    fprintf(fp, "\"%s\" ", xmlbuf);
+		}
+	    }
+	    alt_puts("</valstrings>\n", fp, fz);
+	}
+	alt_puts("</string-tables>\n", fp, fz);
+    }
+
+    alt_puts("</gretldata>\n", fp, fz);
 
  cleanup: 
 
@@ -2150,6 +2206,89 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     if (!err && t != dset->n) {
 	gretl_errmsg_set(_("Number of observations does not match declaration"));
 	err = E_DATA;
+    }
+
+    return err;
+}
+
+static int owner_id (const DATASET *dset, const char *s)
+{
+    int i;
+
+    for (i=1; i<dset->v; i++) {
+	if (!strcmp(s, dset->varname[i])) {
+	    return i;
+	}
+    }
+
+    return -1;
+}
+
+static int process_string_tables (xmlDocPtr doc, xmlNodePtr node, 
+				  DATASET *dset)
+{
+    xmlNodePtr cur;
+    xmlChar *tmp;
+    int ntabs = 0;
+    int err = 0;
+
+    tmp = xmlGetProp(node, (XUC) "count");
+    if (tmp == NULL) {
+	return E_DATA;
+    } 
+
+    if (sscanf((char *) tmp, "%d", &ntabs) != 1) {
+	err = E_DATA;
+    }
+
+    free(tmp);
+
+    if (!err) {
+	cur = node->xmlChildrenNode;
+	while (cur && xmlIsBlankNode(cur)) {
+	    cur = cur->next;
+	}
+	if (cur == NULL) {
+	    err = E_DATA;
+	}
+    }
+
+    if (err) {
+	return err;
+    }
+
+    while (cur != NULL && !err) {
+        if (!xmlStrcmp(cur->name, (XUC) "valstrings")) {
+	    xmlChar *owner = xmlGetProp(cur, (XUC) "owner");
+	    series_table *st;
+	    char **strs = NULL;
+	    int v = 0, n_strs = 0;
+
+	    if (owner == NULL) {
+		err = E_DATA;
+	    } else {
+		v = owner_id(dset, (const char *) owner);
+		if (v <= 0) {
+		    err = E_DATA;
+		}
+	    }
+	    if (!err) {
+		strs = gretl_xml_get_strings_array(cur, doc, &n_strs, 
+						   0, &err);
+	    }
+	    if (!err) {
+		st = series_table_new(strs, n_strs);
+		if (st == NULL) {
+		    strings_array_free(strs, n_strs);
+		    err = E_ALLOC;
+		} else {
+		    series_attach_string_table(dset, v, st);
+		}
+	    }
+	    free(owner);
+	}	   
+ 
+	cur = cur->next;
     }
 
     return err;
@@ -2506,6 +2645,14 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 	    } else {
 		gotobs = 1;
 	    }
+	} else if (!xmlStrcmp(cur->name, (XUC) "string-tables")) {
+	    if (!gotvars) {
+		gretl_errmsg_set(_("Variables information is missing"));
+		err = 1;
+	    }
+	    if (process_string_tables(doc, cur, tmpset)) {
+		err = 1;
+	    }	    
 	}
 	if (!err) {
 	    cur = cur->next;

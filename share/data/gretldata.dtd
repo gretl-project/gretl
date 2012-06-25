@@ -50,6 +50,17 @@
    unit      NMTOKEN #IMPLIED
    period    NMTOKEN #IMPLIED
    id        NMTOKEN #IMPLIED
->   
+>
+
+<!ELEMENT string-tables ( valstrings )+>
+<!ATTLIST string-tables
+   count     CDATA #REQUIRED
+>
+
+<!ELEMENT valstrings  ( #PCDATA )>
+<!ATTLIST valstrings
+   owner     CDATA #REQUIRED
+   count     CDATA #REQUIRED
+>
 
 

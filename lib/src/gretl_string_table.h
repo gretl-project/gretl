@@ -22,22 +22,32 @@
 
 typedef struct _gretl_string_table gretl_string_table;
 
-gretl_string_table *gretl_string_table_new (int *err);
+typedef struct _series_table series_table;
 
-gretl_string_table *string_table_new_from_cols_list (int *list);
+gretl_string_table *gretl_string_table_new (const int *list);
 
-int gretl_string_table_index (gretl_string_table *st, const char *s, int col,
-			      int addcol, PRN *prn);
+int gretl_string_table_index (gretl_string_table *gst, const char *s, 
+			      int col, int addcol, PRN *prn);
 
-int gretl_string_table_print (gretl_string_table *st, DATASET *dset,
+int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 			      const char *fname, PRN *prn);
 
-void gretl_string_table_destroy (gretl_string_table *st);
+void gretl_string_table_destroy (gretl_string_table *gst);
 
-void gretl_string_table_add_extra (gretl_string_table *st, PRN *prn);
+void gretl_string_table_add_extra (gretl_string_table *gst, PRN *prn);
 
-int gretl_string_table_reset_column_id (gretl_string_table *st, 
+int gretl_string_table_reset_column_id (gretl_string_table *gst, 
 					int oldid, int newid);
+
+series_table *series_table_new (char **strs, int n_strs);
+
+void series_table_destroy (series_table *st);
+
+double series_table_get_value (series_table *st, const char *s);
+
+const char *series_table_get_string (series_table *st, double val);
+
+const char **series_table_get_strings (series_table *st, int *n_strs);
 
 void gretl_insert_builtin_string (const char *name, const char *s);
 

@@ -450,4 +450,15 @@ void series_increment_stack_level (DATASET *dset, int i);
 
 void series_decrement_stack_level (DATASET *dset, int i);
 
+void series_attach_string_table (DATASET *dset, int i, void *ptr);
+
+int series_has_string_table (const DATASET *dset, int i);
+
+const char *series_get_string_val (const DATASET *dset, int i, int t);
+
+double series_decode_string (const DATASET *dset, int i, const char *s);
+
+const char **series_get_string_vals (const DATASET *dset, int i,
+				     int *n_strs);
+
 #endif /* DATASET_H */

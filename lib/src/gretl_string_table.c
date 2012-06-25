@@ -24,107 +24,112 @@
 
 #include <glib.h>
 
-typedef struct _col_table col_table;
-
-struct _col_table {
-    int idx;          /* column index (variable number) */
+struct _series_table {
     int n_strs;       /* number of strings in table */
     char **strs;      /* saved strings */
-    GHashTable *hash; /* hash table for quick lookup */
+    GHashTable *ht;   /* hash table for quick lookup */
 };
 
 struct _gretl_string_table {
-    int n_cols;       /* number of columns (variables) included */
-    col_table **cols; /* column tables (see above) */
-    char *extra;      /* extra information */
+    int *cols_list;       /* list of included columns */
+    series_table **cols;  /* per-column tables (see above) */
+    char *extra;          /* extra information, if any */
 };
 
-static col_table *col_table_new (int colnum)
+static series_table *series_table_alloc (void)
 {
-    col_table *ct = malloc(sizeof *ct);
+    series_table *st = malloc(sizeof *st);
 
-    if (ct != NULL) {
-	ct->strs = NULL;
-	ct->n_strs = 0;
-	ct->idx = colnum;
-	ct->hash = g_hash_table_new(g_str_hash, g_str_equal);
+    if (st != NULL) {
+	st->strs = NULL;
+	st->n_strs = 0;
+	st->ht = g_hash_table_new(g_str_hash, g_str_equal);
     }
 
-    return ct;
+    return st;
+}
+
+static gretl_string_table *gretl_string_table_alloc (void)
+{
+    gretl_string_table *gst = malloc(sizeof *gst);
+
+    if (gst != NULL) {
+	gst->cols_list = NULL;
+	gst->cols = NULL;
+	gst->extra = NULL;
+    }
+
+    return gst;
 }
 
 /**
  * gretl_string_table_new:
- * @err: location to receive error code.
- *
- * Returns: a pointer to a newly allocated string table.
- */
-
-gretl_string_table *gretl_string_table_new (int *err)
-{
-    gretl_string_table *st = malloc(sizeof *st);
-
-    if (st == NULL) {
-	*err = E_ALLOC;
-    } else {
-	st->cols = NULL;
-	st->n_cols = 0;
-	st->extra = NULL;
-    }
-
-    return st;
-}
-
-/**
- * gretl_string_table_new_from_cols_list:
- * @list: list of 'columns' (variables) whose values are to be 
- * given a string representation.  
+ * @list: list of series IDs whose values are to be 
+ * given a string representation. or NULL. 
  * 
  * These values in @list should correspond to the 0-based indices 
- * of the variables in question within the dataset.  For example, 
+ * of the series in question within the dataset.  For example, 
  * if strings are to be recorded for variables 2, 5 and 10 the
- * @list argument would be {3, 2, 5, 10}.
+ * @list argument would be {3, 2, 5, 10}. If NULL is passed for
+ * @list the return value is an initialized, empty string table.
  *
- * Returns: pointer to a newly allocated string table
- * containing a column member for each ID in @list.
+ * Returns: pointer to a newly allocated string table or NULL
+ * on failure.
  */
 
-gretl_string_table *string_table_new_from_cols_list (int *list)
+gretl_string_table *gretl_string_table_new (const int *list)
 {
-    gretl_string_table *st;
-    int ncols = list[0];
-    int i, j, err = 0;
+    gretl_string_table *gst;
+    int ncols = 0;
+    int err = 0;
 
-    st = gretl_string_table_new(&err);
-    if (st == NULL) {
+    gst = gretl_string_table_alloc();
+    if (gst == NULL) {
 	return NULL;
     }
 
-    st->cols = malloc(ncols * sizeof *st->cols);
-    if (st->cols == NULL) {
-	free(st);
-	st = NULL;
-    } else {
-	st->n_cols = ncols;
-	for (i=0; i<ncols; i++) {
-	    st->cols[i] = col_table_new(list[i+1]);
-	    if (st->cols[i] == NULL) {
-		for (j=0; j<i; j++) {
-		    free(st->cols[j]);
+    if (list != NULL && list[0] > 0) {
+	gst->cols_list = gretl_list_copy(list);
+	if (gst->cols_list == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    ncols = list[0];
+	}
+    }
+
+    if (ncols > 0) {
+	gst->cols = malloc(ncols * sizeof *gst->cols);
+	if (gst->cols == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    int i, j;
+
+	    for (i=0; i<ncols && !err; i++) {
+		gst->cols[i] = series_table_alloc();
+		if (gst->cols[i] == NULL) {
+		    err = E_ALLOC;
+		    for (j=0; j<i; j++) {
+			free(gst->cols[j]);
+		    }
+		    free(gst->cols);
 		}
-		free(st->cols);
-		free(st);
-		st = NULL;
 	    } 
 	}
     }
 
-    return st;
+    if (err) {
+	free(gst->cols_list);
+	free(gst);
+	gst = NULL;
+    }
+
+    return gst;
 }
 
-static int col_table_get_index (const col_table *ct, const char *s)
+static int series_table_get_index (const series_table *st, 
+				   const char *s)
 {
-    gpointer p = g_hash_table_lookup(ct->hash, s);
+    gpointer p = g_hash_table_lookup(st->ht, s);
     int ret = 0;
 
     if (p != NULL) {
@@ -134,52 +139,131 @@ static int col_table_get_index (const col_table *ct, const char *s)
     return ret;
 }
 
-static int col_table_add_string (col_table *ct, const char *s)
+/**
+ * series_table_get_value:
+ * @st: a gretl series table.
+ * @s: the string to look up.
+ *
+ * Returns: the numerical value associated with @s in the 
+ * given series table, or #NADBL in case there is no match.
+ */
+
+double series_table_get_value (series_table *st, const char *s)
 {
-    char **strs;
-    int n = ct->n_strs + 1;
-    int ret = n;
+    int k = series_table_get_index(st, s);
 
-    strs = realloc(ct->strs, n * sizeof *strs);
-    if (strs == NULL) {
-	ret = -1;
-    } else {
-	ct->strs = strs;
-	strs[n-1] = gretl_strdup(s);
+    return (k > 0)? (double) k : NADBL;
+}
 
-	if (strs[n-1] == NULL) {
-	    ret = -1;
-	} else {
-	    ct->n_strs += 1;
-	    g_hash_table_insert(ct->hash, (gpointer) strs[n-1], 
-				GINT_TO_POINTER(n));
+/**
+ * series_table_get_string:
+ * @st: a gretl series table.
+ * @val: the numerical value to look up.
+ *
+ * Returns: the string associated with @val in the 
+ * given series table, or NULL in case there is no match.
+ */
+
+const char *series_table_get_string (series_table *st, double val)
+{
+    const char *ret = NULL;
+
+    if (!na(val)) {
+	int k = val;
+
+	if (k > 0 && k <= st->n_strs) {
+	    ret = st->strs[k-1];
 	}
     }
 
     return ret;
 }
 
-static col_table *
-gretl_string_table_add_column (gretl_string_table *st, int colnum)
+/**
+ * series_table_get_strings:
+ * @st: a gretl series table.
+ * @n_strs: location to receive the number of strings.
+ *
+ * Returns: the array of strings associated with @st.
+ */
+
+const char **series_table_get_strings (series_table *st, int *n_strs)
 {
-    col_table **cols;
-    int n = st->n_cols + 1;
+    *n_strs = st->n_strs;
+    return (const char **) st->strs;
+}
 
-    cols = realloc(st->cols, n * sizeof *cols);
-    if (cols == NULL) return NULL;
+static int series_table_add_string (series_table *st, 
+				    const char *s)
+{
+    int n, err;
 
-    st->cols = cols;
-    cols[n-1] = col_table_new(colnum);
-    if (cols[n-1] == NULL) return NULL;
+    err = strings_array_add(&st->strs, &st->n_strs, s);
 
-    st->n_cols += 1;
+    if (err) {
+	n = -1;
+    } else {
+	n = st->n_strs;
+	g_hash_table_insert(st->ht, (gpointer) st->strs[n-1], 
+			    GINT_TO_POINTER(n));
+    }
 
-    return cols[n-1];
+    return n;
+}
+
+series_table *series_table_new (char **strs, int n_strs)
+{
+    series_table *st = series_table_alloc();
+    int i;
+
+    if (st != NULL) {
+	st->n_strs = n_strs;
+	st->strs = strs;
+	for (i=0; i<n_strs; i++) {
+	    g_hash_table_insert(st->ht, (gpointer) st->strs[i], 
+				GINT_TO_POINTER(i+1));
+	}
+    }
+
+    return st;
+}
+
+static series_table *
+gretl_string_table_add_column (gretl_string_table *gst, int colnum)
+{
+    series_table **cols;
+    int *newlist;
+    int n, err = 0;
+
+    newlist = gretl_list_append_term(&gst->cols_list, colnum);
+    if (newlist == NULL) {
+	return NULL;
+    }
+
+    n = gst->cols_list[0];
+
+    cols = realloc(gst->cols, n * sizeof *cols);
+    if (cols == NULL) {
+	err = E_ALLOC;
+    } else {
+	gst->cols = cols;
+	cols[n-1] = series_table_alloc();
+	if (cols[n-1] == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
+	gst->cols_list[0] -= 1;
+	return NULL;
+    } else {
+	return cols[n-1];
+    }
 }
 
 /**
  * gretl_string_table_index:
- * @st: a gretl string table.
+ * @gst: a gretl string table.
  * @s: the string to look up or add.
  * @col: index of the column to be accessed or created.
  * @addcol: non-zero to indicate that a column should be
@@ -198,35 +282,35 @@ gretl_string_table_add_column (gretl_string_table *st, int colnum)
  */
 
 int 
-gretl_string_table_index (gretl_string_table *st, const char *s, int col,
-			  int addcol, PRN *prn)
+gretl_string_table_index (gretl_string_table *gst, const char *s, 
+			  int col, int addcol, PRN *prn)
 {
-    col_table *ct = NULL;
+    series_table *st = NULL;
     int i, idx = 0;
 
-    if (st == NULL) return idx;
+    if (gst == NULL) return idx;
 
-    for (i=0; i<st->n_cols; i++) {
-	if (st->cols[i]->idx == col) {
-	    ct = st->cols[i];
+    for (i=1; i<=gst->cols_list[0]; i++) {
+	if (gst->cols_list[i] == col) {
+	    st = gst->cols[i-1];
 	    break;
 	}
     }
 
-    if (ct != NULL) {
+    if (st != NULL) {
 	/* there's a table for this column already */
-	idx = col_table_get_index(ct, s);
+	idx = series_table_get_index(st, s);
     } else if (addcol) {
 	/* no table for this column yet: start one now */
-	ct = gretl_string_table_add_column(st, col);
-	if (ct != NULL) {
+	st = gretl_string_table_add_column(gst, col);
+	if (st != NULL) {
 	    pprintf(prn, _("variable %d: translating from strings to "
 			   "code numbers\n"), col);
 	}
     }
 
-    if (idx == 0 && ct != NULL) {
-	idx = col_table_add_string(ct, s);
+    if (idx == 0 && st != NULL) {
+	idx = series_table_add_string(st, s);
     }
 
     return idx;
@@ -238,15 +322,15 @@ gretl_string_table_index (gretl_string_table *st, const char *s, int col,
    the variable in question. 
 */
 
-int gretl_string_table_reset_column_id (gretl_string_table *st, 
+int gretl_string_table_reset_column_id (gretl_string_table *gst, 
 					int oldid, int newid)
 {
-    if (st != NULL) {
+    if (gst != NULL) {
 	int i;
 
-	for (i=0; i<st->n_cols; i++) {
-	    if (st->cols[i]->idx == oldid) {
-		st->cols[i]->idx = newid;
+	for (i=1; i<=gst->cols_list[0]; i++) {
+	    if (gst->cols_list[i] == oldid) {
+		gst->cols_list[i] = newid;
 		return 0;
 	    }
 	}
@@ -255,72 +339,79 @@ int gretl_string_table_reset_column_id (gretl_string_table *st,
     return E_DATA;
 }
 
-static void col_table_destroy (col_table *ct)
-{
-    int i;
-
-    if (ct == NULL) return;
-
-    for (i=0; i<ct->n_strs; i++) {
-	free(ct->strs[i]);
-    }
-    free(ct->strs);
-
-    if (ct->hash != NULL) {
-	g_hash_table_destroy(ct->hash);
-    }
-
-    free(ct);
-}
-
 /**
- * gretl_string_table_destroy:
- * @st: gretl string table.
+ * series_table_destroy:
+ * @st: series string table.
  *
  * Frees all resources associated with @st.
  */
 
-void gretl_string_table_destroy (gretl_string_table *st)
+void series_table_destroy (series_table *st)
 {
-    int i;
-
-    if (st == NULL) return;
-
-    for (i=0; i<st->n_cols; i++) {
-	col_table_destroy(st->cols[i]);
+    if (st != NULL) {
+	strings_array_free(st->strs, st->n_strs);
+	if (st->ht != NULL) {
+	    g_hash_table_destroy(st->ht);
+	}
+	free(st);
     }
-    free(st->cols);
-
-    if (st->extra != NULL) {
-	free(st->extra);
-    }
-
-    free(st);
 }
 
 /**
+ * gretl_string_table_destroy:
+ * @gst: gretl string table.
+ *
+ * Frees all resources associated with @gst.
+ */
+
+void gretl_string_table_destroy (gretl_string_table *gst)
+{
+    int i, ncols;
+
+    if (gst == NULL) return;
+
+    ncols = (gst->cols_list != NULL)? gst->cols_list[0] : 0;
+
+    for (i=0; i<ncols; i++) {
+	series_table_destroy(gst->cols[i]);
+    }
+    free(gst->cols);
+
+    free(gst->cols_list);
+
+    if (gst->extra != NULL) {
+	free(gst->extra);
+    }
+
+    free(gst);
+}
+
+#define SAVE_STRING_TABLES 1
+
+/**
  * gretl_string_table_print:
- * @st: gretl string table.
+ * @gst: gretl string table.
  * @dset: dataset information (for names of variables).
- * @fname: name of file to which to print.
+ * @fname: name of the datafile to which the table pertains.
  * @prn: gretl printer (or %NULL).
  *
- * Prints table @st to a file called @fname.
+ * Prints table @gst to a file named string_table.txt in the
+ * user's working directory.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_string_table_print (gretl_string_table *st, DATASET *dset,
+int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 			      const char *fname, PRN *prn)
 {
-    const col_table *ct;
+    series_table *st;
     const char *fshort;
     char stname[MAXLEN];
     FILE *fp;
-    int i, j;
+    int i, j, ncols = 0;
     int err = 0;
 
-    if (st == NULL) {
+    if (gst == NULL) {
 	return E_DATA;
     }
 
@@ -339,28 +430,41 @@ int gretl_string_table_print (gretl_string_table *st, DATASET *dset,
 	fprintf(fp, "%s\n", fname);
     }
 
-    if (st->n_cols > 0) {
+    ncols = (gst->cols_list != NULL)? gst->cols_list[0] : 0;
+
+    if (ncols > 0) {
 	fputc('\n', fp);
 	fputs(_("One or more non-numeric variables were found.\n"
 		"Gretl cannot handle such variables directly, so they\n"
 		"have been given numeric codes as follows.\n\n"), fp);
-	if (st->extra != NULL) {
+	if (gst->extra != NULL) {
 	    fputs(_("In addition, some mappings from numerical values to string\n"
 		    "labels were found, and are printed below.\n\n"), fp);
 	}
     }
     
-    for (i=0; i<st->n_cols; i++) {
-	ct = st->cols[i];
-	fprintf(fp, _("String code table for variable %d (%s):\n"), 
-		ct->idx, dset->varname[ct->idx]);
-	for (j=0; j<ct->n_strs; j++) {
-	    fprintf(fp, "%3d = '%s'\n", j+1, ct->strs[j]);
+    for (i=0; i<ncols; i++) {
+	int vi = gst->cols_list[i+1];
+
+	st = gst->cols[i];
+	if (i > 0) {
+	    fputc('\n', fp);
 	}
+	fprintf(fp, _("String code table for variable %d (%s):\n"), 
+		vi, dset->varname[vi]);
+	for (j=0; j<st->n_strs; j++) {
+	    fprintf(fp, "%3d = '%s'\n", j+1, st->strs[j]);
+	}
+#if SAVE_STRING_TABLES
+	if (dset->varinfo != NULL) {
+	    series_attach_string_table(dset, vi, st);
+	    gst->cols[i] = NULL;
+	}
+#endif
     }
 
-    if (st->extra != NULL) {
-	fputs(st->extra, fp);
+    if (gst->extra != NULL) {
+	fputs(gst->extra, fp);
     }
 
     pprintf(prn, _("String code table written to\n %s\n"), stname);
@@ -373,18 +477,18 @@ int gretl_string_table_print (gretl_string_table *st, DATASET *dset,
 
 /**
  * gretl_string_table_add_extra:
- * @st: gretl string table.
+ * @gst: gretl string table.
  * @prn: gretl printer.
  *
- * Steals the printing buffer from @prn and adds it to @st.
- * The buffer will be appended when @st is printed via
+ * Steals the printing buffer from @prn and adds it to @gst.
+ * The buffer will be appended when @gst is printed via
  * gretl_string_table_print().
  */
 
-void gretl_string_table_add_extra (gretl_string_table *st, PRN *prn)
+void gretl_string_table_add_extra (gretl_string_table *gst, PRN *prn)
 {
-    if (st != NULL && prn != NULL) {
-	st->extra = gretl_print_steal_buffer(prn);
+    if (gst != NULL && prn != NULL) {
+	gst->extra = gretl_print_steal_buffer(prn);
     }
 }
 

@@ -37,6 +37,7 @@ struct VARINFO_ {
     char compact_method;
     char stack_level; /* FIXME should be int? */
     char line_width;
+    series_table *st;
 };
 
 static int dataset_changed;
@@ -129,6 +130,9 @@ void dataset_destroy_obs_markers (DATASET *dset)
 
 static void free_varinfo (DATASET *dset, int v)
 {
+    if (dset->varinfo[v]->st != NULL) {
+	series_table_destroy(dset->varinfo[v]->st);
+    }
     free(dset->varinfo[v]);
 }
 
@@ -291,6 +295,7 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     vinfo->compact_method = COMPACT_NONE;
     vinfo->line_width = 1;
     vinfo->stack_level = gretl_function_depth();
+    vinfo->st = NULL;
 }
 
 /**
@@ -3624,4 +3629,55 @@ void series_increment_stack_level (DATASET *dset, int i)
 void series_decrement_stack_level (DATASET *dset, int i)
 {
     dset->varinfo[i]->stack_level -= 1;
+}
+
+void series_attach_string_table (DATASET *dset, int i, void *ptr)
+{
+    dset->varinfo[i]->st = ptr;
+}
+
+int series_has_string_table (const DATASET *dset, int i)
+{
+    if (i > 0 && i < dset->v) {
+	return dset->varinfo[i]->st != NULL;
+    } else {
+	return 0;
+    }
+}
+
+const char *series_get_string_val (const DATASET *dset, int i, int t)
+{
+    const char *ret = NULL;
+
+    if (i > 0 && i < dset->v && dset->varinfo[i]->st != NULL) {
+	ret = series_table_get_string(dset->varinfo[i]->st, 
+				      dset->Z[i][t]);
+    } 
+
+    return ret;
+}
+
+double series_decode_string (const DATASET *dset, int i, const char *s)
+{
+    double ret = NADBL;
+
+    if (i > 0 && i < dset->v && dset->varinfo[i]->st != NULL) {
+	ret = series_table_get_value(dset->varinfo[i]->st, s);
+    } 
+
+    return ret;
+}
+
+const char **series_get_string_vals (const DATASET *dset, int i,
+				     int *n_strs)
+{
+    const char **strs = NULL;
+
+    *n_strs = 0;
+
+    if (i > 0 && i < dset->v && dset->varinfo[i]->st != NULL) {
+	strs = series_table_get_strings(dset->varinfo[i]->st, n_strs);
+    } 
+
+    return strs;    
 }

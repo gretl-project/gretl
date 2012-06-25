@@ -1824,11 +1824,11 @@ static int maybe_add_string_table (spss_data *sdat)
 		    list[j++] = sdat->vars[i].gretl_index;
 		}
 	    }
-	    sdat->st = string_table_new_from_cols_list(list);
+	    sdat->st = gretl_string_table_new(list);
 	    free(list);
 	}
     } else if (sdat->nlabelsets > 0) {
-	sdat->st = gretl_string_table_new(&err);
+	sdat->st = gretl_string_table_new(NULL);
     }
 
     return err;
