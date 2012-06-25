@@ -3760,7 +3760,8 @@ static void panel_copy_var (DATASET *targ, int targv,
     }
 }
 
-static void make_reduced_data_info (DATASET *targ, DATASET *src, int order)
+static void make_reduced_data_info (DATASET *targ, DATASET *src, 
+				    int order)
 {
     targ->pd = src->pd - order;
     ntodate(targ->stobs, src->t1 + order, src);

@@ -1428,27 +1428,59 @@ static NODE *compare_strings (NODE *l, NODE *r, int f, parser *p)
 
 #define annual_data(p) (p->pd == 1 && p->structure == TIME_SERIES)
 
-/* try interpreting the string on the right as identifying
-   an observation number */
+/* 
+   We're looking at a comparison, with either a series on the left and
+   a string on the right or vice versa.  This can work if the series
+   in question is string-valued, as in
 
-static NODE *number_string_calc (NODE *l, NODE *r, int f, parser *p)
+     series foo = x=="strval"
+
+   It can also work if the string is an observation marker, as in
+
+     series foo = obs>="CA"
+*/
+
+static NODE *series_string_calc (NODE *l, NODE *r, int f, parser *p)
 {
+    double xt = NADBL, yt = NADBL;
+    double *x = NULL, *y = NULL;
+    double *alt;
+    const char *strval;
+    int vnum, t, t1, t2;
     NODE *ret;
-    double yt, xt = (l->t == NUM)? l->v.xval : 0.0;
-    double *x = NULL;
-    int t, t1, t2;
 
-    if (annual_data(p->dset)) {
-	yt = get_date_x(p->dset->pd, r->v.str);
+    if (r->t == STR) {
+	strval = r->v.str;
+	vnum = l->vnum;
+	x = l->v.xvec;
+	alt = &yt;
     } else {
-	t = dateton(r->v.str, p->dset);
-	if (t >= 0) {
-	    yt = t + 1;
+	strval = l->v.str;
+	vnum = r->vnum;
+	y = r->v.xvec;
+	alt = &xt;
+    }
+
+    if (vnum > 0 && series_has_string_table(p->dset, vnum)) {
+	*alt = series_decode_string(p->dset, vnum, strval);
+    }
+
+    if (na(*alt)) {
+	/* try for an observation string */
+	if (annual_data(p->dset)) {
+	    *alt = get_date_x(p->dset->pd, strval);
 	} else {
-	    gretl_errmsg_sprintf("%s: not a valid observation", r->v.str);
-	    p->err = E_PARSE;
-	    return NULL;
+	    t = dateton(strval, p->dset);
+	    if (t >= 0) {
+		*alt = t + 1;
+	    } 
 	}
+    }
+
+    if (na(*alt)) {
+	gretl_errmsg_sprintf(_("got invalid field '%s'"), strval);
+	p->err = E_TYPES;
+	return NULL;
     }
 
     ret = aux_vec_node(p, p->dset->n);
@@ -1456,19 +1488,14 @@ static NODE *number_string_calc (NODE *l, NODE *r, int f, parser *p)
 	return NULL;
     }
 
-#if EDEBUG
-    fprintf(stderr, "number_string_calc: l=%p, r=%p, ret=%p\n", 
-	    (void *) l, (void *) r, (void *) ret);
-#endif
-
     t1 = (autoreg(p))? p->obs : p->dset->t1;
     t2 = (autoreg(p))? p->obs : p->dset->t2;
-
-    if (l->t == VEC) x = l->v.xvec;
 
     for (t=t1; t<=t2; t++) {
 	if (x != NULL) {
 	    xt = x[t];
+	} else if (y != NULL) {
+	    yt = y[t];
 	}
 	ret->v.xvec[t] = xy_calc(xt, yt, f, VEC, p);
     }
@@ -8490,9 +8517,9 @@ static NODE *eval (NODE *t, parser *p)
 		   (l->t == VEC && r->t == MAT)) {
 	    ret = matrix_series_calc(l, r, t->t, p);
 	} else if (t->t >= B_EQ && t->t <= B_NEQ &&
-		   (l->t == VEC || l->t == NUM) && 
-		   r->t == STR) {
-	    ret = number_string_calc(l, r, t->t, p);
+		   ((l->t == VEC && r->t == STR) ||
+		    (l->t == STR && r->t == VEC))) {
+	    ret = series_string_calc(l, r, t->t, p);
 	} else if ((t->t == B_AND || t->t == B_OR || t->t == B_SUB) &&
 		   ok_list_node(l) && ok_list_node(r)) {
 	    ret = list_and_or(l, r, t->t, p);

@@ -1665,13 +1665,14 @@ char *get_obs_string (char *obs, int t, const DATASET *dset)
  * obs_str_to_double:
  * @obs: string representation of observation number.
  *
- * Returns: the floating-point counterpart of @obs.
+ * Returns: the floating-point counterpart of @obs,
+ * or #NADBL on invalid input.
  */
 
 double obs_str_to_double (const char *obs)
 {
-    char tmp[OBSLEN];
-    char *p;
+    char *p, *test, tmp[OBSLEN];
+    double ret;
 
     strcpy(tmp, obs);
     p = tmp;
@@ -1683,7 +1684,17 @@ double obs_str_to_double (const char *obs)
 	p++;
     }
 
-    return dot_atof(tmp);
+    errno = 0;
+
+    gretl_push_c_numeric_locale();
+    ret = strtod(tmp, &test);
+    gretl_pop_c_numeric_locale();
+ 
+    if (*test != '\0' || errno == ERANGE) {
+	ret = NADBL;
+    }
+
+    return ret;
 }
 
 /**
