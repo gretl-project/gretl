@@ -872,7 +872,7 @@ char **gretl_string_split_quoted (const char *s, int *n, int *err)
 char *gretl_trunc (char *str, size_t n)
 {
     if (n < strlen(str)) {
-	str[n] = 0;
+	str[n] = '\0';
     }
 
     return str;

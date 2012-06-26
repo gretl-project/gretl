@@ -343,17 +343,21 @@ void print_freq_test (const FreqDist *freq, PRN *prn)
 /**
  * print_freq:
  * @freq: gretl frequency distribution struct.
+ * @varno: ID number of the series in question.
+ * @dset: pointer to dataset.
  * @prn: gretl printing struct.
  *
  * Print frequency distribution to @prn.
  */
 
-void print_freq (const FreqDist *freq, PRN *prn)
+void print_freq (const FreqDist *freq, int varno, const DATASET *dset, 
+		 PRN *prn)
 {
     int i, k, nlw, K;
     int total, valid, missing;
     char word[64];
     double f, cumf = 0;
+    const char **labels = NULL;
 
     if (freq == NULL) {
 	return;
@@ -373,11 +377,25 @@ void print_freq (const FreqDist *freq, PRN *prn)
 	return;
     } 
 
+    if (varno > 0 && dset != NULL && series_has_string_table(dset, varno)) {
+	int n_labels;
+
+	labels = series_get_string_vals(dset, varno, &n_labels);
+	if (n_labels != freq->numbins) {
+	    labels = NULL;
+	}
+    }
+
     if (freq->discrete) {
 	pputs(prn, _("\n          frequency    rel.     cum.\n\n"));
 
 	for (k=0; k<=K; k++) {
-	    sprintf(word, "%4g", freq->midpt[k]);
+	    if (labels != NULL) {
+		*word = '\0';
+		gretl_utf8_strncat(word, labels[k], 8);
+	    } else {
+		sprintf(word, "%4g", freq->midpt[k]);
+	    }
 	    pputs(prn, word);
 	    nlw = 10 - strlen(word);
 	    bufspace(nlw, prn);

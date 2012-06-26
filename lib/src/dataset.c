@@ -200,7 +200,7 @@ void clear_datainfo (DATASET *dset, int code)
 
 /**
  * destroy_dataset:
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
  *
  * Frees all resources associated with @dset.
  */
@@ -216,8 +216,8 @@ void destroy_dataset (DATASET *dset)
 
 /**
  * copy_dataset_obs_info:
- * @targ: target dataset information struct.
- * @src: source dataset information struct.
+ * @targ: pointer to target dataset.
+ * @src: pointer to source dataset.
  *
  * Sets the "date" or observations information in @targ to that
  * found in @src.
@@ -234,7 +234,7 @@ void copy_dataset_obs_info (DATASET *targ, const DATASET *src)
 
 /**
  * dataset_obs_info_default:
- * @dset: dataset information struct.
+ * @dset: pointer to dataset.
  *
  * Sets the "date" or observations information in @dset to a
  * simple default of cross-sectional data, observations 1 to n,
@@ -252,7 +252,7 @@ void dataset_obs_info_default (DATASET *dset)
 
 /**
  * dataset_allocate_obs_markers:
- * @dset: dataset information struct
+ * @dset: pointer to dataset
  *
  * Allocates space in @dset for strings indentifying the
  * observations and initializes all of the markers to empty
@@ -325,7 +325,7 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
 
 /**
  * dataset_allocate_varnames:
- * @dset: dataset information struct.
+ * @dset: pointer to dataset.
  *
  * Given a blank @dset, which should have been obtained using
  * datainfo_new(), allocate space for the names of variables.
@@ -484,9 +484,9 @@ DATASET *create_auxiliary_dataset (int nvar, int nobs)
 
 /**
  * allocate_Z:
- * @dset: dataset information struct.
+ * @dset: pointer to dataset.
  *
- * Allocates the two-dimensional array to which @pZ points,
+ * Allocates the two-dimensional data array Z,
  * based on the v (number of variables) and n (number of
  * observations) members of @dset.  The variable at 
  * position 0 is initialized to all 1s; other variables
@@ -521,7 +521,7 @@ int allocate_Z (DATASET *dset)
 
 /**
  * start_new_Z:
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
  * @resample: 1 if we're sub-sampling from a full data set, 0 otherwise.
  *
  * Initializes the data array within @dset (adding the constant in
@@ -696,7 +696,7 @@ static int real_periodic_dummy (const double *x, int n,
 /**
  * is_periodic_dummy:
  * @x: array to examine.
- * @dset: pointer to dataset information struct.
+ * @dset: pointer to dataset.
  *
  * Returns: 1 if @x is a periodic dummy variable,
  * 0 otherwise.
@@ -799,7 +799,7 @@ static void maybe_extend_dummies (DATASET *dset, int oldn)
 /**
  * dataset_add_observations:
  * @newobs: number of observations to add.
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
  * @opt: use OPT_A to attempt to recognize and
  * automatically extend simple deterministic variables such 
  * as a time trend and periodic dummy variables; 
@@ -915,7 +915,7 @@ static int real_insert_observation (int pos, DATASET *dset)
 /**
  * dataset_drop_observations:
  * @n: number of observations to drop.
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
  *
  * Deletes @n observations from the end of each series in the 
  * dataset.
@@ -966,7 +966,7 @@ int dataset_drop_observations (int n, DATASET *dset)
 
 /**
  * dataset_shrink_obs_range:
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
  *
  * Truncates the range of observations in the dataset, based on
  * the current values of the t1 and t2 members of @dset.
@@ -1177,17 +1177,16 @@ int dataset_add_NA_series (DATASET *dset)
 /**
  * dataset_add_allocated_series:
  * @x: one-dimensional data array.
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
  *
  * Adds @x as an additional series in the dataset.
  * The array @x is not copied; it should be treated as
- * belonging to @pZ after this operation.
+ * belonging to @dset after this operation.
  *
  * Returns: 0 on success, E_ALLOC on error.
  */
 
-int 
-dataset_add_allocated_series (double *x, DATASET *dset)
+int dataset_add_allocated_series (double *x, DATASET *dset)
 {
     return real_add_series(1, x, dset);
 }
@@ -1196,7 +1195,7 @@ dataset_add_allocated_series (double *x, DATASET *dset)
  * dataset_add_series_as:
  * @x: array to be added.
  * @newname: name to give the new variable.
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
  *
  * Adds to the dataset a new series with name @newname and
  * values given by @x.  The new variable is added at one
@@ -1239,7 +1238,7 @@ int dataset_add_series_as (double *x, const char *newname,
  * dataset_copy_variable_as:
  * @v: index number of variable to copy.
  * @newname: name to give the copy.
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
  *
  * Makes a copy of variable @v under the name @newname.
  * The copy exists in a variable namespace one level "deeper"
@@ -1355,7 +1354,7 @@ int overwrite_err (const char *name)
 /**
  * series_is_parent:
  * @dset: dataset information.
- * @v: ID number of variable to test.
+ * @v: ID number of series to test.
  * 
  * Returns: 1 if variable @v is "parent" to a transformed
  * variable (e.g. a log, lag or difference), othewise 0.
@@ -1378,8 +1377,8 @@ int series_is_parent (const DATASET *dset, int v)
 /**
  * dataset_rename_series:
  * @dset: dataset information.
- * @v: ID number of the variable to be renamed.
- * @name: new name to give the variable.
+ * @v: ID number of the series to be renamed.
+ * @name: new name to give the series.
  * 
  * Returns: 0 on success, non-zero on error.
  */
@@ -1405,7 +1404,7 @@ int dataset_rename_series (DATASET *dset, int v, const char *name)
 
 /**
  * dataset_replace_series:
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
  * @v: ID number of the series to be replaced.
  * @x: replacement values.
  * @descrip: replacement description.
@@ -1614,7 +1613,7 @@ static int *make_dollar_list (DATASET *dset, int *err)
 /**
  * dataset_drop_listed_variables:
  * @list: list of variable to drop, by ID number.
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
  * @renumber: location for return of information on whether
  * remaining variables have been renumbered as a result, or
  * NULL.
@@ -1690,7 +1689,7 @@ int dataset_drop_listed_variables (int *list,
 /**
  * dataset_drop_variable:
  * @v: ID number of variable to drop.
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
  *
  * Deletes variable @v from the dataset.  
  *
@@ -1777,7 +1776,7 @@ int dataset_renumber_variable (int v_old, int v_new,
 
 /**
  * dataset_destroy_hidden_variables:
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
  * @vmin: do not drop variables with ID numbers less than this.
  *
  * Deletes from the dataset any "hidden" variables that have
@@ -2067,7 +2066,7 @@ static int dataset_sort (const int *list, DATASET *dset,
 /**
  * dataset_drop_last_variables:
  * @delvars: number of variables to be dropped.
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
  *
  * Deletes from the dataset the number @delvars of variables 
  * that were added most recently (that have the highest ID numbers).
@@ -2321,7 +2320,7 @@ static int *list_to_array (const int *list, int *err)
  * dataset_stack_variables:
  * @vname: name for new variable, to be produced by stacking.
  * @line: instructions for stacking existing variables.
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
  * @prn: printing apparatus.
  *
  * Really for internal use. Don't worry about it.
@@ -2608,7 +2607,7 @@ static int found_log_parent (const char *s, char *targ)
 /**
  * series_is_log:
  * @dset: dataset information.
- * @i: ID number of variable.
+ * @i: ID number of series.
  * @parent: location to which to write the name of the
  * "parent" variable if any.
  *
@@ -2643,7 +2642,7 @@ int series_is_log (const DATASET *dset, int i, char *parent)
 /**
  * series_set_discrete:
  * @dset: pointer to data information struct.
- * @i: index number of variable.
+ * @i: index number of series.
  * @s: non-zero to mark variable as discrete, zero to 
  * mark as not discrete.
  *
@@ -2668,7 +2667,7 @@ void series_set_discrete (DATASET *dset, int i, int s)
 /**
  * series_set_linewidth:
  * @dset: pointer to data information struct.
- * @i: index number of variable.
+ * @i: index number of series.
  * @w: with of plot line.
  *
  * Set the line width for use when this variable is displayed
@@ -2685,7 +2684,7 @@ void series_set_linewidth (DATASET *dset, int i, int w)
 /**
  * series_get_linewidth:
  * @dset: pointer to data information struct.
- * @i: index number of variable.
+ * @i: index number of series.
  *
  * Returns: the line width set for use when graphing
  * variable @i.
@@ -3206,7 +3205,7 @@ int panel_sample_size (const DATASET *dset)
 
 /**
  * multi_unit_panel_sample:
- * @dset: pointer to data information struct.
+ * @dset: pointer to dataset.
  * 
  * Returns: 1 if the dataset is a panel and the current sample
  * range includes two or more individuals, otherwise 0.
@@ -3225,7 +3224,7 @@ int multi_unit_panel_sample (const DATASET *dset)
 
 /**
  * dataset_purge_missing_rows:
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
  * 
  * Removes empty rows from the dataset -- that is, observations
  * at which there are no non-missing values.  This is intended
@@ -3334,8 +3333,8 @@ int dataset_purge_missing_rows (DATASET *dset)
 
 /**
  * series_is_discrete:
- * @p: pointer to data information struct.
- * @i: index number of variable.
+ * @p: pointer to dataset.
+ * @i: index number of series.
  *
  * Returns: non-zero iff series @i should be treated as discrete.
  */
@@ -3347,8 +3346,8 @@ int series_is_discrete (const DATASET *dset, int i)
 
 /**
  * series_is_hidden:
- * @dset: pointer to data information struct.
- * @i: index number of variable.
+ * @dset: pointer to dataset.
+ * @i: index number of series.
  *
  * Returns: non-zero iff series @i is hidden.
  */
@@ -3360,8 +3359,8 @@ int series_is_hidden (const DATASET *dset, int i)
 
 /**
  * series_is_generated:
- * @dset: pointer to data information struct.
- * @i: index number of variable.
+ * @dset: pointer to dataset.
+ * @i: index number of series.
  *
  * Returns: non-zero iff series @i was generated using
  * a formula or transformation function.
@@ -3374,8 +3373,8 @@ int series_is_generated (const DATASET *dset, int i)
 
 /**
  * series_is_listarg:
- * @dset: pointer to data information struct.
- * @i: index number of variable.
+ * @dset: pointer to dataset.
+ * @i: index number of series.
  *
  * Returns: non-zero iff series @i has been marked as
  * belonging to a list argument to a function.
@@ -3388,8 +3387,8 @@ int series_is_listarg (const DATASET *dset, int i)
 
 /**
  * series_set_flag:
- * @dset: pointer to data information struct.
- * @i: index number of variable.
+ * @dset: pointer to dataset.
+ * @i: index number of series.
  * @flag: flag to set.
  *
  * Sets the given @flag on series @i.
@@ -3404,8 +3403,8 @@ void series_set_flag (DATASET *dset, int i, int flag)
 
 /**
  * series_unset_flag:
- * @dset: pointer to data information struct.
- * @i: index number of variable.
+ * @dset: pointer to dataset.
+ * @i: index number of series.
  * @flag: flag to remove.
  *
  * Unsets the given @flag on series @i.
@@ -3420,8 +3419,8 @@ void series_unset_flag (DATASET *dset, int i, int flag)
 
 /**
  * series_zero_flags:
- * @dset: pointer to data information struct.
- * @i: index number of variable.
+ * @dset: pointer to dataset.
+ * @i: index number of series.
  *
  * Sets flags on series @i to zero.
  */
@@ -3435,8 +3434,8 @@ void series_zero_flags (DATASET *dset, int i)
 
 /**
  * series_get_label:
- * @dset: pointer to data information struct.
- * @i: index number of variable.
+ * @dset: pointer to dataset.
+ * @i: index number of series.
  *
  * Returns: the descriptive label for series @i.
  */
@@ -3452,8 +3451,8 @@ const char *series_get_label (const DATASET *dset, int i)
 
 /**
  * series_get_display_name:
- * @dset: pointer to data information struct.
- * @i: index number of variable.
+ * @dset: pointer to dataset.
+ * @i: index number of series.
  *
  * Returns: the display name for series @i.
  */
@@ -3469,7 +3468,7 @@ const char *series_get_display_name (const DATASET *dset, int i)
 
 /**
  * series_get_parent_name:
- * @dset: pointer to data information struct.
+ * @dset: pointer to dataset.
  * @i: index number of series.
  *
  * Returns: the name of the "parent" of series @i
@@ -3490,7 +3489,7 @@ const char *series_get_parent_name (const DATASET *dset, int i)
 
 /**
  * series_get_parent_id:
- * @dset: pointer to data information struct.
+ * @dset: pointer to dataset.
  * @i: index number of series.
  *
  * Returns: the ID number of the "parent" of series @i
@@ -3531,8 +3530,8 @@ int series_get_transform (const DATASET *dset, int i)
 
 /**
  * series_get_compact_method:
- * @dset: pointer to data information struct.
- * @i: index number of variable.
+ * @dset: pointer to dataset.
+ * @i: index number of series.
  *
  * Returns: the compaction method set for series @i.
  */
@@ -3548,8 +3547,8 @@ int series_get_compact_method (const DATASET *dset, int i)
 
 /**
  * series_get_stack_level:
- * @dset: pointer to data information struct.
- * @i: index number of variable.
+ * @dset: pointer to dataset.
+ * @i: index number of series.
  *
  * Returns: the stack level of series @i.
  */
@@ -3636,6 +3635,16 @@ void series_attach_string_table (DATASET *dset, int i, void *ptr)
     dset->varinfo[i]->st = ptr;
 }
 
+/**
+ * series_has_string_table:
+ * @dset: pointer to dataset.
+ * @i: index number of series.
+ *
+ * Returns: 1 if series @i has a table of string values
+ * (that is, a mapping from numerical values to associated
+ * string values), otherwise 0.
+ */
+
 int series_has_string_table (const DATASET *dset, int i)
 {
     if (i > 0 && i < dset->v) {
@@ -3644,6 +3653,16 @@ int series_has_string_table (const DATASET *dset, int i)
 	return 0;
     }
 }
+
+/**
+ * series_get_string_val:
+ * @dset: pointer to dataset.
+ * @i: index number of series.
+ * @t: 0-based index of observation.
+ *
+ * Returns: the string associated with the numerical value of
+ * series @i at observation @t, or NULL if there is no such string.
+ */
 
 const char *series_get_string_val (const DATASET *dset, int i, int t)
 {
@@ -3657,6 +3676,16 @@ const char *series_get_string_val (const DATASET *dset, int i, int t)
     return ret;
 }
 
+/**
+ * series_decode_string:
+ * @dset: pointer to dataset.
+ * @i: index number of series.
+ * @s: string to decode.
+ *
+ * Returns: the numerical value associated with the string
+ * @s for series @i, or #NADBL if there's no such value.
+ */
+
 double series_decode_string (const DATASET *dset, int i, const char *s)
 {
     double ret = NADBL;
@@ -3668,16 +3697,31 @@ double series_decode_string (const DATASET *dset, int i, const char *s)
     return ret;
 }
 
+/**
+ * series_get_string_vals:
+ * @dset: pointer to dataset.
+ * @i: index number of series.
+ * @n_strs: location to receive the number of strings, or NULL.
+ *
+ * Returns: the array of strings associated with distinct numerical
+ * values of series @i, or NULL if there's no such array. The returned
+ * array should not be modified in any way; copy the strings first if 
+ * you need to modify them.
+ */
+
 const char **series_get_string_vals (const DATASET *dset, int i,
 				     int *n_strs)
 {
     const char **strs = NULL;
-
-    *n_strs = 0;
+    int n = 0;
 
     if (i > 0 && i < dset->v && dset->varinfo[i]->st != NULL) {
-	strs = series_table_get_strings(dset->varinfo[i]->st, n_strs);
+	strs = series_table_get_strings(dset->varinfo[i]->st, &n);
     } 
+
+    if (n_strs != NULL) {
+	*n_strs = n;
+    }
 
     return strs;    
 }

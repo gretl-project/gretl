@@ -2034,7 +2034,7 @@ int freqdist (int varno, const DATASET *dset,
 
     if (!err) {
 	if (!(opt & OPT_S)) {
-	    print_freq(freq, prn);
+	    print_freq(freq, varno, dset, prn);
 	} else if (dist) {
 	    record_freq_test(freq);
 	}
@@ -2614,7 +2614,7 @@ int model_error_dist (const MODEL *pmod, DATASET *dset,
 	if (opt & OPT_Q) {
 	    print_freq_test(freq, prn);
 	} else {
-	    print_freq(freq, prn); 
+	    print_freq(freq, 0, NULL, prn); 
 	}
 	free_freq(freq);
     }

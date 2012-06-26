@@ -4702,7 +4702,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
 	record_model_command_verbatim(pmod->ID);
 
 	if (!err) {
-	    print_freq(freq, prn);
+	    print_freq(freq, 0, NULL, prn);
 	    view_buffer_with_parent(vwin, prn, 78, 300, 
 				    _("gretl: residual dist."), 
 				    MODTEST, NULL);
@@ -4828,7 +4828,7 @@ void do_freq_dist (void)
 
 	if (bufopen(&prn) == 0) {
 	    tmp = gretl_window_title(_("frequency distribution"));
-	    print_freq(freq, prn);
+	    print_freq(freq, 0, NULL, prn);
 	    view_buffer(prn, 78, 340, tmp, FREQ, NULL);
 	    g_free(tmp);
 	}

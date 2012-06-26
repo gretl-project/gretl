@@ -184,7 +184,8 @@ const char *series_table_get_string (series_table *st, double val)
  * @st: a gretl series table.
  * @n_strs: location to receive the number of strings.
  *
- * Returns: the array of strings associated with @st.
+ * Returns: the array of strings associated with @st. These
+ * should not be modified in any way.
  */
 
 const char **series_table_get_strings (series_table *st, int *n_strs)
