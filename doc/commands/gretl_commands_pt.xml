@@ -1363,6 +1363,28 @@
     </description>
   </command>
 
+  <command name="cluster" section="Estimation" 
+	   label="Estimação de variância robusta" context="gui">
+    <description>
+      <para>
+	Se você selecionar a segunda opção então tem que fornecer o
+	nome de uma variável agrupadora. Esta variável deve ter pelo
+        menos dois valores distintos mas geralmente deve ter 
+        substancialmente menos valores distintos do que há observações
+	no intervalo da amostra.
+      </para>
+      <para>
+	O estimador de variância <quote>agrupação-robusta</quote> 
+        divide a amostra num núero de subconjuntos ou agrupamentos
+        de acordo com o valor tomado na variável selecionada. Em vez da
+        assumção clássica de que o erro é independente e identicamente
+        distribuido, este estimador permite que a variância do erro
+        seja diferente por agrupamento e também permite algum grau de
+        dependência do erro dentro de cada agrupamento.
+      </para>
+    </description>
+  </command>
+
   <command name="coeffsum" section="Tests" label="Soma de coeficientes">
 
     <usage>
