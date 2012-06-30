@@ -1478,8 +1478,11 @@
       </para>
       <para context="cli">
 	Se a ordem de desfasamento especificada é positiva, todos os testes
-	Dickey&ndash;Fuller usam essa ordem, com esta qualificação: se a opção <opt>--test-down</opt> for dada, o valor indicado é tomado como sendo o máximo e a ordem de desfasamento efectivamente usada em cada caso é obtida testando para
-        baixo. Ver o comando <cmdref targ="adf"/> para detalhes sobre este procedimento.
+	Dickey&ndash;Fuller usam essa ordem, com esta qualificação: se a 
+	opção <opt>--test-down</opt> for dada, o valor indicado é tomado 
+	como sendo o máximo e a ordem de desfasamento efectivamente usada em
+	cada caso é obtida testando para baixo. Ver o comando 
+	<cmdref targ="adf"/> para detalhes sobre este procedimento.
       </para>
       <para context="cli">
 	Por omissão, a regressão de cointegração contém uma constante.  Se
@@ -1551,7 +1554,7 @@
 	  <flag>--rc</flag>
 	  <effect>constante restringida</effect>
         </option>
-<option>
+	<option>
 	  <flag>--uc</flag>
 	  <effect>constante não restringida</effect>
         </option>
@@ -1593,12 +1596,26 @@
 
     <description>
       <para>
-	Executa o teste de Johansen para a cointegração entre as variáveis em <repl>listaY</repl> para a dada ordem de desfasamento.  Para detalhes sobre este teste ver <guideref targ="chap:vecm"/> ou <cite
-	key="hamilton94">Hamilton (1994)</cite>, Capítulo 20. Os valores p são calculados usando a aproximação gama de Doornik <cite key="doornik98" p="true">(Doornik, 1998)</cite>. São mostrados dois conjuntos de valores p para o teste traço, valores assimtóticos imediatos e valores ajustados para o tamanho da amostra.  Por omissão, o acessor <lit>$pvalue</lit> obtém a variante ajustada, mas se opção <opt>--asy</opt> for dada, pode ser usado para registar os valores assimtóticos.
+	Executa o teste de Johansen para a cointegração entre as
+	variáveis em <repl>listaY</repl> para a dada ordem de 
+	desfasamento.  Para detalhes sobre este teste ver 
+	<guideref targ="chap:vecm"/> ou <cite key="hamilton94">Hamilton (1994)</cite>,
+	Capítulo 20. Os valores p são calculados usando a aproximação
+	gama de Doornik <cite key="doornik98" p="true">(Doornik, 1998)</cite>.
+	 São mostrados dois conjuntos de valores p para o teste traço,
+	valores assimtóticos imediatos e valores ajustados para o 
+	tamanho da amostra.  Por omissão, o acessor <lit>$pvalue</lit>
+	obtém a variante ajustada, mas se opção <opt>--asy</opt> for 
+	dada, pode ser usado para registar os valores assimtóticos.
       </para>
 
       <para context="gui">
-	Efectua o teste de Johansen para a cointegração entre as variáveis listadas para a ordem de desfasamento selecionada.  Para detalhes sobre este teste ver, por exemplo, o livro de Hamilton, <book>Time Series Analysis</book> (1994), Capítulo 20.  Os valores p são calculados usando a aproximação gama de  Doornik.
+	Efectua o teste de Johansen para a cointegração entre as
+	variáveis listadas para a ordem de desfasamento selecionada.
+	  Para detalhes sobre este teste ver, por exemplo, o livro 
+	de Hamilton, <book>Time Series Analysis</book> (1994), 
+	Capítulo 20.  Os valores p são calculados usando a aproximação
+	gama de  Doornik.
       </para>
 
       <para context="cli">
@@ -1632,12 +1649,21 @@
 
 <para context="cli">
 	As listas opcionais <repl>listaX</repl> e <repl>listaRx</repl>
-	permite-lhe controlar as variáveis exógenas: estas entram no sistema como não restringidas (<repl>listaX</repl>) ou
-	restringidas ao espaço de cointegração (<repl>listaRx</repl>). Estas listas são separadas da  <repl>listaY</repl> e entre elas usando ponto-e-vírgulas.
+	permite-lhe controlar as variáveis exógenas: estas entram no 
+	sistema como não restringidas (<repl>listaX</repl>) ou
+	restringidas ao espaço de cointegração (<repl>listaRx</repl>).
+	 Estas listas são separadas da  <repl>listaY</repl> e entre 
+	elas usando ponto-e-vírgulas.
       </para>
 
       <para context="gui">
-	Você pode controlar as variáveis exógenas adicionando-as à lista na caixa inferior.  Por omissão estas entram no modelo na forma não restringida  (indicada por um <lit>U</lit> junto do nome da variável).  Se você pretender que uma certa variável seja restringida ao espaço de cointegração, clique com botão direito sobre ela e selecione <quote>Restringida</quote> do menu de contexto.  O símbolo junto à variável mudará para R.
+	Você pode controlar as variáveis exógenas adicionando-as à 
+	lista na caixa inferior.  Por omissão estas entram no modelo 
+	na forma não restringida  (indicada por um <lit>U</lit> junto
+	do nome da variável).  Se você pretender que uma certa variável
+	seja restringida ao espaço de cointegração, clique com botão 
+	direito sobre ela e selecione <quote>Restringida</quote> do 
+	menu de contexto.  O símbolo junto à variável mudará para R.
       </para>
 
       <para context="cli">
@@ -1668,7 +1694,7 @@
           2      c = 2  c = 3       c = 2  c = 3
          ---------------------------------------
       </mono>
-<para context="tex">
+      <para context="tex">
 	A seguinte tabela serve como um guia
         à interpretação dos resultados
         apresentados pelo teste, num caso de
@@ -3584,37 +3610,37 @@
   </command>
 
   <command name="function" section="Programming" 
-    label="Define a function" context="cli">
+    label="Definir uma função" context="cli">
 
     <usage>
       <arguments>
-        <argument>fnname</argument>
+        <argument>nome-da-função</argument>
       </arguments>
     </usage>
 
     <description>
       <para>
-	Opens a block of statements in which a function is defined.  This
-	block must be closed with <lit>end function</lit>.  Please see
-	<guideref targ="chap:functions"/> for details.
+	Abre um bloco de declarções no qual é definida a função.  Este
+	bloco tem que ser finalizado com <lit>end function</lit>.  Para mais
+	detalhes ver <guideref targ="chap:functions"/>.
       </para>
     </description>
 
   </command>  
 
-  <command name="garch" section="Estimation" label="GARCH model">
+  <command name="garch" section="Estimation" label="Modelo GARCH">
 
     <usage>
       <arguments>
         <argument>p</argument>
 	<argument>q</argument>
-	<argument separated="true">depvar</argument>
-	<argument optional="true">indepvars</argument>
+	<argument separated="true">variável-dependente</argument>
+	<argument optional="true">variáveis-independentes</argument>
       </arguments>
       <options>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>erros padrão robustos</effect>
         </option>
 	<option>
 	  <flag>--verbose</flag>
@@ -3626,19 +3652,19 @@
         </option>
         <option>
 	  <flag>--nc</flag>
-	  <effect>do not include a constant</effect>
+	  <effect>não incluir uma constante</effect>
         </option>
         <option>
 	  <flag>--stdresid</flag>
-	  <effect>standardize the residuals</effect>
+	  <effect>normalizar os resíduos</effect>
         </option>
         <option>
 	  <flag>--fcp</flag>
-	  <effect>use Fiorentini, Calzolari, Panattoni algorithm</effect>
+	  <effect>usar o algoritmo Fiorentini, Calzolari, Panattoni</effect>
         </option>
         <option>
 	  <flag>--arma-init</flag>
-	  <effect>initial variance parameters from ARMA</effect>
+	  <effect>parâmetros iniciais da variância a partir de ARMA</effect>
         </option>
       </options>
       <examples>
@@ -3649,13 +3675,15 @@
 
     <description>
       <para context="cli">
-	Estimates a GARCH model (GARCH = Generalized Autoregressive
-	Conditional Heteroskedasticity), either a univariate model or,
-	if <repl>indepvars</repl> are specified, including the given
-	exogenous variables.  The integer values <repl>p</repl> and
-	<repl>q</repl> (which may be given in numerical form or as the
-	names of pre-existing scalar variables) represent the lag
-	orders in the conditional variance equation:
+	Estima um modelo GARCH (GARCH = Autoregressivo Generalizado
+        de Heterocedastidade Condicional, "Generalized Autoregressive
+	Conditional Heteroskedasticity"), que pode ser um modelo
+	univariado, ou multivariado se especificadas as 
+	<repl>variáveis-independentes</repl>, incluindo as variáveis 
+	exógenas.  Os valores inteiros <repl>p</repl> e <repl>q</repl>
+	(que podem ser dados na forma numérica ou como nomes de variáveis
+	escalares pré-existentes) representam as ordens de desfasamento 
+	na equação de variância condicional:
 	<equation status="display"
 	  tex="\[h_t = \alpha_0 + \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} +
 	  \sum_{j=1}^p \beta_j h_{t-j}\]"
@@ -3663,107 +3691,108 @@
 	  graphic="garch_h"/>
       </para>
       <para context="cli">
-	The parameter <repl>p</repl> therefore represents the Generalized
-	(or <quote>AR</quote>) order, while <repl>q</repl> represents the
-	regular ARCH (or <quote>MA</quote>) order.  If <repl>p</repl> is
-	non-zero, <repl>q</repl> must also be non-zero otherwise the model
-	is unidentified.  However, you can estimate a regular ARCH model
-	by setting <repl>q</repl> to a positive value and <repl>p</repl>
-	to zero.  The sum of <repl>p</repl> and <repl>q</repl> must be no
-	greater than 5.  Note that a constant is automatically included in
-	the mean equation unless the <opt>--nc</opt> option is given.
+	Portanto, o parâmetro <repl>p</repl> representa a ordem Generalizada
+	(ou <quote>AR</quote>), enquanto <repl>q</repl> representa a ordem
+	normal ARCH (ou <quote>MA</quote>).  Se <repl>p</repl> for não-nulo,
+	<repl>q</repl> tem também que ser não-nulo senão o modelo fica
+	não-identificado.  No entanto, você pode estimar um modelo ARCH normal
+	ao definir <repl>q</repl> para um valor positivo e <repl>p</repl>
+	para zero.  A soma de <repl>p</repl> e <repl>q</repl> não pode ser
+	maior que 5.  Note que é automaticamente incluida uma constante na 
+        equação da média, exceto se tiver sido dada a opção <opt>--nc</opt>.
       </para>
 
       <para context="gui">
-	Estimates a GARCH model (GARCH = Generalized Autoregressive
-	Conditional Heteroskedasticity), either a univariate model or,
-	if independent variables are selected, including the given
-	exogenous variables.  The conditional variance equation is
-	shown below.
+	Estima um modelo GARCH (GARCH = Autoregressivo Generalizado
+        de Heterocedastidade Condicional, "Generalized Autoregressive
+	Conditional Heteroskedasticity"), que pode ser um modelo
+	univariado, ou multivariado se selecionadas variáveis 
+	independentes, incluindo as variáveis exógenas.  Em baixo é
+	mostrada a equação de variância condicional:
 	<equation status="display" tex="\[h_t = \alpha_0 + 
 	\sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} + \sum_{j=1}^p
 	\beta_i h_{t-j}\]" ascii="h(t) = a(0) + sum(i=1 to q) a(i)*u(t-i) +
 	sum(j=1 to p) b(j)*h(t-j)" graphic="garch_h"/>
       </para>
       <para context="gui">
-	The parameter <repl>p</repl> therefore represents the Generalized
-	(or <quote>AR</quote>) order, while <repl>q</repl> represents the
-	regular ARCH (or <quote>MA</quote>) order.  If <repl>p</repl> is
-	non-zero, <repl>q</repl> must also be non-zero otherwise the model
-	is unidentified.  However, you can estimate a regular ARCH model
-	by setting <repl>q</repl> to a positive value and <repl>p</repl>
-	to zero.  The sum of <repl>p</repl> and <repl>q</repl> must be no
-	greater than 5.
+	Portanto, o parâmetro <repl>p</repl> representa a ordem Generalizada
+	(ou <quote>AR</quote>), enquanto <repl>q</repl> representa a ordem
+	normal ARCH (ou <quote>MA</quote>).  Se <repl>p</repl> for não-nulo,
+	<repl>q</repl> tem também que ser não-nulo senão o modelo fica
+	não-identificado.  No entanto, você pode estimar um modelo ARCH normal
+	ao definir <repl>q</repl> para um valor positivo e <repl>p</repl>
+	para zero.  A soma de <repl>p</repl> e <repl>q</repl> não pode ser
+	maior que 5.
       </para>
 
       <para>
-	By default native gretl code is used in estimation of GARCH
-	models, but you also have the option of using the algorithm of
-	<cite key="fiorentini96">Fiorentini, Calzolari and Panattoni
-	(1996)</cite>.  The former uses the BFGS maximizer while the
-	latter uses the information matrix to maximize the likelihood,
-	with fine-tuning via the Hessian.
+	Por omissão a estimação de modelos GARCH é feita usando código
+	nativo gretl, mas você também tem a possibilidade de usar o 
+	algoritmo de <cite key="fiorentini96">Fiorentini, Calzolari e Panattoni
+	(1996)</cite>.  O primeiro usa o maximizador BFGS enquanto o 
+	segundo usa a matriz de informação para maximizar a
+	verosimilhança, com aperfeiçoamento por via da Hessiana.
       </para>
 
       <para context="cli">
-	Several variant estimators of the covariance matrix are available
-	with this command.  By default, the Hessian is used unless the
-	<opt>--robust</opt> option is given, in which case the QML (White)
-	covariance matrix is used.  Other possibilities (&eg; the
-	information matrix, or the Bollerslev&ndash;Wooldridge estimator)
-	can be specified using the <cmdref targ="set"/> command.
+	Para este comando estão disponíveis diferentes estimadores da
+	matriz de covariância.  Por omissão, usa-se a Hessiana, ou se
+	a opção	<opt>--robust</opt> tiver sido dada, será usada a 
+	matriz de covariança QML (White).  Outras possibilidades podem
+	ser especificadas usando o comando <cmdref targ="set"/> 
+	(por exemplo a matriz de informação, ou o estimador 
+	Bollerslev&ndash;Wooldridge ).
       </para>
 
       <para context="gui">
-	Several variant estimates of the coefficient covariance matrix are
-	available with this command.  By default, the Hessian is used
-	unless the <quote>Robust standard errors</quote> box is checked,
-	in which case the QML (White) covariance matrix is used.  Other
-	possibilities (&eg; the information matrix, or the
-	Bollerslev&ndash;Wooldridge estimator) can be specified using the
-	<cmdref targ="set"/>
-	command.
+	Para este comando estão disponíveis diferentes estimadores da
+	matriz de covariância.  Por omissão, usa-se a Hessiana, ou se
+	a opção	<quote>Erros padrão robustos</quote> tiver sido 
+	selecionada, será usada a matriz de covariança QML (White).  
+	 Outras possibilidades podem ser especificadas usando o 
+	comando <cmdref targ="set"/> (por exemplo a matriz de 
+	informação, ou o estimador Bollerslev&ndash;Wooldridge ).
       </para>
 
       <para context="gui">
-	The estimated conditional variance, along with the residuals and
-	various other model statistics, can be accessed and added to the
-	dataset using the <quote>Model data</quote> menu in the window where
-	the model is displayed.  If the box marked <quote>Standardize the
-	residuals</quote> is checked, the residuals are divided by the
-	square root of te conditional variance.
+	A variância condicional estimada, juntamente com os resíduos e 
+	outras estatísticas do modelo, podem ser acedidas e acrescentadas
+	ao modelo usando o menu <quote>Gravar</quote> na janela
+	onde o modelo é apresentado.  Se a opção 
+	<quote>Normalizar os resíduos</quote> estiver selecionada, os
+	resíduos são divididos pela raiz quadrada da variância condicional.
       </para>
 
       <para context="cli">
-	By default, the estimates of the variance parameters are
-	initialized using the unconditional error variance from
-	initial OLS estimation for the constant, and small positive
-	values for the coefficients on the past values of the squared
-	error and the error variance.  The flag <opt>--arma-init</opt>
-	calls for the starting values of these parameters to be
-	set using an initial ARMA model, exploiting the relationship
-	between GARCH and ARMA set out in Chapter 21 of Hamilton's
-	<book>Time Series Analysis</book>.  In some cases this may 
-	improve the chances of convergence.
+	Por omissão, as estimativas dos parâmetros da variância são
+	inicializados usando a variância do erro incondicional da 
+	estimação OLS inicial para a constante, e pequenos valores
+	positivos para os coeficientes dos valores anteriores do
+	quadrado do erro e da variância do erro.  A opção 
+	<opt>--arma-init</opt> faz com que os valores iniciais destes
+	parâmetros sejam definidos usando inicialmente um modelo ARMA,
+	explorando a relação entre GARCH e ARMA demosntrado no 
+	Capítulo 21 do livro de Hamilton, <book>Time Series Analysis</book>.
+	 Em alguns casos isto pode melhorar as possibilidades de converência.
       </para>
 
       <para context="cli">
-	The GARCH residuals and estimated conditional variance can be
-	retrieved as <lit>$uhat</lit> and <lit>$h</lit> respectively.  For
-	example, to get the conditional variance:  
+	Os resíduos GARCH e a variância condicional estimada podem ser
+	obtidos como <lit>$uhat</lit> e <lit>$h</lit> respectivamente.  Por
+	exemplo, para obter a variância condicional:  
       </para>
       <code context="cli">
 	genr ht = $h
       </code>
       <para context="cli">
-	If the <opt>--stdresid</opt> option is given, the <lit>$uhat</lit>
-	values are divided by the square root of <math>h</math><sub>t</sub>.
+	Se a opção <opt>--stdresid</opt> tiver sido dada, os valores <lit>$uhat</lit>
+	são divididos pela raiz quadrada de <math>h</math><sub>t</sub>.
       </para>
 
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/GARCH</menu-path>
+      <menu-path>/Modelo/Série temporal/GARCH</menu-path>
     </gui-access>
 
   </command>
@@ -5085,7 +5114,7 @@
         </option>
         <option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>erros padrão robustos</effect>
         </option>
 	<option>
 	  <flag>--cluster</flag>
@@ -5792,7 +5821,7 @@
       <options>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>erros padrão robustos</effect>
 	</option>
 	<option>
 	  <flag>--cluster</flag>
@@ -6785,7 +6814,7 @@
 	</option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>erros padrão robustos</effect>
         </option>
 	<option>
 	  <flag>--vcv</flag>
@@ -7057,7 +7086,7 @@
         </option>
         <option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>erros padrão robustos</effect>
         </option>
 	<option>
 	  <flag>--cluster</flag>
@@ -7905,7 +7934,7 @@
       <options>
         <option>
           <flag>--robust</flag>
-          <effect>robust standard errors</effect>
+          <effect>erros padrão robustos</effect>
         </option>
 	<option>
 	  <flag>--cluster</flag>
@@ -8131,7 +8160,7 @@
       <options>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>erros padrão robustos</effect>
 	</option>
 	<option>
 	  <flag>--cluster</flag>
@@ -8365,7 +8394,7 @@
       <options>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>erros padrão robustos</effect>
         </option>
         <option>
 	  <flag>--intervals</flag>
@@ -10792,7 +10821,7 @@
         </option>
         <option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>erros padrão robustos</effect>
         </option>
 	<option>
 	  <flag>--cluster</flag>
@@ -10887,7 +10916,7 @@
         </option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>erros padrão robustos</effect>
         </option>
 	<option>
 	  <flag>--cluster</flag>
@@ -11030,7 +11059,7 @@
       <options>
         <option>
 	  <flag>--nc</flag>
-	  <effect>do not include a constant</effect>
+	  <effect>não incluir uma constante</effect>
         </option>
         <option>
 	  <flag>--trend</flag>
@@ -11042,7 +11071,7 @@
         </option>
         <option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>erros padrão robustos</effect>
         </option>
         <option>
 	  <flag>--robust-hac</flag>
@@ -11504,7 +11533,7 @@
         </option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>erros padrão robustos</effect>
         </option>
 	<option>
 	  <flag>--quiet</flag>
