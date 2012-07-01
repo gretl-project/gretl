@@ -1175,6 +1175,15 @@ static int matrix_is_busy (user_matrix *u)
 {
     const char *s;
 
+    /* Here we check to see if a given user matrix is
+       "busy" in the sense of being employed as part
+       of an optional specification of the data rows
+       or columns to be read in the context of the
+       "open" command. If so it should not be destroyed
+       as part of the clean-up associated with opening
+       a data file.
+    */
+
     s = get_optval_string(OPEN, OPT_F);
     if (s != NULL && !strcmp(s, u->name)) {
 	return 1;
@@ -1220,7 +1229,7 @@ void destroy_user_matrices (void)
 	for (i=0; i<n_matrices; i++) {
 	    matrices[i]->flags &= ~UM_PROTECT;
 	}
-	return;
+	return; /* no-op */
     } else if (n_left > 0) {
 	tmp = malloc(n_left * sizeof *tmp);
     }
@@ -1238,7 +1247,7 @@ void destroy_user_matrices (void)
 
     free(matrices);
 
-    if (tmp != NULL){
+    if (tmp != NULL) {
 	matrices = tmp;
 	n_matrices = n_left;
     } else {
