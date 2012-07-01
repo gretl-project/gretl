@@ -926,7 +926,9 @@ double get_optval_double (int ci, gretlopt opt)
  *
  * Returns: the integer ancillary value currently 
  * associated with option @opt for command @ci, if any,
- * otherwise 0 (with a non-zero value written to @err).
+ * otherwise 0. A non-zero value written to @err if
+ * such a value is required for the option in question
+ * but is not present.
  */
 
 int get_optval_int (int ci, gretlopt opt, int *err)
@@ -947,7 +949,7 @@ int get_optval_int (int ci, gretlopt opt, int *err)
 		ret = (int) x;
 	    }
 	}
-    } else if (status == 2) {
+    } else if (status == 2 && err != NULL) {
 	/* parameter is required */
 	*err = E_DATA;
     }
@@ -955,7 +957,7 @@ int get_optval_int (int ci, gretlopt opt, int *err)
     return ret;
 }
 
-/* called via GUI */
+/* below: called via GUI */
 
 /**
  * set_optval_double:

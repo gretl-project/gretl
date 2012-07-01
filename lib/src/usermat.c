@@ -34,7 +34,8 @@
 
 typedef enum {
     UM_PRIVATE = 1 << 0,
-    UM_SHELL   = 1 << 1
+    UM_SHELL   = 1 << 1,
+    UM_PROTECT = 1 << 2
 } UMFlags;
 
 struct user_matrix_ {
@@ -49,6 +50,7 @@ static int n_matrices;
 
 #define matrix_is_private(u) ((u->flags & UM_PRIVATE) || *u->name == '$')
 #define matrix_is_shell(u) (u->flags & UM_SHELL)
+#define matrix_protected(u) (u->flags & UM_PROTECT)
 
 #if MDEBUG > 1
 static void print_matrix_stack (const char *msg)
@@ -1169,6 +1171,23 @@ int destroy_private_matrices (void)
     return destroy_user_matrices_at_level(LEV_PRIVATE);    
 }
 
+static int matrix_is_busy (user_matrix *u)
+{
+    const char *s;
+
+    s = get_optval_string(OPEN, OPT_F);
+    if (s != NULL && !strcmp(s, u->name)) {
+	return 1;
+    }
+
+    s = get_optval_string(OPEN, OPT_M);
+    if (s != NULL && !strcmp(s, u->name)) {
+	return 1;
+    }
+
+    return 0;
+}
+
 /**
  * destroy_user_matrices:
  *
@@ -1178,7 +1197,8 @@ int destroy_private_matrices (void)
 
 void destroy_user_matrices (void)
 {
-    int i;
+    user_matrix **tmp = NULL;
+    int i, j, n_left = 0;
 
 #if MDEBUG
     fprintf(stderr, "destroy_user_matrices called, n_matrices = %d\n",
@@ -1190,16 +1210,41 @@ void destroy_user_matrices (void)
     }
 
     for (i=0; i<n_matrices; i++) {
-#if MDEBUG
-	fprintf(stderr, "destroying user_matrix %d (%s) at %p\n", i,
-		matrices[i]->name, (void *) matrices[i]);
-#endif
-	destroy_user_matrix(matrices[i]);
+	if (matrix_is_busy(matrices[i])) {
+	    matrices[i]->flags |= UM_PROTECT;
+	    n_left++;
+	}
+    }
+
+    if (n_left == n_matrices) {
+	for (i=0; i<n_matrices; i++) {
+	    matrices[i]->flags &= ~UM_PROTECT;
+	}
+	return;
+    } else if (n_left > 0) {
+	tmp = malloc(n_left * sizeof *tmp);
+    }
+
+    j = 0;
+
+    for (i=0; i<n_matrices; i++) {
+	if (tmp != NULL && matrix_protected(matrices[i])) {
+	    matrices[i]->flags &= ~UM_PROTECT;
+	    tmp[j++] = matrices[i];
+	} else {
+	    destroy_user_matrix(matrices[i]);
+	}
     }
 
     free(matrices);
-    matrices = NULL;
-    n_matrices = 0;
+
+    if (tmp != NULL){
+	matrices = tmp;
+	n_matrices = n_left;
+    } else {
+	matrices = NULL;
+	n_matrices = 0;
+    }
 }
 
 int user_matrix_destroy (user_matrix *u)
