@@ -1777,7 +1777,11 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     p = c->line;
     if (c->delim == ' ' && *p == ' ') p++;
     iso_to_ascii(p);
-    pprintf(mprn, A_("   line: %s\n"), p);
+    if (strlen(p) > 118) {
+	pprintf(mprn, A_("   line: %.115s...\n"), p);
+    } else {
+	pprintf(mprn, A_("   line: %s\n"), p);
+    }
     
     numcount = 0;
     j = 1;

@@ -8101,7 +8101,7 @@ static int gui_try_http (const char *s, char *fname, int *http)
 static int script_open_append (ExecState *s, DATASET *dset, 
 			       PRN *prn)
 {
-    gretlopt openopt = OPT_NONE;
+    gretlopt opt = s->cmd->opt;
     PRN *vprn = prn;
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -8115,25 +8115,24 @@ static int script_open_append (ExecState *s, DATASET *dset,
     }
 
     err = gui_try_http(line, myfile, &http);
-
-    if (!err && !http && !(cmd->opt & OPT_O)) {
-	/* not using http or ODBC */
-	err = getopenfile(line, myfile, (cmd->opt & OPT_W)? 
-			  OPT_W : OPT_NONE);
-    }
-
     if (err) {
 	gui_errmsg(err);
 	return err;
-    }    
+    }  
 
-    /* the "drop-empty", "quiet" and "time-series" options 
-       should be passed on */
-    transcribe_option_flags(&openopt, cmd->opt, OPT_D | OPT_Q | OPT_T);
+    if (!http && !(opt & OPT_O)) {
+	/* not using http or ODBC */
+	err = getopenfile(line, myfile, (opt & OPT_W)? 
+			  OPT_W : OPT_NONE);
+	if (err) {
+	    gui_errmsg(err);
+	    return err;
+	}
+    }   
 
-    if (cmd->opt & OPT_W) {
+    if (opt & OPT_W) {
 	ftype = GRETL_NATIVE_DB_WWW;
-    } else if (cmd->opt & OPT_O) {
+    } else if (opt & OPT_O) {
 	ftype = GRETL_ODBC;
     } else {
 	ftype = detect_filetype(myfile, OPT_P);
@@ -8170,20 +8169,20 @@ static int script_open_append (ExecState *s, DATASET *dset,
     } 
 
     if (ftype == GRETL_CSV) {
-	err = import_csv(myfile, dset, openopt, vprn);
+	err = import_csv(myfile, dset, opt, vprn);
     } else if (ftype == GRETL_XML_DATA) {
-	err = gretl_read_gdt(myfile, dset, openopt | OPT_B, vprn);
+	err = gretl_read_gdt(myfile, dset, opt | OPT_B, vprn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
 	err = import_spreadsheet(myfile, ftype, cmd->list, cmd->extra, dset, 
-				 openopt, vprn);
+				 opt, vprn);
     } else if (OTHER_IMPORT(ftype)) {
-	err = import_other(myfile, ftype, dset, openopt, vprn);
+	err = import_other(myfile, ftype, dset, opt, vprn);
     } else if (ftype == GRETL_ODBC) {
 	err = set_odbc_dsn(line, vprn);
     } else if (dbdata) {
 	err = set_db_name(myfile, ftype, vprn);
     } else {
-	err = gretl_get_data(myfile, dset, openopt, vprn);
+	err = gretl_get_data(myfile, dset, opt, vprn);
     }
 
     if (vprn != prn) {
