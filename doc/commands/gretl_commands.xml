@@ -3978,10 +3978,10 @@
 	that was estimated most recently. This is also true in the GUI program,
 	if one uses <cmd>genr</cmd> in the <quote>gretl console</quote> or
 	enters a formula using the <quote>Define new variable</quote> option
-	under the Variable menu in the main window.  With the GUI, however, you
+	under the Add menu in the main window.  With the GUI, however, you
 	have the option of retrieving data from any model currently displayed in
 	a window (whether or not it's the most recent model).  You do this under
-	the <quote>Model data</quote> menu in the model's window.
+	the <quote>Save</quote> menu in the model's window.
       </para>
 
       <para>
