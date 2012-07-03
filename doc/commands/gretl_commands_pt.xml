@@ -2859,7 +2859,7 @@
 	na qual valores diferentes de zero indicam caso censurados.
       </para>
       <para>
-	Por omissão os valores ajustados obtidos por intermédio do assessor
+	Por omissão os valores ajustados obtidos por intermédio do acessor
 	<lit>$yhat</lit> são as médias condicionadas das durações, mas se 
 	tiver sido dada a opção <lit>--medians</lit>, então <lit>$yhat</lit>
 	devolve as medianas condicionadas.
@@ -3287,7 +3287,7 @@
 	endógena específica para a predição (por omissão são produzidas
 	predições para todas as variáveis endógenas).  No caso do sistema,
 	ou se não tiver sido dado o <repl>nome-de-variável</repl>, os 
-	valores de predição podem ser obtidos usando o assessor 
+	valores de predição podem ser obtidos usando o acessor 
 	<lit>$fcast</lit>, e os erros padrão, se disponíveis, pelo 
 	<lit>$fcerr</lit>.
       </para>
@@ -3462,7 +3462,7 @@
 	<math>T</math>/2 e <math>T</math><sup>0.6</sup>.
       </para>
       <para>
-	Os resultados podem ser obtidos usando os assessores <lit>$test</lit>
+	Os resultados podem ser obtidos usando os acessores <lit>$test</lit>
 	e <lit>$pvalue</lit>. Estes valores baseiam-se no estimador local de
 	Whittle exceto quando dada a opção <opt>--gph</opt>.
       </para>
@@ -3563,8 +3563,8 @@
       <para>
 	A opção <opt>--silent</opt> suprime toda a saída do programa.
 	Isto apenas faz sentido quando em conjunto com uma das opções
-	de teste de distribuição: a estística de teste e o seu valor p
-	ficam guardados e podem ser obtidos usando os assessores
+	de teste de distribuição: a estatística de teste e o seu valor p
+	ficam guardados e podem ser obtidos usando os acessores
 	<lit>$test</lit> e <lit>$pvalue</lit>.
       </para>
     </description>
@@ -3584,7 +3584,7 @@
       </para>
       <para>
 	Se você desejar alinhar as classes para números redondos, esta é uma
-	maneira possível: começe por especificar o número de classes, e 
+	maneira possível: comece por especificar o número de classes, e 
 	observe o gráfico produzido. Se não fôr do seu agrado, anote a 
 	modificação necessária (por exemplo, fazer a classe mais à esquerda
 	iniciar em 100 e impor uma largura de classe de 200).
@@ -3596,7 +3596,7 @@
 	distribuição teórica dos dados: a normal ou a gama.  Se a opção
 	normal for selecionada será determinado o teste para normalidade 
 	de Doornik&ndash;Hansen. Se a opção gama é selecionada, gretl
-	calcula o teste não paramétrico de Locke para ahipótese nula de que
+	calcula o teste não paramétrico de Locke para a hipótese nula de que
 	variável segue uma distribuição gama.  Note que a
 	parametrização da distribuição gama utilizadada em gretl é 
 	(forma, escala).
@@ -3620,7 +3620,7 @@
 
     <description>
       <para>
-	Abre um bloco de declarções no qual é definida a função.  Este
+	Abre um bloco de declarações no qual é definida a função.  Este
 	bloco tem que ser finalizado com <lit>end function</lit>.  Para mais
 	detalhes ver <guideref targ="chap:functions"/>.
       </para>
@@ -3798,202 +3798,206 @@
   </command>
 
   <command name="genr" section="Dataset"
-    label="Generate a new variable">
+    label="Gerar uma nova variável">
 
     <usage>
       <arguments>
-        <argument>newvar</argument>
-        <argument>= formula</argument>
+        <argument>nova-variável</argument>
+        <argument>= expressão</argument>
       </arguments>
     </usage>
 
     <description>
       <para context="cli">
-	In the appropriate context, <lit>series</lit>, <lit>scalar</lit>
-	and <lit>matrix</lit> are synonyms for this command.
+	No contexto apropriado, o nomes; <lit>series</lit>, <lit>scalar</lit>
+	e <lit>matrix</lit> são sinónimos para este comando.
       </para>
 
       <para context="cli">
-	Creates new variables, often via transformations of existing
-	variables. See also <cmdref targ="diff"/>, <cmdref targ="logs"/>,
+	Cria novas variáveis, frequentemente a partir de transformações 
+	de variáveis já existentes. Ver também os atalhos, <cmdref targ="diff"/>, <cmdref targ="logs"/>,
 	<cmdref targ="lags"/>, <cmdref targ="ldiff"/>, 
-	<cmdref targ="sdiff"/> and <cmdref targ="square"/>
-	for shortcuts. In the context of a <lit>genr</lit> formula, existing
-	variables must be referenced by name, not ID number.  The formula should
-	be a well-formed combination of variable names, constants, operators and
-	functions (described below).  Note that further details on some aspects
-	of this command can be found in <guideref targ="chap-genr"/>.
+	<cmdref targ="sdiff"/> e <cmdref targ="square"/>.  No contexto de
+	uma expressão <lit>genr</lit>, as variáveis existentes têm que ser 
+	referenciadas por nome e não por número ID.  A expressão deve ser uma 
+	combinação bem construída de nomes de variáveis, constantes, operadores
+	e funções (descrito adiante).  Note que detalhes adicionais sobre alguns
+	aspetos deste comando podem ser encontrados em <guideref targ="chap-genr"/>.
       </para>
 
       <para context="gui">
-	Use this box to define a new variable, on the pattern
-	<repl>name</repl> = <repl>formula</repl>.  The formula should be a
-	well-formed combination of variable names, constants, operators and
-	functions (details below).  To ensure you get the type of variable you
-	want, you can prefix the formula with a type-name, &eg;
-	<lit>scalar</lit>, <lit>series</lit> or <lit>matrix</lit>.  For
-	example, to create a series that has a constant value of 10,
-	you can type
+	Use esta caixa de txto para definir uma nova variável, seguindo o padrão
+	<repl>nome</repl> = <repl>expressão</repl>.  A expressão deve ser uma 
+	combinação bem construída de nomes de variáveis, constantes, operadores
+	e funções (descrito adiante).  Para garantir que o tipo de variável
+	criada é o desejado, você pode anteceder o nome com o tipo, como
+	sejam, <lit>scalar</lit>, <lit>series</lit> ou <lit>matrix</lit>.  Por
+	exemplo, para criar uma série que tenha um valor constante de 10, você
+	pode escrever
       </para>
       <code context="gui">
 	series c = 10
       </code>
       <para context="gui">
-	(otherwise <lit>c = 10</lit> would create a scalar variable).
+	(de outro modo <lit>c = 10</lit> resultaria numa variável escalar).
       </para>
 
       <para context="cli">
-	A <lit>genr</lit> command may yield either a series or a scalar
-	result.  For example, the formula <lit>x2 = x * 2</lit> naturally
-	yields a series if the variable <lit>x</lit> is a series and a
-	scalar if <lit>x</lit> is a scalar.  The formulae <lit>x = 0</lit>
-	and <lit>mx = mean(x)</lit> naturally return scalars. Under some
-	circumstances you may want to have a scalar result expanded into a
-	series or vector.  You can do this by using <lit>series</lit> as
-	an <quote>alias</quote> for the <lit>genr</lit> command.  For
-	example, <lit>series x = 0</lit> produces a series all of whose
-	values are set to 0.  You can also use <lit>scalar</lit> as an
-	alias for <lit>genr</lit>.  It is not possible to coerce a vector
-	result into a scalar, but use of this keyword indicates that the
-	result <emphasis>should be</emphasis> a scalar: if it is not, an
-	error occurs.
+	Um comando <lit>genr</lit> pode resultar tanto num escalar como numa
+	série.  Por exemplo, a expressão <lit>x2 = x * 2</lit> naturalmente
+	resulta numa série se a variável <lit>x</lit> for uma série e num 
+	escalar se <lit>x</lit> for um escalar.  As expressões <lit>x = 0</lit>
+	e <lit>mx = mean(x)</lit> naturalmente retornam escalares.  Em alguma
+	circusntâncias você poderá querer ter um resultado escalar expandido 
+	numa série ou num vetor.  Você pode fazer isso usando <lit>series</lit>
+	como um <quote>aliás</quote> para o comando <lit>genr</lit>.  Por 
+	exemplo, <lit>series x = 0</lit> produz uma série em que todos os 
+	valores são 0.  Você também pode usar <lit>scalar</lit> como sendo
+	um aliás para <lit>genr</lit>.  Não é possível forçar um resultado do
+	tipo vetor para um escalar mas o uso desta palavra reservada indica
+	que o resultado <emphasis>deve ser</emphasis> um escalar: se não for
+	ocorrerá um erro.
       </para>
 
       <para context="cli">
-	When a formula yields a series result, the range over which
-	the result is written to the target variable depends on the current
-	sample setting.  It is possible, therefore, to define a series piecewise
-	using the <lit>smpl</lit> command in conjunction with <lit>genr</lit>.
+	Quando uma expressão resulta numa série, o intervalo que será 
+	escrito na variável destino depende do actual intervalo de amostragem.
+	É assim possível, definir uma série por troços usando o comando 
+	<lit>smpl</lit> conjugado com <lit>genr</lit>.
       </para>
 
       <para>
-	Supported <emphasis>arithmetical operators</emphasis> are, in
-	order of precedence: <lit>^</lit> (exponentiation);
-	<lit>*</lit>, <lit>/</lit> and <lit>%</lit> (modulus or
-	remainder); <lit>+</lit> and <lit>-</lit>. 
+	Os <emphasis>operadores aritméticos</emphasis> suportados são, por
+	ordem de precedência: <lit>^</lit> (potenciação);
+	<lit>*</lit>, <lit>/</lit> e <lit>%</lit> (resto da divisão inteira);
+	<lit>+</lit> e <lit>-</lit>. 
       </para>
 
       <para>
-	The available <emphasis>Boolean operators</emphasis> are (again,
-	in order of precedence): <lit>!</lit> (negation),
-	<lit>&amp;&amp;</lit> (logical AND), <lit>||</lit> (logical OR),
+	Os <emphasis>operadores Booleanos</emphasis> são (mais uma vez,
+	por ordem de precedência): <lit>!</lit> (negação),
+	<lit>&amp;&amp;</lit> (E lógico), <lit>||</lit> (OU lógico),
 	<lit>&gt;</lit>, <lit>&lt;</lit>, <lit>=</lit>, <lit>&gt;=</lit>
-	(greater than or equal), <lit>&lt;=</lit> (less than or equal) and
-	<lit>!=</lit> (not equal).  The Boolean operators can be used in
-	constructing dummy variables: for instance <lit>(x > 10)</lit>
-	returns 1 if <lit>x</lit> &gt; 10, 0 otherwise.
+	(maior ou igual), <lit>&lt;=</lit> (menor ou igual) e
+	<lit>!=</lit> (diferente).  Os operadores Booleanos podem ser 
+	usados na construção de variáveis auxiliares ('dummy'): por
+	exemplo <lit>(x > 10)</lit> retorna 1 se <lit>x</lit> &gt; 10,
+	0 caso contrário.
       </para>
 
       <para>
-	Built-in constants are <lit>pi</lit> and <lit>NA</lit>.  The latter
-	is the missing value code: you can initialize a variable to the missing
-	value with <lit>scalar x = NA</lit>.
+	As constantes pré-definidas são <lit>pi</lit> e <lit>NA</lit>.  Esta última
+	representa um valor omisso: você pode inicializar uma variável como tendo
+	um valor omisso com <lit>scalar x = NA</lit>.
       </para>
 
       <para>
-	The <lit>genr</lit> command supports a wide range of mathematical and
-	statistical functions, including all the common ones plus several that
-	are special to econometrics.  In addition it offers access to numerous
-	internal variables that are defined in the course of running
-	regressions, doing hypothesis tests, and so on.
+	O comando <lit>genr</lit> suporta uma larga gama de funções matemáticas
+	e estatísticas, incluindo, para além das usuais, várias que são
+	especialmente dedicadas à econometria.  Adicionalmente oferece
+	acesso a numerosas variáveis internas que são definidas no 
+	decorrer das regressões, testes de hipóteses e outros.
 	<refnote xref="false"> 
-	  For a listing of functions and accessors, type 
+	  Para uma lista de acessores, escrever 
 	  <quote>help functions</quote>. 
 	</refnote> 
 	<refnote xref="true">
-	  For a listing of functions and accessors, see 
+	  Para uma lista de funções e acessores, ver 
 	  <gfr targ="chap:funcref"/>. 
 	</refnote>
       </para>
 
       <para>
-	Besides the operators and functions noted above there are
-	some special uses of <cmd>genr</cmd>:
+	Para além dos operadores e funções mencionados acima, existem alguns
+	usos especiais de <cmd>genr</cmd>:
       </para>
 
       <ilist>
 	<li>
 	  <para>
-	    <cmd>genr time</cmd> creates a time trend variable (1,2,3,&hellip;)
-	    called <cmd>time</cmd>. <cmd>genr index</cmd> does the same thing
-	    except that the variable is called <lit>index</lit>.
+	    <cmd>genr time</cmd> cria uma variável de tendência temporal (1,2,3,&hellip;)
+	    com o nome <cmd>time</cmd>. <cmd>genr index</cmd> faz a mesma coisa exceto
+	    em que o nome da variável é <lit>index</lit>.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <cmd>genr dummy</cmd> creates dummy variables up to the periodicity
-	    of the data.  In the case of quarterly data
-	    (periodicity 4), the program creates <lit>dq1</lit> = 1 for
-	    first quarter and 0 in other quarters, <lit>dq2</lit> = 1 for
-	    the second quarter and 0 in other quarters, and so on.  With
-	    monthly data the dummies are named <lit>dm1</lit>, <lit>dm2</lit>,
-	    and so on.  With other frequencies the names are
-	    <lit>dummy_1</lit>, <lit>dummy_2</lit>, etc.
+	    <cmd>genr dummy</cmd> cria variáveis auxiliares ('dummy')
+            até à periodicidade dos dados.  No caso de dados trimestrais
+	    (periodicidade 4), o programa cria <lit>dq1</lit> = 1 para
+	    o primeiro trimestre 0 nos outros timestres, <lit>dq2</lit> = 1 
+	    para o segundo trimestre e 0 para os outros trimestres, e por aí
+	    adiante.  No caso de dados mensais as variáveis auxiliares têm os
+	    nomes <lit>dm1</lit>, <lit>dm2</lit>, e por aí adiante. No caso de
+	    outras frequências os nomes são <lit>dummy_1</lit>, 
+	    <lit>dummy_2</lit>, etc.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <cmd>genr unitdum</cmd> and <cmd>genr timedum</cmd> create 
-	    sets of special dummy variables for use with panel data.
-	    The first codes for the cross-sectional units and the second
-	    for the time period of the observations.
+	    <cmd>genr unitdum</cmd> e <cmd>genr timedum</cmd> criam 
+	    conjuntos de variáveis auxiliares especiais para usar com
+	    dados de painel. O primeiro codifica para as seções-cruzadas
+	    e o segundo para os períodos temporais das observações.
 	  </para>
 	</li>
       </ilist>
 
       <para>
-	<emphasis>Note</emphasis>: In the command-line program, <cmd>genr</cmd>
-	commands that retrieve model-related data always reference the model
-	that was estimated most recently. This is also true in the GUI program,
-	if one uses <cmd>genr</cmd> in the <quote>gretl console</quote> or
-	enters a formula using the <quote>Define new variable</quote> option
-	under the Variable menu in the main window.  With the GUI, however, you
-	have the option of retrieving data from any model currently displayed in
-	a window (whether or not it's the most recent model).  You do this under
-	the <quote>Model data</quote> menu in the model's window.
+	<emphasis>Nota</emphasis>: No programa de linha-de-comandos, 
+	os comandos <cmd>genr</cmd> que obtenham dados de modelo
+	referem-se sempre ao modelo que foi estimado mais recentemente.
+	Isto também é válido para o programa em ambiente gráfico (GUI),
+	ao se usar <cmd>genr</cmd> na <quote>consola gretl</quote> ou
+	ao introduzir uma expressão usando <quote>Definir nova variável</quote>
+	no menu Acrescentar na janela principal.  No entanto, no GUI, você
+	tem a possibilidade de obter dados a partir de qualquer modelo que
+	esteja disponível numa janela (independentemente se é ou não o modelo
+	mais recente).  Isso é feito no menu <quote>Gravar</quote> na 
+	janela do modelo.
       </para>
 
       <para>
-	The special variable <lit>obs</lit> serves as an index of the
-	observations.  For instance <lit>genr dum = (obs=15)</lit> will
-	generate a dummy variable that has value 1 for observation 15, 0
-	otherwise.  You can also use this variable to pick out particular
-	observations by date or name.  For example, 
+	A variável especial <lit>obs</lit> serve como um índice das
+	observações.  Por exemplo <lit>genr dum = (obs=15)</lit> irá gerar
+	uma variável auxiliar que tem valor 1 para a observação 15 e 0
+	para as outras.  Você também pode usar esta variável para escolher
+	certas observações por data ou nome.  Por exemplo, 
 	<lit>genr d = (obs&gt;1986:4)</lit>, 
-	<lit>genr d = (obs&gt;"2008/04/01")</lit>, or
-	<lit>genr d = (obs="CA")</lit>.  If daily dates or observation labels
-	are used in this context, they should be enclosed in double quotes.
-	Quarterly and monthly dates (with a colon) may be used unquoted. Note
-	that in the case of annual time series data, the year is not
-	distinguishable syntactically from a plain integer; therefore if you
-	wish to compare observations against <lit>obs</lit> by year you must
-	use the function <lit>obsnum</lit> to convert the year to a 1-based
-	index value, as in <lit>genr d = (obs&gt;obsnum(1986))</lit>.
+	<lit>genr d = (obs&gt;"2008/04/01")</lit>, ou
+	<lit>genr d = (obs="CA")</lit>.  Se se usarem datas diárias ou 
+	etiquetas neste contexto, elas devem ser indicadas dentro de aspas.
+	Datas trimestrais ou mensais (com um dois-pontos) podem ser usadas
+	sem aspas.  Note que no caso de dados de séries temporais anuais, o
+	ano não se distingue sintáticamente de um simples inteiro; como tal,
+	se você quiser comparar observações com <lit>obs</lit> por ano, você
+	tem que usar a função <lit>obsnum</lit> para converter o ano para
+	um valor de índice iniciado em 1, tal como em <lit>genr d = (obs&gt;obsnum(1986))</lit>.
       </para>
 
       <para>
-	Scalar values can be pulled from a series in the context of a
-	<lit>genr</lit> formula, using the syntax
-	<repl>varname</repl><lit>[</lit><repl>obs</repl><lit>]</lit>. The
-	<repl>obs</repl> value can be given by number or date. Examples:
-	<lit>x[5]</lit>, <lit>CPI[1996:01]</lit>.  For daily data, the form
-	<repl>YYYY/MM/DD</repl> should be used, &eg; <lit>ibm[1970/01/23]</lit>.
+	Valores escalares podem ser extraídos de uma série no contexto de uma
+	expressão <lit>genr</lit>, usando a sintaxe 
+	<repl>varname</repl><lit>[</lit><repl>obs</repl><lit>]</lit>.  O valor
+	<repl>obs</repl> pode ser dado por núnmero ou data. Exemplos:
+	<lit>x[5]</lit>, <lit>CPI[1996:01]</lit>.  Para dados diários, deve se
+	usar a forma <repl>YYYY/MM/DD</repl>, por exemplo, <lit>ibm[1970/01/23]</lit>.
       </para>
 
       <para>
-	An individual observation in a series can be modified via
-	<lit>genr</lit>.  To do this, a valid observation number or date, in
-	square brackets, must be appended to the name of the variable on the
-	left-hand side of the formula.  For example, <lit>genr x[3] = 30</lit>
-	or <lit>genr x[1950:04] = 303.7</lit>.
+	Uma observação individual numa série pode ser modificado usando 
+	<lit>genr</lit>.  Para fazer isto, uma observação válida numérica ou de data,
+	tem que ser acrescentada dentro de parentesis rectos, ao nome da variável no
+	lado esquerdo da expressão.  Por exemplo, <lit>genr x[3] = 30</lit>
+	ou <lit>genr x[1950:04] = 303.7</lit>.
       </para>
 
-      <table id="tab-genr" title="Examples of use of genr command"
-	lhead="Formula" rhead="Comment" lwidth="100pt" rwidth="300pt" 
+      <table id="tab-genr" title="Exemplos de uso do comando genr"
+	lhead="Expressão" rhead="Comentário" lwidth="100pt" rwidth="300pt" 
 	style="rpara">
 	<row>
 	  <cell><lit>y = x1^3</lit></cell>
-	  <cell><lit>x1</lit> cubed</cell>
+	  <cell><lit>x1</lit> ao cubo</cell>
 	</row>          
 	<row>
 	  <cell><lit>y = ln((x1+x2)/x3)</lit></cell>
@@ -4002,15 +4006,15 @@
 	<row>
 	  <cell><lit>z = x&gt;y</lit></cell>
 	  <cell><lit>z(t)</lit> = 1 if <lit>x(t) &gt; y(t)</lit>,
-	    otherwise 0</cell>
+	    caso contrário 0</cell>
 	</row> 
 	<row>
 	  <cell><lit>y = x(-2)</lit></cell>
-	  <cell><lit>x</lit> lagged 2 periods</cell>
+	  <cell><lit>x</lit> desfasado 2 períodos</cell>
 	</row>     
 	<row>
 	  <cell><lit>y = x(+2)</lit></cell>
-	  <cell><lit>x</lit> led 2 periods</cell>
+	  <cell><lit>x</lit> adiantado 2 períodos</cell>
 	</row>
 	<row>
 	  <cell><lit>y = diff(x)</lit></cell>
@@ -4018,140 +4022,140 @@
 	</row>
 	<row>
 	  <cell><lit>y = ldiff(x)</lit></cell>
-	  <cell><lit>y(t) = log x(t) - log x(t-1)</lit>, the
-	    instantaneous rate of growth of <lit>x</lit></cell>
+	  <cell><lit>y(t) = log x(t) - log x(t-1)</lit>, o
+	    rácio de crescimento instantâneo de <lit>x</lit></cell>
 	</row>
 	<row>
 	  <cell><lit>y = sort(x)</lit></cell>
-	  <cell>sorts <lit>x</lit> in increasing order and stores in
+	  <cell>ordena <lit>x</lit> por ordem crescente e guarda em
 	    <lit>y</lit></cell>
 	</row>
 	<row>
 	  <cell><lit>y = dsort(x)</lit></cell>
-	  <cell>sort <lit>x</lit> in decreasing order</cell>
+	  <cell>ordena <lit>x</lit> por ordem decrescente</cell>
 	</row>
 	<row>
 	  <cell><lit>y = int(x)</lit></cell>
-	  <cell>truncate <lit>x</lit> and store its integer value as
+	  <cell>guarda a parte inteira de <lit>x</lit> em 
 	    <lit>y</lit></cell>
 	</row>
 	<row>
 	  <cell><lit>y = abs(x)</lit></cell>
-	  <cell>store the absolute values of <lit>x</lit></cell>
+	  <cell>guarda os valores absolutos de <lit>x</lit></cell>
 	</row>
 	<row>
 	  <cell><lit>y = sum(x)</lit></cell>
-	  <cell>sum <lit>x</lit> values excluding missing <lit>NA</lit>
-	    entries</cell>
+	  <cell>soma os valores de <lit>x</lit> excluíndo entradas <lit>NA</lit>
+	    de valores omissos</cell>
 	</row>
 	<row>
 	  <cell><lit>y = cum(x)</lit></cell>
-	  <cell>cumulation: 
+	  <cell>acumulado: 
 		<equation status="inline"
 		  tex="$y_t = \sum_{\tau=1}^t x_{\tau}$"
-		  ascii="y(t) = the sum from s=1 to s=t of x(s)"
+		  ascii="y(t) = a soma de s=1 a s=t de x(s)"
 		  graphic="cumulate"/>
 	  </cell>
 	</row>
 	<row>
 	  <cell><lit>aa = $ess</lit></cell>
-	  <cell>set <lit>aa</lit> equal to the Error Sum of Squares
-	    from last regression</cell>
+	  <cell>define <lit>aa</lit> igual ao Erro da Soma de Quadrados
+	    da última regressão</cell>
 	</row>
 	<row>
 	  <cell><lit>x = $coeff(sqft)</lit></cell>
-	  <cell>grab the estimated coefficient on the variable
-	    <lit>sqft</lit> from the last regression</cell>
+	  <cell>obtém o coeficiente estimado da variável 
+	    <lit>sqft</lit> da última regressão</cell>
 	</row>
 	<row>
 	  <cell><lit>rho4 = $rho(4)</lit></cell>
-	  <cell>grab the 4th-order autoregressive coefficient from the
-	    last model (presumes an <lit>ar</lit> model)</cell>
+	  <cell>obtém o coeficiente autoregressivo de quarta-ordem
+	    do último modelo (assume um modelo <lit>ar</lit>)</cell>
 	</row>
 	<row>
 	  <cell><lit>cvx1x2 = $vcv(x1, x2)</lit></cell>
-	  <cell>grab the estimated coefficient covariance of vars
-	    <lit>x1</lit> and <lit>x2</lit> from the last model</cell>
+	  <cell>obtém a covariância estimada dos coeficientes das
+	     variáveis <lit>x1</lit> e <lit>x2</lit> do último modelo</cell>
 	</row>
 	<row>
 	  <cell><lit>foo = uniform()</lit></cell>
-	  <cell>uniform pseudo-random variable in range
-	    0&ndash;1</cell>
+	  <cell>variável pseudo-aleatória uniforme no intervalo
+	     0&ndash;1</cell>
 	</row>
 	<row>
 	  <cell><lit>bar = 3 * normal()</lit></cell>
-	  <cell>normal pseudo-random variable, &mu; = 0, &sigma; =
+	  <cell>variável pseudo-aleatória normal, &mu; = 0, &sigma; =
 	    3</cell>
 	</row>
 	<row>
 	  <cell><lit>samp = ok(x)</lit></cell>
-	  <cell>= 1 for observations where <lit>x</lit> is not
-	    missing.</cell>
+	  <cell>= 1 para observações onde <lit>x</lit> não está
+	    ausente.</cell>
 	</row>
       </table>
 
     </description>
 
     <gui-access>
-      <menu-path>/Add/Define new variable</menu-path>
-      <other-access>Main window pop-up menu</other-access>
+      <menu-path>/Acrescentar/Definir nova variável</menu-path>
+      <other-access>Menu de contexto da janela principal</other-access>
     </gui-access>
 
   </command>
 
   <command name="genrand" section="Programming" context="gui"
-    label="Generating random variables">
+    label="Gerador de variáveis aleatórias">
 
     <description>
       <para>
-	In this dialog you must give a name for the variable to be
-	created, plus some additional information depending on the
-	distribution.
+	Neste diálogo você tem que fornecer um nome para a variável
+	a ser criada, mais alguma informação adicional depedendo da
+	distribuição.
       </para>
 
       <ilist>
 	<li>
 	  <para>
-	    Uniform: the lower and upper bounds for the distribution.
+	    Uniforme: os limites inferior e superior para a distribuição.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Normal: the mean and (positive) standard deviation.
+	    Normal: a média e o desvio padrão (positivo).
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Chi-square and Student's t: the degrees of freedom, which must
-	    be positive.
+	    Qui-quadrado e t de Student: os graus de liberdade, que têm que ser
+	    positivos.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    F: both numerator and denominator degrees of freedom.
+	    F: numerador, denonimador e o grau de liberdade.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    gamma: shape and scale parameters (both positive).
+	    gama: parâmetros de forma e de escala (ambos positivos).
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Binomial: the <quote>success</quote> probability and the
-	    integer number of trials.
+	    Binomial: a probabilidade de <quote>sucesso</quote> e o
+	    inteiro positivo para o número de experiências.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Poisson: the positive mean (which also equals the variance).
+	    Poisson: a média positiva (que também é igual à variância).
 	  </para>
 	</li>
       </ilist>
 
       <para>
-	If you want to generate repeatable sequences of pseudo-random
-	numbers, you can set the seed, under the Tools menu.
+	Se você quiser gerar sequências repetíveis de números pseudo-aleatórios,
+	você pode definir a semente no menu Ferramentas.
       </para>
 
     </description>
