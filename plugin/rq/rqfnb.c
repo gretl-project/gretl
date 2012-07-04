@@ -2,6 +2,7 @@
    and slightly cleaned up by Allin Cottrell
 */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include "gretl_f2c.h"
 
@@ -64,6 +65,9 @@ static int stepy_ (integer *n, integer *p, doublereal *a,
     }
 
     dposv_("U", p, &one, &ada[ada_offset], p, b, p, info, (ftnlen) 1);
+    if (*info != 0) {
+	fprintf(stderr, "stepy_: dposv gave info = %d\n", *info);
+    }
 
     return 0;
 }
@@ -223,6 +227,9 @@ looptop:
 		   &dy[1], &one, (ftnlen) 1);
 	    dpotrs_("U", p, &one, &ada[ada_offset], p, &dy[1], p, info, 
 		    (ftnlen) 1);
+	    if (*info != 0) {
+		fprintf(stderr, "lpfnb_: dpotrs_ gave info = %d\n", *info);
+	    }
 	    dgemv_("T", p, n, &c_b4, &a[a_offset], p, &dy[1], &one, &zero, 
 		   &u[1], &one, (ftnlen) 1);
 	    deltap = 1e20;
