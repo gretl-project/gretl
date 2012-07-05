@@ -781,16 +781,16 @@ static void rq_workspace_init (struct fn_info *rq,
     }
 }
 
-static void rq_call_FN (integer *n, integer *p, gretl_matrix *XT,
-			gretl_matrix *y, struct fn_info *rq,
-			double tau)
+static int rq_call_FN (integer *n, integer *p, gretl_matrix *XT,
+		       gretl_matrix *y, struct fn_info *rq,
+		       double tau)
 {
     rq_workspace_init(rq, XT, tau);
 
-    rqfnb_(n, p, XT->val, y->val, rq->rhs, 
-	   rq->d, rq->u, &rq->beta, &rq->eps, 
-	   rq->resid, rq->coeff, rq->nit, &rq->info, 
-	   rq->callback);
+    return rqfnb_(n, p, XT->val, y->val, rq->rhs, 
+		  rq->d, rq->u, &rq->beta, &rq->eps, 
+		  rq->resid, rq->coeff, rq->nit, &rq->info, 
+		  rq->callback);
 }
 
 static int rq_write_variance (const gretl_matrix *V,
@@ -901,11 +901,10 @@ static int rq_fn_iid_VCV (MODEL *pmod, gretl_matrix *y,
 
     /* run artificial L1 regression to get sparsity measure */
 
-    rq_call_FN(&vn, &vp, vx, vy, rq, 0.5);
+    err = rq_call_FN(&vn, &vp, vx, vy, rq, 0.5);
 
-    if (rq->info != 0) {
+    if (err) {
 	fprintf(stderr, "rq_fn_iid_VCV: rqfn: info = %d\n", rq->info);
-	err = E_DATA;
     } else {
 	/* scale X'X-inverse appropriately */
 	sparsity = rq->coeff[1];
@@ -963,10 +962,9 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
 	goto bailout;
     }
 	
-    rq_call_FN(&n, &p, XT, y, rq, tau + h);
-    if (rq->info != 0) {
+    err = rq_call_FN(&n, &p, XT, y, rq, tau + h);
+    if (err) {
 	fprintf(stderr, "tau + h: info = %d\n", rq->info);
-	err = E_DATA;
 	goto bailout;
     }
 
@@ -975,10 +973,9 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
 	p1->val[i] = rq->coeff[i];
     }
 
-    rq_call_FN(&n, &p, XT, y, rq, tau - h);
-    if (rq->info != 0) {
+    err = rq_call_FN(&n, &p, XT, y, rq, tau - h);
+    if (err) {
 	fprintf(stderr, "tau - h: info = %d\n", rq->info);
-	err = E_DATA;
 	goto bailout;
     }
 
@@ -1237,10 +1234,9 @@ static int rq_fit_fn (gretl_matrix *y, gretl_matrix *XT,
 #endif
 
 	/* get coefficients and residuals */
-	rq_call_FN(&n, &p, XT, y, &rq, tau);
-	if (rq.info != 0) {
+	err = rq_call_FN(&n, &p, XT, y, &rq, tau);
+	if (err) {
 	    fprintf(stderr, "rqfn gave info = %d\n", rq.info);
-	    err = E_DATA;
 	}
 
 	if (!err) {

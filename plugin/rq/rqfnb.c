@@ -2,8 +2,7 @@
    and slightly cleaned up by Allin Cottrell
 */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "libgretl.h"
 #include "gretl_f2c.h"
 
 /* Table of constant values */
@@ -47,6 +46,7 @@ static int stepy_ (integer *n, integer *p, doublereal *a,
     integer a_dim1 = *p, ada_dim1 = *p;
     integer a_offset = 1 + a_dim1, ada_offset = 1 + ada_dim1;
     integer i, j, k;
+    int err = 0;
 
     /* Parameter adjustments */
     --d;
@@ -67,9 +67,10 @@ static int stepy_ (integer *n, integer *p, doublereal *a,
     dposv_("U", p, &one, &ada[ada_offset], p, b, p, info, (ftnlen) 1);
     if (*info != 0) {
 	fprintf(stderr, "stepy_: dposv gave info = %d\n", *info);
+	err = (*info > 0)? E_NOTPD : E_DATA;
     }
 
-    return 0;
+    return err;
 }
 
 #define ITERSTEP 5
@@ -82,18 +83,16 @@ static int lpfnb_ (integer *n, integer *p, doublereal *a, doublereal *c__,
 		   doublereal *rhs, doublereal *ada, integer *nit, integer *info,
 		   void (*callback)(void))
 {
-    /* System generated locals */
     integer a_dim1 = *p, ada_dim1 = *p;
     integer a_offset = 1 + a_dim1, ada_offset = 1 + ada_dim1;
     doublereal d1, d2;
-
-    /* Local variables */
     static doublereal g;
     static integer i;
     static doublereal mu, gap;
     static doublereal dsdw, dxdz;
     static doublereal deltad, deltap;
     int main_iters = 0;
+    int err = 0;
 
     /* Parameter adjustments */
     --dr;
@@ -120,14 +119,14 @@ static int lpfnb_ (integer *n, integer *p, doublereal *a, doublereal *c__,
     nit[1] = 0;
     nit[2] = 0;
     nit[3] = *n;
-    dgemv_("N", p, n, &c_b4, &a[a_offset], p, &c__[1], &one, &zero, &y[1], &
-	   one, (ftnlen) 1);
+    dgemv_("N", p, n, &c_b4, &a[a_offset], p, &c__[1], &one, &zero, &y[1],
+	   &one, (ftnlen) 1);
     for (i = 1; i <= *n; ++i) {
 	d__[i] = 1.;
     }
-    stepy_(n, p, &a[a_offset], &d__[1], &y[1], &ada[ada_offset], info);
-    if (*info != 0) {
-	return 0;
+    err = stepy_(n, p, &a[a_offset], &d__[1], &y[1], &ada[ada_offset], info);
+    if (err) {
+	return err;
     }
     dcopy_(n, &c__[1], &one, &s[1], &one);
     dgemv_("T", p, n, &c_b13, &a[a_offset], p, &y[1], &one, &c_b4, &s[1],
@@ -170,9 +169,9 @@ looptop:
 	dgemv_("N", p, n, &c_b4, &a[a_offset], p, &dz[1], &one, &c_b4, &dy[1],
 		&one, (ftnlen) 1);
 	dcopy_(p, &dy[1], &one, &rhs[1], &one);
-	stepy_(n, p, &a[a_offset], &d__[1], &dy[1], &ada[ada_offset], info);
-	if (*info != 0) {
-	    return 0;
+	err = stepy_(n, p, &a[a_offset], &d__[1], &dy[1], &ada[ada_offset], info);
+	if (err) {
+	    return err;
 	}
 
 	dgemv_("T", p, n, &c_b4, &a[a_offset], p, &dy[1], &one, &c_b13, 
@@ -278,7 +277,7 @@ looptop:
     daxpy_(n, &c_b13, &w[1], &one, &z__[1], &one);
     dswap_(n, &z__[1], &one, &x[1], &one);
 
-    return 0;
+    return err;
 } /* end of lpfnb_ */
 
 int rqfnb_ (integer *n, integer *p, doublereal *a, doublereal *y, 
@@ -287,18 +286,19 @@ int rqfnb_ (integer *n, integer *p, doublereal *a, doublereal *y,
 	    integer *info, void (*callback)(void))
 {
     integer a_dim = *p, wn_dim = *n, wp_dim = *p;
+    int err;
 
     /* Parameter adjustments */
     wn -= 1 + wn_dim;
     wp -= 1 + wp_dim;
     a -= 1 + a_dim;
 
-    lpfnb_(n, p, &a[a_dim + 1], y, rhs, d, u, beta, eps, 
-	   &wn[wn_dim + 1], &wn[(wn_dim << 1) + 1], &wp[wp_dim + 1], 
-	   &wn[wn_dim * 3 + 1], &wn[(wn_dim << 2) + 1], &wn[wn_dim * 5 + 1], 
-	   &wn[wn_dim * 6 + 1], &wp[(wp_dim << 1) + 1], &wn[wn_dim * 7 + 1],
-	   &wn[(wn_dim << 3) + 1], &wn[wn_dim * 9 + 1], &wp[wp_dim * 3 + 1], 
-	   &wp[(wp_dim << 2) + 1], nit, info, callback);
+    err = lpfnb_(n, p, &a[a_dim + 1], y, rhs, d, u, beta, eps, 
+		 &wn[wn_dim + 1], &wn[(wn_dim << 1) + 1], &wp[wp_dim + 1], 
+		 &wn[wn_dim * 3 + 1], &wn[(wn_dim << 2) + 1], &wn[wn_dim * 5 + 1], 
+		 &wn[wn_dim * 6 + 1], &wp[(wp_dim << 1) + 1], &wn[wn_dim * 7 + 1],
+		 &wn[(wn_dim << 3) + 1], &wn[wn_dim * 9 + 1], &wp[wp_dim * 3 + 1], 
+		 &wp[(wp_dim << 2) + 1], nit, info, callback);
 
-    return 0;
+    return err;
 } 
