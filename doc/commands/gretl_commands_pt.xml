@@ -4162,41 +4162,41 @@
   </command>
 
   <command name="genseed" section="Programming" context="gui"
-    label="Setting the seed for random numbers">
+    label="Definindo a semente dos números aleatórios">
 
     <description>
       <para>
-	The "seed" controls the starting point for the sequence of
-	pseudo-random numbers generated in a given gretl session. By
-	default the seed is set when the program is started, using the
-	system time.  This ensures that you get a different
-	sequence of random numbers each time you run the program.  If
-	you want to obtain repeatable sequences, you need to set the
-	seed manually (and take note of the value you used).
+	A "semente" controla o ponto inicial da sequência dos
+	números pseudo-aleatórios gerados num dada sessão gretl.  Por
+	omissão a semente é definida usando a hora do sistema, quando
+	o programa é iniciado.  Isto garante que você obtém uma sequência
+	diferente de número aleatórios de cada vez que iniciar o programa.
+	Se você quiser obter sequências repetíveis, você precisa de
+	definir manualmente a semente (tomando nota do valor utilizado).
       </para>
       <para>
-	Note that whenever you click "OK" in this dialog box, the
-	generator is re-started, using the given seed.  So, for
-	example, if you (a) set the seed to (say) 147; (b) generate a
-	series from the standard normal distribution; (c) revisit
-	this dialog and click "OK" again with the seed still at 147;
-	then (d) generate a second series from the standard normal
-	distribution, the two generated series will be identical.
+	Note que sempre que você clicar "OK" nesta janela de diálogo,
+	o gerador é reiniciado usando a semente fornecida.  Portanto,
+	por exemplo, se você (a) definir a semente para (digamos) 147;
+	(b) gerar uma série com distribuição normal; (c) voltar a esta
+	janela de diálogo e clicar "OK" outra vez com a semente ainda a
+	147; e depois (d) gerar uma segunda série com a distribuição
+	normal, as duas séries serão iguais.
       </para>
     </description>
   </command>
 
-  <command name="gmm" section="Estimation" label="GMM estimation">
+  <command name="gmm" section="Estimation" label="Estimação GMM">
 
     <usage>
       <options>
 	<option>
 	  <flag>--two-step</flag>
-	  <effect>two step estimation</effect>
+	  <effect>estimação em duas fases</effect>
 	</option>
 	<option>
 	  <flag>--iterate</flag>
-	  <effect>iterated GMM</effect>
+	  <effect>GMM iterado</effect>
 	</option>
 	<option>
 	  <flag>--vcv</flag>
@@ -4208,7 +4208,7 @@
 	</option>
 	<option>
 	  <flag>--lbfgs</flag>
-	  <effect>use L-BFGS-B instead of regular BFGS</effect>
+	  <effect>usar L-BFGS-B em vez do normal BFGS</effect>
 	</option>
       </options>
     </usage>
@@ -4216,18 +4216,19 @@
     <description>
 
       <para>
-	Performs Generalized Method of Moments (GMM) estimation using the
-	BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm. You must
-	specify one or more commands for updating the relevant quantities
-	(typically GMM residuals), one or more sets of orthogonality
-	conditions, an initial matrix of weights, and a listing of the
-	parameters to be estimated, all enclosed between the tags
-	<lit>gmm</lit> and <lit>end gmm</lit>. Any options should be
-	appended to the <lit>end gmm</lit> line.
+	Faz estimação usando o Método dos Momentos Generalizado, 
+	'Generalized Method of Moments' (GMM) com o algoritmo 
+	BFGS (Broyden, Fletcher, Goldfarb, Shanno). Você tem que
+	especificar um ou mais comandos para a atualização das quantidades
+	relevantes (tipicamente os resíduos GMM), um ou mais conjuntos
+	das condições, uma matriz inicial dos pesos, e uma listagem dos
+	parâmetros a serem estimados, tudo entre os marcadores 
+	<lit>gmm</lit> e <lit>end gmm</lit>. Quaisquer opções devem ser
+	acrescentadas à linha <lit>end gmm</lit> .
       </para>
       <para>
-	Please see <guideref targ="chap:gmm"/> for details on this command.
-	Here we just illustrate with a simple example.
+	Por favor veja mais detalhes sobre este comando em <guideref targ="chap:gmm"/>.
+	Aqui apenas ilustramos com um exemplo simples.
       </para>
       <code>
 	gmm e = y - X*b
@@ -4237,81 +4238,81 @@
 	end gmm
       </code>
       <para>
-	In the example above we assume that <lit>y</lit> and <lit>X</lit>
-	are data matrices, <lit>b</lit> is an appropriately sized vector
-	of parameter values, <lit>W</lit> is a matrix of instruments, and
-	<lit>V</lit> is a suitable matrix of weights.  The statement
+	No exemplo acima nós assumimos que <lit>y</lit> e <lit>X</lit>
+	são matrizes, <lit>b</lit> é um vetor de tamanho apropriado dos
+	valores dos parâmetros, <lit>W</lit> é a matriz dos instrumentos,
+	e <lit>V</lit> é uma matriz adequada de pesos.  A declaração
       </para>
       <code>
 	orthog e ; W
       </code>
       <para>
-	indicates that the residual vector <lit>e</lit> is in principle
-	orthogonal to each of the instruments composing the columns of
+	indica que o vetor dos resíduos <lit>e</lit> é em princípio
+	ortognal a cada um dos instromentos que compõem as colunas de
 	<lit>W</lit>.
       </para>
 
     </description>
 
     <gui-access>
-      <menu-path>/Model/GMM</menu-path>
+      <menu-path>/Modelo/GMM</menu-path>
     </gui-access>
 
   </command>
 
   <command name="gnuplot" section="Graphs" 
-    label="Create a gnuplot graph" context="cli">
+    label="Criar um gráfico gnuplot" context="cli">
 
     <usage>
       <arguments>
-        <argument>yvars</argument>
-        <argument>xvar</argument>
-	<argument optional="true">dumvar</argument>
+        <argument>variáveis-y</argument>
+        <argument>variável-x</argument>
+	<argument optional="true">variável-auxiliar</argument>
       </arguments>
       <options>
         <option>
 	  <flag>--with-lines</flag>
-	  <effect>use lines, not points</effect>
+	  <effect>usar linhas, e não pontos</effect>
         </option>
         <option>
 	  <flag>--with-impulses</flag>
-	  <effect>use vertical lines</effect>
+	  <effect>usar linhas verticais</effect>
         </option>
         <option>
 	  <flag>--time-series</flag>
-	  <effect>plot against time</effect>
+	  <effect>gráfico temporal</effect>
         </option>
         <option>
 	  <flag>--suppress-fitted</flag>
-	  <effect>don't show fitted line</effect>
+	  <effect>não mostrar a linha ajustada</effect>
         </option>
         <option>
 	  <flag>--single-yaxis</flag>
-	  <effect>force use of just one y-axis</effect>
+	  <effect>forçar o uso de apenas um eixo y</effect>
         </option>
         <option>
 	  <flag>--linear-fit</flag>
-	  <effect>show least squares fit</effect>
+	  <effect>mostrar o ajustamento por mínimos quadrados</effect>
         </option>
         <option>
 	  <flag>--inverse-fit</flag>
-	  <effect>show inverse fit</effect>
+	  <effect>mostrar o ajustamento inverso</effect>
         </option>
         <option>
 	  <flag>--quadratic-fit</flag>
-	  <effect>show quadratic fit</effect>
+	  <effect>mostrar o ajustamento quadrático</effect>
         </option>
-<option>
+	<option>
 	  <flag>--cubic-fit</flag>
-	  <effect>show cubic fit</effect>
+	  <effect>mostrar o ajustamento cúbico</effect>
         </option>
         <option>
 	  <flag>--loess-fit</flag>
-	  <effect>show loess fit</effect>
+	  <effect>mostrar o ajustamento loess</effect>
         </option>
         <option>
 	  <flag>--semilog-fit</flag>
-	  <effect>show semilog fit</effect>
+	  <effect>mostrar o ajustamento semilog</effect>
         </option>
         <option>
 	  <flag>--dummy</flag>
@@ -4319,18 +4320,18 @@
         </option>
         <option>
 	  <flag>--matrix</flag>
-	  <optparm>name</optparm>
-	  <effect>plot columns of named matrix</effect>
+	  <optparm>nome</optparm>
+	  <effect>representar as colunas da matriz indicada</effect>
         </option>
         <option>
 	  <flag>--output</flag>
-	  <optparm>filename</optparm>
-	  <effect>send output to specified file</effect>
+	  <optparm>nome-de-ficheiro</optparm>
+	  <effect>enviar a saída para o ficheiro especificado</effect>
         </option>
         <option>
 	  <flag>--input</flag>
-	  <optparm>filename</optparm>
-	  <effect>take input from specified file</effect>
+	  <optparm>nome-de-ficheiro</optparm>
+	  <effect>obter entrada a partir do ficheiro especificado</effect>
         </option>
       </options>
       <examples>
@@ -4342,92 +4343,94 @@
 
     <description>
       <para>
-	The variables in the list <repl>yvars</repl> are graphed against
-	<repl>xvar</repl>.  For a time series plot you may either
-	give <lit>time</lit> as <repl>xvar</repl> or use the option
-	flag <opt>--time-series</opt>.
+	As variáveis na lista <repl>variáveis-y</repl> são representadas
+	contra a <repl>variável-x</repl>.  Para um gráfico de série 
+	temporal você pode indicar <lit>tempo</lit> como sendo a 
+	<repl>variável-x</repl> ou usar a opção <opt>--time-series</opt>.
       </para>
 
       <para>
-	If the <opt>--dummy</opt> option is selected, exactly three
-	variables should be given: a single <math>y</math> variable, an
-	<math>x</math> variable, and <repl>dvar</repl>, a discrete
-	variable.  The effect is to plot <repl>yvar</repl> against
-	<repl>xvar</repl> with the points shown in different colors
-	depending on the value of <repl>dvar</repl> at the given
-	observation.
+	Se a opção <opt>--dummy</opt> tiver sido indicada, terão que ser
+	dadas exatamente três variáveis: uma única variável <math>y</math>,
+	uma variável <math>x</math>, e uma variável 
+	<repl>variável-auxiliar</repl>, uma variável discreta.  O efeito é
+	o de representar as <repl>variáveis-y</repl> contra <repl>variável-x</repl>
+	com os pontos mostrados com diferentes cores dependendo do valor da
+	<repl>variável-auxiliar</repl> na respectiva observação.
       </para>
 
       <para context="cli">
-	Generally, <repl>yvars</repl> and <repl>xvar</repl> refer to series in
-	the current dataset (given either by name or ID number).  But if a
-	named matrix is supplied via the <opt>--matrix</opt> option these
-	arguments (which must be given as numerical values) denote
-	(1-based) column indices for the given matrix.  So for example
-	if you want a scatterplot of column 2 of matrix <lit>M</lit> against
-	column 1, you should do:
+	Geralmente, as <repl>variáveis-y</repl> e <repl>variável-x</repl> 
+	referem-se a séries no conjunto de dados corrente (tanto referenciadas
+	por nome como por número ID).  Mas se o nome de uma matriz for indicado
+	com a opção <opt>--matrix</opt> estes argumentos (que têm que ser dados
+	como valores numéricos) indicam indices de colunas (iniciados em 1) para
+	a matriz fornecida. Assim, por exemplo, se você quiser um gráfico X-Y
+	da coluna 2 da matriz <lit>M</lit> contra a coluna 1, você deve usar:
       </para>
       <code context="cli">
 	gnuplot 2 1 --matrix=M
       </code>
 
       <para context="cli">
-	In interactive mode the plot is displayed immediately. In batch mode
-	the default behavior is that a gnuplot command file is written in the
-	user's working directory, with a name on the pattern
-	<filename>gpttmpN.plt</filename>, starting with N = <lit>01</lit>. The
-	actual plots may be generated later using <program>gnuplot</program>
-	(under MS Windows, <program>wgnuplot</program>).  This behavior can be
-	modified by use of the <opt>--output=</opt><repl>filename</repl>
-	option.  This option controls the filename used, and at the same time
-	allows you to specify a particular output format via the three-letter
-	extension of the file name, as follows: <lit>.eps</lit> results in the
-	production of an Encapulated PostScript (EPS) file; <lit>.pdf</lit>
-	produces PDF; <lit>.png</lit> produces PNG format, <lit>.emf</lit>
-	calls for EMF (Enhanced MetaFile), <lit>.fig</lit> calls for an Xfig
-	file, and <lit>.svg</lit> for SVG (Scalable Vector Graphics). If the
-	dummy filename <quote><lit>display</lit></quote> is given then the
-	plot is shown on screen as in interactive mode. If a filename with any
-	extension other than those just mentioned is given, a gnuplot command
-	file is written.
+	Em modo interativo o gráfico é apresentado imediatamente. Em modo de 
+	sequência de comandos o comportamento por omissão é o de criar um 
+	ficheiro de comandos gnuplot na directoria de trabalho do utilizador,
+	com um nome seguindo o padrão <filename>gpttmpN.plt</filename>, 
+	iniciando com N = <lit>01</lit>. Os gráficos podem ser depois gerados
+	usando o programa <program>gnuplot</program> (em MS Windows,
+	 <program>wgnuplot</program>).  Este comportamento pode ser modificado
+	com o uso da opção <opt>--output=</opt><repl>nome-de-ficheiro</repl>.
+	Esta opção controla o nome do ficheiro usado, e ao mesmo tempo permite-lhe
+	especificar um formato de saída de acordo com a extensão de três letras
+	no nome do ficheiro, sendo: <lit>.eps</lit> resultante na produção de um
+	ficheiro 'Encapsulated PostScript' (EPS); <lit>.pdf</lit> produz PDF; 
+	<lit>.png</lit> produz no formato PNG, <lit>.emf</lit> em formato EMF
+	('Enhanced MetaFile'), <lit>.fig</lit> no formato Xfig, e <lit>.svg</lit>
+	para o formato SVG ('Scalable Vector Graphics'). Se usado o nome de ficheiro
+	<quote><lit>display</lit></quote> o gráfico é apresentado no écran tal como
+	em modo interativo. Se o nome de ficheiro tiver outra qualquer extensão que
+	não as mencionadas, será escrito um ficheiro de comandos gnuplot.
       </para>
 
       <para>
-	The various <quote>fit</quote> options are applicable only in
-	the case of a bivariate scatterplot.  The default behavior
-	is to show the OLS fitted line if and only if the slope
-	coefficient is significant at the 10 percent level. If the
-	<opt>suppress</opt> option is given, no fitted line is shown.
-	If the <opt>linear</opt> option is given, the OLS line is
-	shown regardless of whether or not it is significant.  The other
-	options&mdash;<opt>inverse</opt>, <opt>quadratic</opt> and
-	<opt>loess</opt>&mdash;produce respectively an inverse fit
-	(regression of <math>y</math> on 1/<math>x</math>), a
-	quadratic fit, or a loess fit.  Loess (also sometimes called
-	<quote>lowess</quote>) is a robust locally weighted regression.  
+	As várias opções de <quote>ajustamento</quote> são aplicáveis
+	apenas nos caso de gráficos bivariados. O comportamento
+	por omissão é o de mostrar a linha de ajustamento de mínimos
+	quadrados se e só se o coeficiente do declive fôr significativo
+	num nível de 10 porcento. Se a opção <opt>suppress</opt>
+	tiver sido dada, não será mostrada a linha ajustada.
+	Se a opção <opt>linear</opt> fôr dada, a linha mínimos quadrados
+	será mostrada independentemente se é significativa ou não.  As outras
+	opções&mdash;<opt>inverse</opt>, <opt>quadratic</opt> e
+	<opt>loess</opt>&mdash;produzem espectivamente um ajustamento inverso
+	(regressão de <math>y</math> sobre 1/<math>x</math>), um ajustamento
+	quadrático, ou um ajustamento loess. Loess (também por vezes chamado
+	<quote>lowess</quote>) é uma regressão robusta com pesos locais.
       </para>
 
       <para>
-	A further option to this command is available: following
-	the specification of the variables to be plotted and the
-	option flag (if any), you may add literal gnuplot commands to
-	control the appearance of the plot (for example, setting the
-	plot title and/or the axis ranges).  These commands should be
-	enclosed in braces, and each gnuplot command must be
-	terminated with a semi-colon.  A backslash may be used to
-	continue a set of gnuplot commands over more than one line.
-	Here is an example of the syntax:
+	Uma outra opção está disponível para este comando:
+	a seguir às especificações das variáveis a serem representadas
+	e das opções (caso hajam), você pode acrescentar comandos 
+	gnuplot para controlar a aparência do gráfico (por exemplo,
+	para definir o título e/ou as escalas dos eixos).  Estes comandos
+	devem ser colocados dentro de chavetas, e cada comando gnuplot
+	tem que ser terminado com um ponto-e-vírgula.  Um '\' pode ser
+	usado para continuar uma conjunto de comandos gnuplot por mais que
+	uma linha.
+	Aqui está um exemplo da sintaxe:
       </para>
 
       <para>
-	<lit>{ set title 'My Title'; set yrange [0:1000]; }</lit>
+	<lit>{ set title 'O Meu Título'; set yrange [0:1000]; }</lit>
       </para>
 
     </description>
 
     <gui-access>
-      <menu-path>/View/Graph specified vars</menu-path>
-      <other-access>Main window pop-up menu, graph button on toolbar</other-access>
+      <menu-path>/Ver/Gráfico das variáveis</menu-path>
+      <other-access>Menu de contexto na janela principal, botão de gráfico na barra de ferramentas</other-access>
     </gui-access>
 
   </command>
