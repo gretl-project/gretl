@@ -3395,7 +3395,7 @@ int gretl_LU_solve_invert (gretl_matrix *a, gretl_matrix *b)
  * @b: matrix.
  *
  * Solves ax = b for the unknown x, via LU decomposition
- * using partial piviting with row interchanges.
+ * using partial pivoting with row interchanges.
  * On exit, @b is replaced by the solution and @a is replaced 
  * by its decomposition. Calls the lapack functions dgetrf() 
  * and dgetrs().
