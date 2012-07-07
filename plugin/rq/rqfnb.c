@@ -39,6 +39,57 @@ extern int dpotrs_ (char *, integer *, integer *, doublereal *, integer *,
 extern doublereal ddot_ (integer *, doublereal *, integer *, doublereal *, 
 			 integer *);
 
+#if 1
+
+static int stepy_ (integer *n, integer *p, doublereal *a, 
+		   doublereal *d, doublereal *b, doublereal *ada, 
+		   integer *info)
+{
+    integer i, m = *p * *p;
+    int attempt = 0;
+    int err = 0;
+
+ try_again:
+
+    for (i=0; i<m; i++) {
+	ada[i] = 0.0;
+    }
+
+    for (i=0; i<*n; i++) {
+	dsyr_("U", p, &d[i], &a[i * *p], &one, ada, p, (ftnlen) 1);
+    }
+
+    if (attempt == 0) {
+	dposv_("U", p, &one, ada, p, b, p, info, (ftnlen) 1);
+	if (*info != 0) {
+	    fprintf(stderr, "stepy: dposv gave info = %d\n", *info);
+	    attempt = 1;
+	    goto try_again;
+	    /* err = (*info > 0)? E_NOTPD : E_DATA; */
+	}
+    } else {
+	gretl_matrix A, B;
+
+	gretl_matrix_init(&A);
+	gretl_matrix_init(&B);
+
+	A.rows = A.cols = *p;
+	A.val = ada;
+	B.rows = *p;
+	B.cols = 1;
+	B.val = b;
+
+	err = gretl_LU_solve(&A, &B);
+	if (err) {
+	    fprintf(stderr, "stepy: gretl_LU_solve: err = %d\n", err);
+	}
+    }
+
+    return err;
+}
+
+#else
+
 static int stepy_ (integer *n, integer *p, doublereal *a, 
 		   doublereal *d, doublereal *b, doublereal *ada, 
 		   integer *info)
@@ -49,7 +100,7 @@ static int stepy_ (integer *n, integer *p, doublereal *a,
     int err = 0;
 
     /* Parameter adjustments */
-    --d;
+    --d; 
     ada -= ada_offset;
     a -= a_offset;
 
@@ -65,13 +116,16 @@ static int stepy_ (integer *n, integer *p, doublereal *a,
     }
 
     dposv_("U", p, &one, &ada[ada_offset], p, b, p, info, (ftnlen) 1);
+
     if (*info != 0) {
-	fprintf(stderr, "stepy_: dposv gave info = %d\n", *info);
+	fprintf(stderr, "stepy: dposv gave info = %d\n", *info);
 	err = (*info > 0)? E_NOTPD : E_DATA;
     }
 
     return err;
 }
+
+#endif
 
 #define ITERSTEP 5
 
@@ -227,7 +281,7 @@ looptop:
 	    dpotrs_("U", p, &one, &ada[ada_offset], p, &dy[1], p, info, 
 		    (ftnlen) 1);
 	    if (*info != 0) {
-		fprintf(stderr, "lpfnb_: dpotrs_ gave info = %d\n", *info);
+		fprintf(stderr, "lpfnb: dpotrs_ gave info = %d\n", *info);
 	    }
 	    dgemv_("T", p, n, &c_b4, &a[a_offset], p, &dy[1], &one, &zero, 
 		   &u[1], &one, (ftnlen) 1);
