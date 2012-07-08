@@ -4431,7 +4431,7 @@
 	option.  This option controls the filename used, and at the same time
 	allows you to specify a particular output format via the three-letter
 	extension of the file name, as follows: <lit>.eps</lit> results in the
-	production of an Encapulated PostScript (EPS) file; <lit>.pdf</lit>
+	production of an Encapsulated PostScript (EPS) file; <lit>.pdf</lit>
 	produces PDF; <lit>.png</lit> produces PNG format, <lit>.emf</lit>
 	calls for EMF (Enhanced MetaFile), <lit>.fig</lit> calls for an Xfig
 	file, and <lit>.svg</lit> for SVG (Scalable Vector Graphics). If the
