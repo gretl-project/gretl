@@ -973,7 +973,7 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
     double gradtol = 1.0e-05;
     int fncount, maxit = 1000;
     gretlopt maxopt = opt & OPT_V;
-    gretlopt quietopt = opt & OPT_Q;
+    int quiet = opt & OPT_Q;
     double *theta;
     int err = 0;
 
@@ -989,12 +989,12 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
 	err = BFGS_max(theta, bp->npar, maxit, crittol, &fncount, 
 		       &grcount, biprob_loglik, C_LOGLIK,
 		       biprob_score, bp, NULL,
-		       maxopt, quietopt ? NULL : prn);
+		       maxopt, quiet ? NULL : prn);
     } else {	
 	err = newton_raphson_max(theta, bp->npar, maxit, crittol, gradtol,
 				 &fncount, C_LOGLIK, biprob_loglik, 
 				 biprob_score, biprobit_hessian,
-				 bp, maxopt, quietopt ? NULL : prn);
+				 bp, maxopt, quiet ? NULL : prn);
     }
 
     free(theta);
