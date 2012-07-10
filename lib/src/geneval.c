@@ -7238,6 +7238,43 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 				     opt, p->dset, ret->v.xvec);
 	    }
 	}
+    } else if (t->t == F_GHK) {
+	gretl_matrix *S = NULL;
+	gretl_matrix *A = NULL;
+	gretl_matrix *B = NULL;
+	gretl_matrix *U = NULL;
+
+	if (k != 4) {
+	    n_args_error(k, 4, "ghk", p);
+	} 
+
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else if (e->t != MAT) {
+		node_type_error(t->t, i+1, MAT, e, p);
+	    } else if (i == 0) {
+		S = e->v.m;
+	    } else if (i == 1) {
+		A = e->v.m;
+	    } else if (i == 2) {
+		B = e->v.m;
+	    } else if (i == 3) {
+		U = e->v.m;
+	    }
+	}
+
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
+
+	if (!p->err) {
+	    if (ret->v.m != NULL) {
+		gretl_matrix_free(ret->v.m);
+	    }	    
+	    ret->v.m = gretl_GHK(S, A, B, U, &p->err);
+	} 
     }
 
 #if PRE_EVAL_ARGS
@@ -9198,6 +9235,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_KSIMUL:
     case F_NRMAX:
     case F_LOESS:
+    case F_GHK:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
 	break;

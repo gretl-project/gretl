@@ -385,6 +385,7 @@ struct str_table funcs[] = {
     { F_SIMANN,   "simann" },     /* simulated annealing */
     { F_LOESS,    "loess" },
     { F_FREQ,     "freq" },
+    { F_GHK,      "ghk" },
     { 0,          NULL }
 };
 

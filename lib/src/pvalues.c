@@ -1469,6 +1469,161 @@ double bvnorm_cdf (double rho, double a, double b)
 #endif
 }
 
+/*
+  C         Lower triangular Cholesky factor of W, a m x m matrix
+  A         Lower bound of rectangle, a m x 1 vector [When the lower bound
+            is -infinity, set A = (-1.0E10)*ONES(m,1)]
+  B         Upper bound of rectangle, a m x 1 vector [When the upper bound
+            is +infinity, set B = (+1.0E10)*ONES(m,1)]
+  U         Random variates, a m x r matrix
+ */
+
+static double GHK_1 (const gretl_matrix *C, 
+		     const gretl_matrix *A, 
+		     const gretl_matrix *B, 
+		     const gretl_matrix *U)
+{
+    gretl_matrix *TA, *TB;
+    gretl_matrix *WGT, *TT;
+    int m = C->rows; /* Dimension of the multivariate normal */
+    int r = U->cols; /* Number of repetitions */
+    double P, den, TINY = 1.0e-100;
+    double ui, icdf, x, cjk, tki;
+    int i, j, k;
+
+    den = gretl_matrix_get(C, 0, 0) + TINY;
+
+    TA = gretl_matrix_alloc(1, r);
+    TB = gretl_matrix_alloc(1, r);
+
+    for (i=0; i<r; i++) {
+	TA->val[i] = normal_cdf(A->val[0] / den);
+	TB->val[i] = normal_cdf(B->val[0] / den);
+    }
+
+    WGT = gretl_matrix_copy(TB);
+    gretl_matrix_subtract_from(WGT, TA);
+
+    TT = gretl_zero_matrix_new(m, r);
+
+    for (i=0; i<r; i++) {
+	ui = gretl_matrix_get(U, 0, i);
+	x = ui * TA->val[i] + (1-ui) * TB->val[i];
+	icdf = normal_cdf_inverse(x);
+	gretl_matrix_set(TT, 0, i, icdf);
+    }
+
+    for (j=1; j<m; j++) {
+	den = gretl_matrix_get(C, j, j) + TINY;
+	for (i=0; i<r; i++) {
+	    x = 0.0;
+	    for (k=0; k<j; k++) {
+		cjk = gretl_matrix_get(C, j, k);
+		tki = gretl_matrix_get(TT, k, i);
+		x += cjk * tki;
+	    }
+	    TA->val[i] = normal_cdf((A->val[j] - x) / den);
+	    TB->val[i] = normal_cdf((B->val[j] - x) / den);
+	    /* component j draw */
+	    ui = gretl_matrix_get(U, j, i);
+	    x = ui * TA->val[i] + (1-ui) * TB->val[i];
+	    icdf = normal_cdf_inverse(x);
+	    gretl_matrix_set(TT, j, i, icdf);
+	}
+	/* accumulate weight */
+	gretl_matrix_subtract_from(TB, TA);
+	for (i=0; i<r; i++) {
+	    WGT->val[i] *= TB->val[i];
+	}
+    }
+
+    P = 0.0;
+    for (i=0; i<r; i++) {
+	P += WGT->val[i];
+    }
+    P /= r;
+
+    gretl_matrix_free(TA);
+    gretl_matrix_free(TB);
+    gretl_matrix_free(WGT);
+    gretl_matrix_free(TT);
+
+    return P;
+}
+
+/**
+ * gretl_GHK:
+ * @S: 
+ * @A: 
+ * @B: 
+ * @U:
+
+ * Returns: 
+ */
+
+gretl_matrix *gretl_GHK (const gretl_matrix *S,
+			 const gretl_matrix *A,
+			 const gretl_matrix *B,
+			 const gretl_matrix *U,
+			 int *err)
+{
+    gretl_matrix *P = NULL;
+    gretl_matrix *C, *Ai = NULL, *Bi = NULL;
+    int dim = S->rows;
+    int nobs = A->rows;
+    int i, j;
+
+    if (gretl_is_null_matrix(S) ||
+	gretl_is_null_matrix(A) ||
+	gretl_is_null_matrix(B) ||
+	gretl_is_null_matrix(U)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (A->rows != B->rows ||
+	A->cols != B->cols ||
+	S->rows != A->cols ||
+	S->cols != A->cols ||
+	U->rows != A->cols) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    C = gretl_matrix_copy(S);
+    if (C == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }	
+
+    *err = gretl_matrix_cholesky_decomp(C);
+
+    if (!*err) {
+	Ai = gretl_matrix_alloc(dim, 1);
+	Bi = gretl_matrix_alloc(dim, 1);
+	P = gretl_matrix_alloc(nobs, 1);
+	if (Ai == NULL || Bi == NULL || P == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	for (i=0; i<nobs; i++) {
+	    for (j=0; j<dim; j++) {
+		Ai->val[j] = gretl_matrix_get(A, i, j);
+		Bi->val[j] = gretl_matrix_get(B, i, j);
+	    }
+	    P->val[i] = GHK_1(C, Ai, Bi, U);
+	}
+    }
+
+    gretl_matrix_free(C);
+    gretl_matrix_free(Ai);
+    gretl_matrix_free(Bi);
+
+    return P;
+}
+
 /**
  * gamma_cdf:
  * @s1: first parameter.
