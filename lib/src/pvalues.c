@@ -1290,6 +1290,7 @@ static double genz04 (double rho, double limx, double limy)
 	    }
 	}
 	bvn = bvn * asr / (2 * M_2PI); 
+
 	d1 = -h;
 	bvn += normal_cdf(d1) * normal_cdf(-k);
     } else {
@@ -1354,7 +1355,7 @@ static double genz04 (double rho, double limx, double limy)
     }
 
     /* sanity check */
-    return (bvn < 0) ? NADBL : bvn;
+    return (bvn < 0) ? 0 : bvn;
 }
 
 #else

@@ -167,7 +167,6 @@ double series_table_get_value (series_table *st, const char *s)
 const char *series_table_get_string (series_table *st, double val)
 {
     const char *ret = NULL;
-
     if (!na(val)) {
 	int k = val;
 
