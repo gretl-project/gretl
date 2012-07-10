@@ -1491,14 +1491,16 @@ static double GHK_1 (const gretl_matrix *C,
     int m = C->rows; /* Dimension of the multivariate normal */
     int r = U->cols; /* Number of repetitions */
     double P, den, TINY = 1.0e-100;
-    double ui, icdf, x, cjk, tki;
+    double ui, icdf, x, z, cjk, tki;
     int i, j, k;
 
     den = gretl_matrix_get(C, 0, 0) + TINY;
 
     for (i=0; i<r; i++) {
-	TA->val[i] = normal_cdf(A->val[0] / den);
-	TB->val[i] = normal_cdf(B->val[0] / den);
+	z = A->val[0];
+	TA->val[i] = xna(z) ? 0 : normal_cdf(z / den);
+	z = B->val[0];
+	TB->val[i] = xna(z) ? 1 : normal_cdf(z / den);
     }
 
     gretl_matrix_copy_values(WGT, TB);
@@ -1507,7 +1509,7 @@ static double GHK_1 (const gretl_matrix *C,
 
     for (i=0; i<r; i++) {
 	ui = gretl_matrix_get(U, 0, i);
-	x = ui * TA->val[i] + (1-ui) * TB->val[i];
+	x = TB->val[i] - ui * (TB->val[i] - TA->val[i]);
 	icdf = normal_cdf_inverse(x);
 	gretl_matrix_set(TT, 0, i, icdf);
     }
@@ -1521,11 +1523,13 @@ static double GHK_1 (const gretl_matrix *C,
 		tki = gretl_matrix_get(TT, k, i);
 		x += cjk * tki;
 	    }
-	    TA->val[i] = normal_cdf((A->val[j] - x) / den);
-	    TB->val[i] = normal_cdf((B->val[j] - x) / den);
+	    z = A->val[j];
+	    TA->val[i] = xna(z) ? 0 : normal_cdf((z - x) / den);
+	    z = B->val[j];
+	    TB->val[i] = xna(z) ? 1 : normal_cdf((z - x) / den);
 	    /* component j draw */
 	    ui = gretl_matrix_get(U, j, i);
-	    x = ui * TA->val[i] + (1-ui) * TB->val[i];
+	    x = TB->val[i] - ui * (TB->val[i] - TA->val[i]);
 	    icdf = normal_cdf_inverse(x);
 	    gretl_matrix_set(TT, j, i, icdf);
 	}
