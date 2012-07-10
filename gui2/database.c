@@ -2687,7 +2687,7 @@ static int get_addon_info (xmlNodePtr node, xmlDocPtr doc, char **S)
 	char *path = gretl_function_package_get_path(S[0], PKG_SUBDIR);
 
 	if (path != NULL) {
-	    S[3] = gretl_strdup(_("Installed"));
+	    S[3] = installed_addon_status_string(path, S[1]);
 	    free(path);
 	} else {
 	    S[3] = gretl_strdup(_("Not installed"));

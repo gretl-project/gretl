@@ -5711,6 +5711,36 @@ int check_function_needs (const DATASET *dset, FuncDataReq dreq,
     return 0;
 }
 
+/**
+ * package_version_ok:
+ * @minver: function package minimum program version requirement.
+ * @reqstr: location to write required version string (should be
+ * at least 8 bytes), or NULL.
+ *
+ * Returns: 1 if the running version of gretl satisfies the
+ * minimum version requirement in @minver; otherwise returns 0,
+ * in which case the string representation of @minver is written
+ * @reqstr if this is non-NULL.
+ */
+
+int package_version_ok (int minver, char *reqstr)
+{
+    static int thisver = 0;
+    int ret = 0;
+
+    if (thisver == 0) {
+	thisver = version_number_from_string(GRETL_VERSION);
+    }
+
+    ret = thisver >= minver;
+
+    if (!ret && reqstr != NULL) {
+	get_version_string(reqstr, minver);
+    }
+
+    return ret;
+}
+
 static int maybe_check_function_needs (const DATASET *dset,
 				       const ufunc *fun)
 {

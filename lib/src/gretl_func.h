@@ -144,6 +144,8 @@ int create_and_write_function_package (const char *fname,
 int check_function_needs (const DATASET *dset, FuncDataReq dreq,
 			  int minver);
 
+int package_version_ok (int minver, char *reqstr);
+
 int write_session_functions_file (const char *fname);
 
 int read_session_functions_file (const char *fname);

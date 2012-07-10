@@ -2,7 +2,7 @@ Checklist for making a gretl release
 
 Local:
 * Update the fedstl database if it needs it
-* Update the addons tarball (sh mkaddons in ~/stats/esl/win32/)
+* Ensure the addon zipfiles are up to date with CVS
 * Update lib/src/version.h
 * Update src/Changelog and src/CompatLog with the current date
 * Commit the above changes to CVS

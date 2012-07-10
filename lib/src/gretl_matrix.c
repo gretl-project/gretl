@@ -537,6 +537,29 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
 }
 
 /**
+ * gretl_matrix_init_full:
+ * @m: matrix to be initialized.
+ * @rows: number of rows.
+ * @cols: number of columns.
+ * @val: data array.
+ *
+ * Initializes @m to be @rows by @cols and have data @val. This
+ * intended for use with automatic matrices declared "on
+ * the stack". It is up to the user to ensure that the size of
+ * @val is compatible with the @rows and @cols specification.
+ */
+
+void gretl_matrix_init_full (gretl_matrix *m,
+			     int rows, int cols,
+			     double *val)
+{
+    m->rows = rows;
+    m->cols = cols;
+    m->val = val;
+    m->info = NULL;
+}
+
+/**
  * gretl_matrix_init:
  * @m: matrix to be initialized.
  *

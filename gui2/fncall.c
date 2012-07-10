@@ -2789,3 +2789,57 @@ int maybe_handle_pkg_menu_option (const char *path)
 
     return ret;
 }
+
+char *installed_addon_status_string (const char *path,
+				     const char *svstr)
+{
+    fnpkg *pkg;
+    int err = 0;
+    char *ret = NULL;
+
+    pkg = get_function_package_by_filename(path, &err);
+
+    if (pkg != NULL) {
+	int current = 0;
+	int update_ok = 0;
+	char reqstr[8] = {0};
+	gchar *ivstr = NULL;
+	int minver = 0;
+
+	/* @ivstr = installed package version string
+	   @svstr = package version string from server
+	*/
+	err = function_package_get_properties(pkg, 
+					      "version", &ivstr, 
+					      "min-version", &minver,
+					      NULL);
+	if (!err) {
+	    double svnum = dot_atof(svstr);
+	    double ivnum = dot_atof(ivstr);
+
+	    current = ivnum >= svnum;
+	    g_free(ivstr);
+
+	    if (!current) {
+		/* Not current, but can the addon be updated?  It may
+		   be that the running instance of gretl is too old.
+		*/
+		update_ok = package_version_ok(minver, reqstr);
+	    }
+
+	    if (current) {
+		ret = gretl_strdup(_("Up to date"));
+	    } else if (update_ok) {
+		ret = gretl_strdup(_("Not up to date"));
+	    } else if (*reqstr != '\0') {
+		ret = gretl_strdup_printf(_("Requires gretl %s"), reqstr);
+	    }
+	}
+    }
+
+    if (ret == NULL) {
+	ret = gretl_strdup(_("Error reading package"));
+    }
+
+    return ret;
+}

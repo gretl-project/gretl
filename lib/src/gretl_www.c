@@ -36,7 +36,7 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 
-#define WDEBUG 1
+#define WDEBUG 0
 #define WBUFSIZE 8192
 
 enum {
@@ -106,6 +106,8 @@ static void urlinfo_init (urlinfo *u,
     u->progfunc = NULL;
     u->phandle = NULL;
     u->pstarted = 0;
+
+    gretl_error_clear();
 
 #ifdef BUILD_DATE
     sprintf(u->agent, "gretl-%s-%s", GRETL_VERSION, BUILD_DATE);

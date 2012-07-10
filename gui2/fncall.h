@@ -50,4 +50,7 @@ int query_addons (void);
 
 int download_addon (const char *pkgname, char **local_path);
 
+char *installed_addon_status_string (const char *path,
+				     const char *svstr);
+
 #endif /* FNCALL_H */

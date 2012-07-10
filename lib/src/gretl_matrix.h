@@ -215,6 +215,10 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols);
 
 void gretl_matrix_init (gretl_matrix *m);
 
+void gretl_matrix_init_full (gretl_matrix *m,
+			     int rows, int cols,
+			     double *val);
+
 gretl_matrix *gretl_matrix_replace (gretl_matrix **pa, 
 				    gretl_matrix *b);
 
