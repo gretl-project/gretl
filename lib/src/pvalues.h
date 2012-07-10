@@ -74,7 +74,7 @@ double invmills (double x);
 
 double bvnorm_cdf (double rho, double a, double b);
 
-gretl_matrix *gretl_GHK (const gretl_matrix *S,
+gretl_matrix *gretl_GHK (const gretl_matrix *C,
 			 const gretl_matrix *A,
 			 const gretl_matrix *B,
 			 const gretl_matrix *U,

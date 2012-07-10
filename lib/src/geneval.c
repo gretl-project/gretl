@@ -7239,7 +7239,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	}
     } else if (t->t == F_GHK) {
-	gretl_matrix *S = NULL;
+	gretl_matrix *C = NULL;
 	gretl_matrix *A = NULL;
 	gretl_matrix *B = NULL;
 	gretl_matrix *U = NULL;
@@ -7255,7 +7255,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (e->t != MAT) {
 		node_type_error(t->t, i+1, MAT, e, p);
 	    } else if (i == 0) {
-		S = e->v.m;
+		C = e->v.m;
 	    } else if (i == 1) {
 		A = e->v.m;
 	    } else if (i == 2) {
@@ -7273,7 +7273,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
 	    }	    
-	    ret->v.m = gretl_GHK(S, A, B, U, &p->err);
+	    ret->v.m = gretl_GHK(C, A, B, U, &p->err);
 	} 
     }
 

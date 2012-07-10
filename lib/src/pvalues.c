@@ -1481,10 +1481,12 @@ double bvnorm_cdf (double rho, double a, double b)
 static double GHK_1 (const gretl_matrix *C, 
 		     const gretl_matrix *A, 
 		     const gretl_matrix *B, 
-		     const gretl_matrix *U)
+		     const gretl_matrix *U,
+		     gretl_matrix *TA,
+		     gretl_matrix *TB,
+		     gretl_matrix *WGT,
+		     gretl_matrix *TT)
 {
-    gretl_matrix *TA, *TB;
-    gretl_matrix *WGT, *TT;
     int m = C->rows; /* Dimension of the multivariate normal */
     int r = U->cols; /* Number of repetitions */
     double P, den, TINY = 1.0e-100;
@@ -1493,18 +1495,14 @@ static double GHK_1 (const gretl_matrix *C,
 
     den = gretl_matrix_get(C, 0, 0) + TINY;
 
-    TA = gretl_matrix_alloc(1, r);
-    TB = gretl_matrix_alloc(1, r);
-
     for (i=0; i<r; i++) {
 	TA->val[i] = normal_cdf(A->val[0] / den);
 	TB->val[i] = normal_cdf(B->val[0] / den);
     }
 
-    WGT = gretl_matrix_copy(TB);
+    gretl_matrix_copy_values(WGT, TB);
     gretl_matrix_subtract_from(WGT, TA);
-
-    TT = gretl_zero_matrix_new(m, r);
+    gretl_matrix_zero(TT);
 
     for (i=0; i<r; i++) {
 	ui = gretl_matrix_get(U, 0, i);
@@ -1543,37 +1541,39 @@ static double GHK_1 (const gretl_matrix *C,
     }
     P /= r;
 
-    gretl_matrix_free(TA);
-    gretl_matrix_free(TB);
-    gretl_matrix_free(WGT);
-    gretl_matrix_free(TT);
-
     return P;
 }
 
 /**
  * gretl_GHK:
- * @S: 
- * @A: 
- * @B: 
- * @U:
-
- * Returns: 
+ * @C: Cholesky decomposition of covariance matrix, lower triangular,
+ * m x m.
+ * @A: Lower bounds, n x m.
+ * @B: Upper bounds, n x m.
+ * @U: Uniform random matrix, m x r.
+ *
+ * Computes the GHK () approximation to the multivariate normal
+ * distribution function for @n observations on @m variates, using
+ * r draws. 
+ *
+ * Returns: an n x 1 vector of probabilities.
  */
 
-gretl_matrix *gretl_GHK (const gretl_matrix *S,
+gretl_matrix *gretl_GHK (const gretl_matrix *C,
 			 const gretl_matrix *A,
 			 const gretl_matrix *B,
 			 const gretl_matrix *U,
 			 int *err)
 {
     gretl_matrix *P = NULL;
-    gretl_matrix *C, *Ai = NULL, *Bi = NULL;
-    int dim = S->rows;
-    int nobs = A->rows;
+    gretl_matrix_block *Bk = NULL;
+    gretl_matrix *Ai, *Bi;
+    gretl_matrix *TA, *TB;
+    gretl_matrix *WT, *TT;
+    int dim, nobs, ndraws;
     int i, j;
 
-    if (gretl_is_null_matrix(S) ||
+    if (gretl_is_null_matrix(C) ||
 	gretl_is_null_matrix(A) ||
 	gretl_is_null_matrix(B) ||
 	gretl_is_null_matrix(U)) {
@@ -1583,26 +1583,33 @@ gretl_matrix *gretl_GHK (const gretl_matrix *S,
 
     if (A->rows != B->rows ||
 	A->cols != B->cols ||
-	S->rows != A->cols ||
-	S->cols != A->cols ||
+	C->rows != A->cols ||
+	C->cols != A->cols ||
 	U->rows != A->cols) {
 	*err = E_NONCONF;
 	return NULL;
     }
 
-    C = gretl_matrix_copy(S);
-    if (C == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }	
-
-    *err = gretl_matrix_cholesky_decomp(C);
+    dim = C->rows;
+    nobs = A->rows;
+    ndraws = U->cols;
 
     if (!*err) {
-	Ai = gretl_matrix_alloc(dim, 1);
-	Bi = gretl_matrix_alloc(dim, 1);
+	Bk = gretl_matrix_block_new(&Ai, dim, 1,
+				    &Bi, dim, 1,
+				    &TA, 1, ndraws,
+				    &TB, 1, ndraws,
+				    &WT, 1, ndraws,
+				    &TT, dim, ndraws,
+				    NULL);
+	if (Bk == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
 	P = gretl_matrix_alloc(nobs, 1);
-	if (Ai == NULL || Bi == NULL || P == NULL) {
+	if (P == NULL) {
 	    *err = E_ALLOC;
 	}
     }
@@ -1613,13 +1620,11 @@ gretl_matrix *gretl_GHK (const gretl_matrix *S,
 		Ai->val[j] = gretl_matrix_get(A, i, j);
 		Bi->val[j] = gretl_matrix_get(B, i, j);
 	    }
-	    P->val[i] = GHK_1(C, Ai, Bi, U);
+	    P->val[i] = GHK_1(C, Ai, Bi, U, TA, TB, WT, TT);
 	}
     }
 
-    gretl_matrix_free(C);
-    gretl_matrix_free(Ai);
-    gretl_matrix_free(Bi);
+    gretl_matrix_block_destroy(Bk);
 
     return P;
 }
