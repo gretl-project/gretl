@@ -2389,3 +2389,43 @@ int import_csv (const char *fname, DATASET *dset,
 
     return err;
 }
+
+int join_from_csv (const char *newfile,
+		   const char *varname,
+		   DATASET *dset, 
+		   int ikeyvar,
+		   const char *okey,
+		   const char *filter,
+		   const char *data,
+		   int aggregate,
+		   gretlopt opt,
+		   PRN *prn)
+{
+    int err = 0;
+
+    pputs(prn, "join_from_csv:\n");
+    pprintf(prn, " filename='%s'\n", newfile);
+    pprintf(prn, " seriesname='%s'\n", varname);
+    if (ikeyvar != 0) {
+	pprintf(prn, " ikey series=%d\n", ikeyvar);
+    }
+    if (okey != NULL) {
+	pprintf(prn, " okey='%s'\n", okey);
+    } else if (ikeyvar > 0) {
+	pprintf(prn, " okey='%s' (from ikey)\n", 
+		dset->varname[ikeyvar]);
+    }
+    if (filter != NULL) {
+	pprintf(prn, " filter='%s'\n", filter);
+    }    
+    if (data != NULL) {
+	pprintf(prn, " payload='%s'\n", data);
+    } else {
+	pprintf(prn, " payload='%s' (from inner varname)\n", varname);
+    }
+    if (aggregate != 0) {
+	pprintf(prn, " aggregation=%d\n", aggregate);
+    }
+
+    return err;
+}

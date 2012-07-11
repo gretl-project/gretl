@@ -1494,8 +1494,8 @@ static double GHK_1 (const gretl_matrix *C,
 
     den = gretl_matrix_get(C, 0, 0) + TINY;
 
-#define minus_inf(x) (x == -1.0E10)
-#define plus_inf(x) (x == 1.0E10)
+#define minus_inf(x) (x <= -1.0E10)
+#define plus_inf(x) (x >= 1.0E10 && !na(x))
 
     for (i=0; i<r; i++) {
 	z = A->val[0];

@@ -43,6 +43,7 @@
 #include "flow_control.h"
 #include "libglue.h"
 #include "gretl_www.h"
+#include "csvdata.h"
 
 #include <errno.h>
 #include <glib.h>
@@ -1861,6 +1862,27 @@ static void param_grab_braced (CMD *cmd, const char *s)
     }
 }
 
+static void param_grab_quoted (CMD *cmd, const char *s)
+{
+    if (*s == '"') {
+	const char *p = strchr(s+1, '"');
+
+	if (p == NULL) {
+	    cmd->err = E_PARSE;
+	} else {
+	    int n = p - s - 1;
+
+	    free(cmd->param);
+	    cmd->param = gretl_strndup(s+1, n);
+	    if (cmd->param == NULL) {
+		cmd->err = E_ALLOC;
+	    } 
+	}	    
+    } else {
+	cmd_param_grab_word(cmd, s);
+    }
+}
+
 /* Capture the next 'word' found following the initial command word
    (or the whole remainder of the line in some cases) as the parameter
    for @cmd.  Flag an error if the command requires a parameter but
@@ -1894,6 +1916,9 @@ static int capture_param (CMD *cmd, const char *s)
 	    cmd_param_grab_string(cmd, s);
 	} else if (cmd->ci == QUANTREG || cmd->ci == LEVINLIN) {
 	    param_grab_braced(cmd, s);
+	} else if (cmd->ci == OPEN || cmd->ci == APPEND ||
+		   cmd->ci == JOIN) {
+	    param_grab_quoted(cmd, s);
 	} else {
 	    /* grab one 'word' */
 	    cmd_param_grab_word(cmd, s);
@@ -4268,27 +4293,96 @@ static int lib_clear_data (ExecState *s, DATASET *dset)
     return err;
 }
 
-static int lib_join_data (DATASET *dset,
+static int join_agg_method (const char *s)
+{
+    int ret = -1;
+
+    if (!strcmp(s, "count")) {
+	ret = COMPACT_MAX; /* FIXME */
+    } else if (!strcmp(s, "avg")) {
+	ret = COMPACT_AVG;
+    } else if (!strcmp(s, "sum")) {
+	ret = COMPACT_SUM;
+    }
+
+    return ret;
+}
+
+static int lib_join_data (ExecState *s,
+			  char *newfile,
+			  DATASET *dset,
 			  gretlopt opt,
 			  PRN *prn)
 {
-    gretlopt opts[] = { OPT_S, OPT_K, OPT_C, 0 };
+    gretlopt opts[] = { 
+	OPT_I, OPT_O, OPT_F, OPT_C, OPT_D, 0 
+    };
     const char *optstr[] = {
-	"source",
-	"key",
-	"compact"
+	"ikey",
+	"okey",
+	"filter",
+	"compact",
+	"data"
     };
     const char *param;
-    int i, err = E_NOTIMP;
+    char *okey = NULL;
+    char *filter = NULL, *data = NULL;
+    char *p, *varname = NULL;
+    int aggregate = 0, ikeyvar = 0;
+    int i, err = 0;
 
-    for (i=0; opts[i]; i++) {
-	param = get_optval_string(JOIN, opts[i]);
-	if (param != NULL) {
-	    pprintf(prn, "%s: '%s'\n", optstr[i], param);
-	} else {
-	    pprintf(prn, "%s: missing option param!\n", optstr[i]);
+    p = strstr(s->line, s->cmd->param);
+    if (p == NULL) {
+	return E_DATA;
+    }
+
+    p += strlen(s->cmd->param);
+    p += strspn(p, " \"");
+    if (*p == '\0') {
+	return E_ARGS;
+    }
+
+    varname = gretl_strdup(p);
+
+    for (i=0; opts[i] && !err; i++) {
+	if (opt & opts[i]) {
+	    param = get_optval_string(JOIN, opts[i]);
+	    if (param != NULL) {
+		if (i == 0) {
+		    ikeyvar = current_series_index(dset, param);
+		    if (ikeyvar < 0) {
+			err = E_UNKVAR;
+		    }
+		} else if (i == 1) {
+		    okey = gretl_strdup(param);
+		} else if (i == 2) {
+		    filter = gretl_strdup(param);
+		} else if (i == 3) {
+		    aggregate = join_agg_method(param);
+		    if (aggregate < 0) {
+			err = E_DATA;
+		    }
+		} else if (i == 4) {
+		    data = gretl_strdup(param);
+		}
+	    } else {
+		pprintf(prn, "%s: missing option param!\n", optstr[i]);
+		err = E_DATA;
+	    }
 	}
+    }
+
+    if (!err) {
+	err = join_from_csv(newfile, varname, dset, 
+			    ikeyvar, okey, filter,
+			    data, aggregate,
+			    opt, prn);
     }	
+
+    free(okey);
+    free(filter);
+    free(data);
+    free(varname);
 
     return err;
 }
@@ -4305,6 +4399,10 @@ static int lib_open_append (ExecState *s,
     int http = 0, dbdata = 0;
     int ftype;
     int err = 0;
+    
+    if (cmd->ci == JOIN && (dset == NULL || dset->v == 0)) {
+	return E_NODATA;
+    }
 
     if (cmd->ci == OPEN && (gretl_in_gui_mode() || gretl_function_depth() > 0)) {
 	gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
@@ -4327,7 +4425,7 @@ static int lib_open_append (ExecState *s,
 	    return err;
 	}
     }
-    
+
     if (opt & OPT_W) {
 	ftype = GRETL_NATIVE_DB_WWW;
     } else if (opt & OPT_O) {
@@ -4338,15 +4436,15 @@ static int lib_open_append (ExecState *s,
 
     if (cmd->ci == JOIN) {
 	if (ftype == GRETL_CSV) {
-	    err = lib_join_data(dset, opt, prn);
+	    err = lib_join_data(s, newfile, dset, opt, prn);
 	} else {
-	    /* only CSV for now */
+	    /* only CSV allowed for now */
 	    err = E_NOTIMP;
 	}
 	if (err) {
 	    errmsg(err, prn);
-	    return err;
 	}
+	return err;
     }
 
     dbdata = (ftype == GRETL_NATIVE_DB || ftype == GRETL_NATIVE_DB_WWW ||

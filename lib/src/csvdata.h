@@ -42,4 +42,15 @@ int test_markers_for_dates (DATASET *dset,
 
 void reverse_data (DATASET *dset, PRN *prn);
 
+int join_from_csv (const char *newfile,
+		   const char *varname,
+		   DATASET *dset, 
+		   int ikeyvar,
+		   const char *okey,
+		   const char *filter,
+		   const char *data,
+		   int aggregate,
+		   gretlopt opt,
+		   PRN *prn);
+
 #endif /* CSVDATA_H */
