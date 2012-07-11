@@ -253,7 +253,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS)
 	$(AMP)$(COMPILE) -o $@ $<
 	$(AMP)$(CCV) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d
 
-$(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ)
+$(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ) Makefile
 	$(LDECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(LOBJS) $(AUX_LOBJ) \
 	-rpath $(RPATH) $(LIBS) -version-info $(CURRENT):$(REVISION):$(AGE)
