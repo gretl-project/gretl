@@ -20,6 +20,15 @@
 #ifndef CSVDATA_H
 #define CSVDATA_H
 
+typedef enum {
+    AGGR_NONE,
+    AGGR_COUNT,
+    AGGR_AVG,
+    AGGR_SUM,
+    AGGR_MIN,
+    AGGR_MAX
+} AggrType;
+
 #define import_na_string(s) (!strcmp(s, "NA") || \
                              !strcmp(s, "N.A.") || \
                              !strcmp(s, "n.a.") || \
@@ -49,7 +58,7 @@ int join_from_csv (const char *newfile,
 		   const char *okey,
 		   const char *filter,
 		   const char *data,
-		   int aggregate,
+		   AggrType agg,
 		   gretlopt opt,
 		   PRN *prn);
 

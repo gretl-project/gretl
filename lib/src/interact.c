@@ -4293,16 +4293,20 @@ static int lib_clear_data (ExecState *s, DATASET *dset)
     return err;
 }
 
-static int join_agg_method (const char *s)
+static AggrType join_agg_method (const char *s)
 {
     int ret = -1;
 
     if (!strcmp(s, "count")) {
-	ret = COMPACT_MAX; /* FIXME */
+	ret = AGGR_COUNT;
     } else if (!strcmp(s, "avg")) {
-	ret = COMPACT_AVG;
+	ret = AGGR_AVG;
     } else if (!strcmp(s, "sum")) {
-	ret = COMPACT_SUM;
+	ret = AGGR_SUM;
+    } else if (!strcmp(s, "min")) {
+	ret = AGGR_MIN;
+    } else if (!strcmp(s, "max")) {
+	ret = AGGR_MAX;
     }
 
     return ret;
@@ -4325,10 +4329,10 @@ static int lib_join_data (ExecState *s,
 	"data"
     };
     const char *param;
-    char *okey = NULL;
-    char *filter = NULL, *data = NULL;
-    char *p, *varname = NULL;
-    int aggregate = 0, ikeyvar = 0;
+    char *p, *okey = NULL, *filter = NULL;
+    char *varname = NULL, *data = NULL;
+    AggrType agg = 0;
+    int ikeyvar = 0;
     int i, err = 0;
 
     p = strstr(s->line, s->cmd->param);
@@ -4358,8 +4362,8 @@ static int lib_join_data (ExecState *s,
 		} else if (i == 2) {
 		    filter = gretl_strdup(param);
 		} else if (i == 3) {
-		    aggregate = join_agg_method(param);
-		    if (aggregate < 0) {
+		    agg = join_agg_method(param);
+		    if (agg < 0) {
 			err = E_DATA;
 		    }
 		} else if (i == 4) {
@@ -4375,8 +4379,7 @@ static int lib_join_data (ExecState *s,
     if (!err) {
 	err = join_from_csv(newfile, varname, dset, 
 			    ikeyvar, okey, filter,
-			    data, aggregate,
-			    opt, prn);
+			    data, agg, opt, prn);
     }	
 
     free(okey);

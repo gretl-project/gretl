@@ -2397,7 +2397,7 @@ int join_from_csv (const char *newfile,
 		   const char *okey,
 		   const char *filter,
 		   const char *data,
-		   int aggregate,
+		   AggrType agg,
 		   gretlopt opt,
 		   PRN *prn)
 {
@@ -2423,8 +2423,8 @@ int join_from_csv (const char *newfile,
     } else {
 	pprintf(prn, " payload='%s' (from inner varname)\n", varname);
     }
-    if (aggregate != 0) {
-	pprintf(prn, " aggregation=%d\n", aggregate);
+    if (agg != 0) {
+	pprintf(prn, " aggregation=%d\n", agg);
     }
 
     return err;
