@@ -1471,13 +1471,11 @@ double bvnorm_cdf (double rho, double a, double b)
 }
 
 /*
-  C         Lower triangular Cholesky factor of W, a m x m matrix
-  A         Lower bound of rectangle, a m x 1 vector [When the lower bound
-            is -infinity, set A = (-1.0E10)*ONES(m,1)]
-  B         Upper bound of rectangle, a m x 1 vector [When the upper bound
-            is +infinity, set B = (+1.0E10)*ONES(m,1)]
-  U         Random variates, a m x r matrix
- */
+  C  Lower triangular Cholesky factor of \Sigma, m x m
+  A  Lower bound of rectangle, m x 1
+  B  Upper bound of rectangle, m x 1
+  U  Random variates, m x r
+*/
 
 static double GHK_1 (const gretl_matrix *C, 
 		     const gretl_matrix *A, 
@@ -1496,11 +1494,14 @@ static double GHK_1 (const gretl_matrix *C,
 
     den = gretl_matrix_get(C, 0, 0) + TINY;
 
+#define minus_inf(x) (x == -1.0E10)
+#define plus_inf(x) (x == 1.0E10)
+
     for (i=0; i<r; i++) {
 	z = A->val[0];
-	TA->val[i] = xna(z) ? 0 : normal_cdf(z / den);
+	TA->val[i] = minus_inf(z) ? 0 : normal_cdf(z / den);
 	z = B->val[0];
-	TB->val[i] = xna(z) ? 1 : normal_cdf(z / den);
+	TB->val[i] = plus_inf(z) ? 1 : normal_cdf(z / den);
     }
 
     gretl_matrix_copy_values(WGT, TB);
@@ -1524,9 +1525,9 @@ static double GHK_1 (const gretl_matrix *C,
 		x += cjk * tki;
 	    }
 	    z = A->val[j];
-	    TA->val[i] = xna(z) ? 0 : normal_cdf((z - x) / den);
+	    TA->val[i] = minus_inf(z) ? 0 : normal_cdf((z - x) / den);
 	    z = B->val[j];
-	    TB->val[i] = xna(z) ? 1 : normal_cdf((z - x) / den);
+	    TB->val[i] = plus_inf(z) ? 1 : normal_cdf((z - x) / den);
 	    /* component j draw */
 	    ui = gretl_matrix_get(U, j, i);
 	    x = TB->val[i] - ui * (TB->val[i] - TA->val[i]);
@@ -1539,6 +1540,9 @@ static double GHK_1 (const gretl_matrix *C,
 	    WGT->val[i] *= TB->val[i];
 	}
     }
+
+#undef minus_inf
+#undef plus_inf
 
     P = 0.0;
     for (i=0; i<r; i++) {
@@ -1553,13 +1557,15 @@ static double GHK_1 (const gretl_matrix *C,
  * gretl_GHK:
  * @C: Cholesky decomposition of covariance matrix, lower triangular,
  * m x m.
- * @A: Lower bounds, n x m.
- * @B: Upper bounds, n x m.
+ * @A: Lower bounds, n x m; in case a lower bound is minus infinity
+ * this should be represented as -1.0E10.
+ * @B: Upper bounds, n x m; in case an upper bound is plus infinity
+ * this should be represented as +1.0E10.
  * @U: Uniform random matrix, m x r.
  *
- * Computes the GHK () approximation to the multivariate normal
- * distribution function for @n observations on @m variates, using
- * r draws. 
+ * Computes the GHK (Geweke, Hajivassiliou, Keane) approximation to 
+ * the multivariate normal distribution function for @n observations 
+ * on @m variates, using r draws. 
  *
  * Returns: an n x 1 vector of probabilities.
  */
