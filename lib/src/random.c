@@ -1363,7 +1363,7 @@ static double halton (int i, int base)
 
 /**
  * halton_matrix:
- * @m: number of rows (sequences); the maximum is 10.
+ * @m: number of rows (sequences); the maximum is 40.
  * @r: number of columns (elements in each sequence).
  * @err: location to receive error code.
  *
@@ -1378,13 +1378,15 @@ gretl_matrix *halton_matrix (int m, int r, int *err)
     const int bases[] = {
 	2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31,
 	37, 41, 43, 47, 53, 59, 61, 67, 71, 73,
-	79, 83, 89, 97, 101, 103, 107, 109
+	79, 83, 89, 97, 101, 103, 107, 109, 113,
+	127, 131, 137, 139, 149, 151, 157, 163,
+	167, 173, 179, 181
     };
     gretl_matrix *H;
     double hij;
     int i, j, k, n;
 
-    if (m > 11) {
+    if (m > 40) {
 	*err = E_DATA;
 	return NULL;
     }
