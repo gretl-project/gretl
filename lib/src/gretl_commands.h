@@ -79,6 +79,7 @@ typedef enum {
     INCLUDE,
     INFO,
     INTREG,
+    JOIN,
     KALMAN,
     KPSS,
     LABELS, 

@@ -357,6 +357,7 @@ static int catch_system_alias (CMD *cmd)
                        c == HELP || \
                        c == INCLUDE || \
     	               c == INFO || \
+		       c == JOIN || \
                        c == KALMAN || \
                        c == LEVERAGE || \
                        c == LOOP || \
@@ -4267,6 +4268,31 @@ static int lib_clear_data (ExecState *s, DATASET *dset)
     return err;
 }
 
+static int lib_join_data (DATASET *dset,
+			  gretlopt opt,
+			  PRN *prn)
+{
+    gretlopt opts[] = { OPT_S, OPT_K, OPT_C, 0 };
+    const char *optstr[] = {
+	"source",
+	"key",
+	"compact"
+    };
+    const char *param;
+    int i, err = E_NOTIMP;
+
+    for (i=0; opts[i]; i++) {
+	param = get_optval_string(JOIN, opts[i]);
+	if (param != NULL) {
+	    pprintf(prn, "%s: '%s'\n", optstr[i], param);
+	} else {
+	    pprintf(prn, "%s: missing option param!\n", optstr[i]);
+	}
+    }	
+
+    return err;
+}
+
 static int lib_open_append (ExecState *s, 
 			    DATASET *dset, 
 			    char *newfile,
@@ -4310,11 +4336,24 @@ static int lib_open_append (ExecState *s,
 	ftype = detect_filetype(newfile, OPT_P);
     }
 
+    if (cmd->ci == JOIN) {
+	if (ftype == GRETL_CSV) {
+	    err = lib_join_data(dset, opt, prn);
+	} else {
+	    /* only CSV for now */
+	    err = E_NOTIMP;
+	}
+	if (err) {
+	    errmsg(err, prn);
+	    return err;
+	}
+    }
+
     dbdata = (ftype == GRETL_NATIVE_DB || ftype == GRETL_NATIVE_DB_WWW ||
 	      ftype == GRETL_RATS_DB || ftype == GRETL_PCGIVE_DB ||
 	      ftype == GRETL_ODBC);
 
-    if (!dbdata && cmd->ci != APPEND) {
+    if (cmd->ci == OPEN && !dbdata) {
 	lib_clear_data(s, dset);
     } 
 
@@ -4662,6 +4701,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     switch (cmd->ci) {
 
     case APPEND:
+    case JOIN:
     case OPEN:
 	err = lib_open_append(s, dset, readfile, prn);
 	if (!err && cmd->ci == OPEN) {
