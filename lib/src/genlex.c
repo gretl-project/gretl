@@ -386,6 +386,7 @@ struct str_table funcs[] = {
     { F_LOESS,    "loess" },
     { F_FREQ,     "freq" },
     { F_GHK,      "ghk" },
+    { F_HALTON,   "halton" },
     { 0,          NULL }
 };
 

@@ -71,6 +71,8 @@ int gretl_rand_gamma (double *a, int t1, int t2,
 
 int gretl_rand_GED (double *a, int t1, int t2, double nu);
 
+gretl_matrix *halton_matrix (int m, int r, int *err);
+
 void gretl_rand_set_sfmt (int s);
 
 int gretl_rand_get_sfmt (void);

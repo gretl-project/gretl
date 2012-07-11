@@ -1347,3 +1347,64 @@ unsigned int gretl_rand_int (void)
     }
 }
 
+static double halton (int i, int base)
+{
+    double f = 1.0 / base;
+    double h = 0.0;
+
+    while (i > 0) {
+	h += f * (i % base);
+	i = floor(i / base);
+	f /= base;
+    }
+
+    return h;
+}
+
+/**
+ * halton_matrix:
+ * @m: number of rows (sequences); the maximum is 10.
+ * @r: number of columns (elements in each sequence).
+ * @err: location to receive error code.
+ *
+ * Returns: an @m x @r matrix containing @m Halton
+ * sequences. The sequences are contructed using the first 
+ * @m primes, and the first 10 elements of each sequence 
+ * are discarded.
+ */
+
+gretl_matrix *halton_matrix (int m, int r, int *err)
+{
+    const int bases[] = {
+	2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31
+    };
+    gretl_matrix *H;
+    double hij;
+    int i, j, k, n;
+
+    if (m > 11) {
+	*err = E_DATA;
+	return NULL;
+    }
+	
+    H = gretl_matrix_alloc(m, r);
+    if (H == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+    
+    /* we'll discard the first 10 elements */
+    n = r + 10;
+
+    for (i=0; i<m; i++) {
+	j = 0;
+	for (k=1; k<n; k++) {
+	    hij = halton(k, bases[i]);
+	    if (k > 9) {
+		gretl_matrix_set(H, i, j++, hij);
+	    }
+	}
+    }
+
+    return H;
+}

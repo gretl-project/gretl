@@ -2790,6 +2790,9 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_random_matrix_new(rows, cols,
 					       D_NORMAL);
 	    break;
+	case F_HALTON:
+	    ret->v.m = halton_matrix(rows, cols, &p->err);
+	    break;
 	default:
 	    break;
 	}
@@ -9026,6 +9029,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_ONES:
     case F_MUNIF:
     case F_MNORM:
+    case F_HALTON:
 	/* matrix-creation functions */
 	if (scalar_node(l) && (r == NULL || scalar_node(r))) {
 	    ret = matrix_fill_func(l, r, t->t, p);
