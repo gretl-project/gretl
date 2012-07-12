@@ -1532,7 +1532,7 @@ static double GHK_1 (const gretl_matrix *C,
 	    z = A->val[j];
 	    P = minus_inf(z) ? 0 : normal_cdf((z - x) / den);
 	    if (P >= NORM_CDF_MAX) {
-		gretl_matrix_set(TT, j, i, HUGE);
+		gretl_matrix_set(TT, j, i, huge);
 		break;
 	    } else {
 		TA->val[i] = P;
@@ -1541,7 +1541,7 @@ static double GHK_1 (const gretl_matrix *C,
 	    z = B->val[j];
 	    P = plus_inf(z) ? 1 : normal_cdf((z - x) / den);
 	    if (P == 0) {
-		gretl_matrix_set(TT, j, i, -HUGE);
+		gretl_matrix_set(TT, j, i, -huge);
 		break;
 	    } else {
 		TB->val[i] = P;

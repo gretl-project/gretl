@@ -1650,7 +1650,11 @@ double libset_get_double (const char *key)
 	}
     } else if (!strcmp(key, CONV_HUGE)) {
 	if (na(state->conv_huge)) {
+#ifdef HUGE
+	    return HUGE;
+#else
 	    return 1.0e100;
+#endif
 	} else {
 	    return state->conv_huge;
 	}
