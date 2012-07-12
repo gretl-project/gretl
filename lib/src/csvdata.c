@@ -45,7 +45,9 @@ enum {
     CSV_AUTONAME = 1 << 7,
     CSV_REVERSED = 1 << 8,
     CSV_DOTSUB   = 1 << 9,
-    CSV_VALFIRST = 1 << 10
+    CSV_VALFIRST = 1 << 10,
+    CSV_JKEY_OK  = 1 << 11,
+    CSV_JVAL_OK  = 1 << 12
 };
 
 typedef struct csvdata_ csvdata;
@@ -1839,6 +1841,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 		    c->dset->varname[j][0] = '\0';
 		    strncat(c->dset->varname[j], c->str, VNAMELEN - 1);
 		    update_join_cols_list(c, k);
+		    c->flags |= CSV_JVAL_OK;
 		    if (j == 1) {
 			c->flags |= CSV_VALFIRST;
 		    }
@@ -1847,6 +1850,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 		    c->dset->varname[j][0] = '\0';
 		    strncat(c->dset->varname[j], c->str, VNAMELEN - 1);
 		    update_join_cols_list(c, k);
+		    c->flags |= CSV_JKEY_OK;
 		    j++;
 		}		    
 	    } else {
