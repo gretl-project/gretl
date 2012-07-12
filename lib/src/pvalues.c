@@ -25,6 +25,7 @@
 #include "../../cephes/libprob.h"
 
 #include <errno.h>
+#include <libset.h>
 
 /**
  * SECTION:pvalues
@@ -1488,15 +1489,17 @@ static double GHK_1 (const gretl_matrix *C,
 {
     int m = C->rows; /* Dimension of the multivariate normal */
     int r = U->cols; /* Number of repetitions */
-    double P, den, TINY = 1.0e-100;
+    double P, Pj, den, HUGENUM;
     double ui, icdf, x, z, cjk, tki;
     int i, j, k;
 
-    den = gretl_matrix_get(C, 0, 0) + TINY;
+    HUGENUM = libset_get_double(CONV_HUGE);
 
-#define minus_inf(x) (x <= -1.0E10)
-#define plus_inf(x) (x >= 1.0E10 && !na(x))
+#define minus_inf(x) (x <= -HUGENUM)
+#define plus_inf(x) (x >= HUGENUM && !na(x))
 
+    den = gretl_matrix_get(C, 0, 0);
+    
     for (i=0; i<r; i++) {
 	z = A->val[0];
 	TA->val[i] = minus_inf(z) ? 0 : normal_cdf(z / den);
@@ -1516,7 +1519,7 @@ static double GHK_1 (const gretl_matrix *C,
     }
 
     for (j=1; j<m; j++) {
-	den = gretl_matrix_get(C, j, j) + TINY;
+	den = gretl_matrix_get(C, j, j);
 	for (i=0; i<r; i++) {
 	    x = 0.0;
 	    for (k=0; k<j; k++) {
@@ -1525,14 +1528,31 @@ static double GHK_1 (const gretl_matrix *C,
 		x += cjk * tki;
 	    }
 	    z = A->val[j];
-	    TA->val[i] = minus_inf(z) ? 0 : normal_cdf((z - x) / den);
+	    Pj = minus_inf(z) ? 0 : normal_cdf((z - x) / den);
+
+	    if (Pj >= 0.9999999999999999) {
+		gretl_matrix_set(TT, j, i, HUGE);
+		break;
+	    } else {
+		TA->val[i] = Pj;
+	    }
+
 	    z = B->val[j];
-	    TB->val[i] = plus_inf(z) ? 1 : normal_cdf((z - x) / den);
+	    Pj = plus_inf(z) ? 1 : normal_cdf((z - x) / den);
+
+	    if (Pj == 0) {
+		gretl_matrix_set(TT, j, i, -HUGE);
+		break;
+	    } else {
+		TB->val[i] = Pj;
+	    }
+
 	    /* component j draw */
 	    ui = gretl_matrix_get(U, j, i);
 	    x = TB->val[i] - ui * (TB->val[i] - TA->val[i]);
 	    icdf = normal_cdf_inverse(x);
 	    gretl_matrix_set(TT, j, i, icdf);
+
 	}
 	/* accumulate weight */
 	gretl_matrix_subtract_from(TB, TA);
@@ -1541,14 +1561,14 @@ static double GHK_1 (const gretl_matrix *C,
 	}
     }
 
-#undef minus_inf
-#undef plus_inf
-
     P = 0.0;
     for (i=0; i<r; i++) {
 	P += WGT->val[i];
     }
     P /= r;
+
+#undef minus_inf
+#undef plus_inf 
 
     return P;
 }

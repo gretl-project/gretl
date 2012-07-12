@@ -7796,6 +7796,8 @@ double dvar_get_scalar (int i, const DATASET *dset,
     int ival;
 
     switch (i) {
+    case R_PI:
+	return M_PI;
     case R_NOBS:
 	return (dset == NULL) ? NADBL : 
 	(dset->n == 0 ? 0 : sample_size(dset));
@@ -7839,6 +7841,8 @@ double dvar_get_scalar (int i, const DATASET *dset,
 	return get_gretl_errno();
     case R_SEED:
 	return gretl_rand_get_seed();
+    case R_HUGE:
+	return libset_get_double(CONV_HUGE);
     default:
 	return NADBL;
     }

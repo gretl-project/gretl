@@ -81,6 +81,7 @@ struct robust_opts {
 struct set_vars_ {
     int flags;
     unsigned int seed;          /* for PRNG */
+    double conv_huge;           /* conventional value for $huge */
     int horizon;                /* for VAR impulse responses */ 
     int bootrep;                /* bootstrap replications */
     double nls_toler;           /* NLS convergence criterion */
@@ -133,7 +134,8 @@ struct set_vars_ {
 			   !strcmp(s, BFGS_RSTEP) || \
 			   !strcmp(s, DPDSTYLE))
 
-#define libset_double(s) (!strcmp(s, BFGS_TOLER) || \
+#define libset_double(s) (!strcmp(s, CONV_HUGE) || \
+			  !strcmp(s, BFGS_TOLER) || \
 			  !strcmp(s, BFGS_MAXGRAD) || \
 			  !strcmp(s, BHHH_TOLER) || \
 			  !strcmp(s, NLS_TOLER) || \
@@ -375,6 +377,7 @@ static void state_vars_copy (set_vars *sv)
     sv->flags &= ~STATE_LOOPING;
 
     sv->seed = state->seed;
+    sv->conv_huge = state->conv_huge;
     sv->horizon = state->horizon;
     sv->bootrep = state->bootrep;
     sv->loop_maxiter = state->loop_maxiter;
@@ -411,6 +414,7 @@ static void state_vars_init (set_vars *sv)
     sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON | 
 	STATE_HALT_ON_ERR | STATE_SKIP_MISSING;
     sv->seed = 0;
+    sv->conv_huge = 1.0e100;
     sv->horizon = UNSET_INT;
     sv->bootrep = 1000;
     sv->nls_toler = NADBL;
@@ -1300,6 +1304,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_int(LOOP_MAXITER, prn, opt);
     libset_print_bool(MAX_VERBOSE, prn, opt);
     libset_print_int(BFGS_VERBSKIP, prn, opt);
+    libset_print_double(CONV_HUGE, prn, opt);
     libset_print_bool(MESSAGES, prn, opt);
     libset_print_bool(WARNINGS, prn, opt);
     libset_print_int(GRETL_DEBUG, prn, opt);
@@ -1643,6 +1648,12 @@ double libset_get_double (const char *key)
 	} else {
 	    return state->nadarwat_trim;
 	}
+    } else if (!strcmp(key, CONV_HUGE)) {
+	if (na(state->conv_huge)) {
+	    return 1.0e100;
+	} else {
+	    return state->conv_huge;
+	}
     } else {
 	fprintf(stderr, "libset_get_double: unrecognized "
 		"variable '%s'\n", key);	
@@ -1690,6 +1701,8 @@ int libset_set_double (const char *key, double val)
 	state->bfgs_maxgrad = val;
     } else if (!strcmp(key, NADARWAT_TRIM)) {
 	state->nadarwat_trim = val;
+    } else if (!strcmp(key, CONV_HUGE)) {
+	state->conv_huge = val;
     } else {
 	fprintf(stderr, "libset_set_double: unrecognized "
 		"variable '%s'\n", key);	

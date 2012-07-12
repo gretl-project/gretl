@@ -23,7 +23,8 @@
 #include "gretl_matrix.h"
 
 typedef enum {
-    R_NOBS = 1,   /* number of observations in current sample range */
+    R_PI = 1,     /* pi (constant) */
+    R_NOBS,       /* number of observations in current sample range */
     R_NVARS,      /* number of variables in dataset (including the constant) */
     R_PD,         /* periodicity of dataset */
     R_T1,         /* start of current sample range */
@@ -33,6 +34,7 @@ typedef enum {
     R_VERSION,    /* gretl version number */
     R_ERRNO,      /* internal gretl error code */
     R_SEED,       /* RNG seed */
+    R_HUGE,       /* conventional "huge" number, like eg 1.0e100 */
     R_DSET_MAX,   /* separator */
     R_TEST_LNL,   /* log-likelihood from last test (if applicable) */
     R_KLNL,       /* log-likelihood from Kalman filter (if applicable) */

@@ -68,6 +68,7 @@ struct str_table dummies[] = {
 };
 
 struct str_table dvars[] = {
+    { R_PI,        "$pi" },
     { R_NOBS,      "$nobs" },
     { R_NVARS,     "$nvars" },
     { R_PD,        "$pd" },
@@ -88,6 +89,7 @@ struct str_table dvars[] = {
     { R_VERSION,   "$version" },
     { R_ERRNO,     "$error" },
     { R_SEED,      "$seed" },
+    { R_HUGE,      "$huge" },
     { 0,           NULL },
 };
 
