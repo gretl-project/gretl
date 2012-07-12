@@ -4404,7 +4404,10 @@ static int lib_open_append (ExecState *s,
     gretlopt opt = cmd->opt;
     char *line = s->line;
     PRN *vprn = prn;
-    int http = 0, dbdata = 0;
+    int quiet = (opt & OPT_Q);
+    int http = 0;
+    int dbdata = 0;
+    int odbc = 0;
     int ftype;
     int err = 0;
     
@@ -4418,13 +4421,17 @@ static int lib_open_append (ExecState *s,
 	return E_DATA;
     }
 
+    if (cmd->ci != JOIN && (opt & OPT_O)) {
+	odbc = 1;
+    }
+
     err = lib_try_http(line, newfile, &http);
     if (err) {
 	errmsg(err, prn);
 	return err;
     }
 
-    if (!http && !(opt & OPT_O)) {
+    if (!http && !odbc) {
 	/* not using http or ODBC */
 	err = getopenfile(line, newfile, (opt & OPT_W)?
 			  OPT_W : OPT_NONE);
@@ -4436,7 +4443,7 @@ static int lib_open_append (ExecState *s,
 
     if (opt & OPT_W) {
 	ftype = GRETL_NATIVE_DB_WWW;
-    } else if (opt & OPT_O) {
+    } else if (odbc) {
 	ftype = GRETL_ODBC;
     } else {
 	ftype = detect_filetype(newfile, OPT_P);
@@ -4463,8 +4470,8 @@ static int lib_open_append (ExecState *s,
 	lib_clear_data(s, dset);
     } 
 
-    if (opt & OPT_Q) {
-	/* --quiet, but in case we hit any problems below... */
+    if (quiet) {
+	/* in case we hit any problems below... */
 	vprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
     } 
 
@@ -4508,7 +4515,7 @@ static int lib_open_append (ExecState *s,
 	return err;
     }
 
-    if (dset->v > 0 && !dbdata && !(opt & OPT_Q)) {
+    if (dset->v > 0 && !dbdata && !quiet) {
 	varlist(dset, prn);
     }
 
