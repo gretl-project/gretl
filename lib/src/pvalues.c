@@ -27,6 +27,8 @@
 #include <errno.h>
 #include <libset.h>
 
+#define NORM_CDF_MAX 0.9999999999999999
+
 /**
  * SECTION:pvalues
  * @short_description: probability values for test statistics and
@@ -1003,7 +1005,7 @@ double normal_cdf (double x)
 	y = NADBL;
     } else if (y == 1.0) {
 	/* do we want to do this? */
-	y = 0.9999999999999999;
+	y = NORM_CDF_MAX;
     }
 
     return y;
@@ -1489,14 +1491,14 @@ static double GHK_1 (const gretl_matrix *C,
 {
     int m = C->rows; /* Dimension of the multivariate normal */
     int r = U->cols; /* Number of repetitions */
-    double P, Pj, den, HUGENUM;
+    double P, den, huge;
     double ui, icdf, x, z, cjk, tki;
     int i, j, k;
 
-    HUGENUM = libset_get_double(CONV_HUGE);
+    huge = libset_get_double(CONV_HUGE);
 
-#define minus_inf(x) (x <= -HUGENUM)
-#define plus_inf(x) (x >= HUGENUM && !na(x))
+#define minus_inf(x) (x <= -huge)
+#define plus_inf(x) (x >= huge && !na(x))
 
     den = gretl_matrix_get(C, 0, 0);
     
@@ -1528,23 +1530,21 @@ static double GHK_1 (const gretl_matrix *C,
 		x += cjk * tki;
 	    }
 	    z = A->val[j];
-	    Pj = minus_inf(z) ? 0 : normal_cdf((z - x) / den);
-
-	    if (Pj >= 0.9999999999999999) {
+	    P = minus_inf(z) ? 0 : normal_cdf((z - x) / den);
+	    if (P >= NORM_CDF_MAX) {
 		gretl_matrix_set(TT, j, i, HUGE);
 		break;
 	    } else {
-		TA->val[i] = Pj;
+		TA->val[i] = P;
 	    }
 
 	    z = B->val[j];
-	    Pj = plus_inf(z) ? 1 : normal_cdf((z - x) / den);
-
-	    if (Pj == 0) {
+	    P = plus_inf(z) ? 1 : normal_cdf((z - x) / den);
+	    if (P == 0) {
 		gretl_matrix_set(TT, j, i, -HUGE);
 		break;
 	    } else {
-		TB->val[i] = Pj;
+		TB->val[i] = P;
 	    }
 
 	    /* component j draw */
@@ -1552,7 +1552,6 @@ static double GHK_1 (const gretl_matrix *C,
 	    x = TB->val[i] - ui * (TB->val[i] - TA->val[i]);
 	    icdf = normal_cdf_inverse(x);
 	    gretl_matrix_set(TT, j, i, icdf);
-
 	}
 	/* accumulate weight */
 	gretl_matrix_subtract_from(TB, TA);

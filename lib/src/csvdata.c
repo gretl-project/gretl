@@ -44,7 +44,8 @@ enum {
     CSV_TRAIL    = 1 << 6,
     CSV_AUTONAME = 1 << 7,
     CSV_REVERSED = 1 << 8,
-    CSV_DOTSUB   = 1 << 9
+    CSV_DOTSUB   = 1 << 9,
+    CSV_VALFIRST = 1 << 10
 };
 
 typedef struct csvdata_ csvdata;
@@ -1838,6 +1839,9 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 		    c->dset->varname[j][0] = '\0';
 		    strncat(c->dset->varname[j], c->str, VNAMELEN - 1);
 		    update_join_cols_list(c, k);
+		    if (j == 1) {
+			c->flags |= CSV_VALFIRST;
+		    }
 		    j++;
 		} else if (c->keyname != NULL && !strcmp(c->str, c->keyname)) {
 		    c->dset->varname[j][0] = '\0';
@@ -2581,8 +2585,6 @@ struct joinrect_ {
     int *key_freq;
 };
 
-/* parse a string of the form <lhs> <op> <rhs> */
-
 typedef struct joinrect_ joinrect;
 
 static void joinrect_destroy (joinrect *jr)
@@ -2595,10 +2597,14 @@ static void joinrect_destroy (joinrect *jr)
     }
 }
 
-static joinrect *joinrect_new (DATASET *tempdset)
+static joinrect *joinrect_new (csvdata *c)
 {
     joinrect *jr = malloc(sizeof *jr);
-    int i, nrows = tempdset->n;
+    int i, nrows = c->dset->n;
+    int kcol, vcol;
+
+    vcol = (c->flags & CSV_VALFIRST)? 1 : 2;
+    kcol = (vcol == 1)? 2 : 1;
 
     if (jr != NULL) {
 	jr->keys = NULL;
@@ -2614,8 +2620,8 @@ static joinrect *joinrect_new (DATASET *tempdset)
     }
 
     for (i=0; i<nrows; i++) {
-	jr->rows[i].keyval = (int) tempdset->Z[1][i];
-	jr->rows[i].val    = tempdset->Z[2][i];
+	jr->rows[i].keyval = (int) c->dset->Z[kcol][i];
+	jr->rows[i].val    = c->dset->Z[vcol][i];
     }
     
     return jr;
@@ -2674,6 +2680,8 @@ static int joinrect_sort (joinrect *jr)
     return err;
 }
 
+#if CDEBUG > 1
+
 static void joinrect_print (joinrect *jr, int sorted)
 {
     int i;
@@ -2693,7 +2701,7 @@ static void joinrect_print (joinrect *jr, int sorted)
     }    
 }
 
-/* ------------------------------------------------------------- */
+#endif
 
 static double aggr_retval (int key, joinrect *jr, AggrType a)
 {
@@ -2780,6 +2788,27 @@ static int aggregate_data (int ikeyvar, int newvar, DATASET *dset,
     return err;
 }
 
+static int get_target_varnum (const char *vname,
+			      DATASET *dset,
+			      int *err)
+{
+    int targ = current_series_index(dset, vname);
+
+    if (targ < 0) {
+	int i;
+
+	*err = dataset_add_series(1, dset);
+	if (!*err) {
+	    targ = dset->v - 1;
+	    strcpy(dset->varname[targ], vname);
+	    for (i=0; i<dset->n; i++) {
+		dset->Z[targ][i] = NADBL;
+	    }
+	}
+    }
+
+    return targ;
+}
 
 int join_from_csv (const char *fname,
 		   const char *varname,
@@ -2793,7 +2822,9 @@ int join_from_csv (const char *fname,
 		   PRN *prn)
 {
     csvdata *c = NULL;
+    joinrect *jr = NULL;
     char *lhs = NULL, *rhs = NULL;
+    int targvar = 0;
     int filter_op = 0;
     int err = 0;
 
@@ -2826,7 +2857,7 @@ int join_from_csv (const char *fname,
     }
 
     /* FIXME detect and handle the case of no options, just
-       a filename and the name of a series to import
+       a filename and the name of a series to import?
     */
 
     if (!err) {
@@ -2839,27 +2870,43 @@ int join_from_csv (const char *fname,
 	}
 	err = real_import_csv(fname, dset, data, NULL,
 			      okey, &c, opt, prn);
-	pprintf(prn, "real_import_csv: err = %d\n", err);
-	if (!err) {
-	    pprintf(prn, "Data extracted from %s:\n", fname);
-	    printdata(NULL, NULL, c->dset, OPT_O, prn);
+    }
 
-	    joinrect *jr = joinrect_new(c->dset);
-	    joinrect_print(jr, 0);
-	    err = joinrect_sort(jr);
-	    joinrect_print(jr, 1);
-
-	    err = dataset_add_series(1, dset);
-	    int newvar = dset->v - 1;
-	    err = aggregate_data(ikeyvar, newvar, dset, jr, agg);
-	    strcpy(dset->varname[newvar], varname);
-
-	    joinrect_destroy(jr);
+    if (!err) {
+#if CDEBUG > 1
+	pprintf(prn, "Data extracted from %s:\n", fname);
+	printdata(NULL, NULL, c->dset, OPT_O, prn);
+#endif
+	jr = joinrect_new(c);
+	if (jr == NULL) {
+	    err = E_ALLOC;
 	}
+    }
+
+    if (!err) {
+#if CDEBUG > 1
+	joinrect_print(jr, 0);
+	err = joinrect_sort(jr);
+	joinrect_print(jr, 1);
+#else
+	err = joinrect_sort(jr);
+#endif
+    }
+
+    if (!err) {
+	targvar = get_target_varnum(varname, dset, &err);
+    }
+
+    if (!err) {
+	err = aggregate_data(ikeyvar, targvar, dset, jr, agg);
     }
 
     if (c != NULL) {
 	csvdata_free(c);
+    }
+
+    if (jr != NULL) {
+	joinrect_destroy(jr);
     }
 
     return err;
