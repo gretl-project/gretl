@@ -261,7 +261,7 @@ struct gretl_option gretl_opts[] = {
     { JOIN,     OPT_I, "ikey", 2 },
     { JOIN,     OPT_O, "okey", 2 },
     { JOIN,     OPT_F, "filter", 2 },
-    { JOIN,     OPT_C, "compact", 2 },
+    { JOIN,     OPT_A, "aggr", 2 },
     { JOIN,     OPT_D, "data", 2 },
     { KALMAN,   OPT_C, "cross", 0 },
     { KALMAN,   OPT_D, "diffuse", 0 },

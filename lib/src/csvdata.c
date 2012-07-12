@@ -21,11 +21,14 @@
 #include "gretl_string_table.h"
 #include "libset.h"
 #include "usermat.h"
+#include "genparse.h"
 #include "csvdata.h"
 
 #include <ctype.h>
 #include <errno.h>
 #include <glib.h>
+
+#define CDEBUG 1
 
 #define QUOTE      '\''
 #define CSVSTRLEN  72
@@ -65,6 +68,8 @@ struct csvdata_ {
     int *width_list;
     const gretl_matrix *rowmask;
     int masklen;
+    const char *keyname;
+    const char *dataname;
 };
 
 #define csv_has_trailing_comma(c) (c->flags & CSV_TRAIL)
@@ -96,6 +101,7 @@ struct csvdata_ {
 #define fixed_format(c) (c->cols_list != NULL && c->width_list != NULL)
 #define cols_subset(c) (c->cols_list != NULL && c->width_list == NULL)
 #define rows_subset(c) (c->rowmask != NULL)
+#define joining(c) (c->dataname != NULL)
 
 static int 
 time_series_label_check (DATASET *dset, int reversed, char *skipstr, PRN *prn);
@@ -158,6 +164,9 @@ static csvdata *csvdata_new (DATASET *dset)
     c->width_list = NULL;
     c->rowmask = NULL;
     c->masklen = 0;
+
+    c->keyname = NULL;
+    c->dataname = NULL;
 
     c->dset = datainfo_new();
     if (c->dset == NULL) {
@@ -1438,7 +1447,9 @@ static int non_numeric_check (csvdata *c, PRN *prn)
 	    }
 	}
 
+#if CDEBUG > 1
 	printlist(list, "non-numeric vars list");
+#endif
 
 	for (i=1; i<=list[0]; i++) {
 	    double nnfrac;
@@ -1750,6 +1761,22 @@ static int skip_data_column (csvdata *c, int k)
     }
 }
 
+static int update_join_cols_list (csvdata *c, int k)
+{
+    int *test = gretl_list_append_term(&c->cols_list, k+1);
+    int err = 0;
+
+    if (test == NULL) {
+	err = E_ALLOC;
+    }
+
+#if CDEBUG
+    printlist(c->cols_list, "c->cols_list for join");
+#endif
+
+    return err;
+}
+
 #define starts_number(c) (isdigit((unsigned char) c) || c == '-' || \
                           c == '+' || c == '.')
 
@@ -1784,7 +1811,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     }
     
     numcount = 0;
-    j = 1;
+    j = 1; /* for the constant */
 
     for (k=0; k<c->ncols && !err; k++) {
 	i = 0;
@@ -1799,13 +1826,25 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 
 	if (k == 0 && (csv_skip_column(c))) {
 	    ; /* no-op */
-	} else if (cols_subset(c) && skip_data_column(c, k)) {
+	} else if (!joining(c) && cols_subset(c) && skip_data_column(c, k)) {
 	    ; /* no-op */
 	} else {
 	    if (*c->str == '\0') {
 		pprintf(prn, A_("   variable name %d is missing: aborting\n"), j);
 		pputs(prn, A_(csv_msg));
 		err = E_DATA;
+	    } else if (c->dataname != NULL) {
+		if (!strcmp(c->str, c->dataname)) {
+		    c->dset->varname[j][0] = '\0';
+		    strncat(c->dset->varname[j], c->str, VNAMELEN - 1);
+		    update_join_cols_list(c, k);
+		    j++;
+		} else if (c->keyname != NULL && !strcmp(c->str, c->keyname)) {
+		    c->dset->varname[j][0] = '\0';
+		    strncat(c->dset->varname[j], c->str, VNAMELEN - 1);
+		    update_join_cols_list(c, k);
+		    j++;
+		}		    
 	    } else {
 		c->dset->varname[j][0] = '\0';
 		strncat(c->dset->varname[j], c->str, VNAMELEN - 1);
@@ -1822,7 +1861,12 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 		j++;
 	    }
 	}
-	if (j == c->dset->v) break;
+	if (j == c->dset->v) {
+#if CDEBUG
+	    fprintf(stderr, "breaking on j = %d (k = %d)\n", j, k);
+#endif	    
+	    break;
+	}
     }
 
     if (err) {
@@ -2093,18 +2137,32 @@ static void csv_set_dataset_dimensions (csvdata *c)
 	if (c->dset->n == 0) {
 	    c->dset->n = c->nrows - 1; /* allow for varnames row */
 	}
-	if (cols_subset(c)) {
+	if (c->dataname != NULL) {
+	    /* doing a "join" */
+	    c->dset->v = (c->keyname != NULL)? 3 : 2;
+	} else if (cols_subset(c)) {
 	    c->dset->v = c->cols_list[0] + 1;
 	} else {
 	    c->dset->v = csv_skip_column(c) ? c->ncols : c->ncols + 1;
 	}
     }
+
+#if CDEBUG
+    if (c->dataname != NULL) {
+	fprintf(stderr, "csv dataset dimensions: v=%d, n=%d\n",
+		c->dset->v, c->dset->n);
+    }
+#endif
 }
 
-/**
- * import_csv:
+/*
+ * real_import_csv:
  * @fname: name of CSV file.
  * @dset: dataset struct.
+ * @cols: column specification.
+ * @rows: row specification.
+ * @keyspec: join key specification.
+ * @cptr: optional location to grab CSV data struct.
  * @opt: use OPT_N to force interpretation of data colums containing
  * strings as coded (non-numeric) values and not errors; for use of OPT_T see
  * the help for "append".
@@ -2116,15 +2174,20 @@ static void csv_set_dataset_dimensions (csvdata *c)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int import_csv (const char *fname, DATASET *dset, 
-		gretlopt opt, PRN *prn)
+static int real_import_csv (const char *fname, 
+			    DATASET *dset, 
+			    const char *cols, 
+			    const char *rows,
+			    const char *keyspec,
+			    csvdata **cptr,
+			    gretlopt opt, 
+			    PRN *prn)
 {
     csvdata *c = NULL;
-    const char *cols = NULL;
-    const char *rows = NULL;
     FILE *fp = NULL;
     PRN *mprn = NULL;
     int newdata = (dset->Z == NULL);
+    int joining = (cptr != NULL);
     int popit = 0;
     long datapos;
     int i, err = 0;
@@ -2133,22 +2196,6 @@ int import_csv (const char *fname, DATASET *dset,
 	/* quiet */
 	prn = NULL;
     }
-
-    if (opt & OPT_F) {
-	/* we should have a "--cols=XXX" specification */
-	cols = get_optval_string(OPEN, OPT_F);
-	if (cols == NULL || *cols == '\0') {
-	    return E_PARSE;
-	}
-    }
-
-    if (opt & OPT_M) {
-	/* we should have a "--rowmask=XXX" specification */
-	rows = get_optval_string(OPEN, OPT_M);
-	if (rows == NULL || *rows == '\0') {
-	    return E_PARSE;
-	}
-    }	
 
     if (prn != NULL) {
 	set_alt_gettext_mode(prn);
@@ -2172,11 +2219,15 @@ int import_csv (const char *fname, DATASET *dset,
     }
 
     if (cols != NULL) {
-	err = csvdata_add_cols_list(c, cols, opt);
-	if (err) {
-	    goto csv_bailout;
-	} else if (fixed_format(c)) {
-	    pprintf(mprn, A_("using fixed column format\n"));
+	if (joining) {
+	    c->dataname = cols;
+	} else {
+	    err = csvdata_add_cols_list(c, cols, opt);
+	    if (err) {
+		goto csv_bailout;
+	    } else if (fixed_format(c)) {
+		pprintf(mprn, A_("using fixed column format\n"));
+	    }
 	}
     }
 
@@ -2186,6 +2237,17 @@ int import_csv (const char *fname, DATASET *dset,
 	    goto csv_bailout;
 	} 
     }
+
+    if (joining && keyspec != NULL) {
+	c->keyname = keyspec;
+    }
+
+#if CDEBUG
+    if (joining) {
+	fprintf(stderr, "csv, join: dataname='%s', keyname='%s'\n",
+		c->dataname, c->keyname);
+    }
+#endif
 
     if (mprn != NULL) {
 	print_csv_parsing_header(fname, mprn);
@@ -2364,15 +2426,18 @@ int import_csv (const char *fname, DATASET *dset,
 	pputs(prn, A_("warning: some variable names were duplicated\n"));
     }
 
-    err = merge_or_replace_data(dset, &c->dset, opt, prn);
+    if (cptr == NULL) {
+	/* not doing a special "join" operation */
+	err = merge_or_replace_data(dset, &c->dset, opt, prn);
 
-    if (!err && newdata && c->descrip != NULL) {
-	dset->descrip = c->descrip;
-	c->descrip = NULL;
-    }
+	if (!err && newdata && c->descrip != NULL) {
+	    dset->descrip = c->descrip;
+	    c->descrip = NULL;
+	}
 
-    if (!err) {
-	dataset_add_import_info(dset, fname, GRETL_CSV);
+	if (!err) {
+	    dataset_add_import_info(dset, fname, GRETL_CSV);
+	}
     }
 
  csv_bailout:
@@ -2381,7 +2446,11 @@ int import_csv (const char *fname, DATASET *dset,
 	fclose(fp);
     }
 
-    csvdata_free(c);
+    if (!err && cptr != NULL) {
+	*cptr = c;
+    } else {
+	csvdata_free(c);
+    }
 
     if (err == E_ALLOC) {
 	pputs(prn, A_("Out of memory\n"));
@@ -2390,7 +2459,110 @@ int import_csv (const char *fname, DATASET *dset,
     return err;
 }
 
-int join_from_csv (const char *newfile,
+/**
+ * import_csv:
+ * @fname: name of CSV file.
+ * @dset: dataset struct.
+ * @opt: use OPT_N to force interpretation of data colums containing
+ * strings as coded (non-numeric) values and not errors; for use of OPT_T see
+ * the help for "append".
+ * @prn: gretl printing struct (or NULL).
+ * 
+ * Open a Comma-Separated Values data file and read the data into
+ * the current work space.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ */
+
+int import_csv (const char *fname, DATASET *dset, 
+		gretlopt opt, PRN *prn)
+{
+    const char *cols = NULL;
+    const char *rows = NULL;
+
+    /* below: FIXME, usage with APPEND? */
+
+    if (opt & OPT_F) {
+	/* we should have a "--cols=XXX" specification */
+	cols = get_optval_string(OPEN, OPT_F);
+	if (cols == NULL || *cols == '\0') {
+	    return E_PARSE;
+	}
+    }
+
+    if (opt & OPT_M) {
+	/* we should have a "--rowmask=XXX" specification */
+	rows = get_optval_string(OPEN, OPT_M);
+	if (rows == NULL || *rows == '\0') {
+	    return E_PARSE;
+	}
+    }	
+
+    return real_import_csv(fname, dset, rows, cols, 
+			   NULL, NULL, opt, prn);
+}
+
+/* parse a string of the form <lhs> <op> <rhs> */
+
+static int parse_join_filter (const char *s,
+			      char **plhs,
+			      char **prhs,
+			      int *iop)
+{
+    const char *opchars = "=!><";
+    char *lhs = NULL, *op = NULL, *rhs = NULL;
+    size_t nop, len = strlen(s);
+    size_t nlhs = strcspn(s, opchars);
+    int err = 0;
+
+    if (nlhs == len) {
+	err = E_PARSE;
+    } else {
+	lhs = strndup(s, nlhs);
+	printf("lhs = '%s'\n", lhs);
+	nop = strspn(s + nlhs, opchars);
+	op = strndup(s + nlhs, nop);
+	printf("op = '%s'\n", op);
+	if (nlhs + nop == len) {
+	    err = E_PARSE;
+	} else {
+	    rhs = strdup(s + nlhs + nop);
+	    printf("rhs = '%s'\n", rhs);
+	}
+    }
+
+    if (!err) {
+	if (!strcmp(op, "==")) {
+	    *iop = B_EQ;
+	} else if (!strcmp(op, "<")) {
+	    *iop = B_LT;
+	} else if (!strcmp(op, ">")) {
+	    *iop = B_GT;
+	} else if (!strcmp(op, "<=")) {
+	    *iop = B_LTE;
+	} else if (!strcmp(op, ">=")) {
+	    *iop = B_GTE;
+	} else if (!strcmp(op, "!=")) {
+	    *iop = B_NEQ;
+	} else {
+	    err = E_PARSE;
+	}
+    }
+
+    if (!err) {
+	*plhs = lhs;
+	*prhs = rhs;
+	lhs = rhs = NULL;
+    }
+
+    free(lhs);
+    free(op);
+    free(rhs);
+
+    return err;
+}
+
+int join_from_csv (const char *fname,
 		   const char *varname,
 		   DATASET *dset, 
 		   int ikeyvar,
@@ -2401,30 +2573,62 @@ int join_from_csv (const char *newfile,
 		   gretlopt opt,
 		   PRN *prn)
 {
+    csvdata *c = NULL;
+    char *lhs = NULL, *rhs = NULL;
+    int filter_op = 0;
     int err = 0;
 
-    pputs(prn, "join_from_csv:\n");
-    pprintf(prn, " filename='%s'\n", newfile);
-    pprintf(prn, " seriesname='%s'\n", varname);
+    pputs(prn, "*** join_from_csv:\n");
+    pprintf(prn, " filename = '%s'\n", fname);
+    pprintf(prn, " target series name = '%s'\n", varname);
     if (ikeyvar != 0) {
-	pprintf(prn, " ikey series=%d\n", ikeyvar);
+	pprintf(prn, " inner key series = %d\n", ikeyvar);
     }
     if (okey != NULL) {
-	pprintf(prn, " okey='%s'\n", okey);
+	pprintf(prn, " outer key = '%s'\n", okey);
     } else if (ikeyvar > 0) {
-	pprintf(prn, " okey='%s' (from ikey)\n", 
+	pprintf(prn, " outer key = '%s' (from inner key)\n", 
 		dset->varname[ikeyvar]);
     }
     if (filter != NULL) {
-	pprintf(prn, " filter='%s'\n", filter);
+	pprintf(prn, " filter = '%s'\n", filter);
     }    
     if (data != NULL) {
-	pprintf(prn, " payload='%s'\n", data);
+	pprintf(prn, " source data series = '%s'\n", data);
     } else {
-	pprintf(prn, " payload='%s' (from inner varname)\n", varname);
+	pprintf(prn, " source data series = '%s' (from inner varname)\n", varname);
     }
     if (agg != 0) {
 	pprintf(prn, " aggregation=%d\n", agg);
+    }
+
+    if (filter != NULL) {
+	err = parse_join_filter(filter, &lhs, &rhs, &filter_op);
+    }
+
+    /* FIXME detect and handle the case of no options, just
+       a filename and the name of a series to import
+    */
+
+    if (!err) {
+	/* FIXME make "rows" from filter or something */
+	if (okey == NULL && ikeyvar > 0) {
+	    okey = dset->varname[ikeyvar];
+	}
+	if (data == NULL) {
+	    data = varname;
+	}
+	err = real_import_csv(fname, dset, data, NULL,
+			      okey, &c, opt, prn);
+	pprintf(prn, "real_import_csv: err = %d\n", err);
+	if (!err) {
+	    pprintf(prn, "Data extracted from %s:\n", fname);
+	    printdata(NULL, NULL, c->dset, OPT_O, prn);
+	}
+    }
+
+    if (c != NULL) {
+	csvdata_free(c);
     }
 
     return err;

@@ -4319,20 +4319,20 @@ static int lib_join_data (ExecState *s,
 			  PRN *prn)
 {
     gretlopt opts[] = { 
-	OPT_I, OPT_O, OPT_F, OPT_C, OPT_D, 0 
+	OPT_I, OPT_O, OPT_F, OPT_A, OPT_D, 0 
     };
     const char *optstr[] = {
 	"ikey",
 	"okey",
 	"filter",
-	"compact",
+	"aggr",
 	"data"
     };
     const char *param;
     char *p, *okey = NULL, *filter = NULL;
     char *varname = NULL, *data = NULL;
     AggrType agg = 0;
-    int ikeyvar = 0;
+    int ikeyvar = -1;
     int i, err = 0;
 
     p = strstr(s->line, s->cmd->param);
@@ -4374,6 +4374,11 @@ static int lib_join_data (ExecState *s,
 		err = E_DATA;
 	    }
 	}
+    }
+
+    if (!err && okey != NULL && ikeyvar < 0) {
+	/* can't have an outer key but no inner one */
+	err = E_DATA;
     }
 
     if (!err) {
