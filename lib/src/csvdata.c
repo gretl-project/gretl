@@ -2562,6 +2562,225 @@ static int parse_join_filter (const char *s,
     return err;
 }
 
+/* ---------------------------------------------------------------------- */
+/* ------   new join stuff   -------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+
+struct jr_row_ {
+    int keyval;
+    double val;
+};
+
+typedef struct jr_row_ jr_row;
+
+struct joinrect_ {
+    int n_rows;
+    int n_unique;
+    jr_row *rows;
+    int *keys;
+    int *key_freq;
+};
+
+/* parse a string of the form <lhs> <op> <rhs> */
+
+typedef struct joinrect_ joinrect;
+
+static void joinrect_destroy (joinrect *jr)
+{
+    if (jr != NULL) {
+	free(jr->rows);
+	free(jr->keys);
+	free(jr->key_freq);
+	free(jr);
+    }
+}
+
+static joinrect *joinrect_new (DATASET *tempdset)
+{
+    joinrect *jr = malloc(sizeof *jr);
+    int i, nrows = tempdset->n;
+
+    if (jr != NULL) {
+	jr->keys = NULL;
+	jr->key_freq = NULL;
+	jr->rows = malloc(nrows * sizeof *jr->rows);
+	if (jr->rows == NULL) {
+	    joinrect_destroy(jr);
+	    jr = NULL;
+	} else {
+	    jr->n_rows = nrows;
+	    jr->n_unique = 0;
+	}
+    }
+
+    for (i=0; i<nrows; i++) {
+	jr->rows[i].keyval = (int) tempdset->Z[1][i];
+	jr->rows[i].val    = tempdset->Z[2][i];
+    }
+    
+    return jr;
+}
+
+static int compare_jr_rows (const void *a, const void *b)
+{
+    const jr_row *ra = a;
+    const jr_row *rb = b;
+
+    return (ra->keyval > rb->keyval) - (ra->keyval < rb->keyval);
+}
+
+static int joinrect_sort (joinrect *jr)
+{
+    int i, err = 0;
+
+    qsort(jr->rows, jr->n_rows, sizeof *jr->rows, compare_jr_rows);
+
+    jr->n_unique = 1;
+    for (i=1; i<jr->n_rows; i++) {
+	if (jr->rows[i].keyval != jr->rows[i-1].keyval) {
+	    jr->n_unique += 1;
+	}
+    }
+
+    jr->keys = malloc(jr->n_unique * sizeof *jr->keys);
+    jr->key_freq = malloc(jr->n_unique * sizeof *jr->key_freq);
+
+    if (jr->keys == NULL || jr->key_freq == NULL) {
+	err = E_ALLOC;
+    } else {
+	int j = 0, nj = 1;
+
+	for (i=0; i<jr->n_unique; i++) {
+	    jr->key_freq[i] = 0;
+	}
+
+	jr->keys[0] = jr->rows[0].keyval;
+
+	for (i=1; i<jr->n_rows; i++) {
+	    if (jr->rows[i].keyval != jr->rows[i-1].keyval) {
+		jr->keys[j] = jr->rows[i-1].keyval;
+		jr->key_freq[j] = nj;
+		nj = 1;
+		j++;
+	    } else {
+		nj++;
+	    }
+	}
+
+	jr->keys[j] = jr->rows[i-1].keyval;
+	jr->key_freq[j] = nj;
+    }
+
+    return err;
+}
+
+static void joinrect_print (joinrect *jr, int sorted)
+{
+    int i;
+
+    printf("\njoinrect (%s): n_rows = %d\n", sorted ? "sorted" : "raw",
+	   jr->n_rows);
+    for (i=0; i<jr->n_rows; i++) {
+	printf(" row %d: keyval=%d, val=%g\n", i, jr->rows[i].keyval,
+	       jr->rows[i].val);
+    }
+
+    if (sorted) {
+	printf(" n_unique = %d\n", jr->n_unique);
+	for (i=0; i<jr->n_unique; i++) {
+	    printf("  key value %d : count = %d\n", jr->keys[i], jr->key_freq[i]);
+	}
+    }    
+}
+
+/* ------------------------------------------------------------- */
+
+static double aggr_retval (int key, joinrect *jr, AggrType a)
+{
+    int pos, i, n;
+    double x = 0, y;
+
+    /* find the key in the freq rectangle */
+    pos = -1;
+    for (i=0; i<jr->n_unique && pos<0; i++) {
+	if (key == jr->keys[i]) {
+	    pos = i;
+	}
+    }
+
+    if (pos < 0) {
+	/* not found */
+	return NADBL;
+    }
+
+    n = jr->key_freq[pos];
+    if (a == AGGR_COUNT) {
+	return n;
+    }
+    
+    /* we assume that jr is already sorted */
+    /* find the key in the rectangle proper */
+
+    pos = 0;
+    while (key != jr->rows[pos].keyval) {
+	++pos;
+    }
+
+    if (a == AGGR_NONE) {
+	x = jr->rows[pos].val;
+    } else if (a == AGGR_MAX) {
+	x = jr->rows[pos].val;
+	for (i=1; i<n; i++) {
+	    y = jr->rows[pos+i].val;
+	    if (y > x) {
+		x = y;
+	    }
+	}
+    } else if (a == AGGR_MIN) {
+	x = jr->rows[pos].val;
+	for (i=1; i<n; i++) {
+	    y = jr->rows[pos+i].val;
+	    if (y < x) {
+		x = y;
+	    }
+	}
+    } else if (a == AGGR_SUM || a == AGGR_AVG) {
+	x = 0;
+	for (i=0; i<n; i++) {
+	    x += jr->rows[pos+i].val;
+	}
+	if (a == AGGR_AVG) {
+	    x /= n;
+	}
+    }
+
+    return x;
+}
+
+static int aggregate_data (int ikeyvar, int newvar, DATASET *dset, 
+			   joinrect *jr, AggrType a)
+{
+    int i, key, err = 0;
+    double z;
+
+    for (i=dset->t1; i<=dset->t2; i++) {
+	z = dset->Z[ikeyvar][i];
+	fprintf(stderr, "z = %g\t", z);
+	if (xna(z)) {
+	    fprintf(stderr, "NA\n");
+	    dset->Z[newvar][i] = NADBL;
+	} else {
+	    key = trunc(z);
+	    z = aggr_retval(key, jr, a);
+	    fprintf(stderr, "aggr. output = %g\n", z);
+	    dset->Z[newvar][i] = z;
+	}
+    }
+
+    return err;
+}
+
+
 int join_from_csv (const char *fname,
 		   const char *varname,
 		   DATASET *dset, 
@@ -2624,6 +2843,18 @@ int join_from_csv (const char *fname,
 	if (!err) {
 	    pprintf(prn, "Data extracted from %s:\n", fname);
 	    printdata(NULL, NULL, c->dset, OPT_O, prn);
+
+	    joinrect *jr = joinrect_new(c->dset);
+	    joinrect_print(jr, 0);
+	    err = joinrect_sort(jr);
+	    joinrect_print(jr, 1);
+
+	    err = dataset_add_series(1, dset);
+	    int newvar = dset->v - 1;
+	    err = aggregate_data(ikeyvar, newvar, dset, jr, agg);
+	    strcpy(dset->varname[newvar], varname);
+
+	    joinrect_destroy(jr);
 	}
     }
 
