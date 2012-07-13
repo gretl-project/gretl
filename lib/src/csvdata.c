@@ -2580,7 +2580,6 @@ static int join_row_wanted (DATASET *dset, int i,
 			    jr_filter *filter, int *err)
 {
     int ret = 0;
-    *err = 0;
 
     if (filter == NULL) {
 	return 1;
@@ -2607,16 +2606,15 @@ static int join_row_wanted (DATASET *dset, int i,
 	    ret = (strcmp(x, y) == 0);
 	} else if (filter->op == B_GT) {
 	    slen = strlen(y);
-	    ret = (strlen(x) > slen) && (strncmp(x, y, slen)==0);
+	    ret = (strlen(x) > slen) && (strncmp(x, y, slen) == 0);
 	} else if (filter->op == B_LT) {
 	    slen = strlen(x);
-	    ret = (strlen(y) > slen) && (strncmp(x, y, slen)==0);
+	    ret = (strlen(y) > slen) && (strncmp(x, y, slen) == 0);
 	} else if (filter->op == B_NEQ) {
 	    ret = strcmp(x, y);
 	} else {
 	    *err = E_PARSE;
 	}
-
     } else {
 	double x = filter->lhcol ? dset->Z[filter->lhcol][i] : filter->lhval;
 	double y = filter->rhcol ? dset->Z[filter->rhcol][i] : filter->rhval;
@@ -2637,6 +2635,7 @@ static int join_row_wanted (DATASET *dset, int i,
 	    *err = E_PARSE;
 	}
     }
+
 #if CDEBUG
     fprintf(stderr, "join filter: %s row %d\n",
 	    ret ? "keeping" : "discarding", i);
@@ -2671,14 +2670,16 @@ static joinrect *joinrect_new (csvdata *c, jr_filter *filter,
 	    *err = E_DATA;
 	    return NULL;
 	}
+
 	filter->lhcol = lhcol;
-	filter->is_string = series_has_string_table (c->dset, lhcol);
+	filter->is_string = series_has_string_table(c->dset, lhcol);
 
 	if (filter->rhname != NULL) {
 	    if (rhcol > 0) {
 		filter->rhcol = rhcol;
-	    } else if (!(filter->is_string)) {
+	    } else if (!filter->is_string) {
 		*err = E_DATA;
+		return NULL;
 	    }
 	}
     }
@@ -2809,16 +2810,15 @@ static void joinrect_print (joinrect *jr, int sorted)
 static double aggr_retval (int key, joinrect *jr, AggrType a, 
 			   DATASET *lhs_dset, DATASET *rhs_dset)
 {
-    int pos, i, n;
-    double x = 0, y;
     const char **llabels = NULL;
     const char **rlabels = NULL;
+    double x = 0, y;
+    int pos, i, n;
 
     if (jr->str_comp) {
 	/* matching by strings */
-	int n_llabels, n_rlabels;
-	llabels = series_get_string_vals(lhs_dset, jr->l_keyno , &n_llabels);
-	rlabels = series_get_string_vals(rhs_dset, jr->r_keyno,  &n_rlabels);
+	llabels = series_get_string_vals(lhs_dset, jr->l_keyno, NULL);
+	rlabels = series_get_string_vals(rhs_dset, jr->r_keyno, NULL);
     }
 
     /* find the key in the freq rectangle */
@@ -2843,8 +2843,10 @@ static double aggr_retval (int key, joinrect *jr, AggrType a,
     /* find the key in the rectangle proper */
 
     pos = 0;
+
     if (jr->str_comp) {
 	int rkey = jr->rows[pos].keyval;
+
 	while (strcmp(llabels[key], rlabels[rkey])) {
 	    ++pos;
 	}
@@ -2940,7 +2942,6 @@ static jr_filter *make_join_filter (const char *s,
 	fprintf(stderr,"op = '%s'\n", opstr);
 	fprintf(stderr,"rhs = '%s'\n", rhs);
 #endif
-
     }
 
     if (!*err) {
@@ -3038,9 +3039,9 @@ int join_from_csv (const char *fname,
     joinrect *jr = NULL;
     jr_filter *filter = NULL;
     int targvar = 0;
-    int i, err = 0;
     int str_comp = 0;
     int okeyvar = -1;
+    int i, err = 0;
 
 #if CDEBUG
     pputs(prn, "*** join_from_csv:\n");
@@ -3102,33 +3103,30 @@ int join_from_csv (const char *fname,
     }
 
     if (!err) {
-	/* 
-	   check that okey is in fact in the right-hand-side file 
+	/* check that okey is in fact in the right-hand-side file 
 	   and is conformable to the ikey
 	*/
-
 	if (colnames[0] != NULL) {
 	    err = E_DATA;
 	    for (i=0; i<4; i++) {
-		if(c->joincols[i] == JOIN_KEY) {
+		if (c->joincols[i] == JOIN_KEY) {
 		    err = 0;
 		    okeyvar = i + 1;
 		    break;
 		}
 	    }
 	} 
-
 	
 	if (!err) {
 	    int lstr = series_has_string_table(dset, ikeyvar);
 	    int rstr = series_has_string_table(c->dset, okeyvar);
+
 	    if (lstr != rstr) {
 		err = E_TYPES; 
-	    } else if (lstr && rstr) {
+	    } else if (lstr) {
 		str_comp = 1;
 	    }
 	}
-
     }
 
     if (!err) {
