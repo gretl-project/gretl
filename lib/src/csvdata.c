@@ -2537,6 +2537,9 @@ struct joinrect_ {
     jr_row *rows;
     int *keys;
     int *key_freq;
+    int str_comp;   /* flag for string comparison */
+    int l_keyno;    /* used for string comparison: # of ikey in lhs dset */
+    int r_keyno;    /* used for string comparison: # of okey in rhs dset */
 };
 
 typedef struct joinrect_ joinrect;
@@ -2803,10 +2806,20 @@ static void joinrect_print (joinrect *jr, int sorted)
 
 #endif
 
-static double aggr_retval (int key, joinrect *jr, AggrType a)
+static double aggr_retval (int key, joinrect *jr, AggrType a, 
+			   DATASET *lhs_dset, DATASET *rhs_dset)
 {
     int pos, i, n;
     double x = 0, y;
+    const char **llabels = NULL;
+    const char **rlabels = NULL;
+
+    if (jr->str_comp) {
+	/* matching by strings */
+	int n_llabels, n_rlabels;
+	llabels = series_get_string_vals(lhs_dset, jr->l_keyno , &n_llabels);
+	rlabels = series_get_string_vals(rhs_dset, jr->r_keyno,  &n_rlabels);
+    }
 
     /* find the key in the freq rectangle */
     pos = -1;
@@ -2830,8 +2843,15 @@ static double aggr_retval (int key, joinrect *jr, AggrType a)
     /* find the key in the rectangle proper */
 
     pos = 0;
-    while (key != jr->rows[pos].keyval) {
-	++pos;
+    if (jr->str_comp) {
+	int rkey = jr->rows[pos].keyval;
+	while (strcmp(llabels[key], rlabels[rkey])) {
+	    ++pos;
+	}
+    } else {
+	while (key != jr->rows[pos].keyval) {
+	    ++pos;
+	}
     }
 
     if (a == AGGR_NONE) {
@@ -2865,26 +2885,26 @@ static double aggr_retval (int key, joinrect *jr, AggrType a)
     return x;
 }
 
-static int aggregate_data (int ikeyvar, int newvar, DATASET *dset, 
-			   joinrect *jr, AggrType a)
+static int aggregate_data (int ikeyvar, int newvar, DATASET *l_dset, 
+			   DATASET *r_dset, joinrect *jr, AggrType a)
 {
     int i, key, err = 0;
     double z;
 
-    for (i=dset->t1; i<=dset->t2; i++) {
-	z = dset->Z[ikeyvar][i];
+    for (i=l_dset->t1; i<=l_dset->t2; i++) {
+	z = l_dset->Z[ikeyvar][i];
 #if CDEBUG
 	fprintf(stderr, "z = %g\t", z);
 #endif
 	if (xna(z)) {
-	    dset->Z[newvar][i] = NADBL;
+	    l_dset->Z[newvar][i] = NADBL;
 	} else {
 	    key = trunc(z);
-	    z = aggr_retval(key, jr, a);
+	    z = aggr_retval(key, jr, a, l_dset, r_dset);
 #if CDEBUG
 	    fprintf(stderr, "aggr. output = %g\n", z);
 #endif
-	    dset->Z[newvar][i] = z;
+	    l_dset->Z[newvar][i] = z;
 	}
     }
 
@@ -2907,16 +2927,20 @@ static jr_filter *make_join_filter (const char *s,
 	*err = E_PARSE;
     } else {
 	lhs = strndup(s, nlhs);
-	printf("lhs = '%s'\n", lhs);
 	nop = strspn(s + nlhs, opchars);
 	opstr = strndup(s + nlhs, nop);
-	printf("op = '%s'\n", opstr);
 	if (nlhs + nop == len) {
 	    *err = E_PARSE;
 	} else {
 	    rhs = strdup(s + nlhs + nop);
-	    printf("rhs = '%s'\n", rhs);
 	}
+
+#if CDEBUG
+	fprintf(stderr,"lhs = '%s'\n", lhs);
+	fprintf(stderr,"op = '%s'\n", opstr);
+	fprintf(stderr,"rhs = '%s'\n", rhs);
+#endif
+
     }
 
     if (!*err) {
@@ -3015,6 +3039,8 @@ int join_from_csv (const char *fname,
     jr_filter *filter = NULL;
     int targvar = 0;
     int i, err = 0;
+    int str_comp = 0;
+    int okeyvar = -1;
 
 #if CDEBUG
     pputs(prn, "*** join_from_csv:\n");
@@ -3076,16 +3102,33 @@ int join_from_csv (const char *fname,
     }
 
     if (!err) {
-	/* check that okey is in fact in the right-hand-side file */
+	/* 
+	   check that okey is in fact in the right-hand-side file 
+	   and is conformable to the ikey
+	*/
+
 	if (colnames[0] != NULL) {
 	    err = E_DATA;
 	    for (i=0; i<4; i++) {
 		if(c->joincols[i] == JOIN_KEY) {
 		    err = 0;
+		    okeyvar = i + 1;
 		    break;
 		}
 	    }
 	} 
+
+	
+	if (!err) {
+	    int lstr = series_has_string_table(dset, ikeyvar);
+	    int rstr = series_has_string_table(c->dset, okeyvar);
+	    if (lstr != rstr) {
+		err = E_TYPES; 
+	    } else if (lstr && rstr) {
+		str_comp = 1;
+	    }
+	}
+
     }
 
     if (!err) {
@@ -3097,6 +3140,11 @@ int join_from_csv (const char *fname,
     }
 
     if (!err) {
+	jr->str_comp = str_comp;
+	if (str_comp) {
+	    jr->l_keyno = ikeyvar;
+	    jr->r_keyno = okeyvar;
+	}
 #if CDEBUG > 1
 	joinrect_print(jr, 0);
 	err = joinrect_sort(jr);
@@ -3111,7 +3159,7 @@ int join_from_csv (const char *fname,
     }
 
     if (!err) {
-	err = aggregate_data(ikeyvar, targvar, dset, jr, agg);
+	err = aggregate_data(ikeyvar, targvar, dset, c->dset, jr, agg);
     }
 
     if (c != NULL) {
