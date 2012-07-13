@@ -4348,6 +4348,13 @@ static int lib_join_data (ExecState *s,
 
     varname = gretl_strdup(p);
 
+    if (current_series_index(dset, varname) < 0) {
+	err = check_varname(varname);
+	if (!err && gretl_type_from_name(varname, NULL)) {
+	    err = E_TYPES;
+	}
+    }
+
     for (i=0; opts[i] && !err; i++) {
 	if (opt & opts[i]) {
 	    param = get_optval_string(JOIN, opts[i]);
@@ -6074,4 +6081,3 @@ int process_command_error (CMD *cmd, int err)
 
     return ret;
 }
-

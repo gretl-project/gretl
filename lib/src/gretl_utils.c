@@ -1213,7 +1213,7 @@ int varnum_from_string (const char *str, DATASET *dset)
 
 GretlType gretl_type_from_name (const char *s, const DATASET *dset)
 {
-    if (gretl_is_series(s, dset)) {
+    if (dset != NULL && gretl_is_series(s, dset)) {
 	return GRETL_TYPE_SERIES;
     } else if (get_matrix_by_name(s) != NULL) {
 	return GRETL_TYPE_MATRIX;
