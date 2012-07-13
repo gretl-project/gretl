@@ -28,7 +28,7 @@
 #include <errno.h>
 #include <glib.h>
 
-#define CDEBUG 1
+#define CDEBUG 0
 
 #define QUOTE      '\''
 #define CSVSTRLEN  72
@@ -2038,6 +2038,7 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
     int t = 0, s = 0;
     int i, j, k;
     int err = 0;
+    int truncated = 0;
 
     c->real_n = c->dset->n;
 
@@ -2068,8 +2069,7 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 		if (i < CSVSTRLEN - 1) {
 		    c->str[i++] = *p;
 		} else {
-		    pprintf(prn, A_("warning: truncating data at row %d, column %d\n"),
-			    t+1, k+1);
+		    truncated++;
 		}
 		p++;
 	    }
@@ -2099,6 +2099,10 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 	if (++t == c->dset->n) {
 	    break;
 	}
+    }
+
+    if (truncated) {
+	pprintf(prn, A_("warning: %d labels were truncated.\n"), truncated);
     }
 
     if (!err && c->real_n < c->dset->n) {
@@ -2545,6 +2549,7 @@ struct jr_filter_ {
     double rhval;
     int rhcol;
     int op;
+    int is_string;
 };
 
 typedef struct jr_filter_ jr_filter;
@@ -2569,32 +2574,66 @@ static void joinrect_destroy (joinrect *jr)
 }
 
 static int join_row_wanted (DATASET *dset, int i,
-			    jr_filter *filter)
+			    jr_filter *filter, int *err)
 {
-    double x, y;
     int ret = 0;
+    *err = 0;
 
     if (filter == NULL) {
 	return 1;
     }
 
-    x = filter->lhcol ? dset->Z[filter->lhcol][i] : filter->lhval;
-    y = filter->rhcol ? dset->Z[filter->rhcol][i] : filter->rhval;
+    if (filter->is_string) {
+	const char *x;
+	const char *y;
+	size_t slen;
 
-    if (filter->op == B_EQ) {
-	ret = x == y;
-    } else if (filter->op == B_GT) {
-	ret = x > y;
-    } else if (filter->op == B_LT) {
-	ret = x < y;
-    } else if (filter->op == B_GTE) {
-	ret = x >= y;
-    } else if (filter->op == B_LTE) {
-	ret = x <= y;
-    } else if (filter->op == B_NEQ) {
-	ret = x != y;
+	if (filter->lhcol) {
+	    x = series_get_string_val(dset, filter->lhcol, i);
+	} else {
+	    x = filter->lhname;
+	}
+
+	if (filter->rhcol) {
+	    y = series_get_string_val(dset, filter->rhcol, i);
+	} else {
+	    y = filter->rhname;
+	}
+
+	if (filter->op == B_EQ) {
+	    ret = (strcmp(x, y) == 0);
+	} else if (filter->op == B_GT) {
+	    slen = strlen(y);
+	    ret = (strlen(x) > slen) && (strncmp(x, y, slen)==0);
+	} else if (filter->op == B_LT) {
+	    slen = strlen(x);
+	    ret = (strlen(y) > slen) && (strncmp(x, y, slen)==0);
+	} else if (filter->op == B_NEQ) {
+	    ret = strcmp(x, y);
+	} else {
+	    *err = E_PARSE;
+	}
+
+    } else {
+	double x = filter->lhcol ? dset->Z[filter->lhcol][i] : filter->lhval;
+	double y = filter->rhcol ? dset->Z[filter->rhcol][i] : filter->rhval;
+
+	if (filter->op == B_EQ) {
+	    ret = x == y;
+	} else if (filter->op == B_GT) {
+	    ret = x > y;
+	} else if (filter->op == B_LT) {
+	    ret = x < y;
+	} else if (filter->op == B_GTE) {
+	    ret = x >= y;
+	} else if (filter->op == B_LTE) {
+	    ret = x <= y;
+	} else if (filter->op == B_NEQ) {
+	    ret = x != y;
+	} else {
+	    *err = E_PARSE;
+	}
     }
-
 #if CDEBUG
     fprintf(stderr, "join filter: %s row %d\n",
 	    ret ? "keeping" : "discarding", i);
@@ -2624,14 +2663,21 @@ static joinrect *joinrect_new (csvdata *c, jr_filter *filter,
     }
 
     if (filter != NULL) {
-	if ((filter->lhname != NULL && lhcol == 0) ||
-	    (filter->rhname != NULL && rhcol == 0)) {
+	if (filter->lhname != NULL && lhcol == 0) {
 	    /* a required filter column is missing */
 	    *err = E_DATA;
 	    return NULL;
 	}
 	filter->lhcol = lhcol;
-	filter->rhcol = rhcol;
+	filter->is_string = series_has_string_table (c->dset, lhcol);
+
+	if (filter->rhname != NULL) {
+	    if (rhcol > 0) {
+		filter->rhcol = rhcol;
+	    } else if (!(filter->is_string)) {
+		*err = E_DATA;
+	    }
+	}
     }
 
     jr = malloc(sizeof *jr);
@@ -2644,7 +2690,7 @@ static joinrect *joinrect_new (csvdata *c, jr_filter *filter,
     if (filter != NULL) {
 	/* count the filtered rows */
 	for (i=0; i<c->dset->n; i++) {
-	    if (join_row_wanted(c->dset, i, filter)) {
+	    if (join_row_wanted(c->dset, i, filter, err)) {
 		nrows++;
 	    }
 	}
@@ -2670,7 +2716,7 @@ static joinrect *joinrect_new (csvdata *c, jr_filter *filter,
 	int j = 0;
 
 	for (i=0; i<c->dset->n; i++) {
-	    if (join_row_wanted(c->dset, i, filter)) {
+	    if (join_row_wanted(c->dset, i, filter, err)) {
 		jr->rows[j].keyval = (int) c->dset->Z[keycol][i];
 		jr->rows[j].val = c->dset->Z[valcol][i];
 		j++;
@@ -2968,8 +3014,9 @@ int join_from_csv (const char *fname,
     joinrect *jr = NULL;
     jr_filter *filter = NULL;
     int targvar = 0;
-    int err = 0;
+    int i, err = 0;
 
+#if CDEBUG
     pputs(prn, "*** join_from_csv:\n");
     pprintf(prn, " filename = '%s'\n", fname);
     pprintf(prn, " target series name = '%s'\n", varname);
@@ -2993,6 +3040,7 @@ int join_from_csv (const char *fname,
     if (agg != 0) {
 	pprintf(prn, " aggregation=%d\n", agg);
     }
+#endif
 
     if (filtstr != NULL) {
 	filter = make_join_filter(filtstr, &err);
@@ -3025,6 +3073,19 @@ int join_from_csv (const char *fname,
 
 	err = real_import_csv(fname, dset, NULL, NULL,
 			      colnames, &c, opt, prn);
+    }
+
+    if (!err) {
+	/* check that okey is in fact in the right-hand-side file */
+	if (colnames[0] != NULL) {
+	    err = E_DATA;
+	    for (i=0; i<4; i++) {
+		if(c->joincols[i] == JOIN_KEY) {
+		    err = 0;
+		    break;
+		}
+	    }
+	} 
     }
 
     if (!err) {
