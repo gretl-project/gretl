@@ -4391,7 +4391,8 @@ static int lib_join_data (ExecState *s,
     if (!err) {
 	err = join_from_csv(newfile, varname, dset, 
 			    ikeyvar, okey, filter,
-			    data, agg, opt, prn);
+			    data, agg, opt, 
+			    (opt & OPT_V)? prn : NULL);
     }	
 
     free(okey);
