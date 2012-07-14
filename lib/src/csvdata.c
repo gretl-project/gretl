@@ -54,7 +54,14 @@ enum {
     JOIN_RHS
 };
 
+typedef struct csvjoin_ csvjoin;
 typedef struct csvdata_ csvdata;
+
+struct csvjoin_ {
+    const char *colnames[4];
+    char colnums[4];
+    csvdata *c;
+};    
 
 struct csvdata_ {
     int flags;
@@ -75,8 +82,7 @@ struct csvdata_ {
     int *width_list;
     const gretl_matrix *rowmask;
     int masklen;
-    const char **joinspec;
-    char joincols[4];
+    csvjoin *jspec; /* info used for "join" command */
 };
 
 #define csv_has_trailing_comma(c) (c->flags & CSV_TRAIL)
@@ -108,7 +114,8 @@ struct csvdata_ {
 #define fixed_format(c) (c->cols_list != NULL && c->width_list != NULL)
 #define cols_subset(c) (c->cols_list != NULL && c->width_list == NULL)
 #define rows_subset(c) (c->rowmask != NULL)
-#define joining(c) (c->joinspec != NULL)
+
+#define joining(c) (c->jspec != NULL)
 
 static int 
 time_series_label_check (DATASET *dset, int reversed, char *skipstr, PRN *prn);
@@ -148,7 +155,6 @@ static void csvdata_free (csvdata *c)
 static csvdata *csvdata_new (DATASET *dset)
 {
     csvdata *c = malloc(sizeof *c);
-    int i;
 
     if (c == NULL) {
 	return NULL;
@@ -173,10 +179,7 @@ static csvdata *csvdata_new (DATASET *dset)
     c->rowmask = NULL;
     c->masklen = 0;
 
-    c->joinspec = NULL;
-    for (i=0; i<4; i++) {
-	c->joincols[i] = 0;
-    }
+    c->jspec = NULL;
 
     c->dset = datainfo_new();
     if (c->dset == NULL) {
@@ -1787,20 +1790,20 @@ static int update_join_cols_list (csvdata *c, int k)
     return err;
 }
 
-static int handle_joinspec_varname (csvdata *c, int k, int *pj)
+static int handle_join_varname (csvdata *c, int k, int *pj)
 {
     int i, j = *pj;
 
     for (i=0; i<4; i++) {
 #if CDEBUG
-	fprintf(stderr, "i = %d; %s <-> %s\n", i, c->str, c->joinspec[i]);
+	fprintf(stderr, "i = %d; %s <-> %s\n", i, c->str, c->jspec->colnames[i]);
 #endif
-	if (c->joinspec[i] != NULL &&
-	    !strcmp(c->str, c->joinspec[i])) {
+	if (c->jspec->colnames[i] != NULL &&
+	    !strcmp(c->str, c->jspec->colnames[i])) {
 	    c->dset->varname[j][0] = '\0';
 	    strncat(c->dset->varname[j], c->str, VNAMELEN - 1);
 	    update_join_cols_list(c, k);
-	    c->joincols[j-1] = i + 1;
+	    c->jspec->colnums[j-1] = i + 1;
 	    *pj += 1;
 	    break;
 	}
@@ -1865,8 +1868,8 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 		pprintf(prn, A_("   variable name %d is missing: aborting\n"), j);
 		pputs(prn, A_(csv_msg));
 		err = E_DATA;
-	    } else if (c->joinspec != NULL) {
-		handle_joinspec_varname(c, k, &j);
+	    } else if (joining(c)) {
+		handle_join_varname(c, k, &j);
 	    } else {
 		c->dset->varname[j][0] = '\0';
 		strncat(c->dset->varname[j], c->str, VNAMELEN - 1);
@@ -2168,7 +2171,7 @@ static void csv_set_dataset_dimensions (csvdata *c)
 
 	    c->dset->v = 1;
 	    for (i=0; i<4; i++) {
-		if (c->joinspec[i] != NULL) {
+		if (c->jspec->colnames[i] != NULL) {
 		    c->dset->v += 1;
 		}
 	    }
@@ -2210,8 +2213,7 @@ static int real_import_csv (const char *fname,
 			    DATASET *dset, 
 			    const char *cols, 
 			    const char *rows,
-			    const char **joinspec,
-			    csvdata **cptr,
+			    csvjoin *join,
 			    gretlopt opt, 
 			    PRN *prn)
 {
@@ -2219,7 +2221,6 @@ static int real_import_csv (const char *fname,
     FILE *fp = NULL;
     PRN *mprn = NULL;
     int newdata = (dset->Z == NULL);
-    int joining = (cptr != NULL);
     int popit = 0;
     long datapos;
     int i, err = 0;
@@ -2266,8 +2267,8 @@ static int real_import_csv (const char *fname,
 	} 
     }
 
-    if (joining && joinspec != NULL) {
-	c->joinspec = joinspec;
+    if (join != NULL) {
+	c->jspec = join;
     }
 
     if (mprn != NULL) {
@@ -2448,7 +2449,7 @@ static int real_import_csv (const char *fname,
 	pputs(prn, A_("warning: some variable names were duplicated\n"));
     }
 
-    if (cptr == NULL) {
+    if (!joining(c)) {
 	/* not doing a special "join" operation */
 	err = merge_or_replace_data(dset, &c->dset, opt, prn);
 
@@ -2468,8 +2469,8 @@ static int real_import_csv (const char *fname,
 	fclose(fp);
     }
 
-    if (!err && cptr != NULL) {
-	*cptr = c;
+    if (!err && c->jspec != NULL) {
+	c->jspec->c = c;
     } else {
 	csvdata_free(c);
     }
@@ -2521,7 +2522,7 @@ int import_csv (const char *fname, DATASET *dset,
     }	
 
     return real_import_csv(fname, dset, cols, rows, 
-			   NULL, NULL, opt, prn);
+			   NULL, opt, prn);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -2536,17 +2537,17 @@ struct jr_row_ {
 typedef struct jr_row_ jr_row;
 
 struct joiner_ {
-    int n_rows;
-    int n_unique;
-    jr_row *rows;
-    int *keys;
-    int *key_freq;
-    int str_comp;   /* flag for string comparison */
+    int n_rows;     /* number of rows in data table */
+    int n_unique;   /* number of unique keys found */
+    jr_row *rows;   /* array of table rows */
+    int *keys;      /* array of unique key values as integers */
+    int *key_freq;  /* counts of occurrences of key values */
+    int str_keys;   /* flag for string comparison of keys */
     int l_keyno;    /* used for string comparison: # of ikey in lhs dset */
     int r_keyno;    /* used for string comparison: # of okey in rhs dset */
-    AggrType aggr;
-    DATASET *l_dset;
-    DATASET *r_dset;
+    AggrType aggr;  /* aggregation method for 1:n joining */
+    DATASET *l_dset;  /* the main dataset */
+    DATASET *r_dset;  /* the temporary CSV dataset */
 };
 
 typedef struct joiner_ joiner;
@@ -2651,25 +2652,26 @@ static int join_row_wanted (DATASET *dset, int i,
     return ret;
 }
 
-static joiner *joiner_new (csvdata *c, 
-			   DATASET *dset,
+static joiner *joiner_new (csvjoin *jspec, 
+			   DATASET *l_dset,
 			   jr_filter *filter,
 			   AggrType aggr,
 			   int *err)
 {
     joiner *jr = NULL;
+    DATASET *r_dset = jspec->c->dset;
     int keycol = 0, valcol = 0;
     int lhcol = 0, rhcol = 0;
     int i, nrows = 0;
 
     for (i=0; i<4; i++) {
-	if (c->joincols[i] == JOIN_KEY) {
+	if (jspec->colnums[i] == JOIN_KEY) {
 	    keycol = i+1;
-	} else if (c->joincols[i] == JOIN_VAL) {
+	} else if (jspec->colnums[i] == JOIN_VAL) {
 	    valcol = i+1;
-	} else if (c->joincols[i] == JOIN_LHS) {
+	} else if (jspec->colnums[i] == JOIN_LHS) {
 	    lhcol = i+1;
-	} else if (c->joincols[i] == JOIN_RHS) {
+	} else if (jspec->colnums[i] == JOIN_RHS) {
 	    rhcol = i+1;
 	}
     }
@@ -2680,7 +2682,7 @@ static joiner *joiner_new (csvdata *c,
 	    *err = E_DATA;
 	} else {
 	    filter->lhcol = lhcol;
-	    filter->is_string = series_has_string_table(c->dset, lhcol);
+	    filter->is_string = series_has_string_table(r_dset, lhcol);
 	    if (filter->rhname != NULL) {
 		if (rhcol > 0) {
 		    filter->rhcol = rhcol;
@@ -2704,13 +2706,13 @@ static joiner *joiner_new (csvdata *c,
 
     if (filter != NULL) {
 	/* count the filtered rows */
-	for (i=0; i<c->dset->n; i++) {
-	    if (join_row_wanted(c->dset, i, filter, err)) {
+	for (i=0; i<r_dset->n; i++) {
+	    if (join_row_wanted(r_dset, i, filter, err)) {
 		nrows++;
 	    }
 	}
     } else {
-	nrows = c->dset->n;
+	nrows = r_dset->n;
     }
 
     jr->keys = NULL;
@@ -2724,17 +2726,18 @@ static joiner *joiner_new (csvdata *c,
 	jr->n_rows = nrows;
 	jr->n_unique = 0;
 	jr->aggr = aggr;
-	jr->l_dset = dset;
-	jr->r_dset = c->dset;
+	jr->l_dset = l_dset;
+	jr->r_dset = r_dset;
     }
 
     if (jr != NULL) {
+	/* transcribe the rows we want */
 	int j = 0;
 
-	for (i=0; i<c->dset->n; i++) {
-	    if (join_row_wanted(c->dset, i, filter, err)) {
-		jr->rows[j].keyval = (int) c->dset->Z[keycol][i];
-		jr->rows[j].val = c->dset->Z[valcol][i];
+	for (i=0; i<r_dset->n; i++) {
+	    if (join_row_wanted(r_dset, i, filter, err)) {
+		jr->rows[j].keyval = (int) r_dset->Z[keycol][i];
+		jr->rows[j].val = r_dset->Z[valcol][i];
 		j++;
 	    }
 	}
@@ -2834,7 +2837,7 @@ static double aggr_retval (int key, const char *lstr,
     /* is the key present in the freq rectangle? */
 
     pos = -1;
-    if (jr->str_comp) {
+    if (jr->str_keys) {
 	for (i=0; i<jr->n_unique && pos<0; i++) {
 	    rstr = rlabels[jr->keys[i] - 1];
 	    if (!strcmp(lstr, rstr)) {
@@ -2874,7 +2877,7 @@ static double aggr_retval (int key, const char *lstr,
     /* we assume that jr is already sorted */
     /* find the key in the rectangle proper */
 
-    if (jr->str_comp) {
+    if (jr->str_keys) {
 	/* matching by string values */
 	for (i=0; i<jr->n_rows && pos<0; i++) {
 	    rstr = rlabels[jr->rows[i].keyval - 1];
@@ -2940,7 +2943,7 @@ static int aggregate_data (int ikeyvar, int newvar, joiner *jr)
     fputs("\naggregate data:\n", stderr);
 #endif
 
-    if (jr->str_comp) {
+    if (jr->str_keys) {
 	/* we're matching by strings */
 	llabels = series_get_string_vals(jr->l_dset, jr->l_keyno, NULL);
 	rlabels = series_get_string_vals(jr->r_dset, jr->r_keyno, NULL);
@@ -2988,13 +2991,15 @@ static jr_filter *make_join_filter (const char *s,
     if (nlhs == len) {
 	*err = E_PARSE;
     } else {
-	lhs = strndup(s, nlhs);
+	lhs = gretl_strndup(s, nlhs);
+	g_strstrip(lhs);
 	nop = strspn(s + nlhs, opchars);
-	opstr = strndup(s + nlhs, nop);
+	opstr = gretl_strndup(s + nlhs, nop);
 	if (nlhs + nop == len) {
 	    *err = E_PARSE;
 	} else {
-	    rhs = strdup(s + nlhs + nop);
+	    rhs = gretl_strdup(s + nlhs + nop);
+	    g_strstrip(rhs);
 	}
 
 #if CDEBUG
@@ -3092,14 +3097,11 @@ int join_from_csv (const char *fname,
 		   gretlopt opt,
 		   PRN *prn)
 {
-    const char *colnames[] = {
-	NULL, NULL, NULL, NULL
-    };
-    csvdata *c = NULL;
+    csvjoin jspec = {0};
     joiner *jr = NULL;
     jr_filter *filter = NULL;
     int targvar = 0;
-    int str_comp = 0;
+    int str_keys = 0;
     int okeyvar = -1;
     int i, err = 0;
 
@@ -3141,51 +3143,48 @@ int join_from_csv (const char *fname,
     if (!err) {
 	/* handle the "outer" key column, if any */
 	if (okey != NULL) {
-	    colnames[0] = okey;
+	    jspec.colnames[0] = okey;
 	} else if (ikeyvar > 0) {
-	    colnames[0] = dset->varname[ikeyvar];
+	    jspec.colnames[0] = dset->varname[ikeyvar];
 	}
 
 	/* the data or "payload" column */
 	if (data != NULL) {
-	    colnames[1] = data;
+	    jspec.colnames[1] = data;
 	} else {
-	    colnames[1] = varname; /* always? */
+	    jspec.colnames[1] = varname; /* always? */
 	}
 
 	/* handle filter columns, if applicable */
 	if (filter != NULL) {
-	    colnames[2] = filter->lhname;
-	    colnames[3] = filter->rhname;
+	    jspec.colnames[2] = filter->lhname;
+	    jspec.colnames[3] = filter->rhname;
 	}
 
 	err = real_import_csv(fname, dset, NULL, NULL,
-			      colnames, &c, opt, prn);
+			      &jspec, opt, prn);
     }
 
-    if (!err) {
+    if (!err && jspec.colnames[0] != NULL) {
 	/* check that okey is in fact in the right-hand-side file 
 	   and is conformable to the ikey
 	*/
-	if (colnames[0] != NULL) {
-	    err = E_DATA;
-	    for (i=0; i<4; i++) {
-		if (c->joincols[i] == JOIN_KEY) {
-		    err = 0;
-		    okeyvar = i + 1;
-		    break;
-		}
+	for (i=0; i<4 && okeyvar<0; i++) {
+	    if (jspec.colnums[i] == JOIN_KEY) {
+		okeyvar = i + 1;
 	    }
-	} 
-	
-	if (!err) {
+	}
+
+	if (okeyvar < 0) {
+	    err = E_DATA;
+	} else {
 	    int lstr = series_has_string_table(dset, ikeyvar);
-	    int rstr = series_has_string_table(c->dset, okeyvar);
+	    int rstr = series_has_string_table(jspec.c->dset, okeyvar);
 
 	    if (lstr != rstr) {
 		err = E_TYPES; 
 	    } else if (lstr) {
-		str_comp = 1;
+		str_keys = 1;
 	    }
 	}
     }
@@ -3195,12 +3194,12 @@ int join_from_csv (const char *fname,
 	pprintf(prn, "Data extracted from %s:\n", fname);
 	printdata(NULL, NULL, c->dset, OPT_O, prn);
 #endif
-	jr = joiner_new(c, dset, filter, aggr, &err);
+	jr = joiner_new(&jspec, dset, filter, aggr, &err);
     }
 
     if (!err) {
-	jr->str_comp = str_comp;
-	if (str_comp) {
+	jr->str_keys = str_keys;
+	if (jr->str_keys) {
 	    jr->l_keyno = ikeyvar;
 	    jr->r_keyno = okeyvar;
 	}
@@ -3221,17 +3220,9 @@ int join_from_csv (const char *fname,
 	}
     }
 
-    if (c != NULL) {
-	csvdata_free(c);
-    }
-
-    if (jr != NULL) {
-	joiner_destroy(jr);
-    }
-
-    if (filter != NULL) {
-	jr_filter_destroy(filter);
-    }
+    csvdata_free(jspec.c);
+    joiner_destroy(jr);
+    jr_filter_destroy(filter);
 
     return err;
 }
