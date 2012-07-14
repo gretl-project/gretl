@@ -1298,16 +1298,29 @@ static int count_csv_fields (const char *s, char delim)
     return nf + 1;
 }
 
-static void remove_quoted_commas (char *s)
+static void purge_quoted_commas (char *s)
 {
     int inquote = 0;
 
     while (*s) {
 	if (*s == '"') {
 	    inquote = !inquote;
-	}
-	if (inquote && *s == ',') {
+	} else if (inquote && *s == ',') {
 	    *s = ' ';
+	}
+	s++;
+    }
+}
+
+static void purge_unquoted_spaces (char *s)
+{
+    int inquote = 0;
+
+    while (*s) {
+	if (*s == '"') {
+	    inquote = !inquote;
+	} else if (!inquote && *s == ' ') {
+	    shift_string_left(s, 1);
 	}
 	s++;
     }
@@ -1326,11 +1339,12 @@ static void compress_csv_line (csvdata *c)
     if (*p == '\r') *p = '\0';
 
     if (c->delim == ',') {
-	remove_quoted_commas(c->line);
+	purge_quoted_commas(c->line);
     }
 
     if (c->delim != ' ') {
-	gretl_delchar(' ', c->line);
+	/* 2012-07-14: was gretl_delchar(' ', c->line); */
+	purge_unquoted_spaces(c->line);
     } else {
 	compress_spaces(c->line);
     }
