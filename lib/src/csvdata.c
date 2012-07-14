@@ -2798,46 +2798,38 @@ static int joiner_sort (joiner *jr)
 
 #if CDEBUG > 1
 
-static void joiner_print (joiner *jr, int sorted)
+static void joiner_print (joiner *jr)
 {
     int i;
 
-    fprintf(stderr, "\njoiner (%s): n_rows = %d\n", sorted ? "sorted" : "raw",
-	    jr->n_rows);
+    fprintf(stderr, "\njoiner: n_rows = %d\n", jr->n_rows);
     for (i=0; i<jr->n_rows; i++) {
 	fprintf(stderr, " row %d: keyval=%d, val=%g\n", i, jr->rows[i].keyval,
 		jr->rows[i].val);
     }
 
-    if (sorted) {
-	fprintf(stderr, " n_unique = %d\n", jr->n_unique);
-	for (i=0; i<jr->n_unique; i++) {
-	    fprintf(stderr,"  key value %d : count = %d\n", 
-		    jr->keys[i], jr->key_freq[i]);
-	}
-    }    
+    fprintf(stderr, " n_unique = %d\n", jr->n_unique);
+    for (i=0; i<jr->n_unique; i++) {
+	fprintf(stderr,"  key value %d : count = %d\n", 
+		jr->keys[i], jr->key_freq[i]);
+    }
 }
 
 #endif
 
-static double aggr_retval (int key, joiner *jr, int *err)
+static double aggr_retval (int key, const char *lstr,
+			   const char **rlabels,
+			   joiner *jr, int *err)
 {
-    const char **llabels = NULL;
-    const char **rlabels = NULL;
-    const char *lstr = NULL;
     const char *rstr = NULL;
     double x = 0, y;
     int pos, i, n;
 
-    if (jr->str_comp) {
-	/* matching by strings */
-	llabels = series_get_string_vals(jr->l_dset, jr->l_keyno, NULL);
-	rlabels = series_get_string_vals(jr->r_dset, jr->r_keyno, NULL);
-	lstr = llabels[key-1];
 #if CDEBUG
-	fprintf(stderr, "  left-hand key string = '%s'\n", lstr);
-#endif
+    if (lstr != NULL) {
+	fprintf(stderr, "  left-hand key string = '%s'\n", lstr);	
     }
+#endif
 
     /* is the key present in the freq rectangle? */
 
@@ -2873,7 +2865,8 @@ static double aggr_retval (int key, joiner *jr, int *err)
 
     if (n>1 && jr->aggr == AGGR_NONE) {
 	*err = E_DATA;
-	gretl_errmsg_set(_("You need to specify an aggregation method for a 1:n join"));
+	gretl_errmsg_set(_("You need to specify an aggregation "
+			   "method for a 1:n join"));
     }
 
     pos = -1;
@@ -2936,6 +2929,9 @@ static double aggr_retval (int key, joiner *jr, int *err)
 
 static int aggregate_data (int ikeyvar, int newvar, joiner *jr)
 {
+    const char **llabels = NULL;
+    const char **rlabels = NULL;
+    const char *keystr = NULL;
     DATASET *dset = jr->l_dset;
     int i, key, err = 0;
     double z;
@@ -2943,6 +2939,12 @@ static int aggregate_data (int ikeyvar, int newvar, joiner *jr)
 #if CDEBUG
     fputs("\naggregate data:\n", stderr);
 #endif
+
+    if (jr->str_comp) {
+	/* we're matching by strings */
+	llabels = series_get_string_vals(jr->l_dset, jr->l_keyno, NULL);
+	rlabels = series_get_string_vals(jr->r_dset, jr->r_keyno, NULL);
+    }
 
     for (i=dset->t1; i<=dset->t2; i++) {
 	z = dset->Z[ikeyvar][i];
@@ -2953,7 +2955,10 @@ static int aggregate_data (int ikeyvar, int newvar, joiner *jr)
 	    dset->Z[newvar][i] = NADBL;
 	} else {
 	    key = trunc(z);
-	    z = aggr_retval(key, jr, &err);
+	    if (llabels != NULL) {
+		keystr = llabels[key-1];
+	    }
+	    z = aggr_retval(key, keystr, rlabels, jr, &err);
 	    if (err) {
 		break;
 	    }
@@ -3199,12 +3204,9 @@ int join_from_csv (const char *fname,
 	    jr->l_keyno = ikeyvar;
 	    jr->r_keyno = okeyvar;
 	}
+	err = joiner_sort(jr);	
 #if CDEBUG > 1
-	joiner_print(jr, 0);
-	err = joiner_sort(jr);
-	joiner_print(jr, 1);
-#else
-	err = joiner_sort(jr);
+	joiner_print(jr);
 #endif
     }
 
@@ -3214,6 +3216,9 @@ int join_from_csv (const char *fname,
 
     if (!err) {
 	err = aggregate_data(ikeyvar, targvar, jr);
+	if (err) {
+	    dataset_drop_last_variables(1, dset);
+	}
     }
 
     if (c != NULL) {
