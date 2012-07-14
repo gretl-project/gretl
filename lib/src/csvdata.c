@@ -28,7 +28,7 @@
 #include <errno.h>
 #include <glib.h>
 
-#define CDEBUG 2
+#define CDEBUG 0
 
 #define QUOTE      '\''
 #define CSVSTRLEN  72
@@ -1792,6 +1792,9 @@ static int handle_joinspec_varname (csvdata *c, int k, int *pj)
     int i, j = *pj;
 
     for (i=0; i<4; i++) {
+#if CDEBUG
+	fprintf(stderr, "i = %d; %s <-> %s\n", i, c->str, c->joinspec[i]);
+#endif
 	if (c->joinspec[i] != NULL &&
 	    !strcmp(c->str, c->joinspec[i])) {
 	    c->dset->varname[j][0] = '\0';
