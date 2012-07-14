@@ -2820,7 +2820,7 @@ static void joiner_print (joiner *jr, int sorted)
 
 #endif
 
-static double aggr_retval (int key, joiner *jr)
+static double aggr_retval (int key, joiner *jr, int *err)
 {
     const char **llabels = NULL;
     const char **rlabels = NULL;
@@ -2869,6 +2869,11 @@ static double aggr_retval (int key, joiner *jr)
     n = jr->key_freq[pos];
     if (jr->aggr == AGGR_COUNT) {
 	return n;
+    }
+
+    if (n>1 && jr->aggr == AGGR_NONE) {
+	*err = E_DATA;
+	gretl_errmsg_set(_("You need to specify an aggregation method for a 1:n join"));
     }
 
     pos = -1;
@@ -2948,7 +2953,10 @@ static int aggregate_data (int ikeyvar, int newvar, joiner *jr)
 	    dset->Z[newvar][i] = NADBL;
 	} else {
 	    key = trunc(z);
-	    z = aggr_retval(key, jr);
+	    z = aggr_retval(key, jr, &err);
+	    if (err) {
+		break;
+	    }
 #if CDEBUG
 	    fprintf(stderr, " aggr_retval gives %g\n", z);
 #endif

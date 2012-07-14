@@ -4331,7 +4331,7 @@ static int lib_join_data (ExecState *s,
     const char *param;
     char *p, *okey = NULL, *filter = NULL;
     char *varname = NULL, *data = NULL;
-    AggrType agg = 0;
+    int agg = 0;
     int ikeyvar = -1;
     int i, err = 0;
 
@@ -4371,21 +4371,21 @@ static int lib_join_data (ExecState *s,
 		} else if (i == 3) {
 		    agg = join_agg_method(param);
 		    if (agg < 0) {
-			err = E_DATA;
+			err = E_PARSE;
 		    }
 		} else if (i == 4) {
 		    data = gretl_strdup(param);
 		}
 	    } else {
 		pprintf(prn, "%s: missing option param!\n", optstr[i]);
-		err = E_DATA;
+		err = E_PARSE;
 	    }
 	}
     }
 
     if (!err && okey != NULL && ikeyvar < 0) {
 	/* can't have an outer key but no inner one */
-	err = E_DATA;
+	err = E_PARSE;
     }
 
     if (!err) {
