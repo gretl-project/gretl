@@ -1464,6 +1464,28 @@ const double *arma_model_get_x_coeffs (const MODEL *pmod)
     return xc;
 }
 
+/**
+ * arma_model_get_n_arma_coeffs:
+ * @pmod: pointer to gretl model.
+ *
+ * Returns: the sum of the numbers of AR and MA coefficients in
+ * @pmod.
+ */
+
+int arma_model_get_n_arma_coeffs (const MODEL *pmod)
+{
+    int npq = 0;
+
+    if (pmod->ci == ARMA) {
+	npq += arma_AR_lags(pmod);
+	npq += arma_MA_lags(pmod);
+	npq += gretl_model_get_int(pmod, "arma_P");
+	npq += gretl_model_get_int(pmod, "arma_Q");
+    }
+
+    return npq;
+}
+
 static int arbond_get_depvar (const MODEL *pmod)
 {
     int i;

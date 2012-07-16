@@ -334,6 +334,8 @@ int regarma_model_AR_coeffs (const MODEL *pmod,
 
 const double *arma_model_get_x_coeffs (const MODEL *pmod);
 
+int arma_model_get_n_arma_coeffs (const MODEL *pmod);
+
 int regarima_model_get_AR_coeffs (const MODEL *pmod,
 				  double **phi0,
 				  int *pp);

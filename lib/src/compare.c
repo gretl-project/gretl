@@ -2094,7 +2094,13 @@ static int lb_autocorr_test (MODEL *pmod, int order,
 			     gretlopt opt, PRN *prn)
 {
     double lb, pval;
+    int npq, df = order;
     int err = 0;
+
+    npq = arma_model_get_n_arma_coeffs(pmod);
+    if (npq < df) {
+	df -= npq; /* FIXME? */
+    }
 
     lb = ljung_box(order, pmod->t1, pmod->t2, pmod->uhat, &err);
 
@@ -2115,8 +2121,8 @@ static int lb_autocorr_test (MODEL *pmod, int order,
 		order);
 	pputs(prn, "\n\n");
 	pprintf(prn, "Ljung-Box Q' = %g,\n", lb);
-	pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n", _("with p-value"), 
-		_("Chi-square"), order, lb, chisq_cdf_comp(order, lb));
+	pprintf(prn, "%s = P(%s(%d) > %g) = %#.4g\n", _("with p-value"), 
+		_("Chi-square"), df, lb, chisq_cdf_comp(df, lb));
 	pputc(prn, '\n');
 	record_test_result(lb, pval, _("autocorrelation"));
     }
@@ -2126,7 +2132,7 @@ static int lb_autocorr_test (MODEL *pmod, int order,
 
 	if (test != NULL) {
 	    model_test_set_teststat(test, GRETL_STAT_LB_CHISQ);
-	    model_test_set_dfn(test, order);
+	    model_test_set_dfn(test, df);
 	    model_test_set_order(test, order);
 	    model_test_set_value(test, lb);
 	    model_test_set_pvalue(test, pval);
