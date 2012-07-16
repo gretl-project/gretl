@@ -1589,7 +1589,8 @@ static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
     } else if (csv_missval(c->str, i, t+1, miss_shown, prn)) {
 	c->dset->Z[i][t] = NADBL;
     } else {
-	c->dset->Z[i][t] = csv_atof(c, c->str);
+	
+	c->dset->Z[i][t] = csv_atof(c, gretl_chopstr(c->str));
     } 
 
     return err;
@@ -3206,7 +3207,7 @@ int join_from_csv (const char *fname,
     if (!err) {
 #if CDEBUG > 1
 	pprintf(prn, "Data extracted from %s:\n", fname);
-	printdata(NULL, NULL, c->dset, OPT_O, prn);
+	printdata(NULL, NULL, jspec.c->dset, OPT_O, prn);
 #endif
 	jr = joiner_new(&jspec, dset, filter, aggr, &err);
     }
