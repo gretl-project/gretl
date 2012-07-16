@@ -3592,6 +3592,7 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
 	break;
     case GRETL_STAT_LR:
     case GRETL_STAT_WALD_CHISQ:
+    case GRETL_STAT_LB_CHISQ:
 	if (tex) {
 	    if (na(test->value)) {
 		sprintf(str, "$\\chi^2(%d)$ = NA (%s)", test->dfn, A_("failed"));
@@ -4981,6 +4982,8 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 	    if (mci == IVREG && (opt & (OPT_A | OPT_W))) {
 		/* Autocorr. and H'sked. supported for IVREG */
 		ok = 1; 
+	    } else if (mci == ARMA && (opt & OPT_A)) {
+		ok = 1;
 	    } else if (mci == PANEL && (opt & OPT_P)) {
 		ok = 1;
 	    } else {

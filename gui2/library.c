@@ -2847,7 +2847,7 @@ void do_autocorr (GtkAction *action, gpointer p)
 	gretl_print_destroy(prn);
     } else {
 	gchar *title =
-	    g_strdup_printf(_("gretl: LM test (autocorrelation)"));
+	    g_strdup_printf(_("gretl: autocorrelation"));
 
 	update_model_tests(vwin);
 	lib_command_sprintf("modtest --autocorr %d", order);

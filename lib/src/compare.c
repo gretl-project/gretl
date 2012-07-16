@@ -2090,6 +2090,53 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
     return err;
 }
 
+static int lb_autocorr_test (MODEL *pmod, int order, 
+			     gretlopt opt, PRN *prn)
+{
+    double lb, pval;
+    int err = 0;
+
+    lb = ljung_box(order, pmod->t1, pmod->t2, pmod->uhat, &err);
+
+    if (err) {
+	lb = pval = NADBL;
+    } else {
+	pval = chisq_cdf_comp(order, lb);
+	if (na(pval)) {
+	    err = E_DATA;
+	} 
+    }
+
+    if (err) {
+	gretl_errmsg_set(_("Error calculating Ljung-Box statistic"));
+    } else {
+	pputc(prn, '\n');
+	pprintf(prn, _("Test for autocorrelation up to order %d"), 
+		order);
+	pputs(prn, "\n\n");
+	pprintf(prn, "Ljung-Box Q' = %g,\n", lb);
+	pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n", _("with p-value"), 
+		_("Chi-square"), order, lb, chisq_cdf_comp(order, lb));
+	pputc(prn, '\n');
+	record_test_result(lb, pval, _("autocorrelation"));
+    }
+
+    if (!err && (opt & OPT_S)) {
+	ModelTest *test = model_test_new(GRETL_TEST_AUTOCORR);
+
+	if (test != NULL) {
+	    model_test_set_teststat(test, GRETL_STAT_LB_CHISQ);
+	    model_test_set_dfn(test, order);
+	    model_test_set_order(test, order);
+	    model_test_set_value(test, lb);
+	    model_test_set_pvalue(test, pval);
+	    maybe_add_test_to_model(pmod, test);
+	}	    
+    }
+
+    return err;
+}
+
 /**
  * autocorr_test:
  * @pmod: pointer to model to be tested.
@@ -2120,6 +2167,10 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 
     if (pmod->ci == IVREG) {
 	return ivreg_autocorr_test(pmod, order, dset, opt, prn);
+    }
+
+    if (pmod->ci == ARMA) {
+	return lb_autocorr_test(pmod, order, opt, prn);
     }
 
     if (pmod->ci != OLS && pmod->ci != VAR) { 
