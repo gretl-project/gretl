@@ -5,6 +5,8 @@ Version 1.9.10, in progress
 - Enable use of the "open" command in loops (gretlcli only)
 - "dpanel" and "arbond": indicate in the model printout if the AR,
   Sargan or Wald tests failed
+- "modtest" command: support the autocorrelation option for ARMA
+  models, using the Ljung-Box statistic
 - Fix for ARMA forecasts: ensure that the dynamic portion starts
   as soon as possible when the --dynamic option is given
 - Switch to using libcurl for HTTP transaction support
