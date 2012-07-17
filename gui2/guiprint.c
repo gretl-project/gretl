@@ -749,6 +749,28 @@ rtfprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	printf_rtf(summ->xkurt[i], prn, 1);
     }
 
+    if (summ->list[0] > 1) pprintf(prn, "\\intbl \\qc %s\\cell",
+				   A_("Variable"));
+
+    pprintf(prn, 
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\intbl \\row\n",
+	    A_("5% Perc."), A_("95% Perc."), A_("IQ range"), A_("Missing obs."));
+
+    for (i=0; i<summ->list[0]; i++) {
+	vi = summ->list[i + 1];
+	if (summ->list[0] > 1) {
+	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[vi]);
+	}
+	printf_rtf(summ->perc05[i], prn, 0);
+	printf_rtf(summ->perc95[i], prn, 0);
+	printf_rtf(summ->iqr[i], prn, 0);
+	printf_rtf(summ->missing[i], prn, 1);
+    }
+
     pputs(prn, "}}\n");
 }
 
@@ -1041,6 +1063,33 @@ texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	printf_tex(summ->cv[i], prn, 0);
 	printf_tex(summ->skew[i], prn, 0);
 	printf_tex(summ->xkurt[i], prn, 1);
+	if (i == summ->list[0] - 1) {
+	    pputs(prn, "[10pt]\n\n");
+	} else {
+	    pputc(prn, '\n');
+	}
+    }
+
+    if (summ->list[0] > 1) {
+	pprintf(prn, "%s & ", A_("Variable"));
+    }
+
+    pprintf(prn, " \\multicolumn{2}{c}{%s}%%\n"
+	    " & \\multicolumn{2}{c}{%s}%%\n"
+	    "  & \\multicolumn{2}{c}{%s}%%\n"
+	    "   & \\multicolumn{2}{c}{%s} \\\\[1ex]\n",
+	    A_("5\\% perc."), A_("95\\% perc."), A_("IQ Range"), A_("Missing obs."));
+
+    for (i=0; i<summ->list[0]; i++) {
+	vi = summ->list[i + 1];
+	if (summ->list[0] > 1) {
+	    tex_escape(vname, pdinfo->varname[vi]);
+	    pprintf(prn, "%s & ", vname);
+	}
+	printf_tex(summ->perc05[i], prn, 0);
+	printf_tex(summ->perc95[i], prn, 0);
+	printf_tex(summ->iqr[i], prn, 0);
+	printf_tex(summ->missing[i], prn, 1);
 	pputc(prn, '\n');
     }
 

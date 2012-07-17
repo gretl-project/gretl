@@ -4399,7 +4399,7 @@ void print_summary_single (const Summary *s,
 			   PRN *prn)
 {
     char obs1[OBSLEN], obs2[OBSLEN], tmp[128];
-    double vals[8];
+    double vals[12];
     const char *labels[] = {
 	N_("Mean"),
 	N_("Median"),
@@ -4408,8 +4408,13 @@ void print_summary_single (const Summary *s,
 	N_("Standard deviation"),
 	N_("C.V."),
 	N_("Skewness"),
-	N_("Ex. kurtosis")
+	N_("Ex. kurtosis"),
+	N_("5% percentile"),
+	N_("95% percentile"),
+	N_("Interquartile range"),
+	N_("Missing obs.")
     };
+
     const char *wstr = N_("Within s.d.");
     const char *bstr = N_("Between s.d.");
     int simple_skip[] = {0,1,0,0,0,1,1,1};
@@ -4423,16 +4428,20 @@ void print_summary_single (const Summary *s,
 	    dset->varname[s->list[1]], s->n);
     output_line(tmp, prn, 1);
 
-    vals[0] = s->mean[0];
-    vals[1] = s->median[0];
-    vals[2] = s->low[0];
-    vals[3] = s->high[0];
-    vals[4] = s->sd[0];
-    vals[5] = s->cv[0];
-    vals[6] = s->skew[0];
-    vals[7] = s->xkurt[0];
+    vals[0]  = s->mean[0];
+    vals[1]  = s->median[0];
+    vals[2]  = s->low[0];
+    vals[3]  = s->high[0];
+    vals[4]  = s->sd[0];
+    vals[5]  = s->cv[0];
+    vals[6]  = s->skew[0];
+    vals[7]  = s->xkurt[0];
+    vals[8]  = s->perc05[0];
+    vals[9]  = s->perc95[0];
+    vals[10] = s->iqr[0];
+    vals[11] = s->missing[0];
 
-    for (i=0; i<8; i++) {
+    for (i=0; i<11; i++) {
 	if ((s->opt & OPT_S) && simple_skip[i]) {
 	    continue;
 	}	
@@ -4442,7 +4451,7 @@ void print_summary_single (const Summary *s,
     }
     slen++;
 
-    for (i=0; i<8; i++) {
+    for (i=0; i<11; i++) {
 	if ((s->opt & OPT_S) && simple_skip[i]) {
 	    continue;
 	}
@@ -4498,9 +4507,11 @@ void print_summary (const Summary *summ,
 
     len = (maxlen <= 8)? 10 : (maxlen + 1);
 
+#if 0
     if (!(summ->opt & OPT_B)) {
 	prhdr(_("Summary statistics"), dset, summ->missing, prn);
     }
+#endif
 
     pputc(prn, '\n');
 
@@ -4541,6 +4552,12 @@ void print_summary (const Summary *summ,
 	    N_("C.V."),
 	    N_("Skewness"),
 	    N_("Ex. kurtosis")
+	};
+	const char *hc[] = {
+	    N_("5% perc."),
+	    N_("95% perc."),
+	    N_("IQ range"),
+	    N_("Missing obs.")
 	};
 
 	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
@@ -4586,6 +4603,24 @@ void print_summary (const Summary *summ,
 	    printf15(summ->xkurt[i], prn);
 	    pputc(prn, '\n');
 	}
+	pputc(prn, '\n');
+
+	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
+		UTF_WIDTH(_(ha[0]), 15), _(hc[0]),
+		UTF_WIDTH(_(ha[1]), 15), _(hc[1]),
+		UTF_WIDTH(_(ha[2]), 15), _(hc[2]),
+		UTF_WIDTH(_(ha[3]), 15), _(hc[3]));
+
+	for (i=0; i<summ->list[0]; i++) {
+	    vi = summ->list[i + 1];
+	    pprintf(prn, "%-*s", len, dset->varname[vi]);
+	    printf15(summ->perc05[i], prn);
+	    printf15(summ->perc95[i], prn);
+	    printf15(summ->iqr[i], prn);
+	    printf15(summ->missing[i], prn);
+	    pputc(prn, '\n');
+	}
+	pputc(prn, '\n');
     }
 
     pputc(prn, '\n');
@@ -4602,6 +4637,7 @@ void print_summary (const Summary *summ,
 void free_summary (Summary *summ)
 {
     free(summ->list);
+    free(summ->missing);
     free(summ->stats);
 
     free(summ);
@@ -4625,22 +4661,25 @@ static Summary *summary_new (const int *list, gretlopt opt)
 
     s->opt = opt;
     s->n = 0;
-    s->missing = 0;
+    s->missing = malloc(nv * sizeof *s->missing);
 
-    s->stats = malloc(8 * nv * sizeof *s->stats);
+    s->stats = malloc(11 * nv * sizeof *s->stats);
     if (s->stats == NULL) {
 	free_summary(s);
 	return NULL;
     }
 
-    s->mean = s->stats;
+    s->mean   = s->stats;
     s->median = s->mean + nv;
-    s->sd = s->median + nv;
-    s->skew = s->sd + nv;
-    s->xkurt = s->skew + nv;
-    s->low = s->xkurt + nv;
-    s->high = s->low + nv;
-    s->cv = s->high + nv;
+    s->sd     = s->median + nv;
+    s->skew   = s->sd + nv;
+    s->xkurt  = s->skew + nv;
+    s->low    = s->xkurt + nv;
+    s->high   = s->low + nv;
+    s->cv     = s->high + nv;
+    s->perc05 = s->cv + nv;
+    s->perc95 = s->perc05 + nv;
+    s->iqr    = s->perc95 + nv;
 
     s->sb = s->sw = NADBL;
 
@@ -4691,6 +4730,7 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 	double *pskew = NULL, *pkurt = NULL;
 	int vi = s->list[i+1];
 	int ni = 0;
+        int ntot = 0;
 
 	/* create the restricted series: substitute NAs
 	   for values at which the restriction dummy is
@@ -4698,6 +4738,7 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 	*/
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (!na(rv[t]) && rv[t] != 0.0) {
+                ntot++;
 		x[t] = dset->Z[vi][t];
 		if (!na(x[t])) {
 		    ni++;
@@ -4707,9 +4748,7 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 	    }
 	}
 
-	if (ni < nmax) {
-	    s->missing = 1;
-	}
+	s->missing[i] = ntot - ni;
 
 	if (ni > s->n) {
 	    s->n = ni;
@@ -4748,6 +4787,8 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 		      1);
 
 	if (!(opt & OPT_S)) {
+	    int err;
+
 	    if (floateq(s->mean[i], 0.0)) {
 		s->cv[i] = NADBL;
 	    } else if (floateq(s->sd[i], 0.0)) {
@@ -4756,6 +4797,10 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
 	    } 
 	    s->median[i] = gretl_median(dset->t1, dset->t2, x);
+	    s->perc05[i] = gretl_quantile(dset->t1, dset->t2, x, 0.05, &err);
+	    s->perc95[i] = gretl_quantile(dset->t1, dset->t2, x, 0.95, &err);
+	    s->iqr[i]    = gretl_quantile(dset->t1, dset->t2, x, 0.75, &err);
+	    s->iqr[i]   -= gretl_quantile(dset->t1, dset->t2, x, 0.25, &err);
 	}
 
 	if (dataset_is_panel(dset) && list[0] == 1) {
@@ -4806,10 +4851,7 @@ Summary *get_summary (const int *list, const DATASET *dset,
 	vi = s->list[i+1];
 	x = dset->Z[vi];
 	ni = good_obs(x + dset->t1, nmax, &x0);
-
-	if (ni < nmax) {
-	    s->missing = 1;
-	}
+	s->missing[i] = nmax - ni;
 
 	if (ni > s->n) {
 	    s->n = ni;
@@ -4848,6 +4890,8 @@ Summary *get_summary (const int *list, const DATASET *dset,
 		      1);
 
 	if (!(opt & OPT_S)) {
+	    int err;
+
 	    if (floateq(s->mean[i], 0.0)) {
 		s->cv[i] = NADBL;
 	    } else if (floateq(s->sd[i], 0.0)) {
@@ -4856,6 +4900,10 @@ Summary *get_summary (const int *list, const DATASET *dset,
 		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
 	    } 
 	    s->median[i] = gretl_median(dset->t1, dset->t2, x);
+	    s->perc05[i] = gretl_quantile(dset->t1, dset->t2, x, 0.05, &err);
+	    s->perc95[i] = gretl_quantile(dset->t1, dset->t2, x, 0.95, &err);
+	    s->iqr[i]    = gretl_quantile(dset->t1, dset->t2, x, 0.75, &err);
+	    s->iqr[i]   -= gretl_quantile(dset->t1, dset->t2, x, 0.25, &err);
 	}
 
 	if (dataset_is_panel(dset) && list[0] == 1) {

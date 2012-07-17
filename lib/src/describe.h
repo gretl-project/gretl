@@ -25,7 +25,7 @@ typedef struct MahalDist_ MahalDist;
 typedef struct Summary_ {
     gretlopt opt;
     int n;
-    int missing;
+    int *missing;
     int *list;
     double *stats;
     double *mean;
@@ -36,6 +36,9 @@ typedef struct Summary_ {
     double *low;
     double *high;
     double *cv;
+    double *perc05;
+    double *perc95;
+    double *iqr;
     double sw;
     double sb;
 } Summary;
