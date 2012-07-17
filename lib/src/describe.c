@@ -393,6 +393,19 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
 	return NADBL;
     }
 
+    N = (n + 1) * p - 1;
+    nl = floor(N);
+    nh = ceil(N);
+
+    if (nh == 0 || nh == n) {
+	/* too few usable observations for such an extreme 
+	   quantile */
+	*err = E_DATA;
+	fprintf(stderr, "n = %d: not enough data for %g quantile\n",
+		n, p);
+	return NADBL;
+    }
+
     a = malloc(n * sizeof *a);
     if (a == NULL) {
 	*err = E_ALLOC;
@@ -404,20 +417,6 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
 	if (!na(x[t])) {
 	    a[n++] = x[t];
 	}
-    }
-
-    N = (n + 1) * p - 1;
-    nl = floor(N);
-    nh = ceil(N);
-    
-    if (nh == 0 || nh == n) {
-	/* too few usable observations for such an extreme 
-	   quantile */
-	*err = E_DATA;
-	fprintf(stderr, "n = %d: not enough data for %g quantile\n",
-		n, p);
-	free(a);
-	return NADBL;
     }
 
 #if 0
@@ -4617,7 +4616,7 @@ void print_summary (const Summary *summ,
 	    printf15(summ->perc05[i], prn);
 	    printf15(summ->perc95[i], prn);
 	    printf15(summ->iqr[i], prn);
-	    printf15(summ->missing[i], prn);
+	    pprintf(prn, "%15d", (int) summ->missing[i]);
 	    pputc(prn, '\n');
 	}
 	pputc(prn, '\n');
