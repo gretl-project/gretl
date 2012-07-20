@@ -4293,7 +4293,7 @@ static int lib_clear_data (ExecState *s, DATASET *dset)
     return err;
 }
 
-static AggrType join_agg_method (const char *s)
+static AggrType join_aggregation_method (const char *s)
 {
     int ret = -1;
 
@@ -4310,6 +4310,71 @@ static AggrType join_agg_method (const char *s)
     }
 
     return ret;
+}
+
+static int *get_inner_keys (const char *s, DATASET *dset,
+			    int *err)
+{
+    int *klist = NULL;
+    int ikey1 = -1, ikey2 = -1;
+    int nkeys = 0;
+
+    if (strchr(s, ',') == NULL) {
+	/* just one key, fine */
+	ikey1 = current_series_index(dset, s);
+	if (ikey1 < 0) {
+	    *err = E_UNKVAR;
+	} else {
+	    nkeys = 1;
+	}
+    } else {
+	char vname[VNAMELEN];
+	int n = strcspn(s, ",");
+
+	if (n == 0 || n >= VNAMELEN) {
+	    *err = E_PARSE;
+	} else {
+	    *vname = '\0';
+	    strncat(vname, s, n);
+	    ikey1 = current_series_index(dset, vname);
+	    if (ikey1 < 0) {
+		*err = E_UNKVAR;
+	    }
+	}
+
+	if (!*err) {
+	    s += n + 1;
+	    n = strlen(s);
+	    if (n == 0 || n >= VNAMELEN) {
+		*err = E_PARSE;
+	    } else {
+		*vname = '\0';
+		strncat(vname, s, VNAMELEN-1);
+		ikey2 = current_series_index(dset, vname);
+		if (ikey2 < 0) {
+		    *err = E_UNKVAR;
+		}
+	    }
+	}
+
+	if (!*err) {
+	    nkeys = 2;
+	}
+    }
+
+    if (!*err) {
+	klist = gretl_list_new(nkeys);
+	if (klist == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    klist[1] = ikey1;
+	    if (nkeys == 2) {
+		klist[2] = ikey2;
+	    }
+	}
+    }
+
+    return klist;
 }
 
 static int lib_join_data (ExecState *s,
@@ -4331,8 +4396,8 @@ static int lib_join_data (ExecState *s,
     const char *param;
     char *p, *okey = NULL, *filter = NULL;
     char *varname = NULL, *data = NULL;
-    int agg = 0;
-    int ikeyvar = -1;
+    int *ikeyvars = NULL;
+    int aggr = 0;
     int i, err = 0;
 
     p = strstr(s->line, s->cmd->param);
@@ -4360,20 +4425,21 @@ static int lib_join_data (ExecState *s,
 	    param = get_optval_string(JOIN, opts[i]);
 	    if (param != NULL) {
 		if (i == 0) {
-		    ikeyvar = current_series_index(dset, param);
-		    if (ikeyvar < 0) {
-			err = E_UNKVAR;
-		    }
+		    /* the inner key(s) string */
+		    ikeyvars = get_inner_keys(param, dset, &err);
 		} else if (i == 1) {
+		    /* the outer key(s) string */
 		    okey = gretl_strdup(param);
 		} else if (i == 2) {
+		    /* string specifying a row filter */
 		    filter = gretl_strdup(param);
 		} else if (i == 3) {
-		    agg = join_agg_method(param);
-		    if (agg < 0) {
+		    aggr = join_aggregation_method(param);
+		    if (aggr < 0) {
 			err = E_PARSE;
 		    }
 		} else if (i == 4) {
+		    /* string specifying the wanted data series */
 		    data = gretl_strdup(param);
 		}
 	    } else {
@@ -4383,18 +4449,19 @@ static int lib_join_data (ExecState *s,
 	}
     }
 
-    if (!err && okey != NULL && ikeyvar < 0) {
+    if (!err && okey != NULL && ikeyvars == NULL) {
 	/* can't have an outer key but no inner one */
 	err = E_PARSE;
     }
 
     if (!err) {
 	err = join_from_csv(newfile, varname, dset, 
-			    ikeyvar, okey, filter,
-			    data, agg, opt, 
+			    ikeyvars, okey, filter,
+			    data, aggr, opt, 
 			    (opt & OPT_V)? prn : NULL);
     }	
 
+    free(ikeyvars);
     free(okey);
     free(filter);
     free(data);

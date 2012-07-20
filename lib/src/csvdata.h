@@ -54,7 +54,7 @@ void reverse_data (DATASET *dset, PRN *prn);
 int join_from_csv (const char *fname,
 		   const char *varname,
 		   DATASET *dset, 
-		   int ikeyvar,
+		   const int *ikeyvars,
 		   const char *okey,
 		   const char *filter,
 		   const char *data,

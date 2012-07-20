@@ -51,15 +51,18 @@ enum {
     JOIN_KEY = 1,
     JOIN_VAL,
     JOIN_LHS,
-    JOIN_RHS
+    JOIN_RHS,
+    JOIN_KEY2
 };
+
+#define JOIN_MAXCOL 5
 
 typedef struct csvjoin_ csvjoin;
 typedef struct csvdata_ csvdata;
 
 struct csvjoin_ {
-    const char *colnames[4];
-    char colnums[4];
+    const char *colnames[JOIN_MAXCOL];
+    char colnums[JOIN_MAXCOL];
     csvdata *c;
 };    
 
@@ -1809,7 +1812,7 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 {
     int i, j = *pj;
 
-    for (i=0; i<4; i++) {
+    for (i=0; i<JOIN_MAXCOL; i++) {
 #if CDEBUG
 	fprintf(stderr, "i = %d; %s <-> %s\n", i, c->str, c->jspec->colnames[i]);
 #endif
@@ -2185,7 +2188,7 @@ static void csv_set_dataset_dimensions (csvdata *c)
 	    int i;
 
 	    c->dset->v = 1;
-	    for (i=0; i<4; i++) {
+	    for (i=0; i<JOIN_MAXCOL; i++) {
 		if (c->jspec->colnames[i] != NULL) {
 		    c->dset->v += 1;
 		}
@@ -2558,8 +2561,8 @@ struct joiner_ {
     int *keys;      /* array of unique key values as integers */
     int *key_freq;  /* counts of occurrences of key values */
     int str_keys;   /* flag for string comparison of keys */
-    int l_keyno;    /* used for string comparison: # of ikey in lhs dset */
-    int r_keyno;    /* used for string comparison: # of okey in rhs dset */
+    const int *l_keyno; /* for string comparison: list of ikey IDs in lhs dset */
+    const int *r_keyno; /* for string comparison: list of okey IDs in rhs dset */
     AggrType aggr;  /* aggregation method for 1:n joining */
     DATASET *l_dset;  /* the main dataset */
     DATASET *r_dset;  /* the temporary CSV dataset */
@@ -2675,11 +2678,11 @@ static joiner *joiner_new (csvjoin *jspec,
 {
     joiner *jr = NULL;
     DATASET *r_dset = jspec->c->dset;
-    int keycol = 0, valcol = 0;
+    int keycol = 0, key2col = 0, valcol = 0;
     int lhcol = 0, rhcol = 0;
     int i, nrows = 0;
 
-    for (i=0; i<4; i++) {
+    for (i=0; i<JOIN_MAXCOL; i++) {
 	if (jspec->colnums[i] == JOIN_KEY) {
 	    keycol = i+1;
 	} else if (jspec->colnums[i] == JOIN_VAL) {
@@ -2688,6 +2691,8 @@ static joiner *joiner_new (csvjoin *jspec,
 	    lhcol = i+1;
 	} else if (jspec->colnums[i] == JOIN_RHS) {
 	    rhcol = i+1;
+	} else if (jspec->colnums[i] == JOIN_KEY2) {
+	    key2col = i+1;
 	}
     }
 
@@ -2732,6 +2737,9 @@ static joiner *joiner_new (csvjoin *jspec,
 
     jr->keys = NULL;
     jr->key_freq = NULL;
+    jr->l_keyno = NULL;
+    jr->r_keyno = NULL;
+
     jr->rows = malloc(nrows * sizeof *jr->rows);
     if (jr->rows == NULL) {
 	*err = E_ALLOC;
@@ -2945,7 +2953,7 @@ static double aggr_retval (int key, const char *lstr,
     return x;
 }
 
-static int aggregate_data (int ikeyvar, int newvar, joiner *jr)
+static int aggregate_data (const int *ikeyvars, int newvar, joiner *jr)
 {
     const char **llabels = NULL;
     const char **rlabels = NULL;
@@ -2960,12 +2968,12 @@ static int aggregate_data (int ikeyvar, int newvar, joiner *jr)
 
     if (jr->str_keys) {
 	/* we're matching by strings */
-	llabels = series_get_string_vals(jr->l_dset, jr->l_keyno, NULL);
-	rlabels = series_get_string_vals(jr->r_dset, jr->r_keyno, NULL);
+	llabels = series_get_string_vals(jr->l_dset, jr->l_keyno[1], NULL);
+	rlabels = series_get_string_vals(jr->r_dset, jr->r_keyno[1], NULL);
     }
 
     for (i=dset->t1; i<=dset->t2; i++) {
-	z = dset->Z[ikeyvar][i];
+	z = dset->Z[ikeyvars[1]][i];
 #if CDEBUG
 	fprintf(stderr, " left-hand key value = %g\n", z);
 #endif
@@ -3101,10 +3109,49 @@ static int get_target_varnum (const char *vname,
     return targ;
 }
 
+static int process_outer_key (const char *s, int n_keys, 
+			      char *name1, char *name2,
+			      int maxlen)
+{
+    int n_okeys = 0;
+    int err = 0;
+
+    if (strchr(s, ',') == NULL) {
+	/* just one outer key */
+	strncat(name1, s, maxlen - 1);
+	n_okeys = 1;
+    } else {
+	int n = strcspn(s, ",");
+
+	if (n == 0 || n >= maxlen) {
+	    err = E_PARSE;
+	} else {
+	    strncat(name1, s, n);
+	    s += n + 1;
+	    n = strlen(s);
+	    if (n == 0 || n >= maxlen) {
+		err = E_PARSE;
+	    } else {
+		strncat(name2, s, VNAMELEN-1);
+	    }
+	}
+
+	if (!err) {
+	    n_okeys = 2;
+	}
+    }
+
+    if (!err && n_okeys != n_keys) {
+	err = E_PARSE;
+    }
+
+    return err;
+}
+
 int join_from_csv (const char *fname,
 		   const char *varname,
 		   DATASET *dset, 
-		   int ikeyvar,
+		   const int *ikeyvars,
 		   const char *okey,
 		   const char *filtstr,
 		   const char *data,
@@ -3115,23 +3162,37 @@ int join_from_csv (const char *fname,
     csvjoin jspec = {0};
     joiner *jr = NULL;
     jr_filter *filter = NULL;
+    int okeyvars[3] = {0, -1, -1};
+    char okeyname1[48] = {0};
+    char okeyname2[48] = {0};
     int targvar = 0;
     int str_keys = 0;
-    int okeyvar = -1;
+    int n_keys = 0;
     int i, err = 0;
+
+    if (ikeyvars != NULL) {
+	n_keys = ikeyvars[0];
+    }
 
 #if CDEBUG
     fputs("*** join_from_csv:\n", stderr);
     fprintf(stderr, " filename = '%s'\n", fname);
     fprintf(stderr, " target series name = '%s'\n", varname);
-    if (ikeyvar != 0) {
-	fprintf(stderr, " inner key series = %d\n", ikeyvar);
+    if (n_keys > 0) {
+	fprintf(stderr, " inner key series = %d\n", ikeyvars[1]);
+	if (n_keys == 2) {
+	    fprintf(stderr, " second inner key series = %d\n", ikeyvars[2]);
+	}
     }
     if (okey != NULL) {
 	fprintf(stderr, " outer key = '%s'\n", okey);
-    } else if (ikeyvar > 0) {
+    } else if (n_keys > 0) {
 	fprintf(stderr, " outer key = '%s' (from inner key)\n", 
-		dset->varname[ikeyvar]);
+		dset->varname[ikeyvars[1]]);
+	if (n_keys == 2) {
+	    fprintf(stderr, " second outer key = '%s'\n", 
+		    dset->varname[ikeyvars[2]]);
+	}
     }
     if (filtstr != NULL) {
 	fprintf(stderr, " filter = '%s'\n", filtstr);
@@ -3151,16 +3212,24 @@ int join_from_csv (const char *fname,
 	filter = make_join_filter(filtstr, &err);
     }
 
+    if (!err && okey != NULL) {
+	err = process_outer_key(okey, n_keys, okeyname1, okeyname2, 48);
+#if CDEBUG
+	fprintf(stderr, " processed outer keys: '%s' and '%s', err=%d\n", 
+		okeyname1, okeyname2, err);
+#endif
+    }
+
     /* FIXME detect and handle the case of no options, just
        a filename and the name of a series to import?
     */
 
     if (!err) {
 	/* handle the "outer" key column, if any */
-	if (okey != NULL) {
-	    jspec.colnames[0] = okey;
-	} else if (ikeyvar > 0) {
-	    jspec.colnames[0] = dset->varname[ikeyvar];
+	if (*okeyname1 != '\0') {
+	    jspec.colnames[0] = okeyname1;
+	} else if (n_keys > 0) {
+	    jspec.colnames[0] = dset->varname[ikeyvars[1]];
 	}
 
 	/* the data or "payload" column */
@@ -3176,31 +3245,54 @@ int join_from_csv (const char *fname,
 	    jspec.colnames[3] = filter->rhname;
 	}
 
+	/* second outer key, if present */
+	if (*okeyname2 != '\0') {
+	    jspec.colnames[4] = okeyname2;
+	} else if (n_keys > 1) {
+	    jspec.colnames[4] = dset->varname[ikeyvars[2]];
+	}	
+
 	err = real_import_csv(fname, dset, NULL, NULL,
 			      &jspec, opt, prn);
     }
 
     if (!err && jspec.colnames[0] != NULL) {
 	/* check that okey is in fact in the right-hand-side file 
-	   and is conformable to the ikey
+	   and is conformable to the ikey 
 	*/
-	for (i=0; i<4 && okeyvar<0; i++) {
+	for (i=0; i<JOIN_MAXCOL && okeyvars[0]<2; i++) {
 	    if (jspec.colnums[i] == JOIN_KEY) {
-		okeyvar = i + 1;
-	    }
+		okeyvars[0] += 1;
+		okeyvars[1] = i + 1;
+	    } else if (jspec.colnums[i] == JOIN_KEY2) {
+		okeyvars[0] += 1;
+		okeyvars[2] = i + 1;
+	    }		
 	}
 
-	if (okeyvar < 0) {
+	if ((jspec.colnames[0] != NULL && okeyvars[1] < 0) ||
+	    (jspec.colnames[4] != NULL && okeyvars[2] < 0)) {
 	    err = E_DATA;
 	} else {
-	    int lstr = series_has_string_table(dset, ikeyvar);
-	    int rstr = series_has_string_table(jspec.c->dset, okeyvar);
+	    int lstr = series_has_string_table(dset, ikeyvars[1]);
+	    int rstr = series_has_string_table(jspec.c->dset, okeyvars[1]);
 
 	    if (lstr != rstr) {
 		err = E_TYPES; 
 	    } else if (lstr) {
 		str_keys = 1;
 	    }
+
+	    if (!err && okeyvars[2] > 0) {
+		lstr = series_has_string_table(dset, ikeyvars[2]);
+		rstr = series_has_string_table(jspec.c->dset, okeyvars[2]);
+
+		if (lstr != rstr) {
+		    err = E_TYPES; 
+		} else if (lstr) {
+		    str_keys = 1;
+		}
+	    }		
 	}
     }
 
@@ -3215,8 +3307,8 @@ int join_from_csv (const char *fname,
     if (!err) {
 	jr->str_keys = str_keys;
 	if (jr->str_keys) {
-	    jr->l_keyno = ikeyvar;
-	    jr->r_keyno = okeyvar;
+	    jr->l_keyno = ikeyvars;
+	    jr->r_keyno = okeyvars;
 	}
 	err = joiner_sort(jr);	
 #if CDEBUG > 1
@@ -3229,7 +3321,7 @@ int join_from_csv (const char *fname,
     }
 
     if (!err) {
-	err = aggregate_data(ikeyvar, targvar, jr);
+	err = aggregate_data(ikeyvars, targvar, jr);
 	if (err) {
 	    dataset_drop_last_variables(1, dset);
 	}
