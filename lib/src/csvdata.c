@@ -3190,7 +3190,7 @@ int join_from_csv (const char *fname,
 	fprintf(stderr, " outer key = '%s' (from inner key)\n", 
 		dset->varname[ikeyvars[1]]);
 	if (n_keys == 2) {
-	    fprintf(stderr, " second outer key = '%s'\n", 
+	    fprintf(stderr, " second outer key = '%s' (from inner)\n", 
 		    dset->varname[ikeyvars[2]]);
 	}
     }
@@ -3210,14 +3210,16 @@ int join_from_csv (const char *fname,
 
     if (filtstr != NULL) {
 	filter = make_join_filter(filtstr, &err);
+	if (err) {
+	    fprintf(stderr, "join: error %d processing row filter\n", err);
+	}
     }
 
     if (!err && okey != NULL) {
 	err = process_outer_key(okey, n_keys, okeyname1, okeyname2, 48);
-#if CDEBUG
-	fprintf(stderr, " processed outer keys: '%s' and '%s', err=%d\n", 
-		okeyname1, okeyname2, err);
-#endif
+	if (err) {
+	    fprintf(stderr, "join: error %d processing outer key(s)\n", err);
+	}
     }
 
     /* FIXME detect and handle the case of no options, just
@@ -3245,7 +3247,7 @@ int join_from_csv (const char *fname,
 	    jspec.colnames[3] = filter->rhname;
 	}
 
-	/* second outer key, if present */
+	/* the second outer key, if present */
 	if (*okeyname2 != '\0') {
 	    jspec.colnames[4] = okeyname2;
 	} else if (n_keys > 1) {
@@ -3254,6 +3256,9 @@ int join_from_csv (const char *fname,
 
 	err = real_import_csv(fname, dset, NULL, NULL,
 			      &jspec, opt, prn);
+	if (err) {
+	    fprintf(stderr, "join: error %d from real_import_csv\n", err);
+	}
     }
 
     if (!err && jspec.colnames[0] != NULL) {
@@ -3272,12 +3277,14 @@ int join_from_csv (const char *fname,
 
 	if ((jspec.colnames[0] != NULL && okeyvars[1] < 0) ||
 	    (jspec.colnames[4] != NULL && okeyvars[2] < 0)) {
+	    fprintf(stderr, "join: error finding outer key columns\n");
 	    err = E_DATA;
 	} else {
 	    int lstr = series_has_string_table(dset, ikeyvars[1]);
 	    int rstr = series_has_string_table(jspec.c->dset, okeyvars[1]);
 
 	    if (lstr != rstr) {
+		fprintf(stderr, "key 1: numeric/string mismatch\n");
 		err = E_TYPES; 
 	    } else if (lstr) {
 		str_keys = 1;
@@ -3288,6 +3295,7 @@ int join_from_csv (const char *fname,
 		rstr = series_has_string_table(jspec.c->dset, okeyvars[2]);
 
 		if (lstr != rstr) {
+		    fprintf(stderr, "key 2: numeric/string mismatch\n");
 		    err = E_TYPES; 
 		} else if (lstr) {
 		    str_keys = 1;
@@ -3302,6 +3310,9 @@ int join_from_csv (const char *fname,
 	printdata(NULL, NULL, jspec.c->dset, OPT_O, prn);
 #endif
 	jr = joiner_new(&jspec, dset, filter, aggr, &err);
+	if (err) {
+	    fprintf(stderr, "join: error %d from joiner_new()\n", err);
+	}
     }
 
     if (!err) {
@@ -3318,11 +3329,15 @@ int join_from_csv (const char *fname,
 
     if (!err) {
 	targvar = get_target_varnum(varname, dset, &err);
+	if (err) {
+	    fprintf(stderr, "join: error %d from get_target_varnum()\n", err);
+	}	
     }
 
     if (!err) {
 	err = aggregate_data(ikeyvars, targvar, jr);
 	if (err) {
+	    fprintf(stderr, "join: error %d from aggregate_data()\n", err);
 	    dataset_drop_last_variables(1, dset);
 	}
     }
