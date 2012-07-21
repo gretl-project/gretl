@@ -1034,6 +1034,11 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
 	sd0 = dot_atof(stobs);
     }
 
+    if (structure == TIME_SERIES && (pd == 1 || pd == 4 || pd == 12)) {
+	/* force use of regular time-series obs labels */
+	dataset_destroy_obs_markers(dset);
+    }
+
     dset->pd = pd;
     dset->structure = structure;
     dset->sd0 = sd0;
