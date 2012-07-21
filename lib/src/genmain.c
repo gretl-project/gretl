@@ -869,8 +869,8 @@ parser *genr_compile (const char *s, DATASET *dset,
 int execute_genr (parser *p, DATASET *dset, PRN *prn)
 {
 #if GDEBUG
-    fprintf(stderr, "\n*** execute_genr: p=%p, LHS='%s', Z=%p\n", 
-	    (void *) p, p->lh.name, (void *) dset->Z);
+    fprintf(stderr, "\n*** execute_genr: p=%p, LHS='%s', Z=%p, prn=%p\n", 
+	    (void *) p, p->lh.name, (void *) dset->Z, (void *) prn);
 #endif
 
     realgen(NULL, p, dset, prn, P_EXEC);

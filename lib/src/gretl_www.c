@@ -107,7 +107,9 @@ static void urlinfo_init (urlinfo *u,
     u->phandle = NULL;
     u->pstarted = 0;
 
+#ifndef STANDALONE
     gretl_error_clear();
+#endif
 
 #ifdef BUILD_DATE
     sprintf(u->agent, "gretl-%s-%s", GRETL_VERSION, BUILD_DATE);
