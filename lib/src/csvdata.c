@@ -2608,7 +2608,8 @@ static void joiner_destroy (joiner *jr)
 }
 
 static int join_row_wanted (DATASET *dset, int i,
-			    jr_filter *filter, int *err)
+			    jr_filter *filter, 
+			    int *err)
 {
     int ret = 0;
 
@@ -2642,7 +2643,7 @@ static int join_row_wanted (DATASET *dset, int i,
 	    slen = strlen(x);
 	    ret = (strlen(y) > slen) && (strncmp(x, y, slen) == 0);
 	} else if (filter->op == B_NEQ) {
-	    ret = strcmp(x, y);
+	    ret = (strcmp(x, y) != 0);
 	} else {
 	    *err = E_PARSE;
 	}
@@ -2767,9 +2768,11 @@ static joiner *joiner_new (csvjoin *jspec,
 	    if (join_row_wanted(r_dset, i, filter, err)) {
 		jr->rows[j].keyval = (int) r_dset->Z[keycol][i];
 		if (jspec->colnames[4] != NULL) {
+		    /* double key */
 		    jr->rows[j].n_keys = 2;
 		    jr->rows[j].keyval2 = (int) r_dset->Z[key2col][i];
 		} else {
+		    /* single key */
 		    jr->rows[j].n_keys = 1;
 		    jr->rows[j].keyval2 = 0;
 		}
@@ -3068,6 +3071,7 @@ static int aggregate_data (const int *ikeyvars, int newvar, joiner *jr)
 	rlabels2 = series_get_string_vals(jr->r_dset, jr->r_keyno[2], NULL);
     }
 
+    /* find the greatest (primary) key frequency */
     nmax = 0;
     for (i=0; i<jr->n_unique; i++) {
 	if (jr->key_freq[i] > nmax) {
@@ -3385,6 +3389,29 @@ int join_from_csv (const char *fname,
 			      &jspec, opt, prn);
 	if (err) {
 	    fprintf(stderr, "join: error %d from real_import_csv\n", err);
+	}
+    }
+
+    if (!err) {
+	/* run some sanity tests on the payload */
+	int valcol = -1;
+
+	for (i=0; i<JOIN_MAXCOL && valcol<0; i++) {
+	    if (jspec.colnums[i] == JOIN_VAL) {
+		valcol = i+1;
+	    }
+	}
+
+	if (valcol < 0) {
+	    fprintf(stderr, "join: '%s' was not found\n", jspec.colnames[1]);
+	    err = E_UNKVAR;
+	} else if (aggr != AGGR_NONE && aggr != AGGR_COUNT) {
+	    if (series_has_string_table(jspec.c->dset, valcol)) {
+		/* maybe this should just be a warning? */
+		fprintf(stderr, "'%s' is a string variable: aggregation type "
+			"is not applicable\n", jspec.colnames[1]);
+		err = E_TYPES;
+	    }
 	}
     }
 
