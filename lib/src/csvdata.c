@@ -2705,6 +2705,8 @@ static joiner *joiner_new (csvjoin *jspec,
     if (filter != NULL) {
 	if (filter->lhname != NULL && lhcol == 0) {
 	    /* a required filter column is missing */
+	    fprintf(stderr, "join: filter column '%s' was not found\n", 
+		    filter->lhname);
 	    *err = E_DATA;
 	} else {
 	    filter->lhcol = lhcol;
@@ -2713,6 +2715,8 @@ static joiner *joiner_new (csvjoin *jspec,
 		if (rhcol > 0) {
 		    filter->rhcol = rhcol;
 		} else if (!filter->is_string) {
+		    fprintf(stderr, "join: filter column '%s' was not found\n", 
+			    filter->rhname);
 		    *err = E_DATA;
 		}
 	    }
@@ -3403,7 +3407,8 @@ int join_from_csv (const char *fname,
 	}
 
 	if (valcol < 0) {
-	    fprintf(stderr, "join: '%s' was not found\n", jspec.colnames[1]);
+	    fprintf(stderr, "join: data column '%s' was not found\n", 
+		    jspec.colnames[1]);
 	    err = E_UNKVAR;
 	} else if (aggr != AGGR_NONE && aggr != AGGR_COUNT) {
 	    if (series_has_string_table(jspec.c->dset, valcol)) {
