@@ -3014,7 +3014,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    } else if (cmd->ci == DELEET && !(cmd->opt & OPT_F)) {
 		err = loop_delete_object(cmd, prn);
 	    } else {
-		fprintf(stderr, "loop: cmd_exec\n");
 		err = gretl_cmd_exec(s, dset);
 		if (!err && !check_gretl_errno() && block_model(cmd)) {
 		    /* NLS, etc. */
