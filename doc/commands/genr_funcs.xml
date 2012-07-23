@@ -2225,6 +2225,39 @@
       </description>
     </function>
 
+    <function name="ghk" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">C</fnarg>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="matrix">B</fnarg>
+	<fnarg type="matrix">U</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Computes the GHK (Geweke, Hajivassiliou, Keane) approximation to the
+	  multivariate normal distribution function; see for example <cite
+	  key="geweke91">Geweke (1991)</cite>. The value returned is an <by
+	  r="n" c="1"/> vector of probabilities.
+	</para>
+	<para>
+	  The argument <argname>C</argname> (<by r="m" c="m"/>) should give
+	  the Cholesky decomposition (lower triangular) of the covariance
+	  matrix of the <math>m</math> normal variates.  The arguments
+	  <argname>A</argname> and <argname>B</argname> should both be <by
+	  r="n" c="m"/>, giving respectively the lower and upper bounds
+	  applying to the variates at each of <math>n</math>
+	  observations. Where variates are unbounded, this should be indicated
+	  using the built-in constant <fncref targ="$huge"/> or its negative.
+	</para>
+	<para>
+	  The matrix <argname>U</argname> should be <by r="m" c="r"/>, with
+	  <math>r</math> the number of pseudo-random draws from the uniform
+	  distribution; suitable functions for creating <argname>U</argname>
+	  are <fncref targ="muniform"/> and <fncref targ="halton"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="gini" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -2271,6 +2304,21 @@
 	    <fncref targ="inv"/>
 	    <fncref targ="svd"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="halton" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="scalar">m</fnarg>
+	<fnarg type="scalar">r</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns an <by r="m" c="r"/> matrix containing <math>m</math> Halton
+	  sequences of length <math>r</math>; <math>m</math> is limited to a
+	  maximum of 40. See <cite key="halton64">Halton and Smith
+	  (1964)</cite>.
 	</para>
       </description>
     </function>

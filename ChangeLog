@@ -3,6 +3,8 @@ Version 1.9.10, in progress
 - "delete" command: add a --force option to permit deletion of
   series in loops (to be used with caution!)
 - Enable use of the "open" command in loops (gretlcli only)
+- "open" command: rename the option for reading fixed format data
+  from --cols to --fixed-cols
 - "dpanel" and "arbond": indicate in the model printout if the AR,
   Sargan or Wald tests failed
 - "modtest" command: support the autocorrelation option for ARMA
