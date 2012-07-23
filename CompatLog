@@ -1,3 +1,9 @@
+version 1.9.10, in progress
+
+The option for specifying how to read data from a fixed format
+text file using the "open" command has been renamed from --cols
+to --fixed-cols.
+
 2012-06-01 version 1.9.9
 
 No intentional backward-incompatible changes

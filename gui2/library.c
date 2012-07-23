@@ -8185,7 +8185,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	err = gretl_get_data(myfile, dset, opt, vprn);
     }
 
-    if (vprn != prn) {
+    if (vprn != NULL && vprn != prn) {
 	if (err) {
 	    /* The user asked for quiet operation, but something
 	       went wrong so let's print any info we got on

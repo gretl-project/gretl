@@ -7565,18 +7565,19 @@
 	With plain text files, gretl generally expects to find the data
 	columns delimited in some standard manner.  But there is also a
 	special facility for reading <quote>fixed format</quote> files, in
-	which there are no delimiters but there is a known specification of the
-	form, &eg;, <quote>variable <math>k</math> occupies 8 columns starting
-	at column 24</quote>.  To read such files, you should append a string
-	<opt>--cols=</opt><repl>colspec</repl>, where <repl>colspec</repl> is
-	composed of comma-separated integers.  These integers are interpreted
-	as a set of pairs.  The first element of each pair denotes a starting
-	column, measured in bytes from the beginning of the line with 1
-	indicating the first byte; and the second element indicates how many
-	bytes should be read for the given field.  So, for example, if you say
+	which there are no delimiters but there is a known specification of
+	the form, &eg;, <quote>variable <math>k</math> occupies 8 columns
+	starting at column 24</quote>.  To read such files, you should append
+	a string <opt>--fixed-cols=</opt><repl>colspec</repl>, where
+	<repl>colspec</repl> is composed of comma-separated integers.  These
+	integers are interpreted as a set of pairs.  The first element of each
+	pair denotes a starting column, measured in bytes from the beginning
+	of the line with 1 indicating the first byte; and the second element
+	indicates how many bytes should be read for the given field.  So, for
+	example, if you say
       </para>
       <code>
-	open fixed.txt --cols=1,6,20,3
+	open fixed.txt --fixed-cols=1,6,20,3
       </code>
       <para>
 	then for variable 1 gretl will read 6 bytes starting at column 1; and

@@ -222,10 +222,10 @@ static int *cols_list_from_matrix (const char *s, int *err)
 }
 
 /* The interpretation of the "cols" specification depends on
-   @opt: if this includes OPT_L (--delimited) then it should
-   provide a 1-based list of columns to be read; but if @opt
-   is just OPT_F it should provide a fixed-format spec,
-   consisting of pairs (start column, width).
+   @opt: if this includes OPT_L then it should provide a 1-based 
+   list of columns to be read; but if @opt includes OPT_F it 
+   should provide a fixed-format spec, consisting of pairs 
+   (start column, width).
 */
 
 static int csvdata_add_cols_list (csvdata *c, const char *s,
@@ -2524,20 +2524,33 @@ int import_csv (const char *fname, DATASET *dset,
 {
     const char *cols = NULL;
     const char *rows = NULL;
+    int ci, err;
 
-    /* below: FIXME, usage with APPEND? */
+    err = incompatible_options(opt, OPT_F | OPT_L);
+    if (err) {
+	/* --cols and --fixed-cols */
+	return err;
+    }
+
+    ci = (dset != NULL && dset->v > 0)? APPEND : OPEN;
 
     if (opt & OPT_F) {
-	/* we should have a "--cols=XXX" specification */
-	cols = get_optval_string(OPEN, OPT_F);
+	/* we should have a "--fixed-cols=XXX" specification */
+	cols = get_optval_string(ci, OPT_F);
 	if (cols == NULL || *cols == '\0') {
 	    return E_PARSE;
 	}
-    }
+    } else if (opt & OPT_L) {
+	/* should have a "--cols=XXX" specification */
+	cols = get_optval_string(ci, OPT_L);
+	if (cols == NULL || *cols == '\0') {
+	    return E_PARSE;
+	}
+    }	
 
     if (opt & OPT_M) {
 	/* we should have a "--rowmask=XXX" specification */
-	rows = get_optval_string(OPEN, OPT_M);
+	rows = get_optval_string(ci, OPT_M);
 	if (rows == NULL || *rows == '\0') {
 	    return E_PARSE;
 	}
@@ -2547,9 +2560,7 @@ int import_csv (const char *fname, DATASET *dset,
 			   NULL, opt, prn);
 }
 
-/* ---------------------------------------------------------------------- */
-/* ------   new join stuff   -------------------------------------------- */
-/* ---------------------------------------------------------------------- */
+/* below: apparatus to implement the "join" command */
 
 struct jr_row_ {
     int n_keys;  /* number of keys (needed for qsort callback) */
