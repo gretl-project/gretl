@@ -4460,7 +4460,7 @@ static int lib_join_data (ExecState *s,
     if (!err && ikeyvars == NULL && aggr != 0) {
 	/* aggregation requires the use of keys */
 	gretl_errmsg_set(_("Inner key is missing"));
-	err = E_DATA;
+	err = E_ARGS;
     }
 
     if (!err) {
