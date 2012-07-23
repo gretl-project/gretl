@@ -4293,7 +4293,7 @@ static int lib_clear_data (ExecState *s, DATASET *dset)
     return err;
 }
 
-static AggrType join_aggregation_method (const char *s)
+static int join_aggregation_method (const char *s)
 {
     int ret = -1;
 
@@ -4307,6 +4307,8 @@ static AggrType join_aggregation_method (const char *s)
 	ret = AGGR_MIN;
     } else if (!strcmp(s, "max")) {
 	ret = AGGR_MAX;
+    } else if (!strcmp(s, "none")) {
+	ret = AGGR_NONE;
     }
 
     return ret;
@@ -4451,7 +4453,14 @@ static int lib_join_data (ExecState *s,
 
     if (!err && okey != NULL && ikeyvars == NULL) {
 	/* can't have an outer key but no inner one */
+	gretl_errmsg_set(_("Inner key is missing"));
 	err = E_PARSE;
+    }
+
+    if (!err && ikeyvars == NULL && aggr != 0) {
+	/* aggregation requires the use of keys */
+	gretl_errmsg_set(_("Inner key is missing"));
+	err = E_DATA;
     }
 
     if (!err) {

@@ -28,7 +28,7 @@
 #include <errno.h>
 #include <glib.h>
 
-#define CDEBUG 0
+#define CDEBUG 2
 
 #define QUOTE      '\''
 #define CSVSTRLEN  72
@@ -1592,7 +1592,6 @@ static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
     } else if (csv_missval(c->str, i, t+1, miss_shown, prn)) {
 	c->dset->Z[i][t] = NADBL;
     } else {
-	
 	c->dset->Z[i][t] = csv_atof(c, gretl_chopstr(c->str));
     } 
 
@@ -1910,6 +1909,11 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 #endif	    
 	    break;
 	}
+    }
+
+    if (!err && joining(c) && c->cols_list == NULL) {
+	/* no relevant columns were found */
+	err = E_UNKVAR;
     }
 
     if (err) {
@@ -2768,14 +2772,21 @@ static joiner *joiner_new (csvjoin *jspec,
 
 	for (i=0; i<r_dset->n; i++) {
 	    if (join_row_wanted(r_dset, i, filter, err)) {
-		jr->rows[j].keyval = (int) r_dset->Z[keycol][i];
-		if (jspec->colnames[4] != NULL) {
-		    /* double key */
-		    jr->rows[j].n_keys = 2;
-		    jr->rows[j].keyval2 = (int) r_dset->Z[key2col][i];
+		if (keycol > 0) {
+		    jr->rows[j].keyval = (int) r_dset->Z[keycol][i];
+		    if (key2col > 0) {
+			/* double key */
+			jr->rows[j].n_keys = 2;
+			jr->rows[j].keyval2 = (int) r_dset->Z[key2col][i];
+		    } else {
+			/* single key */
+			jr->rows[j].n_keys = 1;
+			jr->rows[j].keyval2 = 0;
+		    }
 		} else {
-		    /* single key */
-		    jr->rows[j].n_keys = 1;
+		    /* no keys have been specified */
+		    jr->rows[j].n_keys = 0;
+		    jr->rows[j].keyval = 0;
 		    jr->rows[j].keyval2 = 0;
 		}
 		jr->rows[j].val = r_dset->Z[valcol][i];
@@ -2859,10 +2870,12 @@ static void joiner_print (joiner *jr)
 		jr->rows[i].val);
     }
 
-    fprintf(stderr, " n_unique = %d\n", jr->n_unique);
-    for (i=0; i<jr->n_unique; i++) {
-	fprintf(stderr,"  key value %d : count = %d\n", 
-		jr->keys[i], jr->key_freq[i]);
+    if (jr->keys != NULL) {
+	fprintf(stderr, " n_unique = %d\n", jr->n_unique);
+	for (i=0; i<jr->n_unique; i++) {
+	    fprintf(stderr,"  key value %d : count = %d\n", 
+		    jr->keys[i], jr->key_freq[i]);
+	}
     }
 }
 
@@ -3131,6 +3144,28 @@ static int aggregate_data (const int *ikeyvars, int newvar, joiner *jr)
     return err;
 }
 
+/* for use when no keys are given */
+
+static int join_fetch_data (int newvar, joiner *jr)
+{
+    DATASET *dset = jr->l_dset;
+    int err = 0;
+
+    if (jr->n_rows != sample_size(dset)) {
+	gretl_errmsg_set(_("Series length does not match the dataset"));
+	err = E_DATA;
+    } else {
+	int i, t;
+
+	for (i=0; i<jr->n_rows; i++) {
+	    t = dset->t1 + i;
+	    dset->Z[newvar][t] = jr->rows[i].val;
+	}
+    }
+
+    return err;
+}
+
 /* parse a string of the form <lhs> <op> <rhs> */
 
 static jr_filter *make_join_filter (const char *s,
@@ -3297,6 +3332,7 @@ int join_from_csv (const char *fname,
     int okeyvars[3] = {0, -1, -1};
     char okeyname1[48] = {0};
     char okeyname2[48] = {0};
+    int orig_v = dset->v;
     int targvar = 0;
     int str_keys = 0;
     int str_keys2 = 0;
@@ -3353,10 +3389,6 @@ int join_from_csv (const char *fname,
 	}
     }
 
-    /* FIXME detect and handle the case of no options, just
-       a filename and the name of a series to import?
-    */
-
     if (!err) {
 	/* handle the "outer" key column, if any */
 	if (*okeyname1 != '\0') {
@@ -3403,7 +3435,7 @@ int join_from_csv (const char *fname,
 	}
 
 	if (valcol < 0) {
-	    if (aggr != AGGR_COUNT) {
+	    if (data != NULL || aggr != AGGR_COUNT) {
 		fprintf(stderr, "join: data column '%s' was not found\n", 
 			jspec.colnames[1]);
 		err = E_UNKVAR;
@@ -3480,7 +3512,9 @@ int join_from_csv (const char *fname,
 	    jr->l_keyno = ikeyvars;
 	    jr->r_keyno = okeyvars;
 	}
-	err = joiner_sort(jr);	
+	if (jr->n_keys > 0) {
+	    err = joiner_sort(jr);
+	}	
 #if CDEBUG > 1
 	joiner_print(jr);
 #endif
@@ -3494,10 +3528,14 @@ int join_from_csv (const char *fname,
     }
 
     if (!err) {
-	err = aggregate_data(ikeyvars, targvar, jr);
+	if (jr->n_keys == 0) {
+	    err = join_fetch_data(targvar, jr);
+	} else {
+	    err = aggregate_data(ikeyvars, targvar, jr);
+	}
 	if (err) {
 	    fprintf(stderr, "join: error %d from aggregate_data()\n", err);
-	    dataset_drop_last_variables(1, dset);
+	    dataset_drop_last_variables(dset->v - orig_v, dset);
 	}
     }
 
