@@ -2548,10 +2548,10 @@ int import_csv (const char *fname, DATASET *dset,
 /* ---------------------------------------------------------------------- */
 
 struct jr_row_ {
-    int n_keys;
-    int keyval;
-    int keyval2;
-    double val;
+    int n_keys;  /* number of keys (needed for qsort callback) */
+    int keyval;  /* primary key value */
+    int keyval2; /* seconary key value, if applicable */
+    double val;  /* data value */
 };
 
 typedef struct jr_row_ jr_row;
@@ -2560,7 +2560,6 @@ struct joiner_ {
     int n_rows;     /* number of rows in data table */
     int n_keys;     /* number of keys used (1 or 2) */
     int n_unique;   /* number of unique keys found, primary key */
-    int n_unique2;  /* number of unique keys found, secondary key */
     jr_row *rows;   /* array of table rows */
     int *keys;      /* array of unique (primary) key values as integers */
     int *key_freq;  /* counts of occurrences of (primary) key values */
@@ -2568,7 +2567,7 @@ struct joiner_ {
     int str_keys2;  /* flag for string comparison of secondary keys */
     const int *l_keyno; /* for string comparison: list of ikey IDs in lhs dset */
     const int *r_keyno; /* for string comparison: list of okey IDs in rhs dset */
-    AggrType aggr;  /* aggregation method for 1:n joining */
+    AggrType aggr;    /* aggregation method for 1:n joining */
     DATASET *l_dset;  /* the main dataset */
     DATASET *r_dset;  /* the temporary CSV dataset */
 };
@@ -2758,7 +2757,6 @@ static joiner *joiner_new (csvjoin *jspec,
     } else {
 	jr->n_rows = nrows;
 	jr->n_unique = 0;
-	jr->n_unique2 = 0;
 	jr->aggr = aggr;
 	jr->l_dset = l_dset;
 	jr->r_dset = r_dset;
@@ -3338,9 +3336,7 @@ int join_from_csv (const char *fname,
 	fprintf(stderr, " source data series = '%s' (from inner varname)\n", 
 		varname);
     }
-    if (aggr != 0) {
-	fprintf(stderr, " aggregation=%d\n", aggr);
-    }
+    fprintf(stderr, " aggregation = %d\n", aggr);
 #endif
 
     if (filtstr != NULL) {
@@ -3373,7 +3369,7 @@ int join_from_csv (const char *fname,
 	if (data != NULL) {
 	    jspec.colnames[1] = data;
 	} else {
-	    jspec.colnames[1] = varname; /* always? */
+	    jspec.colnames[1] = varname;
 	}
 
 	/* handle filter columns, if applicable */
@@ -3407,9 +3403,11 @@ int join_from_csv (const char *fname,
 	}
 
 	if (valcol < 0) {
-	    fprintf(stderr, "join: data column '%s' was not found\n", 
-		    jspec.colnames[1]);
-	    err = E_UNKVAR;
+	    if (aggr != AGGR_COUNT) {
+		fprintf(stderr, "join: data column '%s' was not found\n", 
+			jspec.colnames[1]);
+		err = E_UNKVAR;
+	    }
 	} else if (aggr != AGGR_NONE && aggr != AGGR_COUNT) {
 	    if (series_has_string_table(jspec.c->dset, valcol)) {
 		/* maybe this should just be a warning? */
@@ -3421,8 +3419,8 @@ int join_from_csv (const char *fname,
     }
 
     if (!err && jspec.colnames[0] != NULL) {
-	/* check that okey is in fact in the right-hand-side file 
-	   and is conformable to the ikey 
+	/* check that outer key was found in the right-hand-side
+	   file, and is conformable to the inner key 
 	*/
 	for (i=0; i<JOIN_MAXCOL && okeyvars[0]<2; i++) {
 	    if (jspec.colnums[i] == JOIN_KEY) {
