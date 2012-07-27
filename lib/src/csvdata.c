@@ -3265,6 +3265,10 @@ static jr_filter *make_join_filter (const char *s,
     return filter;
 }
 
+/* get the series ID for the left-hand side variable, which
+   may be an existing series or a new one
+*/
+
 static int get_target_varnum (const char *vname,
 			      DATASET *dset,
 			      int *err)
@@ -3299,6 +3303,7 @@ static int process_outer_key (const char *s, int n_keys,
 	strncat(name1, s, maxlen - 1);
 	n_okeys = 1;
     } else {
+	/* two comma-separated keys */
 	int n = strcspn(s, ",");
 
 	if (n == 0 || n >= maxlen) {

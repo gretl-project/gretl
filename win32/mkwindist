@@ -279,21 +279,27 @@ add_file gretl.stamp gretl/gretl.stamp
 
 # add GTK runtime and gnuplot distribution: note that we move
 # into the "windist" subdir first
+# RTFILE=gtk-runtime.tar.gz
+RTFILE=gtk-2.24-runtime.tgz
 cd windist
-if [ ! -f ${WINFILES}/gtk-runtime.tar.gz ] ; then
-  echo "Couldn't find gtk-runtime.tar.gz"
+if [ ! -f ${WINFILES}/${RTFILE} ] ; then
+  echo "Couldn't find ${RTFILE}"
   exit 1
 else 
-  process_tarball ${WINFILES}/gtk-runtime.tar.gz
+  process_tarball ${WINFILES}/${RTFILE}
 fi
 
-# replacement builds
-if [ -f ${WINFILES}/misc-dll/libpixmap.dll ] ; then
-  cp -p ${WINFILES}/misc-dll/libpixmap.dll gretl/lib/gtk-2.0/2.10.0/engines/
-fi
-if [ -f ${WINFILES}/misc-dll/libwimp.dll ] ; then
-  cp -p ${WINFILES}/misc-dll/libwimp.dll gretl/lib/gtk-2.0/2.10.0/engines/
-fi
+# replacement builds (?)
+# if [ -f ${WINFILES}/misc-dll/libpixmap.dll ] ; then
+#   cp -p ${WINFILES}/misc-dll/libpixmap.dll gretl/lib/gtk-2.0/2.10.0/engines/
+# fi
+# if [ -f ${WINFILES}/misc-dll/libwimp.dll ] ; then
+#   cp -p ${WINFILES}/misc-dll/libwimp.dll gretl/lib/gtk-2.0/2.10.0/engines/
+# fi
+
+if [ -f ${WINFILES}/gtk-3rdparty.tgz ] ; then
+  process_tarball ${WINFILES}/gtk-3rdparty.tgz
+fi 
 
 if [ ! -f ${WINFILES}/gp460w32.tar.gz ] ; then
   echo "Couldn't find gp460w32.tar.gz"

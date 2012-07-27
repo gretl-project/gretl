@@ -4708,7 +4708,7 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 {
     Summary *s;
     double *x;
-    int i, t, nmax;
+    int i, t;
 
     s = summary_new(list, opt);
     if (s == NULL) {
@@ -4722,8 +4722,6 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 	free_summary(s);
 	return NULL;
     }    
-
-    nmax = sample_size(dset);
 
     for (i=0; i<s->list[0]; i++)  {
 	double *pskew = NULL, *pkurt = NULL;
