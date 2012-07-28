@@ -279,6 +279,15 @@
       </description>
     </function>
 
+    <function name="$huge" section="access" output="scalar">
+      <description>
+	<para>
+	  Returns a very large positive number. By default this is 1.0E100,
+	  but the value can be changed using the <cmdref targ="set"/> command.
+	</para>
+      </description>
+    </function>
+
     <function name="$jalpha" section="access" output="matrix">
       <description>
 	<para>
@@ -423,6 +432,14 @@
 	  Returns the frequency or periodicity of the data (e.g. 4 for
 	  quarterly data).  In the case of panel data the value returned
 	  is the time-series length.
+	</para>
+      </description>
+    </function>
+
+    <function name="$pi" section="access" output="scalar">
+      <description>
+	<para>
+	  Returns the value of &pi; in double precision.
 	</para>
       </description>
     </function>

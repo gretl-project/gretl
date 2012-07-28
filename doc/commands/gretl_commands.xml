@@ -9590,6 +9590,12 @@
 	  replaced, or removed via the <lit>null</lit> keyword.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>huge</lit>: a large positive number (by default,
+	  1.0E100). This setting controls the value returned by the
+	  accessor <fncref targ="$huge"/>.
+	  </para>
+	</li>
       </ilist>
 
       <para>

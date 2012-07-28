@@ -117,14 +117,14 @@ done
 for f in \
     libgmp-3.dll libmpfr-1.dll libxml2.dll readline5.dll history5.dll \
     libblas-3.dll liblapack-3.dll libgtksourceview-2.0-0.dll \
-    libfftw3-3.dll libcurl-4.dll
+    libfftw3-3.dll libcurl-4.dll iconv.dll
 do
     add_file ${WINFILES}/misc-dll/$f gretl/$f
 done
 
-# aux. dlls that are either not used with GTK 2.24 or are now supplied
-# separately (were drawn from ${WINFILES}/misc-dll)
-# zlib1.dll iconv.dll intl.dll libexpat-1.dll freetype6.dll libfontconfig-1.dll
+# third-party dlls that are now supplied separately (they were drawn 
+# from ${WINFILES}/misc-dll)
+# zlib1.dll intl.dll libexpat-1.dll freetype6.dll libfontconfig-1.dll
 
 # system DLLs for threads/openmp, if required
 # add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
