@@ -39,7 +39,7 @@ static int mvsize (unsigned char *s, int nbytes)
     return strlen((char *) s + nbytes) + 1;
 }
 
-static void write_text (char *s, char *repl)
+static void write_text (unsigned char *s, char *repl)
 {
     while (*repl) {
 	*s++ = *repl++;

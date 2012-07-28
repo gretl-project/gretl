@@ -73,6 +73,13 @@ PT_GENSTAMP = $(SHAREDIR)/gen_pt.stamp
 FIGSTAMP = $(SHAREDIR)/fig.stamp
 HELPREFS = $(SHAREDIR)/gretlhelp.refs
 
+GRETLDEP = $(topsrc)/lib/src/libgretl.h \
+	$(topsrc)/lib/src/gretl_commands.h \
+	$(topsrc)/lib/src/gretl_commands.c \
+	$(topsrc)/lib/src/genlex.c \
+	$(topsrc)/lib/src/genmain.c \
+	$(topsrc)/lib/src/options.c
+
 TOPICDEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
 
 CPROGS = xsltrans skeleton reflow bbl2txt validate topiclist tables matfuncs us2a4
@@ -106,20 +113,19 @@ tables: tables.o
 matfuncs: matfuncs.o
 	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
 
-skeleton.o: skeleton.c
+skeleton.o: skeleton.c $(GRETLDEP)
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
 
-validate.o: validate.c
+validate.o: validate.c $(GRETLDEP)
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
 
-topiclist.o: topiclist.c $(topsrc)/lib/src/libgretl.h
+topiclist.o: topiclist.c $(GRETLDEP)
 	$(CC) $(CFLAGS) $(TOPICDEFS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
 
-tables.o: tables.c $(topsrc)/lib/src/genmain.c \
-	$(topsrc)/lib/src/monte_carlo.c
+tables.o: tables.c $(GRETLDEP) $(topsrc)/lib/src/monte_carlo.c
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
 
-matfuncs.o: matfuncs.c $(topsrc)/lib/src/libgretl.h
+matfuncs.o: matfuncs.c $(GRETLDEP)
 	$(CC) $(CFLAGS) $(TOPICDEFS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
 
 # test generation of XML skeleton from libgretl info:
@@ -340,3 +346,4 @@ clean: docclean
 	rm -f $(CPROGS) *.o
 	rm -f textables cmdtex* functex* topiclist_*
 	rm -rf .libs
+
