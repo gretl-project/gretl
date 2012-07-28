@@ -1840,11 +1840,16 @@ static void set_gretl_binbase (const char *path)
 /* This should be called after we're fairly confident that we
    have the dotdir setting right */
 
-static int set_tramo_x12a_dirs (void)
+static int set_extra_dot_paths (void)
 {
     char dirname[MAXLEN];
     size_t n;
     int err = 0;
+
+    /* the personal function package directory */
+    *dirname = '\0';
+    build_path(dirname, paths.dotdir, "functions", NULL);
+    gretl_mkdir(dirname);
 
     *paths.tramodir = '\0';
     *paths.x12adir = '\0';
@@ -1853,6 +1858,7 @@ static int set_tramo_x12a_dirs (void)
     return 0;
 #endif
 
+    *dirname = '\0';
     strcpy(dirname, paths.dotdir);
     n = strlen(dirname);
 
@@ -2564,7 +2570,7 @@ static int initialize_dotdir (void)
 	*paths.tramodir = '\0';
     } else {
 	/* these paths depend on dotdir */
-	err = set_tramo_x12a_dirs();
+	err = set_extra_dot_paths();
     }
 
     return err;

@@ -116,23 +116,19 @@ done
 # auxiliary dlls
 for f in \
     libgmp-3.dll libmpfr-1.dll libxml2.dll readline5.dll history5.dll \
-    zlib1.dll libblas-3.dll liblapack-3.dll libgtksourceview-2.0-0.dll \
-    iconv.dll intl.dll libfftw3-3.dll libcairo-2.dll libpng14-14.dll \
-    libcurl-4.dll
+    libblas-3.dll liblapack-3.dll libgtksourceview-2.0-0.dll \
+    libfftw3-3.dll libcurl-4.dll
 do
     add_file ${WINFILES}/misc-dll/$f gretl/$f
 done
 
+# aux. dlls that are either not used with GTK 2.24 or are now supplied
+# separately (were drawn from ${WINFILES}/misc-dll)
+# zlib1.dll iconv.dll intl.dll libexpat-1.dll freetype6.dll libfontconfig-1.dll
+
 # system DLLs for threads/openmp, if required
 # add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
 # add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
-
-# GTK/pango dependencies
-for f in \
-    libexpat-1.dll freetype6.dll libfontconfig-1.dll
-do 
-    add_file ${WINFILES}/misc-dll/$f gretl/$f
-done
 
 # XML UI-definition files
 for f in ${TOPDIR}/gui2/*.xml ; do
@@ -289,7 +285,7 @@ else
   process_tarball ${WINFILES}/${RTFILE}
 fi
 
-# replacement builds (?)
+# replacement builds of GTK engines, not used w. GTK 2.24
 # if [ -f ${WINFILES}/misc-dll/libpixmap.dll ] ; then
 #   cp -p ${WINFILES}/misc-dll/libpixmap.dll gretl/lib/gtk-2.0/2.10.0/engines/
 # fi
@@ -297,6 +293,7 @@ fi
 #   cp -p ${WINFILES}/misc-dll/libwimp.dll gretl/lib/gtk-2.0/2.10.0/engines/
 # fi
 
+# additional GTK-related runtime files
 if [ -f ${WINFILES}/gtk-3rdparty.tgz ] ; then
   process_tarball ${WINFILES}/gtk-3rdparty.tgz
 fi 
