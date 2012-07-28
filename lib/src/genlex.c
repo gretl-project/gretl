@@ -53,10 +53,11 @@ struct str_table {
 };
 
 struct str_table consts[] = {
-    { CONST_PI,    "pi" },
+    { CONST_PI,    "$pi" },
     { CONST_NA,    "NA" },
+    { CONST_INF,   "$inf" },
     { CONST_WIN32, "WIN32" },
-    { CONST_EPS,   "macheps" },
+    { CONST_EPS,   "$macheps" },
     { 0,        NULL }
 };
 
@@ -68,7 +69,6 @@ struct str_table dummies[] = {
 };
 
 struct str_table dvars[] = {
-    { R_PI,        "$pi" },
     { R_NOBS,      "$nobs" },
     { R_NVARS,     "$nvars" },
     { R_PD,        "$pd" },
@@ -410,6 +410,13 @@ int const_lookup (const char *s)
 	if (!strcmp(s, consts[i].str)) {
 	    return consts[i].id;
 	}
+    }
+
+    /* backward comatibility: to be removed eventually */
+    if (!strcmp(s, "pi")) {
+	return CONST_PI;
+    } else if (!strcmp(s, "macheps")) {
+	return CONST_EPS;
     }
 
     return 0;
@@ -873,16 +880,14 @@ int is_gretl_accessor (const char *s)
 
 static void look_up_dollar_word (const char *s, parser *p)
 {
-    p->idnum = dvar_lookup(s);
-    if (p->idnum > 0) {
+    if ((p->idnum = dvar_lookup(s)) > 0) {
 	p->sym = DVAR;
+    } else if ((p->idnum = const_lookup(s)) > 0) {
+	p->sym = CON;
+    } else if ((p->idnum = mvar_lookup(s)) > 0) {
+	p->sym = MVAR;
     } else {
-	p->idnum = mvar_lookup(s);
-	if (p->idnum > 0) {
-	    p->sym = MVAR;
-	} else {
-	    undefined_symbol_error(s, p);
-	}
+	undefined_symbol_error(s, p);
     }
 
 #if LDEBUG

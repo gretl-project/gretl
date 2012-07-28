@@ -1349,6 +1349,12 @@ static double get_const_by_id (int id)
     } else if (id == CONST_EPS) {
 	/* IEEE 754 - 2008, double precision */
 	return pow(2.0, -53);
+    } else if (id == CONST_INF) {
+#ifdef INFINITY
+	return INFINITY;
+#else
+	return 1.0/0.0;
+#endif
     } else if (id == CONST_WIN32) {
 #ifdef WIN32
 	return 1;
@@ -7796,8 +7802,6 @@ double dvar_get_scalar (int i, const DATASET *dset,
     int ival;
 
     switch (i) {
-    case R_PI:
-	return M_PI;
     case R_NOBS:
 	return (dset == NULL) ? NADBL : 
 	(dset->n == 0 ? 0 : sample_size(dset));

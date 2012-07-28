@@ -387,6 +387,16 @@
       </description>
     </function>
 
+    <function name="$macheps" section="access" output="scalar">
+      <description>
+	<para>
+	  Returns the value of <quote>machine epsilon</quote>, which
+	  gives an upper bound on the relative error due to rounding
+	  in double-precision floating point arithmetic.
+	</para>
+      </description>
+    </function>
+
     <function name="$mnlprobs" section="access" output="matrix">
       <description>
 	<para>

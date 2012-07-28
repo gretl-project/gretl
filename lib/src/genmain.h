@@ -23,8 +23,7 @@
 #include "gretl_matrix.h"
 
 typedef enum {
-    R_PI = 1,     /* pi (constant) */
-    R_NOBS,       /* number of observations in current sample range */
+    R_NOBS = 1,   /* number of observations in current sample range */
     R_NVARS,      /* number of variables in dataset (including the constant) */
     R_PD,         /* periodicity of dataset */
     R_T1,         /* start of current sample range */
