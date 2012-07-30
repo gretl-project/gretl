@@ -1948,7 +1948,7 @@ static void win32_read_gretlrc (void)
 	    if (strcmp(key, "gretldir")) {
 		strcpy(linevar, line + strlen(key) + 3); 
 		gretl_chopstr(linevar); 
-		if (*linevar) {
+		if (*linevar != '\0') {
 		    find_and_set_rc_var(key, linevar);
 		}
 	    }

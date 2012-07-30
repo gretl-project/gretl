@@ -296,7 +296,9 @@ static void wimp_init (void)
 {
     char tmp[4] = {0};
 
-    /* Are we using the XP theme (as opposed to "classic")? */
+    /* Are we using the XP theme (as opposed to "classic")?
+       In that case we'll make use of libwimp the default.
+    */
 
     read_reg_val(HKEY_CURRENT_USER, 
 		 "Microsoft\\Windows\\CurrentVersion\\ThemeManager", 
@@ -341,10 +343,13 @@ void gretl_win32_init (const char *progname, int debug)
 {
     set_gretlnet_filename(progname);
     wimp_init();
+    if (debug) {
+	fprintf(stderr, "after wimp_init: use_wimp = %d\n", use_wimp);
+    }    
     read_win32_config(debug);
     set_gretl_startdir();
     if (debug) {
-	fprintf(stderr, "gretl_win32_init: done\n");
+	fprintf(stderr, "gretl_win32_init: done (use_wimp = %d)\n", use_wimp);
     }
 }
 

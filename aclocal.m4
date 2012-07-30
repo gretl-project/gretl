@@ -1,8 +1,7 @@
-# generated automatically by aclocal 1.11.3 -*- Autoconf -*-
+# generated automatically by aclocal 1.12.2 -*- Autoconf -*-
 
-# Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-# 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation,
-# Inc.
+# Copyright (C) 1996-2012 Free Software Foundation, Inc.
+
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -12,21 +11,25 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-# Copyright (C) 2003, 2004, 2005, 2006, 2011 Free Software Foundation,
-# Inc.
+# Copyright (C) 2003-2012 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-# serial 1
+# serial 3
 
 # AM_PROG_MKDIR_P
 # ---------------
-# Check for `mkdir -p'.
+# Check for 'mkdir -p'.
 AC_DEFUN([AM_PROG_MKDIR_P],
 [AC_PREREQ([2.60])dnl
 AC_REQUIRE([AC_PROG_MKDIR_P])dnl
+dnl FIXME to be removed in Automake 1.13.
+AC_DIAGNOSE([obsolete],
+[$0: this macro is deprecated, and will soon be removed.
+You should use the Autoconf-provided 'AC][_PROG_MKDIR_P' macro instead,
+and use '$(MKDIR_P)' instead of '$(mkdir_p)'in your Makefile.am files.])
 dnl Automake 1.8 to 1.9.6 used to define mkdir_p.  We now use MKDIR_P,
 dnl while keeping a definition of mkdir_p for backward compatibility.
 dnl @MKDIR_P@ is magic: AC_OUTPUT adjusts its value for each Makefile.
