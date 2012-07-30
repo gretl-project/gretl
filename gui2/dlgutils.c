@@ -1328,9 +1328,11 @@ blocking_edit_dialog (int ci, const char *title,
 	active_edit_text = d->edit;
     } 
 
-    if (click == VARCLICK_NONE && helpcode == 0) {
+    if (click != VARCLICK_NONE || helpcode > 0) {
+	gtk_window_set_keep_above(GTK_WINDOW(d->dialog), FALSE);
+    } else {
 	gtk_window_set_keep_above(GTK_WINDOW(d->dialog), TRUE);
-    } 
+    }
 
     gtk_widget_grab_focus(d->edit);
 
