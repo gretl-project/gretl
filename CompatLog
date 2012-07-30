@@ -4,6 +4,10 @@ The option for specifying how to read data from a fixed format
 text file using the "open" command has been renamed from --cols
 to --fixed-cols.
 
+The built-in constants "pi" and "macheps" have been renamed as
+"$pi" and "$macheps". The old names continue to work at present 
+but they will be removed before long.
+
 2012-06-01 version 1.9.9
 
 No intentional backward-incompatible changes
