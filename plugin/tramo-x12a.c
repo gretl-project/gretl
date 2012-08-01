@@ -1588,7 +1588,7 @@ int write_tx_data (char *fname, int varnum,
 }
 
 int adjust_series (const double *x, double *y, const DATASET *dset, 
-		   int tramo)
+		   int tramo, int use_log)
 {
     int prog = (tramo)? TRAMO_SEATS : X12A;
     int savelist[2] = {1, TX_SA};
@@ -1614,11 +1614,14 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
     } 
 
     if (prog == X12A) { 
-	x12a_opts xopt = { 2, /* auto log transformation */
+	x12a_opts xopt = { 2, /* log transformation flag (2 == no) */
 			   0, /* don't correct for outliers */
 			   0  /* trading days correction */
 	};
 
+	if (use_log) {
+	    xopt.logtrans = 1;
+	}
 	if (dset->pd == 12) {
 	    xopt.trdays = 1;
 	}

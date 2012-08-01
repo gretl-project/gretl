@@ -4954,7 +4954,18 @@ static NODE *series_matrix_func (NODE *n, int f, parser *p)
     }
 
     return ret;
-}	
+}
+
+static int get_logtrans (const char *s)
+{
+    if (s != NULL) {
+	if (*s != 'T' && strchr(s, 'l')) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
 
 #define use_tramo(s) (s != NULL && (s[0] == 't' || s[0] == 'T'))
 
@@ -5049,10 +5060,11 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	case F_DESEAS:
 	    if (rtype == STR) {
 		int tramo = use_tramo(r->v.str);
+		int logt = get_logtrans(r->v.str);
 
-		p->err = seasonally_adjust_series(x, y, p->dset, tramo); 
+		p->err = seasonally_adjust_series(x, y, p->dset, tramo, logt); 
 	    } else {
-		p->err = seasonally_adjust_series(x, y, p->dset, 0);
+		p->err = seasonally_adjust_series(x, y, p->dset, 0, 0);
 	    }
 	    break;
 	case F_RESAMPLE:

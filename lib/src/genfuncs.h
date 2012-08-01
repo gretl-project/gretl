@@ -62,7 +62,8 @@ int movavg_series (const double *x, double *y, const DATASET *dset,
 		   int k, int center);
 
 int seasonally_adjust_series (const double *x, double *y, 
-			      DATASET *dset, int tramo);
+			      DATASET *dset, int tramo,
+			      int use_log);
 
 int panel_statistic (const double *x, double *y, const DATASET *dset, 
 		     int k, const double *mask);

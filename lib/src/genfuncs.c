@@ -839,11 +839,12 @@ int movavg_series (const double *x, double *y, const DATASET *dset,
 }
 
 int seasonally_adjust_series (const double *x, double *y, 
-			      DATASET *dset, int tramo)
+			      DATASET *dset, int tramo,
+			      int use_log)
 {
     void *handle;
     int (*adjust_series) (const double *, double *, 
-			  const DATASET *, int);
+			  const DATASET *, int, int);
     int t1 = dset->t1;
     int t2 = dset->t2;
     int T, err = 0;
@@ -885,7 +886,7 @@ int seasonally_adjust_series (const double *x, double *y,
 	dset->t1 = t1;
 	dset->t2 = t2;
 
-	err = (*adjust_series) (x, y, dset, tramo);
+	err = (*adjust_series) (x, y, dset, tramo, use_log);
 
 	dset->t1 = save_t1;
 	dset->t2 = save_t2;
