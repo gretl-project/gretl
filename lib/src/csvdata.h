@@ -26,7 +26,8 @@ typedef enum {
     AGGR_AVG,
     AGGR_SUM,
     AGGR_MIN,
-    AGGR_MAX
+    AGGR_MAX,
+    AGGR_SEQ
 } AggrType;
 
 #define import_na_string(s) (!strcmp(s, "NA") || \
@@ -59,6 +60,7 @@ int join_from_csv (const char *fname,
 		   const char *filter,
 		   const char *data,
 		   AggrType agg,
+		   int seqval,
 		   gretlopt opt,
 		   PRN *prn);
 

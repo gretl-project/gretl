@@ -4293,11 +4293,16 @@ static int lib_clear_data (ExecState *s, DATASET *dset)
     return err;
 }
 
-static int join_aggregation_method (const char *s)
+static int join_aggregation_method (const char *s, int *seqval)
 {
     int ret = -1;
 
-    if (!strcmp(s, "count")) {
+    if (!strncmp(s, "seq:", 4)) {
+	*seqval = atoi(s + 4);
+	if (*seqval >= 1) {
+	    ret = AGGR_SEQ;
+	} 
+    } else if (!strcmp(s, "count")) {
 	ret = AGGR_COUNT;
     } else if (!strcmp(s, "avg")) {
 	ret = AGGR_AVG;
@@ -4399,7 +4404,7 @@ static int lib_join_data (ExecState *s,
     char *p, *okey = NULL, *filter = NULL;
     char *varname = NULL, *data = NULL;
     int *ikeyvars = NULL;
-    int aggr = 0;
+    int aggr = 0, seqval = 0;
     int i, err = 0;
 
     p = strstr(s->line, s->cmd->param);
@@ -4436,7 +4441,7 @@ static int lib_join_data (ExecState *s,
 		    /* string specifying a row filter */
 		    filter = gretl_strdup(param);
 		} else if (i == 3) {
-		    aggr = join_aggregation_method(param);
+		    aggr = join_aggregation_method(param, &seqval);
 		    if (aggr < 0) {
 			err = E_PARSE;
 		    }
@@ -4466,7 +4471,7 @@ static int lib_join_data (ExecState *s,
     if (!err) {
 	err = join_from_csv(newfile, varname, dset, 
 			    ikeyvars, okey, filter,
-			    data, aggr, opt, 
+			    data, aggr, seqval, opt, 
 			    (opt & OPT_V)? prn : NULL);
     }	
 

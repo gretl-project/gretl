@@ -2583,6 +2583,7 @@ struct joiner_ {
     const int *l_keyno; /* for string comparison: list of ikey IDs in lhs dset */
     const int *r_keyno; /* for string comparison: list of okey IDs in rhs dset */
     AggrType aggr;    /* aggregation method for 1:n joining */
+    int seqval;       /* aux. sequence number for aggregation */
     DATASET *l_dset;  /* the main dataset */
     DATASET *r_dset;  /* the temporary CSV dataset */
 };
@@ -2694,6 +2695,7 @@ static joiner *joiner_new (csvjoin *jspec,
 			   DATASET *l_dset,
 			   jr_filter *filter,
 			   AggrType aggr,
+			   int seqval,
 			   int *err)
 {
     joiner *jr = NULL;
@@ -2773,6 +2775,7 @@ static joiner *joiner_new (csvjoin *jspec,
 	jr->n_rows = nrows;
 	jr->n_unique = 0;
 	jr->aggr = aggr;
+	jr->seqval = seqval;
 	jr->l_dset = l_dset;
 	jr->r_dset = r_dset;
     }
@@ -2939,7 +2942,7 @@ static double aggr_retval (int key, const char *lstr,
 
     if (pos < 0) {
 	/* (primary) key not found */
-	return NADBL;
+	return (jr->aggr == AGGR_COUNT)? 0 : NADBL;
     }
 
     n1 = jr->key_freq[pos];
@@ -2947,6 +2950,9 @@ static double aggr_retval (int key, const char *lstr,
     if (jr->n_keys == 1) {
 	if (jr->aggr == AGGR_COUNT) {
 	    return n1;
+	} else if (jr->aggr == AGGR_SEQ && jr->seqval > n1) {
+	    /* out of bounds sequence index */
+	    return NADBL;
 	} else if (n1 > 1 && jr->aggr == AGGR_NONE) {
 	    *err = E_DATA;
 	    gretl_errmsg_set(_("You need to specify an aggregation "
@@ -3038,6 +3044,11 @@ static double aggr_retval (int key, const char *lstr,
 	; /* all obs. are NAs */
     } else if (jr->aggr == AGGR_NONE) {
 	x = xmatch[0];
+    } else if (jr->aggr == AGGR_SEQ) {
+	i = jr->seqval - 1;
+	if (i >= 0 && i < n) {
+	    x = xmatch[i];
+	}
     } else if (jr->aggr == AGGR_MAX) {
 	x = xmatch[0];
 	for (i=1; i<n; i++) {
@@ -3339,6 +3350,7 @@ int join_from_csv (const char *fname,
 		   const char *filtstr,
 		   const char *data,
 		   AggrType aggr,
+		   int seqval,
 		   gretlopt opt,
 		   PRN *prn)
 {
@@ -3456,7 +3468,7 @@ int join_from_csv (const char *fname,
 			jspec.colnames[1]);
 		err = E_UNKVAR;
 	    }
-	} else if (aggr != AGGR_NONE && aggr != AGGR_COUNT) {
+	} else if (aggr != AGGR_NONE && aggr != AGGR_COUNT && aggr != AGGR_SEQ) {
 	    if (series_has_string_table(jspec.c->dset, valcol)) {
 		/* maybe this should just be a warning? */
 		fprintf(stderr, "'%s' is a string variable: aggregation type "
@@ -3514,7 +3526,7 @@ int join_from_csv (const char *fname,
 	pprintf(prn, "Data extracted from %s:\n", fname);
 	printdata(NULL, NULL, jspec.c->dset, OPT_O, prn);
 #endif
-	jr = joiner_new(&jspec, dset, filter, aggr, &err);
+	jr = joiner_new(&jspec, dset, filter, aggr, seqval, &err);
 	if (err) {
 	    fprintf(stderr, "join: error %d from joiner_new()\n", err);
 	}
