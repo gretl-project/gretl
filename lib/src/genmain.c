@@ -226,7 +226,6 @@ int function_from_string (const char *s)
 static const char *reswords[] = {
     /* constants */
     "const",
-    "CONST",
     "pi",
     "NA",
     "null",
