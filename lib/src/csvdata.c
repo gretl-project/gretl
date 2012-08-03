@@ -3302,6 +3302,12 @@ static int get_target_varnum (const char *vname,
     return targ;
 }
 
+/* Parse either one column name or two comma-separated names out of
+   @s. If @s contains a comma, we accept a zero-length name on either
+   the left or the right -- but not both -- as indicating that we
+   should use the corresponding inner key name.
+*/
+
 static int process_outer_key (const char *s, int n_keys, 
 			      char *name1, char *name2,
 			      int maxlen)
@@ -3315,19 +3321,24 @@ static int process_outer_key (const char *s, int n_keys,
 	n_okeys = 1;
     } else {
 	/* two comma-separated keys */
-	int n = strcspn(s, ",");
+	int n2, n1 = strcspn(s, ",");
 
-	if (n == 0 || n >= maxlen) {
+	if (n1 >= maxlen) {
 	    err = E_PARSE;
 	} else {
-	    strncat(name1, s, n);
-	    s += n + 1;
-	    n = strlen(s);
-	    if (n == 0 || n >= maxlen) {
+	    strncat(name1, s, n1);
+	    s += n1 + 1;
+	    n2 = strlen(s);
+	    if (n2 >= maxlen) {
 		err = E_PARSE;
 	    } else {
-		strncat(name2, s, VNAMELEN-1);
+		strncat(name2, s, n2);
 	    }
+	}
+
+	if (!err && n1 == 0 && n2 == 0) {
+	    /* both fields empty */
+	    err = E_PARSE;
 	}
 
 	if (!err) {
@@ -3414,7 +3425,7 @@ int join_from_csv (const char *fname,
 	err = process_outer_key(okey, n_keys, okeyname1, okeyname2, 48);
 	if (err) {
 	    fprintf(stderr, "join: error %d processing outer key(s)\n", err);
-	}
+	} 
     }
 
     if (!err) {
