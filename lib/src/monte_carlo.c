@@ -353,7 +353,6 @@ int ok_in_loop (int c)
 
     if (c == CORRGM ||
 	c == CUSUM ||
-	c == DATA ||
 	c == EQNPRINT ||
 	c == FUNC ||
 	c == HURST ||

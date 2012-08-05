@@ -3309,27 +3309,26 @@ static int get_target_varnum (const char *vname,
 */
 
 static int process_outer_key (const char *s, int n_keys, 
-			      char *name1, char *name2,
-			      int maxlen)
+			      char *name1, char *name2)
 {
     int n_okeys = 0;
     int err = 0;
 
     if (strchr(s, ',') == NULL) {
 	/* just one outer key */
-	strncat(name1, s, maxlen - 1);
+	strncat(name1, s, CSVSTRLEN - 1);
 	n_okeys = 1;
     } else {
 	/* two comma-separated keys */
 	int n2, n1 = strcspn(s, ",");
 
-	if (n1 >= maxlen) {
+	if (n1 >= CSVSTRLEN) {
 	    err = E_PARSE;
 	} else {
 	    strncat(name1, s, n1);
 	    s += n1 + 1;
 	    n2 = strlen(s);
-	    if (n2 >= maxlen) {
+	    if (n2 >= CSVSTRLEN) {
 		err = E_PARSE;
 	    } else {
 		strncat(name2, s, n2);
@@ -3369,8 +3368,8 @@ int join_from_csv (const char *fname,
     joiner *jr = NULL;
     jr_filter *filter = NULL;
     int okeyvars[3] = {0, -1, -1};
-    char okeyname1[48] = {0};
-    char okeyname2[48] = {0};
+    char okeyname1[CSVSTRLEN] = {0};
+    char okeyname2[CSVSTRLEN] = {0};
     int orig_v = dset->v;
     int targvar = 0;
     int str_keys = 0;
@@ -3422,7 +3421,7 @@ int join_from_csv (const char *fname,
     }
 
     if (!err && okey != NULL) {
-	err = process_outer_key(okey, n_keys, okeyname1, okeyname2, 48);
+	err = process_outer_key(okey, n_keys, okeyname1, okeyname2);
 	if (err) {
 	    fprintf(stderr, "join: error %d processing outer key(s)\n", err);
 	} 
