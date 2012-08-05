@@ -61,6 +61,7 @@ int join_from_csv (const char *fname,
 		   const char *data,
 		   AggrType agg,
 		   int seqval,
+		   const char *auxname,
 		   gretlopt opt,
 		   PRN *prn);
 

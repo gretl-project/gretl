@@ -4293,7 +4293,8 @@ static int lib_clear_data (ExecState *s, DATASET *dset)
     return err;
 }
 
-static int join_aggregation_method (const char *s, int *seqval)
+static int join_aggregation_method (const char *s, int *seqval,
+				    char **auxname)
 {
     int ret = -1;
 
@@ -4314,6 +4315,20 @@ static int join_aggregation_method (const char *s, int *seqval)
 	ret = AGGR_MAX;
     } else if (!strcmp(s, "none")) {
 	ret = AGGR_NONE;
+    } else if (!strncmp(s, "min(", 4) ||
+	       !strncmp(s, "max(", 4)) {
+	const char *p = strchr(s + 4, ')');
+
+	if (p != NULL && strlen(p) == 1) {
+	    int len = p - (s + 4);
+
+	    if (len > 0) {
+		*auxname = gretl_strndup(s + 4, len);
+		if (*auxname != NULL) {
+		    ret = (s[1] == 'a')? AGGR_MAX : AGGR_MIN;
+		}
+	    }
+	}
     }
 
     return ret;
@@ -4403,6 +4418,7 @@ static int lib_join_data (ExecState *s,
     const char *param;
     char *p, *okey = NULL, *filter = NULL;
     char *varname = NULL, *data = NULL;
+    char *auxname = NULL;
     int *ikeyvars = NULL;
     int aggr = 0, seqval = 0;
     int i, err = 0;
@@ -4441,7 +4457,7 @@ static int lib_join_data (ExecState *s,
 		    /* string specifying a row filter */
 		    filter = gretl_strdup(param);
 		} else if (i == 3) {
-		    aggr = join_aggregation_method(param, &seqval);
+		    aggr = join_aggregation_method(param, &seqval, &auxname);
 		    if (aggr < 0) {
 			err = E_PARSE;
 		    }
@@ -4471,8 +4487,8 @@ static int lib_join_data (ExecState *s,
     if (!err) {
 	err = join_from_csv(newfile, varname, dset, 
 			    ikeyvars, okey, filter,
-			    data, aggr, seqval, opt, 
-			    (opt & OPT_V)? prn : NULL);
+			    data, aggr, seqval, auxname,
+			    opt, (opt & OPT_V)? prn : NULL);
     }	
 
     free(ikeyvars);
@@ -4480,6 +4496,7 @@ static int lib_join_data (ExecState *s,
     free(filter);
     free(data);
     free(varname);
+    free(auxname);
 
     return err;
 }

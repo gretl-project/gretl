@@ -52,10 +52,11 @@ enum {
     JOIN_VAL,
     JOIN_LHS,
     JOIN_RHS,
-    JOIN_KEY2
+    JOIN_KEY2,
+    JOIN_AUX
 };
 
-#define JOIN_MAXCOL 5
+#define JOIN_MAXCOL 6
 
 typedef struct csvjoin_ csvjoin;
 typedef struct csvdata_ csvdata;
@@ -2567,6 +2568,7 @@ struct jr_row_ {
     int keyval;  /* primary key value */
     int keyval2; /* seconary key value, if applicable */
     double val;  /* data value */
+    double aux;  /* auxiliary value */
 };
 
 typedef struct jr_row_ jr_row;
@@ -2584,6 +2586,7 @@ struct joiner_ {
     const int *r_keyno; /* for string comparison: list of okey IDs in rhs dset */
     AggrType aggr;    /* aggregation method for 1:n joining */
     int seqval;       /* aux. sequence number for aggregation */
+    int auxcol;       /* aux. data column for aggregation */
     DATASET *l_dset;  /* the main dataset */
     DATASET *r_dset;  /* the temporary CSV dataset */
 };
@@ -2701,7 +2704,7 @@ static joiner *joiner_new (csvjoin *jspec,
     joiner *jr = NULL;
     DATASET *r_dset = jspec->c->dset;
     int keycol = 0, key2col = 0, valcol = 0;
-    int lhcol = 0, rhcol = 0;
+    int lhcol = 0, rhcol = 0, auxcol = 0;
     int i, nrows = 0;
 
     for (i=0; i<JOIN_MAXCOL; i++) {
@@ -2715,6 +2718,8 @@ static joiner *joiner_new (csvjoin *jspec,
 	    rhcol = i+1;
 	} else if (jspec->colnums[i] == JOIN_KEY2) {
 	    key2col = i+1;
+	} else if (jspec->colnums[i] == JOIN_AUX) {
+	    auxcol = i+1;
 	}
     }
 
@@ -2776,6 +2781,7 @@ static joiner *joiner_new (csvjoin *jspec,
 	jr->n_unique = 0;
 	jr->aggr = aggr;
 	jr->seqval = seqval;
+	jr->auxcol = auxcol;
 	jr->l_dset = l_dset;
 	jr->r_dset = r_dset;
     }
@@ -2786,6 +2792,7 @@ static joiner *joiner_new (csvjoin *jspec,
 
 	for (i=0; i<r_dset->n; i++) {
 	    if (join_row_wanted(r_dset, i, filter, err)) {
+		/* the keys */
 		if (keycol > 0) {
 		    jr->rows[j].keyval = (int) r_dset->Z[keycol][i];
 		    if (key2col > 0) {
@@ -2803,7 +2810,14 @@ static joiner *joiner_new (csvjoin *jspec,
 		    jr->rows[j].keyval = 0;
 		    jr->rows[j].keyval2 = 0;
 		}
+		/* the data */
 		jr->rows[j].val = r_dset->Z[valcol][i];
+		/* the auxiliary data */
+		if (auxcol > 0) {
+		    jr->rows[j].aux = r_dset->Z[auxcol][i];
+		} else {
+		    jr->rows[j].aux = 0;
+		}
 		j++;
 	    }
 	}
@@ -2900,10 +2914,10 @@ static double aggr_retval (int key, const char *lstr,
 			   int key2, const char *lstr2,
 			   const char **rlabels2,
 			   joiner *jr, double *xmatch,
-			   int *err)
+			   double *auxmatch, int *err)
 {
     const char *rstr = NULL;
-    double x, y;
+    double x, y, xa;
     int pos, imax;
     int i, n1, n;
 
@@ -3014,7 +3028,13 @@ static double aggr_retval (int key, const char *lstr,
 	    if (match) {
 		totcount++;
 		x = jr->rows[i].val;
-		if (!na(x)) {
+		if (jr->auxcol) {
+		    xa = jr->rows[i].aux;
+		    if (!na(xa)) {
+			auxmatch[n] = xa;
+			xmatch[n++] = x;
+		    }
+		} else if (!na(x)) {
 		    xmatch[n++] = x;
 		}
 	    }		
@@ -3032,7 +3052,13 @@ static double aggr_retval (int key, const char *lstr,
 	/* just one key */
 	for (i=pos; i<imax; i++) {
 	    x = jr->rows[i].val;
-	    if (!na(x)) {
+	    if (jr->auxcol) {
+		xa = jr->rows[i].aux;
+		if (!na(xa)) {
+		    auxmatch[n] = xa;
+		    xmatch[n++] = x;
+		}
+	    } else if (!na(x)) {
 		xmatch[n++] = x;
 	    }
 	}
@@ -3050,19 +3076,41 @@ static double aggr_retval (int key, const char *lstr,
 	    x = xmatch[i];
 	}
     } else if (jr->aggr == AGGR_MAX) {
+	if (jr->auxcol) {
+	    /* using the max of the auxiliary var */
+	    xa = auxmatch[0];
+	}
 	x = xmatch[0];
 	for (i=1; i<n; i++) {
-	    y = xmatch[i];
-	    if (y > x) {
-		x = y;
+	    if (jr->auxcol) {
+		y = auxmatch[i];
+		if (y > xa) {
+		    x = xmatch[i];
+		}
+	    } else {
+		y = xmatch[i];
+		if (y > x) {
+		    x = y;
+		}
 	    }
 	}
     } else if (jr->aggr == AGGR_MIN) {
+	if (jr->auxcol) {
+	    /* using the min of the auxiliary var */
+	    xa = auxmatch[0];
+	}
 	x = xmatch[0];
 	for (i=1; i<n; i++) {
-	    y = xmatch[i];
-	    if (y < x) {
-		x = y;
+	    if (jr->auxcol) {
+		y = auxmatch[i];
+		if (y < xa) {
+		    x = xmatch[i];
+		}
+	    } else {	    
+		y = xmatch[i];
+		if (y < x) {
+		    x = y;
+		}
 	    }
 	}
     } else if (jr->aggr == AGGR_SUM || jr->aggr == AGGR_AVG) {
@@ -3088,6 +3136,7 @@ static int aggregate_data (const int *ikeyvars, int newvar, joiner *jr)
     const char *key2str = NULL;
     DATASET *dset = jr->l_dset;
     double *xmatch = NULL;
+    double *auxmatch = NULL;
     double z, z2 = 0.0;
     int i, nmax, key, key2 = 0;
     int err = 0;
@@ -3121,6 +3170,13 @@ static int aggregate_data (const int *ikeyvars, int newvar, joiner *jr)
 	if (xmatch == NULL) {
 	    return E_ALLOC;
 	}
+	if (jr->auxcol) {
+	    auxmatch = malloc(nmax * sizeof *auxmatch);
+	    if (auxmatch == NULL) {
+		free(xmatch);
+		return E_ALLOC;
+	    }
+	}	    
     }
 
     for (i=dset->t1; i<=dset->t2; i++) {
@@ -3150,7 +3206,8 @@ static int aggregate_data (const int *ikeyvars, int newvar, joiner *jr)
 	    }
 	    z = aggr_retval(key, keystr, rlabels,
 			    key2, key2str, rlabels2,
-			    jr, xmatch, &err);
+			    jr, xmatch, auxmatch,
+			    &err);
 	    if (err) {
 		break;
 	    }
@@ -3162,6 +3219,7 @@ static int aggregate_data (const int *ikeyvars, int newvar, joiner *jr)
     }
 
     free(xmatch);
+    free(auxmatch);
 
     return err;
 }
@@ -3361,6 +3419,7 @@ int join_from_csv (const char *fname,
 		   const char *data,
 		   AggrType aggr,
 		   int seqval,
+		   const char *auxname,
 		   gretlopt opt,
 		   PRN *prn)
 {
@@ -3411,6 +3470,9 @@ int join_from_csv (const char *fname,
 		varname);
     }
     fprintf(stderr, " aggregation = %d\n", aggr);
+    if (auxname != NULL) {
+	fprintf(stderr, " aggr auxiliary col = '%s'\n", auxname);
+    }
 #endif
 
     if (filtstr != NULL) {
@@ -3453,7 +3515,12 @@ int join_from_csv (const char *fname,
 	    jspec.colnames[4] = okeyname2;
 	} else if (n_keys > 1) {
 	    jspec.colnames[4] = dset->varname[ikeyvars[2]];
-	}	
+	}
+
+	/* the auxiliary var for aggregation, if present */
+	if (auxname != NULL) {
+	    jspec.colnames[5] = auxname;
+	}
 
 	err = real_import_csv(fname, dset, NULL, NULL,
 			      &jspec, opt, prn);
