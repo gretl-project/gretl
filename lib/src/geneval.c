@@ -3522,6 +3522,28 @@ static NODE *list_and_or (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+static NODE *get_named_list_element (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int *list = node_get_list(l, p);
+	int i = node_get_int(r, p);
+
+	if (!p->err) {
+	    if (i < 1 || i > list[0]) {
+		gretl_errmsg_sprintf("Index value %d is out of bounds", i);
+		p->err = E_DATA;
+	    } else {
+		ret->v.xval = list[i];
+	    }
+	}
+	free(list);
+    }
+
+    return ret;
+}    
+
 static gretl_bundle *node_get_bundle (NODE *n, parser *p)
 {
     gretl_bundle *b;
@@ -8841,6 +8863,14 @@ static NODE *eval (NODE *t, parser *p)
 	/* matrix sub-slice, x:y, or lag range, 'p to q' */
 	ret = process_subslice(l, r, p);
 	break;
+    case LISTELEM:
+	/* list plus scalar */
+	if (r->t != NUM) {
+	    node_type_error(t->t, 2, NUM, r, p);
+	} else {
+	    ret = get_named_list_element(l, r, p);
+	}
+	break;
     case BOBJ:
 	/* name of bundle plus key */
 	ret = get_named_bundle_value(l, r, p);
@@ -10464,11 +10494,6 @@ static void pre_process (parser *p, int flags)
 
 /* tests for saving variable */
 
-static int non_scalar_matrix (const NODE *r)
-{
-    return r->t == MAT && (r->v.m->rows != 1 || r->v.m->cols != 1);
-}
-
 static int matrix_may_be_masked (const gretl_matrix *m, int n,
 				 parser *p)
 {
@@ -11076,9 +11101,11 @@ static int gen_check_return_type (parser *p)
 
     if (p->targ == NUM) {
 	/* result must be scalar or 1 x 1 matrix */
-	if (r->t == VEC || r->t == LIST || non_scalar_matrix(r)) {
+	if (r->t == NUM || scalar_matrix_node(r)) {
+	    ; /* OK */
+	} else {
 	    p->err = E_TYPES;
-	} 
+	}
     } else if (p->targ == VEC) {
 	/* result must be scalar, series, or conformable matrix */
 	if (r->t == NUM || r->t == VEC) {

@@ -126,8 +126,7 @@ typedef enum {
 #define model_data_scalar(i) (i > R_MAX && i < M_SCALAR_MAX)
 #define model_data_series(i) (i > M_SCALAR_MAX && i < M_SERIES_MAX)
 #define model_data_matrix(i) (i > M_SERIES_MAX && i < M_MATRIX_MAX)
-#define model_data_matrix_builder(i) (i > M_MATRIX_MAX && \
-				      i < M_MBUILD_MAX)
+#define model_data_matrix_builder(i) (i > M_MATRIX_MAX && i < M_MBUILD_MAX)
 #define model_data_list(i)   (i > M_MBUILD_MAX && i < M_LIST_MAX)
 #define model_data_string(i) (i > M_LIST_MAX && i < M_MAX)
 

@@ -106,10 +106,12 @@ enum {
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
               OVAR,	  /* object variable: variable "under" an object */
               LIST,	  /* reference to named list */
-	      LISTVAR,    /* variable in list */
-	      STR,	  /* string */
-	      BUNDLE,     /* gretl bundle (hash table) */
-  /* 80 */    BOBJ,       /* object inside a bundle */
+	      LISTVAR,    /* variable in list, dot syntax */
+	      LISTELEM,   /* list member, [...] syntax) */
+	      MLISTELEM,  /* accessor list member, [...] syntax) */
+  /* 80 */    STR,	  /* string */
+              BUNDLE,     /* gretl bundle (hash table) */
+              BOBJ,       /* object inside a bundle */
 	      FARGS,	  /* set of n function arguments */
               EMPTY,      /* "null" */
 	      ABSENT,
@@ -117,9 +119,9 @@ enum {
               EROOT,	  /* dummy root for (...) expression */
               UFUN,	  /* user-defined function */
 	      RFUN,       /* GNU R function */
-              VSTR,       /* string variable */
+  /* 90 */    VSTR,       /* string variable */
               INC,   
-  /* 90 */    DEC,
+              DEC,
 	      QUERY,
               EOT,	  /* end of transmission */
 	      UNK 
@@ -418,7 +420,7 @@ enum {
 
 #define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
                    s == MSL2 || s == SUBSL || s == LAG || \
-                   s == OBS || s == BOBJ)
+                   s == OBS || s == BOBJ || s == LISTELEM)
 
 #define b1sym(s) (unary_op(s) || func1_symb(s) || funcn_symb(s) || \
                   s == G_LPR || s == EROOT)

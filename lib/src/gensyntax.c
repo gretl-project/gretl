@@ -337,6 +337,9 @@ static NODE *base (parser *p, NODE *up)
 	}
 	if (up->t == OBS) {
 	    t = obs_node(p);
+	} else if (up->t == LISTELEM) {
+	    lex(p);
+	    t = expr(p);
 	}
 	if (p->sym == G_RBR) {
 	    lex(p);
@@ -1136,6 +1139,17 @@ static NODE *powterm (parser *p)
 	    t->v.b2.l = newref(p, MVAR);
 	    lex(p);
 	    t->v.b2.r = get_final_string_arg(p, sym, 1);
+	}
+    } else if (sym == LISTELEM || sym == MLISTELEM) {
+	t = newb2(LISTELEM, NULL, NULL);
+	if (t != NULL) {
+	    if (sym == LISTELEM) {
+		t->v.b2.l = newref(p, LIST);
+	    } else {
+		t->v.b2.l = newref(p, MVAR);
+	    }
+	    lex(p);
+	    t->v.b2.r = base(p, t);
 	}
     } else if (sym == BOBJ) {
 	t = newb2(sym, NULL, NULL);

@@ -986,7 +986,7 @@ static void look_up_word (const char *s, parser *p)
 #define could_be_matrix(t) (model_data_matrix(t) || \
 			    model_data_matrix_builder(t) || \
 			    t == M_UHAT || t == M_YHAT || \
-			    t == R_TEST_STAT || R_TEST_PVAL)
+			    t == R_TEST_STAT || t == R_TEST_PVAL)
 
 static void word_check_next_char (parser *p)
 {
@@ -1024,6 +1024,12 @@ static void word_check_next_char (parser *p)
 	} else if (p->sym == USERIES) {
 	    /* observation from series */
 	    p->sym = OBS;
+	} else if (p->sym == LIST) {
+	    /* element of list */
+	    p->sym = LISTELEM;
+	} else if (p->sym == MVAR && model_data_list(p->idnum)) {
+	    /* element of accessor list */
+	    p->sym = MLISTELEM;
 	} else if (p->sym == BUNDLE) {
 	    /* object from bundle */
 	    p->sym = BOBJ;
@@ -1545,6 +1551,8 @@ const char *getsymb (int t, const parser *p)
 	return "LISTVAR";
     } else if (t == BOBJ) {
 	return "BOBJ";
+    } else if (t == LISTELEM) {
+	return "LISTELEM";
     }
 
     if (p != NULL) {
