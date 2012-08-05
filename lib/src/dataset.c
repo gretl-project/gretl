@@ -3647,7 +3647,7 @@ void series_attach_string_table (DATASET *dset, int i, void *ptr)
 
 int series_has_string_table (const DATASET *dset, int i)
 {
-    if (i > 0 && i < dset->v) {
+    if (dset != NULL && i > 0 && i < dset->v) {
 	return dset->varinfo[i]->st != NULL;
     } else {
 	return 0;

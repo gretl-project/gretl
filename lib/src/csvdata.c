@@ -3342,18 +3342,15 @@ static int get_target_varnum (const char *vname,
 			      DATASET *dset,
 			      int *err)
 {
-    int targ = current_series_index(dset, vname);
+    int i, targ = -1;
 
-    if (targ < 0) {
-	int i;
+    *err = dataset_add_series(1, dset);
 
-	*err = dataset_add_series(1, dset);
-	if (!*err) {
-	    targ = dset->v - 1;
-	    strcpy(dset->varname[targ], vname);
-	    for (i=0; i<dset->n; i++) {
-		dset->Z[targ][i] = NADBL;
-	    }
+    if (!*err) {
+	targ = dset->v - 1;
+	strcpy(dset->varname[targ], vname);
+	for (i=0; i<dset->n; i++) {
+	    dset->Z[targ][i] = NADBL;
 	}
     }
 
@@ -3429,12 +3426,17 @@ int join_from_csv (const char *fname,
     int okeyvars[3] = {0, -1, -1};
     char okeyname1[CSVSTRLEN] = {0};
     char okeyname2[CSVSTRLEN] = {0};
-    int orig_v = dset->v;
-    int targvar = 0;
+    int targvar, orig_v = dset->v;
     int str_keys = 0;
     int str_keys2 = 0;
     int n_keys = 0;
     int i, err = 0;
+
+    targvar = current_series_index(dset, varname);
+    if (targvar == 0) {
+	/* can't modify const */
+	return E_DATA;
+    }    
 
     if (ikeyvars != NULL) {
 	n_keys = ikeyvars[0];
@@ -3498,10 +3500,12 @@ int join_from_csv (const char *fname,
 	}
 
 	/* the data or "payload" column */
-	if (data != NULL) {
-	    jspec.colnames[1] = data;
-	} else {
-	    jspec.colnames[1] = varname;
+	if (aggr != AGGR_COUNT) {
+	    if (data != NULL) {
+		jspec.colnames[1] = data;
+	    } else {
+		jspec.colnames[1] = varname;
+	    }
 	}
 
 	/* handle filter columns, if applicable */
@@ -3529,7 +3533,7 @@ int join_from_csv (const char *fname,
 	}
     }
 
-    if (!err) {
+    if (!err && aggr != AGGR_COUNT) {
 	/* run some sanity tests on the payload */
 	int valcol = -1;
 
@@ -3540,12 +3544,12 @@ int join_from_csv (const char *fname,
 	}
 
 	if (valcol < 0) {
-	    if (data != NULL || aggr != AGGR_COUNT) {
+	    if (data != NULL) {
 		fprintf(stderr, "join: data column '%s' was not found\n", 
 			jspec.colnames[1]);
 		err = E_UNKVAR;
 	    }
-	} else if (aggr != AGGR_NONE && aggr != AGGR_COUNT && aggr != AGGR_SEQ) {
+	} else if (aggr != AGGR_NONE && aggr != AGGR_SEQ) {
 	    if (series_has_string_table(jspec.c->dset, valcol)) {
 		/* maybe this should just be a warning? */
 		fprintf(stderr, "'%s' is a string variable: aggregation type "
@@ -3609,6 +3613,15 @@ int join_from_csv (const char *fname,
 	}
     }
 
+    if (!err && targvar > 0) {
+	/* initial check for mismatch of string var vs straight numeric,
+	   between the import and existing data, if present
+	*/
+	if (aggr == AGGR_COUNT && series_has_string_table(dset, targvar)) {
+	    err = E_TYPES;
+	}
+    }
+
     if (!err) {
 	jr->n_keys = n_keys;
 	jr->str_keys = str_keys;
@@ -3625,7 +3638,7 @@ int join_from_csv (const char *fname,
 #endif
     }
 
-    if (!err) {
+    if (!err && targvar < 0) {
 	targvar = get_target_varnum(varname, dset, &err);
 	if (err) {
 	    fprintf(stderr, "join: error %d from get_target_varnum()\n", err);
