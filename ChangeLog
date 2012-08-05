@@ -2,6 +2,7 @@ Version 1.9.10, in progress
 - Update translations
 - "delete" command: add a --force option to permit deletion of
   series in loops (to be used with caution!)
+- "data" command: allow this in loops
 - Enable use of the "open" command in loops (gretlcli only)
 - "open" command: rename the option for reading fixed format data
   from --cols to --fixed-cols
@@ -23,6 +24,7 @@ Version 1.9.10, in progress
   "Virtual Store" folder-redirection introduced in Windows Vista
 - Add two new functions: ghk() and halton()
 - Add two new accessors: $pi and $huge
+- Enable indexing into named lists to get the ID numbers of series
 - Fix bivariate normal cdf calculator (would return NAs in some
   pathological cases)
 - GUI: add check for updated addons, such as gig
