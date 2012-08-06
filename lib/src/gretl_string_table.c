@@ -194,8 +194,16 @@ const char **series_table_get_strings (series_table *st, int *n_strs)
     return (const char **) st->strs;
 }
 
-static int series_table_add_string (series_table *st, 
-				    const char *s)
+/**
+ * series_table_add_string:
+ * @st: a gretl series table.
+ * @s: new string to add.
+ *
+ * Returns: the index of the new string within the table, or
+ * -1 on failure.
+ */
+
+int series_table_add_string (series_table *st, const char *s)
 {
     int n, err;
 
@@ -474,6 +482,37 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
     set_string_table_written();
 
     return err;
+}
+
+/**
+ * gretl_string_table_save:
+ * @gst: gretl string table.
+ * @dset: dataset information (for names of variables).
+ *
+ * Attaches the content of @gst to @dset.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_string_table_save (gretl_string_table *gst, DATASET *dset)
+{
+    series_table *st;
+    int i, vi, ncols = 0;
+
+    if (gst == NULL || dset->varinfo == NULL) {
+	return E_DATA;
+    }
+
+    ncols = (gst->cols_list != NULL)? gst->cols_list[0] : 0;
+
+    for (i=0; i<ncols; i++) {
+	vi = gst->cols_list[i+1];
+	st = gst->cols[i];
+	series_attach_string_table(dset, vi, st);
+	gst->cols[i] = NULL;
+    }
+
+    return 0;
 }
 
 /**

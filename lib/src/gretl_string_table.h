@@ -22,8 +22,6 @@
 
 typedef struct _gretl_string_table gretl_string_table;
 
-typedef struct _series_table series_table;
-
 gretl_string_table *gretl_string_table_new (const int *list);
 
 int gretl_string_table_index (gretl_string_table *gst, const char *s, 
@@ -31,6 +29,8 @@ int gretl_string_table_index (gretl_string_table *gst, const char *s,
 
 int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 			      const char *fname, PRN *prn);
+
+int gretl_string_table_save (gretl_string_table *gst, DATASET *dset);
 
 void gretl_string_table_destroy (gretl_string_table *gst);
 
@@ -46,6 +46,8 @@ void series_table_destroy (series_table *st);
 double series_table_get_value (series_table *st, const char *s);
 
 const char *series_table_get_string (series_table *st, double val);
+
+int series_table_add_string (series_table *st, const char *s);
 
 const char **series_table_get_strings (series_table *st, int *n_strs);
 

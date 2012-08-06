@@ -121,7 +121,7 @@ struct csvdata_ {
 
 #define joining(c) (c->jspec != NULL)
 
-static int 
+static int
 time_series_label_check (DATASET *dset, int reversed, char *skipstr, PRN *prn);
 
 static void csvdata_free (csvdata *c)
@@ -2450,8 +2450,11 @@ static int real_import_csv (const char *fname,
     }
 
     if (c->st != NULL) {
-	/* FIXME joining? */
-	gretl_string_table_print(c->st, c->dset, fname, prn);
+	if (joining(c)) {
+	    gretl_string_table_save(c->st, c->dset);
+	} else {
+	    gretl_string_table_print(c->st, c->dset, fname, prn);
+	}
     }
 
     /* If there were observation labels and they were not interpretable
@@ -2587,6 +2590,7 @@ struct joiner_ {
     AggrType aggr;    /* aggregation method for 1:n joining */
     int seqval;       /* aux. sequence number for aggregation */
     int auxcol;       /* aux. data column for aggregation */
+    int valcol;       /* column of RHS dataset holding payload */
     DATASET *l_dset;  /* the main dataset */
     DATASET *r_dset;  /* the temporary CSV dataset */
 };
@@ -2782,6 +2786,7 @@ static joiner *joiner_new (csvjoin *jspec,
 	jr->aggr = aggr;
 	jr->seqval = seqval;
 	jr->auxcol = auxcol;
+	jr->valcol = valcol;
 	jr->l_dset = l_dset;
 	jr->r_dset = r_dset;
     }
@@ -2810,8 +2815,12 @@ static joiner *joiner_new (csvjoin *jspec,
 		    jr->rows[j].keyval = 0;
 		    jr->rows[j].keyval2 = 0;
 		}
-		/* the data */
-		jr->rows[j].val = r_dset->Z[valcol][i];
+		/* the "payload" data */
+		if (valcol > 0) {
+		    jr->rows[j].val = r_dset->Z[valcol][i];
+		} else {
+		    jr->rows[j].val = 0;
+		}
 		/* the auxiliary data */
 		if (auxcol > 0) {
 		    jr->rows[j].aux = r_dset->Z[auxcol][i];
@@ -2963,6 +2972,7 @@ static double aggr_retval (int key, const char *lstr,
 
     if (jr->n_keys == 1) {
 	if (jr->aggr == AGGR_COUNT) {
+	    /* simple, we're done */
 	    return n1;
 	} else if (jr->aggr == AGGR_SEQ && jr->seqval > n1) {
 	    /* out of bounds sequence index */
@@ -3126,8 +3136,52 @@ static double aggr_retval (int key, const char *lstr,
     return x;
 }
 
-static int aggregate_data (const int *ikeyvars, int newvar, joiner *jr)
+static int key_from_double (double x, int *err)
 {
+    if (xna(x) || fabs(x) > INT_MAX) {
+	*err = E_INVARG;
+	return -1;
+    } else {
+	return (int) trunc(x);
+    }
+}
+
+/* Handle the case where (a) the "aggregated" value from the right,
+   @rz, is actually the coding of a string value, and (b) the LHS
+   series is pre-existing and already has a string table attached. The
+   RHS coding must be made consistent with that on the left. We reach
+   this function only if we've verified that there are string tables
+   on both sides, and if @rz is not NA.
+*/
+
+static double maybe_adjust_string_code (series_table *rst,
+					series_table *lst,
+					double rz, int *err)
+{
+    const char *rstr = series_table_get_string(rst, rz);
+    double lz = series_table_get_value(lst, rstr);
+
+    if (!na(lz)) {
+	/* use the LHS encoding */
+	rz = lz;
+    } else {
+	/* we need to append to the LHS string table */
+	int n = series_table_add_string(lst, rstr);
+
+	if (n < 0) {
+	    *err = E_ALLOC;
+	} else {
+	    rz = n;
+	}
+    }
+
+    return rz;
+}
+
+static int aggregate_data (joiner *jr, const int *ikeyvars, int newvar)
+{
+    series_table *rst = NULL;
+    series_table *lst = NULL;
     const char **llabels = NULL;
     const char **rlabels = NULL;
     const char **llabels2 = NULL;
@@ -3138,6 +3192,7 @@ static int aggregate_data (const int *ikeyvars, int newvar, joiner *jr)
     double *xmatch = NULL;
     double *auxmatch = NULL;
     double z, z2 = 0.0;
+    int strcheck = 0;
     int i, nmax, key, key2 = 0;
     int err = 0;
 
@@ -3179,7 +3234,13 @@ static int aggregate_data (const int *ikeyvars, int newvar, joiner *jr)
 	}	    
     }
 
-    for (i=dset->t1; i<=dset->t2; i++) {
+    if (jr->valcol > 0) {
+	rst = series_get_string_table(jr->r_dset, jr->valcol);
+	lst = series_get_string_table(jr->l_dset, newvar);
+	strcheck = (rst != NULL && lst != NULL);
+    }
+
+    for (i=dset->t1; i<=dset->t2 && !err; i++) {
 	z = dset->Z[ikeyvars[1]][i];
 	if (jr->n_keys == 2) {
 	    z2 = dset->Z[ikeyvars[2]][i];
@@ -3194,27 +3255,31 @@ static int aggregate_data (const int *ikeyvars, int newvar, joiner *jr)
 	if (xna(z) || xna(z2)) {
 	    dset->Z[newvar][i] = NADBL;
 	} else {
-	    key = trunc(z);
-	    if (llabels != NULL) {
+	    key = key_from_double(z, &err);
+	    if (!err && llabels != NULL) {
 		keystr = llabels[key-1];
 	    }
-	    if (jr->n_keys == 2) {
-		key2 = trunc(z2);
-		if (llabels2 != NULL) {
+	    if (!err && jr->n_keys == 2) {
+		key2 = key_from_double(z2, &err);
+		if (!err && llabels2 != NULL) {
 		    key2str = llabels2[key2-1];
 		}
 	    }
-	    z = aggr_retval(key, keystr, rlabels,
-			    key2, key2str, rlabels2,
-			    jr, xmatch, auxmatch,
-			    &err);
-	    if (err) {
-		break;
+	    if (!err) {
+		z = aggr_retval(key, keystr, rlabels,
+				key2, key2str, rlabels2,
+				jr, xmatch, auxmatch,
+				&err);
 	    }
 #if CDEBUG
-	    fprintf(stderr, " aggr_retval gives %g\n", z);
+	    fprintf(stderr, " aggr_retval gives %g (err = %d)\n", z, err);
 #endif
-	    dset->Z[newvar][i] = z;
+	    if (!err && strcheck && !na(z)) {
+		z = maybe_adjust_string_code(rst, lst, z, &err);
+	    }
+	    if (!err) {
+		dset->Z[newvar][i] = z;
+	    }
 	}
     }
 
@@ -3226,20 +3291,28 @@ static int aggregate_data (const int *ikeyvars, int newvar, joiner *jr)
 
 /* for use when no keys are given */
 
-static int join_fetch_data (int newvar, joiner *jr)
+static int join_fetch_data (joiner *jr, int newvar)
 {
+    series_table *rst = NULL;
+    series_table *lst = NULL;
     DATASET *dset = jr->l_dset;
-    int err = 0;
+    double z;
+    int strcheck = 0;
+    int i, err = 0;
 
-    if (jr->n_rows != sample_size(dset)) {
-	gretl_errmsg_set(_("Series length does not match the dataset"));
-	err = E_DATA;
-    } else {
-	int i, t;
+    if (jr->valcol > 0) {
+	rst = series_get_string_table(jr->r_dset, jr->valcol);
+	lst = series_get_string_table(dset, newvar);
+	strcheck = (rst != NULL && lst != NULL);
+    }
 
-	for (i=0; i<jr->n_rows; i++) {
-	    t = dset->t1 + i;
-	    dset->Z[newvar][t] = jr->rows[i].val;
+    for (i=0; i<jr->n_rows && !err; i++) {
+	z = jr->rows[i].val;
+	if (strcheck && !na(z)) {
+	    z = maybe_adjust_string_code(rst, lst, z, &err);
+	}
+	if (!err) {
+	    dset->Z[newvar][dset->t1 + i] = z;
 	}
     }
 
@@ -3402,6 +3475,68 @@ static int process_outer_key (const char *s, int n_keys,
 
     if (!err && n_okeys != n_keys) {
 	err = E_PARSE;
+    }
+
+    return err;
+}
+
+static int numerical_aggr (joiner *jr, int aggr)
+{
+    if (aggr == AGGR_SUM || aggr == AGGR_AVG) {
+	return 1;
+    } else if (aggr == AGGR_MIN || aggr == AGGR_MAX) {
+	return jr->auxcol == 0;
+    } else {
+	return 0;
+    }
+}
+
+#define lr_mismatch(l,r) ((l > 0 && r == 0) || (r > 0 && l == 0))
+
+/* Run some checks pertaining to the nature of the payload
+   (string-valued vs numeric) in relation to the aggregation
+   method specified, and the nature of the existing left-hand
+   series, if any.
+*/
+
+static int join_data_type_check (joiner *jr, int targvar,
+				 int aggr)
+{
+    int lstr = -1, rstr = -1;
+    int err = 0;
+
+    if (targvar > 0) {
+	/* there's an existing LHS series */
+	lstr = series_has_string_table(jr->l_dset, targvar);
+	if (lstr && aggr == AGGR_COUNT) {
+	    /* count values can't be mixed with strings */
+	    err = E_TYPES;
+	}
+    }
+
+    if (!err && jr->valcol > 0) {
+	/* there's a payload variable on the right */
+	rstr = series_has_string_table(jr->r_dset, jr->valcol);
+	if (rstr && numerical_aggr(jr, aggr)) {
+	    /* if the RHS series is string-valued, numerical
+	       aggregation methods are not meaningful
+	    */
+	    err = E_TYPES;
+	}
+    }
+
+    if (!err && lr_mismatch(lstr, rstr)) {
+	/* one of (L, R) is string-valued, but not the other */
+	err = E_TYPES;
+    }    
+
+    if (!err && jr->auxcol > 0) {
+	/* we're using an aux. column for min/max aggregation:
+	   that variable cannot be string-valued 
+	*/
+	if (series_has_string_table(jr->r_dset, jr->auxcol)) {
+	    err = E_TYPES;
+	}
     }
 
     return err;
@@ -3613,13 +3748,9 @@ int join_from_csv (const char *fname,
 	}
     }
 
-    if (!err && targvar > 0) {
-	/* initial check for mismatch of string var vs straight numeric,
-	   between the import and existing data, if present
-	*/
-	if (aggr == AGGR_COUNT && series_has_string_table(dset, targvar)) {
-	    err = E_TYPES;
-	}
+    if (!err) {
+	/* initial check for mash-up of string data and numeric */
+	err = join_data_type_check(jr, targvar, aggr);
     }
 
     if (!err) {
@@ -3638,6 +3769,11 @@ int join_from_csv (const char *fname,
 #endif
     }
 
+    if (!err && jr->n_keys == 0 && jr->n_rows != sample_size(jr->l_dset)) {
+	gretl_errmsg_set(_("Series length does not match the dataset"));
+	err = E_DATA;
+    }
+
     if (!err && targvar < 0) {
 	targvar = get_target_varnum(varname, dset, &err);
 	if (err) {
@@ -3647,14 +3783,25 @@ int join_from_csv (const char *fname,
 
     if (!err) {
 	if (jr->n_keys == 0) {
-	    err = join_fetch_data(targvar, jr);
+	    err = join_fetch_data(jr, targvar);
 	} else {
-	    err = aggregate_data(ikeyvars, targvar, jr);
+	    err = aggregate_data(jr, ikeyvars, targvar);
 	}
 	if (err) {
 	    fprintf(stderr, "join: error %d from aggregate_data()\n", err);
-	    dataset_drop_last_variables(dset->v - orig_v, dset);
 	}
+    }
+
+    if (!err && dset->v > orig_v && jr->valcol > 0) {
+	/* we got a newly added payload series */
+	if (series_has_string_table(jr->r_dset, jr->valcol)) {
+	    /* let the new series grab the RHS string table */
+	    steal_string_table(jr->l_dset, targvar, jr->r_dset, jr->valcol); 
+	}
+    }
+
+    if (err) {
+	dataset_drop_last_variables(dset->v - orig_v, dset);
     }
 
     csvdata_free(jspec.c);

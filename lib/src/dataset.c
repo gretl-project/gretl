@@ -3655,6 +3655,24 @@ int series_has_string_table (const DATASET *dset, int i)
 }
 
 /**
+ * series_get_string_table:
+ * @dset: pointer to dataset.
+ * @i: index number of series.
+ *
+ * Returns: the string table attched to series @i or NULL if
+ * there is no such table.
+ */
+
+series_table *series_get_string_table (const DATASET *dset, int i)
+{
+    if (dset != NULL && i > 0 && i < dset->v) {
+	return dset->varinfo[i]->st;
+    } else {
+	return NULL;
+    }
+}
+
+/**
  * series_get_string_val:
  * @dset: pointer to dataset.
  * @i: index number of series.
@@ -3724,4 +3742,28 @@ const char **series_get_string_vals (const DATASET *dset, int i,
     }
 
     return strs;    
+}
+
+/**
+ * steal_string_table:
+ * @l_dset: pointer to recipient dataset.
+ * @lvar: index number of target series.
+ * @r_dset: pointer to donor dataset.
+ * @rvar: index number of source series.
+ *
+ * Detaches the string table from @rvar in @r_dset and attaches it
+ * to @lvar in @l_dset,
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int steal_string_table (DATASET *l_dset, int lvar,
+			DATASET *r_dset, int rvar)
+{
+    if (l_dset != r_dset || lvar != rvar) {
+	l_dset->varinfo[lvar]->st = r_dset->varinfo[rvar]->st;
+	r_dset->varinfo[rvar]->st = NULL;
+    }
+
+    return 0;
 }

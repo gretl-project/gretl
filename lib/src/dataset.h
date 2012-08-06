@@ -86,7 +86,9 @@ typedef enum {
     COMPACT_EOP,
     COMPACT_WDAY,
     COMPACT_MAX
-} CompactMethod; 
+} CompactMethod;
+
+typedef struct _series_table series_table;
 
 /**
  * dataset_is_cross_section:
@@ -454,11 +456,16 @@ void series_attach_string_table (DATASET *dset, int i, void *ptr);
 
 int series_has_string_table (const DATASET *dset, int i);
 
+series_table *series_get_string_table (const DATASET *dset, int i);
+
 const char *series_get_string_val (const DATASET *dset, int i, int t);
 
 double series_decode_string (const DATASET *dset, int i, const char *s);
 
 const char **series_get_string_vals (const DATASET *dset, int i,
 				     int *n_strs);
+
+int steal_string_table (DATASET *l_dset, int lvar,
+			DATASET *r_dset, int rvar);
 
 #endif /* DATASET_H */
