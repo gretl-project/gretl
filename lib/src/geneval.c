@@ -3126,7 +3126,11 @@ static NODE *apply_scalar_func (NODE *n, int f, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
-	ret->v.xval = real_apply_func(n->v.xval, f, p);
+	if (f == F_ISNAN) {
+	    ret->v.xval = isnan(n->v.xval);
+	} else {
+	    ret->v.xval = real_apply_func(n->v.xval, f, p);
+	}
     }
 
     return ret;
@@ -8806,6 +8810,14 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = list_ok_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, VEC, l, p);
+	}
+	break;
+    case F_ISNAN:
+	/* scalar only */
+	if (l->t == NUM) {
+	    ret = apply_scalar_func(l, t->t, p);
+	} else {
+	    node_type_error(t->t, 0, NUM, l, p);
 	}
 	break;
     case LAG:

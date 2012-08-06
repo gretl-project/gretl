@@ -2864,6 +2864,20 @@
       </description>
     </function>
 
+    <function name="isnan" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns 1 if <argname>x</argname> is <quote>Not a
+	  Number</quote> (NaN), otherwise 0. May be useful for testing
+	  elements of a matrix, in which NAs (if any are included) are
+	  converted to NaNs.
+	</para>
+      </description>
+    </function>
+
     <function name="isnull" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>

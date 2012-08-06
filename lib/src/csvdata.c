@@ -3146,12 +3146,12 @@ static int key_from_double (double x, int *err)
     }
 }
 
-/* Handle the case where (a) the "aggregated" value from the right,
-   @rz, is actually the coding of a string value, and (b) the LHS
-   series is pre-existing and already has a string table attached. The
-   RHS coding must be made consistent with that on the left. We reach
-   this function only if we've verified that there are string tables
-   on both sides, and if @rz is not NA.
+/* Handle the case where (a) the value from the right, @rz, is
+   actually the coding of a string value, and (b) the LHS series is
+   pre-existing and already has a string table attached. The RHS
+   coding must be made consistent with that on the left. We reach this
+   function only if we've verified that there are string tables on
+   both sides, and that @rz is not NA.  
 */
 
 static double maybe_adjust_string_code (series_table *rst,
