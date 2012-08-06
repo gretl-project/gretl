@@ -1583,6 +1583,8 @@ int do_save_markers (const char *fname)
     return 0;
 }
 
+/* called from main window Data menu */
+
 void markers_callback (void) 
 {
     if (dataset->S != NULL) {
