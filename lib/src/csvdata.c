@@ -1098,6 +1098,88 @@ static int fix_IFS_data_labels (DATASET *dset)
     return ret;
 }
 
+static int month_number (char *s)
+{
+    const char *mo[] = {
+	"jan", "feb", "mar", "apr",
+	"may", "jun", "jul", "aug",
+	"sep", "oct", "nov", "dec"
+    };
+    int i;
+
+    gretl_lower(s);
+
+    for (i=0; i<12; i++) {
+	if (!strcmp(s, mo[i])) {
+	    return i+1;
+	}
+    }
+
+    return 0;
+}
+
+/* e.g. "Jan-1980" */
+
+static int fix_mon_year_labels (DATASET *dset)
+{
+    char *s1 = dset->S[0];
+    char *s2 = dset->S[dset->n - 1];
+    char m1[4] = {0};
+    char m2[4] = {0};
+    int yr1 = 0, yr2 = 0;
+    int ret = 0;
+
+    if (strlen(s1) == 8 && strlen(s2) == 8 &&
+	s1[3] == '-' && s2[3] == '-') {
+	yr1 = atoi(s1 + 4);
+	yr2 = atoi(s2 + 4);
+	strncat(m1, s1, 3);
+	strncat(m2, s2, 3);
+    }
+
+    if (yr1 > 999 && yr1 < 3000 && yr2 > 999 && yr2 < 3000 &&
+	month_number(m1) && month_number(m2)) {
+	int p, pbak = 0;
+	int i, doit = 1;
+	char *s;
+
+	for (i=0; i<dset->n; i++) {
+	    s = dset->S[i];
+	    if (strlen(s) != 8 || s[3] != '-') {
+		doit = 0;
+		break;
+	    }
+	    yr1 = atoi(s + 4);
+	    *m1 = '\0';
+	    strncat(m1, s, 3);
+	    if (yr1 < 1000 || yr1 >= 3000 || 
+		(p = month_number(m1)) < 1) {
+		doit = 0;
+		break;
+	    }
+	    if (i > 0 && p != pbak + 1 && p != 1) {
+		doit = 0;
+		break;
+	    }		    
+	    pbak = p;
+	}
+
+	if (doit) {
+	    for (i=0; i<dset->n; i++) {
+		s = dset->S[i];
+		yr1 = atoi(s + 4);
+		*m1 = '\0';
+		strncat(m1, s, 3);
+		p = month_number(m1);
+		sprintf(dset->S[i], "%d:%02d", yr1, p);
+	    }
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
 /* Attempt to parse csv row labels as dates.  Return -1 if this
    doesn't work out, or 0 if the labels seem to be just integer
    observation numbers, else return the inferred data frequency.  The
@@ -1132,7 +1214,11 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
 	lbl1 = dset->S[0];
 	lbl2 = dset->S[n - 1];
 	len1 = strlen(lbl1);
-    }
+    } else if (fix_mon_year_labels(dset)) {
+	lbl1 = dset->S[0];
+	lbl2 = dset->S[n - 1];
+	len1 = strlen(lbl1);
+    }	
 
     /* labels are of different lengths? */
     if (len1 != strlen(lbl2)) {
