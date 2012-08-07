@@ -3342,12 +3342,13 @@ static int get_inner_keys (joiner *jr, int i,
     if (ikeyvars == NULL) {
 	/* real-time data special: use the LHS obs info */
 	double dx = date_as_double(i, dset->pd, dset->sd0);
+	double dx2 = dx - floor(dx);
 
 	*pk1 = (int) dx;
 	if (dset->pd == 12) {
-	    *pk2 = 100 * (dx - floor(dx));
+	    *pk2 = (int) ceil(100 * dx2);
 	} else {
-	    *pk2 = 10 * (dx - floor(dx));
+	    *pk2 = (int) ceil(10 * dx2);
 	}
     } else {
 	/* using regular LHS key series */

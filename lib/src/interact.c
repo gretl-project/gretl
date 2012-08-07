@@ -4314,6 +4314,12 @@ static int join_revision_date (const char *s, const DATASET *dset,
 {
     int d = -1;
 
+    if (!strcmp(s, "earliest")) {
+	return -2;
+    } else if (!strcmp(s, "latest")) {
+	return -3;
+    }
+
     if (integer_string(s)) {
 	d = atoi(s);
     } else if (gretl_is_scalar(s)) {
@@ -4525,13 +4531,23 @@ static int lib_join_data (ExecState *s,
 	}
     }
 
-    if (!err && revdate > 0) {
-	/* A non-zero value of revdate implies 
-	   --filter="avail<=revdate" and --aggr=max(avail)
-	*/
-	aggr = AGGR_MAX;
-	auxname = gretl_strdup("avail");
-	filter = gretl_strdup_printf("avail<=%d", revdate);
+    if (!err) {
+	if (revdate > 0) {
+	    /* A positive value of revdate implies 
+	       --filter="avail<=revdate" and --aggr=max(avail)
+	    */
+	    aggr = AGGR_MAX;
+	    auxname = gretl_strdup("avail");
+	    filter = gretl_strdup_printf("avail<=%d", revdate);
+	} else if (revdate == -2) {
+	    /* --rev="earliest" */
+	    aggr = AGGR_MIN;
+	    auxname = gretl_strdup("avail");
+	} else if (revdate == -3) {
+	    /* --rev="latest" */
+	    aggr = AGGR_MAX;
+	    auxname = gretl_strdup("avail");
+	}	    
     }
 
     if (!err && okey != NULL && ikeyvars == NULL) {
