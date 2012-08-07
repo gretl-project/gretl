@@ -1118,7 +1118,7 @@ static int month_number (char *s)
     return 0;
 }
 
-/* e.g. "Jan-1980" */
+/* e.g. "Jan-1980", for monthly or quarterly data */
 
 static int fix_mon_year_labels (DATASET *dset)
 {
@@ -1139,14 +1139,14 @@ static int fix_mon_year_labels (DATASET *dset)
 
     if (yr1 > 999 && yr1 < 3000 && yr2 > 999 && yr2 < 3000 &&
 	month_number(m1) && month_number(m2)) {
-	int p, pbak = 0;
-	int i, doit = 1;
+	int i, p, pbak = 0;
+	int d, pd = 0;
 	char *s;
 
 	for (i=0; i<dset->n; i++) {
 	    s = dset->S[i];
 	    if (strlen(s) != 8 || s[3] != '-') {
-		doit = 0;
+		pd = 0;
 		break;
 	    }
 	    yr1 = atoi(s + 4);
@@ -1154,24 +1154,34 @@ static int fix_mon_year_labels (DATASET *dset)
 	    strncat(m1, s, 3);
 	    if (yr1 < 1000 || yr1 >= 3000 || 
 		(p = month_number(m1)) < 1) {
-		doit = 0;
+		pd = 0;
 		break;
 	    }
-	    if (i > 0 && p != pbak + 1 && p != 1) {
-		doit = 0;
-		break;
-	    }		    
+	    if (i > 0) {
+		d = p - pbak;
+		if (d != 1 && d != 3 && p != 1) {
+		    pd = 0;
+		    break;
+		}
+		if (pd == 0 && d > 0) {
+		    pd = (d == 1)? 12 : 4;
+		}
+	    }
 	    pbak = p;
 	}
 
-	if (doit) {
+	if (pd > 0) {
 	    for (i=0; i<dset->n; i++) {
 		s = dset->S[i];
 		yr1 = atoi(s + 4);
 		*m1 = '\0';
 		strncat(m1, s, 3);
 		p = month_number(m1);
-		sprintf(dset->S[i], "%d:%02d", yr1, p);
+		if (pd == 12) {
+		    sprintf(dset->S[i], "%d:%02d", yr1, p);
+		} else {
+		    sprintf(dset->S[i], "%d:%g", yr1, ceil((3+p)/4.0));
+		}
 	    }
 	    ret = 1;
 	}
