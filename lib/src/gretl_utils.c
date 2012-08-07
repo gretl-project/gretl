@@ -47,7 +47,7 @@
 static void gretl_tests_cleanup (void);
 
 /**
- * date:
+ * date_as_double:
  * @t: observation number (zero-based).
  * @pd: data periodicity or frequency.
  * @sd0: floating point representation of starting date.
@@ -55,7 +55,7 @@ static void gretl_tests_cleanup (void);
  * Returns: the date corresponding to @t, as a double-precision number.
  */
 
-double date (int t, int pd, double sd0)
+double date_as_double (int t, int pd, double sd0)
 {
     int ysd = (int) sd0, yy, pp, yp;
     int p10 = 10;

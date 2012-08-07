@@ -2413,7 +2413,7 @@ int dummy (DATASET *dset, int center)
 
 	for (vi=1, di = di0; vi<=ndums; vi++, di++) {
 	    for (t=0; t<dset->n; t++) {
-		xx = date(t, dset->pd, dset->sd0) + .1;
+		xx = date_as_double(t, dset->pd, dset->sd0) + .1;
 		yy = (int) xx;
 		pp = (int) (mm * (xx - yy) + 0.5);
 		dx = (pp == vi)? 1.0 : 0.0;
@@ -2524,7 +2524,7 @@ int panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
 	series_set_label(dset, dnum, label);
 
 	for (t=0; t<dset->n; t++) {
-	    xx = date(t, dset->pd, dset->sd0);
+	    xx = date_as_double(t, dset->pd, dset->sd0);
 	    yy = (int) xx;
 	    pp = (int) (mm * (xx - yy) + 0.5);
 	    dset->Z[dnum][t] = (pp == vi)? 1.0 : 0.0;

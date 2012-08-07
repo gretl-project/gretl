@@ -49,6 +49,4 @@ int matrix_scatters_driver (const int *list, const DATASET *dset,
 
 int do_modprint (const char *line, gretlopt opt, PRN *prn);
 
-int script_add_obs_markers (DATASET *dset);
-
 #endif /* LIBGLUE_H */

@@ -101,7 +101,6 @@ static struct gui_help_item gui_help_items[] = {
     { GR_FBOX,        "boxplots" },
     { GR_3D,          "3-D" },
     { ONLINE,         "online" },
-    { MARKERS,        "markers" },
     { EXPORT,         "export" },
     { SMPLBOOL,       "sampling" },
     { SMPLDUM,        "sampling" },

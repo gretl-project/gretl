@@ -8,6 +8,10 @@ The built-in constants "pi" and "macheps" have been renamed as
 "$pi" and "$macheps". The old names continue to work at present 
 but they will be removed before long.
 
+The --labels option to the "setobs" command has been removed.
+Its functionality (and more) is now available via the new
+"markers" command.
+
 2012-06-01 version 1.9.9
 
 No intentional backward-incompatible changes

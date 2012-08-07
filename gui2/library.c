@@ -1554,6 +1554,8 @@ void do_add_markers (const char *fname)
     if (err) {
 	gui_errmsg(err);
     } else {
+	lib_command_sprintf("markers --from-file=\"%s\"", fname);
+	record_command_verbatim();
 	mark_dataset_as_modified();
     }
 }
@@ -1579,6 +1581,9 @@ int do_save_markers (const char *fname)
     }
 
     fclose(fp);
+
+    lib_command_sprintf("markers --to-file=\"%s\"", fname);
+    record_command_verbatim();
 
     return 0;
 }
@@ -1621,6 +1626,8 @@ void do_add_labels (const char *fname)
     if (err) {
 	gui_errmsg(err);
     } else {
+	lib_command_sprintf("labels --from-file=\"%s\"", fname);
+	record_command_verbatim();
 	refresh_data();
 	mark_dataset_as_modified();
     }
@@ -1632,7 +1639,10 @@ int do_save_labels (const char *fname)
 
     if (err) {
 	file_write_errbox(fname);
-    }
+    } else {
+	lib_command_sprintf("labels --to-file=\"%s\"", fname);
+	record_command_verbatim();
+    }	
 
     return err;
 }
@@ -1645,6 +1655,8 @@ static void gui_remove_var_labels (void)
 	series_set_label(dataset, i, "");
     }
 
+    lib_command_strcpy("labels --delete");
+    record_command_verbatim();
     populate_varlist();
     mark_dataset_as_modified();
 }
@@ -8047,9 +8059,11 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 	mark_dataset_as_modified();
     } else if (ci == SMPL) {
 	set_sample_label(dataset);
-    } else if (ci == DATAMOD) {
+    } else if (ci == DATAMOD || ci == LABELS) {
 	mark_dataset_as_modified();
 	populate_varlist();
+    } else if (ci == MARKERS) {
+	mark_dataset_as_modified();
     } else if (ci == MODELTAB) {
 	err = modeltab_parse_line(s->line, s->prn);
     } else if (ci == GRAPHPG) {

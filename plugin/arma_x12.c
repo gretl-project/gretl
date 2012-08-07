@@ -608,7 +608,7 @@ make_x12a_date_string (int t, const DATASET *dset, char *str)
 	return;
     } 
 
-    dx = date(t, dset->pd, dset->sd0);
+    dx = date_as_double(t, dset->pd, dset->sd0);
     yr = (int) dx;
 
     sprintf(str, "%g", dx);

@@ -729,7 +729,7 @@ char *ntodate (char *datestr, int t, const DATASET *dset)
     } else if (dataset_is_daily(dset) || 
 	       dataset_is_weekly(dset)) {
 	/* undated time series */
-	x = date(t, 1, dset->sd0);
+	x = date_as_double(t, 1, dset->sd0);
 	sprintf(datestr, "%d", (int) x);
 	return datestr;
     } else if (dataset_is_decennial(dset)) {
@@ -741,7 +741,7 @@ char *ntodate (char *datestr, int t, const DATASET *dset)
 	return datestr;
     }
 
-    x = date(t, dset->pd, dset->sd0);
+    x = date_as_double(t, dset->pd, dset->sd0);
 
     if (dset->pd == 1) {
         sprintf(datestr, "%d", (int) x);
@@ -801,7 +801,7 @@ int get_subperiod (int t, const DATASET *dset, int *err)
 	ret = t % dset->pd;
     } else {
 	/* quarterly, monthly, hourly... */
-	double x = date(t, dset->pd, dset->sd0);
+	double x = date_as_double(t, dset->pd, dset->sd0);
 	int i, d = ceil(log10(dset->pd));
 
 	x -= floor(x);
@@ -2540,20 +2540,31 @@ int add_var_labels_from_file (DATASET *dset, const char *fname)
 
 int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
 {
-    const char *fname;
+    const char *fname = NULL;
     int err;
 
-    err = incompatible_options(opt, OPT_T | OPT_F); 
+    err = incompatible_options(opt, OPT_D | OPT_T | OPT_F); 
     if (err) {
 	return err;
     }
 
-    fname = get_optval_string(LABELS, opt);
-    if (fname == NULL) {
-	return E_BADOPT;
+    if (opt & (OPT_T | OPT_F)) {
+	fname = get_optval_string(LABELS, opt);
+	if (fname == NULL) {
+	    return E_BADOPT;
+	} else {
+	    fname = gretl_maybe_switch_dir(fname);
+	}
     }
 
-    if (opt & OPT_T) {
+    if (opt & OPT_D) {
+	/* delete */
+	int i;
+
+	for (i=1; i<dset->v; i++) {
+	    series_set_label(dset, i, "");
+	}	
+    } else if (opt & OPT_T) {
 	/* to-file */
 	if (!dataset_has_var_labels(dset)) {
 	    pprintf(prn, "No labels are available for writing\n");
@@ -2569,6 +2580,69 @@ int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
 	err = add_var_labels_from_file(dset, fname);
 	if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
 	    pprintf(prn, "Labels loaded OK\n");
+	}	
+    }
+
+    return err;
+}
+
+static int save_obs_markers_to_file (DATASET *dset, const char *fname)
+{
+    FILE *fp = gretl_fopen(fname, "w");
+    int err = 0;
+
+    if (fp == NULL) {
+	err = E_FOPEN;
+    } else {
+	int i;
+
+	for (i=0; i<dset->n; i++) {
+	    fprintf(fp, "%s\n", dset->S[i]);
+	}
+	fclose(fp);
+    }
+
+    return err;
+}
+
+int read_or_write_obs_markers (gretlopt opt, DATASET *dset, PRN *prn)
+{
+    const char *fname = NULL;
+    int err;
+
+    err = incompatible_options(opt, OPT_D | OPT_T | OPT_F); 
+    if (err) {
+	return err;
+    }
+
+    if (opt & (OPT_T | OPT_F)) {
+	fname = get_optval_string(MARKERS, opt);
+	if (fname == NULL) {
+	    return E_BADOPT;
+	} else {
+	    fname = gretl_maybe_switch_dir(fname);
+	}
+    }
+
+    if (opt & OPT_D) {
+	/* delete */
+	dataset_destroy_obs_markers(dset);
+    } else if (opt & OPT_T) {
+	/* to-file */
+	if (dset->S == NULL) {
+	    gretl_errmsg_set(_("No markers are available for writing"));
+	    err = E_DATA;
+	} else {
+	    err = save_obs_markers_to_file(dset, fname);
+	    if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
+		pprintf(prn, "Markers written OK\n");
+	    }
+	}
+    } else if (opt & OPT_F) {
+	/* from-file */
+	err = add_obs_markers_from_file(dset, fname);
+	if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
+	    pprintf(prn, "Markers loaded OK\n");
 	}	
     }
 

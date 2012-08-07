@@ -104,6 +104,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { LOOP,     "loop" },
     { MAHAL,    "mahal" },
     { MAKEPKG,  "makepkg" },
+    { MARKERS,  "markers" },
     { MEANTEST, "meantest" },
     { MLE,      "mle" },
     { MODELTAB, "modeltab" },

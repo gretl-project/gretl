@@ -131,6 +131,8 @@ int dataset_has_var_labels (const DATASET *dset);
 
 int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn);
 
+int read_or_write_obs_markers (gretlopt opt, DATASET *dset, PRN *prn);
+
 GretlFileType detect_filetype (char *fname, gretlopt opt);
 
 gretlopt data_save_opt_from_suffix (const char *fname);

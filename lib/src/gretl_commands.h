@@ -94,6 +94,7 @@ typedef enum {
     LOOP,
     MAHAL,
     MAKEPKG,
+    MARKERS,
     MEANTEST,
     MLE,
     MODELTAB,

@@ -8,7 +8,6 @@ enum extra_cmds {
     SMPLDUM,
     SMPLBOOL,
     SMPLRAND,
-    MARKERS,
     STORE_MODEL,
     VAR_SUMMARY,
     ALL_SUMMARY,

@@ -363,6 +363,7 @@ static int catch_system_alias (CMD *cmd)
                        c == LEVERAGE || \
                        c == LOOP || \
 		       c == MAKEPKG || \
+		       c == MARKERS || \
                        c == MLE || \
                        c == MODELTAB || \
                        c == MODPRINT || \
@@ -3919,12 +3920,27 @@ static int set_var_info (const char *line, gretlopt opt,
 static void showlabels (const int *list, const DATASET *dset, PRN *prn)
 {
     const char *label;
-    int i, v;
+    int i, v, nl = 0;
 
-    if (dset->v == 0) {
+    if (dset == NULL || dset->v == 0) {
 	pprintf(prn, _("No series are defined\n"));
 	return;
     }
+
+    for (i=1; i<=list[0]; i++) {
+	v = list[i];
+	if (v >= 0 && v < dset->v) {
+	    label = series_get_label(dset, v);
+	    if (*label != '\0') {
+		nl++;
+	    }
+	}
+    } 
+
+    if (nl == 0) {
+	pprintf(prn, "No labels\n");
+	return;
+    } 
 
     pprintf(prn, _("Listing labels for variables:\n"));
 
@@ -4293,6 +4309,30 @@ static int lib_clear_data (ExecState *s, DATASET *dset)
     return err;
 }
 
+static int join_revision_date (const char *s, const DATASET *dset,
+			       int *err)
+{
+    int d = -1;
+
+    if (integer_string(s)) {
+	d = atoi(s);
+    } else if (gretl_is_scalar(s)) {
+	d = gretl_scalar_get_value(s);
+    } else {
+	*err = E_PARSE;
+    }
+
+    if (!*err) {
+	if (d <= 0) {
+	    *err = E_PARSE;
+	} else if (!dataset_is_time_series(dset)) {
+	    *err = E_PDWRONG;
+	}
+    }
+
+    return d;
+}
+
 static int join_aggregation_method (const char *s, int *seqval,
 				    char **auxname)
 {
@@ -4406,14 +4446,15 @@ static int lib_join_data (ExecState *s,
 			  PRN *prn)
 {
     gretlopt opts[] = { 
-	OPT_I, OPT_O, OPT_F, OPT_A, OPT_D, 0 
+	OPT_I, OPT_O, OPT_F, OPT_A, OPT_D, OPT_R, 0 
     };
     const char *optstr[] = {
 	"ikey",
 	"okey",
 	"filter",
 	"aggr",
-	"data"
+	"data",
+	"rev"
     };
     const char *param;
     char *p, *okey = NULL, *filter = NULL;
@@ -4421,7 +4462,15 @@ static int lib_join_data (ExecState *s,
     char *auxname = NULL;
     int *ikeyvars = NULL;
     int aggr = 0, seqval = 0;
+    int revdate = 0;
     int i, err = 0;
+
+    if (opt & OPT_R) {
+	if (opt & (OPT_A | OPT_F)) {
+	    /* --rev implies special handling of --filter and --aggr */
+	    return E_BADOPT;
+	}
+    }
 
     p = strstr(s->line, s->cmd->param);
     if (p == NULL) {
@@ -4457,6 +4506,7 @@ static int lib_join_data (ExecState *s,
 		    /* string specifying a row filter */
 		    filter = gretl_strdup(param);
 		} else if (i == 3) {
+		    /* aggregation */
 		    aggr = join_aggregation_method(param, &seqval, &auxname);
 		    if (aggr < 0) {
 			err = E_PARSE;
@@ -4464,12 +4514,24 @@ static int lib_join_data (ExecState *s,
 		} else if (i == 4) {
 		    /* string specifying the wanted data series */
 		    data = gretl_strdup(param);
-		}
+		} else if (i == 5) {
+		    /* string specifying the wanted data series */
+		    revdate = join_revision_date(param, dset, &err);
+		}		    
 	    } else {
 		pprintf(prn, "%s: missing option param!\n", optstr[i]);
 		err = E_PARSE;
 	    }
 	}
+    }
+
+    if (!err && revdate > 0) {
+	/* A non-zero value of revdate implies 
+	   --filter="avail<=revdate" and --aggr=max(avail)
+	*/
+	aggr = AGGR_MAX;
+	auxname = gretl_strdup("avail");
+	filter = gretl_strdup_printf("avail<=%d", revdate);
     }
 
     if (!err && okey != NULL && ikeyvars == NULL) {
@@ -4478,17 +4540,19 @@ static int lib_join_data (ExecState *s,
 	err = E_PARSE;
     }
 
-    if (!err && ikeyvars == NULL && aggr != 0) {
+    if (!err && ikeyvars == NULL && aggr != 0 && !(opt & OPT_R)) {
 	/* aggregation requires the use of keys */
 	gretl_errmsg_set(_("Inner key is missing"));
 	err = E_ARGS;
     }
 
     if (!err) {
+	PRN *vprn = (opt & OPT_V)? prn : NULL;
+
 	err = join_from_csv(newfile, varname, dset, 
 			    ikeyvars, okey, filter,
 			    data, aggr, seqval, auxname,
-			    opt, (opt & OPT_V)? prn : NULL);
+			    opt, vprn);
     }	
 
     free(ikeyvars);
@@ -5154,8 +5218,18 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case LABELS:
 	if (cmd->opt) {
 	    err = read_or_write_var_labels(cmd->opt, dset, prn);
+	    if (!err && (cmd->opt & (OPT_D | OPT_F))) {
+		schedule_callback(s);
+	    }
 	} else {
 	    showlabels(cmd->list, dset, prn);
+	}
+	break;
+
+    case MARKERS:
+	err = read_or_write_obs_markers(cmd->opt, dset, prn);
+	if (!err && (cmd->opt & (OPT_D | OPT_F))) {
+	    schedule_callback(s);
 	}
 	break;
 
@@ -5238,20 +5312,13 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case SETOBS:
-	if (cmd->opt & OPT_M) {
-	    err = script_add_obs_markers(dset);
-	    if (!err) {
+	err = set_obs(line, dset, cmd->opt);
+	if (!err) {
+	    if (dset->n > 0) {
+		print_smpl(dset, 0, prn);
 		schedule_callback(s);
-	    }
-	} else {
-	    err = set_obs(line, dset, cmd->opt);
-	    if (!err) {
-		if (dset->n > 0) {
-		    print_smpl(dset, 0, prn);
-		    schedule_callback(s);
-		} else {
-		    pprintf(prn, _("data frequency = %d\n"), dset->pd);
-		}
+	    } else {
+		pprintf(prn, _("data frequency = %d\n"), dset->pd);
 	    }
 	}
 	break;

@@ -5465,13 +5465,14 @@
   </command>
 
   <command name="labels" section="Dataset" 
-    label="Print labels for variables" context="cli">
+    label="Labels for variables" context="cli">
 
     <usage>
       <altforms>
 	<altform><lit>labels [</lit> <repl>varlist</repl> <lit>]</lit></altform>	
 	<altform><lit>labels --to-file=</lit><repl>filename</repl></altform>
 	<altform><lit>labels --from-file=</lit><repl>filename</repl></altform>
+	<altform><lit>labels --delete</lit></altform>
       </altforms>
     </usage>
 
@@ -5494,10 +5495,14 @@
 	to indicate blank labels.
       </para>
       <para>
-	Via the file writing and reading options it is possible to copy
-	series labels from one data file to another.
-      </para>
+	The <opt>--delete</opt> option does what you'd expect: it
+	removes all the series labels from the dataset.
+      </para>      
     </description>
+
+    <gui-access>
+      <menu-path>/Data/Variable labels</menu-path>
+    </gui-access>
 
   </command>
 
@@ -6185,23 +6190,40 @@
 
   </command>  
 
-  <command name="markers" section="Dataset" context="gui"
-    label="Add case markers">
+  <command name="markers" section="Dataset" 
+    label="Observation markers" context="cli">
+
+    <usage>
+      <altforms>
+	<altform><lit>markers --to-file=</lit><repl>filename</repl></altform>
+	<altform><lit>markers --from-file=</lit><repl>filename</repl></altform>
+	<altform><lit>markers --delete</lit></altform>
+      </altforms>
+    </usage>
 
     <description>
       <para>
-	This command needs the name of a file containing <quote>case
-	  markers</quote>, that is, short identifying strings for the
-	individual observations in the data set (for example, country
-	or city names or codes).  These marker strings should be no
-	more than 8 characters long.  The file should contain one
-	marker per line, and there should be just as many markers as
-	observations in the current dataset. If these conditions are
-	met and the specified file is found, the case markers will be
-	added; they will be visible when you choose <quote>Display
-	  values</quote> under gretl's Data menu.
+	With the option <opt>--to-file</opt>, writes to the named file
+	the observation marker strings from the current dataset, one
+	per line. If no such strings are present an error is flagged.
       </para>
+      <para>
+	With the option <opt>--from-file</opt>, reads the specified
+	file (which should be plain text) and assigns observation
+	markers to the rows in the dataset, reading one marker per
+	line. There should be at least as many markers in the file as
+	observations in the dataset.
+      </para>
+      <para>
+	The <opt>--delete</opt> option does what you'd expect: it
+	removes the observation marker strings from the dataset.
+      </para>      
     </description>
+
+    <gui-access>
+      <menu-path>/Data/Observation markers</menu-path>
+    </gui-access>
+
   </command>
 
   <command name="makepkg" section="Programming" context="cli"
@@ -10028,7 +10050,6 @@
       <altforms>
         <altform><lit>setobs</lit> <repl>periodicity</repl> <repl>startobs</repl></altform>
 	<altform><lit>setobs</lit> <repl>unitvar</repl> <repl>timevar</repl> <lit>--panel-vars</lit></altform>
-	<altform><lit>setobs --labels=</lit><repl>filename</repl></altform>
       </altforms>
       <options>
         <option>
@@ -10063,10 +10084,8 @@
 
     <description>
       <para>
-	In its primary use, this command forces the program to
-	interpret the current data set as having a specified
-	structure. A secondary use, with the <opt>--labels</opt> flag,
-	is to add observation labels to a dataset.
+	This command forces the program to interpret the current data
+	set as having a specified structure.
       </para>
       <para>
 	In the first form of the command the <repl>periodicity</repl>,
@@ -10102,19 +10121,10 @@
 	of the data the program will attempt to guess the structure
 	from the information given.
       </para>
-      <para>
-	In the third form of the comman, with the <opt>--labels</opt>
-	flag, the effect is not to set the interpretation of the data
-	structure, but rather to add labels for the observations. The
-	required <repl>filename</repl> parameter must give the name of
-	a plain text file that contains one label per line, with
-	enough lines to label all the observations.
-      </para>
     </description> 
 
     <gui-access>
       <menu-path>/Data/Dataset structure</menu-path>
-      <menu-path>/Data/Observation markers</menu-path>
     </gui-access>
       
   </command>

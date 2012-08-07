@@ -1003,7 +1003,7 @@ static int write_tramo_file (const char *fname,
 
     gretl_push_c_numeric_locale();
 
-    x = date(dset->t1, dset->pd, dset->sd0);
+    x = date_as_double(dset->t1, dset->pd, dset->sd0);
     startyr = (int) x;
     sprintf(tmp, "%g", x);
     p = strchr(tmp, '.');
@@ -1059,7 +1059,7 @@ static int write_spc_file (const char *fname, const double *y,
 
     gretl_push_c_numeric_locale();
 
-    x = date(dset->t1, dset->pd, dset->sd0);
+    x = date_as_double(dset->t1, dset->pd, dset->sd0);
     startyr = (int) x;
     sprintf(tmp, "%g", x);
     p = strchr(tmp, '.');

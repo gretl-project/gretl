@@ -55,14 +55,14 @@ static void prntdate (int nt, int n, const DATASET *dset, PRN *prn)
     if (n != dset->t2 - dset->t1 + 1) {
 	pprintf(prn, "%5d  ", nt);
     } else {
-	double xx = date(nt, dset->pd, dset->sd0);
+	double x = date_as_double(nt, dset->pd, dset->sd0);
 
 	if (dset->pd == 1) {
-	    pprintf(prn, "%5.0f ", xx);
+	    pprintf(prn, "%5.0f ", x);
 	} else if (dset->pd < 10) {
-	    pprintf(prn, "%5g ", xx);
+	    pprintf(prn, "%5g ", x);
 	} else {
-	    pprintf(prn, "%6.2f", xx);
+	    pprintf(prn, "%6.2f", x);
 	}
     }
 }

@@ -1,5 +1,6 @@
 Version 1.9.10, in progress
 - Update translations
+- New command "markers": manipulate observation marker strings
 - "delete" command: add a --force option to permit deletion of
   series in loops (to be used with caution!)
 - "data" command: allow this in loops
