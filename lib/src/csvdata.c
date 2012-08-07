@@ -48,7 +48,7 @@ enum {
 };
 
 enum {
-    JOIN_KEY = 1,
+    JOIN_KEY,
     JOIN_VAL,
     JOIN_LHS,
     JOIN_RHS,
@@ -1906,20 +1906,28 @@ static int update_join_cols_list (csvdata *c, int k)
 
 static int handle_join_varname (csvdata *c, int k, int *pj)
 {
+    int matched = 0;
     int i, j = *pj;
+
+    /* note that a given column may play a dual role,
+       e.g. in a filter and in an auxiliary role
+    */
 
     for (i=0; i<JOIN_MAXCOL; i++) {
 #if CDEBUG
-	fprintf(stderr, "i = %d; %s <-> %s\n", i, c->str, c->jspec->colnames[i]);
+	fprintf(stderr, "k=%d, j=%d, trying for col '%s'\n", 
+		k, j, c->jspec->colnames[i]);
 #endif
 	if (c->jspec->colnames[i] != NULL &&
 	    !strcmp(c->str, c->jspec->colnames[i])) {
-	    c->dset->varname[j][0] = '\0';
-	    strncat(c->dset->varname[j], c->str, VNAMELEN - 1);
-	    update_join_cols_list(c, k);
-	    c->jspec->colnums[j-1] = i + 1;
-	    *pj += 1;
-	    break;
+	    c->jspec->colnums[i] = j;
+	    if (!matched) {
+		matched = 1;
+		c->dset->varname[j][0] = '\0';
+		strncat(c->dset->varname[j], c->str, VNAMELEN - 1);
+		update_join_cols_list(c, k);
+		*pj += 1;
+	    }
 	}
     }
 
@@ -2786,7 +2794,7 @@ static int join_row_wanted (DATASET *dset, int i,
 	}
     }
 
-#if CDEBUG
+#if CDEBUG > 2
     fprintf(stderr, "join filter: %s row %d\n",
 	    ret ? "keeping" : "discarding", i);
 #endif
@@ -2807,21 +2815,18 @@ static joiner *joiner_new (csvjoin *jspec,
     int lhcol = 0, rhcol = 0, auxcol = 0;
     int i, nrows = 0;
 
-    for (i=0; i<JOIN_MAXCOL; i++) {
-	if (jspec->colnums[i] == JOIN_KEY) {
-	    keycol = i+1;
-	} else if (jspec->colnums[i] == JOIN_VAL) {
-	    valcol = i+1;
-	} else if (jspec->colnums[i] == JOIN_LHS) {
-	    lhcol = i+1;
-	} else if (jspec->colnums[i] == JOIN_RHS) {
-	    rhcol = i+1;
-	} else if (jspec->colnums[i] == JOIN_KEY2) {
-	    key2col = i+1;
-	} else if (jspec->colnums[i] == JOIN_AUX) {
-	    auxcol = i+1;
-	}
-    }
+    keycol = jspec->colnums[JOIN_KEY];
+    valcol = jspec->colnums[JOIN_VAL];
+    lhcol  = jspec->colnums[JOIN_LHS];
+    rhcol  = jspec->colnums[JOIN_RHS];
+    key2col = jspec->colnums[JOIN_KEY2];
+    auxcol = jspec->colnums[JOIN_AUX];
+
+#if CDEBUG
+    fprintf(stderr, "joiner columns:\n"
+	    "KEY=%d, VAL=%d, LHS=%d, RHS=%d, KEY2=%d, AUX=%d\n",
+	    keycol, valcol, lhcol, rhcol, key2col, auxcol);
+#endif
 
     if (filter != NULL) {
 	if (filter->lhname != NULL && lhcol == 0) {
@@ -3654,14 +3659,14 @@ int join_from_csv (const char *fname,
     csvjoin jspec = {0};
     joiner *jr = NULL;
     jr_filter *filter = NULL;
-    int okeyvars[3] = {0, -1, -1};
+    int okeyvars[3] = {0, 0, 0};
     char okeyname1[CSVSTRLEN] = {0};
     char okeyname2[CSVSTRLEN] = {0};
     int targvar, orig_v = dset->v;
     int str_keys = 0;
     int str_keys2 = 0;
     int n_keys = 0;
-    int i, err = 0;
+    int err = 0;
 
     targvar = current_series_index(dset, varname);
     if (targvar == 0) {
@@ -3766,15 +3771,9 @@ int join_from_csv (const char *fname,
 
     if (!err && aggr != AGGR_COUNT) {
 	/* run some sanity tests on the payload */
-	int valcol = -1;
+	int valcol = jspec.colnums[JOIN_VAL];
 
-	for (i=0; i<JOIN_MAXCOL && valcol<0; i++) {
-	    if (jspec.colnums[i] == JOIN_VAL) {
-		valcol = i+1;
-	    }
-	}
-
-	if (valcol < 0) {
+	if (valcol == 0) {
 	    if (data != NULL) {
 		fprintf(stderr, "join: data column '%s' was not found\n", 
 			jspec.colnames[1]);
@@ -3794,18 +3793,18 @@ int join_from_csv (const char *fname,
 	/* check that outer key was found in the right-hand-side
 	   file, and is conformable to the inner key 
 	*/
-	for (i=0; i<JOIN_MAXCOL && okeyvars[0]<2; i++) {
-	    if (jspec.colnums[i] == JOIN_KEY) {
-		okeyvars[0] += 1;
-		okeyvars[1] = i + 1;
-	    } else if (jspec.colnums[i] == JOIN_KEY2) {
-		okeyvars[0] += 1;
-		okeyvars[2] = i + 1;
-	    }		
+	if (jspec.colnums[JOIN_KEY] > 0) {
+	    okeyvars[0] += 1;
+	    okeyvars[1] = jspec.colnums[JOIN_KEY];
 	}
 
-	if ((jspec.colnames[0] != NULL && okeyvars[1] < 0) ||
-	    (jspec.colnames[4] != NULL && okeyvars[2] < 0)) {
+	if (jspec.colnums[JOIN_KEY2] > 0) {
+	    okeyvars[0] += 1;
+	    okeyvars[2] = jspec.colnums[JOIN_KEY2];
+	}	
+
+	if ((jspec.colnames[0] != NULL && okeyvars[1] == 0) ||
+	    (jspec.colnames[4] != NULL && okeyvars[2] == 0)) {
 	    fprintf(stderr, "join: error finding outer key columns\n");
 	    err = E_DATA;
 	} else {
