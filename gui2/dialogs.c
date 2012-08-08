@@ -557,7 +557,7 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
     }
 
     if (otype == GRETL_OBJ_DSET && (ci == EXPORT_CSV || ci == COPY_CSV)) {
-	/* On export/copt of series data only: allow choice to exclude
+	/* On export/copy of series data only: allow choice to exclude
 	   the observations column, and/or on representation of NAs, 
 	   if applicable.
 	 */

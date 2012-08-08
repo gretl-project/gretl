@@ -2379,11 +2379,6 @@ static int real_import_csv (const char *fname,
     long datapos;
     int i, err = 0;
 
-    if (opt & OPT_Q) {
-	/* quiet */
-	prn = NULL;
-    }
-
     if (prn != NULL) {
 	set_alt_gettext_mode(prn);
     }
