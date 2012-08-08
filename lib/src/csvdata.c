@@ -2716,7 +2716,7 @@ struct joiner_ {
     int *key_freq;  /* counts of occurrences of (primary) key values */
     int str_keys;   /* flag for string comparison of primary keys */
     int str_keys2;  /* flag for string comparison of secondary keys */
-    int obs_keys;   /* flag for extracting keys from obs markers */ 
+    int auto_keys;  /* flag for extracting keys from obs markers */ 
     const int *l_keyno; /* for string comparison: list of ikey IDs in lhs dset */
     const int *r_keyno; /* for string comparison: list of okey IDs in rhs dset */
     AggrType aggr;    /* aggregation method for 1:n joining */
@@ -2742,6 +2742,8 @@ struct jr_filter_ {
 
 typedef struct jr_filter_ jr_filter;
 
+#define AUTO_KEYS 1 /* experimental */
+
 static void jr_filter_destroy (jr_filter *f)
 {
     if (f != NULL) {
@@ -2761,6 +2763,11 @@ static void joiner_destroy (joiner *jr)
     }
 }
 
+/* In relation to join, determine whether or not row @i of the data
+   read from CSV satisfies the filter criterion; return 1 iff the
+   condition is met.  
+*/
+
 static int join_row_wanted (DATASET *dset, int i,
 			    jr_filter *filter, 
 			    int *err)
@@ -2768,44 +2775,51 @@ static int join_row_wanted (DATASET *dset, int i,
     int ret = 0;
 
     if (filter == NULL) {
+	/* no-op */
 	return 1;
     }
 
     if (filter->is_string) {
-	const char *x;
-	const char *y;
+	const char *sx;
+	const char *sy;
 	size_t slen;
 
 	if (filter->lhcol) {
-	    x = series_get_string_val(dset, filter->lhcol, i);
+	    sx = series_get_string_val(dset, filter->lhcol, i);
 	} else {
-	    x = filter->lhname;
+	    sx = filter->lhname;
 	}
 
 	if (filter->rhcol) {
-	    y = series_get_string_val(dset, filter->rhcol, i);
+	    sy = series_get_string_val(dset, filter->rhcol, i);
 	} else {
-	    y = filter->rhname;
+	    sy = filter->rhname;
 	}
 
-	if (filter->op == B_EQ) {
-	    ret = (strcmp(x, y) == 0);
+	if (sx == NULL || sy == NULL) {
+	    fprintf(stderr, "join: missing string in filtering\n");
+	    *err = E_MISSDATA;
+	} else if (filter->op == B_EQ) {
+	    ret = (strcmp(sx, sy) == 0);
 	} else if (filter->op == B_GT) {
-	    slen = strlen(y);
-	    ret = (strlen(x) > slen) && (strncmp(x, y, slen) == 0);
+	    slen = strlen(sy);
+	    ret = (strlen(sx) > slen) && (strncmp(sx, sy, slen) == 0);
 	} else if (filter->op == B_LT) {
-	    slen = strlen(x);
-	    ret = (strlen(y) > slen) && (strncmp(x, y, slen) == 0);
+	    slen = strlen(sx);
+	    ret = (strlen(sy) > slen) && (strncmp(sx, sy, slen) == 0);
 	} else if (filter->op == B_NEQ) {
-	    ret = (strcmp(x, y) != 0);
+	    ret = (strcmp(sx, sy) != 0);
 	} else {
 	    *err = E_PARSE;
 	}
     } else {
 	double x = filter->lhcol ? dset->Z[filter->lhcol][i] : filter->lhval;
 	double y = filter->rhcol ? dset->Z[filter->rhcol][i] : filter->rhval;
-
-	if (filter->op == B_EQ) {
+	
+	if (na(x) || na(y)) {
+	    fprintf(stderr, "join: found NAs in filtering\n");
+	    *err = E_MISSDATA;
+	} else if (filter->op == B_EQ) {
 	    ret = x == y;
 	} else if (filter->op == B_GT) {
 	    ret = x > y;
@@ -2830,9 +2844,16 @@ static int join_row_wanted (DATASET *dset, int i,
     return ret;
 }
 
-static int get_outer_obs_keys (joiner *jr, int j,
-			       const DATASET *dset,
-			       int i)
+/* Parse the obs string on row @i of the outer dataset and set the two
+   keys on row @j of the joiner struct, representing year and month or
+   quarter. We get here only if we have verified that the obs strings
+   exist, and plausibly conform to the right pattern. The indices
+   @i and @j may not be equal if filering is going on.
+*/
+
+static int read_outer_auto_keys (joiner *jr, int j,
+				 const DATASET *dset,
+				 int i)
 {
     const char *s = dset->S[i];
     int maj, min, err = 0;
@@ -2849,18 +2870,45 @@ static int get_outer_obs_keys (joiner *jr, int j,
     return err;
 }
 
+static int verify_filter (jr_filter *filter, int lhcol, int rhcol,
+			  const DATASET *r_dset)
+{
+    int err = 0;
+
+    if (filter->lhname != NULL && lhcol == 0) {
+	/* a required filter column is missing */
+	fprintf(stderr, "join: filter column '%s' was not found\n", 
+		filter->lhname);
+	err = E_DATA;
+    } else {
+	filter->lhcol = lhcol;
+	filter->is_string = series_has_string_table(r_dset, lhcol);
+	if (filter->rhname != NULL) {
+	    if (rhcol > 0) {
+		filter->rhcol = rhcol;
+	    } else if (!filter->is_string) {
+		fprintf(stderr, "join: filter column '%s' was not found\n", 
+			filter->rhname);
+		err = E_DATA;
+	    }
+	}
+    }
+
+    return err;
+}
+
 static joiner *joiner_new (csvjoin *jspec, 
 			   DATASET *l_dset,
 			   jr_filter *filter,
 			   AggrType aggr,
 			   int seqval,
-			   int obs_keys,
+			   int auto_keys,
 			   int *err)
 {
     joiner *jr = NULL;
     DATASET *r_dset = jspec->c->dset;
-    int keycol = 0, key2col = 0, valcol = 0;
-    int lhcol = 0, rhcol = 0, auxcol = 0;
+    int keycol, key2col, valcol;
+    int lhcol, rhcol, auxcol;
     int i, nrows = 0;
 
     keycol = jspec->colnums[JOIN_KEY];
@@ -2877,24 +2925,7 @@ static joiner *joiner_new (csvjoin *jspec,
 #endif
 
     if (filter != NULL) {
-	if (filter->lhname != NULL && lhcol == 0) {
-	    /* a required filter column is missing */
-	    fprintf(stderr, "join: filter column '%s' was not found\n", 
-		    filter->lhname);
-	    *err = E_DATA;
-	} else {
-	    filter->lhcol = lhcol;
-	    filter->is_string = series_has_string_table(r_dset, lhcol);
-	    if (filter->rhname != NULL) {
-		if (rhcol > 0) {
-		    filter->rhcol = rhcol;
-		} else if (!filter->is_string) {
-		    fprintf(stderr, "join: filter column '%s' was not found\n", 
-			    filter->rhname);
-		    *err = E_DATA;
-		}
-	    }
-	}
+	*err = verify_filter(filter, lhcol, rhcol, r_dset);
     }
 
     if (!*err) {
@@ -2938,6 +2969,7 @@ static joiner *joiner_new (csvjoin *jspec,
 	jr->valcol = valcol;
 	jr->l_dset = l_dset;
 	jr->r_dset = r_dset;
+	jr->auto_keys = auto_keys;
     }
 
     if (jr != NULL) {
@@ -2947,8 +2979,8 @@ static joiner *joiner_new (csvjoin *jspec,
 	for (i=0; i<r_dset->n && !*err; i++) {
 	    if (join_row_wanted(r_dset, i, filter, err)) {
 		/* the keys */
-		if (obs_keys) {
-		    *err = get_outer_obs_keys(jr, j, r_dset, i);
+		if (auto_keys) {
+		    *err = read_outer_auto_keys(jr, j, r_dset, i);
 		} else if (keycol > 0) {
 		    jr->rows[j].keyval = (int) r_dset->Z[keycol][i];
 		    if (key2col > 0) {
@@ -2986,6 +3018,8 @@ static joiner *joiner_new (csvjoin *jspec,
     return jr;
 }
 
+/* qsort callback for sorting rows of the joiner struct */
+
 static int compare_jr_rows (const void *a, const void *b)
 {
     const jr_row *ra = a;
@@ -3000,6 +3034,11 @@ static int compare_jr_rows (const void *a, const void *b)
     
     return ret;
 }
+
+/* Sort the rows of the joiner struct, by either one or two keys, then
+   figure out how many unique (primary) key values we have and
+   construct an array of frequency of occurrence of these values.
+*/
 
 static int joiner_sort (joiner *jr)
 {
@@ -3238,7 +3277,7 @@ static double aggr_retval (int key, const char *lstr,
 	}
     } else if (jr->aggr == AGGR_MAX) {
 	if (jr->auxcol) {
-	    /* using the max of the auxiliary var */
+	    /* using the max of an auxiliary var */
 	    xa = auxmatch[0];
 	}
 	x = xmatch[0];
@@ -3257,7 +3296,7 @@ static double aggr_retval (int key, const char *lstr,
 	}
     } else if (jr->aggr == AGGR_MIN) {
 	if (jr->auxcol) {
-	    /* using the min of the auxiliary var */
+	    /* using the min of an auxiliary var */
 	    xa = auxmatch[0];
 	}
 	x = xmatch[0];
@@ -3286,6 +3325,9 @@ static double aggr_retval (int key, const char *lstr,
 
     return x;
 }
+
+/* get an integer key value from a double, checking for
+   pathology */
 
 static int key_from_double (double x, int *err)
 {
@@ -3339,17 +3381,13 @@ static int get_inner_keys (joiner *jr, int i,
 
     *pk1 = *pk2 = 0;
 
-    if (ikeyvars == NULL) {
+    if (jr->auto_keys) {
 	/* real-time data special: use the LHS obs info */
-	double dx = date_as_double(i, dset->pd, dset->sd0);
-	double dx2 = dx - floor(dx);
+	char obs[8];
 
-	*pk1 = (int) dx;
-	if (dset->pd == 12) {
-	    *pk2 = (int) ceil(100 * dx2);
-	} else {
-	    *pk2 = (int) ceil(10 * dx2);
-	}
+	ntodate(obs, i, dset);
+	*pk1 = atoi(obs);
+	*pk2 = atoi(obs + 5);
     } else {
 	/* using regular LHS key series */
 	double dk1, dk2 = 0;
@@ -3577,12 +3615,16 @@ static jr_filter *make_join_filter (const char *s,
 	filter->op = op;
 	if (numeric_string(lhs)) {
 	    filter->lhval = dot_atof(lhs);
+	} else if (gretl_is_scalar(lhs)) {
+	    filter->lhval = gretl_scalar_get_value(lhs);
 	} else {
 	    filter->lhname = lhs;
 	    lhs = NULL;
 	}
 	if (numeric_string(rhs)) {
 	    filter->rhval = dot_atof(rhs);
+	} else if (gretl_is_scalar(rhs)) {
+	    filter->rhval = gretl_scalar_get_value(rhs);
 	} else {
 	    filter->rhname = rhs;
 	    rhs = NULL;
@@ -3733,11 +3775,13 @@ static int join_data_type_check (joiner *jr, int targvar,
     return err;
 }
 
+#if AUTO_KEYS
+
 static int subperiod_char (char c, int pd)
 {
-    if (pd == 12 && c == 'm') {
+    if (pd == 12 && (c == 'm' || c == 'M')) {
 	return 1;
-    } else if (pd == 4 && c == 'q') {
+    } else if (pd == 4 && (c == 'q' || c == 'Q')) {
 	return 1;
     } else {
 	return 0;
@@ -3750,8 +3794,8 @@ static int subperiod_char (char c, int pd)
    quarterly data or "1990m1" for monthly? Maybe.
 */
 
-static int realtime_key_check (const DATASET *l_dset,
-			       const DATASET *r_dset)
+static int auto_keys_check (const DATASET *l_dset,
+			    const DATASET *r_dset)
 {
     const char *dig = "0123456789";
     const char *s;
@@ -3790,6 +3834,8 @@ static int realtime_key_check (const DATASET *l_dset,
 
     return err;
 }
+
+#endif /* AUTO_KEYS */
 
 /**
  * join_from_csv:
@@ -3835,7 +3881,7 @@ int join_from_csv (const char *fname,
     int targvar, orig_v = dset->v;
     int str_keys = 0;
     int str_keys2 = 0;
-    int obs_keys = 0;
+    int auto_keys = 0;
     int n_keys = 0;
     int err = 0;
 
@@ -4008,13 +4054,15 @@ int join_from_csv (const char *fname,
 	}
     }
 
+#if AUTO_KEYS
     if (!err && (opt & OPT_R) && n_keys == 0) {
-	err = realtime_key_check(dset, jspec.c->dset);
+	err = auto_keys_check(dset, jspec.c->dset);
 	if (!err) {
-	    obs_keys = 1;
+	    auto_keys = 1;
 	    n_keys = 2;
 	}
     }
+#endif
 
     if (!err) {
 #if CDEBUG > 1
@@ -4024,7 +4072,7 @@ int join_from_csv (const char *fname,
 	printdata(NULL, NULL, jspec.c->dset, OPT_O, eprn);
 	gretl_print_destroy(eprn);
 #endif
-	jr = joiner_new(&jspec, dset, filter, aggr, seqval, obs_keys, &err);
+	jr = joiner_new(&jspec, dset, filter, aggr, seqval, auto_keys, &err);
 	if (err) {
 	    fprintf(stderr, "join: error %d from joiner_new()\n", err);
 	}
@@ -4039,7 +4087,6 @@ int join_from_csv (const char *fname,
 	jr->n_keys = n_keys;
 	jr->str_keys = str_keys;
 	jr->str_keys2 = str_keys2;
-	jr->obs_keys = obs_keys;
 	if (jr->str_keys || jr->str_keys2) {
 	    jr->l_keyno = ikeyvars;
 	    jr->r_keyno = okeyvars;
