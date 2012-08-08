@@ -4,13 +4,16 @@ Version 1.9.10, in progress
 - "delete" command: add a --force option to permit deletion of
   series in loops (to be used with caution!)
 - "data" command: allow this in loops
-- Enable use of the "open" command in loops (gretlcli only)
 - "open" command: rename the option for reading fixed format data
-  from --cols to --fixed-cols
-- "dpanel" and "arbond": indicate in the model printout if the AR,
-  Sargan or Wald tests failed
+  from --cols to --fixed-cols; also allow use of this command
+  in loops (gretlcli only)
+- "dpanel" and "arbond" commands: indicate in the model printout 
+  if the AR, Sargan or Wald tests failed
+- "gnuplot" command: add a --with-lp option to use linespoints
 - "modtest" command: support the autocorrelation option for ARMA
   models, using the Ljung-Box statistic
+- Add three new functions: ghk(), halton() and isnan()
+- Add two new accessors: $pi and $huge
 - Fix for ARMA forecasts: ensure that the dynamic portion starts
   as soon as possible when the --dynamic option is given
 - Switch to using libcurl for HTTP transaction support
@@ -23,8 +26,6 @@ Version 1.9.10, in progress
   more robust algorithm
 - MS Windows build: work around problems associated with the
   "Virtual Store" folder-redirection introduced in Windows Vista
-- Add three new functions: ghk(), halton() and isnan()
-- Add two new accessors: $pi and $huge
 - Enable indexing into named lists to get the ID numbers of series
 - Fix bivariate normal cdf calculator (would return NAs in some
   pathological cases)
