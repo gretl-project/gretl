@@ -68,14 +68,19 @@ struct gnuplot_info_ {
     const char *yformula;
     const double *x;
     gretl_matrix *dvals;
-    int *non_point_list;
+    int *withlist;
+};
+
+enum {
+    W_POINTS,
+    W_LINES,
+    W_IMPULSES,
+    W_LP
 };
 
 #define MAX_LETTERBOX_LINES 8
 
 #define ts_plot(g)      ((g)->flags & GPT_TS)
-#define use_impulses(g) ((g)->flags & GPT_IMPULSES)
-#define use_lines(g)    ((g)->flags & GPT_LINES)
 
 #if GP_DEBUG
 static void print_gnuplot_flags (int flags, int revised);
@@ -291,42 +296,51 @@ static int gp_list_pos (const char *s, const int *list,
    --with-lines=foo,bar
 
    this indicates that the "with lines" format should be
-   applied to selected y-axis variables, not all. In that
-   case we construct a list holding the positions in the
-   graph list of the variables that want special
-   treatment; this is gi->non_point_list.
+   applied to selected y-axis variables, not all.
 */
 
-static int gp_set_non_point_vars (gnuplot_info *gi, 
-				  const char *s, 
+static int gp_set_non_point_info (gnuplot_info *gi, 
 				  const int *list,
-				  const DATASET *dset)
+				  const DATASET *dset,
+				  gretlopt opt)
 {
-    int *non_point_list = NULL;
-    int i, pos;
+    const char *s = get_optval_string(GNUPLOT, opt);
+    int withval = W_POINTS;
+    int i, imax = gi->withlist[0];
 
-    if (strchr(s, ',') != NULL) {
-	/* multiple components */
+    if (opt == OPT_O) {
+	withval = W_LINES;
+    } else if (opt == OPT_M) {
+	withval = W_IMPULSES;
+    } else if (opt == OPT_P) {
+	withval = W_LP;
+    }
+
+    if (s == NULL) {
+	/* spec applies to all members of list */
+	for (i=1; i<=imax; i++) {
+	    if (gi->withlist[i] == W_POINTS) {
+		gi->withlist[i] = withval;
+	    }
+	}
+    } else if (strchr(s, ',') != NULL) {
+	/* spec has multiple components */
 	gchar **strs = g_strsplit(s, ",", 0);
+	int j;
 	
-	for (i=0; strs[i]!=NULL; i++) {
-	    pos = gp_list_pos(strs[i], list, dset);
-	    if (pos > 0 && pos < list[0]) {
-		gretl_list_append_term(&non_point_list, pos);
+	for (j=0; strs[j]!=NULL; j++) {
+	    i = gp_list_pos(strs[j], list, dset);
+	    if (i > 0 && i <= imax) {
+		gi->withlist[i] = withval;
 	    }
 	}
 	g_strfreev(strs);
     } else {
 	/* just one component */
-	pos = gp_list_pos(s, list, dset);
-	if (pos > 0 && pos < list[0]) {
-	    non_point_list = gretl_list_new(1);
-	    non_point_list[1] = pos;
+	i = gp_list_pos(s, list, dset);
+	if (i > 0 && i <= imax) {
+	    gi->withlist[i] = withval;
 	}
-    }
-
-    if (non_point_list != NULL) {
-	gi->non_point_list = non_point_list;
     }
 
     return 0;
@@ -337,7 +351,7 @@ static int gp_set_non_point_vars (gnuplot_info *gi,
 static void get_gp_flags (gnuplot_info *gi, gretlopt opt, 
 			  const int *list, const DATASET *dset)
 {
-    int k;
+    int n_yvars = list[0] - 1;
 
     gi->flags = 0;
 
@@ -355,22 +369,6 @@ static void get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	gi->flags |= GPT_FA;
     }
 
-    if (opt & OPT_M) {
-	const char *s = get_optval_string(GNUPLOT, OPT_M);
-
-	if (s != NULL) {
-	    gp_set_non_point_vars(gi, s, list, dset);
-	}
-	gi->flags |= GPT_IMPULSES;
-    } else if (opt & OPT_O) {
-	const char *s = get_optval_string(GNUPLOT, OPT_O);
-
-	if (s != NULL) {
-	    gp_set_non_point_vars(gi, s, list, dset);
-	}
-	gi->flags |= GPT_LINES;
-    }
-
     if (opt & OPT_Z) {
 	gi->flags |= GPT_DUMMY;
     } else if (opt & OPT_C) {
@@ -381,14 +379,31 @@ static void get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	}
 	if (opt & OPT_T) {
 	    gi->flags |= GPT_IDX;
+	    /* there's no xvar in @list */
+	    n_yvars++;
+	}
+    }
+
+    if (opt & (OPT_M | OPT_O | OPT_P)) {
+	/* non-point "plot with" options */
+	gi->withlist = gretl_list_new(n_yvars);
+    }
+
+    if (gi->withlist != NULL) {
+	if (opt & OPT_M) {
+	    gp_set_non_point_info(gi, list, dset, OPT_M);
+	}
+	if (opt & OPT_O) {
+	    gp_set_non_point_info(gi, list, dset, OPT_O);
+	}
+	if (opt & OPT_P) {
+	    gp_set_non_point_info(gi, list, dset, OPT_P);
 	}
     }
 
     gi->fit = PLOT_FIT_NONE;
-    k = list[0];
 
-    if ((k == 2 || (k == 1 && (gi->flags & GPT_IDX))) && !(opt & OPT_S)) {
-	/* OPT_S suppresses auto-fit */
+    if (!(gi->flags & GPT_FIT_OMIT) && n_yvars == 1) {
 	if (opt & OPT_I) {
 	    gi->fit = PLOT_FIT_INVERSE;
 	} else if (opt & OPT_Q) {
@@ -2320,6 +2335,36 @@ all_graph_data_missing (const int *list, int t, const double **Z)
     return 1;
 }
 
+static int use_impulses (gnuplot_info *gi)
+{
+    if (gi->withlist != NULL) {
+	int i;
+
+	for (i=1; i<=gi->withlist[0]; i++) {
+	    if (gi->withlist[0] == W_IMPULSES) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+static int use_lines (gnuplot_info *gi)
+{
+    if (gi->withlist != NULL) {
+	int i;
+
+	for (i=1; i<=gi->withlist[0]; i++) {
+	    if (gi->withlist[0] == W_LINES) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 static void print_gp_data (gnuplot_info *gi, const DATASET *dset)
 {
     int n = gi->t2 - gi->t1 + 1;
@@ -2389,7 +2434,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 {
     int l0 = list[0];
 
-    gi->non_point_list = NULL;
+    gi->withlist = NULL;
 
     get_gp_flags(gi, opt, list, dset);
 
@@ -2458,7 +2503,7 @@ static void clear_gpinfo (gnuplot_info *gi)
 {
     free(gi->list);
     gretl_matrix_free(gi->dvals);
-    free(gi->non_point_list);
+    free(gi->withlist);
 
     if (gi->fp != NULL) {
 	fclose(gi->fp);
@@ -2537,24 +2582,22 @@ static void set_withstr (gnuplot_info *gi, int i, char *str)
 {
     if (gi->flags & GPT_DATA_STYLE) {
 	*str = '\0';
-    } else if (gi->flags & GPT_LINES) {
-	if (gi->non_point_list == NULL) {
-	    /* GPT_LINES applies to all */
+    } else if (gi->withlist != NULL) {
+	int withval = W_POINTS;
+
+	if (i > 0 && i <= gi->withlist[0]) {
+	    withval = gi->withlist[i];
+	}
+
+	if (withval == W_LINES) {
 	    strcpy(str, "w lines");
-	} else if (in_gretl_list(gi->non_point_list, i)) {
-	    strcpy(str, "w lines");
+	} else if (withval == W_IMPULSES) {
+	    strcpy(str, "w impulses");
+	} else if (withval == W_LP) {
+	    strcpy(str, "w linespoints");
 	} else {
 	    strcpy(str, "w points");
 	}
-    } else if (gi->flags & GPT_IMPULSES) {
-	if (gi->non_point_list == NULL) {
-	    /* GPT_IMPULSES applies to all */
-	    strcpy(str, "w impulses");
-	} else if (in_gretl_list(gi->non_point_list, i)) {
-	    strcpy(str, "w impulses");
-	} else {
-	    strcpy(str, "w points");
-	}	
     } else {
 	strcpy(str, "w points");
     }
@@ -3004,9 +3047,11 @@ int gnuplot (const int *plotlist, const char *literal,
        "width 1 box" otherwise */
     strcpy(keystr, "set key left top\n");
 
+#if 0 /* FIXME? */
     if (gi.flags & GPT_IMPULSES) {
 	strcpy(withstr, "w i");
     }
+#endif
 
     /* set x-axis label for non-time series plots */
     if (!(gi.flags & GPT_TS)) {

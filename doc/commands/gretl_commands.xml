@@ -4302,6 +4302,11 @@
 	  <effect>use lines, not points</effect>
         </option>
         <option>
+	  <flag>--with-lp</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>use lines and points</effect>
+        </option>
+        <option>
 	  <flag>--with-impulses</flag>
 	  <optparm optional="true">varspec</optparm>
 	  <effect>use vertical lines</effect>
@@ -4379,16 +4384,18 @@
       </para>
       <para>
 	By default, data-points are shown as points; this can be
-	overridden by giving one of the options <opt>--with-lines</opt> or
+	overridden by giving one of the options
+	<opt>--with-lines</opt>, <opt>--with-lp</opt> or
 	<opt>--with-impulses</opt>. If more than one variable is to be
-	plotted on the <math>y</math> axis, the effect of these options
-	may be confined to a subset of the variables by using the
-	<repl>varspec</repl> parameter. This should take the form of a
-	comma-separated listing of the names or numbers of the variables
-	to be plotted with lines or impulses respectively. For instance,
-	the final example above shows how to plot <lit>y1</lit> and
-	<lit>y2</lit> against <lit>x</lit>, such that <lit>y2</lit> is
-	represented by a line but <lit>y1</lit> by points.
+	plotted on the <math>y</math> axis, the effect of these
+	options may be confined to a subset of the variables by using
+	the <repl>varspec</repl> parameter. This should take the form
+	of a comma-separated listing of the names or numbers of the
+	variables to be plotted with lines or impulses
+	respectively. For instance, the final example above shows how
+	to plot <lit>y1</lit> and <lit>y2</lit> against <lit>x</lit>,
+	such that <lit>y2</lit> is represented by a line but
+	<lit>y1</lit> by points.
       </para>
       <para>
 	If the <opt>--dummy</opt> option is selected, exactly three
