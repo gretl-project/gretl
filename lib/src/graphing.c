@@ -2519,12 +2519,6 @@ static void print_gnuplot_flags (int flags, int revised)
 	fprintf(stderr, "*** gnuplot() called with flags:\n");
     }
 
-    if (flags & GPT_IMPULSES) {
-	fprintf(stderr, " GPT_IMPULSES\n");
-    }
-    if (flags & GPT_LINES) {
-	fprintf(stderr, " GPT_LINES\n");
-    }
     if (flags & GPT_RESIDS) {
 	fprintf(stderr, " GPT_RESIDS\n");
     }	
