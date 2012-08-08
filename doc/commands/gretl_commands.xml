@@ -6190,42 +6190,6 @@
 
   </command>  
 
-  <command name="markers" section="Dataset" 
-    label="Observation markers" context="cli">
-
-    <usage>
-      <altforms>
-	<altform><lit>markers --to-file=</lit><repl>filename</repl></altform>
-	<altform><lit>markers --from-file=</lit><repl>filename</repl></altform>
-	<altform><lit>markers --delete</lit></altform>
-      </altforms>
-    </usage>
-
-    <description>
-      <para>
-	With the option <opt>--to-file</opt>, writes to the named file
-	the observation marker strings from the current dataset, one
-	per line. If no such strings are present an error is flagged.
-      </para>
-      <para>
-	With the option <opt>--from-file</opt>, reads the specified
-	file (which should be plain text) and assigns observation
-	markers to the rows in the dataset, reading one marker per
-	line. There should be at least as many markers in the file as
-	observations in the dataset.
-      </para>
-      <para>
-	The <opt>--delete</opt> option does what you'd expect: it
-	removes the observation marker strings from the dataset.
-      </para>      
-    </description>
-
-    <gui-access>
-      <menu-path>/Data/Observation markers</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="makepkg" section="Programming" context="cli"
     label="Make function package">
 
@@ -6267,6 +6231,42 @@
 
     <gui-access>
       <menu-path>/File/Function files/New package</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="markers" section="Dataset" 
+    label="Observation markers" context="cli">
+
+    <usage>
+      <altforms>
+	<altform><lit>markers --to-file=</lit><repl>filename</repl></altform>
+	<altform><lit>markers --from-file=</lit><repl>filename</repl></altform>
+	<altform><lit>markers --delete</lit></altform>
+      </altforms>
+    </usage>
+
+    <description>
+      <para>
+	With the option <opt>--to-file</opt>, writes to the named file
+	the observation marker strings from the current dataset, one
+	per line. If no such strings are present an error is flagged.
+      </para>
+      <para>
+	With the option <opt>--from-file</opt>, reads the specified
+	file (which should be plain text) and assigns observation
+	markers to the rows in the dataset, reading one marker per
+	line. There should be at least as many markers in the file as
+	observations in the dataset.
+      </para>
+      <para>
+	The <opt>--delete</opt> option does what you'd expect: it
+	removes the observation marker strings from the dataset.
+      </para>      
+    </description>
+
+    <gui-access>
+      <menu-path>/Data/Observation markers</menu-path>
     </gui-access>
 
   </command>
