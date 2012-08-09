@@ -50,8 +50,8 @@ enum {
 enum {
     JOIN_KEY,
     JOIN_VAL,
-    JOIN_LHS,
-    JOIN_RHS,
+    JOIN_LHF,
+    JOIN_RHF,
     JOIN_KEY2,
     JOIN_AUX,
     JOIN_MAXCOL
@@ -2843,7 +2843,7 @@ static int join_row_wanted (DATASET *dset, int i,
    keys on row @j of the joiner struct, representing year and month or
    quarter. We get here only if we have verified that the obs strings
    exist, and plausibly conform to the right pattern. The indices
-   @i and @j may not be equal if filering is going on.
+   @i and @j may not be equal if a filter is being used.
 */
 
 static int read_outer_auto_keys (joiner *jr, int j,
@@ -2892,6 +2892,19 @@ static int verify_filter (jr_filter *filter, int lhcol, int rhcol,
     return err;
 }
 
+/* get an integer key value from a double, checking for
+   pathology */
+
+static int dtoi (double x, int *err)
+{
+    if (xna(x) || fabs(x) > INT_MAX) {
+	*err = E_INVARG;
+	return -1;
+    } else {
+	return (int) trunc(x);
+    }
+}
+
 static joiner *joiner_new (csvjoin *jspec, 
 			   DATASET *l_dset,
 			   jr_filter *filter,
@@ -2902,25 +2915,22 @@ static joiner *joiner_new (csvjoin *jspec,
 {
     joiner *jr = NULL;
     DATASET *r_dset = jspec->c->dset;
-    int keycol, key2col, valcol;
-    int lhcol, rhcol, auxcol;
+    int keycol  = jspec->colnums[JOIN_KEY];
+    int valcol  = jspec->colnums[JOIN_VAL];
+    int lhfcol  = jspec->colnums[JOIN_LHF];
+    int rhfcol  = jspec->colnums[JOIN_RHF];
+    int key2col = jspec->colnums[JOIN_KEY2];
+    int auxcol  = jspec->colnums[JOIN_AUX];
     int i, nrows = 0;
-
-    keycol = jspec->colnums[JOIN_KEY];
-    valcol = jspec->colnums[JOIN_VAL];
-    lhcol  = jspec->colnums[JOIN_LHS];
-    rhcol  = jspec->colnums[JOIN_RHS];
-    key2col = jspec->colnums[JOIN_KEY2];
-    auxcol = jspec->colnums[JOIN_AUX];
 
 #if CDEBUG
     fprintf(stderr, "joiner columns:\n"
-	    "KEY=%d, VAL=%d, LHS=%d, RHS=%d, KEY2=%d, AUX=%d\n",
-	    keycol, valcol, lhcol, rhcol, key2col, auxcol);
+	    "KEY=%d, VAL=%d, LHF=%d, RHF=%d, KEY2=%d, AUX=%d\n",
+	    keycol, valcol, lhfcol, rhfcol, key2col, auxcol);
 #endif
 
     if (filter != NULL) {
-	*err = verify_filter(filter, lhcol, rhcol, r_dset);
+	*err = verify_filter(filter, lhfcol, rhfcol, r_dset);
     }
 
     if (!*err) {
@@ -2969,6 +2979,7 @@ static joiner *joiner_new (csvjoin *jspec,
 
     if (jr != NULL) {
 	/* transcribe the rows we want */
+	double **Z = r_dset->Z;
 	int j = 0;
 
 	for (i=0; i<r_dset->n && !*err; i++) {
@@ -2977,11 +2988,11 @@ static joiner *joiner_new (csvjoin *jspec,
 		if (auto_keys) {
 		    *err = read_outer_auto_keys(jr, j, r_dset, i);
 		} else if (keycol > 0) {
-		    jr->rows[j].keyval = (int) r_dset->Z[keycol][i];
+		    jr->rows[j].keyval = dtoi(Z[keycol][i], err);
 		    if (key2col > 0) {
 			/* double key */
 			jr->rows[j].n_keys = 2;
-			jr->rows[j].keyval2 = (int) r_dset->Z[key2col][i];
+			jr->rows[j].keyval2 = dtoi(Z[key2col][i], err);
 		    } else {
 			/* single key */
 			jr->rows[j].n_keys = 1;
@@ -2994,17 +3005,9 @@ static joiner *joiner_new (csvjoin *jspec,
 		    jr->rows[j].keyval2 = 0;
 		}
 		/* the "payload" data */
-		if (valcol > 0) {
-		    jr->rows[j].val = r_dset->Z[valcol][i];
-		} else {
-		    jr->rows[j].val = 0;
-		}
+		jr->rows[j].val = valcol > 0 ? Z[valcol][i] : 0;
 		/* the auxiliary data */
-		if (auxcol > 0) {
-		    jr->rows[j].aux = r_dset->Z[auxcol][i];
-		} else {
-		    jr->rows[j].aux = 0;
-		}
+		jr->rows[j].aux = auxcol > 0 ? Z[auxcol][i] : 0;
 		j++;
 	    }
 	}
@@ -3321,19 +3324,6 @@ static double aggr_retval (int key, const char *lstr,
     return x;
 }
 
-/* get an integer key value from a double, checking for
-   pathology */
-
-static int key_from_double (double x, int *err)
-{
-    if (xna(x) || fabs(x) > INT_MAX) {
-	*err = E_INVARG;
-	return -1;
-    } else {
-	return (int) trunc(x);
-    }
-}
-
 /* Handle the case where (a) the value from the right, @rz, is
    actually the coding of a string value, and (b) the LHS series is
    pre-existing and already has a string table attached. The RHS
@@ -3395,9 +3385,9 @@ static int get_inner_keys (joiner *jr, int i,
 	if (xna(dk1) || xna(dk2)) {
 	    *missing = 1;
 	} else {
-	    k1 = key_from_double(dk1, &err);
+	    k1 = dtoi(dk1, &err);
 	    if (!err && jr->n_keys == 2) {
-		k2 = key_from_double(dk2, &err);
+		k2 = dtoi(dk2, &err);
 	    }
 	}
 	if (!err && !*missing) {
@@ -3963,8 +3953,8 @@ int join_from_csv (const char *fname,
 
 	/* handle filter columns, if applicable */
 	if (filter != NULL) {
-	    jspec.colnames[JOIN_LHS] = filter->lhname;
-	    jspec.colnames[JOIN_RHS] = filter->rhname;
+	    jspec.colnames[JOIN_LHF] = filter->lhname;
+	    jspec.colnames[JOIN_RHF] = filter->rhname;
 	}
 
 	/* the second outer key, if present */
