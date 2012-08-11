@@ -5129,7 +5129,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     double x, y;
     int m, n, p, q, nr, nc;
     int conftype;
-    int i, j;
+    int i, j, nv;
 
     if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
 	*err = E_DATA;
@@ -5161,133 +5161,115 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 
     switch (conftype) {
     case CONF_ELEMENTS:
-	{
-	    int nv = m * n;
+	nv = m * n;
 #if defined(_OPENMP) && defined(USE_OPENMP)
 #pragma omp parallel for if (nv>OPENP_MIN) private(i)
 #endif
-	    for (i=0; i<nv; i++) {
-		c->val[i] = x_op_y(a->val[i], b->val[i], op);
-	    }
+	for (i=0; i<nv; i++) {
+	    c->val[i] = x_op_y(a->val[i], b->val[i], op);
 	}
 	break;
     case CONF_A_COLVEC:
-	{
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nr*nc>OPENP_MIN) private(i,j,x,y)
+#pragma omp parallel for if (nr>OPENP_MIN) private(i,j,x,y)
 #endif
-	    for (i=0; i<nr; i++) {
-		x = gretl_vector_get(a, i);
-		for (j=0; j<nc; j++) {
-		    y = gretl_matrix_get(b, i, j);
-		    y = x_op_y(x, y, op);
-		    gretl_matrix_set(c, i, j, y);
-		}
+	for (i=0; i<nr; i++) {
+	    x = gretl_vector_get(a, i);
+	    for (j=0; j<nc; j++) {
+		y = gretl_matrix_get(b, i, j);
+		y = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, y);
 	    }
 	}
 	break;
     case CONF_B_COLVEC:
-	{
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nr*nc>OPENP_MIN) private(i,j,x,y)
+#pragma omp parallel for if (nr>OPENP_MIN) private(i,j,x,y)
 #endif
-	    for (i=0; i<nr; i++) {
-		y = gretl_vector_get(b, i);
-		for (j=0; j<nc; j++) {
-		    x = gretl_matrix_get(a, i, j);
-		    x = x_op_y(x, y, op);
-		    gretl_matrix_set(c, i, j, x);
-		}
+	for (i=0; i<nr; i++) {
+	    y = gretl_vector_get(b, i);
+	    for (j=0; j<nc; j++) {
+		x = gretl_matrix_get(a, i, j);
+		x = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, x);
 	    }
 	}
 	break;
     case CONF_A_ROWVEC:
-	{
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nr*nc>OPENP_MIN) private(i,j,x,y)
+#pragma omp parallel for if (nc>OPENP_MIN) private(i,j,x,y)
 #endif
-	    for (j=0; j<nc; j++) {
-		x = gretl_vector_get(a, j);
-		for (i=0; i<nr; i++) {
-		    y = gretl_matrix_get(b, i, j);
-		    y = x_op_y(x, y, op);
-		    gretl_matrix_set(c, i, j, y);
-		}
+	for (j=0; j<nc; j++) {
+	    x = gretl_vector_get(a, j);
+	    for (i=0; i<nr; i++) {
+		y = gretl_matrix_get(b, i, j);
+		y = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, y);
 	    }
 	}
 	break;
     case CONF_B_ROWVEC:
-	{
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nr*nc>OPENP_MIN) private(i,j,x,y)
+#pragma omp parallel for if (nc>OPENP_MIN) private(i,j,x,y)
 #endif
-	    for (j=0; j<nc; j++) {
-		y = gretl_vector_get(b, j);
-		for (i=0; i<nr; i++) {
-		    x = gretl_matrix_get(a, i, j);
-		    x = x_op_y(x, y, op);
-		    gretl_matrix_set(c, i, j, x);
-		}
+	for (j=0; j<nc; j++) {
+	    y = gretl_vector_get(b, j);
+	    for (i=0; i<nr; i++) {
+		x = gretl_matrix_get(a, i, j);
+		x = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, x);
 	    }
 	}
 	break;
-	case CONF_A_SCALAR:
-	    {
-		x = a->val[0];
+    case CONF_A_SCALAR:
+	x = a->val[0];
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nr*nc>OPENP_MIN) private(i,j,y)
+#pragma omp parallel for if (nr>OPENP_MIN) private(i,j,y)
 #endif
-		for (i=0; i<nr; i++) {
-		    for (j=0; j<nc; j++) {
-			y = gretl_matrix_get(b, i, j);
-			y = x_op_y(x, y, op);
-			gretl_matrix_set(c, i, j, y);
-		    }
-		}
+	for (i=0; i<nr; i++) {
+	    for (j=0; j<nc; j++) {
+		y = gretl_matrix_get(b, i, j);
+		y = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, y);
 	    }
-	    break;
+	}
+	break;
     case CONF_B_SCALAR:
-	{
-	    y = b->val[0];
+	y = b->val[0];
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nr*nc>OPENP_MIN) private(i,j,x)
+#pragma omp parallel for if (nr>OPENP_MIN) private(i,j,x)
 #endif
-	    for (i=0; i<nr; i++) {
-		for (j=0; j<nc; j++) {
-		    x = gretl_matrix_get(a, i, j);
-		    x = x_op_y(x, y, op);
-		    gretl_matrix_set(c, i, j, x);
-		}
+	for (i=0; i<nr; i++) {
+	    for (j=0; j<nc; j++) {
+		x = gretl_matrix_get(a, i, j);
+		x = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, x);
 	    }
 	}
 	break;
     case CONF_AC_BR:
-	{
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nr*nc>OPENP_MIN) private(i,j,x,y)
+#pragma omp parallel for if (nr>OPENP_MIN) private(i,j,x,y)
 #endif
-	    for (i=0; i<nr; i++) {
-		x = a->val[i];
-		for (j=0; j<nc; j++) {
-		    y = b->val[j];
-		    y = x_op_y(x, y, op);
-		    gretl_matrix_set(c, i, j, y);
-		}
+	for (i=0; i<nr; i++) {
+	    x = a->val[i];
+	    for (j=0; j<nc; j++) {
+		y = b->val[j];
+		y = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, y);
 	    }
 	}
 	break;
     case CONF_AR_BC:
-	{
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nr*nc>OPENP_MIN) private(i,j,x,y)
+#pragma omp parallel for if (nc>OPENP_MIN) private(i,j,x,y)
 #endif
-	    for (j=0; j<nc; j++) {
-		x = a->val[j];
-		for (i=0; i<nr; i++) {
-		    y = b->val[i];
-		    y = x_op_y(x, y, op);
-		    gretl_matrix_set(c, i, j, y);
-		}
+	for (j=0; j<nc; j++) {
+	    x = a->val[j];
+	    for (i=0; i<nr; i++) {
+		y = b->val[i];
+		y = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, y);
 	    }
 	}
 	break;
