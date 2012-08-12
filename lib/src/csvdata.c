@@ -3787,8 +3787,10 @@ static int auto_keys_check (const DATASET *l_dset,
     int pd = l_dset->pd;
     int err = 0;
 
-    if ((pd != 4 && pd != 12) || l_dset->S != NULL) {
+    if (!dataset_is_time_series(l_dset) || l_dset->S != NULL) {
 	return E_DATA;
+    } else if (pd != 4 && pd != 12) {
+	return E_PDWRONG;
     }
 
     if (r_dset->S == NULL) {

@@ -4328,12 +4328,8 @@ static int join_revision_date (const char *s, const DATASET *dset,
 	*err = E_PARSE;
     }
 
-    if (!*err) {
-	if (d <= 0) {
-	    *err = E_PARSE;
-	} else if (!dataset_is_time_series(dset)) {
-	    *err = E_PDWRONG;
-	}
+    if (!*err && d <= 0) {
+	*err = E_PARSE;
     }
 
     return d;
@@ -4557,7 +4553,10 @@ static int lib_join_data (ExecState *s,
     }
 
     if (!err && ikeyvars == NULL && aggr != 0 && !(opt & OPT_R)) {
-	/* aggregation requires the use of keys */
+	/* aggregation requires the use of keys, unless perhaps
+	   we're using --rev with a time-series dataset on the
+	   left
+	*/
 	gretl_errmsg_set(_("Inner key is missing"));
 	err = E_ARGS;
     }
