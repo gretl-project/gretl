@@ -20,6 +20,7 @@ Version 1.9.10, in progress
 - Add two new element-wise matrix operators, ".>=" and ".<=",
   (greater than or equal, less than or equal)
 - Fix some buggy behavior in regard to empty matrices
+- Fix for use of "catch" (to trap errors) in loops
 - Allow passing "null" as an argument for lists in user-defined
   functions
 - Bivariate normal cdf: switch from Drezner(78) to a faster and

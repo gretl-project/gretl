@@ -3020,6 +3020,12 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		}
 	    }
 
+	    if (err && (cmd->flags & CMD_CATCH)) {
+		set_gretl_errno(err);
+		cmd->flags ^= CMD_CATCH;
+		err = 0;
+	    }
+
 	} /* end execution of commands within loop */
 
 	if (err) {
