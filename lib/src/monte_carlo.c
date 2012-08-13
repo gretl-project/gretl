@@ -31,6 +31,7 @@
 #include "flow_control.h"
 #include "system.h"
 #include "genparse.h"
+#include "gretl_string_table.h"
 
 #include <time.h>
 #include <unistd.h>
@@ -238,12 +239,29 @@ static double controller_get_val (controller *clr,
 	    gretl_errmsg_sprintf(_("'%s': not a scalar"), clr->vname);
 	} 
     } else if (clr->expr != NULL) {
-	clr->val = generate_scalar(clr->expr, dset, err);
+	int done = 0;
+
+	if (strchr(clr->expr, '@')) {
+	    /* the expression needs string substitution? */
+	    int subst = 0;
+	    char expr[32];
+
+	    *expr = '\0';
+	    strncat(expr, clr->expr, 31);
+	    *err = substitute_named_strings(expr, &subst);
+	    if (!*err && subst) {
+		clr->val = generate_scalar(expr, dset, err);
+		done = 1;
+	    }
+	}
+	if (!*err && !done) {
+	    clr->val = generate_scalar(clr->expr, dset, err);
+	}
     }
 
 #if LOOP_DEBUG
-    fprintf(stderr, "controller_get_val: vname='%s', returning %g\n", 
-	    clr->vname, clr->val);
+    fprintf(stderr, "controller_get_val: vname='%s', expr='%s', val=%g, err=%d\n", 
+	    clr->vname, clr->expr, clr->val, *err);
 #endif
 
     return clr->val;

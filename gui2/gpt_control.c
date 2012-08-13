@@ -44,6 +44,12 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdkkeysyms.h>
 
+#define TRY_SVG 0
+
+#if TRY_SVG
+# include <librsvg/rsvg.h>
+#endif
+
 enum {
     PLOT_SAVED          = 1 << 0,
     PLOT_ZOOMED         = 1 << 1,
@@ -4249,6 +4255,81 @@ static int render_pngfile (png_plot *plot, int view)
     return 0;
 }
 
+#if TRY_SVG
+
+static int render_svgfile (png_plot *plot, int view)
+{
+    gint width, height;
+    GdkPixbuf *pbuf;
+    char fname[MAXLEN];
+    GError *gerr = NULL;
+
+    build_path(fname, gretl_dotdir(), "test.svg", NULL);
+
+    pbuf = rsvg_pixbuf_from_file(fname, &gerr);
+
+    if (pbuf == NULL) {
+	fprintf(stderr, "rsvg_pixbuf_from_file failed\n");
+	gretl_remove(fname);
+	return 1;
+    }
+
+    width = gdk_pixbuf_get_width(pbuf);
+    height = gdk_pixbuf_get_height(pbuf);
+
+    if (width == 0 || height == 0) {
+	errbox(_("Malformed SVG file for graph"));
+	g_object_unref(pbuf);
+	gretl_remove(fname);
+	return 1;
+    }
+
+    /* scrap any old record of which points are labeled */
+    if (plot->spec->labeled != NULL) {
+	free(plot->spec->labeled);
+	plot->spec->labeled = NULL;
+	if (!(plot->spec->flags & GPT_PRINT_MARKERS)) {
+	    /* any markers will have disappeared on reprinting */
+	    plot->format &= ~PLOT_MARKERS_UP;
+	} 
+    }
+
+#if GTK_MAJOR_VERSION >= 3
+    copy_pixbuf_to_surface(plot, pbuf);
+#else
+    plot->cr = gdk_cairo_create(plot->pixmap);
+    gdk_cairo_set_source_pixbuf(plot->cr, pbuf, 0, 0);
+    cairo_paint(plot->cr);
+    cairo_destroy(plot->cr);
+    if (plot->savebuf != NULL) {
+	g_object_unref(plot->savebuf);
+	plot->savebuf = NULL;
+    }
+#endif
+
+    g_object_unref(pbuf);
+    gretl_remove(fname);
+   
+    if (view != PNG_START) { 
+	/* we're changing the view, so refresh the whole canvas */
+	redraw_plot_rectangle(plot, NULL);	
+	if (view == PNG_ZOOM) {
+	    plot->status |= PLOT_ZOOMED;
+	} else if (view == PNG_UNZOOM) {
+	    plot->status ^= PLOT_ZOOMED;
+	}
+    }
+
+#ifdef G_OS_WIN32
+    /* somehow the plot can end up underneath */
+    gtk_window_present(GTK_WINDOW(plot->shell));
+#endif
+
+    return 0;
+}
+
+#endif
+
 static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 {
     /* delete temporary plot source file? */
@@ -4883,7 +4964,11 @@ static int gnuplot_show_png (const char *fname, const char *name,
 		     G_CALLBACK(plot_expose), plot);
 #endif
 
+#if TRY_SVG
+    err = render_svgfile(plot, PNG_START);
+#else
     err = render_pngfile(plot, PNG_START);
+#endif
 
     if (err) {
 	gtk_widget_destroy(plot->shell);
