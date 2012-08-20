@@ -195,6 +195,10 @@ void time_series_menu_state (gboolean s)
 	return;
     }
 
+    /* FIXME: we (may) need to enable/disable function
+       packages that have menu attachments here.
+    */
+
     /* unit-root tests: require time-series or panel data,
        and a time series length greater than 5
     */

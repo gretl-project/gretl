@@ -2381,12 +2381,12 @@ static int read_addons_info (void)
     return err;
 }
 
-/* For recognized "addon" function packages: given the internal
+/* For recognized function packages: given the internal
    package name (e.g. "gig") and a menu path where we'd like
    it to appear (e.g. "/menubar/Model/TSModels" -- see the
    ui definition file gui2/gretlmain.xml), construct the
    appropriate menu item and connect it to gfn_menu_callback(), 
-   which see above.
+   for which see above.
 */
 
 static void add_package_to_menu (addon_info *addon,
@@ -2396,6 +2396,11 @@ static void add_package_to_menu (addon_info *addon,
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gfn_menu_callback)
     };
     GtkActionGroup *actions;
+
+#if 0
+    fprintf(stderr, "add_package_to_menu:\n pkgname='%s', menupath='%s'\n",
+	    addon->pkgname, addon->menupath);
+#endif
 
     pkg_item.name = addon->pkgname;
     if (addon->label != NULL) {

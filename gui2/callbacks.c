@@ -200,6 +200,7 @@ void open_data (GtkAction *action)
     if (!dataset_locked()) {
 	int code = open_data_code(gtk_action_get_name(action));
 
+#if 1
 	if (code == OPEN_CSV || code == APPEND_CSV) {
 	    /* allow specification of separator */
 	    int resp = csv_options_dialog(code, GRETL_OBJ_DSET, NULL);
@@ -208,6 +209,7 @@ void open_data (GtkAction *action)
 		return;
 	    }
 	}
+#endif
 
 	file_selector(code, FSEL_DATA_NONE, NULL);
     }
