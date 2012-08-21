@@ -65,6 +65,7 @@ struct call_info_ {
     char rettype;        /* its return type */
     gchar **args;        /* its arguments */
     gchar *ret;          /* return assignment name */
+    gchar *label;        /* the function's label */
 };
 
 #define scalar_arg(t) (t == GRETL_TYPE_DOUBLE || t == GRETL_TYPE_SCALAR_REF)
@@ -144,6 +145,7 @@ static call_info *cinfo_new (fnpkg *pkg, windata_t *vwin)
     cinfo->ret = NULL;
 
     cinfo->dreq = 0;
+    cinfo->label = NULL;
 
     return cinfo;
 }
@@ -186,6 +188,7 @@ static void cinfo_free (call_info *cinfo)
 	g_list_free(cinfo->ssels);
     }
 
+    g_free(cinfo->label);
     free(cinfo->publist);
     free(cinfo);
 }
@@ -239,7 +242,8 @@ static GtkWidget *label_hbox (call_info *cinfo, GtkWidget *w,
     lbl = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl), buf);
     g_free(buf);
-    g_free(label);
+
+    cinfo->label = label;
 
     gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
     gtk_widget_show(lbl);
@@ -966,6 +970,19 @@ static int already_set_as_default (call_info *cinfo,
     return ret;
 }
 
+static int has_single_series_arg (call_info *cinfo)
+{
+    int i, ns = 0;
+
+    for (i=0; i<cinfo->n_params; i++) {
+	if (fn_param_type(cinfo->func, i) == GRETL_TYPE_SERIES) {
+	    ns++;
+	}
+    }
+
+    return ns == 1;
+}
+
 /* Try to be somewhat clever in selecting the default values to show
    in function-argument drop-down "combo" selectors.
 
@@ -975,6 +992,10 @@ static int already_set_as_default (call_info *cinfo,
    unlikely that the user wants to select the same named variable in
    more than one argument slot, so we try to avoid setting duplicate
    defaults.
+
+   Special case: the function has exactly one series argument, and
+   a single series is selected in the main gretl window: in that
+   case we pre-select that series.
 */
 
 static void arg_combo_set_default (call_info *cinfo,
@@ -983,13 +1004,24 @@ static void arg_combo_set_default (call_info *cinfo,
 				   int ptype)
 {
     GList *mylist = g_list_first(list);
+    const char *targname = NULL;
     int i, k = 0;
+
+    if (ptype == GRETL_TYPE_SERIES && has_single_series_arg(cinfo)) {
+	int vsel = mdata_active_var();
+
+	if (vsel > 0) {
+	    targname = dataset->varname[vsel];
+	}
+    }
 
     for (i=0; mylist != NULL; i++) {
 	gchar *name = mylist->data;
 	int ok = 0;
 
-	if (series_arg(ptype)) {
+	if (targname != NULL) {
+	    ok = strcmp(name, targname) == 0;
+	} else if (series_arg(ptype)) {
 	    int v = current_series_index(dataset, name);
 
 	    if (v > 0 && probably_stochastic(v)) {
@@ -1224,10 +1256,15 @@ static void function_call_dialog (call_info *cinfo)
 				     (desc != NULL)? desc :
 				     parname);
 	} else {
-	    argtxt = g_strdup_printf("%s (%s)",
-				     (desc != NULL)? desc :
-				     parname,
-				     gretl_arg_type_name(ptype));
+	    const char *astr = gretl_arg_type_name(ptype);
+
+	    if (desc != NULL && strstr(desc, astr)) {
+		argtxt = g_strdup_printf("%s", desc);
+	    } else {
+		argtxt = g_strdup_printf("%s (%s)",
+					 (desc != NULL)? desc :
+					 parname, astr);
+	    }
 	}
 
 	label = gtk_label_new(argtxt);
@@ -1572,7 +1609,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 
     strcat(fnline, ")");
 
-    if (!attach_bundle) {
+    if (!attach_bundle && strncmp(funname, "GUI", 3)) {
 	pprintf(prn, "? %s\n", fnline);
     }
 
@@ -1637,7 +1674,10 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     if (!err && no_print) {
 	gretl_print_destroy(prn);
     } else {
-	view_buffer(prn, 80, 400, funname, 
+	const char *title = cinfo->label != NULL ?
+	    cinfo->label : funname;
+
+	view_buffer(prn, 80, 400, title, 
 		    (bundle == NULL)? PRINT : VIEW_BUNDLE,
 		    bundle);
     }
