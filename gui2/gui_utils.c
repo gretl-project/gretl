@@ -1751,7 +1751,12 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
     }
 
-    gretl_print_get_size(prn, &width, &nlines);
+    if (role == VIEW_PKG_CODE) {
+	width = nlines = 0;
+    } else {
+	gretl_print_get_size(prn, &width, &nlines);
+    }
+
 #if 1
     if (role != SCRIPT_OUT && width > 0 && width + 2 < hsize) {
 	hsize = width + 2;

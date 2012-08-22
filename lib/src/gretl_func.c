@@ -4026,11 +4026,12 @@ real_print_function_package_data (const char *fname, PRN *prn, int task)
     int free_pkg = 0;
     int err = 0;
 
-#if PKG_DEBUG
-    fprintf(stderr, "real_get_function_file_info: fname = '%s'\n", fname);
-#endif
-
     pkg = get_loaded_pkg_by_filename(fname);
+
+#if PKG_DEBUG
+    fprintf(stderr, "real_get_function_file_info: fname='%s', pkg=%p\n", 
+	    fname, (void *) pkg);
+#endif
 
     if (pkg == NULL) {
 	/* package is not loaded, read it now */

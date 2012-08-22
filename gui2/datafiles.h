@@ -28,7 +28,8 @@ enum {
     LOAD_FN_PKG,
     EDIT_FN_PKG,
     DELETE_FN_PKG,
-    CALL_FN_PKG
+    CALL_FN_PKG,
+    MENU_ADD_FN_PKG
 };
 
 void browser_open_data (GtkWidget *w, gpointer data);

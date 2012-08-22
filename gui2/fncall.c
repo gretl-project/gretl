@@ -76,6 +76,7 @@ static GtkWidget *open_fncall_dlg;
 static gboolean close_on_OK = TRUE;
 
 static void fncall_exec_callback (GtkWidget *w, call_info *cinfo);
+static void unregister_package (const gchar *pkgname);
 
 static gchar **glib_str_array_new (int n)
 {
@@ -2130,7 +2131,6 @@ int query_addons (void)
     }
 
     if (!err) {
-	/* make use of info! */
 	infobox(buf);
     }
 
@@ -2282,6 +2282,39 @@ static addon_info *retrieve_addon_info (const gchar *pkgname)
     return NULL;
 }
 
+int package_is_available_for_menu (const gchar *pkgname,
+				   const char *path)
+{
+    int present = 0;
+    int i, ret = 0;
+
+    for (i=0; i<n_addons && !present; i++) {
+	if (!strcmp(pkgname, addons[i].pkgname)) {
+	    present = 1;
+	}
+    }
+
+    if (!present) {
+	/* not already present in menus: can it be added? */
+	gchar *mpath = NULL;
+	fnpkg *pkg;
+	int err = 0;
+
+	pkg = get_function_package_by_filename(path, &err);
+	if (!err) {
+	    err = function_package_get_properties(pkg,
+						  "menu-attachment", &mpath,
+						  NULL);
+	    if (mpath != NULL) {
+		ret = 1;
+		g_free(mpath);
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /* Callback for a menu item representing a "addon" function package, 
    whose name (e.g. "gig") is attached to @action. We first see if 
    we can find the full path to the corresponding gfn file; if so we
@@ -2317,6 +2350,8 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 
     if (addon->filepath != NULL) {
 	call_function_package(addon->filepath, vwin, NULL);
+    } else {
+	unregister_package(pkgname);
     }
 }
 
@@ -2618,7 +2653,7 @@ void maybe_add_packages_to_model_menus (windata_t *vwin)
 static const gchar *pkg_get_attachment (const gchar *mpath,
 					int *modelwin)
 {
-    const gchar *relpath = NULL;
+    const gchar *relpath = mpath;
 
     if (!strncmp(mpath, "MAINWIN/", 8)) {
 	relpath = mpath + 7;
@@ -2672,8 +2707,7 @@ static void print_pkg_line (const gchar *name,
 
     relpath = pkg_get_attachment(mpath, &modelwin);
 
-    fprintf(fp, "<package name=\"%s\" label=\"%s\"", 
-	    name, label);
+    fprintf(fp, "<package name=\"%s\" label=\"%s\"", name, label);
     if (modelwin) {
 	fputs(" model-window=\"true\"", fp);
     }
@@ -2687,6 +2721,65 @@ static void print_pkg_line (const gchar *name,
     } else {
 	fputs("/>\n", fp);
     }
+}
+
+/* When a package nominally appears in a menu but in fact
+   it is not found, remove it from packages.xml.
+*/
+
+static void unregister_package (const gchar *pkgname)
+{
+    gchar *pkgxml;
+    FILE *fp;
+    int err = 0;
+
+    pkgxml = g_strdup_printf("%sfunctions%cpackages.xml", 
+			     gretl_dotdir(), SLASH);
+
+    fp = gretl_fopen(pkgxml, "r");
+
+    if (fp != NULL) {
+	gchar *tmpfile;
+	char line[512];
+	FILE *fnew;
+
+	tmpfile = g_strdup_printf("%sfunctions%cpackages.xml.new", 
+				  gretl_dotdir(), SLASH);
+	fnew = gretl_fopen(tmpfile, "w");
+
+	if (fnew == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    char *p, *q, *targ;
+	    int found = 0;
+
+	    while (fgets(line, sizeof line, fp)) {
+		int skip = 0;
+
+		if (!found && (p = strstr(line, "<package name=\""))) {
+		    p += 15;
+		    q = strchr(p, '"');
+		    targ = gretl_strndup(p, q - p);
+		    if (!strcmp(pkgname, targ)) {
+			found = skip = 1;
+		    }
+		    free(targ);
+		}
+		if (!skip) {
+		    fputs(line, fnew);
+		}
+	    }
+	    fclose(fnew);
+	}
+	fclose(fp);
+	if (!err) {
+	    err = gretl_copy_file(tmpfile, pkgxml);
+	    gretl_remove(tmpfile);
+	}
+	g_free(tmpfile);
+    } 
+
+    g_free(pkgxml);
 }
 
 static int register_package (const gchar *name,
@@ -2717,7 +2810,7 @@ static int register_package (const gchar *name,
 	    fclose(fp);
 	}
     } else {
-	/* adding to an existing packages.xml */
+	/* adding to an existing packages.xml, open as @fp */
 	gchar *tmpfile;
 	char line[512];
 	FILE *fnew;
@@ -2745,11 +2838,13 @@ static int register_package (const gchar *name,
 	}
 	g_free(tmpfile);
     } 
-    
+
     g_free(pkgxml);
 
     if (err) {
 	gui_errmsg(err);
+    } else {
+	infobox("This change will take effect when you restart gretl");
     }
 
     return err;
@@ -2791,11 +2886,9 @@ static int package_already_registered (const char *name)
     return found;
 }
 
-/* returns non-zero if we put up a dialog box */
-
-int maybe_handle_pkg_menu_option (const char *path)
+int gui_add_package_to_menu (const char *path, gboolean prechecked)
 {
-    fnpkg *pkg = NULL;
+    fnpkg *pkg;
     int err = 0, ret = 0;
 
     pkg = get_function_package_by_filename(path, &err);
@@ -2803,6 +2896,7 @@ int maybe_handle_pkg_menu_option (const char *path)
     if (!err) {
 	gchar *name = NULL, *mpath = NULL, *label = NULL;
 	int registered = 0, uses_subdir = 0;
+	int addit = 0;
 
 	err = function_package_get_properties(pkg,
 					      "name", &name,
@@ -2811,20 +2905,30 @@ int maybe_handle_pkg_menu_option (const char *path)
 					      "lives-in-subdir", &uses_subdir,
 					      NULL);
 
-	if (!err && name != NULL) {
+	if (!err && !prechecked && name != NULL) {
 	    registered = package_already_registered(name);
 	}
 
 	if (!err && !registered && name != NULL && 
 	    label != NULL && mpath != NULL) {
-	    int resp = pkg_attach_dialog(name, label, mpath);
+	    if (prechecked) {
+		/* go right ahead */
+		addit = 1;
+	    } else {
+		/* not "prechecked": put up a dialog */
+		int resp = pkg_attach_dialog(name, label, mpath);
 
-	    if (resp >= 0) {
-		ret = 1;
+		if (resp >= 0) {
+		    ret = 1;
+		}
+		if (resp == GRETL_YES) {
+		    addit = 1;
+		}
 	    }
-	    if (resp == GRETL_YES) {
-		register_package(name, label, mpath, uses_subdir);
-	    }
+	}
+
+	if (addit) {
+	    register_package(name, label, mpath, uses_subdir);
 	}
 
 	g_free(name);
@@ -2833,6 +2937,13 @@ int maybe_handle_pkg_menu_option (const char *path)
     }
 
     return ret;
+}
+
+/* returns non-zero if we put up a dialog box */
+
+int maybe_handle_pkg_menu_option (const char *path)
+{
+    return gui_add_package_to_menu(path, FALSE);
 }
 
 char *installed_addon_status_string (const char *path,

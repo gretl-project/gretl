@@ -2892,7 +2892,7 @@ char *bufgets (char *s, size_t size, const char *buf)
 	    break;
 	}
 	if (i == size - 1) {
-	    fprintf(stderr, "bufgets: line too long: max %d characters\n", 
+	    fprintf(stderr, "*** bufgets: line too long: max %d characters\n", 
 		    (int) size);
 	    s[i] = '\0';
 	    fprintf(stderr, " '%.16s...'\n", s);
