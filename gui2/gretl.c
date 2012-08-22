@@ -1643,6 +1643,59 @@ GtkActionEntry main_entries[] = {
     { "About", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL, G_CALLBACK(about_dialog) }
 };
 
+gchar *get_user_menu_string (const gchar *mpath)
+{
+    gchar *ret = NULL;
+    gchar **S;
+
+    if (!strncmp(mpath, "/menubar/", 9)) {
+	mpath += 8;
+    } else if (!strncmp(mpath, "MAINWIN/", 8)) {
+	mpath += 8;
+    } else if (*mpath == '/') {
+	mpath += 1;
+    } else if (!strncmp(mpath, "MODELWIN/", 9)) {
+	return NULL;
+    }
+
+    fprintf(stderr, "get_user_menu_string: mpath='%s'\n", mpath);
+
+    S = g_strsplit(mpath, "/", 0);
+
+    if (S != NULL && S[0] != NULL) {
+	int i, j, nmain = G_N_ELEMENTS(main_entries);
+	const gchar *p1 = NULL, *p2 = NULL;
+
+	for (i=0; i<nmain && !p1; i++) {
+	    if (main_entries[i].callback == NULL && 
+		!strcmp(S[0], main_entries[i].name)) {
+		p1 = main_entries[i].label;
+		if (S[1] != NULL) {
+		    for (j=i+1; j<nmain && !p2; j++) {
+			if (main_entries[j].callback == NULL &&
+			    !strcmp(S[1], main_entries[j].name)) {
+			    p2 = main_entries[j].label;
+			}
+		    }
+		}
+	    }
+	}
+	if (p2 != NULL) {
+	    ret = g_strdup_printf("/%s/%s", p1, p2);
+	} else if (p1 != NULL) {
+	    ret = g_strdup_printf("/%s", p1);
+	}
+    }
+	
+    g_strfreev(S);
+
+    if (ret != NULL) {
+	gretl_delchar('_', ret);
+    }
+
+    return ret;
+}
+
 static void add_conditional_items (windata_t *vwin)
 {
     GtkUIManager *ui = vwin->ui;

@@ -2844,7 +2844,19 @@ static int register_package (const gchar *name,
     if (err) {
 	gui_errmsg(err);
     } else {
-	infobox("This change will take effect when you restart gretl");
+	gchar *upath = get_user_menu_string(mpath);
+
+	if (upath != NULL) {
+	    gchar *tmp = g_strdup_printf(_("Adding %s under %s."), 
+					 label, upath);
+
+	    infobox("%s\n%s", tmp, 
+		    _("This change will take effect when you restart gretl"));
+	    g_free(upath);
+	    g_free(tmp);
+	} else {
+	    infobox(_("This change will take effect when you restart gretl"));
+	}
     }
 
     return err;
