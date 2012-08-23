@@ -3,7 +3,7 @@
 (defvar gretl-function-header-regexp
   (concat "^\\s-*\\<\\(function\\)\\>"
 	  "\\([^=;\n]*=[ \t]*\\|[ \t]*\\)\\(\\w+\\)\\>")
-  "Regexp to match a Gretl function header.
+  "Regexp to match a gretl function header.
 The string `function' and its name are given by the first and third
 parenthetical grouping.")
 
@@ -44,10 +44,10 @@ parenthetical grouping.")
    (list gretl-function-header-regexp
 	 '(1 font-lock-keyword-face)
 	 '(3 font-lock-function-name-face nil t)))
-  "Additional Gretl expressions to highlight.")
+  "Additional gretl expressions to highlight.")
 
 (defvar gretl-mode-map nil
-  "Keymap used in Gretl mode.")
+  "Keymap used in gretl mode.")
 (if gretl-mode-map
     ()
   (let ((map (make-sparse-keymap)))
@@ -80,7 +80,7 @@ parenthetical grouping.")
     (setq gretl-mode-map map)))
 
 (defvar gretl-mode-menu
-  (list "Gretl"
+  (list "gretl"
 	(list "Lines"
 	      ["Previous Code Line"	gretl-previous-code-line t]
 	      ["Next Code Line"		gretl-next-code-line t]
@@ -110,8 +110,8 @@ parenthetical grouping.")
 	"-"
 	["Submit Bug Report"		gretl-submit-bug-report t]
 	"-"
-	["Describe Gretl Mode"		gretl-describe-major-mode t])
-  "Menu for Gretl mode.")
+	["Describe gretl Mode"		gretl-describe-major-mode t])
+  "Menu for gretl mode.")
 
 (defvar gretl-mode-syntax-table nil
   "Syntax table in use in gretl-mode buffers.")
@@ -141,24 +141,24 @@ parenthetical grouping.")
     (setq gretl-mode-syntax-table table)))
 
 (defcustom gretl-auto-indent nil
-  "*Non-nil means indent line after a semicolon or space in Gretl mode."
+  "*Non-nil means indent line after a semicolon or space in gretl mode."
   :type 'boolean
   :group 'gretl)
 
 (defcustom gretl-auto-newline nil
-  "*Non-nil means automatically newline after a semicolon in Gretl mode."
+  "*Non-nil means automatically newline after a semicolon in gretl mode."
   :type 'boolean
   :group 'gretl)
 
 (defcustom gretl-blink-matching-block t
-  "*Control the blinking of matching Gretl block keywords.
+  "*Control the blinking of matching gretl block keywords.
 Non-nil means show matching begin of block when inserting a space,
 newline or semicolon after an else or end keyword."
   :type 'boolean
   :group 'gretl)
 
 (defcustom gretl-block-offset 2
-  "*Extra indentation applied to statements in Gretl block structures."
+  "*Extra indentation applied to statements in gretl block structures."
   :type 'integer
   :group 'gretl)
 
@@ -208,64 +208,64 @@ newline or semicolon after an else or end keyword."
     ("restrict" . ("end"))
     ("kalman" . ("end"))
     ("system" . ("end")))
-  "Alist with Gretl's matching block keywords.
-Has Gretl's begin keywords as keys and a list of the matching else or
+  "Alist with gretl's matching block keywords.
+Has gretl's begin keywords as keys and a list of the matching else or
 end keywords as associated values.")
 
 (defvar gretl-block-comment-start
   (concat (make-string 2 gretl-comment-char) " ")
-  "String to insert to start a new Gretl comment on an empty line.")
+  "String to insert to start a new gretl comment on an empty line.")
 
 (defcustom gretl-continuation-offset 4
-  "*Extra indentation applied to Gretl continuation lines."
+  "*Extra indentation applied to gretl continuation lines."
   :type 'integer
   :group 'gretl)
 (defvar gretl-continuation-regexp
   "[^#%\n]*\\(\\\\\\|\\.\\.\\.\\)\\s-*\\(\\s<.*\\)?$")
 (defcustom gretl-continuation-string "\\"
-  "*Character string used for Gretl continuation lines.  Normally \\."
+  "*Character string used for gretl continuation lines.  Normally \\."
   :type 'string
   :group 'gretl)
 
 (defvar gretl-completion-alist nil
-  "Alist of Gretl symbols for completion in Gretl mode.
+  "Alist of gretl symbols for completion in gretl mode.
 Each element looks like (VAR . VAR), where the car and cdr are the same
-symbol (an Gretl command or variable name).
+symbol (an gretl command or variable name).
 Currently, only builtin variables can be completed.")
 
 (defvar gretl-mode-imenu-generic-expression
   (list
    ;; Functions
    (list nil gretl-function-header-regexp 3))
-  "Imenu expression for Gretl mode.  See `imenu-generic-expression'.")
+  "Imenu expression for gretl mode.  See `imenu-generic-expression'.")
 
 (defcustom gretl-mode-hook nil
-  "*Hook to be run when Gretl mode is started."
+  "*Hook to be run when gretl mode is started."
   :type 'hook
   :group 'gretl)
 
 
 ;;;###autoload
 (defun gretl-mode ()
-  "Major mode for editing Gretl code.
+  "Major mode for editing gretl code.
 
-This mode makes it easier to write Gretl code by helping with
+This mode makes it easier to write gretl code by helping with
 indentation, doing some of the typing for you (with Abbrev mode) and by
 showing keywords, comments, strings, etc. in different faces (with
 Font Lock mode on terminals that support it).
 
-The latest released version of Gretl is always available via http from
+The latest released version of gretl is always available via http from
 http://gretl.sourceforge.net.  Complete source and binaries for
 GNU-Linux and MS Windows are available.
 
-Type \\[list-abbrevs] to display the built-in abbrevs for Gretl keywords.
+Type \\[list-abbrevs] to display the built-in abbrevs for gretl keywords.
 
 Keybindings
 ===========
 
 \\{gretl-mode-map}
 
-Variables you can use to customize Gretl mode
+Variables you can use to customize gretl mode
 ==============================================
 
 gretl-auto-indent
@@ -285,14 +285,14 @@ gretl-block-offset
   Default is 2.
 
 gretl-continuation-offset
-  Extra indentation applied to Gretl continuation lines.
+  Extra indentation applied to gretl continuation lines.
   Default is 4.
 
 gretl-continuation-string
-  String used for Gretl continuation lines.
+  String used for gretl continuation lines.
   Default is a backslash.
 
-Turning on Gretl mode runs the hook `gretl-mode-hook'.
+Turning on gretl mode runs the hook `gretl-mode-hook'.
 
 To begin using this mode for all `.inp' files that you edit, add the
 following lines to your `.emacs' file:
@@ -312,7 +312,7 @@ add the following lines to your `.emacs' file as well:
 		  (font-lock-mode 1))))
 
 To submit a problem report, enter \\[gretl-submit-bug-report] from \
-an Gretl mode buffer.
+an gretl mode buffer.
 This automatically sets up a mail buffer with version information
 already added.  You just need to add a description of the problem,
 including a reproducible test case and send the message."
@@ -321,7 +321,7 @@ including a reproducible test case and send the message."
 
   (use-local-map gretl-mode-map)
   (setq major-mode 'gretl-mode)
-  (setq mode-name "Gretl")
+  (setq mode-name "gretl")
   (setq local-abbrev-table gretl-abbrev-table)
   (set-syntax-table gretl-mode-syntax-table)
 
@@ -385,24 +385,24 @@ including a reproducible test case and send the message."
     (point)))
 
 (defsubst gretl-in-comment-p ()
-  "Returns t if point is inside an Gretl comment, nil otherwise."
+  "Returns t if point is inside an gretl comment, nil otherwise."
   (interactive)
   (save-excursion
     (nth 4 (parse-partial-sexp (gretl-point 'bol) (point)))))
 
 (defsubst gretl-in-string-p ()
-  "Returns t if point is inside an Gretl string, nil otherwise."
+  "Returns t if point is inside an gretl string, nil otherwise."
   (interactive)
   (save-excursion
     (nth 3 (parse-partial-sexp (gretl-point 'bol) (point)))))
 
 (defsubst gretl-not-in-string-or-comment-p ()
-  "Returns t iff point is not inside an Gretl string or comment."
+  "Returns t iff point is not inside an gretl string or comment."
   (let ((pps (parse-partial-sexp (gretl-point 'bol) (point))))
     (not (or (nth 3 pps) (nth 4 pps)))))
 
 (defun gretl-in-block-p ()
-  "Returns t if point is inside an Gretl block, nil otherwise.
+  "Returns t if point is inside an gretl block, nil otherwise.
 The block is taken to start at the first letter of the begin keyword and
 to end after the end keyword."
   (let ((pos (point)))
@@ -417,7 +417,7 @@ to end after the end keyword."
       (< pos (point)))))
 
 (defun gretl-in-defun-p ()
-  "Returns t iff point is inside an Gretl function declaration.
+  "Returns t iff point is inside an gretl function declaration.
 The function is taken to start at the `f' of `function' and to end after
 the end keyword."
   (let ((pos (point)))
@@ -446,14 +446,14 @@ the end keyword."
 
 ;;; Comments
 (defun gretl-comment-region (beg end &optional arg)
-  "Comment or uncomment each line in the region as Gretl code.
+  "Comment or uncomment each line in the region as gretl code.
 See `comment-region'."
   (interactive "r\nP")
   (let ((comment-start (char-to-string gretl-comment-char)))
     (comment-region beg end arg)))
 
 (defun gretl-uncomment-region (beg end &optional arg)
-  "Uncomment each line in the region as Gretl code."
+  "Uncomment each line in the region as gretl code."
   (interactive "r\nP")
   (or arg (setq arg 1))
   (gretl-comment-region beg end (- arg)))
@@ -461,7 +461,7 @@ See `comment-region'."
 ;;; Indentation
 
 (defun calculate-gretl-indent ()
-  "Return appropriate indentation for current line as Gretl code.
+  "Return appropriate indentation for current line as gretl code.
 Returns an integer (the column to indent to) unless the line is a
 comment line with fixed goal golumn.  In that case, returns a list whose
 car is the column to indent to, and whose cdr is the current indentation
@@ -542,7 +542,7 @@ level."
 	   comment-column))))
 
 (defun gretl-indent-for-comment ()
-  "Maybe insert and indent an Gretl comment.
+  "Maybe insert and indent an gretl comment.
 If there is no comment already on this line, create a code-level comment
 (started by two comment characters) if the line is empty, or an in-line
 comment (started by one comment character) otherwise.
@@ -552,7 +552,7 @@ Point is left after the start of the comment which is properly aligned."
   (indent-according-to-mode))
 
 (defun gretl-indent-line (&optional arg)
-  "Indent current line as Gretl code.
+  "Indent current line as gretl code.
 With optional ARG, use this as offset unless this line is a comment with
 fixed goal column."
   (interactive)
@@ -569,7 +569,7 @@ fixed goal column."
 	  (move-to-column (+ icol relpos))))))
 
 (defun gretl-indent-new-comment-line ()
-  "Break Gretl line at point, continuing comment if within one.
+  "Break gretl line at point, continuing comment if within one.
 If within code, insert `gretl-continuation-string' before breaking the
 line.  If within a string, signal an error.
 The new line is properly indented."
@@ -585,7 +585,7 @@ The new line is properly indented."
     (gretl-reindent-then-newline-and-indent))))
 
 (defun gretl-indent-defun ()
-  "Properly indents the Gretl function which contains point."
+  "Properly indents the gretl function which contains point."
   (interactive)
   (save-excursion
     (gretl-mark-defun)
@@ -596,7 +596,7 @@ The new line is properly indented."
 ;;; Motion
 
 (defun gretl-next-code-line (&optional arg)
-  "Move ARG lines of Gretl code forward (backward if ARG is negative).
+  "Move ARG lines of gretl code forward (backward if ARG is negative).
 Skips past all empty and comment lines.  Default for ARG is 1.
 
 On success, return 0.  Otherwise, go as far as possible and return -1."
@@ -614,7 +614,7 @@ On success, return 0.  Otherwise, go as far as possible and return -1."
     n))
 
 (defun gretl-previous-code-line (&optional arg)
-  "Move ARG lines of Gretl code backward (forward if ARG is negative).
+  "Move ARG lines of gretl code backward (forward if ARG is negative).
 Skips past all empty and comment lines.  Default for ARG is 1.
 
 On success, return 0.  Otherwise, go as far as possible and return -1."
@@ -623,9 +623,9 @@ On success, return 0.  Otherwise, go as far as possible and return -1."
   (gretl-next-code-line (- arg)))
 
 (defun gretl-beginning-of-line ()
-  "Move point to beginning of current Gretl line.
+  "Move point to beginning of current gretl line.
 If on an empty or comment line, go to the beginning of that line.
-Otherwise, move backward to the beginning of the first Gretl code line
+Otherwise, move backward to the beginning of the first gretl code line
 which is not inside a continuation statement, i.e., which does not
 follow a code line ending in `...' or `\\', or is inside an open
 parenthesis list."
@@ -645,9 +645,9 @@ parenthesis list."
 		      (zerop (forward-line -1)))))))
 
 (defun gretl-end-of-line ()
-  "Move point to end of current Gretl line.
+  "Move point to end of current gretl line.
 If on an empty or comment line, go to the end of that line.
-Otherwise, move forward to the end of the first Gretl code line which
+Otherwise, move forward to the end of the first gretl code line which
 does not end in `...' or `\\' or is inside an open parenthesis list."
   (interactive)
   (end-of-line)
@@ -669,7 +669,7 @@ does not end in `...' or `\\' or is inside an open parenthesis list."
     (end-of-line)))
 
 (defun gretl-scan-blocks (from count depth)
-  "Scan from character number FROM by COUNT Gretl begin-end blocks.
+  "Scan from character number FROM by COUNT gretl begin-end blocks.
 Returns the character number of the position thus found.
 
 If DEPTH is nonzero, block depth begins counting from that value.
@@ -702,7 +702,7 @@ an error is signaled."
       (point))))
 
 (defun gretl-forward-block (&optional arg)
-  "Move forward across one balanced Gretl begin-end block.
+  "Move forward across one balanced gretl begin-end block.
 With argument, do it that many times.
 Negative arg -N means move backward across N blocks."
   (interactive "p")
@@ -710,7 +710,7 @@ Negative arg -N means move backward across N blocks."
   (goto-char (or (gretl-scan-blocks (point) arg 0) (buffer-end arg))))
 
 (defun gretl-backward-block (&optional arg)
-  "Move backward across one balanced Gretl begin-end block.
+  "Move backward across one balanced gretl begin-end block.
 With argument, do it that many times.
 Negative arg -N means move forward across N blocks."
   (interactive "p")
@@ -718,7 +718,7 @@ Negative arg -N means move forward across N blocks."
   (gretl-forward-block (- arg)))
 
 (defun gretl-down-block (arg)
-  "Move forward down one begin-end block level of Gretl code.
+  "Move forward down one begin-end block level of gretl code.
 With argument, do this that many times.
 A negative argument means move backward but still go down a level.
 In Lisp programs, an argument is required."
@@ -730,7 +730,7 @@ In Lisp programs, an argument is required."
       (setq arg (- arg inc)))))
 
 (defun gretl-backward-up-block (arg)
-  "Move backward out of one begin-end block level of Gretl code.
+  "Move backward out of one begin-end block level of gretl code.
 With argument, do this that many times.
 A negative argument means move forward but still to a less deep spot.
 In Lisp programs, an argument is required."
@@ -738,7 +738,7 @@ In Lisp programs, an argument is required."
   (gretl-up-block (- arg)))
 
 (defun gretl-up-block (arg)
-  "Move forward out of one begin-end block level of Gretl code.
+  "Move forward out of one begin-end block level of gretl code.
 With argument, do this that many times.
 A negative argument means move backward but still to a less deep spot.
 In Lisp programs, an argument is required."
@@ -750,7 +750,7 @@ In Lisp programs, an argument is required."
       (setq arg (- arg inc)))))
 
 (defun gretl-mark-block ()
-  "Put point at the beginning of this Gretl block, mark at the end.
+  "Put point at the beginning of this gretl block, mark at the end.
 The block marked is the one that contains point or follows point."
   (interactive)
   (let ((pos (point)))
@@ -770,7 +770,7 @@ The block marked is the one that contains point or follows point."
       (message "No block to mark found"))))
 
 (defun gretl-close-block ()
-  "Close the current Gretl block on a separate line.
+  "Close the current gretl block on a separate line.
 An error is signaled if no block to close is found."
   (interactive)
   (let (bb-keyword)
@@ -793,8 +793,8 @@ An error is signaled if no block to close is found."
       (error (message "No block to close found")))))
 
 (defun gretl-blink-matching-block-open ()
-  "Blink the matching Gretl begin block keyword.
-If point is right after an Gretl else or end type block keyword, move
+  "Blink the matching gretl begin block keyword.
+If point is right after an gretl else or end type block keyword, move
 cursor momentarily to the corresponding begin keyword.
 Signal an error if the keywords are incompatible."
   (interactive)
@@ -841,7 +841,7 @@ Signal an error if the keywords are incompatible."
 		   bb-keyword eb-keyword))))))
 
 (defun gretl-beginning-of-defun (&optional arg)
-  "Move backward to the beginning of an Gretl function.
+  "Move backward to the beginning of an gretl function.
 With positive ARG, do it that many times.  Negative argument -N means
 move forward to Nth following beginning of a function.
 Returns t unless search stops at the beginning or end of the buffer."
@@ -863,7 +863,7 @@ Returns t unless search stops at the beginning or end of the buffer."
 	  t))))
 
 (defun gretl-end-of-defun (&optional arg)
-  "Move forward to the end of an Gretl function.
+  "Move forward to the end of an gretl function.
 With positive ARG, do it that many times.  Negative argument -N means
 move back to Nth preceding end of a function.
 
@@ -880,7 +880,7 @@ An end of a function occurs right after the end keyword matching the
       (gretl-forward-block)))
 
 (defun gretl-mark-defun ()
-  "Put point at the beginning of this Gretl function, mark at its end.
+  "Put point at the beginning of this gretl function, mark at its end.
 The function marked is the one containing point or following point."
   (interactive)
   (let ((pos (point)))
@@ -899,7 +899,7 @@ The function marked is the one containing point or following point."
 ;;; Filling
 
 (defun gretl-auto-fill ()
-  "Perform auto-fill in Gretl mode.
+  "Perform auto-fill in gretl mode.
 Returns nil if no feasible place to break the line could be found, and t
 otherwise."
   (let (fc give-up)
@@ -960,7 +960,7 @@ otherwise."
       (not give-up))))
 
 (defun gretl-fill-paragraph (&optional arg)
- "Fill paragraph of Gretl code, handling Gretl comments."
+ "Fill paragraph of gretl code, handling gretl comments."
  (interactive "P")
  (save-excursion
    (let ((end (progn (forward-paragraph) (point)))
@@ -1037,7 +1037,7 @@ otherwise."
 ;;; Completions
 
 (defun gretl-initialize-completions ()
-  "Create an alist for Gretl completions."
+  "Create an alist for gretl completions."
   (if gretl-completion-alist
       ()
     (setq gretl-completion-alist
@@ -1047,8 +1047,8 @@ otherwise."
 			  gretl-internal-vars)))))
 
 (defun gretl-complete-symbol ()
-  "Perform completion on Gretl symbol preceding point.
-Compare that symbol against Gretl's reserved words and builtin
+  "Perform completion on gretl symbol preceding point.
+Compare that symbol against gretl's reserved words and builtin
 variables."
   ;; This code taken from lisp-complete-symbol
   (interactive)
@@ -1092,7 +1092,7 @@ variables."
 ;;; Electric characters && friends
 
 (defun gretl-reindent-then-newline-and-indent ()
-  "Reindent current Gretl line, insert newline, and indent the new line.
+  "Reindent current gretl line, insert newline, and indent the new line.
 If Abbrev mode is on, expand abbrevs first."
   (interactive)
   (if abbrev-mode (expand-abbrev))
@@ -1105,7 +1105,7 @@ If Abbrev mode is on, expand abbrevs first."
   (indent-according-to-mode))
 
 (defun gretl-electric-semi ()
-  "Insert a semicolon in Gretl mode.
+  "Insert a semicolon in gretl mode.
 Maybe expand abbrevs and blink matching block open keywords.
 Reindent the line of `gretl-auto-indent' is non-nil.
 Insert a newline if `gretl-auto-newline' is non-nil."
@@ -1122,7 +1122,7 @@ Insert a newline if `gretl-auto-newline' is non-nil."
 	(newline-and-indent))))
 
 (defun gretl-electric-space ()
-  "Insert a space in Gretl mode.
+  "Insert a space in gretl mode.
 Maybe expand abbrevs and blink matching block open keywords.
 Reindent the line of `gretl-auto-indent' is non-nil."
   (interactive)
@@ -1142,11 +1142,11 @@ Reindent the line of `gretl-auto-indent' is non-nil."
     (self-insert-command 1)))
 
 (defun gretl-abbrev-start ()
-  "Start entering an Gretl abbreviation.
+  "Start entering an gretl abbreviation.
 If Abbrev mode is turned on, typing ` (grave accent) followed by ? or
-\\[help-command] lists all Gretl abbrevs.  Any other key combination is
+\\[help-command] lists all gretl abbrevs.  Any other key combination is
 executed normally.
-Note that all Gretl mode abbrevs start with a grave accent."
+Note that all gretl mode abbrevs start with a grave accent."
   (interactive)
   (if (not abbrev-mode)
       (self-insert-command 1)
@@ -1164,10 +1164,10 @@ Note that all Gretl mode abbrevs start with a grave accent."
 ;;; Menu
 
 (defun gretl-add-gretl-menu ()
-  "Adds the `Gretl' menu to the menu bar in Gretl mode."
+  "Adds the `gretl' menu to the menu bar in gretl mode."
   (require 'easymenu)
   (easy-menu-define gretl-mode-menu-map gretl-mode-map
-		    "Menu keymap for Gretl mode." gretl-mode-menu)
+		    "Menu keymap for gretl mode." gretl-mode-menu)
   (easy-menu-add gretl-mode-menu-map gretl-mode-map))
 
 ;;; Execution
@@ -1177,18 +1177,18 @@ Note that all Gretl mode abbrevs start with a grave accent."
   (interactive)
   (let (save-pop-frames pop-up-frames)
   (setq pop-up-frames gretl-output-in-new-frame)
-  (write-region (point-min) (point-max) ".#gretltmp.inp" nil 1 nil nil)
+  (write-region (point-min) (point-max) "#gretltmp.inp" nil 1 nil nil)
   (get-buffer-create "gretl_output")
-  (call-process gretl-program nil "gretl_output" nil "-b" ".#gretltmp.inp")
+  (call-process gretl-program nil "gretl_output" nil "-b" "#gretltmp.inp")
   (pop-to-buffer "gretl_output" nil nil)
   (goto-char (point-min))
-  (call-process gretl-remove-file nil nil nil ".#gretltmp.inp")
+  (call-process gretl-remove-file nil nil nil "#gretltmp.inp")
   (setq pop-up-frames save-pop-frames)))
 
 ;;; Bug reporting
 
 (defun gretl-submit-bug-report ()
-  "Submit a bug report on the Emacs Gretl package via mail."
+  "Submit a bug report on the Emacs gretl package via mail."
   (interactive)
   (require 'reporter)
   (and

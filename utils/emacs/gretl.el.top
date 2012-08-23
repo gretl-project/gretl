@@ -1,4 +1,4 @@
-;;; gretl.el --- editing Gretl script files under Emacs
+;;; gretl.el --- editing gretl script files under Emacs
 
 ;; Copyright (C) 2005 Allin Cottrell
 
@@ -33,8 +33,8 @@
 
 ;;; Commentary:
 
-;; This package provides Emacs support for Gretl.  It defines Gretl
-;; mode, a major mode for editing Gretl scripts.
+;; This package provides Emacs support for gretl.  It defines gretl
+;; mode, a major mode for editing gretl scripts.
 
 ;; See the documentation of `gretl-mode' for further information 
 ;; on usage and customization.
@@ -44,17 +44,17 @@
 (require 'custom)
 
 (defgroup gretl nil
-  "Major mode for editing Gretl source files."
+  "Major mode for editing gretl source files."
   :group 'languages)
 
 (defconst gretl-maintainer-address
   "Allin Cottrell <cottrell@wfu.edu>"
-  "Current maintainer of the Emacs Gretl package.")
+  "Current maintainer of the Emacs gretl package.")
 
 (defvar gretl-abbrev-table nil
-  "Abbrev table for Gretl's reserved words.
+  "Abbrev table for gretl's reserved words.
 Used in gretl-mode and inferior-gretl-mode buffers.
-All Gretl abbrevs start with a grave accent (`).")
+All gretl abbrevs start with a grave accent (`).")
 (if gretl-abbrev-table
     ()
   (let ((ac abbrevs-changed))
@@ -71,14 +71,14 @@ All Gretl abbrevs start with a grave accent (`).")
     (setq abbrevs-changed ac)))
 
 (defvar gretl-comment-char ?#
-  "Character to start an Gretl comment.")
+  "Character to start an gretl comment.")
 
 (defvar gretl-comment-start
   (concat (make-string 1 gretl-comment-char) " ")
-  "String to insert to start a new Gretl in-line comment.")
+  "String to insert to start a new gretl in-line comment.")
 
 (defvar gretl-comment-start-skip "\\s<+\\s-*"
-  "Regexp to match the start of a Gretl comment up to its body.")
+  "Regexp to match the start of a gretl comment up to its body.")
 
 (defvar gretl-begin-keywords
   '("loop" "foreign" "function" "gmm" "if" "system" "mle" "nls" "restrict"))
@@ -94,7 +94,7 @@ All Gretl abbrevs start with a grave accent (`).")
 	  gretl-else-keywords
 	  gretl-end-keywords
 	  '("break"))
-  "Reserved words in Gretl.")
+  "Reserved words in gretl.")
 
 ;; Insert auto-generated keywords sections
 
