@@ -18017,7 +18017,7 @@ _ACEOF
 
 
 CFLAGS="$orig_CFLAGS"
-ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/debug gnome/Makefile gnome/gretl.desktop gnome/gretl.keys cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile osx/Makefile osx/fixlinks.sh redhat/gretl.spec"
+ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/debug gnome/Makefile gnome/gretl.desktop gnome/gretl.keys cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile osx/Makefile osx/fixlinks.sh redhat/gretl.spec utils/emacs/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -19027,6 +19027,7 @@ do
     "osx/Makefile") CONFIG_FILES="$CONFIG_FILES osx/Makefile" ;;
     "osx/fixlinks.sh") CONFIG_FILES="$CONFIG_FILES osx/fixlinks.sh" ;;
     "redhat/gretl.spec") CONFIG_FILES="$CONFIG_FILES redhat/gretl.spec" ;;
+    "utils/emacs/Makefile") CONFIG_FILES="$CONFIG_FILES utils/emacs/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -21382,6 +21383,7 @@ do
     "osx/Makefile") CONFIG_FILES="$CONFIG_FILES osx/Makefile" ;;
     "osx/fixlinks.sh") CONFIG_FILES="$CONFIG_FILES osx/fixlinks.sh" ;;
     "redhat/gretl.spec") CONFIG_FILES="$CONFIG_FILES redhat/gretl.spec" ;;
+    "utils/emacs/Makefile") CONFIG_FILES="$CONFIG_FILES utils/emacs/Makefile" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
     "doc/gretl.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl.sty" ;;
     "doc/gretl-lite.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl-lite.sty" ;;

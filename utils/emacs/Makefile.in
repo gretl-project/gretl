@@ -1,0 +1,28 @@
+topsrc = @top_srcdir@
+elsrc = $(topsrc)/utils/emacs
+MKLANG = ../../gui2/mklang
+
+EMACS = $(shell which emacs)
+EPREFIX = $(shell dirname $(EMACS))
+SITELISP = $(shell echo $(EPREFIX) | sed s+bin+share+)/emacs/site-lisp
+
+gretl.elc : gretl.el
+	emacs -batch -f batch-byte-compile $<
+
+gretl.el : gretl.el.middle
+	cat $(elsrc)/gretl.el.top > gretl.el
+	cat gretl.el.middle >> gretl.el
+	cat $(elsrc)/gretl.el.bottom >> gretl.el
+
+gretl.el.middle :
+	$(MKLANG) --emacs > $@
+
+install: gretl.elc
+	echo "Installing to $(SITELISP)"
+	install -m 644 gretl.elc $(SITELISP)
+
+clean:
+	rm -f gretl.el gretl.elc gretl.el.middle
+
+	
+

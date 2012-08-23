@@ -736,6 +736,7 @@ extra/Makefile
 osx/Makefile
 osx/fixlinks.sh
 redhat/gretl.spec
+utils/emacs/Makefile
 ])
 
 if test "${build_docs}" = "yes" ; then
