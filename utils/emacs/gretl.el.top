@@ -1,0 +1,100 @@
+;;; gretl.el --- editing Gretl script files under Emacs
+
+;; Copyright (C) 2005 Allin Cottrell
+
+;; Author:     Allin Cottrell <cottrell@wfu.edu>
+;; Created:    July 14 2011
+;; Version:    0.3
+;; Keywords:   gretl, econometrics
+
+;; With hefty borrowings from octave-mod.el
+
+;; This file is not part of GNU Emacs.
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+;;
+;; This lisp script is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+;;
+;; Permission is granted to distribute copies of this lisp script
+;; provided the copyright notice and this permission are preserved in
+;; all copies.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program; if not, you can either send email to this
+;; program's maintainer or write to: The Free Software Foundation,
+;; Inc.; 675 Massachusetts Avenue; Cambridge, MA 02139, USA.
+
+;; send bug reports to the author (cottrell@wfu.edu)
+
+;;; Commentary:
+
+;; This package provides Emacs support for Gretl.  It defines Gretl
+;; mode, a major mode for editing Gretl scripts.
+
+;; See the documentation of `gretl-mode' for further information 
+;; on usage and customization.
+
+;;; Code:
+
+(require 'custom)
+
+(defgroup gretl nil
+  "Major mode for editing Gretl source files."
+  :group 'languages)
+
+(defconst gretl-maintainer-address
+  "Allin Cottrell <cottrell@wfu.edu>"
+  "Current maintainer of the Emacs Gretl package.")
+
+(defvar gretl-abbrev-table nil
+  "Abbrev table for Gretl's reserved words.
+Used in gretl-mode and inferior-gretl-mode buffers.
+All Gretl abbrevs start with a grave accent (`).")
+(if gretl-abbrev-table
+    ()
+  (let ((ac abbrevs-changed))
+    (define-abbrev-table 'gretl-abbrev-table ())
+    (define-abbrev gretl-abbrev-table "`a" "add" nil)
+    (define-abbrev gretl-abbrev-table "`b" "break" nil)
+    (define-abbrev gretl-abbrev-table "`g" "genr" nil)
+    (define-abbrev gretl-abbrev-table "`l" "loop" nil)
+    (define-abbrev gretl-abbrev-table "`efu" "end function" nil)
+    (define-abbrev gretl-abbrev-table "`ei" "endif" nil)
+    (define-abbrev gretl-abbrev-table "`el" "endloop" nil)
+    (define-abbrev gretl-abbrev-table "`fu" "function" nil)
+    (define-abbrev gretl-abbrev-table "`gp" "gnuplot" nil)
+    (setq abbrevs-changed ac)))
+
+(defvar gretl-comment-char ?#
+  "Character to start an Gretl comment.")
+
+(defvar gretl-comment-start
+  (concat (make-string 1 gretl-comment-char) " ")
+  "String to insert to start a new Gretl in-line comment.")
+
+(defvar gretl-comment-start-skip "\\s<+\\s-*"
+  "Regexp to match the start of a Gretl comment up to its body.")
+
+(defvar gretl-begin-keywords
+  '("loop" "foreign" "function" "gmm" "if" "system" "mle" "nls" "restrict"))
+
+(defvar gretl-else-keywords
+  '("else" "elif"))
+
+(defvar gretl-end-keywords
+  '("end" "endif" "endloop"))
+
+(defvar gretl-keywords
+  (append gretl-begin-keywords
+	  gretl-else-keywords
+	  gretl-end-keywords
+	  '("break"))
+  "Reserved words in Gretl.")
+
+;; Insert auto-generated keywords sections
+
