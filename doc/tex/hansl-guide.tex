@@ -1,0 +1,92 @@
+\documentclass[oneside]{book}
+\usepackage{url,verbatim,fancyvrb,appendix}
+\usepackage{pifont}
+\usepackage[latin1]{inputenc}
+\usepackage[pdftex]{graphicx}
+\usepackage[authoryear]{natbib}
+\usepackage{color,gretl}
+\usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
+\usepackage{dcolumn,amsmath,bm}
+
+%% \pdfimageresolution=120
+\hypersetup{pdftitle={A Guide to Hansl},
+            pdfsubject={GNU Regression, Econometrics and Time Series Library},
+            pdfauthor={Allin Cottrell and Jack Lucchetti},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            citecolor=steel,
+            bookmarks=true,
+            bookmarksnumbered=true,
+            plainpages=false
+}
+
+\begin{document}
+
+\VerbatimFootnotes
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+\setcounter{tocdepth}{1}
+
+%% titlepage
+
+\thispagestyle{empty}
+
+\begin{center}
+\pdfbookmark[1]{Gretl User's Guide}{titlepage}
+
+\gtitle{A Guide to Hansl}
+
+\gsubtitle{the scripting language of gretl}
+
+{\large \sffamily
+Allin Cottrell\\
+Department of Economics\\
+Wake Forest University\\
+
+\vspace{20pt}
+Riccardo ``Jack'' Lucchetti\\
+Dipartimento di Economia\\
+Università Politecnica delle Marche\\
+
+\vspace{20pt}
+\input date
+}
+
+\end{center}
+\clearpage
+
+%% end titlepage, start license page
+
+\thispagestyle{empty}
+
+\pdfbookmark[1]{License}{license}
+
+\vspace*{2in}
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the \emph{GNU Free Documentation License}, Version
+1.1 or any later version published by the Free Software Foundation
+(see \url{http://www.gnu.org/licenses/fdl.html}).
+
+\clearpage
+
+%% end license page, start table of contents
+\pdfbookmark[1]{Table of contents}{contents}
+
+\pagenumbering{roman}
+\pagestyle{headings}
+
+\tableofcontents
+
+\clearpage
+\pagenumbering{arabic}
+
+\include{hansl-intro}
+
+% \clearpage
+% \include{biblio}
+
+\end{document}
