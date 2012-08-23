@@ -58,6 +58,7 @@ pdfdocs:
 
 clean:
 	for d in $(ALLSUBDIRS) ; do $(MAKE) -C $$d clean; done
+	$(MAKE) -C utils/emacs clean
 	rm -f build.h builddate
 
 installdirs:
@@ -104,6 +105,7 @@ osx-dist:
 # dependency for parallel builds
 lib: buildstamp
 cli: lib
+share: lib
 $(GUIDIR): lib
 plugin: lib
 tests: lib
