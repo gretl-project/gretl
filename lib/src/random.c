@@ -919,6 +919,20 @@ void gretl_rand_uniform (double *a, int t1, int t2)
     }
 }
 
+#define USE_MARSAGLIA_TSANG 1
+
+/* Marsaglia-Tsang, "A Simple Method for Generating Gamma Variables",
+   ACM Transactions on Mathematical Software, Vol. 26, No. 3,
+   September 2000, Pages 363­372.
+
+   (1) Setup: d=a-1/3, c=1/sqrt(9*d).
+   (2) Generate v=(1+c*x)^3 with x normal; repeat if v <= 0.
+   (3) Generate uniform U.
+   (4) If U < 1-0.0331*x^4 return d*v.
+   (5) If log(U) < 0.5*x^2+d*(1-v+log(v)) return d*v.
+   (6) Go to step 2.
+*/   
+
 /**
  * gretl_rand_gamma:
  * @a: target array.
@@ -936,6 +950,48 @@ void gretl_rand_uniform (double *a, int t1, int t2)
 int gretl_rand_gamma (double *a, int t1, int t2, 
 		      double shape, double scale) 
 {
+#if USE_MARSAGLIA_TSANG
+    double k = shape;
+    double d, c, x, v, u, dv;
+    int t, boost = 0;
+
+    if (shape <= 0 || scale <= 0) {
+	return E_DATA;
+    }
+
+    if (shape < 1) {
+	k = shape + 1.0;
+	boost = 1;
+    }
+
+    d = k - 1.0/3;
+    c = 1.0 / sqrt(9*d);    
+    
+    for (t=t1; t<=t2; t++) {
+	while (1) {
+	    x = gretl_one_snormal();
+	    v = pow(1 + c*x, 3);
+	    if (v > 0.0) {
+		dv = d * v;
+		u = gretl_rand_01();
+		/* apply squeeze */
+		if (u < 1 - 0.0331 * pow(x, 4) ||
+		    log(u) < 0.5*x*x + d*(1-v+log(v))) {
+		    break;
+		} 
+	    }
+	}
+	if (boost) {
+	    /* shape < 1 */
+	    u = gretl_rand_01();
+	    dv *= pow(u, 1/shape);
+	}
+	dv *= scale;
+	a[t] = dv;
+    }
+
+    return 0;
+#else
     double *U = NULL;
     double e = 2.718281828459045235;
     double delta, dinv = 0, d1 = 0;
@@ -1021,6 +1077,7 @@ int gretl_rand_gamma (double *a, int t1, int t2,
     free(U);
 	
     return 0;
+#endif /* gamma variants */
 }
 
 /**
