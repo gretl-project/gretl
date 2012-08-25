@@ -953,7 +953,7 @@ int gretl_rand_gamma (double *a, int t1, int t2,
 #if USE_MARSAGLIA_TSANG
     double k = shape;
     double d, c, x, v, u, dv;
-    int t, boost = 0;
+    int t;
 
     if (shape <= 0 || scale <= 0) {
 	return E_DATA;
@@ -961,7 +961,6 @@ int gretl_rand_gamma (double *a, int t1, int t2,
 
     if (shape < 1) {
 	k = shape + 1.0;
-	boost = 1;
     }
 
     d = k - 1.0/3;
@@ -981,13 +980,11 @@ int gretl_rand_gamma (double *a, int t1, int t2,
 		} 
 	    }
 	}
-	if (boost) {
-	    /* shape < 1 */
+	if (shape < 1) {
 	    u = gretl_rand_01();
 	    dv *= pow(u, 1/shape);
 	}
-	dv *= scale;
-	a[t] = dv;
+	a[t] = dv * scale;
     }
 
     return 0;
