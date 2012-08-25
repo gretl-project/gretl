@@ -3856,6 +3856,8 @@
 	<fnarg type="char">c</fnarg>
 	<fnarg type="scalar">a</fnarg>
 	<fnarg type="scalar">b</fnarg>
+	<fnarg type="scalar">r</fnarg>
+	<fnarg type="scalar">c</fnarg>
       </fnargs>
       <examples>
 	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
@@ -3863,11 +3865,13 @@
       </examples>
       <description>
 	<para>
-	  Works like <fncref targ="randgen"/> except that the return value
-	  is a matrix rather than a series. The initial arguments to this
-	  function are as described for <lit>randgen</lit>, but they must
-	  be followed by two integers to specify the number of rows and
-	  columns of the desired random matrix.
+	  Works like <fncref targ="randgen"/> except that the return
+	  value is a matrix rather than a series. The initial
+	  arguments to this function are as described for
+	  <lit>randgen</lit>, but they must be followed by two
+	  integers to specify the number of rows
+	  (<argname>r</argname>) and columns (<argname>c</argname>) of
+	  the desired random matrix.
 	</para>
 	<para>
 	  The first example above calls for a uniform random column vector
@@ -5075,7 +5079,7 @@
 	  </li>
 	  <li>
 	    <para>
-	      Standard normal (c = z, n, or N): mean; standard deviation
+	      Normal (c = z, n, or N): mean; standard deviation
 	    </para>
 	  </li>
 	  <li>
@@ -5141,7 +5145,36 @@
 	  <seelist>
 	    <fncref targ="normal"/>
 	    <fncref targ="uniform"/> 
-	    <fncref targ="mrandgen"/> 
+	    <fncref targ="mrandgen"/>
+	    <fncref targ="randgen1"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="randgen1" section="probdist" output="scalar">
+      <fnargs>
+	<fnarg type="char">c</fnarg>
+	<fnarg type="scalar">a</fnarg>
+	<fnarg type="scalar">b</fnarg>
+      </fnargs>
+      <examples>
+	<example>scalar x = randgen1(z, 0, 1)</example>
+	<example>scalar g = randgen1(g, 3, 2.5)</example>
+      </examples>
+      <description>
+	<para>
+	  Works like <fncref targ="randgen"/> except that the return
+	  value is a scalar rather than a series.
+	</para>
+	<para>
+	  The first example above calls for a value from the standard
+	  normal distribution, while the second specifies a drawing
+	  from the Gamma distribution with shape 3 and scale 2.5.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="mrandgen"/>
 	  </seelist>
 	</para>
       </description>

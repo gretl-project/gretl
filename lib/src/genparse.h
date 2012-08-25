@@ -228,6 +228,7 @@ enum {
     F_URCPVAL,
     F_RANDGEN,
     F_MRANDGEN,
+    F_RANDGEN1,
     F_VALUES,
     F_UNIQ,
     F_NULLSPC,
@@ -404,7 +405,7 @@ enum {
 /* function with multiple args, character code for first arg */
 #define char0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
 		       s == F_CRIT || s == F_RANDGEN || s == F_PDF ||	\
-		       s == F_BESSEL || s == F_MRANDGEN)
+		       s == F_BESSEL || s == F_MRANDGEN || s == F_RANDGEN1)
 
 /* functions taking a string arg in last position */
 #define string_last_func(s) (s == F_FDJAC || s == F_BFGSMAX || \

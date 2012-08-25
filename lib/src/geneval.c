@@ -697,7 +697,7 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
     }
 }
 
-#define randgen(f) (f == F_RANDGEN || f == F_MRANDGEN)
+#define randgen(f) (f == F_RANDGEN || f == F_MRANDGEN || f == F_RANDGEN1)
 
 static int check_dist_count (char *s, int f, int *np, int *argc)
 {
@@ -1203,6 +1203,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	int i, k, m = r->v.bn.n_nodes;
 	int rgen = (n->t == F_RANDGEN);
 	int mrgen = (n->t == F_MRANDGEN);
+	int rgen1 = (n->t == F_RANDGEN1);
 	double parm[3] = {0};
 	double argval = NADBL;
 	double *parmvec[2] = { NULL };
@@ -1326,6 +1327,8 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	} else if (mrgen) {
 	    ret->v.m = gretl_get_random_matrix(d, parm, rows, cols, 
 					       &p->err);
+	} else if (rgen1) {
+	    ret->v.xval = gretl_get_random_scalar(d, parm, &p->err);
 	} else if (argvec != NULL) {
 	    ret->v.xvec = series_pdist(n->t, d, parm, np, argvec, p);
 	} else if (argmat != NULL) {
@@ -9380,6 +9383,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_PVAL:
     case F_RANDGEN:
     case F_MRANDGEN:
+    case F_RANDGEN1:	
     case F_URCPVAL:	
 	if (t->v.b1.b->t == FARGS) {
 	    if (t->t == F_URCPVAL) {

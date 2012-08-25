@@ -124,6 +124,9 @@ gretl_matrix *gretl_get_random_matrix (char st, const double *parm,
 				       int rows, int cols, 
 				       int *err);
 
+double gretl_get_random_scalar (char st, const double *parm,
+				int *err);
+
 int batch_pvalue (const char *str, DATASET *dset, PRN *prn);
 
 void print_pvalue (char st, const double *parm, double x, double pv, PRN *prn);

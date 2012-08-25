@@ -919,7 +919,44 @@ void gretl_rand_uniform (double *a, int t1, int t2)
     }
 }
 
-#define USE_MARSAGLIA_TSANG 1
+double gretl_rand_gamma_one (double shape, double scale)
+{
+    double k = shape;
+    double d, c, x, v, u, dv;
+
+    if (shape <= 0 || scale <= 0) {
+	return NADBL;
+    }
+
+    if (shape < 1) {
+	k = shape + 1.0;
+    }
+
+    d = k - 1.0/3;
+    c = 1.0 / sqrt(9*d);    
+    
+    while (1) {
+	x = gretl_one_snormal();
+	v = pow(1 + c*x, 3);
+	if (v > 0.0) {
+	    dv = d * v;
+	    u = gretl_rand_01();
+	    /* apply squeeze */
+	    if (u < 1 - 0.0331 * pow(x, 4) ||
+		log(u) < 0.5*x*x + d*(1-v+log(v))) {
+		break;
+	    } 
+	}
+    }
+    if (shape < 1) {
+	u = gretl_rand_01();
+	dv *= pow(u, 1/shape);
+    }
+
+    return dv * scale;
+}
+
+#define USE_MT_GAMMA 1
 
 /* Marsaglia-Tsang, "A Simple Method for Generating Gamma Variables",
    ACM Transactions on Mathematical Software, Vol. 26, No. 3,
@@ -950,7 +987,7 @@ void gretl_rand_uniform (double *a, int t1, int t2)
 int gretl_rand_gamma (double *a, int t1, int t2, 
 		      double shape, double scale) 
 {
-#if USE_MARSAGLIA_TSANG
+#if USE_MT_GAMMA
     double k = shape;
     double d, c, x, v, u, dv;
     int t;

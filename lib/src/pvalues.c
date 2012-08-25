@@ -2813,6 +2813,17 @@ gretl_matrix *gretl_get_random_matrix (char st, const double *parm,
     return m;
 }
 
+double gretl_get_random_scalar (char st, const double *parm,
+				int *err)
+{
+    double x;
+
+    *err = gretl_fill_random_array(&x, 0, 0, st,
+				   parm, NULL, NULL);
+
+    return x;
+}
+
 static int 
 print_pv_string (double x, double p, PRN *prn)
 {

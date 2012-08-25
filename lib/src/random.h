@@ -69,6 +69,8 @@ int gretl_rand_weibull (double *a, int t1, int t2, double shape,
 int gretl_rand_gamma (double *a, int t1, int t2,  
 		      double shape, double scale);
 
+double gretl_rand_gamma_one (double shape, double scale);
+
 int gretl_rand_GED (double *a, int t1, int t2, double nu);
 
 gretl_matrix *halton_matrix (int m, int r, int *err);
