@@ -3208,7 +3208,7 @@
   </command>
 
   <command name="fcast" section="Prediction" 
-    label="Gerar prdições">
+    label="Gerar predições">
 
     <usage>
       <arguments>
@@ -3572,7 +3572,7 @@
     <description context="gui">
       <para>
 	Na janela de diálogo do gráfico de frequência você pode controlar
-	as caraterísticas do gáfico em duas maneiras diferentes.
+	as caraterísticas do gráfico em duas maneiras diferentes.
       </para>
       <para>
 	Primeiro, você pode escolher o número de classes. Neste caso
@@ -3748,7 +3748,7 @@
 	Para este comando estão disponíveis diferentes estimadores da
 	matriz de covariância.  Por omissão, usa-se a Hessiana, ou se
 	a opção	<quote>Erros padrão robustos</quote> tiver sido 
-	selecionada, será usada a matriz de covariança QML (White).  
+	selecionada, será usada a matriz de covariância QML (White).  
 	 Outras possibilidades podem ser especificadas usando o 
 	comando <cmdref targ="set"/> (por exemplo a matriz de 
 	informação, ou o estimador Bollerslev&ndash;Wooldridge ).
@@ -4436,132 +4436,159 @@
   </command>
 
   <command name="graphing" section="Graphs" context="gui"
-    label="Graphing">
+    label="Representação Gráfica">
 
     <description>
 
-      <para>Gretl calls a separate program, namely gnuplot, to
-	generate graphs.  Gnuplot is a very full-featured graphing
-	program with myriad options.  Gretl gives you direct access,
-	via a graphical interface, to a subset of these options and it
-	tries to choose sensible values for you; it also allows you to
-	take complete control over graph details if you wish.</para>
+      <para>Gretl chama um programa separado, designadamente gnuplot,
+	para gerar gráficos.  Gnuplot é um programa de gráficos
+	completo com muitas de opções.  Gretl dá-lhe acesso direto,
+	por intermédio de um interface gráfico, a um subconjunto destas
+	opções e tenta escolher valores adequados para si;  também
+	permite-lhe controlar completamente os detalhes dos gráficos
+	se assim o desejar.</para>
 
-      <para>With a graph displayed, you can click on the graph window
-	for a pop-up menu with the following options:</para>
+      <para>Com um gráfico apresentado, você pode clicar na janela do
+	gráfico para aceder a um menu de contexto com as seguintes opções:
+      </para>
 
       <ilist>
-	<li><para>Save as postscript: save the graph in encapsulated
-	    postscript (EPS) format</para>
+	<li><para>Gravar como 'postscript' (EPS): grava o gráfico no formato
+	    'postscript' encapsulado (EPS)</para>
 	</li>
-	<li><para>Save as PNG: save in Portable Network Graphics
-	    format</para>
+	<li><para>Gravar como PNG: grava o gráfico no formato 
+	    'Portable Network Graphics'</para>
 	</li>
-	<li><para>Save to session as icon: the graph will appear in
-	    iconic form when you select <quote>Icon view</quote> from
-	    the Session menu</para>
+	<li><para>Gravar como PDF: grava o gráfico no formato 
+	    'Portable Document Format'</para>
 	</li>
-	<li><para>Zoom: lets you select an area within the graph for
-	    closer inspection</para>
+	<li><para>Gravar como metaficheiro do Windows (EMF): grava o gráfico no formato 
+	    'Enhanced Metafile Format', a cores ou monocromático</para>
 	</li>
-	<li><para>Print: (on the Gnome desktop and MS Windows only)
-	    lets you print the graph directly</para>
+	<li><para>Guardar para a sessão como ícone: o gráfico aparecerá
+	    na forma de ícone quando você selecionar <quote>Ver/Por Ícones</quote> do
+            menu da janela principal</para>
 	</li>
-	<li><para>Copy to clipboard: (MS Windows only) lets you paste
-	    the graph into Windows applications such as MS
-	    Word</para>
+	<li><para>Ampliar: deixa você selecionar uma área dentro do gráfico
+	para melhor inspeção. Depois pode substituir o gráfico inicial ou restaurar
+	a vista normal.</para>
 	</li>
-	<li><para>Edit: opens a controller for the plot which lets you
-	    adjust various aspects of its appearance</para>
+	<li><para>Imprimir: (apenas no ambiente gráfico Gnome e no MS Windows)
+	    permite-lhe imprimir o gráfico diretamente</para>
 	</li>
-	<li><para>Close: closes the graph window</para>
+	<li><para>Copia para a memória de edição: (apenas no MS Windows) permite-lhe
+	    colar o gráfico em aplicações Windows como seja o MS Word</para>
+	</li>
+	<li><para>Editar: abre uma janela de controlo do gráfico que 
+	    lhe permite ajustar os vários aspetos da sua aparência
+	    </para>
+	</li>
+	<li><para>Fechar: fecha a janela do gráfico</para>
 	</li>
       </ilist>
 
       <para>
-	If you know something about gnuplot and wish to get finer
-	control over the appearance of a graph than is available via
-	the graphical controller (<quote>Edit</quote> option), you
-	have two further options:
+	Se você conhece algo sobre o gnuplot e deseja obter melhor controlo
+	sobre a aparência sobre o gráfico do que a que é disponibilizada
+	no controlador gráfico (<quote>Editar</quote> option), você tem
+	outras opção:
       </para>
 
       <ilist>
 	<li>
 	  <para>
-	    Once the graph is saved as a session icon, you can
-	    right-click on its icon for a further pop-up menu.  One of the
-	    options here is <quote>Edit plot commands</quote>, which opens
-	    an editing window with the actual gnuplot commands displayed.
-	    You can edit these commands and either save them for future
-	    processing or send them to gnuplot (with the execute toolbar
-	    icon in the plot commands editing window).
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    Another way to save the plot commands (or to save
-	    the displayed plot in formats other than EPS or PNG) is to
-	    use <quote>Edit</quote> item on a graph's pop-up menu to
-	    invoke the graphical controller, then click on the
-	    <quote>Output to file</quote> tab in the controller.  You
-	    are then presented with a drop-down menu of formats in
-	    which to save the graph.
+	    Assim que o gráfico é guardado para a sessão como ícone, você pode clicar com
+	    o botão direito sobre o ícone para aceder a um menu de contexto.  Uma das
+	    opções é <quote>Editar comandos do gráfico</quote>, o que abre uma janela
+            de edição com os comandos gnuplot utilizados nesse gráfico. Você pode editar
+	    esses comandos e gravá-los para uso futuro ou enviar para o gnuplot (com o ícone
+	    de execução na barra de ferramentas da janela de edição).
 	  </para>
 	</li>
       </ilist>
 
       <para>
-	To find out more about gnuplot, see http://www.gnuplot.info
+	Para saber mais sobre gnuplot, ver http://www.gnuplot.info
       </para>
 
     </description>
 
   </command>
 
-  <command name="graphpg" section="Graphs" label="Gretl graph page">
+  <command name="graphpg" section="Graphs" label="Página dos gráficos de Gretl">
 
     <description>
 
       <para>
-	The session <quote>graph page</quote> will work only if you have
-	the &latex; typesetting system installed, and are able to generate
-	and view PDF or PostScript output.
+	A <quote>página dos gráficos</quote> de sessão apenas funcionará se você
+	tiver instalado o sistema de produção de texto &latex;, e puder gerar e 
+	visionar documentos PDF ou PostScript.
       </para>
 
       <para>
-	In the session icon window, you can drag up to eight graphs onto
-	the graph page icon.  When you double-click on the graph page (or
-	right-click and select <quote>Display</quote>), a page containing
-	the selected graphs will be composed and opened in a suitable
-	viewer.  From there you should be able to print the page.
+	Na janela de sessão por ícones, você pode arrastar até oito gráficos
+	para dentro de um ícone de página de gráficos.  Quando você fizer
+	duplo-clique na página de gráficos (ou com o botão direito e selecionar 
+	<quote>Mostrar</quote>), será produzida uma página com os gráficos
+	selecionados e apresentada no visionador adequado.  A partir deste você
+	poderá imprimir a página.
       </para>
 
       <para>
-	To clear the graph page, right-click on its icon and select
-	<quote>Clear</quote>.
-      </para> 
-
+	Para limpar a página de gráficos, clicar com o botão direito no seu ícone e
+	selecionar <quote>Limpar</quote>.
+      </para>
       <para>
-	In script (or console) mode, you can add a graph to the graph page by
-	issuing the command <lit>graphpg add</lit> after saving
-	a named graph, as in
+	Note que em sistemas diferentes do MS Windows, você pode ter que
+	ajustar as definições dos programas usados para visionar documentos
+	PDF ou PostScript. Isso encontra-se dentro do separador <quote>Programas</quote>
+	na janela de diálogo das Preferências do gretl (a partir do menu Ferramentas da
+	janela principal).
+      </para>
+      <para>
+	Também é possível trabalhar com a página de gráficos a partir
+	se sequência de comandos, ou usando a consola (dentro do programa em
+	ambiente gráfico). São suportados os seguintes comandos e opções:
+      </para>
+      <para>
+	Para acrescentar um gráfico à página de gráficos, dê o comando
+	<lit>graphpg add</lit> depois de o ter gravado como um gráfico com
+	nome, tal como
       </para>
       <code>
 	grf1 &lt;- gnuplot Y X
 	graphpg add
       </code>
-
-      <para>
-	Also in script mode you can call for display of the graph page using
-	the command <lit>graphpg show</lit>, and can clear the page via
-	<lit>graphpg free</lit>.
+       <para>
+	Para ver a página de gráficos: <lit>graphpg show</lit>.
       </para>
-
       <para>
-	Note that on systems other than MS Windows, you may have to adjust the
-	setting for the program used to view PDF or PostScript files. Find
-	that under the <quote>Programs</quote> tab in the gretl Preferences
-	dialog box (under the Tools menu in the main window).
+	Para limpar a página de gráficos: <lit>graphpg free</lit>.
+      </para>
+      <para>
+	Para ajustar a escala da fonte usada na página de gráficos, use
+	<lit>graphpg fontscale</lit> <repl>escala</repl>, onde
+	<repl>escala</repl> é um multiplicador (com o valor 1,0 por omissão).
+	Assim, para tornar a o fonte 50 porcento maior que a por inicial você
+	pode
+      </para>
+      <code>
+	graphpg fontscale 1.5
+      </code>
+      <para>
+	Para chamar a impressão da página de gráficos para um ficheiro, use a opção
+	<opt>output=</opt> mais um nome de ficheiro; o nome do ficheiro deverá ter 
+	o sufixo <quote><lit>.pdf</lit></quote>,
+	<quote><lit>.ps</lit></quote> ou
+	<quote><lit>.eps</lit></quote>. Por exemplo:
+      </para>
+      <code>
+	graphpg --output="meu_ficheiro.pdf"
+      </code>
+      <para>
+	Neste contexto, por omissão o resultado usa linhas coloridas; para
+	usar padrões ponto/traço em vez de cores, você pode acrescentar a opção
+	<opt>monochrome</opt>.
       </para>
 
     </description>
@@ -6141,6 +6168,42 @@
 
     <gui-access>
       <menu-path>/File/Function files/New package</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="markers" section="Dataset" 
+    label="Observation markers" context="cli">
+
+    <usage>
+      <altforms>
+	<altform><lit>markers --to-file=</lit><repl>filename</repl></altform>
+	<altform><lit>markers --from-file=</lit><repl>filename</repl></altform>
+	<altform><lit>markers --delete</lit></altform>
+      </altforms>
+    </usage>
+
+    <description>
+      <para>
+	With the option <opt>--to-file</opt>, writes to the named file
+	the observation marker strings from the current dataset, one
+	per line. If no such strings are present an error is flagged.
+      </para>
+      <para>
+	With the option <opt>--from-file</opt>, reads the specified
+	file (which should be plain text) and assigns observation
+	markers to the rows in the dataset, reading one marker per
+	line. There should be at least as many markers in the file as
+	observations in the dataset.
+      </para>
+      <para>
+	The <opt>--delete</opt> option does what you'd expect: it
+	removes the observation marker strings from the dataset.
+      </para>      
+    </description>
+
+    <gui-access>
+      <menu-path>/Data/Observation markers</menu-path>
     </gui-access>
 
   </command>
