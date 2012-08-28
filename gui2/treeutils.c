@@ -629,8 +629,9 @@ void tree_view_get_bool (GtkTreeView *view, int row, int col, gboolean *val)
 
     model = gtk_tree_view_get_model(view);
     path = g_strdup_printf("%d", row);
-    gtk_tree_model_get_iter_from_string(model, &iter, path);
-    gtk_tree_model_get(model, &iter, col, val, -1);
+    if (gtk_tree_model_get_iter_from_string(model, &iter, path)) {
+	gtk_tree_model_get(model, &iter, col, val, -1);
+    }
     g_free(path);
 }
 
@@ -642,8 +643,9 @@ void tree_view_get_string (GtkTreeView *view, int row, int col, gchar **val)
 
     model = gtk_tree_view_get_model(view);
     path = g_strdup_printf("%d", row);
-    gtk_tree_model_get_iter_from_string(model, &iter, path);
-    gtk_tree_model_get(model, &iter, col, val, -1);
+    if (gtk_tree_model_get_iter_from_string(model, &iter, path)) {
+	gtk_tree_model_get(model, &iter, col, val, -1);
+    }
     g_free(path);
 }
 
@@ -656,11 +658,12 @@ static void tree_view_set_string (GtkTreeView *view, int row, int col,
 
     model = gtk_tree_view_get_model(view);
     path = g_strdup_printf("%d", row);
-    gtk_tree_model_get_iter_from_string(model, &iter, path);
-    if (tstore == 1) {
-	gtk_tree_store_set(GTK_TREE_STORE(model), &iter, col, val, -1);
-    } else {
-	gtk_list_store_set(GTK_LIST_STORE(model), &iter, col, val, -1);
+    if (gtk_tree_model_get_iter_from_string(model, &iter, path)) {
+	if (tstore == 1) {
+	    gtk_tree_store_set(GTK_TREE_STORE(model), &iter, col, val, -1);
+	} else {
+	    gtk_list_store_set(GTK_LIST_STORE(model), &iter, col, val, -1);
+	}
     }
     g_free(path);
 }
@@ -683,8 +686,9 @@ void tree_view_get_int (GtkTreeView *view, int row, int col, int *val)
 
     model = gtk_tree_view_get_model(view);
     path = g_strdup_printf("%d", row);
-    gtk_tree_model_get_iter_from_string(model, &iter, path);
-    gtk_tree_model_get(model, &iter, col, val, -1);
+    if (gtk_tree_model_get_iter_from_string(model, &iter, path)) {
+	gtk_tree_model_get(model, &iter, col, val, -1);
+    }
     g_free(path);
 }
 
