@@ -384,8 +384,11 @@ static void get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	}
     }
 
-    if (opt & (OPT_M | OPT_O | OPT_P)) {
-	/* non-point "plot with" options */
+    if ((opt & OPT_O) && !(opt & (OPT_M | OPT_P))) {
+	/* just using lines */
+	gi->flags |= GPT_LINES;
+    } else if (opt & (OPT_M | OPT_O | OPT_P)) {
+	/* for handling other non-point "plot with" options */
 	gi->withlist = gretl_list_new(n_yvars);
     }
 
@@ -2474,7 +2477,8 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 
     if ((l0 > 2 || (l0 > 1 && (gi->flags & GPT_IDX))) && 
 	l0 < 7 && !(gi->flags & GPT_RESIDS) && !(gi->flags & GPT_FA)
-	&& !(gi->flags & GPT_DUMMY)  & !(opt & OPT_Y)) { /* FIXME GPT_XYZ */
+	&& !(gi->flags & GPT_DUMMY)  & !(opt & OPT_Y)) { 
+	/* FIXME GPT_XYZ ? */
 	/* allow probe for using two y axes */
 #if GP_DEBUG
 	fprintf(stderr, "l0 = %d, setting y2axis probe\n", l0);
@@ -2592,6 +2596,8 @@ static void set_withstr (gnuplot_info *gi, int i, char *str)
 	} else {
 	    strcpy(str, "w points");
 	}
+    } else if (gi->flags & GPT_LINES) {
+        strcpy(str, "w lines");
     } else {
 	strcpy(str, "w points");
     }
@@ -3229,7 +3235,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, _("fitted"));
     } else if (gi.flags & GPT_FA) {
 	/* this is a fitted vs actual plot */
-	set_withstr(&gi, 0, withstr);
+	set_withstr(&gi, 1, withstr);
 	fprintf(fp, " '-' using 1:($2) title \"%s\" %s lt 2, \\\n", _("fitted"), withstr);
 	fprintf(fp, " '-' using 1:($2) title \"%s\" %s lt 1\n", _("actual"), withstr);	
     } else {

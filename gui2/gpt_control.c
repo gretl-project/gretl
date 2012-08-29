@@ -2188,9 +2188,6 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
     if ((p = strstr(s, " w "))) {
 	sscanf(p + 3, "%15[^, ]", tmp);
 	line->style = gp_style_index_from_name(tmp);
-	if (line->style != GP_STYLE_POINTS) {
-	    spec->flags |= GPT_LINES;
-	}
     } 
 
     if ((p = strstr(s, " lt "))) {
@@ -2253,10 +2250,9 @@ static void maybe_set_add_fit_ok (GPT_SPEC *spec)
     } else if (spec->data != NULL &&
 	       spec->code == PLOT_REGULAR &&
 	       spec->n_lines == 1 &&
-	       spec->lines[0].ncols == 2 &&
-	       !(spec->flags & GPT_LINES)) {
+	       spec->lines[0].ncols == 2) {
 	if (spec->flags & GPT_TS) {
-	    spec->fit = (dataset_is_time_series(dataset))?
+	    spec->fit = dataset_is_time_series(dataset) ?
 		PLOT_FIT_NONE : PLOT_FIT_NA;
 	} else {
 	    spec->fit = PLOT_FIT_NONE;
