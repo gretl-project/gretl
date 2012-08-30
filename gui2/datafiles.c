@@ -2237,6 +2237,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	cols = G_N_ELEMENTS(remote_func_types);
 	hidden_col = TRUE;
 	full_width = 580;
+	file_height = 340;
 	break;
     case REMOTE_ADDONS:
 	titles = addons_titles;
