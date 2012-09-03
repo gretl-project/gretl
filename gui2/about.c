@@ -26,7 +26,7 @@
 # include "gretlwin32.h"
 #endif
 
-const gchar *copyright = "Copyright (C) 2000-2010 Allin Cottrell and "
+const gchar *copyright = "Copyright (C) 2000-2012 Allin Cottrell and "
                          "Riccardo \"Jack\" Lucchetti";
 const gchar *bonmot = N_("\"By econometricians, for econometricians.\"");
 const gchar *website = "http://gretl.sourceforge.net/";
