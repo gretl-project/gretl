@@ -1,9 +1,0 @@
-application/x-gretldata
-	ext: gdt
-
-application/x-gretlsession
-	ext: gretl
-
-application/x-gretlscript
-	ext: inp
-
