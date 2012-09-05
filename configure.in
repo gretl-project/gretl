@@ -40,7 +40,7 @@ have_readline="no"
 new_readline="no"
 have_zlib="no"
 gtk_version="none"
-have_gnome="no"
+have_xdg="no"
 have_gmp="no"
 have_mpfr="no"
 have_lapack="no"
@@ -173,23 +173,15 @@ else
 fi,
 try_readline=yes)
 
-AC_ARG_WITH(gnome,
-[  --with-gnome         Install gnome support [[default=auto]]],
+AC_ARG_WITH(xdg,
+[  --with-xdg           Install XDG support [[default=yes]]],
 if test "x${withval}" = "xno"
 then
-  try_gnome=no
+  have_xdg=no
 else
-  try_gnome=yes
+  have_xdg=yes
 fi,
-try_gnome=yes)
-
-gnome_prefix="NA"
-AC_ARG_WITH(gnome_install,
-[  --with-gnome-install=DIR  where to install gnome-specific files [[default=auto]]],
-if test -n "${withval}"
-then
-  gnome_prefix=${withval}
-fi,)
+have_xdg=yes)
 
 AC_ARG_WITH(mpfr,
 [  --with-mpfr            Use MPFR library [[default=auto]]],
@@ -628,28 +620,6 @@ if test "${pixbuf_failed}" = "yes" ; then
     exit
 fi
 
-dnl Check for gnome, if we haven't been told not to
-if test "$build_gui" = "yes" && test "$try_gnome" = "yes" ; then
-    PKG_CHECK_MODULES(GNOME, libgnome-2.0,
-       have_gnome="yes"
-       if test "${gnome_prefix}" = "NA" ; then
-           gnome_prefix=`pkg-config --variable=prefix libgnome-2.0`
-       fi,
-       have_gnome="no"
-    )
-    if test "$have_gnome" = "no" ; then
-      PKG_CHECK_MODULES(GNOME, gnome-desktop-3.0,
-         have_gnome="yes"
-         if test "${gnome_prefix}" = "NA" ; then
-           gnome_prefix=`pkg-config --variable=prefix gnome-desktop-3.0`
-         fi,
-         have_gnome="no"
-      )
-    fi
-    AC_SUBST(have_gnome)
-    AC_SUBST(gnome_prefix)
-fi
-
 dnl Check for libxml2
 PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0)
 
@@ -721,9 +691,8 @@ gretl_sh
 gretl.pc 
 gui2/Makefile
 gui2/debug
-gnome/Makefile
-gnome/gretl.desktop 
-gnome/gretl.keys 
+xdg/gretl.desktop
+xdg/Makefile
 cli/Makefile 
 cli/debug
 lib/Makefile 
@@ -818,11 +787,10 @@ Configuration:
   sse2 support for RNG:                   ${sse2_result}
   openMP support:                         ${ac_openmp_result}
   Build with GTK version:                 ${gtk_version}
-  Build with gnome support:               ${have_gnome}
+  Build with XDG support:                 ${have_xdg}
   Build gretl documentation:              ${build_docs}
   Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}
-  Gnome installation prefix:              ${gnome_prefix}
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}
   libR support:                           ${have_libR}

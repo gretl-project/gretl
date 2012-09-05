@@ -1,0 +1,17 @@
+topsrc = @top_srcdir@
+xdgsrc = $(topsrc)/xdg
+
+# gretl's mime types:
+#  application/gretl.data    (glob: *.gdt,   icon: gretl-data-icon.png)
+#  application/gretl.session (glob: *.gretl, icon: gretl-session-icon.png)
+#  text/gretl.script         (glob: *.inp,   icon: gretl-script-icon.png)
+
+all:
+
+install: gretl.desktop $(xdgsrc)/gretl.xml $(xdgsrc)/gretl-data-icon.png \
+	$(xdgsrc)/gretl-session-icon.png $(xdgsrc)/gretl-script-icon.png
+	xdg-desktop-menu install gretl.desktop --novendor
+	xdg-mime install $(xdgsrc)/gretl.xml
+	xdg-icon-resource install --context mimetypes --size 32 $(xdgsrc)/gretl-data-icon.png application-gretl.data
+	xdg-icon-resource install --context mimetypes --size 32 $(xdgsrc)/gretl-session-icon.png application-gretl.session
+	xdg-icon-resource install --context mimetypes --size 32 $(xdgsrc)/gretl-script-icon.png text-gretl.script

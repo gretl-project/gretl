@@ -16,8 +16,7 @@ LN = @LN_S@
 have_readline = @have_readline@
 have_sourceview = @have_sourceview@
 have_zlib = @have_zlib@
-have_gnome = @have_gnome@
-gnome_prefix = @gnome_prefix@
+have_xdg = @have_xdg@
 quiet_build = @quiet_build@
 pkg_build = @pkg_build@
 fake_gtkspinner = @fake_gtkspinner@
@@ -65,9 +64,8 @@ ifeq ($(LN),)
   LN = ln -sf
 endif
 
-ifeq ($(have_gnome),yes)
-  query_install_gnome = install-gnome
-  GNOMEDEF = -DDATADIR=\"$(gnome_prefix)/share\"
+ifeq ($(have_xdg),yes)
+  query_install_xdg = install-xdg
 endif
 
 GRETLLIB = ../lib/libgretl-1.0.la
@@ -93,7 +91,7 @@ else
   CCV = $(CC) $(SSE2_OPT) $(OMP_OPT)
 endif
 
-DEFS = $(NLSDEF) $(GNOMEDEF)
+DEFS = $(NLSDEF)
 
 # Directories
 bindir	= $(prefix)/bin
@@ -207,9 +205,9 @@ $(GRETL_LANG): $(MKLANG)
 
 .PHONY:
 
-install: install-exec install-ui install-data install-lang $(query_install_gnome)
+install: install-exec install-ui install-data install-lang $(query_install_xdg)
 
-install-strip: $(PROG) install-data $(query_install_gnome)
+install-strip: $(PROG) install-data $(query_install_xdg)
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)
 
 install-data: installdirs
@@ -223,8 +221,8 @@ install-ui: installdirs
 install-exec: $(PROG) installdirs 
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(PROG) $(DESTDIR)$(bindir)/$(PROG)
 
-install-gnome: $(PROG) installdirs 
-	$(MAKE) -C ../gnome install 
+install-xdg: $(PROG) installdirs 
+	$(MAKE) -C ../xdg install 
 
 install-lang: $(GRETL_LANG) installdirs
 	$(INSTALL_DATA) $(GRETL_LANG) $(DESTDIR)$(langdir)/gretl.lang
