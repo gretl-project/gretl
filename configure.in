@@ -40,6 +40,7 @@ have_readline="no"
 new_readline="no"
 have_zlib="no"
 gtk_version="none"
+try_xdg="yes"
 have_xdg="no"
 have_gmp="no"
 have_mpfr="no"
@@ -174,14 +175,14 @@ fi,
 try_readline=yes)
 
 AC_ARG_WITH(xdg,
-[  --with-xdg           Install XDG support [[default=yes]]],
+[  --with-xdg           Install XDG support [[default=auto]]],
 if test "x${withval}" = "xno"
 then
-  have_xdg=no
+  try_xdg=no
 else
-  have_xdg=yes
+  try_xdg=yes
 fi,
-have_xdg=yes)
+try_xdg=yes)
 
 AC_ARG_WITH(mpfr,
 [  --with-mpfr            Use MPFR library [[default=auto]]],
@@ -325,6 +326,19 @@ if test "$try_readline" = "yes" ; then
      READLINE_LIBS=""
      READLINE_CFLAGS=""
    fi
+fi
+
+dnl
+dnl Check for XDG for handling of gretl mime-types
+dnl
+if test "$try_xdg" = "yes" ; then
+  AC_DEFUN([AC_PROG_XDG_MIME],
+  [AC_CHECK_PROG(XDG_MIME,xdg-mime,yes)])
+
+  AC_PROG_XDG_MIME
+  if test x"${XDG_MIME}" = xyes ; then
+    have_xdg=yes
+  fi
 fi
 
 dnl
@@ -787,7 +801,7 @@ Configuration:
   sse2 support for RNG:                   ${sse2_result}
   openMP support:                         ${ac_openmp_result}
   Build with GTK version:                 ${gtk_version}
-  Build with XDG support:                 ${have_xdg}
+  Install XDG support:                    ${have_xdg}
   Build gretl documentation:              ${build_docs}
   Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}
