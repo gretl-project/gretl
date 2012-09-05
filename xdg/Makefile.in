@@ -15,3 +15,6 @@ install: gretl.desktop $(xdgsrc)/gretl.xml $(xdgsrc)/gretl-data-icon.png \
 	xdg-icon-resource install --context mimetypes --size 32 $(xdgsrc)/gretl-data-icon.png application-gretl.data
 	xdg-icon-resource install --context mimetypes --size 32 $(xdgsrc)/gretl-session-icon.png application-gretl.session
 	xdg-icon-resource install --context mimetypes --size 32 $(xdgsrc)/gretl-script-icon.png text-gretl.script
+	xdg-icon-resource install --context apps --size 32 $(xdgsrc)/32/gretl.png --novendor
+	xdg-icon-resource install --context apps --size 48 $(xdgsrc)/48/gretl.png --novendor
+	xdg-icon-resource install --context apps --size 64 $(xdgsrc)/64/gretl.png --novendor
