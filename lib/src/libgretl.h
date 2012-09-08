@@ -44,6 +44,10 @@
 # include <libxml/parser.h>
 #endif
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #ifdef WIN32
 # include "winconfig.h"
 #endif
@@ -386,6 +390,10 @@ typedef struct MODEL_ {
 #include "transforms.h"
 #ifdef WIN32
 # include "gretl_win32.h"
+#endif
+
+#ifdef  __cplusplus
+}
 #endif
 
 #endif /* LIBGRETL_H */

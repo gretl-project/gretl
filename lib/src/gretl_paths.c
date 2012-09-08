@@ -271,7 +271,7 @@ static FILE *win32_mktemp (char *tmpl, const char *mode)
 
 /**
  * gretl_mktemp:
- * @template: template for filename; must end with "XXXXXX".
+ * @pattern: template for filename; must end with "XXXXXX".
  * @mode: e.g. "w" for text use or "wb" for binary mode.
  *
  * A wrapper for the combination of mkstemp() and fdopen(),
@@ -283,7 +283,7 @@ static FILE *win32_mktemp (char *tmpl, const char *mode)
  * Returns: file pointer, or %NULL on failure.
  */
 
-FILE *gretl_mktemp (char *template, const char *mode)
+FILE *gretl_mktemp (char *pattern, const char *mode)
 {
     FILE *fp = NULL;
     int fd = -1;
@@ -291,9 +291,9 @@ FILE *gretl_mktemp (char *template, const char *mode)
     gretl_error_clear();
 
 #ifdef G_OS_WIN32
-    fp = win32_mktemp(template, mode);
+    fp = win32_mktemp(pattern, mode);
 #else
-    fd = mkstemp(template); 
+    fd = mkstemp(pattern); 
 #endif
 
     if (errno != 0) {
@@ -304,7 +304,7 @@ FILE *gretl_mktemp (char *template, const char *mode)
 
 #if 0
     fprintf(stderr, "gretl_mktemp: name='%s', fd=%d, fp=%p\n",
-	    template, fd, (void *) fp);
+	    pattern, fd, (void *) fp);
 #endif
 
     return fp;
