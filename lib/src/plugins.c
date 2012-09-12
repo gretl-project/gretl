@@ -314,7 +314,7 @@ void *gretl_dlopen (const char *path, int now)
 #if !defined(WIN32)
 	fprintf(stderr, "%s\n", dlerror());
 #endif
-    }   
+    }
 
     return handle;
 }

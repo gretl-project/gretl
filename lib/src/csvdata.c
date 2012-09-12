@@ -185,6 +185,7 @@ static csvdata *csvdata_new (DATASET *dset)
     c->jspec = NULL;
 
     c->dset = datainfo_new();
+
     if (c->dset == NULL) {
 	free(c);
 	c = NULL;
@@ -194,6 +195,10 @@ static csvdata *csvdata_new (DATASET *dset)
 	if (dset->Z != NULL) {
 	    c->flags |= CSV_HAVEDATA;
 	}
+#if CDEBUG
+	fprintf(stderr, "csvdata_new: c->delim = '%c', c->decpoint = '%c'\n",
+		c->delim, c->decpoint);
+#endif
     }
 
     return c;
@@ -1337,7 +1342,12 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 	}
 	if (!comment) {
 	    if (c == '\t') {
-		csv_set_got_tab(cdata);
+		/* let's ignore trailing tabs in this heuristic */
+		c1 = fgetc(fp);
+		if (c1 != 0x0d && c1 != 0x0a) {
+		    csv_set_got_tab(cdata);
+		}
+		ungetc(c1, fp);
 	    }
 	    if (c == ';') {
 		csv_set_got_semi(cdata);
@@ -2429,7 +2439,14 @@ static int real_import_csv (const char *fname,
     if (c->maxlen <= 0) {
 	err = E_DATA;
 	goto csv_bailout;
-    } 
+    }
+
+#if CDEBUG
+    fprintf(stderr, "fixed_format? %s; got_delim (%c)? %s; got_tab? %s\n",
+	    fixed_format(c) ? "yes" : "no", c->delim,
+	    csv_got_delim(c) ? "yes" : "no",
+	    csv_got_tab(c)? "yes" : "no");
+#endif    
 
     if (!fixed_format(c) && !csv_got_delim(c)) {
 	/* set default delimiter */
