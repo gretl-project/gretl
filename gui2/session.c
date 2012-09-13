@@ -181,7 +181,8 @@ static char *graph_items[] = {
     N_("Display"),
     N_("Edit plot commands"),
     N_("Rename"),
-    N_("Delete")
+    N_("Delete"),
+    N_("Copy")
 };
 
 static char *dataset_items[] = {
@@ -205,7 +206,8 @@ static char *matrix_items[] = {
     N_("Properties"),
     N_("Copy as CSV..."),
     N_("Rename"),
-    N_("Delete")
+    N_("Delete"),
+    N_("Copy")
 };
 
 static char *bundle_items[] = {
@@ -696,9 +698,9 @@ void save_output_as_text_icon (windata_t *vwin)
     if (err) {
 	return;
     } else if (iconlist != NULL) {
-	    SESSION_TEXT * text = get_session_text_by_name(tname);
+	SESSION_TEXT * text = get_session_text_by_name(tname);
 
-	    session_add_icon(text, GRETL_OBJ_TEXT, ICON_ADD_SINGLE);
+	session_add_icon(text, GRETL_OBJ_TEXT, ICON_ADD_SINGLE);
     } else if (autoicon_on()) {
 	view_session();
     }
@@ -851,7 +853,6 @@ int gui_add_graph_to_session (char *fname, char *fullname, int type)
     }
 
     gretl_chdir(gretl_dotdir());
-
     make_graph_name(shortname, graphname);
     session_file_make_path(fullname, shortname);
 
@@ -2514,6 +2515,93 @@ static int rename_session_object (gui_obj *obj, const char *newname)
     return err;
 }
 
+static int copy_session_object (gui_obj *obj, const char *cpyname)
+{
+    void *oldp = NULL;
+    int err = 0;
+
+    if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
+	oldp = get_session_graph_by_name(cpyname);
+    } else if (obj->sort == GRETL_OBJ_MATRIX) {
+	oldp = get_user_matrix_by_name(cpyname);
+    } 
+
+    if (oldp != NULL) {
+	errbox(_("'%s': there is already an object of this name"), cpyname);
+    } else if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
+	SESSION_GRAPH *g0 = obj->data;
+
+	errno = 0;
+	if (!session_dir_ok()) {
+	    err = 1;
+	} else {
+	    char fname1[MAXSAVENAME];
+	    char path0[FILENAME_MAX];
+	    char path1[FILENAME_MAX];
+	    SESSION_GRAPH *g1;
+
+	    gretl_chdir(gretl_dotdir());
+	    make_graph_filename(fname1);
+	    session_file_make_path(path0, g0->fname);
+	    session_file_make_path(path1, fname1);
+	    copyfile(path0, path1);
+	    g1 = session_append_graph(cpyname, fname1, g0->type);
+	    if (g1 == NULL) {
+		err = 1;
+	    } else {
+		session_add_icon(g1, g0->type, ICON_ADD_SINGLE);
+	    }
+	}
+    } else if (obj->sort == GRETL_OBJ_MATRIX) {
+	user_matrix *u = obj->data;
+
+	err = copy_matrix_as(user_matrix_get_matrix(u), cpyname);
+	if (!err) {
+	    u = get_user_matrix_by_name(cpyname);
+	    session_add_icon(u, GRETL_OBJ_MATRIX, ICON_ADD_SINGLE);
+	}
+    }
+
+    return err;
+}
+
+static void copy_object_callback (GtkWidget *widget, dialog_t *dlg) 
+{
+    gui_obj *obj = (gui_obj *) edit_dialog_get_data(dlg);
+    const gchar *newname;
+    int err = 0;
+
+    newname = edit_dialog_get_text(dlg);
+
+    if (newname != NULL && *newname != '\0') {
+	err = copy_session_object(obj, newname);
+	if (!err) {
+	    mark_session_changed();
+	}
+    }
+
+    if (!err) {
+	edit_dialog_close(dlg);
+    }
+}
+
+static void copy_object_dialog (gui_obj *obj) 
+{
+    int maxlen = MAXSAVENAME - 1;
+    gchar *tmp;
+
+    if (obj->sort == GRETL_OBJ_MATRIX || obj->sort == GRETL_OBJ_BUNDLE) {
+	maxlen = VNAMELEN - 1;
+    }
+
+    tmp = g_strdup_printf(_("Enter new name\n(max. %d characters)"),
+			  maxlen);
+    edit_dialog(0, _("gretl: copy object"), tmp, obj->name, 
+		copy_object_callback, obj, 
+		VARCLICK_NONE, iconview);
+    g_free(tmp);
+}
+
 static void rename_object_callback (GtkWidget *widget, dialog_t *dlg) 
 {
     gui_obj *obj = (gui_obj *) edit_dialog_get_data(dlg);
@@ -3098,6 +3186,8 @@ static void matrix_popup_callback (GtkWidget *widget, gpointer data)
 	rename_object_dialog(obj);
     } else if (!strcmp(item, _("Delete"))) {
 	maybe_delete_session_object(obj);
+    } else if (!strcmp(item, _("Copy"))) {
+	copy_object_dialog(obj);
     }
 }
 
@@ -3220,6 +3310,10 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
     } else if (!strcmp(item, _("Save as TeX..."))) {   
 	if (obj->sort == GRETL_OBJ_GPAGE) {
 	    graph_page_save_wrapper();
+	}
+    } else if (!strcmp(item, _("Copy"))) {
+	if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
+	    copy_object_dialog(obj);
 	}
     }
 }
