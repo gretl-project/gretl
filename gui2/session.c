@@ -2546,12 +2546,14 @@ static int copy_session_object (gui_obj *obj, const char *cpyname)
 	    make_graph_filename(fname1);
 	    session_file_make_path(path0, g0->fname);
 	    session_file_make_path(path1, fname1);
-	    copyfile(path0, path1);
-	    g1 = session_append_graph(cpyname, fname1, g0->type);
-	    if (g1 == NULL) {
-		err = 1;
-	    } else {
-		session_add_icon(g1, g0->type, ICON_ADD_SINGLE);
+	    err = copyfile(path0, path1);
+	    if (!err) {
+		g1 = session_append_graph(cpyname, fname1, g0->type);
+		if (g1 == NULL) {
+		    err = 1;
+		} else {
+		    session_add_icon(g1, g0->type, ICON_ADD_SINGLE);
+		}
 	    }
 	}
     } else if (obj->sort == GRETL_OBJ_MATRIX) {
