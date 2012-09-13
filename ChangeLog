@@ -31,6 +31,7 @@ Version 1.9.10, in progress
 - Fix bivariate normal cdf calculator (would return NAs in some
   pathological cases)
 - GUI: add check for updated addons, such as gig
+- GUI icon view: enable copying of graphs and matrices
 
 2012-06-01 version 1.9.9
 - Add --cluster option (cluster-robust standard errors) for several
