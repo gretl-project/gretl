@@ -532,16 +532,20 @@ int copy_named_matrix_as (const char *orig, const char *newname)
  * copy_matrix_as:
  * @m: the original matrix.
  * @newname: the name to be given to the copy.
+ * @fnarg: 0 for regular use.
  *
  * A copy of matrix @m is added to the stack of saved matrices
- * under the name @newname.  This is intended for use when a matrix
- * is given as the argument to a user-defined function: it is copied
- * under the name assigned by the function's parameter list.
+ * under the name @newname.  
+ *
+ * The @fnarg argument should be non-zero only if this function
+ * is used to handle the case where a matrix is given as the argument 
+ * to a user-defined function.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int copy_matrix_as (const gretl_matrix *m, const char *newname)
+int copy_matrix_as (const gretl_matrix *m, const char *newname,
+		    int fnarg)
 {
     gretl_matrix *m2 = gretl_matrix_copy(m);
     user_matrix *u;
@@ -553,7 +557,7 @@ int copy_matrix_as (const gretl_matrix *m, const char *newname)
 	u = real_user_matrix_add(m2, newname, 0);
 	if (u == NULL) {
 	    err = E_ALLOC;
-	} else {
+	} else if (fnarg) {
 	    u->level += 1;
 	}
     }

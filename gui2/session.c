@@ -2520,6 +2520,8 @@ static int copy_session_object (gui_obj *obj, const char *cpyname)
     void *oldp = NULL;
     int err = 0;
 
+    /* Only graphs and matrices are supported for copying */
+
     if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
 	oldp = get_session_graph_by_name(cpyname);
     } else if (obj->sort == GRETL_OBJ_MATRIX) {
@@ -2555,7 +2557,7 @@ static int copy_session_object (gui_obj *obj, const char *cpyname)
     } else if (obj->sort == GRETL_OBJ_MATRIX) {
 	user_matrix *u = obj->data;
 
-	err = copy_matrix_as(user_matrix_get_matrix(u), cpyname);
+	err = copy_matrix_as(user_matrix_get_matrix(u), cpyname, 0);
 	if (!err) {
 	    u = get_user_matrix_by_name(cpyname);
 	    session_add_icon(u, GRETL_OBJ_MATRIX, ICON_ADD_SINGLE);
@@ -2568,16 +2570,18 @@ static int copy_session_object (gui_obj *obj, const char *cpyname)
 static void copy_object_callback (GtkWidget *widget, dialog_t *dlg) 
 {
     gui_obj *obj = (gui_obj *) edit_dialog_get_data(dlg);
-    const gchar *newname;
+    const gchar *cpyname;
     int err = 0;
 
-    newname = edit_dialog_get_text(dlg);
+    cpyname = edit_dialog_get_text(dlg);
 
-    if (newname != NULL && *newname != '\0') {
-	err = copy_session_object(obj, newname);
-	if (!err) {
+    if (cpyname != NULL && *cpyname != '\0') {
+	err = copy_session_object(obj, cpyname);
+	if (err) {
+	    errbox(_("Failed to copy object"));
+	} else {
 	    mark_session_changed();
-	}
+	} 
     }
 
     if (!err) {
@@ -2589,6 +2593,12 @@ static void copy_object_dialog (gui_obj *obj)
 {
     int maxlen = MAXSAVENAME - 1;
     gchar *tmp;
+
+    if (obj->sort != GRETL_OBJ_MATRIX &&
+	obj->sort != GRETL_OBJ_GRAPH &&
+	obj->sort != GRETL_OBJ_PLOT) {
+	dummy_call();
+    }
 
     if (obj->sort == GRETL_OBJ_MATRIX || obj->sort == GRETL_OBJ_BUNDLE) {
 	maxlen = VNAMELEN - 1;

@@ -5589,7 +5589,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    if (fp->flags & ARG_CONST) {
 		err = localize_const_matrix(arg, fp);
 	    } else {
-		err = copy_matrix_as(arg->val.m, fp->name);
+		err = copy_matrix_as(arg->val.m, fp->name, 1);
 	    }
 	} else if (fp->type == GRETL_TYPE_BUNDLE) {
 	    err = copy_bundle_arg_as(arg->val.b, fp->name);
