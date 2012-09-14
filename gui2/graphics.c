@@ -118,26 +118,16 @@ static void set_pdf_ps_dims (struct pdf_ps_saver *s, GPT_SPEC *spec)
     s->pheight = h;
 }
 
-#ifndef G_OS_WIN32
-static void pdffontsize_init (void)
-{
-    static int basesize;
-
-    if (basesize == 0) {
-	double gpver = gnuplot_get_version();
-
-	pdffontsize = (gpver > 4.4)? 10 : 5;
-    }
-}
-#endif
-
 static void saver_init (struct pdf_ps_saver *s,
 			GtkWidget *w,
 			GPT_SPEC *spec)
 {
 #ifndef G_OS_WIN32
-    if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	pdffontsize_init();
+    static int started;
+
+    if (!started && gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
+	pdffontsize = (gnuplot_get_version() > 4.4)? 10 : 5;
+	started = 1;
     }
 #endif
 
@@ -501,7 +491,6 @@ void pdf_ps_dialog (GPT_SPEC *spec, GtkWidget *parent)
     } else {
 	hbox = label_in_hbox(_("Font and size:"), 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-
 	hbox = ps_font_selector(&saver);
 	gtk_container_add(GTK_CONTAINER(vbox), hbox);
     }
