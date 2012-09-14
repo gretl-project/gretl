@@ -2518,6 +2518,8 @@ static int rename_session_object (gui_obj *obj, const char *newname)
 static int copy_session_object (gui_obj *obj, const char *cpyname)
 {
     void *oldp = NULL;
+    void *p = NULL;
+    int ptype = 0;
     int err = 0;
 
     /* Only graphs and matrices are supported for copying */
@@ -2540,7 +2542,6 @@ static int copy_session_object (gui_obj *obj, const char *cpyname)
 	    char fname1[MAXSAVENAME];
 	    char path0[FILENAME_MAX];
 	    char path1[FILENAME_MAX];
-	    SESSION_GRAPH *g1;
 
 	    gretl_chdir(gretl_dotdir());
 	    make_graph_filename(fname1);
@@ -2548,12 +2549,9 @@ static int copy_session_object (gui_obj *obj, const char *cpyname)
 	    session_file_make_path(path1, fname1);
 	    err = copyfile(path0, path1);
 	    if (!err) {
-		g1 = session_append_graph(cpyname, fname1, g0->type);
-		if (g1 == NULL) {
-		    err = 1;
-		} else {
-		    session_add_icon(g1, g0->type, ICON_ADD_SINGLE);
-		}
+		p = session_append_graph(cpyname, fname1, g0->type);
+		ptype = g0->type;
+		err = (p == NULL);
 	    }
 	}
     } else if (obj->sort == GRETL_OBJ_MATRIX) {
@@ -2561,9 +2559,14 @@ static int copy_session_object (gui_obj *obj, const char *cpyname)
 
 	err = copy_matrix_as(user_matrix_get_matrix(u), cpyname, 0);
 	if (!err) {
-	    u = get_user_matrix_by_name(cpyname);
-	    session_add_icon(u, GRETL_OBJ_MATRIX, ICON_ADD_SINGLE);
+	    p = get_user_matrix_by_name(cpyname);
+	    ptype = GRETL_OBJ_MATRIX;
+	    err = (p == NULL);
 	}
+    }
+
+    if (!err) {
+	session_add_icon(p, ptype, ICON_ADD_SINGLE);
     }
 
     return err;
