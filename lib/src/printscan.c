@@ -726,15 +726,32 @@ int do_printf (const char *line, DATASET *dset, PRN *prn)
 
 /* below: sscanf apparatus */
 
-static int sscanf_target_var (const char *vname, int *err)
+static int check_scalar_target (char *targ, DATASET *dset)
 {
-    if (gretl_is_scalar(vname)) {
-	return 0;
-    } else {
+    int err = 0;
+
+    if (strchr(targ, '[') != NULL) {
+	/* target may be an element of a series or matrix */
+	char *p = strchr(targ, '[');
+	char vname[VNAMELEN];
+	int len = p - targ;
+
+	if (len >= VNAMELEN) {
+	    err = E_UNKVAR;
+	} else {
+	    *vname = '\0';
+	    strncat(vname, targ, len);
+	    if (!gretl_is_matrix(vname) && !gretl_is_series(vname, dset)) {
+		gretl_errmsg_set(_("sscanf: numerical target must be scalar"));
+		err = E_DATA;
+	    }
+	}
+    } else if (!gretl_is_scalar(targ)) {
 	gretl_errmsg_set(_("sscanf: numerical target must be scalar"));
-	*err = E_DATA;
-	return 0;
+	err = E_DATA;
     }
+
+    return err;
 }
 
 struct bracket_scan {
@@ -933,21 +950,18 @@ scan_string (const char *targ, char **psrc, int width,
     return err;
 }
 
-static int scan_scalar (const char *targ, char **psrc,
+static int scan_scalar (char *targ, char **psrc,
 			int fc, int width, DATASET *dset, 
 			int *ns)
 {
     char *endp = NULL;
-    int v = 0;
     long k = 0;
     double x = 0;
     int err = 0;
 
-    if (targ != NULL) {
-	v = sscanf_target_var(targ, &err);
-	if (err) {
-	    return err;
-	}
+    err = check_scalar_target(targ, dset);
+    if (err) {
+	return err;
     }
 
     errno = 0;
@@ -978,11 +992,15 @@ static int scan_scalar (const char *targ, char **psrc,
     }
 
     if (!errno && endp != *psrc) {
-	if (v == 0) {
-	    gretl_scalar_set_value(targ, (fc == 'd')? k : x);
-	} else if (v > 0) {
-	    dset->Z[v][0] = (fc == 'd')? k : x;
+	char *genline;
+
+	if (fc == 'd') {
+	    genline = gretl_strdup_printf("%s=%d", targ, k);
+	} else {
+	    genline = gretl_strdup_printf("%s=%.16g", targ, x);
 	}
+	err = generate(genline, dset, OPT_P, NULL);
+	free(genline);
 	*ns += 1;
     }
 
