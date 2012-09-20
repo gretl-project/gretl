@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.9.8cvs
+# Polish translation for gretl-1.9.9cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2012
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2012
@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.9.8\n"
+"Project-Id-Version: gretl-1.9.9\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-09-15 08:10-0400\n"
-"PO-Revision-Date: 2012-05-21 04:03-0400\n"
+"PO-Revision-Date: 2012-09-18 03:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -582,12 +582,12 @@ msgstr "Testy autokorelacji"
 
 #: lib/src/compare.c:2117
 msgid "Error calculating Ljung-Box statistic"
-msgstr ""
+msgstr "Błąd w wyliczeniu statystyki Ljunga-Boxa"
 
 #: lib/src/compare.c:2120
-#, fuzzy, c-format
+#, c-format
 msgid "Test for autocorrelation up to order %d"
-msgstr "Test LM na autokorelację rzędu %s"
+msgstr "Test na autokorelację do rzędu %d"
 
 #: lib/src/compare.c:2292 lib/src/gretl_panel.c:3909
 msgid "Alternative statistic"
@@ -982,9 +982,9 @@ msgid "scanning for variable names...\n"
 msgstr "skanowanie nazw zmiennych...\n"
 
 #: lib/src/csvdata.c:2002
-#, fuzzy, c-format
+#, c-format
 msgid "   line: %.115s...\n"
-msgstr "   linia: %s\n"
+msgstr "   linia: %.115s...\n"
 
 #: lib/src/csvdata.c:2004
 #, c-format
@@ -1012,9 +1012,9 @@ msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' -- nie dokonano konwersji numerycznej!"
 
 #: lib/src/csvdata.c:2275
-#, fuzzy, c-format
+#, c-format
 msgid "warning: %d labels were truncated.\n"
-msgstr "Uwaga: kilka zmiennych ma zduplikowane nazwy\n"
+msgstr "Uwaga: %d etykiety zostały skrócone\n"
 
 #: lib/src/csvdata.c:2292
 msgid "scanning for row labels and data...\n"
@@ -1093,7 +1093,7 @@ msgstr "Brak pamięci\n"
 
 #: lib/src/csvdata.c:3187 lib/src/csvdata.c:3262
 msgid "You need to specify an aggregation method for a 1:n join"
-msgstr ""
+msgstr "Określ metodę agregacji dla łączenia 1:n"
 
 #: lib/src/csvdata.c:4107 gui2/library.c:3932
 msgid "Series length does not match the dataset"
@@ -1278,9 +1278,8 @@ msgid "Data appended OK\n"
 msgstr "Dołączenie danych OK\n"
 
 #: lib/src/dataio.c:2633
-#, fuzzy
 msgid "No markers are available for writing"
-msgstr "Niedostępne dane dla wykresu"
+msgstr "Nie wskazano zaznaczenia dla wydruku"
 
 #: lib/src/dataio.c:2703
 #, c-format
@@ -1782,23 +1781,21 @@ msgid "Ex. kurtosis"
 msgstr "Kurtoza"
 
 #: lib/src/describe.c:4411
-#, fuzzy, c-format
+#, c-format
 msgid "5% percentile"
-msgstr "percentyl"
+msgstr "5% percentyl"
 
 #: lib/src/describe.c:4412
-#, fuzzy, c-format
+#, c-format
 msgid "95% percentile"
-msgstr "%g procentowy przedział"
+msgstr "95% percentyl"
 
 #: lib/src/describe.c:4413
-#, fuzzy
 msgid "Interquartile range"
-msgstr "manualny zakres skali:"
+msgstr "Zakres międzykwartylowy"
 
 #: lib/src/describe.c:4414 lib/src/describe.c:4559 gui2/guiprint.c:761
 #: gui2/guiprint.c:1081
-#, fuzzy
 msgid "Missing obs."
 msgstr "Brakujące obserwacje"
 
@@ -1827,17 +1824,16 @@ msgstr "Odch. Stand."
 #: lib/src/describe.c:4556
 #, c-format
 msgid "5% perc."
-msgstr ""
+msgstr "5% percentyl"
 
 #: lib/src/describe.c:4557
 #, c-format
 msgid "95% perc."
-msgstr ""
+msgstr "95% percentyl"
 
 #: lib/src/describe.c:4558 gui2/guiprint.c:761
-#, fuzzy
 msgid "IQ range"
-msgstr "x maksimum"
+msgstr "Zakres międzykwartylowy"
 
 #: lib/src/describe.c:4755 lib/src/describe.c:4858
 #, c-format
@@ -4211,14 +4207,13 @@ msgid "No data information is available.\n"
 msgstr "Nie dostępna informacja o pliku danych.\n"
 
 #: lib/src/interact.c:4551 lib/src/interact.c:4560
-#, fuzzy
 msgid "Inner key is missing"
-msgstr "Błędna nazwa zmiennej"
+msgstr "Błędna wewnętrzna nazwa"
 
 #: lib/src/interact.c:4604
-#, fuzzy, c-format
+#, c-format
 msgid "The \"%s\" command cannot be used in this context"
-msgstr "polecenie '%s' jest błędny w tym kontekście"
+msgstr "polecenie \"%s\" jest błędny w tym kontekście"
 
 #: lib/src/interact.c:4693 cli/gretlcli.c:808 gui2/library.c:8217
 #, c-format
@@ -8339,9 +8334,8 @@ msgid "Execute"
 msgstr "Wykonaj"
 
 #: gui2/datafiles.c:1227 gui2/datafiles.c:1383
-#, fuzzy
 msgid "Add to menu"
-msgstr "Dodaj do bazy danych"
+msgstr "Dodaj do menu"
 
 #: gui2/datafiles.c:1234 gui2/datafiles.c:1387
 msgid "New"
@@ -9774,14 +9768,12 @@ msgstr ""
 "Would you like to try downloading it now?"
 
 #: gui2/fncall.c:2680
-#, fuzzy
 msgid "main window"
 msgstr "Okno główne"
 
 #: gui2/fncall.c:2681
-#, fuzzy
 msgid "model window"
-msgstr "Zamknij okno"
+msgstr "Okno modelu"
 
 #: gui2/fncall.c:2685
 #, c-format
@@ -9790,11 +9782,14 @@ msgid ""
 "as \"%s/%s\" in the %s.\n"
 "Do you want to do this?"
 msgstr ""
+"The package %s can be attached to the gretl menus\n"
+"as \"%s/%s\" in the %s.\n"
+"Do you want to do this?"
 
 #: gui2/fncall.c:2850
-#, fuzzy, c-format
+#, c-format
 msgid "Adding %s under %s."
-msgstr "względem %s i %s"
+msgstr "Adding %s under %s."
 
 #: gui2/fncall.c:2854 gui2/fncall.c:2858 gui2/settings.c:1607
 msgid "This change will take effect when you restart gretl"
@@ -9803,12 +9798,11 @@ msgstr "Zmiany będą widoczne po restarcie programu gretla"
 #: gui2/fncall.c:3003
 #, c-format
 msgid "Requires gretl %s"
-msgstr ""
+msgstr "Wymagany gretl %s"
 
 #: gui2/fncall.c:3009
-#, fuzzy
 msgid "Error reading package"
-msgstr "Błąd wczytania %s\n"
+msgstr "Błąd wczytania pakietu funkcji"
 
 #: gui2/fnsave.c:338
 msgid "Please add a sample script for this package"
@@ -10097,9 +10091,8 @@ msgid "Malformed PNG file for graph"
 msgstr "Przekłamanie w pliku graficznym PNG"
 
 #: gui2/gpt_control.c:4277
-#, fuzzy
 msgid "Malformed SVG file for graph"
-msgstr "Przekłamanie w pliku graficznym PNG"
+msgstr "Błędny plik SVG dla wykresu"
 
 #: gui2/gpt_control.c:4823
 msgid "gretl: graph"
@@ -11515,11 +11508,11 @@ msgstr "dla zmiennej %s (%d prawidłowych obserwacji)"
 
 #: gui2/guiprint.c:761
 msgid "5% Perc."
-msgstr ""
+msgstr "5% percentyl"
 
 #: gui2/guiprint.c:761
 msgid "95% Perc."
-msgstr ""
+msgstr "95% percentyl"
 
 #: gui2/guiprint.c:880
 msgid "t-ratios in parentheses"
@@ -11541,17 +11534,16 @@ msgstr "Ex.\\ kurtoza"
 #: gui2/guiprint.c:1081
 #, c-format
 msgid "5\\% perc."
-msgstr ""
+msgstr "5\\% percentyl"
 
 #: gui2/guiprint.c:1081
 #, c-format
 msgid "95\\% perc."
-msgstr ""
+msgstr "95\\% percentyl"
 
 #: gui2/guiprint.c:1081
-#, fuzzy
 msgid "IQ Range"
-msgstr "Zakres"
+msgstr "Zakres IQ"
 
 #: gui2/guiprint.c:1172
 #, c-format
@@ -13519,9 +13511,8 @@ msgid "Invalid quantile specification"
 msgstr "Błąd w specyfikacji kwantyli"
 
 #: gui2/selector.c:3095 gui2/selector.c:5031
-#, fuzzy
 msgid "Cluster"
-msgstr "Cluster by"
+msgstr "Cluster"
 
 #: gui2/selector.c:3177
 msgid "You must select a weight variable"
@@ -14396,9 +14387,8 @@ msgid "'%s': there is already an object of this name"
 msgstr "'%s': jest już nazwą obiektu"
 
 #: gui2/session.c:2586
-#, fuzzy
 msgid "Failed to copy object"
-msgstr "Błąd kopiowania pliku graficznego"
+msgstr "Błąd kopiowania objektu (ikony)"
 
 #: gui2/session.c:2612 gui2/session.c:2654
 #, c-format
@@ -14410,9 +14400,8 @@ msgstr ""
 "(maksymalnie %d znaków)"
 
 #: gui2/session.c:2614
-#, fuzzy
 msgid "gretl: copy object"
-msgstr "gretl: zmiana nazwy obiektu"
+msgstr "gretl: kopiuj obiekt"
 
 #: gui2/session.c:2656
 msgid "gretl: rename object"
@@ -14660,9 +14649,8 @@ msgid "Database server name"
 msgstr "Nazwa serwera baz danych"
 
 #: gui2/settings.c:236
-#, fuzzy
 msgid "HTTP proxy"
-msgstr "Wykorzystaj proxy HTTP"
+msgstr "Proxy HTTP"
 
 #: gui2/settings.c:238
 msgid "Use HTTP proxy"
@@ -14742,7 +14730,7 @@ msgstr "Ogólne"
 
 #: gui2/settings.c:1181
 msgid "Network"
-msgstr ""
+msgstr "Sieć"
 
 #: gui2/settings.c:1183
 msgid "Programs"
@@ -15975,7 +15963,7 @@ msgstr "Dozwolony dla restrykcji a prior, df = %d\n"
 
 #: plugin/johansen.c:2544
 msgid "Test of restrictions on cointegrating relations"
-msgstr ""
+msgstr "Test restrykcji dla relacji skointegrowanej"
 
 #: plugin/jrestrict.c:1248
 msgid "Switching algorithm: failed"
@@ -16531,49 +16519,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "   label strings can't be consistent dates\n"
-#~ msgstr "   etykieta nie może zawierać daty\n"
-
-#~ msgid "warning: truncating data at row %d, column %d\n"
-#~ msgstr "uwaga: ucięto dane od wiersza %d, kolumny %d\n"
-
-#~ msgid "Host not found"
-#~ msgstr "Nie znaleziono serwera"
-
-#~ msgid "Unknown error"
-#~ msgstr "Nieznany błąd"
-
-#~ msgid "No data received"
-#~ msgstr "Nie odebrano danych"
-
-#~ msgid "Malformed status line"
-#~ msgstr "Przekłamana linia statusu pliku"
-
-#~ msgid "(no description)"
-#~ msgstr "(brak opisu)"
-
-#~ msgid ""
-#~ "Failed to parse HTTP proxy:\n"
-#~ "format must be ipnumber:port"
-#~ msgstr ""
-#~ "Błąd w składni HTTP proxy:\n"
-#~ "format musi być zgodny z numerem IP:port"
-
-#~ msgid "HTTP proxy: first field must be an IP number"
-#~ msgstr "HTTP proxy: pierwsze pole musi być numerem IP"
-
-#~ msgid "Couldn't find usable socket driver\n"
-#~ msgstr "Nie może znaleść przydatnego sterownika\n"
-
-#~ msgid "gretl: LM test (autocorrelation)"
-#~ msgstr "gretl: test mnożnika Lagrange'a (LM) na autokorelację"
-
-#~ msgid "RATS data directory"
-#~ msgstr "Folder bazy danych RATS"
-
-#~ msgid "HTTP proxy (ipnumber:port)"
-#~ msgstr "Numer IP:port (dla proxy HTTP)"
-
-#~ msgid "Databases"
-#~ msgstr "Bazy danych"

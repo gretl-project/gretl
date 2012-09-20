@@ -572,10 +572,12 @@ int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname)
 static int write_data_for_stata (const DATASET *dset,
 				 FILE *fp)
 {
-    const char *save_na = get_csv_na_string();
+    char save_na[8];
     gchar *sdata;
     int err;
 
+    *save_na = '\0';
+    strncat(save_na, get_csv_na_string(), 7);
     set_csv_na_string(".");
     sdata = g_strdup_printf("%sstata.csv", gretl_dotdir());
     err = write_data(sdata, NULL, dset, OPT_C, 0);
