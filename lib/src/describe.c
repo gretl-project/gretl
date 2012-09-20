@@ -4408,7 +4408,9 @@ void print_summary_single (const Summary *s,
 	N_("C.V."),
 	N_("Skewness"),
 	N_("Ex. kurtosis"),
+	/* xgettext:no-c-format */
 	N_("5% percentile"),
+	/* xgettext:no-c-format */
 	N_("95% percentile"),
 	N_("Interquartile range"),
 	N_("Missing obs.")

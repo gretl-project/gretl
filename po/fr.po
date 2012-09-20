@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-09-15 08:10-0400\n"
+"POT-Creation-Date: 2012-09-20 17:17-0400\n"
 "PO-Revision-Date: 2011-12-17 16:17+0100\n"
 "Last-Translator: \n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -229,7 +229,7 @@ msgstr "Paramètre du délai de troncation = %d\n"
 
 #: lib/src/adf_kpss.c:1581 lib/src/compare.c:386 lib/src/compare.c:962
 #: lib/src/compare.c:1841 lib/src/compare.c:2059 lib/src/compare.c:2287
-#: lib/src/compare.c:3340 lib/src/describe.c:5590 lib/src/estimate.c:2740
+#: lib/src/compare.c:3340 lib/src/describe.c:5592 lib/src/estimate.c:2740
 #: lib/src/estimate.c:2753 lib/src/estimate.c:2761 lib/src/estimate.c:3527
 #: lib/src/estimate.c:3530 lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3722
 #: lib/src/gretl_panel.c:3904 lib/src/gretl_restrict.c:2215
@@ -511,7 +511,7 @@ msgstr "Test de non linéarité (logs)"
 #: lib/src/compare.c:2124 lib/src/compare.c:2288 lib/src/compare.c:2293
 #: lib/src/compare.c:2299 lib/src/compare.c:2759 lib/src/compare.c:2761
 #: lib/src/compare.c:2765 lib/src/describe.c:4043 lib/src/describe.c:4069
-#: lib/src/describe.c:6538 lib/src/describe.c:6541 lib/src/estimate.c:2742
+#: lib/src/describe.c:6540 lib/src/describe.c:6543 lib/src/estimate.c:2742
 #: lib/src/estimate.c:2765 lib/src/estimate.c:3533 lib/src/gretl_model.c:3738
 #: lib/src/gretl_model.c:3740 lib/src/gretl_model.c:3742
 #: lib/src/gretl_panel.c:1565 lib/src/gretl_panel.c:3656
@@ -1552,7 +1552,7 @@ msgstr "Matrice de corrélation des résidus, C"
 msgid "Eigenvalues of C"
 msgstr "Valeurs propres de C"
 
-#: lib/src/describe.c:1547 lib/src/describe.c:6527
+#: lib/src/describe.c:1547 lib/src/describe.c:6529
 msgid "Doornik-Hansen test"
 msgstr "Test de Doornik-Hansen"
 
@@ -1691,8 +1691,8 @@ msgstr ""
 "\n"
 "Périodigramme de %s\n"
 
-#: lib/src/describe.c:3967 lib/src/describe.c:5506 lib/src/describe.c:5508
-#: lib/src/describe.c:5584 lib/src/describe.c:5586 lib/src/describe.c:6032
+#: lib/src/describe.c:3967 lib/src/describe.c:5508 lib/src/describe.c:5510
+#: lib/src/describe.c:5586 lib/src/describe.c:5588 lib/src/describe.c:6034
 #, c-format
 msgid "Number of observations = %d\n"
 msgstr "Nombre d'itérations = %d\n"
@@ -1743,32 +1743,32 @@ msgstr "Test GPH"
 msgid "NA"
 msgstr "NA"
 
-#: lib/src/describe.c:4364 lib/src/describe.c:5375
+#: lib/src/describe.c:4364 lib/src/describe.c:5377
 #, c-format
 msgid "%s, using the observations %s - %s"
 msgstr "%s, utilisant les observations %s - %s"
 
-#: lib/src/describe.c:4368 lib/src/describe.c:5380 gui2/guiprint.c:704
+#: lib/src/describe.c:4368 lib/src/describe.c:5382 gui2/guiprint.c:704
 #: gui2/guiprint.c:1014 gui2/guiprint.c:1176 gui2/guiprint.c:1269
 msgid "(missing values were skipped)"
 msgstr "(les valeurs manquantes ont été escamotées)"
 
-#: lib/src/describe.c:4403 lib/src/describe.c:4520 lib/src/describe.c:4544
+#: lib/src/describe.c:4403 lib/src/describe.c:4522 lib/src/describe.c:4546
 #: gui2/guiprint.c:717 gui2/guiprint.c:1027
 msgid "Mean"
 msgstr "Moyenne"
 
-#: lib/src/describe.c:4404 lib/src/describe.c:4545 gui2/guiprint.c:717
+#: lib/src/describe.c:4404 lib/src/describe.c:4547 gui2/guiprint.c:717
 #: gui2/guiprint.c:1027
 msgid "Median"
 msgstr "Médiane"
 
-#: lib/src/describe.c:4405 lib/src/describe.c:4521 lib/src/describe.c:4546
+#: lib/src/describe.c:4405 lib/src/describe.c:4523 lib/src/describe.c:4548
 #: gui2/guiprint.c:717 gui2/guiprint.c:1027
 msgid "Minimum"
 msgstr "Minimum"
 
-#: lib/src/describe.c:4406 lib/src/describe.c:4522 lib/src/describe.c:4547
+#: lib/src/describe.c:4406 lib/src/describe.c:4524 lib/src/describe.c:4549
 #: gui2/guiprint.c:717 gui2/guiprint.c:1027
 msgid "Maximum"
 msgstr "Maximum"
@@ -1777,90 +1777,90 @@ msgstr "Maximum"
 msgid "Standard deviation"
 msgstr "Écart type"
 
-#: lib/src/describe.c:4408 lib/src/describe.c:4551 gui2/guiprint.c:739
+#: lib/src/describe.c:4408 lib/src/describe.c:4553 gui2/guiprint.c:739
 #: gui2/guiprint.c:1054
 msgid "C.V."
 msgstr "C.V."
 
-#: lib/src/describe.c:4409 lib/src/describe.c:4552 gui2/guiprint.c:739
+#: lib/src/describe.c:4409 lib/src/describe.c:4554 gui2/guiprint.c:739
 #: gui2/guiprint.c:1054
 msgid "Skewness"
 msgstr "Asymétrie"
 
-#: lib/src/describe.c:4410 lib/src/describe.c:4553 gui2/guiprint.c:739
+#: lib/src/describe.c:4410 lib/src/describe.c:4555 gui2/guiprint.c:739
 msgid "Ex. kurtosis"
 msgstr "Ex. aplatissement"
 
-#: lib/src/describe.c:4411
-#, fuzzy, c-format
+#: lib/src/describe.c:4412
+#, fuzzy, no-c-format
 msgid "5% percentile"
 msgstr "Constante"
 
-#: lib/src/describe.c:4412
-#, fuzzy, c-format
+#: lib/src/describe.c:4414
+#, fuzzy, no-c-format
 msgid "95% percentile"
 msgstr "intervalle à %g pourcent "
 
-#: lib/src/describe.c:4413
+#: lib/src/describe.c:4415
 #, fuzzy
 msgid "Interquartile range"
 msgstr "étendue manuelle :"
 
-#: lib/src/describe.c:4414 lib/src/describe.c:4559 gui2/guiprint.c:761
+#: lib/src/describe.c:4416 lib/src/describe.c:4561 gui2/guiprint.c:761
 #: gui2/guiprint.c:1081
 #, fuzzy
 msgid "Missing obs."
 msgstr "Observations manquantes"
 
-#: lib/src/describe.c:4417
+#: lib/src/describe.c:4419
 msgid "Within s.d."
 msgstr "Ecart type intra"
 
-#: lib/src/describe.c:4418
+#: lib/src/describe.c:4420
 msgid "Between s.d."
 msgstr "Ecart type inter"
 
-#: lib/src/describe.c:4425 lib/src/describe.c:4511 gui2/menustate.c:340
+#: lib/src/describe.c:4427 lib/src/describe.c:4513 gui2/menustate.c:340
 #: gui2/menustate.c:431 gui2/menustate.c:492 gui2/menustate.c:555
 msgid "Summary statistics"
 msgstr "Statistiques descriptives"
 
-#: lib/src/describe.c:4426
+#: lib/src/describe.c:4428
 #, c-format
 msgid "for the variable '%s' (%d valid observations)"
 msgstr "pour la variable « %s » (%d observations valides)"
 
-#: lib/src/describe.c:4523 lib/src/describe.c:4550 gui2/guiprint.c:739
+#: lib/src/describe.c:4525 lib/src/describe.c:4552 gui2/guiprint.c:739
 msgid "Std. Dev."
 msgstr "Écart type"
 
-#: lib/src/describe.c:4556
+#: lib/src/describe.c:4558
 #, c-format
 msgid "5% perc."
 msgstr ""
 
-#: lib/src/describe.c:4557
+#: lib/src/describe.c:4559
 #, c-format
 msgid "95% perc."
 msgstr ""
 
-#: lib/src/describe.c:4558 gui2/guiprint.c:761
+#: lib/src/describe.c:4560 gui2/guiprint.c:761
 #, fuzzy
 msgid "IQ range"
 msgstr "étendue de x"
 
-#: lib/src/describe.c:4755 lib/src/describe.c:4858
+#: lib/src/describe.c:4757 lib/src/describe.c:4860
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
 msgstr ""
 "Abandon de %s : l'étendue de l'échantillon ne contient pas d'observations "
 "valides\n"
 
-#: lib/src/describe.c:5278
+#: lib/src/describe.c:5280
 msgid "corr: needs at least two non-constant arguments"
 msgstr "corr : il faut au moins 2 arguments non constants"
 
-#: lib/src/describe.c:5335 lib/src/modelprint.c:3330 lib/src/modelprint.c:3342
+#: lib/src/describe.c:5337 lib/src/modelprint.c:3330 lib/src/modelprint.c:3342
 #: lib/src/modelprint.c:3343 lib/src/modelprint.c:3344
 #: lib/src/modelprint.c:3353 lib/src/modelprint.c:3363
 #: lib/src/modelprint.c:3395 lib/src/modelprint.c:3408
@@ -1876,7 +1876,7 @@ msgstr "corr : il faut au moins 2 arguments non constants"
 msgid "undefined"
 msgstr "indéfini"
 
-#: lib/src/describe.c:5342 lib/src/nonparam.c:334 lib/src/nonparam.c:340
+#: lib/src/describe.c:5344 lib/src/nonparam.c:334 lib/src/nonparam.c:340
 #: lib/src/nonparam.c:574
 msgid ""
 "Under the null hypothesis of no correlation:\n"
@@ -1885,29 +1885,29 @@ msgstr ""
 "Sous l'hypothèse nulle d'absence de corrélation :\n"
 " "
 
-#: lib/src/describe.c:5343 lib/src/nonparam.c:341
+#: lib/src/describe.c:5345 lib/src/nonparam.c:341
 #, c-format
 msgid "t(%d) = %g, with two-tailed p-value %.4f\n"
 msgstr "t(%d) = %g, avec une p. critique bilatérale %.4f\n"
 
-#: lib/src/describe.c:5347 lib/src/describe.c:5385 gui2/guiprint.c:1178
+#: lib/src/describe.c:5349 lib/src/describe.c:5387 gui2/guiprint.c:1178
 #, c-format
 msgid "5%% critical value (two-tailed) = %.4f for n = %d"
 msgstr "5%% valeur critique (bilatéral) = %.4f pour n = %d"
 
-#: lib/src/describe.c:5376
+#: lib/src/describe.c:5378
 msgid "Correlation Coefficients"
 msgstr "Coefficients de corrélation"
 
-#: lib/src/describe.c:5470 lib/src/describe.c:5554
+#: lib/src/describe.c:5472 lib/src/describe.c:5556
 msgid "Sample range has no valid observations."
 msgstr "L'étendue de l'échantillon n'a pas d'observations valides."
 
-#: lib/src/describe.c:5476 lib/src/describe.c:5560
+#: lib/src/describe.c:5478 lib/src/describe.c:5562
 msgid "Sample range has only one observation."
 msgstr "L'étendue de l'échantillon a une seule observation."
 
-#: lib/src/describe.c:5503
+#: lib/src/describe.c:5505
 #, c-format
 msgid ""
 "\n"
@@ -1918,35 +1918,35 @@ msgstr ""
 "Test d'égalité des moyennes (variances %s assumées)\n"
 "\n"
 
-#: lib/src/describe.c:5504
+#: lib/src/describe.c:5506
 msgid "unequal"
 msgstr "inégal"
 
-#: lib/src/describe.c:5504
+#: lib/src/describe.c:5506
 msgid "equal"
 msgstr "égal"
 
-#: lib/src/describe.c:5509
+#: lib/src/describe.c:5511
 #, c-format
 msgid "   Difference between sample means = %g - %g = %g\n"
 msgstr "   Différence entre les moyennes des échantillons = %g - %g = %g\n"
 
-#: lib/src/describe.c:5511
+#: lib/src/describe.c:5513
 msgid "   Null hypothesis: The two population means are the same.\n"
 msgstr ""
 "   Hypothèse nulle : les deux moyennes des populations sont identiques.\n"
 
-#: lib/src/describe.c:5512
+#: lib/src/describe.c:5514
 #, c-format
 msgid "   Estimated standard error = %g\n"
 msgstr "   Écart type estimé = %g\n"
 
-#: lib/src/describe.c:5513
+#: lib/src/describe.c:5515
 #, c-format
 msgid "   Test statistic: t(%d) = %g\n"
 msgstr "   Test statistique : t(%d) = %g\n"
 
-#: lib/src/describe.c:5514 lib/src/describe.c:5591
+#: lib/src/describe.c:5516 lib/src/describe.c:5593
 #, c-format
 msgid ""
 "   p-value (two-tailed) = %g\n"
@@ -1955,7 +1955,7 @@ msgstr ""
 "   valeur de P (bilatéral) = %g\n"
 "\n"
 
-#: lib/src/describe.c:5516 lib/src/describe.c:5593
+#: lib/src/describe.c:5518 lib/src/describe.c:5595
 msgid ""
 "   The difference is not statistically significant.\n"
 "\n"
@@ -1963,11 +1963,11 @@ msgstr ""
 "   La différence n'est pas statistiquement significative.\n"
 "\n"
 
-#: lib/src/describe.c:5518
+#: lib/src/describe.c:5520
 msgid "difference of means"
 msgstr "différences de moyennes"
 
-#: lib/src/describe.c:5582
+#: lib/src/describe.c:5584
 msgid ""
 "\n"
 "Equality of variances test\n"
@@ -1977,86 +1977,86 @@ msgstr ""
 "Test d'égalité des variances\n"
 "\n"
 
-#: lib/src/describe.c:5587
+#: lib/src/describe.c:5589
 #, c-format
 msgid "   Ratio of sample variances = %g\n"
 msgstr "   Taux des variances de l'échantillon = %g\n"
 
-#: lib/src/describe.c:5588 lib/src/gretl_model.c:3553
+#: lib/src/describe.c:5590 lib/src/gretl_model.c:3553
 #: lib/src/gretl_model.c:3556 lib/src/gretl_model.c:3563
 #: lib/src/nonparam.c:976 lib/src/nonparam.c:1113 lib/src/varprint.c:1233
 #: lib/src/varprint.c:1239 lib/src/varprint.c:1247
 msgid "Null hypothesis"
 msgstr "Hypothèse nulle "
 
-#: lib/src/describe.c:5589
+#: lib/src/describe.c:5591
 msgid "The two population variances are equal"
 msgstr "Les variances des deux populations sont identiques"
 
-#: lib/src/describe.c:5595
+#: lib/src/describe.c:5597
 msgid "difference of variances"
 msgstr "différences de variances"
 
-#: lib/src/describe.c:5680 gui2/library.c:514 gui2/library.c:678
+#: lib/src/describe.c:5682 gui2/library.c:514 gui2/library.c:678
 #: gui2/library.c:831
 msgid "Mahalanobis distances"
 msgstr "distances de Mahalanobis"
 
-#: lib/src/describe.c:5721
+#: lib/src/describe.c:5723
 msgid "Covariance matrix"
 msgstr "Matrice de covariance"
 
-#: lib/src/describe.c:5727
+#: lib/src/describe.c:5729
 msgid "Inverse of covariance matrix"
 msgstr "Inverse de la matrice de covariance"
 
-#: lib/src/describe.c:5742
+#: lib/src/describe.c:5744
 msgid "Mahalanobis distances from the centroid"
 msgstr "Distances de Mahalanobis du centroide"
 
-#: lib/src/describe.c:5743
+#: lib/src/describe.c:5745
 msgid "using the variables:"
 msgstr "utilisant les variables :"
 
-#: lib/src/describe.c:5788
+#: lib/src/describe.c:5790
 #, c-format
 msgid "Distances saved as '%s'"
 msgstr "Distances sauvegardées en tant que '%s'"
 
-#: lib/src/describe.c:5861
+#: lib/src/describe.c:5863
 msgid "illegal negative value"
 msgstr "valeur négative interdite"
 
-#: lib/src/describe.c:5968
+#: lib/src/describe.c:5970
 msgid "Lorenz curve"
 msgstr "Courbe de Lorenz"
 
-#: lib/src/describe.c:6035 plugin/excel_import.c:1657
+#: lib/src/describe.c:6037 plugin/excel_import.c:1657
 #: plugin/gnumeric_import.c:767
 msgid "Warning: there were missing values\n"
 msgstr "AVERTISSEMENT: il y a des valeurs manquantes\n"
 
-#: lib/src/describe.c:6040
+#: lib/src/describe.c:6042
 msgid "Sample Gini coefficient"
 msgstr "Coefficient de Gini"
 
-#: lib/src/describe.c:6041
+#: lib/src/describe.c:6043
 msgid "Estimate of population value"
 msgstr "Estimation de la valeur de la population"
 
-#: lib/src/describe.c:6524
+#: lib/src/describe.c:6526
 msgid "Shapiro-Wilk W"
 msgstr "Shapiro-Wilk W"
 
-#: lib/src/describe.c:6525
+#: lib/src/describe.c:6527
 msgid "Jarque-Bera test"
 msgstr "test de Bera-Jarque"
 
-#: lib/src/describe.c:6526
+#: lib/src/describe.c:6528
 msgid "Lilliefors test"
 msgstr "test de Lilliefors"
 
-#: lib/src/describe.c:6589
+#: lib/src/describe.c:6591
 #, c-format
 msgid "Test for normality of %s:"
 msgstr "Test de normalité de %s :"
@@ -6416,11 +6416,7 @@ msgstr "Gradiant :"
 msgid "norm"
 msgstr "normal"
 
-#: lib/src/printscan.c:734
-msgid "sscanf: numerical target must be scalar"
-msgstr "sscanf : la cible numérique doit être un scalaire"
-
-#: lib/src/printscan.c:913
+#: lib/src/printscan.c:902
 #, c-format
 msgid "%s: not a string variable"
 msgstr "%s : pas une variable de texte"
@@ -16595,6 +16591,9 @@ msgstr "Statistiques/transformations"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Distributions de _Probabilités"
+
+#~ msgid "sscanf: numerical target must be scalar"
+#~ msgstr "sscanf : la cible numérique doit être un scalaire"
 
 #~ msgid "   label strings can't be consistent dates\n"
 #~ msgstr ""

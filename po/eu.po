@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eu\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-09-15 08:10-0400\n"
+"POT-Creation-Date: 2012-09-20 17:17-0400\n"
 "PO-Revision-Date: 2011-09-11 16:19-0400\n"
 "Last-Translator: Susan Orbe <susan.orbe@ehu.es>, Marian Zubia <marian."
 "zubia@ehu.es>\n"
@@ -240,7 +240,7 @@ msgstr "Atzerapenen moztura-parametroa = %d\n"
 
 #: lib/src/adf_kpss.c:1581 lib/src/compare.c:386 lib/src/compare.c:962
 #: lib/src/compare.c:1841 lib/src/compare.c:2059 lib/src/compare.c:2287
-#: lib/src/compare.c:3340 lib/src/describe.c:5590 lib/src/estimate.c:2740
+#: lib/src/compare.c:3340 lib/src/describe.c:5592 lib/src/estimate.c:2740
 #: lib/src/estimate.c:2753 lib/src/estimate.c:2761 lib/src/estimate.c:3527
 #: lib/src/estimate.c:3530 lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3722
 #: lib/src/gretl_panel.c:3904 lib/src/gretl_restrict.c:2215
@@ -528,7 +528,7 @@ msgstr "Linealtasun-ezaren kontrastea (logaritmoak)"
 #: lib/src/compare.c:2124 lib/src/compare.c:2288 lib/src/compare.c:2293
 #: lib/src/compare.c:2299 lib/src/compare.c:2759 lib/src/compare.c:2761
 #: lib/src/compare.c:2765 lib/src/describe.c:4043 lib/src/describe.c:4069
-#: lib/src/describe.c:6538 lib/src/describe.c:6541 lib/src/estimate.c:2742
+#: lib/src/describe.c:6540 lib/src/describe.c:6543 lib/src/estimate.c:2742
 #: lib/src/estimate.c:2765 lib/src/estimate.c:3533 lib/src/gretl_model.c:3738
 #: lib/src/gretl_model.c:3740 lib/src/gretl_model.c:3742
 #: lib/src/gretl_panel.c:1565 lib/src/gretl_panel.c:3656
@@ -1578,7 +1578,7 @@ msgstr "Erabili koerlazio matrizea"
 msgid "Eigenvalues of C"
 msgstr "Balio propioak"
 
-#: lib/src/describe.c:1547 lib/src/describe.c:6527
+#: lib/src/describe.c:1547 lib/src/describe.c:6529
 msgid "Doornik-Hansen test"
 msgstr "Doornik-Hansen kontrastea"
 
@@ -1717,8 +1717,8 @@ msgstr ""
 "\n"
 "%s -ren periodograma\n"
 
-#: lib/src/describe.c:3967 lib/src/describe.c:5506 lib/src/describe.c:5508
-#: lib/src/describe.c:5584 lib/src/describe.c:5586 lib/src/describe.c:6032
+#: lib/src/describe.c:3967 lib/src/describe.c:5508 lib/src/describe.c:5510
+#: lib/src/describe.c:5586 lib/src/describe.c:5588 lib/src/describe.c:6034
 #, c-format
 msgid "Number of observations = %d\n"
 msgstr "Behaketen kopurua = %d\n"
@@ -1771,32 +1771,32 @@ msgstr "J kontrastea"
 msgid "NA"
 msgstr "NA"
 
-#: lib/src/describe.c:4364 lib/src/describe.c:5375
+#: lib/src/describe.c:4364 lib/src/describe.c:5377
 #, c-format
 msgid "%s, using the observations %s - %s"
 msgstr "%s, %s - %s behaketak erabiliz"
 
-#: lib/src/describe.c:4368 lib/src/describe.c:5380 gui2/guiprint.c:704
+#: lib/src/describe.c:4368 lib/src/describe.c:5382 gui2/guiprint.c:704
 #: gui2/guiprint.c:1014 gui2/guiprint.c:1176 gui2/guiprint.c:1269
 msgid "(missing values were skipped)"
 msgstr "(faltako balioak kenduta)"
 
-#: lib/src/describe.c:4403 lib/src/describe.c:4520 lib/src/describe.c:4544
+#: lib/src/describe.c:4403 lib/src/describe.c:4522 lib/src/describe.c:4546
 #: gui2/guiprint.c:717 gui2/guiprint.c:1027
 msgid "Mean"
 msgstr "Batezbestekoa"
 
-#: lib/src/describe.c:4404 lib/src/describe.c:4545 gui2/guiprint.c:717
+#: lib/src/describe.c:4404 lib/src/describe.c:4547 gui2/guiprint.c:717
 #: gui2/guiprint.c:1027
 msgid "Median"
 msgstr "Mediana"
 
-#: lib/src/describe.c:4405 lib/src/describe.c:4521 lib/src/describe.c:4546
+#: lib/src/describe.c:4405 lib/src/describe.c:4523 lib/src/describe.c:4548
 #: gui2/guiprint.c:717 gui2/guiprint.c:1027
 msgid "Minimum"
 msgstr "Minimoa"
 
-#: lib/src/describe.c:4406 lib/src/describe.c:4522 lib/src/describe.c:4547
+#: lib/src/describe.c:4406 lib/src/describe.c:4524 lib/src/describe.c:4549
 #: gui2/guiprint.c:717 gui2/guiprint.c:1027
 msgid "Maximum"
 msgstr "Maximoa"
@@ -1805,88 +1805,88 @@ msgstr "Maximoa"
 msgid "Standard deviation"
 msgstr "Desbideratze tipikoa"
 
-#: lib/src/describe.c:4408 lib/src/describe.c:4551 gui2/guiprint.c:739
+#: lib/src/describe.c:4408 lib/src/describe.c:4553 gui2/guiprint.c:739
 #: gui2/guiprint.c:1054
 msgid "C.V."
 msgstr "Aldakuntza-koefizientea (A.K.)"
 
-#: lib/src/describe.c:4409 lib/src/describe.c:4552 gui2/guiprint.c:739
+#: lib/src/describe.c:4409 lib/src/describe.c:4554 gui2/guiprint.c:739
 #: gui2/guiprint.c:1054
 msgid "Skewness"
 msgstr "Asimetria"
 
-#: lib/src/describe.c:4410 lib/src/describe.c:4553 gui2/guiprint.c:739
+#: lib/src/describe.c:4410 lib/src/describe.c:4555 gui2/guiprint.c:739
 msgid "Ex. kurtosis"
 msgstr "Kurtosis soberakina"
 
-#: lib/src/describe.c:4411
-#, fuzzy, c-format
+#: lib/src/describe.c:4412
+#, fuzzy, no-c-format
 msgid "5% percentile"
 msgstr "_Alderantzikatu"
 
-#: lib/src/describe.c:4412
-#, fuzzy, c-format
+#: lib/src/describe.c:4414
+#, fuzzy, no-c-format
 msgid "95% percentile"
 msgstr "ehuneko %g -ko tartea"
 
-#: lib/src/describe.c:4413
+#: lib/src/describe.c:4415
 #, fuzzy
 msgid "Interquartile range"
 msgstr "ardatzaren ibiltartea eskuz:"
 
-#: lib/src/describe.c:4414 lib/src/describe.c:4559 gui2/guiprint.c:761
+#: lib/src/describe.c:4416 lib/src/describe.c:4561 gui2/guiprint.c:761
 #: gui2/guiprint.c:1081
 #, fuzzy
 msgid "Missing obs."
 msgstr "Faltako behaketak"
 
-#: lib/src/describe.c:4417
+#: lib/src/describe.c:4419
 msgid "Within s.d."
 msgstr "D.T  barnean"
 
-#: lib/src/describe.c:4418
+#: lib/src/describe.c:4420
 msgid "Between s.d."
 msgstr "D.T artean"
 
-#: lib/src/describe.c:4425 lib/src/describe.c:4511 gui2/menustate.c:340
+#: lib/src/describe.c:4427 lib/src/describe.c:4513 gui2/menustate.c:340
 #: gui2/menustate.c:431 gui2/menustate.c:492 gui2/menustate.c:555
 msgid "Summary statistics"
 msgstr "Estatistikoen laburpena"
 
-#: lib/src/describe.c:4426
+#: lib/src/describe.c:4428
 #, c-format
 msgid "for the variable '%s' (%d valid observations)"
 msgstr "'%s' aldagaiarentzat (%d behaketa baliagarriak)"
 
-#: lib/src/describe.c:4523 lib/src/describe.c:4550 gui2/guiprint.c:739
+#: lib/src/describe.c:4525 lib/src/describe.c:4552 gui2/guiprint.c:739
 msgid "Std. Dev."
 msgstr "Desb. Tip."
 
-#: lib/src/describe.c:4556
+#: lib/src/describe.c:4558
 #, c-format
 msgid "5% perc."
 msgstr ""
 
-#: lib/src/describe.c:4557
+#: lib/src/describe.c:4559
 #, c-format
 msgid "95% perc."
 msgstr ""
 
-#: lib/src/describe.c:4558 gui2/guiprint.c:761
+#: lib/src/describe.c:4560 gui2/guiprint.c:761
 #, fuzzy
 msgid "IQ range"
 msgstr "x ibiltartea"
 
-#: lib/src/describe.c:4755 lib/src/describe.c:4858
+#: lib/src/describe.c:4757 lib/src/describe.c:4860
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
 msgstr "%s kentzen: laginak ez du behaketa baliogarririk\n"
 
-#: lib/src/describe.c:5278
+#: lib/src/describe.c:5280
 msgid "corr: needs at least two non-constant arguments"
 msgstr ""
 
-#: lib/src/describe.c:5335 lib/src/modelprint.c:3330 lib/src/modelprint.c:3342
+#: lib/src/describe.c:5337 lib/src/modelprint.c:3330 lib/src/modelprint.c:3342
 #: lib/src/modelprint.c:3343 lib/src/modelprint.c:3344
 #: lib/src/modelprint.c:3353 lib/src/modelprint.c:3363
 #: lib/src/modelprint.c:3395 lib/src/modelprint.c:3408
@@ -1902,7 +1902,7 @@ msgstr ""
 msgid "undefined"
 msgstr "definitu gabe"
 
-#: lib/src/describe.c:5342 lib/src/nonparam.c:334 lib/src/nonparam.c:340
+#: lib/src/describe.c:5344 lib/src/nonparam.c:334 lib/src/nonparam.c:340
 #: lib/src/nonparam.c:574
 #, fuzzy
 msgid ""
@@ -1910,29 +1910,29 @@ msgid ""
 " "
 msgstr "Autokoerlazio ezaren hipotesi hutsaren menpean:\n"
 
-#: lib/src/describe.c:5343 lib/src/nonparam.c:341
+#: lib/src/describe.c:5345 lib/src/nonparam.c:341
 #, c-format
 msgid "t(%d) = %g, with two-tailed p-value %.4f\n"
 msgstr "t(%d) = %g, alde biko p-balioarekin %.4f\n"
 
-#: lib/src/describe.c:5347 lib/src/describe.c:5385 gui2/guiprint.c:1178
+#: lib/src/describe.c:5349 lib/src/describe.c:5387 gui2/guiprint.c:1178
 #, c-format
 msgid "5%% critical value (two-tailed) = %.4f for n = %d"
 msgstr "%%5eko esanguratasuna (alde bikoa) = %.4f  n = %d -rentzat"
 
-#: lib/src/describe.c:5376
+#: lib/src/describe.c:5378
 msgid "Correlation Coefficients"
 msgstr "Koerlazio Koefizienteak"
 
-#: lib/src/describe.c:5470 lib/src/describe.c:5554
+#: lib/src/describe.c:5472 lib/src/describe.c:5556
 msgid "Sample range has no valid observations."
 msgstr "Laginak ez du behaketa baliagarririk"
 
-#: lib/src/describe.c:5476 lib/src/describe.c:5560
+#: lib/src/describe.c:5478 lib/src/describe.c:5562
 msgid "Sample range has only one observation."
 msgstr "Laginak behaketa bakarra du"
 
-#: lib/src/describe.c:5503
+#: lib/src/describe.c:5505
 #, c-format
 msgid ""
 "\n"
@@ -1943,34 +1943,34 @@ msgstr ""
 "Batezbestekoen berdintasunaren kontrastea (%s bariantzak suposatuz)\n"
 "\n"
 
-#: lib/src/describe.c:5504
+#: lib/src/describe.c:5506
 msgid "unequal"
 msgstr "desberdin"
 
-#: lib/src/describe.c:5504
+#: lib/src/describe.c:5506
 msgid "equal"
 msgstr "berdin"
 
-#: lib/src/describe.c:5509
+#: lib/src/describe.c:5511
 #, c-format
 msgid "   Difference between sample means = %g - %g = %g\n"
 msgstr "  Lagin batezbestekoen arteko diferentzia = %g - %g = %g\n"
 
-#: lib/src/describe.c:5511
+#: lib/src/describe.c:5513
 msgid "   Null hypothesis: The two population means are the same.\n"
 msgstr "  Hipotesi hutsa: populazio batezbesteko biak berdinak dira.\n"
 
-#: lib/src/describe.c:5512
+#: lib/src/describe.c:5514
 #, c-format
 msgid "   Estimated standard error = %g\n"
 msgstr "  Estimatutako desbideratze tipikoa = %g\n"
 
-#: lib/src/describe.c:5513
+#: lib/src/describe.c:5515
 #, c-format
 msgid "   Test statistic: t(%d) = %g\n"
 msgstr "  Estatistikoa: t(%d) = %g\n"
 
-#: lib/src/describe.c:5514 lib/src/describe.c:5591
+#: lib/src/describe.c:5516 lib/src/describe.c:5593
 #, c-format
 msgid ""
 "   p-value (two-tailed) = %g\n"
@@ -1979,7 +1979,7 @@ msgstr ""
 "   p-balioa (alde bikoa) = %g\n"
 "\n"
 
-#: lib/src/describe.c:5516 lib/src/describe.c:5593
+#: lib/src/describe.c:5518 lib/src/describe.c:5595
 msgid ""
 "   The difference is not statistically significant.\n"
 "\n"
@@ -1987,11 +1987,11 @@ msgstr ""
 "   Diferentzia ez da estatistikoki esanguratsua.\n"
 "\n"
 
-#: lib/src/describe.c:5518
+#: lib/src/describe.c:5520
 msgid "difference of means"
 msgstr "batezbestekoen diferentzia"
 
-#: lib/src/describe.c:5582
+#: lib/src/describe.c:5584
 msgid ""
 "\n"
 "Equality of variances test\n"
@@ -2001,86 +2001,86 @@ msgstr ""
 "Bariantzen berdintasunaren kontrastea\n"
 "\n"
 
-#: lib/src/describe.c:5587
+#: lib/src/describe.c:5589
 #, c-format
 msgid "   Ratio of sample variances = %g\n"
 msgstr "  Lagin bariantzen arrazoia  = %g\n"
 
-#: lib/src/describe.c:5588 lib/src/gretl_model.c:3553
+#: lib/src/describe.c:5590 lib/src/gretl_model.c:3553
 #: lib/src/gretl_model.c:3556 lib/src/gretl_model.c:3563
 #: lib/src/nonparam.c:976 lib/src/nonparam.c:1113 lib/src/varprint.c:1233
 #: lib/src/varprint.c:1239 lib/src/varprint.c:1247
 msgid "Null hypothesis"
 msgstr "Hipotesi hutsa"
 
-#: lib/src/describe.c:5589
+#: lib/src/describe.c:5591
 msgid "The two population variances are equal"
 msgstr "Populazio bariantza biak berdinak dira"
 
-#: lib/src/describe.c:5595
+#: lib/src/describe.c:5597
 msgid "difference of variances"
 msgstr "bariantzen diferentzia"
 
-#: lib/src/describe.c:5680 gui2/library.c:514 gui2/library.c:678
+#: lib/src/describe.c:5682 gui2/library.c:514 gui2/library.c:678
 #: gui2/library.c:831
 msgid "Mahalanobis distances"
 msgstr "Mahalanobis distantzia"
 
-#: lib/src/describe.c:5721
+#: lib/src/describe.c:5723
 msgid "Covariance matrix"
 msgstr "Kobariantza matrizea"
 
-#: lib/src/describe.c:5727
+#: lib/src/describe.c:5729
 msgid "Inverse of covariance matrix"
 msgstr "Kobariantza matrizearen alderantzizkoa"
 
-#: lib/src/describe.c:5742
+#: lib/src/describe.c:5744
 msgid "Mahalanobis distances from the centroid"
 msgstr "Mahalanobis distantzia masa-zentrotik"
 
-#: lib/src/describe.c:5743
+#: lib/src/describe.c:5745
 msgid "using the variables:"
 msgstr "aldagai hauek erabiliz:"
 
-#: lib/src/describe.c:5788
+#: lib/src/describe.c:5790
 #, c-format
 msgid "Distances saved as '%s'"
 msgstr "Distantzia '%s' bezala gordeta"
 
-#: lib/src/describe.c:5861
+#: lib/src/describe.c:5863
 msgid "illegal negative value"
 msgstr "balio negatiboak ez dira baliagarriak"
 
-#: lib/src/describe.c:5968
+#: lib/src/describe.c:5970
 msgid "Lorenz curve"
 msgstr "Lorenz kurba"
 
-#: lib/src/describe.c:6035 plugin/excel_import.c:1657
+#: lib/src/describe.c:6037 plugin/excel_import.c:1657
 #: plugin/gnumeric_import.c:767
 msgid "Warning: there were missing values\n"
 msgstr "Kontuz: faltako balioak daude\n"
 
-#: lib/src/describe.c:6040
+#: lib/src/describe.c:6042
 msgid "Sample Gini coefficient"
 msgstr "Lagineko Gini koefizientea"
 
-#: lib/src/describe.c:6041
+#: lib/src/describe.c:6043
 msgid "Estimate of population value"
 msgstr "Populazio balioaren estimazioa"
 
-#: lib/src/describe.c:6524
+#: lib/src/describe.c:6526
 msgid "Shapiro-Wilk W"
 msgstr "Shapiro-Wilk W"
 
-#: lib/src/describe.c:6525
+#: lib/src/describe.c:6527
 msgid "Jarque-Bera test"
 msgstr "Jarque-Bera kontrastea"
 
-#: lib/src/describe.c:6526
+#: lib/src/describe.c:6528
 msgid "Lilliefors test"
 msgstr "Lilliefors kontrastea"
 
-#: lib/src/describe.c:6589
+#: lib/src/describe.c:6591
 #, c-format
 msgid "Test for normality of %s:"
 msgstr "%s -ren normaltasun kontrastea:"
@@ -6487,11 +6487,7 @@ msgstr "Gradienteak:"
 msgid "norm"
 msgstr "normala"
 
-#: lib/src/printscan.c:734
-msgid "sscanf: numerical target must be scalar"
-msgstr "sscanf: zenbakizko helburuak eskalarra izan behar du"
-
-#: lib/src/printscan.c:913
+#: lib/src/printscan.c:902
 #, c-format
 msgid "%s: not a string variable"
 msgstr "%s: ez da kate-aldagaia"
@@ -16922,6 +16918,9 @@ msgstr "Estatistikoak/eraldakuntzak"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Probabilitate banaketak"
+
+#~ msgid "sscanf: numerical target must be scalar"
+#~ msgstr "sscanf: zenbakizko helburuak eskalarra izan behar du"
 
 #~ msgid "   label strings can't be consistent dates\n"
 #~ msgstr "   etiketen-kateak ezin dira data tinkoak\n"

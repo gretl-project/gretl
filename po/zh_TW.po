@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-09-15 08:10-0400\n"
+"POT-Creation-Date: 2012-09-20 17:17-0400\n"
 "PO-Revision-Date: 2011-10-01 15:10-0400\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
@@ -238,7 +238,7 @@ msgstr "落後期 (lag truncation parameter) = %d\n"
 
 #: lib/src/adf_kpss.c:1581 lib/src/compare.c:386 lib/src/compare.c:962
 #: lib/src/compare.c:1841 lib/src/compare.c:2059 lib/src/compare.c:2287
-#: lib/src/compare.c:3340 lib/src/describe.c:5590 lib/src/estimate.c:2740
+#: lib/src/compare.c:3340 lib/src/describe.c:5592 lib/src/estimate.c:2740
 #: lib/src/estimate.c:2753 lib/src/estimate.c:2761 lib/src/estimate.c:3527
 #: lib/src/estimate.c:3530 lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3722
 #: lib/src/gretl_panel.c:3904 lib/src/gretl_restrict.c:2215
@@ -530,7 +530,7 @@ msgstr ""
 #: lib/src/compare.c:2124 lib/src/compare.c:2288 lib/src/compare.c:2293
 #: lib/src/compare.c:2299 lib/src/compare.c:2759 lib/src/compare.c:2761
 #: lib/src/compare.c:2765 lib/src/describe.c:4043 lib/src/describe.c:4069
-#: lib/src/describe.c:6538 lib/src/describe.c:6541 lib/src/estimate.c:2742
+#: lib/src/describe.c:6540 lib/src/describe.c:6543 lib/src/estimate.c:2742
 #: lib/src/estimate.c:2765 lib/src/estimate.c:3533 lib/src/gretl_model.c:3738
 #: lib/src/gretl_model.c:3740 lib/src/gretl_model.c:3742
 #: lib/src/gretl_panel.c:1565 lib/src/gretl_panel.c:3656
@@ -1557,7 +1557,7 @@ msgstr "共變數矩陣的反矩陣"
 msgid "Eigenvalues of C"
 msgstr ""
 
-#: lib/src/describe.c:1547 lib/src/describe.c:6527
+#: lib/src/describe.c:1547 lib/src/describe.c:6529
 msgid "Doornik-Hansen test"
 msgstr "Doornik-Hansen 檢定"
 
@@ -1704,8 +1704,8 @@ msgid ""
 "Periodogram for %s\n"
 msgstr "檢查有無更新版(_u)"
 
-#: lib/src/describe.c:3967 lib/src/describe.c:5506 lib/src/describe.c:5508
-#: lib/src/describe.c:5584 lib/src/describe.c:5586 lib/src/describe.c:6032
+#: lib/src/describe.c:3967 lib/src/describe.c:5508 lib/src/describe.c:5510
+#: lib/src/describe.c:5586 lib/src/describe.c:5588 lib/src/describe.c:6034
 #, c-format
 msgid "Number of observations = %d\n"
 msgstr "樣本數 = %d\n"
@@ -1753,32 +1753,32 @@ msgstr "GPH 檢定"
 msgid "NA"
 msgstr ""
 
-#: lib/src/describe.c:4364 lib/src/describe.c:5375
+#: lib/src/describe.c:4364 lib/src/describe.c:5377
 #, c-format
 msgid "%s, using the observations %s - %s"
 msgstr "%s, 使用中之子樣本範圍 %s - %s"
 
-#: lib/src/describe.c:4368 lib/src/describe.c:5380 gui2/guiprint.c:704
+#: lib/src/describe.c:4368 lib/src/describe.c:5382 gui2/guiprint.c:704
 #: gui2/guiprint.c:1014 gui2/guiprint.c:1176 gui2/guiprint.c:1269
 msgid "(missing values were skipped)"
 msgstr "(排除遺漏值之變數 (missing values))"
 
-#: lib/src/describe.c:4403 lib/src/describe.c:4520 lib/src/describe.c:4544
+#: lib/src/describe.c:4403 lib/src/describe.c:4522 lib/src/describe.c:4546
 #: gui2/guiprint.c:717 gui2/guiprint.c:1027
 msgid "Mean"
 msgstr "Mean"
 
-#: lib/src/describe.c:4404 lib/src/describe.c:4545 gui2/guiprint.c:717
+#: lib/src/describe.c:4404 lib/src/describe.c:4547 gui2/guiprint.c:717
 #: gui2/guiprint.c:1027
 msgid "Median"
 msgstr "Median"
 
-#: lib/src/describe.c:4405 lib/src/describe.c:4521 lib/src/describe.c:4546
+#: lib/src/describe.c:4405 lib/src/describe.c:4523 lib/src/describe.c:4548
 #: gui2/guiprint.c:717 gui2/guiprint.c:1027
 msgid "Minimum"
 msgstr "Minimum"
 
-#: lib/src/describe.c:4406 lib/src/describe.c:4522 lib/src/describe.c:4547
+#: lib/src/describe.c:4406 lib/src/describe.c:4524 lib/src/describe.c:4549
 #: gui2/guiprint.c:717 gui2/guiprint.c:1027
 msgid "Maximum"
 msgstr "Maximum"
@@ -1787,88 +1787,88 @@ msgstr "Maximum"
 msgid "Standard deviation"
 msgstr "Standard deviation"
 
-#: lib/src/describe.c:4408 lib/src/describe.c:4551 gui2/guiprint.c:739
+#: lib/src/describe.c:4408 lib/src/describe.c:4553 gui2/guiprint.c:739
 #: gui2/guiprint.c:1054
 msgid "C.V."
 msgstr "C.V."
 
-#: lib/src/describe.c:4409 lib/src/describe.c:4552 gui2/guiprint.c:739
+#: lib/src/describe.c:4409 lib/src/describe.c:4554 gui2/guiprint.c:739
 #: gui2/guiprint.c:1054
 msgid "Skewness"
 msgstr "Skewness"
 
-#: lib/src/describe.c:4410 lib/src/describe.c:4553 gui2/guiprint.c:739
+#: lib/src/describe.c:4410 lib/src/describe.c:4555 gui2/guiprint.c:739
 msgid "Ex. kurtosis"
 msgstr "Ex. kurtosis"
 
-#: lib/src/describe.c:4411
-#, fuzzy, c-format
+#: lib/src/describe.c:4412
+#, fuzzy, no-c-format
 msgid "5% percentile"
 msgstr "反矩陣(_Invert)"
 
-#: lib/src/describe.c:4412
-#, fuzzy, c-format
+#: lib/src/describe.c:4414
+#, fuzzy, no-c-format
 msgid "95% percentile"
 msgstr "%g percent interval"
 
-#: lib/src/describe.c:4413
+#: lib/src/describe.c:4415
 #, fuzzy
 msgid "Interquartile range"
 msgstr "手動刻度設定"
 
-#: lib/src/describe.c:4414 lib/src/describe.c:4559 gui2/guiprint.c:761
+#: lib/src/describe.c:4416 lib/src/describe.c:4561 gui2/guiprint.c:761
 #: gui2/guiprint.c:1081
 #, fuzzy
 msgid "Missing obs."
 msgstr "增加樣本(_A)"
 
-#: lib/src/describe.c:4417
+#: lib/src/describe.c:4419
 msgid "Within s.d."
 msgstr ""
 
-#: lib/src/describe.c:4418
+#: lib/src/describe.c:4420
 msgid "Between s.d."
 msgstr ""
 
-#: lib/src/describe.c:4425 lib/src/describe.c:4511 gui2/menustate.c:340
+#: lib/src/describe.c:4427 lib/src/describe.c:4513 gui2/menustate.c:340
 #: gui2/menustate.c:431 gui2/menustate.c:492 gui2/menustate.c:555
 msgid "Summary statistics"
 msgstr "Summary statistics"
 
-#: lib/src/describe.c:4426
+#: lib/src/describe.c:4428
 #, fuzzy, c-format
 msgid "for the variable '%s' (%d valid observations)"
 msgstr "輸入新變數的數學式"
 
-#: lib/src/describe.c:4523 lib/src/describe.c:4550 gui2/guiprint.c:739
+#: lib/src/describe.c:4525 lib/src/describe.c:4552 gui2/guiprint.c:739
 msgid "Std. Dev."
 msgstr "Std. Dev."
 
-#: lib/src/describe.c:4556
+#: lib/src/describe.c:4558
 #, c-format
 msgid "5% perc."
 msgstr ""
 
-#: lib/src/describe.c:4557
+#: lib/src/describe.c:4559
 #, c-format
 msgid "95% perc."
 msgstr ""
 
-#: lib/src/describe.c:4558 gui2/guiprint.c:761
+#: lib/src/describe.c:4560 gui2/guiprint.c:761
 #, fuzzy
 msgid "IQ range"
 msgstr "x 軸上限"
 
-#: lib/src/describe.c:4755 lib/src/describe.c:4858
+#: lib/src/describe.c:4757 lib/src/describe.c:4860
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
 msgstr ""
 
-#: lib/src/describe.c:5278
+#: lib/src/describe.c:5280
 msgid "corr: needs at least two non-constant arguments"
 msgstr ""
 
-#: lib/src/describe.c:5335 lib/src/modelprint.c:3330 lib/src/modelprint.c:3342
+#: lib/src/describe.c:5337 lib/src/modelprint.c:3330 lib/src/modelprint.c:3342
 #: lib/src/modelprint.c:3343 lib/src/modelprint.c:3344
 #: lib/src/modelprint.c:3353 lib/src/modelprint.c:3363
 #: lib/src/modelprint.c:3395 lib/src/modelprint.c:3408
@@ -1884,7 +1884,7 @@ msgstr ""
 msgid "undefined"
 msgstr "undefined"
 
-#: lib/src/describe.c:5342 lib/src/nonparam.c:334 lib/src/nonparam.c:340
+#: lib/src/describe.c:5344 lib/src/nonparam.c:334 lib/src/nonparam.c:340
 #: lib/src/nonparam.c:574
 msgid ""
 "Under the null hypothesis of no correlation:\n"
@@ -1893,29 +1893,29 @@ msgstr ""
 "在無相關 (no correlation) 的虛無假設下 :\n"
 " "
 
-#: lib/src/describe.c:5343 lib/src/nonparam.c:341
+#: lib/src/describe.c:5345 lib/src/nonparam.c:341
 #, c-format
 msgid "t(%d) = %g, with two-tailed p-value %.4f\n"
 msgstr ""
 
-#: lib/src/describe.c:5347 lib/src/describe.c:5385 gui2/guiprint.c:1178
+#: lib/src/describe.c:5349 lib/src/describe.c:5387 gui2/guiprint.c:1178
 #, c-format
 msgid "5%% critical value (two-tailed) = %.4f for n = %d"
 msgstr ""
 
-#: lib/src/describe.c:5376
+#: lib/src/describe.c:5378
 msgid "Correlation Coefficients"
 msgstr "Correlation Coefficients"
 
-#: lib/src/describe.c:5470 lib/src/describe.c:5554
+#: lib/src/describe.c:5472 lib/src/describe.c:5556
 msgid "Sample range has no valid observations."
 msgstr ""
 
-#: lib/src/describe.c:5476 lib/src/describe.c:5560
+#: lib/src/describe.c:5478 lib/src/describe.c:5562
 msgid "Sample range has only one observation."
 msgstr ""
 
-#: lib/src/describe.c:5503
+#: lib/src/describe.c:5505
 #, c-format
 msgid ""
 "\n"
@@ -1923,34 +1923,34 @@ msgid ""
 "\n"
 msgstr ""
 
-#: lib/src/describe.c:5504
+#: lib/src/describe.c:5506
 msgid "unequal"
 msgstr ""
 
-#: lib/src/describe.c:5504
+#: lib/src/describe.c:5506
 msgid "equal"
 msgstr ""
 
-#: lib/src/describe.c:5509
+#: lib/src/describe.c:5511
 #, fuzzy, c-format
 msgid "   Difference between sample means = %g - %g = %g\n"
 msgstr "虛無假設: 平均數之差 = %g\n"
 
-#: lib/src/describe.c:5511
+#: lib/src/describe.c:5513
 msgid "   Null hypothesis: The two population means are the same.\n"
 msgstr "   虛無假設 H0: 兩母體平均數相等\n"
 
-#: lib/src/describe.c:5512
+#: lib/src/describe.c:5514
 #, c-format
 msgid "   Estimated standard error = %g\n"
 msgstr "   Estimated standard error = %g\n"
 
-#: lib/src/describe.c:5513
+#: lib/src/describe.c:5515
 #, c-format
 msgid "   Test statistic: t(%d) = %g\n"
 msgstr "   Test statistic: t(%d) = %g\n"
 
-#: lib/src/describe.c:5514 lib/src/describe.c:5591
+#: lib/src/describe.c:5516 lib/src/describe.c:5593
 #, c-format
 msgid ""
 "   p-value (two-tailed) = %g\n"
@@ -1959,17 +1959,17 @@ msgstr ""
 "   p值 (雙尾 two-tailed) = %g\n"
 "\n"
 
-#: lib/src/describe.c:5516 lib/src/describe.c:5593
+#: lib/src/describe.c:5518 lib/src/describe.c:5595
 msgid ""
 "   The difference is not statistically significant.\n"
 "\n"
 msgstr ""
 
-#: lib/src/describe.c:5518
+#: lib/src/describe.c:5520
 msgid "difference of means"
 msgstr "difference of means"
 
-#: lib/src/describe.c:5582
+#: lib/src/describe.c:5584
 msgid ""
 "\n"
 "Equality of variances test\n"
@@ -1979,94 +1979,94 @@ msgstr ""
 "Equality of variances test\n"
 "\n"
 
-#: lib/src/describe.c:5587
+#: lib/src/describe.c:5589
 #, c-format
 msgid "   Ratio of sample variances = %g\n"
 msgstr "   Ratio of sample variances = %g\n"
 
-#: lib/src/describe.c:5588 lib/src/gretl_model.c:3553
+#: lib/src/describe.c:5590 lib/src/gretl_model.c:3553
 #: lib/src/gretl_model.c:3556 lib/src/gretl_model.c:3563
 #: lib/src/nonparam.c:976 lib/src/nonparam.c:1113 lib/src/varprint.c:1233
 #: lib/src/varprint.c:1239 lib/src/varprint.c:1247
 msgid "Null hypothesis"
 msgstr "Null hypothesis"
 
-#: lib/src/describe.c:5589
+#: lib/src/describe.c:5591
 msgid "The two population variances are equal"
 msgstr "The two population variances are equal"
 
-#: lib/src/describe.c:5595
+#: lib/src/describe.c:5597
 #, fuzzy
 msgid "difference of variances"
 msgstr "Difference test 差異檢定"
 
-#: lib/src/describe.c:5680 gui2/library.c:514 gui2/library.c:678
+#: lib/src/describe.c:5682 gui2/library.c:514 gui2/library.c:678
 #: gui2/library.c:831
 msgid "Mahalanobis distances"
 msgstr "Mahalanobis 距離"
 
-#: lib/src/describe.c:5721
+#: lib/src/describe.c:5723
 #, fuzzy
 msgid "Covariance matrix"
 msgstr "共變數矩陣"
 
-#: lib/src/describe.c:5727
+#: lib/src/describe.c:5729
 #, fuzzy
 msgid "Inverse of covariance matrix"
 msgstr "共變數矩陣的反矩陣"
 
-#: lib/src/describe.c:5742
+#: lib/src/describe.c:5744
 msgid "Mahalanobis distances from the centroid"
 msgstr ""
 
-#: lib/src/describe.c:5743
+#: lib/src/describe.c:5745
 #, fuzzy
 msgid "using the variables:"
 msgstr "使用這個變數:"
 
-#: lib/src/describe.c:5788
+#: lib/src/describe.c:5790
 #, c-format
 msgid "Distances saved as '%s'"
 msgstr "Distances 另存為變數: '%s'"
 
-#: lib/src/describe.c:5861
+#: lib/src/describe.c:5863
 #, fuzzy
 msgid "illegal negative value"
 msgstr "gretl: 查 P 值"
 
-#: lib/src/describe.c:5968
+#: lib/src/describe.c:5970
 #, fuzzy
 msgid "Lorenz curve"
 msgstr "勞倫茲曲線"
 
-#: lib/src/describe.c:6035 plugin/excel_import.c:1657
+#: lib/src/describe.c:6037 plugin/excel_import.c:1657
 #: plugin/gnumeric_import.c:767
 msgid "Warning: there were missing values\n"
 msgstr "警告: 變數有遺漏值的問題\n"
 
-#: lib/src/describe.c:6040
+#: lib/src/describe.c:6042
 #, fuzzy
 msgid "Sample Gini coefficient"
 msgstr "gretl: 設定樣本"
 
-#: lib/src/describe.c:6041
+#: lib/src/describe.c:6043
 #, fuzzy
 msgid "Estimate of population value"
 msgstr "gretl: 查 P 值"
 
-#: lib/src/describe.c:6524
+#: lib/src/describe.c:6526
 msgid "Shapiro-Wilk W"
 msgstr ""
 
-#: lib/src/describe.c:6525
+#: lib/src/describe.c:6527
 msgid "Jarque-Bera test"
 msgstr "Jarque-Bera (JB) 檢定"
 
-#: lib/src/describe.c:6526
+#: lib/src/describe.c:6528
 msgid "Lilliefors test"
 msgstr "Lilliefors 檢定"
 
-#: lib/src/describe.c:6589
+#: lib/src/describe.c:6591
 #, c-format
 msgid "Test for normality of %s:"
 msgstr " %s 變數之常態性 (normality) 檢定"
@@ -6466,11 +6466,7 @@ msgstr "Gradients:  "
 msgid "norm"
 msgstr "標準常態"
 
-#: lib/src/printscan.c:734
-msgid "sscanf: numerical target must be scalar"
-msgstr ""
-
-#: lib/src/printscan.c:913
+#: lib/src/printscan.c:902
 #, c-format
 msgid "%s: not a string variable"
 msgstr "%s: 並非字串變數 (string variable)"
