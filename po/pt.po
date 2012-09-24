@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-09-20 17:17-0400\n"
-"PO-Revision-Date: 2012-09-16 16:44+0100\n"
+"PO-Revision-Date: 2012-09-24 22:57+0100\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
@@ -1830,12 +1830,10 @@ msgid "Std. Dev."
 msgstr "Desvio Padrão"
 
 #: lib/src/describe.c:4558
-#, fuzzy, c-format
 msgid "5% perc."
 msgstr "perc. 5%"
 
 #: lib/src/describe.c:4559
-#, fuzzy, c-format
 msgid "95% perc."
 msgstr "perc. 95%"
 
@@ -7308,7 +7306,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 16 de setembro de 2012."
+"Tradução de 24 de setembro de 2012."
 
 #: gui2/about.c:164
 msgid "License"
@@ -11560,12 +11558,10 @@ msgid "Ex.\\ kurtosis"
 msgstr "Ex.\\ kurtosis"
 
 #: gui2/guiprint.c:1081
-#, fuzzy, c-format
 msgid "5\\% perc."
 msgstr "perc. 5\\%"
 
 #: gui2/guiprint.c:1081
-#, fuzzy, c-format
 msgid "95\\% perc."
 msgstr "perc. 95\\%"
 
