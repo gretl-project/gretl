@@ -18,23 +18,65 @@
 
 \begin{center}
 {\color{gold} \titlefont gretl} \\[1ex]
-version 1.9.7 for Mac OS X \\[2ex]
+version 1.9.9 for Mac OS X \\[2ex]
 
 \textit{GNU Regression, Econometrics and Time-series Library\\
   This is free software under the GNU General Public License.}
 
 \end{center}
 
-\section{Installation}
+This package was tested on Mac OS X 10.6.8 (Snow Leopard) and
+is also known to work on OS X 10.7 (Lion) and 10.8 (Mountain Lion).
+Hopefully it will work on later releases of OS X but it will probably
+not work on releases earlier than 10.4.
+
+\section{Prerequisites}
+\label{sec:os}
+
+To run \textsf{gretl} you will need Apple's version of the \textbf{X11
+  window system}. This was automatically installed with OS X 10.6 and
+10.7, but if you're using Mountain Lion you need to download XQuartz
+from \texttt{macosforge}
+
+\url{http://xquartz.macosforge.org/landing/}
+
+and install it yourself. (In OS X versions prior to 10.6, Apple's X11 was 
+available as an optional install from the distribution DVD.)
+
+\textsf{Gretl} also requires the \textbf{GTK+ Framework}, which can be
+found at the following location:
+
+\url{http://sourceforge.net/projects/gretl/files/osx/GTK+.framework.dmg/download}
+
+To install GTK+, open the disk image and drag the
+\texttt{GTK+.framework} folder onto the \texttt{Frameworks}
+folder. You may get an error message if another version of the GTK
+framework is already installed. In that case you can do, at the
+command prompt in a terminal window:
+
+\verb|sudo rm -rf /Library/Frameworks/GTK+.framework|
+
+or, if you want to preserve the existing version in case you need to
+restore it later,
+\begin{verbatim}
+sudo mv /Library/Frameworks/GTK+.framework \
+  /Library/Frameworks/GTK+.framework.old
+\end{verbatim}
+
+Then try the drag again. Once you're done you can eject the
+disk image and delete the \texttt{.dmg} file.
+
+\section{Installating the program}
 \label{sec:install}
 
 \textsf{Gretl} is distributed as a gzipped disk-image
 (\texttt{.dmg.gz}).  Double-click to unzip it first.  Once you have a
 \texttt{.dmg} file, double-click to mount the image, and open the
-image in the Finder.  Then drag \textsf{Gretl} to somewhere suitable
-on your system (preferably your \textsf{Applications} folder).  Once
-that is done, you can eject the disk image and delete the
-\texttt{.dmg} and \texttt{.dmg.gz} files.
+image in the Finder. (This may all happen automatically when you
+double-click the \texttt{.dmg.gz} file.) Then drag \textsf{Gretl} to
+somewhere suitable on your system (preferably your
+\textsf{Applications} folder).  Once that is done, you can eject the
+disk image and delete the \texttt{.dmg} and \texttt{.dmg.gz} files.
 
 If you already have an older version of \textsf{Gretl} installed, the
 update via dragging may fail. In that case you should open the
@@ -43,22 +85,6 @@ item, then try the drag again.
 
 To run gretl, double-click on the gretl program icon.  You can drag
 this icon onto the dock if you want a quick launcher.
-
-\section{System requirements}
-\label{sec:os}
-
-This package was tested on Mac OS X 10.6.8 (``Snow Leopard'') and
-is also known to work on OS X 10.7 (``Lion'').
-Hopefully it will work on later releases of OS X but it will probably
-not work on releases earlier than 10.4.
-
-The package requires Apple's version of the X11 window system, which
-is automatically included in a current OS X installation; in older
-versions of OS X it is available as an optional install from the distribution DVD.
-It also requires the GTK+ Framework, which can be found at the
-following location:
-
-\url{http://sourceforge.net/projects/gretl/files/osx/GTK+.framework.dmg/download}
 
 \section{Trouble-shooting}
 
@@ -95,7 +121,7 @@ documentation in various formats.
 Allin Cottrell \\
 Wake Forest University \\
 \texttt{cottrell@wfu.edu} \\
-October, 2011
+September, 2012
 
 \end{document}
 
