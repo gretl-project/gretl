@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-09-20 17:17-0400\n"
-"PO-Revision-Date: 2012-09-26 00:44+0800\n"
-"Last-Translator: YNY <Home>\n"
+"PO-Revision-Date: 2012-09-22 01:10+0800\n"
+"Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1947,9 +1947,9 @@ msgid "Residual spectrum"
 msgstr "殘差自我相關函數"
 
 #: lib/src/describe.c:3891
-#, fuzzy, c-format
+#, c-format
 msgid "Spectrum of %s"
-msgstr "頻譜圖"
+msgstr "%s 的頻譜圖"
 
 #: lib/src/describe.c:3897
 #, fuzzy, c-format
@@ -1958,21 +1958,21 @@ msgstr "/資料/更新顯示"
 
 #: lib/src/describe.c:3903
 #: gui2/dialogs.c:4480
-#, fuzzy
 msgid "log scale"
-msgstr "指令紀錄(_C)"
+msgstr "取對數尺度"
 
 #: lib/src/describe.c:3962
-#, fuzzy
 msgid "Residual periodogram"
-msgstr "殘差自我相關函數"
+msgstr "殘差週期圖 (periodogram)"
 
 #: lib/src/describe.c:3964
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Periodogram for %s\n"
-msgstr "檢查有無更新版(_u)"
+msgstr ""
+"\n"
+"%s 的週期圖 (periodogram)\n"
 
 #: lib/src/describe.c:3967
 #: lib/src/describe.c:5508
@@ -8199,9 +8199,8 @@ msgstr "有關 gretl"
 
 #: gui2/about.c:120
 #: plugin/excel_import.c:138
-#, fuzzy
 msgid "build date"
-msgstr "資料類型(_s)"
+msgstr "build 日期"
 
 #: gui2/about.c:153
 #: gui2/about.c:155
@@ -9524,9 +9523,8 @@ msgstr "資料來源"
 
 #: gui2/datafiles.c:2128
 #: gui2/datafiles.c:2160
-#, fuzzy
 msgid "Date"
-msgstr "資料(_D)"
+msgstr "日期"
 
 #: gui2/datafiles.c:2131
 #, fuzzy
@@ -10345,17 +10343,15 @@ msgstr "無任何 model"
 
 #: gui2/dialogs.c:4454
 msgid "gretl: periodogram"
-msgstr "gretl: periodogram"
+msgstr "gretl: 週期圖"
 
 #: gui2/dialogs.c:4460
-#, fuzzy
 msgid "Sample periodogram"
-msgstr "示範資料檔(_S)..."
+msgstr "樣本週期圖 (sample periodogram)"
 
 #: gui2/dialogs.c:4465
-#, fuzzy
 msgid "Bartlett window, bandwidth:"
-msgstr "/資料/更新顯示"
+msgstr "Bartlett 視窗, 頻寬 (bandwidth):"
 
 #: gui2/dialogs.c:4487
 #, fuzzy
@@ -11070,9 +11066,8 @@ msgid "Minimum gretl version"
 msgstr "最低的 gretl 版本"
 
 #: gui2/fnsave.c:990
-#, fuzzy
 msgid "Insert today's date"
-msgstr "插入樣本(_I)"
+msgstr "插入今天日期"
 
 #: gui2/fnsave.c:1008
 #: gui2/gui_utils.c:2193
@@ -11123,9 +11118,8 @@ msgid "Upload package to server on save"
 msgstr "在儲存時自訂函數, 同時更新伺服器中的版本"
 
 #: gui2/fnsave.c:1208
-#, fuzzy
 msgid "Validate"
-msgstr "變異數"
+msgstr "驗證"
 
 #: gui2/fnsave.c:1258
 msgid "gretl: upload"
@@ -11372,7 +11366,6 @@ msgid "gretl: graph"
 msgstr "gretl: 繪圖"
 
 #: gui2/gpt_control.c:4898
-#, fuzzy
 msgid " Right-click on graph for menu"
 msgstr " 在圖上按滑鼠鍵會出現選單"
 
@@ -11498,15 +11491,13 @@ msgstr "顯示完整圖外方框"
 
 #: gui2/gpt_dialog.c:2003
 msgid "horizontal"
-msgstr ""
+msgstr "水平"
 
 #: gui2/gpt_dialog.c:2004
-#, fuzzy
 msgid "vertical"
-msgstr "數學 (Mathematical)"
+msgstr "垂直"
 
 #: gui2/gpt_dialog.c:2005
-#, fuzzy
 msgid "both"
 msgstr "兩者皆畫"
 
@@ -11520,7 +11511,7 @@ msgstr ""
 
 #: gui2/gpt_dialog.c:2064
 msgid "Show bars"
-msgstr "Show bars"
+msgstr "設定特定期間陰影區"
 
 #: gui2/gpt_dialog.c:2073
 msgid "NBER recessions"
@@ -11616,25 +11607,23 @@ msgstr "新增..."
 
 #: gui2/gpt_dialog.c:3210
 msgid "Arrows"
-msgstr ""
+msgstr "指示箭號 (arrows)"
 
 #: gui2/gpt_dialog.c:3241
 msgid "from (X Y)"
-msgstr ""
+msgstr "座標從 (X Y)"
 
 #: gui2/gpt_dialog.c:3243
-#, fuzzy
 msgid "to (X Y)"
-msgstr "位置 (X Y)"
+msgstr "到 (X Y)"
 
 #: gui2/gpt_dialog.c:3278
 msgid "arrow has head"
-msgstr ""
+msgstr "有箭頭"
 
 #: gui2/gpt_dialog.c:3287
-#, fuzzy
 msgid "line is dotted"
-msgstr "線寬: "
+msgstr "虛線線條"
 
 #: gui2/gpt_dialog.c:3325
 msgid "X-axis"
@@ -13484,9 +13473,8 @@ msgid "Residual _correlogram"
 msgstr "殘差自我相關圖 (_correlogram)"
 
 #: gui2/gui_utils.c:2773
-#, fuzzy
 msgid "Residual _periodogram"
-msgstr "殘差自我相關函數"
+msgstr "殘差週期圖"
 
 #: gui2/gui_utils.c:2782
 msgid "Residual _Q-Q plot"
@@ -14372,9 +14360,8 @@ msgid "Maximum lag:"
 msgstr "最大落後期數 (max. lag):"
 
 #: gui2/library.c:5308
-#, fuzzy
 msgid "periodogram"
-msgstr "程式"
+msgstr "週期圖"
 
 #: gui2/library.c:5343
 #, fuzzy
@@ -14715,14 +14702,12 @@ msgstr "箱形圖 (Boxplot)"
 
 #: gui2/menustate.c:354
 #: gui2/menustate.c:498
-#, fuzzy
 msgid "Periodogram"
-msgstr "程式"
+msgstr "週期圖 (Periodogram)"
 
 #: gui2/menustate.c:356
-#, fuzzy
 msgid "ARIMA model"
-msgstr "/模型/最大概似法(_M)"
+msgstr "ARIMA 模型"
 
 #: gui2/menustate.c:359
 msgid "Dickey-Fuller test"
@@ -14746,7 +14731,6 @@ msgstr "編輯變數值"
 
 #: gui2/menustate.c:371
 #: gui2/menustate.c:504
-#, fuzzy
 msgid "Add log"
 msgstr "將變數取自然對數"
 
@@ -14799,9 +14783,8 @@ msgid "Unknown"
 msgstr "未知"
 
 #: gui2/menustate.c:668
-#, fuzzy
 msgid "Undated"
-msgstr "未訂時間順序"
+msgstr "無時間序資料"
 
 #: gui2/menustate.c:700
 #, c-format
@@ -15402,7 +15385,7 @@ msgstr "Difference 差分階次 :"
 
 #: gui2/selector.c:4869
 msgid "MA order:"
-msgstr "MA order:"
+msgstr "MA 階次:"
 
 #: gui2/selector.c:4890
 #: gui2/selector.c:4919
@@ -16017,9 +16000,8 @@ msgstr ""
 "(最多 31 個英文字元)"
 
 #: gui2/session.c:2614
-#, fuzzy
 msgid "gretl: copy object"
-msgstr "gretl: 更名"
+msgstr "gretl: 複製物件"
 
 #: gui2/session.c:2656
 msgid "gretl: rename object"
@@ -16268,9 +16250,8 @@ msgid "Path to oxl executable"
 msgstr "oxl executable 的路徑"
 
 #: gui2/settings.c:232
-#, fuzzy
 msgid "Path to octave executable"
-msgstr "oxl executable 的路徑"
+msgstr "Octave 程式的路徑"
 
 #: gui2/settings.c:234
 msgid "Database server name"
@@ -16679,19 +16660,19 @@ msgstr "用一階差分"
 
 #: gui2/textbuf.c:2533
 msgid "Comment line"
-msgstr "Comment line"
+msgstr "插入註解符號"
 
 #: gui2/textbuf.c:2534
 msgid "Uncomment line"
-msgstr "Uncomment line"
+msgstr "取消註解符號"
 
 #: gui2/textbuf.c:2535
 msgid "Comment region"
-msgstr "Comment region"
+msgstr "此區各行皆插入註解符號"
 
 #: gui2/textbuf.c:2536
 msgid "Uncomment region"
-msgstr "Uncomment region"
+msgstr "此區各行皆取消註解符號"
 
 #: gui2/textbuf.c:2572
 msgid "Execute region"
@@ -16699,11 +16680,11 @@ msgstr "Execute region"
 
 #: gui2/textbuf.c:2574
 msgid "Execute line"
-msgstr "Execute line"
+msgstr "執行此行指令"
 
 #: gui2/textbuf.c:2601
 msgid "Auto-indent region"
-msgstr "Auto-indent region"
+msgstr "自動縮排 (region)"
 
 #: gui2/textbuf.c:2602
 msgid "Indent region"
@@ -16805,11 +16786,11 @@ msgstr "執行指令"
 
 #: gui2/toolbar.c:646
 msgid "Stop"
-msgstr ""
+msgstr "停止執行"
 
 #: gui2/toolbar.c:647
 msgid "Cut"
-msgstr ""
+msgstr "剪下"
 
 #: gui2/toolbar.c:649
 msgid "Paste"
@@ -16825,7 +16806,7 @@ msgstr "復原 (Undo)"
 
 #: gui2/toolbar.c:653
 msgid "Redo"
-msgstr ""
+msgstr "取消復原"
 
 #: gui2/toolbar.c:654
 msgid "Sort"
@@ -17065,7 +17046,7 @@ msgstr "\t組距(range)"
 
 #: plugin/addons-i18n.c:4
 msgid "gig"
-msgstr ""
+msgstr "gig GARCH 套件"
 
 #: plugin/addons-i18n.c:5
 #, fuzzy
@@ -17109,7 +17090,7 @@ msgstr ""
 
 #: plugin/addons-i18n.c:16
 msgid "GJR"
-msgstr ""
+msgstr "GJR"
 
 #: plugin/addons-i18n.c:17
 #, fuzzy
@@ -17558,9 +17539,8 @@ msgid "Sending debugging output to %s"
 msgstr "資料匯入的偵錯結果存檔至: %s"
 
 #: plugin/import_common.c:644
-#, fuzzy
 msgid "Sheet to import:"
-msgstr "複製資料"
+msgstr "選擇要匯入的工作表:"
 
 #: plugin/import_common.c:671
 msgid "gretl: spreadsheet import"
@@ -17741,9 +17721,8 @@ msgstr "估計機率密度圖(_d)"
 
 #: plugin/leverage.c:120
 #: plugin/pca.c:101
-#, fuzzy
 msgid "Variables to save:"
-msgstr "選擇要儲存的變數"
+msgstr "要儲存的變數:"
 
 #: plugin/leverage.c:125
 #: plugin/leverage.c:236
@@ -17777,14 +17756,12 @@ msgid "Cross-validation criterion"
 msgstr "樣本篩選(_R)"
 
 #: plugin/mailer.c:583
-#, fuzzy
 msgid "To:"
-msgstr "%s, 樣本從 %s 到 %s"
+msgstr "寄給: "
 
 #: plugin/mailer.c:584
-#, fuzzy
 msgid "Reply-To:"
-msgstr "寄送資料至"
+msgstr "回覆至:"
 
 #: plugin/mailer.c:585
 msgid "Subject:"
@@ -17795,36 +17772,32 @@ msgid "Note:"
 msgstr "Note:"
 
 #: plugin/mailer.c:609
-#, fuzzy
 msgid "gretl: send mail"
-msgstr "gretl: open data"
+msgstr "gretl: 寄送 mail"
 
 #: plugin/mailer.c:624
 msgid "Message"
 msgstr "Message"
 
 #: plugin/mailer.c:705
-#, fuzzy
 msgid "Append signature"
-msgstr "新增資料(_A)"
+msgstr "新增簽名"
 
 #: plugin/mailer.c:717
 msgid "Mail setup"
 msgstr "Mail setup"
 
 #: plugin/mailer.c:725
-#, fuzzy
 msgid "SMTP server:"
-msgstr "從伺服器讀取(_s)"
+msgstr "SMTT 伺服器:"
 
 #: plugin/mailer.c:735
 msgid "port:"
 msgstr "port:"
 
 #: plugin/mailer.c:781
-#, fuzzy
 msgid "POP server:"
-msgstr "從伺服器讀取(_s)"
+msgstr "POP 伺服器:"
 
 #: plugin/mailer.c:782
 msgid "Username:"
@@ -17835,9 +17808,8 @@ msgid "Password:"
 msgstr "密碼:"
 
 #: plugin/mailer.c:799
-#, fuzzy
 msgid "gretl: POP info"
-msgstr "gretl: 新增變數資訊"
+msgstr "gretl: POP 資訊"
 
 #: plugin/mp_ols.c:140
 #, c-format
