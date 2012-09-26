@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-09-20 17:17-0400\n"
-"PO-Revision-Date: 2012-09-22 01:10+0800\n"
+"PO-Revision-Date: 2012-09-26 22:30+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -8522,7 +8522,7 @@ msgstr "二項分配"
 
 #: gui2/calculator.c:1944
 msgid "poisson"
-msgstr "poisson 波氐分配"
+msgstr "poisson 波氏分配"
 
 #: gui2/calculator.c:1945
 msgid "weibull"
@@ -8666,7 +8666,7 @@ msgstr "均數差"
 
 #: gui2/calculator.c:2604
 msgid "2 variances"
-msgstr "2 變異數"
+msgstr "兩變異數"
 
 #: gui2/calculator.c:2605
 msgid "2 proportions"
@@ -8752,7 +8752,7 @@ msgstr "樣本 2 的變異數"
 
 #: gui2/calculator.c:2690
 msgid "H0: Ratio of variances = 1"
-msgstr "H0: Ratio of variances 變異數比率 = 1"
+msgstr "H0: 變異數比率 (Ratio of variances) = 1"
 
 #: gui2/calculator.c:2694
 msgid "proportion, sample 1"
@@ -10451,9 +10451,8 @@ msgid "show scalars window"
 msgstr ""
 
 #: gui2/dialogs.c:5164
-#, fuzzy
 msgid "show icons window"
-msgstr "回主視窗"
+msgstr "顯示圖示視窗"
 
 #: gui2/dialogs.c:5321
 msgid "gretl: TeX tabular format"
@@ -10511,9 +10510,8 @@ msgid "Add list of instruments"
 msgstr "gretl: 新增變數資訊"
 
 #: gui2/dlgutils.c:854
-#, fuzzy
 msgid "Show interval for median"
-msgstr "%g%% 信賴區間 = %g to %g"
+msgstr "顯示中位數區間"
 
 #: gui2/dlgutils.c:857
 #: gui2/dlgutils.c:1022
@@ -10557,7 +10555,6 @@ msgid "(Please refer to Help for guidance)"
 msgstr "(詳細請參見「指令參考說明」(command reference) 之指令語法)"
 
 #: gui2/fileselect.c:482
-#, fuzzy
 msgid ""
 "There is already a file of this name.\n"
 "OK to overwrite it?"
@@ -17040,9 +17037,8 @@ msgid "Main window"
 msgstr "回主視窗"
 
 #: gui2/winstack.c:422
-#, fuzzy
 msgid "Arrange"
-msgstr "\t組距(range)"
+msgstr "重新排列所有視窗"
 
 #: plugin/addons-i18n.c:4
 msgid "gig"
@@ -17054,15 +17050,13 @@ msgid "APARCH"
 msgstr "ARCH自我相關異質變異模型 (_A)"
 
 #: plugin/addons-i18n.c:6
-#, fuzzy
 msgid "AR lags"
-msgstr "落後期數"
+msgstr "AR 落後期數"
 
 #: plugin/addons-i18n.c:8
 #: plugin/addons-i18n.c:47
-#, fuzzy
 msgid "Constant"
-msgstr "不含常數項 (no constant)"
+msgstr "常數項"
 
 #: plugin/addons-i18n.c:9
 #, fuzzy
@@ -17070,14 +17064,12 @@ msgid "Covariance estimator"
 msgstr "共變數矩陣"
 
 #: plugin/addons-i18n.c:11
-#, fuzzy
 msgid "Dependent Variable"
-msgstr "應變數 (Dependent variable)"
+msgstr "應變數"
 
 #: plugin/addons-i18n.c:12
-#, fuzzy
 msgid "Distribution"
-msgstr "統計分配圖(_D)"
+msgstr "分配"
 
 #: plugin/addons-i18n.c:13
 #, fuzzy
@@ -17098,15 +17090,13 @@ msgid "Hessian"
 msgstr "使用這個變數:"
 
 #: plugin/addons-i18n.c:18
-#, fuzzy
 msgid "Mean regressors"
-msgstr "自變數"
+msgstr "均數方程式之自變數"
 
 #: plugin/addons-i18n.c:19
 #: plugin/addons-i18n.c:53
-#, fuzzy
 msgid "Model type"
-msgstr "模型比較表(model table)"
+msgstr "模型類別"
 
 #: plugin/addons-i18n.c:20
 #, fuzzy
@@ -17151,19 +17141,16 @@ msgid "Taylor/Schwert GARCH"
 msgstr ""
 
 #: plugin/addons-i18n.c:30
-#, fuzzy
 msgid "Variance regressors"
-msgstr "第 1 條迴歸之自變數"
+msgstr "變異數方程式之自變數"
 
 #: plugin/addons-i18n.c:31
-#, fuzzy
 msgid "Verbosity"
-msgstr "詳細報告(_V)"
+msgstr "顯示詳細過程"
 
 #: plugin/addons-i18n.c:32
-#, fuzzy
 msgid "t"
-msgstr "至"
+msgstr "t"
 
 #: plugin/addons-i18n.c:36
 #, fuzzy
@@ -17175,17 +17162,14 @@ msgid "G2SLS"
 msgstr ""
 
 #: plugin/addons-i18n.c:39
-#, fuzzy
 msgid "dependent variable"
-msgstr "應變數 (Dependent variable)"
+msgstr "應變數"
 
 #: plugin/addons-i18n.c:40
-#, fuzzy
 msgid "instruments"
-msgstr "基本假設檢定(_T)"
+msgstr "工具變數"
 
 #: plugin/addons-i18n.c:41
-#, fuzzy
 msgid "regressors"
 msgstr "自變數"
 
@@ -17200,9 +17184,8 @@ msgid "C-model"
 msgstr "模型"
 
 #: plugin/addons-i18n.c:48
-#, fuzzy
 msgid "Exogenous regressors"
-msgstr "變數顯示順序(_S)"
+msgstr "外生自變數"
 
 #: plugin/addons-i18n.c:49
 msgid "IRF by shock"
@@ -17221,14 +17204,12 @@ msgid "Lags"
 msgstr ""
 
 #: plugin/addons-i18n.c:55
-#, fuzzy
 msgid "Time trend"
-msgstr "新增時間趨勢變數(_T)"
+msgstr "時間趨勢變數"
 
 #: plugin/addons-i18n.c:56
-#, fuzzy
 msgid "VAR variables"
-msgstr "變數"
+msgstr "VAR 變數"
 
 #: plugin/addons-i18n.c:57
 msgid "horizon"
@@ -17266,14 +17247,12 @@ msgid "Grand mean"
 msgstr "樣本均數"
 
 #: plugin/anova.c:377
-#, fuzzy
 msgid "anova: the treatment variable must be discrete"
-msgstr "沒有任何自變數被消去 (omitted)"
+msgstr "anova: treatment 變數必須是不連續 (discrete)"
 
 #: plugin/anova.c:383
-#, fuzzy
 msgid "anova: the block variable must be discrete"
-msgstr "將此變數視為不連續 (discrete) 變數"
+msgstr "anova: block 變數必須是不連續 (discrete)"
 
 #: plugin/anova.c:501
 #, c-format
@@ -17286,9 +17265,8 @@ msgid "MA root %d = %g\n"
 msgstr " Prob(x = %d) = %g\n"
 
 #: plugin/arma.c:906
-#, fuzzy
 msgid "MA estimate(s) out of bounds\n"
-msgstr "列 (row) 的開始值不正確 (out of bounds)\n"
+msgstr "MA 估計值超出範圍\n"
 
 #: plugin/arma.c:1446
 #: plugin/arma_init.c:347
@@ -17299,9 +17277,8 @@ msgid "ARMA initialization"
 msgstr "ARMA initialization"
 
 #: plugin/arma.c:1447
-#, fuzzy
 msgid "user-specified values"
-msgstr "gretl: 臨界值"
+msgstr "使用者自訂值"
 
 #: plugin/arma_common.c:684
 #: plugin/arma_common.c:765
@@ -17318,14 +17295,12 @@ msgid "small MA values"
 msgstr "gretl: 臨界值"
 
 #: plugin/arma_init.c:1223
-#, fuzzy
 msgid "using nonlinear AR model"
-msgstr "/模型/非線性模型/非線性迴歸法(_N)"
+msgstr "使用非線性模型 AR 模型"
 
 #: plugin/arma_init.c:1226
-#, fuzzy
 msgid "using linear AR model"
-msgstr "非線性模型(_N)"
+msgstr "使用非線性模型 AR 模型"
 
 #: plugin/arma_x12.c:926
 msgid "Failed to execute x12arima"
@@ -17403,9 +17378,8 @@ msgstr ""
 "%s\" 在第 %d 列 (row), 第 %d 行 (column)\n"
 
 #: plugin/fcp.c:246
-#, fuzzy
 msgid " (using Hessian)"
-msgstr "使用這個變數:"
+msgstr "(使用 Hessian)"
 
 #: plugin/fiml.c:92
 msgid "No list of endogenous variables was given"
@@ -17476,9 +17450,8 @@ msgid "coeff"
 msgstr "coeff"
 
 #: plugin/fractals.c:277
-#, fuzzy
 msgid "Regression results"
-msgstr "顯示迴歸估計結果"
+msgstr "迴歸估計結果"
 
 #: plugin/fractals.c:290
 #, fuzzy
@@ -17490,9 +17463,9 @@ msgid "GARCH: p > 0 and q = 0: the model is unidentified"
 msgstr "GARCH: p > 0 and q = 0: the model is unidentified"
 
 #: plugin/garch.c:641
-#, fuzzy, c-format
+#, c-format
 msgid "GARCH: p + q must not exceed %d"
-msgstr "最大值必須大於 %g"
+msgstr "GARCH: p + q 值不可大於 %d"
 
 #: plugin/gnumeric_import.c:295
 #, c-format
