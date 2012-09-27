@@ -1078,7 +1078,12 @@ texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	    " & \\multicolumn{2}{c}{%s}%%\n"
 	    "  & \\multicolumn{2}{c}{%s}%%\n"
 	    "   & \\multicolumn{2}{c}{%s} \\\\[1ex]\n",
-	    A_("5\\% perc."), A_("95\\% perc."), A_("IQ Range"), A_("Missing obs."));
+	    /* xgettext:no-c-format */
+	    A_("5\\% perc."),
+	    /* xgettext:no-c-format */
+	    A_("95\\% perc."), 
+	    A_("IQ Range"), 
+	    A_("Missing obs."));
 
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];

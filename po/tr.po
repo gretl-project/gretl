@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-09-20 17:17-0400\n"
+"POT-Creation-Date: 2012-09-27 09:24-0400\n"
 "PO-Revision-Date: 2012-06-04 11:16+0300\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
@@ -232,7 +232,7 @@ msgstr "Gecikme budama değiştirgesi = %d\n"
 
 #: lib/src/adf_kpss.c:1581 lib/src/compare.c:386 lib/src/compare.c:962
 #: lib/src/compare.c:1841 lib/src/compare.c:2059 lib/src/compare.c:2287
-#: lib/src/compare.c:3340 lib/src/describe.c:5592 lib/src/estimate.c:2740
+#: lib/src/compare.c:3340 lib/src/describe.c:5594 lib/src/estimate.c:2740
 #: lib/src/estimate.c:2753 lib/src/estimate.c:2761 lib/src/estimate.c:3527
 #: lib/src/estimate.c:3530 lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3722
 #: lib/src/gretl_panel.c:3904 lib/src/gretl_restrict.c:2215
@@ -492,8 +492,8 @@ msgstr "ekle"
 
 #: lib/src/compare.c:904 lib/src/compare.c:2233 lib/src/graphing.c:3135
 #: lib/src/graphing.c:3144 lib/src/graphing.c:3220 lib/src/graphing.c:4938
-#: lib/src/gretl_panel.c:3756 lib/src/printout.c:1215 gui2/guiprint.c:1487
-#: gui2/guiprint.c:1547 gui2/library.c:6040 plugin/leverage.c:308
+#: lib/src/gretl_panel.c:3756 lib/src/printout.c:1215 gui2/guiprint.c:1492
+#: gui2/guiprint.c:1552 gui2/library.c:6040 plugin/leverage.c:308
 msgid "residual"
 msgstr "kalıntı"
 
@@ -509,7 +509,7 @@ msgstr "Doğrusal-dışılık sınaması (loglar)"
 #: lib/src/compare.c:2124 lib/src/compare.c:2288 lib/src/compare.c:2293
 #: lib/src/compare.c:2299 lib/src/compare.c:2759 lib/src/compare.c:2761
 #: lib/src/compare.c:2765 lib/src/describe.c:4043 lib/src/describe.c:4069
-#: lib/src/describe.c:6540 lib/src/describe.c:6543 lib/src/estimate.c:2742
+#: lib/src/describe.c:6542 lib/src/describe.c:6545 lib/src/estimate.c:2742
 #: lib/src/estimate.c:2765 lib/src/estimate.c:3533 lib/src/gretl_model.c:3738
 #: lib/src/gretl_model.c:3740 lib/src/gretl_model.c:3742
 #: lib/src/gretl_panel.c:1565 lib/src/gretl_panel.c:3656
@@ -1541,7 +1541,7 @@ msgstr "Kalıntı ilinti dizeyi, C"
 msgid "Eigenvalues of C"
 msgstr "C'nin özdeğerleri"
 
-#: lib/src/describe.c:1547 lib/src/describe.c:6529
+#: lib/src/describe.c:1547 lib/src/describe.c:6531
 msgid "Doornik-Hansen test"
 msgstr "Doornik-Hansen sınaması"
 
@@ -1678,8 +1678,8 @@ msgstr ""
 "\n"
 "%s dönemçiziti\n"
 
-#: lib/src/describe.c:3967 lib/src/describe.c:5508 lib/src/describe.c:5510
-#: lib/src/describe.c:5586 lib/src/describe.c:5588 lib/src/describe.c:6034
+#: lib/src/describe.c:3967 lib/src/describe.c:5510 lib/src/describe.c:5512
+#: lib/src/describe.c:5588 lib/src/describe.c:5590 lib/src/describe.c:6036
 #, c-format
 msgid "Number of observations = %d\n"
 msgstr "Gözlem sayısı = %d\n"
@@ -1730,13 +1730,13 @@ msgstr "GPH sınaması"
 msgid "NA"
 msgstr "yok"
 
-#: lib/src/describe.c:4364 lib/src/describe.c:5377
+#: lib/src/describe.c:4364 lib/src/describe.c:5379
 #, c-format
 msgid "%s, using the observations %s - %s"
 msgstr "%s, kullanılan gözlemler: %s - %s"
 
-#: lib/src/describe.c:4368 lib/src/describe.c:5382 gui2/guiprint.c:704
-#: gui2/guiprint.c:1014 gui2/guiprint.c:1176 gui2/guiprint.c:1269
+#: lib/src/describe.c:4368 lib/src/describe.c:5384 gui2/guiprint.c:704
+#: gui2/guiprint.c:1014 gui2/guiprint.c:1181 gui2/guiprint.c:1274
 msgid "(missing values were skipped)"
 msgstr "(eksik değerler atlandı)"
 
@@ -1793,8 +1793,8 @@ msgstr "yüzde %g aralığı"
 msgid "Interquartile range"
 msgstr "eksen aralığı:"
 
-#: lib/src/describe.c:4416 lib/src/describe.c:4561 gui2/guiprint.c:761
-#: gui2/guiprint.c:1081
+#: lib/src/describe.c:4416 lib/src/describe.c:4563 gui2/guiprint.c:761
+#: gui2/guiprint.c:1086
 #, fuzzy
 msgid "Missing obs."
 msgstr "Eksik gözlemler"
@@ -1821,31 +1821,31 @@ msgstr "'%s' değişkeni için (%d geçerli gözlem)"
 msgid "Std. Dev."
 msgstr "Ölç.Sap."
 
-#: lib/src/describe.c:4558
-#, c-format
+#: lib/src/describe.c:4559
+#, no-c-format
 msgid "5% perc."
 msgstr ""
 
-#: lib/src/describe.c:4559
-#, c-format
+#: lib/src/describe.c:4561
+#, no-c-format
 msgid "95% perc."
 msgstr ""
 
-#: lib/src/describe.c:4560 gui2/guiprint.c:761
+#: lib/src/describe.c:4562 gui2/guiprint.c:761
 #, fuzzy
 msgid "IQ range"
 msgstr "x aralığı"
 
-#: lib/src/describe.c:4757 lib/src/describe.c:4860
+#: lib/src/describe.c:4759 lib/src/describe.c:4862
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
 msgstr "%s çıkarılıyor: örneklem aralığı geçerli gözlem içermiyor\n"
 
-#: lib/src/describe.c:5280
+#: lib/src/describe.c:5282
 msgid "corr: needs at least two non-constant arguments"
 msgstr "corr: en az iki sabit-dışı argüman istemektedir"
 
-#: lib/src/describe.c:5337 lib/src/modelprint.c:3330 lib/src/modelprint.c:3342
+#: lib/src/describe.c:5339 lib/src/modelprint.c:3330 lib/src/modelprint.c:3342
 #: lib/src/modelprint.c:3343 lib/src/modelprint.c:3344
 #: lib/src/modelprint.c:3353 lib/src/modelprint.c:3363
 #: lib/src/modelprint.c:3395 lib/src/modelprint.c:3408
@@ -1855,13 +1855,13 @@ msgstr "corr: en az iki sabit-dışı argüman istemektedir"
 #: lib/src/texprint.c:580 lib/src/texprint.c:598 lib/src/texprint.c:615
 #: lib/src/texprint.c:629 lib/src/texprint.c:713 lib/src/texprint.c:724
 #: lib/src/texprint.c:730 gui2/guiprint.c:662 gui2/guiprint.c:664
-#: gui2/guiprint.c:973 gui2/guiprint.c:975 gui2/guiprint.c:1114
-#: gui2/guiprint.c:1123 gui2/guiprint.c:1837 gui2/guiprint.c:1846
-#: gui2/guiprint.c:1897 plugin/anova.c:148 plugin/leverage.c:335
+#: gui2/guiprint.c:973 gui2/guiprint.c:975 gui2/guiprint.c:1119
+#: gui2/guiprint.c:1128 gui2/guiprint.c:1842 gui2/guiprint.c:1851
+#: gui2/guiprint.c:1902 plugin/anova.c:148 plugin/leverage.c:335
 msgid "undefined"
 msgstr "tanımsız"
 
-#: lib/src/describe.c:5344 lib/src/nonparam.c:334 lib/src/nonparam.c:340
+#: lib/src/describe.c:5346 lib/src/nonparam.c:334 lib/src/nonparam.c:340
 #: lib/src/nonparam.c:574
 msgid ""
 "Under the null hypothesis of no correlation:\n"
@@ -1870,29 +1870,29 @@ msgstr ""
 "İlinti olmadığı sıfır önsavı altında:\n"
 " "
 
-#: lib/src/describe.c:5345 lib/src/nonparam.c:341
+#: lib/src/describe.c:5347 lib/src/nonparam.c:341
 #, c-format
 msgid "t(%d) = %g, with two-tailed p-value %.4f\n"
 msgstr "t(%d) = %g (çift-kuyruk p-değeri %.4f)\n"
 
-#: lib/src/describe.c:5349 lib/src/describe.c:5387 gui2/guiprint.c:1178
+#: lib/src/describe.c:5351 lib/src/describe.c:5389 gui2/guiprint.c:1183
 #, c-format
 msgid "5%% critical value (two-tailed) = %.4f for n = %d"
 msgstr "%% 5 kritik değeri (çift-kuyruk) = %.4f (n = %d)"
 
-#: lib/src/describe.c:5378
+#: lib/src/describe.c:5380
 msgid "Correlation Coefficients"
 msgstr "İlinti Katsayıları"
 
-#: lib/src/describe.c:5472 lib/src/describe.c:5556
+#: lib/src/describe.c:5474 lib/src/describe.c:5558
 msgid "Sample range has no valid observations."
 msgstr "Örneklem aralığında geçerli gözlem yok."
 
-#: lib/src/describe.c:5478 lib/src/describe.c:5562
+#: lib/src/describe.c:5480 lib/src/describe.c:5564
 msgid "Sample range has only one observation."
 msgstr "Örneklem aralığında yalnızca bir gözlem var."
 
-#: lib/src/describe.c:5505
+#: lib/src/describe.c:5507
 #, c-format
 msgid ""
 "\n"
@@ -1903,34 +1903,34 @@ msgstr ""
 "Ortalamaların eşitliği sınaması (%s varyans varsayımı ile)\n"
 "\n"
 
-#: lib/src/describe.c:5506
+#: lib/src/describe.c:5508
 msgid "unequal"
 msgstr "eşit değil"
 
-#: lib/src/describe.c:5506
+#: lib/src/describe.c:5508
 msgid "equal"
 msgstr "eşit"
 
-#: lib/src/describe.c:5511
+#: lib/src/describe.c:5513
 #, c-format
 msgid "   Difference between sample means = %g - %g = %g\n"
 msgstr "   Örneklem ortalamaları arası fark = %g - %g = %g\n"
 
-#: lib/src/describe.c:5513
+#: lib/src/describe.c:5515
 msgid "   Null hypothesis: The two population means are the same.\n"
 msgstr "   Sıfır önsavı: İki anakütlenin ortalaması aynı.\n"
 
-#: lib/src/describe.c:5514
+#: lib/src/describe.c:5516
 #, c-format
 msgid "   Estimated standard error = %g\n"
 msgstr "   Tahmin edilen ölçünlü hata = %g\n"
 
-#: lib/src/describe.c:5515
+#: lib/src/describe.c:5517
 #, c-format
 msgid "   Test statistic: t(%d) = %g\n"
 msgstr "   Sınama istatistiği: t(%d) = %g\n"
 
-#: lib/src/describe.c:5516 lib/src/describe.c:5593
+#: lib/src/describe.c:5518 lib/src/describe.c:5595
 #, c-format
 msgid ""
 "   p-value (two-tailed) = %g\n"
@@ -1939,7 +1939,7 @@ msgstr ""
 "   (çift kuyruk p-değeri = %g)\n"
 "\n"
 
-#: lib/src/describe.c:5518 lib/src/describe.c:5595
+#: lib/src/describe.c:5520 lib/src/describe.c:5597
 msgid ""
 "   The difference is not statistically significant.\n"
 "\n"
@@ -1947,11 +1947,11 @@ msgstr ""
 "   Aradaki fark istatistiksel olarak anlamlı değil.\n"
 "\n"
 
-#: lib/src/describe.c:5520
+#: lib/src/describe.c:5522
 msgid "difference of means"
 msgstr "ortalamalar farkı"
 
-#: lib/src/describe.c:5584
+#: lib/src/describe.c:5586
 msgid ""
 "\n"
 "Equality of variances test\n"
@@ -1961,86 +1961,86 @@ msgstr ""
 "Varyansların eşitliği sınaması\n"
 "\n"
 
-#: lib/src/describe.c:5589
+#: lib/src/describe.c:5591
 #, c-format
 msgid "   Ratio of sample variances = %g\n"
 msgstr "   Örneklem varyanslar oranı = %g\n"
 
-#: lib/src/describe.c:5590 lib/src/gretl_model.c:3553
+#: lib/src/describe.c:5592 lib/src/gretl_model.c:3553
 #: lib/src/gretl_model.c:3556 lib/src/gretl_model.c:3563
 #: lib/src/nonparam.c:976 lib/src/nonparam.c:1113 lib/src/varprint.c:1233
 #: lib/src/varprint.c:1239 lib/src/varprint.c:1247
 msgid "Null hypothesis"
 msgstr "Sıfır önsavı"
 
-#: lib/src/describe.c:5591
+#: lib/src/describe.c:5593
 msgid "The two population variances are equal"
 msgstr "İki anakütlenin varyansları eşit"
 
-#: lib/src/describe.c:5597
+#: lib/src/describe.c:5599
 msgid "difference of variances"
 msgstr "varyanslar farklılığı"
 
-#: lib/src/describe.c:5682 gui2/library.c:514 gui2/library.c:678
+#: lib/src/describe.c:5684 gui2/library.c:514 gui2/library.c:678
 #: gui2/library.c:831
 msgid "Mahalanobis distances"
 msgstr "Mahalanobis uzaklıkları"
 
-#: lib/src/describe.c:5723
+#: lib/src/describe.c:5725
 msgid "Covariance matrix"
 msgstr "Kovaryans dizeyi"
 
-#: lib/src/describe.c:5729
+#: lib/src/describe.c:5731
 msgid "Inverse of covariance matrix"
 msgstr "Kovaryans dizeyinin tersi"
 
-#: lib/src/describe.c:5744
+#: lib/src/describe.c:5746
 msgid "Mahalanobis distances from the centroid"
 msgstr "Kitle merkezinden Mahalanobis uzaklıkları"
 
-#: lib/src/describe.c:5745
+#: lib/src/describe.c:5747
 msgid "using the variables:"
 msgstr "kullanılan değişkenler:"
 
-#: lib/src/describe.c:5790
+#: lib/src/describe.c:5792
 #, c-format
 msgid "Distances saved as '%s'"
 msgstr "Farklar '%s' olarak kaydedildi"
 
-#: lib/src/describe.c:5863
+#: lib/src/describe.c:5865
 msgid "illegal negative value"
 msgstr "Yasak eksi değer"
 
-#: lib/src/describe.c:5970
+#: lib/src/describe.c:5972
 msgid "Lorenz curve"
 msgstr "Lorenz eğrisi"
 
-#: lib/src/describe.c:6037 plugin/excel_import.c:1657
+#: lib/src/describe.c:6039 plugin/excel_import.c:1657
 #: plugin/gnumeric_import.c:767
 msgid "Warning: there were missing values\n"
 msgstr "Uyarı: eksik değerler ile karşılaşıldı\n"
 
-#: lib/src/describe.c:6042
+#: lib/src/describe.c:6044
 msgid "Sample Gini coefficient"
 msgstr "Örneklem Gini katsayısı"
 
-#: lib/src/describe.c:6043
+#: lib/src/describe.c:6045
 msgid "Estimate of population value"
 msgstr "Anakütle değeri tahmini"
 
-#: lib/src/describe.c:6526
+#: lib/src/describe.c:6528
 msgid "Shapiro-Wilk W"
 msgstr "Shapiro-Wilk W"
 
-#: lib/src/describe.c:6527
+#: lib/src/describe.c:6529
 msgid "Jarque-Bera test"
 msgstr "Jarque-Bera sınaması"
 
-#: lib/src/describe.c:6528
+#: lib/src/describe.c:6530
 msgid "Lilliefors test"
 msgstr "Lilliefors sınaması"
 
-#: lib/src/describe.c:6591
+#: lib/src/describe.c:6593
 #, c-format
 msgid "Test for normality of %s:"
 msgstr "%s için normallik sınaması"
@@ -2705,7 +2705,7 @@ msgid "actual"
 msgstr "gözlenen"
 
 #: lib/src/graphing.c:3235 lib/src/graphing.c:3239 lib/src/printout.c:1214
-#: gui2/guiprint.c:923 gui2/guiprint.c:1487 gui2/guiprint.c:1547
+#: gui2/guiprint.c:923 gui2/guiprint.c:1492 gui2/guiprint.c:1552
 #: gui2/library.c:4047
 msgid "fitted"
 msgstr "yakıştırılan"
@@ -5159,7 +5159,7 @@ msgstr "katsayı"
 #: lib/src/modelprint.c:2169 lib/src/modelprint.c:3526
 #: lib/src/modelprint.c:3923 lib/src/modelprint.c:4063
 #: lib/src/modelprint.c:4238 lib/src/varprint.c:453 lib/src/varprint.c:455
-#: lib/src/varprint.c:457 gui2/guiprint.c:1688 gui2/guiprint.c:1785
+#: lib/src/varprint.c:457 gui2/guiprint.c:1693 gui2/guiprint.c:1790
 #: plugin/fractals.c:271
 msgid "std. error"
 msgstr "ölç. hata"
@@ -5187,7 +5187,7 @@ msgid "Estimate"
 msgstr "Tahmin"
 
 #: lib/src/modelprint.c:2177 gui2/dialogs.c:1009 gui2/dialogs.c:5302
-#: gui2/guiprint.c:1876 gui2/guiprint.c:1926
+#: gui2/guiprint.c:1881 gui2/guiprint.c:1931
 msgid "Coefficient"
 msgstr "Katsayı"
 
@@ -6249,27 +6249,27 @@ msgstr "%d değişken listeleniyor:\n"
 msgid "list is empty"
 msgstr "liste boş"
 
-#: lib/src/printout.c:2318 gui2/guiprint.c:1362
+#: lib/src/printout.c:2318 gui2/guiprint.c:1367
 msgid "Mean Error"
 msgstr "Ortalama hata"
 
-#: lib/src/printout.c:2319 gui2/guiprint.c:1363
+#: lib/src/printout.c:2319 gui2/guiprint.c:1368
 msgid "Mean Squared Error"
 msgstr "Ortalama hata kareleri"
 
-#: lib/src/printout.c:2320 gui2/guiprint.c:1364
+#: lib/src/printout.c:2320 gui2/guiprint.c:1369
 msgid "Root Mean Squared Error"
 msgstr "Ortalama hata kareleri kökü"
 
-#: lib/src/printout.c:2321 gui2/guiprint.c:1365
+#: lib/src/printout.c:2321 gui2/guiprint.c:1370
 msgid "Mean Absolute Error"
 msgstr "Ortalama mutlak hata"
 
-#: lib/src/printout.c:2322 gui2/guiprint.c:1366
+#: lib/src/printout.c:2322 gui2/guiprint.c:1371
 msgid "Mean Percentage Error"
 msgstr "Ortalama yüzde hata"
 
-#: lib/src/printout.c:2323 gui2/guiprint.c:1367
+#: lib/src/printout.c:2323 gui2/guiprint.c:1372
 msgid "Mean Absolute Percentage Error"
 msgstr "Ortalama yüzde mutlak hata"
 
@@ -6289,7 +6289,7 @@ msgstr "Bağlanım orantısı, UR"
 msgid "Disturbance proportion, UD"
 msgstr "Bozukluk orantısı, UD"
 
-#: lib/src/printout.c:2365 gui2/guiprint.c:1391
+#: lib/src/printout.c:2365 gui2/guiprint.c:1396
 msgid "Forecast evaluation statistics"
 msgstr "Yordama değerlendirme istatistikleri"
 
@@ -6307,8 +6307,8 @@ msgstr " %%%g güven aralıkları için, z(%g) = %.2f\n"
 msgid " For %g%% confidence intervals, t(%d, %g) = %.3f\n"
 msgstr " %%%g güven aralıkları için, t(%d, %g) = %.3f\n"
 
-#: lib/src/printout.c:2528 gui2/guiprint.c:1625 gui2/guiprint.c:1688
-#: gui2/guiprint.c:1743 gui2/guiprint.c:1784
+#: lib/src/printout.c:2528 gui2/guiprint.c:1630 gui2/guiprint.c:1693
+#: gui2/guiprint.c:1748 gui2/guiprint.c:1789
 msgid "prediction"
 msgstr "yordama"
 
@@ -7643,7 +7643,7 @@ msgstr "Değişken %d"
 
 #: gui2/calculator.c:2330 gui2/guiprint.c:708 gui2/guiprint.c:731
 #: gui2/guiprint.c:753 gui2/guiprint.c:1020 gui2/guiprint.c:1047
-#: gui2/guiprint.c:1074 gui2/guiprint.c:1876 gui2/guiprint.c:1926
+#: gui2/guiprint.c:1074 gui2/guiprint.c:1881 gui2/guiprint.c:1931
 #: gui2/selector.c:7798
 msgid "Variable"
 msgstr "Değişken"
@@ -10425,7 +10425,7 @@ msgstr "Önizleme"
 msgid "The graph page is full"
 msgstr "Çizim sayfası dolu"
 
-#: gui2/graph_page.c:519 gui2/guiprint.c:2318 gui2/guiprint.c:2433
+#: gui2/graph_page.c:519 gui2/guiprint.c:2323 gui2/guiprint.c:2438
 msgid "Failed to process TeX file"
 msgstr "TeX dosyası işleme başarısız"
 
@@ -11511,66 +11511,66 @@ msgstr "Ölç.\\ Sap."
 msgid "Ex.\\ kurtosis"
 msgstr "Fzl.\\ basıklık"
 
-#: gui2/guiprint.c:1081
-#, c-format
+#: gui2/guiprint.c:1082
+#, no-c-format
 msgid "5\\% perc."
 msgstr ""
 
-#: gui2/guiprint.c:1081
-#, c-format
+#: gui2/guiprint.c:1084
+#, no-c-format
 msgid "95\\% perc."
 msgstr ""
 
-#: gui2/guiprint.c:1081
+#: gui2/guiprint.c:1085
 #, fuzzy
 msgid "IQ Range"
 msgstr "Aralık"
 
-#: gui2/guiprint.c:1172
+#: gui2/guiprint.c:1177
 #, c-format
 msgid "Correlation coefficients, using the observations %s - %s"
 msgstr "İlinti katsayıları, kullanılan gözlemler: %s - %s"
 
-#: gui2/guiprint.c:1183 gui2/guiprint.c:1277
+#: gui2/guiprint.c:1188 gui2/guiprint.c:1282
 msgid "Coefficient covariance matrix"
 msgstr "Katsayı kovaryans dizeyi"
 
-#: gui2/guiprint.c:1265
+#: gui2/guiprint.c:1270
 #, c-format
 msgid "Correlation coefficients, using the observations %s--%s"
 msgstr "İlinti katsayıları, %s--%s gözlemlerine dayalı"
 
-#: gui2/guiprint.c:1272
+#: gui2/guiprint.c:1277
 #, c-format
 msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
 msgstr "n = %2$d için \\%% 5 kritik değeri (çift-kuyruk) = %1$.4f"
 
-#: gui2/guiprint.c:1368
+#: gui2/guiprint.c:1373
 msgid "Theil's $U$"
 msgstr "Theil $U$ değeri"
 
-#: gui2/guiprint.c:1369
+#: gui2/guiprint.c:1374
 msgid "Bias proportion, $U^M$"
 msgstr "Yanlılık orantısı, $U^M$"
 
-#: gui2/guiprint.c:1370
+#: gui2/guiprint.c:1375
 msgid "Regression proportion, $U^R$"
 msgstr "Bağlanım orantısı, $U^R$"
 
-#: gui2/guiprint.c:1371
+#: gui2/guiprint.c:1376
 msgid "Disturbance proportion, $U^D$"
 msgstr "Bozukluk orantısı, $U^D$"
 
-#: gui2/guiprint.c:1426 gui2/guiprint.c:1444
+#: gui2/guiprint.c:1431 gui2/guiprint.c:1449
 msgid "Model estimation range:"
 msgstr "Model tahmin aralığı:"
 
-#: gui2/guiprint.c:1429 gui2/guiprint.c:1447
+#: gui2/guiprint.c:1434 gui2/guiprint.c:1452
 #, c-format
 msgid "Standard error of residuals = %g"
 msgstr "Kalıntılar ölçünlü hatası = %g"
 
-#: gui2/guiprint.c:1516
+#: gui2/guiprint.c:1521
 msgid ""
 "\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
 "\n"
@@ -11579,16 +11579,16 @@ msgstr ""
 "göstermektedir\n"
 "\n"
 
-#: gui2/guiprint.c:1577
+#: gui2/guiprint.c:1582
 msgid "Note: * denotes a residual in excess of 2.5 standard errors"
 msgstr "Not: '*' 2,5 ölçünlü hatadan daha uzak bir kalıntıyı göstermektedir."
 
-#: gui2/guiprint.c:1625 gui2/guiprint.c:1687 gui2/guiprint.c:1743
-#: gui2/guiprint.c:1784
+#: gui2/guiprint.c:1630 gui2/guiprint.c:1692 gui2/guiprint.c:1748
+#: gui2/guiprint.c:1789
 msgid "Obs"
 msgstr "Gözl"
 
-#: gui2/guiprint.c:1657
+#: gui2/guiprint.c:1662
 #, c-format
 msgid ""
 "For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
@@ -11597,7 +11597,7 @@ msgstr ""
 "\\%%%g güven aralıkları için, $z(%g) = %.2f$\n"
 "\n"
 
-#: gui2/guiprint.c:1661
+#: gui2/guiprint.c:1666
 #, c-format
 msgid ""
 "For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
@@ -11606,38 +11606,38 @@ msgstr ""
 "\\%%%g güven aralıkları için, $t(%d, %g) = %.3f$\n"
 "\n"
 
-#: gui2/guiprint.c:1681
+#: gui2/guiprint.c:1686
 #, c-format
 msgid "%g\\%% interval"
 msgstr "\\%%%g aralığı"
 
-#: gui2/guiprint.c:1765
+#: gui2/guiprint.c:1770
 #, c-format
 msgid "For %g%% confidence intervals, z(%g) = %.2f"
 msgstr "%%%g güven aralıkları için, z(%g) = %.2f"
 
-#: gui2/guiprint.c:1769
+#: gui2/guiprint.c:1774
 #, c-format
 msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
 msgstr "%%%g güven aralıkları için, t(%d, %g) = %.3f"
 
-#: gui2/guiprint.c:1774
+#: gui2/guiprint.c:1779
 #, c-format
 msgid "%g%% interval"
 msgstr "(%%%g aralığı)"
 
-#: gui2/guiprint.c:1871 gui2/guiprint.c:1918
+#: gui2/guiprint.c:1876 gui2/guiprint.c:1923
 #, c-format
 msgid "%g\\%% confidence interval"
 msgstr "\\%%%g güven aralığı"
 
-#: gui2/guiprint.c:1958
+#: gui2/guiprint.c:1963
 msgid ""
 "You can't use the same character for the column delimiter and the decimal "
 "point"
 msgstr "Sütun ayıracı ve ondalık ayıracı için aynı simgeyi kullanamazsınız"
 
-#: gui2/guiprint.c:2131
+#: gui2/guiprint.c:2136
 msgid "No scalar variables are currently defined"
 msgstr "Şu an, tanımlı sayıl değişken yok"
 

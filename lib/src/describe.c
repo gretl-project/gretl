@@ -4555,7 +4555,9 @@ void print_summary (const Summary *summ,
 	    N_("Ex. kurtosis")
 	};
 	const char *hc[] = {
+	    /* xgettext:no-c-format */
 	    N_("5% perc."),
+	    /* xgettext:no-c-format */
 	    N_("95% perc."),
 	    N_("IQ range"),
 	    N_("Missing obs.")
