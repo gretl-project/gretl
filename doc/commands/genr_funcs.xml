@@ -1677,7 +1677,7 @@
 	<para>
 	  Returns the principal diagonal of <argname>X</argname> in a
 	  column vector. Note: if <argname>X</argname> is an
-	  <by r="m" c="n"/> marix, the number of elements
+	  <by r="m" c="n"/> matrix, the number of elements
 	  of the output vector is min(<math>m</math>, <math>n</math>).
 	  <seelist>
 	    <fncref targ="tr"/>
@@ -1693,10 +1693,12 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the direct sum of <argname>A</argname>
-	  and <argname>B</argname>, that is a block-diagonal matrix
-	  holding <argname>A</argname> in its north-west corner
-	  and <argname>B</argname> in its south-east corner.
+	  Returns the direct sum of <argname>A</argname> and
+	  <argname>B</argname>, that is a matrix holding
+	  <argname>A</argname> in its north-west corner and
+	  <argname>B</argname> in its south-east corner. If both
+	  <argname>A</argname> and <argname>B</argname> are square,
+	  the resulting matrix is block-diagonal.
 	</para>
       </description>
     </function>

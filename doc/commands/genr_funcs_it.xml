@@ -908,19 +908,37 @@
       </description>
     </function>  
 
-    <function name="diag" section="linalg" output="matrix">
+    <function name="diag" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the principal diagonal of <argname>X</argname> in a
-	  column vector. Note: if <argname>X</argname> is an
-	  <by r="m" c="n"/> marix, the number of elements
-	  of the output vector is min(<math>m</math>, <math>n</math>).
+	  Ritorna la diagonale principale di <argname>X</argname> in
+	  un vettore colonna. Nota: se <argname>X</argname> è una
+	  matrice <by r="m" c="n"/>, il numero di elementi del vettore
+	  risultato è min(<math>m</math>, <math>n</math>).
 	  <seelist>
 	    <fncref targ="tr"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+
+    <function name="diagcat" section="matbuild" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="matrix">B</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Ritorna la simma diretta di <argname>A</argname> e
+	  <argname>B</argname>, ossia una matrice che ha
+	  <argname>A</argname> nell'angolo nord-ovest e
+	  <argname>B</argname> in quello sud-est. Se
+	  <argname>A</argname> e <argname>B</argname> sono entrambe
+	  quadrate, la matrice risultato è diagonale a blocchi.
 	</para>
       </description>
     </function>
