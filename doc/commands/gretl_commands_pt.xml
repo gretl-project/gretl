@@ -6108,25 +6108,6 @@
 
   </command>  
 
-  <command name="markers" section="Dataset" context="gui"
-    label="Add case markers">
-
-    <description>
-      <para>
-	This command needs the name of a file containing <quote>case
-	  markers</quote>, that is, short identifying strings for the
-	individual observations in the data set (for example, country
-	or city names or codes).  These marker strings should be no
-	more than 8 characters long.  The file should contain one
-	marker per line, and there should be just as many markers as
-	observations in the current dataset. If these conditions are
-	met and the specified file is found, the case markers will be
-	added; they will be visible when you choose <quote>Display
-	  values</quote> under gretl's Data menu.
-      </para>
-    </description>
-  </command>
-
   <command name="makepkg" section="Programming" context="cli"
     label="Make function package">
 
