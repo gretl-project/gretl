@@ -13,7 +13,7 @@ Version 1.9.10, in progress
 - "modtest" command: support the autocorrelation option for ARMA
   models, using the Ljung-Box statistic
 - "boxplot" command: add a --matrix option, which works in the way
-  manner as for the "gnuplot" command
+  as with the "gnuplot" command
 - Add three new functions: ghk(), halton() and isnan()
 - Add two new accessors: $pi and $huge
 - Fix for ARMA forecasts: ensure that the dynamic portion starts
