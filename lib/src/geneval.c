@@ -9768,7 +9768,8 @@ static void printnode (NODE *t, parser *p)
 			 o == DEC || o == B_HCAT || \
                          o == B_VCAT || o == B_DOTASN)
 #define ok_list_op(o) (o == B_ASN || o == B_ADD || o == B_SUB)
-#define ok_string_op(o) (o == B_ASN || o == B_ADD || o == B_HCAT) 
+#define ok_string_op(o) (o == B_ASN || o == B_ADD || \
+			 o == B_HCAT || o == INC) 
 
 struct mod_assign {
     int c;
@@ -10079,6 +10080,8 @@ static NODE *lhs_copy_node (parser *p)
 	n->v.xval = gretl_scalar_get_value(p->lh.name);
     } else if (p->targ == VEC) {
 	n->v.xvec = p->dset->Z[p->lh.v];
+    } else if (p->targ == STR) {
+	n->v.str = gretl_strdup(get_string_by_name(p->lh.name));
     } else {
 	n->v.m = p->lh.m0;
     }
@@ -11055,6 +11058,30 @@ static int edit_string (parser *p)
 		strcat(full, src);
 		p->err = save_named_string(p->lh.name, full, NULL);
 		free(full);
+	    }
+	}
+    } else if (p->op == INC) {
+	/* string++ */
+	const char *orig = get_string_by_name(p->lh.name);
+
+	if (orig == NULL) {
+	    p->err = E_DATA;
+	} else {
+	    size_t len = strlen(orig);
+	    char *newstr;
+
+	    if (len < 2) {
+		newstr = gretl_strdup("");
+	    } else {
+		newstr = malloc(len);
+	    }
+	    if (newstr == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		*newstr = '\0';
+		strncat(newstr, orig + 1, len - 1);
+		p->err = save_named_string(p->lh.name, newstr, NULL);
+		free(newstr);
 	    }
 	}
     }
