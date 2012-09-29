@@ -2282,7 +2282,9 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
 	cmd->ci == ARMA || cmd->ci == GARCH) {
 	/* flag acceptance of plain ints in list */
 	ints_ok = 1;
-    } else if ((cmd->ci == GNUPLOT || cmd->ci == SCATTERS) && 
+    } else if ((cmd->ci == GNUPLOT || 
+		cmd->ci == SCATTERS ||
+		cmd->ci == BXPLOT) && 
 	       (cmd->opt & OPT_X)) {
 	/* plotting columns of a matrix */
 	ints_ok = 1;
@@ -2358,6 +2360,7 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
 	       cmd->ci != PRINT &&
 	       cmd->ci != GNUPLOT &&
 	       cmd->ci != SCATTERS &&
+	       cmd->ci != BXPLOT &&
 	       cmd->ci != DELEET) {
 	/* the command needs a list but doesn't have one */
 	if (cmd->list[0] == 0) {
@@ -2390,6 +2393,16 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
 	    ; /* non-empty list not required */
 	} else {
 	    /* all other cases: we need at least two series */
+	    cmd->err = E_ARGS;
+	}
+    }
+
+    if (!cmd->err && cmd->ci == BXPLOT && cmd->list[0] < 1) {
+	/* check the list for the boxplot command */
+	if (cmd->opt & OPT_X) {
+	    ; /* matrix: non-empty list not required */
+	} else {
+	    /* all other cases: we need at least one series */
 	    cmd->err = E_ARGS;
 	}
     }    
@@ -5764,10 +5777,14 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    } else {
 		err = multi_scatters(cmd->list, dset, cmd->opt);
 	    }
-	} else if (cmd_nolist(cmd)) { 
+	} else if (cmd_nolist(cmd)) {
 	    err = boolean_boxplots(line, dset, cmd->opt);
 	} else {
-	    err = boxplots(cmd->list, dset, cmd->opt);
+	    if (cmd->opt & OPT_X) {
+		err = matrix_boxplot_driver(cmd->list, cmd->opt);
+	    } else {
+		err = boxplots(cmd->list, dset, cmd->opt);
+	    }
 	}
 	if (!err) {
 	    maybe_schedule_graph_callback(s);

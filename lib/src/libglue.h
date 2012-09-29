@@ -47,6 +47,8 @@ int matrix_plot_driver (const int *list, const char *literal,
 int matrix_scatters_driver (const int *list, const DATASET *dset,
 			    gretlopt opt);
 
+int matrix_boxplot_driver (const int *list, gretlopt opt);
+
 int do_modprint (const char *line, gretlopt opt, PRN *prn);
 
 #endif /* LIBGLUE_H */

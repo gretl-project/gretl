@@ -12,6 +12,8 @@ Version 1.9.10, in progress
 - "gnuplot" command: add a --with-lp option to use linespoints
 - "modtest" command: support the autocorrelation option for ARMA
   models, using the Ljung-Box statistic
+- "boxplot" command: add a --matrix option, which works in the way
+  manner as for the "gnuplot" command
 - Add three new functions: ghk(), halton() and isnan()
 - Add two new accessors: $pi and $huge
 - Fix for ARMA forecasts: ensure that the dynamic portion starts
@@ -28,15 +30,16 @@ Version 1.9.10, in progress
   more robust algorithm
 - randgen() function, gamma distribution option: switch to the fast
   Marsaglia-Tsang generator for gamma variates
-- MS Windows build: work around problems associated with the
-  "Virtual Store" folder-redirection introduced in Windows Vista
-- Linux: add proper XDG support (mime types, icons)
 - Fix bivariate normal cdf calculator (would return NAs in some
   pathological cases)
 - GUI: add check for updated addons, such as gig
 - GUI icon view: enable copying of graphs and matrices
 - GUI graphs: in saving as PDF, remember the user's choice of font
   size for the duration of the session
+- MS Windows build: work around problems associated with the
+  "Virtual Store" folder-redirection introduced in Windows Vista
+- Linux: add proper XDG support (mime types, icons)
+- OS X package: update the gmp, mpfr and fftw libraries
 
 2012-06-01 version 1.9.9
 - Add --cluster option (cluster-robust standard errors) for several

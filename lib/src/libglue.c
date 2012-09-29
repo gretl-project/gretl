@@ -30,6 +30,7 @@
 #include "usermat.h"
 #include "gretl_scalar.h"
 #include "gretl_string_table.h"
+#include "boxplots.h"
 #include "libglue.h"
 
 /*
@@ -542,6 +543,27 @@ int matrix_scatters_driver (const int *list, const DATASET *dset,
 	err = E_DATA;
     } else {
 	err = matrix_scatters(m, list, dset, opt);
+    }
+
+    return err;
+}
+
+int matrix_boxplot_driver (const int *list, gretlopt opt)
+{
+    gretl_matrix *m = NULL;
+    const char *mname;
+    int err = 0;
+
+    mname = get_optval_string(BXPLOT, OPT_X);
+
+    if (mname != NULL) {
+	m = get_matrix_by_name(mname);
+    }
+
+    if (m == NULL) {
+	err = E_DATA;
+    } else {
+	err = matrix_boxplots(m, list, opt);
     }
 
     return err;

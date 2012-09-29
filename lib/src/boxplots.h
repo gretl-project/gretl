@@ -22,6 +22,8 @@
 
 int boxplots (const int *list, const DATASET *dset, gretlopt opt);
 
+int matrix_boxplots (gretl_matrix *m, const int *list, gretlopt opt);
+
 int boolean_boxplots (const char *line, DATASET *dset, gretlopt opt);
 
 int boxplot_numerical_summary (const char *fname, PRN *prn);

@@ -127,6 +127,7 @@ struct gretl_option gretl_opts[] = {
     { BXPLOT,   OPT_L, "outliers", 2 },
     { BXPLOT,   OPT_P, "panel", 0 },
     { BXPLOT,   OPT_U, "output", 2 },
+    { BXPLOT,   OPT_X, "matrix", 2 },
     { BXPLOT,   OPT_Z, "factorized", 0 },
     { CHOW,     OPT_D, "dummy", 0 },
     { CLEAR,    OPT_D, "dataset", 0 },

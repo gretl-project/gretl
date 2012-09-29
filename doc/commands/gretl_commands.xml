@@ -1198,6 +1198,11 @@
 	  <flag>--panel</flag>
 	  <effect>see below</effect>
 	</option>
+        <option>
+	  <flag>--matrix</flag>
+	  <optparm>name</optparm>
+	  <effect>plot columns of named matrix</effect>
+        </option>
 	<option>
 	  <flag>--output</flag>
 	  <optparm>filename</optparm>
@@ -1251,6 +1256,15 @@
 	specified, the <opt>panel</opt> option produces a series of
 	side-by-side boxplots, one for each panel <quote>unit</quote>
 	or group.
+      </para>
+
+      <para context="cli">
+	Generally, the argument <repl>varlist</repl> is required, and
+	refers to one or more series in the current dataset (given
+	either by name or ID number).  But if a named matrix is
+	supplied via the <opt>--matrix</opt> option this argument
+	becomes optional: by default a plot is drawn for each
+	column of the specified matrix.
       </para>
 
       <para context="cli">
