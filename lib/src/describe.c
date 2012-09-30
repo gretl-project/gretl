@@ -4948,7 +4948,9 @@ int list_summary (const int *list, const DATASET *dset,
 }
 
 /**
- * print_matrix_summary:
+ * matrix_summary:
+ * @m: matrix from which to draw data.
+ * @list: list of columns to use, or NULL for all.
  * @opt: may include %OPT_S for "simple" version.
  * @prn: gretl printing struct.
  *
@@ -4959,45 +4961,39 @@ int list_summary (const int *list, const DATASET *dset,
  * Returns: 0 on success, non-zero code on error.
  */
 
-int print_matrix_summary (gretlopt opt, PRN *prn)
+int matrix_summary (gretl_matrix *m, const int *list,
+		    gretlopt opt, PRN *prn)
 {
-    const char *mname;
-    const gretl_matrix *m;
     DATASET *dset = NULL;
-    int *list = NULL;
+    int *summlist = NULL;
     int err = 0;
 
-    mname = get_optval_string(SUMMARY, OPT_M);
-    
-    if (mname == NULL) {
-	err = E_DATA;
-    } else {
-	m = get_matrix_by_name(mname);
-	if (m == NULL) {
-	    err = E_DATA;
-	}
+    if (gretl_is_null_matrix(m)) {
+	return E_DATA;
     }
 
-    if (!err) {
+    if (list != NULL && list[0] == 0) {
 	dset = gretl_dataset_from_matrix(m, NULL, &err);
+    } else {
+	dset = gretl_dataset_from_matrix(m, list, &err);
     }
-
+ 
     if (err) {
 	return err;
     }
 
-    list = gretl_consecutive_list_new(1, dset->v - 1);
-    if (list == NULL) {
+    summlist = gretl_consecutive_list_new(1, dset->v - 1);
+    if (summlist == NULL) {
 	err = E_ALLOC;
     } 
 
     if (!err) {
-	opt &= ~OPT_M;
-	err = list_summary(list, dset, opt, prn);
+	opt &= ~OPT_X;
+	err = list_summary(summlist, dset, opt, prn);
     }
 
     destroy_dataset(dset);   
-    free(list);
+    free(summlist);
 
     return err;
 }

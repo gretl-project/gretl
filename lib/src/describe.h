@@ -204,7 +204,8 @@ Summary *get_summary_restricted (const int *list,
 int list_summary (const int *list, const DATASET *dset, 
 		  gretlopt opt, PRN *prn);
 
-int print_matrix_summary (gretlopt opt, PRN *prn);
+int matrix_summary (gretl_matrix *m, const int *list,
+		    gretlopt opt, PRN *prn);
 
 void print_summary (const Summary *summ,
 		    const DATASET *dset,

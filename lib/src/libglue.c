@@ -504,14 +504,18 @@ int do_modprint (const char *line, gretlopt opt, PRN *prn)
     return err;
 }
 
-int matrix_plot_driver (const int *list, const char *literal,
-			gretlopt opt)
+int matrix_command_driver (int ci, 
+			   const int *list, 
+			   const char *param,
+			   const DATASET *dset, 
+			   gretlopt opt,
+			   PRN *prn)
 {
     gretl_matrix *m = NULL;
     const char *mname;
     int err = 0;
 
-    mname = get_optval_string(GNUPLOT, OPT_X);
+    mname = get_optval_string(ci, OPT_X);
 
     if (mname != NULL) {
 	m = get_matrix_by_name(mname);
@@ -519,51 +523,16 @@ int matrix_plot_driver (const int *list, const char *literal,
 
     if (m == NULL) {
 	err = E_DATA;
-    } else {
-	err = matrix_plot(m, list, literal, opt);
-    }
-
-    return err;
-}
-
-int matrix_scatters_driver (const int *list, const DATASET *dset,
-			    gretlopt opt)
-{
-    gretl_matrix *m = NULL;
-    const char *mname;
-    int err = 0;
-
-    mname = get_optval_string(SCATTERS, OPT_X);
-
-    if (mname != NULL) {
-	m = get_matrix_by_name(mname);
-    }
-
-    if (m == NULL) {
-	err = E_DATA;
-    } else {
-	err = matrix_scatters(m, list, dset, opt);
-    }
-
-    return err;
-}
-
-int matrix_boxplot_driver (const int *list, gretlopt opt)
-{
-    gretl_matrix *m = NULL;
-    const char *mname;
-    int err = 0;
-
-    mname = get_optval_string(BXPLOT, OPT_X);
-
-    if (mname != NULL) {
-	m = get_matrix_by_name(mname);
-    }
-
-    if (m == NULL) {
-	err = E_DATA;
-    } else {
+    } else if (ci == BXPLOT) {
 	err = matrix_boxplots(m, list, opt);
+    } else if (ci == SCATTERS) {
+	err = matrix_scatters(m, list, dset, opt);
+    } else if (ci == GNUPLOT) {
+	err = matrix_plot(m, list, param, opt);
+    } else if (ci == SUMMARY) {
+	err = matrix_summary(m, list, opt, prn);
+    } else {
+	err = E_DATA;
     }
 
     return err;

@@ -457,8 +457,8 @@ struct gretl_option gretl_opts[] = {
     { STORE,    OPT_E, "comment", 2 },
     { STORE,    OPT_I, "decimal-comma", 0 },
     { SUMMARY,  OPT_B, "by", 2 },
-    { SUMMARY,  OPT_M, "matrix", 2 },
     { SUMMARY,  OPT_S, "simple", 0 },
+    { SUMMARY,  OPT_X, "matrix", 2 },
     { SYSTEM,   OPT_I, "iterate", 0 },
     { SYSTEM,   OPT_V, "verbose", 0 },
     { TOBIT,    OPT_L, "llimit", 2 },
@@ -509,6 +509,27 @@ int cluster_option_ok (int ci)
 	    found = 1;
 	} else if (found) {
 	    break;
+	}
+    }
+
+    return 0;
+}
+
+int matrix_data_option (int ci, gretlopt opt)
+{
+    if (opt & OPT_X) {
+	int i, found = 0;
+
+	for (i=0; gretl_opts[i].ci; i++) {
+	    if (gretl_opts[i].ci == ci) {
+		if (gretl_opts[i].o == OPT_X &&
+		    !strcmp(gretl_opts[i].longopt, "matrix")) {
+		    return 1;
+		}
+		found = 1;
+	    } else if (found) {
+		break;
+	    }
 	}
     }
 

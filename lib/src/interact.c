@@ -2282,11 +2282,8 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
 	cmd->ci == ARMA || cmd->ci == GARCH) {
 	/* flag acceptance of plain ints in list */
 	ints_ok = 1;
-    } else if ((cmd->ci == GNUPLOT || 
-		cmd->ci == SCATTERS ||
-		cmd->ci == BXPLOT) && 
-	       (cmd->opt & OPT_X)) {
-	/* plotting columns of a matrix */
+    } else if (matrix_data_option(cmd->ci, cmd->opt)) {
+	/* the list refers to columns of a matrix */
 	ints_ok = 1;
     }
 
@@ -2605,10 +2602,9 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
     /* commands that never take a list of variables */
     if (NO_VARLIST(cmd->ci) || 
 	(cmd->ci == DELEET && (cmd->opt & OPT_D)) ||
-	(cmd->ci == SUMMARY && (cmd->opt & OPT_M)) ||
 	(cmd->ci == EQUATION && (cmd->opt & OPT_M))) { 
 	cmd_set_nolist(cmd);
-	if (cmd->ci != GENR && cmd->ci != SUMMARY) {
+	if (cmd->ci != GENR) {
 	    capture_param(cmd, rem);
 	}
 	return cmd->err;
@@ -3499,13 +3495,12 @@ cmd_print_list (const CMD *cmd, const DATASET *dset,
 	return;
     }
     
-    if ((cmd->ci == GNUPLOT || 
-	 cmd->ci == SCATTERS ||
-	 cmd->ci == BXPLOT) && 
-	(cmd->opt & OPT_X)) {
-	/* plotting columns of a matrix */
+    if (dset == NULL) {
 	use_varnames = 0;
-    }
+    } else if (matrix_data_option(cmd->ci, cmd->opt)) {
+	/* using columns of a matrix */
+	use_varnames = 0;
+    }	
 
     nsep = n_separators(cmd->list);
 
@@ -5297,8 +5292,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case SUMMARY:
 	if (cmd->opt & OPT_B) {
 	    err = do_command_by(cmd, dset, prn);
-	} else if (cmd->opt & OPT_M) {
-	    err = print_matrix_summary(cmd->opt, prn);
+	} else if (cmd->opt & OPT_X) {
+	    err = matrix_command_driver(cmd->ci, cmd->list, cmd->param,
+					dset, cmd->opt, prn);
 	} else {
 	    err = list_summary(cmd->list, dset, cmd->opt, prn);
 	}
@@ -5762,11 +5758,12 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case GNUPLOT:
     case BXPLOT:
     case SCATTERS:
-	if (cmd->ci == GNUPLOT) {
+	if (cmd->opt & OPT_X) {
+	    err = matrix_command_driver(cmd->ci, cmd->list, cmd->param, 
+					dset, cmd->opt, prn);
+	} else if (cmd->ci == GNUPLOT) {
 	    if (cmd->opt & OPT_D) {
 		err = gnuplot_process_file(cmd->opt, prn);
-	    } else if (cmd->opt & OPT_X) {
-		err = matrix_plot_driver(cmd->list, cmd->param, cmd->opt);
 	    } else if (cmd->opt & OPT_C) {
 		err = xy_plot_with_control(cmd->list, cmd->param, 
 					   dset, cmd->opt);
@@ -5774,19 +5771,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 		err = gnuplot(cmd->list, cmd->param, dset, cmd->opt);
 	    }
 	} else if (cmd->ci == SCATTERS) {
-	    if (cmd->opt & OPT_X) {
-		err = matrix_scatters_driver(cmd->list, dset, cmd->opt);
-	    } else {
-		err = multi_scatters(cmd->list, dset, cmd->opt);
-	    }
+	    err = multi_scatters(cmd->list, dset, cmd->opt);
 	} else if (cmd_nolist(cmd)) {
 	    err = boolean_boxplots(line, dset, cmd->opt);
 	} else {
-	    if (cmd->opt & OPT_X) {
-		err = matrix_boxplot_driver(cmd->list, cmd->opt);
-	    } else {
-		err = boxplots(cmd->list, dset, cmd->opt);
-	    }
+	    err = boxplots(cmd->list, dset, cmd->opt);
 	}
 	if (!err) {
 	    maybe_schedule_graph_callback(s);

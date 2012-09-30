@@ -42,6 +42,8 @@ int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn);
 
 int cluster_option_ok (int ci);
 
+int matrix_data_option (int ci, gretlopt opt);
+
 char **get_all_option_strings (int *pn);
 
 gretlopt transcribe_option_flags (gretlopt *targ, gretlopt src,
