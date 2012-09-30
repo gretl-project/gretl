@@ -1444,7 +1444,7 @@ int write_tx_data (char *fname, int varnum,
 	savescript = 1;
     } else {
 	/* create little temporary dataset */
-	tmpset = create_auxiliary_dataset(4, dset->n);
+	tmpset = create_auxiliary_dataset(4, dset->n, 0);
 	if (tmpset == NULL) {
 	    return E_ALLOC;
 	}

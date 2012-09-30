@@ -792,7 +792,7 @@ static int nls_make_trimmed_dataset (nlspec *spec, int t1, int t2)
 	return E_DF;
     }
 
-    dset = create_auxiliary_dataset(nvar, nobs);
+    dset = create_auxiliary_dataset(nvar, nobs, 0);
     if (dset == NULL) {
 	return E_ALLOC;
     }
@@ -1768,7 +1768,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 
     /* number of variables = 1 (const) + 1 (depvar) + spec->ncoeff
        (derivatives) */
-    gdset = create_auxiliary_dataset(spec->ncoeff + 2, dset->n);
+    gdset = create_auxiliary_dataset(spec->ncoeff + 2, dset->n, 0);
     if (gdset == NULL) {
 	gretl_model_init(&gnr);
 	gnr.errcode = E_ALLOC;

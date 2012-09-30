@@ -710,6 +710,7 @@ gretl_matrix_data_subset_special (const int *list,
  * gretl_dataset_from_matrix:
  * @m: source matrix.
  * @list: list of columns (1-based) to include, or NULL.
+ * @opt: may include OPT_B to attempt "borrowing" of data.
  * @err: location to receive error code.
  *
  * Creates a gretl dataset from matrix @m, either using the
@@ -722,6 +723,7 @@ gretl_matrix_data_subset_special (const int *list,
 
 DATASET *gretl_dataset_from_matrix (const gretl_matrix *m, 
 				    const int *list,
+				    gretlopt opt,
 				    int *err)
 {
     DATASET *dset = NULL;
@@ -741,16 +743,34 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 	for (i=1; i<=list[0]; i++) {
 	    col = list[i];
 	    if (col < 1 || col > nv) {
-		fprintf(stderr, "column %d: out of bounds\n", col);
+		gretl_errmsg_sprintf("Variable number %d is out of bounds", col);
 		*err = E_DATA;
 		break;
-	    } 
+	    } else if (opt & OPT_B) {
+		/* try borrowing? */
+		for (t=0; t<T; t++) {
+		    x = gretl_matrix_get(m, t, col-1);
+		    if (xna(x)) {
+			opt = OPT_NONE;
+			break;
+		    }
+		}
+	    }
 	}
 	nv = list[0];
-    } 
+    } else if (opt & OPT_B) {
+	int N = T * nv;
+
+	for (i=0; i<N; i++) {
+	    if (xna(m->val[i])) {
+		opt = OPT_NONE;
+		break;
+	    }
+	}
+    }
 
     if (!*err) {
-	dset = create_auxiliary_dataset(nv + 1, T);
+	dset = create_auxiliary_dataset(nv + 1, T, opt);
 	if (dset == NULL) {
 	    *err = E_ALLOC;
 	}
@@ -764,9 +784,16 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 
     for (i=1; i<=nv; i++) {
 	col = (list != NULL)? list[i] - 1 : i - 1;
-	for (t=0; t<T; t++) {
-	    x = gretl_matrix_get(m, t, col);
-	    dset->Z[i][t] = x;
+	if (opt & OPT_B) {
+	    dset->Z[i] = m->val + T * col;
+	} else {
+	    for (t=0; t<T; t++) {
+		x = gretl_matrix_get(m, t, col);
+		if (xna(x)) {
+		    x = NADBL;
+		}
+		dset->Z[i][t] = x;
+	    }
 	}
 	if (names != NULL) {
 	    strcpy(dset->varname[i], names[col]);

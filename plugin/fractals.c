@@ -244,7 +244,7 @@ int hurst_exponent (int vnum, const DATASET *dset, PRN *prn)
 
     k = get_depth(T);
 
-    hset = create_auxiliary_dataset(3, k);
+    hset = create_auxiliary_dataset(3, k, 0);
     if (hset == NULL) return E_ALLOC;
 
     pprintf(prn, _("Rescaled range figures for %s"), 

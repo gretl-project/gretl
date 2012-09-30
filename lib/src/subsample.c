@@ -1292,7 +1292,7 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
     }
 
     /* set up the sub-sampled datainfo */
-    err = start_new_Z(subset, 1);
+    err = start_new_Z(subset, OPT_R);
     if (err) { 
 	free(subset);
 	return err;
@@ -2028,7 +2028,7 @@ int add_dataset_to_model (MODEL *pmod, const DATASET *dset,
     }
 
     /* allocate auxiliary dataset */
-    pmod->dataset = create_auxiliary_dataset(maxv, sn);
+    pmod->dataset = create_auxiliary_dataset(maxv, sn, 0);
     if (pmod->dataset == NULL) {
 	return E_ALLOC;
     }

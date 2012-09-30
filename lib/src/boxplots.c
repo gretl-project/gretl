@@ -22,7 +22,6 @@
 #include "libgretl.h"
 #include "boxplots.h"
 #include "libset.h"
-#include "matrix_extra.h"
 
 typedef struct {
     double mean;
@@ -881,7 +880,7 @@ static int panel_group_boxplots (int vnum, const DATASET *dset,
     nv = nunits + 1;
     u0 = dset->t1 / T;
 
-    gdset = create_auxiliary_dataset(nv, T);
+    gdset = create_auxiliary_dataset(nv, T, 0);
     if (gdset == NULL) {
 	return E_ALLOC;
     }
@@ -941,42 +940,6 @@ int boxplots (const int *list, const DATASET *dset, gretlopt opt)
     } else {
 	err = real_boxplots(list, NULL, dset, opt);
     }
-
-    return err;
-}
-
-int matrix_boxplots (gretl_matrix *m, const int *list, gretlopt opt)
-{
-    DATASET *dset = NULL;
-    int *plotlist = NULL;
-    int err = 0;
-
-    if (gretl_is_null_matrix(m)) {
-	return E_DATA;
-    }
-
-    if (list != NULL && list[0] == 0) {
-	dset = gretl_dataset_from_matrix(m, NULL, &err);
-    } else {
-	dset = gretl_dataset_from_matrix(m, list, &err);
-    }
- 
-    if (err) {
-	return err;
-    }
-
-    plotlist = gretl_consecutive_list_new(1, dset->v - 1);
-    if (plotlist == NULL) {
-	err = E_ALLOC;
-    } 
-
-    if (!err) {
-	opt &= ~OPT_X;
-	err = boxplots(plotlist, dset, opt);
-    }
-
-    destroy_dataset(dset);   
-    free(plotlist);
 
     return err;
 }

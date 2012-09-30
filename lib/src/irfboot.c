@@ -453,7 +453,7 @@ static int init_VECM_dataset (irfboot *b, GRETL_VAR *var,
 	nv += var->rlist[0];
     }
 
-    b->dset = create_auxiliary_dataset(nv, dset->n);
+    b->dset = create_auxiliary_dataset(nv, dset->n, 0);
     if (b->dset == NULL) {
 	return E_ALLOC;
     }   

@@ -1611,7 +1611,7 @@ static int loop_store_start (LOOPSET *loop, const int *list,
 
     n = (loop->itermax > 0)? loop->itermax : DEFAULT_NOBS;
 
-    loop->store.dset = create_auxiliary_dataset(list[0] + 1, n);
+    loop->store.dset = create_auxiliary_dataset(list[0] + 1, n, 0);
     if (loop->store.dset == NULL) {
 	return E_ALLOC;
     }

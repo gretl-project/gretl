@@ -30,6 +30,7 @@
 #include "usermat.h"
 #include "gretl_scalar.h"
 #include "gretl_string_table.h"
+#include "matrix_extra.h"
 #include "boxplots.h"
 #include "libglue.h"
 
@@ -512,6 +513,8 @@ int matrix_command_driver (int ci,
 			   PRN *prn)
 {
     gretl_matrix *m = NULL;
+    DATASET *mdset = NULL;
+    int *collist = NULL;
     const char *mname;
     int err = 0;
 
@@ -521,19 +524,40 @@ int matrix_command_driver (int ci,
 	m = get_matrix_by_name(mname);
     }
 
-    if (m == NULL) {
+    if (gretl_is_null_matrix(m)) {
 	err = E_DATA;
-    } else if (ci == BXPLOT) {
-	err = matrix_boxplots(m, list, opt);
     } else if (ci == SCATTERS) {
-	err = matrix_scatters(m, list, dset, opt);
-    } else if (ci == GNUPLOT) {
-	err = matrix_plot(m, list, param, opt);
-    } else if (ci == SUMMARY) {
-	err = matrix_summary(m, list, opt, prn);
+	/* note: this is a special case, for now */
+	return matrix_scatters(m, list, dset, opt);
+    } else if (list != NULL && list[0] == 0) {
+	mdset = gretl_dataset_from_matrix(m, NULL, OPT_B, &err);
     } else {
-	err = E_DATA;
+	mdset = gretl_dataset_from_matrix(m, list, OPT_B, &err);
     }
+
+    if (!err) {
+	collist = gretl_consecutive_list_new(1, mdset->v - 1);
+	if (collist == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	opt &= ~OPT_X;
+	if (ci == BXPLOT) {
+	    err = boxplots(collist, mdset, opt);
+	} else if (ci == GNUPLOT) {
+	    err = gnuplot(collist, param, mdset, opt);
+	} else if (ci == SUMMARY) {
+	    err = list_summary(collist, mdset, opt, prn);
+	} else {
+	    err = E_DATA;
+	}
+    }
+
+    destroy_dataset(mdset);   
+    free(collist);
 
     return err;
 }
+

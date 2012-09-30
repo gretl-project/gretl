@@ -2069,7 +2069,7 @@ gretl_matrix *freqdist_matrix (const double *x, int t1, int t2, int *err)
     gretl_matrix *m = NULL;
     int i, t, T = t2 - t1 + 1;
 
-    dset = create_auxiliary_dataset(1, T);
+    dset = create_auxiliary_dataset(1, T, 0);
     if (dset == NULL) {
 	*err = E_ALLOC;
     }
@@ -4943,57 +4943,6 @@ int list_summary (const int *list, const DATASET *dset,
 	print_summary(summ, dset, prn);
 	free_summary(summ);
     }
-
-    return err;
-}
-
-/**
- * matrix_summary:
- * @m: matrix from which to draw data.
- * @list: list of columns to use, or NULL for all.
- * @opt: may include %OPT_S for "simple" version.
- * @prn: gretl printing struct.
- *
- * Prints descriptive statistics for the columns in
- * a named matrix: the name is supplied via the
- * --matrix=matname option to the %summary command.
- *
- * Returns: 0 on success, non-zero code on error.
- */
-
-int matrix_summary (gretl_matrix *m, const int *list,
-		    gretlopt opt, PRN *prn)
-{
-    DATASET *dset = NULL;
-    int *summlist = NULL;
-    int err = 0;
-
-    if (gretl_is_null_matrix(m)) {
-	return E_DATA;
-    }
-
-    if (list != NULL && list[0] == 0) {
-	dset = gretl_dataset_from_matrix(m, NULL, &err);
-    } else {
-	dset = gretl_dataset_from_matrix(m, list, &err);
-    }
- 
-    if (err) {
-	return err;
-    }
-
-    summlist = gretl_consecutive_list_new(1, dset->v - 1);
-    if (summlist == NULL) {
-	err = E_ALLOC;
-    } 
-
-    if (!err) {
-	opt &= ~OPT_X;
-	err = list_summary(summlist, dset, opt, prn);
-    }
-
-    destroy_dataset(dset);   
-    free(summlist);
 
     return err;
 }

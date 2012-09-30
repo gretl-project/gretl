@@ -1069,7 +1069,7 @@ static DATASET *within_groups_dataset (const DATASET *dset,
 	    pan->vlist[0], pan->NT);
 #endif
 
-    wset = create_auxiliary_dataset(nv, pan->NT);
+    wset = create_auxiliary_dataset(nv, pan->NT, 0);
     if (wset == NULL) {
 	free(vlist);
 	return NULL;
@@ -1178,7 +1178,7 @@ random_effects_dataset (const DATASET *dset, const DATASET *gset,
 	    v1 + v2, pan->NT);
 #endif
 
-    rset = create_auxiliary_dataset(v1 + v2, pan->NT);
+    rset = create_auxiliary_dataset(v1 + v2, pan->NT, 0);
     if (rset == NULL) {
 	return NULL;
     }
@@ -1283,7 +1283,7 @@ static DATASET *group_means_dataset (panelmod_t *pan,
 	    gv, gn);
 #endif
 
-    gset = create_auxiliary_dataset(gv, gn);
+    gset = create_auxiliary_dataset(gv, gn, 0);
     if (gset == NULL) {
 	return NULL;
     }
@@ -3826,7 +3826,7 @@ int panel_autocorr_test (MODEL *pmod, int order, DATASET *dset,
     nv = pmod->list[0] + order;
 
     /* create temporary reduced dataset */
-    tmpset = create_auxiliary_dataset(nv, nobs);
+    tmpset = create_auxiliary_dataset(nv, nobs, 0);
     if (tmpset == NULL) {
 	return E_ALLOC;
     }

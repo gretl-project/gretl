@@ -73,6 +73,7 @@ gretl_matrix_data_subset_special (const int *list,
 
 DATASET *gretl_dataset_from_matrix (const gretl_matrix *m, 
 				    const int *list,
+				    gretlopt opt,
 				    int *err);
 
 int gretl_plotfit_matrices (const double *yvar, const double *xvar,

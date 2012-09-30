@@ -1679,7 +1679,7 @@ static int import_esl (const char *datafile, char *auxfile,
     pprintf(prn, I_("\nReading header file %s\n"), auxfile);
 
     /* allocate data storage */
-    err = allocate_Z(tmpset);
+    err = allocate_Z(tmpset, 0);
 
     if (!err && tmpset->markers) {
 	/* deal with case where first column of the data file contains
@@ -1851,7 +1851,7 @@ int open_nulldata (DATASET *dset, int data_status, int length,
     }
 
     /* allocate dataset */
-    if (allocate_Z(dset)) {
+    if (allocate_Z(dset, 0)) {
 	return E_ALLOC;
     }
 

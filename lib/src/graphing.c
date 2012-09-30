@@ -2941,9 +2941,9 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
     }
 
     if (list != NULL && list[0] == 0) {
-	dset = gretl_dataset_from_matrix(m, NULL, &err);
+	dset = gretl_dataset_from_matrix(m, NULL, OPT_B, &err);
     } else {
-	dset = gretl_dataset_from_matrix(m, list, &err);
+	dset = gretl_dataset_from_matrix(m, list, OPT_B, &err);
     }
  
     if (err) {
@@ -5075,7 +5075,7 @@ static int panel_means_ts_plot (const int vnum,
 	nv++;
     }
 
-    gset = create_auxiliary_dataset(nv, T);
+    gset = create_auxiliary_dataset(nv, T, 0);
     if (gset == NULL) {
 	return E_ALLOC;
     }
@@ -5294,7 +5294,7 @@ static int panel_overlay_ts_plot (const int vnum,
 	nv++;
     }
 
-    gset = create_auxiliary_dataset(nv, T);
+    gset = create_auxiliary_dataset(nv, T, 0);
     if (gset == NULL) {
 	return E_ALLOC;
     }
@@ -6488,7 +6488,7 @@ int xy_plot_with_control (const int *list, const char *literal,
 
     /* create temporary dataset */
 
-    gset = create_auxiliary_dataset(4, T);
+    gset = create_auxiliary_dataset(4, T, 0);
     if (gset == NULL) {
 	return E_ALLOC;
     }

@@ -281,13 +281,13 @@ DATASET *create_new_dataset (int nvar,     /* number of variables */
 			     int markers   /* case markers or not? */
 			     );
 
-DATASET *create_auxiliary_dataset (int nvar, int nobs);
+DATASET *create_auxiliary_dataset (int nvar, int nobs, gretlopt opt);
 
 void destroy_dataset (DATASET *dset);
 
 void clear_datainfo (DATASET *dset, int code);
 
-int allocate_Z (DATASET *dset);
+int allocate_Z (DATASET *dset, gretlopt opt);
 
 int dataset_allocate_varnames (DATASET *dset);
 
@@ -305,7 +305,7 @@ void set_sorted_markers (DATASET *dset, int v, char **S);
 
 void dataset_set_regular_markers (DATASET *dset);
 
-int start_new_Z (DATASET *dset, int resample);
+int start_new_Z (DATASET *dset, gretlopt opt);
 
 int is_trend_variable (const double *x, int n);
 

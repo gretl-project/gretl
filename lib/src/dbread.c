@@ -3560,7 +3560,7 @@ static int weekly_dataset_to_monthly (DATASET *dset,
     }
 
     mset.v = dset->v;
-    err = allocate_Z(&mset);
+    err = allocate_Z(&mset, 0);
     if (err) {
 	return err;
     }

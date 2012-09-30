@@ -27,6 +27,8 @@
 #define DDEBUG 0
 #define FULLDEBUG 0
 
+#define Z_COLS_BORROWED 2
+
 struct VARINFO_ {
     char label[MAXLABEL];
     char display_name[MAXDISP];
@@ -92,14 +94,12 @@ static void dataset_set_nobs (DATASET *dset, int n)
 void free_Z (DATASET *dset)
 {
     if (dset != NULL && dset->Z != NULL) {
-	int i;
+	int i, v = (dset->auxiliary == Z_COLS_BORROWED)? 1 : dset->v;
 
 #if DDEBUG
-	fprintf(stderr, "Freeing Z (%p): %d vars\n", (void *) dset->Z, 
-		dset->v);
+	fprintf(stderr, "Freeing Z (%p): %d vars\n", (void *) dset->Z, v);
 #endif
-
-	for (i=0; i<dset->v; i++) {
+	for (i=0; i<v; i++) {
 	    free(dset->Z[i]);
 	}
 	free(dset->Z);
@@ -431,6 +431,34 @@ DATASET *datainfo_new (void)
     return dset;
 }
 
+static DATASET *real_create_new_dataset (int nvar, int nobs, 
+					 gretlopt opt)
+{
+    DATASET *dset = datainfo_new();
+
+    if (dset == NULL) return NULL;
+
+    dset->v = nvar;
+    dset->n = nobs;
+    dset->Z = NULL;
+
+    if (start_new_Z(dset, opt)) {
+	free(dset);
+	return NULL;
+    }
+
+    if (opt & OPT_M) {
+	if (dataset_allocate_obs_markers(dset)) {
+	    free_datainfo(dset);
+	    return NULL;
+	}
+    } 
+
+    dataset_obs_info_default(dset);
+
+    return dset;
+}
+
 /**
  * create_new_dataset:
  * @nvar: number of variables.
@@ -446,56 +474,68 @@ DATASET *datainfo_new (void)
 
 DATASET *create_new_dataset (int nvar, int nobs, int markers)
 {
-    DATASET *dset = datainfo_new();
+    gretlopt opt = markers ? OPT_M : OPT_NONE;
 
-    if (dset == NULL) return NULL;
+    return real_create_new_dataset(nvar, nobs, opt);
+}
 
-    dset->v = nvar;
-    dset->n = nobs;
-    dset->Z = NULL;
+DATASET *create_auxiliary_dataset (int nvar, int nobs, gretlopt opt)
+{
+    DATASET *dset = real_create_new_dataset(nvar, nobs, opt);
 
-    if (start_new_Z(dset, 0)) {
-	free(dset);
-	return NULL;
-    }
-
-    if (markers) {
-	if (dataset_allocate_obs_markers(dset)) {
-	    free_datainfo(dset);
-	    return NULL;
+    if (dset != NULL) {
+	if (opt & OPT_B) {
+	    dset->auxiliary = Z_COLS_BORROWED;
+	} else {
+	    dset->auxiliary = 1;
 	}
-    } 
-
-    dataset_obs_info_default(dset);
+    }
 
     return dset;
 }
 
-DATASET *create_auxiliary_dataset (int nvar, int nobs)
+static double **make_borrowed_Z (int v, int n)
 {
-    DATASET *dset = create_new_dataset(nvar, nobs, 0);
+    double **Z = malloc(v * sizeof *Z);
 
-    if (dset != NULL) {
-	dset->auxiliary = 1;
+    if (Z != NULL) {
+	int i;
+
+	for (i=0; i<v; i++) {
+	    Z[i] = NULL;
+	}
+
+	Z[0] = malloc(n * sizeof **Z);
+
+	if (Z[0] == NULL) {
+	    free(Z);
+	    Z = NULL;
+	} else {
+	    for (i=0; i<n; i++) {
+		Z[0][i] = 1.0;
+	    }
+	}
     }
 
-    return dset;
+    return Z;
 }
 
 /**
  * allocate_Z:
  * @dset: pointer to dataset.
+ * @opt: may include OPT_B to indicate that the data columns
+ * will be "borrowed".
  *
  * Allocates the two-dimensional data array Z,
  * based on the v (number of variables) and n (number of
  * observations) members of @dset.  The variable at 
  * position 0 is initialized to all 1s; other variables
- * are initialized to #NADBL.
+ * are initialized to #NADBL (unless OPT_B is given).
  *
  * Returns: 0 on success, E_ALLOC on error.
  */
 
-int allocate_Z (DATASET *dset)
+int allocate_Z (DATASET *dset, gretlopt opt)
 {
     int i, t;
     int err = 0;
@@ -504,11 +544,15 @@ int allocate_Z (DATASET *dset)
 	fprintf(stderr, "*** error: allocate_Z called with non-NULL Z\n");
     }
 
-    dset->Z = doubles_array_new(dset->v, dset->n);
+    if (opt & OPT_B) {
+	dset->Z = make_borrowed_Z(dset->v, dset->n);
+    } else {
+	dset->Z = doubles_array_new(dset->v, dset->n);
+    }
 
     if (dset->Z == NULL) {
 	err = E_ALLOC;
-    } else {
+    } else if (!(opt & OPT_B)) {
 	for (i=0; i<dset->v; i++) {
 	    for (t=0; t<dset->n; t++) {
 		dset->Z[i][t] = (i == 0)? 1.0 : NADBL;
@@ -522,7 +566,7 @@ int allocate_Z (DATASET *dset)
 /**
  * start_new_Z:
  * @dset: pointer to dataset.
- * @resample: 1 if we're sub-sampling from a full data set, 0 otherwise.
+ * @opt: if includes OPT_R we're sub-sampling from a full data set.
  *
  * Initializes the data array within @dset (adding the constant in
  * position 0).
@@ -530,16 +574,17 @@ int allocate_Z (DATASET *dset)
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int start_new_Z (DATASET *dset, int resample)
+int start_new_Z (DATASET *dset, gretlopt opt)
 {
-    if (allocate_Z(dset)) {
+    if (allocate_Z(dset, opt)) {
 	return E_ALLOC;
     }
 
     dset->t1 = 0; 
     dset->t2 = dset->n - 1;
 
-    if (resample) {
+    if (opt & OPT_R) {
+	/* sub-sampling */
 	dset->varname = NULL;
 	dset->varinfo = NULL;
     } else if (dataset_allocate_varnames(dset)) {

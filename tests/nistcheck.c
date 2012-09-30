@@ -406,7 +406,7 @@ static int read_nist_file (const char *fname,
 	if (nvar > 0 && nobs > 0 && dset == NULL) {
 
 	    dset = create_auxiliary_dataset(nvar + 1 + npoly, 
-					    nobs);
+					    nobs, 0);
 	    if (dset == NULL) {
 		free_mp_results(certvals);
 		fclose(fp);
