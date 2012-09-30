@@ -3499,9 +3499,11 @@ cmd_print_list (const CMD *cmd, const DATASET *dset,
 	return;
     }
     
-    if ((cmd->ci == GNUPLOT || cmd->ci == SCATTERS) && 
+    if ((cmd->ci == GNUPLOT || 
+	 cmd->ci == SCATTERS ||
+	 cmd->ci == BXPLOT) && 
 	(cmd->opt & OPT_X)) {
-	/* plotting columns of matrix */
+	/* plotting columns of a matrix */
 	use_varnames = 0;
     }
 
