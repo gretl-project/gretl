@@ -29,6 +29,8 @@
 
 #define Z_COLS_BORROWED 2
 
+#define dset_zcols_borrowed(d) (d->auxiliary == Z_COLS_BORROWED)
+
 struct VARINFO_ {
     char label[MAXLABEL];
     char display_name[MAXDISP];
@@ -94,7 +96,7 @@ static void dataset_set_nobs (DATASET *dset, int n)
 void free_Z (DATASET *dset)
 {
     if (dset != NULL && dset->Z != NULL) {
-	int i, v = (dset->auxiliary == Z_COLS_BORROWED)? 1 : dset->v;
+	int i, v = dset_zcols_borrowed(dset) ? 1 : dset->v;
 
 #if DDEBUG
 	fprintf(stderr, "Freeing Z (%p): %d vars\n", (void *) dset->Z, v);
@@ -867,6 +869,11 @@ int dataset_add_observations (int newobs, DATASET *dset, gretlopt opt)
     int i, t, bign;
     int err = 0;
 
+    if (dset_zcols_borrowed(dset)) {
+	fprintf(stderr, "*** Internal error: modifying borrowed data\n");
+	return E_DATA;
+    }
+
     if (newobs <= 0) {
 	return 0;
     }
@@ -973,6 +980,11 @@ int dataset_drop_observations (int n, DATASET *dset)
     double *x;
     int i, newn;
 
+    if (dset_zcols_borrowed(dset)) {
+	fprintf(stderr, "*** Internal error: modifying borrowed data\n");
+	return E_DATA;
+    }
+
     if (n <= 0) {
 	return 0;
     }
@@ -1024,6 +1036,11 @@ int dataset_shrink_obs_range (DATASET *dset)
     int head = dset->t1;
     int tail = dset->n - 1 - dset->t2;
     int err = 0;
+
+    if (dset_zcols_borrowed(dset)) {
+	fprintf(stderr, "*** Internal error: modifying borrowed data\n");
+	return E_DATA;
+    }
 
     if (head > 0) {
 	int mvsize, rem = dset->n - head;
@@ -1178,7 +1195,14 @@ static int real_add_series (int newvars, double *x,
 int dataset_add_series (int newvars, DATASET *dset)
 {
     int v0 = dset->v;
-    int err = real_add_series(newvars, NULL, dset);
+    int err;
+
+    if (dset_zcols_borrowed(dset)) {
+	fprintf(stderr, "*** Internal error: modifying borrowed data\n");
+	return E_DATA;
+    }
+
+    err = real_add_series(newvars, NULL, dset);
 
     if (!err) {
 	int i, v, t;
@@ -1206,7 +1230,14 @@ int dataset_add_series (int newvars, DATASET *dset)
 
 int dataset_add_NA_series (DATASET *dset)
 {
-    int err = real_add_series(1, NULL, dset);
+    int err;
+
+    if (dset_zcols_borrowed(dset)) {
+	fprintf(stderr, "*** Internal error: modifying borrowed data\n");
+	return E_DATA;
+    }
+
+    err = real_add_series(1, NULL, dset);
 
     if (!err) {
 	int t, v = dset->v - 1;
@@ -1233,7 +1264,12 @@ int dataset_add_NA_series (DATASET *dset)
 
 int dataset_add_allocated_series (double *x, DATASET *dset)
 {
-    return real_add_series(1, x, dset);
+    if (dset_zcols_borrowed(dset)) {
+	fprintf(stderr, "*** Internal error: modifying borrowed data\n");
+	return E_DATA;
+    } else {
+	return real_add_series(1, x, dset);
+    }
 }
 
 /**
@@ -1254,6 +1290,11 @@ int dataset_add_series_as (double *x, const char *newname,
 			   DATASET *dset)
 {
     int v, t, err = 0;
+
+    if (dset_zcols_borrowed(dset)) {
+	fprintf(stderr, "*** Internal error: modifying borrowed data\n");
+	return E_DATA;
+    }
 
     if (dset->varinfo == NULL) {
 	gretl_errmsg_set(_("Please open a data file first"));
@@ -1687,6 +1728,11 @@ int dataset_drop_listed_variables (int *list,
 	return E_NODATA;
     }
 
+    if (dset_zcols_borrowed(dset)) {
+	fprintf(stderr, "*** Internal error: modifying borrowed data\n");
+	return E_DATA;
+    }
+
     if (list == NULL) {
 	/* signal to drop internal "$" variables */
 	dlist = make_dollar_list(dset, &err);
@@ -1749,6 +1795,11 @@ int dataset_drop_variable (int v, DATASET *dset)
 	return E_DATA;
     }
 
+    if (dset_zcols_borrowed(dset)) {
+	fprintf(stderr, "*** Internal error: modifying borrowed data\n");
+	return E_DATA;
+    }
+
     return dataset_drop_listed_variables(list, dset, NULL, NULL);
 }
 
@@ -1776,6 +1827,11 @@ int dataset_renumber_variable (int v_old, int v_new,
     if (complex_subsampled()) {
 	/* too tricky */
 	gretl_errmsg_set(_("dataset is subsampled"));
+	return E_DATA;
+    }
+
+    if (dset_zcols_borrowed(dset)) {
+	fprintf(stderr, "*** Internal error: modifying borrowed data\n");
 	return E_DATA;
     }
 
