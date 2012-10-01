@@ -211,6 +211,7 @@ struct gretl_option gretl_opts[] = {
     { FREQ,     OPT_N, "nbins", 2 },
     { FREQ,     OPT_M, "min", 2 },
     { FREQ,     OPT_W, "binwidth", 2 },
+    { FREQ,     OPT_X, "matrix", 2 },
     { FUNDEBUG, OPT_C, "continue", 0 },
     { FUNDEBUG, OPT_N, "next", 0 },
     { FUNDEBUG, OPT_Q, "quit", 0 },

@@ -48,6 +48,11 @@ int matrix_command_driver (int ci,
 			   gretlopt opt,
 			   PRN *prn);
 
+int matrix_freq_driver (const int *list,
+			int *graph,
+			gretlopt opt,
+			PRN *prn);
+
 int do_modprint (const char *line, gretlopt opt, PRN *prn);
 
 #endif /* LIBGLUE_H */

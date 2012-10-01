@@ -561,3 +561,38 @@ int matrix_command_driver (int ci,
     return err;
 }
 
+int matrix_freq_driver (const int *list,
+			int *graph,
+			gretlopt opt,
+			PRN *prn)
+{
+    gretl_matrix *m = NULL;
+    DATASET *mdset = NULL;
+    const char *mname;
+    int err = 0;
+
+    if (list[0] != 1) {
+	return E_PARSE;
+    }
+
+    mname = get_optval_string(FREQ, OPT_X);
+
+    if (mname != NULL) {
+	m = get_matrix_by_name(mname);
+    }
+
+    if (gretl_is_null_matrix(m)) {
+	err = E_DATA;
+    } else {
+	mdset = gretl_dataset_from_matrix(m, list, OPT_B, &err);
+    }
+
+    if (!err) {
+	err = freqdist(1, mdset, graph, opt, prn);
+    }
+
+    destroy_dataset(mdset);   
+
+    return err;
+}
+

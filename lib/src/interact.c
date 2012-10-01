@@ -5102,7 +5102,13 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    int graph = (s->flags == CONSOLE_EXEC ||
 			 (cmd->opt & OPT_G));
 
-	    err = freqdist(cmd->list[1], dset, &graph, cmd->opt, prn);
+	    if (cmd->opt & OPT_X) {
+		err = matrix_freq_driver(cmd->list, &graph, 
+					 cmd->opt, prn);
+	    } else {
+		err = freqdist(cmd->list[1], dset, &graph, 
+			       cmd->opt, prn);
+	    }
 	    if (!err && graph) {
 		schedule_callback(s);
 	    }
