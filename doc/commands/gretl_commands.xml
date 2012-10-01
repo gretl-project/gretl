@@ -3528,7 +3528,7 @@
 
     <usage>
       <arguments>
-        <argument>series</argument>
+        <argument>var</argument>
       </arguments>
       <options>
         <option>
@@ -3566,6 +3566,11 @@
 	  <flag>--show-plot</flag>
 	  <effect>see below</effect>
         </option>
+        <option>
+	  <flag>--matrix</flag>
+	  <optparm>name</optparm>
+	  <effect>use column of named matrix</effect>
+        </option>
       </options>
       <examples>
         <example>freq x</example>
@@ -3578,8 +3583,13 @@
     <description context="cli">
       <para>
 	With no options given, displays the frequency distribution for
-	<repl>series</repl> (given by name or number), with the number
-	of bins and their size chosen automatically.
+	the series <repl>var</repl> (given by name or number), with
+	the number of bins and their size chosen automatically.
+      </para>
+      <para>
+	If the <opt>--matrix</opt> option is given, <repl>var</repl>
+	(which must be an integer) is instead interpreted as a 1-based
+	index that selects a column from the named matrix.
       </para>
       <para>
 	To control the presentation of the distribution you may
