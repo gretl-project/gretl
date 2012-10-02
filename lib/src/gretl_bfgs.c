@@ -1915,38 +1915,70 @@ static void print_NR_status (int status, double crittol, double gradtol,
    a NR iteration would just amount to an iteration of the simple
    gradient method (on a scaled version of the coefficients).
    Hopefully, a few of those should be able to "tow us away" from the
-   non-pd region.
+   non-pd region. In desperate cases, we use the a diagonal matrix
+   with the absolute values of H_{i,i} plus one.  
 */
 
 static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 {
-    int err = gretl_invert_symmetric_matrix(H);
+    int i,j, err = 0;
+    double x;
 
-    if (err == E_NOTPD) {
-	double x, lambda = 1.0;
-	int i, j, s;
+    /* first, check if all the elements along the diagonal are numerically
+       positive
+    */
 
-	for (s=0; lambda > 0.1 && err; s++) {
-	    lambda *= 0.9;
-	    fprintf(stderr, "newton hessian fixup: round %d, lambda=%g\n",
-		    s, lambda);
+    for (i=0; i<H->rows; i++) {
+	err |= gretl_matrix_get(H, i, i) < 1.0e-20;
+    }
 
-	    gretl_matrix_copy_values(H, Hcpy);
-	    for (i=0; i<H->rows; i++) {
-		for (j=0; j<i; j++) {
-		    x = lambda * gretl_matrix_get(H, i, j);
-		    gretl_matrix_set(H, i, j, x);
-		    gretl_matrix_set(H, j, i, x);
-		}
-	    }
+    if(err) {
+	fprintf(stderr, "newton hessian fixup: non-positive diagonal\n");
 #if 0
-	    gretl_matrix_print(H, "after shrinkage");
+	gretl_matrix_print(H, "H");
 #endif
-	    err = gretl_invert_symmetric_matrix(H);
+    } else {
+	err = gretl_invert_symmetric_matrix(H);
+
+	if (err == E_NOTPD) {
+	    double lambda = 1.0;
+	    int i, j, s;
+
+	    for (s=0; lambda > 0.1 && err; s++) {
+		lambda *= 0.8;
+		fprintf(stderr, "newton hessian fixup: round %d, lambda=%g\n",
+			s, lambda);
+
+		gretl_matrix_copy_values(H, Hcpy);
+		for (i=0; i<H->rows; i++) {
+		    for (j=0; j<i; j++) {
+			x = lambda * gretl_matrix_get(H, i, j);
+			gretl_matrix_set(H, i, j, x);
+			gretl_matrix_set(H, j, i, x);
+		    }
+		}
+#if 0
+		gretl_matrix_print(H, "after shrinkage");
+#endif
+		err = gretl_invert_symmetric_matrix(H);
+	    }
 	}
     }
 
-    return err;
+    if(err) {
+	fprintf(stderr, "newton hessian fixup: desperation!\n");
+	for (i=0; i<H->rows; i++) {
+	    for (j=0; j<H->rows; j++) {
+		x = (i==j) ? 1/(1 + fabs(gretl_matrix_get(H, i, j))): 0;
+		gretl_matrix_set(H, i, j, x);
+	    }
+	}
+#if 0
+	gretl_matrix_print(H, "desperate H");
+#endif	
+    }
+
+    return 0;
 }
 
 /**
