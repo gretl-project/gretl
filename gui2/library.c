@@ -5956,8 +5956,9 @@ void add_model_stat (MODEL *pmod, int which, windata_t *vwin)
 
     blurb = g_strdup_printf(_("Statistic from model %d\n"
 			      "%s (value = %g)\n" 
-			      "Name (max. 15 characters):"),
-			    pmod->ID, _(descrip), val);
+			      "Name (max. %d characters):"),
+			    pmod->ID, _(descrip), val,
+			    VNAMELEN -1);
 
     blocking_edit_dialog(0, _("add scalar"), blurb, vname, 
 			 set_scalar_name, vname, VARCLICK_NONE, 

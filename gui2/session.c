@@ -1109,17 +1109,19 @@ void bundle_add_as_icon (GtkAction *action, gpointer p)
     gretl_bundle *bundle = vwin->data;
     char vname[VNAMELEN];
     char *defname;
-    const char *blurb;
+    gchar *blurb;
     int *pshow, show = 0;
     int resp;
 
     defname = get_bundle_default_name();
     strcpy(vname, defname);
     free(defname);
-    blurb = "Save bundle\nName (max. 15 characters):";
+    blurb = g_strdup_printf("Save bundle\nName (max. %d characters):",
+			    VNAMELEN - 1);
     pshow = (iconlist == NULL)? &show : NULL;
     resp = object_name_entry_dialog(vname, GRETL_TYPE_BUNDLE, 
 				    blurb, pshow, vwin->main);
+    g_free(blurb);
 
     if (!canceled(resp)) {    
 	int err = gretl_bundle_set_name(bundle, vname);

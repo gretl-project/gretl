@@ -165,12 +165,16 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *dlg)
 static void maybe_start_editing (void)
 {
     int cancel = 0;
+    gchar *msg;
 
-    blocking_edit_dialog(CREATE_DATASET, _("gretl: name variable"), 
-			 _("Enter name for first variable\n"
-			   "(max. 15 characters)"),
-			 NULL, prep_spreadsheet, NULL, 
+    msg = g_strdup_printf(_("Enter name for first variable\n"
+			    "(max. %d characters)"),
+			  VNAMELEN - 1);
+
+    blocking_edit_dialog(CREATE_DATASET, _("gretl: name variable"),
+			 msg, NULL, prep_spreadsheet, NULL, 
 			 VARCLICK_NONE, NULL, &cancel);
+    g_free(msg);
 
     if (cancel) {
 	/* accept the default blank dataset */

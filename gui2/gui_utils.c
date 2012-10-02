@@ -4311,8 +4311,9 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	strncat(vname, key, VNAMELEN - 1);
 
 	blurb = g_strdup_printf("%s (%s) from bundle\n"
-				"Name (max. 15 characters):",
-				key, gretl_arg_type_name(type));
+				"Name (max. %d characters):",
+				key, gretl_arg_type_name(type),
+				VNAMELEN - 1);
 	resp = object_name_entry_dialog(vname, type, blurb, &show,
 					vwin->main);
 	g_free(blurb);
