@@ -1921,18 +1921,19 @@ static void print_NR_status (int status, double crittol, double gradtol,
 
 static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 {
-    int i,j, err = 0;
+    int i, j, err = 0;
+    int restore = 0;
     double x;
 
-    /* first, check if all the elements along the diagonal are numerically
-       positive
+    /* first, check if all the elements along the diagonal are 
+       numerically positive
     */
 
-    for (i=0; i<H->rows; i++) {
-	err |= gretl_matrix_get(H, i, i) < 1.0e-20;
+    for (i=0; i<H->rows && !err; i++) {
+	err = gretl_matrix_get(H, i, i) < 1.0e-20;
     }
 
-    if(err) {
+    if (err) {
 	fprintf(stderr, "newton hessian fixup: non-positive diagonal\n");
 #if 0
 	gretl_matrix_print(H, "H");
@@ -1942,13 +1943,13 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 
 	if (err == E_NOTPD) {
 	    double lambda = 1.0;
-	    int i, j, s;
+	    int s;
 
 	    for (s=0; lambda > 0.1 && err; s++) {
 		lambda *= 0.8;
 		fprintf(stderr, "newton hessian fixup: round %d, lambda=%g\n",
 			s, lambda);
-
+		/* restore the original H */
 		gretl_matrix_copy_values(H, Hcpy);
 		for (i=0; i<H->rows; i++) {
 		    for (j=0; j<i; j++) {
@@ -1962,11 +1963,15 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 #endif
 		err = gretl_invert_symmetric_matrix(H);
 	    }
+	    restore = (err != 0);
 	}
     }
 
-    if(err) {
+    if (err) {
 	fprintf(stderr, "newton hessian fixup: desperation!\n");
+	if (restore) {
+	    gretl_matrix_copy_values(H, Hcpy);
+	}
 	for (i=0; i<H->rows; i++) {
 	    for (j=0; j<H->rows; j++) {
 		x = (i==j) ? 1/(1 + fabs(gretl_matrix_get(H, i, j))): 0;
