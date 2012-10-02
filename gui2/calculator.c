@@ -2036,7 +2036,7 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
     *p = 0;
     p++;
 
-    if (sscanf(str, "%15s", test) != 1) {
+    if (gretl_scan_varname(str, test) != 1) {
 	err = 1;
     } else {
 	*vx = series_index(dataset, test);
@@ -2080,7 +2080,7 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
     }
 
     if (!err) {
-	if (sscanf(p, "%15s", test) != 1) {
+	if (gretl_scan_varname(p, test) != 1) {
 	    err = 1;
 	} else {
 	    *vy = series_index(dataset, test);

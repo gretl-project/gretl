@@ -1126,7 +1126,7 @@ static int add_local_db_series_list (windata_t *vwin)
 	tailstrip(line1);
 	gretl_charsub(line1, '\t', ' ');
 
-	if (sscanf(line1, "%15s", sername) != 1) {
+	if (gretl_scan_varname(line1, sername) != 1) {
 	    break;
 	}
 
@@ -1188,7 +1188,7 @@ static int add_remote_db_series_list (windata_t *vwin, char *buf)
 
 	err = utf8_correct(line1);
 
-	if (sscanf(line1, "%15s", sername) != 1) {
+	if (gretl_scan_varname(line1, sername) != 1) {
 	    break;
 	}
 

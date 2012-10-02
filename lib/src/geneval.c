@@ -10361,7 +10361,8 @@ static void pre_process (parser *p, int flags)
 #endif
 
     if (strlen(test) > VNAMELEN - 1) {
-	pprintf(p->prn, _("'%s': name is too long (max 15 characters)\n"), test);
+	pprintf(p->prn, _("'%s': name is too long (max %d characters)\n"), 
+		test, VNAMELEN - 1);
 	p->err = E_DATA;
 	return;
     }

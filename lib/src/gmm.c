@@ -661,8 +661,11 @@ int
 nlspec_add_orthcond (nlspec *s, const char *str,
 		     const DATASET *dset)
 {
-    char lname[VNAMELEN], rname[VNAMELEN];
-    int ltype = GRETL_TYPE_NONE, rtype = GRETL_TYPE_NONE;
+    char lname[VNAMELEN]; 
+    char rname[VNAMELEN];
+    char fmt[16];
+    int ltype = GRETL_TYPE_NONE;
+    int rtype = GRETL_TYPE_NONE;
     int n, err = 0;
 
     if (s->ci != GMM) {
@@ -681,7 +684,9 @@ nlspec_add_orthcond (nlspec *s, const char *str,
 
     str += strspn(str, " ");
 
-    if (sscanf(str, "%15[^; ] ; %15s", lname, rname) != 2) {
+    sprintf(fmt, "%%%d[^; ] ; %%%d", VNAMELEN-1, VNAMELEN-1);
+
+    if (sscanf(str, fmt, lname, rname) != 2) {
 	return E_PARSE;
     }
 
@@ -837,7 +842,7 @@ int nlspec_add_weights (nlspec *s, const char *str)
     fprintf(stderr, "nlspec_add_weights: line = '%s'\n", str);
 #endif
 
-    if (sscanf(str, "%15s", s->oc->Wname) != 1) {
+    if (gretl_scan_varname(str, s->oc->Wname) != 1) {
 	return E_PARSE;
     } 
 

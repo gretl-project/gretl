@@ -2044,7 +2044,7 @@ attach_input_matrix (kalman *K, const char *s, int i,
     if (i <= K_R && strchr(s, '(')) {
 	/* we have a function call? */
 	err = add_matrix_fncall(K, s, i, mname, &m);
-    } else if (sscanf(s, "%15s", mname) == 1) {
+    } else if (gretl_scan_varname(s, mname) == 1) {
 	m = get_matrix_by_name(mname);
     } else {
 	err = E_PARSE;

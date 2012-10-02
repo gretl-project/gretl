@@ -842,12 +842,14 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 
 static int find_list_in_parentage (LOOPSET *loop, const char *s)
 {
-    char lname[VNAMELEN];
+    char fmt[16], lname[VNAMELEN];
     int i;
+
+    sprintf(fmt, "list %%%d[^ =]", VNAMELEN-1);
 
     while ((loop = loop->parent) != NULL) {
 	for (i=0; i<loop->n_cmds; i++) {
-	    if (sscanf(loop->cmds[i].line, "list %15[^ =]", lname)) {
+	    if (sscanf(loop->cmds[i].line, fmt, lname)) {
 		if (!strcmp(lname, s)) {
 		    return 1;
 		}
@@ -917,10 +919,13 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATASET *dset,
 	list = varname_match_list(dset, s, &err);
     } else {
 	char vn1[VNAMELEN], vn2[VNAMELEN];
+	char fmt[16];
 	
 	gretl_delchar(' ', s);
+	sprintf(fmt, "%%%d[^.]..%%%ds", VNAMELEN-1, VNAMELEN-1);
+	
 
-	if (sscanf(s, "%15[^.]..%15s", vn1, vn2) != 2) {
+	if (sscanf(s, fmt, vn1, vn2) != 2) {
 	    err = E_PARSE;
 	} else {
 	    int v1 = current_series_index(dset, vn1);
@@ -984,7 +989,7 @@ parse_as_each_loop (LOOPSET *loop, const DATASET *dset, char *s)
     fprintf(stderr, "parse_as_each_loop: s = '%s'\n", s);
 #endif 
 
-    if (sscanf(s, "%15s", ivar) != 1) {
+    if (gretl_scan_varname(s, ivar) != 1) {
 	return E_PARSE;
     } 
 
@@ -1114,6 +1119,7 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
 				 DATASET *dset)
 {
     char lvar[VNAMELEN], rvar[VNAMELEN], op[VNAMELEN];
+    char fmt[32];
     int err = 0;
 
     /* skip preliminary string */
@@ -1132,15 +1138,18 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
     fprintf(stderr, "parse_first_loopline: '%s'\n", s);
 #endif
 
+    sprintf(fmt, "%%%d[^= ] = %%%d[^.]..%%%ds", VNAMELEN-1, VNAMELEN-1, 
+	    VNAMELEN-1);
+
     if (!strncmp(s, "foreach ", 8)) {
 	err = parse_as_each_loop(loop, dset, s + 8);
-    } else if (sscanf(s, "%15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
+    } else if (sscanf(s, fmt, lvar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(loop, dset, lvar, op, rvar);
     } else if (!strncmp(s, "for", 3)) {
 	err = parse_as_for_loop(loop, s + 4);
     } else if (!strncmp(s, "while", 5)) {
 	err = parse_as_while_loop(loop, s + 6);
-    } else if (sscanf(s, "%15s", lvar) == 1) {
+    } else if (gretl_scan_varname(s, lvar) == 1) {
 	err = parse_as_count_loop(loop, dset, lvar);
     } else {
 	printf("parse_first_loopline: failed on '%s'\n", s);

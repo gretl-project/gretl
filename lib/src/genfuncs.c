@@ -3102,11 +3102,11 @@ int get_t_from_obs_string (const char *s, const DATASET *dset)
     int t;
 
     if (*s == '"') {
-	char obs[16];
+	char obs[OBSLEN+2];
 	int err = 0;
 
 	*obs = '\0';
-	strncat(obs, s, 15);
+	strncat(obs, s, OBSLEN+1);
 	gretl_unquote(obs, &err);
 	t = dateton(obs, dset);
     } else {

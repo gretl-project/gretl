@@ -111,7 +111,7 @@ static int get_db_series_names (const char *idxname, char ***pnames,
 	}
 	i++;
 	if (i % 2) {
-	    if (sscanf(line, "%15s", vnames[j]) != 1) {
+	    if (gretl_scan_varname(line, vnames[j]) != 1) {
 		err = E_DATA;
 	    }
 	    j++;

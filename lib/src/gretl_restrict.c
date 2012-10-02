@@ -778,8 +778,8 @@ static int pick_apart (gretl_restriction *r, const char *s,
 		       const DATASET *dset)
 {
     const char *junk;
-    char s1[16] = {0};
-    char s2[16] = {0};
+    char s1[VNAMELEN] = {0};
+    char s2[VNAMELEN] = {0};
     char *targ = s1;
     int i, j, k;
     int err = 0;
@@ -791,7 +791,7 @@ static int pick_apart (gretl_restriction *r, const char *s,
     *eq = *bnum = -1;
 
     k = gretl_charpos(']', s);
-    if (k <= 0 || k > 30) {
+    if (k <= 0 || k > 2*(VNAMELEN-1)) {
 	return E_PARSE;
     }
     
@@ -808,7 +808,7 @@ static int pick_apart (gretl_restriction *r, const char *s,
 	    targ = s2;
 	    j = 0;
 	} else if (!isspace(s[i])) {
-	    if (j == 15) {
+	    if (j == VNAMELEN-1) {
 		return E_PARSE;
 	    }
 	    targ[j++] = s[i];
@@ -1512,7 +1512,7 @@ static int read_matrix_line (const char *s, gretl_restriction *rset)
 
     s++;
     while (isspace((unsigned char) *s)) s++;
-    if (sscanf(s, "%15s", mname) != 1) {
+    if (gretl_scan_varname(s, mname) != 1) {
 	return E_PARSE;
     }
 

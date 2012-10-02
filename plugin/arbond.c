@@ -2511,6 +2511,7 @@ static int parse_diag_info (int ci, const char *s, diag_info *d,
 			    const DATASET *dset)
 {
     char vname[VNAMELEN];
+    char fmt[16];
     int m1, m2;
     int err = 0;
 
@@ -2529,7 +2530,9 @@ static int parse_diag_info (int ci, const char *s, diag_info *d,
 	return E_PARSE;
     }
 
-    if (sscanf(s, "%15[^, ],%d,%d)", vname, &m1, &m2) != 3) {
+    sprintf(fmt, "%%%d[^, ],%%d,%%d)", VNAMELEN-1);
+
+    if (sscanf(s, fmt, vname, &m1, &m2) != 3) {
 	err = E_PARSE;
     } else {
 	int v = current_series_index(dset, vname);

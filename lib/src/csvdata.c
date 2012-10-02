@@ -661,12 +661,12 @@ static int complete_qm_labels (DATASET *dset, int reversed,
 		   && skipstr != NULL) {
 	    *skip = *bad = '\0';
 	    strncat(skip, dset->S[s] + 4, 7); 
-	    strncat(bad, dset->S[s], 15); 
+	    strncat(bad, dset->S[s], OBSLEN-1); 
 	    pd = pd0 + 1;
 	    goto restart;
 	} else if (per == Ep + 2 && pmin == 1 && fakequarter(per)) {
 	    *bad = '\0';
-	    strncat(bad, dset->S[s], 15); 
+	    strncat(bad, dset->S[s], OBSLEN-1); 
 	    pmin = 3;
 	    goto restart;
 	} else if (yr != Ey || per != Ep) {
@@ -1501,7 +1501,7 @@ static void check_first_field (const char *line, csvdata *c, PRN *prn)
 
 	if (c->delim == ' ' && *line == ' ') line++;
 
-	while (*line && i < 15) {
+	while (*line && i < sizeof field1) {
 	    if (*line == c->delim) break;
 	    field1[i++] = *line++;
 	}

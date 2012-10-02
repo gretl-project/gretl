@@ -2202,3 +2202,24 @@ char *gretl_utf8_strncat (char *dest, const char *src, size_t n)
 
     return strncat(dest, src, b0);
 }
+
+/**
+ * gretl_scan_varname:
+ * @src: source string.
+ * @targ: target string.
+ *
+ * Performs sscanf() on @src, using a conversion specifier
+ * which allows for writing up to VNAMELEN-1 bytes into
+ * @targ. The latter must therefore be at least VNAMELEN
+ * bytes long.
+ *
+ * Returns: the return value from sscanf().
+ */
+
+int gretl_scan_varname (const char *src, char *targ)
+{
+    char fmt[8];
+
+    sprintf(fmt, "%%%ds", VNAMELEN-1);
+    return sscanf(src, fmt, targ);
+}

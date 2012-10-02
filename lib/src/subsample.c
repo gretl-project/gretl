@@ -732,7 +732,7 @@ static int mask_from_dummy (const char *s, const DATASET *dset,
     char dname[VNAMELEN] = {0};
     int dnum, err = 0;
 
-    sscanf(s, "%15s", dname);
+    gretl_scan_varname(s, dname);
     dnum = series_index(dset, dname);
 
     if (dnum == dset->v) {

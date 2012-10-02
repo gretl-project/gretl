@@ -1253,7 +1253,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     char yvar[VNAMELEN];
     char xvar[VNAMELEN];
     char vname[VNAMELEN];
-    char line[512];
+    char fmt[16], line[512];
     FILE *fp;
     int n = 0;
     int err = 0;
@@ -1264,6 +1264,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     }
 
     *yvar = *xvar = *vname = '\0';
+    sprintf(fmt, "%%%d[^\\\"]", VNAMELEN-1);
 
     /* first pass: count the plots, using labels as heuristic */
 
@@ -1272,11 +1273,11 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
 	    /* reached first data block */
 	    break;
 	} else if (!strncmp(line, "set ylabel ", 11)) {
-	    sscanf(line + 12, "%15[^\"]", yvar);
+	    sscanf(line + 12, fmt, yvar);
 	} else if (!strncmp(line, "set xlabel ", 11)) {
-	    sscanf(line + 12, "%15[^\"]", xvar);
+	    sscanf(line + 12, fmt, xvar);
 	} else if (!strncmp(line, "set title ", 10)) {
-	    sscanf(line + 11, "%15[^\"]", vname);
+	    sscanf(line + 11, fmt, vname);
 	} else if (!strncmp(line, "set label ", 10)) {
 	    if (!strncmp(line + 10, "\"(", 2)) {
 		; /* boolean specifier */

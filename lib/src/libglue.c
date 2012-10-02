@@ -205,6 +205,7 @@ int chow_test_driver (const char *line, MODEL *pmod, DATASET *dset,
 		      gretlopt opt, PRN *prn)
 {
     char chowstr[VNAMELEN];
+    char fmt[16];
     int chowparm = 0;
     int err = 0;
 
@@ -213,7 +214,9 @@ int chow_test_driver (const char *line, MODEL *pmod, DATASET *dset,
        to be used to divide the sample (if given OPT_D)
     */
 
-    if (sscanf(line, "%*s %15s", chowstr) != 1) {
+    sprintf(fmt, "%%*s %%%ds", VNAMELEN-1);
+
+    if (sscanf(line, fmt, chowstr) != 1) {
 	err = E_PARSE;
     } else if (opt & OPT_D) {
 	chowparm = get_chow_dummy(chowstr, dset, &err);
@@ -433,7 +436,7 @@ int do_modprint (const char *line, gretlopt opt, PRN *prn)
     }
 
     /* first up, name of k x 2 matrix */
-    if (sscanf(s, "%15s", name) == 1) {
+    if (gretl_scan_varname(s, name) == 1) {
 	coef_se = get_matrix_by_name(name);
 	if (coef_se == NULL) {
 	    err = E_UNKVAR;
@@ -459,7 +462,7 @@ int do_modprint (const char *line, gretlopt opt, PRN *prn)
 		parnames = litstr;
 		s += strspn(s, " ");
 	    }
-	} else if (sscanf(s, "%15s", name) == 1) {
+	} else if (gretl_scan_varname(s, name) == 1) {
 	    parnames = (char *) get_string_by_name(name);
 	    if (parnames == NULL) {
 		err = E_UNKVAR;
@@ -477,7 +480,7 @@ int do_modprint (const char *line, gretlopt opt, PRN *prn)
     if (!err) {
 	/* optional third field: extra matrix */
 	if (*s != '\0') {
-	    sscanf(s, "%15s", name);
+	    gretl_scan_varname(s, name);
 	    addstats = get_matrix_by_name(name);
 	    if (addstats == NULL) {
 		err = E_UNKVAR;

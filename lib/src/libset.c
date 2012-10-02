@@ -973,7 +973,7 @@ static int set_initvals (const char *s, PRN *prn)
     /* skip past "set initvals" */
     s += 12;
 
-    if (sscanf(s, "%15s", mname) != 1 || !strcmp(mname, "auto")) {
+    if (gretl_scan_varname(s, mname) != 1 || !strcmp(mname, "auto")) {
 	gretl_matrix_free(state->initvals);
 	state->initvals = NULL;
     } else {
@@ -1005,7 +1005,7 @@ static int set_matmask (const char *s, const DATASET *dset,
     /* skip past "set matrix_mask" */
     s += 15;
 
-    if (sscanf(s, "%15s", vname) != 1 || !strcmp(vname, "null")) {
+    if (gretl_scan_varname(s, vname) != 1 || !strcmp(vname, "null")) {
 	gretl_matrix_free(state->matmask);
 	state->matmask = NULL;
     } else {

@@ -3859,7 +3859,7 @@ static int set_var_info (const char *line, gretlopt opt,
     line += strcspn(line, " ");
     line += strspn(line, " ");
 
-    if (sscanf(line, "%15s", vname) != 1) {
+    if (gretl_scan_varname(line, vname) != 1) {
 	return E_PARSE;
     }
 

@@ -955,20 +955,30 @@ static void name_new_obs (GtkWidget *widget, dialog_t *dlg)
 
 static void name_var_dialog (Spreadsheet *sheet) 
 {
+    gchar *msg;
+
+    msg = g_strdup_printf(_("Enter name for new variable\n"
+			    "(max. %d characters)"), 
+			  VNAMELEN - 1);
+
     edit_dialog(0, _("gretl: name variable"), 
-		_("Enter name for new variable\n"
-		  "(max. 15 characters)"), NULL,
-		name_new_var, sheet, 
+		msg, NULL, name_new_var, sheet, 
 		VARCLICK_NONE, sheet->win);
+    g_free(msg);
 }
 
 static void new_case_dialog (Spreadsheet *sheet) 
 {
+    gchar *msg;
+
+    msg = g_strdup_printf(_("Enter case marker for new obs\n"
+			    "(max. %d characters)"), 
+			  OBSLEN - 1);
+
     edit_dialog(0, _("gretl: case marker"), 
-		_("Enter case marker for new obs\n"
-		  "(max. 8 characters)"), NULL,
-		name_new_obs, sheet, 
+		msg, NULL, name_new_obs, sheet, 
 		VARCLICK_NONE, sheet->win);
+    g_free(msg);
 }
 
 static void name_matrix_col (GtkWidget *widget, dialog_t *dlg) 
