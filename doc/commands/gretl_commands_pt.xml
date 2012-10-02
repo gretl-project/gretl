@@ -370,7 +370,10 @@
 	tratar os novos dados como sendo série temporal ao fornecer a opção
 	<opt>--time-series</opt>.  (Esta opção é ignorada nos outros casos.)
       </para>
-
+      <para>
+	Ver também o comando <cmdref targ="join"/> para um manuseamento
+        mais sofisticado com várias fontes de dados.
+      </para>
     </description>
 
     <gui-access>
@@ -5239,6 +5242,80 @@
 	The default is given by the order in which the variables are
 	entered into the model specification, but the up and down arrows
 	can be used to promote or demote a selected variable.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="join" section="Dataset" label="Manage data sources" 
+	   context="cli">
+
+    <usage>
+      <arguments>
+        <argument>filename</argument>
+	<argument>varname</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--data</flag>
+	  <optparm>column-name</optparm>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--filter</flag>
+	  <optparm>expression</optparm>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--ikey</flag>
+	  <optparm>inner-key</optparm>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--okey</flag>
+	  <optparm>outer-key</optparm>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--aggr</flag>
+	  <optparm>method</optparm>
+	  <effect>see below</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	This command imports a data series from the source
+	<repl>filename</repl> (which must be a delimited text data
+	file) under the name <repl>varname</repl>. For details please
+	see <guideref targ="chap:join"/>; here we just give a brief
+	summary of the available options.
+      </para>
+      <para>
+	The <opt>data</opt> option can be used to specify the column
+	heading of the data in the source file, if this differs from
+	the name by which the data should be known in gretl.
+      </para>
+      <para>
+	The <opt>filter</opt> option can be used to specify a
+	criterion for filtering the source data (that is, selecting a
+	subset of observations).
+      </para> 
+      <para>
+	The <opt>ikey</opt> and <opt>okey</opt> options can be used to 
+	specify a mapping between observations in the current dataset
+	and observations in the source data (for example, individuals
+	can be matched against the household to which they belong).
+      </para>
+      <para>
+	The <opt>aggr</opt> option is used when the mapping between
+	observations in the current dataset and the source is not
+	one-to-one.
+      </para>      
+      <para>
+	See also <cmdref targ="append"/> for simpler joining
+	operations.
       </para>
     </description>
 
