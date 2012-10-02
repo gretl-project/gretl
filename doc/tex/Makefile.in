@@ -26,6 +26,7 @@ TEXSRC = cli.tex \
 	matrices.tex \
 	introduction.tex \
 	datafiles.tex \
+	join.tex \
 	robust_vcv.tex \
 	panel.tex \
 	dpanel.tex \

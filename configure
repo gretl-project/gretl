@@ -668,6 +668,8 @@ CURL_LIBS
 CURL_CFLAGS
 FFTW_LIBS
 FFTW_CFLAGS
+PKG_CONFIG_LIBDIR
+PKG_CONFIG_PATH
 PKG_CONFIG
 LATEX
 GNUPLOT
@@ -858,6 +860,8 @@ HOSTCC
 MKLANG
 LAPACK_LIBS
 PKG_CONFIG
+PKG_CONFIG_PATH
+PKG_CONFIG_LIBDIR
 FFTW_CFLAGS
 FFTW_LIBS
 CURL_CFLAGS
@@ -1549,6 +1553,10 @@ Some influential environment variables:
   MKLANG      builder for gtksourceview files (cross-build)
   LAPACK_LIBS linker flags for lapack, overriding auto-detection
   PKG_CONFIG  path to pkg-config utility
+  PKG_CONFIG_PATH
+              directories to add to pkg-config's search path
+  PKG_CONFIG_LIBDIR
+              path overriding pkg-config's built-in search path
   FFTW_CFLAGS C compiler flags for FFTW, overriding pkg-config
   FFTW_LIBS   linker flags for FFTW, overriding pkg-config
   CURL_CFLAGS C compiler flags for CURL, overriding pkg-config
@@ -14920,8 +14928,6 @@ $as_echo "$sse2_result" >&6; }
 
 
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use OpenMP" >&5
-$as_echo_n "checking whether to use OpenMP... " >&6; }
   # Check whether --enable-openmp was given.
 if test "${enable_openmp+set}" = set; then :
   enableval=$enable_openmp; enable_openmp=$enableval
@@ -15034,8 +15040,6 @@ $as_echo "$ac_cv_prog_cc_openmp" >&6; }
 	OPENMP_CFLAGS=$ac_cv_prog_cc_openmp ;;
     esac
   fi
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_openmp_result" >&5
-$as_echo "$ac_openmp_result" >&6; }
 
 
 
@@ -16818,6 +16822,11 @@ orig_CFLAGS=$CFLAGS
 if test "$PKG_CONFIG" != "no" ; then
 
 
+
+
+
+
+
 if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
 	if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
@@ -16930,7 +16939,6 @@ $as_echo "yes" >&6; }
 $as_echo "no" >&6; }
 		PKG_CONFIG=""
 	fi
-
 fi
 
 pkg_failed=no
@@ -16947,6 +16955,7 @@ if test -n "$FFTW_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_FFTW_CFLAGS=`$PKG_CONFIG --cflags "fftw3" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -16963,6 +16972,7 @@ if test -n "$FFTW_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_FFTW_LIBS=`$PKG_CONFIG --libs "fftw3" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -16973,6 +16983,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -16980,17 +16992,17 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        FFTW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "fftw3" 2>&1`
+	        FFTW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "fftw3" 2>&1`
         else
-	        FFTW_PKG_ERRORS=`$PKG_CONFIG --print-errors "fftw3" 2>&1`
+	        FFTW_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "fftw3" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$FFTW_PKG_ERRORS" >&5
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                have_fftw3="no"
+	have_fftw3="no"
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	have_fftw3="no"
 else
 	FFTW_CFLAGS=$pkg_cv_FFTW_CFLAGS
@@ -17019,6 +17031,7 @@ if test -n "$CURL_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_CURL_CFLAGS=`$PKG_CONFIG --cflags "libcurl >= 7.13.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17035,6 +17048,7 @@ if test -n "$CURL_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_CURL_LIBS=`$PKG_CONFIG --libs "libcurl >= 7.13.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17045,6 +17059,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -17052,17 +17068,17 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        CURL_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "libcurl >= 7.13.0" 2>&1`
+	        CURL_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libcurl >= 7.13.0" 2>&1`
         else
-	        CURL_PKG_ERRORS=`$PKG_CONFIG --print-errors "libcurl >= 7.13.0" 2>&1`
+	        CURL_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libcurl >= 7.13.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$CURL_PKG_ERRORS" >&5
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                have_curl="no"
+	have_curl="no"
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	have_curl="no"
 else
 	CURL_CFLAGS=$pkg_cv_CURL_CFLAGS
@@ -17089,6 +17105,7 @@ if test -n "$GLIB_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_GLIB_CFLAGS=`$PKG_CONFIG --cflags "glib-2.0 >= 2.12.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17105,6 +17122,7 @@ if test -n "$GLIB_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_GLIB_LIBS=`$PKG_CONFIG --libs "glib-2.0 >= 2.12.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17115,6 +17133,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -17122,17 +17142,17 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "glib-2.0 >= 2.12.0" 2>&1`
+	        GLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "glib-2.0 >= 2.12.0" 2>&1`
         else
-	        GLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors "glib-2.0 >= 2.12.0" 2>&1`
+	        GLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "glib-2.0 >= 2.12.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GLIB_PKG_ERRORS" >&5
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                have_glib2="no"
+	have_glib2="no"
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	have_glib2="no"
 else
 	GLIB_CFLAGS=$pkg_cv_GLIB_CFLAGS
@@ -17159,6 +17179,7 @@ if test -n "$GTK_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_GTK_CFLAGS=`$PKG_CONFIG --cflags "gtk+-3.0 >= 3.0.1" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17175,6 +17196,7 @@ if test -n "$GTK_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_GTK_LIBS=`$PKG_CONFIG --libs "gtk+-3.0 >= 3.0.1" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17185,6 +17207,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -17192,19 +17216,19 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTK_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "gtk+-3.0 >= 3.0.1" 2>&1`
+	        GTK_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-3.0 >= 3.0.1" 2>&1`
         else
-	        GTK_PKG_ERRORS=`$PKG_CONFIG --print-errors "gtk+-3.0 >= 3.0.1" 2>&1`
+	        GTK_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-3.0 >= 3.0.1" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTK_PKG_ERRORS" >&5
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                build_gui="no"
+	build_gui="no"
       echo "GTK 3 >= 3.0.1 not found"
 
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	build_gui="no"
       echo "GTK 3 >= 3.0.1 not found"
 
@@ -17236,6 +17260,7 @@ if test -n "$GTK_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_GTK_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.14.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17252,6 +17277,7 @@ if test -n "$GTK_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_GTK_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.14.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17262,6 +17288,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -17269,19 +17297,19 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTK_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "gtk+-2.0 >= 2.14.0" 2>&1`
+	        GTK_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-2.0 >= 2.14.0" 2>&1`
         else
-	        GTK_PKG_ERRORS=`$PKG_CONFIG --print-errors "gtk+-2.0 >= 2.14.0" 2>&1`
+	        GTK_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-2.0 >= 2.14.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTK_PKG_ERRORS" >&5
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                build_gui="no"
+	build_gui="no"
       echo "GTK 2 >= 2.14.0 not found"
 
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	build_gui="no"
       echo "GTK 2 >= 2.14.0 not found"
 
@@ -17312,6 +17340,7 @@ if test -n "$GTKSPINNER_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_GTKSPINNER_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.20.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17328,6 +17357,7 @@ if test -n "$GTKSPINNER_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_GTKSPINNER_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.20.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17338,6 +17368,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -17345,17 +17377,17 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTKSPINNER_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "gtk+-2.0 >= 2.20.0" 2>&1`
+	        GTKSPINNER_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-2.0 >= 2.20.0" 2>&1`
         else
-	        GTKSPINNER_PKG_ERRORS=`$PKG_CONFIG --print-errors "gtk+-2.0 >= 2.20.0" 2>&1`
+	        GTKSPINNER_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-2.0 >= 2.20.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTKSPINNER_PKG_ERRORS" >&5
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                fake_gtkspinner="yes"
+	fake_gtkspinner="yes"
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	fake_gtkspinner="yes"
 else
 	GTKSPINNER_CFLAGS=$pkg_cv_GTKSPINNER_CFLAGS
@@ -17382,6 +17414,7 @@ if test -n "$GTKSOURCEVIEW_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_GTKSOURCEVIEW_CFLAGS=`$PKG_CONFIG --cflags "gtksourceview-2.0 >= 2.2.2" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17398,6 +17431,7 @@ if test -n "$GTKSOURCEVIEW_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_GTKSOURCEVIEW_LIBS=`$PKG_CONFIG --libs "gtksourceview-2.0 >= 2.2.2" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17408,6 +17442,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -17415,18 +17451,18 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "gtksourceview-2.0 >= 2.2.2" 2>&1`
+	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtksourceview-2.0 >= 2.2.2" 2>&1`
         else
-	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --print-errors "gtksourceview-2.0 >= 2.2.2" 2>&1`
+	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtksourceview-2.0 >= 2.2.2" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTKSOURCEVIEW_PKG_ERRORS" >&5
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                echo "version 2.0 >= 2.2.2 not found"
+	echo "version 2.0 >= 2.2.2 not found"
 
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	echo "version 2.0 >= 2.2.2 not found"
 
 else
@@ -17456,6 +17492,7 @@ if test -n "$GTKSOURCEVIEW_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_GTKSOURCEVIEW_CFLAGS=`$PKG_CONFIG --cflags "gtksourceview-3.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17472,6 +17509,7 @@ if test -n "$GTKSOURCEVIEW_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_GTKSOURCEVIEW_LIBS=`$PKG_CONFIG --libs "gtksourceview-3.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17482,6 +17520,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -17489,18 +17529,18 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "gtksourceview-3.0" 2>&1`
+	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtksourceview-3.0" 2>&1`
         else
-	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --print-errors "gtksourceview-3.0" 2>&1`
+	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtksourceview-3.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTKSOURCEVIEW_PKG_ERRORS" >&5
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                echo "version 3.0 not found"
+	echo "version 3.0 not found"
 
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	echo "version 3.0 not found"
 
 else
@@ -17551,6 +17591,7 @@ if test -n "$GDK_PIXBUF_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_GDK_PIXBUF_CFLAGS=`$PKG_CONFIG --cflags "gdk-pixbuf-2.0 >= 0.7.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17567,6 +17608,7 @@ if test -n "$GDK_PIXBUF_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_GDK_PIXBUF_LIBS=`$PKG_CONFIG --libs "gdk-pixbuf-2.0 >= 0.7.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17577,6 +17619,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -17584,18 +17628,18 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GDK_PIXBUF_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "gdk-pixbuf-2.0 >= 0.7.0" 2>&1`
+	        GDK_PIXBUF_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gdk-pixbuf-2.0 >= 0.7.0" 2>&1`
         else
-	        GDK_PIXBUF_PKG_ERRORS=`$PKG_CONFIG --print-errors "gdk-pixbuf-2.0 >= 0.7.0" 2>&1`
+	        GDK_PIXBUF_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gdk-pixbuf-2.0 >= 0.7.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GDK_PIXBUF_PKG_ERRORS" >&5
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                pixbuf_failed="yes"
+	pixbuf_failed="yes"
 
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	pixbuf_failed="yes"
 
 else
@@ -17626,6 +17670,7 @@ if test -n "$XML_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_XML_CFLAGS=`$PKG_CONFIG --cflags "libxml-2.0 >= 2.5.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17642,6 +17687,7 @@ if test -n "$XML_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_XML_LIBS=`$PKG_CONFIG --libs "libxml-2.0 >= 2.5.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17652,6 +17698,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -17659,9 +17707,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        XML_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "libxml-2.0 >= 2.5.0" 2>&1`
+	        XML_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libxml-2.0 >= 2.5.0" 2>&1`
         else
-	        XML_PKG_ERRORS=`$PKG_CONFIG --print-errors "libxml-2.0 >= 2.5.0" 2>&1`
+	        XML_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libxml-2.0 >= 2.5.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$XML_PKG_ERRORS" >&5
@@ -17675,9 +17723,10 @@ installed software in a non-standard prefix.
 
 Alternatively, you may set the environment variables XML_CFLAGS
 and XML_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details.
-" "$LINENO" 5
+See the pkg-config man page for more details." "$LINENO" 5
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
@@ -17695,7 +17744,7 @@ else
 	XML_LIBS=$pkg_cv_XML_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	:
+
 fi
 
 if test "${build_docs}" = "yes" ; then
@@ -17714,6 +17763,7 @@ if test -n "$XSLT_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_XSLT_CFLAGS=`$PKG_CONFIG --cflags "libxslt >= 1.0.15" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17730,6 +17780,7 @@ if test -n "$XSLT_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_XSLT_LIBS=`$PKG_CONFIG --libs "libxslt >= 1.0.15" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17740,6 +17791,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -17747,18 +17800,18 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        XSLT_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "libxslt >= 1.0.15" 2>&1`
+	        XSLT_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libxslt >= 1.0.15" 2>&1`
         else
-	        XSLT_PKG_ERRORS=`$PKG_CONFIG --print-errors "libxslt >= 1.0.15" 2>&1`
+	        XSLT_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libxslt >= 1.0.15" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$XSLT_PKG_ERRORS" >&5
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                have_xslt="no"
+	have_xslt="no"
 
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	have_xslt="no"
 
 else
@@ -17786,6 +17839,7 @@ if test -n "$RLIB_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_RLIB_CFLAGS=`$PKG_CONFIG --cflags "libR" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17802,6 +17856,7 @@ if test -n "$RLIB_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_RLIB_LIBS=`$PKG_CONFIG --libs "libR" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -17812,6 +17867,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -17819,18 +17876,18 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        RLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "libR" 2>&1`
+	        RLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libR" 2>&1`
         else
-	        RLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors "libR" 2>&1`
+	        RLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libR" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$RLIB_PKG_ERRORS" >&5
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                have_libR="no"
+	have_libR="no"
 
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	have_libR="no"
 
 else

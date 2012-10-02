@@ -11,7 +11,6 @@
 # -----------
 AC_DEFUN([AC_C_OPENMP],
 [
-  AC_MSG_CHECKING([whether to use OpenMP])
   AC_ARG_ENABLE(openmp,
     [AS_HELP_STRING([--enable-openmp], [use OpenMP if available [default=no]])],
     [enable_openmp=$enableval]
@@ -95,7 +94,6 @@ int main () { return omp_get_num_threads (); }
 	OPENMP_CFLAGS=$ac_cv_prog_cc_openmp ;;
     esac
   fi
-  AC_MSG_RESULT([$ac_openmp_result])
   AC_SUBST([OPENMP_CFLAGS])
 ])
 
