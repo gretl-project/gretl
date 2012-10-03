@@ -211,7 +211,8 @@ int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
     double *vif = NULL;
     int *xlist;
     double vj;
-    int vi, i, j;
+    int vi, i, n;
+    int maxlen = 0;
     int err = 0;
 
     /* fetch list of regressors */
@@ -239,12 +240,22 @@ int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
     pprintf(prn, "%s\n", _("Values > 10.0 may indicate a collinearity problem"));
     pputc(prn, '\n');
 
-    j = 0;
     for (i=1; i<=xlist[0]; i++) {
 	vi = xlist[i];
-	vj = vif[j++];
+	vj = vif[i-1];
 	if (!na(vj)) {
-	    pprintf(prn, "%15s %8.3f\n", dset->varname[vi], vj);
+	    n = strlen(dset->varname[vi]);
+	    if (n > maxlen) {
+		maxlen = n;
+	    }
+	}
+    }    
+
+    for (i=1; i<=xlist[0]; i++) {
+	vi = xlist[i];
+	vj = vif[i-1];
+	if (!na(vj)) {
+	    pprintf(prn, "%*s %8.3f\n", maxlen, dset->varname[vi], vj);
 	}
     }
     pputc(prn, '\n');
