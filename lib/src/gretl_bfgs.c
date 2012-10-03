@@ -1919,23 +1919,27 @@ static void print_NR_status (int status, double crittol, double gradtol,
    with the absolute values of H_{i,i} plus one.  
 */
 
+#define SPECTRAL 0
+
 static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 {
     int i, j, err = 0;
+    int n = H->rows;
     int restore = 0;
+
     double x;
 
     /* first, check if all the elements along the diagonal are 
        numerically positive
     */
 
-    for (i=0; i<H->rows && !err; i++) {
+    for (i=0; i<n && !err; i++) {
 	err = gretl_matrix_get(H, i, i) < 1.0e-20;
     }
 
     if (err) {
 	fprintf(stderr, "newton hessian fixup: non-positive diagonal\n");
-#if 0
+#if 1
 	gretl_matrix_print(H, "H");
 #endif
     } else {
@@ -1951,7 +1955,7 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 			s, lambda);
 		/* restore the original H */
 		gretl_matrix_copy_values(H, Hcpy);
-		for (i=0; i<H->rows; i++) {
+		for (i=0; i<n; i++) {
 		    for (j=0; j<i; j++) {
 			x = lambda * gretl_matrix_get(H, i, j);
 			gretl_matrix_set(H, i, j, x);
@@ -1967,23 +1971,55 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 	}
     }
 
+
+#if SPECTRAL
     if (err) {
-	fprintf(stderr, "newton hessian fixup: desperation!\n");
+	fprintf(stderr, "newton hessian fixup: spectral method\n");
+	gretl_matrix *evecs;
+	gretl_matrix *evals;
+	gretl_matrix *tmp;
+	double y;
+
+	evecs = gretl_matrix_copy(Hcpy);
+	tmp = gretl_matrix_alloc(n,n);
+	evals = gretl_symmetric_matrix_eigenvals(evecs, 1, &err);
+
+	if (!err) {
+	    for (i=0; i<n; i++) {
+		x = 1.0 / (1.0 + fabs(gretl_vector_get(evals,i)));
+		for (j=0; j<n; j++) {
+		    y = x * gretl_matrix_get(evecs, j, i);
+		    gretl_matrix_set(tmp, i, j, y);
+		}
+	    }
+
+	    gretl_matrix_multiply(evecs, tmp, H);
+	    gretl_matrix_print(H, "after spectral fixup");
+	}
+
+	gretl_matrix_free(evals);
+	gretl_matrix_free(evecs);
+	gretl_matrix_free(tmp);
+    }
+
+#endif
+
+    if (err) {
+	fprintf(stderr, "newton hessian fixup: err = %d -> desperation!\n",
+		err);
 	if (restore) {
 	    gretl_matrix_copy_values(H, Hcpy);
 	}
-	for (i=0; i<H->rows; i++) {
-	    for (j=0; j<H->rows; j++) {
+	for (i=0; i<n; i++) {
+	    for (j=0; j<n; j++) {
 		x = (i==j) ? 1/(1 + fabs(gretl_matrix_get(H, i, j))): 0;
 		gretl_matrix_set(H, i, j, x);
 	    }
 	}
-#if 0
-	gretl_matrix_print(H, "desperate H");
-#endif	
     }
 
     return 0;
+
 }
 
 /**
