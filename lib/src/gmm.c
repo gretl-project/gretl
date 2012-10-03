@@ -684,7 +684,7 @@ nlspec_add_orthcond (nlspec *s, const char *str,
 
     str += strspn(str, " ");
 
-    sprintf(fmt, "%%%d[^; ] ; %%%d", VNAMELEN-1, VNAMELEN-1);
+    sprintf(fmt, "%%%d[^; ] ; %%%ds", VNAMELEN-1, VNAMELEN-1);
 
     if (sscanf(str, fmt, lname, rname) != 2) {
 	return E_PARSE;

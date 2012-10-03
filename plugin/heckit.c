@@ -1056,20 +1056,20 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATASET *dset)
     }
 
     if (!err) {
-	err = gretl_model_allocate_params(hm, npar);
+	err = gretl_model_allocate_param_names(hm, npar);
     }
 
     if (!err) {
 	for (i=0; i<kb; i++) {
-	    strcpy(hm->params[i], dset->varname[hm->list[i+2]]);
+	    gretl_model_set_param_name(hm, i, dset->varname[hm->list[i+2]]);
 	    fullcoeff[i] = gretl_vector_get(HC->beta, i);
 	}
 	
-	strcpy(hm->params[kb], "lambda");
+	gretl_model_set_param_name(hm, kb, "lambda");
 	fullcoeff[kb] = HC->lambda;
 
 	for (i=0; i<HC->ksel; i++) {
-	    strcpy(hm->params[i+kb+1], dset->varname[HC->Zlist[i+1]]);
+	    gretl_model_set_param_name(hm, i+kb+1, dset->varname[HC->Zlist[i+1]]);
 	    fullcoeff[i+kb+1] = gretl_vector_get(HC->gama, i);
 	}
     }

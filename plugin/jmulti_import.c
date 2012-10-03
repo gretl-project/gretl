@@ -261,7 +261,7 @@ static int read_jmulti_data (FILE *fp, char *line, int len,
     s = line;
     for (i=1; i<dset->v; i++) {
 	s += strspn(s, " ");
-	sscanf(s, "%15s", dset->varname[i]);
+	gretl_scan_varname(s, dset->varname[i]);
 	if (check_varname(dset->varname[i]) && 
 	    try_fix_varname(dset->varname[i])) {
 	    err = 1;

@@ -664,14 +664,14 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     } 
 
     if (!err) {
-	err = gretl_model_allocate_params(pmod, np);
+	err = gretl_model_allocate_param_names(pmod, np);
 	if (!err) {
 	    for (j=0; j<dinfo->k; j++) {
 		v = pmod->list[j+2];
-		strcpy(pmod->params[j], dset->varname[v]);
+		gretl_model_set_param_name(pmod, j, dset->varname[v]);
 	    }
 	    if (dinfo->dist != DUR_EXPON) {
-		strcpy(pmod->params[np-1], "sigma");
+		gretl_model_set_param_name(pmod, np-1, "sigma");
 	    } 
 	}
     }

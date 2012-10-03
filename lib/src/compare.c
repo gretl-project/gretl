@@ -3260,7 +3260,7 @@ int comfac_test (MODEL *pmod, DATASET *dset,
     }
 
     /* add lags of the dependent variable and all regressors: some of
-       these may be redundant but we'll just let the redundat terms be
+       these may be redundant but we'll just let the redundant terms be
        eliminated automatically via gretl's collinearity checking.
     */
 

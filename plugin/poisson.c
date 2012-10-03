@@ -371,15 +371,15 @@ transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
     }
 
     if (!err) {
-	err = gretl_model_allocate_params(pmod, nc);
+	err = gretl_model_allocate_param_names(pmod, nc);
 	if (!err) {
 	    int v;
 
 	    for (i=0; i<nbinfo->k; i++) {
 		v = pmod->list[i+2];
-		strcpy(pmod->params[i], dset->varname[v]);
+		gretl_model_set_param_name(pmod, i, dset->varname[v]);
 	    }
-	    strcpy(pmod->params[nc-1], "alpha");
+	    gretl_model_set_param_name(pmod, nc-1, "alpha");
 	}
     }
 

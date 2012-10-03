@@ -2698,7 +2698,10 @@ static int found_log_parent (const char *s, char *targ)
     int len = gretl_namechar_spn(s);
 
     if (len < VNAMELEN && s[len] == ')') {
-	sscanf(s, "%15[^)]", targ);
+	char fmt[8];
+
+	sprintf(fmt, "%%%d[^)]", VNAMELEN-1);
+	sscanf(s, fmt, targ);
 	return 1;
     }
 
@@ -2725,7 +2728,11 @@ int series_is_log (const DATASET *dset, int i, char *parent)
     *parent = '\0';
 
     if (s != NULL && *s != '\0') {
-	if (sscanf(s, "= log of %15s", parent) == 1) {
+	char fmt[16];
+
+	sprintf(fmt, "= log of %%%ds", VNAMELEN-1);
+
+	if (sscanf(s, fmt, parent) == 1) {
 	    return 1;
 	} else if (!strncmp(s, "log(", 4)) {
 	    return found_log_parent(s + 4, parent);

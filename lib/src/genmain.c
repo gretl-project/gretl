@@ -103,6 +103,7 @@ static int maybe_record_lag_info (parser *p)
     const char *s = p->input;
     int n = strlen(p->lh.name);
     char vname[VNAMELEN];
+    char fmt[16];
     int lag;
 
     if (!strncmp(s, "genr ", 5)) {
@@ -120,7 +121,9 @@ static int maybe_record_lag_info (parser *p)
 	s += strspn(s, " ");
     }
 
-    if (sscanf(s, "%15[^ ()](%d)", vname, &lag) == 2) {
+    sprintf(fmt, "%%%d[^ ()](%%d)", VNAMELEN-1);
+
+    if (sscanf(s, fmt, vname, &lag) == 2) {
 	s = strchr(s, ')');
 	if (s != NULL && string_is_blank(s + 1)) {
 	    int pv = series_index(p->dset, vname);
@@ -305,8 +308,11 @@ static int try_for_listvar (const DATASET *dset, const char *s)
 {
     char vname[VNAMELEN];
     char lname[VNAMELEN];
+    char fmt[16];
 
-    if (sscanf(s, "%15[^.].%15s", lname, vname) == 2) {
+    sprintf(fmt, "%%%d[^.].%%%ds", VNAMELEN-1, VNAMELEN-1);
+
+    if (sscanf(s, fmt, lname, vname) == 2) {
 	int *list = get_list_by_name(lname);
 
 	if (list != NULL) {

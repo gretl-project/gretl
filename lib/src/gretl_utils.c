@@ -1577,9 +1577,12 @@ static int maybe_delete_bundle_value (const char *s, PRN *prn)
 {
     char bname[VNAMELEN];
     char key[VNAMELEN];
+    char fmt[16];
     int err = 0;
 
-    if (sscanf(s, "%15[^[][%15[^]]", bname, key) == 2) {
+    sprintf(fmt, "%%%d[^[][%%%d[^]]", VNAMELEN-1, VNAMELEN-1);
+
+    if (sscanf(s, fmt, bname, key) == 2) {
 	gretl_bundle *bundle;
 	const char *s;
 

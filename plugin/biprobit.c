@@ -1178,7 +1178,7 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
     } else {
 	pmod->coeff = tmp;
 	pmod->ncoeff = npar;
-	err = gretl_model_allocate_params(pmod, npar);
+	err = gretl_model_allocate_param_names(pmod, npar);
     }
 
     if (err) {
@@ -1186,12 +1186,12 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
     }
 
     for (i=0; i<bp->k1; i++) {
-	strcpy(pmod->params[i], dset->varname[bp->X1list[i+1]]);
+	gretl_model_set_param_name(pmod, i, dset->varname[bp->X1list[i+1]]);
 	pmod->coeff[i] = gretl_vector_get(bp->beta, i);
     }
 	
     for (i=0; i<bp->k2; i++) {
-	strcpy(pmod->params[i+bp->k1], dset->varname[bp->X2list[i+1]]);
+	gretl_model_set_param_name(pmod, i+bp->k1, dset->varname[bp->X2list[i+1]]);
 	pmod->coeff[i + bp->k1] = gretl_vector_get(bp->gama, i);
     }
 

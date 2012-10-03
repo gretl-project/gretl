@@ -249,7 +249,9 @@ int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
 		maxlen = n;
 	    }
 	}
-    }    
+    }
+
+    maxlen = maxlen < 12 ? 12 : maxlen;
 
     for (i=1; i<=xlist[0]; i++) {
 	vi = xlist[i];

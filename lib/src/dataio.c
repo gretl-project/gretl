@@ -2725,7 +2725,7 @@ static int import_octave (const char *fname, DATASET *dset,
     DATASET *octset = NULL;
     FILE *fp = NULL;
     char *line = NULL;
-    char tmp[8], name[32];
+    char tmp[8], fmt[16], name[32];
     int nrows = 0, ncols = 0, nblocks = 0;
     int brows = 0, bcols = 0, oldbcols = 0;
     int maxlen, got_type = 0, got_name = 0;
@@ -2835,12 +2835,14 @@ static int import_octave (const char *fname, DATASET *dset,
     i = 1;
     t = 0;
 
+    sprintf(fmt, "# name: %%%ds", VNAMELEN - 1);
+
     while (fgets(line, maxlen, fp) && !err) {
 	char *s = line;
 	int j;
 
 	if (*s == '#') {
-	    if (sscanf(line, "# name: %15s", name) == 1) {
+	    if (sscanf(line, fmt, name) == 1) {
 		;
 	    } else if (sscanf(line, "# rows: %d", &brows) == 1) {
 		t = 0;

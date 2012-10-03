@@ -1740,7 +1740,7 @@ static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
     pmod->fstt = pmod->chisq = NADBL;
     pmod->lnL = NADBL;
   
-    gretl_model_allocate_params(pmod, dpd->k);
+    gretl_model_allocate_param_names(pmod, dpd->k);
     if (pmod->errcode) {
 	return pmod->errcode;
     }
@@ -1749,16 +1749,14 @@ static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
 	j = 0;
 	if (dpd->laglist != NULL) {
 	    for (i=1; i<=dpd->laglist[0]; i++) {
-		pmod->params[j][0] = '\0';
 		sprintf(tmp, "%.10s(-%d)", dset->varname[dpd->yno], 
 			dpd->laglist[i]);
-		strncat(pmod->params[j++], tmp, 15);
+		gretl_model_set_param_name(pmod, j++, tmp);
 	    }	
 	} else {
 	    for (i=0; i<dpd->p; i++) {
-		pmod->params[j][0] = '\0';
 		sprintf(tmp, "%.10s(-%d)", dset->varname[dpd->yno], i+1);
-		strncat(pmod->params[j++], tmp, 15);
+		gretl_model_set_param_name(pmod, j++, tmp);
 	    }
 	}
     } else {
@@ -1767,29 +1765,29 @@ static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
 	j = 0;
 	if (dpd->laglist != NULL) {
 	    for (i=1; i<=dpd->laglist[0]; i++) {
-		pmod->params[j][0] = '\0';
 		sprintf(tmp, "%c%.10s(-%d)", prefix, dset->varname[dpd->yno], 
 			dpd->laglist[i]);
-		strncat(pmod->params[j++], tmp, 15);
+		gretl_model_set_param_name(pmod, j++, tmp);
 	    }	
 	} else {
 	    for (i=0; i<dpd->p; i++) {
-		pmod->params[j][0] = '\0';
 		sprintf(tmp, "%c%.10s(-%d)", prefix, dset->varname[dpd->yno], i+1);
-		strncat(pmod->params[j++], tmp, 15);
+		gretl_model_set_param_name(pmod, j++, tmp);
 	    }
 	}
     }
 
     for (i=0; i<dpd->nx; i++) {
-	strcpy(pmod->params[j++], dset->varname[dpd->xlist[i+1]]);
+	gretl_model_set_param_name(pmod, j++, dset->varname[dpd->xlist[i+1]]);
     }
 
     for (i=0; i<dpd->ndum; i++) {
 	if (dpd->ifc) {
-	    sprintf(pmod->params[j++], "T%d", dpd->t1min + i + 2);
+	    sprintf(tmp, "T%d", dpd->t1min + i + 2);
+	    gretl_model_set_param_name(pmod, j++, tmp);
 	} else {
-	    sprintf(pmod->params[j++], "T%d", dpd->t1min + i + 1);
+	    sprintf(tmp, "T%d", dpd->t1min + i + 1);
+	    gretl_model_set_param_name(pmod, j++, tmp);
 	}
     }
 

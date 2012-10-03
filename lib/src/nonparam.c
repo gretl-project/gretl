@@ -254,19 +254,23 @@ static void print_raw_and_ranked (int vx, int vy,
 {
     int T = dset->t2 - dset->t1 + 1;
     int obslen = max_obs_marker_length(dset);
+    int n1 = strlen(dset->varname[vx]);
+    int n2 = strlen(dset->varname[vy]);
     int t, i = 0;
 
+    n1 = (n2 > n1)? n2 : n1;
+    n1 = (n1 < 15)? 15 : n1;
     pputc(prn, '\n');
     bufspace(obslen + 1, prn);
-    pprintf(prn, "%15s%8s%15s%8s\n\n", dset->varname[vx], _("rank"),
-	    dset->varname[vy], _("rank"));
+    pprintf(prn, "%*s%8s%*s%8s\n\n", n1, dset->varname[vx], _("rank"),
+	    n1, dset->varname[vy], _("rank"));
 
     for (t=0; t<T; t++) {
 	print_obs_marker(t + dset->t1, dset, obslen, prn);
 	if (!(na(x[t])) && !(na(y[t]))) {
-	    pprintf(prn, "%#15g", x[t]);
+	    pprintf(prn, "%#*g", n1, x[t]);
 	    pprintf(prn, "%8g", rx[i]);
-	    pprintf(prn, "%#15g", y[t]);
+	    pprintf(prn, "%#*g", n1, y[t]);
 	    pprintf(prn, "%8g", ry[i]);
 	    i++;
 	}

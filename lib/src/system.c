@@ -826,6 +826,7 @@ int equation_system_append_multi (equation_system *sys,
 				  const DATASET *dset)
 {
     char name1[VNAMELEN], name2[VNAMELEN];
+    char fmt[12];
     int n, err = 0;
 
     if (sys == NULL) {
@@ -833,7 +834,8 @@ int equation_system_append_multi (equation_system *sys,
 	return E_DATA;
     }
 
-    n = sscanf(param, "%15s %15s", name1, name2);
+    sprintf(fmt, "%%%ds %%%ds", VNAMELEN-1, VNAMELEN-1);
+    n = sscanf(param, fmt, name1, name2);
 
     if (n == 2) {
 	/* look for two lists */

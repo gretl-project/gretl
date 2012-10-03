@@ -4473,6 +4473,23 @@ void print_summary_single (const Summary *s,
     pputs(prn, "\n\n");    
 }
 
+#define MAXNAM 18
+
+static void summary_print_varname (const char *vname,
+				   int len, PRN *prn)
+{
+    if (strlen(vname) >= MAXNAM) {
+	char tmp[MAXNAM];
+
+	*tmp = '\0';
+	strncat(tmp, vname, MAXNAM-2);
+	strncat(tmp, "~", 1);
+	pprintf(prn, "%-*s", len, tmp);		
+    } else {
+	pprintf(prn, "%-*s", len, vname);
+    }
+}
+
 /**
  * print_summary:
  * @summ: pointer to gretl summary statistics struct.
@@ -4507,6 +4524,9 @@ void print_summary (const Summary *summ,
     }
 
     len = (maxlen <= 8)? 10 : (maxlen + 1);
+    if (len > MAXNAM) {
+	len = MAXNAM;
+    }
 
 #if 0
     if (!(summ->opt & OPT_B)) {
@@ -4533,7 +4553,7 @@ void print_summary (const Summary *summ,
 
 	for (i=0; i<summ->list[0]; i++) {
 	    vi = summ->list[i + 1];
-	    pprintf(prn, "%-*s", len, dset->varname[vi]);
+	    summary_print_varname(dset->varname[vi], len, prn);
 	    printf15(summ->mean[i], prn);
 	    printf15(summ->low[i], prn);
 	    printf15(summ->high[i], prn);
@@ -4571,7 +4591,7 @@ void print_summary (const Summary *summ,
 
 	for (i=0; i<summ->list[0]; i++) {
 	    vi = summ->list[i + 1];
-	    pprintf(prn, "%-*s", len, dset->varname[vi]);
+	    summary_print_varname(dset->varname[vi], len, prn);
 	    printf15(summ->mean[i], prn);
 	    printf15(summ->median[i], prn);
 	    printf15(summ->low[i], prn);
@@ -4590,7 +4610,7 @@ void print_summary (const Summary *summ,
 	    double cv;
 
 	    vi = summ->list[i + 1];
-	    pprintf(prn, "%-*s", len, dset->varname[vi]);
+	    summary_print_varname(dset->varname[vi], len, prn);
 
 	    if (floateq(summ->mean[i], 0.0)) {
 		cv = NADBL;
@@ -4616,7 +4636,7 @@ void print_summary (const Summary *summ,
 
 	for (i=0; i<summ->list[0]; i++) {
 	    vi = summ->list[i + 1];
-	    pprintf(prn, "%-*s", len, dset->varname[vi]);
+	    summary_print_varname(dset->varname[vi], len, prn);
 	    printf15(summ->perc05[i], prn);
 	    printf15(summ->perc95[i], prn);
 	    printf15(summ->iqr[i], prn);

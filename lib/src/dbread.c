@@ -498,7 +498,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 	    continue;
 	}
 
-	if (sscanf(s1, "%15s", sername) != 1) {
+	if (gretl_scan_varname(s1, sername) != 1) {
 	    break;
 	}
 
@@ -566,7 +566,7 @@ get_remote_series_info (const char *series, SERIESINFO *sinfo)
 	    continue;
 	}
 
-	if (sscanf(s1, "%15s", sername) != 1) {
+	if (gretl_scan_varname(s1, sername) != 1) {
 	    break;
 	}
 
@@ -655,6 +655,7 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
     FILE *fp;
     char dbidx[MAXLEN];
     char line[1024];
+    char fmt[24];
     char *p;
     int y0, p0, y1, p1;
     int nf, gotit = 0;
@@ -678,13 +679,14 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
 	return E_FOPEN;
     }
 
+    sprintf(fmt, "%%%ds %%d %%d %%d %%d %%d %%d", VNAMELEN - 1);
+
     while (fgets(line, sizeof line, fp) && !gotit) {
 	if (*line == '>') {
 	    *sinfo->varname = 0;
 	    *sinfo->descrip = 0;
-	    nf = sscanf(line + 1, "%15s %d %d %d %d %d %d",
-			sinfo->varname, &y0, &p0, &y1, &p1, 
-			&sinfo->pd, &sinfo->offset);
+	    nf = sscanf(line + 1, fmt, sinfo->varname, &y0, &p0, 
+			&y1, &p1, &sinfo->pd, &sinfo->offset);
 	    fprintf(stderr, "in7: varname='%s'\n", sinfo->varname);
 	    if (!strcmp(sinfo->varname, series)) {
 		gotit = 1;
@@ -905,7 +907,7 @@ static RECNUM read_rats_directory (FILE *fp, const char *series_name,
     fseek(fp, 4L, SEEK_CUR); /* skip two shorts */
     fread(&rdir.first_data, sizeof(RECNUM), 1, fp);
     fread(rdir.series_name, NAMELENGTH, 1, fp);  
-    rdir.series_name[15] = '\0';
+    rdir.series_name[NAMELENGTH-1] = '\0';
 
     gretl_chopstr(rdir.series_name);
 
@@ -1085,16 +1087,19 @@ static int read_in7_series_info (FILE *fp, dbwrapper *dw)
     char line[1024];
     char sname[VNAMELEN];
     char desc[MAXLABEL];
+    char fmt[24];
     int y0, p0, y1, p1;
     int pd, offset, pos;
     int i, nf;
     int err = 0;
 
+    sprintf(fmt, "%%%ds %%d %%d %%d %%d %%d %%d", VNAMELEN - 1);
+
     i = 0;
     while (fgets(line, sizeof line, fp) && !err) {
 	if (*line == '>') {
-	    nf = sscanf(line + 1, "%15s %d %d %d %d %d %d",
-			sname, &y0, &p0, &y1, &p1, &pd, &offset);
+	    nf = sscanf(line + 1, fmt, sname, &y0, &p0, &y1, 
+			&p1, &pd, &offset);
 	    if (nf == 7 && y0 > 0 && p0 > 0 && y1 > 0 && p1 > 0 &&
 		pd >= 1 && offset > 0) {
 		*desc = 0;
@@ -1132,9 +1137,12 @@ static int count_in7_series (FILE *fp, int *err)
 {
     char line[1024];
     char sname[VNAMELEN];
+    char fmt[24];
     int y0, p0, y1, p1;
     int pd, offset;
     int nf, i = 0, nseries = 0;
+
+    sprintf(fmt, "%%%ds %%d %%d %%d %%d %%d %%d", VNAMELEN - 1);
 
     while (fgets(line, sizeof line, fp)) {
 	if (i == 0 && strncmp(line, "pcgive 700", 10)) {
@@ -1143,8 +1151,8 @@ static int count_in7_series (FILE *fp, int *err)
 	    return 0;
 	}
 	if (*line == '>') {
-	    nf = sscanf(line + 1, "%15s %d %d %d %d %d %d",
-			sname, &y0, &p0, &y1, &p1, &pd, &offset);
+	    nf = sscanf(line + 1, fmt, sname, &y0, &p0, &y1, 
+			&p1, &pd, &offset);
 	    if (nf < 7 || y0 < 0 || p0 < 0 || y1 < 0 || p1 < 0 ||
 		pd < 1 || offset < 0) {
 		fprintf(stderr, "Error reading series info\n");

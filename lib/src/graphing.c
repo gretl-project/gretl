@@ -1725,7 +1725,8 @@ static void make_gtitle (gnuplot_info *gi, int code,
 	}	    
 	break;
     case GTITLE_RESID:
-	if (sscanf(s1, "residual for %15s", depvar) == 1) {
+	if (strncmp(s1, "residual for ", 13) == 0 &&
+	    gretl_scan_varname(s1 + 13, depvar) == 1) {
 	    sprintf(title, _("Regression residuals (= observed - fitted %s)"), 
 		    depvar);
 	}
@@ -3555,8 +3556,15 @@ static const double *matrix_col (const gretl_matrix *m, int j)
 static void plot_colname (char *s, const char **colnames, int j)
 {
     if (colnames != NULL) {
+	const char *name = colnames[j-1];
+
 	*s = '\0';
-	strncat(s, colnames[j-1], 15);
+	if (strlen(name) >= 16) {
+	    strncat(s, name, 14);
+	    strncat(s, "~", 1);
+	} else {
+	    strncat(s, name, 15);
+	}
     } else {
 	sprintf(s, "col %d", j);
     }

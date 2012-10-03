@@ -1117,7 +1117,7 @@ static int vmat_maxlen (VMatrix *vmat)
 void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 {
     register int i, j;
-    int nf, li2, p, k, idx, ij2;
+    int n, nf, li2, p, k, idx, ij2;
     int maxlen = 0;
     int fwidth = 14;
     int fields = 5;
@@ -1142,8 +1142,13 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 	/* print the varname headings */
 	for (j=1; j<=p; ++j)  {
 	    s = vmat->names[j + nf - 1];
-	    bufspace(fwidth - strlen(s), prn);
-	    pputs(prn, s); 
+	    n = strlen(s);
+	    if (n > fwidth - 1) {
+		pprintf(prn, " %.*s~", fwidth - 2, s);
+	    } else {
+		bufspace(fwidth - n, prn);
+		pputs(prn, s);
+	    } 
 	}
 	pputc(prn, '\n');
 
@@ -1154,7 +1159,12 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 		outxx(vmat->vec[idx], vmat->ci, fwidth, prn);
 	    }
 	    if (fwidth < 15) pputc(prn, ' ');
-	    pprintf(prn, " %s\n", vmat->names[j]);
+	    n = strlen(vmat->names[j]);
+	    if (n > fwidth - 1) {
+		pprintf(prn, " %.*s~\n", fwidth - 2, vmat->names[j]);
+	    } else {
+		pprintf(prn, " %s\n", vmat->names[j]);
+	    }
 	}
 
 	/* print upper triangular part of matrix */
@@ -1166,7 +1176,12 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 		outxx(vmat->vec[idx], vmat->ci, fwidth, prn);
 	    }
 	    if (fwidth < 15) pputc(prn, ' ');
-	    pprintf(prn, " %s\n", vmat->names[ij2]);
+	    n = strlen(vmat->names[ij2]);
+	    if (n > fwidth - 1) {
+		pprintf(prn, " %.*s~\n", fwidth - 2, vmat->names[ij2]);
+	    } else {
+		pprintf(prn, " %s\n", vmat->names[ij2]);
+	    }	    
 	}
 	pputc(prn, '\n');
     }

@@ -2366,10 +2366,10 @@ static int xml_get_startobs (xmlNodePtr node, double *sd0, char *stobs,
     int err = 0;
 
     if (tmp != NULL) {
-	char obstr[16];
+	char obstr[OBSLEN];
 
 	obstr[0] = '\0';
-	strncat(obstr, (char *) tmp, 15);
+	strncat(obstr, (char *) tmp, OBSLEN - 1);
 	gretl_charsub(obstr, ':', '.');
 	
 	if (strchr(obstr, '/') != NULL && caldata) {
@@ -2439,10 +2439,12 @@ static int xml_get_endobs (xmlNodePtr node, char *endobs, int caldata)
 static int lag_from_label (int v, const DATASET *dset, int *lag)
 {
     const char *test = series_get_label(dset, v);
-    char pm, vname[VNAMELEN];
+    char pm, fmt[20], vname[VNAMELEN];
     int pv = 0;
 
-    if (sscanf(test, "= %15[^(](t %c %d)", vname, &pm, lag) == 3) {
+    sprintf(fmt, "= %%%d[^(](t %%c %%d)", VNAMELEN - 1);
+
+    if (sscanf(test, fmt, vname, &pm, lag) == 3) {
 	pv = series_index(dset, vname);
 	pv = (pv < dset->v)? pv : 0;
     }

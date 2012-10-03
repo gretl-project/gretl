@@ -435,7 +435,9 @@ double coeff_pval (int ci, double x, int df);
 
 int exact_fit_check (const MODEL *pmod, PRN *prn);
 
-int gretl_model_allocate_params (MODEL *pmod, int k);
+int gretl_model_allocate_param_names (MODEL *pmod, int k);
+
+int gretl_model_set_param_name (MODEL *pmod, int i, const char *name);
 
 int gretl_model_add_arma_varnames (MODEL *pmod, const DATASET *dset,
 				   int yno, int p, int q, 

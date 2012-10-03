@@ -2492,18 +2492,26 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    continue;
 	}
 
-	if (sscanf(gpline, "# X = '%15[^\']' (%d)", vname, &v) == 2) {
-	    if (plot_ols_var_ok(vname)) {
-		reglist[2] = v;
+	if (!strncmp(gpline, "# X = ", 6) || !strncmp(gpline, "# Y = ", 6)) {
+	    char fmt[16];
+
+	    sprintf(fmt, "'%%%d[^\\']' (%%d)", VNAMELEN - 1);
+
+	    if (sscanf(gpline + 6, fmt, vname, &v) == 2) {
+		if (gpline[2] == 'X') {
+		    if (plot_ols_var_ok(vname)) {
+			reglist[2] = v;
+		    }
+		} else { 
+		    /* 'Y' */
+		    if (reglist[2] > 0 && plot_ols_var_ok(vname)) {
+			reglist[0] = 3;
+			reglist[1] = v;
+		    }
+		}
 	    }
 	    continue;
-	} else if (sscanf(gpline, "# Y = '%15[^\']' (%d)", vname, &v) == 2) {
-	    if (reglist[2] > 0 && plot_ols_var_ok(vname)) {
-		reglist[0] = 3;
-		reglist[1] = v;
-	    }
-	    continue;
-	} 
+	}
 	
 	if (sscanf(gpline, "# literal lines = %d", &spec->n_literal)) {
 	    spec->literal = strings_array_new(spec->n_literal);

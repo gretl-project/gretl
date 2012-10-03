@@ -55,6 +55,8 @@ struct CoeffSep_ {
     int pos;
 };
 
+#define PNAMELEN 16 /* for parameter names */
+
 static void gretl_test_init (ModelTest *test, ModelTestType ttype)
 {
     test->type = ttype;
@@ -5257,7 +5259,7 @@ double coeff_pval (int ci, double x, int df)
 }
 
 /**
- * gretl_model_allocate_params:
+ * gretl_model_allocate_param_names:
  * @pmod: pointer to target model.
  * @k: number of strings to allocate.
  * 
@@ -5268,9 +5270,9 @@ double coeff_pval (int ci, double x, int df)
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_model_allocate_params (MODEL *pmod, int k)
+int gretl_model_allocate_param_names (MODEL *pmod, int k)
 {
-    pmod->params = strings_array_new_with_length(k, VNAMELEN);
+    pmod->params = strings_array_new_with_length(k, PNAMELEN);
 
     if (pmod->params == NULL) {
 	pmod->errcode = E_ALLOC;
@@ -5281,6 +5283,32 @@ int gretl_model_allocate_params (MODEL *pmod, int k)
     }
 
     return pmod->errcode;
+}
+
+/**
+ * gretl_model_set_param_name:
+ * @pmod: pointer to target model.
+ * @i: 0-based index of value to set.
+ * @name: string value to set.
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_model_set_param_name (MODEL *pmod, int i, const char *name)
+{
+    if (pmod->params == NULL || i < 0 || i >= pmod->nparams || 
+	name == NULL) {
+	return E_DATA;
+    } else {
+	pmod->params[i][0] = '\0';
+	if (strlen(name) >= PNAMELEN) {
+	    strncat(pmod->params[i], name, PNAMELEN - 2);
+	    strncat(pmod->params[i], "~", 1);
+	} else {
+	    strncat(pmod->params[i], name, PNAMELEN - 1);
+	}
+	return 0;
+    }
 }
 
 static int count_coeffs (int p, const char *pmask,
@@ -6183,6 +6211,7 @@ static double get_vcv_element (MODEL *pmod, const char *s,
 			       const DATASET *dset)
 {
     char v1str[VNAMELEN], v2str[VNAMELEN];
+    char fmt[16];
     int v1 = 0, v2 = 0;
     int i, j, k, gotit;
     double ret = NADBL;
@@ -6191,7 +6220,9 @@ static double get_vcv_element (MODEL *pmod, const char *s,
 	return NADBL;
     }
 
-    if (sscanf(s, "%15[^,],%15s", v1str, v2str) != 2) {
+    sprintf(fmt, "%%%d[^,],%%%ds", VNAMELEN-1, VNAMELEN-1);
+
+    if (sscanf(s, fmt, v1str, v2str) != 2) {
 	return NADBL;
     }
 

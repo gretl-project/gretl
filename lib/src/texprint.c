@@ -129,9 +129,7 @@ char *tex_escape (char *targ, const char *src)
 
 static int tex_math_pname (char *targ, const char *s)
 {
-    char base[16];
-    char op[2];
-    char mod[8];
+    char base[16], op[2], mod[8];
     int n;
 
     n = sscanf(s, "%15[^_^]%1[_^]%7s", base, op, mod);
@@ -440,10 +438,12 @@ static int tex_greek_param (char *targ, const char *src)
 static void tex_garch_coeff_name (char *targ, const char *src,
 				  int inmath)
 {
-    char vname[VNAMELEN], vnesc[16];
+    char fmt[16], vname[VNAMELEN], vnesc[16];
     int lag;
 
-    if (sscanf(src, "%15[^(](%d)", vname, &lag) == 2) {
+    sprintf(fmt, "%%%d[^(](%%d)", VNAMELEN - 1);
+
+    if (sscanf(src, fmt, vname, &lag) == 2) {
 	/* e.g. "alpha(0)" */
 	if (!inmath) {
 	    sprintf(targ, "$\\%s_{%d}$", vname, lag);
@@ -464,12 +464,14 @@ static void tex_garch_coeff_name (char *targ, const char *src,
 static void tex_mp_coeff_name (char *targ, const char *src,
 			       int inmath)
 {
-    char vname[VNAMELEN], vnesc[24];
+    char fmt[12], vname[VNAMELEN], vnesc[24];
     int power;
 
     tex_escape(vnesc, src);
 
-    if (sscanf(vnesc, "%15[^^]^%d", vname, &power) == 2) {
+    sprintf(fmt, "%%%d[^^]^%%d", VNAMELEN - 1);
+
+    if (sscanf(vnesc, fmt, vname, &power) == 2) {
 	/* variable raised to some power */
 	if (!inmath) {
 	    sprintf(targ, "%s$^{%d}$", vname, power);
@@ -516,21 +518,30 @@ static void tex_arma_coeff_name (char *targ, const char *src,
 	} else {
 	    sprintf(targ, "\\Theta_{%d}", i);
 	}
-    } else if (sscanf(src, "%15[^(](-%d)", vname, &i) == 2) {
-	if (!strcmp(vname, "y")) {
-	    strcpy(texname, "y");
-	} else {
-	    tex_escape(vnesc, vname);
-	    if (!inmath) {
-		strcpy(texname, vnesc);
+    } else if (strstr(src, "(-") != NULL) {
+	char fmt[16];
+
+	sprintf(fmt, "%%%d[^(](-%%d)", VNAMELEN - 1);
+	
+	if (sscanf(src, fmt, vname, &i) == 2) {
+	    if (!strcmp(vname, "y")) {
+		strcpy(texname, "y");
 	    } else {
-		sprintf(texname, "\\mbox{%s}", vnesc);
+		tex_escape(vnesc, vname);
+		if (!inmath) {
+		    strcpy(texname, vnesc);
+		} else {
+		    sprintf(texname, "\\mbox{%s}", vnesc);
+		}
 	    }
-	}
-	if (!inmath) {
-	    sprintf(targ, "%s$_{t-%d}$", texname, i);
+	    if (!inmath) {
+		sprintf(targ, "%s$_{t-%d}$", texname, i);
+	    } else {
+		sprintf(targ, "%s_{t-%d}", texname, i);
+	    }
 	} else {
-	    sprintf(targ, "%s_{t-%d}", texname, i);
+	    tex_escape(vnesc, src);
+	    strcpy(targ, vnesc);
 	}
     } else {
 	tex_escape(vnesc, src);

@@ -975,7 +975,8 @@ static int hausman_allocate (panelmod_t *pan)
 
 static void print_panel_coeff (const MODEL *pmod,
  			       const char *vname,
- 			       int i, PRN *prn)
+ 			       int i, int maxlen,
+			       PRN *prn)
 {
     double tstat = pmod->coeff[i] / pmod->sderr[i];
     char errstr[18];
@@ -983,7 +984,7 @@ static void print_panel_coeff (const MODEL *pmod,
  
     sprintf(errstr, "(%.5g)", pmod->sderr[i]);
     sprintf(pvstr, "[%.5f]", student_pvalue_2(pmod->dfd, tstat));
-    pprintf(prn, "%*s: %14.5g %15s %15s\n", VNAMELEN, vname,
+    pprintf(prn, "%*s: %14.5g %15s %15s\n", maxlen, vname,
  	    pmod->coeff[i], errstr, pvstr);
 }
 
@@ -1537,7 +1538,8 @@ static int print_fe_results (panelmod_t *pan,
 			     DATASET *dset,
 			     PRN *prn)
 {
-    int dfn, i;
+    int n, maxlen = 0;
+    int dfn, i, vi;
 
     pputs(prn, 
 	  _("Fixed effects estimator\n"
@@ -1545,11 +1547,20 @@ static int print_fe_results (panelmod_t *pan,
 	    "slope standard errors in parentheses, p-values in brackets\n"));
     pputc(prn, '\n');
 
+    for (i=0; i<pmod->ncoeff; i++) {
+	vi = pan->vlist[i+2];
+	n = strlen(dset->varname[vi]);
+	if (n > maxlen) {
+	    maxlen = n;
+	}
+    }
+
+    maxlen = maxlen < 12 ? 12 : maxlen;
+
     /* print the slope coefficients, for varying regressors */
     for (i=0; i<pmod->ncoeff; i++) {
-	int vi = pan->vlist[i+2];
-
-	print_panel_coeff(pmod, dset->varname[vi], i, prn);
+	vi = pan->vlist[i+2];
+	print_panel_coeff(pmod, dset->varname[vi], i, maxlen, prn);
     }
     pputc(prn, '\n');   
 
@@ -2448,7 +2459,7 @@ static int random_effects (panelmod_t *pan,
 	    int vi = pan->pooled->list[i+2];
 
 	    if (pan->opt & OPT_V) {
-		print_panel_coeff(&remod, dset->varname[vi], i, prn);
+		print_panel_coeff(&remod, dset->varname[vi], i, 15, prn);
 	    }
 	    if (pan->bdiff != NULL && var_is_varying(pan, vi)) {
 		pan->bdiff->val[k++] -= remod.coeff[i];
@@ -2879,7 +2890,7 @@ process_time_dummies (MODEL *pmod, const DATASET *dset, int v)
     }
 
     if (n > 0) {
-	gretl_model_allocate_params(pmod, pmod->ncoeff);
+	gretl_model_allocate_param_names(pmod, pmod->ncoeff);
 
 	if (pmod->errcode) {
 	    return pmod->errcode;
@@ -2887,7 +2898,7 @@ process_time_dummies (MODEL *pmod, const DATASET *dset, int v)
 
 	for (i=2; i<=pmod->list[0]; i++) {
 	    vi = pmod->list[i];
-	    strcpy(pmod->params[i-2], dset->varname[vi]);
+	    gretl_model_set_param_name(pmod, i-2, dset->varname[vi]); 
 	}
 
 	for (i=pmod->list[0]; i>1; i--) {
@@ -4599,9 +4610,12 @@ static int uv_tv_from_line (const char *line, const DATASET *dset,
 {
     char uvname[VNAMELEN];
     char tvname[VNAMELEN];
+    char fmt[12];
     int err = 0;
+
+    sprintf(fmt, "%%%ds %%%ds", VNAMELEN-1, VNAMELEN-1);
     
-    if (sscanf(line, "%15s %15s", uvname, tvname) != 2) {
+    if (sscanf(line, fmt, uvname, tvname) != 2) {
 	return E_PARSE;
     }
 

@@ -53,7 +53,7 @@ static void debug_print_scalars (const char *s)
 
 	fprintf(stderr, "%s: defined scalars:\n", s);
 	for (i=0; i<n_scalars; i++) {
-	    fprintf(stderr, "%15s = %g\n", scalars[i]->name,
+	    fprintf(stderr, "%s = %g\n", scalars[i]->name,
 		    scalars[i]->val);
 	}
     }

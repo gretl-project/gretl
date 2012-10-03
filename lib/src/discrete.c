@@ -844,16 +844,19 @@ static void fill_op_model (MODEL *pmod, const int *list,
     mle_criteria(pmod, 0);
     pmod->rsq = pmod->adjrsq = NADBL;
 
-    gretl_model_allocate_params(pmod, npar);
+    gretl_model_allocate_param_names(pmod, npar);
 
     if (pmod->errcode == 0) {
+	char tmp[16];
+
 	for (i=0; i<nx; i++) {
 	    v = OC->list[i+2];
-	    strcpy(pmod->params[i], dset->varname[v]);
+	    gretl_model_set_param_name(pmod, i, dset->varname[v]);
 	}
 	s = 1;
 	for (i=nx; i<npar; i++) {
-	    sprintf(pmod->params[i], "cut%d", s++);
+	    sprintf(tmp, "cut%d", s++);
+	    gretl_model_set_param_name(pmod, i, tmp);
 	}
     }
 
@@ -2029,7 +2032,7 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
 	pmod->ess = pmod->sigma = NADBL;
 	pmod->fstt = pmod->rsq = pmod->adjrsq = NADBL;
 
-	gretl_model_allocate_params(pmod, mnl->npar);
+	gretl_model_allocate_param_names(pmod, mnl->npar);
     }
 
     if (!pmod->errcode) {
@@ -2038,7 +2041,7 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
 	for (i=0; i<mnl->n; i++) {
 	    for (j=0; j<mnl->k; j++) {
 		vj = pmod->list[j+2];
-		strcpy(pmod->params[k++], dset->varname[vj]);
+		gretl_model_set_param_name(pmod, k++, dset->varname[vj]);
 	    }
 	}
 	mn_logit_yhat(pmod, mnl, yvals);

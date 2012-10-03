@@ -36,6 +36,7 @@
 static void add_garch_varnames (MODEL *pmod, const DATASET *dset,
 				const int *list)
 {
+    char tmp[16];
     int p = list[1];        /* GARCH beta terms */
     int q = list[2];        /* ARCH alpha terms > 0 */
     int r = list[0] - 4;    /* regressors */
@@ -45,7 +46,7 @@ static void add_garch_varnames (MODEL *pmod, const DATASET *dset,
     free(pmod->list);
     pmod->list = gretl_list_copy(list);
 
-    gretl_model_allocate_params(pmod, np);
+    gretl_model_allocate_param_names(pmod, np);
     if (pmod->errcode) {
 	return;
     }
@@ -53,17 +54,19 @@ static void add_garch_varnames (MODEL *pmod, const DATASET *dset,
     j = 0;
 
     for (i=0; i<r; i++) {
-	strcpy(pmod->params[j++], dset->varname[pmod->list[5+i]]);
+	gretl_model_set_param_name(pmod, j++, dset->varname[pmod->list[5+i]]);
     }
 
-    strcpy(pmod->params[j++], "alpha(0)");
+    gretl_model_set_param_name(pmod, j++, "alpha(0)");
 
     for (i=0; i<q; i++) {
-	sprintf(pmod->params[j++], "alpha(%d)", i + 1);
+	sprintf(tmp, "alpha(%d)", i + 1);
+	gretl_model_set_param_name(pmod, j++, tmp);
     }
 
     for (i=0; i<p; i++) {
-	sprintf(pmod->params[j++], "beta(%d)", i + 1);
+	sprintf(tmp, "beta(%d)", i + 1);
+	gretl_model_set_param_name(pmod, j++, tmp);
     }
 }
 

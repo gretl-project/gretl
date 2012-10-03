@@ -255,19 +255,22 @@ static int catch_command_alias (char *line, CMD *cmd)
 	cmd->opt = OPT_S;
     } else if (!strcmp(s, "list")) {
 	char lname[VNAMELEN];
+	char fmt[24];
 
 	if (string_is_blank(line + 4)) {
 	    cmd->ci = VARLIST;
 	    strcpy(line, "varlist");
 	} else if (gretl_string_ends_with(line, "delete")) {
-	    if (sscanf(line, "list %15s delete", lname)) {
+	    sprintf(fmt, "list %%%ds delete", VNAMELEN - 1);
+	    if (sscanf(line, fmt, lname)) {
 		free(cmd->extra);
 		cmd->extra = gretl_strdup(lname);
 		cmd->ci = DELEET;
 	    }
 	} else {
 	    if (gretl_string_ends_with(line, "print")) {
-		if (sscanf(line, "list %15s", lname)) {
+		sprintf(fmt, "list %%%ds", VNAMELEN - 1);
+		if (sscanf(line, fmt, lname)) {
 		    strcpy(line, lname);
 		}
 	    } 
@@ -1028,7 +1031,8 @@ static int get_contiguous_lags (LAGVAR *lv,
 static int parse_lagvar (const char *s, LAGVAR *lv, 
 			 const DATASET *dset)
 {
-    char l1str[16], l2str[16]; /* VNAMELEN */
+    char l1str[16], l2str[16];
+    char fmt[32];
     int i, err = 1;
 
     lv->v = 0;
@@ -1038,7 +1042,9 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
     lv->lmax = 0;
     lv->laglist = NULL;
 
-    if (sscanf(s, "%15[^(](%15s", lv->name, l1str) != 2) {
+    sprintf(fmt, "%%%d[^(](%%%ds", VNAMELEN - 1, 15);
+
+    if (sscanf(s, fmt, lv->name, l1str) != 2) {
 	return err;
     }
 
@@ -1056,8 +1062,9 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
 	}
     }
 
-    if (sscanf(s, "%15[^(](%15s to %15[^)])", lv->name, 
-	       l1str, l2str) == 3) {
+    sprintf(fmt, "%%%d[^(](%%%ds to %%%d[^)])", VNAMELEN - 1, 15, 15);
+
+    if (sscanf(s, fmt, lv->name, l1str, l2str) == 3) {
 	err = get_contiguous_lags(lv, l1str, l2str);
     } else if (strchr(l1str, ',') != NULL) {
 	lv->laglist = gretl_list_from_string(strchr(s, '('), &err);
@@ -1068,7 +1075,8 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
 	    err = 0;
 	}
     } else {
-	sscanf(s, "%15[^(](%15[^ )]", lv->name, l1str);
+	sprintf(fmt, "%%%d[^(](%%%d[^ )]", VNAMELEN - 1, 15);
+	sscanf(s, fmt, lv->name, l1str);
 	lv->lmin = lv->lmax = lag_from_lstr(l1str, &err);
     }
 
@@ -1280,9 +1288,12 @@ static void parse_laglist_spec (const char *s, int *order, char **lname,
     if (len < strlen(s)) {
 	char ostr[VNAMELEN] = {0};
 	char word[32] = {0};
+	char fmt[12];
 	int v;
 
-	sscanf(s, "%15[^ ,;]", ostr);
+	sprintf(fmt, "%%%d[^ ,;]", VNAMELEN - 1);
+
+	sscanf(s, fmt, ostr);
 	if (isdigit(*ostr)) {
 	    *order = atoi(ostr);
 	} else if (gretl_is_scalar(ostr)) {
@@ -1471,9 +1482,12 @@ static int print_name_ok (const char *s, CMD *cmd)
 static int delete_name_ok (const char *s, CMD *cmd)
 {
     char bname[VNAMELEN];
+    char fmt[8];
     int ok = 0;
 
-    if (sscanf(s, "%15[^[]", bname) == 1 &&
+    sprintf(fmt, "%%%d[^[]", VNAMELEN - 1);
+
+    if (sscanf(s, fmt, bname) == 1 &&
 	gretl_is_bundle(bname)) {
 	free(cmd->param);
 	cmd->param = gretl_strdup(s);
@@ -1490,9 +1504,11 @@ static void parse_rename_cmd (const char *s, CMD *cmd,
     int vtest, vtarg;
     char targ[VNAMELEN];
     char newname[VNAMELEN];
-    char numstr[8];
+    char fmt[10], numstr[8];
 
-    if (sscanf(s, "%15s %15s", targ, newname) != 2) {
+    sprintf(fmt, "%%%ds %%%ds", VNAMELEN-1, VNAMELEN-1);
+
+    if (sscanf(s, fmt, targ, newname) != 2) {
 	cmd->err = E_PARSE;
 	return;
     }
@@ -1710,8 +1726,11 @@ int plausible_genr_start (const char *s, const DATASET *dset)
     if (strchr(s, '=') || strstr(s, "++") || strstr(s, "--")) {
 	const char *ok = ".+-*/%^~|=[";
 	char word[VNAMELEN] = {0};
+	char fmt[20];
 
-	if (sscanf(s, "%15[^[ .+*/%^~|=-]", word)) {
+	sprintf(fmt, "%%%d[^[ .+*/%%^~|=-]", VNAMELEN - 1);
+
+	if (sscanf(s, fmt, word)) {
 	    s += strlen(word);
 	    while (*s == ' ') s++;
 	    if (strspn(s, ok) > 0 && check_varname(word) == 0) {
