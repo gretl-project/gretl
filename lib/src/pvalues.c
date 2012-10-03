@@ -1583,8 +1583,8 @@ static double GHK_1 (const gretl_matrix *C,
  * @U: Uniform random matrix, m x r.
  *
  * Computes the GHK (Geweke, Hajivassiliou, Keane) approximation to 
- * the multivariate normal distribution function for @n observations 
- * on @m variates, using r draws. 
+ * the multivariate normal distribution function for n observations 
+ * on m variates, using r draws. 
  *
  * Returns: an n x 1 vector of probabilities.
  */
