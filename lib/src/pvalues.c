@@ -1550,7 +1550,13 @@ static double GHK_1 (const gretl_matrix *C,
 	    /* component j draw */
 	    ui = gretl_matrix_get(U, j, i);
 	    x = TB->val[i] - ui * (TB->val[i] - TA->val[i]);
-	    icdf = normal_cdf_inverse(x);
+	    if (x >= 1.0) {
+		/* experiment, 2012-10-04 */
+		fprintf(stderr, "warning: ghk, icdf: x=%g\n", x);
+		icdf = huge;
+	    } else {
+		icdf = normal_cdf_inverse(x);
+	    }
 	    gretl_matrix_set(TT, j, i, icdf);
 	}
 	/* accumulate weight */
