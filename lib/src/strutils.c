@@ -2204,6 +2204,53 @@ char *gretl_utf8_strncat (char *dest, const char *src, size_t n)
 }
 
 /**
+ * gretl_utf8_strncat_trim:
+ * @dest: destination string.
+ * @src: source string.
+ * @n: maximum number of bytes to append.
+ *
+ * The same as gretl_utf8_strncat(), except that any leading and/or
+ * trailing white space is trimmed from @dest.
+ *
+ * Returns: the destination string.
+ */
+
+char *gretl_utf8_strncat_trim (char *dest, const char *src, size_t n)
+{
+    const char *p;
+    size_t b, b0 = 0;
+    int i;
+
+    src += strspn(src, " \t\r\n");
+    p = src;
+
+    while (p && *p) {
+	p = g_utf8_next_char(p);
+	if (p) {
+	    b = p - src;
+	    if (b > n) {
+		break;
+	    }
+	    b0 = b;
+	}
+    }
+
+    strncat(dest, src, b0);
+
+    n = strlen(dest);
+
+    for (i=n-1; i>=0; i--) {
+	if (isspace(dest[i]) || dest[i] == '\r') {
+	    dest[i] = '\0';
+	} else {
+	    break;
+	}
+    }
+
+    return dest;
+}
+
+/**
  * gretl_scan_varname:
  * @src: source string.
  * @targ: target string.

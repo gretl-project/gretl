@@ -1974,19 +1974,20 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 
 #if SPECTRAL
     if (err) {
-	fprintf(stderr, "newton hessian fixup: spectral method\n");
 	gretl_matrix *evecs;
 	gretl_matrix *evals;
 	gretl_matrix *tmp;
 	double y;
 
+	fprintf(stderr, "newton hessian fixup: spectral method\n");
+
 	evecs = gretl_matrix_copy(Hcpy);
-	tmp = gretl_matrix_alloc(n,n);
+	tmp = gretl_matrix_alloc(n, n);
 	evals = gretl_symmetric_matrix_eigenvals(evecs, 1, &err);
 
 	if (!err) {
 	    for (i=0; i<n; i++) {
-		x = 1.0 / (1.0 + fabs(gretl_vector_get(evals,i)));
+		x = 1.0 / (1.0 + fabs(gretl_vector_get(evals, i)));
 		for (j=0; j<n; j++) {
 		    y = x * gretl_matrix_get(evecs, j, i);
 		    gretl_matrix_set(tmp, i, j, y);
@@ -2001,7 +2002,6 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 	gretl_matrix_free(evecs);
 	gretl_matrix_free(tmp);
     }
-
 #endif
 
     if (err) {

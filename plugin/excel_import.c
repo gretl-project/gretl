@@ -1720,7 +1720,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 		char *src = xls_cell(xi, ts, i);
 
 		if (src != NULL) {
-		    gretl_utf8_strncat(newset->S[t], src + 1, OBSLEN - 1);
+		    gretl_utf8_strncat_trim(newset->S[t], src + 1, OBSLEN - 1);
 		}
 	    }
 	}

@@ -134,12 +134,12 @@ double ndtri (double y0)
     int code;
 
     if (y0 <= 0.0) {
-	mtherr("ndtri", CEPHES_DOMAIN);
+	mtherr_with_arg("ndtri", CEPHES_DOMAIN, y0);
 	return -MAXNUM;
     }
 
     if (y0 >= 1.0) {
-	mtherr("ndtri", CEPHES_DOMAIN);
+	mtherr_with_arg("ndtri", CEPHES_DOMAIN, y0);
 	return MAXNUM;
     }
 

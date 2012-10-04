@@ -1649,6 +1649,8 @@ void varlist (const DATASET *dset, PRN *prn)
 
     if (maxlen < 9) {
 	nv = 5;
+    } else if (maxlen > 20) {
+	nv = 1;
     } else if (maxlen > 13) {
 	nv = 3;
     }

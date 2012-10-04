@@ -1509,6 +1509,7 @@ static double GHK_1 (const gretl_matrix *C,
 	TB->val[i] = plus_inf(z) ? 1 : normal_cdf(z / den);
     }
 
+    /* form WGT = TB - TA */
     gretl_matrix_copy_values(WGT, TB);
     gretl_matrix_subtract_from(WGT, TA);
     gretl_matrix_zero(TT);
@@ -1531,8 +1532,12 @@ static double GHK_1 (const gretl_matrix *C,
 	    }
 	    z = A->val[j];
 	    P = minus_inf(z) ? 0 : normal_cdf((z - x) / den);
-	    if (P >= NORM_CDF_MAX) {
+	    if (0 && P >= NORM_CDF_MAX) {
+		/* try disabling this? 2012-10-04 */
 		gretl_matrix_set(TT, j, i, huge);
+		fprintf(stderr, "j,i=%d,%d: break on huge "
+			"(z=%g, x=%g, z-x=%g, den=%g, cdf_arg=%g)\n", 
+			j, i, z, x, z-x, den, (z - x) / den);
 		break;
 	    } else {
 		TA->val[i] = P;
@@ -1541,6 +1546,7 @@ static double GHK_1 (const gretl_matrix *C,
 	    z = B->val[j];
 	    P = plus_inf(z) ? 1 : normal_cdf((z - x) / den);
 	    if (P == 0) {
+		/* do we want this? */
 		gretl_matrix_set(TT, j, i, -huge);
 		break;
 	    } else {
@@ -1550,15 +1556,10 @@ static double GHK_1 (const gretl_matrix *C,
 	    /* component j draw */
 	    ui = gretl_matrix_get(U, j, i);
 	    x = TB->val[i] - ui * (TB->val[i] - TA->val[i]);
-	    if (x >= 1.0) {
-		/* experiment, 2012-10-04 */
-		fprintf(stderr, "warning: ghk, icdf: x=%g\n", x);
-		icdf = huge;
-	    } else {
-		icdf = normal_cdf_inverse(x);
-	    }
+	    icdf = normal_cdf_inverse(x);
 	    gretl_matrix_set(TT, j, i, icdf);
 	}
+
 	/* accumulate weight */
 	gretl_matrix_subtract_from(TB, TA);
 	for (i=0; i<r; i++) {
@@ -1571,6 +1572,13 @@ static double GHK_1 (const gretl_matrix *C,
 	P += WGT->val[i];
     }
     P /= r;
+
+    if (P < 0.0 || P > 1.0) {
+	fprintf(stderr, "*** P = %g (divisor = %d)\n", P, r);
+	for (i=0; i<r; i++) {
+	    fprintf(stderr, "P: contrib %d = %g\n", i, WGT->val[i]);
+	}
+    }	
 
 #undef minus_inf
 #undef plus_inf 

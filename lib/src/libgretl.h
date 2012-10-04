@@ -77,7 +77,7 @@ extern "C" {
 #define MAXLABEL  128  /* maximum length of descriptive labels for variables */
 #define MAXLEN    512  /* max length of regular "long" strings */
 #define MAXDISP    32  /* max length of "display names" for variables */
-#define VNAMELEN   16  /* space allocated for var names (including termination) */
+#define VNAMELEN   32  /* space allocated for var names (including termination) */
 #define OBSLEN     16  /* space allocated for obs strings (including termination) */
 
 #ifndef M_PI
