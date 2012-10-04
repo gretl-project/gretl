@@ -82,8 +82,19 @@ static const char *ermsg[] = {
 */
 
 static int real_mtherr (char *name, int code, double arg,
-			int have_arg)
+			int have_arg, int quiet)
 {
+    static int hush;
+
+    if (name == NULL) {
+	hush = quiet;
+	return 0;
+    }
+
+    if (hush) {
+	return 0;
+    }
+
     fprintf(stderr, "%s ", name);
 
     if (code <= 0 || code > CEPHES_UNKNOWN)
@@ -102,12 +113,12 @@ static int real_mtherr (char *name, int code, double arg,
 
 int mtherr_with_arg (char *name, int code, double arg)
 {
-    return real_mtherr(name, code, arg, 1);
+    return real_mtherr(name, code, arg, 1, 0);
 }
 
 int mtherr (char *name, int code)
 {
-    return real_mtherr(name, code, 0, 0);
+    return real_mtherr(name, code, 0, 0, 0);
 }
 
 int get_cephes_errno (void)
@@ -117,4 +128,9 @@ int get_cephes_errno (void)
     cephes_errno = 0; /* clear the code */
 
     return ret;
+}
+
+void set_cephes_hush (int s)
+{
+    real_mtherr(NULL, 0, 0, 0, s);
 }

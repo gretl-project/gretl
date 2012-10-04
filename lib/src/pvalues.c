@@ -1497,16 +1497,18 @@ static double GHK_1 (const gretl_matrix *C,
 
     huge = libset_get_double(CONV_HUGE);
 
-#define minus_inf(x) (x <= -huge)
-#define plus_inf(x) (x >= huge && !na(x))
+#define minus_inf(x) (x == -huge)
+#define plus_inf(x) (x == huge)
 
     den = gretl_matrix_get(C, 0, 0);
+
+    set_cephes_hush(1);
     
     for (i=0; i<r; i++) {
 	z = A->val[0];
-	TA->val[i] = minus_inf(z) ? 0 : normal_cdf(z / den);
+	TA->val[i] = minus_inf(z) ? 0 : ndtr(z / den);
 	z = B->val[0];
-	TB->val[i] = plus_inf(z) ? 1 : normal_cdf(z / den);
+	TB->val[i] = plus_inf(z) ? 1 : ndtr(z / den);
     }
 
     /* form WGT = TB - TA */
@@ -1517,7 +1519,7 @@ static double GHK_1 (const gretl_matrix *C,
     for (i=0; i<r; i++) {
 	ui = gretl_matrix_get(U, 0, i);
 	x = TB->val[i] - ui * (TB->val[i] - TA->val[i]);
-	icdf = normal_cdf_inverse(x);
+	icdf = ndtri(x);
 	gretl_matrix_set(TT, 0, i, icdf);
     }
 
@@ -1531,10 +1533,10 @@ static double GHK_1 (const gretl_matrix *C,
 		x += cjk * tki;
 	    }
 	    z = A->val[j];
-	    P = minus_inf(z) ? 0 : normal_cdf((z - x) / den);
+	    P = minus_inf(z) ? 0 : ndtr((z - x) / den);
 	    if (0 && P >= NORM_CDF_MAX) {
 		/* try disabling this? 2012-10-04 */
-		gretl_matrix_set(TT, j, i, huge);
+		gretl_matrix_set(TT, j, i, DBL_MAX);
 		fprintf(stderr, "j,i=%d,%d: break on huge "
 			"(z=%g, x=%g, z-x=%g, den=%g, cdf_arg=%g)\n", 
 			j, i, z, x, z-x, den, (z - x) / den);
@@ -1544,10 +1546,10 @@ static double GHK_1 (const gretl_matrix *C,
 	    }
 
 	    z = B->val[j];
-	    P = plus_inf(z) ? 1 : normal_cdf((z - x) / den);
+	    P = plus_inf(z) ? 1 : ndtr((z - x) / den);
 	    if (P == 0) {
 		/* do we want this? */
-		gretl_matrix_set(TT, j, i, -huge);
+		gretl_matrix_set(TT, j, i, -DBL_MAX);
 		break;
 	    } else {
 		TB->val[i] = P;
@@ -1556,7 +1558,7 @@ static double GHK_1 (const gretl_matrix *C,
 	    /* component j draw */
 	    ui = gretl_matrix_get(U, j, i);
 	    x = TB->val[i] - ui * (TB->val[i] - TA->val[i]);
-	    icdf = normal_cdf_inverse(x);
+	    icdf = ndtri(x);
 	    gretl_matrix_set(TT, j, i, icdf);
 	}
 
@@ -1566,6 +1568,8 @@ static double GHK_1 (const gretl_matrix *C,
 	    WGT->val[i] *= TB->val[i];
 	}
     }
+
+    set_cephes_hush(0);
 
     P = 0.0;
     for (i=0; i<r; i++) {

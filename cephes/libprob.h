@@ -142,4 +142,6 @@ int polrt (double *xcof, double *cof, int m, cmplx *root);
 /* Accessor for cephes error code */
 int get_cephes_errno (void);
 
+void set_cephes_hush (int s);
+
 #endif /* LIBPROB_H */
