@@ -1579,7 +1579,7 @@ static double GHK_1 (const gretl_matrix *C,
 
     if (P < 0.0 || P > 1.0) {
 	fprintf(stderr, "*** ghk error: P = %g\n", P);
-	P = 0.0/0.0;
+	P = 0.0/0.0; /* force a NaN */
     }	
 
 #undef minus_inf
