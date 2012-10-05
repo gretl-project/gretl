@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.9\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-10-03 08:33-0400\n"
-"PO-Revision-Date: 2012-09-27 13:00-0400\n"
+"PO-Revision-Date: 2012-10-05 02:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -1792,12 +1792,12 @@ msgstr "Percentyl 95%"
 
 #: lib/src/describe.c:4415
 msgid "Interquartile range"
-msgstr "Przedział Q3-Q1"
+msgstr "Zakres Q3-Q1"
 
 #: lib/src/describe.c:4416 lib/src/describe.c:4563 gui2/guiprint.c:761
 #: gui2/guiprint.c:1086
 msgid "Missing obs."
-msgstr "Brakujące obserwacje"
+msgstr "Brakujące obs."
 
 #: lib/src/describe.c:4419
 msgid "Within s.d."
@@ -2324,9 +2324,9 @@ msgid "The variable %s is of type %s"
 msgstr "Zmienna '%s' jest typu %s"
 
 #: lib/src/geneval.c:10364
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': name is too long (max %d characters)\n"
-msgstr "'%s': nazwa jest za długa (maksymalnie 15 znaków)\n"
+msgstr "'%s': nazwa jest za długa (maksymalnie %d znaków)\n"
 
 #: lib/src/geneval.c:10468
 #, c-format
@@ -8503,13 +8503,13 @@ msgid "Confirm dataset structure"
 msgstr "Potwierdz strukturę danych"
 
 #: gui2/datawiz.c:170
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter name for first variable\n"
 "(max. %d characters)"
 msgstr ""
 "Wprowadź nazwę nowej zmiennej\n"
-"(maksymalnie 15 znaków)"
+"(maksymalnie %d znaków)"
 
 #: gui2/datawiz.c:174 gui2/dialogs.c:5137 gui2/ssheet.c:964
 msgid "gretl: name variable"
@@ -13003,7 +13003,7 @@ msgid "Akaike Information Criterion"
 msgstr "Kryterium Informacyjne Akaike'a"
 
 #: gui2/library.c:5957
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Statistic from model %d\n"
 "%s (value = %g)\n"
@@ -13011,7 +13011,7 @@ msgid ""
 msgstr ""
 "Statyka z modelu %d\n"
 "%s (value = %g)\n"
-"Nazwa (max. 15 znaków):"
+"Nazwa (max. %d znaków):"
 
 #: gui2/library.c:6044
 msgid "standardized residual"
@@ -14834,22 +14834,22 @@ msgid "_Divide by scalar"
 msgstr "Dzielenie przez skalar"
 
 #: gui2/ssheet.c:960
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter name for new variable\n"
 "(max. %d characters)"
 msgstr ""
 "Wprowadź nazwę nowej zmiennej\n"
-"(maksymalnie 15 znaków)"
+"(maksymalnie %d znaków)"
 
 #: gui2/ssheet.c:974
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter case marker for new obs\n"
 "(max. %d characters)"
 msgstr ""
 "Wprowadź opis przypadku dla nowej obserwacji\n"
-"(maksymalnie 8 znaków)"
+"(maksymalnie %d znaków)"
 
 #: gui2/ssheet.c:978
 msgid "gretl: case marker"
