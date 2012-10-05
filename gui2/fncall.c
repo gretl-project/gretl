@@ -2443,8 +2443,12 @@ static int read_addons_info (void)
     err = real_read_packages_file(fname, &n, 0);
 
     if (!err) {
+	struct stat buf;
+
 	sprintf(fname, "%sfunctions%cpackages.xml", gretl_dotdir(), SLASH);
-	err = real_read_packages_file(fname, &n, 1);
+	if (gretl_stat(fname, &buf) == 0) {
+	    err = real_read_packages_file(fname, &n, 1);
+	}
     }
 
     if (err) {
