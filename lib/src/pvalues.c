@@ -1536,7 +1536,7 @@ static double GHK_1 (const gretl_matrix *C,
 	    P = minus_inf(z) ? 0 : ndtr((z - x) / den);
 	    if (0 && P >= NORM_CDF_MAX) {
 		/* try disabling this? 2012-10-04 */
-		gretl_matrix_set(TT, j, i, DBL_MAX);
+		gretl_matrix_set(TT, j, i, huge);
 		fprintf(stderr, "j,i=%d,%d: break on huge "
 			"(z=%g, x=%g, z-x=%g, den=%g, cdf_arg=%g)\n", 
 			j, i, z, x, z-x, den, (z - x) / den);
@@ -1549,7 +1549,7 @@ static double GHK_1 (const gretl_matrix *C,
 	    P = plus_inf(z) ? 1 : ndtr((z - x) / den);
 	    if (P == 0) {
 		/* do we want this? */
-		gretl_matrix_set(TT, j, i, -DBL_MAX);
+		gretl_matrix_set(TT, j, i, -huge);
 		break;
 	    } else {
 		TB->val[i] = P;
@@ -1578,10 +1578,8 @@ static double GHK_1 (const gretl_matrix *C,
     P /= r;
 
     if (P < 0.0 || P > 1.0) {
-	fprintf(stderr, "*** P = %g (divisor = %d)\n", P, r);
-	for (i=0; i<r; i++) {
-	    fprintf(stderr, "P: contrib %d = %g\n", i, WGT->val[i]);
-	}
+	fprintf(stderr, "*** ghk error: P = %g\n", P);
+	P = 0.0/0.0;
     }	
 
 #undef minus_inf
@@ -1662,12 +1660,19 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 	}
     }
 
-    if (!*err) {
-	for (i=0; i<nobs; i++) {
-	    for (j=0; j<dim; j++) {
-		Ai->val[j] = gretl_matrix_get(A, i, j);
-		Bi->val[j] = gretl_matrix_get(B, i, j);
+    for (i=0; i<nobs && !*err; i++) {
+	for (j=0; j<dim && !*err; j++) {
+	    Ai->val[j] = gretl_matrix_get(A, i, j);
+	    Bi->val[j] = gretl_matrix_get(B, i, j);
+	    if (Bi->val[j] < Ai->val[j]) {
+		gretl_errmsg_sprintf("ghk: inconsistent bounds: B[%d,%d] < A[%d,%d]",
+				     i+1, j+1, i+1, j+1);
+		*err = E_DATA;
+		gretl_matrix_free(P);
+		P = NULL;
 	    }
+	}
+	if (!*err) {
 	    P->val[i] = GHK_1(C, Ai, Bi, U, TA, TB, WT, TT);
 	}
     }
