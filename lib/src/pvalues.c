@@ -1480,7 +1480,7 @@ double bvnorm_cdf (double rho, double a, double b)
   U  Random variates, m x r
 */
 
-#define GHK_SPEEDUP 1
+#define GHK_SPEEDUP 0
 
 /*
   The logic behind GHK_SPEEDUP is that B[i]>A[i] is guaranteed.
@@ -1542,26 +1542,32 @@ static double GHK_1 (const gretl_matrix *C,
 		tki = gretl_matrix_get(TT, k, i);
 		x += cjk * tki;
 	    }
-	    z = A->val[j];
-	    TA->val[i] = minus_inf(z) ? 0 : ndtr((z - x) / den);
 
+	    if (minus_inf(A->val[j])) {
+		TA->val[i] = 0.0;
+	    } else {
+		TA->val[i] = ndtr((A->val[j] - x) / den);
 #if GHK_SPEEDUP
-	    if (TA->val[i] >= NORM_CDF_MAX) {
-		TB->val[i] = TA->val[i];
-		gretl_matrix_set(TT, j, i, DBL_MAX);
-		continue;
-	    }
+		if (TA->val[i] >= NORM_CDF_MAX) {
+		    TB->val[i] = TA->val[i];
+		    gretl_matrix_set(TT, j, i, DBL_MAX);
+		    continue;
+		}
 #endif
+	    }
 
-	    z = B->val[j];
-	    TB->val[i] = plus_inf(z) ? 1 : ndtr((z - x) / den);
-
+	    if (plus_inf(B->val[j])) {
+		TB->val[i] = 1.0;
+	    } else {
+		TB->val[i] = ndtr((B->val[j] - x) / den);
 #if GHK_SPEEDUP
-	    if (TB->val[i] == 0) {
-		gretl_matrix_set(TT, j, i, -DBL_MAX);
-		continue;
-	    }
+		if (TB->val[i] == 0) {
+		    gretl_matrix_set(TT, j, i, -DBL_MAX);
+		    continue;
+		}
 #endif
+	    }
+
 	    /* component j draw */
 	    ui = gretl_matrix_get(U, j, i);
 	    x = TB->val[i] - ui * (TB->val[i] - TA->val[i]);
