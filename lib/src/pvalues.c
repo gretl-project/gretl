@@ -1480,14 +1480,15 @@ double bvnorm_cdf (double rho, double a, double b)
   U  Random variates, m x r
 */
 
-#define GHK_SPEEDUP 0
+#define GHK_SPEEDUP 1
 
 /*
   The logic behind GHK_SPEEDUP is that B[i]>A[i] is guaranteed.
   Hence, if P(A[i]) == 1 or P(B[i]) == 0 there should be no point 
   in continuing; however, this has caused problems (negative 
   probabilities!) so it needs to be better investigated.
- */
+  2012-10-06.
+*/
 
 static double GHK_1 (const gretl_matrix *C, 
 		     const gretl_matrix *A, 
@@ -1534,6 +1535,7 @@ static double GHK_1 (const gretl_matrix *C,
 
     for (j=1; j<m; j++) {
 	den = gretl_matrix_get(C, j, j);
+
 	for (i=0; i<r; i++) {
 	    x = 0.0;
 	    for (k=0; k<j; k++) {
@@ -1542,36 +1544,23 @@ static double GHK_1 (const gretl_matrix *C,
 		x += cjk * tki;
 	    }
 	    z = A->val[j];
-	    P = minus_inf(z) ? 0 : ndtr((z - x) / den);
+	    TA->val[i] = minus_inf(z) ? 0 : ndtr((z - x) / den);
 
 #if GHK_SPEEDUP
-	    if (P >= NORM_CDF_MAX) {
-		/* try disabling this? 2012-10-04 */
+	    if (TA->val[i] >= NORM_CDF_MAX) {
+		TB->val[i] = TA->val[i];
 		gretl_matrix_set(TT, j, i, huge);
-		fprintf(stderr, "j,i=%d,%d: break on huge "
-			"(z=%g, x=%g, z-x=%g, den=%g, cdf_arg=%g)\n", 
-			j, i, z, x, z-x, den, (z - x) / den);
-		break;
-	    } else {
-		TA->val[i] = P;
+		continue;
 	    }
-#else
-	    TA->val[i] = P;
 #endif
-
 	    z = B->val[j];
-	    P = plus_inf(z) ? 1 : ndtr((z - x) / den);
+	    TB->val[i] = plus_inf(z) ? 1 : ndtr((z - x) / den);
 
 #if GHK_SPEEDUP
-	    if (P == 0) {
-		/* do we want this? */
+	    if (TB->val[i] == 0) {
 		gretl_matrix_set(TT, j, i, -huge);
-		break;
-	    } else {
-		TB->val[i] = P;
+		continue;
 	    }
-#else
-	    TB->val[i] = P;
 #endif
 	    /* component j draw */
 	    ui = gretl_matrix_get(U, j, i);
@@ -1586,6 +1575,10 @@ static double GHK_1 (const gretl_matrix *C,
 	    WGT->val[i] *= TB->val[i];
 	}
     }
+
+#if 0
+    gretl_matrix_print(WGT, "WGT");
+#endif
 
     set_cephes_hush(0);
 
@@ -1679,6 +1672,8 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
     }
 
     for (i=0; i<nobs && !*err; i++) {
+	int pzero = 0;
+
 	for (j=0; j<dim && !*err; j++) {
 	    Ai->val[j] = gretl_matrix_get(A, i, j);
 	    Bi->val[j] = gretl_matrix_get(B, i, j);
@@ -1688,9 +1683,13 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 		*err = E_DATA;
 		gretl_matrix_free(P);
 		P = NULL;
+	    } else if (Bi->val[j] == Ai->val[j]) {
+		P->val[i] = 0.0;
+		pzero = 1;
+		break;
 	    }
 	}
-	if (!*err) {
+	if (!*err && !pzero) {
 	    P->val[i] = GHK_1(C, Ai, Bi, U, TA, TB, WT, TT);
 	}
     }
