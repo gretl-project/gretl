@@ -1501,24 +1501,24 @@ static double GHK_1 (const gretl_matrix *C,
 {
     int m = C->rows; /* Dimension of the multivariate normal */
     int r = U->cols; /* Number of repetitions */
-    double P, den, huge;
-    double ui, icdf, x, z, cjk, tki;
+    double huge = libset_get_double(CONV_HUGE);
+    double P, den = gretl_matrix_get(C, 0, 0);
+    double ui, x, z, cjk, tki;
     int i, j, k;
-
-    huge = libset_get_double(CONV_HUGE);
 
 #define minus_inf(x) (x == -huge)
 #define plus_inf(x) (x == huge)
 
-    den = gretl_matrix_get(C, 0, 0);
-
     set_cephes_hush(1);
+
+    z = A->val[0];
+    TA->val[0] = minus_inf(z) ? 0 : ndtr(z / den);
+    z = B->val[0];
+    TB->val[0] = plus_inf(z) ? 1 : ndtr(z / den);
     
-    for (i=0; i<r; i++) {
-	z = A->val[0];
-	TA->val[i] = minus_inf(z) ? 0 : ndtr(z / den);
-	z = B->val[0];
-	TB->val[i] = plus_inf(z) ? 1 : ndtr(z / den);
+    for (i=1; i<r; i++) {
+	TA->val[i] = TA->val[0];
+	TB->val[i] = TB->val[0];
     }
 
     /* form WGT = TB - TA */
@@ -1529,8 +1529,7 @@ static double GHK_1 (const gretl_matrix *C,
     for (i=0; i<r; i++) {
 	ui = gretl_matrix_get(U, 0, i);
 	x = TB->val[i] - ui * (TB->val[i] - TA->val[i]);
-	icdf = ndtri(x);
-	gretl_matrix_set(TT, 0, i, icdf);
+	gretl_matrix_set(TT, 0, i, ndtri(x));
     }
 
     for (j=1; j<m; j++) {
@@ -1549,24 +1548,24 @@ static double GHK_1 (const gretl_matrix *C,
 #if GHK_SPEEDUP
 	    if (TA->val[i] >= NORM_CDF_MAX) {
 		TB->val[i] = TA->val[i];
-		gretl_matrix_set(TT, j, i, huge);
+		gretl_matrix_set(TT, j, i, DBL_MAX);
 		continue;
 	    }
 #endif
+
 	    z = B->val[j];
 	    TB->val[i] = plus_inf(z) ? 1 : ndtr((z - x) / den);
 
 #if GHK_SPEEDUP
 	    if (TB->val[i] == 0) {
-		gretl_matrix_set(TT, j, i, -huge);
+		gretl_matrix_set(TT, j, i, -DBL_MAX);
 		continue;
 	    }
 #endif
 	    /* component j draw */
 	    ui = gretl_matrix_get(U, j, i);
 	    x = TB->val[i] - ui * (TB->val[i] - TA->val[i]);
-	    icdf = ndtri(x);
-	    gretl_matrix_set(TT, j, i, icdf);
+	    gretl_matrix_set(TT, j, i, ndtri(x));
 	}
 
 	/* accumulate weight */
