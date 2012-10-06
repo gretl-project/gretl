@@ -34,8 +34,6 @@ Version 1.9.10, in progress
   more robust algorithm
 - randgen() function, gamma distribution option: switch to the fast
   Marsaglia-Tsang generator for gamma variates
-- Fix bivariate normal cdf calculator (would return NAs in some
-  pathological cases)
 - GUI: add check for updated addons, such as gig
 - GUI icon view: enable copying of graphs and matrices
 - GUI graphs: in saving as PDF, remember the user's choice of font

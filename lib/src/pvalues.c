@@ -1480,6 +1480,15 @@ double bvnorm_cdf (double rho, double a, double b)
   U  Random variates, m x r
 */
 
+#define GHK_SPEEDUP 0
+
+/*
+  The logic behind GHK_SPEEDUP is that B[i]>A[i] is guaranteed.
+  Hence, if P(A[i]) == 1 or P(B[i]) == 0 there should be no point 
+  in continuing; however, this has caused problems (negative 
+  probabilities!) so it needs to be better investigated.
+ */
+
 static double GHK_1 (const gretl_matrix *C, 
 		     const gretl_matrix *A, 
 		     const gretl_matrix *B, 
@@ -1534,7 +1543,9 @@ static double GHK_1 (const gretl_matrix *C,
 	    }
 	    z = A->val[j];
 	    P = minus_inf(z) ? 0 : ndtr((z - x) / den);
-	    if (0 && P >= NORM_CDF_MAX) {
+
+#if GHK_SPEEDUP
+	    if (P >= NORM_CDF_MAX) {
 		/* try disabling this? 2012-10-04 */
 		gretl_matrix_set(TT, j, i, huge);
 		fprintf(stderr, "j,i=%d,%d: break on huge "
@@ -1544,9 +1555,14 @@ static double GHK_1 (const gretl_matrix *C,
 	    } else {
 		TA->val[i] = P;
 	    }
+#else
+	    TA->val[i] = P;
+#endif
 
 	    z = B->val[j];
 	    P = plus_inf(z) ? 1 : ndtr((z - x) / den);
+
+#if GHK_SPEEDUP
 	    if (P == 0) {
 		/* do we want this? */
 		gretl_matrix_set(TT, j, i, -huge);
@@ -1554,7 +1570,9 @@ static double GHK_1 (const gretl_matrix *C,
 	    } else {
 		TB->val[i] = P;
 	    }
-
+#else
+	    TB->val[i] = P;
+#endif
 	    /* component j draw */
 	    ui = gretl_matrix_get(U, j, i);
 	    x = TB->val[i] - ui * (TB->val[i] - TA->val[i]);
