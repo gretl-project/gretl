@@ -1529,9 +1529,10 @@ static double GHK_1 (const gretl_matrix *C,
 	    if (WGT->val[i] == 0) {
 		/* If WGT[i] ever comes to be zero, it cannot in
 		   principle be modified by the code below; in fact,
-		   however, the computations may introduce some
-		   numerical instability, particularly for large
-		   dimension @m.
+		   however, running through the computations
+		   regardless may produce a NaN (since 0 * NaN = NaN).
+		   This becomes more likely for for large dimension
+		   @m.
 		*/
 		continue;
 	    }
