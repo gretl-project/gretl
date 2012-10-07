@@ -1531,8 +1531,7 @@ static double GHK_1 (const gretl_matrix *C,
 		   principle be modified by the code below; in fact,
 		   however, running through the computations
 		   regardless may produce a NaN (since 0 * NaN = NaN).
-		   This becomes more likely for for large dimension
-		   @m.
+		   This becomes more likely for large dimension @m.
 		*/
 		continue;
 	    }
