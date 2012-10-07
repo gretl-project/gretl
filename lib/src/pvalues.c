@@ -1480,16 +1480,6 @@ double bvnorm_cdf (double rho, double a, double b)
   U  Random variates, m x r
 */
 
-#define GHK_SPEEDUP 0
-
-/*
-  The logic behind GHK_SPEEDUP is that B[i]>A[i] is guaranteed.
-  Hence, if P(A[i]) == 1 or P(B[i]) == 0 there should be no point 
-  in continuing; however, this has caused problems (negative 
-  probabilities!) so it needs to be better investigated.
-  2012-10-06.
-*/
-
 static double GHK_1 (const gretl_matrix *C, 
 		     const gretl_matrix *A, 
 		     const gretl_matrix *B, 
@@ -1536,6 +1526,15 @@ static double GHK_1 (const gretl_matrix *C,
 	den = gretl_matrix_get(C, j, j);
 
 	for (i=0; i<r; i++) {
+	    if (WGT->val[i] == 0) {
+		/* If WGT[i] ever comes to be zero, it cannot in
+		   principle be modified by the code below; in fact,
+		   however, the computations may introduce some
+		   numerical instability, particularly for large
+		   dimension @m.
+		*/
+		continue;
+	    }
 	    x = 0.0;
 	    for (k=0; k<j; k++) {
 		cjk = gretl_matrix_get(C, j, k);
@@ -1547,25 +1546,12 @@ static double GHK_1 (const gretl_matrix *C,
 		TA->val[i] = 0.0;
 	    } else {
 		TA->val[i] = ndtr((A->val[j] - x) / den);
-#if GHK_SPEEDUP
-		if (TA->val[i] >= NORM_CDF_MAX) {
-		    TB->val[i] = TA->val[i];
-		    gretl_matrix_set(TT, j, i, DBL_MAX);
-		    continue;
-		}
-#endif
 	    }
 
 	    if (plus_inf(B->val[j])) {
 		TB->val[i] = 1.0;
 	    } else {
 		TB->val[i] = ndtr((B->val[j] - x) / den);
-#if GHK_SPEEDUP
-		if (TB->val[i] == 0) {
-		    gretl_matrix_set(TT, j, i, -DBL_MAX);
-		    continue;
-		}
-#endif
 	    }
 
 	    /* component j draw */
@@ -1580,10 +1566,6 @@ static double GHK_1 (const gretl_matrix *C,
 	    WGT->val[i] *= TB->val[i];
 	}
     }
-
-#if 0
-    gretl_matrix_print(WGT, "WGT");
-#endif
 
     set_cephes_hush(0);
 
