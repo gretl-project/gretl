@@ -5079,7 +5079,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case CORRGM:
 	err = corrgram(cmd->list[1], cmd->order, 0, dset, 
-		       cmd->opt | OPT_A, prn);
+		       cmd->opt | OPT_A, 
+		       cmd->opt & OPT_S ? NULL : prn);
 	if (!err && (cmd->opt & OPT_G)) {
 	    /* experimental */
 	    maybe_schedule_graph_callback(s);

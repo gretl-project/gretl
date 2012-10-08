@@ -2977,7 +2977,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	      gretlopt opt, PRN *prn)
 {
     const double z[] = {1.65, 1.96, 2.58};
-    double ybar, box, pm[3];
+    double ybar, box, pval, pm[3];
     double *acf = NULL;
     double *pacf = NULL;
     const char *vname;
@@ -3112,12 +3112,15 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	box += (T * (T + 2.0)) * acf[k] * acf[k] / (T - (k + 1));
 	pprintf(prn, "%12.4f", box);
 	if (k >= nparam) {
-	    pprintf(prn, "  [%5.3f]", chisq_cdf_comp(dfQ++, box));
+	    pval = chisq_cdf_comp(dfQ++, box);
+	    pprintf(prn, "  [%5.3f]", pval);
 	}
 	pputc(prn, '\n');
     }
     pputc(prn, '\n');
 
+    record_test_result(box, pval, "Ljung-Box");
+    
     if (!(opt & OPT_A) && !(opt & OPT_Q)) {
 	err = corrgram_graph(vname, acf, m, (pacf_err)? NULL : pacf, 
 			     pm[1], opt);
