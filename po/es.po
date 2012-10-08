@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-10-03 08:33-0400\n"
-"PO-Revision-Date: 2012-06-15 13:03+0200\n"
+"PO-Revision-Date: 2012-10-08 17:20+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
-"Language-Team: Español <kde-i18n-doc@kde.org>\n"
-"Language: \n"
+"Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.0\n"
+"X-Generator: Lokalize 1.4\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: lib/src/adf_kpss.c:290
@@ -8567,13 +8567,13 @@ msgid "Confirm dataset structure"
 msgstr "Confirmar la estructura del conjunto de datos"
 
 #: gui2/datawiz.c:170
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter name for first variable\n"
 "(max. %d characters)"
 msgstr ""
 "Introduzca el nombre de la primera variable\n"
-"(máx. 15 caracteres)"
+"(máx. %d caracteres)"
 
 #: gui2/datawiz.c:174 gui2/dialogs.c:5137 gui2/ssheet.c:964
 msgid "gretl: name variable"
@@ -9828,14 +9828,12 @@ msgstr ""
 "¿Desea intentar descargarlo ahora?"
 
 #: gui2/fncall.c:2680
-#, fuzzy
 msgid "main window"
 msgstr "Ventana principal"
 
 #: gui2/fncall.c:2681
-#, fuzzy
 msgid "model window"
-msgstr "Cerrar ventana"
+msgstr "Ventana de modelo"
 
 #: gui2/fncall.c:2685
 #, c-format
@@ -9844,11 +9842,14 @@ msgid ""
 "as \"%s/%s\" in the %s.\n"
 "Do you want to do this?"
 msgstr ""
+"El paquete %s puede añadirse a los menús de gretl\n"
+"como \"%s/%s\" en %s.\n"
+"Desea Vd. hacer esto?"
 
 #: gui2/fncall.c:2850
-#, fuzzy, c-format
+#, c-format
 msgid "Adding %s under %s."
-msgstr "_Contra %s y %s"
+msgstr "Añadiendo %s bajo %s"
 
 #: gui2/fncall.c:2854 gui2/fncall.c:2858 gui2/settings.c:1607
 msgid "This change will take effect when you restart gretl"
@@ -9857,12 +9858,11 @@ msgstr "Este cambio tendrá efecto cuando se reinicie gretl"
 #: gui2/fncall.c:3003
 #, c-format
 msgid "Requires gretl %s"
-msgstr ""
+msgstr "Requiere gretl %s"
 
 #: gui2/fncall.c:3009
-#, fuzzy
 msgid "Error reading package"
-msgstr "Error al leer %s\n"
+msgstr "Error al leer el paquete"
 
 #: gui2/fnsave.c:338
 msgid "Please add a sample script for this package"
@@ -10152,9 +10152,8 @@ msgid "Malformed PNG file for graph"
 msgstr "Fichero PNG de gráfico mal formado"
 
 #: gui2/gpt_control.c:4277
-#, fuzzy
 msgid "Malformed SVG file for graph"
-msgstr "Fichero PNG de gráfico mal formado"
+msgstr "Fichero SVG de gráfico mal formado"
 
 #: gui2/gpt_control.c:4823
 msgid "gretl: graph"
@@ -11571,11 +11570,11 @@ msgstr "para la variable %s (%d observaciones válidas)"
 
 #: gui2/guiprint.c:761
 msgid "5% Perc."
-msgstr ""
+msgstr "Porc. 5%"
 
 #: gui2/guiprint.c:761
 msgid "95% Perc."
-msgstr ""
+msgstr "Porc. 95% "
 
 #: gui2/guiprint.c:880
 msgid "t-ratios in parentheses"
@@ -11597,17 +11596,16 @@ msgstr "Exc. de curtosis"
 #: gui2/guiprint.c:1082
 #, no-c-format
 msgid "5\\% perc."
-msgstr ""
+msgstr "porc. 5\\%"
 
 #: gui2/guiprint.c:1084
 #, no-c-format
 msgid "95\\% perc."
-msgstr ""
+msgstr "porc. 95\\% "
 
 #: gui2/guiprint.c:1085
-#, fuzzy
 msgid "IQ Range"
-msgstr "Rango"
+msgstr "Rango IQ"
 
 #: gui2/guiprint.c:1177
 #, c-format
@@ -13068,7 +13066,7 @@ msgid "Akaike Information Criterion"
 msgstr "Criterio de información de Akaike"
 
 #: gui2/library.c:5957
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Statistic from model %d\n"
 "%s (value = %g)\n"
@@ -13076,7 +13074,7 @@ msgid ""
 msgstr ""
 "Estadístico del modelo %d\n"
 "%s (valor = %g)\n"
-"Nombre (máx. 15 caracteres):"
+"Nombre (máx. %d caracteres):"
 
 #: gui2/library.c:6044
 msgid "standardized residual"
@@ -14445,9 +14443,8 @@ msgid "'%s': there is already an object of this name"
 msgstr "'%s': ya hay un objeto con este nombre"
 
 #: gui2/session.c:2588
-#, fuzzy
 msgid "Failed to copy object"
-msgstr "Fallo al copiar fichero de gráfico"
+msgstr "Fallo al copiar el objeto"
 
 #: gui2/session.c:2614 gui2/session.c:2656
 #, c-format
@@ -14459,9 +14456,8 @@ msgstr ""
 "(máx. %d caracteres)"
 
 #: gui2/session.c:2616
-#, fuzzy
 msgid "gretl: copy object"
-msgstr "gretl: renombrar objeto"
+msgstr "gretl: copiar objeto"
 
 #: gui2/session.c:2658
 msgid "gretl: rename object"
@@ -14711,9 +14707,8 @@ msgid "Database server name"
 msgstr "Nombre del servidor de bases de datos"
 
 #: gui2/settings.c:236
-#, fuzzy
 msgid "HTTP proxy"
-msgstr "Utilizar proxy HTTP"
+msgstr "proxy HTTP"
 
 #: gui2/settings.c:238
 msgid "Use HTTP proxy"
@@ -14794,7 +14789,7 @@ msgstr "General"
 
 #: gui2/settings.c:1181
 msgid "Network"
-msgstr ""
+msgstr "Red"
 
 #: gui2/settings.c:1183
 msgid "Programs"
@@ -14903,22 +14898,22 @@ msgid "_Divide by scalar"
 msgstr "_Dividir por un escalar"
 
 #: gui2/ssheet.c:960
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter name for new variable\n"
 "(max. %d characters)"
 msgstr ""
 "Introduzca el nombre para la nueva variable\n"
-"(máx. 15 caracteres)"
+"(máx. %d caracteres)"
 
 #: gui2/ssheet.c:974
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter case marker for new obs\n"
 "(max. %d characters)"
 msgstr ""
 "Introduzca la etiqueta de punto para la nueva observación\n"
-"(máx. 8 caracteres)"
+"(máx. %d caracteres)"
 
 #: gui2/ssheet.c:978
 msgid "gretl: case marker"
