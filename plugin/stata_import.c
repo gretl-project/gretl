@@ -550,7 +550,7 @@ static int read_dta_data (FILE *fp, DATASET *dset,
     int *types = NULL;
     int *lvars = NULL;
     char **lnames = NULL;
-    char strbuf[129];
+    char strbuf[256];
     char *txt = NULL; 
     int *off = NULL;
     int st_err = 0;
@@ -707,12 +707,15 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 		dset->Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else {
 		clen = types[i] - soffset;
+		if (clen > 255) {
+		    clen = 255;
+		} 
 		stata_read_string(fp, clen, strbuf, &err);
 		strbuf[clen] = 0;
 #if 0
 		fprintf(stderr, "Z[%d][%d] = '%s'\n", v, t, strbuf);
 #endif
-		if (*strbuf != '\0' && strcmp(strbuf, ".") && *pst != NULL) {
+		if (!err && *strbuf != '\0' && strcmp(strbuf, ".") && *pst != NULL) {
 		    ix = gretl_string_table_index(*pst, strbuf, v, 0, prn);
 		    if (ix > 0) {
 			dset->Z[v][t] = ix;
@@ -723,7 +726,7 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 		}
 	    }
 
-	    if (i == tnum && t == 0) {
+	    if (i == tnum && t == 0 && !err) {
 		set_time_info((int) dset->Z[v][t], pd, dset);
 	    }
 	}
