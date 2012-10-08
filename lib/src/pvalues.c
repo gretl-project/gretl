@@ -1487,11 +1487,11 @@ static double GHK_1 (const gretl_matrix *C,
 		     gretl_matrix *TA,
 		     gretl_matrix *TB,
 		     gretl_matrix *WGT,
-		     gretl_matrix *TT)
+		     gretl_matrix *TT,
+		     double huge)
 {
     int m = C->rows; /* Dimension of the multivariate normal */
     int r = U->cols; /* Number of repetitions */
-    double huge = libset_get_double(CONV_HUGE);
     double P, den = gretl_matrix_get(C, 0, 0);
     double ui, x, z, cjk, tki;
     int i, j, k;
@@ -1614,6 +1614,7 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
     gretl_matrix *Ai, *Bi;
     gretl_matrix *TA, *TB;
     gretl_matrix *WT, *TT;
+    double huge;
     int dim, nobs, ndraws;
     int i, j;
 
@@ -1633,6 +1634,8 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 	*err = E_NONCONF;
 	return NULL;
     }
+
+    huge = libset_get_double(CONV_HUGE);
 
     dim = C->rows;
     nobs = A->rows;
@@ -1677,7 +1680,7 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 	    }
 	}
 	if (!*err && !pzero) {
-	    P->val[i] = GHK_1(C, Ai, Bi, U, TA, TB, WT, TT);
+	    P->val[i] = GHK_1(C, Ai, Bi, U, TA, TB, WT, TT, huge);
 	}
     }
 

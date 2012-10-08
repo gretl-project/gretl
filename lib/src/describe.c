@@ -2734,19 +2734,24 @@ static double gretl_acf (int k, int t1, int t2, const double *y,
 
 double ljung_box (int m, int t1, int t2, const double *y, int *err)
 {
-    double ybar, acf, LB = 0.0;
+    double acf, ybar = 0.0, LB = 0.0;
     int k, n = t2 - t1 + 1;
 
     *err = 0;
 
     if (n == 0 || gretl_isconst(t1, t2, y)) {
 	*err = E_DATA;
-	return NADBL;
-    }  
-
-    ybar = gretl_mean(t1, t2, y);
-    if (na(ybar)) {
+    } else if (m <= 0) {
+	gretl_errmsg_sprintf(_("Invalid lag order %d"), m);
 	*err = E_DATA;
+    } else {
+	ybar = gretl_mean(t1, t2, y);
+	if (na(ybar)) {
+	    *err = E_DATA;
+	}
+    }
+
+    if (*err) {
 	return NADBL;
     }
 
@@ -2977,7 +2982,8 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	      gretlopt opt, PRN *prn)
 {
     const double z[] = {1.65, 1.96, 2.58};
-    double ybar, box, pval, pm[3];
+    double ybar, box, pm[3];
+    double pval = NADBL;
     double *acf = NULL;
     double *pacf = NULL;
     const char *vname;

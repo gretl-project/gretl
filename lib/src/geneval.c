@@ -4734,14 +4734,18 @@ static NODE *series_ljung_box (NODE *l, NODE *r, parser *p)
 	int t1 = p->dset->t1;
 	int t2 = p->dset->t2;
 
-	if (p->err) {
-	    return ret;
+	if (!p->err && k <= 0) {
+	    gretl_errmsg_sprintf(_("Invalid lag order %d"), k);
+	    p->err = E_DATA;
 	}
 
-	while (na(x[t1]) && t1 <= t2) t1++;
-	while (na(x[t2]) && t2 >= t1) t2--;
-	
-	ret->v.xval = ljung_box(k, t1, t2, x, &p->err);
+	if (!p->err) {
+	    p->err = series_adjust_sample(x, &t1, &t2);
+	}
+
+	if (!p->err) {
+	    ret->v.xval = ljung_box(k, t1, t2, x, &p->err);
+	}
     }
 
     return ret;
