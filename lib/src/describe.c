@@ -365,6 +365,8 @@ static double find_hoare_inexact (double *a, double p,
  * @t2: ending observation.
  * @x: data series.
  * @p: probability.
+ * @opt: may include OPT_Q to hush warning when sample is
+ * too small.
  * @err: location to receive error code.
  *
  * Returns: the @p quantile of the series @x from obs
@@ -373,7 +375,7 @@ static double find_hoare_inexact (double *a, double p,
  */
 
 double gretl_quantile (int t1, int t2, const double *x, double p,
-		       int *err)
+		       gretlopt opt, int *err)
 {
     double *a = NULL;
     double xmin, xmax;
@@ -401,8 +403,10 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
 	/* too few usable observations for such an extreme 
 	   quantile */
 	*err = E_DATA;
-	fprintf(stderr, "n = %d: not enough data for %g quantile\n",
-		n, p);
+	if (!(opt & OPT_Q)) {
+	    fprintf(stderr, "n = %d: not enough data for %g quantile\n",
+		    n, p);
+	}
 	return NADBL;
     }
 
@@ -520,7 +524,7 @@ double gretl_median (int t1, int t2, const double *x)
 {
     int err = 0;
 
-    return gretl_quantile(t1, t2, x, 0.5, &err);
+    return gretl_quantile(t1, t2, x, 0.5, OPT_NONE, &err);
 }
 
 /**
@@ -4386,6 +4390,8 @@ static void summary_print_val (double x, int digits, int places,
 
     if (na(x)) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("NA"), 14), _("NA"));
+    } else if (digits < 0) {
+	pprintf(prn, "%14d", (int) x);
     } else if (digits > 0 || places > 0) {
 	int prec = (digits > 0)? digits : places;
 	int len = prec + 9;
@@ -4406,9 +4412,8 @@ void print_summary_single (const Summary *s,
 			   const DATASET *dset,
 			   PRN *prn)
 {
-    char obs1[OBSLEN], obs2[OBSLEN], tmp[128];
-    double vals[12];
-    const char *labels[] = {
+#define NVALS 12
+    const char *labels[NVALS] = {
 	N_("Mean"),
 	N_("Median"),
 	N_("Minimum"),
@@ -4424,19 +4429,27 @@ void print_summary_single (const Summary *s,
 	N_("Interquartile range"),
 	N_("Missing obs.")
     };
-
     const char *wstr = N_("Within s.d.");
     const char *bstr = N_("Between s.d.");
-    int simple_skip[] = {0,1,0,0,0,1,1,1};
+    double vals[NVALS];
+    int simple_skip[NVALS] = {0,1,0,0,0,1,1,1,1,1,1,0};
+    int skip0595 = 0;
+    int offset = 2;
     int slen = 0, i = 0;
 
-    ntodate(obs1, dset->t1, dset);
-    ntodate(obs2, dset->t2, dset);
+    if (s->opt & OPT_B) {
+	offset = 4;
+    } else {
+	char obs1[OBSLEN], obs2[OBSLEN], tmp[128];
 
-    prhdr(_("Summary statistics"), dset, 0, prn);
-    sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
-	    dset->varname[s->list[1]], s->n);
-    output_line(tmp, prn, 1);
+	ntodate(obs1, dset->t1, dset);
+	ntodate(obs2, dset->t2, dset);
+
+	prhdr(_("Summary statistics"), dset, 0, prn);
+	sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
+		dset->varname[s->list[1]], s->n);
+	output_line(tmp, prn, 1);
+    }
 
     vals[0]  = s->mean[0];
     vals[1]  = s->median[0];
@@ -4451,35 +4464,50 @@ void print_summary_single (const Summary *s,
     vals[10] = s->iqr[0];
     vals[11] = s->missing[0];
 
-    for (i=0; i<11; i++) {
+    if (na(vals[8]) && na(vals[9])) {
+	skip0595 = 1;
+    }
+
+    for (i=0; i<NVALS; i++) {
 	if ((s->opt & OPT_S) && simple_skip[i]) {
 	    continue;
-	}	
+	} else if ((i == 8 || i == 9) && skip0595) {
+	    continue;
+	}
 	if (strlen(_(labels[i])) > slen) {
 	    slen = g_utf8_strlen(_(labels[i]), -1);	    
 	}
     }
     slen++;
 
-    for (i=0; i<11; i++) {
+    for (i=0; i<NVALS; i++) {
 	if ((s->opt & OPT_S) && simple_skip[i]) {
 	    continue;
+	} else if ((i == 8 || i == 9) && skip0595) {
+	    continue;
 	}
-	pprintf(prn, "  %-*s", UTF_WIDTH(_(labels[i]), slen), _(labels[i]));
-	summary_print_val(vals[i], digits, places, prn);
+	bufspace(offset, prn);
+	pprintf(prn, "%-*s", UTF_WIDTH(_(labels[i]), slen), _(labels[i]));
+	if (i == NVALS - 1) {
+	    summary_print_val(vals[i], -1, places, prn);
+	} else {
+	    summary_print_val(vals[i], digits, places, prn);
+	}
 	pputc(prn, '\n');
     }
 
     if (!na(s->sw) && !na(s->sb)) {
 	pputc(prn, '\n');
-	pprintf(prn, "  %-*s", UTF_WIDTH(_(wstr), slen), _(wstr));
+	bufspace(offset, prn);
+	pprintf(prn, "%-*s", UTF_WIDTH(_(wstr), slen), _(wstr));
 	summary_print_val(s->sw, digits, places, prn);
 	pputc(prn, '\n');
-	pprintf(prn, "  %-*s", UTF_WIDTH(_(bstr), slen), _(bstr));
+	bufspace(offset, prn);
+	pprintf(prn, "%-*s", UTF_WIDTH(_(bstr), slen), _(bstr));
 	summary_print_val(s->sb, digits, places, prn);
-    }  
+    }
 
-    pputs(prn, "\n\n");    
+    pputc(prn, '\n');
 }
 
 #define MAXNAM 18
@@ -4519,7 +4547,7 @@ void print_summary (const Summary *summ,
 	return;
     }
 
-    if (summ->list[0] == 1 && !(summ->opt & OPT_B)) {
+    if (summ->list[0] == 1) {
 	print_summary_single(summ, 0, 0, dset, prn);
 	return;
     }
@@ -4569,6 +4597,7 @@ void print_summary (const Summary *summ,
 	    printf15(summ->sd[i], prn);
 	    pputc(prn, '\n');
 	}
+	pputc(prn, '\n');
     } else {
 	/* print all available stats */
 	const char *ha[] = {
@@ -4637,17 +4666,25 @@ void print_summary (const Summary *summ,
 	}
 	pputc(prn, '\n');
 
-	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
-		UTF_WIDTH(_(ha[0]), 15), _(hc[0]),
-		UTF_WIDTH(_(ha[1]), 15), _(hc[1]),
-		UTF_WIDTH(_(ha[2]), 15), _(hc[2]),
-		UTF_WIDTH(_(ha[3]), 15), _(hc[3]));
+	if (!na(summ->perc05[i]) && !na(summ->perc95[i])) {
+	    pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
+		    UTF_WIDTH(_(ha[0]), 15), _(hc[0]),
+		    UTF_WIDTH(_(ha[1]), 15), _(hc[1]),
+		    UTF_WIDTH(_(ha[2]), 15), _(hc[2]),
+		    UTF_WIDTH(_(ha[3]), 15), _(hc[3]));
+	} else {
+	    pprintf(prn, "%*s%*s%*s\n", len, " ",
+		    UTF_WIDTH(_(ha[2]), 15), _(hc[2]),
+		    UTF_WIDTH(_(ha[3]), 15), _(hc[3]));
+	}	    
 
 	for (i=0; i<summ->list[0]; i++) {
 	    vi = summ->list[i + 1];
 	    summary_print_varname(dset->varname[vi], len, prn);
-	    printf15(summ->perc05[i], prn);
-	    printf15(summ->perc95[i], prn);
+	    if (!na(summ->perc05[i]) && !na(summ->perc95[i])) {
+		printf15(summ->perc05[i], prn);
+		printf15(summ->perc95[i], prn);
+	    }
 	    printf15(summ->iqr[i], prn);
 	    pprintf(prn, "%15d", (int) summ->missing[i]);
 	    pputc(prn, '\n');
@@ -4655,7 +4692,7 @@ void print_summary (const Summary *summ,
 	pputc(prn, '\n');
     }
 
-    pputc(prn, '\n');
+    // pputc(prn, '\n');
 }
 
 /**
@@ -4739,6 +4776,8 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 				 const double *rv, gretlopt opt, 
 				 PRN *prn, int *err) 
 {
+    int t1 = dset->t1;
+    int t2 = dset->t2;
     Summary *s;
     double *x;
     int i, t;
@@ -4766,7 +4805,7 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 	   for values at which the restriction dummy is
 	   invalid or zero
 	*/
-	for (t=dset->t1; t<=dset->t2; t++) {
+	for (t=t1; t<=t2; t++) {
 	    if (!na(rv[t]) && rv[t] != 0.0) {
                 ntot++;
 		x[t] = dset->Z[vi][t];
@@ -4806,15 +4845,9 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 	    pkurt = &s->xkurt[i];
 	}
 
-	gretl_minmax(dset->t1, dset->t2, x, 
-		     &s->low[i], 
-		     &s->high[i]);
+	gretl_minmax(t1, t2, x, &s->low[i], &s->high[i]);
 	
-	gretl_moments(dset->t1, dset->t2, x, 
-		      &s->mean[i], 
-		      &s->sd[i], 
-		      pskew, pkurt, 
-		      1);
+	gretl_moments(t1, t2, x, &s->mean[i], &s->sd[i], pskew, pkurt, 1);
 
 	if (!(opt & OPT_S)) {
 	    int err;
@@ -4826,11 +4859,13 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 	    } else {
 		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
 	    } 
-	    s->median[i] = gretl_median(dset->t1, dset->t2, x);
-	    s->perc05[i] = gretl_quantile(dset->t1, dset->t2, x, 0.05, &err);
-	    s->perc95[i] = gretl_quantile(dset->t1, dset->t2, x, 0.95, &err);
-	    s->iqr[i]    = gretl_quantile(dset->t1, dset->t2, x, 0.75, &err);
-	    s->iqr[i]   -= gretl_quantile(dset->t1, dset->t2, x, 0.25, &err);
+	    s->median[i] = gretl_median(t1, t2, x);
+	    s->perc05[i] = gretl_quantile(t1, t2, x, 0.05, OPT_Q, &err);
+	    s->perc95[i] = gretl_quantile(t1, t2, x, 0.95, OPT_Q, &err);
+	    s->iqr[i]    = gretl_quantile(t1, t2, x, 0.75, OPT_NONE, &err);
+	    if (!na(s->iqr[i])) {
+		s->iqr[i] -= gretl_quantile(t1, t2, x, 0.25, OPT_NONE, &err);
+	    }
 	}
 
 	if (dataset_is_panel(dset) && list[0] == 1) {
@@ -4860,6 +4895,8 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 Summary *get_summary (const int *list, const DATASET *dset, 
 		      gretlopt opt, PRN *prn, int *err) 
 {
+    int t1 = dset->t1;
+    int t2 = dset->t2;
     Summary *s;
     int i, nmax;
 
@@ -4880,7 +4917,7 @@ Summary *get_summary (const int *list, const DATASET *dset,
 
 	vi = s->list[i+1];
 	x = dset->Z[vi];
-	ni = good_obs(x + dset->t1, nmax, &x0);
+	ni = good_obs(x + t1, nmax, &x0);
 	s->missing[i] = nmax - ni;
 
 	if (ni > s->n) {
@@ -4909,15 +4946,9 @@ Summary *get_summary (const int *list, const DATASET *dset,
 	    pkurt = &s->xkurt[i];
 	}
 
-	gretl_minmax(dset->t1, dset->t2, x, 
-		     &s->low[i], 
-		     &s->high[i]);
+	gretl_minmax(t1, t2, x, &s->low[i], &s->high[i]);
 	
-	gretl_moments(dset->t1, dset->t2, x, 
-		      &s->mean[i], 
-		      &s->sd[i], 
-		      pskew, pkurt, 
-		      1);
+	gretl_moments(t1, t2, x, &s->mean[i], &s->sd[i], pskew, pkurt, 1);
 
 	if (!(opt & OPT_S)) {
 	    int err;
@@ -4929,11 +4960,13 @@ Summary *get_summary (const int *list, const DATASET *dset,
 	    } else {
 		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
 	    } 
-	    s->median[i] = gretl_median(dset->t1, dset->t2, x);
-	    s->perc05[i] = gretl_quantile(dset->t1, dset->t2, x, 0.05, &err);
-	    s->perc95[i] = gretl_quantile(dset->t1, dset->t2, x, 0.95, &err);
-	    s->iqr[i]    = gretl_quantile(dset->t1, dset->t2, x, 0.75, &err);
-	    s->iqr[i]   -= gretl_quantile(dset->t1, dset->t2, x, 0.25, &err);
+	    s->median[i] = gretl_median(t1, t2, x);
+	    s->perc05[i] = gretl_quantile(t1, t2, x, 0.05, OPT_Q, &err);
+	    s->perc95[i] = gretl_quantile(t1, t2, x, 0.95, OPT_Q, &err);
+	    s->iqr[i]    = gretl_quantile(t1, t2, x, 0.75, OPT_NONE, &err);
+	    if (!na(s->iqr[i])) {
+		s->iqr[i] -= gretl_quantile(t1, t2, x, 0.25, OPT_NONE, &err);
+	    }
 	}
 
 	if (dataset_is_panel(dset) && list[0] == 1) {

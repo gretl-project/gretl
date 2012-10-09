@@ -18,6 +18,8 @@ Version 1.9.10, in progress
   as with the "gnuplot" command)
 - "freq" command: add a --matrix option to select a column from a
   named matrix instead of a series
+- "corrgm" command: make the $test and pvalue accessors available 
+  for the Ljung-Box test at the maximum lag
 - Add three new functions: ghk(), halton() and isnan()
 - Add two new accessors: $pi and $huge
 - Fix for ARMA forecasts: ensure that the dynamic portion starts

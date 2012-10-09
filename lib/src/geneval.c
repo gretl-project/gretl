@@ -2799,9 +2799,6 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_random_matrix_new(rows, cols,
 					       D_NORMAL);
 	    break;
-	case F_HALTON:
-	    ret->v.m = halton_matrix(rows, cols, &p->err);
-	    break;
 	default:
 	    break;
 	}
@@ -4655,7 +4652,7 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	    ret->v.xval = gretl_long_run_variance(t1, t2, xvec, (int) rval);
 	    break;
 	case F_QUANTILE:
-	    ret->v.xval = gretl_quantile(t1, t2, xvec, rval, &p->err);
+	    ret->v.xval = gretl_quantile(t1, t2, xvec, rval, OPT_NONE, &p->err);
 	    break;
 	case F_NPV:
 	    ret->v.xval = gretl_npv(t1, t2, xvec, rval, pd, &p->err);
@@ -6443,7 +6440,24 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 				     &p->err);
 	    }
 	}
-    }	    
+    } else if (f == F_HALTON) {
+	if (l->t != NUM) {
+	    node_type_error(f, 1, NUM, l, p);
+	} else if (m->t != NUM) {
+	    node_type_error(f, 2, NUM, m, p);
+	} else if (r->t != EMPTY && r->t != NUM) {
+	    /* optional offset */
+	    node_type_error(f, 3, NUM, r, p);
+	} else {
+	    int offset = (r->t == EMPTY)? 10 : node_get_int(r, p);
+	    int rows = node_get_int(l, p);
+	    int cols = node_get_int(m, p);
+
+	    if (!p->err) {
+		A = halton_matrix(rows, cols, offset, &p->err);
+	    }
+	}
+    }	
 
     if (f != F_STRNCMP && f != F_WEEKDAY && 
 	f != F_MONTHLEN && f != F_EPOCHDAY &&
@@ -9109,7 +9123,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_ONES:
     case F_MUNIF:
     case F_MNORM:
-    case F_HALTON:
 	/* matrix-creation functions */
 	if (scalar_node(l) && (r == NULL || scalar_node(r))) {
 	    ret = matrix_fill_func(l, r, t->t, p);
@@ -9286,6 +9299,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_EIGSOLVE:
     case F_NADARWAT:
     case F_PRINCOMP:
+    case F_HALTON:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);

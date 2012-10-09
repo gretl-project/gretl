@@ -329,7 +329,6 @@ enum {
     F_PXSUM,
     F_PSD,
     F_RANDINT,
-    F_HALTON,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_PRINCOMP,
     F_BFGSMAX,
@@ -357,6 +356,7 @@ enum {
     F_EIGSOLVE,
     F_NADARWAT,
     F_SIMANN,
+    F_HALTON,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

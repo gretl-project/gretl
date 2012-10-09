@@ -2010,7 +2010,7 @@
 	given, a plot of the correlogram is printed.
       </para>
       <para>
-	If a <repl>order</repl> value is specified the length of the
+	If an <repl>order</repl> value is specified the length of the
 	correlogram is limited to at most that number of lags, otherwise the
 	length is determined automatically, as a function of the frequency of
 	the data and the number of observations.

@@ -4842,12 +4842,11 @@ static int do_debug_command (ExecState *state, const char *param,
 static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 {
     const char *byvar = get_optval_string(cmd->ci, OPT_B);
+    const char **labels = NULL;
     gretl_matrix *xvals = NULL;
     const double *x;
     int i, v, nvals = 0;
-    int err = 0;
-    int haslabels = 0;
-    const char **labels = NULL;
+    int single, err = 0;
 
     if (dset == NULL || byvar == NULL) {
 	return E_DATA;
@@ -4868,6 +4867,8 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 	return E_DATA;
     }
 
+    single = cmd->list[0] == 1;
+
     xvals = gretl_matrix_values(x + dset->t1, dset->t2 - dset->t1 + 1, 
 				OPT_S, &err);
 
@@ -4875,18 +4876,21 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 	nvals = gretl_vector_get_length(xvals);
 	if (nvals == 0) {
 	    err = E_DATA;
+	} else if (series_has_string_table(dset, v)) {
+	    int n_labels;
+
+	    labels = series_get_string_vals(dset, v, &n_labels);
+	    if (n_labels != nvals) {
+		labels = NULL;
+	    }
 	}
     }
 
-    if (series_has_string_table(dset, v)) {
-	int n_labels;
-
-	labels = series_get_string_vals(dset, v, &n_labels);
-	if (n_labels != nvals) {
-	    labels = NULL;
-	} else {
-	    haslabels = 1;
-	}
+    if (!err && single) {
+	pputc(prn, '\n');
+	pprintf(prn, _("Summary statistics for %s, by value of %s"),
+		dset->varname[cmd->list[1]], dset->varname[v]);
+	pputc(prn, '\n');
     }
 
     for (i=0; i<nvals && !err; i++) {
@@ -4906,8 +4910,11 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 	if (!err) {
 	    if (i == 0) {
 		pputc(prn, '\n');
-	    }	    
-	    if (haslabels) {
+	    }
+	    if (single) {
+		bufspace(2, prn);
+	    }
+	    if (labels != NULL) {
 		pprintf(prn, "%s = %s (n = %d):\n", byvar, labels[i], summ->n);
 	    } else {
 		pprintf(prn, "%s = %g (n = %d):\n", byvar, xi, summ->n);
@@ -5096,8 +5103,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case CORRGM:
 	err = corrgram(cmd->list[1], cmd->order, 0, dset, 
-		       cmd->opt | OPT_A, 
-		       cmd->opt & OPT_S ? NULL : prn);
+		       cmd->opt | OPT_A, prn);
 	if (!err && (cmd->opt & OPT_G)) {
 	    /* experimental */
 	    maybe_schedule_graph_callback(s);
