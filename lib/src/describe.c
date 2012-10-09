@@ -4407,13 +4407,14 @@ static void summary_print_val (double x, int digits, int places,
     }
 }
 
+#define NSUMM 12
+
 void print_summary_single (const Summary *s,
 			   int digits, int places,
 			   const DATASET *dset,
 			   PRN *prn)
 {
-#define NVALS 12
-    const char *labels[NVALS] = {
+    const char *labels[NSUMM] = {
 	N_("Mean"),
 	N_("Median"),
 	N_("Minimum"),
@@ -4431,8 +4432,8 @@ void print_summary_single (const Summary *s,
     };
     const char *wstr = N_("Within s.d.");
     const char *bstr = N_("Between s.d.");
-    double vals[NVALS];
-    int simple_skip[NVALS] = {0,1,0,0,0,1,1,1,1,1,1,0};
+    double vals[NSUMM];
+    int simple_skip[NSUMM] = {0,1,0,0,0,1,1,1,1,1,1,0};
     int skip0595 = 0;
     int offset = 2;
     int slen = 0, i = 0;
@@ -4468,7 +4469,7 @@ void print_summary_single (const Summary *s,
 	skip0595 = 1;
     }
 
-    for (i=0; i<NVALS; i++) {
+    for (i=0; i<NSUMM; i++) {
 	if ((s->opt & OPT_S) && simple_skip[i]) {
 	    continue;
 	} else if ((i == 8 || i == 9) && skip0595) {
@@ -4480,7 +4481,7 @@ void print_summary_single (const Summary *s,
     }
     slen++;
 
-    for (i=0; i<NVALS; i++) {
+    for (i=0; i<NSUMM; i++) {
 	if ((s->opt & OPT_S) && simple_skip[i]) {
 	    continue;
 	} else if ((i == 8 || i == 9) && skip0595) {
@@ -4488,7 +4489,7 @@ void print_summary_single (const Summary *s,
 	}
 	bufspace(offset, prn);
 	pprintf(prn, "%-*s", UTF_WIDTH(_(labels[i]), slen), _(labels[i]));
-	if (i == NVALS - 1) {
+	if (i == NSUMM - 1) {
 	    summary_print_val(vals[i], -1, places, prn);
 	} else {
 	    summary_print_val(vals[i], digits, places, prn);
@@ -4691,8 +4692,6 @@ void print_summary (const Summary *summ,
 	}
 	pputc(prn, '\n');
     }
-
-    // pputc(prn, '\n');
 }
 
 /**
