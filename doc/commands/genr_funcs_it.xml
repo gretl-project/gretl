@@ -1704,6 +1704,31 @@
       </description>
     </function>
 
+    <function name="ljungbox" section="stats" output="scalar">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="scalar">p</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcola la statistica Q di Ljung&ndash;Box per la serie y
+	  <argname>y</argname> usando <argname>p</argname> ritardi e
+	  il campione definito al momento. Il parametro
+	  <argname>p</argname> deve essere maggiore o uguale a 1 e
+	  minore del numero di osservazioni disponibili.
+	</para>
+	<para>
+	  Questa statistica può essere confrontata alla chi-quadro con
+	  <argname>p</argname> gradi di libertà per sottoporre a test
+	  l'ipotesi che la variabile <argname>y</argname> sia
+	  serialmente incorrelata.
+	  <seelist>
+	    <fncref targ="pvalue"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="lngamma" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>

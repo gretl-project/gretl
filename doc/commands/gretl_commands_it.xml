@@ -1488,6 +1488,17 @@
         viene scelta automaticamente in funzione della frequenza dei dati e del
         numero di osservazioni.
       </para>
+
+      <para>
+	Se il comando va a buon fine, gli accessori <lit>$test</lit> e
+	<lit>$pvalue</lit> conterranno i valori corrispondenti per la
+	statistica di Ljung&ndash;Box, per l'ordine
+	<repl>max-ritardo</repl>. Peraltro, se si vuole semplicemente
+	calcolare la statistica <math>Q</math> senza che il programma
+	produca alcun output, consigliamo di usare la funzione <fncref
+	targ="ljungbox"/> anziché questo comando.
+      </para>
+
     </description>
 
     <gui-access>

@@ -3180,10 +3180,10 @@
 	  observations.  
 	</para>
 	<para>
-	  This statistic may be referred to the chi-square distribution with
-	  <argname>p</argname> degrees of freedom as a test of the null
-	  hypothesis that the series <argname>y</argname> is serially
-	  independent.
+	  This statistic may be referred to the chi-square
+	  distribution with <argname>p</argname> degrees of freedom as
+	  a test of the null hypothesis that the series
+	  <argname>y</argname> is serially incorrelated.
 	  <seelist>
 	    <fncref targ="pvalue"/>
 	  </seelist>

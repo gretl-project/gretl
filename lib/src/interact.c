@@ -4846,6 +4846,8 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
     const double *x;
     int i, v, nvals = 0;
     int err = 0;
+    int haslabels = 0;
+    const char **labels = NULL;
 
     if (dset == NULL || byvar == NULL) {
 	return E_DATA;
@@ -4876,6 +4878,17 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 	}
     }
 
+    if (series_has_string_table(dset, v)) {
+	int n_labels;
+
+	labels = series_get_string_vals(dset, v, &n_labels);
+	if (n_labels != nvals) {
+	    labels = NULL;
+	} else {
+	    haslabels = 1;
+	}
+    }
+
     for (i=0; i<nvals && !err; i++) {
 	Summary *summ = NULL;
 	char genline[64];
@@ -4894,7 +4907,11 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 	    if (i == 0) {
 		pputc(prn, '\n');
 	    }	    
-	    pprintf(prn, "%s = %g (n = %d):\n", byvar, xi, summ->n);
+	    if (haslabels) {
+		pprintf(prn, "%s = %s (n = %d):\n", byvar, labels[i], summ->n);
+	    } else {
+		pprintf(prn, "%s = %g (n = %d):\n", byvar, xi, summ->n);
+	    }
 	    print_summary(summ, dset, prn);
 	    free_summary(summ);
 	}

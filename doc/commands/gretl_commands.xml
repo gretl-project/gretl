@@ -2015,6 +2015,14 @@
 	length is determined automatically, as a function of the frequency of
 	the data and the number of observations.
       </para>
+      <para>
+	Upon successful completion, the accessors <lit>$test</lit> and
+	<lit>$pvalue</lit> contain the corresponding figures of the
+	Ljung&ndash;Box test for the maximum order displayed. Note
+	that if you just want to compute the <math>Q</math> statistic,
+	you'll probably want to use the <fncref targ="ljungbox"/>
+	function instead.
+      </para>
     </description>
 
     <gui-access>
