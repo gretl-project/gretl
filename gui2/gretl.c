@@ -922,7 +922,7 @@ static int get_line_pos (GtkTreeModel *mod)
 static int get_lag_or_dummy_parent (int v)
 {
     const char *vname = dataset->varname[v];
-    int pv = 0, i = 0;
+    int i = 0, pv = 0;
 
     if (series_get_lag(dataset, v) != 0) {
 	pv = series_get_parent_id(dataset, v);
@@ -938,7 +938,7 @@ static int get_lag_or_dummy_parent (int v)
 	}
     }
 
-    if (pv < 0) {
+    if (pv < 0 || pv >= dataset->v) {
 	pv = 0;
     }
     
@@ -974,7 +974,11 @@ void populate_varlist (void)
 	    continue;
 	}
 
-	if (i > 0 && (pv = get_lag_or_dummy_parent(i)) > 0) {
+	if (i > 0) {
+	    pv = get_lag_or_dummy_parent(i);
+	}
+
+	if (pv > 0) {
 	    GtkTreeIter child_iter, parent_iter;
 
 	    if (series_get_parent_iter(pv, &parent_iter)) {
@@ -985,8 +989,10 @@ void populate_varlist (void)
 				   0, id, 
 				   1, dataset->varname[i],
 				   2, series_get_label(dataset, i),
-				   -1);	
-	    }	
+				   -1);
+	    } else {
+		pv = 0;
+	    }
 	}
 
 	if (pv == 0) {
