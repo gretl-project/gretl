@@ -1944,6 +1944,13 @@
         comprimento é determinado automaticamente, como uma função da
         frequência dos dados e do número de observações.
       </para>
+      <para>
+	Depois de completar com sucesso, os acessores <lit>$test</lit> e
+	<lit>$pvalue</lit> contêm os respectivos valores do teste de
+	Ljung&ndash;Box para a maior ordem apresentada. Note que se você
+	apenas quiser determinar a estatística <math>Q</math>, provavelmente
+	você quererá usar a função <fncref targ="ljungbox"/>.
+      </para>
     </description>
 
     <gui-access>
