@@ -937,6 +937,10 @@ static int get_lag_or_dummy_parent (int v)
 	    pv = current_series_index(dataset, "du_1");
 	}
     }
+
+    if (pv < 0) {
+	pv = 0;
+    }
     
     return pv;
 }
