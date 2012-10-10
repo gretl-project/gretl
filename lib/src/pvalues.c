@@ -1662,20 +1662,18 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
     }
 
     for (i=0; i<nobs && !*err; i++) {
-	int pzero = 0, ABok = 1;
+	int ABok = 1, pzero = 0;
 
 	for (j=0; j<dim && !*err; j++) {
 	    Ai->val[j] = gretl_matrix_get(A, i, j);
 	    Bi->val[j] = gretl_matrix_get(B, i, j);
-	    ABok &= !(xna(Ai->val[j]) || xna(Bi->val[j]));
+	    ABok = !(isnan(Ai->val[j]) || isnan(Bi->val[j]));
 
 	    if (!ABok) {
-		/* 
-		   first, let's check whether there are any NAs
-		   in A or B, because if so, there's no point in 
-		   continuing
+		/* If there are any NaNs in A or B, there's no
+		   point in continuing
 		*/
-		P->val[i] = NADBL;
+		P->val[i] = 0.0/0.0; /* NaN */
 		break;
 	    } else if (Bi->val[j] < Ai->val[j]) {
 		gretl_errmsg_sprintf("ghk: inconsistent bounds: B[%d,%d] < A[%d,%d]",
