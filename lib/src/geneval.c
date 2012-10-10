@@ -3132,7 +3132,7 @@ static NODE *apply_scalar_func (NODE *n, int f, parser *p)
     return ret;
 }
 
-static NODE *isnan_node (NODE *n, parser *p)
+static NODE *scalar_isnan_node (NODE *n, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
@@ -3141,6 +3141,35 @@ static NODE *isnan_node (NODE *n, parser *p)
 
 	if (!p->err) {
 	    ret->v.xval = isnan(x);
+	}
+    }
+
+    return ret;
+}
+
+static NODE *matrix_isnan_node (NODE *n, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	ret = aux_matrix_node(p);
+	if (ret != NULL) {
+	    const gretl_matrix *m = n->v.m;
+
+	    if (m->rows == 0 || m->cols == 0) {
+		p->err = E_DATA;
+	    } else {
+		ret->v.m = gretl_matrix_alloc(m->rows, m->cols);
+		if (ret->v.m == NULL) {
+		    p->err = E_ALLOC;
+		} else {
+		    int i, n = m->rows * m->cols;
+
+		    for (i=0; i<n; i++) {
+			ret->v.m->val[i] = isnan(m->val[i]);
+		    }
+		}
+	    }
 	}
     }
 
@@ -8845,9 +8874,11 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_ISNAN:
-	/* scalar only */
+	/* scalar or matrix */
 	if (scalar_node(l)) {
-	    ret = isnan_node(l, p);
+	    ret = scalar_isnan_node(l, p);
+	} else if (l->t == MAT) {
+	    ret = matrix_isnan_node(l, p);
 	} else {
 	    node_type_error(t->t, 0, NUM, l, p);
 	}

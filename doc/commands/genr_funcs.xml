@@ -2872,16 +2872,17 @@
       </description>
     </function>
 
-    <function name="isnan" section="data-utils" output="scalar">
+    <function name="isnan" section="data-utils" output="asinput">
       <fnargs>
-	<fnarg type="scalar">x</fnarg>
+	<fnarg type="scalar-or-matrix">x</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns 1 if <argname>x</argname> is <quote>Not a
-	  Number</quote> (NaN), otherwise 0. May be useful for testing
-	  elements of a matrix, in which NAs (if any are included) are
-	  converted to NaNs.
+	  Given a scalar argument, returns 1 if <argname>x</argname>
+	  is <quote>Not a Number</quote> (NaN), otherwise 0. Given a
+	  matrix argument, returns a matrix of the same dimensions
+	  with 1s in positions where the corresponding element of the
+	  input is NaN and 0s elsewhere.
 	</para>
       </description>
     </function>
