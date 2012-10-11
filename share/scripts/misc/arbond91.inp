@@ -5,18 +5,15 @@
 
 open abdata.gdt
 
-# Take first differences of the independent variables
-genr Dw = diff(w)
-genr Dk = diff(k)
-genr Dys = diff(ys)
-
 # We first treat all the independent variables as
 # exogenous (Table 4, column b)
 
+list X = w w(-1) k ys ys(-1)
+
 # 1-step GMM estimation
-arbond 2 ; n Dw Dw(-1) Dk Dys Dys(-1) 0 --time-dummies
+dpanel 2 ; n X const --time-dummies --asy --dpdstyle
 # 2-step estimation
-arbond 2 ; n Dw Dw(-1) Dk Dys Dys(-1) 0 --time-dummies --two-step
+dpanel 2 ; n X const --time-dummies --asy --two-step --dpdstyle
 
 # Then we treat the wage and capital stock as predetermined,
 # not exogenous.  This gives an approximation to Table 4,
@@ -24,8 +21,7 @@ arbond 2 ; n Dw Dw(-1) Dk Dys Dys(-1) 0 --time-dummies --two-step
 # model are not available.  In addition, we're using
 # finite-sample corrected standard errors.
 
-list pred = Dw Dw(-1) Dk
-list exog = Dys Dys(-1) 0
-arbond 2 ; n pred exog ; exog GMM(k,2,3) GMM(w,2,3) --time-dummies
-arbond 2 ; n pred exog ; exog GMM(k,2,3) GMM(w,2,3) --time --two-step
+list Ivars = ys ys(-1)
+dpanel 2 ; n X const ; GMM(w,2,3) GMM(k,2,3) Ivars --time --dpd
+dpanel 2 ; n X const ; GMM(w,2,3) GMM(k,2,3) Ivars --time --two-step --dpd
 
