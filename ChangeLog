@@ -29,6 +29,8 @@ Version 1.9.10, in progress
   (greater than or equal, less than or equal)
 - Fix some buggy behavior in regard to empty matrices
 - Fix for use of "catch" (to trap errors) in loops
+- Fix GUI bug: lagged series could become invisible in the main
+  window under some (unusual) conditions
 - Allow passing "null" as an argument for lists in user-defined
   functions
 - Enable indexing into named lists to get the ID numbers of series
@@ -44,6 +46,7 @@ Version 1.9.10, in progress
   "Virtual Store" folder-redirection introduced in Windows Vista
 - Linux: add proper XDG support (mime types, icons)
 - OS X package: update the gmp, mpfr and fftw libraries
+- MS Windows and OS X: update gnuplot to version 4.6.1
 
 2012-06-01 version 1.9.9
 - Add --cluster option (cluster-robust standard errors) for several
