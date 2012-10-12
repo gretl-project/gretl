@@ -4441,14 +4441,28 @@ void print_summary_single (const Summary *s,
     if (s->opt & OPT_B) {
 	offset = 4;
     } else {
+	const char *vname = dset->varname[s->list[1]];
 	char obs1[OBSLEN], obs2[OBSLEN], tmp[128];
 
 	ntodate(obs1, dset->t1, dset);
 	ntodate(obs2, dset->t2, dset);
 
 	prhdr(_("Summary statistics"), dset, 0, prn);
-	sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
-		dset->varname[s->list[1]], s->n);
+
+	if (isdigit(*vname)) {
+	    const char *mname = dataset_get_matrix_name(dset);
+
+	    if (mname != NULL) {
+		sprintf(tmp, _("for column %d of %s (%d valid observations)"), 
+			atoi(vname), mname, s->n);
+	    } else {
+		sprintf(tmp, _("for column %d (%d valid observations)"), 
+			atoi(vname), s->n);
+	    }
+	} else {
+	    sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
+		    dset->varname[s->list[1]], s->n);
+	}
 	output_line(tmp, prn, 1);
     }
 

@@ -1923,6 +1923,38 @@ int dataset_destroy_hidden_variables (DATASET *dset, int vmin)
     return err;
 }
 
+int dataset_set_matrix_name (DATASET *dset, const char *name)
+{
+    int err = 0;
+
+    if (dset->descrip != NULL) {
+	free(dset->descrip);
+	dset->descrip = NULL;
+    }
+
+    if (name != NULL && *name != '\0') {
+	dset->descrip = malloc(strlen(name) + 8);
+	if (dset->descrip == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    sprintf(dset->descrip, "matrix:%s", name);
+	}
+    }
+
+    return err;
+}
+
+const char *dataset_get_matrix_name (const DATASET *dset)
+{
+    if (dset->descrip != NULL &&
+	strlen(dset->descrip) > 7 &&
+	!strncmp(dset->descrip, "matrix:", 7)) {
+	return dset->descrip + 7;
+    } else {
+	return NULL;
+    }
+}
+
 /* intended for use with newly imported data: trash any 
    series that contain nothing but NAs
 */

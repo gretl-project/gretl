@@ -710,7 +710,8 @@ gretl_matrix_data_subset_special (const int *list,
  * gretl_dataset_from_matrix:
  * @m: source matrix.
  * @list: list of columns (1-based) to include, or NULL.
- * @opt: may include OPT_B to attempt "borrowing" of data.
+ * @opt: may include OPT_B to attempt "borrowing" of data;
+ * may include OPT_N to use plain numbers as variable names.
  * @err: location to receive error code.
  *
  * Creates a gretl dataset from matrix @m, either using the
@@ -797,6 +798,8 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 	}
 	if (names != NULL) {
 	    strcpy(dset->varname[i], names[col]);
+	} else if (opt & OPT_N) {
+	    sprintf(dset->varname[i], "%d", col + 1);
 	} else {
 	    sprintf(dset->varname[i], "col%d", col + 1);
 	}

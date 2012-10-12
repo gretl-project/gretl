@@ -362,6 +362,10 @@ int dataset_stack_variables (const char *vname, const char *line,
 
 int dataset_sort_by (const int *list, DATASET *dset, gretlopt opt);
 
+int dataset_set_matrix_name (DATASET *dset, const char *name);
+
+const char *dataset_get_matrix_name (const DATASET *dset);
+
 int series_is_log (const DATASET *dset, int i, char *parent);
 
 void series_set_discrete (DATASET *dset, int i, int s);

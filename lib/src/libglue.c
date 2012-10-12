@@ -534,11 +534,14 @@ int matrix_command_driver (int ci,
 	return matrix_scatters(m, list, dset, opt);
     } else if (list != NULL && list[0] == 0) {
 	mdset = gretl_dataset_from_matrix(m, NULL, OPT_B, &err);
+    } else if (list != NULL && list[0] == 1 && ci == SUMMARY) {
+	mdset = gretl_dataset_from_matrix(m, list, OPT_B | OPT_N, &err);
     } else {
 	mdset = gretl_dataset_from_matrix(m, list, OPT_B, &err);
     }
 
     if (!err) {
+	dataset_set_matrix_name(mdset, mname);
 	collist = gretl_consecutive_list_new(1, mdset->v - 1);
 	if (collist == NULL) {
 	    err = E_ALLOC;
