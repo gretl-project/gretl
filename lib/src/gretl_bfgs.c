@@ -1887,11 +1887,17 @@ enum {
 static void print_NR_status (int status, double crittol, double gradtol, 
 			     double sumgrad, PRN *prn)
 {
+    int msgs = gretl_messages_on();
+
     if (status == GRADTOL_MET) {
-	pprintf(prn, _("Gradient within tolerance (%g)\n"), gradtol);
+	if (msgs) {
+	    pprintf(prn, _("Gradient within tolerance (%g)\n"), gradtol);
+	}
     } else if (status == CRITTOL_MET) {
-	pprintf(prn, _("Successive criterion values within tolerance (%g)\n"),
-		crittol);
+	if (msgs) {
+	    pprintf(prn, _("Successive criterion values within tolerance (%g)\n"),
+		    crittol);
+	}
     } else if (status == STEPMIN_MET) {
 	if (sumgrad > 0) {
 	    pprintf(prn, _("Warning: couldn't improve criterion (gradient = %g)\n"),
