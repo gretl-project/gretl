@@ -3903,12 +3903,22 @@
       </fnargs>
       <description>
 	<para>
-	  Reads a matrix from a text file. The string <argname>s</argname>
-	  must contain the name of the (plain text) file from which the
-	  matrix is to be read. The file in question must conform to the
-	  following rules:
+	  Reads a matrix from a text file. The string
+	  <argname>s</argname> must contain the name of the (plain
+	  text) file from which the matrix is to be read. The file in
+	  question may start with any number of comment lines, defined
+	  as lines that start with the hash mark, <lit>#</lit>; such
+	  lines are ignored.  Beyond that, the content must conform to
+	  the following rules:
 	</para>
 	<ilist>
+	  <li>
+	    <para>
+	      The first non-comment line must contain two integers,
+	      separated by a space or a tab, indicating the number of
+	      rows and columns, respectively.
+	    </para>
+	  </li>
 	  <li>
 	    <para>
 	      The columns must be separated by spaces or tab characters.
@@ -3918,13 +3928,6 @@
 	    <para>
 	      The decimal separator must be the dot character,
 	      <quote><lit>.</lit></quote>.
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      The first line in the file must contain two integers,
-	      separated by a space or a tab, indicating the number of rows
-	      and columns, respectively.
 	    </para>
 	  </li>
 	</ilist>

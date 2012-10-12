@@ -925,6 +925,28 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
     return err;
 }
 
+static int skip_matrix_comment (FILE *fp, int *err)
+{
+    int c = fgetc(fp);
+    int ret = 0;
+
+    if (c == '#') {
+	ret = 1;
+	while (c != '\n' && c != EOF) {
+	    c = fgetc(fp);
+	}
+    } else {
+	ungetc(c, fp);
+    }
+
+    if (c == EOF) {
+	fprintf(stderr, "reached premature end of file\n");
+	*err = E_DATA;
+    }
+
+    return ret;
+}
+
 /**
  * gretl_matrix_read_from_text:
  * @fname: name of text file.
@@ -953,17 +975,25 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname, int *err)
 	return NULL;
     }
 
-    n = fscanf(fp, "%d %d\n", &r, &c);
-
-    if (n < 2 || r <= 0 || c <= 0) {
-	*err = E_DATA;
-	fclose(fp);
-	return NULL;
+    /* skip any leading comment lines starting with '#' */
+    while (!*err && skip_matrix_comment(fp, err)) {
+	;
     }
 
-    A = gretl_matrix_alloc(r, c);
-    if (A == NULL) {
-	*err = E_ALLOC;
+    if (!*err) {
+	n = fscanf(fp, "%d %d\n", &r, &c);
+	if (n < 2 || r <= 0 || c <= 0) {
+	    fprintf(stderr, "error reading rows, cols\n");
+	    *err = E_DATA;
+	} else {
+	    A = gretl_matrix_alloc(r, c);
+	    if (A == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+    }
+
+    if (*err) {
 	fclose(fp);
 	return NULL;
     }

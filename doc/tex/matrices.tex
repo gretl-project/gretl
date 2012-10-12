@@ -751,14 +751,17 @@ exchange data with other programs.
 
 The \texttt{mread} function accepts one string parameter: the name of
 the (plain text) file from which the matrix is to be read.  The file
-in question must conform to the following rules:
+in question may start with any number of comment lines, defined as
+lines that start with the hash mark, ``\texttt{\#}''; such lines are
+ignored.  Beyond that, the content must conform to the following
+rules:
 %
 \begin{enumerate}
-\item The columns must be separated by spaces or tab characters.
-\item The decimal separator must be the dot ``\texttt{.}'' character.
-\item The first line in the file must contain two integers, separated
+\item The first non-comment line must contain two integers, separated
   by a space or a tab, indicating the number of rows and columns,
   respectively.
+\item The columns must be separated by spaces or tab characters.
+\item The decimal separator must be the dot ``\texttt{.}'' character.
 \end{enumerate}
 
 Should an error occur (such as the file being badly formatted or
