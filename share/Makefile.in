@@ -37,6 +37,7 @@ AUTO_HELPFILES = \
 
 ifeq ($(build_docs),yes)
   query_make_help = help
+  query_clean_help = helpclean
 endif
 
 VPATH = $(sharesrc)
@@ -113,15 +114,14 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/db
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/functions
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/fonts
-
-clean:
-	$(MAKE) -C bcih clean
-
-textclean: 
-	rm -f *.txt
-
+	
 helpclean:
-	for f in $(AUTO_HELPFILES) ; do rm -f $$f ; done
+	for f in $(AUTO_HELPFILES) ; do rm -f $(sharesrc)/$$f ; done
+	for f in $(sharesrc)/hlp*.stamp ; do rm -f $$f ; done
+	for f in $(sharesrc)/gen*.stamp ; do rm -f $$f ; done
+
+clean: $(query_clean_help)
+	$(MAKE) -C bcih clean
 
 distclean: clean
 	rm -f Makefile

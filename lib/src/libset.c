@@ -1813,7 +1813,6 @@ static int intvar_min_max (const char *s, int *min, int *max,
 	*var = &state->optim;
     } else if (!strcmp(s, GRETL_DEBUG)) {
 	*min = 0;
-	*max = 4;
 	*var = &gretl_debug;
     } else {
 	fprintf(stderr, "libset_set_int: unrecognized "
