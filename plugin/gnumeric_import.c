@@ -760,7 +760,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	if (blank_cols > 0) {
 	    fprintf(stderr, "Dropping %d apparently blank column(s)\n", 
 		    blank_cols);
-	    dataset_drop_last_variables(blank_cols, newset);
+	    dataset_drop_last_variables(newset, blank_cols);
 	}
 
 	if (missvals) {

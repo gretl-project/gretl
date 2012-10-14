@@ -274,7 +274,7 @@ static int pca_save_components (VMatrix *cmat,
 	} 
     }
 
-    err = dataset_add_series(m, dset);
+    err = dataset_add_series(dset, m);
 
     if (!err) {
 	/* construct standardized versions of all variables */

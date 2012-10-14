@@ -2514,7 +2514,7 @@ static long get_filesize (const char *fname)
 
 static int remedy_empty_data (DATASET *dset)
 {
-    int err = dataset_add_series(1, dset);
+    int err = dataset_add_series(dset, 1);
 
     if (!err) {
 	int t;

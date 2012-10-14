@@ -1175,7 +1175,7 @@ static int save_vars_to_dataset (DATASET *dset,
 	}
     }
 
-    if (addvars > 0 && dataset_add_series(addvars, dset)) {
+    if (addvars > 0 && dataset_add_series(dset, addvars)) {
 	return E_ALLOC;
     }
 

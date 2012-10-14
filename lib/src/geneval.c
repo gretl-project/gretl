@@ -11275,7 +11275,7 @@ static int gen_allocate_storage (parser *p)
 	if (p->dset == NULL || p->dset->Z == NULL) {
 	    p->err = E_DATA;
 	} else {
-	    p->err = dataset_add_series(1, p->dset);
+	    p->err = dataset_add_series(p->dset, 1);
 	}
 	if (!p->err) {
 	    int t;

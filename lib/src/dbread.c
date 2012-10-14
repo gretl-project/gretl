@@ -2320,7 +2320,7 @@ static int odbc_get_series (char *line, DATASET *dset,
 	    newvars = odbc_count_new_vars(vnames, nv, dset);
 	    vmin = dset->v;
 	    if (newvars > 0) {
-		err = dataset_add_series(newvars, dset);
+		err = dataset_add_series(dset, newvars);
 	    }
 	}
 
@@ -2828,7 +2828,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    gretl_errmsg_set(_("Out of memory!"));
 	    return 1;
 	}
-    } else if (new && dataset_add_series(1, dset)) {
+    } else if (new && dataset_add_series(dset, 1)) {
 	gretl_errmsg_set(_("Out of memory!"));
 	return 1;
     }
@@ -2845,7 +2845,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    sinfo->pd != 12) {
 	    gretl_errmsg_set(_("Sorry, can't handle this conversion yet!"));
 	    if (new) {
-		dataset_drop_last_variables(1, dset);
+		dataset_drop_last_variables(dset, 1);
 	    }
 	    return 1;
 	}
@@ -2859,7 +2859,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	if (xvec == NULL) {
 	    gretl_errmsg_set(_("Out of memory!"));
 	    if (new) {
-		dataset_drop_last_variables(1, dset);
+		dataset_drop_last_variables(dset, 1);
 	    }
 	    return 1;
 	}

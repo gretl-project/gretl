@@ -1284,7 +1284,7 @@ static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
 
     if (dset->v > orig_v) {
 	/* clean up any automatically-added dummies */
-	dataset_drop_last_variables(dset->v - orig_v, dset);
+	dataset_drop_last_variables(dset, dset->v - orig_v);
     }
 
     set_model_id(&model);
@@ -3133,7 +3133,7 @@ static int make_logistic_depvar (DATASET *dset, int dv,
     int t, v = dset->v;
     int err;
 
-    err = dataset_add_series(1, dset);
+    err = dataset_add_series(dset, 1);
 
     if (!err) {
 	for (t=0; t<dset->n; t++) {
@@ -3269,7 +3269,7 @@ MODEL logistic_model (const int *list, double lmax,
 	set_model_id(&lmod);
     }
 
-    dataset_drop_last_variables(1, dset);
+    dataset_drop_last_variables(dset, 1);
     free(llist);
     
     return lmod;

@@ -1143,7 +1143,7 @@ static int save_filtered_var (filter_info *finfo, double *x, int i,
     int err = 0;
 
     if (v == dataset->v) {
-	err = dataset_add_allocated_series(x, dataset);
+	err = dataset_add_allocated_series(dataset, x);
     } else {
 	free(dataset->Z[v]);
 	dataset->Z[v] = x;

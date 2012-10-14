@@ -555,7 +555,7 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
 	return 0;
     }
 
-    err = dataset_add_series(1, dset);
+    err = dataset_add_series(dset, 1);
     if (err) {
 	return err;
     }
@@ -566,7 +566,7 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
 
     OT_list = gretl_list_new(ninst + 1);
     if (OT_list == NULL) {
-	dataset_drop_last_variables(1, dset);
+	dataset_drop_last_variables(dset, 1);
 	return E_ALLOC;
     }
 
@@ -598,7 +598,7 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
     }
 
     clear_model(&smod);
-    dataset_drop_last_variables(1, dset);
+    dataset_drop_last_variables(dset, 1);
     free(OT_list);
 
     return err;
@@ -664,7 +664,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     ku = hmod.ncoeff;
 
     /* add fitted values from unrestricted model to dataset */
-    err = dataset_add_series(1, dset);
+    err = dataset_add_series(dset, 1);
     if (err) {
 	goto bailout;
     } 
@@ -728,7 +728,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     gretl_print_destroy(dbgprn);
 #endif
 
-    dataset_drop_last_variables(dset->v - nv, dset);
+    dataset_drop_last_variables(dset, dset->v - nv);
     clear_model(&hmod);
     free(HT_list);
 
@@ -1654,7 +1654,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 
     /* allocate storage for fitted vars (etc.), if needed */
     if (nendo > 0) {
-	err = dataset_add_series(nendo, dset);
+	err = dataset_add_series(dset, nendo);
 	if (!err) {
 	    r = gretl_vector_alloc(Q->cols);
 	    if (r == NULL) {
@@ -1809,7 +1809,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     } 
 
     /* delete any first-stage fitted values from dataset */
-    dataset_drop_last_variables(dset->v - orig_nvar, dset);
+    dataset_drop_last_variables(dset, dset->v - orig_nvar);
 
     free(reglist); 
     free(instlist);

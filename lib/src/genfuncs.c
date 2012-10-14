@@ -2392,7 +2392,7 @@ int dummy (DATASET *dset, int center)
 	return -1;
     }
 
-    if (dataset_add_series(ndums, dset)) {
+    if (dataset_add_series(dset, ndums)) {
 	gretl_errmsg_set(_("Out of memory!"));
 	return 0;
     }
@@ -2494,7 +2494,7 @@ int panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
 	}
     }
 
-    if (nnew > 0 && dataset_add_series(nnew, dset)) {
+    if (nnew > 0 && dataset_add_series(dset, nnew)) {
 	return E_ALLOC;
     }
 
@@ -2581,7 +2581,7 @@ int gen_unit (DATASET *dset)
 
     i = series_index(dset, "unit");
 
-    if (i == dset->v && dataset_add_series(1, dset)) {
+    if (i == dset->v && dataset_add_series(dset, 1)) {
 	return E_ALLOC;
     }
 
@@ -2659,7 +2659,7 @@ int gen_time (DATASET *dset, int tm)
 
     i = series_index(dset, (tm)? "time" : "index");
 
-    if (i == dset->v && dataset_add_series(1, dset)) {
+    if (i == dset->v && dataset_add_series(dset, 1)) {
 	return E_ALLOC;
     }
 
@@ -2706,7 +2706,7 @@ int gen_wkday (DATASET *dset)
 
     i = series_index(dset, "weekday");
 
-    if (i == dset->v && dataset_add_series(1, dset)) {
+    if (i == dset->v && dataset_add_series(dset, 1)) {
 	return E_ALLOC;
     }
 
@@ -3001,7 +3001,7 @@ int genr_fit_resid (const MODEL *pmod, DATASET *dset,
     x = get_fit_or_resid(pmod, dset, idx, vname, vlabel, &err);
 
     if (!err) {
-	err = dataset_add_allocated_series(x, dset);
+	err = dataset_add_allocated_series(dset, x);
     }
 
     if (err) {

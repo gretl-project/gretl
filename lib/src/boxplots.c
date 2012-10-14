@@ -1114,7 +1114,7 @@ int boolean_boxplots (const char *line, DATASET *dset, gretlopt opt)
     free(s);
 
     if (nbool) {
-	dataset_drop_last_variables(nbool, dset);
+	dataset_drop_last_variables(dset, nbool);
     }
     
     return err;

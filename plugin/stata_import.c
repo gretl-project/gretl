@@ -949,7 +949,7 @@ int dta_get_data (const char *fname, DATASET *dset,
 	int nvtarg = newset->v - 1;
 
 	if (nvread < nvtarg) {
-	    dataset_drop_last_variables(nvtarg - nvread, newset);
+	    dataset_drop_last_variables(newset, nvtarg - nvread);
 	}
 	
 	if (fix_varname_duplicates(newset)) {

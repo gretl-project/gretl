@@ -166,7 +166,7 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
 	int test = (opt & OPT_T)? UR_TREND : UR_CONST;
 	int t, v = dset->v;
 
-	err = dataset_add_series(1, dset);
+	err = dataset_add_series(dset, 1);
 	if (!err) {
 	    int T, offset = 0;
 
@@ -626,7 +626,7 @@ static int gettrend (DATASET *dset, int square)
 	return idx;
     }
 
-    if (dataset_add_series(1, dset)) {
+    if (dataset_add_series(dset, 1)) {
 	return 0; /* error: valid value cannot == 0 */
     }
 
@@ -904,7 +904,7 @@ static int real_adf_test (int varno, int order, int niv,
 	free(biglist);
     }
 
-    dataset_drop_last_variables(dset->v - orig_nvars, dset);
+    dataset_drop_last_variables(dset, dset->v - orig_nvars);
 
     return err;
 }
@@ -1751,7 +1751,7 @@ int kpss_test (int order, const int *list, DATASET *dset,
     dset->t2 = save_t2;
 
     /* added 2012-03-22 for consistency with adf test */
-    dataset_drop_last_variables(dset->v - orig_nvars, dset);
+    dataset_drop_last_variables(dset, dset->v - orig_nvars);
 
     return err;
 }
@@ -1990,7 +1990,7 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
     printmodel(&cmod, dset, OPT_NONE, prn);
 
     /* add residuals from cointegrating regression to data set */
-    err = dataset_add_allocated_series(cmod.uhat, dset);
+    err = dataset_add_allocated_series(dset, cmod.uhat);
     if (err) {
 	goto bailout;
     }

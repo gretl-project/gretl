@@ -1862,10 +1862,12 @@ int open_nulldata (DATASET *dset, int data_status, int length,
 	dset->Z[1][t] = (double) (t + 1);
     }
 
-    /* print out basic info */
-    pprintf(prn, A_("periodicity: %d, maxobs: %d\n"
-	   "observations range: %s-%s\n"), dset->pd, dset->n,
-	   dset->stobs, dset->endobs);
+    if (gretl_messages_on()) {
+	/* print out basic info */
+	pprintf(prn, A_("periodicity: %d, maxobs: %d\n"
+			"observations range: %s-%s\n"), 
+		dset->pd, dset->n, dset->stobs, dset->endobs);
+    }
 
     /* Set sample range to entire length of data-set by default */
     dset->t1 = 0; 
@@ -2041,7 +2043,7 @@ static int panel_append_special (int addvars,
     int i, j, s, p, t;
     int err = 0;
 
-    if (addvars > 0 && dataset_add_series(addvars, dset)) {
+    if (addvars > 0 && dataset_add_series(dset, addvars)) {
 	merge_error(_("Out of memory!\n"), prn);
 	err = E_ALLOC;
     }
@@ -2260,7 +2262,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 	int k = dset->v;
 	int i, t;
 
-	if (addvars > 0 && dataset_add_series(addvars, dset)) {
+	if (addvars > 0 && dataset_add_series(dset, addvars)) {
 	    merge_error(_("Out of memory!\n"), prn);
 	    err = E_ALLOC;
 	}

@@ -196,7 +196,7 @@ static int create_midpoint_y (int *list, DATASET *dset,
     double x0, x1;
     int i, t, err;
 
-    err = dataset_add_series(1, dset);
+    err = dataset_add_series(dset, 1);
     if (err) {
 	return err;
     }
@@ -971,7 +971,7 @@ MODEL interval_estimate (int *list, DATASET *dset,
 #endif
 
     /* clean up midpoint-y */
-    dataset_drop_last_variables(1, dset);
+    dataset_drop_last_variables(dset, 1);
     free(initlist);
 
     if (opt & OPT_C) {
@@ -994,7 +994,7 @@ static int tobit_add_lo_hi (MODEL *pmod, double llim, double rlim,
     int lv, hv;
     int i, t, err;
 
-    err = dataset_add_series(2, dset);
+    err = dataset_add_series(dset, 2);
     if (err) {
 	return err;
     }
@@ -1083,7 +1083,7 @@ MODEL tobit_via_intreg (int *list, double llim, double rlim,
     }
 
     /* clean up extra data */
-    dataset_drop_last_variables(dset->v - origv, dset);
+    dataset_drop_last_variables(dset, dset->v - origv);
     free(ilist);
 
     return model;

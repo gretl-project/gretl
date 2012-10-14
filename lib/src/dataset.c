@@ -966,8 +966,8 @@ static int real_insert_observation (int pos, DATASET *dset)
 
 /**
  * dataset_drop_observations:
- * @n: number of observations to drop.
  * @dset: pointer to dataset.
+ * @n: number of observations to drop.
  *
  * Deletes @n observations from the end of each series in the 
  * dataset.
@@ -975,7 +975,7 @@ static int real_insert_observation (int pos, DATASET *dset)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int dataset_drop_observations (int n, DATASET *dset)
+int dataset_drop_observations (DATASET *dset, int n)
 {
     double *x;
     int i, newn;
@@ -1074,7 +1074,7 @@ int dataset_shrink_obs_range (DATASET *dset)
     }
 
     if (tail > 0) {
-	err = dataset_drop_observations(tail, dset);
+	err = dataset_drop_observations(dset, tail);
     }
 
     return err;
@@ -1183,8 +1183,8 @@ static int real_add_series (int newvars, double *x,
 
 /**
  * dataset_add_series:
+ * @dset: pointer to dataset.
  * @newvars: number of series to add.
- * @dset: dataset information.
  *
  * Adds space for the specified number of additional series
  * in the dataset. Values are initialized to zero.
@@ -1192,7 +1192,7 @@ static int real_add_series (int newvars, double *x,
  * Returns: 0 on success, E_ALLOC on error.
  */
 
-int dataset_add_series (int newvars, DATASET *dset)
+int dataset_add_series (DATASET *dset, int newvars)
 {
     int v0 = dset->v;
     int err;
@@ -1220,7 +1220,7 @@ int dataset_add_series (int newvars, DATASET *dset)
 
 /**
  * dataset_add_NA_series:
- * @dset: dataset information.
+ * @dset: pointer to dataset.
  *
  * Adds space for one additional series in the dataset; the
  * values of the new series are initialized to NADBL.
@@ -1252,8 +1252,8 @@ int dataset_add_NA_series (DATASET *dset)
 
 /**
  * dataset_add_allocated_series:
- * @x: one-dimensional data array.
  * @dset: pointer to dataset.
+ * @x: one-dimensional data array.
  *
  * Adds @x as an additional series in the dataset.
  * The array @x is not copied; it should be treated as
@@ -1262,7 +1262,7 @@ int dataset_add_NA_series (DATASET *dset)
  * Returns: 0 on success, E_ALLOC on error.
  */
 
-int dataset_add_allocated_series (double *x, DATASET *dset)
+int dataset_add_allocated_series (DATASET *dset, double *x)
 {
     if (dset_zcols_borrowed(dset)) {
 	fprintf(stderr, "*** Internal error: modifying borrowed data\n");
@@ -1274,11 +1274,11 @@ int dataset_add_allocated_series (double *x, DATASET *dset)
 
 /**
  * dataset_add_series_as:
- * @x: array to be added.
- * @newname: name to give the new variable.
  * @dset: pointer to dataset.
+ * @x: array to be added.
+ * @name: name to give the new variable.
  *
- * Adds to the dataset a new series with name @newname and
+ * Adds to the dataset a new series with name @name and
  * values given by @x.  The new variable is added at one
  * level "deeper" (in terms of function execution) than the
  * current level.  This is for use with user-defined functions.
@@ -1286,8 +1286,7 @@ int dataset_add_allocated_series (double *x, DATASET *dset)
  * Returns: 0 on success, E_ALLOC on error.
  */
 
-int dataset_add_series_as (double *x, const char *newname,
-			   DATASET *dset)
+int dataset_add_series_as (DATASET *dset, double *x, const char *name)
 {
     int v, t, err = 0;
 
@@ -1303,7 +1302,7 @@ int dataset_add_series_as (double *x, const char *newname,
 
 #if DDEBUG
     fprintf(stderr, "dataset_add_series_as: incoming Z=%p, name='%s'\n",
-	    (void *) dset->Z, newname);
+	    (void *) dset->Z, name);
 #endif
 
     err = real_add_series(1, NULL, dset);
@@ -1313,7 +1312,7 @@ int dataset_add_series_as (double *x, const char *newname,
 	for (t=0; t<dset->n; t++) {
 	    dset->Z[v][t] = x[t];
 	}
-	strcpy(dset->varname[v], newname);
+	strcpy(dset->varname[v], name);
 	dset->varinfo[v]->stack_level += 1;
     }
 
@@ -1321,12 +1320,12 @@ int dataset_add_series_as (double *x, const char *newname,
 }
 
 /**
- * dataset_copy_variable_as:
- * @v: index number of variable to copy.
- * @newname: name to give the copy.
+ * dataset_copy_series_as:
  * @dset: pointer to dataset.
+ * @v: index number of variable to copy.
+ * @name: name to give the copy.
  *
- * Makes a copy of variable @v under the name @newname.
+ * Makes a copy of series @v under the name @name.
  * The copy exists in a variable namespace one level "deeper"
  * (in terms of function execution) than the variable being copied. 
  * This is for use with user-defined functions: a variable
@@ -1337,8 +1336,7 @@ int dataset_add_series_as (double *x, const char *newname,
  * Returns: 0 on success, E_ALLOC on error.
  */
 
-int dataset_copy_variable_as (int v, const char *newname,
-			      DATASET *dset)
+int dataset_copy_series_as (DATASET *dset, int v, const char *name)
 {
     int t, err;
 
@@ -1350,7 +1348,7 @@ int dataset_copy_variable_as (int v, const char *newname,
 	for (t=0; t<dset->n; t++) {
 	    dset->Z[vnew][t] = dset->Z[v][t];
 	}
-	strcpy(dset->varname[vnew], newname);
+	strcpy(dset->varname[vnew], name);
 	dset->varinfo[vnew]->stack_level += 1;
 	/* FIXME other varinfo stuff? */
 #if 0
@@ -1451,6 +1449,10 @@ int series_is_parent (const DATASET *dset, int v)
     const char *s = dset->varname[v];
     int i;
 
+    if (*s == '\0') {
+	return 0;
+    }
+
     for (i=1; i<dset->v; i++) {
 	if (i != v && !strcmp(s, dset->varinfo[i]->parent)) {
 	    return 1;
@@ -1471,21 +1473,20 @@ int series_is_parent (const DATASET *dset, int v)
 
 int dataset_rename_series (DATASET *dset, int v, const char *name)
 {
-    if (v < 0 || v >= dset->v) {
-	return E_DATA;
-    }
+    int err = 0;
 
-    if (object_is_const(dset->varname[v]) ||
+    if (v < 0 || v >= dset->v || name == NULL) {
+	err = E_DATA;
+    } else if (object_is_const(dset->varname[v]) ||
 	series_is_parent(dset, v)) {
-	return overwrite_err(dset->varname[v]);
-    }
-
-    if (strcmp(dset->varname[v], name)) {
-	strcpy(dset->varname[v], name);
+	err = overwrite_err(dset->varname[v]);
+    } else if (strcmp(dset->varname[v], name)) {
+	dset->varname[v][0] = '\0';
+	strncat(dset->varname[v], name, VNAMELEN-1);
 	set_dataset_is_changed();
     }
 
-    return 0;
+    return err;
 }
 
 /**
@@ -2198,8 +2199,8 @@ static int dataset_sort (const int *list, DATASET *dset,
 
 /**
  * dataset_drop_last_variables:
- * @delvars: number of variables to be dropped.
  * @dset: pointer to dataset.
+ * @delvars: number of variables to be dropped.
  *
  * Deletes from the dataset the number @delvars of variables 
  * that were added most recently (that have the highest ID numbers).
@@ -2207,7 +2208,7 @@ static int dataset_sort (const int *list, DATASET *dset,
  * Returns: 0 on success, E_ALLOC on error.
  */
 
-int dataset_drop_last_variables (int delvars, DATASET *dset)
+int dataset_drop_last_variables (DATASET *dset, int delvars)
 {
     int newv = dset->v - delvars;
     int i, err = 0;
@@ -2695,7 +2696,7 @@ int dataset_stack_variables (const char *vname, const char *line,
     /* add stacked series to dataset */
     if (genv == dset->v) {
 	/* add as new variable */
-	err = dataset_add_allocated_series(bigx, dset);
+	err = dataset_add_allocated_series(dset, bigx);
 	if (err) {
 	    free(bigx);
 	    goto bailout;
@@ -3472,8 +3473,58 @@ int dataset_purge_missing_rows (DATASET *dset)
 }
 
 /**
+ * dataset_set_time_series:
+ * @dset: pointer to dataset.
+ * @pd: time series annual frequency (1 for annual, 4
+ * for quarterly or 12 for monthly).
+ * @yr0: starting year.
+ * @minor0: starting "minor" period, 1-based (quarter or
+ * month).
+ *
+ * Sets time-series properties on @dset: frequency @pd with
+ * starting observation @yr0, @minor0. If the data are
+ * annual (@pd = 1) then @minor0 is ignored.
+
+ * Returns 0 on success, non-zero code on error.
+ */
+
+int dataset_set_time_series (DATASET *dset, int pd, 
+			     int yr0, int minor0)
+{
+    int err = 0;
+
+    if (pd != 1 && pd != 4 && pd != 12) {
+	err = E_DATA;
+    } else if (yr0 < 1) {
+	err = E_DATA;
+    } else if (pd > 1 && (minor0 < 1 || minor0 > pd)) {
+	err = E_DATA;
+    } else {
+	char stobs[OBSLEN];
+
+	dataset_destroy_obs_markers(dset);
+	dset->structure = TIME_SERIES;
+	dset->pd = pd;
+
+	if (pd == 1) {
+	    sprintf(stobs, "%d", yr0);
+	} else if (pd == 4) {
+	    sprintf(stobs, "%d.%d", yr0, minor0);
+	} else {
+	    sprintf(stobs, "%d.%02d", yr0, minor0);
+	}
+
+	dset->sd0 = dot_atof(stobs);
+	ntodate(dset->stobs, 0, dset); 
+	ntodate(dset->endobs, dset->n - 1, dset);
+    }
+
+    return err;
+}
+
+/**
  * series_is_discrete:
- * @p: pointer to dataset.
+ * @dset: pointer to dataset.
  * @i: index number of series.
  *
  * Returns: non-zero iff series @i should be treated as discrete.

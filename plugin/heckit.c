@@ -1524,7 +1524,7 @@ static MODEL heckit_init (h_container *HC, DATASET *dset)
 
     /* add the inverse Mills ratio to the dataset */
 
-    err = dataset_add_series(1, dset);
+    err = dataset_add_series(dset, 1);
     if (err) {
 	goto bailout;
     } 
@@ -1640,7 +1640,7 @@ MODEL heckit_estimate (const int *list, DATASET *dset,
     }
 
     if (dset->v > oldv) {
-	dataset_drop_last_variables(1, dset);
+	dataset_drop_last_variables(dset, 1);
     }
 
     h_container_destroy(HC);

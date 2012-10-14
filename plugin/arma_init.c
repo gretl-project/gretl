@@ -569,7 +569,7 @@ static int arma_init_add_dummies (arma_info *ainfo,
 	int origv = dset->v;
 	int j, v, nd = misslist[0];
 
-	err = dataset_add_series(nd, dset);
+	err = dataset_add_series(dset, nd);
 	if (!err) {
 	    for (i=1; i<=misslist[0]; i++) {
 		v = origv + i - 1;

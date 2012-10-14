@@ -3174,7 +3174,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 #endif
 
     if (!dset->auxiliary) {
-	dataset_drop_last_variables(dset->v - origv, dset);
+	dataset_drop_last_variables(dset, dset->v - origv);
     }
 
     if (!(opt & OPT_A) && !nlmod.errcode) {
@@ -3362,7 +3362,7 @@ static int ivreg_oc_setup (nlspec *spec, const int *ilist,
     int i, err;
 
     /* add GMM residual */
-    err = dataset_add_series(1, dset);
+    err = dataset_add_series(dset, 1);
 
     if (!err) {
 	*rv = v;
@@ -3562,7 +3562,7 @@ MODEL ivreg_via_gmm (const int *list, DATASET *dset, gretlopt opt)
     free(ilist);
     clear_model(&olsmod);
 
-    dataset_drop_last_variables(dset->v - orig_v, dset);
+    dataset_drop_last_variables(dset, dset->v - orig_v);
     user_matrix_destroy_by_name(IVREG_WEIGHTNAME, NULL);
 
     return model;
@@ -3815,7 +3815,7 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
 
     clear_nlspec(spec);
 
-    dataset_drop_last_variables(dset->v - origv, dset);
+    dataset_drop_last_variables(dset, dset->v - origv);
 
     /* restore original y */
     if (orig_y != NULL) {

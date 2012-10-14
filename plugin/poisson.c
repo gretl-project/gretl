@@ -733,7 +733,7 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 	goto bailout;
     }
 
-    if (dataset_add_series(2, dset)) {
+    if (dataset_add_series(dset, 2)) {
 	pmod->errcode = E_ALLOC;
 	goto bailout;
     }
@@ -836,7 +836,7 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 
     clear_model(&tmpmod);
     free(local_list);
-    dataset_drop_last_variables(dset->v - origv, dset);
+    dataset_drop_last_variables(dset, dset->v - origv);
 
     dset->t1 = orig_t1;
     dset->t2 = orig_t2;

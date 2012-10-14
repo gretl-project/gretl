@@ -3213,7 +3213,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     }
 
 #if CLEAN_UP_DUMMIES
-    dataset_drop_last_variables(dset->v - orig_v, dset);
+    dataset_drop_last_variables(dset, dset->v - orig_v);
 #endif
 
     return mod;    
@@ -3267,7 +3267,7 @@ write_weights_to_dataset (double *uvar, int nunits, int T,
 
 static int allocate_weight_var (DATASET *dset)
 {
-    if (dataset_add_series(1, dset)) {
+    if (dataset_add_series(dset, 1)) {
 	return E_ALLOC;
     }
 
@@ -3651,7 +3651,7 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
     free(bvec);
 
     if (!(opt & OPT_V)) {
-	dataset_drop_last_variables(dset->v - orig_v, dset);
+	dataset_drop_last_variables(dset, dset->v - orig_v);
     }
     
     return mdl;

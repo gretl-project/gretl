@@ -472,7 +472,7 @@ static int add_uhat_squared (const MODEL *pmod, double scale,
 {
     int t, v = dset->v;
 
-    if (dataset_add_series(1, dset)) {
+    if (dataset_add_series(dset, 1)) {
 	return E_ALLOC;
     }
 
@@ -597,7 +597,7 @@ garch_init_by_arma (const MODEL *pmod, const int *glist,
 	clear_model(&amod);
     }
 
-    dataset_drop_last_variables(dset->v - v, dset);
+    dataset_drop_last_variables(dset, dset->v - v);
     free(list);
 
     return err;

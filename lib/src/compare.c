@@ -891,7 +891,7 @@ static int add_residual_to_dataset (MODEL *pmod, DATASET *dset)
 {
     int err = 0;
 
-    if (dataset_add_series(1, dset)) {
+    if (dataset_add_series(dset, 1)) {
 	err = E_ALLOC;
     } else {
 	int t, v = dset->v - 1;
@@ -1050,7 +1050,7 @@ int nonlinearity_test (MODEL *pmod, DATASET *dset, ModelAuxCode aux,
     }
 	
     /* trash any extra variables generated (squares, logs) */
-    dataset_drop_last_variables(dset->v - orig_nvar, dset);
+    dataset_drop_last_variables(dset, dset->v - orig_nvar);
 
     /* put back into dset what was there on input */
     dset->t1 = save_t1;
@@ -1223,7 +1223,7 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     } 
 
     /* put dset back as it was on input */
-    dataset_drop_last_variables(dset->v - orig_nvar, dset);
+    dataset_drop_last_variables(dset, dset->v - orig_nvar);
     dset->t1 = save_t1;
     dset->t2 = save_t2;
 
@@ -1779,7 +1779,7 @@ int reset_test (MODEL *pmod, DATASET *dset,
 	for (i=1; i<=pmod->list[0]; i++) {
 	    newlist[i] = pmod->list[i];
 	}
-	if (dataset_add_series(addv, dset)) {
+	if (dataset_add_series(dset, addv)) {
 	    err = E_ALLOC;
 	}
     }
@@ -1867,7 +1867,7 @@ int reset_test (MODEL *pmod, DATASET *dset,
     }
 
     free(newlist);
-    dataset_drop_last_variables(addv, dset); 
+    dataset_drop_last_variables(dset, addv); 
     clear_model(&aux); 
 
     dset->t1 = save_t1;
@@ -2080,7 +2080,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
     free(addlist);
     free(testlist);
 
-    dataset_drop_last_variables(dset->v - v, dset); 
+    dataset_drop_last_variables(dset, dset->v - v); 
     clear_model(&aux); 
 
     /* reset sample as it was */
@@ -2214,7 +2214,7 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 	for (i=2; i<=pmod->list[0]; i++) {
 	    newlist[i] = pmod->list[i];
 	}
-	if (dataset_add_series(1 + order, dset)) {
+	if (dataset_add_series(dset, 1 + order)) {
 	    err = E_ALLOC;
 	}
     }
@@ -2320,7 +2320,7 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
     }
 
     free(newlist);
-    dataset_drop_last_variables(dset->v - v, dset); 
+    dataset_drop_last_variables(dset, dset->v - v); 
     clear_model(&aux); 
 
     /* reset sample as it was */
@@ -2360,7 +2360,7 @@ make_chow_list (const MODEL *pmod, DATASET *dset,
 	return NULL;
     }
 
-    if (dataset_add_series(newvars, dset)) {
+    if (dataset_add_series(dset, newvars)) {
 	*err = E_ALLOC;
     } else {
 	chowlist = gretl_list_new(pmod->list[0] + ninter + 1);
@@ -2778,7 +2778,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
  bailout:
 
     /* clean up extra variables */
-    dataset_drop_last_variables(dset->v - origv, dset);
+    dataset_drop_last_variables(dset, dset->v - origv);
     free(chowlist);
 
     dset->t1 = save_t1;
@@ -3253,7 +3253,7 @@ int comfac_test (MODEL *pmod, DATASET *dset,
 
     nadd = 1 + pmod->ncoeff - pmod->ifc;
 
-    err = dataset_add_series(nadd, dset);
+    err = dataset_add_series(dset, nadd);
     if (err) {
 	free(biglist);
 	return err;
@@ -3366,7 +3366,7 @@ int comfac_test (MODEL *pmod, DATASET *dset,
     /* delete the added variables and restore the original
        sample range */
 
-    dataset_drop_last_variables(nadd, dset);   
+    dataset_drop_last_variables(dset, nadd);   
     free(biglist);
 
     dset->t1 = save_t1;
@@ -3439,7 +3439,7 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 	return 0;
     }
 
-    if (dataset_add_series(addvars, dset)) {
+    if (dataset_add_series(dset, addvars)) {
 	return E_ALLOC;
     }
 

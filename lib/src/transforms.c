@@ -544,7 +544,7 @@ check_add_transform (int ci, int lag, int vnum, const double *x,
 	}
     } else {
 	/* no var of this name, working from scratch */
-	if (dataset_add_series(1, dset)) {
+	if (dataset_add_series(dset, 1)) {
 	    ret = VAR_ADD_FAILED;
 	} else {
 	    strcpy(dset->varname[vnum], vname);

@@ -1874,7 +1874,7 @@ static int csv_reconfigure_for_markers (DATASET *dset)
     int err = dataset_allocate_obs_markers(dset);
 
     if (!err) {
-	err = dataset_drop_last_variables(1, dset);
+	err = dataset_drop_last_variables(dset, 1);
     }
 
     return err;
@@ -2278,7 +2278,7 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
     if (!err && c->real_n < c->dset->n) {
 	int drop = c->dset->n - c->real_n;
 
-	err = dataset_drop_observations(drop, c->dset);
+	err = dataset_drop_observations(c->dset, drop);
     }
 
     return err;
@@ -3652,7 +3652,7 @@ static int get_target_varnum (const char *vname,
 {
     int i, targ = -1;
 
-    *err = dataset_add_series(1, dset);
+    *err = dataset_add_series(dset, 1);
 
     if (!*err) {
 	targ = dset->v - 1;
@@ -4135,7 +4135,7 @@ int join_from_csv (const char *fname,
     }
 
     if (err) {
-	dataset_drop_last_variables(dset->v - orig_v, dset);
+	dataset_drop_last_variables(dset, dset->v - orig_v);
     }
 
     csvdata_free(jspec.c);

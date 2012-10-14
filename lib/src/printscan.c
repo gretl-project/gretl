@@ -535,7 +535,7 @@ static int print_arg (char **pfmt, char **pargs, DATASET *dset,
     if (free_m) {
 	gretl_matrix_free(m);
     } else if (free_v) {
-	dataset_drop_last_variables(1, dset);
+	dataset_drop_last_variables(dset, 1);
     }
     
     return err;

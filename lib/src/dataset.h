@@ -314,21 +314,19 @@ int is_periodic_dummy (const double *x, const DATASET *dset);
 int dataset_add_observations (int newobs, DATASET *dset,
 			      gretlopt opt);
 
-int dataset_drop_observations (int n, DATASET *dset);
+int dataset_drop_observations (DATASET *dset, int n);
 
 int dataset_shrink_obs_range (DATASET *dset);
 
-int dataset_add_series (int newvars, DATASET *dset);
+int dataset_add_series (DATASET *dset, int newvars);
 
 int dataset_add_NA_series (DATASET *dset);
 
-int dataset_add_allocated_series (double *x, DATASET *dset);
+int dataset_add_allocated_series (DATASET *dset, double *x);
 
-int dataset_add_series_as (double *x, const char *newname,
-			   DATASET *dset);
+int dataset_add_series_as (DATASET *dset, double *x, const char *name);
 
-int dataset_copy_variable_as (int v, const char *newname,
-			      DATASET *dset);
+int dataset_copy_series_as (DATASET *dset, int v, const char *name);
 
 int overwrite_err (const char *name);
 
@@ -347,7 +345,7 @@ int dataset_drop_variable (int v, DATASET *dset);
 
 int dataset_destroy_hidden_variables (DATASET *dset, int vmin);
 
-int dataset_drop_last_variables (int delvars, DATASET *dset);
+int dataset_drop_last_variables (DATASET *dset, int delvars);
 
 int dataset_renumber_variable (int v_old, int v_new, 
 			       DATASET *dset);
@@ -402,6 +400,9 @@ int dataset_purge_missing_rows (DATASET *dset);
 int check_dataset_is_changed (void);
 
 void set_dataset_is_changed (void);
+
+int dataset_set_time_series (DATASET *dset, int pd, 
+			     int yr0, int minor0);
 
 int series_is_discrete (const DATASET *dset, int i);
 

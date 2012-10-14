@@ -2622,7 +2622,7 @@ int model_error_dist (const MODEL *pmod, DATASET *dset,
 	free_freq(freq);
     }
 
-    dataset_drop_last_variables(1, dset);
+    dataset_drop_last_variables(dset, 1);
 
     dset->t1 = save_t1;
     dset->t2 = save_t2;
@@ -5688,7 +5688,7 @@ static int mdist_saver (DATASET *dset)
 {
     int t, v, err;
 
-    err = dataset_add_series(1, dset);
+    err = dataset_add_series(dset, 1);
 
     if (err) {
 	v = 0;

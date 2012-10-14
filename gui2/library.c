@@ -464,9 +464,9 @@ static int add_or_replace_series (double *x, const char *vname,
     } else {
 	/* adding */
 	if (flag == DS_GRAB_VALUES) {
-	    err = dataset_add_allocated_series(x, dataset);
+	    err = dataset_add_allocated_series(dataset, x);
 	} else {
-	    err = dataset_add_series(1, dataset);
+	    err = dataset_add_series(dataset, 1);
 	}
 	if (err) {
 	    gui_errmsg(err);
@@ -1992,8 +1992,7 @@ static void trim_dataset (MODEL *pmod, int origv)
 	destroy_dataset(pmod->dataset);
 	pmod->dataset = NULL;
     } else if (origv > 0) {
-	dataset_drop_last_variables(dataset->v - origv,  
-				    dataset);
+	dataset_drop_last_variables(dataset, dataset->v - origv); 
     }
 }
 
@@ -5565,7 +5564,7 @@ void do_remove_obs (void)
 	g_free(msg);
 
 	if (resp == GRETL_YES) {
-	    int err = dataset_drop_observations(drop, dataset);
+	    int err = dataset_drop_observations(dataset, drop);
 
 	    if (err) {
 		gui_errmsg(err);

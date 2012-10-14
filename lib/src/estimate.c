@@ -262,7 +262,7 @@ ldepvar_std_errors (MODEL *pmod, DATASET *dset)
 	return 1;
     }
 
-    err = dataset_add_series(vnew, dset);
+    err = dataset_add_series(dset, vnew);
     if (err) {
 	free(list);
 	pmod->errcode = E_ALLOC;
@@ -342,7 +342,7 @@ ldepvar_std_errors (MODEL *pmod, DATASET *dset)
     clear_model(&emod);
     
     free(list);
-    dataset_drop_last_variables(vnew, dset);
+    dataset_drop_last_variables(dset, vnew);
 
     dset->t1 = orig_t1;
     dset->t2 = orig_t2;
@@ -2478,7 +2478,7 @@ static int get_hsk_weights (MODEL *pmod, DATASET *dset)
     }
 
     /* allocate space for an additional variable */
-    if (dataset_add_series(1, dset)) {
+    if (dataset_add_series(dset, 1)) {
 	free(lcpy);
 	return E_ALLOC;
     }
@@ -2535,7 +2535,7 @@ static int get_hsk_weights (MODEL *pmod, DATASET *dset)
     clear_model(&aux);
 
     if (shrink > 0) {
-	dataset_drop_last_variables(shrink, dset);
+	dataset_drop_last_variables(dset, shrink);
     }
 
     free(list);
@@ -2604,7 +2604,7 @@ MODEL hsk_model (const int *list, DATASET *dset)
     hsk = lsq(hsklist, dset, WLS, OPT_NONE);
     hsk.ci = HSK;
 
-    dataset_drop_last_variables(dset->v - orig_nvar, dset);
+    dataset_drop_last_variables(dset, dset->v - orig_nvar);
 
     free(hsklist);
 
@@ -2873,7 +2873,7 @@ static int tsls_hetero_test (MODEL *pmod, DATASET *dset,
        original model and (ii) the squares of the fitted values from
        the auxiliary regression above
      */
-    err = dataset_add_series(2, dset);
+    err = dataset_add_series(dset, 2);
     if (err) {
 	clear_model(&ptmod);
 	goto bailout;
@@ -2926,7 +2926,7 @@ static int tsls_hetero_test (MODEL *pmod, DATASET *dset,
 
     clear_model(&ptmod);
 
-    dataset_drop_last_variables(2, dset); 
+    dataset_drop_last_variables(dset, 2); 
 
  bailout:
 
@@ -3061,7 +3061,7 @@ int whites_test (MODEL *pmod, DATASET *dset,
     gretl_model_init(&white);
 
     /* make space in data set */
-    if (dataset_add_series(1, dset)) {
+    if (dataset_add_series(dset, 1)) {
 	err = E_ALLOC;
     }
 
@@ -3150,7 +3150,7 @@ int whites_test (MODEL *pmod, DATASET *dset,
     }
 
     clear_model(&white);
-    dataset_drop_last_variables(dset->v - v, dset);
+    dataset_drop_last_variables(dset, dset->v - v);
     free(list);
 
     dset->t1 = save_t1;
@@ -3234,7 +3234,7 @@ MODEL ar_model (const int *list, DATASET *dset,
     nvadd = arlist[0] + 1 + reglist[0];
 
     /* allocate space for the uhat terms and transformed data */
-    if (dataset_add_series(nvadd, dset)) {
+    if (dataset_add_series(dset, nvadd)) {
 	ar.errcode = E_ALLOC;
 	goto bailout;
     }
@@ -3373,7 +3373,7 @@ MODEL ar_model (const int *list, DATASET *dset,
     ar.dw = dwstat(maxlag, &ar, dset);
     ar.rho = rhohat(maxlag, ar.t1, ar.t2, ar.uhat);
 
-    dataset_drop_last_variables(nvadd, dset);
+    dataset_drop_last_variables(dset, nvadd);
 
     if (gretl_model_add_arinfo(&ar, maxlag)) {
 	ar.errcode = E_ALLOC;
@@ -3774,7 +3774,7 @@ MODEL arch_model (const int *list, int order, DATASET *dset,
 	return amod;
     }
 
-    if (dataset_add_series(order + 1, dset)) {
+    if (dataset_add_series(dset, order + 1)) {
 	amod.errcode = E_ALLOC;
     } else {
 	alist = gretl_list_new(order + 2);
@@ -3876,7 +3876,7 @@ MODEL arch_model (const int *list, int order, DATASET *dset,
     if (alist != NULL) free(alist);
     if (wlist != NULL) free(wlist);
 
-    dataset_drop_last_variables(dset->v - oldv, dset); 
+    dataset_drop_last_variables(dset, dset->v - oldv); 
 
     return amod;
 }

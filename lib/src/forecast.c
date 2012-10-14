@@ -764,7 +764,7 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
     }
 
     if (dset->v > fcv) {
-	err = dataset_drop_last_variables(dset->v - fcv, dset);
+	err = dataset_drop_last_variables(dset, dset->v - fcv);
     }
 
     dset->t1 = oldt1;
@@ -2882,7 +2882,7 @@ static int add_fcast_to_dataset (FITRESID *fr, const char *vname,
 	if (check_varname(vname)) {
 	    err = E_DATA;
 	} else {
-	    err = dataset_add_series(1, dset);
+	    err = dataset_add_series(dset, 1);
 	    if (!err) {
 		strcpy(dset->varname[v], vname);
 	    }

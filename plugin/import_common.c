@@ -235,7 +235,7 @@ static int import_prune_columns (DATASET *dset)
 	err = E_DATA;
     } else if (ndel > 0) {
 	fprintf(stderr, "Sheet has %d trailing empty variables\n", ndel);
-	err = dataset_drop_last_variables(ndel, dset);
+	err = dataset_drop_last_variables(dset, ndel);
     }
 
     return err;

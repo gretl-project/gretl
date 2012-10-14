@@ -5581,11 +5581,9 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    }
 	} else if (fp->type == GRETL_TYPE_SERIES) {
 	    if (arg->type == GRETL_TYPE_USERIES) {
-		err = dataset_copy_variable_as(arg->val.idnum, fp->name,
-					       dset);
+		err = dataset_copy_series_as(dset, arg->val.idnum, fp->name);
 	    } else {
-		err = dataset_add_series_as(arg->val.px, fp->name, 
-					    dset);
+		err = dataset_add_series_as(dset, arg->val.px, fp->name);
 	    }	    
 	} else if (fp->type == GRETL_TYPE_MATRIX) {
 	    if (fp->flags & ARG_CONST) {
@@ -6225,7 +6223,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 	if (delv > 0) {
 	    if (delv == dset->v - orig_v) {
 		/* deleting all added variables */
-		anyerr = dataset_drop_last_variables(delv, dset);
+		anyerr = dataset_drop_last_variables(dset, delv);
 		if (anyerr && !err) {
 		    err = anyerr;
 		}

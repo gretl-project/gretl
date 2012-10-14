@@ -1487,7 +1487,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 	int vj, v0 = sheet->varlist[0];
 	const gchar *newname;
 
-	if (dataset_add_series(newvars, dataset)) {
+	if (dataset_add_series(dataset, newvars)) {
 	    nomem();
 	    return;
 	}

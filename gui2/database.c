@@ -391,7 +391,7 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	    }
 	}
 
-	if (!overwrite && dataset_add_series(1, dataset)) {
+	if (!overwrite && dataset_add_series(dataset, 1)) {
 	    nomem();
 	    return 1;
 	}
@@ -407,7 +407,7 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 				    &method, NULL, vwin->main);
 		if (method == COMPACT_NONE) {
 		    if (!overwrite) {
-			dataset_drop_last_variables(1, dataset);
+			dataset_drop_last_variables(dataset, 1);
 		    }
 		    return 0;
 		}
@@ -428,7 +428,7 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	if (xvec == NULL) {
 	    nomem();
 	    if (!overwrite) {
-		dataset_drop_last_variables(1, dataset);
+		dataset_drop_last_variables(dataset, 1);
 	    }
 	    return 1;
 	}
