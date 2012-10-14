@@ -9648,8 +9648,8 @@
 	<li>
 	  <para><lit>max_verbose</lit>: <lit>on</lit> or
 	  <lit>off</lit> (the default). Toggles verbose output for the
-	  <lit>BFGSmax</lit> function (see the User's Guide for
-	  details).
+	  <lit>BFGSmax</lit> and <lit>NRmax</lit> functions (see the
+	  User's Guide for details).
 	</para>
 	</li>
 	<li>
