@@ -2877,16 +2877,17 @@
       </description>
     </function>
 
-    <function name="isnan" section="data-utils" output="scalar">
+    <function name="isnan" section="data-utils" output="asinput">
       <fnargs>
-	<fnarg type="scalar">x</fnarg>
+	<fnarg type="scalar-or-matrix">x</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns 1 if <argname>x</argname> is <quote>Not a
-	  Number</quote> (NaN), otherwise 0. May be useful for testing
-	  elements of a matrix, in which NAs (if any are included) are
-	  converted to NaNs.
+	  Given a scalar argument, returns 1 if <argname>x</argname>
+	  is <quote>Not a Number</quote> (NaN), otherwise 0. Given a
+	  matrix argument, returns a matrix of the same dimensions
+	  with 1s in positions where the corresponding element of the
+	  input is NaN and 0s elsewhere.
 	</para>
       </description>
     </function>
@@ -3907,12 +3908,22 @@
       </fnargs>
       <description>
 	<para>
-	  Reads a matrix from a text file. The string <argname>s</argname>
-	  must contain the name of the (plain text) file from which the
-	  matrix is to be read. The file in question must conform to the
-	  following rules:
+	  Reads a matrix from a text file. The string
+	  <argname>s</argname> must contain the name of the (plain
+	  text) file from which the matrix is to be read. The file in
+	  question may start with any number of comment lines, defined
+	  as lines that start with the hash mark, <lit>#</lit>; such
+	  lines are ignored.  Beyond that, the content must conform to
+	  the following rules:
 	</para>
 	<ilist>
+	  <li>
+	    <para>
+	      The first non-comment line must contain two integers,
+	      separated by a space or a tab, indicating the number of
+	      rows and columns, respectively.
+	    </para>
+	  </li>
 	  <li>
 	    <para>
 	      The columns must be separated by spaces or tab characters.
@@ -3922,13 +3933,6 @@
 	    <para>
 	      The decimal separator must be the dot character,
 	      <quote><lit>.</lit></quote>.
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      The first line in the file must contain two integers,
-	      separated by a space or a tab, indicating the number of rows
-	      and columns, respectively.
 	    </para>
 	  </li>
 	</ilist>
