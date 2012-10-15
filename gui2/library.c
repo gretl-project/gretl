@@ -171,9 +171,7 @@ static void register_graph (PRN *prn)
 
 void gui_graph_handler (int err)
 {
-    if (err == GRAPH_NO_DATA) {
-	errbox(_("No data were available to graph"));
-    } else if (err) {
+    if (err) {
 	gui_errmsg(err);
     } else {
 	register_graph(NULL);
@@ -1703,7 +1701,7 @@ int out_of_sample_info (int add_ok, int *t2)
 	    err = 1;
 	} else if (n > 0) {
 	    set_original_n(dataset->n);
-	    err = dataset_add_observations(n, dataset, OPT_A);
+	    err = dataset_add_observations(dataset, n, OPT_A);
 	    if (err) {
 		gui_errmsg(err);
 	    } else {
@@ -5534,7 +5532,7 @@ void do_add_obs (void)
     int err = 0;
 
     if (n > 0) {
-	err = dataset_add_observations(n, dataset, OPT_A);
+	err = dataset_add_observations(dataset, n, OPT_A);
 	if (err) {
 	    gui_errmsg(err);
 	} else {
@@ -6200,9 +6198,7 @@ void fit_actual_splot (GtkAction *action, gpointer p)
 
     err = gnuplot_3d(list, NULL, dset, GPT_GUI | GPT_FA);
 
-    if (err == GRAPH_NO_DATA) {
-	errbox(_("No data were available to graph"));
-    } else if (err) {
+    if (err) {
 	gui_errmsg(err);
     } else {
 	launch_gnuplot_interactive();
@@ -6776,9 +6772,7 @@ int do_splot_from_selector (selector *sr)
 
     err = gnuplot_3d(list, NULL, dataset, GPT_GUI);
 
-    if (err == GRAPH_NO_DATA) {
-	errbox(_("No data were available to graph"));
-    } else if (err) {
+    if (err) {
 	gui_errmsg(err);
     } else {
 	launch_gnuplot_interactive();
@@ -7399,7 +7393,7 @@ void gui_sort_data (void)
 	if (v > 0) {
 	    int list[] = { 1, v };
 
-	    err = dataset_sort_by(list, dataset, opt);
+	    err = dataset_sort_by(dataset, list, opt);
 	    if (err) {
 		gui_errmsg(err);
 	    } else {
@@ -7425,8 +7419,8 @@ void gui_resample_data (void)
 	gchar *nstr = g_strdup_printf("%d", n);
 	int err;
 
-	err = modify_dataset(DS_RESAMPLE, NULL, nstr, 
-			     dataset, NULL);
+	err = modify_dataset(dataset, DS_RESAMPLE, NULL, nstr, 
+			     NULL);
 	if (err) {
 	    gui_errmsg(err);
 	} else {

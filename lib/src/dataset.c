@@ -845,8 +845,8 @@ static void maybe_extend_dummies (DATASET *dset, int oldn)
 
 /**
  * dataset_add_observations:
- * @newobs: number of observations to add.
  * @dset: pointer to dataset.
+ * @n: number of observations to add.
  * @opt: use OPT_A to attempt to recognize and
  * automatically extend simple deterministic variables such 
  * as a time trend and periodic dummy variables; 
@@ -862,7 +862,7 @@ static void maybe_extend_dummies (DATASET *dset, int oldn)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int dataset_add_observations (int newobs, DATASET *dset, gretlopt opt)
+int dataset_add_observations (DATASET *dset, int n, gretlopt opt)
 {
     double *x;
     int oldn = dset->n;
@@ -874,15 +874,15 @@ int dataset_add_observations (int newobs, DATASET *dset, gretlopt opt)
 	return E_DATA;
     }
 
-    if (newobs <= 0) {
+    if (n <= 0) {
 	return 0;
     }
 
-    if (dataset_is_panel(dset) && newobs % dset->pd != 0) {
+    if (dataset_is_panel(dset) && n % dset->pd != 0) {
 	return E_PDWRONG;
     }
 
-    bign = dset->n + newobs;
+    bign = dset->n + n;
 
     for (i=0; i<dset->v; i++) {
 	x = realloc(dset->Z[i], bign * sizeof *x);
@@ -2112,7 +2112,7 @@ static int compare_vals_down (const void *a, const void *b)
     return ret;
 }
 
-int dataset_sort_by (const int *list, DATASET *dset, gretlopt opt)
+int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt)
 {
     spoint_t *sv = NULL;
     double *x = NULL;
@@ -2181,7 +2181,7 @@ int dataset_sort_by (const int *list, DATASET *dset, gretlopt opt)
     return err;
 }
 
-static int dataset_sort (const int *list, DATASET *dset,
+static int dataset_sort (DATASET *dset, const int *list,
 			 gretlopt opt)
 {
     if (dataset_is_time_series(dset) ||
@@ -2194,7 +2194,7 @@ static int dataset_sort (const int *list, DATASET *dset,
 	return E_DATA;
     }
 
-    return dataset_sort_by(list, dset, opt);
+    return dataset_sort_by(dset, list, opt);
 }
 
 /**
@@ -2658,7 +2658,7 @@ int dataset_stack_variables (const char *vname, const char *line,
     /* extend length of all series? */
     oldn = dset->n;
     if (bign > oldn) {
-	err = dataset_add_observations(bign - oldn, dset, OPT_NONE);
+	err = dataset_add_observations(dset, bign - oldn, OPT_NONE);
 	if (err) {
 	    free(bigx);
 	    goto bailout;
@@ -2891,7 +2891,7 @@ static int add_obs (int n, DATASET *dset, PRN *prn)
     } else if (n <= 0) {
 	err = E_PARSE;
     } else {
-	err = dataset_add_observations(n, dset, OPT_A);
+	err = dataset_add_observations(dset, n, OPT_A);
 	if (!err) {
 	    pprintf(prn, _("Dataset extended by %d observations"), n);
 	    pputc(prn, '\n');
@@ -3037,8 +3037,7 @@ unsigned int get_resampling_seed (void)
 
 /* resample the dataset by observation, with replacement */
 
-int dataset_resample (int n, unsigned int seed,
-		      DATASET *dset)
+int dataset_resample (DATASET *dset, int n, unsigned int seed)
 {
     DATASET *rset = NULL;
     char **S = NULL;
@@ -3204,8 +3203,8 @@ int renumber_series_with_checks (const char *s, int fixmax,
 
 */
 
-int modify_dataset (int op, const int *list, const char *s, 
-		    DATASET *dset, PRN *prn)
+int modify_dataset (DATASET *dset, int op, const int *list, 
+		    const char *s, PRN *prn)
 {
     static int resampled;
     int k = 0, err = 0;
@@ -3281,11 +3280,11 @@ int modify_dataset (int op, const int *list, const char *s,
     } else if (op == DS_TRANSPOSE) {
 	err = transpose_data(dset);
     } else if (op == DS_SORTBY) {
-	err = dataset_sort(list, dset, OPT_NONE);
+	err = dataset_sort(dset, list, OPT_NONE);
     } else if (op == DS_DSORTBY) {
-	err = dataset_sort(list, dset, OPT_D);
+	err = dataset_sort(dset, list, OPT_D);
     } else if (op == DS_RESAMPLE) {
-	err = dataset_resample(k, 0, dset);
+	err = dataset_resample(dset, k, 0);
 	if (!err) {
 	    resampled = 1;
 	}

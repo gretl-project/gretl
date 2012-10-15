@@ -221,6 +221,10 @@ int gretl_isconst (int t1, int t2, const double *x)
 	t1++;
     }
 
+    if (t1 >= t2) {
+        return 0;
+    }
+
     for (t=t1+1; t<=t2; t++) {
 	if (na(x[t])) {
 	    continue;

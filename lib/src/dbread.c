@@ -3769,7 +3769,7 @@ static int insert_missing_hidden_obs (DATASET *dset, int nmiss)
     int i, s, t, skip;
     int err = 0;
 
-    err = dataset_add_observations(nmiss, dset, OPT_NONE);
+    err = dataset_add_observations(dset, nmiss, OPT_NONE);
     if (err) {
 	return err;
     }
@@ -4095,7 +4095,7 @@ int expand_data_set (DATASET *dset, int newpd, int interpol)
     newn = mult * dset->n;
     nadd = newn - oldn;
 
-    err = dataset_add_observations(nadd, dset, OPT_NONE);
+    err = dataset_add_observations(dset, nadd, OPT_NONE);
     if (err) {
 	goto bailout;
     }

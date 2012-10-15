@@ -1424,8 +1424,7 @@ void do_open_session (void)
 
     if (!nodata) {
 	if (sinfo.resample_n > 0) {
-	    err = dataset_resample(sinfo.resample_n, sinfo.seed, 
-				   dataset);
+	    err = dataset_resample(dataset, sinfo.resample_n, sinfo.seed); 
 	} else if (sinfo.mask != NULL) {
 	    err = restrict_sample_from_mask(sinfo.mask, dataset,
 					    OPT_NONE);
@@ -4040,5 +4039,3 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
     view_buffer(prn, 78, 400, title, PRINT, NULL);
     g_free(title);
 }
-
-

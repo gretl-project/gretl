@@ -1474,7 +1474,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
     /* first extend the series length, if needed */
 
     if (newobs > 0) {
-	if (dataset_add_observations(newobs, dataset, OPT_A) ||
+	if (dataset_add_observations(dataset, newobs, OPT_A) ||
 	    dataset_destroy_hidden_variables(dataset, 0)) {
 	    nomem();
 	    return;

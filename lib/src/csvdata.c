@@ -396,7 +396,7 @@ static int pad_weekly_data (DATASET *dset, int add)
     int ttarg, offset = 0, skip = 0;
     int i, s, t, tc, err;
 
-    err = dataset_add_observations(add, dset, OPT_A); 
+    err = dataset_add_observations(dset, add, OPT_A); 
 
     if (!err) {
 	for (t=0; t<oldn; t++) {

@@ -5183,8 +5183,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case DATAMOD:
-	err = modify_dataset(cmd->aux, cmd->list, cmd->param, 
-			     dset, prn);
+	err = modify_dataset(dset, cmd->aux, cmd->list, cmd->param, 
+			     prn);
 	if (!err) { 
 	    schedule_callback(s);
 	} 

@@ -1824,8 +1824,8 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
     }
 
     graph_list_adjust_sample(gi->list, gi, dset);
-    if (gi->t1 == gi->t2 || gi->list[0] != 2) {
-	return GRAPH_NO_DATA;
+    if (gi->t1 >= gi->t2 || gi->list[0] != 2) {
+	return E_MISSDATA;
     }
 
     fp = open_gp_stream(PLOT_REGULAR, gi->flags, &err);
@@ -2015,8 +2015,8 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
     }
 
     graph_list_adjust_sample(gi->list, gi, dset);
-    if (gi->t1 == gi->t2) {
-	return GRAPH_NO_DATA;
+    if (gi->t1 >= gi->t2) {
+	return E_MISSDATA;
     }
 
     err = get_fitted_line(gi, dset, fitline);
@@ -3068,8 +3068,8 @@ int gnuplot (const int *plotlist, const char *literal,
 
     /* adjust sample range, and reject if it's empty */
     graph_list_adjust_sample(list, &gi, dset);
-    if (gi.t1 == gi.t2 || list[0] < 2) {
-	err = GRAPH_NO_DATA;
+    if (gi.t1 >= gi.t2 || list[0] < 2) {
+	err = E_MISSDATA;
 	goto bailout;
     }
 
@@ -3307,8 +3307,8 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
     gi.flags &= ~GPT_TS;
 
     graph_list_adjust_sample(gi.list, &gi, dset);
-    if (gi.t1 == gi.t2) {
-	err = GRAPH_NO_DATA;
+    if (gi.t1 >= gi.t2) {
+	err = E_MISSDATA;
 	goto bailout;
     }
 
@@ -3877,9 +3877,9 @@ int gnuplot_3d (int *list, const char *literal,
     list_adjust_sample(list, &t1, &t2, dset);
 
     /* if resulting sample range is empty, complain */
-    if (t2 == t1) {
+    if (t1 >= t2) {
 	fclose(fq);
-	return GRAPH_NO_DATA;
+	return E_MISSDATA;
     }
 
     dset->t1 = t1;

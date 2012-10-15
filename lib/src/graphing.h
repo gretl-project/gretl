@@ -24,8 +24,6 @@
 
 #include <stdio.h>
 
-#define GRAPH_NO_DATA -999
-
 typedef enum {
     GPT_IMPULSES       = 1 << 0,  /* use impulses for plotting */
     GPT_LINES          = 1 << 1,  /* force use of lines for plotting */

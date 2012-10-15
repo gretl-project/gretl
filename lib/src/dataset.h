@@ -311,8 +311,7 @@ int is_trend_variable (const double *x, int n);
 
 int is_periodic_dummy (const double *x, const DATASET *dset);
 
-int dataset_add_observations (int newobs, DATASET *dset,
-			      gretlopt opt);
+int dataset_add_observations (DATASET *dset, int n, gretlopt opt);
 
 int dataset_drop_observations (DATASET *dset, int n);
 
@@ -358,7 +357,7 @@ int maybe_prune_dataset (DATASET **pdset, void *p);
 int dataset_stack_variables (const char *vname, const char *line,
 			     DATASET *dset, PRN *prn);
 
-int dataset_sort_by (const int *list, DATASET *dset, gretlopt opt);
+int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt);
 
 int dataset_set_matrix_name (DATASET *dset, const char *name);
 
@@ -382,12 +381,12 @@ const char *series_get_graph_name (const DATASET *dset, int i);
 
 unsigned int get_resampling_seed (void);
 
-int dataset_resample (int n, unsigned int seed, DATASET *dset);
+int dataset_resample (DATASET *dset, int n, unsigned int seed);
 
 int dataset_op_from_string (const char *s);
 
-int modify_dataset (int op, const int *list, const char *s, 
-		    DATASET *dset, PRN *prn);
+int modify_dataset (DATASET *dset, int op, const int *list, 
+		    const char *s, PRN *prn);
 
 int dataset_get_structure (const DATASET *dset);
 
