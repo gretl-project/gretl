@@ -27,6 +27,12 @@
 #include <errno.h>
 #include <libset.h>
 
+#define OPENP_MIN 127
+
+#if defined(_OPENMP) && defined(USE_OPENMP)
+# include <omp.h>
+#endif
+
 #define NORM_CDF_MAX 0.9999999999999999
 
 /**
@@ -1603,6 +1609,115 @@ static double GHK_1 (const gretl_matrix *C,
  * Returns: an n x 1 vector of probabilities.
  */
 
+#if defined(_OPENMP) && defined(USE_OPENMP)
+
+gretl_matrix *gretl_GHK (const gretl_matrix *C,
+			 const gretl_matrix *A,
+			 const gretl_matrix *B,
+			 const gretl_matrix *U,
+			 int *err)
+{
+    gretl_matrix_block *Bk = NULL;
+    gretl_matrix *P = NULL;
+    gretl_matrix *Ai, *Bi;
+    gretl_matrix *TA, *TB;
+    gretl_matrix *WT, *TT;
+    double huge;
+    int dim, nobs, ndraws;
+    int ierr, ghk_err = 0;
+    int ABok, pzero;
+    int i, j;
+
+    if (gretl_is_null_matrix(C) ||
+	gretl_is_null_matrix(A) ||
+	gretl_is_null_matrix(B) ||
+	gretl_is_null_matrix(U)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (A->rows != B->rows ||
+	A->cols != B->cols ||
+	C->rows != A->cols ||
+	C->cols != A->cols ||
+	U->rows != A->cols) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    huge = libset_get_double(CONV_HUGE);
+
+    dim = C->rows;
+    nobs = A->rows;
+    ndraws = U->cols;
+
+    P = gretl_matrix_alloc(nobs, 1);
+    if (P == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+#pragma omp parallel if (nobs>OPENP_MIN) private(i,j,Bk,Ai,Bi,TA,TB,WT,TT,ABok,pzero,ierr)
+    {
+	Bk = gretl_matrix_block_new(&Ai, dim, 1,
+				    &Bi, dim, 1,
+				    &TA, 1, ndraws,
+				    &TB, 1, ndraws,
+				    &WT, 1, ndraws,
+				    &TT, dim, ndraws,
+				    NULL);
+	ierr = 0;
+
+        #pragma omp for
+	for (i=0; i<nobs; i++) {
+	    ABok = 1; pzero = 0;
+
+	    for (j=0; j<dim && !*err; j++) {
+		Ai->val[j] = gretl_matrix_get(A, i, j);
+		Bi->val[j] = gretl_matrix_get(B, i, j);
+		ABok = !(isnan(Ai->val[j]) || isnan(Bi->val[j]));
+
+		if (!ABok) {
+		    /* If there are any NaNs in A or B, there's no
+		       point in continuing
+		    */
+		    P->val[i] = 0.0/0.0; /* NaN */
+		    break;
+		} else if (Bi->val[j] < Ai->val[j]) {
+		    gretl_errmsg_sprintf("ghk: inconsistent bounds: B[%d,%d] < A[%d,%d]",
+					 i+1, j+1, i+1, j+1);
+		    ierr = E_DATA;
+		} else if (Bi->val[j] == Ai->val[j]) {
+		    P->val[i] = 0.0;
+		    pzero = 1;
+		    break;
+		}
+	    }
+	    if (!ierr && !pzero && ABok) {
+		P->val[i] = GHK_1(C, Ai, Bi, U, TA, TB, WT, TT, huge);
+	    }
+	}
+
+	if (ierr) {
+	    ghk_err = ierr;
+	}
+
+	gretl_matrix_block_destroy(Bk);
+    }
+
+    if (ghk_err) {
+	*err = ghk_err;
+	gretl_matrix_free(P);
+	P = NULL;
+    }
+
+ bailout:
+
+    return P;
+}
+
+#else /* non-MP version */
+
 gretl_matrix *gretl_GHK (const gretl_matrix *C,
 			 const gretl_matrix *A,
 			 const gretl_matrix *B,
@@ -1696,6 +1811,8 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 
     return P;
 }
+
+#endif /* OPENMP or not */
 
 /**
  * gamma_cdf:
