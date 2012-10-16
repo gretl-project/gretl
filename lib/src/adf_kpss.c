@@ -459,7 +459,8 @@ print_adf_results (int order, int pmax, double DFt, double pv,
 }
 
 static int auto_adjust_order (int *list, int order_max,
-			      DATASET *dset, PRN *prn)
+			      DATASET *dset, int *err,
+			      PRN *prn)
 {
     MODEL kmod;
     double tstat, pval;
@@ -467,9 +468,13 @@ static int auto_adjust_order (int *list, int order_max,
 
     for (k=order_max; k>0; k--) {
 	kmod = lsq(list, dset, OLS, OPT_A);
+	if (!kmod.errcode && kmod.dfd == 0) {
+	    kmod.errcode = E_DF;
+	}
 	if (kmod.errcode) {
 	    fprintf(stderr, "auto_adjust_order: k = %d, err = %d\n", k,
 		    kmod.errcode);
+	    *err = kmod.errcode;
 	    clear_model(&kmod);
 	    k = -1;
 	    break;
@@ -816,9 +821,8 @@ static int real_adf_test (int varno, int order, int niv,
     skipdet:
 
 	if (auto_order) {
-	    order = auto_adjust_order(list, order_max, dset, prn);
-	    if (order < 0) {
-		err = 1;
+	    order = auto_adjust_order(list, order_max, dset, &err, prn);
+	    if (err) {
 		clear_model(&dfmod);
 		goto bailout;
 	    }
@@ -829,6 +833,10 @@ static int real_adf_test (int varno, int order, int niv,
 #endif
 
 	dfmod = lsq(list, dset, OLS, df_mod_opt);
+	if (!dfmod.errcode && dfmod.dfd == 0) {
+	    /* we can't have an exact fit here */
+	    dfmod.errcode = E_DF;
+	}
 	if (dfmod.errcode) {
 	    fprintf(stderr, "adf_test: dfmod.errcode = %d\n", 
 		    dfmod.errcode);
@@ -836,6 +844,7 @@ static int real_adf_test (int varno, int order, int niv,
 	    clear_model(&dfmod);
 	    goto bailout;
 	}
+	printmodel(&dfmod, dset, OPT_NONE, prn);
 
 	DFt = dfmod.coeff[dfnum] / dfmod.sderr[dfnum];
 
