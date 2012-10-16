@@ -5155,14 +5155,10 @@ int print_model_from_matrices (const gretl_matrix *cs,
     int nadd = gretl_vector_get_length(adds);
     int ntot = ncoef + nadd;
     const char *sep = ",";
-    char **names = NULL;
-    char *tmp;
-    const double *b, *se;
+    char *tmp, **names = NULL;
     int i, err = 0;
 
-    set_alt_gettext_mode(prn);
-
-    /* copy the user-defined string 's' before applying strtok */
+    /* copy the user-defined string @s before applying strtok */
     tmp = gretl_strdup(s);
     if (tmp == NULL) {
 	return E_ALLOC;
@@ -5179,39 +5175,47 @@ int print_model_from_matrices (const gretl_matrix *cs,
     }
 
     for (i=0; i<ntot && !err; i++) {
-	names[i] = strtok((i == 0)? tmp : NULL, sep);
-	if (names[i] == NULL) {
-	    free(names);
-	    free(tmp);
+	char *name = strtok((i == 0)? tmp : NULL, sep);
+
+	if (name == NULL) {
 	    gretl_errmsg_sprintf(_("modprint: expected %d names"), ntot);
-	    return E_DATA;
+	    err = E_DATA;
+	} else {
+	    while (isspace(*name)) {
+		name++;
+	    }
+	    names[i] = name;
 	}
     }
 
-    b = cs->val;
-    se = b + ncoef;
+    if (!err) {
+	const double *b = cs->val;
+	const double *se = b + ncoef;
 
-    if (plain_format(prn)) {
-	/* newline here is useless for TeX and makes RTF choke */
-	pputc(prn, '\n'); 
-    } else if (csv_format(prn)) {
-	set_csv_delim(prn);
+	set_alt_gettext_mode(prn);
+
+	if (plain_format(prn)) {
+	    /* newline here is useless for TeX and makes RTF choke */
+	    pputc(prn, '\n'); 
+	} else if (csv_format(prn)) {
+	    set_csv_delim(prn);
+	}
+
+	model_format_start(prn);
+
+	print_coeffs(b, se, (const char **) names, ncoef, 0, MODPRINT, prn);
+
+	if (nadd > 0) {
+	    print_model_stats_table(adds->val, (const char **) names + ncoef, 
+				    nadd, prn);
+	}
+
+	if (plain_format(prn)) {
+	    pputc(prn, '\n'); 
+	} 
+
+	model_format_end(prn);
     }
-
-    model_format_start(prn);
-
-    print_coeffs(b, se, (const char **) names, ncoef, 0, MODPRINT, prn);
-
-    if (nadd > 0) {
-	print_model_stats_table(adds->val, (const char **) names + ncoef, 
-				nadd, prn);
-    }
-
-    if (plain_format(prn)) {
-	pputc(prn, '\n'); 
-    } 
-
-    model_format_end(prn);
 
     free(names);
     free(tmp);
