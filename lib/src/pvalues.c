@@ -27,8 +27,6 @@
 #include <errno.h>
 #include <libset.h>
 
-#define OPENP_MIN 127
-
 #if defined(_OPENMP) && defined(USE_OPENMP)
 # include <omp.h>
 #endif
@@ -1657,7 +1655,7 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 	goto bailout;
     }
 
-#pragma omp parallel if (nobs>OPENP_MIN) private(i,j,Bk,Ai,Bi,TA,TB,WT,TT,ABok,pzero,ierr)
+#pragma omp parallel if (nobs>256) private(i,j,Bk,Ai,Bi,TA,TB,WT,TT,ABok,pzero,ierr)
     {
 	Bk = gretl_matrix_block_new(&Ai, dim, 1,
 				    &Bi, dim, 1,
@@ -1666,7 +1664,12 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 				    &WT, 1, ndraws,
 				    &TT, dim, ndraws,
 				    NULL);
-	ierr = 0;
+	if (Bk == NULL) {
+	    ierr = E_ALLOC;
+	    goto omp_end;
+	} else {
+	    ierr = 0;
+	}
 
         #pragma omp for
 	for (i=0; i<nobs; i++) {
@@ -1697,6 +1700,8 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 		P->val[i] = GHK_1(C, Ai, Bi, U, TA, TB, WT, TT, huge);
 	    }
 	}
+
+    omp_end:
 
 	if (ierr) {
 	    ghk_err = ierr;
