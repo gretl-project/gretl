@@ -30,6 +30,7 @@
 
 #if defined(_OPENMP) && defined(USE_OPENMP)
 # include <omp.h>
+# define ALWAYS_MALLOC
 #endif
 
 /**
@@ -114,11 +115,26 @@ static int wspace_fail (integer info, double w0)
     return E_DATA;
 }
 
+#ifdef ALWAYS_MALLOC
+
+#define lapack_malloc(sz) malloc(sz)
+#define lapack_realloc(ptr,sz) realloc(ptr,sz)
+#define lapack_free(ptr) free(ptr)
+
+void lapack_mem_free (void)
+{
+    return;
+}
+
+#else
+
 /* An efficient means of allocating temporary storage for lapack
    operations: this should be used _only_ for temporary allocations
    that would ordinarily be freed before returning from the function
    in question.  In this mode we keep the chunk around for future use,
-   expanding it as needed.
+   expanding it as needed. 
+
+   Note: right now this mechanism is not thread-safe.
 */
 
 static void *lapack_mem_chunk;
@@ -166,6 +182,8 @@ static void lapack_free (void *p)
 {
     return;
 }
+
+#endif
 
 static int matrix_block_error (const char *f)
 {
@@ -3996,7 +4014,7 @@ static int use_blas (int n, int m, int k)
     return 0;
 }
 
-#define OPENP_MIN 127
+#define MP_MIN 256
 
 static int 
 gretl_blas_dsyrk (const gretl_matrix *a, int atr,
@@ -4021,7 +4039,7 @@ gretl_blas_dsyrk (const gretl_matrix *a, int atr,
 	   &beta, c->val, &n);
 
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (n*n>OPENP_MIN) private(i, j, x)
+#pragma omp parallel for if (n*n>MP_MIN) private(i, j, x)
 #endif
     for (i=0; i<n; i++) {
 	for (j=i+1; j<n; j++) {
@@ -4079,7 +4097,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 
     if (atr) {
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nc*nc>OPENP_MIN) private(i, j, k, idx1, idx2, x)
+#pragma omp parallel for if (nc*nc>MP_MIN) private(i, j, k, idx1, idx2, x)
 #endif
 	for (i=0; i<nc; i++) {
 	    for (j=i; j<nc; j++) {
@@ -4094,7 +4112,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 	} 
     } else {
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nc*nc>OPENP_MIN) private(i, j, k, idx1, idx2, x)
+#pragma omp parallel for if (nc*nc>MP_MIN) private(i, j, k, idx1, idx2, x)
 #endif
 	for (i=0; i<nc; i++) {
 	    for (j=i; j<nc; j++) {
@@ -4242,7 +4260,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	if (!atr) {
 	    /* C := alpha*A*B + beta*C */
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (m*n>OPENP_MIN) private(j, i, l, x) 
+#pragma omp parallel for if (m*n>MP_MIN) private(j, i, l, x) 
 #endif
 	    for (j=0; j<n; j++) {
 		if (beta == 0) {
@@ -4262,7 +4280,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	} else {
 	    /* C := alpha*A'*B + beta*C */
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (m*n>OPENP_MIN) private(j, i, l, x)
+#pragma omp parallel for if (m*n>MP_MIN) private(j, i, l, x)
 #endif
 	    for (j=0; j<n; j++) {
 		for (i=0; i<m; i++) {
@@ -4282,7 +4300,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	if (!atr) {
 	    /* C := alpha*A*B' + beta*C */
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (m*n>OPENP_MIN) private(j, i, l, x)
+#pragma omp parallel for if (m*n>MP_MIN) private(j, i, l, x)
 #endif
 	    for (j=0; j<n; j++) {
 		if (beta == 0) {
@@ -4302,7 +4320,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	} else {
 	    /* C := alpha*A'*B' + beta*C */
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (m*n>OPENP_MIN) private(j, i, l, x)
+#pragma omp parallel for if (m*n>MP_MIN) private(j, i, l, x)
 #endif
 	    for (j=0; j<n; j++) {
 		for (i=0; i<m; i++) {
@@ -5163,7 +5181,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     case CONF_ELEMENTS:
 	nv = m * n;
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nv>OPENP_MIN) private(i)
+#pragma omp parallel for if (nv>MP_MIN) private(i)
 #endif
 	for (i=0; i<nv; i++) {
 	    c->val[i] = x_op_y(a->val[i], b->val[i], op);
@@ -5171,7 +5189,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	break;
     case CONF_A_COLVEC:
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nr>OPENP_MIN) private(i,j,x,y)
+#pragma omp parallel for if (nr>MP_MIN) private(i,j,x,y)
 #endif
 	for (i=0; i<nr; i++) {
 	    x = gretl_vector_get(a, i);
@@ -5184,7 +5202,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	break;
     case CONF_B_COLVEC:
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nr>OPENP_MIN) private(i,j,x,y)
+#pragma omp parallel for if (nr>MP_MIN) private(i,j,x,y)
 #endif
 	for (i=0; i<nr; i++) {
 	    y = gretl_vector_get(b, i);
@@ -5197,7 +5215,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	break;
     case CONF_A_ROWVEC:
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nc>OPENP_MIN) private(i,j,x,y)
+#pragma omp parallel for if (nc>MP_MIN) private(i,j,x,y)
 #endif
 	for (j=0; j<nc; j++) {
 	    x = gretl_vector_get(a, j);
@@ -5210,7 +5228,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	break;
     case CONF_B_ROWVEC:
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nc>OPENP_MIN) private(i,j,x,y)
+#pragma omp parallel for if (nc>MP_MIN) private(i,j,x,y)
 #endif
 	for (j=0; j<nc; j++) {
 	    y = gretl_vector_get(b, j);
@@ -5224,7 +5242,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     case CONF_A_SCALAR:
 	x = a->val[0];
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nr>OPENP_MIN) private(i,j,y)
+#pragma omp parallel for if (nr>MP_MIN) private(i,j,y)
 #endif
 	for (i=0; i<nr; i++) {
 	    for (j=0; j<nc; j++) {
@@ -5237,7 +5255,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     case CONF_B_SCALAR:
 	y = b->val[0];
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nr>OPENP_MIN) private(i,j,x)
+#pragma omp parallel for if (nr>MP_MIN) private(i,j,x)
 #endif
 	for (i=0; i<nr; i++) {
 	    for (j=0; j<nc; j++) {
@@ -5249,7 +5267,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	break;
     case CONF_AC_BR:
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nr>OPENP_MIN) private(i,j,x,y)
+#pragma omp parallel for if (nr>MP_MIN) private(i,j,x,y)
 #endif
 	for (i=0; i<nr; i++) {
 	    x = a->val[i];
@@ -5262,7 +5280,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	break;
     case CONF_AR_BC:
 #if defined(_OPENMP) && defined(USE_OPENMP)
-#pragma omp parallel for if (nc>OPENP_MIN) private(i,j,x,y)
+#pragma omp parallel for if (nc>MP_MIN) private(i,j,x,y)
 #endif
 	for (j=0; j<nc; j++) {
 	    x = a->val[j];

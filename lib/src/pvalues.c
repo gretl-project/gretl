@@ -1500,15 +1500,10 @@ static double GHK_1 (const gretl_matrix *C,
     double ui, x, z, cjk, tki;
     int i, j, k;
 
-#define minus_inf(x) (x == -huge)
-#define plus_inf(x) (x == huge)
-
-    set_cephes_hush(1);
-
     z = A->val[0];
-    TA->val[0] = minus_inf(z) ? 0 : ndtr(z / den);
+    TA->val[0] = (z == -huge) ? 0 : ndtr(z / den);
     z = B->val[0];
-    TB->val[0] = plus_inf(z) ? 1 : ndtr(z / den);
+    TB->val[0] = (z == huge) ? 1 : ndtr(z / den);
     
     for (i=1; i<r; i++) {
 	TA->val[i] = TA->val[0];
@@ -1546,13 +1541,13 @@ static double GHK_1 (const gretl_matrix *C,
 		x += cjk * tki;
 	    }
 
-	    if (minus_inf(A->val[j])) {
+	    if (A->val[j] == -huge) {
 		TA->val[i] = 0.0;
 	    } else {
 		TA->val[i] = ndtr((A->val[j] - x) / den);
 	    }
 
-	    if (plus_inf(B->val[j])) {
+	    if (B->val[j] == huge) {
 		TB->val[i] = 1.0;
 	    } else {
 		TB->val[i] = ndtr((B->val[j] - x) / den);
@@ -1571,8 +1566,6 @@ static double GHK_1 (const gretl_matrix *C,
 	}
     }
 
-    set_cephes_hush(0);
-
     P = 0.0;
     for (i=0; i<r; i++) {
 	P += WGT->val[i];
@@ -1583,9 +1576,6 @@ static double GHK_1 (const gretl_matrix *C,
 	fprintf(stderr, "*** ghk error: P = %g\n", P);
 	P = 0.0/0.0; /* force a NaN */
     }	
-
-#undef minus_inf
-#undef plus_inf 
 
     return P;
 }
@@ -1655,6 +1645,8 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 	return NULL;
     }
 
+    set_cephes_hush(1);
+
 #pragma omp parallel if (nobs>256) private(i,j,Bk,Ai,Bi,TA,TB,WT,TT,ABok,pzero,ierr)
     {
 	Bk = gretl_matrix_block_new(&Ai, dim, 1,
@@ -1675,7 +1667,7 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 	for (i=0; i<nobs; i++) {
 	    ABok = 1; pzero = 0;
 
-	    for (j=0; j<dim && !*err; j++) {
+	    for (j=0; j<dim && !ierr; j++) {
 		Ai->val[j] = gretl_matrix_get(A, i, j);
 		Bi->val[j] = gretl_matrix_get(B, i, j);
 		ABok = !(isnan(Ai->val[j]) || isnan(Bi->val[j]));
@@ -1709,6 +1701,8 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 
 	gretl_matrix_block_destroy(Bk);
     }
+
+    set_cephes_hush(0);
 
     if (ghk_err) {
 	*err = ghk_err;
@@ -1779,6 +1773,8 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 	}
     }
 
+    set_cephes_hush(1);
+
     for (i=0; i<nobs && !*err; i++) {
 	int ABok = 1, pzero = 0;
 
@@ -1809,6 +1805,8 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 	    P->val[i] = GHK_1(C, Ai, Bi, U, TA, TB, WT, TT, huge);
 	}
     }
+
+    set_cephes_hush(0);
 
     gretl_matrix_block_destroy(Bk);
 
