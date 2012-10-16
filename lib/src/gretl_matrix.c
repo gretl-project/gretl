@@ -30,7 +30,6 @@
 
 #if defined(_OPENMP) && defined(USE_OPENMP)
 # include <omp.h>
-# define ALWAYS_MALLOC
 #endif
 
 /**
@@ -115,30 +114,19 @@ static int wspace_fail (integer info, double w0)
     return E_DATA;
 }
 
-#ifdef ALWAYS_MALLOC
-
-#define lapack_malloc(sz) malloc(sz)
-#define lapack_realloc(ptr,sz) realloc(ptr,sz)
-#define lapack_free(ptr) free(ptr)
-
-void lapack_mem_free (void)
-{
-    return;
-}
-
-#else
-
 /* An efficient means of allocating temporary storage for lapack
    operations: this should be used _only_ for temporary allocations
    that would ordinarily be freed before returning from the function
    in question.  In this mode we keep the chunk around for future use,
    expanding it as needed. 
-
-   Note: right now this mechanism is not thread-safe.
 */
 
 static void *lapack_mem_chunk;
 static size_t lapack_mem_sz;
+
+#if defined(_OPENMP) && defined(USE_OPENMP)
+#pragma omp threadprivate(lapack_mem_chunk, lapack_mem_sz)
+#endif
 
 static void *lapack_malloc (size_t sz)
 {
@@ -182,8 +170,6 @@ static void lapack_free (void *p)
 {
     return;
 }
-
-#endif
 
 static int matrix_block_error (const char *f)
 {
