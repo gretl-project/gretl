@@ -844,7 +844,6 @@ static int real_adf_test (int varno, int order, int niv,
 	    clear_model(&dfmod);
 	    goto bailout;
 	}
-	printmodel(&dfmod, dset, OPT_NONE, prn);
 
 	DFt = dfmod.coeff[dfnum] / dfmod.sderr[dfnum];
 
