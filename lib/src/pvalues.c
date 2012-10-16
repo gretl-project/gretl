@@ -1652,7 +1652,7 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
     P = gretl_matrix_alloc(nobs, 1);
     if (P == NULL) {
 	*err = E_ALLOC;
-	goto bailout;
+	return NULL;
     }
 
 #pragma omp parallel if (nobs>256) private(i,j,Bk,Ai,Bi,TA,TB,WT,TT,ABok,pzero,ierr)
@@ -1715,8 +1715,6 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 	gretl_matrix_free(P);
 	P = NULL;
     }
-
- bailout:
 
     return P;
 }
