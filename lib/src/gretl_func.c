@@ -6164,6 +6164,7 @@ static int restore_obs_info (obsinfo *o, DATASET *dset)
 static int stop_fncall (fncall *call, int rtype, void *ret,
 			DATASET *dset, PRN *prn, int orig_v)
 {
+    int destroy_locals = 1;
     int i, d = gretl_function_depth();
     int delv, anyerr = 0;
     int err = 0;
@@ -6175,43 +6176,45 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 #endif
 
     call->args = NULL;
-
-    anyerr = destroy_user_scalars_at_level(d);
-    if (anyerr && !err) {
-	err = anyerr;
+    
+    if (destroy_locals) {
+	anyerr = destroy_user_scalars_at_level(d);
+	if (anyerr && !err) {
+	    err = anyerr;
 #if FN_DEBUG
-	fprintf(stderr, "destroy_user_scalars_at_level(%d): err = %d\n", d, err);
+	    fprintf(stderr, "destroy_user_scalars_at_level(%d): err = %d\n", d, err);
 #endif
+	}
+
+	/* if any bundles were defined but not returned, clean up */
+	anyerr = destroy_saved_bundles_at_level(d);
+	if (anyerr && !err) {
+	    err = anyerr;
+#if FN_DEBUG
+	    fprintf(stderr, "destroy_saved_bundles_at_level(%d): err = %d\n", d, err);
+#endif
+	}    
+
+	anyerr = destroy_user_matrices_at_level(d);
+	if (anyerr && !err) {
+	    err = anyerr;
+#if FN_DEBUG
+	    fprintf(stderr, "destroy_user_matrices_at_level(%d): err = %d\n", d, err);
+#endif
+	}
+
+	anyerr = destroy_saved_strings_at_level(d);
+	if (anyerr && !err) {
+	    err = anyerr;
+#if FN_DEBUG
+	    fprintf(stderr, "destroy_saved_strings_at_level(%d): err = %d\n", d, err);
+#endif
+	}
     }
 
-    /* if any bundles were defined but not returned, clean up */
-    anyerr = destroy_saved_bundles_at_level(d);
-    if (anyerr && !err) {
-	err = anyerr;
-#if FN_DEBUG
-	fprintf(stderr, "destroy_saved_bundles_at_level(%d): err = %d\n", d, err);
-#endif
-    }    
-
-    anyerr = destroy_user_matrices_at_level(d);
-    if (anyerr && !err) {
-	err = anyerr;
-#if FN_DEBUG
-	fprintf(stderr, "destroy_user_matrices_at_level(%d): err = %d\n", d, err);
-#endif
-    }
-
-    anyerr = destroy_saved_strings_at_level(d);
-    if (anyerr && !err) {
-	err = anyerr;
-#if FN_DEBUG
-	fprintf(stderr, "destroy_saved_strings_at_level(%d): err = %d\n", d, err);
-#endif
-    } 
-
-    /* below: delete variables local to the function, taking care not to
-       delete any local vars that have been "promoted" to caller
-       level via their inclusion in a returned list
+    /* below: delete series local to the function, taking care not to
+       delete any that have been "promoted" to caller level via their 
+       inclusion in a returned list
     */
 
     if (dset != NULL) {
@@ -6222,7 +6225,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 	}
 	if (delv > 0) {
 	    if (delv == dset->v - orig_v) {
-		/* deleting all added variables */
+		/* deleting all added series */
 		anyerr = dataset_drop_last_variables(dset, delv);
 		if (anyerr && !err) {
 		    err = anyerr;

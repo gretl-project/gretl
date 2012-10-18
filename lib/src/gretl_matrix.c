@@ -4000,7 +4000,7 @@ static int use_blas (int n, int m, int k)
     return 0;
 }
 
-#define MP_MIN 256
+#define MP_MIN 1024
 
 static int 
 gretl_blas_dsyrk (const gretl_matrix *a, int atr,

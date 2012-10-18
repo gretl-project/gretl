@@ -3149,25 +3149,22 @@ static NODE *scalar_isnan_node (NODE *n, parser *p)
 
 static NODE *matrix_isnan_node (NODE *n, parser *p)
 {
-    NODE *ret = NULL;
+    NODE *ret = aux_matrix_node(p);
 
-    if (starting(p)) {
-	ret = aux_matrix_node(p);
-	if (ret != NULL) {
-	    const gretl_matrix *m = n->v.m;
+    if (ret != NULL && starting(p)) {
+	const gretl_matrix *m = n->v.m;
 
-	    if (m->rows == 0 || m->cols == 0) {
-		p->err = E_DATA;
+	if (m->rows == 0 || m->cols == 0) {
+	    p->err = E_DATA;
+	} else {
+	    ret->v.m = gretl_matrix_alloc(m->rows, m->cols);
+	    if (ret->v.m == NULL) {
+		p->err = E_ALLOC;
 	    } else {
-		ret->v.m = gretl_matrix_alloc(m->rows, m->cols);
-		if (ret->v.m == NULL) {
-		    p->err = E_ALLOC;
-		} else {
-		    int i, n = m->rows * m->cols;
+		int i, n = m->rows * m->cols;
 
-		    for (i=0; i<n; i++) {
-			ret->v.m->val[i] = isnan(m->val[i]);
-		    }
+		for (i=0; i<n; i++) {
+		    ret->v.m->val[i] = isnan(m->val[i]);
 		}
 	    }
 	}
