@@ -1430,7 +1430,7 @@ static int vars_renumbered (const int *list, DATASET *dset,
 
 int overwrite_err (const char *name)
 {
-    gretl_errmsg_sprintf("The variable %s is read-only", name);
+    gretl_errmsg_sprintf(_("The variable %s is read-only"), name);
 
     return E_DATA;
 }

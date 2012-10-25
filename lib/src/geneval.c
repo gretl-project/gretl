@@ -8474,10 +8474,9 @@ static void node_type_error (int ntype, int argnum, int goodt,
     }
 
     if (bad != NULL) {
-	pprintf(p->prn, ", is %s\n", typestr(bad->t));
-    } else {
-	pputc(p->prn, '\n');
+	pprintf(p->prn, _(", is %s"), typestr(bad->t));
     }
+    pputc(p->prn, '\n');
 
     if (!strcmp(nstr, "&")) {
 	pputs(p->prn, "(for logical AND, please use \"&&\")\n");
@@ -11749,7 +11748,8 @@ static int decl_check (parser *p, int flags)
 {
     if (flags & P_COMPILE) {
 	p->err = E_PARSE;
-	gretl_errmsg_sprintf("Bare declarations are not allowed here:\n> '%s'",
+	gretl_errmsg_sprintf("%s:\n> '%s'",
+			     _("Bare declarations are not allowed here"), 
 			     p->input);
     } 
 

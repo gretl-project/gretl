@@ -4418,7 +4418,7 @@ void do_genr (GtkWidget *w, dialog_t *dlg)
 	    edit = 1;
 	}
     } else {
-	lib_command_sprintf("series %s", s);
+	lib_command_strcpy(s);
     }
     
     g_free(s);
@@ -6911,7 +6911,7 @@ static int all_missing (int v)
 	} 
     }
 
-    warnbox("%s: no valid values", dataset->varname[v]);
+    warnbox(_("%s: no valid values"), dataset->varname[v]);
     return 1;
 }
 
