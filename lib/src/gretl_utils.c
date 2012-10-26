@@ -1624,7 +1624,7 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
     }
 
     if (object_is_function_arg(s)) {
-	gretl_errmsg_sprintf("The variable %s is read-only", s);
+	gretl_errmsg_sprintf(_("The variable %s is read-only"), s);
 	return E_DATA;
     }
 
