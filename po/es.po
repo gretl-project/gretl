@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-10-25 09:26-0400\n"
-"PO-Revision-Date: 2012-10-08 17:20+0200\n"
+"PO-Revision-Date: 2012-10-26 12:40+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -581,14 +581,13 @@ msgid "autocorrelation"
 msgstr "autocorrelación"
 
 #: lib/src/compare.c:2117
-#, fuzzy
 msgid "Error calculating Ljung-Box statistic"
-msgstr "Error al calcular los criterios de selección de modelos.\n"
+msgstr "Error al calcular el estadístico de Ljung-Box"
 
 #: lib/src/compare.c:2120
-#, fuzzy, c-format
+#, c-format
 msgid "Test for autocorrelation up to order %d"
-msgstr "Contraste LM de autocorrelación hasta el orden %s"
+msgstr "Contrastes de autocorrelación hasta el orden %d"
 
 #: lib/src/compare.c:2292 lib/src/gretl_panel.c:3920
 msgid "Alternative statistic"
@@ -988,9 +987,9 @@ msgid "scanning for variable names...\n"
 msgstr "escaneando para obtener los nombres de las variables...\n"
 
 #: lib/src/csvdata.c:2002
-#, fuzzy, c-format
+#, c-format
 msgid "   line: %.115s...\n"
-msgstr "   línea: %s\n"
+msgstr "   línea: %.115s...\n"
 
 #: lib/src/csvdata.c:2004
 #, c-format
@@ -1018,9 +1017,9 @@ msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' -- ¡no se ha realizado conversión numérica!"
 
 #: lib/src/csvdata.c:2275
-#, fuzzy, c-format
+#, c-format
 msgid "warning: %d labels were truncated.\n"
-msgstr "advertencia: se han duplicado algunos nombres de variables\n"
+msgstr "atención: se han truncado %d etiquetas.\n"
 
 #: lib/src/csvdata.c:2292
 msgid "scanning for row labels and data...\n"
@@ -1100,6 +1099,7 @@ msgstr "Falta de memoria\n"
 #: lib/src/csvdata.c:3187 lib/src/csvdata.c:3262
 msgid "You need to specify an aggregation method for a 1:n join"
 msgstr ""
+"Es necesario especificar un método de agregación para una unión 1:n (join)"
 
 #: lib/src/csvdata.c:4107 gui2/library.c:3929
 msgid "Series length does not match the dataset"
@@ -1286,9 +1286,8 @@ msgid "Data appended OK\n"
 msgstr "Los datos se han añadido correctamente\n"
 
 #: lib/src/dataio.c:2635
-#, fuzzy
 msgid "No markers are available for writing"
-msgstr "No había datos disponibles para representar"
+msgstr "No hay marcadores disponibles para escribir"
 
 #: lib/src/dataio.c:2705
 #, c-format
@@ -1351,9 +1350,9 @@ msgid "Please open a data file first"
 msgstr "Por favor, abra primero un archivo de datos"
 
 #: lib/src/dataset.c:1433
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is read-only"
-msgstr "La variable %s es de tipo %s"
+msgstr "La variable %s es de sólo lectura"
 
 #: lib/src/dataset.c:1660 lib/src/dataset.c:1670
 #, c-format
@@ -1792,25 +1791,23 @@ msgid "Ex. kurtosis"
 msgstr "Exc. de curtosis"
 
 #: lib/src/describe.c:4427
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "5% percentile"
-msgstr "por ciento"
+msgstr "percentil del 5%"
 
 #: lib/src/describe.c:4429
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "95% percentile"
-msgstr "Intervalo de %g por ciento"
+msgstr "percentil del 95%"
 
 #: lib/src/describe.c:4430
-#, fuzzy
 msgid "Interquartile range"
-msgstr "rango manual:"
+msgstr "Rango intercuartílico"
 
 #: lib/src/describe.c:4431 lib/src/describe.c:4636 gui2/guiprint.c:761
 #: gui2/guiprint.c:1086
-#, fuzzy
 msgid "Missing obs."
-msgstr "Observaciones ausentes"
+msgstr "Obs. ausentes"
 
 #: lib/src/describe.c:4433
 msgid "Within s.d."
@@ -1826,14 +1823,14 @@ msgid "Summary statistics"
 msgstr "Estadísticos principales"
 
 #: lib/src/describe.c:4456
-#, fuzzy, c-format
+#, c-format
 msgid "for column %d of %s (%d valid observations)"
-msgstr "para la variable %s (%d observaciones válidas)"
+msgstr "para la columna %d de %s (%d observaciones válidas)"
 
 #: lib/src/describe.c:4459
-#, fuzzy, c-format
+#, c-format
 msgid "for column %d (%d valid observations)"
-msgstr "para la variable %s (%d observaciones válidas)"
+msgstr "para la columna %d (%d observaciones válidas)"
 
 #: lib/src/describe.c:4463
 #, c-format
@@ -1847,17 +1844,16 @@ msgstr "Desv. Típica."
 #: lib/src/describe.c:4632
 #, no-c-format
 msgid "5% perc."
-msgstr ""
+msgstr "perc. 5%"
 
 #: lib/src/describe.c:4634
 #, no-c-format
 msgid "95% perc."
-msgstr ""
+msgstr "perc. 95%"
 
 #: lib/src/describe.c:4635 gui2/guiprint.c:761
-#, fuzzy
 msgid "IQ range"
-msgstr "dominio de x"
+msgstr "Rango IQ"
 
 #: lib/src/describe.c:4840 lib/src/describe.c:4941
 #, c-format
@@ -2328,9 +2324,9 @@ msgid "%s: argument %d should be %s"
 msgstr "%s: el argumento %d debería ser %s"
 
 #: lib/src/geneval.c:8477
-#, fuzzy, c-format
+#, c-format
 msgid ", is %s"
-msgstr "= %s veces %s"
+msgstr ", es %s"
 
 #: lib/src/geneval.c:10043 lib/src/genlex.c:712
 #, c-format
@@ -2349,9 +2345,9 @@ msgid "The variable %s is of type %s"
 msgstr "La variable %s es de tipo %s"
 
 #: lib/src/geneval.c:10409
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': name is too long (max %d characters)\n"
-msgstr "'%s': el nombre es demasiado largo (máximo 15 caracteres)\n"
+msgstr "'%s': el nombre es demasiado largo (máximo %d caracteres)\n"
 
 #: lib/src/geneval.c:10513
 #, c-format
@@ -2379,9 +2375,8 @@ msgid "'%s' : not implemented for this type"
 msgstr "'%s' : no está preparado para este tipo"
 
 #: lib/src/geneval.c:11752
-#, fuzzy
 msgid "Bare declarations are not allowed here"
-msgstr "%s: aquí no se permite la división"
+msgstr "Aquí no se permiten declaraciones vacías"
 
 #: lib/src/genfuncs.c:853 gui2/library.c:5000
 msgid "Input must be a monthly or quarterly time series"
@@ -2586,7 +2581,7 @@ msgstr "Se ha generado la lista %s"
 #: lib/src/genmain.c:90
 #, c-format
 msgid "Replaced string %s"
-msgstr "Se ha reemplazado la matriz %s"
+msgstr "Se ha reemplazado la cadena de caracteres %s"
 
 #: lib/src/genmain.c:92
 #, c-format
@@ -4267,14 +4262,13 @@ msgid "No data information is available.\n"
 msgstr "No hay información disponible sobre los datos.\n"
 
 #: lib/src/interact.c:4580 lib/src/interact.c:4589
-#, fuzzy
 msgid "Inner key is missing"
-msgstr "Falta el nombre de la variable"
+msgstr "Falta la clave interna"
 
 #: lib/src/interact.c:4633
-#, fuzzy, c-format
+#, c-format
 msgid "The \"%s\" command cannot be used in this context"
-msgstr "la instrucción '%s' no es válida en este contexto"
+msgstr "La instrucción \"%s\" no puede utilizarse en este contexto"
 
 #: lib/src/interact.c:4722 cli/gretlcli.c:808 gui2/library.c:8211
 #, c-format
@@ -4282,9 +4276,9 @@ msgid "Read datafile %s\n"
 msgstr "Leer fichero de datos %s\n"
 
 #: lib/src/interact.c:4891
-#, fuzzy, c-format
+#, c-format
 msgid "Summary statistics for %s, by value of %s"
-msgstr "Estadísticos principales"
+msgstr "Estadísticos principales para %s, por valores de %s"
 
 #: lib/src/interact.c:5134
 msgid "You can't end a loop here, you haven't started one\n"
@@ -8424,9 +8418,8 @@ msgid "Execute"
 msgstr "Ejecutar"
 
 #: gui2/datafiles.c:1227 gui2/datafiles.c:1383
-#, fuzzy
 msgid "Add to menu"
-msgstr "Añadir al conjunto de datos"
+msgstr "Añadir al menú"
 
 #: gui2/datafiles.c:1234 gui2/datafiles.c:1387
 msgid "New"
@@ -13159,9 +13152,9 @@ msgid "Plot the series"
 msgstr "Representar la serie"
 
 #: gui2/library.c:6914
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no valid values"
-msgstr "valores válidos"
+msgstr "%s: no hay valores válidos"
 
 #: gui2/library.c:7100
 msgid "Non-interactive (just get output)"
