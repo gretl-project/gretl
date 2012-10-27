@@ -2677,7 +2677,7 @@ static void add_missing_tex_items (windata_t *vwin)
     flip(vwin->ui, "/menubar/LaTeX", FALSE);
 }
 
-#define VNAMELEN2 32
+#define VNAMELEN2 (2*VNAMELEN)
 
 static void add_vars_to_plot_menu (windata_t *vwin)
 {
@@ -2687,7 +2687,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	"/menubar/Graphs/FittedActualPlot"
     };
     MODEL *pmod = vwin->data;
-    char tmp[VNAMELEN2], aname[16];
+    char tmp[VNAMELEN2], aname[VNAMELEN];
     gchar *alabel;
     int *xlist;
     int v1, v2;
@@ -2917,7 +2917,7 @@ static void add_tau_plot_menu (windata_t *vwin)
 {
     GtkActionEntry item;
     MODEL *pmod = vwin->data;
-    char tmp[VNAMELEN2], aname[16];
+    char tmp[VNAMELEN2], aname[VNAMELEN];
     int i;
 
     action_entry_init(&item);
@@ -4048,7 +4048,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
     int neqns, nfc, vtarg, vshock;
-    char tmp[VNAMELEN2], istr[16];
+    char tmp[VNAMELEN2], istr[VNAMELEN];
     char maj[64], min[32];
     const char *cmdword;
     int i, j;

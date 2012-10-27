@@ -95,6 +95,8 @@ enum {
 
 #define EXTRA_LAGS (N_EXTRA - 1)
 
+#define VNAMEWIDTH 18
+
 /* single-equation estimation commands plus some GUI extensions */
 #define MODEL_CODE(c) (MODEL_COMMAND(c) || c == CORC || c == HILU || \
                        c == PWE || c == PANEL_WLS || c == PANEL_B || \
@@ -3966,7 +3968,7 @@ entry_with_label_and_chooser (selector *sr, GtkWidget *vbox,
 
     entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN - 1);
-    gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMELEN + 3);
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMEWIDTH);
 
     gtk_box_pack_start(GTK_BOX(x_hbox), entry, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), x_hbox, FALSE, FALSE, 0);
@@ -4051,7 +4053,7 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
 
     sr->depvar = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(sr->depvar), VNAMELEN - 1);
-    gtk_entry_set_width_chars(GTK_ENTRY(sr->depvar), VNAMELEN + 3);
+    gtk_entry_set_width_chars(GTK_ENTRY(sr->depvar), VNAMEWIDTH);
 
     g_signal_connect(G_OBJECT(sr->depvar), "changed",
 		     G_CALLBACK(maybe_activate_depvar_lags), sr);

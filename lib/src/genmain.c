@@ -904,7 +904,7 @@ void destroy_genr (parser *p)
     if (p != NULL) {
 	p->flags = 0;
 #if PRESERVE_AUX_NODES
-	/* free this stuff only when finished */
+	/* free this stuff (only) when finished */
 	parser_free_aux_nodes(p);
 #endif
 	gen_cleanup(p);
