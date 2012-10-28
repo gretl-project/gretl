@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-10-25 09:26-0400\n"
-"PO-Revision-Date: 2012-10-16 18:09-0300\n"
+"PO-Revision-Date: 2012-10-28 15:55-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -1348,9 +1348,9 @@ msgid "Please open a data file first"
 msgstr "Primeiro abra um arquivo de dados"
 
 #: lib/src/dataset.c:1433
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is read-only"
-msgstr "A variável %s é do tipo %s"
+msgstr "A variável %s é apenas para leitura"
 
 #: lib/src/dataset.c:1660 lib/src/dataset.c:1670
 #, c-format
@@ -1825,14 +1825,14 @@ msgid "Summary statistics"
 msgstr "Estatísticas descritivas"
 
 #: lib/src/describe.c:4456
-#, fuzzy, c-format
+#, c-format
 msgid "for column %d of %s (%d valid observations)"
-msgstr "para a variável %s (%d observações válidas)"
+msgstr "para a coluna %d de %s (%d observações válidas)"
 
 #: lib/src/describe.c:4459
-#, fuzzy, c-format
+#, c-format
 msgid "for column %d (%d valid observations)"
-msgstr "para a variável %s (%d observações válidas)"
+msgstr "para a coluna %d (%d observações válidas)"
 
 #: lib/src/describe.c:4463
 #, c-format
@@ -2326,9 +2326,9 @@ msgid "%s: argument %d should be %s"
 msgstr "%s: o argumento %d deve ser %s"
 
 #: lib/src/geneval.c:8477
-#, fuzzy, c-format
+#, c-format
 msgid ", is %s"
-msgstr "= %s vezes %s"
+msgstr ", é %s"
 
 #: lib/src/geneval.c:10043 lib/src/genlex.c:712
 #, c-format
@@ -2377,9 +2377,8 @@ msgid "'%s' : not implemented for this type"
 msgstr "'%s' : não está implementado para este tipo"
 
 #: lib/src/geneval.c:11752
-#, fuzzy
 msgid "Bare declarations are not allowed here"
-msgstr "%s: a divisão não é permitida aqui"
+msgstr "Declarações vazias não são permitidas aqui"
 
 #: lib/src/genfuncs.c:853 gui2/library.c:5000
 msgid "Input must be a monthly or quarterly time series"
@@ -4263,9 +4262,9 @@ msgid "Read datafile %s\n"
 msgstr "Lido o arquivo de dados %s\n"
 
 #: lib/src/interact.c:4891
-#, fuzzy, c-format
+#, c-format
 msgid "Summary statistics for %s, by value of %s"
-msgstr "Estatísticas descritivas"
+msgstr "Estatísticas descritivas para %s, pelo valor de %s"
 
 #: lib/src/interact.c:5134
 msgid "You can't end a loop here, you haven't started one\n"
@@ -7332,7 +7331,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 16 de outubro de 2012."
+"Tradução de 28 de outubro de 2012."
 
 #: gui2/about.c:164
 msgid "License"
@@ -13112,9 +13111,9 @@ msgid "Plot the series"
 msgstr "Gráfico da série temporal"
 
 #: gui2/library.c:6914
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no valid values"
-msgstr "valores válidos"
+msgstr "%s: não existem valores válidos"
 
 #: gui2/library.c:7100
 msgid "Non-interactive (just get output)"
