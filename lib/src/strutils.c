@@ -1960,9 +1960,11 @@ char *make_varname_unique (char *vname, int v, DATASET *dset)
     size_t n = strlen(vname);
     int i, j, conflict;
 
-    if (n > 7) {
-	n = 7;
+    if (n > 15) {
+	n = 15;
     }
+
+ tryagain:
 
     for (j=0; j<26; j++) {
 	conflict = 0;
@@ -1977,6 +1979,11 @@ char *make_varname_unique (char *vname, int v, DATASET *dset)
 	} else {
 	    break;
 	}
+    }
+
+    if (conflict && n < 18) {
+	n++;
+	goto tryagain;
     }
 
     return vname;
