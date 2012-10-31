@@ -168,7 +168,8 @@ add_file ${HLPDIR}/gretlhelp.refs gretl/gretlhelp.refs
 for f in ${TOPDIR}/share/texfigs/*.png ; do
    add_file $f gretl/helpfigs/`basename $f`
 done
-for lang in es it ; do
+# at one time "es" was included
+for lang in it ; do
    add_file ${HLPDIR}/gretlgui.hlp.${lang} \
        gretl/gretlgui_hlp_${lang}.txt
    add_file ${HLPDIR}/gretlcmd.hlp.${lang} \
