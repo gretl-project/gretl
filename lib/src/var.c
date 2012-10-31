@@ -461,13 +461,19 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
     /* advance t1 if needed */
 
     for (t=dset->t1; t<=dset->t2; t++) {
-	int miss = 0, s = t - (v->order + diff);
+	int miss = 0, p, s = t - (v->order + diff);
 
 	for (i=1; i<=v->ylist[0] && !miss; i++) {
 	    vi = v->ylist[i];
-	    if (na(dset->Z[vi][t]) || s < 0 || na(dset->Z[vi][s])) {
+	    if (na(dset->Z[vi][t]) || s < 0) {
 		v->t1 += 1;
 		miss = 1;
+	    }
+	    for (p=s; p<t && !miss; p++) {
+		if (na(dset->Z[vi][p])) {
+		    v->t1 += 1;
+		    miss = 1;
+		}
 	    }
 	}
 
