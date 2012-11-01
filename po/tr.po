@@ -10,14 +10,14 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-10-25 09:26-0400\n"
-"PO-Revision-Date: 2012-06-04 11:16+0300\n"
-"Last-Translator: \n"
+"PO-Revision-Date: 2012-11-01 17:03+0200\n"
+"Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.2\n"
+"X-Generator: Lokalize 1.4\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: lib/src/adf_kpss.c:290
@@ -579,14 +579,13 @@ msgid "autocorrelation"
 msgstr "özilinti"
 
 #: lib/src/compare.c:2117
-#, fuzzy
 msgid "Error calculating Ljung-Box statistic"
-msgstr "Model seçim ölçütleri hesaplama hatası\n"
+msgstr "Ljung-Box istatistiği hesaplama hatası"
 
 #: lib/src/compare.c:2120
-#, fuzzy, c-format
+#, c-format
 msgid "Test for autocorrelation up to order %d"
-msgstr "%s. dereceye kadar özilinti için LM sınaması"
+msgstr "%d. dereceye kadar özilinti sınaması"
 
 #: lib/src/compare.c:2292 lib/src/gretl_panel.c:3920
 msgid "Alternative statistic"
@@ -983,9 +982,9 @@ msgid "scanning for variable names...\n"
 msgstr "değişken adları taranıyor...\n"
 
 #: lib/src/csvdata.c:2002
-#, fuzzy, c-format
+#, c-format
 msgid "   line: %.115s...\n"
-msgstr "   satır: %s\n"
+msgstr "   satır: %.115s...\n"
 
 #: lib/src/csvdata.c:2004
 #, c-format
@@ -1013,9 +1012,9 @@ msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' -- sayısal bir dönüştürme yapılamadı!"
 
 #: lib/src/csvdata.c:2275
-#, fuzzy, c-format
+#, c-format
 msgid "warning: %d labels were truncated.\n"
-msgstr "Uyarı: bazı değişken adları tekrarlı\n"
+msgstr "Uyarı: %d sayıda etiket kısaltıldı.\n"
 
 #: lib/src/csvdata.c:2292
 msgid "scanning for row labels and data...\n"
@@ -1094,7 +1093,7 @@ msgstr "Bellek yetersiz\n"
 
 #: lib/src/csvdata.c:3187 lib/src/csvdata.c:3262
 msgid "You need to specify an aggregation method for a 1:n join"
-msgstr ""
+msgstr "1:n birleştirmesi için bir toplulaştırma yöntemi belirtmelisiniz"
 
 #: lib/src/csvdata.c:4107 gui2/library.c:3929
 msgid "Series length does not match the dataset"
@@ -1279,9 +1278,8 @@ msgid "Data appended OK\n"
 msgstr "Verileri iliştirme başarılı\n"
 
 #: lib/src/dataio.c:2635
-#, fuzzy
 msgid "No markers are available for writing"
-msgstr "Elde çizilecek veri yok"
+msgstr "Elde yazılacak imleç yok"
 
 #: lib/src/dataio.c:2705
 #, c-format
@@ -1344,9 +1342,9 @@ msgid "Please open a data file first"
 msgstr "Lütfen ilk önce bir veri dosyası açınız"
 
 #: lib/src/dataset.c:1433
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is read-only"
-msgstr "%s değişkeninin türü %s"
+msgstr "%s değişkeni yalnızca okunur"
 
 #: lib/src/dataset.c:1660 lib/src/dataset.c:1670
 #, c-format
@@ -1785,25 +1783,23 @@ msgid "Ex. kurtosis"
 msgstr "Basıklık"
 
 #: lib/src/describe.c:4427
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "5% percentile"
-msgstr "yüzde"
+msgstr "%5 dilimi"
 
 #: lib/src/describe.c:4429
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "95% percentile"
-msgstr "yüzde %g aralığı"
+msgstr "%95 dilimi"
 
 #: lib/src/describe.c:4430
-#, fuzzy
 msgid "Interquartile range"
-msgstr "eksen aralığı:"
+msgstr "Bölütlerarası aralık"
 
 #: lib/src/describe.c:4431 lib/src/describe.c:4636 gui2/guiprint.c:761
 #: gui2/guiprint.c:1086
-#, fuzzy
 msgid "Missing obs."
-msgstr "Eksik gözlemler"
+msgstr "Eksik gözl."
 
 #: lib/src/describe.c:4433
 msgid "Within s.d."
@@ -1819,14 +1815,14 @@ msgid "Summary statistics"
 msgstr "Özet istatistikler"
 
 #: lib/src/describe.c:4456
-#, fuzzy, c-format
+#, c-format
 msgid "for column %d of %s (%d valid observations)"
-msgstr "%s değişkeni için (%d geçerli gözlem)"
+msgstr "%2$s değişkeninin %1$d. sütunu için (%3$d geçerli gözlem)"
 
 #: lib/src/describe.c:4459
-#, fuzzy, c-format
+#, c-format
 msgid "for column %d (%d valid observations)"
-msgstr "%s değişkeni için (%d geçerli gözlem)"
+msgstr "sütun %d için (%d geçerli gözlem)"
 
 #: lib/src/describe.c:4463
 #, c-format
@@ -1840,17 +1836,16 @@ msgstr "Ölç.Sap."
 #: lib/src/describe.c:4632
 #, no-c-format
 msgid "5% perc."
-msgstr ""
+msgstr "%5 dilim"
 
 #: lib/src/describe.c:4634
 #, no-c-format
 msgid "95% perc."
-msgstr ""
+msgstr "%95 dilim"
 
 #: lib/src/describe.c:4635 gui2/guiprint.c:761
-#, fuzzy
 msgid "IQ range"
-msgstr "x aralığı"
+msgstr "BA aralığı"
 
 #: lib/src/describe.c:4840 lib/src/describe.c:4941
 #, c-format
@@ -2321,9 +2316,9 @@ msgid "%s: argument %d should be %s"
 msgstr "%s: argüman %d, %s olmalı"
 
 #: lib/src/geneval.c:8477
-#, fuzzy, c-format
+#, c-format
 msgid ", is %s"
-msgstr "= %s kere %s"
+msgstr ", %s"
 
 #: lib/src/geneval.c:10043 lib/src/genlex.c:712
 #, c-format
@@ -2342,9 +2337,9 @@ msgid "The variable %s is of type %s"
 msgstr "%s değişkeninin türü %s"
 
 #: lib/src/geneval.c:10409
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': name is too long (max %d characters)\n"
-msgstr "'%s': adı aşırı uzun (ençok 15 harf)\n"
+msgstr "'%s': adı aşırı uzun (ençok %d harf)\n"
 
 #: lib/src/geneval.c:10513
 #, c-format
@@ -2372,9 +2367,8 @@ msgid "'%s' : not implemented for this type"
 msgstr "'%s': bu tür için eklenmedi"
 
 #: lib/src/geneval.c:11752
-#, fuzzy
 msgid "Bare declarations are not allowed here"
-msgstr "%s: burada bölmeye izin verilmiyor"
+msgstr "Burada yalın bildirilere izin verilmiyor"
 
 #: lib/src/genfuncs.c:853 gui2/library.c:5000
 msgid "Input must be a monthly or quarterly time series"
@@ -4228,14 +4222,13 @@ msgid "No data information is available.\n"
 msgstr "Elde veri bilgisi yok.\n"
 
 #: lib/src/interact.c:4580 lib/src/interact.c:4589
-#, fuzzy
 msgid "Inner key is missing"
-msgstr "Değişken adı eksik"
+msgstr "İç anahtar eksik"
 
 #: lib/src/interact.c:4633
-#, fuzzy, c-format
+#, c-format
 msgid "The \"%s\" command cannot be used in this context"
-msgstr "'%s' komutu bu bağlamda geçerli değil"
+msgstr "'%s' komutu bu bağlamda kullanılamaz"
 
 #: lib/src/interact.c:4722 cli/gretlcli.c:808 gui2/library.c:8211
 #, c-format
@@ -4243,9 +4236,9 @@ msgid "Read datafile %s\n"
 msgstr "%s veri dosyasını oku\n"
 
 #: lib/src/interact.c:4891
-#, fuzzy, c-format
+#, c-format
 msgid "Summary statistics for %s, by value of %s"
-msgstr "Özet istatistikler"
+msgstr "%s değişkeninin %s değerlerine göre özet istatistikleri"
 
 #: lib/src/interact.c:5134
 msgid "You can't end a loop here, you haven't started one\n"
@@ -8345,9 +8338,8 @@ msgid "Execute"
 msgstr "Çalıştır"
 
 #: gui2/datafiles.c:1227 gui2/datafiles.c:1383
-#, fuzzy
 msgid "Add to menu"
-msgstr "Veri setine ekle"
+msgstr "Menüye ekle"
 
 #: gui2/datafiles.c:1234 gui2/datafiles.c:1387
 msgid "New"
@@ -8519,13 +8511,13 @@ msgid "Confirm dataset structure"
 msgstr "Veri seti yapısı doğrulama"
 
 #: gui2/datawiz.c:170
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter name for first variable\n"
 "(max. %d characters)"
 msgstr ""
 "Birinci değişkenin adını giriniz\n"
-"(ençok 15 harf)"
+"(ençok %d harf)"
 
 #: gui2/datawiz.c:174 gui2/dialogs.c:5137 gui2/ssheet.c:964
 msgid "gretl: name variable"
@@ -9779,14 +9771,12 @@ msgstr ""
 "Şimdi indirmeyi denemek istiyor musunuz?"
 
 #: gui2/fncall.c:2684
-#, fuzzy
 msgid "main window"
-msgstr "Ana pencere"
+msgstr "ana pencere"
 
 #: gui2/fncall.c:2685
-#, fuzzy
 msgid "model window"
-msgstr "Pencereyi kapat"
+msgstr "model penceresi"
 
 #: gui2/fncall.c:2689
 #, c-format
@@ -9795,11 +9785,14 @@ msgid ""
 "as \"%s/%s\" in the %s.\n"
 "Do you want to do this?"
 msgstr ""
+"Paket %s, gretl menülerine şu şekilde eklenebilir:\n"
+"\"%s/%s\" (%s menüsü)\n"
+"Bunu yapmak ister misiniz?"
 
 #: gui2/fncall.c:2854
-#, fuzzy, c-format
+#, c-format
 msgid "Adding %s under %s."
-msgstr "_Karşı değişkenler: %s ve %s"
+msgstr "%s öğesi %s altına ekleniyor."
 
 #: gui2/fncall.c:2858 gui2/fncall.c:2862 gui2/settings.c:1607
 msgid "This change will take effect when you restart gretl"
@@ -9808,12 +9801,11 @@ msgstr "Bu değişiklik gretl'ı yeniden başlattığınızda etkili olacaktır"
 #: gui2/fncall.c:3007
 #, c-format
 msgid "Requires gretl %s"
-msgstr ""
+msgstr "gretl %s gereklidir"
 
 #: gui2/fncall.c:3013
-#, fuzzy
 msgid "Error reading package"
-msgstr "%s okuma hatası\n"
+msgstr "Paket okuma hatası"
 
 #: gui2/fnsave.c:338
 msgid "Please add a sample script for this package"
@@ -10102,9 +10094,8 @@ msgid "Malformed PNG file for graph"
 msgstr "Çizim için kusurlu PNG dosyası"
 
 #: gui2/gpt_control.c:4285
-#, fuzzy
 msgid "Malformed SVG file for graph"
-msgstr "Çizim için kusurlu PNG dosyası"
+msgstr "Çizim için kusurlu SVG dosyası"
 
 #: gui2/gpt_control.c:4831
 msgid "gretl: graph"
@@ -11520,11 +11511,11 @@ msgstr "%s değişkeni için (%d geçerli gözlem)"
 
 #: gui2/guiprint.c:761
 msgid "5% Perc."
-msgstr ""
+msgstr "%5 Dilim"
 
 #: gui2/guiprint.c:761
 msgid "95% Perc."
-msgstr ""
+msgstr "%95 Dilim"
 
 #: gui2/guiprint.c:880
 msgid "t-ratios in parentheses"
@@ -11546,17 +11537,16 @@ msgstr "Fzl.\\ basıklık"
 #: gui2/guiprint.c:1082
 #, no-c-format
 msgid "5\\% perc."
-msgstr ""
+msgstr "\\% 5 dilimi"
 
 #: gui2/guiprint.c:1084
 #, no-c-format
 msgid "95\\% perc."
-msgstr ""
+msgstr "\\% 95 dilimi"
 
 #: gui2/guiprint.c:1085
-#, fuzzy
 msgid "IQ Range"
-msgstr "Aralık"
+msgstr "BA Aralığı"
 
 #: gui2/guiprint.c:1177
 #, c-format
@@ -13009,7 +12999,7 @@ msgid "Akaike Information Criterion"
 msgstr "Akaike Bilgi Ölçütü"
 
 #: gui2/library.c:5954
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Statistic from model %d\n"
 "%s (value = %g)\n"
@@ -13017,7 +13007,7 @@ msgid ""
 msgstr ""
 "Model %d istatistikleri\n"
 "%s (değer = %g)\n"
-"Ad (ençok 15 harf):"
+"Ad (ençok %d harf):"
 
 #: gui2/library.c:6041
 msgid "standardized residual"
@@ -13075,9 +13065,9 @@ msgid "Plot the series"
 msgstr "Serileri çiz"
 
 #: gui2/library.c:6914
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no valid values"
-msgstr "geçerli değerler"
+msgstr "%s: geçerli değer yok"
 
 #: gui2/library.c:7100
 msgid "Non-interactive (just get output)"
@@ -14389,9 +14379,8 @@ msgid "'%s': there is already an object of this name"
 msgstr "'%s': Bu adda bir nesne zaten var"
 
 #: gui2/session.c:2587
-#, fuzzy
 msgid "Failed to copy object"
-msgstr "Çizim dosyasını kopyalama başarısız"
+msgstr "Nesne kopyalama başarısız"
 
 #: gui2/session.c:2613 gui2/session.c:2655
 #, c-format
@@ -14403,9 +14392,8 @@ msgstr ""
 "(ençok %d harf)"
 
 #: gui2/session.c:2615
-#, fuzzy
 msgid "gretl: copy object"
-msgstr "gretl: nesneyi yeniden adlandır"
+msgstr "gretl: nesneyi kopyala"
 
 #: gui2/session.c:2657
 msgid "gretl: rename object"
@@ -14653,9 +14641,8 @@ msgid "Database server name"
 msgstr "Veritabanı sunucu adı"
 
 #: gui2/settings.c:236
-#, fuzzy
 msgid "HTTP proxy"
-msgstr "HTTP vekili kullan"
+msgstr "HTTP vekili"
 
 #: gui2/settings.c:238
 msgid "Use HTTP proxy"
@@ -14737,7 +14724,7 @@ msgstr "Genel"
 
 #: gui2/settings.c:1181
 msgid "Network"
-msgstr ""
+msgstr "Ağ"
 
 #: gui2/settings.c:1183
 msgid "Programs"
@@ -14844,22 +14831,22 @@ msgid "_Divide by scalar"
 msgstr "Sayıl ile _böl"
 
 #: gui2/ssheet.c:960
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter name for new variable\n"
 "(max. %d characters)"
 msgstr ""
 "Yeni değişkene ad giriniz\n"
-"(ençok 15 harf)"
+"(ençok %d harf)"
 
 #: gui2/ssheet.c:974
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter case marker for new obs\n"
 "(max. %d characters)"
 msgstr ""
 "Yeni gözlem için durum imleçi giriniz\n"
-"(ençok 8 harf)"
+"(ençok %d harf)"
 
 #: gui2/ssheet.c:978
 msgid "gretl: case marker"
