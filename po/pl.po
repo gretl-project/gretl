@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.9\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-10-25 09:26-0400\n"
-"PO-Revision-Date: 2012-10-05 02:00-0400\n"
+"PO-Revision-Date: 2012-10-29 14:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -1341,9 +1341,9 @@ msgid "Please open a data file first"
 msgstr "Proszę najpierw otworzyć plik danych"
 
 #: lib/src/dataset.c:1433
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is read-only"
-msgstr "Zmienna '%s' jest typu %s"
+msgstr "Zmienna '%s' jest tylko do odczytu"
 
 #: lib/src/dataset.c:1660 lib/src/dataset.c:1670
 #, c-format
@@ -1819,14 +1819,14 @@ msgid "Summary statistics"
 msgstr "Statystyki opisowe"
 
 #: lib/src/describe.c:4456
-#, fuzzy, c-format
+#, c-format
 msgid "for column %d of %s (%d valid observations)"
-msgstr "dla zmiennej %s (%d prawidłowych obserwacji)"
+msgstr "dla kolumny %d z %s (%d prawidłowych obserwacji)"
 
 #: lib/src/describe.c:4459
-#, fuzzy, c-format
+#, c-format
 msgid "for column %d (%d valid observations)"
-msgstr "dla zmiennej %s (%d prawidłowych obserwacji)"
+msgstr "dla kolumny %d (%d prawidłowych obserwacji)"
 
 #: lib/src/describe.c:4463
 #, c-format
@@ -1849,7 +1849,7 @@ msgstr "Percentyl 95%"
 
 #: lib/src/describe.c:4635 gui2/guiprint.c:761
 msgid "IQ range"
-msgstr "Przedział Q3-Q1"
+msgstr "Zakres Q3-Q1"
 
 #: lib/src/describe.c:4840 lib/src/describe.c:4941
 #, c-format
@@ -2324,9 +2324,9 @@ msgid "%s: argument %d should be %s"
 msgstr "%s: argument %d powinnien być %s"
 
 #: lib/src/geneval.c:8477
-#, fuzzy, c-format
+#, c-format
 msgid ", is %s"
-msgstr "= %s times %s"
+msgstr ", a jest %s"
 
 #: lib/src/geneval.c:10043 lib/src/genlex.c:712
 #, c-format
@@ -4247,9 +4247,9 @@ msgid "Read datafile %s\n"
 msgstr "Czytaj plik danych %s\n"
 
 #: lib/src/interact.c:4891
-#, fuzzy, c-format
+#, c-format
 msgid "Summary statistics for %s, by value of %s"
-msgstr "Statystyki opisowe"
+msgstr "Statystyki opisowe dla %s, dla wartości z %s"
 
 #: lib/src/interact.c:5134
 msgid "You can't end a loop here, you haven't started one\n"
@@ -13096,9 +13096,9 @@ msgid "Plot the series"
 msgstr "Wykres kilku szeregów czasowych"
 
 #: gui2/library.c:6914
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no valid values"
-msgstr "Poprawne wartości"
+msgstr "%s: nie jest poprawną wartością"
 
 #: gui2/library.c:7100
 msgid "Non-interactive (just get output)"
@@ -16550,6 +16550,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "No data were available to graph"
-#~ msgstr "Niedostępne dane dla wykresu"
