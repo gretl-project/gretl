@@ -766,12 +766,12 @@
       </fnargs>
       <description>
 	<para>
-	  Complex division. The two arguments must have the same number of
-	  rows, <math>n</math>, and either one or two columns.  The first
-	  column contains the real part and the second (if present) the
-	  imaginary part.  The return value is an <by r="n" c="2"/>
-	  matrix or, if the result has no imaginary part, an
-	  <math>n</math>-vector.
+	  Divisione complessa. I due argomenti devono avere lo stesso
+	  numero di righe, <math>n</math>, e una o due colonne.  La
+	  prima colonna contiene la parte reale e l'eventuale seconda
+	  quella immaginaria.  Ritorna una matrice <by r="n" c="2"/>
+	  oppure, se la parte immaginaria del risultato è nulla, un
+	  vettore a <math>n</math> elementi.
 	  <seelist>
 	    <fncref targ="cmult"/>
 	  </seelist>
@@ -818,12 +818,12 @@
       </fnargs>
       <description>
 	<para>
-	  Complex multiplication. The two arguments must have the same
-	  number of rows, <math>n</math>, and either one or two columns.
-	  The first column contains the real part and the second (if
-	  present) the imaginary part.  The return value is an
-	  <by r="n" c="2"/> matrix, or, if the result has no imaginary
-	  part, an <math>n</math>-vector. 
+	  Moltiplicazione complessa. I due argomenti devono avere lo
+	  stesso numero di righe, <math>n</math>, e una o due colonne.
+	  La prima colonna contiene la parte reale e l'eventuale
+	  seconda quella immaginaria.  Ritorna una matrice <by r="n"
+	  c="2"/> oppure, se la parte immaginaria del risultato è
+	  nulla, un vettore a <math>n</math> elementi.
 	  <seelist>
 	    <fncref targ="cdiv"/>
 	  </seelist>
