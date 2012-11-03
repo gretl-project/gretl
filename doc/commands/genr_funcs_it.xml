@@ -33,17 +33,27 @@
       </description>
     </function>
 
+    <function name="$chisq" section="access" output="scalar">
+      <description>
+	<para>
+	  Produce la statistica chi-quadro complessiva per l'ultimo
+	  modello stimato, se disponibile.
+	</para>
+      </description>
+    </function>
+
+
     <function name="$coeff" section="access" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  L'accessorio <lit>$coeff</lit> può essere usato in due modi: senza argomenti
-	  produce un vettore colonna che contiene i coefficienti dell'ultimo
-          modello stimato. Con l'argomento opzionale, produce uno scalare che
-          corrisponde alla stima del coefficiente chiamato
-	  <argname>s</argname>.
+	  L'accessore <lit>$coeff</lit> può essere usato in due modi:
+	  senza argomenti produce un vettore colonna che contiene i
+	  coefficienti dell'ultimo modello stimato. Con l'argomento
+	  opzionale, produce uno scalare che corrisponde alla stima
+	  del coefficiente chiamato <argname>s</argname>.
 	  <seelist>
 	    <fncref targ="$stderr"/>
 	    <fncref targ="$vcv"/>
@@ -59,10 +69,20 @@
 	  macoef = $coeff(theta_1)
 	</code>
 	<para>
-	  Se il <quote>modello</quote> in questione è effettivamente un sistema
-          (un VAR o un VECM, o un sistema di equazioni simultanee),
-	  <lit>$coeff</lit> senza parametri produce la matrice dei coefficienti,
-          una colonna per equazione.
+	  Se il <quote>modello</quote> in questione è effettivamente
+	  un sistema (un VAR o un VECM, o un sistema di equazioni
+	  simultanee), <lit>$coeff</lit> senza parametri produce la
+	  matrice dei coefficienti, una colonna per equazione.
+	</para>
+      </description>
+    </function>
+
+    <function name="$command" section="access" output="string">
+      <description>
+	<para>
+	  Deve seguire la stima di un modello; restituisce la stringa
+	  del comando relativo, come ad esempio <lit>ols</lit> oppure
+	  <lit>probit</lit>.
 	</para>
       </description>
     </function>
@@ -76,11 +96,72 @@
       </description>
     </function>
 
+    <function name="$datatype" section="access" output="scalar">
+      <description>
+	<para>
+	  Returns an integer value representing the sort of dataset that
+	  is currently loaded: 0 = no data; 1 = cross-sectional (undated)
+	  data; 2 = time-series data; 3 = panel data.
+	</para>
+      </description>
+    </function>
+
+    <function name="$depvar" section="access" output="string">
+      <description>
+	<para>
+	  Must follow the estimation of a single-equation model;
+	  returns the name of the dependent variable.
+	</para>
+      </description>
+    </function>
+
     <function name="$df" section="access" output="scalar">
       <description>
 	<para>
 	  Produce i gradi di libertà dell'ultimo modello stimato.
 	</para>
+      </description>
+    </function>
+
+
+    <function name="$dwpval" section="access" output="scalar">
+      <description>
+	<para>
+	  Returns the p-value for the Durbin&ndash;Watson statistic for the
+	  model last estimated, if available.  This is computed using the
+	  Imhof procedure.
+	</para>
+      </description>
+    </function>
+
+    <function name="$ec" section="access" output="matrix">
+      <description>
+	<para>
+	  Must follow the estimation of a VECM; returns a matrix containing
+	  the error correction terms.  The number of rows equals the number 
+	  of observations used and the number of columns equals the
+	  cointegration rank of the system.
+	</para>
+      </description>
+    </function>
+
+    <function name="$error" section="access" output="scalar">
+      <description>
+	<para>
+	  Returns the program's internal error code, which will be non-zero in
+	  case an error has occurred but has been trapped using
+	  <cmdref targ="catch"/>. Note that using this accessor causes the
+	  internal error code to be reset to zero. See also 
+	  <fncref targ="errmsg"/>. If you want to get the error message
+	  associated with a given <lit>$error</lit> you need to
+	  store the value in a temporary variable, as in
+	</para>
+	<code>
+	  errval = $error
+	  if (errval) 
+	    printf "Got error %d (%s)\n", errval, errmsg(errval);
+	  endif
+	</code>
       </description>
     </function>
 
@@ -105,7 +186,8 @@
     <function name="$h" section="access" output="series">
       <description>
 	<para>
-	  Deve seguire un comando <lit>garch</lit>. Produce la varianza condizionale stimata.
+	  Deve seguire un comando <lit>garch</lit>. Produce la
+	  varianza condizionale stimata.
 	</para>
       </description>
     </function>
@@ -314,6 +396,16 @@
 	  dei coefficienti per l'ultimo modello stimato.  Con il
 	  parametro opzionale, ritorna uno scalare contentente la
 	  stima del parametro <argname>s</argname>.
+	</para>
+	<para>
+	  Se il <quote>modello</quote> in questione è un sistema, il
+	  risultato dipende dalle sue caratteristiche: per sistemi VAR
+	  e VECM il valore ritornato è una matrice con una colonna per
+	  equazione; altrimenti, è un vettore colonna contentente i
+	  coefficienti della prima equazione, seguiti da quelli della
+	  seconda, e così via.
+	</para>
+	<para>
 	  <seelist>
 	    <fncref targ="$coeff"/> 
 	    <fncref targ="$vcv"/>
@@ -325,13 +417,45 @@
     <function name="$stopwatch" section="access" output="scalar">
       <description>
 	<para>
-	  Must be preceded by the <lit>set stopwatch</lit> command, which
-	  activates the measurement of CPU time.  The <quote>clock</quote>
-	  stops when the accessor <lit>$stopwatch</lit> is used, either in
-	  assigning it to a variable or simply by printing it. The
-	  accessor <lit>$stopwatch</lit> yields the seconds of CPU time
-	  that have elapsed since the <lit>set stopwatch</lit> statement
-	  command.
+	  Deve essere preceduto dal comando <lit>set stopwatch</lit>,
+	  che attiva la misurazione del tempo di CPU.  Il primo uso di
+	  questo accessore ritorna i secondi di CPU time trascorsi dal
+	  comando <lit>set stopwatch</lit>. Ad ogni accesso il
+	  cronometro viene riazzerato, cosicché l'uso successivo
+	  dell'accessore ritorna i secondi di CPU intercorsi dalla
+	  chiamata precedente.
+	</para>
+      </description>
+    </function>
+
+    <function name="$sysA" section="access" output="matrix">
+      <description>
+	<para>
+	  Deve seguire la stima di un sistema simultaneo.  Restituisce
+	  la matrice dei coefficienti delle endogene ritardate, se
+	  presenti nella forma strutturale. Vedi il comando <cmdref
+	  targ="system"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="$sysB" section="access" output="matrix">
+      <description>
+	<para>
+	  Deve seguire la stima di un sistema simultaneo.  Restituisce
+	  la matrice dei coefficienti delle esogene nella forma
+	  strutturale. Vedi il comando <cmdref targ="system"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="$sysGamma" section="access" output="matrix">
+      <description>
+	<para>
+	  Deve seguire la stima di un sistema simultaneo.  Restituisce
+	  la matrice dei coefficienti delle endogene contemporanee
+	  nella forma strutturale. Vedi il comando <cmdref
+	  targ="system"/>.
 	</para>
       </description>
     </function>
@@ -339,7 +463,8 @@
     <function name="$T" section="access" output="scalar">
       <description>
 	<para>
-	  Number of observations used in estimating the last model.
+	  Numero di osservazioni usato nella stima dell'ultimo
+	  modello.
 	</para>
       </description>
     </function>
@@ -898,8 +1023,8 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the determinant of <argname>A</argname>, computed via the
-	  LU factorization.
+	  Restituisce il determinante di <argname>A</argname>,
+	  calcolato trmite la scomposizione LU.
 	  <seelist> 
 	    <fncref targ="ldet"/>
 	    <fncref targ="rcond"/>
