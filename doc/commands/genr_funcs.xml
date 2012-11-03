@@ -2284,6 +2284,30 @@
 	  distribution; suitable functions for creating <argname>U</argname>
 	  are <fncref targ="muniform"/> and <fncref targ="halton"/>.
 	</para>
+	<para>
+	  In the following example, the series <argname>P</argname>
+	  and <argname>Q</argname> should be numerically very similar
+	  to one another, <argname>P</argname> being the "true"
+	  probability and <argname>Q</argname> its GHK approximation:
+	</para>
+	<code>
+	  nulldata 20
+	  series inf1 = -2*uniform()
+	  series sup1 = 2*uniform()
+	  series inf2 = -2*uniform()
+	  series sup2 = 2*uniform()
+
+	  scalar rho = 0.25
+	  matrix V = {1, rho; rho, 1}
+
+	  series P = cdf(D, rho, inf1, inf2) - cdf(D, rho, sup1, inf2) \
+	  - cdf(D, rho, inf1, sup2) + cdf(D, rho, sup1, sup2)
+
+	  C = cholesky(V)
+	  U = muniform(2, 100)
+
+	  series Q = ghk(C, {inf1, inf2}, {sup1, sup2}, U)
+	</code>
       </description>
     </function>
 

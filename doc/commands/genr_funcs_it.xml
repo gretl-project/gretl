@@ -1366,33 +1366,74 @@
       </description>
     </function>
 
-    <function name="genpois" section="probdist" output="series">
+    <function name="getenv" section="strings" output="string">
       <fnargs>
-	<fnarg type="scalar-or-series">&mu;</fnarg>
+	<fnarg type="string">s</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  If an environment variable by the name of
+	  <argname>s</argname> is defined, returns the string value of
+	  that variable, otherwise returns an empty string.
+	  See also <fncref targ="ngetenv"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="ghk" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">C</fnarg>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="matrix">B</fnarg>
+	<fnarg type="matrix">U</fnarg>
       </fnargs>
       <description>
-	<para context="notex">
-	  Generates a series of Poisson pseudo-random variates. If &mu; is
-	  a scalar, all the elements are drawn from the same distribution;
-	  if &mu; is a series, the appropriate value &mu;<sub>t</sub> is
-	  used at each observation.
-	</para>
-	<para context="tex">
-	  Generates a series of Poisson pseudo-random variates. If &mu; is
-	  a scalar, all the elements are drawn from the same distribution
-	  \[ P(x_t = a) = e^{-\mu} \frac{\mu^{a}}{a!} \] 
-	  Otherwise, if &mu; is a series, the above becomes 
-	  \[ P(x_t = a) = e^{-\mu_t} \frac{\mu_t^{a}}{a!} \]
+	<para>
+	  Computes the GHK (Geweke, Hajivassiliou, Keane) approximation to the
+	  multivariate normal distribution function; see for example <cite
+	  key="geweke91">Geweke (1991)</cite>. The value returned is an <by
+	  r="n" c="1"/> vector of probabilities.
 	</para>
 	<para>
-	  <seelist>
-	    <fncref targ="randgen"/>
-	    <fncref targ="normal"/> 
-	    <fncref targ="uniform"/>
-	    <fncref targ="mnormal"/>
-	    <fncref targ="muniform"/>
-	  </seelist>
+	  The argument <argname>C</argname> (<by r="m" c="m"/>) should give
+	  the Cholesky decomposition (lower triangular) of the covariance
+	  matrix of the <math>m</math> normal variates.  The arguments
+	  <argname>A</argname> and <argname>B</argname> should both be <by
+	  r="n" c="m"/>, giving respectively the lower and upper bounds
+	  applying to the variates at each of <math>n</math>
+	  observations. Where variates are unbounded, this should be indicated
+	  using the built-in constant <fncref targ="$huge"/> or its negative.
 	</para>
+	<para>
+	  The matrix <argname>U</argname> should be <by r="m" c="r"/>, with
+	  <math>r</math> the number of pseudo-random draws from the uniform
+	  distribution; suitable functions for creating <argname>U</argname>
+	  are <fncref targ="muniform"/> and <fncref targ="halton"/>.
+	</para>
+	<para>
+	  In the following example, the series <argname>P</argname>
+	  and <argname>Q</argname> should be numerically very similar
+	  to one another, <argname>P</argname> being the "true"
+	  probability and <argname>Q</argname> its GHK approximation:
+	</para>
+	<code>
+	  nulldata 20
+	  series inf1 = -2*uniform()
+	  series sup1 = 2*uniform()
+	  series inf2 = -2*uniform()
+	  series sup2 = 2*uniform()
+
+	  scalar rho = 0.25
+	  matrix V = {1, rho; rho, 1}
+
+	  series P = cdf(D, rho, inf1, inf2) - cdf(D, rho, sup1, inf2) \
+	  - cdf(D, rho, inf1, sup2) + cdf(D, rho, sup1, sup2)
+
+	  C = cholesky(V)
+	  U = muniform(2, 100)
+
+	  series Q = ghk(C, {inf1, inf2}, {sup1, sup2}, U)
+	</code>
       </description>
     </function>
 
@@ -1402,8 +1443,7 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns Gini's inequality index for the series
-	  <argname>y</argname>.
+	  Produce l'indice di Gini per la serie <argname>y</argname>.
 	</para>
       </description>
     </function>
@@ -1529,6 +1569,19 @@
 	</para>
       </description>
     </function>
+
+    <function name="inbundle" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bundle">b</fnarg>
+	<fnarg type="string">chiave</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Ritorna 1 se il bundle <argname>b</argname> contiene un
+	  elemento di nome <argname>chiave</argname> e 0 altrimenti.
+	</para>	  
+      </description>
+    </function>   
 
     <function name="infnorm" section="linalg" output="scalar">
       <fnargs>
