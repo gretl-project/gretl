@@ -535,6 +535,9 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
     double ymin = 1.0e-7;
     double pearson = 0.0;
     int i, j;
+    char lbl[64];
+    int has_clabels = (tab->clabels!=NULL);
+    int has_rlabels = (tab->rlabels!=NULL);
 
     if (*tab->rvarname != '\0' && *tab->cvarname != '\0') {
 	pputc(prn, '\n');
@@ -545,18 +548,38 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 	pputs(prn, "\n       ");
     }
 
+    if(has_rlabels){
+	pputs(prn, "    ");
+    }
+
     for (j=0; j<c; j++) {
-	pprintf(prn, "[%4g]", tab->cval[j]);
-    } 
+	if (!has_clabels) {
+	    pprintf(prn, "[%4g]", tab->cval[j]);
+	} else {
+	    *lbl = '\0';
+	    gretl_utf8_strncat(lbl, tab->clabels[j], 8);
+	    pprintf(prn, "[%8s]", lbl);
+	}
+    }
 
     pprintf(prn,"  %s\n  \n", _("TOT."));
 
     for (i=0; i<r; i++) {
 
 	if (tab->rtotal[i] > 0) {
-	    pprintf(prn, "[%4g] ", tab->rval[i]);
+	    if (!has_rlabels) {
+		pprintf(prn, "[%4g] ", tab->rval[i]);
+	    } else {
+		*lbl = '\0';
+		gretl_utf8_strncat(lbl, tab->rlabels[i], 8);
+		pprintf(prn, "[%8s] ", lbl);
+	    }
 
 	    for (j=0; j<c; j++) {
+		if (has_clabels) {
+		    pputs(prn, "    ");
+		}
+
 		if (tab->ctotal[j]) {
 		    if (tab->f[i][j] || (opt & OPT_Z)) {
 			if (opt & (OPT_C | OPT_R)) {
@@ -597,8 +620,14 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 
     pputc(prn, '\n');
     pputs(prn, _("TOTAL  "));
+    if(has_rlabels){
+	pputs(prn, "    ");
+    }
 
     for (j=0; j<c; j++) {
+	if (has_clabels) {
+	    pputs(prn, "    ");
+	}
 	if (opt & OPT_R) {
 	    x = 100.0 * tab->ctotal[j] / tab->n;
 	    pprintf(prn, "%5.1f%%", x);

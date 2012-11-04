@@ -2182,6 +2182,9 @@ static Xtab *xtab_new (int n, int t1, int t2)
     *tab->rvarname = '\0';
     *tab->cvarname = '\0';
 
+    tab->rlabels = NULL;
+    tab->clabels = NULL;
+
     return tab;
 }
 
@@ -2257,6 +2260,7 @@ static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
     int t1 = dset->t1;
     int t2 = dset->t2;
     int i, t, n = 0;
+    int n_labels_chk;
 
     /* count non-missing values */
     for (t=t1; t<=t2; t++) {
@@ -2297,9 +2301,24 @@ static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
 
     rowfreq = get_freq(rvarno, dset, NADBL, NADBL, 0, 
 		       0, OPT_D | OPT_X, err); 
+
+    if (rvarno > 0 && dset != NULL && series_has_string_table(dset, rvarno)) {
+	tab->rlabels = series_get_string_vals(dset, rvarno, &n_labels_chk);
+	if (n_labels_chk != rowfreq->numbins) {
+	    tab->rlabels = NULL;
+	}
+    }
+
     if (!*err) {
 	colfreq = get_freq(cvarno, dset, NADBL, NADBL, 0, 
 			   0, OPT_D | OPT_X, err); 
+	
+	if (cvarno > 0 && dset != NULL && series_has_string_table(dset, cvarno)) {
+	    tab->clabels = series_get_string_vals(dset, cvarno, &n_labels_chk);
+	    if (n_labels_chk != colfreq->numbins) {
+		tab->clabels = NULL;
+	    }
+	}
     }
 
     if (*err) {

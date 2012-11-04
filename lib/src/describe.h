@@ -68,6 +68,7 @@ typedef struct Xtab_ {
     int **f;
     int n, missing;
     int t1, t2;
+    const char **rlabels, **clabels;
 } Xtab;
 
 /* functions follow */

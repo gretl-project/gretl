@@ -2879,7 +2879,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    int subst = 0;
 
 #if LOOP_DEBUG
-	    fprintf(stderr, " j=%d, line='%s'\n", j, line);
+	    fprintf(stderr, " j=%d, line='%s', compiled = %d\n", 
+		    j, line, genr_compiled(loop, j));
 #endif
 	    strcpy(errline, line);
 
