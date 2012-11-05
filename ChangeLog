@@ -1,4 +1,4 @@
-Version 1.9.10, in progress
+2012-11-05 version 1.9.10
 - Update translations
 - Major new command "join": this adds sophisticated procedures for 
   assembling a dataset from multiple sources
@@ -20,6 +20,7 @@ Version 1.9.10, in progress
   named matrix instead of a series
 - "corrgm" command: make the $test and $pvalue accessors available 
   for the Ljung-Box test at the maximum lag
+- "xtab" command: user string values of variables if available
 - Add three new functions: ghk(), halton() and isnan()
 - The mread() function now allows leading #-comment lines in the
   plain text file from which a matrix is read
