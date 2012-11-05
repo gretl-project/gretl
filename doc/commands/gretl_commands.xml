@@ -2945,7 +2945,7 @@
     </description>
   </command>
 
-  <command name="else" section="Programming" context="cli">
+  <command name="else" section="Programming" label="Flow control" context="cli">
     <description>
       <para>See <cmdref targ="if"/>. Note that <cmd>else</cmd>
 	requires a line to itself, before the following
@@ -3525,7 +3525,6 @@
     </gui-access>
 
   </command>
-
 
   <command name="freq" section="Statistics" label="Frequency distribution">
 
@@ -6343,12 +6342,12 @@
 
   </command>
 
-  <command name="markers" section="Dataset" 
-    label="Observation markers" context="cli">
+  <command name="markers" section="Dataset" label="Observation markers" context="cli">
 
     <usage>
       <altforms>
-	<altform><lit>markers --to-file=</lit><repl>filename</repl></altform>
+	<altform><lit>markers
+	--to-file=</lit><repl>filename</repl></altform>
 	<altform><lit>markers --from-file=</lit><repl>filename</repl></altform>
 	<altform><lit>markers --delete</lit></altform>
       </altforms>

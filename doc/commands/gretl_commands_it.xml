@@ -268,6 +268,75 @@
 
   </command>
 
+  <command name="anova" label="ANOVA" section="Statistics">
+    <usage>
+      <arguments>
+        <argument>response</argument>
+        <argument>treatment</argument>
+        <argument optional="true">block</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't print results</effect>
+	</option>
+      </options>
+    </usage>
+    <description>
+      <para>
+	Analysis of Variance: <repl>response</repl> is a series measuring some
+	effect of interest and <repl>treatment</repl> must be a discrete
+	variable that codes for two or more types of treatment (or
+	non-treatment).  For two-way ANOVA, the <repl>block</repl> variable
+	(which should also be discrete) codes for the values of some control
+	variable.
+      </para>
+      <para context="cli">
+	Unless the <opt>--quiet</opt> option is given, this command prints a
+	table showing the sums of squares and mean squares along with an
+	<math>F</math>-test.  The <math>F</math>-test and its P-value can be
+	retrieved using the accessors <lit>$test</lit> and <lit>$pvalue</lit>
+	respectively.  
+      </para>
+      <para>
+	The null hypothesis for the <math>F</math>-test is that the mean
+	response is invariant with respect to the treatment type, or in words
+	that the treatment has no effect.  Strictly speaking, the test
+	is valid only if the variance of the response is the same for
+	all treatment types.
+      </para>
+      <para>
+	Note that the results shown by this command are in fact a subset of
+	the information given by the following procedure, which is easily
+	implemented in gretl.  Create a set of dummy variables coding for all
+	but one of the treatment types.  For two-way ANOVA, in addition create
+	a set of dummies coding for all but one of the <quote>blocks</quote>.
+	Then regress <repl>response</repl> on a constant and the dummies using
+	<cmdref targ="ols"/>.  For a one-way design the ANOVA table is printed
+	via the <opt>--anova</opt> option to <lit>ols</lit>.  In the two-way
+	case the relevant <math>F</math>-test is found by using the <cmdref
+	targ="omit"/> command.  For example (assuming <lit>y</lit> is the
+	response, <lit>xt</lit> codes for the treatment, and <lit>xb</lit>
+	codes for blocks):
+      </para>
+      <code>
+	# one-way
+	list dxt = dummify(xt)
+	ols y 0 dxt --anova
+	# two-way
+	list dxb = dummify(xb)
+	ols y 0 dxt dxb
+	# test joint significance of dxt
+	omit dxt --quiet
+      </code>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Other linear models/ANOVA</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="append" section="Dataset" label="Aggiunge dati" context="cli">
 
     <usage>
@@ -795,6 +864,117 @@
 
   </command>
  
+  <command name="bfgs-config" section="Estimation" label="BFGS options"
+    context="gui">
+    <description>
+      <para>
+	This dialog allows you to control some aspects of the operation of the
+	BFGS maximizer.  In case the maximizer fails to converge it may help
+	matters, in some cases, to increase the number of iterations allowed
+	and/or to increase (make more permissive) the convergence tolerance.
+	However, you should be suspicious of results obtained using a high
+	tolerance and should consider the possibility that the model you
+	are estimating is misspecified. 
+      </para>
+      <para>
+	For most applications we recommend use of the regular BFGS maximizer
+	but for some problems the <quote>limited memory</quote> variant of the
+	algorithm, L-BFGS-B, may produce more rapid convergence.  When
+	L-BFGS-B is selected, you have the option of setting the number of
+	corrections used in the limited memory matrix (between 3 and 20, with
+	a default of 8).
+      </para>
+    </description>
+  </command>
+
+  <command name="biprobit" section="Estimation" label="Bivariate probit"
+    context="cli">
+    <usage>
+      <arguments>
+        <argument>depvar1</argument>
+	<argument>depvar2</argument>
+        <argument>indepvars1</argument>
+	<argument separated="true" optional="true">indepvars2</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+        </option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>see <cmdref targ="logit"/> for explanation</effect>
+        </option>
+	<option>
+	  <flag>--opg</flag>
+	  <effect>see below</effect>
+        </option>
+	<option>
+	  <flag>--save-xbeta</flag>
+	  <effect>see below</effect>
+        </option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print extra information</effect>
+        </option>
+      </options>      
+      <examples>
+        <example>biprobit y1 y2 0 x1 x2</example>
+	<example>biprobit y1 y2 0 x11 x12 ; 0 x21 x22</example>
+	<demos>
+	  <demo>biprobit.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+    <description>
+      <para>
+	Estimates a bivariate probit model, using the
+	Newton&ndash;Raphson method to maximize the likelihood.
+      </para>
+      <para>
+	The argument list starts with the two (binary) dependent
+	variables, followed by a list of regressors. If a second list
+	is given, separated by a semicolon, this is interpreted as a
+	set of regressors specific to the second equation, with
+	<repl>indepvars1</repl> being specific to the first equation;
+	otherwise <repl>indepvars1</repl> is taken to represent a
+	common set of regressors.
+      </para>
+      <para>
+	By default, standard errors are computed using a numerical
+	approximation to the Hessian at convergence.  But if the
+	<opt>--opg</opt> option is given the covariance matrix is based on
+	the Outer Product of the Gradient (OPG), or if the
+	<opt>--robust</opt> option is given QML standard errors are
+	calculated, using a <quote>sandwich</quote> of the inverse of the
+	Hessian and the OPG.
+      </para>
+      <para>
+	After successful estimation, the accessor <lit>$uhat</lit>
+	retrieves a matrix with two columns holding the generalized
+	residuals for the two equations; that is, the expected values
+	of the disturbances conditional on the observed outcomes and
+	covariates.  By default <lit>$yhat</lit> retrieves a matrix
+	with four columns, holding the estimated probabilities of the
+	four possible joint outcomes for (<math>y</math><sub>1</sub>,
+	<math>y</math><sub>2</sub>), in the order (1,1), (1,0), (0,1),
+	(0,0). Alternatively, if the option <opt>--save-xbeta</opt> is
+	given, <lit>$yhat</lit> has two columns and holds the values
+	of the index functions for the respective equations.
+      </para>
+      <para>
+	The output includes a likelihood ratio test of the null
+	hypothesis that the disturbances in the two equations are
+	uncorrelated.
+      </para>
+    </description>
+  </command>
+
   <command name="bootstrap" section="Tests" label="Opzioni bootstrap"
     context="gui">
 
@@ -934,6 +1114,64 @@
 
   </command>
 
+  <command name="bwfilter" section="Transformations" context="gui"
+    label="The Butterworth filter">
+
+    <description>
+      <para>
+	The Butterworth filter is an appromixation to an ideal
+	square-wave filter which allows frequencies over a certain
+	range to pass at full strength while stopping all others.
+      </para>
+      <para>
+	Higher values of the order parameter, <math>n</math>, produce
+	a closer approximation to the ideal filter, in principle,
+	but at the possible cost of numerical instability. The
+	<quote>cutoff</quote> value sets the boundary between
+	the pass band and the stop band. It is expressed in degrees,
+	and must be greater than 0 and less than 180&deg; (or &pi;
+	radians, corresponding to the highest frequency in the
+	data). Smaller values of the cutoff produce a smoother
+	trend.
+      </para>
+      <para>
+	Inspecting the periodogram of the target series is a
+	useful preliminary when you wish to apply this filter.  See
+	<guideref targ="chap-genr"/> for details.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Filter/Butterworth</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="catch" section="Programming" 
+    label="Catch errors" context="cli">
+    <usage>
+      <syntax>
+        <lit>catch</lit> <repl>command</repl>
+      </syntax>
+    </usage>
+    <description>
+      <para>
+	This is not a command in its own right but can be used as a prefix
+	to most regular commands: the effect is to prevent termination of
+	a script if an error occurs in executing the command. If an error
+	does occur, this is registered in an internal error code which can
+	be accessed as <lit>$error</lit> (a zero value indicates success).
+	The value of <lit>$error</lit> should always be checked
+	immediately after using <lit>catch</lit>, and appropriate action
+	taken if the command failed.
+      </para> 
+      <para>
+	The <lit>catch</lit> keyword cannot be used before <lit>if</lit>,
+	<lit>elif</lit> or <lit>endif</lit>.
+      </para>
+    </description>
+  </command>
+
   <command name="chow" section="Tests" label="Test di Chow">
 
     <usage>
@@ -980,6 +1218,63 @@
       <menu-path>Finestra del modello, /Test/CHOW</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="clear" section="Programming" context="cli">
+    <usage>
+      <options>
+	<option>
+	  <flag>--dataset</flag>
+	  <effect>clear dataset only</effect>
+	</option>
+	<option>
+	  <flag>--other</flag>
+	  <effect>clear everything but the dataset</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	With no options, clears all saved objects, including the current
+	dataset if any, out of memory. Note that opening a new dataset, or
+	using the <cmd>nulldata</cmd> command to create an empty dataset,
+	also has this effect, so use of <cmd>clear</cmd> is not usually
+	necessary.
+      </para>
+      <para>
+	If the <opt>--dataset</opt> option is given, then only the dataset
+	is cleared; other saved objects such as named matrices and scalars
+	are preserved.
+      </para>
+      <para>
+	If the <opt>--other</opt> option is given, then the current
+	dataset, if any, is preserved but all other saved objects are
+	destroyed.
+      </para>
+    </description>
+  </command>
+
+  <command name="cluster" section="Estimation" 
+	   label="Robust variance estimation" context="gui">
+    <description>
+      <para>
+	If you select the second option you must supply the name of a
+	clustering variable. This variable should have at least two
+	distinct values but generally should have substantially fewer
+	distinct values than there are observations in the sample
+	range.
+      </para>
+      <para>
+	The <quote>cluster-robust</quote> variance estimator divides
+	the sample into a number of subsets or clusters according to
+	the value taken on by the selected variable.  In place of the
+	classical assumption that the error term is independently and
+	identically distributed, this estimator allows for the error
+	variance to differ by cluster and also allows for a degree of
+	dependence of the error within each cluster.
+      </para>
+    </description>
   </command>
 
   <command name="coeffsum" section="Tests" label="Somma dei coefficienti">
@@ -1508,53 +1803,65 @@
 
   </command>
 
-  <command name="criteria" section="Utilities" label="Criteri di selezione dei modelli" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>ess</argument>
-        <argument>T</argument>
-        <argument>k</argument>
-      </arguments>
-      <examples>
-        <example>criteria 23.45 45 8</example>
-      </examples>
-    </usage>
+  <command name="count-model" section="Estimation" context="gui"
+    label="Models for count data">
 
     <description>
       <para>
-	Calcola il criterio di informazione di Akaike (AIC), il criterio
-        di informazione bayesiana di Schwarz (BIC) e il criterio di
-        Hannan&ndash;Quinn, dati <repl>ess</repl> (somma dei quadrati degli
-        errori), il numero delle osservazioni (<math>T</math>) e quello dei
-        coefficienti (<math>k</math>).  <math>T</math>, <math>k</math> e
-        <repl>ess</repl> possono essere valori numerici o nomi di
-        variabili definite in precedenza.
+	The dependent variable is taken to represent a count of the occurrence
+	of events of some sort, and must have only non-negative integer
+	values. By default the Poisson distribution is used, but the drop-down
+	selector gives the options of using the Negative Binomial
+	distribution. (The variant NegBin 2 is commonly used in econometrics,
+	but the lesser used NegBin 1 is also available.)
       </para>
       <para>
-	L'AIC è calcolato come nella formulazione originale di Akaike (1974),
-        ossia
-	<equation status="display"
-	  tex="\[{\rm AIC} = -2 \ell + 2k\]"
-	  ascii="AIC = -2L + 2k"
-          graphic="aic"/>
-	dove <equation status="inline" 
-	  tex="$\ell$" ascii="L"
-	  graphic="ell"/> denota la log-verosimiglianza massimizzata.
-	Il BIC è calcolato come
-	<equation status="display"
-	  tex="\[{\rm BIC} = -2 \ell + k \log T\]"
-	  ascii="BIC = -2L + k log T"
-          graphic="bic_orig"/>
-	Il HQC è calcolato come
-	<equation status="display"
-	  tex="\[{\rm HQC} = -2 \ell + 2k \log \log T\]"
-	  ascii="HQC = -2L + 2k log log T"
-          graphic="hqc"/>
-	Si veda la <guideref targ="select-criteria"/> per ulteriori dettagli.
+	Optionally, you may add an <quote>offset</quote> variable to the
+	specification.  This is a scale variable, the log of which is added to
+	the linear regression function (implicitly, with a coefficient of
+	1.0).  This makes sense if you expect the number of occurrences of the
+	event in question to be proportional, other things equal, to some
+	known factor.  For example, the number of traffic accidents might be
+	supposed to be proportional to traffic volume, other things equal, and
+	in that case traffic volume could be specified as an
+	<quote>offset</quote> in a model of the accident rate. The
+	offset variable must be strictly positive.  
+      </para>
+      <para>
+	By default, standard errors are computed using a numerical
+	approximation to the Hessian at convergence.  But if the <quote>Robust
+	  standard errors</quote> box is checked then QML standard errors are
+	calculated, using a <quote>sandwich</quote> of the inverse of the
+	Hessian and the outer product of the gradient.
       </para>
     </description>
+  </command>
 
+  <command name="curve" section="Graphs" label="Plot a curve"
+    context="gui">
+
+    <description>
+      <para>
+	This dialog box allows you to create a gnuplot graph by specifying a
+	formula. This must be an expression acceptable to gnuplot.  Use
+	<lit>x</lit> to denote the value of the variable on the x-axis.
+	Please note that gnuplot uses <lit>**</lit> for exponentiation
+	(raising to a power), and that the decimal character must be given as
+	<quote>.</quote>.  Examples:
+      </para>
+      <code>
+	10+0.35*x
+	100+5.3*x-0.12*x**2
+	sin(x)
+	exp(sqrt(pi*x))
+      </code>
+      <para>
+	To put an additional line onto a graph created in this way, click
+	on the graph and select <quote>Edit</quote>, select the
+	<quote>Lines</quote> tab in the graph editing dialog, and use
+	the <quote>Add line</quote> button.
+      </para>
+    </description>
   </command>
 
   <command name="cusum" section="Tests" label="Test CUSUM">
@@ -1776,6 +2083,36 @@
     </description>
   </command>
 
+  <command name="debug" section="Programming" context="cli"
+    label="Debugging">
+
+    <usage>
+      <arguments>
+        <argument>function</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Experimental debugger for user-defined functions, available in the
+	command-line program, gretlcli, and in the GUI console.  The
+	<lit>debug</lit> command should be invoked after the function in
+	question is defined but before it is called.  The effect is that
+	execution pauses when the function is called and a special prompt is
+	shown.
+      </para>
+      <para>
+	At the debugging prompt you can type <lit>next</lit> to execute the
+	next command in the function, or <lit>continue</lit> to allow
+	execution of the function to continue unimpeded. These commands can be
+	abbreviated as <lit>n</lit> and <lit>c</lit> respectively.  You can
+	also interpolate an instruction at this prompt, for example a
+	<lit>print</lit> command to reveal the current value of some variable
+	of interest.
+      </para>
+    </description>
+  </command>  
+
   <command name="delete" section="Dataset" label="Elimina variabili" context="cli">
 
     <usage>
@@ -1792,7 +2129,7 @@
 
     <description>
       <para>
-        Per impostazione predefiinita, rimuove dal dataset le variabili
+        Per impostazione predefinita, rimuove dal dataset le variabili
         elencate (specificate tramite il nome o il numero). <emphasis>Usare con
         cautela</emphasis>: non viene chiesta conferma dell'operazione e le
         variabili con numeri identificativi più alti vengono ri-numerate.
@@ -2060,6 +2397,141 @@
 
   </command>
 
+  <command name="dpanel" section="Estimation" label="Dynamic panel models">
+
+    <usage>
+      <arguments>
+	<argument>p</argument>
+	<argblock separated="true">
+	  <argument>depvar</argument>
+	  <argument>indepvars</argument>
+	</argblock>
+	<argblock optional="true" separated="true">
+	  <argument>instruments</argument>
+	</argblock>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't show estimated model</effect>
+	</option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+        <option>
+	  <flag>--two-step</flag>
+	  <effect>perform 2-step GMM estimation</effect>
+        </option>
+        <option>
+	  <flag>--system</flag>
+	  <effect>add equations in levels</effect>
+        </option>
+        <option>
+	  <flag>--time-dummies</flag>
+	  <effect>add time dummy variables</effect>
+        </option>
+        <option>
+	  <flag>--dpdstyle</flag>
+	  <effect>emulate DPD package for Ox</effect>
+        </option>
+        <option>
+	  <flag>--asymptotic</flag>
+	  <effect>uncorrected asymptotic standard errors</effect>
+        </option>
+      </options>
+      <examples>
+        <example>dpanel 2 ; y x1 x2</example>
+	<example>dpanel 2 ; y x1 x2 --system</example>
+        <example>dpanel {2 3} ; y x1 x2 ; x1</example>
+	<example>dpanel 1 ; y x1 x2 ; x1 GMM(x2,2,3)</example>
+	<demos>
+	  <demo>bbond98.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Carries out estimation of dynamic panel data models (that is,
+	panel models including one or more lags of the dependent
+	variable) using either the GMM-DIF or GMM-SYS method.
+      </para>
+      <para context="cli">
+	The parameter <repl>p</repl> represents the order of the
+	autoregression for the dependent variable. In the simplest
+	case this is a scalar value, but a pre-defined matrix may be
+	given for this argument, to specify a set of (possibly
+	non-contiguous) lags to be used.
+      </para>
+      <para>
+	The dependent variable and regressors should be given in
+	levels form; they will be differenced automatically (since
+	this estimator uses differencing to cancel out the individual
+	effects).
+      </para>
+      <para context="cli">
+	The last (optional) field in the command is for specifying
+	instruments.  If no instruments are given, it is assumed that all
+	the independent variables are strictly exogenous.  If you specify
+	any instruments, you should include in the list any strictly
+	exogenous independent variables.  For predetermined regressors,
+	you can use the <lit>GMM</lit> function to include a specified
+	range of lags in block-diagonal fashion.  This is illustrated in
+	the third example above.  The first argument to <lit>GMM</lit> is
+	the name of the variable in question, the second is the minimum
+	lag to be used as an instrument, and the third is the maximum lag.
+	The same syntax can be used with the <lit>GMMlevel</lit>
+	function to specify GMM-type instruments for the equations
+	in levels.
+      </para>
+      <para context="gui">
+	As regards the handling of instruments, please see the
+	documentation for the script version of this command.  Currently
+	you cannot specify instruments explicitly in the GUI: all the
+	independent variables are taken to be strictly exogenous.
+      </para>
+      <para>
+	By default the results of 1-step estimation are reported (with
+	robust standard errors).  You may select 2-step estimation as an
+	option.  In both cases tests for autocorrelation of orders 1 and 2
+	are provided, as well as the Sargan overidentification test and a
+	Wald test for the joint significance of the regressors.  Note that
+	in this differenced model first-order autocorrelation is not a
+	threat to the validity of the model, but second-order
+	autocorrelation violates the maintained statistical assumptions.
+      </para>
+      <para context="cli">
+	In the case of 2-step estimation, standard errors are by default
+	computed using the finite-sample correction suggested by <cite
+	key="windmeijer05">Windmeijer (2005)</cite>.  The standard
+	asymptotic standard errors associated with the 2-step estimator
+	are generally reckoned to be an unreliable guide to inference, but
+	if for some reason you want to see them you can use the
+	<opt>--asymptotic</opt> option to turn off the Windmeijer
+	correction.
+      </para>
+      <para context="cli">
+	If the <opt>--time-dummies</opt> option is given, a set of
+	time dummy variables is added to the specified regressors.  
+	The number of dummies is one less than the maximum number of
+	periods used in estimation, to avoid perfect collinearity with
+	the constant.  The dummies are entered in differenced form unless
+	the <opt>--dpdstyle</opt> option is given, in which case they
+	are entered in levels.
+      </para>
+      <para>
+	For further details and examples, please see <guideref
+	targ="chap-dpanel"/>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Panel/Dynamic panel model</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="dummify" section="Transformations" label="Crea variabili dummy" context="cli">
 
     <usage>
@@ -2116,6 +2588,88 @@
 
   </command>
  
+  <command name="duration" section="Estimation" label="Duration models" 
+    context="cli">
+    <usage>
+      <arguments>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+        <argument separated="true" optional="true">censvar</argument>
+      </arguments>
+      <options>
+        <option>
+          <flag>--exponential</flag>
+          <effect>use exponential distribution</effect>
+        </option>
+        <option>
+          <flag>--loglogistic</flag>
+          <effect>use log-logistic distribution</effect>
+        </option>
+        <option>
+          <flag>--lognormal</flag>
+          <effect>use log-normal distribution</effect>
+        </option>
+        <option>
+          <flag>--medians</flag>
+          <effect>fitted values are medians</effect>
+        </option>
+        <option>
+          <flag>--robust</flag>
+          <effect>robust (QML) standard errors</effect>
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>see <cmdref targ="logit"/> for explanation</effect>
+        </option>
+        <option>
+          <flag>--vcv</flag>
+          <effect>print covariance matrix</effect>
+        </option>
+        <option>
+          <flag>--verbose</flag>
+          <effect>print details of iterations</effect>
+        </option>
+      </options>      
+      <examples>
+        <example>duration y 0 x1 x2</example>
+	<example>duration y 0 x1 x2 ; cens</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Estimates a duration model: the dependent variable (which must be
+	positive) represents the duration of some state of affairs, for 
+	example the length of spells of unemployment for a cross-section
+	of respondents. By default the Weibull distribution is used but
+	the exponential, log-logistic and log-normal distributions are
+	also available.
+      </para>
+      <para>
+	If some of the duration measurements are right-censored (&eg; an
+	individual's spell of unemployment has not come to an end within the
+	period of observation) then you should supply the trailing argument
+	<repl>censvar</repl>, a series in which non-zero values indicate
+	right-censored cases.
+      </para>
+      <para>
+	By default the fitted values obtained via the accessor
+	<lit>$yhat</lit> are the conditional means of the durations, but if
+	the <opt>--medians</opt> option is given then <lit>$yhat</lit>
+	provides the conditional medians instead.
+      </para>
+      <para>
+	Please see <guideref targ="chap:discr-models"/> for details.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Nonlinear models/Duration data...</menu-path>
+    </gui-access>
+
+  </command>  
+
   <command name="elif" section="Programming" label="Strutture di controllo" context="cli">
 
     <description><para>Si veda <cmdref targ="if"/>.</para>
@@ -2559,6 +3113,63 @@
        Si veda la <guideref targ="chap:gretlR"/> per dettagli ed esempi.
       </para>
     </description>
+
+  </command>
+
+  <command name="fractint" section="Statistics" label="Fractional integration">
+  
+    <usage>
+      <arguments>
+        <argument>series</argument>
+	<argument optional="true">order</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--gph</flag>
+	  <effect>do Geweke and Porter-Hudak test</effect>
+        </option>
+        <option>
+	  <flag>--all</flag>
+	  <effect>do both tests</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>don't print results</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Tests the specified series for fractional integration
+	(<quote>long memory</quote>). The null hypothesis is that the
+	integration order of the series is zero.  By default the local
+	Whittle estimator <cite key="robinson95" p="true">(Robinson,
+	1995)</cite> is used but if the <opt>--gph</opt> option is given
+	the GPH test <cite key="GPH83" p="true">(Geweke and
+	Porter-Hudak, 1983)</cite> is performed instead. If the
+	<opt>--all</opt> flag is given then the results of both tests
+	are printed.
+      </para>
+      <para>
+	For details on this sort of test, see <cite key="phillips04">Phillips 
+	and Shimotsu (2004)</cite>. 
+      </para>
+      <para>
+	If the optional <repl>order</repl> argument is not given the order
+	for the test(s) is set automatically as the lesser of
+	<math>T</math>/2 and <math>T</math><sup>0.6</sup>.
+      </para>
+      <para>
+	The results can be retrieved using the accessors <lit>$test</lit>
+	and <lit>$pvalue</lit>. These values are based on the Local
+	Whittle Estimator unless the <opt>--gph</opt> option is given.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Unit root tests/Fractional integration</menu-path>
+    </gui-access>
 
   </command>
 
@@ -3389,46 +4000,19 @@
 
   </command>
 
-  <command name="graph" section="Graphs" label="Crea un grafico ASCII" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>variabili-y</argument>
-        <argument>variabile-x</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--tall</flag>
-	  <effect>usa 40 righe</effect>
-        </option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-	Grafici ASCII.  Le <repl>variabili-y</repl> (che possono essere
-        definite per nome o numero) sono rappresentate rispetto alla
-        <repl>variabile-x</repl> usando simboli ASCII. L'opzione
-        <lit>--tall</lit> produce un grafico di 40 righe per 60 colonne,
-        altrimenti il grafico sarà di 20 righe per 60 colonne (per la
-        visualizzazione a schermo). Si veda anche <cmdref targ="gnuplot"/>.
-      </para>
-    </description>
-
-  </command>
-
   <command name="graphing" section="Graphs" context="gui"
     label="Grafici">
 
     <description>
 
       <para>
-        Gretl richiama un programma separato, gnuplot, per generare
-	i grafici. Gnuplot è un programma di grafica molto completo, con
+        Gretl richiama un programma separato, gnuplot, per generare i
+        grafici. Gnuplot è un programma di grafica molto completo, con
         una miriade di opzioni; gretl fornisce l'accesso, attraverso
-        un'interfaccia grafica, a una parte di queste opzioni, cercando
-        di scegliere dei valori, ma è possibile anche controllare
-        l'aspetto di un grafico in tutti i suoi dettagli, se si vuole.
+        un'interfaccia grafica, a una parte di queste opzioni,
+        cercando di scegliere dei valori, ma è possibile anche
+        controllare l'aspetto di un grafico in tutti i suoi dettagli,
+        se si vuole.
       </para>
 
       <para>
@@ -3465,10 +4049,10 @@
       </ilist>
 
       <para>
-	Se si conosce gnuplot e si desidera un controllo sull'aspetto
-        del grafico più preciso di quello fornito dalla finestra di
-        modifica del grafico (opzione <quote>Modifica</quote>), ci sono
-        due possibilità:
+	Se si conosce gnuplot e si desidera un controllo sull'aspetto del
+	grafico più preciso di quello fornito dalla finestra di modifica
+	del grafico (opzione <quote>Modifica</quote>), ci sono due
+	possibilità:
       </para>
 
       <ilist>
@@ -3505,8 +4089,7 @@
 
   </command>
 
-  <command name="graphpg" section="Graphs" context="gui"
-    label="Pagina dei grafici">
+  <command name="graphpg" section="Graphs" label="Pagina dei grafici">
 
     <description>
 
@@ -4177,6 +4760,123 @@
 
   </command>
 
+  <command name="join" section="Dataset" label="Manage data sources" 
+	   context="cli">
+
+    <usage>
+      <arguments>
+        <argument>filename</argument>
+	<argument>varname</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--data</flag>
+	  <optparm>column-name</optparm>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--filter</flag>
+	  <optparm>expression</optparm>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--ikey</flag>
+	  <optparm>inner-key</optparm>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--okey</flag>
+	  <optparm>outer-key</optparm>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--aggr</flag>
+	  <optparm>method</optparm>
+	  <effect>see below</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	This command imports a data series from the source
+	<repl>filename</repl> (which must be a delimited text data
+	file) under the name <repl>varname</repl>. For details please
+	see <guideref targ="chap:join"/>; here we just give a brief
+	summary of the available options.
+      </para>
+      <para>
+	The <opt>data</opt> option can be used to specify the column
+	heading of the data in the source file, if this differs from
+	the name by which the data should be known in gretl.
+      </para>
+      <para>
+	The <opt>filter</opt> option can be used to specify a
+	criterion for filtering the source data (that is, selecting a
+	subset of observations).
+      </para> 
+      <para>
+	The <opt>ikey</opt> and <opt>okey</opt> options can be used to 
+	specify a mapping between observations in the current dataset
+	and observations in the source data (for example, individuals
+	can be matched against the household to which they belong).
+      </para>
+      <para>
+	The <opt>aggr</opt> option is used when the mapping between
+	observations in the current dataset and the source is not
+	one-to-one.
+      </para>      
+      <para>
+	See also <cmdref targ="append"/> for simpler joining
+	operations.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="kalman" section="Estimation" label="Kalman filter">
+
+    <usage>
+      <options>
+	<option>
+	  <flag>--cross</flag>
+	  <effect>allow for cross-correlated disturbances</effect>
+	</option>
+	<option>
+	  <flag>--diffuse</flag>
+	  <effect>use diffuse initialization</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Opens a block of statements to set up a Kalman filter.  This block
+	should end with the line <lit>end kalman</lit>, to which the options
+	shown above may be appended.  The intervening lines specify the
+	matrices that compose the filter.  For example,
+      </para>
+      <code>
+	kalman 
+	  obsy y
+	  obsymat H
+	  statemat F
+	  statevar Q
+	end kalman
+      </code>
+      <para>
+	Please see <guideref targ="chap:kalman"/> for details.
+      </para>
+	<para>
+	  <seelist>
+	    <fncref targ="kfilter"/>
+	    <fncref targ="ksimul"/>
+	    <fncref targ="ksmooth"/>
+	  </seelist>
+	</para>
+    </description>
+
+  </command>
 
   <command name="kpss" section="Tests" label="Test KPSS di stazionarietà">
 
@@ -4481,131 +5181,97 @@
 
   </command>
 
-  <command name="modtest" section="Tests" label="Test LM">
+  <command name="levinlin" section="Tests" label="Levin-Lin-Chu test">
 
     <usage>
       <arguments>
-        <argument optional="true">ordine</argument>
+        <argument>order</argument>
+        <argument>series</argument>
       </arguments>
       <options>
-        <option>
-	  <flag>--normality</flag>
-	  <effect>normalità dei residui</effect>
-        </option>
-        <option>
-	  <flag>--logs</flag>
-	  <effect>non-linearità, logaritmi</effect>
-        </option>
-        <option>
-	  <flag>--autocorr</flag>
-	  <effect>correlazione seriale</effect>
-        </option>
-        <option>
-	  <flag>--arch</flag>
-	  <effect>ARCH</effect>
-        </option>
-        <option>
-	  <flag>--squares</flag>
-	  <effect>non-linearità, quadrati</effect>
-        </option>
-        <option>
-	  <flag>--white</flag>
-	  <effect>eteroschedasticità, test di White</effect>
-        </option>
-        <option>
-	  <flag>--white-nocross</flag>
-	  <effect>eteroschedasticità, test di White (solo quadrati)</effect>
-        </option>
-        <option>
-	  <flag>--breusch-pagan</flag>
-	  <effect>eteroschedasticità, test di Breusch&ndash;Pagan</effect>
-        </option>
-        <option>
-	  <flag>--robust</flag>
-	  <effect>stima robusta della varianza per Breusch&ndash;Pagan</effect>
-        </option>
-        <option>
-	  <flag>--panel</flag>
-	  <effect>eteroschedasticità, a gruppi</effect>
-        </option>
-        <option>
+	<option>
+	  <flag>--nc</flag>
+	  <effect>test without a constant</effect>
+	</option>
+	<option>
+	  <flag>--ct</flag>
+	  <effect>with constant and trend</effect>
+	</option>
+	<option>
 	  <flag>--quiet</flag>
-	  <effect>non mostra la regressione ausiliaria</effect>
-        </option>
+	  <effect>suppress printing of results</effect>
+	</option>
       </options>
+      <examples>
+	<example>levinlin 0 y</example>
+        <example>levinlin 2 y --ct</example>
+        <example>levinlin {2,2,3,3,4,4} y</example>
+      </examples>
     </usage>
 
-    <description context="gui">
+    <description>
       <para>
-	Questo comando racchiude vari test di ipotesi. La caratteristica
-        comune è che tutti i test prevedono la stima di una regressione
-        ausiliaria in cui la variabile dipendente è il residuo di una
-        regressione <quote>originale</quote>. Le variabili indipendenti
-        della regressione ausiliaria comprendono quelle della
-        regressione originale e alcuni termini aggiuntivi. La statistica
-        test è calcolata come (ampiezza campionaria * R-quadro) della 
-        regressione ausiliaria: si distribuisce come chi-quadro con
-        gradi di libertà pari al numero dei termini aggiuntivi, sotto
-        l'ipotesi nulla che essi non abbiano potere esplicativo sui
-        residui. Un valore <quote>elevato</quote> del chi-quadro (ossia
-        un basso p-value) suggerisce di rifiutare questa ipotesi nulla.
+	Carries out the panel unit-root test described by <cite
+	key="LLC2002">Levin, Lin and Chu (2002)</cite>. The null
+	hypothesis is that all of the individual time series exhibit a
+	unit root, and the alternative is that none of the series has a
+	unit root. (That is, a common AR(1) coefficient is assumed,
+	although in other respects the statistical properties of the
+	series are allowed to vary across individuals.)
       </para>
-    </description>
+	
+      <para context="cli">
+	By default the test ADF regressions include a constant;
+	to suppress the constant use the <opt>--nc</opt> option, or
+	to add a linear trend use the <opt>--ct</opt> option.
+	(See the <cmdref targ="adf"/> command for explanation of
+	ADF regressions.)
+      </para>
 
-    <description context="cli">
-      <para>
-        Deve seguire immediatamente un comando di stima. A seconda dell'opzione
-        usata, il comando esegue uno dei test seguenti: test dei moltiplicatori
-        di Lagrange per la non-linearità (logaritmi o quadrati), test di White
-        (con o senza i prodotti incrociati) o
-        test di Breusch&ndash;Pagan per l'eteroschedasticità, test LMF per la
-        correlazione seriale (si veda Kiviet, 1986) o test per il modello ARCH
-        (Autoregressive Conditional Heteroskedasticity, si veda anche il comando
-        <cmd>arch</cmd>). La maggior parte delle opzioni sono disponibili solo
-        per modelli stimati con OLS, ma si veda oltre per alcuni dettagli
-        riguardanti la stima con i minimi quadrati a due stadi.
+      <para context="cli">
+	The (non-negative) <repl>order</repl> for the test (governing
+	the number of lags of the dependent variable to include in the
+	ADF regressions) may be given in either of two forms. If a
+	scalar value is given, this is applied to all the individuals
+	in the panel.  The alternative is to provide a matrix
+	containing a specific lag order for each individual; this must
+	be a vector with as many elements as there are individuals in
+	the current sample range. Such a matrix can be specified by
+	name, or constructed using braces as illustrated in the
+	last example above.
       </para>
-      <para>
-	L'argomento opzionale <lit>ordine</lit> è rilevante solo nel caso si
-        scelga l'opzione <lit>--autocorr</lit> o l'opzione <lit>--arch</lit>.
-        Per impostazione predefinita, questi test sono eseguiti usando un ordine
-        di ritardo pari alla periodicità dei dati, ma è possibile anche
-        impostare un ordine di ritardo specifico.
-      </para>
-       <para>
-	L'opzione <lit>--robust</lit> ha effetto solo se viene scelto il test di
-	Breusch&ndash;Pagan; l'effetto è quello di usare lo stimatore robusto
-        per la varianza proposto da Koenker (1981), rendendo il test meno
-        sensibile all'ipotesi di normalità.
-      </para>
-      <para>
-	L'opzione <lit>--panel</lit> è disponibile solo se il modello viene
-        stimato su dati panel: in questo caso viene eseguito un test per
-        eteroschedasticità a gruppi (ossia per una varianza dell'errore diversa
-        fra le unità cross section).
-      </para>
-      <para>
-	Per impostazione predefinita, il programma mostra la regressione
-        ausiliaria su cui si basa la statistica test, ma è possibile evitarlo
-        usando l'opzione <lit>--quiet</lit>. La statistica test e il suo p-value
-        possono essere recuperati usando le variabili accessorie <lit>$test</lit>
-        e <lit>$pvalue</lit>.
-      </para>
-      <para>
-        Nel caso di modelli stimati col metodo dei minimi quadrati a due stadi
-        (si veda <cmdref targ="tsls"/>), non è possibile usare il test LM, quindi
-        gretl offre alcuni test equivalenti; in questo caso, l'opzione
-        <flag>--autocorr</flag> calcola il test di Godfrey per
-        l'autocorrelazione (si veda Godfrey 1994),
-        mentre l'opzione <flag>--white</flag> produce il test HET1 per
-        l'eteroschedasticità (si veda Pesaran e Taylor 1999).
-      </para>
+
     </description>
 
     <gui-access>
-      <menu-path>Finestra del modello, /Test</menu-path>
+      <menu-path>/Variable/Unit root tests/Levin-Lin-Chu test</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="loess" section="Estimation" label="Loess" context="gui">
+    <description>
+      <para>
+	Performs locally-weighted polynomial regression and produces a
+	series containing predicted values of the dependent variable for
+	each non-missing value of the independent variable. The method is
+	as described by <cite key="cleveland79">William Cleveland
+	(1979)</cite>.
+      </para>
+      <para>
+	The controls allow you to specify the order of the polynomial
+	in the independent variable and the proportion of the data
+	points to be used in each local regression (the
+	bandwidth). Higher values of the bandwidth produce a smoother
+	outcome.
+      </para>
+      <para>
+	If the robust weights box is checked the local regression
+	procedure is iterated twice, with the weights being modified
+	based on the residuals from the previous iteration so as to
+	give less influence to outliers.
+      </para>
+     </description>
   </command>
 
   <command name="logistic" section="Estimation"
@@ -4925,21 +5591,65 @@
 
   </command>
 
-  <command name="markers" section="Dataset" context="gui"
-    label="Aggiunta di marcatori">
+  <command name="makepkg" section="Programming" context="cli"
+    label="Make function package">
+
+    <usage>
+      <arguments>
+        <argument>filename</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--index</flag>
+	  <effect>write auxiliary index file</effect>
+        </option>
+        <option>
+	  <flag>--translations</flag>
+	  <effect>write auxiliary strings file</effect>
+        </option>
+      </options>
+    </usage>    
+
+    <description>
+      <para>
+	Supports creation of a gretl function package via the command
+	line. The filename argument represents the name of the package
+	to be created, and should have the <lit>.gfn</lit>
+	extension. Please see <guideref targ="chap:functions"/> for
+	details.
+      </para>
+      <para>
+	The option flags support the writing of auxiliary files for
+	use with gretl <quote>addons</quote>. The index file is a
+	short XML document containing basic information about the
+	package; it has the same basename as the package and the
+	extension <lit>.xml</lit>. The translations file contains
+	strings from the package that may be suitable for translation,
+	in C format; for package <lit>foo</lit> this file is named
+	<lit>foo-i18n.c</lit>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/File/Function files/New package</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="markers" section="Dataset" label="Aggiunta di marcatori" context="cli">
 
     <description>
       <para>
 	Questo comando richiede il nome di un file che contiene
-        <quote>marcatori</quote> per le osservazioni, ossia brevi stringhe
-        identificative per singole osservazioni del dataset (ad esempio
-        nomi di paesi o città, o altri codici), che possono essere
-        lunghe fino a 8 caratteri. Il file deve contenere un marcatore
-        per riga e devono esserci tanti marcatori quante sono le
-        osservazioni nel dataset attuale. Se queste condizioni sono
-        rispettate e se il file specificato esiste, i marcatori verranno
-        aggiunti al dataset e saranno visibili scegliendo <quote>Mostra valori</quote>
-        dal menù Dati di gretl.</para>
+	<quote>marcatori</quote> per le osservazioni, ossia brevi stringhe
+	identificative per singole osservazioni del dataset (ad esempio
+	nomi di paesi o città, o altri codici), che possono essere lunghe
+	fino a 8 caratteri. Il file deve contenere un marcatore per riga e
+	devono esserci tanti marcatori quante sono le osservazioni nel
+	dataset attuale. Se queste condizioni sono rispettate e se il file
+	specificato esiste, i marcatori verranno aggiunti al dataset e
+	saranno visibili scegliendo <quote>Mostra valori</quote> dal menù
+	Dati di gretl.</para>
     </description>
   </command>
 
@@ -5302,6 +6012,133 @@
 
   </command>
 
+  <command name="modtest" section="Tests" label="Test LM">
+
+    <usage>
+      <arguments>
+        <argument optional="true">ordine</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--normality</flag>
+	  <effect>normalità dei residui</effect>
+        </option>
+        <option>
+	  <flag>--logs</flag>
+	  <effect>non-linearità, logaritmi</effect>
+        </option>
+        <option>
+	  <flag>--autocorr</flag>
+	  <effect>correlazione seriale</effect>
+        </option>
+        <option>
+	  <flag>--arch</flag>
+	  <effect>ARCH</effect>
+        </option>
+        <option>
+	  <flag>--squares</flag>
+	  <effect>non-linearità, quadrati</effect>
+        </option>
+        <option>
+	  <flag>--white</flag>
+	  <effect>eteroschedasticità, test di White</effect>
+        </option>
+        <option>
+	  <flag>--white-nocross</flag>
+	  <effect>eteroschedasticità, test di White (solo quadrati)</effect>
+        </option>
+        <option>
+	  <flag>--breusch-pagan</flag>
+	  <effect>eteroschedasticità, test di Breusch&ndash;Pagan</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>stima robusta della varianza per Breusch&ndash;Pagan</effect>
+        </option>
+        <option>
+	  <flag>--panel</flag>
+	  <effect>eteroschedasticità, a gruppi</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra la regressione ausiliaria</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description context="gui">
+      <para>
+	Questo comando racchiude vari test di ipotesi. La caratteristica
+        comune è che tutti i test prevedono la stima di una regressione
+        ausiliaria in cui la variabile dipendente è il residuo di una
+        regressione <quote>originale</quote>. Le variabili indipendenti
+        della regressione ausiliaria comprendono quelle della
+        regressione originale e alcuni termini aggiuntivi. La statistica
+        test è calcolata come (ampiezza campionaria * R-quadro) della 
+        regressione ausiliaria: si distribuisce come chi-quadro con
+        gradi di libertà pari al numero dei termini aggiuntivi, sotto
+        l'ipotesi nulla che essi non abbiano potere esplicativo sui
+        residui. Un valore <quote>elevato</quote> del chi-quadro (ossia
+        un basso p-value) suggerisce di rifiutare questa ipotesi nulla.
+      </para>
+    </description>
+
+    <description context="cli">
+      <para>
+        Deve seguire immediatamente un comando di stima. A seconda dell'opzione
+        usata, il comando esegue uno dei test seguenti: test dei moltiplicatori
+        di Lagrange per la non-linearità (logaritmi o quadrati), test di White
+        (con o senza i prodotti incrociati) o
+        test di Breusch&ndash;Pagan per l'eteroschedasticità, test LMF per la
+        correlazione seriale (si veda Kiviet, 1986) o test per il modello ARCH
+        (Autoregressive Conditional Heteroskedasticity, si veda anche il comando
+        <cmd>arch</cmd>). La maggior parte delle opzioni sono disponibili solo
+        per modelli stimati con OLS, ma si veda oltre per alcuni dettagli
+        riguardanti la stima con i minimi quadrati a due stadi.
+      </para>
+      <para>
+	L'argomento opzionale <lit>ordine</lit> è rilevante solo nel caso si
+        scelga l'opzione <lit>--autocorr</lit> o l'opzione <lit>--arch</lit>.
+        Per impostazione predefinita, questi test sono eseguiti usando un ordine
+        di ritardo pari alla periodicità dei dati, ma è possibile anche
+        impostare un ordine di ritardo specifico.
+      </para>
+       <para>
+	L'opzione <lit>--robust</lit> ha effetto solo se viene scelto il test di
+	Breusch&ndash;Pagan; l'effetto è quello di usare lo stimatore robusto
+        per la varianza proposto da Koenker (1981), rendendo il test meno
+        sensibile all'ipotesi di normalità.
+      </para>
+      <para>
+	L'opzione <lit>--panel</lit> è disponibile solo se il modello viene
+        stimato su dati panel: in questo caso viene eseguito un test per
+        eteroschedasticità a gruppi (ossia per una varianza dell'errore diversa
+        fra le unità cross section).
+      </para>
+      <para>
+	Per impostazione predefinita, il programma mostra la regressione
+        ausiliaria su cui si basa la statistica test, ma è possibile evitarlo
+        usando l'opzione <lit>--quiet</lit>. La statistica test e il suo p-value
+        possono essere recuperati usando le variabili accessorie <lit>$test</lit>
+        e <lit>$pvalue</lit>.
+      </para>
+      <para>
+        Nel caso di modelli stimati col metodo dei minimi quadrati a due stadi
+        (si veda <cmdref targ="tsls"/>), non è possibile usare il test LM, quindi
+        gretl offre alcuni test equivalenti; in questo caso, l'opzione
+        <flag>--autocorr</flag> calcola il test di Godfrey per
+        l'autocorrelazione (si veda Godfrey 1994),
+        mentre l'opzione <flag>--white</flag> produce il test HET1 per
+        l'eteroschedasticità (si veda Pesaran e Taylor 1999).
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Finestra del modello, /Test</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="mpols" section="Estimation"
     label="Stima OLS a precisione multipla">
 
@@ -5362,6 +6199,106 @@
       <menu-path>/Modello/Altri modelli lineari/MPOLS - Minimi quadrati in alta precisione</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="nadarwat" section="Estimation" label="Nadaraya-Watson" 
+	   context="gui">
+    <description>
+      <para>
+	Computes the Nadaraya&ndash;Watson nonparametric estimator of
+	the conditional mean of the dependent variable,
+	<math>m(x)</math>, for each non-missing value of the
+	independent variable.
+      </para>
+      <para>
+	The kernel function <math>K</math> is given by <math>K =
+	exp(-x</math><sup>2</sup><math> / 2h)</math> for <math>|x|
+	&lt; T</math> and zero otherwise.
+      </para>
+      <para>
+	The bandwidth, usually a small number, controls the smoothness
+	of <math>m(x)</math> (higher values producing a smoother
+	series); the default value is <math>n</math><sup>-0.2</sup>.
+      </para>
+      <para>
+	If the <quote>leave-one-out</quote> box is checked, a variant
+	of the estimator is employed in which the <math>i</math>-th
+	observation is not used in evaluating
+	<math>m(x</math><sub>i</sub><math>)</math>. This makes the
+	Nadaraya&ndash;Watson estimator more robust numerically and
+	its usage is normally advised when the estimator is computed
+	for inference purposes.
+      </para>
+     </description>
+  </command>
+
+  <command name="negbin" section="Estimation"
+    label="Negative Binomial regression">
+
+    <usage>
+      <arguments>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+	<argument separated="true" optional="true">offset</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--model1</flag>
+	  <effect>use NegBin 1 model</effect>
+	</option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>QML covariance matrix</effect>
+	</option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>see <cmdref targ="logit"/> for explanation</effect>
+        </option>
+	<option>
+	  <flag>--opg</flag>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print details of iterations</effect>
+	</option>
+      </options>
+    </usage>  
+
+    <description>
+      <para>
+	Estimates a Negative Binomial model.  The dependent variable is taken
+	to represent a count of the occurrence of events of some sort, and
+	must have only non-negative integer values. By default the model
+	NegBin 2 is used, in which the conditional variance of the count is
+	given by &mu;(1 + &alpha;&mu;), where &mu; denotes the conditional
+	mean.  But if the <opt>--model1</opt> option is given the conditional
+	variance is &mu;(1 + &alpha;).
+      </para>
+      <para>
+	The optional <lit>offset</lit> series works in the same way as for the
+	<cmdref targ="poisson"/> command.  The Poisson model is a restricted
+	form of the Negative Binomial in which &alpha; = 0 by construction.
+      </para>
+      <para>
+	By default, standard errors are computed using a numerical
+	approximation to the Hessian at convergence.  But if the
+	<opt>--opg</opt> option is given the covariance matrix is based on
+	the Outer Product of the Gradient (OPG), or if the
+	<opt>--robust</opt> option is given QML standard errors are
+	calculated, using a <quote>sandwich</quote> of the inverse of the
+	Hessian and the OPG.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Nonlinear models/Count data...</menu-path>
+    </gui-access>
   </command>
 
   <command name="nls" section="Estimation" label="Minimi quadrati non-lineari">
@@ -6366,6 +7303,38 @@
 
   </command>
 
+  <command name="polyweights" section="Transformations" context="gui"
+    label="Polynomial trend fitting">
+
+    <description>
+      <para>
+	In fitting a polynomial trend to a time series it may be
+	desirable to give extra weight to the observations at the
+	start and end of the sample. (Points in the middle of the
+	sample range have neighbours on both sides that are likely to
+	be pulling the fit in the same general direction.)
+      </para>
+      <para>
+	The weighting schemes offered here (quadratic, cosine-bell and
+	steps) can be used to this effect. If you select one of these
+	schemes two additional settings must be chosen: first, what
+	maximum weight should be used (the minimum, baseline weight is
+	1.0)?  Second, what central fraction of the sample should be
+	given a uniform (minimal) weighting?
+      </para>
+      <para>
+	Suppose, for example, you select a maximum weight of 3.0 and a
+	central fraction of 0.4. This means that the middle 40 percent
+	of the data get a weight of 1.0. If the steps shape is
+	selected the first and last 30 percent of the observations get
+	a weight of 3.0; otherwise, for the first 30 percent of
+	observations the weights decline gradually from 3.0 to 1.0; and
+	for the last 30 percent the weights increase from 1.0 to 3.0.
+      </para>
+    </description>
+
+  </command>
+
   <command name="poisson" section="Estimation" label="Stima Poisson">
 
     <usage>
@@ -6433,32 +7402,6 @@
     <gui-access>
       <menu-path>/Modello/Modelli non lineari/Poisson</menu-path>
     </gui-access>
-
-  </command>
-
-  <command name="plot" section="Graphs" label="Grafici ASCII" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>lista-variabili</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--one-scale</flag>
-	  <effect>forza l'uso di un'unica scala</effect>
-        </option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-	Disegna i valori delle variabili indicate per l'intervallo di
-        osservazioni attuale, usando simboli ASCII. Ogni riga
-        rappresenta un'osservazione e i valori sono disegnati
-        orizzontalmente. Il comportamento predefinito è di scalare la
-        variabili in modo appropriato. Si veda anche <cmdref targ="gnuplot"/>.
-      </para>
-    </description>
 
   </command>
 
@@ -6777,6 +7720,64 @@
 
     <gui-access>
       <menu-path>Finestra del modello, /Test/QLR</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="qqplot" section="Graphs" label="Q-Q plot">
+
+    <usage>
+      <altforms>
+	<altform><lit>qqplot</lit> <repl>y</repl></altform>
+	<altform><lit>qqplot</lit> <repl>y</repl> <repl>x</repl></altform>
+      </altforms>
+      <options>
+	<option>
+	  <flag>--z-scores</flag>
+	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--raw</flag>
+	  <effect>see below</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para context="gui">
+	With just one series selected, displays a plot of the empirical
+	quantiles of the given series against the quantiles of the normal
+	distribution. The series must include at least 20 valid observations
+	in the current sample range. By default the empirical quantiles are
+	plotted against quantiles of the normal distribution having the same
+	mean and variance as the sample data, but two alternatives are
+	available: the data may be standardized (converted to z-scores) before
+	plotting, or the <quote>raw</quote> empirical quantiles may be plotted
+	against the quantiles of the standard normal distribution.
+      </para>
+      <para context="cli">
+	Given just one series argument, displays a plot of the empirical
+	quantiles of the selected series (given by name or ID number)
+	against the quantiles of the normal distribution. The series must
+	include at least 20 valid observations in the current sample
+	range. By default the empirical quantiles are plotted against
+	quantiles of the normal distribution having the same mean and
+	variance as the sample data, but two alternatives are available:
+	if the <opt>--z-scores</opt> option is given the data are
+	standardized, while if the <opt>--raw</opt> option is given the
+	<quote>raw</quote> empirical quantiles are plotted against the
+	quantiles of the standard normal distribution. 
+      </para>
+      <para>
+	Given two series arguments, <repl>y</repl> and <repl>x</repl>,
+	displays a plot of the empirical quantiles of <repl>y</repl> against
+	those of <repl>x</repl>. The data values are not standardized.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Normal Q-Q plot</menu-path>
+      <menu-path>/View/Graph specified vars/Q-Q plot</menu-path>
     </gui-access>
 
   </command>
@@ -7372,6 +8373,84 @@
     </description>
   </command>
 
+  <command name="save-labels" section="Utilities" 
+    label="Save or remove series labels" context="gui">
+    <description>
+      <para>
+	If you choose Export here, gretl will write a file containing 
+	the descriptive labels of any series in the current dataset
+	that have such labels. This is a plain text file with one
+	line per variable. The line will be empty for variables that
+	have no descriptive label.
+      </para>
+      <para>
+	If you choose Remove, the descriptive labels will be removed
+	for all series that have such labels. This would be
+	appropriate only if the current labels have somehow been
+	added in error.
+      </para>
+    </description>
+  </command>
+
+  <command name="add-labels" section="Utilities" 
+    label="Add series labels" context="gui">
+    <description>
+      <para>
+	If you choose Yes here, you are offered a file-open dialog box to
+	select a plain text file containing descriptive labels for the
+	series in the current dataset. The file should contain one label
+	per line; a blank line means no label. Gretl will attempt to read
+	as many labels as there are series in the dataset, excluding the
+	constant.
+      </para>
+    </description>
+  </command>
+
+  <command name="save-script" section="Utilities" 
+    label="Save commands?" context="gui">
+    <description>
+      <para>
+	If you choose Yes here, gretl will write a file containing a
+	record of the commands you executed in the current session.  Most
+	commands that you execute via <quote>point and click</quote> have
+	a <quote>script</quote> counterpart, and it is these script
+	commands that will be saved.  You could take the file as the basis
+	for writing a gretl command script.
+      </para>
+      <para>
+	If you don't care to be prompted to save a record of commands
+	on exit, uncheck the tick box in the save commands dialog.
+      </para>
+    </description>
+  </command>
+
+  <command name="save-session" section="Utilities" 
+    label="Save this gretl session?" context="gui">
+    <description>
+      <para>
+	If you choose Yes here, gretl will write a file containing a
+	<quote>snapshot</quote> of the current session, including a copy of
+	the working dataset along with any models, graphs or other objects
+	that you have saved <quote>as icons</quote>.  You can re-open this
+	file later to recreate the state of gretl as of the time you quit the
+	session (see the <quote>File/Session files</quote> menu).
+      </para>
+      <para>
+	If you mostly work with gretl using command scripts (which we
+	recommend for <quote>serious</quote> econometric work) you
+	probably don't need to save the session, but you should be
+	sure to save any changes to your script that you wish to keep.
+	You may also want to save any changes to your dataset, unless
+	these are of a sort that can easily be recreated by running
+	a script.
+      </para>
+      <para>
+	If you work with scripts and don't care to be prompted to
+	save your session on exit, uncheck the tick box in the
+	save session dialog.
+      </para>
+    </description>
+  </command>
 
   <command name="scatters" section="Graphs"
     label="Grafici multipli per coppie di variabili">
@@ -8828,6 +9907,51 @@
 
   </command>
 
+  <command name="textplot" section="Graphs" label="Grafici ASCII" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>lista-variabili</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--time-series</flag>
+	  <effect>disegna per osservazione</effect>
+        </option>
+        <option>
+	  <flag>--one-scale</flag>
+	  <effect>forza l'uso di un'unica scala</effect>
+        </option>
+        <option>
+	  <flag>--tall</flag>
+	  <effect>usa 40 linee</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Quick and simple ASCII graphics.  Without the <opt>--time-series</opt>
+	flag, <repl>varlist</repl> must contain at least two series, the last
+	of which is taken as the variable for the <math>x</math> axis, and a
+	scatter plot is produced. In this case the <opt>--tall</opt> option
+	may be used to produce a graph in which the <math>y</math> axis is
+	represented by 40 rows of characters (the default is 20 rows).
+      </para>
+      <para>
+	With the <opt>--time-series</opt>, a plot by observation is produced.
+	In this case the option <opt>--one-scale</opt> may be used to force
+	the use of a single scale; otherwise if <repl>varlist</repl> contains
+	more than one series the data may be scaled. Each line represents an
+	observation, with the data values plotted horizontally.  
+      </para>
+      <para>
+	See also <cmdref targ="gnuplot"/>.
+      </para>
+    </description>
+
+  </command>
+
   <command name="tobit" section="Estimation" label="Stima Tobit">
 
     <usage>
@@ -9521,6 +10645,35 @@
       <menu-path>/File/Directory di lavoro</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="x12a" section="Utilities" context="gui"
+    label="X-12-ARIMA">
+
+    <description>
+      <para>
+	There are two procedural options here, controlled by the 
+	lower set of radio-buttons.
+      </para>
+      <para>
+	If you select <quote>Execute X-12-ARIMA directly</quote> then
+	gretl writes a command file for X-12-ARIMA and calls the
+	x12a program to execute the commands. In this case you have the
+	option of producing a graph and/or saving selected output series
+	to the gretl dataset.
+      </para>
+      <para>
+	If you select <quote>Make X-12-ARIMA command file</quote>
+	gretl writes a command file for X-12-ARIMA, as above, but then
+	opens this file in an editor window. In that window you are
+	able to make changes and to save the file under a chosen
+	name. You are also able to send the file for execution by x12a
+	(by clicking the <quote>Run</quote> button on the editor
+	window toolbar) and view the output. But in this case you do
+	not have the option of saving data as gretl series or
+	producing a gretl graph.
+      </para>
+    </description>
   </command>
 
   <command name="xcorrgm" section="Statistics" label="Correlogramma incrociato">
