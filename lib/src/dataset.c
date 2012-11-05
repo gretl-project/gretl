@@ -19,7 +19,7 @@
 
 #include "libgretl.h"
 #include "gretl_func.h"
-#include "gretl_scalar.h"
+#include "uservar.h"
 #include "gretl_string_table.h"
 #include "libset.h"
 #include "dbread.h"

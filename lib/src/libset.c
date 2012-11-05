@@ -22,10 +22,10 @@
 #include "libgretl.h"
 #include "libset.h"
 #include "usermat.h"
+#include "uservar.h"
 #include "matrix_extra.h"
 #include "gretl_string_table.h"
 #include "gretl_func.h"
-#include "gretl_scalar.h"
 
 #include <unistd.h>
 #include <errno.h>

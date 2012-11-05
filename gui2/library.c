@@ -44,9 +44,9 @@
 #include "objstack.h"
 #include "gretl_xml.h"
 #include "gretl_panel.h"
-#include "usermat.h"
+#include "uservar.h"
+#include "csvdata.h"
 #include "matrix_extra.h"
-#include "gretl_scalar.h"
 #include "gretl_string_table.h"
 #include "gretl_bundle.h"
 #include "gretl_www.h"
@@ -3323,6 +3323,7 @@ void errmsg_plus (int err, const char *plus)
 static int finish_genr (MODEL *pmod, dialog_t *dlg)
 {
     PRN *prn;
+    const char *gbuf;
     int err = 0;
 
     if (bufopen(&prn)) {
@@ -3337,13 +3338,12 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 
     unset_genr_model();
 
+    gbuf = gretl_print_get_buffer(prn);
+
     if (err) {
-	errmsg_plus(err, gretl_print_get_buffer(prn));
+	errmsg_plus(err, gbuf);
     } else {
-	int n, gentype = genr_get_last_output_type();
-	const char *name;
-	double val;
-	gchar *txt;
+	int gentype = genr_get_last_output_type();
 
 	if (dlg != NULL) {
 	    edit_dialog_close(dlg);
@@ -3361,24 +3361,14 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 	} else if (gentype == GRETL_TYPE_DOUBLE) {
 	    if (autoicon_on()) {
 		edit_scalars();
-	    } else {	    
-		n = n_saved_scalars();
-		name = gretl_scalar_get_name(n-1);
-		val = gretl_scalar_get_value_by_index(n-1);
-		txt = g_strdup_printf(_("Added scalar %s = %g"),
-				      name, val);
-		infobox(txt);
-		g_free(txt);
+	    } else {
+		infobox(gbuf);
 	    }
 	} else if (gentype == GRETL_TYPE_MATRIX) {
 	    if (autoicon_on()) {
 		view_session();
 	    } else {
-		n = n_user_matrices();
-		name = get_matrix_name_by_index(n-1);
-		txt = g_strdup_printf(_("Added matrix %s"), name);
-		infobox(txt);
-		g_free(txt);
+		infobox(gbuf);
 	    }
 	}
 
@@ -4490,14 +4480,14 @@ void do_fncall_genr (GtkWidget *w, dialog_t *dlg)
 	} else {
 	    lib_command_sprintf("scalar %s", s);
 	}
-	oldv = n_saved_scalars();
+	oldv = n_user_scalars();
 	scalargen = 1;
     }
 
     err = finish_genr(NULL, dlg);
 
     if (!err) {
-	int newv = (scalargen)? n_saved_scalars(): dataset->v;
+	int newv = (scalargen)? n_user_scalars(): dataset->v;
 
 	if (oldv >= 0 && newv > oldv) {
 	    fncall_register_genr(newv - oldv, p);
@@ -8170,7 +8160,12 @@ static int script_open_append (ExecState *s, DATASET *dset,
     }
 
     if (!dbdata && cmd->ci != APPEND) {
-	close_session(cmd->opt);
+	gretlopt closeopt = cmd->opt;
+
+	if (!(cmd->opt & OPT_P) && csv_open_needs_matrix(cmd->opt)) {
+	    closeopt |= OPT_P;
+	}
+	close_session(closeopt);
     }
 
     if (cmd->opt & OPT_Q) {
@@ -8382,17 +8377,19 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	} else if (*cmd->param != '\0') {
 	    /* note that this does not catch the case where objects
 	       are deleted within a loop; but that is handled via
-	       callbacks from libgretl (usermat and gretl_bundle)
+	       callbacks from libgretl
 	    */
-	    if (get_matrix_by_name(cmd->param)) {
-		err = session_matrix_destroy_by_name(cmd->param);
+	    if (gretl_is_matrix(cmd->param)) {
+		err = session_user_var_destroy_by_name(cmd->param,
+						       GRETL_OBJ_MATRIX);
 	    } else if (gretl_is_bundle(cmd->param)) {
-		err = session_bundle_destroy_by_name(cmd->param);
+		err = session_user_var_destroy_by_name(cmd->param,
+						       GRETL_OBJ_BUNDLE);
 	    } else {
 		err = gretl_delete_var_by_name(cmd->param, prn);
 	    }
 	} else if (get_list_by_name(cmd->extra)) {
-	    err = delete_list_by_name(cmd->extra);
+	    err = user_var_delete_by_name(cmd->extra, prn);
 	} else {
 	    /* here we're deleting series */
 	    if (dataset_locked()) {
@@ -8530,9 +8527,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
   	break;
 
     case CLEAR:
-	if (cmd->opt & OPT_O) {
-	    close_session(OPT_O);
-	} else if (cmd->opt & OPT_D) {
+	if (cmd->opt & OPT_D) {
 	    close_session(OPT_P);
 	} else {
 	    close_session(OPT_NONE);

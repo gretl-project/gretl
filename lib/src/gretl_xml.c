@@ -23,8 +23,7 @@
 #include "gretl_xml.h"
 #include "gretl_panel.h"
 #include "gretl_func.h"
-#include "usermat.h"
-#include "gretl_scalar.h"
+#include "uservar.h"
 #include "gretl_bundle.h"
 #include "gretl_string_table.h"
 #include "dbread.h"
@@ -2811,7 +2810,7 @@ int load_user_matrix_file (const char *fname)
 		m = xml_get_user_matrix(cur, doc, &colnames, 
 					&rownames, &err);
 		if (m != NULL) {
-		    err = user_matrix_add(m, name);
+		    err = user_var_add(name, GRETL_TYPE_MATRIX, m);
 		    if (!err && colnames != NULL) {
 			umatrix_set_names_from_string(m, colnames, 0);
 		    }

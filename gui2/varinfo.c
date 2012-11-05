@@ -26,6 +26,8 @@
 #include "winstack.h"
 #include "varinfo.h"
 
+#include "uservar.h"
+
 #define VSET_MAX_FIELDS 6
 
 /* symbolic names for the things which can be set here */

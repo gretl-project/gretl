@@ -24,6 +24,7 @@
 #include "gretl_func.h"
 #include "libset.h"
 #include "gretl_xml.h"
+#include "uservar.h"
 
 #include <errno.h>
 #include <glib.h>
@@ -54,131 +55,6 @@
  * a list.
  */
 
-typedef struct saved_list_ saved_list;
-
-struct saved_list_ {
-    char name[VNAMELEN];
-    int *list;
-    int level;
-};
-
-static saved_list **list_stack;
-static int n_lists;
-
-static saved_list *saved_list_new (const int *list, const char *name)
-{
-    saved_list *sl = malloc(sizeof *sl);
-
-    if (sl != NULL) {
-	sl->level = gretl_function_depth();
-	if (list != NULL && list[0] > 0) {
-	    sl->list = gretl_list_copy(list);
-	} else {
-	    sl->list = gretl_null_list();
-	}
-	if (sl->list == NULL) {
-	    free(sl);
-	    sl = NULL;
-	} else {
-	    *sl->name = '\0';
-	    strncat(sl->name, name, VNAMELEN - 1);
-	}
-    }
-
-#if LDEBUG
-    if (sl != NULL) {
-	fprintf(stderr, "saved_list_new: '%s' (level %d)\n", name, sl->level);
-	printlist(sl->list, "sl->list");
-    }
-#endif
-
-    return sl;
-}
-
-static void free_saved_list (saved_list *sl)
-{
-    if (sl != NULL) {
-	free(sl->list);
-	free(sl);
-    }
-}
-
-static saved_list *get_saved_list_by_name (const char *name)
-{
-    saved_list *sl = NULL;
-    int fsd = gretl_function_depth();
-    int i;
-
-    for (i=0; i<n_lists; i++) {
-	if (!strcmp(name, list_stack[i]->name) && 
-	    fsd == list_stack[i]->level) {
-	    sl = list_stack[i];
-#if LDEBUG > 1
-	    fprintf(stderr, "get_saved_list_by_name: found '%s' (level %d)\n", 
-		    sl->name, fsd);
-	    printlist(sl->list, "sl->list");
-#endif
-	    break;
-	}
-    }
-
-    return sl;
-}
-
-/**
- * n_saved_lists:
- *
- * Returns: the number of saved (named) lists currently defined.
- */
-
-int n_saved_lists (void)
-{
-    return n_lists;
-}
-
-/**
- * max_varno_in_saved_lists:
- *
- * Returns: the highest ID number of a variable referenced
- * in a saved (named) list.
- */
-
-int max_varno_in_saved_lists (void)
-{
-    int *list;
-    int i, j, vmax = 0;
-
-    for (i=0; i<n_lists; i++) {
-	list = list_stack[i]->list;
-	if (list != NULL) {
-	    for (j=1; j<=list[0]; j++) {
-		if (list[j] > vmax) {
-		    vmax = list[j];
-		}
-	    }
-	}
-    }    
-
-    return vmax;
-}
-
-/**
- * get_list_name_by_index:
- * @idx: 0-based index into array of saved lists.
- *
- * Returns: the name of the specified saved list, or NULL if
- * @idx is out of bounds.
- */
-
-const char *get_list_name_by_index (int idx)
-{
-    if (idx >= 0 && idx < n_lists) {
-	return list_stack[idx]->name;
-    } else {
-	return NULL;
-    }
-}
-
 /**
  * saved_list_get_name:
  * @list: list whose name should be retrieved.
@@ -189,14 +65,10 @@ const char *get_list_name_by_index (int idx)
 
 const char *saved_list_get_name (const int *list)
 {
-    saved_list *sl;
-    int i;
+    user_var *u = get_user_var_by_data(list);
 
-    for (i=0; i<n_lists; i++) {
-	sl = list_stack[i];
-	if (sl->list != NULL && sl->list == list) {
-	    return sl->name;
-	}
+    if (u != NULL) {
+	return user_var_get_name(u);
     }   
 
     return NULL;
@@ -206,7 +78,7 @@ const char *saved_list_get_name (const int *list)
  * get_list_by_name:
  * @name: the name of the list to be found.
  *
- * Looks up @name in the stack of saved lists, at the current level
+ * Looks up @name in the stack of saved variables, at the current level
  * of function execution, and retrieves the associated list.
  *
  * Returns: the list, or NULL if the lookup fails. 
@@ -214,21 +86,29 @@ const char *saved_list_get_name (const int *list)
 
 int *get_list_by_name (const char *name)
 {
+    user_var *u;
     int *ret = NULL;
-    saved_list *sl;
 
-#if LDEBUG > 1
-    fprintf(stderr, "get_list_by_name: '%s'\n", name);
-#endif
+    u = get_user_var_of_type_by_name(name, GRETL_TYPE_LIST);
 
-    if (name != NULL) {
-	sl = get_saved_list_by_name(name);
-	if (sl != NULL) {
-	    ret = sl->list;
-	}
+    if (u != NULL) {
+	ret = user_var_get_value(u);
     }
 
     return ret;
+}
+
+/**
+ * gretl_is_list:
+ * @name: the name to test.
+ *
+ * Returns: 1 if @name is the name of a saved list, 0
+ * otherwise.
+ */
+
+int gretl_is_list (const char *name)
+{
+    return get_user_var_of_type_by_name(name, GRETL_TYPE_LIST) != NULL;
 }
 
 /**
@@ -244,34 +124,26 @@ int *get_list_by_name (const char *name)
 
 int append_to_list_by_name (const char *targ, const int *add)
 {
-    saved_list *sl = get_saved_list_by_name(targ);
+    user_var *u;
     int err = 0;
 
-#if LDEBUG
-    fprintf(stderr, "append_to_list_by_name: '%s'\n", targ);
-    printlist(sl->list, "original (target) list");
-    printlist(add, "list to add");
-#endif
+    u = get_user_var_of_type_by_name(targ, GRETL_TYPE_LIST);
 
-    if (sl == NULL) {
+    if (u == NULL) {
 	err = E_UNKVAR;
     } else {
-	int *tmp = gretl_list_copy(sl->list);
+	const int *list = user_var_get_value(u);
+	int *tmp = gretl_list_copy(list);
 
 	if (tmp == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    err = gretl_list_add_list(&tmp, add);
 	    if (!err) {
-		free(sl->list);
-		sl->list = tmp;
+		user_var_replace_value(u, tmp);
 	    }
 	}
     } 
-
-#if LDEBUG
-    printlist(sl->list, "final list");
-#endif
 
     return err;
 }
@@ -289,21 +161,19 @@ int append_to_list_by_name (const char *targ, const int *add)
 
 int subtract_from_list_by_name (const char *targ, const int *sub)
 {
-    saved_list *sl = get_saved_list_by_name(targ);
+    user_var *u;
     int err = 0;
 
-#if LDEBUG
-    fprintf(stderr, "subtract_from_list_by_name: '%s'\n", targ);
-#endif
+    u = get_user_var_of_type_by_name(targ, GRETL_TYPE_LIST);
 
-    if (sl == NULL) {
+    if (u == NULL) {
 	err = E_UNKVAR;
     } else {
-	int *tmp = gretl_list_drop(sl->list, sub, &err);
+	const int *list = user_var_get_value(u);
+	int *tmp = gretl_list_drop(list, sub, &err);
 
 	if (!err) {
-	    free(sl->list);
-	    sl->list = tmp;
+	    user_var_replace_value(u, tmp);
 	}
     } 
 
@@ -323,14 +193,12 @@ int subtract_from_list_by_name (const char *targ, const int *sub)
 
 int replace_list_by_name (const char *targ, const int *src)
 {
-    saved_list *sl = get_saved_list_by_name(targ);
+    user_var *u;
     int err = 0;
 
-#if LDEBUG
-    fprintf(stderr, "replace_list_by_name: '%s'\n", targ);
-#endif
+    u = get_user_var_of_type_by_name(targ, GRETL_TYPE_LIST);
 
-    if (sl == NULL) {
+    if (u == NULL) {
 	err = E_UNKVAR;
     } else {
 	int *tmp = gretl_list_copy(src);
@@ -338,92 +206,9 @@ int replace_list_by_name (const char *targ, const int *src)
 	if (tmp == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    free(sl->list);
-	    sl->list = tmp;
+	    user_var_replace_value(u, tmp);
 	}	    
     }
-
-    return err;
-}
-
-enum {
-    LIST_ADD_NORMAL,
-    LIST_FORCE_NEW
-};
-
-static int real_remember_list (const int *list, const char *name, 
-			       int flag, PRN *prn)
-{
-    saved_list *orig = NULL;
-    int err = 0;
-
-    if (list == NULL) {
-	return E_DATA;
-    }
-
-#if LDEBUG
-    fprintf(stderr, "remember_list (in): name='%s', flag=%d,"
-	    " n_lists=%d\n", name, flag, n_lists);
-#endif
-
-    /* Note: if @flag = LIST_FORCE_NEW we'll add a new list even if it
-       has the same name as an existing one.  This makes sense only if
-       we're copying a list in the context of running a user-defined
-       function, since in that case the new list will exist at a
-       different "stack level" from any prior list.
-    */
-
-    if (flag != LIST_FORCE_NEW) {
-	orig = get_saved_list_by_name(name);
-    }
-
-    if (orig != NULL) {
-	/* replace existing list of same name */
-	free(orig->list);
-	orig->list = gretl_list_copy(list);
-	if (orig->list == NULL) {
-	    err = E_ALLOC;
-	} else if (gretl_messages_on() && !gretl_looping_quietly()) {
-	    pprintf(prn, _("Replaced list '%s'\n"), name);
-	}
-    } else {
-	saved_list **lstack;
-
-	err = check_varname(name);
-	if (err) {
-	    return err;
-	}
-
-	lstack = realloc(list_stack, (n_lists + 1) * sizeof *lstack);
-	if (lstack == NULL) {
-	    return E_ALLOC;
-	}
-	list_stack = lstack;
-
-	list_stack[n_lists] = saved_list_new(list, name);
-	if (list_stack[n_lists] == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    if (prn != NULL && gretl_messages_on()) {
-		const char *realname = list_stack[n_lists]->name;
-
-		if (list[0] > 0) {
-		    pprintf(prn, _("Added list '%s'\n"), realname);
-		}
-		if (strlen(realname) < strlen(name)) {
-		    pprintf(prn, _("Warning: the name was truncated to %d characters\n"), 
-			    VNAMELEN - 1);
-		}
-	    }
-	    n_lists++;
-	}
-    }
-
-#if LDEBUG
-    fprintf(stderr, "remember_list (out): n_lists=%d, ", n_lists);
-    fprintf(stderr, "list_stack[%d]=%p\n", n_lists - 1, 
-	    (void *) list_stack[n_lists - 1]);
-#endif
 
     return err;
 }
@@ -445,67 +230,29 @@ static int real_remember_list (const int *list, const char *name,
 
 int remember_list (const int *list, const char *name, PRN *prn)
 {
-    return real_remember_list(list, name, LIST_ADD_NORMAL, prn);
-}
+    int *lcpy = gretl_list_copy(list);
+    int err = 0;
 
-/**
- * declare_list:
- * @name: name to be given to the list.
- *
- * Implements bare declaration of a list in the "genr" context:
- * adds a null list under the given @name.
- *
- * Returns: 0 on success, non-zero code on error.
- */
-
-int declare_list (const char *name)
-{
-    int tmp[] = {0};
-
-#if LDEBUG
-    fprintf(stderr, "declare_list: '%s'\n", name);
-#endif
-
-    return real_remember_list(tmp, name, LIST_ADD_NORMAL, NULL);
-}
-
-static int destroy_saved_list (saved_list *sl)
-{
-    saved_list **lstack;
-    int found = 0;
-    int i, j, err = 0;
-
-    for (i=0; i<n_lists; i++) {
-	if (list_stack[i] == NULL) {
-	    break;
-	}
-	if (list_stack[i] == sl) {
-	    free_saved_list(sl);
-	    for (j=i; j<n_lists - 1; j++) {
-		list_stack[j] = list_stack[j+1];
-	    }
-	    list_stack[n_lists - 1] = NULL;
-	    found = 1;
-	    break;
-	} 
-    }
-
-    if (!found) {
-	err = E_DATA;
+    if (lcpy == NULL) {
+	err = (list == NULL)? E_DATA : E_ALLOC;
     } else {
-	n_lists--;
-	if (n_lists == 0) {
-	    free(list_stack);
-	    list_stack = NULL;
+	user_var *orig;
+
+	orig = get_user_var_of_type_by_name(name, GRETL_TYPE_LIST);
+
+	if (orig != NULL) {
+	    /* replace existing list of same name */
+	    user_var_replace_value(orig, lcpy);
+	    if (gretl_messages_on() && !gretl_looping_quietly()) {
+		pprintf(prn, _("Replaced list '%s'\n"), name);
+	    }
 	} else {
-	    lstack = realloc(list_stack, n_lists * sizeof *list_stack);
-	    if (lstack == NULL) {
-		err = E_ALLOC;
-	    } else {
-		list_stack = lstack;
-	    } 
+	    err = user_var_add(name, GRETL_TYPE_LIST, lcpy);
+	    if (!err && prn != NULL && gretl_messages_on()) {
+		pprintf(prn, _("Added list '%s'\n"), name);
+	    }
 	}
-    }   
+    }
 
     return err;
 }
@@ -523,311 +270,22 @@ static int destroy_saved_list (saved_list *sl)
 
 int rename_saved_list (const char *orig, const char *newname)
 {
-    saved_list *sl0, *sl1;
+    user_var *u0, *u1;
     int err = 0;
 
-    sl0 = get_saved_list_by_name(orig);
-    if (sl0 == NULL) {
-	err = 1;
+    u0 = get_user_var_of_type_by_name(orig, GRETL_TYPE_LIST);
+
+    if (u0 == NULL) {
+	err = E_DATA;
     } else {
-	/* is there already a list called @newname? */
-	sl1 = get_saved_list_by_name(newname);
-	if (sl1 != NULL) {
-	    err = destroy_saved_list(sl1);
+	u1 = get_user_var_of_type_by_name(newname, GRETL_TYPE_LIST);
+	if (u1 != NULL) {
+	    user_var_delete(u1);
 	}
-	*sl0->name = '\0';
-	strncat(sl0->name, newname, VNAMELEN - 1);
-    } 
-
-    return err;
-}
-
-/**
- * copy_list_as:
- * @list: the list to copy.
- * @name: the name to be given to the copy.
- *
- * This is intended for use when a list is given as the 
- * argument to a user-defined function: it is copied
- * under the name assigned by the function's parameter 
- * list.
- *
- * The "level" of the returned list is 1 above the current
- * level of function execution.
- *
- * Returns: the newly-saved list, or NULL on error.
- */
-
-int *copy_list_as (const int *list, const char *name)
-{
-    int err = real_remember_list(list, name, LIST_FORCE_NEW, NULL);
-
-    if (!err) {
-	saved_list *sl = list_stack[n_lists - 1];
-
-	sl->level += 1;
-	return sl->list;
-    } else {
-	return NULL;
-    }
-}
-
-/**
- * create_named_null_list:
- * @name: the name to be given to the list.
- *
- * Creates an empty list under the given @name and adds it
- * to the stack of saved lists.  This is intended for use when 
- * a null list argument is given to a user-defined function.
- *
- * The "level" of the returned list is 1 above the current
- * level of function execution.
- *
- * Returns: the newly-saved list, or NULL on error.
- */
-
-int *create_named_null_list (const char *name)
-{
-    int tmp[] = {0};
-    int err;
-
-    err = real_remember_list(tmp, name, LIST_FORCE_NEW, NULL);
-
-    if (!err) {
-	saved_list *sl = list_stack[n_lists - 1];
-
-	sl->level += 1;
-	return sl->list;
-    } else {
-	return NULL;
-    }
-}
-
-/**
- * create_named_singleton_list:
- * @varnum: ID number of the series to use.
- * @name: the name to be given to the list.
- *
- * Creates a one-element list under the given @name and adds it
- * to the stack of saved lists.  This is intended for use when a 
- * single series is given as an argument to a user-defined function
- * in a 'slot' where a list is required.
- *
- * The "level" of the returned list is 1 above the current
- * level of function execution.
- *
- * Returns: the newly saved list, or NULL on error.
- */
-
-int *create_named_singleton_list (int varnum, const char *name)
-{
-    int tmp[] = {1, varnum};
-    int err;
-
-    err = real_remember_list(tmp, name, LIST_FORCE_NEW, NULL);
- 
-    if (!err) {
-	saved_list *sl = list_stack[n_lists - 1]; 
-
-	sl->level += 1;
-	return sl->list;
-    } else {
-	return NULL;
-    }
-}
-
-/**
- * destroy_saved_lists_at_level:
- * @level: stack level of function execution.
- *
- * Destroys and removes from the stack of saved lists all
- * lists that were created at the given @level.  This is 
- * part of the cleanup that is performed when a user-defined
- * function terminates.
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int destroy_saved_lists_at_level (int level)
-{
-    saved_list **lstack;
-    int nl = n_lists;
-    int i, j, err = 0;
-
-    for (i=0; i<n_lists; i++) {
-	if (list_stack[i] == NULL) {
-	    /* we reached the end of the (occupied) stack */
-	    break;
-	}
-	if (list_stack[i]->level == level) {
-	    free_saved_list(list_stack[i]);
-	    for (j=i; j<n_lists - 1; j++) {
-		list_stack[j] = list_stack[j+1];
-	    }
-	    list_stack[n_lists-1] = NULL;
-	    i--;
-	    nl--;
-	} 
-    }
-
-    if (nl < n_lists) {
-	n_lists = nl;
-	if (nl == 0) {
-	    free(list_stack);
-	    list_stack = NULL;
-	} else {
-	    lstack = realloc(list_stack, nl * sizeof *list_stack);
-	    if (lstack == NULL) {
-		err = E_ALLOC;
-	    } else {
-		list_stack = lstack;
-	    }
-	}
+	user_var_set_name(u0, newname);
     }
 
     return err;
-}
-
-int delete_list_by_name (const char *name)
-{
-    saved_list *sl = get_saved_list_by_name(name);
-
-    if (sl == NULL) {
-	return E_UNKVAR;
-    } else {
-	return destroy_saved_list(sl);
-    }
-}
-
-static int var_is_deleted (const int *dlist, int dmin, int i)
-{
-    int v = dmin + i - 1;
-
-    if (dlist != NULL) {
-	return in_gretl_list(dlist, v);
-    } else {
-	return (v >= dmin);
-    }
-}
-
-/**
- * gretl_lists_revise:
- * @dlist: list of variables to be deleted (or NULL).
- * @dmin: lowest ID number of deleted var (referenced only
- * if @dlist is NULL).
- *
- * Goes through any saved lists, adjusting the ID numbers
- * they contain to reflect the deletion from the dataset of
- * certain variables: those referenced in @dlist, if given, 
- * or if @dlist is NULL, those variables with IDs greater 
- * than or equal to @dmin.
- *
- * Returns: 0 on success, non-zero code on failure.
- */
-
-int gretl_lists_revise (const int *dlist, int dmin)
-{
-    int *list, *maplist;
-    int lmax = 0;
-    int i, j, k;
-
-#if LDEBUG
-    fprintf(stderr, "gretl_lists_revise: dlist = %p, dmin = %d\n", 
-	    (void *) dlist, dmin);
-#endif
-
-    if (dlist != NULL) {
-	/* determine lowest deleted ID */
-	dmin = dlist[1];
-	for (i=2; i<=dlist[0]; i++) {
-	    if (dlist[i] > 0 && dlist[i] < dmin) {
-		dmin = dlist[i];
-	    }
-	}
-    }
-
-    /* find highest ID ref'd in any saved list */
-    for (j=0; j<n_lists; j++) {
-	list = list_stack[j]->list;
-	if (list != NULL) {
-	    for (i=1; i<=list[0]; i++) {
-		if (list[i] > lmax) {
-		    lmax = list[i];
-		}
-	    }
-	}
-    }
-
-    if (lmax < dmin) {
-	/* nothing to be done */
-	return 0;
-    }
-
-    /* make mapping from old to new IDs */
-
-    maplist = gretl_list_new(lmax - dmin + 1);
-    if (maplist == NULL) {
-	return E_ALLOC;
-    }
-
-    j = dmin;
-
-    for (i=1; i<=maplist[0]; i++) {
-	if (var_is_deleted(dlist, dmin, i)) {
-	    maplist[i] = -1;
-	} else {
-	    maplist[i] = j++;
-	}
-    }
-
-    /* use mapping to revise saved lists */
-    for (j=0; j<n_lists; j++) {
-	list = list_stack[j]->list;
-#if LDEBUG
-	fprintf(stderr, "maybe revising list '%s'\n", list_stack[j]->name);
-	printlist(list, "original list");
-#endif
-	if (list == NULL) {
-	    continue;
-	}
-	for (i=list[0]; i>0; i--) {
-	    k = list[i] - dmin + 1;
-	    if (k >= 1) {
-		if (maplist[k] == -1) {
-		    gretl_list_delete_at_pos(list, i);
-		} else {
-		    list[i] = maplist[k];
-		}
-	    }
-	}
-#if LDEBUG
-	printlist(list, "revised?");
-#endif
-    }
-
-    free(maplist);
-
-    return 0;
-}
-
-/**
- * gretl_lists_cleanup:
- *
- * Frees all resources associated with the internal
- * apparatus for saving and retrieving named lists.
- */
-
-void gretl_lists_cleanup (void)
-{
-    int i;
-
-    for (i=0; i<n_lists; i++) {
-	free_saved_list(list_stack[i]);
-    }
-
-    free(list_stack);
-    list_stack = NULL;
-    n_lists = 0;
 }
 
 /**
@@ -2230,7 +1688,7 @@ int gretl_list_add_list (int **targ, const int *src)
 	return E_DATA;
     }
 
-    if (src == NULL || *src == 0) {
+    if (src == NULL || src[0] == 0) {
 	/* no-op */
 	return 0;
     }
@@ -2919,7 +2377,7 @@ int load_user_lists_file (const char *fname)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
-    int i, nl, err = 0;
+    int nl, err = 0;
 
     err = gretl_xml_open_doc_root(fname, "gretl-lists", &doc, &node);
     if (err) {
@@ -2930,53 +2388,25 @@ int load_user_lists_file (const char *fname)
 	err = E_DATA;
     } else if (nl <= 0) {
 	err = E_DATA;
-    }
-
-    if (!err) {
-	list_stack = malloc(nl * sizeof *list_stack);
-	if (list_stack == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    n_lists = nl;
-	    for (i=0; i<nl; i++) {
-		list_stack[i] = NULL;
-	    }
-	    for (i=0; i<nl && !err; i++) {
-		list_stack[i] = malloc(sizeof **list_stack);
-		if (list_stack[i] == NULL) {
-		    err = E_ALLOC;
-		} else {
-		    list_stack[i]->name[0] = '\0';
-		    list_stack[i]->list = NULL;
-		    list_stack[i]->level = 0;
-		}
-	    }
-	}
-    }
-
-    if (!err) {
+    } else {
 	xmlNodePtr cur = node->xmlChildrenNode;
+	int *list;
 	char *lname;
 
-	i = 0;
 	while (cur != NULL && !err) {
 	    if (!xmlStrcmp(cur->name, (XUC) "list")) {
 		if (!gretl_xml_get_prop_as_string(cur, "name", &lname)) {
 		    err = E_DATA;
 		} else {
-		    strncat(list_stack[i]->name, lname, VNAMELEN - 1);
+		    list = gretl_xml_node_get_list(cur, doc, &err);
+		    if (!err) {
+			err = user_var_add(lname, GRETL_TYPE_LIST, list);
+		    }
 		    free(lname);
-		    list_stack[i]->list = 
-			gretl_xml_node_get_list(cur, doc, &err);
-		    i++;
 		}
 	    }
 	    cur = cur->next;
 	}
-    }
-
-    if (err && list_stack != NULL) {
-	gretl_lists_cleanup();
     }
 
     if (doc != NULL) {
@@ -2984,48 +2414,6 @@ int load_user_lists_file (const char *fname)
     }
 
     return err;
-}
-
-/**
- * gretl_serialize_lists:
- * @fname: name of file to which output should be written.
- *
- * Prints an XML representation of the current saved lists,
- * if any.
- *
- * Returns: 0 on success, or if there are no saved lists, 
- * non-zero code on error.
- */
-
-int gretl_serialize_lists (const char *fname)
-{
-    FILE *fp;
-    int i;
-
-    if (n_lists == 0) {
-	return 0;
-    }
-
-    fp = gretl_fopen(fname, "w");
-    if (fp == NULL) {
-	return E_FOPEN;
-    }
-
-    gretl_xml_header(fp); 
-
-    fprintf(fp, "<gretl-lists count=\"%d\">\n", n_lists);
-
-    for (i=0; i<n_lists; i++) {
-	gretl_xml_put_named_list(list_stack[i]->name, 
-				 list_stack[i]->list, 
-				 fp);
-    }
-
-    fputs("</gretl-lists>\n", fp);
-
-    fclose(fp);
-
-    return 0;
 }
 
 /**
@@ -3170,6 +2558,61 @@ int *ellipsis_list (const DATASET *dset, int v1, int v2, int *err)
 }
 
 /**
+ * list_from_matrix:
+ * @m: matrix (must be a vector).
+ * @dset: pointer to dataset.
+ * @err: location to receive error code.
+ *
+ * Tries to interpret the matrix @m as a list of ID
+ * numbers of series. This can work only if @m is a
+ * vector, and all its elements have integer values
+ * k satisfying 0 <= k < v, where v is the number
+ * of series in @dset. In the special case where @m
+ * is a null matrix, an empty list is returned.
+ *
+ * Returns: a gretl list, or NULL on failure.
+ */
+
+int *list_from_matrix (const gretl_matrix *m, const DATASET *dset,
+		       int *err)
+{
+    int *list = NULL;
+
+    if (gretl_is_null_matrix(m)) {
+	list = gretl_null_list();
+	if (list == NULL) {
+	    *err = E_ALLOC;
+	}
+    } else {
+	int i, v, k = gretl_vector_get_length(m);
+
+	if (k == 0) {
+	    *err = E_TYPES;
+	} else {
+	    for (i=0; i<k; i++) {
+		v = (int) m->val[i];
+		if (v < 0 || v >= dset->v) {
+		    *err = E_UNKVAR;
+		    break;
+		}
+	    }
+	    if (!*err) {
+		list = gretl_list_new(k);
+		if (list == NULL) {
+		    *err = E_ALLOC;
+		} else {
+		    for (i=0; i<k; i++) {
+			list[i+1] = (int) m->val[i];
+		    }
+		}
+	    }
+	}
+    }
+
+    return list;
+}
+
+/**
  * varname_match_any:
  * @dset: pointer to dataset information.
  * @pattern: pattern to be matched.
@@ -3200,5 +2643,7 @@ int varname_match_any (const DATASET *dset, const char *pattern)
 
     return ret;
 }
+
+
 
 

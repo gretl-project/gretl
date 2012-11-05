@@ -1,4 +1,4 @@
-version 1.9.10, in progress
+2012-11-05 version 1.9.10
 
 The option for specifying how to read data from a fixed format
 text file using the "open" command has been renamed from --cols

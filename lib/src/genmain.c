@@ -804,16 +804,13 @@ int *generate_list (const char *s, DATASET *dset, int *err)
 
     if (!*err) {
 	if (p.ret->t == LIST) {
-	    const int *nlist = get_list_by_name(p.ret->v.str);
+	    const int *nlist = p.ret->v.ivec;
 
 	    if (nlist == NULL) {
 		*err = E_DATA;
 	    } else {
 		ret = gretl_list_copy(nlist);
 	    }
-	} else if (p.ret->t == LVEC) {
-	    ret = p.ret->v.ivec;
-	    p.ret->v.ivec = NULL;
 	} else {
 	    *err = E_TYPES;
 	}
@@ -904,7 +901,7 @@ void destroy_genr (parser *p)
     if (p != NULL) {
 	p->flags = 0;
 #if PRESERVE_AUX_NODES
-	/* free this stuff (only) when finished */
+	/* free this stuff only when finished */
 	parser_free_aux_nodes(p);
 #endif
 	gen_cleanup(p);

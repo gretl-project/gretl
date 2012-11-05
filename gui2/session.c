@@ -48,7 +48,7 @@
 #include "gretl_func.h"
 #include "matrix_extra.h"
 #include "cmd_private.h"
-#include "gretl_scalar.h"
+#include "uservar.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -262,10 +262,11 @@ static gboolean session_view_click (GtkWidget *widget,
 static int real_delete_model_from_session (SESSION_MODEL *model);
 static void make_short_label_string (char *targ, const char *src);
 static gui_obj *get_gui_obj_by_data (void *finddata);
-static void add_user_matrix_callback (const char *mname);
-static void add_bundle_callback (gretl_bundle *bundle);
+static int gui_user_var_callback (const char *name, GretlType type,
+				  int action);
 
 static int session_graph_count;
+static int session_bundle_count;
 static int commands_recorded;
 
 int session_is_modified (void)
@@ -1108,14 +1109,11 @@ void bundle_add_as_icon (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     gretl_bundle *bundle = vwin->data;
     char vname[VNAMELEN];
-    char *defname;
     gchar *blurb;
     int *pshow, show = 0;
     int resp;
 
-    defname = get_bundle_default_name();
-    strcpy(vname, defname);
-    free(defname);
+    sprintf(vname, "bundle%d", ++session_bundle_count);
     blurb = g_strdup_printf("Save bundle\nName (max. %d characters):",
 			    VNAMELEN - 1);
     pshow = (iconlist == NULL)? &show : NULL;
@@ -1123,16 +1121,14 @@ void bundle_add_as_icon (GtkAction *action, gpointer p)
 				    blurb, pshow, vwin->main);
     g_free(blurb);
 
-    if (!canceled(resp)) {    
-	int err = gretl_bundle_set_name(bundle, vname);
+    if (!canceled(resp)) { 
+	int err = user_var_add(vname, GRETL_TYPE_BUNDLE, bundle);
 	int flipit = 1;
 
 	if (err) {
 	    gui_errmsg(err);
 	} else {
-	    if (iconlist != NULL) {
-		session_add_icon(bundle, GRETL_OBJ_BUNDLE, ICON_ADD_SINGLE);
-	    } else if (autoicon_on() || show) {
+	    if (autoicon_on() || show) {
 		view_session();
 	    }
 	    mark_session_changed();
@@ -1522,11 +1518,7 @@ void session_init (void)
     *session.name = '\0';
     *session.dirname = '\0';
 
-    set_matrix_add_callback(add_user_matrix_callback);
-    set_matrix_delete_callback(session_matrix_destroy_by_name);
-
-    set_bundle_add_callback(add_bundle_callback);
-    set_bundle_delete_callback(session_bundle_destroy_by_name);
+    set_user_var_callback(gui_user_var_callback);
 }
 
 void free_session (void)
@@ -1661,13 +1653,11 @@ void close_session (gretlopt opt)
     fprintf(stderr, "close_session: starting cleanup\n");
 #endif
 
-    if (!(opt & OPT_O)) {
-	if (dataset != NULL && dataset->v > 0) {
-	    logcode = LOG_CLOSE;
-	    session_clear_data(dataset); 
-	}
+    if (dataset != NULL && dataset->v > 0) {
+	logcode = LOG_CLOSE;
+	session_clear_data(dataset); 
     }
-
+ 
     free_session();
 
     clear_model_table(1, NULL);
@@ -1692,13 +1682,12 @@ void close_session (gretlopt opt)
 
     if (opt & OPT_P) {
 	libgretl_session_cleanup(SESSION_CLEAR_DATASET);
-    } else if (opt & OPT_O) {
-	libgretl_session_cleanup(SESSION_CLEAR_OTHER);
     } else {
 	libgretl_session_cleanup(SESSION_CLEAR_ALL);
     }
 
     session_graph_count = 0;
+    session_bundle_count = 0;
     reset_plot_count();
 
     set_session_log(NULL, logcode);
@@ -2130,18 +2119,28 @@ void session_model_callback (void *ptr, int action)
 
 static void open_matrix (gui_obj *obj)
 {
-    user_matrix *u = (user_matrix *) obj->data;
-    const char *name = user_matrix_get_name(u);
+    user_var *u = (user_var *) obj->data;
+    const char *name = user_var_get_name(u);
 
     edit_user_matrix_by_name(name, iconview);
 }
 
 static void open_bundle (gui_obj *obj)
 {
-    gretl_bundle *b = (gretl_bundle *) obj->data;
-    const char *name = gretl_bundle_get_name(b);
+    user_var *u = (user_var *) obj->data;
+    const char *name = user_var_get_name(u);
+    gretl_bundle *b = user_var_get_value(u);
     PRN *prn = NULL;
     int done = 0;
+
+    if (maybe_raise_object_window(b)) {
+	return;
+    }
+
+    if (gretl_bundle_get_n_keys(b) == 0) {
+	warnbox(_("Bundle is empty"));
+	return;
+    }
 
     if (bufopen(&prn)) {
 	return;
@@ -2295,10 +2294,9 @@ static int delete_session_object (gui_obj *obj)
 	real_delete_graph_from_session(obj->data);
     } else if (obj->sort == GRETL_OBJ_TEXT) { 
 	real_delete_text_from_session(obj->data);
-    } else if (obj->sort == GRETL_OBJ_MATRIX) { 
-	user_matrix_destroy(obj->data);
-    } else if (obj->sort == GRETL_OBJ_BUNDLE) {
-	gretl_bundle_delete_by_name(obj->name, NULL);
+    } else if (obj->sort == GRETL_OBJ_MATRIX ||
+	       obj->sort == GRETL_OBJ_BUNDLE) {
+	user_var_delete(obj->data);
     }
 
     session_delete_icon(obj);
@@ -2331,11 +2329,17 @@ static void maybe_delete_session_object (gui_obj *obj)
 	    SESSION_MODEL *mod = obj->data;
 
 	    p = mod->ptr;
+	} else if (obj->sort == GRETL_OBJ_BUNDLE) {
+	    p = user_var_get_value((user_var *) obj->data);
 	} else {
 	    p = obj->data;
 	}
 
-	busy = (p != NULL && get_viewer_for_data(p) != NULL);
+	if (obj->sort == GRETL_OBJ_MATRIX) {
+	    busy = (p != NULL && get_window_for_data(p) != NULL);
+	} else {
+	    busy = (p != NULL && get_viewer_for_data(p) != NULL);
+	}
     }
 
     if (busy) {
@@ -2351,6 +2355,7 @@ static void maybe_delete_session_object (gui_obj *obj)
     }
 }
 
+#if 0 /* FIXME? */
 static gui_obj *get_gui_obj_by_name_and_sort (const char *name,
 					      int sort)
 {
@@ -2367,6 +2372,7 @@ static gui_obj *get_gui_obj_by_name_and_sort (const char *name,
 
     return NULL;
 }
+#endif
 
 static gui_obj *get_gui_obj_by_data (void *targ)
 {
@@ -2384,53 +2390,35 @@ static gui_obj *get_gui_obj_by_data (void *targ)
     return NULL;
 }
 
-/* This callback is invoked when a named matrix is deleted via script
-   or console.  Note that we call user_matrix_destroy() below, and NOT
-   user_matrix_destroy_by_name() -- calling the latter would lead to a
-   loop back to here.  
-*/
-
-int session_matrix_destroy_by_name (const char *name)
+static GretlObjType get_obj_type (GretlType type)
 {
-    user_matrix *u = get_user_matrix_by_name(name);
+    if (type == GRETL_TYPE_MATRIX) {
+	return GRETL_OBJ_MATRIX;
+    } else if (type == GRETL_TYPE_BUNDLE) {
+	return GRETL_OBJ_BUNDLE;
+    } else {
+	return GRETL_TYPE_NONE;
+    }
+}
+
+/* called from DELEET case in library.c */
+
+int session_user_var_destroy_by_name (const char *name, 
+				      GretlObjType type)
+{
+    user_var *u = get_user_var_by_name(name);
     int err;
 
     if (u == NULL) {
 	err = E_UNKVAR;
     } else {
-	maybe_close_window_for_data(u, GRETL_OBJ_MATRIX);
+	maybe_close_window_for_user_var(u, type);
 	if (iconlist != NULL) {
 	    gui_obj *obj = get_gui_obj_by_data(u);
 
 	    session_delete_icon(obj);
 	}
-	err = user_matrix_destroy(u);
-    } 
-    
-    return err;
-}
-
-/* This callback is invoked when a named bundle is deleted via script
-   or console. As with session_matrix_destroy_by_name() we invoke
-   user_bundle_destroy() rather than gretl_bundle_delete_by_name()
-   to avoid looping back.
-*/
-
-int session_bundle_destroy_by_name (const char *name)
-{
-    gretl_bundle *b = get_gretl_bundle_by_name(name);
-    int err;
-
-    if (b == NULL) {
-	err = E_UNKVAR;
-    } else {
-	maybe_close_window_for_data(b, GRETL_OBJ_BUNDLE);
-	if (iconlist != NULL) {
-	    gui_obj *obj = get_gui_obj_by_data(b);
-
-	    session_delete_icon(obj);
-	}
-	err = user_bundle_destroy(b);
+	err = user_var_delete(u);
     } 
     
     return err;
@@ -2490,7 +2478,7 @@ static int rename_session_object (gui_obj *obj, const char *newname)
 	    rename_session_graph(sg, newname);
 	}
     } else if (obj->sort == GRETL_OBJ_MATRIX) {
-	user_matrix_set_name(obj->data, newname);
+	user_var_set_name(obj->data, newname);
     } else if (obj->sort == GRETL_OBJ_BUNDLE) {
 	gretl_bundle_set_name(obj->data, newname);
     } else if (obj->sort == GRETL_OBJ_TEXT) {
@@ -2528,7 +2516,7 @@ static int copy_session_object (gui_obj *obj, const char *cpyname)
     if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
 	oldp = get_session_graph_by_name(cpyname);
     } else if (obj->sort == GRETL_OBJ_MATRIX) {
-	oldp = get_user_matrix_by_name(cpyname);
+	oldp = get_user_var_by_name(cpyname);
     } 
 
     if (oldp != NULL) {
@@ -2556,11 +2544,11 @@ static int copy_session_object (gui_obj *obj, const char *cpyname)
 	    }
 	}
     } else if (obj->sort == GRETL_OBJ_MATRIX) {
-	user_matrix *u = obj->data;
+	user_var *u = obj->data;
 
-	err = copy_matrix_as(user_matrix_get_matrix(u), cpyname, 0);
+	err = copy_matrix_as(user_var_get_value(u), cpyname, 0);
 	if (!err) {
-	    p = get_user_matrix_by_name(cpyname);
+	    p = get_user_var_by_name(cpyname);
 	    ptype = GRETL_OBJ_MATRIX;
 	    err = (p == NULL);
 	}
@@ -2849,38 +2837,39 @@ static void batch_pack_icons (void)
     }
 }
 
-static void add_user_matrix_callback (const char *mname)
+static int gui_user_var_callback (const char *name, GretlType type,
+				  int action)
 {
-    if (iconview != NULL) {
-	user_matrix *u = get_user_matrix_by_name(mname);
+    GretlObjType otype = get_obj_type(type);
+    user_var *u;
+    int err = 0;
 
-	if (u != NULL) {
-	    session_add_icon(u, GRETL_OBJ_MATRIX, ICON_ADD_SINGLE);
+    if (action == UVAR_ADD) {
+	/* variable has been added, GUI sync wanted */
+	if (iconview != NULL) {
+	    u = get_user_var_of_type_by_name(name, type);
+	    if (u != NULL) {
+		session_add_icon(u, otype, ICON_ADD_SINGLE);
+	    }
+	} else if (autoicon_on()) {
+	    view_session();
 	}
-    } else if (autoicon_on()) {
-	view_session();
-    }
-
-    mark_session_changed();
-}
-
-static void add_bundle_callback (gretl_bundle *bundle)
-{
-    if (iconview != NULL) {
-	/* first check for replacement of an existing bundle */
-	const char *name = gretl_bundle_get_name(bundle);
-	gui_obj *obj = get_gui_obj_by_name_and_sort(name, GRETL_OBJ_BUNDLE);
-
-	if (obj != NULL) {
-	    obj->data = bundle;
+	mark_session_changed();
+    } else if (action == UVAR_DELETE) {
+	/* variable not yet deleted (deferred to GUI) */
+	u = get_user_var_of_type_by_name(name, type);
+	if (u == NULL) {
+	    err = E_UNKVAR;
 	} else {
-	    session_add_icon(bundle, GRETL_OBJ_BUNDLE, ICON_ADD_SINGLE);
+	    maybe_close_window_for_user_var(u, otype);
+	    if (iconlist != NULL) {
+		session_delete_icon(get_gui_obj_by_data(u));
+	    }
+	    err = user_var_delete(u);
 	}
-    } else if (autoicon_on()) {
-	view_session();
-    }
-
-    mark_session_changed();
+    }	
+    
+    return err;
 }
 
 int have_session_objects (void)
@@ -2896,16 +2885,22 @@ int have_session_objects (void)
     }
 
     if (n == 0) {
-	n = n_user_matrices() + n_user_bundles() + n_saved_scalars();
+	n = n_user_matrices() + n_user_bundles() + n_user_scalars();
     }
 
     return n > 0;
 }
 
+static void add_user_var_icon (gpointer data, gpointer intp)
+{
+    session_add_icon(data, GPOINTER_TO_INT(intp), ICON_ADD_BATCH);
+}
+
 static void add_all_icons (void) 
 {
+    GList *list = NULL;
     int show_graph_page = check_for_prog(latex);
-    int i, n;
+    int i;
 
     active_object = NULL;
 
@@ -2949,17 +2944,13 @@ static void add_all_icons (void)
 	session_add_icon(session.texts[i], GRETL_OBJ_TEXT, ICON_ADD_BATCH);
     }
 
-    n = n_user_matrices();
-    for (i=0; i<n; i++) {
-	session_add_icon(get_user_matrix_by_index(i), GRETL_OBJ_MATRIX, 
-			 ICON_ADD_BATCH);
-    }
+    list = user_var_list_for_type(GRETL_TYPE_MATRIX);
+    g_list_foreach(list, add_user_var_icon, GINT_TO_POINTER(GRETL_OBJ_MATRIX));
+    g_list_free(list);
 
-    n = n_user_bundles();
-    for (i=0; i<n; i++) {
-	session_add_icon(get_gretl_bundle_by_index(i), GRETL_OBJ_BUNDLE, 
-			 ICON_ADD_BATCH);
-    }    
+    list = user_var_list_for_type(GRETL_TYPE_BUNDLE);
+    g_list_foreach(list, add_user_var_icon, GINT_TO_POINTER(GRETL_OBJ_BUNDLE));
+    g_list_free(list);
 
     batch_pack_icons();
 }
@@ -3174,14 +3165,14 @@ static void matrix_popup_callback (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
     gui_obj *obj = active_object;
-    user_matrix *u = (user_matrix *) obj->data;
-    const char *name = user_matrix_get_name(u);
+    user_var *u = (user_var *) obj->data;
+    const char *name = user_var_get_name(u);
     gretl_matrix *m;
 
     if (!strcmp(item, _("View"))) {
 	PRN *prn;
 
-	m = user_matrix_get_matrix(u);
+	m = user_var_get_value(u);
 	if (m != NULL && bufopen(&prn) == 0) {
 	    gretl_matrix_print_to_prn(m, name, prn);
 	    view_buffer(prn, 78, 400, name, PRINT, NULL);
@@ -3189,10 +3180,10 @@ static void matrix_popup_callback (GtkWidget *widget, gpointer data)
     } else if (!strcmp(item, _("Edit"))) {
 	edit_user_matrix_by_name(name, iconview);
     } else if (!strcmp(item, _("Properties"))) {
-	m = user_matrix_get_matrix(u);
+	m = user_var_get_value(u);
 	view_matrix_properties(m, name);
     } else if (!strcmp(item, _("Copy as CSV..."))) {
-	m = user_matrix_get_matrix(u);
+	m = user_var_get_value(u);
 	if (gretl_is_null_matrix(m)) {
 	    warnbox("matrix is null");
 	} else {
@@ -3494,10 +3485,8 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	name = g_strdup(_("Graph page"));
 	break;
     case GRETL_OBJ_MATRIX:
-	name = g_strdup(user_matrix_get_name((user_matrix *) data));
-	break;
     case GRETL_OBJ_BUNDLE:
-	name = g_strdup(gretl_bundle_get_name((gretl_bundle *) data));
+	name = g_strdup(user_var_get_name((user_var *) data));
 	break;
     default:
 	break;

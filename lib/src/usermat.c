@@ -17,367 +17,15 @@
  * 
  */
 
-#define FULL_XML_HEADERS
-
 #include "libgretl.h"
 #include "gretl_matrix.h"
 #include "matrix_extra.h"
-#include "gretl_func.h"
-#include "libset.h"
 #include "usermat.h"
-#include "gretl_xml.h"
 #include "genparse.h"
 #include "gretl_bundle.h"
+#include "uservar.h"
 
 #define MDEBUG 0
-#define LEVEL_AUTO -1
-
-typedef enum {
-    UM_PRIVATE = 1 << 0,
-    UM_SHELL   = 1 << 1,
-    UM_PROTECT = 1 << 2
-} UMFlags;
-
-struct user_matrix_ {
-    gretl_matrix *M;
-    int level;
-    UMFlags flags;
-    char name[VNAMELEN];
-};
-
-static user_matrix **matrices;
-static int n_matrices;
-
-#define matrix_is_private(u) ((u->flags & UM_PRIVATE) || *u->name == '$')
-#define matrix_is_shell(u) (u->flags & UM_SHELL)
-#define matrix_protected(u) (u->flags & UM_PROTECT)
-
-#if MDEBUG > 1
-static void print_matrix_stack (const char *msg)
-{
-    int i;
-
-    fprintf(stderr, "\nmatrix stack, %s:\n", msg);
-    for (i=0; i<n_matrices; i++) {
-	if (matrices[i] == NULL) {
-	    fprintf(stderr, " %d: NULL\n", i);
-	} else {
-	    fprintf(stderr, " %d: '%s' at %p (%d x %d)\n",
-		    i, matrices[i]->name, (void *) matrices[i]->M,
-		    matrices[i]->M->rows, matrices[i]->M->cols);
-	}
-    }
-    fputc('\n', stderr);
-}
-#endif
-
-int n_user_matrices (void)
-{
-    return n_matrices;
-}
-
-const char *get_matrix_name_by_index (int idx)
-{
-    if (idx >= 0 && idx < n_matrices) {
-	return matrices[idx]->name;
-    } else {
-	return NULL;
-    }
-}
-
-static user_matrix *user_matrix_new (gretl_matrix *M, const char *name)
-{
-    user_matrix *u = malloc(sizeof *u);
-
-    if (u == NULL) {
-	return NULL;
-    }
-
-    u->M = M;
-    u->level = gretl_function_depth();
-    u->flags = 0;
-    *u->name = '\0';
-    strncat(u->name, name, VNAMELEN - 1);
-
-    return u;
-}
-
-static int matrix_is_saved (const gretl_matrix *m)
-{
-    int i;
-
-    for (i=0; i<n_matrices; i++) {
-	if (m == matrices[i]->M) {
-	    return 1;
-	}
-    }
-
-    if (data_is_bundled((void *) m)) {
-	return 1;
-    }
-
-    return 0;
-}
-
-/* callbacks for adding or deleting icons representing 
-   matrices in the GUI session window */
-
-static MATRIX_ADD_FUNC matrix_add_callback;
-static MATRIX_DEL_FUNC matrix_delete_callback;
-
-/**
- * set_matrix_add_callback:
- * @callback: function function to put in place.
- *
- * Sets the callback function to be invoked when a user-defined
- * matrix is added to the stack of saved objects.  
- * Intended for synchronizing the GUI program with the saved object
- * state.
- */
-
-void set_matrix_add_callback (MATRIX_ADD_FUNC callback)
-{
-    matrix_add_callback = callback; 
-}
-
-/**
- * set_matrix_delete_callback:
- * @callback: function function to put in place.
- *
- * Sets the callback function to be invoked when a user-defined
- * matrix is to be removed from the stack of saved objects.  
- * Intended for synchronizing the GUI program with the saved object
- * state.
- */
-
-void set_matrix_delete_callback (MATRIX_DEL_FUNC callback)
-{
-    matrix_delete_callback = callback; 
-}
-
-static user_matrix *real_user_matrix_add (gretl_matrix *M, 
-					  const char *name,
-					  int callback_ok)
-{
-    user_matrix **tmp;
-    user_matrix *u;
-    int n = n_matrices;
-
-    if (M == NULL) {
-	return 0;
-    }
-
-    tmp = realloc(matrices, (n + 1) * sizeof *tmp);
-    if (tmp == NULL) {
-	return NULL;
-    } else {
-	matrices = tmp;
-    }
-
-    if (matrix_is_saved(M)) {
-	/* ensure uniqueness of matrix pointers */
-	gretl_matrix *Mcpy = gretl_matrix_copy(M);
-
-	if (Mcpy == NULL) {
-	    return NULL;
-	}
-	M = Mcpy;
-    }
-
-    matrices[n] = u = user_matrix_new(M, name);
-
-    if (matrices[n] == NULL) {
-	return NULL;
-    }
-
-    n_matrices++;
-
-#if MDEBUG
-    fprintf(stderr, "add_user_matrix: allocated '%s' at %p (M at %p, %dx%d)\n",
-	    name, (void *) matrices[n], (void *) M,
-	    gretl_matrix_rows(M), gretl_matrix_cols(M));
-#endif
-
-    if (callback_ok && matrix_add_callback != NULL && 
-	gretl_function_depth() == 0) {
-	(*matrix_add_callback)(name);
-    }
-
-    return u;
-}
-
-int user_matrix_add (gretl_matrix *M, const char *name)
-{
-    user_matrix *u = real_user_matrix_add(M, name, 1);
-
-    return (u == NULL)? E_ALLOC : 0;
-}
-
-int private_matrix_add (gretl_matrix *M, const char *name)
-{
-    user_matrix *u = real_user_matrix_add(M, name, 0);
-
-    if (u == NULL) {
-	return E_ALLOC;
-    } else {
-	u->flags |= UM_PRIVATE;
-	return 0;
-    }
-}
-
-static int 
-matrix_insert_diagonal (gretl_matrix *M, const gretl_matrix *S,
-			int mr, int mc)
-{
-    int i, n = gretl_vector_get_length(S);
-    int k = (mr < mc)? mr : mc;
-
-    if (n != k) {
-	return E_NONCONF;
-    }
-
-    for (i=0; i<n; i++) {
-	gretl_matrix_set(M, i, i, S->val[i]);
-    }
-    
-    return 0;
-}
-
-/* If level is LEVEL_AUTO, search at the current function execution
-   depth, otherwise search at the function execution depth given by
-   slevel.
-*/
-
-static gretl_matrix *real_get_matrix_by_name (const char *name, 
-					      int level)
-{
-    int i;
-
-    if (level == LEVEL_AUTO) {
-	level = gretl_function_depth();
-    } 
-
-    for (i=0; i<n_matrices; i++) {
-	if (matrices[i]->level == level && 
-	    !strcmp(name, matrices[i]->name)) {
-	    return matrices[i]->M;
-	}
-    }
-
-    return NULL;
-}
-
-user_matrix *get_user_matrix_by_name (const char *name)
-{
-    int i, level = gretl_function_depth();
-
-    for (i=0; i<n_matrices; i++) {
-	if (matrices[i]->level == level && 
-	    !strcmp(name, matrices[i]->name)) {
-	    return matrices[i];
-	}
-    }
-
-    return NULL;
-}
-
-user_matrix *get_user_matrix_by_index (int idx)
-{
-    if (idx >= 0 && idx < n_matrices) {
-	return matrices[idx];
-    } else {
-	return NULL;
-    }
-}
-
-int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
-{
-    if (u == NULL) {
-	return E_UNKVAR;
-    }
-
-#if MDEBUG
-    fprintf(stderr, "user_matrix_replace_matrix (%s)\n", u->name);
-#endif
-
-    if (M != u->M) {
-	if (!data_is_bundled(u->M)) {
-#if MDEBUG
-	    fprintf(stderr, " %s: freeing matrix at %p, replacing with "
-		    "matrix at %p\n", u->name, u->M, M);
-#endif
-	    gretl_matrix_free(u->M);
-	}	
-	u->M = M;
-    }
-
-    return 0;
-}
-
-int user_matrix_get_level (user_matrix *u)
-{
-    return (u == NULL)? -1 : u->level;
-}
-
-int user_matrix_adjust_level (user_matrix *u, int adj)
-{
-    if (u == NULL) {
-	return E_UNKVAR;
-    }
-
-    u->level += adj;
-
-#if MDEBUG
-    fprintf(stderr, " user matrix at %p, new level = %d\n", (void *) u,
-	    u->level);
-#endif
-
-    return 0;
-}
-
-int user_matrix_set_name (user_matrix *u, const char *name)
-{
-    if (u == NULL) {
-	return E_UNKVAR;
-    }
-
-    *u->name = '\0';
-    strncat(u->name, name, VNAMELEN - 1);
-
-#if MDEBUG
-    fprintf(stderr, " user matrix at %p, new name = '%s'\n", (void *) u,
-	    name);
-#endif
-
-    return 0;
-}
-
-const char *user_matrix_get_name (user_matrix *u)
-{
-    return (u == NULL)? NULL : u->name;
-}
-
-int user_matrix_replace_matrix_by_name (const char *name, 
-					gretl_matrix *M)
-{
-    user_matrix *u = get_user_matrix_by_name(name);  
-
-    return user_matrix_replace_matrix(u, M);
-}
-
-user_matrix *get_user_matrix_by_data (const gretl_matrix *M)
-{
-    int level = gretl_function_depth();
-    int i;
-
-    for (i=0; i<n_matrices; i++) {
-	if (matrices[i]->M == M && matrices[i]->level == level) {
-	    return matrices[i];
-	}
-    }
-
-    return NULL;
-}
 
 /**
  * get_matrix_by_name:
@@ -390,11 +38,18 @@ user_matrix *get_user_matrix_by_data (const gretl_matrix *M)
 
 gretl_matrix *get_matrix_by_name (const char *name)
 {
-    if (name == NULL || *name == '\0') {
-	return NULL;
-    } else {
-	return real_get_matrix_by_name(name, LEVEL_AUTO);
+    gretl_matrix *ret = NULL;
+
+    if (name != NULL && *name != '\0') {
+	user_var *u;
+
+	u = get_user_var_of_type_by_name(name, GRETL_TYPE_MATRIX);
+	if (u != NULL) {
+	    ret = user_var_get_value(u);
+	}
     }
+
+    return ret;
 }
 
 /**
@@ -413,11 +68,12 @@ gretl_matrix *steal_matrix_by_name (const char *name)
     gretl_matrix *ret = NULL;
 
     if (name != NULL && *name != '\0') {
-	user_matrix *u = get_user_matrix_by_name(name);
+	user_var *u;
+
+	u = get_user_var_of_type_by_name(name, GRETL_TYPE_MATRIX);
 
 	if (u != NULL) {
-	    ret = u->M;
-	    u->M = NULL;
+	    ret = user_var_steal_value(u);
 	}
     }
 
@@ -436,164 +92,19 @@ gretl_matrix *steal_matrix_by_name (const char *name)
 
 gretl_matrix *get_matrix_copy_by_name (const char *name, int *err)
 {
-    gretl_matrix *m;
-
-    m = real_get_matrix_by_name(name, LEVEL_AUTO);
+    gretl_matrix *m = get_matrix_by_name(name);
+    gretl_matrix *ret = NULL;
 
     if (m == NULL) {
 	*err = E_UNKVAR;
     } else {
-	m = gretl_matrix_copy(m);
-	if (m == NULL) {
+	ret = gretl_matrix_copy(m);
+	if (ret == NULL) {
 	    *err = E_ALLOC;
 	}
     }
 
-    return m;
-}
-
-/**
- * get_matrix_by_name_at_level:
- * @name: name of the matrix.
- * @level: level of function execution at which to search.
- *
- * Looks up a user-defined matrix by @name, at the given
- * @level of function execution.
- *
- * Returns: pointer to matrix, or %NULL if not found.
- */
-
-gretl_matrix *get_matrix_by_name_at_level (const char *name, int level)
-{
-    return real_get_matrix_by_name(name, level);
-}
-
-/**
- * user_matrix_get_matrix:
- * @u: user-matrix pointer.
- *
- * Returns: pointer to matrix, or %NULL if not found.
- */
-
-gretl_matrix *user_matrix_get_matrix (user_matrix *u)
-{
-    int i;
-
-    for (i=0; i<n_matrices; i++) {
-	if (matrices[i] == u) {
-	    return matrices[i]->M;
-	}
-    }
-
-    return NULL;
-}
-
-/**
- * copy_named_matrix_as:
- * @orig: the name of the original matrix.
- * @newname: the name to be given to the copy.
- *
- * If a saved matrix is found by the name @orig, a copy of
- * this matrix is added to the stack of saved matrices under the
- * name @newname.  This is intended for use when a matrix is given
- * as the argument to a user-defined function: it is copied
- * under the name assigned by the function's parameter list.
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int copy_named_matrix_as (const char *orig, const char *newname)
-{
-    user_matrix *u;
-    int err = 0;
-
-    u = get_user_matrix_by_name(orig);
-    if (u == NULL) {
-	err = 1;
-    } else {
-	gretl_matrix *M = gretl_matrix_copy(u->M);
-
-	if (M == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    err = user_matrix_add(M, newname);
-	}
-	if (!err) {
-	    /* for use in functions: increment level of last-added matrix */
-	    u = matrices[n_matrices - 1];
-	    u->level += 1;
-	}
-    }
-
-    return err;
-}
-
-/**
- * copy_matrix_as:
- * @m: the original matrix.
- * @newname: the name to be given to the copy.
- * @fnarg: 0 for regular use.
- *
- * A copy of matrix @m is added to the stack of saved matrices
- * under the name @newname.  
- *
- * The @fnarg argument should be non-zero only if this function
- * is used to handle the case where a matrix is given as the argument 
- * to a user-defined function.
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int copy_matrix_as (const gretl_matrix *m, const char *newname,
-		    int fnarg)
-{
-    gretl_matrix *m2 = gretl_matrix_copy(m);
-    user_matrix *u;
-    int err = 0;
-
-    if (m2 == NULL) {
-	err = E_ALLOC;
-    } else {
-	u = real_user_matrix_add(m2, newname, 0);
-	if (u == NULL) {
-	    err = E_ALLOC;
-	} else if (fnarg) {
-	    u->level += 1;
-	}
-    }
-
-    return err;
-}
-
-/**
- * matrix_add_as_shell:
- * @M: the matrix to add.
- * @name: the name to be given to the "shell".
- *
- * Matrix @M is added to the stack of saved matrices under
- * the name @name with the shell flag set.  This is used
- * when an anonymous matrix is given as a %const argument to a 
- * user-defined function: it is temporarily given user_matrix, 
- * status, so that it is accessible by name within the function,
- * but the content @M is protected from destruction on exit 
- * from the function.
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int matrix_add_as_shell (gretl_matrix *M, const char *name)
-{
-    user_matrix *u = real_user_matrix_add(M, name, 0);
-    int err = 0;
-
-    if (u == NULL) {
-	err = E_ALLOC;
-    } else {
-	u->flags |= UM_SHELL;
-	u->level += 1;
-    }
-
-    return err;
+    return ret;
 }
 
 static int msel_out_of_bounds (int *range, int n)
@@ -811,6 +322,24 @@ int assign_scalar_to_submatrix (gretl_matrix *M, double x,
     return err;
 }
 
+static int matrix_insert_diagonal (gretl_matrix *M, 
+				   const gretl_matrix *S,
+				   int mr, int mc)
+{
+    int i, n = gretl_vector_get_length(S);
+    int k = (mr < mc)? mr : mc;
+
+    if (n != k) {
+	return E_NONCONF;
+    }
+
+    for (i=0; i<n; i++) {
+	gretl_matrix_set(M, i, i, S->val[i]);
+    }
+    
+    return 0;
+}
+
 /* @M is the target for partial replacement, @S is the source to
    substitute, and @spec tells how/where to make the
    substitution.
@@ -1005,7 +534,7 @@ gretl_matrix *user_matrix_get_submatrix (const char *name,
     gretl_matrix *S = NULL;
     gretl_matrix *M;
 
-    M = real_get_matrix_by_name(name, LEVEL_AUTO); 
+    M = user_var_get_value_by_name(name);
     if (M == NULL) {
 	*err = E_UNKVAR;
     } else {
@@ -1024,313 +553,20 @@ int user_matrix_replace_submatrix (const char *mname,
 				   const gretl_matrix *S,
 				   matrix_subspec *spec)
 {
-    gretl_matrix *M;
+    gretl_matrix *M = user_var_get_value_by_name(mname);
 
-    M = real_get_matrix_by_name(mname, LEVEL_AUTO); 
     if (M == NULL) {
 	return E_UNKVAR;
-    }
-
-    return matrix_replace_submatrix(M, S, spec);
-}
-
-/**
- * add_or_replace_user_matrix:
- * @M: gretl matrix.
- * @name: name for the matrix.
- *
- * Checks whether a matrix of the given @name already exists.
- * If so, the original matrix is replaced by @M; if not, the
- * the matrix @M is added to the stack of user-defined
- * matrices.
- *
- * Returns: 0 on success, %E_ALLOC on failure.
- */
-
-int add_or_replace_user_matrix (gretl_matrix *M, const char *name)
-{
-    int err = 0;
-
-    if (get_user_matrix_by_name(name) != NULL) {
-	err = user_matrix_replace_matrix_by_name(name, M);
     } else {
-	err = user_matrix_add(M, name);
+	return matrix_replace_submatrix(M, S, spec);
     }
-
-    return err;
-}
-
-static void destroy_user_matrix (user_matrix *u)
-{
-    if (u == NULL) {
-	return;
-    }
-
-    if (matrix_is_shell(u)) {
-	/* don't free content */
-	free(u);
-	return;
-    }
-
-    if (!data_is_bundled(u->M)) {
-#if MDEBUG
-	fprintf(stderr, "destroy_user_matrix %s: freeing matrix at %p...\n", 
-		u->name, (void *) u->M);
-#endif
-	gretl_matrix_free(u->M);
-    }
-
-    free(u);
-
-#if MDEBUG
-    fprintf(stderr, " done\n");
-#endif
-}
-
-#define LEV_PRIVATE -1
-
-static int matrix_levels_match (user_matrix *u, int lev)
-{
-    int ret = 0;
-
-    if (u->level == lev) {
-	ret = 1;
-    } else if (lev == LEV_PRIVATE && matrix_is_private(u)) {
-	ret = 1;
-    }
-
-    return ret;
-}
-
-/**
- * destroy_user_matrices_at_level:
- * @level: stack level of function execution.
- *
- * Destroys and removes from the stack of user matrices all
- * matrices that were created at the given @level.  This is 
- * part of the cleanup that is performed when a user-defined
- * function terminates.
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int destroy_user_matrices_at_level (int level)
-{
-    user_matrix **tmp;
-    int i, j, nm = 0;
-    int err = 0;
-
-#if MDEBUG
-    fprintf(stderr, "destroy_user_matrices_at_level: level = %d, "
-	    "total n_matrices = %d\n", level, n_matrices);
-#endif
-#if MDEBUG > 1
-    print_matrix_stack("at top of destroy_user_matrices_at_level");
-#endif
-
-    for (i=0; i<n_matrices; i++) {
-	if (matrices[i] == NULL) {
-	    break;
-	}
-	if (matrix_levels_match(matrices[i], level)) {
-#if MDEBUG
-	    fprintf(stderr, "destroying matrix[%d] ('%s' at %p)\n",
-		    i, matrices[i]->name, (void *) matrices[i]->M);
-#endif
-	    destroy_user_matrix(matrices[i]);
-	    for (j=i; j<n_matrices - 1; j++) {
-		matrices[j] = matrices[j+1];
-	    }
-	    matrices[n_matrices - 1] = NULL;
-	    i--;
-	} else {
-	    nm++;
-	}
-    }
-
-    if (nm < n_matrices) {
-	n_matrices = nm;
-	if (nm == 0) {
-	    free(matrices);
-	    matrices = NULL;
-	} else {
-	    tmp = realloc(matrices, nm * sizeof *tmp);
-	    if (tmp == NULL) {
-		err = E_ALLOC;
-	    } else {
-		matrices = tmp;
-	    }
-	}
-    }
-
-#if MDEBUG > 1
-    print_matrix_stack("at end of destroy_user_matrices_at_level");
-#endif
-
-    return err;
-}
-
-int destroy_private_matrices (void)
-{
-    return destroy_user_matrices_at_level(LEV_PRIVATE);    
-}
-
-static int matrix_is_busy (user_matrix *u)
-{
-    const char *s;
-
-    /* Here we check to see if a given user matrix is
-       "busy" in the sense of being employed as part
-       of an optional specification of the data rows
-       or columns to be read in the context of the
-       "open" command. If so it should not be destroyed
-       as part of the clean-up associated with opening
-       a data file.
-    */
-
-    s = get_optval_string(OPEN, OPT_F);
-    if (s != NULL && !strcmp(s, u->name)) {
-	return 1;
-    }
-
-    s = get_optval_string(OPEN, OPT_M);
-    if (s != NULL && !strcmp(s, u->name)) {
-	return 1;
-    }
-
-    return 0;
-}
-
-/**
- * destroy_user_matrices:
- *
- * Frees all resources associated with the stack of user-
- * defined matrices.
- */
-
-void destroy_user_matrices (void)
-{
-    user_matrix **tmp = NULL;
-    int i, j, n_left = 0;
-
-#if MDEBUG
-    fprintf(stderr, "destroy_user_matrices called, n_matrices = %d\n",
-	    n_matrices);
-#endif
-
-    if (matrices == NULL) {
-	return;
-    }
-
-    for (i=0; i<n_matrices; i++) {
-	if (matrix_is_busy(matrices[i])) {
-	    matrices[i]->flags |= UM_PROTECT;
-	    n_left++;
-	}
-    }
-
-    if (n_left == n_matrices) {
-	for (i=0; i<n_matrices; i++) {
-	    matrices[i]->flags &= ~UM_PROTECT;
-	}
-	return; /* no-op */
-    } else if (n_left > 0) {
-	tmp = malloc(n_left * sizeof *tmp);
-    }
-
-    j = 0;
-
-    for (i=0; i<n_matrices; i++) {
-	if (tmp != NULL && matrix_protected(matrices[i])) {
-	    matrices[i]->flags &= ~UM_PROTECT;
-	    tmp[j++] = matrices[i];
-	} else {
-	    destroy_user_matrix(matrices[i]);
-	}
-    }
-
-    free(matrices);
-
-    if (tmp != NULL) {
-	matrices = tmp;
-	n_matrices = n_left;
-    } else {
-	matrices = NULL;
-	n_matrices = 0;
-    }
-}
-
-int user_matrix_destroy (user_matrix *u)
-{
-    int err = 0;
-
-    if (u == NULL) {
-	err = E_UNKVAR;
-    } else {
-	int i, j, nm = n_matrices - 1;
-
-	for (i=0; i<n_matrices; i++) {
-	    if (matrices[i] == u) {
-		destroy_user_matrix(matrices[i]);
-		for (j=i; j<nm; j++) {
-		    matrices[j] = matrices[j+1];
-		}
-		matrices[nm] = NULL;
-		break;
-	    }
-	} 
-
-	if (nm == 0) {
-	    free(matrices);
-	    matrices = NULL;
-	} else {
-	    user_matrix **tmp = realloc(matrices, nm * sizeof *tmp);
-
-	    if (tmp == NULL) {
-		err = E_ALLOC;
-	    } else {
-		matrices = tmp;
-	    }
-	}
-
-	n_matrices = nm;
-    }
-
-    return err;
-}
-
-int user_matrix_destroy_by_name (const char *name, PRN *prn)
-{
-    user_matrix *u;
-    int err;
-
-    if (matrix_delete_callback != NULL && gretl_function_depth() == 0) {
-	/* run this through the GUI program to ensure that
-	   things stay in sync */
-	return matrix_delete_callback(name);
-    }
-
-    u = get_user_matrix_by_name(name);
-    err = user_matrix_destroy(u);
-
-    if (!err && prn != NULL && gretl_messages_on()) {
-	pprintf(prn, _("Deleted matrix %s"), name);
-	pputc(prn, '\n');
-    }
-
-    return err;
 }
 
 int umatrix_set_names_from_string (gretl_matrix *M, 
 				   const char *s,
 				   int byrow)
 {
-    user_matrix *u = get_user_matrix_by_data(M);
     int n, err = 0;
-
-    if (u == NULL) {
-	return E_UNKVAR;
-    }
 
     n = (byrow)? M->rows : M->cols;
 
@@ -1365,12 +601,7 @@ int umatrix_set_names_from_list (gretl_matrix *M,
 				 const DATASET *dset,
 				 int byrow)
 {
-    user_matrix *u = get_user_matrix_by_data(M);
     int i, n, err = 0;
-
-    if (u == NULL) {
-	return E_UNKVAR;
-    }
 
     n = (byrow)? M->rows : M->cols;
 
@@ -1432,50 +663,53 @@ char *user_matrix_get_column_name (const gretl_matrix *M, int col,
 }
 
 double 
-user_matrix_get_determinant (gretl_matrix *m, int f, int *err)
+user_matrix_get_determinant (gretl_matrix *m, int tmpmat, 
+			     int f, int *err)
 {
-    gretl_matrix *tmp = NULL;
+    gretl_matrix *R = NULL;
     double d = NADBL;
 
     if (gretl_is_null_matrix(m)) {
 	return d;
-    } else if (matrix_is_saved(m)) {
-	tmp = gretl_matrix_copy(m);
+    } else if (tmpmat) {
+	/* it's OK to overwrite @m */
+	R = m;
     } else {
-	tmp = m;
+	/* @m should not be over-written! */
+	R = gretl_matrix_copy(m);
     }
 
-    if (tmp != NULL) {
+    if (R != NULL) {
 	if (f == F_LDET) {
-	    d = gretl_matrix_log_determinant(tmp, err);
+	    d = gretl_matrix_log_determinant(R, err);
 	} else {
-	    d = gretl_matrix_determinant(tmp, err);
+	    d = gretl_matrix_determinant(R, err);
 	}
-	if (tmp != m) {
-	    gretl_matrix_free(tmp);
+	if (R != m) {
+	    gretl_matrix_free(R);
 	}
     }
 
     return d;
 }
 
-gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int f, 
-				       int *err)
+gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int tmpmat, 
+				       int f, int *err)
 {
     gretl_matrix *R = NULL;
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
-    } else if (matrix_is_saved(m)) {
-	/* don't mess with the original matrix! */
+    } else if (tmpmat) {
+	/* it's OK to overwrite @m */
+	R = m;
+    } else {
+	/* @m should not be over-written! */
 	R = gretl_matrix_copy(m);
 	if (R == NULL) {
 	    *err = E_ALLOC;
 	}	
-    } else {
-	/* use (overwrite) the input matrix */
-	R = m;
-    } 
+    }
 
     if (R != NULL) {
 	if (f == F_CDEMEAN) {
@@ -2125,71 +1359,4 @@ gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
     }
 
     return E;
-}
-
-static void xml_put_user_matrix (user_matrix *u, FILE *fp)
-{
-    gretl_matrix *M;
-    const char **S;
-    int i, j;
-
-    if (u == NULL || u->M == NULL) {
-	return;
-    }
-
-    M = u->M;
-
-    fprintf(fp, "<gretl-matrix name=\"%s\" rows=\"%d\" cols=\"%d\"", 
-	    u->name, M->rows, M->cols);
-
-    S = gretl_matrix_get_colnames(M);
-
-    if (S != NULL) {
-	fputs(" colnames=\"", fp);
-	for (j=0; j<M->cols; j++) {
-	    fputs(S[j], fp);
-	    fputc((j < M->cols - 1)? ' ' : '"', fp);
-	}
-    } 
-
-    S = gretl_matrix_get_rownames(M);
-
-    if (S != NULL) {
-	fputs(" rownames=\"", fp);
-	for (j=0; j<M->rows; j++) {
-	    fputs(S[j], fp);
-	    fputc((j < M->rows - 1)? ' ' : '"', fp);
-	}
-    }     
-
-    fputs(">\n", fp);
-
-    for (i=0; i<M->rows; i++) {
-	for (j=0; j<M->cols; j++) {
-	    fprintf(fp, "%.16g ", gretl_matrix_get(M, i, j));
-	}
-	fputc('\n', fp);
-    }
-
-    fputs("</gretl-matrix>\n", fp); 
-}
-
-void write_matrices_to_file (FILE *fp)
-{
-    int i;
-
-    gretl_xml_header(fp);
-    fprintf(fp, "<gretl-matrices count=\"%d\">\n", n_matrices);
-
-    gretl_push_c_numeric_locale();
-
-    for (i=0; i<n_matrices; i++) {
-	if (matrices[i]->M != NULL) {
-	    xml_put_user_matrix(matrices[i], fp);
-	}
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    fputs("</gretl-matrices>\n", fp);
 }

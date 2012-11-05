@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "libset.h"
 #include "gretl_func.h"
+#include "uservar.h"
 #include "gretl_string_table.h"
 
 #include <glib.h>
@@ -532,40 +533,45 @@ void gretl_string_table_add_extra (gretl_string_table *gst, PRN *prn)
     }
 }
 
-/* below: saving of user-defined strings */
+/* apparatus for built-in strings */
 
-typedef struct saved_string_ saved_string;
-
-struct saved_string_ {
+struct built_in_string_ {
     char name[VNAMELEN];
-    int level;
     char *s;
 };
 
-static int n_saved_strings;
-static saved_string *saved_strings;
+typedef struct built_in_string_ built_in_string;
 
-static saved_string built_ins[] = {
-    { "gretldir", 0, NULL },
-    { "dotdir",   0, NULL },
-    { "workdir",  0, NULL },
-    { "gnuplot",  0, NULL },
-    { "x12a",     0, NULL },
-    { "x12adir",  0, NULL },
-    { "tramo",    0, NULL },
-    { "tramodir", 0, NULL },
-    { "seats",    0, NULL },
-    { "shelldir", 0, NULL },
-    { "Rbin",     0, NULL },
-    { "Rlib",     0, NULL },
-    { "pkgdir",   0, NULL }
+static built_in_string built_ins[] = {
+    { "gretldir", NULL },
+    { "dotdir",   NULL },
+    { "workdir",  NULL },
+    { "gnuplot",  NULL },
+    { "x12a",     NULL },
+    { "x12adir",  NULL },
+    { "tramo",    NULL },
+    { "tramodir", NULL },
+    { "seats",    NULL },
+    { "shelldir", NULL },
+    { "Rbin",     NULL },
+    { "Rlib",     NULL },
+    { "pkgdir",   NULL }
 };
 
 #ifdef WIN32
-static saved_string dsep = { "dirsep", 0, "\\" };
+static built_in_string dsep = { "dirsep", "\\" };
 #else
-static saved_string dsep = { "dirsep", 0, "/" };
+static built_in_string dsep = { "dirsep", "/" };
 #endif
+
+void builtin_strings_cleanup (void)
+{
+    int i, n = sizeof built_ins / sizeof built_ins[0];
+
+    for (i=0; i<n; i++) {
+	free(built_ins[i].s);
+    }    
+}
 
 /**
  * gretl_insert_builtin_string:
@@ -600,312 +606,22 @@ void gretl_insert_builtin_string (const char *name, const char *s)
     }
 }
 
-static void gretl_free_builtin_strings (void)
+char *get_built_in_string_by_name (const char *name)
 {
-    int i, n = sizeof built_ins / sizeof built_ins[0];
-
-    for (i=0; i<n; i++) {
-	free(built_ins[i].s);
-    }    
-}
-
-static saved_string *get_saved_string_by_name (const char *name,
-					       int *builtin)
-{
-    int i, d;
-
-    if (builtin != NULL && !strcmp(name, "dirsep")) {
-	*builtin = 1;
-	return &dsep;
-    }
-
-    if (builtin != NULL) {
-	int n = sizeof built_ins / sizeof built_ins[0];
+    if (!strcmp(name, "dirsep")) {
+	return dsep.s;
+    } else {
+	int i, n = sizeof built_ins / sizeof built_ins[0];
 
 	for (i=0; i<n; i++) {
 	    if (!strcmp(name, built_ins[i].name)) {
-		*builtin = 1;
-		return &built_ins[i];
+		return built_ins[i].s;
 	    }
-	}
-    }
-
-    d = gretl_function_depth();
-
-    for (i=0; i<n_saved_strings; i++) {
-	if (saved_strings[i].level == d &&
-	    !strcmp(name, saved_strings[i].name)) {
-	    return &saved_strings[i];
 	}
     }
 
     return NULL;
 }
-
-/**
- * get_string_by_name:
- * @name: the name of the string variable to access.
- *
- * Returns: the value of string variable @name, or %NULL
- * if there is no such variable.
- */
-
-const char *get_string_by_name (const char *name)
-{
-    int i, n, d;
-
-    if (!strcmp(name, "dirsep")) {
-	return dsep.s;
-    } else if (!strcmp(name, "vcvtype")) {
-	return last_model_get_vcv_type();
-    }
-
-    n = sizeof built_ins / sizeof built_ins[0];
-
-    for (i=0; i<n; i++) {
-	if (!strcmp(name, built_ins[i].name)) {
-	    return built_ins[i].s;
-	}
-    }
-
-    d = gretl_function_depth();
-
-    for (i=0; i<n_saved_strings; i++) {
-	if (saved_strings[i].level == d &&
-	    !strcmp(name, saved_strings[i].name)) {
-	    return saved_strings[i].s;
-	}
-    }
-
-    return NULL;
-}
-
-static saved_string *add_named_string (const char *name)
-{
-    int n = n_saved_strings;
-    saved_string *S;
-
-    S = realloc(saved_strings, (n + 1) * sizeof *S);
-    if (S == NULL) {
-	return NULL;
-    }
-
-    strcpy(S[n].name, name);
-    S[n].level = gretl_function_depth();
-    S[n].s = NULL;
-    saved_strings = S;
-    n_saved_strings += 1;
-
-    return &S[n];
-}
-
-/**
- * add_string_as:
- * @s: string value to be added.
- * @name: the name of the string variable to add.
- *
- * Adds @s to the saved array of string variables 
- * under the name @name.
- *
- * Returns: 0 on success, non-zero on failure.
- */
-
-int add_string_as (const char *s, const char *name)
-{
-    int n = n_saved_strings;
-    saved_string *S;
-    int err = 0;
-
-    if (name == NULL || s == NULL) {
-	return E_DATA;
-    }
-
-    S = realloc(saved_strings, (n + 1) * sizeof *S);
-    if (S == NULL) {
-	return E_ALLOC;
-    }
-
-    saved_strings = S;
-
-    S[n].s = gretl_strdup(s);
-    if (S[n].s == NULL) {
-	err = E_ALLOC;
-    } else {  
-	strcpy(S[n].name, name);
-	S[n].level = gretl_function_depth() + 1;
-	n_saved_strings += 1;
-    }
-
-    return err;
-}
-
-static int destroy_saved_string (saved_string *S)
-{
-    int i, j, ns = n_saved_strings - 1;
-    int err = 0;
-
-    for (i=0; i<n_saved_strings; i++) {
-	if (&saved_strings[i] == S) {
-	    free(saved_strings[i].s);
-	    for (j=i; j<ns; j++) {
-		saved_strings[j] = saved_strings[j+1];
-	    }
-	    break;
-	}
-    } 
-
-    if (ns == 0) {
-	free(saved_strings);
-	saved_strings = NULL;
-    } else {
-	saved_string *tmp = realloc(saved_strings, ns * sizeof *tmp);
-
-	if (tmp == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    saved_strings = tmp;
-	}
-    }
-
-    n_saved_strings = ns;
-
-    return err;
-}
-
-/**
- * delete_saved_string:
- * @name: the name of the string variable to delete.
- * @prn: gretl printer (or %NULL).
- *
- * Deletes the string variable called @name.
- *
- * Returns: 0 on success, non-zero on failure (e.g.
- * attempting to delete a built-in string variable).
- */
-
-int delete_saved_string (const char *name, PRN *prn)
-{
-    saved_string *S;
-    int err, builtin = 0;
-
-    S = get_saved_string_by_name(name, &builtin);
-    if (S == NULL) {
-	err = E_UNKVAR;
-    } else if (builtin) {
-	gretl_errmsg_sprintf(_("You cannot delete '%s'"), name);
-	err = E_DATA;
-    } else {
-	err = destroy_saved_string(S);
-	if (!err && prn != NULL && gretl_messages_on()) {
-	    pprintf(prn, _("Deleted string %s"), name);
-	    pputc(prn, '\n');
-	}
-    }
-
-    return err;
-}
-
-void saved_strings_cleanup (void)
-{
-    int i;
-
-    for (i=0; i<n_saved_strings; i++) {
-	free(saved_strings[i].s);
-    }
-
-    free(saved_strings);
-    saved_strings = NULL;
-    n_saved_strings = 0;
-
-    gretl_free_builtin_strings();
-}
-
-void destroy_user_strings (void)
-{
-    int i;
-
-    for (i=0; i<n_saved_strings; i++) {
-	free(saved_strings[i].s);
-    }
-
-    free(saved_strings);
-    saved_strings = NULL;
-    n_saved_strings = 0;
-}
-
-/* called on exiting a user-defined function to clean
-   up any strings defined therein */
-
-int destroy_saved_strings_at_level (int d)
-{
-    int i, ndel = 0;
-    int err = 0;
-
-    for (i=0; i<n_saved_strings; i++) {
-	if (saved_strings[i].level == d) {
-	    ndel++;
-	}
-    }
-
-    if (ndel > 0) {
-	int nnew = n_saved_strings - ndel;
-
-	if (nnew == 0) {
-	    for (i=0; i<n_saved_strings; i++) {
-		free(saved_strings[i].s);
-	    }
-	    free(saved_strings);
-	    saved_strings = NULL;
-	    n_saved_strings = 0;
-	} else {	    
-	    saved_string *S = malloc(nnew * sizeof *S);
-	    int j = 0;
-
-	    if (S == NULL) {
-		err = E_ALLOC;
-	    } else {
-		for (i=0; i<n_saved_strings; i++) {
-		    if (saved_strings[i].level == d) {
-			free(saved_strings[i].s);
-		    } else {
-			strcpy(S[j].name, saved_strings[i].name);
-			S[j].level = saved_strings[i].level;
-			S[j].s = saved_strings[i].s;
-			j++;
-		    }
-		}
-		free(saved_strings);
-		saved_strings = S;
-		n_saved_strings = nnew;
-	    }
-	}
-    }
-
-    return err;
-}
-
-#if 0
-static void copy_unescape (char *targ, const char *src, int n)
-{
-    int c, i = 0;
-
-    for (i=0; i<n; i++) {
-	if (src[i] == '\\') {
-	    c = src[i+1];
-	    if (c == '\\' || c == '"') {
-		*targ++ = c;
-		i++;
-	    } else {
-		*targ++ = src[i];
-	    }
-	} else {
-	    *targ++ = src[i];
-	}
-    }	
-
-    *targ = '\0';
-}
-#endif
 
 static int shell_grab (const char *arg, char **sout)
 {
@@ -970,21 +686,6 @@ char *gretl_getenv (const char *key, int *defined, int *err)
     return val;
 }
 
-#if 0
-static char *strim (char *s)
-{
-    int n;
-
-    tailstrip(s);
-    n = strlen(s);
-    if (n > 0 && s[n-1] == '"') {
-	s[n-1] = '\0';
-    }
-
-    return s;
-}
-#endif
-
 char *retrieve_date_string (int t, const DATASET *dset, int *err)
 {
     char *ret = NULL;
@@ -1036,94 +737,6 @@ char *retrieve_file_content (const char *fname, int *err)
     return ret;
 }
 
-/**
- * gretl_is_string:
- * @sname: string to test.
- *
- * Returns: 1 if @sname os the name of a currently defined
- * string variable, otherwise 0.
- */
-
-int gretl_is_string (const char *sname)
-{
-    saved_string *str;
-    int builtin = 0;
-
-    if (*sname == '@' && *(sname + 1) != '@') {
-	sname++;
-    }
-    
-    str = get_saved_string_by_name(sname, &builtin);
-
-    return (str != NULL && str->s != NULL);
-}
-
-int is_user_string (const char *sname)
-{
-    int i, d;
-
-    if (*sname == '@' && *(sname + 1) != '@') {
-	sname++;
-    }
-
-    d = gretl_function_depth();
-
-    for (i=0; i<n_saved_strings; i++) {
-	if (saved_strings[i].level == d &&
-	    !strcmp(sname, saved_strings[i].name)) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-int save_named_string (const char *name, const char *s, PRN *prn)
-{
-    saved_string *str;
-    int builtin = 0;
-    int add = 0;
-    int err = 0;
-
-    str = get_saved_string_by_name(name, &builtin);
-
-    if (str != NULL && builtin) {
-	if (prn == NULL) {
-	    gretl_errmsg_sprintf(_("You cannot overwrite '%s'\n"), name);
-	} else {
-	    pprintf(prn, _("You cannot overwrite '%s'\n"), name);
-	}
-	return E_DATA;
-    }	
-
-    if (str != NULL) {
-	free(str->s);
-	str->s = NULL;
-    } else {
-	str = add_named_string(name);
-	if (str == NULL) {
-	    return E_ALLOC;
-	}
-	add = 1;
-    } 
-
-    str->s = gretl_strdup(s);
-    if (str->s == NULL) {
-	err = E_ALLOC;
-    }
-
-    if (prn != NULL && !err && gretl_messages_on() && 
-	!gretl_looping_quietly() && *s != '\0') {
-	if (add) {
-	    pprintf(prn, _("Generated string %s\n"), name); 
-	} else {
-	    pprintf(prn, _("Replaced string %s\n"), name);
-	}
-    }
-
-    return err;
-}
-
 /* inserting string into format portion of (s)printf command:
    double any backslashes to avoid breakage of Windows paths
 */
@@ -1165,16 +778,15 @@ static char *mod_strdup (const char *s)
 static char *maybe_get_subst (char *name, int *n, int quoted,
 			      int *freeit)
 {
-    saved_string *str;
-    int builtin = 0;
+    char *s = NULL;
     int k = *n - 1;
     char *ret = NULL;
 
     while (k >= 0) {
-	str = get_saved_string_by_name(name, &builtin);
-	if (str != NULL && str->s != NULL) {
+	s = (char *) get_string_by_name(name);
+	if (s != NULL) {
 	    *n = k + 1;
-	    ret = str->s;
+	    ret = s;
 	    break;
 	}
 	name[k--] = '\0';

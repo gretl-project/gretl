@@ -24,7 +24,7 @@
 #include "libset.h"
 #include "matrix_extra.h"
 #include "usermat.h"
-#include "gretl_scalar.h"
+#include "uservar.h"
 
 #include "../../minpack/minpack.h"
 #include <float.h> 
@@ -1320,8 +1320,7 @@ static void umax_destroy (umax *u)
 	dataset_drop_listed_variables(NULL, u->dset, NULL, NULL);
     }
 
-    gretl_scalar_delete("$umax", NULL);
-    user_matrix_destroy_by_name("$umax", NULL);
+    user_var_delete_by_name("$umax", NULL);
 
     destroy_genr(u->gf);
     destroy_genr(u->gg);

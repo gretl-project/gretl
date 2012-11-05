@@ -43,7 +43,8 @@
 #include "dbread.h"
 #include "boxplots.h"
 #include "gretl_www.h"
-#include "gretl_scalar.h"
+#include "uservar.h"
+#include "csvdata.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -186,32 +187,24 @@ static int cli_clear_data (CMD *cmd, DATASET *dset, MODEL *model)
     } else if (cmd->opt & OPT_P) {
 	/* --preserve: clear dataset only */
 	clearopt = OPT_D;
+    } else if (csv_open_needs_matrix(cmd->opt)) {
+	clearopt = OPT_D;
     }
 
-    if (!(clearopt & OPT_O)) {
-	/* OPT_O means "other", i.e. leave the dataset 
-	   in place but clear all other stuff
-	*/
-	*datafile = '\0';
+    *datafile = '\0';
 
-	if (dset->Z != NULL) {
-	    err = restore_full_sample(dset, NULL); 
-	    free_Z(dset); 
-	}
-
-	clear_datainfo(dset, CLEAR_FULL);
-	data_status = 0;
+    if (dset->Z != NULL) {
+	err = restore_full_sample(dset, NULL); 
+	free_Z(dset); 
     }
+
+    clear_datainfo(dset, CLEAR_FULL);
+    data_status = 0;
 
     clear_model(model);
 
     if (clearopt & OPT_D) {
 	libgretl_session_cleanup(SESSION_CLEAR_DATASET);
-    } else if (clearopt & OPT_O) {
-	/* only supported by the "clear" command:
-	   clear stuff _other than_ the dataset
-	*/
-	libgretl_session_cleanup(SESSION_CLEAR_OTHER);
     } else {
 	libgretl_session_cleanup(SESSION_CLEAR_ALL);
     }
@@ -966,7 +959,7 @@ static int exec_line (ExecState *s, DATASET *dset)
 	} else if (*cmd->param != '\0') {
 	    err = gretl_delete_var_by_name(cmd->param, prn);
 	} else if (get_list_by_name(cmd->extra)) {
-	    err = delete_list_by_name(cmd->extra);
+	    err = user_var_delete_by_name(cmd->extra, prn);
 	} else {
 	    int nv = 0;
 

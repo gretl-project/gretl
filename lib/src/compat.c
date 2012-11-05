@@ -19,7 +19,6 @@
 
 #include "libgretl.h"
 #include "libset.h"
-#include "gretl_scalar.h"
 #include "compat.h"
 
 /*

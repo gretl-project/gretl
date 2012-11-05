@@ -196,7 +196,6 @@ LIBSRC = adf_kpss.c \
 	gretl_paths.c \
 	gretl_prn.c \
 	gretl_restrict.c \
-	gretl_scalar.c \
 	gretl_string_table.c \
 	gretl_untar.c \
 	gretl_utils.c \
@@ -229,6 +228,7 @@ LIBSRC = adf_kpss.c \
 	transforms.c \
 	tsls.c \
         usermat.c \
+	uservar.c \
 	var.c \
 	varprint.c \
 	vartest.c \

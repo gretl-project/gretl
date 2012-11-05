@@ -34,6 +34,7 @@
 #include "var.h"
 #include "gretl_func.h"
 #include "libset.h"
+#include "uservar.h"
 #include "johansen.h"
 #include "gretl_bfgs.h"
 
@@ -6435,15 +6436,17 @@ static void selector_set_focus (selector *sr)
 static void list_append_named_lists (GtkListStore *store,
 				     GtkTreeIter *iterp)
 {
-    int i, n = n_saved_lists();
-    const char *lname;
+    GList *llist = user_var_names_for_type(GRETL_TYPE_LIST);
+    GList *tail = llist;
 
-    for (i=0; i<n; i++) {
+    while (tail != NULL) {
 	gtk_list_store_append(store, iterp);
-	lname = get_list_name_by_index(i);
 	gtk_list_store_set(store, iterp, COL_ID, -1, COL_LAG, 0,
-			   COL_NAME, lname, -1);
+			   COL_NAME, tail->data, -1);
+	tail = tail->next;
     }
+
+    g_list_free(llist);    
 }
 
 selector *selection_dialog (int ci, const char *title, int (*callback)())
@@ -6853,7 +6856,7 @@ static void selector_add_top_entry (selector *sr)
 	src = GTK_WIDGET(sr->data);
 	lname = gtk_entry_get_text(GTK_ENTRY(src));
     } else {
-	lnames = get_list_of_listnames();
+	lnames = user_var_names_for_type(GRETL_TYPE_LIST);
     }
 
     hbox = gtk_hbox_new(FALSE, 0);

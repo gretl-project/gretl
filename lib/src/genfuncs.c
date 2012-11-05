@@ -2655,27 +2655,27 @@ static void make_panel_time_var (double *x, const DATASET *dset)
 
 int gen_time (DATASET *dset, int tm)
 {
-    int i, t;
+    int v, t;
 
-    i = series_index(dset, (tm)? "time" : "index");
+    v = series_index(dset, (tm)? "time" : "index");
 
-    if (i == dset->v && dataset_add_series(dset, 1)) {
+    if (v == dset->v && dataset_add_series(dset, 1)) {
 	return E_ALLOC;
     }
 
     if (tm) {
-	strcpy(dset->varname[i], "time");
-	series_set_label(dset, i, _("time trend variable"));
+	strcpy(dset->varname[v], "time");
+	series_set_label(dset, v, _("time trend variable"));
     } else {
-	strcpy(dset->varname[i], "index");
-	series_set_label(dset, i, _("data index variable"));
+	strcpy(dset->varname[v], "index");
+	series_set_label(dset, v, _("data index variable"));
     }
     
     if (tm && dset->structure == STACKED_TIME_SERIES) {
-	make_panel_time_var(dset->Z[i], dset);
+	make_panel_time_var(dset->Z[v], dset);
     } else {
 	for (t=0; t<dset->n; t++) {
-	    dset->Z[i][t] = (double) (t + 1);
+	    dset->Z[v][t] = (double) (t + 1);
 	}
     }
 
@@ -3200,12 +3200,7 @@ int check_declarations (char ***pS, parser *p)
     }
 
     for (i=0; i<n && !p->err; i++) {
-	if (gretl_is_series(S[i], p->dset) ||
-	    gretl_is_scalar(S[i]) ||
-	    gretl_is_bundle(S[i]) ||
-	    get_matrix_by_name(S[i]) ||
-	    get_list_by_name(S[i]) ||
-	    get_string_by_name(S[i])) {
+	if (gretl_type_from_name(S[i], p->dset)) {
 	    /* variable already exists */
 	    exists = 1;
 	    p->err = E_DATA;
@@ -3948,7 +3943,7 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
     int Ty, nx = 1;
     int i, j;
 
-    if (xtype == LVEC) {
+    if (xtype == LIST) {
 	xlist = px;
 	nx = xlist[0];
 	if (nx < 1) {

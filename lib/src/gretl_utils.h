@@ -34,8 +34,7 @@
 
 enum {
     SESSION_CLEAR_ALL,
-    SESSION_CLEAR_DATASET,
-    SESSION_CLEAR_OTHER
+    SESSION_CLEAR_DATASET
 };
 
 void libgretl_init (void);

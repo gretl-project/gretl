@@ -46,8 +46,8 @@ GtkWidget *get_window_for_data (const gpointer data);
 
 GtkWidget *get_window_for_plot (const char *plotfile);
 
-void maybe_close_window_for_data (const gpointer data,
-				  GretlObjType otype);
+void maybe_close_window_for_user_var (const gpointer data,
+				      GretlObjType otype);
 
 void close_session_windows (void);
 

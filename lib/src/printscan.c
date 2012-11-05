@@ -23,8 +23,8 @@
 #include "libset.h"
 #include "gretl_func.h"
 #include "gretl_string_table.h"
-#include "gretl_scalar.h"
 #include "matrix_extra.h"
+#include "uservar.h"
 
 #include <errno.h>
 
@@ -189,7 +189,7 @@ static int gen_arg_val (const char *s, DATASET *dset,
 	if (type == GRETL_TYPE_DOUBLE) {
 	    *scalar = 1;
 	    *px = gretl_scalar_get_value(name);
-	    gretl_scalar_delete(name, NULL);
+	    user_var_delete_by_name(name, NULL);
 	} else if (type == GRETL_TYPE_MATRIX) {
 	    gretl_matrix *m = get_matrix_by_name(name);
 
@@ -197,7 +197,7 @@ static int gen_arg_val (const char *s, DATASET *dset,
 	    if (*pm == NULL) {
 		err = E_ALLOC;
 	    }
-	    user_matrix_destroy_by_name(name, NULL);
+	    user_var_delete_by_name(name, NULL);
 	} else if (type == GRETL_TYPE_SERIES) {
 	    *pv = current_series_index(dset, name);
 	} else {
@@ -623,6 +623,40 @@ static int split_printf_line (const char *s, char *targ, int *sp,
     return 0;
 }
 
+#define SPRINTF_COMPAT 1
+
+static user_var *get_stringvar_target (const char *targ, 
+				       DATASET *dset,
+				       PRN *prn,
+				       int *err)
+{
+    user_var *uvar = NULL;
+
+    if (*targ == '\0') {
+	*err = E_PARSE;
+    } else {
+	uvar = get_user_var_of_type_by_name(targ, GRETL_TYPE_STRING);
+#if SPRINTF_COMPAT
+	if (uvar == NULL) {
+	    char genline[64];
+
+	    sprintf(genline, "string %s = \"\"", targ);
+	    *err = generate(genline, dset, OPT_NONE, prn);
+	    if (!*err) {
+		uvar = get_user_var_of_type_by_name(targ, GRETL_TYPE_STRING);
+		
+	    }
+	}
+#endif	
+	if (uvar == NULL) {
+	    gretl_errmsg_sprintf(_("%s: not a string variable"), targ);
+	    *err = E_DATA;
+	}
+    }
+
+    return uvar;
+}
+
 /* supports both printf and sprintf */
 
 static int real_do_printf (const char *line, DATASET *dset, 
@@ -632,6 +666,7 @@ static int real_do_printf (const char *line, DATASET *dset,
     char targ[VNAMELEN];
     char *format = NULL;
     char *args = NULL;
+    user_var *uvar = NULL;
     int sp, err = 0;
 
     gretl_error_clear();
@@ -643,10 +678,13 @@ static int real_do_printf (const char *line, DATASET *dset,
 	return err;
     }
 
-    if (sp && *targ == '\0') {
-	/* sprintf: we need a target stringvar */
-	return E_PARSE;
-    }    
+    if (sp) {
+	/* sprintf: we need a target string variable */
+	uvar = get_stringvar_target(targ, dset, inprn, &err);
+	if (err) {
+	    return err;
+	}
+    }
 
     /* Even for printf we'll buffer the output locally in 
        case there's an error part way through the printing.
@@ -692,7 +730,13 @@ static int real_do_printf (const char *line, DATASET *dset,
 	const char *buf = gretl_print_get_buffer(prn);
 
 	if (sp) {
-	    err = save_named_string(targ, buf, inprn);
+	    char *tmp = gretl_strdup(buf);
+
+	    if (tmp == NULL) {
+		err = E_ALLOC;
+	    } else {
+		user_var_replace_value(uvar, tmp);
+	    }
 	} else {
 	    pputs(inprn, buf);
 	}
@@ -898,17 +942,20 @@ scan_string (const char *targ, char **psrc, int width,
     }
 
     if (targ != NULL) {
-	if (!is_user_string(targ)) {
+	user_var *uvar;
+
+	uvar = get_user_var_of_type_by_name(targ, GRETL_TYPE_STRING);
+
+	if (uvar == NULL) {
 	    gretl_errmsg_sprintf(_("%s: not a string variable"), targ);
-	    err = E_UNKVAR;
+	    err = E_DATA;
 	} else if (n > 0) {
 	    char *conv = gretl_strndup(*psrc, n);
 
 	    if (conv == NULL) {
 		err = E_ALLOC;
 	    } else {
-		err = save_named_string(targ, conv, NULL);
-		free(conv);
+		user_var_replace_value(uvar, conv);
 		*psrc += n;
 	    }
 	    if (!err) {

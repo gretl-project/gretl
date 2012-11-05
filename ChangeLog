@@ -20,7 +20,7 @@
   named matrix instead of a series
 - "corrgm" command: make the $test and $pvalue accessors available 
   for the Ljung-Box test at the maximum lag
-- "xtab" command: user string values of variables if available
+- "xtab" command: use string values of variables if available
 - Add three new functions: ghk(), halton() and isnan()
 - The mread() function now allows leading #-comment lines in the
   plain text file from which a matrix is read

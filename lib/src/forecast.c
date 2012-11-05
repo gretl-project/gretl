@@ -19,7 +19,7 @@
 
 #include "libgretl.h"
 #include "matrix_extra.h"
-#include "gretl_scalar.h"
+#include "uservar.h"
 #include "forecast.h"
 #include "var.h"
 #include "system.h"

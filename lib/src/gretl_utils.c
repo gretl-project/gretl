@@ -23,9 +23,8 @@
 #include "objstack.h"
 #include "cmd_private.h"
 #include "libset.h"
-#include "usermat.h"
+#include "uservar.h"
 #include "gretl_panel.h"
-#include "gretl_scalar.h"
 #include "gretl_bundle.h"
 #include "gretl_string_table.h"
 #include "gretl_xml.h"
@@ -1216,7 +1215,7 @@ int varnum_from_string (const char *str, DATASET *dset)
  * @dset: dataset information.
  * 
  * Returns: non-zero if @s is the name of an existing
- * series, matrix, scalar, list or string variable,
+ * series, matrix, scalar, list, string or bundle,
  * otherwise 0.
  */
 
@@ -1224,18 +1223,8 @@ GretlType gretl_type_from_name (const char *s, const DATASET *dset)
 {
     if (dset != NULL && gretl_is_series(s, dset)) {
 	return GRETL_TYPE_SERIES;
-    } else if (get_matrix_by_name(s) != NULL) {
-	return GRETL_TYPE_MATRIX;
-    } else if (gretl_is_scalar(s)) {
-	return GRETL_TYPE_DOUBLE;
-    } else if (get_list_by_name(s)) {
-	return GRETL_TYPE_LIST;
-    } else if (get_string_by_name(s)) {
-	return GRETL_TYPE_STRING;
-    } else if (gretl_is_bundle(s)) {
-	return GRETL_TYPE_BUNDLE;
     } else {
-	return GRETL_TYPE_NONE;
+	return user_var_get_type_by_name(s);
     }
 }
 
@@ -1590,7 +1579,7 @@ static int maybe_delete_bundle_value (const char *s, PRN *prn)
 	gretl_bundle *bundle;
 	const char *s;
 
-	bundle = get_gretl_bundle_by_name(bname);
+	bundle = get_bundle_by_name(bname);
 	if (bundle == NULL) {
 	    err = E_UNKVAR;
 	} else {
@@ -1629,15 +1618,9 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
     }
 
     if (!strcmp(s, "kalman")) {
-	err = delete_kalman(prn);	
-    } else if (gretl_is_scalar(s)) {
-	err = gretl_scalar_delete(s, prn);
-    } else if (get_matrix_by_name(s)) {
-	err = user_matrix_destroy_by_name(s, prn);
-    } else if (get_string_by_name(s)) {
-	err = delete_saved_string(s, prn);
-    } else if (gretl_is_bundle(s)) {
-	err = gretl_bundle_delete_by_name(s, prn);
+	err = delete_kalman(prn);
+    } else if (gretl_is_user_var(s)) {
+	err = user_var_delete_by_name(s, prn);
     } else {
 	err = maybe_delete_bundle_value(s, prn);
     } 
@@ -1769,20 +1752,14 @@ void libgretl_session_cleanup (int mode)
 {
     gretl_saved_objects_cleanup();
 
-    if (mode != SESSION_CLEAR_OTHER) {
-	/* trash dataset-related items */
-	gretl_transforms_cleanup();
-	gretl_lists_cleanup();
-	gretl_tests_cleanup();
-	gretl_plotx(NULL);
-    }
+    /* trash dataset-related items */
+    gretl_transforms_cleanup();
+    gretl_lists_cleanup();
+    gretl_tests_cleanup();
+    gretl_plotx(NULL);
 
     if (mode != SESSION_CLEAR_DATASET) {
-	/* trash non-dataset items */
-	destroy_user_scalars();
-	destroy_user_matrices();
-	destroy_user_bundles();
-	destroy_user_strings();
+	destroy_user_vars();
     }
 }
 
@@ -1806,7 +1783,6 @@ void libgretl_cleanup (void)
     libset_cleanup();
     gretl_command_hash_cleanup();
     gretl_function_hash_cleanup();
-    saved_strings_cleanup();
     lapack_mem_free();
     forecast_matrix_cleanup();
     option_flags_cleanup();
@@ -1814,6 +1790,7 @@ void libgretl_cleanup (void)
     gnuplot_cleanup();
     bufgets_cleanup();
     gretl_www_cleanup();
+    builtin_strings_cleanup();
 
 #ifdef USE_RLIB
     gretl_R_cleanup();

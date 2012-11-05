@@ -65,4 +65,6 @@ int join_from_csv (const char *fname,
 		   gretlopt opt,
 		   PRN *prn);
 
+int csv_open_needs_matrix (gretlopt opt);
+
 #endif /* CSVDATA_H */

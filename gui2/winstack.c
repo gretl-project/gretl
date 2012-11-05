@@ -25,6 +25,8 @@
 #include "tabwin.h"
 #include "winstack.h"
 
+#include "uservar.h"
+
 #define WDEBUG 0
 
 /* Below: apparatus for keeping track of open gretl windows.
@@ -497,9 +499,9 @@ gboolean window_list_exit_check (void)
     return ret;
 }
 
-/* windows that should not be automatically closed when
+/* windows that should _not_ be automatically closed when
    closing the current gretl session (e.g. on opening a
-   new data file
+   new data file)
 */
 
 #define other_dont_close(r) (r == SCRIPT_OUT ||		\
@@ -738,21 +740,22 @@ GtkWidget *get_window_for_data (const gpointer data)
     return ret;
 }
 
-void maybe_close_window_for_data (const gpointer data,
-				  GretlObjType otype)
+void maybe_close_window_for_user_var (const gpointer data,
+				      GretlObjType otype)
 {
-    GtkWidget *w = get_window_for_data(data);
+    if (otype == GRETL_OBJ_BUNDLE) {
+	void *ptr = user_var_get_value((user_var *) data);
+	windata_t *vwin = get_viewer_for_data(ptr);
 
-    /* special for bundle windows and matrix editor */
+	if (vwin != NULL) {
+	    vwin->data = NULL; /* don't double-free */
+	    gtk_widget_destroy(vwin->main);
+	}
+    } else {
+	GtkWidget *w = get_window_for_data(data);
 
-    if (w != NULL) {
-	if (otype == GRETL_OBJ_BUNDLE) {
-	    windata_t *vwin = g_object_get_data(G_OBJECT(w),
-						"vwin");
-	    if (vwin != NULL) {
-		vwin->data = NULL;
-	    }
-	} else if (otype == GRETL_OBJ_MATRIX) {
+	if (otype == GRETL_OBJ_MATRIX) {
+	    /* don't double-free */
 	    g_object_set_data(G_OBJECT(w), "object", NULL);
 	}
 	gtk_widget_destroy(w);

@@ -29,11 +29,10 @@
 #include "forecast.h"
 #include "cmd_private.h"
 #include "libset.h"
-#include "usermat.h"
+#include "uservar.h"
 #include "gretl_panel.h"
 #include "texprint.h"
 #include "gretl_xml.h"
-#include "gretl_scalar.h"
 #include "gretl_bundle.h"
 #include "gretl_string_table.h"
 #include "dbread.h"
@@ -1467,8 +1466,12 @@ static int print_name_ok (const char *s, CMD *cmd)
     int ok = 0;
 
     if (cmd->ci == PRINT) {
-	if (gretl_is_matrix(s) || gretl_is_scalar(s) || 
-	    gretl_is_bundle(s) || gretl_is_string(s) ||
+	GretlType t = user_var_get_type_by_name(s);
+
+	if (t == GRETL_TYPE_MATRIX ||
+	    t == GRETL_TYPE_DOUBLE ||
+	    t == GRETL_TYPE_STRING ||
+	    t == GRETL_TYPE_BUNDLE ||
 	    !strcmp(s, "scalars")) {
 	    cmd->extra = gretl_str_expand(&cmd->extra, s, " ");
 	    cmd->list[0] -= 1;
@@ -1737,17 +1740,7 @@ int plausible_genr_start (const char *s, const DATASET *dset)
 		ret = 1;
 	    }
 	}
-    } else if (gretl_is_series(s, dset)) {
-	ret = 1;
-    } else if (gretl_is_scalar(s)) {
-	ret = 1;
-    } else if (gretl_is_matrix(s)) {
-	ret = 1;
-    } else if (get_list_by_name(s)) {
-	ret = 1;
-    } else if (get_string_by_name(s)) {
-	ret = 1;
-    } else if (gretl_is_bundle(s)) {
+    } else if (gretl_type_from_name(s, dset) != 0) {
 	ret = 1;
     }
 
@@ -2183,7 +2176,7 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
     *pk = k;
 
     if (!ok && cmd->err == 0) {
-	if (gretl_is_scalar(s) || gretl_is_matrix(s)) {
+	if (user_var_get_type_by_name(s)) {
 	    gretl_errmsg_sprintf(_("'%s' is not the name of a series"), s);
 	    cmd->err = E_DATATYPE;
 	} else {
@@ -2718,11 +2711,13 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 #endif
 
     if (cmd->ci == DELEET && nf == 1) {
-	if (!strcmp(rem, "kalman") ||
-	    gretl_is_scalar(rem) ||
-	    gretl_is_matrix(rem) || 
-	    gretl_is_bundle(rem) ||
-	    get_string_by_name(rem)) {
+	GretlType t = user_var_get_type_by_name(rem);
+
+	if (t == GRETL_TYPE_DOUBLE ||
+	    t == GRETL_TYPE_MATRIX ||
+	    t == GRETL_TYPE_BUNDLE ||
+	    t == GRETL_TYPE_STRING ||
+	    !strcmp(rem, "kalman")) {
 	    /* special for deleting a named matrix, string, ... */
 	    cmd_param_grab_string(cmd, rem);
 	    goto cmd_exit;

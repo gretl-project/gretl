@@ -113,15 +113,11 @@ int gretl_list_n_distinct_members (const int *list);
 
 int *full_var_list (const DATASET *dset, int *nvars);
 
-int n_saved_lists (void);
-
-int max_varno_in_saved_lists (void);
-
-const char *get_list_name_by_index (int idx);
-
 const char *saved_list_get_name (const int *list);
 
 int *get_list_by_name (const char *name);
+
+int gretl_is_list (const char *name);
 
 int append_to_list_by_name (const char *targ, const int *add);
 
@@ -133,31 +129,18 @@ int remember_list (const int *list, const char *name, PRN *prn);
 
 int rename_saved_list (const char *orig, const char *newname); 
 
-int declare_list (const char *name);
-
-int *copy_list_as (const int *list, const char *name);
-
-int *create_named_null_list (const char *name);
-
-int *create_named_singleton_list (int varnum, const char *name);
-
-int delete_list_by_name (const char *name);
-
-int destroy_saved_lists_at_level (int level);
-
-int gretl_lists_revise (const int *dlist, int dmin);
-
-void gretl_lists_cleanup (void);
-
 int load_user_lists_file (const char *fname);
-
-int gretl_serialize_lists (const char *fname);
 
 void gretl_list_print (const char *lname, 
 		       const DATASET *dset,
 		       PRN *prn);
 
-int *varname_match_list (const DATASET *dset, const char *pattern,
+int *list_from_matrix (const gretl_matrix *m, 
+		       const DATASET *dset,
+		       int *err);
+
+int *varname_match_list (const DATASET *dset, 
+			 const char *pattern,
 			 int *err);
 
 int *ellipsis_list (const DATASET *dset, int v1, int v2, int *err);

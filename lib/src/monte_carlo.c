@@ -27,7 +27,7 @@
 #include "var.h"
 #include "objstack.h"
 #include "gretl_func.h"
-#include "gretl_scalar.h"
+#include "uservar.h"
 #include "flow_control.h"
 #include "system.h"
 #include "genparse.h"
@@ -558,7 +558,7 @@ static void gretl_loop_destroy (LOOPSET *loop)
     }
 
     if (loop->flags & LOOP_DELVAR) {
-	gretl_scalar_delete(loop->idxname, NULL);
+	user_var_delete_by_name(loop->idxname, NULL);
     }
 
     free(loop);
@@ -586,7 +586,7 @@ static int parse_as_while_loop (LOOPSET *loop, const char *s)
 }
 
 static int loop_attach_index_var (LOOPSET *loop, const char *vname,
-				  const DATASET *dset)
+				  DATASET *dset)
 {
     int err = 0;
 
@@ -594,7 +594,10 @@ static int loop_attach_index_var (LOOPSET *loop, const char *vname,
 	strcpy(loop->idxname, vname);
 	gretl_scalar_set_value(vname, loop->init.val);
     } else {
-	err = gretl_scalar_add_with_check(vname, loop->init.val, dset);
+	char genline[64];
+
+	sprintf(genline, "scalar %s = %g", vname, loop->init.val);
+	err = generate(genline, dset, OPT_Q, NULL);
 	if (!err) {
 	    strcpy(loop->idxname, vname);
 	    loop->flags |= LOOP_DELVAR;
@@ -972,7 +975,7 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATASET *dset,
 }
 
 static int
-parse_as_each_loop (LOOPSET *loop, const DATASET *dset, char *s)
+parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
 {
     char ivar[VNAMELEN] = {0};
     int done = 0;
@@ -2879,8 +2882,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    int subst = 0;
 
 #if LOOP_DEBUG
-	    fprintf(stderr, " j=%d, line='%s', compiled = %d\n", 
-		    j, line, genr_compiled(loop, j));
+	    fprintf(stderr, " j=%d, line='%s', compiled = %d\n", j, line,
+	            genr_compiled(loop, j));
 #endif
 	    strcpy(errline, line);
 

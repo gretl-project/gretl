@@ -1902,13 +1902,6 @@
 	  calculations can be reduced). The eigenvalues are returned
 	  in ascending order.
 	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="eigengen"/>
-	    <fncref targ="qrdecomp"/>
-	    <fncref targ="svd"/>
-	  </seelist>
-	</para>
       </description>
     </function>
 
@@ -2935,39 +2928,6 @@
 	</para>
       </description>
     </function>
-    <function name="isseries" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="string">s</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns 1 if <argname>s</argname> is the identifier for a
-	  currently defined series, otherwise 0.
-	  <seelist> 
-	    <fncref targ="islist"/>
-	    <fncref targ="isnull"/>
-	    <fncref targ="isstring"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="isstring" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="string">s</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns 1 if <math>s</math> is the identifier for a currently
-	  defined string, otherwise 0.
-	  <seelist> 
-	    <fncref targ="islist"/>
-	    <fncref targ="isnull"/>
-	    <fncref targ="isseries"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
 
     <function name="kdensity" section="stats" output="matrix">
       <fnargs>
@@ -3100,6 +3060,39 @@
       </description>
     </function>
 
+    <function name="isseries" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns 1 if <argname>s</argname> is the identifier for a
+	  currently defined series, otherwise 0.
+	  <seelist> 
+	    <fncref targ="islist"/>
+	    <fncref targ="isnull"/>
+	    <fncref targ="isstring"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="isstring" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns 1 if <math>s</math> is the identifier for a currently
+	  defined string, otherwise 0.
+	  <seelist> 
+	    <fncref targ="islist"/>
+	    <fncref targ="isnull"/>
+	    <fncref targ="isseries"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
 
     <function name="lags" section="transforms" output="list">
       <fnargs>
@@ -3240,48 +3233,6 @@
       </description>
     </function>
 
-    <function name="loess" section="stats" output="series">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-	<fnarg type="series">x</fnarg>
-	<fnarg optional="true" type="scalar">d</fnarg>
-	<fnarg optional="true" type="scalar">q</fnarg>
-	<fnarg optional="true" type="scalar">robust</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Performs locally-weighted polynomial regression and returns
-	  a series holding predicted values of <argname>y</argname>
-	  for each non-missing value of <argname>x</argname>.  The
-	  method is as described by <cite key="cleveland79">William
-	  Cleveland (1979)</cite>.
-	</para>
-	<para>
-	  The optional arguments <argname>d</argname> and
-	  <argname>q</argname> specify the order of the polynomial in
-	  <argname>x</argname> and the proportion of the data points
-	  to be used in local estimation, respectively.  The default
-	  values are <argname>d</argname> = 1 and <argname>q</argname>
-	  = 0.5. The other acceptable values for <argname>d</argname>
-	  are 0 and 2. Setting <argname>d</argname> = 0 reduces the
-	  local regression to a form of moving average. The value
-	  of <argname>q</argname> must be greater than 0 and cannot
-	  exceed 1; larger values produce a smoother outcome.
-	</para>
-	<para>
-	  If a non-zero value is given for the <argname>robust</argname>
-	  argument the local regressions are iterated twice, with the
-	  weights being modified based on the residuals from the previous
-	  iteration so as to give less influence to outliers.
-	</para>
-	<para>
-	  See also <fncref targ="nadarwat"/>, and in addition see
-	  <guideref targ="chap-nonparam"/> for details on
-	  nonparametric methods.
-	</para>
-      </description>
-    </function>
-
     <function name="log" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat-or-list">x</fnarg>
@@ -3323,6 +3274,48 @@
 	<para>
 	  Returns the base-2 logarithm of <argname>x</argname>; produces
 	  <lit>NA</lit> for non-positive values.
+	</para>
+      </description>
+    </function>
+
+    <function name="loess" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="series">x</fnarg>
+	<fnarg optional="true" type="scalar">d</fnarg>
+	<fnarg optional="true" type="scalar">q</fnarg>
+	<fnarg optional="true" type="scalar">robust</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Performs locally-weighted polynomial regression and returns
+	  a series holding predicted values of <argname>y</argname>
+	  for each non-missing value of <argname>x</argname>.  The
+	  method is as described by <cite key="cleveland79">William
+	  Cleveland (1979)</cite>.
+	</para>
+	<para>
+	  The optional arguments <argname>d</argname> and
+	  <argname>q</argname> specify the order of the polynomial in
+	  <argname>x</argname> and the proportion of the data points
+	  to be used in local estimation, respectively.  The default
+	  values are <argname>d</argname> = 1 and <argname>q</argname>
+	  = 0.5. The other acceptable values for <argname>d</argname>
+	  are 0 and 2. Setting <argname>d</argname> = 0 reduces the
+	  local regression to a form of moving average. The value
+	  of <argname>q</argname> must be greater than 0 and cannot
+	  exceed 1; larger values produce a smoother outcome.
+	</para>
+	<para>
+	  If a non-zero value is given for the <argname>robust</argname>
+	  argument the local regressions are iterated twice, with the
+	  weights being modified based on the residuals from the previous
+	  iteration so as to give less influence to outliers.
+	</para>
+	<para>
+	  See also <fncref targ="nadarwat"/>, and in addition see
+	  <guideref targ="chap-nonparam"/> for details on
+	  nonparametric methods.
 	</para>
       </description>
     </function>
@@ -5644,6 +5637,7 @@
 	    <fncref targ="NRmax"/>
 	  </seelist>
 	</para>
+
       </description>
     </function>
 

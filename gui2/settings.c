@@ -31,7 +31,7 @@
 
 #include "libset.h"
 #include "texprint.h"
-#include "usermat.h"
+#include "uservar.h"
 
 #include <unistd.h>
 #include <sys/types.h>

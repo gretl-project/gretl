@@ -24,6 +24,7 @@
 #include "gretl_string_table.h"
 #include "matrix_extra.h"
 #include "usermat.h"
+#include "uservar.h"
 #include "gretl_bfgs.h"
 #include "gretl_fft.h"
 #include "gretl_panel.h"
@@ -57,17 +58,20 @@
 
 #define dataset_dum(n) (n->t == DUM && n->v.idnum == DUM_DATASET)
 
-#define ok_list_node(n) (n->t == LIST || n->t == LVEC || n->t == NUM || \
+#define ok_list_node(n) (n->t == LIST || n->t == WLIST || n->t == NUM || \
 			 n->t == MAT || n->t == EMPTY || \
 			 (n->t == VEC && n->vnum >= 0))
 
-#define uscalar_node(n) (n->t == NUM && n->vnum >= 0)
+#define umatrix_node(n) (n->t == MAT && n->vname != NULL)
+#define uscalar_node(n) (n->t == NUM && n->vname != NULL)
+#define ubundle_node(n) (n->t == BUNDLE && n->vname != NULL)
+#define ulist_node(n)   (n->t == LIST && n->vname != NULL)
+#define ustring_node(n) (n->t == STR && n->vname != NULL)
 #define useries_node(n) (n->t == VEC && n->vnum >= 0)
+#define uvar_node(n) (n->vname != NULL)
 
 #define scalar_matrix_node(n) (n->t == MAT && gretl_matrix_is_scalar(n->v.m))
-
-#define scalar_node(n) (n->t == NUM || \
-			(n->t == MAT &&	gretl_matrix_is_scalar(n->v.m)))
+#define scalar_node(n) (n->t == NUM || scalar_matrix_node(n))
 
 #define empty_or_num(n) (n == NULL || n->t == EMPTY || n->t == NUM)
 #define null_or_empty(n) (n == NULL || n->t == EMPTY)
@@ -79,6 +83,8 @@
 #define lhlist(p) (p->flags & P_LHLIST)
 #define lhstr(p) (p->flags & P_LHSTR)
 
+#define compiled(p) (p->flags & P_EXEC)
+
 static void parser_init (parser *p, const char *str, DATASET *dset, 
 			 PRN *prn, int flags);
 static void parser_reinit (parser *p, DATASET *dset, PRN *prn);
@@ -87,7 +93,7 @@ static NODE *eval (NODE *t, parser *p);
 static void node_type_error (int ntype, int argnum, int goodt, 
 			     NODE *bad, parser *p);
 static int *node_get_list (NODE *n, parser *p);
-static void reattach_data_series (NODE *n, parser *p);
+static void reattach_series (NODE *n, parser *p);
 
 static const char *typestr (int t)
 {
@@ -105,7 +111,6 @@ static const char *typestr (int t)
     case U_ADDR:
 	return "address";
     case LIST:
-    case LVEC:
 	return "list";
     case BUNDLE:
 	return "bundle";
@@ -125,14 +130,40 @@ static void free_mspec (matrix_subspec *spec)
     }
 }
 
-static int bundle_node_free_name (NODE *t)
+#if EDEBUG
+
+static void print_tree (NODE *t, parser *p, int level)
 {
-    /* if a bundle node is a TMP_NODE it will have an
-       actual bundle pointer attached, and not the name
-       of a saved bundle
-    */
-    return t->t == BUNDLE && !(t->flags & TMP_NODE);
+    if (t == NULL) {
+	return;
+    }
+
+    if (bnsym(t->t)) {
+	int i;
+
+	level++;
+	for (i=0; i<t->v.bn.n_nodes; i++) {
+	    print_tree(t->v.bn.n[i], p, level);
+	}
+    } else if (b3sym(t->t)) {
+	level++;
+	print_tree(t->v.b3.l, p, level);
+	print_tree(t->v.b3.m, p, level);
+	print_tree(t->v.b3.r, p, level);
+    } else if (b2sym(t->t)) {
+	level++;
+	print_tree(t->v.b2.l, p, level);
+	print_tree(t->v.b2.r, p, level);
+    } else if (b1sym(t->t)) {
+	level++;
+	print_tree(t->v.b1.b, p, level);
+    }
+
+    fprintf(stderr, "%d: node at %p (type %03d, flags = %d), vname='%s'\n",
+	    level, (void *) t, t->t, t->flags, t->vname);
 }
+
+#endif
 
 static void free_tree (NODE *t, parser *p, const char *msg)
 {
@@ -141,8 +172,8 @@ static void free_tree (NODE *t, parser *p, const char *msg)
     }
 
 #if EDEBUG
-    fprintf(stderr, "%-8s: starting with t at %p (type %03d)\n", msg, 
-	    (void *) t, t->t);
+    fprintf(stderr, "%-8s: starting with t at %p (type %03d, %s)\n", msg, 
+	    (void *) t, t->t, getsymb(t->t, NULL));
 #endif
 
     /* free recursively */
@@ -165,19 +196,19 @@ static void free_tree (NODE *t, parser *p, const char *msg)
     } 
 
 #if EDEBUG
-    fprintf(stderr, "%-8s: freeing node at %p (type %03d, flags = %d)\n", msg, 
-	    (void *) t, t->t, t->flags);
+    fprintf(stderr, "%-8s: freeing node at %p (type %03d, %s, flags = %d)\n", msg, 
+	    (void *) t, t->t, getsymb(t->t, NULL), t->flags);
 #endif
 
     if (is_tmp_node(t)) {
+#if EDEBUG
+	fprintf(stderr, " tmp node: freeing attached data\n");
+#endif
 	if (t->t == VEC) {
 	    free(t->v.xvec);
-	} else if (t->t == IVEC || t->t == LVEC) {
+	} else if (t->t == LIST || t->t == IVEC) {
 	    free(t->v.ivec);
 	} else if (t->t == MAT) {
-#if EDEBUG
-	    fprintf(stderr, "tmp node, freeing matrix at %p\n", t->v.m);
-#endif
 	    gretl_matrix_free(t->v.m);
 	} else if (t->t == MSPEC) {
 	    free_mspec(t->v.mspec);
@@ -186,8 +217,14 @@ static void free_tree (NODE *t, parser *p, const char *msg)
 	}
     }
 
-    if (freestr(t->t) || bundle_node_free_name(t)) {
+    if (t->t == UOBJ || t->t == WLIST) {
 	free(t->v.str);
+    } else if (t->t == STR && t->vname == NULL) {
+	free(t->v.str);
+    }
+
+    if (t->vname != NULL) {
+	free(t->vname);
     }
 
     if (p != NULL && t == p->ret) {
@@ -220,36 +257,27 @@ void parser_free_aux_nodes (parser *p)
 
 static NODE *newmdef (int k)
 {  
-    NODE *n = malloc(sizeof *n);
-    int i;
-
-#if MDEBUG
-    fprintf(stderr, "newmdef: allocated node at %p\n", (void *) n);
-#endif
-
-    if (n == NULL) {
-	return NULL;
-    }
-
-    if (k > 0) {
-	n->v.bn.n = malloc(k * sizeof n);
-	if (n->v.bn.n != NULL) {
-	    for (i=0; i<k; i++) {
-		n->v.bn.n[i] = NULL;
-	    }
-	} else {
-	    free(n);
-	    n = NULL;
-	}
-    } else {
-	n->v.bn.n = NULL;
-    }
+    NODE *n = new_node(MDEF);
 
     if (n != NULL) {
-	n->t = MDEF;
-	n->v.bn.n_nodes = k;
-	n->flags = 0;
-	n->vnum = NO_VNUM;
+	int i;
+
+	if (k > 0) {
+	    n->v.bn.n = malloc(k * sizeof n);
+	    if (n->v.bn.n != NULL) {
+		for (i=0; i<k; i++) {
+		    n->v.bn.n[i] = NULL;
+		}
+	    } else {
+		free(n);
+		n = NULL;
+	    }
+	} else {
+	    n->v.bn.n = NULL;
+	}
+	if (n != NULL) {
+	    n->v.bn.n_nodes = k;
+	}
     }
 
     return n;
@@ -259,18 +287,13 @@ static NODE *newmdef (int k)
 
 static NODE *newvec (int n, int tmp)
 {  
-    NODE *b = malloc(sizeof *b);
-    int i;
-
-#if EDEBUG
-    fprintf(stderr, "newvec: allocated node at %p\n", (void *) b);
-#endif
+    NODE *b = new_node(VEC);
 
     if (b != NULL) {
-	b->t = VEC;
+	int i;
+
 	b->flags = (tmp)? TMP_NODE : 0;
 	b->v.xvec = NULL;
-	b->vnum = NO_VNUM;
 	if (n > 0) {
 	    b->v.xvec = malloc(n * sizeof *b->v.xvec);
 	    if (b->v.xvec == NULL) {
@@ -291,16 +314,10 @@ static NODE *newvec (int n, int tmp)
 
 static NODE *newivec (int n, int type)
 {  
-    NODE *b = malloc(sizeof *b);
-
-#if EDEBUG
-    fprintf(stderr, "newivec: allocated node at %p\n", (void *) b);
-#endif
+    NODE *b = new_node(type);
 
     if (b != NULL) {
-	b->t = type;
 	b->flags = TMP_NODE;
-	b->vnum = NO_VNUM;
 	if (n > 0) {
 	    b->v.ivec = malloc(n * sizeof(int));
 	    if (b->v.ivec == NULL) {
@@ -319,60 +336,42 @@ static NODE *newivec (int n, int type)
 
 static NODE *newmat (int tmp)
 {  
-    NODE *b = malloc(sizeof *b);
+    NODE *n = new_node(MAT);
 
-#if EDEBUG
-    fprintf(stderr, "newmat: allocated node at %p\n", (void *) b);
-#endif
-
-    if (b != NULL) {
-	b->t = MAT;
-	b->flags = (tmp)? TMP_NODE : 0;
-	b->vnum = NO_VNUM;
-	b->v.m = NULL;
+    if (n != NULL) {
+	n->flags = (tmp)? TMP_NODE : 0;
+	n->v.m = NULL;
     }
 
-    return b;
+    return n;
 }
 
 /* new node to hold a matrix specification */
 
 static NODE *newmspec (void)
 {
-    NODE *b = malloc(sizeof *b);
+    NODE *n = new_node(MSPEC);
 
-#if EDEBUG
-    fprintf(stderr, "newmspec: allocated node at %p\n", (void *) b);
-#endif
-
-    if (b != NULL) {
-	b->t = MSPEC;
-	b->flags = TMP_NODE;
-	b->vnum = NO_VNUM;
-	b->v.mspec = NULL;
+    if (n != NULL) {
+	n->flags = TMP_NODE;
+	n->v.mspec = NULL;
     }
 
-    return b;
+    return n;
 }
 
-/* new node to hold a list reference */
+/* new node to hold a list */
 
 static NODE *newlist (void)
 {  
-    NODE *b = malloc(sizeof *b);
+    NODE *n = new_node(LIST);
 
-#if EDEBUG
-    fprintf(stderr, "newlist: allocated node at %p\n", (void *) b); 
-#endif
-
-    if (b != NULL) {
-	b->t = LIST;
-	b->flags = TMP_NODE;
-	b->vnum = NO_VNUM;
-	b->v.str = NULL;
+    if (n != NULL) {
+	n->flags = TMP_NODE;
+	n->v.str = NULL;
     }    
 
-    return b;
+    return n;
 }
 
 static int node_allocate_matrix (NODE *t, int m, int n, parser *p)
@@ -391,40 +390,27 @@ static int node_allocate_matrix (NODE *t, int m, int n, parser *p)
 
 static NODE *newstring (void)
 {  
-    NODE *b = malloc(sizeof *b);
+    NODE *n = new_node(STR);
 
-#if EDEBUG
-    fprintf(stderr, "newstring: allocated node at %p\n", (void *) b); 
-#endif
-
-    if (b != NULL) {
-	b->t = STR;
-	b->flags = 0;
-	b->vnum = NO_VNUM;
-	b->v.str = NULL;
+    if (n != NULL) {
+	n->flags = TMP_NODE;
+	n->v.str = NULL;
     }
 
-    return b;
+    return n;
 }
 
 static NODE *newbundle (void)
 {  
-    NODE *b = malloc(sizeof *b);
+    NODE *n = new_node(BUNDLE);
 
-#if EDEBUG
-    fprintf(stderr, "newbundle: allocated node at %p\n", (void *) b); 
-#endif
-
-    if (b != NULL) {
-	b->t = BUNDLE;
-	b->flags = TMP_NODE;
-	b->vnum = NO_VNUM;
-	b->v.b = NULL;
+    if (n != NULL) {
+	n->flags = TMP_NODE;
+	n->v.b = NULL;
     }
 
-    return b;
+    return n;
 }
-
 
 /* push an auxiliary evaluation node onto the stack of
    such nodes */
@@ -462,8 +448,8 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	    ret = newvec(n, tmp);
 	} else if (t == IVEC) {
 	    ret = newivec(n, IVEC);
-	} else if (t == LVEC) {
-	    ret = newivec(n, LVEC);
+	} else if (t == LIST) {
+	    ret = newivec(n, LIST);
 	} else if (t == MAT) {
 	    ret = newmat(tmp);
 	} else if (t == MSPEC) {
@@ -529,18 +515,16 @@ static NODE *aux_series_node (parser *p, int n)
 
 static NODE *aux_ivec_node (parser *p, int n)
 {
-    /* Note 2008-9-19: this used to give an error 
-       on no dataset present */
     return get_aux_node(p, IVEC, n, 1);
 }
 
-static NODE *aux_lvec_node (parser *p)
+static NODE *aux_list_node (parser *p)
 {
     if (p->dset == NULL || p->dset->n == 0) {
 	no_data_error(p);
 	return NULL;
     } else {
-	return get_aux_node(p, LVEC, 0, 1);
+	return get_aux_node(p, LIST, 0, 1);
     }
 }
 
@@ -931,11 +915,7 @@ static gretl_matrix *matrix_pdist (int f, char d,
 static double node_get_scalar (NODE *n, parser *p)
 {
     if (n->t == NUM) {
-	if (n->vnum >= 0) {
-	    return gretl_scalar_get_value_by_index(n->vnum);
-	} else {
-	    return n->v.xval;
-	}
+	return n->v.xval;
     } else if (scalar_matrix_node(n)) {
 	return n->v.m->val[0];
     } else {
@@ -2369,10 +2349,13 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	gretl_matrix *m;
+	int tmpmat = 0;
 
 	if (n->t == NUM) {
 	    m = gretl_matrix_from_scalar(node_get_scalar(n, p));
+	    tmpmat = 1;
 	} else {
+	    tmpmat = is_tmp_node(n);
 	    m = n->v.m;
 	}
 
@@ -2385,7 +2368,7 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	    break;
 	case F_DET:
 	case F_LDET:
-	    ret->v.xval = user_matrix_get_determinant(m, f, &p->err);
+	    ret->v.xval = user_matrix_get_determinant(m, tmpmat, f, &p->err);
 	    break;
 	case F_TRACE:
 	    ret->v.xval = gretl_matrix_trace(m);
@@ -2501,11 +2484,14 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	gretl_matrix *m = NULL;
+	int tmpmat = 0;
 	int a, b, c;
 
 	if (n->t == NUM) {
 	    m = gretl_matrix_from_scalar(node_get_scalar(n, p));
+	    tmpmat = 1;
 	} else {
+	    tmpmat = is_tmp_node(n);
 	    m = n->v.m;
 	}
 
@@ -2583,7 +2569,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	case F_GINV:
 	case F_UPPER:
 	case F_LOWER:
-	    ret->v.m = user_matrix_matrix_func(m, f, &p->err);
+	    ret->v.m = user_matrix_matrix_func(m, tmpmat, f, &p->err);
 	    break;
 	case F_DIAG:
 	    ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
@@ -2715,8 +2701,8 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 	} else {
 	    /* note: switch to the 'content' sub-node */
 	    r = r->v.b1.b;
-	    if (r->t == UMAT) {
-		rname = r->v.str;
+	    if (umatrix_node(r)) {
+		rname = r->vname;
 	    } else {
 		p->err = E_PARSE;
 		gretl_errmsg_set("Expected the address of a matrix");
@@ -2944,24 +2930,15 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
 	}
 
 	if (a != NULL) {
-	    if (0 && gretl_matrix_is_scalar(a)) {
-		/* should we automatically cast to scalar? */
-		ret = aux_scalar_node(p);
-		if (ret != NULL) {
-		    ret->v.xval = a->val[0];
-		} 
+	    ret = aux_matrix_node(p);
+	    if (ret == NULL) {
 		gretl_matrix_free(a);
 	    } else {
-		ret = aux_matrix_node(p);
-		if (ret == NULL) {
-		    gretl_matrix_free(a);
-		} else {
-		    ret->v.m = a;
-		}
+		ret->v.m = a;
 	    }
 	}
     } else {
-	ret = aux_any_node(p);
+	ret = aux_matrix_node(p);
     }
 
     return ret;
@@ -3204,7 +3181,7 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
 
 static NODE *dummify_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_lvec_node(p);
+    NODE *ret = aux_list_node(p);
 
     if (ret != NULL && starting(p)) {
 	int *list = NULL;
@@ -3217,18 +3194,20 @@ static NODE *dummify_func (NODE *l, NODE *r, int f, parser *p)
 	    } else {
 		oddval = r->v.xval;
 	    }
-	} 
-
-	if (l->t == VEC) {
-	    list = gretl_list_new(1);
-	    list[1] = l->vnum;
-	} else if (l->t == LVEC) {
-	    list = gretl_list_copy(l->v.ivec);
-	} else {
-	    list = gretl_list_copy(get_list_by_name(l->v.str));
 	}
 
-	if (list == NULL) {
+	if (l->t == LIST) {
+	    list = gretl_list_copy(l->v.ivec);
+	} else if (useries_node(l)) {
+	    list = gretl_list_new(1);
+	    list[1] = l->vnum;
+	} else {
+	    p->err = E_TYPES;
+	}
+
+	if (p->err) {
+	    ; /* don't do anything more */
+	} else if (list == NULL) {
 	    p->err = E_ALLOC;
 	} else if (r->t == EMPTY) {
 	    /* got just one argument */
@@ -3252,23 +3231,25 @@ static NODE *dummify_func (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_lvec_node(p);
+    NODE *ret = aux_list_node(p);
 
     if (ret != NULL && starting(p)) {
 	NODE *ln = (f == F_LLAG)? r : l;
 	int *list = NULL;
 	int order;
 
-	if (ln->t == VEC) {
+	if (ln->t == LIST) {
+	    list = gretl_list_copy(ln->v.ivec);
+	} else if (useries_node(ln)) {
 	    list = gretl_list_new(1);
 	    list[1] = ln->vnum;
-	} else if (ln->t == LVEC) {
-	    list = gretl_list_copy(ln->v.ivec);
 	} else {
-	    list = gretl_list_copy(get_list_by_name(ln->v.str));
+	    p->err = E_TYPES;
 	}
 
-	if (list == NULL) {
+	if (p->err) {
+	    ; /* don't proceed */
+	} else if (list == NULL) {
 	    p->err = E_ALLOC;
 	} else {
 	    switch (f) {
@@ -3301,7 +3282,7 @@ static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *apply_list_func (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_lvec_node(p);
+    NODE *ret = aux_list_node(p);
 
     if (!ok_list_func(f)) {
 	p->err = E_TYPES;
@@ -3345,7 +3326,7 @@ static NODE *apply_list_func (NODE *n, int f, parser *p)
 
 static NODE *dataset_list_node (parser *p)
 {
-    NODE *ret = aux_lvec_node(p);
+    NODE *ret = aux_list_node(p);
 
     if (ret != NULL && starting(p)) {
 	int *list = full_var_list(p->dset, NULL);
@@ -3366,21 +3347,21 @@ static NODE *trend_node (parser *p)
 {
     NODE *ret = NULL;
 
-#if EDEBUG
-    fprintf(stderr, "trend_node called\n");
-#endif
+    if (starting(p)) {
+	if (p->dset == NULL || p->dset->n == 0) {
+	    no_data_error(p);
+	} else {
+	    ret = aux_series_node(p, 0);
+	}
 
-    if (p->dset == NULL || p->dset->n == 0) {
-	no_data_error(p);
-    } else {
-	ret = aux_series_node(p, 0);
-    }
-
-    if (ret != NULL && starting(p)) {
-	p->err = gen_time(p->dset, 1);
-	if (!p->err) {
-	    ret->vnum = series_index(p->dset, "time");
-	    ret->v.xvec = p->dset->Z[ret->vnum];
+	if (ret != NULL) {
+	    p->err = gen_time(p->dset, 1);
+	    if (!p->err) {
+		ret->vname = gretl_strdup("time");
+		ret->vnum = series_index(p->dset, "time");
+		ret->v.xvec = p->dset->Z[ret->vnum];
+		ret->flags = 0;
+	    }
 	}
     }
 
@@ -3422,7 +3403,7 @@ static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
 	}
 
 	if (list != NULL) {
-	    ret = aux_lvec_node(p);
+	    ret = aux_list_node(p);
 	    if (ret != NULL) {
 		ret->v.ivec = list;
 	    } else {
@@ -3446,17 +3427,11 @@ static int *node_get_list (NODE *n, parser *p)
     int *list = NULL;
     int v = 0;
 
-    if (n->t == LIST && strchr(n->v.str, '*')) {
+    if (n->t == LIST) {
+	list = gretl_list_copy(n->v.ivec);
+    } else if (n->t == WLIST) {
 	/* handle wildcard */
 	list = varname_match_list(p->dset, n->v.str, &p->err);
-    } else if (n->t == LVEC || n->t == LIST) {
-	int *src = (n->t == LVEC)? n->v.ivec : get_list_by_name(n->v.str);
-
-	if (src == NULL) {
-	    p->err = E_DATA;
-	} else {
-	    list = gretl_list_copy(src);
-	}
     } else if (n->t == VEC || n->t == NUM) {
 	v = (n->t == VEC)? n->vnum : n->v.xval;
 	if (v < 0 || v >= p->dset->v) {
@@ -3474,39 +3449,10 @@ static int *node_get_list (NODE *n, parser *p)
     } else if (dataset_dum(n)) {
 	list = full_var_list(p->dset, NULL);
     } else if (n->t == MAT) {
-	if (gretl_is_null_matrix(n->v.m)) {
-	    list = gretl_null_list();
-	    if (list == NULL) {
-		p->err = E_ALLOC;
-	    }
-	} else {
-	    int i, k = gretl_vector_get_length(n->v.m);
-
-	    if (k == 0) {
-		p->err = E_TYPES;
-	    } else {
-		for (i=0; i<k; i++) {
-		    v = (int) n->v.m->val[i];
-		    if (v < 0 || v >= p->dset->v) {
-			p->err = E_UNKVAR;
-			break;
-		    }
-		}
-		if (!p->err) {
-		    list = gretl_list_new(k);
-		    if (list == NULL) {
-			p->err = E_ALLOC;
-		    } else {
-			for (i=0; i<k; i++) {
-			    list[i+1] = (int) n->v.m->val[i];
-			}
-		    }
-		}
-	    }
-	}
+	list = list_from_matrix(n->v.m, p->dset, &p->err);
     }
 
-    if (p->err == E_UNKVAR) {
+    if (p->err == E_UNKVAR && v != 0) {
 	gretl_errmsg_sprintf(_("Variable number %d is out of bounds"), v);
     }
 
@@ -3515,20 +3461,20 @@ static int *node_get_list (NODE *n, parser *p)
 
 static NODE *eval_lcat (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret = aux_lvec_node(p);
+    NODE *ret = aux_list_node(p);
 
     if (ret != NULL && starting(p)) {
-	int *llist, *rlist = NULL;
+	int *list1, *list2 = NULL;
 
-	llist = node_get_list(l, p);
-	if (llist != NULL) {
-	    rlist = node_get_list(r, p);
+	list1 = node_get_list(l, p); /* note, copied */
+	if (list1 != NULL) {
+	    list2 = node_get_list(r, p); /* copied */
 	}
-	if (rlist != NULL) {
-	    p->err = gretl_list_add_list(&llist, rlist);
+	if (list2 != NULL) {
+	    p->err = gretl_list_add_list(&list1, list2);
 	}
-	ret->v.ivec = llist;
-	free(rlist);
+	ret->v.ivec = list1;
+	free(list2);
     }
 
     return ret;
@@ -3536,7 +3482,7 @@ static NODE *eval_lcat (NODE *l, NODE *r, parser *p)
 
 static NODE *list_and_or (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_lvec_node(p);
+    NODE *ret = aux_list_node(p);
 
     if (ret != NULL && starting(p)) {
 	int *llist, *rlist = NULL;
@@ -3585,25 +3531,6 @@ static NODE *get_named_list_element (NODE *l, NODE *r, parser *p)
     return ret;
 }    
 
-static gretl_bundle *node_get_bundle (NODE *n, parser *p)
-{
-    gretl_bundle *b;
-
-    if (n->flags & TMP_NODE) {
-	/* should have an actual bundle attached */
-	b = n->v.b;
-    } else {
-	/* should have the name of a bundle */
-	b = get_gretl_bundle_by_name(n->v.str);
-    }
-
-    if (b == NULL && p != NULL) {
-	p->err = E_DATA;
-    }
-
-    return b;
-}
-
 /* Binary operator applied to two bundles: at present only '+'
    (for union) is supported.
 */
@@ -3613,8 +3540,8 @@ static NODE *bundle_op (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = aux_bundle_node(p);
 
     if (ret != NULL && starting(p)) {
-	gretl_bundle *bl = node_get_bundle(l, p);
-	gretl_bundle *br = node_get_bundle(r, p);
+	gretl_bundle *bl = l->v.b;
+	gretl_bundle *br = r->v.b;
 
 	if (!p->err) {
 	    if (f == B_ADD) {
@@ -4005,27 +3932,20 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	const char *s = n->v.str;
 
 	ret->v.xval = NADBL;
+
 	if (f == F_ISSERIES) {
 	    ret->v.xval = gretl_is_series(s, p->dset);
 	} else if (f == F_ISSCALAR) {
 	    ret->v.xval = gretl_is_scalar(s);
 	} else if (f == F_ISLIST) {
-	    ret->v.xval = get_list_by_name(s) != NULL;
+	    ret->v.xval = gretl_is_list(s);
 	} else if (f == F_ISSTRING) {
 	    ret->v.xval = gretl_is_string(s);
 	} else if (f == F_ISNULL) {
 	    ret->v.xval = 1;
 	    if (gretl_is_series(s, p->dset)) {
 		ret->v.xval = 0.0;
-	    } else if (gretl_is_scalar(s)) {
-		ret->v.xval = 0.0;
-	    } else if (get_matrix_by_name(s)) {
-		ret->v.xval = 0.0;
-	    } else if (get_list_by_name(s)) {
-		ret->v.xval = 0.0;
-	    } else if (get_string_by_name(s)) {
-		ret->v.xval = 0.0;
-	    } else if (get_gretl_bundle_by_name(s)) {
+	    } else if (gretl_is_user_var(s)) {
 		ret->v.xval = 0.0;
 	    }
 	} else if (f == F_OBSNUM) {
@@ -4118,18 +4038,18 @@ static NODE *argname_from_uvar (NODE *n, parser *p)
     NODE *ret = aux_string_node(p);
 
     if (ret != NULL && starting(p)) {
-	const char *s = NULL;
+	const char *vname = NULL;
 
 	if (n->t == VEC) {
-	    s = p->dset->varname[n->vnum];
+	    vname = p->dset->varname[n->vnum];
 	} else if (n->t == NUM) {
-	    s = gretl_scalar_get_name(n->vnum);
+	    vname = n->vname;
 	}
 
-	if (s == NULL) {
+	if (vname == NULL) {
 	    p->err = E_DATA;
 	} else {
-	    ret->v.str = gretl_func_get_arg_name(s, &p->err);
+	    ret->v.str = gretl_func_get_arg_name(vname, &p->err);
 	}
     }
 
@@ -5244,33 +5164,6 @@ static NODE *apply_matrix_func (NODE *n, int f, parser *p)
     return ret;
 }
 
-/* node holding a user-defined scalar */
-
-static NODE *get_uscalar_node (NODE *t, parser *p)
-{
-    NODE *ret = aux_scalar_node(p);
-
-    if (ret != NULL && starting(p)) {
-	ret->v.xval = gretl_scalar_get_value(t->v.str);
-	ret->vnum = gretl_scalar_get_index(t->v.str, &p->err);
-    }
-
-    return ret;
-}
-
-/* node holding a user-defined matrix */
-
-static NODE *get_umatrix_node (NODE *t, parser *p)
-{
-    NODE *ret = matrix_pointer_node(p);
-
-    if (ret != NULL && starting(p)) {
-	ret->v.m = get_matrix_by_name(t->v.str);
-    }
-
-    return ret;
-}
-
 /* node holding a cashed-out string variable */
 
 static NODE *string_var_node (NODE *t, parser *p)
@@ -5346,7 +5239,7 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
 		n = t->v.bn.n[k++];
 		if (n->t == EMPTY) {
 		    n = t->v.bn.n[k++];
-		} 
+		}
 		x = node_get_scalar(n, p);
 		if (na(x)) {
 		    x = M_NA;
@@ -5411,11 +5304,8 @@ static gretl_matrix *matrix_from_list (NODE *n, parser *p)
 
     if (n != NULL) {
 	if (n->t == LIST) {
-	    list = get_list_by_name(n->v.str);
-	} else if (n->t == LVEC) {
 	    list = n->v.ivec;
-	}
-	if (list == NULL) {
+	} else {
 	    p->err = E_DATA;
 	}
     } else {
@@ -5434,152 +5324,175 @@ static gretl_matrix *matrix_from_list (NODE *n, parser *p)
     return M;
 }
 
+static void *arg_get_data (NODE *n, int ref, GretlType *type)
+{
+    void *data = NULL;
+
+    if (n->t == VEC) {
+	if (ref) {
+	    *type = GRETL_TYPE_SERIES_REF;
+	    data = &n->vnum;
+	} else if (n->vname != NULL) {
+	    *type = GRETL_TYPE_USERIES;
+	    data = &n->vnum;
+	} else {
+	    *type = GRETL_TYPE_SERIES;
+	    data = n->v.xvec;
+	}
+    } else if (n->t == NUM) {
+	*type = ref ? GRETL_TYPE_SCALAR_REF : GRETL_TYPE_DOUBLE;
+	data = &n->v.xval;
+    } else if (n->t == MAT) {
+	*type = ref ? GRETL_TYPE_MATRIX_REF : GRETL_TYPE_MATRIX;
+	data = n->v.m;
+    } else if (n->t == BUNDLE) {
+	*type = ref ? GRETL_TYPE_BUNDLE_REF : GRETL_TYPE_BUNDLE;
+	data = n->v.b;
+    } else if (n->t == STR) {
+	*type = GRETL_TYPE_STRING;
+	data = n->v.str;
+    } else if (n->t == LIST) {
+	*type = GRETL_TYPE_LIST;
+	data = n->v.ivec;
+    } else {
+	*type = GRETL_TYPE_NONE;
+    }
+
+    return data;
+}
+
+static int check_uaddr_type (NODE *u, parser *p)
+{
+    NODE *n = u->v.b1.b;
+    int err = 0;
+
+    if (uscalar_node(n)) {
+	; /* OK */
+    } else if (useries_node(n)) {
+	; /* OK */
+    } else if (umatrix_node(n)) {
+	; /* OK */
+    } else if (ubundle_node(n)) {
+	; /* OK */	
+    } else {
+	pputs(p->prn, _("Wrong type of operand for unary '&'"));
+	pputc(p->prn, '\n');
+	err = E_TYPES;
+    }
+
+    return err;
+}
+
 #define ok_ufunc_sym(s) (s == NUM || s == VEC || s == MAT || \
                          s == LIST || s == U_ADDR || s == DUM || \
-                         s == STR || s == EMPTY || s == BUNDLE || \
-			 s == LVEC)
+                         s == STR || s == EMPTY || s == BUNDLE)
 
 /* evaluate a user-defined function */
 
 static NODE *eval_ufunc (NODE *t, parser *p)
 {
-    fnargs *args = NULL;
-    ufunc *uf = NULL;
-    int argc = 0;
     NODE *l = t->v.b2.l;
     NODE *r = t->v.b2.r;
-    int i, m = r->v.bn.n_nodes;
+    NODE *ret = NULL;
     const char *funname = l->v.str;
+    fnargs *args = NULL;
+    ufunc *uf = NULL;
+    int i, nparam, argc = 0;
     int rtype = GRETL_TYPE_NONE;
-    NODE *n, *ret = NULL;
 
-    /* find the function */
+    /* first find the function */
     uf = get_user_function_by_name(funname);
     if (uf == NULL) {
 	fprintf(stderr, "%s: couldn't find a function of this name\n", funname);
-	p->err = E_UNKVAR;
-	return NULL;
+	p->err = E_DATA;
     }
 
-    if (!simple_ufun_call(p)) {
+    if (!p->err && !simple_ufun_call(p)) {
 	/* check that the function returns something suitable */
 	rtype = user_func_get_return_type(uf);
 	if (!ok_function_return_type(rtype) || rtype == GRETL_TYPE_VOID) {
 	    fprintf(stderr, "eval_ufunc: %s: invalid return type %d\n", 
 		    funname, rtype);
 	    p->err = E_TYPES;
-	    return NULL;
 	}
     } 
 
-    /* check the argument count */
-    argc = fn_n_params(uf);
-    if (m > argc) {
-	gretl_errmsg_sprintf(_("Number of arguments (%d) does not "
-			       "match the number of\nparameters for "
-			       "function %s (%d)"),
-			     m, funname, argc);
-	p->err = 1;
+    if (!p->err) {
+	/* get the argument and param counts */
+	argc = r->v.bn.n_nodes;
+	nparam = fn_n_params(uf);
+	if (argc > nparam) {
+	    gretl_errmsg_sprintf(_("Number of arguments (%d) does not "
+				   "match the number of\nparameters for "
+				   "function %s (%d)"),
+				 argc, funname, nparam);
+	    p->err = E_DATA;
+	}
+    }
+
+    if (!p->err) {
+	/* allocate an arguments array */
+	args = fn_args_new(argc);
+	if (args == NULL) {
+	    p->err = E_ALLOC;
+	}
+    }
+
+    if (p->err) {
+	/* no sense in continuing */
 	return NULL;
     }
 
-    /* make an arguments array */
-    args = fn_args_new();
-    if (args == NULL) {
-	p->err = E_ALLOC;
-	return NULL;
-    }
+    /* evaluate the function argument nodes */
 
-    /* evaluate the function arguments */
+    for (i=0; i<argc && !p->err; i++) {
+	NODE *arg, *ni = r->v.bn.n[i];
+	GretlType argt = 0;
+	int reftype = 0;
+	void *data;
 
-    for (i=0; i<m && !p->err; i++) {
-	if (useries_node(r->v.bn.n[i])) {
-	    /* let dataset variables through "as is" */
-	    n = r->v.bn.n[i];
-	} else if (uscalar_node(r->v.bn.n[i])) {
-	    /* let predefined scalars through "as is" */
-	    n = r->v.bn.n[i];
+	if (starting(p)) {
+	    /* evaluate all nodes */
+	    arg = eval(ni, p);
+	} else if (ni->vname != NULL) {
+	    /* otherwise let named variables through "as is" */
+	    arg = ni;
 	} else {
-	    n = eval(r->v.bn.n[i], p);
-	    if (n == NULL) {
-		fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i);
-	    } else if (!ok_ufunc_sym(n->t)) {
-		gretl_errmsg_sprintf("%s: invalid argument type %s", funname, 
-				     typestr(n->t));
-		p->err = E_TYPES;
-	    }
+	    arg = eval(ni, p);
 	}
 
-	if (p->err) {
-	    break;
+	if (p->err || arg == NULL) {
+	    fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i);
+	    p->err = (p->err == 0)? E_DATA : p->err;
+	} else if (!ok_ufunc_sym(arg->t)) {
+	    gretl_errmsg_sprintf("%s: invalid argument type %s", funname, 
+				 typestr(arg->t));
+	    p->err = E_TYPES;
 	}
 
 #if EDEBUG
-	fprintf(stderr, "%s: arg[%d] is of type %d\n", funname, i, n->t);
+	fprintf(stderr, "%s: arg %d is of type %d\n", funname, i, 
+		arg == NULL? -1 : arg->t);
 #endif
 
-	if (useries_node(n)) {
-	    p->err = push_fn_arg(args, GRETL_TYPE_USERIES, &n->vnum);
-	} else if (uscalar_node(n)) {
-	    p->err = push_fn_arg(args, GRETL_TYPE_USCALAR, &n->vnum);
-	} else if (n->t == U_ADDR) {
-	    /* switch to the 'content' sub-node */
-	    NODE *u = n->v.b1.b;
+	if (!p->err && arg->t == U_ADDR) {
+	    /* address node: switch to the 'content' sub-node */
+	    reftype = 1;
+	    arg = arg->v.b1.b;
+	}
 
-	    if (u->t == USCALAR) {
-		int v = gretl_scalar_get_index(u->v.str, &p->err);
-		
-		if (!p->err) {
-		    p->err = push_fn_arg(args, GRETL_TYPE_SCALAR_REF, &v);
-		}
-	    } else if (u->t == NUM) {
-		p->err = push_fn_arg(args, GRETL_TYPE_SCALAR_REF, &u->vnum);
-	    } else if (u->t == VEC) {
-		p->err = push_fn_arg(args, GRETL_TYPE_SERIES_REF, &u->vnum);
-	    } else if (u->t == UMAT) {
-		user_matrix *m = get_user_matrix_by_name(u->v.str);
+	if (!p->err && arg->t == DUM && arg->v.idnum != DUM_NULL) {
+	    p->err = E_TYPES;
+	}
 
-		p->err = push_fn_arg(args, GRETL_TYPE_MATRIX_REF, m);
-	    } else if (u->t == BUNDLE) {
-		p->err = push_fn_arg(args, GRETL_TYPE_BUNDLE_REF, u->v.str);
-	    } else {
-		pputs(p->prn, _("Wrong type of operand for unary '&'"));
-		pputc(p->prn, '\n');
-		fprintf(stderr, "bad type %d\n", u->t);
-		p->err = E_TYPES;
-	    }
-	} else if (n->t == DUM) {
-	    if (n->v.idnum == DUM_NULL) {
-		p->err = push_fn_arg(args, GRETL_TYPE_NONE, NULL);
-	    } else {
-		p->err = E_TYPES;
-	    }
-	} else if (n->t == EMPTY) {
-	    p->err = push_fn_arg(args, GRETL_TYPE_NONE, NULL);
-	} else if (n->t == NUM) {
-	    p->err = push_fn_arg(args, GRETL_TYPE_DOUBLE, &n->v.xval);
-	} else if (n->t == VEC) {
-	    p->err = push_fn_arg(args, GRETL_TYPE_SERIES, n->v.xvec);
-	} else if (n->t == MAT) {
-	    p->err = push_fn_arg(args, GRETL_TYPE_MATRIX, n->v.m);
-	} else if (n->t == LIST) {
-	    int *list = get_list_by_name(n->v.str);
-
-	    p->err = push_fn_arg(args, GRETL_TYPE_LIST, list);
-	} else if (n->t == LVEC) {
-	    p->err = push_fn_arg(args, GRETL_TYPE_LIST, n->v.ivec);
-	} else if (n->t == STR) {
-	    p->err = push_fn_arg(args, GRETL_TYPE_STRING, n->v.str);
-	} else if (n->t == BUNDLE) {
-	    gretl_bundle *b = node_get_bundle(n, p);
-
-	    if (!p->err) {
-		p->err = push_fn_arg(args, GRETL_TYPE_BUNDLE, b);
-	    }
+	if (!p->err) {
+	    /* assemble info and push argument */
+	    data = arg_get_data(arg, reftype, &argt);
+	    p->err = push_fn_arg(args, arg->vname, argt, data);
 	}
 
 	if (p->err) {
-	    fprintf(stderr, "eval_ufunc: error evaluating arg %d\n", i);
+	    fprintf(stderr, "%s: error evaluating arg %d\n", funname, i);
 	}
     }
 
@@ -5642,7 +5555,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		    ret->v.m = mret;
 		}
 	    } else if (rtype == GRETL_TYPE_LIST) {
-		ret = aux_lvec_node(p);
+		ret = aux_list_node(p);
 		if (ret != NULL) {
 		    if (is_tmp_node(ret)) {
 			free(ret->v.ivec);
@@ -5693,33 +5606,26 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 {
     NODE *l = t->v.b2.l;
     NODE *r = t->v.b2.r;
-    int i, m = r->v.bn.n_nodes;
+    int i, argc = r->v.bn.n_nodes;
     const char *funname = l->v.str;
     int rtype = GRETL_TYPE_NONE;
-    NODE *n, *ret = NULL;
+    NODE *ret = NULL;
 
     /* first find the function */
-    p->err = gretl_R_get_call(funname, m);
+    p->err = gretl_R_get_call(funname, argc);
     if (p->err) {
 	return NULL;
     }
 
     /* evaluate the function arguments */
-    for (i=0; i<m && !p->err; i++) {
-	if (useries_node(r->v.bn.n[i])) {
-	    /* let dataset variables through "as is" */
-	    n = r->v.bn.n[i];
-	} else if (uscalar_node(r->v.bn.n[i])) {
-	    /* let predefined scalars through "as is" */
-	    n = r->v.bn.n[i];
-	} else {
-	    n = eval(r->v.bn.n[i], p);
-	    if (n == NULL) {
-		fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i); 
-	    } else if (!ok_ufunc_sym(n->t)) {
-		fprintf(stderr, "%s: node type %d: not OK\n", funname, n->t);
-		p->err = E_TYPES;
-	    }
+    for (i=0; i<argc && !p->err; i++) {
+	NODE *arg = eval(r->v.bn.n[i], p);
+
+	if (arg == NULL) {
+	    fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i); 
+	} else if (!ok_ufunc_sym(arg->t)) {
+	    fprintf(stderr, "%s: node type %d: not OK\n", funname, arg->t);
+	    p->err = E_TYPES;
 	}
 
 	if (p->err) {
@@ -5727,20 +5633,20 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 	}
 
 #if EDEBUG
-	fprintf(stderr, "%s: arg[%d] is of type %d\n", funname, i, n->t);
+	fprintf(stderr, "%s: arg[%d] is of type %d\n", funname, i, arg->t);
 #endif
 
-	if (n->t == NUM) {
-	    p->err = gretl_R_function_add_scalar(n->v.xval);
-	} else if (n->t == VEC) {
-	    gretl_matrix *m = tmp_matrix_from_series(n, p);
+	if (arg->t == NUM) {
+	    p->err = gretl_R_function_add_scalar(arg->v.xval);
+	} else if (arg->t == VEC) {
+	    gretl_matrix *m = tmp_matrix_from_series(arg, p);
 
 	    if (m != NULL) {
 		p->err = gretl_R_function_add_matrix(m);
 		gretl_matrix_free(m);
 	    }
-	} else if (n->t == MAT) {
-	    p->err = gretl_R_function_add_matrix(n->v.m);
+	} else if (arg->t == MAT) {
+	    p->err = gretl_R_function_add_matrix(arg->v.m);
 	} else {
 	    fprintf(stderr, "eval_Rfunc: argument not supported\n");
 	    p->err = E_TYPES;
@@ -5817,12 +5723,12 @@ static gretl_matrix *complex_array_to_matrix (cmplx *c, int sz,
 
 static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 {
-    const char *name = l->v.str;
+    const char *name = l->vname;
     const char *key = r->v.str;
     gretl_bundle *bundle;
     GretlType type;
-    void *val;
     int size = 0;
+    void *val = NULL;
     NODE *ret = NULL;
 
 #if EDEBUG
@@ -5834,7 +5740,7 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	val = last_model_get_data(key, &type, &size, &p->err);
     } else {
 	/* regular named bundle */
-	bundle = get_gretl_bundle_by_name(name);
+	bundle = get_bundle_by_name(name);
 	if (bundle == NULL) {
 	    p->err = E_UNKVAR;
 	} else {
@@ -5924,7 +5830,7 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 
 static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
 {
-    gretl_bundle *bundle = node_get_bundle(l, p);
+    gretl_bundle *bundle = l->v.b;
     const char *key = r->v.str;
     void *val = NULL;
     NODE *ret = NULL;
@@ -5962,7 +5868,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     int size = 0;
     int err = 0;
 
-    bundle = get_gretl_bundle_by_name(name);
+    bundle = get_bundle_by_name(name);
 
     if (bundle == NULL) {
 	err = E_UNKVAR;
@@ -6000,13 +5906,9 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	    break;
 	case U_ADDR:
 	    n = n->v.b1.b;
-	    if (n->t == UMAT) {
-		ptr = get_matrix_by_name(n->v.str);
-		if (ptr == NULL) {
-		    err = E_DATA;
-		} else {
-		    type = GRETL_TYPE_MATRIX_REF;
-		}
+	    if (umatrix_node(n)) {
+		ptr = n->v.m;
+		type = GRETL_TYPE_MATRIX_REF;
 	    } else {
 		err = E_TYPES;
 	    }	 
@@ -6017,7 +5919,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	    size = p->dset->n;
 	    break;
 	case BUNDLE:
-	    ptr = node_get_bundle(n, p);
+	    ptr = n->v.b;
 	    type = GRETL_TYPE_BUNDLE;
 	    err = p->err;
 	    break;
@@ -6044,7 +5946,7 @@ static int set_named_bundle_note (const char *name, const char *key,
     gretl_bundle *bundle;
     int err = 0;
 
-    bundle = get_gretl_bundle_by_name(name);
+    bundle = get_bundle_by_name(name);
     if (bundle == NULL) {
 	p->err = E_UNKVAR;
     } else {
@@ -6104,7 +6006,7 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
 	
 	if (list != NULL) {
 	    px = list;
-	    xtype = LVEC;
+	    xtype = LIST;
 	} else if (l->t == MAT) {
 	    px = l->v.m;
 	    xtype = MAT;
@@ -6124,13 +6026,13 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
 
 static const char *ptr_node_get_matrix_name (NODE *t, parser *p)
 {
-    char *name = NULL;
+    const char *name = NULL;
 
     if (t->t == U_ADDR) {
 	NODE *n = t->v.b1.b;
 
-	if (n->t == UMAT) {
-	    name = n->v.str;
+	if (umatrix_node(n)) {
+	    name = n->vname;
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -6340,7 +6242,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else {
 	    ret = aux_scalar_node(p);
 	    if (!p->err) {
-		ret->v.xval = set_named_bundle_note(l->v.str, m->v.str, 
+		ret->v.xval = set_named_bundle_note(l->vname, m->v.str, 
 						    r->v.str, p);
 	    }
 	}
@@ -6764,65 +6666,6 @@ static void n_args_error (int k, int n, const char *s, parser *p)
     p->err = 1;
 }
 
-#define PRE_EVAL_ARGS 0 
-
-#if PRE_EVAL_ARGS /* may be worth experimenting with this? */
-
-static void free_tmp_args_node (NODE *n)
-{
-    if (n != NULL) {
-	free(n->v.bn.n);
-	free(n);
-    }
-}
-
-static NODE *tmp_args_node (int k, parser *p)
-{  
-    NODE *n = malloc(sizeof *n);
-
-    if (n == NULL) {
-	p->err = E_ALLOC;
-    } else {
-	NODE **nn = malloc(k * sizeof *nn);
-	int i;
-
-	if (nn == NULL) {
-	    free(n);
-	    n = NULL;
-	    p->err = E_ALLOC;
-	} else {
-	    n->t = FARGS;
-	    n->v.bn.n_nodes = k;
-	    n->v.bn.n = nn;
-	    n->flags = 0;
-	    n->vnum = NO_VNUM;
-	    for (i=0; i<k; i++) {
-		n->v.bn.n[i] = NULL;
-	    }
-	}
-    } 
-
-    fprintf(stderr, "tmp_args_node: %p\n", (void *) n);
-
-    return n;
-}
-
-static NODE *process_n_args_node (NODE *n, parser *p)
-{
-    int i, k = n->v.bn.n_nodes;
-    NODE *ret = tmp_args_node(k, p);
-
-    if (ret != NULL) {
-	for (i=0; i<k && !p->err; i++) {
-	    ret->v.bn.n[i] = eval(n->v.bn.n[i], p);
-	}
-    }
-
-    return ret;
-}
-
-#endif
-
 /* evaluate a built-in function that has more than three arguments */
 
 static NODE *eval_nargs_func (NODE *t, parser *p)
@@ -6830,13 +6673,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     NODE *e, *n = t->v.b1.b;
     NODE *ret = NULL;
     int i, k = n->v.bn.n_nodes;
-
-#if PRE_EVAL_ARGS
-    n = process_n_args_node(n, p);
-    if (p->err) {
-	return NULL;
-    }
-#endif
 
     if (t->t == F_BKFILT) {
 	const double *x = NULL;
@@ -7002,7 +6838,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
-	    e = n->v.bn.n[i];
+	    e = eval(n->v.bn.n[i], p);
 	    if (e->t == EMPTY) {
 		; /* NULL arguments are OK */
 	    } else if (e->t != U_ADDR) {
@@ -7038,7 +6874,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
-	    e = n->v.bn.n[i];
+	    e = eval(n->v.bn.n[i], p);
 	    if (e->t == EMPTY) {
 		; /* NULL arguments are acceptable */
 	    } else if (e->t != U_ADDR) {
@@ -7382,10 +7218,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	} 
     }
 
-#if PRE_EVAL_ARGS
-    free_tmp_args_node(n);
-#endif
-
     return ret;
 }
 
@@ -7414,13 +7246,6 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
     for (i=0; i<nnodes; i++) {
 	n = nn->v.bn.n[i];
 	if (n->t == LIST) {
-	    list = get_list_by_name(n->v.str);
-	    if (list == NULL) {
-		p->err = E_DATA;
-		return NULL;
-	    } 
-	    k += list[0];
-	} else if (n->t == LVEC) {
 	    k += n->v.ivec[0];
 	} else if (n->t == VEC) {
 	    k++;
@@ -7451,18 +7276,13 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
     for (i=0; i<nnodes; i++) {
 	n = nn->v.bn.n[i];
 	if (n->t == LIST) {
-	    list = get_list_by_name(n->v.str);
-	    for (j=1; j<=list[0]; j++) {
-		Z[k++] = p->dset->Z[list[j]];
-	    }
-	} else if (n->t == LVEC) {
 	    list = n->v.ivec;
 	    for (j=1; j<=list[0]; j++) {
 		Z[k++] = p->dset->Z[list[j]];
 	    }	    
 	} else if (n->t == VEC) {
-	    if (useries_node(n) && (p->flags & P_EXEC)) {
-		reattach_data_series(n, p);
+	    if (useries_node(n) && compiled(p)) {
+		reattach_series(n, p);
 	    } 
 	    Z[k++] = n->v.xvec;
 	}
@@ -7504,7 +7324,7 @@ static NODE **tmp_node_holder (NODE *n, parser *p)
 }
 
 #define ok_matdef_sym(s) (s == NUM || s == VEC || s == EMPTY || \
-                          s == DUM || s == LIST || s == LVEC)
+                          s == DUM || s == LIST)
 
 /* composing a matrix from scalars, series or lists */
 
@@ -7538,26 +7358,28 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 #endif
 
     for (i=0; i<m && !p->err; i++) {
-	n = nn->v.bn.n[i];
-	if (ok_matdef_sym(n->t) || scalar_matrix_node(n)) {
-	    nn->v.bn.n[i] = n;
+	NODE *ni = nn->v.bn.n[i];
+
+	if (!compiled(p) && (ok_matdef_sym(ni->t) || scalar_matrix_node(ni))) {
+	    /* pass through */
+	    n = ni;
 	} else {
-	    n = eval(n, p);
+	    n = eval(ni, p);
 	    if (n == NULL && !p->err) {
 		p->err = E_UNSPEC; /* "can't happen" */
 	    }
 	    if (p->err) {
 		break;
 	    }
-	    if (ok_matdef_sym(n->t) || scalar_matrix_node(n)) {
+	    if (!ok_matdef_sym(n->t) && !scalar_matrix_node(n)) {
+		fprintf(stderr, "matrix_def_node: node type %d: not OK\n", n->t);
+		p->err = E_TYPES;
+		break;
+	    } else if (n != ni) {
 		if (nntmp == NULL) {
 		    free_tree(nn->v.bn.n[i], p, "MatDef");
 		}
 		nn->v.bn.n[i] = n;
-	    } else {
-		fprintf(stderr, "matrix_def_node: node type %d: not OK\n", n->t);
-		p->err = E_TYPES;
-		break;
 	    }
 	}
 	if (scalar_node(n)) {
@@ -7566,7 +7388,7 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 	    nvec++;
 	} else if (n->t == DUM) {
 	    dum++;
-	} else if (n->t == LIST || n->t == LVEC) {
+	} else if (n->t == LIST) {
 	    nlist++;
 	} else if (n->t == EMPTY) {
 	    if (nsep == 0) {
@@ -8289,7 +8111,7 @@ static NODE *object_var_node (NODE *t, parser *p)
 	} else if (vtype == GRETL_TYPE_SERIES) {
 	    ret = aux_vec_node(p, 0);
 	} else if (vtype == GRETL_TYPE_LIST) {
-	    ret = aux_lvec_node(p);
+	    ret = aux_list_node(p);
 	} else if (vtype == GRETL_TYPE_STRING) {
 	    ret = aux_string_node(p);
 	} else {
@@ -8329,7 +8151,7 @@ static NODE *object_var_node (NODE *t, parser *p)
 
 static NODE *wildlist_node (NODE *n, parser *p)
 {
-    NODE *ret = aux_lvec_node(p);
+    NODE *ret = aux_list_node(p);
 
     if (ret != NULL && starting(p)) {
 	int *list = varname_match_list(p->dset, n->v.str,
@@ -8343,7 +8165,7 @@ static NODE *wildlist_node (NODE *n, parser *p)
 
 static NODE *ellipsis_list_node (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret = aux_lvec_node(p);
+    NODE *ret = aux_list_node(p);
 
     if (ret != NULL && starting(p)) {
 	int *list = ellipsis_list(p->dset, l->vnum, r->vnum,
@@ -8357,7 +8179,7 @@ static NODE *ellipsis_list_node (NODE *l, NODE *r, parser *p)
 
 static NODE *list_join_node (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret = aux_lvec_node(p);
+    NODE *ret = aux_list_node(p);
 
     if (ret != NULL && starting(p)) {
 	int *L1 = node_get_list(l, p);
@@ -8417,7 +8239,7 @@ static int series_calc_nodes (NODE *l, NODE *r)
     return ret;
 }
 
-static void reattach_data_series (NODE *n, parser *p)
+static void reattach_series (NODE *n, parser *p)
 {
     int v = n->vnum;
 
@@ -8426,6 +8248,23 @@ static void reattach_data_series (NODE *n, parser *p)
 	p->err = E_DATA;
     } else {
 	n->v.xvec = p->dset->Z[v];
+    }
+}
+
+static void node_reattach_data (NODE *n, parser *p)
+{
+    if (uscalar_node(n)) {
+	n->v.xval = gretl_scalar_get_value(n->vname);
+    } else if (umatrix_node(n)) {
+	n->v.m = get_matrix_by_name(n->vname);
+    } else if (useries_node(n)) {
+	reattach_series(n, p);
+    } else if (ulist_node(n)) {
+	n->v.ivec = get_list_by_name(n->vname);
+    } else if (ubundle_node(n)) {
+	n->v.b = get_bundle_by_name(n->vname);
+    } else if (ustring_node(n)) {
+	n->v.str = get_string_by_name(n->vname);
     }
 }
 
@@ -8475,7 +8314,7 @@ static void node_type_error (int ntype, int argnum, int goodt,
 
     if (bad != NULL) {
 	pprintf(p->prn, _(", is %s"), typestr(bad->t));
-    }
+    } 
     pputc(p->prn, '\n');
 
     if (!strcmp(nstr, "&")) {
@@ -8537,6 +8376,11 @@ static NODE *eval (NODE *t, parser *p)
 	return NULL;
     }
 
+#if EDEBUG
+    fprintf(stderr, "eval: incoming node %p (t=%d, vname=%s)\n", 
+	    (void *) t, t->t, t->vname);
+#endif
+
     if (!p->err && eval_left(t->t)) {
 	l = eval(raw_node(t, 0), p);
 	if (l == NULL && !p->err) {
@@ -8581,30 +8425,31 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     switch (t->t) {
+    case MSPEC:
+    case EMPTY:
+    case ABSENT:
+	ret = t;
+	break;
     case NUM:
     case VEC:
     case MAT:
     case STR:
+    case LIST:
     case BUNDLE:
-    case MSPEC:
-    case EMPTY:
-    case ABSENT:
-    case U_ADDR:
-    case LVEC:
-	if (uscalar_node(t)) { 
-	    t->v.xval = gretl_scalar_get_value_by_index(t->vnum);
-	} else if (useries_node(t) && (p->flags & P_EXEC)) {
-	    reattach_data_series(t, p);
-	} 
-	/* otherwise, terminal symbol: pass on through */
+	if (compiled(p) && starting(p) && uvar_node(t)) {
+	    node_reattach_data(t, p);
+	}
 	ret = t;
 	break;
-    case LIST:
-	if (strchr(t->v.str, '*')) {
-	    ret = wildlist_node(t, p);
-	} else {
-	    ret = t;
+    case U_ADDR:
+	p->err = check_uaddr_type(t, p);
+	if (!p->err && compiled(p) && starting(p)) {
+	    node_reattach_data(t->v.b1.b, p);
 	}
+	ret = t;
+	break;
+    case WLIST:
+	ret = wildlist_node(t, p);
 	break;
     case DUM:
 	if (t->v.idnum == DUM_DATASET) {
@@ -8943,17 +8788,19 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case BOBJ:
-	/* name of bundle plus key */
-	ret = get_named_bundle_value(l, r, p);
-	break;
     case F_INBUNDLE:
+	/* name of bundle plus key */
 	if (l->t == BUNDLE && r->t == STR) {
-	    ret = test_bundle_key(l, r, p);
+	    if (t->t == BOBJ) {
+		ret = get_named_bundle_value(l, r, p);
+	    } else {
+		ret = test_bundle_key(l, r, p);
+	    }
 	} else if (l->t == BUNDLE) {
 	    node_type_error(t->t, 1, STR, r, p);
 	} else {
 	    node_type_error(t->t, 0, BUNDLE, l, p);
-	}
+	}	    
 	break;
     case F_LDIFF:
     case F_SDIFF:
@@ -9364,15 +9211,7 @@ static NODE *eval (NODE *t, parser *p)
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
 	break;
-    case UMAT:
-	/* user-defined matrix */
-	ret = get_umatrix_node(t, p);
-	break;
-    case USCALAR:
-	/* user-defined scalar */
-	ret = get_uscalar_node(t, p);
-	break;
-    case VSTR:
+    case USTR:
 	/* string variable */
 	ret = string_var_node(t, p);
 	break;
@@ -9604,7 +9443,7 @@ int parser_getc (parser *p)
 
     p->ch = 0;
 
-    if (more_input(p->point)) { /* 2011-11-03: was just *p->point */
+    if (more_input(p->point)) {
 	p->ch = *p->point;
 	p->point += 1;
     }
@@ -9702,7 +9541,7 @@ static void printnode (NODE *t, parser *p)
     } else if (useries_node(t)) {
 	pprintf(p->prn, "%s", p->dset->varname[t->vnum]);
     } else if (uscalar_node(t)) {
-	pprintf(p->prn, "%s", gretl_scalar_get_name(t->vnum));
+	pprintf(p->prn, "%s", t->vname);
     } else if (t->t == NUM) {
 	if (na(t->v.xval)) {
 	    pputs(p->prn, "NA");
@@ -9730,10 +9569,14 @@ static void printnode (NODE *t, parser *p)
 	    }
 	}
     } else if (t->t == MAT) {
-	gretl_matrix_print_to_prn(t->v.m, NULL, p->prn);
+	if (t->vname != NULL) {
+	    pputs(p->prn, t->vname);
+	} else {
+	    gretl_matrix_print_to_prn(t->v.m, NULL, p->prn);
+	}
     } else if (t->t == BUNDLE) {
-	gretl_bundle_print(node_get_bundle(t, p), p->prn);
-    } else if (t->t == UMAT || t->t == UOBJ) {
+	gretl_bundle_print(t->v.b, p->prn);
+    } else if (t->t == UOBJ) {
 	pprintf(p->prn, "%s", t->v.str);
     } else if (t->t == DVAR) {
 	pputs(p->prn, dvarname(t->v.idnum));
@@ -9781,7 +9624,7 @@ static void printnode (NODE *t, parser *p)
 	}
 	printnode(t->v.b2.r, p);
 	pputc(p->prn, ')');
-    } else if (t->t == STR || t->t == VSTR) {
+    } else if (t->t == STR || t->t == USTR) {
 	pprintf(p->prn, "%s", t->v.str);
     } else if (t->t == MDEF) {
 	pprintf(p->prn, "{ MDEF }");
@@ -9794,8 +9637,6 @@ static void printnode (NODE *t, parser *p)
 	pprintf(p->prn, "%s.%s", t->v.b2.l->v.str, t->v.b2.r->v.str);
     } else if (t->t == LIST) {
 	pputs(p->prn, "LIST");
-    } else if (t->t == LVEC) {
-	pputs(p->prn, "LVEC");
     } else if (t->t == LAG) {
 	pputs(p->prn, "LAG");
     } else if (t->t != EMPTY) {
@@ -10075,28 +9916,31 @@ static void do_decl (parser *p)
 
     for (i=0; i<n && !p->err; i++) {
 	if (S[i] != NULL) {
-	    if (p->targ == MAT) {
-		gretl_matrix *m = gretl_null_matrix_new();
-
-		if (m == NULL) {
-		    p->err = E_ALLOC;
-		} else {
-		    p->err = user_matrix_add(m, S[i]);
-		}
-	    } else if (p->targ == NUM) {
-		p->err = gretl_scalar_add(S[i], NADBL);
-	    } else if (p->targ == VEC) {
+	    if (p->targ == VEC) {
 		p->err = dataset_add_NA_series(p->dset);
 		if (!p->err) {
 		    v = p->dset->v - 1;
 		    strcpy(p->dset->varname[v], S[i]);
 		}
-	    } else if (p->targ == LIST) {
-		p->err = declare_list(S[i]);
-	    } else if (p->targ == STR) {
-		p->err = save_named_string(S[i], "", NULL);
-	    } else if (p->targ == BUNDLE) {
-		p->err = save_named_bundle(S[i]);
+	    } else {
+		GretlType type = 0;
+
+		if (p->targ == MAT) {
+		    type = GRETL_TYPE_MATRIX;
+		} else if (p->targ == NUM) {
+		    type = GRETL_TYPE_DOUBLE;
+		} else if (p->targ == STR) {
+		    type = GRETL_TYPE_STRING;
+		} else if (p->targ == BUNDLE) {
+		    type = GRETL_TYPE_BUNDLE;
+		} else if (p->targ == LIST) {
+		    type = GRETL_TYPE_LIST;
+		} else {
+		    p->err = E_DATA;
+		}
+		if (!p->err) {
+		    p->err = create_user_var(S[i], type);
+		}
 	    }
 	}
     }
@@ -10111,24 +9955,18 @@ static void do_decl (parser *p)
 
 static NODE *lhs_copy_node (parser *p)
 {
-    NODE *n = malloc(sizeof *n);
+    NODE *n = new_node(p->targ);
 
-    if (n == NULL) {
-	return NULL;
-    }
-
-    n->t = p->targ;
-    n->flags = 0;
-    n->vnum = NO_VNUM;
-
-    if (p->targ == NUM) {
-	n->v.xval = gretl_scalar_get_value(p->lh.name);
-    } else if (p->targ == VEC) {
-	n->v.xvec = p->dset->Z[p->lh.v];
-    } else if (p->targ == STR) {
-	n->v.str = gretl_strdup(get_string_by_name(p->lh.name));
-    } else {
-	n->v.m = p->lh.m0;
+    if (n != NULL) {
+	if (p->targ == NUM) {
+	    n->v.xval = gretl_scalar_get_value(p->lh.name);
+	} else if (p->targ == VEC) {
+	    n->v.xvec = p->dset->Z[p->lh.v];
+	} else if (p->targ == STR) {
+	    n->v.str = gretl_strdup(get_string_by_name(p->lh.name));
+	} else {
+	    n->v.m = p->lh.m0;
+	}
     }
 
     return n;
@@ -10233,14 +10071,12 @@ static void maybe_do_type_errmsg (const char *name, int t)
     if (name != NULL && *name != '\0') {
 	const char *tstr = NULL;
 
-	if (t == USCALAR || t == NUM) {
+	if (t == NUM) {
 	    tstr = "scalar";
-	} else if (t == USERIES || t == VEC) {
+	} else if (t == UVEC || t == VEC) {
 	    tstr = "series";
 	} else if (t == MAT) {
 	    tstr = "matrix";
-	} else if (t == UMAT) {
-	    tstr = "user matrix";
 	} else if (t == STR) {
 	    tstr = "string";
 	} else if (t == BUNDLE) {
@@ -10418,27 +10254,32 @@ static void pre_process (parser *p, int flags)
 	p->lh.v = v;
 	p->lh.t = VEC;
 	newvar = 0;
-    } else if ((p->lh.m0 = get_matrix_by_name(test)) != NULL) {
-	p->flags |= P_LHMAT;
-	p->lh.t = MAT;
-	newvar = 0;
-    } else if (gretl_is_scalar(test)) {
-	p->flags |= P_LHSCAL;
-	p->lh.t = NUM;
-	newvar = 0;
-    } else if (get_list_by_name(test)) {
-	p->flags |= P_LHLIST;
-	p->lh.t = LIST;
-	newvar = 0;
-    } else if (get_string_by_name(test)) {
-	p->flags |= P_LHSTR;
-	p->lh.t = STR;
-	newvar = 0;
-    } else if (gretl_is_bundle(test)) {	
-	p->flags |= P_LHSTR;
-	p->lh.t = BUNDLE;
-	newvar = 0;
-    }	
+    } else {
+	GretlType vtype = user_var_get_type_by_name(test);
+
+	if (vtype == GRETL_TYPE_MATRIX) {
+	    p->lh.m0 = get_matrix_by_name(test);
+	    p->flags |= P_LHMAT;
+	    p->lh.t = MAT;
+	    newvar = 0;
+	} else if (vtype == GRETL_TYPE_DOUBLE) {
+	    p->flags |= P_LHSCAL;
+	    p->lh.t = NUM;
+	    newvar = 0;
+	} else if (vtype == GRETL_TYPE_LIST) {
+	    p->flags |= P_LHLIST;
+	    p->lh.t = LIST;
+	    newvar = 0;
+	} else if (vtype == GRETL_TYPE_STRING) {
+	    p->flags |= P_LHSTR;
+	    p->lh.t = STR;
+	    newvar = 0;
+	} else if (vtype == GRETL_TYPE_BUNDLE) {
+	    p->flags |= P_LHSTR;
+	    p->lh.t = BUNDLE;
+	    newvar = 0;
+	} 
+    }
 
     /* if pre-existing var, check for const-ness */
     if (!newvar && overwrite_const_check(test, p)) {
@@ -10686,28 +10527,50 @@ static void gen_check_errvals (parser *p)
     }
 }
 
-static gretl_matrix *list_to_matrix (const char *name, int *err)
+static gretl_matrix *list_to_matrix (const int *list, int *err)
 {
-    const int *list = get_list_by_name(name);
     gretl_matrix *v = NULL;
-    int i;
 
     if (list == NULL) {
 	*err = E_DATA;
-	return NULL;
+    } else {
+	int i, n = list[0];
+
+	if (n == 0) {
+	    v = gretl_null_matrix_new();
+	    if (v == NULL) {
+		*err = E_ALLOC;
+	    }	    
+	} else if (n > 0) {
+	    v = gretl_vector_alloc(n);
+	    if (v == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		for (i=0; i<n; i++) {
+		    v->val[i] = list[i+1];
+		}
+	    }
+	} else {
+	    *err = E_DATA;
+	}
     }
 
-    if (list[0] > 0) {
-	v = gretl_vector_alloc(list[0]);
-	if (v == NULL) {
-	    *err = E_ALLOC;
-	    return NULL;
-	} 
-	for (i=0; i<list[0]; i++) {
-	    v->val[i] = list[i+1];
-	}
+    return v;
+}
+
+static gretl_matrix *series_to_matrix (const double *x, 
+				       parser *p)
+{
+    gretl_matrix *v = NULL;
+    int i, n = sample_size(p->dset);
+
+    v = gretl_column_vector_alloc(n);
+    if (v == NULL) {
+	p->err = E_ALLOC;
     } else {
-	*err = E_DATA;
+	for (i=0; i<n; i++) {
+	    v->val[i] = x[i + p->dset->t1];
+	}
     }
 
     return v;
@@ -10724,28 +10587,13 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p,
 #endif
 
     if (r->t == NUM) {
-	/* result was a scalar, not a matrix */
-	m = gretl_matrix_alloc(1, 1);
-	if (m == NULL) {
-	    p->err = E_ALLOC;
-	} else {
-	    m->val[0] = r->v.xval;
-	}	
+	m = gretl_matrix_from_scalar(r->v.xval);
     } else if (r->t == VEC) {
-	/* result was a series, not a matrix */
-	int i, n = sample_size(p->dset);
-	const double *x = r->v.xvec;
-
-	m = gretl_column_vector_alloc(n);
-	if (m == NULL) {
-	    p->err = E_ALLOC;
-	} else {
-	    for (i=0; i<n; i++) {
-		m->val[i] = x[i + p->dset->t1];
-	    }
-	}
+	m = series_to_matrix(r->v.xvec, p);
+    } else if (r->t == LIST) {
+	m = list_to_matrix(r->v.ivec, &p->err);
     } else if (r->t == MAT && is_tmp_node(r)) {
-	/* result r->v.m is newly allocated, steal it */
+	/* result matrix is newly allocated, steal it */
 #if EDEBUG
 	fprintf(stderr, "matrix result (%p) is tmp, stealing it\n", 
 		(void *) r->v.m);
@@ -10775,8 +10623,6 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p,
 	if (prechecked != NULL) {
 	    *prechecked = 1;
 	}
-    } else if (r->t == LIST) {
-	m = list_to_matrix(r->v.str, &p->err);
     } else {
 	fprintf(stderr, "Looking for matrix, but r->t = %d\n", r->t);
 	p->err = E_TYPES;
@@ -10809,7 +10655,7 @@ static gretl_matrix *matrix_from_scratch (parser *p, int tmp,
     if (!tmp && !p->err) {
 	int adj = p->lh.m0 != NULL;
 
-	p->err = user_matrix_add(m, p->lh.name);
+	p->err = user_var_add(p->lh.name, GRETL_TYPE_MATRIX, m);
 	if (adj) {
 	    p->lh.m0 = m; /* make the lh matrix pointer valid */
 	}
@@ -10890,32 +10736,42 @@ static void assign_to_matrix (parser *p, int *prechecked)
 
 static void assign_to_matrix_mod (parser *p)
 {
+    user_var *uvar;
     gretl_matrix *m = NULL;
     gretl_matrix *a, *b;
 
-    a = get_matrix_by_name(p->lh.name);
+    uvar = get_user_var_of_type_by_name(p->lh.name, GRETL_TYPE_MATRIX);
 
-    if (a == NULL) {
+    if (uvar == NULL) {
 	p->err = E_UNKVAR;
-    } else if (p->op == B_DOTASN) {
-	if (p->ret->t == NUM) {
-	    gretl_matrix_fill(a, p->ret->v.xval);
-	    return;
-	} else {
-	    p->err = E_TYPES;
-	}
     } else {
-	b = matrix_from_scratch(p, 1, NULL);
-	if (b != NULL) {
-	    m = real_matrix_calc(a, b, p->op, &p->err);
-	    gretl_matrix_free(b);
+	a = user_var_get_value(uvar);
+	if (a == NULL) {
+	    p->err = E_DATA;
+	}
+    }
+
+    if (!p->err) {
+	if (p->op == B_DOTASN) {
+	    if (p->ret->t == NUM) {
+		gretl_matrix_fill(a, p->ret->v.xval);
+		return;
+	    } else {
+		p->err = E_TYPES;
+	    }
+	} else {
+	    b = matrix_from_scratch(p, 1, NULL);
+	    if (b != NULL) {
+		m = real_matrix_calc(a, b, p->op, &p->err);
+		gretl_matrix_free(b);
+	    }
 	}
     }
  
     p->lh.m1 = m;
 
     if (!p->err) {
-	p->err = user_matrix_replace_matrix_by_name(p->lh.name, m);
+	p->err = user_var_replace_value(uvar, m);
     }
 }
 
@@ -11043,6 +10899,9 @@ static void edit_matrix (parser *p)
 static int edit_string (parser *p)
 {
     const char *src = NULL;
+    const char *orig = NULL;
+    char *newstr = NULL;
+    user_var *uvar;
 
     if (p->ret->t == NUM && p->op != B_ADD) {
 	p->err = E_TYPES;
@@ -11055,80 +10914,79 @@ static int edit_string (parser *p)
 	src = p->ret->v.str;
     }
 
+#if EDEBUG
+    fprintf(stderr, "edit_string: src='%s'\n", src);
+#endif
+
+    uvar = get_user_var_of_type_by_name(p->lh.name, GRETL_TYPE_STRING);
+
+    if (uvar != NULL) {
+	orig = user_var_get_value(uvar);
+    } else if (p->op != B_ASN) {
+	/* without a left-hand string we can only assign */
+	p->err = E_DATA;
+	return p->err;
+    }
+
     if (p->ret->t == NUM) {
-	/* taking an offset into an existing string */
-	const char *orig = get_string_by_name(p->lh.name);
-
-	if (orig == NULL) {
-	    p->err = E_DATA;
-	} else {
-	    int len = strlen(orig);
-	    int adj = p->ret->v.xval;
+	/* taking an offset into an existing string ("+=") */
+	int len = strlen(orig);
+	int adj = p->ret->v.xval;
 		
-	    if (adj < 0) {
-		p->err = E_DATA;
-	    } else if (adj == 0) {
-		; /* no-op */
+	if (adj < 0) {
+	    p->err = E_DATA;
+	} else if (adj == 0) {
+	    ; /* no-op */
+	} else {
+	    src = (adj < len)? (orig + adj) : "";
+	    newstr = gretl_strdup(src);
+	    if (newstr == NULL) {
+		p->err = E_ALLOC;
 	    } else {
-		const char *src = (adj < len)? (orig + adj) : "";
-		char *repl = gretl_strdup(src);
-
-		if (repl == NULL) {
-		    p->err = E_ALLOC;
-		} else {
-		    p->err = save_named_string(p->lh.name, repl, NULL);
-		    free(repl);
-		}
+		user_var_replace_value(uvar, newstr);
 	    }
 	}
     } else if (src == NULL) {
 	; /* no-op -- e.g. argname() didn't get anything */
     } else if (p->op == B_ASN) {
 	/* simple assignment */
-	p->err = save_named_string(p->lh.name, src, NULL);
+	newstr = gretl_strdup(src);
+	if (newstr == NULL) {
+	    p->err = E_ALLOC;
+	} else if (uvar == NULL) {
+	    user_var_add(p->lh.name, GRETL_TYPE_STRING, newstr);
+	} else {
+	    user_var_replace_value(uvar, newstr);
+	}
     } else if (p->op == B_HCAT || p->op == B_ADD) {
 	/* string concatenation */
-	const char *orig = get_string_by_name(p->lh.name);
-
-	if (orig == NULL) {
-	    p->err = E_DATA;
-	} else if (*src == '\0') {
+	if (*src == '\0') {
 	    ; /* no-op */
 	} else {
-	    char *full = malloc(strlen(orig) + strlen(src) + 1);
-	    
-	    if (full == NULL) {
+	    newstr = malloc(strlen(orig) + strlen(src) + 1);
+	    if (newstr == NULL) {
 		p->err = E_ALLOC;
 	    } else {
-		strcpy(full, orig);
-		strcat(full, src);
-		p->err = save_named_string(p->lh.name, full, NULL);
-		free(full);
+		strcpy(newstr, orig);
+		strcat(newstr, src);
+		user_var_replace_value(uvar, newstr);
 	    }
 	}
     } else if (p->op == INC) {
 	/* string++ */
-	const char *orig = get_string_by_name(p->lh.name);
+	size_t len = strlen(orig);
 
-	if (orig == NULL) {
-	    p->err = E_DATA;
+	if (len < 2) {
+	    newstr = gretl_strdup("");
 	} else {
-	    size_t len = strlen(orig);
-	    char *newstr;
-
-	    if (len < 2) {
-		newstr = gretl_strdup("");
-	    } else {
-		newstr = malloc(len);
-	    }
-	    if (newstr == NULL) {
-		p->err = E_ALLOC;
-	    } else {
-		*newstr = '\0';
-		strncat(newstr, orig + 1, len - 1);
-		p->err = save_named_string(p->lh.name, newstr, NULL);
-		free(newstr);
-	    }
+	    newstr = malloc(len);
+	}
+	if (newstr == NULL) {
+	    p->err = E_ALLOC;
+	} else {
+	    *newstr = '\0';
+	    strncat(newstr, orig + 1, len - 1);
+	    user_var_replace_value(uvar, newstr); 
 	}
     }
 
@@ -11137,8 +10995,11 @@ static int edit_string (parser *p)
 
 static int edit_list (parser *p)
 {
-    NODE *r = p->ret;
-    int *list = node_get_list(r, p);
+    int *list = node_get_list(p->ret, p); /* copied */
+
+#if EDEBUG
+    printlist(list, "ret list copy in edit_list");
+#endif
 
     if (!p->err) {
 	if (!lhlist(p)) {
@@ -11164,9 +11025,8 @@ static int edit_list (parser *p)
 }
 
 #define ok_return_type(t) (t == NUM || t == VEC || t == MAT || \
-			   t == LIST || t == LVEC || t == DUM || \
-			   t == EMPTY || t == STR || t == BUNDLE || \
-                           t == U_ADDR)
+			   t == LIST || t == DUM || t == EMPTY || \
+                           t == STR || t == BUNDLE || t == U_ADDR)
 
 static int gen_check_return_type (parser *p)
 {
@@ -11238,7 +11098,7 @@ static int gen_check_return_type (parser *p)
     } else {
 	/* target type was not specified: set it now, based
 	   on the type of the object we computed */
-	if (r->t == LVEC) {
+	if (r->t == LIST) {
 	    p->targ = LIST;
 	} else if (scalar_matrix_node(r)) {
 	    /* cast a 1 x 1 matrix to a scalar */
@@ -11346,8 +11206,11 @@ static int save_generated_var (parser *p, PRN *prn)
     }
 
 #if EDEBUG
-    fprintf(stderr, "save_generated_var: targ = %d, ret = %d, op = %d\n",
-	    p->targ, p->ret->t, p->op);
+    fputs("save_generated_var:\n ", stderr);
+    fprintf(stderr, "targ = %d (%s), ret = %d (%s), op = %d (%s)\n",
+	    p->targ, getsymb(p->targ, NULL), 
+	    p->ret->t, getsymb(p->ret->t, NULL), 
+	    p->op, getsymb(p->op, NULL));
 #endif
 
     /* allocate dataset storage, if needed */
@@ -11497,7 +11360,9 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == BUNDLE) {
 	if ((r->flags & TMP_NODE) || (p->flags & P_UFRET)) {
 	    /* bundle created on the fly */
-	    p->err = gretl_bundle_add_or_replace(r->v.b, p->lh.name);
+	    p->err = user_var_add_or_replace(p->lh.name,
+					     GRETL_TYPE_BUNDLE,
+					     r->v.b);
 	    if (!p->err) {
 		/* avoid destroying the returned bundle */
 		r->v.b = NULL;
@@ -11528,7 +11393,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     /* flags that should be reinstated if they were
        present at compile time */
     int repflags[] = { P_PRINT, P_NATEST, P_AUTOREG,
-		       P_LOOP, P_SLAVE, P_SLICE, P_UFUN, 
+		       P_LOOP, P_SLAVE, P_SLICE, P_UFUN,
 		       P_LHPTR, P_DISCARD, 0 };
     int i, saveflags = p->flags;
 
@@ -11551,6 +11416,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     p->xval = 0.0;
     p->idnum = 0;
     p->idstr = NULL;
+    p->uval = NULL;
 
     p->ret = NULL;
     p->err = 0;
@@ -11584,7 +11450,12 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 	    /* recorded series ID is no longer valid */
 	    p->lh.v = 0;
 	}
-    }
+    } else if (p->targ == STR) {
+	/* FIXME is this wanted */
+	if (*p->lh.name != '\0' && get_string_by_name(p->lh.name)) {
+	    p->flags |= P_LHSTR;
+	}
+    }	
 
     /* LHS matrix subspec: re-evaluate */
     if (p->subp != NULL) {
@@ -11667,7 +11538,7 @@ void gen_save_or_print (parser *p, PRN *prn)
 	    } else if (p->ret->t == STR) {
 		pprintf(p->prn, "%s\n", get_string_by_name(p->lh.name));
 	    } else if (p->ret->t == BUNDLE) {
-		gretl_bundle_print(get_gretl_bundle_by_name(p->lh.name), prn);
+		gretl_bundle_print(get_bundle_by_name(p->lh.name), prn);
 	    } else {
 		printnode(p->ret, p);
 		pputc(p->prn, '\n');
@@ -11785,6 +11656,10 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 #endif
 
     if (flags & P_EXEC) {
+#if EDEBUG
+	fprintf(stderr, "*** printinng p->tree (before reinit)\n");
+	print_tree(p->tree, p, 0);
+#endif
 	parser_reinit(p, dset, prn);
 	if (p->err) {
 	    fprintf(stderr, "error in parser_reinit\n");
@@ -11901,6 +11776,13 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     }
 
     p->aux_i = 0;
+
+#if EDEBUG
+    if (flags & P_EXEC) {
+	fprintf(stderr, "*** printing p->tree (about to start eval)\n");
+	print_tree(p->tree, p, 0);
+    }
+#endif
 
     if (!p->err) {
 	p->ret = eval(p->tree, p);

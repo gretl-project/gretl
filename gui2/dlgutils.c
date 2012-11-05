@@ -1409,20 +1409,6 @@ gchar *entry_box_get_trimmed_text (GtkWidget *w)
     return ret;
 }
 
-GList *get_list_of_listnames (void)
-{
-    GList *llist = NULL;
-    const char *lname;
-    int i, n = n_saved_lists();
-
-    for (i=0; i<n; i++) {
-	lname = get_list_name_by_index(i);
-	llist = g_list_append(llist, (gpointer) lname);
-    }
-
-    return llist;
-}
-
 void set_combo_box_strings_from_list (GtkWidget *box, GList *list)
 {
     GList *mylist = list;

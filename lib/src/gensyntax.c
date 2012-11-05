@@ -40,19 +40,31 @@ static void notify (const char *s, NODE *t, parser *p)
 }
 #endif
 
-static NODE *newempty (void)
-{  
+NODE *new_node (int t)
+{
     NODE *n = malloc(sizeof *n);
 
 #if MDEBUG
-    fprintf(stderr, "newempty: allocated node at %p\n", (void *) n);
+    fprintf(stderr, "new_node: allocated node of type %d (%s) at %p\n", 
+	    t, getsymb(t, NULL), (void *) n);
 #endif
 
     if (n != NULL) {
-	n->t = EMPTY;
-	n->v.idnum = 0;
+	n->t = t;
 	n->flags = 0;
 	n->vnum = NO_VNUM;
+	n->vname = NULL;	
+    }
+
+    return n;
+}
+
+static NODE *newempty (void)
+{  
+    NODE *n = new_node(EMPTY);
+
+    if (n != NULL) {
+	n->v.idnum = 0;
     }
 
     return n;
@@ -60,76 +72,70 @@ static NODE *newempty (void)
 
 static NODE *newref (parser *p, int t)
 {  
-    NODE *n = malloc(sizeof *n);
-
-#if MDEBUG
-    fprintf(stderr, "newref: allocated node at %p (type %d)\n", 
-	    (void *) n, t);
-#endif
+    NODE *n = new_node(t);
 
     if (n != NULL) {
-	if (t == USERIES) {
-	    n->vnum = p->idnum;
+	if (t == UVEC) {
 	    n->t = VEC;
+	    n->vnum = p->idnum;
 	    n->v.xvec = p->dset->Z[n->vnum];
+	    n->vname = p->idstr;
+	} else if (t == UNUM) {
+	    n->t = NUM;
+	    n->vname = p->idstr;
+	    n->v.xval = *(double *) p->uval;
+	} else if (t == UMAT) {
+	    n->t = MAT;
+	    n->vname = p->idstr;
+	    n->v.m = p->uval;
+	} else if (t == ULIST) {
+	    n->t = LIST;
+	    n->vname = p->idstr;
+	    n->v.ivec = p->uval;
+	} else if (t == BUNDLE) {
+	    n->vname = p->idstr;
+	    n->v.b = p->uval;
+	} else if (t == USTR) {
+	    n->t = STR;
+	    n->vname = p->idstr;
+	    n->v.str = p->uval;
+	} else if (t == UOBJ || t == WLIST) {
+	    /* FIXME ? */
+	    n->v.str = p->idstr;
 	} else {
-	    n->t = t;
-	    if (t == USCALAR || t == UMAT || t == UOBJ || 
-		t == LIST || t == BUNDLE) {
-		n->v.str = p->idstr;
-	    } else {
-		n->v.idnum = p->idnum;
-	    }
-	    n->vnum = NO_VNUM;
+	    n->v.idnum = p->idnum;
 	}
-	n->flags = 0;
     }
 
     return n;
 }
 
-static NODE *newstr (parser *p, int t)
+/* node storing an anonymous string value */
+
+static NODE *newstr (char *s)
 {  
-    NODE *n;
+    NODE *n = NULL;
 
-    if (p->idstr == NULL) {
+    if (s == NULL) {
 	fprintf(stderr, "newstr: input is NULL\n");
-	return NULL;
-    }
-
-    n = malloc(sizeof *n);
-
-#if MDEBUG
-    fprintf(stderr, "newstr: allocated node at %p (s = '%s')\n", 
-	    (void *) n, p->idstr);
-#endif
-
-    if (n != NULL) {
-	n->t = t;
-	n->v.str = p->idstr;
-	n->flags = 0;
-	n->vnum = NO_VNUM;
+    } else {
+	n = new_node(STR);
+	if (n != NULL) {
+	    n->v.str = s;
+	}
     }
 
     return n;
 }
 
-/* node storing a floating point value */
+/* node storing an anonymous floating point value */
 
 NODE *newdbl (double x)
 {  
-    NODE *n = malloc(sizeof *n);
-
-#if MDEBUG
-    fprintf(stderr, "newdbl: allocated node at %p (x = %g)\n", 
-	    (void *) n, x);
-#endif
+    NODE *n = new_node(NUM);
 
     if (n != NULL) {
-	n->t = NUM;
 	n->v.xval = x;
-	n->flags = 0;
-	n->vnum = NO_VNUM;
     }
 
     return n;
@@ -139,18 +145,10 @@ NODE *newdbl (double x)
 
 static NODE *newb1 (int t, NODE *b)
 {  
-    NODE *n = malloc(sizeof *n);
-
-#if MDEBUG
-    fprintf(stderr, "newb1:  allocated node at %p (type = %d)\n", 
-	    (void *) n, t);
-#endif
+    NODE *n = new_node(t);
 
     if (n != NULL) {
-	n->t = t;
 	n->v.b1.b = b;
-	n->flags = 0;
-	n->vnum = NO_VNUM;
     }
 
     return n;
@@ -160,19 +158,11 @@ static NODE *newb1 (int t, NODE *b)
 
 static NODE *newb2 (int t, NODE *l, NODE *r)
 {  
-    NODE *n = malloc(sizeof *n);
-
-#if MDEBUG
-    fprintf(stderr, "newb2:  allocated node at %p (type = %d)\n", 
-	    (void *) n, t);
-#endif
+    NODE *n = new_node(t);
 
     if (n != NULL) {
-	n->t = t;
 	n->v.b2.l = l;
 	n->v.b2.r = r;
-	n->flags = 0;
-	n->vnum = NO_VNUM;
     }
 
     return n;
@@ -182,20 +172,12 @@ static NODE *newb2 (int t, NODE *l, NODE *r)
 
 static NODE *newb3 (int t, NODE *l)
 {  
-    NODE *n = malloc(sizeof *n);
-
-#if MDEBUG
-    fprintf(stderr, "newb3:  allocated node at %p (type = %d)\n", 
-	    (void *) n, t);
-#endif
+    NODE *n = new_node(t);
 
     if (n != NULL) {
-	n->t = t;
 	n->v.b3.l = l;
 	n->v.b3.m = NULL;
 	n->v.b3.r = NULL;
-	n->flags = 0;
-	n->vnum = NO_VNUM;
     }
 
     return n;
@@ -205,19 +187,11 @@ static NODE *newb3 (int t, NODE *l)
 
 static NODE *newbn (int t)
 {  
-    NODE *n = malloc(sizeof *n);
-
-#if MDEBUG
-    fprintf(stderr, "newbn:  allocated node at %p (type = %d)\n", 
-	    (void *) n, t);
-#endif
+    NODE *n = new_node(t);
 
     if (n != NULL) {
-	n->t = t;
 	n->v.bn.n_nodes = 0;
 	n->v.bn.n = NULL;
-	n->flags = 0;
-	n->vnum = NO_VNUM;
     }
 
     return n;
@@ -275,9 +249,6 @@ static void unmatched_symbol_error (int c, parser *p)
     p->err = E_PARSE;
 }
 
-#define matrix_ref_node(p) (p->sym == UMAT || (p->sym == MVAR && \
-                            model_data_matrix(p->idnum)))
-
 static NODE *base (parser *p, NODE *up)
 { 
     NODE *t = NULL;
@@ -296,16 +267,22 @@ static NODE *base (parser *p, NODE *up)
 	t = newdbl(p->xval);
 	lex(p);
 	break;
-    case USCALAR: 
-    case USERIES:
+    case STR:
+	t = newstr(p->idstr);
+	lex(p);
+	break;
+    case UNUM: 
+    case UVEC:
     case UMAT:
     case UOBJ:
     case CON: 
     case DVAR:
     case MVAR:
     case OBS:
-    case LIST:
+    case ULIST:
+    case WLIST:
     case BUNDLE:
+    case USTR:
 	t = newref(p, p->sym);
 	lex(p);
 	break;
@@ -414,7 +391,7 @@ static NODE *listvar_node (parser *p)
 	    free(p->idstr);
 	    p->idstr = NULL;
 	    p->idnum = v;
-	    ret = newref(p, USERIES);
+	    ret = newref(p, UVEC);
 	    if (ret == NULL) {
 		p->err = E_ALLOC;
 	    } else {
@@ -510,7 +487,7 @@ static NODE *get_sscanf_args (parser *p)
     fprintf(stderr, "get_sscanf_args: '%s'\n", p->idstr);
 #endif
 
-    return newstr(p, STR);
+    return newstr(p->idstr);
 }
 
 static void unwrap_string_arg (parser *p)
@@ -615,10 +592,15 @@ static NODE *get_final_string_arg (parser *p, int sym, int eat_last)
 	unwrap_string_arg(p);
     } else if (sym != F_ISSTRING && sym != F_ISNULL) {
 	/* not quoted: give priority to string variables */
-	const char *s = get_string_by_name(p->idstr);
+	char *ustr = get_string_by_name(p->idstr);
 
-	if (s != NULL) {
-	    strsym = VSTR;
+	if (ustr != NULL) {
+	    p->uval = gretl_strdup(ustr);
+	    if (p->uval == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		strsym = USTR;
+	    }
 	}
     }
 
@@ -626,8 +608,20 @@ static NODE *get_final_string_arg (parser *p, int sym, int eat_last)
     fprintf(stderr, "get_final_string_arg: '%s'\n", p->idstr);
 #endif
 
-    return (p->err)? NULL : newstr(p, strsym);
+    if (p->err) {
+	return NULL;
+    } else if (strsym == USTR) {
+	return newref(p, USTR);
+    } else {
+	return newstr(p->idstr);
+    }
 }
+
+/* get_middle_string_arg() is used to retrieve a string that
+   defines a function call, e.g. in BFGSmax(). In this 
+   context we expect a literal string, but not wrapped in
+   quotes. 
+*/
 
 static NODE *get_middle_string_arg (parser *p)
 {
@@ -716,7 +710,7 @@ static NODE *get_middle_string_arg (parser *p)
     fprintf(stderr, "get_middle_string_arg: '%s'\n", p->idstr);
 #endif
 
-    return (p->err)? NULL : newstr(p, STR);
+    return (p->err)? NULL : newstr(p->idstr);
 }
 
 enum {
@@ -1112,7 +1106,7 @@ static NODE *powterm (parser *p)
 	}
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newref(p, USERIES); 
+	    t->v.b2.l = newref(p, UVEC); 
 	    lex(p);
 	    t->v.b2.r = base(p, t);
 	}
@@ -1123,7 +1117,7 @@ static NODE *powterm (parser *p)
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    if (p->sym == MSL) {
-		t->v.b2.l = newstr(p, STR);
+		t->v.b2.l = newstr(p->idstr);
 	    } else {
 		t->v.b2.l = newref(p, MVAR);
 	    }
@@ -1144,7 +1138,7 @@ static NODE *powterm (parser *p)
 	t = newb2(LISTELEM, NULL, NULL);
 	if (t != NULL) {
 	    if (sym == LISTELEM) {
-		t->v.b2.l = newref(p, LIST);
+		t->v.b2.l = newref(p, ULIST);
 	    } else {
 		t->v.b2.l = newref(p, MVAR);
 	    }
@@ -1161,7 +1155,7 @@ static NODE *powterm (parser *p)
     } else if (sym == OVAR) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newstr(p, STR);
+	    t->v.b2.l = newstr(p->idstr);
 	    get_ovar_ref(t, p);
 	}
     } else if (sym == LISTVAR) {
@@ -1207,7 +1201,7 @@ static NODE *powterm (parser *p)
     } else if (sym == UFUN || sym == RFUN) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newstr(p, STR);
+	    t->v.b2.l = newstr(p->idstr);
 	    lex(p);
 	    t->v.b2.r = newbn(FARGS);
 	    if (t != NULL) {
@@ -1225,9 +1219,6 @@ static NODE *powterm (parser *p)
 		get_args(t->v.b1.b, p, sym, k, opt, &next);
 	    }
 	}
-    } else if (sym == STR || sym == VSTR) {
-	t = newstr(p, sym);
-	lex(p);
     } else {
 	t = base(p, NULL);
     }

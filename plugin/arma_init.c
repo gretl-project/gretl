@@ -18,7 +18,7 @@
  */
 
 #include "libgretl.h"
-#include "gretl_scalar.h"
+#include "uservar.h"
 #include "arma_priv.h"
 
 #define AINIT_DEBUG 0

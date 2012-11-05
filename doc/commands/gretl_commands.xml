@@ -1423,10 +1423,6 @@
 	  <flag>--dataset</flag>
 	  <effect>clear dataset only</effect>
 	</option>
-	<option>
-	  <flag>--other</flag>
-	  <effect>clear everything but the dataset</effect>
-	</option>
       </options>
     </usage>
 
@@ -1439,14 +1435,10 @@
 	necessary.
       </para>
       <para>
-	If the <opt>--dataset</opt> option is given, then only the dataset
-	is cleared; other saved objects such as named matrices and scalars
-	are preserved.
-      </para>
-      <para>
-	If the <opt>--other</opt> option is given, then the current
-	dataset, if any, is preserved but all other saved objects are
-	destroyed.
+	If the <opt>--dataset</opt> option is given, then only the
+	dataset is cleared (plus any named lists of series); other
+	saved objects such as named matrices and scalars are
+	preserved.
       </para>
     </description>
   </command>

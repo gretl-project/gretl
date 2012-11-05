@@ -113,7 +113,6 @@ PUBLIC_HDRS = \
 	gretl_paths.h \
 	gretl_prn.h \
 	gretl_restrict.h \
-	gretl_scalar.h \
 	gretl_string_table.h \
 	gretl_untar.h \
 	gretl_utils.h \
@@ -147,6 +146,7 @@ PUBLIC_HDRS = \
 	transforms.h \
 	tsls.h \
 	usermat.h \
+	uservar.h \
 	var.h \
 	varprint.h \
 	vartest.h
@@ -191,7 +191,6 @@ SRCS = adf_kpss.c \
 	gretl_paths.c \
 	gretl_prn.c \
 	gretl_restrict.c \
-	gretl_scalar.c \
 	gretl_string_table.c \
 	gretl_untar.c \
 	gretl_utils.c \
@@ -223,6 +222,7 @@ SRCS = adf_kpss.c \
 	transforms.c \
 	tsls.c \
 	usermat.c \
+	uservar.c \
 	var.c \
 	varprint.c \
 	vartest.c \

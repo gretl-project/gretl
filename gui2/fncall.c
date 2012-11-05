@@ -23,11 +23,10 @@
 #include "selector.h"
 #include "gretl_func.h"
 #include "monte_carlo.h"
-#include "usermat.h"
+#include "uservar.h"
 #include "cmd_private.h"
 #include "gretl_www.h"
 #include "gretl_string_table.h"
-#include "gretl_scalar.h"
 #include "gretl_bundle.h"
 #include "gretl_xml.h"
 #include "database.h"
@@ -364,26 +363,45 @@ static int probably_stochastic (int v)
 
 static GList *add_list_names (GList *list)
 {
-    int i, n = n_saved_lists();
-    const char *name;
+    GList *llist = user_var_names_for_type(GRETL_TYPE_LIST);
+    GList *tail = llist;
 
-    for (i=0; i<n; i++) {
-	name = get_list_name_by_index(i);
-	list = g_list_append(list, (gpointer) name);
+    while (tail != NULL) {
+	list = g_list_append(list, tail->data);
+	tail = tail->next;
     }
+
+    g_list_free(llist);
 
     return list;
 }
 
 static GList *add_matrix_names (GList *list)
 {
-    int i, n = n_user_matrices();
-    const char *name;
+    GList *mlist = user_var_names_for_type(GRETL_TYPE_MATRIX);
+    GList *tail = mlist;
 
-    for (i=0; i<n; i++) {
-	name = get_matrix_name_by_index(i);
-	list = g_list_append(list, (gpointer) name);
+    while (tail != NULL) {
+	list = g_list_append(list, tail->data);
+	tail = tail->next;
     }
+
+    g_list_free(mlist);
+
+    return list;
+}
+
+static GList *add_scalar_names (GList *list)
+{
+    GList *mlist = user_var_names_for_type(GRETL_TYPE_DOUBLE);
+    GList *tail = mlist;
+
+    while (tail != NULL) {
+	list = g_list_append(list, tail->data);
+	tail = tail->next;
+    }
+
+    g_list_free(mlist);
 
     return list;
 }
@@ -399,19 +417,6 @@ static GList *add_series_names (GList *list)
     }
 
     list = g_list_append(list, (gpointer) dataset->varname[0]);
-
-    return list;
-}
-
-static GList *add_scalar_names (GList *list)
-{
-    int i, n = n_saved_scalars();
-    const char *name;
-
-    for (i=0; i<n; i++) {
-	name = gretl_scalar_get_name(i);
-	list = g_list_append(list, (gpointer) name);
-    }
 
     return list;
 }
@@ -608,7 +613,7 @@ static int do_make_list (selector *sr)
 	return 1;
     } 
 
-    nl = n_saved_lists();
+    nl = n_user_lists();
 
     if (buf == NULL || *buf == '\0') {
 	int resp;
@@ -653,7 +658,7 @@ static int do_make_list (selector *sr)
     if (!err) {
 	gtk_widget_hide(selector_get_window(sr));
 	if (cinfo != NULL) {
-	    if (n_saved_lists() > nl) {
+	    if (n_user_lists() > nl) {
 		update_combo_selectors(cinfo, aux, GRETL_TYPE_LIST);
 	    } 
 	} else {
@@ -1476,7 +1481,9 @@ static int maybe_add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 	    if (m == NULL) {
 		err = E_ALLOC;
 	    } else {
-		err = add_or_replace_user_matrix(m, s);
+		err = user_var_add_or_replace(s,
+					      GRETL_TYPE_MATRIX,
+					      m);
 	    }
 	    if (!err) {
 		pprintf(prn, "? matrix %s\n", s);
@@ -1573,8 +1580,8 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     char *tmpname = NULL;
     const char *funname;
     gretl_bundle *bundle = NULL;
-    int attach_bundle = 0;
-    int no_print = 0;
+    int grab_bundle = 0;
+    int show = 1;
     int orig_v = dataset->v;
     int i, err = 0;
 
@@ -1590,10 +1597,10 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	/* make a special arrangement to grab the returned
 	   bundle for GUI purposes 
 	*/
-	tmpname = get_bundle_temp_name();
+	tmpname = temp_name_for_bundle();
 	strcat(fnline, tmpname);
 	strcat(fnline, " = ");
-	attach_bundle = 1;
+	grab_bundle = 1;
     }	
 
     strcat(fnline, funname);
@@ -1610,7 +1617,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 
     strcat(fnline, ")");
 
-    if (!attach_bundle && strncmp(funname, "GUI", 3)) {
+    if (!grab_bundle && strncmp(funname, "GUI", 3)) {
 	pprintf(prn, "? %s\n", fnline);
     }
 
@@ -1648,31 +1655,39 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     /* destroy any "ARG" vars or matrices that were created? */
 
     if (!err && cinfo->rettype == GRETL_TYPE_BUNDLE) {
-	if (attach_bundle) {
-	    bundle = get_gretl_bundle_by_name(tmpname);
+	if (grab_bundle) {
+	    bundle = get_bundle_by_name(tmpname);
 	    if (bundle != NULL && gretl_bundle_get_n_keys(bundle) == 0) {
-		/* got a useless empty bundle */
+		/* we got a useless empty bundle */
 		gretl_bundle_pull_from_stack(tmpname, &err);
 		gretl_bundle_destroy(bundle);
 		bundle = NULL;
 	    }
-	    free(tmpname);
 	} else if (cinfo->ret != NULL) {
-	    bundle = get_gretl_bundle_by_name(cinfo->ret);
+	    bundle = get_bundle_by_name(cinfo->ret);
 	}
     }
 
-    no_print = user_func_is_noprint(cinfo->func);
+    show = !user_func_is_noprint(cinfo->func);
 
-    if (!err && bundle != NULL && no_print) {
+    if (!err && bundle != NULL && !show) {
 	gretl_print_reset_buffer(prn);
 	if (try_exec_bundle_print_function(bundle, prn)) {
-	    /* flag printing of bundled result */
-	    no_print = 0;
-	} 
+	    /* flag the fact that we do have something to show */
+	    show = 1;
+	}
     }
 
-    if (!err && no_print) {
+    if (grab_bundle && bundle != NULL) {
+	/* If the user specified an assignment of a returned bundle,
+	   we should leave it in the user_vars stack; but if we added
+	   the assignment automatically, we should pull it out of the
+	   stack, leaving the saving (or not) up to the user.
+	*/
+	gretl_bundle_pull_from_stack(tmpname, &err);
+    }
+
+    if (!err && !show) {
 	gretl_print_destroy(prn);
     } else {
 	const char *title = cinfo->label != NULL ?
@@ -1682,6 +1697,8 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 		    (bundle == NULL)? PRINT : VIEW_BUNDLE,
 		    bundle);
     }
+
+    free(tmpname);
 
     if (err) {
 	gui_errmsg(err);
@@ -1959,7 +1976,7 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
     fnargs *args = NULL;
     const char *bname;
     char funname[32];
-    int iopt = -1;
+    int argc, iopt = -1;
     int err = 0;
 
     if (strchr(aname, ':') != NULL) {
@@ -1971,12 +1988,13 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
     }
 
     func = get_user_function_by_name(funname);
-    bname = gretl_bundle_get_name(b);
+    bname = user_var_get_name_by_data(b);
 
     if (func == NULL || bname == NULL) {
 	err = E_DATA;
     } else {
-	args = fn_args_new();
+	argc = iopt >= 0 ? 2 : 1;
+	args = fn_args_new(argc);
 	if (args == NULL) {
 	    err = E_ALLOC;
 	}
@@ -1987,7 +2005,7 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 	fprintf(stderr, "bundle plot: using bundle %p (%s)\n",
 		(void *) b, bname);
 #endif
-	err = push_fn_arg(args, GRETL_TYPE_BUNDLE_REF, (void *) bname);
+	err = push_fn_arg(args, bname, GRETL_TYPE_BUNDLE_REF, (void *) bname);
 
 	if (!err && iopt >= 0) {
 	    /* add option flag to args */
@@ -1995,7 +2013,7 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 
 	    if (!na(minv)) {
 		iopt += (int) minv;
-		err = push_fn_arg(args, GRETL_TYPE_INT, &iopt);
+		err = push_fn_arg(args, NULL, GRETL_TYPE_INT, &iopt);
 	    }
 	}
     }
@@ -2075,7 +2093,7 @@ int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn)
     funname = get_bundle_special_function(b, BUNDLE_PRINT);
 
     if (funname != NULL) {
-	const char *name = gretl_bundle_get_name(b);
+	const char *name = user_var_get_name_by_data(b);
 	char fnline[MAXLINE];
 	ExecState state;
 	int err;
@@ -2506,7 +2524,7 @@ static void add_package_to_menu (addon_info *addon,
 
 static int precheck_error (ufunc *func, windata_t *vwin)
 {
-    fnargs *args = fn_args_new();
+    fnargs *args = fn_args_new(0);
     PRN *prn;
     double check_err = 0;
     int err = 0;

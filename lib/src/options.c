@@ -18,7 +18,7 @@
  */
 
 #include "libgretl.h"
-#include "gretl_scalar.h"
+#include "uservar.h"
 
 #include <errno.h>
 
@@ -131,7 +131,6 @@ struct gretl_option gretl_opts[] = {
     { BXPLOT,   OPT_Z, "factorized", 0 },
     { CHOW,     OPT_D, "dummy", 0 },
     { CLEAR,    OPT_D, "dataset", 0 },
-    { CLEAR,    OPT_O, "other", 0 },
     { COINT,    OPT_E, "test-down", 0 },
     { COINT,    OPT_N, "nc", 0 },
     { COINT,    OPT_R, "ctt", 0 },     

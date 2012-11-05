@@ -24,6 +24,7 @@
 #include "filters.h"
 #include "libset.h"
 #include "plotspec.h"
+#include "uservar.h"
 #include "usermat.h"
 #include "cmdstack.h"
 #include "ssheet.h"

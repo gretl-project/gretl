@@ -660,7 +660,7 @@ static int maybe_write_scalars_file (char *fullname)
 {
     FILE *fp;
 
-    if (n_saved_scalars() == 0) {
+    if (n_user_scalars() == 0) {
 	return 0;
     }
 

@@ -18,7 +18,7 @@
  */
 
 #include "libgretl.h"
-#include "gretl_string_table.h"
+#include "uservar.h"
 #include "dbwrite.h"
 #include "libset.h"
 #include "gretl_xml.h"

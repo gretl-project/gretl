@@ -183,11 +183,12 @@ const char *gretl_arg_type_name (GretlType type);
 
 GretlType gretl_type_from_string (const char *s);
 
-fnargs *fn_args_new (void);
+fnargs *fn_args_new (int argc);
 
 void fn_args_free (fnargs *args);
 
-int push_fn_arg (fnargs *args, GretlType type, void *p);
+int push_fn_arg (fnargs *args, const char *name, GretlType type,
+		 void *value);
 
 void adjust_indent (const char *line, int *this_indent,
 		    int *next_indent);

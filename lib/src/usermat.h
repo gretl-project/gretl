@@ -31,8 +31,6 @@ enum {
     SEL_NULL
 };
 
-typedef struct user_matrix_ user_matrix;
-
 typedef struct matrix_subspec_ matrix_subspec;
 
 union msel {
@@ -55,9 +53,7 @@ struct matrix_subspec_ {
 
 #define gretl_is_matrix(s) (get_matrix_by_name(s) != NULL)
 
-int n_user_matrices (void);
-
-const char *get_matrix_name_by_index (int idx);
+GList *get_named_matrix_list (void);
 
 gretl_matrix *get_matrix_by_name (const char *name);
 
@@ -65,52 +61,12 @@ gretl_matrix *get_matrix_copy_by_name (const char *name, int *err);
 
 gretl_matrix *steal_matrix_by_name (const char *name);
 
-gretl_matrix *get_matrix_by_name_at_level (const char *name, int level);
-
-gretl_matrix *user_matrix_get_matrix (user_matrix *u);
-
-user_matrix *get_user_matrix_by_name (const char *name);
-
-user_matrix *get_user_matrix_by_index (int idx);
-
-user_matrix *get_user_matrix_by_data (const gretl_matrix *M);
-
-int user_matrix_add (gretl_matrix *M, const char *name);
-
-int private_matrix_add (gretl_matrix *M, const char *name);
-
-int matrix_add_as_shell (gretl_matrix *M, const char *name);
-
-int user_matrix_destroy_by_name (const char *name, PRN *prn);
-
-int user_matrix_destroy (user_matrix *u);
-
-int user_matrix_get_level (user_matrix *u);
-
-int user_matrix_adjust_level (user_matrix *u, int adj);
-
-const char *user_matrix_get_name (user_matrix *u);
-
-int user_matrix_set_name (user_matrix *u, const char *name);
-
-int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M);
-
-int user_matrix_replace_matrix_by_name (const char *name, 
-					gretl_matrix *M);
-
 int assign_scalar_to_submatrix (gretl_matrix *M, double x,
 				matrix_subspec *spec);
 
 int user_matrix_replace_submatrix (const char *mname, 
 				   const gretl_matrix *S,
 				   matrix_subspec *spec);
-
-int add_or_replace_user_matrix (gretl_matrix *M, const char *name);
-
-int copy_named_matrix_as (const char *orig, const char *newname);
-
-int copy_matrix_as (const gretl_matrix *m, const char *newname,
-		    int fnarg);
 
 int umatrix_set_names_from_string (gretl_matrix *M, 
 				   const char *s,
@@ -124,15 +80,11 @@ int umatrix_set_names_from_list (gretl_matrix *M,
 char *user_matrix_get_column_name (const gretl_matrix *M, int col,
 				   int *err);
 
-void destroy_user_matrices (void);
+double user_matrix_get_determinant (gretl_matrix *m, int tmpmat,
+				    int f, int *err);
 
-int destroy_user_matrices_at_level (int level);
-
-int destroy_private_matrices (void);
-
-double user_matrix_get_determinant (gretl_matrix *m, int f, int *err);
-
-gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int f, int *err);
+gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int tmpmat,
+				       int f, int *err);
 
 gretl_matrix *user_matrix_vec (const gretl_matrix *m, int *err);
 
@@ -194,15 +146,5 @@ int matrix_cholesky_in_place (gretl_matrix *m);
 int matrix_transpose_in_place (gretl_matrix *m);
 
 int matrix_XTX_in_place (gretl_matrix *m);
-
-void write_matrices_to_file (FILE *fp);
-
-typedef void (*MATRIX_ADD_FUNC) (const char *);
-typedef int (*MATRIX_DEL_FUNC) (const char *);
-
-void set_matrix_add_callback (MATRIX_ADD_FUNC);
-
-void set_matrix_delete_callback (MATRIX_DEL_FUNC);
-
 
 #endif /* USERMAT_H_ */

@@ -153,8 +153,6 @@ void edit_dialog_close (dialog_t *dlg);
 
 gchar *entry_box_get_trimmed_text (GtkWidget *w);
 
-GList *get_list_of_listnames (void);
-
 GtkWidget *gretl_opts_combo (combo_opts *opts, int deflt);
 
 GtkWidget *gretl_opts_combo_masked (combo_opts *opts, int deflt,

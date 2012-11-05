@@ -86,9 +86,8 @@ void bundle_add_as_icon (GtkAction *action, gpointer p);
 
 void *get_session_object_by_name (const char *name, GretlObjType *type);
 
-int session_matrix_destroy_by_name (const char *name);
-
-int session_bundle_destroy_by_name (const char *name);
+int session_user_var_destroy_by_name (const char *name,
+				      GretlObjType type);
 
 void delete_text_from_session (void *p);
 

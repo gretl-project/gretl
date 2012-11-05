@@ -35,7 +35,7 @@
 #include "tabwin.h"
 #include "toolbar.h"
 
-#include "usermat.h"
+#include "uservar.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -348,7 +348,9 @@ static void add_matrix_callback (GtkWidget *w, windata_t *vwin)
 	    if (m == NULL) {
 		nomem();
 	    } else {
-		err = add_or_replace_user_matrix(m, mname);
+		err = user_var_add_or_replace(mname,
+					      GRETL_TYPE_MATRIX,
+					      m);
 		if (err) {
 		    gretl_matrix_free(m);
 		    gui_errmsg(err);

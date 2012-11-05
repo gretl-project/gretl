@@ -18,11 +18,10 @@
  */
 
 #include "libgretl.h"
-#include "usermat.h"
+#include "uservar.h"
 #include "gretl_func.h"
 #include "matrix_extra.h"
 #include "libset.h"
-#include "gretl_scalar.h"
 #include "kalman.h"
 
 /**

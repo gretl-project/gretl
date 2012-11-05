@@ -38,6 +38,7 @@
 #include <limits.h>
 
 #include <zlib.h>
+#include <glib.h>
 
 #ifdef FULL_XML_HEADERS
 # include <libxml/xmlmemory.h>
@@ -114,7 +115,6 @@ typedef enum {
     GRETL_TYPE_SCALAR_REF,
     GRETL_TYPE_SERIES_REF,
     GRETL_TYPE_MATRIX_REF,
-    GRETL_TYPE_USCALAR,
     GRETL_TYPE_USERIES,
     GRETL_TYPE_DATE,
     GRETL_TYPE_BUNDLE,

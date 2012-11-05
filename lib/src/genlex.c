@@ -20,8 +20,8 @@
 /* lexer module for 'genr' and related commands */
 
 #include "genparse.h"
-#include "usermat.h"
 #include "gretl_func.h"
+#include "uservar.h"
 #include "gretl_string_table.h"
 
 #include <glib.h>
@@ -845,14 +845,15 @@ NODE *obs_node (parser *p)
 
 static void look_up_string_variable (const char *s, parser *p)
 {
-    const char *val = get_string_by_name(s + 1);
+    char *val = get_string_by_name(s + 1);
 
     if (val != NULL) {
-	p->idstr = gretl_strdup(s);
+	p->idstr = gretl_strdup(s + 1);
 	if (p->idstr == NULL) {
 	    p->err = E_ALLOC;
 	} else {
-	    p->sym = VSTR;
+	    p->uval = val;
+	    p->sym = USTR;
 	}
     } else {
 	undefined_symbol_error(s, p);
@@ -929,35 +930,42 @@ static void look_up_word (const char *s, parser *p)
 	    if (p->idnum > 0) {
 		p->sym = DUM;
 	    } else {
+		GretlType vtype = 0;
+		char *bstr;
+
 		if ((p->idnum = current_series_index(p->dset, s)) >= 0) {
-		    p->sym = USERIES;
+		    p->sym = UVEC;
+		    p->idstr = gretl_strdup(s);
 		} else if (!strcmp(s, "time")) {
 		    p->sym = DUM;
 		    p->idnum = DUM_TREND;
-		} else if (gretl_is_scalar(s)) {
-		    p->sym = USCALAR;
+		} else if ((p->uval = user_var_get_value_and_type(s, &vtype)) != NULL) {
+		    if (vtype == GRETL_TYPE_DOUBLE) {
+			p->sym = UNUM;
+		    } else if (vtype == GRETL_TYPE_MATRIX) {
+			p->sym = UMAT;
+		    } else if (vtype == GRETL_TYPE_BUNDLE) {
+			p->sym = BUNDLE;
+		    } else if (vtype == GRETL_TYPE_STRING) {
+			p->sym = USTR;
+		    } else if (vtype == GRETL_TYPE_LIST) {
+			p->sym = ULIST;
+		    } else if (vtype == GRETL_TYPE_STRING) {
+			p->sym = USTR;
+		    }
 		    p->idstr = gretl_strdup(s);
-		} else if (get_matrix_by_name(s)) {
-		    p->sym = UMAT;
-		    p->idstr = gretl_strdup(s);
-		} else if (gretl_is_bundle(s)) {
-		    p->sym = BUNDLE;
-		    p->idstr = gretl_strdup(s);
+		} else if ((bstr = get_built_in_string_by_name(s))) {
+		    /* FIXME should use $-accessors? */
+		    p->sym = STR;
+		    p->idstr = gretl_strdup(bstr);
 		} else if (gretl_get_object_by_name(s)) {
 		    p->sym = UOBJ;
-		    p->idstr = gretl_strdup(s);
-		} else if (get_list_by_name(s)) {
-		    p->sym = LIST;
 		    p->idstr = gretl_strdup(s);
 		} else if (get_user_function_by_name(s)) {
 		    p->sym = UFUN;
 		    p->idstr = gretl_strdup(s);
-		} else if (gretl_is_string(s)) {
-		    p->sym = VSTR;
-		    p->idstr = gretl_strdup(s);
-		} else if (p->targ == LIST &&
-			   varname_match_any(p->dset, s)) {
-		    p->sym = LIST;
+		} else if (p->targ == LIST && varname_match_any(p->dset, s)) {
+		    p->sym = WLIST;
 		    p->idstr = gretl_strdup(s);
 		} else if (!strcmp(s, "t")) {
 		    /* if "t" has not been otherwise defined, treat it
@@ -999,7 +1007,7 @@ static void word_check_next_char (parser *p)
 
     if (p->ch == '(') {
 	/* series (lag) or function */
-	if (p->sym == USERIES) {
+	if (p->sym == UVEC) {
 	    if (p->idnum == p->lh.v) {
 		p->flags |= P_AUTOREG;
 	    }
@@ -1023,10 +1031,10 @@ static void word_check_next_char (parser *p)
 		   could_be_matrix(p->idnum)) {
 	    /* slice of $ matrix */
 	    p->sym = DMSL;
-	} else if (p->sym == USERIES) {
+	} else if (p->sym == UVEC) {
 	    /* observation from series */
 	    p->sym = OBS;
-	} else if (p->sym == LIST) {
+	} else if (p->sym == ULIST) {
 	    /* element of list */
 	    p->sym = LISTELEM;
 	} else if (p->sym == MVAR && model_data_list(p->idnum)) {
@@ -1050,7 +1058,7 @@ static void word_check_next_char (parser *p)
 	    p->err = E_PARSE;
 	}	    
     } else if (p->ch == '.' && isalpha(*p->point)) {
-	if (p->sym == LIST) {
+	if (p->sym == ULIST) {
 	    p->sym = LISTVAR;
 	} else {
 	    p->err = E_PARSE;
@@ -1117,6 +1125,7 @@ static void getword (parser *p)
     if ((*word == '$' && word[1]) || !strcmp(word, "obs")) {
 	look_up_dollar_word(word, p);
     } else if (*word == '@') {
+	/* do we actually want to do this? */
 	look_up_string_variable(word, p);
     } else if (*word == '$' && word[1] == '\0' && p->ch == '[') {
 	p->sym = BUNDLE;
@@ -1541,12 +1550,12 @@ const char *getsymb (int t, const parser *p)
 	return "MDEF";
     } else if (t == FARGS) {
 	return "FARGS";
-    } else if (t == LIST) {
+    } else if (t == LIST || t == ULIST || t == WLIST) {
 	return "LIST";
     } else if (t == OVAR) {
 	return "OVAR";
-    } else if (t == VSTR) {
-	return "VSTR";
+    } else if (t == USTR) {
+	return "USTR";
     } else if (t == EMPTY) {
 	return "EMPTY";
     } else if (t == LISTVAR) {
@@ -1555,14 +1564,18 @@ const char *getsymb (int t, const parser *p)
 	return "BOBJ";
     } else if (t == LISTELEM) {
 	return "LISTELEM";
+    } else if (t == VEC) {
+	return "VEC";
+    } else if (t == MAT) {
+	return "MAT";
     }
 
     if (p != NULL) {
 	if (t == NUM) {
 	    return fromdbl(p->xval); 
-	} else if (t == USERIES) {
+	} else if (t == UVEC) {
 	    return p->dset->varname[p->idnum];
-	} else if (t == USCALAR) {
+	} else if (t == UNUM) {
 	    return p->idstr;
 	} else if (t == BUNDLE) {
 	    return p->idstr;
@@ -1581,7 +1594,35 @@ const char *getsymb (int t, const parser *p)
 	} else if (t == STR) {
 	    return p->idstr;
 	}
-    } 
+    } else {
+	if (t == NUM) {
+	    return "NUM"; 
+	} else if (t == UVEC) {
+	    return "UVEC";
+	} else if (t == UNUM) {
+	    return "UNUM";
+	} else if (t == BUNDLE) {
+	    return "BUNDLE";
+	} else if (t == UMAT) {
+	    return "UMAT";
+	} else if (t == UOBJ) {
+	    return "UOBJ";
+	} else if (t == CON) {
+	    return "CON";
+	} else if (t == DUM) {
+	    return "DUM";
+	} else if (t == DVAR) {
+	    return "DVAR";
+	} else if (t == MVAR) {
+	    return "MVAR";
+	} else if (t == UFUN) {
+	    return "UFUN";
+	} else if (t == RFUN) {
+	    return "RFUN";
+	} else if (t == STR) {
+	    return "STR";
+	}
+    }	
 
     switch (t) {
     case B_ASN:
@@ -1665,7 +1706,7 @@ const char *getsymb (int t, const parser *p)
     case B_VCAT: 
 	return "|";
     case B_LCAT:
-	return " ";
+	return "LCAT";
     case P_COM: 
 	return ",";
     case P_DOT: 

@@ -25,7 +25,7 @@
 #include "forecast.h"
 #include "gretl_func.h"
 #include "matrix_extra.h"
-#include "gretl_scalar.h"
+#include "uservar.h"
 #include "gretl_bundle.h"
 #include "gretl_string_table.h"
 
@@ -1766,7 +1766,7 @@ static void print_listed_objects (const char *s,
 	    gretl_matrix_print_to_prn(m, name, prn);
 	} else if ((list = get_list_by_name(name)) != NULL) {
 	    print_varlist(name, list, dset, prn);
-	} else if ((b = get_gretl_bundle_by_name(name)) != NULL) {
+	} else if ((b = get_bundle_by_name(name)) != NULL) {
 	    gretl_bundle_print(b, prn);
 	} else if ((p = get_string_by_name(name)) != NULL) {
 	    pprintf(prn, "%s\n", p);	

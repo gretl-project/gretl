@@ -36,6 +36,7 @@
 #include "forecast.h"
 #include "console.h"
 #include "libset.h"
+#include "uservar.h"
 #include "gretl_bfgs.h"
 
 #include <errno.h>
@@ -1299,7 +1300,7 @@ int select_list_dialog (char *listname)
 
     dlg = gretl_dialog_new(NULL, NULL, GRETL_DLG_BLOCK);
     
-    llist = get_list_of_listnames();
+    llist = user_var_names_for_type(GRETL_TYPE_LIST);
     llist = g_list_first(llist);
     strcpy(listname, (char *) llist->data);
 

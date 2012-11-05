@@ -21,12 +21,11 @@
 #include "gretl_string_table.h"
 #include "libset.h"
 #include "usermat.h"
+#include "uservar.h"
 #include "genparse.h"
 #include "csvdata.h"
 
-#include <ctype.h>
 #include <errno.h>
-#include <glib.h>
 
 #define CDEBUG 0
 
@@ -4143,4 +4142,21 @@ int join_from_csv (const char *fname,
     jr_filter_destroy(filter);
 
     return err;
+}
+
+int csv_open_needs_matrix (gretlopt opt)
+{
+    int ret = 0;
+
+    if (opt & OPT_M) {
+	/* --rowmask=matrix */
+	ret = 1;
+    } else if (opt & OPT_F) {
+	/* --fixed-cols=whatever */
+	const char *s = get_optval_string(OPEN, OPT_F);
+
+	ret = gretl_is_matrix(s);
+    }
+
+    return ret;
 }

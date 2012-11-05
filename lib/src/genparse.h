@@ -20,9 +20,8 @@
 /* shared private header for all 'genr' related modules */
 
 #include "libgretl.h"
-#include "usermat.h"
+#include "uservar.h"
 #include "gretl_func.h"
-#include "gretl_scalar.h"
 #include "gretl_bundle.h"
 
 #define GENDEBUG 0
@@ -84,14 +83,13 @@ enum {
               PUNCT_MAX,  /* SEPARATOR: end of grouping and punctuation marks */
 	      CON,	  /* named constant */
 	      DUM,	  /* dummy variable */
-              USCALAR,	  /* user variable, scalar */
-              USERIES,    /* user variable, series */
-	      UMAT,	  /* user-defined matrix */
+              UNUM,	  /* user variable, named scalar */
+              UVEC,       /* user variable, named series */
+	      UMAT,	  /* user variable, named matrix */
+	      ULIST,      /* user variable, named list */
 	      UOBJ,	  /* user-defined object (e.g. model) */
-	      NUM,	  /* scalar, evaluated */
-  /* 60 */    VEC,	  /* series, evaluated */
-	      IVEC,	  /* vector of integers, evaluated */
-              LVEC,       /* list, as array of ints */
+  /* 60 */    NUM,	  /* scalar, evaluated */
+	      VEC,	  /* series, evaluated */
 	      MAT,	  /* matrix, evaluated */
 	      OBS,	  /* observation from a series */
               MSL,	  /* matrix plus subspec */
@@ -99,18 +97,18 @@ enum {
 	      DMSTR,	  /* "dollar" matrix plus string subspec */
 	      MSL2,	  /* unevaluated matrix subspec */
 	      MSPEC,	  /* evaluated matrix subspec */
-  /* 70 */    SUBSL,	  /* row or column component of MSPEC */
-	      MDEF,	  /* explicit matrix definition {...} */
+	      SUBSL,	  /* row or column component of MSPEC */
+  /* 70 */    MDEF,	  /* explicit matrix definition {...} */
               LAG,        /* variable plus lag length */	  
 	      DVAR,	  /* $ "dataset" variable (mostly scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
               OVAR,	  /* object variable: variable "under" an object */
-              LIST,	  /* reference to named list */
+              LIST,	  /* list, evaluated */
 	      LISTVAR,    /* variable in list, dot syntax */
 	      LISTELEM,   /* list member, [...] syntax) */
 	      MLISTELEM,  /* accessor list member, [...] syntax) */
-  /* 80 */    STR,	  /* string */
-              BUNDLE,     /* gretl bundle (hash table) */
+	      STR,	  /* string */
+  /* 80 */    BUNDLE,     /* gretl bundle (hash table) */
               BOBJ,       /* object inside a bundle */
 	      FARGS,	  /* set of n function arguments */
               EMPTY,      /* "null" */
@@ -119,7 +117,9 @@ enum {
               EROOT,	  /* dummy root for (...) expression */
               UFUN,	  /* user-defined function */
 	      RFUN,       /* GNU R function */
-  /* 90 */    VSTR,       /* string variable */
+	      USTR,       /* string variable */
+  /* 90 */    WLIST,      /* wildcard list spec */
+	      IVEC,       /* array of ints, not a varlist */
               INC,   
               DEC,
 	      QUERY,
@@ -438,9 +438,6 @@ enum {
 
 #define bnsym(s) (s == MDEF || s == FARGS)
 
-#define freestr(s) (s == STR || s == USCALAR || s == UMAT || s == UOBJ || \
-                    s == LIST || s == VSTR)
-
 #define bare_data_type(s) (s > PUNCT_MAX && s < DTYPE_MAX)
 
 #define closing_sym(s) (s == G_RPR || s == G_RBR || s == G_RCB)
@@ -503,7 +500,8 @@ enum {
 struct node {
     short t;       /* type indentifier */
     char flags;    /* AUX_NODE etc., see above */
-    int vnum;      /* associated variable ID number */
+    int vnum;      /* associated series ID number */
+    char *vname;   /* associated variable name */
     union val v;   /* value (of whatever type) */
 };
 
@@ -577,6 +575,7 @@ struct parser_ {
     double xval;
     int idnum;
     char *idstr;
+    void *uval;
     int err;
 };
 
@@ -591,6 +590,7 @@ int parser_gretl_charpos (parser *p, int c);
 int parser_next_nonspace_char (parser *p);
 void parser_print_input (parser *p);
 void lex (parser *s);
+NODE *new_node (int t);
 NODE *expr (parser *s);
 NODE *newdbl (double x);
 NODE *obs_node (parser *p);

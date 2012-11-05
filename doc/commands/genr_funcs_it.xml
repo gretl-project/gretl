@@ -43,7 +43,7 @@
     </function>
 
 
-    <function name="$coeff" section="access" output="matrix" altout="scalar">
+    <function name="$coeff" section="access" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s</fnarg>
       </fnargs>
@@ -174,66 +174,6 @@
       </description>
     </function>
 
-    <function name="$evals" section="access" output="matrix">
-      <description>
-	<para>
-	  Must follow the estimation of a VECM; returns a vector
-	  containing the eigenvalues that are used in computing
-	  the trace test for cointegration.
-	</para>
-      </description>
-    </function>
-
-    <function name="$fcast" section="access" output="matrix">
-      <description>
-	<para>
-	  Must follow the <cmdref targ="fcast"/> forecasting command;
-	  returns the forecast values as a matrix. If the model on
-	  which the forecast was based is a system of equations the
-	  returned matrix will have one column per equation, otherwise
-	  it is a column vector. 
-	</para>
-      </description>
-    </function>
-
-    <function name="$fcerr" section="access" output="matrix">
-      <description>
-	<para>
-	  Must follow the <cmdref targ="fcast"/> forecasting command;
-	  returns the standard errors of the forecasts, if available, as a
-	  matrix. If the model on which the forecast was based is a system
-	  of equations the returned matrix will have one column per
-	  equation, otherwise it is a column vector.
-	</para>
-      </description>
-    </function>
-
-    <function name="$fevd" section="access" output="matrix">
-      <description>
-	<para>
-	  Must follow estimation of a VAR. Returns a matrix containing
-	  the forecast error variance decomposition. This matrix has
-	  <math>h</math> rows where <math>h</math> is the forecast
-	  horizon, which can be chosen using <lit>set horizon</lit> or
-	  otherwise is set automatically based on the frequency of the
-	  data.  For a VAR with <math>p</math> variables, the matrix
-	  has <math>p</math><sup>2</sup> columns. The fraction of the
-	  forecast error for variable <math>i</math> attributable to
-	  innovation in variable <math>j</math> is found in column
-	  (<math>i</math> &minus; 1)<math>p</math> + <math>j</math>.
-	</para>
-      </description>
-    </function>
-
-    <function name="$Fstat" section="access" output="scalar">
-      <description>
-	<para>
-	  Returns the overall F-statistic from the last estimated model,
-	  if available.
-	</para>
-      </description>
-    </function>
-
     <function name="$gmmcrit" section="access" output="scalar">
       <description>
 	<para>
@@ -267,15 +207,6 @@
 	<para>
 	  Produce il criterio di informazione di Hannan-Quinn per l'ultimo
           modello stimato.
-	</para>
-      </description>
-    </function>
-
-    <function name="$huge" section="access" output="scalar">
-      <description>
-	<para>
-	  Returns a very large positive number. By default this is 1.0E100,
-	  but the value can be changed using the <cmdref targ="set"/> command.
 	</para>
       </description>
     </function>
@@ -355,44 +286,11 @@
       </description>
     </function>
 
-    <function name="$llt" section="access" output="series">
-      <description>
-	<para>
-	  For selected models estimated via Maximum Likelihood,
-	  returns the series of per-observation log-likelihood
-	  values. At present this is supported only for binary logit
-	  and probit, tobit and heckit.
-	</para>
-      </description>
-    </function>
-
     <function name="$lnl" section="access" output="scalar">
       <description>
 	<para>
 	  Produce la log-verosimiglianza dell'ultimo modello stimato (dove
           possibile).
-	</para>
-      </description>
-    </function>
-
-    <function name="$macheps" section="access" output="scalar">
-      <description>
-	<para>
-	  Returns the value of <quote>machine epsilon</quote>, which
-	  gives an upper bound on the relative error due to rounding
-	  in double-precision floating point arithmetic.
-	</para>
-      </description>
-    </function>
-
-    <function name="$mnlprobs" section="access" output="matrix">
-      <description>
-	<para>
-	  Following estimation of a multinomial logit model (only),
-	  retrieves a matrix holding the estimated probabilities
-	  of each possible outcome at each observation in the model's
-	  sample range. Each row represents an observation and
-	  each column an outcome. 
 	</para>
       </description>
     </function>
@@ -430,15 +328,7 @@
       </description>
     </function>
 
-    <function name="$pi" section="access" output="scalar">
-      <description>
-	<para>
-	  Returns the value of &pi; in double precision.
-	</para>
-      </description>
-    </function>
-
-    <function name="$pvalue" section="access" targ="dpvalue" output="scalar-or-matrix">
+    <function name="$pvalue" section="access" targ="dpvalue" output="scalar">
       <description>
 	<para>
 	  Produce il p-value della statistica test generata dall'ultimo comando
@@ -475,27 +365,6 @@
       </description>
     </function>
 
-    <function name="$sample" section="access" output="series">
-      <description>
-	<para>
-	  Must follow estimation of a single-equation model.  Returns a dummy
-	  series with value 1 for observations used in estimation, 0 for
-	  observations within the currently defined sample range but not used
-	  (presumably because of missing values), and NA for observations
-	  outside of the current range.
-	</para>
-	<para>
-	  If you wish to compute statistics based on the sample that was
-	  used for a given model, you can do, for example: 
-	</para>
-	<code>
-	  ols y 0 xlist
-	  genr sdum = $sample
-	  smpl sdum --dummy
-	</code>
-      </description>
-    </function>
-
     <function name="$sargan" section="access" output="rvec">
       <description>
 	<para>
@@ -507,7 +376,7 @@
       </description>
     </function>
 
-    <function name="$sigma" section="access" output="scalar-or-matrix">
+    <function name="$sigma" section="access" output="scalar">
       <description>
 	<para>
 	  Ritorna lo scarto quadratico medio dei residui dell'ultimo
@@ -516,7 +385,7 @@
       </description>
     </function>
 
-    <function name="$stderr" section="access" output="matrix" altout="scalar">
+    <function name="$stderr" section="access" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s</fnarg>
       </fnargs>
@@ -618,7 +487,7 @@
       </description>
     </function>
 
-    <function name="$test" section="access" output="scalar-or-matrix">
+    <function name="$test" section="access" output="scalar">
       <description>
 	<para>
 	  Returns the value of the test statistic that was generated by
@@ -659,17 +528,7 @@
       </description>
     </function>
 
-    <function name="$unit" section="access" output="series">
-      <description>
-	<para>
-	  Valid for panel datasets only.  Returns a series with
-	  value 1 for all observations on the first unit or group,
-	  2 for observations on the second unit, and so on.
-	</para>
-      </description>
-    </function>
-
-    <function name="$vcv" section="access" output="matrix" altout="scalar">
+    <function name="$vcv" section="access" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s1</fnarg>
 	<fnarg optional="true" type="coeffname">s2</fnarg>
@@ -696,91 +555,10 @@
       </description>
     </function>
 
-    <function name="$vecGamma" section="access" output="matrix">
-      <description>
-	<para>
-	  Must follow the estimation of a VECM; returns a matrix in
-	  which the Gamma matrices (coefficients on the lagged differences
-	  of the cointegrated variables) are stacked side by side.
-	  Each row represents an equation; for a VECM of lag order
-	  <math>p</math> there are <math>p</math> &minus; 1 sub-matrices.
-	</para>
-      </description>
-    </function>    
-
-    <function name="$version" section="access" output="scalar">
-      <description>
-	<para>
-	  Returns an integer value that codes for the program version. The
-	  gretl version string takes the form <lit>x.y.z</lit> (for example,
-	  1.7.6).  The return value from this accessor is formed as
-	  <lit>10000*x + 100*y + z</lit>, so that 1.7.6 translates as 10706.
-	</para>
-      </description>
-    </function>
-
-    <function name="$vma" section="access" output="matrix">
-      <description>
-	<para>
-	  Must follow the estimation of a VAR or a VECM; returns a
-	  matrix containing the VMA representation up to the order
-	  specified via the <lit>set horizon</lit> command. See
-	  <guideref targ="sec:var-estim"/> for details.
-	</para>
-      </description>
-    </function>
-
-    <function name="$windows" section="access" output="scalar">
-      <description>
-	<para>
-	  Returns 1 if gretl is running on MS Windows, otherwise 0. By
-	  conditioning on the value of this variable you can write shell
-	  calls that are portable across different operating systems.
-	</para>
-	<para>
-	  Also see the <cmdref targ="shell"/> command.
-	</para>
-      </description>
-    </function>
-
-    <function name="$xlist" section="access" output="list">
-      <description>
-	<para>
-	  Returns the list of regressors from the last model (for
-	  single-equation models only).
-	</para>
-      </description>
-    </function>
-
-    <function name="$xtxinv" section="access" output="matrix">
-      <description>
-	<para>
-	  Following estimation of a VAR or VECM (only), returns
-	  <math>X'X</math><sup>-1</sup>, where <math>X</math> is the common
-	  matrix of regressors used in each of the equations.  This accessor
-	  is not available for a VECM estimated with a restriction imposed on
-	  &agr;, the <quote>loadings</quote> matrix.
-	</para>
-      </description>
-    </function>
-
     <function name="$yhat" section="access" output="series">
       <description>
 	<para>
 	  Returns the fitted values from the last regression.
-	</para>
-      </description>
-    </function>
-
-    <function name="$ylist" section="access" output="list">
-      <description>
-	<para>
-	  If the last model estimated was a VAR, VECM or simultaneous
-	  system, returns the associated list of endogenous variables.
-	  If the last model was a single equation, this accessor gives
-	  a list with a single element, the dependent variable. In the
-	  special case of the biprobit model the list contains two
-	  elements. 
 	</para>
       </description>
     </function>
@@ -800,75 +578,6 @@
       </description>
     </function>
 
-    <function name="acos" section="math" output="asinput">
-      <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the arc cosine of <argname>x</argname>, that is, the value
-	  whose cosine is <argname>x</argname>.  The result is in radians; the
-	  input should be in the range &minus;1 to 1.
-	</para>
-      </description>
-    </function>
-
-    <function name="acosh" section="math" output="asinput">
-      <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the inverse hyperbolic cosine of <argname>x</argname>
-	  (positive solution). <argname>x</argname> should be greater than 1;
-	  otherwise, NA is returned.
-	  <seelist>
-	    <fncref targ="cosh"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="argname" section="strings" output="string">
-      <fnargs>
-	<fnarg type="string">s</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  For <argname>s</argname> the name of a parameter to a 
-	  user-defined function, returns the name of the corresponding
-	  argument, or an empty string if the argument was anonymous.
-	</para>
-      </description>
-    </function>
-
-    <function name="asin" section="math" output="asinput">
-      <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the arc sine of <argname>x</argname>, that is, the value
-	  whose sine is <argname>x</argname>.  The result is in radians; the
-	  input should be in the range &minus;1 to 1.
-	</para>
-      </description>
-    </function>
-
-    <function name="asinh" section="math" output="asinput">
-      <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the inverse hyperbolic sine of <argname>x</argname>.
-	  <seelist>
-	    <fncref targ="sinh"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="atan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -876,61 +585,6 @@
       <description>
 	<para>
 	  Arctangent.
-	</para>
-      </description>
-    </function>
-
-    <function name="atanh" section="math" output="asinput">
-      <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the inverse hyperbolic tangent of <argname>x</argname>.
-	  <seelist>
-	    <fncref targ="tanh"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="bessel" section="math" output="asinput">
-      <fnargs>
-	<fnarg type="char">type</fnarg>
-	<fnarg type="scalar">v</fnarg>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Computes one of the Bessel function variants for order
-	  <argname>v</argname> and argument <argname>x</argname>.  The return
-	  value is of the same type as <argname>x</argname>. The specific
-	  function is selected by the first argument, which must be
-	  <lit>J</lit>, <lit>Y</lit>, <lit>I</lit>, or <lit>K</lit>.  A good
-	  discussion of the Bessel functions can be found on Wikipedia; here
-	  we give a brief account.
-	</para>
-	<para>
-	  case <lit>J</lit>: Bessel function of the first kind.  Resembles a
-	  damped sine wave.  Defined for real <argname>v</argname> and
-	  <argname>x</argname>, but if <argname>x</argname> is negative
-	  then <argname>v</argname> must be an integer.
-	</para>
-	<para>
-	  case <lit>Y</lit>: Bessel function of the second kind.  Defined
-	  for real <argname>v</argname> and <argname>x</argname> but has
-	  a singularity at <argname>x</argname> = 0.
-	</para>
-	<para>
-	  case <lit>I</lit>: Modified Bessel function of the first kind.
-	  An exponentially growing function.  Acceptable arguments are
-	  as for case <lit>J</lit>.
-	</para>
-	<para>
-	  case <lit>K</lit>: Modified Bessel function of the second kind.  An
-	  exponentially decaying function.  Diverges at <argname>x</argname> =
-	  0 and is not defined for negative <argname>x</argname>.  Symmetric
-	  around <argname>v</argname> = 0.
 	</para>
       </description>
     </function>
@@ -944,7 +598,7 @@
 	<para>
 	  Numerical maximization via the method of Broyden, Fletcher, Goldfarb
 	  and Shanno.  The vector <argname>b</argname> should hold the initial
-	  values of a set of parameters, and the argument <argname>f</argname>
+	  values of a set of parameters, and the string <argname>s</argname>
 	  should specify a call to a function that calculates the (scalar)
 	  criterion to be maximized, given the current parameter values and
 	  any other relevant data. If the object is in fact minimization, this
@@ -954,21 +608,11 @@
 	  produce the maximum.  
 	</para>
 	<para>
-	  The optional third argument provides a means of supplying analytical
-	  derivatives (otherwise the gradient is computed numerically).  The
-	  gradient function call <argname>g</argname> must have as its first
-	  argument a pre-defined matrix that is of the correct size to contain
-	  the gradient, given in pointer form. It also must take the parameter
-	  vector as an argument (in pointer form or otherwise).  Other
-	  arguments are optional.
-	</para>
-	<para>
-	  For more details and examples see the chapter on numerical
-	  methods in <guideref targ="chap-numerical"/>.
+	  For more details and examples see the chapter
+	  on special functions in <lit>genr</lit> in 
+	  <guideref targ="sec:genr-numerical"/>.
 	  <seelist>
-	    <fncref targ="NRmax"/>
 	    <fncref targ="fdjac"/>
-	    <fncref targ="simann"/>
 	  </seelist>
 	</para>
       </description>
@@ -984,60 +628,6 @@
 	  via the Baxter&ndash;King bandpass filter, a two-sided symmetric
 	  filter. See <guideref targ="chap-genr"/> for details.
 	  <seelist>
-	    <fncref targ="hpfilt"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="boxcox" section="filters" output="series">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-	<fnarg type="scalar">d</fnarg>
-      </fnargs>    
-      <description>
-	<para>
-	  Returns the Box&ndash;Cox transformation with parameter
-	  <argname>d</argname> for the positive series <argname>y</argname>.
-	</para>	  
-	<para context="tex">
-	  \[ y_t^{(d)} = \left\{ \begin{array}{ll} \frac{y_t^d - 1}{d} &amp;
-	  {\rm if}\quad d\neq 0 \\ \log (y_t) &amp; {\rm if}\quad d=0
-	  \end{array} \right. \]
-	</para>
-	<para context="notex">
-	  The transformed series is 
-	  (<math>y</math><sup>d</sup> - 1)/<math>d</math> for
-	  <math>d</math> not equal to zero, or log(<math>y</math>) for
-	  <math>d</math> = 0.
-	</para>
-      </description>
-    </function>
-
-    <function name="bwfilt" section="filters" output="series">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-	<fnarg type="scalar">n</fnarg>
-	<fnarg type="scalar">omega</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the result from application of a low-pass
-	  Butterworth filter with order <argname>n</argname> and
-	  frequency cutoff <argname>omega</argname> to the series
-	  <argname>y</argname>. The cutoff is expressed in degrees and
-	  must be greater than 0 and less than 180. Smaller cutoff
-	  values restrict the pass-band to lower frequencies and hence
-	  produce a smoother trend. Higher values of
-	  <argname>n</argname> produce a sharper cutoff, at the cost
-	  of possible numerical instability. 
-	</para>
-	<para>
-	  Inspecting the periodogram of the target series is a
-	  useful preliminary when you wish to apply this function.
-	  See <guideref targ="chap-filters"/> for details.
-	  <seelist>
-	    <fncref targ="bkfilt"/>
 	    <fncref targ="hpfilt"/>
 	  </seelist>
 	</para>
@@ -1117,17 +707,7 @@
 	    <para>
 	      Poisson (p or P): Mean
 	    </para>
-	  </li>	
-  	  <li>
-	    <para>
-	      Weibull (w or W): shape; scale
-	    </para>
-	  </li>	
-	  <li>
-	    <para>
-	      Generalized Error (E): shape
-	    </para>
-	  </li>	
+	  </li>	  
 	</ilist>
 	<para context="tex">
 	  \begin{center} 
@@ -1231,40 +811,6 @@
       </description>
     </function>
 
-    <function name="chowlin" section="transforms" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">Y</fnarg>
-	<fnarg type="scalar">xfac</fnarg>
-	<fnarg type="matrix" optional="true">X</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Expands the input data, <argname>Y</argname>, to a higher
-	  frequency, using the interpolation method of <cite
-	  key="chowlin71">Chow and Lin (1971)</cite>. It is
-	  assumed that the columns of <argname>Y</argname>
-	  represent data series; the returned matrix has as many columns
-	  as <argname>Y</argname> and <argname>xfac</argname> times
-	  as many rows.
-	</para>
-	<para>
-	  The second argument represents the expansion factor: it should
-	  be 3 for expansion from quarterly to monthly or 4 for expansion
-	  from annual to quarterly, these being the only supported
-	  factors. The optional third argument may be used to provide a
-	  matrix of covariates at the higher (target) frequency.
-	</para>
-	<para>
-	  The regressors used by default are a constant and quadratic
-	  trend. If <argname>X</argname> is provided, its columns are
-	  used as additional regressors; it is an error if the number of
-	  rows in <argname>X</argname> does not equal
-	  <argname>xfac</argname> times the number of rows in
-	  <argname>Y</argname>.
-	</para>
-      </description>
-    </function>
-
     <function name="cmult" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -1297,41 +843,6 @@
 	    <fncref targ="dnorm"/>
 	    <fncref targ="qnorm"/>
 	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="colname" section="strings" output="string">
-      <fnargs>
-	<fnarg type="matrix">M</fnarg>
-	<fnarg type="scalar">col</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Retrieves the name for column <argname>col</argname> of
-	  matrix <argname>M</argname>. If <argname>M</argname> has
-	  no column names attached the value returned is an empty
-	  string; if <argname>col</argname> is out of bounds for
-	  the given matrix an error is flagged. See also
-	  <fncref targ="colnames"/>.
-	</para>
-      </description>
-    </function>
-
-    <function name="colnames" section="matbuild" output="scalar">
-      <fnargs>
-	<fnarg type="matrix">M</fnarg>
-	<fnarg type="list-or-string">s</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Attaches names to the columns of the <by r="T" c="k"/> matrix
-	  <argname>M</argname>. If <argname>s</argname> is a named list, the
-	  column names are copied from the names of the variables; the list
-	  must have <math>k</math> members. If <argname>s</argname> is a
-	  string, it should contain <math>k</math> space-separated
-	  sub-strings.  The return value is 0 on successful completion,
-	  non-zero on error. See also <fncref targ="rownames"/>.
 	</para>
       </description>
     </function>
@@ -1372,38 +883,6 @@
       </description>
     </function>
 
-    <function name="corrgm" section="stats" output="matrix">
-      <fnargs>
-	<fnarg type="smlist">x</fnarg>
-	<fnarg type="scalar">p</fnarg>
-	<fnarg optional="true" type="series-or-vec">y</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  If only the first two arguments are given, computes the correlogram
-	  for <argname>x</argname> for lags 1 to <argname>p</argname>.  Let
-	  <math>k</math> represent the number of elements in
-	  <argname>x</argname> (1 if <argname>x</argname> is a series, the
-	  number of columns if <argname>x</argname> is a matrix, or the number
-	  of list-members is <argname>x</argname> is a list).  The return
-	  value is a matrix with <argname>p</argname> rows and 2<math>k</math>
-	  columns, the first <math>k</math> columns holding the respective
-	  autocorrelations and the remainder the respective partial
-	  autocorrelations.
-	</para>
-	<para>
-	  If a third argument is given, this function computes the
-	  cross-correlogram for each of the <math>k</math> elements in
-	  <argname>x</argname> and <argname>y</argname>, from lead
-	  <argname>p</argname> to lag <argname>p</argname>. The returned
-	  matrix has 2<math>p</math> + 1 rows and <math>k</math> columns.
-          If <argname>x</argname> is series or list and <argname>y</argname>
-          is a vector, the vector must have just as many rows as there
-          are observations in the current sample range.
-	</para>
-      </description>
-    </function>
-
     <function name="cos" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -1411,27 +890,6 @@
       <description>
 	<para>
 	  Cosine.
-	</para>
-      </description>
-    </function>
-
-    <function name="cosh" section="math" output="asinput">
-      <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the hyperbolic cosine of <argname>x</argname>.
-	</para>
-	<para context="tex">
-	  \[ \cosh x = \frac{e^x + e^{-x}}{2}  \]
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="acosh"/>
-	    <fncref targ="sinh"/>
-	    <fncref targ="tanh"/>
-	  </seelist>
 	</para>
       </description>
     </function>
@@ -1559,35 +1017,6 @@
       </description>
     </function>
 
-    <function name="deseas" section="filters" output="series">
-      <fnargs>
-	<fnarg type="series">x</fnarg>
-	<fnarg optional="true" type="char">c</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Depends on having TRAMO/SEATS or X-12-ARIMA installed. Returns a
-	  deseasonalized (seasonally adjusted) version of the input series
-	  <argname>x</argname>, which must be a quarterly or monthly time
-	  series.  To use X-12-ARIMA give <lit>X</lit> as the second argument;
-	  to use TRAMO give <lit>T</lit>.  If the second argument is omitted
-	  then X-12-ARIMA is used.
-	</para>
-	<para>
-	  Note that if the input series has no detectable seasonal
-	  component this function will fail.  Also note that both
-	  TRAMO/SEATS and X-12-ARIMA offer numerous options;
-	  <lit>deseas</lit> calls them with all options at their default
-	  settings. For both programs, the seasonal factors are calculated
-	  on the basis of an automatically selected ARIMA model. One
-	  difference between the programs which can sometimes make a
-	  substantial difference to the results is that by default TRAMO
-	  performs a prior adjustment for outliers while X-12-ARIMA does
-	  not.
-	</para>
-      </description>
-    </function>
-
     <function name="det" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
@@ -1660,23 +1089,6 @@
       </description>
     </function>
 
-    <function name="digamma" section="math" output="asinput">
-      <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>    
-      <description>
-	<para context="notex">
-	  Returns the digamma (or Psi) function
-	  of <argname>x</argname>, that is the derivative of the log
-	  of the Gamma function.
-	</para>
-	<para context="tex">
-	  Returns the digamma (or Psi) function of $x$, that is 
-	  $\frac{\mathrm{d} \Gamma(x)}{\mathrm{d} x}$.
-	</para>
-      </description>
-    </function>
-
     <function name="dnorm" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -1692,7 +1104,7 @@
       </description>
     </function>
 
-    <function name="dsort" section="matshape" output="asinput">
+    <function name="dsort" section="transforms" output="asinput">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
       </fnargs>
@@ -1705,37 +1117,6 @@
 	    <fncref targ="sort"/>
 	    <fncref targ="values"/>
 	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="dummify" section="transforms" output="list">
-      <fnargs>
-	<fnarg type="series">x</fnarg>
-	<fnarg optional="true" type="scalar">omitval</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  The argument <argname>x</argname> should be a discrete series. This
-	  function creates a set of dummy variables coding for the distinct
-	  values in the series.  By default the smallest value is taken as the
-	  omitted category and is not explicitly represented.
-	</para>
-	<para>
-	  The optional second argument represents the value of
-	  <argname>x</argname> which should be treated as the omitted
-	  category. The effect when a single argument is given is equivalent
-	  to <lit>dummify(x, min(x))</lit>.  To produce a full set of dummies,
-	  with no omitted category, use <lit>dummify(x, NA)</lit>.
-	</para>
-	<para> 
-	  The generated variables are automatically named according to
-	  the template
-	  <lit>D</lit><repl>varname</repl><lit>_</lit><repl>i</repl> where
-	  <repl>varname</repl> is the name of the original series and
-	  <repl>i</repl> is a 1-based index.  The original portion of the name
-	  is truncated if necessary, and may be adjusted in case of
-	  non-uniqueness in the set of names thus constructed. 
 	</para>
       </description>
     </function>
@@ -1803,17 +1184,26 @@
       </description>
     </function>
 
-    <function name="eigensym" section="linalg" output="matrix">
+    <function name="eigensym" section="linalg" output="cvec">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Works just as <fncref targ="eigengen"/>, but the argument
-	  <argname>A</argname> must be symmetric (in which case the
-	  calculations can be reduced). The eigenvalues are returned
-	  in ascending order.
+	  Computes the eigenvalues, and optionally the right eigenvectors, of
+	  the <by r="n" c="n"/> symmetrix matrix <argname>A</argname>; the
+	  second argument must be either the name of an existing matrix
+	  preceded by <lit>&amp;</lit> (to indicate the <quote>address</quote>
+	  of the matrix in question), in which case an auxiliary result is
+	  written to that matrix, or the keyword <lit>null</lit>, in which
+	  case the auxiliary result is not produced.
+	</para>
+	<para>
+	  If the second argument is not <lit>null</lit>, the specified
+	  matrix will be over-written with the auxiliary result.  (It is
+	  not required that the existing matrix be of the right dimensions
+	  to receive the result.)
 	</para>
 	<para>
 	  <seelist>
@@ -1821,54 +1211,6 @@
 	    <fncref targ="qrdecomp"/>
 	    <fncref targ="svd"/>
 	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="eigsolve" section="linalg" output="matrix">
-      <fnargs>
-	<fnarg type="symmat">A</fnarg>
-	<fnarg type="symmat">B</fnarg>
-	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Solves the generalized eigenvalue problem |<math>A</math>
-	  &minus; &lgr;<math>B</math>| = 0, where both <math>A</math>
-	  and <math>B</math> are symmetric and <math>B</math> is
-	  positive definite. The eigenvalues are returned directly,
-	  arranged in ascending order. If the optional third argument
-	  is given it should be the name of an existing matrix
-	  preceded by <lit>&amp;</lit>; in that case the generalized
-	  eigenvectors are written to the named matrix.
-	</para>
-      </description>
-    </function>
-
-    <function name="epochday" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="scalar">year</fnarg>
-	<fnarg type="scalar">month</fnarg>
-	<fnarg type="scalar">day</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the number of the day in the current epoch specified by
-	  year, month and day (which equals 1 for the first of January in
-	  the year 1 AD).
-	</para>
-      </description>
-    </function>
-
-    <function name="errmsg" section="strings" output="string">
-      <fnargs>
-	<fnarg type="scalar">errno</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Retrieves the gretl error message associated with
-	  <argname>errno</argname>. See also <fncref
-	  targ="$error"/>.
 	</para>
       </description>
     </function>
@@ -1882,41 +1224,6 @@
 	  Exponential. Note: in case of matrices, the function acts element
 	  by element. For the matrix exponential function, see <fncref
 	  targ="mexp"/>.
-	</para>
-      </description>
-    </function>
-
-    <function name="fcstats" section="stats" output="matrix">
-      <fnargs>
-	<fnarg type="series-or-vec">y</fnarg>
-	<fnarg type="series-or-vec">f</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Produces a column vector holding several statistics which may be
-	  used for evaluating the series <argname>f</argname> as a
-	  forecast of the series <argname>y</argname> over the current
-	  sample range. Two vectors of the same length may be given in
-	  place of two series arguments.
-	</para>
-	<para>
-	  The layout of the returned vector is as follows:
-	</para>
-	<code>
-	  1  Mean Error (ME)
-	  2  Mean Squared Error (MSE)
-	  3  Mean Absolute Error (MAE)
-	  4  Mean Percentage Error (MPE)
-	  5  Mean Absolute Percentage Error (MAPE)
-	  6  Theil's U 
-	  7  Bias proportion, UM
-	  8  Regression proportion, UR
-	  9  Disturbance proportion, UD
-	</code>
-	<para>
-	  For details on the calculation of these statistics, and the
-	  interpretation of the <math>U</math> values, please see 
-	  <guideref targ="chap-forecast"/>.
 	</para>
       </description>
     </function>
@@ -1988,95 +1295,6 @@
 	    <fncref targ="fft"/>
 	  </seelist>
 	</para>
-      </description>
-    </function>
-
-    <function name="filter" section="filters" output="series">
-      <fnargs>
-	<fnarg type="series">x</fnarg>
-	<fnarg optional="true" type="scalar-or-vec">a</fnarg>
-	<fnarg optional="true" type="scalar-or-vec">b</fnarg>
-	<fnarg optional="true" type="scalar">y0</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	Computes an ARMA-like filtering of the
-	series <argname>x</argname>. The transformation can be written
-	as
-	</para>
-	<para context="tex">
-	  \[ y_t = \sum_{i=0}^q a_i x_{t-i} + \sum_{i=i}^p b_i y_{t-i} \]
-	</para>
-	<para context="notex">
-	  <math>y</math><sub>t</sub> = 
-	  <math>a</math><sub>0</sub> <math>x</math><sub>t</sub> +
-	  <math>a</math><sub>1</sub> <math>x</math><sub>t-1</sub> +
-	  ...
-	  <math>a</math><sub>q</sub> <math>x</math><sub>t-q</sub> +
-	  <math>b</math><sub>1</sub> <math>y</math><sub>t-1</sub> +
-	  ...
-	  <math>b</math><sub>p</sub> <math>y</math><sub>t-p</sub>
-	</para>
-	<para>
-	  The two arguments <argname>a</argname>
-	  and <argname>b</argname> are optional. They may be scalars,
-	  vectors or the keyword <lit>null</lit>.
-	</para>
-	<para>
-	  If <argname>a</argname> is a scalar, this is used
-	  as <math>a</math><sub>0</sub> and implies <math>q=0</math>;
-	  if it is a vector of <math>q+1</math> elements, they contain
-	  the coefficients from <math>a</math><sub>0</sub>
-	  to <math>a</math><sub>q</sub>. If <argname>a</argname>
-	  is <lit>null</lit> or omitted, this is equivalent to
-	  setting <math>a</math><sub>0</sub><math>=1</math>
-	  and <math>q=0</math>.
-	</para>
-	<para>
-	  If <argname>b</argname> is a scalar, this is
-	  used as <math>b</math><sub>1</sub> and
-	  implies <math>p=1</math>; if it is a vector
-	  of <math>p</math> elements, they contain the coefficients
-	  from <math>b</math><sub>1</sub>
-	  to <math>b</math><sub>p</sub>. If <argname>b</argname>
-	  is <lit>null</lit> or omitted, this is equivalent to
-	  setting <math>B(L)=1</math>.
-	</para>
-	<para>
-	  The optional scalar argument <argname>y0</argname> is taken
-	  to represent all values of <math>y</math> prior to the
-	  beginning of sample (used only when <math>p>0</math>). If
-	  omitted, it is understood to be 0.  Pre-sample values
-	  of <argname>x</argname> are always assumed zero.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="bkfilt"/>
-	    <fncref targ="fracdiff"/>
-	    <fncref targ="hpfilt"/>
-	    <fncref targ="movavg"/>
-	  </seelist>
-	</para>
-	<para>
-	  Example:
-	</para>
-	<code>
-	  nulldata 5
-	  y = filter(index, 0.5, -0.9, 1)
-	  print index y --byobs
-	</code>
-	<para>
-	  produces
-	</para>
-	<code>
-                   index            y   
-           			      
-          1            1     -0.40000   
-          2            2      1.36000   
-          3            3      0.27600   
-          4            4      1.75160   
-          5            5      0.92356   
-	</code>
       </description>
     </function>
 
@@ -2256,75 +1474,6 @@
       </description>
     </function>
 
-    <function name="halton" section="stats" output="matrix">
-      <fnargs>
-	<fnarg type="scalar">m</fnarg>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg optional="true" type="scalar">offset</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns an <by r="m" c="r"/> matrix containing
-	  <math>m</math> Halton sequences of length <math>r</math>;
-	  <math>m</math> is limited to a maximum of 40. The sequences
-	  are contructed using the first <math>m</math> primes. By
-	  default the first 10 elements of each sequence are
-	  discarded, but this figure can be adjusted via the optional
-	  <argname>offset</argname> argument, which should be a
-	  non-negative integer. See <cite key="halton64">Halton and
-	  Smith (1964)</cite>.
-	</para>
-      </description>
-    </function>
-
-    <function name="hdprod" section="linalg" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">X</fnarg>
-	<fnarg type="matrix">Y</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Horizontal direct product. The two arguments must have the
-	  same number of rows, <math>r</math>. The return value is a
-	  matrix with <math>r</math> rows, in which the
-	  <math>i</math>-th row is the Kronecker product of the
-	  corresponding rows of <argname>X</argname> and
-	  <argname>Y</argname>.
-	</para>
-	<para context="tex">
-	  In other words, if $X$ is an $r \times k$ matrix, $Y$ is an
-	  $r \times m$ matrix and $Z$ is the result matrix of the
-	  horizontal direct product of $X$ times $Y$, then $Z$ will
-	  have $r$ rows and $k\cdot m$ columns; moreover, 
-	  \[ 
-	  Z_{in} = X_{ij} Y_{il} 
-	  \]
-	  where $n = (j-1) m + l$.
-	</para>
-	<para>
-	  As far as we know, there isn't an established name for this
-	  operation in matrix algebra. "Horizontal direct product" is
-	  the way this operation is called in the GAUSS programming
-	  language.
-	</para>
-	<para>
-	  Example: the code
-	</para>
-	<code>
-	  A = {1,2,3; 4,5,6}
-	  B = {0,1; -1,1}
-	  C = hdprod(A, B)
-	</code>
-	<para>
-	  produces the following matrix:
-	</para>
-	<code>
-         0    1    0    2    0    3 
-        -4    4   -5    5   -6    6 
-	</code>
-      </description>
-    </function>
-
     <function name="hpfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -2382,36 +1531,6 @@
 	    <fncref targ="imaxc"/>
 	    <fncref targ="iminr"/>
 	    <fncref targ="maxr"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="imhof" section="probdist" output="scalar">
-      <fnargs>
-	<fnarg type="matrix">M</fnarg>
-	<fnarg type="scalar">x</fnarg>
-      </fnargs>    
-      <description>
-	<para context="notex">
-	  Computes Prob(<math>u'Au</math> &lt; <math>x</math>) for a quadratic
-	  form in standard normal variates, <math>u</math>, using the procedure
-	  developed by <cite key="imhof61">Imhof (1961)</cite>.
-	</para>
-	<para context="tex">
-	  Computes ${\rm Prob}(u'Au &lt; x)$ for a quadratic form in standard
-	  normal variates, $u$, using the procedure developed by
-	  <cite key="imhof61">Imhof (1961)</cite>.
-	</para>
-	<para>
-	  If the first argument, <argname>M</argname>, is a square matrix it
-	  is taken to specify <math>A</math>, otherwise if it's a column
-	  vector it is taken to be the precomputed eigenvalues of
-	  <math>A</math>, otherwise an error is flagged.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="pvalue"/>
 	  </seelist>
 	</para>
       </description>
@@ -2483,22 +1602,6 @@
 	  <seelist>
 	    <fncref targ="onenorm"/>
 	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="inlist" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="list">L</fnarg>
-	<fnarg type="series">y</fnarg>
-      </fnargs>    
-      <description>
-	<para>
-	  Returns the (1-based) position of <argname>y</argname> in
-	  list <argname>L</argname>, or 0 if <argname>y</argname>
-	  is not present in <argname>L</argname>. The second
-	  argument may be given as the name of a series or
-	  alternatively as an integer ID number.
 	</para>
       </description>
     </function>
@@ -2618,34 +1721,6 @@
       </description>
     </function>
 
-    <function name="invmills" section="probdist" output="asinput">
-      <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>  
-      <description>
-	<para>
-	  Returns the inverse Mills ratio at <argname>x</argname>, that is
-	  the ratio between the standard normal density and the complement
-	  to the standard normal distribution function, both evaluated at
-	  <argname>x</argname>. 
-	</para>
-	<para>
-	  This function uses a dedicated algorithm which yields greater
-	  accuracy compared to calculation using <fncref targ="dnorm"/>
-	  and <fncref targ="cnorm"/>, but the difference between the two
-	  methods is appreciable only for very large negative values of
-	  <argname>x</argname>.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="cdf"/>
-	    <fncref targ="cnorm"/>
-	    <fncref targ="dnorm"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="invpd" section="linalg" output="smatrix">
       <fnargs>
 	<fnarg type="symmat">A</fnarg>
@@ -2657,88 +1732,6 @@
 	  <fncref targ="inv"/> for large matrices, since no check for
 	  symmetry is performed; for that reason it should be used with
 	  care.
-	</para>
-      </description>
-    </function>
-
-    <function name="irf" section="stats" output="matrix">
-      <fnargs>
-	<fnarg type="scalar">target</fnarg>
-	<fnarg type="scalar">shock</fnarg>
-	<fnarg type="pscalar" optional="true">alpha</fnarg>
-      </fnargs>  
-      <description>
-	<para>
-	  This function is available only when the last model
-	  estimated was a VAR or VECM. It returns a matrix containing
-	  the estimated response of the <argname>target</argname>
-	  variable to an impulse of one standard deviation in the
-	  <argname>shock</argname> variable. These variables are
-	  identified by their position in the VAR specification: for
-	  example, if <argname>target</argname> and
-	  <argname>shock</argname> are given as 1 and 3 respectively,
-	  the returned matrix gives the response of the first variable
-	  in the VAR for a shock to the third variable.
-	</para>
-	<para>
-	  If the optional <argname>alpha</argname> argument is given,
-	  the returned matrix has three columns: the point estimate of
-	  the responses, followed by the lower and upper limits of a 1
-	  &minus; &agr; confidence interval obtained via
-	  bootstrapping.  (So <argname>alpha</argname> = 0.1
-	  corresponds to 90 percent confidence.) If
-	  <argname>alpha</argname> is omitted or set to zero, only the
-	  point estimate is provided.
-	</para>
-	<para>
-	  The number of periods (rows) over which the response is
-	  traced is determined automatically based on the frequency
-	  of the data, but this can be overridden via the <cmdref
-	  targ="set"/> command, as in <lit>set horizon 10</lit>.
-	</para>
-      </description>
-    </function>
-
-    <function name="irr" section="math" output="scalar">
-      <fnargs>
-	<fnarg type="series-or-vec">x</fnarg>
-      </fnargs>  
-      <description>
-	<para>
-	  Returns the Internal Rate of Return for <argname>x</argname>,
-	  considered as a sequence of payments (negative) and receipts
-	  (positive).
-	  <seelist>
-	    <fncref targ="npv"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="isconst" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="series-or-vec">y</fnarg>
-	<fnarg type="scalar" optional="true">panel-code</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Without the optional second argument, returns 1 if
-	  <argname>y</argname> has a constant value over the current
-	  sample range (or over its entire length if
-	  <argname>y</argname> is a vector), otherwise 0.
-	</para>
-	<para>
-	  The second argument is accepted only if the current dataset
-	  is a panel and <argname>y</argname> is a series.  In that
-	  case a <argname>panel-code</argname> value of 0 calls for a
-	  check for time-invariance, while a value of 1 means check
-	  for cross-sectional invariance (that is, in each time period
-	  the value of <argname>y</argname> is the same for all
-	  groups).
-	</para>
-	<para>
-	  If <argname>y</argname> is a series, missing values are
-	  ignored in checking for constancy.
 	</para>
       </description>
     </function>
@@ -2757,21 +1750,6 @@
 	    <fncref targ="isseries"/>
 	    <fncref targ="isstring"/>
 	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="isnan" section="data-utils" output="asinput">
-      <fnargs>
-	<fnarg type="scalar-or-matrix">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Given a scalar argument, returns 1 if <argname>x</argname>
-	  is <quote>Not a Number</quote> (NaN), otherwise 0. Given a
-	  matrix argument, returns a matrix of the same dimensions
-	  with 1s in positions where the corresponding element of the
-	  input is NaN and 0s elsewhere.
 	</para>
       </description>
     </function>
@@ -2826,137 +1804,6 @@
 	    <fncref targ="isnull"/>
 	    <fncref targ="isseries"/>
 	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="kdensity" section="stats" output="matrix">
-      <fnargs>
-	<fnarg type="series">x</fnarg>
-	<fnarg type="scalar" optional="true">scale</fnarg>
-	<fnarg type="scalar" optional="true">control</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Computes a kernel density estimate for the series
-	  <argname>x</argname>. The returned matrix has two columns, the
-	  first holding a set of evenly spaced abscissae and the second
-	  the estimated density at each of these points.
-	</para>
-	<para>
-	  The optional <argname>scale</argname> parameter can be used to
-	  adjust the degree of smoothing relative to the default of 1.0
-	  (higher values produce a smoother result). The
-	  <argname>control</argname> parameter acts as a boolean: 0 (the
-	  default) means that the Gaussian kernel is used; a non-zero
-	  value switches to the Epanechnikov kernel.
-	</para>
-	<para>
-	  A plot of the results may be obtained using the <cmdref
-	  targ="gnuplot"/> command, as in
-	</para>
-	<code>
-	  matrix d = kdensity(x)
-	  gnuplot 2 1 --matrix=d --with-lines
-	</code>
-      </description>
-    </function>
-
-    <function name="kfilter" section="filters" output="scalar">
-      <fnargs>
-	<fnarg optional="true" type="matrixref">&amp;E</fnarg>
-	<fnarg optional="true" type="matrixref">&amp;V</fnarg>
-	<fnarg optional="true" type="matrixref">&amp;S</fnarg>
-	<fnarg optional="true" type="matrixref">&amp;P</fnarg>
-	<fnarg optional="true" type="matrixref">&amp;G</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Requires that a Kalman filter be set up.  Performs a forward,
-	  filtering pass and returns 0 on successful completion or 1 
-	  if numerical problems are encountered.
-	</para>
-	<para>
-	  The optional matrix arguments can be used to retrieve the following
-	  information: <argname>E</argname> gets the matrix of one-step ahead
-	  prediction errors and <argname>V</argname> gets the variance matrix
-	  for these errors; <argname>S</argname> gets the matrix of estimated
-	  values of the state vector and <argname>P</argname> the variance
-	  matrix of these estimates; <argname>G</argname> gets the Kalman
-	  gain.  All of these matrices have <math>T</math> rows, corresponding
-	  to <math>T</math> observations.  For the column dimensions and
-	  further details see <guideref targ="chap:kalman"/>.
-	</para>
-	<para>
-	  <seelist>
-	    <cmdref targ="kalman"/>
-	    <fncref targ="ksmooth"/>
-	    <fncref targ="ksimul"/>
-	  </seelist>
-	</para>
-      </description>
-    </function> 
-
-    <function name="ksimul" section="filters" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">v</fnarg>
-	<fnarg type="matrix">w</fnarg>
-	<fnarg optional="true" type="matrixref">&amp;S</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Requires that a Kalman filter be set up.  Performs a simulation
-	  and returns a matrix holding simulated values of the
-	  observable variables.
-	</para>
-	<para>
-	  The argument <argname>v</argname> supplies artificial disturbances
-	  for the state transition equation and <argname>w</argname> supplies
-	  disturbances for the observation equation, if applicable.  The
-	  optional argument <argname>S</argname> may be used to retrieve the
-	  simulated state vector.  For details see <guideref
-	    targ="chap:kalman"/>.
-	</para>
-	<para>
-	  <seelist>
-	    <cmdref targ="kalman"/>
-	    <fncref targ="kfilter"/>
-	    <fncref targ="ksmooth"/>
-	  </seelist>
-	</para>
-      </description>
-    </function> 
-
-    <function name="ksmooth" section="filters" output="matrix">
-      <fnargs>
-	<fnarg optional="true" type="matrixref">&amp;P</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Requires that a Kalman filter be set up.  Performs a backward,
-	  smoothing pass and returns a matrix holding smoothed estimates of
-	  the state vector.  The optional argument <argname>P</argname> may be
-	  used to retrieve the MSE of the smoothed state.  For details see
-	  <guideref targ="chap:kalman"/>.
-	</para>
-	<para>
-	  <seelist>
-	    <cmdref targ="kalman"/>
-	    <fncref targ="kfilter"/>
-	    <fncref targ="ksimul"/>
-	  </seelist>
-	</para>
-      </description>
-    </function> 
-
-    <function name="kurtosis" section="stats" output="scalar">
-      <fnargs>
-	<fnarg type="series">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the excess kurtosis of the series <argname>x</argname>,
-	  skipping any missing observations.
 	</para>
       </description>
     </function>
@@ -3022,22 +1869,15 @@
       </description>
     </function>
 
-    <function name="lincomb" section="transforms" output="series">
+    <function name="log" section="math" output="asinput">
       <fnargs>
-	<fnarg type="list">L</fnarg>
-	<fnarg type="vector">b</fnarg>
+	<fnarg type="anyfloat-or-list">x</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Computes a new series as a linear combination of the series in the
-	  list <argname>L</argname>.  The coefficients are given by the vector
-	  <argname>b</argname>, which must have length equal to the number of
-	  series in <argname>L</argname>.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="wmean"/>
-	  </seelist>
+	  Natural logarithm; produces <lit>NA</lit> for non-positive
+	  values. Note: <lit>ln</lit> is an acceptable alias for
+	  <lit>log</lit>.
 	</para>
       </description>
     </function>
@@ -3078,62 +1918,6 @@
       </description>
     </function>
 
-
-    <function name="loess" section="stats" output="series">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-	<fnarg type="series">x</fnarg>
-	<fnarg optional="true" type="scalar">d</fnarg>
-	<fnarg optional="true" type="scalar">q</fnarg>
-	<fnarg optional="true" type="scalar">robust</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Performs locally-weighted polynomial regression and returns
-	  a series holding predicted values of <argname>y</argname>
-	  for each non-missing value of <argname>x</argname>.  The
-	  method is as described by <cite key="cleveland79">William
-	  Cleveland (1979)</cite>.
-	</para>
-	<para>
-	  The optional arguments <argname>d</argname> and
-	  <argname>q</argname> specify the order of the polynomial in
-	  <argname>x</argname> and the proportion of the data points
-	  to be used in local estimation, respectively.  The default
-	  values are <argname>d</argname> = 1 and <argname>q</argname>
-	  = 0.5. The other acceptable values for <argname>d</argname>
-	  are 0 and 2. Setting <argname>d</argname> = 0 reduces the
-	  local regression to a form of moving average. The value
-	  of <argname>q</argname> must be greater than 0 and cannot
-	  exceed 1; larger values produce a smoother outcome.
-	</para>
-	<para>
-	  If a non-zero value is given for the <argname>robust</argname>
-	  argument the local regressions are iterated twice, with the
-	  weights being modified based on the residuals from the previous
-	  iteration so as to give less influence to outliers.
-	</para>
-	<para>
-	  See also <fncref targ="nadarwat"/>, and in addition see
-	  <guideref targ="chap-nonparam"/> for details on
-	  nonparametric methods.
-	</para>
-      </description>
-    </function>
-
-    <function name="log" section="math" output="asinput">
-      <fnargs>
-	<fnarg type="anyfloat-or-list">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Natural logarithm; produces <lit>NA</lit> for non-positive
-	  values. Note: <lit>ln</lit> is an acceptable alias for
-	  <lit>log</lit>.
-	</para>
-      </description>
-    </function>
-
     <function name="log10" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -3158,26 +1942,7 @@
       </description>
     </function>
 
-    <function name="logistic" section="math" output="asinput">
-      <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>
-      <description>
-	<para context="tex">
-	  Returns the logistic function of the argument <argname>x</argname>,
-	  that is, $\Lambda(x) = e^x/(1+e^x)$. If <argname>x</argname> is a
-	  matrix, the function is applied element by element.
-	</para>
-	<para context="notex">
-	  Returns the logistic function of the argument <argname>x</argname>,
-	  that is, <math>e</math><sup>x</sup>/(1 +
-	  <math>e</math><sup>x</sup>).  If <argname>x</argname> is a matrix,
-	  the function is applied element by element.
-	</para>
-      </description>
-    </function>
-
-    <function name="lower" section="matbuild" output="smatrix">
+    <function name="lower" section="matshape" output="smatrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
       </fnargs>
@@ -3217,6 +1982,20 @@
 	  \right] \] 
 	  with 
 	  \[ w_i = 1 - \frac{|i|}{k + 1} \]
+	</para>
+      </description>
+    </function>
+
+    <function name="makemask" section="data-utils" output="cvec">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Produces a column vector containing the observation numbers
+	  corresponding to the non-zero entries in the series
+	  <argname>y</argname>. This function is typically useful for
+	  filtering out rows of a matrix built from data series.
 	</para>
       </description>
     </function>
@@ -3295,40 +2074,6 @@
 	    <fncref targ="cov"/>
 	    <fncref targ="mcorr"/>
 	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="mcovg" section="stats" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">X</fnarg>
-	<fnarg optional="true" type="vector">u</fnarg>
-	<fnarg optional="true" type="vector">w</fnarg>
-	<fnarg type="scalar">p</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the matrix covariogram for a <by r="T" c="k"/> matrix
-	  <argname>X</argname> (typically containing regressors), an
-	  (optional) <math>T</math>-vector <argname>u</argname> (typically
-	  containing residuals), an (optional) (<math>p</math>+1)-vector
-	  of weights <argname>w</argname>, and a scalar lag order
-	  <argname>p</argname>, which must be greater than or equal to 0.
-	</para>
-	<para context="tex">
-	  The returned matrix is given by
-	  \[\sum_{j=-p}^{p} \sum_j w_{|j|} (X_t' u_t
-	  u_{t-j} X_{t-j})\]
-	</para>
-	<para context="notex">
-	  The returned matrix is given by
-	  sum_{j=-p}^{p} sum_j w_{|j|} (X_t' u_t u_{t-j} X_{t-j})
-	</para>
-	<para>
-	  If <argname>u</argname> is given as <lit>null</lit> the
-	  <math>u</math> terms are omitted, and if
-	  <argname>w</argname> is given as <lit>null</lit> all the weights
-	  are taken to be 1.0.
 	</para>
       </description>
     </function>
@@ -3489,7 +2234,7 @@
       </description>
     </function>
 
-    <function name="mlag" section="stats" output="matrix">
+    <function name="mlag" section="transforms" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar">p</fnarg>
@@ -3516,7 +2261,7 @@
       </description>
     </function>
 
-    <function name="mnormal" section="matbuild" output="matrix">
+    <function name="mnormal" section="probdist" output="matrix">
       <fnargs>
 	<fnarg type="scalar">r</fnarg>
 	<fnarg type="scalar">c</fnarg>
@@ -3551,23 +2296,6 @@
       </description>
     </function>
 
-    <function name="monthlen" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="scalar">month</fnarg>
-	<fnarg type="scalar">year</fnarg>
-	<fnarg type="scalar">weeklen</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the number of (relevant) days in the specified month in
-	  the specified year; <argname>weeklen</argname>, which must equal
-	  5, 6 or 7, gives the number of days in the week that should be
-	  counted (a value of 6 omits Sundays, and a value of 5 omits both
-	  Saturdays and Sundays).
-	</para>
-      </description>
-    </function>
-
     <function name="movavg" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
@@ -3594,63 +2322,6 @@
 	    y = tmp(+1)
 	</code>
     </description>
-    </function>
-
-    <function name="mpols" section="stats" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">Y</fnarg>
-	<fnarg type="matrix">X</fnarg>
-	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Works exactly as <fncref targ="mols"/>, except that the calculations
-	  are done in multiple precision using the GMP library (assuming this
-	  is available).
-	</para>
-	<para>
-	  By default GMP uses 256 bits for each floating point number, but
-	  you can adjust this using the environment variable
-	  <lit>GRETL_MP_BITS</lit>, &eg; <lit>GRETL_MP_BITS=1024</lit>.
-	</para>
-      </description>
-    </function>
-
-    <function name="mrandgen" section="probdist" output="matrix">
-      <fnargs>
-	<fnarg type="char">c</fnarg>
-	<fnarg type="scalar">a</fnarg>
-	<fnarg type="scalar">b</fnarg>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg type="scalar">c</fnarg>
-      </fnargs>
-      <examples>
-	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
-	<example>matrix mt14 = mrandgen(t, 14, 20, 20)</example>
-      </examples>
-      <description>
-	<para>
-	  Works like <fncref targ="randgen"/> except that the return
-	  value is a matrix rather than a series. The initial
-	  arguments to this function are as described for
-	  <lit>randgen</lit>, but they must be followed by two
-	  integers to specify the number of rows
-	  (<argname>r</argname>) and columns (<argname>c</argname>) of
-	  the desired random matrix.
-	</para>
-	<para>
-	  The first example above calls for a uniform random column vector
-	  of length 50, while the second example specifies a <by r="20"
-	  c="20"/> random matrix with drawings from the the <math>t</math>
-	  distribution with 14 degrees of freedom.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="mnormal"/>
-	    <fncref targ="muniform"/>
-	  </seelist>
-	</para>
-      </description>
     </function>
 
     <function name="mread" section="matbuild" output="matrix">
@@ -3696,59 +2367,6 @@
       </description>
     </function>
 
-    <function name="mreverse" section="matshape" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">X</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns a matrix containing the rows of <argname>X</argname> in
-	  reverse order.  If you wish to obtain a matrix in which the columns
-	  of <argname>X</argname> appear in reverse order you can do:
-	</para>
-	<code>
-	  matrix Y = mreverse(X')'
-	</code>
-      </description>
-    </function>  
-
-    <function name="mrls" section="stats" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">Y</fnarg>
-	<fnarg type="matrix">X</fnarg>
-	<fnarg type="matrix">R</fnarg>
-	<fnarg type="cvec">q</fnarg>
-	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
-	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Restricted least squares: returns a <by r="k" c="n"/> matrix
-	  of parameter estimates obtained by least-squares regression
-	  of the <by r="T" c="n"/> matrix <argname>Y</argname> on the
-	  <by r="T" c="k"/> matrix <argname>X</argname> subject to the
-	  linear restriction <math>RB</math> = <math>q</math>, where
-	  <math>B</math> denotes the stacked coefficient vector.
-	  <argname>R</argname> must have <math>k</math> *
-	  <math>n</math> columns; each row of this matrix represents a
-	  linear restriction. The number of rows in <argname>q</argname>
-	  must match the number of rows in <argname>R</argname>.
-	</para>
-	<para>
-	  If the fifth argument is not <lit>null</lit>, the <by r="T"
-	  c="n"/> matrix <argname>U</argname> will contain the
-	  residuals. If the final argument is given and is not
-	  <lit>null</lit> then the <by r="k" c="k"/> matrix
-	  <argname>V</argname> will hold the restricted counterpart to
-	  the matrix <math>X'X</math><sup>-1</sup>. The variance
-	  matrix of the estimates for equation <math>i</math> can be
-	  constructed by multiplying the appropriate sub-matrix of
-	  <argname>V</argname> by an estimate of the error variance
-	  for that equation.
-	</para>
-      </description>
-    </function>  
-
     <function name="mshape" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -3774,20 +2392,6 @@
 	    <fncref targ="vec"/> 
 	    <fncref targ="vech"/>
 	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="msortby" section="matshape" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">X</fnarg>
-	<fnarg type="scalar">j</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns a matrix in which the rows of <argname>X</argname>
-	  are reordered by increasing value of the elements in
-	  column <argname>j</argname>.
 	</para>
       </description>
     </function>
@@ -3871,94 +2475,6 @@
       </description>
     </function>
 
-
-    <function name="nadarwat" section="stats" output="series">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-	<fnarg type="series">x</fnarg>
-	<fnarg type="scalar">h</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the Nadaraya&ndash;Watson nonparametric estimator of the
-	  conditional mean of <argname>y</argname>
-	  given <argname>x</argname>. It returns a series holding the
-	  nonparametric estimate
-	  of <math>E(y</math><sub>i</sub><math>|x</math><sub>i</sub><math>)</math>
-	  for each nonmissing element of the
-	  series <argname>x</argname>.
-	</para>
-	<para context="tex">
-	  \[
-	  m(x_i) = \frac{ \sum_{j=1}^{n} y_j \cdot K_h(x_i -
-	  x_j)} {\sum_{j=1}^{n} K_h(x_i - x_j)}
-	  \]
-	  where the kernel function <math>K_h(\cdot)</math> is given
-	  by
-	  \[
-	  K_h(x) = \exp\left(-\frac{x^2}{2h}\right)
-	  \]
-	  for $|x| &lt; \tau$ and zero otherwise.
-	</para>
-	<para context="notex">
-	  The kernel function <math>K</math> is given
-	  by <math>K = exp(-x</math><sup>2</sup><math> / 2h)</math>
-	  for <math>|x| &lt; T</math> and zero otherwise.
-	</para>
-	<para context="tex">
-	  The argument <argname>h</argname>, known as the
-	  \emph{bandwidth}, is a parameter (a positive real number)
-	  given by the user. This is usually a small number: larger
-	  values of $h$ make $m(x)$ smoother; a popular choice is
-	  $n^{-0.2}$. More details are given in
-	  <guideref targ="sec:nadarwat"/>.
-	</para>
-	<para context="notex">
-	  The argument <argname>h</argname>, known as the bandwidth,
-	  is a parameter (a positive real number) given by the
-	  user. This is usually a small number: larger values
-	  of <argname>h</argname> make <math>m(x)</math> smoother; a
-	  popular choice is <math>n</math><sup>-0.2</sup>. More
-	  details are given in <guideref targ="sec:nadarwat"/>.
-	</para>
-	<para context="tex">
-	  The scalar $\tau$ is used to prevent numerical problems when
-	  the the kernel function is evaluated too far away from zero
-	  and is called the trim parameter.
-	</para>
-	<para context="notex">
-	  The scalar <math>T</math> is used to prevent numerical
-	  problems when the the kernel function is evaluated too far
-	  away from zero and is called the trim parameter.
-	</para>
-        <para>
-	  The trim parameter can be adjusted via
-	  the <lit>nadarwat_trim</lit> setting, as a multiple
-	  of <argname>h</argname>. The default value is 4.  
-        </para>
-	<para>
-	  The user may provide a negative value for the bandwidth:
-	  this is interpreted as conventional syntax to obtain the
-	  leave-one-out estimator, that is a variant of the estimator
-	  that does not use the <math>i</math>-th observation for
-	  evaluating <math>m(x</math><sub>i</sub><math>)</math>. This
-	  makes the Nadaraya&ndash;Watson estimator more robust
-	  numerically and its usage is normally advised when the
-	  estimator is computed for inference purposes. Of course, the
-	  bandwidth actually used is the absolute value of
-	  <argname>h</argname>.
-	</para>
-	  <para context="tex">
-	    In formulae, the leave-one-out estimator is
-	    \[
-	    m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i -
-	    x_j)} {\sum_{j \ne i} K_h(x_i - x_j)}
-	    \]
-	  </para>
-
-      </description>
-    </function>
-
     <function name="nelem" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="list">L</fnarg>
@@ -3966,20 +2482,6 @@
       <description>
 	<para>
 	  Returns the number of items in list <argname>L</argname>.
-	</para>
-      </description>
-    </function>
-
-    <function name="ngetenv" section="strings" output="scalar">
-      <fnargs>
-	<fnarg type="string">s</fnarg>
-      </fnargs>    
-      <description>
-	<para>
-	  If an environment variable by the name of
-	  <argname>s</argname> is defined and has a numerical value,
-	  returns that value; otherwise returns NA.  See also <fncref
-	  targ="getenv"/>.
 	</para>
       </description>
     </function>
@@ -4015,78 +2517,6 @@
 	    <fncref targ="genpois"/>
 	    <fncref targ="mnormal"/>
 	    <fncref targ="muniform"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="npv" section="math" output="scalar">
-      <fnargs>
-	<fnarg type="series-or-vec">x</fnarg>
-	<fnarg type="scalar">r</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the Net Present Value of <argname>x</argname>,
-	  considered as a sequence of payments (negative) and receipts
-	  (positive), evaluated at annual discount rate
-	  <argname>r</argname>.  The first value is taken as dated
-	  <quote>now</quote> and is not discounted.  To emulate an NPV
-	  function in which the first value is discounted, prepend zero to
-	  the input sequence.
-	</para>
-	<para>
-	  Supported data frequencies are annual, quarterly, monthly, and
-	  undated (undated data are treated as if annual).
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="irr"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="NRmax" section="numerical" output="scalar">
-      <fnargs>
-	<fnarg type="vector">b</fnarg>
-	<fnarg type="fncall">f</fnarg>
-	<fnarg type="fncall" optional="true">g</fnarg>
-	<fnarg type="fncall" optional="true">h</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Numerical maximization via the Newton&ndash;Raphson method.
-	  The vector <argname>b</argname> should hold the initial
-	  values of a set of parameters, and the argument
-	  <argname>f</argname> should specify a call to a function
-	  that calculates the (scalar) criterion to be maximized,
-	  given the current parameter values and any other relevant
-	  data. If the object is in fact minimization, this function
-	  should return the negative of the criterion.  On successful
-	  completion, <lit>NRmax</lit> returns the maximized value of
-	  the criterion, and <argname>b</argname> holds the parameter
-	  values which produce the maximum.
-	</para>
-	<para>
-	  The optional third and fourth arguments provide means of
-	  supplying analytical derivatives and an analytical
-	  (negative) Hessian, respectively. The functions referenced
-	  by <argname>g</argname> and <argname>h</argname> must take
-	  as their first argument a pre-defined matrix that is of the
-	  correct size to contain the gradient or Hessian,
-	  respectively, given in pointer form. They also must take the
-	  parameter vector as an argument (in pointer form or
-	  otherwise).  Other arguments are optional. If either or
-	  both of the optional arguments are omitted, a numerical
-	  approximation is used.
-	</para>
-	<para>
-	  For more details and examples see the chapter on numerical
-	  methods in <guideref targ="chap-numerical"/>.
-	  <seelist>
-	    <fncref targ="BFGSmax"/>
-	    <fncref targ="fdjac"/>
 	  </seelist>
 	</para>
       </description>
@@ -4142,19 +2572,6 @@
       </description>
     </function>
 
-    <function name="obslabel" section="data-utils" output="string">
-      <fnargs>
-	<fnarg type="scalar">t</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the observation label for observation <argname>t</argname>,
-	  where <argname>t</argname> is a 1-based index.  The inverse
-	  function is provided by <fncref targ="obsnum"/>.
-	</para>
-      </description>
-    </function>
-
     <function name="obsnum" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -4182,28 +2599,17 @@
       </description>
     </function>
 
-    <function name="ok" section="data-utils" output="seebelow">
+    <function name="ok" section="data-utils" output="asinput">
       <fnargs>
-	<fnarg type="anyfloat-or-list">x</fnarg>
+	<fnarg type="sslist">x</fnarg>
       </fnargs>
       <description>
 	<para>
-	  If <argname>x</argname> is a scalar, returns 1 if
-	  <argname>x</argname> is not <lit>NA</lit>, otherwise 0.  If
-	  <argname>x</argname> is a series, returns a series with
-	  value 1 at observations with non-missing values and zeros
-	  elsewhere. If <argname>x</argname> is a list, the output is
-	  a series with 0 at observations for which at least one
-	  series in the list has a missing value, and 1 otherwise.
-	</para>
-	<para>
-	  If <argname>x</argname> is a matrix the behavior is a little
-	  different, since matrices cannot contain <lit>NA</lit>s: the
-	  function returns a matrix of the same dimensions as
-	  <argname>x</argname>, with 1s in positions corresponding to
-	  finite elements of <argname>x</argname> and 0s in positions
-	  where the elements are non-finite (either infinities or
-	  not-a-number, as per the IEEE 754 standard).
+	  Returns a binary variable holding 1 if <math>x</math> is not
+	  <lit>NA</lit>. If <math>x</math> is a series, the comparison is
+	  done element by element. If <math>x</math> is a list of series,
+	  the output is a series with 0 at the observations for which at
+	  least one series in the list is missing, and 1 otherwise.
 	</para>
 	<para>
 	  <seelist>
@@ -4211,7 +2617,6 @@
 	    <fncref targ="misszero"/>
 	    <fncref targ="zeromiss"/>
 	  </seelist>
-	  But note that these functions are not applicable to matrices.
 	</para>
       </description>
     </function>
@@ -4287,85 +2692,6 @@
       </description>
     </function>
 
-
-    <function name="pdf" section="probdist" output="asinput">
-      <fnargs>
-	<fnarg type="char">c</fnarg>
-	<fnarg type="seebelow">&hellip;</fnarg>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>
-      <examples>
-	<example>f1 = pdf(N, -2.5)</example>
-	<example>f2 = pdf(X, 3, y)</example>
-	<example>f3 = pdf(W, shape, scale, y)</example>
-      </examples>
-      <description>
-	<para>
-	  Probability density function calculator. Returns the density at
-	  <argname>x</argname> of the distribution identified by the code
-	  <argname>c</argname>.  See <fncref targ="cdf"/> for details of the
-	  required (scalar) arguments.  The distributions supported by the
-	  <lit>pdf</lit> function are the normal, Student's <math>t</math>,
-	  chi-square, <math>F</math>, Gamma, Weibull, Generalized Error,
-	  Binomial and Poisson. Note that for the Binomial and the
-	  Poisson what's calculated is in fact the probability
-	  mass at the specified point.
-	</para>
-	<para>
-	  For the normal distribution, see also <fncref targ="dnorm"/>.
-	</para>
-      </description>
-    </function>
-
-    <function name="pergm" section="stats" output="matrix">
-      <fnargs>
-	<fnarg type="series-or-vec">x</fnarg>
-	<fnarg optional="true" type="scalar">bandwidth</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  If only the first argument is given, computes the sample periodogram
-	  for the given series or vector. If the second argument is given,
-	  computes an estimate of the spectrum of <argname>x</argname> using a
-	  Bartlett lag window of the given bandwidth, up to a maximum of half
-	  the number of observations (<math>T</math>/2).
-	</para>
-	<para>
-	  Returns a matrix with two columns and <math>T</math>/2 rows: the
-	  first column holds the frequency, &omega;, from 2&pi;/<math>T</math>
-	  to &pi;, and the second the corresponding spectral density.
-	</para>
-      </description>
-    </function>
-
-    <function name="pmax" section="stats" output="series">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-	<fnarg type="series" optional="true">mask</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Only applicable if the currently open dataset has a panel
-	  structure. Returns the per-unit maximum for variable
-	  <argname>y</argname>.
-	</para>
-	<para>
-	  If the optional second argument is provided then
-	  observations for which the value of <argname>mask</argname>
-	  is zero are ignored.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="pmin"/>
-	    <fncref targ="pmean"/>
-	    <fncref targ="pnobs"/>
-	    <fncref targ="psd"/>
-	    <fncref targ="pxsum"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="pmean" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -4391,96 +2717,6 @@
 	  <seelist> 
 	    <fncref targ="psd"/>
 	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="pmin" section="stats" output="series">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-	<fnarg type="series" optional="true">mask</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Only applicable if the currently open dataset has a panel
-	  structure. Returns the per-unit mimimum for variable
-	  <argname>y</argname>.
-	</para>
-	<para>
-	  If the optional second argument is provided then
-	  observations for which the value of <argname>mask</argname>
-	  is zero are ignored.
-	</para>	
-	<para>
-	  <seelist> 
-	    <fncref targ="pmax"/>
-	    <fncref targ="pmean"/>
-	    <fncref targ="pnobs"/>
-	    <fncref targ="psd"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="pnobs" section="stats" output="series">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-	<fnarg type="series" optional="true">mask</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Only applicable if the currently open dataset has a panel
-	  structure. Returns for each unit the number of non-missing
-	  cases for the variable <argname>y</argname>.
-	</para>
-	<para>
-	  If the optional second argument is provided then
-	  observations for which the value of <argname>mask</argname>
-	  is zero are ignored.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="pmax"/>
-	    <fncref targ="pmin"/>
-	    <fncref targ="pmean"/>
-	    <fncref targ="psd"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="polroots" section="linalg" output="matrix">
-      <fnargs>
-	<fnarg type="vector">a</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Finds the roots of a polynomial.  If the polynomial is of degree
-	  <math>p</math>, the vector <argname>a</argname> should contain
-	  <math>p</math> + 1 coefficients in ascending order, &ie; starting
-	  with the constant and ending with the coefficient on
-	  <math>x</math><sup>p</sup>.
-	</para>
-	<para>
-	  If all the roots are real they are returned in a column vector of
-	  length <math>p</math>, otherwise a <by r="p" c="2"/> matrix
-	  is returned, the real parts in the first column and the imaginary
-	  parts in the second.
-	</para>
-      </description>
-    </function>
-
-    <function name="polyfit" section="filters" output="series">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-	<fnarg type="scalar">q</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Fits a polynomial trend of order <argname>q</argname> to the
-	  input series <argname>y</argname> using the method of
-	  orthogonal polynomials. The series returned holds the
-	  fitted values.
 	</para>
       </description>
     </function>
@@ -4564,47 +2800,6 @@
       </description>
     </function>
 
-    <function name="psdroot" section="linalg" output="smatrix">
-      <fnargs>
-	<fnarg type="symmat">A</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Performs a generalized variant of the Cholesky decomposition of
-	  the matrix <argname>A</argname>, which must be positive
-	  semidefinite (but which may be singular). If the input matrix is
-	  not square an error is flagged, but symmetry is assumed and not
-	  tested; only the lower triangle of <argname>A</argname> is read.
-	  The result is a lower-triangular matrix <math>L</math> which
-	  satisfies <equation status="inline" ascii="A = LL'" tex="$A =
-	  LL'$"/>.  Indeterminate elements in the solution are set to
-	  zero.
-	</para>
-	<para>
-	  For the case where <argname>A</argname> is positive definite,
-	  see <fncref targ="cholesky"/>.
-	</para>
-      </description>
-    </function>
-
-    <function name="pshrink" section="data-utils" output="matrix">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-      </fnargs>
-      <description>
-	<para context="notex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Returns a column vector holding the first valid
-	  observation for the series <argname>y</argname> for each
-	  unit or individual in the panel, over the current sample
-	  range. If a unit has no valid observations for the input
-	  series it is skipped. This function provides a means of
-	  compacting the information provided by functions such
-	  as <fncref targ="pmean"/>.
-	</para>
-      </description>
-    </function>
-
     <function name="pvalue" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="char">c</fnarg>
@@ -4634,37 +2829,6 @@
 	    <fncref targ="critical"/>
 	    <fncref targ="invcdf"/>
 	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="pxsum" section="stats" output="series">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-	<fnarg type="series" optional="true">mask</fnarg>
-      </fnargs>
-      <description>
-	<para context="notex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Computes a series holding the sum of the values
-	  of <argname>y</argname> for each cross-sectional unit in
-	  each period.
-	</para>
-	<para context="tex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Computes the cross-sectional sum for variable
-	  <argname>y</argname> in each period; that is, 
-	  \[ \tilde{y}_t = \sum_{i=1}^{N} y_{i,t}\] 
-	  where $N$ is the number of cross-sectional units.
-	</para>
-	<para>
-	  If the optional second argument is provided then
-	  observations for which the value of <argname>mask</argname>
-	  is zero are ignored.
-	</para>
-	<para>
-	  Note that this function works in a different dimension from
-	  the <fncref targ="pmean"/> function.
 	</para>
       </description>
     </function>
@@ -4728,30 +2892,20 @@
       </description>
     </function>
 
-    <function name="quantile" section="stats" output="scalar" altout="matrix">
+    <function name="quantile" section="stats" output="scalar" altout="rvec">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>
 	<fnarg type="pscalar">p</fnarg>
       </fnargs>
       <description>
 	<para>
-	  If <argname>y</argname> is a series, returns the
+	  Given a series argument, returns the
 	  <argname>p</argname>-quantile for the series. For example, when
-	  <math>p</math> = 0.5, the median is returned.
-	</para>
-	<para>
-	  If <argname>y</argname> is a matrix, returns a row vector
-	  containing the <argname>p</argname>-quantiles for the columns of
-	  <argname>y</argname>; that is, each column is treated as a
-	  series.
-	</para>
-	<para>
-	  In addition, for matrix <argname>y</argname> an alternate form
-	  of the second argument is supported: <argname>p</argname> may be
-	  given as a vector. In that case the return value is an <by r="m"
-	  c="n"/> matrix, where <repl>m</repl> is the number of elements
-	  in <argname>p</argname> and <repl>n</repl> is the number of
-	  columns in <argname>y</argname>.
+	  <math>p</math> = 0.5, the median is returned. Given a
+	  matrix argument, returns a row vector containing the 
+	  <argname>p</argname>-quantiles for the columns of 
+	  <argname>y</argname>; that is, each column is treated
+	  as a series.
 	</para>
 	<para context="tex">
 	  For a series of length $n$, the $p$-quantile, $q$, is defined
@@ -4764,38 +2918,71 @@
       </description>
     </function>
 
+    <function name="rank" section="linalg" output="scalar">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the rank of <argname>X</argname>, numerically computed
+	  via the singular value decomposition. 
+	  <seelist> 
+	    <fncref targ="svd"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="ranking" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a series with the ranks of <math>y</math>. The rank for
+	  observation <math>i</math> is the number of elements in the
+	  series that are less than <math>y</math><sub>i</sub> plus one
+	  half the number of elements in the series that are equal to
+	  <math>y</math><sub>i</sub>. (Intuitively, you may think of chess
+	  points, where victory gives you one point and a draw gives you
+	  half a point.) One is added so the lowest rank is 1 instead of
+	  0.
+	</para>
+	<para context="tex">
+	  Formally, 
+	  \[ \mathrm{rank}(y_i) = 1 + \sum_{j \ne i} \left[
+	  I(y_j &lt; y_i) + 0.5 \cdot I(y_j = y_i) \right] \] 
+	  where $I$ denotes the indicator function.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="sort"/>
+	    <fncref targ="sortby"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="randgen" section="probdist" output="series">
       <fnargs>
 	<fnarg type="char">c</fnarg>
-	<fnarg type="scalar-or-series">a</fnarg>
-	<fnarg type="scalar-or-series">b</fnarg>
+	<fnarg type="scalar">a</fnarg>
+	<fnarg type="scalar">b</fnarg>
       </fnargs>
       <examples>
 	<example>series x = randgen(u, 0, 100)</example>
 	<example>series t14 = randgen(t, 14)</example>
 	<example>series y = randgen(B, 0.6, 30)</example>
 	<example>series g = randgen(G, 1, 1)</example>
-	<example>series P = randgen(P, mu)</example>
       </examples>
       <description>
 	<para>
 	  All-purpose random number generator. The parameter
 	  <argname>c</argname> is a character, which specifies from which
-	  distribution the pseudo-random numbers should be drawn. The
-	  arguments <argname>a</argname> and (in some cases)
-	  <argname>b</argname> provide the parameters of the selected
-	  distribution. If these are given as scalars the output series is
-	  identically distributed; if a series is given for
-	  <argname>a</argname> or <argname>b</argname> the distribution is
-	  conditional on the parameter value at each observation.
+	  distribution the pseudo-random numbers should be drawn;
+	  <argname>a</argname> and, in some cases, <argname>b</argname>
+	  gauge the shape of the distribution.
 	</para>
-	<para>
-	  Specifics are given below: the character codes for each
-	  distribution are shown in parentheses, followed by the
-	  interpretation of the argument <argname>a</argname> and,
-	  where applicable, <argname>b</argname>.
-	</para>
-	  
 	<ilist context="notex">
 	  <li>
 	    <para>
@@ -4804,12 +2991,7 @@
 	  </li>
 	  <li>
 	    <para>
-	      Uniform (discrete) (c = i): minimum; maximum
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      Normal (c = z, n, or N): mean; standard deviation
+	      Standard normal (c = z, n, or N): mean; standard deviation
 	    </para>
 	  </li>
 	  <li>
@@ -4841,33 +3023,20 @@
 	    <para>
 	      Poisson (p or P): Mean
 	    </para>
-	  </li>	
-	  <li>
-	    <para>
-	      Weibull (w or W): shape; scale
-	    </para>
-	  </li>	
-	  <li>
-	    <para>
-	      Generalized Error (E): shape
-	    </para>
-	  </li>	
+	  </li>	  
 	</ilist>
 	<para context="tex">
 	  \begin{center}
 	  \begin{tabular}{llll}
 	  \textbf{Distribution} &amp; \textsl{c} &amp; \textsl{a} &amp; \textsl{b} \\[4pt]
 	  Uniform (continuous) &amp; \texttt{u} or \texttt{U} &amp; minimum &amp; maximum\\
-	  Uniform (discrete) &amp; \texttt{i} &amp; minimum &amp; maximum\\
 	  Normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp; mean &amp; standard deviation\\
 	  Student's $t$ &amp; \texttt{t} &amp; degrees of freedom &amp; --\\
 	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; degrees of freedom &amp; --\\
 	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp; df (num.) &amp; df (den.)\\
 	  Gamma &amp; \texttt{g} or \texttt{G} &amp; shape &amp; scale \\
 	  Binomial &amp; \texttt{b} or \texttt{B} &amp; $p$ &amp; $n$ \\
-	  Poisson &amp; \texttt{p} or \texttt{P} &amp; mean &amp; -- \\
-	  Weibull &amp; \texttt{w} or \texttt{W} &amp; shape &amp; scale \\
-	  Generalized Error &amp; \texttt{e} or \texttt{E} &amp; shape &amp; -- 
+	  Poisson &amp; \texttt{p} or \texttt{P} &amp; mean &amp; --
 	  \end{tabular}
 	  \end{center}
 	</para>
@@ -4875,97 +3044,7 @@
 	  <seelist>
 	    <fncref targ="normal"/>
 	    <fncref targ="uniform"/> 
-	    <fncref targ="mrandgen"/>
-	    <fncref targ="randgen1"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="randgen1" section="probdist" output="scalar">
-      <fnargs>
-	<fnarg type="char">c</fnarg>
-	<fnarg type="scalar">a</fnarg>
-	<fnarg type="scalar">b</fnarg>
-      </fnargs>
-      <examples>
-	<example>scalar x = randgen1(z, 0, 1)</example>
-	<example>scalar g = randgen1(g, 3, 2.5)</example>
-      </examples>
-      <description>
-	<para>
-	  Works like <fncref targ="randgen"/> except that the return
-	  value is a scalar rather than a series.
-	</para>
-	<para>
-	  The first example above calls for a value from the standard
-	  normal distribution, while the second specifies a drawing
-	  from the Gamma distribution with shape 3 and scale 2.5.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="mrandgen"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="randint" section="probdist" output="scalar">
-      <fnargs>
-	<fnarg type="scalar">min</fnarg>
-	<fnarg type="scalar">max</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns a pseudo-random integer in the closed interval
-	  [<argname>min</argname>, <argname>max</argname>]. 
-	  <seelist>
-	  <fncref targ="randgen"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="rank" section="linalg" output="scalar">
-      <fnargs>
-	<fnarg type="matrix">X</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the rank of <argname>X</argname>, numerically computed
-	  via the singular value decomposition. 
-	  <seelist> 
-	    <fncref targ="svd"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="ranking" section="stats" output="asinput">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns a series with the ranks of <math>y</math>. The rank for
-	  observation <math>i</math> is the number of elements in the
-	  series that are less than <math>y</math><sub>i</sub> plus one
-	  half the number of elements in the series that are equal to
-	  <math>y</math><sub>i</sub>. (Intuitively, you may think of chess
-	  points, where victory gives you one point and a draw gives you
-	  half a point.) One is added so the lowest rank is 1 instead of
-	  0.
-	</para>
-	<para context="tex">
-	  Formally, 
-	  \[ \mathrm{rank}(y_i) = 1 + \sum_{j \ne i} \left[
-	  I(y_j &lt; y_i) + 0.5 \cdot I(y_j = y_i) \right] \] 
-	  where $I$ denotes the indicator function.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="sort"/>
-	    <fncref targ="sortby"/>
+	    <fncref targ="genpois"/>
 	  </seelist>
 	</para>
       </description>
@@ -5001,69 +3080,6 @@
 	    <fncref targ="onenorm"/>
 	  </seelist>
 	</para>
-      </description>
-    </function>
-
-    <function name="readfile" section="strings" output="string">
-      <fnargs>
-	<fnarg type="string">fname</fnarg>
-      </fnargs>    
-      <description>
-	<para>
-	  If a file by the name of <argname>fname</argname> exists and
-	  is readable, returns a string containing the content of
-	  this file, otherwise flags an error.  
-	</para>
-	<para>
-	  Also see the <fncref targ="sscanf"/> function.
-	</para>
-      </description>
-    </function>
-
-    <function name="replace" section="data-utils" output="asinput">
-      <fnargs>
-	<fnarg type="series-or-mat">x</fnarg>
-	<fnarg type="scalar-or-vec">find</fnarg>
-	<fnarg type="scalar-or-vec">subst</fnarg>
-      </fnargs>    
-      <description>
-	<para>
-	  Replaces each element of <argname>x</argname> equal to
-	  the <math>i</math>-th element of <argname>find</argname>
-	  with the corresponding element of <argname>subst</argname>.
-	</para>
-	<para>
-	  If <argname>find</argname> is a scalar, <argname>subst</argname>
-	  must also be a scalar.  If <argname>find</argname> and
-	  <argname>subst</argname> are both vectors, they must have the same
-	  number of elements.  But if <argname>find</argname> is a vector and
-	  <argname>subst</argname> a scalar, then all matches will be replaced
-	  by <argname>subst</argname>.
-	</para>
-	<para>
-	  Example:
-	</para>
-	<code>
-	  a = {1,2,3;3,4,5}
-	  find = {1,3,4}
-	  subst = {-1,-8, 0}
-	  b = replace(a, find, subst)
-	  print a b
-	</code>
-	<para>
-	  produces
-	</para>
-	<code>
-          a (2 x 3)
-           
-            1   2   3 
-            3   4   5 
-           
-          b (2 x 3)
-           
-            -1    2   -8 
-            -8    0    5 
-	</code>
       </description>
     </function>
 
@@ -5105,24 +3121,6 @@
       </description>
     </function>
 
-    <function name="rownames" section="matbuild" output="scalar">
-      <fnargs>
-	<fnarg type="matrix">M</fnarg>
-	<fnarg type="list-or-string">s</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Attaches names to the rows of the <by r="m" c="n"/> matrix
-	  <argname>M</argname>. If <argname>s</argname> is a named list, the
-	  row names are copied from the names of the variables; the list
-	  must have <math>m</math> members. If <argname>s</argname> is a
-	  string, it should contain <math>m</math> space-separated
-	  sub-strings.  The return value is 0 on successful completion,
-	  non-zero on error. See also <fncref targ="colnames"/>.
-	</para>
-      </description>
-    </function>
-
     <function name="rows" section="matshape" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -5151,27 +3149,6 @@
 	  series <argname>y</argname>. 
 	  <seelist> 
 	    <fncref targ="var"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="sdc" section="stats" output="rvec">
-      <fnargs>
-	<fnarg type="matrix">X</fnarg>
-	<fnarg type="scalar" optional="true">df</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the standard deviations of the columns of
-	  <argname>X</argname>. If <argname>df</argname> is positive
-	  it is used as the divisor for the column variances,
-	  otherwise the divisor is the number of rows in
-	  <argname>X</argname> (that is, no degrees of freedom
-	  correction is applied).
-	  <seelist>
-	    <fncref targ="meanc"/>
-	    <fncref targ="sumc"/>
 	  </seelist>
 	</para>
       </description>
@@ -5254,38 +3231,6 @@
       </description>
     </function>
 
-    <function name="simann" section="numerical" output="scalar">
-      <fnargs>
-	<fnarg type="vector">b</fnarg>
-	<fnarg type="fncall">f</fnarg>
-	<fnarg type="scalar" optional="true">maxit</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Implements simulated annealing, which may be helpful in
-	  improving the initialization for a numerical optimization
-	  problem.
-	</para>
-	<para>
-	  The first argument holds the intial value of a parameter
-	  vector and the second argument specifies a function call
-	  which returns the (scalar) value of the maximand. The
-	  optional third argument specifies the maximum number of
-	  iterations (which defaults to 1024). On successful
-	  completion, <lit>simann</lit> returns the final value of the
-	  maximand.
-	</para>
-	<para>
-	  For more details and an example see the chapter on numerical
-	  methods in <guideref targ="chap-numerical"/>.
-	  <seelist>
-	    <fncref targ="BFGSmax"/>
-	    <fncref targ="NRmax"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="sin" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -5302,40 +3247,7 @@
       </description>
     </function>
 
-    <function name="sinh" section="math" output="asinput">
-      <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the hyperbolic sine of <argname>x</argname>.
-	</para>
-	<para context="tex">
-	  \[ \sinh x = \frac{e^x - e^{-x}}{2}  \]
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="asinh"/>
-	    <fncref targ="cosh"/>
-	    <fncref targ="tanh"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="skewness" section="stats" output="scalar">
-      <fnargs>
-	<fnarg type="series">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the skewness value for the series <argname>x</argname>,
-	  skipping any missing observations.
-	</para>
-      </description>
-    </function>
-
-    <function name="sort" section="matshape" output="asinput">
+    <function name="sort" section="stats" output="asinput">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
       </fnargs>     
@@ -5382,101 +3294,6 @@
       </description>
     </function>
 
-    <function name="sscanf" section="strings" output="scalar">
-      <fnargs>
-	<fnarg type="string">src</fnarg>
-	<fnarg type="string">format</fnarg>
-	<fnarg type="varargs"/>
-      </fnargs>  
-      <description>
-	<para>
-	  Reads values from <argname>src</argname> under the control
-	  of <argname>format</argname> and assigns these values to one
-	  or more trailing arguments, indicated by the dots above.
-	  Returns the number of values assigned. This is a simplifed
-	  version of the <lit>sscanf</lit> function in the C
-	  programming language.
-	</para>
-	<para>
-	  <repl>src</repl> may be either a literal string, enclosed
-	  in double quotes, or the name of a predefined string
-	  variable.  <repl>format</repl> is defined similarly to the
-	  format string in <cmdref targ="printf"/> (more on this
-	  below). <repl>args</repl> should be a comma-separated list
-	  containing the names of pre-defined variables: these are the
-	  targets of conversion from <repl>src</repl>.  (For those
-	  used to C: one can prefix the names of numerical variables
-	  with <lit>&amp;</lit> but this is not required.)
-	</para>
-	<para>
-	  Literal text in <repl>format</repl> is matched against
-	  <repl>src</repl>.  Conversion specifiers start with
-	  <lit>%</lit>, and recognized conversions include
-	  <lit>%f</lit>, <lit>%g</lit> or <lit>%lf</lit> for
-	  floating-point numbers; <lit>%d</lit> for integers;
-	  <lit>%s</lit> for strings; and <lit>%m</lit> for matrices.
-	  You may insert a positive integer after the percent sign:
-	  this sets the maximum number of characters to read for the
-	  given conversion (or the maximum number of rows in the case
-	  of matrix conversion). Alternatively, you can insert a
-	  literal <lit>*</lit> after the percent to suppress the
-	  conversion (thereby skipping any characters that would
-	  otherwise have been converted for the given type).  For
-	  example, <lit>%3d</lit> converts the next 3 characters in
-	  <repl>source</repl> to an integer, if possible;
-	  <lit>%*g</lit> skips as many characters in
-	  <repl>source</repl> as could be converted to a single
-	  floating-point number.
-	</para>
-	<para>
-	  Matrix conversion works thus: the scanner reads a line of
-	  input and counts the (space- or tab-separated) number of
-	  numeric fields.  This defines the number of columns in the
-	  matrix.  By default, reading then proceeds for as many lines
-	  (rows) as contain the same number of numeric columns, but
-	  the maximum number of rows to read can be limited as
-	  described above.
-	</para>
-	<para>
-	  In addition to <lit>%s</lit> conversion for strings, a
-	  simplified version of the C format
-	  <lit>%</lit><repl>N</repl><lit>[</lit><repl>chars</repl><lit>]</lit>
-	  is available.  In this format <repl>N</repl> is the maximum
-	  number of characters to read and <repl>chars</repl> is a set
-	  of acceptable characters, enclosed in square brackets:
-	  reading stops if <repl>N</repl> is reached or if a character
-	  not in <repl>chars</repl> is encountered. The function of
-	  <repl>chars</repl> can be reversed by giving a circumflex,
-	  <lit>^</lit>, as the first character; in that case reading
-	  stops if a character in the given set is found.  (Unlike C,
-	  the hyphen does not play a special role in the
-	  <repl>chars</repl> set.)
-	</para>
-	<para>
-	  If the source string does not (fully) match the format, the
-	  number of conversions may fall short of the number of
-	  arguments given.  This is not in itself an error so far as
-	  gretl is concerned.  However, you may wish to check the
-	  number of conversions performed; this is given by the
-	  return value.
-	</para>
-	<para>
-	  Some examples follow:
-	</para>
-	<code>
-	  scalar x
-	  scalar y
-	  sscanf("123456", "%3d%3d", x, y)
-
-	  sprintf S, "1 2 3 4\n5 6 7 8"
-	  S
-	  matrix m
-	  sscanf(S, "%m", m)
-	  print m
-	</code>
-      </description>
-    </function>
-
     <function name="sst" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -5492,117 +3309,14 @@
       </description>
     </function>
 
-    <function name="strlen" section="strings" output="scalar">
+    <function name="sum" section="stats" output="scalar">
       <fnargs>
-	<fnarg type="string">s</fnarg>
-      </fnargs>  
-      <description>
-	<para>
-	  Returns the number of characters in <argname>s</argname>.
-	</para>
-      </description>
-    </function>
-
-    <function name="strncmp" section="strings" output="scalar">
-      <fnargs>
-	<fnarg type="string">s1</fnarg>
-	<fnarg type="string">s2</fnarg>
-	<fnarg optional="true" type="scalar">n</fnarg>
-      </fnargs>  
-      <description>
-	<para>
-	  Compares the two string arguments and returns an integer less
-	  than, equal to, or greater than zero if <argname>s1</argname> is
-	  found, respectively, to be less than, to match, or be greater
-	  than <argname>s2</argname>, up to the first <argname>n</argname>
-	  characters.  If <argname>n</argname> is omitted the comparison
-	  proceeds as far as possible.
-	</para>
-	<para> Note that if you just want to compare two strings for
-	  equality, that can be done without using a function, as in
-	  <lit>if (s1 == s2) ...</lit>
-	</para>
-      </description>
-    </function>
-
-    <function name="strsplit" section="strings" output="string">
-      <fnargs>
-	<fnarg type="string">s</fnarg>
-	<fnarg type="scalar">i</fnarg>
-      </fnargs>  
-      <description>
-	<para>
-	  Returns space-separated element <argname>i</argname> from
-	  the string <argname>s</argname>. The index
-	  <argname>i</argname> is 1-based, and it is an error if
-	  <argname>i</argname> is less than 1. In case
-	  <argname>s</argname> contains no spaces and
-	  <argname>i</argname> equals 1, a copy of the entire input
-	  string is returned; otherwise, in case <argname>i</argname>
-	  exceeds the number of space-separated elements an empty
-	  string is returned.
-	</para>
-      </description>
-    </function>
-
-    <function name="strstr" section="strings" output="string">
-      <fnargs>
-	<fnarg type="string">s1</fnarg>
-	<fnarg type="string">s2</fnarg>
-      </fnargs>  
-      <description>
-	<para>
-	  Searches <argname>s1</argname> for an occurrence of the string
-	  <argname>s2</argname>.  If a match is found, returns a copy of the
-	  portion of <argname>s1</argname> that starts with
-	  <argname>s2</argname>, otherwise returns an empty string.
-	</para>
-      </description>
-    </function>
-
-    <function name="strsub" section="strings" output="string">
-      <fnargs>
-	<fnarg type="string">s</fnarg>
-	<fnarg type="string">find</fnarg>
-	<fnarg type="string">subst</fnarg>
-      </fnargs>  
-      <description>
-	<para>
-	  Returns a copy of <argname>s</argname> in which all
-	  occurrences of <argname>find</argname> are replaced by
-	  <argname>subst</argname>.
-	</para>
-      </description>
-    </function>
-
-    <function name="sum" section="stats" output="scalar-or-series">
-      <fnargs>
-	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="series">y</fnarg>
       </fnargs>      
       <description>
 	<para>
-	  If <argname>x</argname> is a series, returns the (scalar) sum of the
-	  non-missing observations in <argname>x</argname>. See also
-	  <fncref targ="sumall"/>.
-	</para>
-	<para>
-	  If <argname>x</argname> is a list, returns a series <math>y</math>
-	  such that <math>y</math><sub>t</sub> is the sum of the values of the
-	  variables in the list at observation <math>t</math>, or
-	  <lit>NA</lit> if there are any missing values at <math>t</math>.
-	</para>	
-      </description>
-    </function>
-
-    <function name="sumall" section="stats" output="scalar">
-      <fnargs>
-	<fnarg type="series">x</fnarg>
-      </fnargs>      
-      <description>
-	<para>
-	  Returns the sum of the observations of <argname>x</argname>
-	  over the current sample range, or <lit>NA</lit> if there are
-	  any missing values.
+	  Sum of the non-missing observations in series
+	  <argname>y</argname>.
 	</para>
       </description>
     </function>
@@ -5697,79 +3411,15 @@
       </description>
     </function>
 
-    <function name="tanh" section="math" output="asinput">
-      <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the hyperbolic tangent of <argname>x</argname>. 
-	</para>
-	<para context="tex">
-	  \[ \tanh x = \frac{e^{2x} - 1}{e^{2x} + 1}  \]
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="atanh"/>
-	    <fncref targ="cosh"/>
-	    <fncref targ="sinh"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="toepsolv" section="linalg" output="cvec">
-      <fnargs>
-	<fnarg type="vector">c</fnarg>
-	<fnarg type="vector">r</fnarg>
-	<fnarg type="vector">b</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Solves a Toeplitz system of linear equations, that is
-	  <math>Tx = b</math> where <math>T</math> is a square matrix
-	  whose element <math>T</math><sub>i,j</sub> equals
-	  <math>c</math><sub>i-j</sub> for <equation status="inline"
-	  ascii="i&gt;=j" tex="$i\ge j$"/> and
-	  <math>r</math><sub>j-i</sub> for <equation status="inline"
-	  ascii="i&lt;=j" tex="$i\le j$"/>. Note that the first
-	  elements of <math>c</math> and <math>r</math> must be equal,
-	  otherwise an error is returned. Upon successful completion,
-	  the function returns the vector <math>x</math>.
-	</para>
-	<para>
-	  The algorithm used here takes advantage of the special
-	  structure of the matrix <math>T</math>, which makes it much
-	  more efficient than other unspecialized algorithms,
-	  especially for large problems. Warning: in certain cases,
-	  the function may spuriously issue a singularity error when
-	  in fact the matrix <math>T</math> is nonsingular; this
-	  problem, however, cannot arise when <math>T</math> is
-	  positive definite.
-	</para>
-      </description>
-    </function>
-
-    <function name="tolower" section="strings" output="string">
-      <fnargs>
-	<fnarg type="string">s</fnarg>
-      </fnargs>    
-      <description>
-	<para>
-	  Returns a copy of <argname>s</argname> in which any upper-case
-	  characters are converted to lower case.
-	</para>
-      </description>
-    </function>
-
     <function name="tr" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>    
       <description>
 	<para>
-	  Produce la traccia della matrice quadrata <argname>A</argname>,
-	  ossia la somma degli elementi sulla diagonale principale.
+	  Returns the trace of the square matrix <argname>A</argname>,
+	  namely <equation status="inline" ascii="the sum of its
+	  diagonal elements" tex="$\sum_i A_{ii}$"/>.
 	  <seelist> 
 	    <fncref targ="diag"/>
 	  </seelist>
@@ -5783,31 +3433,9 @@
       </fnargs>      
       <description>
 	<para>
-	  Ritorna la trasposta di <argname>X</argname>. Nota: questa
-	  funzione è di uso molto raro; nella maggioranza dei casi, si usa
-	  l'operatore apice: <lit>X'</lit>.
-	</para>
-      </description>
-    </function>
-
-    <function name="trimr" section="matshape" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">X</fnarg>
-	<fnarg type="scalar">ttop</fnarg>
-	<fnarg type="scalar">tbot</fnarg>
-      </fnargs>   
-      <description>
-	<para>
-	  Returns a matrix that is a copy of <argname>X</argname> with
-	  <argname>ttop</argname> rows trimmed at the top and
-	  <argname>tbot</argname> rows trimmed at the bottom.  The latter two
-	  arguments must be non-negative, and must sum to less than the total
-	  rows of <argname>X</argname>.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="selifr"/>
-	  </seelist>
+	  Matrix transposition. Note: this is rarely used; in order to get
+	  the trasnpose of a matrix, in most cases you can just use the
+	  prime operator: <lit>X'</lit>.
 	</para>
       </description>
     </function>
@@ -5836,23 +3464,10 @@
       </description>
     </function>
 
-    <function name="uniq" section="stats" output="cvec">
-      <fnargs>
-	<fnarg type="series-or-vec">x</fnarg>
-      </fnargs>      
-      <description>
-	<para>
-	  Returns a vector containing the distinct elements of
-	  <argname>x</argname>, not sorted but in their order of
-	  appearance. See <fncref targ="values"/> for a variant
-	  that sorts the elements.
-	</para>
-      </description>
-    </function>
-
-    <function name="unvech" section="matbuild" output="smatrix">
+    <function name="unvech" section="linalg" output="smatrix">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
+	<fnarg type="scalar">b</fnarg>
       </fnargs>      
       <description>
 	<para>
@@ -5868,13 +3483,12 @@
 	<para>
 	  <seelist>
 	    <fncref targ="mshape"/>
-	    <fncref targ="vech"/>
 	  </seelist>
 	</para>
       </description>
     </function>
 
-    <function name="upper" section="matbuild" output="smatrix">
+    <function name="upper" section="matshape" output="smatrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>  
@@ -5891,44 +3505,6 @@
 	<para>
 	  <seelist>
 	    <fncref targ="lower"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="urcpval" section="probdist" output="scalar">
-      <fnargs>
-	<fnarg type="scalar">tau</fnarg>
-	<fnarg type="scalar">n</fnarg>
-	<fnarg type="scalar">niv</fnarg>
-	<fnarg type="scalar">itv</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  <math>P</math>-values for the test statistic from the
-	  Dickey&ndash;Fuller unit-root test and the
-	  Engle&ndash;Granger cointegration test, as per <cite
-	  key="mackinnon96">James MacKinnon (1996)</cite>.
-	</para>
-	<para>
-	  The arguments are as follows: <argname>tau</argname> denotes the
-	  test statistic; <argname>n</argname> is the number of
-	  observations (or 0 for an asymptotic result);
-	  <argname>niv</argname> is the number of potentially cointegrated
-	  variables when testing for cointegration (or 1 for a univariate
-	  unit-root test); and <argname>itv</argname> is a code for the
-	  model specification: 1 for no constant, 2 for constant
-	  included, 3 for constant and linear trend, 4 for constant and
-	  quadratic trend.
-	</para>
-	<para>
-	  Note that if the test regression is <quote>augmented</quote>
-	  with lags of the dependent variable, then you should give an
-	  <argname>n</argname> value of 0 to get an asymptotic result.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="pvalue"/>
 	  </seelist>
 	</para>
       </description>
@@ -5976,95 +3552,13 @@
       </description>
     </function>
 
-    <function name="varname" section="strings" output="string">
-      <fnargs>
-	<fnarg type="scalar-or-list">v</fnarg>
-      </fnargs>     
-      <description>
-	<para>
-	  If given a scalar argument, returns the name of the variable with ID
-	  number <argname>v</argname>, or generates an error if there is no
-	  such variable.
-	</para>
-	<para>
-	  If given a list argument, returns a string containing the names of
-	  the variables in the list, separated by commas.  If the supplied
-	  list is empty, so is the returned string.
-	</para>
-      </description>
-    </function>
-
-    <function name="varnum" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="string">varname</fnarg>
-      </fnargs>     
-      <description>
-	<para>
-	  Returns the ID number of the variable called
-	  <argname>varname</argname>, or NA is there is no such variable.
-	</para>
-      </description>
-    </function>
-
-    <function name="varsimul" section="linalg" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">A</fnarg>
-	<fnarg type="matrix">U</fnarg>
-	<fnarg type="matrix">y0</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Simulates a <math>p</math>-order <math>n</math>-variable
-	  VAR, that is
-	  <equation status="inline"
-	  ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)." 
-	  tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$."/>
-
-	  The coefficient matrix <argname>A</argname> is composed by
-	  horizontal stacking of the <math>A</math><sub>i</sub>
-	  matrices; it is <by r="n" c="np"/>, with one row
-	  per equation. This corresponds to the first <math>n</math>
-	  rows of the matrix <lit>$compan</lit> provided by gretl's
-	  <lit>var</lit> and <lit>vecm</lit> commands.
-	</para>
-	<para>
-	  The <math>u_t</math> vectors are contained (as rows) in
-	  <argname>U</argname> (<by r="T" c="n"/>). Initial values are in
-	  <argname>y0</argname> (<by r="p" c="n"/>).
-	</para>
-	<para>
-	  If the VAR contains deterministic terms and/or exogenous
-	  regressors, these can be handled by folding them into the
-	  <argname>U</argname> matrix: each row of <argname>U</argname>
-	  then becomes 
-	  <equation status="inline"
-	  ascii="u(t) = B' x(t) + e(t)." 
-	  tex="$u_t = B' x_t + e_t$."/>
-	</para>
-	<para>
-	  The output matrix has <math>T</math> + <math>p</math> rows
-	  and <math>n</math> columns; it holds the initial <math>p</math>
-	  values of the endogenous variables plus <math>T</math>
-	  simulated values.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="$compan"/>
-	    <cmdref targ="var"/>
-	    <cmdref targ="vecm"/>
-	  </seelist>
-	</para>
-
-      </description>
-    </function>
-
-    <function name="vec" section="matbuild" output="cvec">
+    <function name="vec" section="linalg" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>     
       <description>
 	<para>
-	  Accosta, una sotto l'altra, le colonne di <argname>X</argname>.
+	  Stacks the columns of <argname>X</argname> as a column vector.
 	  <seelist>
 	    <fncref targ="mshape"/>
 	    <fncref targ="unvech"/>
@@ -6074,7 +3568,7 @@
       </description>
     </function>
 
-    <function name="vech" section="matbuild" output="cvec">
+    <function name="vech" section="linalg" output="cvec">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>    
@@ -6087,163 +3581,6 @@
 	  <seelist> 
 	    <fncref targ="vec"/>
 	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="weekday" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="scalar">year</fnarg>
-	<fnarg type="scalar">month</fnarg>
-	<fnarg type="scalar">day</fnarg>
-      </fnargs>    
-      <description>
-	<para>
-	  Returns the day of the week (Sunday = 0, Monday = 1, etc.) for the
-	  date specified by the three arguments, or <lit>NA</lit> if the date
-	  is invalid.
-	</para>
-      </description>
-    </function>
-
-    <function name="wmean" section="stats" output="series">
-      <fnargs>
-	<fnarg type="list">Y</fnarg>
-	<fnarg type="list">W</fnarg>
-      </fnargs>    
-      <description>
-	<para>
-	  Returns a series <math>y</math> such that <math>y</math><sub>t</sub>
-	  is the weighted mean of the values of the variables in list
-	  <argname>Y</argname> at observation <math>t</math>, the respective
-	  weights given by the values of the variables in list
-	  <argname>W</argname> at <math>t</math>.  The weights can therefore
-	  be time-varying. The lists <argname>Y</argname> and
-	  <argname>W</argname> must be of the same length and the weights must
-	  be non-negative.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="wsd"/>
-	    <fncref targ="wvar"/>
-	  </seelist>
-	</para> 
-      </description>
-    </function>
-
-    <function name="wsd" section="stats" output="series">
-      <fnargs>
-	<fnarg type="list">Y</fnarg>
-	<fnarg type="list">W</fnarg>
-      </fnargs>    
-      <description>
-	<para>
-	  Returns a series <math>y</math> such that <math>y</math><sub>t</sub>
-	  is the weighted sample standard deviation of the values of the
-	  variables in list <argname>Y</argname> at observation
-	  <math>t</math>, the respective weights given by the values of the
-	  variables in list <argname>W</argname> at <math>t</math>.  The
-	  weights can therefore be time-varying. The lists
-	  <argname>Y</argname> and <argname>W</argname> must be of the same
-	  length and the weights must be non-negative.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="wmean"/>
-	    <fncref targ="wvar"/>
-	  </seelist>
-	</para> 
-      </description>
-    </function>
-
-    <function name="wvar" section="stats" output="series">
-      <fnargs>
-	<fnarg type="list">X</fnarg>
-	<fnarg type="list">W</fnarg>
-      </fnargs>    
-      <description>
-	<para>
-	  Returns a series <math>y</math> such that <math>y</math><sub>t</sub>
-	  is the weighted sample variance of the values of the
-	  variables in list <argname>X</argname> at observation
-	  <math>t</math>, the respective weights given by the values of the
-	  variables in list <argname>W</argname> at <math>t</math>.  The
-	  weights can therefore be time-varying. The lists
-	  <argname>Y</argname> and <argname>W</argname> must be of the same
-	  length and the weights must be non-negative.
-	</para>
-	<para context="tex">
-	  The weighted sample variance is computed as
-	  \[ s^2_w = \frac{n'}{n'-1} \,
-	  \frac{\sum_{i=1}^n w_i(x_i - \bar{x}_w)^2}{\sum_{i=1}^n w_i} \]
-	  where $n'$ is the number of non-zero weights and $\bar{x}_w$ is
-	  the weighted mean.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="wmean"/>
-	    <fncref targ="wsd"/>
-	  </seelist>
-	</para> 
-      </description>
-    </function>
-
-    <function name="xmax" section="math" output="scalar">
-      <fnargs>
-	<fnarg type="scalar">x</fnarg>
-	<fnarg type="scalar">y</fnarg>
-      </fnargs>     
-      <description>
-	<para>
-	  Returns the greater of <argname>x</argname> and
-	  <argname>y</argname>, or <lit>NA</lit> if either value
-	  is missing.  
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="xmin"/>
-	    <fncref targ="max"/>
-	    <fncref targ="min"/>
-	  </seelist>
-	</para> 
-      </description>
-    </function>
-
-    <function name="xmin" section="math" output="scalar">
-      <fnargs>
-	<fnarg type="scalar">x</fnarg>
-	<fnarg type="scalar">y</fnarg>
-      </fnargs>     
-      <description>
-	<para>
-	  Returns the lesser of <argname>x</argname> and
-	  <argname>y</argname>, or <lit>NA</lit> if either value
-	  is missing.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="xmax"/>
-	    <fncref targ="max"/>
-	    <fncref targ="min"/>
-	  </seelist>
-	</para> 
-      </description>
-    </function>
-
-    <function name="xpx" section="transforms" output="list">
-      <fnargs>
-	<fnarg type="list">L</fnarg>
-      </fnargs>     
-      <description>
-	<para>
-	  Returns a list that references the squares and cross-products
-	  of the variables in list <argname>L</argname>.  Squares are
-	  named on the pattern <lit>sq_</lit><repl>varname</repl> and
-	  cross-products on the pattern 
-	  <repl>var1</repl><lit>_</lit><repl>var2</repl>.  The input
-	  variable names are truncated if need be, and the output
-	  names may be adjusted in case of duplication
-	  of names in the returned list.
 	</para>
       </description>
     </function>

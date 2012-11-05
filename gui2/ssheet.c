@@ -28,8 +28,8 @@
 #include "toolbar.h"
 #include "cmdstack.h"
 #include "usermat.h"
+#include "uservar.h"
 #include "matrix_extra.h"
-#include "gretl_scalar.h"
 
 #include <errno.h>
 #include <ctype.h>
@@ -1246,7 +1246,7 @@ static void sheet_delete_scalar (Spreadsheet *sheet, GtkTreePath *path)
 
     set_scalar_edit_callback(NULL);
 
-    err = gretl_scalar_delete(vname, NULL);
+    err = user_var_delete_by_name(vname, NULL);
     if (!err) {
 	mark_session_changed();
     }
@@ -1334,7 +1334,7 @@ static void update_matrix_from_sheet_full (Spreadsheet *sheet)
     set_ok_transforms(sheet);
 }
 
-/* callback from gretl_scalar.c, for use when a scalar is added,
+/* callback from uservar.c, for use when a scalar is added,
    deleted or changed by means other than the spreadsheet, and the
    scalars spreadsheet is currently displayed */
 
@@ -1343,27 +1343,29 @@ static void scalars_changed_callback (void)
     Spreadsheet *sheet = scalars_sheet;
 
     if (sheet != NULL) {
+	GList *slist, *tail;
 	GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
 	GtkTreeIter iter;
 	GtkListStore *store;
 	gchar vname[VNAMELEN];
 	gchar val[32];
+	user_var *u;
 	double x;
-	int i, n;
 
-	n = n_saved_scalars();
+	tail = slist = user_var_list_for_type(GRETL_TYPE_DOUBLE);
 
 	store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
 	gtk_list_store_clear(store);
 	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 	sheet->datarows = 0;
 
-	for (i=0; i<n; i++) {
-	    if (gretl_scalar_get_level(i) != 0) {
+	while (tail) {
+	    u = tail->data;
+	    if (user_var_get_level(u) != 0) {
 		continue;
 	    }
-	    strcpy(vname, gretl_scalar_get_name(i)); /* underscores? */
-	    x = gretl_scalar_get_value_by_index(i);
+	    strcpy(vname, user_var_get_name(u)); /* underscores? */
+	    x = user_var_get_scalar_value(u);
 	    if (na(x)) {
 		*val = '\0';
 	    } else {
@@ -1373,7 +1375,10 @@ static void scalars_changed_callback (void)
 	    gtk_list_store_set(store, &iter, 0, vname, 1, val, 
 			       2, sheet->pbuf, -1);
 	    sheet->datarows += 1;
+	    tail = tail->next;
 	}
+
+	g_list_free(slist);
     }
 }
 
@@ -1605,18 +1610,20 @@ static void matrix_save_as (GtkWidget *w, Spreadsheet *sheet)
     
     if (!cancel) {
 	gretl_matrix *m;
-	user_matrix *u;
+	user_var *u;
 	gchar *tmp;
 
 	m = gretl_matrix_copy(sheet->matrix);
-	add_or_replace_user_matrix(m, newname);
+	user_var_add_or_replace(newname, 
+				GRETL_TYPE_MATRIX,
+				m);
 	strcpy(sheet->mname, newname);
 
 	tmp = g_strdup_printf("gretl: %s", sheet->mname);
 	gtk_window_set_title(GTK_WINDOW(sheet->win), tmp);
 	g_free(tmp);
 
-	u = get_user_matrix_by_name(newname);
+	u = get_user_var_by_name(newname);
 	g_object_set_data(G_OBJECT(sheet->win), "object", u);
 
 	sheet->oldmat = m;
@@ -1647,7 +1654,7 @@ static void select_first_editable_cell (Spreadsheet *sheet)
 
     path = gtk_tree_path_new_from_string("0");
 
-    if (editing_scalars(sheet) && n_saved_scalars() == 0) {
+    if (editing_scalars(sheet) && n_user_scalars() == 0) {
 	column = gtk_tree_view_get_column(view, 0);
     } else {
 	column = gtk_tree_view_get_column(view, 1);
@@ -1870,32 +1877,31 @@ static int add_matrix_data_to_sheet (Spreadsheet *sheet)
 
 static int add_scalars_to_sheet (Spreadsheet *sheet)
 {
+    GList *slist, *tail;
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
     GtkTreeIter iter;
     GtkListStore *store;
+    user_var *u;
     gchar vname[VNAMELEN];
     gchar val[32];
     double x;
-    int i;
 
     if (sheet->pbuf == NULL) {
 	sheet->pbuf = gtk_widget_render_icon(sheet->view, GTK_STOCK_DELETE,
 					     GTK_ICON_SIZE_MENU, NULL);
     }
 
-    if (n_saved_scalars() == 0) {
-	/* nothing to show */
-	return 0;
-    }
+    tail = slist = user_var_list_for_type(GRETL_TYPE_DOUBLE);
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     /* insert names and values of scalar variables */
 
-    for (i=0; i<sheet->datarows; i++) {
-	strcpy(vname, gretl_scalar_get_name(i)); /* underscores? */
-	x = gretl_scalar_get_value_by_index(i);
+    while (tail) {
+	u = tail->data;
+	strcpy(vname, user_var_get_name(u)); /* underscores? */
+	x = user_var_get_scalar_value(u);
 	if (na(x)) {
 	    *val = '\0';
 	} else {
@@ -1904,7 +1910,10 @@ static int add_scalars_to_sheet (Spreadsheet *sheet)
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 0, vname, 1, val, 
 			   2, sheet->pbuf, -1);
+	tail = tail->next;
     }
+
+    g_list_free(slist);
 
     return 0;
 }
@@ -1912,28 +1921,32 @@ static int add_scalars_to_sheet (Spreadsheet *sheet)
 static void maybe_update_scalars_sheet (Spreadsheet *sheet)
 {
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
-    int ns = n_saved_scalars();
+    int ns = n_user_scalars();
     int update = 0;
 
     if (sheet->datarows != ns) {
 	sheet->datarows = ns;
 	update = 1;
     } else {
+	GList *slist, *tail;
 	GtkTreeIter iter;
 	GtkTreeModel *model;
 	gchar *rowname, *numstr;
 	const char *sname;
+	user_var *u;
 	double sx, rx;
-	int i;
+
+	tail = slist = user_var_list_for_type(GRETL_TYPE_DOUBLE);
 
 	model = gtk_tree_view_get_model(view);
 	gtk_tree_model_get_iter_first(model, &iter);
 
-	for (i=0; i<sheet->datarows; i++) {
+	while (tail) {
+	    u = tail->data;
 	    gtk_tree_model_get(model, &iter, 0, &rowname, 1, &numstr, -1);
 	    rx = atof(numstr);
-	    sname = gretl_scalar_get_name(i);
-	    sx = gretl_scalar_get_value_by_index(i);
+	    sname = user_var_get_name(u);
+	    sx = user_var_get_scalar_value(u);
 	    if (strcmp(rowname, sname) || rx != sx) {
 		update = 1;
 	    }
@@ -1943,7 +1956,10 @@ static void maybe_update_scalars_sheet (Spreadsheet *sheet)
 		break;
 	    }
 	    gtk_tree_model_iter_next(model, &iter);
+	    tail = tail->next;
 	}
+
+	g_list_free(slist);
     }
 
     if (update) {
@@ -3321,7 +3337,7 @@ void edit_scalars (void)
 
     scalars_sheet = sheet;
 
-    sheet->datarows = n_saved_scalars();
+    sheet->datarows = n_user_scalars();
     sheet->datacols = 1;
 
     real_show_spreadsheet(&sheet, SHEET_EDIT_SCALARS, 0);
@@ -3609,7 +3625,9 @@ static int gui_matrix_from_list (selector *sr)
 				    M_MISSING_SKIP, &err);
 
     if (!err) {
-	err = add_or_replace_user_matrix(s->m, s->name);
+	err = user_var_add_or_replace(s->name,
+				      GRETL_TYPE_MATRIX,
+				      s->m);
     }
 
     if (err) {
@@ -3670,11 +3688,14 @@ matrix_from_spec (struct gui_matrix_spec *s)
     int err = 0;
 
     s->m = gretl_matrix_alloc(s->rows, s->cols);
+
     if (s->m == NULL) {
 	err = E_ALLOC;
     } else {
 	gretl_matrix_fill(s->m, s->fill);
-	err = add_or_replace_user_matrix(s->m, s->name);
+	err = user_var_add_or_replace(s->name,
+				      GRETL_TYPE_MATRIX,
+				      s->m);
     }
 
     if (err) {
@@ -3701,8 +3722,8 @@ static void gui_matrix_spec_init (struct gui_matrix_spec *s,
     }
 }
 
-static void edit_matrix (gretl_matrix *m, const char *name,
-			 int block)
+static void gui_edit_matrix (gretl_matrix *m, const char *name,
+			     int block)
 {
     Spreadsheet *sheet = NULL;
     int err = 0;
@@ -3737,7 +3758,7 @@ static void edit_matrix (gretl_matrix *m, const char *name,
 
     if (!block && sheet != NULL) {
 	/* protect matrix from deletion while editing */
-	user_matrix *u = get_user_matrix_by_name(name);
+	user_var *u = get_user_var_by_name(name);
 
 	if (u != NULL) {
 	    g_object_set_data(G_OBJECT(sheet->win), "object", u);
@@ -3776,7 +3797,7 @@ static void real_gui_new_matrix (gretl_matrix *m, const char *name,
 	int err = matrix_from_spec(&spec);
 
 	if (!err) {
-	    edit_matrix(spec.m, spec.name, block);
+	    gui_edit_matrix(spec.m, spec.name, block);
 	}
     }
 }
@@ -3790,8 +3811,8 @@ void gui_new_matrix (GtkWidget *parent)
 
 void edit_user_matrix_by_name (const char *name, GtkWidget *parent)
 {
-    user_matrix *u = get_user_matrix_by_name(name);
-    gretl_matrix *m = get_matrix_by_name(name);
+    user_var *u = get_user_var_by_name(name);
+    gretl_matrix *m = user_var_get_value(u);
     GtkWidget *w;
 
     /* do we already have a window open, editing this
@@ -3807,7 +3828,7 @@ void edit_user_matrix_by_name (const char *name, GtkWidget *parent)
     } else if (gretl_is_null_matrix(m)) {
 	real_gui_new_matrix(m, name, parent);
     } else {
-	edit_matrix(m, name, 0);
+	gui_edit_matrix(m, name, 0);
     }
 }
 

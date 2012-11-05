@@ -23,6 +23,7 @@
 #include "gretl_func.h"
 #include "gretl_xml.h"
 #include "libset.h"
+#include "uservar.h"
 #include "gretl_bundle.h"
 
 #include "treeutils.h"
@@ -1123,9 +1124,7 @@ static void real_select_list (const int *list)
 
 static void mdata_select_list (void)
 {
-    int nl = n_saved_lists();
-
-    if (nl == 0) {
+    if (n_user_lists() == 0) {
 	warnbox(_("No lists are currently defined"));
 	return;
     } else {

@@ -30,8 +30,8 @@
 #include "bootstrap.h"
 #include "gretl_foreign.h"
 #include "gretl_bundle.h"
-#include "gretl_scalar.h"
 #include "gretl_string_table.h"
+#include "uservar.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -1497,7 +1497,9 @@ void free_windata (GtkWidget *w, gpointer data)
 	} else if (help_role(vwin->role)) {
 	    g_free(vwin->data); /* help file text */
 	} else if (vwin->role == VIEW_BUNDLE) {
-	    gretl_bundle_destroy_if_temp(vwin->data);
+	    if (!get_user_var_by_data(vwin->data)) {
+		gretl_bundle_destroy(vwin->data);
+	    }
 	} else if (vwin->role == LOESS || vwin->role == NADARWAT) {
 	    gretl_bundle_destroy(vwin->data);
 	}
@@ -4334,18 +4336,18 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	    if (m == NULL) {
 		err = E_ALLOC;
 	    } else {
-		err = user_matrix_add(m, vname);
+		err = user_var_add(vname, GRETL_TYPE_MATRIX, m);
 	    }
 	} else if (type == GRETL_TYPE_SERIES) {
 	    double *x = (double *) val;
 	    gretl_matrix *m;
 
 	    m = gretl_vector_from_array(x, size, GRETL_MOD_NONE);
-	    err = user_matrix_add(m, vname);
+	    err = user_var_add(vname, GRETL_TYPE_MATRIX, m);
 	} else if (type == GRETL_TYPE_STRING) {
-	    char *s = (char *) val;
+	    char *s = gretl_strdup((char *) val);
 
-	    err = save_named_string(vname, s, NULL);
+	    err = user_var_add(vname, GRETL_TYPE_STRING, s);
 	}
 
 	if (show && !err) {
@@ -4436,7 +4438,7 @@ static void add_bundle_menu_items (windata_t *vwin)
     if (n > 0) {
 	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
 
-	if (!gretl_bundle_is_temp(bundle)) {
+	if (get_user_var_by_data(bundle)) {
 	    /* bundle is already saved by name */
 	    flip(vwin->ui, "/menubar/File/SaveAsIcon", FALSE);
 	    flip(vwin->ui, "/menubar/File/SaveAndClose", FALSE);

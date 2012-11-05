@@ -28,8 +28,8 @@
 #include "gretl_xml.h"
 #include "cmd_private.h"
 #include "gretl_string_table.h"
-#include "gretl_scalar.h"
 #include "gretl_bundle.h"
+#include "uservar.h"
 #include "flow_control.h"
 #include "kalman.h"
 #include "system.h"
@@ -179,7 +179,6 @@ struct fnarg {
 	double x;         /* scalar arg */
 	double *px;       /* anonymous series arg */
 	gretl_matrix *m;  /* matrix arg */
-	user_matrix *um;  /* named user-matrix arg */
 	char *str;        /* string arg */
 	int *list;        /* list arg */
 	gretl_bundle *b;  /* anonymous bundle pointer */
@@ -188,6 +187,7 @@ struct fnarg {
 
 struct fnargs_ {
     int argc;           /* count of arguments */
+    int n_alloc;        /* number of arg slots allocated */
     struct fnarg **arg; /* array of arguments */
 };
 
@@ -292,7 +292,8 @@ int gretl_function_depth (void)
 
 /**
  * fn_arg_new:
- * @type: type of argument
+ * @name: name of argument (or NULL for an anonymous argument).
+ * @type: type of argument.
  * @p: pointer to value for argument.
  * @err: location to receive error code.
  *
@@ -302,7 +303,8 @@ int gretl_function_depth (void)
  * Returns: the allocated argument, or %NULL of failure.
  */
 
-struct fnarg *fn_arg_new (GretlType type, void *p, int *err)
+static struct fnarg *fn_arg_new (const char *name, GretlType type, 
+				 void *p, int *err)
 {
     struct fnarg *arg;
 
@@ -316,31 +318,38 @@ struct fnarg *fn_arg_new (GretlType type, void *p, int *err)
     arg->flags = 0;
     arg->name = NULL;
     arg->upname = NULL;
+
+    if (name != NULL) {
+	arg->upname = gretl_strdup(name);
+	if (arg->upname == NULL) {
+	    *err = E_ALLOC;
+	    free(arg);
+	    return NULL;
+	}
+    }
     
     if (type == GRETL_TYPE_NONE) {
 	arg->val.x = 0;
-    } else if (type == GRETL_TYPE_DOUBLE) {
+    } else if (type == GRETL_TYPE_DOUBLE || 
+	       type == GRETL_TYPE_SCALAR_REF) {
 	arg->val.x = *(double *) p;
-    } else if (type == GRETL_TYPE_INT || type == GRETL_TYPE_OBS) {
+    } else if (type == GRETL_TYPE_INT || 
+	       type == GRETL_TYPE_OBS) {
 	arg->val.x = *(int *) p;
     } else if (type == GRETL_TYPE_SERIES) {
 	arg->val.px = (double *) p;
-    } else if (type == GRETL_TYPE_MATRIX) {
+    } else if (type == GRETL_TYPE_MATRIX || 
+	       type == GRETL_TYPE_MATRIX_REF) {
 	arg->val.m = (gretl_matrix *) p;
     } else if (type == GRETL_TYPE_STRING) {
 	arg->val.str = (char *) p;
     } else if (type == GRETL_TYPE_LIST) {
 	arg->val.list = (int *) p;
-    } else if (type == GRETL_TYPE_SCALAR_REF ||
-	       type == GRETL_TYPE_SERIES_REF ||
-	       type == GRETL_TYPE_USCALAR ||
+    } else if (type == GRETL_TYPE_SERIES_REF ||
 	       type == GRETL_TYPE_USERIES) {
-	       arg->val.idnum = * (int *) p;
-    } else if (type == GRETL_TYPE_MATRIX_REF) {
-	arg->val.um = (user_matrix *) p;
-    } else if (type == GRETL_TYPE_BUNDLE_REF) {
-	arg->val.str = (char *) p;
-    } else if (type == GRETL_TYPE_BUNDLE) {
+	       arg->val.idnum = *(int *) p;
+    } else if (type == GRETL_TYPE_BUNDLE || 
+	       type == GRETL_TYPE_BUNDLE_REF) {
 	arg->val.b = (gretl_bundle *) p;
     } else {
 	*err = E_TYPES;
@@ -353,21 +362,37 @@ struct fnarg *fn_arg_new (GretlType type, void *p, int *err)
 
 /**
  * fn_args_new:
+ * @argc: the number of argument slots to allocate.
  *
- * Returns: a newly allocated, empty array of function
- * arguments, or %NULL of failure.
+ * Returns: a newly allocated array of @argc function
+ * arguments, or %NULL on failure.
  */
 
-fnargs *fn_args_new (void)
+fnargs *fn_args_new (int argc)
 {
     fnargs *args = malloc(sizeof *args);
 
-    if (args == NULL) {
-	return NULL;
-    }
+    if (args != NULL) {
+	if (argc <= 0) {
+	    args->arg = NULL;
+	    args->n_alloc = 0;
+	    args->argc = 0;
+	} else {
+	    args->arg = malloc(argc * sizeof *args->arg);
+	    if (args->arg == NULL) {
+		free(args);
+		args = NULL;
+	    } else {
+		int i;
 
-    args->argc = 0;
-    args->arg = NULL;
+		for (i=0; i<argc; i++) {
+		    args->arg[i] = NULL;
+		}
+		args->n_alloc = argc;
+		args->argc = 0;
+	    }
+	}
+    }
 
     return args;
 }
@@ -378,8 +403,10 @@ fnargs *fn_args_new (void)
 
 static void free_fn_arg (struct fnarg *arg)
 {
-    free(arg->upname);
-    free(arg);
+    if (arg != NULL) {
+	free(arg->upname);
+	free(arg);
+    }
 }
 
 void fn_args_free (fnargs *args)
@@ -387,7 +414,7 @@ void fn_args_free (fnargs *args)
     if (args != NULL) {
 	int i;
 
-	for (i=0; i<args->argc; i++) {
+	for (i=0; i<args->n_alloc; i++) {
 	    free_fn_arg(args->arg[i]);
 	}
     
@@ -399,35 +426,34 @@ void fn_args_free (fnargs *args)
 /**
  * push_fn_arg:
  * @args: existing array of function arguments.
+ * @name: name of variable (or NULL for anonymous)
  * @type: type of argument to add.
  * @p: pointer to value to add.
  *
- * Appends a new argument of the specified type and value to the
- * array @args.
+ * Writes a new argument of the specified type and value into the
+ * array @args. Note that @args must have been pre-allocated
+ * with enough slots to accommodate the argument; see fn_args_new().
+ * Successive calls to this function will populate the array
+ * from position 0 onwards.
  *
  * Returns: 0 on success, non-zero on failure.
  */
 
-int push_fn_arg (fnargs *args, GretlType type, void *p)
+int push_fn_arg (fnargs *args, const char *name, GretlType type, 
+		 void *value)
 {
     int err = 0;
-
-#if 0
-    fprintf(stderr, "push_fn_arg: starting on type %d\n", type);
-#endif
 
     if (args == NULL) {
 	err = E_DATA;
     } else {
-	struct fnarg **arg;
 	int n = args->argc + 1;
 
-	arg = realloc(args->arg, n * sizeof *arg);
-	if (arg == NULL) {
-	    err = E_ALLOC;
+	if (n > args->n_alloc) {
+	    fprintf(stderr, "push_fn_arg: excess argument!\n");
+	    err = E_DATA;
 	} else {
-	    args->arg = arg;
-	    args->arg[n-1] = fn_arg_new(type, p, &err);
+	    args->arg[n-1] = fn_arg_new(name, type, value, &err);
 	}
 
 	if (!err) {
@@ -4653,7 +4679,7 @@ static int parse_fn_definition (char *fname,
 {
     fn_param *params = NULL;
     char *p, *s = NULL;
-    int i, len, np = 0;
+    int i, j, len, np = 0;
     int err = 0;
 
 #if FNPARSE_DEBUG > 1
@@ -4794,6 +4820,16 @@ static int parse_fn_definition (char *fname,
     }
 
     free(s);
+
+    for (i=0; i<np && !err; i++) {
+	for (j=i+1; j<np && !err; j++) {
+	    if (!strcmp(params[i].name, params[j].name)) {
+		gretl_errmsg_sprintf(_("%s: duplicated parameter name '%s'"),
+				     fname, params[i].name);
+		err = E_DATA;
+	    }
+	}
+    }
 
     if (err) {
 	free_params_array(params, np);
@@ -5299,29 +5335,33 @@ int update_function_from_script (const char *funname, const char *path,
 /* Given a list of variables supplied as an argument to a function,
    copy the list under the name assigned by the function and
    make the variables referenced in that list accessible within
-   the function.
+   the function. We also handle the case where the given arg
+   was not a real list, but we can make a list out of it for the
+   purposes of the function.
 */
 
 static int localize_list (fncall *call, struct fnarg *arg,
 			  fn_param *fp, DATASET *dset)
 {
     int *list = NULL;
-    const char *s = NULL;
     int err = 0;
 
     if (arg == NULL || arg->type == GRETL_TYPE_NONE) {
-	/* empty arg */
-	list = create_named_null_list(fp->name);
+	/* empty arg -> gives an empty list */
+	int tmp[] = {0};
+
+	list = copy_list_as_arg(fp->name, tmp, &err);
     } else if (arg->type == GRETL_TYPE_LIST) {
-	/* list arg */
+	/* actual list arg -> copy to function level */
 	list = arg->val.list;
-	s = saved_list_get_name(list);
-	list = copy_list_as(list, fp->name);
+	err = copy_as_arg(fp->name, GRETL_TYPE_LIST, list);
     } else if (arg->type == GRETL_TYPE_USERIES) {
-	/* series arg */
-	list = create_named_singleton_list(arg->val.idnum, fp->name);
+	/* series arg -> becomes a singleton list */
+	int tmp[] = {1, arg->val.idnum};
+
+	list = copy_list_as_arg(fp->name, tmp, &err);
     } else {
-	/* can't happen */
+	/* "can't happen" */
 	err = E_DATA;
     }
 
@@ -5341,10 +5381,6 @@ static int localize_list (fncall *call, struct fnarg *arg,
 		series_set_stack_level(dset, vi, level);
 	    }
 	}
-
-	if (s != NULL) {
-	    arg->upname = gretl_strdup(s);
-	}
     }
 
 #if UDEBUG
@@ -5353,17 +5389,6 @@ static int localize_list (fncall *call, struct fnarg *arg,
 #endif
 
     return err;
-}
-
-/* coerce scalar value to boolean, as per parameter spec */
-
-static void boolify_local_var (const char *vname)
-{
-    double x = gretl_scalar_get_value(vname);
-
-    if (x != 0.0 && !na(x)) {
-	gretl_scalar_set_value(vname, 1.0);
-    }
 }
 
 static void maybe_set_arg_const (struct fnarg *arg, fn_param *fp)
@@ -5381,21 +5406,18 @@ static void maybe_set_arg_const (struct fnarg *arg, fn_param *fp)
 
 static int localize_const_matrix (struct fnarg *arg, fn_param *fp)
 {
-    user_matrix *u = get_user_matrix_by_data(arg->val.m);
+    user_var *u = get_user_var_by_data(arg->val.m);
     int err = 0;
 
     if (u == NULL) {
 	/* the const argument is an anonymous matrix */
 	err = matrix_add_as_shell(arg->val.m, fp->name);
     } else {
-	/* the const argument is a named matrix */
-	arg->upname = gretl_strdup(user_matrix_get_name(u));
-	if (arg->upname == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    user_matrix_adjust_level(u, 1);
-	    user_matrix_set_name(u, fp->name);
-	}
+	/* a named matrix: in view of its "const-ness" we
+	   don't need to copy the data
+	*/
+	user_var_adjust_level(u, 1);
+	user_var_set_name(u, fp->name);
     }
 
     if (!err) {
@@ -5406,97 +5428,10 @@ static int localize_const_matrix (struct fnarg *arg, fn_param *fp)
     return err;
 }
 
-static int localize_matrix_ref (struct fnarg *arg, fn_param *fp)
-{
-    user_matrix *u = arg->val.um;
-    int ulev = user_matrix_get_level(u);
-
-    if (ulev == fn_executing + 1) {
-	gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
-	return E_DATA;
-    }
-
-    arg->upname = gretl_strdup(user_matrix_get_name(u));
-    if (arg->upname == NULL) {
-	return E_ALLOC;
-    }
-
-    user_matrix_adjust_level(u, 1);
-    user_matrix_set_name(u, fp->name);
-
-    maybe_set_arg_const(arg, fp);
-
-    return 0;
-}
-
-static int localize_bundle_ref (fnargs *args, int i,
-				fn_param *fp)
-{
-    struct fnarg *arg = args->arg[i];
-    const char *alt, *bname = arg->val.str;
-    int j, err = 0;
-
-    for (j=0; j<i; j++) {
-	alt = args->arg[j]->upname;
-	if (alt != NULL && !strcmp(alt, bname)) {
-	    gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
-	    return E_DATA;
-	}
-    }
-
-    arg->upname = gretl_strdup(bname);
-    if (arg->upname == NULL) {
-	err = E_ALLOC;
-    } else {
-	err = gretl_bundle_localize(bname, fp->name);
-    }
-
-    if (!err) {
-	maybe_set_arg_const(arg, fp);
-    }
-
-    return err;
-}
-
-static int localize_scalar_ref (struct fnarg *arg, fn_param *fp)
-{
-    int i = arg->val.idnum;
-    const char *s = gretl_scalar_get_name(i);
-
-    if (s == NULL) {
-	return E_DATA;
-    } 
-
-    if (gretl_scalar_get_level(i) == fn_executing + 1) {
-	gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
-	return E_DATA;
-    }
-
-    arg->upname = gretl_strdup(s);
-    if (arg->upname == NULL) {
-	return E_ALLOC;
-    } 
-
-    gretl_scalar_set_local_name(i, fp->name);
-    maybe_set_arg_const(arg, fp);
-
-    return 0;
-}
-
 static int localize_series_ref (fncall *call, struct fnarg *arg, 
 				fn_param *fp, DATASET *dset)
 {
     int v = arg->val.idnum;
-
-    if (series_get_stack_level(dset, v) == fn_executing + 1) {
-	gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
-	return E_DATA;
-    }
-
-    arg->upname = gretl_strdup(dset->varname[v]);
-    if (arg->upname == NULL) {
-	return E_ALLOC;
-    } 
 
     series_increment_stack_level(dset, v);
     strcpy(dset->varname[v], fp->name);
@@ -5510,28 +5445,45 @@ static int localize_series_ref (fncall *call, struct fnarg *arg,
     return 0;
 }
 
+static int real_add_scalar_arg (fn_param *param, double x)
+{
+    if (!na(x)) {
+	if (param->type == GRETL_TYPE_BOOL) {
+	    if (x != 0.0) {
+		x = 1.0;
+	    }
+	} else if (param->type == GRETL_TYPE_INT ||
+		   param->type == GRETL_TYPE_OBS) {
+	    x = floor(x);
+	}
+    }
+
+    return copy_as_arg(param->name, GRETL_TYPE_DOUBLE, &x);
+}
+
 /* Scalar function arguments only: if the arg is not supplied, use the
    default that is found in the function specification, if any.
 */
 
 static int add_scalar_arg_default (fn_param *param)
 {
-    double x;
-
     if (default_unset(param)) {
 	/* should be impossible here, but... */
 	return E_DATA;
-    }
-
-    if (param->type == GRETL_TYPE_BOOL || 
-	param->type == GRETL_TYPE_INT ||
-	param->type == GRETL_TYPE_OBS) {
-	x = floor(param->deflt);
     } else {
-	x = param->deflt;
+	return real_add_scalar_arg(param, param->deflt);
     }
-    
-    return gretl_scalar_add_as_arg(param->name, x);
+}
+
+/* Handle the case of a scalar parameter for which a 1 x 1 matrix 
+   was given as argument.
+*/
+
+static int do_matrix_scalar_cast (struct fnarg *arg, fn_param *param)
+{
+    gretl_matrix *m = arg->val.m;
+
+    return real_add_scalar_arg(param, m->val[0]);
 }
 
 static void fncall_finalize_listvars (fncall *call)
@@ -5551,33 +5503,52 @@ static void fncall_finalize_listvars (fncall *call)
     }
 }
 
+static int duplicated_pointer_arg_check (fnargs *args)
+{
+    int i, j, err = 0;
+
+    /* note: a caller cannot be allowed to supply a given 
+       variable in pointer form for more than one argument 
+       slot in a function call (although ordinary arguments
+       may be repeated)
+    */
+
+    for (i=0; i<args->argc && !err; i++) {
+	if (gretl_ref_type(args->arg[i]->type)) {
+	    for (j=i+1; j<args->argc && !err; j++) {
+		if (gretl_ref_type(args->arg[j]->type) && 
+		    !strcmp(args->arg[i]->upname, args->arg[j]->upname)) {
+		    gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
+		    err = E_DATA;
+		}
+	    }
+	}
+    }
+
+    return err;
+}
+
 static int allocate_function_args (fncall *call, DATASET *dset)
 {
     ufunc *fun = call->fun;
     fnargs *args = call->args;
     struct fnarg *arg;
     fn_param *fp;
-    int i, err = 0;
+    int i, err;
+
+    err = duplicated_pointer_arg_check(args);
 
     for (i=0; i<args->argc && !err; i++) {
 	arg = args->arg[i];
 	fp = &fun->params[i];
 
 	if (gretl_scalar_type(fp->type)) {
-	    if (arg->type == GRETL_TYPE_USCALAR) {
-		double x = gretl_scalar_get_value_by_index(arg->val.idnum);
-
-		err = gretl_scalar_add_as_arg(fp->name, x);
-	    } else if (arg->type == GRETL_TYPE_NONE) {
+	    if (arg->type == GRETL_TYPE_NONE) {
 		err = add_scalar_arg_default(fp);
 	    } else if (arg->type == GRETL_TYPE_MATRIX) {
-		/* "cast" to scalar */
-		err = gretl_scalar_add_as_arg(fp->name, arg->val.m->val[0]);
+		err = do_matrix_scalar_cast(arg, fp);
 	    } else {
-		err = gretl_scalar_add_as_arg(fp->name, arg->val.x);    
-	    }
-	    if (!err && fp->type == GRETL_TYPE_BOOL) {
-		boolify_local_var(fp->name);
+		err = real_add_scalar_arg(fp, arg->val.x);
 	    }
 	} else if (fp->type == GRETL_TYPE_SERIES) {
 	    if (arg->type == GRETL_TYPE_USERIES) {
@@ -5589,40 +5560,35 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    if (fp->flags & ARG_CONST) {
 		err = localize_const_matrix(arg, fp);
 	    } else {
-		err = copy_matrix_as(arg->val.m, fp->name, 1);
+		err = copy_as_arg(fp->name, fp->type, arg->val.m); 
 	    }
 	} else if (fp->type == GRETL_TYPE_BUNDLE) {
-	    err = copy_bundle_arg_as(arg->val.b, fp->name);
+	    err = copy_as_arg(fp->name, fp->type, arg->val.b); 
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    err = localize_list(call, arg, fp, dset);
 	} else if (fp->type == GRETL_TYPE_STRING) {
 	    if (arg->type != GRETL_TYPE_NONE) {
-		err = add_string_as(arg->val.str, fp->name);
-	    }
-	} else if (fp->type == GRETL_TYPE_SCALAR_REF) {
-	    if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_scalar_ref(arg, fp);
+		err = copy_as_arg(fp->name, fp->type, arg->val.str); 
 	    }
 	} else if (fp->type == GRETL_TYPE_SERIES_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
 		err = localize_series_ref(call, arg, fp, dset);
 	    }
-	} else if (fp->type == GRETL_TYPE_MATRIX_REF) {
+	} else if (gretl_ref_type(fp->type)) {
 	    if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_matrix_ref(arg, fp);
-	    }
-	} else if (fp->type == GRETL_TYPE_BUNDLE_REF) {
-	    if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_bundle_ref(args, i, fp);
+		err = user_var_localize(arg->upname, fp->name, fp->type);
+		if (!err) {
+		    maybe_set_arg_const(arg, fp);
+		}
 	    }
 	} 
 
-	if (!err) {
-	    if (arg->type == GRETL_TYPE_USERIES && fp->type != GRETL_TYPE_LIST) {
-		arg->upname = gretl_strdup(dset->varname[arg->val.idnum]);
-	    } else if (arg->type == GRETL_TYPE_USCALAR) {
-		arg->upname = gretl_strdup(gretl_scalar_get_name(arg->val.idnum));
-	    }	
+	if (!err && arg->type == GRETL_TYPE_USERIES) {
+	    if (fp->type == GRETL_TYPE_LIST) {
+		/* FIXME ? */
+		free(arg->upname);
+		arg->upname = NULL;
+	    }
 	}	
     }
 
@@ -5833,7 +5799,7 @@ static int handle_bundle_return (fncall *call, void *ptr, int copy)
     int err = 0;
 
     if (copy) {
-	gretl_bundle *b = get_gretl_bundle_by_name(name);
+	gretl_bundle *b = get_bundle_by_name(name);
 
 	if (b != NULL) {
 	    ret = gretl_bundle_copy(b, &err);
@@ -5946,7 +5912,7 @@ static int unlocalize_list (const char *lname, struct fnarg *arg,
 	}
 	if (arg->type != GRETL_TYPE_LIST) {
 	    /* the list was constructed on the fly */
-	    delete_list_by_name(lname);
+	    user_var_delete_by_name(lname, NULL);
 	}
     }
 
@@ -5993,16 +5959,15 @@ maybe_set_return_description (fncall *call, int rtype,
 static int is_pointer_arg (fncall *call, fnargs *args, int rtype)
 {
     ufunc *u = call->fun;
-    int i;
 
-    if (call->retname == NULL) {
-	return 0;
-    }
+    if (call->retname != NULL) {
+	int i;
 
-    for (i=0; i<args->argc; i++) {
-	if (types_match(u->params[i].type, rtype)) {
-	    if (!strcmp(u->params[i].name, call->retname)) {
-		return 1;
+	for (i=0; i<args->argc; i++) {
+	    if (types_match(u->params[i].type, rtype)) {
+		if (!strcmp(u->params[i].name, call->retname)) {
+		    return 1;
+		}
 	    }
 	}
     }
@@ -6022,34 +5987,34 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
     ufunc *u = call->fun;
     struct fnarg *arg;
     fn_param *fp;
-    int copy, i, err = 0;
+    int i, err = 0;
 
 #if UDEBUG
     fprintf(stderr, "function_assign_returns: rtype = %d, call->retname = %s\n", 
 	    rtype, call->retname);
 #endif
 
-    /* check for missing return value */
     if (*perr == 0 && !null_return(rtype) && call->retname == NULL) {
+	/* missing return value */
 	gretl_errmsg_sprintf("Function %s did not provide the specified return value",
 			     u->name);
 	*perr = err = E_UNKVAR;
+    } else if (*perr == 0 && needs_datainfo(rtype) && dset == NULL) {
+	/* "can't happen" */
+	*perr = err = E_DATA;
     }
 
     if (*perr == 0) {
 	/* first we work on the value directly returned by the
 	   function (but only if there's no error) 
 	*/
-	if (needs_datainfo(rtype) && dset == NULL) {
-	    /* "can't happen" */
-	    err = E_DATA;
-	} else if (rtype == GRETL_TYPE_DOUBLE) {
+	int copy = is_pointer_arg(call, args, rtype);
+
+	if (rtype == GRETL_TYPE_DOUBLE) {
 	    err = handle_scalar_return(call->retname, ret);
 	} else if (rtype == GRETL_TYPE_SERIES) {
-	    copy = is_pointer_arg(call, args, rtype);
 	    err = handle_series_return(call->retname, ret, dset, copy);
 	} else if (rtype == GRETL_TYPE_MATRIX) {
-	    copy = is_pointer_arg(call, args, rtype);
 	    err = handle_matrix_return(call->retname, ret, copy);
 	} else if (rtype == GRETL_TYPE_LIST) {
 	    /* note: in this case the job is finished in
@@ -6058,7 +6023,6 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	    */
 	    err = unlocalize_list(call->retname, NULL, dset);
 	} else if (rtype == GRETL_TYPE_BUNDLE) {
-	    copy = is_pointer_arg(call, args, rtype);
 	    err = handle_bundle_return(call, ret, copy);
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    err = handle_string_return(call->retname, ret);
@@ -6091,21 +6055,19 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 
 		series_decrement_stack_level(dset, v);
 		strcpy(dset->varname[v], arg->upname);
-	    } else if (arg->type == GRETL_TYPE_SCALAR_REF) {
-		gretl_scalar_restore_name(arg->val.idnum, arg->upname);
-	    } else if (arg->type == GRETL_TYPE_MATRIX_REF) {
-		user_matrix *u = arg->val.um;
+	    } else if (gretl_ref_type(arg->type)) {
+		user_var_unlocalize(fp->name, arg->upname, fp->type);
+	    } 
+	} else if (fp->type == GRETL_TYPE_MATRIX && 
+		   (fp->flags & ARG_CONST) && 
+		   arg->upname != NULL) {
+	    /* non-pointerized const matrix argument */
+	    user_var *u = get_user_var_by_data(arg->val.m);
 
-		user_matrix_adjust_level(u, -1);
-		user_matrix_set_name(u, arg->upname);
-	    } else if (arg->type == GRETL_TYPE_BUNDLE_REF) {
-		gretl_bundle_unlocalize(fp->name, arg->upname);
+	    if (u != NULL) {
+		user_var_adjust_level(u, -1);
+		user_var_set_name(u, arg->upname);
 	    }
-	} else if (fp->type == GRETL_TYPE_MATRIX && arg->upname != NULL) {
-	    user_matrix *u = get_user_matrix_by_data(arg->val.m);
-
-	    user_matrix_adjust_level(u, -1);
-	    user_matrix_set_name(u, arg->upname);
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    unlocalize_list(fp->name, arg, dset);
 	} 
@@ -6137,22 +6099,22 @@ static void record_obs_info (obsinfo *o, DATASET *dset)
 /* on function exit, restore the sample information that was in force
    on entry */
 
-static int restore_obs_info (obsinfo *o, DATASET *dset)
+static int restore_obs_info (obsinfo *oi, DATASET *dset)
 {
     gretlopt opt = OPT_NONE;
     char tmp[128];
 
-    if (o->structure == CROSS_SECTION) {
+    if (oi->structure == CROSS_SECTION) {
 	opt = OPT_X;
-    } else if (o->structure == TIME_SERIES) {
+    } else if (oi->structure == TIME_SERIES) {
 	opt = OPT_T;
-    } else if (o->structure == STACKED_TIME_SERIES) {
+    } else if (oi->structure == STACKED_TIME_SERIES) {
 	opt = OPT_S;
-    } else if (o->structure == SPECIAL_TIME_SERIES) {
+    } else if (oi->structure == SPECIAL_TIME_SERIES) {
 	opt = OPT_N;
     } 
 
-    sprintf(tmp, "setobs %d %s", o->pd, o->stobs);
+    sprintf(tmp, "setobs %d %s", oi->pd, oi->stobs);
 
     return set_obs(tmp, dset, opt);
 }
@@ -6177,41 +6139,6 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 
     call->args = NULL;
     
-    if (destroy_locals) {
-	anyerr = destroy_user_scalars_at_level(d);
-	if (anyerr && !err) {
-	    err = anyerr;
-#if FN_DEBUG
-	    fprintf(stderr, "destroy_user_scalars_at_level(%d): err = %d\n", d, err);
-#endif
-	}
-
-	/* if any bundles were defined but not returned, clean up */
-	anyerr = destroy_saved_bundles_at_level(d);
-	if (anyerr && !err) {
-	    err = anyerr;
-#if FN_DEBUG
-	    fprintf(stderr, "destroy_saved_bundles_at_level(%d): err = %d\n", d, err);
-#endif
-	}    
-
-	anyerr = destroy_user_matrices_at_level(d);
-	if (anyerr && !err) {
-	    err = anyerr;
-#if FN_DEBUG
-	    fprintf(stderr, "destroy_user_matrices_at_level(%d): err = %d\n", d, err);
-#endif
-	}
-
-	anyerr = destroy_saved_strings_at_level(d);
-	if (anyerr && !err) {
-	    err = anyerr;
-#if FN_DEBUG
-	    fprintf(stderr, "destroy_saved_strings_at_level(%d): err = %d\n", d, err);
-#endif
-	}
-    }
-
     /* below: delete series local to the function, taking care not to
        delete any that have been "promoted" to caller level via their 
        inclusion in a returned list
@@ -6256,14 +6183,11 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 	} else {
 	    err = E_ALLOC;
 	}
+    }
+
+    if (destroy_locals) {
+	anyerr = destroy_user_vars_at_level(d);
     }    
-
-    anyerr = destroy_saved_lists_at_level(d);
-
-#if FN_DEBUG
-    fprintf(stderr, "destroy_saved_lists_at_level(%d): err = %d\n", d, anyerr);
-#endif
-
 
     if (anyerr && !err) {
 	err = anyerr;
@@ -6344,9 +6268,7 @@ static void func_exec_callback (ExecState *s, void *ptr,
 
 static double arg_get_double_val (struct fnarg *arg)
 {
-    if (arg->type == GRETL_TYPE_USCALAR) {
-	return gretl_scalar_get_value_by_index(arg->val.idnum);
-    } else if (gretl_scalar_type(arg->type)) {
+    if (gretl_scalar_type(arg->type)) {
 	return arg->val.x;
     } else if (arg->type == GRETL_TYPE_MATRIX) {
 	return arg->val.m->val[0];
@@ -6369,8 +6291,6 @@ static int check_function_args (ufunc *u, fnargs *args, PRN *prn)
 	if ((fp->flags & ARG_OPTIONAL) && arg->type == GRETL_TYPE_NONE) {
 	    ; /* this is OK */
 	} else if (gretl_scalar_type(fp->type) && arg->type == GRETL_TYPE_DOUBLE) {
-	    ; /* OK */
-	} else if (gretl_scalar_type(fp->type) && arg->type == GRETL_TYPE_USCALAR) {
 	    ; /* OK */
 	} else if (fp->type == GRETL_TYPE_SERIES && arg->type == GRETL_TYPE_USERIES) {
 	    ; /* OK */
@@ -6674,9 +6594,7 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 	if (gretl_scalar_type(fp->type)) {
 	    double x;
 
-	    if (arg->type == GRETL_TYPE_USCALAR) {
-		x = gretl_scalar_get_value_by_index(arg->val.idnum);
-	    } else if (arg->type == GRETL_TYPE_NONE) {
+	    if (arg->type == GRETL_TYPE_NONE) {
 		x = fp->deflt;
 	    } else if (arg->type == GRETL_TYPE_MATRIX) {
 		x = arg->val.m->val[0];
@@ -6689,13 +6607,10 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 		x = (x != 0.0);
 	    }
 	    err = gretl_bundle_set_data(b, key, &x, GRETL_TYPE_DOUBLE, 0);
-	} else if (fp->type == GRETL_TYPE_MATRIX) {
+	} else if (fp->type == GRETL_TYPE_MATRIX || 
+		   fp->type == GRETL_TYPE_MATRIX_REF) {
 	    gretl_matrix *m = arg->val.m;
 	    
-	    err = gretl_bundle_set_data(b, key, m, fp->type, 0);
-	} else if (fp->type == GRETL_TYPE_MATRIX_REF) {
-	    gretl_matrix *m = user_matrix_get_matrix(arg->val.um);
-
 	    err = gretl_bundle_set_data(b, key, m, fp->type, 0);
 	} else if (fp->type == GRETL_TYPE_SERIES) {
 	    int size = sample_size(dset);

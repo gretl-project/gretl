@@ -30,7 +30,7 @@
 #include "guiprint.h"
 #include "graph_page.h"
 
-#include "gretl_scalar.h"
+#include "uservar.h"
 #include "libset.h"
 
 #ifdef G_OS_WIN32
@@ -1953,11 +1953,12 @@ void special_print_confints (const CoeffIntervals *cf, PRN *prn)
 
 int scalars_to_prn (PRN *prn)
 {
+    GList *slist, *tail;
     char decpoint = get_data_export_decpoint();
     char delim = get_data_export_delimiter();
     const char *sname;
     double sval;
-    int i, n = n_saved_scalars();
+    user_var *u;
 
     if (delim == ',' && ',' == decpoint) {
 	errbox(_("You can't use the same character for "
@@ -1965,19 +1966,25 @@ int scalars_to_prn (PRN *prn)
 	return 1;
     }
 
+    tail = slist = user_var_list_for_type(GRETL_TYPE_DOUBLE);
+
     if (decpoint != ',') {
 	gretl_push_c_numeric_locale();
     }
 
-    for (i=0; i<n; i++) {
-	sname = gretl_scalar_get_name(i);
-	sval = gretl_scalar_get_value_by_index(i);
+    while (tail) {
+	u = tail->data;
+	sname = user_var_get_name(u);
+	sval = user_var_get_scalar_value(u);
 	if (na(sval)) {
 	    pprintf(prn, "%s%cNA\n", sname, delim);
 	} else {
 	    pprintf(prn, "%s%c%.15g\n", sname, delim, sval);
 	}
+	tail = tail->next;
     }
+
+    g_list_free(slist);
 
     if (decpoint != ',') {
 	gretl_pop_c_numeric_locale();
@@ -2132,7 +2139,7 @@ int scalars_to_clipboard_as_csv (GtkWidget *parent)
 {
     int err = 0;
 
-    if (n_saved_scalars() == 0) {
+    if (n_user_scalars() == 0) {
 	warnbox(_("No scalar variables are currently defined"));
     } else {
 	int resp = csv_options_dialog(COPY_CSV, GRETL_OBJ_SCALARS,

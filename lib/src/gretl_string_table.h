@@ -53,29 +53,15 @@ const char **series_table_get_strings (series_table *st, int *n_strs);
 
 void gretl_insert_builtin_string (const char *name, const char *s);
 
-int save_named_string (const char *name, const char *s, PRN *prn);
+char *get_built_in_string_by_name (const char *name);
 
-int add_string_as (const char *s, const char *name);
-
-const char *get_string_by_name (const char *name);
+void builtin_strings_cleanup (void);
 
 int process_string_command (const char *line, 
 			    double ***pZ, DATASET *dset,
 			    PRN *prn);
 
 int substitute_named_strings (char *line, int *subst);
-
-int gretl_is_string (const char *sname);
-
-int is_user_string (const char *sname);
-
-void saved_strings_cleanup (void);
-
-int delete_saved_string (const char *name, PRN *prn);
-
-void destroy_user_strings (void);
-
-int destroy_saved_strings_at_level (int d);
 
 char *gretl_getenv (const char *key, int *defined, int *err);
 

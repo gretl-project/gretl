@@ -28,7 +28,7 @@
 #include "system.h"
 #include "gretl_panel.h"
 #include "usermat.h"
-#include "gretl_scalar.h"
+#include "uservar.h"
 #include "gretl_string_table.h"
 #include "matrix_extra.h"
 #include "boxplots.h"

@@ -24,13 +24,12 @@
 
 #include "libgretl.h" 
 #include "libset.h"
-#include "usermat.h"
+#include "uservar.h"
 #include "matrix_extra.h"
 #include "gretl_func.h"
 #include "nlspec.h"
 #include "cmd_private.h"
 #include "estim_private.h"
-#include "gretl_scalar.h"
 #include "gretl_string_table.h"
 #include "gretl_bfgs.h"
 #include "tsls.h"
@@ -3563,7 +3562,7 @@ MODEL ivreg_via_gmm (const int *list, DATASET *dset, gretlopt opt)
     clear_model(&olsmod);
 
     dataset_drop_last_variables(dset, dset->v - orig_v);
-    user_matrix_destroy_by_name(IVREG_WEIGHTNAME, NULL);
+    user_var_delete_by_name(IVREG_WEIGHTNAME, NULL);
 
     return model;
 }

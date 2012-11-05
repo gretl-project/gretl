@@ -23,7 +23,7 @@
 #include "swap_bytes.h"
 #include "gretl_www.h"
 #include "libset.h"
-#include "gretl_string_table.h"
+#include "uservar.h"
 #include "matrix_extra.h"
 #include "usermat.h"
 #include "dbread.h"

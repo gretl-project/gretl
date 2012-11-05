@@ -123,7 +123,7 @@ topiclist.o: topiclist.c $(GRETLDEP)
 	$(CC) $(CFLAGS) $(TOPICDEFS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
 
 tables.o: tables.c $(GRETLDEP) $(topsrc)/lib/src/monte_carlo.c
-	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
+	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
 
 matfuncs.o: matfuncs.c $(GRETLDEP)
 	$(CC) $(CFLAGS) $(TOPICDEFS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
