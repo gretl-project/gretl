@@ -2289,7 +2289,7 @@
 	  distribution; suitable functions for creating <argname>U</argname>
 	  are <fncref targ="muniform"/> and <fncref targ="halton"/>.
 	</para>
-        <para>
+	<para>
 	  In the following example, the series <argname>P</argname>
 	  and <argname>Q</argname> should be numerically very similar
 	  to one another, <argname>P</argname> being the "true"
@@ -3216,10 +3216,10 @@
 	  observations.  
 	</para>
 	<para>
-	  This statistic may be referred to the chi-square distribution with
-	  <argname>p</argname> degrees of freedom as a test of the null
-	  hypothesis that the series <argname>y</argname> is serially
-	  independent.
+	  This statistic may be referred to the chi-square
+	  distribution with <argname>p</argname> degrees of freedom as
+	  a test of the null hypothesis that the series
+	  <argname>y</argname> is serially incorrelated.
 	  <seelist>
 	    <fncref targ="pvalue"/>
 	  </seelist>

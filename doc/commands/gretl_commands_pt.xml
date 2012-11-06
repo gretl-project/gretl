@@ -2892,7 +2892,7 @@
     </description>
   </command>
 
-  <command name="else" section="Programming" context="cli">
+  <command name="else" section="Programming" label="Controlo de fluxo" context="cli">
     <description>
       <para>Ver <cmdref targ="if"/>. Note que <cmd>else</cmd>
 	requer uma linha para ele mesmo, antes do comando
@@ -6237,8 +6237,7 @@
 
   </command>
 
-  <command name="markers" section="Dataset" 
-    label="Observation markers" context="cli">
+  <command name="markers" section="Dataset" label="Observation markers" context="cli">
 
     <usage>
       <altforms>
