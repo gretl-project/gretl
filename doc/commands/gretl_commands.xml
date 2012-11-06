@@ -6346,8 +6346,7 @@
 
     <usage>
       <altforms>
-	<altform><lit>markers
-	--to-file=</lit><repl>filename</repl></altform>
+	<altform><lit>markers --to-file=</lit><repl>filename</repl></altform>
 	<altform><lit>markers --from-file=</lit><repl>filename</repl></altform>
 	<altform><lit>markers --delete</lit></altform>
       </altforms>
