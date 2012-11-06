@@ -7599,6 +7599,76 @@ static NODE *query_eval_scalar (double x, NODE *n, parser *p)
     return ret;
 }
 
+static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
+{
+    NODE *ret, *l, *r;
+    gretl_matrix *mret;
+
+    if (gretl_is_null_matrix(m)) {
+	p->err = E_TYPES;
+	return NULL;
+    }
+
+    l = eval(n->v.b3.m, p);
+    if (p->err) {
+	return NULL;
+    }
+
+    r = eval(n->v.b3.r, p);
+    if (p->err) {
+	return NULL;
+    }
+
+    if ((l->t != NUM && l->t != MAT) ||
+	(r->t != NUM && r->t != MAT)) {
+	p->err = E_TYPES;
+	return NULL;
+    }
+
+    if (l->t == MAT && (l->v.m->cols != m->cols ||
+			l->v.m->rows != m->rows)) {
+	p->err = E_NONCONF;
+	return NULL;
+    } else if (r->t == MAT && (r->v.m->cols != m->cols ||
+			       r->v.m->rows != m->rows)) {
+	p->err = E_NONCONF;
+	return NULL;
+    }	
+
+    mret = gretl_matrix_copy(m);
+    if (mret == NULL) {
+	p->err = E_ALLOC;
+	return NULL;
+    }
+
+    ret = aux_matrix_node(p);
+
+    if (!p->err) {
+	double x, y;
+	int j, i;
+
+	for (j=0; j<m->cols; j++) {
+	    for (i=0; i<m->rows; i++) {
+		x = gretl_matrix_get(m, i, j);
+		if (isnan(x)) {
+		    gretl_matrix_set(mret, i, j, x);
+		} else if (x != 0.0) {
+		    y = l->t == NUM ? l->v.xval :
+			gretl_matrix_get(l->v.m, i, j);
+		    gretl_matrix_set(mret, i, j, y);
+		} else {
+		    y = r->t == NUM ? r->v.xval :
+			gretl_matrix_get(r->v.m, i, j);
+		    gretl_matrix_set(mret, i, j, y);
+		}
+	    }
+	}
+	ret->v.m = mret;
+    }
+
+    return ret;
+}
+
 /* Handle the case where a ternary "query" expression has produced one
    of its own child nodes as output: we duplicate the information in an
    auxiliary node so as to avoid double-freeing of the result.
@@ -7652,8 +7722,8 @@ static NODE *ternary_return_node (NODE *n, parser *p)
 }
 
 /* Evaluate a ternary "query" expression: (C)? X : Y.  The condition C
-   must be a scalar or a series.  The relevant sub-nodes of t are
-   named "l" (left, the condition), "m" and "r" (middle and right
+   must be a scalar, series or matrix.  The relevant sub-nodes of @t
+   are named "l" (left, the condition), "m" and "r" (middle and right
    respectively, the two alternates).
 */
 
@@ -7661,6 +7731,7 @@ static NODE *eval_query (NODE *t, parser *p)
 {
     NODE *e, *ret = NULL;
     double *vec = NULL;
+    gretl_matrix *m = NULL;
     double x = NADBL;
 
 #if EDEBUG
@@ -7672,13 +7743,16 @@ static NODE *eval_query (NODE *t, parser *p)
     /* evaluate and check the condition */
 
     e = eval(t->v.b3.l, p);
+
     if (!p->err) {
-	if (e->t != NUM && e->t != VEC) {
-	    p->err = E_TYPES;
-	} else if (e->t == NUM) {
+	if (e->t == NUM) {
 	    x = e->v.xval;
-	} else {
+	} else if (e->t == VEC) {
 	    vec = e->v.xvec;
+	} else if (e->t == MAT) {
+	    m = e->v.m;
+	} else {
+	    p->err = E_TYPES;
 	}
     }
 
@@ -7688,6 +7762,8 @@ static NODE *eval_query (NODE *t, parser *p)
 
     if (vec != NULL) {
 	ret = query_eval_vec(vec, t, p);
+    } else if (m != NULL) {
+	ret = query_eval_matrix(m, t, p);
     } else {
 	ret = query_eval_scalar(x, t, p);
     }

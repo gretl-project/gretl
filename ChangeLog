@@ -1,3 +1,8 @@
+version 1.9.11, in progress
+- Substantial re-write of code for handling named variables
+  other than series (matrices, scalars, strings, etc.) in the
+  interest of maintainability and efficiency
+
 2012-11-05 version 1.9.10
 - Update translations
 - Major new command "join": this adds sophisticated procedures for 
