@@ -2,6 +2,11 @@ version 1.9.11, in progress
 - Substantial re-write of code for handling named variables
   other than series (matrices, scalars, strings, etc.) in the
   interest of maintainability and efficiency
+- Fix bug: spurious detection of line continuation characters
+  in #-style comments that do not start a command line
+- Fix bug: "eval" not working correctly for anonymous strings
+- Support a matrix as an element-wise boolean condition for the 
+  ternary "?" operator
 
 2012-11-05 version 1.9.10
 - Update translations
