@@ -9478,7 +9478,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     default: 
-	printf("EVAL: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),
+	printf("eval: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),
 	       t->t);
 	p->err = E_PARSE;
 	break;
@@ -11612,7 +11612,11 @@ void gen_save_or_print (parser *p, PRN *prn)
 	    } else if (p->ret->t == LIST) {
 		gretl_list_print(p->lh.name, p->dset, p->prn);
 	    } else if (p->ret->t == STR) {
-		pprintf(p->prn, "%s\n", get_string_by_name(p->lh.name));
+		if (p->lh.name[0] != '\0') {
+		    pprintf(p->prn, "%s\n", get_string_by_name(p->lh.name));
+		} else {
+		    pprintf(p->prn, "%s\n", p->ret->v.str);
+		}
 	    } else if (p->ret->t == BUNDLE) {
 		gretl_bundle_print(get_bundle_by_name(p->lh.name), prn);
 	    } else {

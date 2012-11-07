@@ -2016,7 +2016,7 @@ int printdata (const int *list, const char *mstr,
     /* at this point plist should have something in it */
     if (plist == NULL) {
 	return E_ALLOC;
-    } 
+    }
 
     if (gretl_list_has_separator(plist)) {
 	err = adjust_print_list(plist, &screenvar, opt);
