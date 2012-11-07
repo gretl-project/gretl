@@ -11768,11 +11768,7 @@ static int compare_rows (const void *a, const void *b)
     int ret = (*da > *db) - (*da < *db);
 
     if (ret == 0) {
-	if (a - b > 0) {
-	    ret = 1;
-	} else if (b - a > 0) {
-	    ret = -1;
-	}
+	ret = a - b > 0 ? 1 : -1;
     }
 
     return ret;
