@@ -11761,6 +11761,23 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
     return ret;
 }
 
+static int compare_rows (const void *a, const void *b)
+{
+    const double *da = (const double *) a;
+    const double *db = (const double *) b;
+    int ret = (*da > *db) - (*da < *db);
+
+    if (ret == 0) {
+	if (a - b > 0) {
+	    ret = 1;
+	} else if (b - a > 0) {
+	    ret = -1;
+	}
+    }
+
+    return ret;
+}
+
 /**
  * gretl_matrix_sort_by_column:
  * @m: matrix.
@@ -11808,7 +11825,7 @@ gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m,
 	rs[i].row = i;
     }
 
-    qsort(rs, m->rows, sizeof *rs, gretl_compare_doubles);
+    qsort(rs, m->rows, sizeof *rs, compare_rows);
 
     for (j=0; j<m->cols; j++) {
 	for (i=0; i<m->rows; i++) {
