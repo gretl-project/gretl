@@ -7,6 +7,9 @@ CC = @CC@
 CFLAGS = @CFLAGS@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
+GLIB_CFLAGS = @GLIB_CFLAGS@
+GLIB_LIBS = @GLIB_LIBS@
+
 SSE2_OPT = @SSE2_CFLAGS@
 OMP_OPT = @OPENMP_CFLAGS@
 
@@ -25,10 +28,10 @@ override CFLAGS += -I$(libsrc) -DSTANDALONE
 all: nistcheck
 
 nistcheck: nistcheck.o $(LIBGRETL)
-	../libtool --mode=link $(CCO) -o $@ $< $(LIBGRETL) $(XML_LIBS)
+	../libtool --mode=link $(CCO) -o $@ $< $(LIBGRETL) $(XML_LIBS) $(GLIB_LIBS)
 
 nistcheck.o: nistcheck.c
-	$(CCO) $(CFLAGS) $(XML_CFLAGS) -c $<
+	$(CCO) $(CFLAGS) $(XML_CFLAGS) $(GLIB_CFLAGS) -c $<
 
 .PHONY :
 
