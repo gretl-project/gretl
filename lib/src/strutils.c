@@ -1119,10 +1119,14 @@ int top_n_tail (char *str, size_t maxlen, int *err)
 	if (*str == '#' || !strncmp(str, "/*", 2)) {
 	    ; /* leave well alone */
 	} else {
-	    /* replace backslash, if present */
+	    /* look for line continuation characters at the end of
+	       the line, but only if not preceded by the comment
+	       character, '#' 
+	    */
 	    n = strlen(str) - 1;
-	    if (n >= 0) {
+	    if (n >= 0 && strchr(str, '#') == NULL) {
 		if (str[n] == '\\') {
+		    /* replace backslash */
 		    str[n] = ' ';
 		    cont = 1;
 		} else if (str[n] == ',') {
