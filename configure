@@ -646,6 +646,8 @@ XML_LIBS
 XML_CFLAGS
 GDK_PIXBUF_LIBS
 GDK_PIXBUF_CFLAGS
+use_xdg_utils
+use_xdg
 build_po
 build_mailer
 have_odbc
@@ -820,12 +822,13 @@ enable_gtk3
 enable_build_doc
 enable_quiet_build
 enable_swap_ends
+enable_xdg
+enable_xdg_utils
 enable_pkgbuild
 enable_gnuplot_checks
 with_lucida
 with_gmake
 with_readline
-with_xdg
 with_mpfr
 with_x_12_arima
 with_tramo_seats
@@ -1500,7 +1503,9 @@ Optional Features:
   --enable-build-doc      Enable building of gretl docs [CVS only]
   --enable-quiet-build    Enable quiet building
   --enable-swap-ends      Build FRED database with swapped endianness
-  --enable-pkgbuild       For building relocatable package
+  --disable-xdg           Don't Install XDG files
+  --enable-xdg-utils      Use xdg-utils for installing XDG files [default=auto]
+  --enable-pkgbuild       For building relocatable package (e.g. OS X)
   --disable-gnuplot-checks do not run checks for gnuplot
   --enable-static[=PKGS]  build static libraries [default=no]
   --enable-shared[=PKGS]  build shared libraries [default=yes]
@@ -1521,7 +1526,6 @@ Optional Packages:
   --with-lucida           Use Lucida fonts for manual [CVS only]
   --with-gmake            Use GNU make explicitly [default=no]
   --with-readline      Build with libreadline support [default=auto]
-  --with-xdg           Install XDG support [default=auto]
   --with-mpfr            Use MPFR library [default=auto]
   --with-x-12-arima      include X-12-ARIMA support [default=yes]
   --with-tramo-seats     include TRAMO/SEATS support [default=yes]
@@ -2673,8 +2677,9 @@ have_readline="no"
 new_readline="no"
 have_zlib="no"
 gtk_version="none"
-try_xdg="yes"
-have_xdg="no"
+use_xdg="yes"
+use_xdg_utils="no"
+try_xdg_utils="yes"
 have_gmp="no"
 have_mpfr="no"
 have_lapack="no"
@@ -6222,6 +6227,25 @@ fi
 fi
 
 
+# Check whether --enable-xdg was given.
+if test "${enable_xdg+set}" = set; then :
+  enableval=$enable_xdg; if test "$enableval" = "no"
+then
+  use_xdg=no
+  try_xdg_utils=no
+fi
+fi
+
+
+# Check whether --enable-xdg-utils was given.
+if test "${enable_xdg_utils+set}" = set; then :
+  enableval=$enable_xdg_utils; if test "$enableval" = "no"
+then
+  try_xdg_utils=no
+fi
+fi
+
+
 # Check whether --enable-pkgbuild was given.
 if test "${enable_pkgbuild+set}" = set; then :
   enableval=$enable_pkgbuild; if test "$enableval" = "yes"
@@ -6284,20 +6308,6 @@ else
 fi
 else
   try_readline=yes
-fi
-
-
-
-# Check whether --with-xdg was given.
-if test "${with_xdg+set}" = set; then :
-  withval=$with_xdg; if test "x${withval}" = "xno"
-then
-  try_xdg=no
-else
-  try_xdg=yes
-fi
-else
-  try_xdg=yes
 fi
 
 
@@ -15354,7 +15364,7 @@ fi
    fi
 fi
 
-if test "$try_xdg" = "yes" ; then
+if test "$try_xdg_utils" = "yes" ; then
 
 
   # Extract the first word of "xdg-mime", so it can be a program name with args.
@@ -15395,7 +15405,7 @@ fi
 
 
   if test x"${XDG_MIME}" = xyes ; then
-    have_xdg=yes
+    use_xdg_utils=yes
   fi
 fi
 
@@ -17559,6 +17569,8 @@ if test x"${MSGFMT}" != x ; then
 else
    echo "*** msgfmt not found, can't build message catalogs"
 fi
+
+
 
 
 
@@ -22731,7 +22743,6 @@ Configuration:
   sse2 support for RNG:                   ${sse2_result}
   openMP support:                         ${ac_openmp_result}
   Build with GTK version:                 ${gtk_version}
-  Install XDG support:                    ${have_xdg}
   Build gretl documentation:              ${build_docs}
   Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}
@@ -22740,6 +22751,7 @@ Configuration:
   libR support:                           ${have_libR}
   ODBC support:                           ${have_odbc}
   Experimental audio support:             ${have_audio}
+  Use xdg-utils in installation:          ${use_xdg_utils}
   LAPACK libraries:
     ${LAPACK_LIBS}
 

@@ -40,8 +40,9 @@ have_readline="no"
 new_readline="no"
 have_zlib="no"
 gtk_version="none"
-try_xdg="yes"
-have_xdg="no"
+use_xdg="yes"
+use_xdg_utils="no"
+try_xdg_utils="yes"
 have_gmp="no"
 have_mpfr="no"
 have_lapack="no"
@@ -122,8 +123,23 @@ then
   swap_ends=yes
 fi])
 
+AC_ARG_ENABLE(xdg,
+[  --disable-xdg           Don't Install XDG files],
+[if test "$enableval" = "no"
+then
+  use_xdg=no
+  try_xdg_utils=no
+fi])
+
+AC_ARG_ENABLE(xdg-utils,
+[  --enable-xdg-utils      Use xdg-utils for installing XDG files [[default=auto]]],
+[if test "$enableval" = "no"
+then
+  try_xdg_utils=no
+fi])
+
 AC_ARG_ENABLE(pkgbuild,
-[  --enable-pkgbuild       For building relocatable package ],
+[  --enable-pkgbuild       For building relocatable package (e.g. OS X) ],
 [if test "$enableval" = "yes"
 then
   AC_DEFINE(PKGBUILD)
@@ -173,16 +189,6 @@ else
   try_readline=yes
 fi,
 try_readline=yes)
-
-AC_ARG_WITH(xdg,
-[  --with-xdg           Install XDG support [[default=auto]]],
-if test "x${withval}" = "xno"
-then
-  try_xdg=no
-else
-  try_xdg=yes
-fi,
-try_xdg=yes)
 
 AC_ARG_WITH(mpfr,
 [  --with-mpfr            Use MPFR library [[default=auto]]],
@@ -331,13 +337,13 @@ fi
 dnl
 dnl Check for XDG for handling of gretl mime-types
 dnl
-if test "$try_xdg" = "yes" ; then
+if test "$try_xdg_utils" = "yes" ; then
   AC_DEFUN([AC_PROG_XDG_MIME],
   [AC_CHECK_PROG(XDG_MIME,xdg-mime,yes)])
 
   AC_PROG_XDG_MIME
   if test x"${XDG_MIME}" = xyes ; then
-    have_xdg=yes
+    use_xdg_utils=yes
   fi
 fi
 
@@ -617,6 +623,8 @@ AC_SUBST(have_audio)
 AC_SUBST(have_odbc)
 AC_SUBST(build_mailer)
 AC_SUBST(build_po)
+AC_SUBST(use_xdg)
+AC_SUBST(use_xdg_utils)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(CURL_CFLAGS)
@@ -801,7 +809,6 @@ Configuration:
   sse2 support for RNG:                   ${sse2_result}
   openMP support:                         ${ac_openmp_result}
   Build with GTK version:                 ${gtk_version}
-  Install XDG support:                    ${have_xdg}
   Build gretl documentation:              ${build_docs}
   Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}
@@ -810,6 +817,7 @@ Configuration:
   libR support:                           ${have_libR}
   ODBC support:                           ${have_odbc}
   Experimental audio support:             ${have_audio}
+  Use xdg-utils in installation:          ${use_xdg_utils}
   LAPACK libraries:
     ${LAPACK_LIBS}
 

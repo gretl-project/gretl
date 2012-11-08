@@ -1,5 +1,19 @@
 topsrc = @top_srcdir@
+prefix = @prefix@
+datarootdir = @datarootdir@
 xdgsrc = $(topsrc)/xdg
+tooldir = $(topsrc)/tools
+datadir = @datadir@
+use_xdg_utils = @use_xdg_utils@
+
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+ifeq ($(use_xdg_utils),yes)
+  query_install = xdg-install
+else
+  query_install = sh-install
+endif
 
 # gretl's mime types:
 #  application/gretl.data    (glob: *.gdt,   icon: gretl-data-icon.png)
@@ -8,7 +22,25 @@ xdgsrc = $(topsrc)/xdg
 
 all:
 
-install: gretl.desktop $(xdgsrc)/gretl.xml $(xdgsrc)/gretl-data-icon.png \
+install: $(query_install)
+
+# for system use, or package-building
+sh-install: gretl.desktop installdirs $(xdgsrc)/gretl.xml $(xdgsrc)/gretl-data-icon.png \
+	$(xdgsrc)/gretl-session-icon.png $(xdgsrc)/gretl-script-icon.png
+	$(INSTALL_DATA) gretl.desktop $(DESTDIR)$(datadir)/applications
+	$(INSTALL_DATA) $(xdgsrc)/gretl.xml $(DESTDIR)$(datadir)/mime/packages
+	$(INSTALL_DATA) $(xdgsrc)/gretl-data-icon.png \
+	  $(DESTDIR)$(datadir)/icons/hicolor/32x32/mimetypes/application-gretl.data.png
+	$(INSTALL_DATA) $(xdgsrc)/gretl-session-icon.png \
+	  $(DESTDIR)$(datadir)/icons/hicolor/32x32/mimetypes/application-gretl.session.png
+	$(INSTALL_DATA) $(xdgsrc)/gretl-script-icon.png \
+	  $(DESTDIR)$(datadir)/icons/hicolor/32x32/mimetypes/text-gretl.script.png
+	for f in 32 48 64 ; do \
+	  $(INSTALL_DATA) $(xdgsrc)/$$f/gretl.png $(DESTDIR)$(datadir)/icons/hicolor/$${f}x$${f}/apps ; \
+	done
+
+# suitable for individual users
+xdg-install: gretl.desktop $(xdgsrc)/gretl.xml $(xdgsrc)/gretl-data-icon.png \
 	$(xdgsrc)/gretl-session-icon.png $(xdgsrc)/gretl-script-icon.png
 	xdg-desktop-menu install gretl.desktop --novendor
 	xdg-mime install $(xdgsrc)/gretl.xml --novendor
@@ -18,3 +50,12 @@ install: gretl.desktop $(xdgsrc)/gretl.xml $(xdgsrc)/gretl-data-icon.png \
 	xdg-icon-resource install --context apps --size 32 $(xdgsrc)/32/gretl.png --novendor
 	xdg-icon-resource install --context apps --size 48 $(xdgsrc)/48/gretl.png --novendor
 	xdg-icon-resource install --context apps --size 64 $(xdgsrc)/64/gretl.png --novendor
+
+installdirs:
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(sharedir)/applications
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(sharedir)/mime/packages
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(sharedir)/icons/hicolor/32x32/apps
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(sharedir)/icons/hicolor/32x32/mimetypes
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(sharedir)/icons/hicolor/48x48/apps
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(sharedir)/icons/hicolor/64x64/apps
+

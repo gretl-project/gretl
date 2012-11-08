@@ -14,6 +14,7 @@ build_gui = @build_gui@
 gtk_version = @gtk_version@
 build_po = @build_po@
 build_doc = @build_docs@
+use_xdg = @use_xdg@
 
 ifeq ($(CC),)
   CC = gcc
@@ -35,6 +36,10 @@ ifeq ($(build_doc),yes)
   DOCDIR = doc
 endif
 
+ifeq ($(use_xdg),yes)
+  XDGDIR = xdg
+endif
+
 INSTALL_PROGRAM = ${INSTALL} -m 755
 INSTALL_DATA = ${INSTALL} -m 644
 
@@ -42,8 +47,8 @@ export
 
 tooldir = $(topsrc)/tools
 
-SUBDIRS = lib cli $(GUIDIR) plugin $(PODIR) share
-ALLSUBDIRS = lib cli gui2 plugin po share tests
+SUBDIRS = lib cli $(GUIDIR) plugin $(PODIR) share $(XDGDIR)
+ALLSUBDIRS = lib cli gui2 plugin po share tests xdg
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-strip \
 install-man tags dist distclean check buildstamp

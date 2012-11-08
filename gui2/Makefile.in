@@ -16,7 +16,6 @@ LN = @LN_S@
 have_readline = @have_readline@
 have_sourceview = @have_sourceview@
 have_zlib = @have_zlib@
-have_xdg = @have_xdg@
 quiet_build = @quiet_build@
 pkg_build = @pkg_build@
 fake_gtkspinner = @fake_gtkspinner@
@@ -62,10 +61,6 @@ ifeq ($(INSTALL_DATA),)
 endif
 ifeq ($(LN),)
   LN = ln -sf
-endif
-
-ifeq ($(have_xdg),yes)
-  query_install_xdg = install-xdg
 endif
 
 GRETLLIB = ../lib/libgretl-1.0.la
@@ -205,9 +200,9 @@ $(GRETL_LANG): $(MKLANG)
 
 .PHONY:
 
-install: install-exec install-ui install-data install-lang $(query_install_xdg)
+install: install-exec install-ui install-data install-lang
 
-install-strip: $(PROG) install-data $(query_install_xdg)
+install-strip: $(PROG) install-data
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)
 
 install-data: installdirs
@@ -220,9 +215,6 @@ install-ui: installdirs
 
 install-exec: $(PROG) installdirs 
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(PROG) $(DESTDIR)$(bindir)/$(PROG)
-
-install-xdg: $(PROG) installdirs 
-	$(MAKE) -C ../xdg install 
 
 install-lang: $(GRETL_LANG) installdirs
 	$(INSTALL_DATA) $(GRETL_LANG) $(DESTDIR)$(langdir)/gretl.lang
