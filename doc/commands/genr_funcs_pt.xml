@@ -1393,6 +1393,14 @@
 	  sub-strings.  The return value is 0 on successful completion,
 	  non-zero on error. See also <fncref targ="rownames"/>.
 	</para>
+	<para>
+	  Example:
+	</para>
+	<code>
+	  matrix M = {1,2;2,1;4,1}
+	  colnames(M, "Col1 Col2")
+	  print M
+	</code>
       </description>
     </function>
 
@@ -5442,6 +5450,14 @@
 	  sub-strings.  The return value is 0 on successful completion,
 	  non-zero on error. See also <fncref targ="colnames"/>.
 	</para>
+	<para>
+          Example:
+        </para>
+        <code>
+         matrix M = {1,2;2,1;4,1} 
+         rownames(M, "Row1 Row2 Row3")
+         print M      
+      </code>
       </description>
     </function>
 
