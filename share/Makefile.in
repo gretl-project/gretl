@@ -62,18 +62,23 @@ install_datafiles:
 	$(INSTALL_DATA) $(sharesrc)/data/descriptions $(DESTDIR)$(gretldir)/data 
 	$(INSTALL_DATA) $(sharesrc)/data/gretldata.dtd $(DESTDIR)$(gretldir)/data 
 	$(INSTALL_DATA) $(sharesrc)/data/plotbars/nber.txt $(DESTDIR)$(gretldir)/data/plotbars
-	for f in $(sharesrc)/data/greene/* ; do \
+	for f in $(sharesrc)/data/greene/*.gdt ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data/greene ; done
-	for f in $(sharesrc)/data/misc/* ; do \
+	$(INSTALL_DATA) $(sharesrc)/data/greene/wg_descriptions $(DESTDIR)$(gretldir)/data/greene
+	for f in $(sharesrc)/data/misc/*.gdt ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data/misc ; done
+	$(INSTALL_DATA) $(sharesrc)/data/misc/descriptions $(DESTDIR)$(gretldir)/data/misc
 	for f in $(topsrc)/tests/*.dat ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data/nist ; done
 
 install_scripts:
-	for f in $(sharesrc)/scripts/* ; do \
+	for f in $(sharesrc)/scripts/*.inp ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/scripts ; done
-	for f in $(sharesrc)/scripts/misc/* ; do \
+	$(INSTALL_DATA) $(sharesrc)/scripts/ps_descriptions $(DESTDIR)$(gretldir)/scripts
+	$(INSTALL_DATA) $(sharesrc)/scripts/wg_ps_descriptions $(DESTDIR)$(gretldir)/scripts
+	for f in $(sharesrc)/scripts/misc/*.inp ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/scripts/misc ; done
+	$(INSTALL_DATA) $(sharesrc)/scripts/misc/ps_descriptions $(DESTDIR)$(gretldir)/scripts/misc
 
 install_functions:
 	$(INSTALL_DATA) $(sharesrc)/functions/gretlfunc.dtd $(DESTDIR)$(gretldir)/functions 
@@ -114,7 +119,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/db
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/functions
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/fonts
-	
+
 helpclean:
 	for f in $(AUTO_HELPFILES) ; do rm -f $(sharesrc)/$$f ; done
 	for f in $(sharesrc)/hlp*.stamp ; do rm -f $$f ; done

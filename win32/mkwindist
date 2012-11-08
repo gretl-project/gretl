@@ -168,13 +168,16 @@ add_file ${HLPDIR}/gretlhelp.refs gretl/gretlhelp.refs
 for f in ${TOPDIR}/share/texfigs/*.png ; do
    add_file $f gretl/helpfigs/`basename $f`
 done
-for lang in es it ; do
-   add_file ${HLPDIR}/gretlgui.hlp.${lang} \
-       gretl/gretlgui_hlp_${lang}.txt
-   add_file ${HLPDIR}/gretlcmd.hlp.${lang} \
-       gretl/gretlcmd_hlp_${lang}.txt
-   add_file ${HLPDIR}/gretlcli.hlp.${lang} \
-       gretl/gretlcli_hlp_${lang}.txt
+for lang in es it pt ; do
+  if test -f ${HLPDIR}/gretlgui.hlp.${lang} ; then \
+     add_file ${HLPDIR}/gretlgui.hlp.${lang} gretl/gretlgui_hlp_${lang}.txt
+  fi
+  if test -f ${HLPDIR}/gretlcmd.hlp.${lang} ; then \
+     add_file ${HLPDIR}/gretlcmd.hlp.${lang} gretl/gretlcmd_hlp_${lang}.txt
+  fi
+  if test -f ${HLPDIR}/gretlcli.hlp.${lang} ; then \
+     add_file ${HLPDIR}/gretlcli.hlp.${lang} gretl/gretlcli_hlp_${lang}.txt
+  fi
 done
 add_file ${TOPDIR}/COPYING gretl/COPYING
 add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm
