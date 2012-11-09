@@ -6075,14 +6075,21 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     if (f == F_MSHAPE || f == F_TRIMR) {
 	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
-	} else if (m->t != NUM) {
+	} else if (!scalar_node(m)) {
 	    node_type_error(f, 2, NUM, m, p);
-	} else if (r->t != NUM) {
+	} else if (!scalar_node(r)) {
 	    node_type_error(f, 3, NUM, r, p);
-	} else if (f == F_MSHAPE) {
-	    A = gretl_matrix_shape(l->v.m, m->v.xval, r->v.xval);
 	} else {
-	    A = gretl_matrix_trim_rows(l->v.m, m->v.xval, r->v.xval, &p->err);
+	    int k1 = node_get_int(m, p);
+	    int k2 = node_get_int(r, p);
+
+	    if (!p->err) {
+		if (f == F_MSHAPE) {
+		    A = gretl_matrix_shape(l->v.m, k1, k2);
+		} else {
+		    A = gretl_matrix_trim_rows(l->v.m, k1, k2, &p->err);
+		}
+	    }
 	}
     } else if (f == F_SVD) {
 	if (l->t != MAT) {
@@ -6123,18 +6130,20 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    A = get_corrgm_matrix(l, m, r, p);
 	}
     } else if (f == F_SEQ) {
-	if (l->t != NUM) {
+	if (!scalar_node(l)) {
 	    node_type_error(f, 1, NUM, l, p);
-	} else if (m->t != NUM) {
+	} else if (!scalar_node(m)) {
 	    node_type_error(f, 2, NUM, m, p);
-	} else if (r->t != NUM && r->t != EMPTY) {
+	} else if (!scalar_node(r) && r->t != EMPTY) {
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
-	    int start = l->v.xval;
-	    int end = m->v.xval;
-	    int step = (r->t == NUM)? r->v.xval : 1;
+	    int start = node_get_int(l, p);
+	    int end = node_get_int(m, p);
+	    int step = (r->t != EMPTY)? node_get_int(r, p) : 1;
 
-	    A = gretl_matrix_seq(start, end, step, &p->err);
+	    if (!p->err) {
+		A = gretl_matrix_seq(start, end, step, &p->err);
+	    }
 	}
     } else if (f == F_STRNCMP) {
 	if (l->t != STR) {
