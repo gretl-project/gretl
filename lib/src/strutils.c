@@ -1061,6 +1061,26 @@ char *switch_ext_new (const char *src, const char *ext)
     return ret;
 }
 
+static int ends_in_comment (const char *s, int n)
+{
+    int i, quoted = 0;
+
+    /* the '#' character is inert (only) if it appears
+       within a string literal */
+
+    for (i=n; i>1; i--) {
+	if (s[i] == '"') {
+	    quoted = !quoted;
+	} else if (!quoted && s[i] == '#') {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+#define LINE_CONT(c) (c == '\\' || c == ',' || c == '(')
+
 /**
  * top_n_tail:
  * @str: the string to process.
@@ -1076,6 +1096,8 @@ char *switch_ext_new (const char *src, const char *ext)
  * Returns: 1 if a trailing backslash, comma or left parenthesis
  * was found, otherwise 0.
  */
+
+#include <assert.h>
 
 int top_n_tail (char *str, size_t maxlen, int *err)
 {
@@ -1095,6 +1117,7 @@ int top_n_tail (char *str, size_t maxlen, int *err)
     for (i=n; i>=0; i--) {
 	if (isspace((unsigned char) str[i])) {
 	    str[i] = 0;
+	    n--;
 	} else {
 	    break;
 	}
@@ -1109,32 +1132,25 @@ int top_n_tail (char *str, size_t maxlen, int *err)
 	       str[i] == '?' ||
 	       str[i] == (char) 0xC2 ||
 	       str[i] == (char) 0xA0) {
+	    n--;
 	    i++;
 	}
 	if (i > 0) {
 	    shift_string_left(str, i);
 	}
 
-	/* does this line start a comment? */
 	if (*str == '#' || !strncmp(str, "/*", 2)) {
-	    ; /* leave well alone */
-	} else if (strchr(str, '#') == NULL) {
-	    /* look for line continuation characters at the end of
+	    ; /* the line starts a comment: leave well alone */
+	} else if (n >= 0 && LINE_CONT(str[n])) {
+	    /* register line continuation characters at the end of
 	       the line, but only if not preceded by the comment
-	       character, '#' 
+	       character '#' (unquoted)
 	    */
-	    n = strlen(str) - 1;
-	    if (n >= 0) {
-		if (str[n] == '\\') {
-		    /* replace backslash */
-		    str[n] = ' ';
-		    cont = 1;
-		} else if (str[n] == ',') {
-		    cont = 1;
-		} else if (str[n] == '(') {
-		    cont = 1;
-		}
-	    }
+	    cont = !ends_in_comment(str, n - 1);
+	    if (cont && str[n] == '\\') {
+		/* replace backslash */
+		str[n] = ' ';
+	    }		    
 	}
     }
 
