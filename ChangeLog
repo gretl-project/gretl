@@ -7,6 +7,9 @@ version 1.9.11, in progress
 - Fix bug: "eval" not working correctly for anonymous strings
 - Support a matrix as an element-wise boolean condition for the 
   ternary "?" operator
+- The msortby() function: ensure that it performs a "stable" 
+  sort, such that rows sharing a common key value are never 
+  interchanged
 
 2012-11-05 version 1.9.10
 - Update translations
