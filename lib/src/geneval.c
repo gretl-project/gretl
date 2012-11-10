@@ -5828,22 +5828,36 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static int bundle_type_translate (GretlType type)
+{
+    if (type == GRETL_TYPE_DOUBLE) {
+	return 1;
+    } else if (type == GRETL_TYPE_SERIES) {
+	return 2;
+    } else if (type == GRETL_TYPE_MATRIX) {
+	return 3;
+    } else if (type == GRETL_TYPE_STRING) {
+	return 4;
+    } else if (type == GRETL_TYPE_BUNDLE) {
+	return 5;
+    } else if (type == GRETL_TYPE_MATRIX_REF) {
+	return 6;
+    } else {
+	return 0;
+    }
+}
+
 static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
 {
-    gretl_bundle *bundle = l->v.b;
-    const char *key = r->v.str;
-    void *val = NULL;
-    NODE *ret = NULL;
+    NODE *ret = aux_scalar_node(p);
 
-    if (!p->err) {
-	val = gretl_bundle_get_data(bundle, key, NULL, NULL, &p->err);
-    }
+    if (ret != NULL) {
+	gretl_bundle *bundle = l->v.b;
+	const char *key = r->v.str;
+	GretlType type = 0;
 
-    if (!p->err) {
-	ret = aux_scalar_node(p);
-	if (ret != NULL) {
-	    ret->v.xval = (val != NULL);
-	}
+	gretl_bundle_get_data(bundle, key, &type, NULL, NULL);
+	ret->v.xval = bundle_type_translate(type);
     }
 
     return ret;
