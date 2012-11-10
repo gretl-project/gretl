@@ -391,6 +391,7 @@ struct str_table funcs[] = {
     { F_GHK,      "ghk" },
     { F_HALTON,   "halton" },
     { F_ISNAN,    "isnan" },
+    { F_TYPESTR,  "typestr" },
     { 0,          NULL }
 };
 

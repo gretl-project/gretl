@@ -5863,6 +5863,37 @@ static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *type_string_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL) {
+	int t = n->v.xval;
+	const char *s = "";
+
+	if (t == 1) {
+	    s = "scalar";
+	} else if (t == 2) {
+	    s = "series";
+	} else if (t == 3) {
+	    s = "matrix";
+	} else if (t == 4) {
+	    s = "string";
+	} else if (t == 5) {
+	    s = "bundle";
+	} else if (t == 6) {
+	    s = "matrixref";
+	}
+
+	ret->v.str = gretl_strdup(s);
+	if (ret->v.str == NULL) {
+	    p->err = E_ALLOC;
+	}
+    }
+
+    return ret;
+}
+
 /* Setting an object in a bundle under a given key string. We get here
    only if p->lh.substr is non-NULL. That "substr" may be a string
    literal, or it may be the name of a string variable. In the latter
@@ -8900,6 +8931,14 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, 0, BUNDLE, l, p);
 	}	    
+	break;
+    case F_TYPESTR:
+	/* numerical type code to string */
+	if (l->t == NUM) {
+	    ret = type_string_node(l, p);
+	} else {
+	    node_type_error(t->t, 0, NUM, l, p);
+	}
 	break;
     case F_LDIFF:
     case F_SDIFF:
