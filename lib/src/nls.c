@@ -533,12 +533,13 @@ static int push_scalar_coeff (nlspec *s, double x)
    either a scalar or a vector
 */
 
-static int nlspec_push_param (nlspec *s, const char *name, char *deriv)
+static int nlspec_push_param (nlspec *s, const char *name, 
+			      GretlType type, char *deriv)
 {
     parm *params, *p;
     int np = s->nparam;
     int err;
-    
+
     params = realloc(s->params, (np + 1) * sizeof *params);
     if (params == NULL) {
 	return E_ALLOC;
@@ -548,7 +549,7 @@ static int nlspec_push_param (nlspec *s, const char *name, char *deriv)
 
     p->name[0] = '\0';
     strncat(p->name, name, VNAMELEN - 1);
-    p->type = GRETL_TYPE_DOUBLE;
+    p->type = type;
     p->dtype = GRETL_TYPE_NONE;
     p->deriv = deriv;
     p->dnum = 0;
@@ -564,7 +565,7 @@ static int nlspec_push_param (nlspec *s, const char *name, char *deriv)
     s->params = params;
     s->nparam = np + 1;
 
-    if (gretl_is_scalar(name)) {
+    if (type == GRETL_TYPE_DOUBLE) {
 	err = push_scalar_coeff(s, gretl_scalar_get_value(name));
     } else {
 	gretl_matrix *m = get_matrix_by_name(name);
@@ -573,8 +574,6 @@ static int nlspec_push_param (nlspec *s, const char *name, char *deriv)
 #if NLS_DEBUG
 	fprintf(stderr, "vector param: m = %p, k = %d\n", (void *) m, k);
 #endif
-
-	p->type = GRETL_TYPE_MATRIX;
 	p->vec = m;
 	p->nc = k;
 	err = push_vec_coeffs(s, m, k);
@@ -590,19 +589,21 @@ static int nlspec_push_param (nlspec *s, const char *name, char *deriv)
    if so return 0, else return E_DATATYPE.
 */
 
-static int check_param_name (const char *name)
+static int check_param_name (const char *name, GretlType *type)
 {
     int err = 0;
 
     if (gretl_is_scalar(name)) {
-	; /* OK */
+	*type = GRETL_TYPE_DOUBLE; /* OK */
     } else {
 	gretl_matrix *m = get_matrix_by_name(name);
 
 	if (m == NULL || gretl_vector_get_length(m) == 0) {
 	    gretl_errmsg_sprintf(_("'%s': expected a scalar or vector"), name);
 	    err = E_DATATYPE;
-	} 
+	} else {
+	    *type = GRETL_TYPE_MATRIX;
+	}
     }
 
     return err;
@@ -668,13 +669,14 @@ nlspec_add_params_from_line (nlspec *s, const char *str)
 
     for (i=0; i<nf && !err; i++) {
 	char *name = gretl_word_strdup(str, &str, OPT_S, &err);
+	GretlType type = 0;
 
 	if (!err) {
-	    err = check_param_name(name);
+	    err = check_param_name(name, &type);
 	}
 
 	if (!err) {
-	    err = nlspec_push_param(s, name, NULL);
+	    err = nlspec_push_param(s, name, type, NULL);
 	}
 
 	free(name);
@@ -682,6 +684,37 @@ nlspec_add_params_from_line (nlspec *s, const char *str)
 
     if (err) {
 	nlspec_destroy_arrays(s);
+    } 
+
+    return err;
+}
+
+/* note: this function handles scalar params only */
+
+int real_nlspec_add_param_list (nlspec *spec, int np, 
+				double *vals, char **names, 
+				gretlopt opt)
+{
+    int i, err = 0;
+
+    if (spec->params != NULL || np == 0) {
+	return E_DATA;
+    }
+
+    for (i=0; i<np && !err; i++) {
+	if (opt & OPT_A) {
+	    /* doing internal auxiliary NLS */
+	    err = add_auxiliary_scalar(names[i], vals[i]);
+	} else {
+	    err = gretl_scalar_add(names[i], vals[i]);
+	}
+	if (!err) {
+	    err = nlspec_push_param(spec, names[i], GRETL_TYPE_DOUBLE, NULL);
+	}
+    }
+
+    if (err) {
+	nlspec_destroy_arrays(spec);
     } 
 
     return err;
@@ -695,7 +728,8 @@ nlspec_add_params_from_line (nlspec *s, const char *str)
  * @names: array of parameter names.
  *
  * Adds to @spec a list of (scalar) parameters to be estimated.
- * For an example of use see arma.c in the gretl plugin directory.
+ * For an example of use see nls_example.c in the gretl extra
+ * subdirectory.
  *
  * Returns: 0 on success, non-zero error code on error.
  */
@@ -703,24 +737,16 @@ nlspec_add_params_from_line (nlspec *s, const char *str)
 int nlspec_add_param_list (nlspec *spec, int np, double *vals,
 			   char **names)
 {
-    int i, err = 0;
+    return real_nlspec_add_param_list(spec, np, vals, names,
+				      OPT_NONE);
 
-    if (spec->params != NULL || np == 0) {
-	return E_DATA;
-    }
+}
 
-    for (i=0; i<np && !err; i++) {
-	err = gretl_scalar_add(names[i], vals[i]);
-	if (!err) {
-	    err = nlspec_push_param(spec, names[i], NULL);
-	}
-    }
-
-    if (err) {
-	nlspec_destroy_arrays(spec);
-    } 
-
-    return err;
+int aux_nlspec_add_param_list (nlspec *spec, int np, double *vals,
+			       char **names)
+{
+    return real_nlspec_add_param_list(spec, np, vals, names,
+				      OPT_A);
 }
 
 /* update the 'external' values of scalars or matrices using
@@ -2553,6 +2579,7 @@ int nlspec_add_param_with_deriv (nlspec *spec, const char *s)
     const char *p = s;
     char *name = NULL;
     char *deriv = NULL;
+    GretlType type = 0;
     int err = 0;
 
     if (spec->ci == GMM) {
@@ -2571,10 +2598,10 @@ int nlspec_add_param_with_deriv (nlspec *spec, const char *s)
 	return E_PARSE;
     }
 
-    err = check_param_name(name);
+    err = check_param_name(name, &type);
     
     if (!err) {
-	err = nlspec_push_param(spec, name, deriv);
+	err = nlspec_push_param(spec, name, type, deriv);
 	if (err) {
 	    free(deriv);
 	    deriv = NULL;

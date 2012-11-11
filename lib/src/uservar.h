@@ -43,7 +43,7 @@ int user_var_delete_by_name (const char *name, PRN *prn);
 
 int gretl_is_user_var (const char *name);
 
-int user_var_get_type_by_name (const char *name);
+GretlType user_var_get_type_by_name (const char *name);
 
 user_var *get_user_var_by_name (const char *name);
 
@@ -57,6 +57,8 @@ const char *user_var_get_name (user_var *uvar);
 const char *user_var_get_name_by_data (const void *data);
 
 void *user_var_get_value (user_var *uvar);
+
+GretlType user_var_get_type (user_var *uvar);
 
 double user_var_get_scalar_value (user_var *uvar);
 
@@ -142,6 +144,8 @@ double gretl_scalar_get_value (const char *name);
 void gretl_scalar_set_value (const char *name, double val);
 
 int gretl_scalar_add (const char *name, double val);
+
+int add_auxiliary_scalar (const char *name, double val);
 
 void set_auxiliary_scalars (void);
 

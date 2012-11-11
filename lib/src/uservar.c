@@ -353,13 +353,15 @@ user_var *get_user_var_of_type_by_name (const char *name,
     }
 
 #if UVDEBUG
-    fprintf(stderr, "get_user_var_of_type_by_name: n_vars = %d, level = %d\n",
-	    n_vars, d);
+    fprintf(stderr, "get_user_var_of_type_by_name: '%s' (n_vars=%d, level=%d)\n",
+	    name, n_vars, d);
+# if UVDEBUG > 1
     for (i=0; i<n_vars; i++) {
 	fprintf(stderr, " %d: '%s' type %d, level %d, ptr %p\n", i, 
 		uvars[i]->name, uvars[i]->type, uvars[i]->level,
 		uvars[i]->ptr);
     }
+# endif
 #endif
 
     if (type == GRETL_TYPE_DOUBLE) {
@@ -400,7 +402,7 @@ int gretl_is_user_var (const char *name)
     return get_user_var_by_name(name) != NULL;
 }
 
-int user_var_get_type_by_name (const char *name)
+GretlType user_var_get_type_by_name (const char *name)
 {
     int i, d = gretl_function_depth();
 
@@ -446,6 +448,11 @@ int user_var_get_level (user_var *uvar)
 void *user_var_get_value (user_var *uvar)
 {
     return (uvar == NULL)? NULL : uvar->ptr;
+}
+
+GretlType user_var_get_type (user_var *uvar)
+{
+    return (uvar == NULL)? 0 : uvar->type;
 }
 
 void *user_var_get_value_by_name (const char *name)
@@ -952,7 +959,7 @@ static int uvar_levels_match (user_var *u, int level)
 static int real_destroy_user_vars_at_level (int level, int type,
 					    int imin)
 {
-    int i, j, nv = 0;
+    int i, j, nv = imin;
     int err = 0;
 
     for (i=imin; i<n_vars; i++) {
@@ -1262,6 +1269,21 @@ int gretl_scalar_add (const char *name, double val)
 	if (!err && level == 0 && scalar_edit_callback != NULL) {
 	    scalar_edit_callback();
 	}	
+    }
+
+    return err;
+}
+
+int add_auxiliary_scalar (const char *name, double val)
+{
+    double *px = malloc(sizeof *px);
+    int err;
+
+    if (px == NULL) {
+	err = E_ALLOC;
+    } else {
+	*px = val;
+	err = user_var_add(name, GRETL_TYPE_DOUBLE, px);
     }
 
     return err;
