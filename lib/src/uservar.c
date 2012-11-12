@@ -380,7 +380,7 @@ user_var *get_user_var_of_type_by_name (const char *name,
     return NULL;
 }
 
-/* used in kalman.c */
+/* note: used in kalman.c */
 
 gretl_matrix *get_matrix_by_name_at_level (const char *name, int level)
 {

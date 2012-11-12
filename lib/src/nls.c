@@ -703,7 +703,7 @@ int real_nlspec_add_param_list (nlspec *spec, int np,
 
     for (i=0; i<np && !err; i++) {
 	if (opt & OPT_A) {
-	    /* doing internal auxiliary NLS */
+	    /* doing internal auxiliary NLS (e.g. arma init) */
 	    err = add_auxiliary_scalar(names[i], vals[i]);
 	} else {
 	    err = gretl_scalar_add(names[i], vals[i]);
