@@ -710,6 +710,21 @@ static char *get_xmlname (char *objname, int *err)
     return ret;
 }
 
+#if 1
+
+static void check_cwd (void)
+{
+    char thisdir[MAXLEN];
+
+    if (getcwd(thisdir, MAXLEN - 1) != NULL) {
+	fprintf(stderr, " cwd = '%s'\n", thisdir);
+    } else {
+	fprintf(stderr, " couldn't get cwd!\n");
+    }
+}
+
+#endif
+
 static int write_session_xml (const char *datname)
 {
     MODEL *pmod;
@@ -722,12 +737,14 @@ static int write_session_xml (const char *datname)
     int i, modnum;
     int err = 0;
 
-    gretl_chdir(gretl_dotdir());
+    /* we should be in dotdir already when this is called */
 
     sprintf(fname, "%s%csession.xml", session.dirname, SLASH);
     fp = gretl_fopen(fname, "w");
 
     if (fp == NULL) {
+	fprintf(stderr, " write_session_xml: failed on '%s'\n", fname);
+	check_cwd();
 	file_write_errbox(fname);
 	return E_FOPEN;
     }

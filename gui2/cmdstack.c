@@ -295,9 +295,16 @@ void set_session_log (const char *dirname, int code)
     fprintf(stderr, "session_open = %d\n", session_open);
 #endif
 
-    if (code == LOG_SAVE) {
+    if (code == LOG_SAVE_AS) {
+	/* previous log file will have been closed; we'll
+	   let it reopen as and when needed
+	*/
+	strcpy(logname, dirname);
+	strcat(logname, "session.inp");
+	session_open = 1;
+    } else if (code == LOG_SAVE) {
 	if (gretl_print_has_tempfile(logprn)) {
-	    /* if logprn is not a tempfile-prn, it will already
+	    /* if logprn is NOT a tempfile-prn, it will already
 	       have been renamed, via the renaming of the
 	       session directory on save
 	    */
@@ -326,3 +333,11 @@ void set_session_log (const char *dirname, int code)
 	session_open = 0;
     }
 }
+
+void suspend_session_log (void)
+{
+    gretl_print_close_stream(logprn);
+    gretl_print_destroy(logprn);
+    logprn = NULL;
+}
+

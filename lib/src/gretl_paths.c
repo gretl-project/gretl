@@ -666,10 +666,22 @@ static gzFile gretl_try_gzopen (const char *fname, const char *mode)
 
 int gretl_chdir (const char *path)
 {
+#ifdef WIN32
+    char *ptmp = NULL;
+    int len = strlen(path);
+#endif
     gchar *pconv = NULL;
     int err;
 
     gretl_error_clear();
+
+#ifdef WIN32
+    if (len > 1 && path[len - 1] == '\\' && path[len - 2] != ':') {
+	/* trim trailing slash for non-root dir */
+	ptmp = gretl_strndup(path, len - 1);
+	path = ptmp;
+    }
+#endif
 
     err = maybe_recode_path(path, stdio_use_utf8, &pconv);
 
@@ -685,6 +697,10 @@ int gretl_chdir (const char *path)
     if (errno != 0) {
 	gretl_errmsg_set_from_errno("chdir");
     }
+
+#ifdef WIN32
+    free(ptmp);
+#endif
     
     return err;
 }

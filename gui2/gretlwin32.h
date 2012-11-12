@@ -60,4 +60,6 @@ void win32_font_selector (char *fontname, int flag);
 
 int windows_uses_virtual_store (void);
 
+int win32_rename_dir (const char *oldname, const char *newname);
+
 #endif /* GRETLWIN32_H */

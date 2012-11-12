@@ -807,3 +807,32 @@ int windows_uses_virtual_store (void)
     return ret;
 }
 
+int win32_rename_dir (const char *oldname, const char *newname)
+{
+    char *oldtmp = NULL, *newtmp = NULL;
+    int len, err;
+
+    /* trim trailing slash for non-root dirs */
+
+    len = strlen(oldname);
+    if (len > 1 && oldname[len - 1] == '\\' && oldname[len - 2] != ':') {
+	oldtmp = gretl_strndup(oldname, len - 1);
+	oldname = oldtmp;
+    } 
+
+    len = strlen(newname);
+    if (len > 1 && newname[len - 1] == '\\' && newname[len - 2] != ':') {
+	newtmp = gretl_strndup(newname, len - 1);
+	newname = newtmp;
+    }    
+
+    err = gretl_rename(oldname, newname);
+
+    if (oldtmp!= NULL || newtmp != NULL) {
+	free(oldtmp);
+	free(newtmp);
+    }
+
+    return err;
+}
+

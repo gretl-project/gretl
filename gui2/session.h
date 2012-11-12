@@ -38,6 +38,7 @@ enum {
 
 enum {
     LOG_SAVE,
+    LOG_SAVE_AS,
     LOG_OPEN,
     LOG_CLOSE,
     LOG_NULL

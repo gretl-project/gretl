@@ -1036,6 +1036,26 @@ void gretl_print_flush_stream (PRN *prn)
 }
 
 /**
+ * gretl_print_close_file:
+ * @prn: gretl printing struct.
+ * 
+ * If the output of @prn is directed to a stream, close
+ * the stream. Also frees and sets to NULL the filename
+ * associated with the stream (but does not remove the
+ * file).
+ */
+
+void gretl_print_close_stream (PRN *prn)
+{
+    if (prn != NULL && prn->fp != NULL) {
+	fclose(prn->fp);
+	prn->fp = NULL;
+	free(prn->fname);
+	prn->fname = NULL;
+    }
+}
+
+/**
  * printing_to_standard_stream:
  * @prn: gretl printing struct.
  * 

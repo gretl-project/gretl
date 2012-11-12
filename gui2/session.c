@@ -1758,8 +1758,6 @@ static int real_save_session_dataset (const char *dname)
 	/* flag the fact that the data are saved */
 	data_status &= ~MODIFIED_DATA;
     }
-
-    fprintf(stderr, "real_save_session_dataset: err=%d\n", err);
     
     return err;
 }
@@ -1826,22 +1824,33 @@ static void make_session_dataname (char *datname)
     }
 }
 
+#define SAVE_DEBUG 1
+
 int save_session (char *fname) 
 {
+    char *dirbak = NULL;
     char datname[MAXLEN];
     char dirname[MAXLEN];
     void *handle;
     int (*gretl_make_zipfile) (const char *, const char *, GError **);
     int len, err = 0;
+    int log_code = LOG_SAVE;
     GError *gerr = NULL;
-
-    fprintf(stderr, "save_session: fname='%s', sessionfile='%s'\n",
-	    fname, sessionfile);
 
     if (fname == NULL) {
 	/* saving session 'as is' */
 	fname = sessionfile;
     } 
+
+#if SAVE_DEBUG
+    if (fname == sessionfile) {
+	fprintf(stderr, "save_session:\n sessionfile='%s'\n",
+		sessionfile);
+    } else {
+	fprintf(stderr, "save_session as:\n current session='%s'\n"
+		" save filename='%s'\n", sessionfile, fname);
+    }
+#endif
 
     if (!session_dir_ok()) {
 	errbox("Couldn't make session directory");
@@ -1857,31 +1866,66 @@ int save_session (char *fname)
 	strcat(fname, ".gretl");
     }
 
-    /* paths below are relative to this */
-    gretl_chdir(gretl_dotdir());
+#if SAVE_DEBUG
+    fprintf(stderr, " save dirname = '%s'\n", dirname);
+    fprintf(stderr, " current session.dirname = '%s'\n", session.dirname);
+    fprintf(stderr, " doing chdir to '%s'\n", gretl_dotdir());
+#endif
+
+    /* note: paths below are relative to this */
+    err = gretl_chdir(gretl_dotdir());
+    if (err) {
+	fprintf(stderr, " chdir to dotdir failed\n");
+	gui_errmsg(err);
+	return 1;
+    }
+
+#if SAVE_DEBUG
+    fprintf(stderr, " done chdir OK\n");
+#endif
 
     if (strcmp(dirname, session.dirname)) {
-	/* rename session directory */
-	gretl_rename(session.dirname, dirname);
-	strcpy(session.dirname, dirname);
+	/* have to rename the session directory */
+	suspend_session_log();
+	log_code = LOG_SAVE_AS;
+	dirbak = gretl_strdup(session.dirname);
+#ifdef G_OS_WIN32
+	err = win32_rename_dir(session.dirname, dirname);
+#else
+	err = gretl_rename(session.dirname, dirname);
+#endif
+	if (err) {
+	    fprintf(stderr, " failed to rename session dir\n");
+	    gui_errmsg(err);
+	} else {
+	    fprintf(stderr, " renamed session dir OK\n");
+	    strcpy(session.dirname, dirname);
+	}
+    }  
+
+    if (!err) {
+	*datname = '\0';
+	if (data_status) {
+	    make_session_dataname(datname);
+	} else {
+	    strcpy(datname, "none");
+	}
+
+	err = write_session_xml(datname);
+#if SAVE_DEBUG
+	fprintf(stderr, " write_session_xml: err = %d\n", err);
+#endif
     }
 
-    *datname = '\0';
-
-    if (data_status) {
-	make_session_dataname(datname);
-    } else {
-	strcpy(datname, "none");
-    }
-
-    write_session_xml(datname);
-
-    if (data_status) {
+    if (!err && data_status) {
 	err = real_save_session_dataset(datname);
+#if SAVE_DEBUG
+	fprintf(stderr, " real_save_session_dataset: err = %d\n", err);
+#endif
     }
 
     if (!err) {
-	session_switch_log_location(LOG_SAVE);
+	session_switch_log_location(log_code);
     }
     
     if (!err) {
@@ -1893,22 +1937,30 @@ int save_session (char *fname)
 
 	/* make zipfile containing session files */
 	err = (*gretl_make_zipfile)(fname, dirname, &gerr);
-	fprintf(stderr, "gretl_make_zipfile: err = %d\n", err);
+	fprintf(stderr, " gretl_make_zipfile: err = %d\n", err);
 	close_plugin(handle);
+
+	if (gerr != NULL) {
+	    errbox(gerr->message);
+	    g_error_free(gerr);
+	} else {
+	    mkfilelist(FILE_LIST_SESSION, fname);
+	    if (fname != sessionfile) {
+		session_name_from_session_file(session.name, fname);
+		strcpy(sessionfile, fname);
+		data_status |= SESSION_DATA; /* FIXME? */
+		set_sample_label(dataset);
+	    }
+	    mark_session_saved();
+	}
     }
 
-    if (gerr != NULL) {
-	errbox(gerr->message);
-	g_error_free(gerr);
-    } else {
-	mkfilelist(FILE_LIST_SESSION, fname);
-	if (fname != sessionfile) {
-	    session_name_from_session_file(session.name, fname);
-	    strcpy(sessionfile, fname);
-	    data_status |= SESSION_DATA; /* FIXME? */
-	    set_sample_label(dataset);
+    if (dirbak != NULL) {
+	if (err) {
+	    /* restore original name on error */
+	    strcpy(session.dirname, dirbak);
 	}
-	mark_session_saved();
+	free(dirbak);
     }
 
     fprintf(stderr, "save_session; returning %d\n", err);

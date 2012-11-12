@@ -115,6 +115,8 @@ void gretl_prn_newline (PRN *prn);
 
 void gretl_print_flush_stream (PRN *prn);
 
+void gretl_print_close_stream (PRN *prn);
+
 int printing_to_standard_stream (PRN *prn);
 
 int printing_is_redirected (PRN *prn);
