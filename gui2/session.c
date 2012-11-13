@@ -86,7 +86,8 @@ typedef struct gui_obj_ gui_obj;
 
 enum {
     SESSION_CHANGED    = 1 << 0,
-    SESSION_SAVED      = 1 << 1
+    SESSION_SAVED      = 1 << 1,
+    SESSION_OPEN       = 1 << 2
 };
 
 struct SESSION_ {
@@ -274,27 +275,37 @@ int session_is_modified (void)
     return session.status & SESSION_CHANGED;
 }
 
+int session_is_open (void)
+{
+    return session.status & SESSION_OPEN;
+}
+
 void mark_session_changed (void)
 {
     iconview_menubar_state(TRUE);
-    session.status = SESSION_CHANGED;
+    session.status &= ~SESSION_SAVED;
+    session.status |= SESSION_CHANGED;
     if (save_item != NULL) {
 	gtk_widget_set_sensitive(save_item, TRUE);
-	flip(mdata->ui, "/menubar/File/SessionFiles/SaveSession", TRUE);
-	if (*session.name != '\0') {
-	    set_main_window_title(session.name, TRUE);
-	}
+    }
+    flip(mdata->ui, "/menubar/File/SessionFiles/SaveSession", TRUE);
+    flip(mdata->ui, "/menubar/File/SessionFiles/SaveSessionAs", TRUE);
+    if (*session.name != '\0') {
+	set_main_window_title(session.name, TRUE);
     }
 }
 
 static void mark_session_saved (void)
 {
-    session.status = SESSION_SAVED;
+    session.status &= ~SESSION_CHANGED;
+    session.status |= SESSION_SAVED;
     if (save_item != NULL) {
 	gtk_widget_set_sensitive(save_item, FALSE);
-	flip(mdata->ui, "/menubar/File/SessionFiles/SaveSession", FALSE);
-	set_main_window_title(session.name, FALSE);
     }
+    flip(mdata->ui, "/menubar/File/SessionFiles/SaveSession", FALSE);
+    flip(mdata->ui, "/menubar/File/SessionFiles/SaveSessionAs", 
+	 session.status & SESSION_OPEN);
+    set_main_window_title(session.name, FALSE);
 }
 
 void set_commands_recorded (void)
@@ -1457,6 +1468,8 @@ void do_open_session (void)
 	strcpy(sessionfile, tryfile);
 	mkfilelist(FILE_LIST_SESSION, sessionfile);
 
+	session.status = SESSION_OPEN;
+
 	/* sync gui with session */
 	session_menu_state(TRUE);
 
@@ -1671,7 +1684,7 @@ void close_session (gretlopt opt)
 	gtk_widget_destroy(iconview);
     }
 
-    session.status = 0;
+    session.status = 0; /* not saved, changed or open */
     session.show_notes = 0;
     commands_recorded = 0;
 
@@ -1838,7 +1851,7 @@ int save_session (char *fname)
     GError *gerr = NULL;
 
     if (fname == NULL) {
-	/* saving session 'as is' */
+	/* re-saving session 'as is' */
 	fname = sessionfile;
     } 
 
@@ -1880,13 +1893,9 @@ int save_session (char *fname)
 	return 1;
     }
 
-#if SAVE_DEBUG
-    fprintf(stderr, " done chdir OK\n");
-#endif
-
     if (strcmp(dirname, session.dirname)) {
 	/* have to rename the session directory */
-	suspend_session_log();
+	maybe_suspend_session_log();
 	log_code = LOG_SAVE_AS;
 	dirbak = gretl_strdup(session.dirname);
 #ifdef G_OS_WIN32
@@ -3095,31 +3104,11 @@ static void graph_page_save_wrapper (void)
     }
 }
 
-static gboolean session_view_click (GtkWidget *widget, 
+static gboolean session_icon_click (GtkWidget *icon, 
 				    GdkEventButton *event,
 				    gpointer data)
 {
-    gui_obj *obj;
-    GdkModifierType mods;
-
-    if (event == NULL || (in_icon && data == NULL)) {
-	return FALSE;
-    }
-
-    mods = widget_get_pointer_mask(widget);
-
-    if (!in_icon) {
-	if (RIGHT_CLICK(mods)) {
-	    /* right-click on window background */
-	    gtk_menu_popup(GTK_MENU(global_popup), NULL, NULL, NULL, NULL,
-			   event->button, event->time);
-	    return TRUE;
-	} else {
-	    return FALSE;
-	}
-    }
-
-    obj = (gui_obj *) data;
+    gui_obj *obj = (gui_obj *) data;
 
     if (event->type == GDK_2BUTTON_PRESS) {
 	switch (obj->sort) {
@@ -3167,19 +3156,39 @@ static gboolean session_view_click (GtkWidget *widget,
 	    break;
 	}
 	return TRUE;
+    } else {
+	GdkModifierType mods = widget_get_pointer_mask(icon);
+
+	if (RIGHT_CLICK(mods)) {
+	    if (obj->sort == GRETL_OBJ_EQN  || obj->sort == GRETL_OBJ_GRAPH || 
+		obj->sort == GRETL_OBJ_TEXT || obj->sort == GRETL_OBJ_DSET || 
+		obj->sort == GRETL_OBJ_INFO || obj->sort == GRETL_OBJ_GPAGE ||
+		obj->sort == GRETL_OBJ_PLOT || obj->sort == GRETL_OBJ_MODTAB ||
+		obj->sort == GRETL_OBJ_VAR  || obj->sort == GRETL_OBJ_SYS ||
+		obj->sort == GRETL_OBJ_MATRIX || obj->sort == GRETL_OBJ_BUNDLE ||
+		obj->sort == GRETL_OBJ_SCALARS) {
+		object_popup_show(obj, (GdkEventButton *) event);
+	    }
+	    return TRUE;
+	}
     }
 
-    if (RIGHT_CLICK(mods)) {
-	if (obj->sort == GRETL_OBJ_EQN  || obj->sort == GRETL_OBJ_GRAPH || 
-	    obj->sort == GRETL_OBJ_TEXT || obj->sort == GRETL_OBJ_DSET || 
-	    obj->sort == GRETL_OBJ_INFO || obj->sort == GRETL_OBJ_GPAGE ||
-	    obj->sort == GRETL_OBJ_PLOT || obj->sort == GRETL_OBJ_MODTAB ||
-	    obj->sort == GRETL_OBJ_VAR  || obj->sort == GRETL_OBJ_SYS ||
-	    obj->sort == GRETL_OBJ_MATRIX || obj->sort == GRETL_OBJ_BUNDLE ||
-	    obj->sort == GRETL_OBJ_SCALARS) {
-	    object_popup_show(obj, (GdkEventButton *) event);
+    return FALSE;
+}
+
+static gboolean session_view_click (GtkWidget *widget, 
+				    GdkEventButton *event,
+				    gpointer data)
+{
+    if (!in_icon) {
+	GdkModifierType mods = widget_get_pointer_mask(widget);
+
+	if (RIGHT_CLICK(mods)) {
+	    /* right-click on iconview background */
+	    gtk_menu_popup(GTK_MENU(global_popup), NULL, NULL, NULL, NULL,
+			   event->button, event->time);
+	    return TRUE;
 	}
-	return TRUE;
     }
 
     return FALSE;
@@ -3191,7 +3200,7 @@ static void global_popup_callback (GtkWidget *widget, gpointer data)
 
     if (!strcmp(item, _("Save session"))) {
 	if (sessionfile[0]) {
-	    if (session.status == SESSION_CHANGED) {
+	    if (session.status & SESSION_CHANGED) {
 		save_session(NULL);
 	    } else {
 		mark_session_saved();
@@ -3609,6 +3618,9 @@ static GtkWidget *create_pop_item (GtkWidget *popup, char *str,
 
     if (!strcmp(str, _("Save session"))) {
 	save_item = item;
+	if (session.status == 0) {
+	    gtk_widget_set_sensitive(item, FALSE);
+	}
     }
 
     return item;
@@ -3748,7 +3760,7 @@ static void iconview_connect_signals (GtkWidget *iconview)
 
 void view_session (void)
 {
-    GtkWidget *hbox, *scroller;
+    GtkWidget *ebox, *scroller;
     gchar *title;
 
     if (iconview != NULL) {
@@ -3769,31 +3781,24 @@ void view_session (void)
 
     session_build_popups();
 
-    hbox = gtk_hbox_new(FALSE,0);
-    gtk_container_add(GTK_CONTAINER(iconview), hbox);
-    gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);
+    ebox = gtk_event_box_new();
+    gtk_container_set_border_width(GTK_CONTAINER(ebox), 5);
+    gtk_container_add(GTK_CONTAINER(iconview), ebox);
+    g_signal_connect(G_OBJECT(ebox), "button-press-event",
+		     G_CALLBACK(session_view_click), NULL);
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
     gtk_container_set_border_width(GTK_CONTAINER(scroller), 0);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
 				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    g_signal_connect(G_OBJECT(scroller), "button-press-event",
-		     G_CALLBACK(session_view_click), NULL);
-
-    gtk_box_pack_start(GTK_BOX(hbox), scroller, TRUE, TRUE, 0); 
+    gtk_container_add(GTK_CONTAINER(ebox), scroller);
 
     icon_table = gtk_table_new(2, ICONVIEW_MIN_COLS, FALSE);
-
     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), 
 					  icon_table);
 
     add_all_icons();
-
-    gtk_widget_show(icon_table);
-    gtk_widget_show(scroller);
-    gtk_widget_show(hbox);
-    gtk_widget_show(iconview);
-
+    gtk_widget_show_all(iconview);
     window_list_add(iconview, OPEN_SESSION);
 
     gtk_container_foreach(GTK_CONTAINER(scroller), 
@@ -3842,7 +3847,7 @@ static void create_gobj_icon (gui_obj *obj, const char **xpm)
     g_object_ref(obj->label);
 
     g_signal_connect(G_OBJECT(obj->icon), "button-press-event",
-		     G_CALLBACK(session_view_click), obj);
+		     G_CALLBACK(session_icon_click), obj);
     g_signal_connect(G_OBJECT(obj->icon), "enter-notify-event",
 		     G_CALLBACK(icon_entered), obj);
     g_signal_connect(G_OBJECT(obj->icon), "leave-notify-event",

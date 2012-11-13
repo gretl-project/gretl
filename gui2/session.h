@@ -52,6 +52,8 @@ int save_session_dataset (void);
 
 int session_is_modified (void);
 
+int session_is_open (void);
+
 void set_commands_recorded (void);
 
 int get_commands_recorded (void);

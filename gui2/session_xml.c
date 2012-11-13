@@ -616,76 +616,10 @@ static SavedObjectFlags model_save_flags (const void *ptr,
     return flags;
 }
 
-static int maybe_write_matrix_file (char *fullname)
-{
-    FILE *fp;
-
-    if (n_user_matrices() == 0) {
-	return 0;
-    }
-
-    session_file_make_path(fullname, "matrices.xml");
-    fp = gretl_fopen(fullname, "w");
-    if (fp == NULL) {
-	return E_FOPEN;
-    }
-
-    write_matrices_to_file(fp);
-    fclose(fp);
-
-    return 0;
-}
-
-static int maybe_write_bundle_file (char *fullname)
-{
-    FILE *fp;
-
-    if (n_user_bundles() == 0) {
-	return 0;
-    }
-
-    session_file_make_path(fullname, "bundles.xml");
-    fp = gretl_fopen(fullname, "w");
-    if (fp == NULL) {
-	return E_FOPEN;
-    }
-
-    write_bundles_to_file(fp);
-    fclose(fp);
-
-    return 0;
-}
-
-static int maybe_write_scalars_file (char *fullname)
-{
-    FILE *fp;
-
-    if (n_user_scalars() == 0) {
-	return 0;
-    }
-
-    session_file_make_path(fullname, "scalars.xml");
-    fp = gretl_fopen(fullname, "w");
-    if (fp == NULL) {
-	return E_FOPEN;
-    }
-
-    write_scalars_to_file(fp);
-    fclose(fp);
-
-    return 0;
-}
-
 static int maybe_write_function_file (char *fullname)
 {
     session_file_make_path(fullname, "functions.xml");
     return write_session_functions_file(fullname);
-}
-
-static int maybe_write_lists_file (char *fullname)
-{
-    session_file_make_path(fullname, "lists.xml");
-    return gretl_serialize_lists(fullname);
 }
 
 static int write_settings_file (char *fullname)
@@ -710,21 +644,6 @@ static char *get_xmlname (char *objname, int *err)
     return ret;
 }
 
-#if 1
-
-static void check_cwd (void)
-{
-    char thisdir[MAXLEN];
-
-    if (getcwd(thisdir, MAXLEN - 1) != NULL) {
-	fprintf(stderr, " cwd = '%s'\n", thisdir);
-    } else {
-	fprintf(stderr, " couldn't get cwd!\n");
-    }
-}
-
-#endif
-
 static int write_session_xml (const char *datname)
 {
     MODEL *pmod;
@@ -744,7 +663,6 @@ static int write_session_xml (const char *datname)
 
     if (fp == NULL) {
 	fprintf(stderr, " write_session_xml: failed on '%s'\n", fname);
-	check_cwd();
 	file_write_errbox(fname);
 	return E_FOPEN;
     }
@@ -920,11 +838,9 @@ static int write_session_xml (const char *datname)
 
     fclose(fp);
 
-    maybe_write_matrix_file(tmpname);
-    maybe_write_bundle_file(tmpname);
-    maybe_write_scalars_file(tmpname);
+    serialize_user_vars(session.dirname);
+
     maybe_write_function_file(tmpname);
-    maybe_write_lists_file(tmpname);
     write_settings_file(tmpname);
 
     return 0;

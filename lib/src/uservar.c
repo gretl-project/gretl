@@ -1092,77 +1092,6 @@ static void xml_put_user_matrix (user_var *u, FILE *fp)
     fputs("</gretl-matrix>\n", fp); 
 }
 
-void write_matrices_to_file (FILE *fp)
-{
-    int i, nm = 0;
-
-    for (i=0; i<n_vars; i++) {
-	if (uvars[i]->type == GRETL_TYPE_MATRIX) {
-	    nm++;
-	}
-    }
-
-    if (nm == 0) {
-	return;
-    }
-
-    gretl_xml_header(fp);
-    fprintf(fp, "<gretl-matrices count=\"%d\">\n", nm);
-
-    gretl_push_c_numeric_locale();
-
-    for (i=0; i<n_vars; i++) {
-	if (uvars[i]->type == GRETL_TYPE_MATRIX) {
-	    xml_put_user_matrix(uvars[i], fp);
-	}
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    fputs("</gretl-matrices>\n", fp);
-}
-
-/**
- * write_scalars_to_file:
- * @fp: stream to which to write.
- *
- * Prints information on any saved scalars as XML, for use
- * when saving a gretl session.
- */
-
-void write_scalars_to_file (FILE *fp)
-{
-    double x;
-    int i, ns = 0;
-
-    for (i=0; i<n_vars; i++) {
-	if (uvars[i]->type == GRETL_TYPE_DOUBLE) {
-	    ns++;
-	}
-    }
-
-    if (ns == 0) {
-	return;
-    }
-
-    gretl_xml_header(fp);
-    fputs("<gretl-scalars>\n", fp);
-
-    gretl_push_c_numeric_locale();
-
-    for (i=0; i<n_vars; i++) {
-	if (uvars[i]->type == GRETL_TYPE_DOUBLE) {
-	    x = *(double *) uvars[i]->ptr;
-	    fprintf(fp, " <gretl-scalar name=\"%s\" value=\"%.15g\"/>\n", 
-		    uvars[i]->name, x);
-	}
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    fputs("</gretl-scalars>\n", fp);
-}
-
 /**
  * print_scalars:
  * @prn: pointer to gretl printing struct.
@@ -1515,42 +1444,6 @@ int matrix_is_saved (const gretl_matrix *m)
     }
 }
 
-/**
- * write_bundles_to_file:
- *
- * Serializes all saved bundles as XML, writing to @fp.
- */
-
-void write_bundles_to_file (FILE *fp)
-{
-    int i, nb = 0;
-
-    for (i=0; i<n_vars; i++) {
-	if (uvars[i]->type == GRETL_TYPE_BUNDLE) {
-	    nb++;
-	}
-    }
-
-    if (nb == 0) {
-	return;
-    }
-
-    gretl_xml_header(fp);
-    fprintf(fp, "<gretl-bundles count=\"%d\">\n", nb);
-
-    gretl_push_c_numeric_locale();
-
-    for (i=0; i<n_vars; i++) {
-	if (uvars[i]->type == GRETL_TYPE_BUNDLE) {
-	    xml_put_bundle(uvars[i]->ptr, uvars[i]->name, fp);
-	}
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    fputs("</gretl-bundles>\n", fp);
-}
-
 int max_varno_in_saved_lists (void)
 {
     int *list;
@@ -1688,38 +1581,44 @@ void gretl_lists_cleanup (void)
 				    0);
 }
 
-/**
- * gretl_serialize_lists:
- * @fname: name of file to which output should be written.
- *
- * Prints an XML representation of the current saved lists,
- * if any.
- *
- * Returns: 0 on success, or if there are no saved lists, 
- * non-zero code on error.
- */
+/* serialization of user vars follows */
 
-int gretl_serialize_lists (const char *fname)
+static void write_matrices_to_file (FILE *fp, int nm)
 {
-    FILE *fp;
-    int i, nl = 0;
+    int i;
+
+    fprintf(fp, "<gretl-matrices count=\"%d\">\n", nm);
 
     for (i=0; i<n_vars; i++) {
-	if (uvars[i]->type == GRETL_TYPE_LIST) {
-	    nl++;
+	if (uvars[i]->type == GRETL_TYPE_MATRIX) {
+	    xml_put_user_matrix(uvars[i], fp);
 	}
     }
 
-    if (nl == 0) {
-	return 0;
+    fputs("</gretl-matrices>\n", fp);
+}
+
+static void write_scalars_to_file (FILE *fp, int ns)
+{
+    double x;
+    int i;
+
+    fputs("<gretl-scalars>\n", fp);
+
+    for (i=0; i<n_vars; i++) {
+	if (uvars[i]->type == GRETL_TYPE_DOUBLE) {
+	    x = *(double *) uvars[i]->ptr;
+	    fprintf(fp, " <gretl-scalar name=\"%s\" value=\"%.15g\"/>\n", 
+		    uvars[i]->name, x);
+	}
     }
 
-    fp = gretl_fopen(fname, "w");
-    if (fp == NULL) {
-	return E_FOPEN;
-    }
+    fputs("</gretl-scalars>\n", fp);
+}
 
-    gretl_xml_header(fp); 
+static void write_lists_to_file (FILE *fp, int nl)
+{
+    int i;
 
     fprintf(fp, "<gretl-lists count=\"%d\">\n", nl);
 
@@ -1732,8 +1631,73 @@ int gretl_serialize_lists (const char *fname)
     }
 
     fputs("</gretl-lists>\n", fp);
+}
 
-    fclose(fp);
+static void write_bundles_to_file (FILE *fp, int nb)
+{
+    int i;
 
-    return 0;
+    fprintf(fp, "<gretl-bundles count=\"%d\">\n", nb);
+
+    for (i=0; i<n_vars; i++) {
+	if (uvars[i]->type == GRETL_TYPE_BUNDLE) {
+	    xml_put_bundle(uvars[i]->ptr, uvars[i]->name, fp);
+	}
+    }
+
+    fputs("</gretl-bundles>\n", fp);
+}
+
+int serialize_user_vars (const char *dirname)
+{
+    GretlType types[] = {
+	GRETL_TYPE_DOUBLE,
+	GRETL_TYPE_MATRIX,
+	GRETL_TYPE_LIST,
+	GRETL_TYPE_BUNDLE,
+	0
+    };
+    const char *fnames[] = {
+	"scalars.xml",
+	"matrices.xml",
+	"lists.xml",
+	"bundles.xml"
+    };
+    char path[MAXLEN];
+    FILE *fp;
+    int i, n, err = 0;
+
+    gretl_push_c_numeric_locale();
+
+    for (i=0; types[i]!=0; i++) {
+	n = user_var_count_for_type(types[i]);
+	if (n > 0) {
+	    sprintf(path, "%s%c%s", dirname, SLASH, fnames[i]);
+	    fp = gretl_fopen(path, "w");
+	    if (fp == NULL) {
+		err++;
+		continue;
+	    }
+	    gretl_xml_header(fp);
+	    if (types[i] == GRETL_TYPE_DOUBLE) {
+		write_scalars_to_file(fp, n);
+	    } else if (types[i] == GRETL_TYPE_MATRIX) {
+		write_matrices_to_file(fp, n);
+	    } else if (types[i] == GRETL_TYPE_LIST) {
+		write_lists_to_file(fp, n);
+	    } else if (types[i] == GRETL_TYPE_BUNDLE) {
+		write_bundles_to_file(fp, n);
+	    }
+	    fclose(fp);
+	}
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    if (err > 0) {
+	fprintf(stderr, "Failed writing %d user_var files\n", err);
+	err = E_FOPEN;
+    }
+	    
+    return err;
 }

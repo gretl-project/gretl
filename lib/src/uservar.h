@@ -169,18 +169,12 @@ int is_user_string (const char *name);
 
 char *temp_name_for_bundle (void);
 
-void write_matrices_to_file (FILE *fp);
-
-void write_scalars_to_file (FILE *fp);
-
-void write_bundles_to_file (FILE *fp);
-
 int max_varno_in_saved_lists (void);
 
 int gretl_lists_revise (const int *dlist, int dmin);
 
 void gretl_lists_cleanup (void);
 
-int gretl_serialize_lists (const char *fname);
+int serialize_user_vars (const char *dirname);
 
 #endif /* USERVAR_H_ */

@@ -273,10 +273,11 @@ void view_command_log (void)
    This function gets called from session.c when when saving a
    session, opening a session file, or closing a session.
 
-   On saving, we shift the existing logfile (if any) into the session
-   directory so it'll get saved along with the other materials -- if
-   required.  (But if the save is of a session that has already been
-   saved to file, the logfile location will already be correct.)
+   On first saving a session, we shift the existing logfile (if any)
+   from the user's dotdir into the session directory so it'll get
+   saved along with the other materials.  If the save is of a session
+   that has already been saved to file, however, the logfile location
+   should already be correct.
 
    On opening a session file, we set the logfile name so the re-opened
    session log can be displayed and added to.
@@ -295,14 +296,14 @@ void set_session_log (const char *dirname, int code)
     fprintf(stderr, "session_open = %d\n", session_open);
 #endif
 
-    if (code == LOG_SAVE_AS) {
-	/* previous log file will have been closed; we'll
+    if (code == LOG_SAVE_AS && logprn == NULL) {
+	/* previous log file has been closed; we'll
 	   let it reopen as and when needed
 	*/
 	strcpy(logname, dirname);
 	strcat(logname, "session.inp");
 	session_open = 1;
-    } else if (code == LOG_SAVE) {
+    } else if (code == LOG_SAVE || code == LOG_SAVE_AS) {
 	if (gretl_print_has_tempfile(logprn)) {
 	    /* if logprn is NOT a tempfile-prn, it will already
 	       have been renamed, via the renaming of the
@@ -334,10 +335,23 @@ void set_session_log (const char *dirname, int code)
     }
 }
 
-void suspend_session_log (void)
+void maybe_suspend_session_log (void)
 {
-    gretl_print_close_stream(logprn);
-    gretl_print_destroy(logprn);
-    logprn = NULL;
+    /* If we're saving an open session under another name, we should
+       close the old session.inp file, if present (this will be
+       reopened later). On Windows we get "permission denied" on
+       trying to rename the session directory if it contains an open
+       stream.
+
+       The test for !gretl_print_has_tempfile catches the case
+       where the current logprn is a tempfile: that means it's
+       in the user's dotdir, not inside an old session directory.
+       In that case it'll be moved by set_session_log().
+    */
+    if (logprn != NULL && !gretl_print_has_tempfile(logprn)) {
+	gretl_print_close_stream(logprn);
+	gretl_print_destroy(logprn);
+	logprn = NULL;
+    }
 }
 

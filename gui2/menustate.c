@@ -273,8 +273,12 @@ void session_menu_state (gboolean s)
 {
     if (mdata->ui != NULL) {
 	flip(mdata->ui, "/menubar/View/IconView", s);
-	flip(mdata->ui, "/menubar/File/SessionFiles/SaveSession", s);
-	flip(mdata->ui, "/menubar/File/SessionFiles/SaveSessionAs", s);
+	if (!s || session_is_modified()) {
+	    flip(mdata->ui, "/menubar/File/SessionFiles/SaveSession", s);
+	}
+	if (!s || session_is_open()) {
+	    flip(mdata->ui, "/menubar/File/SessionFiles/SaveSessionAs", s);
+	}
     }
 
     if (!s && mdata->main != NULL) {

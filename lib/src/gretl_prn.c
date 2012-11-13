@@ -299,7 +299,11 @@ PRN *gretl_print_new_with_tempfile (int *err)
 
 int gretl_print_has_tempfile (PRN *prn)
 {
-    return (prn != NULL && prn->fname != NULL && prn->fp != NULL);
+    if (prn != NULL && prn->fname != NULL && prn->fp != NULL) {
+	return strstr(prn->fname, "prntmp.") != NULL;
+    } else {
+	return 0;
+    }
 }
 
 /**

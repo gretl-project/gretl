@@ -32,6 +32,6 @@ void view_command_log (void);
 
 void set_session_log (const char *dirname, int code);
 
-void suspend_session_log (void);
+void maybe_suspend_session_log (void);
 
 #endif /* CMDSTACK_H */
