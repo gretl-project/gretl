@@ -177,4 +177,6 @@ void gretl_lists_cleanup (void);
 
 int serialize_user_vars (const char *dirname);
 
+int deserialize_user_vars (const char *dirname);
+
 #endif /* USERVAR_H_ */

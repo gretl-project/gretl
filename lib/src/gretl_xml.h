@@ -109,6 +109,10 @@ int gretl_xml_child_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
 gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, 
 				    int *err);
 
+gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc, 
+				   char **colnames, char **rownames,
+				   int *err);
+
 int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask);
 
 #endif /* FULL_XML_HEADERS */
@@ -126,12 +130,6 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 		    gretlopt opt, PRN *prn);
 
 char *gretl_get_gdt_description (const char *fname);
-
-int load_user_matrix_file (const char *fname);
-
-int load_user_bundle_file (const char *fname);
-
-int load_user_scalars_file (const char *fname);
 
 int load_user_XML_file (const char *fname);
 

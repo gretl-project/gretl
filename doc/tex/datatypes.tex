@@ -72,12 +72,12 @@ changes, deletion of low-numbered series is disallowed.
 
 The scalar type is relatively simple: just a convenient named holder
 for a single numerical value. Scalars have none of the additional
-attributes pertaining to series, do not have public ID numbers, and
-must be referenced by name. A common use of scalar variables is to
-record information made available by gretl commands for further
-processing, as in \texttt{scalar s2 = \$sigma\^{}2} to record the square of
-the standard error of the regression following an estimation command
-such as \texttt{ols}.
+attributes pertaining to series, do not have ID numbers, and must be
+referenced by name. A common use of scalar variables is to record
+information made available by gretl commands for further processing,
+as in \texttt{scalar s2 = \$sigma\^{}2} to record the square of the
+standard error of the regression following an estimation command such
+as \texttt{ols}.
 
 You can define and work with scalars in gretl without having any
 dataset in place.
@@ -90,16 +90,17 @@ window).
 \label{sec:Matrices}
 
 Matrices in gretl work much as in other mathematical software (e.g.\
-\textsf{MATLAB}, \textsf{Octave}). Like scalars they have no public ID
+\textsf{MATLAB}, \textsf{Octave}). Like scalars they have no ID
 numbers and must be referenced by name, and they can be used without
 any dataset in place. Matrix indexing is 1-based: the top-left element
 of matrix \texttt{A} is \texttt{A[1,1]}.  Matrices are discussed at
 length in chapter~\ref{chap:matrices}; advanced users of gretl will
 want to study this chapter in detail.
 
-Matrices have one optional attribute beyond their numerical content:
-they may have column names attached, which are displayed when the
-matrix is printed. See the \texttt{colnames} function for details.
+Matrices have two optional attribute beyond their numerical content:
+they may have column and/or row names attached; these are displayed
+when the matrix is printed. See the \texttt{colnames} and
+\texttt{rownames} functions for details.
 
 In the gretl GUI, matrices can be inspected, analysed and edited via
 the \texttt{Icon view} item under the \texttt{View} menu in the main
@@ -110,7 +111,7 @@ window: each currently defined matrix is represented by an icon.
 
 As with matrices, lists merit an explication of their own (see
 chapter~\ref{chap-persist}).  Briefly, named lists can (and should!)
-be used to make commands scripts less verbose and repetitious, and
+be used to make command scripts less verbose and repetitious, and
 more easily modifiable. Since lists are in fact lists of series ID
 numbers they can be used only when a dataset is in place.
 

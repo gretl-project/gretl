@@ -20,7 +20,6 @@
 /* parser module for 'genr' and related commands */
 
 #include "genparse.h"
-#include "gretl_string_table.h"
 
 #if GENDEBUG
 # define SDEBUG GENDEBUG

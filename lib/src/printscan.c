@@ -22,7 +22,6 @@
 #include "libgretl.h"
 #include "libset.h"
 #include "gretl_func.h"
-#include "gretl_string_table.h"
 #include "matrix_extra.h"
 #include "uservar.h"
 

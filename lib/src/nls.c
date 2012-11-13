@@ -30,7 +30,6 @@
 #include "nlspec.h"
 #include "cmd_private.h"
 #include "estim_private.h"
-#include "gretl_string_table.h"
 #include "gretl_bfgs.h"
 #include "tsls.h"
 

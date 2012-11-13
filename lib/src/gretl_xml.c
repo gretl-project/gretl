@@ -23,7 +23,6 @@
 #include "gretl_xml.h"
 #include "gretl_panel.h"
 #include "gretl_func.h"
-#include "uservar.h"
 #include "gretl_bundle.h"
 #include "gretl_string_table.h"
 #include "dbread.h"
@@ -816,8 +815,6 @@ int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
 	list = NULL;
     }
 
-    fprintf(stderr, "returning list = %p\n", (void *) list);
-
     return list;
 }
 
@@ -1225,9 +1222,9 @@ int gretl_xml_child_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
  * on failure.
  */
 
-static gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc, 
-					  char **colnames, char **rownames,
-					  int *err)
+gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc, 
+				   char **colnames, char **rownames,
+				   int *err)
 {
     gretl_matrix *m = NULL;
     xmlChar *tmp;
@@ -2784,127 +2781,6 @@ static char *gretl_xml_get_doc_type (const char *fname, int *err)
     return ret;
 }
 
-int load_user_matrix_file (const char *fname) 
-{
-    xmlDocPtr doc = NULL;
-    xmlNodePtr cur = NULL;
-    gretl_matrix *m;
-    char *colnames;
-    char *rownames;
-    char *name;
-    int err = 0;
-
-    err = gretl_xml_open_doc_root(fname, "gretl-matrices", &doc, &cur);
-    if (err) {
-	return err;
-    }
-
-    cur = cur->xmlChildrenNode;
-    while (cur != NULL && !err) {
-        if (!xmlStrcmp(cur->name, (XUC) "gretl-matrix")) {
-	    name = (char *) xmlGetProp(cur, (XUC) "name");
-	    if (name == NULL) {
-		err = 1;
-	    } else {
-		colnames = rownames = NULL;
-		m = xml_get_user_matrix(cur, doc, &colnames, 
-					&rownames, &err);
-		if (m != NULL) {
-		    err = user_var_add(name, GRETL_TYPE_MATRIX, m);
-		    if (!err && colnames != NULL) {
-			umatrix_set_names_from_string(m, colnames, 0);
-		    }
-		    if (!err && rownames != NULL) {
-			umatrix_set_names_from_string(m, rownames, 1);
-		    }		    
-		}
-		free(colnames);
-		free(rownames);
-		free(name);
-	    }
-	}
-	cur = cur->next;
-    }
-
-    if (doc != NULL) {
-	xmlFreeDoc(doc);
-    }
-
-    return err;
-}
-
-int load_user_bundle_file (const char *fname)
-{
-    xmlDocPtr doc = NULL;
-    xmlNodePtr cur = NULL;
-    char *name;
-    int err = 0;
-
-    err = gretl_xml_open_doc_root(fname, "gretl-bundles", &doc, &cur);
-    if (err) {
-	return err;
-    }
-
-    gretl_push_c_numeric_locale();
-
-    cur = cur->xmlChildrenNode;
-    while (cur != NULL && !err) {
-        if (!xmlStrcmp(cur->name, (XUC) "gretl-bundle")) {
-	    name = (char *) xmlGetProp(cur, (XUC) "name");
-	    if (name == NULL) {
-		err = 1;
-	    } else {
-		err = load_bundle_from_xml(cur, doc, name);
-		free(name);
-	    }
-	}
-	cur = cur->next;
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    if (doc != NULL) {
-	xmlFreeDoc(doc);
-    }
-
-    return err;
-}
-
-int load_user_scalars_file (const char *fname) 
-{
-    xmlDocPtr doc = NULL;
-    xmlNodePtr cur = NULL;
-    char *name, *val;
-    int err = 0;
-
-    err = gretl_xml_open_doc_root(fname, "gretl-scalars", &doc, &cur);
-    if (err) {
-	return err;
-    }
-
-    cur = cur->xmlChildrenNode;
-    while (cur != NULL && !err) {
-        if (!xmlStrcmp(cur->name, (XUC) "gretl-scalar")) {
-	    name = (char *) xmlGetProp(cur, (XUC) "name");
-	    val = (char *) xmlGetProp(cur, (XUC) "value");
-	    if (name == NULL || val == NULL) {
-		err = 1;
-	    } else {
-		err = gretl_scalar_add(name, dot_atof(val));
-	    }
-	    free(name);
-	    free(val);
-	}
-	cur = cur->next;
-    }
-
-    if (doc != NULL) {
-	xmlFreeDoc(doc);
-    }
-
-    return err;
-}
-
 /* This is called in response to the "include" command in
    the CLI program, the GUI program, and in interact.c,
    if we detect that the named file is XML.
@@ -2922,10 +2798,8 @@ int load_user_XML_file (const char *fname)
 
     if (!strcmp(rootname, "gretl-functions")) {
 	err = load_function_package_by_filename(fname);
-    } else if (!strcmp(rootname, "gretl-matrices")) {
-	err = load_user_matrix_file(fname);
-    } else if (!strcmp(rootname, "gretl-scalars")) {
-	err = load_user_scalars_file(fname);
+    } else {
+	err = E_DATA;
     }
 
     free(rootname);

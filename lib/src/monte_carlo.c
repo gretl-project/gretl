@@ -2173,6 +2173,7 @@ static void loop_model_print (LOOP_MODEL *lmod, const DATASET *dset,
 static void loop_print_print (LOOP_PRINT *lprn, PRN *prn)
 {
     bigval mean, m, sd;
+    int len, maxlen = 7;
     int i, vi, n;
     const char *s;
 
@@ -2182,19 +2183,34 @@ static void loop_print_print (LOOP_PRINT *lprn, PRN *prn)
 
     n = lprn->n;
 
-    pprintf(prn, _("Statistics for %d repetitions\n"), n); 
-    pputs(prn, "    ");
-    pputs(prn, _("   Variable     mean         std. dev.\n"));
-
     mpf_init(mean);
     mpf_init(m);
     mpf_init(sd);
+
+    for (i=0; i<lprn->list[0]; i++) {
+	vi = lprn->list[i+1];
+	s = gretl_scalar_get_name(vi);
+	len = strlen(s);
+	if (len > maxlen) {
+	    maxlen = len;
+	}
+    }
+
+    pprintf(prn, _("Statistics for %d repetitions\n"), n); 
+    pputc(prn, '\n');
+    bufspace(maxlen + 1, prn);
+
+    len = get_utf_width(_("mean"), 14);
+    pprintf(prn, "%*s ", len, _("mean"));
+
+    len = get_utf_width(_("std. dev"), 14);
+    pprintf(prn, "%*s\n", len, _("std. dev"));
     
     for (i=0; i<lprn->list[0]; i++) {
 	vi = lprn->list[i+1];
 	s = gretl_scalar_get_name(vi);
 	if (lprn->na[i]) {
-	    pprintf(prn, "%*s", VNAMELEN - 1, s);
+	    pprintf(prn, "%*s", maxlen + 1, s);
 	    pprintf(prn, "%14s %14s\n", "NA   ", "NA   ");
 	    continue;
 	}
@@ -2212,7 +2228,7 @@ static void loop_print_print (LOOP_PRINT *lprn, PRN *prn)
 		mpf_set_d(sd, 0.0);
 	    }
 	}
-	pprintf(prn, "%*s", VNAMELEN - 1, s);
+	pprintf(prn, "%*s", maxlen + 1, s);
 	pprintf(prn, "%#14g %#14g\n", mpf_get_d(mean), mpf_get_d(sd));
     }
 

@@ -29,7 +29,6 @@
 #include "gretl_panel.h"
 #include "usermat.h"
 #include "uservar.h"
-#include "gretl_string_table.h"
 #include "matrix_extra.h"
 #include "boxplots.h"
 #include "libglue.h"

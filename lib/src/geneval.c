@@ -5869,7 +5869,7 @@ static NODE *type_string_node (NODE *n, parser *p)
 
     if (ret != NULL) {
 	int t = n->v.xval;
-	const char *s = "";
+	const char *s = "null";
 
 	if (t == 1) {
 	    s = "scalar";

@@ -22,7 +22,6 @@
 #include "genparse.h"
 #include "libset.h"
 #include "monte_carlo.h"
-#include "gretl_string_table.h"
 #include "gretl_panel.h"
 #include "gretl_fft.h"
 #include "estim_private.h"

@@ -22,9 +22,6 @@
 #include "system.h"
 #include "texprint.h"
 #include "usermat.h"
-#include "gretl_string_table.h"
-
-#include <glib.h>
 
 static int 
 plain_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn);

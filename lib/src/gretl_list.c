@@ -17,13 +17,10 @@
  * 
  */
 
-#define FULL_XML_HEADERS
-
 #include "libgretl.h"
 #include "gretl_list.h"
 #include "gretl_func.h"
 #include "libset.h"
-#include "gretl_xml.h"
 #include "uservar.h"
 
 #include <errno.h>
@@ -2371,49 +2368,6 @@ int *gretl_list_build (const char *s, const DATASET *dset, int *err)
     }
 
     return list;
-}
-
-int load_user_lists_file (const char *fname)
-{
-    xmlDocPtr doc = NULL;
-    xmlNodePtr node = NULL;
-    int nl, err = 0;
-
-    err = gretl_xml_open_doc_root(fname, "gretl-lists", &doc, &node);
-    if (err) {
-	return err;
-    }
-
-    if (!gretl_xml_get_prop_as_int(node, "count", &nl)) {
-	err = E_DATA;
-    } else if (nl <= 0) {
-	err = E_DATA;
-    } else {
-	xmlNodePtr cur = node->xmlChildrenNode;
-	int *list;
-	char *lname;
-
-	while (cur != NULL && !err) {
-	    if (!xmlStrcmp(cur->name, (XUC) "list")) {
-		if (!gretl_xml_get_prop_as_string(cur, "name", &lname)) {
-		    err = E_DATA;
-		} else {
-		    list = gretl_xml_node_get_list(cur, doc, &err);
-		    if (!err) {
-			err = user_var_add(lname, GRETL_TYPE_LIST, list);
-		    }
-		    free(lname);
-		}
-	    }
-	    cur = cur->next;
-	}
-    }
-
-    if (doc != NULL) {
-	xmlFreeDoc(doc);
-    }
-
-    return err;
 }
 
 /**

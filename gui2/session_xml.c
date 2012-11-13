@@ -489,51 +489,6 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
     return err;
 }
 
-static int maybe_read_matrix_file (const char *fname) 
-{
-    FILE *fp;
-
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	/* nothing to be read */
-	return 0;
-    }
-
-    fclose(fp);
-
-    return load_user_matrix_file(fname);
-}
-
-static int maybe_read_bundles_file (const char *fname) 
-{
-    FILE *fp;
-
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	/* nothing to be read */
-	return 0;
-    }
-
-    fclose(fp);
-
-    return load_user_bundle_file(fname);
-}
-
-static int maybe_read_scalars_file (const char *fname) 
-{
-    FILE *fp;
-
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	/* nothing to be read */
-	return 0;
-    }
-
-    fclose(fp);
-
-    return load_user_scalars_file(fname);
-}
-
 static int maybe_read_functions_file (const char *fname) 
 {
     FILE *fp;
@@ -547,21 +502,6 @@ static int maybe_read_functions_file (const char *fname)
     fclose(fp);
 
     return read_session_functions_file(fname);
-}
-
-static int maybe_read_lists_file (const char *fname) 
-{
-    FILE *fp;
-
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	/* nothing to be read */
-	return 0;
-    }
-
-    fclose(fp);
-
-    return load_user_lists_file(fname);
 }
 
 static int maybe_read_settings_file (const char *fname) 

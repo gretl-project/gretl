@@ -47,7 +47,6 @@
 #include "uservar.h"
 #include "csvdata.h"
 #include "matrix_extra.h"
-#include "gretl_string_table.h"
 #include "gretl_bundle.h"
 #include "gretl_www.h"
 #include "texprint.h"

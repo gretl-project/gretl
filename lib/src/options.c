@@ -1301,7 +1301,9 @@ gretlopt get_gretl_options (char *line, int *err)
 	return 0;
     }
 
+#if 0
     fprintf(stderr, "get_gretl_options: '%s'\n", line);
+#endif
 
     get_cmdword(line, cmdword);
 

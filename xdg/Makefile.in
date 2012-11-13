@@ -59,3 +59,5 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(sharedir)/icons/hicolor/48x48/apps
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(sharedir)/icons/hicolor/64x64/apps
 
+clean:
+	rm -f gretl-desktop

@@ -1411,20 +1411,10 @@ void do_open_session (void)
 	goto bailout;
     }
 
-    session_file_make_path(fname, "matrices.xml");
-    err = maybe_read_matrix_file(fname);
-
-    session_file_make_path(fname, "bundles.xml");
-    err = maybe_read_bundles_file(fname);
-
-    session_file_make_path(fname, "scalars.xml");
-    err = maybe_read_scalars_file(fname);
+    err = deserialize_user_vars(session.dirname);
 
     session_file_make_path(fname, "functions.xml");
     err = maybe_read_functions_file(fname);
-
-    session_file_make_path(fname, "lists.xml");
-    err = maybe_read_lists_file(fname);
 
     session_file_make_path(fname, "settings.inp");
     err = maybe_read_settings_file(fname);

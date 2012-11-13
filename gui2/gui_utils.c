@@ -30,7 +30,6 @@
 #include "bootstrap.h"
 #include "gretl_foreign.h"
 #include "gretl_bundle.h"
-#include "gretl_string_table.h"
 #include "uservar.h"
 
 #include <sys/stat.h>
