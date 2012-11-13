@@ -2195,15 +2195,15 @@ static void font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
 
 void font_selector (GtkAction *action)
 {
-    static GtkWidget *fontsel = NULL;
+    static GtkWidget *fc = NULL;
     GtkFontFilterFunc filter;
     GtkWidget *button;
     int which = fontsel_code(action);
     char *title = NULL;
     const char *fontname = NULL;
  
-    if (fontsel != NULL) {
-	gtk_window_present(GTK_WINDOW(fontsel));
+    if (fc != NULL) {
+	gtk_window_present(GTK_WINDOW(fc));
         return;
     }
 
@@ -2219,34 +2219,38 @@ void font_selector (GtkAction *action)
 
     gretl_font_filter_init();
 
-    fontsel = gtk_font_chooser_dialog_new(title, GTK_WINDOW(mdata->main));
-    gtk_font_chooser_set_font(GTK_FONT_CHOOSER(fontsel), 
+    fc = gtk_font_chooser_dialog_new(title, GTK_WINDOW(mdata->main));
+    gtk_font_chooser_set_font(GTK_FONT_CHOOSER(fc), 
 			      fontname); 
-    gtk_font_chooser_set_filter_func(GTK_FONT_CHOOSER(fontsel),
+    gtk_font_chooser_set_filter_func(GTK_FONT_CHOOSER(fc),
 				     filter, NULL, NULL);
-    gtk_window_set_position(GTK_WINDOW(fontsel), GTK_WIN_POS_MOUSE);
+    gtk_window_set_position(GTK_WINDOW(fc), GTK_WIN_POS_MOUSE);
 
-    g_signal_connect(G_OBJECT(fontsel), "destroy",
+    if (which == FIXED_FONT_SELECTION) {
+	widget_set_int(fc, "mono", 1);
+    }
+
+    g_signal_connect(G_OBJECT(fc), "destroy",
 		     G_CALLBACK(gtk_widget_destroyed),
-		     &fontsel);
+		     &fc);
 
-    button = gtk_dialog_get_widget_for_response(GTK_DIALOG(fontsel),
+    button = gtk_dialog_get_widget_for_response(GTK_DIALOG(fc),
 						GTK_RESPONSE_OK);
     if (button != NULL) {
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(font_selection_ok),
-			 fontsel);
+			 fc);
     }
 
-    button = gtk_dialog_get_widget_for_response(GTK_DIALOG(fontsel),
+    button = gtk_dialog_get_widget_for_response(GTK_DIALOG(fc),
 						GTK_RESPONSE_CANCEL);
     if (button != NULL) {
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(close_font_chooser),
-			 fontsel);
+			 fc);
     }
 
-    gtk_widget_show(fontsel);
+    gtk_widget_show(fc);
 }
 
 #else /* GTK, not using GtkFontChooser */
