@@ -38,7 +38,6 @@ lib/src/gretl_panel.c
 lib/src/gretl_paths.c
 lib/src/gretl_prn.c
 lib/src/gretl_restrict.c
-lib/src/gretl_scalar.c
 lib/src/gretl_string_table.c
 lib/src/gretl_untar.c
 lib/src/gretl_utils.c
@@ -73,6 +72,7 @@ lib/src/texprint.c
 lib/src/transforms.c
 lib/src/tsls.c
 lib/src/usermat.c
+lib/src/uservar.c
 lib/src/var.c
 lib/src/varprint.c
 lib/src/vartest.c
