@@ -215,7 +215,6 @@ enum {
     F_RANK, 
     F_OBSNUM,
     F_ISSERIES,
-    F_ISSCALAR,
     F_ISLIST,	 
     F_ISSTRING,
     F_ISNULL,
@@ -401,8 +400,7 @@ enum {
 #define string_arg_func(s) (s == F_ISSERIES || s == F_ISNULL || \
 			    s == F_ISLIST   || s == F_ISSTRING || \
 			    s == F_OBSNUM || s == F_BACKTICK || \
-			    s == F_VARNUM || s == F_ARGNAME || \
-			    s == F_ISSCALAR)
+			    s == F_VARNUM || s == F_ARGNAME)
 
 /* function with multiple args, character code for first arg */
 #define char0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \

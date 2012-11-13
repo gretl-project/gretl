@@ -2582,8 +2582,13 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns 1 if bundle <argname>b</argname> contains a data-item
-	  with name <argname>key</argname>, otherwise 0.
+	  Checks whether bundle <argname>b</argname> contains a
+	  data-item with name <argname>key</argname>. The value
+	  returned is an integer code for the type of the item: 0 for
+	  no match, 1 for scalar, 2 for series, 3 for matrix, 4 for
+	  string and 5 for bundle. The function <fncref
+	  targ="typestr"/> may be used to get the string
+	  corresponding to this code.
 	</para>	  
       </description>
     </function>   
@@ -6190,6 +6195,22 @@
       </description>
     </function>
 
+    <function name="typestr" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="scalar">code</fnarg>
+      </fnargs>      
+      <description>
+	<para>
+	  Returns the name of the gretl data-type corresponding to
+	  <argname>code</argname>. This is intended for use in
+	  conjunction with the function <fncref targ="inbundle"/>.
+	  The value returned is one of <quote>scalar</quote>,
+	  <quote>series</quote>, <quote>matrix</quote>,
+	  <quote>string</quote>, <quote>bundle</quote> or
+	  <quote>null</quote>.
+	</para>
+      </description>
+    </function>
 
     <function name="uniform" section="probdist" output="series">
       <fnargs>

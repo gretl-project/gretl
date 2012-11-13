@@ -10,6 +10,11 @@ version 1.9.11, in progress
 - The msortby() function: ensure that it performs a "stable" 
   sort, such that rows sharing a common key value are never 
   interchanged
+- The inbundle() function: return a code that identifies the
+  type of a bundled item; also add typestr() function to turn
+  this code into a string
+- GUI: fix for "save as..." for session files on Windows
+- GUI: fix for right-click in icon view window
 
 2012-11-05 version 1.9.10
 - Update translations

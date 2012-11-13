@@ -3935,8 +3935,6 @@ static NODE *object_status (NODE *n, int f, parser *p)
 
 	if (f == F_ISSERIES) {
 	    ret->v.xval = gretl_is_series(s, p->dset);
-	} else if (f == F_ISSCALAR) {
-	    ret->v.xval = gretl_is_scalar(s);
 	} else if (f == F_ISLIST) {
 	    ret->v.xval = gretl_is_list(s);
 	} else if (f == F_ISSTRING) {
@@ -9372,7 +9370,6 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_OBSNUM:
     case F_ISSERIES:
-    case F_ISSCALAR:
     case F_ISLIST:
     case F_ISSTRING:
     case F_ISNULL:
