@@ -9,7 +9,12 @@ Gretl uses GNU autoconf.  Here's the quick way to get going:
   available.  
 
 * By default the installation goes under /usr/local.  To install
-  elsewhere use "./configure --prefix=/your/prefix". 
+  elsewhere use "./configure --prefix=/your/prefix".
+
+* Packagers who are using DESTDIR when building a gretl package
+  should use the "--disable-xdg-utils" option so that gretl's XDG
+  files get installed to DESTDIR rather than to the standard system
+  location.
 
 * On systems where GNU make is not the default you may need to use the
   "--with-gmake" option to ./configure.

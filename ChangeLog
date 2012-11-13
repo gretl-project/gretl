@@ -5,6 +5,9 @@ version 1.9.11, in progress
 - Fix bug: spurious detection of line continuation characters
   in #-style comments that do not start a command line
 - Fix bug: "eval" not working correctly for anonymous strings
+- Fix build bug: "make check" not working properly
+- Fix build bug: XDG (desktop) files not getting installed in
+  a manner suitable for packagers of gretl
 - Support a matrix as an element-wise boolean condition for the 
   ternary "?" operator
 - The msortby() function: ensure that it performs a "stable" 
@@ -15,6 +18,7 @@ version 1.9.11, in progress
   this code into a string
 - GUI: fix for "save as..." for session files on Windows
 - GUI: fix for right-click in icon view window
+- GUI: fix for font selector in the GTK 3 version of the code 
 
 2012-11-05 version 1.9.10
 - Update translations
