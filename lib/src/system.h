@@ -40,7 +40,7 @@ enum {
     SYSTEM_RESTRICT    = 1 << 4,
     SYSTEM_ITERATE     = 1 << 5,
     SYSTEM_SAVEIT      = 1 << 6,
-    SYSTEM_SINGLE      = 1 << 7,
+    SYSTEM_LIML1       = 1 << 7,
     SYSTEM_QUIET       = 1 << 8
 };
 

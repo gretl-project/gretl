@@ -1521,7 +1521,7 @@ adjust_sys_flags_for_method (equation_system *sys, int method)
 
     if (oldflags & SYSTEM_VCV_GEOMEAN) {
 	sys->flags |= SYSTEM_VCV_GEOMEAN;
-    }    
+    }
 }
 
 static void 
@@ -1559,8 +1559,8 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
     }     
 
     if (opt & OPT_S) {
-	/* estimating single equation */
-	sys->flags |= SYSTEM_SINGLE;
+	/* estimating single equation via LIML */
+	sys->flags |= SYSTEM_LIML1;
     }
 }
 
@@ -1652,7 +1652,7 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
 	close_plugin(handle);
     }
 
-    if (!err && sys->neqns > 1) {
+    if (!err && !(sys->flags & SYSTEM_LIML1)) {
 	set_as_last_model(sys, GRETL_OBJ_SYS);
     } 
 
@@ -2123,6 +2123,8 @@ static int sys_has_user_name (equation_system *sys)
 	    !sys_anonymous(sys->name));
 }
 
+#define ALLOW_SINGLE 1
+
 /**
  * equation_system_finalize:
  * @sys: pre-defined equation system.
@@ -2143,7 +2145,11 @@ static int sys_has_user_name (equation_system *sys)
 int equation_system_finalize (equation_system *sys, DATASET *dset,
 			      gretlopt opt, PRN *prn)
 {
+#if ALLOW_SINGLE
+    int mineq = 1;
+#else
     int mineq = (opt & OPT_S)? 1 : 2;
+#endif
     int err = 0;
 
 #if SYSDEBUG

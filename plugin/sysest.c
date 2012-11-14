@@ -729,8 +729,8 @@ static void clean_up_models (equation_system *sys)
 	}
     }
 
-    if (sys->neqns == 1) {
-	/* ivreg (LIML) */
+    if (sys->flags & SYSTEM_LIML1) {
+	/* ivreg (single-equation LIML) */
 	sys->models[0]->rho = sys->models[0]->dw = NADBL;
     } else {
 	free(sys->models);
@@ -791,7 +791,7 @@ static gretlopt sys_tsls_opt (const equation_system *sys)
 	opt |= OPT_N; /* ML: no df correction */
     }
 
-    if (sys->flags & SYSTEM_SINGLE) {
+    if (sys->flags & SYSTEM_LIML1) {
 	opt |= OPT_H; /* add "hatlist" of instrumented vars */
     }
 
@@ -1166,7 +1166,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	err = fiml_driver(sys, dset, opt, prn);
     }
 
-    if (!err && !(sys->flags & SYSTEM_SINGLE)) {
+    if (!err && !(sys->flags & SYSTEM_LIML1)) {
 	err = system_save_and_print_results(sys, dset, opt, prn);
     }
 
