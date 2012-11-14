@@ -805,7 +805,7 @@ static GtkTextTagTable *gretl_tags_new (void)
 
     tag = gtk_text_tag_new("heading");
     g_object_set(tag, "family", helpfont, 
-		 "weight", PANGO_WEIGHT_BOLD, 
+		 "weight", PANGO_WEIGHT_BOLD,
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
@@ -817,9 +817,8 @@ static GtkTextTagTable *gretl_tags_new (void)
 
     tag = gtk_text_tag_new("replaceable");
     g_object_set(tag, "family", helpfont,
-		 "style", PANGO_STYLE_ITALIC, 
+		 "style", PANGO_STYLE_ITALIC,
 		 NULL);
-
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("superscript");
@@ -863,7 +862,7 @@ static GtkTextTagTable *gretl_tags_new (void)
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("code");
-    g_object_set(tag, "family", "monospace", 
+    g_object_set(tag, "family", "monospace",
 		 "paragraph-background", "#e6f3ff",
 		 NULL);
     gtk_text_tag_table_add(table, tag);
