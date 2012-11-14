@@ -3513,6 +3513,43 @@ static void add_to_session_callback (GPT_SPEC *spec)
     }
 }
 
+static void plot_do_rescale (png_plot *plot, guint keyval)
+{
+    double scales[] = { 0.8, 1.0, 1.1, 1.2 };
+    int i = 0, n = G_N_ELEMENTS(scales);
+    FILE *fp = NULL;
+
+    for (i=0; i<n; i++) {
+	if (plot->spec->scale == scales[i]) {
+	    break;
+	}
+    }
+
+    if (keyval == GDK_plus && i < n - 1) {
+	plot->spec->scale = scales[i+1];
+    } else if (keyval == GDK_minus && i > 0) {
+	plot->spec->scale = scales[i-1];
+    } else {
+	warnbox("Scale is at %s", keyval == GDK_plus ? 
+		"maximum" : "minimum");
+	return;
+    }
+
+    gnuplot_png_init(plot, &fp);
+
+    if (fp == NULL) {
+	gui_errmsg(E_FOPEN);
+	return;
+    }
+
+    set_png_output(plot->spec);
+    plotspec_print(plot->spec, fp);
+    fclose(fp);
+    unset_png_output(plot->spec);
+
+    repaint_png(plot, PNG_REDISPLAY); 
+}
+
 static void show_all_labels (png_plot *plot)
 {
     FILE *fp;
@@ -4098,6 +4135,12 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 static gboolean 
 plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 {
+    if (gnuplot_png_terminal() == GP_PNG_CAIRO &&
+	(key->keyval == GDK_plus || key->keyval == GDK_minus)) {
+	plot_do_rescale(plot, key->keyval);
+	return TRUE;
+    }
+
     switch (key->keyval) {
     case GDK_q:
     case GDK_Q:
@@ -4184,6 +4227,65 @@ static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
     return pbuf;
 }
 
+/* timeout for changing status line */
+
+static gboolean revert_status_message (gpointer data)
+{
+    png_plot *plot = (png_plot *) data;
+
+    gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar),
+		       plot->cid, _(" Right-click on graph for menu"));
+    return FALSE;
+}
+
+static int resize_png_plot (png_plot *plot, int width, int height)
+{
+    gchar *msg;
+    png_bounds b;
+
+    plot->pixel_width = width;
+    plot->pixel_height = height;
+
+    gtk_widget_set_size_request(GTK_WIDGET(plot->canvas), 
+				plot->pixel_width, plot->pixel_height);
+
+    g_object_unref(plot->pixmap);
+    plot->pixmap = gdk_pixmap_new(plot->window, 
+				  plot->pixel_width, 
+				  plot->pixel_height, 
+				  -1);
+
+    /* give some feedback on status bar */
+    msg = g_strdup_printf(_(" Scale = %.1f"), plot->spec->scale);
+    gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, msg);
+    g_free(msg);
+    g_timeout_add(2000, revert_status_message, plot);
+
+    if (plot->status & (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE)) {
+	return 0;
+    }
+
+    /* try revising the gnuplot bounds info? */
+
+    if (plot_has_png_coords(plot) && 
+	get_png_bounds_info(&b) == GRETL_PNG_OK) {
+	plot->status |= PLOT_PNG_COORDS;
+	plot->pixel_xmin = b.xleft;
+	plot->pixel_xmax = b.xright;
+	plot->pixel_ymin = plot->pixel_height - b.ytop;
+	plot->pixel_ymax = plot->pixel_height - b.ybot;
+	plot->xmin = b.xmin;
+	plot->xmax = b.xmax;
+	plot->ymin = b.ymin;
+	plot->ymax = b.ymax;
+	fprintf(stderr, "resize: get_png_bounds_info(): OK\n");
+    } else {
+	plot->status |= (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
+    }
+
+    return 0;
+}
+
 /* The last step in displaying a graph (or redisplaying after some
    change has been made): grab the gnuplot-generated PNG file, make a
    pixbuf out of it, and draw the pixbuf onto the canvas of the plot
@@ -4213,6 +4315,10 @@ static int render_pngfile (png_plot *plot, int view)
 	g_object_unref(pbuf);
 	gretl_remove(pngname);
 	return 1;
+    }
+
+    if (width != plot->pixel_width || height != plot->pixel_height) {
+	resize_png_plot(plot, width, height);
     }
 
     /* scrap any old record of which points are labeled */

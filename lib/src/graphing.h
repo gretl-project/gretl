@@ -166,7 +166,8 @@ typedef enum {
 				c == PLOT_FREQ_GAMMA)
 
 #define set_png_output(p) (p->flags |= GPT_PNG_OUTPUT)
-#define get_png_output(p) (p->flags & GPT_PNG_OUTPUT) 
+#define get_png_output(p) (p->flags & GPT_PNG_OUTPUT)
+#define unset_png_output(p) (p->flags &= ~GPT_PNG_OUTPUT) 
     
 const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags);
 

@@ -95,6 +95,7 @@ GPT_SPEC *plotspec_new (void)
     spec->auxdata = NULL;
     spec->markers = NULL;
     spec->n_markers = 0;
+    spec->scale = 1.0;
     spec->labeled = NULL;
     spec->ptr = NULL;
     spec->bars = NULL;
@@ -1333,7 +1334,9 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    }
 	}
 
-	if (line->width != 1) {
+	if (line->width == 1 && spec->scale > 1.0) {
+	    fprintf(fp, " lw 2");
+	} else if (line->width != 1) {
 	    fprintf(fp, " lw %d", line->width);
 	}
 
@@ -1447,7 +1450,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
     }
 
     gretl_pop_c_numeric_locale();
-
+    
     if (png && gnuplot_has_bbox()) {
 	print_plot_bounding_box_request(fp);
     }

@@ -873,7 +873,7 @@ static void maybe_set_small_font (int nplots)
 
 static void 
 write_gnuplot_font_string (char *fstr, PlotType ptype, int pngterm,
-			   const char *grfont)
+			   const char *grfont, double scale)
 {
     if (grfont == NULL) {
 	grfont = gretl_png_font();
@@ -895,11 +895,12 @@ write_gnuplot_font_string (char *fstr, PlotType ptype, int pngterm,
 	nf = split_graph_fontspec(grfont, fname, &fsize);
 	if (nf == 2) {
 	    if (maybe_big_multiplot(ptype) && gp_small_font_size > 0) {
-		fprintf(stderr, "Doing small font\n");
-		sprintf(fstr, " font \"%s,%d\"", fname, gp_small_font_size);
-	    } else {
-		sprintf(fstr, " font \"%s,%d\"", fname, fsize);
+		fsize = gp_small_font_size;
 	    }
+	    if (scale != 1.0) {
+		fsize = round(scale * fsize);
+	    }
+	    sprintf(fstr, " font \"%s,%d\"", fname, fsize);
 	} else if (nf == 1) {
 	    sprintf(fstr, " font \"%s\"", fname);
 	}
@@ -1057,27 +1058,42 @@ const char *get_gretl_eps_term_line (PlotType ptype, GptFlags flags)
     return eps_term_line;
 }
 
-static void write_png_size_string (char *s, PlotType ptype, GptFlags flags)
+static void write_png_size_string (char *s, PlotType ptype, 
+				   GptFlags flags, double scale)
 {
-    *s = '\0';
+    int w = GP_WIDTH, h = GP_HEIGHT;
 
     if (flags & GPT_LETTERBOX) {
-	/* for time series */
-	sprintf(s, " size %d,%d", GP_LB_WIDTH, GP_LB_HEIGHT);
+	/* time series plots */
+	w = GP_LB_WIDTH;
+	h = GP_LB_HEIGHT;
     } else if (flags & GPT_XL) {
 	/* large */
-	sprintf(s, " size %d,%d", GP_XL_WIDTH, GP_XL_HEIGHT);
+	w = GP_XL_WIDTH;
+	h = GP_XL_HEIGHT;
     } else if (flags & GPT_XXL) {
 	/* extra large */
-	sprintf(s, " size %d,%d", GP_XXL_WIDTH, GP_XXL_HEIGHT);
+	w = GP_XXL_WIDTH;
+	h = GP_XXL_HEIGHT;
     } else if (ptype == PLOT_ROOTS || ptype == PLOT_QQ) {
 	/* square plots */
-	sprintf(s, " size %d,%d", GP_SQ_SIZE, GP_SQ_SIZE);
+	w = h = GP_SQ_SIZE;
     }
+
+    if (scale != 1.0) {
+	w *= scale;
+	h *= scale;
+    }
+
+    *s = '\0';
+
+    sprintf(s, " size %d,%d", w, h);
 }
 
-static const char *real_png_term_line (PlotType ptype, GptFlags flags,
-				       const char *specfont)
+static const char *real_png_term_line (PlotType ptype, 
+				       GptFlags flags,
+				       const char *specfont,
+				       double scale)
 {
     static char png_term_line[256];
     char truecolor_string[12] = {0};
@@ -1101,7 +1117,7 @@ static const char *real_png_term_line (PlotType ptype, GptFlags flags,
 
     if (gpttf) {
 	write_gnuplot_font_string(font_string, ptype, pngterm,
-				  specfont);
+				  specfont, scale);
     } 
 
 #ifndef WIN32
@@ -1110,7 +1126,7 @@ static const char *real_png_term_line (PlotType ptype, GptFlags flags,
     }
 #endif
 
-    write_png_size_string(size_string, ptype, flags);
+    write_png_size_string(size_string, ptype, flags, scale);
 
     if (pngterm == GP_PNG_CAIRO) {
 	sprintf(png_term_line, "set term pngcairo%s%s",
@@ -1144,13 +1160,13 @@ static const char *real_png_term_line (PlotType ptype, GptFlags flags,
 
 const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 {
-    return real_png_term_line(ptype, flags, NULL);
+    return real_png_term_line(ptype, flags, NULL, 1.0);
 }
 
 const char *get_png_line_for_plotspec (const GPT_SPEC *spec)
 {
-    return real_png_term_line(spec->code, spec->flags,
-			      spec->fontstr);
+    return real_png_term_line(spec->code, spec->flags, 
+			      spec->fontstr, spec->scale);
 }
 
 static void png_font_to_emf (const char *pngfont, char *emfline)

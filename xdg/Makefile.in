@@ -9,6 +9,10 @@ use_xdg_utils = @use_xdg_utils@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 
+ifneq ($(DESTDIR),)
+  use_xdg_utils = no
+endif
+
 ifeq ($(use_xdg_utils),yes)
   query_install = xdg-install
 else
@@ -52,12 +56,12 @@ xdg-install: gretl.desktop $(xdgsrc)/gretl.xml $(xdgsrc)/gretl-data-icon.png \
 	xdg-icon-resource install --context apps --size 64 $(xdgsrc)/64/gretl.png --novendor
 
 installdirs:
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(sharedir)/applications
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(sharedir)/mime/packages
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(sharedir)/icons/hicolor/32x32/apps
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(sharedir)/icons/hicolor/32x32/mimetypes
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(sharedir)/icons/hicolor/48x48/apps
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(sharedir)/icons/hicolor/64x64/apps
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(datadir)/applications
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(datadir)/mime/packages
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(datadir)/icons/hicolor/32x32/apps
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(datadir)/icons/hicolor/32x32/mimetypes
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(datadir)/icons/hicolor/48x48/apps
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(datadir)/icons/hicolor/64x64/apps
 
 clean:
 	rm -f gretl-desktop
