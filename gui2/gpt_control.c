@@ -4231,10 +4231,17 @@ static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
 
 static gboolean revert_status_message (gpointer data)
 {
-    png_plot *plot = (png_plot *) data;
+    /* note: the plot window in question may have been
+       destroyed by the time this timeout callback is
+       invoked
+    */
+    if (get_window_for_data(data) != NULL) {
+	png_plot *plot = (png_plot *) data;
 
-    gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar),
-		       plot->cid, _(" Right-click on graph for menu"));
+	gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar),
+			  plot->cid);
+    }
+
     return FALSE;
 }
 
@@ -4249,17 +4256,19 @@ static int resize_png_plot (png_plot *plot, int width, int height)
     gtk_widget_set_size_request(GTK_WIDGET(plot->canvas), 
 				plot->pixel_width, plot->pixel_height);
 
+#if GTK_MAJOR_VERSION == 2
     g_object_unref(plot->pixmap);
     plot->pixmap = gdk_pixmap_new(plot->window, 
 				  plot->pixel_width, 
 				  plot->pixel_height, 
 				  -1);
+#endif
 
     /* give some feedback on status bar */
     msg = g_strdup_printf(_(" Scale = %.1f"), plot->spec->scale);
     gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, msg);
     g_free(msg);
-    g_timeout_add(2000, revert_status_message, plot);
+    g_timeout_add_seconds(3, revert_status_message, plot);
 
     if (plot->status & (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE)) {
 	return 0;
@@ -4278,7 +4287,6 @@ static int resize_png_plot (png_plot *plot, int width, int height)
 	plot->xmax = b.xmax;
 	plot->ymin = b.ymin;
 	plot->ymax = b.ymax;
-	fprintf(stderr, "resize: get_png_bounds_info(): OK\n");
     } else {
 	plot->status |= (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
     }
@@ -4995,7 +5003,6 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
     /* the statusbar */
     plot->statusbar = gtk_statusbar_new();
-
     gtk_widget_set_size_request(plot->statusbar, 1, -1);
 
 #if GTK_MAJOR_VERSION < 3
@@ -5083,7 +5090,10 @@ static int gnuplot_show_png (const char *fname, const char *name,
     if (err) {
 	gtk_widget_destroy(plot->shell);
 	plot = NULL;
-    } 
+    } else {
+	g_object_set_data(G_OBJECT(plot->shell), "object",
+			  plot);
+    }
 
     return err;
 }

@@ -897,7 +897,7 @@ write_gnuplot_font_string (char *fstr, PlotType ptype, int pngterm,
 	    if (maybe_big_multiplot(ptype) && gp_small_font_size > 0) {
 		fsize = gp_small_font_size;
 	    }
-	    if (scale != 1.0) {
+	    if (scale > 1.0) {
 		fsize = round(scale * fsize);
 	    }
 	    sprintf(fstr, " font \"%s,%d\"", fname, fsize);
