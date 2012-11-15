@@ -3520,29 +3520,38 @@ static void add_to_session_callback (GPT_SPEC *spec)
     }
 }
 
-static void plot_do_rescale (png_plot *plot, guint key)
+static void plot_do_rescale (png_plot *plot, int mod)
 {
     double scales[] = { 0.8, 1.0, 1.1, 1.2 };
-    int i = 0, n = G_N_ELEMENTS(scales);
-    int plus, minus;
+    int n = G_N_ELEMENTS(scales);
     FILE *fp = NULL;
 
-    for (i=0; i<n; i++) {
-	if (plot->spec->scale == scales[i]) {
-	    break;
+    if (mod == 0) {
+	/* reset to default */
+	if (plot->spec->scale == 1.0) {
+	    /* no-op */
+	    return;
+	} else {
+	    plot->spec->scale = 1.0;
 	}
-    }
-
-    plus = (key == GDK_plus || key == GDK_greater);
-    minus = (key == GDK_minus || key == GDK_less);
-
-    if (plus && i < n - 1) {
-	plot->spec->scale = scales[i+1];
-    } else if (minus && i > 0) {
-	plot->spec->scale = scales[i-1];
     } else {
-	warnbox("Scale is at %s", plus ? "maximum" : "minimum");
-	return;
+	/* enlarge or shrink */
+	int i;
+
+	for (i=0; i<n; i++) {
+	    if (plot->spec->scale == scales[i]) {
+		break;
+	    }
+	}
+
+	if (mod == 1 && i < n - 1) {
+	    plot->spec->scale = scales[i+1];
+	} else if (mod == -1 && i > 0) {
+	    plot->spec->scale = scales[i-1];
+	} else {
+	    warnbox("Scale is at %s", mod > 0 ? "maximum" : "minimum");
+	    return;
+	}
     }
 
     gnuplot_png_init(plot, &fp);
@@ -4145,14 +4154,24 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 static gboolean 
 plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 {
+    guint k = key->keyval;
+
     if (gnuplot_png_terminal() == GP_PNG_CAIRO &&
-	(key->keyval == GDK_plus || key->keyval == GDK_minus ||
-	 key->keyval == GDK_greater || key->keyval == GDK_less)) {
-	plot_do_rescale(plot, key->keyval);
+	(k == GDK_plus || k == GDK_greater ||
+	 k == GDK_minus || k == GDK_less ||
+	 k == GDK_equal || k == GDK_0)) {
+	int rk = 1;
+
+	if (k == GDK_minus || k == GDK_less) {
+	    rk = -1;
+	} else if (k == GDK_0) {
+	    rk = 0;
+	}
+	plot_do_rescale(plot, rk);
 	return TRUE;
     }
 
-    switch (key->keyval) {
+    switch (k) {
     case GDK_q:
     case GDK_Q:
 	gtk_widget_destroy(w);
