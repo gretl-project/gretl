@@ -1058,6 +1058,16 @@ const char *get_gretl_eps_term_line (PlotType ptype, GptFlags flags)
     return eps_term_line;
 }
 
+void plot_get_scaled_dimensions (int *width, int *height, double scale)
+{
+    *width *= scale;
+    *height *= scale;
+
+    /* PNG: round up to an even number of pixels if need be */
+    if (*width % 2) *width += 1;
+    if (*height % 2) *height += 1;
+}
+
 static void write_png_size_string (char *s, PlotType ptype, 
 				   GptFlags flags, double scale)
 {
@@ -1081,8 +1091,7 @@ static void write_png_size_string (char *s, PlotType ptype,
     }
 
     if (scale != 1.0) {
-	w *= scale;
-	h *= scale;
+	plot_get_scaled_dimensions(&w, &h, scale);
     }
 
     *s = '\0';

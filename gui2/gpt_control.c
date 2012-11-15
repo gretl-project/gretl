@@ -2488,6 +2488,13 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    }
 	    spec->flags |= GPT_TS;
 	    continue;
+	} else if (!strncmp(gpline, "# scale = ", 10)) {
+	    double x = dot_atof(gpline + 10);
+	    
+	    if (x >= 0.5 && x <= 2.0) {
+		spec->scale = x;
+	    }
+	    continue;
 	} else if (!strncmp(gpline, "# boxplots", 10)) {
 	    continue;
 	}
@@ -3513,10 +3520,11 @@ static void add_to_session_callback (GPT_SPEC *spec)
     }
 }
 
-static void plot_do_rescale (png_plot *plot, guint keyval)
+static void plot_do_rescale (png_plot *plot, guint key)
 {
     double scales[] = { 0.8, 1.0, 1.1, 1.2 };
     int i = 0, n = G_N_ELEMENTS(scales);
+    int plus, minus;
     FILE *fp = NULL;
 
     for (i=0; i<n; i++) {
@@ -3525,13 +3533,15 @@ static void plot_do_rescale (png_plot *plot, guint keyval)
 	}
     }
 
-    if (keyval == GDK_plus && i < n - 1) {
+    plus = (key == GDK_plus || key == GDK_greater);
+    minus = (key == GDK_minus || key == GDK_less);
+
+    if (plus && i < n - 1) {
 	plot->spec->scale = scales[i+1];
-    } else if (keyval == GDK_minus && i > 0) {
+    } else if (minus && i > 0) {
 	plot->spec->scale = scales[i-1];
     } else {
-	warnbox("Scale is at %s", keyval == GDK_plus ? 
-		"maximum" : "minimum");
+	warnbox("Scale is at %s", plus ? "maximum" : "minimum");
 	return;
     }
 
@@ -4136,7 +4146,8 @@ static gboolean
 plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 {
     if (gnuplot_png_terminal() == GP_PNG_CAIRO &&
-	(key->keyval == GDK_plus || key->keyval == GDK_minus)) {
+	(key->keyval == GDK_plus || key->keyval == GDK_minus ||
+	 key->keyval == GDK_greater || key->keyval == GDK_less)) {
 	plot_do_rescale(plot, key->keyval);
 	return TRUE;
     }
@@ -4881,7 +4892,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
     /* Parse the gnuplot source file.  If we hit errors here,
        flag this, but it's not necessarily a show-stopper in
        terms of simply displaying the graph. Unless we get
-       E_FOPEN, in which case it really is a show-stopper.
+       E_FOPEN, which really is a show-stopper.
     */
     plot->err = read_plotspec_from_file(plot->spec, &plot->pd);
 
@@ -4918,11 +4929,20 @@ static int gnuplot_show_png (const char *fname, const char *name,
     } else if (plot->spec->flags & GPT_XL) {
 	plot->pixel_width = GP_XL_WIDTH;
 	plot->pixel_height = GP_XL_HEIGHT;
-    }	
+    }
+
+    if (plot->spec->scale != 1.0) {
+	plot_get_scaled_dimensions(&plot->pixel_width,
+				   &plot->pixel_height,
+				   plot->spec->scale);
+    }
 
     if (!plot->err) {
 	int range_err = get_plot_ranges(plot);
 
+#if GPDEBUG
+	fprintf(stderr, "range_err = %d\n", range_err);
+#endif
 	if (plot->spec->nbars > 0) {
 	    if (range_err) {
 		plot->spec->nbars = 0;

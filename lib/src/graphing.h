@@ -201,6 +201,8 @@ void print_plot_bounding_box_request (FILE *fp);
 
 PlotType plot_type_from_string (const char *str);
 
+void plot_get_scaled_dimensions (int *width, int *height, double scale);
+
 int gnuplot_make_graph (void);
 
 int graph_written_to_file (void);

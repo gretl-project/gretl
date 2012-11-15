@@ -1067,6 +1067,12 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	}
     }
 
+    if (spec->scale != 1.0) {
+	gretl_push_c_numeric_locale();
+	fprintf(fp, "# scale = %.1f", spec->scale);
+	gretl_pop_c_numeric_locale();
+    }
+
     if (!mono) {
 	write_styles_from_plotspec(spec, fp);
     }
@@ -1450,7 +1456,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
     }
 
     gretl_pop_c_numeric_locale();
-    
+
     if (png && gnuplot_has_bbox()) {
 	print_plot_bounding_box_request(fp);
     }
