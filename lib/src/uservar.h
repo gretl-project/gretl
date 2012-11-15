@@ -133,14 +133,6 @@ int matrix_is_saved (const gretl_matrix *m);
 
 int gretl_is_scalar (const char *name);
 
-int gretl_scalar_get_index (const char *name, int *err);
-
-int gretl_scalar_get_level (int i);
-
-const char *gretl_scalar_get_name (int i);
-
-double gretl_scalar_get_value_by_index (int i);
-
 double gretl_scalar_get_value (const char *name);
 
 void gretl_scalar_set_value (const char *name, double val);

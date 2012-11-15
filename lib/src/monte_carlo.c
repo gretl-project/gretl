@@ -60,7 +60,8 @@ enum loop_types {
 typedef struct {
     int lineno;    /* location: line number in loop */
     int n;         /* number of repetitions */
-    int *list;     /* list of vars to print */
+    int nvars;     /* number of variables */
+    char **names;  /* names of vars to print */
     bigval *sum;   /* running sum of values */
     bigval *ssq;   /* running sum of squares */
     double *xbak;  /* previous values */
@@ -87,11 +88,13 @@ typedef struct {
 } LOOP_MODEL;
 
 typedef struct {
-    int lineno;       /* location: line number in loop */ 
-    int n;            /* number of observations */
-    char *fname;      /* filename for output */
-    gretlopt opt;     /* formatting option */
-    DATASET *dset;    /* temporary data storage */
+    int lineno;     /* location: line number in loop */ 
+    int n;          /* number of observations */
+    int nvars;      /* number of variables to store */
+    char **names;   /* names of vars to print */
+    char *fname;    /* filename for output */
+    gretlopt opt;   /* formatting option */
+    DATASET *dset;  /* temporary data storage */
 } LOOP_STORE;
 
 enum loop_flags {
@@ -257,6 +260,7 @@ static double controller_get_val (controller *clr,
 	    }
 	}
 	if (!done && !*err && strchr(clr->expr, '$')) {
+	    /* the expression needs dollar substitution? */
 	    int subst = 0;
 	    char expr[32];
 
@@ -438,6 +442,8 @@ static void loop_store_init (LOOP_STORE *lstore)
 {
     lstore->lineno = -1;
     lstore->n = 0;
+    lstore->nvars = 0;
+    lstore->names = NULL;
     lstore->fname = NULL;
     lstore->opt = OPT_NONE;
     lstore->dset = NULL;
@@ -1486,14 +1492,15 @@ static void loop_print_free (LOOP_PRINT *lprn)
 {
     int i;
 
-    for (i=0; i<lprn->list[0]; i++) {
+    for (i=0; i<lprn->nvars; i++) {
 	mpf_clear(lprn->sum[i]);
 	mpf_clear(lprn->ssq[i]);
     }
 
+    strings_array_free(lprn->names, lprn->nvars);
+
     free(lprn->sum);
     free(lprn->ssq);
-    free(lprn->list);
     free(lprn->xbak);
     free(lprn->diff);
     free(lprn->na);
@@ -1505,7 +1512,7 @@ static void loop_print_zero (LOOP_PRINT *lprn, int started)
 
     lprn->n = 0;
 
-    for (i=0; i<lprn->list[0]; i++) { 
+    for (i=0; i<lprn->nvars; i++) { 
 	if (started) {
 	    mpf_set_d(lprn->sum[i], 0.0);
 	    mpf_set_d(lprn->ssq[i], 0.0);
@@ -1519,40 +1526,43 @@ static void loop_print_zero (LOOP_PRINT *lprn, int started)
     }
 }
 
-static void loop_print_init (LOOP_PRINT *lprn, int lno)
-{
-    lprn->lineno = lno;
-    lprn->list = NULL;
-    lprn->sum = NULL;
-    lprn->ssq = NULL;
-    lprn->xbak = NULL;
-    lprn->diff = NULL;
-    lprn->na = NULL;
-}
-
 /* allocate and initialize @lprn, based on the number of
-   elements in @list */
+   elements in @namestr */
 
-static int loop_print_start (LOOP_PRINT *lprn, const int *list)
+static int loop_print_start (LOOP_PRINT *lprn, const char *namestr)
 {
-    int k = list[0];
+    int i, nv;
 
-    lprn->list = gretl_list_copy(list);
-    if (lprn->list == NULL) return 1;
+    lprn->names = gretl_string_split(namestr, &lprn->nvars);
+    if (lprn->names == NULL) {
+	return E_ALLOC;
+    }
 
-    lprn->sum = malloc(k * sizeof *lprn->sum);
+    nv = lprn->nvars;
+
+    for (i=0; i<nv; i++) {
+	if (!gretl_is_scalar(lprn->names[i])) {
+	    gretl_errmsg_sprintf(_("'%s': not a scalar"), lprn->names[i]);
+	    strings_array_free(lprn->names, lprn->nvars);
+	    lprn->names = NULL;
+	    lprn->nvars = 0;
+	    return E_DATA;
+	}
+    }
+
+    lprn->sum = malloc(nv * sizeof *lprn->sum);
     if (lprn->sum == NULL) goto cleanup;
 
-    lprn->ssq = malloc(k * sizeof *lprn->ssq);
+    lprn->ssq = malloc(nv * sizeof *lprn->ssq);
     if (lprn->ssq == NULL) goto cleanup;
 
-    lprn->xbak = malloc(k * sizeof *lprn->xbak);
+    lprn->xbak = malloc(nv * sizeof *lprn->xbak);
     if (lprn->xbak == NULL) goto cleanup;
 
-    lprn->diff = malloc(k * sizeof *lprn->diff);
+    lprn->diff = malloc(nv * sizeof *lprn->diff);
     if (lprn->diff == NULL) goto cleanup;
 
-    lprn->na = malloc(k);
+    lprn->na = malloc(nv);
     if (lprn->na == NULL) goto cleanup;
 
     loop_print_zero(lprn, 0);
@@ -1561,14 +1571,35 @@ static int loop_print_start (LOOP_PRINT *lprn, const int *list)
 
  cleanup:
 
-    free(lprn->list);
+    strings_array_free(lprn->names, lprn->nvars);
+    lprn->names = NULL;
+    lprn->nvars = 0;
+    
     free(lprn->sum);
     free(lprn->ssq);
     free(lprn->xbak);
     free(lprn->diff);
     free(lprn->na);
 
-    return 1;
+    lprn->sum = NULL;
+    lprn->ssq = NULL;
+    lprn->xbak = NULL;
+    lprn->diff = NULL;
+    lprn->na = NULL;
+
+    return E_ALLOC;
+}
+
+static void loop_print_init (LOOP_PRINT *lprn, int lno)
+{
+    lprn->lineno = lno;
+    lprn->nvars = 0;
+    lprn->names = NULL;
+    lprn->sum = NULL;
+    lprn->ssq = NULL;
+    lprn->xbak = NULL;
+    lprn->diff = NULL;
+    lprn->na = NULL;
 }
 
 static LOOP_PRINT *get_loop_print_by_line (LOOPSET *loop, int lno, int *err)
@@ -1600,6 +1631,11 @@ static void loop_store_free (LOOP_STORE *lstore)
 {
     destroy_dataset(lstore->dset);
     lstore->dset = NULL;
+
+    strings_array_free(lstore->names, lstore->nvars);
+    lstore->nvars = 0;
+    lstore->names = NULL;
+
     free(lstore->fname);
     lstore->fname = NULL;
 
@@ -1608,63 +1644,71 @@ static void loop_store_free (LOOP_STORE *lstore)
     lstore->opt = OPT_NONE;
 }
 
-static int loop_store_set_filename (LOOPSET *loop, const char *fname,
+static int loop_store_set_filename (LOOP_STORE *lstore, 
+				    const char *fname,
 				    gretlopt opt)
 {
     if (fname == NULL || *fname == '\0') {
 	return E_ARGS;
     }
 
-    loop->store.fname = gretl_strdup(fname);
-    if (loop->store.fname == NULL) {
+    lstore->fname = gretl_strdup(fname);
+    if (lstore->fname == NULL) {
 	return E_ALLOC;
     }
 
     if (opt == OPT_NONE) {
-	opt = data_save_opt_from_suffix(loop->store.fname);
+	opt = data_save_opt_from_suffix(lstore->fname);
     }
 
-    loop->store.opt = opt;    
+    lstore->opt = opt;    
 
     return 0;
 }
 
 /* check, allocate and initialize loop data storage */
 
-static int loop_store_start (LOOPSET *loop, const int *list, 
+static int loop_store_start (LOOPSET *loop, const char *names, 
 			     const char *fname, gretlopt opt)
 {
+    LOOP_STORE *lstore = &loop->store;
     int i, n, err = 0;
 
-    if (list == NULL || list[0] == 0) {
+    if (names == NULL || *names == '\0') {
 	gretl_errmsg_set("'store' list is empty");
 	return E_DATA;
     }
 
-    err = loop_store_set_filename(loop, fname, opt);
+    lstore->names = gretl_string_split(names, &lstore->nvars);
+    if (lstore->names == NULL) {
+	return E_ALLOC;
+    }
+
+    err = loop_store_set_filename(lstore, fname, opt);
     if (err) {
 	return err;
     }
 
     n = (loop->itermax > 0)? loop->itermax : DEFAULT_NOBS;
 
-    loop->store.dset = create_auxiliary_dataset(list[0] + 1, n, 0);
-    if (loop->store.dset == NULL) {
+    lstore->dset = create_auxiliary_dataset(lstore->nvars + 1, n, 0);
+    if (lstore->dset == NULL) {
 	return E_ALLOC;
     }
     
 #if LOOP_DEBUG
     fprintf(stderr, "loop_store_init: created sZ, v = %d, n = %d\n",
-	    loop->store.dset->v, loop->store.dset->n);
+	    lstore->dset->v, lstore->dset->n);
 #endif
 
-    for (i=1; i<=list[0] && !err; i++) {
-	const char *s = gretl_scalar_get_name(list[i]);
+    for (i=0; i<lstore->nvars && !err; i++) {
+	const char *s = lstore->names[i];
 
-	if (s == NULL) {
+	if (!gretl_is_scalar(s)) {
+	    gretl_errmsg_sprintf(_("'%s': not a scalar"), s);
 	    err = E_DATA;
 	} else {
-	    strcpy(loop->store.dset->varname[i], s);
+	    strcpy(lstore->dset->varname[i+1], s);
 	}
     }
 
@@ -1672,40 +1716,40 @@ static int loop_store_start (LOOPSET *loop, const int *list,
 }
 
 static int loop_store_update (LOOPSET *loop, int lno,
-			      const int *list, const char *fname,
+			      const char *names, const char *fname,
 			      gretlopt opt)
 {
+    LOOP_STORE *lstore = &loop->store;
     int i, t, err = 0;
 
-    if (loop->store.lineno >= 0 && loop->store.lineno != lno) {
+    if (lstore->lineno >= 0 && lstore->lineno != lno) {
 	gretl_errmsg_set("Only one 'store' command is allowed in a "
 			 "progressive loop");
 	return E_DATA;
     }
 
-    if (loop->store.dset == NULL) {
+    if (lstore->dset == NULL) {
 	/* not started yet */
-	err = loop_store_start(loop, list, fname, opt);
+	err = loop_store_start(loop, names, fname, opt);
 	if (err) {
 	    return err;
 	}
     }
 
-    loop->store.lineno = lno;
-    t = loop->store.n;
+    lstore->lineno = lno;
+    t = lstore->n;
 
-    if (t >= loop->store.dset->n) {
-	if (extend_loop_dataset(&loop->store)) {
+    if (t >= lstore->dset->n) {
+	if (extend_loop_dataset(lstore)) {
 	    return E_ALLOC;
 	}
     }
 
-    for (i=1; i<=list[0]; i++) {
-	loop->store.dset->Z[i][t] = 
-	    gretl_scalar_get_value_by_index(list[i]);
+    for (i=0; i<lstore->nvars; i++) {
+	lstore->dset->Z[i+1][t] = gretl_scalar_get_value(lstore->names[i]);
     }
 
-    loop->store.n += 1;
+    lstore->n += 1;
 
     return 0;
 }
@@ -1878,16 +1922,15 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
    allocation first.
 */
 
-static int loop_print_update (LOOP_PRINT *lprn, const int *list) 
+static int loop_print_update (LOOP_PRINT *lprn, const char *names) 
 {
     mpf_t m;
-    int j, vj;
     double x;
-    int err = 0;
+    int i, err = 0;
 
-    if (lprn->list == NULL) {
+    if (lprn->names == NULL) {
 	/* not started yet */
-	err = loop_print_start(lprn, list);
+	err = loop_print_start(lprn, names);
 	if (err) {
 	    return err;
 	}
@@ -1895,24 +1938,23 @@ static int loop_print_update (LOOP_PRINT *lprn, const int *list)
 
     mpf_init(m);
     
-    for (j=0; j<list[0]; j++) {
-	if (lprn->na[j]) {
+    for (i=0; i<lprn->nvars; i++) {
+	if (lprn->na[i]) {
 	    continue;
 	}
-	vj = list[j+1];
-	x = gretl_scalar_get_value_by_index(vj);
+	x = gretl_scalar_get_value(lprn->names[i]);
 	if (na(x)) {
-	    lprn->na[j] = 1;
+	    lprn->na[i] = 1;
 	    continue;
 	}
 	mpf_set_d(m, x); 
-	mpf_add(lprn->sum[j], lprn->sum[j], m);
+	mpf_add(lprn->sum[i], lprn->sum[i], m);
 	mpf_mul(m, m, m);
-	mpf_add(lprn->ssq[j], lprn->ssq[j], m);
-	if (!na(lprn->xbak[j]) && realdiff(x, lprn->xbak[j])) {
-	    lprn->diff[j] = 1;
+	mpf_add(lprn->ssq[i], lprn->ssq[i], m);
+	if (!na(lprn->xbak[i]) && realdiff(x, lprn->xbak[i])) {
+	    lprn->diff[i] = 1;
 	}
-	lprn->xbak[j] = x;
+	lprn->xbak[i] = x;
     }
 
     mpf_clear(m);
@@ -2199,7 +2241,7 @@ static void loop_print_print (LOOP_PRINT *lprn, PRN *prn)
 {
     bigval mean, m, sd;
     int len, maxlen = 7;
-    int i, vi, n;
+    int i, n;
     const char *s;
 
     if (lprn == NULL) {
@@ -2212,10 +2254,8 @@ static void loop_print_print (LOOP_PRINT *lprn, PRN *prn)
     mpf_init(m);
     mpf_init(sd);
 
-    for (i=0; i<lprn->list[0]; i++) {
-	vi = lprn->list[i+1];
-	s = gretl_scalar_get_name(vi);
-	len = strlen(s);
+    for (i=0; i<lprn->nvars; i++) {
+	len = strlen(lprn->names[i]);
 	if (len > maxlen) {
 	    maxlen = len;
 	}
@@ -2231,9 +2271,8 @@ static void loop_print_print (LOOP_PRINT *lprn, PRN *prn)
     len = get_utf_width(_("std. dev"), 14);
     pprintf(prn, "%*s\n", len, _("std. dev"));
     
-    for (i=0; i<lprn->list[0]; i++) {
-	vi = lprn->list[i+1];
-	s = gretl_scalar_get_name(vi);
+    for (i=0; i<lprn->nvars; i++) {
+	s = lprn->names[i];
 	if (lprn->na[i]) {
 	    pprintf(prn, "%*s", maxlen + 1, s);
 	    pprintf(prn, "%14s %14s\n", "NA   ", "NA   ");
@@ -3060,10 +3099,10 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		       loop_is_progressive(loop)) {
 		lprn = get_loop_print_by_line(loop, j, &err);
 		if (!err) {
-		    loop_print_update(lprn, cmd->list);
+		    err = loop_print_update(lprn, cmd->extra);
 		}
 	    } else if (cmd->ci == STORE && loop_is_progressive(loop)) {
-		err = loop_store_update(loop, j, cmd->list, cmd->param,
+		err = loop_store_update(loop, j, cmd->extra, cmd->param,
 					cmd->opt);
 	    } else if (loop_is_progressive(loop) && not_ok_in_progloop(cmd->ci)) {
 		gretl_errmsg_sprintf(_("%s: not implemented in 'progressive' loops"),

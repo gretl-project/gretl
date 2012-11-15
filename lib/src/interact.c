@@ -2109,12 +2109,6 @@ static int get_id_or_int (const char *s, int *k, int ints_ok, int poly,
     return ok;
 }
 
-/* for use with "progressive" loops, when scalars in effect
-   turn into series */
-#define make_scalars_list(c) ((c->flags & CMD_PROG) && \
-                              (cmd->ci == PRINT || \
-			       cmd->ci == STORE))
-
 static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 				   DATASET *dset, CMD *cmd)
 {
@@ -2127,13 +2121,7 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 	    s, cmd->ci, cmd->word);
 #endif
 
-    if (make_scalars_list(cmd)) {
-	v = gretl_scalar_get_index(s, &cmd->err);
-	if (!cmd->err) {
-	    cmd->list[k++] = v;
-	    ok = 1;
-	}
-    } else if (ints_ok) {
+    if (ints_ok) {
 	v = gretl_int_from_string(s, &cmd->err);
 	if (!cmd->err) {
 	    cmd->list[k++] = v;
@@ -2632,6 +2620,14 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 	    cmd_set_nolist(cmd);
 	    capture_param(cmd, rem);
 	    return cmd->err;
+	} else if (cmd->flags & CMD_PROG) {
+	    /* print in progressive loop */
+	    free(cmd->extra);
+	    cmd->extra = gretl_strdup(rem);
+	    if (cmd->extra == NULL) {
+		cmd->err = E_ALLOC;
+	    }
+	    return cmd->err;
 	}
     } else if (cmd->ci == SMPL) {
 	/* SMPL may take a list, but only in case of OPT_M,
@@ -2668,7 +2664,18 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 	    cmd_set_nolist(cmd);
 	    return cmd->err;
 	}
-    }
+    } else if (cmd->ci == STORE && (cmd->flags & CMD_PROG)) {
+	/* store in progressive loop */
+	cmd->err = get_maybe_quoted_filename(cmd, &rem);
+	if (!cmd->err) {
+	    free(cmd->extra);
+	    cmd->extra = gretl_strdup(rem);
+	    if (cmd->extra == NULL) {
+		cmd->err = E_ALLOC;
+	    }
+	}
+	return cmd->err;
+    }	
 
     /* OK, now we're definitely doing a list-oriented command;
 	we begin by taking care of a few specials 

@@ -1276,55 +1276,6 @@ double gretl_scalar_get_value (const char *name)
     return ret;
 }
 
-static int is_scalar_index (int i)
-{
-    return i >= 0 && i < n_vars && uvars[i]->type == GRETL_TYPE_DOUBLE;
-}
-
-double gretl_scalar_get_value_by_index (int i)
-{
-    if (is_scalar_index(i)) {
-	return *(double *) uvars[i]->ptr;
-    } else {
-	return NADBL;
-    }
-}
-
-const char *gretl_scalar_get_name (int i)
-{
-    if (is_scalar_index(i)) {
-	return uvars[i]->name;
-    } else {
-	return NULL;
-    }
-}
-
-int gretl_scalar_get_level (int i)
-{
-    if (is_scalar_index(i)) {
-	return uvars[i]->level;
-    } else {
-	return -1;
-    }
-}
-
-int gretl_scalar_get_index (const char *name, int *err)
-{
-    int i, level = gretl_function_depth();
-
-    for (i=0; i<n_vars; i++) {
-	if (uvars[i]->type == GRETL_TYPE_DOUBLE &&
-	    level == uvars[i]->level &&
-	    !strcmp(name, uvars[i]->name)) {
-	    return i;
-	}
-    }
-
-    *err = E_UNKVAR;
-
-    return -1;
-}
-
 int gretl_is_scalar (const char *name)
 {
     int ret = 0;
