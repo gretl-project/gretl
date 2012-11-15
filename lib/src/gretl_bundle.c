@@ -841,7 +841,7 @@ int gretl_bundle_copy_as (const char *name, const char *copyname)
     u = get_user_var_of_type_by_name(name, GRETL_TYPE_BUNDLE);
 
     if (u == NULL) {
-	return E_UNKVAR;
+	return E_DATA;
     }
 
     b0 = user_var_get_value(u);

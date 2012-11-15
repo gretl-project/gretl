@@ -10878,7 +10878,7 @@ static void assign_to_matrix_mod (parser *p)
     uvar = get_user_var_of_type_by_name(p->lh.name, GRETL_TYPE_MATRIX);
 
     if (uvar == NULL) {
-	p->err = E_UNKVAR;
+	p->err = E_DATA;
     } else {
 	a = user_var_get_value(uvar);
 	if (a == NULL) {

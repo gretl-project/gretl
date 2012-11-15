@@ -634,7 +634,12 @@ static user_var *get_stringvar_target (const char *targ,
     if (*targ == '\0') {
 	*err = E_PARSE;
     } else {
-	uvar = get_user_var_of_type_by_name(targ, GRETL_TYPE_STRING);
+	uvar = get_user_var_by_name(targ);
+	if (uvar != NULL && 
+	    user_var_get_type(uvar) != GRETL_TYPE_STRING) {
+	    *err = E_TYPES;
+	    return NULL;
+	}
 #if SPRINTF_COMPAT
 	if (uvar == NULL) {
 	    char genline[64];

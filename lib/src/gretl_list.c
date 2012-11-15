@@ -127,7 +127,7 @@ int append_to_list_by_name (const char *targ, const int *add)
     u = get_user_var_of_type_by_name(targ, GRETL_TYPE_LIST);
 
     if (u == NULL) {
-	err = E_UNKVAR;
+	err = E_DATA;
     } else {
 	const int *list = user_var_get_value(u);
 	int *tmp = gretl_list_copy(list);
@@ -164,7 +164,7 @@ int subtract_from_list_by_name (const char *targ, const int *sub)
     u = get_user_var_of_type_by_name(targ, GRETL_TYPE_LIST);
 
     if (u == NULL) {
-	err = E_UNKVAR;
+	err = E_DATA;
     } else {
 	const int *list = user_var_get_value(u);
 	int *tmp = gretl_list_drop(list, sub, &err);
@@ -196,7 +196,7 @@ int replace_list_by_name (const char *targ, const int *src)
     u = get_user_var_of_type_by_name(targ, GRETL_TYPE_LIST);
 
     if (u == NULL) {
-	err = E_UNKVAR;
+	err = E_DATA;
     } else {
 	int *tmp = gretl_list_copy(src);
 
@@ -249,37 +249,6 @@ int remember_list (const int *list, const char *name, PRN *prn)
 		pprintf(prn, _("Added list '%s'\n"), name);
 	    }
 	}
-    }
-
-    return err;
-}
-
-/**
- * rename_saved_list:
- * @orig: the original name of the list.
- * @newname: the new name to be given.
- *
- * Renames a saved list from @orig to @new.  If there is
- * already a list called @newname, it is destroyed.
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int rename_saved_list (const char *orig, const char *newname)
-{
-    user_var *u0, *u1;
-    int err = 0;
-
-    u0 = get_user_var_of_type_by_name(orig, GRETL_TYPE_LIST);
-
-    if (u0 == NULL) {
-	err = E_DATA;
-    } else {
-	u1 = get_user_var_of_type_by_name(newname, GRETL_TYPE_LIST);
-	if (u1 != NULL) {
-	    user_var_delete(u1);
-	}
-	user_var_set_name(u0, newname);
     }
 
     return err;
