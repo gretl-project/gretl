@@ -919,7 +919,7 @@ static int exec_line (ExecState *s, DATASET *dset)
 	pputs(prn, _("Enter commands for loop.  "
 		     "Type 'endloop' to get out\n"));
     }
-   
+
     if (cmd->ci == LOOP || gretl_compiling_loop()) {  
 	/* accumulating loop commands */
 	if (gretl_echo_on() && (!gretl_compiling_loop() || batch || runit)) {

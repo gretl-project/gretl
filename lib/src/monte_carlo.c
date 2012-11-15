@@ -595,8 +595,14 @@ static int loop_attach_index_var (LOOPSET *loop, const char *vname,
 	gretl_scalar_set_value(vname, loop->init.val);
     } else {
 	char genline[64];
-
-	sprintf(genline, "scalar %s = %g", vname, loop->init.val);
+	
+	if (na(loop->init.val)) {
+	    sprintf(genline, "scalar %s = NA", vname);
+	} else {
+	    gretl_push_c_numeric_locale();
+	    sprintf(genline, "scalar %s = %g", vname, loop->init.val);
+	    gretl_pop_c_numeric_locale();
+	}
 	err = generate(genline, dset, OPT_Q, NULL);
 	if (!err) {
 	    strcpy(loop->idxname, vname);
@@ -1159,6 +1165,10 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
 	gretl_errmsg_set(_("No valid loop condition was given."));
 	err = 1;
     }
+
+#if LOOP_DEBUG
+    fprintf(stderr, "parse_first_loopline: returning %d\n", err);
+#endif
 
     return err;
 }

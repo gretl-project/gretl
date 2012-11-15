@@ -6065,7 +6065,7 @@ int get_command_index (char *line, CMD *cmd)
     }
 
 #if CMD_DEBUG
-    fprintf(stderr, " cmd->ci set to %d\n", cmd->ci);
+    fprintf(stderr, " get_command_index: cmd->ci set to %d\n", cmd->ci);
 #endif
 
     return 0;
