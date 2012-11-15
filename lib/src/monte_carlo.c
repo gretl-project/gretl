@@ -199,7 +199,8 @@ static int
 make_dollar_substitutions (char *str, int maxlen,
 			   const LOOPSET *loop,
 			   const DATASET *dset,
-			   int *subst);
+			   int *subst,
+			   gretlopt opt);
 
 #define LOOP_BLOCK 32
 
@@ -228,7 +229,8 @@ int gretl_execute_loop (void)
    that value.  
 */
 
-static double controller_get_val (controller *clr, 
+static double controller_get_val (controller *clr,
+				  LOOPSET *loop,
 				  DATASET *dset, 
 				  int *err)
 {
@@ -253,6 +255,19 @@ static double controller_get_val (controller *clr,
 		clr->val = generate_scalar(expr, dset, err);
 		done = 1;
 	    }
+	}
+	if (!done && !*err && strchr(clr->expr, '$')) {
+	    int subst = 0;
+	    char expr[32];
+
+	    *expr = '\0';
+	    strncat(expr, clr->expr, 31);
+	    *err = make_dollar_substitutions(expr, 31, loop, dset, 
+					     &subst, OPT_T);
+	    if (!*err && subst) {
+		clr->val = generate_scalar(expr, dset, err);
+		done = 1;
+	    }	    
 	}
 	if (!*err && !done) {
 	    clr->val = generate_scalar(clr->expr, dset, err);
@@ -820,7 +835,7 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 
 	strcpy(lname, loop->listname);
 	err = make_dollar_substitutions(lname, VNAMELEN, loop, 
-					dset, NULL);
+					dset, NULL, OPT_T);
 	if (!err) {
 	    list = get_list_by_name(lname);
 	} 
@@ -2501,13 +2516,13 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
     if (is_list_loop(loop)) {
 	err = loop_list_refresh(loop, dset);
     } else if (loop->type == INDEX_LOOP) {
-	loop->init.val = controller_get_val(&loop->init, dset, &err);
+	loop->init.val = controller_get_val(&loop->init, loop, dset, &err);
     } else if (loop->type == FOR_LOOP) {
 	forloop_init(loop, dset, &err);
     }
 
     if (!err && (loop->type == COUNT_LOOP || indexed_loop(loop))) {
-	loop->final.val = controller_get_val(&loop->final, dset, &err);
+	loop->final.val = controller_get_val(&loop->final, loop, dset, &err);
 	if (na(loop->init.val) || na(loop->final.val)) {
 	    gretl_errmsg_set(_("error evaluating loop condition"));
 	    fprintf(stderr, "loop: got NA for init and/or final value\n");
@@ -2572,14 +2587,16 @@ static int
 make_dollar_substitutions (char *str, int maxlen,
 			   const LOOPSET *loop,
 			   const DATASET *dset,
-			   int *subst)
+			   int *subst,
+			   gretlopt opt)
 {
     int err = 0;
 
-    /* if maxlen == VNAMELEN we're just processing a list name, at the top
-       of a loop */
+    /* if (opt & OPT_T) we're just processing a variable name, at the top
+       of a loop, so we can skip to the "parentage" bit 
+    */
 
-    if (maxlen != VNAMELEN && (indexed_loop(loop) || loop->type == FOR_LOOP)) {
+    if (!(opt & OPT_T) && (indexed_loop(loop) || loop->type == FOR_LOOP)) {
 	err = substitute_dollar_targ(str, maxlen, loop, dset, subst);
     }
 
@@ -2940,7 +2957,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 
 	    if (!loop_cmd_nodol(loop, j) && strchr(line, '$')) {
 		err = make_dollar_substitutions(line, MAXLINE, loop, 
-						dset, &subst);
+						dset, &subst, OPT_NONE);
 		if (err) {
 		    break;
 		} else if (!subst) {
