@@ -1964,16 +1964,16 @@ void function_call_cleanup (void)
 }
 
 /* Execute the plotting function made available by the function
-   package that produced the bundle represented by @ptr, possibly
-   inflected by an integer option -- if an option is present it's
-   packed into @aname, after a colon. 
+   package that produced bundle @b, possibly inflected by an 
+   integer option -- if an option is present it's packed into 
+   @aname, after a colon. 
 */
 
 int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 {
     ufunc *func;
     fnargs *args = NULL;
-    const char *bname;
+    char *tmpname = NULL;
     char funname[32];
     int argc, iopt = -1;
     int err = 0;
@@ -1987,9 +1987,8 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
     }
 
     func = get_user_function_by_name(funname);
-    bname = user_var_get_name_by_data(b);
 
-    if (func == NULL || bname == NULL) {
+    if (func == NULL) {
 	err = E_DATA;
     } else {
 	argc = iopt >= 0 ? 2 : 1;
@@ -2000,14 +1999,30 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
     }
 
     if (!err) {
+	const char *bname = user_var_get_name_by_data(b);
 #if 1
 	fprintf(stderr, "bundle plot: using bundle %p (%s)\n",
 		(void *) b, bname);
 #endif
-	err = push_fn_arg(args, bname, GRETL_TYPE_BUNDLE_REF, (void *) bname);
+	if (bname == NULL) {
+	    /* The bundle is anonymous: add it to the stack of
+	       user vars temporarily. This means the bundle does
+	       not have to be copied as a function argument; plus
+	       it's mandated that the first arg for bundle plot
+	       functions should be of type "bundle *", which is
+	       feasible only for named bundles.
+	    */
+	    tmpname = temp_name_for_bundle();
+	    err = user_var_add(tmpname, GRETL_TYPE_BUNDLE, b);
+	    bname = tmpname;
+	}
+
+	if (!err) {
+	    err = push_fn_arg(args, bname, GRETL_TYPE_BUNDLE_REF, b);
+	}
 
 	if (!err && iopt >= 0) {
-	    /* add option flag to args */
+	    /* add the option flag, if any, to args */
 	    double minv = fn_param_minval(func, 1);
 
 	    if (!na(minv)) {
@@ -2018,15 +2033,23 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
     }
 
     if (!err) {
-	/* note that the function may need a non-NULL prn for
+	/* Note that the function may need a non-NULL prn for
 	   use with printing redirection; also we may want to
-	   see error output if something goes amiss
+	   see error output if something goes amiss.
 	*/
 	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
 
 	err = gretl_function_exec(func, args, GRETL_TYPE_NONE,
 				  dataset, NULL, NULL, prn);
 	gretl_print_destroy(prn);
+    }
+
+    if (tmpname != NULL) {
+	/* We added an anonymous bundle to the stack of named
+	   variables temporarily: now we should remove it.
+	*/
+	gretl_bundle_pull_from_stack(tmpname, &err);
+	free(tmpname);
     }
 
     fn_args_free(args);

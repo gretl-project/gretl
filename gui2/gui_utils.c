@@ -4449,6 +4449,7 @@ static void add_bundle_menu_items (windata_t *vwin)
     plotfunc = get_bundle_plot_function(bundle);
 
     if (plotfunc != NULL) {
+	/* set up the bundle's Graph menu */
 	ufunc *fun = get_user_function_by_name(plotfunc);
 	const char **S = NULL;
 	int ng = 0;
@@ -4474,7 +4475,7 @@ static void add_bundle_menu_items (windata_t *vwin)
 		g_free(aname);
 	    }		
 	} else {
-	    /* no plotting options to show */
+	    /* no options to show */
 	    item.name = plotfunc;
 	    item.label = _("show plot");
 	    item.callback = G_CALLBACK(bundle_plot_call);
