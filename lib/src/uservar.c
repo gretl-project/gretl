@@ -152,21 +152,21 @@ static void user_var_destroy (user_var *u)
 {
     int free_val = 1;
 
-    if (u->type == GRETL_TYPE_MATRIX) {
+    if (var_is_shell(u)) {
+	free_val = 0;
+    } else if (u->type == GRETL_TYPE_MATRIX) {
 	/* At this point only matrices have to be checked in this
 	   manner: note that in geneval.c, all other types are
 	   unconditionally copied out of bundles, while matrices
 	   may be subject to pointer-sharing.
 	*/
-	if (var_is_shell(u)) {
-	    free_val = 0;
-	} else if (data_is_bundled(u->ptr, "user_var_destroy")) {
+	if (data_is_bundled(u->ptr, "user_var_destroy")) {
 	    free_val = 0;
 	}
     }
 
     if (free_val) {
-	 uvar_free_value(u);
+	uvar_free_value(u);
     }
 
     free(u);
@@ -227,6 +227,8 @@ static int real_user_var_add (const char *name,
 	if (!err) {
 	    if (opt & OPT_P) {
 		u->flags = UV_PRIVATE;
+	    } else if (opt & OPT_S) {
+		u->flags = UV_SHELL;
 	    }
 	    uvars[n_vars] = u;
 	    set_nvars(n_vars + 1, "user_var_add");
@@ -234,7 +236,7 @@ static int real_user_var_add (const char *name,
     }
 
     if (user_var_callback != NULL && u->level == 0 &&
-	!(opt & OPT_P) && 
+	!(opt & (OPT_P | OPT_S)) && 
 	(type == GRETL_TYPE_MATRIX ||
 	 type == GRETL_TYPE_BUNDLE) &&
 	!(type == GRETL_TYPE_BUNDLE && bname_is_temp(name))) {
@@ -810,29 +812,31 @@ int create_user_var (const char *name, GretlType type)
 }
 
 /**
- * matrix_add_as_shell:
- * @M: the matrix to add.
- * @name: the name to be given to the "shell".
+ * arg_add_as_shell:
+ * @name: the name to be given to the "shell" variable.
+ * @type: the type of the variable.
+ * @value: the value pointer
  *
- * Matrix @M is added to the stack of saved matrices under
- * the name @name with the shell flag set.  This is used
- * when an anonymous matrix is given as a %const argument to a 
- * user-defined function: it is temporarily given user_matrix, 
- * status, so that it is accessible by name within the function,
- * but the content @M is protected from destruction on exit 
- * from the function.
+ * The value in question is added to the stack of named
+ * variables matrices under the name @name with the shell flag 
+ * set. This is used (a) when an anonymous matrix is given as 
+ * a %const argument to a user-defined function and (b) when
+ * an anonymous bundle is given as the argument corresponding
+ * to a bundle-pointer parameter. The @value becomes
+ * accessible by @name within the function, but is protected
+ * from destruction on exit from the function.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int matrix_add_as_shell (gretl_matrix *M, const char *name)
+int arg_add_as_shell (const char *name, GretlType type,
+		      void *value)
 {
-    int err = user_var_add(name, GRETL_TYPE_MATRIX, M);
+    int err = real_user_var_add(name, type, value, OPT_S);
 
     if (!err) {
 	user_var *u = uvars[n_vars-1];
 
-	u->flags |= UV_SHELL;
 	u->level += 1;
     }
 

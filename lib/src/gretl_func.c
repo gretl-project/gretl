@@ -5404,6 +5404,23 @@ static void maybe_set_arg_const (struct fnarg *arg, fn_param *fp)
     }
 }
 
+/* handle the case where the GUI passed an anonymous
+   bundle as a "bundle *" argument */
+
+static int localize_bundle_as_shell (struct fnarg *arg, 
+				     fn_param *fp)
+{
+    int err = 0;
+
+    err = arg_add_as_shell(fp->name, GRETL_TYPE_BUNDLE, arg->val.b);
+
+    if (!err) {
+	arg->name = fp->name;
+    }
+
+    return err;
+}
+
 static int localize_const_matrix (struct fnarg *arg, fn_param *fp)
 {
     user_var *u = get_user_var_by_data(arg->val.m);
@@ -5411,7 +5428,7 @@ static int localize_const_matrix (struct fnarg *arg, fn_param *fp)
 
     if (u == NULL) {
 	/* the const argument is an anonymous matrix */
-	err = matrix_add_as_shell(arg->val.m, fp->name);
+	err = arg_add_as_shell(fp->name, GRETL_TYPE_MATRIX, arg->val.m);
     } else {
 	/* a named matrix: in view of its "const-ness" we
 	   don't need to copy the data
@@ -5576,7 +5593,11 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    }
 	} else if (gretl_ref_type(fp->type)) {
 	    if (arg->type != GRETL_TYPE_NONE) {
-		err = user_var_localize(arg->upname, fp->name, fp->type);
+		if (fp->type == GRETL_TYPE_BUNDLE_REF && arg->upname == NULL) {
+		    err = localize_bundle_as_shell(arg, fp);
+		} else {
+		    err = user_var_localize(arg->upname, fp->name, fp->type);
+		}
 		if (!err) {
 		    maybe_set_arg_const(arg, fp);
 		}
@@ -6050,7 +6071,10 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	if (needs_datainfo(fp->type) && dset == NULL) {
 	    err = E_DATA;
 	} else if (gretl_ref_type(fp->type)) {
-	    if (arg->type == GRETL_TYPE_SERIES_REF) {
+	    if (arg->type == GRETL_TYPE_BUNDLE_REF &&
+		arg->upname == NULL) {
+		; /* pointer to anonymous bundle: no-op */
+	    } else if (arg->type == GRETL_TYPE_SERIES_REF) {
 		int v = arg->val.idnum;
 
 		series_decrement_stack_level(dset, v);

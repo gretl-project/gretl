@@ -1973,7 +1973,6 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 {
     ufunc *func;
     fnargs *args = NULL;
-    char *tmpname = NULL;
     char funname[32];
     int argc, iopt = -1;
     int err = 0;
@@ -2004,22 +2003,7 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 	fprintf(stderr, "bundle plot: using bundle %p (%s)\n",
 		(void *) b, bname);
 #endif
-	if (bname == NULL) {
-	    /* The bundle is anonymous: add it to the stack of
-	       user vars temporarily. This means the bundle does
-	       not have to be copied as a function argument; plus
-	       it's mandated that the first arg for bundle plot
-	       functions should be of type "bundle *", which is
-	       feasible only for named bundles.
-	    */
-	    tmpname = temp_name_for_bundle();
-	    err = user_var_add(tmpname, GRETL_TYPE_BUNDLE, b);
-	    bname = tmpname;
-	}
-
-	if (!err) {
-	    err = push_fn_arg(args, bname, GRETL_TYPE_BUNDLE_REF, b);
-	}
+	err = push_fn_arg(args, bname, GRETL_TYPE_BUNDLE_REF, b);
 
 	if (!err && iopt >= 0) {
 	    /* add the option flag, if any, to args */
@@ -2034,22 +2018,13 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 
     if (!err) {
 	/* Note that the function may need a non-NULL prn for
-	   use with printing redirection; also we may want to
-	   see error output if something goes amiss.
+	   use with printing redirection (outfile).
 	*/
 	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
 
 	err = gretl_function_exec(func, args, GRETL_TYPE_NONE,
 				  dataset, NULL, NULL, prn);
 	gretl_print_destroy(prn);
-    }
-
-    if (tmpname != NULL) {
-	/* We added an anonymous bundle to the stack of named
-	   variables temporarily: now we should remove it.
-	*/
-	gretl_bundle_pull_from_stack(tmpname, &err);
-	free(tmpname);
     }
 
     fn_args_free(args);

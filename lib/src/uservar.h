@@ -90,6 +90,10 @@ int user_var_unlocalize (const char *localname,
 int copy_as_arg (const char *param_name, GretlType type, 
 		 void *value);
 
+int arg_add_as_shell (const char *name,
+		      GretlType type,
+		      void *value);
+
 int *copy_list_as_arg (const char *param_name, int *list,
 		       int *err);
 
@@ -122,8 +126,6 @@ int copy_matrix_as (const gretl_matrix *m, const char *newname,
 		    int fnarg);
 
 int private_matrix_add (gretl_matrix *M, const char *name);
-
-int matrix_add_as_shell (gretl_matrix *M, const char *name);
 
 gretl_matrix *get_matrix_by_name_at_level (const char *name, int level);
 
