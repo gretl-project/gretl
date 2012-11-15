@@ -6195,6 +6195,22 @@
       </description>
     </function>
 
+    <function name="typestr" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="scalar">code</fnarg>
+      </fnargs>      
+      <description>
+	<para>
+	  Returns the name of the gretl data-type corresponding to
+	  <argname>code</argname>. This is intended for use in
+	  conjunction with the function <fncref targ="inbundle"/>.
+	  The value returned is one of <quote>scalar</quote>,
+	  <quote>series</quote>, <quote>matrix</quote>,
+	  <quote>string</quote>, <quote>bundle</quote> or
+	  <quote>null</quote>.
+	</para>
+      </description>
+    </function>
 
     <function name="uniform" section="probdist" output="series">
       <fnargs>
