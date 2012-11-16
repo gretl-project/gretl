@@ -1925,49 +1925,13 @@ static void print_NR_status (int status, double crittol, double gradtol,
 */
 
 #define SPECTRAL 0
-#define OLD_STYLE 0
-
-#if OLD_STYLE /* as of gretl 1.9.9 */
 
 static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 {
-    int err = gretl_invert_symmetric_matrix(H);
-
-    if (err == E_NOTPD) {
-	double x, lambda = 1.0;
-	int i, j, s;
-
-	for (s=0; lambda > 0.1 && err; s++) {
-	    lambda *= 0.9;
-	    fprintf(stderr, "newton hessian fixup: round %d, lambda=%g\n",
-		    s, lambda);
-
-	    gretl_matrix_copy_values(H, Hcpy);
-	    for (i=0; i<H->rows; i++) {
-		for (j=0; j<i; j++) {
-		    x = lambda * gretl_matrix_get(H, i, j);
-		    gretl_matrix_set(H, i, j, x);
-		    gretl_matrix_set(H, j, i, x);
-		}
-	    }
-#if 0
-	    gretl_matrix_print(H, "after shrinkage");
-#endif
-	    err = gretl_invert_symmetric_matrix(H);
-	}
-    }
-
-    return err;
-}
-
-#else /* new style */
-
-static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
-{
+    double hii, hmin = 1.0e-28; /* was 1.0e-20 */
     int i, j, err = 0;
     int n = H->rows;
     int restore = 0;
-
     double x;
 
     /* first, check if all the elements along the diagonal are 
@@ -1975,11 +1939,13 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
     */
 
     for (i=0; i<n && !err; i++) {
-	err = gretl_matrix_get(H, i, i) < 1.0e-20;
+	hii = gretl_matrix_get(H, i, i);
+	err = hii < hmin;
     }
 
     if (err) {
-	fprintf(stderr, "newton hessian fixup: non-positive diagonal\n");
+	fprintf(stderr, "NR_invert_hessian: non-positive "
+		"diagonal (hii=%g)\n", hii);
 #if 1
 	gretl_matrix_print(H, "H");
 #endif
@@ -2062,8 +2028,6 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
     return 0;
 
 }
-
-#endif /* OLD_STYLE or not */
 
 /**
  * newton_raphson_max:
