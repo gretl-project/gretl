@@ -3522,7 +3522,7 @@ static void add_to_session_callback (GPT_SPEC *spec)
 
 static void plot_do_rescale (png_plot *plot, int mod)
 {
-    double scales[] = { 0.8, 1.0, 1.1, 1.2 };
+    double scales[] = { 0.8, 1.0, 1.1, 1.2, 1.4 };
     int n = G_N_ELEMENTS(scales);
     FILE *fp = NULL;
 
