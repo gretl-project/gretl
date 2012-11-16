@@ -22,7 +22,9 @@
 #endif
 
 #if GTK_MAJOR_VERSION >= 3
-#include <gdk/gdkkeysyms-compat.h>
+# include <gdk/gdkkeysyms-compat.h>
+#else
+# include <gdk/gdkkeysyms.h>
 #endif
 
 static int check_imported_varname (char *vname, int row, int col,

@@ -1143,13 +1143,17 @@ static int max_label_length (const char **names, int n)
 
 static void 
 real_matrix_print_to_prn (const gretl_matrix *m, const char *msg, 
-			  int packed, int errout, int plain,
-			  const char **heads, PRN *prn)
+			  int plain, const char **colnames, 
+			  PRN *prn)
 {
     const char **rownames = NULL;
     char numstr[32];
     double x;
-    int i, j, llen = 0;
+    int strwidth = 12;
+    int rnamelen = 0;
+    int cmax = 0;
+    int cpad = 2;
+    int i, j;
 
     if (prn == NULL) {
 	return;
@@ -1164,6 +1168,8 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 	return;
     }
 
+    /* @plain != 0 means skip the header stuff */
+
     if (msg != NULL && *msg != '\0' && !plain) {
 	pprintf(prn, "%s (%d x %d)", msg, m->rows, m->cols);
 	if (gretl_matrix_is_dated(m)) {
@@ -1176,72 +1182,48 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 	}
     }
 
-    if (heads == NULL) {
-	heads = gretl_matrix_get_colnames(m);
+    cmax = max_numchars(m);
+    if (cmax > 5) {
+	cmax = 0;
+    }    
+
+    if (colnames == NULL) {
+	colnames = gretl_matrix_get_colnames(m);
     }
 
-    if (!packed) {
-	rownames = gretl_matrix_get_rownames(m);
-	if (rownames != NULL) {
-	    llen = max_label_length(rownames, m->rows);
-	}
+    rownames = gretl_matrix_get_rownames(m);
+    if (rownames != NULL) {
+	rnamelen = max_label_length(rownames, m->rows);
     }
 
-    if (heads != NULL) {
+    if (colnames != NULL) {
 	if (rownames != NULL) {
-	    bufspace(llen + 1, prn);
+	    bufspace(rnamelen + 1, prn);
 	}
 	for (j=0; j<m->cols; j++) {
-	    pprintf(prn, "%12.12s ", heads[j]);
+	    pprintf(prn, "%*.*s ", strwidth, strwidth, colnames[j]);
 	}
 	pputc(prn, '\n');
     }
 
-    if (packed) {
-	int v, n;
-
-	v = gretl_vector_get_length(m);
-	if (v == 0) {
-	    pputs(prn, " not a packed matrix\n");
-	    return;
+    for (i=0; i<m->rows; i++) {
+	if (rownames != NULL) {
+	    pprintf(prn, "%*s ", rnamelen, rownames[i]);
 	}
-
-	n = (sqrt(1.0 + 8.0 * v) - 1.0) / 2.0;
-
-	for (i=0; i<n; i++) {
-	    for (j=0; j<n; j++) {
-		x = m->val[ijton(i, j, n)];
-		make_numstr(numstr, x);
-		pprintf(prn, "%12s ", numstr);
-	    }
-	    pputc(prn, '\n');
-	}
-    } else {
-	int cmax = 0;
-
-	if (heads == NULL) {
-	    cmax = max_numchars(m);
-	    if (cmax > 5) {
-		cmax = 0;
-	    }
-	} 
-
-	for (i=0; i<m->rows; i++) {
-	    if (rownames != NULL) {
-		pprintf(prn, "%*s ", llen, rownames[i]);
-	    }
-	    for (j=0; j<m->cols; j++) {
-		x = gretl_matrix_get(m, i, j);
-		if (cmax) {
-		    sprintf(numstr, "%g", x);
-		    pprintf(prn, "%*s ", cmax + 2, numstr);
-		} else {
-		    make_numstr(numstr, x);
-		    pprintf(prn, "%12s ", numstr);
+	for (j=0; j<m->cols; j++) {
+	    x = gretl_matrix_get(m, i, j);
+	    if (cmax > 0) {
+		if (colnames != NULL) {
+		    bufspace(strwidth - cmax - cpad, prn);
 		}
+		sprintf(numstr, "%g", x);
+		pprintf(prn, "%*s ", cmax + cpad, numstr);
+	    } else {
+		make_numstr(numstr, x);
+		pprintf(prn, "%*s ", strwidth, numstr);
 	    }
-	    pputc(prn, '\n');
 	}
+	pputc(prn, '\n');
     }
 
     pputc(prn, '\n');
@@ -1259,7 +1241,7 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 void 
 gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn)
 {
-    real_matrix_print_to_prn(m, msg, 0, 0, 0, NULL, prn);
+    real_matrix_print_to_prn(m, msg, 0, NULL, prn);
 }
 
 /**
@@ -1278,7 +1260,7 @@ void gretl_matrix_print_with_col_heads (const gretl_matrix *m,
 					const char **heads,
 					PRN *prn)
 {
-    real_matrix_print_to_prn(m, title, 0, 0, 0, heads, prn);
+    real_matrix_print_to_prn(m, title, 0, heads, prn);
 }
 
 static void maybe_print_col_heads (const gretl_matrix *m, 
@@ -1358,7 +1340,7 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
     }
 
     if (gretl_is_null_matrix(m) || fmt == NULL || *fmt == '\0') {
-	real_matrix_print_to_prn(m, NULL, 0, 0, 1, NULL, prn);
+	real_matrix_print_to_prn(m, NULL, 1, NULL, prn);
     } else {
 	const char **rownames = NULL;
 	int llen = 0, intcast = 0;
