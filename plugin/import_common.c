@@ -21,6 +21,10 @@
 # include "gtk_compat.h"
 #endif
 
+#if GTK_MAJOR_VERSION >= 3
+#include <gdk/gdkkeysyms-compat.h>
+#endif
+
 static int check_imported_varname (char *vname, int row, int col,
 				   PRN *prn)
 {
@@ -660,6 +664,19 @@ static void make_wmenu_modal (GtkWidget *w, gpointer p)
     gtk_window_set_modal(GTK_WINDOW(w), TRUE);
 }
 
+gboolean esc_cancels (GtkWidget *w, GdkEventKey *key, wbook *book)
+{
+    if (key->keyval == GDK_Escape) {
+	if (book != NULL) {
+	    book->selected = -1;
+	}
+        gtk_widget_destroy(w);
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}
+
 static void wsheet_menu (wbook *book, int multisheet)
 {
     GtkWidget *w, *tmp, *label;
@@ -753,6 +770,9 @@ static void wsheet_menu (wbook *book, int multisheet)
 			     G_OBJECT (w));
     gtk_widget_set_can_default(tmp, TRUE);
     gtk_widget_grab_default(tmp);
+
+    g_signal_connect(G_OBJECT(w), "key-press-event", 
+		     G_CALLBACK(esc_cancels), book);
 
     gtk_entry_set_activates_default(GTK_ENTRY(book->colspin), TRUE);
     gtk_entry_set_activates_default(GTK_ENTRY(book->rowspin), TRUE);
