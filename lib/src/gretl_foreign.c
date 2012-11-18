@@ -18,12 +18,12 @@
  */
 
 #include "libgretl.h"
+#include "libset.h"
 #include "gretl_foreign.h"
 
 #include <glib.h>
 
 #ifdef USE_RLIB
-# include "libset.h"
 # include <Rinternals.h> /* for SEXP and friends */
 #endif
 

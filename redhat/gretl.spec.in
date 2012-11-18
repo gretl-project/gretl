@@ -8,14 +8,14 @@ Name: %{name}
 Version: %{ver}
 Release: %{rel}
 License: GPL
-Group: Applications/Math
+Group: X11/Scientific Applications
 Source: http://sourceforge.net/projects/gretl/files/gretl/%{ver}/%{name}-%{ver}.tar.bz2
 Buildroot: %{_tmppath}/%{name}-%{ver}-%{rel}-root
 Packager: Allin Cottrell <cottrell@wfu.edu>
 URL: http://gretl.sourceforge.net/
 Vendor: Allin Cottrell <cottrell@wfu.edu>
 Docdir: %{prefix}/share/doc
-Requires: gtk+ >= 2.4.0
+Requires: gtk+ >= 2.14.0
 
 %description
 
@@ -49,3 +49,6 @@ rm -fr %{buildroot}
 %{prefix}/share/gretl/*
 %{prefix}/share/locale/*
 %{prefix}/share/man/*
+%{prefix}/share/applications/*
+%{prefix}/share/icons/*
+%{prefix}/share/mime/*

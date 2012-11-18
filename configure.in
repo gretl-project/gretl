@@ -798,6 +798,11 @@ gtksourceview-3.0 is available from http://www.gnome.org/
 "
 
 else
+if test "${use_xdg_utils}" = "yes" ; then
+  xdg_utils_msg="if DESTDIR not set"
+else
+  xdg_utils_msg="no"
+fi
 echo "
 Configuration:
   
@@ -817,7 +822,7 @@ Configuration:
   libR support:                           ${have_libR}
   ODBC support:                           ${have_odbc}
   Experimental audio support:             ${have_audio}
-  Use xdg-utils in installation:          ${use_xdg_utils}
+  Use xdg-utils in installation:          ${xdg_utils_msg}
   LAPACK libraries:
     ${LAPACK_LIBS}
 
