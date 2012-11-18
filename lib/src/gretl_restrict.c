@@ -2078,12 +2078,20 @@ static int save_restricted_model (ExecState *state,
 	    double tmp;
 
 	    rmod->rsq = 1.0 - (rmod->ess / rmod->tss);
-	    tmp = rmod->tss * rmod->dfd;
-	    rmod->adjrsq = 1 - (rmod->ess * (rmod->nobs - 1) / tmp);
-	    tmp = rmod->dfd / (double) rmod->dfn;
-	    rmod->fstt = tmp * (rmod->tss - rmod->ess) / rmod->ess;
-	    if (rmod->fstt < 0) {
+	    if (rmod->rsq < 0.0) {
+		rmod->rsq = 0.0;
+	    }
+	    if (rmod->dfn == 0) {
+		rmod->adjrsq = 0.0;
 		rmod->fstt = NADBL;
+	    } else {
+		tmp = rmod->tss * rmod->dfd;
+		rmod->adjrsq = 1 - (rmod->ess * (rmod->nobs - 1) / tmp);
+		tmp = rmod->dfd / (double) rmod->dfn;
+		rmod->fstt = tmp * (rmod->tss - rmod->ess) / rmod->ess;
+		if (rmod->fstt < 0) {
+		    rmod->fstt = NADBL;
+		}
 	    }
 	}
 
