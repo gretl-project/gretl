@@ -10158,7 +10158,7 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     double x;
     int k = X->cols;
     int nr = R->rows;
-    int j, err = 0;
+    int i, j, err = 0;
 
     if (gretl_vector_get_length(b) != k) {
 	fprintf(stderr, "gretl_matrix_restricted_ols: "
@@ -10175,14 +10175,12 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (!err) {
-	int i;
-
 	if (s2 != NULL) {
 	    *s2 = get_ols_error_variance(y, X, b, nr);
 	}
 
 	if (W != NULL) {
-	    int *exlist = get_exact_list(R);
+	    int *exlist = NULL;
 
 	    err = get_ols_vcv(W, s2);
 
@@ -10193,9 +10191,10 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 			gretl_matrix_set(vcv, i, j, x);
 		    }
 		}
+		exlist = get_exact_list(R);
 	    }
 
-	    if (!err && exlist != NULL) {
+	    if (exlist != NULL) {
 		int p;
 
 		for (p=0; p<k; p++) {
