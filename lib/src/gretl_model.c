@@ -5922,15 +5922,10 @@ model_get_estvec (const MODEL *pmod, int idx, int *err)
 
     src = (idx == M_COEFF)? pmod->coeff : pmod->sderr;
 
-#if 0
-    /* FIXME paternalism? */
-    for (i=0; i<pmod->ncoeff; i++) {
-	if (na(src[i])) {
-	    *err = E_BADSTAT;
-	    return NULL;
-	}
+    if (src == NULL) {
+	*err = E_BADSTAT;
+	return NULL;
     }
-#endif
 
     v = gretl_column_vector_alloc(pmod->ncoeff);
     if (v == NULL) {
