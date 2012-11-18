@@ -1024,7 +1024,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     } else if (fmax < f0) {
 	/* FIXME this should never happen */
 	fprintf(stderr, "failed to match initial value of objective function:\n"
-		" f0=%.15g, fmax=%.15g\n", f0, fmax);
+		" f0=%.18g, fmax=%.18g\n", f0, fmax);
 	err = E_NOCONV;
     } 
 

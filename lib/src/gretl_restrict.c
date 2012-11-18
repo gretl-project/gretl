@@ -1925,7 +1925,11 @@ static int print_restricted_estimates (MODEL *pmod,
 
     for (i=0; i<nc; i++) {
 	v = gretl_matrix_get(S, i, i);
-	se[i] = (v > 1.0e-16)? sqrt(v) : 0.0;
+	if (fabs(v) < 1.0e-16) {
+	    se[i] = 0.0;
+	} else {
+	    se[i] = sqrt(v);
+	}
 	gretl_model_get_param_name(pmod, dset, i, names[i]);
     }
 
@@ -2039,6 +2043,7 @@ static int save_restricted_model (ExecState *state,
 	for (i=0; i<rmod->ncoeff; i++) {
 	    rmod->coeff[i] = b->val[i];
 	}
+	gretl_model_set_int(rmod, "restricted", 1);
 	err = gretl_model_write_vcv(rmod, S);
     }
 
@@ -2091,7 +2096,6 @@ static int save_restricted_model (ExecState *state,
 	gretl_model_free(rmod);
     } else {
 	set_model_id(rmod);
-	gretl_model_set_int(rmod, "restricted", 1);
 	gretl_exec_state_set_model(state, rmod);
     } 
 

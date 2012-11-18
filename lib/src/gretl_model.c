@@ -1861,6 +1861,15 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem)
     return err;
 }
 
+static double vcv_get_se (double vii, int restricted)
+{
+    if (restricted) {
+	vii = fabs(vii) < 1.0e-17 ? 0.0 : vii;
+    }
+
+    return (xna(vii) || vii < 0)? NADBL : sqrt(vii);
+}
+
 /**
  * gretl_model_write_vcv:
  * @pmod: pointer to model.
@@ -1910,18 +1919,16 @@ int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V)
     }
 
     if (!err) {
-	int idx = 0;
+	int restricted, idx = 0;
+
+	restricted = gretl_model_get_int(pmod, "restricted");
 
 	for (i=0; i<k; i++) {
 	    for (j=i; j<k; j++) {
 		x = gretl_matrix_get(V, i, j);
 		pmod->vcv[idx++] = x;
 		if (i == j) {
-		    if (xna(x) || x < 0) {
-			pmod->sderr[i] = NADBL;
-		    } else {
-			pmod->sderr[i] = sqrt(x);
-		    }
+		    pmod->sderr[i] = vcv_get_se(x, restricted);
 		}
 	    }
 	}
@@ -5915,12 +5922,15 @@ model_get_estvec (const MODEL *pmod, int idx, int *err)
 
     src = (idx == M_COEFF)? pmod->coeff : pmod->sderr;
 
+#if 0
+    /* FIXME paternalism? */
     for (i=0; i<pmod->ncoeff; i++) {
 	if (na(src[i])) {
 	    *err = E_BADSTAT;
 	    return NULL;
 	}
     }
+#endif
 
     v = gretl_column_vector_alloc(pmod->ncoeff);
     if (v == NULL) {
