@@ -10085,6 +10085,48 @@ static int gretl_matrix_gglse (const gretl_vector *y,
     return err;
 }
 
+static int *get_exact_list (const gretl_matrix *R)
+{
+    int *list = NULL;
+    int n, n_exact = 0;
+    int i, j;
+
+    for (i=0; i<R->rows; i++) {
+	n = 0;
+	for (j=0; j<R->cols && n<2; j++) {
+	    if (gretl_matrix_get(R, i, j) != 0.0) {
+		n++;
+	    }
+	}
+	if (n == 1) {
+	    n_exact++;
+	}
+    }
+
+    if (n_exact > 0) {
+	list = gretl_list_new(n_exact);
+    }
+
+    if (list != NULL) {
+	int col, k = 1;
+
+	for (i=0; i<R->rows && k<=n_exact; i++) {
+	    n = 0;
+	    for (j=0; j<R->cols && n<2; j++) {
+		if (gretl_matrix_get(R, i, j) != 0.0) {
+		    col = j;
+		    n++;
+		}
+	    }
+	    if (n == 1) {
+		list[k++] = col;
+	    }
+	}
+    }
+
+    return list;
+}
+
 /**
  * gretl_matrix_restricted_ols:
  * @y: dependent variable vector.
@@ -10138,17 +10180,38 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 	if (s2 != NULL) {
 	    *s2 = get_ols_error_variance(y, X, b, nr);
 	}
+
 	if (W != NULL) {
+	    int *exlist = get_exact_list(R);
+
 	    err = get_ols_vcv(W, s2);
+
 	    if (!err) {
 		for (i=0; i<k; i++) {
 		    for (j=0; j<k; j++) {
 			x = gretl_matrix_get(W, i, j);
 			gretl_matrix_set(vcv, i, j, x);
 		    }
-		}		
+		}
+	    }
+
+	    if (!err && exlist != NULL) {
+		int p;
+
+		for (p=0; p<k; p++) {
+		    if (in_gretl_list(exlist, p)) {
+			for (i=0; i<k; i++) {
+			    gretl_matrix_set(vcv, i, p, 0.0);
+			}
+			for (j=0; j<k; j++) {
+			    gretl_matrix_set(vcv, p, j, 0.0);
+			}
+		    }
+		}
+		free(exlist);
 	    }
 	}
+
 	if (uhat != NULL) {
 	    get_ols_uhat(y, X, b, uhat);
 	}
