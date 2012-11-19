@@ -1,7 +1,7 @@
 \documentclass[11pt]{article}
 \usepackage[body={6.5in,9in},top=1in,left=1in,nohead]{geometry}
 \usepackage[pdftex]{color}
-\usepackage{hyperref}
+\usepackage[urlcolor=blue]{hyperref}
 \usepackage{myguide}
 \usepackage[T1]{fontenc}
 \usepackage{lucidabr}
@@ -18,7 +18,7 @@
 
 \begin{center}
 {\color{gold} \titlefont gretl} \\[1ex]
-version 1.9.9 for Mac OS X \\[2ex]
+version 1.9.11 for Mac OS X \\[2ex]
 
 \textit{GNU Regression, Econometrics and Time-series Library\\
   This is free software under the GNU General Public License.}
@@ -109,6 +109,30 @@ your old preferences file.  In an xterm window, do:
 rm -f ~/.gretl2rc
 \end{verbatim}
 
+\section{An oddity on Mountain Lion}
+
+It appears that in some cases dragging \textsf{Gretl} from the disk
+image to the \textsf{Applications} folder does not work correctly:
+certain shared library files may get truncated to zero bytes. If that
+happens it may be necessary to copy the files manually. To do this,
+open the Mac Terminal application, and at the command line type
+
+\begin{verbatim}
+sudo rm -rf /Applications/Gretl.app
+\end{verbatim}
+
+then
+
+\begin{verbatim}
+cp -r /Volumes/gretl/Gretl.app /Applications
+\end{verbatim}
+
+or if you get ``permission denied,'' do it as the administrator:
+
+\begin{verbatim}
+sudo cp -r /Volumes/gretl/Gretl.app /Applications
+\end{verbatim}
+
 \section{Documentation}
 \label{sec:doc}
 
@@ -121,7 +145,7 @@ documentation in various formats.
 Allin Cottrell \\
 Wake Forest University \\
 \texttt{cottrell@wfu.edu} \\
-September, 2012
+November, 2012
 
 \end{document}
 
