@@ -1394,7 +1394,7 @@ static int sys_test_type (equation_system *sys)
 
 /* Handle the case where sys->b and sys->vcv have been augmented in
    order to test some restrictions: we now have to trim these matrices
-   down to their final size. The vector 'b' contains unrestricted
+   down to their final size. The vector @b contains unrestricted
    coefficient estimates, so its length can be used to gauge the
    true number of coeffs.
 */
@@ -2520,7 +2520,6 @@ void system_attach_coeffs (equation_system *sys, gretl_matrix *b)
 void system_attach_vcv (equation_system *sys, gretl_matrix *vcv)
 {
     gretl_matrix_replace(&sys->vcv, vcv);
-    /* gretl_matrix_xtr_symmetric(sys->vcv); */
 }
 
 void system_attach_sigma (equation_system *sys, gretl_matrix *S)
@@ -3044,6 +3043,8 @@ static int system_add_yhat_matrix (equation_system *sys)
 	}
 	nc += sys->models[i]->ncoeff;
     }
+
+    nc -= system_n_restrictions(sys);
 
     avc = nc / (double) sys->neqns;
     sys->df = sys->T - floor(avc);

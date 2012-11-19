@@ -9174,8 +9174,8 @@ get_ols_error_variance (const gretl_vector *y, const gretl_matrix *X,
 			const gretl_vector *b, int nr)
 {
     double u, s2 = 0.0;
-    int k = X->cols;       /* number of regressors */
-    int n = X->rows;       /* number of observations */
+    int k = X->cols;  /* number of regressors */
+    int n = X->rows;  /* number of observations */
     int i, j;
 
     for (i=0; i<n; i++) {
@@ -10084,6 +10084,14 @@ static int gretl_matrix_gglse (const gretl_vector *y,
 
     return err;
 }
+
+/* get_exact_list: constructs a list of the parameter positions
+   (columns of the @R matrix) corresponding to unitary restrictions --
+   that is, restrictions that stipulate a definite numerical value for
+   a given parameter. We want this so that we can set the variance of
+   such parameters (and also their covariances with other parameter
+   estimates) to exactly zero.
+*/
 
 static int *get_exact_list (const gretl_matrix *R)
 {

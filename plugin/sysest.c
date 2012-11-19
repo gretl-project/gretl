@@ -159,10 +159,10 @@ make_sys_X_block (gretl_matrix *X, const MODEL *pmod,
     return err;
 }
 
-/* populate the cross-equation covariance matrix, @S, based on
+/* Populate the cross-equation covariance matrix, @S, based on
    the per-equation residuals: if @do_diag is non-zero we also
    want to compute the Breusch-Pagan test for diagonality
-   of the matrix
+   of the matrix.
 */
 
 static int
@@ -214,7 +214,21 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *S,
     return 0;
 }
 
-/* compute residuals, for all cases other than FIML */
+static void maybe_correct_model_dfd (equation_system *sys,
+				     MODEL *pmod)
+{
+    int nr = system_n_restrictions(sys);
+
+    if (nr > 0) {
+	double avr = nr / (double) sys->neqns;
+
+	pmod->dfd = sys->T - pmod->ncoeff + floor(avr);
+    }
+}
+
+/* Compute residuals and related quantities, for all cases 
+   other than FIML 
+*/
 
 static void 
 sys_resids (equation_system *sys, int eq, const DATASET *dset)
@@ -240,6 +254,7 @@ sys_resids (equation_system *sys, int eq, const DATASET *dset)
 
     /* df correction? */
     if (system_want_df_corr(sys)) {
+	maybe_correct_model_dfd(sys, pmod);
 	pmod->sigma = sqrt(pmod->ess / pmod->dfd);
     } else {
 	pmod->sigma = sqrt(pmod->ess / pmod->nobs);
@@ -358,13 +373,13 @@ calculate_sys_coeffs (equation_system *sys, const DATASET *dset,
     if (sys->R == NULL) {
 	/* hopefully X may be positive definite */
 	err = gretl_cholesky_decomp_solve(X, y);
-	if (err) {
-	    /* nope; we'll fall back to the LU solver */
-	    gretl_matrix_copy_values(X, V);
-	    err = 0;
-	} else {
+	if (!err) {
 	    posdef = 1;
 	    err = gretl_cholesky_invert(X);
+	} else {	    
+	    /* nope: fall back to the LU solver */
+	    gretl_matrix_copy_values(X, V);
+	    err = 0;
 	}
     }
 
@@ -610,8 +625,9 @@ double sur_loglik (equation_system *sys)
     return sys->ll;
 }
 
-/* if we're estimating with a specified set of linear restrictions,
-   Rb = q, augment the X matrix with R and R-transpose */
+/* If we're estimating with a specified set of linear restrictions,
+   Rb = q, augment the X matrix with R and R-transpose.
+*/
 
 static void
 augment_X_with_restrictions (gretl_matrix *X, int mk, 
@@ -630,8 +646,9 @@ augment_X_with_restrictions (gretl_matrix *X, int mk,
     }
 }
 
-/* when estimating with a specified set of linear restrictions,
-   Rb = q, augment the y matrix with q */
+/* When estimating with a specified set of linear restrictions,
+   Rb = q, augment the y matrix with q.
+*/
 
 static int 
 augment_y_with_restrictions (gretl_matrix *y, int mk, int nr,
