@@ -2746,7 +2746,8 @@ static int Jgradient (double *theta, double *gr, int n,
     return err;
 }
 
-static int max_beta_vname (GRETL_VAR *v, 
+static int max_beta_vname (char *tmp,
+			   GRETL_VAR *v, 
 			   const DATASET *dset)
 {
     int r = gretl_matrix_rows(v->jinfo->Beta);
@@ -2754,7 +2755,7 @@ static int max_beta_vname (GRETL_VAR *v,
     int i, ni, n = 0;
 
     for (i=0; i<r; i++) {    
-	s = beta_vname(v, dset, i);
+	s = beta_vname(tmp, v, dset, i);
 	ni = strlen(s);
 	if (ni > n) {
 	    n = ni;
@@ -2774,6 +2775,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar,
     const gretl_matrix *c = J->beta;
     const gretl_matrix *sd = J->bse;
     char vname[32], s[16];
+    char tmp[NAMETRUNC];
     char namefmt[8];
     int nwid, sdshow;
     int i, j;
@@ -2811,11 +2813,11 @@ static int printres (Jwrap *J, GRETL_VAR *jvar,
     }
     pputs(prn, "\n\n");
 
-    nwid = max_beta_vname(jvar, dset) + 1;
+    nwid = max_beta_vname(tmp, jvar, dset) + 1;
     sprintf(namefmt, "%%-%ds", nwid);
 
     for (i=0; i<J->p1; i++) {
-	pprintf(prn, namefmt, beta_vname(jvar, dset, i));
+	pprintf(prn, namefmt, beta_vname(tmp, jvar, dset, i));
 
 	for (j=0; j<J->r; j++) {
 	    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, i, j));

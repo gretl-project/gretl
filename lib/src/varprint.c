@@ -59,8 +59,6 @@ int gretl_VAR_print_sigma (const GRETL_VAR *var, PRN *prn)
 #define VDC_ROW_MAX 5
 #define VDC_WIDTH  11
 
-#define VECM_WIDTH 13
-
 enum {
     IRF,
     VDC
@@ -568,15 +566,23 @@ static char *make_beta_vname (char *vname,
 			      const DATASET *dset,
 			      int i)
 {
+    const char *src = "";
+
     if (i < v->neqns) {
-	strcpy(vname, dset->varname[v->ylist[i+1]]);
+	src = dset->varname[v->ylist[i+1]];
     } else if (auto_restr(v) && i == v->neqns) {
-	strcpy(vname, (jcode(v) == J_REST_CONST)? "const" : "trend");
+	src = (jcode(v) == J_REST_CONST)? "const" : "trend";
     } else if (v->rlist != NULL) {
 	int k = i - v->ylist[0] - auto_restr(v) + 1;
 
-	strcpy(vname, dset->varname[v->rlist[k]]);
-    } 
+	src = dset->varname[v->rlist[k]];
+    }
+
+    if (strlen(src) >= NAMETRUNC) {
+	truncate_varname(vname, src);
+    } else {
+	strcpy(vname, src);
+    }
 
     return vname;
 }
@@ -680,7 +686,13 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
     gretl_prn_newline(prn);
 
     for (i=0; i<rows; i++) {
-	sprintf(vname, "%s", dset->varname[jvar->ylist[i+1]]);
+	const char *src = dset->varname[jvar->ylist[i+1]];
+
+	if (plain_format(prn) && strlen(src) >= NAMETRUNC) {
+	    truncate_varname(vname, src);
+	} else {
+	    strcpy(vname, src);
+	}
 	if (rtf) {
 	    pputs(prn, vname);
 	} else {
@@ -730,6 +742,10 @@ static int max_vlen (const int *list, const DATASET *dset)
 	}
     }
 
+    if (n >= NAMETRUNC) {
+	n = NAMETRUNC - 1;
+    }
+
     return n;
 }
 
@@ -737,7 +753,9 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATASET *dset, PRN *prn)
 {
     int rtf = rtf_format(prn);
     int *list = jvar->ylist;
+    const char *vname;
     char s[32];
+    int vwidth = 13;
     int w0, wi = 12;
     int i, j;
 
@@ -745,17 +763,25 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATASET *dset, PRN *prn)
     gretl_prn_newline(prn);
 
     w0 = max_vlen(list, dset) + 1;
+    if (w0 > vwidth) {
+	vwidth = w0;
+    }
 
     /* top row: names of Y variables */
 
     for (i=0; i<jvar->neqns; i++) {
-	sprintf(s, "%s", dset->varname[list[i+1]]);
+	vname = dset->varname[list[i+1]];
+	if (plain_format(prn) && strlen(vname) >= NAMETRUNC) {
+	    truncate_varname(s, vname);
+	} else {
+	    strcpy(s, vname);
+	}
 	if (i == 0) {
 	    if (rtf) {
 		pprintf(prn, "\t\t%s", s);
 	    } else {
 		wi = strlen(s);
-		if (wi < VECM_WIDTH) wi = VECM_WIDTH;
+		if (wi < vwidth) wi = vwidth;
 		pprintf(prn, "%*s", w0 + wi, s);
 	    }
 	} else {
@@ -763,7 +789,7 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATASET *dset, PRN *prn)
 		pprintf(prn, "\t%s", s);
 	    } else {
 		wi = strlen(s) + 1;
-		if (wi < VECM_WIDTH) wi = VECM_WIDTH;
+		if (wi < vwidth) wi = vwidth;
 		pprintf(prn, "%*s", wi, s);
 	    }
 	}
@@ -774,7 +800,12 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATASET *dset, PRN *prn)
     /* subsequent rows: Y name plus values */
 
     for (i=0; i<jvar->neqns; i++) {
-	sprintf(s, "%s", dset->varname[list[i+1]]);
+	vname = dset->varname[list[i+1]];
+	if (plain_format(prn) && strlen(vname) >= NAMETRUNC) {
+	    truncate_varname(s, vname);
+	} else {
+	    strcpy(s, vname);
+	}
 	if (rtf) {
 	    pputs(prn, s);
 	    if (strlen(s) < 8) {
@@ -787,8 +818,12 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATASET *dset, PRN *prn)
 	    if (rtf) {
 		pprintf(prn, "\t%#.5g", gretl_matrix_get(jvar->S, i, j));
 	    } else {
-		wi = strlen(dset->varname[list[j+1]]);
-		if (wi < VECM_WIDTH - 1) wi = VECM_WIDTH - 1;
+		vname = dset->varname[list[j+1]];
+		wi = strlen(vname);
+		if (wi >= NAMETRUNC) {
+		    wi = NAMETRUNC - 1;
+		}
+		if (wi < vwidth - 1) wi = vwidth - 1;
 		pprintf(prn, "%#*.5g ", wi, gretl_matrix_get(jvar->S, i, j));
 	    }
 	}
@@ -963,11 +998,15 @@ static int max_Ftest_label_len (GRETL_VAR *var, const DATASET *dset,
     int i, v;
 
     for (i=0; i<var->neqns; i++) {
-	v = (var->models[i])->list[1];
+	v = var->models[i]->list[1];
 	len = strlen(dset->varname[v]);
 	if (len > maxnamelen) {
 	    maxnamelen = len;
 	}
+    }
+
+    if (maxnamelen >= NAMETRUNC) {
+	maxnamelen = NAMETRUNC - 1;
     }
 
     sprintf(s, _("All lags of %s"), "x");
@@ -1152,22 +1191,32 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	for (j=0; j<var->neqns; j++) {
 	    Fval = var->Fvals[k];
 	    if (!na(Fval)) {
+		const char *vname;
+
 		pv = snedecor_cdf_comp(nlags, dfd, Fval);
 		v = (var->models[j])->list[1];
+		vname = dset->varname[v];
 		if (tex) {
-		    pprintf(prn, A_("All lags of %s"), dset->varname[v]);
+		    pprintf(prn, A_("All lags of %s"), vname);
 		    pputs(prn, " & ");
 		    pprintf(prn, "$F(%d, %d) = %g$ & ", nlags, dfd, Fval);
 		    pprintf(prn, "[%.4f]\\\\\n", pv);
 		} else if (rtf) {
-		    sprintf(label, A_("All lags of %s"), dset->varname[v]);
+		    sprintf(label, A_("All lags of %s"), vname);
 		    llen = strlen(label);
 		    pputs(prn, label);
 		    bufspace(fwidth - llen, prn);
 		    pprintf(prn, "F(%d, %d) = %8.5g ", nlags, dfd, Fval);
 		    pprintf(prn, "[%.4f]\\par\n", pv);
 		} else {
-		    sprintf(label, _("All lags of %s"), dset->varname[v]);
+		    if (strlen(vname) >= NAMETRUNC) {
+			char tmp[NAMETRUNC];
+
+			truncate_varname(tmp, vname);
+			sprintf(label, _("All lags of %s"), tmp);
+		    } else {		    
+			sprintf(label, _("All lags of %s"), vname);
+		    }
 		    llen = g_utf8_strlen(label, -1);
 		    pputs(prn, label);
 		    bufspace(fwidth - llen, prn);

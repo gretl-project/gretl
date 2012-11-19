@@ -1646,6 +1646,28 @@ void print_obs_marker (int t, const DATASET *dset, int len, PRN *prn)
     real_print_obs_marker(t, dset, len, 1, prn);
 }
 
+char *truncate_varname (char *targ, const char *src)
+{
+    const char *p = strrchr(src, '_');
+
+    *targ = '\0';
+
+    if (p != NULL && isdigit(*(p+1)) && strlen(p) < 4) {
+	/* preserve lag identifier? */
+	int snip = strlen(src) - NAMETRUNC + 2;
+	int fore = p - src;
+
+	strncat(targ, src, fore - snip);
+	strncat(targ, "~", 1);
+	strncat(targ, p, strlen(p));
+    } else {
+	strncat(targ, src, NAMETRUNC - 2);
+	strncat(targ, "~", 1);
+    }
+
+    return targ;
+}
+
 /**
  * varlist:
  * @dset: data information struct.

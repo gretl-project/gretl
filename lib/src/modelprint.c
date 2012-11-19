@@ -4225,8 +4225,6 @@ static void mn_logit_coeffsep (char *sep, const MODEL *pmod,
     sprintf(sep, "%s = %d", vname, val);
 }
 
-#define MAXSHOW 18
-
 static int plain_print_coeffs (const MODEL *pmod, 
 			       const DATASET *dset, 
 			       PRN *prn)
@@ -4391,8 +4389,8 @@ static int plain_print_coeffs (const MODEL *pmod,
 
     if (namelen < 8) {
 	namelen = 8;
-    } else if (namelen > MAXSHOW) {
-	namelen = MAXSHOW;
+    } else if (namelen > NAMETRUNC) {
+	namelen = NAMETRUNC;
     }
 
     /* figure appropriate column separation */
@@ -4446,12 +4444,10 @@ static int plain_print_coeffs (const MODEL *pmod,
 	    mn_logit_coeffsep(mnlsep, pmod, dset, ++k);
 	    print_coeff_separator(mnlsep, 0, prn);
 	}
-	if (strlen(names[i]) >= MAXSHOW) {
-	    char tmp[MAXSHOW];
+	if (strlen(names[i]) >= NAMETRUNC) {
+	    char tmp[NAMETRUNC];
 
-	    *tmp = '\0';
-	    strncat(tmp, names[i], MAXSHOW - 2);
-	    strncat(tmp, "~", 1);
+	    truncate_varname(tmp, names[i]);
 	    pprintf(prn, "  %-*s", namelen, tmp);
 	} else {
 	    pprintf(prn, "  %-*s", namelen, names[i]);

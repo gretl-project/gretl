@@ -48,7 +48,8 @@ int vecm_alpha_test (GRETL_VAR *jvar,
 		     gretlopt opt,
 		     PRN *prn);
 
-const char *beta_vname (const GRETL_VAR *v,
+const char *beta_vname (char *tmp,
+			const GRETL_VAR *v,
 			const DATASET *dset,
 			int i);
 

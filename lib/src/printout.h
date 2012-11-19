@@ -21,6 +21,7 @@
 
 #define GRETL_DIGITS 6
 #define GRETL_MP_DIGITS 12
+#define NAMETRUNC 18
 
 void session_time (PRN *prn);
 
@@ -53,6 +54,8 @@ int outcovmx (MODEL *pmod, const DATASET *dset, PRN *prn);
 int max_obs_marker_length (const DATASET *dset);
 
 void print_obs_marker (int t, const DATASET *dset, int len, PRN *prn);
+
+char *truncate_varname (char *targ, const char *src);
 
 void varlist (const DATASET *dset, PRN *prn);
 
