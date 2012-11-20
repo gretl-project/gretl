@@ -20,6 +20,8 @@ version 1.9.11, in progress
 - The inbundle() function: return a code that identifies the
   type of a bundled item; also add typestr() function to turn
   this code into a string
+- GUI: allow resizing of plot windows, using the "+", "-" and
+  "0" keys (depends on gnuplot's pngcairo driver) 
 - GUI: fix for "save as..." for session files on Windows
 - GUI: fix for right-click in icon view window
 - GUI: fix for font selector in the GTK 3 version of the code 
