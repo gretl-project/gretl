@@ -71,6 +71,10 @@
 #include "../pixmaps/mini.page.xpm"
 #include "../pixmaps/mini.tools.xpm"
 
+/* for plot bar */
+#include "../pixmaps/upsize.xpm"
+#include "../pixmaps/downsize.xpm"
+
 enum {
     SAVE_ITEM = 1,
     SAVE_AS_ITEM,
@@ -135,7 +139,9 @@ void gretl_stock_icons_init (void)
 	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
 	{ mini_table_xpm, GRETL_STOCK_TABLE},
 	{ mini_page_xpm, GRETL_STOCK_PAGE},
-	{ mini_tools_xpm, GRETL_STOCK_TOOLS}
+	{ mini_tools_xpm, GRETL_STOCK_TOOLS},
+	{ upsize_xpm, GRETL_STOCK_BIGGER},
+	{ downsize_xpm, GRETL_STOCK_SMALLER}
     };
     int n = G_N_ELEMENTS(stocks);
 

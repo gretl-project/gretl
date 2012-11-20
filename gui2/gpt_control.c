@@ -120,6 +120,8 @@ struct png_plot_t {
     GtkWidget *cursor_label;
     GtkWidget *pos_entry;
     GtkWidget *editor;
+    GtkWidget *up_icon;
+    GtkWidget *down_icon;
     GdkWindow *window;
     cairo_t *cr;
 #if GTK_MAJOR_VERSION >= 3
@@ -154,6 +156,7 @@ static void graph_display_pdf (GPT_SPEC *spec);
 #ifdef G_OS_WIN32
 static void win32_process_graph (GPT_SPEC *spec, int dest);
 #endif
+static void plot_do_rescale (png_plot *plot, int mod);
 
 enum {
     GRETL_PNG_OK,
@@ -273,6 +276,16 @@ static GtkWidget *small_tool_button (GretlToolItem *item,
     return button;
 }
 
+static void graph_enlarge_callback (GtkWidget *w, png_plot *plot)
+{
+    plot_do_rescale(plot, 1);
+}
+
+static void graph_shrink_callback (GtkWidget *w, png_plot *plot)
+{
+    plot_do_rescale(plot, -1);
+}
+
 static void graph_edit_callback (GtkWidget *w, png_plot *plot)
 {
     start_editing_png_plot(plot);
@@ -299,6 +312,8 @@ static GretlToolItem plotbar_items[] = {
     { N_("Edit"),        GTK_STOCK_EDIT,      G_CALLBACK(graph_edit_callback), 0 },
     { N_("Zoom..."),     GTK_STOCK_ZOOM_IN,   G_CALLBACK(graph_zoom_callback), 0 },
     { N_("Display PDF"), GRETL_STOCK_PDF,     G_CALLBACK(show_pdf_callback), 0 },
+    { N_("Smaller"),     GRETL_STOCK_SMALLER, G_CALLBACK(graph_shrink_callback), 0 },
+    { N_("Bigger"),      GRETL_STOCK_BIGGER,  G_CALLBACK(graph_enlarge_callback), 0 }
 };
 
 static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
@@ -317,8 +332,18 @@ static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
 	    /* not ready yet */
 	    continue;
 	}
+	if ((item->func == G_CALLBACK(graph_enlarge_callback) ||
+	     item->func == G_CALLBACK(graph_shrink_callback)) &&
+	    gnuplot_png_terminal() != GP_PNG_CAIRO) {
+	    continue;
+	}
 	button = small_tool_button(item, plot);
 	gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+	if (item->func == G_CALLBACK(graph_enlarge_callback)) {
+	    plot->up_icon = button;
+	} else if (item->func == G_CALLBACK(graph_shrink_callback)) {
+	    plot->down_icon = button;
+	}
     }	
 }
 
@@ -3561,6 +3586,9 @@ static void plot_do_rescale (png_plot *plot, int mod)
 	return;
     }
 
+    gtk_widget_set_sensitive(plot->up_icon, plot->spec->scale != scales[n-1]);
+    gtk_widget_set_sensitive(plot->down_icon, plot->spec->scale != scales[0]);
+
     set_png_output(plot->spec);
     plotspec_print(plot->spec, fp);
     fclose(fp);
@@ -4257,27 +4285,8 @@ static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
     return pbuf;
 }
 
-/* timeout for changing status line */
-
-static gboolean revert_status_message (gpointer data)
-{
-    /* note: the plot window in question may have been
-       destroyed by the time this timeout callback is
-       invoked
-    */
-    if (get_window_for_data(data) != NULL) {
-	png_plot *plot = (png_plot *) data;
-
-	gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar),
-			  plot->cid);
-    }
-
-    return FALSE;
-}
-
 static int resize_png_plot (png_plot *plot, int width, int height)
 {
-    gchar *msg;
     png_bounds b;
 
     plot->pixel_width = width;
@@ -4293,12 +4302,6 @@ static int resize_png_plot (png_plot *plot, int width, int height)
 				  plot->pixel_height, 
 				  -1);
 #endif
-
-    /* give some feedback on status bar */
-    msg = g_strdup_printf(_(" Scale = %.1f"), plot->spec->scale);
-    gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, msg);
-    g_free(msg);
-    g_timeout_add_seconds(3, revert_status_message, plot);
 
     if (plot->status & (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE)) {
 	return 0;
@@ -4841,6 +4844,8 @@ static png_plot *png_plot_new (void)
     plot->spec = NULL;
     plot->editor = NULL;
     plot->window = NULL;
+    plot->up_icon = NULL;
+    plot->down_icon = NULL;
 
     plot->pixel_width = GP_WIDTH;
     plot->pixel_height = GP_HEIGHT;
