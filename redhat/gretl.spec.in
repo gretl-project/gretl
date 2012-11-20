@@ -52,3 +52,4 @@ rm -fr %{buildroot}
 %{prefix}/share/applications/*
 %{prefix}/share/icons/*
 %{prefix}/share/mime/*
+%{prefix}/share/gtksourceview-*/*
