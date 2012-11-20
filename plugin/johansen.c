@@ -321,30 +321,28 @@ static void fix_xstr (char *s, int p)
     }
 }
 
-const char *beta_vname (char *tmp, 
+/* FIXME duplication (varprint.c) */
+
+const char *beta_vname (char *vname, 
 			const GRETL_VAR *v,
 			const DATASET *dset,
 			int i)
 {
-    const char *vname = "";
+    const char *src = "";
 
     if (i < v->neqns) {
-	vname = dset->varname[v->ylist[i+1]];
+	src = dset->varname[v->ylist[i+1]];
     } else if (auto_restr(v) && i == v->neqns) {
-	vname = (jcode(v) == J_REST_CONST)? "const" : "trend";
+	src = (jcode(v) == J_REST_CONST)? "const" : "trend";
     } else if (v->rlist != NULL) {
 	int k = i - v->ylist[0] - auto_restr(v) + 1;
 
-	vname = dset->varname[v->rlist[k]];
+	src = dset->varname[v->rlist[k]];
     }
 
-    if (strlen(vname) >= NAMETRUNC) {
-	truncate_varname(tmp, vname);
-    } else {
-	strcpy(tmp, vname);
-    }
+    maybe_trim_varname(vname, src);
 
-    return tmp;
+    return vname;
 }
 
 #define ABMIN 1.0e-15
@@ -362,7 +360,7 @@ static void print_beta_or_alpha (const GRETL_VAR *jvar, int k,
     int vnorm = libset_get_int(VECM_NORM);
     char xstr[32], tmp[NAMETRUNC];
     const char *bname;
-    int n, namelen = 10;
+    int n, namelen = 8;
     int i, j, row;
     double x, y;
 
@@ -463,24 +461,6 @@ static int compute_alpha (JohansenInfo *jv)
     return err;
 }
 
-static int max_namelen (const int *list, const DATASET *dset)
-{
-    int i, ni, n = 0;
-
-    for (i=1; i<=list[0]; i++) {
-	ni = strlen(dset->varname[list[i]]);
-	if (ni > n) {
-	    n = ni;
-	}
-    }
-
-    if (n >= NAMETRUNC) {
-	n = NAMETRUNC - 1;
-    }
-
-    return n;
-}
-
 /* print the long-run matrix, \alpha \beta' */
 
 static int print_long_run_matrix (const GRETL_VAR *jvar, 
@@ -501,13 +481,13 @@ static int print_long_run_matrix (const GRETL_VAR *jvar,
 	return E_ALLOC;
     }
 
-    namelen = max_namelen(jvar->ylist, dset);
-    if (namelen < 12) {
-	namelen = 12;
-    }
+    namelen = max_namelen_in_list(jvar->ylist, dset);
     if (firstlen <= namelen) {
 	firstlen = namelen + 1;
     }
+    if (namelen < 12) {
+	namelen = 12;
+    }    
 
     gretl_matrix_multiply_mod(jv->Alpha, GRETL_MOD_NONE,
 			      jv->Beta, GRETL_MOD_TRANSPOSE,
@@ -516,13 +496,9 @@ static int print_long_run_matrix (const GRETL_VAR *jvar,
     pprintf(prn, "%s\n", _("long-run matrix (alpha * beta')"));
 
     vname = dset->varname[jvar->ylist[1]];
-    if (strlen(vname) >= NAMETRUNC) {
-	truncate_varname(tmp, vname);
-    } else {
-	strcpy(tmp, vname);
-    }
+    maybe_trim_varname(tmp, vname);
 
-    pprintf(prn, "%*s", firstlen + namelen + 1, tmp); 
+    pprintf(prn, "%*s", firstlen + namelen, tmp); 
     for (j=1; j<Pi->cols; j++) {
 	pprintf(prn, "%*s", namelen + 1, beta_vname(tmp, jvar, dset, j));
     }
@@ -531,11 +507,7 @@ static int print_long_run_matrix (const GRETL_VAR *jvar,
 
     for (i=0; i<Pi->rows; i++) {
 	vname = dset->varname[jvar->ylist[i+1]];
-	if (strlen(vname) >= NAMETRUNC) {
-	    truncate_varname(tmp, vname);
-	} else {
-	    strcpy(tmp, vname);
-	}	
+	maybe_trim_varname(tmp, vname);
 	pprintf(prn, "%-*s", firstlen, tmp);
 	for (j=0; j<Pi->cols; j++) {
 	    x = gretl_matrix_get(Pi, i, j);

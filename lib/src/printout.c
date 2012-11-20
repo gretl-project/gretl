@@ -1646,26 +1646,53 @@ void print_obs_marker (int t, const DATASET *dset, int len, PRN *prn)
     real_print_obs_marker(t, dset, len, 1, prn);
 }
 
-char *truncate_varname (char *targ, const char *src)
+char *maybe_trim_varname (char *targ, const char *src)
 {
-    const char *p = strrchr(src, '_');
+    int srclen = strlen(src);
 
-    *targ = '\0';
-
-    if (p != NULL && isdigit(*(p+1)) && strlen(p) < 4) {
-	/* preserve lag identifier? */
-	int snip = strlen(src) - NAMETRUNC + 2;
-	int fore = p - src;
-
-	strncat(targ, src, fore - snip);
-	strncat(targ, "~", 1);
-	strncat(targ, p, strlen(p));
+    if (srclen < NAMETRUNC) {
+	strcpy(targ, src);
     } else {
-	strncat(targ, src, NAMETRUNC - 2);
-	strncat(targ, "~", 1);
+	const char *p = strrchr(src, '_');
+
+	*targ = '\0';
+
+	if (p != NULL && isdigit(*(p+1)) && strlen(p) < 4) {
+	    /* preserve lag identifier? */
+	    int snip = srclen - NAMETRUNC + 2;
+	    int fore = p - src;
+
+	    strncat(targ, src, fore - snip);
+	    strncat(targ, "~", 1);
+	    strncat(targ, p, strlen(p));
+	} else {
+	    strncat(targ, src, NAMETRUNC - 2);
+	    strncat(targ, "~", 1);
+	}
     }
 
     return targ;
+}
+
+int max_namelen_in_list (const int *list, const DATASET *dset)
+{
+    int i, vi, ni, n = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	vi = list[i];
+	if (vi >= 0 && vi < dset->v) {
+	    ni = strlen(dset->varname[list[i]]);
+	    if (ni > n) {
+		n = ni;
+	    }
+	}
+    }
+
+    if (n >= NAMETRUNC) {
+	n = NAMETRUNC - 1;
+    }
+
+    return n;
 }
 
 /**

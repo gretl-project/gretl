@@ -45,6 +45,12 @@ ifeq ($(have_sourceview),2.0)
   langdir = $(svprefix)/share/gtksourceview-2.0/language-specs
 endif
 
+# override for packaging with DESTDIR
+ifneq ($(DESTDIR),)
+  svnum = $(have_sourceview)
+  langdir = $(prefix)/share/gtksourceview-$(svnum)/language-specs
+endif
+
 # override for building Windows and OS X packages
 ifeq ($(pkg_build),yes)
   langdir = $(prefix)/share/gretl/gtksourceview

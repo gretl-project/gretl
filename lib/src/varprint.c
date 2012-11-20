@@ -199,7 +199,8 @@ static void VAR_info_end_table (PRN *prn)
     }
 }
 
-static int varprint_namelen (const GRETL_VAR *var, const DATASET *dset,
+static int varprint_namelen (const GRETL_VAR *var, 
+			     const DATASET *dset,
 			     int rmax, int block)
 {
     int len, maxlen = 0;
@@ -578,11 +579,7 @@ static char *make_beta_vname (char *vname,
 	src = dset->varname[v->rlist[k]];
     }
 
-    if (strlen(src) >= NAMETRUNC) {
-	truncate_varname(vname, src);
-    } else {
-	strcpy(vname, src);
-    }
+    maybe_trim_varname(vname, src);
 
     return vname;
 }
@@ -688,14 +685,10 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
     for (i=0; i<rows; i++) {
 	const char *src = dset->varname[jvar->ylist[i+1]];
 
-	if (plain_format(prn) && strlen(src) >= NAMETRUNC) {
-	    truncate_varname(vname, src);
-	} else {
-	    strcpy(vname, src);
-	}
 	if (rtf) {
-	    pputs(prn, vname);
+	    pputs(prn, src);
 	} else {
+	    maybe_trim_varname(vname, src);
 	    pprintf(prn, namefmt, vname);
 	}
 
@@ -731,30 +724,12 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
     gretl_prn_newline(prn);
 }
 
-static int max_vlen (const int *list, const DATASET *dset)
-{
-    int i, ni, n = 0;
-
-    for (i=1; i<=list[0]; i++) {
-	ni = strlen(dset->varname[list[i]]);
-	if (ni > n) {
-	    n = ni;
-	}
-    }
-
-    if (n >= NAMETRUNC) {
-	n = NAMETRUNC - 1;
-    }
-
-    return n;
-}
-
 static void print_VECM_omega (GRETL_VAR *jvar, const DATASET *dset, PRN *prn)
 {
     int rtf = rtf_format(prn);
     int *list = jvar->ylist;
-    const char *vname;
-    char s[32];
+    const char *src;
+    char vname[32] = {0};
     int vwidth = 13;
     int w0, wi = 12;
     int i, j;
@@ -762,7 +737,7 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATASET *dset, PRN *prn)
     pprintf(prn, "%s:\n", A_("Cross-equation covariance matrix"));
     gretl_prn_newline(prn);
 
-    w0 = max_vlen(list, dset) + 1;
+    w0 = max_namelen_in_list(list, dset) + 1;
     if (w0 > vwidth) {
 	vwidth = w0;
     }
@@ -770,27 +745,25 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATASET *dset, PRN *prn)
     /* top row: names of Y variables */
 
     for (i=0; i<jvar->neqns; i++) {
-	vname = dset->varname[list[i+1]];
-	if (plain_format(prn) && strlen(vname) >= NAMETRUNC) {
-	    truncate_varname(s, vname);
-	} else {
-	    strcpy(s, vname);
+	src = dset->varname[list[i+1]];
+	if (plain_format(prn)) {
+	    maybe_trim_varname(vname, src);
 	}
 	if (i == 0) {
 	    if (rtf) {
-		pprintf(prn, "\t\t%s", s);
+		pprintf(prn, "\t\t%s", src);
 	    } else {
-		wi = strlen(s);
+		wi = strlen(vname);
 		if (wi < vwidth) wi = vwidth;
-		pprintf(prn, "%*s", w0 + wi, s);
+		pprintf(prn, "%*s", w0 + wi, vname);
 	    }
 	} else {
 	    if (rtf) {
-		pprintf(prn, "\t%s", s);
+		pprintf(prn, "\t%s", src);
 	    } else {
-		wi = strlen(s) + 1;
+		wi = strlen(vname) + 1;
 		if (wi < vwidth) wi = vwidth;
-		pprintf(prn, "%*s", wi, s);
+		pprintf(prn, "%*s", wi, vname);
 	    }
 	}
     }
@@ -800,26 +773,24 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATASET *dset, PRN *prn)
     /* subsequent rows: Y name plus values */
 
     for (i=0; i<jvar->neqns; i++) {
-	vname = dset->varname[list[i+1]];
-	if (plain_format(prn) && strlen(vname) >= NAMETRUNC) {
-	    truncate_varname(s, vname);
-	} else {
-	    strcpy(s, vname);
+	src = dset->varname[list[i+1]];
+	if (plain_format(prn)) {
+	    maybe_trim_varname(vname, src);
 	}
 	if (rtf) {
-	    pputs(prn, s);
-	    if (strlen(s) < 8) {
+	    pputs(prn, src);
+	    if (strlen(src) < 8) {
 		pputc(prn, '\t');
 	    }	    
 	} else {
-	    pprintf(prn, "%-*s ", w0, s);
+	    pprintf(prn, "%-*s ", w0, vname);
 	}
 	for (j=0; j<jvar->neqns; j++) {
 	    if (rtf) {
 		pprintf(prn, "\t%#.5g", gretl_matrix_get(jvar->S, i, j));
 	    } else {
-		vname = dset->varname[list[j+1]];
-		wi = strlen(vname);
+		src = dset->varname[list[j+1]];
+		wi = strlen(src);
 		if (wi >= NAMETRUNC) {
 		    wi = NAMETRUNC - 1;
 		}
@@ -1209,14 +1180,10 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 		    pprintf(prn, "F(%d, %d) = %8.5g ", nlags, dfd, Fval);
 		    pprintf(prn, "[%.4f]\\par\n", pv);
 		} else {
-		    if (strlen(vname) >= NAMETRUNC) {
-			char tmp[NAMETRUNC];
+		    char tmp[NAMETRUNC];
 
-			truncate_varname(tmp, vname);
-			sprintf(label, _("All lags of %s"), tmp);
-		    } else {		    
-			sprintf(label, _("All lags of %s"), vname);
-		    }
+		    maybe_trim_varname(tmp, vname);
+		    sprintf(label, _("All lags of %s"), tmp);
 		    llen = g_utf8_strlen(label, -1);
 		    pputs(prn, label);
 		    bufspace(fwidth - llen, prn);

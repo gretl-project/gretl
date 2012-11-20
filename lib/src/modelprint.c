@@ -4431,6 +4431,8 @@ static int plain_print_coeffs (const MODEL *pmod,
 
     k = 0;
     for (i=0; i<nc; i++) {
+	char tmp[NAMETRUNC];
+
 	if (i == seppos) {
 	    if (pmod->ci == BIPROBIT) {
 		pputc(prn, '\n');
@@ -4444,14 +4446,8 @@ static int plain_print_coeffs (const MODEL *pmod,
 	    mn_logit_coeffsep(mnlsep, pmod, dset, ++k);
 	    print_coeff_separator(mnlsep, 0, prn);
 	}
-	if (strlen(names[i]) >= NAMETRUNC) {
-	    char tmp[NAMETRUNC];
-
-	    truncate_varname(tmp, names[i]);
-	    pprintf(prn, "  %-*s", namelen, tmp);
-	} else {
-	    pprintf(prn, "  %-*s", namelen, names[i]);
-	}
+	maybe_trim_varname(tmp, names[i]);
+	pprintf(prn, "  %-*s", namelen, tmp);
 	bufspace(colsep, prn);
 	for (j=0; j<ncols; j++) {
 	    vij = &vals[i][j];

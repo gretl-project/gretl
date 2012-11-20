@@ -55,7 +55,9 @@ int max_obs_marker_length (const DATASET *dset);
 
 void print_obs_marker (int t, const DATASET *dset, int len, PRN *prn);
 
-char *truncate_varname (char *targ, const char *src);
+char *maybe_trim_varname (char *targ, const char *src);
+
+int max_namelen_in_list (const int *list, const DATASET *dset);
 
 void varlist (const DATASET *dset, PRN *prn);
 
