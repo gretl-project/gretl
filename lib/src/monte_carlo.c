@@ -2154,6 +2154,7 @@ static void print_loop_coeff (const DATASET *dset,
 			      int i, PRN *prn)
 {
     char pname[VNAMELEN];
+    char tmp[NAMETRUNC];
     mpf_t c1, c2, m, sd1, sd2;
     unsigned long ln = lmod->n;
 
@@ -2194,7 +2195,8 @@ static void print_loop_coeff (const DATASET *dset,
     }
 
     gretl_model_get_param_name(lmod->model0, dset, i, pname);
-    pprintf(prn, "%*s", VNAMELEN - 1, pname);
+    maybe_trim_varname(tmp, pname);
+    pprintf(prn, "%*s", 15, tmp); /* FIXME length */
     pprintf(prn, "%#14g %#14g %#14g %#14g\n", mpf_get_d(c1), mpf_get_d(sd1), 
 	    mpf_get_d(c2), mpf_get_d(sd2));
 

@@ -162,9 +162,9 @@
 	  store the value in a temporary variable, as in
 	</para>
 	<code>
-	  errval = $error
-	  if (errval) 
-	    printf "Got error %d (%s)\n", errval, errmsg(errval);
+	  err = $error
+	  if (err) 
+	    printf "Got error %d (%s)\n", err, errmsg(err);
 	  endif
 	</code>
       </description>
@@ -243,7 +243,7 @@
       <description>
 	<para>
 	  Must follow a <lit>gmm</lit> block. Returns the value of the
-	  objective function at its minimum.
+	  GMM objective function at its minimum.
 	</para>
       </description>
     </function>
@@ -1405,7 +1405,7 @@
       </fnargs>
       <description>
 	<para>
-	  The number of columns of <argname>X</argname>. 
+	  Returns the number of columns of <argname>X</argname>. 
 	  <seelist> 
 	    <fncref targ="mshape"/>
 	    <fncref targ="rows"/>
@@ -2186,10 +2186,11 @@
       </fnargs>
       <description>
 	<para>
-	  First non-missing observation for the variable
-	  <argname>y</argname>. Note that if some form of subsampling is
-	  in effect, the value returned may be smaller than the dollar
-	  variable <fncref targ="$t1"/>. 
+	  Returns the 1-based index of the first non-missing
+	  observation for the series <argname>y</argname>. Note that
+	  if some form of subsampling is in effect, the value returned
+	  may be smaller than the dollar variable <fncref
+	  targ="$t1"/>.
 	  <seelist> 
 	    <fncref targ="lastobs"/>
 	  </seelist>
@@ -2892,23 +2893,6 @@
       </description>
     </function>
 
-    <function name="islist" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="string">s</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns 1 if <argname>s</argname> is the identifier for a
-	  currently defined list, otherwise 0.
-	  <seelist>
-	    <fncref targ="isnull"/>
-	    <fncref targ="isseries"/>
-	    <fncref targ="isstring"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="isnan" section="data-utils" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-matrix">x</fnarg>
@@ -2926,18 +2910,13 @@
 
     <function name="isnull" section="data-utils" output="scalar">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="string">name</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns 0 if <argname>s</argname> is the identifier for a
+	  Returns 0 if <argname>name</argname> is the identifier for a
 	  currently defined object, be it a scalar, a series, a matrix,
-	  list or string; otherwise returns 1.
-	  <seelist>
-	    <fncref targ="islist"/>
-	    <fncref targ="isseries"/>
-	    <fncref targ="isstring"/>
-	  </seelist>
+	  list, string or bundle; otherwise returns 1.
 	</para>
       </description>
     </function>
@@ -3073,40 +3052,6 @@
       </description>
     </function>
 
-    <function name="isseries" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="string">s</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns 1 if <argname>s</argname> is the identifier for a
-	  currently defined series, otherwise 0.
-	  <seelist> 
-	    <fncref targ="islist"/>
-	    <fncref targ="isnull"/>
-	    <fncref targ="isstring"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="isstring" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="string">s</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns 1 if <math>s</math> is the identifier for a currently
-	  defined string, otherwise 0.
-	  <seelist> 
-	    <fncref targ="islist"/>
-	    <fncref targ="isnull"/>
-	    <fncref targ="isseries"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="lags" section="transforms" output="list">
       <fnargs>
 	<fnarg type="scalar">p</fnarg>
@@ -3137,10 +3082,10 @@
       </fnargs>
       <description>
 	<para>
-	  Last non-missing observation for the variable
-	  <argname>y</argname>. Note that if some form of subsampling is
-	  in effect, the value returned may be larger than the dollar
-	  variable <fncref targ="$t2"/>.
+	  Returns the 1-based index of the last non-missing
+	  observation for the series <argname>y</argname>. Note that
+	  if some form of subsampling is in effect, the value returned
+	  may be larger than the dollar variable <fncref targ="$t2"/>.
 	  <seelist>
 	    <fncref targ="firstobs"/>
 	  </seelist>
@@ -4071,7 +4016,9 @@
 	<para>
 	  Returns a matrix in which the rows of <argname>X</argname>
 	  are reordered by increasing value of the elements in
-	  column <argname>j</argname>.
+	  column <argname>j</argname>. This is a stable sort: 
+	  rows that share the same value in column <argname>j</argname>
+	  will not be interchanged.
 	</para>
       </description>
     </function>
@@ -4248,7 +4195,8 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the number of members in list <argname>L</argname>.
+	  Returns the number of members in the list
+	  <argname>L</argname>.
 	</para>
       </description>
     </function>
@@ -5467,7 +5415,7 @@
       </fnargs>
       <description>
 	<para>
-	  Number of rows of the matrix <argname>X</argname>.  
+	  Returns the number of rows of the matrix <argname>X</argname>.  
 	  <seelist>
 	    <fncref targ="cols"/>
 	    <fncref targ="mshape"/>

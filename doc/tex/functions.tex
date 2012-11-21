@@ -629,10 +629,10 @@ the series given as 'y' was named QNC
 Please note that this will not always work: the arguments given
 to functions may be anonymous variables, created on the fly, as in
 \texttt{somefun(log(QNC))} or \texttt{somefun(CPI/100)}.  In that case
-the \textsf{argname} function fails to return a string.  Function
+the \textsf{argname} function returns an empty string.  Function
 writers who wish to make use of this facility should check the return
-from \texttt{argname} using the \texttt{isstring()} function, which
-returns 1 when given the name of a string variable, 0 otherwise.
+from \texttt{argname} using the \texttt{strlen()} function: if this
+returns 0, no name was found.
 
 \subsection{Return values}
 
