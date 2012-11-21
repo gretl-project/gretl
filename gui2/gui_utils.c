@@ -4050,7 +4050,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     equation_system *sys = NULL;
     int neqns, nfc, vtarg, vshock;
     char tmp[VNAMELEN2], istr[VNAMELEN];
-    char maj[64], min[32];
+    char maj[64], min[64];
     const char *cmdword;
     int i, j;
 
