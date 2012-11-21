@@ -3574,7 +3574,7 @@ static void plot_do_rescale (png_plot *plot, int mod)
 	} else if (mod == -1 && i > 0) {
 	    plot->spec->scale = scales[i-1];
 	} else {
-	    warnbox("Scale is at %s", mod > 0 ? "maximum" : "minimum");
+	    gdk_window_beep(plot->window);
 	    return;
 	}
     }

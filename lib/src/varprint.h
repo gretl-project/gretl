@@ -41,4 +41,9 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 int gretl_VAR_print_all_impulse_responses (GRETL_VAR *var, const DATASET *dset, 
 					   int horizon, PRN *prn);
 
+char *vecm_beta_varname (char *vname,
+			 const GRETL_VAR *v,
+			 const DATASET *dset,
+			 int i);
+
 #endif /* VARPRINT_H_ */

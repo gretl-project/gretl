@@ -4544,21 +4544,13 @@ void print_summary_single (const Summary *s,
     pputc(prn, '\n');
 }
 
-#define MAXNAM 18
-
-static void summary_print_varname (const char *vname,
+static void summary_print_varname (const char *src,
 				   int len, PRN *prn)
 {
-    if (strlen(vname) >= MAXNAM) {
-	char tmp[MAXNAM];
+    char vname[NAMETRUNC];
 
-	*tmp = '\0';
-	strncat(tmp, vname, MAXNAM-2);
-	strncat(tmp, "~", 1);
-	pprintf(prn, "%-*s", len, tmp);		
-    } else {
-	pprintf(prn, "%-*s", len, vname);
-    }
+    maybe_trim_varname(vname, src);
+    pprintf(prn, "%-*s", len, vname);
 }
 
 /**
@@ -4585,19 +4577,9 @@ void print_summary (const Summary *summ,
 	print_summary_single(summ, 0, 0, dset, prn);
 	return;
     }
-
-    for (i=1; i<=summ->list[0]; i++) {
-	vi = summ->list[i];
-	len = strlen(dset->varname[vi]);
-	if (len > maxlen) {
-	    maxlen = len;
-	}
-    }
-
-    len = (maxlen <= 8)? 10 : (maxlen + 1);
-    if (len > MAXNAM) {
-	len = MAXNAM;
-    }
+    
+    maxlen = max_namelen_in_list(summ->list, dset);
+    len = maxlen <= 8 ? 10 : (maxlen + 1);
 
 #if 0
     if (!(summ->opt & OPT_B)) {
@@ -4623,7 +4605,7 @@ void print_summary (const Summary *summ,
 		UTF_WIDTH(_(h[0]), 15), _(h[3]));
 
 	for (i=0; i<summ->list[0]; i++) {
-	    vi = summ->list[i + 1];
+	    vi = summ->list[i+1];
 	    summary_print_varname(dset->varname[vi], len, prn);
 	    printf15(summ->mean[i], prn);
 	    printf15(summ->low[i], prn);
@@ -4662,7 +4644,7 @@ void print_summary (const Summary *summ,
 		UTF_WIDTH(_(ha[3]), 15), _(ha[3]));
 
 	for (i=0; i<summ->list[0]; i++) {
-	    vi = summ->list[i + 1];
+	    vi = summ->list[i+1];
 	    summary_print_varname(dset->varname[vi], len, prn);
 	    printf15(summ->mean[i], prn);
 	    printf15(summ->median[i], prn);
@@ -4681,7 +4663,7 @@ void print_summary (const Summary *summ,
 	for (i=0; i<summ->list[0]; i++) {
 	    double cv;
 
-	    vi = summ->list[i + 1];
+	    vi = summ->list[i+1];
 	    summary_print_varname(dset->varname[vi], len, prn);
 
 	    if (floateq(summ->mean[i], 0.0)) {

@@ -25,6 +25,7 @@
 #include "var.h"
 #include "johansen.h"
 #include "vartest.h"
+#include "varprint.h"
 #include "libset.h"
 #include "jprivate.h"
 
@@ -321,30 +322,6 @@ static void fix_xstr (char *s, int p)
     }
 }
 
-/* FIXME duplication (varprint.c) */
-
-const char *beta_vname (char *vname, 
-			const GRETL_VAR *v,
-			const DATASET *dset,
-			int i)
-{
-    const char *src = "";
-
-    if (i < v->neqns) {
-	src = dset->varname[v->ylist[i+1]];
-    } else if (auto_restr(v) && i == v->neqns) {
-	src = (jcode(v) == J_REST_CONST)? "const" : "trend";
-    } else if (v->rlist != NULL) {
-	int k = i - v->ylist[0] - auto_restr(v) + 1;
-
-	src = dset->varname[v->rlist[k]];
-    }
-
-    maybe_trim_varname(vname, src);
-
-    return vname;
-}
-
 #define ABMIN 1.0e-15
 
 /* for cointegration test: print cointegrating vectors or adjustments,
@@ -359,7 +336,6 @@ static void print_beta_or_alpha (const GRETL_VAR *jvar, int k,
     int rows = gretl_matrix_rows(c);
     int vnorm = libset_get_int(VECM_NORM);
     char xstr[32], tmp[NAMETRUNC];
-    const char *bname;
     int n, namelen = 8;
     int i, j, row;
     double x, y;
@@ -379,15 +355,16 @@ static void print_beta_or_alpha (const GRETL_VAR *jvar, int k,
     }
 
     for (i=0; i<rows; i++) {
-	bname = beta_vname(tmp, jvar, dset, i);
-	n = strlen(bname);
+	vecm_beta_varname(tmp, jvar, dset, i);
+	n = strlen(tmp);
 	if (n > namelen) {
 	    namelen = n;
 	}
     }
 
     for (i=0; i<rows; i++) {
-	pprintf(prn, "%-*s", namelen + 2, beta_vname(tmp, jvar, dset, i));
+	vecm_beta_varname(tmp, jvar, dset, i);
+	pprintf(prn, "%-*s", namelen + 2, tmp);
 	for (j=0; j<k; j++) {
 	    x = gretl_matrix_get(c, i, j);
 	    if (rescale) {
@@ -500,7 +477,8 @@ static int print_long_run_matrix (const GRETL_VAR *jvar,
 
     pprintf(prn, "%*s", firstlen + namelen, tmp); 
     for (j=1; j<Pi->cols; j++) {
-	pprintf(prn, "%*s", namelen + 1, beta_vname(tmp, jvar, dset, j));
+	vecm_beta_varname(tmp, jvar, dset, j);
+	pprintf(prn, "%*s", namelen + 1, tmp);
     }
 
     pputc(prn, '\n');

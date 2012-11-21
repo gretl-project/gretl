@@ -1224,7 +1224,7 @@ void verify_open_data (windata_t *vwin, int code)
 void verify_open_session (void)
 {
     if (!gretl_is_pkzip_file(tryfile)) {
-	/* not a new-style zipped session file */
+	/* not a zipped session file */
 	do_open_script(EDIT_SCRIPT);
 	return;
     }

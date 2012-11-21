@@ -1118,8 +1118,7 @@ static void outxx (double x, int ci, int wid, PRN *prn)
 
 static int vmat_maxlen (VMatrix *vmat)
 {
-    int len, maxlen = 0;
-    int i;
+    int i, len, maxlen = 0;
 
     for (i=0; i<vmat->dim; i++) {
 	len = strlen(vmat->names[i]);

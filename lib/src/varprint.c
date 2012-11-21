@@ -562,10 +562,10 @@ void print_Johansen_test_case (JohansenCode jcode, PRN *prn)
     }
 }
 
-static char *make_beta_vname (char *vname,
-			      const GRETL_VAR *v,
-			      const DATASET *dset,
-			      int i)
+char *vecm_beta_varname (char *vname,
+			 const GRETL_VAR *v,
+			 const DATASET *dset,
+			 int i)
 {
     const char *src = "";
 
@@ -592,7 +592,7 @@ static int max_beta_namelen (GRETL_VAR *v,
     int i, ni, n = 0;
 
     for (i=0; i<r; i++) {    
-	make_beta_vname(s, v, dset, i);
+	vecm_beta_varname(s, v, dset, i);
 	ni = strlen(s);
 	if (ni > n) {
 	    n = ni;
@@ -630,7 +630,7 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
     sprintf(namefmt, "%%-%ds", nwid);
 
     for (i=0; i<rows; i++) {
-	make_beta_vname(vname, jvar, dset, i);
+	vecm_beta_varname(vname, jvar, dset, i);
 	if (rtf) {
 	    pputs(prn, vname);
 	} else {
