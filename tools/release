@@ -20,7 +20,7 @@ Remote:
   binary packages. Upload a README. Use the SF File
   Manager to mark the new files as the default downloads.
 * Also make a new versioned subdirectory of "addons" and
-  upload the .zip addon files
+  upload the .zip addon files if need be.
 
 Local:
 * Update all the web docs (this is automated: ./update_html)
