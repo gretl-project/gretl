@@ -25,6 +25,7 @@
 #include "random.h"
 #include "johansen.h"
 #include "var.h"
+#include "varprint.h"
 #include "gretl_bfgs.h"
 #include "gretl_restrict.h"
 #include "libset.h"
@@ -2755,7 +2756,7 @@ static int max_beta_vname (char *tmp,
     int i, ni, n = 0;
 
     for (i=0; i<r; i++) {    
-	s = beta_vname(tmp, v, dset, i);
+	s = vecm_beta_varname(tmp, v, dset, i);
 	ni = strlen(s);
 	if (ni > n) {
 	    n = ni;
@@ -2774,8 +2775,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar,
 {
     const gretl_matrix *c = J->beta;
     const gretl_matrix *sd = J->bse;
-    char vname[32], s[16];
-    char tmp[NAMETRUNC];
+    char s[16], vname[NAMETRUNC];
     char namefmt[8];
     int nwid, sdshow;
     int i, j;
@@ -2797,7 +2797,6 @@ static int printres (Jwrap *J, GRETL_VAR *jvar,
     if (J->df > 0) {
 	double x = 2.0 * (jvar->ll - J->ll);
 	double pv = chisq_cdf_comp(J->df, x);
-	
 
 	pprintf(prn, "2 * (lu - lr) = %g\n", x);
 	pprintf(prn, "P(%s(%d) > %g) = %g\n", _("Chi-square"), J->df, x, pv);
@@ -2813,11 +2812,12 @@ static int printres (Jwrap *J, GRETL_VAR *jvar,
     }
     pputs(prn, "\n\n");
 
-    nwid = max_beta_vname(tmp, jvar, dset) + 1;
+    nwid = max_beta_vname(vname, jvar, dset) + 1;
     sprintf(namefmt, "%%-%ds", nwid);
 
     for (i=0; i<J->p1; i++) {
-	pprintf(prn, namefmt, beta_vname(tmp, jvar, dset, i));
+	vecm_beta_varname(vname, jvar, dset, i);
+	pprintf(prn, namefmt, vname);
 
 	for (j=0; j<J->r; j++) {
 	    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, i, j));
@@ -2847,7 +2847,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar,
     pputs(prn, "\n\n");
 
     for (i=0; i<J->p; i++) {
-	sprintf(vname, "%s", dset->varname[jvar->ylist[i+1]]);
+	maybe_trim_varname(vname, dset->varname[jvar->ylist[i+1]]);
 	pprintf(prn, namefmt, vname);
 	for (j=0; j<J->r; j++) {
 	    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, i, j));
