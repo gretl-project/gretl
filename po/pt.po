@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-11-20 15:40-0500\n"
-"PO-Revision-Date: 2012-11-14 23:59+0000\n"
+"PO-Revision-Date: 2012-11-21 00:31+0000\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
@@ -7295,7 +7295,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 15 de novembro de 2012."
+"Tradução de 21 de novembro de 2012."
 
 #: gui2/about.c:164
 msgid "License"
@@ -9981,7 +9981,7 @@ msgstr "Menor"
 
 #: gui2/gpt_control.c:316
 msgid "Bigger"
-msgstr ""
+msgstr "Maior"
 
 #: gui2/gpt_control.c:402
 msgid " Click to set position"
