@@ -1,3 +1,8 @@
+version 1.9.11, in progress
+
+The functions islist(), isseries() and isstring() are deprecated,
+and will be removed before long.
+
 2012-11-05 version 1.9.10
 
 The option for specifying how to read data from a fixed format
