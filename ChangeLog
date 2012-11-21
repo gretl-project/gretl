@@ -1,4 +1,4 @@
-version 1.9.11, in progress
+2012-11-21 version 1.9.11
 - Substantial re-write of code for handling named variables
   other than series (matrices, scalars, strings, etc.) in the
   interest of maintainability and efficiency

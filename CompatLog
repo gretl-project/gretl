@@ -1,4 +1,4 @@
-version 1.9.11, in progress
+2012-11-21 version 1.9.11
 
 The functions islist(), isseries() and isstring() are deprecated,
 and will be removed before long.
