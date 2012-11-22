@@ -3252,8 +3252,8 @@ static void add_x12_output_menu_item (windata_t *vwin)
 
 static GtkWidget *up_down_button (int up)
 {
+    GtkWidget *img, *w = gtk_button_new();
     GdkPixbuf *pbuf;
-    GtkWidget *img, *w;
 
     if (up) {
 	pbuf = gdk_pixbuf_new_from_inline(-1, up_pixbuf, FALSE, NULL);
@@ -3262,7 +3262,6 @@ static GtkWidget *up_down_button (int up)
     }
 
     img = gtk_image_new_from_pixbuf(pbuf);
-    w = gtk_button_new();
     gtk_container_add(GTK_CONTAINER(w), img);
     g_object_unref(pbuf);
 
@@ -3402,14 +3401,19 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
     gtk_tree_selection_select_iter(select, &iter);
 
-    gtk_widget_set_size_request(view, 120 * gui_scale, -1);
+    gtk_widget_set_size_request(view, 140 * gui_scale, -1);
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scroller),
 				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW (scroller),
-					GTK_SHADOW_IN);    
+					GTK_SHADOW_IN);
     gtk_container_add(GTK_CONTAINER(scroller), view);
+
+#if GTK_MAJOR_VERSION >= 3
+    gtk_scrolled_window_set_min_content_width(GTK_SCROLLED_WINDOW(scroller),
+					      140 * gui_scale);
+#endif
 
     bbox = gtk_vbox_new(FALSE, 5);
     b1 = up_down_button(1);
@@ -3421,6 +3425,7 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
     g_signal_connect(G_OBJECT(b2), "clicked",
 		     G_CALLBACK(shift_var_down), view);
 
+    /* FIXME this is ignored in GTK3 ? */
     gtk_widget_set_sensitive(b1, FALSE);
     g_object_set_data(G_OBJECT(view), "up-button", b1);
     g_object_set_data(G_OBJECT(view), "down-button", b2);
