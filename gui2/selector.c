@@ -62,6 +62,8 @@ struct _selector {
     GtkWidget *vbox;
     GtkWidget *action_area;
     GtkWidget *lvars;
+    GtkWidget *mid_vbox;
+    GtkWidget *right_vbox;
     GtkWidget *depvar;
     GtkWidget *rvars1;
     GtkWidget *rvars2;
@@ -96,7 +98,8 @@ enum {
 
 #define EXTRA_LAGS (N_EXTRA - 1)
 
-#define VNAMEWIDTH 18
+#define VNAME_WIDTH 18
+#define BUTTON_WIDTH 64
 
 /* single-equation estimation commands plus some GUI extensions */
 #define MODEL_CODE(c) (MODEL_COMMAND(c) || c == CORC || c == HILU || \
@@ -273,7 +276,7 @@ static gint listvar_flagcol_click (GtkWidget *widget, GdkEventButton *event,
 				   gpointer data);
 static int list_show_var (int v, int ci, int show_lags);
 static void functions_list (selector *sr);
-static void primary_rhs_varlist (selector *sr, GtkWidget *vbox);
+static void primary_rhs_varlist (selector *sr);
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 static void call_iters_dialog (GtkWidget *w, GtkWidget *combo);
 static void reset_arma_spinners (selector *sr);
@@ -283,6 +286,17 @@ static void vbox_add_vwedge (GtkWidget *vbox)
     GtkWidget *h = gtk_hbox_new(FALSE, 0);
     
     gtk_box_pack_start(GTK_BOX(vbox), h, FALSE, FALSE, 2);
+    gtk_widget_show(h);
+}
+
+static void top_section_add_vwedge (selector *sr)
+{
+    GtkWidget *h = gtk_hbox_new(FALSE, 0);
+    
+    gtk_box_pack_start(GTK_BOX(sr->mid_vbox), h, FALSE, FALSE, 2);
+    gtk_widget_show(h);
+    h = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(sr->right_vbox), h, FALSE, FALSE, 2);
     gtk_widget_show(h);
 }
 
@@ -3716,7 +3730,7 @@ static char *est_str (int cmdnum)
     }
 }
 
-static char *extra_string (int ci)
+static char *extra_var_string (int ci)
 {
     switch (ci) {
     case WLS:
@@ -3928,75 +3942,78 @@ static void build_gmm_popdown (selector *sr)
     }
 }
 
-static GtkWidget *choose_button (void)
+static GtkWidget *pix_button (const guint8 *src, gchar *tip)
 {
-    GdkPixbuf *pbuf = gdk_pixbuf_new_from_inline(-1, choose_inline, FALSE, NULL);
-    GtkWidget *img = gtk_image_new_from_pixbuf(pbuf);
-    GtkWidget *w = gtk_button_new();
+    GtkWidget *img, *button;
+    GdkPixbuf *pbuf;
 
-    gtk_widget_show(img);
-    gtk_widget_set_size_request(w, 64, -1);
-    gtk_container_add(GTK_CONTAINER(w), img);
-    gretl_tooltips_add(w, _("Choose"));
+    pbuf = gdk_pixbuf_new_from_inline(-1, src, FALSE, NULL);
+    img = gtk_image_new_from_pixbuf(pbuf);
+    button = gtk_button_new();
+    gtk_widget_set_size_request(button, BUTTON_WIDTH, -1);
+    gtk_container_add(GTK_CONTAINER(button), img);
+    gretl_tooltips_add(button, tip);
     g_object_unref(pbuf);
 
-    return w;
+    return button;
+}
+
+static void label_vspacer (GtkWidget *parent)
+{
+    GtkWidget *v = gtk_label_new("");
+
+    gtk_box_pack_start(GTK_BOX(parent), v, FALSE, FALSE, 0);
 }
 
 static GtkWidget *
-entry_with_label_and_chooser (selector *sr, GtkWidget *vbox,
+entry_with_label_and_chooser (selector *sr,
 			      gchar *label_string,
 			      int label_active,
 			      void (*clickfunc)())
 {
-    GtkWidget *tmp, *x_hbox;
-    GtkWidget *entry;
+    GtkWidget *tmp, *hbox, *entry;
 
     if (label_active) {
 	tmp = multiplot_popdown(sr->ci);
-	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(sr->right_vbox), tmp, FALSE, FALSE, 0);
+	label_vspacer(sr->mid_vbox);
     } else if (label_string != NULL) {
 	tmp = gtk_label_new(label_string);
-	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(sr->right_vbox), tmp, FALSE, FALSE, 0);
+	label_vspacer(sr->mid_vbox);
     }
 
-    x_hbox = gtk_hbox_new(FALSE, 5); 
-
-    tmp = choose_button();
-    gtk_box_pack_start(GTK_BOX(x_hbox), tmp, TRUE, TRUE, 0);
-    g_signal_connect (G_OBJECT(tmp), "clicked", 
-		      G_CALLBACK(clickfunc), sr);
+    tmp = pix_button(choose_inline, _("Choose"));
+    gtk_box_pack_start(GTK_BOX(sr->mid_vbox), tmp, FALSE, FALSE, 0);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(clickfunc), sr);
 
     entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN - 1);
-    gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMEWIDTH);
-
-    gtk_box_pack_start(GTK_BOX(x_hbox), entry, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), x_hbox, FALSE, FALSE, 0);
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAME_WIDTH);
+    hbox = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(sr->right_vbox), hbox, FALSE, FALSE, 0);
 
     if (label_active || label_string != NULL) {
 	if (clickfunc != set_third_var_callback) {
-	    vbox_add_vwedge(vbox);
+	    top_section_add_vwedge(sr);
 	}
     }
 
     return entry;
 }
 
-static void build_x_axis_section (selector *sr, GtkWidget *right_vbox,
-				  int v)
+static void build_x_axis_section (selector *sr, int v)
 {
     if (sr->ci == SCATTERS) {
-	sr->depvar = entry_with_label_and_chooser(sr, right_vbox,
-						  NULL, 1,
+	sr->depvar = entry_with_label_and_chooser(sr, NULL, 1,
 						  set_dependent_var_callback);
     } else if (sr->ci == GR_FBOX) {
-	sr->depvar = entry_with_label_and_chooser(sr, right_vbox,
-						  _("Variable to plot"), 0,
+	sr->depvar = entry_with_label_and_chooser(sr, _("Variable to plot"), 0,
 						  set_dependent_var_callback);
     } else {
-	sr->depvar = entry_with_label_and_chooser(sr, right_vbox,
-						  _("X-axis variable"), 0,
+	sr->depvar = entry_with_label_and_chooser(sr, _("X-axis variable"), 0,
 						  set_dependent_var_callback);
     }
 
@@ -4018,8 +4035,7 @@ static void maybe_activate_depvar_lags (GtkWidget *w, selector *sr)
 
 /* returns ID number of variable pre-inserted as dependent, or -1 */
 
-static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
-				 int preselect)
+static int build_depvar_section (selector *sr, int preselect)
 {
     GtkWidget *tmp, *depvar_hbox;
     int defvar;
@@ -4043,38 +4059,37 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
 	tmp = gtk_label_new(_("Dependent variable"));
     }
 
-    gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(sr->right_vbox), tmp, FALSE, FALSE, 0);
+    label_vspacer(sr->mid_vbox);
 
-    depvar_hbox = gtk_hbox_new(FALSE, 5); 
-
-    tmp = choose_button();
-    gtk_box_pack_start(GTK_BOX(depvar_hbox), tmp, TRUE, TRUE, 0);
+    tmp = pix_button(choose_inline, _("Choose"));
+    gtk_box_pack_start(GTK_BOX(sr->mid_vbox), tmp, FALSE, FALSE, 0);    
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(set_dependent_var_callback), sr);
-
+    
+    depvar_hbox = gtk_hbox_new(FALSE, 5); 
     sr->depvar = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(sr->depvar), VNAMELEN - 1);
-    gtk_entry_set_width_chars(GTK_ENTRY(sr->depvar), VNAMEWIDTH);
-
+    gtk_entry_set_width_chars(GTK_ENTRY(sr->depvar), VNAME_WIDTH);
     g_signal_connect(G_OBJECT(sr->depvar), "changed",
 		     G_CALLBACK(maybe_activate_depvar_lags), sr);
-
     if (defvar >= 0) {
         gtk_entry_set_text(GTK_ENTRY(sr->depvar), dataset->varname[defvar]);
     }
-
-    gtk_box_pack_start(GTK_BOX(depvar_hbox), sr->depvar, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(right_vbox), depvar_hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(depvar_hbox), sr->depvar, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(sr->right_vbox), depvar_hbox, FALSE, FALSE, 0);
 
     if (sr->ci != INTREG && sr->ci != BIPROBIT) {
 	sr->default_check = gtk_check_button_new_with_label(_("Set as default"));
-	gtk_box_pack_start(GTK_BOX(right_vbox), sr->default_check, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(sr->right_vbox), sr->default_check, 
+			   FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->default_check),
 				     default_y >= 0);
+	label_vspacer(sr->mid_vbox);
     } 
 
     if (sr->ci != DPANEL && sr->ci != BIPROBIT && sr->ci != TOBIT) {
-	vbox_add_vwedge(right_vbox);
+	top_section_add_vwedge(sr);
     }
 
     return defvar;
@@ -4100,13 +4115,11 @@ enum {
     LAG_AND_RANK
 };
 
-static void lag_order_spin (selector *sr, GtkWidget *vbox, int which)
+static void lag_order_spin (selector *sr, int which)
 {
+    gdouble lag, minlag, maxlag;
     GtkWidget *tmp, *hbox;
     GtkAdjustment *adj;
-    gdouble lag; 
-    gdouble minlag;
-    gdouble maxlag;
     const char *labels[] = {
 	N_("lag order:"),
 	N_("cointegration rank:")
@@ -4132,16 +4145,13 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int which)
 
     for (i=0; i<nspin; i++) {
 	hbox = gtk_hbox_new(FALSE, 5);
-
 	if (sr->ci == VLAGSEL) {
 	    tmp = gtk_label_new(_("maximum lag:"));
 	} else {
 	    tmp = gtk_label_new(_(labels[i]));
 	}
-
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 	gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
-	
 	if (i == 0) {
 	    /* lag order */
 	    adj = (GtkAdjustment *) gtk_adjustment_new(lag, minlag, maxlag, 
@@ -4151,10 +4161,8 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int which)
 	    adj = (GtkAdjustment *) gtk_adjustment_new(jrank, 1, 10, 
 						       1, 1, 0);
 	}
-
 	sr->extra[i] = gtk_spin_button_new(adj, 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
-
 	if (i == 0) {
 	    /* cross-connect with lag preferences dialog */
 	    if (get_VAR_lags_list() != NULL) {
@@ -4163,12 +4171,12 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int which)
 	    g_signal_connect(G_OBJECT(sr->extra[i]), "value-changed",
 			     G_CALLBACK(lag_order_sync), sr);
 	}
-
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(sr->right_vbox), hbox, FALSE, FALSE, 0);
+	label_vspacer(sr->mid_vbox);
     }
 }
 
-static void AR_order_spin (selector *sr, GtkWidget *vbox)
+static void AR_order_spin (selector *sr)
 {
     GtkWidget *tmp, *hbox;
     GtkAdjustment *adj;
@@ -4200,10 +4208,11 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
     sr->extra[0] = gtk_spin_button_new(adj, 1, 0);
     gtk_box_pack_start(GTK_BOX(hbox), sr->extra[0], FALSE, FALSE, 5);
 
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(sr->right_vbox), hbox, FALSE, FALSE, 0);
+    label_vspacer(sr->mid_vbox);
 }
 
-static void extra_plotvar_box (selector *sr, GtkWidget *vbox)
+static void extra_plotvar_box (selector *sr)
 {
     const gchar *label;
 
@@ -4219,11 +4228,11 @@ static void extra_plotvar_box (selector *sr, GtkWidget *vbox)
 	return;
     }
 
-    sr->rvars1 = entry_with_label_and_chooser(sr, vbox, _(label), 0,
+    sr->rvars1 = entry_with_label_and_chooser(sr, _(label), 0,
 					      set_third_var_callback);
 }
 
-static int get_np_xvar (void)
+static int get_nonparam_xvar (void)
 {
     if (np_xvar > 0) {
 	return np_xvar;
@@ -4242,12 +4251,11 @@ static int get_np_xvar (void)
 
 /* selector for auxiliary series of some kind */
 
-static void extra_var_box (selector *sr, GtkWidget *vbox)
+static void extra_var_box (selector *sr)
 {
     int setvar = 0;
 
-    sr->extra[0] = entry_with_label_and_chooser(sr, vbox,
-						NULL, 0,
+    sr->extra[0] = entry_with_label_and_chooser(sr, NULL, 0,
 						set_extra_var_callback);
 
     if (sr->ci == WLS && wtvar > 0 && wtvar < dataset->v) {
@@ -4261,7 +4269,7 @@ static void extra_var_box (selector *sr, GtkWidget *vbox)
     } else if (sr->ci == DURATION && censvar > 0 && censvar < dataset->v) {
 	setvar = censvar;
     } else if (NONPARAM_CODE(sr->ci)) {
-	setvar = get_np_xvar();
+	setvar = get_nonparam_xvar();
     }	
 
     if (setvar > 0) {
@@ -4282,22 +4290,6 @@ static gboolean accept_right_arrow (GtkWidget *w, GdkEventKey *key,
     }
 }
 
-static GtkWidget *add_button (selector *sr, GtkWidget *box)
-{
-    GdkPixbuf *pbuf = gdk_pixbuf_new_from_inline(-1, add_inline, FALSE, NULL);
-    GtkWidget *img = gtk_image_new_from_pixbuf(pbuf);
-    GtkWidget *w = gtk_button_new();
-
-    gtk_container_add(GTK_CONTAINER(w), img);
-    g_object_unref(pbuf);
-    g_signal_connect(G_OBJECT(sr->dlg), "key-press-event", 
-		     G_CALLBACK(accept_right_arrow), w);
-    gretl_tooltips_add(w, _("Add"));
-    gtk_box_pack_start(GTK_BOX(box), w, TRUE, FALSE, 0);
-
-    return w;
-}
-
 static gboolean accept_left_arrow (GtkWidget *w, GdkEventKey *key,
 				   gpointer p)
 {
@@ -4309,29 +4301,74 @@ static gboolean accept_left_arrow (GtkWidget *w, GdkEventKey *key,
     }
 }
 
-static GtkWidget *remove_button (selector *sr, GtkWidget *box)
+static void push_pull_buttons (selector *sr, 
+			       void (*addfunc)(), gpointer addptr,
+			       void (*remfunc)(), gpointer remptr,
+			       GtkWidget **lags_button,
+			       gretlopt opt)
 {
-    GdkPixbuf *pbuf = gdk_pixbuf_new_from_inline(-1, remove_inline, FALSE, NULL);
-    GtkWidget *img = gtk_image_new_from_pixbuf(pbuf);
-    GtkWidget *w = gtk_button_new();
+    GtkWidget *align, *vbox;
+    GtkWidget *button;
+    int top_pad = 0;
+    int spacing = 5;
 
-    gtk_container_add(GTK_CONTAINER(w), img);
-    g_object_unref(pbuf);
+    align = gtk_alignment_new(0.5, 0.5, 0, 0);
+    gtk_alignment_set_padding(GTK_ALIGNMENT(align), 
+			      top_pad, 0, 0, 0);
+    vbox = gtk_vbox_new(TRUE, 5);    
+
+    /* "Add" button */
+    button = pix_button(add_inline, _("Add"));
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(addfunc), addptr);
     g_signal_connect(G_OBJECT(sr->dlg), "key-press-event", 
-		     G_CALLBACK(accept_left_arrow), w);
-    gretl_tooltips_add(w, _("Remove"));
-    gtk_box_pack_start(GTK_BOX(box), w, TRUE, FALSE, 0);
+		     G_CALLBACK(accept_right_arrow), button);
+    gtk_box_pack_start(GTK_BOX(vbox), button, 0, 0, spacing);
+    if (opt & OPT_A) {
+	sr->add_button = button;
+    }
 
-    return w;
+    /* "All" button? */
+    if (SAVE_DATA_ACTION(sr->ci) || sr->ci == EXPORT) {
+	button = gtk_button_new_with_label(_("All ->"));
+	g_signal_connect(G_OBJECT(button), "clicked", 
+			 G_CALLBACK(add_all_to_rvars1_callback), sr);
+	gtk_box_pack_start(GTK_BOX(vbox), button, 0, 0, spacing);
+    }    
+
+    /* "Remove" button */
+    button = pix_button(remove_inline, _("Remove"));
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(remfunc), remptr);
+    g_signal_connect(G_OBJECT(sr->dlg), "key-press-event", 
+		     G_CALLBACK(accept_left_arrow), button);
+    gtk_box_pack_start(GTK_BOX(vbox), button, 0, 0, spacing);
+    if (opt & OPT_R) {
+	sr->add_button = button;
+    }
+
+    /* "Lags" button? */
+    if (lags_button != NULL) {
+	button = gtk_button_new_with_label(_("lags..."));
+	g_signal_connect(G_OBJECT(button), "clicked", 
+			 G_CALLBACK(lags_dialog_driver), sr);
+	gtk_widget_set_sensitive(button, FALSE);
+	*lags_button = button;
+	gtk_box_pack_start(GTK_BOX(vbox), button, 0, 0, spacing);
+    }
+
+    gtk_container_add(GTK_CONTAINER(align), vbox);
+    gtk_box_pack_start(GTK_BOX(sr->mid_vbox), align, TRUE, TRUE, 5);
 }
 
-static void secondary_rhs_varlist (selector *sr, GtkWidget *vbox)
+static void secondary_rhs_varlist (selector *sr)
 {
     GtkTreeModel *mod;
     GtkListStore *store;
     GtkTreeIter iter;
-    GtkWidget *remove, *hbox, *bvbox;
+    GtkWidget *hbox;
     GtkWidget *tmp = NULL;
+    GtkWidget **lptr = NULL;
     int i;
 
     if (USE_VECXLIST(sr->ci)) {
@@ -4347,30 +4384,12 @@ static void secondary_rhs_varlist (selector *sr, GtkWidget *vbox)
     }
 
     if (tmp != NULL) {
-	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(sr->right_vbox), tmp, FALSE, FALSE, 0);
+	label_vspacer(sr->mid_vbox);
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
-    bvbox = gtk_vbox_new(TRUE, 0);
 
-    tmp = add_button(sr, bvbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked", 
-		     G_CALLBACK(add_to_rvars2_callback), sr);
-    
-    remove = remove_button(sr, bvbox);
-
-    if (sr->ci == VAR || sr->ci == VECM || sr->ci == VLAGSEL) {
-	/* select lags of exogenous variables */
-	sr->lags_button = gtk_button_new_with_label(_("lags..."));
-	gtk_box_pack_start(GTK_BOX(bvbox), sr->lags_button, TRUE, FALSE, 0);
-	g_signal_connect(G_OBJECT(sr->lags_button), "clicked", 
-			 G_CALLBACK(lags_dialog_driver), sr);
-	gtk_widget_set_sensitive(sr->lags_button, FALSE);
-    }
-
-    gtk_box_pack_start(GTK_BOX(hbox), bvbox, TRUE, TRUE, 0);
-
-    /* then the listing */
     sr->rvars2 = var_list_box_new(GTK_BOX(hbox), sr, SR_RVARS2);
     mod = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars2));
 
@@ -4401,12 +4420,16 @@ static void secondary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	list_append_var(mod, &iter, 0, sr, SR_RVARS2);
     }
 
-    /* hook up remove button to list box */
-    g_signal_connect(G_OBJECT(remove), "clicked", 
-		     G_CALLBACK(remove_from_right_callback), 
-		     sr->rvars2);
+    if (sr->ci == VAR || sr->ci == VECM || sr->ci == VLAGSEL) {
+	lptr = &sr->lags_button;
+    }
 
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(sr->right_vbox), hbox, TRUE, TRUE, 0);
+
+    /* add push-pull buttons */
+    push_pull_buttons(sr, add_to_rvars2_callback, sr,
+		      remove_from_right_callback, sr->rvars2,
+		      lptr, OPT_NONE);
 }
 
 static void make_tau_list (GtkWidget *box)
@@ -4496,36 +4519,37 @@ static int maybe_set_entry_text (GtkWidget *w, const char *s)
     }
 }
 
-static void build_mid_section (selector *sr, GtkWidget *right_vbox)
+static void build_mid_section (selector *sr)
 {
+    const char *str = _(extra_var_string(sr->ci));
     GtkWidget *tmp;
-    const char *str = _(extra_string(sr->ci));
 
     if (str != NULL) {
 	tmp = gtk_label_new(str);
-	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(sr->right_vbox), tmp, FALSE, FALSE, 0);
+	label_vspacer(sr->mid_vbox);
     }	
 
     if (sr->ci == HECKIT || sr->ci == BIPROBIT) {
-	extra_var_box(sr, right_vbox);
-	vbox_add_vwedge(right_vbox);
-	primary_rhs_varlist(sr, right_vbox);
+	extra_var_box(sr);
+	top_section_add_vwedge(sr);
+	primary_rhs_varlist(sr);
     } else if (sr->ci == WLS || sr->ci == INTREG || 
 	       sr->ci == COUNTMOD || sr->ci == DURATION ||
 	       THREE_VARS_CODE(sr->ci)) { 
-	extra_var_box(sr, right_vbox);
+	extra_var_box(sr);
     } else if (NONPARAM_CODE(sr->ci)) {
-	extra_var_box(sr, right_vbox);
-	vbox_add_vwedge(right_vbox);
-	add_np_controls(sr, right_vbox);
+	extra_var_box(sr);
+	top_section_add_vwedge(sr);
+	add_np_controls(sr, sr->right_vbox);
     } else if (sr->ci == TOBIT) {
-	tobit_limits_selector(sr, right_vbox);
-	vbox_add_vwedge(right_vbox);
+	tobit_limits_selector(sr, sr->right_vbox);
+	top_section_add_vwedge(sr);
     } else if (USE_ZLIST(sr->ci)) {
-	primary_rhs_varlist(sr, right_vbox);
+	primary_rhs_varlist(sr);
     } else if (sr->ci == AR) {
 	sr->extra[0] = gtk_entry_new();
-	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra[0], 
+	gtk_box_pack_start(GTK_BOX(sr->right_vbox), sr->extra[0], 
 			   FALSE, TRUE, 0);
 	maybe_set_entry_text(sr->extra[0], arlags);
     } else if (sr->ci == QUANTREG) {
@@ -4535,27 +4559,27 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	make_tau_list(sr->extra[0]);
 	child = gtk_bin_get_child(GTK_BIN(sr->extra[0]));
 	gtk_entry_set_text(GTK_ENTRY(child), "0.5");
-	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra[0], 
+	gtk_box_pack_start(GTK_BOX(sr->right_vbox), sr->extra[0], 
 			   FALSE, TRUE, 0);
     } else if (sr->ci == VAR || sr->ci == VLAGSEL) {
-	lag_order_spin(sr, right_vbox, LAG_ONLY);
-	vbox_add_vwedge(right_vbox);
-	primary_rhs_varlist(sr, right_vbox);
+	lag_order_spin(sr, LAG_ONLY);
+	top_section_add_vwedge(sr);
+	primary_rhs_varlist(sr);
     } else if (sr->ci == VECM) {
-	lag_order_spin(sr, right_vbox, LAG_AND_RANK);
-	vbox_add_vwedge(right_vbox);
-	primary_rhs_varlist(sr, right_vbox);
+	lag_order_spin(sr, LAG_AND_RANK);
+	top_section_add_vwedge(sr);
+	primary_rhs_varlist(sr);
     } else if (sr->ci == COINT2) {
-	lag_order_spin(sr, right_vbox, LAG_ONLY);
-	vbox_add_vwedge(right_vbox);
-	primary_rhs_varlist(sr, right_vbox);
+	lag_order_spin(sr, LAG_ONLY);
+	top_section_add_vwedge(sr);
+	primary_rhs_varlist(sr);
     } else if (VEC_CODE(sr->ci)) {
-	lag_order_spin(sr, right_vbox, LAG_ONLY);
+	lag_order_spin(sr, LAG_ONLY);
     } else if (sr->ci == DPANEL || sr->ci == ARCH) {
-	AR_order_spin(sr, right_vbox);
+	AR_order_spin(sr);
     } 
     
-    vbox_add_vwedge(right_vbox);
+    top_section_add_vwedge(sr);
 }
 
 enum {
@@ -6292,15 +6316,14 @@ static int has_0 (const int *list)
     return 0;
 }
 
-static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
+static void primary_rhs_varlist (selector *sr)
 {
     GtkTreeModel *mod;
     GtkListStore *store;
     GtkTreeIter iter;
-    GtkWidget *remove;
     GtkWidget *hbox;
-    GtkWidget *bvbox;
     GtkWidget *tmp = NULL;
+    GtkWidget **lptr = NULL;
     int i;
 
     if (COINT_CODE(sr->ci)) {
@@ -6320,38 +6343,26 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
     }
 
     if (tmp != NULL) {
-	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(sr->right_vbox), tmp, FALSE, FALSE, 0);
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
 
-    /* push/pull buttons first, in their own little vbox */
-    bvbox = gtk_vbox_new(TRUE, 0);
-
-    tmp = add_button(sr, bvbox);
-    g_signal_connect (G_OBJECT(tmp), "clicked", 
-		      G_CALLBACK(add_to_rvars1_callback), sr);
-    
-    remove = remove_button(sr, bvbox);
-
-    if (sr->ci == ARMA || sr->ci == VAR) { /* FIXME VECM */
-	tmp = gtk_button_new_with_label(_("lags..."));
-	gtk_box_pack_start(GTK_BOX(bvbox), tmp, TRUE, FALSE, 0);
-	g_signal_connect(G_OBJECT(tmp), "clicked", 
-			 G_CALLBACK(lags_dialog_driver), sr);
-	gtk_widget_set_sensitive(tmp, FALSE);
-	if (sr->ci == ARMA) {
-	    sr->lags_button = tmp;
-	} else {
-	    sr->extra[EXTRA_LAGS] = tmp;
-	}
-    }
-
-    gtk_box_pack_start(GTK_BOX(hbox), bvbox, TRUE, TRUE, 0);
-
-    /* then the actual primary RHS listbox */
+    /* add the actual primary RHS listbox */
     sr->rvars1 = var_list_box_new(GTK_BOX(hbox), sr, SR_RVARS1);
     mod = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars1));
+
+    if (sr->ci == ARMA) {
+	lptr = &sr->lags_button;
+    } else if (sr->ci == VAR) { /* FIXME VECM? */
+	lptr = &sr->extra[EXTRA_LAGS];
+    }
+
+    /* add push/pull buttons */
+    label_vspacer(sr->mid_vbox);
+    push_pull_buttons(sr, add_to_rvars1_callback, sr,
+		      remove_from_right_callback, sr->rvars1,
+		      lptr, OPT_NONE);
 
     store = GTK_LIST_STORE(mod);
     gtk_list_store_clear(store);
@@ -6389,12 +6400,7 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	}
     }
 
-    /* hook remove button to listing */
-    g_signal_connect(G_OBJECT(remove), "clicked", 
-		     G_CALLBACK(remove_from_right_callback), 
-		     sr->rvars1);
-
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(sr->right_vbox), hbox, TRUE, TRUE, 0);
 }
 
 /* On opening the selector dialog, select (if possible) the
@@ -6453,7 +6459,6 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
 {
     GtkListStore *store;
     GtkTreeIter iter;
-    GtkWidget *right_vbox;
     GtkWidget *big_hbox;
     selector *sr;
     int preselect;
@@ -6475,7 +6480,6 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     }
 
     selector_init(sr, ci, title, callback, NULL, NULL, SELECTOR_FULL);
-
     selection_dialog_add_top_label(sr);
 
     /* the following encloses LHS lvars, depvar and indepvar stuff */
@@ -6500,19 +6504,22 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
 	}
     }
 
+    /* mid section: for push-pull buttons */
+    sr->mid_vbox = gtk_vbox_new(FALSE, 5);
+
     /* RHS: vertical holder */
-    right_vbox = gtk_vbox_new(FALSE, 5);
+    sr->right_vbox = gtk_vbox_new(FALSE, 5);
 
     if (MODEL_CODE(ci) || NONPARAM_CODE(ci) || ci == ANOVA) { 
 	/* models: top right -> dependent variable */
-	yvar = build_depvar_section(sr, right_vbox, preselect);
+	yvar = build_depvar_section(sr, preselect);
     } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY ||
 	       ci == SCATTERS || ci == GR_3D || ci == GR_XYZ ||
 	       ci == GR_FBOX) {
 	/* graphs: top right -> x-axis variable or equivalent */
-	build_x_axis_section(sr, right_vbox, preselect);
+	build_x_axis_section(sr, preselect);
     } else if (FNPKG_CODE(ci)) {
-	primary_rhs_varlist(sr, right_vbox);
+	primary_rhs_varlist(sr);
     }
 
     /* middle right: used for some estimators and factored plot */
@@ -6520,21 +6527,24 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
 	VEC_CODE(ci) || ci == COUNTMOD || ci == DURATION || 
 	ci == QUANTREG || ci == INTREG || ci == TOBIT ||
 	ci == DPANEL || THREE_VARS_CODE(ci) || NONPARAM_CODE(ci)) {
-	build_mid_section(sr, right_vbox);
+	build_mid_section(sr);
     }
     
     if (ci == GR_FBOX || THREE_VARS_CODE(ci)) {
 	/* choose extra var for plot */
-	extra_plotvar_box(sr, right_vbox);
+	extra_plotvar_box(sr);
     } else if (AUX_LAST(ci)) {
-	secondary_rhs_varlist(sr, right_vbox);
+	secondary_rhs_varlist(sr);
     } else if (!NONPARAM_CODE(ci)) {
 	/* all other uses: list of vars */
-	primary_rhs_varlist(sr, right_vbox);
+	primary_rhs_varlist(sr);
     }
 
+    /* pack the (vertical) mid-section */
+    gtk_box_pack_start(GTK_BOX(big_hbox), sr->mid_vbox, FALSE, FALSE, 5);
+
     /* pack the whole RHS to the right of the LHS lvars */
-    gtk_box_pack_start(GTK_BOX(big_hbox), right_vbox, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(big_hbox), sr->right_vbox, TRUE, TRUE, 0);
 
     /* pack the whole central section into the dialog's vbox */
     gtk_box_pack_start(GTK_BOX(sr->vbox), big_hbox, TRUE, TRUE, 0);
@@ -6942,7 +6952,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
 {
     GtkListStore *store;
     GtkTreeIter iter;
-    GtkWidget *left_vbox, *button_vbox, *right_vbox, *tmp;
+    GtkWidget *left_vbox, *tmp;
     GtkWidget *top_hbox, *big_hbox;
     selector *sr;
     int nleft = 0;
@@ -7018,30 +7028,16 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     gtk_box_pack_start(GTK_BOX(big_hbox), left_vbox, TRUE, TRUE, 0);
     
     /* middle: vertical holder for push/pull buttons */
-    button_vbox = gtk_vbox_new(TRUE, 0);
-
-    sr->add_button = add_button(sr, button_vbox);
-    g_signal_connect(G_OBJECT(sr->add_button), "clicked", 
-		     G_CALLBACK(add_to_rvars1_callback), sr);
-
-    if (SAVE_DATA_ACTION(sr->ci) || sr->ci == EXPORT) {
-	tmp = gtk_button_new_with_label (_("All ->"));
-	gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
-	g_signal_connect(G_OBJECT(tmp), "clicked", 
-			 G_CALLBACK(add_all_to_rvars1_callback), sr);
-    }
-    
-    sr->remove_button = remove_button(sr, button_vbox);
-
-    gtk_box_pack_start(GTK_BOX(big_hbox), button_vbox, TRUE, TRUE, 0);
+    sr->mid_vbox = gtk_vbox_new(TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(big_hbox), sr->mid_vbox, TRUE, TRUE, 0);
 
     /* RHS: vertical holder for selected vars */
-    right_vbox = gtk_vbox_new(FALSE, 5);
+    sr->right_vbox = gtk_vbox_new(FALSE, 5);
 
-    sr->rvars1 = var_list_box_new(GTK_BOX(right_vbox), sr, SR_RVARS1);
+    sr->rvars1 = var_list_box_new(GTK_BOX(sr->right_vbox), sr, SR_RVARS1);
     g_object_set_data(G_OBJECT(sr->rvars1), "selector", sr);
 
-    gtk_box_pack_start(GTK_BOX(big_hbox), right_vbox, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(big_hbox), sr->right_vbox, TRUE, TRUE, 0);
 
     /* pre-fill RHS box? Only if we have 2 or more vars selected in the
        main window and if the command is "suitable"
@@ -7050,10 +7046,10 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
 	maybe_prefill_RHS(sr);
     }
 
-    /* connect removal from right signal */
-    g_signal_connect(G_OBJECT(sr->remove_button), "clicked", 
-		     G_CALLBACK(remove_from_right_callback), 
-		     sr->rvars1);
+    /* put buttons into mid-section */
+    push_pull_buttons(sr, add_to_rvars1_callback, sr,
+		      remove_from_right_callback, sr->rvars1,
+		      NULL, OPT_A | OPT_R);
 
     /* pack the whole central section into the dialog's vbox */
     gtk_box_pack_start(GTK_BOX(sr->vbox), big_hbox, TRUE, TRUE, 0);
