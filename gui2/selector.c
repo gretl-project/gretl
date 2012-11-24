@@ -3960,7 +3960,7 @@ static GtkWidget *pix_button (const guint8 *src, gchar *tip)
 
 static void label_vspacer (GtkWidget *parent)
 {
-    GtkWidget *v = gtk_label_new("");
+    GtkWidget *v = gtk_label_new(" ");
 
     gtk_box_pack_start(GTK_BOX(parent), v, FALSE, FALSE, 0);
 }
@@ -3976,7 +3976,7 @@ entry_with_label_and_chooser (selector *sr,
     if (label_active) {
 	tmp = multiplot_popdown(sr->ci);
 	gtk_box_pack_start(GTK_BOX(sr->right_vbox), tmp, FALSE, FALSE, 0);
-	label_vspacer(sr->mid_vbox);
+	label_vspacer(sr->mid_vbox); /* FIXME */
     } else if (label_string != NULL) {
 	tmp = gtk_label_new(label_string);
 	gtk_box_pack_start(GTK_BOX(sr->right_vbox), tmp, FALSE, FALSE, 0);
@@ -4311,6 +4311,10 @@ static void push_pull_buttons (selector *sr,
     GtkWidget *button;
     int top_pad = 0;
     int spacing = 5;
+
+    if (opt & OPT_A) {
+	spacing = 15;
+    }
 
     align = gtk_alignment_new(0.5, 0.5, 0, 0);
     gtk_alignment_set_padding(GTK_ALIGNMENT(align), 
