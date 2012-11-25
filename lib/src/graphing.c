@@ -346,6 +346,15 @@ static int gp_set_non_point_info (gnuplot_info *gi,
     return 0;
 }
 
+static int plain_lines_spec (gretlopt opt)
+{
+    if ((opt & OPT_O) && !(opt & (OPT_M | OPT_P))) {
+	return get_optval_string(GNUPLOT, OPT_O) == NULL;
+    } else {
+	return 0;
+    }
+}
+
 #define gp_interactive(f) (!(f & GPT_BATCH))
 
 static void get_gp_flags (gnuplot_info *gi, gretlopt opt, 
@@ -384,11 +393,11 @@ static void get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	}
     }
 
-    if ((opt & OPT_O) && !(opt & (OPT_M | OPT_P))) {
+    if (plain_lines_spec(opt)) {
 	/* just using lines */
 	gi->flags |= GPT_LINES;
     } else if (opt & (OPT_M | OPT_O | OPT_P)) {
-	/* for handling other non-point "plot with" options */
+	/* for handling per-variable "plot with" options */
 	gi->withlist = gretl_list_new(n_yvars);
     }
 
