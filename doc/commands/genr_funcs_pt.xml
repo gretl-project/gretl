@@ -2892,23 +2892,6 @@
       </description>
     </function>
 
-    <function name="islist" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="string">s</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns 1 if <argname>s</argname> is the identifier for a
-	  currently defined list, otherwise 0.
-	  <seelist>
-	    <fncref targ="isnull"/>
-	    <fncref targ="isseries"/>
-	    <fncref targ="isstring"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="isnan" section="data-utils" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-matrix">x</fnarg>
@@ -2933,11 +2916,6 @@
 	  Returns 0 if <argname>s</argname> is the identifier for a
 	  currently defined object, be it a scalar, a series, a matrix,
 	  list or string; otherwise returns 1.
-	  <seelist>
-	    <fncref targ="islist"/>
-	    <fncref targ="isseries"/>
-	    <fncref targ="isstring"/>
-	  </seelist>
 	</para>
       </description>
     </function>
@@ -3069,40 +3047,6 @@
 	<para>
 	  Returns the excess kurtosis of the series <argname>x</argname>,
 	  skipping any missing observations.
-	</para>
-      </description>
-    </function>
-
-    <function name="isseries" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="string">s</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns 1 if <argname>s</argname> is the identifier for a
-	  currently defined series, otherwise 0.
-	  <seelist> 
-	    <fncref targ="islist"/>
-	    <fncref targ="isnull"/>
-	    <fncref targ="isstring"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="isstring" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="string">s</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns 1 if <math>s</math> is the identifier for a currently
-	  defined string, otherwise 0.
-	  <seelist> 
-	    <fncref targ="islist"/>
-	    <fncref targ="isnull"/>
-	    <fncref targ="isseries"/>
-	  </seelist>
 	</para>
       </description>
     </function>
