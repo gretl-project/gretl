@@ -253,9 +253,7 @@
 	<menuitem action="intreg"/>
       </menu>
       <menu action="TSModels">
-	<menuitem action="CORC"/>
-	<menuitem action="HILU"/>
-	<menuitem action="PWE"/>
+	<menuitem action="ar1"/>
 	<menuitem action="ar"/>
 	<menuitem action="arima"/>
 	<menuitem action="garch"/>

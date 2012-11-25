@@ -275,13 +275,7 @@ static int model_action_code (GtkAction *action)
 
     if (ci == 0) {
 	/* look up "GUI special" */
-	if (!strcmp(s, "CORC"))
-	    ci = CORC;
-	else if (!strcmp(s, "HILU"))
-	    ci = HILU;
-	else if (!strcmp(s, "PWE"))
-	    ci = PWE;
-	else if (!strcmp(s, "PANEL_WLS"))
+	if (!strcmp(s, "PANEL_WLS"))
 	    ci = PANEL_WLS;
 	else if (!strcmp(s, "PANEL_B"))
 	    ci = PANEL_B;

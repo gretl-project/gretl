@@ -513,12 +513,12 @@
       </arguments>
       <options>
 	<option>
-	  <flag>--hilu</flag>
-	  <effect>use Hildreth&ndash;Lu procedure</effect>
-	</option>
-	<option>
 	  <flag>--pwe</flag>
 	  <effect>use Prais&ndash;Winsten estimator</effect>
+	</option>
+	<option>
+	  <flag>--hilu</flag>
+	  <effect>use Hildreth&ndash;Lu procedure</effect>
 	</option>
 	<option>
 	  <flag>--vcv</flag>
@@ -531,8 +531,8 @@
       </options>
       <examples>
         <example>ar1 1 0 2 4 6 7</example>
-	<example>ar1 y 0 xlist --hilu --no-corc</example>
 	<example>ar1 y 0 xlist --pwe</example>
+	<example>ar1 y 0 xlist --hilu --no-corc</example>
       </examples>
     </usage>
 
@@ -550,13 +550,6 @@
 	iterations.
       </para>
       <para>
-	If the <opt>--hilu</opt> option is given, the Hildreth&ndash;Lu search
-	procedure is used.  The results are then fine-tuned using the
-	Cochrane&ndash;Orcutt method, unless the <opt>--no-corc</opt> flag is
-	specified.  (The latter option is ignored if <opt>--hilu</opt>
-	is not specified.)
-      </para>
-      <para>
 	If the <opt>--pwe</opt> option is given, the Prais&ndash;Winsten
 	estimator is used.  This involves an an iteration similar to
 	Cochrane&ndash;Orcutt; the difference is that while
@@ -565,12 +558,17 @@
 	of <cite key="greene00">Greene's <book>Econometric Analysis</book>
 	(2000)</cite> for details.
       </para>
+      <para>
+	If the <opt>--hilu</opt> option is given, the Hildreth&ndash;Lu search
+	procedure is used.  The results are then fine-tuned using the
+	Cochrane&ndash;Orcutt method, unless the <opt>--no-corc</opt> flag is
+	specified. The <opt>--no-corc</opt> option is ignored for estimators
+	other than Hildreth&ndash;Lu.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/Cochrane-Orcutt</menu-path>
-      <menu-path>/Model/Time series/Hildreth-Lu</menu-path>
-      <menu-path>/Model/Time series/Prais-Winsten</menu-path>
+      <menu-path>/Model/Time series/AR(1)</menu-path>
     </gui-access>
 
   </command>

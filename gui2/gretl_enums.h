@@ -94,9 +94,6 @@ enum extra_cmds {
     DATASORT,
     WORKDIR,
     DFGLS,
-    CORC,
-    HILU,
-    PWE,
     AFR, /* actual, fitted, residual */
     GPT_ADDLINE,
     GPT_CURVE,

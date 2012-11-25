@@ -55,7 +55,6 @@ enum {
 };
 
 #define N_EXTRA  8
-#define N_RADIOS 3
 
 struct _selector {
     GtkWidget *dlg;
@@ -75,7 +74,6 @@ struct _selector {
     GtkWidget *xdiff_button;
     GtkWidget *hccme_button;
     GtkWidget *extra[N_EXTRA];
-    GtkWidget *radios[N_RADIOS];
     int ci;
     int blocking;
     int active_var;
@@ -103,8 +101,7 @@ enum {
 #define BUTTON_WIDTH 64
 
 /* single-equation estimation commands plus some GUI extensions */
-#define MODEL_CODE(c) (MODEL_COMMAND(c) || c == CORC || c == HILU || \
-                       c == PWE || c == PANEL_WLS || c == PANEL_B || \
+#define MODEL_CODE(c) (MODEL_COMMAND(c) || c == PANEL_WLS || c == PANEL_B || \
                        c == OLOGIT || c == OPROBIT || c == MLOGIT || \
 	               c == IV_LIML || c == IV_GMM || c == COUNTMOD)
 
@@ -142,7 +139,6 @@ enum {
                          c == GARCH || \
                          c == HECKIT || \
                          c == BIPROBIT || \
-                         c == HILU || \
                          c == INTREG || \
                          c == IVREG || \
                          c == LOGIT || \
@@ -299,7 +295,7 @@ static int want_radios (selector *sr)
     int c = sr->ci;
     int ret = 0;
 
-    if (c == PANEL || c == SCATTERS || 
+    if (c == PANEL || c == SCATTERS || c == AR1 ||
 	c == LOGIT || c == PROBIT || c == HECKIT ||
 	c == XTAB || c == SPEARMAN || c == PCA ||
 	c == QUANTREG || c == DPANEL || c == LOGISTIC) {
@@ -714,11 +710,9 @@ void selector_from_model (windata_t *vwin)
 	    retrieve_AR_lags_info(pmod);
 	} else if (pmod->ci == AR1) {
 	    if (pmod->opt & OPT_P) {
-		sel_ci = PWE;
+		model_opt |= OPT_P;
 	    } else if (pmod->opt & OPT_H) {
-		sel_ci = HILU;
-	    } else {
-		sel_ci = CORC;
+		model_opt |= OPT_H;
 	    }
 	} else if (pmod->ci == PANEL) {
 	    if (pmod->opt & OPT_F) {
@@ -1899,14 +1893,14 @@ static void add_to_rvars1_callback (GtkWidget *w, selector *sr)
 					sr);
 }
 
-static void remove_from_right_callback (GtkWidget *w, gpointer data)
+static void remove_from_right (GtkWidget *w, selector *sr, 
+			       GtkWidget *listbox)
 {
-    GtkTreeView *view = GTK_TREE_VIEW(data);
+    GtkTreeView *view = GTK_TREE_VIEW(listbox);
     GtkTreeModel *model = gtk_tree_view_get_model(view);
     GtkTreeSelection *selection = gtk_tree_view_get_selection(view);
     GtkTreePath *path;
     GtkTreeIter iter, last;
-    selector *sr;
     int context = 0;
     int nsel = 0;
 
@@ -1947,12 +1941,6 @@ static void remove_from_right_callback (GtkWidget *w, gpointer data)
 	}
     } 
 
-    sr = g_object_get_data(G_OBJECT(data), "selector");
-
-    if (sr == NULL) {
-	return;
-    }
-
     if (sr->add_button != NULL &&
 	!gtk_widget_is_sensitive(sr->add_button) &&
 	!selection_at_max(sr, nsel)) {
@@ -1968,6 +1956,16 @@ static void remove_from_right_callback (GtkWidget *w, gpointer data)
 	    xdiff_button_set_sensitive(sr, FALSE);
 	}
     }
+}
+
+static void remove_from_rvars1_callback (GtkWidget *w, selector *sr)
+{
+    remove_from_right(w, sr, sr->rvars1);
+}
+
+static void remove_from_rvars2_callback (GtkWidget *w, selector *sr)
+{
+    remove_from_right(w, sr, sr->rvars2);
 }
 
 /* double-clicking sets the dependent variable and marks it as the
@@ -3634,12 +3632,8 @@ static char *est_str (int cmdnum)
 	return N_("OLS");
     case HSK:
 	return N_("Heteroskedasticity corrected");
-    case CORC:
-	return N_("Cochrane-Orcutt");
-    case HILU:
-	return N_("Hildreth-Lu");
-    case PWE:
-	return N_("Prais-Winsten");
+    case AR1:
+	return N_("AR(1)");
     case LOGIT:
 	return N_("Logit");
     case OLOGIT:
@@ -3927,7 +3921,7 @@ static void build_gmm_popdown (selector *sr)
 static void table_add_left (selector *sr,
 			    GtkWidget *child)
 {
-    guint xpad = 5, ypad = 2;
+    guint xpad = 4, ypad = 2;
 
     gtk_table_attach(GTK_TABLE(sr->table), child,
 		     0, 1, 0, sr->n_rows,
@@ -3948,7 +3942,7 @@ static void maybe_add_row (selector *sr)
 static void table_add_mid (selector *sr,
 			   GtkWidget *child)
 {
-    guint xpad = 5, ypad = 2;
+    guint xpad = 4, ypad = 2;
 
     maybe_add_row(sr);
     gtk_table_attach(GTK_TABLE(sr->table), child,
@@ -3961,7 +3955,7 @@ static void table_add_right (selector *sr,
 			     GtkWidget *child,
 			     int fixed)
 {
-    guint xpad = 5, ypad = 2;
+    guint xpad = 4, ypad = 2;
 
     maybe_add_row(sr);
     gtk_table_attach(GTK_TABLE(sr->table), child,
@@ -4164,7 +4158,7 @@ enum {
 static void lag_order_spin (selector *sr, int which)
 {
     gdouble lag, minlag, maxlag;
-    GtkWidget *tmp, *hbox;
+    GtkWidget *hbox, *label, *spin;
     GtkAdjustment *adj;
     const char *labels[] = {
 	N_("lag order:"),
@@ -4192,12 +4186,10 @@ static void lag_order_spin (selector *sr, int which)
     for (i=0; i<nspin; i++) {
 	hbox = gtk_hbox_new(FALSE, 5);
 	if (sr->ci == VLAGSEL) {
-	    tmp = gtk_label_new(_("maximum lag:"));
+	    label = gtk_label_new(_("maximum lag:"));
 	} else {
-	    tmp = gtk_label_new(_(labels[i]));
+	    label = gtk_label_new(_(labels[i]));
 	}
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-	gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
 	if (i == 0) {
 	    /* lag order */
 	    adj = (GtkAdjustment *) gtk_adjustment_new(lag, minlag, maxlag, 
@@ -4207,16 +4199,18 @@ static void lag_order_spin (selector *sr, int which)
 	    adj = (GtkAdjustment *) gtk_adjustment_new(jrank, 1, 10, 
 						       1, 1, 0);
 	}
-	sr->extra[i] = gtk_spin_button_new(adj, 1, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
+	spin = gtk_spin_button_new(adj, 1, 0);
+	gtk_box_pack_end(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
+	gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 	if (i == 0) {
 	    /* cross-connect with lag preferences dialog */
 	    if (get_VAR_lags_list() != NULL) {
-		gtk_widget_set_sensitive(sr->extra[i], FALSE);
+		gtk_widget_set_sensitive(spin, FALSE);
 	    }
-	    g_signal_connect(G_OBJECT(sr->extra[i]), "value-changed",
+	    g_signal_connect(G_OBJECT(spin), "value-changed",
 			     G_CALLBACK(lag_order_sync), sr);
 	}
+	sr->extra[i] = spin;
 	table_add_right(sr, hbox, 1);
     }
 }
@@ -4346,29 +4340,28 @@ static gboolean accept_left_arrow (GtkWidget *w, GdkEventKey *key,
 }
 
 static void push_pull_buttons (selector *sr, 
-			       void (*addfunc)(), gpointer addptr,
-			       void (*remfunc)(), gpointer remptr,
+			       void (*addfunc)(),
+			       void (*remfunc)(),
 			       GtkWidget **lags_button,
 			       gretlopt opt)
 {
     GtkWidget *align, *vbox;
     GtkWidget *button;
-    int top_pad = 0;
     int spacing = 5;
 
-    if (opt & OPT_A) {
+    if ((opt & OPT_A) || lags_button == NULL) {
 	spacing = 15;
     }
 
     align = gtk_alignment_new(0.5, 0.5, 0, 0);
     gtk_alignment_set_padding(GTK_ALIGNMENT(align), 
-			      top_pad, 0, 0, 0);
+			      0, 0, 0, 0);
     vbox = gtk_vbox_new(TRUE, 5);    
 
     /* "Add" button */
     button = pix_button(add_inline, _("Add"));
     g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(addfunc), addptr);
+		     G_CALLBACK(addfunc), sr);
     g_signal_connect(G_OBJECT(sr->dlg), "key-press-event", 
 		     G_CALLBACK(accept_right_arrow), button);
     gtk_box_pack_start(GTK_BOX(vbox), button, 0, 0, spacing);
@@ -4387,12 +4380,12 @@ static void push_pull_buttons (selector *sr,
     /* "Remove" button */
     button = pix_button(remove_inline, _("Remove"));
     g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(remfunc), remptr);
+		     G_CALLBACK(remfunc), sr);
     g_signal_connect(G_OBJECT(sr->dlg), "key-press-event", 
 		     G_CALLBACK(accept_left_arrow), button);
     gtk_box_pack_start(GTK_BOX(vbox), button, 0, 0, spacing);
     if (opt & OPT_R) {
-	sr->add_button = button;
+	sr->remove_button = button;
     }
 
     /* "Lags" button? */
@@ -4472,8 +4465,8 @@ static void secondary_rhs_varlist (selector *sr)
     }
 
     /* add push-pull buttons */
-    push_pull_buttons(sr, add_to_rvars2_callback, sr,
-		      remove_from_right_callback, sr->rvars2,
+    push_pull_buttons(sr, add_to_rvars2_callback,
+		      remove_from_rvars2_callback,
 		      lptr, OPT_NONE);
 
     table_add_right(sr, hbox, 0);
@@ -4754,10 +4747,6 @@ static void selector_init (selector *sr, guint ci, const char *title,
 	sr->extra[i] = NULL;
     }
 
-    for (i=0; i<N_RADIOS; i++) {
-	sr->radios[i] = NULL;
-    }    
-
     sr->cmdlist = NULL;
     sr->callback = callback;
 
@@ -4937,11 +4926,19 @@ static void build_arma_spinners (selector *sr)
     GtkAdjustment *adj;
     gdouble vmax, val;
     gboolean freeform;
+#if 1
+    const char *strs[] = {
+	N_("AR"),
+	N_("I"),
+	N_("MA")
+    };
+#else
     const char *strs[] = {
 	N_("AR order:"),
 	N_("Difference:"),
 	N_("MA order:")
     };
+#endif
     int i, j;
 
     if (dataset->pd > 1) {
@@ -5412,9 +5409,6 @@ static void build_selector_switches (selector *sr)
 	if (dataset->pd != 4 && dataset->pd != 12) {
 	    gtk_widget_set_sensitive(tmp, FALSE);
 	}
-    } else if (sr->ci == HILU) {
-	tmp = gtk_check_button_new_with_label(_("Fine-tune using Cochrane-Orcutt"));
-	pack_switch(tmp, sr, TRUE, TRUE, OPT_B, 0);
     } else if (sr->ci == COINT) {
 	tmp = gtk_check_button_new_with_label(_("Test down from maximum lag order"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_E, 0);
@@ -5590,9 +5584,6 @@ static void build_quantreg_radios (selector *sr)
     pack_switch_with_extra(b2, sr, FALSE, OPT_I, 0, sr->extra[1], "1 - α =");
     gtk_widget_set_sensitive(sr->extra[1], FALSE);
     sensitize_conditional_on(sr->extra[1], b2);
-
-    sr->radios[0] = b1;
-    sr->radios[1] = b2;
 }
 
 static GtkWidget *ymax_spinner (void)
@@ -5621,9 +5612,6 @@ static void build_logistic_radios (selector *sr)
     pack_switch_with_extra(b2, sr, FALSE, OPT_M, 0, sr->extra[1], NULL);
     gtk_widget_set_sensitive(sr->extra[1], FALSE);
     sensitize_conditional_on(sr->extra[1], b2);
-
-    sr->radios[0] = b1;
-    sr->radios[1] = b2;
 }
 
 static void build_ellipse_spinner (selector *sr)
@@ -5659,9 +5647,6 @@ static void build_rankcorr_radios (selector *sr)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Kendall's tau"));
     pack_switch(b2, sr, FALSE, FALSE, OPT_K, 0);
-
-    sr->radios[0] = b1;
-    sr->radios[1] = b2;
 }
 
 static void build_pca_radios (selector *sr)
@@ -5675,9 +5660,6 @@ static void build_pca_radios (selector *sr)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Use covariance matrix"));
     pack_switch(b2, sr, FALSE, FALSE, OPT_C, 0);
-
-    sr->radios[0] = b1;
-    sr->radios[1] = b2;
 }
 
 static void build_pvalues_radios (selector *sr)
@@ -5697,9 +5679,6 @@ static void build_pvalues_radios (selector *sr)
     } else {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
     }
-
-    sr->radios[0] = b1;
-    sr->radios[1] = b2;
 }
 
 static void build_scatters_radios (selector *sr)
@@ -5713,9 +5692,6 @@ static void build_scatters_radios (selector *sr)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Use lines"));
     pack_switch(b2, sr, FALSE, FALSE, OPT_L, 0);
-
-    sr->radios[0] = b1;
-    sr->radios[1] = b2;
 }
 
 static void auto_omit_restrict_callback (GtkWidget *w, selector *sr)
@@ -5771,12 +5747,10 @@ static void build_add_test_radios (selector *sr)
 
     b1 = gtk_radio_button_new_with_label(NULL, _("Estimate augmented model"));
     pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
-    sr->radios[0] = b1;
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("LM test using auxiliary regression"));
     pack_switch(b2, sr, FALSE, FALSE, OPT_L, 0);
-    sr->radios[1] = b2;
 }
 
 static void build_omit_test_radios (selector *sr)
@@ -5790,12 +5764,10 @@ static void build_omit_test_radios (selector *sr)
 
     b1 = gtk_radio_button_new_with_label(NULL, _("Estimate reduced model"));
     pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
-    sr->radios[0] = b1;
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Wald test, based on covariance matrix"));
     pack_switch(b2, sr, FALSE, FALSE, OPT_W, 0);
-    sr->radios[1] = b2;
 
     if (pmod->ci != PANEL) {
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b2));
@@ -5813,8 +5785,6 @@ static void build_omit_test_radios (selector *sr)
 	gtk_widget_set_sensitive(sr->extra[1], FALSE);
 	g_signal_connect(G_OBJECT(sr->extra[1]), "toggled",
 			 G_CALLBACK(auto_omit_restrict_callback), sr);
-
-	sr->radios[2] = b3;
     }
 }
 
@@ -5849,9 +5819,6 @@ static void build_panel_radios (selector *sr)
     b2 = gtk_radio_button_new_with_label(group, _("Random effects"));
     hbox = pack_switch(b2, sr, !fe, FALSE, OPT_U, 0);
 
-    sr->radios[0] = b1;
-    sr->radios[1] = b2;
-
     /* random effects transformation selector */
     w = gtk_combo_box_text_new();
     combo_box_append_text(w, _("Swamy-Arora"));
@@ -5880,9 +5847,6 @@ static void build_dpanel_radios (selector *sr)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Two-step estimation"));
     pack_switch(b2, sr, twostep, FALSE, OPT_T, 0);
-
-    sr->radios[0] = b1;
-    sr->radios[1] = b2;
 }
 
 static void build_heckit_radios (selector *sr)
@@ -5901,9 +5865,6 @@ static void build_heckit_radios (selector *sr)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("2-step estimation"));
     pack_switch(b2, sr, !ml, FALSE, OPT_T, 0);
-
-    sr->radios[0] = b1;
-    sr->radios[1] = b2;
 }
 
 static void build_xtab_radios (selector *sr)
@@ -5921,10 +5882,38 @@ static void build_xtab_radios (selector *sr)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b2));
     b3 = gtk_radio_button_new_with_label(group, _("Show column percentages"));
     pack_switch(b3, sr, FALSE, FALSE, OPT_C, 0);
+}
 
-    sr->radios[0] = b1;
-    sr->radios[1] = b2;
-    sr->radios[2] = b3;
+static void build_ar1_radios (selector *sr)
+{
+    GtkWidget *b1, *b2, *b3, *b4;
+    GSList *group;
+
+    b1 = gtk_radio_button_new_with_label(NULL, _("Cochrane-Orcutt"));
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("Prais-Winsten"));
+    pack_switch(b2, sr, FALSE, FALSE, OPT_P, 0);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b2));
+    b3 = gtk_radio_button_new_with_label(group, _("Hildreth-Lu"));
+    pack_switch(b3, sr, FALSE, FALSE, OPT_H, 0);
+
+    b4 = gtk_check_button_new_with_label(_("Fine-tune using Cochrane-Orcutt"));
+    pack_switch(b4, sr, TRUE, TRUE, OPT_B, 0);
+    gtk_widget_set_sensitive(b4, FALSE);
+    sensitize_conditional_on(b4, b3);
+
+    if (model_opt & OPT_P) {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), TRUE);
+    } else if (model_opt & OPT_H) {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b3), TRUE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b4), 
+				     !(model_opt & OPT_B));
+    } else {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
+    }	
 }
 
 static gboolean arma_estimator_switch (GtkComboBox *box, selector *sr)
@@ -6120,6 +6109,8 @@ static void build_selector_radios (selector *sr)
 	build_quantreg_radios(sr);
     } else if (sr->ci == LOGISTIC) {
 	build_logistic_radios(sr);
+    } else if (sr->ci == AR1) {
+	build_ar1_radios(sr);
     }
 }
 
@@ -6406,8 +6397,8 @@ static void primary_rhs_varlist (selector *sr)
     }
 
     /* add push/pull buttons */
-    push_pull_buttons(sr, add_to_rvars1_callback, sr,
-		      remove_from_right_callback, sr->rvars1,
+    push_pull_buttons(sr, add_to_rvars1_callback,
+		      remove_from_rvars1_callback,
 		      lptr, OPT_NONE);
 
     store = GTK_LIST_STORE(mod);
@@ -6415,9 +6406,7 @@ static void primary_rhs_varlist (selector *sr)
     gtk_tree_model_get_iter_first(mod, &iter);
 
     if (MODEL_CODE(sr->ci)) {
-	if (sr->ci == ARMA) {
-	    g_object_set_data(G_OBJECT(sr->rvars1), "selector", sr);
-	} else if (sr->ci == GARCH || NONPARAM_CODE(sr->ci)) {
+	if (sr->ci == ARMA || sr->ci == GARCH || NONPARAM_CODE(sr->ci)) {
 	    ; /* skip */
 	} else if (xlist == NULL || has_0(xlist)) {
 	    /* stick the constant in by default */
@@ -6532,7 +6521,7 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     sr->table = gtk_table_new(sr->n_rows, 3, FALSE);
 
     /* LHS: list of elements to choose from */
-    left_box = gtk_hbox_new(FALSE, 5);
+    left_box = gtk_hbox_new(FALSE, 0);
     sr->lvars = var_list_box_new(GTK_BOX(left_box), sr, SR_LVARS);
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
     gtk_list_store_clear(store);
@@ -6912,7 +6901,7 @@ static void selector_add_top_entry (selector *sr)
 	lnames = user_var_names_for_type(GRETL_TYPE_LIST);
     }
 
-    label = gtk_label_new(_("Name of list:"));
+    label = gtk_label_new(_("Name of list"));
     table_add_right(sr, label, 1);
 
     if (lnames != NULL) {
@@ -7047,7 +7036,6 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
 
     right_box = gtk_vbox_new(FALSE, 5);
     sr->rvars1 = var_list_box_new(GTK_BOX(right_box), sr, SR_RVARS1);
-    g_object_set_data(G_OBJECT(sr->rvars1), "selector", sr);
 
     /* pre-fill RHS box? Only if we have 2 or more vars selected in the
        main window and if the command is "suitable"
@@ -7062,8 +7050,8 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     }
 
     /* put buttons into mid-section */
-    push_pull_buttons(sr, add_to_rvars1_callback, sr,
-		      remove_from_right_callback, sr->rvars1,
+    push_pull_buttons(sr, add_to_rvars1_callback,
+		      remove_from_rvars1_callback,
 		      NULL, OPT_A | OPT_R);
 
     /* pack RHS */
@@ -7076,9 +7064,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     gtk_box_pack_start(GTK_BOX(sr->vbox), sr->table, TRUE, TRUE, 0);
 
     /* unhide lags check box? */
-    if ((sr->ci == DEFINE_LIST || 
-	 sr->ci == EXPORT ||
-	 SAVE_DATA_ACTION(sr->ci)) 
+    if ((sr->ci == DEFINE_LIST || sr->ci == EXPORT || SAVE_DATA_ACTION(sr->ci)) 
 	&& lags_hidden) {
 	unhide_lags_switch(sr);
     }

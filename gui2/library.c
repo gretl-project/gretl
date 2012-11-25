@@ -3761,14 +3761,6 @@ int do_model (selector *sr)
 	    addopt = OPT_G;
 	}	
 	ci = IVREG;
-    } else if (ci == CORC || ci == HILU || ci == PWE) {
-	/* Cochrane-Orcutt, Hildreth-Lu, Prais-Winsten */
-	if (ci == HILU) {
-	    addopt = OPT_H;
-	} else if (ci == PWE) {
-	    addopt = OPT_P;
-	}
-	ci = AR1;
     } else if (ci == COUNTMOD) {
 	if (opt & (OPT_M | OPT_N)) {
 	    ci = NEGBIN;

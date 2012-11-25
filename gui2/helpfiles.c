@@ -149,18 +149,12 @@ static struct gui_help_item gui_help_items[] = {
 };
 
 enum {
-    COMPAT_CORC = GUI_CMD_MAX + 1,
-    COMPAT_FCASTERR,
-    COMPAT_HILU,
-    COMPAT_PWE
+    COMPAT_FCASTERR = GUI_CMD_MAX + 1
 };
 
 static struct gui_help_item compat_help_items[] = {
     { GUI_CMD_MAX,     "nothing" },
-    { COMPAT_CORC,     "corc" },
     { COMPAT_FCASTERR, "fcasterr" },
-    { COMPAT_HILU,     "hilu" },
-    { COMPAT_PWE,      "pwe" },
     { -1,              NULL }
 };
 
