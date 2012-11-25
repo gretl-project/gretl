@@ -1123,7 +1123,7 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
     GtkTreeViewColumn *column;
     GtkTreeSelection *select;
     gboolean flagcol = FALSE;
-    int width = 120;
+    int width = 140;
     int height = -1;
     
     if (USE_RXLIST(sr->ci) && locus == SR_RVARS2) {
@@ -3724,7 +3724,7 @@ static char *extra_var_string (int ci)
     case HECKIT:
 	return N_("Selection variable");
     case BIPROBIT:
-	return N_("Second dependent variable");
+	return N_("Dependent variable 2");
     case AR:
 	return N_("List of AR lags");
     case QUANTREG:
@@ -4007,6 +4007,23 @@ static GtkWidget *pix_button (const guint8 *src, gchar *tip)
     return button;
 }
 
+static GtkWidget *name_entry_in_hbox (GtkWidget **pentry)
+{
+    GtkWidget *hbox, *entry;
+
+    hbox = gtk_hbox_new(FALSE, 0);
+    entry = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN - 1);
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAME_WIDTH);
+    gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
+
+    if (pentry != NULL) {
+	*pentry = entry;
+    }
+
+    return hbox;
+}
+
 static GtkWidget *
 entry_with_label_and_chooser (selector *sr,
 			      gchar *label_string,
@@ -4028,11 +4045,7 @@ entry_with_label_and_chooser (selector *sr,
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(clickfunc), sr);
 
-    entry = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN - 1);
-    gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAME_WIDTH);
-    hbox = gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
+    hbox = name_entry_in_hbox(&entry);
     table_add_right(sr, hbox, 1);
 
     if (label_active || label_string != NULL) {
@@ -4077,7 +4090,7 @@ static void maybe_activate_depvar_lags (GtkWidget *w, selector *sr)
 
 static int build_depvar_section (selector *sr, int preselect)
 {
-    GtkWidget *tmp, *depvar_hbox;
+    GtkWidget *tmp, *hbox;
     int defvar;
 
     if (sr->ci == INTREG) {
@@ -4094,7 +4107,7 @@ static int build_depvar_section (selector *sr, int preselect)
     } else if (sr->ci == ANOVA) {
 	tmp = gtk_label_new(_("Response variable"));
     } else if (sr->ci == BIPROBIT) {
-	tmp = gtk_label_new(_("First dependent variable"));
+	tmp = gtk_label_new(_("Dependent variable 1"));
     } else {
 	tmp = gtk_label_new(_("Dependent variable"));
     }
@@ -4105,18 +4118,14 @@ static int build_depvar_section (selector *sr, int preselect)
     table_add_mid(sr, tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(set_dependent_var_callback), sr);
-    
-    depvar_hbox = gtk_hbox_new(FALSE, 5); 
-    sr->depvar = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(sr->depvar), VNAMELEN - 1);
-    gtk_entry_set_width_chars(GTK_ENTRY(sr->depvar), VNAME_WIDTH);
+
+    hbox = name_entry_in_hbox(&sr->depvar);
     g_signal_connect(G_OBJECT(sr->depvar), "changed",
 		     G_CALLBACK(maybe_activate_depvar_lags), sr);
     if (defvar >= 0) {
         gtk_entry_set_text(GTK_ENTRY(sr->depvar), dataset->varname[defvar]);
     }
-    gtk_box_pack_start(GTK_BOX(depvar_hbox), sr->depvar, TRUE, TRUE, 0);
-    table_add_right(sr, depvar_hbox, 1);
+    table_add_right(sr, hbox, 1);
 
     if (sr->ci != INTREG && sr->ci != BIPROBIT) {
 	sr->default_check = gtk_check_button_new_with_label(_("Set as default"));
@@ -4415,9 +4424,9 @@ static void secondary_rhs_varlist (selector *sr)
     } else if (IV_MODEL(sr->ci)) {
 	tmp = gtk_label_new(_("Instruments"));
     } else if (sr->ci == HECKIT) {
-	tmp = gtk_label_new(_("Selection equation regressors"));
+	tmp = gtk_label_new(_("Selection regressors"));
     } else if (sr->ci == BIPROBIT) {
-	tmp = gtk_label_new(_("Second equation regressors"));
+	tmp = gtk_label_new(_("Equation 2 regressors"));
     } else if (FNPKG_CODE(sr->ci)) {
 	tmp = gtk_label_new(_("Helper functions"));
     }
@@ -6369,9 +6378,9 @@ static void primary_rhs_varlist (selector *sr)
     } else if (VEC_CODE(sr->ci)) {
 	tmp = gtk_label_new(_("Endogenous variables"));
     } else if (sr->ci == BIPROBIT) {
-	tmp = gtk_label_new(_("First equation regressors"));
+	tmp = gtk_label_new(_("Equation 1 regressors"));
     } else if (MODEL_CODE(sr->ci)) {
-	tmp = gtk_label_new(_("Independent variables"));
+	tmp = gtk_label_new(_("Regressors"));
     } else if (sr->ci == GR_XY || sr->ci == GR_IMP) {
 	tmp = gtk_label_new(_("Y-axis variables"));
     } else if (sr->ci == SCATTERS) {
@@ -6496,7 +6505,7 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
 {
     GtkListStore *store;
     GtkTreeIter iter;
-    GtkWidget *lvbox;
+    GtkWidget *left_box;
     selector *sr;
     int preselect;
     int yvar = 0;
@@ -6523,8 +6532,8 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     sr->table = gtk_table_new(sr->n_rows, 3, FALSE);
 
     /* LHS: list of elements to choose from */
-    lvbox = gtk_vbox_new(FALSE, 5);
-    sr->lvars = var_list_box_new(GTK_BOX(lvbox), sr, SR_LVARS);
+    left_box = gtk_hbox_new(FALSE, 5);
+    sr->lvars = var_list_box_new(GTK_BOX(left_box), sr, SR_LVARS);
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
@@ -6573,7 +6582,7 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     }
 
     /* add left-hand column now we know how tall it should be */
-    table_add_left(sr, lvbox);
+    table_add_left(sr, left_box);
 
     /* pack the whole central section into the dialog's vbox */
     gtk_box_pack_start(GTK_BOX(sr->vbox), sr->table, TRUE, TRUE, 0);
@@ -6983,7 +6992,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
 {
     GtkListStore *store;
     GtkTreeIter iter;
-    GtkWidget *left_vbox, *right_vbox;
+    GtkWidget *left_box, *right_box;
     GtkWidget *tmp;
     selector *sr;
     int nleft = 0;
@@ -7010,9 +7019,9 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     sr->table = gtk_table_new(1, 3, FALSE);
 
     /* holds list of elements available for selection */
-    left_vbox = gtk_vbox_new(FALSE, 5);
+    left_box = gtk_vbox_new(FALSE, 5);
 
-    sr->lvars = var_list_box_new(GTK_BOX(left_vbox), sr, SR_LVARS);
+    sr->lvars = var_list_box_new(GTK_BOX(left_box), sr, SR_LVARS);
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
@@ -7036,8 +7045,8 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
 
     sr->n_left = nleft;
 
-    right_vbox = gtk_vbox_new(FALSE, 5);
-    sr->rvars1 = var_list_box_new(GTK_BOX(right_vbox), sr, SR_RVARS1);
+    right_box = gtk_vbox_new(FALSE, 5);
+    sr->rvars1 = var_list_box_new(GTK_BOX(right_box), sr, SR_RVARS1);
     g_object_set_data(G_OBJECT(sr->rvars1), "selector", sr);
 
     /* pre-fill RHS box? Only if we have 2 or more vars selected in the
@@ -7058,10 +7067,10 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
 		      NULL, OPT_A | OPT_R);
 
     /* pack RHS */
-    table_add_right(sr, right_vbox, 0);
+    table_add_right(sr, right_box, 0);
 
     /* pack left-hand stuff */
-    table_add_left(sr, left_vbox);
+    table_add_left(sr, left_box);
 
     /* pack the whole central section into the dialog's vbox */
     gtk_box_pack_start(GTK_BOX(sr->vbox), sr->table, TRUE, TRUE, 0);
