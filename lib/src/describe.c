@@ -3890,13 +3890,12 @@ static int pergm_graph (const char *vname,
 	return err;
     }
 
-    fputs("# literal lines = 4\n", fp);
     fputs("set xtics nomirror\n", fp); 
 
     fprintf(fp, "set x2label '%s'\n", _("periods"));
     fprintf(fp, "set x2range [0:%d]\n", roundup_mod(T, 2.0));
 
-    fputs("set x2tics(", fp);
+    fputs("set x2tics (", fp);
     k = T2 / 6;
     for (t = 1; t <= T2; t += k) {
 	fprintf(fp, "\"%.1f\" %d, ", (double) T / t, 4 * t);
@@ -3957,7 +3956,6 @@ static int pergm_graph (const char *vname,
     }
 
     if (opt & OPT_R) {
-	fputs("# literal lines = 1\n", fp);
 	fputs("set xtics (\"0\" 0, \"π/4\" pi/4, \"π/2\" pi/2, "
 	      "\"3π/4\" 3*pi/4, \"π\" pi)\n", fp);
     }

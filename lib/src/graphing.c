@@ -519,33 +519,9 @@ int gnuplot_png_terminal (void)
     return GP_PNG_CAIRO;
 }
    
-int gnuplot_has_latin5 (void)
-{
-    /* ... and that it supports ISO-8859-9 */
-    return 1;
-}
-
-int gnuplot_has_cp1254 (void)
-{
-    /* ... and that it supports CP1254 */
-    return 1;
-}
-
 int gnuplot_has_cp950 (void)
 {
     /* ... and that it supports CP950 */
-    return 1;
-}
-
-int gnuplot_has_bbox (void)
-{
-    /* ... and that it supports bounding box info */
-    return 1;
-}
-
-int gnuplot_has_utf8 (void)
-{
-    /* ... and that it supports "set encoding utf8" */
     return 1;
 }
 
@@ -568,32 +544,6 @@ int gnuplot_has_ttf (int reset)
 		err = gnuplot_test_command("set term png font arial 8");
 	    }
 	}
-    }
-
-    return !err;
-}
-
-int gnuplot_has_latin5 (void)
-{
-    static int err = -1; 
-
-    /* not OK in gnuplot 4.2.0 */
-
-    if (err == -1) {
-	err = gnuplot_test_command("set encoding iso_8859_9");
-    }
-
-    return !err;
-}
-
-int gnuplot_has_cp1254 (void)
-{
-    static int err = -1; 
-
-    /* not OK in gnuplot 4.2.0 */
-
-    if (err == -1) {
-	err = gnuplot_test_command("set encoding cp1254");
     }
 
     return !err;
@@ -640,6 +590,8 @@ int gnuplot_eps_terminal (void)
 
     if (ret == -1) {
 	int err = gnuplot_test_command("set term epscairo");
+
+	/* not OK in gnuplot 4.4.0 */
 
 	if (!err) {
 	    ret = GP_EPS_CAIRO;
@@ -691,34 +643,6 @@ int gnuplot_png_terminal (void)
     }
 
     return ret;
-}
-
-int gnuplot_has_bbox (void)
-{
-    static int err = -1;
-
-    /* not OK in gnuplot 4.2.0 */
-
-    if (err == -1) {
-	err = gnuplot_test_command("set term png ; "
-				   "set output '/dev/null' ; "
-				   "plot x ; print GPVAL_TERM_XMIN");
-    }
-
-    return !err;    
-}
-
-int gnuplot_has_utf8 (void)
-{
-    static int err = -1;
-
-    /* not OK in gnuplot 4.2.0 */
-
-    if (err == -1) {
-	err = gnuplot_test_command("set encoding utf8");
-    }
-
-    return !err;    
 }
 
 #endif /* !WIN32 */
@@ -977,7 +901,7 @@ void write_plot_line_styles (int ptype, FILE *fp)
 }
 
 /* Get gnuplot to print the dimensions of a PNG plot, in terms
-   of both pixels and data bounds, if gnuplot supports this.
+   of both pixels and data bounds (gnuplot >= 4.4.0).
 */
 
 void print_plot_bounding_box_request (FILE *fp)
@@ -1489,17 +1413,18 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 
 static int gnuplot_too_old (void)
 {
-    static int gperr = -1;
+    static double gpv;
 
-    if (gperr < 0) {
-	gperr = gnuplot_test_command("set style line 2 lc rgb \"#0000ff\"");
+    if (gpv == 0.0) {
+	gpv = gnuplot_get_version();
     }
 
-    if (gperr) {
-	gretl_errmsg_set("Gnuplot is too old: must be >= version 4.2.0");
+    if (gpv < 4.4) {
+	gretl_errmsg_set("Gnuplot is too old: must be >= version 4.4.0");
+	return 1;
+    } else {
+	return 0;
     }
-
-    return gperr;
 }
 
 #endif
@@ -1680,25 +1605,14 @@ int gnuplot_make_graph (void)
 	    return E_EXTERNAL;
 	}
     } else if (fmt == GP_TERM_NONE && gui) {
-	if (gnuplot_has_bbox()) {
-	    do_plot_bounding_box();
-	}
+	do_plot_bounding_box();
 	/* ensure we don't get stale output */
 	remove_old_png(buf);
     }
 
 #ifdef WIN32
-# if 0 /* experiment */
-    if (strchr(fname, '\'') != NULL) {
-	err = gretl_spawn_with_fixup(gretl_gnuplot_path(), fname);
-    } else {
-	sprintf(buf, "\"%s\" \"%s\"", gretl_gnuplot_path(), fname);
-	err = gretl_spawn(buf);
-    }
-# else
     sprintf(buf, "\"%s\" \"%s\"", gretl_gnuplot_path(), fname);
     err = gretl_spawn(buf);
-# endif
 #else /* !WIN32 */
     if (gui || fmt) {
 	sprintf(buf, "%s \"%s\"", gretl_gnuplot_path(), fname);
@@ -2795,7 +2709,6 @@ static void make_named_month_tics (const gnuplot_info *gi, double yrs,
     m = 1 + ((x - floor(x) > .8)? ceil(x) : floor(x));
     if (m > 12) m -= 12;
 
-    pputs(prn, "# literal lines = 1\n"); 
     pputs(prn, "set xtics ("); 
     x = t0;
 
@@ -2849,7 +2762,6 @@ static void make_panel_unit_tics (const DATASET *dset,
     int printed;
     int u, t, n;
 
-    pputs(prn, "# literal lines = 1\n"); 
     pputs(prn, "set xtics ("); 
 
     gretl_push_c_numeric_locale();
@@ -3081,12 +2993,6 @@ int gnuplot (const int *plotlist, const char *literal,
     /* below: did have "height 1 width 1 box" for win32,
        "width 1 box" otherwise */
     strcpy(keystr, "set key left top\n");
-
-#if 0 /* FIXME? */
-    if (gi.flags & GPT_IMPULSES) {
-	strcpy(withstr, "w i");
-    }
-#endif
 
     /* set x-axis label for non-time series plots */
     if (!(gi.flags & GPT_TS)) {

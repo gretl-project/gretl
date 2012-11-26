@@ -83,6 +83,7 @@ enum {
 #define plot_has_yrange(p)      (p->status & PLOT_HAS_YRANGE)
 #define plot_not_zoomable(p)    (p->status & PLOT_DONT_ZOOM)
 #define plot_not_editable(p)    (p->status & PLOT_DONT_EDIT)
+#define plot_is_editable(p)     (!(p->status & PLOT_DONT_EDIT))
 #define plot_doing_position(p)  (p->status & PLOT_POSITIONING)
 
 #define plot_has_title(p)        (p->format & PLOT_TITLE)
@@ -334,7 +335,8 @@ static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
 	}
 	if ((item->func == G_CALLBACK(graph_enlarge_callback) ||
 	     item->func == G_CALLBACK(graph_shrink_callback)) &&
-	    gnuplot_png_terminal() != GP_PNG_CAIRO) {
+	    (plot_not_editable(plot) || 
+	     gnuplot_png_terminal() != GP_PNG_CAIRO)) {
 	    continue;
 	}
 	button = small_tool_button(item, plot);
@@ -538,9 +540,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 		fputs(fline, ftmp);
 	    }
 	}
-	if (gnuplot_has_bbox()) {
-	    print_plot_bounding_box_request(ftmp);
-	}
+	print_plot_bounding_box_request(ftmp);
     } else {
 	/* not ADD_PNG: we're removing the png term line */
 	int printit, png_line_saved = 0;
@@ -763,7 +763,7 @@ static int non_ascii_gp_file (FILE *fp)
     return ret;
 }
 
-static int term_uses_utf8 (int ttype, int gp_has_utf8)
+static int term_uses_utf8 (int ttype)
 {
     if (ttype == GP_TERM_PNG || 
 	ttype == GP_TERM_SVG ||
@@ -826,23 +826,14 @@ static void maybe_print_gp_encoding (int ttype, int latin, FILE *fp)
     if (ttype == GP_TERM_EMF) {
 	if (latin == 2) {
 	    fputs("set encoding cp1250\n", fp);
-	} else if (latin == 9 && gnuplot_has_cp1254()) {
+	} else if (latin == 9) {
 	    fputs("set encoding cp1254\n", fp);
 	} else if (chinese_locale() && gnuplot_has_cp950()) {
 	    fputs("set encoding cp950\n", fp);
 	}
-    } else {
-	if (latin != 1 && latin != 2 && latin != 15 && latin != 9) {
-	    /* unsupported by gnuplot */
-	    latin = 0;
-	}
-	if (latin == 9 && !gnuplot_has_latin5()) {
-	    /* Turkish not supported */
-	    latin = 0;
-	}
-	if (latin) {
-	    fprintf(fp, "set encoding iso_8859_%d\n", latin);
-	}
+    } else if (latin == 1 || latin == 2 || latin == 15 || latin == 9) {
+	/* supported by gnuplot >= 4.4.0 */
+	fprintf(fp, "set encoding iso_8859_%d\n", latin);
     }
 } 
 
@@ -873,12 +864,10 @@ static int revise_plot_file (GPT_SPEC *spec,
 
     if (non_ascii_gp_file(fpin)) {
 	/* plot contains UTF-8 strings */
-	int utf8_ok = gnuplot_has_utf8();
-
-	if (!term_uses_utf8(ttype, utf8_ok)) {
+	if (!term_uses_utf8(ttype)) {
 	    latin = iso_latin_version();
 	    maybe_print_gp_encoding(ttype, latin, fpout);
-	} else if (utf8_ok) {
+	} else {
 	    fputs("set encoding utf8\n", fpout);
 	}
     }
@@ -1066,48 +1055,28 @@ static int is_batch_term_line (const char *s)
    sending it to gnuplot for execution, or (b) saving it to a "user
    file".  
 
-   There's a question over what we should do with non-ascii strings in
-   the plot file.  These will be in UTF-8 in the GTK editor window.
-   That's OK if gnuplot supports UTF-8, but otherwise it seems that
-   the best thing is to determine the character set for the current
-   locale (using g_get_charset) and if it is not UTF-8, recode to the
-   locale. 
-
-   This function also handles the addition of "pause -1" on MS
-   Windows, if @addpause is non-zero.
+   This function handles the addition of "pause -1" on MS Windows,
+   if @addpause is non-zero.
 */
 
 int dump_plot_buffer (const char *buf, const char *fname,
 		      int addpause)
 {
-    const gchar *cset;
-    FILE *fp;
-    int recode = 0;
+    FILE *fp = gretl_fopen(fname, "w");
 
-    fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
 	file_write_errbox(fname);
 	return E_FOPEN;
     }
 
-    if (!g_get_charset(&cset) && !gnuplot_has_utf8()) {
-	/* we're on a non-UTF-8 platform and we need to convert */
-	recode = 1;
-    } else if (!gnuplot_has_utf8()) {
-	/* we're screwed -- what do we recode to? */
-	fprintf(stderr, "Warning: gnuplot does not support UTF-8\n");
-    }
-
-    if (!recode && !addpause) {
+    if (!addpause) {
 	/* nice and simple! */
 	fputs(buf, fp);
     } else {
 #ifdef G_OS_WIN32
 	int gotpause = 0;
 #endif
-	gchar *trbuf;
 	char bufline[512];
-	int handled;
 
 	bufgets_init(buf);
 
@@ -1115,18 +1084,7 @@ int dump_plot_buffer (const char *buf, const char *fname,
 	    if (addpause && is_batch_term_line(bufline)) {
 		addpause = 0;
 	    }
-	    handled = 0;
-	    if (recode) {
-		trbuf = gp_locale_from_utf8(bufline);
-		if (trbuf != NULL) {
-		    fputs(trbuf, fp);
-		    g_free(trbuf);
-		    handled = 1;
-		}
-	    }
-	    if (!handled) {
-		fputs(bufline, fp);
-	    }
+	    fputs(bufline, fp);
 #ifdef G_OS_WIN32
 	    if (addpause && strstr(bufline, "pause -1")) {
 		gotpause = 1;
@@ -1639,6 +1597,8 @@ read_plotspec_range (const char *obj, const char *s, GPT_SPEC *spec)
 	i = 2;
     } else if (!strcmp(obj, "trange")) {
 	i = 3;
+    } else if (!strcmp(obj, "x2range")) {
+	i = 4;
     } else {
 	err = 1;
     }
@@ -1784,10 +1744,13 @@ static int parse_gp_unset_line (GPT_SPEC *spec, const char *s)
     return err;
 }
 
-static void read_xtics_setting (GPT_SPEC *spec, const char *val)
+static void read_xtics_setting (GPT_SPEC *spec, 
+				const char *key,
+				const char *val)
 {
-    if (*val == '(') {
-	/* set of specific xtic values */
+    if (!strcmp(key, "x2tics")) {
+	spec->x2ticstr = gretl_strdup(val);
+    } else if (*val == '(') {
 	spec->xticstr = gretl_strdup(val);
     } else {
 	*spec->xtics = '\0';
@@ -1920,10 +1883,12 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 	strncat(spec->yvarname, val, MAXDISP-1);
     } else if (!strcmp(key, "y2label")) {
 	strcpy(spec->titles[3], val);
+    } else if (!strcmp(key, "x2label")) {
+	strcpy(spec->titles[4], val);
     } else if (!strcmp(key, "key")) {
 	spec->keyspec = gp_keypos_from_name(val);
-    } else if (!strcmp(key, "xtics")) { 
-	read_xtics_setting(spec, val);
+    } else if (!strcmp(key, "xtics") || !strcmp(key, "x2tics")) { 
+	read_xtics_setting(spec, key, val);
     } else if (!strcmp(key, "mxtics")) {
 	*spec->mxtics = '\0';
 	strncat(spec->mxtics, val, sizeof(spec->mxtics) - 1);
@@ -3845,7 +3810,7 @@ static void build_plot_menu (png_plot *plot)
 	    continue;
 	}
 	if ((!pngcairo || plot_has_controller(plot) || 
-	     !plot_not_editable(plot)) && !strcmp(plot_items[i], "Font")) {
+	     plot_is_editable(plot)) && !strcmp(plot_items[i], "Font")) {
 	    i++;
 	    continue;
 	}
@@ -4185,6 +4150,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
     guint k = key->keyval;
 
     if (gnuplot_png_terminal() == GP_PNG_CAIRO &&
+	plot_is_editable(plot) && 
 	(k == GDK_plus || k == GDK_greater ||
 	 k == GDK_minus || k == GDK_less ||
 	 k == GDK_equal || k == GDK_0)) {
@@ -4510,204 +4476,6 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
     free(plot);
 }
 
-static void set_approx_pixel_bounds (png_plot *plot, 
-				     int max_num_width,
-				     int max_num2_width)
-{
-    if (plot_has_xlabel(plot)) {
-	plot->pixel_ymax = plot->pixel_height - 36;
-    } else {
-	plot->pixel_ymax = plot->pixel_height - 24;
-    }
-
-    if (plot_has_title(plot)) {
-	plot->pixel_ymin = 36;
-    } else {
-	plot->pixel_ymin = 14;
-    }
-
-    plot->pixel_xmin = 27 + 7 * max_num_width;
-    if (plot_has_ylabel(plot)) {
-	plot->pixel_xmin += 12;
-    }
-
-    plot->pixel_xmax = plot->pixel_width - 20; 
-    if (plot_has_y2axis(plot)) {
-	plot->pixel_xmax -= 7 * (max_num2_width + 1);
-    }
-    if (plot_has_y2label(plot)) {
-	plot->pixel_xmax -= 11;
-    }
-
-#if POINTS_DEBUG
-    fprintf(stderr, "set_approx_pixel_bounds():\n"
-	    " xmin=%d xmax=%d ymin=%d ymax=%d\n", 
-	    plot->pixel_xmin, plot->pixel_xmax,
-	    plot->pixel_ymin, plot->pixel_ymax);
-    fprintf(stderr, "set_approx_pixel_bounds():\n"
-	    " max_num_width=%d max_num2_width=%d\n", 
-	    max_num_width, max_num2_width);
-#endif
-}
-
-int ok_dumb_line (const char *s)
-{
-    if (strstr(s, "x2tics")) return 0;
-    if (strstr(s, "set style line")) return 0;
-    if (strstr(s, "set style inc")) return 0;
-    return 1;
-}
-
-/* Attempt to read y-range info from the ascii representation
-   of a gnuplot graph (the "dumb" terminal): return 0 on
-   success, non-zero on failure.
-*/
-
-static int get_dumb_plot_yrange (png_plot *plot)
-{
-    FILE *fpin, *fpout;
-    char line[MAXLEN], dumbgp[MAXLEN], dumbtxt[MAXLEN];
-    gchar *plotcmd = NULL;
-    int err = 0, x2axis = 0;
-    int max_ywidth = 0;
-    int max_y2width = 0;
-
-    fpin = gretl_fopen(plot->spec->fname, "r");
-    if (fpin == NULL) {
-	return 1;
-    }
-
-    build_path(dumbgp, gretl_dotdir(), "dumbplot.gp", NULL);
-    build_path(dumbtxt, gretl_dotdir(), "gptdumb.txt", NULL);
-    fpout = gretl_fopen(dumbgp, "w");
-    if (fpout == NULL) {
-	fclose(fpin);
-	return 1;
-    }
-
-    /* switch to the "dumb" (ascii) terminal in gnuplot */
-    while (fgets(line, MAXLEN-1, fpin)) {
-	if (strstr(line, "set term")) {
-	    fputs("set term dumb\n", fpout);
-	} else if (strstr(line, "set output")) { 
-	    fprintf(fpout, "set output '%s'\n", dumbtxt);
-	} else if (ok_dumb_line(line)) {
-	    fputs(line, fpout);
-	}
-	if (strstr(line, "x2range")) {
-	    x2axis = 1;
-	}
-    }
-
-    fclose(fpin);
-    fclose(fpout);
-
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", 
-			      gretl_gnuplot_path(), 
-			      dumbgp);
-    err = gretl_spawn(plotcmd);
-    g_free(plotcmd);
-
-    gretl_remove(dumbgp);
-
-    if (err) {
-#if POINTS_DEBUG
-	fputs("get_dumb_plot_yrange(): plot command failed\n", stderr);
-#endif
-	gretl_error_clear();
-	return 1;
-    } else {
-	double y[16] = {0};
-	int y_numwidth[16] = {0};
-	int y2_numwidth[16] = {0};
-	char numstr[32];
-	int i, j, k, imin;
-
-	fpin = gretl_fopen(dumbtxt, "r");
-	if (fpin == NULL) {
-	    return 1;
-	}
-
-	/* read the y-axis min and max from the ascii graph */
-
-	gretl_push_c_numeric_locale();
-
-	i = j = 0;
-	while (i < 16 && fgets(line, MAXLEN-1, fpin)) {
-	    const char *s = line;
-	    int nsp = 0;
-
-	    while (isspace((unsigned char) *s)) {
-	        nsp++;
-	        s++;
-            }
-	    if (nsp > 5) {
-		/* not a y-axis number */
-		continue; 
-	    }
-	    if (sscanf(s, "%lf", &y[i]) == 1) {
-#if POINTS_DEBUG
-		fprintf(stderr, "from text plot: read y[%d]=%g\n",
-			i, y[i]);
-#endif
-		sscanf(s, "%31s", numstr);
-		y_numwidth[i++] = strlen(numstr);
-	    }
-	    if (plot_has_y2axis(plot) && j < 16) {
-		double y2;
-
-		s = strrchr(s, ' ');
-		if (s != NULL && sscanf(s, "%lf", &y2) == 1) {
-		    sscanf(s, "%31s", numstr);
-		    y2_numwidth[j++] = strlen(numstr);
-		}
-	    }
-	}
-
-	gretl_pop_c_numeric_locale();
-
-	fclose(fpin);
-#if (POINTS_DEBUG == 0)
-	gretl_remove(dumbtxt);
-#endif
-
-	imin = (x2axis)? 1 : 0;
-
-	if (i > (imin + 2) && y[imin] > y[i-1]) {
-	    plot->ymin = y[i-1];
-	    plot->ymax = y[imin];
-	    for (k=imin; k<i-1; k++) {
-		if (y_numwidth[k] > max_ywidth) {
-		    max_ywidth = y_numwidth[k];
-		}
-	    }
-	}	    
-
-#if POINTS_DEBUG
-	fprintf(stderr, "Reading y range from text plot: plot->ymin=%g, "
-		"plot->ymax=%g\n", plot->ymin, plot->ymax);
-#endif
-
-	if (plot_has_y2axis(plot)) {
-	    for (k=imin; k<j-2; k++) {
-		if (y2_numwidth[k] > max_y2width) {
-		    max_y2width = y2_numwidth[k];
-		}
-	    }
-	}
-    }
-
-    if (plot->ymax <= plot->ymin) {
-	err = 1;
-    }
-
-    if (!err) {
-	set_approx_pixel_bounds(plot, max_ywidth, max_y2width);
-    }
-    
-    return err;
-}
-
 /* Do a partial parse of the gnuplot source file: enough to determine
    the data ranges so we can read back the mouse pointer coordinates
    when the user moves the pointer over the graph.
@@ -4785,21 +4553,13 @@ static int get_plot_ranges (png_plot *plot)
     /* If got_x = 0 at this point, we didn't get an x-range out of 
        gnuplot, so we might as well give up.
     */
-
-    if (got_x) {
-	plot->status |= PLOT_HAS_XRANGE;
-    } else {
+    if (!got_x) {
 	plot->status |= (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
 	return 1;
     }    
 
-    /* get the "dumb" y coordinates only if we haven't got
-       more accurate ones already */
-    if (!plot_has_png_coords(plot)) { 
-	err = get_dumb_plot_yrange(plot);
-    }
-
-    if (!err) {
+    if (plot_has_png_coords(plot)) {
+	plot->status |= PLOT_HAS_XRANGE;
 	plot->status |= PLOT_HAS_YRANGE;
 	if ((plot->xmax - plot->xmin) / 
 	    (plot->pixel_xmax - plot->pixel_xmin) >= 1.0) {

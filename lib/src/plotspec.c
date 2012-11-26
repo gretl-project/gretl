@@ -56,7 +56,7 @@ GPT_SPEC *plotspec_new (void)
     spec->literal = NULL;
     spec->n_literal = 0;
 
-    for (i=0; i<4; i++) {
+    for (i=0; i<5; i++) {
 	spec->titles[i][0] = 0;
     }
 
@@ -64,6 +64,7 @@ GPT_SPEC *plotspec_new (void)
     *spec->yvarname = '\0';
 
     spec->xticstr = NULL;
+    spec->x2ticstr = NULL;
 
     spec->xfmt[0] = 0;
     spec->xtics[0] = 0;
@@ -73,7 +74,7 @@ GPT_SPEC *plotspec_new (void)
     spec->fname[0] = 0;
     spec->keyspec = GP_KEY_LEFT_TOP;
 
-    for (i=0; i<4; i++) {
+    for (i=0; i<5; i++) {
 	spec->range[i][0] = NADBL;
 	spec->range[i][1] = NADBL;
 	if (i < 3) {
@@ -175,7 +176,11 @@ void plotspec_destroy (GPT_SPEC *spec)
    
     if (spec->xticstr != NULL) {
 	free(spec->xticstr);
-    } 
+    }
+
+    if (spec->x2ticstr != NULL) {
+	free(spec->x2ticstr);
+    }    
   
     gretl_matrix_free(spec->b_ols);
     gretl_matrix_free(spec->b_quad);
@@ -865,13 +870,13 @@ void print_auto_fit_string (FitType fit, FILE *fp)
 void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
 {
     const char *rstrs[] = {
-	"x", "y", "y2", "t"
+	"x", "y", "y2", "t", "x2"
     };
     int i;
 
     gretl_push_c_numeric_locale();
 
-    for (i=0; i<4; i++) {
+    for (i=0; i<5; i++) {
 	if (i < 3 && spec->logbase[i] > 0.0) {
 	    fprintf(fp, "set logscale %s %g\n", rstrs[i], spec->logbase[i]);
 	}
@@ -1069,7 +1074,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
     if (spec->scale != 1.0) {
 	gretl_push_c_numeric_locale();
-	fprintf(fp, "# scale = %.1f", spec->scale);
+	fprintf(fp, "# scale = %.1f\n", spec->scale);
 	gretl_pop_c_numeric_locale();
     }
 
@@ -1091,6 +1096,10 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
     if ((spec->flags & GPT_Y2AXIS) && !string_is_blank(spec->titles[3])) {
 	fprintf(fp, "set y2label \"%s\"\n", spec->titles[3]);
+    }
+
+    if (!string_is_blank(spec->titles[4])) {
+	fprintf(fp, "set x2label \"%s\"\n", spec->titles[4]);
     }
 
     for (i=0; i<spec->n_labels; i++) {
@@ -1168,6 +1177,11 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, "set mxtics %s\n", spec->mxtics);
 	}
     }
+
+    /* using x2tics? */
+    if (spec->x2ticstr != NULL) {
+	fprintf(fp, "set x2tics %s\n", spec->x2ticstr);
+    }	
 
     /* customized ytics? */
     if (!strcmp(spec->ytics, "none")) {
@@ -1457,7 +1471,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
     gretl_pop_c_numeric_locale();
 
-    if (png && gnuplot_has_bbox()) {
+    if (png) {
 	print_plot_bounding_box_request(fp);
     }
 

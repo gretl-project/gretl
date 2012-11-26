@@ -470,7 +470,7 @@ else
 
   if test "$build_gui" = "yes" ; then
     have_gnuplot=no
-    AC_MSG_CHECKING(for gnuplot >= 4.2.0 with PNG support)
+    AC_MSG_CHECKING(for gnuplot >= 4.4.0 with PNG support)
     echo "set term png" | GNUTERM=dumb gnuplot 2>/dev/null && have_gnuplot=yes
     if test "$have_gnuplot" = yes ; then
       GPVERSION=`gnuplot --version | awk '{print $2}'`
@@ -491,7 +491,7 @@ else
     if test "$have_gnuplot" = no ; then
       AC_MSG_RESULT(no)
       echo
-      echo "* gretl needs gnuplot >= 4.2.0, with PNG support."
+      echo "* gretl needs gnuplot >= 4.4.0, with PNG support."
       echo "* The current version of gnuplot is available from www.gnuplot.info"
       exit
     fi

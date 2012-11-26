@@ -52,7 +52,8 @@ typedef enum {
     GP_X_RANGE,
     GP_Y_RANGE,
     GP_Y2_RANGE,
-    GP_T_RANGE
+    GP_T_RANGE,
+    GP_X2_RANGE
 } GpRange;
 
 typedef struct gp_style_spec_ gp_style_spec;
@@ -135,8 +136,8 @@ struct GPT_SPEC_ {
     int nbars;                 /* number of time-series shaded bars */
     char xvarname[MAXDISP];    /* name of x variable */
     char yvarname[MAXDISP];    /* name of y variable */
-    char titles[4][MAXTITLE];  /* main, x, y, y2 */
-    double range[4][2];        /* axis range specifiers */
+    char titles[5][MAXTITLE];  /* main, x, y, y2, x2 */
+    double range[5][2];        /* axis range specifiers */
     double logbase[3];         /* axis log-scales base (0 for linear) */
     int keyspec;               /* position of key (or none) */
     char xfmt[16];             /* x-axis tic format */
@@ -145,6 +146,7 @@ struct GPT_SPEC_ {
     char yfmt[16];             /* y-axis tic format */ 
     char ytics[64];            /* y-axis tic marks */
     char *xticstr;             /* special xtics */
+    char *x2ticstr;            /* special x2tics */
     int termtype;              /* gnuplot "terminal" code */
     int n_lines;               /* number of lines */
     int samples;               /* number of samples for parametric plots */
