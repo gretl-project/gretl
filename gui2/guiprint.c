@@ -652,11 +652,11 @@ void rtf_print_obs_marker (int t, const DATASET *pdinfo, PRN *prn)
 #define STATS_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                    "\\cellx2700\\cellx4000\\cellx6700\\cellx8000\n\\intbl"
 
-static void printf_rtf (double zz, PRN *prn, int endrow)
+static void printf_rtf (double x, PRN *prn, int endrow)
 {
     /* was using "qr", for right alignment */
 
-    if (na(zz)) {
+    if (na(x)) {
 	if (endrow) {
 	    pprintf(prn, "\\qc %s\\cell\\intbl \\row\n",
 		    A_("undefined"));
@@ -667,9 +667,18 @@ static void printf_rtf (double zz, PRN *prn, int endrow)
     }
 
     if (endrow) {
-	pprintf(prn, "\\qc %#.*g\\cell\\intbl \\row\n", GRETL_DIGITS, zz);
+	pprintf(prn, "\\qc %#.*g\\cell\\intbl \\row\n", GRETL_DIGITS, x);
     } else {
-	pprintf(prn, "\\qc %#.*g\\cell", GRETL_DIGITS, zz);
+	pprintf(prn, "\\qc %#.*g\\cell", GRETL_DIGITS, x);
+    }
+}
+
+static void printk_rtf (int k, PRN *prn, int endrow)
+{
+    if (endrow) {
+	pprintf(prn, "\\qc %d\\cell\\intbl \\row\n", k);
+    } else {
+	pprintf(prn, "\\qc %d\\cell", k);
     }
 }
 
@@ -700,7 +709,7 @@ rtfprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	pprintf(prn, "%s\\par\n\n", tmp);
 	pputs(prn, "{" VAR_SUMM_ROW "\\intbl ");
     } else {
-	if (summ->missing) {
+	if (summary_has_missing_values(summ)) {
 	    strcpy(tmp, A_("(missing values were skipped)"));
 	    pprintf(prn, "%s\\par\n\n", tmp); /* FIXME */
 	}
@@ -768,7 +777,7 @@ rtfprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	printf_rtf(summ->perc05[i], prn, 0);
 	printf_rtf(summ->perc95[i], prn, 0);
 	printf_rtf(summ->iqr[i], prn, 0);
-	printf_rtf(summ->missing[i], prn, 1);
+	printk_rtf(summ->misscount[i], prn, 1);
     }
 
     pputs(prn, "}}\n");
@@ -978,13 +987,21 @@ static void printf_tex (double x, PRN *prn, int endrow)
 	char s[32];
 
 	tex_rl_double(x, s);
-
 	if (endrow) {
 	    pprintf(prn, "%s\\\\", s);
 	} else {
 	    pprintf(prn, "%s & ", s);
 	}
     }	
+}
+
+static void printk_tex (int k, PRN *prn, int endrow)
+{
+    if (endrow) {
+	pprintf(prn, "\\multicolumn{2}{c}{%d}\\\\", k);
+    } else {
+	pprintf(prn, "\\multicolumn{2}{c}{%d} & ", k);
+    }
 }
 
 static void 
@@ -1010,7 +1027,7 @@ texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	pprintf(prn, "\\begin{tabular}{r@{%c}lr@{%c}lr@{%c}lr@{%c}l}\n",
 		pt, pt, pt, pt);
     } else {
-	if (summ->missing) {
+	if (summary_has_missing_values(summ)) {
 	    pprintf(prn, "%s\\\\[8pt]\n\n", A_("(missing values were skipped)"));
 	} else {
 	    pputs(prn, "\n\\vspace{8pt}\n\n");
@@ -1094,7 +1111,7 @@ texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	printf_tex(summ->perc05[i], prn, 0);
 	printf_tex(summ->perc95[i], prn, 0);
 	printf_tex(summ->iqr[i], prn, 0);
-	printf_tex(summ->missing[i], prn, 1);
+	printk_tex(summ->misscount[i], prn, 1);
 	pputc(prn, '\n');
     }
 

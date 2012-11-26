@@ -25,7 +25,7 @@ typedef struct MahalDist_ MahalDist;
 typedef struct Summary_ {
     gretlopt opt;
     int n;
-    int *missing;
+    int *misscount;
     int *list;
     double *stats;
     double *mean;
@@ -213,6 +213,8 @@ void print_summary_single (const Summary *s,
 			   int digits, int places,
 			   const DATASET *dset,
 			   PRN *prn);
+
+int summary_has_missing_values (const Summary *summ);
 
 void free_summary (Summary *summ);
 

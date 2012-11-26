@@ -4494,7 +4494,7 @@ void print_summary_single (const Summary *s,
     vals[8]  = s->perc05[0];
     vals[9]  = s->perc95[0];
     vals[10] = s->iqr[0];
-    vals[11] = s->missing[0];
+    vals[11] = s->misscount[0];
 
     if (na(vals[8]) && na(vals[9])) {
 	skip0595 = 1;
@@ -4581,7 +4581,9 @@ void print_summary (const Summary *summ,
 
 #if 0
     if (!(summ->opt & OPT_B)) {
-	prhdr(_("Summary statistics"), dset, summ->missing, prn);
+	int missing = summary_has_missing_values(summ);
+
+	prhdr(_("Summary statistics"), dset, missing, prn);
     }
 #endif
 
@@ -4700,7 +4702,7 @@ void print_summary (const Summary *summ,
 		printf15(summ->perc95[i], prn);
 	    }
 	    printf15(summ->iqr[i], prn);
-	    pprintf(prn, "%15d", (int) summ->missing[i]);
+	    pprintf(prn, "%15d", (int) summ->misscount[i]);
 	    pputc(prn, '\n');
 	}
 	pputc(prn, '\n');
@@ -4718,7 +4720,7 @@ void print_summary (const Summary *summ,
 void free_summary (Summary *summ)
 {
     free(summ->list);
-    free(summ->missing);
+    free(summ->misscount);
     free(summ->stats);
 
     free(summ);
@@ -4742,7 +4744,7 @@ static Summary *summary_new (const int *list, gretlopt opt)
 
     s->opt = opt;
     s->n = 0;
-    s->missing = malloc(nv * sizeof *s->missing);
+    s->misscount = malloc(nv * sizeof *s->misscount);
 
     s->stats = malloc(11 * nv * sizeof *s->stats);
     if (s->stats == NULL) {
@@ -4765,6 +4767,21 @@ static Summary *summary_new (const int *list, gretlopt opt)
     s->sb = s->sw = NADBL;
 
     return s;
+}
+
+int summary_has_missing_values (const Summary *summ)
+{
+    if (summ->misscount != NULL) {
+	int i, nv = summ->list[0];
+
+	for (i=0; i<nv; i++) {
+	    if (summ->misscount[i] > 0) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
 }
 
 /**
@@ -4829,7 +4846,7 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 	    }
 	}
 
-	s->missing[i] = ntot - ni;
+	s->misscount[i] = ntot - ni;
 
 	if (ni > s->n) {
 	    s->n = ni;
@@ -4930,7 +4947,7 @@ Summary *get_summary (const int *list, const DATASET *dset,
 	vi = s->list[i+1];
 	x = dset->Z[vi];
 	ni = good_obs(x + t1, nmax, &x0);
-	s->missing[i] = nmax - ni;
+	s->misscount[i] = nmax - ni;
 
 	if (ni > s->n) {
 	    s->n = ni;
@@ -5560,7 +5577,7 @@ int means_test (const int *list, const DATASET *dset,
 
 int vars_test (const int *list, const DATASET *dset, PRN *prn)
 {
-    double m, skew, kurt, s1, s2, var1, var2;
+    double m, s1, s2, var1, var2;
     double F, pval;
     double *x = NULL, *y = NULL;
     int dfn, dfd, n1, n2, n = dset->n;
@@ -5585,17 +5602,17 @@ int vars_test (const int *list, const DATASET *dset, PRN *prn)
 	return 1;
     }
     
-    gretl_moments(0, n1-1, x, &m, &s1, &skew, &kurt, 1);
-    gretl_moments(0, n2-1, y, &m, &s2, &skew, &kurt, 1);
+    gretl_moments(0, n1-1, x, &m, &s1, NULL, NULL, 1);
+    gretl_moments(0, n2-1, y, &m, &s2, NULL, NULL, 1);
 
     var1 = s1*s1;
     var2 = s2*s2;
     if (var1 > var2) { 
-	F = var1/var2;
+	F = var1 / var2;
 	dfn = n1 - 1;
 	dfd = n2 - 1;
     } else {
-	F = var2/var1;
+	F = var2 / var1;
 	dfn = n2 - 1;
 	dfd = n1 - 1;
     }
