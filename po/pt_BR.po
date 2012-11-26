@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-11-25 18:38-0500\n"
-"PO-Revision-Date: 2012-11-21 00:45-0300\n"
+"PO-Revision-Date: 2012-11-26 00:01-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -7288,7 +7288,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 21 de outubro de 2012."
+"Tradução de 26 de outubro de 2012."
 
 #: gui2/about.c:164
 msgid "License"
@@ -9974,7 +9974,7 @@ msgstr "Menor"
 
 #: gui2/gpt_control.c:316
 msgid "Bigger"
-msgstr ""
+msgstr "Maior"
 
 #: gui2/gpt_control.c:402
 msgid " Click to set position"
@@ -11230,7 +11230,7 @@ msgstr "Série _temporal"
 
 #: gui2/gretl.c:1599
 msgid "_AR(1)..."
-msgstr ""
+msgstr "_AR(1)..."
 
 #: gui2/gretl.c:1600
 msgid "_Autoregressive estimation..."
@@ -13559,7 +13559,7 @@ msgstr "Heteroscedasticidade corrigida"
 
 #: gui2/selector.c:3636
 msgid "AR(1)"
-msgstr ""
+msgstr "AR(1)"
 
 #: gui2/selector.c:3656
 msgid "Count data model"
@@ -13638,9 +13638,8 @@ msgid "Censoring variable"
 msgstr "Variável censurada"
 
 #: gui2/selector.c:3721
-#, fuzzy
 msgid "Dependent variable 2"
-msgstr "Variável dependente"
+msgstr "Variável dependente 2"
 
 #: gui2/selector.c:3723
 msgid "List of AR lags"
@@ -13719,9 +13718,8 @@ msgid "Response variable"
 msgstr "Variável de resposta"
 
 #: gui2/selector.c:4104
-#, fuzzy
 msgid "Dependent variable 1"
-msgstr "Variável dependente"
+msgstr "Variável dependente 1"
 
 #: gui2/selector.c:4164
 msgid "lag order:"
@@ -13776,14 +13774,12 @@ msgid "Exogenous variables"
 msgstr "Variáveis exógenas"
 
 #: gui2/selector.c:4420
-#, fuzzy
 msgid "Selection regressors"
-msgstr "Regressores da equação de seleção"
+msgstr "Regressores de seleção"
 
 #: gui2/selector.c:4422
-#, fuzzy
 msgid "Equation 2 regressors"
-msgstr "Regressores da primeira equação"
+msgstr "Regressores da equação 2"
 
 #: gui2/selector.c:4424
 msgid "Helper functions"
@@ -13831,7 +13827,7 @@ msgstr "Sazonal"
 
 #: gui2/selector.c:4932
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: gui2/selector.c:4938
 msgid "Difference:"
@@ -14130,9 +14126,8 @@ msgid "Endogenous variables"
 msgstr "Variáveis endógenas"
 
 #: gui2/selector.c:6372
-#, fuzzy
 msgid "Equation 1 regressors"
-msgstr "Regressores da primeira equação"
+msgstr "Regressores da equação 1"
 
 #: gui2/selector.c:6374 gui2/selector.c:7802
 msgid "Regressors"
@@ -14207,9 +14202,8 @@ msgid "Define named list"
 msgstr "Definir lista com nome"
 
 #: gui2/selector.c:6904
-#, fuzzy
 msgid "Name of list"
-msgstr "Nome da lista:"
+msgstr "Nome da lista"
 
 #: gui2/selector.c:7215
 msgid "Too many items were selected"
