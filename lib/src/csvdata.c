@@ -27,7 +27,7 @@
 
 #include <errno.h>
 
-#define CDEBUG 0
+#define CDEBUG 2
 
 #define QUOTE      '\''
 #define CSVSTRLEN  72
@@ -2085,6 +2085,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 		break;
 	    }
 	}
+	fprintf(stderr, "numcount = %d\n", numcount);
 	err = E_DATA;
     }
 
