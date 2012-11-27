@@ -11702,10 +11702,10 @@
       </para>
 
       <para context="gui">
-	The <quote>cointegration rank</quote> represents the number of
-	cointegrating vectors.  This must be greater than zero and less than or
-	equal to (generally, less than) the number of endogenous variables 
-	selected.
+	The <quote>rank</quote> represents the number of cointegrating
+	vectors.  This must be greater than zero and less than or
+	equal to (generally, less than) the number of endogenous
+	variables selected.
       </para>
 
       <para context="cli">

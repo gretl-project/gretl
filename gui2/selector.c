@@ -4162,7 +4162,7 @@ static void lag_order_spin (selector *sr, int which)
     GtkAdjustment *adj;
     const char *labels[] = {
 	N_("lag order:"),
-	N_("cointegration rank:")
+	N_("rank:")
     };
     int i, nspin = (which == LAG_AND_RANK)? 2 : 1;
 
@@ -4200,6 +4200,9 @@ static void lag_order_spin (selector *sr, int which)
 						       1, 1, 0);
 	}
 	spin = gtk_spin_button_new(adj, 1, 0);
+	if (i == 1) {
+	    gretl_tooltips_add(label, _("Number of cointegrating vectors"));
+	}
 	gtk_box_pack_end(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
 	gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 	if (i == 0) {
@@ -5169,6 +5172,37 @@ static GtkWidget *pack_switch (GtkWidget *b, selector *sr,
     return hbox;
 }
 
+static void pack_switch_in (GtkWidget *hbox, GtkWidget *b, selector *sr,
+			    gboolean checked, gboolean reversed, 
+			    gretlopt opt, int child)
+{
+    gint offset = (child)? 15 : 0;
+    gint i = opt;
+
+    g_object_set_data(G_OBJECT(b), "opt", GINT_TO_POINTER(i));
+
+    if (reversed) {
+	g_signal_connect(G_OBJECT(b), "toggled", 
+			 G_CALLBACK(reverse_option_callback), sr);
+	if (checked) {
+	    sr->opts &= ~opt;
+	} else {
+	    sr->opts |= opt;
+	}
+    } else {
+	g_signal_connect(G_OBJECT(b), "toggled", 
+			 G_CALLBACK(option_callback), sr);
+	if (checked) {
+	    sr->opts |= opt;
+	} else {
+	    sr->opts &= ~opt;
+	}
+    }
+
+    gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, offset);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), checked);
+}
+
 static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 {
     static int optim = BFGS_MAX;
@@ -5537,7 +5571,6 @@ static void pack_switch_with_extra (GtkWidget *b, selector *sr,
     gint i = opt;
 
     g_object_set_data(G_OBJECT(b), "opt", GINT_TO_POINTER(i));
-
     g_signal_connect(G_OBJECT(b), "toggled", 
 		     G_CALLBACK(option_callback), sr);
     if (checked) {
@@ -5545,7 +5578,6 @@ static void pack_switch_with_extra (GtkWidget *b, selector *sr,
     } else {
 	sr->opts &= ~opt;
     }
-
     gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, offset);
 
     if (extra_text != NULL) {
@@ -5886,7 +5918,7 @@ static void build_xtab_radios (selector *sr)
 
 static void build_ar1_radios (selector *sr)
 {
-    GtkWidget *b1, *b2, *b3, *b4;
+    GtkWidget *b1, *b2, *b3, *b4, *hbox;
     GSList *group;
 
     b1 = gtk_radio_button_new_with_label(NULL, _("Cochrane-Orcutt"));
@@ -5898,10 +5930,10 @@ static void build_ar1_radios (selector *sr)
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b2));
     b3 = gtk_radio_button_new_with_label(group, _("Hildreth-Lu"));
-    pack_switch(b3, sr, FALSE, FALSE, OPT_H, 0);
+    hbox = pack_switch(b3, sr, FALSE, FALSE, OPT_H, 0);
 
     b4 = gtk_check_button_new_with_label(_("Fine-tune using Cochrane-Orcutt"));
-    pack_switch(b4, sr, TRUE, TRUE, OPT_B, 0);
+    pack_switch_in(hbox, b4, sr, TRUE, TRUE, OPT_B, 0);
     gtk_widget_set_sensitive(b4, FALSE);
     sensitize_conditional_on(b4, b3);
 
