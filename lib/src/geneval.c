@@ -4281,6 +4281,14 @@ static NODE *one_string_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+static const char *advance_to_split (const char *s)
+{
+    int n = strcspn(s, " \t\r\n");
+    int m = strlen(s);
+
+    return (n == m)? NULL : s + n;
+}
+
 static NODE *gretl_strsplit (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_string_node(p);
@@ -4296,16 +4304,16 @@ static NODE *gretl_strsplit (NODE *l, NODE *r, parser *p)
 	    int i;
 
 	    for (i=1; i<k; i++) {
-		q = strchr(s, ' ');
+		q = advance_to_split(s);
 		if (q != NULL) {
-		    q += strspn(q, " ");
+		    q += strspn(q, " \t\r\n");
 		    s = q;
 		} else {
 		    s = "";
 		    break;
 		}
 	    }
-	    ret->v.str = gretl_strndup(s, strcspn(s, " "));
+	    ret->v.str = gretl_strndup(s, strcspn(s, " \t\r\n"));
 	} 
 
 	if (!p->err && ret->v.str == NULL) {
