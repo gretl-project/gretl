@@ -845,8 +845,9 @@ int substitute_named_strings (char *line, int *subst)
 
     while (*s && !err) {
 	if (pf) {
+	    /* FIXME do we really want to do this? */
 	    if (*s == '"' && (bs % 2 == 0)) {
-		/* reached end of format string: stop substituting */
+		/* reached end of format string: stop substituting (?) */
 		break;
 	    }
 	    if (*s == '\\') {

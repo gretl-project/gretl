@@ -2458,6 +2458,12 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 	}
     }
 
+#if CMD_DEBUG
+    if (cmd->flags & CMD_SUBST) {
+	fprintf(stderr, "after substitution: '%s'\n", line);
+    }
+#endif
+
     if (cmd->context == FOREIGN && !end_foreign(line)) {
 	cmd_set_nolist(cmd);
 	cmd->opt = OPT_NONE;
