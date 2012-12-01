@@ -111,14 +111,14 @@ enum {
   /* 80 */    BUNDLE,     /* gretl bundle (hash table) */
               BOBJ,       /* object inside a bundle */
 	      FARGS,	  /* set of n function arguments */
+              WLIST,      /* wildcard list spec */
               EMPTY,      /* "null" */
 	      ABSENT,
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
               EROOT,	  /* dummy root for (...) expression */
               UFUN,	  /* user-defined function */
 	      RFUN,       /* GNU R function */
-	      USTR,       /* string variable */
-  /* 90 */    WLIST,      /* wildcard list spec */
+  /* 90 */    USTR,       /* string variable */
 	      IVEC,       /* array of ints, not a varlist */
               INC,   
               DEC,

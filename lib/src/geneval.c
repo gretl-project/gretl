@@ -11141,7 +11141,7 @@ static int edit_list (parser *p)
     int *list = node_get_list(p->ret, p); /* copied */
 
 #if EDEBUG
-    printlist(list, "ret list copy in edit_list");
+    printlist(list, "incoming list in edit_list()");
 #endif
 
     if (!p->err) {

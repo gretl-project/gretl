@@ -347,7 +347,8 @@ static NODE *base (parser *p, NODE *up)
 
 #if SDEBUG
     notify("base", t, p);
-    fprintf(stderr, "on exit from base, p->sym = %d\n", p->sym);
+    fprintf(stderr, "on exit from base, p->sym = %d (p->err = %d)\n", 
+	    p->sym, p->err);
 #endif    
 
     return t;
