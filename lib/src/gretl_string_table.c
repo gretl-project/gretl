@@ -762,7 +762,7 @@ static char *mod_strdup (const char *s)
 	strcpy(ret, s);
     } else {
 	int j = 0;
-
+	
 	for (i=0; i<n; i++) {
 	    if (s[i] == '\\' && (i == n - 1 || s[i+1] != '\\')) {
 		ret[j++] = '\\';
@@ -793,11 +793,9 @@ static char *maybe_get_subst (char *name, int *n, int quoted,
     }
 
     if (ret != NULL) {
-	if (quoted) {
-	    if (strchr(ret, '\\')) {
-		ret = mod_strdup(ret);
-		*freeit = 1;
-	    }
+	if (quoted && strchr(ret, '\\')) {
+	    ret = mod_strdup(ret);
+	    *freeit = 1;
 	} 
     }
 
@@ -810,14 +808,14 @@ static void too_long (void)
 			   "(%d bytes) exceeded\n"), MAXLINE);
 }
 
-#define var_context(s,i) (i > 8 && !strncmp(s - 9, "isstring(", 9))
+#define PRINTF_SPECIAL 0
 
 int substitute_named_strings (char *line, int *subst)
 {
     char sname[VNAMELEN];
     int len = strlen(line);
     char *sub, *tmp, *s = line;
-    int bs = 0, pf = 0, quoted = 0;
+    int bs = 0, in_format = 0;
     int freeit;
     int i, n, m, err = 0;
 
@@ -825,30 +823,26 @@ int substitute_named_strings (char *line, int *subst)
 	return 0;
     }
 
-    if (!strncmp(line, "sscanf", 6)) {
-	/* when scanning, let @foo be handled as a variable (FIXME?) */
-	return 0;
-    }    
-
     if (!strncmp(line, "printf", 6) || !strncmp(line, "sprintf", 7)) {
-	pf = 1;
 	s = strchr(s, '"');
 	if (s == NULL) {
 	    /* no format string */
 	    return E_PARSE;
 	}
 	s++;
-	quoted = 1;
+	in_format = 1;
     }
 
     i = s - line;
 
     while (*s && !err) {
-	if (pf) {
-	    /* FIXME do we really want to do this? */
+	if (in_format) {
 	    if (*s == '"' && (bs % 2 == 0)) {
-		/* reached end of format string: stop substituting (?) */
+		/* reached end of (s)printf format string */
+		in_format = 0;
+#if PRINTF_SPECIAL
 		break;
+#endif
 	    }
 	    if (*s == '\\') {
 		bs++;
@@ -856,7 +850,7 @@ int substitute_named_strings (char *line, int *subst)
 		bs = 0;
 	    }
 	}
-	if (*s == '@' && !var_context(s, i)) {
+	if (*s == '@') {
 	    n = gretl_namechar_spn(s + 1);
 	    if (n > 0) {
 		if (n >= VNAMELEN) {
@@ -865,14 +859,14 @@ int substitute_named_strings (char *line, int *subst)
 		*sname = '\0';
 		strncat(sname, s + 1, n);
 		freeit = 0;
-		sub = maybe_get_subst(sname, &n, quoted, &freeit);
+		sub = maybe_get_subst(sname, &n, in_format, &freeit);
 		if (sub != NULL) {
 		    m = strlen(sub);
 		    if (len + m + 2 >= MAXLINE) {
 			too_long();
 			err = 1;
 			break;
-		    } 
+		    }
 		    tmp = gretl_strdup(s + n + 1);
 		    if (tmp == NULL) {
 			err = E_ALLOC;
