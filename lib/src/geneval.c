@@ -862,8 +862,7 @@ static double *series_pdist (int f, char d,
 	gretl_fill_pdf_array(d, parm, xvec + p->dset->t1, n);
     } else {
 	for (t=p->dset->t1; t<=p->dset->t2; t++) {
-	    xvec[t] = scalar_pdist(f, d, parm, np, 
-				   argvec[t], p);
+	    xvec[t] = scalar_pdist(f, d, parm, np, argvec[t], p);
 	}
     }
 
@@ -1233,9 +1232,8 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    s = r->v.bn.n[i];
 	    e = eval(s, p);
 	    if (p->err) {
-		goto disterr;
+		break;
 	    }	    
-
 	    if (scalar_node(e)) {
 		/* scalars always acceptable */
 		if (mrgen) {
@@ -1277,15 +1275,18 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    } else {
 		p->err = E_INVARG;
 		fprintf(stderr, "eval_pdist: arg %d, bad type %d\n", i+1, e->t);
-		goto disterr;
 	    }
 
-	    if (!reusable(p)) {
+	    if (!reusable(p)) { 
 		free_tree(s, p, "Pdist");
 		r->v.bn.n[i] = NULL;
 	    }		    
 	}
 
+	if (p->err) {
+	    goto disterr;
+	}	
+	
 	if (mrgen) {
 	    ret = aux_matrix_node(p);
 	} else if (rgen || argvec != NULL) {
