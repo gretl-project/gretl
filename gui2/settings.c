@@ -314,6 +314,8 @@ int autoicon_on (void)
 	return autoicon;
     } else if (n_user_matrices() > 0) {
 	return autoicon;
+    } else if (n_user_bundles() > 0) {
+	return autoicon;
     } else {
 	return 0;
     }

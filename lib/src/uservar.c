@@ -214,10 +214,13 @@ static int real_user_var_add (const char *name,
     user_var *u = user_var_new(name, type, value);
     int err = 0;
 
-    /* use OPT_P for a private variable */
+    /* We use OPT_P for a private variable, OPT_A
+       when adding as a function argument, OPT_S
+       when adding as a "shell" variable.
+    */
 
 #if UVDEBUG
-    fprintf(stderr, "user_var_add: '%s'\n", name);
+    fprintf(stderr, "real_user_var_add: '%s'\n", name);
 #endif
 
     if (u == NULL) {
@@ -232,6 +235,9 @@ static int real_user_var_add (const char *name,
 	    }
 	    uvars[n_vars] = u;
 	    set_nvars(n_vars + 1, "user_var_add");
+	    if (opt & OPT_A) {
+		u->level += 1;
+	    }
 	}
     }
 
@@ -240,6 +246,9 @@ static int real_user_var_add (const char *name,
 	(type == GRETL_TYPE_MATRIX ||
 	 type == GRETL_TYPE_BUNDLE) &&
 	!(type == GRETL_TYPE_BUNDLE && bname_is_temp(name))) {
+#if UVDEBUG
+	fprintf(stderr, "invoking user_var_callback\n");
+#endif
 	return (*user_var_callback)(name, type, UVAR_ADD);
     }
 
@@ -925,10 +934,7 @@ int copy_as_arg (const char *param_name, GretlType type, void *value)
     }	
 
     if (!err) {
- 	err = user_var_add(param_name, type, copyval);
-	if (!err) {
-	    uvars[n_vars-1]->level += 1;
-	}
+ 	err = real_user_var_add(param_name, type, copyval, OPT_A);
     }
 
     return err;
