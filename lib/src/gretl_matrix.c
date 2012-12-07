@@ -664,6 +664,33 @@ gretl_matrix *gretl_DW_matrix_new (int n)
     return m;
 }
 
+static gretl_matrix *gretl_filled_matrix_new (int r, int c,
+					      double val)
+{
+    gretl_matrix *m = NULL;
+
+    if (r < 0 || c < 0) {
+	return NULL;
+    } else if (r == 0 || c == 0) {
+	m = gretl_null_matrix_new();
+	if (m != NULL) {
+	    m->rows = r;
+	    m->cols = c;
+	}
+    } else {
+	int i, n = r * c;
+
+	m = gretl_matrix_alloc(r, c);
+	if (m != NULL) {
+	    for (i=0; i<n; i++) {
+		m->val[i] = val;
+	    }
+	}
+    }
+
+    return m;
+}
+
 /**
  * gretl_zero_matrix_new:
  * @r: desired number of rows in the matrix.
@@ -675,24 +702,7 @@ gretl_matrix *gretl_DW_matrix_new (int n)
 
 gretl_matrix *gretl_zero_matrix_new (int r, int c)
 {
-    gretl_matrix *m;
-    int i, n = r * c;
-
-    if (r < 0 || c < 0) {
-	return NULL;
-    } else if (r == 0 || c == 0) {
-	return gretl_null_matrix_new();
-    }
-
-    m = gretl_matrix_alloc(r, c);
-
-    if (m != NULL) {
-	for (i=0; i<n; i++) {
-	    m->val[i] = 0.0;
-	}
-    }
-
-    return m;
+    return gretl_filled_matrix_new(r, c, 0.0);
 }
 
 /**
@@ -706,24 +716,7 @@ gretl_matrix *gretl_zero_matrix_new (int r, int c)
 
 gretl_matrix *gretl_unit_matrix_new (int r, int c)
 {
-    gretl_matrix *m;
-    int i, n = r * c;
-
-    if (r < 0 || c < 0) {
-	return NULL;
-    } else if (r == 0 || c == 0) {
-	return gretl_null_matrix_new();
-    }
-
-    m = gretl_matrix_alloc(r, c);
-
-    if (m != NULL) {
-	for (i=0; i<n; i++) {
-	    m->val[i] = 1.0;
-	}
-    }
-
-    return m;
+    return gretl_filled_matrix_new(r, c, 1.0);
 }
 
 /**
@@ -1205,25 +1198,27 @@ int gretl_matrix_random_fill (gretl_matrix *m, int dist)
 
 gretl_matrix *gretl_random_matrix_new (int r, int c, int dist)
 {
-    gretl_matrix *m;
+    gretl_matrix *m = NULL;
 
     if (dist != D_UNIFORM && dist != D_NORMAL) {
 	return NULL;
-    }
-
-    if (r == 0 || c == 0) {
-	return gretl_null_matrix_new();
-    }
-
-    m = gretl_matrix_alloc(r, c);
-    if (m == NULL) {
+    } else if (r < 0 || c < 0) {
 	return NULL;
-    }
-
-    if (dist == D_NORMAL) {
-	gretl_rand_normal(m->val, 0, r * c - 1);
-    } else if (dist == D_UNIFORM) {
-	gretl_rand_uniform(m->val, 0, r * c - 1);
+    } else if (r == 0 || c == 0) {
+	m = gretl_null_matrix_new();
+	if (m != NULL) {
+	    m->rows = r;
+	    m->cols = c;
+	}
+    } else {
+	m = gretl_matrix_alloc(r, c);
+	if (m != NULL) {
+	    if (dist == D_NORMAL) {
+		gretl_rand_normal(m->val, 0, r * c - 1);
+	    } else if (dist == D_UNIFORM) {
+		gretl_rand_uniform(m->val, 0, r * c - 1);
+	    }
+	}
     }
 
     return m;
@@ -8487,7 +8482,12 @@ gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,
     gretl_matrix *c = NULL;
 
     if (a == NULL || b == NULL) {
-	*err = 1;
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (a->cols != b->cols) {
+	*err = E_NONCONF;
 	return NULL;
     }
 
@@ -8578,9 +8578,14 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
     gretl_matrix *c = NULL;
 
     if (a == NULL || b == NULL) {
-	*err = 1;
+	*err = E_DATA;
 	return NULL;
     }
+
+    if (a->rows != b->rows) {
+	*err = E_NONCONF;
+	return NULL;
+    }    
 
     if (gretl_is_null_matrix(a) && gretl_is_null_matrix(b)) {
 	c = gretl_null_matrix_new();

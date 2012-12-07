@@ -233,11 +233,11 @@ static int real_user_var_add (const char *name,
 	    } else if (opt & OPT_S) {
 		u->flags = UV_SHELL;
 	    }
-	    uvars[n_vars] = u;
-	    set_nvars(n_vars + 1, "user_var_add");
 	    if (opt & OPT_A) {
 		u->level += 1;
 	    }
+	    uvars[n_vars] = u;
+	    set_nvars(n_vars + 1, "user_var_add");
 	}
     }
 
@@ -246,9 +246,6 @@ static int real_user_var_add (const char *name,
 	(type == GRETL_TYPE_MATRIX ||
 	 type == GRETL_TYPE_BUNDLE) &&
 	!(type == GRETL_TYPE_BUNDLE && bname_is_temp(name))) {
-#if UVDEBUG
-	fprintf(stderr, "invoking user_var_callback\n");
-#endif
 	return (*user_var_callback)(name, type, UVAR_ADD);
     }
 
@@ -712,7 +709,7 @@ int user_var_add_or_replace (const char *name,
     } else if (u != NULL) {
 	err = user_var_replace_value(u, value);
     } else {
-	err = user_var_add(name, type, value);
+	err = real_user_var_add(name, type, value, OPT_NONE);
     }
 
     return err;
@@ -817,7 +814,7 @@ void set_scalar_edit_callback (void (*callback))
 
 int create_user_var (const char *name, GretlType type)
 {
-    return user_var_add(name, type, NULL);
+    return real_user_var_add(name, type, NULL, OPT_NONE);
 }
 
 /**
@@ -841,15 +838,7 @@ int create_user_var (const char *name, GretlType type)
 int arg_add_as_shell (const char *name, GretlType type,
 		      void *value)
 {
-    int err = real_user_var_add(name, type, value, OPT_S);
-
-    if (!err) {
-	user_var *u = uvars[n_vars-1];
-
-	u->level += 1;
-    }
-
-    return err;
+    return real_user_var_add(name, type, value, OPT_S | OPT_A);
 }
 
 /**
@@ -877,10 +866,9 @@ int copy_matrix_as (const gretl_matrix *m, const char *newname,
     if (m2 == NULL) {
 	err = E_ALLOC;
     } else {
-	err = user_var_add(newname, GRETL_TYPE_MATRIX, m2);
-	if (!err && fnarg) {
-	    uvars[n_vars-1]->level += 1;
-	}
+	gretlopt opt = fnarg ? OPT_A : OPT_NONE;
+
+	err = real_user_var_add(newname, GRETL_TYPE_MATRIX, m2, opt);
     }
 
     return err;
@@ -1225,7 +1213,8 @@ int gretl_scalar_add (const char *name, double val)
 	    err = E_ALLOC;
 	} else {
 	    *px = val;
-	    err = user_var_add(name, GRETL_TYPE_DOUBLE, px);
+	    err = real_user_var_add(name, GRETL_TYPE_DOUBLE, 
+				    px, OPT_NONE);
 	}
 
 	if (!err && level == 0 && scalar_edit_callback != NULL) {
@@ -1245,7 +1234,8 @@ int add_auxiliary_scalar (const char *name, double val)
 	err = E_ALLOC;
     } else {
 	*px = val;
-	err = user_var_add(name, GRETL_TYPE_DOUBLE, px);
+	err = real_user_var_add(name, GRETL_TYPE_DOUBLE, 
+				px, OPT_NONE);
     }
 
     return err;
@@ -1317,34 +1307,6 @@ char *get_string_by_name (const char *name)
     } else {
 	return get_built_in_string_by_name(name);
     }
-}
-
-/**
- * add_string_as:
- * @s: string value to be added.
- * @name: the name of the string variable to add.
- *
- * Adds @s to the saved array of string variables 
- * under the name @name.
- *
- * Returns: 0 on success, non-zero on failure.
- */
-
-int add_string_as (const char *s, const char *name)
-{
-    char *scpy = gretl_strdup(s);
-    int err;
-
-    if (scpy == NULL) {
-	err = E_ALLOC;
-    } else {
-	err = user_var_add(name, GRETL_TYPE_STRING, scpy);
-	if (!err) {
-	    uvars[n_vars-1]->level += 1;
-	}
-    }
-
-    return err;
 }
 
 /**
