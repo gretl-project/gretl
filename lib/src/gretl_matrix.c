@@ -4349,15 +4349,17 @@ matmul_mod_w_scalar (double x, const gretl_matrix *m, int mtr,
 	    }
 	}
     } else {
+	double xm;
 	int i, n = cr * cc;
 
 	for (i=0; i<n; i++) {
+	    xm = x * m->val[i];
 	    if (cmod == GRETL_MOD_CUMULATE) {
-		c->val[i] += x * m->val[i];
+		c->val[i] += xm;
 	    } else if (cmod == GRETL_MOD_DECREMENT) {
-		c->val[i] -= x * m->val[i];
+		c->val[i] -= xm;
 	    } else {
-		c->val[i] = x * m->val[i];
+		c->val[i] = xm;
 	    }
 	}	
     }
