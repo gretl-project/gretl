@@ -4318,7 +4318,52 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	    }
 	}
     }
-}  
+}
+
+static int 
+matmul_mod_w_scalar (double x, const gretl_matrix *m, int mtr,
+		     gretl_matrix *c, GretlMatrixMod cmod)
+{
+    int cr = mtr ? m->cols : m->rows;
+    int cc = mtr ? m->rows : m->cols;
+
+    if (c->rows != cr || c->cols != cc) {
+	return E_NONCONF;
+    }
+
+    if (mtr) {
+	double xm, cij;
+	int i, j, k = 0;
+
+	for (i=0; i<cr; i++) {
+	    for (j=0; j<cc; j++) {
+		xm = x * m->val[k++];
+		if (cmod == GRETL_MOD_CUMULATE) {
+		    cij = gretl_matrix_get(c, i, j) + xm;
+		} else if (cmod == GRETL_MOD_DECREMENT) {
+		    cij = gretl_matrix_get(c, i, j) - xm;
+		} else {
+		    cij = xm;
+		}
+		gretl_matrix_set(c, i, j, cij);
+	    }
+	}
+    } else {
+	int i, n = cr * cc;
+
+	for (i=0; i<n; i++) {
+	    if (cmod == GRETL_MOD_CUMULATE) {
+		c->val[i] += x * m->val[i];
+	    } else if (cmod == GRETL_MOD_DECREMENT) {
+		c->val[i] -= x * m->val[i];
+	    } else {
+		c->val[i] = x * m->val[i];
+	    }
+	}	
+    }
+
+    return 0;
+}
 
 /**
  * gretl_matrix_multiply_mod:
@@ -4362,6 +4407,12 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 
     if (a == b && atr != btr && c->rows == c->cols) {
 	return matrix_multiply_self_transpose(a, atr, c, cmod);
+    }
+
+    if (a->rows == 1 && a->cols == 1) {
+	return matmul_mod_w_scalar(a->val[0], b, btr, c, cmod);
+    } else if (b->rows == 1 && b->cols == 1) {
+	return matmul_mod_w_scalar(b->val[0], a, atr, c, cmod);
     }
 
     lrows = (atr)? a->cols : a->rows;
@@ -8465,6 +8516,9 @@ gretl_matrix *gretl_matrix_left_nullspace (const gretl_matrix *M,
     return L;
 }
 
+#define true_null_matrix(a) (a->rows == 0 && a->cols == 0)
+
+
 /**
  * gretl_matrix_row_concat:
  * @a: upper source matrix (m x n).
@@ -8486,18 +8540,12 @@ gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,
 	return NULL;
     }
 
-    if (a->cols != b->cols) {
-	*err = E_NONCONF;
-	return NULL;
-    }
-
-    if (gretl_is_null_matrix(a) && gretl_is_null_matrix(b)) {
-	c = gretl_null_matrix_new();
-    } else if (gretl_is_null_matrix(a)) {
+    if (true_null_matrix(a)) {
 	c = gretl_matrix_copy(b);
-    } else if (gretl_is_null_matrix(b)) {
+    } else if (true_null_matrix(b)) {
 	c = gretl_matrix_copy(a);
     } else {
+	int nullmat = 0;
 	int scalar_a = 0;
 	int scalar_b = 0;
 	double x;
@@ -8516,11 +8564,14 @@ gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,
 	    c = gretl_matrix_alloc(1 + b->rows, b->cols);
 	} else if (scalar_b) {
 	    c = gretl_matrix_alloc(a->rows + 1, a->cols);
+	} else if (a->rows + b->rows == 0 || a->cols == 0) {
+	    c = gretl_null_matrix_new();
+	    nullmat = 1;
 	} else {
 	    c = gretl_matrix_alloc(a->rows + b->rows, a->cols);
 	}
 
-	if (c != NULL) {
+	if (c != NULL && !nullmat) {
 	    if (scalar_a) {
 		x = a->val[0];
 		for (j=0; j<b->cols; j++) {
@@ -8554,7 +8605,7 @@ gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,
 	}
     }
 
-    if (c == NULL) {
+    if (!*err && c == NULL) {
 	*err = E_ALLOC;
     }    
 
@@ -8582,16 +8633,9 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 	return NULL;
     }
 
-    if (a->rows != b->rows) {
-	*err = E_NONCONF;
-	return NULL;
-    }    
-
-    if (gretl_is_null_matrix(a) && gretl_is_null_matrix(b)) {
-	c = gretl_null_matrix_new();
-    } else if (gretl_is_null_matrix(a)) {
+    if (true_null_matrix(a)) {
 	c = gretl_matrix_copy(b);
-    } else if (gretl_is_null_matrix(b)) {
+    } else if (true_null_matrix(b)) {
 	c = gretl_matrix_copy(a);
     } else {
 	int scalar_a = 0;
@@ -8629,6 +8673,8 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 		    gretl_matrix_set(c, i, a->cols, x);
 		}
 	    }
+	} else if (a->rows == 0 || a->cols + b->cols == 0) {
+	    c = gretl_null_matrix_new();
 	} else {
 	    c = gretl_matrix_alloc(a->rows, a->cols + b->cols);
 	    if (c != NULL) {
@@ -8639,11 +8685,11 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 		memcpy(c->val + anelem, b->val, bsize);
 	    }
 	} 
-
-	if (c == NULL) {
-	    *err = E_ALLOC;
-	} 
     }
+
+    if (!*err && c == NULL) {
+	*err = E_ALLOC;
+    }     
 
     return c;
 }
