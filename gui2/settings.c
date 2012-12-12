@@ -28,6 +28,7 @@
 #include "textbuf.h"
 #include "ssheet.h"
 #include "selector.h"
+#include "gpt_control.h"
 
 #include "libset.h"
 #include "texprint.h"
@@ -105,6 +106,7 @@ static char hc_panel[9] = "Arellano";
 static char hc_garch[5] = "QML";
 
 static int lcnumeric = 1;
+static double graph_scale = 1.0;
 
 #ifdef G_OS_WIN32
 extern int use_wimp;
@@ -115,17 +117,18 @@ char midiplayer[MAXSTR] = "timidity -ig";
 #endif
 
 typedef enum {
-    USERSET  = 1 << 0,  /* user-lavel variable */
+    USERSET  = 1 << 0,  /* user-level variable */
     BOOLSET  = 1 << 1,  /* boolean value (user) */
     INTSET   = 1 << 2,  /* integer value (user) */
-    LISTSET  = 1 << 3,  /* user string, from fixed menu */
-    RADIOSET = 1 << 4,  /* user int, from fixed menu */
-    INVISET  = 1 << 5,  /* not visible in Preferences dialog */
-    FIXSET   = 1 << 6,  /* setting fixed by admin (Windows network use) */
-    MACHSET  = 1 << 7,  /* "local machine" setting */
-    BROWSER  = 1 << 8,  /* wants "Browse" button */
-    RESTART  = 1 << 9,  /* needs program restart to take effect */
-    GOTSET   = 1 << 10  /* dynamic: already found a setting */
+    FLOATSET = 1 << 3,  /* floating point value (user) */
+    LISTSET  = 1 << 4,  /* user selection from fixed menu */
+    RADIOSET = 1 << 5,  /* user int, from fixed menu */
+    INVISET  = 1 << 6,  /* not visible in Preferences dialog */
+    FIXSET   = 1 << 7,  /* setting fixed by admin (Windows network use) */
+    MACHSET  = 1 << 8,  /* "local machine" setting */
+    BROWSER  = 1 << 9,  /* wants "Browse" button */
+    RESTART  = 1 << 10, /* needs program restart to take effect */
+    GOTSET   = 1 << 11  /* dynamic: already found a setting */
 } rcflags;
 
 typedef struct {
@@ -151,8 +154,10 @@ RCVAR rc_vars[] = {
       MACHSET | BROWSER, sizeof paths.gretldir, TAB_MAIN, NULL },
     { "userdir", N_("User's gretl directory"), NULL, paths.workdir, 
       INVISET, sizeof paths.workdir, TAB_MAIN, NULL },
+#if 0 /* not working anyway */
     { "updater", N_("Tell me about gretl updates"), NULL, &updater, 
       BOOLSET, 0, TAB_MAIN, NULL },
+#endif
 #ifndef G_OS_WIN32
     { "winsize", N_("Remember main window size"), NULL, &winsize, 
       BOOLSET, 0, TAB_MAIN, NULL },
@@ -189,6 +194,8 @@ RCVAR rc_vars[] = {
     { "langpref", N_("Language preference"), NULL, langpref, 
       LISTSET | RESTART, 32, TAB_MAIN, NULL },
 #endif
+    { "graph_scale", N_("Default graph scale"), NULL, &graph_scale,
+      LISTSET | FLOATSET, 0, TAB_MAIN, NULL },
 #ifndef G_OS_WIN32 
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
       MACHSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
@@ -1089,7 +1096,7 @@ static const char **get_list_setting_strings (void *var, int *n)
     } else if (var == hc_garch) {
 	strs = garch_strs;
 	*n = sizeof garch_strs / sizeof garch_strs[0];
-    } 
+    }
 
     return strs;
 }
@@ -1161,7 +1168,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 {
     GtkWidget *b_table = NULL, *s_table = NULL;
     GtkWidget *l_table = NULL;
-    GtkWidget *box, *w = NULL;
+    GtkWidget *vbox, *w = NULL;
     int s_len = 1, b_len = 0, l_len = 1;
     int s_cols, b_cols = 0, l_cols = 0;
     int b_col = 0;
@@ -1169,13 +1176,12 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     int n_bool = 0;
     int n_browse = 0;
     int n_list = 0;
-    int langs = 0;
     RCVAR *rc;
     int i;
    
-    box = gtk_vbox_new(FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(box), 10);
-    gtk_widget_show(box);
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+    gtk_widget_show(vbox);
 
     if (tab == TAB_MAIN) {
 	w = gtk_label_new(_("General"));
@@ -1190,7 +1196,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     }
     
     gtk_widget_show(w);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, w);   
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, w);   
 
     get_table_sizes(tab, &n_str, &n_bool, &n_browse, &n_list);
 
@@ -1202,7 +1208,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	l_table = gtk_table_new(l_len, l_cols, FALSE);
 	gtk_table_set_row_spacings(GTK_TABLE(l_table), 5);
 	gtk_table_set_col_spacings(GTK_TABLE(l_table), 5);
-	gtk_box_pack_start(GTK_BOX(box), l_table, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), l_table, FALSE, FALSE, 0);
 	gtk_widget_show(l_table);
     }	
 
@@ -1210,7 +1216,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	s_table = gtk_table_new(s_len, s_cols, FALSE);
 	gtk_table_set_row_spacings(GTK_TABLE(s_table), 5);
 	gtk_table_set_col_spacings(GTK_TABLE(s_table), 5);
-	gtk_box_pack_start(GTK_BOX(box), s_table, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), s_table, FALSE, FALSE, 0);
 	gtk_widget_show(s_table);
     }
 
@@ -1219,20 +1225,22 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	b_table = gtk_table_new(1, b_cols, FALSE);
 	gtk_table_set_row_spacings(GTK_TABLE(b_table), 5);
 	gtk_table_set_col_spacings(GTK_TABLE(b_table), 5);
-	gtk_box_pack_start(GTK_BOX(box), b_table, FALSE, FALSE, 10);
+	gtk_box_pack_start(GTK_BOX(vbox), b_table, FALSE, FALSE, 10);
 	gtk_widget_show(b_table);
     }
 
     if (tab != TAB_VCV && n_list > 0) {
-	/* non-VCV tab: language list comes last */
+	/* non-VCV tab -- list entries come last, and we
+	   use an hbox to pack them left */
+	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+
 	l_cols = 2;
-#ifdef ENABLE_NLS
-	langs = 1;
-#endif
 	l_table = gtk_table_new(l_len, l_cols, FALSE);
-	gtk_table_set_row_spacings(GTK_TABLE(l_table), 5);
-	gtk_table_set_col_spacings(GTK_TABLE(l_table), 5);
-	gtk_box_pack_start(GTK_BOX(box), l_table, FALSE, FALSE, 0);
+	gtk_table_set_row_spacings(GTK_TABLE(l_table), 10);
+	gtk_table_set_col_spacings(GTK_TABLE(l_table), 10);
+	gtk_box_pack_start(GTK_BOX(hbox), l_table, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+	gtk_widget_show(hbox);
 	gtk_widget_show(l_table);
     }
 
@@ -1387,28 +1395,53 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 				 rc->var);
 	    }
 	} else if (rc->flags & LISTSET) {
+	    int langs = rc->var == langpref;
 	    int j, active = 0;
 
 	    l_len++;
 
 	    gtk_table_resize(GTK_TABLE(l_table), l_len, l_cols);
 	    w = gtk_label_new(_(rc->description));
-	    if (langs) {
-		gtk_table_attach(GTK_TABLE(l_table), w, 
-				 0, 1, l_len - 1, l_len,
-				 0, 0, 0, 0);
+	    if (tab == TAB_MAIN) {
+		gtk_misc_set_alignment(GTK_MISC(w), 0.0, 0.5);
 	    } else {		
 		gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.5);
-		gtk_table_attach_defaults(GTK_TABLE(l_table), 
-					  w, 0, 1, l_len - 1, l_len);
 	    } 
+	    gtk_table_attach_defaults(GTK_TABLE(l_table), 
+				      w, 0, 1, l_len - 1, l_len);
 	    gtk_widget_show(w);
 
 	    rc->widget = gtk_combo_box_text_new();
-	    gtk_table_attach(GTK_TABLE(l_table), rc->widget, 
-			     1, 2, l_len - 1, l_len,
-			     0, 0, 0, 0);
-	    if (langs) {
+
+	    if (tab == TAB_MAIN) {
+		GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+
+		gtk_box_pack_start(GTK_BOX(hbox), rc->widget, FALSE, FALSE, 5);
+		gtk_table_attach(GTK_TABLE(l_table), hbox, 
+				 1, 2, l_len - 1, l_len,
+				 GTK_EXPAND | GTK_FILL, 0, 0, 0);
+		gtk_widget_show(hbox);
+	    } else {
+		gtk_table_attach(GTK_TABLE(l_table), rc->widget, 
+				 1, 2, l_len - 1, l_len,
+				 0, 0, 0, 0);
+	    }		
+
+	    if (rc->flags & FLOATSET) {
+		/* special: graph scale */
+		double scale, *xvar = (double *) rc->var;
+		char numstr[4];
+
+		j = 0;
+		while (get_graph_scale(j, &scale)) {
+		    sprintf(numstr, "%.1f", scale);
+		    combo_box_append_text(rc->widget, numstr);
+		    if (scale == *xvar) {
+			active = j;
+		    }
+		    j++;
+		}
+	    } else if (langs) {
 		char *strvar = (char *) rc->var;
 		const char *str;
 
@@ -1513,6 +1546,11 @@ static void set_gp_colors (void)
     }
 }
 
+static void set_gp_scale (void)
+{
+    gnuplot_png_set_default_scale(graph_scale);
+}
+
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
 
 static void maybe_revise_tramo_x12a_status (void)
@@ -1562,6 +1600,20 @@ static void rcvar_set_string (RCVAR *rcvar, const char *sval, int *changed)
     }
 }
 
+static void rcvar_set_double (RCVAR *rcvar, const char *sval, int *changed)
+{
+    double *xvar = (double *) rcvar->var;
+
+    if (sval != NULL && *sval != '\0') {
+	double xval = atof(sval);
+
+	if (xval != *xvar) {
+	    flag_changed(rcvar, changed);
+	    *xvar = xval;
+	}
+    }
+}
+
 /* register and react to changes from Preferences dialog */
 
 static void apply_changes (GtkWidget *widget, gpointer data) 
@@ -1598,7 +1650,11 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 		} else {
 		    gchar *str = combo_box_get_active_text(box);
 
-		    rcvar_set_string(rcvar, str, &changed);
+		    if (rcvar->flags & FLOATSET) {
+			rcvar_set_double(rcvar, str, &changed);
+		    } else {
+			rcvar_set_string(rcvar, str, &changed);
+		    }
 		    g_free(str);
 		}
 	    }
@@ -1675,6 +1731,10 @@ int write_rc (void)
 	    fprintf(fp, "%s = %s\n", rcvar->key, val);
 	} else if (rcvar->flags & INTSET) {
 	    fprintf(fp, "%s = %d\n", rcvar->key, *(int *) rcvar->var);
+	} else if (rcvar->flags & FLOATSET) {
+	    gretl_push_c_numeric_locale();
+	    fprintf(fp, "%s = %g\n", rcvar->key, *(double *) rcvar->var);
+	    gretl_pop_c_numeric_locale();
 	} else {
 	    strvar = (char *) rcvar->var;
 	    fprintf(fp, "%s = %s\n", rcvar->key, strvar);
@@ -1710,6 +1770,15 @@ static void str_to_int (const char *s, void *b)
 
     if (sscanf(s, "%d", ivar) != 1) {
 	*ivar = 0;
+    }
+}
+
+static void str_to_double (const char *s, void *b)
+{
+    double *xvar = (double *) b;
+
+    if (s != NULL && *s != '\0') {
+	*xvar = dot_atof(s);
     }
 }
 
@@ -1781,6 +1850,7 @@ static int common_read_rc_setup (void)
     libset_set_bool(SHELL_OK, shellok);
     libset_set_bool(USE_CWD, usecwd);
     set_gp_colors();
+    set_gp_scale();
 
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
@@ -1839,6 +1909,8 @@ static void find_and_set_rc_var (const char *key, const char *val)
 		    str_to_boolvar(val, rcvar->var);
 		} else if (rcvar->flags & INTSET) {
 		    str_to_int(val, rcvar->var);
+		} else if (rcvar->flags & FLOATSET) {
+		    str_to_double(val, rcvar->var);
 		} else {
 		    strvar = (char *) rcvar->var;
 		    *strvar = '\0';

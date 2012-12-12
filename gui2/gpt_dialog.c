@@ -2132,7 +2132,6 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hsep, 0, TAB_MAIN_COLS, 
 				  rows - 1, rows);  
 	gtk_widget_show(hsep);
-
 	add_color_selector(BOXCOLOR, tbl, TAB_MAIN_COLS, &rows, 
 			   ed->notebook);
     }

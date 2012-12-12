@@ -52,6 +52,7 @@
 
 static char gnuplot_path[MAXLEN];
 static int gp_small_font_size;
+static double default_png_scale = 1.0;
 
 typedef struct gnuplot_info_ gnuplot_info;
 
@@ -1102,13 +1103,22 @@ static const char *real_png_term_line (PlotType ptype,
 
 const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 {
-    return real_png_term_line(ptype, flags, NULL, 1.0);
+    double s = default_png_scale;
+
+    return real_png_term_line(ptype, flags, NULL, s);
 }
 
 const char *get_png_line_for_plotspec (const GPT_SPEC *spec)
 {
     return real_png_term_line(spec->code, spec->flags, 
 			      spec->fontstr, spec->scale);
+}
+
+void gnuplot_png_set_default_scale (double s)
+{
+    if (s >= 0.5 && s <= 2.0) {
+	default_png_scale = s;
+    }
 }
 
 static void png_font_to_emf (const char *pngfont, char *emfline)
@@ -1400,6 +1410,11 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 	if (gui) {
 	    /* set up for PNG output */
 	    fprintf(fp, "%s\n", get_gretl_png_term_line(ptype, flags));
+	    if (default_png_scale != 1.0) {
+		gretl_push_c_numeric_locale();
+		fprintf(fp, "# scale = %.1f\n", default_png_scale);
+		gretl_pop_c_numeric_locale();
+	    }
 	    print_set_output(NULL, fp);
 	}
 	write_plot_type_string(ptype, flags, fp);
@@ -2520,6 +2535,8 @@ static void set_lwstr (const DATASET *dset, int v, char *s)
 
     if (w > 1) {
 	sprintf(s, " lw %d", w);
+    } else if (default_png_scale > 1.0) {
+	strcpy(s, " lw 2");
     } else {
 	*s = '\0';
     }

@@ -44,12 +44,6 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdkkeysyms.h>
 
-#define TRY_SVG 0
-
-#if TRY_SVG
-# include <librsvg/rsvg.h>
-#endif
-
 enum {
     PLOT_SAVED          = 1 << 0,
     PLOT_ZOOMED         = 1 << 1,
@@ -3510,10 +3504,25 @@ static void add_to_session_callback (GPT_SPEC *spec)
     }
 }
 
+static double graph_scales[] = {
+    0.8, 1.0, 1.1, 1.2, 1.4
+};
+
+int get_graph_scale (int i, double *s)
+{
+    int n = G_N_ELEMENTS(graph_scales);
+
+    if (i >= 0 && i < n) {
+	*s = graph_scales[i];
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static void plot_do_rescale (png_plot *plot, int mod)
 {
-    double scales[] = { 0.8, 1.0, 1.1, 1.2, 1.4 };
-    int n = G_N_ELEMENTS(scales);
+    int n = G_N_ELEMENTS(graph_scales);
     FILE *fp = NULL;
 
     if (mod == 0) {
@@ -3529,15 +3538,15 @@ static void plot_do_rescale (png_plot *plot, int mod)
 	int i;
 
 	for (i=0; i<n; i++) {
-	    if (plot->spec->scale == scales[i]) {
+	    if (plot->spec->scale == graph_scales[i]) {
 		break;
 	    }
 	}
 
 	if (mod == 1 && i < n - 1) {
-	    plot->spec->scale = scales[i+1];
+	    plot->spec->scale = graph_scales[i+1];
 	} else if (mod == -1 && i > 0) {
-	    plot->spec->scale = scales[i-1];
+	    plot->spec->scale = graph_scales[i-1];
 	} else {
 	    gdk_window_beep(plot->window);
 	    return;
@@ -3551,8 +3560,8 @@ static void plot_do_rescale (png_plot *plot, int mod)
 	return;
     }
 
-    gtk_widget_set_sensitive(plot->up_icon, plot->spec->scale != scales[n-1]);
-    gtk_widget_set_sensitive(plot->down_icon, plot->spec->scale != scales[0]);
+    gtk_widget_set_sensitive(plot->up_icon, plot->spec->scale != graph_scales[n-1]);
+    gtk_widget_set_sensitive(plot->down_icon, plot->spec->scale != graph_scales[0]);
 
     set_png_output(plot->spec);
     plotspec_print(plot->spec, fp);
@@ -4372,81 +4381,6 @@ static int render_pngfile (png_plot *plot, int view)
     return 0;
 }
 
-#if TRY_SVG
-
-static int render_svgfile (png_plot *plot, int view)
-{
-    gint width, height;
-    GdkPixbuf *pbuf;
-    char fname[MAXLEN];
-    GError *gerr = NULL;
-
-    build_path(fname, gretl_dotdir(), "test.svg", NULL);
-
-    pbuf = rsvg_pixbuf_from_file(fname, &gerr);
-
-    if (pbuf == NULL) {
-	fprintf(stderr, "rsvg_pixbuf_from_file failed\n");
-	gretl_remove(fname);
-	return 1;
-    }
-
-    width = gdk_pixbuf_get_width(pbuf);
-    height = gdk_pixbuf_get_height(pbuf);
-
-    if (width == 0 || height == 0) {
-	errbox(_("Malformed SVG file for graph"));
-	g_object_unref(pbuf);
-	gretl_remove(fname);
-	return 1;
-    }
-
-    /* scrap any old record of which points are labeled */
-    if (plot->spec->labeled != NULL) {
-	free(plot->spec->labeled);
-	plot->spec->labeled = NULL;
-	if (!(plot->spec->flags & GPT_PRINT_MARKERS)) {
-	    /* any markers will have disappeared on reprinting */
-	    plot->format &= ~PLOT_MARKERS_UP;
-	} 
-    }
-
-#if GTK_MAJOR_VERSION >= 3
-    copy_pixbuf_to_surface(plot, pbuf);
-#else
-    plot->cr = gdk_cairo_create(plot->pixmap);
-    gdk_cairo_set_source_pixbuf(plot->cr, pbuf, 0, 0);
-    cairo_paint(plot->cr);
-    cairo_destroy(plot->cr);
-    if (plot->savebuf != NULL) {
-	g_object_unref(plot->savebuf);
-	plot->savebuf = NULL;
-    }
-#endif
-
-    g_object_unref(pbuf);
-    gretl_remove(fname);
-   
-    if (view != PNG_START) { 
-	/* we're changing the view, so refresh the whole canvas */
-	redraw_plot_rectangle(plot, NULL);	
-	if (view == PNG_ZOOM) {
-	    plot->status |= PLOT_ZOOMED;
-	} else if (view == PNG_UNZOOM) {
-	    plot->status ^= PLOT_ZOOMED;
-	}
-    }
-
-#ifdef G_OS_WIN32
-    /* somehow the plot can end up underneath */
-    gtk_window_present(GTK_WINDOW(plot->shell));
-#endif
-
-    return 0;
-}
-
-#endif
-
 static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 {
     /* delete temporary plot source file? */
@@ -4885,11 +4819,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 		     G_CALLBACK(plot_expose), plot);
 #endif
 
-#if TRY_SVG
-    err = render_svgfile(plot, PNG_START);
-#else
     err = render_pngfile(plot, PNG_START);
-#endif
 
     if (err) {
 	gtk_widget_destroy(plot->shell);

@@ -78,4 +78,6 @@ void launch_gnuplot_interactive (void);
 int dump_plot_buffer (const char *buf, const char *fname,
 		      int addpause);
 
+int get_graph_scale (int i, double *s);
+
 #endif /* GPT_CONTROL_H */

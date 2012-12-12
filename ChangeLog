@@ -1,6 +1,8 @@
 version 1.9.12, in progress
 - Improve structural integrity of model specification dialog
 - Gnuplot version: require 4.4.0 or higher
+- You can now use "bundle b = null" to create a new bundle or
+  empty an existing one
 
 2012-11-21 version 1.9.11
 - Substantial re-write of code for handling named variables
