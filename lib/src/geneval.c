@@ -11232,7 +11232,7 @@ static int gen_check_return_type (parser *p)
 	    p->err = E_TYPES;
 	}
     } else if (p->targ == BUNDLE) {
-	if (r->t != BUNDLE) {
+	if (r->t != BUNDLE && r->t != EMPTY) {
 	    p->err = E_TYPES;
 	}
     } else if (p->targ == BOBJ) {
@@ -11511,6 +11511,16 @@ static int save_generated_var (parser *p, PRN *prn)
 		/* avoid destroying the returned bundle */
 		r->v.b = NULL;
 	    }
+	} else if (r->t == EMPTY) {
+	    gretl_bundle *b = gretl_bundle_new();
+
+	    if (b == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		p->err = user_var_add_or_replace(p->lh.name,
+						 GRETL_TYPE_BUNDLE,
+						 b);
+	    }
 	} else {
 	    /* assignment from pre-existing named bundle */
 	    p->err = gretl_bundle_copy_as(p->rhs, p->lh.name);
@@ -11691,9 +11701,6 @@ void gen_save_or_print (parser *p, PRN *prn)
 		printnode(p->ret, p);
 		pputc(p->prn, '\n');
 	    }
-	} else if (p->flags & (P_SCALAR | P_SERIES)) {
-	    /* generating a stipulated type */
-	    gen_check_return_type(p);
 	} else if (p->flags & P_DECL) {
 	    do_decl(p);
 	} else {
