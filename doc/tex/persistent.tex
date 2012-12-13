@@ -310,13 +310,9 @@ See the \GCR\ for more details.
 
 For some purposes it may be useful to save a string (that is, a
 sequence of characters) as a named variable that can be reused.
-Versions of \app{gretl} higher than 1.6.0 offer this facility, but
-some of the refinements noted below are available only in \app{gretl}
-1.7.2 and higher.
 
-To \textit{define} a string variable, you can use either of two
-commands, \texttt{string} or \texttt{sprintf}.  The \texttt{string}
-command is simpler: you can type, for example,
+Some examples of the definition of a string variable are shown
+below.
 %
 \begin{code}
 string s1 = "some stuff I want to save"
@@ -324,11 +320,11 @@ string s2 = getenv("HOME")
 string s3 = s1 + 11
 \end{code}
 %
-The first field after \texttt{string} is the name under which the
-string should be saved, then comes an equals sign, then comes a
-specification of the string to be saved. This can be the keyword
-\texttt{null}, to produce an empty string, or may take any of the 
-following forms:
+The first field after the type-name \texttt{string} is the name under
+which the string should be saved, then comes an equals sign, then
+comes a specification of the string to be saved. This can be the
+keyword \texttt{null}, to produce an empty string, or may take any of
+the following forms:
 
 \begin{itemize}
 \item a string literal (enclosed in double quotes); or
@@ -370,80 +366,121 @@ backslash character.  If you wish to use backslash-escapes to denote
 newlines, tabs, embedded double-quotes and so on, use \texttt{sprintf}
 instead.
 
-The \texttt{sprintf} command is more flexible.  It works exactly as
-\app{gretl}'s \texttt{printf} command except that the ``format''
-string must be preceded by the name of a string variable.  For
-example,
+The \texttt{sprintf} command can also be used to define a string
+variable. This command works in exactly the same way as the
+\texttt{printf} command except that the ``format'' string must be
+preceded by an identifier: either the name of an existing string
+variable or a new name to which the string should be assigned.
+For example,
 %
 \begin{code}
 scalar x = 8
 sprintf foo "var%d", x
 \end{code}
 
-To use the \emph{value} of a string variable in a command, give the
-name of the variable preceded by the ``at'' sign, \verb|@|.  This
-notation is treated as a ``macro''.  That is, if a sequence of
-characters in a \app{gretl} command following the symbol \verb|@| is
-recognized as the name of a string variable, the value of that
-variable is sustituted literally into the command line before the
-regular parsing of the command is carried out.  This is illustrated in
-the following interactive session:
-%
-\begin{code}
-? scalar x = 8
- scalar x = 8
-Generated scalar x (ID 2) = 8
-? sprintf foo "var%d", x
-Saved string as 'foo'
-? print "@foo"
-var8
-\end{code}
-%
-Note the effect of the quotation marks in the line 
-\verb|print "@foo"|.  The line
-%
-\begin{code}
-? print @foo
-\end{code}
-%
-would \textit{not} print a literal ``\texttt{var8}'' as above.  After
-pre-processing the line would read
-%
-\begin{code}
-print var8
-\end{code}
-%
-It would therefore print the value(s) of the variable \texttt{var8},
-if such a variable exists, or would generate an error otherwise.
+\subsection{String variables and string substitution}
 
-In some contexts, however, one wants to treat string variables as
-variables in their own right: to do this, give the name of
-the variable without the leading \verb|@| symbol.  This is the
-way to handle such variables in the following contexts:
+String variables can be used in two ways in scripting: the name of the
+variable can be typed ``as is'', or it may be preceded by the ``at''
+sign, \verb|@|. In the first variant the named string is treated as a
+variable in its own right, while the second calls for ``string
+substitution''. The context determines which of these variants is
+appropriate. 
+
+In the following contexts the names of string variables should be
+given in plain form (without the ``at'' sign):
 
 \begin{itemize}
-\item When they appear among the arguments to the commands \texttt{printf} and
-  \texttt{sprintf}.
+\item When such a variable appears among the arguments to the
+  commands \texttt{printf} or \texttt{sprintf}.
+\item When such a variable is given as the argument to a function.
 \item On the right-hand side of a \texttt{string} assignment.
-\item When they appear as an argument to the function taking
-  a string argument.
 \end{itemize}
 
-Here is an illustration of the use of named string arguments with
+Here is an illustration of the use of a named string argument with
 \texttt{printf}:
 %
 \begin{code}
-string vstr = "variance"
+? string vstr = "variance"
 Generated string vstr
-printf "vstr: %12s\n", vstr
+? printf "vstr: %12s\n", vstr
 vstr:     variance
 \end{code}
+
+String substitution can be used in contexts where a string variable is
+not acceptable as such. If \app{gretl} encounters the symbol \verb|@|
+followed directly by the name of a string variable, this notation is
+treated as a ``macro'': the value of the variable is sustituted
+literally into the command line before the regular parsing of the
+command is carried out.
+
+One common use of string substitution is when you want to construct
+and use the name of a series programatically. For example, suppose you
+want to create 10 random normal series named \texttt{norm1} to
+\texttt{norm10}. This can be accomplished as follows.
 %
-Note that \texttt{vstr} should not be put in quotes in this context.
-Similarly with
 \begin{code}
-? string vstr_copy = vstr
+string sname = null
+loop i=1..10
+  sprintf sname "norm%d", i
+  series @sname = normal()
+endloop
 \end{code}
+%
+Note that plain \texttt{sname} could not be used in the second line
+within the loop: the effect would be to attempt to overwrite the
+string variable named \texttt{sname} with a series of the same
+name. What we want is for the current \textit{value} of
+\texttt{sname} to be dumped directly into the command that defines a
+series, and the ``\verb|@|'' notation achieves that.
+
+Another typical use of string substitution is when you want the
+options used with a particular command to vary depending on
+some condition. For example,
+%
+\begin{code}
+function void use_optstr (series y, list xlist, int verbose)
+   string optstr = verbose ? "" : "--simple-print"
+   ols y xlist @optstr 
+end function
+
+open data4-1
+list X = const sqft
+use_optstr(price, X, 1)
+use_optstr(price, X, 0)
+\end{code} 
+
+When printing the value of a string variable using the \texttt{print}
+command, the plain variable name should generally be used, as in
+%
+\begin{code}
+string s = "Just testing"
+print s
+\end{code}
+%
+The following variant is equivalent, though clumsy.
+%
+\begin{code}
+string s = "Just testing"
+print "@s"
+\end{code}
+%
+But note that this next variant does something quite different.
+%
+\begin{code}
+string s = "Just testing"
+print @s
+\end{code}
+%
+After string substitution, the print command reads
+%
+\begin{code}
+print Just testing
+\end{code}
+%
+which attempts to print the values of two variables, \texttt{Just} and
+\texttt{testing}.
+
 
 \subsection{Built-in strings}
 
@@ -477,9 +514,9 @@ variable as its argument.  For example:
 %
 \begin{code}
 ? string user = getenv("USER")
-Saved string as 'user'
+Generated string user
 ? string home = getenv("HOME")
-Saved string as 'home'
+Generated string home
 ? print "@user's home directory is @home"
 cottrell's home directory is /home/cottrell
 \end{code}
@@ -490,14 +527,10 @@ retrieves the length of the string, as in
 %
 \begin{code}
 ? string temp = getenv("TEMP")
-Saved empty string as 'temp'
+Generated string temp
 ? scalar x = strlen(temp)
-Generated scalar x (ID 2) = 0
+Generated scalar x = 0
 \end{code}
-
-At present the \texttt{getenv} function can only be used on the
-right-hand side of a \texttt{string} assignment, as in the above
-illustrations.
 
 \subsection{Capturing strings via the shell}
 
@@ -528,8 +561,10 @@ Generated string foo
 %
 The above could also be accomplished using the ``macro'' variant
 of a string variable, provided it is placed in quotation marks: 
-
-\verb|string foo = readfile("@x12adir/QNC.rts")|
+%
+\begin{code}
+string foo = readfile("@x12adir/QNC.rts")
+\end{code}
 
 \subsection{The \texttt{strstr} function}
 
@@ -545,10 +580,10 @@ returned; otherwise the portion of \textsl{s1} starting with
 %
 \begin{code}
 ? string hw = "hello world"
-Saved string as 'hw'
+Generated string hw
 ? string w = strstr(hw, "o")
-Saved string as 'w'
-? print "@w"
+Generated string w
+? print w
 o world
 \end{code}
 %

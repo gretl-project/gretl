@@ -1413,6 +1413,7 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 	    if (default_png_scale != 1.0) {
 		gretl_push_c_numeric_locale();
 		fprintf(fp, "# scale = %.1f\n", default_png_scale);
+		fputs("# auto linewidth\n", fp);
 		gretl_pop_c_numeric_locale();
 	    }
 	    print_set_output(NULL, fp);

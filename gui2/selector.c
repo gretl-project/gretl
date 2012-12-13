@@ -4929,7 +4929,7 @@ static void build_arma_spinners (selector *sr)
     GtkAdjustment *adj;
     gdouble vmax, val;
     gboolean freeform;
-#if 1
+#if 0
     const char *strs[] = {
 	N_("AR"),
 	N_("I"),

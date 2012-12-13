@@ -19,7 +19,7 @@ command-line client program and a graphical user interface.
   \href{http://gretl.sourceforge.net/lists.html}{gretl-users} mailing
   list.
 \item[Flexible] You can choose your preferred point on the spectrum
-  from interactive point-and-click to batch processing, and can easily
+  from interactive point-and-click to complex scripting, and can easily
   combine these approaches.
 \item[Cross-platform] \app{Gretl}'s ``home'' platform is Linux but it
   is also available for MS Windows and Mac OS X, and should work on
@@ -41,14 +41,13 @@ command-line client program and a graphical user interface.
 \item[Accurate] \app{Gretl} has been thoroughly tested on several
   benchmarks, among which the NIST reference datasets. See
   Appendix~\ref{app-accuracy}.
-\item[Internet ready] \app{Gretl} can access and fetch databases from
-  a server at Wake Forest University.  The MS Windows version comes
-  with an updater program which will detect when a new version is
-  available and offer the option of auto-updating.
+\item[Internet ready] \app{Gretl} can fetch materials such databases,
+  collections of textbook datafiles and add-on packages over the
+  internet.
 \item[International] \app{Gretl} will produce its output in English,
   French, Italian, Spanish, Polish, Portuguese, German, Basque,
-  Turkish or Russian depending on your computer's native language
-  setting.
+  Turkish, Russian, Albanian or Greek depending on your computer's
+  native language setting.
 \end{description}
 
 
@@ -117,23 +116,11 @@ needs, but this takes quite a few skills; most users will want to go
 for a pre-built package.
 
 Some Linux distributions feature \app{gretl} as part of their standard
-offering: Debian, for example, or Ubuntu (in the \emph{universe}
-repository). If this is the case, all you need to do is install
-\app{gretl} through your package manager of choice (e.g.\
-\app{synaptic}).
-
-Ready-to-run packages are available in \app{rpm} format
-(suitable for Red Hat Linux and related systems) on the \app{gretl}
-webpage \url{http://gretl.sourceforge.net}.  
-      
-However, we're hopeful that some users with coding skills may consider
-\app{gretl} sufficiently interesting to be worth improving and
-extending.  The documentation of the libgretl API is by no means
-complete, but you can find some details by following the link
-``Libgretl API docs'' on the \app{gretl} homepage. People interested
-in the \app{gretl} development are welcome to subscribe to the
-\href{http://gretl.sourceforge.net/lists.html}{gretl-devel} mailing
-list. 
+offering: Debian, Ubuntu and Fedora, for example.  If this is the
+case, all you need to do is install \app{gretl} through your package
+manager of choice. In addition the \app{gretl} webpage at
+\url{http://gretl.sourceforge.net} offers a ``generic'' package in
+\app{rpm} format for modern Linux systems.
 
 If you prefer to compile your own (or are using a unix system for
 which pre-built packages are not available), instructions on building
@@ -147,25 +134,15 @@ Installation is just a matter of downloading \verb+gretl_install.exe+
 and running this program. You will be prompted for a location to
 install the package.
 
+\subsection{Mac OS X}
+\label{windows-install}
 
-\subsection{Updating}
-\label{updating}
+The Mac version comes as a gzipped disk image. Installation is a
+matter of downloading the image file, opening it in the Finder, and
+dragging \texttt{Gretl.app} to the Applications folder. However, when
+installing for the first time two prerequisite packages must be
+put in place first; details are given on the \app{gretl} website.
 
-If your computer is connected to the Internet, then on start-up
-\app{gretl} can query its home website at Wake Forest University to
-see if any program updates are available; if so, a window will open up
-informing you of that fact.  If you want to activate this feature,
-check the box marked ``Tell me about gretl updates'' under
-\app{gretl}'s ``Tools, Preferences, General'' menu.
-      
-The MS Windows version of the program goes a step further: it tells
-you that you can update \app{gretl} automatically if you wish.  To do
-this, follow the instructions in the popup window: close \app{gretl}
-then run the program titled ``gretl updater'' (you should find this
-along with the main \app{gretl} program item, under the Programs
-heading in the Windows Start menu). Once the updater has completed its
-work you may restart \app{gretl}.
-      
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "gretl-guide"

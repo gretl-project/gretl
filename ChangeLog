@@ -3,6 +3,12 @@ version 1.9.12, in progress
 - Gnuplot version: require 4.4.0 or higher
 - You can now use "bundle b = null" to create a new bundle or
   empty an existing one
+- GUI preferences dialog: add facility to set the default scale
+  for PNG plots
+- Fix bug: transient objects created within functions were 
+  appearing in the GUI icon view window
+- User's Guide: clarify the use of string substitution, plus
+  various small updates
 
 2012-11-21 version 1.9.11
 - Substantial re-write of code for handling named variables

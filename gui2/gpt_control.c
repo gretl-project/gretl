@@ -2088,7 +2088,8 @@ static void grab_line_title (char *targ, const char *src)
      using XX axes XX title XX w XX lt XX lw XX
 */
 
-static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
+static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
+			       int auto_linewidth)
 {
     GPT_LINE *line;
     char tmp[16];
@@ -2184,9 +2185,9 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 
     if ((p = strstr(s, " pt "))) {
 	sscanf(p + 4, "%d", &line->ptype);
-    }    
+    }
 
-    if ((p = strstr(s, " lw "))) {
+    if (!auto_linewidth && (p = strstr(s, " lw "))) {
 	sscanf(p + 4, "%d", &line->width);
     } 
 
@@ -2385,6 +2386,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
     linestyle styles[MAX_STYLES];
     int do_markers = 0;
     int datacols = 0;
+    int auto_linewidth = 0;
     int reglist[4] = {0};
     int *uservec = NULL;
     char gpline[MAXLEN];
@@ -2478,6 +2480,9 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    if (x >= 0.5 && x <= 2.0) {
 		spec->scale = x;
 	    }
+	    continue;
+	} else if (!strncmp(gpline, "# auto linewidth", 16)) {
+	    auto_linewidth = 1;
 	    continue;
 	} else if (!strncmp(gpline, "# boxplots", 10)) {
 	    continue;
@@ -2602,7 +2607,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	fprintf(stderr, "calling parse_gp_line_line\n");
 #endif
 
-	err = parse_gp_line_line(gpline, spec);
+	err = parse_gp_line_line(gpline, spec, auto_linewidth);
 
 	if (err || done || (got = bufgets(gpline, MAXLEN - 1, buf)) == NULL) {
 	    break;

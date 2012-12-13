@@ -143,11 +143,24 @@ bundle is associated with a key string which can used to retrieve it
 subsequently. We begin by explaining the mechanics of bundles then
 offer some thoughts on what they are good for.
 
-To use a bundle you must first ``declare'' it, as in
-
+To use a bundle you first either ``declare'' it, as in
+%
 \begin{code}
 bundle foo
 \end{code}
+%
+or define an empty bundle using the \texttt{null} keyword:
+%
+\begin{code}
+bundle foo = null
+\end{code}
+%
+These two formulations are basically equivalent, in that they both
+create an empty bundle. The difference is that the second variant
+may be reused --- if a bundle named \texttt{foo} already exists the
+effect is to empty it --- while the first may only be used once in
+a given \app{gretl} session; it is an error to declare a variable that
+already exists. 
 
 To add an object to a bundle you assign to a compound left-hand value:
 the name of the bundle followed by the key string in square

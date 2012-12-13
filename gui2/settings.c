@@ -1674,6 +1674,9 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	use_proxy = 0;
     }
 
+    /* update scale factor for PNG plots */
+    gnuplot_png_set_default_scale(graph_scale);
+
     write_rc(); /* note: calls gretl_update_paths */
 
     /* register these settings for the current session using 
