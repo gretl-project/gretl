@@ -1,6 +1,7 @@
 version 1.9.12, in progress
 - Improve structural integrity of model specification dialog
-- Gnuplot version: require 4.4.0 or higher
+  (it now behaves properly on resizing)
+- Gnuplot version: require 4.4.0 (March 2010) or higher
 - You can now use "bundle b = null" to create a new bundle or
   empty an existing one
 - GUI preferences dialog: add facility to set the default scale
