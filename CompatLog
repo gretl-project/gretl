@@ -1,3 +1,13 @@
+version 1.9.12, in progress
+
+The special treatment that supported the use of @-substitution
+in an unquoted argument to printf has been removed. For example,
+ 
+  string strvar = "some string"
+  printf "strvar = %s\n", strvar    # correct
+  printf "strvar = %s\n", "@strvar" # ugly but legal
+  printf "strvar = %s\n", @strvar   # no longer supported!
+
 2012-11-21 version 1.9.11
 
 The functions islist(), isseries() and isstring() are deprecated,
