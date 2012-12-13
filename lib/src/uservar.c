@@ -1037,6 +1037,29 @@ int destroy_private_matrices (void)
 					   0);    
 }
 
+int delete_user_vars_of_type (GretlType type, PRN *prn)
+{
+    int err = 0;
+
+    if (type == GRETL_TYPE_MATRIX ||
+	type == GRETL_TYPE_BUNDLE ||
+	type == GRETL_TYPE_STRING ||
+	type == GRETL_TYPE_DOUBLE ||
+	type == GRETL_TYPE_LIST) {
+	int level = gretl_function_depth();
+
+	err = real_destroy_user_vars_at_level(level, type, 0);
+	if (!err && gretl_messages_on()) {
+	    pprintf(prn, "Deleted all variables of type %s\n",
+		    gretl_arg_type_name(type));
+	}
+    } else {
+	err = E_DATATYPE;
+    }
+
+    return err;
+}
+
 /**
  * destroy_private_scalars:
  *

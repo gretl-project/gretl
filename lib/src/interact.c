@@ -2607,7 +2607,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 
     /* commands that never take a list of variables */
     if (NO_VARLIST(cmd->ci) || 
-	(cmd->ci == DELEET && (cmd->opt & OPT_D)) ||
+	(cmd->ci == DELEET && (cmd->opt & (OPT_D | OPT_T))) ||
 	(cmd->ci == EQUATION && (cmd->opt & OPT_M))) { 
 	cmd_set_nolist(cmd);
 	if (cmd->ci != GENR) {
@@ -4979,6 +4979,26 @@ static int param_to_order (const char *s)
     }
 }
 
+static GretlType get_type_for_deletion (const char *param, int *err)
+{
+    GretlType type = 0;
+
+    if (param != NULL && *param != '\0') {
+	/* not compatible with the type-deletion option */
+	*err = E_DATA;
+    } else {
+	const char *s = get_optval_string(DELEET, OPT_T);
+
+	if (s == NULL) {
+	    *err = E_ARGS;
+	} else {
+	    type = gretl_type_from_string(s);
+	}
+    }
+
+    return type;
+}
+
 #define can_continue(c) (c == ARMA || c == GARCH || c == GMM || \
                          c == MLE || c == NLS)
 
@@ -5802,6 +5822,12 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    } else {
 		pputs(prn, _("You cannot delete series in this context\n"));
 		err = 1;
+	    }
+	} else if (cmd->opt & OPT_T) {
+	    GretlType type = get_type_for_deletion(cmd->param, &err);
+
+	    if (!err) {
+		err = delete_user_vars_of_type(type, prn);
 	    }
 	} else {
 	    err = gretl_delete_var_by_name(cmd->param, prn);

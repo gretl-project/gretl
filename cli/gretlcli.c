@@ -956,6 +956,8 @@ static int exec_line (ExecState *s, DATASET *dset)
     case DELEET:
 	if (cmd->opt & OPT_D) {
 	    err = db_delete_series_by_name(cmd->param, prn);
+	} else if (cmd->opt & OPT_T) {
+	    err = gretl_cmd_exec(s, dset);
 	} else if (*cmd->param != '\0') {
 	    err = gretl_delete_var_by_name(cmd->param, prn);
 	} else if (get_list_by_name(cmd->extra)) {

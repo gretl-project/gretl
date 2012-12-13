@@ -2382,6 +2382,11 @@
 	  <flag>--db</flag>
 	  <effect>delete series from database</effect>
 	</option>
+	<option>
+	  <flag>--type</flag>
+	  <optparm>type-name</optparm>
+	  <effect>all variables of given type</effect>
+	</option>
       </options>
     </usage>
 
@@ -2405,6 +2410,14 @@
 	database, assuming that a database has been opened, and the user
 	has write permission for file in question.  See also the
 	<cmdref targ="open"/> command.
+      </para>
+      <para>
+	If the <opt>--type</opt> option is given it must be
+	accompanied by one of the following type-names:
+	<lit>matrix</lit>, <lit>bundle</lit>, <lit>string</lit>,
+	<lit>list</lit>, or <lit>scalar</lit>. The effect is to delete
+	all variables of the given type. In this case (only), no
+	<repl>varname</repl> argument should be given.
       </para>
     </description>
 

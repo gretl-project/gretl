@@ -108,6 +108,8 @@ int destroy_user_vars_at_level (int level);
 
 int destroy_private_matrices (void);
 
+int delete_user_vars_of_type (GretlType type, PRN *prn);
+
 int n_user_matrices (void);
 
 int n_user_scalars (void);

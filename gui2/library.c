@@ -8365,6 +8365,8 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	    if (!err) {
 		sync_db_windows();
 	    }
+	} else if (cmd->opt & OPT_T) {
+	    gretl_cmd_exec(s, dset);
 	} else if (*cmd->param != '\0') {
 	    /* note that this does not catch the case where objects
 	       are deleted within a loop; but that is handled via
