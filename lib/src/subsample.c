@@ -1668,7 +1668,7 @@ static int smpl_get_int (const char *s, DATASET *dset, int *err)
     if (integer_string(s)) {
 	k = atoi(s);
     } else if (gretl_is_scalar(s)) {
-	k = gretl_scalar_get_value(s);
+	k = gretl_scalar_get_value(s, NULL);
     } else {
 	k = (int) generate_scalar(s, dset, err);
     }

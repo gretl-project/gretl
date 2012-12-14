@@ -928,7 +928,7 @@ static int r_get_scalar (const char *s, double *x)
 	    *tmp = '\0';
 	    strncat(tmp, s, n);
 	    if (gretl_is_scalar(tmp)) {
-		*x = gretl_scalar_get_value(tmp);
+		*x = gretl_scalar_get_value(tmp, NULL);
 		if (!na(*x)) {
 		    return 1;
 		}
@@ -1674,7 +1674,7 @@ static int parse_restriction_row (gretl_restriction *rset,
 	    } else if (sscanf(s, "%lf", &rhs) == 1) {
 		row->rhs += rhs;
 	    } else if (gretl_is_scalar(rhstr)) {
-		rhs = gretl_scalar_get_value(rhstr);
+		rhs = gretl_scalar_get_value(rhstr, NULL);
 		if (na(rhs)) {
 		    err = E_DATA;
 		} else {

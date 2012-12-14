@@ -2369,7 +2369,7 @@ static int fcast_get_limit (const char *s, DATASET *dset)
     int t, err = 0;
 
     if (gretl_is_scalar(s)) {
-	x = gretl_scalar_get_value(s);
+	x = gretl_scalar_get_value(s, NULL);
     } else {
 	x = generate_scalar(s, dset, &err);
     }

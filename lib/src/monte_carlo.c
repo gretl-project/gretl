@@ -239,7 +239,7 @@ static double controller_get_val (controller *clr,
 {
     if (clr->vname[0] != '\0') {
 	if (gretl_is_scalar(clr->vname)) {
-	    clr->val = gretl_scalar_get_value(clr->vname) * clr->vsign;
+	    clr->val = gretl_scalar_get_value(clr->vname, NULL) * clr->vsign;
 	} else {
 	    gretl_errmsg_sprintf(_("'%s': not a scalar"), clr->vname);
 	} 
@@ -656,7 +656,7 @@ static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
 	if (gretl_is_scalar(s)) {
 	    *clr->vname = '\0';
 	    strncat(clr->vname, s, VNAMELEN - 1);
-	    clr->val = (int) gretl_scalar_get_value(s);
+	    clr->val = (int) gretl_scalar_get_value(s, NULL);
 	} else if ((v = current_series_index(dset, s)) >= 0) {
 	    /* found a series by the name of s */
 	    gretl_errmsg_sprintf(_("'%s': not a scalar"), s);
@@ -1741,17 +1741,20 @@ static int loop_store_update (LOOPSET *loop, int lno,
 
     if (t >= lstore->dset->n) {
 	if (extend_loop_dataset(lstore)) {
-	    return E_ALLOC;
+	    err = E_ALLOC;
 	}
     }
 
-    for (i=0; i<lstore->nvars; i++) {
-	lstore->dset->Z[i+1][t] = gretl_scalar_get_value(lstore->names[i]);
+    for (i=0; i<lstore->nvars && !err; i++) {
+	lstore->dset->Z[i+1][t] = 
+	    gretl_scalar_get_value(lstore->names[i], &err);
     }
 
-    lstore->n += 1;
+    if (!err) {
+	lstore->n += 1;
+    }
 
-    return 0;
+    return err;
 }
 
 /* See if we already have a model recorder in place for the command on
@@ -1942,7 +1945,10 @@ static int loop_print_update (LOOP_PRINT *lprn, const char *names)
 	if (lprn->na[i]) {
 	    continue;
 	}
-	x = gretl_scalar_get_value(lprn->names[i]);
+	x = gretl_scalar_get_value(lprn->names[i], &err);
+	if (err) {
+	    break;
+	}
 	if (na(x)) {
 	    lprn->na[i] = 1;
 	    continue;
@@ -2439,7 +2445,7 @@ static int substitute_dollar_targ (char *str, int maxlen,
     /* prepare the substitute string */
 
     if (loop->type == FOR_LOOP) {
-	double x = gretl_scalar_get_value(loop->init.vname);
+	double x = gretl_scalar_get_value(loop->init.vname, NULL);
 
 	if (na(x)) {
 	    strcpy(insert, "NA");
@@ -3017,6 +3023,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 #if LOOP_DEBUG
 	    fprintf(stderr, "    after: '%s'\n", line);
 	    fprintf(stderr, "    cmd->savename = '%s'\n", cmd->savename);
+	    fprintf(stderr, "    err from parse_command_line: %d\n", err);
 #endif
 
 	    if (cmd->ci < 0) {
@@ -3125,7 +3132,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 			err = execute_genr(genr, dset, prn);
 		    }
 		}
-	    } else if (cmd->ci == DELEET && !(cmd->opt & OPT_F)) {
+	    } else if (cmd->ci == DELEET && !(cmd->opt & (OPT_F | OPT_T))) {
 		err = loop_delete_object(cmd, prn);
 	    } else {
 		err = gretl_cmd_exec(s, dset);

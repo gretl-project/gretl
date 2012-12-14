@@ -2356,7 +2356,7 @@ static int get_stack_param_val (const char *s, const DATASET *dset)
 	*vname = '\0';
 	strncat(vname, s, len);
 	if (gretl_is_scalar(vname)) {
-	    val = gretl_scalar_get_value(vname);
+	    val = gretl_scalar_get_value(vname, NULL);
 	} else {
 	    i = series_index(dset, vname);
 	    if (i < dset->v) {

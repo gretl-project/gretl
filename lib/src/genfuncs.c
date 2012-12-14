@@ -3125,7 +3125,7 @@ int get_t_from_obs_string (const char *s, const DATASET *dset)
 #endif
 	} else {
 	    if (gretl_is_scalar(s)) {
-		t = gretl_scalar_get_value(s);
+		t = gretl_scalar_get_value(s, NULL);
 	    } 
 
 	    if (t > dset->n) {

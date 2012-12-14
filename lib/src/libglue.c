@@ -259,7 +259,7 @@ int llc_test_driver (const char *parm, const int *list,
     } else if (integer_string(parm)) {
 	p0 = atoi(parm);
     } else if (gretl_is_scalar(parm)) {
-	p0 = gretl_scalar_get_value(parm);
+	p0 = gretl_scalar_get_value(parm, NULL);
     } else {
 	err = E_DATA;
     }

@@ -5747,7 +5747,7 @@ static int handle_scalar_return (const char *vname, void *ptr)
     int err = 0;
 
     if (gretl_is_scalar(vname)) {
-	*(double *) ptr = gretl_scalar_get_value(vname);
+	*(double *) ptr = gretl_scalar_get_value(vname, NULL);
     } else {
 	*(double *) ptr = NADBL;
 	err = E_UNKVAR; /* FIXME */

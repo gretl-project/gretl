@@ -945,7 +945,7 @@ double get_optval_double (int ci, gretlopt opt)
 	if (numeric_string(op->val)) {
 	    ret = dot_atof(op->val);
 	} else {
-	    ret = gretl_scalar_get_value(op->val);
+	    ret = gretl_scalar_get_value(op->val, NULL);
 	}
     }
 
@@ -975,11 +975,9 @@ int get_optval_int (int ci, gretlopt opt, int *err)
 	if (integer_string(op->val)) {
 	    ret = atoi(op->val);
 	} else {
-	    double x = gretl_scalar_get_value(op->val);
+	    double x = gretl_scalar_get_value(op->val, err);
 
-	    if (na(x)) {
-		*err = E_DATA;
-	    } else {
+	    if (!*err) {
 		ret = (int) x;
 	    }
 	}

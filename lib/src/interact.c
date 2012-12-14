@@ -200,7 +200,7 @@ static int get_lags_param (CMD *cmd, char **ps)
 	int lag = positive_int_from_string(tmp);
 
 	if (lag < 0 && gretl_is_scalar(tmp)) {
-	    lag = gretl_scalar_get_value(tmp);
+	    lag = gretl_scalar_get_value(tmp, NULL);
 	    free(tmp);
 	    tmp = g_strdup_printf("%d", lag);
 	}
@@ -999,7 +999,7 @@ static int lag_from_lstr (const char *s, int *err)
 	if (isdigit(*s)) {
 	    lag = atoi(s);
 	} else if (gretl_is_scalar(s)) {
-	    lag = gretl_scalar_get_value(s);
+	    lag = gretl_scalar_get_value(s, NULL);
 	} else {
 	    *err = 1;
 	}
@@ -1296,7 +1296,7 @@ static void parse_laglist_spec (const char *s, int *order, char **lname,
 	if (isdigit(*ostr)) {
 	    *order = atoi(ostr);
 	} else if (gretl_is_scalar(ostr)) {
-	    *order = gretl_scalar_get_value(ostr);
+	    *order = gretl_scalar_get_value(ostr, NULL);
 	} else {
 	    ; /* FIXME error condition */
 	}
@@ -3894,7 +3894,7 @@ static int set_var_info (const char *line, gretlopt opt,
     line += strcspn(line, " ");
 
     if (gretl_is_scalar(vname)) {
-	v = gretl_scalar_get_value(vname);
+	v = gretl_scalar_get_value(vname, NULL);
 	if (v < 0 || v >= dset->v) {
 	    return E_UNKVAR;
 	}
@@ -4360,7 +4360,7 @@ static int join_revision_date (const char *s, const DATASET *dset,
     if (integer_string(s)) {
 	d = atoi(s);
     } else if (gretl_is_scalar(s)) {
-	d = gretl_scalar_get_value(s);
+	d = gretl_scalar_get_value(s, NULL);
     } else {
 	*err = E_PARSE;
     }
@@ -4973,7 +4973,7 @@ static int param_to_order (const char *s)
     } else if (integer_string(s)) {
 	return atoi(s);
     } else if (gretl_is_scalar(s)) {
-	return (int) gretl_scalar_get_value(s);
+	return (int) gretl_scalar_get_value(s, NULL);
     } else {
 	return -1;
     }

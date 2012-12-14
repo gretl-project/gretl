@@ -565,7 +565,7 @@ static int nlspec_push_param (nlspec *s, const char *name,
     s->nparam = np + 1;
 
     if (type == GRETL_TYPE_DOUBLE) {
-	err = push_scalar_coeff(s, gretl_scalar_get_value(name));
+	err = push_scalar_coeff(s, gretl_scalar_get_value(name, NULL));
     } else {
 	gretl_matrix *m = get_matrix_by_name(name);
 	int k = gretl_vector_get_length(m);
@@ -953,7 +953,7 @@ static double get_mle_ll (const double *b, void *p)
     }
 
     if (s->lhtype == GRETL_TYPE_DOUBLE) {
-	s->crit = gretl_scalar_get_value(s->lhname);
+	s->crit = gretl_scalar_get_value(s->lhname, NULL);
 	return s->crit;
     }
 
@@ -1114,7 +1114,7 @@ static int get_nls_derivs (int T, int offset, double *g, double **G,
 	    }
 	} else if (scalar_deriv(spec, j)) {
 	    /* transcribe from scalar var to array g */
-	    x = gretl_scalar_get_value(spec->params[j].dname);
+	    x = gretl_scalar_get_value(spec->params[j].dname, NULL);
 	    for (t=0; t<T; t++) {
 		gi[t] = (spec->ci == MLE)? x : -x;
 	    }
@@ -1219,7 +1219,7 @@ static int get_mle_gradient (double *b, double *g, int n,
 		i++;
 	    }
 	} else if (scalar_deriv(spec, j)) {
-	    x = gretl_scalar_get_value(spec->params[j].dname);
+	    x = gretl_scalar_get_value(spec->params[j].dname, NULL);
 	    if (na(x)) {
 		fprintf(stderr, "NA in gradient calculation\n");
 		err = 1;
@@ -1404,7 +1404,7 @@ static gretl_matrix *ml_gradient_matrix (nlspec *spec, int *err)
 		    j++;
 		}
 	    } else if (scalar_deriv(spec, i)) {
-		x = gretl_scalar_get_value(spec->params[i].dname);
+		x = gretl_scalar_get_value(spec->params[i].dname, NULL);
 		for (t=0; t<T; t++) {
 		    gretl_matrix_set(G, t, j, x);
 		}
@@ -3630,10 +3630,9 @@ static int set_nlspec_from_model (const MODEL *pmod,
 
 static int push_scalar_parm (const char *name, double **px, int *n)
 {
-    double x = gretl_scalar_get_value(name);
+    double x = gretl_scalar_get_value(name, NULL);
     int err = 0;
 
-    x = gretl_scalar_get_value(name);
     if (na(x)) {
 	err = E_DATA;
     } else {

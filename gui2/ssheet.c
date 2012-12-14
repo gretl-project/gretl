@@ -1406,7 +1406,7 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
 	if (vname != NULL && *vname != '\0') {
 	    x = (*val == '\0')? NADBL : atof(val);
 	    if (gretl_is_scalar(vname)) {
-		if (x != gretl_scalar_get_value(vname)) {
+		if (x != gretl_scalar_get_value(vname, NULL)) {
 		    gretl_scalar_set_value(vname, x);
 		    sheet_set_modified(sheet, TRUE);
 		}

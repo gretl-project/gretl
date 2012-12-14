@@ -140,7 +140,7 @@ static int printf_get_int (const char *s, DATASET *dset,
     if (numeric_string(s)) {
 	x = dot_atof(s);
     } else if (gretl_is_scalar(s)) {
-	x = gretl_scalar_get_value(s);
+	x = gretl_scalar_get_value(s, NULL);
     } else {
 	x = generate_scalar(s, dset, err);
     }
@@ -187,7 +187,7 @@ static int gen_arg_val (const char *s, DATASET *dset,
 
 	if (type == GRETL_TYPE_DOUBLE) {
 	    *scalar = 1;
-	    *px = gretl_scalar_get_value(name);
+	    *px = gretl_scalar_get_value(name, NULL);
 	    user_var_delete_by_name(name, NULL);
 	} else if (type == GRETL_TYPE_MATRIX) {
 	    gretl_matrix *m = get_matrix_by_name(name);
@@ -440,7 +440,7 @@ static int print_arg (char **pfmt, char **pargs, DATASET *dset,
 	    got_scalar = 1;
 	} else if (gretl_is_scalar(arg)) {
 	    /* printing a named scalar */
-	    x = gretl_scalar_get_value(arg);
+	    x = gretl_scalar_get_value(arg, NULL);
 	    got_scalar = 1;
 	} else if ((m = get_matrix_by_name(arg)) != NULL) {
 	    ; /* printing a named matrix */

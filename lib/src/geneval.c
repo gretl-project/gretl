@@ -1363,9 +1363,18 @@ static NODE *retrieve_const (NODE *n, parser *p)
     return ret;
 }
 
-double get_const_by_name (const char *name)
+double get_const_by_name (const char *name, int *err)
 {
-    return get_const_by_id(const_lookup(name));
+    int id = const_lookup(name);
+
+    if (id > 0) {
+	return get_const_by_id(id);
+    } else {
+	if (err != NULL) {
+	    *err = E_UNKVAR;
+	}
+	return NADBL;
+    }
 }
 
 static NODE *scalar_calc (NODE *x, NODE *y, int f, parser *p)
@@ -8390,18 +8399,24 @@ static void reattach_series (NODE *n, parser *p)
 
 static void node_reattach_data (NODE *n, parser *p)
 {
+    void *data = n;
+
     if (uscalar_node(n)) {
-	n->v.xval = gretl_scalar_get_value(n->vname);
+	n->v.xval = gretl_scalar_get_value(n->vname, &p->err);
     } else if (umatrix_node(n)) {
-	n->v.m = get_matrix_by_name(n->vname);
+	data = n->v.m = get_matrix_by_name(n->vname);
     } else if (useries_node(n)) {
 	reattach_series(n, p);
     } else if (ulist_node(n)) {
-	n->v.ivec = get_list_by_name(n->vname);
+	data = n->v.ivec = get_list_by_name(n->vname);
     } else if (ubundle_node(n)) {
-	n->v.b = get_bundle_by_name(n->vname);
+	data = n->v.b = get_bundle_by_name(n->vname);
     } else if (ustring_node(n)) {
-	n->v.str = get_string_by_name(n->vname);
+	data = n->v.str = get_string_by_name(n->vname);
+    }
+
+    if (!p->err && data == NULL) {
+	p->err = E_UNKVAR;
     }
 }
 
@@ -10103,7 +10118,7 @@ static NODE *lhs_copy_node (parser *p)
 
     if (n != NULL) {
 	if (p->targ == NUM) {
-	    n->v.xval = gretl_scalar_get_value(p->lh.name);
+	    n->v.xval = gretl_scalar_get_value(p->lh.name, NULL);
 	} else if (p->targ == VEC) {
 	    n->v.xvec = p->dset->Z[p->lh.v];
 	} else if (p->targ == STR) {
@@ -11386,7 +11401,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    set_dataset_is_changed();
 	} else if (p->flags & P_LHSCAL) {
 	    /* modifying existing scalar */
-	    x = gretl_scalar_get_value(p->lh.name);
+	    x = gretl_scalar_get_value(p->lh.name, NULL);
 	    if (r->t == NUM) {
 		x = xy_calc(x, r->v.xval, p->op, NUM, p);
 	    } else if (scalar_matrix_node(r)) {

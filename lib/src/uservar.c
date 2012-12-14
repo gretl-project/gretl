@@ -1279,17 +1279,17 @@ void gretl_scalar_set_value (const char *name, double val)
     }
 }
 
-double gretl_scalar_get_value (const char *name)
+double gretl_scalar_get_value (const char *name, int *err)
 {
     user_var *u;
     double ret = NADBL;
 
     u = get_user_var_of_type_by_name(name, GRETL_TYPE_DOUBLE);
-    
+
     if (u != NULL) {
 	ret = *(double *) u->ptr;
     } else {
-	ret = get_const_by_name(name);
+	ret = get_const_by_name(name, err);
     }
 
     return ret;

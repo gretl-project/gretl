@@ -1101,7 +1101,7 @@ double gretl_double_from_string (const char *s, int *err)
     }
 
     if (gretl_is_scalar(s)) {
-	x = gretl_scalar_get_value(s);
+	x = gretl_scalar_get_value(s, NULL);
     } else {
 	*err = E_DATA;
 	x = NADBL;
@@ -1147,7 +1147,7 @@ int gretl_int_from_string (const char *s, int *err)
     if (*test == '\0') {
 	return n;
     } else if (gretl_is_scalar(s)) {
-	x = gretl_scalar_get_value(s);
+	x = gretl_scalar_get_value(s, NULL);
 	if (na(x)) {
 	    *err = E_MISSDATA;
 	} else if (fabs(x) > INT_MAX) {

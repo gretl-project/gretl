@@ -201,7 +201,7 @@ int function_lookup (const char *s);
 
 int const_lookup (const char *s);
 
-double get_const_by_name (const char *name);
+double get_const_by_name (const char *name, int *err);
 
 const char *gretl_function_complete (const char *s);
 

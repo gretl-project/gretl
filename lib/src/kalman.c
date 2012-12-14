@@ -2143,7 +2143,7 @@ static int update_scalar_matrix (gretl_matrix *m, const char *name)
     int err = 0;
 
     if (gretl_matrix_is_scalar(m) && strcmp(name, GENERIC_MATNAME)) {
-	double x = gretl_scalar_get_value(name + 1);
+	double x = gretl_scalar_get_value(name + 1, NULL);
 
 	if (na(x)) {
 	    /* or should we just ignore x in this case? */

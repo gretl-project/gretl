@@ -3618,7 +3618,7 @@ static jr_filter *make_join_filter (const char *s,
 	if (numeric_string(lhs)) {
 	    filter->lhval = dot_atof(lhs);
 	} else if (gretl_is_scalar(lhs)) {
-	    filter->lhval = gretl_scalar_get_value(lhs);
+	    filter->lhval = gretl_scalar_get_value(lhs, NULL);
 	} else {
 	    filter->lhname = lhs;
 	    lhs = NULL;
@@ -3626,7 +3626,7 @@ static jr_filter *make_join_filter (const char *s,
 	if (numeric_string(rhs)) {
 	    filter->rhval = dot_atof(rhs);
 	} else if (gretl_is_scalar(rhs)) {
-	    filter->rhval = gretl_scalar_get_value(rhs);
+	    filter->rhval = gretl_scalar_get_value(rhs, NULL);
 	} else {
 	    filter->rhname = rhs;
 	    rhs = NULL;

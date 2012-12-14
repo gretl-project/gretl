@@ -33,7 +33,7 @@
 
 static void write_scalar_message (const parser *p, PRN *prn)
 {
-    double x = gretl_scalar_get_value(p->lh.name);
+    double x = gretl_scalar_get_value(p->lh.name, NULL);
 
     if (p->flags & P_LHSCAL) {
 	pprintf(prn, _("Replaced scalar %s"), p->lh.name);
@@ -957,7 +957,7 @@ gretl_matrix *genr_get_output_matrix (const parser *p)
 double genr_get_output_scalar (const parser *p)
 {
     if (p->targ == NUM) {
-	return gretl_scalar_get_value(p->lh.name);
+	return gretl_scalar_get_value(p->lh.name, NULL);
     } else {
 	return NADBL;
     }
