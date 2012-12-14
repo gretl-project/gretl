@@ -1,6 +1,8 @@
 version 1.9.12, in progress
 - Improve structural integrity of model specification dialog
   (it now behaves properly on resizing)
+- lags() function: add an optional third parameter to control
+  the ordering of terms in the output list
 - Gnuplot version: require 4.4.0 (March 2010) or higher
 - You can now use "bundle b = null" to create a new bundle or
   empty an existing one
