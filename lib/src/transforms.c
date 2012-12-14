@@ -1136,6 +1136,8 @@ static int *make_lags_list (int *list, int order)
  * the list holds the ID numbers of the lag variables.
  * @order: number of lags to generate (or 0 for automatic).
  * @dset: dataset struct.
+ * @opt: may contain OPT_L to order the list by lag rather than
+ * by variable. 
  *
  * Generates and adds to the data set @order lagged values of the 
  * variables given in the list pointed to by @plist.
@@ -1143,7 +1145,8 @@ static int *make_lags_list (int *list, int order)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int list_laggenr (int **plist, int order, DATASET *dset)
+int list_laggenr (int **plist, int order, DATASET *dset,
+		  gretlopt opt)
 {
     int origv = dset->v;
     int *list = *plist;
@@ -1175,21 +1178,29 @@ int list_laggenr (int **plist, int order, DATASET *dset)
     startlen = get_starting_length(list, dset, (order > 9)? 3 : 2);
 
     j = 1;
-    for (i=1; i<=list[0]; i++) {
-	v = list[i];
+
+    if (opt & OPT_L) {
+	/* order the list by lags */
 	for (l=1; l<=order; l++) {
-	    lv = get_transform(LAGS, v, l, 0.0, dset, startlen, origv);
-#if TRDEBUG > 1
-	    fprintf(stderr, "base var '%s', lag %d: lv = %d\n",
-		    dset->varname[v], l, lv);
-#endif
-	    if (lv > 0) {
-#if TRDEBUG > 1
-		fprintf(stderr, "lag var name '%s', label '%s'\n",
-			dset->varname[lv], series_get_label(dset, lv));
-#endif
-		laglist[j++] = lv;
-		l0++;
+	    for (i=1; i<=list[0]; i++) {
+		v = list[i];
+		lv = get_transform(LAGS, v, l, 0.0, dset, startlen, origv);
+		if (lv > 0) {
+		    laglist[j++] = lv;
+		    l0++;
+		}
+	    }
+	}		
+    } else {
+	/* order by variable */
+	for (i=1; i<=list[0]; i++) {
+	    v = list[i];
+	    for (l=1; l<=order; l++) {
+		lv = get_transform(LAGS, v, l, 0.0, dset, startlen, origv);
+		if (lv > 0) {
+		    laglist[j++] = lv;
+		    l0++;
+		}
 	    }
 	}
     }

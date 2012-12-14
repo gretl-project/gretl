@@ -3239,44 +3239,42 @@ static NODE *dummify_func (NODE *l, NODE *r, int f, parser *p)
 /* argument is series or list; value returned is list in either
    case */
 
-static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
+static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_list_node(p);
 
     if (ret != NULL && starting(p)) {
-	NODE *ln = (f == F_LLAG)? r : l;
-	int *list = NULL;
-	int order;
+	gretlopt opt = OPT_NONE;
+	int k, *list = NULL;
 
-	if (ln->t == LIST) {
-	    list = gretl_list_copy(ln->v.ivec);
-	} else if (useries_node(ln)) {
-	    list = gretl_list_new(1);
-	    list[1] = ln->vnum;
-	} else {
-	    p->err = E_TYPES;
+	if (!null_or_empty(r)) {
+	    k = node_get_int(r, p);
+	    if (!p->err && k != 0) {
+		opt = OPT_L;
+	    }
 	}
 
-	if (p->err) {
-	    ; /* don't proceed */
-	} else if (list == NULL) {
-	    p->err = E_ALLOC;
-	} else {
-	    switch (f) {
-	    case F_LLAG:
-		order = node_get_int(l, p);
-		if (!p->err) {
-		    p->err = list_laggenr(&list, order, p->dset);
-		}
-		break;
-	    case F_ODEV:
-		p->err = list_orthdev(list, p->dset);
-		break;
-	    default:
-		break;
+	if (!p->err) {
+	    if (m->t == LIST) {
+		list = gretl_list_copy(m->v.ivec);
+	    } else if (useries_node(m)) {
+		list = gretl_list_new(1);
+		list[1] = m->vnum;
+	    } else {
+		p->err = E_TYPES;
 	    }
+	}
 
-	    ret->v.ivec = list;
+	if (!p->err) {
+	    if (list == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		k = node_get_int(l, p);
+		if (!p->err) {
+		    p->err = list_laggenr(&list, k, p->dset, opt);
+		}
+		ret->v.ivec = list;
+	    }
 	}
     }
 
@@ -8776,8 +8774,8 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_LLAG:
-	if (scalar_node(l) && ok_list_node(r)) {
-	    ret = list_gen_func(l, r, t->t, p);
+	if (scalar_node(l) && ok_list_node(m)) {
+	    ret = list_make_lags(l, m, r, t->t, p);
 	} else {
 	    p->err = E_TYPES; 
 	}

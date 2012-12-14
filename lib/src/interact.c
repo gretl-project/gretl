@@ -1389,7 +1389,7 @@ static int auto_transform_ok (const char *s, int *lpos,
     } else if (trans == SQUARE) {
 	cmd->err = list_xpxgenr(&genlist, dset, opt);
     } else if (trans == LAGS) {
-	cmd->err = list_laggenr(&genlist, order, dset);
+	cmd->err = list_laggenr(&genlist, order, dset, OPT_NONE);
     } else if (trans == DUMMIFY) {
 	cmd->err = list_dumgenr(&genlist, dset, OPT_F);
     }
@@ -5245,7 +5245,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case LAGS:
-	err = list_laggenr(&listcpy, cmd->order, dset); 
+	err = list_laggenr(&listcpy, cmd->order, dset, OPT_NONE); 
 	if (!err) {
 	    maybe_list_vars(dset, prn);
 	    set_dataset_is_changed();

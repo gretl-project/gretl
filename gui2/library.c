@@ -5664,7 +5664,7 @@ void add_logs_etc (int ci, int varnum)
     }
 
     if (ci == LAGS) {
-	err = list_laggenr(&tmplist, order, dataset);
+	err = list_laggenr(&tmplist, order, dataset, OPT_NONE);
     } else if (ci == LOGS) {
 	err = list_loggenr(tmplist, dataset);
     } else if (ci == SQUARE) {

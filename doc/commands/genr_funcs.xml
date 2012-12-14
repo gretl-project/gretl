@@ -3056,12 +3056,13 @@
       <fnargs>
 	<fnarg type="scalar">p</fnarg>
 	<fnarg type="series-or-list">y</fnarg>
+	<fnarg type="scalar" optional="true">bylag</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Generates lags 1 to <argname>p</argname> of the series
 	  <argname>y</argname>, or if <argname>y</argname> is a list, of all
-	  variables in the list.  If <argname>p</argname> = 0, the maximum
+	  series in the list.  If <argname>p</argname> = 0, the maximum
 	  lag defaults to the periodicity of the data; otherwise
 	  <argname>p</argname> must be positive.
 	</para>
@@ -3072,6 +3073,16 @@
 	  <repl>i</repl> is the specific lag.  The original portion of the
 	  name is truncated if necessary, and may be adjusted in case of
 	  non-uniqueness in the set of names thus constructed.  
+	</para>
+	<para>
+	  When <argname>y</argname> is a list and the lag order is
+	  greater than 1, the default ordering of the terms in the
+	  returned list is by variable: all lags of the first series
+	  in the input list followed by all lags of the second series,
+	  and so on. The optional third argument can be used to
+	  change this: if <argname>bylag</argname> is non-zero then
+	  the terms are ordered by lag: lag 1 of all the input series,
+	  then lag 2 of all the series, and so on.
 	</para>
       </description>
     </function>

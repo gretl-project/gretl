@@ -295,7 +295,6 @@ enum {
     F_MWRITE,
     F_MRSEL,
     F_MCSEL,
-    F_LLAG,
     F_WMEAN,
     F_WVAR,
     F_WSD,
@@ -330,6 +329,7 @@ enum {
     F_PSD,
     F_RANDINT,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
+    F_LLAG,
     F_PRINCOMP,
     F_BFGSMAX,
     F_MSHAPE,
