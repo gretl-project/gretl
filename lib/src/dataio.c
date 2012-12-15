@@ -2371,6 +2371,25 @@ static int check_imported_string (char *src, int i, size_t len)
     return err;
 }
 
+static int count_markers (FILE *fp, char *line, int linelen,
+			  char *marker)
+{
+    int n = 0;
+
+    while (fgets(line, linelen, fp)) {
+	if (sscanf(line, "%31[^\n\r]", marker) == 1) {
+	    g_strstrip(marker);
+	    if (*marker != '\0') {
+		n++;
+	    }
+	}
+    }
+
+    rewind(fp);
+
+    return n;
+}
+
 /**
  * add_obs_markers_from_file:
  * @dset: data information struct.
@@ -2390,6 +2409,7 @@ int add_obs_markers_from_file (DATASET *dset, const char *fname)
     char **S = NULL;
     FILE *fp;
     char line[128], marker[32];
+    int done = 0;
     int t, err = 0;
 
     fp = gretl_fopen(fname, "r");
@@ -2402,19 +2422,54 @@ int add_obs_markers_from_file (DATASET *dset, const char *fname)
 	fclose(fp);
 	return E_ALLOC;
     }
-    
-    for (t=0; t<dset->n && !err; t++) {
-	if (fgets(line, sizeof line, fp) == NULL) {
-	    gretl_errmsg_sprintf("Expected %d markers; found %d\n", 
-				 dset->n, t);
-	    err = E_DATA;
-	} else if (sscanf(line, "%31[^\n\r]", marker) != 1) {
-	    gretl_errmsg_sprintf("Couldn't read marker on line %d", t+1);
-	    err = E_DATA;
-	} else {
-	    g_strstrip(marker);
-	    strncat(S[t], marker, OBSLEN - 1);
-	    err = check_imported_string(S[t], t+1, OBSLEN);
+
+    if (dataset_is_panel(dset)) {
+	/* allow the case where we get just enough markers to
+	   label the cross-sectional units */
+	int nm = count_markers(fp, line, sizeof line, marker);
+	int N = dset->n / dset->pd; /* = number of units */
+
+	if (nm == N) {
+	    int T = dset->pd;
+	    int i, s, t = 0;
+
+	    while (fgets(line, sizeof line, fp) && !err) {
+		if (sscanf(line, "%31[^\n\r]", marker) == 1) {
+		    g_strstrip(marker);
+		    strncat(S[t], marker, OBSLEN - 1);
+		    err = check_imported_string(S[t], t+1, OBSLEN);
+		    if (!err) {
+			/* copy to remaining locations */
+			for (i=1; ; i++) {
+			    s = t + i * T;
+			    if (s < dset->n) {
+				strcpy(S[s], S[t]);
+			    } else {
+				break;
+			    }
+			}
+		    }
+		    t++;
+		}
+	    }
+	    done = 1;
+	}
+    }
+
+    if (!done) {
+	for (t=0; t<dset->n && !err; t++) {
+	    if (fgets(line, sizeof line, fp) == NULL) {
+		gretl_errmsg_sprintf("Expected %d markers; found %d\n", 
+				     dset->n, t);
+		err = E_DATA;
+	    } else if (sscanf(line, "%31[^\n\r]", marker) != 1) {
+		gretl_errmsg_sprintf("Couldn't read marker on line %d", t+1);
+		err = E_DATA;
+	    } else {
+		g_strstrip(marker);
+		strncat(S[t], marker, OBSLEN - 1);
+		err = check_imported_string(S[t], t+1, OBSLEN);
+	    }
 	}
     }
 

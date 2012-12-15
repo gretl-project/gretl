@@ -1524,7 +1524,7 @@ void session_init (void)
     set_user_var_callback(gui_user_var_callback);
 }
 
-void free_session (void)
+void free_session (gretlopt opt)
 {
     int i;
 
@@ -1535,31 +1535,39 @@ void free_session (void)
 	free(session.models);
 	session.models = NULL;
     }
-
-    if (session.graphs) {
-	for (i=0; i<session.ngraphs; i++) {
-	    free(session.graphs[i]);
-	}
-	free(session.graphs);
-	session.graphs = NULL;
-    }
-
-    if (session.texts) {
-	for (i=0; i<session.ntexts; i++) {
-	    free_session_text(session.texts[i]);
-	}	
-	free(session.texts);
-	session.texts = NULL;
-    }
-
-    if (session.notes) {
-	free(session.notes);
-	session.notes = NULL;
-    }
-
     session.nmodels = 0;
-    session.ngraphs = 0;
-    session.ntexts = 0;
+
+    /* FIXME OPT_P ? Maybe we should try to preserve
+       graphs and texts, though this would require
+       that we don't trash the session directory, and
+       instead remove only the model files. Perhaps
+       this is just too complicated.
+    */
+
+    if (1 || !(opt & OPT_P)) {
+	if (session.graphs) {
+	    for (i=0; i<session.ngraphs; i++) {
+		free(session.graphs[i]);
+	    }
+	    free(session.graphs);
+	    session.graphs = NULL;
+	}
+	session.ngraphs = 0;
+
+	if (session.texts) {
+	    for (i=0; i<session.ntexts; i++) {
+		free_session_text(session.texts[i]);
+	    }	
+	    free(session.texts);
+	    session.texts = NULL;
+	}
+	session.ntexts = 0;
+
+	if (session.notes) {
+	    free(session.notes);
+	    session.notes = NULL;
+	}
+    }
 
     *session.name = '\0';
 
@@ -1651,6 +1659,7 @@ static void session_clear_data (DATASET *pdinfo)
 void close_session (gretlopt opt)
 {
     int logcode = LOG_NULL;
+    int iview = 0;
 
 #if SESSION_DEBUG
     fprintf(stderr, "close_session: starting cleanup\n");
@@ -1661,7 +1670,7 @@ void close_session (gretlopt opt)
 	session_clear_data(dataset); 
     }
  
-    free_session();
+    free_session(opt);
 
     clear_model_table(1, NULL);
     clear_graph_page(1);
@@ -1671,6 +1680,7 @@ void close_session (gretlopt opt)
     *sessionfile = '\0';
 
     if (iconview != NULL) {
+	iview = 1;
 	gtk_widget_destroy(iconview);
     }
 
@@ -1684,6 +1694,7 @@ void close_session (gretlopt opt)
     edit_dialog_special_get_text(NULL);
 
     if (opt & OPT_P) {
+	/* preserve non-dataset items */
 	libgretl_session_cleanup(SESSION_CLEAR_DATASET);
     } else {
 	libgretl_session_cleanup(SESSION_CLEAR_ALL);
@@ -1694,6 +1705,11 @@ void close_session (gretlopt opt)
     reset_plot_count();
 
     set_session_log(NULL, logcode);
+
+    if (iview && have_session_objects()) {
+	dataset_menubar_state(FALSE);
+	view_session();
+    }
 }
 
 static void relpath_from_fname (char *path, const char *fname)

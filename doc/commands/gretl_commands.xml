@@ -6373,8 +6373,11 @@
 	With the option <opt>--from-file</opt>, reads the specified
 	file (which should be plain text) and assigns observation
 	markers to the rows in the dataset, reading one marker per
-	line. There should be at least as many markers in the file as
-	observations in the dataset.
+	line. In general there should be at least as many markers in
+	the file as observations in the dataset, but if the dataset is
+	a panel it is also acceptable if the number of markers in the
+	file matches the number of cross-sectional units (in which
+	case the markers are repeated for each time period.)
       </para>
       <para>
 	The <opt>--delete</opt> option does what you'd expect: it

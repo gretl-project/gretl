@@ -8521,6 +8521,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 
     case CLEAR:
 	if (cmd->opt & OPT_D) {
+	    /* --dataset only */
 	    close_session(OPT_P);
 	} else {
 	    close_session(OPT_NONE);
