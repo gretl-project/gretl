@@ -2431,25 +2431,21 @@ int add_obs_markers_from_file (DATASET *dset, const char *fname)
 
 	if (nm == N) {
 	    int T = dset->pd;
-	    int i, s, t = 0;
+	    int t, i = 0;
 
 	    while (fgets(line, sizeof line, fp) && !err) {
+		*marker = '\0';
 		if (sscanf(line, "%31[^\n\r]", marker) == 1) {
 		    g_strstrip(marker);
-		    strncat(S[t], marker, OBSLEN - 1);
-		    err = check_imported_string(S[t], t+1, OBSLEN);
+		    strncat(S[i], marker, OBSLEN - 1);
+		    err = check_imported_string(S[i], i+1, OBSLEN);
 		    if (!err) {
-			/* copy to remaining locations */
-			for (i=1; ; i++) {
-			    s = t + i * T;
-			    if (s < dset->n) {
-				strcpy(S[s], S[t]);
-			    } else {
-				break;
-			    }
+			/* copy to remaining observations */
+			for (t=1; t<T; t++) {
+			    strcpy(S[i+t], S[i]);
 			}
 		    }
-		    t++;
+		    i += T;
 		}
 	    }
 	    done = 1;
