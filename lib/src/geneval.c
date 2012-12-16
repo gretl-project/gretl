@@ -4186,6 +4186,8 @@ static NODE *single_string_func (NODE *n, int f, parser *p)
 	    ret->v.str = retrieve_file_content(s, &p->err);
 	} else if (f == F_BACKTICK) {
 	    ret->v.str = gretl_backtick(s, &p->err);
+	} else if (f == F_STRSTRIP) {
+	    ret->v.str = gretl_strstrip_copy(s, &p->err);
 	} else {
 	    p->err = E_DATA;
 	}
@@ -9490,6 +9492,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_ARGNAME:
     case F_READFILE:
     case F_BACKTICK:
+    case F_STRSTRIP:
 	if (l->t == STR) {
 	    ret = single_string_func(l, t->t, p);
 	} else if (t->t == F_ARGNAME && (uscalar_node(l) || useries_node(l))) {

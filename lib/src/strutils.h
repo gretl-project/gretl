@@ -94,7 +94,9 @@ char *shift_string_left (char *str, size_t move);
 
 char *gretl_lower (char *str);
 
-char *gretl_chopstr (char *str);
+char *gretl_strstrip (char *str);
+
+char *gretl_strstrip_copy (const char *str, int *err);
 
 char *switch_ext (char *targ, const char *src, const char *ext);
 

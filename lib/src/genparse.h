@@ -266,6 +266,7 @@ enum {
     F_FREQ,
     F_ISNAN,
     F_TYPESTR,
+    F_STRSTRIP,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,

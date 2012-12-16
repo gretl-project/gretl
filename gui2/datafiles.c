@@ -188,7 +188,7 @@ static int get_title_from_descfile (file_collection *coll)
     fp = gretl_fopen(test, "r");
 
     if (fp != NULL && fgets(line, sizeof line, fp) != NULL) {
-	gretl_chopstr(line);
+	gretl_strstrip(line);
 	if (sscanf(line, "# %23[^:]", title) == 1) {
 	    coll->title = gretl_strdup(title);
 	    if (coll->title == NULL) {

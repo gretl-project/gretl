@@ -1955,7 +1955,7 @@ static int get_network_settings (void)
 
 	    if (sscanf(p, "%31s", key) == 1) {
 		strcpy(linevar, p + strlen(key) + 3); 
-		gretl_chopstr(linevar); 
+		gretl_strstrip(linevar); 
 		gotvar = 0;
 		for (j=0; rc_vars[j].key != NULL; j++) {
 		    if (!strcmp(key, rc_vars[j].key)) {
@@ -2024,7 +2024,7 @@ static void win32_read_gretlrc (void)
 	    /* note: don't take gretldir from here */
 	    if (strcmp(key, "gretldir")) {
 		strcpy(linevar, line + strlen(key) + 3); 
-		gretl_chopstr(linevar); 
+		gretl_strstrip(linevar); 
 		if (*linevar != '\0') {
 		    find_and_set_rc_var(key, linevar);
 		}
@@ -2152,7 +2152,7 @@ static int read_gretlrc (void)
 	    if (sscanf(line, "%31s", key) == 1) {
 		*linevar = '\0';
 		strncat(linevar, line + strlen(key) + 3, MAXLEN-1); 
-		gretl_chopstr(linevar); 
+		gretl_strstrip(linevar); 
 		if (*linevar != '\0') {
 		    find_and_set_rc_var(key, linevar);
 		}

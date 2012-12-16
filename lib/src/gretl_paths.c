@@ -3215,7 +3215,7 @@ int cli_read_rc (void)
 	    *val = '\0';
 	    /* get the string that follows " = " */ 
 	    strncat(val, line + strlen(key) + 3, MAXLEN - 1);
-	    gretl_chopstr(val); 
+	    gretl_strstrip(val); 
 	    if (!strcmp(key, "gretldir")) {
 		strncat(cpaths.gretldir, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "gnuplot")) {

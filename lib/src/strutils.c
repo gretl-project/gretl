@@ -968,15 +968,15 @@ char *shift_string_left (char *str, size_t move)
 }
 
 /**
- * gretl_chopstr:
+ * gretl_strstrip:
  * @str: the string to process.
  *
- * Removes both leading and trailing space from a string.
+ * Removes leading and trailing white space from a string.
  *
  * Returns: the possibly modified string.
  */
 
-char *gretl_chopstr (char *str)
+char *gretl_strstrip (char *str)
 {
     int i, n = strspn(str, " \t");
 
@@ -995,6 +995,41 @@ char *gretl_chopstr (char *str)
     }
 
     return str;
+}
+
+/**
+ * gretl_strstrip_copy:
+ * @str: the string to process.
+ *
+ * Returns: a copy of @str, from which both leading and 
+ * trailing white space have been removed.
+ */
+
+char *gretl_strstrip_copy (const char *str, int *err)
+{
+    char *ret = NULL;
+    int i, n;
+
+    while (isspace(*str)) {
+	str++;
+    }
+
+    n = strlen(str);
+
+    for (i=n-1; i>=0; i--) {
+	if (isspace(str[i]) || str[i] == '\r') {
+	    n--;
+	} else {
+	    break;
+	}
+    }
+
+    ret = gretl_strndup(str, n);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    }
+
+    return ret;
 }
 
 /**

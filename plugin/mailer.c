@@ -500,7 +500,7 @@ static void get_email_info (struct mail_info *minfo)
 	    if (string_is_blank(line)) {
 		continue;
 	    }
-	    gretl_chopstr(line);
+	    gretl_strstrip(line);
 	    if (!strncmp(line, "Reply-To:", 9)) {
 		minfo->sender = g_strdup(line + 10);
 	    } else if (!strncmp(line, "SMTP server:", 12)) {
@@ -1010,7 +1010,7 @@ static int get_POP_error (char *buf)
     if (*buf == '-') {
 	gchar *errmsg;
 
-	gretl_chopstr(buf);
+	gretl_strstrip(buf);
 	errmsg = g_strdup_printf("POP server said:\n%s", buf);
 	mail_infobox(errmsg, 1);
 	g_free(errmsg);
@@ -1077,7 +1077,7 @@ static int get_SMTP_error (char *buf, SMTPCode code)
 	if (resp == 500) {
 	    err = SMTP_OLD_SERVER;
 	} else if (resp != 250) {
-	    gretl_chopstr(buf);
+	    gretl_strstrip(buf);
 	    errmsg = g_strdup_printf("Server response to . :\n%s", buf);
 	    err = SMTP_ERR;
 	}
@@ -1085,19 +1085,19 @@ static int get_SMTP_error (char *buf, SMTPCode code)
 	if (resp == 553 && strstr(buf, "must check")) {
 	    err = SMTP_POP_FIRST;
 	} else if (resp != 250) {
-	    gretl_chopstr(buf);
+	    gretl_strstrip(buf);
 	    errmsg = g_strdup_printf("Server response to RCPT:\n%s", buf);
 	    err = SMTP_ERR;
 	}
     } else if (code == SMTP_DATA) {
 	if (resp != 354) {
-	    gretl_chopstr(buf);
+	    gretl_strstrip(buf);
 	    errmsg = g_strdup_printf("Server response to RCPT:\n%s", buf);
 	    err = SMTP_ERR;
 	}
     } else if (code == SMTP_DOT) {
 	if (resp != 250) {
-	    gretl_chopstr(buf);
+	    gretl_strstrip(buf);
 	    errmsg = g_strdup_printf("Server response to . :\n%s", buf);
 	    err = SMTP_ERR;
 	}

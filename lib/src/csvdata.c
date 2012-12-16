@@ -1691,7 +1691,7 @@ static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
     } else if (csv_missval(c->str, i, t+1, miss_shown, prn)) {
 	c->dset->Z[i][t] = NADBL;
     } else {
-	c->dset->Z[i][t] = csv_atof(c, gretl_chopstr(c->str));
+	c->dset->Z[i][t] = csv_atof(c, gretl_strstrip(c->str));
     } 
 
     return err;
