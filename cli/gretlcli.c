@@ -436,8 +436,10 @@ int main (int argc, char *argv[])
     gretl_www_init(NULL, NULL, 0);
 #endif
 
-    logo(quiet); 
-    session_time(NULL);
+    logo(quiet);
+    if (!quiet) {
+	session_time(NULL);
+    }
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT, &err);
     if (err) {

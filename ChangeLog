@@ -2,6 +2,8 @@ version 1.9.12, in progress
 - "markers" command: add support for the panel-data case
   where the number of markers equals the number of cross-
   sectional units
+- "delete" command: add option to delete all variables of a
+  specified type
 - You can now use "bundle b = null" to create a new bundle or
   empty an existing one
 - Add new function strstrip()

@@ -3170,8 +3170,6 @@ int parseopt (int *pargc, char ***pargv, gretlopt *popt,
 
 	if (!strcmp(s, "-e") || !strncmp(s, "--english", 9)) { 
 	    opt |= OPT_ENGLISH;
-	} else if (!strcmp(s, "-q") || !strncmp(s, "--basque", 8)) { 
-	    opt |= OPT_BASQUE;
 	} else if (!strcmp(s, "-b") || !strncmp(s, "--batch", 7)) {
 	    opt |= OPT_BATCH;
 	} else if (!strcmp(s, "-h") || !strcmp(s, "--help")) { 

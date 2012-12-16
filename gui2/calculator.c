@@ -3063,6 +3063,23 @@ static void real_stats_calculator (int code, gpointer data)
     window_list_add(child->dlg, STAT_TABLE);
 }
 
+const gchar *maybe_trim_y_equals (const gchar *s)
+{
+    const gchar *p = s;
+
+    while (isspace(*p)) p++;
+
+    if (*p == 'y' || *p == 'Y') {
+	p++;
+	while (isspace(*p)) p++;
+	if (*p == '=') {
+	    s = p + 1;
+	}
+    }
+
+    return s;
+}
+
 /* for gnuplot: convert '^' to '**' for exponentiation */
 
 static gchar *formula_mod (const gchar *s)
@@ -3112,6 +3129,12 @@ static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
 	return;
     }
 
+    /* It's "natural", but not accepted on a gnuplot 'plot'
+       line, to type something like "y = x**2"; here we just
+       want the bit to the right of the equals sign.
+    */
+    s = maybe_trim_y_equals(s);
+
     g_free(p->formula);
 
     if (strchr(s, '^')) {
@@ -3153,7 +3176,7 @@ static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
 
 /* plot a curve specified via formula (no data required) */
 
-static void plot_curve (void)
+static void plot_a_curve (void)
 {
     static struct curve_plotter plotter;
     GtkWidget *dialog, *hbox, *vbox;
@@ -3387,7 +3410,7 @@ void stats_calculator (GtkAction *action, gpointer data)
 		     code == CALC_PLOT);
 
     if (code == CALC_PLOT) {
-	plot_curve();
+	plot_a_curve();
     } else {
 	real_stats_calculator(code, data);
     }
