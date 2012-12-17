@@ -2011,35 +2011,36 @@ void unescape_url (char *url)
 
 char *make_varname_unique (char *vname, int v, DATASET *dset) 
 {
-    const char *add = "abcdefghijklmnopqrstuvwxyz";
     size_t n = strlen(vname);
-    int i, j, conflict;
+    size_t nmax = VNAMELEN - 8;
+    char tmp[8];
+    int i, k, conflict;
 
-    if (n > 15) {
-	n = 15;
+    if (n > nmax) {
+	n = nmax;
     }
 
- tryagain:
-
-    for (j=0; j<26; j++) {
+    for (k=1; k<999999; k++) {
 	conflict = 0;
-	for (i=1; i<dset->v && !conflict; i++) {
+	for (i=1; i<dset->v; i++) {
 	    if (i != v && !strcmp(vname, dset->varname[i])) {
 		conflict = 1;
+		break;
 	    }
 	}
 	if (conflict) {
-	    vname[n] = add[j];
-	    vname[n+1] = '\0';
+	    sprintf(tmp, "_%d", k);
+	    vname[n] = '\0';
+	    strncat(vname, tmp, strlen(tmp));
 	} else {
+	    /* name is unique */
 	    break;
 	}
     }
-
-    if (conflict && n < 18) {
-	n++;
-	goto tryagain;
-    }
+    
+    if (conflict) {
+	fprintf(stderr, "make_varname_unique: unresolved conflict!\n");
+    }    
 
     return vname;
 }

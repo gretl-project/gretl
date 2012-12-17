@@ -20,19 +20,9 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-typedef enum {
-    OPT_NO_PARM = 0,
-    OPT_ACCEPTS_PARM,
-    OPT_NEEDS_PARM
-} OptStatus;
-
 gretlopt get_gretl_options (char *line, int *err);
 
 gretlopt opt_from_flag (unsigned char c);
-
-gretlopt valid_long_opt (int ci, const char *lopt, OptStatus *status);
-
-gretlopt valid_short_opt (int ci, char c);
 
 const char *print_flags (gretlopt oflags, int ci);
 

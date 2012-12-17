@@ -24,6 +24,13 @@
 
 #define OPTDEBUG 0
 
+typedef enum {
+    OPT_NO_PARM = 0,
+    OPT_ACCEPTS_PARM,
+    OPT_NEEDS_PARM,
+    OPT_AMBIGUOUS
+} OptStatus;
+
 #define vcv_opt_ok(c) (MODEL_COMMAND(c) || c == ADD || c == OMIT)
 
 #define quiet_opt_ok(c) (MODEL_COMMAND(c) ||	\
@@ -694,28 +701,6 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
     return 0;
 }
 
-gretlopt valid_short_opt (int ci, char c)
-{
-    gretlopt opt = 0;
-    int i, ok;
-
-    for (i=0; flag_matches[i].c != '\0'; i++) {
-	if (c == flag_matches[i].c) {
-	    opt = flag_matches[i].o;
-	    break;
-	}
-    }
-
-    if (opt) {
-	ok = opt_is_valid(opt, ci, c);
-	if (!ok) {
-	    opt = 0;
-	}
-    }
-	
-    return opt;
-}
-
 /* See if at point @p (at which we've found '-') in string @s we
    might be at the start of an option flag: the previous character
    must be a space, and we must not be inside a quoted string.
@@ -1031,54 +1016,59 @@ int set_optval_string (int ci, gretlopt opt, const char *s)
     return real_push_option_param(ci, opt, gretl_strdup(s), 1);
 }
 
-gretlopt valid_long_opt (int ci, const char *lopt, OptStatus *status)
+static gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
 {
-    int opt = OPT_NONE;
+    gretlopt opt = OPT_NONE;
     int i;
 
     *status = 0;
 
-    if (*lopt == '\0') {
+    if (*s == '\0') {
 	return 0;
     }
 
-    if (vcv_opt_ok(ci) && !strcmp(lopt, "vcv")) {
+    if (vcv_opt_ok(ci) && !strcmp(s, "vcv")) {
 	return OPT_O;
     }
 
-    if (quiet_opt_ok(ci) && !strcmp(lopt, "quiet")) {
+    if (quiet_opt_ok(ci) && !strcmp(s, "quiet")) {
 	return OPT_Q;
     }
 
     /* start by looking for an exact match */
     for (i=0; gretl_opts[i].o != 0; i++) {
 	if (ci == gretl_opts[i].ci && 
-	    !strcmp(lopt, gretl_opts[i].longopt)) {
+	    !strcmp(s, gretl_opts[i].longopt)) {
 	    opt = gretl_opts[i].o;
 	    *status = gretl_opts[i].parminfo;
 	    break;
 	}
     }
 
-    /* if this failed, try for an abbreviation or extension */
+    /* if this failed, try for a unique abbreviation */
     if (opt == OPT_NONE) {
-	int len, len1, len2;
+	int optlen, slen = strlen(s);
+	int nmatch = 0;
 
-	len1 = strlen(lopt);
 	for (i=0; gretl_opts[i].o != 0; i++) {
-	    len2 = strlen(gretl_opts[i].longopt);
-	    len = (len2 > len1)? len1 : len2;
-	    if (ci == gretl_opts[i].ci && 
-		!strncmp(lopt, gretl_opts[i].longopt, len)) {
-		opt = gretl_opts[i].o;
-		*status = gretl_opts[i].parminfo;
-		break;
+	    optlen = strlen(gretl_opts[i].longopt);
+	    if (optlen > slen) {
+		if (ci == gretl_opts[i].ci && 
+		    !strncmp(s, gretl_opts[i].longopt, slen)) {
+		    opt = gretl_opts[i].o;
+		    *status = gretl_opts[i].parminfo;
+		    nmatch++;
+		}
 	    }
-	} 
+	}
+	if (nmatch > 1) {
+	    *status = OPT_AMBIGUOUS;
+	    return OPT_NONE;
+	}
     }  
 
     /* backward compatibility */
-    if (opt == OPT_NONE && !strcmp(lopt, "wald")) {
+    if (opt == OPT_NONE && !strcmp(s, "wald")) {
 	opt = OPT_W;
 	*status = 0;
     }
@@ -1117,6 +1107,10 @@ static int handle_optval (char *s, int ci, gretlopt opt, int status)
 	err = E_PARSE;
     }
 
+#if OPTDEBUG
+    fprintf(stderr, "handle_optval: got val = '%s'\n", val);
+#endif
+
     if (val == NULL && !err) {
 	/* allocation must have failed */
 	err = E_ALLOC;
@@ -1149,7 +1143,7 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
     char *s = line;
     char longopt[32];
     OptStatus status = 0;
-    gretlopt match, ret = 0L;
+    gretlopt match, ret = OPT_NONE;
 
     while ((s = strstr(s, "--")) != NULL) {
 	match = 0;
@@ -1165,12 +1159,18 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 	    if (match > 0) {
 		/* recognized an acceptable option flag */
 		ret |= match;
-	    } else {
+	    } else if (status == OPT_AMBIGUOUS) {
+		/* abbreviation matches more than one option */
+		gretl_errmsg_sprintf(_("Ambiguous option '--%s'"), longopt);
+		fprintf(stderr, " line='%s', ci = %d\n", line, ci);
+		*err = 1;
+		return OPT_NONE;
+	    } else {		
 		/* not a valid flag, or not applicable in context */
 		gretl_errmsg_sprintf(_("Invalid option '--%s'"), longopt);
 		fprintf(stderr, " line='%s', ci = %d\n", line, ci);
 		*err = 1;
-		return 0L;
+		return OPT_NONE;
 	    } 
 	}
 
@@ -1190,7 +1190,7 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 		*err = E_PARSE;
 	    }
 	    if (*err) {
-		return 0L;
+		return OPT_NONE;
 	    }	    
 	} else {
 	    s += 2;
@@ -1300,8 +1300,8 @@ gretlopt get_gretl_options (char *line, int *err)
 	return 0;
     }
 
-#if 0
-    fprintf(stderr, "get_gretl_options: '%s'\n", line);
+#if OPTDEBUG > 1
+    fprintf(stderr, "get_gretl_options, starting: '%s'\n", line);
 #endif
 
     get_cmdword(line, cmdword);
@@ -1366,6 +1366,10 @@ gretlopt get_gretl_options (char *line, int *err)
 
     /* strip trailing whitespace after processing */
     tail_strip(line);
+
+#if OPTDEBUG > 1
+    fprintf(stderr, "get_gretl_options, done: '%s'\n", line);
+#endif
 
     if (err != NULL) {
 	*err = myerr;
