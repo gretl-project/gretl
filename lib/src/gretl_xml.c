@@ -2786,7 +2786,7 @@ static char *gretl_xml_get_doc_type (const char *fname, int *err)
    if we detect that the named file is XML.
 */
 
-int load_user_XML_file (const char *fname)
+int load_user_XML_file (const char *fname, PRN *prn)
 {
     char *rootname = NULL;
     int err = 0;
@@ -2797,7 +2797,7 @@ int load_user_XML_file (const char *fname)
     }
 
     if (!strcmp(rootname, "gretl-functions")) {
-	err = load_function_package_by_filename(fname);
+	err = load_function_package_by_filename(fname, prn);
     } else {
 	err = E_DATA;
     }

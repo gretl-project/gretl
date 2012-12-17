@@ -131,7 +131,7 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 
 char *gretl_get_gdt_description (const char *fname);
 
-int load_user_XML_file (const char *fname);
+int load_user_XML_file (const char *fname, PRN *prn);
 
 void gretl_xml_init (void);
 

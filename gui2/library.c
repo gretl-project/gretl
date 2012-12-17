@@ -8473,7 +8473,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	    pprintf(prn, " %s\n", runfile);
 	}
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
-	    err = load_user_XML_file(runfile);
+	    err = load_user_XML_file(runfile, prn);
 	    if (err) {
 		pprintf(prn, _("Error reading %s\n"), runfile);
 	    }

@@ -1054,17 +1054,17 @@ static int exec_line (ExecState *s, DATASET *dset)
 	    err = getopenfile(line, runfile, OPT_S);
 	}
 	if (err) { 
-	    pputs(prn, _("Command is malformed\n"));
+	    errmsg(err, prn);
 	    break;
 	}
+	if (gretl_messages_on()) {
+	    pprintf(prn, " %s\n", runfile);
+	}
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
-	    err = load_user_XML_file(runfile);
+	    err = load_user_XML_file(runfile, prn);
 	    if (err) {
 		pprintf(prn, _("Error reading %s\n"), runfile);
 	    } else {
-		if (gretl_messages_on()) {
-		    pprintf(prn, " %s\n", runfile);
-		}
 		pprintf(cmdprn, "include \"%s\"\n", runfile);
 	    }
 	    break;

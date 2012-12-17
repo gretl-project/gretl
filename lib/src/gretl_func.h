@@ -154,7 +154,7 @@ fnpkg *get_function_package_by_name (const char *pkgname);
 
 fnpkg *get_function_package_by_filename (const char *fname, int *err);
 
-int load_function_package_by_filename (const char *fname);
+int load_function_package_by_filename (const char *fname, PRN *prn);
 
 int function_package_is_loaded (const char *fname);
 

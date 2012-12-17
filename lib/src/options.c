@@ -1051,10 +1051,9 @@ static gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
 	int nmatch = 0;
 
 	for (i=0; gretl_opts[i].o != 0; i++) {
-	    optlen = strlen(gretl_opts[i].longopt);
-	    if (optlen > slen) {
-		if (ci == gretl_opts[i].ci && 
-		    !strncmp(s, gretl_opts[i].longopt, slen)) {
+	    if (ci == gretl_opts[i].ci) {
+		optlen = strlen(gretl_opts[i].longopt);
+		if (optlen > slen && !strncmp(s, gretl_opts[i].longopt, slen)) {
 		    opt = gretl_opts[i].o;
 		    *status = gretl_opts[i].parminfo;
 		    nmatch++;

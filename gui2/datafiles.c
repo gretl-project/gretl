@@ -755,7 +755,7 @@ static gint enter_opens_file (GtkWidget *w, GdkEventKey *key,
 
 static int gui_load_user_functions (const char *fname)
 {
-    int err = load_function_package_by_filename(fname);
+    int err = load_function_package_by_filename(fname, NULL);
 
     if (err) {
 	gui_errmsg(err);

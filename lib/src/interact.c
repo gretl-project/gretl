@@ -5789,7 +5789,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    pprintf(prn, " %s\n", readfile);
 	}
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(readfile)) {
-	    err = load_user_XML_file(readfile);
+	    err = load_user_XML_file(readfile, prn);
 	    break;
 	}
 	if (!strcmp(readfile, s->runfile)) { 

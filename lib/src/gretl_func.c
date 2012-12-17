@@ -3965,8 +3965,9 @@ int function_package_is_loaded (const char *fname)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int load_function_package_by_filename (const char *fname)
+int load_function_package_by_filename (const char *fname, PRN *prn)
 {
+    fnpkg *pkg = NULL;
     int err = 0;
 
     if (function_package_is_loaded(fname)) {
@@ -3974,8 +3975,7 @@ int load_function_package_by_filename (const char *fname)
 	fprintf(stderr, "load_function_package_from_file:\n"
 		" '%s' is already loaded\n", fname);
     } else {
-	fnpkg *pkg = read_package_file(fname, &err);
-
+	pkg = read_package_file(fname, &err);
 	if (!err) {
 	    err = real_load_package(pkg);
 	} 
@@ -3983,6 +3983,9 @@ int load_function_package_by_filename (const char *fname)
 
     if (err) {
 	fprintf(stderr, "load function package: failed on %s\n", fname);
+    } else if (pkg != NULL && prn != NULL) {
+	pprintf(prn, "%s %s, %s (%s)\n", pkg->name, pkg->version, 
+		pkg->date, pkg->author);
     }
 
     return err;
