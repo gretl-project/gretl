@@ -14,6 +14,8 @@ version 1.9.12, in progress
 - Gnuplot version: require 4.4.0 (March 2010) or higher
 - GUI preferences dialog: add facility to set the default scale
   for PNG plots
+- GUI Tools menu: add an item to launch an interactive gnuplot
+  session
 - Fix bug: transient objects created within functions were 
   appearing in the GUI icon view window
 - User's Guide: clarify the use of string substitution, plus

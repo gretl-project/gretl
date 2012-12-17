@@ -6182,7 +6182,7 @@ void fit_actual_splot (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	launch_gnuplot_interactive();
+	launch_gnuplot_interactive(gretl_plotfile());
     }
 
     trim_dataset(pmod, origv);
@@ -6756,7 +6756,7 @@ int do_splot_from_selector (selector *sr)
     if (err) {
 	gui_errmsg(err);
     } else {
-	launch_gnuplot_interactive();
+	launch_gnuplot_interactive(gretl_plotfile());
     }
 
     free(list);

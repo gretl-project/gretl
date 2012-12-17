@@ -48,6 +48,7 @@
 #include "selector.h"
 #include "guiprint.h"
 #include "tabwin.h"
+#include "gpt_control.h"
 
 #include <dirent.h>
 
@@ -79,6 +80,7 @@ static gboolean main_popup_handler (GtkWidget *w, GdkEventButton *event,
 				    gpointer data);
 static GtkWidget *make_main_menu (void);
 static void start_R_callback (void);
+static void start_gnuplot_callback (void);
 static void auto_store (void);
 static void restore_sample_callback (void);
 static void show_sample_callback (void);
@@ -1451,6 +1453,7 @@ GtkActionEntry main_entries[] = {
     { "SetSeed", NULL, N_("_Seed for random numbers"), NULL, NULL, G_CALLBACK(rand_seed_dialog) },
     { "CommandLog", NULL, N_("_Command log"), NULL, NULL, G_CALLBACK(view_command_log) },
     { "ShowConsole", NULL, N_("_Gretl console"), NULL, NULL, G_CALLBACK(gretl_console) },
+    { "Gnuplot", NULL, N_("_Gnuplot"), NULL, NULL, G_CALLBACK(start_gnuplot_callback) },
     { "StartR", NULL, N_("Start GNU _R"), NULL, NULL, G_CALLBACK(start_R_callback) },
     { "NistTest", NULL, N_("_NIST test suite"), NULL, NULL, NULL },
     { "NistBasic", NULL, N_("_Basic"), NULL, NULL, G_CALLBACK(do_nistcheck) },
@@ -1934,6 +1937,11 @@ static void start_R_callback (void)
     start_R(NULL, 1, 1);
 }
 
+static void start_gnuplot_callback (void)
+{
+    launch_gnuplot_interactive(NULL);
+}
+
 #ifndef G_OS_WIN32
 
 int gretl_fork (const char *progvar, const char *arg)
@@ -1948,7 +1956,7 @@ int gretl_fork (const char *progvar, const char *arg)
 	prog = calculator;
     } else if (!strcmp(progvar, "viewdvi")) {
 	prog = viewdvi;
-    } 
+    }
 #else
     if (!strcmp(progvar, "Browser")) {
 	prog = Browser;
@@ -1960,7 +1968,7 @@ int gretl_fork (const char *progvar, const char *arg)
 	prog = viewpdf;
     } else if (!strcmp(progvar, "viewps")) {
 	prog = viewps;
-    }    
+    }
 #endif
 
     if (prog == NULL) {

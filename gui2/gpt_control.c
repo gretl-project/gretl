@@ -5026,14 +5026,18 @@ static int get_terminal (char *s)
 
 #endif /* !G_OS_WIN32 */
 
-void launch_gnuplot_interactive (void)
+void launch_gnuplot_interactive (const char *plotfile)
 {
 # ifdef G_OS_WIN32
     gchar *gpline;
 
-    gpline = g_strdup_printf("\"%s\" \"%s\" -", 
-			     gretl_gnuplot_path(),
-			     gretl_plotfile());
+    if (plotfile == NULL) {
+	gpline = g_strdup_printf("\"%s\"", gretl_gnuplot_path());
+    } else {
+	gpline = g_strdup_printf("\"%s\" \"%s\" -", 
+				 gretl_gnuplot_path(),
+				 plotfile);
+    }	
     create_child_process(gpline);
     g_free(gpline);
 # else 
@@ -5041,13 +5045,17 @@ void launch_gnuplot_interactive (void)
     char fname[MAXLEN];
     int err = 0;
 
-    strcpy(fname, gretl_plotfile());
+    if (plotfile != NULL) {
+	strcpy(fname, plotfile);
+    } else {
+	*fname = '\0';
+    }
 
-    if (gnuplot_has_wxt()) {
+    if (*fname != '\0' && gnuplot_has_wxt()) {
 	*term = '\0';
     } else {
 	err = get_terminal(term);
-    } 
+    }
 
     if (!err) {
 	const char *gp = gretl_gnuplot_path();
@@ -5064,27 +5072,42 @@ void launch_gnuplot_interactive (void)
 	} else if (strstr(term, "gnome")) {
 	    /* gnome-terminal */
 	    argv[0] = term;
-	    argv[1] = "--geometry=40x4";
-	    argv[2] = "--title=\"gnuplot: type q to quit\"";
-	    argv[3] = "-x";
-	    argv[4] = (char *) gp;
-	    argv[5] = fname;
-	    argv[6] = "-";
-	    argv[7] = NULL;
+	    if (*fname != '\0') {
+		argv[1] = "--geometry=40x4";
+		argv[2] = "--title=\"gnuplot: type q to quit\"";
+		argv[3] = "-x";
+		argv[4] = (char *) gp;
+		argv[5] = fname;
+		argv[6] = "-";
+		argv[7] = NULL;
+	    } else {
+		argv[1] = "--title=\"gnuplot: type q to quit\"";
+		argv[2] = "-x";
+		argv[3] = (char *) gp;
+		argv[4] = NULL;
+	    }		
 	} else {	    
 	    /* xterm, rxvt, kterm */
 	    argv[0] = term;
-	    argv[1] = "+sb";
-	    argv[2] = "+ls";
-	    argv[3] = "-geometry";
-	    argv[4] = "40x4";
-	    argv[5] = "-title";
-	    argv[6] = "gnuplot: type q to quit";
-	    argv[7] = "-e";
-	    argv[8] = (char *) gp;
-	    argv[9] = fname;
-	    argv[10] = "-";
-	    argv[11] = NULL;
+	    if (*fname != '\0') {
+		argv[1] = "+sb";
+		argv[2] = "+ls";
+		argv[3] = "-geometry";
+		argv[4] = "40x4";
+		argv[5] = "-title";
+		argv[6] = "gnuplot: type q to quit";
+		argv[7] = "-e";
+		argv[8] = (char *) gp;
+		argv[9] = fname;
+		argv[10] = "-";
+		argv[11] = NULL;
+	    } else {
+		argv[1] = "-title";
+		argv[2] = "gnuplot: type q to quit";
+		argv[3] = "-e";
+		argv[4] = (char *) gp;
+		argv[5] = NULL;
+	    }
 	} 
 
 	ok = g_spawn_async(NULL, /* working dir */

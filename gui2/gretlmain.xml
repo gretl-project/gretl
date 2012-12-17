@@ -88,6 +88,7 @@
       <separator/>
       <menuitem action="CommandLog"/>
       <menuitem action="ShowConsole"/>
+      <menuitem action="Gnuplot"/>
       <menuitem action="StartR"/>
       <separator/>
       <menu action="NistTest">
