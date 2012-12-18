@@ -73,7 +73,7 @@ PT_GENSTAMP = $(SHAREDIR)/gen_pt.stamp
 FIGSTAMP = $(SHAREDIR)/fig.stamp
 HELPREFS = $(SHAREDIR)/gretlhelp.refs
 
-GRETLDEP = $(topsrc)/lib/src/libgretl.h \
+GRETLHDRS = $(topsrc)/lib/src/libgretl.h \
 	$(topsrc)/lib/src/gretl_commands.h \
 	$(topsrc)/lib/src/gretl_commands.c \
 	$(topsrc)/lib/src/genlex.c \
@@ -98,34 +98,34 @@ bbl2txt: bbl2txt.c
 us2a4: us2a4.c
 	$(CC) $(CFLAGS) -o $@ $< 
 
-skeleton: skeleton.o
+skeleton: skeleton.o $(GRETLLIB)
 	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
 
-validate: validate.o
+validate: validate.o $(GRETLLIB)
 	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
 
-topiclist: topiclist.o
+topiclist: topiclist.o $(GRETLLIB)
 	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB) $(GLIB_LIBS)
 
-tables: tables.o
+tables: tables.o $(GRETLLIB)
 	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
 
-matfuncs: matfuncs.o
+matfuncs: matfuncs.o $(GRETLLIB)
 	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
 
-skeleton.o: skeleton.c $(GRETLDEP)
+skeleton.o: skeleton.c $(GRETLHDRS)
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
 
-validate.o: validate.c $(GRETLDEP)
+validate.o: validate.c $(GRETLHDRS)
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
 
-topiclist.o: topiclist.c $(GRETLDEP)
+topiclist.o: topiclist.c $(GRETLHDRS)
 	$(CC) $(CFLAGS) $(TOPICDEFS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
 
-tables.o: tables.c $(GRETLDEP) $(topsrc)/lib/src/monte_carlo.c
+tables.o: tables.c $(GRETLHDRS) $(topsrc)/lib/src/monte_carlo.c
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
 
-matfuncs.o: matfuncs.c $(GRETLDEP)
+matfuncs.o: matfuncs.c $(GRETLHDRS)
 	$(CC) $(CFLAGS) $(TOPICDEFS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
 
 # test generation of XML skeleton from libgretl info:

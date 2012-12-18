@@ -39,6 +39,7 @@ struct lang_strings_t {
 };
 
 typedef struct _gretl_version gretl_version;
+
 struct _gretl_version {
     int major;
     int minor;
@@ -106,7 +107,7 @@ int read_lang_info (const char *s, int i)
 /* read info with which to perform substitutions, from the
    little file "subst" */
 
-int read_subst_file (void)
+int read_subst_file_full (void)
 {
     FILE *fp;
     char line[MYLEN];
@@ -172,9 +173,14 @@ int print_subst (const char *verstr)
 int get_intl_progdate (const char *s, int i)
 {
     int yr, mon, day;
-    int err = 0;
+    int nf, err = 0;
 
-    if (sscanf(s, "%d.%d.%d", &yr, &mon, &day) != 3) {
+    nf = sscanf(s, "%d.%d.%d", &yr, &mon, &day);
+    if (nf != 3) {
+	nf = sscanf(s, "%d-%d-%d", &yr, &mon, &day);
+    }
+
+    if (nf != 3) {
 	err = 1;
     } else {
 	char pdate[32];
@@ -252,7 +258,7 @@ int make_subst_file (const char *verstr, const char *progdate)
 	err = syscmd_to_string(syscmd, lang_strings[i].longdate, tmpfile);
 
 	if (progdate != NULL) {
-	    get_intl_progdate(progdate, i);
+	    err = get_intl_progdate(progdate, i);
 	} else {
 	    sprintf(syscmd, "%sdate +\"%%b %%e, %%Y\" > %s", langbit, tmpfile);
 	    err = syscmd_to_string(syscmd, lang_strings[i].shortdate, tmpfile);
@@ -301,33 +307,60 @@ int copyfile (const char *src, const char *dest, int append)
     return 0;
 }
 
-/* read the little "subst" file for a version number */
+static int mstr_to_mon (const char *s)
+{
+    const char *months[] = { 
+	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    };
+    int i;
 
-int get_version_from_subst_file (char *verstr)
+    for (i=0; i<12; i++) {
+	if (!strcmp(s, months[i])) {
+	    return i + 1;
+	}
+    }
+
+    return 0;
+}
+
+/* read the little "subst" file for version number and dates:
+   returns 1 if we got everything
+*/
+
+int get_info_from_subst_file (char *verstr, char *progdate)
 {
     FILE *fp;
     char line[MYLEN];
-    int err = 1;
+    char mstr[4];
+    int mon, day, yr;
+    int n_read = 0;
 
     *verstr = '\0';
+    *progdate = '\0';
 
     fp = fopen(substfile, "r");
     if (fp == NULL) {
-	return 1;
+	return 0;
     }
 
-    while (fgets(line, sizeof line, fp)) {
+    while (fgets(line, sizeof line, fp) && n_read < 2) {
 	if (!strncmp(line, "VERSION", 7)) {
 	    if (sscanf(line, "%*s %7s", verstr)) {
-		err = 0;
-		break;
+		n_read++;
 	    }
-	}
+	} else if (strstr(line, "en_US SHORTDATE")) {
+	    if (sscanf(line + 22, "%3s %d, %d", mstr, &day, &yr) == 3) {
+		mon = mstr_to_mon(mstr);
+		sprintf(progdate, "%d.%02d.%02d", yr, mon, day);
+		n_read++;
+	    }
+	} 
     }
 
     fclose(fp);
 
-    return err;
+    return n_read == 2;
 }
 
 char *get_src_version (void)
@@ -448,16 +481,16 @@ int process_templates (char *verstr)
 	{ "osx_pat.html",             "osx.html" },
 	{ "mac-intel_pat.html",       "mac-intel.html" },
 	{ "mac-ppc_pat.html",         "mac-ppc.html" },
-	{ "gretl_espanol_pat.html",   "gretl_espanol.html" },
+	{ "gretl_espanol_pat.html",   "es.html" },
 	{ "win32_pat_es.html",        "win32/index_es.html", },
 	{ "osx_pat_es.html",          "osx_es.html" },
-	{ "gretl_italiano_pat.html",  "gretl_italiano.html" },
+	{ "gretl_italiano_pat.html",  "it.html" },
 	{ "win32_pat_it.html",        "win32/index_it.html" },
 	{ "osx_pat_it.html",          "osx_it.html" },
-	{ "gretl_portugues_pat.html", "gretl_portugues.html" },
+	{ "gretl_portugues_pat.html", "pt.html" },
 	{ "win32_pat_pt.html",        "win32/index_pt.html" },
 	{ "osx_pat_pt.html",          "osx_pt.html" },
-	{ "gretl_turkish_pat.html",   "gretl_turkish.html" },
+	{ "gretl_turkish_pat.html",   "tr.html" },
 	{ "win32_pat_tr.html",        "win32/index_tr.html" },
 	{ "osx_pat_tr.html",          "osx_tr.html" },
 	{ NULL, NULL }
@@ -692,18 +725,21 @@ int set_working_directories (void)
 
 int main (int argc, char **argv)
 {
-    char *progdate;
-    char *src_version;
-    char html_version[8];
+    char *src_version = NULL;
+    char *progdate = NULL;
+    char subst_version[8];
+    char subst_progdate[12];
+    int got_subst;
     int up_to_date;
     int err = 0;
 
-    if (argc < 2) {
-	fprintf(stderr, "%s: Please give a gretl version number,\n"
-		"or say \"auto\" to read version info from the source tree.\n",
+    if (argc == 2 && !strcmp(argv[1], "--help")) {
+	fprintf(stderr, "%s: You can a gretl version number, or say \"auto\"\n"
+		" to read version info from the source tree.\n",
 		argv[0]);
-	fputs("You can specify a program date, YYYY.MM.DD, as a second arg\n", stderr);
-	exit(EXIT_FAILURE);
+	fputs("* You can specify a program date, YYYY.MM.DD, as a second arg.\n", stderr);
+	fputs("* With no args, we use the existing subst file, if present.\n", stderr);
+	exit(EXIT_SUCCESS);
     }
 
     err = set_working_directories();
@@ -712,47 +748,60 @@ int main (int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
 
-    if (strcmp(argv[1], "auto")) {
-	src_version = argv[1];
-    } else {
-	src_version = get_src_version();
+    if (argc >= 2) {
+	if (!strcmp(argv[1], "auto")) {
+	    src_version = get_src_version();
+	} else {
+	    src_version = argv[1];
+	}
     }
 
     if (argc == 3) {
 	progdate = argv[2];
 	fprintf(stderr, "Got '%s' for progdate\n", progdate);
-    } else {
-	progdate = NULL;
     }
 
-    if (src_version == NULL) {
+    if (argc > 1 && src_version == NULL) {
 	fputs("Couldn't find source version\n", stderr);
 	exit(EXIT_FAILURE);
     }
 
     sprintf(substfile, "%s/subst", WEBDIR);
 
-    get_version_from_subst_file(html_version);
-    if (*html_version == '\0') {
-	fprintf(stderr, "Couldn't get html version from %s\n", substfile);
-	strcpy(html_version, "unknown");
+    got_subst = get_info_from_subst_file(subst_version, subst_progdate);
+    if (!got_subst) {
+	fprintf(stderr, "Couldn't get info from %s\n", substfile);
+	if (src_version == NULL) {
+	    exit(EXIT_FAILURE);
+	}
     }
 
-    fprintf(stderr, "source version is %s\n", src_version);
-    fprintf(stderr, "html version is %s\n", html_version);
+    if (src_version != NULL) {
+	fprintf(stderr, "Taking version from command: '%s'\n", src_version);
+    } else {
+	fprintf(stderr, "Taking version from subst file: '%s'\n", subst_version);
+    }
 
-    if (strcmp(src_version, html_version)) {
+    /* Do we have to rewrite the subst file? */
+    if (!got_subst) {
 	up_to_date = 0;
-	fputs("version number needs updating\n", stderr);
+    } else if (src_version != NULL && strcmp(src_version, subst_version)) {
+	up_to_date = 0;
+    } else if (progdate != NULL && strcmp(progdate, subst_progdate)) {
+	up_to_date = 0;
     } else {
 	up_to_date = 1;
-	fputs("version number is current\n", stderr);
+	if (src_version == NULL) {
+	    src_version = subst_version;
+	}
     }
+
+    fprintf(stderr, "subst file is %sup to date\n", up_to_date ? "" : "not ");
 
     lang_strings_init();
 
     if (up_to_date) {
-	err = read_subst_file();
+	err = read_subst_file_full();
     } else {
 	err = make_subst_file(src_version, progdate);
     }
