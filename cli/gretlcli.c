@@ -1082,9 +1082,6 @@ static int exec_line (ExecState *s, DATASET *dset)
 	    err = 1;
 	    fb = pop_input_file();
 	} else {
-	    if (gretl_messages_on()) {
-		pprintf(prn, " %s\n", runfile);
-	    }	    
 	    gretl_set_current_dir(runfile);
 	    strcpy(s->runfile, runfile);
 	    if (cmd->ci == INCLUDE) {
