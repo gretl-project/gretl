@@ -8372,6 +8372,24 @@ static NODE *two_scalars_func (NODE *l, NODE *r, int t, parser *p)
     return ret;    
 }
 
+static NODE *scalar_postfix_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	double x = n->v.xval;
+
+	ret->v.xval = x;
+	if (n->t == UNUM_P) {
+	    p->err = gretl_scalar_set_value(n->vname, x + 1.0);
+	} else {
+	    p->err = gretl_scalar_set_value(n->vname, x - 1.0);
+	}
+    }
+
+    return ret;
+}
+
 static int series_calc_nodes (NODE *l, NODE *r)
 {
     int ret = 0;
@@ -8612,6 +8630,10 @@ static NODE *eval (NODE *t, parser *p)
 	    /* otherwise treat as terminal */
 	    ret = t;
 	}
+	break;
+    case UNUM_P:
+    case UNUM_M:
+	ret = scalar_postfix_node(t, p);
 	break;
     case FARGS:
 	/* will be evaluated in context */
@@ -9637,7 +9659,7 @@ void parser_ungetc (parser *p)
 /* look ahead to the position of a given character in
    the remaining input stream */
 
-int parser_gretl_charpos (parser *p, int c)
+int parser_char_index (parser *p, int c)
 {
     int i;
 
@@ -9650,13 +9672,20 @@ int parser_gretl_charpos (parser *p, int c)
     return -1;
 }
 
-/* look ahead to the next non-space character and return it */
+/* Look ahead to the next non-space character in the
+   parser stream and return it; if @skip then start at
+   offset 1 beyond the current p->point.
+*/
 
-int parser_next_nonspace_char (parser *p)
+int parser_next_nonspace_char (parser *p, int skip)
 {
-    int i;
+    int i, offset = skip ? 1 : 0;
 
-    for (i=0; p->point[i] != '\0'; i++) {
+    if (p->point == '\0') {
+	return 0;
+    }
+
+    for (i=offset; p->point[i] != '\0'; i++) {
 	if (!isspace(p->point[i])) {
 	    return p->point[i];
 	}

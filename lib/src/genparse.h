@@ -88,6 +88,8 @@ enum {
 	      UMAT,	  /* user variable, named matrix */
 	      ULIST,      /* user variable, named list */
 	      UOBJ,	  /* user-defined object (e.g. model) */
+	      UNUM_P,     /* user scalar++ */
+	      UNUM_M,     /* user scalar-- */
   /* 60 */    NUM,	  /* scalar, evaluated */
 	      VEC,	  /* series, evaluated */
 	      MAT,	  /* matrix, evaluated */
@@ -587,8 +589,8 @@ struct parser_ {
 int parser_getc (parser *p);
 void parser_ungetc (parser *p);
 void parser_advance (parser *p, int n);
-int parser_gretl_charpos (parser *p, int c);
-int parser_next_nonspace_char (parser *p);
+int parser_char_index (parser *p, int c);
+int parser_next_nonspace_char (parser *p, int skip);
 void parser_print_input (parser *p);
 void lex (parser *s);
 NODE *new_node (int t);

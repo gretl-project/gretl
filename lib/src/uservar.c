@@ -1264,19 +1264,24 @@ int add_auxiliary_scalar (const char *name, double val)
     return err;
 }
 
-void gretl_scalar_set_value (const char *name, double val)
+int gretl_scalar_set_value (const char *name, double val)
 {
     user_var *u;
+    int err = 0;
 
     u = get_user_var_of_type_by_name(name, GRETL_TYPE_DOUBLE);
 
-    if (u != NULL) {
+    if (u == NULL) {
+	err = E_DATA;
+    } else {
 	*(double *) u->ptr = val;
 
 	if (scalar_edit_callback != NULL) {
 	    scalar_edit_callback();
 	}
     }
+
+    return err;
 }
 
 double gretl_scalar_get_value (const char *name, int *err)

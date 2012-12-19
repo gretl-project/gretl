@@ -734,7 +734,7 @@ void context_error (int c, parser *p)
 
 static char *get_quoted_string (parser *p)
 {
-    int n = parser_gretl_charpos(p, '"');
+    int n = parser_char_index(p, '"');
     char *s = NULL;
 
     if (n >= 0) {
@@ -994,6 +994,23 @@ static void look_up_word (const char *s, parser *p)
     }
 }
 
+static void maybe_treat_as_postfix (parser *p)
+{
+    if (p->sym == UNUM) {
+	const char *ok = ")]}+-*/%,:";
+	int c = parser_next_nonspace_char(p, 1);
+
+	/* Interpret as foo++ or foo-- ? Only if
+	   the following character is suitable.
+	*/
+	if (c == 0 || strchr(ok, c)) {
+	    p->sym = p->ch == '+'? UNUM_P : UNUM_M;
+	    /* swallow the two pluses or minuses */
+	    parser_advance(p, 2);
+	}
+    }
+}
+
 #define could_be_matrix(t) (model_data_matrix(t) || \
 			    model_data_matrix_builder(t) || \
 			    t == M_UHAT || t == M_YHAT || \
@@ -1064,7 +1081,11 @@ static void word_check_next_char (parser *p)
 	} else {
 	    p->err = E_PARSE;
 	}
-    }
+    } else if (p->ch == '+' && *p->point == '+') {
+	maybe_treat_as_postfix(p);
+    } else if (p->ch == '-' && *p->point == '-') {
+	maybe_treat_as_postfix(p);
+    }	
 
     if (p->err) {
 	context_error(p->ch, p);

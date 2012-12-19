@@ -79,8 +79,8 @@ static NODE *newref (parser *p, int t)
 	    n->vnum = p->idnum;
 	    n->v.xvec = p->dset->Z[n->vnum];
 	    n->vname = p->idstr;
-	} else if (t == UNUM) {
-	    n->t = NUM;
+	} else if (t == UNUM || t == UNUM_P || t == UNUM_M) {
+	    n->t = t == UNUM ? NUM : t;
 	    n->vname = p->idstr;
 	    n->v.xval = *(double *) p->uval;
 	} else if (t == UMAT) {
@@ -282,6 +282,8 @@ static NODE *base (parser *p, NODE *up)
     case WLIST:
     case BUNDLE:
     case USTR:
+    case UNUM_P:
+    case UNUM_M:
 	t = newref(p, p->sym);
 	lex(p);
 	break;
@@ -636,7 +638,7 @@ static NODE *get_middle_string_arg (parser *p)
 
     if (p->ch == '"') {
 	/* special: arg is wrapped in quotes */
-	close = parser_gretl_charpos(p, '"');
+	close = parser_char_index(p, '"');
 	if (close < 0) {
 	    unmatched_symbol_error('"', p);
 	    return NULL;
@@ -984,7 +986,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 
 static void get_ovar_ref (NODE *t, parser *p)
 {
-    if (p->ch != '.' || parser_gretl_charpos(p, '$') != 0) {
+    if (p->ch != '.' || parser_char_index(p, '$') != 0) {
 	p->err = E_PARSE;
 	return;
     }
