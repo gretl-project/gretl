@@ -58,12 +58,15 @@
 
 #define dataset_dum(n) (n->t == DUM && n->v.idnum == DUM_DATASET)
 
+#define postfix_node(n) (n->t == UNUM_P || n->t == UNUM_M)
+
 #define ok_list_node(n) (n->t == LIST || n->t == WLIST || n->t == NUM || \
 			 n->t == MAT || n->t == EMPTY || \
 			 (n->t == VEC && n->vnum >= 0))
 
+#define uscalar_node(n) ((n->t == NUM && n->vname != NULL) || postfix_node(n))
+
 #define umatrix_node(n) (n->t == MAT && n->vname != NULL)
-#define uscalar_node(n) (n->t == NUM && n->vname != NULL)
 #define ubundle_node(n) (n->t == BUNDLE && n->vname != NULL)
 #define ulist_node(n)   (n->t == LIST && n->vname != NULL)
 #define ustring_node(n) (n->t == STR && n->vname != NULL)
@@ -8633,6 +8636,9 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case UNUM_P:
     case UNUM_M:
+	if (compiled(p) && starting(p)) {
+	    node_reattach_data(t, p);
+	}
 	ret = scalar_postfix_node(t, p);
 	break;
     case FARGS:

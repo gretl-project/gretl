@@ -1005,8 +1005,8 @@ static void maybe_treat_as_postfix (parser *p)
 	*/
 	if (c == 0 || strchr(ok, c)) {
 	    p->sym = p->ch == '+'? UNUM_P : UNUM_M;
-	    /* swallow the two pluses or minuses */
-	    parser_advance(p, 2);
+	    /* swallow the pluses or minuses */
+	    parser_advance(p, 1);
 	}
     }
 }
