@@ -88,9 +88,9 @@ enum {
 	      UMAT,	  /* user variable, named matrix */
 	      ULIST,      /* user variable, named list */
 	      UOBJ,	  /* user-defined object (e.g. model) */
-	      UNUM_P,     /* user scalar++ */
+  /* 60 */    UNUM_P,     /* user scalar++ */
 	      UNUM_M,     /* user scalar-- */
-  /* 60 */    NUM,	  /* scalar, evaluated */
+	      NUM,	  /* scalar, evaluated */
 	      VEC,	  /* series, evaluated */
 	      MAT,	  /* matrix, evaluated */
 	      OBS,	  /* observation from a series */
@@ -98,9 +98,9 @@ enum {
               DMSL,	  /* "dollar" matrix plus subspec */
 	      DMSTR,	  /* "dollar" matrix plus string subspec */
 	      MSL2,	  /* unevaluated matrix subspec */
-	      MSPEC,	  /* evaluated matrix subspec */
+  /* 70 */    MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
-  /* 70 */    MDEF,	  /* explicit matrix definition {...} */
+	      MDEF,	  /* explicit matrix definition {...} */
               LAG,        /* variable plus lag length */	  
 	      DVAR,	  /* $ "dataset" variable (mostly scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
@@ -108,9 +108,9 @@ enum {
               LIST,	  /* list, evaluated */
 	      LISTVAR,    /* variable in list, dot syntax */
 	      LISTELEM,   /* list member, [...] syntax) */
-	      MLISTELEM,  /* accessor list member, [...] syntax) */
+  /* 80 */    MLISTELEM,  /* accessor list member, [...] syntax) */
 	      STR,	  /* string */
-  /* 80 */    BUNDLE,     /* gretl bundle (hash table) */
+	      BUNDLE,     /* gretl bundle (hash table) */
               BOBJ,       /* object inside a bundle */
 	      FARGS,	  /* set of n function arguments */
               WLIST,      /* wildcard list spec */
@@ -118,9 +118,9 @@ enum {
 	      ABSENT,
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
               EROOT,	  /* dummy root for (...) expression */
-              UFUN,	  /* user-defined function */
+  /* 90 */    UFUN,	  /* user-defined function */
 	      RFUN,       /* GNU R function */
-  /* 90 */    USTR,       /* string variable */
+	      USTR,       /* string variable */
 	      IVEC,       /* array of ints, not a varlist */
               INC,   
               DEC,
