@@ -61,6 +61,7 @@ TEXSRC = cli.tex \
 	numerical.tex \
 	nonparam.tex \
 	system.tex \
+	operators.tex \
 	hansl-intro.tex
 
 BIBSRC = gretl.bib gretl.bst

@@ -1,0 +1,163 @@
+\chapter{Operators}
+\label{chap:operators}
+
+\section{Precedence}
+
+Table~\ref{tab:ops} lists the operators available in \app{gretl} in
+order of decreasing precedence: the operators on the first row have
+the highest precedence, those on the second row have the second
+highest precedence and so on. Operators on any given row have equal
+precedence. Where successive operators have the same precedence the
+order of evaluation is in general left to right. The exception is
+exponentiation; the expression \verb|a^b^c| is equivalent to
+\verb|a^(b^c)|, not \verb|(a^b)^c|.
+
+\begin{table}[htbp]
+\caption{Operator precedence}
+\label{tab:ops}
+\begin{center}
+\begin{tabular}{lllllllll}
+\verb|()| & \verb|[]| & \verb|{}| \\
+\texttt{!} & \texttt{++} & \verb|--| & \verb|^| & \verb|'| \\
+\texttt{*} & \texttt{/} & \texttt{\%} & \verb+\+ & \texttt{**} \\
+\texttt{+} & \texttt{-} & \verb|~| & \verb+|+ & \\
+\verb|>| & \verb|<| & \verb|>=| & \verb|<=| & \texttt{..} \\
+\texttt{==} & \texttt{!=} \\
+\verb|&&| \\
+\verb+||+ \\
+\texttt{?:} \\
+\end{tabular}
+\end{center}
+\end{table}
+
+In addition to the basic forms shown in the Table, several operators
+also have a ``dot form'' (as in ``\texttt{.+}'' which is read as ``dot
+plus''). These are element-wise versions of the basic operators, for
+use with matrices exclusively; they have the same precedence as their
+basic counterparts. The available dot operators are as follows.
+
+\begin{center}
+\begin{tabular}{cccccccccc}
+\verb|.^| & \texttt{.*} & \texttt{./} & \texttt{.+} &
+ \texttt{.-} & \verb|.>| & \verb|.<| & \verb|.>=| &
+ \verb|.<=| & \texttt{.=} \\
+\end{tabular}
+\end{center}
+
+Each basic operator is shown once again in the following list along
+with a brief account of its meaning. Apart from the first three sets
+of grouping symbols, all operators are binary except where otherwise
+noted.
+
+\begin{longtable}{ll}
+\verb|()| & Function call \\
+\verb|[]|  & Subscripting \\
+\verb|{}|  & Matrix definition \\
+\texttt{!} & Unary logical NOT \\
+\texttt{++} & Increment (unary) \\
+\verb|--| & Decrement (unary) \\
+\verb|^|  & Exponentiation \\
+\verb|'|  & Matrix transpose (unary) or transpose-multiply (binary) \\
+\texttt{*} & Multiplication \\
+\texttt{/} & Division, matrix ``right division'' \\
+\texttt{\%} & Modulus \\
+\verb+\+    & Matrix ``left division'' \\
+\texttt{**} & Kronecker product \\
+\texttt{+} & Addition \\
+\texttt{-} & Subtraction \\
+\verb|~| & Matrix horizontal concatenation \\
+\verb+|+ & Matrix vertical concatenation \\
+\verb|>| & Boolean greater than \\
+\verb|<| & Boolean less than \\
+\verb|>=| & Greater than or equal \\
+\verb|<=| & Less than or equal \\
+\texttt{..} & Range from--to (in constructing lists) \\
+\texttt{==} & Boolean equality test \\
+\texttt{!=} & Boolean inequality test \\
+\verb|&&| & Logical AND \\
+\verb+||+ & Logical OR \\
+\texttt{?:} & Conditional expression \\
+\end{longtable}
+
+Details on the use of the matrix-related operators (including the dot
+operators) can be found in the chapter on matrices in the
+\textit{Gretl User's Guide}.
+
+\section{Assignment}
+
+The operators mentioned above are all intended for use on the
+right-hand side of an expression which assigns a value to a variable
+(or which just computes and displays a value --- see the \texttt{eval}
+command). In addition we have the assignment operator itself,
+``\texttt{=}''. In effect this has the lowest precedence of all: the
+entire right-hand side is evaluated before assignment takes place.
+
+Besides plain ``\texttt{=}'' several ``inflected'' versions of
+assignment are available. These may be used only when the left-hand
+side variable is already defined. The inflected assignment yields a
+value that is a function of the prior value on the left and the
+computed value on the right. Such operators are formed by prepending a
+regular operator symbol to the equals sign. For example,
+%
+\begin{code}
+y += x
+\end{code}
+%
+The new value assigned to \texttt{y} by the statement above is the
+prior value of \texttt{y} plus \texttt{x}. The other available
+inflected operators, which work in an exactly analogous fashion, are
+as follows.
+
+\begin{center}
+\begin{tabular}{ccccccc}
+\texttt{-=} & \texttt{*=} & \texttt{/=} & \verb|%=| & 
+  \verb|^=| & \verb|~=| & \verb+|=+ \\
+\end{tabular}
+\end{center}
+
+In addition, a special form of inflected assignment is provided for
+matrices. Say matrix \texttt{M} is $2 \times 2$. If you execute
+\texttt{M = 5} this has the effect of replacing \texttt{M} with a $1
+\times 1$ matrix with single element 5. But if you do \texttt{M .= 5}
+this assigns the value 5 to all elements of \texttt{M} without
+changing its dimensions.
+
+\section{Increment and decrement}
+
+The unary operators \texttt{++} and \verb|--| follow their
+operand,\footnote{The C programming language also supports prefix
+  versions of \texttt{++} and \verb|--|, which increment or decrement
+  their operand before yielding its value. Only the postfix form is
+  supported by \app{gretl}.}  which must be a variable of scalar
+type. Their simplest use is in stand-alone expressions, such as
+%
+\begin{code}
+j++  # shorthand for j = j + 1
+k--  # shorthand for k = k - 1
+\end{code}
+%
+However, they can also be embedded in more complex expressions, in
+which case they first yield the original value of the variable in
+question, then have the side-effect of incrementing or decrementing
+the variable's value. For example:
+%
+\begin{code}
+scalar i = 3
+k = i++
+matrix M = zeros(10, 1)
+M[i++] = 1
+\end{code}
+%
+After the second line, \texttt{k} has the value 3 and \texttt{i} has
+value 4. The last line assigns the value 1 to element 4 of
+matrix \texttt{M} and sets \texttt{i} = 5.
+
+
+
+
+
+
+
+
+
+
