@@ -191,8 +191,9 @@ static int matrix_block_error (const char *f)
 gretl_matrix *gretl_matrix_alloc (int rows, int cols)
 {
     gretl_matrix *m;
+    int n;
 
-    if (rows <= 0 || cols <= 0) {
+    if (rows < 0 || cols < 0) {
 	fprintf(stderr, "gretl error: gretl_matrix_alloc: rows=%d, cols=%d\n",
 		rows, cols);
 	return NULL;
@@ -204,11 +205,17 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
 	return NULL;
     }
 
-    m->val = malloc(rows * cols * sizeof *m->val);
-    if (m->val == NULL) {
-	set_gretl_matrix_err(E_ALLOC);
-	free(m);
-	return NULL;
+    n = rows * cols;
+
+    if (n == 0) {
+	m->val = NULL;
+    } else {
+	m->val = malloc(n * sizeof *m->val);
+	if (m->val == NULL) {
+	    set_gretl_matrix_err(E_ALLOC);
+	    free(m);
+	    return NULL;
+	}
     }
 
     m->rows = rows;

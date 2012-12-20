@@ -1159,14 +1159,23 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 	return;
     }
 
-    if (m == NULL || m->val == NULL) {
+    if (m == NULL) {
 	if (msg != NULL && *msg != '\0') {
 	    pprintf(prn, "%s: matrix is NULL\n", msg);
 	} else {
 	    pputs(prn, "matrix is NULL\n");
 	}
 	return;
-    }
+    } else if (m->rows == 0 || m->cols == 0) {
+	if (msg != NULL && *msg != '\0') {
+	    pprintf(prn, "%s: matrix is null (%d x %d)\n", 
+		    msg, m->rows, m->cols);
+	} else {
+	    pprintf(prn, "matrix is null (%d x %d)\n",
+		    m->rows, m->cols);
+	}
+	return;
+    }	
 
     /* @plain != 0 means skip the header stuff */
 

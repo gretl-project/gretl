@@ -1569,6 +1569,37 @@ static int op_symbol (int op)
     }
 }
 
+static gretl_matrix *nullmat_multiply (const gretl_matrix *A, 
+				       const gretl_matrix *B,
+				       int op, int *err)
+{
+    gretl_matrix *C = NULL;
+
+    if (A->rows == 0 && A->cols == 0 &&
+	B->rows == 0 && B->cols == 0) {
+	C = gretl_null_matrix_new();
+    } else {
+	int Lc = op == B_TRMUL ? A->rows : A->cols;
+	int Cr = op == B_TRMUL ? A->cols : A->rows;
+	int Cc = B->cols;
+
+	if (Lc != B->rows) {
+	    *err = E_NONCONF;
+	} else {
+	    if (Cr > 0 && Cc > 0) {
+		C = gretl_zero_matrix_new(Cr, Cc);
+	    } else {
+		C = gretl_matrix_alloc(Cr, Cc);
+	    }
+	    if (C == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+    } 
+
+    return C;
+}
+
 /* return allocated result of binary operation performed on
    two matrices */
 
@@ -1583,9 +1614,13 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 
     if (gretl_is_null_matrix(A) ||
 	gretl_is_null_matrix(B)) {
-	if (op != B_HCAT && op != B_VCAT && op != F_DSUM) {
+	if (op != B_HCAT && op != B_VCAT && op != F_DSUM &&
+	    op != B_MUL && op != B_TRMUL) {
 	    *err = E_NONCONF;
 	    return NULL;
+	}
+	if (op == B_MUL || op == B_TRMUL) {
+	    return nullmat_multiply(A, B, op, err);
 	}
     }
 
