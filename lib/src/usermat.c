@@ -1048,16 +1048,25 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
     return S;
 }
 
+/* Here we're looking for a matrix that was passed by address to
+   mols() or similar. If we can't find it, that's an error.
+   Otherwise, set @newmat depending on whether the existing matrix has
+   the appropriate dimensions to accept the result (@newmat = 0) or
+   not (in which case we need to allocate a new gretl_matrix to
+   replace the old one, and we set @newmat = 1).
+*/
+
 static gretl_matrix *get_ols_matrix (const char *mname, 
 				     int r, int c,
-				     int *newmat, int *err)
+				     int *newmat, 
+				     int *err)
 {
     gretl_matrix *m = get_matrix_by_name(mname);
 
     if (m == NULL) {
 	gretl_errmsg_sprintf(_("'%s': no such matrix"), mname);
 	*err = E_UNKVAR;
-    } else if (newmat != NULL && (m->rows != r || m->cols != c)) {
+    } else if (m->rows != r || m->cols != c) {
 	m = gretl_matrix_alloc(r, c);
 	if (m == NULL) {
 	    *err = E_ALLOC;
@@ -1067,6 +1076,18 @@ static gretl_matrix *get_ols_matrix (const char *mname,
     }
 
     return m;
+}
+
+static int check_vcv_arg (const char *mname)
+{
+    gretl_matrix *m = get_matrix_by_name(mname);
+
+    if (m == NULL) {
+	gretl_errmsg_sprintf(_("'%s': no such matrix"), mname);
+	return E_UNKVAR;
+    } else {
+	return 0;
+    }
 }
 
 gretl_matrix *user_matrix_ols (const gretl_matrix *Y, 
@@ -1083,7 +1104,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
     double s2, *ps2 = NULL;
     int g, k, T;
 
-    if (gretl_is_null_matrix(Y) || gretl_is_null_matrix(X)) {
+    if (gretl_is_null_matrix(Y) || X == NULL) {
 	*err = E_DATA;
 	return NULL;
     }
@@ -1098,7 +1119,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
     }
 
     if (g > 1 && (opt & OPT_M)) {
-	/* multiple precision: only one y var wanted */
+	/* multiple precision: we accept only one y var */
 	*err = E_DATA;
 	return NULL;
     }
@@ -1113,12 +1134,12 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
     if (!nullarg(Vname)) {
 	if (g > 1) {
 	    /* multiple dependent variables */
-	    get_ols_matrix(Vname, 0, 0, NULL, err);
+	    *err = check_vcv_arg(Vname);
 	    if (!*err) {
 		newV = 1;
 	    }
 	} else {
-	    /* single dependent variable */
+	    /* a single dependent variable */
 	    int nv = g * k;
 
 	    V = get_ols_matrix(Vname, nv, nv, &newV, err);
@@ -1136,7 +1157,17 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
     }
 
     if (!*err) {
-	if (g == 1) {
+	if (gretl_is_null_matrix(X)) {
+	    if (U != NULL) {
+		gretl_matrix_copy_values(U, Y);
+	    }
+	    if (!nullarg(Vname)) {
+		V = gretl_null_matrix_new();
+		if (V == NULL) {
+		    *err = E_ALLOC;
+		}
+	    }
+	} else if (g == 1) {
 	    if (opt & OPT_M) {
 		/* use multiple precision */
 		*err = gretl_matrix_mp_ols(Y, X, B, V, U, ps2);
@@ -1206,7 +1237,7 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
     } 
 
     if (!nullarg(Vname)) {
-	get_ols_matrix(Vname, 0, 0, NULL, err);
+	*err = check_vcv_arg(Vname);
 	if (!*err) {
 	    newV = 1;
 	}
