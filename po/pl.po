@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.11\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-12-13 11:54-0500\n"
-"PO-Revision-Date: 2012-11-25 23:00-0400\n"
+"PO-Revision-Date: 2012-12-24 21:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -11202,7 +11202,7 @@ msgstr "Modele _szeregów czasowych"
 
 #: gui2/gretl.c:1599
 msgid "_AR(1)..."
-msgstr ""
+msgstr "model _Cochrane-Orcutt i modyfikacje (UMNK)"
 
 #: gui2/gretl.c:1600
 msgid "_Autoregressive estimation..."
@@ -13543,7 +13543,7 @@ msgstr "Korekta heteroskedastyczności"
 
 #: gui2/selector.c:3636
 msgid "AR(1)"
-msgstr ""
+msgstr "Korekta przez AR(1)"
 
 #: gui2/selector.c:3656
 msgid "Count data model"
@@ -13622,9 +13622,8 @@ msgid "Censoring variable"
 msgstr "Zmienna - cenzorowana"
 
 #: gui2/selector.c:3721
-#, fuzzy
 msgid "Dependent variable 2"
-msgstr "Zmienna zależna (Y)"
+msgstr "Zmienna zależna (Y2)"
 
 #: gui2/selector.c:3723
 msgid "List of AR lags"
@@ -13703,16 +13702,14 @@ msgid "Response variable"
 msgstr "Zmienna - odpowiedź"
 
 #: gui2/selector.c:4104
-#, fuzzy
 msgid "Dependent variable 1"
-msgstr "Zmienna zależna (Y)"
+msgstr "Zmienna zależna (Y1)"
 
 #: gui2/selector.c:4164
 msgid "lag order:"
 msgstr "rząd opóźnienia:"
 
 #: gui2/selector.c:4165
-#, fuzzy
 msgid "rank:"
 msgstr "rangi"
 
@@ -13721,9 +13718,8 @@ msgid "maximum lag:"
 msgstr "Maksymalne opóźnienie:"
 
 #: gui2/selector.c:4204
-#, fuzzy
 msgid "Number of cointegrating vectors"
-msgstr "beta (wektor kointegrujący)"
+msgstr "Liczba wektorów kointegrujących"
 
 #: gui2/selector.c:4230
 msgid "ARCH order:"
@@ -13766,14 +13762,12 @@ msgid "Exogenous variables"
 msgstr "Zmienne egzogeniczne"
 
 #: gui2/selector.c:4423
-#, fuzzy
 msgid "Selection regressors"
-msgstr "Regresory równania selekcji"
+msgstr "Wybór regresorów"
 
 #: gui2/selector.c:4425
-#, fuzzy
 msgid "Equation 2 regressors"
-msgstr "Regresory pierwszego równania"
+msgstr "Regresory drugiego równania"
 
 #: gui2/selector.c:4427
 msgid "Helper functions"
@@ -13821,7 +13815,7 @@ msgstr "Sezonowe"
 
 #: gui2/selector.c:4935
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: gui2/selector.c:4941
 msgid "Difference:"
@@ -14120,7 +14114,6 @@ msgid "Endogenous variables"
 msgstr "Zmienne endogeniczne"
 
 #: gui2/selector.c:6404
-#, fuzzy
 msgid "Equation 1 regressors"
 msgstr "Regresory pierwszego równania"
 
@@ -14197,9 +14190,8 @@ msgid "Define named list"
 msgstr "Definiowanie listy zmiennych"
 
 #: gui2/selector.c:6936
-#, fuzzy
 msgid "Name of list"
-msgstr "Nazwa listy:"
+msgstr "Nazwa listy"
 
 #: gui2/selector.c:7247
 msgid "Too many items were selected"
@@ -14573,7 +14565,7 @@ msgstr "Wybór języka dla GUI"
 
 #: gui2/settings.c:197
 msgid "Default graph scale"
-msgstr ""
+msgstr "Domyślna skala wykresu"
 
 #: gui2/settings.c:200
 msgid "Command to launch gnuplot"
@@ -16504,36 +16496,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "Malformed SVG file for graph"
-#~ msgstr "Błędny plik SVG dla wykresu"
-
-#~ msgid "_Cochrane-Orcutt..."
-#~ msgstr "model _Cochrane-Orcutt (UMNK)..."
-
-#~ msgid "_Hildreth-Lu..."
-#~ msgstr "model _Hildreth-Lu (UMNK)..."
-
-#~ msgid "_Prais-Winsten..."
-#~ msgstr "model _Prais-Winsten (UMNK)..."
-
-#~ msgid "Second dependent variable"
-#~ msgstr "Druga zmienna zależna"
-
-#~ msgid "First dependent variable"
-#~ msgstr "Pierwsza zmienna zależna"
-
-#~ msgid "cointegration rank:"
-#~ msgstr "rząd kointegracji:"
-
-#~ msgid "Second equation regressors"
-#~ msgstr "Regresory drugiego równania"
-
-#~ msgid "Independent variables"
-#~ msgstr "Zmienne niezależne (X):"
-
-#~ msgid "Available vars"
-#~ msgstr "Dostępne zmienne"
-
-#~ msgid "Selected vars"
-#~ msgstr "Wybrane zmienne"
