@@ -204,7 +204,7 @@ RCVAR rc_vars[] = {
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #ifdef G_OS_WIN32 
     { "Rbin", "Path to Rterm.exe", NULL, paths.rbinpath, 
-      MACHSET | BROWSER, MAXSTR, TAB_NONE, NULL },
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL }, /* was TAB_NONE? */
 #endif
     { "latex", N_("Command to compile TeX files"), NULL, latex, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
@@ -833,9 +833,9 @@ static void root_check (void)
     if (getuid() == 0) {
 	int resp;
 
-	resp = yes_no_dialog ("gretl", _("You seem to be running gretl " 
-			      "as root.  Do you really want to do this?"), 
-			      0);
+	resp = yes_no_dialog("gretl", _("You seem to be running gretl " 
+					"as root.  Do you really want to do this?"), 
+			     0);
 	if (resp == GRETL_NO) {
 	    exit(EXIT_FAILURE);
 	}
@@ -901,7 +901,8 @@ int options_dialog (int page, const char *varname, GtkWidget *parent)
 	return 0;
     }
 
-    dialog = gretl_dialog_new(_("gretl: options"), parent, GRETL_DLG_BLOCK);
+    dialog = gretl_dialog_new(_("gretl: options"), parent, 
+			      GRETL_DLG_RESIZE | GRETL_DLG_BLOCK);
 #if GTK_MAJOR_VERSION < 3
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
 #endif

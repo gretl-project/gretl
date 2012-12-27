@@ -957,14 +957,14 @@ int maybe_print_R_path_addition (FILE *fp)
 	/* revised path already built */
 	fprintf(fp, "Sys.setenv(PATH=\"%s\")\n", fixpath);
     } else {
-	char rpath[MAXLEN];
+	char Rpath[MAXLEN];
 
-	strcpy(rpath, gretl_rlib_path());
+	strcpy(Rpath, gretl_rlib_path());
 
-	if (*rpath == '\0') {
+	if (*Rpath == '\0') {
 	    err = 1;
 	} else {
-	    char *p = strrchr(rpath, '\\');
+	    char *p = strrchr(Rpath, '\\');
 	    char *path = getenv("PATH");
 
 	    if (p != NULL) {
@@ -972,13 +972,16 @@ int maybe_print_R_path_addition (FILE *fp)
 		*p = '\0';
 	    }
 
-	    if (path != NULL && strstr(path, rpath) != NULL) {
+	    fprintf(stderr, "Rpath = '%s'\n", Rpath);
+
+	    if (path != NULL && strstr(path, Rpath) != NULL) {
 		ok = 1; /* nothing to be done */
 	    } else {
-		fixpath = get_fixed_R_path(path, rpath);
+		fixpath = get_fixed_R_path(path, Rpath);
 		if (fixpath == NULL) {
 		    err = E_ALLOC;
 		} else {
+		    fprintf(stderr, "added Rpath to PATH:\n %s\n", fixpath);
 		    fprintf(fp, "Sys.setenv(PATH=\"%s\")\n", fixpath);
 		}
 	    }

@@ -811,6 +811,10 @@ static void write_R_export_func (FILE *fp)
 
 static void put_R_startup_content (FILE *fp)
 {
+#ifdef G_OS_WIN32
+    /* 2012-12-27: moved here from write_R_source_file() */
+    maybe_print_R_path_addition(fp);
+#endif
     fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", 
 	  fp);
     fputs("if (vnum > 2.41) library(utils)\n", fp);
@@ -915,7 +919,7 @@ static int write_R_source_file (const char *buf,
 		fputs("sink(errout, type=\"message\")\n", fp);
 	    }
 	    sunk = 1;
-#ifdef G_OS_WIN32
+#if 0 /* def G_OS_WIN32 */
 	    /* can this go in the "startup content"? */
 	    maybe_print_R_path_addition(fp);
 #endif

@@ -511,6 +511,7 @@ static const char *maybe_skip_savename (const char *s)
 static inline void maybe_set_catch_flag (char *s, CMD *cmd)
 {
     if (strncmp(s, "catch ", 6) == 0) {
+	/* the next two lines added 2012-12-27 */
 	set_gretl_errno(0);
 	gretl_error_clear();
 	cmd->flags |= CMD_CATCH;
