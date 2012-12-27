@@ -2475,6 +2475,8 @@ static int read_addons_info (void)
     return err;
 }
 
+#define PKG_DEBUG 0
+
 /* For recognized function packages: given the internal
    package name (e.g. "gig") and a menu path where we'd like
    it to appear (e.g. "/menubar/Model/TSModels" -- see the
@@ -2491,7 +2493,7 @@ static void add_package_to_menu (addon_info *addon,
     };
     GtkActionGroup *actions;
 
-#if 0
+#if PKG_DEBUG
     fprintf(stderr, "add_package_to_menu:\n pkgname='%s', menupath='%s'\n",
 	    addon->pkgname, addon->menupath);
 #endif
@@ -2599,6 +2601,9 @@ static int maybe_add_model_pkg (addon_info *addon,
     }
 
     if (!err) {
+#if PKG_DEBUG
+	fprintf(stderr, "maybe_add_model_pkg...\n");
+#endif
 	add_package_to_menu(addon, vwin);
     }
 
@@ -2617,6 +2622,10 @@ void maybe_add_packages_to_menus (windata_t *vwin)
     if (addons == NULL) {
 	read_addons_info();
     }
+
+#if PKG_DEBUG
+    fprintf(stderr, "maybe_add_packages_to_menus...\n");
+#endif
 
     for (i=0; i<n_addons; i++) {
 	if (!addons[i].modelwin) {
