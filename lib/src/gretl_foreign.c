@@ -824,7 +824,7 @@ static void put_R_startup_content (FILE *fp)
 }
 
 /* Set up a gretl-specific R profile, and put notice of its existence
-   into the environment.  Used when exec'ing the R binary (only) */
+   into the environment. Used when exec'ing the R binary (only) */
 
 static int write_gretl_R_profile (gretlopt opt)
 {
@@ -1293,7 +1293,7 @@ static int gretl_Rlib_init (void)
 }
 
 /* run R's source() function on an R command file written by
-   gretl -- shared library version */
+   gretl, shared library version */
 
 static int lib_run_Rlib_sync (gretlopt opt, PRN *prn) 
 {

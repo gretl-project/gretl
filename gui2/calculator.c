@@ -661,8 +661,8 @@ static void dist_graph (int d, double *parms)
 	fprintf(fp, "%s\n", F_POIS);
 	break;
     case WEIBULL_DIST:
-	fprintf(fp, "shp1=%g\n", parms[0]);
-	fprintf(fp, "scl1=%g\n", parms[1]);
+	fprintf(fp, "shp1=%f\n", parms[0]);
+	fprintf(fp, "scl1=%f\n", parms[1]);
 	fprintf(fp, "%s\n", F_WEIB);
 	break;
     }
