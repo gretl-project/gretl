@@ -811,10 +811,6 @@ static void write_R_export_func (FILE *fp)
 
 static void put_R_startup_content (FILE *fp)
 {
-#ifdef G_OS_WIN32
-    /* 2012-12-27: moved here from write_R_source_file() */
-    maybe_print_R_path_addition(fp);
-#endif
     fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", 
 	  fp);
     fputs("if (vnum > 2.41) library(utils)\n", fp);
@@ -919,8 +915,8 @@ static int write_R_source_file (const char *buf,
 		fputs("sink(errout, type=\"message\")\n", fp);
 	    }
 	    sunk = 1;
-#if 0 /* def G_OS_WIN32 */
-	    /* can this go in the "startup content"? */
+#if 0 /* ifdef G_OS_WIN32 */
+	    /* not working, 2012-12-27 */
 	    maybe_print_R_path_addition(fp);
 #endif
 	}
@@ -1214,6 +1210,33 @@ void gretl_R_reset_error (void)
     Rlib_err = 0;
 }
 
+#ifdef WIN32
+
+static void set_path_for_Rlib (const char *Rhome)
+{
+    char *path = getenv("PATH");
+    gchar *Rpath;
+
+    Rpath = g_strdup_printf("%s\\bin\\i386", Rhome);
+    fprintf(stderr, "Rpath = '%s'\n", Rpath);
+
+    if (path != NULL && strstr(path, Rpath) != NULL) {
+	; /* nothing to be done */
+    } else {
+	g_free(Rpath);
+	Rpath = g_strdup_printf("%s;%s\\bin\\i386", path, Rhome);
+	gretl_setenv("PATH", Rpath);
+	g_free(Rpath);
+	Rpath = NULL;
+    }
+
+    if (Rpath != NULL) {
+	g_free(Rpath);
+    }
+}
+
+#endif
+
 /* Initialize the R library for use with gretl.  Note that we only
    need do this once per gretl session.  We need to check that the
    environment is set to R's liking first, otherwise initialization
@@ -1250,6 +1273,8 @@ static int gretl_Rlib_init (void)
 	fprintf(stderr, "To use Rlib, the variable R_HOME must be set\n");
 	err = E_EXTERNAL;
 	goto bailout;
+    } else {
+	set_path_for_Rlib(Rhome);
     }
 #endif
 
