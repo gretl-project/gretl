@@ -807,9 +807,9 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 	break;
     case WEIBULL_DIST:
 	k = ids[ID_SHP] + 1;
-	sprintf(v1, "shp%d=%g", k, parms[0]);
+	sprintf(v1, "shp%d=%f", k, parms[0]);
 	k = ids[ID_SCL] + 1;
-	sprintf(v2, "scl%d=%g", k, parms[1]);
+	sprintf(v2, "scl%d=%f", k, parms[1]);
 	break;
     }  
 
