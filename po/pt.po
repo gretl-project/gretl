@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-12-13 11:54-0500\n"
-"PO-Revision-Date: 2012-11-21 00:31+0000\n"
+"PO-Revision-Date: 2012-12-14 23:18+0000\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
@@ -7295,7 +7295,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 21 de novembro de 2012."
+"Tradução de 14 de dezembro de 2012."
 
 #: gui2/about.c:164
 msgid "License"
@@ -11234,7 +11234,7 @@ msgstr "Série _temporal"
 
 #: gui2/gretl.c:1599
 msgid "_AR(1)..."
-msgstr ""
+msgstr "_AR(1)..."
 
 #: gui2/gretl.c:1600
 msgid "_Autoregressive estimation..."
@@ -13565,7 +13565,7 @@ msgstr "Heterocedasticidade corrigida"
 
 #: gui2/selector.c:3636
 msgid "AR(1)"
-msgstr ""
+msgstr "AR(1)"
 
 #: gui2/selector.c:3656
 msgid "Count data model"
@@ -13646,9 +13646,8 @@ msgid "Censoring variable"
 msgstr "Variável censora"
 
 #: gui2/selector.c:3721
-#, fuzzy
 msgid "Dependent variable 2"
-msgstr "Variável dependente"
+msgstr "Variável dependente 2"
 
 #: gui2/selector.c:3723
 msgid "List of AR lags"
@@ -13727,27 +13726,24 @@ msgid "Response variable"
 msgstr "Variável de resposta"
 
 #: gui2/selector.c:4104
-#, fuzzy
 msgid "Dependent variable 1"
-msgstr "Variável dependente"
+msgstr "Variável dependente 1"
 
 #: gui2/selector.c:4164
 msgid "lag order:"
 msgstr "ordem de desfasamento:"
 
 #: gui2/selector.c:4165
-#, fuzzy
 msgid "rank:"
-msgstr "posto"
+msgstr "posto:"
 
 #: gui2/selector.c:4189
 msgid "maximum lag:"
 msgstr "desfasamento máximo:"
 
 #: gui2/selector.c:4204
-#, fuzzy
 msgid "Number of cointegrating vectors"
-msgstr "beta (vectores de cointegração)"
+msgstr "Número de vectores de cointegração"
 
 #: gui2/selector.c:4230
 msgid "ARCH order:"
@@ -13790,14 +13786,12 @@ msgid "Exogenous variables"
 msgstr "Variáveis exógenas"
 
 #: gui2/selector.c:4423
-#, fuzzy
 msgid "Selection regressors"
-msgstr "Regressores da equação de selecção"
+msgstr "Regressores de selecção"
 
 #: gui2/selector.c:4425
-#, fuzzy
 msgid "Equation 2 regressors"
-msgstr "Regressores da primeira equação"
+msgstr "Regressores da equação 2"
 
 #: gui2/selector.c:4427
 msgid "Helper functions"
@@ -13845,7 +13839,7 @@ msgstr "Sazonal"
 
 #: gui2/selector.c:4935
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: gui2/selector.c:4941
 msgid "Difference:"
@@ -14144,9 +14138,8 @@ msgid "Endogenous variables"
 msgstr "Variáveis endógenas"
 
 #: gui2/selector.c:6404
-#, fuzzy
 msgid "Equation 1 regressors"
-msgstr "Regressores da primeira equação"
+msgstr "Regressores da equação 1"
 
 #: gui2/selector.c:6406 gui2/selector.c:7834
 msgid "Regressors"
@@ -14221,9 +14214,8 @@ msgid "Define named list"
 msgstr "Definir lista com nome"
 
 #: gui2/selector.c:6936
-#, fuzzy
 msgid "Name of list"
-msgstr "Nome da lista:"
+msgstr "Nome de lista"
 
 #: gui2/selector.c:7247
 msgid "Too many items were selected"
@@ -14597,7 +14589,7 @@ msgstr "Preferência de língua"
 
 #: gui2/settings.c:197
 msgid "Default graph scale"
-msgstr ""
+msgstr "Escala de gráfico por omissão"
 
 #: gui2/settings.c:200
 msgid "Command to launch gnuplot"
