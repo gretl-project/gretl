@@ -1338,10 +1338,6 @@
 	  <flag>--dataset</flag>
 	  <effect>apagar apenas o conjunto de dados</effect>
 	</option>
-	<option>
-	  <flag>--other</flag>
-	  <effect>apagar tudo exceto o conjunto de dados</effect>
-	</option>
       </options>
     </usage>
 
@@ -1357,11 +1353,6 @@
 	Se tiver sido dada a opção <lit>--dataset</lit>, então apenas o conjunto
 	de dados é apagado; os outros objetos gravados como matrizes e escalares
 	serão preservados.
-      </para>
-      <para>
-	Se tiver sido dada a opção <lit>--other</lit>, então o conjunto de dados
-	currente, se existir, será preservado mas todos os outros objetos gravados
-	serão destruidos.
       </para>
     </description>
   </command>
@@ -2326,6 +2317,11 @@
 	  <flag>--db</flag>
 	  <effect>apaga séries em base de dados</effect>
 	</option>
+	<option>
+	  <flag>--type</flag>
+	  <optparm>nome-de-tipo</optparm>
+	  <effect>todas as variáveis do tipo dado</effect>
+	</option>
       </options>
     </usage>
 
@@ -2350,6 +2346,14 @@
 	gretl, assumindo que a base de dados está aberta e que o utilizador
 	tem permissão de escrita no ficheiro em questão.  Ver também o 
 	comando	<cmdref targ="open"/>.
+      </para>
+      <para>
+	Se tiver sido dada a opção <opt>--type</opt> ela terá de ser
+        acompanhada por um dos seguintes nomes-de-tipo:
+	<lit>matrix</lit> (matriz), <lit>bundle</lit> ('bundle'), <lit>string</lit> (texto),
+	<lit>list</lit> (lista), ou <lit>scalar</lit> (escalar). O efeito é o de apagar todas
+	as variáveis do tipo dado. Neste caso (somente neste), não deve ser indicado o argumento
+	<repl>nome-de-variável</repl>.
       </para>
     </description>
 
@@ -6257,8 +6261,11 @@
 	With the option <opt>--from-file</opt>, reads the specified
 	file (which should be plain text) and assigns observation
 	markers to the rows in the dataset, reading one marker per
-	line. There should be at least as many markers in the file as
-	observations in the dataset.
+	line. In general there should be at least as many markers in
+	the file as observations in the dataset, but if the dataset is
+	a panel it is also acceptable if the number of markers in the
+	file matches the number of cross-sectional units (in which
+	case the markers are repeated for each time period.)
       </para>
       <para>
 	The <opt>--delete</opt> option does what you'd expect: it
@@ -8437,18 +8444,18 @@
 	and end of the sample period.
       </para>
       <para>
-	For each potential break point within the central 70 percent of
-	the observations, a Chow test is performed (see <cmdref
+	For each potential break point within the central 70 percent
+	of the observations, a Chow test is performed (see <cmdref
 	targ="chow"/>). The QLR test statistic is the maximum of the
-	<math>F</math> values from these tests.  It follows a non-standard
-	distribution, the critical values of which are taken from <cite
-	key="stock-watson03">Stock and Watson's <book>Introduction to
-	Econometrics</book> (2003)</cite>. If the QLR statistic exceeds
-	the critical value at the chosen level of significance, one can
-	infer that the parameters of the model are not constant.  This
-	statistic can be used to detect forms of instability other than a
-	single discrete break (such as multiple breaks or a slow drifting
-	of the parameters).
+	<math>F</math> values from these tests.  It follows a
+	non-standard distribution, the critical values of which are
+	taken from <cite key="stock-watson03">Stock and Watson
+	(2003)</cite>. If the QLR statistic exceeds the critical value
+	at the chosen level of significance, one can infer that the
+	parameters of the model are not constant.  This statistic can
+	be used to detect forms of instability other than a single
+	discrete break (such as multiple breaks or a slow drifting of
+	the parameters).
       </para>
     </description>
 
