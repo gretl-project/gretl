@@ -46,9 +46,9 @@ double student_pvalue_2 (double df, double x);
 
 double student_pvalue_1 (double df, double x);
 
-double chisq_cdf (int df, double x);
+double chisq_cdf (double df, double x);
 
-double chisq_cdf_comp (int df, double x);
+double chisq_cdf_comp (double df, double x);
 
 double snedecor_cdf_comp (int dfn, int dfd, double x);
 

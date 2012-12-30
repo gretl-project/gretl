@@ -603,7 +603,7 @@ double student_cdf_inverse (double df, double a)
  * on failure.
  */
 
-double chisq_cdf (int df, double x)
+double chisq_cdf (double df, double x)
 {
     double p = NADBL;
 
@@ -627,7 +627,7 @@ double chisq_cdf (int df, double x)
  * on failure.
  */
 
-double chisq_cdf_comp (int df, double x)
+double chisq_cdf_comp (double df, double x)
 {
     double p = NADBL;
 

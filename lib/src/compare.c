@@ -2493,13 +2493,47 @@ static void save_QLR_test (MODEL *pmod, const char *datestr,
     }	  
 }
 
+static double get_QLR_pval (double test, int df, int k1, int k2, 
+			    MODEL *pmod, PRN *prn)
+{
+    double (*qlr_asy_pvalue) (double, int, double);
+    void *handle;
+    double pi_1, pi_2, lam0;
+    double pval;
+
+    qlr_asy_pvalue = get_plugin_function("qlr_asy_pvalue", &handle);
+
+    if (qlr_asy_pvalue == NULL) {
+	fputs(I_("Couldn't load plugin function\n"), stderr);
+	return NADBL;
+    }
+
+    pi_1 = (k1 - pmod->t1 + 1) / (double) pmod->nobs; 
+    pi_2 = (k2 - pmod->t1 + 1) / (double) pmod->nobs;
+    lam0 = (pi_2*(1.0 - pi_1)) / (pi_1*(1.0 - pi_2));
+
+    test *= df;
+    pval = (*qlr_asy_pvalue) (test, df, lam0);
+    pprintf(prn, "Asymptotic p-value = %g\n", pval);
+#if 0
+    pprintf(prn, "(lambda0 = %g, pi0 = %g)\n", lam0, 1.0/(1 + sqrt(lam0)));
+#endif
+
+    close_plugin(handle);
+
+    return pval;
+}
+
 static void QLR_print_result (MODEL *pmod,
-			      double Fmax, int tmax, int dfn, int dfd,
-			      const DATASET *dset, gretlopt opt,
+			      double Fmax, int tmax, 
+			      int k1, int k2,
+			      int dfn, int dfd,
+			      const DATASET *dset, 
+			      gretlopt opt,
 			      PRN *prn)
 {
     char datestr[OBSLEN];
-    double crit = 0.0;
+    double pval, crit = 0.0;
     int a = 0, approx = 0;
 
     ntodate(datestr, tmax, dset);
@@ -2533,7 +2567,8 @@ static void QLR_print_result (MODEL *pmod,
 	  "F distribution;\ncritical values are from Stock and Watson "
 	  "(2003)."));
     pputs(prn, "\n\n");
-	  
+
+    pval = get_QLR_pval(Fmax, dfn, k1, k2, pmod, prn);
 
     if (opt & OPT_S) {
 	save_QLR_test(pmod, datestr, Fmax, crit, a / 100.0,
@@ -2585,6 +2620,19 @@ static void save_chow_test (MODEL *pmod, const char *chowstr,
     }	  
 }
 
+static int get_QLR_trim_val (double frac, int n)
+{
+    int trimf = floor(frac * n);
+    int trimc = ceil(frac * n);
+    int trim = trimc;
+
+    if (fabs(trimf/(double) n) < fabs(trimc/(double) n)) {
+	trim = trimf;
+    }
+
+    return trim;
+}
+
 /*
  * real_chow_test:
  * @chowparm: sample breakpoint; or ID number of dummy
@@ -2626,9 +2674,11 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
     gretl_model_init(&chow_mod);
 
     if (QLR) {
-	/* 15 percent trimming */
-	split = pmod->t1 + 0.15 * pmod->nobs;
-	smax = pmod->t1 + 0.85 * pmod->nobs;
+	/* 15 percent trimming, as close as we can get */
+	int trim = get_QLR_trim_val(0.15, pmod->nobs);
+
+	split = pmod->t1 + trim;
+	smax = pmod->t2 - trim;
     } else if (opt & OPT_D) {
 	/* Chow, using dummy */
 	dumv = chowparm;
@@ -2687,7 +2737,8 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	}
 
 	if (!err) {
-	    QLR_print_result(pmod, Fmax, tmax, dfn, dfd, dset, opt, prn);
+	    QLR_print_result(pmod, Fmax, tmax, split, smax, 
+			     dfn, dfd, dset, opt, prn);
 	    record_test_result(Fmax, NADBL, "QLR");
 	    if (Ft != NULL) {
 		QLR_graph(Ft, split, smax, dset);
