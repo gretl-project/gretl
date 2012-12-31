@@ -58,38 +58,6 @@ struct COMPARE {
     const int *testvars; /* list of variables added or omitted */
 };
 
-/* Critical values for Quandt likelihood ratio (break) test:
-   columns contain the 10%, 5% and 1% values respectively,
-   for the given number of restrictions, q, and 15% trimming.  
-   Taken from Stock and Watson, Introduction to Econometrics
-   (Addison-Wesley, 2003), based on Andrews.
-*/
-
-#define QLR_QMAX 20
-
-static double QLR_critvals[QLR_QMAX][3] = {
-    { 7.12, 8.68, 12.16 }, /*  1 */
-    { 5.00, 5.86,  7.78 }, /*  2 */
-    { 4.09, 4.71,  6.02 }, /*  3 */
-    { 3.59, 4.09,  5.12 }, /*  4 */
-    { 3.26, 3.66,  4.53 }, /*  5 */
-    { 3.02, 3.37,  4.12 }, /*  6 */
-    { 2.84, 3.15,  3.82 }, /*  7 */
-    { 2.69, 2.98,  3.57 }, /*  8 */
-    { 2.58, 2.84,  3.38 }, /*  9 */
-    { 2.48, 2.71,  3.23 }, /* 10 */
-    { 2.40, 2.62,  3.09 }, /* 11 */
-    { 2.33, 2.54,  2.97 }, /* 12 */
-    { 2.27, 2.46,  2.87 }, /* 13 */
-    { 2.21, 2.40,  2.78 }, /* 14 */
-    { 2.16, 2.34,  2.71 }, /* 15 */
-    { 2.12, 2.29,  2.64 }, /* 16 */
-    { 2.08, 2.25,  2.58 }, /* 17 */
-    { 2.05, 2.20,  2.53 }, /* 18 */
-    { 2.01, 2.17,  2.48 }, /* 19 */
-    { 1.99, 2.13,  2.43 }  /* 20 */
-};
-
 /* Given a list of variables, check them against the independent
    variables included in a model, and construct a mask with 1s in
    positions where there is a match, 0s otherwise.  If the test list
@@ -2418,33 +2386,6 @@ make_chow_list (const MODEL *pmod, DATASET *dset,
     return chowlist;
 }
 
-static double QLR_get_critval (double Fmax, int dfn, int *a, int *approx)
-{
-    double crit = 0.0;
-    int i, j = dfn - 1;
-
-    *approx = 0;
-
-    if (j >= QLR_QMAX) {
-	j = QLR_QMAX - 1;
-	*approx = 1;
-    } 
-
-    for (i=2; i>=0; i--) {
-	if (Fmax > QLR_critvals[j][i]) {
-	    *a = (i == 2)? 1 : (i == 1)? 5 : 10;
-	    crit = QLR_critvals[j][i];
-	    break;
-	}
-    }
-
-    if (crit == 0.0) {
-	crit = QLR_critvals[j][0];
-    }
-
-    return crit;
-}
-
 static int QLR_graph (const double *Ft, int t1, int t2, 
 		      const DATASET *dset)
 {
@@ -2477,18 +2418,16 @@ static int QLR_graph (const double *Ft, int t1, int t2,
 }
 
 static void save_QLR_test (MODEL *pmod, const char *datestr,
-			   double Fmax, double crit, double alpha,
-			   int dfn, int dfd)
+			   double X2, double pval, int df)
 {
     ModelTest *test = model_test_new(GRETL_TEST_QLR);
 
     if (test != NULL) {
 	model_test_set_teststat(test, GRETL_STAT_SUP_WALD);
 	model_test_set_param(test, datestr);
-	model_test_set_value(test, Fmax);
-	model_test_set_crit_and_alpha(test, crit, alpha);
-	model_test_set_dfn(test, dfn);
-	model_test_set_dfd(test, dfd);
+	model_test_set_value(test, X2);
+	model_test_set_pvalue(test, pval);
+	model_test_set_dfn(test, df);
 	maybe_add_test_to_model(pmod, test);
     }	  
 }
@@ -2512,9 +2451,7 @@ static double get_QLR_pval (double test, int df, int k1, int k2,
     pi_2 = (k2 - pmod->t1 + 1) / (double) pmod->nobs;
     lam0 = (pi_2*(1.0 - pi_1)) / (pi_1*(1.0 - pi_2));
 
-    test *= df;
     pval = (*qlr_asy_pvalue) (test, df, lam0);
-    pprintf(prn, "Asymptotic p-value = %g\n", pval);
 #if 0
     pprintf(prn, "(lambda0 = %g, pi0 = %g)\n", lam0, 1.0/(1 + sqrt(lam0)));
 #endif
@@ -2526,15 +2463,14 @@ static double get_QLR_pval (double test, int df, int k1, int k2,
 
 static void QLR_print_result (MODEL *pmod,
 			      double Fmax, int tmax, 
-			      int k1, int k2,
+			      int k1, int k2, 
 			      int dfn, int dfd,
 			      const DATASET *dset, 
 			      gretlopt opt,
 			      PRN *prn)
 {
     char datestr[OBSLEN];
-    double pval, crit = 0.0;
-    int a = 0, approx = 0;
+    double X2, pval;
 
     ntodate(datestr, tmax, dset);
 
@@ -2545,34 +2481,21 @@ static void QLR_print_result (MODEL *pmod,
 		   "at observation %s"), dfn, dfd, Fmax, datestr);
     pputc(prn, '\n');
 
-    crit = QLR_get_critval(Fmax, dfn, &a, &approx);
+    X2 = dfn * Fmax;
+    pval = get_QLR_pval(X2, dfn, k1, k2, pmod, prn);
 
-    if (a > 0) {
-	pprintf(prn, _("Significant at the %d percent level "), a);
-	pprintf(prn, _("(%d%% critical value %s %.2f)"), a, 
-		(approx)? "<" : "=", crit);
-    } else {
-	if (approx) {
-	    pprintf(prn, _("10%% critical value for q = 20 is %.2f"),
-		    crit);
-	} else {
-	    pputs(prn, _("Not significant at the 10 percent level "));
-	    pprintf(prn, _("(10%% value = %.2f)"), crit);
-	}
-	a = 10;
+    if (!na(pval)) {
+	pprintf(prn, _("Asymptotic p-value = %.5g for "
+		       "chi-square(%d) = %g"),
+		pval, dfn, X2);
+	pputc(prn, '\n');
     }
+    pputc(prn, '\n');
 
-    pputs(prn, "\n\n");
-    pputs(prn, _("This statistic does not follow the standard "
-	  "F distribution;\ncritical values are from Stock and Watson "
-	  "(2003)."));
-    pputs(prn, "\n\n");
-
-    pval = get_QLR_pval(Fmax, dfn, k1, k2, pmod, prn);
+    record_test_result(X2, pval, "QLR");
 
     if (opt & OPT_S) {
-	save_QLR_test(pmod, datestr, Fmax, crit, a / 100.0,
-		      dfn, dfd);
+	save_QLR_test(pmod, datestr, X2, pval, dfn);
     }
 }
 
@@ -2739,7 +2662,6 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	if (!err) {
 	    QLR_print_result(pmod, Fmax, tmax, split, smax, 
 			     dfn, dfd, dset, opt, prn);
-	    record_test_result(Fmax, NADBL, "QLR");
 	    if (Ft != NULL) {
 		QLR_graph(Ft, split, smax, dset);
 	    }

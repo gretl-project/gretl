@@ -91,7 +91,9 @@ void print_item (char *s, const char *key)
 	} else if (!strncmp(s, "\\url{", 4)) {
 	    url = 1;
 	    putit = 0;
-	    s += 3;	    
+	    s += 3;
+	} else if (*s == '\\' && *(s+1) == '&') {
+	    putit = 0;
 	} else if (*s == '{') {
 	    group = 1;
 	    putit = 0;

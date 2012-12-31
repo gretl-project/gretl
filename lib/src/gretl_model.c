@@ -3597,11 +3597,11 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
 	break;
     case GRETL_STAT_SUP_WALD:
 	if (tex) {
-	    sprintf(str, "$F_{\\rm max}(%d, %d)$ = %g (%s)", test->dfn, test->dfd, 
+	    sprintf(str, "max $\\chi^2(%d)$ = %g (%s)", test->dfn, 
 		    test->value, test->param);
 	} else {
-	    sprintf(str, _("max F(%d, %d) = %g at observation %s"), 
-		    test->dfn, test->dfd, test->value, test->param);
+	    sprintf(str, _("chi-square(%d) = %g at observation %s"), 
+		    test->dfn, test->value, test->param);
 	}
 	break;
     case GRETL_STAT_LMF:
@@ -3694,6 +3694,7 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
     case GRETL_STAT_NORMAL_CHISQ:
     case GRETL_STAT_LR:
     case GRETL_STAT_WALD_CHISQ:
+    case GRETL_STAT_SUP_WALD:	
     case GRETL_STAT_Z:
 	if (na(test->value)) {
 	    *str = '\0';
@@ -3708,7 +3709,10 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
     }
 }
 
-#define asy_test(t) (t == GRETL_STAT_WALD_CHISQ || t == GRETL_STAT_Z)
+#define asy_test(t) (t == GRETL_STAT_WALD_CHISQ || \
+		     t == GRETL_STAT_Z)
+
+#define asy_pval(t) (t == GRETL_STAT_SUP_WALD)
 
 void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn)
 {
@@ -3742,13 +3746,16 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
 
     get_test_pval_string(test, buf, prn);
 
-    if (*buf) {
+    if (*buf != '\0') {
+	const char *pvstr = asy_pval(test->teststat) ? 
+	    N_("with asymptotic p-value") : N_("with p-value");
+
 	if (plain_format(prn)) {
-	    pprintf(prn, "  %s = %s\n\n", _("with p-value"), buf);
+	    pprintf(prn, "  %s = %s\n\n", _(pvstr), buf);
 	} else if (tex_format(prn)) {
-	    pprintf(prn, "\\quad %s = %s\\\\\n", A_("with p-value"), buf);
+	    pprintf(prn, "\\quad %s = %s\\\\\n", A_(pvstr), buf);
 	} else if (rtf_format(prn)) {
-	    pprintf(prn, " %s = %s\\par\n\n", A_("with p-value"), buf);
+	    pprintf(prn, " %s = %s\\par\n\n", A_(pvstr), buf);
 	}
     } else if (!na(test->crit) && !na(test->alpha)) {
 	double a = test->alpha * 100.0;

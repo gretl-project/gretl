@@ -8585,18 +8585,14 @@
 	and end of the sample period.
       </para>
       <para>
-	For each potential break point within the central 70 percent
-	of the observations, a Chow test is performed (see <cmdref
+	For each potential break point within the central 70 percent of the
+	observations, a Chow test is performed (see <cmdref
 	targ="chow"/>). The QLR test statistic is the maximum of the
-	<math>F</math> values from these tests.  It follows a
-	non-standard distribution, the critical values of which are
-	taken from <cite key="stock-watson03">Stock and Watson
-	(2003)</cite>. If the QLR statistic exceeds the critical value
-	at the chosen level of significance, one can infer that the
-	parameters of the model are not constant.  This statistic can
-	be used to detect forms of instability other than a single
-	discrete break (such as multiple breaks or a slow drifting of
-	the parameters).
+	<math>F</math> values from these tests. An asymptotic p-value
+	is obtained using the method of <cite key="hansen97">Bruce Hansen
+	(1997)</cite>; this is based on the chi-square form of the
+	statistic, namely the <math>F</math> value multiplied by the
+	numerator degrees of freedom.
       </para>
     </description>
 
