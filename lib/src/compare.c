@@ -2543,19 +2543,6 @@ static void save_chow_test (MODEL *pmod, const char *chowstr,
     }	  
 }
 
-static int get_QLR_trim_val (double frac, int n)
-{
-    int trimf = floor(frac * n);
-    int trimc = ceil(frac * n);
-    int trim = trimc;
-
-    if (fabs(trimf/(double) n) < fabs(trimc/(double) n)) {
-	trim = trimf;
-    }
-
-    return trim;
-}
-
 /*
  * real_chow_test:
  * @chowparm: sample breakpoint; or ID number of dummy
@@ -2597,11 +2584,9 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
     gretl_model_init(&chow_mod);
 
     if (QLR) {
-	/* 15 percent trimming, as close as we can get */
-	int trim = get_QLR_trim_val(0.15, pmod->nobs);
-
-	split = pmod->t1 + trim;
-	smax = pmod->t2 - trim;
+	/* 15 percent trimming */
+	split = pmod->t1 + floor(0.15 * pmod->nobs);
+	smax = pmod->t1 + floor(0.85 * pmod->nobs);
     } else if (opt & OPT_D) {
 	/* Chow, using dummy */
 	dumv = chowparm;
@@ -2648,8 +2633,8 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 		Ft[t - split] = F;
 	    }
 #if 0
-	    fprintf(stderr, "split at t=%d: F(%d,%d)=%g\n", t, 
-		    dfn, dfd, F);
+	    fprintf(stderr, "split at t=%d: F(%d,%d)=%g (X2=%g)\n", t, 
+		    dfn, dfd, F, F*dfn);
 	    fprintf(stderr, " pmod->ess = %g, chow_mod.ess = %g\n", 
 		    pmod->ess, chow_mod.ess);
 #endif
