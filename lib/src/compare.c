@@ -2386,8 +2386,8 @@ make_chow_list (const MODEL *pmod, DATASET *dset,
     return chowlist;
 }
 
-static int QLR_graph (const double *Ft, int t1, int t2, 
-		      const DATASET *dset)
+static int QLR_graph (const double *testvec, int t1, int t2, 
+		      const DATASET *dset, int robust)
 {
     const double *x = gretl_plotx(dset);
     FILE *fp;
@@ -2404,9 +2404,10 @@ static int QLR_graph (const double *Ft, int t1, int t2,
 
     fprintf(fp, "plot \\\n"
 	    "'-' using 1:2 title '%s' w lines\n",
+	    robust ? _("Robust Wald test for break") : 
 	    _("Chow F-test for break"));
     for (t=t1; t<=t2; t++) {
-	fprintf(fp, "%g %g\n", x[t], Ft[t-t1]);
+	fprintf(fp, "%g %g\n", x[t], testvec[t-t1]);
     }
     fputs("e\n", fp);
 
@@ -2452,21 +2453,30 @@ static double get_QLR_pval (double test, int df, int k1, int k2,
     lam0 = (pi_2*(1.0 - pi_1)) / (pi_1*(1.0 - pi_2));
 
     pval = (*qlr_asy_pvalue) (test, df, lam0);
-#if 0
-    pprintf(prn, "(lambda0 = %g, pi0 = %g)\n", lam0, 1.0/(1 + sqrt(lam0)));
-#endif
 
     close_plugin(handle);
+
+    if (!na(pval)) {
+	pprintf(prn, _("Asymptotic p-value = %.4g for "
+		       "chi-square(%d) = %g"),
+		pval, df, test);
+	pputc(prn, '\n');
+#if 0
+	pprintf(prn, "(k1 = %d, k2 = %d, lambda0 = %g, pi0 = %g)\n", 
+		k1, k2, lam0, 1.0/(1 + sqrt(lam0)));
+#endif
+    }
 
     return pval;
 }
 
 static void QLR_print_result (MODEL *pmod,
-			      double Fmax, int tmax, 
+			      double test, int tmax, 
 			      int k1, int k2, 
 			      int dfn, int dfd,
 			      const DATASET *dset, 
 			      gretlopt opt,
+			      int robust,
 			      PRN *prn)
 {
     char datestr[OBSLEN];
@@ -2477,20 +2487,18 @@ static void QLR_print_result (MODEL *pmod,
     pputs(prn, _("Quandt likelihood ratio test for structural break at an "
 		 "unknown point,\nwith 15 percent trimming"));
     pputs(prn, ":\n\n");
-    pprintf(prn, _("The maximum F(%d, %d) = %g occurs "
-		   "at observation %s"), dfn, dfd, Fmax, datestr);
-    pputc(prn, '\n');
-
-    X2 = dfn * Fmax;
-    pval = get_QLR_pval(X2, dfn, k1, k2, pmod, prn);
-
-    if (!na(pval)) {
-	pprintf(prn, _("Asymptotic p-value = %.5g for "
-		       "chi-square(%d) = %g"),
-		pval, dfn, X2);
-	pputc(prn, '\n');
+    if (robust) {
+	pprintf(prn, _("The maximum Wald test = %g occurs "
+		       "at observation %s"), test, datestr);
+	X2 = test;
+    } else {
+	pprintf(prn, _("The maximum F(%d, %d) = %g occurs "
+		       "at observation %s"), dfn, dfd, test, datestr);
+	X2 = dfn * test;
     }
     pputc(prn, '\n');
+
+    pval = get_QLR_pval(X2, dfn, k1, k2, pmod, prn);
 
     record_test_result(X2, pval, "QLR");
 
@@ -2499,22 +2507,12 @@ static void QLR_print_result (MODEL *pmod,
     }
 }
 
-static double robust_chow_test (MODEL *pmod, const int *list,
-				int *err)
+static double robust_chow_test (MODEL *pmod, const int *testlist)
 {
-    double test = NADBL;
-    int *tlist;
+    double test = wald_omit_F(testlist, pmod);
 
-    tlist = gretl_list_diff_new(pmod->list, list, 2);
-
-    if (tlist == NULL) {
-	*err = E_ALLOC;
-    } else {
-	test = wald_omit_F(tlist, pmod);
-	if (!na(test)) {
-	    test *= tlist[0]; /* chi-square form */
-	}
-	free(tlist);
+    if (!na(test)) {
+	test *= testlist[0]; /* chi-square form */
     }
 
     return test;
@@ -2584,11 +2582,15 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
     gretl_model_init(&chow_mod);
 
     if (QLR) {
-	/* 15 percent trimming */
-	split = pmod->t1 + floor(0.15 * pmod->nobs);
-	smax = pmod->t1 + floor(0.85 * pmod->nobs);
+	/* "15 percent trimming": exactly how this should be
+	   defined is debatable, but the following agrees
+	   with the strucchange package for R, when the
+	   Fstats() function is given "from=0.15, to=0.85".
+	*/
+	split = pmod->t1 + floor(0.15 * pmod->nobs) - 1;
+	smax = pmod->t1 + floor(0.85 * pmod->nobs) - 1;
     } else if (opt & OPT_D) {
-	/* Chow, using dummy */
+	/* Chow, using a predefined dummy */
 	dumv = chowparm;
     } else {
 	/* Chow, using break observation */
@@ -2605,36 +2607,57 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 
     if (QLR) {
 	/* Quandt likelihood ratio */
-	double F, Fmax = 0.0;
-	double *Ft = NULL;
+	int robust = (pmod->opt & OPT_R);
+	gretlopt lsqopt = OPT_A;
+	double test, testmax = 0.0;
+	double *testvec = NULL;
+	int *testlist = NULL;
 	int dfn = 0, dfd = 0;
 	int tmax = 0;
 	int i, t;
 
 	if (gretl_in_gui_mode()) {
-	    Ft = malloc((smax - split + 1) * sizeof *Ft);
+	    testvec = malloc((smax - split + 1) * sizeof *testvec);
+	}
+
+	if (robust) {
+	    lsqopt |= OPT_R;
+	    testlist = gretl_list_diff_new(chowlist, pmod->list, 2);
+	    if (testlist == NULL) {
+		err = E_ALLOC;
+	    }
 	}
 	
-	for (t=split; t<=smax; t++) {
-	    chow_mod = lsq(chowlist, dset, OLS, OPT_A);
+	for (t=split; t<=smax && !err; t++) {
+	    chow_mod = lsq(chowlist, dset, OLS, lsqopt);
 	    if (chow_mod.errcode) {
 		err = chow_mod.errcode;
 		errmsg(err, prn);
 		break;
 	    }
 	    dfn = chow_mod.ncoeff - pmod->ncoeff;
-	    dfd = chow_mod.dfd;
-	    F = (pmod->ess - chow_mod.ess) * dfd / (chow_mod.ess * dfn);
-	    if (F > Fmax) {
-		tmax = t;
-		Fmax = F;
+	    if (robust) {
+		test = robust_chow_test(&chow_mod, testlist);
+#if 0
+		fprintf(stderr, "%d %g\n", t+1, test);
+#endif
+	    } else {
+		dfd = chow_mod.dfd;
+		test = (pmod->ess - chow_mod.ess) * dfd / (chow_mod.ess * dfn);
+#if 0
+		fprintf(stderr, "%d %g\n", t+1, test*dfn);
+#endif
 	    }
-	    if (Ft != NULL) {
-		Ft[t - split] = F;
+	    if (test > testmax) {
+		tmax = t;
+		testmax = test;
+	    }
+	    if (testvec != NULL) {
+		testvec[t - split] = test;
 	    }
 #if 0
 	    fprintf(stderr, "split at t=%d: F(%d,%d)=%g (X2=%g)\n", t, 
-		    dfn, dfd, F, F*dfn);
+		    dfn, dfd, F, test*dfn);
 	    fprintf(stderr, " pmod->ess = %g, chow_mod.ess = %g\n", 
 		    pmod->ess, chow_mod.ess);
 #endif
@@ -2645,23 +2668,28 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	}
 
 	if (!err) {
-	    QLR_print_result(pmod, Fmax, tmax, split, smax, 
-			     dfn, dfd, dset, opt, prn);
-	    if (Ft != NULL) {
-		QLR_graph(Ft, split, smax, dset);
+	    QLR_print_result(pmod, testmax, tmax, split, smax, 
+			     dfn, dfd, dset, opt, robust, prn);
+	    if (testvec != NULL) {
+		QLR_graph(testvec, split, smax, dset, robust);
 	    }
 	}
 
-	if (Ft != NULL) {
-	    free(Ft);
-	}
+	free(testvec);
+	free(testlist);
     } else {
 	/* regular (or robust) Chow test */
 	int robust = (pmod->opt & OPT_R);
 	gretlopt lsqopt = OPT_A;
+	int *testlist = NULL;
 
 	if (robust) {
 	    lsqopt |= OPT_R;
+	    testlist = gretl_list_diff_new(chowlist, pmod->list, 2);
+	    if (testlist == NULL) {
+		err = E_ALLOC;
+		goto bailout;
+	    }
 	}
 
 	chow_mod = lsq(chowlist, dset, OLS, lsqopt);
@@ -2683,7 +2711,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	    }
 
 	    if (robust) {
-		test = robust_chow_test(&chow_mod, pmod->list, &err);
+		test = robust_chow_test(&chow_mod, testlist);
 		if (!na(test)) {
 		    pval = chisq_cdf_comp(dfn, test);
 		}
@@ -2731,6 +2759,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	    } 
 	}
 	clear_model(&chow_mod);
+	free(testlist);
     }
 
  bailout:

@@ -8586,13 +8586,15 @@
       </para>
       <para>
 	For each potential break point within the central 70 percent of the
-	observations, a Chow test is performed (see <cmdref
-	targ="chow"/>). The QLR test statistic is the maximum of the
-	<math>F</math> values from these tests. An asymptotic p-value
-	is obtained using the method of <cite key="hansen97">Bruce Hansen
-	(1997)</cite>; this is based on the chi-square form of the
-	statistic, namely the <math>F</math> value multiplied by the
-	numerator degrees of freedom.
+	observations, a Chow test is performed. See <cmdref targ="chow"/> for
+	details; as with the regular Chow test, this is a robust Wald test if
+	the original model was estimated with the <opt>robust</opt> option, an
+	F-test otherwise. The QLR statistic is then the maximum of the
+	individual test statistics.
+      </para>
+      <para>
+	An asymptotic p-value is obtained using the method of <cite
+	key="hansen97">Bruce Hansen (1997)</cite>.
       </para>
     </description>
 
