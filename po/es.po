@@ -2,13 +2,13 @@
 # Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 # This file is distributed under the same license as the gretl package.
 #
-# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012.
+# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013.
 msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-12-13 11:54-0500\n"
-"PO-Revision-Date: 2012-10-08 17:20+0200\n"
+"PO-Revision-Date: 2013-01-03 15:43+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -581,14 +581,13 @@ msgid "autocorrelation"
 msgstr "autocorrelación"
 
 #: lib/src/compare.c:2117
-#, fuzzy
 msgid "Error calculating Ljung-Box statistic"
-msgstr "Error al calcular los criterios de selección de modelos.\n"
+msgstr "Error al calcular el estadístico de Ljung-Box"
 
 #: lib/src/compare.c:2120
-#, fuzzy, c-format
+#, c-format
 msgid "Test for autocorrelation up to order %d"
-msgstr "Contraste LM de autocorrelación hasta el orden %s"
+msgstr "Contraste de autocorrelación hasta el orden %d"
 
 #: lib/src/compare.c:2292 lib/src/gretl_panel.c:3920
 msgid "Alternative statistic"
@@ -988,9 +987,9 @@ msgid "scanning for variable names...\n"
 msgstr "escaneando para obtener los nombres de las variables...\n"
 
 #: lib/src/csvdata.c:2001
-#, fuzzy, c-format
+#, c-format
 msgid "   line: %.115s...\n"
-msgstr "   línea: %s\n"
+msgstr "   línea: %.115s...\n"
 
 #: lib/src/csvdata.c:2003
 #, c-format
@@ -1018,9 +1017,9 @@ msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' -- ¡no se ha realizado conversión numérica!"
 
 #: lib/src/csvdata.c:2275
-#, fuzzy, c-format
+#, c-format
 msgid "warning: %d labels were truncated.\n"
-msgstr "advertencia: se han duplicado algunos nombres de variables\n"
+msgstr "atención: se han truncado %d etiquetas.\n"
 
 #: lib/src/csvdata.c:2292
 msgid "scanning for row labels and data...\n"
@@ -1100,6 +1099,8 @@ msgstr "Falta de memoria\n"
 #: lib/src/csvdata.c:3187 lib/src/csvdata.c:3262
 msgid "You need to specify an aggregation method for a 1:n join"
 msgstr ""
+"Es necesario especificar un método de agregación para la instrucción 'join' "
+"de 1 a n"
 
 #: lib/src/csvdata.c:4107 gui2/library.c:3910
 msgid "Series length does not match the dataset"
@@ -1286,9 +1287,8 @@ msgid "Data appended OK\n"
 msgstr "Los datos se han añadido correctamente\n"
 
 #: lib/src/dataio.c:2635
-#, fuzzy
 msgid "No markers are available for writing"
-msgstr "No había datos disponibles para representar"
+msgstr "No hay marcadores disponibles para escribir"
 
 #: lib/src/dataio.c:2705
 #, c-format
@@ -1351,9 +1351,9 @@ msgid "Please open a data file first"
 msgstr "Por favor, abra primero un archivo de datos"
 
 #: lib/src/dataset.c:1433 lib/src/gretl_utils.c:1616
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is read-only"
-msgstr "La variable %s es de tipo %s"
+msgstr "La variable %s es de sólo lectura"
 
 #: lib/src/dataset.c:1660 lib/src/dataset.c:1670 lib/src/uservar.c:330
 #, c-format
@@ -1792,23 +1792,21 @@ msgid "Ex. kurtosis"
 msgstr "Exc. de curtosis"
 
 #: lib/src/describe.c:4444
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "5% percentile"
-msgstr "por ciento"
+msgstr "Percentil del 5%"
 
 #: lib/src/describe.c:4446
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "95% percentile"
-msgstr "Intervalo de %g por ciento"
+msgstr "Percentil del 95%"
 
 #: lib/src/describe.c:4447
-#, fuzzy
 msgid "Interquartile range"
-msgstr "rango manual:"
+msgstr "Rango intercuartílico"
 
 #: lib/src/describe.c:4448 lib/src/describe.c:4637 gui2/guiprint.c:770
 #: gui2/guiprint.c:1103
-#, fuzzy
 msgid "Missing obs."
 msgstr "Observaciones ausentes"
 
@@ -1826,14 +1824,14 @@ msgid "Summary statistics"
 msgstr "Estadísticos principales"
 
 #: lib/src/describe.c:4473
-#, fuzzy, c-format
+#, c-format
 msgid "for column %d of %s (%d valid observations)"
-msgstr "para la variable %s (%d observaciones válidas)"
+msgstr "para la columna %d de %s (%d observaciones válidas)"
 
 #: lib/src/describe.c:4476
-#, fuzzy, c-format
+#, c-format
 msgid "for column %d (%d valid observations)"
-msgstr "para la variable %s (%d observaciones válidas)"
+msgstr "para la columna %d (%d observaciones válidas)"
 
 #: lib/src/describe.c:4480
 #, c-format
@@ -1847,17 +1845,16 @@ msgstr "Desv. Típica."
 #: lib/src/describe.c:4633
 #, no-c-format
 msgid "5% perc."
-msgstr ""
+msgstr "Perc. 5%"
 
 #: lib/src/describe.c:4635
 #, no-c-format
 msgid "95% perc."
-msgstr ""
+msgstr "Perc. 95%"
 
 #: lib/src/describe.c:4636 gui2/guiprint.c:770
-#, fuzzy
 msgid "IQ range"
-msgstr "dominio de x"
+msgstr "Rango IQ"
 
 #: lib/src/describe.c:4856 lib/src/describe.c:4957
 #, c-format
@@ -2328,9 +2325,9 @@ msgid "%s: argument %d should be %s"
 msgstr "%s: el argumento %d debería ser %s"
 
 #: lib/src/geneval.c:8453
-#, fuzzy, c-format
+#, c-format
 msgid ", is %s"
-msgstr "= %s veces %s"
+msgstr ", es %s"
 
 #: lib/src/geneval.c:10028 lib/src/genlex.c:712
 #, c-format
@@ -2349,9 +2346,9 @@ msgid "The variable %s is of type %s"
 msgstr "La variable %s es de tipo %s"
 
 #: lib/src/geneval.c:10389
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': name is too long (max %d characters)\n"
-msgstr "'%s': el nombre es demasiado largo (máximo 15 caracteres)\n"
+msgstr "'%s': el nombre es demasiado largo (máximo %d caracteres)\n"
 
 #: lib/src/geneval.c:10498
 #, c-format
@@ -2379,9 +2376,8 @@ msgid "'%s' : not implemented for this type"
 msgstr "'%s' : no está preparado para este tipo"
 
 #: lib/src/geneval.c:11778
-#, fuzzy
 msgid "Bare declarations are not allowed here"
-msgstr "%s: aquí no se permite la división"
+msgstr "Aquí no se permiten declaraciones genéricas"
 
 #: lib/src/genfuncs.c:852 gui2/library.c:4981
 msgid "Input must be a monthly or quarterly time series"
@@ -3210,9 +3206,9 @@ msgid "Deleted function '%s'\n"
 msgstr "Se ha borrado la función '%s'\n"
 
 #: lib/src/gretl_func.c:4827
-#, fuzzy, c-format
+#, c-format
 msgid "%s: duplicated parameter name '%s'"
-msgstr "%s: no es un nombre de parámetro válido"
+msgstr "%s: el nombre del parámetro '%s' está duplicado"
 
 #: lib/src/gretl_func.c:5284
 msgid "You can't change the name of a function here"
@@ -4232,14 +4228,13 @@ msgid "No data information is available.\n"
 msgstr "No hay información disponible sobre los datos.\n"
 
 #: lib/src/interact.c:4588 lib/src/interact.c:4597
-#, fuzzy
 msgid "Inner key is missing"
-msgstr "Falta el nombre de la variable"
+msgstr "Falta la clave interna"
 
 #: lib/src/interact.c:4641
-#, fuzzy, c-format
+#, c-format
 msgid "The \"%s\" command cannot be used in this context"
-msgstr "la instrucción '%s' no es válida en este contexto"
+msgstr "La instrucción '%s' no puede usarse en este contexto"
 
 #: lib/src/interact.c:4730 cli/gretlcli.c:801 gui2/library.c:8197
 #, c-format
@@ -4247,9 +4242,9 @@ msgid "Read datafile %s\n"
 msgstr "Leer fichero de datos %s\n"
 
 #: lib/src/interact.c:4899
-#, fuzzy, c-format
+#, c-format
 msgid "Summary statistics for %s, by value of %s"
-msgstr "Estadísticos principales"
+msgstr "Estadísticos principales de %s, por valores de %s"
 
 #: lib/src/interact.c:5142
 msgid "You can't end a loop here, you haven't started one\n"
@@ -8381,9 +8376,8 @@ msgid "Execute"
 msgstr "Ejecutar"
 
 #: gui2/datafiles.c:1227 gui2/datafiles.c:1383
-#, fuzzy
 msgid "Add to menu"
-msgstr "Añadir al conjunto de datos"
+msgstr "Añadir al menú"
 
 #: gui2/datafiles.c:1234 gui2/datafiles.c:1387
 msgid "New"
@@ -10015,7 +10009,7 @@ msgstr "Más pequeño"
 
 #: gui2/gpt_control.c:311
 msgid "Bigger"
-msgstr ""
+msgstr "Mayor"
 
 #: gui2/gpt_control.c:398
 msgid " Click to set position"
@@ -11268,7 +11262,7 @@ msgstr "Series _temporales"
 
 #: gui2/gretl.c:1599
 msgid "_AR(1)..."
-msgstr ""
+msgstr "_AR(1)..."
 
 #: gui2/gretl.c:1600
 msgid "_Autoregressive estimation..."
@@ -13098,9 +13092,9 @@ msgid "Plot the series"
 msgstr "Representar la serie"
 
 #: gui2/library.c:6895
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no valid values"
-msgstr "valores válidos"
+msgstr "%s: no hay valores válidos"
 
 #: gui2/library.c:7081
 msgid "Non-interactive (just get output)"
@@ -13603,7 +13597,7 @@ msgstr "con corrección de heterocedasticidad\t"
 
 #: gui2/selector.c:3636
 msgid "AR(1)"
-msgstr ""
+msgstr "AR(1)"
 
 #: gui2/selector.c:3656
 msgid "Count data model"
@@ -13682,9 +13676,8 @@ msgid "Censoring variable"
 msgstr "Variable de censura"
 
 #: gui2/selector.c:3721
-#, fuzzy
 msgid "Dependent variable 2"
-msgstr "Variable dependiente"
+msgstr "Variable dependiente 2"
 
 #: gui2/selector.c:3723
 msgid "List of AR lags"
@@ -13763,27 +13756,24 @@ msgid "Response variable"
 msgstr "Variable de respuesta"
 
 #: gui2/selector.c:4104
-#, fuzzy
 msgid "Dependent variable 1"
-msgstr "Variable dependiente"
+msgstr "Variable dependiente 1"
 
 #: gui2/selector.c:4164
 msgid "lag order:"
 msgstr "Orden del retardo:"
 
 #: gui2/selector.c:4165
-#, fuzzy
 msgid "rank:"
-msgstr "rango"
+msgstr "rango:"
 
 #: gui2/selector.c:4189
 msgid "maximum lag:"
 msgstr "máximo retardo:"
 
 #: gui2/selector.c:4204
-#, fuzzy
 msgid "Number of cointegrating vectors"
-msgstr "beta (vectores cointegrantes)"
+msgstr "Número de vectores cointegrantes"
 
 #: gui2/selector.c:4230
 msgid "ARCH order:"
@@ -13826,14 +13816,12 @@ msgid "Exogenous variables"
 msgstr "Variables exógenas"
 
 #: gui2/selector.c:4423
-#, fuzzy
 msgid "Selection regressors"
-msgstr "Regresores de la ecuación de selección"
+msgstr "Regresores de selección"
 
 #: gui2/selector.c:4425
-#, fuzzy
 msgid "Equation 2 regressors"
-msgstr "Regresores de la primera ecuación"
+msgstr "Regresores de la ecuación 2"
 
 #: gui2/selector.c:4427
 msgid "Helper functions"
@@ -13881,7 +13869,7 @@ msgstr "Estacional"
 
 #: gui2/selector.c:4935
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: gui2/selector.c:4941
 msgid "Difference:"
@@ -14180,9 +14168,8 @@ msgid "Endogenous variables"
 msgstr "Variables endógenas"
 
 #: gui2/selector.c:6404
-#, fuzzy
 msgid "Equation 1 regressors"
-msgstr "Regresores de la primera ecuación"
+msgstr "Regresores de la ecuación 1"
 
 #: gui2/selector.c:6406 gui2/selector.c:7834
 msgid "Regressors"
@@ -14257,9 +14244,8 @@ msgid "Define named list"
 msgstr "Definir una lista nominal"
 
 #: gui2/selector.c:6936
-#, fuzzy
 msgid "Name of list"
-msgstr "Nombre de la lista:"
+msgstr "Nombre de la lista"
 
 #: gui2/selector.c:7247
 msgid "Too many items were selected"
@@ -14412,9 +14398,8 @@ msgid "versus"
 msgstr "con respecto a"
 
 #: gui2/session.c:2192
-#, fuzzy
 msgid "Bundle is empty"
-msgstr "El buffer está vacío"
+msgstr "El 'bundle' está vacío"
 
 #: gui2/session.c:2397
 #, c-format
@@ -14636,7 +14621,7 @@ msgstr "Preferencia de idioma"
 
 #: gui2/settings.c:197
 msgid "Default graph scale"
-msgstr ""
+msgstr "Escala gráfica por defecto"
 
 #: gui2/settings.c:200
 msgid "Command to launch gnuplot"
