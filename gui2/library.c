@@ -4445,7 +4445,7 @@ void do_selector_genr (GtkWidget *w, dialog_t *dlg)
 
 void do_fncall_genr (GtkWidget *w, dialog_t *dlg) 
 {
-    const gchar *s = edit_dialog_get_text(dlg);
+    gchar *s = get_genr_string(NULL, dlg);
     gpointer p = edit_dialog_get_data(dlg);
     int scalargen = 0, oldv = -1;
     int type, err;
@@ -4475,6 +4475,8 @@ void do_fncall_genr (GtkWidget *w, dialog_t *dlg)
 	scalargen = 1;
     }
 
+    g_free(s);
+
     err = finish_genr(NULL, dlg);
 
     if (!err) {
@@ -4488,13 +4490,14 @@ void do_fncall_genr (GtkWidget *w, dialog_t *dlg)
 
 void do_model_genr (GtkWidget *w, dialog_t *dlg) 
 {
-    const gchar *buf = edit_dialog_get_text(dlg);
+    gchar *s = get_genr_string(NULL, dlg);
     windata_t *vwin = (windata_t *) edit_dialog_get_data(dlg);
     MODEL *pmod = vwin->data;
 
-    if (buf != NULL) {
-	lib_command_sprintf("genr %s", buf);
+    if (s != NULL) {
+	lib_command_sprintf("genr %s", s);
 	finish_genr(pmod, dlg);
+	g_free(s);
     }
 }
 

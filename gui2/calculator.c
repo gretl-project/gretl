@@ -605,6 +605,7 @@ static void dist_graph (int d, double *parms)
 {
     char pline[128];
     int ids[ID_MAX] = {0};
+    gchar *comment = NULL;
     gchar *title = NULL;
     FILE *fp;
     int alt = 0, err = 0;
@@ -619,15 +620,17 @@ static void dist_graph (int d, double *parms)
     print_keypos_string(GP_KEY_RIGHT_TOP, fp);
     fputs("set parametric\n", fp);
 
+    title = dist_graph_title(d, parms);
+
     gretl_push_c_numeric_locale();
 
     range_from_dist(d, parms, alt, fp);
 
     /* header */
     fprintf(fp, "# literal lines = %d\n", n_literal_lines(d, PLOT_PROB_DIST));
-    title = dist_comment_line(d, parms);
-    fprintf(fp, "%s\n", title);
-    g_free(title);
+    comment = dist_comment_line(d, parms);
+    fprintf(fp, "%s\n", comment);
+    g_free(comment);
 
     /* required variables and formulae */
     switch (d) {
@@ -669,7 +672,6 @@ static void dist_graph (int d, double *parms)
 
     fprintf(fp, "plot \\\n");
 
-    title = dist_graph_title(d, parms);
     make_plot_line(pline, d, alt, ids);
 
     if (d == BINOMIAL_DIST || d == POISSON_DIST) {
@@ -3063,9 +3065,9 @@ static void real_stats_calculator (int code, gpointer data)
     window_list_add(child->dlg, STAT_TABLE);
 }
 
-const gchar *maybe_trim_y_equals (const gchar *s)
+static gchar *maybe_trim_y_equals (gchar *s)
 {
-    const gchar *p = s;
+    gchar *p = s;
 
     while (isspace(*p)) p++;
 
@@ -3121,11 +3123,11 @@ struct curve_plotter {
 
 static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
 {
-    const gchar *s = gtk_entry_get_text(GTK_ENTRY(p->entry));
+    gchar *s1, *s0 = get_genr_string(p->entry, NULL);
     FILE *fp = NULL;
     int err = 0;
 
-    if (s == NULL || *s == '\0') {
+    if (s0 == NULL || *s0 == '\0') {
 	return;
     }
 
@@ -3133,15 +3135,17 @@ static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
        line, to type something like "y = x**2"; here we just
        want the bit to the right of the equals sign.
     */
-    s = maybe_trim_y_equals(s);
+    s1 = maybe_trim_y_equals(s0);
 
     g_free(p->formula);
 
-    if (strchr(s, '^')) {
-	p->formula = formula_mod(s);
+    if (strchr(s1, '^')) {
+	p->formula = formula_mod(s1);
     } else {
-	p->formula = g_strdup(s);
+	p->formula = g_strdup(s1);
     }
+
+    g_free(s0);
 
     fp = get_plot_input_stream(PLOT_CURVE, &err);
     if (err) { 
