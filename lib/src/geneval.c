@@ -3526,7 +3526,7 @@ static NODE *eval_lcat (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *list_and_or (NODE *l, NODE *r, int f, parser *p)
+static NODE *list_list_op (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_list_node(p);
 
@@ -3545,6 +3545,8 @@ static NODE *list_and_or (NODE *l, NODE *r, int f, parser *p)
 		list = gretl_list_union(llist, rlist, &p->err);
 	    } else if (f == B_SUB) {
 		list = gretl_list_drop(llist, rlist, &p->err);
+	    } else if (f == B_POW) {
+		list = gretl_list_product(llist, rlist, p->dset, &p->err);
 	    }
 	}
 	ret->v.ivec = list;
@@ -8725,7 +8727,9 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = series_string_calc(l, r, t->t, p);
 	} else if ((t->t == B_AND || t->t == B_OR || t->t == B_SUB) &&
 		   ok_list_node(l) && ok_list_node(r)) {
-	    ret = list_and_or(l, r, t->t, p);
+	    ret = list_list_op(l, r, t->t, p);
+	} else if (t->t == B_POW && ok_list_node(l) && ok_list_node(r)) {
+	    ret = list_list_op(l, r, t->t, p);
 	} else if (bool_comp(t->t)) {
 	    if (ok_list_node(l) && (r->t == NUM || r->t == VEC)) {
 		ret = list_bool_comp(l, r, t->t, 0, p);
@@ -11898,7 +11902,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 
     if (flags & P_EXEC) {
 #if EDEBUG
-	fprintf(stderr, "*** printinng p->tree (before reinit)\n");
+	fprintf(stderr, "*** printing p->tree (before reinit)\n");
 	print_tree(p->tree, p, 0);
 #endif
 	parser_reinit(p, dset, prn);

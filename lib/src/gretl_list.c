@@ -1316,6 +1316,137 @@ int *gretl_list_intersection (const int *l1, const int *l2, int *err)
     return ret;
 }
 
+static void name_list_xprod_term (int v, int vi, int vj,
+				  int di, DATASET *dset)
+{
+    const char *si = dset->varname[vi];
+    const char *sj = dset->varname[vj];
+    int ilen = strlen(si);
+    int jlen = strlen(sj);
+    int totlen = ilen + jlen + 2;
+    char numstr[32];
+
+    sprintf(numstr, "%d", di);
+    totlen += strlen(numstr);
+
+    if (totlen > VNAMELEN - 1) {
+	int decr = totlen - (VNAMELEN - 1);
+
+	while (decr > 0) {
+	    if (ilen > jlen) {
+		ilen--;
+	    } else {
+		jlen--;
+	    }
+	    decr--;
+	}
+    }
+
+    sprintf(dset->varname[v], "%.*s_%.*s_%s", ilen, si, jlen, sj, numstr);
+
+    /* FIXME write description too */
+}
+
+static int series_is_integer (const DATASET *dset, int v)
+{
+    double xt;
+    int t;
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	xt = dset->Z[v][t];
+	if (!na(xt) && xt != floor(xt)) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+/**
+ * gretl_list_product:
+ * @l1: list of integers (representing discrete variables).
+ * @l2: list of integers.
+ * @dset: pointer to dataset.
+ * @err: location to receive error code.
+ *
+ * Creates a list holding the Cartesian product of @l1 and @l2.
+ *
+ * Returns: new list on success, NULL on error.
+ */
+
+int *gretl_list_product (const int *l1, const int *l2, 
+			 DATASET *dset, int *err)
+{
+    int *ret = NULL;
+    gretl_matrix *xvals;
+    const double *x, *y;
+    double xik;
+    int n, n2, v, vi, vj;
+    int i, j, k, t;
+
+    if (l1 == NULL || l2 == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }	
+
+    if (l1[0] == 0 || l2[0] == 0) {
+	ret = gretl_null_list();
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+	return ret;
+    }	
+
+    /* check the first list for integer-valuedness */
+    for (i=1; i<=l1[0]; i++) {
+	vi = l1[i];
+	if (!series_is_integer(dset, vi)) {
+	    gretl_errmsg_sprintf(_("The variable '%s' is not integer-valued"),
+				 dset->varname[vi]);
+	    *err = E_DATA;
+	    return NULL;
+	}
+    }
+
+    n = sample_size(dset);
+    n2 = l2[0];
+    v = dset->v;
+
+    for (j=1; j<=l1[0] && !*err; j++) {
+	vj = l1[j];
+	x = dset->Z[vj];
+	xvals = gretl_matrix_values(x + dset->t1, n, OPT_S, err);
+	if (!*err) {
+	    *err = dataset_add_series(dset, n2 * xvals->rows);
+	    if (!*err) {
+		for (i=1; i<=n2 && !*err; i++) {
+		    vi = l2[i];
+		    y = dset->Z[vi];
+		    for (k=0; k<xvals->rows && !*err; k++) {
+			xik = gretl_vector_get(xvals, k);
+			for (t=dset->t1; t<=dset->t2; t++) {
+			    if (na(x[t]) || xna(xik)) {
+				dset->Z[v][t] = NADBL;
+			    } else {
+				dset->Z[v][t] = (x[t] == xik)? y[t] : 0;
+			    }
+			}
+			name_list_xprod_term(v, vi, vj, (int) xik, dset);
+			gretl_list_append_term(&ret, v);
+			if (ret == NULL) {
+			    *err = E_ALLOC;
+			}
+			v++;
+		    }
+		}
+	    }
+	    gretl_matrix_free(xvals);
+	}
+    }    
+
+    return ret;
+}
+
 /**
  * gretl_list_omit_last:
  * @orig: an array of integers, the first element of which holds
