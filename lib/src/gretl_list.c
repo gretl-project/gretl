@@ -1392,7 +1392,7 @@ int *gretl_list_product (const int *X, const int *Y,
     const double *x, *y;
     int *x_is_int = NULL;
     int newv, n_old = 0;
-    int n, nY, vi, vj;
+    int n, vi, vj;
     int i, j, k, t;
 
     if (X == NULL || Y == NULL) {
@@ -1406,27 +1406,24 @@ int *gretl_list_product (const int *X, const int *Y,
 	    *err = E_ALLOC;
 	}
 	return ret;
-    }	
+    }
+
+    x_is_int = gretl_list_new(X[0]);
+    if (x_is_int == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
 
     /* check the X list for discreteness */
 
-    for (i=1; i<=X[0] && !*err; i++) {
-	vi = X[i];
-	if (series_is_integer(dset, vi)) {
-	    /* integer series, no problem */
-	    gretl_list_append_term(&x_is_int, 1);
-	} else if (series_is_discrete(dset, vi)) {
-	    /* series marked as discrete, but not integer:
-	       we'll handle this somehow */
-	    gretl_list_append_term(&x_is_int, 0);
-	} else {
-	    /* can't/won't do it */
+    for (j=1; j<=X[0] && !*err; j++) {
+	vj = X[j];
+	if (series_is_integer(dset, vj)) {
+	    x_is_int[j] = 1;
+	} else if (!series_is_discrete(dset, vj)) {
 	    gretl_errmsg_sprintf(_("The variable '%s' is not discrete"),
-				 dset->varname[vi]);
+				 dset->varname[vj]);
 	    *err = E_DATA;
-	}
-	if (!*err && x_is_int == NULL) {
-	    *err = E_ALLOC;
 	}
     }
 
@@ -1436,7 +1433,6 @@ int *gretl_list_product (const int *X, const int *Y,
     }
 
     n = sample_size(dset);
-    nY = Y[0];
     newv = dset->v;
 
     for (j=1; j<=X[0] && !*err; j++) {
@@ -1444,9 +1440,9 @@ int *gretl_list_product (const int *X, const int *Y,
 	x = dset->Z[vj];
 	xvals = gretl_matrix_values(x + dset->t1, n, OPT_S, err);
 	if (!*err) {
-	    *err = dataset_add_series(dset, nY * xvals->rows);
+	    *err = dataset_add_series(dset, Y[0] * xvals->rows);
 	    if (!*err) {
-		for (i=1; i<=nY && !*err; i++) {
+		for (i=1; i<=Y[0] && !*err; i++) {
 		    vi = Y[i];
 		    y = dset->Z[vi];
 		    for (k=0; k<xvals->rows && !*err; k++) {
