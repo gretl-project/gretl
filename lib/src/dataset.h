@@ -372,7 +372,7 @@ void series_set_linewidth (DATASET *dset, int i, int w);
 int series_get_linewidth (const DATASET *dset, int i);
 
 int series_record_display_name (DATASET *dset, int i,
-			  const char *s); 
+				const char *s); 
 
 int series_record_label (DATASET *dset, int i,
 			 const char *s); 

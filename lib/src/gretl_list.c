@@ -1345,6 +1345,17 @@ static void name_xprod_term (char *vname, int vi, int vj,
     sprintf(vname, "%.*s_%.*s_%s", ilen, si, jlen, sj, numstr);
 }
 
+static void set_xprod_label (int v, int vi, int vj, 
+			     double val, DATASET *dset)
+{
+    const char *si = dset->varname[vi];
+    const char *sj = dset->varname[vj];
+    char label[MAXLABEL];
+
+    sprintf(label, "interaction of %s and (%s == %g)", si, sj, val);
+    series_record_label(dset, v, label);
+}
+
 static int series_is_integer (const DATASET *dset, int v)
 {
     double xt;
@@ -1468,7 +1479,7 @@ int *gretl_list_product (const int *X, const int *Y,
 			    if (v != oldv) {
 				strcpy(dset->varname[v], vname);
 			    }
-			    /* FIXME set series description here */
+			    set_xprod_label(v, vi, vj, xik, dset);
 			}
 		    }
 		}
