@@ -1316,8 +1316,8 @@ int *gretl_list_intersection (const int *l1, const int *l2, int *err)
     return ret;
 }
 
-static void name_list_xprod_term (int v, int vi, int vj,
-				  int di, DATASET *dset)
+static void name_xprod_term (char *vname, int vi, int vj, 
+			     int di, const DATASET *dset)
 {
     const char *si = dset->varname[vi];
     const char *sj = dset->varname[vj];
@@ -1342,9 +1342,7 @@ static void name_list_xprod_term (int v, int vi, int vj,
 	}
     }
 
-    sprintf(dset->varname[v], "%.*s_%.*s_%s", ilen, si, jlen, sj, numstr);
-
-    /* FIXME write description too */
+    sprintf(vname, "%.*s_%.*s_%s", ilen, si, jlen, sj, numstr);
 }
 
 static int series_is_integer (const DATASET *dset, int v)
@@ -1364,32 +1362,34 @@ static int series_is_integer (const DATASET *dset, int v)
 
 /**
  * gretl_list_product:
- * @l1: list of integers (representing discrete variables).
- * @l2: list of integers.
+ * @X: list of integers (representing discrete variables).
+ * @Y: list of integers.
  * @dset: pointer to dataset.
  * @err: location to receive error code.
  *
- * Creates a list holding the Cartesian product of @l1 and @l2.
+ * Creates a list holding the Cartesian product of @X and @Y.
  *
  * Returns: new list on success, NULL on error.
  */
 
-int *gretl_list_product (const int *l1, const int *l2, 
+int *gretl_list_product (const int *X, const int *Y, 
 			 DATASET *dset, int *err)
 {
     int *ret = NULL;
     gretl_matrix *xvals;
+    char vname[VNAMELEN];
     const double *x, *y;
-    double xik;
-    int n, n2, v, vi, vj;
+    int *x_is_int = NULL;
+    int newv, n_old = 0;
+    int n, nY, vi, vj;
     int i, j, k, t;
 
-    if (l1 == NULL || l2 == NULL) {
+    if (X == NULL || Y == NULL) {
 	*err = E_DATA;
 	return NULL;
     }	
 
-    if (l1[0] == 0 || l2[0] == 0) {
+    if (X[0] == 0 || Y[0] == 0) {
 	ret = gretl_null_list();
 	if (ret == NULL) {
 	    *err = E_ALLOC;
@@ -1397,33 +1397,63 @@ int *gretl_list_product (const int *l1, const int *l2,
 	return ret;
     }	
 
-    /* check the first list for integer-valuedness */
-    for (i=1; i<=l1[0]; i++) {
-	vi = l1[i];
-	if (!series_is_integer(dset, vi)) {
-	    gretl_errmsg_sprintf(_("The variable '%s' is not integer-valued"),
+    /* check the X list for discreteness */
+
+    for (i=1; i<=X[0] && !*err; i++) {
+	vi = X[i];
+	if (series_is_integer(dset, vi)) {
+	    /* integer series, no problem */
+	    gretl_list_append_term(&x_is_int, 1);
+	} else if (series_is_discrete(dset, vi)) {
+	    /* series marked as discrete, but not integer:
+	       we'll handle this somehow */
+	    gretl_list_append_term(&x_is_int, 0);
+	} else {
+	    /* can't/won't do it */
+	    gretl_errmsg_sprintf(_("The variable '%s' is not discrete"),
 				 dset->varname[vi]);
 	    *err = E_DATA;
-	    return NULL;
+	}
+	if (!*err && x_is_int == NULL) {
+	    *err = E_ALLOC;
 	}
     }
 
-    n = sample_size(dset);
-    n2 = l2[0];
-    v = dset->v;
+    if (*err) {
+	free(x_is_int);
+	return NULL;
+    }
 
-    for (j=1; j<=l1[0] && !*err; j++) {
-	vj = l1[j];
+    n = sample_size(dset);
+    nY = Y[0];
+    newv = dset->v;
+
+    for (j=1; j<=X[0] && !*err; j++) {
+	vj = X[j];
 	x = dset->Z[vj];
 	xvals = gretl_matrix_values(x + dset->t1, n, OPT_S, err);
 	if (!*err) {
-	    *err = dataset_add_series(dset, n2 * xvals->rows);
+	    *err = dataset_add_series(dset, nY * xvals->rows);
 	    if (!*err) {
-		for (i=1; i<=n2 && !*err; i++) {
-		    vi = l2[i];
+		for (i=1; i<=nY && !*err; i++) {
+		    vi = Y[i];
 		    y = dset->Z[vi];
 		    for (k=0; k<xvals->rows && !*err; k++) {
+			int v, oldv, iik;
+			double xik;
+
 			xik = gretl_vector_get(xvals, k);
+			iik = x_is_int[j] ? (int) xik : (k + 1);
+			name_xprod_term(vname, vi, vj, iik, dset);
+			oldv = current_series_index(dset, vname);
+			if (oldv > 0) {
+			    /* reuse existing series of the same name */
+			    v = oldv;
+			    n_old++;
+			} else {
+			    /* make a new series */
+			    v = newv++;
+			}
 			for (t=dset->t1; t<=dset->t2; t++) {
 			    if (na(x[t]) || xna(xik)) {
 				dset->Z[v][t] = NADBL;
@@ -1431,18 +1461,28 @@ int *gretl_list_product (const int *l1, const int *l2,
 				dset->Z[v][t] = (x[t] == xik)? y[t] : 0;
 			    }
 			}
-			name_list_xprod_term(v, vi, vj, (int) xik, dset);
 			gretl_list_append_term(&ret, v);
 			if (ret == NULL) {
 			    *err = E_ALLOC;
+			} else {
+			    if (v != oldv) {
+				strcpy(dset->varname[v], vname);
+			    }
+			    /* FIXME set series description here */
 			}
-			v++;
 		    }
 		}
 	    }
 	    gretl_matrix_free(xvals);
 	}
-    }    
+    }
+
+    free(x_is_int);
+
+    if (n_old > 0) {
+	/* we added more series than were actually needed */
+	dataset_drop_last_variables(dset, n_old);
+    }
 
     return ret;
 }
