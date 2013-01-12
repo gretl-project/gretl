@@ -820,10 +820,6 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 	return NULL;
     }
 
-    if (gretl_is_null_matrix(m)) {
-	return gretl_null_matrix_new();
-    }
-
     if (mod == GRETL_MOD_TRANSPOSE) {
 	rows = m->cols;
 	cols = m->rows;
