@@ -1356,14 +1356,14 @@ static void set_xprod_label (int v, int vi, int vj,
     series_record_label(dset, v, label);
 }
 
-static int series_is_integer (const DATASET *dset, int v)
+static int nonneg_integer_series (const DATASET *dset, int v)
 {
     double xt;
     int t;
 
     for (t=dset->t1; t<=dset->t2; t++) {
 	xt = dset->Z[v][t];
-	if (!na(xt) && xt != floor(xt)) {
+	if (!na(xt) && (xt != floor(xt) || xt < 0)) {
 	    return 0;
 	}
     }
@@ -1418,7 +1418,7 @@ int *gretl_list_product (const int *X, const int *Y,
 
     for (j=1; j<=X[0] && !*err; j++) {
 	vj = X[j];
-	if (series_is_integer(dset, vj)) {
+	if (nonneg_integer_series(dset, vj)) {
 	    x_is_int[j] = 1;
 	} else if (!series_is_discrete(dset, vj)) {
 	    gretl_errmsg_sprintf(_("The variable '%s' is not discrete"),
