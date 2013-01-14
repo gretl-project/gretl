@@ -1166,8 +1166,7 @@ static int phillips_normalize_beta (GRETL_VAR *vecm)
     return err;
 }
 
-static int 
-col_normalize_beta (GRETL_VAR *vecm, int vnorm)
+static int col_normalize_beta (GRETL_VAR *vecm, int vnorm)
 {
     gretl_matrix *B = vecm->jinfo->Beta;
     double x, den;

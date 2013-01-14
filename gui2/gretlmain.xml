@@ -234,7 +234,7 @@
 	<menuitem action="mpols"/>
         <menuitem action="anova"/>
       </menu>
-      <menu action="NonlinearModels">
+      <menu action="LimdepModels">
 	<menu action="logit">
 	  <menuitem action="blogit"/>
 	  <menuitem action="ologit"/>
@@ -250,7 +250,6 @@
 	<menuitem action="countmod"/>
 	<menuitem action="duration"/>
 	<menuitem action="logistic"/>
-	<menuitem action="nls"/>
 	<menuitem action="intreg"/>
       </menu>
       <menu action="TSModels">
@@ -279,6 +278,7 @@
 	<menuitem action="loess"/>
 	<menuitem action="nadarwat"/>
       </menu>
+      <menuitem action="nls"/>
       <menuitem action="mle"/>
       <menuitem action="gmm"/>
       <menuitem action="system"/>

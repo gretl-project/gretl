@@ -382,14 +382,13 @@ each case, p-values are computed via the approximations devised by
 \label{sec:johansen-test}
 
 The two Johansen tests for cointegration are used to establish the
-rank of $\beta$; in other words, how many cointegration vectors the
-system has.  These are the ``$\lambda$-max'' test, for hypotheses on
+rank of $\beta$, or in other words the number of cointegrating
+vectors.  These are the ``$\lambda$-max'' test, for hypotheses on
 individual eigenvalues, and the ``trace'' test, for joint hypotheses.
 Suppose that the eigenvalues $\lambda_i$ are sorted from largest to
-smallest. The null hypothesis for the $\lambda$-max test on the
-$i$-th eigenvalue is that $\lambda_i = 0$. The corresponding trace
-test, instead, considers the hypothesis $\lambda_j = 0$ for all $j \ge
-i$.
+smallest. The null hypothesis for the $\lambda$-max test on the $i$-th
+eigenvalue is that $\lambda_i = 0$. The corresponding trace test,
+instead, considers the hypothesis $\lambda_j = 0$ for all $j \ge i$.
 
 The \app{gretl} command \cmd{coint2} performs these two
 tests. The corresponding menu entry in the GUI is ``Model, Time
