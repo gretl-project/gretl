@@ -32,7 +32,8 @@ struct table_row {
     char *cells[2];
 };
 
-static int utf_ok;
+static int plain_text;
+static int html;
 
 static int mvsize (unsigned char *s, int nbytes)
 {
@@ -46,7 +47,7 @@ static void write_text (unsigned char *s, char *repl)
     }
 }
 
-static void utf_replace (unsigned char *s)
+static void utf_replace_plain (unsigned char *s)
 {
     while (*s) {
 	if (s[0] == 0xe2 && s[1] == 0x80) {
@@ -108,15 +109,79 @@ static void utf_replace (unsigned char *s)
     }
 }
 
+static void utf_replace_html (unsigned char *s)
+{
+    while (*s) {
+	if (s[0] == 0xe2 && s[1] == 0x80) {
+	    if (s[2] == 0x93) {
+		/* &ndash; */
+		memmove(s + 7, s + 3, mvsize(s, 3));
+		write_text(s, "&#8211;");
+	    } else if (s[2] == 0x94) {
+		/* &mdash; */
+		memmove(s + 7, s + 3, mvsize(s, 3));
+		write_text(s, "&#8212;");
+	    } else if (s[2] == 0xa6) {
+		/* &hellip; */
+		write_text(s, "...");
+	    }
+	} else if (s[0] == 0xe2 && s[1] == 0x88 && s[2] == 0x92) {
+	    /* &minus; */
+	    write_text(s, "-");
+	    memmove(s + 1, s + 3, mvsize(s, 3));
+	} else if (s[0] == 0xe2 && s[1] == 0x89 && s[2] == 0xa4) {
+	    write_text(s, "<=");
+	    memmove(s + 2, s + 3, mvsize(s, 3));
+	} else if (s[0] == 0xce && s[1] == 0x93) {
+	    /* &Gamma */
+	    memmove(s + 7, s + 2, mvsize(s, 2));
+	    write_text(s, "&Gamma;");
+	} else if (s[0] == 0xce && s[1] == 0xb2) {
+	    /* &beta; */
+	    memmove(s + 4, s + 2, mvsize(s, 2));
+	    write_text(s, "beta");
+	} else if (s[0] == 0xce && s[1] == 0xbb) {
+	    /* &lambda; */
+	    memmove(s + 8, s + 2, mvsize(s, 2));
+	    write_text(s, "&lambda;");
+	} else if (s[0] == 0xce && s[1] == 0xbc) {
+	    /* &mu; */
+	    write_text(s, "mu");
+	} else if (s[0] == 0xcf && s[1] == 0x80) {
+	    /* &pi; */
+	    write_text(s, "pi");
+	} else if (s[0] == 0xcf && s[1] == 0x81) {
+	    /* &rho; */
+	    memmove(s + 3, s + 2, mvsize(s, 2));
+	    write_text(s, "rho");
+	} else if (s[0] == 0xcf && s[1] == 0x83) {
+	    /* &sigma; */
+	    memmove(s + 5, s + 2, mvsize(s, 2));
+	    write_text(s, "sigma");
+	} else if (s[0] == 0xcf && s[1] == 0x89) {
+	    /* &omega; */
+	    memmove(s + 5, s + 2, mvsize(s, 2));
+	    write_text(s, "omega");
+	} else if (s[0] == 0xc2 && s[1] == 0xb0) {
+	    /* &deg; */
+	    memmove(s + 7, s + 2, mvsize(s, 2));
+	    write_text(s, "degrees");
+	}	    
+	s++;
+    }
+}
+
 static void compress_spaces (char *s)
 {
     char *p;
 
     if (s == NULL || *s == 0) return;
 
-    if (!utf_ok) {
-	/* replace endashes (and other entities?) */
-	utf_replace((unsigned char *) s);
+    if (plain_text) {
+	/* replace endashes, etc. */
+	utf_replace_plain((unsigned char *) s);
+    } else if (html) {
+	utf_replace_html((unsigned char *) s);
     }
 
     p = s;
@@ -518,7 +583,7 @@ int process_para (char *s, char *inbuf, int ptype, int markup)
     int done = 0;
 
     buf = inbuf;
-    *buf = 0;
+    *buf = '\0';
 
     p = strstr(s, starts[ptype]);
     strip_marker(p, starts[ptype]);
@@ -569,16 +634,15 @@ int main (int argc, char **argv)
     int blank = 0;
     int markup = 0;
 
-    if (argc == 2 && !strcmp(argv[1], "--markup")) {
-	markup = 1;
-	utf_ok = 1;
+    if (argc == 2) {
+	if (!strcmp(argv[1], "--markup")) {
+	    markup = 1;
+	} else if (!strcmp(argv[1], "--html")) {
+	    html = 1;
+	}
+    } else {
+	plain_text = 1;
     }
-
-    /* utf_ok: this may be a problem: in principle we should be OK
-       putting, e.g., greek characters into text to be displayed in a
-       GTK window using pango, but whether or not this actually works
-       will depend on the font that ends up being used?
-     */
 
     while (fgets(line, sizeof line, stdin)) {
 	if (strstr(line, "[PARA]")) {
@@ -609,8 +673,10 @@ int main (int argc, char **argv)
 		    putchar('\n');
 		}
 	    } else {
-		if (!utf_ok) {
-		    utf_replace((unsigned char *) line);
+		if (plain_text) {
+		    utf_replace_plain((unsigned char *) line);
+		} else if (html) {
+		    utf_replace_html((unsigned char *) line);
 		}
 		fputs(line, stdout);
 		blank = 0;

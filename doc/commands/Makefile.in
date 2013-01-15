@@ -53,6 +53,7 @@ HLPXSL = $(CMDSDIR)/gretltxt.xsl \
 	$(CMDSDIR)/equations.xsl 
 
 TEXXSL = $(CMDSDIR)/gretltex.xsl
+HTMLXSL = $(CMDSDIR)/gretlhtml.xsl
 
 XMLSTRS = $(CMDSDIR)/hlp_l10n.xml $(CMDSDIR)/hlpstrs_en.xml \
   $(CMDSDIR)/hlpstrs_es.xml $(CMDSDIR)/hlpstrs_pt.xml $(CMDSDIR)/hlpstrs_it.xml
@@ -114,10 +115,10 @@ matfuncs: matfuncs.o $(GRETLLIB)
 	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
 
 skeleton.o: skeleton.c $(GRETLHDRS)
-	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
+	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
 
 validate.o: validate.c $(GRETLHDRS)
-	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
+	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
 
 topiclist.o: topiclist.c $(GRETLHDRS)
 	$(CC) $(CFLAGS) $(TOPICDEFS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
@@ -206,6 +207,17 @@ $(PT_GENSTAMP): xsltrans reflow $(PT_FNCSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS)
 	./reflow --markup < tmp.txt > $(SHAREDIR)/genrgui.hlp.pt && \
 	touch $@
 
+# English HTML help files (experimental)
+
+cmdref.html: xsltrans reflow $(EN_SRC) $(CMDDTD) $(HTMLXSL) $(XMLSTRS)
+	./xsltrans --cmds --html $(EN_SRC) && \
+	./reflow --html < tmp.txt > $@
+
+funcref.html: xsltrans reflow $(EN_FNCSRC) $(FNCDTD) $(HTMLXSL) $(XMLSTRS) 
+	./xsltrans --funcs --html $(EN_FNCSRC) && \
+	./reflow --html < tmp.txt > $@
+
+# Bibliography file
 $(HELPREFS): bbl2txt $(EN_HLPSTAMP) $(EN_GENSTAMP) ../tex/gretl-ref.bbl
 	./bbl2txt ../tex/gretl-ref.bbl > $@
 

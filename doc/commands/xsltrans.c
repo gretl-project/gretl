@@ -20,12 +20,8 @@
 /* Formatter for gretl commands info stored as "generic" XML: takes
    a purely content-based XML representation of the info relating to
    the gretl commands (conforming to gretl_commands.dtd) and uses
-   XSL transformation to turn this into output suitable for:
-
-   * the "cmdref" chapter of the gretl manual (docbook XML); and 
-   * the "online" help files.
-   
-   Uses the XSL stylesheets gretlman.xsl and gretltxt.xsl.
+   XSL transformation to turn this into output suitable for gretl's 
+   "online" help files as well as TeX.
 */
 
 #include <stdio.h>
@@ -48,7 +44,8 @@ enum {
 enum {
     FORMAT_PLAIN,
     FORMAT_PANGO,
-    FORMAT_TEX
+    FORMAT_TEX,
+    FORMAT_HTML
 };
 
 #define UTF const xmlChar *
@@ -129,6 +126,8 @@ int apply_xslt (xmlDocPtr doc, int content, int format,
 	get_full_styname(styname, docdir, "gretlhlp.xsl");
     } else if (format == FORMAT_TEX) {
 	get_full_styname(styname, docdir, "gretltex.xsl");
+    } else if (format == FORMAT_HTML) {
+	get_full_styname(styname, docdir, "gretlhtml.xsl");
     } else {
 	get_full_styname(styname, docdir, "gretltxt.xsl");
     }
@@ -253,6 +252,8 @@ int main (int argc, char **argv)
 	    format = FORMAT_PANGO;
 	} else if (!strcmp(argv[i], "--tex")) {
 	    format = FORMAT_TEX;
+	} else if (!strcmp(argv[i], "--html")) {
+	    format = FORMAT_HTML;
 	} else if (!strcmp(argv[i], "--cmds")) {
 	    content = CONTENT_CMDS;
 	} else if (!strcmp(argv[i], "--funcs")) {
