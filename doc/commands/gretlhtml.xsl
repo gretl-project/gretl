@@ -437,10 +437,16 @@
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="lit|func|filename|flag">
+<xsl:template match="lit|func|filename">
   <xsl:text>&lt;kbd&gt;</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>&lt;/kbd&gt; </xsl:text>
+</xsl:template>
+
+<xsl:template match="flag">
+  <xsl:text>&lt;kbd&gt;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>&lt;/kbd&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="math">
@@ -536,7 +542,7 @@
   <xsl:if test="not(@context) or @context=$hlp or @context='notex'">
     <xsl:text>&lt;pre&gt;</xsl:text>
     <xsl:apply-templates/>
-    <xsl:text>&lt;/pre&gt;&#xa;</xsl:text>
+    <xsl:text>&lt;/pre&gt;</xsl:text>
   </xsl:if>
 </xsl:template>
 

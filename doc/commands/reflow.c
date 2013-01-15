@@ -138,34 +138,36 @@ static void utf_replace_html (unsigned char *s)
 	    write_text(s, "&Gamma;");
 	} else if (s[0] == 0xce && s[1] == 0xb2) {
 	    /* &beta; */
-	    memmove(s + 4, s + 2, mvsize(s, 2));
-	    write_text(s, "beta");
+	    memmove(s + 6, s + 2, mvsize(s, 2));
+	    write_text(s, "&beta;");
 	} else if (s[0] == 0xce && s[1] == 0xbb) {
 	    /* &lambda; */
 	    memmove(s + 8, s + 2, mvsize(s, 2));
 	    write_text(s, "&lambda;");
 	} else if (s[0] == 0xce && s[1] == 0xbc) {
 	    /* &mu; */
-	    write_text(s, "mu");
+	    memmove(s + 4, s + 2, mvsize(s, 2));
+	    write_text(s, "&mu;");
 	} else if (s[0] == 0xcf && s[1] == 0x80) {
 	    /* &pi; */
-	    write_text(s, "pi");
+	    memmove(s + 4, s + 2, mvsize(s, 2));
+	    write_text(s, "&pi;");
 	} else if (s[0] == 0xcf && s[1] == 0x81) {
 	    /* &rho; */
-	    memmove(s + 3, s + 2, mvsize(s, 2));
-	    write_text(s, "rho");
+	    memmove(s + 5, s + 2, mvsize(s, 2));
+	    write_text(s, "&rho;");
 	} else if (s[0] == 0xcf && s[1] == 0x83) {
 	    /* &sigma; */
-	    memmove(s + 5, s + 2, mvsize(s, 2));
-	    write_text(s, "sigma");
+	    memmove(s + 7, s + 2, mvsize(s, 2));
+	    write_text(s, "&sigma;");
 	} else if (s[0] == 0xcf && s[1] == 0x89) {
 	    /* &omega; */
-	    memmove(s + 5, s + 2, mvsize(s, 2));
-	    write_text(s, "omega");
+	    memmove(s + 7, s + 2, mvsize(s, 2));
+	    write_text(s, "&omega;");
 	} else if (s[0] == 0xc2 && s[1] == 0xb0) {
 	    /* &deg; */
-	    memmove(s + 7, s + 2, mvsize(s, 2));
-	    write_text(s, "degrees");
+	    memmove(s + 5, s + 2, mvsize(s, 2));
+	    write_text(s, "&deg;");
 	}	    
 	s++;
     }
