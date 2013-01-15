@@ -217,6 +217,9 @@ funcref.html: xsltrans reflow $(EN_FNCSRC) $(FNCDTD) $(HTMLXSL) $(XMLSTRS)
 	./xsltrans --funcs --html $(EN_FNCSRC) && \
 	./reflow --html < tmp.txt > $@
 
+biblio.html: bbl2txt ../tex/gretl-ref.bbl
+	./bbl2txt ../tex/gretl-ref.bbl --html > $@
+
 # Bibliography file
 $(HELPREFS): bbl2txt $(EN_HLPSTAMP) $(EN_GENSTAMP) ../tex/gretl-ref.bbl
 	./bbl2txt ../tex/gretl-ref.bbl > $@

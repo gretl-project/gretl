@@ -54,9 +54,10 @@ void remember_author (char *s, char *au)
     }
 }
 
-void print_item (char *s, const char *key)
+void print_item (char *s, const char *key, int html)
 {
     static char prev_author[128];
+    int rparen = 0;
     int quoted = 0;
     int ital = 0;
     int group = 0;
@@ -66,7 +67,11 @@ void print_item (char *s, const char *key)
 	remember_author(s, prev_author);
     }
 
-    printf("<@key=\"%s\">", key);
+    if (html) {
+	printf("<p><a name=\"%s\">", key);
+    } else {
+	printf("<@key=\"%s\">", key);
+    }
 
     while (*s) {
 	int putit = 1;
@@ -86,7 +91,11 @@ void print_item (char *s, const char *key)
 	} else if (!strncmp(s, "\\emph{", 6)) {
 	    ital = 1;
 	    putit = 0;
-	    printf("<@itl=\"");
+	    if (html) {
+		printf("<i>");
+	    } else {
+		printf("<@itl=\"");
+	    }
 	    s += 5;
 	} else if (!strncmp(s, "\\url{", 4)) {
 	    url = 1;
@@ -108,7 +117,11 @@ void print_item (char *s, const char *key)
 		group = 0;
 	    } else if (ital) {
 		putit = 0;
-		printf("\">");
+		if (html) {
+		    printf("</i>");
+		} else {
+		    printf("\">");
+		}
 		quoted = 0;
 	    } else if (quoted) {
 		putit = 0;
@@ -123,16 +136,24 @@ void print_item (char *s, const char *key)
 
 	if (putit) {
 	    putchar(*s);
+	    if (html && rparen == 0 && *s == ')') {
+		fputs("</a>", stdout);
+		rparen++;
+	    }
 	}
 
 	s++;
+    }
+
+    if (html) {
+	fputs("</p>", stdout);
     }
 
     fputs("\n\n", stdout);
 
 }
 
-int parse_record (char *buf)
+int parse_record (char *buf, int html)
 {
     char *p, key[32];
 
@@ -186,7 +207,7 @@ int parse_record (char *buf)
 	*p = '\0';
     }
 
-    print_item(buf, key);
+    print_item(buf, key, html);
 
     return 0;
 }
@@ -206,6 +227,7 @@ int main (int argc, char **argv)
 {
     FILE *fp;
     char c, buf[RECLEN], line[1024];
+    int html = 0;
     int err = 0;
 
     if (argc < 2) {
@@ -213,13 +235,21 @@ int main (int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
 
+    if (argc == 3 && !strcmp(argv[2], "--html")) {
+	html = 1;
+    }    
+
     fp = fopen(argv[1], "r");
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't open %s\n", argv[1]);
 	exit(EXIT_FAILURE);
     }
 
-    printf("<@hd1=\"References\">\n\n");
+    if (html) {
+	printf("<h1>References</h1>\n\n");
+    } else {
+	printf("<@hd1=\"References\">\n\n");
+    }
 
     *buf = '\0';
 
@@ -229,7 +259,7 @@ int main (int argc, char **argv)
 	    /* two newlines: para ends, process block */
 	    err = append_to_buf(buf, line);
 	    if (!err) {
-		err = parse_record(buf);
+		err = parse_record(buf, html);
 	    }
 	    *buf = '\0';
 	} else {

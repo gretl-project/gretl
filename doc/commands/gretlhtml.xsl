@@ -57,6 +57,9 @@
   <xsl:text>&lt;h1&gt;</xsl:text>
   <xsl:text>Gretl Command Reference</xsl:text>
   <xsl:text>&lt;/h1&gt;&#10;</xsl:text>
+  <xsl:text>&lt;p&gt;</xsl:text>
+  <xsl:text>See also the &lt;a href="./funcref.html"&gt;Function Reference&lt;/a&gt;</xsl:text>
+  <xsl:text>&lt;/p&gt;</xsl:text>
   <xsl:apply-templates/> 
 </xsl:template>
 
@@ -87,7 +90,7 @@
 
 <xsl:template match="usage">
   <xsl:if test="$hlp='cli'">
-    <xsl:text>&lt;table&gt;</xsl:text>
+    <xsl:text>&lt;table cellspacing="4"&gt;</xsl:text>
     <xsl:apply-templates/>
     <xsl:text>&lt;/table&gt;</xsl:text>
     <xsl:call-template name="dnl"/>
@@ -213,7 +216,7 @@
   <xsl:if test="position() > 1">
     <xsl:text>, </xsl:text>
   </xsl:if>
-  <xsl:text>&lt;a href="scripts/misc/</xsl:text>
+  <xsl:text>&lt;a href="scripts/</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>"&gt;</xsl:text>
   <xsl:apply-templates/>
@@ -288,7 +291,10 @@
 <xsl:template match="funcref">
   <xsl:text>&lt;h1&gt;</xsl:text>
   <xsl:text>Gretl Function Reference</xsl:text>
-  <xsl:text>&lt;/h1&gt;&#10;</xsl:text>  
+  <xsl:text>&lt;/h1&gt;&#10;</xsl:text>
+  <xsl:text>&lt;p&gt;</xsl:text>
+  <xsl:text>See also the &lt;a href="./cmdref.html"&gt;Command Reference&lt;/a&gt;</xsl:text>
+  <xsl:text>&lt;/p&gt;</xsl:text>
   <xsl:apply-templates/> 
 </xsl:template>
 
@@ -304,6 +310,9 @@
     <xsl:call-template name="nl"/>
   </xsl:if>
   <xsl:text>&lt;h2&gt;</xsl:text>
+  <xsl:text>&lt;a name="</xsl:text>
+  <xsl:value-of select="@name"/>
+  <xsl:text>"&gt;</xsl:text>
   <xsl:value-of select="@name"/>
   <xsl:text>&lt;/h2&gt;&#10;</xsl:text>
   <xsl:text>&lt;b&gt;</xsl:text>
@@ -459,7 +468,7 @@
 </xsl:template>
 
 <xsl:template match="cite">
-  <xsl:text>&lt;a href="</xsl:text>
+  <xsl:text>&lt;a href="./biblio.html#</xsl:text>
   <xsl:value-of select="@key"/>
   <xsl:text>"&gt;</xsl:text>
   <xsl:apply-templates/>
@@ -624,11 +633,7 @@
 </xsl:template>
 
 <xsl:template match="guideref">
-  <xsl:text>&lt;a href="</xsl:text>
-  <xsl:call-template name="gettext-nospace">
-    <xsl:with-param name="key" select="'guidebook'"/>
-  </xsl:call-template>
-  <xsl:text>"&gt;</xsl:text>
+  <xsl:text>&lt;a href="gretl-guide.pdf"&gt;</xsl:text>
   <xsl:call-template name="gettext-nospace">
     <xsl:with-param name="key" select="'guidebook'"/>
   </xsl:call-template>
@@ -637,9 +642,11 @@
 
 <xsl:template match="menu-path">
   <xsl:text>&#xa;&lt;p&gt;</xsl:text>
+  <xsl:text>&lt;b&gt;</xsl:text>
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="'menupath'"/>
   </xsl:call-template>
+  <xsl:text>&lt;/b&gt;</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>&lt;/p&gt;</xsl:text>
 </xsl:template>
