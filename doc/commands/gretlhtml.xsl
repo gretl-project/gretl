@@ -53,14 +53,46 @@
   </xsl:choose>  
 </xsl:template>
 
+<xsl:template name="cmd-index-entry">
+  <xsl:param name="cmd"/>
+  <xsl:if test="$cmd and $cmd[not(@context) or @context=$hlp]">
+    <xsl:text>&lt;td&gt;</xsl:text>
+    <xsl:text>&lt;a href="#</xsl:text>
+    <xsl:value-of select="$cmd/@name"/>
+    <xsl:text>"&gt;</xsl:text>
+    <xsl:value-of select="$cmd/@name"/>
+    <xsl:text>&lt;/a&gt;</xsl:text>
+    <xsl:text>&lt;/td&gt;&#10;</xsl:text>
+  </xsl:if>
+</xsl:template>
+
 <xsl:template match="commandlist">
   <xsl:text>&lt;h1&gt;</xsl:text>
   <xsl:text>Gretl Command Reference</xsl:text>
   <xsl:text>&lt;/h1&gt;&#10;</xsl:text>
   <xsl:text>&lt;p&gt;</xsl:text>
   <xsl:text>See also the &lt;a href="./funcref.html"&gt;Function Reference&lt;/a&gt;</xsl:text>
-  <xsl:text>&lt;/p&gt;</xsl:text>
-  <xsl:apply-templates/> 
+  <xsl:text>&lt;/p&gt;&#10;</xsl:text>
+  <xsl:text>&lt;table&gt;&#10;</xsl:text>
+  <xsl:for-each select="command[not(@context) or @context=$hlp]">
+    <xsl:choose>
+      <xsl:when test="position() mod 8 = 1">
+        <xsl:text>&lt;tr&gt;&#10;</xsl:text>
+        <xsl:call-template name="cmd-index-entry">
+          <xsl:with-param name="cmd" select="."/>
+        </xsl:call-template>
+        <xsl:for-each select="following-sibling::*[position() &lt; 8]">
+          <xsl:call-template name="cmd-index-entry">
+            <xsl:with-param name="cmd" select="."/>
+          </xsl:call-template>
+        </xsl:for-each>
+        <xsl:text>&lt;/tr&gt;&#10;</xsl:text>
+      </xsl:when>
+      <xsl:otherwise></xsl:otherwise>
+    </xsl:choose>
+  </xsl:for-each>
+  <xsl:text>&lt;/table&gt;&#10;</xsl:text>
+  <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="command">
@@ -97,9 +129,17 @@
   </xsl:if>
 </xsl:template>
 
+<xsl:template name="bold-cell-start">
+  <xsl:text>&lt;td&gt;&lt;b&gt;</xsl:text>
+</xsl:template>
+
+<xsl:template name="bold-cell-end">
+  <xsl:text>&lt;/b&gt;&lt;/td&gt;</xsl:text>
+</xsl:template>
+
 <xsl:template match="arguments">
   <xsl:text>&#xa;&lt;tr&gt;</xsl:text>
-  <xsl:text>&lt;td&gt;&lt;b&gt;</xsl:text>
+  <xsl:call-template name="bold-cell-start"/>
   <xsl:choose>
     <xsl:when test="count(argument) > 1">
       <xsl:call-template name="gettext">
@@ -112,7 +152,7 @@
       </xsl:call-template>
     </xsl:otherwise> 
   </xsl:choose>
-  <xsl:text>&lt;/b&gt;&lt;/td&gt;</xsl:text>
+  <xsl:call-template name="bold-cell-end"/>
   <xsl:text>&lt;td&gt;</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>&lt;/td&gt;</xsl:text>
