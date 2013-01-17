@@ -318,13 +318,14 @@
 
 <xsl:template match="syntax">
   <xsl:call-template name="nl"/>
-  <xsl:text>&lt;b&gt;</xsl:text>
+  <xsl:text>&lt;tr&gt;&lt;td&gt;&lt;b&gt;</xsl:text>
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="'syntax'"/>
   </xsl:call-template>
-  <xsl:text>&lt;/b&gt;</xsl:text>
-  <xsl:text> </xsl:text>
+  <xsl:text>&lt;/b&gt;&lt;/td&gt;</xsl:text>
+  <xsl:text>&lt;td&gt;</xsl:text>
   <xsl:apply-templates/>
+  <xsl:text>&lt;/td&gt;&lt;/tr&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="examples">

@@ -1336,9 +1336,7 @@
   <command name="catch" section="Programming" 
     label="Catch errors" context="cli">
     <usage>
-      <syntax>
-        <lit>catch</lit> <repl>command</repl>
-      </syntax>
+      <syntax><lit>catch </lit><repl>command</repl></syntax>
     </usage>
     <description>
       <para>
