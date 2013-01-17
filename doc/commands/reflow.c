@@ -235,6 +235,17 @@ static void trim_trailing_space (char *s)
     }
 }
 
+static void trim_newline (char *s)
+{
+    int n;
+
+    trim_trailing_space(s);
+    n = strlen(s);
+    if (s[n-1] == '\n') {
+	s[n-1] = '\0';
+    }
+}
+
 /* back up along a string and terminate at the first space */
 
 static void trim_to_length (char *s)
@@ -629,10 +640,33 @@ int process_para (char *s, char *inbuf, int ptype, int markup)
     return 0;
 }
 
+void process_pre (char *s, char *buf)
+{
+    if (strstr(s, "</pre>") != NULL) {
+	/* just a one-liner */
+	fputs(s, stdout);
+    } else {
+	/* not just a one-liner */
+	char line[1024];
+
+	*buf = '\0';
+	strcat(buf, s);
+
+	while (fgets(line, sizeof line, stdin)) {
+	    if (strstr(line, "</pre>") != NULL) {
+		trim_newline(buf);
+		printf("%s</pre>\n\n", buf);
+		break;
+	    }
+	    strcat(buf, line);
+	}
+    }
+}
+
 int main (int argc, char **argv)
 { 
     char buf[PARSIZE];
-    char line[128];
+    char line[1024];
     int blank = 0;
     int markup = 0;
 
@@ -668,6 +702,8 @@ int main (int argc, char **argv)
 	} else if (strstr(line, "[MONO]")) {
 	    process_para(line, buf, MONO, markup);
 	    blank++;
+	} else if (html && strstr(line, "<pre>")) {
+	    process_pre(line, buf);
 	} else {
 	    if (blank_string(line)) {
 		blank++;

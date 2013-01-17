@@ -632,9 +632,9 @@
 
 <xsl:template match="code">
   <xsl:if test="not(@context) or @context=$hlp or @context='notex'">
-    <xsl:text>&lt;pre&gt;</xsl:text>
+    <xsl:text>&#10;&lt;pre&gt;</xsl:text>
     <xsl:apply-templates/>
-    <xsl:text>&lt;/pre&gt;</xsl:text>
+    <xsl:text>&lt;/pre&gt;&#10;</xsl:text>
   </xsl:if>
 </xsl:template>
 
