@@ -96,7 +96,7 @@
 
 <!ELEMENT para (#PCDATA | repl | program | math | equation |
                 lit | emphasis | book | quote | filename | by |
-                func | guideref | cmdref| fncref | tabref | 
+                func | guideref | cmdref | fncref | tabref | 
                 sub | sup | flag | footnote | refnote | opt |
                 cmd | cite | url | seelist)*>
 <!ATTLIST para

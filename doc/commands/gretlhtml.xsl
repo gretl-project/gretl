@@ -53,17 +53,44 @@
   </xsl:choose>  
 </xsl:template>
 
-<xsl:template name="cmd-index-entry">
-  <xsl:param name="cmd"/>
-  <xsl:if test="$cmd and $cmd[not(@context) or @context=$hlp]">
-    <xsl:text>&lt;td&gt;</xsl:text>
-    <xsl:text>&lt;a href="#</xsl:text>
-    <xsl:value-of select="$cmd/@name"/>
-    <xsl:text>"&gt;</xsl:text>
-    <xsl:value-of select="$cmd/@name"/>
-    <xsl:text>&lt;/a&gt;</xsl:text>
-    <xsl:text>&lt;/td&gt;&#10;</xsl:text>
-  </xsl:if>
+<xsl:template name="index-cell">
+  <xsl:param name="entry"/>
+  <xsl:text>&lt;td&gt;</xsl:text>
+  <xsl:text>&lt;a href="#</xsl:text>
+  <xsl:value-of select="$entry"/>
+  <xsl:text>"&gt;</xsl:text>
+  <xsl:value-of select="$entry"/>
+  <xsl:text>&lt;/a&gt;</xsl:text>
+  <xsl:text>&lt;/td&gt;&#10;</xsl:text>
+</xsl:template>
+
+<xsl:template name="index-row">
+  <xsl:param name="n"/>
+  <xsl:for-each select="following-sibling::*[position() = 1]">
+    <xsl:choose>
+      <xsl:when test="not(@context) or @context=$hlp">
+        <xsl:call-template name="index-cell">
+          <xsl:with-param name="entry" select="@name"/>
+        </xsl:call-template>        
+        <xsl:if test="$n - 1 &gt; 0">
+          <xsl:call-template name="index-row">
+            <xsl:with-param name="n">
+              <xsl:value-of select="$n - 1"/>
+            </xsl:with-param>
+          </xsl:call-template>
+        </xsl:if>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:if test="$n &gt; 0">
+          <xsl:call-template name="index-row">
+            <xsl:with-param name="n">
+              <xsl:value-of select="$n"/>
+            </xsl:with-param>
+          </xsl:call-template>
+        </xsl:if>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:for-each>
 </xsl:template>
 
 <xsl:template match="commandlist">
@@ -71,36 +98,43 @@
   <xsl:text>Gretl Command Reference</xsl:text>
   <xsl:text>&lt;/h1&gt;&#10;</xsl:text>
   <xsl:text>&lt;p&gt;</xsl:text>
-  <xsl:text>See also the &lt;a href="./funcref.html"&gt;Function Reference&lt;/a&gt;</xsl:text>
+  <xsl:text>See also the &lt;a href="./funcref.html"&gt;Gretl Function Reference&lt;/a&gt;.</xsl:text>
   <xsl:text>&lt;/p&gt;&#10;</xsl:text>
-  <xsl:text>&lt;table&gt;&#10;</xsl:text>
+  <xsl:text>&lt;p&gt;</xsl:text>
+  <xsl:text>The following commands are documented below.</xsl:text>
+  <xsl:text>&lt;/p&gt;&#10;</xsl:text>
+  <xsl:text>&lt;table cellspacing="4"&gt;&#10;</xsl:text>
   <xsl:for-each select="command[not(@context) or @context=$hlp]">
-    <xsl:choose>
-      <xsl:when test="position() mod 8 = 1">
-        <xsl:text>&lt;tr&gt;&#10;</xsl:text>
-        <xsl:call-template name="cmd-index-entry">
-          <xsl:with-param name="cmd" select="."/>
-        </xsl:call-template>
-        <xsl:for-each select="following-sibling::*[position() &lt; 8]">
-          <xsl:call-template name="cmd-index-entry">
-            <xsl:with-param name="cmd" select="."/>
-          </xsl:call-template>
-        </xsl:for-each>
-        <xsl:text>&lt;/tr&gt;&#10;</xsl:text>
-      </xsl:when>
-      <xsl:otherwise></xsl:otherwise>
-    </xsl:choose>
+    <xsl:if test="position() mod 8 = 1">
+      <xsl:text>&lt;tr&gt;&#10;</xsl:text>
+      <xsl:call-template name="index-cell">
+        <xsl:with-param name="entry" select="@name"/>
+      </xsl:call-template>
+      <xsl:call-template name="index-row">
+        <xsl:with-param name="n" select="7"/>
+      </xsl:call-template>
+      <xsl:text>&lt;/tr&gt;&#10;</xsl:text>
+    </xsl:if>
   </xsl:for-each>
   <xsl:text>&lt;/table&gt;&#10;</xsl:text>
+  <xsl:text>&lt;p&gt;</xsl:text>
+  <xsl:text>Note that brackets "&lt;kbd&gt;[&lt;/kbd&gt;" and "&lt;kbd&gt;]&lt;/kbd&gt;" </xsl:text>
+  <xsl:text>are used to indicate that certain elements of commands are optional.</xsl:text>
+  <xsl:text>The brackets should not be typed by the user.</xsl:text>
+  <xsl:text>&lt;/p&gt;&#10;</xsl:text>
   <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template name="divider">
+  <xsl:call-template name="nl"/>
+  <xsl:text>&lt;hr&gt;</xsl:text>
+  <xsl:call-template name="nl"/>
 </xsl:template>
 
 <xsl:template match="command">
   <xsl:if test="not(@context) or @context=$hlp">
     <xsl:if test="position() > 1">
-      <xsl:call-template name="nl"/>
-      <xsl:text>&lt;hr&gt;</xsl:text>
-      <xsl:call-template name="nl"/>
+      <xsl:call-template name="divider"/>
     </xsl:if>
     <xsl:text>&lt;h2&gt;</xsl:text>
     <xsl:text>&lt;a name="</xsl:text>
@@ -138,7 +172,7 @@
 </xsl:template>
 
 <xsl:template match="arguments">
-  <xsl:text>&#xa;&lt;tr&gt;</xsl:text>
+  <xsl:text>&#10;&lt;tr&gt;</xsl:text>
   <xsl:call-template name="bold-cell-start"/>
   <xsl:choose>
     <xsl:when test="count(argument) > 1">
@@ -213,7 +247,7 @@
 
 <xsl:template match="option">
   <xsl:if test="position() > 1">
-    <xsl:text>&#xa;&lt;tr&gt;&lt;td&gt;&lt;/td&gt;</xsl:text>
+    <xsl:text>&#10;&lt;tr&gt;&lt;td&gt;&lt;/td&gt;</xsl:text>
   </xsl:if>
   <xsl:text>&lt;td&gt;</xsl:text>
   <xsl:apply-templates/>
@@ -230,7 +264,7 @@
 
 <xsl:template match="example">
   <xsl:if test="position() > 1">
-    <xsl:text>&#xa;&lt;tr&gt;&lt;td&gt;&lt;/td&gt;</xsl:text>
+    <xsl:text>&#10;&lt;tr&gt;&lt;td&gt;&lt;/td&gt;</xsl:text>
   </xsl:if> 
   <xsl:text>&lt;td&gt;&lt;kbd&gt;</xsl:text>
   <xsl:apply-templates/>
@@ -333,8 +367,26 @@
   <xsl:text>Gretl Function Reference</xsl:text>
   <xsl:text>&lt;/h1&gt;&#10;</xsl:text>
   <xsl:text>&lt;p&gt;</xsl:text>
-  <xsl:text>See also the &lt;a href="./cmdref.html"&gt;Command Reference&lt;/a&gt;</xsl:text>
-  <xsl:text>&lt;/p&gt;</xsl:text>
+  <xsl:text>See also the &lt;a href="./cmdref.html"&gt;Gretl Command Reference&lt;/a&gt;</xsl:text>
+  <xsl:text>&#10;&lt;/p&gt;</xsl:text>
+  <xsl:text>The following accessors and functions are documented below.</xsl:text>
+  <xsl:text>&lt;/p&gt;&#10;</xsl:text>
+  <xsl:for-each select="funclist">
+    <xsl:text>&lt;table cellspacing="4"&gt;&#10;</xsl:text>
+    <xsl:for-each select="function">
+      <xsl:if test="position() mod 8 = 1">
+        <xsl:text>&lt;tr&gt;&#10;</xsl:text>
+        <xsl:call-template name="index-cell">
+          <xsl:with-param name="entry" select="@name"/>
+        </xsl:call-template>
+        <xsl:call-template name="index-row">
+          <xsl:with-param name="n" select="7"/>
+        </xsl:call-template>
+        <xsl:text>&lt;/tr&gt;&#10;</xsl:text>
+      </xsl:if>
+    </xsl:for-each>
+    <xsl:text>&lt;/table&gt;&#10;</xsl:text>
+  </xsl:for-each>
   <xsl:apply-templates/> 
 </xsl:template>
 
@@ -347,7 +399,7 @@
 
 <xsl:template match="function">
   <xsl:if test="position() > 1">
-    <xsl:call-template name="nl"/>
+    <xsl:call-template name="divider"/>
   </xsl:if>
   <xsl:text>&lt;h2&gt;</xsl:text>
   <xsl:text>&lt;a name="</xsl:text>
@@ -558,7 +610,7 @@
 
 <xsl:template match="para">
   <xsl:if test="not(@context) or @context=$hlp or @context='notex'">
-    <xsl:text>&#xa;&lt;p&gt;</xsl:text>
+    <xsl:text>&#10;&lt;p&gt;</xsl:text>
     <xsl:apply-templates/>
     <xsl:text>&lt;/p&gt;</xsl:text>
  </xsl:if>
@@ -687,7 +739,7 @@
 </xsl:template>
 
 <xsl:template match="menu-path">
-  <xsl:text>&#xa;&lt;p&gt;</xsl:text>
+  <xsl:text>&#10;&lt;p&gt;</xsl:text>
   <xsl:text>&lt;b&gt;</xsl:text>
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="'menupath'"/>
@@ -698,7 +750,7 @@
 </xsl:template>
 
 <xsl:template match="other-access">
-  <xsl:text>&#xa;</xsl:text>
+  <xsl:text>&#10;</xsl:text>
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="'otheraccess'"/>
   </xsl:call-template>
