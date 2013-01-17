@@ -1031,6 +1031,7 @@
 	  then the following default values are used: <argname>f1</argname> =
 	  8, <argname>f1</argname> = 32, <argname>k</argname> = 8.
 	  <seelist>
+	    <fncref targ="bwfilt"/>
 	    <fncref targ="hpfilt"/>
 	  </seelist>
 	</para>
@@ -2152,6 +2153,7 @@
 	<para>
 	  <seelist> 
 	    <fncref targ="bkfilt"/>
+	    <fncref targ="bwfilt"/>
 	    <fncref targ="fracdiff"/>
 	    <fncref targ="hpfilt"/>
 	    <fncref targ="movavg"/>
@@ -2452,7 +2454,9 @@
 	  a data-based default is used, namely 100 times the square of the
 	  periodicity (100 for annual data, 1600 for quarterly data, and so
 	  on).  
-	  <seelist> <fncref targ="bkfilt"/>
+	  <seelist> 
+	    <fncref targ="bkfilt"/>
+	    <fncref targ="bwfilt"/>
 	  </seelist>
 	</para>
       </description>
@@ -3842,8 +3846,7 @@
       <description>
 	<para>
 	  Works exactly as <fncref targ="mols"/>, except that the calculations
-	  are done in multiple precision using the GMP library (assuming this
-	  is available).
+	  are done in multiple precision using the GMP library.
 	</para>
 	<para>
 	  By default GMP uses 256 bits for each floating point number, but

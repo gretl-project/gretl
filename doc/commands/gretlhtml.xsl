@@ -509,10 +509,6 @@
 </xsl:template>
 
 <xsl:template match="opt">
-  <xsl:comment>
-    For option flags, ensure that there's no break between 
-    the double-dash and the following string.
-  </xsl:comment>
   <xsl:text>&lt;kbd&gt;--</xsl:text>
   <xsl:choose>
     <xsl:when test="substring(text(),1,2)='--'">
@@ -617,11 +613,9 @@
 </xsl:template>
 
 <xsl:template match="gfr">
-  <xsl:text>&lt;@gfr="</xsl:text>
-  <xsl:call-template name="gettext-nospace">
-    <xsl:with-param name="key" select="'funcchap'"/>
-  </xsl:call-template>  
-  <xsl:text>"&gt;</xsl:text>
+  <xsl:text>the &lt;a href="./funcref.html"&gt;</xsl:text>
+  <xsl:text>Gretl Function Reference</xsl:text>
+  <xsl:text>&lt;/a&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="refnote">

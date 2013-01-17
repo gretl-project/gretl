@@ -6253,12 +6253,13 @@
 
     <description>
       <para>
-	The Mahalanobis distance is the distance between two points in
-	a <math>k</math>-dimensional space, scaled by the
-	statistical variation in each dimension of the space.  For
-	example, if <math>p</math> and <math>q</math> are
-	two observations on a set of <math>k</math> variables
-	with covariance matrix <math>C</math>, then the
+	Computes the Mahalanobis distances between the series in
+	<repl>varlist</repl>.  The Mahalanobis distance is the
+	distance between two points in a <math>k</math>-dimensional
+	space, scaled by the statistical variation in each dimension
+	of the space.  For example, if <math>p</math> and
+	<math>q</math> are two observations on a set of <math>k</math>
+	variables with covariance matrix <math>C</math>, then the
 	Mahalanobis distance between the observations is given by
 	<equation status="display"
         tex="\[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]"
@@ -6922,8 +6923,7 @@
     <description>
       <para>
 	Computes OLS estimates for the specified model using multiple
-	precision floating-point arithmetic.  This command is available
-	only if <program>gretl</program> is compiled with support for the
+	precision floating-point arithmetic, with the help of the
 	Gnu Multiple Precision (GMP) library.  By default 256 bits of
 	precision are used for the calculations, but this can be increased
 	via the environment variable <lit>GRETL_MP_BITS</lit>.  For
@@ -9236,10 +9236,11 @@
 
     <description>
       <para>
-	Execute the commands in <repl>filename</repl> then return
+	Executes the commands in <repl>filename</repl> then returns
 	control to the interactive prompt.  This command is intended
-	for use with the command-line program gretlcli, or at the
-	<quote>gretl console</quote> in the GUI program.
+	for use with the command-line program
+	<program>gretlcli</program>, or at the <quote>gretl
+	console</quote> in the GUI program.
       </para>
       <para>
 	See also <cmdref targ="include"/>.
