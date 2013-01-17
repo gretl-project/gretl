@@ -646,7 +646,6 @@ void process_pre (char *s, char *buf)
 	/* just a one-liner */
 	fputs(s, stdout);
     } else {
-	/* not just a one-liner */
 	char line[1024];
 
 	*buf = '\0';

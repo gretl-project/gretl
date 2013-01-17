@@ -119,7 +119,7 @@
   <xsl:text>&lt;/table&gt;&#10;</xsl:text>
   <xsl:text>&lt;p&gt;</xsl:text>
   <xsl:text>Note that brackets "&lt;kbd&gt;[&lt;/kbd&gt;" and "&lt;kbd&gt;]&lt;/kbd&gt;" </xsl:text>
-  <xsl:text>are used to indicate that certain elements of commands are optional.</xsl:text>
+  <xsl:text>are used to indicate that certain elements of commands are optional. </xsl:text>
   <xsl:text>The brackets should not be typed by the user.</xsl:text>
   <xsl:text>&lt;/p&gt;&#10;</xsl:text>
   <xsl:apply-templates/>
@@ -197,7 +197,7 @@
   <xsl:if test="(@optional)">[ </xsl:if>
   <xsl:if test="(@separated)">; </xsl:if>
   <xsl:apply-templates/>
-  <xsl:if test="(@optional)">] </xsl:if>
+  <xsl:if test="(@optional)"> ] </xsl:if>
 </xsl:template>
 
 <xsl:template match="argument">
@@ -216,7 +216,7 @@
   <xsl:text>&lt;i&gt;</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>&lt;/i&gt;</xsl:text>
-  <xsl:if test="(@optional)">] </xsl:if>
+  <xsl:if test="(@optional)"> ] </xsl:if>
   <xsl:text> </xsl:text>
 </xsl:template>
 
@@ -299,7 +299,6 @@
 
 <xsl:template match="altforms">
   <xsl:call-template name="nl"/>
-  <xsl:text>&lt;table&gt;</xsl:text>
   <xsl:text>&lt;tr&gt;&lt;td&gt;&lt;b&gt;</xsl:text>
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="'altforms'"/>
@@ -310,7 +309,7 @@
 
 <xsl:template match="altform">
   <xsl:if test="position() > 1">
-    <xsl:text>&lt;tr&gt;&lt;td&gt;&lt;/td&gt;</xsl:text>
+    <xsl:text>&#10;&lt;tr&gt;&lt;td&gt;&lt;/td&gt;</xsl:text>
   </xsl:if> 
   <xsl:text>&lt;td&gt;</xsl:text>
   <xsl:apply-templates/>
@@ -532,7 +531,7 @@
 <xsl:template match="lit|func|filename">
   <xsl:text>&lt;kbd&gt;</xsl:text>
   <xsl:apply-templates/>
-  <xsl:text>&lt;/kbd&gt; </xsl:text>
+  <xsl:text>&lt;/kbd&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="flag">

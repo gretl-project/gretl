@@ -5138,32 +5138,28 @@
       <para>Flow control for command execution.  Three sorts of
 	construction are supported, as follows.
       </para>
-      <pre>
-	<lit># simple form</lit>&par;
-	<lit>if</lit> <repl>condition</repl>&par;
-	<lit> </lit><lit> </lit> <repl>commands</repl>&par;
-	<lit>endif</lit>
-      </pre>
+      <code>
+	# simple form
+	if condition
+	    commands
+	endif
 
-      <pre>
-	<lit># two branches</lit>&par;
-	<lit>if</lit> <repl>condition</repl>&par;
-	<lit> </lit><lit> </lit> <repl>commands1</repl>&par;
-	<lit>else</lit>&par;
-	<lit> </lit><lit> </lit> <repl>commands2</repl>&par;
-	<lit>endif</lit>
-      </pre>
+	# two branches
+	if condition
+	    commands1
+	else
+	    commands2
+        endif
 
-      <pre>
-	<lit># three or more branches</lit>&par;
-	<lit>if</lit> <repl>condition1</repl>&par;
-	<lit> </lit><lit> </lit> <repl>commands1</repl>&par;
-	<lit>elif</lit> <repl>condition2</repl>&par;
-	<lit> </lit><lit> </lit> <repl>commands2</repl>&par;
-	<lit>else</lit>&par;
-	<lit> </lit><lit> </lit> <repl>commands3</repl>&par;
-	<lit>endif</lit>
-      </pre>
+	# three or more branches
+	if condition1
+	    commands1
+	elif condition2
+	    commands2
+	else
+	    commands3
+	endif
+      </code>
 
       <para>
 	<repl quote="true">condition</repl> must be a Boolean expression, for
