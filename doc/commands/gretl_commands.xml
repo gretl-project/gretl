@@ -2495,7 +2495,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Variable/ADF-GLS test</menu-path>
+      <menu-path>/Variable/Unit root tests/ADF-GLS test</menu-path>
     </gui-access>
 
   </command>
@@ -2942,7 +2942,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Nonlinear models/Duration data...</menu-path>
+      <menu-path>/Model/Limited dependent variable/Duration data...</menu-path>
     </gui-access>
 
   </command>  
@@ -4979,7 +4979,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Nonlinear models/Heckit</menu-path>
+      <menu-path>/Model/Limited dependent variable/Heckit</menu-path>
     </gui-access>
 
   </command>
@@ -5298,7 +5298,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Nonlinear models/Interval regression</menu-path>
+      <menu-path>/Model/Limited dependent variable/Interval regression</menu-path>
     </gui-access>
 
   </command>
@@ -6031,7 +6031,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Nonlinear models/Logistic</menu-path>
+      <menu-path>/Model/Limited dependent variable/Logistic</menu-path>
     </gui-access>
 
   </command>
@@ -6139,7 +6139,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Nonlinear models/Logit</menu-path>
+      <menu-path>/Model/Limited dependent variable/Logit</menu-path>
     </gui-access>
 
   </command>
@@ -6428,7 +6428,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Bivariate tests/Difference of means</menu-path>
+      <menu-path>/Tools/Test statistic calculator</menu-path>
     </gui-access>
 
   </command>
@@ -6727,7 +6727,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Session window, Model table icon</menu-path>
+      <menu-path>Session icon window, Model table icon</menu-path>
     </gui-access>
 
   </command>
@@ -7052,7 +7052,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Nonlinear models/Count data...</menu-path>
+      <menu-path>/Model/Limited dependent variable/Count data...</menu-path>
     </gui-access>
   </command>
 
@@ -7222,7 +7222,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Nonlinear models/Nonlinear Least Squares</menu-path>
+      <menu-path>/Model/Nonlinear Least Squares</menu-path>
     </gui-access>
 
   </command>
@@ -8286,7 +8286,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Nonlinear models/Count data...</menu-path>
+      <menu-path>/Model/Limited dependent variable/Count data...</menu-path>
     </gui-access>
 
   </command>
@@ -8504,7 +8504,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Nonlinear models/Probit</menu-path>
+      <menu-path>/Model/Limited dependent variable/Probit</menu-path>
     </gui-access>
 
   </command>
@@ -11170,7 +11170,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Nonlinear models/Tobit</menu-path>
+      <menu-path>/Model/Limited dependent variable/Tobit</menu-path>
     </gui-access>
 
   </command>
@@ -11349,7 +11349,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Other linear models/Two-Stage Least Squares</menu-path>
+      <menu-path>/Model/Instrumental variables</menu-path>
     </gui-access>
 
   </command>
@@ -11607,7 +11607,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Bivariate tests/Difference of variances</menu-path>
+      <menu-path>/Tools/Test statistic calculator</menu-path>
     </gui-access>
 
   </command>
