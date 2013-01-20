@@ -27,7 +27,7 @@
 #include <errno.h>
 #include <libset.h>
 
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 # include <omp.h>
 #endif
 
@@ -1597,7 +1597,7 @@ static double GHK_1 (const gretl_matrix *C,
  * Returns: an n x 1 vector of probabilities.
  */
 
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 
 gretl_matrix *gretl_GHK (const gretl_matrix *C,
 			 const gretl_matrix *A,

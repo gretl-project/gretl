@@ -299,9 +299,9 @@ AC_ARG_VAR(MKLANG, builder for gtksourceview files (cross-build))
 AC_C_SSE2
 AC_C_OPENMP
 
-if test "$ac_openmp_result" = "yes" ; then
-  AC_DEFINE(USE_OPENMP, 1)
-fi
+dnl if test "$ac_openmp_result" = "yes" ; then
+dnl   AC_DEFINE(USE_OPENMP, 1)
+dnl fi
 
 dnl try to build mailer plugin?
 AC_CHECK_HEADERS(netdb.h sys/socket.h,

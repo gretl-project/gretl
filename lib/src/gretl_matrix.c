@@ -28,7 +28,7 @@
 #include "clapack_double.h"
 #include "../../cephes/libprob.h"
 
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 # include <omp.h>
 #endif
 
@@ -124,7 +124,7 @@ static int wspace_fail (integer info, double w0)
 static void *lapack_mem_chunk;
 static size_t lapack_mem_sz;
 
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp threadprivate(lapack_mem_chunk, lapack_mem_sz)
 #endif
 
@@ -3998,7 +3998,7 @@ static int use_blas (int n, int m, int k)
     return 0;
 }
 
-#define MP_MIN 1024
+#define MP_MIN 127
 
 static int 
 gretl_blas_dsyrk (const gretl_matrix *a, int atr,
@@ -4022,9 +4022,26 @@ gretl_blas_dsyrk (const gretl_matrix *a, int atr,
     dsyrk_(&uplo, &tr, &n, &k, &alpha, a->val, &lda,
 	   &beta, c->val, &n);
 
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
+    if (!libset_get_bool(USE_OPENMP)) {
+	goto st_mode;
+    }
+#endif
+
+#if defined(_OPENMP)
 #pragma omp parallel for if (n*n>MP_MIN) private(i, j, x)
 #endif
+    for (i=0; i<n; i++) {
+	for (j=i+1; j<n; j++) {
+	    x = gretl_matrix_get(c, i, j);
+	    gretl_matrix_set(c, j, i, x);
+	}
+    }
+
+    return 0;
+
+ st_mode:
+
     for (i=0; i<n; i++) {
 	for (j=i+1; j<n; j++) {
 	    x = gretl_matrix_get(c, i, j);
@@ -4079,8 +4096,14 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 	return 0;
     }
 
+#if defined(_OPENMP)
+    if (!libset_get_bool(USE_OPENMP)) {
+	goto st_mode;
+    }
+#endif
+
     if (atr) {
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp parallel for if (nc*nc>MP_MIN) private(i, j, k, idx1, idx2, x)
 #endif
 	for (i=0; i<nc; i++) {
@@ -4095,7 +4118,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 	    }
 	} 
     } else {
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp parallel for if (nc*nc>MP_MIN) private(i, j, k, idx1, idx2, x)
 #endif
 	for (i=0; i<nc; i++) {
@@ -4112,6 +4135,38 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 	    }
 	} 
     }
+
+    return 0;
+
+ st_mode:
+
+    if (atr) {
+	for (i=0; i<nc; i++) {
+	    for (j=i; j<nc; j++) {
+		idx1 = i * a->rows;
+		idx2 = j * a->rows;
+		x = 0.0;
+		for (k=0; k<nr; k++) {
+		    x += a->val[idx1++] * a->val[idx2++];
+		}
+		gretl_st_result(c,i,j,x,cmod);
+	    }
+	} 
+    } else {
+	for (i=0; i<nc; i++) {
+	    for (j=i; j<nc; j++) {
+		idx1 = i;
+		idx2 = j;
+		x = 0.0;
+		for (k=0; k<nr; k++) {
+		    x += a->val[idx1] * a->val[idx2];
+		    idx1 += a->rows;
+		    idx2 += a->rows;
+		}
+		gretl_st_result(c,i,j,x,cmod);
+	    }
+	} 
+    }    
 
     return 0;
 }
@@ -4240,10 +4295,16 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	beta = 1;
     }
 
+#if defined(_OPENMP)
+    if (!libset_get_bool(USE_OPENMP)) {
+	goto st_mode;
+    }
+#endif
+
     if (!btr) {
 	if (!atr) {
 	    /* C := alpha*A*B + beta*C */
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp parallel for if (m*n>MP_MIN) private(j, i, l, x) 
 #endif
 	    for (j=0; j<n; j++) {
@@ -4263,7 +4324,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	    }
 	} else {
 	    /* C := alpha*A'*B + beta*C */
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp parallel for if (m*n>MP_MIN) private(j, i, l, x)
 #endif
 	    for (j=0; j<n; j++) {
@@ -4283,7 +4344,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     } else {
 	if (!atr) {
 	    /* C := alpha*A*B' + beta*C */
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp parallel for if (m*n>MP_MIN) private(j, i, l, x)
 #endif
 	    for (j=0; j<n; j++) {
@@ -4303,9 +4364,83 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	    }
 	} else {
 	    /* C := alpha*A'*B' + beta*C */
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp parallel for if (m*n>MP_MIN) private(j, i, l, x)
 #endif
+	    for (j=0; j<n; j++) {
+		for (i=0; i<m; i++) {
+		    x = 0.0;
+		    for (l=0; l<k; l++) {
+			x += A[i*ar+l] * B[l*br+j];
+		    }
+		    if (beta == 0) {
+			C[j*cr+i] = alpha * x;
+		    } else {
+			C[j*cr+i] += alpha * x;
+		    }
+		}
+	    }
+	}
+    }
+
+    return;
+
+ st_mode:
+
+    if (!btr) {
+	if (!atr) {
+	    /* C := alpha*A*B + beta*C */
+	    for (j=0; j<n; j++) {
+		if (beta == 0) {
+		    for (i=0; i<m; i++) {
+			C[j*cr+i] = 0.0;
+		    }
+		} 
+		for (l=0; l<k; l++) {
+		    if (B[j*br+l] != 0.0) {
+			x = alpha * B[j*br+l];
+			for (i=0; i<m; i++) {
+			    C[j*cr+i] += x * A[l*ar+i];
+			}
+		    }
+		}
+	    }
+	} else {
+	    /* C := alpha*A'*B + beta*C */
+	    for (j=0; j<n; j++) {
+		for (i=0; i<m; i++) {
+		    x = 0.0;
+		    for (l=0; l<k; l++) {
+			x += A[i*ar+l] * B[j*br+l];
+		    }
+		    if (beta == 0) {
+			C[j*cr+i] = alpha * x;
+		    } else {
+			C[j*cr+i] += alpha * x;
+		    }
+		}
+	    }
+	} 
+    } else {
+	if (!atr) {
+	    /* C := alpha*A*B' + beta*C */
+	    for (j=0; j<n; j++) {
+		if (beta == 0) {
+		    for (i=0; i<m; i++) {
+			C[j*cr+i] = 0.0;
+		    }
+		} 
+		for (l=0; l<k; l++) {
+		    if (B[l*br+j] != 0.0) {
+			x = alpha * B[l*br+j];
+			for (i=0; i<m; i++) {
+			    C[j*cr+i] += x * A[l*ar+i];
+			}
+		    }
+		}
+	    }
+	} else {
+	    /* C := alpha*A'*B' + beta*C */
 	    for (j=0; j<n; j++) {
 		for (i=0; i<m; i++) {
 		    x = 0.0;
@@ -5214,10 +5349,16 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 
     errno = 0;
 
+#if defined(_OPENMP)
+    if (!libset_get_bool(USE_OPENMP)) {
+	goto st_mode;
+    }
+#endif
+
     switch (conftype) {
     case CONF_ELEMENTS:
 	nv = m * n;
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp parallel for if (nv>MP_MIN) private(i)
 #endif
 	for (i=0; i<nv; i++) {
@@ -5225,7 +5366,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	}
 	break;
     case CONF_A_COLVEC:
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp parallel for if (nr>MP_MIN) private(i,j,x,y)
 #endif
 	for (i=0; i<nr; i++) {
@@ -5238,7 +5379,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	}
 	break;
     case CONF_B_COLVEC:
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp parallel for if (nr>MP_MIN) private(i,j,x,y)
 #endif
 	for (i=0; i<nr; i++) {
@@ -5251,7 +5392,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	}
 	break;
     case CONF_A_ROWVEC:
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp parallel for if (nc>MP_MIN) private(i,j,x,y)
 #endif
 	for (j=0; j<nc; j++) {
@@ -5264,7 +5405,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	}
 	break;
     case CONF_B_ROWVEC:
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp parallel for if (nc>MP_MIN) private(i,j,x,y)
 #endif
 	for (j=0; j<nc; j++) {
@@ -5278,7 +5419,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	break;
     case CONF_A_SCALAR:
 	x = a->val[0];
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp parallel for if (nr>MP_MIN) private(i,j,y)
 #endif
 	for (i=0; i<nr; i++) {
@@ -5291,7 +5432,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	break;
     case CONF_B_SCALAR:
 	y = b->val[0];
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp parallel for if (nr>MP_MIN) private(i,j,x)
 #endif
 	for (i=0; i<nr; i++) {
@@ -5303,7 +5444,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	}
 	break;
     case CONF_AC_BR:
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp parallel for if (nr>MP_MIN) private(i,j,x,y)
 #endif
 	for (i=0; i<nr; i++) {
@@ -5316,7 +5457,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	}
 	break;
     case CONF_AR_BC:
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#if defined(_OPENMP)
 #pragma omp parallel for if (nc>MP_MIN) private(i,j,x,y)
 #endif
 	for (j=0; j<nc; j++) {
@@ -5329,6 +5470,101 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	}
 	break;
     }
+
+    goto finish;
+
+ st_mode:
+
+    switch (conftype) {
+    case CONF_ELEMENTS:
+	nv = m * n;
+	for (i=0; i<nv; i++) {
+	    c->val[i] = x_op_y(a->val[i], b->val[i], op);
+	}
+	break;
+    case CONF_A_COLVEC:
+	for (i=0; i<nr; i++) {
+	    x = gretl_vector_get(a, i);
+	    for (j=0; j<nc; j++) {
+		y = gretl_matrix_get(b, i, j);
+		y = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, y);
+	    }
+	}
+	break;
+    case CONF_B_COLVEC:
+	for (i=0; i<nr; i++) {
+	    y = gretl_vector_get(b, i);
+	    for (j=0; j<nc; j++) {
+		x = gretl_matrix_get(a, i, j);
+		x = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, x);
+	    }
+	}
+	break;
+    case CONF_A_ROWVEC:
+	for (j=0; j<nc; j++) {
+	    x = gretl_vector_get(a, j);
+	    for (i=0; i<nr; i++) {
+		y = gretl_matrix_get(b, i, j);
+		y = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, y);
+	    }
+	}
+	break;
+    case CONF_B_ROWVEC:
+	for (j=0; j<nc; j++) {
+	    y = gretl_vector_get(b, j);
+	    for (i=0; i<nr; i++) {
+		x = gretl_matrix_get(a, i, j);
+		x = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, x);
+	    }
+	}
+	break;
+    case CONF_A_SCALAR:
+	x = a->val[0];
+	for (i=0; i<nr; i++) {
+	    for (j=0; j<nc; j++) {
+		y = gretl_matrix_get(b, i, j);
+		y = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, y);
+	    }
+	}
+	break;
+    case CONF_B_SCALAR:
+	y = b->val[0];
+	for (i=0; i<nr; i++) {
+	    for (j=0; j<nc; j++) {
+		x = gretl_matrix_get(a, i, j);
+		x = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, x);
+	    }
+	}
+	break;
+    case CONF_AC_BR:
+	for (i=0; i<nr; i++) {
+	    x = a->val[i];
+	    for (j=0; j<nc; j++) {
+		y = b->val[j];
+		y = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, y);
+	    }
+	}
+	break;
+    case CONF_AR_BC:
+	for (j=0; j<nc; j++) {
+	    x = a->val[j];
+	    for (i=0; i<nr; i++) {
+		y = b->val[i];
+		y = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, y);
+	    }
+	}
+	break;
+    }
+
+ finish:
 
     if (errno) {
 	gretl_matrix_free(c);

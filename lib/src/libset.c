@@ -40,6 +40,8 @@ enum {
     AUTO_LAG_NEWEYWEST
 };
 
+/* state flags */
+
 enum {
     STATE_USE_CWD         = 1 << 0,  /* store: use current dir as default */
     STATE_ECHO_ON         = 1 << 1,  /* echoing commands or not */
@@ -61,7 +63,8 @@ enum {
     STATE_LOOP_PROG       = 1 << 17, /* progressive loop is in progress */
     STATE_BFGS_RSTEP      = 1 << 18, /* use Richardson method in BFGS numerical
 					gradient */
-    STATE_DPDSTYLE_ON     = 1 << 19  /* emulate dpd in dynamic panel data models */
+    STATE_DPDSTYLE_ON     = 1 << 19, /* emulate dpd in dynamic panel data models */
+    STATE_OPENMP_ON       = 1 << 20  /* using openmp */
 };    
 
 /* for values that really want a non-negative integer */
@@ -132,7 +135,8 @@ struct set_vars_ {
 			   !strcmp(s, R_FUNCTIONS) || \
 			   !strcmp(s, R_LIB) || \
 			   !strcmp(s, BFGS_RSTEP) || \
-			   !strcmp(s, DPDSTYLE))
+			   !strcmp(s, DPDSTYLE) || \
+			   !strcmp(s, USE_OPENMP))
 
 #define libset_double(s) (!strcmp(s, CONV_HUGE) || \
 			  !strcmp(s, BFGS_TOLER) || \
@@ -1484,6 +1488,18 @@ static int write_or_read_settings (gretlopt opt, PRN *prn)
     return err;
 }
 
+static int check_set_bool (const char *setobj, const char *setarg)
+{
+    if (boolean_on(setarg)) {
+	return libset_set_bool(setobj, 1);
+    } else if (boolean_off(setarg)) {
+	return libset_set_bool(setobj, 0);
+    } else {
+	gretl_errmsg_sprintf("'%s': invalid argument", setarg);
+	return E_PARSE;
+    }
+}
+
 int execute_set_line (const char *line, DATASET *dset, 
 		      gretlopt opt, PRN *prn)
 {
@@ -1543,10 +1559,14 @@ int execute_set_line (const char *line, DATASET *dset,
 	    if (!strcmp(setobj, SHELL_OK)) {
 		pprintf(prn, "You can only set this variable "
 			"via the gretl GUI\n");
-	    } else if (boolean_on(setarg)) {
-		err = libset_set_bool(setobj, 1);
-	    } else if (boolean_off(setarg)) {
-		err = libset_set_bool(setobj, 0);
+	    } else if (!strcmp(setobj, USE_OPENMP)) {
+#if defined(_OPENMP)
+		err = check_set_bool(setobj, setarg);
+#else
+		pprintf(prn, "Warning: openmp not supported\n");
+#endif
+	    } else {
+		err = check_set_bool(setobj, setarg);
 	    }
 	} else if (libset_double(setobj)) {
 	    if (default_ok(setobj) && default_str(setarg)) {
@@ -1887,6 +1907,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_BFGS_RSTEP;
     } else if (!strcmp(s, DPDSTYLE)) {
 	return STATE_DPDSTYLE_ON;
+    } else if (!strcmp(s, USE_OPENMP)) {
+	return STATE_OPENMP_ON;
     } else {
 	fprintf(stderr, "libset_get_bool: unrecognized "
 		"variable '%s'\n", s);	
