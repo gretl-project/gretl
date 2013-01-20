@@ -5887,6 +5887,18 @@
       </description>
     </function>
 
+    <function name="strstrip" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Returns a copy of the argument <argname>s</argname> from
+	  which leading and trailing white space have been removed.
+	</para>
+      </description>
+    </function>
+
     <function name="strsub" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
