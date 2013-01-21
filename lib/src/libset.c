@@ -410,6 +410,29 @@ static void state_vars_copy (set_vars *sv)
     robust_opts_copy(&sv->ropts);
 }
 
+#if defined(_OPENMP)
+
+# ifdef WIN32
+#  include <windows.h>
+
+static int num_cores (void)
+{
+    SYSTEM_INFO sysinfo;
+    GetSystemInfo(&sysinfo);
+
+    return sysinfo.dwNumberOfProcessors;
+}
+
+# else
+
+static int num_cores (void)
+{
+    return sysconf(_SC_NPROCESSORS_ONLN);
+}
+
+# endif
+#endif
+
 static void state_vars_init (set_vars *sv)
 {
 #if PDEBUG
@@ -417,6 +440,11 @@ static void state_vars_init (set_vars *sv)
 #endif
     sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON | 
 	STATE_HALT_ON_ERR | STATE_SKIP_MISSING;
+#if defined(_OPENMP)
+    if (num_cores > 1) {
+	sv->flags |= STATE_OPENMP_ON;
+    }
+#endif
     sv->seed = 0;
     sv->conv_huge = 1.0e100;
     sv->horizon = UNSET_INT;
@@ -861,7 +889,7 @@ static int parse_libset_int_code (const char *key,
     }	
 
     if (err) {
-	gretl_errmsg_sprintf("%s: invalid value '%s'\n", key, val);
+	gretl_errmsg_sprintf(_("%s: invalid value '%s'"), key, val);
     }
 
     return err;
@@ -1495,7 +1523,7 @@ static int check_set_bool (const char *setobj, const char *setarg)
     } else if (boolean_off(setarg)) {
 	return libset_set_bool(setobj, 0);
     } else {
-	gretl_errmsg_sprintf("'%s': invalid argument", setarg);
+	gretl_errmsg_sprintf(_("%s: invalid value '%s'"), setobj, setarg);
 	return E_PARSE;
     }
 }
