@@ -156,76 +156,10 @@ variable 2, and so on.
 
 \input{odbc}
 
-\chapter{Building \app{gretl}}
+\chapter{Building \app{gretl}: a step-by-step guide}
 \label{app-build}
 
-\section{Requirements}
-\label{sec:build-req}
-
-\app{Gretl} is written in the C programming language, abiding as far
-as possible by the ISO/ANSI C Standard (C90) although the graphical
-user interface and some other components necessarily make use of
-platform-specific extensions.
-  
-The program was developed under Linux. The shared library and
-command-line client should compile and run on any platform that
-supports ISO/ANSI C and has the libraries listed in
-Table~\ref{tab:depend}.  If the GNU readline library is found on the
-host system this will be used for \app{gretcli}, providing a much
-enhanced editable command line.  See the
-\href{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}{readline
-  homepage}.
-
-\begin{table}[htbp]
-  \centering
-  \begin{tabular}{lll}
-\textit{Library} & \textit{purpose} & \textit{website} \\ [4pt]
-zlib & data compression &  
-   \href{http://www.info-zip.org/pub/infozip/zlib/}{info-zip.org} \\
-libxml2 & XML manipulation &
-   \href{http://xmlsoft.org/}{xmlsoft.org} \\
-LAPACK & linear algebra & 
-   \href{http://www.netlib.org/lapack/}{netlib.org} \\
-FFTW3 & Fast Fourier Transform & 
-   \href{http://www.fftw.org/}{fftw.org} \\
-glib-2.0 & Numerous utilities & 
-  \href{http://www.gtk.org/}{gtk.org}
-  \end{tabular}
-  \caption{Libraries required for building gretl}
-  \label{tab:depend}
-\end{table}
-
-The graphical client program should compile and run on any system
-that, in addition to the above requirements, offers GTK version 2.4.0
-or higher (see \href{http://www.gtk.org/}{gtk.org}).\footnote{Up till
-  version 1.5.1, \app{gretl} could also be built using GTK 1.2.
-  Support for this was dropped at version 1.6.0 of \app{gretl}.}
-  
-\app{Gretl} calls gnuplot for graphing. You can find gnuplot at
-\href{http://www.gnuplot.info/}{gnuplot.info}.  As of this writing the
-most recent official release is 4.2.6 (of September, 2009).  The 
-\app{gretl} packages for MS Windows and Mac OS X come with 
-current CVS gnuplot (version 4.5), and the \app{gretl} website
-offers information on building or installing gnuplot 4.5 on
-Linux.
-  
-Some features of \app{gretl} make use of portions of Adrian Feguin's
-\app{gtkextra} library.  The relevant parts of this package are
-included (in slightly modified form) with the \app{gretl} source
-distribution.
-  
-A binary version of the program is available for the Microsoft Windows
-platform (Windows 2000 or higher). This version was cross-compiled
-under Linux using mingw (the GNU C compiler, \app{gcc}, ported for use
-with win32) and linked against the Microsoft C library,
-\verb+msvcrt.dll+.  The (free, open-source) Windows installer program
-is courtesy of Jordan Russell
-(\href{http://www.jrsoftware.org/}{jrsoftware.org}).
-
-\section{Build instructions: a step-by-step guide}
-\label{sec:build-inst}
-
-In this section we give instructions detailed enough to allow a user
+Here we give instructions detailed enough to allow a user
 with only a basic knowledge of a Unix-type system to build \app{gretl}.
 These steps were tested on a fresh installation of Debian Etch. For
 other Linux distributions (especially Debian-based ones, like Ubuntu
@@ -238,7 +172,7 @@ documentation.  This introduces a few more requirements, but gives you
 the ability to modify the documentation files as well, like the help
 files or the manuals.
 
-\subsection{Installing the prerequisites}
+\section{Installing the prerequisites}
 
 We assume that the basic GNU utilities are already installed on the
 system, together with these other programs:
@@ -308,7 +242,7 @@ may have changed in the meantime. However, the chances of a mismatch
 are rather remote for a reasonably up-to-date system, so in most cases
 the above command should take care of everything correctly.}
 
-\subsection{Getting the source: release or CVS}
+\section{Getting the source: release or CVS}
 
 At this point, it is possible to build from the source.  You have two
 options here: obtain the latest released source package, or retrieve
@@ -367,7 +301,7 @@ Assuming you're now in the CVS \texttt{gretl} directory, you can
 proceed in the same manner as with the released source package.
 
 
-\subsection{Configure the source}
+\section{Configure the source}
           
 The next command you need is \texttt{./configure}; this is a complex
 script that detects which tools you have on your system and sets
@@ -437,7 +371,7 @@ Now type 'make' to build gretl.
   \texttt{configure} with any options you want to use.}
 
 
-\subsection{Build and install}
+\section{Build and install}
 
 We are now ready to undertake the compilation proper: this is done by
 running the \texttt{make} command, which takes care of compiling all
