@@ -412,26 +412,20 @@ static void state_vars_copy (set_vars *sv)
 
 #if defined(_OPENMP)
 
-# ifdef WIN32
-#  include <windows.h>
-
 static int num_cores (void)
 {
+# ifdef WIN32
+# include <windows.h>
     SYSTEM_INFO sysinfo;
     GetSystemInfo(&sysinfo);
 
     return sysinfo.dwNumberOfProcessors;
-}
-
 # else
-
-static int num_cores (void)
-{
     return sysconf(_SC_NPROCESSORS_ONLN);
+# endif
 }
 
-# endif
-#endif
+#endif /* _OPENMP */
 
 static void state_vars_init (set_vars *sv)
 {
@@ -441,7 +435,7 @@ static void state_vars_init (set_vars *sv)
     sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON | 
 	STATE_HALT_ON_ERR | STATE_SKIP_MISSING;
 #if defined(_OPENMP)
-    if (num_cores > 1) {
+    if (num_cores() > 1) {
 	sv->flags |= STATE_OPENMP_ON;
     }
 #endif
