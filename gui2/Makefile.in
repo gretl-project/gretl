@@ -19,6 +19,7 @@ have_zlib = @have_zlib@
 quiet_build = @quiet_build@
 pkg_build = @pkg_build@
 fake_gtkspinner = @fake_gtkspinner@
+mac_native = @mac_native@
 
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
@@ -115,7 +116,11 @@ override LIBS += $(GDK_PIXBUF_LIBS)
 
 SHELL = /bin/sh
 LIBTOOL = ../libtool
-PROG  = gretl_x11$(EXEEXT)
+ifeq ($(mac_native),yes)
+  PROG = gretl_quartz
+else
+  PROG = gretl_x11$(EXEEXT)
+endif
 
 vpath %.c $(topsrc)/gui2
 vpath %.h $(topsrc)/gui2

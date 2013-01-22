@@ -656,12 +656,15 @@ have_gnu_regex
 fake_gtkspinner
 have_sourceview
 have_mpfr
+mac_native
 gtk_version
 build_gui
 GTKSOURCEVIEW_LIBS
 GTKSOURCEVIEW_CFLAGS
 GTKSPINNER_LIBS
 GTKSPINNER_CFLAGS
+GTKQUARTZ_LIBS
+GTKQUARTZ_CFLAGS
 GTK_LIBS
 GTK_CFLAGS
 GLIB_LIBS
@@ -873,6 +876,8 @@ GLIB_CFLAGS
 GLIB_LIBS
 GTK_CFLAGS
 GTK_LIBS
+GTKQUARTZ_CFLAGS
+GTKQUARTZ_LIBS
 GTKSPINNER_CFLAGS
 GTKSPINNER_LIBS
 GTKSOURCEVIEW_CFLAGS
@@ -1569,6 +1574,10 @@ Some influential environment variables:
   GLIB_LIBS   linker flags for GLIB, overriding pkg-config
   GTK_CFLAGS  C compiler flags for GTK, overriding pkg-config
   GTK_LIBS    linker flags for GTK, overriding pkg-config
+  GTKQUARTZ_CFLAGS
+              C compiler flags for GTKQUARTZ, overriding pkg-config
+  GTKQUARTZ_LIBS
+              linker flags for GTKQUARTZ, overriding pkg-config
   GTKSPINNER_CFLAGS
               C compiler flags for GTKSPINNER, overriding pkg-config
   GTKSPINNER_LIBS
@@ -2702,6 +2711,8 @@ darwin_build="no"
 quiet_build="no"
 swap_ends="no"
 pkg_build="no"
+mac_native="no"
+gui_disabled="no"
 MAKE="make"
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
@@ -6183,6 +6194,7 @@ then
   build_gui=yes
 else
   build_gui=no
+  gui_disabled=yes
 fi
 fi
 
@@ -15053,7 +15065,6 @@ $as_echo "$ac_cv_prog_cc_openmp" >&6; }
 
 
 
-
 for ac_header in netdb.h sys/socket.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
@@ -17330,6 +17341,156 @@ $as_echo "yes" >&6; }
 fi
 fi
 
+if test "$darwin_build" = "yes" ; then
+  if test "$gtk_version" = "3.0" ; then
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKQUARTZ" >&5
+$as_echo_n "checking for GTKQUARTZ... " >&6; }
+
+if test -n "$GTKQUARTZ_CFLAGS"; then
+    pkg_cv_GTKQUARTZ_CFLAGS="$GTKQUARTZ_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-quartz-3.0 >= 3.4.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-quartz-3.0 >= 3.4.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTKQUARTZ_CFLAGS=`$PKG_CONFIG --cflags "gtk+-quartz-3.0 >= 3.4.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$GTKQUARTZ_LIBS"; then
+    pkg_cv_GTKQUARTZ_LIBS="$GTKQUARTZ_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-quartz-3.0 >= 3.4.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-quartz-3.0 >= 3.4.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTKQUARTZ_LIBS=`$PKG_CONFIG --libs "gtk+-quartz-3.0 >= 3.4.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        GTKQUARTZ_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-quartz-3.0 >= 3.4.0" 2>&1`
+        else
+	        GTKQUARTZ_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-quartz-3.0 >= 3.4.0" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$GTKQUARTZ_PKG_ERRORS" >&5
+
+	mac_native="no"
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	mac_native="no"
+else
+	GTKQUARTZ_CFLAGS=$pkg_cv_GTKQUARTZ_CFLAGS
+	GTKQUARTZ_LIBS=$pkg_cv_GTKQUARTZ_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	echo "Found quartz-based GTK"
+     mac_native="yes"
+fi
+  elif test "$gtk_version" = "2.0" ; then
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKQUARTZ" >&5
+$as_echo_n "checking for GTKQUARTZ... " >&6; }
+
+if test -n "$GTKQUARTZ_CFLAGS"; then
+    pkg_cv_GTKQUARTZ_CFLAGS="$GTKQUARTZ_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-quartz-2.0 >= 2.24.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-quartz-2.0 >= 2.24.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTKQUARTZ_CFLAGS=`$PKG_CONFIG --cflags "gtk+-quartz-2.0 >= 2.24.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$GTKQUARTZ_LIBS"; then
+    pkg_cv_GTKQUARTZ_LIBS="$GTKQUARTZ_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-quartz-2.0 >= 2.24.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-quartz-2.0 >= 2.24.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTKQUARTZ_LIBS=`$PKG_CONFIG --libs "gtk+-quartz-2.0 >= 2.24.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        GTKQUARTZ_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-quartz-2.0 >= 2.24.0" 2>&1`
+        else
+	        GTKQUARTZ_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-quartz-2.0 >= 2.24.0" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$GTKQUARTZ_PKG_ERRORS" >&5
+
+	mac_native="no"
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	mac_native="no"
+else
+	GTKQUARTZ_CFLAGS=$pkg_cv_GTKQUARTZ_CFLAGS
+	GTKQUARTZ_LIBS=$pkg_cv_GTKQUARTZ_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	echo "Found quartz-based GTK"
+     mac_native="yes"
+fi
+  fi
+fi
+
 if test "$gtk_version" = "2.0" ; then
 
 pkg_failed=no
@@ -17583,6 +17744,7 @@ fi
 
 
 
+
 if test ${build_gui} = "yes" ; then
 
 pkg_failed=no
@@ -17659,7 +17821,7 @@ $as_echo "yes" >&6; }
 fi
 fi
 if test "${pixbuf_failed}" = "yes" ; then
-    echo "* gretl wants but did not find the gdk-pixbuf library for PNG graphs."
+    echo "* gretl needs but did not find the gdk-pixbuf library."
     exit
 fi
 
@@ -17956,7 +18118,7 @@ _ACEOF
 
 
 CFLAGS="$orig_CFLAGS"
-ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/debug xdg/gretl.desktop xdg/Makefile cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile osx/Makefile osx/fixlinks.sh redhat/gretl.spec utils/emacs/Makefile"
+ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/debug xdg/gretl.desktop xdg/Makefile cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile osx/Makefile osx/gretl.sh osx/fixlinks.sh redhat/gretl.spec utils/emacs/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -18963,6 +19125,7 @@ do
     "tests/Makefile") CONFIG_FILES="$CONFIG_FILES tests/Makefile" ;;
     "extra/Makefile") CONFIG_FILES="$CONFIG_FILES extra/Makefile" ;;
     "osx/Makefile") CONFIG_FILES="$CONFIG_FILES osx/Makefile" ;;
+    "osx/gretl.sh") CONFIG_FILES="$CONFIG_FILES osx/gretl.sh" ;;
     "osx/fixlinks.sh") CONFIG_FILES="$CONFIG_FILES osx/fixlinks.sh" ;;
     "redhat/gretl.spec") CONFIG_FILES="$CONFIG_FILES redhat/gretl.spec" ;;
     "utils/emacs/Makefile") CONFIG_FILES="$CONFIG_FILES utils/emacs/Makefile" ;;
@@ -21318,6 +21481,7 @@ do
     "tests/Makefile") CONFIG_FILES="$CONFIG_FILES tests/Makefile" ;;
     "extra/Makefile") CONFIG_FILES="$CONFIG_FILES extra/Makefile" ;;
     "osx/Makefile") CONFIG_FILES="$CONFIG_FILES osx/Makefile" ;;
+    "osx/gretl.sh") CONFIG_FILES="$CONFIG_FILES osx/gretl.sh" ;;
     "osx/fixlinks.sh") CONFIG_FILES="$CONFIG_FILES osx/fixlinks.sh" ;;
     "redhat/gretl.spec") CONFIG_FILES="$CONFIG_FILES redhat/gretl.spec" ;;
     "utils/emacs/Makefile") CONFIG_FILES="$CONFIG_FILES utils/emacs/Makefile" ;;
@@ -22728,11 +22892,11 @@ gtksourceview-3.0 is available from http://www.gnome.org/
 "
 
 else
-if test "${use_xdg_utils}" = "yes" ; then
-  xdg_utils_msg="if DESTDIR not set"
-else
-  xdg_utils_msg="no"
-fi
+  if test "${use_xdg_utils}" = "yes" ; then
+    xdg_utils_msg="if DESTDIR not set"
+  else
+    xdg_utils_msg="no"
+  fi
 echo "
 Configuration:
 
@@ -22757,15 +22921,16 @@ Configuration:
     ${LAPACK_LIBS}
 
 Now type '$MAKE' to build gretl."
+
   if test "${build_docs}" = "yes" ; then
     echo "You can also do 'make pdfdocs' to build the PDF documentation."
   fi
   echo
-fi
 
-if test "${gtk_version}" = "none" ; then
-  echo "*** Warning: since GTK is not available the gretl GUI will"
-  echo "*** not be built, only the library and command-line program."
-  echo
+  if test "${gui_disabled}" = "no" && test "${gtk_version}" = "none" ; then
+    echo "*** Warning: since GTK is not available the gretl GUI will"
+    echo "*** not be built, only the library and command-line program."
+    echo
+  fi
 fi
 

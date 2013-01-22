@@ -116,6 +116,7 @@ struct set_vars_ {
 #define WARNINGS "warnings"
 #define GRETL_DEBUG "debug"
 #define BLAS_NMK_MIN "blas_nmk_min"
+#define MP_MIN "mp_min"
 
 #define libset_boolvar(s) (!strcmp(s, ECHO) || \
                            !strcmp(s, MESSAGES) || \
@@ -171,6 +172,7 @@ static int R_lib = 1;
 static int csv_digits;
 static char data_delim = ',';
 static char data_export_decpoint = '.';
+static int mp_min = 127;
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
@@ -410,19 +412,45 @@ static void state_vars_copy (set_vars *sv)
     robust_opts_copy(&sv->ropts);
 }
 
-#if defined(_OPENMP)
-
-static int num_cores (void)
+int libset_use_openmp (int n)
 {
+#if defined(_OPENMP)
+    if (state == NULL || !(state->flags & STATE_OPENMP_ON)) {
+	return 0;
+    } else if (mp_min >= 0 && n > mp_min) {
+	return 1;
+    }
+#endif
+
+    return 0;
+}
+
+#if defined(_OPENMP)
 # ifdef WIN32
 # include <windows.h>
-    SYSTEM_INFO sysinfo;
-    GetSystemInfo(&sysinfo);
-
-    return sysinfo.dwNumberOfProcessors;
-# else
-    return sysconf(_SC_NPROCESSORS_ONLN);
 # endif
+
+static int openmp_by_default (void)
+{
+    int num_cores, ret = 0;
+# ifdef WIN32
+    SYSTEM_INFO sysinfo;
+
+    GetSystemInfo(&sysinfo);
+    num_cores = sysinfo.dwNumberOfProcessors;
+# else
+    num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+# endif
+    if (num_cores > 1) {
+	/* one can use the environment to turn this off */
+	char *envstr = getenv("GRETL_USE_OPENMP");
+
+	if (envstr != NULL && !strcmp(envstr, "0")) {
+	    ret = 0;
+	}
+    }
+
+    return ret;
 }
 
 #endif /* _OPENMP */
@@ -435,7 +463,7 @@ static void state_vars_init (set_vars *sv)
     sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON | 
 	STATE_HALT_ON_ERR | STATE_SKIP_MISSING;
 #if defined(_OPENMP)
-    if (num_cores() > 1) {
+    if (openmp_by_default()) {
 	sv->flags |= STATE_OPENMP_ON;
     }
 #endif
@@ -1867,10 +1895,6 @@ static int intvar_min_max (const char *s, int *min, int *max,
 
 int libset_set_int (const char *key, int val)
 {
-    int min = 0, max = 0;
-    int *ivar = NULL;
-    int err = 0;
-
     if (check_for_state()) {
 	return 1;
     }
@@ -1878,19 +1902,26 @@ int libset_set_int (const char *key, int val)
     if (!strcmp(key, BLAS_NMK_MIN)) {
 	set_blas_nmk_min(val);
 	return 0;
-    }
+    } else if (!strcmp(key, MP_MIN)) {
+	mp_min = val;
+	return 0;
+    } else {
+	int min = 0, max = 0;
+	int *ivar = NULL;
+	int err = 0;
 
-    err = intvar_min_max(key, &min, &max, &ivar);
+	err = intvar_min_max(key, &min, &max, &ivar);
 
-    if (!err) {
-	if (val < min || val >= max || ivar == NULL) {
-	    err = E_DATA;
-	} else {
-	    *ivar = val;
+	if (!err) {
+	    if (val < min || val >= max || ivar == NULL) {
+		err = E_DATA;
+	    } else {
+		*ivar = val;
+	    }
 	}
-    }
 
-    return err;
+	return err;
+    }
 }
 
 static int boolvar_get_flag (const char *s)

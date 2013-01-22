@@ -65,6 +65,8 @@ darwin_build="no"
 quiet_build="no"
 swap_ends="no"
 pkg_build="no"
+mac_native="no"
+gui_disabled="no"
 MAKE="make"
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
@@ -89,6 +91,7 @@ then
   build_gui=yes
 else
   build_gui=no
+  gui_disabled=yes
 fi])
 
 AC_ARG_ENABLE(gtk3,
@@ -298,10 +301,6 @@ AC_ARG_VAR(MKLANG, builder for gtksourceview files (cross-build))
 
 AC_C_SSE2
 AC_C_OPENMP
-
-dnl if test "$ac_openmp_result" = "yes" ; then
-dnl   AC_DEFINE(USE_OPENMP, 1)
-dnl fi
 
 dnl try to build mailer plugin?
 AC_CHECK_HEADERS(netdb.h sys/socket.h,
@@ -532,7 +531,7 @@ dnl
 dnl fftw3
 dnl
 if test "$PKG_CONFIG" != "no" ; then
-   PKG_CHECK_MODULES(FFTW, fftw3,have_fftw3="yes", have_fftw3="no")
+   PKG_CHECK_MODULES(FFTW, fftw3, have_fftw3="yes", have_fftw3="no")
 fi
 
 dnl
@@ -572,6 +571,23 @@ elif test "$build_gui" = "yes" ; then
       build_gui="no"
       echo "GTK 2 >= 2.14.0 not found"     
     )
+fi
+
+dnl
+dnl Mac: check for Quartz version of GTK
+dnl
+if test "$darwin_build" = "yes" ; then
+  if test "$gtk_version" = "3.0" ; then
+    PKG_CHECK_MODULES(GTKQUARTZ, gtk+-quartz-3.0 >= 3.4.0,
+     echo "Found quartz-based GTK"
+     mac_native="yes", 
+     mac_native="no")
+  elif test "$gtk_version" = "2.0" ; then
+    PKG_CHECK_MODULES(GTKQUARTZ, gtk+-quartz-2.0 >= 2.24.0,
+     echo "Found quartz-based GTK"
+     mac_native="yes", 
+     mac_native="no")
+  fi
 fi
 
 dnl
@@ -615,6 +631,7 @@ fi
 dnl record the results of the above tests
 AC_SUBST(build_gui)
 AC_SUBST(gtk_version)
+AC_SUBST(mac_native)
 AC_SUBST(have_mpfr)
 AC_SUBST(have_sourceview)
 AC_SUBST(fake_gtkspinner)
@@ -638,7 +655,7 @@ if test ${build_gui} = "yes" ; then
    )
 fi
 if test "${pixbuf_failed}" = "yes" ; then
-    echo "* gretl wants but did not find the gdk-pixbuf library for PNG graphs."
+    echo "* gretl needs but did not find the gdk-pixbuf library."
     exit
 fi
 
@@ -725,6 +742,7 @@ share/bcih/Makefile
 tests/Makefile
 extra/Makefile
 osx/Makefile
+osx/gretl.sh
 osx/fixlinks.sh
 redhat/gretl.spec
 utils/emacs/Makefile
@@ -798,11 +816,11 @@ gtksourceview-3.0 is available from http://www.gnome.org/
 "
 
 else
-if test "${use_xdg_utils}" = "yes" ; then
-  xdg_utils_msg="if DESTDIR not set"
-else
-  xdg_utils_msg="no"
-fi
+  if test "${use_xdg_utils}" = "yes" ; then
+    xdg_utils_msg="if DESTDIR not set"
+  else
+    xdg_utils_msg="no"
+  fi
 echo "
 Configuration:
   
@@ -827,15 +845,16 @@ Configuration:
     ${LAPACK_LIBS}
 
 Now type '$MAKE' to build gretl."
+
   if test "${build_docs}" = "yes" ; then
     echo "You can also do 'make pdfdocs' to build the PDF documentation."
   fi
   echo
-fi
 
-if test "${gtk_version}" = "none" ; then
-  echo "*** Warning: since GTK is not available the gretl GUI will"
-  echo "*** not be built, only the library and command-line program."
-  echo
+  if test "${gui_disabled}" = "no" && test "${gtk_version}" = "none" ; then
+    echo "*** Warning: since GTK is not available the gretl GUI will"
+    echo "*** not be built, only the library and command-line program."
+    echo
+  fi
 fi
 

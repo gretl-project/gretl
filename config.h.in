@@ -35,9 +35,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Extra floating-point GMP routines? */
 #undef HAVE_MPFR
 
-/* Are we using openmp? */
-/* #undef USE_OPENMP */
-
 /* X-12-ARIMA support? */
 #undef HAVE_X12A
 

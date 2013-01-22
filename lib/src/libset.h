@@ -110,6 +110,8 @@ int libset_set_int (const char *key, int val);
 
 int is_libset_var (const char *s);
 
+int libset_use_openmp (int n);
+
 /* GUI setter functions */
 void set_xsect_hccme (const char *s);
 void set_tseries_hccme (const char *s);

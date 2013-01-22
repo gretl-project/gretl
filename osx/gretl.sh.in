@@ -4,6 +4,8 @@
 #   sudo fc-cache
 # before running this program
 
+mac_native=@mac_native@
+
 # record prior dir
 STARTDIR=`pwd`
 export "GRETL_STARTDIR=$STARTDIR"
@@ -28,14 +30,16 @@ fi
 export "GRETL_HOME=$TOP/share/gretl/"
 
 # location of gnuplot help file
-export "GNUHELP=$TOP/share/gnuplot/4.5/gnuplot.gih"
+export "GNUHELP=$TOP/share/gnuplot/4.6/gnuplot.gih"
 # location of gnuplot X11 driver
-export "GNUPLOT_PS_DIR=$TOP/share/gnuplot/4.5/PostScript"
+export "GNUPLOT_PS_DIR=$TOP/share/gnuplot/4.6/PostScript"
 # location of PostScript resources
-export "GNUPLOT_DRIVER_DIR=$TOP/libexec/gnuplot/4.5"
-# we do not support the 'aqua' terminal type
-if [ "$GNUTERM" = "aqua" ] ; then
-   export GNUTERM=x11
+export "GNUPLOT_DRIVER_DIR=$TOP/libexec/gnuplot/4.6"
+if [ "$mac_native" = "no" ] ; then
+  # we do not support the 'aqua' terminal type
+  if [ "$GNUTERM" = "aqua" ] ; then
+     export GNUTERM=x11
+  fi
 fi
 # R shared library: may require platform-specific symlink
 if [ "x$R_HOME" = "x" ] ; then
@@ -47,7 +51,10 @@ export "PATH=$CWD:$PATH"
 # echo "pwd is `pwd`" >>~/where
 
 cd $CWD
-if [ "x$DISPLAY" = "x" ] ; then
+
+if [ "$mac_native" = "yes" ] ; then
+  exec "$CWD/gretl_quartz" "$@"
+elif [ "x$DISPLAY" = "x" ] ; then
   exec "$CWD/gretlcli" "$@" 
 else
   exec "$CWD/gretl_x11" "$@"
