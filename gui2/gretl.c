@@ -167,7 +167,7 @@ char calculator[MAXSTR] = "calc.exe";
 char latex[MAXSTR] = "pdflatex.exe";
 char viewdvi[MAXSTR] = "windvi.exe";
 char Rcommand[MAXSTR] = "RGui.exe";
-#elif defined(OSX_BUILD)
+#elif defined(OS_OSX)
 char calculator[MAXSTR] = "/Applications/Calculator.app/Contents/MacOS/Calculator";
 char latex[MAXSTR] = "pdflatex";
 char viewdvi[MAXSTR] = "xdvi";
@@ -327,7 +327,7 @@ static void real_nls_init (void)
     bind_textdomain_codeset(PACKAGE, "UTF-8");
 }
 
-#elif defined(OSX_BUILD) 
+#elif defined(OS_OSX) 
 
 static void real_nls_init (void)
 {
@@ -1951,7 +1951,7 @@ int gretl_fork (const char *progvar, const char *arg)
     GError *err = NULL;
     gboolean run;
 
-#ifdef OSX_BUILD
+#ifdef OS_OSX
     if (!strcmp(progvar, "calculator")) {
 	prog = calculator;
     } else if (!strcmp(progvar, "viewdvi")) {

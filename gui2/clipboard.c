@@ -133,7 +133,7 @@ static void gretl_clipboard_set (int fmt)
     GtkTargetEntry *targs;
     gint n_targs;
 
-#ifdef OSX_BUILD
+#ifdef OS_OSX
     if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
 	FILE *fp = popen("/usr/bin/pbcopy", "w");
 

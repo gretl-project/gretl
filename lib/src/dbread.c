@@ -1677,7 +1677,7 @@ int set_db_name (const char *fname, int filetype, PRN *prn)
 	    fp = gretl_fopen(saved_db_name, "rb");
 	}
 
-#ifdef OSX_BUILD
+#ifdef OS_OSX
 	if (fp == NULL) {
 	    gchar *tmp = g_build_path(SLASHSTR, gretl_app_support_dir(), "db",
 				      fname, NULL);

@@ -1871,7 +1871,7 @@ static int get_target_in_home (char *targ, int code,
 			       const char *objname,
 			       const char *ext)
 {
-#ifdef OSX_BUILD
+#ifdef OS_OSX
     const char *savedir = gretl_app_support_dir();
 #else
     const char *savedir = gretl_dotdir();
@@ -1962,7 +1962,7 @@ static char *get_writable_target (int code, char *objname,
 	ext = ".tar.gz";
     }
 
-#ifdef OSX_BUILD
+#ifdef OS_OSX
     /* we prefer writing to ~/Library/Application Support
        rather than /Applications/Gretl.app 
     */

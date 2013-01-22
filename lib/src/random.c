@@ -32,7 +32,7 @@
 #endif
 
 #include "../../rng/SFMT.c"
-#if defined(HAVE_POSIX_MEMALIGN) || defined(OSX_BUILD) || defined(WIN32)
+#if defined(HAVE_POSIX_MEMALIGN) || defined(OS_OSX) || defined(WIN32)
 # define USE_RAND_ARRAYS 0 /* potentially faster, but needs more testing */
 #else
 # define USE_RAND_ARRAYS 0

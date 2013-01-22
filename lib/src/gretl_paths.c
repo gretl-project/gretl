@@ -1362,7 +1362,7 @@ char **get_plausible_search_dirs (int type, int *n_dirs)
     build_path(dirname, gretl_home(), subdir, NULL);
     err = strings_array_add(&dirs, n_dirs, dirname);
 
-#ifdef OSX_BUILD
+#ifdef OS_OSX
     if (!err) {
 	/* the user's ~/Library */
 	build_path(dirname, gretl_app_support_dir(), subdir, NULL);
@@ -1578,7 +1578,7 @@ char *gretl_addpath (char *fname, int script)
 
 	fname = tmp;
 	strcpy(fname, orig);
-#ifdef OSX_BUILD
+#ifdef OS_OSX
 	gpath = gretl_app_support_dir();
 #else
 	gpath = gretl_dotdir();
@@ -2781,20 +2781,20 @@ static void load_default_path (char *targ)
 	*paths.rlibpath = '\0';
 #endif /* RLIBPATH */
     } else if (targ == paths.oxlpath) {
-#ifdef OSX_BUILD
+#ifdef OS_OSX
 	strcpy(paths.oxlpath, "/Applications/OxMetrics6/ox/bin/oxl");
 #else
 	strcpy(paths.oxlpath, "oxl");
-#endif /* OSX_BUILD */
+#endif /* OS_OSX */
     } else if (targ == paths.octpath) {
-#ifdef OSX_BUILD
+#ifdef OS_OSX
 	strcpy(paths.octpath, 
 	       "/Applications/Octave.app/Contents/Resources/bin/octave");
 #else
 	strcpy(paths.octpath, "octave");
-#endif /* OSX_BUILD */
+#endif /* OS_OSX */
     } else if (targ == paths.pngfont) {
-#ifdef OSX_BUILD
+#ifdef OS_OSX
 	strcpy(targ, "Sans 9");
 #else
 	if (chinese_locale()) {
@@ -2802,7 +2802,7 @@ static void load_default_path (char *targ)
 	} else {
 	    strcpy(targ, "Vera 9");
 	}
-#endif /* OSX_BUILD */	
+#endif /* OS_OSX */	
     }
 }
 
@@ -2904,7 +2904,7 @@ int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
 	}
     }
 
-#if defined(WIN32) || defined(OSX_BUILD) 
+#if defined(WIN32) || defined(OS_OSX) 
     shelldir_init(paths.workdir);
 #else
     /* if on Linux, respect the "real" CWD */
@@ -3289,7 +3289,7 @@ int cli_read_rc (void)
 
 #endif /* !WIN32 */
 
-#ifdef OSX_BUILD
+#ifdef OS_OSX
 
 const char *gretl_app_support_dir (void)
 {

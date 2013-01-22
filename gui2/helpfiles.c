@@ -1969,7 +1969,7 @@ static int get_x12a_doc_path (char *path, const char *fname)
 	    *path = '\0';
 	}
 
-#if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
+#if !defined(G_OS_WIN32) && !defined(OS_OSX)
 	if (!ret) {
 	    /* using gretl x12a package? */
 	    sprintf(path, "/opt/x12arima/docs/%s", fname);
@@ -2083,7 +2083,7 @@ void gretl_show_pdf (const char *fname)
 {
 #if defined(G_OS_WIN32)
     win32_open_file(fname);
-#elif defined(OSX_BUILD)
+#elif defined(OS_OSX)
     osx_open_file(fname);
 #else
     gretl_fork("viewpdf", fname);

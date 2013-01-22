@@ -143,6 +143,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #undef RLIBPATH
 
 /* Building for Mac OS X? */
-#undef OSX_BUILD
+#undef OS_OSX
 
 #endif /* CONFIG_H */

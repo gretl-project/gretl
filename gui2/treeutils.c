@@ -254,7 +254,7 @@ static void update_dialogs_from_varclick (int active_var)
     }  
 }
 
-#ifdef OSX_BUILD
+#ifdef OS_OSX
 
 /* Support for command-click as replacement for Ctrl-click
    on OS X */
@@ -314,7 +314,7 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 	    vwin->active_var = atoi(varnum);
 	    g_free(varnum);
 	    update_dialogs_from_varclick(vwin->active_var);
-#ifdef OSX_BUILD
+#ifdef OS_OSX
 	    ret = maybe_do_meta_click(widget, view, path);
 #endif
 	} 

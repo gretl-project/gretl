@@ -170,7 +170,7 @@ RCVAR rc_vars[] = {
     { "wimp", N_("Emulate Windows look"), NULL, &use_wimp, 	 
       BOOLSET | RESTART, 0, TAB_MAIN, NULL }, 	 
 #endif
-#if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
+#if !defined(G_OS_WIN32) && !defined(OS_OSX)
     { "browser", N_("Web browser"), NULL, Browser, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
@@ -210,7 +210,7 @@ RCVAR rc_vars[] = {
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
     { "viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
-#if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
+#if !defined(G_OS_WIN32) && !defined(OS_OSX)
     { "viewps", N_("Command to view postscript files"), NULL, viewps, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
     { "viewpdf", N_("Command to view PDF files"), NULL, viewpdf, 
@@ -578,7 +578,7 @@ static const char *get_reg_base (const char *key)
 }
 #endif
 
-#ifdef OSX_BUILD
+#ifdef OS_OSX
 static int alt_ok (const char *prog)
 {
     char *p, test[MAXSTR];
@@ -633,7 +633,7 @@ static void set_tramo_status (void)
 	const char *tramo = gretl_tramo();
 
 	ok = check_for_prog(tramo);
-# ifdef OSX_BUILD
+# ifdef OS_OSX
 	if (!ok) {
 	    ok = alt_ok(tramo);
 	}
@@ -676,7 +676,7 @@ static void set_x12a_status (void)
 	const char *x12a = gretl_x12_arima();
 
 	ok = check_for_prog(x12a);
-# ifdef OSX_BUILD    
+# ifdef OS_OSX    
 	if (!ok) {
 	    ok = alt_ok(x12a);
 	}
@@ -1806,7 +1806,7 @@ static int dir_exists (const char *dname, FILE *fp)
     return ok;
 }
 
-#if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
+#if !defined(G_OS_WIN32) && !defined(OS_OSX)
 
 static void maybe_fix_viewpdf (void)
 {
@@ -1871,7 +1871,7 @@ static int common_read_rc_setup (void)
     gretl_www_init(paths.dbhost, http_proxy, use_proxy);
     set_tex_use_pdf(latex);
 
-#if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
+#if !defined(G_OS_WIN32) && !defined(OS_OSX)
     maybe_fix_viewpdf();
 #endif
 

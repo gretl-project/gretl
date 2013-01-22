@@ -206,7 +206,7 @@ int cli_read_rc (void);
 
 #endif
 
-#ifdef OSX_BUILD
+#ifdef OS_OSX
 
 const char *gretl_app_support_dir (void);
 

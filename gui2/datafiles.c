@@ -527,7 +527,7 @@ static int build_file_collections (void)
 
 	n += seek_file_collections(gretl_home(), DATA_SEARCH, &err);
 	n += seek_file_collections(gretl_home(), SCRIPT_SEARCH, &err);
-#ifdef OSX_BUILD
+#ifdef OS_OSX
 	n += seek_file_collections(gretl_app_support_dir(), DATA_SEARCH, &err);
 	n += seek_file_collections(gretl_app_support_dir(), SCRIPT_SEARCH, &err);
 #else

@@ -124,7 +124,9 @@ static int wspace_fail (integer info, double w0)
 static void *lapack_mem_chunk;
 static size_t lapack_mem_sz;
 
-#if defined(_OPENMP)
+/* Note: we haven't yet figured out how to support TLS on OS X */
+
+#if defined(_OPENMP) && !defined(OS_OSX)
 #pragma omp threadprivate(lapack_mem_chunk, lapack_mem_sz)
 #endif
 

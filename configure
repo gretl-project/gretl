@@ -15832,7 +15832,7 @@ case $host_os in
     LAPACK_LIBS="-Wl,-framework -Wl,vecLib"
     have_lapack="yes"
     darwin_build="yes"
-    $as_echo "#define OSX_BUILD 1" >>confdefs.h
+    $as_echo "#define OS_OSX 1" >>confdefs.h
 
   ;;
   *cygwin*)
@@ -22760,6 +22760,12 @@ Now type '$MAKE' to build gretl."
   if test "${build_docs}" = "yes" ; then
     echo "You can also do 'make pdfdocs' to build the PDF documentation."
   fi
+  echo
+fi
+
+if test "${gtk_version}" = "none" ; then
+  echo "*** Warning: since GTK is not available the gretl GUI will"
+  echo "*** not be built, only the library and command-line program."
   echo
 fi
 

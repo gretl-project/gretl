@@ -944,7 +944,7 @@ static void graph_display_pdf (GPT_SPEC *spec)
 
 #if defined(G_OS_WIN32)
     win32_open_file(pdfname);
-#elif defined(OSX_BUILD)
+#elif defined(OS_OSX)
     osx_open_file(pdfname);
 #else
     gretl_fork("viewpdf", pdfname);
@@ -984,7 +984,7 @@ void saver_preview_graph (GPT_SPEC *spec, char *termstr)
 
 #if defined(G_OS_WIN32)
     win32_open_file(grfname);
-#elif defined(OSX_BUILD)
+#elif defined(OS_OSX)
     osx_open_file(grfname);
 #else
     if (spec->termtype == GP_TERM_EPS) {

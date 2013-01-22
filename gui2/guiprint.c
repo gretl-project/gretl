@@ -2483,7 +2483,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 		win_show_last_error();
 	    }
 	}
-#elif defined(OSX_BUILD)
+#elif defined(OS_OSX)
 	if (use_pdf) {
 	    sprintf(tmp, "%s.pdf", texbase);
 	} else {

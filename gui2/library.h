@@ -31,7 +31,7 @@ int winfork (char *cmdline, const char *dir, int wshow,
 	     DWORD flags);
 #endif
 
-#ifdef OSX_BUILD
+#ifdef OS_OSX
 int osx_open_file (const char *path);
 
 int osx_open_url (const char *url);

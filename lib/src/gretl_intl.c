@@ -800,7 +800,7 @@ int force_language (int langid)
 	    gretl_setenv("LANG", lcode);
 	}
     }
-# elif defined(OSX_BUILD)
+# elif defined(OS_OSX)
     if (langid != LANG_C) {
 	lcode = lang_code_from_id(langid);
 	if (lcode != NULL) {

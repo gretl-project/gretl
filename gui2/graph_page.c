@@ -619,7 +619,7 @@ static int real_display_gpage (void)
 
 #if defined(G_OS_WIN32)
     err = win32_open_file(fname);
-#elif defined(OSX_BUILD)
+#elif defined(OS_OSX)
     err = osx_open_file(fname);
 #else
     viewer = (gpage.term == GP_TERM_PDF)? "viewpdf" : "viewps";

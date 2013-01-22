@@ -4894,7 +4894,7 @@ static int alt_show (const char *uri)
 
 int browser_open (const char *url)
 {
-# if defined(OSX_BUILD)
+# if defined(OS_OSX)
     return osx_open_url(url);
 # else
     gchar *urlcmd;

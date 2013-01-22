@@ -7707,7 +7707,7 @@ int do_store (char *filename, int action, gpointer data)
     return err;
 }
 
-#ifdef OSX_BUILD
+#ifdef OS_OSX
 
 #include <Carbon/Carbon.h>
 
@@ -7749,7 +7749,7 @@ int osx_open_url (const char *url)
     return err;
 }
 
-#endif /* OSX_BUILD */
+#endif /* OS_OSX */
 
 static void clean_up_varlabels (DATASET *dset)
 {

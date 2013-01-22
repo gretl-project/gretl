@@ -65,7 +65,7 @@
 
 /* remedial macro for pig-headed Mac mouse */
 
-#ifdef OSX_BUILD
+#ifdef OS_OSX
 # define RIGHT_CLICK(m) (m & (GDK_CONTROL_MASK | GDK_BUTTON3_MASK))
 #else
 # define RIGHT_CLICK(m) (m & GDK_BUTTON3_MASK)
@@ -116,7 +116,7 @@ extern int mainwin_width;
 extern int mainwin_height;
 extern int ox_support;
 
-#if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
+#if !defined(G_OS_WIN32) && !defined(OS_OSX)
 extern char viewps[MAXSTR];
 extern char viewpdf[MAXSTR];
 extern char Browser[MAXSTR];
