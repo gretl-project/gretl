@@ -156,7 +156,7 @@ variable 2, and so on.
 
 \input{odbc}
 
-\chapter{Building \app{gretl}: a step-by-step guide}
+\chapter{Building gretl}
 \label{app-build}
 
 Here we give instructions detailed enough to allow a user
@@ -164,7 +164,7 @@ with only a basic knowledge of a Unix-type system to build \app{gretl}.
 These steps were tested on a fresh installation of Debian Etch. For
 other Linux distributions (especially Debian-based ones, like Ubuntu
 and its derivatives) little should change. Other Unix-like operating
-systems such as MacOSX and BSD would probably require more substantial
+systems such as Mac OS X and BSD would probably require more substantial
 adjustments.
 
 In this guided example, we will build \app{gretl} complete with
@@ -220,12 +220,13 @@ packages for the libraries that \app{gretl} uses:
   \end{tabular}
 \end{center}
 
-(MPFR is optional, but recommended.)  The \texttt{dev} packages for
-these libraries are necessary to \emph{compile} \app{gretl} --- you'll
-also need the plain, non-\texttt{dev} library packages to \emph{run}
-\app{gretl}, but most of these should already be part of a standard
-installation.  In order to enable other optional features, like audio
-support, you may need to install more libraries.
+MPFR is optional, but recommended. It is possible to substitute GTK
+3.0 for GTK 2.0.  The \texttt{dev} packages for these libraries are
+necessary to \emph{compile} \app{gretl} --- you'll also need the
+plain, non-\texttt{dev} library packages to \emph{run} \app{gretl},
+but most of these should already be part of a standard installation.
+In order to enable other optional features, like audio support, you
+may need to install more libraries.
 
 \tip{The above steps can be much simplified on Linux systems
 that provide deb-based package managers, such as Debian and its
@@ -262,7 +263,7 @@ To work with the released source:
   (replace \cmd{N} with the specific version number of the file you
   downloaded at step 1).
 \item Change directory to the gretl source directory created at step 2
-  (e.g.\ \verb+gretl-1.6.6+).
+  (e.g.\ \verb+gretl-1.9.11+).
 \item Proceed to the next section, ``Configure and make''.
 \end{enumerate}
 
@@ -316,51 +317,74 @@ tweak is \cmd{--prefix}.  By default the installation goes under
 \begin{code}
 ./configure --prefix=/usr
 \end{code}
-will put everything under the \verb+/usr+ tree.  Another useful option
-refers to the fact that, by default, \app{gretl} offers support for
-the \app{gnome} desktop.  If you want to suppress the
-\app{gnome}-specific features you can pass the option
-\option{without-gnome} to \cmd{configure}.
+will put everything under the \verb+/usr+ tree.  
+
+If you have a multi-core machine you may want to activate support
+for OpenMP, which permits the parallelization of matrix
+multiplication and some other tasks. This requires adding the
+\texttt{configure} flag
+\begin{code}
+--enable-openmp
+\end{code}
+
+By default the \app{gretl} GUI is built using version 2.0 of the 
+GTK libraries. However, another \texttt{configure} option enables
+use of version 3.0:
+\texttt{configure} flag
+\begin{code}
+--enable-gtk3
+\end{code}
 
 In order to have the documentation built, we need to pass the relevant
 option to \texttt{configure}, as in
 \begin{code}
-./configure --enable-build-doc
+--enable-build-doc
 \end{code}
 But please note that this option will work only if you are using
 the CVS source.
+
+This, for example, if you want to install under \texttt{/usr},
+with OpenMP and GTK 3.0 support, and also build the documentation, you
+would do
+\begin{code}
+./configure --prefix=/usr \
+ --enable-openmp \
+ --enable-gtk3 \
+ --enable-build-doc
+\end{code}
 
 You will see a number of checks being run, and if everything goes
 according to plan, you should see a summary similar to that displayed
 in Example~\ref{configure-output}.
 
 \begin{script}[htbp]
-  \caption{Output from \texttt{./configure --enable-build-doc}}
+  \caption{Sample output from \texttt{./configure}}
   \label{configure-output}
 \begin{scode}
 Configuration:
 
-  Installation path:                      /usr/local
+  Installation path:                      /usr
   Use readline library:                   yes
   Use gnuplot for graphs:                 yes
-  Use PNG for gnuplot graphs:             yes
   Use LaTeX for typesetting output:       yes
-  Gnu Multiple Precision support:         yes
-  MPFR support:                           no
-  LAPACK support:                         yes
-  FFTW3 support:                          yes
-  Build with GTK version:                 2.0
-  Script syntax highlighting:             yes
-  Use installed gtksourceview:            yes
-  Build with gnome support:               no
+  MPFR support:                           yes
+  sse2 support for RNG:                   yes
+  openMP support:                         yes
+  Build with GTK version:                 3.0
   Build gretl documentation:              yes
+  Use Lucida fonts:                       no
   Build message catalogs:                 yes
-  Gnome installation prefix:              NA
   X-12-ARIMA support:                     yes
   TRAMO/SEATS support:                    yes
+  libR support:                           yes
+  ODBC support:                           yes
   Experimental audio support:             no
+  Use xdg-utils in installation:          if DESTDIR not set
+  LAPACK libraries:
+    -llapack -lblas
 
 Now type 'make' to build gretl.
+You can also do 'make pdfdocs' to build the PDF documentation.
 \end{scode}
 \end{script}
 
