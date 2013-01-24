@@ -72,7 +72,7 @@ struct gretl_restriction_ {
     double pval;                  /* p-value of test statistic */
     double lnl;
     double bsum;
-    double bsd;
+    double bse;
     int code;
 };
 
@@ -1349,7 +1349,7 @@ static gretl_restriction *restriction_set_new (void *ptr,
     rset->pval = NADBL;
     rset->lnl = NADBL;
     rset->bsum = NADBL;
-    rset->bsd = NADBL;
+    rset->bse = NADBL;
 
     rset->g = rset->gmax = 0;
     rset->gb = rset->ga = 0;
@@ -2351,7 +2351,7 @@ static int test_restriction_set (gretl_restriction *rset, PRN *prn)
 	gretl_matrix_print(RvR, "RvR");
 #endif  
 	if (rset->opt & OPT_C) {
-	    rset->bsd = sqrt(RvR->val[0]);
+	    rset->bse = sqrt(RvR->val[0]);
 	}
     }
 
@@ -2786,7 +2786,7 @@ gretl_sum_test (const int *list, MODEL *pmod, DATASET *dset,
 	pprintf(prn, "\n   %s = %g\n", _("Sum of coefficients"), r->bsum);
 
 	if (r->code == GRETL_STAT_F) {
-	    pprintf(prn, "   %s = %g\n", _("Standard error"), r->bsd);
+	    pprintf(prn, "   %s = %g\n", _("Standard error"), r->bse);
 	    test = sqrt(r->test);
 	    if (r->bsum < 0) {
 		test = -test;
@@ -2795,7 +2795,7 @@ gretl_sum_test (const int *list, MODEL *pmod, DATASET *dset,
 	    pprintf(prn, _("with p-value = %g\n"), r->pval);
 	    record_test_result(test, r->pval, _("sum")); 
 	} else if (r->code == GRETL_STAT_WALD_CHISQ) {
-	    pprintf(prn, "   %s = %g\n", _("Standard error"), r->bsd);
+	    pprintf(prn, "   %s = %g\n", _("Standard error"), r->bse);
 	    test = sqrt(r->test);
 	    if (r->bsum < 0) {
 		test = -test;

@@ -70,6 +70,8 @@ int gretl_model_protect (MODEL *pmod);
 
 void *get_last_model (GretlObjType *type);
 
+GretlObjType get_last_model_type (void);
+
 void *get_genr_model (GretlObjType *type);
 
 MODEL *get_model_by_name (const char *mname);

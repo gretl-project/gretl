@@ -2379,17 +2379,47 @@ int gretl_matrix_add_self_transpose (gretl_matrix *m)
 int 
 gretl_matrix_vectorize (gretl_matrix *targ, const gretl_matrix *src)
 {
-    int i, n = src->rows * src->cols;
+    int n;
+
+    if (gretl_is_null_matrix(src) || gretl_is_null_matrix(targ)) {
+	return E_DATA;
+    }
+
+    n = src->rows * src->cols;
 
     if (targ->cols != 1 || targ->rows != n) {
 	return E_NONCONF;
     }
 
-    for (i=0; i<n; i++) {
-	targ->val[i] = src->val[i];
-    }
+    memcpy(targ->val, src->val, n * sizeof *src->val);
 
     return 0;
+}
+
+/**
+ * gretl_matrix_vectorize_new:
+ * @m: matrix to be vectorized.
+ *
+ * Returns: a gretl column vector, vec(@m), or NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_vectorize_new (const gretl_matrix *m)
+{
+    gretl_matrix *v;
+    int n;
+
+    if (gretl_is_null_matrix(m)) {
+	return NULL;
+    } 
+
+    n = m->rows * m->cols;
+
+    v = gretl_matrix_alloc(n, 1);
+    if (v != NULL) {
+	memcpy(v->val, m->val, n * sizeof *m->val);
+    }
+
+    return v;
 }
 
 /**
@@ -2408,15 +2438,19 @@ gretl_matrix_vectorize (gretl_matrix *targ, const gretl_matrix *src)
 int 
 gretl_matrix_unvectorize (gretl_matrix *targ, const gretl_matrix *src)
 {
-    int i, n = targ->rows * targ->cols;
+    int n;
+
+    if (gretl_is_null_matrix(src) || gretl_is_null_matrix(targ)) {
+	return E_DATA;
+    }
+
+    n = targ->rows * targ->cols;
 
     if (src->cols != 1 || src->rows != n) {
 	return E_NONCONF;
     }
 
-    for (i=0; i<n; i++) {
-	targ->val[i] = src->val[i];
-    }
+    memcpy(targ->val, src->val, n * sizeof *src->val);
 
     return 0;
 }

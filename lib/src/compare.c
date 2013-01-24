@@ -258,10 +258,11 @@ static int add_diffvars_to_test (ModelTest *test, const int *list,
     return err;
 }
 
-static void print_add_omit_null (const int *list, const DATASET *dset,
-				 PRN *prn)
+void print_add_omit_null (const int *list, const DATASET *dset,
+			  gretlopt opt, PRN *prn)
 {
-    if (list[0] == 1) {
+    if (list[0] == 1 && !(opt & OPT_S)) {
+	/* if OPT_S, we're doing this for a system */
 	pputs(prn, "\n  ");
 	pprintf(prn, _("Null hypothesis: the regression parameter is zero for %s"), 
 		dset->varname[list[1]]);
@@ -324,7 +325,7 @@ static void print_compare (struct COMPARE *cmp,
 	pputc(prn, '\n');
     } 
 
-    print_add_omit_null(cmp->testvars, dset, prn);
+    print_add_omit_null(cmp->testvars, dset, OPT_NONE, prn);
 
     if (cmp->stat == GRETL_STAT_WALD_CHISQ) {
 	pprintf(prn, "  %s: %s(%d) = %g, %s %g\n",  _("Wald test"),

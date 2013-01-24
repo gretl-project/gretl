@@ -437,6 +437,17 @@ void *get_last_model (GretlObjType *type)
 }
 
 /**
+ * get_last_model_type:
+ *
+ * Returns: the type indentifier for the last model estimated.
+ */
+
+GretlObjType get_last_model_type (void)
+{
+    return last_model.type;
+}
+
+/**
  * gretl_object_get_name:
  * @p: pointer to gretl object (e.g. #MODEL).
  * @type: type of object.
@@ -875,17 +886,15 @@ int gretl_stack_object_as (void *ptr, GretlObjType type, const char *name)
 
 int maybe_stack_var (GRETL_VAR *var, CMD *cmd)
 {
-    const char *name;
     int err = 0;
 
     if (var != NULL) {
+	const char *name = gretl_cmd_get_savename(cmd);
+
 	set_as_last_model(var, GRETL_OBJ_VAR);
-
-	name = gretl_cmd_get_savename(cmd);
-
 	if (*name != '\0') {
 	    err = real_stack_object(var, GRETL_OBJ_VAR, name, NULL);
-	} 
+	}
     }
 
     return err;
@@ -1554,7 +1563,10 @@ int last_model_test_ok (int ci, gretlopt opt, const DATASET *dset,
 	    err = 0;
 	} else if (ci == MODTEST && sys_modtest_opt_ok(opt)) {
 	    err = 0;
-	} 
+	} else if (ci == OMIT && r == 0 && !(opt & OPT_A)) {
+	    /* we can handle a test on exogenous terms in a VAR */
+	    err = 0;
+	}
     }
 
     return err;

@@ -129,6 +129,10 @@ int do_add_omit (selector *sr);
 
 int do_VAR_omit (selector *sr);
 
+void VAR_omit_trend (GtkAction *action, gpointer p);
+
+void VAR_omit_seasonals (GtkAction *action, gpointer p);
+
 int do_confidence_region (selector *sr);
 
 void do_modtest (GtkAction *action, gpointer p);

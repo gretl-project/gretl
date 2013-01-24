@@ -145,12 +145,19 @@ int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn);
 
 int set_VAR_model_stats (GRETL_VAR *var, int i);
 
+int gretl_VAR_has_exog_vars (const GRETL_VAR *var);
+
 const int *gretl_VAR_get_exo_list (const GRETL_VAR *var);
 
 const int *gretl_VAR_get_endo_list (const GRETL_VAR *var);
 
-GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig, 
-				DATASET *dset, PRN *prn, int *err);
+GRETL_VAR *gretl_VAR_omit_test (GRETL_VAR *var, const int *omitlist,
+				DATASET *dset, gretlopt opt,
+				PRN *prn, int *err);
+
+int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist, 
+			      DATASET *dset, gretlopt opt,
+			      PRN *prn);
 
 double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j, const DATASET *dset, 
 			   int *err);

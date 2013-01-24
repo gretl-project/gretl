@@ -150,4 +150,7 @@ int leverage_test (MODEL *pmod, DATASET *dset,
 int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m, 
 				    int flags);
 
+void print_add_omit_null (const int *list, const DATASET *dset,
+			  gretlopt opt, PRN *prn);
+
 #endif /* COMPARE_H */

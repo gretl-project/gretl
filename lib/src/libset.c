@@ -441,7 +441,8 @@ static int openmp_by_default (void)
 # else
     num_cores = sysconf(_SC_NPROCESSORS_ONLN);
 # endif
-    if (num_cores > 1) {
+    ret = num_cores > 1;
+    if (ret) {
 	/* one can use the environment to turn this off */
 	char *envstr = getenv("GRETL_USE_OPENMP");
 
@@ -449,6 +450,14 @@ static int openmp_by_default (void)
 	    ret = 0;
 	}
     }
+    
+    if (ret) {
+	fprintf(stderr, "num_cores = %d, using OpenMP by default\n",
+		num_cores);
+    } else {
+	fprintf(stderr, "num_cores = %d, not using OpenMP by default\n",
+		num_cores);
+    }	
 
     return ret;
 }

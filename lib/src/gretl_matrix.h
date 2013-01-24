@@ -354,6 +354,8 @@ int gretl_matrix_add_self_transpose (gretl_matrix *m);
 int 
 gretl_matrix_vectorize (gretl_matrix *targ, const gretl_matrix *src);
 
+gretl_matrix *gretl_matrix_vectorize_new (const gretl_matrix *m);
+
 int 
 gretl_matrix_unvectorize (gretl_matrix *targ, const gretl_matrix *src);
 

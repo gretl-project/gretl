@@ -4104,7 +4104,19 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	    item.label = N_("Omit exogenous variables...");
 	    item.callback = G_CALLBACK(selector_callback);
 	    vwin_menu_add_item(vwin, tests, &item);
-	}	    
+	} 
+	if (var->detflags & DET_TREND) {
+	    item.name = "VarOmitTrend";
+	    item.label = N_("Omit time trend");
+	    item.callback = G_CALLBACK(VAR_omit_trend);
+	    vwin_menu_add_item(vwin, tests, &item);
+	}
+	if (var->detflags & DET_SEAS) {
+	    item.name = "VarOmitSeas";
+	    item.label = N_("Omit seasonal dummies");
+	    item.callback = G_CALLBACK(VAR_omit_seasonals);
+	    vwin_menu_add_item(vwin, tests, &item);
+	}	
     }
 
     /* Save residuals */

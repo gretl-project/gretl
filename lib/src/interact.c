@@ -5023,6 +5023,29 @@ static int add_omit_save (CMD *cmd)
     }
 }
 
+static int VAR_omit_driver (CMD *cmd, DATASET *dset, PRN *prn)
+{
+    GRETL_VAR *var = get_last_model(NULL);
+    int err = 0;
+
+    if (cmd->opt & OPT_W) {
+	/* Wald test using VCV */
+	err = gretl_VAR_wald_omit_test(var, cmd->list, dset, 
+				       cmd->opt, prn);
+    } else {
+	/* the full deal: estimate reduced system */
+	GRETL_VAR *vnew;
+
+	vnew = gretl_VAR_omit_test(var, cmd->list, dset, OPT_NONE,
+				   prn, &err);
+	if (!err) {
+	    err = maybe_stack_var(vnew, cmd);
+	}
+    }
+
+    return err;
+}
+
 static void abort_execution (ExecState *s)
 {
     *s->cmd->savename = '\0';
@@ -5590,7 +5613,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case ADD:
     case OMIT:
-	if (add_omit_save(cmd)) {
+	if (get_last_model_type() == GRETL_OBJ_VAR) {
+	    err = VAR_omit_driver(cmd, dset, prn);
+	} else if (add_omit_save(cmd)) {
 	    MODEL mymod;
 
 	    gretl_model_init(&mymod);
