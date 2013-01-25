@@ -263,7 +263,7 @@ void print_add_omit_null (const int *list, const DATASET *dset,
 {
     /* note: if OPT_S, we're doing this for a system */
 
-    if (list[0] == 1 && !(opt & OPT_S)) {
+    if (list != NULL && list[0] == 1 && !(opt & OPT_S)) {
 	pputs(prn, "\n  ");
 	pprintf(prn, _("Null hypothesis: the regression parameter is zero for %s"), 
 		dset->varname[list[1]]);
@@ -274,29 +274,31 @@ void print_add_omit_null (const int *list, const DATASET *dset,
 
 	pputs(prn, _("\n  Null hypothesis: the regression parameters are "
 		     "zero for the variables\n"));
-	pputs(prn, "    ");
 
-	for (i=1; i<=list[0]; i++) {
-	    vname = dset->varname[list[i]];
-	    nc += strlen(vname) + 2;
-	    pprintf(prn, "%s", vname);
-	    if (i < list[0]) {
-		if (nc > 60) {
-		    pputs(prn, ",\n    ");
-		    nc = 0;
-		} else {
-		    pputs(prn, ", ");
+	if (list != NULL && list[0] > 0) {
+	    pputs(prn, "    ");
+	    for (i=1; i<=list[0]; i++) {
+		vname = dset->varname[list[i]];
+		nc += strlen(vname) + 2;
+		pprintf(prn, "%s", vname);
+		if (i < list[0]) {
+		    if (nc > 60) {
+			pputs(prn, ",\n    ");
+			nc = 0;
+		    } else {
+			pputs(prn, ", ");
+		    }
 		}
 	    }
+	    pputc(prn, '\n');
 	}
-	pputc(prn, '\n');
 	if (opt & OPT_E) {
 	    /* seasonals */
 	    pprintf(prn, "    %s\n", _("seasonal dummies"));
 	}
 	if (opt & OPT_T) {
 	    /* trend */
-	    pprintf(prn, "    %time\n");
+	    pprintf(prn, "    time\n");
 	}	
     }
 }

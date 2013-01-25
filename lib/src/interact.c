@@ -5036,7 +5036,7 @@ static int VAR_omit_driver (CMD *cmd, DATASET *dset, PRN *prn)
 	/* the full deal: estimate reduced system */
 	GRETL_VAR *vnew;
 
-	vnew = gretl_VAR_omit_test(var, cmd->list, dset, OPT_NONE,
+	vnew = gretl_VAR_omit_test(var, cmd->list, dset, cmd->opt,
 				   prn, &err);
 	if (!err) {
 	    err = maybe_stack_var(vnew, cmd);

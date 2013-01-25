@@ -2523,7 +2523,7 @@ GRETL_VAR *gretl_VAR (int order, int *list, const DATASET *dset,
 		*err = gretl_VAR_do_error_decomp(var->S, var->C, NULL);
 	    }
 
-	    if (!*err) {
+	    if (!*err && prn != NULL) {
 		gretl_VAR_print(var, dset, opt, prn);
 	    }
 	}
