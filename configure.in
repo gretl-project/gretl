@@ -578,12 +578,12 @@ dnl Mac: check for Quartz version of GTK
 dnl
 if test "$darwin_build" = "yes" ; then
   if test "$gtk_version" = "3.0" ; then
-    PKG_CHECK_MODULES(GTKQUARTZ, gtk+-quartz-3.0 >= 3.4.0,
+    PKG_CHECK_EXISTS(gtk+-quartz-3.0 >= 3.4.0,
      echo "Found quartz-based GTK"
      mac_native="yes", 
      mac_native="no")
   elif test "$gtk_version" = "2.0" ; then
-    PKG_CHECK_MODULES(GTKQUARTZ, gtk+-quartz-2.0 >= 2.24.0,
+    PKG_CHECK_EXISTS(gtk+-quartz-2.0 >= 2.24.0,
      echo "Found quartz-based GTK"
      mac_native="yes", 
      mac_native="no")
