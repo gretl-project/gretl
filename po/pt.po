@@ -5,13 +5,13 @@
 # Helio Guilherme <helio.guilherme@bluebottle.com>, 2006, 2007.
 # Hélio Guilherme <helio.guilherme@bluebottle.com>, 2007, 2008.
 # Hélio Guilherme <helio_guilherme@hotmail.com>, 2008, 2009, 2010.
-# Helio Guilherme <helio_guilherme@hotmail.com>, 2010, 2011, 2012.
+# Helio Guilherme <helio_guilherme@hotmail.com>, 2010, 2011, 2012, 2013.
 msgid ""
 msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-01-14 11:55-0500\n"
-"PO-Revision-Date: 2012-12-14 23:18+0000\n"
+"PO-Revision-Date: 2013-01-24 22:33+0000\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
@@ -605,20 +605,17 @@ msgid "dummy variable for Chow test"
 msgstr "variável auxiliar para o teste de Chow"
 
 #: lib/src/compare.c:2407
-#, fuzzy
 msgid "Robust Wald test for break"
-msgstr "Teste F de Chow para quebra estrutural"
+msgstr "Teste de Wald robusto para quebra estrutural"
 
 #: lib/src/compare.c:2408
 msgid "Chow F-test for break"
 msgstr "Teste F de Chow para quebra estrutural"
 
 #: lib/src/compare.c:2460
-#, fuzzy, c-format
+#, c-format
 msgid "Asymptotic p-value = %.4g for chi-square(%d) = %g"
-msgstr ""
-"com valor p = prob(Qui-quadrado(%d) > %g) = %g\n"
-"\n"
+msgstr "Valor p assimptótico = %.4g para qui-quadrado (%d) = %g"
 
 #: lib/src/compare.c:2487
 msgid ""
@@ -630,9 +627,9 @@ msgstr ""
 "com 15 por cento de desbaste"
 
 #: lib/src/compare.c:2491
-#, fuzzy, c-format
+#, c-format
 msgid "The maximum Wald test = %g occurs at observation %s"
-msgstr "O máximo F(%d ; %d) = %g ocorre na observação %s"
+msgstr "O máximo teste Wald = %g ocorre na observação %s"
 
 #: lib/src/compare.c:2495
 #, c-format
@@ -3408,9 +3405,9 @@ msgid "Distribution free Wald test for heteroskedasticity"
 msgstr "Teste de Wald independente da distribuição para heterocedasticidade"
 
 #: lib/src/gretl_model.c:3603
-#, fuzzy, c-format
+#, c-format
 msgid "chi-square(%d) = %g at observation %s"
-msgstr "O máximo F(%d ; %d) = %g ocorre na observação %s"
+msgstr "Qui-quadrado(%d)  = %g na observação %s"
 
 #: lib/src/gretl_model.c:3629 lib/src/gretl_model.c:3636
 msgid "failed"
@@ -3421,9 +3418,8 @@ msgid "Asymptotic test statistic"
 msgstr "Estatística de teste assimptótica"
 
 #: lib/src/gretl_model.c:3751
-#, fuzzy
 msgid "with asymptotic p-value"
-msgstr "valor p assimptótico"
+msgstr "com valor p assimptótico"
 
 #: lib/src/gretl_model.c:3764 lib/src/gretl_model.c:3767
 #: lib/src/gretl_model.c:3770
@@ -5973,9 +5969,9 @@ msgstr ""
 "a partir do qual o modelo de referência foi estimado\n"
 
 #: lib/src/options.c:1163
-#, fuzzy, c-format
+#, c-format
 msgid "Ambiguous option '--%s'"
-msgstr "opção inválida '--'%s'"
+msgstr "Opção ambígua '--'%s'"
 
 #: lib/src/options.c:1169
 #, c-format
@@ -7285,7 +7281,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 14 de dezembro de 2012."
+"Tradução de 23 de janeiro de 2013."
 
 #: gui2/about.c:164
 msgid "License"
@@ -10762,9 +10758,8 @@ msgid "_Gretl console"
 msgstr "Consola _Gretl"
 
 #: gui2/gretl.c:1456
-#, fuzzy
 msgid "_Gnuplot"
-msgstr "Cores do gnuplot"
+msgstr "_Gnuplot"
 
 #: gui2/gretl.c:1457
 msgid "Start GNU _R"
@@ -11288,9 +11283,8 @@ msgid "_Dynamic panel model..."
 msgstr "Modelo de painel _dinâmico..."
 
 #: gui2/gretl.c:1618
-#, fuzzy
 msgid "_Limited dependent variable"
-msgstr "Primeira variável dependente"
+msgstr "Variável dependente _limitada"
 
 #: gui2/gretl.c:1619
 msgid "_Logit"
