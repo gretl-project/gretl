@@ -716,21 +716,6 @@ const int *gretl_VAR_get_endo_list (const GRETL_VAR *var)
     return (var == NULL)? NULL : var->ylist;
 }
 
-int gretl_VAR_has_exog_vars (const GRETL_VAR *var)
-{
-    int ret = 0;
-
-    if (var != NULL) {
-	if (var->xlist != NULL && var->xlist[0] > 0) {
-	    ret = 1;
-	} else if (var->detflags & (DET_TREND | DET_SEAS)) {
-	    ret = 1;
-	}
-    }
-
-    return ret;
-}
-
 /* Based on the specification stored in the original VAR struct, 
    plus a new exogenous list, constitute a full VAR list.
 */

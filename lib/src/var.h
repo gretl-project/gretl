@@ -145,8 +145,6 @@ int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn);
 
 int set_VAR_model_stats (GRETL_VAR *var, int i);
 
-int gretl_VAR_has_exog_vars (const GRETL_VAR *var);
-
 const int *gretl_VAR_get_exo_list (const GRETL_VAR *var);
 
 const int *gretl_VAR_get_endo_list (const GRETL_VAR *var);
