@@ -1049,7 +1049,7 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
 				_("no seasonal effect"));
 		    }
 		} else {		    
-		    print_add_omit_null(omitlist, dset, OPT_S, prn);
+		    print_add_omit_null(omitlist, dset, opt | OPT_S, prn);
 		}
 		pprintf(prn, "\n  %s: %s(%d) = %g, %s %g\n\n",  _("Wald test"),
 			_("Chi-square"), nr, test,
