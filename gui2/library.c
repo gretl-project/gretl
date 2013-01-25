@@ -2179,21 +2179,15 @@ void VAR_omit_trend (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = vwin->data;
-    int omitlist[2] = {1, 0};
     PRN *prn;
-    int err = 0;
+    int err;
 
     if (bufopen(&prn)) {
 	return;
     }
 
-    /* the auto-trend term comes after any auto-seasonals */
-    if (var->detflags & DET_SEAS) {
-	omitlist[1] = dataset->pd - 1;
-    }
-
-    err = gretl_VAR_wald_omit_test(var, omitlist, dataset, 
-				   OPT_P, prn);
+    err = gretl_VAR_wald_omit_test(var, NULL, dataset, 
+				   OPT_T, prn);
     if (err) {
         gui_errmsg(err);
         gretl_print_destroy(prn);
@@ -2207,30 +2201,15 @@ void VAR_omit_seasonals (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = vwin->data;
-    int *omitlist;
     PRN *prn;
-    int i, err = 0;
+    int err;
 
     if (bufopen(&prn)) {
 	return;
     }
 
-    omitlist = gretl_list_new(dataset->pd - 1);
-    if (omitlist == NULL) {
-	nomem();
-	gretl_print_destroy(prn);
-	return;
-    }
-
-    /* seasonals come first among auto-terms */
-    for (i=1; i<=omitlist[0]; i++) {
-	omitlist[i] = i - 1;
-    }
-
-    err = gretl_VAR_wald_omit_test(var, omitlist, dataset, 
-				   OPT_P, prn);
-    free(omitlist);
-
+    err = gretl_VAR_wald_omit_test(var, NULL, dataset, 
+				   OPT_E, prn);
     if (err) {
         gui_errmsg(err);
         gretl_print_destroy(prn);

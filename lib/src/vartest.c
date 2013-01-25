@@ -890,14 +890,15 @@ GRETL_VAR *gretl_VAR_omit_test (GRETL_VAR *var, const int *omitlist,
     return vnew;
 }
 
-static int set_wald_R_ones (gretl_matrix *R, int k, int stride)
+static int set_wald_R_ones (gretl_matrix *R, int k, int r0, int neq,
+			    int stride)
 {
     if (k < 0) {
 	return E_DATA;
     } else {
-	int i;
+	int i, rmax = r0 + neq;
 
-	for (i=0; i<R->rows; i++) {
+	for (i=r0; i<rmax; i++) {
 	    gretl_matrix_set(R, i, k, 1.0);
 	    k += stride;
 	}
@@ -931,8 +932,8 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
     gretl_matrix *RB = NULL;
     gretl_matrix *RVR = NULL;
     double x, test = NADBL;
-    int i, neq, nr, eqk;
-    int j, pos;
+    int i, j, neq, eqk, row0;
+    int pos, nr = 0, nx_omit = 0;
     int err = 0;
 
     if (var == NULL || var->B == NULL || 
@@ -940,21 +941,13 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
 	return E_DATA;
     }
 
-    if (omitlist == NULL || omitlist[0] == 0) {
-	return E_DATA;
+    if (omitlist != NULL) {
+	nx_omit = omitlist[0];
     }
 
-#if 0
-    gretl_matrix_print(var->B, "var->B");
-    gretl_matrix_print(var->S, "var->S");
-    gretl_matrix_print(var->XTX, "var->XTX");
-    fprintf(stderr, "var->neqns = %d, var->order = %d\n",
-	    var->neqns, var->order);
-    fprintf(stderr, "const? %s\n", (var->ifc)? "yes" : "no");
-    fprintf(stderr, "trend? %s\n", (var->detflags & DET_TREND)? "yes" : "no");
-    fprintf(stderr, "seasonal? %s\n", (var->detflags & DET_SEAS)? "yes" : "no");
-    fprintf(stderr, "xlist? %s\n", (var->xlist != NULL)? "yes" : "no");
-#endif
+    if ((nx_omit == 0) && !(opt & (OPT_T | OPT_E))) {
+	return E_DATA;
+    }
 
     B = gretl_matrix_vectorize_new(var->B);
     if (B == NULL) {
@@ -962,8 +955,19 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
     }
 
     neq = var->neqns;
-    eqk = var->B->rows;
-    nr = omitlist[0] * var->neqns;
+
+    if (nx_omit > 0) {
+	/* omitting user-specified exogenous vars */
+	nr += nx_omit * neq;
+    }
+    if (opt & OPT_T) {
+	/* omit trend */
+	nr += neq;
+    }
+    if (opt & OPT_E) {
+	/* omit seasonals */
+	nr += (dset->pd - 1) * neq;
+    }
 
     S = gretl_zero_matrix_new(neq, neq);
     R = gretl_zero_matrix_new(nr, B->rows);
@@ -985,16 +989,12 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
 	goto bailout;
     }
 
+    eqk = var->B->rows;
     pos = var->ifc + neq * var->order;
+    row0 = 0;
 
-    if (opt & OPT_P) {
-	/* @omitlist holds 0-based positions among the auto terms */
-	for (i=1; i<=omitlist[0]; i++) {
-	    j = pos + omitlist[i];
-	    set_wald_R_ones(R, j, eqk);
-	}
-    } else {
-	/* @omitlist holds ID numbers of variables */ 
+    if (omitlist != NULL && omitlist[0] != 0) {
+	/* @omitlist holds ID numbers of exog variables */ 
 	int vi;
 
 	for (i=1; i<=omitlist[0]; i++) {
@@ -1005,8 +1005,23 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
 		j = in_gretl_list(var->xlist, vi);
 		j += pos - 1;
 	    }
-	    set_wald_R_ones(R, j, eqk);
+	    set_wald_R_ones(R, j, row0, neq, eqk);
+	    row0 += neq;
 	}	
+    }
+    if (opt & OPT_E) {
+	/* omit auto-seasonals */
+	for (i=1; i<dset->pd; i++) {
+	    j = pos + i - 1;
+	    set_wald_R_ones(R, j, row0, neq, eqk);
+	    row0 += neq;
+	}
+    }   
+    if (opt & OPT_T) {
+	/* omit auto-trend (comes as last param) */
+	j = eqk - 1;
+	set_wald_R_ones(R, j, row0, neq, eqk);
+	row0 += neq;
     }
 
     gretl_matrix_multiply(R, B, RB);
@@ -1022,16 +1037,21 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
 	    record_test_result(test, pval, _("omit"));
 
 	    if (!(opt & OPT_I)) {
-		if (!(opt & OPT_P)) {
+		if (nx_omit == 0) {
+		    if ((opt & OPT_T) && (opt & OPT_E)) {
+			pprintf(prn, "%s: %s\n", _("Null hypothesis"), 
+				_("no trend or seasonal effects"));
+		    } else if (opt & OPT_T) {
+			pprintf(prn, "%s: %s\n", _("Null hypothesis"), 
+				_("no trend"));
+		    } else if (opt & OPT_E) {
+			pprintf(prn, "%s: %s\n", _("Null hypothesis"), 
+				_("no seasonal effect"));
+		    }
+		} else {		    
 		    print_add_omit_null(omitlist, dset, OPT_S, prn);
-		} else {
-		    if (omitlist[0] == 1) {
-			pprintf(prn, "%s: %s\n", _("Null hypothesis"),  _("no trend"));
-		    } else {
-			pprintf(prn, "%s: %s\n", _("Null hypothesis"),  _("no seasonal effect"));
-		    }			
 		}
-		pprintf(prn, "\n  %s: %s(%d) = %g, %s %g\n",  _("Wald test"),
+		pprintf(prn, "\n  %s: %s(%d) = %g, %s %g\n\n",  _("Wald test"),
 			_("Chi-square"), nr, test,
 			_("p-value"), pval);
 	    }

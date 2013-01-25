@@ -261,8 +261,9 @@ static int add_diffvars_to_test (ModelTest *test, const int *list,
 void print_add_omit_null (const int *list, const DATASET *dset,
 			  gretlopt opt, PRN *prn)
 {
+    /* note: if OPT_S, we're doing this for a system */
+
     if (list[0] == 1 && !(opt & OPT_S)) {
-	/* if OPT_S, we're doing this for a system */
 	pputs(prn, "\n  ");
 	pprintf(prn, _("Null hypothesis: the regression parameter is zero for %s"), 
 		dset->varname[list[1]]);
@@ -289,6 +290,14 @@ void print_add_omit_null (const int *list, const DATASET *dset,
 	    }
 	}
 	pputc(prn, '\n');
+	if (opt & OPT_E) {
+	    /* seasonals */
+	    pprintf(prn, "    %s\n", _("seasonal dummies"));
+	}
+	if (opt & OPT_T) {
+	    /* trend */
+	    pprintf(prn, "    %time\n");
+	}	
     }
 }
 

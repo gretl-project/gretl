@@ -357,6 +357,8 @@ struct gretl_option gretl_opts[] = {
     { OMIT,     OPT_X, "chi-square", 0 },
     { OMIT,     OPT_I, "silent", 0 },
     { OMIT,     OPT_W, "test-only", 0 },
+    { OMIT,     OPT_T, "trend", 0 },      /* omit auto-trend: VAR only */
+    { OMIT,     OPT_E, "seasonals", 0 },  /* omit auto-seasonals: VAR only */
     { OPEN,     OPT_B, "progress-bar", 0 },
     { OPEN,     OPT_D, "drop-empty", 0 },
     { OPEN,     OPT_F, "fixed-cols", 2 },    
