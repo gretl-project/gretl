@@ -8468,6 +8468,10 @@ static void node_reattach_data (NODE *n, parser *p)
     } else if (ulist_node(n)) {
 	data = n->v.ivec = get_list_by_name(n->vname);
     } else if (ubundle_node(n)) {
+	if (!strcmp(n->vname, "$")) {
+	    /* last model as bundle */
+	    return;
+	}
 	data = n->v.b = get_bundle_by_name(n->vname);
     } else if (ustring_node(n)) {
 	data = n->v.str = get_string_by_name(n->vname);

@@ -754,6 +754,8 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
     df = orig->neqns * omitlist[0];
     pval = chisq_cdf_comp(df, LR);
 
+    record_test_result(LR, pval, _("omit"));
+
     print_add_omit_null(omitlist, dset, OPT_S, prn);
 
     pprintf(prn, "\n  %s: %s(%d) = %g, ", _("LR test"), 
@@ -761,6 +763,26 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
     pprintf(prn, _("with p-value = %g\n\n"), pval);
 
     free(omitlist);
+
+    return err;
+}
+
+static int VAR_omit_check (GRETL_VAR *var, const int *omitlist,
+			   gretlopt opt)
+{
+    int nx = omitlist == NULL ? 0 : omitlist[0];
+    int err = 0;
+
+    if (nx == 0 && !(opt & (OPT_T | OPT_E))) {
+	/* nothing to be omitted */
+	err = E_NOOMIT;
+    } else if ((opt & OPT_T) && !(var->detflags & DET_TREND)) {
+	/* can't have the --trend option with no auto-trend */
+	err = E_BADOPT;
+    } else if ((opt & OPT_E) && !(var->detflags & DET_SEAS)) {
+	/* can't have the --seasonals option with no auto-seasonals */
+	err = E_BADOPT;
+    }    
 
     return err;
 }
@@ -779,7 +801,7 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
  * and system-wide LR tests for the null hypothesis that
  * the omitted variables have zero parameters.
  * 
- * Returns: restricted VAR on sucess, %NULL on error.
+ * Returns: restricted VAR on success, %NULL on error.
  */
 
 GRETL_VAR *gretl_VAR_omit_test (GRETL_VAR *var, const int *omitlist, 
@@ -858,8 +880,8 @@ GRETL_VAR *gretl_VAR_omit_test (GRETL_VAR *var, const int *omitlist,
 
     vnew = gretl_VAR(var->order, varlist, dset, opt, prn, err);
 
-    /* now, if var is non-NULL, do the actual test(s) */
     if (vnew != NULL) {
+	/* do the actual test(s) */
 	*err = gretl_VAR_real_omit_test(var, vnew, dset, prn);
     }
 
@@ -926,12 +948,13 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
 	return E_DATA;
     }
 
-    if (omitlist != NULL) {
-	nx_omit = omitlist[0];
+    err = VAR_omit_check(var, omitlist, opt);
+    if (err) {
+	return err;
     }
 
-    if ((nx_omit == 0) && !(opt & (OPT_T | OPT_E))) {
-	return E_DATA;
+    if (omitlist != NULL) {
+	nx_omit = omitlist[0];
     }
 
     B = gretl_matrix_vectorize_new(var->B);
@@ -978,7 +1001,7 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
     pos = var->ifc + neq * var->order;
     row0 = 0;
 
-    if (omitlist != NULL && omitlist[0] != 0) {
+    if (nx_omit > 0) {
 	/* @omitlist holds ID numbers of exog variables */ 
 	int vi;
 
@@ -1029,7 +1052,7 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
 		    } else if (opt & OPT_T) {
 			pprintf(prn, "%s: %s\n", _("Null hypothesis"), 
 				_("no trend"));
-		    } else if (opt & OPT_E) {
+		    } else {
 			pprintf(prn, "%s: %s\n", _("Null hypothesis"), 
 				_("no seasonal effect"));
 		    }
