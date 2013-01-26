@@ -147,6 +147,8 @@ add_file ${WINFILES}/gtksourceview-data/cpp.lang \
   gretl/gtksourceview/cpp.lang
 add_file ${WINFILES}/gtksourceview-data/octave.lang \
   gretl/gtksourceview/octave.lang
+add_file ${WINFILES}/gtksourceview-data/octave.lang \
+  gretl/gtksourceview/python.lang
 add_file ${WINFILES}/gtksourceview-data/def.lang \
   gretl/gtksourceview/def.lang
 add_file ${WINFILES}/gtksourceview-data/classic.xml \
