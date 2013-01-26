@@ -247,6 +247,7 @@ enum {
     F_UPPER,
     F_LOWER,
     F_MREAD,
+    F_MIMPORT,
     F_POLROOTS,
     F_XPX,
     F_ARGNAME,
@@ -296,6 +297,7 @@ enum {
     F_CDIV,	  /* complex division */
     F_MXTAB,
     F_MWRITE,
+    F_MEXPORT,
     F_MRSEL,
     F_MCSEL,
     F_WMEAN,

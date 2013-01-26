@@ -3571,6 +3571,55 @@
       </description>
     </function>
 
+    <function name="mexport" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="string">filename</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Works like <fncref targ="mwrite"/> (that is, writes out
+	  <argname>X</argname> as a text file) except that the file is
+	  written to a location where it can be found by third-party
+	  programs running under the <cmdref targ="foreign"/>
+	  command. The <argname>filename</argname> argument should be
+	  given without any directory/folder component, as in
+	</para>
+	<code>
+	  mexport(X, "X.mat")
+	</code>
+	<para>
+	  <seelist>
+	    <fncref targ="mimport"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="mimport" section="matbuild" output="matrix">
+      <fnargs>
+	<fnarg type="string">filename</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Works like <fncref targ="mread"/> (that is, reads a matrix
+	  from a text file) except that the file is read from the
+	  location where it is written by default by third-party
+	  programs running under the <cmdref targ="foreign"/>
+	  command. The <argname>filename</argname> argument should be
+	  given without any directory/folder component, as in
+	</para>
+	<code>
+	  matrix M = mimport("M.mat")
+	</code>
+	<para>
+	  <seelist>
+	    <fncref targ="mexport"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="min" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">y</fnarg>
@@ -3934,6 +3983,7 @@
 	<para>
 	  <seelist>
 	    <fncref targ="mwrite"/>
+	    <fncref targ="mimport"/>	    
 	  </seelist>
 	</para>
       </description>
@@ -4062,7 +4112,7 @@
       </description>
     </function>
 
-    <function name="mwrite" section="matbuild" output="scalar">
+    <function name="mwrite" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="string">s</fnarg>
@@ -4089,6 +4139,7 @@
 	<para>
 	  <seelist>
 	    <fncref targ="mread"/>
+	    <fncref targ="mimport"/>
 	  </seelist>
 	</para>
       </description>

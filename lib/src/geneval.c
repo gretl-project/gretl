@@ -2189,19 +2189,20 @@ static void lag_calc (double *y, const double *x,
     }
 }
 
-static NODE *matrix_csv_write (NODE *l, NODE *r, parser *p)
+static NODE *matrix_text_write (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
 	const char *s = r->v.str;
+	int export = (f == F_MEXPORT);
 
 	ret = aux_scalar_node(p);
 	if (ret == NULL) { 
 	    return NULL;
 	}
 
-	ret->v.xval = gretl_matrix_write_as_text(l->v.m, s);
+	ret->v.xval = gretl_matrix_write_as_text(l->v.m, s, export);
     } else {
 	ret = aux_scalar_node(p);
     }
@@ -2703,11 +2704,15 @@ static NODE *string_to_matrix_func (NODE *n, int f, parser *p)
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
+	int import = (f == F_MIMPORT);
+
 	gretl_error_clear();
 
 	switch (f) {
 	case F_MREAD:
-	    ret->v.m = gretl_matrix_read_from_text(n->v.str, &p->err);
+	case F_MIMPORT:	    
+	    ret->v.m = gretl_matrix_read_from_text(n->v.str, import, 
+						   &p->err);
 	    break;
 	default:
 	    break;
@@ -9295,6 +9300,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_MREAD:
+    case F_MIMPORT:
 	/* string -> matrix functions */
 	if (l->t == STR) {
 	    ret = string_to_matrix_func(l, t->t, p);
@@ -9316,12 +9322,13 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_FDJAC:
     case F_MWRITE:
+    case F_MEXPORT:
 	/* matrix, with string as second arg */
 	if (l->t == MAT && r->t == STR) {
 	    if (t->t == F_FDJAC) {
 		ret = numeric_jacobian(l, r, p);
 	    } else {
-		ret = matrix_csv_write(l, r, p);
+		ret = matrix_text_write(l, r, t->t, p);
 	    }
 	} else {
 	    p->err = E_TYPES;

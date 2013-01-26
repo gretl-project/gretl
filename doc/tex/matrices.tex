@@ -776,8 +776,9 @@ the \texttt{mwrite} command can be easily read by other programs; the
 following table summarizes the appropriate commands for reading a
 matrix \texttt{A} from a file called \texttt{a.mat} in some
 widely-used programs.\footnote{Matlab users may find the Octave
-  example helpful, since the two programs are mostly compatible with one
-  another.}
+  example helpful, since the two programs are mostly compatible with
+  one another.} Note that the Python example requires that the
+\texttt{numpy} module is loaded.
 
 \begin{center}
   \begin{tabular}{rl}
@@ -791,6 +792,7 @@ widely-used programs.\footnote{Matlab users may find the Octave
     & \verb|fclose(fd);| \\
     Ox     & \verb|decl A = loadmat("a.mat");| \\
     R      & \verb|A <- as.matrix(read.table("a.mat", skip=1))| \\
+    Python & \verb|A = numpy.loadtxt('a.mat', skiprows=1)| \\
   \hline
 \end{tabular}
 \end{center}

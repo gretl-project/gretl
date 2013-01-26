@@ -953,6 +953,7 @@ static int skip_matrix_comment (FILE *fp, int *err)
 /**
  * gretl_matrix_read_from_text:
  * @fname: name of text file.
+ * @import: non-zero means we're importing via dotdir.
  * @err: location to receive error code.
  *
  * Reads a matrix from a text file by the name @fname; the column
@@ -964,14 +965,22 @@ static int skip_matrix_comment (FILE *fp, int *err)
  * Returns: The matrix read from file, or NULL.
  */
 
-gretl_matrix *gretl_matrix_read_from_text (const char *fname, int *err)
+gretl_matrix *gretl_matrix_read_from_text (const char *fname, 
+					   int import, int *err)
 {
     int r, c, i, j, n;
     double x;
     gretl_matrix *A = NULL;
     FILE *fp;
 
-    fp = gretl_read_user_file(fname);
+    if (import) {
+	char targ[FILENAME_MAX];
+
+	build_path(targ, gretl_dotdir(), fname, NULL);
+	fp = gretl_fopen(targ, "r");
+    } else {
+	fp = gretl_read_user_file(fname);
+    }
 
     if (fp == NULL) {
 	*err = E_FOPEN;
@@ -1030,6 +1039,7 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname, int *err)
  * gretl_matrix_write_as_text:
  * @A: matrix.
  * @fname: name of file to write.
+ * @export: non-zero means we're exporting via dotdir.
  *
  * Writes the matrix @A to a plain text file by the name @fname; the
  * column separator is the tab. The number of rows and columns are
@@ -1039,7 +1049,8 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname, int *err)
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
-int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname)
+int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname,
+				int export)
 {
     int r = A->rows;
     int c = A->cols;
@@ -1047,9 +1058,15 @@ int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname)
     FILE *fp;
     char d = '\t';
 
-    fname = gretl_maybe_switch_dir(fname);
+    if (export) {
+	char targ[FILENAME_MAX];
 
-    fp = gretl_fopen(fname, "w");
+	build_path(targ, gretl_dotdir(), fname, NULL);
+	fp = gretl_fopen(targ, "w");
+    } else {
+	fname = gretl_maybe_switch_dir(fname);
+	fp = gretl_fopen(fname, "w");
+    }
 
     if (fp == NULL) {
 	return E_FOPEN;

@@ -988,7 +988,7 @@ static int trim_zero_inst (ddset *dpd)
 #endif
 
 #if WRITE_MATRICES
-    gretl_matrix_write_as_text(dpd->A, "dpd-bigA.mat");
+    gretl_matrix_write_as_text(dpd->A, "dpd-bigA.mat", 0);
 #endif
 
     mask = gretl_matrix_zero_diag_mask(dpd->A, &err);
@@ -1107,7 +1107,7 @@ static void stack_unit_data (ddset *dpd,
     }
 
 #if WRITE_MATRICES
-    gretl_matrix_write_as_text(dpd->ZT, "dpdZT.mat");
+    gretl_matrix_write_as_text(dpd->ZT, "dpdZT.mat", 0);
 #endif
 
     *row = s;
@@ -1205,8 +1205,8 @@ static int do_units (ddset *dpd, const DATASET *dset,
 #endif
 
 #if WRITE_MATRICES
-    gretl_matrix_write_as_text(dpd->Y, "dpdY.mat");
-    gretl_matrix_write_as_text(dpd->X, "dpdX.mat");
+    gretl_matrix_write_as_text(dpd->Y, "dpdY.mat", 0);
+    gretl_matrix_write_as_text(dpd->X, "dpdX.mat", 0);
 #endif    
 
     gretl_matrix_free(D);

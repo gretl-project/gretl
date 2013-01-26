@@ -2165,8 +2165,8 @@ static int arbond_make_y_X (ddset *dpd, const DATASET *dset)
 #endif
 
 #if WRITE_MATRICES
-    gretl_matrix_write_as_text(dpd->Y, "arbondY.mat");
-    gretl_matrix_write_as_text(dpd->X, "arbondX.mat");
+    gretl_matrix_write_as_text(dpd->Y, "arbondY.mat", 0);
+    gretl_matrix_write_as_text(dpd->X, "arbondX.mat", 0);
 #endif  
 
     return 0;
@@ -2369,7 +2369,7 @@ static int arbond_make_Z_and_A (ddset *dpd, const DATASET *dset)
     free(rc);
 
 #if WRITE_MATRICES
-    gretl_matrix_write_as_text(dpd->A, "arbond-bigA.mat");
+    gretl_matrix_write_as_text(dpd->A, "arbond-bigA.mat", 0);
 #endif
 
     if (!err) {
@@ -2399,7 +2399,7 @@ static int arbond_make_Z_and_A (ddset *dpd, const DATASET *dset)
 #endif
 
 #if WRITE_MATRICES
-    gretl_matrix_write_as_text(dpd->ZT, "arbondZT.mat");
+    gretl_matrix_write_as_text(dpd->ZT, "arbondZT.mat", 0);
 #endif
 
     return err;
