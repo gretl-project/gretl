@@ -7178,6 +7178,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	vwin->role == EDIT_R || 
 	vwin->role == EDIT_OX ||
 	vwin->role == EDIT_OCTAVE ||
+        vwin->role == EDIT_PYTHON ||
 	vwin->role == EDIT_X12A) {
 	buf = textview_get_text(vwin->text);
     } else if (vwin->role == EDIT_PKG_SAMPLE) {
