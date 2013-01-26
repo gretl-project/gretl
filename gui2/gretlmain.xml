@@ -50,6 +50,7 @@
 	  <menuitem action="GnuplotScript"/>
 	  <menuitem action="RScript"/>
           <menuitem action="OctaveScript"/>
+          <menuitem action="PyScript"/>
 	  <placeholder action="OxScript"/>
 	</menu>
 	<separator/>

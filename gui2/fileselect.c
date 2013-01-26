@@ -96,7 +96,8 @@ static struct extmap action_map[] = {
     { SAVE_GP_CMDS,      ".plt" },
     { SAVE_R_CMDS,       ".R" },
     { SAVE_OX_CMDS,      ".ox" },
-    { SAVE_OCTAVE_CMDS,  ".m" },    
+    { SAVE_OCTAVE_CMDS,  ".m" }, 
+    { SAVE_PYTHON_CMDS,  ".py" },
     { SAVE_FUNCTIONS,    ".gfn" },
     { SAVE_MARKERS,      ".txt" },
     { SAVE_LABELS,       ".txt" },
@@ -321,7 +322,8 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
     } else if (action == SAVE_GP_CMDS || 
 	       action == SAVE_R_CMDS ||
 	       action == SAVE_OX_CMDS ||
-	       action == SAVE_OCTAVE_CMDS) {
+	       action == SAVE_OCTAVE_CMDS ||
+	       action == SAVE_PYTHON_CMDS) {
 	script_window_update(vwin, fname);
     } 
 }
@@ -355,6 +357,8 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	view_script(fname, 1, EDIT_OX);
     } else if (has_suffix(fname, ".m")) {
 	view_script(fname, 1, EDIT_OCTAVE);
+    } else if (has_suffix(fname, ".py")) {
+	view_script(fname, 1, EDIT_PYTHON);
     } else {
 	strcpy(tryfile, fname);
 	if (view_script(tryfile, 1, EDIT_SCRIPT) != NULL) {

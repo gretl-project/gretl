@@ -44,6 +44,7 @@
 #include "objstack.h"
 #include "gretl_xml.h"
 #include "gretl_panel.h"
+#include "gretl_foreign.h"
 #include "uservar.h"
 #include "csvdata.h"
 #include "matrix_extra.h"
@@ -7202,9 +7203,11 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
     } else if (vwin->role == EDIT_R) {
 	run_R_script(buf, vwin_toplevel(vwin));
     } else if (vwin->role == EDIT_OX) {
-	run_ox_script(buf);
+	run_foreign_script(buf, LANG_OX);
     } else if (vwin->role == EDIT_OCTAVE) {
-	run_octave_script(buf);
+	run_foreign_script(buf, LANG_OCTAVE);
+    } else if (vwin->role == EDIT_PYTHON) {
+	run_foreign_script(buf, LANG_PYTHON);
     } else if (vwin->role == EDIT_X12A) {
 	run_x12a_script(buf);
     } else {
@@ -7293,6 +7296,8 @@ void new_script_callback (GtkAction *action)
 	etype = EDIT_OX;
     } else if (!strcmp(s, "OctaveScript")) {
 	etype = EDIT_OCTAVE;
+    } else if (!strcmp(s, "PyScript")) {
+	etype = EDIT_PYTHON;
     }
 
     do_new_script(etype);

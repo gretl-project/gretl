@@ -54,7 +54,8 @@ enum {
 
 #define gui_help(r) (r == GUI_HELP || r == GUI_HELP_EN)
 #define foreign_script_role(r) (r == EDIT_GP || r == EDIT_R || \
-				r == EDIT_OX || r == EDIT_OCTAVE)
+				r == EDIT_OX || r == EDIT_OCTAVE || \
+				r == EDIT_PYTHON)
 
 /* globals accessed in settings.c */
 int tabwidth = 4;
@@ -419,6 +420,8 @@ static void sourceview_apply_language (windata_t *vwin)
 	id = "cpp";
     } else if (vwin->role == EDIT_OCTAVE) {
 	id = "octave";
+    } else if (vwin->role == EDIT_PYTHON) {
+	id = "python";
     } else {
 	id = "gretl";
     }

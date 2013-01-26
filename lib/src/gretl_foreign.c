@@ -54,13 +54,7 @@ static gchar *gretl_Rmsg;
 static gchar *gretl_Oxprog;
 static gchar *gretl_octave_prog;
 static gchar *gretl_stata_prog;
-
-enum {
-    LANG_R = 1,
-    LANG_OX,
-    LANG_OCTAVE,
-    LANG_STATA
-};
+static gchar *gretl_python_prog;
 
 static void destroy_foreign (void)
 {
@@ -83,6 +77,8 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 	foreign_lang = LANG_OCTAVE;
     } else if (g_ascii_strcasecmp(lang, "stata") == 0) {
 	foreign_lang = LANG_STATA;
+    } else if (g_ascii_strcasecmp(lang, "python") == 0) {
+	foreign_lang = LANG_PYTHON;
     } else {
 	pprintf(prn, "%s: unknown language\n", lang);
 	err = E_DATA;
@@ -122,6 +118,17 @@ static const gchar *gretl_stata_filename (void)
     }
 
     return gretl_stata_prog;
+}
+
+static const gchar *gretl_python_filename (void)
+{
+    if (gretl_python_prog == NULL) {
+	const char *dotdir = gretl_dotdir();
+
+	gretl_python_prog = g_strdup_printf("%sgretltmp.py", dotdir);
+    }
+
+    return gretl_python_prog;
 }
 
 static void make_gretl_R_names (void)
@@ -201,6 +208,9 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	cmd = g_strdup_printf("\"%s\" --silent \"%s\"", path, fname);
     } else if (foreign_lang == LANG_STATA) {
 	cmd = g_strdup_printf("stata /q /e gretltmp.do");
+    } else if (foreign_lang == LANG_PYTHON) {
+	fname = gretl_python_filename();
+	cmd = g_strdup_printf("python \"%s\"", fname);
     } else {
 	return 1;
     }
@@ -320,6 +330,10 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	argv[1] = "--silent";
 	argv[2] = (char *) gretl_octave_filename();
 	argv[3] = NULL;
+    } else if (foreign_lang == LANG_PYTHON) {
+	argv[0] = "python";
+	argv[1] = (char *) gretl_python_filename();
+	argv[2] = NULL;
     } else if (foreign_lang == LANG_STATA) {
 	argv[0] = "stata";
 	argv[1] = "-b";
@@ -439,6 +453,58 @@ static int write_octave_io_file (void)
     return 0;
 }
 
+static int write_python_io_file (void)
+{
+    static int written;
+
+    if (!written) {
+	const char *dotdir = gretl_dotdir();
+	gchar *fname;
+	FILE *fp;
+
+	fname = g_strdup_printf("%sgretl_io.py", dotdir);
+	fp = gretl_fopen(fname, "w");
+	g_free(fname);
+
+	if (fp == NULL) {
+	    return E_FOPEN;
+	} else {
+#ifdef G_OS_WIN32
+            gchar *dotcpy = win32_dotpath();
+
+	    fputs("def gretl_dotdir():\n", fp);
+	    fprintf(fp, "  dotdir = \"%s\"\n", dotcpy);
+	    g_free(dotcpy);
+#else
+	    fputs("def gretl_dotdir():\n", fp);
+	    fprintf(fp, "  dotdir = \"%s\"\n", dotdir);
+#endif	
+	    fputs("  return dotdir\n\n", fp);
+
+	    fputs("def gretl_export(M, fname):\n", fp);
+            fputs("  dname = gretl_dotdir()\n", fp);
+	    fputs("  r, c = M.shape\n", fp);
+	    fputs("  f = open(dname + fname, 'w')\n", fp);
+	    fputs("  f.write(repr(r) + '\\t' + repr(c) + '\\n')\n", fp);
+	    fputs("  np.savetxt(f, M, fmt='%.18e', delimiter=' ')\n", fp);
+	    fputs("  f.close()\n", fp);
+	    fputs("  return\n\n", fp);  
+
+	    fputs("def gretl_loadmat(fname):\n", fp);
+            fputs("  dname = gretl_dotdir()\n", fp);
+	    fputs("  M = np.loadtxt(dname + fname, skiprows=1)\n", fp);
+	    fputs("  return M\n\n", fp);
+
+	    fputs("import numpy as np\n\n", fp);
+
+	    fclose(fp);
+	    written = 1;
+	}
+    }
+
+    return 0;
+}
+
 static int write_stata_io_file (void)
 {
     static int written;
@@ -495,6 +561,8 @@ static void add_gretl_include (FILE *fp)
 	}
     } else if (foreign_lang == LANG_OCTAVE) {
 	fprintf(fp, "source(\"%sgretl_io.m\")\n", dotcpy);
+    } else if (foreign_lang == LANG_PYTHON) {
+	fprintf(fp, "execfile(\"%sgretl_io.py\")\n", dotcpy);    
     } else if (foreign_lang == LANG_STATA) {
 	fprintf(fp, "quietly adopath + \"%s\"\n", dotcpy);
     }
@@ -510,6 +578,8 @@ static void add_gretl_include (FILE *fp)
 	}
     } else if (foreign_lang == LANG_OCTAVE) {
 	fprintf(fp, "source(\"%sgretl_io.m\")\n", dotdir);
+    } else if (foreign_lang == LANG_PYTHON) {
+	fprintf(fp, "execfile(\"%sgretl_io.py\")\n", dotdir);
     } else if (foreign_lang == LANG_STATA) {
 	fprintf(fp, "quietly adopath + \"%s\"\n", dotdir);
     }
@@ -558,6 +628,56 @@ int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname)
 		if (!err && strstr(foreign_lines[i], "oxstd.h")) {
 		    add_gretl_include(fp);
 		}
+	    }
+	}
+	fclose(fp);
+	if (pfname != NULL) {
+	    *pfname = fname;
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * write_gretl_python_file:
+ * @buf: text buffer containing Python code.
+ * @opt: should contain %OPT_G for use from GUI.
+ * @pfname: location to receive name of file written, or %NULL.
+ *
+ * Writes the content of @buf into a file in the gretl user's
+ * "dotdir".
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int write_gretl_python_file (const char *buf, gretlopt opt, const char **pfname)
+{
+    const gchar *fname = gretl_python_filename();
+    FILE *fp = gretl_fopen(fname, "w");
+    int err = write_python_io_file();
+
+    if (fp == NULL) {
+	return E_FOPEN;
+    } else {
+	if (!err) {
+	    add_gretl_include(fp);
+	}
+	if (buf != NULL) {
+	    /* pass on the material supplied in the 'buf' argument */
+	    char line[1024];
+
+	    bufgets_init(buf);
+	    while (bufgets(line, sizeof line, buf)) {
+		fputs(line, fp);
+	    }
+	    bufgets_finalize(buf);
+	} else {
+	    /* put out the stored 'foreign' lines */
+	    int i;
+
+	    for (i=0; i<foreign_n_lines; i++) { 
+		fprintf(fp, "%s\n", foreign_lines[i]);
 	    }
 	}
 	fclose(fp);
@@ -1034,6 +1154,13 @@ static void delete_gretl_stata_file (void)
 {
     if (gretl_stata_prog != NULL) {
 	gretl_remove(gretl_stata_prog);
+    }
+}
+
+static void delete_gretl_python_file (void)
+{
+    if (gretl_python_prog != NULL) {
+	gretl_remove(gretl_python_prog);
     }
 }
 
@@ -1770,6 +1897,14 @@ int foreign_execute (const DATASET *dset,
 				     dset, NULL);
 	if (err) {
 	    delete_gretl_stata_file();
+	} else {
+	    err = lib_run_other_sync(foreign_opt, prn);
+	}
+    } else if (foreign_lang == LANG_PYTHON) {
+	err = write_gretl_python_file(NULL, foreign_opt, 
+				      NULL);
+	if (err) {
+	    delete_gretl_python_file();
 	} else {
 	    err = lib_run_other_sync(foreign_opt, prn);
 	}	

@@ -19,6 +19,14 @@
 
 #ifndef GRETL_FOREIGN_H
 
+typedef enum {
+    LANG_R = 1,
+    LANG_OX,
+    LANG_OCTAVE,
+    LANG_STATA,
+    LANG_PYTHON
+} ForeignLangs;
+
 int foreign_append_line(const char *line, gretlopt opt, PRN *prn);
 
 int foreign_execute (const DATASET *dset, gretlopt opt, PRN *prn);
@@ -30,6 +38,8 @@ int write_gretl_R_files (const char *buf,
 void delete_gretl_R_files (void);
 
 int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname);
+
+int write_gretl_python_file (const char *buf, gretlopt opt, const char **pfname);
 
 int write_gretl_octave_file (const char *buf, gretlopt opt, 
 			     const DATASET *dset,

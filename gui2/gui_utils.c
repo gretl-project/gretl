@@ -1327,6 +1327,8 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	    file_selector(SAVE_OX_CMDS, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_OCTAVE) {
 	    file_selector(SAVE_OCTAVE_CMDS, FSEL_DATA_VWIN, vwin);
+	} else if (vwin->role == EDIT_PYTHON) {
+	    file_selector(SAVE_PYTHON_CMDS, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == CONSOLE) {
 	    file_selector(SAVE_CONSOLE, FSEL_DATA_VWIN, vwin);
 	}	    
@@ -1609,6 +1611,8 @@ static gchar *make_viewer_title (int role, const char *fname)
 	title = g_strdup(_("gretl: edit Ox program")); break;
     case EDIT_OCTAVE:
 	title = g_strdup(_("gretl: edit Octave script")); break;
+    case EDIT_PYTHON:
+	title = g_strdup(_("gretl: edit Python script")); break;
     case SCRIPT_OUT:
 	title = g_strdup(_("gretl: script output")); break;
     case VIEW_DATA:
@@ -1846,8 +1850,6 @@ view_file_with_title (const char *filename, int editable, int del_file,
     if (role == EDIT_SCRIPT && use_tabbed_editor()) {
 	vwin = viewer_tab_new(role, filename, NULL);
     } else if (given_title != NULL) {
-	/* this is the case when editing the plot commands for
-	   a graph saved as a session icon */
 	vwin = gretl_viewer_new(role, given_title, NULL);
     } else {
 	gchar *title = make_viewer_title(role, filename);
@@ -4837,13 +4839,15 @@ static void run_R_sync (void)
     g_free(cmd);
 }
 
-static void run_ox_or_octave (gchar *buf, int ox)
+void run_foreign_script (gchar *buf, int lang)
 {
     const char *fname;
     int err;
 
-    if (ox) {
+    if (lang == LANG_OX) {
 	err = write_gretl_ox_file(buf, OPT_G, &fname);
+    } else if (lang == LANG_PYTHON) {
+	err = write_gretl_python_file(buf, OPT_G, &fname);
     } else {
 	err = write_gretl_octave_file(buf, OPT_G, dataset, &fname);
     }
@@ -4854,8 +4858,10 @@ static void run_ox_or_octave (gchar *buf, int ox)
 	char *sout = NULL;
 	gchar *cmd;
 
-	if (ox) {
+	if (lang == LANG_OX) {
 	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_oxl_path(), fname);
+	} else if (lang == LANG_PYTHON) {
+	    cmd = g_strdup_printf("\"%s\" \"%s\"", "python", fname);
 	} else {
 	    cmd = g_strdup_printf("\"%s\" -q \"%s\"", gretl_octave_path(), fname);
 	}
@@ -4875,16 +4881,6 @@ static void run_ox_or_octave (gchar *buf, int ox)
 	    }
 	}
     }
-}
-
-void run_ox_script (gchar *buf)
-{
-    run_ox_or_octave(buf, 1);
-}
-
-void run_octave_script (gchar *buf)
-{
-    run_ox_or_octave(buf, 0);
 }
 
 #else /* some non-Windows functions follow */
@@ -5048,43 +5044,39 @@ static void run_R_sync (void)
     run_prog_sync(argv);
 }
 
-void run_ox_script (gchar *buf)
+void run_foreign_script (gchar *buf, int lang)
 {
     const char *fname;
     int err;
 
-    err = write_gretl_ox_file(buf, OPT_G, &fname);
-
-    if (err) {
-	gui_errmsg(err);
+    if (lang == LANG_OX) {
+	err = write_gretl_ox_file(buf, OPT_G, &fname);
+    } else if (lang == LANG_PYTHON) {
+	err = write_gretl_python_file(buf, OPT_G, &fname);
     } else {
-	gchar *argv[3];
-
-	argv[0] = (gchar *) gretl_oxl_path();
-	argv[1] = (gchar *) fname;
-	argv[2] = NULL;
-
-	run_prog_sync(argv);
+	err = write_gretl_octave_file(buf, OPT_G, dataset,
+				      &fname);
     }
-}
-
-void run_octave_script (gchar *buf)
-{
-    const char *fname;
-    int err;
-
-    err = write_gretl_octave_file(buf, OPT_G, dataset,
-				  &fname);
 
     if (err) {
 	gui_errmsg(err);
     } else {
 	gchar *argv[4];
 
-	argv[0] = (gchar *) gretl_octave_path();
-	argv[1] = (gchar *) "-q";
-	argv[2] = (gchar *) fname;
-	argv[3] = NULL;
+	if (lang == LANG_OX) {
+	    argv[0] = (gchar *) gretl_oxl_path();
+	    argv[1] = (gchar *) fname;
+	    argv[2] = NULL;
+	} else if (lang == LANG_PYTHON) {
+	    argv[0] = "python";
+	    argv[1] = (gchar *) fname;
+	    argv[2] = NULL;
+	} else {
+	    argv[0] = (gchar *) gretl_octave_path();
+	    argv[1] = (gchar *) "-q";
+	    argv[2] = (gchar *) fname;
+	    argv[3] = NULL;
+	}
 
 	run_prog_sync(argv);
     }
