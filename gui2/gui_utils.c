@@ -4108,13 +4108,13 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	if (var->detflags & DET_TREND) {
 	    item.name = "VarOmitTrend";
 	    item.label = N_("Omit time trend");
-	    item.callback = G_CALLBACK(VAR_omit_trend);
+	    item.callback = G_CALLBACK(VAR_omit_auto);
 	    vwin_menu_add_item(vwin, tests, &item);
 	}
 	if (var->detflags & DET_SEAS) {
 	    item.name = "VarOmitSeas";
 	    item.label = N_("Omit seasonal dummies");
-	    item.callback = G_CALLBACK(VAR_omit_seasonals);
+	    item.callback = G_CALLBACK(VAR_omit_auto);
 	    vwin_menu_add_item(vwin, tests, &item);
 	}	
     }

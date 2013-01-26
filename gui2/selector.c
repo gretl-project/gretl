@@ -298,7 +298,8 @@ static int want_radios (selector *sr)
     if (c == PANEL || c == SCATTERS || c == AR1 ||
 	c == LOGIT || c == PROBIT || c == HECKIT ||
 	c == XTAB || c == SPEARMAN || c == PCA ||
-	c == QUANTREG || c == DPANEL || c == LOGISTIC) {
+	c == QUANTREG || c == DPANEL || 
+	c == LOGISTIC || c == VAROMIT) {
 	ret = 1;
     } else if (c == ADD || c == OMIT) {
 	windata_t *vwin = (windata_t *) sr->data;
@@ -5788,9 +5789,9 @@ static void build_add_test_radios (selector *sr)
 static void build_omit_test_radios (selector *sr)
 {
     windata_t *vwin = (windata_t *) sr->data;
-    MODEL *pmod = (MODEL *) vwin->data;
     GtkWidget *b1, *b2, *b3;
     GSList *group;
+    int auto_ok = 0;
 
     vbox_add_vwedge(sr->vbox);
 
@@ -5801,7 +5802,15 @@ static void build_omit_test_radios (selector *sr)
     b2 = gtk_radio_button_new_with_label(group, _("Wald test, based on covariance matrix"));
     pack_switch(b2, sr, FALSE, FALSE, OPT_W, 0);
 
-    if (pmod->ci != PANEL) {
+    if (sr->ci != VAROMIT) {
+	MODEL *pmod = (MODEL *) vwin->data;
+
+	if (pmod != NULL) {
+	    auto_ok = (pmod->ci != PANEL);
+	}
+    }
+
+    if (auto_ok) {
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b2));
 	b3 = gtk_radio_button_new_with_label(group, _("Sequential elimination of variables\n"
 						      "using two-sided p-value:"));
@@ -6125,7 +6134,7 @@ static void build_selector_radios (selector *sr)
 	build_scatters_radios(sr);
     } else if (sr->ci == ADD) {
 	build_add_test_radios(sr);
-    } else if (sr->ci == OMIT) {
+    } else if (sr->ci == OMIT || sr->ci == VAROMIT) {
 	build_omit_test_radios(sr);
     } else if (sr->ci == LOGIT || sr->ci == PROBIT) {
 	build_pvalues_radios(sr);

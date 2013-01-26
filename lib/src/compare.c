@@ -261,44 +261,56 @@ static int add_diffvars_to_test (ModelTest *test, const int *list,
 void print_add_omit_null (const int *list, const DATASET *dset,
 			  gretlopt opt, PRN *prn)
 {
-    /* note: if OPT_S, we're doing this for a system */
+    int nl = list == NULL ? 0 : list[0];
 
-    if (list != NULL && list[0] == 1 && !(opt & OPT_S)) {
+    if (nl == 1 && !(opt & OPT_S)) {
+	/* single parameter, not in system context */
 	pputs(prn, "\n  ");
 	pprintf(prn, _("Null hypothesis: the regression parameter is zero for %s"), 
 		dset->varname[list[1]]);
 	pputc(prn, '\n');
+    } else if (nl == 0) {
+	/* VAR omit specials */
+	if ((opt & OPT_E) && (opt & OPT_T)) {
+	    pprintf(prn, "\n  %s: %s\n", _("Null hypothesis"),
+		    _("no seasonal effects or trend"));
+	} else if (opt & OPT_E) {
+	    pprintf(prn, "\n  %s: %s\n", _("Null hypothesis"),
+		    _("no seasonal effects"));
+	} else if (opt & OPT_T) {
+	    pprintf(prn, "\n  %s: %s\n", _("Null hypothesis"),
+		    _("no trend"));
+	}
     } else {
+	/* all other cases */
 	const char *vname;
 	int i, nc = 0;
 
 	pputs(prn, _("\n  Null hypothesis: the regression parameters are "
 		     "zero for the variables\n"));
 
-	if (list != NULL && list[0] > 0) {
-	    pputs(prn, "    ");
-	    for (i=1; i<=list[0]; i++) {
-		vname = dset->varname[list[i]];
-		nc += strlen(vname) + 2;
-		pprintf(prn, "%s", vname);
-		if (i < list[0]) {
-		    if (nc > 60) {
-			pputs(prn, ",\n    ");
-			nc = 0;
-		    } else {
-			pputs(prn, ", ");
-		    }
+	pputs(prn, "    ");
+	for (i=1; i<=list[0]; i++) {
+	    vname = dset->varname[list[i]];
+	    nc += strlen(vname) + 2;
+	    pprintf(prn, "%s", vname);
+	    if (i < list[0]) {
+		if (nc > 60) {
+		    pputs(prn, ",\n    ");
+		    nc = 0;
+		} else {
+		    pputs(prn, ", ");
 		}
 	    }
-	    pputc(prn, '\n');
 	}
+	pputc(prn, '\n');
 	if (opt & OPT_E) {
 	    /* seasonals */
 	    pprintf(prn, "    %s\n", _("seasonal dummies"));
 	}
 	if (opt & OPT_T) {
 	    /* trend */
-	    pprintf(prn, "    time\n");
+	    pputs(prn, "    time\n");
 	}	
     }
 }

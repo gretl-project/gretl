@@ -450,14 +450,16 @@ static int openmp_by_default (void)
 	    ret = 0;
 	}
     }
-    
+
+#if 0    
     if (ret) {
 	fprintf(stderr, "num_cores = %d, using OpenMP by default\n",
 		num_cores);
     } else {
 	fprintf(stderr, "num_cores = %d, not using OpenMP by default\n",
 		num_cores);
-    }	
+    }
+#endif	
 
     return ret;
 }

@@ -1057,8 +1057,9 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
 
 	    if (!(opt & OPT_I)) {
 		/* not silent */
+		pprintf(prn, "%s:\n", _("Test on VAR"));
 		print_add_omit_null(omitlist, dset, opt | OPT_S, prn);
-		pprintf(prn, "\n  %s: %s(%d) = %g, %s %g\n\n",  _("Wald test"),
+		pprintf(prn, "  %s: %s(%d) = %g, %s %g\n\n",  _("Wald test"),
 			_("Chi-square"), nr, test,
 			_("p-value"), pval);
 	    }

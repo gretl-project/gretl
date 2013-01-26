@@ -2141,17 +2141,21 @@ int do_VAR_omit (selector *sr)
 {
     windata_t *vwin = selector_get_data(sr);
     const char *buf = selector_list(sr);
-    int *omitlist;
-    GRETL_VAR *var;
+    gretlopt opt = selector_get_opts(sr);
+    GRETL_VAR *var = vwin->data;
     GRETL_VAR *vnew = NULL;
+    int *omitlist;
     PRN *prn;
-    gint err = 0;
+    int err = 0;
 
+    /* Here we're omitting one or more exogenous terms, other than an
+       auto-added trend or seasonals. The selector gives the option of
+       just a Wald test (OPT_W) or estimation of the reduced model.
+    */
+ 
     if (buf == NULL) {
 	return 1;
     }
-
-    var = vwin->data;
 
     if (bufopen(&prn)) {
 	return 1;
@@ -2160,14 +2164,27 @@ int do_VAR_omit (selector *sr)
     omitlist = gretl_list_from_string(buf, &err);
 
     if (!err) {
-	vnew = gretl_VAR_omit_test(var, omitlist, dataset, 
-				   OPT_NONE, prn, &err);
+	if (opt & OPT_W) {
+	    err = gretl_VAR_wald_omit_test(var, omitlist, dataset, 
+					   OPT_NONE, prn);
+	} else {
+	    vnew = gretl_VAR_omit_test(var, omitlist, dataset, 
+				       OPT_NONE, prn, &err);
+	}
+	free(omitlist);
     }
 
     if (err) {
         gui_errmsg(err);
         gretl_print_destroy(prn);
+    } else if (opt & OPT_W) {
+	lib_command_sprintf("omit%s --test-only", buf);
+	record_command_verbatim();
+	view_buffer(prn, 78, 200, _("gretl: Wald omit test"), 
+		    PRINT, NULL);
     } else {
+	lib_command_sprintf("omit%s", buf);
+	record_command_verbatim();
 	view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
 		    VAR, vnew);
     }
@@ -2175,45 +2192,38 @@ int do_VAR_omit (selector *sr)
     return err;
 }
 
-void VAR_omit_trend (GtkAction *action, gpointer p)
+void VAR_omit_auto (GtkAction *action, gpointer p)
 {
+    const gchar *aname = gtk_action_get_name(action);
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = vwin->data;
+    gretlopt opt;
     PRN *prn;
     int err;
+
+    /* Here we're omitting an "auto-added" term: either
+       a trend or a set of seasonal dummies. 
+    */
 
     if (bufopen(&prn)) {
 	return;
     }
 
+    if (!strcmp(aname, "VarOmitTrend")) {
+	opt = OPT_T;
+    } else {
+	opt = OPT_E;
+    }
+
     err = gretl_VAR_wald_omit_test(var, NULL, dataset, 
-				   OPT_T, prn);
+				   opt, prn);
     if (err) {
         gui_errmsg(err);
         gretl_print_destroy(prn);
     } else {
-	view_buffer(prn, 78, 200, _("gretl: Wald omit test"), 
-		    PRINT, NULL);
-    }
-}
-
-void VAR_omit_seasonals (GtkAction *action, gpointer p)
-{
-    windata_t *vwin = (windata_t *) p;
-    GRETL_VAR *var = vwin->data;
-    PRN *prn;
-    int err;
-
-    if (bufopen(&prn)) {
-	return;
-    }
-
-    err = gretl_VAR_wald_omit_test(var, NULL, dataset, 
-				   OPT_E, prn);
-    if (err) {
-        gui_errmsg(err);
-        gretl_print_destroy(prn);
-    } else {
+	lib_command_sprintf("omit --%s --test-only", (opt & OPT_T)?
+			    "trend" : "seasonals");
+	record_command_verbatim();
 	view_buffer(prn, 78, 200, _("gretl: Wald omit test"), 
 		    PRINT, NULL);
     }
