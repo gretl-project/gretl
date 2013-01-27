@@ -426,18 +426,28 @@ int libset_use_openmp (int n)
 }
 
 #if defined(_OPENMP)
-# ifdef WIN32
+# if defined(WIN32)
 # include <windows.h>
+# elif defined(OS_OSX)
+# include <sys/param.h>
+# include <sys/sysctl.h>
 # endif
 
 static int openmp_by_default (void)
 {
-    int num_cores, ret = 0;
-# ifdef WIN32
+    int num_cores = 1, ret = 0;
+# if defined(WIN32)
     SYSTEM_INFO sysinfo;
 
     GetSystemInfo(&sysinfo);
     num_cores = sysinfo.dwNumberOfProcessors;
+# elif defined(OS_OSX)
+    int mib[2] = {CTL_HW, HW_NCPU}; /* or CTL_KERN, KERN_MAXPROC ? */
+    size_t len = sizeof num_cores;
+
+    if (sysctl(mib, 2, &num_cores, &len, NULL, 0) == -1) {
+	perror("could not determine number of cpus available");
+    }    
 # else
     num_cores = sysconf(_SC_NPROCESSORS_ONLN);
 # endif
@@ -451,7 +461,7 @@ static int openmp_by_default (void)
 	}
     }
 
-#if 0    
+#if 1   
     if (ret) {
 	fprintf(stderr, "num_cores = %d, using OpenMP by default\n",
 		num_cores);

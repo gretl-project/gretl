@@ -302,6 +302,12 @@ AC_ARG_VAR(MKLANG, builder for gtksourceview files (cross-build))
 AC_C_SSE2
 AC_C_OPENMP
 
+dnl ensure that the source will get rebuilt if openmp
+dnl is turned on or off, by flagging this in config.h
+if test "$ac_openmp_result" = "yes" ; then
+  AC_DEFINE(USE_OPENMP, 1)
+fi
+
 dnl try to build mailer plugin?
 AC_CHECK_HEADERS(netdb.h sys/socket.h,
 	build_mailer="yes" ; AC_DEFINE(ENABLE_MAILER),
@@ -578,12 +584,12 @@ dnl Mac: check for Quartz version of GTK
 dnl
 if test "$darwin_build" = "yes" ; then
   if test "$gtk_version" = "3.0" ; then
-    PKG_CHECK_EXISTS(gtk+-quartz-3.0 >= 3.4.0,
+    PKG_CHECK_EXISTS(gtk+-quartz-3.0,
      echo "Found quartz-based GTK"
      mac_native="yes", 
      mac_native="no")
   elif test "$gtk_version" = "2.0" ; then
-    PKG_CHECK_EXISTS(gtk+-quartz-2.0 >= 2.24.0,
+    PKG_CHECK_EXISTS(gtk+-quartz-2.0,
      echo "Found quartz-based GTK"
      mac_native="yes", 
      mac_native="no")
