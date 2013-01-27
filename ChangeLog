@@ -1,4 +1,5 @@
 version 1.9.12, in progress
+- "foreign" command: add support for Python + numpy
 - "markers" command: add support for the panel-data case
   where the number of markers equals the number of cross-
   sectional units
@@ -11,6 +12,8 @@ version 1.9.12, in progress
 - Add new function strstrip()
 - lags() function: add an optional third parameter to control
   the ordering of terms in the output list
+- mread() and mwrite() functions: add an optional argument to
+  direct read/write to the user's "dot directory"
 - Improve structural integrity of model specification dialog
   (it now behaves properly on resizing)
 - Gnuplot version: require 4.4.0 (March 2010) or higher
