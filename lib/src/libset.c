@@ -116,7 +116,7 @@ struct set_vars_ {
 #define WARNINGS "warnings"
 #define GRETL_DEBUG "debug"
 #define BLAS_NMK_MIN "blas_nmk_min"
-#define MP_MIN "mp_min"
+#define MP_NMK_MIN "mp_nmk_min"
 
 #define libset_boolvar(s) (!strcmp(s, ECHO) || \
                            !strcmp(s, MESSAGES) || \
@@ -172,7 +172,7 @@ static int R_lib = 1;
 static int csv_digits;
 static char data_delim = ',';
 static char data_export_decpoint = '.';
-static int mp_min = 127;
+static int mp_nmk_min = 127;
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
@@ -417,7 +417,7 @@ int libset_use_openmp (int n)
 #if defined(_OPENMP)
     if (state == NULL || !(state->flags & STATE_OPENMP_ON)) {
 	return 0;
-    } else if (mp_min >= 0 && n > mp_min) {
+    } else if (mp_nmk_min >= 0 && n > mp_nmk_min) {
 	return 1;
     }
 #endif
@@ -461,7 +461,7 @@ static int openmp_by_default (void)
 	}
     }
 
-#if 1   
+#if 0   
     if (ret) {
 	fprintf(stderr, "num_cores = %d, using OpenMP by default\n",
 		num_cores);
@@ -1923,8 +1923,8 @@ int libset_set_int (const char *key, int val)
     if (!strcmp(key, BLAS_NMK_MIN)) {
 	set_blas_nmk_min(val);
 	return 0;
-    } else if (!strcmp(key, MP_MIN)) {
-	mp_min = val;
+    } else if (!strcmp(key, MP_NMK_MIN)) {
+	mp_nmk_min = val;
 	return 0;
     } else {
 	int min = 0, max = 0;

@@ -9589,9 +9589,8 @@
 	estimation, and interaction with GNU R.
       </para>
 
-      <para>
-	<emphasis>Program interaction and behavior</emphasis>
-      </para>
+      <subhead>Program interaction and behavior</subhead>
+
       <para>
 	These settings are used for controlling various aspects of the way
 	gretl interacts with the user.
@@ -9733,9 +9732,8 @@
 	</li>
       </ilist>
 
-      <para>
-	<emphasis>Numerical methods</emphasis>
-      </para>
+      <subhead>Numerical methods</subhead>
+
       <para>
 	These settings are used for controlling the numerical
 	algorithms that gretl uses for estimation.
@@ -9865,9 +9863,7 @@
 	</li>
       </ilist>
 
-      <para>
-	<emphasis>Random number generation</emphasis>
-      </para>
+      <subhead>Random number generation</subhead>
 
       <ilist>
 	<li>
@@ -9895,9 +9891,7 @@
 	</li>
       </ilist>
 
-      <para>
-	<emphasis>Robust estimation</emphasis>
-      </para>
+      <subhead>Robust estimation</subhead>
 
       <ilist>
 	<li>
@@ -10004,9 +9998,7 @@
 	</li> 
       </ilist>
 
-      <para>
-	<emphasis>Time series</emphasis>
-      </para>
+      <subhead>Time series</subhead>
 
       <ilist>
 	<li>
