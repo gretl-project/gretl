@@ -11,8 +11,8 @@
 /* Extra floating-point GMP routines? */
 #define HAVE_MPFR 1
 
-/* openmp: not for now */
-/* #undef USE_OPENMP */
+/* openmp? */
+#define OPENMP_BUILD 1
 
 /* sse2: we'll assume this is OK */
 #define USE_SSE2 1

@@ -3571,55 +3571,6 @@
       </description>
     </function>
 
-    <function name="mexport" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="matrix">X</fnarg>
-	<fnarg type="string">filename</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Works like <fncref targ="mwrite"/> (that is, writes out
-	  <argname>X</argname> as a text file) except that the file is
-	  written to a location where it can be found by third-party
-	  programs running under the <cmdref targ="foreign"/>
-	  command. The <argname>filename</argname> argument should be
-	  given without any directory/folder component, as in
-	</para>
-	<code>
-	  mexport(X, "X.mat")
-	</code>
-	<para>
-	  <seelist>
-	    <fncref targ="mimport"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="mimport" section="matbuild" output="matrix">
-      <fnargs>
-	<fnarg type="string">filename</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Works like <fncref targ="mread"/> (that is, reads a matrix
-	  from a text file) except that the file is read from the
-	  location where it is written by default by third-party
-	  programs running under the <cmdref targ="foreign"/>
-	  command. The <argname>filename</argname> argument should be
-	  given without any directory/folder component, as in
-	</para>
-	<code>
-	  matrix M = mimport("M.mat")
-	</code>
-	<para>
-	  <seelist>
-	    <fncref targ="mexport"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="min" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">y</fnarg>
@@ -3944,12 +3895,13 @@
 
     <function name="mread" section="matbuild" output="matrix">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="string">fname</fnarg>
+	<fnarg optional="true" type="scalar">import</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Reads a matrix from a text file. The string
-	  <argname>s</argname> must contain the name of the (plain
+	  <argname>fname</argname> must contain the name of the (plain
 	  text) file from which the matrix is to be read. The file in
 	  question may start with any number of comment lines, defined
 	  as lines that start with the hash mark, <lit>#</lit>; such
@@ -3977,13 +3929,21 @@
 	  </li>
 	</ilist>
 	<para>
+	  If a non-zero value is given for the optional
+	  <argname>import</argname> argument, the input file is looked
+	  for in the user's <quote>dot</quote> directory. This is
+	  intended for use with the matrix-exporting functions offered
+	  in the context of the <cmdref targ="foreign"/> command. In
+	  this case the <argname>fname</argname> argument should be
+	  a plain filename, without any path component.
+	</para>
+	<para>
 	  Should an error occur (such as the file being badly formatted or
 	  inaccessible), an empty matrix is returned.
 	</para>
 	<para>
 	  <seelist>
 	    <fncref targ="mwrite"/>
-	    <fncref targ="mimport"/>	    
 	  </seelist>
 	</para>
       </description>
@@ -4115,31 +4075,41 @@
     <function name="mwrite" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="string">fname</fnarg>
+	<fnarg optional="true" type="scalar">export</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Writes the matrix <argname>X</argname> to a plain text file
-	  named <argname>s</argname>. The file will contain on the first
-	  line two integers, separated by a tab character, with the number
-	  of rows and columns; on the next lines, the matrix elements in
-	  scientific notation, separated by tabs (one line per row).
+	  named <argname>fname</argname>. The file will contain on the
+	  first line two integers, separated by a tab character, with
+	  the number of rows and columns; on the next lines, the
+	  matrix elements in scientific notation, separated by tabs
+	  (one line per row).
 	</para>
 	<para>
-	  If file <argname>s</argname> already exists, it will be
-	  overwritten. The return value is 0 on successful completion; if
-	  an error occurs, such as the file being unwritable, the return
-	  value will be non-zero.
+	  If file <argname>fname</argname> already exists, it will be
+	  overwritten. The return value is 0 on successful completion;
+	  if an error occurs, such as the file being unwritable, the
+	  return value will be non-zero.
 	</para>
 	<para>
-	  Matrices stored via the <lit>mwrite</lit> command can be easily
-	  read by other programs; see <guideref targ="chap:matrices"/> for
-	  details.
+	  If a non-zero value is given for the
+	  <argname>export</argname> argument, the output file will be
+	  written into the user's <quote>dot</quote> directory, where
+	  it is accessible by default via the matrix-loading functions
+	  offered in the context of the <cmdref targ="foreign"/>
+	  command. In this case a plain filename, without any path
+	  component, should be given for the second argument.
+	</para>
+	<para>
+	  Matrices stored via the <lit>mwrite</lit> command can be
+	  easily read by other programs; see <guideref
+	  targ="chap:matrices"/> for details.
 	</para>
 	<para>
 	  <seelist>
 	    <fncref targ="mread"/>
-	    <fncref targ="mimport"/>
 	  </seelist>
 	</para>
       </description>

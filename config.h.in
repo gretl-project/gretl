@@ -36,7 +36,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #undef HAVE_MPFR
 
 /* Are we using openmp? */
-#undef USE_OPENMP
+#undef OPENMP_BUILD
 
 /* X-12-ARIMA support? */
 #undef HAVE_X12A

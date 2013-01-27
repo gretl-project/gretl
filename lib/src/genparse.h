@@ -246,8 +246,6 @@ enum {
     F_FFTI,
     F_UPPER,
     F_LOWER,
-    F_MREAD,
-    F_MIMPORT,
     F_POLROOTS,
     F_XPX,
     F_ARGNAME,
@@ -296,8 +294,6 @@ enum {
     F_HDPROD,     /* horizontal direct product */
     F_CDIV,	  /* complex division */
     F_MXTAB,
-    F_MWRITE,
-    F_MEXPORT,
     F_MRSEL,
     F_MCSEL,
     F_WMEAN,
@@ -333,6 +329,7 @@ enum {
     F_PXSUM,
     F_PSD,
     F_RANDINT,
+    F_MREAD,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,
@@ -362,6 +359,7 @@ enum {
     F_NADARWAT,
     F_SIMANN,
     F_HALTON,
+    F_MWRITE,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

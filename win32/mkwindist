@@ -127,8 +127,8 @@ done
 # zlib1.dll intl.dll libexpat-1.dll libfontconfig-1.dll
 
 # system DLLs for threads/openmp, if required
-# add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
-# add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
+add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
+add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
 
 # XML UI-definition files
 for f in ${TOPDIR}/gui2/*.xml ; do

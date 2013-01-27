@@ -2189,13 +2189,17 @@ static void lag_calc (double *y, const double *x,
     }
 }
 
-static NODE *matrix_text_write (NODE *l, NODE *r, int f, parser *p)
+static NODE *matrix_text_write (NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
-	const char *s = r->v.str;
-	int export = (f == F_MEXPORT);
+	const char *s = m->v.str;
+	int export = 0;
+	
+	if (!null_or_empty(r)) {
+	    export = (r->v.xval != 0);
+	}
 
 	ret = aux_scalar_node(p);
 	if (ret == NULL) { 
@@ -2699,18 +2703,21 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *string_to_matrix_func (NODE *n, int f, parser *p)
+static NODE *string_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
-	int import = (f == F_MIMPORT);
+	int import = 0;
+
+	if (!null_or_empty(r)) {
+	    import = (r->v.xval != 0);
+	}
 
 	gretl_error_clear();
 
 	switch (f) {
 	case F_MREAD:
-	case F_MIMPORT:	    
 	    ret->v.m = gretl_matrix_read_from_text(n->v.str, import, 
 						   &p->err);
 	    break;
@@ -9300,12 +9307,12 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_MREAD:
-    case F_MIMPORT:
-	/* string -> matrix functions */
-	if (l->t == STR) {
-	    ret = string_to_matrix_func(l, t->t, p);
+	if (l->t != STR) {
+	    node_type_error(t->t, 1, STR, l, p);	
+	} else if (!empty_or_num(r)) {
+	    node_type_error(t->t, 2, NUM, r, p);
 	} else {
-	    p->err = E_TYPES;
+	    ret = string_to_matrix_func(l, r, t->t, p);
 	}
 	break;
     case F_QR:
@@ -9322,14 +9329,12 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_FDJAC:
     case F_MWRITE:
-    case F_MEXPORT:
 	/* matrix, with string as second arg */
-	if (l->t == MAT && r->t == STR) {
-	    if (t->t == F_FDJAC) {
-		ret = numeric_jacobian(l, r, p);
-	    } else {
-		ret = matrix_text_write(l, r, t->t, p);
-	    }
+	if (t->t == F_FDJAC && l->t == MAT && r->t == STR) {
+	    ret = numeric_jacobian(l, r, p);
+	} else if (t->t == F_MWRITE && l->t == MAT && 
+		   m->t == STR && empty_or_num(r)) {
+	    ret = matrix_text_write(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;
 	} 

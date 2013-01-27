@@ -15058,7 +15058,7 @@ $as_echo "$ac_cv_prog_cc_openmp" >&6; }
 
 
 if test "$ac_openmp_result" = "yes" ; then
-  $as_echo "#define USE_OPENMP 1" >>confdefs.h
+  $as_echo "#define OPENMP_BUILD 1" >>confdefs.h
 
 fi
 

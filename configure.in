@@ -305,7 +305,7 @@ AC_C_OPENMP
 dnl ensure that the source will get rebuilt if openmp
 dnl is turned on or off, by flagging this in config.h
 if test "$ac_openmp_result" = "yes" ; then
-  AC_DEFINE(USE_OPENMP, 1)
+  AC_DEFINE(OPENMP_BUILD, 1)
 fi
 
 dnl try to build mailer plugin?
