@@ -44,6 +44,7 @@ static int foreign_lang;
    quietly (don't display output from foreign program)
 */
 static gretlopt foreign_opt;
+static gchar *numpy_as;
 
 /* "dotdir" filenames */
 static gchar *gretl_dot_dir;
@@ -482,20 +483,26 @@ static int write_python_io_file (void)
 	    fputs("  return dotdir\n\n", fp);
 
 	    fputs("def gretl_export(M, fname):\n", fp);
+	    fputs("  from numpy import savetxt\n", fp);
             fputs("  dname = gretl_dotdir()\n", fp);
 	    fputs("  r, c = M.shape\n", fp);
 	    fputs("  f = open(dname + fname, 'w')\n", fp);
 	    fputs("  f.write(repr(r) + '\\t' + repr(c) + '\\n')\n", fp);
-	    fputs("  np.savetxt(f, M, fmt='%.18e', delimiter=' ')\n", fp);
+	    fputs("  savetxt(f, M, fmt='%.18e', delimiter=' ')\n", fp);
 	    fputs("  f.close()\n", fp);
 	    fputs("  return\n\n", fp);  
 
 	    fputs("def gretl_loadmat(fname):\n", fp);
+	    fputs("  from numpy import loadtxt\n", fp);
             fputs("  dname = gretl_dotdir()\n", fp);
-	    fputs("  M = np.loadtxt(dname + fname, skiprows=1)\n", fp);
+	    fputs("  M = loadtxt(dname + fname, skiprows=1)\n", fp);
 	    fputs("  return M\n\n", fp);
 
-	    fputs("import numpy as np\n\n", fp);
+	    if (numpy_as != NULL) {
+		fprintf(fp, "import numpy as %s\n\n", numpy_as);
+	    } else {
+		fputs("import numpy as np\n\n", fp);
+	    }
 
 	    fclose(fp);
 	    written = 1;
@@ -1754,6 +1761,11 @@ static int foreign_block_init (const char *line, gretlopt opt, PRN *prn)
 
     foreign_opt = OPT_NONE;
 
+    if (numpy_as != NULL) {
+	g_free(numpy_as);
+	numpy_as = NULL;
+    }
+
     if (!strncmp(line, "foreign ", 8)) {
 	char lang[16];
 
@@ -1776,7 +1788,22 @@ static int foreign_block_init (const char *line, gretlopt opt, PRN *prn)
     }
 
     if (!err) {
-	foreign_opt = opt;
+	if (opt & OPT_N) {
+	    if (foreign_lang == LANG_PYTHON) {
+		const char *s = get_optval_string(FOREIGN, OPT_N);
+
+		if (s == NULL) {
+		    err = E_DATA;
+		} else {
+		    numpy_as = g_strdup(s);
+		}
+	    } else {
+		err = E_BADOPT;
+	    }
+	}
+	if (!err) {
+	    foreign_opt = opt;
+	}
     }
 
     return err;
