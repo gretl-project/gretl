@@ -799,6 +799,7 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_filter(filesel, N_("GNU R files (*.R)"), "*.R", maxlen);
 	filesel_add_filter(filesel, N_("gnuplot files (*.plt)"), "*.plt", maxlen);
 	filesel_add_filter(filesel, N_("GNU Octave files (*.m)"), "*.m", maxlen);
+	filesel_add_filter(filesel, N_("Python files (*.py)"), "*.py", maxlen);
 	if (ox_support) {
 	    filesel_add_filter(filesel, N_("Ox files (*.ox)"), "*.ox", maxlen);
 	}
