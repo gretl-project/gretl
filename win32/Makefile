@@ -36,8 +36,7 @@ FFTW_LIBS = -lfftw3
 CURL_LIBS = -lcurl.dll
 
 # flags/defines
-CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) -I$(zipdir) \
-  -I$(XML2_INC) $(RLIB_CFLAGS) 
+CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) -I$(zipdir) -I$(XML2_INC) $(RLIB_CFLAGS) 
 GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0 gtksourceview-2.0)
 
 ifeq ($(BUILDTYPE),cross)
