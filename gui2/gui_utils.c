@@ -4169,41 +4169,39 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	vwin_menu_add_item(vwin, analysis, &item);
     }
 
-#if 0 /* not ready yet */
-    if (neqns > 1) {
-	action_entry_init(&item);
-	item.name = "ResidsMenu";
-	item.label = _("Residuals");
-	vwin_menu_add_menu(vwin, graphs, &item);
-    
-	item.callback = G_CALLBACK(system_resid_plot_call);
+    /* Residual plots */
 
-	for (i=0; i<neqns; i++) {
-	    sprintf(min, "residplot_%d %s", i+1, cmdword);
-	    sprintf(maj, N_("Equation %d"), i+1);
-	    item.name = min;
-	    item.label = maj;
-	    vwin_menu_add_item(vwin, "/menubar/Graphs/ResidsMenu", &item);
-	}
-    }
-#endif
-
-    if (neqns > 1 && neqns <= 6) {
-	/* multiple residual plots in one frame */
-	sprintf(min, "multiresid %s", cmdword);
-	item.name = min;
-	item.label = N_("Residual plots");
-	item.callback = G_CALLBACK(system_resid_mplot_call);
-	vwin_menu_add_item(vwin, graphs, &item);
-    }
+    action_entry_init(&item);
+    item.name = "ResidsMenu";
+    item.label = _("Residuals");
+    vwin_menu_add_menu(vwin, graphs, &item);
 
     if (neqns > 1) {
 	/* combined residual plot */
 	sprintf(min, "comboresid %s", cmdword);
 	item.name = min;
-	item.label = N_("Combined residual plot");
+	item.label = N_("Combined plot");
 	item.callback = G_CALLBACK(system_resid_plot_call);
-	vwin_menu_add_item(vwin, graphs, &item);
+	vwin_menu_add_item(vwin, "/menubar/Graphs/ResidsMenu", &item);
+    }
+    
+    if (neqns > 1 && neqns <= 6) {
+	/* multiple residual plots in one frame */
+	sprintf(min, "multiresid %s", cmdword);
+	item.name = min;
+	item.label = N_("Multiple plots");
+	item.callback = G_CALLBACK(system_resid_mplot_call);
+	vwin_menu_add_item(vwin, "/menubar/Graphs/ResidsMenu", &item);
+    }
+
+    item.callback = G_CALLBACK(system_resid_plot_call);
+
+    for (i=0; i<neqns; i++) {
+	sprintf(min, "residplot_%d %s", i+1, cmdword);
+	sprintf(maj, N_("Equation %d"), i+1);
+	item.name = min;
+	item.label = maj;
+	vwin_menu_add_item(vwin, "/menubar/Graphs/ResidsMenu", &item);
     }
 
     if (ci == VECM) {
