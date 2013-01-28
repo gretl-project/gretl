@@ -4204,6 +4204,8 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	vwin_menu_add_item(vwin, "/menubar/Graphs/ResidsMenu", &item);
     }
 
+    /* end residual plots */
+
     if (ci == VECM) {
 	int r = gretl_VECM_rank(var);
 
