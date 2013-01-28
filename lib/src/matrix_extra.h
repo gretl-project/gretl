@@ -92,6 +92,7 @@ gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn);
 void gretl_matrix_print_with_col_heads (const gretl_matrix *m, 
 					const char *title,
 					const char **heads,
+					const DATASET *dset,
 					PRN *prn);
 
 void gretl_matrix_print_with_format (const gretl_matrix *m, 

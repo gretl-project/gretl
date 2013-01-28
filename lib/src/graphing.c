@@ -5783,7 +5783,7 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
     return err;
 }
 
-int gretl_system_residual_plot (void *p, int ci, const DATASET *dset)
+int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
 {
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
@@ -5792,6 +5792,7 @@ int gretl_system_residual_plot (void *p, int ci, const DATASET *dset)
     const double *obs;
     int nvars, nobs;
     int i, v, t, t1;
+    int imin, imax;
     int err = 0;
 
     if (ci == VAR || ci == VECM) {
@@ -5828,14 +5829,23 @@ int gretl_system_residual_plot (void *p, int ci, const DATASET *dset)
     }
 
     fputs("plot \\\n", fp);
-    for (i=0; i<nvars; i++) {
+
+    if (eqn > 0 && eqn <= nvars) {
+	imin = eqn - 1;
+	imax = imin + 1;
+    } else {
+	imin = 0;
+	imax = nvars;
+    }
+
+    for (i=imin; i<imax; i++) {
 	if (var != NULL) {
 	    v = gretl_VAR_get_variable_number(var, i);
 	} else {
 	    v = system_get_depvar(sys, i);
 	}
 	fprintf(fp, "'-' using 1:2 title '%s' w lines", dset->varname[v]);
-	if (i == nvars - 1) {
+	if (i == imax - 1) {
 	    fputc('\n', fp);
 	} else {
 	    fputs(", \\\n", fp); 
@@ -5844,7 +5854,7 @@ int gretl_system_residual_plot (void *p, int ci, const DATASET *dset)
 
     gretl_push_c_numeric_locale();
 
-    for (i=0; i<nvars; i++) {
+    for (i=imin; i<imax; i++) {
 	for (t=0; t<nobs; t++) {
 	    double eti = gretl_matrix_get(E, t, i);
 

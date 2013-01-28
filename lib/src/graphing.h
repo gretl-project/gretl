@@ -273,7 +273,7 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 int gretl_VECM_combined_EC_plot (GRETL_VAR *var, 
 				 const DATASET *dset);
 
-int gretl_system_residual_plot (void *p, int ci, const DATASET *dset);
+int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset);
 
 int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset); 
 

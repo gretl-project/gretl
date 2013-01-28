@@ -1160,16 +1160,18 @@ static int max_label_length (const char **names, int n)
 
 static void 
 real_matrix_print_to_prn (const gretl_matrix *m, const char *msg, 
-			  int plain, const char **colnames, 
-			  PRN *prn)
+			  int plain, const char **colnames,
+			  const DATASET *dset, PRN *prn)
 {
     const char **rownames = NULL;
     char numstr[32];
+    char obs[OBSLEN];
     double x;
     int strwidth = 12;
     int rnamelen = 0;
-    int cmax = 0;
-    int cpad = 2;
+    int dated = 0;
+    int cmax = 0, cpad = 0;
+    int mt1 = 0, mt2 = 0;
     int i, j;
 
     if (prn == NULL) {
@@ -1192,16 +1194,19 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 		    m->rows, m->cols);
 	}
 	return;
-    }	
+    }
+
+    dated = gretl_matrix_is_dated(m);
+    if (dated) {
+	mt1 = gretl_matrix_get_t1(m);
+	mt2 = gretl_matrix_get_t2(m);
+    }
 
     /* @plain != 0 means skip the header stuff */
 
     if (msg != NULL && *msg != '\0' && !plain) {
 	pprintf(prn, "%s (%d x %d)", msg, m->rows, m->cols);
-	if (gretl_matrix_is_dated(m)) {
-	    int mt1 = gretl_matrix_get_t1(m);
-	    int mt2 = gretl_matrix_get_t2(m);
-
+	if (dated && dset == NULL) {
 	    pprintf(prn, " [t1 = %d, t2 = %d]\n\n", mt1 + 1, mt2 + 1);
 	} else {
 	    pputs(prn, "\n\n");
@@ -1218,12 +1223,15 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
     }
 
     rownames = gretl_matrix_get_rownames(m);
+
     if (rownames != NULL) {
 	rnamelen = max_label_length(rownames, m->rows);
+    } else if (dated && dset != NULL) {
+	rnamelen = max_obs_marker_length(dset);
     }
 
     if (colnames != NULL) {
-	if (rownames != NULL) {
+	if (rnamelen > 0) {
 	    bufspace(rnamelen + 1, prn);
 	}
 	for (j=0; j<m->cols; j++) {
@@ -1233,8 +1241,13 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
     }
 
     for (i=0; i<m->rows; i++) {
-	if (rownames != NULL) {
-	    pprintf(prn, "%*s ", rnamelen, rownames[i]);
+	if (rnamelen > 0) {
+	    if (rownames != NULL) {
+		pprintf(prn, "%*s ", rnamelen, rownames[i]);
+	    } else {
+		ntodate(obs, i + mt1, dset);
+		pprintf(prn, "%*s ", rnamelen, obs);
+	    }
 	}
 	for (j=0; j<m->cols; j++) {
 	    x = gretl_matrix_get(m, i, j);
@@ -1267,7 +1280,7 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 void 
 gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn)
 {
-    real_matrix_print_to_prn(m, msg, 0, NULL, prn);
+    real_matrix_print_to_prn(m, msg, 0, NULL, NULL, prn);
 }
 
 /**
@@ -1284,9 +1297,10 @@ gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn)
 void gretl_matrix_print_with_col_heads (const gretl_matrix *m, 
 					const char *title,
 					const char **heads,
+					const DATASET *dset,
 					PRN *prn)
 {
-    real_matrix_print_to_prn(m, title, 0, heads, prn);
+    real_matrix_print_to_prn(m, title, 0, heads, dset, prn);
 }
 
 static void maybe_print_col_heads (const gretl_matrix *m, 
@@ -1366,7 +1380,7 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
     }
 
     if (gretl_is_null_matrix(m) || fmt == NULL || *fmt == '\0') {
-	real_matrix_print_to_prn(m, NULL, 1, NULL, prn);
+	real_matrix_print_to_prn(m, NULL, 1, NULL, NULL, prn);
     } else {
 	const char **rownames = NULL;
 	int llen = 0, intcast = 0;

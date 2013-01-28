@@ -3219,7 +3219,8 @@ static void system_data_callback (GtkAction *action, gpointer p)
 	if (!err) {
 	    title = (code == SYS_DATA_RESIDS)? titles[0] : titles[1];
 	    wtitle = g_strdup_printf("gretl: %s", _(title));
-	    gretl_matrix_print_with_col_heads(M, _(title), heads, prn);
+	    gretl_matrix_print_with_col_heads(M, _(title), heads, 
+					      dataset, prn);
 	}
 
 	free(heads);
@@ -4016,11 +4017,14 @@ static void combined_EC_plot_call (GtkAction *action, gpointer p)
     gui_graph_handler(err);
 }
 
-static int sys_ci_from_action (GtkAction *action)
+static int sys_ci_from_action (GtkAction *action, int *eqn)
 {
     const gchar *s = gtk_action_get_name(action);
     char cmdword[9];
 
+    if (eqn != NULL) {
+	sscanf(s, "residplot_%d", eqn);
+    }
     sscanf(s, "%*s %8s", cmdword);
     return gretl_command_number(cmdword);
 }
@@ -4028,17 +4032,18 @@ static int sys_ci_from_action (GtkAction *action)
 static void system_resid_plot_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
-    int ci = sys_ci_from_action(action);
+    int ci, eqn = 0;
     int err;
 
-    err = gretl_system_residual_plot(vwin->data, ci, dataset);
+    ci = sys_ci_from_action(action, &eqn);
+    err = gretl_system_residual_plot(vwin->data, ci, eqn, dataset);
     gui_graph_handler(err);
 }
 
 static void system_resid_mplot_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
-    int ci = sys_ci_from_action(action);
+    int ci = sys_ci_from_action(action, NULL);
     int err;
 
     err = gretl_system_residual_mplot(vwin->data, ci, dataset);
@@ -4164,8 +4169,27 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	vwin_menu_add_item(vwin, analysis, &item);
     }
 
+#if 0 /* not ready yet */
+    if (neqns > 1) {
+	action_entry_init(&item);
+	item.name = "ResidsMenu";
+	item.label = _("Residuals");
+	vwin_menu_add_menu(vwin, graphs, &item);
+    
+	item.callback = G_CALLBACK(system_resid_plot_call);
+
+	for (i=0; i<neqns; i++) {
+	    sprintf(min, "residplot_%d %s", i+1, cmdword);
+	    sprintf(maj, N_("Equation %d"), i+1);
+	    item.name = min;
+	    item.label = maj;
+	    vwin_menu_add_item(vwin, "/menubar/Graphs/ResidsMenu", &item);
+	}
+    }
+#endif
+
     if (neqns > 1 && neqns <= 6) {
-	/* multiple residual plots */
+	/* multiple residual plots in one frame */
 	sprintf(min, "multiresid %s", cmdword);
 	item.name = min;
 	item.label = N_("Residual plots");
