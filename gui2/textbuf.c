@@ -439,7 +439,7 @@ static void sourceview_apply_language (windata_t *vwin)
 		S++;
 	    }
 	} else {
-	    fprintf(stderr, "the gtksourceview search path is NULL\n");
+	    fprintf(stderr, "the gtksourceview search path is NULL!\n");
 	}
     } else {
 	gtk_source_buffer_set_language(vwin->sbuf, lang);
