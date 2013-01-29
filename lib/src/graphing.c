@@ -615,6 +615,17 @@ static int gnuplot_has_x11 (void)
     return !err;
 }
 
+static int gnuplot_has_aqua (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set term aqua");
+    }
+
+    return !err;
+}
+
 int gnuplot_has_wxt (void)
 {
     static int err = -1; 
@@ -3852,6 +3863,9 @@ int gnuplot_3d (int *list, const char *literal,
 	fputs("set term wxt\n", fq);
     } else if (gnuplot_has_x11()) {
 	fputs("set term x11\n", fq);
+    } else if (gnuplot_has_aqua()) {
+	/* can't do rotation, but it's all we have */
+	fputs("set term aqua\n", fq);
     } else {
 	fclose(fq);
 	return E_EXTERNAL;
