@@ -2532,7 +2532,11 @@ static void print_gnuplot_flags (int flags, int revised)
 
 static void set_lwstr (const DATASET *dset, int v, char *s)
 {
-    int w = series_get_linewidth(dset, v);
+    int w = 1;
+    
+    if (dset != NULL) {
+	w = series_get_linewidth(dset, v);
+    }
 
     if (w > 1) {
 	sprintf(s, " lw %d", w);
@@ -5790,6 +5794,8 @@ int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
     const gretl_matrix *E = NULL;
     FILE *fp = NULL;
     const double *obs;
+    char lwstr[8];
+    int single = 0;
     int nvars, nobs;
     int i, v, t, t1;
     int imin, imax;
@@ -5807,7 +5813,19 @@ int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
 	return E_DATA;
     }
 
+    nvars = gretl_matrix_cols(E);
+    nobs = gretl_matrix_rows(E);
     t1 = gretl_matrix_get_t1(E);
+
+    if (eqn > 0 && eqn <= nvars) {
+	imin = eqn - 1;
+	imax = imin + 1;
+	single = 1;
+    } else {
+	imin = 0;
+	imax = nvars;
+	single = (nvars == 1);
+    }
 
     fp = get_plot_input_stream(PLOT_REGULAR, &err);
     if (err) {
@@ -5816,10 +5834,14 @@ int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
 
     obs = gretl_plotx(dset);
 
-    nvars = gretl_matrix_cols(E);
-    nobs = gretl_matrix_rows(E);
+    if (quarterly_or_monthly(dset)) {
+	fprintf(fp, "# timeseries %d\n", dset->pd);
+    }
 
-    fputs("# system residual plot\n", fp);
+    if (!single) {
+	fputs("# system residual plot\n", fp);
+    }
+
     fputs("set key left top\n", fp);
     fputs("set xzeroaxis\n", fp);
     if (ci == VAR) {
@@ -5828,14 +5850,12 @@ int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
 	fprintf(fp, "set title '%s'\n", _("System residuals"));
     }
 
-    fputs("plot \\\n", fp);
+    set_lwstr(NULL, 0, lwstr);
 
-    if (eqn > 0 && eqn <= nvars) {
-	imin = eqn - 1;
-	imax = imin + 1;
+    if (single) {
+	fputs("plot ", fp);
     } else {
-	imin = 0;
-	imax = nvars;
+	fputs("plot \\\n", fp);
     }
 
     for (i=imin; i<imax; i++) {
@@ -5844,7 +5864,7 @@ int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
 	} else {
 	    v = system_get_depvar(sys, i);
 	}
-	fprintf(fp, "'-' using 1:2 title '%s' w lines", dset->varname[v]);
+	fprintf(fp, "'-' using 1:2 title '%s' w lines%s", dset->varname[v], lwstr);
 	if (i == imax - 1) {
 	    fputc('\n', fp);
 	} else {
