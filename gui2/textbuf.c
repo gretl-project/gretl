@@ -432,10 +432,14 @@ static void sourceview_apply_language (windata_t *vwin)
 	const gchar * const *S = gtk_source_language_manager_get_search_path(lm);
 
 	fprintf(stderr, "*** gtksourceview: lang is NULL for id='%s'\n", id);
-	fprintf(stderr, "the gtksourceview search path:\n");
-	while (S != NULL && *S != NULL) {
-	    fprintf(stderr, " %s\n", *S);
-	    S++;
+	if (S != NULL) {
+	    fprintf(stderr, "the gtksourceview search path:\n");
+	    while (*S != NULL) {
+		fprintf(stderr, " %s\n", *S);
+		S++;
+	    }
+	} else {
+	    fprintf(stderr, "the gtksourceview search path is NULL\n");
 	}
     } else {
 	gtk_source_buffer_set_language(vwin->sbuf, lang);
