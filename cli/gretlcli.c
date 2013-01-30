@@ -432,9 +432,6 @@ int main (int argc, char *argv[])
 #endif
 
     libgretl_init();
-#if 0
-    gretl_www_init(NULL, NULL, 0);
-#endif
 
     logo(quiet);
     if (!quiet) {

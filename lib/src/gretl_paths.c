@@ -2565,7 +2565,8 @@ static int initialize_dotdir (void)
     *paths.dotdir = '\0';
 
     if (dirname != NULL) {
-	strncat(paths.dotdir, dirname, MAXLEN - 1);
+	strncat(paths.dotdir, dirname, MAXLEN - 2);
+	slash_terminate(paths.dotdir);
     } else {
 #ifdef WIN32
 	dirname = appdata_path();
