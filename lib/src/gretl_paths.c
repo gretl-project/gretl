@@ -2559,25 +2559,29 @@ void set_gretl_plugin_path (const char *path)
 
 static int initialize_dotdir (void)
 {
-    char *home;
+    char *dirname = getenv("GRETL_DOTDIR");
     int err = 0;
 
     *paths.dotdir = '\0';
 
-#ifdef WIN32
-    home = appdata_path();
-    if (home != NULL) {
-	sprintf(paths.dotdir, "%s\\gretl\\", home);
-	free(home);
+    if (dirname != NULL) {
+	strncat(paths.dotdir, dirname, MAXLEN - 1);
     } else {
-	sprintf(paths.dotdir, "%s\\user\\", paths.gretldir);
-    }
+#ifdef WIN32
+	dirname = appdata_path();
+	if (dirname != NULL) {
+	    sprintf(paths.dotdir, "%s\\gretl\\", dirname);
+	    free(dirname);
+	} else {
+	    sprintf(paths.dotdir, "%s\\user\\", paths.gretldir);
+	}
 #else
-    home = getenv("HOME");
-    if (home != NULL) {
-	sprintf(paths.dotdir, "%s/.gretl/", home);
-    } 
+	dirname = getenv("HOME");
+	if (dirname != NULL) {
+	    sprintf(paths.dotdir, "%s/.gretl/", dirname);
+	} 
 #endif
+    }
 
     err = validate_writedir(paths.dotdir);
 
