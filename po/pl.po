@@ -1,15 +1,15 @@
 # Polish translation for gretl-1.9.11cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
-# Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2012
-# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2012
-# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2012
+# Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2013
+# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2013
+# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2013
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.9.11\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-01-29 13:00-0500\n"
-"PO-Revision-Date: 2012-12-24 21:00-0400\n"
+"PO-Revision-Date: 2013-01-30 23:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -421,19 +421,16 @@ msgid "Null hypothesis"
 msgstr "Hipoteza zerowa"
 
 #: lib/src/compare.c:276
-#, fuzzy
 msgid "no seasonal effects or trend"
-msgstr "= sezonowe różnice dla %s"
+msgstr "Niesezonowe efekt lub trend"
 
 #: lib/src/compare.c:279
-#, fuzzy
 msgid "no seasonal effects"
-msgstr "Niesezonowe różnice:"
+msgstr "Niesezonowy efekt"
 
 #: lib/src/compare.c:282
-#, fuzzy
 msgid "no trend"
-msgstr "Filtr trendu wielomianowego z wagami"
+msgstr "Bez trendu"
 
 #: lib/src/compare.c:289
 msgid ""
@@ -445,9 +442,8 @@ msgstr ""
 "zero\n"
 
 #: lib/src/compare.c:309
-#, fuzzy
 msgid "seasonal dummies"
-msgstr "oraz sezonowymi zmiennymi 0-1"
+msgstr "sezonowe zmienne 0-1"
 
 #: lib/src/compare.c:347
 #, c-format
@@ -631,9 +627,8 @@ msgid "dummy variable for Chow test"
 msgstr "zmienna zero-jedynkowa dla testu Chowa"
 
 #: lib/src/compare.c:2431
-#, fuzzy
 msgid "Robust Wald test for break"
-msgstr "Test F - Chowa na zmiany strukturalne"
+msgstr "Test Robust Walda na zmiany strukturalne"
 
 #: lib/src/compare.c:2432
 msgid "Chow F-test for break"
@@ -642,7 +637,7 @@ msgstr "Test F - Chowa na zmiany strukturalne"
 #: lib/src/compare.c:2484
 #, c-format
 msgid "Asymptotic p-value = %.4g for chi-square(%d) = %g"
-msgstr ""
+msgstr "Asymptotyczna wartość p = %.4g dla chi-kwadrat(%d) = %g"
 
 #: lib/src/compare.c:2511
 msgid ""
@@ -653,9 +648,9 @@ msgstr ""
 "w nieokreślonym momencie, z 15 procentowym błędem oceny"
 
 #: lib/src/compare.c:2515
-#, fuzzy, c-format
+#, c-format
 msgid "The maximum Wald test = %g occurs at observation %s"
-msgstr "Maksymalne F(%d, %d) = %g dla obserwacji %s"
+msgstr "Maksimum testu Walda = %g dla obserwacji %s"
 
 #: lib/src/compare.c:2519
 #, c-format
@@ -3423,9 +3418,9 @@ msgid "Distribution free Wald test for heteroskedasticity"
 msgstr "Dystrybuanta testu Walda na heteroskedastyczność"
 
 #: lib/src/gretl_model.c:3603
-#, fuzzy, c-format
+#, c-format
 msgid "chi-square(%d) = %g at observation %s"
-msgstr "maksymalne F(%d, %d) = %g dla obserwacji %s"
+msgstr "Ch-kwadrat(%d) = %g dla obserwacji %s"
 
 #: lib/src/gretl_model.c:3629 lib/src/gretl_model.c:3636
 msgid "failed"
@@ -3436,9 +3431,8 @@ msgid "Asymptotic test statistic"
 msgstr "Asymptotyczna statystyka testu"
 
 #: lib/src/gretl_model.c:3751
-#, fuzzy
 msgid "with asymptotic p-value"
-msgstr "asymptotyczna wartość p ="
+msgstr "asymptotyczna wartość p"
 
 #: lib/src/gretl_model.c:3764 lib/src/gretl_model.c:3767
 #: lib/src/gretl_model.c:3770
@@ -4296,9 +4290,9 @@ msgid "modprint: the first matrix argument must have 2 columns"
 msgstr "modprint: pierwszy argument macierzy musi zawierać 2 kolumny"
 
 #: lib/src/libset.c:935 lib/src/libset.c:1569
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid value '%s'"
-msgstr "%s: niepoprawne wartości"
+msgstr "%s: niepoprawna wartość '%s'"
 
 #: lib/src/libset.c:1035
 #, c-format
@@ -5665,7 +5659,7 @@ msgid ""
 " produced a scalar result"
 msgstr ""
 "Formuła '%s'\n"
-" wynik jest skalarem"
+" wynikiem jest skalar"
 
 #: lib/src/nls.c:601
 #, c-format
@@ -5972,9 +5966,9 @@ msgstr ""
 "wykorzystywanego w estymacji modelu\n"
 
 #: lib/src/options.c:1165
-#, fuzzy, c-format
+#, c-format
 msgid "Ambiguous option '--%s'"
-msgstr "Błędna opcja '--%s'"
+msgstr "Niejednoznaczne opcja '--%s'"
 
 #: lib/src/options.c:1171
 #, c-format
@@ -7125,13 +7119,12 @@ msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
 msgstr "opóźnienia  loglik    p(LR)       AIC          BIC          HQC"
 
 #: lib/src/vartest.c:772
-#, fuzzy
 msgid "Test on the original VAR"
-msgstr "Podstawowe statystyki dla oryginalnych danych"
+msgstr "Test dla oryginalnego VAR"
 
 #: lib/src/vartest.c:1060
 msgid "Test on VAR"
-msgstr ""
+msgstr "Test dla VAR"
 
 #: cli/cli_object.c:88 gui2/objectsave.c:143
 #, c-format
@@ -8041,20 +8034,20 @@ msgstr "korelogram wzajemny"
 #: gui2/cmdstack.c:100
 #, c-format
 msgid "# Log re-started %s\n"
-msgstr "# Log re-started %s\n"
+msgstr "# Restart zbioru poleceń: %s\n"
 
 #: gui2/cmdstack.c:138
 #, c-format
 msgid "# Log started %s\n"
-msgstr "# Log started %s\n"
+msgstr "# Start zbioru poleceń:  %s\n"
 
 #: gui2/cmdstack.c:140
 msgid ""
 "# Record of session commands.  Please note that this will\n"
 "# likely require editing if it is to be run as a script.\n"
 msgstr ""
-"# Record of session commands.  Please note that this will\n"
-"# likely require editing if it is to be run as a script.\n"
+"# Wiersze poleceń sesji. Jeżeli zbiór ten będzie uruchamiany jako skrypt,\n"
+"# to prawdopodobnie wymagana będzie jego wcześniejsza edycja.\n"
 
 #: gui2/cmdstack.c:266
 msgid "The command log is empty"
@@ -9405,9 +9398,8 @@ msgid "GNU Octave files (*.m)"
 msgstr "pliki programu GNU Octave (*.m)"
 
 #: gui2/fileselect.c:802
-#, fuzzy
 msgid "Python files (*.py)"
-msgstr "pliki gnuplot (*.plt)"
+msgstr "pliki Pythona (*.plt)"
 
 #: gui2/fileselect.c:804
 msgid "Ox files (*.ox)"
@@ -10646,9 +10638,8 @@ msgid "Octave script"
 msgstr "skrypt Octave"
 
 #: gui2/gretl.c:1424
-#, fuzzy
 msgid "Python script"
-msgstr "okno skryptu"
+msgstr "skrypt Python"
 
 #: gui2/gretl.c:1425 gui2/gretl.c:1753
 msgid "Ox program"
@@ -10755,9 +10746,8 @@ msgid "_Gretl console"
 msgstr "_Konsola gretla..."
 
 #: gui2/gretl.c:1459
-#, fuzzy
 msgid "_Gnuplot"
-msgstr "Kolory Gnuplot"
+msgstr "_Gnuplot"
 
 #: gui2/gretl.c:1460
 msgid "Start GNU _R"
@@ -11281,9 +11271,8 @@ msgid "_Dynamic panel model..."
 msgstr "_Dynamiczny model panelowy..."
 
 #: gui2/gretl.c:1621
-#, fuzzy
 msgid "_Limited dependent variable"
-msgstr "Zmienna zależna"
+msgstr "_Ograniczona zmienna zależna"
 
 #: gui2/gretl.c:1622
 msgid "_Logit"
@@ -12001,9 +11990,8 @@ msgid "gretl: edit Octave script"
 msgstr "gretl: edycja skryptu Octave"
 
 #: gui2/gui_utils.c:1615
-#, fuzzy
 msgid "gretl: edit Python script"
-msgstr "gretl: edycja skryptu Octave"
+msgstr "gretl: edycja skryptu Pythona"
 
 #: gui2/gui_utils.c:1617 gui2/gui_utils.c:4902 gui2/gui_utils.c:5050
 msgid "gretl: script output"
@@ -12202,14 +12190,12 @@ msgid "Omit exogenous variables..."
 msgstr "Test pominiętych zmiennych egzogenicznych..."
 
 #: gui2/gui_utils.c:4117
-#, fuzzy
 msgid "Omit time trend"
-msgstr "Trend liniowy"
+msgstr "Pominięto trend liniowy"
 
 #: gui2/gui_utils.c:4123
-#, fuzzy
 msgid "Omit seasonal dummies"
-msgstr "oraz sezonowymi zmiennymi 0-1"
+msgstr "Pominięto sezonowe zmienne 0-1"
 
 #: gui2/gui_utils.c:4132
 msgid "Residuals from equation"
@@ -12228,24 +12214,21 @@ msgid "Impulse responses"
 msgstr "Odpowiedzi na impuls"
 
 #: gui2/gui_utils.c:4176
-#, fuzzy
 msgid "Residuals"
-msgstr "_Reszty"
+msgstr "Reszty"
 
 #: gui2/gui_utils.c:4183
-#, fuzzy
 msgid "Combined plot"
-msgstr "wspólny wykres procesów EC"
+msgstr "Wspólny wykres reszt"
 
 #: gui2/gui_utils.c:4192
-#, fuzzy
 msgid "Multiple plots"
-msgstr "Wykres rozrzutu dla wielu zmiennych"
+msgstr "Oddzielne wykresy reszt"
 
 #: gui2/gui_utils.c:4201
-#, fuzzy, c-format
+#, c-format
 msgid "Equation %d"
-msgstr "Równanie"
+msgstr "Reszty równania %d"
 
 #: gui2/gui_utils.c:4214
 msgid "EC plot"
@@ -12257,16 +12240,16 @@ msgstr "wspólny wykres procesów EC"
 
 #: gui2/gui_utils.c:4228
 msgid "VAR inverse roots"
-msgstr "pierwiastki równania charakterystycznego"
+msgstr "Pierwiastki równania charakterystycznego"
 
 #: gui2/gui_utils.c:4236
 msgid "Impulse responses (combined)"
-msgstr "odpowiedzi na impuls (zbiorczy wykres)"
+msgstr "Odpowiedzi na impuls (zbiorczy wykres)"
 
 #: gui2/gui_utils.c:4266
 #, c-format
 msgid "Response of %s"
-msgstr "odpowiedz %s"
+msgstr "Odpowiedz %s"
 
 #: gui2/gui_utils.c:4280
 #, c-format
@@ -16544,54 +16527,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid ""
-#~ "\n"
-#~ "  Null hypothesis: the regression parameters are zero for the variables\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "  Hipoteza zerowa: parametry regresji dla wskazanych zmiennych są równe "
-#~ "zero\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "with p-value = %g\n"
-#~ "\n"
-#~ msgstr ""
-#~ "z wartością p = %g\n"
-#~ "\n"
-
-#~ msgid "Residual plots"
-#~ msgstr "zbiorczy wykres reszt modelu"
-
-#~ msgid "Combined residual plot"
-#~ msgstr "wspólny wykres reszt modelu"
-
-#~ msgid "Significant at the %d percent level "
-#~ msgstr "Poziom istotnści %d procentowy "
-
-#~ msgid "(%d%% critical value %s %.2f)"
-#~ msgstr "(%d%% wartość krytyczna %s %.2f)"
-
-#~ msgid "10%% critical value for q = 20 is %.2f"
-#~ msgstr "10%% wartość krytyczna dla q = 20 wynosi %.2f"
-
-#~ msgid "Not significant at the 10 percent level "
-#~ msgstr "Nieistotny na poziomie 10% błędu "
-
-#~ msgid "(10%% value = %.2f)"
-#~ msgstr "(10%% wartość = %.2f) "
-
-#~ msgid ""
-#~ "This statistic does not follow the standard F distribution;\n"
-#~ "critical values are from Stock and Watson (2003)."
-#~ msgstr ""
-#~ "Dla tej statystyki testu nie jest stosowany standardowy rozkład F;\n"
-#~ "wykorzystano wartości krytyczne z pracy Stocka and Watsona (2003)."
-
-#~ msgid "Command is malformed\n"
-#~ msgstr "Błędna komenda\n"
-
-#~ msgid "_Nonlinear models"
-#~ msgstr "_Nieliniowe modele"
