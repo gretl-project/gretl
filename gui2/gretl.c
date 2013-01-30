@@ -1530,6 +1530,7 @@ GtkActionEntry main_entries[] = {
     { "PeriodDums", NULL, N_("_Periodic dummies"), NULL, NULL, G_CALLBACK(add_dummies) },
     { "UnitDums", NULL, N_("_Unit dummies"), NULL, NULL, G_CALLBACK(add_dummies) },
     { "TimeDums", NULL, N_("_Time dummies"), NULL, NULL, G_CALLBACK(add_dummies) },
+    { "RangeDum", NULL, N_("_Observation range dummy"), NULL, NULL, G_CALLBACK(add_dummies) },
     { "dummify", NULL, N_("Dummies for selected _discrete variables"), NULL, NULL, 
       G_CALLBACK(logs_etc_callback) },
     { "NewMatrix", NULL, N_("_Define matrix..."), NULL, NULL, G_CALLBACK(new_matrix_callback) },

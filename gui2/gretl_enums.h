@@ -289,7 +289,8 @@ enum calc_functions {
 enum auto_dummies {
     TS_DUMMIES,
     PANEL_UNIT_DUMMIES,
-    PANEL_TIME_DUMMIES
+    PANEL_TIME_DUMMIES,
+    OBS_RANGE_DUMMY
 };
 
 #endif /* GRETL_ENUMS_H */

@@ -5513,6 +5513,8 @@ static int dummies_code (GtkAction *action)
 	return PANEL_UNIT_DUMMIES;
     else if (!strcmp(s, "TimeDums"))
 	return PANEL_TIME_DUMMIES;
+    else if (!strcmp(s, "RangeDum"))
+	return OBS_RANGE_DUMMY;
     else
 	return 0;
 }
@@ -5534,6 +5536,9 @@ void add_dummies (GtkAction *action)
 	    opt = OPT_T;
 	}
 	err = panel_dummies(dataset, opt, NULL);
+    } else if (u == OBS_RANGE_DUMMY) {
+	dummy_call();
+	return;
     } else {
 	/* "can't happen" */
 	err = E_DATA;
