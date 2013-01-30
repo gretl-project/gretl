@@ -470,9 +470,14 @@ static int maybe_resize_export_matrix (kalman *K, gretl_matrix *m, int i)
     return err;
 }
 
-static int missing_matrix_error (void)
+static int missing_matrix_error (const char *name)
 {
-    gretl_errmsg_set(_("kalman: a required matrix is missing"));
+    if (name == NULL) {
+	gretl_errmsg_set(_("kalman: a required matrix is missing"));
+    } else {
+	gretl_errmsg_sprintf(_("kalman: required matrix %s is missing"), 
+			     name);
+    }
     return E_DATA;
 }
 
@@ -563,7 +568,7 @@ static int kalman_check_dimensions (kalman *K)
 	K->ifc = 1;
     } else if (K->k > 1) {
 	/* A has more than one row but there's no x => error */
-	return missing_matrix_error();
+	return missing_matrix_error("xmat");
     }
 
     /* Below we have the optional "export" matrices for shipping out 
@@ -833,7 +838,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     *err = 0;
 
     if (F == NULL || H == NULL || Q == NULL || y == NULL) {
-	*err = missing_matrix_error();
+	*err = missing_matrix_error(NULL);
 	return NULL;
     }
 
@@ -976,7 +981,7 @@ static int kalman_revise_variance (kalman *K)
     int err = 0;
 
     if (K->Q == NULL || K->R == NULL) {
-	return missing_matrix_error();
+	return missing_matrix_error("'statevar' or 'obsvar'");
     }
 
     if (K->cross == NULL) {
@@ -1024,7 +1029,7 @@ static int user_kalman_setup (kalman *K, gretlopt opt)
     int err = 0;
 
     if (K->F == NULL || K->H == NULL || K->Q == NULL || K->y == NULL) {
-	return missing_matrix_error();
+	return missing_matrix_error(NULL);
     }
 
     kalman_set_dimensions(K, opt);
@@ -2126,7 +2131,7 @@ static gretl_matrix *kalman_retrieve_matrix (const char *name,
 static int obsy_error (kalman *K)
 {
     if (K->y == NULL) {
-	return missing_matrix_error();
+	return missing_matrix_error("obsy");
     } else if (K->y->rows != K->T || K->y->cols != K->n) {
 	return E_NONCONF;
     } else {
@@ -2197,7 +2202,7 @@ static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
     }
 
     if (K->F == NULL || K->H == NULL || K->Q == NULL) {
-	err = missing_matrix_error();
+	err = missing_matrix_error(NULL);
     } else if (gretl_matrix_rows(K->F) != K->r ||
 	       gretl_matrix_rows(K->A) != K->k) {
 	err = E_NONCONF;
@@ -3557,7 +3562,7 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
 
     if (V == NULL) {
 	fprintf(stderr, "ksimul: V is NULL\n");
-	*err = missing_matrix_error();
+	*err = missing_matrix_error(NULL);
     } else if (u == NULL) {
 	*err = missing_kalman_error();
     } 
@@ -3584,7 +3589,7 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
 	} else if (K->R != NULL) {
 	    if (W == NULL) {
 		fprintf(stderr, "ksimul: W is NULL\n");
-		*err = missing_matrix_error();
+		*err = missing_matrix_error("W");
 	    } else if (W->rows != V->rows || W->cols != K->n) {
 		*err = E_NONCONF;
 	    }
