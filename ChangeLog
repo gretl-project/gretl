@@ -25,6 +25,9 @@ version 1.9.12, in progress
   appearing in the GUI icon view window
 - User's Guide: clarify the use of string substitution, plus
   various small updates
+- Environment: respect GRETL_DOTDIR and GRETL_CONFIG_FILE to
+  override the standard defaults (respectively ~/.gretl and
+  ~/.gretl2rc on unix-type systems)
 
 2012-11-21 version 1.9.11
 - Substantial re-write of code for handling named variables

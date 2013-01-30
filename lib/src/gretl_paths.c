@@ -3173,12 +3173,18 @@ static int rc_bool (const char *s)
 
 void get_gretl_rc_path (char *rcfile)
 {
-    char *home = getenv("HOME");
+    char *path = getenv("GRETL_CONFIG_FILE");
 
-    if (home != NULL) {
-	sprintf(rcfile, "%s/.gretl2rc", home);
+    if (path != NULL) {
+	*rcfile = '\0';
+	strncat(rcfile, path, FILENAME_MAX - 1);
     } else {
-	strcpy(rcfile, ".gretl2rc");
+	path = getenv("HOME");
+	if (path != NULL) {
+	    sprintf(rcfile, "%s/.gretl2rc", path);
+	} else {
+	    strcpy(rcfile, ".gretl2rc");
+	}
     }
 }
 
