@@ -97,6 +97,11 @@ int obs_button_get_value (GtkWidget *button)
     return gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(button));
 }
 
+const gchar *obs_button_get_string (GtkWidget *button)
+{
+    return gtk_entry_get_text(GTK_ENTRY(button));
+}
+
 static void alert_partner (GtkWidget *b, GtkWidget *partner)
 {
     GtkSpinButton *b1, *b2;
@@ -131,4 +136,5 @@ void obs_button_set_partner (GtkWidget *button, GtkWidget *partner)
     g_signal_connect(G_OBJECT(button), "value-changed",
 		     G_CALLBACK(alert_partner), partner);
 }
+
 

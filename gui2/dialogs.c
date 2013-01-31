@@ -1526,7 +1526,7 @@ int iter_control_dialog (int *optim, int *pmaxit, double *ptol,
 
 struct range_setting {
     gretlopt opt;
-    DATASET dinfo;       /* auxiliary data info structure */
+    DATASET dinfo;        /* auxiliary data info structure */
     GtkWidget *dlg;       /* dialog box */
     GtkWidget *obslabel;  /* label for showing number of selected obs */
     GtkAdjustment *adj1;  /* adjustment for start spinner */
@@ -1535,6 +1535,7 @@ struct range_setting {
     GtkWidget *spin2;     /* end-of-range spinner */
     GtkWidget *combo;     /* multi-purpose selector */
     GtkWidget *entry;
+    gboolean markers;
     gpointer p;
     MODEL *pmod;
     int *t1;
@@ -1709,7 +1710,7 @@ static GList *get_dummy_list (int *thisdum)
 gboolean update_obs_label (GtkComboBox *box, gpointer data)
 {
     struct range_setting *rset = (struct range_setting *) data;
-    int n = 0;
+    int t1 = 0, t2 = 0, n = 0;
 
     if (box != NULL) {
 	gchar *vname = combo_box_get_active_text(box);
@@ -1723,9 +1724,8 @@ gboolean update_obs_label (GtkComboBox *box, gpointer data)
 	    g_free(vname);
 	}
     } else {
-	int t1 = obs_button_get_value(rset->spin1);
-	int t2 = obs_button_get_value(rset->spin2);
-
+	t1 = obs_button_get_value(rset->spin1);
+	t2 = obs_button_get_value(rset->spin2);
 	n = t2 - t1 + 1;  
     }
     
@@ -1739,6 +1739,17 @@ gboolean update_obs_label (GtkComboBox *box, gpointer data)
 	} else {
 	    obstr = g_strdup_printf(_("Observations: %d"), n);  
 	}
+
+	if (rset->markers) {
+	    const char *s1 = dataset->S[t1];
+	    const char *s2 = dataset->S[t2];
+	    gchar *tmp = g_strconcat(obstr, "\n(", s1, 
+				     " .. ", s2, ")", NULL);
+
+	    g_free(obstr);
+	    obstr = tmp;
+	}
+
 	gtk_label_set_text(GTK_LABEL(rset->obslabel), obstr); 
 	g_free(obstr);
     }
@@ -1768,6 +1779,9 @@ static struct range_setting *rset_new (guint code, gpointer p,
     rset = mymalloc(sizeof *rset);
     if (rset == NULL) return NULL;
 
+    rset->opt = OPT_NONE;
+    rset->markers = 0;
+
     if (code == SMPLDUM) {
 	rset->opt = OPT_O;
     } else if (code == SMPLBOOL) {
@@ -1776,8 +1790,6 @@ static struct range_setting *rset_new (guint code, gpointer p,
 	rset->opt = OPT_N;
     } else if (code == CREATE_DATASET) {
 	rset->opt = OPT_C;
-    } else {
-	rset->opt = OPT_NONE;
     }
 
     rset->dlg = gretl_dialog_new(title, parent, GRETL_DLG_BLOCK);
@@ -2297,24 +2309,55 @@ range_dummy_callback (GtkWidget *w, struct range_setting *rset)
     char s1[OBSLEN], s2[OBSLEN];
     const gchar *vname;
     gchar *buf;
+    int t1, t2;
     int err;
-
-    button = GTK_SPIN_BUTTON(rset->spin1);
-    strcpy(s1, gtk_entry_get_text(GTK_ENTRY(button)));
-
-    button = GTK_SPIN_BUTTON(rset->spin2);
-    strcpy(s2, gtk_entry_get_text(GTK_ENTRY(button)));
 
     name_entry = g_object_get_data(G_OBJECT(rset->dlg), "name-entry");
     vname = gtk_entry_get_text(GTK_ENTRY(name_entry));
+    if (vname == NULL || *vname == '\0') {
+	gtk_widget_grab_focus(name_entry);
+	return FALSE;
+    }
 
     err = gui_validate_varname(vname, GRETL_TYPE_USERIES);
     if (err) {
 	return FALSE;
+    }    
+
+    button = GTK_SPIN_BUTTON(rset->spin1);
+    strcpy(s1, gtk_entry_get_text(GTK_ENTRY(button)));
+    t1 = gtk_spin_button_get_value_as_int(button);
+
+    button = GTK_SPIN_BUTTON(rset->spin2);
+    strcpy(s2, gtk_entry_get_text(GTK_ENTRY(button)));
+    t2 = gtk_spin_button_get_value_as_int(button);
+
+    if (t2 == t1) {
+	/* a singleton dummy */
+	if (strchr(s1, '/')) {
+	    buf = g_strdup_printf("series %s = obs==\"%s\"", vname, s1);
+	} else if (annual_data(dataset)) {
+	    buf = g_strdup_printf("series %s = obs==obsnum(%s)", vname, s1);
+	} else if (rset->markers) {
+	    buf = g_strdup_printf("series %s = obs==\"%s\"", vname, 
+				  dataset->S[t1]);
+	} else {
+	    buf = g_strdup_printf("series %s = obs==%s", vname, s1);
+	}
+    } else {
+	/* range of 2 or more observations */
+	if (strchr(s1, '/') || strchr(s2, '/')) {
+	    buf = g_strdup_printf("series %s = obs>=\"%s\" && obs<=\"%s\"", 
+				  vname, s1, s2);
+	} else if (annual_data(dataset)) {
+	    buf = g_strdup_printf("series %s = obs>=obsnum(%s) && obs<=obsnum(%s)", 
+				  vname, s1, s2);
+	} else {
+	    buf = g_strdup_printf("series %s = obs>=%s && obs<=%s", 
+				  vname, s1, s2);
+	}
     }
 
-    buf = g_strdup_printf("series %s = obs>=%s && obs<=%s", 
-			  vname, s1, s2);
     do_range_dummy_genr(buf);
     g_free(buf);
 
@@ -2332,18 +2375,27 @@ void range_dummy_dialog (GtkAction *action, gpointer p)
     rset = rset_new(0, p, NULL, NULL, NULL, _("gretl: define dummy"), NULL);
     if (rset == NULL) return;
 
+    if (dataset_is_cross_section(dataset) && 
+	dataset_has_markers(dataset)) {
+	rset->markers = 1;
+    }
+
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
 
     hbox = obs_spinbox(rset, _("Set dummy range"), 
 		       _("Start:"), _("End:"),
-		       0, dataset->n - 1, dataset->t1,
-		       0, dataset->n - 1, dataset->t2,
+		       dataset->t1, dataset->t2, dataset->t1,
+		       dataset->t1, dataset->t2, dataset->t2,
 		       SPIN_LABEL_ABOVE);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* label that will show the number of observations */
     rset->obslabel = gtk_label_new("");
     gtk_box_pack_start(GTK_BOX(vbox), rset->obslabel, FALSE, FALSE, 5);
+    if (rset->markers) {
+	gtk_label_set_justify(GTK_LABEL(rset->obslabel), 
+			      GTK_JUSTIFY_CENTER);
+    }
 
     g_object_set_data(G_OBJECT(rset->spin1), "rset", rset);
     g_object_set_data(G_OBJECT(rset->spin2), "rset", rset);

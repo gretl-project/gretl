@@ -1270,8 +1270,6 @@ static void R_data_out (const DATASET *dset, const int *list,
 
 #define DEFAULT_CSV_DIGITS 12
 
-#define annual_data(p) (p->structure == TIME_SERIES && p->pd == 1)
-
 /**
  * write_data:
  * @fname: name of file to write.

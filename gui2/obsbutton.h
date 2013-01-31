@@ -33,6 +33,8 @@ GtkWidget *data_start_button (GtkAdjustment *adj, DATASET *dset);
 
 int obs_button_get_value (GtkWidget *button);
 
+const gchar *obs_button_get_string (GtkWidget *button);
+
 void obs_button_set_partner (GtkWidget *button, GtkWidget *partner);
 
 #endif /* OBS_BUTTON_H__ */

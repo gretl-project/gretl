@@ -224,6 +224,16 @@ typedef struct _series_table series_table;
                                  (p->pd == 4 || p->pd == 12))
 
 /**
+ * annual_data:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a data set is an annual
+ * time series (1), or something else (0).
+ */
+#define annual_data(p) (p != NULL && p->structure == TIME_SERIES && \
+			p->pd == 1)
+
+/**
  * dataset_is_panel:
  * @p: pointer to data information struct.
  *
