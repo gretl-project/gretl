@@ -2559,30 +2559,25 @@ void set_gretl_plugin_path (const char *path)
 
 static int initialize_dotdir (void)
 {
-    char *dirname = getenv("GRETL_DOTDIR");
+    char *dirname;
     int err = 0;
 
     *paths.dotdir = '\0';
 
-    if (dirname != NULL) {
-	strncat(paths.dotdir, dirname, MAXLEN - 2);
-	slash_terminate(paths.dotdir);
-    } else {
 #ifdef WIN32
-	dirname = appdata_path();
-	if (dirname != NULL) {
-	    sprintf(paths.dotdir, "%s\\gretl\\", dirname);
-	    free(dirname);
-	} else {
-	    sprintf(paths.dotdir, "%s\\user\\", paths.gretldir);
-	}
-#else
-	dirname = getenv("HOME");
-	if (dirname != NULL) {
-	    sprintf(paths.dotdir, "%s/.gretl/", dirname);
-	} 
-#endif
+    dirname = appdata_path();
+    if (dirname != NULL) {
+	sprintf(paths.dotdir, "%s\\gretl\\", dirname);
+	free(dirname);
+    } else {
+	sprintf(paths.dotdir, "%s\\user\\", paths.gretldir);
     }
+#else
+    dirname = getenv("HOME");
+    if (dirname != NULL) {
+	sprintf(paths.dotdir, "%s/.gretl/", dirname);
+    } 
+#endif
 
     err = validate_writedir(paths.dotdir);
 
@@ -2889,9 +2884,17 @@ int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
     *paths.plotfile = '\0';
 
     initialize_gretldir(cpaths->gretldir, opt);
-    err0 = initialize_dotdir();
+
+    if (!(opt & OPT_D)) {
+	/* OPT_D says dotdir = workdir */
+	err0 = initialize_dotdir();
+    }
 
     copy_paths_with_fallback(cpaths);
+
+    if (opt & OPT_D) {
+	strcpy(paths.dotdir, paths.workdir);
+    }
 
     if (strcmp(paths.dotdir, paths.workdir)) { 
 	err1 = validate_writedir(paths.workdir);
@@ -3202,6 +3205,7 @@ int cli_read_rc (void)
     char rcfile[FILENAME_MAX];
     char line[MAXLEN], key[32], val[MAXLEN];
     char dbproxy[PROXLEN] = {0};
+    gretlopt paths_opt = OPT_NONE;
     int usecwd = 0;
     int use_proxy = 0;
     int err = 0;
@@ -3233,6 +3237,10 @@ int cli_read_rc (void)
 		strncat(cpaths.gnuplot, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "userdir")) {
 		strncat(cpaths.workdir, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "no_dotdir")) {
+		if (rc_bool(val)) {
+		    paths_opt = OPT_D;
+		}
 	    } else if (!strcmp(key, "shellok")) {
 		libset_set_bool(SHELL_OK, rc_bool(val));
 	    } else if (!strcmp(key, "usecwd")) {
@@ -3288,12 +3296,16 @@ int cli_read_rc (void)
  bailout:
 
     if (err) {
-	gretl_set_paths(&cpaths, OPT_NONE);
+	gretl_set_paths(&cpaths, paths_opt);
     } else {
-	err = gretl_set_paths(&cpaths, OPT_NONE);
+	err = gretl_set_paths(&cpaths, paths_opt);
     }
 
     gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);
+
+#if 0
+    show_paths();
+#endif
 
     return err;
 }
