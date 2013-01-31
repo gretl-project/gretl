@@ -2130,10 +2130,12 @@ static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
 {
     const int *pooldrop;
     int *dlist;
-    int ndrop = 0;
+    int fixed_effects, ndrop = 0;
     int j, vj, i = 1;
 
-    if (pmod->opt & OPT_F) {
+    fixed_effects = (pmod->opt & OPT_F);
+
+    if (fixed_effects) {
 	ndrop = pan->pooled->list[0] - pan->vlist[0];
     }
 
@@ -2156,9 +2158,9 @@ static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
 	for (i=1; i<=pooldrop[0]; i++) {
 	    dlist[i] = pooldrop[i];
 	}
-    } 
+    }
 
-    if (pan->vlist[0] < pan->pooled->list[0]) {
+    if (fixed_effects && pan->vlist[0] < pan->pooled->list[0]) {
 	for (j=2; j<=pan->pooled->list[0]; j++) {
 	    vj = pan->pooled->list[j];
 	    if (!in_gretl_list(pan->vlist, vj)) {
