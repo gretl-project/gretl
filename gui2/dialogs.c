@@ -2304,7 +2304,6 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 static gboolean
 range_dummy_callback (GtkWidget *w, struct range_setting *rset)
 {
-    GtkSpinButton *button;
     GtkWidget *name_entry;
     char s1[OBSLEN], s2[OBSLEN];
     const gchar *vname;
@@ -2322,15 +2321,13 @@ range_dummy_callback (GtkWidget *w, struct range_setting *rset)
     err = gui_validate_varname(vname, GRETL_TYPE_USERIES);
     if (err) {
 	return FALSE;
-    }    
+    }
 
-    button = GTK_SPIN_BUTTON(rset->spin1);
-    strcpy(s1, gtk_entry_get_text(GTK_ENTRY(button)));
-    t1 = gtk_spin_button_get_value_as_int(button);
+    strcpy(s1, obs_button_get_string(rset->spin1));
+    strcpy(s2, obs_button_get_string(rset->spin2));
 
-    button = GTK_SPIN_BUTTON(rset->spin2);
-    strcpy(s2, gtk_entry_get_text(GTK_ENTRY(button)));
-    t2 = gtk_spin_button_get_value_as_int(button);
+    t1 = obs_button_get_value(rset->spin1);
+    t2 = obs_button_get_value(rset->spin2);
 
     if (t2 == t1) {
 	/* a singleton dummy */
@@ -2345,7 +2342,7 @@ range_dummy_callback (GtkWidget *w, struct range_setting *rset)
 	    buf = g_strdup_printf("series %s = obs==%s", vname, s1);
 	}
     } else {
-	/* range of 2 or more observations */
+	/* a range of 2 or more observations */
 	if (strchr(s1, '/') || strchr(s2, '/')) {
 	    buf = g_strdup_printf("series %s = obs>=\"%s\" && obs<=\"%s\"", 
 				  vname, s1, s2);
