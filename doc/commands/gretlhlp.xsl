@@ -442,15 +442,11 @@
 </xsl:template>
 
 <xsl:template match="cite">
-  <xsl:if test="$hlp='cli'">
-    <xsl:text>&lt;@bib="</xsl:text>
-  </xsl:if>  
+  <xsl:text>&lt;@bib="</xsl:text>
   <xsl:apply-templates/>
-  <xsl:if test="$hlp='cli'">
-    <xsl:text>;</xsl:text>
-    <xsl:value-of select="@key"/>
-    <xsl:text>"&gt;</xsl:text>
-  </xsl:if>
+  <xsl:text>;</xsl:text>
+  <xsl:value-of select="@key"/>
+  <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="quote">

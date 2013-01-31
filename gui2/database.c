@@ -216,7 +216,7 @@ static int expand_data_dialog (int src_pd, int targ_pd, int *interpol,
 
 	resp = radio_dialog("gretl", _("Adding a lower frequency series to a\n"
 				       "higher frequency dataset"),
-			    opts, 2, 0, 0, parent);
+			    opts, 2, 0, EXPAND, parent);
 	if (resp == 0) {
 	    *interpol = 1;
 	    resp = GRETL_YES;
@@ -2957,7 +2957,7 @@ gint populate_remote_data_pkg_list (windata_t *vwin)
     return err;
 }
 
-gint populate_dbfilelist (windata_t *vwin)
+gint populate_dbfilelist (windata_t *vwin, int *pndb)
 {
     GtkListStore *store;
     GtkTreeIter iter;
@@ -2987,6 +2987,10 @@ gint populate_dbfilelist (windata_t *vwin)
 	err = 1;
     } else {
 	presort_treelist(vwin);
+    }
+
+    if (pndb != NULL) {
+	*pndb = ndb;
     }
 
     return err;

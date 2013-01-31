@@ -700,6 +700,7 @@ static void ms_ole_ref (MsOle *fs)
  *
  * Decrement by one the count of references to the filesystem.
  **/
+
 static void ms_ole_unref (MsOle *fs)
 {
     g_return_if_fail(fs != NULL);
@@ -715,6 +716,7 @@ static void ms_ole_unref (MsOle *fs)
  *
  * Return value: a #MsOleErr code.
  **/
+
 MsOleErr ms_ole_open (MsOle **fs, const char *name)
 {
 #ifdef HAVE_MMAP
@@ -782,8 +784,8 @@ MsOleErr ms_ole_open (MsOle **fs, const char *name)
 	}
     }
 
-    if (MS_OLE_GET_GUINT32 (f->mem    ) != 0xe011cfd0 ||
-	MS_OLE_GET_GUINT32 (f->mem + 4) != 0xe11ab1a1) {
+    if (MS_OLE_GET_GUINT32(f->mem    ) != 0xe011cfd0 ||
+	MS_OLE_GET_GUINT32(f->mem + 4) != 0xe11ab1a1) {
 	g_warning("Failed OLE2 magic number %x %x\n",
 		  MS_OLE_GET_GUINT32(f->mem), MS_OLE_GET_GUINT32(f->mem+4));
 	ms_ole_destroy(fs);
@@ -818,6 +820,7 @@ MsOleErr ms_ole_open (MsOle **fs, const char *name)
  *
  * Closes the filesystem @fs and truncates any free blocks.
  **/
+
 void ms_ole_destroy (MsOle **ptr)
 {
     MsOle *f = *ptr;
@@ -889,6 +892,7 @@ static MsOlePos tell_pos (MsOleStream *s)
  *
  * Return value: the new position of the stream pointer.
  **/
+
 static MsOleSPos
 ms_ole_lseek (MsOleStream *s, MsOleSPos bytes, MsOleSeek type)
 {
@@ -996,6 +1000,7 @@ static guint8 *ms_ole_read_ptr_sb (MsOleStream *s, MsOlePos length)
  *  zero    - on error
  *  no zero - on success
  */
+
 static gint
 ms_ole_read_copy_bb (MsOleStream *s, guint8 *ptr, MsOlePos length)
 {
@@ -1043,6 +1048,7 @@ ms_ole_read_copy_bb (MsOleStream *s, guint8 *ptr, MsOlePos length)
  *  zero    - on error
  *  no zero - on success
  */
+
 static gint
 ms_ole_read_copy_sb (MsOleStream *s, guint8 *ptr, MsOlePos length)
 {
@@ -1093,6 +1099,7 @@ ms_ole_read_copy_sb (MsOleStream *s, guint8 *ptr, MsOlePos length)
  *
  * Return value: %NULL if not found or pointer to the child list
  **/
+
 static GList *find_in_pps (GList *l, const char *name)
 {
     PPS   *pps;
@@ -1138,6 +1145,7 @@ static GList *find_in_pps (GList *l, const char *name)
  *
  * Return value: a #MsOleErr code.
  **/
+
 static MsOleErr
 path_to_pps (PPS **pps, MsOle *f, const char *path, const char *file)
 {
@@ -1206,6 +1214,7 @@ path_to_pps (PPS **pps, MsOle *f, const char *path, const char *file)
  *
  * Return value: a #MsOleErr code.
  **/
+
 MsOleErr
 ms_ole_stream_open (MsOleStream ** const stream, MsOle *f,
 		    const char *path, const char *fname) 
@@ -1334,6 +1343,7 @@ ms_ole_stream_open (MsOleStream ** const stream, MsOle *f,
  *
  * Return value: a #MsOleErr code.
  **/
+
 MsOleErr ms_ole_stream_close (MsOleStream ** const s)
 {
     if (*s) {

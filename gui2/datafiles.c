@@ -1712,7 +1712,7 @@ void display_files (int role, gpointer data)
 	err = populate_notebook_filelists(vwin, filebox, role);
     } else if (role == FUNC_FILES) {
 	err = populate_filelist(vwin, &fresp);
-	if (fresp.col1_width > 15) {
+	if (!err && fresp.col1_width > 15) {
 	    /* widen the file box if need be */
 	    gint w, h;
 
@@ -1720,6 +1720,15 @@ void display_files (int role, gpointer data)
 	    w += 100;
 	    gtk_widget_set_size_request(filebox, w, h);
 	}
+    } else if (role == NATIVE_DB) {
+	gint w, h, ndb = 0;
+
+	err = populate_filelist(vwin, &ndb);
+	if (!err && ndb > 12) {
+	    gtk_widget_get_size_request(filebox, &w, &h);
+	    h += 100;
+	    gtk_widget_set_size_request(filebox, w, h);
+	}	    
     } else {
 	err = populate_filelist(vwin, NULL);
     }
@@ -2100,7 +2109,7 @@ void maybe_update_func_files_window (int role)
 gint populate_filelist (windata_t *vwin, gpointer p)
 {
     if (vwin->role == NATIVE_DB) {
-	return populate_dbfilelist(vwin);
+	return populate_dbfilelist(vwin, p);
     } else if (vwin->role == REMOTE_DB) {
 	return populate_remote_db_list(vwin);
     } else if (vwin->role == REMOTE_FUNC_FILES) {

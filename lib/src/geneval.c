@@ -1428,8 +1428,6 @@ static NODE *compare_strings (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-#define annual_data(p) (p->pd == 1 && p->structure == TIME_SERIES)
-
 /* 
    We're looking at a comparison, with either a series on the left and
    a string on the right or vice versa.  This can work if the series
