@@ -3182,6 +3182,9 @@ void get_gretl_rc_path (char *rcfile)
     if (path != NULL) {
 	*rcfile = '\0';
 	strncat(rcfile, path, FILENAME_MAX - 1);
+#if 0
+	fprintf(stderr, "rcfile from env: '%s'\n", rcfile);
+#endif
     } else {
 	path = getenv("HOME");
 	if (path != NULL) {
