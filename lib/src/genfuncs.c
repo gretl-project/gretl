@@ -3507,6 +3507,8 @@ int list_linear_combo (double *y, const int *list,
     int err = 0;
 
     if (nb != nl) {
+	gretl_errmsg_sprintf(_("List has %d members, but length "
+			       "of vector b is %d"), nl, nb);
 	err = E_DATA;
     } else {
 	int i, t;
