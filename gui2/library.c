@@ -4556,6 +4556,12 @@ void do_model_genr (GtkWidget *w, dialog_t *dlg)
     }
 }
 
+void do_range_dummy_genr (const gchar *buf)
+{
+    lib_command_strcpy(buf);
+    finish_genr(NULL, NULL);
+}
+
 static int real_do_setmiss (double missval, int varno) 
 {
     int i, t, count = 0;
@@ -5513,8 +5519,6 @@ static int dummies_code (GtkAction *action)
 	return PANEL_UNIT_DUMMIES;
     else if (!strcmp(s, "TimeDums"))
 	return PANEL_TIME_DUMMIES;
-    else if (!strcmp(s, "RangeDum"))
-	return OBS_RANGE_DUMMY;
     else
 	return 0;
 }
@@ -5536,9 +5540,6 @@ void add_dummies (GtkAction *action)
 	    opt = OPT_T;
 	}
 	err = panel_dummies(dataset, opt, NULL);
-    } else if (u == OBS_RANGE_DUMMY) {
-	dummy_call();
-	return;
     } else {
 	/* "can't happen" */
 	err = E_DATA;

@@ -847,7 +847,7 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i,
     adj = (GtkAdjustment *) gtk_adjustment_new(initv, minv, maxv, 
 					       1, 1, 0);
     if (type == GRETL_TYPE_OBS) {
-	spin = obs_button_new(adj, dataset);
+	spin = obs_button_new(adj, dataset, 0);
     } else {
 	spin = gtk_spin_button_new(adj, 1, 0);
     }

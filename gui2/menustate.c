@@ -246,6 +246,7 @@ void panel_menu_state (gboolean s)
     if (mdata->ui != NULL) {
 	flip(mdata->ui, "/menubar/Add/UnitDums", s);
 	flip(mdata->ui, "/menubar/Add/TimeDums", s);
+	flip(mdata->ui, "/menubar/Add/RangeDum", !s);
 	flip(mdata->ui, "/menubar/Model/PanelModels", s);
 	if (s && dataset->pd <= 2) {
 	    flip(mdata->ui, "/menubar/Model/PanelModels/dpanel", 0);

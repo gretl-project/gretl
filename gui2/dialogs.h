@@ -79,6 +79,8 @@ int select_var_from_list (const int *list, const char *query,
 
 void sample_range_dialog (GtkAction *action, gpointer p);
 
+void range_dummy_dialog (GtkAction *action, gpointer p);
+
 void sample_restrict_dialog (GtkAction *action, gpointer p);
 
 int panel_graph_dialog (int *t1, int *t2);

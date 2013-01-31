@@ -1836,7 +1836,7 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
     rset->adj1 = (GtkAdjustment *) gtk_adjustment_new(rset->dinfo.t1, 0, 
 						      rset->dinfo.n - 1, 
 						      1, 1, 0);
-    rset->spin1 = obs_button_new(rset->adj1, &rset->dinfo);
+    rset->spin1 = obs_button_new(rset->adj1, &rset->dinfo, OBS_BUTTON_T1);
 
     if (temp) {
 	gtk_box_pack_start(GTK_BOX(hbox), gtk_label_new(" "), FALSE, FALSE, 0);
@@ -1855,7 +1855,7 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
     rset->adj2 = (GtkAdjustment *) gtk_adjustment_new(rset->dinfo.t2, 0, 
 						      rset->dinfo.n - 1, 
 						      1, 1, 0);
-    rset->spin2 = obs_button_new(rset->adj2, &rset->dinfo);
+    rset->spin2 = obs_button_new(rset->adj2, &rset->dinfo, OBS_BUTTON_T2);
 
     if (temp) {
 	gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
@@ -1869,8 +1869,8 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
     }
 
     /* inter-connect the two spinners */
-    g_object_set_data(G_OBJECT(rset->spin1), "spin2", rset->spin2);
-    g_object_set_data(G_OBJECT(rset->spin2), "spin1", rset->spin1);
+    obs_button_set_partner(rset->spin1, rset->spin2);
+    obs_button_set_partner(rset->spin2, rset->spin1);
 
     return hbox;
 }
@@ -2084,8 +2084,8 @@ typedef enum {
 static GtkWidget *
 obs_spinbox (struct range_setting *rset, const char *label, 
 	     const char *t1str, const char *t2str,
-	     int t1min, int t1max, int *t1,
-	     int t2min, int t2max, int *t2,
+	     int t1min, int t1max, int t1,
+	     int t2min, int t2max, int t2,
 	     SpinLabelAlign align)
 {
     GtkWidget *lbl;
@@ -2133,39 +2133,30 @@ obs_spinbox (struct range_setting *rset, const char *label,
 	lbl = gtk_label_new(t1str);
 	gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
     }
-    rset->adj1 = (GtkAdjustment *) gtk_adjustment_new(*t1, t1min, t1max, 
+    rset->adj1 = (GtkAdjustment *) gtk_adjustment_new(t1, t1min, t1max, 
 						      smin, smaj, 0);
-    rset->spin1 = obs_button_new(rset->adj1, dataset);
+    rset->spin1 = obs_button_new(rset->adj1, dataset, OBS_BUTTON_T1);
     gtk_entry_set_activates_default(GTK_ENTRY(rset->spin1), TRUE);
     gtk_box_pack_start(GTK_BOX(vbox), rset->spin1, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 
     /* spinner for t2, if wanted */
-    if (t2 != NULL) {
+    if (!(t2min == 0 && t2max == 0)) {
 	vbox = gtk_vbox_new(FALSE, 5);
 	if (t2str != NULL) {
 	    lbl = gtk_label_new(t2str);
 	    gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
 	}
-	rset->adj2 = (GtkAdjustment *) gtk_adjustment_new(*t2, t2min, t2max, 
+	rset->adj2 = (GtkAdjustment *) gtk_adjustment_new(t2, t2min, t2max, 
 							  smin, smaj, 0);
-	rset->spin2 = obs_button_new(rset->adj2, dataset);
+	rset->spin2 = obs_button_new(rset->adj2, dataset, OBS_BUTTON_T2);
 	gtk_entry_set_activates_default(GTK_ENTRY(rset->spin2), TRUE);
 	gtk_box_pack_start(GTK_BOX(vbox), rset->spin2, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 
 	/* inter-connect the two spinners */
-	g_object_set_data(G_OBJECT(rset->spin1), "spin2", rset->spin2);
-	g_object_set_data(G_OBJECT(rset->spin2), "spin1", rset->spin1);
-
-	if (dataset_is_panel(dataset)) {
-	    /* ensure that minimum separation of the spinners represents
-	       full time-series length */
-	    g_object_set_data(G_OBJECT(rset->spin1), "minsep", 
-			      GINT_TO_POINTER(dataset->pd - 1));
-	    g_object_set_data(G_OBJECT(rset->spin2), "minsep", 
-			      GINT_TO_POINTER(dataset->pd - 1));
-	}
+	obs_button_set_partner(rset->spin1, rset->spin2);
+	obs_button_set_partner(rset->spin2, rset->spin1);
     }
 
     return hbox;
@@ -2263,8 +2254,8 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 	/* either plain SMPL or CREATE_DATASET */
 	hbox = obs_spinbox(rset, _("Set sample range"), 
 			   _("Start:"), _("End:"),
-			   0, dataset->n - 1, &dataset->t1,
-			   0, dataset->n - 1, &dataset->t2,
+			   0, dataset->n - 1, dataset->t1,
+			   0, dataset->n - 1, dataset->t2,
 			   SPIN_LABEL_ABOVE);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     }
@@ -2289,6 +2280,93 @@ void sample_range_dialog (GtkAction *action, gpointer p)
     w = ok_button(hbox);
     g_signal_connect(G_OBJECT(w), "clicked",
 		     G_CALLBACK(set_sample_from_dialog), rset);
+    gtk_widget_grab_default(w);
+
+    g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
+		     G_CALLBACK(free_rsetting), rset);
+
+    gretl_dialog_keep_above(rset->dlg);
+    gtk_widget_show_all(rset->dlg);
+}
+
+static gboolean
+range_dummy_callback (GtkWidget *w, struct range_setting *rset)
+{
+    GtkSpinButton *button;
+    GtkWidget *name_entry;
+    char s1[OBSLEN], s2[OBSLEN];
+    const gchar *vname;
+    gchar *buf;
+    int err;
+
+    button = GTK_SPIN_BUTTON(rset->spin1);
+    strcpy(s1, gtk_entry_get_text(GTK_ENTRY(button)));
+
+    button = GTK_SPIN_BUTTON(rset->spin2);
+    strcpy(s2, gtk_entry_get_text(GTK_ENTRY(button)));
+
+    name_entry = g_object_get_data(G_OBJECT(rset->dlg), "name-entry");
+    vname = gtk_entry_get_text(GTK_ENTRY(name_entry));
+
+    err = gui_validate_varname(vname, GRETL_TYPE_USERIES);
+    if (err) {
+	return FALSE;
+    }
+
+    buf = g_strdup_printf("series %s = obs>=%s && obs<=%s", 
+			  vname, s1, s2);
+    do_range_dummy_genr(buf);
+    g_free(buf);
+
+    gtk_widget_destroy(rset->dlg);
+
+    return TRUE;
+}
+
+void range_dummy_dialog (GtkAction *action, gpointer p)
+{
+    struct range_setting *rset = NULL;
+    GtkWidget *w, *vbox, *hbox;
+    GtkWidget *label, *entry;
+
+    rset = rset_new(0, p, NULL, NULL, NULL, _("gretl: define dummy"), NULL);
+    if (rset == NULL) return;
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
+
+    hbox = obs_spinbox(rset, _("Set dummy range"), 
+		       _("Start:"), _("End:"),
+		       0, dataset->n - 1, dataset->t1,
+		       0, dataset->n - 1, dataset->t2,
+		       SPIN_LABEL_ABOVE);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    /* label that will show the number of observations */
+    rset->obslabel = gtk_label_new("");
+    gtk_box_pack_start(GTK_BOX(vbox), rset->obslabel, FALSE, FALSE, 5);
+
+    g_object_set_data(G_OBJECT(rset->spin1), "rset", rset);
+    g_object_set_data(G_OBJECT(rset->spin2), "rset", rset);
+
+    /* entry for naming the dummy */
+    label = gtk_label_new(_("Name of variable:"));
+    gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 5);
+    entry = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN-1);
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), 20);
+    gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 5);
+    g_object_set_data(G_OBJECT(rset->dlg), "name-entry", entry);
+    gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(rset->dlg));
+
+    /* Cancel button */
+    cancel_delete_button(hbox, rset->dlg);
+
+    /* "OK" button */
+    w = ok_button(hbox);
+    g_signal_connect(G_OBJECT(w), "clicked",
+		     G_CALLBACK(range_dummy_callback), rset);
     gtk_widget_grab_default(w);
 
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
@@ -2639,10 +2717,9 @@ int chow_dialog (int tmin, int tmax, int *t, int *dumv,
 	b2 = gtk_radio_button_new_with_label(grp, _(dlabel));
     }
 
-    tmp = obs_spinbox(rset, 
-		      (b1 != NULL)? NULL : _(olabel), 
+    tmp = obs_spinbox(rset, (b1 != NULL)? NULL : _(olabel), 
 		      NULL, NULL, 
-		      tmin, tmax, t, 
+		      tmin, tmax, *t, 
 		      0, 0, 0,
 		      (b1 != NULL)? SPIN_LABEL_NONE : SPIN_LABEL_ABOVE);
 
@@ -2938,8 +3015,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
     tmp = obs_spinbox(rset, _("Forecast range:"), 
 		      _("Start"), _("End"), 
-		      t1min, t1max, t1, 
-		      t2min, t2max, t2,
+		      t1min, t1max, *t1, 
+		      t2min, t2max, *t2,
 		      SPIN_LABEL_INLINE);
 
     g_signal_connect(G_OBJECT(rset->adj1), "value-changed",

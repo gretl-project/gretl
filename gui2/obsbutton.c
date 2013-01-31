@@ -61,26 +61,31 @@ static gboolean obs_button_output (GtkSpinButton *spin, gpointer p)
     return TRUE;
 }
 
-GtkWidget *obs_button_new (GtkAdjustment *adj, DATASET *pdinfo) 
+GtkWidget *obs_button_new (GtkAdjustment *adj, DATASET *dset,
+			   ObsButtonRole role) 
 {
     GtkWidget *spinner;
-    int n = strlen(pdinfo->endobs);
+    int n = strlen(dset->endobs);
 
     spinner = gtk_spin_button_new(adj, 1, 0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spinner), FALSE);
     gtk_entry_set_width_chars(GTK_ENTRY(spinner), (n < 2)? 2 : n);
 
     g_signal_connect(G_OBJECT(spinner), "input",
-		     G_CALLBACK(obs_button_input), pdinfo);
+		     G_CALLBACK(obs_button_input), dset);
     g_signal_connect(G_OBJECT(spinner), "output",
-		     G_CALLBACK(obs_button_output), pdinfo);
+		     G_CALLBACK(obs_button_output), dset);
+    
+    if (role) {
+	g_object_set_data(G_OBJECT(spinner), "role", GINT_TO_POINTER(role));
+    }
 
     return spinner;
 }
 
-GtkWidget *data_start_button (GtkAdjustment *adj, DATASET *pdinfo) 
+GtkWidget *data_start_button (GtkAdjustment *adj, DATASET *dset) 
 {
-    GtkWidget *spinner = obs_button_new(adj, pdinfo);
+    GtkWidget *spinner = obs_button_new(adj, dset, 0);
 
     g_object_set_data(G_OBJECT(spinner), "newdata", GINT_TO_POINTER(1));
 
@@ -91,3 +96,39 @@ int obs_button_get_value (GtkWidget *button)
 {
     return gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(button));
 }
+
+static void alert_partner (GtkWidget *b, GtkWidget *partner)
+{
+    GtkSpinButton *b1, *b2;
+    int b_role, t1, t2;
+
+    b_role = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(b), "role"));
+
+    if (b_role == OBS_BUTTON_T1) {
+	b1 = GTK_SPIN_BUTTON(b);
+	b2 = GTK_SPIN_BUTTON(partner);
+    } else {
+	b1 = GTK_SPIN_BUTTON(partner);
+	b2 = GTK_SPIN_BUTTON(b);
+    }
+	
+    t1 = gtk_spin_button_get_value_as_int(b1);
+    t2 = gtk_spin_button_get_value_as_int(b2);
+
+    if (t2 < t1) {
+	if (b_role == OBS_BUTTON_T1) {
+	    /* force t2 to adjust upward */
+	    gtk_spin_button_set_value(b2, (gdouble) t1);   
+	} else {
+	    /* force t1 to adjust downward */
+	    gtk_spin_button_set_value(b1, (gdouble) t2);   
+	}
+    }
+}
+
+void obs_button_set_partner (GtkWidget *button, GtkWidget *partner)
+{
+    g_signal_connect(G_OBJECT(button), "value-changed",
+		     G_CALLBACK(alert_partner), partner);
+}
+
