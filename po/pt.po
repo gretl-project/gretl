@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-01-29 13:00-0500\n"
-"PO-Revision-Date: 2013-01-24 22:33+0000\n"
+"PO-Revision-Date: 2013-02-01 22:56+0000\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
@@ -429,19 +429,16 @@ msgid "Null hypothesis"
 msgstr "Hipótese nula"
 
 #: lib/src/compare.c:276
-#, fuzzy
 msgid "no seasonal effects or trend"
-msgstr "= diferença sazonal de %s"
+msgstr "sem efeitos sazonais ou tendência"
 
 #: lib/src/compare.c:279
-#, fuzzy
 msgid "no seasonal effects"
-msgstr "Diferenças não-sazonais:"
+msgstr "sem efeitos sazonais"
 
 #: lib/src/compare.c:282
-#, fuzzy
 msgid "no trend"
-msgstr "Tendência polinomial"
+msgstr "sem tendência"
 
 #: lib/src/compare.c:289
 msgid ""
@@ -452,9 +449,8 @@ msgstr ""
 "  Hipótese nula: os parâmetros de regressão para as variáveis valem zero.\n"
 
 #: lib/src/compare.c:309
-#, fuzzy
 msgid "seasonal dummies"
-msgstr "variáveis auxiliares de sazonalidade aditiva"
+msgstr "variáveis auxiliares de sazonalidade"
 
 #: lib/src/compare.c:347
 #, c-format
@@ -4315,9 +4311,9 @@ msgid "modprint: the first matrix argument must have 2 columns"
 msgstr "modprint: o primeiro argumento da matriz tem que ter 2 colunas"
 
 #: lib/src/libset.c:935 lib/src/libset.c:1569
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid value '%s'"
-msgstr "%s: sem valores válidos"
+msgstr "%s: valor inválido '%s'"
 
 #: lib/src/libset.c:1035
 #, c-format
@@ -7151,13 +7147,12 @@ msgstr ""
 "BIC          HQC"
 
 #: lib/src/vartest.c:772
-#, fuzzy
 msgid "Test on the original VAR"
-msgstr "Estatísticas baseadas nos dados originais"
+msgstr "Teste no VAR original"
 
 #: lib/src/vartest.c:1060
 msgid "Test on VAR"
-msgstr ""
+msgstr "Teste no VAR"
 
 #: cli/cli_object.c:88 gui2/objectsave.c:143
 #, c-format
@@ -7299,7 +7294,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 23 de janeiro de 2013."
+"Tradução de 1 de fevereiro de 2013."
 
 #: gui2/about.c:164
 msgid "License"
@@ -9436,9 +9431,8 @@ msgid "GNU Octave files (*.m)"
 msgstr "ficheiros GNU Octave (*.m)"
 
 #: gui2/fileselect.c:802
-#, fuzzy
 msgid "Python files (*.py)"
-msgstr "ficheiros gnuplot (*.plt)"
+msgstr "ficheiros Python (*.py)"
 
 #: gui2/fileselect.c:804
 msgid "Ox files (*.ox)"
@@ -10677,9 +10671,8 @@ msgid "Octave script"
 msgstr "Ficheiro de comandos Octave"
 
 #: gui2/gretl.c:1424
-#, fuzzy
 msgid "Python script"
-msgstr "nova sequência de comandos"
+msgstr "Programa Python"
 
 #: gui2/gretl.c:1425 gui2/gretl.c:1753
 msgid "Ox program"
@@ -12024,9 +12017,8 @@ msgid "gretl: edit Octave script"
 msgstr "gretl: editar ficheiro de comandos Octave"
 
 #: gui2/gui_utils.c:1615
-#, fuzzy
 msgid "gretl: edit Python script"
-msgstr "gretl: editar ficheiro de comandos Octave"
+msgstr "gretl: editar programa Python"
 
 #: gui2/gui_utils.c:1617 gui2/gui_utils.c:4902 gui2/gui_utils.c:5050
 msgid "gretl: script output"
@@ -12225,14 +12217,12 @@ msgid "Omit exogenous variables..."
 msgstr "Omitir variáveis exógenas..."
 
 #: gui2/gui_utils.c:4117
-#, fuzzy
 msgid "Omit time trend"
-msgstr "Tendência temporal"
+msgstr "Omitir tendência temporal"
 
 #: gui2/gui_utils.c:4123
-#, fuzzy
 msgid "Omit seasonal dummies"
-msgstr "variáveis auxiliares de sazonalidade aditiva"
+msgstr "Omitir variáveis auxiliares de sazonalidade"
 
 #: gui2/gui_utils.c:4132
 msgid "Residuals from equation"
@@ -12251,24 +12241,21 @@ msgid "Impulse responses"
 msgstr "Respostas de impulsos"
 
 #: gui2/gui_utils.c:4176
-#, fuzzy
 msgid "Residuals"
-msgstr "_Resíduos"
+msgstr "Resíduos"
 
 #: gui2/gui_utils.c:4183
-#, fuzzy
 msgid "Combined plot"
-msgstr "Gráfico combinado EC"
+msgstr "Gráfico combinado"
 
 #: gui2/gui_utils.c:4192
-#, fuzzy
 msgid "Multiple plots"
-msgstr "gráficos de dispersão múltiplos"
+msgstr "Gráficos múltiplos"
 
 #: gui2/gui_utils.c:4201
-#, fuzzy, c-format
+#, c-format
 msgid "Equation %d"
-msgstr "Equação"
+msgstr "Equação %d"
 
 #: gui2/gui_utils.c:4214
 msgid "EC plot"
