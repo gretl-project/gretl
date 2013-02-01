@@ -2119,29 +2119,30 @@ static int *fe_units_list (const panelmod_t *pan)
 /* Compose a list referencing all variables that were dropped from the
    final panel model relative to the incoming regression
    specification.  This may include some variables that were dropped
-   at the stage of running the baseline pooled model (e.g. because of
-   perfect collinearity).  In the case of fixed effects it may include
-   additional variables dropped due to the fact that they are
-   time-invariant.  We want to be able to show this list to the user
-   when printing the model.
+   at the stage of running the baseline pooled model (presumably
+   because of perfect collinearity).
+
+   In the case of fixed effects it may include additional variables
+   dropped due to the fact that they are time-invariant.
 */
 
 static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
 {
+    int fixed_effects = (pmod->opt & OPT_F);
     const int *pooldrop;
     int *dlist;
-    int fixed_effects, ndrop = 0;
-    int j, vj, i = 1;
+    int i, ndrop = 0;
 
-    fixed_effects = (pmod->opt & OPT_F);
-
-    if (fixed_effects) {
-	ndrop = pan->pooled->list[0] - pan->vlist[0];
-    }
-
+    /* regressors dropped at the stage of estmating the 
+       initial pooled model */
     pooldrop = gretl_model_get_list(pan->pooled, "droplist");
     if (pooldrop != NULL) {
 	ndrop += pooldrop[0];
+    }    
+
+    if (fixed_effects) {
+	/* regressors dropped because time-invariant */
+	ndrop += pan->pooled->list[0] - pan->vlist[0];
     }
 
     if (ndrop == 0) {
@@ -2154,17 +2155,23 @@ static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
 	return E_ALLOC;
     }
 
+    i = 1;
+
     if (pooldrop != NULL) {
 	for (i=1; i<=pooldrop[0]; i++) {
 	    dlist[i] = pooldrop[i];
 	}
     }
 
-    if (fixed_effects && pan->vlist[0] < pan->pooled->list[0]) {
-	for (j=2; j<=pan->pooled->list[0]; j++) {
-	    vj = pan->pooled->list[j];
-	    if (!in_gretl_list(pan->vlist, vj)) {
-		dlist[i++] = vj;
+    if (fixed_effects) {
+	if (pan->vlist[0] < pan->pooled->list[0]) {
+	    int j, vj;
+
+	    for (j=2; j<=pan->pooled->list[0]; j++) {
+		vj = pan->pooled->list[j];
+		if (!in_gretl_list(pan->vlist, vj)) {
+		    dlist[i++] = vj;
+		}
 	    }
 	}
     }
