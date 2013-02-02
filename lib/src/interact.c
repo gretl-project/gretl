@@ -4568,19 +4568,19 @@ static int lib_join_data (ExecState *s,
     if (!err) {
 	if (revdate > 0) {
 	    /* A positive value of revdate implies 
-	       --filter="avail<=revdate" and --aggr=max(avail)
+	       --filter="pubdate<=revdate" and --aggr=max(pubdate)
 	    */
 	    aggr = AGGR_MAX;
-	    auxname = gretl_strdup("avail");
-	    filter = gretl_strdup_printf("avail<=%d", revdate);
+	    auxname = gretl_strdup("pubdate");
+	    filter = gretl_strdup_printf("pubdate<=%d", revdate);
 	} else if (revdate == -2) {
 	    /* --rev="earliest" */
 	    aggr = AGGR_MIN;
-	    auxname = gretl_strdup("avail");
+	    auxname = gretl_strdup("pubdate");
 	} else if (revdate == -3) {
 	    /* --rev="latest" */
 	    aggr = AGGR_MAX;
-	    auxname = gretl_strdup("avail");
+	    auxname = gretl_strdup("pubdate");
 	}	    
     }
 
