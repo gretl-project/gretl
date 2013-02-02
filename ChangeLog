@@ -21,13 +21,17 @@ version 1.9.12, in progress
   for PNG plots
 - GUI Tools menu: add an item to launch an interactive gnuplot
   session
+- GUI Add menu: add support for auto-generated dummy variables
+  that code for a specific range of observations (or a single
+  observation)
 - Fix bug: transient objects created within functions were 
   appearing in the GUI icon view window
+- Fix bug: possible crash when regressors are dropped from a
+  random-effects panel model due to near-prefect collinearity
 - User's Guide: clarify the use of string substitution, plus
   various small updates
-- Environment: respect GRETL_DOTDIR and GRETL_CONFIG_FILE to
-  override the standard defaults (respectively ~/.gretl and
-  ~/.gretl2rc on unix-type systems)
+- Environment: respect GRETL_CONFIG_FILE to override the
+  default of ~/.gretl2rc on unix-type systems
 
 2012-11-21 version 1.9.11
 - Substantial re-write of code for handling named variables
