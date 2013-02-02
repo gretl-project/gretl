@@ -44,6 +44,8 @@ typedef enum {
     R_SCALAR_MAX, /* separator: scalars vs series */
     R_INDEX,      /* consecutive observations index */
     R_PUNIT,      /* 1-based panel unit index */
+    R_OBSMAJ,     /* major component of observation (e.g. year) */
+    R_OBSMIN,     /* minor component of observation (e.g. quarter, month) */
     R_SERIES_MAX, /* separator: series vs matrices */
     R_TEST_STAT,  /* last test statistic(s) (scalar or matrix) */
     R_TEST_PVAL,  /* last test p-value(s) (scalar or matrix) */

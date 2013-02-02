@@ -7977,6 +7977,14 @@ static double *dvar_get_series (int i, const DATASET *dset,
 	return NULL;
     }
 
+    if (i == R_OBSMAJ) {
+	if (dset->pd == 1) {
+	    i = R_INDEX;
+	} else if (dataset_is_panel(dset)) {
+	    i = R_PUNIT;
+	}
+    }
+
     switch (i) {
     case R_INDEX:
 	x = malloc(dset->n * sizeof *x);
@@ -7997,6 +8005,36 @@ static double *dvar_get_series (int i, const DATASET *dset,
 		}
 	    } else {
 		*err = E_ALLOC;
+	    }
+	} else {
+	    *err = E_PDWRONG;
+	}
+	break;
+    case R_OBSMAJ:
+	x = malloc(dset->n * sizeof *x);
+	if (x == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    int maj;
+
+	    for (t=0; t<dset->n; t++) {
+		date_maj_min(t, dset, &maj, NULL);
+		x[t] = maj;
+	    }
+	}
+	break;
+    case R_OBSMIN:
+	if (dset->pd > 1) {
+	    x = malloc(dset->n * sizeof *x);
+	    if (x == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		int min;
+
+		for (t=0; t<dset->n; t++) {
+		    date_maj_min(t, dset, NULL, &min);
+		    x[t] = min;
+		}		
 	    }
 	} else {
 	    *err = E_PDWRONG;

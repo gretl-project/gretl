@@ -94,6 +94,8 @@ int get_precision (const double *x, int n, int placemax);
 
 double get_date_x (int pd, const char *obs);
 
+void date_maj_min (int t, const DATASET *dset, int *maj, int *min);
+
 int write_data (const char *fname, int *list, 
 		const DATASET *dset, gretlopt opt, 
 		int progress);
