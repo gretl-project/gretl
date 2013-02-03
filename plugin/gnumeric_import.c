@@ -786,7 +786,10 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	    reverse_data(newset, prn);
 	}
 
-	if (!err && newset->S != NULL) {
+	if (!err && !dataset_is_time_series(newset) && newset->S != NULL) {
+	    /* we didn't time series info above, but it's possible
+	       the observation strings carry such info
+	    */
 	    import_ts_check(newset);
 	}
 

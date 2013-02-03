@@ -2492,22 +2492,6 @@ static NODE *matrix_get_colname (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *matrix_princomp (NODE *l, NODE *r, parser *p)
-{
-    NODE *ret = aux_matrix_node(p);
-
-    if (ret != NULL && starting(p)) {
-	const gretl_matrix *m = l->v.m;
-	int k = node_get_int(r, p);
-
-	if (!p->err) {
-	    ret->v.m = gretl_matrix_pca(m, k, OPT_NONE, &p->err);
-	}
-    }
-
-    return ret;
-}
-
 static NODE *matrix_imhof (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -9394,11 +9378,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_IMHOF:
 	/* matrix, scalar as second arg */
 	if (l->t == MAT && scalar_node(r)) {
-	    if (t->t == F_PRINCOMP) {
-		ret = matrix_princomp(l, r, p);
-	    } else {
-		ret = matrix_imhof(l, r, p);
-	    }
+	    ret = matrix_imhof(l, r, p);
 	} else {
 	    p->err = E_TYPES;
 	} 

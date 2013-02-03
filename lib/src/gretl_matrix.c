@@ -11251,7 +11251,7 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
     gretl_matrix *V = NULL;
     gretl_vector *xbar = NULL;
     gretl_vector *ssx = NULL;
-    int k, n;
+    int k, n, den;
     int t, i, j;
     double vv, x, y;
     int myerr = 0;
@@ -11305,7 +11305,9 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
 		ssx->val[i] += x * x;
 	    }
 	}
-    }	
+    }
+
+    den = n - 1; /* or could use n */
 
     for (i=0; i<k; i++) {
 	for (j=i; j<k; j++) {
@@ -11321,7 +11323,7 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
 		    vv /= sqrt(x);
 		}
 	    } else {
-		vv /= n - 1;
+		vv /= den;
 	    }
 	    gretl_matrix_set(V, i, j, vv);
 	    gretl_matrix_set(V, j, i, vv);
@@ -11755,7 +11757,7 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
     }
 
     if (opt & OPT_C) {
-	/* use covariance matrix */
+	/* just use covariance matrix */
 	corr = 0;
     }
 

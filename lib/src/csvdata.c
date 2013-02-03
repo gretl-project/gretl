@@ -27,7 +27,7 @@
 
 #include <errno.h>
 
-#define CDEBUG 0
+#define CDEBUG 2
 
 #define QUOTE      '\''
 #define CSVSTRLEN  72
@@ -76,6 +76,7 @@ struct csvdata_ {
     DATASET *dset;
     int ncols, nrows;
     char str[CSVSTRLEN];
+    char field1[OBSLEN];
     char skipstr[8];
     int *codelist;
     char *descrip;
@@ -172,6 +173,7 @@ static csvdata *csvdata_new (DATASET *dset)
     c->ncols = 0;
     c->nrows = 0;
     *c->str = '\0';
+    *c->field1 = '\0';
     *c->skipstr = '\0';
     c->codelist = NULL;
     c->descrip = NULL;
@@ -1495,21 +1497,24 @@ static void check_first_field (const char *line, csvdata *c, PRN *prn)
     if (c->delim != ' ' && *line == c->delim) {
 	csv_set_blank_column(c);
     } else {
-	char field1[16];
 	int i = 0;
 
 	if (c->delim == ' ' && *line == ' ') line++;
 
-	while (*line && i < sizeof field1) {
+	while (*line && i < OBSLEN) {
 	    if (*line == c->delim) break;
-	    field1[i++] = *line++;
+	    c->field1[i++] = *line++;
 	}
-	field1[i] = '\0';
-	iso_to_ascii(field1);
+	c->field1[i] = '\0';
+	iso_to_ascii(c->field1);
 
-	pprintf(prn, A_("   first field: '%s'\n"), field1);
+	if (joining(c) && join_wants_col_zero(c)) {
+	    return;
+	}	
 
-	if (import_obs_label(field1)) {
+	pprintf(prn, A_("   first field: '%s'\n"), c->field1);
+
+	if (import_obs_label(c->field1)) {
 	    pputs(prn, A_("   seems to be observation label\n"));
 	    csv_set_obs_column(c);
 	}
@@ -1970,6 +1975,23 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
     return 0;
 }
 
+static int join_wants_col_zero (csvdata *c)
+{
+    int i;
+
+    if (*c->field1 == '\0') {
+	return 0;
+    }
+
+    for (i=0; i<JOIN_MAXCOL; i++) {
+	if (!strcmp(c->field1, c->jspec->colnames[i])) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 #define starts_number(c) (isdigit((unsigned char) c) || c == '-' || \
                           c == '+' || c == '.')
 
@@ -2360,8 +2382,7 @@ static void csv_set_dataset_dimensions (csvdata *c)
  * @dset: dataset struct.
  * @cols: column specification.
  * @rows: row specification.
- * @keyspec: join key specification.
- * @cptr: optional location to grab CSV data struct.
+ * @join: specification pertaining to "join" command.
  * @opt: use OPT_N to force interpretation of data colums containing
  * strings as coded (non-numeric) values and not errors; for use of OPT_T see
  * the help for "append".
@@ -2492,6 +2513,10 @@ static int real_import_csv (const char *fname,
 	goto csv_bailout;
     }
 
+    if (joining(c) && csv_skip_column(c) && join_wants_col_zero(c)) {
+	fprintf(stderr, "Hey, join wants col zero!\n");
+    }
+
     csv_set_dataset_dimensions(c);
 
     pprintf(mprn, A_("   number of variables: %d\n"), c->dset->v - 1);
@@ -2556,7 +2581,7 @@ static int real_import_csv (const char *fname,
 	    fseek(fp, datapos, SEEK_SET);
 	    err = csv_read_data(c, fp, prn, NULL);
 	}
-    }	
+    }
 
     if (popit) {
 	gretl_pop_c_numeric_locale();
