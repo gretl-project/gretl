@@ -1492,6 +1492,23 @@ int import_obs_label (const char *s)
 	    !strcmp(tmp, "period"));    
 }
 
+static int join_wants_col_zero (csvdata *c)
+{
+    int i;
+
+    if (*c->field1 == '\0') {
+	return 0;
+    }
+
+    for (i=0; i<JOIN_MAXCOL; i++) {
+	if (!strcmp(c->field1, c->jspec->colnames[i])) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static void check_first_field (const char *line, csvdata *c, PRN *prn)
 {
     if (c->delim != ' ' && *line == c->delim) {
@@ -1969,23 +1986,6 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 		update_join_cols_list(c, k);
 		*pj += 1;
 	    }
-	}
-    }
-
-    return 0;
-}
-
-static int join_wants_col_zero (csvdata *c)
-{
-    int i;
-
-    if (*c->field1 == '\0') {
-	return 0;
-    }
-
-    for (i=0; i<JOIN_MAXCOL; i++) {
-	if (!strcmp(c->field1, c->jspec->colnames[i])) {
-	    return 1;
 	}
     }
 
