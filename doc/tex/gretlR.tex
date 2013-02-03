@@ -306,7 +306,7 @@ and stores it into the file \texttt{mymatfile.mat}.
   matrix A = mshape(seq(3,14),4,3)
   err = mwrite(A, "mymatfile.mat")
 \end{code}
-In order to retrieve this matrix from \app{R}, all you have to do is
+The \app{R} code to import such a matrix is
 \begin{code}
   A <- as.matrix(read.table("mymatfile.mat", skip=1))
 \end{code}
@@ -322,8 +322,7 @@ hand to use the directory in which \app{gretl} stores all its
 temporary files, whose name is stored in the built-in string
 \texttt{dotdir} (see section~\ref{sec:named-strings}). The value of
 this string is automatically passed to \app{R} as the string variable
-\texttt{gretl.dotdir}, so the above example may be rewritten more
-cleanly as
+\texttt{gretl.dotdir}, so the above example may be rewritten as
 
 \app{Gretl} side:
 \begin{code}
@@ -334,6 +333,23 @@ cleanly as
 \begin{code}
   fname <- paste(gretl.dotdir, "mymatfile.mat", sep="")
   A <- as.matrix(read.table(fname, skip=1))
+\end{code}
+
+As a convenience, you can traffic in matrix files via \app{gretl}'s
+\texttt{dotdir} in a more abbreviated form. First, \texttt{mwrite} has
+an optional third (integer) argument: if this is non-zero then the
+matrix file is automatically written into \texttt{dotdir}.  Second,
+the function \texttt{gretl.loadmat}, which is defined when you run
+\app{R} via \app{gretl}, provides a shortcut for the last two lines of
+\app{R} code above. The simplied version of the transaction is then
+
+\app{Gretl} side:
+\begin{code}
+  mwrite(A, "mymatfile.mat", 1)
+\end{code}
+\app{R} side:
+\begin{code}
+  A <- gretl.loadmat("mymatfile.mat")
 \end{code}
 
 \subsection{Passing data from \app{R} to \app{gretl}}
