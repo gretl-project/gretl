@@ -900,9 +900,10 @@ static int write_data_for_R (const DATASET *dset,
 
 /* define an R function for passing data back to gretl */
 
-static void write_R_export_func (FILE *fp) 
+static void write_R_io_funcs (FILE *fp) 
 {
     fprintf(fp, "gretl.dotdir <- \"%s\"\n", gretl_dot_dir);
+
     fputs("gretl.export <- function(x) {\n", fp);
     fprintf(fp, "  prefix <- \"%s\"\n", gretl_dot_dir);
     fputs("  sx <- as.character(substitute(x))\n", fp);
@@ -924,6 +925,13 @@ static void write_R_export_func (FILE *fp)
     fputs("  gretlmsg <- paste(\"wrote\", fname, \"\\n\")\n", fp);
     fputs("  cat(gretlmsg)\n", fp);
     fputs("}\n", fp);
+
+    fputs("gretl.loadmat <- function(mname) {\n", fp);
+    fprintf(fp, "  prefix <- \"%s\"\n", gretl_dot_dir);
+    fputs("  fname <- paste(prefix, mname, sep=\"\")\n", fp);
+    fputs("  m <- as.matrix(read.table(fname, skip=1))\n", fp);
+    fputs("  return(m)\n", fp);
+    fputs("}\n", fp);
 }
 
 /* basic content which can either go into gretl.Rprofile or into
@@ -936,7 +944,7 @@ static void put_R_startup_content (FILE *fp)
     fputs("if (vnum > 2.41) library(utils)\n", fp);
     fputs("library(stats)\n", fp);
     fputs("if (vnum <= 1.89) library(ts)\n", fp);
-    write_R_export_func(fp);
+    write_R_io_funcs(fp);
 }
 
 /* Set up a gretl-specific R profile, and put notice of its existence
