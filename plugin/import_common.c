@@ -65,6 +65,39 @@ static int check_imported_varname (char *vname, int row, int col,
     return (err)? E_DATA : 0;
 }
 
+#ifndef EXCEL_IMPORTER /* FIXME? */
+
+static void import_ts_check (DATASET *dset)
+{
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    int reversed = 0;
+    int mpd = -1;
+
+    mpd = test_markers_for_dates(dset, &reversed, NULL, prn);
+
+    if (mpd > 0) {
+	pputs(prn, _("taking date information from row labels\n\n"));
+	if (dset->markers != DAILY_DATE_STRINGS) {
+	    dataset_destroy_obs_markers(dset);
+	}
+	if (reversed) {
+	    reverse_data(dset, prn);
+	}
+    } 
+
+#if ODEBUG
+    fprintf(stderr, "xinfo->dset->pd = %d\n", xinfo->dset->pd);
+#endif
+
+    if (dset->pd != 1 || strcmp(dset->stobs, "1")) { 
+        dset->structure = TIME_SERIES;
+    }
+
+    gretl_print_destroy(prn);
+}
+
+#endif /* !EXCEL_IMPORTER */
+
 #if defined(ODS_IMPORTER) || defined(XLSX_IMPORTER)
 
 static char *get_absolute_path (const char *fname)
@@ -84,16 +117,16 @@ static void remove_temp_dir (char *dname)
 {
     const char *udir = gretl_dotdir();
 
-#ifdef G_OS_WIN32
+# ifdef G_OS_WIN32
     char *fullpath = g_strdup_printf("%s%s", udir, dname);
 
     gretl_chdir(udir);
     win32_delete_dir(fullpath);
     g_free(fullpath);
-#else
+# else
     gretl_chdir(udir);
     gretl_deltree(dname);
-#endif
+# endif
 }
 
 # ifdef G_OS_WIN32
@@ -245,35 +278,6 @@ static int import_prune_columns (DATASET *dset)
     }
 
     return err;
-}
-
-static void import_ts_check (DATASET *dset)
-{
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-    int reversed = 0;
-    int mpd = -1;
-
-    mpd = test_markers_for_dates(dset, &reversed, NULL, prn);
-
-    if (mpd > 0) {
-	pputs(prn, _("taking date information from row labels\n\n"));
-	if (dset->markers != DAILY_DATE_STRINGS) {
-	    dataset_destroy_obs_markers(dset);
-	}
-	if (reversed) {
-	    reverse_data(dset, prn);
-	}
-    } 
-
-#if ODEBUG
-    fprintf(stderr, "xinfo->dset->pd = %d\n", xinfo->dset->pd);
-#endif
-
-    if (dset->pd != 1 || strcmp(dset->stobs, "1")) { 
-        dset->structure = TIME_SERIES;
-    }
-
-    gretl_print_destroy(prn);
 }
 
 #else /* !ODS, !XLSX */

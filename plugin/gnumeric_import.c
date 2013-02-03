@@ -786,6 +786,10 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	    reverse_data(newset, prn);
 	}
 
+	if (!err && newset->S != NULL) {
+	    import_ts_check(newset);
+	}
+
 	err = merge_or_replace_data(dset, &newset, opt, prn);
 
 	if (!err && !merge) {
