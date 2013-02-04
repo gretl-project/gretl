@@ -701,10 +701,10 @@ static int xlsx_check_dimensions (xlsx_info *xinfo, PRN *prn)
     if (v < 0) v = 0;
     if (n < 0) n = 0;
 
-    pprintf(prn, "Found %d variables and %d observations\n", v, n);
+    pprintf(prn, _("Found %d variables and %d observations\n"), v, n);
 
     if (v == 0 || n == 0) {
-	pputs(prn, "File contains no data\n");
+	pputs(prn, _("File contains no data\n"));
 	err = E_DATA;
     } else {
 	int labels = (xinfo->flags & BOOK_OBS_LABELS);
@@ -1043,7 +1043,7 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo,
     g_free(wb_name);
 
     if (!err && xinfo->n_sheets == 0) {
-	pputs(prn, "Found no sheets\n");
+	pputs(prn, _("Found no sheets\n"));
 	err = E_DATA;
     }
 
@@ -1108,7 +1108,7 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo,
 		    pputs(prn, "\nFound no valid sheets\n");
 		    err = E_DATA;
 		} else {
-		    pprintf(prn, "\nFound %d valid sheet(s)\n", xinfo->n_sheets);
+		    pprintf(prn, _("\nFound %d valid sheet(s)\n"), xinfo->n_sheets);
 		}
 	    }
 	}

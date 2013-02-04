@@ -203,7 +203,7 @@ RCVAR rc_vars[] = {
     { "Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #ifdef G_OS_WIN32 
-    { "Rbin", "Path to Rterm.exe", NULL, paths.rbinpath, 
+    { "Rbin", N_("Path to Rterm.exe"), NULL, paths.rbinpath, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL }, /* was TAB_NONE? */
 #endif
     { "latex", N_("Command to compile TeX files"), NULL, latex, 
