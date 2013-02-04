@@ -1100,6 +1100,10 @@ static int tex_print_model_table (PRN *prn)
 	return 1;
     }
 
+    if (tex_doc_format(prn)) {
+	gretl_tex_preamble(prn, GRETL_FORMAT_MODELTAB);
+    }
+
     pputs(prn, "\n\\newcommand{\\subsize}[1]{\\footnotesize{#1}}\n\n");
     pputs(prn, "\\begin{center}\n");
 
@@ -1164,6 +1168,10 @@ static int tex_print_model_table (PRN *prn)
     }
 
     pputs(prn, "\\end{center}\n");
+
+    if (tex_doc_format(prn)) {
+	pputs(prn, "\n\\end{document}\n");
+    }
 
     return 0;
 }
@@ -1307,16 +1315,80 @@ static int cli_modeltab_add (PRN *prn)
     return err;
 }
 
-int modeltab_parse_line (const char *line, PRN *prn)
+static int print_model_table_direct (const char *fname, 
+				     gretlopt opt,
+				     PRN *msgprn)
 {
-    char cmdword[9];
+    char outfile[MAXLEN];
+    PRN *prn;
     int err = 0;
 
-    if (sscanf(line, "%*s %8s", cmdword) != 1) {
-	return E_PARSE;
+    if (model_table_is_empty()) {
+	gretl_errmsg_set(_("The model table is empty"));
+	return E_DATA;
     }
 
-    if (!strcmp(cmdword, "add")) {
+    strcpy(outfile, fname);
+    gretl_maybe_switch_dir(fname);
+
+    prn = gretl_print_new_with_filename(outfile, &err);
+    if (err) {
+	return err;
+    }
+
+    if (has_suffix(fname, ".tex")) {
+	gretl_print_set_format(prn, GRETL_FORMAT_TEX);
+	if (opt & OPT_C) {
+	    gretl_print_toggle_doc_flag(prn);
+	}	
+    } else if (has_suffix(fname, ".rtf")) {
+	gretl_print_set_format(prn, GRETL_FORMAT_RTF);
+    }
+
+    set_alt_gettext_mode(prn);
+
+    if (tex_format(prn)) {
+	err = tex_print_model_table(prn);
+    } else if (rtf_format(prn)) {
+	err = rtf_print_model_table(prn);
+    } else {
+	plain_print_model_table(prn);
+    }
+
+    gretl_print_destroy(prn);
+
+    if (!err) {
+	pprintf(msgprn, _("wrote %s\n"), outfile);
+    }
+
+    return err;
+}
+
+int modeltab_parse_line (const char *line, gretlopt opt, PRN *prn)
+{
+    char cmdword[16];
+    int gotcmd = 0;
+    int err = 0;
+
+    if (sscanf(line, "%*s %15s", cmdword) == 1) {
+	gotcmd = 1;
+    }
+
+    if (gotcmd && (opt & OPT_O)) {
+	/* the --output option rules out the various
+	   command words */
+	return E_PARSE;    
+    } else if (opt & OPT_O) {
+	/* --output="filename" */
+	const char *outfile;
+
+	outfile = get_optval_string(MODELTAB, OPT_O);
+	if (outfile == NULL) {
+	    err = E_PARSE;
+	} else {
+	    err = print_model_table_direct(outfile, opt, prn);
+	}
+    } else if (!strcmp(cmdword, "add")) {
 	err = cli_modeltab_add(prn);
     } else if (!strcmp(cmdword, "show")) {
 	err = display_model_table(0);

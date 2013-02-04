@@ -4607,7 +4607,7 @@
       </ilist>
 
       <para>
-	To find out more about gnuplot, see http://www.gnuplot.info
+	To find out more about gnuplot, see <url>www.gnuplot.info</url>.
       </para>
 
     </description>
@@ -4615,6 +4615,16 @@
   </command>
 
   <command name="graphpg" section="Graphs" label="Gretl graph page">
+
+    <usage>
+      <altforms>
+        <altform><lit>graphpg add</lit></altform>
+	<altform><lit>graphpg fontscale </lit><repl>value</repl></altform>
+	<altform><lit>graphpg show</lit></altform>
+	<altform><lit>graphpg free</lit></altform>
+	<altform><lit>graphpg --output=</lit><repl>filename</repl></altform>
+      </altforms>
+    </usage>
 
     <description>
 
@@ -6655,11 +6665,12 @@
   <command name="modeltab" section="Utilities" label="The model table">
 
     <usage>
-      <arguments>
-        <argument>add</argument>
-        <argument alternate="true">show</argument>
-        <argument alternate="true">free</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>modeltab add</lit></altform>
+	<altform><lit>modeltab show</lit></altform>
+	<altform><lit>modeltab free</lit></altform>
+	<altform><lit>modeltab --output=</lit><repl>filename</repl></altform>
+      </altforms>
     </usage>
 
     <description context="gui"> 
@@ -6729,6 +6740,20 @@
 	displays the model table in a window; and <cmd>free</cmd>
 	clears the table.
       </para>
+      <para>
+	To call for printing of the model table, use the flag
+	<opt>output=</opt> plus a filename. If the filename has the
+	suffix <quote><lit>.tex</lit></quote>, the output will be in
+	&tex; format; if the suffix is <quote><lit>.rtf</lit></quote>
+	the output will be RTF; otherwise it will be plain text.
+	In the case of &tex; output the default is to produce a
+	<quote>fragment</quote>, suitable for inclusion in a
+	document; if you want a stand-alone document instead,
+	use the <opt>complete</opt> option, for example
+      </para>
+      <code>
+	modeltab --output="myfile.tex" --complete
+      </code>
     </description>
 
     <gui-access>

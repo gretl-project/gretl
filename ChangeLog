@@ -7,6 +7,7 @@ version 1.9.12, in progress
   specified type
 - "qlrtest" command: compute asymptotic p-value as per Bruce
   Hansen's method (1997)
+- "modeltab" command: add --output option to direct to file
 - You can now use "bundle b = null" to create a new bundle or
   empty an existing one
 - Add new function strstrip()
@@ -14,6 +15,8 @@ version 1.9.12, in progress
   the ordering of terms in the output list
 - mread() and mwrite() functions: add an optional argument to
   direct read/write to the user's "dot directory"
+- Add accessors $obsmajor and $obsminor to get series holding
+  (for example) year and month
 - Improve structural integrity of model specification dialog
   (it now behaves properly on resizing)
 - Gnuplot version: require 4.4.0 (March 2010) or higher

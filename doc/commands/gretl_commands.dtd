@@ -18,6 +18,7 @@
 <!ENTITY latex  "LaTeX">
 <!ENTITY minus  "&#8211;">
 <!ENTITY deg    "&#0176;">
+<!ENTITY tex    "TeX">
 <!ENTITY par    "">
 <!ENTITY eg     "e.g.">
 <!ENTITY ie     "i.e.">

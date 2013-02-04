@@ -8109,7 +8109,7 @@ static void gui_exec_callback (ExecState *s, void *ptr,
     } else if (ci == MARKERS) {
 	mark_dataset_as_modified();
     } else if (ci == MODELTAB) {
-	err = modeltab_parse_line(s->line, s->prn);
+	err = modeltab_parse_line(s->line, s->cmd->opt, s->prn);
     } else if (ci == GRAPHPG) {
 	err = graph_page_parse_line(s->line, s->cmd->opt);
     } else if (GRAPHING_CI(ci)) {

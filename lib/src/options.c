@@ -326,6 +326,8 @@ struct gretl_option gretl_opts[] = {
     { MODPRINT, OPT_O, "complete", 0 },
     { MODPRINT, OPT_R, "rtf", 0 },
     { MODPRINT, OPT_T, "tex", 0 },
+    { MODELTAB, OPT_C, "complete", 0 },
+    { MODELTAB, OPT_O, "output", 2 },
     { MPOLS,    OPT_O, "vcv", 0 },
     { MPOLS,    OPT_S, "simple-print", 0 },
     { NEGBIN,   OPT_G, "opg", 0 },

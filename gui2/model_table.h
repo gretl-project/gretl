@@ -34,7 +34,7 @@ int display_model_table (int gui);
 
 int special_print_model_table (PRN *prn);
 
-int modeltab_parse_line (const char *line, PRN *prn);
+int modeltab_parse_line (const char *line, gretlopt opt, PRN *prn);
 
 void format_model_table (windata_t *vwin);
 
