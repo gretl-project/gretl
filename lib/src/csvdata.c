@@ -27,7 +27,7 @@
 
 #include <errno.h>
 
-#define CDEBUG 2
+#define CDEBUG 0
 
 #define QUOTE      '\''
 #define CSVSTRLEN  72
@@ -76,7 +76,6 @@ struct csvdata_ {
     DATASET *dset;
     int ncols, nrows;
     char str[CSVSTRLEN];
-    char field1[OBSLEN];
     char skipstr[8];
     int *codelist;
     char *descrip;
@@ -173,7 +172,6 @@ static csvdata *csvdata_new (DATASET *dset)
     c->ncols = 0;
     c->nrows = 0;
     *c->str = '\0';
-    *c->field1 = '\0';
     *c->skipstr = '\0';
     c->codelist = NULL;
     c->descrip = NULL;
@@ -1492,16 +1490,18 @@ int import_obs_label (const char *s)
 	    !strcmp(tmp, "period"));    
 }
 
-static int join_wants_col_zero (csvdata *c)
+static int join_wants_col_zero (csvdata *c, const char *s)
 {
+    const char *colname;
     int i;
 
-    if (*c->field1 == '\0') {
+    if (*s == '\0') {
 	return 0;
     }
 
     for (i=0; i<JOIN_MAXCOL; i++) {
-	if (!strcmp(c->field1, c->jspec->colnames[i])) {
+	colname = c->jspec->colnames[i];
+	if (colname != NULL && !strcmp(s, colname)) {
 	    return 1;
 	}
     }
@@ -1514,24 +1514,25 @@ static void check_first_field (const char *line, csvdata *c, PRN *prn)
     if (c->delim != ' ' && *line == c->delim) {
 	csv_set_blank_column(c);
     } else {
+	char field1[OBSLEN];
 	int i = 0;
 
 	if (c->delim == ' ' && *line == ' ') line++;
 
-	while (*line && i < OBSLEN) {
+	while (*line && i < sizeof field1) {
 	    if (*line == c->delim) break;
-	    c->field1[i++] = *line++;
+	    field1[i++] = *line++;
 	}
-	c->field1[i] = '\0';
-	iso_to_ascii(c->field1);
+	field1[i] = '\0';
+	iso_to_ascii(field1);
 
-	if (joining(c) && join_wants_col_zero(c)) {
+	if (joining(c) && join_wants_col_zero(c, field1)) {
 	    return;
 	}	
 
-	pprintf(prn, A_("   first field: '%s'\n"), c->field1);
+	pprintf(prn, A_("   first field: '%s'\n"), field1);
 
-	if (import_obs_label(c->field1)) {
+	if (import_obs_label(field1)) {
 	    pputs(prn, A_("   seems to be observation label\n"));
 	    csv_set_obs_column(c);
 	}
@@ -2511,10 +2512,6 @@ static int real_import_csv (const char *fname,
 	}
 	pputs(prn, A_(csv_msg));
 	goto csv_bailout;
-    }
-
-    if (joining(c) && csv_skip_column(c) && join_wants_col_zero(c)) {
-	fprintf(stderr, "Hey, join wants col zero!\n");
     }
 
     csv_set_dataset_dimensions(c);
