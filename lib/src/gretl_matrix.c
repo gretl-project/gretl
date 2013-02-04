@@ -12206,6 +12206,20 @@ gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m,
 	}
     }
 
+    if (a->info != NULL && a->info->rownames != NULL) {
+	char **S = malloc(a->rows * sizeof *S);
+
+	if (S != NULL) {
+	    for (i=0; i<a->rows; i++) {
+		S[i] = a->info->rownames[i];
+	    }
+	    for (i=0; i<a->rows; i++) {
+		a->info->rownames[i] = S[rs[i].row];
+	    }
+	    free(S);
+	}
+    }
+
     free(rs);
 
     return a;
