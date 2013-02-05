@@ -161,7 +161,8 @@ struct set_vars_ {
 		       !strcmp(s, VECM_NORM) || \
 		       !strcmp(s, GRETL_OPTIM) || \
 		       !strcmp(s, GRETL_DEBUG) || \
-		       !strcmp(s, BLAS_NMK_MIN))
+		       !strcmp(s, BLAS_NMK_MIN) || \
+		       !strcmp(s, MP_NMK_MIN))
 
 /* global state */
 set_vars *state;
@@ -172,7 +173,7 @@ static int R_lib = 1;
 static int csv_digits;
 static char data_delim = ',';
 static char data_export_decpoint = '.';
-static int mp_nmk_min = 127;
+static int mp_nmk_min = 1023;
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
