@@ -4414,6 +4414,32 @@ static int join_aggregation_method (const char *s, int *seqval,
     return ret;
 }
 
+static int get_inner_key_id (const char *s, int n,
+			     const DATASET *dset,
+			     int *err)
+{
+    char vname[VNAMELEN];
+    int id = -1;
+
+    if (n == 0 || n >= VNAMELEN) {
+	*err = E_PARSE;
+    } else {
+	*vname = '\0';
+	strncat(vname, s, n);
+	if (gretl_namechar_spn(vname) != n) {
+	    gretl_errmsg_sprintf(_("field '%s' in command is invalid"), vname);
+	    *err = E_PARSE;
+	} else {
+	    id = current_series_index(dset, vname);
+	    if (id < 0) {
+		*err = E_UNKVAR;
+	    }
+	}
+    }
+
+    return id;
+}
+
 static int *get_inner_keys (const char *s, DATASET *dset,
 			    int *err)
 {
@@ -4430,33 +4456,15 @@ static int *get_inner_keys (const char *s, DATASET *dset,
 	    nkeys = 1;
 	}
     } else {
-	char vname[VNAMELEN];
+	/* we should have a double key */
 	int n = strcspn(s, ",");
 
-	if (n == 0 || n >= VNAMELEN) {
-	    *err = E_PARSE;
-	} else {
-	    *vname = '\0';
-	    strncat(vname, s, n);
-	    ikey1 = current_series_index(dset, vname);
-	    if (ikey1 < 0) {
-		*err = E_UNKVAR;
-	    }
-	}
+	ikey1 = get_inner_key_id(s, n, dset, err);
 
 	if (!*err) {
 	    s += n + 1;
 	    n = strlen(s);
-	    if (n == 0 || n >= VNAMELEN) {
-		*err = E_PARSE;
-	    } else {
-		*vname = '\0';
-		strncat(vname, s, VNAMELEN-1);
-		ikey2 = current_series_index(dset, vname);
-		if (ikey2 < 0) {
-		    *err = E_UNKVAR;
-		}
-	    }
+	    ikey2 = get_inner_key_id(s, n, dset, err);
 	}
 
 	if (!*err) {
