@@ -190,6 +190,7 @@ position of the series in the list, or zero if the series is not
 present in the list. 
 
 \subsection{Generating lists of transformed variables}
+\label{sec:transform-lists}
 
 Given a named list of variables, you are able to generate lists of
 transformations of these variables using the functions \texttt{log},
@@ -236,7 +237,7 @@ $x_i$, taking values from $1$ to $n$ and a variable $z_i$, which could
 be continuous or discrete. In many cases, you want to ``split'' $z_i$
 into a set of $n$ variables via the rule
 \[
-z^(j)_i =\left\{ 
+z^{(j)}_i =\left\{ 
     \begin{array}{ll}
       z_i & \mathrm{when} \quad x_i = j \\
       0 & \mathrm{otherwise;}
