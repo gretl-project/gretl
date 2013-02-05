@@ -7962,7 +7962,7 @@ static double *dvar_get_series (int i, const DATASET *dset,
     }
 
     if (i == R_OBSMAJ) {
-	if (!dataset_is_time_series(dset)) {
+	if (dset->pd == 1 && !dataset_is_time_series(dset)) {
 	    i = R_INDEX;
 	} else if (dataset_is_panel(dset)) {
 	    i = R_PUNIT;
