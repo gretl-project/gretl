@@ -230,6 +230,84 @@ variable, which should be discrete.  (The smallest value is taken as
 the omitted catgory.)  Like lags, this function returns a list even if
 the input is a single series.
 
+Another useful operation you can perform with lists is creating
+\emph{interaction} variables. Suppose you have a discrete variable
+$x_i$, taking values from $1$ to $n$ and a variable $z_i$, which could
+be continuous or discrete. In many cases, you want to ``split'' $z_i$
+into a set of $n$ variables via the rule
+\[
+z^(j)_i =\left\{ 
+    \begin{array}{ll}
+      z_i & \mathrm{when} \quad x_i = j \\
+      0 & \mathrm{otherwise;}
+    \end{array}
+    \right. 
+\] 
+in practice, you create dummies for the $x_i$ variable first and then
+you multiply them all by $z_i$; these are commonly called the
+\emph{interactions} between $x_i$ and $z_i$. In \app{gretl} you can do 
+\begin{code}
+  LIST H = D ^ Z
+\end{code}
+where \texttt{D} is a list of discrete series (or a single discrete
+series), \texttt{Z} is a list (or a single series)\footnote{Warning:
+  this construct does \emph{not} work if neither \texttt{D} nor
+  \texttt{Z} are of the the list type.}; all the interactions will be
+created and listed together under the name \texttt{H}.
+
+An example is provided in script \ref{ex:interact_list}
+
+\begin{script}[ht]
+  \caption{Usage of interaction lists}
+  \label{ex:interact_list}
+Input:
+\begin{scodebit}
+open mroz87.gdt --quiet
+
+# the coding below makes it so that
+# KIDS = 0 -> no kids
+# KIDS = 1 -> young kids only
+# KIDS = 2 -> young or older kids
+
+series KIDS = (KL6 > 0) + (KL6 > 0) && (K618>0)
+
+list D = CIT KIDS # interaction discrete variables 
+list X = WE WA  # variables to "split"
+list INTER = D ^ X
+
+smpl 1 5
+print D X INTER -o
+\end{scodebit}
+Output (selected portions):
+\begin{scodebit}
+           CIT         KIDS           WE           WA     WE_CIT_0
+
+1            0            0           12           32           12
+2            1            0           12           30            0
+3            0            1           12           35           12
+4            0            0           12           34           12
+5            1            1           14           31            0
+
+      WE_CIT_1     WA_CIT_0     WA_CIT_1    WE_KIDS_0    WE_KIDS_1
+
+1            0           32            0           12            0
+2           12            0           30           12            0
+3            0           35            0            0           12
+4            0           34            0           12            0
+5           14            0           31            0           14
+
+     WA_KIDS_0    WA_KIDS_1
+
+1           32            0
+2           30            0
+3            0           35
+4           34            0
+5            0           31
+
+\end{scodebit}
+\end{script}
+
+
 
 \subsection{Generating series from lists}
 
