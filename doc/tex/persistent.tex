@@ -270,40 +270,44 @@ open mroz87.gdt --quiet
 # KIDS = 1 -> young kids only
 # KIDS = 2 -> young or older kids
 
-series KIDS = (KL6 > 0) + (KL6 > 0) && (K618>0)
+series KIDS = (KL6 > 0) + ((KL6 > 0) || (K618 > 0))
 
 list D = CIT KIDS # interaction discrete variables 
 list X = WE WA  # variables to "split"
 list INTER = D ^ X
 
-smpl 1 5
+smpl 1 6
+
 print D X INTER -o
 \end{scodebit}
 Output (selected portions):
 \begin{scodebit}
            CIT         KIDS           WE           WA     WE_CIT_0
 
-1            0            0           12           32           12
-2            1            0           12           30            0
-3            0            1           12           35           12
-4            0            0           12           34           12
-5            1            1           14           31            0
+1            0            2           12           32           12
+2            1            1           12           30            0
+3            0            2           12           35           12
+4            0            1           12           34           12
+5            1            2           14           31            0
+6            1            0           12           54            0
 
       WE_CIT_1     WA_CIT_0     WA_CIT_1    WE_KIDS_0    WE_KIDS_1
 
-1            0           32            0           12            0
-2           12            0           30           12            0
-3            0           35            0            0           12
-4            0           34            0           12            0
-5           14            0           31            0           14
+1            0           32            0            0            0
+2           12            0           30            0           12
+3            0           35            0            0            0
+4            0           34            0            0           12
+5           14            0           31            0            0
+6           12            0           54           12            0
 
-     WA_KIDS_0    WA_KIDS_1
+     WE_KIDS_2    WA_KIDS_0    WA_KIDS_1    WA_KIDS_2
 
-1           32            0
-2           30            0
-3            0           35
-4           34            0
-5            0           31
+1           12            0            0           32
+2            0            0           30            0
+3           12            0            0           35
+4            0            0           34            0
+5           14            0            0           31
+6            0           54            0            0
 
 \end{scodebit}
 \end{script}
