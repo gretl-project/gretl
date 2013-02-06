@@ -248,7 +248,7 @@ in practice, you create dummies for the $x_i$ variable first and then
 you multiply them all by $z_i$; these are commonly called the
 \emph{interactions} between $x_i$ and $z_i$. In \app{gretl} you can do 
 \begin{code}
-  LIST H = D ^ Z
+  list H = D ^ Z
 \end{code}
 where \texttt{D} is a list of discrete series (or a single discrete
 series), \texttt{Z} is a list (or a single series)\footnote{Warning:
@@ -273,7 +273,7 @@ open mroz87.gdt --quiet
 series KIDS = (KL6 > 0) + ((KL6 > 0) || (K618 > 0))
 
 list D = CIT KIDS # interaction discrete variables 
-list X = WE WA  # variables to "split"
+list X = WE WA    # variables to "split"
 list INTER = D ^ X
 
 smpl 1 6
