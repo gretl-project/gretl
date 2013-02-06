@@ -2012,6 +2012,19 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
     }
 
     n = src->rows * src->cols;
+
+#if defined(_OPENMP)
+    if (!libset_use_openmp(n)) {
+	goto st_mode;
+    }
+#pragma omp parallel for private(i)
+    for (i=0; i<n; i++) {
+	targ->val[i] += src->val[i];
+    } 
+    return 0;
+
+ st_mode: 
+#endif
     
     for (i=0; i<n; i++) {
 	targ->val[i] += src->val[i];
@@ -2084,6 +2097,19 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
     }
 
     n = src->rows * src->cols;
+
+#if defined(_OPENMP)
+    if (!libset_use_openmp(n)) {
+	goto st_mode;
+    }
+#pragma omp parallel for private(i)
+    for (i=0; i<n; i++) {
+	targ->val[i] -= src->val[i];
+    } 
+    return 0;
+
+ st_mode: 
+#endif
     
     for (i=0; i<n; i++) {
 	targ->val[i] -= src->val[i];
@@ -2113,6 +2139,19 @@ gretl_matrix_subtract_reversed (const gretl_matrix *a, gretl_matrix *b)
     }
 
     n = a->rows * b->cols;
+
+#if defined(_OPENMP)
+    if (!libset_use_openmp(n)) {
+	goto st_mode;
+    }
+#pragma omp parallel for private(i)
+    for (i=0; i<n; i++) {
+	b->val[i] = a->val[i] - b->val[i];
+    } 
+    return 0;
+
+ st_mode: 
+#endif
     
     for (i=0; i<n; i++) {
 	b->val[i] = a->val[i] - b->val[i];
