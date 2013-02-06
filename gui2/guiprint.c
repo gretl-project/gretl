@@ -1037,9 +1037,9 @@ texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	pprintf(prn, "%s &", A_("Variable"));
     }
 
-    pprintf(prn, " \\multicolumn{2}{c}{%s}%%\n"
-	    " & \\multicolumn{2}{c}{%s}%%\n"
-	    "  & \\multicolumn{2}{c}{%s}%%\n"
+    pprintf(prn, " \\multicolumn{2}{c}{%s}\n"
+	    " & \\multicolumn{2}{c}{%s}\n"
+	    "  & \\multicolumn{2}{c}{%s}\n"
 	    "   & \\multicolumn{2}{c}{%s} \\\\[1ex]\n",
 	    A_("Mean"), A_("Median"), A_("Minimum"), A_("Maximum"));
 
@@ -1064,9 +1064,9 @@ texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	pprintf(prn, "%s & ", A_("Variable"));
     }
 
-    pprintf(prn, " \\multicolumn{2}{c}{%s}%%\n"
-	    " & \\multicolumn{2}{c}{%s}%%\n"
-	    "  & \\multicolumn{2}{c}{%s}%%\n"
+    pprintf(prn, " \\multicolumn{2}{c}{%s}\n"
+	    " & \\multicolumn{2}{c}{%s}\n"
+	    "  & \\multicolumn{2}{c}{%s}\n"
 	    "   & \\multicolumn{2}{c}{%s} \\\\[1ex]\n",
 	    A_("Std.\\ Dev."), A_("C.V."), A_("Skewness"), A_("Ex.\\ kurtosis"));
 
@@ -1091,9 +1091,9 @@ texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	pprintf(prn, "%s & ", A_("Variable"));
     }
 
-    pprintf(prn, " \\multicolumn{2}{c}{%s}%%\n"
-	    " & \\multicolumn{2}{c}{%s}%%\n"
-	    "  & \\multicolumn{2}{c}{%s}%%\n"
+    pprintf(prn, " \\multicolumn{2}{c}{%s}\n"
+	    " & \\multicolumn{2}{c}{%s}\n"
+	    "  & \\multicolumn{2}{c}{%s}\n"
 	    "   & \\multicolumn{2}{c}{%s} \\\\[1ex]\n",
 	    /* xgettext:no-c-format */
 	    A_("5\\% perc."),
