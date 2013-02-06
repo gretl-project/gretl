@@ -34,6 +34,10 @@ struct tabwin_t_ {
     GtkWidget *dlg_owner; /* the tab that "owns" dialog */
 };
 
+GtkTargetEntry tabwin_drag_targets[] = {
+    { "text/uri-list",  0, GRETL_FILENAME },
+};
+
 /* We support one tabbed editor, for gretl scripts --
    and we _may_ support a tabbed viewer for models
    at some point */
@@ -450,6 +454,63 @@ static gint catch_tabwin_key (GtkWidget *w, GdkEventKey *key,
     return catch_viewer_key(w, key, vwin);
 }
 
+static void  
+tabwin_handle_drag  (GtkWidget *widget,
+		     GdkDragContext *context,
+		     gint x,
+		     gint y,
+		     GtkSelectionData *data,
+		     guint info,
+		     guint time,
+		     gpointer p)
+{
+    const guchar *seldata = NULL;
+    gchar *dfname;
+    char tmp[MAXLEN];
+    int pos, skip = 5;
+
+    if (data != NULL) {
+	seldata = gtk_selection_data_get_data(data);
+    }
+
+    if (info != GRETL_FILENAME) {
+	return;
+    }
+
+    /* ignore the wrong sort of data */
+    if (data == NULL || (dfname = (gchar *) seldata) == NULL || 
+	strlen(dfname) <= 5 || strncmp(dfname, "file:", 5)) {
+	return;
+    }
+
+    if (strncmp(dfname, "file://", 7) == 0) skip = 7;
+#ifdef G_OS_WIN32
+    if (strncmp(dfname, "file:///", 8) == 0) skip = 8;
+#endif
+
+    /* there may be multiple files: we ignore all but the first */
+    *tmp = 0;
+    if ((pos = gretl_charpos('\r', dfname)) > 0 || 
+	(pos = gretl_charpos('\n', dfname) > 0)) {
+	strncat(tmp, dfname + skip, pos - skip);
+    } else {
+	strcat(tmp, dfname + skip);
+    }
+
+    /* handle spaces and such */
+    unescape_url(tmp);
+
+#ifdef G_OS_WIN32
+    filename_to_win32(tryfile, tmp);
+#else
+    strcpy(tryfile, tmp);
+#endif
+
+    if (has_suffix(tryfile, ".inp")) {
+	do_open_script(EDIT_SCRIPT);
+    }
+}
+
 /* build a tabbed viewer/editor */
 
 static tabwin_t *make_tabbed_viewer (int role)
@@ -704,6 +765,16 @@ void show_tabbed_viewer (windata_t *vwin)
 	gtk_widget_show_all(tabwin->main);
     }
 #endif
+
+    if (vwin->role == EDIT_SCRIPT) {
+	gtk_drag_dest_set(vwin->text,
+			  GTK_DEST_DEFAULT_ALL,
+			  tabwin_drag_targets, 1,
+			  GDK_ACTION_COPY);
+	g_signal_connect(G_OBJECT(vwin->text), "drag-data-received",
+			 G_CALLBACK(tabwin_handle_drag),
+			 tabwin);
+    }
 
     gtk_window_present(GTK_WINDOW(tabwin->main));
 }
