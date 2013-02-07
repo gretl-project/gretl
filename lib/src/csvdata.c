@@ -2315,7 +2315,7 @@ static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     pputs(mprn, A_("scanning for row labels and data...\n"));
     err = real_read_labels_and_data(c, fp, prn);
 
-    if (!err && csv_skip_column(c) && !rows_subset(c)) {
+    if (!err && csv_skip_column(c) && !rows_subset(c) && !joining(c)) {
 	c->markerpd = test_markers_for_dates(c->dset, &reversed,
 					     c->skipstr, prn);
 	if (reversed) {
@@ -2741,6 +2741,14 @@ struct jr_row_ {
 
 typedef struct jr_row_ jr_row;
 
+struct obskey_ {
+    int active;
+    int dailyfmt;
+    char sepchar;
+};
+
+typedef struct obskey_ obskey;
+
 struct joiner_ {
     int n_rows;     /* number of rows in data table */
     int n_keys;     /* number of keys used (1 or 2) */
@@ -2750,13 +2758,13 @@ struct joiner_ {
     int *key_freq;  /* counts of occurrences of (primary) key values */
     int str_keys;   /* flag for string comparison of primary keys */
     int str_keys2;  /* flag for string comparison of secondary keys */
-    int auto_keys;  /* flag for extracting keys from obs markers */ 
     const int *l_keyno; /* for string comparison: list of ikey IDs in lhs dset */
     const int *r_keyno; /* for string comparison: list of okey IDs in rhs dset */
     AggrType aggr;    /* aggregation method for 1:n joining */
     int seqval;       /* aux. sequence number for aggregation */
     int auxcol;       /* aux. data column for aggregation */
     int valcol;       /* column of RHS dataset holding payload */
+    obskey auto_keys; /* struct to hold info on obs-based key(s) */
     DATASET *l_dset;  /* the main (left-hand) dataset */
     DATASET *r_dset;  /* the temporary CSV dataset */
 };
@@ -2878,8 +2886,14 @@ static int join_row_wanted (DATASET *dset, int i,
     return ret;
 }
 
-/* Parse the obs string on row @i of the outer dataset and set the two
-   keys on row @j of the joiner struct, representing year and month or
+enum {
+    YMD = 1,
+    DMY,
+    MDY
+};
+
+/* Parse the obs string on row @i of the outer dataset and set the
+   key(s) on row @j of the joiner struct, representing year and month or
    quarter. We get here only if we have verified that the obs strings
    exist, and plausibly conform to the right pattern. The indices
    @i and @j may not be equal if a filter is being used.
@@ -2889,16 +2903,54 @@ static int read_outer_auto_keys (joiner *jr, int j,
 				 const DATASET *dset,
 				 int i)
 {
+    int dfmt = jr->auto_keys.dailyfmt;
     const char *s = dset->S[i];
-    int maj, min, err = 0;
-    char c;
+    int err = 0;
 
-    if (sscanf(s, "%d%c%d", &maj, &c, &min) == 3) {
-	jr->rows[j].n_keys = 2;
-	jr->rows[j].keyval = maj;
-	jr->rows[j].keyval2 = min;
+    if (dfmt) {
+	char c[2], sep = jr->auto_keys.sepchar;
+	int y, m, d, k[3];
+
+	if (sscanf(s, "%d%c%d%c%d", &k[0], &c[0],
+		   &k[1], &c[1], &k[2]) != 5) {
+	    err = E_DATA;
+	} else if (c[0] != sep || c[1] != sep) {
+	    err = E_DATA;
+	} else if (dfmt == YMD) {
+	    y = k[0];
+	    m = k[1];
+	    d = k[2];
+	} else if (dfmt == DMY) {
+	    d = k[0];
+	    m = k[1];
+	    y = k[2];
+	} else {
+	    m = k[0];
+	    d = k[1];
+	    y = k[2];
+	}
+	if (!err) {
+	    int eday = epoch_day_from_ymd(y, m, d);
+
+	    if (eday < 0) {
+		err = E_DATA;
+	    } else {
+		jr->rows[j].n_keys = 1;
+		jr->rows[j].keyval = eday;
+		jr->rows[j].keyval2 = 0;
+	    }
+	}	    
     } else {
-	err = E_DATA;
+	int maj, min;
+	char c;
+
+	if (sscanf(s, "%d%c%d", &maj, &c, &min) == 3) {
+	    jr->rows[j].n_keys = 2;
+	    jr->rows[j].keyval = maj;
+	    jr->rows[j].keyval2 = min;
+	} else {
+	    err = E_DATA;
+	}
     }
 
     return err;
@@ -2949,7 +3001,7 @@ static joiner *joiner_new (csvjoin *jspec,
 			   jr_filter *filter,
 			   AggrType aggr,
 			   int seqval,
-			   int auto_keys,
+			   obskey *auto_keys,
 			   int *err)
 {
     joiner *jr = NULL;
@@ -3013,7 +3065,7 @@ static joiner *joiner_new (csvjoin *jspec,
 	jr->valcol = valcol;
 	jr->l_dset = l_dset;
 	jr->r_dset = r_dset;
-	jr->auto_keys = auto_keys;
+	jr->auto_keys = *auto_keys;
     }
 
     if (jr != NULL) {
@@ -3024,7 +3076,7 @@ static joiner *joiner_new (csvjoin *jspec,
 	for (i=0; i<r_dset->n && !*err; i++) {
 	    if (join_row_wanted(r_dset, i, filter, err)) {
 		/* the keys */
-		if (auto_keys) {
+		if (jr->auto_keys.active) {
 		    *err = read_outer_auto_keys(jr, j, r_dset, i);
 		} else if (keycol > 0) {
 		    jr->rows[j].keyval = dtoi(Z[keycol][i], err);
@@ -3395,23 +3447,28 @@ static double maybe_adjust_string_code (series_table *rst,
     return rz;
 }
 
-static int get_inner_keys (joiner *jr, int i,
-			   const int *ikeyvars,
-			   int *pk1, int *pk2,
-			   int *missing)
+static int get_inner_key_values (joiner *jr, int i,
+				 const int *ikeyvars,
+				 int *pk1, int *pk2,
+				 int *missing)
 {
     DATASET *dset = jr->l_dset;
     int err = 0;
 
     *pk1 = *pk2 = 0;
 
-    if (jr->auto_keys) {
-	/* real-time data special: use the LHS obs info */
-	char obs[8];
+    if (jr->auto_keys.active) {
+	/* real-time/daily special: use the LHS obs info */
+	char obs[12];
 
 	ntodate(obs, i, dset);
-	*pk1 = atoi(obs);
-	*pk2 = atoi(obs + 5);
+	if (jr->auto_keys.dailyfmt) {
+	    *pk1 = get_epoch_day(obs);
+	} else {
+	    /* monthly or quarterly */
+	    *pk1 = atoi(obs);
+	    *pk2 = atoi(obs + 5);
+	}
     } else {
 	/* using regular LHS key series */
 	double dk1, dk2 = 0;
@@ -3503,7 +3560,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 	int missing = 0;
 	double z;
 
-	err = get_inner_keys(jr, i, ikeyvars, &key, &key2, &missing);
+	err = get_inner_key_values(jr, i, ikeyvars, &key, &key2, &missing);
 	if (err) {
 	    break;
 	} else if (missing) {
@@ -3812,6 +3869,48 @@ static int subperiod_char (char c, int pd)
     }
 }
 
+static int check_join_daily_format (const char *s, int *fmtnum,
+				    char *sepchar)
+{
+    int n = strlen(s);
+    int err = 0;
+
+    if (n != 10) {
+	err = E_DATA;
+    } else {
+	char fmt[12];
+	int i, c = 0;
+
+	strcpy(fmt, s);
+	gretl_lower(fmt);
+	for (i=0; i<n && !err; i++) {
+	    if (fmt[i] != 'y' && fmt[i] != 'm' && fmt[i] != 'd') {
+		if (c == 0) {
+		    *sepchar = c = fmt[i];
+		} else if (fmt[i] != c) {
+		    err = E_DATA;
+		}
+		fmt[i] = '/';
+	    }
+	}
+	if (!err) {
+	    if (!strcmp(fmt, "yyyy/mm/dd")) {
+		*fmtnum = YMD;
+	    } else if (!strcmp(fmt, "dd/mm/yyyy")) {
+		*fmtnum = DMY;
+	    } else if (!strcmp(fmt, "mm/dd/yyyy")) {
+		*fmtnum = MDY;
+	    }
+	}
+    }
+
+    if (err) {
+	gretl_errmsg_sprintf("Bad daily date format '%s'", s);
+    }
+    
+    return err;
+}
+
 /* Real-time data, no keys supplied: can we figure out keys
    using the time-series information on the left plus regimented
    observation marker string on the right, of the form "1990q1" for
@@ -3819,23 +3918,42 @@ static int subperiod_char (char c, int pd)
 */
 
 static int auto_keys_check (const DATASET *l_dset,
-			    const DATASET *r_dset)
+			    const DATASET *r_dset,
+			    gretlopt opt,
+			    obskey *auto_keys,
+			    int *n_keys)
 {
-    const char *dig = "0123456789";
-    const char *s;
     int pd = l_dset->pd;
     int err = 0;
 
-    if (!dataset_is_time_series(l_dset) || l_dset->S != NULL) {
-	return E_DATA;
+    if (!dataset_is_time_series(l_dset) || 
+	l_dset->S != NULL ||
+	r_dset->S == NULL) {
+	err = E_DATA;
+    } else if (dated_daily_data(l_dset) && (opt & OPT_Y)) {
+	const char *s = get_optval_string(JOIN, OPT_Y);
+
+	if (s == NULL) {
+	    err = E_DATA;
+	} else {
+	    int dailyfmt = 0;
+	    char sepchar = 0;
+	    
+	    err = check_join_daily_format(s, &dailyfmt, &sepchar);
+	    if (!err) {
+		auto_keys->active = 1;
+		auto_keys->dailyfmt = dailyfmt;
+		auto_keys->sepchar = sepchar;
+		*n_keys = 1;
+	    }
+	}
     } else if (pd != 4 && pd != 12) {
-	return E_PDWRONG;
+	err = E_PDWRONG;
     }
 
-    if (r_dset->S == NULL) {
-	err = E_DATA;
-    } else {
-	int tmax = 12; /* arbitrary sample */
+    if (!err && !auto_keys->active) {
+	const char *s, *dig = "0123456789";
+	int tmax = 12; /* arbitrary small sample */
 	int n, t;
 
 	if (tmax > r_dset->n) { 
@@ -3848,14 +3966,19 @@ static int auto_keys_check (const DATASET *l_dset,
 	    if ((n == 6 || n == 7) && strspn(s, dig) == 4 && 
 		subperiod_char(s[4], pd) &&
 		strspn(s + 5, dig) == n - 5) {
+		; /* OK */
 	    } else {
 		err = E_DATA;
 	    }
 	}
+	if (!err) {
+	    auto_keys->active = 1;
+	    *n_keys = 2;
+	}
     }
 
 #if CDEBUG
-    fprintf(stderr, "realtime_key_check: err = %d\n", err);
+    fprintf(stderr, "auto_keys_check: err = %d\n", err);
 #endif
 
     return err;
@@ -3901,13 +4024,13 @@ int join_from_csv (const char *fname,
     csvjoin jspec = {0};
     joiner *jr = NULL;
     jr_filter *filter = NULL;
+    obskey auto_keys = {0};
     int okeyvars[3] = {0, 0, 0};
     char okeyname1[CSVSTRLEN] = {0};
     char okeyname2[CSVSTRLEN] = {0};
     int targvar, orig_v = dset->v;
     int str_keys = 0;
     int str_keys2 = 0;
-    int auto_keys = 0;
     int n_keys = 0;
     int err = 0;
 
@@ -4081,12 +4204,9 @@ int join_from_csv (const char *fname,
     }
 
 #if AUTO_KEYS
-    if (!err && (opt & OPT_R) && n_keys == 0) {
-	err = auto_keys_check(dset, jspec.c->dset);
-	if (!err) {
-	    auto_keys = 1;
-	    n_keys = 2;
-	}
+    if (!err && (opt & (OPT_R | OPT_Y)) && n_keys == 0) {
+	err = auto_keys_check(dset, jspec.c->dset, opt, 
+			      &auto_keys, &n_keys);
     }
 #endif
 
@@ -4098,7 +4218,7 @@ int join_from_csv (const char *fname,
 	printdata(NULL, NULL, jspec.c->dset, OPT_O, eprn);
 	gretl_print_destroy(eprn);
 #endif
-	jr = joiner_new(&jspec, dset, filter, aggr, seqval, auto_keys, &err);
+	jr = joiner_new(&jspec, dset, filter, aggr, seqval, &auto_keys, &err);
 	if (err) {
 	    fprintf(stderr, "join: error %d from joiner_new()\n", err);
 	}

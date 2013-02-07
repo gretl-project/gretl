@@ -103,7 +103,7 @@ static int day_in_year (int day, int month, int year)
 
 long epoch_day_from_ymd (int y, int m, int d)
 {
-    long temp;
+    long ret;
 
     if (y < 0 || m < 0 || d < 0) {
 	return -1;
@@ -113,10 +113,10 @@ long epoch_day_from_ymd (int y, int m, int d)
 	return -1;
     }
 
-    temp = (long)(y - 1) * 365 + leap_years_since_year_1(y - 1)
+    ret = (long)(y - 1) * 365 + leap_years_since_year_1(y - 1)
 	+ day_in_year(d, m, y);
 
-    return temp;
+    return ret;
 }
 
 /**
