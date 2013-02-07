@@ -2280,6 +2280,15 @@ static int merge_data (DATASET *dset, DATASET *addset,
 		newvar = 1;
 		strcpy(dset->varname[v], addset->varname[i]);
 		copy_varinfo(dset->varinfo[v], addset->varinfo[i]);
+		if (series_has_string_table(addset, i) &&
+		    addset->n == dset->n && offset == 0 &&
+		    addobs == 0) {
+		    series_table *st;
+
+		    st = series_get_string_table(addset, i);
+		    series_attach_string_table(dset, v, st);
+		    series_attach_string_table(addset, i, NULL);
+		}
 	    } 
 
 	    if (dayspecial) {

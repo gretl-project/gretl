@@ -7961,6 +7961,21 @@ static double *dvar_get_series (int i, const DATASET *dset,
 	return NULL;
     }
 
+    if (i == R_OBSMIN && dset->pd < 2) {
+	*err = E_PDWRONG;
+	return NULL;
+    }    
+
+    if (i == R_OBSMIC && !dated_daily_data(dset)) {
+	*err = E_PDWRONG;
+	return NULL;
+    }
+
+    if (i == R_PUNIT && !dataset_is_panel(dset)) {
+	*err = E_PDWRONG;
+	return NULL;
+    }
+
     if (i == R_OBSMAJ) {
 	if (dset->pd == 1 && !dataset_is_time_series(dset)) {
 	    i = R_INDEX;
@@ -7969,64 +7984,52 @@ static double *dvar_get_series (int i, const DATASET *dset,
 	}
     }
 
-    switch (i) {
-    case R_INDEX:
-	x = malloc(dset->n * sizeof *x);
-	if (x != NULL) {
-	    for (t=0; t<dset->n; t++) {
-		x[t] = t + 1;
-	    }
-	} else {
-	    *err = E_ALLOC;
-	}
-	break;
-    case R_PUNIT:
-	if (dataset_is_panel(dset)) {
-	    x = malloc(dset->n * sizeof *x);
-	    if (x != NULL) {
-		for (t=0; t<dset->n; t++) {
-		    x[t] = t / dset->pd + 1;
-		}
-	    } else {
-		*err = E_ALLOC;
-	    }
-	} else {
-	    *err = E_PDWRONG;
-	}
-	break;
-    case R_OBSMAJ:
-	x = malloc(dset->n * sizeof *x);
-	if (x == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    int maj;
+    x = malloc(dset->n * sizeof *x);
+    if (x == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
 
-	    for (t=0; t<dset->n; t++) {
-		date_maj_min(t, dset, &maj, NULL);
-		x[t] = maj;
-	    }
-	}
-	break;
-    case R_OBSMIN:
-	if (dset->pd > 1) {
-	    x = malloc(dset->n * sizeof *x);
-	    if (x == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		int min;
+    if (dated_daily_data(dset)) {
+	char obs[12];
+	int y, m, d;
 
-		for (t=0; t<dset->n; t++) {
-		    date_maj_min(t, dset, NULL, &min);
-		    x[t] = min;
-		}		
+	for (t=0; t<dset->n && !*err; t++) {
+	    ntodate(obs, t, dset);
+	    if (sscanf(obs, "%d/%d/%d", &y, &m, &d) != 3) {
+		*err = E_DATA;
+	    } else if (i ==  R_OBSMAJ) {
+		x[t] = y;
+	    } else if (i == R_OBSMIN) {
+		x[t] = m;
+	    } else {
+		x[t] = d;
 	    }
-	} else {
-	    *err = E_PDWRONG;
 	}
-	break;
-    default:
+    } else if (i == R_INDEX) {
+	for (t=0; t<dset->n; t++) {
+	    x[t] = t + 1;
+	} 
+    } else if (i == R_PUNIT) {
+	for (t=0; t<dset->n; t++) {
+	    x[t] = t / dset->pd + 1;
+	}
+    } else if (i == R_OBSMAJ) {
+	int maj;
+
+	for (t=0; t<dset->n; t++) {
+	    date_maj_min(t, dset, &maj, NULL);
+	    x[t] = maj;
+	}
+    } else if (i == R_OBSMIN) {
+	int min;
+
+	for (t=0; t<dset->n; t++) {
+	    date_maj_min(t, dset, NULL, &min);
+	    x[t] = min;
+	}		
+    } else {
 	*err = E_DATA;
-	break;
     }
 
     return x;

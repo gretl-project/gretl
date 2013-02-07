@@ -449,6 +449,25 @@
 	<para>
 	  <seelist>
 	    <fncref targ="$obsminor"/>
+	    <fncref targ="$obsmicro"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="$obsmicro" section="access" output="series">
+      <description>
+	<para>
+	  Applicable when the observations in the current dataset have
+	  a major:minor:micro structure, as in dated daily time series
+	  (year:month:day).  Returns a series holding the micro or
+	  highest-frequency component of each observation (for
+	  example, the day).
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="$obsmajor"/>
+	    <fncref targ="$obsminor"/>
 	  </seelist>
 	</para>
       </description>
@@ -467,6 +486,7 @@
 	<para>
 	  <seelist>
 	    <fncref targ="$obsmajor"/>
+	    <fncref targ="$obsmicro"/>
 	  </seelist>
 	</para>
       </description>

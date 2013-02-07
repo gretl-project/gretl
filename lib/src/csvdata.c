@@ -2784,8 +2784,6 @@ struct jr_filter_ {
 
 typedef struct jr_filter_ jr_filter;
 
-#define AUTO_KEYS 1 /* experimental */
-
 static void jr_filter_destroy (jr_filter *f)
 {
     if (f != NULL) {
@@ -2908,30 +2906,48 @@ static int read_outer_auto_keys (joiner *jr, int j,
     int err = 0;
 
     if (dfmt) {
+	/* we're looking for a daily date specification */
 	char c[2], sep = jr->auto_keys.sepchar;
 	int y, m, d, k[3];
 
-	if (sscanf(s, "%d%c%d%c%d", &k[0], &c[0],
-		   &k[1], &c[1], &k[2]) != 5) {
-	    err = E_DATA;
-	} else if (c[0] != sep || c[1] != sep) {
-	    err = E_DATA;
-	} else if (dfmt == YMD) {
-	    y = k[0];
-	    m = k[1];
-	    d = k[2];
-	} else if (dfmt == DMY) {
-	    d = k[0];
-	    m = k[1];
-	    y = k[2];
-	} else {
-	    m = k[0];
-	    d = k[1];
-	    y = k[2];
-	}
-	if (!err) {
-	    int eday = epoch_day_from_ymd(y, m, d);
+	if (sep == 0) {
+	    char scanfmt[10];
 
+	    if (dfmt == YMD) {
+		k[0] = 4; k[1] = 2; k[2] = 2;
+	    } else {
+		k[0] = 2; k[1] = 2; k[2] = 4;
+	    }
+	    sprintf(scanfmt, "%%%dd%%%dd%%%dd", k[0], k[1], k[2]);
+	    if (sscanf(s, scanfmt, &k[0], &k[1], &k[2]) != 3) {
+		err = E_DATA;
+	    }
+	} else {
+	    if (sscanf(s, "%d%c%d%c%d", &k[0], &c[0],
+		       &k[1], &c[1], &k[2]) != 5) {
+		err = E_DATA;
+	    } else if (c[0] != sep || c[1] != sep) {
+		err = E_DATA;
+	    }
+	}
+
+	if (!err) {
+	    int eday;
+
+	    if (dfmt == YMD) {
+		y = k[0];
+		m = k[1];
+		d = k[2];
+	    } else if (dfmt == DMY) {
+		d = k[0];
+		m = k[1];
+		y = k[2];
+	    } else {
+		m = k[0];
+		d = k[1];
+		y = k[2];
+	    }
+	    eday = epoch_day_from_ymd(y, m, d);
 	    if (eday < 0) {
 		err = E_DATA;
 	    } else {
@@ -2941,6 +2957,7 @@ static int read_outer_auto_keys (joiner *jr, int j,
 	    }
 	}	    
     } else {
+	/* quarterly or monthly */
 	int maj, min;
 	char c;
 
@@ -3856,8 +3873,6 @@ static int join_data_type_check (joiner *jr, int targvar,
     return err;
 }
 
-#if AUTO_KEYS
-
 static int subperiod_char (char c, int pd)
 {
     if (pd == 12 && (c == 'm' || c == 'M')) {
@@ -3875,7 +3890,7 @@ static int check_join_daily_format (const char *s, int *fmtnum,
     int n = strlen(s);
     int err = 0;
 
-    if (n != 10) {
+    if (n != 10 && n != 8) {
 	err = E_DATA;
     } else {
 	char fmt[12];
@@ -3894,12 +3909,25 @@ static int check_join_daily_format (const char *s, int *fmtnum,
 	    }
 	}
 	if (!err) {
-	    if (!strcmp(fmt, "yyyy/mm/dd")) {
-		*fmtnum = YMD;
-	    } else if (!strcmp(fmt, "dd/mm/yyyy")) {
-		*fmtnum = DMY;
-	    } else if (!strcmp(fmt, "mm/dd/yyyy")) {
-		*fmtnum = MDY;
+	    if (c == 0) {
+		if (!strcmp(fmt, "yyyymmdd")) {
+		    *fmtnum = YMD;
+		} else if (!strcmp(fmt, "ddmmyyyy")) {
+		    *fmtnum = DMY;
+		} else if (!strcmp(fmt, "mmddyyyy")) {
+		    *fmtnum = MDY;
+		}		
+	    } else {
+		if (!strcmp(fmt, "yyyy/mm/dd")) {
+		    *fmtnum = YMD;
+		} else if (!strcmp(fmt, "dd/mm/yyyy")) {
+		    *fmtnum = DMY;
+		} else if (!strcmp(fmt, "mm/dd/yyyy")) {
+		    *fmtnum = MDY;
+		}
+	    }
+	    if (*fmtnum == 0) {
+		err = E_DATA;
 	    }
 	}
     }
@@ -3926,11 +3954,16 @@ static int auto_keys_check (const DATASET *l_dset,
     int pd = l_dset->pd;
     int err = 0;
 
-    if (!dataset_is_time_series(l_dset) || 
-	l_dset->S != NULL ||
-	r_dset->S == NULL) {
-	err = E_DATA;
-    } else if (dated_daily_data(l_dset) && (opt & OPT_Y)) {
+    if (!dataset_is_time_series(l_dset) || r_dset->S == NULL) {
+	/* We can do this only if the inner dataset is time-series
+	   and the outer dataset has observation markers on 
+	   which to match.
+	*/
+	return E_DATA;
+    }
+
+    if (dated_daily_data(l_dset) && (opt & OPT_Y)) {
+	/* we got a daily date-format spec */
 	const char *s = get_optval_string(JOIN, OPT_Y);
 
 	if (s == NULL) {
@@ -3947,11 +3980,15 @@ static int auto_keys_check (const DATASET *l_dset,
 		*n_keys = 1;
 	    }
 	}
+    } else if (l_dset->S != NULL) {
+	err = E_DATA;
     } else if (pd != 4 && pd != 12) {
+	/* only quarterly and monthly data are handled */
 	err = E_PDWRONG;
     }
 
     if (!err && !auto_keys->active) {
+	/* we're in the quarterly or monthly case */
 	const char *s, *dig = "0123456789";
 	int tmax = 12; /* arbitrary small sample */
 	int n, t;
@@ -3966,7 +4003,7 @@ static int auto_keys_check (const DATASET *l_dset,
 	    if ((n == 6 || n == 7) && strspn(s, dig) == 4 && 
 		subperiod_char(s[4], pd) &&
 		strspn(s + 5, dig) == n - 5) {
-		; /* OK */
+		; /* OK? */
 	    } else {
 		err = E_DATA;
 	    }
@@ -3983,8 +4020,6 @@ static int auto_keys_check (const DATASET *l_dset,
 
     return err;
 }
-
-#endif /* AUTO_KEYS */
 
 /**
  * join_from_csv:
@@ -4183,7 +4218,11 @@ int join_from_csv (const char *fname,
 	    int rstr = series_has_string_table(jspec.c->dset, okeyvars[1]);
 
 	    if (lstr != rstr) {
-		fprintf(stderr, "key 1: numeric/string mismatch\n");
+		if (lstr) {
+		    fprintf(stderr, "key 1: string on left but not on right\n");
+		} else {
+		    fprintf(stderr, "key 1: string on right but not on left\n");
+		}
 		err = E_TYPES; 
 	    } else if (lstr) {
 		str_keys = 1;
@@ -4203,12 +4242,10 @@ int join_from_csv (const char *fname,
 	}
     }
 
-#if AUTO_KEYS
     if (!err && (opt & (OPT_R | OPT_Y)) && n_keys == 0) {
 	err = auto_keys_check(dset, jspec.c->dset, opt, 
 			      &auto_keys, &n_keys);
     }
-#endif
 
     if (!err) {
 #if CDEBUG > 1

@@ -769,6 +769,7 @@ static int cli_open_append (CMD *cmd, const char *line,
 
     if (ftype == GRETL_CSV) {
 	err = import_csv(newfile, dset, opt, vprn);
+	fprintf(stderr, "cli: import_csv, err = %d\n", err);
     } else if (SPREADSHEET_IMPORT(ftype)) {
 	err = import_spreadsheet(newfile, ftype, cmd->list, cmd->extra,
 				 dset, opt, vprn);

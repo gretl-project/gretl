@@ -46,6 +46,7 @@ typedef enum {
     R_PUNIT,      /* 1-based panel unit index */
     R_OBSMAJ,     /* major component of observation (e.g. year) */
     R_OBSMIN,     /* minor component of observation (e.g. quarter, month) */
+    R_OBSMIC,     /* micro component of observation (e.g. day) */
     R_SERIES_MAX, /* separator: series vs matrices */
     R_TEST_STAT,  /* last test statistic(s) (scalar or matrix) */
     R_TEST_PVAL,  /* last test p-value(s) (scalar or matrix) */
