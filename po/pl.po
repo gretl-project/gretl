@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.11\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-02-04 09:09-0500\n"
-"PO-Revision-Date: 2013-01-30 23:00-0400\n"
+"PO-Revision-Date: 2013-02-08 02:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -4287,9 +4287,9 @@ msgid "kalman: a required matrix is missing"
 msgstr "Kalman: wymagana macierz jest błędna"
 
 #: lib/src/kalman.c:478
-#, fuzzy, c-format
+#, c-format
 msgid "kalman: required matrix %s is missing"
-msgstr "Kalman: wymagana macierz jest błędna"
+msgstr "Kalman: wymagana macierz %s jest błędna"
 
 #: lib/src/kalman.c:486
 msgid "No Kalman filter is defined"
@@ -8910,14 +8910,12 @@ msgid "Set sample range"
 msgstr "Zakres próby"
 
 #: gui2/dialogs.c:2372
-#, fuzzy
 msgid "gretl: define dummy"
-msgstr "gretl: definiowanie wykresu"
+msgstr "gretl: definiowanie zmiennej 0-1"
 
 #: gui2/dialogs.c:2382
-#, fuzzy
 msgid "Set dummy range"
-msgstr "Zakres próby"
+msgstr "Zakres zmiennej 0-1"
 
 #: gui2/dialogs.c:2401 gui2/varinfo.c:998
 msgid "Name of variable:"
@@ -11019,9 +11017,8 @@ msgid "_Time dummies"
 msgstr "zmienne 0-1 jednostek _czasu"
 
 #: gui2/gretl.c:1533
-#, fuzzy
 msgid "_Observation range dummy"
-msgstr "względem obserwacji"
+msgstr "_zmienna 0-1 względem obserwacji"
 
 #: gui2/gretl.c:1534
 msgid "Dummies for selected _discrete variables"
@@ -12293,11 +12290,11 @@ msgid ""
 "Do you want to restore the sample on which\n"
 "this model was estimated?"
 msgstr ""
-"The model sample differs from the dataset sample,\n"
-"so some menu options will be disabled.\n"
+"Podpróba dla oszacowanego modelu jest różna od aktualnej\n"
+"podpróby, dlatego część opcji będzie wyłączonych.\n"
 "\n"
-"Do you want to restore the sample on which\n"
-"this model was estimated?"
+"Czy chcesz przywrócić podpróbę\n"
+"dla której był estymowany model?"
 
 #: gui2/gui_utils.c:4688
 #, c-format
@@ -14636,9 +14633,8 @@ msgid "Command to launch GNU R"
 msgstr "Program GNU R"
 
 #: gui2/settings.c:206
-#, fuzzy
 msgid "Path to Rterm.exe"
-msgstr "Program TRAMO"
+msgstr "Ścieżka dla Programu Rterm.exe"
 
 #: gui2/settings.c:209
 msgid "Command to compile TeX files"
@@ -16530,17 +16526,17 @@ msgid "Unexpected error reading the file\n"
 msgstr "Nieoczekiwany błąd czytania pliku\n"
 
 #: plugin/xlsx_import.c:704
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d variables and %d observations\n"
-msgstr "dla zmiennej %s (%d prawidłowych obserwacji)"
+msgstr "Wczytał %d zmiennych dla %d obserwacji\n"
 
 #: plugin/xlsx_import.c:707
 msgid "File contains no data\n"
-msgstr ""
+msgstr "Plik nie zawierał danych\n"
 
 #: plugin/xlsx_import.c:1046
 msgid "Found no sheets\n"
-msgstr ""
+msgstr "Arkusz nie został znaleziony\n"
 
 #: plugin/xlsx_import.c:1093
 #, c-format
@@ -16548,11 +16544,13 @@ msgid "'%s': no such worksheet"
 msgstr "'%s': nie jest nazwą arkusza"
 
 #: plugin/xlsx_import.c:1111
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Found %d valid sheet(s)\n"
-msgstr "dla kolumny %d (%d prawidłowych obserwacji)"
+msgstr ""
+"\n"
+"Znalazł %d prawidłowych arkuszy\n"
 
 #: doc/commands/matfuncs.c:50
 msgid "Creation and I/O"

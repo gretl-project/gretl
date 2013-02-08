@@ -2743,8 +2743,8 @@ typedef struct jr_row_ jr_row;
 
 struct obskey_ {
     int active;
-    int dailyfmt;
-    char sepchar;
+    int m_means_q;
+    char *date_format;
 };
 
 typedef struct obskey_ obskey;
@@ -2884,12 +2884,6 @@ static int join_row_wanted (DATASET *dset, int i,
     return ret;
 }
 
-enum {
-    YMD = 1,
-    DMY,
-    MDY
-};
-
 /* Parse the obs string on row @i of the outer dataset and set the
    key(s) on row @j of the joiner struct, representing year and month or
    quarter. We get here only if we have verified that the obs strings
@@ -2901,52 +2895,24 @@ static int read_outer_auto_keys (joiner *jr, int j,
 				 const DATASET *dset,
 				 int i)
 {
-    int dfmt = jr->auto_keys.dailyfmt;
+    char *dfmt = jr->auto_keys.date_format;
     const char *s = dset->S[i];
     int err = 0;
 
-    if (dfmt) {
-	/* we're looking for a daily date specification */
-	char c[2], sep = jr->auto_keys.sepchar;
-	int y, m, d, k[3];
+    if (dfmt != NULL) {
+	struct tm t = {0};
+	char *test;
 
-	if (sep == 0) {
-	    char scanfmt[10];
+	test = strptime(s, dfmt, &t);
+	if (test == NULL) {
+	    gretl_errmsg_sprintf("Invalid time/date format '%s'", dfmt);
+	    err = E_DATA;
+	} else if (dated_daily_data(dset)) {
+	    int y, m, d, eday;
 
-	    if (dfmt == YMD) {
-		k[0] = 4; k[1] = 2; k[2] = 2;
-	    } else {
-		k[0] = 2; k[1] = 2; k[2] = 4;
-	    }
-	    sprintf(scanfmt, "%%%dd%%%dd%%%dd", k[0], k[1], k[2]);
-	    if (sscanf(s, scanfmt, &k[0], &k[1], &k[2]) != 3) {
-		err = E_DATA;
-	    }
-	} else {
-	    if (sscanf(s, "%d%c%d%c%d", &k[0], &c[0],
-		       &k[1], &c[1], &k[2]) != 5) {
-		err = E_DATA;
-	    } else if (c[0] != sep || c[1] != sep) {
-		err = E_DATA;
-	    }
-	}
-
-	if (!err) {
-	    int eday;
-
-	    if (dfmt == YMD) {
-		y = k[0];
-		m = k[1];
-		d = k[2];
-	    } else if (dfmt == DMY) {
-		d = k[0];
-		m = k[1];
-		y = k[2];
-	    } else {
-		m = k[0];
-		d = k[1];
-		y = k[2];
-	    }
+	    y = t.tm_year + 1900;
+	    m = t.tm_mon + 1;
+	    d = t.tm_mday;
 	    eday = epoch_day_from_ymd(y, m, d);
 	    if (eday < 0) {
 		err = E_DATA;
@@ -2955,9 +2921,17 @@ static int read_outer_auto_keys (joiner *jr, int j,
 		jr->rows[j].keyval = eday;
 		jr->rows[j].keyval2 = 0;
 	    }
-	}	    
+	} else if (quarterly_or_monthly(dset)) {
+	    int maj, min;
+
+	    maj = t.tm_year + 1900;
+	    min = t.tm_mon + 1;
+	    jr->rows[j].n_keys = 2;
+	    jr->rows[j].keyval = maj;
+	    jr->rows[j].keyval2 = min;
+	}
     } else {
-	/* quarterly or monthly */
+	/* "built-in" quarterly or monthly */
 	int maj, min;
 	char c;
 
@@ -3475,11 +3449,11 @@ static int get_inner_key_values (joiner *jr, int i,
     *pk1 = *pk2 = 0;
 
     if (jr->auto_keys.active) {
-	/* real-time/daily special: use the LHS obs info */
+	/* using the dataset obs info on the left */
 	char obs[12];
 
 	ntodate(obs, i, dset);
-	if (jr->auto_keys.dailyfmt) {
+	if (dated_daily_data(dset)) {
 	    *pk1 = get_epoch_day(obs);
 	} else {
 	    /* monthly or quarterly */
@@ -3884,62 +3858,20 @@ static int subperiod_char (char c, int pd)
     }
 }
 
-static int check_join_daily_format (const char *s, int *fmtnum,
-				    char *sepchar)
+static void check_for_quarterly (obskey *auto_keys)
 {
-    int n = strlen(s);
-    int err = 0;
+    char *s = auto_keys->date_format;
+    int i;
 
-    if (n != 10 && n != 8) {
-	err = E_DATA;
-    } else {
-	char fmt[12];
-	int i, c = 0;
-
-	strcpy(fmt, s);
-	gretl_lower(fmt);
-	for (i=0; i<n && !err; i++) {
-	    if (fmt[i] != 'y' && fmt[i] != 'm' && fmt[i] != 'd') {
-		if (c == 0) {
-		    *sepchar = c = fmt[i];
-		} else if (fmt[i] != c) {
-		    err = E_DATA;
-		}
-		fmt[i] = '/';
-	    }
-	}
-	if (!err) {
-	    if (c == 0) {
-		if (!strcmp(fmt, "yyyymmdd")) {
-		    *fmtnum = YMD;
-		} else if (!strcmp(fmt, "ddmmyyyy")) {
-		    *fmtnum = DMY;
-		} else if (!strcmp(fmt, "mmddyyyy")) {
-		    *fmtnum = MDY;
-		}		
-	    } else {
-		if (!strcmp(fmt, "yyyy/mm/dd")) {
-		    *fmtnum = YMD;
-		} else if (!strcmp(fmt, "dd/mm/yyyy")) {
-		    *fmtnum = DMY;
-		} else if (!strcmp(fmt, "mm/dd/yyyy")) {
-		    *fmtnum = MDY;
-		}
-	    }
-	    if (*fmtnum == 0) {
-		err = E_DATA;
-	    }
+    for (i=0; s[i]; i++) {
+	if (s[i] == '%' && s[i+1] == 'q' && (i == 0 || s[i-1] != '%')) {
+	    *(s+1) = 'm';
+	    auto_keys->m_means_q = 1;
 	}
     }
-
-    if (err) {
-	gretl_errmsg_sprintf("Bad daily date format '%s'", s);
-    }
-    
-    return err;
 }
 
-/* Real-time data, no keys supplied: can we figure out keys
+/* time-series data, no keys supplied: can we figure out keys
    using the time-series information on the left plus regimented
    observation marker string on the right, of the form "1990q1" for
    quarterly data or "1990m1" for monthly? Maybe.
@@ -3963,20 +3895,18 @@ static int auto_keys_check (const DATASET *l_dset,
     }
 
     if (dated_daily_data(l_dset) && (opt & OPT_Y)) {
-	/* we got a daily date-format spec */
+	/* we got a date-format spec */
 	const char *s = get_optval_string(JOIN, OPT_Y);
 
 	if (s == NULL) {
 	    err = E_DATA;
 	} else {
-	    int dailyfmt = 0;
-	    char sepchar = 0;
-	    
-	    err = check_join_daily_format(s, &dailyfmt, &sepchar);
-	    if (!err) {
+	    auto_keys->date_format = gretl_strdup(s);
+	    if (auto_keys->date_format == NULL) {
+		err = E_ALLOC;
+	    } else {
+		check_for_quarterly(auto_keys);
 		auto_keys->active = 1;
-		auto_keys->dailyfmt = dailyfmt;
-		auto_keys->sepchar = sepchar;
 		*n_keys = 1;
 	    }
 	}
@@ -4059,10 +3989,10 @@ int join_from_csv (const char *fname,
     csvjoin jspec = {0};
     joiner *jr = NULL;
     jr_filter *filter = NULL;
-    obskey auto_keys = {0};
     int okeyvars[3] = {0, 0, 0};
     char okeyname1[CSVSTRLEN] = {0};
     char okeyname2[CSVSTRLEN] = {0};
+    obskey auto_keys = {0};
     int targvar, orig_v = dset->v;
     int str_keys = 0;
     int str_keys2 = 0;
@@ -4078,6 +4008,8 @@ int join_from_csv (const char *fname,
     if (ikeyvars != NULL) {
 	n_keys = ikeyvars[0];
     }
+
+    auto_keys.date_format = NULL;
 
 #if CDEBUG
     fputs("*** join_from_csv:\n", stderr);
@@ -4315,6 +4247,10 @@ int join_from_csv (const char *fname,
 
     if (err) {
 	dataset_drop_last_variables(dset, dset->v - orig_v);
+    }
+
+    if (auto_keys.date_format != NULL) {
+	free(auto_keys.date_format);
     }
 
     csvdata_free(jspec.c);
