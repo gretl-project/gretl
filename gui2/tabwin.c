@@ -22,6 +22,10 @@
 #include "textbuf.h"
 #include "tabwin.h"
 
+#ifdef G_OS_WIN32
+# include "gretlwin32.h"
+#endif
+
 #define TDEBUG 0
 
 struct tabwin_t_ {

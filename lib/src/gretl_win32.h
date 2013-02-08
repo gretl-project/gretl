@@ -77,6 +77,9 @@ void *win32_memalign (size_t size, size_t alignment);
 
 void win32_aligned_free (void *mem);
 
+char *strptime (const char *buf, const char *format, 
+		struct tm *timeptr);
+
 #endif /* WIN32 */
 
 #endif /* GRETL_WIN32_H */
