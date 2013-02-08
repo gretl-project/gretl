@@ -7990,7 +7990,11 @@ static double *dvar_get_series (int i, const DATASET *dset,
 	return NULL;
     }
 
-    if (dated_daily_data(dset)) {
+    if (i == R_INDEX) {
+	for (t=0; t<dset->n; t++) {
+	    x[t] = t + 1;
+	} 	
+    } else if (dated_daily_data(dset) && i != R_INDEX) {
 	char obs[12];
 	int y, m, d;
 
@@ -8006,10 +8010,6 @@ static double *dvar_get_series (int i, const DATASET *dset,
 		x[t] = d;
 	    }
 	}
-    } else if (i == R_INDEX) {
-	for (t=0; t<dset->n; t++) {
-	    x[t] = t + 1;
-	} 
     } else if (i == R_PUNIT) {
 	for (t=0; t<dset->n; t++) {
 	    x[t] = t / dset->pd + 1;

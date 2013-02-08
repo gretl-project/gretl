@@ -1382,16 +1382,10 @@ gretlopt get_gretl_options (char *line, int *err)
     return oflags;
 }
 
-static int quote_option_parm (int ci, gretlopt opt, 
-			      const char *s)
+static int option_parm_needs_quoting (const char *s)
 {
-    if (ci == TABPRINT && opt == OPT_T) {
-	if (strchr(s, '%')) {
-	    return 1;
-	}
-    }
-
-    return 0;
+    while (isdigit(*s)) s++;
+    return gretl_namechar_spn(s) < strlen(s);
 }
 
 static PRN *flagprn;
@@ -1452,9 +1446,7 @@ const char *print_flags (gretlopt oflags, int ci)
 	    if (gretl_opts[i].parminfo) {
 		parm = get_optval_string(ci, opt);
 		if (parm != NULL && *parm != '\0') {
-		    if (strchr(parm, ' ')) {
-			pprintf(flagprn, "=\"%s\"", parm);
-		    } else if (quote_option_parm(ci, opt, parm)) {
+		    if (option_parm_needs_quoting(parm)) {
 			pprintf(flagprn, "=\"%s\"", parm);
 		    } else {
 			pprintf(flagprn, "=%s", parm);
