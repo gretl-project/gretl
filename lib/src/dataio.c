@@ -271,13 +271,13 @@ int check_varname (const char *varname)
     if (testchar != 'a') {
 	if (isprint((unsigned char) testchar)) {
 	    if (ret == VARNAME_FIRSTCHAR) {
-		gretl_errmsg_sprintf(_("First char of varname ('%c') is bad\n"
+		gretl_errmsg_sprintf(_("First char of varname '%s' is bad\n"
 				       "(first must be alphabetical)"), 
-				     (unsigned char) testchar);
+				     varname);
 	    } else {
-		gretl_errmsg_sprintf(_("Varname contains illegal character '%c'\n"
+		gretl_errmsg_sprintf(_("Varname '%s' contains illegal character '%c'\n"
 				       "Use only letters, digits and underscore"), 
-				     (unsigned char) testchar);
+				     varname, (unsigned char) testchar);
 	    }
 	} else {
 	    if (ret == VARNAME_FIRSTCHAR) {
