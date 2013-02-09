@@ -488,7 +488,7 @@ static void mt_print_value (char *s, double x)
 static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 {
     const MODEL *pmod;
-    char numstr[32], tmp[32];
+    char numstr[32], tmp[64];
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
     int i, j, k;
@@ -507,6 +507,9 @@ static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 	} else if (rtf) {
 	    print_rtf_row_spec(prn, 0);
 	    pprintf(prn, "\\intbl \\qc %s\\cell ", pname);
+	} else if (strlen(pnames[i]) > namewidth) {
+	    sprintf(tmp, "%.*s...", namewidth - 3, pname);
+	    pprintf(prn, "%-*s ", namewidth, tmp);
 	} else {
 	    pprintf(prn, "%-*s ", namewidth, pname);
 	}
@@ -867,7 +870,7 @@ static void print_equation_stats (int width0, int colwidth, PRN *prn,
     }
 }
 
-static int max_namelen (void)
+static int mtab_max_namelen (void)
 {
     int i, len, maxlen = 8;
 
@@ -878,10 +881,14 @@ static int max_namelen (void)
 	}
     }
 
+    if (maxlen > 15) {
+	maxlen = 15;
+    }
+
     return maxlen;
 }
 
-static int get_colwidth (void)
+static int mtab_get_colwidth (void)
 {
     int maxlen = 0;
     int cw = 13;
@@ -1003,8 +1010,8 @@ static void print_column_heads (int colwidth, PRN *prn)
 
 static void plain_print_model_table (PRN *prn)
 {
-    int namelen = max_namelen();
-    int colwidth = get_colwidth();
+    int namelen = mtab_max_namelen();
+    int colwidth = mtab_get_colwidth();
     int ci = common_estimator();
     int binary = 0;
 

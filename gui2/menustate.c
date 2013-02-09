@@ -640,14 +640,14 @@ void set_main_window_title (const char *name, gboolean modified)
     }
 }
 
-static const char *get_pd_string (DATASET *pdinfo)
+static const char *get_pd_string (DATASET *dset)
 {
     char *pdstr;
 
-    if (custom_time_series(pdinfo)) {
+    if (custom_time_series(dset)) {
 	pdstr = N_("Time series");
-    } else if (dataset_is_time_series(pdinfo)) {
-	switch (pdinfo->pd) {
+    } else if (dataset_is_time_series(dset)) {
+	switch (dset->pd) {
 	case 1:
 	    pdstr = N_("Annual"); break;
 	case 4:
@@ -667,7 +667,7 @@ static const char *get_pd_string (DATASET *pdinfo)
 	default:
 	    pdstr = N_("Unknown"); break;
 	}
-    } else if (dataset_is_panel(pdinfo)) {
+    } else if (dataset_is_panel(dset)) {
 	pdstr = N_("Panel");
     } else {
 	pdstr = N_("Undated");
@@ -676,54 +676,60 @@ static const char *get_pd_string (DATASET *pdinfo)
     return pdstr;
 }
 
-void set_sample_label (DATASET *pdinfo)
+void set_sample_label (DATASET *dset)
 {
     GtkWidget *dlabel;
-    char t1str[OBSLEN], t2str[OBSLEN];
     char tmp[256];
+    int tsubset;
 
     if (mdata == NULL) {
 	return;
     }
 
-    *t1str = *t2str = '\0';
-
     /* set the sensitivity of various menu items */
 
-    time_series_menu_state(dataset_is_time_series(pdinfo));
-    panel_menu_state(dataset_is_panel(pdinfo));
-    ts_or_panel_menu_state(dataset_is_time_series(pdinfo) ||
-			   dataset_is_panel(pdinfo));
-    flip(mdata->ui, "/menubar/Data/DataTranspose", !dataset_is_panel(pdinfo));
+    time_series_menu_state(dataset_is_time_series(dset));
+    panel_menu_state(dataset_is_panel(dset));
+    ts_or_panel_menu_state(dataset_is_time_series(dset) ||
+			   dataset_is_panel(dset));
+    flip(mdata->ui, "/menubar/Data/DataTranspose", !dataset_is_panel(dset));
+
+    tsubset = dset->t1 > 0 || dset->t2 < dset->n - 1;
 
     /* construct label showing summary of dataset/sample info
        (this goes at the foot of the window) */
     
-    if (complex_subsampled() && pdinfo->t1 == 0 && 
-	pdinfo->t2 == pdinfo->n - 1 && 
-	dataset->structure == CROSS_SECTION) {
+    if (complex_subsampled() && !tsubset && dataset_is_cross_section(dset)) {
 	sprintf(tmp, _("Undated: Full range n = %d; current sample"
 		       " n = %d"), get_full_length_n(), dataset->n);
-    } else {
-	const char *pdstr;
-
-	ntodate(t1str, 0, pdinfo);
-	ntodate(t2str, pdinfo->n - 1, pdinfo);
-	pdstr = get_pd_string(pdinfo);
-	sprintf(tmp, _("%s: Full range %s - %s"), _(pdstr), 
-		t1str, t2str);
-    }
-
-    if (pdinfo->t1 > 0 || pdinfo->t2 < pdinfo->n - 1) {
-	gchar *fulltext;
-
-	ntodate(t1str, pdinfo->t1, pdinfo);
-	ntodate(t2str, pdinfo->t2, pdinfo);
-	fulltext = g_strdup_printf(_("%s; sample %s - %s"), tmp, t1str, t2str);
-	gtk_label_set_text(GTK_LABEL(mdata->status), fulltext);
-	g_free(fulltext);
-    } else {
 	gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
+    } else {
+	char t1str[OBSLEN], t2str[OBSLEN];
+	const char *pdstr = get_pd_string(dset);
+
+	if (tsubset && calendar_data(dset)) {
+	    /* it's too verbose to print both full range and sample */
+	    ntodate(t1str, dset->t1, dset);
+	    ntodate(t2str, dset->t2, dset);
+	    sprintf(tmp, _("%s; sample %s - %s"), pdstr, t1str, t2str);
+	    gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
+	} else {
+	    ntodate(t1str, 0, dset);
+	    ntodate(t2str, dset->n - 1, dset);
+	    sprintf(tmp, _("%s: Full range %s - %s"), _(pdstr), 
+		    t1str, t2str);
+	    if (tsubset) {
+		gchar *fulltext;
+
+		ntodate(t1str, dset->t1, dset);
+		ntodate(t2str, dset->t2, dset);
+		fulltext = g_strdup_printf(_("%s; sample %s - %s"), tmp, t1str, t2str);
+		gtk_label_set_text(GTK_LABEL(mdata->status), fulltext);
+		g_free(fulltext);
+	    } else {
+		gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
+	    }
+	}
     }
 
     /* construct label with datafile name (this goes above the
@@ -761,8 +767,8 @@ void set_sample_label (DATASET *pdinfo)
 	}
     }
 
-    if (complex_subsampled() || pdinfo->t1 > 0 || 
-	pdinfo->t2 < pdinfo->n - 1) {
+    if (complex_subsampled() || dset->t1 > 0 || 
+	dset->t2 < dset->n - 1) {
 	restore_sample_state(TRUE);
     }
 
