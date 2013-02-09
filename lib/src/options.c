@@ -1385,8 +1385,16 @@ gretlopt get_gretl_options (char *line, int *err)
 
 static int option_parm_needs_quoting (const char *s)
 {
-    while (isdigit(*s)) s++;
-    return gretl_namechar_spn(s) < strlen(s);
+    const char *qchars = "=%, ";
+
+    while (*s) {
+	if (strspn(s, qchars)) {
+	    return 1;
+	}
+	s++;
+    }
+
+    return 0;
 }
 
 static PRN *flagprn;
