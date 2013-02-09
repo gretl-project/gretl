@@ -2355,6 +2355,11 @@ static int xml_get_data_frequency (xmlNodePtr node, int *pd, int *dtype)
     return err;
 }
 
+static int likely_calendar (const char *s)
+{
+    return strchr(s, '-') || strchr(s, '/');
+}
+
 static int xml_get_startobs (xmlNodePtr node, double *sd0, char *stobs,
 			     int caldata)
 {
@@ -2368,7 +2373,7 @@ static int xml_get_startobs (xmlNodePtr node, double *sd0, char *stobs,
 	strncat(obstr, (char *) tmp, OBSLEN - 1);
 	gretl_charsub(obstr, ':', '.');
 	
-	if (strchr(obstr, '/') != NULL && caldata) {
+	if (likely_calendar(obstr) && caldata) {
 	    long ed = get_epoch_day((char *) tmp);
 
 	    if (ed < 0) {
@@ -2492,7 +2497,7 @@ static void data_read_message (const char *fname, DATASET *dset, PRN *prn)
 {
     pprintf(prn, A_("\nRead datafile %s\n"), fname);
     pprintf(prn, A_("periodicity: %d, maxobs: %d\n"
-		    "observations range: %s-%s\n"), 
+		    "observations range: %s to %s\n"), 
 	    (custom_time_series(dset))? 1 : dset->pd, 
 	    dset->n, dset->stobs, dset->endobs);
     pputc(prn, '\n');

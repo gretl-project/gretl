@@ -1705,7 +1705,7 @@ static int import_esl (const char *datafile, char *auxfile,
     if (!err) {
 	/* print out basic info from the files read */
 	pprintf(prn, I_("periodicity: %d, maxobs: %d\n"
-			"observations range: %s-%s\n"), tmpset->pd, tmpset->n,
+			"observations range: %s to %s\n"), tmpset->pd, tmpset->n,
 		tmpset->stobs, tmpset->endobs);
 
 	pputs(prn, I_("\nReading "));
@@ -1868,7 +1868,7 @@ int open_nulldata (DATASET *dset, int data_status, int length,
     if (gretl_messages_on()) {
 	/* print out basic info */
 	pprintf(prn, A_("periodicity: %d, maxobs: %d\n"
-			"observations range: %s-%s\n"), 
+			"observations range: %s to %s\n"), 
 		dset->pd, dset->n, dset->stobs, dset->endobs);
     }
 
