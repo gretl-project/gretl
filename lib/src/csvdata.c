@@ -27,7 +27,7 @@
 
 #include <errno.h>
 
-#define CDEBUG 0
+#define CDEBUG 2
 
 #define QUOTE      '\''
 #define CSVSTRLEN  72
