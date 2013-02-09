@@ -59,19 +59,10 @@ extern "C" {
 # endif
 #endif
 
-#define USE_ISO_8601 1 /* experimental */
-
-#if USE_ISO_8601
-# define YMD_READ_FMT     "%d-%d-%d" 
-# define YMD_WRITE_FMT    "%d-%02d-%02d"
-# define YMD_WRITE_Y2_FMT "%02d-%02d-%02d"
-# define YMD_WRITE_Y4_FMT "%04d-%02d-%02d"
-#else 
-# define YMD_READ_FMT     "%d/%d/%d"
-# define YMD_WRITE_FMT    "%d/%02d/%02d"
-# define YMD_WRITE_Y2_FMT "%02d/%02d/%02d"
-# define YMD_WRITE_Y4_FMT "%04d/%02d/%02d"
-#endif
+#define YMD_READ_FMT     "%d-%d-%d" 
+#define YMD_WRITE_FMT    "%d-%02d-%02d"
+#define YMD_WRITE_Y2_FMT "%02d-%02d-%02d"
+#define YMD_WRITE_Y4_FMT "%04d-%02d-%02d"
 
 #ifdef ENABLE_NLS
 # include "libintl.h"

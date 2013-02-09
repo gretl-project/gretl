@@ -135,13 +135,8 @@ long get_epoch_day (const char *date)
     nf = sscanf(date, YMD_READ_FMT, &year, &month, &day);
 
     if (nf != 3) {
-#if USE_ISO_8601
-	/* backward compat: try slashes instead */
+	/* backward compatibility: try slashes instead */
 	nf = sscanf(date, "%d/%d/%d", &year, &month, &day);
-#else
-	/* forward compat: try hyphens instead */
-	nf = sscanf(date, "%d-%d-%d", &year, &month, &day);
-#endif
     }
 
     if (nf != 3 || year < 0 || month < 0 || day < 0) {
