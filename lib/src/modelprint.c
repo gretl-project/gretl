@@ -1707,12 +1707,24 @@ static void maybe_print_T (const MODEL *pmod,
     }
 }
 
+static void make_obs_sep (char *targ, const char *obs, int tex)
+{
+    if (tex) {
+	strcpy(targ, "--");
+    } else if (strchr(obs, '-') != NULL) {
+	strcpy(targ, ":");
+    } else {
+	strcpy(targ, "-");
+    }
+}
+
 static void print_model_heading (const MODEL *pmod, 
 				 const DATASET *dset, 
 				 gretlopt opt, 
 				 PRN *prn)
 {
     char startdate[OBSLEN], enddate[OBSLEN], vname[32];
+    char datesep[4];
     int t1 = pmod->t1, t2 = pmod->t2;
     int tex = tex_format(prn);
     int csv = csv_format(prn);
@@ -1722,6 +1734,7 @@ static void print_model_heading (const MODEL *pmod,
     if (pmod->aux != AUX_VAR && pmod->aux != AUX_VECM) {
 	ntodate(startdate, t1, dset);
 	ntodate(enddate, t2, dset);
+	make_obs_sep(datesep, startdate, tex); 
     }
 
     switch (pmod->aux) {
@@ -1792,7 +1805,7 @@ static void print_model_heading (const MODEL *pmod,
     } else if (pmod->aux == AUX_SYS) {
 	pprintf(prn, A_("%s, using observations %s%s%s"),
 		A_(system_short_string(pmod)),
-		startdate, (tex)? "--" : "-", enddate);
+		startdate, datesep, enddate);
 	maybe_print_T(pmod, dset, startdate, prn);
     } else if (!dataset_is_panel(dset)) {
 	int mc, Tmax = pmod->t2 - pmod->t1 + 1;
@@ -1807,7 +1820,7 @@ static void print_model_heading (const MODEL *pmod,
 	} else {
 	    fmt = N_("%s, using observations %s%s%s");
 	    pprintf(prn, A_(fmt), A_(estr), startdate, 
-		    (tex)? "--" : "-", enddate);
+		    datesep, enddate);
 	    maybe_print_T(pmod, dset, startdate, prn);
 	}
 
