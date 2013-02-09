@@ -784,8 +784,11 @@ static int might_be_date_string (const char *s, int n)
     } else if (sscanf(s, "%d:%d", &y, &m) == 2) {
 	/* quarterly, monthly date */
 	return 1;
+    } else if (sscanf(s, "%d-%d-%d", &y, &m, &d) == 3) {
+	/* daily date? */
+	return 1;
     } else if (sscanf(s, "%d/%d/%d", &y, &m, &d) == 3) {
-	/* daily date */
+	/* daily date? */
 	return 1;
     }
 

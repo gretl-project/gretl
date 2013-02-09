@@ -132,7 +132,7 @@ long get_epoch_day (const char *date)
     long temp;
     int year, month, day;
 
-    if (sscanf(date, "%d/%d/%d", &year, &month, &day) != 3) {
+    if (sscanf(date, YMD_READ_FMT, &year, &month, &day) != 3) {
 	return -1;
     }
 
@@ -252,9 +252,9 @@ void calendar_date_string (char *str, int t, const DATASET *dset)
     day = rem - modays;
 
     if (strlen(dset->stobs) == 8) {
-	sprintf(str, "%02d/%02d/%02d", yr % 100, mo, day);
+	sprintf(str, YMD_WRITE_Y2_FMT, yr % 100, mo, day);
     } else {
-	sprintf(str, "%04d/%02d/%02d", yr, mo, day);
+	sprintf(str, YMD_WRITE_Y4_FMT, yr, mo, day);
     }
 }
 
@@ -358,7 +358,7 @@ int MS_excel_date_string (char *date, int mst, int pd, int d1904)
 
 	sprintf(date, "%d:%d", yr, qtr);
     } else {
-	sprintf(date, "%04d/%02d/%02d", yr, mo, day);
+	sprintf(date, YMD_WRITE_Y4_FMT, yr, mo, day);
     }
 
     return 0;
@@ -378,15 +378,23 @@ double get_dec_date (const char *date)
     long ed0, edn, edt;
     double dyr, frac;
 
-    if (sscanf(date, "%d/%d/%d", &yr, &mo, &day) != 3) {
+    if (sscanf(date, YMD_READ_FMT, &yr, &mo, &day) != 3) {
 	return NADBL;
     }
 
+#if USE_ISO_8601
+    edt = get_epoch_day(date);
+    sprintf(tmp, "%04d-01-01", yr);
+    ed0 = get_epoch_day(tmp);
+    sprintf(tmp, "%04d-12-31", yr);
+    edn = get_epoch_day(tmp);
+#else
     edt = get_epoch_day(date);
     sprintf(tmp, "%04d/01/01", yr);
     ed0 = get_epoch_day(tmp);
     sprintf(tmp, "%04d/12/31", yr);
     edn = get_epoch_day(tmp);
+#endif
 
     if (yr < 100) {
 	yr = FOUR_DIGIT_YEAR(yr);
@@ -469,7 +477,7 @@ int get_day_of_week (const char *date)
 {
     int yr, mo, day;
 
-    if (sscanf(date, "%d/%d/%d", &yr, &mo, &day) != 3) {
+    if (sscanf(date, YMD_READ_FMT, &yr, &mo, &day) != 3) {
 	return -1;
     }
 

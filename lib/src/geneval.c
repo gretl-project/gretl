@@ -8000,7 +8000,7 @@ static double *dvar_get_series (int i, const DATASET *dset,
 
 	for (t=0; t<dset->n && !*err; t++) {
 	    ntodate(obs, t, dset);
-	    if (sscanf(obs, "%d/%d/%d", &y, &m, &d) != 3) {
+	    if (sscanf(obs, YMD_READ_FMT, &y, &m, &d) != 3) {
 		*err = E_DATA;
 	    } else if (i ==  R_OBSMAJ) {
 		x[t] = y;

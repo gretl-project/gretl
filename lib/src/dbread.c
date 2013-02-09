@@ -3344,10 +3344,10 @@ static int get_n_ok_months (const DATASET *dset,
     int any_eop, any_sop, all_same;
     int skip = 0, pad = 0, nm = -1;
 
-    if (sscanf(dset->stobs, "%d/%d/%d", &y1, &m1, &d1) != 3) {
+    if (sscanf(dset->stobs, YMD_READ_FMT, &y1, &m1, &d1) != 3) {
 	return -1;
     }
-    if (sscanf(dset->endobs, "%d/%d/%d", &y2, &m2, &d2) != 3) {
+    if (sscanf(dset->endobs, YMD_READ_FMT, &y2, &m2, &d2) != 3) {
 	return -1;
     }
 
@@ -3440,7 +3440,7 @@ weeks_to_months_exec (double **mZ, const DATASET *dset,
     for (s=0; s<dset->n; s++) {
 	/* loop across the weekly obs in this month */
 	ntodate(obsstr, s, dset);
-	sscanf(obsstr, "%d/%d/%d", &yr, &mon, &day);
+	sscanf(obsstr, YMD_READ_FMT, &yr, &mon, &day);
 	if (monbak > 0 && mon != monbak) {
 	    /* new month: finalize the previous one */
 	    for (i=1; i<dset->v; i++) {
@@ -3512,7 +3512,7 @@ weeks_to_months_check (const DATASET *dset, int *startyr, int *endyr,
 
     for (t=0; t<dset->n; t++) {
 	ntodate(obsstr, t, dset);
-	if (sscanf(obsstr, "%d/%d/%d", &yr, &mon, &day) != 3) {
+	if (sscanf(obsstr, YMD_READ_FMT, &yr, &mon, &day) != 3) {
 	    err = 1;
 	    break;
 	}
@@ -3638,7 +3638,7 @@ static int daily_dataset_to_weekly (DATASET *dset, int repday)
 		n_ok++;
 	    }
 	    if (n == 0) {
-		sscanf(obs, "%d/%d/%d", &y1, &m1, &d1);
+		sscanf(obs, YMD_READ_FMT, &y1, &m1, &d1);
 	    }
 	    n++;
 	}
@@ -3686,7 +3686,7 @@ static int daily_dataset_to_weekly (DATASET *dset, int repday)
 	dset->n = n;
 	dset->pd = 52;
 	
-	sprintf(dset->stobs, "%04d/%02d/%02d", y1, m1, d1);
+	sprintf(dset->stobs, YMD_WRITE_Y4_FMT, y1, m1, d1);
 	dset->sd0 = get_date_x(dset->pd, dset->stobs);
 	dset->t1 = 0;
 	dset->t2 = dset->n - 1;

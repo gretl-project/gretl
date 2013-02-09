@@ -949,7 +949,6 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
 	stobs[8] = '\0';
     }
 
-    /* does the supplied frequency make sense? */
     if (pd < 1 || (dset->n > 0 && pd > dset->n && opt != OPT_T)) {
 	gretl_errmsg_sprintf(_("frequency (%d) does not make seem to make sense"), pd);
 	return 1;

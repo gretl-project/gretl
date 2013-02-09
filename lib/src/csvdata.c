@@ -719,7 +719,7 @@ static int compress_daily (DATASET *dset, int pd)
     int t, yr, mon, day;
 
     for (t=0; t<dset->n; t++) {
-	sscanf(dset->S[t], "%d/%d/%d", &yr, &mon, &day);
+	sscanf(dset->S[t], YMD_READ_FMT, &yr, &mon, &day);
 	if (pd == 1) {
 	    sprintf(dset->S[t], "%d", yr);
 	} else if (pd == 12) {
@@ -762,8 +762,8 @@ static void retransform_daily_dates (DATASET *dset)
     */
 
     for (t=0; t<dset->n; t++) {
-	sscanf(dset->S[t], "%d/%d/%d", &y, &d, &m);
-	sprintf(dset->S[t], "%d/%d/%d", d, m, y);
+	sscanf(dset->S[t], YMD_READ_FMT, &y, &d, &m);
+	sprintf(dset->S[t], YMD_WRITE_FMT, d, m, y);
     }
 }
 
@@ -784,7 +784,7 @@ static int transform_daily_dates (DATASET *dset, int dorder)
 	    n = sscanf(label, "%d%c%d%c%d", &mon, &s1, &day, &s2, &yr);
 	}
 	if (n == 5) {
-	    sprintf(label, "%02d/%02d/%02d", yr, mon, day);
+	    sprintf(label, YMD_WRITE_Y2_FMT, yr, mon, day);
 	} else {
 	    err = 1;
 	}
@@ -2385,8 +2385,8 @@ static void csv_set_dataset_dimensions (csvdata *c)
  * @rows: row specification.
  * @join: specification pertaining to "join" command.
  * @opt: use OPT_N to force interpretation of data colums containing
- * strings as coded (non-numeric) values and not errors; for use of OPT_T see
- * the help for "append".
+ * strings as coded (non-numeric) values and not errors; for use of 
+ * OPT_T see the help for "append".
  * @prn: gretl printing struct (or NULL).
  * 
  * Open a Comma-Separated Values data file and read the data into
@@ -2678,8 +2678,8 @@ static int real_import_csv (const char *fname,
  * @fname: name of CSV file.
  * @dset: dataset struct.
  * @opt: use OPT_N to force interpretation of data colums containing
- * strings as coded (non-numeric) values and not errors; for use of OPT_T see
- * the help for "append".
+ * strings as coded (non-numeric) values and not errors; for use of 
+ * OPT_T see the help for "append".
  * @prn: gretl printing struct (or NULL).
  * 
  * Open a Comma-Separated Values data file and read the data into
@@ -2742,9 +2742,9 @@ struct jr_row_ {
 typedef struct jr_row_ jr_row;
 
 struct obskey_ {
-    int active;
+    char *timefmt;
+    int keycol;
     int m_means_q;
-    char *date_format;
 };
 
 typedef struct obskey_ obskey;
@@ -2887,60 +2887,55 @@ static int join_row_wanted (DATASET *dset, int i,
 /* Parse the obs string on row @i of the outer dataset and set the
    key(s) on row @j of the joiner struct, representing year and month or
    quarter. We get here only if we have verified that the obs strings
-   exist, and plausibly conform to the right pattern. The indices
-   @i and @j may not be equal if a filter is being used.
+   exist. The indices @i and @j may not be equal if a filter is being used.
 */
 
-static int read_outer_auto_keys (joiner *jr, int j,
-				 const DATASET *dset,
-				 int i)
+static int read_outer_auto_keys (joiner *jr, int j, int i)
 {
-    char *dfmt = jr->auto_keys.date_format;
-    const char *s = dset->S[i];
+    char *tfmt = jr->auto_keys.timefmt;
+    int tcol = jr->auto_keys.keycol;
+    struct tm t = {0};
+    const char *s;
+    char *test;
     int err = 0;
 
-    if (dfmt != NULL) {
-	struct tm t = {0};
-	char *test;
+    if (tcol >= 0) {
+	s = series_get_string_val(jr->r_dset, tcol, i);	
+    } else {
+	s = jr->r_dset->S[i];
+    }
 
-	test = strptime(s, dfmt, &t);
-	if (test == NULL) {
-	    gretl_errmsg_sprintf("Invalid time/date format '%s'", dfmt);
+    test = strptime(s, tfmt, &t);
+    if (test == NULL || *test != '\0') {
+	gretl_errmsg_sprintf("'%s' does not match the format '%s'", s, tfmt);
+	err = E_DATA;
+    } else if (calendar_data(jr->l_dset)) {
+	int y, m, d, eday;
+
+	y = t.tm_year + 1900;
+	m = t.tm_mon + 1;
+	d = t.tm_mday;
+	eday = epoch_day_from_ymd(y, m, d);
+	if (eday < 0) {
+	    gretl_errmsg_sprintf("'%s' is not a valid date", s);
 	    err = E_DATA;
-	} else if (dated_daily_data(dset)) {
-	    int y, m, d, eday;
-
-	    y = t.tm_year + 1900;
-	    m = t.tm_mon + 1;
-	    d = t.tm_mday;
-	    eday = epoch_day_from_ymd(y, m, d);
-	    if (eday < 0) {
-		err = E_DATA;
-	    } else {
-		jr->rows[j].n_keys = 1;
-		jr->rows[j].keyval = eday;
-		jr->rows[j].keyval2 = 0;
-	    }
-	} else if (quarterly_or_monthly(dset)) {
-	    int maj, min;
-
-	    maj = t.tm_year + 1900;
-	    min = t.tm_mon + 1;
-	    jr->rows[j].n_keys = 2;
-	    jr->rows[j].keyval = maj;
-	    jr->rows[j].keyval2 = min;
+	} else {
+	    jr->rows[j].n_keys = 1;
+	    jr->rows[j].keyval = eday;
+	    jr->rows[j].keyval2 = 0;
 	}
     } else {
-	/* "built-in" quarterly or monthly */
 	int maj, min;
-	char c;
 
-	if (sscanf(s, "%d%c%d", &maj, &c, &min) == 3) {
+	maj = t.tm_year + 1900;
+	min = t.tm_mon + 1;
+	if (jr->auto_keys.m_means_q && min > 4) {
+	    gretl_errmsg_sprintf("'%s' is not a valid date", s);
+	    err = E_DATA;
+	} else {
 	    jr->rows[j].n_keys = 2;
 	    jr->rows[j].keyval = maj;
 	    jr->rows[j].keyval2 = min;
-	} else {
-	    err = E_DATA;
 	}
     }
 
@@ -2986,6 +2981,8 @@ static int dtoi (double x, int *err)
 	return (int) trunc(x);
     }
 }
+
+#define using_auto_keys(j) (j->auto_keys.timefmt != NULL)
 
 static joiner *joiner_new (csvjoin *jspec, 
 			   DATASET *l_dset,
@@ -3067,8 +3064,8 @@ static joiner *joiner_new (csvjoin *jspec,
 	for (i=0; i<r_dset->n && !*err; i++) {
 	    if (join_row_wanted(r_dset, i, filter, err)) {
 		/* the keys */
-		if (jr->auto_keys.active) {
-		    *err = read_outer_auto_keys(jr, j, r_dset, i);
+		if (using_auto_keys(jr)) {
+		    *err = read_outer_auto_keys(jr, j, i);
 		} else if (keycol > 0) {
 		    jr->rows[j].keyval = dtoi(Z[keycol][i], err);
 		    if (key2col > 0) {
@@ -3448,15 +3445,15 @@ static int get_inner_key_values (joiner *jr, int i,
 
     *pk1 = *pk2 = 0;
 
-    if (jr->auto_keys.active) {
-	/* using the dataset obs info on the left */
+    if (using_auto_keys(jr)) {
+	/* using the LHS dataset obs info */
 	char obs[12];
 
 	ntodate(obs, i, dset);
-	if (dated_daily_data(dset)) {
+	if (calendar_data(dset)) {
 	    *pk1 = get_epoch_day(obs);
 	} else {
-	    /* monthly or quarterly */
+	    /* monthly or quarterly (FIXME others?) */
 	    *pk1 = atoi(obs);
 	    *pk2 = atoi(obs + 5);
 	}
@@ -3739,15 +3736,21 @@ static int get_target_varnum (const char *vname,
    @s. If @s contains a comma, we accept a zero-length name on either
    the left or the right -- but not both -- as indicating that we
    should use the corresponding inner key name.
+
+   If opt contains OPT_K (--tkey) there should be just one 
+   column name here.
 */
 
 static int process_outer_key (const char *s, int n_keys, 
-			      char *name1, char *name2)
+			      char *name1, char *name2,
+			      gretlopt opt)
 {
     int n_okeys = 0;
     int err = 0;
 
-    if (strchr(s, ',') == NULL) {
+    if (opt & OPT_K) {
+	strncat(name1, s, CSVSTRLEN - 1);
+    } else if (strchr(s, ',') == NULL) {
 	/* just one outer key */
 	strncat(name1, s, CSVSTRLEN - 1);
 	n_okeys = 1;
@@ -3847,35 +3850,25 @@ static int join_data_type_check (joiner *jr, int targvar,
     return err;
 }
 
-static int subperiod_char (char c, int pd)
-{
-    if (pd == 12 && (c == 'm' || c == 'M')) {
-	return 1;
-    } else if (pd == 4 && (c == 'q' || c == 'Q')) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
+/* Handle the case where the user gave a "%q" conversion specifier
+   (which we take to mean quarter). We convert this to %m for use with
+   strptime(), but record that the fact that "month means quarter".
+*/
 
 static void check_for_quarterly (obskey *auto_keys)
 {
-    char *s = auto_keys->date_format;
+    char *s = auto_keys->timefmt;
     int i;
 
     for (i=0; s[i]; i++) {
 	if (s[i] == '%' && s[i+1] == 'q' && (i == 0 || s[i-1] != '%')) {
-	    *(s+1) = 'm';
+	    s[i+1] = 'm';
 	    auto_keys->m_means_q = 1;
 	}
     }
 }
 
-/* time-series data, no keys supplied: can we figure out keys
-   using the time-series information on the left plus regimented
-   observation marker string on the right, of the form "1990q1" for
-   quarterly data or "1990m1" for monthly? Maybe.
-*/
+/* time-series data on the left, and no explicit keys supplied */
 
 static int auto_keys_check (const DATASET *l_dset,
 			    const DATASET *r_dset,
@@ -3886,67 +3879,70 @@ static int auto_keys_check (const DATASET *l_dset,
     int pd = l_dset->pd;
     int err = 0;
 
-    if (!dataset_is_time_series(l_dset) || r_dset->S == NULL) {
-	/* We can do this only if the inner dataset is time-series
-	   and the outer dataset has observation markers on 
-	   which to match.
-	*/
-	return E_DATA;
+    if (!dataset_is_time_series(l_dset)) {
+	/* On the left we need a time-series dataset */
+	err = E_DATA;
+	goto bailout;
     }
 
-    if (dated_daily_data(l_dset) && (opt & OPT_Y)) {
-	/* we got a date-format spec */
-	const char *s = get_optval_string(JOIN, OPT_Y);
+    if (r_dset->S == NULL && auto_keys->keycol < 0) {
+	/* On the right, we need either obs strings or a specified
+	   time column */
+	err = E_DATA;
+	goto bailout;
+    }
+
+    if (opt & OPT_T) {
+	/* the user should have supplied a time-format spec */
+	const char *s = get_optval_string(JOIN, OPT_T);
 
 	if (s == NULL) {
 	    err = E_DATA;
 	} else {
-	    auto_keys->date_format = gretl_strdup(s);
-	    if (auto_keys->date_format == NULL) {
+	    auto_keys->timefmt = gretl_strdup(s);
+	    if (auto_keys->timefmt == NULL) {
 		err = E_ALLOC;
 	    } else {
-		check_for_quarterly(auto_keys);
-		auto_keys->active = 1;
+		if (pd == 4) {
+		    check_for_quarterly(auto_keys);
+		}
+		if (calendar_data(l_dset)) {
+		    *n_keys = 1;
+		} else {
+		    *n_keys = 2;
+		}
+	    }
+	}
+    } else {
+	/* ISO 8601 defaults */
+	if (calendar_data(l_dset)) {
+	    auto_keys->timefmt = gretl_strdup("%Y-%m-%d");
+	    if (auto_keys->timefmt == NULL) {
+		err = E_ALLOC;
+	    } else {
 		*n_keys = 1;
 	    }
-	}
-    } else if (l_dset->S != NULL) {
-	err = E_DATA;
-    } else if (pd != 4 && pd != 12) {
-	/* only quarterly and monthly data are handled */
-	err = E_PDWRONG;
-    }
-
-    if (!err && !auto_keys->active) {
-	/* we're in the quarterly or monthly case */
-	const char *s, *dig = "0123456789";
-	int tmax = 12; /* arbitrary small sample */
-	int n, t;
-
-	if (tmax > r_dset->n) { 
-	    tmax = r_dset->n;
-	}	
-
-	for (t=0; t<tmax && !err; t++) {
-	    s = r_dset->S[t];
-	    n = strlen(s);
-	    if ((n == 6 || n == 7) && strspn(s, dig) == 4 && 
-		subperiod_char(s[4], pd) &&
-		strspn(s + 5, dig) == n - 5) {
-		; /* OK? */
+	} else if (pd == 12) {
+	    auto_keys->timefmt = gretl_strdup("%Y-%m");
+	    if (auto_keys->timefmt == NULL) {
+		err = E_ALLOC;
 	    } else {
-		err = E_DATA;
-	    }
-	}
-	if (!err) {
-	    auto_keys->active = 1;
-	    *n_keys = 2;
+		*n_keys = 2;
+	    }	    
+	} else {
+	    err = E_PDWRONG;
 	}
     }
 
-#if CDEBUG
-    fprintf(stderr, "auto_keys_check: err = %d\n", err);
-#endif
+ bailout:
+    
+    /* we should flag an error here only if the user
+       explicitly requested use of this apparatus,
+       by giving --time=<format> (that is, OPT_T)
+    */
+    if (err && !(opt & OPT_T)) {
+	err = 0;
+    }
 
     return err;
 }
@@ -4009,7 +4005,8 @@ int join_from_csv (const char *fname,
 	n_keys = ikeyvars[0];
     }
 
-    auto_keys.date_format = NULL;
+    auto_keys.timefmt = NULL;
+    auto_keys.keycol = -1;
 
 #if CDEBUG
     fputs("*** join_from_csv:\n", stderr);
@@ -4054,10 +4051,10 @@ int join_from_csv (const char *fname,
     }
 
     if (!err && okey != NULL) {
-	err = process_outer_key(okey, n_keys, okeyname1, okeyname2);
+	err = process_outer_key(okey, n_keys, okeyname1, okeyname2, opt);
 	if (err) {
 	    fprintf(stderr, "join: error %d processing outer key(s)\n", err);
-	} 
+	}
     }
 
     /* Below: fill out the array of required column names,
@@ -4145,6 +4142,15 @@ int join_from_csv (const char *fname,
 	    (jspec.colnames[JOIN_KEY2] != NULL && okeyvars[2] == 0)) {
 	    fprintf(stderr, "join: error finding outer key columns\n");
 	    err = E_DATA;
+	} else if (opt & OPT_K) {
+	    /* time key on right: should be string */
+	    int rstr = series_has_string_table(jspec.c->dset, okeyvars[1]);
+	    
+	    if (!rstr) {
+		err = E_TYPES;
+	    } else {
+		auto_keys.keycol = okeyvars[1];
+	    }
 	} else {
 	    int lstr = series_has_string_table(dset, ikeyvars[1]);
 	    int rstr = series_has_string_table(jspec.c->dset, okeyvars[1]);
@@ -4174,7 +4180,8 @@ int join_from_csv (const char *fname,
 	}
     }
 
-    if (!err && (opt & (OPT_R | OPT_Y)) && n_keys == 0) {
+    if (!err && n_keys == 0 && 
+	(dataset_is_time_series(dset) || (opt & OPT_T))) {
 	err = auto_keys_check(dset, jspec.c->dset, opt, 
 			      &auto_keys, &n_keys);
     }
@@ -4249,8 +4256,8 @@ int join_from_csv (const char *fname,
 	dataset_drop_last_variables(dset, dset->v - orig_v);
     }
 
-    if (auto_keys.date_format != NULL) {
-	free(auto_keys.date_format);
+    if (auto_keys.timefmt != NULL) {
+	free(auto_keys.timefmt);
     }
 
     csvdata_free(jspec.c);

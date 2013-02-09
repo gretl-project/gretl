@@ -4494,7 +4494,7 @@ static int lib_join_data (ExecState *s,
 			  PRN *prn)
 {
     gretlopt opts[] = { 
-	OPT_I, OPT_O, OPT_F, OPT_A, OPT_D, OPT_R, 0 
+	OPT_I, OPT_O, OPT_F, OPT_A, OPT_D, OPT_R, OPT_K, 0 
     };
     const char *optstr[] = {
 	"ikey",
@@ -4502,11 +4502,12 @@ static int lib_join_data (ExecState *s,
 	"filter",
 	"aggr",
 	"data",
-	"rev"
+	"rev",
+	"tkey"
     };
     const char *param;
     char *p, *okey = NULL, *filter = NULL;
-    char *varname = NULL, *data = NULL;
+    char *varname = NULL, *dataname = NULL;
     char *auxname = NULL;
     int *ikeyvars = NULL;
     int aggr = 0, seqval = 0;
@@ -4514,9 +4515,18 @@ static int lib_join_data (ExecState *s,
     int i, err = 0;
 
     if (opt & OPT_R) {
+	/* --rev implies special handling of --filter and --aggr */
 	if (opt & (OPT_A | OPT_F)) {
-	    /* --rev implies special handling of --filter and --aggr */
 	    return E_BADOPT;
+	}
+    }
+
+    if (opt & OPT_K) {
+	/* --tkey implies special handling of keys */
+	if (opt & (OPT_I | OPT_O)) {
+	    return E_BADOPT;
+	} else if (!dataset_is_time_series(dset)) {
+	    return E_PDWRONG;
 	}
     }
 
@@ -4541,34 +4551,37 @@ static int lib_join_data (ExecState *s,
     }
 
     for (i=0; opts[i] && !err; i++) {
-	if (opt & opts[i]) {
-	    param = get_optval_string(JOIN, opts[i]);
-	    if (param != NULL) {
-		if (i == 0) {
-		    /* the inner key(s) string */
-		    ikeyvars = get_inner_keys(param, dset, &err);
-		} else if (i == 1) {
-		    /* the outer key(s) string */
-		    okey = gretl_strdup(param);
-		} else if (i == 2) {
-		    /* string specifying a row filter */
-		    filter = gretl_strdup(param);
-		} else if (i == 3) {
-		    /* aggregation */
-		    aggr = join_aggregation_method(param, &seqval, &auxname);
-		    if (aggr < 0) {
-			err = E_PARSE;
-		    }
-		} else if (i == 4) {
-		    /* string specifying the wanted data series */
-		    data = gretl_strdup(param);
-		} else if (i == 5) {
-		    /* string specifying the wanted data series */
-		    revdate = join_revision_date(param, dset, &err);
-		}		    
-	    } else {
+	gretlopt jopt = opts[i];
+
+	if (opt & jopt) {
+	    param = get_optval_string(JOIN, jopt);
+	    if (param == NULL) {
 		pprintf(prn, "%s: missing option param!\n", optstr[i]);
 		err = E_PARSE;
+	    } else if (jopt == OPT_I) {		
+		/* the inner key(s) string */
+		ikeyvars = get_inner_keys(param, dset, &err);
+	    } else if (jopt == OPT_O) {
+		/* the outer key(s) string */
+		okey = gretl_strdup(param);
+	    } else if (jopt == OPT_F) {
+		/* string specifying a row filter */
+		filter = gretl_strdup(param);
+	    } else if (jopt == OPT_A) {
+		/* aggregation */
+		aggr = join_aggregation_method(param, &seqval, &auxname);
+		if (aggr < 0) {
+		    err = E_PARSE;
+		}
+	    } else if (jopt == OPT_D) {
+		/* string specifying the wanted data series */
+		dataname = gretl_strdup(param);
+	    } else if (jopt == OPT_R) {
+		/* string specifying the wanted revision */
+		revdate = join_revision_date(param, dset, &err);
+	    } else if (jopt == OPT_K) {
+		/* string specifying outer time key */
+		okey = gretl_strdup(param);
 	    }
 	}
     }
@@ -4592,8 +4605,11 @@ static int lib_join_data (ExecState *s,
 	}	    
     }
 
-    if (!err && okey != NULL && ikeyvars == NULL) {
-	/* can't have an outer key but no inner one */
+    if (!err && okey != NULL && ikeyvars == NULL && !(opt & OPT_K)) {
+	/* We can't have an outer key but no inner one, unless
+	   we're matching by the time-series structure of the
+	   left-hand dataset.
+	*/
 	gretl_errmsg_set(_("Inner key is missing"));
 	err = E_PARSE;
     }
@@ -4612,14 +4628,14 @@ static int lib_join_data (ExecState *s,
 
 	err = join_from_csv(newfile, varname, dset, 
 			    ikeyvars, okey, filter,
-			    data, aggr, seqval, auxname,
+			    dataname, aggr, seqval, auxname,
 			    opt, vprn);
     }	
 
     free(ikeyvars);
     free(okey);
     free(filter);
-    free(data);
+    free(dataname);
     free(varname);
     free(auxname);
 

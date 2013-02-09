@@ -162,7 +162,7 @@ static int parse_obs_bits (const char *s1, const char *s2,
 	    } 
 	}
 	if (!err) {
-	    sprintf(stobs, "%d/%02d/%02d", y, m, d);
+	    sprintf(stobs, YMD_WRITE_FMT, y, m, d);
 	    fprintf(stderr, "Daily data, starting '%s', pd = %d\n", stobs, *pd);
 	}
     } else {
