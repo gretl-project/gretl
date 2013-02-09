@@ -816,7 +816,7 @@ int
 gretl_model_get_param_number (const MODEL *pmod, const DATASET *dset,
 			      const char *s)
 {
-    char pname[16], tmp[16];
+    char pname[VNAMELEN], tmp[VNAMELEN];
     int i, idx = -1;
 
     if (pmod == NULL) {
