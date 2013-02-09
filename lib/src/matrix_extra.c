@@ -1131,7 +1131,7 @@ static int max_numchars (const gretl_matrix *m)
     int i, n = m->rows * m->cols;
     int c, cmax = 0;
 
-    for (i = 0; i < n && cmax < 6; i++) {
+    for (i=0; i<n && cmax<6; i++) {
 	sprintf(s, "%g", m->val[i]);
 	c = strlen(s);
 	if (c > cmax) {
@@ -1170,7 +1170,7 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
     int strwidth = 12;
     int rnamelen = 0;
     int dated = 0;
-    int cmax = 0, cpad = 0;
+    int cmax = 0, cpad = 2;
     int mt1 = 0, mt2 = 0;
     int i, j;
 
