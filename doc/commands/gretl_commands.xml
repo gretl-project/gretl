@@ -4031,7 +4031,7 @@
 	otherwise.  You can also use this variable to pick out particular
 	observations by date or name.  For example, 
 	<lit>genr d = (obs&gt;1986:4)</lit>, 
-	<lit>genr d = (obs&gt;"2008/04/01")</lit>, or
+	<lit>genr d = (obs&gt;"2008-04-01")</lit>, or
 	<lit>genr d = (obs="CA")</lit>.  If daily dates or observation labels
 	are used in this context, they should be enclosed in double quotes.
 	Quarterly and monthly dates (with a colon) may be used unquoted. Note
@@ -4048,7 +4048,7 @@
 	<repl>varname</repl><lit>[</lit><repl>obs</repl><lit>]</lit>. The
 	<repl>obs</repl> value can be given by number or date. Examples:
 	<lit>x[5]</lit>, <lit>CPI[1996:01]</lit>.  For daily data, the form
-	<repl>YYYY/MM/DD</repl> should be used, &eg; <lit>ibm[1970/01/23]</lit>.
+	<repl>YYYY-MM-DD</repl> should be used, &eg; <lit>ibm[1970-01-23]</lit>.
       </para>
 
       <para>
@@ -10240,8 +10240,8 @@
 	separated from the year with a colon.  In the case of panel
 	data the starting observation should be given as 1:1; and in
 	the case of cross-sectional data, as 1.  Starting observations
-	for daily or weekly data should be given in the form YY/MM/DD
-	or YYYY/MM/DD (or simply as 1 for undated data).  
+	for daily or weekly data should be given in the form
+	YYYY-MM-DD (or simply as 1 for undated data).
       </para>
       <para>
 	The second form of the command (which requires the
