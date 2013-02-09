@@ -881,6 +881,11 @@ catch_setobs_errors (const char *stobs, int pd, int n, int min, gretlopt opt)
     return err;
 }
 
+static int likely_calendar_obs_string (const char *s)
+{
+    return strchr(s, '-') != NULL || strchr(s, '/') != NULL;
+}
+
 #define recognized_ts_frequency(f) (f == 4 || f == 12 || f == 24)
 
 /**
@@ -943,7 +948,7 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
     }
 
     /* truncate stobs if not a calendar date */
-    if (strchr(stobs, '/') != NULL) {
+    if (likely_calendar_obs_string(stobs)) {
 	dated = 1;
     } else {
 	stobs[8] = '\0';

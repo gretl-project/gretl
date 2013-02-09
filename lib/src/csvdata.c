@@ -3737,7 +3737,7 @@ static int get_target_varnum (const char *vname,
    the left or the right -- but not both -- as indicating that we
    should use the corresponding inner key name.
 
-   If opt contains OPT_K (--tkey) there should be just one 
+   If opt contains OPT_K (--tkey) we assume there's just one 
    column name here.
 */
 
@@ -3939,8 +3939,9 @@ static int auto_keys_check (const DATASET *l_dset,
     /* we should flag an error here only if the user
        explicitly requested use of this apparatus,
        by giving --time=<format> (that is, OPT_T)
+       and/or --tkey=<colname> (OPT_K)
     */
-    if (err && !(opt & OPT_T)) {
+    if (err && !(opt & (OPT_T | OPT_K))) {
 	err = 0;
     }
 

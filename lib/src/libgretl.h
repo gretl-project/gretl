@@ -59,7 +59,7 @@ extern "C" {
 # endif
 #endif
 
-#define USE_ISO_8601 0 /* not just yet */
+#define USE_ISO_8601 1 /* experimental */
 
 #if USE_ISO_8601
 # define YMD_READ_FMT     "%d-%d-%d" 

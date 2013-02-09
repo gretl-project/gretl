@@ -122,21 +122,29 @@ long epoch_day_from_ymd (int y, int m, int d)
 /**
  * get_epoch_day:
  * @date: string representation of calendar date, in form
- * YY[YY]/MM/DD.
+ * YY[YY]-MM-DD.
  * 
  * Returns: the epoch day number, or -1 on failure.
  */
 
 long get_epoch_day (const char *date)
 {
-    long temp;
-    int year, month, day;
+    int nf, year, month, day;
+    long ret;
 
-    if (sscanf(date, YMD_READ_FMT, &year, &month, &day) != 3) {
-	return -1;
+    nf = sscanf(date, YMD_READ_FMT, &year, &month, &day);
+
+    if (nf != 3) {
+#if USE_ISO_8601
+	/* backward compat: try slashes instead */
+	nf = sscanf(date, "%d/%d/%d", &year, &month, &day);
+#else
+	/* forward compat: try hyphens instead */
+	nf = sscanf(date, "%d-%d-%d", &year, &month, &day);
+#endif
     }
 
-    if (year < 0 || month < 0 || day < 0) {
+    if (nf != 3 || year < 0 || month < 0 || day < 0) {
 	return -1;
     }
 
@@ -148,10 +156,10 @@ long get_epoch_day (const char *date)
 	year = FOUR_DIGIT_YEAR(year);
     }
 
-    temp = (long)(year - 1) * 365 + leap_years_since_year_1(year - 1)
+    ret = (long)(year - 1) * 365 + leap_years_since_year_1(year - 1)
 	+ day_in_year(day, month, year);
 
-    return temp;
+    return ret;
 }
 
 /**

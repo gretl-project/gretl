@@ -4496,15 +4496,6 @@ static int lib_join_data (ExecState *s,
     gretlopt opts[] = { 
 	OPT_I, OPT_O, OPT_F, OPT_A, OPT_D, OPT_R, OPT_K, 0 
     };
-    const char *optstr[] = {
-	"ikey",
-	"okey",
-	"filter",
-	"aggr",
-	"data",
-	"rev",
-	"tkey"
-    };
     const char *param;
     char *p, *okey = NULL, *filter = NULL;
     char *varname = NULL, *dataname = NULL;
@@ -4515,7 +4506,8 @@ static int lib_join_data (ExecState *s,
     int i, err = 0;
 
     if (opt & OPT_R) {
-	/* --rev implies special handling of --filter and --aggr */
+	/* --rev implies special handling of --filter and --aggr,
+	   so these cannot be specified manually */
 	if (opt & (OPT_A | OPT_F)) {
 	    return E_BADOPT;
 	}
@@ -4556,8 +4548,7 @@ static int lib_join_data (ExecState *s,
 	if (opt & jopt) {
 	    param = get_optval_string(JOIN, jopt);
 	    if (param == NULL) {
-		pprintf(prn, "%s: missing option param!\n", optstr[i]);
-		err = E_PARSE;
+		err = E_DATA;
 	    } else if (jopt == OPT_I) {		
 		/* the inner key(s) string */
 		ikeyvars = get_inner_keys(param, dset, &err);
@@ -4608,7 +4599,7 @@ static int lib_join_data (ExecState *s,
     if (!err && okey != NULL && ikeyvars == NULL && !(opt & OPT_K)) {
 	/* We can't have an outer key but no inner one, unless
 	   we're matching by the time-series structure of the
-	   left-hand dataset.
+	   left-hand dataset (implied by OPT_K)
 	*/
 	gretl_errmsg_set(_("Inner key is missing"));
 	err = E_PARSE;
