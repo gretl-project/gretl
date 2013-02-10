@@ -7,7 +7,8 @@ version 1.9.12, in progress
   specified type
 - "qlrtest" command: compute asymptotic p-value as per Bruce
   Hansen's method (1997)
-- "modeltab" command: add --output option to direct to file
+- "modeltab" command: add --output option to direct the model
+  table to a specified file
 - You can now use "bundle b = null" to create a new bundle or
   empty an existing one
 - Add new function strstrip()
@@ -16,7 +17,7 @@ version 1.9.12, in progress
 - mread() and mwrite() functions: add an optional argument to
   direct read/write to the user's "dot directory"
 - Add accessors $obsmajor and $obsminor to get series holding
-  (for example) year and month
+  (for example) year and month; also $obsmicro for daily data
 - Improve structural integrity of model specification dialog
   (it now behaves properly on resizing)
 - Gnuplot version: require 4.4.0 (March 2010) or higher
@@ -48,6 +49,8 @@ version 1.9.12, in progress
   controls a nested loop
 - Fix bug: spurious detection of line continuation characters
   in #-style comments that do not start a command line
+- Fix bug: broken printing of the model table in the case of
+  variable names of greater than 15 characters
 - Fix bug: "eval" not working correctly for anonymous strings
 - Fix build bug: "make check" not working properly
 - Fix build bug: XDG (desktop) files not getting installed in
@@ -56,7 +59,8 @@ version 1.9.12, in progress
   ternary "?" operator
 - The msortby() function: ensure that it performs a "stable" 
   sort, such that rows sharing a common key value are never 
-  interchanged
+  interchanged; also ensure that any row labels are put into
+  the sorted order
 - The inbundle() function: return a code that identifies the
   type of a bundled item; also add typestr() function to turn
   this code into a string

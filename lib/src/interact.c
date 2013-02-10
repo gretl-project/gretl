@@ -4347,15 +4347,18 @@ static int lib_clear_data (ExecState *s, DATASET *dset)
     return err;
 }
 
+#define REV_EARLIEST (-2)
+#define REV_LATEST (-3)
+
 static int join_revision_date (const char *s, const DATASET *dset,
 			       int *err)
 {
     int d = -1;
 
     if (!strcmp(s, "earliest")) {
-	return -2;
+	return REV_EARLIEST;
     } else if (!strcmp(s, "latest")) {
-	return -3;
+	return REV_LATEST;
     }
 
     if (integer_string(s)) {
@@ -4591,19 +4594,19 @@ static int lib_join_data (ExecState *s,
     if (!err) {
 	if (revdate > 0) {
 	    /* A positive value of revdate implies 
-	       --filter="pubdate<=revdate" and --aggr=max(pubdate)
+	       --filter="pubperiod<=revdate" and --aggr=max(pubperiod)
 	    */
 	    aggr = AGGR_MAX;
-	    auxname = gretl_strdup("pubdate");
-	    filter = gretl_strdup_printf("pubdate<=%d", revdate);
-	} else if (revdate == -2) {
+	    auxname = gretl_strdup("pubperiod");
+	    filter = gretl_strdup_printf("pubperiod<=%d", revdate);
+	} else if (revdate == REV_EARLIEST) {
 	    /* --rev="earliest" */
 	    aggr = AGGR_MIN;
-	    auxname = gretl_strdup("pubdate");
-	} else if (revdate == -3) {
+	    auxname = gretl_strdup("pubperiod");
+	} else if (revdate == REV_LATEST) {
 	    /* --rev="latest" */
 	    aggr = AGGR_MAX;
-	    auxname = gretl_strdup("pubdate");
+	    auxname = gretl_strdup("pubperiod");
 	}	    
     }
 
