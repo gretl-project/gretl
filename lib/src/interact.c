@@ -4494,7 +4494,15 @@ static int lib_join_data (ExecState *s,
 			  PRN *prn)
 {
     gretlopt opts[] = { 
-	OPT_I, OPT_O, OPT_F, OPT_A, OPT_D, OPT_R, OPT_K, 0 
+	OPT_I, /* inner key(s) */
+	OPT_O, /* outer key(s) */
+	OPT_F, /* filter */
+	OPT_A, /* aggregation */
+	OPT_D, /* "data" spec */
+	OPT_R, /* revision spec (real-time) */ 
+	OPT_T, /* time/date format spec */ 
+	OPT_K, /* outer time-column name */
+	0 
     };
     const char *param;
     char *p, *okey = NULL, *filter = NULL;
@@ -4502,6 +4510,7 @@ static int lib_join_data (ExecState *s,
     char *auxname = NULL;
     int *ikeyvars = NULL;
     int aggr = 0, seqval = 0;
+    int time_opt = 0;
     int revdate = 0;
     int i, err = 0;
 
@@ -4532,6 +4541,8 @@ static int lib_join_data (ExecState *s,
     if (*p == '\0') {
 	return E_ARGS;
     }
+
+    time_opt = (opt & (OPT_R | OPT_T | OPT_K)) != 0;
 
     varname = gretl_strdup(p);
 
@@ -4605,10 +4616,9 @@ static int lib_join_data (ExecState *s,
 	err = E_PARSE;
     }
 
-    if (!err && ikeyvars == NULL && aggr != 0 && !(opt & OPT_R)) {
-	/* aggregation requires the use of keys, unless perhaps
-	   we're using --rev with a time-series dataset on the
-	   left
+    if (!err && aggr != 0 && ikeyvars == NULL && !time_opt) {
+	/* aggregation requires ikeyvars, unless there's
+	   an implicit time-series inner key
 	*/
 	gretl_errmsg_set(_("Inner key is missing"));
 	err = E_ARGS;

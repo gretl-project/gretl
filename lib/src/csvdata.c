@@ -2900,8 +2900,10 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     int err = 0;
 
     if (tcol >= 0) {
+	/* using a specified string-valued column */
 	s = series_get_string_val(jr->r_dset, tcol, i);	
     } else {
+	/* using first-column observation strings */
 	s = jr->r_dset->S[i];
     }
 
@@ -2929,10 +2931,17 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 
 	maj = t.tm_year + 1900;
 	min = t.tm_mon + 1;
-	if (jr->auto_keys.m_means_q && min > 4) {
-	    gretl_errmsg_sprintf("'%s' is not a valid date", s);
-	    err = E_DATA;
-	} else {
+	if (jr->auto_keys.m_means_q) {
+	    /* using the gretl-specific "%q" conversion */
+	    if (min > 4) {
+		gretl_errmsg_sprintf("'%s' is not a valid date", s);
+		err = E_DATA;
+	    }
+	} else if (jr->l_dset->pd == 4) {
+	    /* map from month on right to quarter on left */
+	    min = (int) ceil(min / 3.0);
+	}
+	if (!err) {
 	    jr->rows[j].n_keys = 2;
 	    jr->rows[j].keyval = maj;
 	    jr->rows[j].keyval2 = min;
