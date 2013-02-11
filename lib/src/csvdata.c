@@ -4134,6 +4134,14 @@ int join_from_csv (const char *fname,
 	}
     }
 
+    if (!err && auxname != NULL && jspec.colnums[JOIN_AUX] == 0) {
+	/* an auxiliary variable was specified for aggr but was
+	   not found */
+	fprintf(stderr, "join: auxiliary column '%s' was not found\n", 
+		jspec.colnames[JOIN_AUX]);
+	err = E_UNKVAR;
+    }	
+
     if (!err && jspec.colnames[0] != NULL) {
 	/* check that outer key was found in the right-hand-side
 	   file, and is conformable to the inner key 
