@@ -4780,7 +4780,7 @@ static int lib_open_append (ExecState *s,
 	remove(newfile);
     }
 
-    if (dbdata || http) {
+    if (dbdata || http || cmd->ci == JOIN) {
 	/* signal to the gretlcli callback that we didn't do
 	   a regular datafile open 
 	*/
