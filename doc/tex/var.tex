@@ -170,19 +170,21 @@ the command line interface, is invoked in the following manner:
     \emph{Xlist}]}
 \end{flushleft}
 where \texttt{p} is a scalar (the VAR order) and \texttt{Ylist} is a
-list of variables describing the content of $y_t$. If the list
-\texttt{Xlist} is absent, the vector $x_t$ is understood to contain a
-constant only; if present, must be separated from \texttt{Ylist} by a
-semi-colon and contains the other exogenous variables. Note, however,
-that a few common choices can be obtained in a simpler way via
-options: the options \app{gretl} provides are \option{trend},
-\option{seasonals} and \option{nc} (no constant). Either
-\texttt{Ylist} and \texttt{Xlist} may be named lists (see section
-\ref{named-lists}). The ``\texttt{\textless -}'' construct can be used
-to store the model under a name (see section
-\ref{sect-script-objects}), if so desired. To estimate a VAR using the
-graphical interface, choose ``Time Series, Vector Autoregression'',
-under the Model menu.
+list of variables specifying the content of $y_t$.  The optional
+\texttt{Xlist} argument can be used to specify a set of exogenous
+variables. If this argument is omitted, the vector $x_t$ is taken to
+contain a constant (only); if present, it must be separated from
+\texttt{Ylist} by a semicolon. Note, however, that a few common
+choices can be obtained in a simpler way: the options \option{trend}
+and \option{seasonals} call for inclusion of a linear trend and a set
+of seasonal dummies respectively. In addition the \option{nc} option
+(no constant) can be used to suppress the standard inclusion of a
+constant.
+
+The ``\texttt{\textless -}'' construct can be used to store the model
+under a name (see section \ref{sect-script-objects}), if so
+desired. To estimate a VAR using the graphical interface, choose
+``Time Series, Vector Autoregression'', under the Model menu.
 
 The parameters in eq. \eqref{eq:VAR} are typically free from
 restrictions, which implies that multivariate OLS provides a
@@ -191,7 +193,7 @@ parameters.\footnote{In fact, under normality of $\epsilon_t$ OLS is
   indeed the conditional ML estimator. You may want to use other
   methods if you need to estimate a VAR in which some parameters are
   constrained.}  Given the simplicity of OLS, this is what every
-software package, including \app{gretl}, uses: example script
+software package, including \app{gretl}, uses; example script
 \ref{script:var-ols} exemplifies the fact that the \cmd{var} command
 gives you exactly the output you would have from a battery of OLS
 regressions. The advantage of using the dedicated command is that,
@@ -201,7 +203,7 @@ accessor returns the estimated coefficients as a matrix with $n$
 columns and \dollar{sigma} returns an estimate of the matrix $\Sigma$,
 the covariance matrix of $\epsilon_t$. 
 
-Moreover, for each variable in the system an F test is automatically
+Moreover, for each variable in the system an $F$ test is automatically
 performed, in which the null hypothesis is that no lags of variable
 $j$ are significant in the equation for variable $i$. This is commonly
 known as a \textbf{Granger causality} test.
@@ -238,17 +240,16 @@ Calling the horizon $h$, the \dollar{vma} accessor returns an $(h+1)
 \times n^2$ matrix, in which the $(i+1)$-th row is the vectorized form
 of $\Theta_i$.
 
-\subsection{VAR order selection}
+\subsection{VAR lag-order selection}
 
 In order to help the user choose the most appropriate VAR order,
-\app{gretl} provides a special syntax construct to the \texttt{var}
-command:
+\app{gretl} provides a special variant of the \texttt{var} command:
 \begin{flushleft}
   \texttt{var \emph{p} \emph{Ylist} [; \emph{Xlist}]} \option{lagselect}
 \end{flushleft}
-When the command is invoked with the \option{lagselect} option,
-estimation is performed for all lags up to \texttt{p} and a table is
-printed: it displays, for each order, a LR test for the order $p$
+When the \option{lagselect} option is given, estimation is performed
+for all lags up to \texttt{\emph{p}} and a table is printed: it
+displays, for each order, a Likelihood Ratio test for the order $p$
 versus $p-1$, plus an array of information criteria (see chapter
 \ref{select-criteria}). For each information criterion in the table, a
 star indicates what appears to be the ``best'' choice. The same output
@@ -298,18 +299,18 @@ lags        loglik    p(LR)       AIC          BIC          HQC
 \end{scodebit}
 \end{script}
 
-Warning: in finite samples the choice of $p$ may affect the outcome of
-the procedure. \textbf{This is not a bug}, but rather a nasty but
-unavoidable side effect of the way these comparisons should be made:
-if your sample contains $T$ observations, the lag selection procedure,
-if invoked with parameter $p$, examines all VARs of order ranging form
-1 to $p$, estimated on a sample of $T-p$ observations. In other words,
-the comparison procedure does not use all the data available when
-estimating VARs of order less than $p$ to make sure that all the
-models compared are estimated on the same data range. Under these
-circumstances, choosing a different value of $p$ may alter the
-results, although this is unlikely to happen if your sample size is
-reasonably large.
+Warning: in finite samples the choice of the maximum lag, $p$, may
+affect the outcome of the procedure. \textit{This is not a bug}, but
+rather an unavoidable side effect of the way these comparisons should
+be made. If your sample contains $T$ observations and you invoke the
+lag selection procedure with maximum order $p$, \app{gretl} examines
+all VARs of order ranging form 1 to $p$, estimated on a uniform sample
+of $T-p$ observations. In other words, the comparison procedure does
+not use all the available data when estimating VARs of order less than
+$p$, so as to ensure that all the models in the comparison are
+estimated on the same data range. Choosing a different value of $p$
+may therefore alter the results, although this is unlikely to happen
+if your sample size is reasonably large.
 
 An example of this unpleasant phenomenon is given in example script
 \ref{script:var-lagselect}. As can be seen, according to the
@@ -320,20 +321,21 @@ maximum tested order is 6.
 \section{Structural VARs}
 \label{sec:svar}
 
-As of today, \app{gretl} does not provide a native implementation for
-the class of models known as ``Structural VARs''; however, it provides
-an implementation of the Cholesky deconposition-based approach, which
-is the most classic, and certainly most popular SVAR version.
+\app{Gretl} does not currently provide a native implementation for the
+general class of models known as ``Structural VARs''; however, it
+provides an implementation of the Cholesky decomposition-based
+approach, the classic and most popular SVAR variant.
 
 \subsection{IRF and FEVD}
 
 Assume that the disturbance in equation \eqref{eq:VAR} can be thought
 of as a linear function of a vector of \emph{structural shocks} $u_t$,
-which are assumed to have unit variance and to be incorrelated to one
-another, so $V(u_t) = I$. If $\epsilon_t = K u_t$, it follows that
-$\Sigma = V(\epsilon_t) = KK'$.
+which are assumed to have unit variance and to be mutually
+unncorrelated, so $V(u_t) = I$. If $\epsilon_t = K u_t$, it follows
+that $\Sigma = V(\epsilon_t) = KK'$.
 
-The main object of interest in this setting the sequence of matrices
+The main object of interest in this setting is the sequence of
+matrices
 \begin{equation}
   \label{eq:svma}
   C_k = \frac{\partial y_t}{\partial u_{t-i}} = \Theta_k K, 
@@ -344,7 +346,7 @@ derived: the \textbf{Impulse Response Function} (IRF) and the
 \textbf{Forecast Error Variance Decomposition} (FEVD).
 
 The IRF of variable $i$ to shock $j$ is simply the sequence of the
-elements in row $i$ and column $j$ of the $C_k$ matrices. In formulae:
+elements in row $i$ and column $j$ of the $C_k$ matrices. In symbols:
 \[
   \mathcal{I}_{i,j,k} = \pder{y_{i,t}}{u_{j, t-k}}
 \]
@@ -352,13 +354,13 @@ As a rule, Impulse Response Functions are plotted as a function of
 $k$, and are interpreted as the effect that a shock has on an
 observable variable through time. Of course, what we observe are the
 estimated IRFs, so it is natural to endow them with confidence
-intervals: following common practice among econometric software,
-\app{gretl} computes the confidence intervals by using the
-bootstrap\footnote{It is possible, in principle, to compute analytical
-  confidence intervals via an asymptotic approximation, but this is
-  not a very popular choice: asymptotic formulae are known to often
-  give a very poor approximation of the finite-sample properties.};
-details are later in this section.
+intervals: following common practice, \app{gretl} computes the
+confidence intervals by using the bootstrap;\footnote{It is possible,
+  in principle, to compute analytical confidence intervals via an
+  asymptotic approximation, but this is not a very popular choice:
+  asymptotic formulae are known to often give a very poor
+  approximation of the finite-sample properties.} details are given
+later in this section.
 
 Another quantity of interest that may be computed from the structural
 VMA representation is the Forecast Error Variance Decomposition
@@ -392,7 +394,7 @@ here: see for example \cite[chapter 9]{LKBook05}.
 
 Suffice it to say that the most popular choice dates back to
 \cite{sims80}, and consists in assuming that $K$ is lower triangular,
-so its estimate is simply the Cholesky deconposition of the estimate
+so its estimate is simply the Cholesky decomposition of the estimate
 of $\Sigma$. The main consequence of this choice is that the ordering
 of variables within the vector $y_t$ becomes meaningful: since $K$ is
 also the matrix of Impulse Response Functions at lag 0, the
@@ -400,21 +402,21 @@ triangularity assumption means that the first variable in the ordering
 responds instantaneously only to shock number 1, the second one only
 to shocks 1 and 2, and so forth. For this reason, each variable is
 thought to ``own'' one shock: variable 1 owns shock number 1,
-etcetera.
+and so on.
 
-This is the reason why in this sort of exercises the ordering of the
-variables is important and the applied literature has developed the
-``most exogenous first'' mantra. Where, in this setting, ``exogenous''
-really means ``instantaneously insensitive to structural
-shocks''\footnote{The word ``exogenous'' has caught on in this
+In this sort of exercise, therefore, the ordering of the $y$ variables
+is important, and the applied literature has developed the ``most
+exogenous first'' mantra --- where, in this setting, ``exogenous'' really
+means ``instantaneously insensitive to structural
+shocks''.\footnote{The word ``exogenous'' has caught on in this
   context, but it's a rather unfortunate choice: for a start, each
   shock impacts on every variable after one lag, so nothing is really
-  exogenous here. A much better choice of words would probably have
-  been something like ``sturdy'', but it's too late now.}. To put it
+  exogenous here. A better choice of words would probably have
+  been something like ``sturdy'', but it's too late now.} To put it
 differently, if variable \texttt{foo} comes before variable
 \texttt{bar} in the $Y$ list, it follows that the shock owned by
-\texttt{foo} affects \texttt{bar} instantaneously, but the reverse
-does not happen.
+\texttt{foo} affects \texttt{bar} instantaneously, but not
+vice versa.
 
 Impulse Response Functions and the FEVD can be printed out via the
 command line interface by using the \option{impulse-response} and
