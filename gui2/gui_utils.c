@@ -571,16 +571,22 @@ static int numeric_keyval (guint key)
     }
 }
 
+#define nav_key(k) (k==GDK_Up || k==GDK_Down || \
+		    k==GDK_Page_Up || k==GDK_Page_Down || \
+		    k==GDK_End || k==GDK_Begin || k==GDK_Home)
+
 static gint jump_to_finder (guint keyval, windata_t *vwin)
 {
-    gchar *letter = gdk_keyval_name(keyval);
+    if (!nav_key(keyval)) {
+	gchar *letter = gdk_keyval_name(keyval);
 
-    if (letter != NULL) {
-	/* snap to search box */
-	gtk_widget_grab_focus(vwin->finder);
-	gtk_entry_set_text(GTK_ENTRY(vwin->finder), letter);
-	gtk_editable_set_position(GTK_EDITABLE(vwin->finder), -1);
-	return TRUE; /* handled */
+	if (letter != NULL) {
+	    /* snap to search box */
+	    gtk_widget_grab_focus(vwin->finder);
+	    gtk_entry_set_text(GTK_ENTRY(vwin->finder), letter);
+	    gtk_editable_set_position(GTK_EDITABLE(vwin->finder), -1);
+	    return TRUE; /* handled */
+	}
     }
 
     return FALSE;
@@ -696,7 +702,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
 	   below: this won't do if we're in editing mode 
 	*/
 	return FALSE;
-    } 
+    }
 
     if (!mods && vwin->finder != NULL && GTK_IS_ENTRY(vwin->finder)) {
 	if (jump_to_finder(key->keyval, vwin)) {
