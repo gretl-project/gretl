@@ -1970,9 +1970,10 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 #endif
 
     for (i=0; i<JOIN_MAXCOL; i++) {
+	/* find "wanted name" i */
 	colname = c->jspec->colnames[i];
 	if (colname == NULL || c->jspec->colnums[i] > 0) {
-	    /* not wanted, or already found */
+	    /* name not wanted, or already found */
 	    continue;
 	}
 	if (!strcmp(c->str, colname)) {
@@ -2338,8 +2339,37 @@ static void print_csv_parsing_header (const char *fname, PRN *prn)
     }
 }
 
-static void csv_set_dataset_dimensions (csvdata *c)
+static int join_unique_columns (csvdata *c)
 {
+    const char **cnames = c->jspec->colnames;
+    int counted[JOIN_MAXCOL] = {0};
+    int i, j, ncols = 0;
+
+    for (i=0; i<JOIN_MAXCOL; i++) {
+	if (cnames[i] != NULL && counted[i] == 0) {
+	    counted[i] = 1;
+	    /* mark any duplicates as counted too */
+	    for (j=i+1; j<JOIN_MAXCOL; j++) {
+		if (cnames[j] != NULL && !strcmp(cnames[i], cnames[j])) {
+		    counted[j] = 1;
+		}
+	    }
+#if CDEBUG
+	    fprintf(stderr, "join_unique_columns: '%s'\n", cnames[i]);
+#endif
+	    ncols++;
+	}
+    }
+
+    return ncols;
+}
+
+static int csv_set_dataset_dimensions (csvdata *c)
+{
+    int err = 0;
+
+    c->dset->v = 0;
+
     if (rows_subset(c)) {
 	c->dset->n = n_from_row_mask(c);
     }
@@ -2350,22 +2380,28 @@ static void csv_set_dataset_dimensions (csvdata *c)
 	}
 	c->dset->v = c->ncols + 1;
     } else {
+	int cols_wanted, cols_present;
+
 	if (c->dset->n == 0) {
 	    c->dset->n = c->nrows - 1; /* allow for varnames row */
 	}
-	if (joining(c)) {
-	    int i;
 
-	    c->dset->v = 1;
-	    for (i=0; i<JOIN_MAXCOL; i++) {
-		if (c->jspec->colnames[i] != NULL) {
-		    c->dset->v += 1;
-		}
-	    }
+	cols_present = csv_skip_column(c) ? (c->ncols - 1) : c->ncols;
+
+	if (joining(c)) {
+	    cols_wanted = join_unique_columns(c);
 	} else if (cols_subset(c)) {
-	    c->dset->v = c->cols_list[0] + 1;
+	    cols_wanted = c->cols_list[0];
 	} else {
-	    c->dset->v = csv_skip_column(c) ? c->ncols : c->ncols + 1;
+	    cols_wanted = cols_present;
+	}
+
+	if (cols_wanted > cols_present) {
+	    gretl_errmsg_set(_("Invalid column specification"));
+	    err = E_DATA;
+	} else {
+	    /* allow for the constant */
+	    c->dset->v = cols_wanted + 1;
 	}
     }
 
@@ -2375,6 +2411,8 @@ static void csv_set_dataset_dimensions (csvdata *c)
 		c->dset->v, c->dset->n);
     }
 #endif
+
+    return err;
 }
 
 /*
@@ -2514,7 +2552,11 @@ static int real_import_csv (const char *fname,
 	goto csv_bailout;
     }
 
-    csv_set_dataset_dimensions(c);
+    err = csv_set_dataset_dimensions(c);
+    if (err) {
+	err = E_DATA;
+	goto csv_bailout;
+    }	
 
     pprintf(mprn, A_("   number of variables: %d\n"), c->dset->v - 1);
     pprintf(mprn, A_("   number of non-blank lines: %d\n"), c->nrows);
@@ -2636,8 +2678,18 @@ static int real_import_csv (const char *fname,
 	for (i=1; i<c->dset->v; i++) {
 	    sprintf(c->dset->varname[i], "v%d", i);
 	}
-    } else if (fix_varname_duplicates(c->dset)) {
-	pputs(prn, A_("warning: some variable names were duplicated\n"));
+    } else {
+#if CDEBUG
+	int ii;
+
+	fprintf(stderr, "HERE, calling fix_varname_duplicates\n");
+	for (ii=0; ii<c->dset->v; ii++) {
+	    fprintf(stderr, " c->dset->varname[%d] = '%s'\n", ii, c->dset->varname[ii]);
+	}
+#endif	
+	if (fix_varname_duplicates(c->dset)) {
+	    pputs(prn, A_("warning: some variable names were duplicated\n"));
+	}
     }
 
     if (!joining(c)) {
@@ -3985,7 +4037,7 @@ int join_from_csv (const char *fname,
 		   const int *ikeyvars,
 		   const char *okey,
 		   const char *filtstr,
-		   const char *data,
+		   const char *dataname,
 		   AggrType aggr,
 		   int seqval,
 		   const char *auxname,
@@ -4023,9 +4075,9 @@ int join_from_csv (const char *fname,
     fprintf(stderr, " filename = '%s'\n", fname);
     fprintf(stderr, " target series name = '%s'\n", varname);
     if (n_keys > 0) {
-	fprintf(stderr, " inner key series = %d\n", ikeyvars[1]);
+	fprintf(stderr, " inner key series ID = %d\n", ikeyvars[1]);
 	if (n_keys == 2) {
-	    fprintf(stderr, " second inner key series = %d\n", ikeyvars[2]);
+	    fprintf(stderr, " second inner key series ID = %d\n", ikeyvars[2]);
 	}
     }
     if (okey != NULL) {
@@ -4041,15 +4093,15 @@ int join_from_csv (const char *fname,
     if (filtstr != NULL) {
 	fprintf(stderr, " filter = '%s'\n", filtstr);
     }    
-    if (data != NULL) {
-	fprintf(stderr, " source data series = '%s'\n", data);
-    } else {
-	fprintf(stderr, " source data series = '%s' (from inner varname)\n", 
+    if (dataname != NULL) {
+	fprintf(stderr, " source data series = '%s'\n", dataname);
+    } else if (aggr != AGGR_COUNT) {
+	fprintf(stderr, " source data series: assuming '%s' (from inner varname)\n", 
 		varname);
     }
-    fprintf(stderr, " aggregation = %d\n", aggr);
+    fprintf(stderr, " aggregation method = %d\n", aggr);
     if (auxname != NULL) {
-	fprintf(stderr, " aggr auxiliary col = '%s'\n", auxname);
+	fprintf(stderr, " aggr auxiliary column = '%s'\n", auxname);
     }
 #endif
 
@@ -4082,8 +4134,8 @@ int join_from_csv (const char *fname,
 
 	/* the data or "payload" column */
 	if (aggr != AGGR_COUNT) {
-	    if (data != NULL) {
-		jspec.colnames[JOIN_VAL] = data;
+	    if (dataname != NULL) {
+		jspec.colnames[JOIN_VAL] = dataname;
 	    } else {
 		jspec.colnames[JOIN_VAL] = varname;
 	    }
@@ -4115,15 +4167,14 @@ int join_from_csv (const char *fname,
     }
 
     if (!err && aggr != AGGR_COUNT) {
-	/* run some sanity tests on the payload */
+	/* run some sanity tests on the payload (there's no need
+	   for a payload with AGGR_COUNT)
+	*/
 	int valcol = jspec.colnums[JOIN_VAL];
 
 	if (valcol == 0) {
-	    if (data != NULL) {
-		fprintf(stderr, "join: data column '%s' was not found\n", 
-			jspec.colnames[1]);
-		err = E_UNKVAR;
-	    }
+	    gretl_errmsg_sprintf("Series not found, '%s'", jspec.colnames[JOIN_VAL]);
+	    err = E_UNKVAR;
 	} else if (aggr != AGGR_NONE && aggr != AGGR_SEQ) {
 	    if (series_has_string_table(jspec.c->dset, valcol)) {
 		/* maybe this should just be a warning? */

@@ -2052,7 +2052,7 @@ int fix_varname_duplicates (DATASET *dset)
 
     for (i=1; i<dset->v; i++) {
 	for (j=i+1; j<dset->v; j++) {
-	    if (!strcmp(dset->varname[i], dset->varname[j])) {
+	    if (strcmp(dset->varname[i], dset->varname[j]) == 0) {
 		fprintf(stderr, "'%s' duplicated variable name\n", dset->varname[i]);
 		dups = 1;
 		make_varname_unique(dset->varname[j], j, dset);
