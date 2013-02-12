@@ -1467,7 +1467,7 @@ void text_find (gpointer unused, gpointer data)
 	gtk_editable_select_region(GTK_EDITABLE(vwin->finder), 
 				   0, -1);
     } else {
-	find_string_dialog(find_in_text, data);
+	find_string_dialog(find_in_text, vwin);
     }
 }
 
@@ -1480,7 +1480,7 @@ void listbox_find (gpointer unused, gpointer data)
 	gtk_editable_select_region(GTK_EDITABLE(vwin->finder), 
 				   0, -1);
     } else {
-	find_string_dialog(find_in_listbox, data);
+	find_string_dialog(find_in_listbox, vwin);
     }
 }
 
@@ -1811,7 +1811,7 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 	return;
     }
 
-    find_dialog = gretl_dialog_new(_("gretl: find"), NULL, 0);
+    find_dialog = gretl_dialog_new(_("gretl: find"), vwin->main, 0);
     g_object_set_data(G_OBJECT(find_dialog), "windat", vwin);
     parent_find(find_dialog, vwin);
 
