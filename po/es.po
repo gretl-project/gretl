@@ -2,12 +2,13 @@
 # Copyright (C) 2002--2013 Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>,
 # This file is distributed under the same license as the gretl package.
 #
+# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>, 2013.
 msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-02-04 09:09-0500\n"
-"PO-Revision-Date: 2013-01-03 15:43+0100\n"
+"PO-Revision-Date: 2013-02-13 16:30+0000\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -6038,7 +6039,7 @@ msgstr ""
 #: lib/src/options.c:1165
 #, fuzzy, c-format
 msgid "Ambiguous option '--%s'"
-msgstr "La opción '--%s' no es válida"
+msgstr "La opción '--%s' es ambigua"
 
 #: lib/src/options.c:1171
 #, c-format
@@ -10843,7 +10844,7 @@ msgstr "Co_nsola de Gretl"
 #: gui2/gretl.c:1459
 #, fuzzy
 msgid "_Gnuplot"
-msgstr "Colores de Gnuplot"
+msgstr "_Gnuplot"
 
 #: gui2/gretl.c:1460
 msgid "Start GNU _R"
@@ -11372,9 +11373,8 @@ msgid "_Dynamic panel model..."
 msgstr "Modelo de panel _dinámico..."
 
 #: gui2/gretl.c:1622
-#, fuzzy
 msgid "_Limited dependent variable"
-msgstr "Primera variable dependiente"
+msgstr "Variable dependiente _limitada"
 
 #: gui2/gretl.c:1623
 msgid "_Logit"
@@ -12088,9 +12088,8 @@ msgid "gretl: edit Octave script"
 msgstr "gretl: editar un guion de Octave"
 
 #: gui2/gui_utils.c:1615
-#, fuzzy
 msgid "gretl: edit Python script"
-msgstr "gretl: editar un guion de Octave"
+msgstr "gretl: editar un guion de Python"
 
 #: gui2/gui_utils.c:1617 gui2/gui_utils.c:4902 gui2/gui_utils.c:5050
 msgid "gretl: script output"
@@ -12289,14 +12288,12 @@ msgid "Omit exogenous variables..."
 msgstr "Omitir variables exógenas..."
 
 #: gui2/gui_utils.c:4117
-#, fuzzy
 msgid "Omit time trend"
-msgstr "Tendencia temporal"
+msgstr "Omitir la tendencia temporal"
 
 #: gui2/gui_utils.c:4123
-#, fuzzy
 msgid "Omit seasonal dummies"
-msgstr "más variables ficticias estacionales"
+msgstr "Omitir las variables ficticias estacionales"
 
 #: gui2/gui_utils.c:4132
 msgid "Residuals from equation"
@@ -12315,24 +12312,21 @@ msgid "Impulse responses"
 msgstr "Respuestas al impulso"
 
 #: gui2/gui_utils.c:4176
-#, fuzzy
 msgid "Residuals"
-msgstr "_Residuos"
+msgstr "Residuos"
 
 #: gui2/gui_utils.c:4183
-#, fuzzy
 msgid "Combined plot"
-msgstr "Gráfico de CE combinado"
+msgstr "Gráfico combinado"
 
 #: gui2/gui_utils.c:4192
-#, fuzzy
 msgid "Multiple plots"
-msgstr "Gráficos bivariantes múltiples"
+msgstr "Gráficos múltiples"
 
 #: gui2/gui_utils.c:4201
-#, fuzzy, c-format
+#, c-format
 msgid "Equation %d"
-msgstr "Ecuación"
+msgstr "Ecuación %d"
 
 #: gui2/gui_utils.c:4214
 msgid "EC plot"
@@ -16608,17 +16602,17 @@ msgid "Unexpected error reading the file\n"
 msgstr "Error inesperado al leer el fichero\n"
 
 #: plugin/xlsx_import.c:704
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d variables and %d observations\n"
-msgstr "para la variable %s (%d observaciones válidas)"
+msgstr "Se han encontrado %d variables y %d observaciones\n"
 
 #: plugin/xlsx_import.c:707
 msgid "File contains no data\n"
-msgstr ""
+msgstr "El archivo no contiene datos\n"
 
 #: plugin/xlsx_import.c:1046
 msgid "Found no sheets\n"
-msgstr ""
+msgstr "No se han encontrado hojas\n"
 
 #: plugin/xlsx_import.c:1093
 #, c-format
@@ -16626,11 +16620,13 @@ msgid "'%s': no such worksheet"
 msgstr "'%s': no existe esa hoja de cálculo"
 
 #: plugin/xlsx_import.c:1111
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Found %d valid sheet(s)\n"
-msgstr "para la columna %d (%d observaciones válidas)"
+msgstr ""
+"\n"
+"Se ha(n) encontrado %d hoja(s) válida(s)\n"
 
 #: doc/commands/matfuncs.c:50
 msgid "Creation and I/O"
