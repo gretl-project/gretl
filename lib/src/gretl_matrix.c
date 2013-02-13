@@ -8091,6 +8091,55 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     return evals;
 }
 
+#if 0
+gretl_matrix *
+gretl_tridiagonal_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err) 
+{
+    integer n, info, lwork;
+    gretl_matrix *evals = NULL;
+    double *work = NULL;
+    double *w = NULL;
+    char jobz = eigenvecs ? 'V' : 'N';
+    char uplo = 'U';
+
+    *err = 0;
+
+    n = m->rows;
+
+    evals = gretl_column_vector_alloc(n);
+    if (evals == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    w = evals->val;
+
+    work = lapack_malloc(work, (2*n-2) * sizeof *work);
+    if (work == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    } 
+
+    if (!*err) {
+	dstev_(&jobz, &n, m->val, &n, w, work, &lwork, &info);
+	if (info != 0) {
+	    *err = 1;
+	}
+    }
+
+ bailout:
+
+    lapack_free(work);
+
+    if (*err && evals != NULL) {
+	gretl_matrix_free(evals);
+	evals = NULL;
+    }
+
+    return evals;
+}
+#endif
+
 /**
  * gretl_symm_matrix_eigenvals_descending:
  * @m: n x n matrix to operate on.
