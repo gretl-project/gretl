@@ -8068,7 +8068,6 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     work = lapack_realloc(work, lwork * sizeof *work);
     if (work == NULL) {
 	*err = E_ALLOC;
-	goto bailout;
     } 
 
     if (!*err) {
@@ -8091,45 +8090,87 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     return evals;
 }
 
-#if 0
+/**
+ * gretl_tridiagonal_matrix_eigenvals:
+ * @m: n x n matrix to operate on.
+ * @eigenvecs: non-zero to calculate eigenvectors, 0 to omit.
+ * @err: location to receive error code.
+ * 
+ * Computes the eigenvalues of the tridiagonal matrix @m.  
+ * If @eigenvecs is non-zero, also compute the orthonormal
+ * eigenvectors of @m, which are stored in @m. Uses the lapack 
+ * function dstev().
+ *
+ * Returns: n x 1 matrix containing the eigenvalues in ascending
+ * order, or NULL on failure.
+ */
+
 gretl_matrix *
 gretl_tridiagonal_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err) 
 {
-    integer n, info, lwork;
+    integer n, info, ldz = 0;
     gretl_matrix *evals = NULL;
-    double *work = NULL;
-    double *w = NULL;
+    double *d, *e, *work = NULL;
+    double *tmp = NULL;
+    double *z = NULL;
     char jobz = eigenvecs ? 'V' : 'N';
-    char uplo = 'U';
+    int i, tmpsize;
 
     *err = 0;
 
-    n = m->rows;
+    if (gretl_is_null_matrix(m)) {
+	*err = E_DATA;
+	return NULL;
+    }
 
+    n = m->rows;
+    if (m->cols != n) {
+	*err = E_NONCONF;
+	return NULL;
+    }	
+
+    tmpsize = 2*n - 1; /* for @d and @e vecs */
+    if (eigenvecs) {
+	tmpsize += 2*n - 2; /* extra workspace */
+    }
+
+    tmp = lapack_malloc(tmpsize * sizeof *tmp);
     evals = gretl_column_vector_alloc(n);
-    if (evals == NULL) {
+
+    if (tmp == NULL || evals == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
 
-    w = evals->val;
+    d = tmp;
+    e = d + n;
+ 
+    for (i=0; i<n; i++) {
+	d[i] = gretl_matrix_get(m, i, i);
+	if (i > 0) {
+	    e[i-1] = gretl_matrix_get(m, i, i-1);
+	}
+    }
 
-    work = lapack_malloc(work, (2*n-2) * sizeof *work);
-    if (work == NULL) {
-	*err = E_ALLOC;
-	goto bailout;
-    } 
+    if (eigenvecs) {
+	work = e + n - 1;
+	z = m->val;
+	ldz = n;
+    }
 
-    if (!*err) {
-	dstev_(&jobz, &n, m->val, &n, w, work, &lwork, &info);
-	if (info != 0) {
-	    *err = 1;
+    dstev_(&jobz, &n, d, e, z, &ldz, work, &info);
+
+    if (info != 0) {
+	*err = 1;
+    } else {
+	for (i=0; i<n; i++) {
+	    evals->val[i] = d[i];
 	}
     }
 
  bailout:
 
-    lapack_free(work);
+    lapack_free(tmp);
 
     if (*err && evals != NULL) {
 	gretl_matrix_free(evals);
@@ -8138,7 +8179,6 @@ gretl_tridiagonal_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 
     return evals;
 }
-#endif
 
 /**
  * gretl_symm_matrix_eigenvals_descending:

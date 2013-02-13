@@ -533,6 +533,11 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
 				  int *err);
 
 gretl_matrix *
+gretl_tridiagonal_matrix_eigenvals (gretl_matrix *m, 
+				    int eigenvecs, 
+				    int *err);
+
+gretl_matrix *
 gretl_symm_matrix_eigenvals_descending (gretl_matrix *m, 
 					int eigenvecs, 
 					int *err);

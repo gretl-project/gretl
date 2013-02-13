@@ -4682,24 +4682,25 @@ static NODE *isconst_node (NODE *l, NODE *r, parser *p)
     }
 }
 
-/* series on left, scalar or string on right */
+/* Series on left, scalar or string on right, as in
+   x[23] or somevar["CA"]. We return the selected
+   scalar value from the series.
+*/
 
 static NODE *series_obs (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
-	int t;
+	int t = -1; /* invalid */
 
 	if (r->t == STR) {
 	    t = dateton(r->v.str, p->dset);
 	} else {
+	    /* plain integer */
 	    t = node_get_int(r, p);
-	    if (!p->err) {
-		char word[16];
-
-		sprintf(word, "%d", t);
-		t = get_t_from_obs_string(word, p->dset);
+	    if (!p->err && t > 0 && t <= p->dset->n) {
+		t--; /* convert to zero based */
 	    }
 	}
 
