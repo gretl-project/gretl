@@ -754,11 +754,13 @@ void maybe_close_window_for_user_var (const gpointer data,
     } else {
 	GtkWidget *w = get_window_for_data(data);
 
-	if (otype == GRETL_OBJ_MATRIX) {
-	    /* don't double-free */
-	    g_object_set_data(G_OBJECT(w), "object", NULL);
+	if (w != NULL) {
+	    if (otype == GRETL_OBJ_MATRIX) {
+		/* don't double-free */
+		g_object_set_data(G_OBJECT(w), "object", NULL);
+	    }
+	    gtk_widget_destroy(w);
 	}
-	gtk_widget_destroy(w);
     }
 }
 

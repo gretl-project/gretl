@@ -1722,7 +1722,6 @@ int dataset_drop_listed_variables (int *list,
     int oldv = dset->v;
     int *dlist = NULL;
     int free_dlist = 0;
-    int lastvar[2];
     int err = 0;
 
     if (dset->n == 0 || dset->v == 0) {
@@ -1745,10 +1744,8 @@ int dataset_drop_listed_variables (int *list,
 	}
 	free_dlist = 1;
     } else if (list[0] == 0) {
-	/* signal to drop last variable */
-	lastvar[0] = 1;
-	lastvar[1] = dset->v - 1;
-	dlist = lastvar;
+	/* no-op */
+	return 0;
     } else {
 	dlist = list;
     }

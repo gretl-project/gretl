@@ -8430,12 +8430,14 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 
     case DELEET:
 	if (cmd->opt & OPT_D) {
+	    /* delete from database */
 	    err = db_delete_series_by_name(cmd->param, prn);
 	    if (!err) {
 		sync_db_windows();
 	    }
 	} else if (cmd->opt & OPT_T) {
-	    gretl_cmd_exec(s, dset);
+	    /* delete all by type (not series) */
+	    err = gretl_cmd_exec(s, dset);
 	} else if (*cmd->param != '\0') {
 	    /* note that this does not catch the case where objects
 	       are deleted within a loop; but that is handled via
@@ -8450,8 +8452,13 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	    } else {
 		err = gretl_delete_var_by_name(cmd->param, prn);
 	    }
-	} else if (get_list_by_name(cmd->extra)) {
-	    err = user_var_delete_by_name(cmd->extra, prn);
+	} else if (*cmd->extra != '\0') {
+	    /* "extra" means we got "list <listname> delete" */
+	    if (get_list_by_name(cmd->extra)) {
+		err = user_var_delete_by_name(cmd->extra, prn);
+	    } else {
+		err = E_UNKVAR;
+	    }
 	} else {
 	    /* here we're deleting series */
 	    if (dataset_locked()) {

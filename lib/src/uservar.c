@@ -988,22 +988,64 @@ static int real_destroy_user_vars_at_level (int level, int type,
 	    break;
 	}
 	if (type > 0 && uvars[i]->type != type) {
+	    /* preserving this variable */
 	    nv++;
 	    continue;
 	}
 	if (uvar_levels_match(uvars[i], level)) {
 	    user_var_destroy(uvars[i]);
+	    /* shuffle the remainder down one place */
 	    for (j=i; j<n_vars-1; j++) {
 		uvars[j] = uvars[j+1];
 	    }
 	    uvars[n_vars-1] = NULL;
 	    i--;
 	} else {
+	    /* preserving */
 	    nv++;
 	}
     }
 
     set_nvars(nv, "real_destroy_user_vars_at_level");
+
+    return err;
+}
+
+static int destroy_user_vars_via_callback (int type)
+{
+    user_var **delvars = NULL;
+    int i, j, n = 0;
+    int err = 0;
+
+    for (i=0; i<n_vars; i++) {
+	if (uvars[i]->level == 0 && uvars[i]->type == type) {
+	    n++;
+	}
+    }
+
+    if (n == 0) {
+	return 0;
+    }
+
+    delvars = malloc(n * sizeof *delvars);
+    if (delvars == NULL) {
+	return E_ALLOC;
+    }
+
+    j = 0;
+    for (i=0; i<n_vars; i++) {
+	if (uvars[i]->level == 0 && uvars[i]->type == type) {
+	    delvars[j++] = uvars[i];
+	}
+    }    
+
+    for (j=0; j<n && !err; j++) {
+	err = (*user_var_callback)(delvars[j]->name, 
+				   delvars[j]->type, 
+				   UVAR_DELETE);
+    }
+
+    free(delvars);
 
     return err;
 }
@@ -1048,7 +1090,13 @@ int delete_user_vars_of_type (GretlType type, PRN *prn)
 	type == GRETL_TYPE_LIST) {
 	int level = gretl_function_depth();
 
-	err = real_destroy_user_vars_at_level(level, type, 0);
+	if (level == 0 && user_var_callback != NULL &&
+	    (type == GRETL_TYPE_MATRIX || type == GRETL_TYPE_BUNDLE)) {
+	    err = destroy_user_vars_via_callback(type);
+	} else {	
+	    err = real_destroy_user_vars_at_level(level, type, 0);
+	}
+
 	if (!err && gretl_messages_on()) {
 	    pprintf(prn, "Deleted all variables of type %s\n",
 		    gretl_arg_type_name(type));
