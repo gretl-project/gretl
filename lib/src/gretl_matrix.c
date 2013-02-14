@@ -8108,7 +8108,7 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 gretl_matrix *
 gretl_tridiagonal_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err) 
 {
-    integer n, info, ldz = 0;
+    integer n, info, ldz = 1;
     gretl_matrix *evals = NULL;
     double *d, *e, *work = NULL;
     double *tmp = NULL;
