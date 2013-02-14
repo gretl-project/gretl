@@ -2797,7 +2797,13 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 	int cols = 0, rows = node_get_int(l, p);
 
 	if (!p->err) {
-	    cols = (f == F_IMAT)? rows : node_get_int(r, p);
+	    if (f == F_IMAT) {
+		cols = rows;
+	    } else if (f == F_QUADRULE) {
+		cols = 2;
+	    } else {
+		cols = node_get_int(r, p);
+	    }
 	}
 
 	if (!p->err && !ok_matrix_dim(rows, cols, f)) {
@@ -2826,6 +2832,9 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 	case F_MNORM:
 	    ret->v.m = gretl_random_matrix_new(rows, cols,
 					       D_NORMAL);
+	    break;
+	case F_QUADRULE:
+	    ret->v.m = gretl_quadrule_matrix_new(rows);
 	    break;
 	default:
 	    break;
@@ -9264,6 +9273,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_ONES:
     case F_MUNIF:
     case F_MNORM:
+    case F_QUADRULE:
 	/* matrix-creation functions */
 	if (scalar_node(l) && (r == NULL || scalar_node(r))) {
 	    ret = matrix_fill_func(l, r, t->t, p);

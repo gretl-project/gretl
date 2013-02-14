@@ -395,6 +395,7 @@ struct str_table funcs[] = {
     { F_HALTON,   "halton" },
     { F_ISNAN,    "isnan" },
     { F_TYPESTR,  "typestr" },
+    { F_QUADRULE, "quadrule" },
     { 0,          NULL }
 };
 

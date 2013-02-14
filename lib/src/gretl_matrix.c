@@ -12760,3 +12760,66 @@ const char **gretl_matrix_get_rownames (const gretl_matrix *m)
 	return NULL;
     }
 }
+
+
+/**
+ * gretl_quadrule_matrix_new:
+ * @n: desired number of rows in the matrix.
+ *
+ * Returns: pointer to a newly allocated matrix, or NULL on
+ * failure. The matrix will contain nodes and weights for a given
+ * quadrature method (for the moment, only Gauss-Hermite is supported)
+ * in the first and second column, respectively.
+ */
+
+gretl_matrix *gretl_quadrule_matrix_new (int n)
+{
+    gretl_matrix *m = NULL;
+    int i, k, err;
+
+    if (n < 0) {
+	return NULL;
+    } else if (n == 0) {
+	return gretl_null_matrix_new();
+    }
+
+    int method = libset_get_int(QUADMETH);
+
+    if (method == QUAD_GHERMITE) {
+	double x;
+	gretl_matrix *td;
+
+	td = gretl_zero_matrix_new(n, n);
+
+	if (td != NULL) {
+	    for(i=1; i<n; i++) {
+		x = sqrt((double) i / 2.0);
+		gretl_matrix_set(td, i, i-1, x);
+		gretl_matrix_set(td, i-1, i, x);
+	    }
+	    
+	    gretl_matrix *lambda;
+	    lambda = gretl_tridiagonal_matrix_eigenvals (td, 1, &err); 
+	    m = gretl_matrix_alloc(n, 2);
+
+	    if (m != NULL) {
+		double SQRT2 = 1.41421356237309504880169;
+		for(i=0; i<n; i++) {
+		    x = lambda->val[i] * SQRT2;
+		    gretl_matrix_set(m, i, 0, x);
+		    x = gretl_matrix_get(td, 0, i);
+		    gretl_matrix_set(m, i, 1, x*x);
+		}
+	    }
+
+	    gretl_matrix_free(lambda);
+	    gretl_matrix_free(td);
+	}
+    } else {
+	fprintf(stderr, 
+		"gretl_quadrule_matrix_new: unsupporthed quadrature method!\n");
+    }
+	
+    return m;
+}
+

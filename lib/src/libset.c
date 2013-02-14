@@ -109,6 +109,7 @@ struct set_vars_ {
     char shelldir[MAXLEN];      /* working dir for shell commands */
     char csv_na[8];             /* representation of NA in CSV output */
     double nadarwat_trim;       /* multiple of h to use in nadarwat() for trimming */
+    int quadmeth;               /* Gaussian quadrature method */ 
 };
 
 #define ECHO "echo"
@@ -162,7 +163,8 @@ struct set_vars_ {
 		       !strcmp(s, GRETL_OPTIM) || \
 		       !strcmp(s, GRETL_DEBUG) || \
 		       !strcmp(s, BLAS_NMK_MIN) || \
-		       !strcmp(s, MP_NMK_MIN))
+		       !strcmp(s, MP_NMK_MIN) || \
+		       !strcmp(s, QUADMETH))
 
 /* global state */
 set_vars *state;
@@ -261,6 +263,13 @@ static const char *RNG_strs[] = {
     NULL
 };
 
+static const char *quadmeth_strs[] = {
+    "ghermite",
+    "glegendre",
+    "glaguerre",
+    NULL
+};
+
 static const char **libset_option_strings (const char *s)
 {
     if (!strcmp(s, GARCH_VCV)) {
@@ -331,6 +340,8 @@ static const char *libset_option_string (const char *s)
 	return normal_rand_strs[gretl_rand_get_box_muller()];
     } else if (!strcmp(s, RNG)) {
 	return RNG_strs[gretl_rand_get_sfmt()];
+    } else if (!strcmp(s, QUADMETH)) {
+	return quadmeth_strs[state->quadmeth];
     } else {
 	return "?";
     }
@@ -393,6 +404,7 @@ static void state_vars_copy (set_vars *sv)
     sv->nls_toler = state->nls_toler;
     sv->vecm_norm = state->vecm_norm;
     sv->optim = state->optim;
+    sv->quadmeth = state->quadmeth;
     sv->bfgs_maxiter = state->bfgs_maxiter;
     sv->bfgs_toler = state->bfgs_toler;
     sv->bfgs_maxgrad = state->bfgs_maxgrad;
@@ -499,6 +511,7 @@ static void state_vars_init (set_vars *sv)
     sv->gmm_maxiter = 250;
     sv->vecm_norm = NORM_PHILLIPS;
     sv->optim = OPTIM_AUTO;
+    sv->quadmeth = QUAD_GHERMITE;
     sv->initvals = NULL;
     sv->matmask = NULL;
 
@@ -922,6 +935,14 @@ static int parse_libset_int_code (const char *key,
 		break;
 	    }
 	}
+    } else if (!g_ascii_strcasecmp(key, QUADMETH)) {
+	for (i=0; quadmeth_strs[i] != NULL; i++) {
+	    if (!g_ascii_strcasecmp(val, quadmeth_strs[i])) {
+		state->quadmeth = i;
+		err = 0;
+		break;
+	    }
+	}
     } else if (!g_ascii_strcasecmp(key, RNG)) {
 	for (i=0; RNG_strs[i] != NULL; i++) {
 	    if (!g_ascii_strcasecmp(val, RNG_strs[i])) {
@@ -1286,6 +1307,7 @@ static void libset_print_bool (const char *s, PRN *prn,
 			 !strcmp(s, VECM_NORM) || \
 			 !strcmp(s, GRETL_OPTIM) || \
 			 !strcmp(s, NORMAL_RAND) || \
+			 !strcmp(s, QUADMETH) || \
                          !strcmp(s, RNG))
 
 const char *intvar_code_string (const char *s)
@@ -1420,6 +1442,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_bool(USE_FCP, prn, opt);
     libset_print_bool(DPDSTYLE, prn, opt);
     libset_print_double(NADARWAT_TRIM, prn, opt);
+    libset_print_int(QUADMETH, prn, opt);
 
     libset_header(N_("Random number generation"), prn, opt);
 
@@ -1848,6 +1871,8 @@ int libset_get_int (const char *key)
 	return state->bfgs_verbskip;
     } else if (!strcmp(key, CSV_DIGITS)) {
 	return csv_digits;
+    } else if (!strcmp(key, QUADMETH)) {
+	return state->quadmeth;
     } else {
 	fprintf(stderr, "libset_get_int: unrecognized "
 		"variable '%s'\n", key);	
@@ -2576,5 +2601,3 @@ int libset_read_script (const char *fname)
 {
     return real_libset_read_script(fname, NULL);
 }
-
-
