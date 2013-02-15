@@ -12785,6 +12785,7 @@ gretl_matrix *gretl_quadrule_matrix_new (int n, int method, int *err)
     }
 
     if (method == QUAD_GHERMITE) {
+	/* Gauss-Hermite, using the Golub-Welsch algorithm */
 	gretl_matrix *lambda = NULL;
 	gretl_matrix *td;
 	double x;
@@ -12800,7 +12801,7 @@ gretl_matrix *gretl_quadrule_matrix_new (int n, int method, int *err)
 		gretl_matrix_set(td, i, i-1, x);
 		gretl_matrix_set(td, i-1, i, x);
 	    }
-	    
+
 	    lambda = gretl_tridiagonal_matrix_eigenvals(td, 1, err);
 
 	    if (!*err) { 
