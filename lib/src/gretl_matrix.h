@@ -761,6 +761,7 @@ void set_blas_nmk_min (int nmk);
 
 int get_blas_nmk_min (void);
 
-gretl_matrix *gretl_quadrule_matrix_new (int n);
+gretl_matrix *gretl_quadrule_matrix_new (int n, int method, 
+					 int *err);
 
 #endif /* GRETL_MATRIX_H */

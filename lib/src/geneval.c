@@ -2795,6 +2795,7 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	int cols = 0, rows = node_get_int(l, p);
+	int method = 0;
 
 	if (!p->err) {
 	    if (f == F_IMAT) {
@@ -2834,7 +2835,10 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 					       D_NORMAL);
 	    break;
 	case F_QUADRULE:
-	    ret->v.m = gretl_quadrule_matrix_new(rows);
+	    /* or @method could be given by an extra argument */
+	    method = libset_get_int(QUADMETH);
+	    ret->v.m = gretl_quadrule_matrix_new(rows, method,
+						 &p->err);
 	    break;
 	default:
 	    break;

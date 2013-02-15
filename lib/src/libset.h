@@ -39,7 +39,7 @@ typedef enum {
     QUAD_GHERMITE,
     QUAD_GLEGENDRE,
     QUAD_GLAGUERRE,
-    QUAD_MAX
+    QUADMETH_MAX
 } QuadratureMeth;
 
 /* guard against consequences of typos */
