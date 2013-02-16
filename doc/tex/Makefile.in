@@ -54,6 +54,7 @@ TEXSRC = cli.tex \
 	gretlOx.tex \
 	gretlOctave.tex \
 	gretlStata.tex \
+	gretlPython.tex \
 	datatypes.tex \
 	df.tex \
 	var.tex \
@@ -93,7 +94,7 @@ $(HANSL): hansl-guide.tex links \
 	date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
-	
+
 $(KBD): gretl-keys.tex links $(STYSRC)
 	pdflatex $<
 
@@ -118,7 +119,7 @@ $(ALTHANSL): hansl-guide-a4.tex links \
 	date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
-	
+
 $(ALTKBD): gretl-keys-a4.tex links $(STYSRC)
 	pdflatex $<
 
@@ -146,7 +147,7 @@ gretl-ref-a4.tex: $(docsrc)/tex/gretl-ref.tex ../commands/us2a4
 
 hansl-guide-a4.tex: $(docsrc)/tex/hansl-guide.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
-	
+
 gretl-keys-a4.tex: $(docsrc)/tex/gretl-keys.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 

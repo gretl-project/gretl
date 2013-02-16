@@ -481,20 +481,22 @@ static int write_python_io_file (void)
 #endif	
 	    fputs("  return dotdir\n\n", fp);
 
-	    fputs("def gretl_export(M, fname):\n", fp);
+	    fputs("def gretl_export(M, fname, autodot=0):\n", fp);
 	    fputs("  from numpy import savetxt\n", fp);
-            fputs("  dname = gretl_dotdir()\n", fp);
 	    fputs("  r, c = M.shape\n", fp);
-	    fputs("  f = open(dname + fname, 'w')\n", fp);
+	    fputs("  if autodot:\n", fp);
+            fputs("    fname = gretl_dotdir() + fname\n", fp);
+	    fputs("  f = open(fname, 'w')\n", fp);
 	    fputs("  f.write(repr(r) + '\\t' + repr(c) + '\\n')\n", fp);
 	    fputs("  savetxt(f, M, fmt='%.18e', delimiter=' ')\n", fp);
 	    fputs("  f.close()\n", fp);
 	    fputs("  return\n\n", fp);  
 
-	    fputs("def gretl_loadmat(fname):\n", fp);
+	    fputs("def gretl_loadmat(fname, autodot=0):\n", fp);
 	    fputs("  from numpy import loadtxt\n", fp);
-            fputs("  dname = gretl_dotdir()\n", fp);
-	    fputs("  M = loadtxt(dname + fname, skiprows=1)\n", fp);
+	    fputs("  if autodot:\n", fp);
+	    fputs("    fname = gretl_dotdir() + fname\n", fp);
+	    fputs("  M = loadtxt(fname, skiprows=1)\n", fp);
 	    fputs("  return M\n\n", fp);
 
 	    fclose(fp);
