@@ -12761,6 +12761,59 @@ const char **gretl_matrix_get_rownames (const gretl_matrix *m)
     }
 }
 
+int gretl_quadrule_matrix_fill (gretl_matrix *m, int method)
+{
+    int n, err = 0;
+
+    if (m == NULL) {
+	return E_DATA;
+    }
+
+    n = m->rows;
+    if (n < 1 || m->cols != 2) {
+	return E_DATA;
+    }
+
+    if (method == QUAD_GHERMITE) {
+	/* Gauss-Hermite, using the Golub-Welsch algorithm */
+	gretl_matrix *lambda = NULL;
+	gretl_matrix *td;
+	double x;
+	int i;
+
+	td = gretl_zero_matrix_new(n, n);
+
+	if (td == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=1; i<n; i++) {
+		x = sqrt(i / 2.0);
+		gretl_matrix_set(td, i, i-1, x);
+		gretl_matrix_set(td, i-1, i, x);
+	    }
+
+	    lambda = gretl_tridiagonal_matrix_eigenvals(td, 1, &err);
+
+	    if (!err) {
+		for (i=0; i<n; i++) {
+		    x = lambda->val[i] * M_SQRT2;
+		    gretl_matrix_set(m, i, 0, x);
+		    x = gretl_matrix_get(td, 0, i);
+		    gretl_matrix_set(m, i, 1, x*x);
+		}
+	    }
+	}
+
+	gretl_matrix_free(lambda);
+	gretl_matrix_free(td);
+    } else {
+	fprintf(stderr, 
+		"gretl_quadrule_matrix_new: unsupporthed quadrature method!\n");
+	err = E_DATA;
+    }
+	
+    return err;
+}
 
 /**
  * gretl_quadrule_matrix_new:
@@ -12785,44 +12838,12 @@ gretl_matrix *gretl_quadrule_matrix_new (int n, int method, int *err)
     }
 
     if (method == QUAD_GHERMITE) {
-	/* Gauss-Hermite, using the Golub-Welsch algorithm */
-	gretl_matrix *lambda = NULL;
-	gretl_matrix *td;
-	double x;
-	int i;
-
-	td = gretl_zero_matrix_new(n, n);
-
-	if (td == NULL) {
+	m = gretl_matrix_alloc(n, 2);
+	if (m == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    for (i=1; i<n; i++) {
-		x = sqrt(i / 2.0);
-		gretl_matrix_set(td, i, i-1, x);
-		gretl_matrix_set(td, i-1, i, x);
-	    }
-
-	    lambda = gretl_tridiagonal_matrix_eigenvals(td, 1, err);
-
-	    if (!*err) { 
-		m = gretl_matrix_alloc(n, 2);
-		if (m == NULL) {
-		    *err = E_ALLOC;
-		}
-	    }
-
-	    if (m != NULL) {
-		for (i=0; i<n; i++) {
-		    x = lambda->val[i] * M_SQRT2;
-		    gretl_matrix_set(m, i, 0, x);
-		    x = gretl_matrix_get(td, 0, i);
-		    gretl_matrix_set(m, i, 1, x*x);
-		}
-	    }
+	    *err = gretl_quadrule_matrix_fill(m, method);
 	}
-
-	gretl_matrix_free(lambda);
-	gretl_matrix_free(td);
     } else {
 	fprintf(stderr, 
 		"gretl_quadrule_matrix_new: unsupporthed quadrature method!\n");
