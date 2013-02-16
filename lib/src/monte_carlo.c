@@ -844,7 +844,13 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 					dset, NULL, OPT_T);
 	if (!err) {
 	    list = get_list_by_name(lname);
-	} 
+	}
+    } else if (*loop->listname == '@') {
+	const char *s = get_string_by_name(loop->listname + 1);
+
+	if (s != NULL && strlen(s) < VNAMELEN) {
+	    list = get_list_by_name(s);
+	}
     } else {
 	list = get_list_by_name(loop->listname);
     }
@@ -913,6 +919,14 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
 
     while (isspace(*s)) s++;
     tailstrip(s);
+
+    if (*s == '@') {
+	/* tricksy: got a list-name that needs string subst? */
+	*loop->listname = '\0';
+	strncat(loop->listname, s, VNAMELEN - 1);
+	*nf = 0;
+	return 0;
+    }
 
     list = get_list_by_name(s);
 
