@@ -1,5 +1,5 @@
 version 1.9.12, in progress
-- "foreign" command: add support for Python + numpy
+- "foreign" command: add support for Python + NumPy
 - "markers" command: add support for the panel-data case
   where the number of markers equals the number of cross-
   sectional units
