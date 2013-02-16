@@ -59,12 +59,12 @@ to use these two functions.
 \label{sec:Python-longley}
 
 Example~\ref{Python-longley} compares the numerical accuracy of
-\app{gretl}'s \texttt{ols} and \texttt{mpols} commands with that of
-\app{NumPy}'s \texttt{linalg.lstsq}, using the notorious Longley test
-data which exhibit extreme multicollinearity.  Unlike some
-econometrics packages, \app{NumPy} does a good job on these data. The
-script computes and prints the log-relative error in estimation of the
-regression coefficients, using the NIST-certified values as a
+\app{gretl}'s \texttt{ols} command with that of \app{NumPy}'s
+\texttt{linalg.lstsq}, using the notorious Longley test data which
+exhibit extreme multicollinearity.  Unlike some econometrics packages,
+\app{NumPy} does a good job on these data. The script computes and
+prints the log-relative error in estimation of the regression
+coefficients, using the NIST-certified values as a
 benchmark;\footnote{See
   \url{http://www.itl.nist.gov/div898/strd/lls/data/Longley.shtml}.}
 the error values correspond to the number of correct digits (with a
