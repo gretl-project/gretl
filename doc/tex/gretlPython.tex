@@ -96,7 +96,7 @@ foreign language=python
    y = gretl_loadmat('y.mat', 1)
    X = gretl_loadmat('X.mat', 1)
    # NumPy's OLS   
-   b, u, rnk, s = np.linalg.lstsq(X, y)
+   b = np.linalg.lstsq(X, y)[0]
    gretl_export(np.transpose(np.matrix(b)), 'py_b.mat', 1)
 end foreign
 
