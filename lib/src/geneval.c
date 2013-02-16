@@ -10559,7 +10559,7 @@ static void pre_process (parser *p, int flags)
 	    p->lh.t = STR;
 	    newvar = 0;
 	} else if (vtype == GRETL_TYPE_BUNDLE) {
-	    p->flags |= P_LHSTR;
+	    p->flags |= P_LHBUN;
 	    p->lh.t = BUNDLE;
 	    newvar = 0;
 	} 
@@ -11476,6 +11476,28 @@ static void align_matrix_to_series (double *y, const gretl_matrix *m,
     }
 }
 
+static int assign_null_to_bundle (parser *p)
+{
+    gretl_bundle *b;
+    int err = 0;
+
+    if (p->flags & P_LHBUN) {
+	b = get_bundle_by_name(p->lh.name);
+	gretl_bundle_void_content(b);
+    } else {
+	b = gretl_bundle_new();
+	if (b == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = user_var_add_or_replace(p->lh.name,
+					  GRETL_TYPE_BUNDLE,
+					  b);
+	}
+    }
+
+    return err;
+}
+
 static int save_generated_var (parser *p, PRN *prn)
 {
     NODE *r = p->ret;
@@ -11652,15 +11674,8 @@ static int save_generated_var (parser *p, PRN *prn)
 		r->v.b = NULL;
 	    }
 	} else if (r->t == EMPTY) {
-	    gretl_bundle *b = gretl_bundle_new();
-
-	    if (b == NULL) {
-		p->err = E_ALLOC;
-	    } else {
-		p->err = user_var_add_or_replace(p->lh.name,
-						 GRETL_TYPE_BUNDLE,
-						 b);
-	    }
+	    /* as in "bundle b = null" */
+	    p->err = assign_null_to_bundle(p);
 	} else {
 	    /* assignment from pre-existing named bundle */
 	    p->err = gretl_bundle_copy_as(p->rhs, p->lh.name);

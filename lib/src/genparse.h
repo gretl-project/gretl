@@ -531,14 +531,15 @@ enum {
     P_LHLIST  = 1 << 18, /* there was a pre-existing LHS list */
     P_LHSTR   = 1 << 19, /* there was a pre-existing LHS string */
     P_LHMAT   = 1 << 20, /* there was a pre-existing LHS matrix */
-    P_QUIET   = 1 << 21, /* don't print any messages or labels */
-    P_GETSTR  = 1 << 22, /* state: flag acceptance of plain strings */
-    P_LOOP    = 1 << 23, /* executing pre-built genr in loop context */
-    P_SLAVE   = 1 << 24, /* running as "slave" of NLS/MLE/GMM */
-    P_LHPTR   = 1 << 25, /* left-hand side: pointer type wanted */
-    P_MMASK   = 1 << 26, /* genr result is masked matrix */
-    P_SLICING = 1 << 27, /* calculating matrix slice (temporary) */
-    P_LAGPRSE = 1 << 28  /* parsing lag spec (temporary) */
+    P_LHBUN   = 1 << 21, /* there was a pre-existing LHS bundle */
+    P_QUIET   = 1 << 22, /* don't print any messages or labels */
+    P_GETSTR  = 1 << 23, /* state: flag acceptance of plain strings */
+    P_LOOP    = 1 << 24, /* executing pre-built genr in loop context */
+    P_SLAVE   = 1 << 25, /* running as "slave" of NLS/MLE/GMM */
+    P_LHPTR   = 1 << 26, /* left-hand side: pointer type wanted */
+    P_MMASK   = 1 << 27, /* genr result is masked matrix */
+    P_SLICING = 1 << 28, /* calculating matrix slice (temporary) */
+    P_LAGPRSE = 1 << 29  /* parsing lag spec (temporary) */
 };
 
 struct lhinfo {

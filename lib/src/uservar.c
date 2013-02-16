@@ -707,7 +707,7 @@ int user_var_add_or_replace (const char *name,
     if (u != NULL && u->type != type) {
 	err = E_TYPES;
     } else if (u != NULL) {
-	err = user_var_replace_value(u, value);
+ 	err = user_var_replace_value(u, value);
     } else {
 	err = real_user_var_add(name, type, value, OPT_NONE);
     }

@@ -208,6 +208,26 @@ void gretl_bundle_destroy (gretl_bundle *bundle)
 }
 
 /**
+ * gretl_bundle_void_content:
+ * @bundle: target bundle.
+ *
+ * Frees all contents of @bundle.
+ */
+
+void gretl_bundle_void_content (gretl_bundle *bundle)
+{
+    if (bundle != NULL) {
+	if (bundle->ht != NULL) {
+	    g_hash_table_destroy(bundle->ht);
+	}
+	free(bundle->creator);
+	bundle->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
+					   g_free, bundled_item_destroy);
+	bundle->creator = NULL;
+    }
+}
+
+/**
  * gretl_bundle_new:
  *
  * Returns: a newly allocated, empty gretl bundle.
