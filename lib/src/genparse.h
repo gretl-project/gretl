@@ -268,7 +268,6 @@ enum {
     F_ISNAN,
     F_TYPESTR,
     F_STRSTRIP,
-    F_QUADRULE,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
@@ -374,6 +373,7 @@ enum {
     F_NRMAX,
     F_LOESS,
     F_GHK,
+    F_QUADRULE,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 

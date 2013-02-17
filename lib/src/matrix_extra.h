@@ -27,6 +27,13 @@ typedef enum {
     M_MISSING_TRIM
 } MMissingCode;
 
+typedef enum {
+    QUAD_GHERMITE,
+    QUAD_LEGENDRE,
+    QUAD_LAGUERRE,
+    QUADMETH_MAX
+} QuadratureMethod;
+
 gretl_vector *
 gretl_vector_from_array (const double *x, int n, GretlMatrixMod mod);
 
@@ -120,9 +127,10 @@ int gretl_matrix_mp_ols (const gretl_vector *y, const gretl_matrix *X,
 			 gretl_vector *b, gretl_matrix *vcv, 
 			 gretl_vector *uhat, double *s2);
 
-gretl_matrix *gretl_quadrule_matrix_2 (int n, int method, 
-				       double a, double b,
-				       int *err);
+gretl_matrix *gretl_quadrule_matrix_new (int n, int method, 
+					 double a, double b,
+					 int *err);
 
+gretl_matrix *gretl_gauss_hermite_matrix_new (int n, int *err);
 
 #endif /* MATRIX_EXTRA_H */

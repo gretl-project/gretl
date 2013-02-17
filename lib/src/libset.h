@@ -35,13 +35,6 @@ typedef enum {
     OPTIM_MAX
 } OptimCode;
 
-typedef enum {
-    QUAD_GHERMITE,
-    QUAD_GLEGENDRE,
-    QUAD_GLAGUERRE,
-    QUADMETH_MAX
-} QuadratureMeth;
-
 /* guard against consequences of typos */
 
 #define BFGS_MAXITER     "bfgs_maxiter"
@@ -88,7 +81,6 @@ typedef enum {
 #define NADARWAT_TRIM    "nadarwat_trim"
 #define CONV_HUGE        "huge"
 #define USE_OPENMP       "openmp"
-#define QUADMETH         "quadmeth"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 typedef void (*SHOW_ACTIVITY_FUNC) (void);

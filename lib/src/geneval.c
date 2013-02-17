@@ -2795,13 +2795,10 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	int cols = 0, rows = node_get_int(l, p);
-	int method = 0;
 
 	if (!p->err) {
 	    if (f == F_IMAT) {
 		cols = rows;
-	    } else if (f == F_QUADRULE) {
-		cols = 2;
 	    } else {
 		cols = node_get_int(r, p);
 	    }
@@ -2833,17 +2830,6 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 	case F_MNORM:
 	    ret->v.m = gretl_random_matrix_new(rows, cols,
 					       D_NORMAL);
-	    break;
-	case F_QUADRULE:
-	    /* @method could be given by an extra argument */
-	    method = libset_get_int(QUADMETH);
-#if 1
-	    ret->v.m = gretl_quadrule_matrix_2(rows, method, 0.0, 1.0,
-					       &p->err);
-#else
-	    ret->v.m = gretl_quadrule_matrix_new(rows, method,
-						 &p->err);
-#endif
 	    break;
 	default:
 	    break;
@@ -7294,7 +7280,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		}
 	    }
 	}
-
 	if (!p->err) {
 	    ret = aux_vec_node(p, p->dset->n);
 	    if (ret != NULL) {
@@ -7328,16 +7313,52 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		U = e->v.m;
 	    }
 	}
-
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
-
 	if (!p->err) {
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
 	    }	    
 	    ret->v.m = gretl_GHK(C, A, B, U, &p->err);
+	} 
+    } else if (t->t == F_QUADRULE) {
+	int order = -1, method = 0;
+	double a = NADBL;
+	double b = NADBL;
+
+	if (k < 1 || k > 4) {
+	    n_args_error(k, 4, "quadrule", p);
+	} 
+	
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else if (i == 0) {
+		order = node_get_int(e, p);
+	    } else if (!empty_or_num(e)) {
+		node_type_error(t->t, i+1, NUM, e, p);
+	    } else if (i == 1) {
+		method = node_get_int(e, p);
+	    } else if (i == 2) {
+		a = e->v.xval;
+	    } else {
+		b = e->v.xval;
+	    }
+	}
+	if (method == QUAD_LEGENDRE && k < 4) {
+	    n_args_error(k, 4, "quadrule", p);
+	}
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
+	if (!p->err) {
+	    if (ret->v.m != NULL) {
+		gretl_matrix_free(ret->v.m);
+	    }	    
+	    ret->v.m = gretl_quadrule_matrix_new(order, method, 
+						 a, b, &p->err);
 	} 
     }
 
@@ -9282,7 +9303,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_ONES:
     case F_MUNIF:
     case F_MNORM:
-    case F_QUADRULE:
 	/* matrix-creation functions */
 	if (scalar_node(l) && (r == NULL || scalar_node(r))) {
 	    ret = matrix_fill_func(l, r, t->t, p);
@@ -9490,6 +9510,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_NRMAX:
     case F_LOESS:
     case F_GHK:
+    case F_QUADRULE:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
 	break;

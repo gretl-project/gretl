@@ -22,6 +22,8 @@
 #include "matrix_extra.h"
 #include "libset.h"
 
+#include <errno.h>
+
 /**
  * SECTION:matrix_extra
  * @short_description: more matrix operations
@@ -1894,7 +1896,7 @@ int gretl_matrix_mp_ols (const gretl_vector *y, const gretl_matrix *X,
 }
 
 /* following: quadrature sources based on John Burkhart's GPL'd
-   code at http://people.sc.fsu.edu/~jburkardt/cpp_src/cpp_src.html
+   code at http://people.sc.fsu.edu/~jburkardt
 */
 
 #define sign(x) (x < 0.0 ? -1.0 : 1.0)
@@ -1902,7 +1904,12 @@ int gretl_matrix_mp_ols (const gretl_vector *y, const gretl_matrix *X,
 /* Diagonalize a Jacobi (symmetric tridiagonal) matrix. On entry, @d
    contains the diagonal and @e the sub-diagonal. On exit, @d contains
    quadrature nodes and @z the square roots of the corresponding
-   weights.
+   weights. 
+
+   This is a C adaptation of subroutine IMTQLX, by Sylvan Elhay,
+   Jaroslav Kautsky and John Burkardt. See
+   http://people.sc.fsu.edu/~jburkardt/f_src/quadrature_weights/
+   specifically, qw_golub_welsch.f90
 */
 
 static int diag_jacobi (int n, double *d, double *e, double *z)
@@ -1912,12 +1919,15 @@ static int diag_jacobi (int n, double *d, double *e, double *z)
     int j, k, l, m = 0;
     int maxiter = 30;
     int i, ii, mml;
+    int err = 0;
 
     if (n == 1) {
 	return 0;
     }
 
     e[n-1] = 0.0;
+
+    errno = 0;
 
     for (l=1; l<=n; l++) {
 	j = 0;
@@ -2002,7 +2012,13 @@ static int diag_jacobi (int n, double *d, double *e, double *z)
 	}
     }
 
-    return 0;
+    if (errno) {
+	/* some calculation went badly */
+	err = E_NAN;
+	errno = 0;
+    }
+
+    return err;
 }
 
 /* Construct the Jacobi matrix for a quadrature rule: @d
@@ -2014,19 +2030,16 @@ static double make_jacobi (int n, int kind, double *d, double *e)
     double z0 = 0.0;
     int i;
 
-    if (kind == QUAD_GLEGENDRE) {
+    if (kind == QUAD_LEGENDRE) {
 	double xi, xj;
 
 	z0 = 2.0;
-	for (i=0; i<n; i++) {
-	    d[i] = 0.0;
-	}
 	for (i=1; i<=n; i++) {
 	    xi = i;
 	    xj = 2.0 * i;
 	    e[i-1] = sqrt(xi * xi / (xj * xj - 1.0));
 	}
-    } else if (kind == QUAD_GLAGUERRE) {
+    } else if (kind == QUAD_LAGUERRE) {
 	z0 = 1.0; /* tgamma(1.0) */
 	for (i=1; i<=n; i++) {
 	    d[i-1] = 2.0 * i - 1.0;
@@ -2034,9 +2047,6 @@ static double make_jacobi (int n, int kind, double *d, double *e)
 	}
     } else if (kind == QUAD_GHERMITE) {
 	z0 = tgamma(0.5);
-	for (i=0; i<n; i++) {
-	    d[i] = 0.0;
-	}
 	for (i=1; i<=n; i++) {
 	    e[i-1] = sqrt(i / 2.0);
 	}
@@ -2073,8 +2083,7 @@ static int legendre_scale (int n, double *x, double *w,
 
 static int gauss_quad_default (int n, int kind, double *x, double *w)
 {
-    double *tmp;
-    double z0;
+    double z0, *tmp;
     int i, err;
 
     tmp = malloc(n * sizeof *tmp);
@@ -2085,9 +2094,6 @@ static int gauss_quad_default (int n, int kind, double *x, double *w)
     z0 = make_jacobi(n, kind, x, tmp);
 
     w[0] = sqrt(z0);
-    for (i=1; i<n; i++) {
-	w[i] = 0.0;
-    }
 
     err = diag_jacobi(n, x, tmp, w);
     
@@ -2102,16 +2108,16 @@ static int gauss_quad_default (int n, int kind, double *x, double *w)
     return err;
 }
 
-gretl_matrix *gretl_quadrule_matrix_2 (int n, int method, 
-				       double a, double b,
-				       int *err)
+gretl_matrix *gretl_quadrule_matrix_new (int n, int method, 
+					 double a, double b,
+					 int *err)
 {
     gretl_matrix *m;
 
     if (method < 0 || method >= QUADMETH_MAX) {
 	*err = E_DATA;
 	return NULL;
-    }    
+    }
 
     if (n < 0) {
 	*err = E_DATA;
@@ -2120,7 +2126,7 @@ gretl_matrix *gretl_quadrule_matrix_2 (int n, int method,
 	return gretl_null_matrix_new();
     }
 
-    m = gretl_matrix_alloc(n, 2);
+    m = gretl_zero_matrix_new(n, 2);
 
     if (m == NULL) {
 	*err = E_ALLOC;
@@ -2131,10 +2137,10 @@ gretl_matrix *gretl_quadrule_matrix_2 (int n, int method,
 	*err = gauss_quad_default(n, method, x, w);
 
 	if (!*err) {
-	    if (method == QUAD_GLEGENDRE) {
+	    if (method == QUAD_LEGENDRE) {
 		*err = legendre_scale(n, x, w, a, b);
 	    } else if (method == QUAD_GHERMITE) {
-		/* how to adjust the Laguerre variant? */
+		/* (how to) adjust the Laguerre variant? */
 		double rtpi = sqrt(M_PI);
 		int i;
 
@@ -2152,4 +2158,9 @@ gretl_matrix *gretl_quadrule_matrix_2 (int n, int method,
     }
 
     return m;
+}
+
+gretl_matrix *gretl_gauss_hermite_matrix_new (int n, int *err)
+{
+    return gretl_quadrule_matrix_new(n, QUAD_GHERMITE, 0, 0, err);
 }

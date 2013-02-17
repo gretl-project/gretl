@@ -533,11 +533,6 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
 				  int *err);
 
 gretl_matrix *
-gretl_tridiagonal_matrix_eigenvals (gretl_matrix *m, 
-				    int eigenvecs, 
-				    int *err);
-
-gretl_matrix *
 gretl_symm_matrix_eigenvals_descending (gretl_matrix *m, 
 					int eigenvecs, 
 					int *err);
@@ -760,8 +755,5 @@ void lapack_mem_free (void);
 void set_blas_nmk_min (int nmk);
 
 int get_blas_nmk_min (void);
-
-gretl_matrix *gretl_quadrule_matrix_new (int n, int method, 
-					 int *err);
 
 #endif /* GRETL_MATRIX_H */
