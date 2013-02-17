@@ -381,13 +381,13 @@ static int write_ox_io_file (void)
 #endif	
 	    fputs("}\n\n", fp);
 
-	    fputs("gretl_export (const X, const str)\n{\n", fp);
+	    fputs("gretl_export_nodot (const X, const str)\n{\n", fp);
 	    fputs("  decl fp = fopen(str, \"w\");\n", fp);
 	    fputs("  fprint(fp, \"%d \", rows(X), \"%d\", columns(X));\n", fp);
 	    fputs("  fprint(fp, \"%.15g\", X);\n", fp);
 	    fputs("  fclose(fp);\n}\n\n", fp);
 
-	    fputs("gretl_dot_export (const X, const str)\n{\n", fp);
+	    fputs("gretl_export (const X, const str)\n{\n", fp);
             fputs("  decl dname = gretl_dotdir();\n", fp);
 	    fputs("  decl fp = fopen(dname ~ str, \"w\");\n", fp);
 	    fputs("  fprint(fp, \"%d \", rows(X), \"%d\", columns(X));\n", fp);
