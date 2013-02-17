@@ -120,4 +120,9 @@ int gretl_matrix_mp_ols (const gretl_vector *y, const gretl_matrix *X,
 			 gretl_vector *b, gretl_matrix *vcv, 
 			 gretl_vector *uhat, double *s2);
 
+gretl_matrix *gretl_quadrule_matrix_2 (int n, int method, 
+				       double a, double b,
+				       int *err);
+
+
 #endif /* MATRIX_EXTRA_H */

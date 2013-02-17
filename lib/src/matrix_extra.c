@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "usermat.h"
 #include "matrix_extra.h"
+#include "libset.h"
 
 /**
  * SECTION:matrix_extra
@@ -1892,4 +1893,263 @@ int gretl_matrix_mp_ols (const gretl_vector *y, const gretl_matrix *X,
     return err;
 }
 
+/* following: quadrature sources based on John Burkhart's GPL'd
+   code at http://people.sc.fsu.edu/~jburkardt/cpp_src/cpp_src.html
+*/
 
+#define sign(x) (x < 0.0 ? -1.0 : 1.0)
+
+/* diagonalize a symmetric tridiagonal matrix */
+
+static int diag_jacobi (int n, double *d, double *e, double *z)
+{
+    double b, c, f, g;
+    double p, r, s;
+    int i, ii;
+    int j, k, l, m = 0;
+    int maxiter = 30;
+    int mml;
+
+    if (n == 1) {
+	return 0;
+    }
+
+    e[n-1] = 0.0;
+
+    for (l=1; l<=n; l++) {
+	j = 0;
+	for ( ; ; ) {
+	    for (m=l; m<=n; m++) {
+		if (m == n) {
+		    break;
+		}
+		p = fabs(d[m-1]) + fabs(d[m]);
+		if (fabs(e[m-1]) <= DBL_EPSILON * p) {
+		    break;
+		}
+	    }
+	    p = d[l-1];
+	    if (m == l) {
+		break;
+	    }
+	    if (j >= maxiter) {
+		fprintf(stderr, "diag_jacobi: iteration limit exceeded\n");
+		return E_NOCONV;
+	    }
+	    j++;
+	    g = (d[l] - p) / (2.0 * e[l-1]);
+	    r =  sqrt(g * g + 1.0);
+	    g = d[m-1] - p + e[l-1] / (g + fabs(r) * sign(g));
+	    s = 1.0;
+	    c = 1.0;
+	    p = 0.0;
+	    mml = m - l;
+
+	    for (ii=1; ii<=mml; ii++) {
+		i = m - ii;
+		f = s * e[i-1];
+		b = c * e[i-1];
+		if (fabs(g) <= fabs(f)) {
+		    c = g / f;
+		    r =  sqrt(c * c + 1.0);
+		    e[i] = f * r;
+		    s = 1.0 / r;
+		    c = c * s;
+		} else {
+		    s = f / g;
+		    r =  sqrt(s * s + 1.0);
+		    e[i] = g * r;
+		    c = 1.0 / r;
+		    s = s * c;
+		}
+		g = d[i] - p;
+		r = (d[i-1] - g) * s + 2.0 * c * b;
+		p = s * r;
+		d[i] = g + p;
+		g = c * r - b;
+		f = z[i];
+		z[i] = s * z[i-1] + c * f;
+		z[i-1] = c * z[i-1] - s * f;
+	    }
+	    d[l-1] = d[l-1] - p;
+	    e[l-1] = g;
+	    e[m-1] = 0.0;
+	}
+    }
+
+    /* sorting */
+
+    for (ii=2; ii<=m; ii++) {
+	i = ii - 1;
+	k = i;
+	p = d[i-1];
+	for (j=ii; j<=n; j++) {
+	    if (d[j-1] < p) {
+		k = j;
+		p = d[j-1];
+	    }
+	}
+	if (k != i) {
+	    d[k-1] = d[i-1];
+	    d[i-1] = p;
+	    p = z[i-1];
+	    z[i-1] = z[k-1];
+	    z[k-1] = p;
+	}
+    }
+
+    return 0;
+}
+
+/* make_jacobi: compute the Jacobi matrix for a quadrature rule */
+
+static double make_jacobi (int n, int kind, double *aj, double *bj)
+{
+    double z0 = 0.0;
+    double abi, abj;
+    int i;
+
+    if (kind == QUAD_GLEGENDRE) {
+	z0 = 2.0;
+	for (i=0; i<n; i++) {
+	    aj[i] = 0.0;
+	}
+	for (i=1; i<=n; i++) {
+	    abi = i;
+	    abj = 2 * i;
+	    bj[i-1] = sqrt(abi * abi / (abj * abj - 1.0));
+	}
+    } else if (kind == QUAD_GLAGUERRE) {
+	z0 = tgamma(1.0);
+	for (i=1; i<=n; i++) {
+	    aj[i-1] = 2.0 * i - 1.0;
+	    bj[i-1] = i;
+	}
+    } else if (kind == QUAD_GHERMITE) {
+	z0 = tgamma(0.5);
+	for (i=0; i<n; i++) {
+	    aj[i] = 0.0;
+	}
+	for (i=1; i<=n; i++) {
+	    bj[i-1] = sqrt(i / 2.0);
+	}
+    } 
+
+    return z0;
+}
+
+/* scale legendre quadrature to a given interval */
+
+static int legendre_scale (int n, double *x, double *w,
+			   double a, double b)
+{
+    double shft, slp;
+    int i;
+
+    if (fabs(b - a) <= DBL_EPSILON) {
+	fprintf(stderr, "legendre: |b - a| too small\n");
+	return E_DATA;
+    }
+
+    shft = (a + b) / 2.0;
+    slp = (b - a) / 2.0;
+
+    for (i=0; i<n; i++) {
+	x[i] = shft + slp * x[i];
+	w[i] = w[i] * slp;
+    }
+
+    return 0;
+}
+
+/* compute Gauss quadrature formula with default a, b */
+
+static int gauss_quad_default (int n, int kind, double *x, double *w)
+{
+    double *aj, *bj;
+    double z0;
+    int i, err;
+
+    aj = malloc(2 * n * sizeof *aj);
+
+    if (aj == NULL) {
+	return E_ALLOC;
+    }
+
+    bj = aj + n;
+
+    z0 = make_jacobi(n, kind, aj, bj);
+
+    for (i=0; i<n; i++) {
+	x[i] = aj[i];
+    }
+
+    w[0] = sqrt(z0);
+    for (i=1; i<n; i++) {
+	w[i] = 0.0;
+    }
+
+    err = diag_jacobi(n, x, bj, w);
+    
+    if (!err) {
+	for (i=0; i<n; i++) {
+	    w[i] = w[i] * w[i];
+	}
+    }
+
+    free(aj);
+
+    return err;
+}
+
+gretl_matrix *gretl_quadrule_matrix_2 (int n, int method, 
+				       double a, double b,
+				       int *err)
+{
+    gretl_matrix *m;
+
+    if (method < 0 || method >= QUADMETH_MAX) {
+	*err = E_DATA;
+	return NULL;
+    }    
+
+    if (n < 0) {
+	*err = E_DATA;
+	return NULL;
+    } else if (n == 0) {
+	return gretl_null_matrix_new();
+    }
+
+    m = gretl_matrix_alloc(n, 2);
+
+    if (m == NULL) {
+	*err = E_ALLOC;
+    } else {
+	double *x = m->val;
+	double *w = x + n;
+
+	*err = gauss_quad_default(n, method, x, w);
+
+	if (!*err) {
+	    if (method == QUAD_GLEGENDRE) {
+		*err = legendre_scale(n, x, w, a, b);
+	    } else if (method == QUAD_GHERMITE) {
+		/* how to adjust the Laguerre variant? */
+		double rtpi = sqrt(M_PI);
+		int i;
+
+		for (i=0; i<n; i++) {
+		    x[i] *= M_SQRT2;
+		    w[i] /= rtpi;
+		}
+	    }
+	}
+    }
+
+    if (*err && m != NULL) {
+	gretl_matrix_free(m);
+	m = NULL;
+    }
+
+    return m;
+}

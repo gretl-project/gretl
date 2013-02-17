@@ -2835,10 +2835,15 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 					       D_NORMAL);
 	    break;
 	case F_QUADRULE:
-	    /* or @method could be given by an extra argument */
+	    /* @method could be given by an extra argument */
 	    method = libset_get_int(QUADMETH);
+#if 1
+	    ret->v.m = gretl_quadrule_matrix_2(rows, method, 0.0, 1.0,
+					       &p->err);
+#else
 	    ret->v.m = gretl_quadrule_matrix_new(rows, method,
 						 &p->err);
+#endif
 	    break;
 	default:
 	    break;

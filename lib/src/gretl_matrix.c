@@ -8096,7 +8096,7 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
  * @eigenvecs: non-zero to calculate eigenvectors, 0 to omit.
  * @err: location to receive error code.
  * 
- * Computes the eigenvalues of the tridiagonal matrix @m.  
+ * Computes the eigenvalues of the symmetric tridiagonal matrix @m.  
  * If @eigenvecs is non-zero, also compute the orthonormal
  * eigenvectors of @m, which are stored in @m. Uses the lapack 
  * function dstev().
