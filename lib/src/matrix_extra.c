@@ -1899,16 +1899,19 @@ int gretl_matrix_mp_ols (const gretl_vector *y, const gretl_matrix *X,
 
 #define sign(x) (x < 0.0 ? -1.0 : 1.0)
 
-/* diagonalize a symmetric tridiagonal matrix */
+/* Diagonalize a Jacobi (symmetric tridiagonal) matrix. On entry, @d
+   contains the diagonal and @e the sub-diagonal. On exit, @d contains
+   quadrature nodes and @z the square roots of the corresponding
+   weights.
+*/
 
 static int diag_jacobi (int n, double *d, double *e, double *z)
 {
     double b, c, f, g;
     double p, r, s;
-    int i, ii;
     int j, k, l, m = 0;
     int maxiter = 30;
-    int mml;
+    int i, ii, mml;
 
     if (n == 1) {
 	return 0;
@@ -1971,6 +1974,7 @@ static int diag_jacobi (int n, double *d, double *e, double *z)
 		z[i] = s * z[i-1] + c * f;
 		z[i-1] = c * z[i-1] - s * f;
 	    }
+
 	    d[l-1] = d[l-1] - p;
 	    e[l-1] = g;
 	    e[m-1] = 0.0;
@@ -2001,44 +2005,47 @@ static int diag_jacobi (int n, double *d, double *e, double *z)
     return 0;
 }
 
-/* make_jacobi: compute the Jacobi matrix for a quadrature rule */
+/* Construct the Jacobi matrix for a quadrature rule: @d
+   holds the diagonal, @e the subdiagonal.
+*/
 
-static double make_jacobi (int n, int kind, double *aj, double *bj)
+static double make_jacobi (int n, int kind, double *d, double *e)
 {
     double z0 = 0.0;
-    double abi, abj;
     int i;
 
     if (kind == QUAD_GLEGENDRE) {
+	double xi, xj;
+
 	z0 = 2.0;
 	for (i=0; i<n; i++) {
-	    aj[i] = 0.0;
+	    d[i] = 0.0;
 	}
 	for (i=1; i<=n; i++) {
-	    abi = i;
-	    abj = 2 * i;
-	    bj[i-1] = sqrt(abi * abi / (abj * abj - 1.0));
+	    xi = i;
+	    xj = 2.0 * i;
+	    e[i-1] = sqrt(xi * xi / (xj * xj - 1.0));
 	}
     } else if (kind == QUAD_GLAGUERRE) {
-	z0 = tgamma(1.0);
+	z0 = 1.0; /* tgamma(1.0) */
 	for (i=1; i<=n; i++) {
-	    aj[i-1] = 2.0 * i - 1.0;
-	    bj[i-1] = i;
+	    d[i-1] = 2.0 * i - 1.0;
+	    e[i-1] = i;
 	}
     } else if (kind == QUAD_GHERMITE) {
 	z0 = tgamma(0.5);
 	for (i=0; i<n; i++) {
-	    aj[i] = 0.0;
+	    d[i] = 0.0;
 	}
 	for (i=1; i<=n; i++) {
-	    bj[i-1] = sqrt(i / 2.0);
+	    e[i-1] = sqrt(i / 2.0);
 	}
     } 
 
     return z0;
 }
 
-/* scale legendre quadrature to a given interval */
+/* Scale Legendre quadrature rule to the interval (a, b) */
 
 static int legendre_scale (int n, double *x, double *w,
 			   double a, double b)
@@ -2062,34 +2069,27 @@ static int legendre_scale (int n, double *x, double *w,
     return 0;
 }
 
-/* compute Gauss quadrature formula with default a, b */
+/* compute basic Gauss quadrature formula */
 
 static int gauss_quad_default (int n, int kind, double *x, double *w)
 {
-    double *aj, *bj;
+    double *tmp;
     double z0;
     int i, err;
 
-    aj = malloc(2 * n * sizeof *aj);
-
-    if (aj == NULL) {
+    tmp = malloc(n * sizeof *tmp);
+    if (tmp == NULL) {
 	return E_ALLOC;
     }
 
-    bj = aj + n;
-
-    z0 = make_jacobi(n, kind, aj, bj);
-
-    for (i=0; i<n; i++) {
-	x[i] = aj[i];
-    }
+    z0 = make_jacobi(n, kind, x, tmp);
 
     w[0] = sqrt(z0);
     for (i=1; i<n; i++) {
 	w[i] = 0.0;
     }
 
-    err = diag_jacobi(n, x, bj, w);
+    err = diag_jacobi(n, x, tmp, w);
     
     if (!err) {
 	for (i=0; i<n; i++) {
@@ -2097,7 +2097,7 @@ static int gauss_quad_default (int n, int kind, double *x, double *w)
 	}
     }
 
-    free(aj);
+    free(tmp);
 
     return err;
 }
