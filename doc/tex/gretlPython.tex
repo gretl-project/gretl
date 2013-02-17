@@ -34,20 +34,25 @@ When you launch \app{Python} from within \app{gretl} three convenience
 functions are pre-defined, as follows.
 \begin{code}
 gretl_dotdir()
-gretl_loadmat(filename, autodot=0)
-gretl_export(M, filename, autodot=0)
+gretl_loadmat(filename, autodot=1)
+gretl_export(M, filename, autodot=1)
 \end{code}
 The first of these returns the path to the user's ``dot directory.''
 The second loads a matrix of the given \texttt{filename} as written by
-\app{gretl}'s \texttt{mwrite} function. If you want the traffic to be
-handled via the dot directory, you can (a) give a non-zero value for
-the optional \textsl{export} parameter to \texttt{mwrite}, and (b)
-give non-zero for \texttt{autodot} when calling \verb|gretl_loadmat|.
-The third function writes matrix \texttt{M}, under the given
-\texttt{filename}, in the format wanted by \app{gretl}. If
-\texttt{autodot} is supplied and non-zero, writing is directed to the
-dot directory; this complements the optional \textsl{import} parameter
-for \app{gretl}'s \texttt{mread} function.
+\app{gretl}'s \texttt{mwrite} function, and the third writes matrix
+\texttt{M}, under the given \texttt{filename}, in the format wanted by
+\app{gretl}.
+
+By default the traffic in matrices goes via the dot directory on the
+\app{Python} side; that is, the name of this directory is prepended to
+\texttt{filename} for both reading and writing. (This is complementary
+to use of the \textsl{export} and \textsl{import} parameters with
+\app{gretl}'s \texttt{mwrite} and \texttt{mread} functions,
+respectively.) However, if you wish to take control over the reading
+and writing locations you can supply a zero value for
+\texttt{autodot} when calling \verb|gretl_loadmat| and
+\verb|gretl_export|: in that case the \texttt{filename} argument is
+used as is.
 
 Note that \verb|gretl_loadmat| and \verb|gretl_export| depend on
 \app{NumPy}; they make use of the functions \texttt{loadtxt} and

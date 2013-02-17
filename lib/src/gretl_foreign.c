@@ -382,6 +382,12 @@ static int write_ox_io_file (void)
 	    fputs("}\n\n", fp);
 
 	    fputs("gretl_export (const X, const str)\n{\n", fp);
+	    fputs("  decl fp = fopen(str, \"w\");\n", fp);
+	    fputs("  fprint(fp, \"%d \", rows(X), \"%d\", columns(X));\n", fp);
+	    fputs("  fprint(fp, \"%.15g\", X);\n", fp);
+	    fputs("  fclose(fp);\n}\n\n", fp);
+
+	    fputs("gretl_dot_export (const X, const str)\n{\n", fp);
             fputs("  decl dname = gretl_dotdir();\n", fp);
 	    fputs("  decl fp = fopen(dname ~ str, \"w\");\n", fp);
 	    fputs("  fprint(fp, \"%d \", rows(X), \"%d\", columns(X));\n", fp);
@@ -429,17 +435,25 @@ static int write_octave_io_file (void)
 #endif	
 	    fputs("endfunction\n\n", fp);
 
-	    fputs("function gretl_export(X, str)\n", fp);
-            fputs("  dname = gretl_dotdir();\n", fp);
-	    fputs("  fd = fopen(strcat(dname, str), \"w\");\n", fp);
+	    fputs("function gretl_export(X, str, autodot=1)\n", fp);
+	    fputs("  if (autodot)\n", fp);
+            fputs("    dname = gretl_dotdir();\n", fp);
+	    fputs("    fd = fopen(strcat(dname, str), \"w\");\n", fp);
+	    fputs("  else\n", fp);
+	    fputs("    fd = fopen(str, \"w\");\n", fp);
+	    fputs("  endif\n", fp);
 	    fputs("  fprintf(fd, \"%d %d\\n\", size(X));\n", fp);
 	    fputs("  fprintf(fd, \"%.15g\\n\", X);\n", fp);
 	    fputs("  fclose(fd);\n", fp);
 	    fputs("endfunction\n\n", fp);  
 
-	    fputs("function A = gretl_loadmat(str)\n", fp);
-            fputs("  dname = gretl_dotdir();\n", fp);
-	    fputs("  fd = fopen(strcat(dname, str), \"r\");\n", fp);
+	    fputs("function A = gretl_loadmat(str, autodot=1)\n", fp);
+	    fputs("  if (autodot)\n", fp);
+            fputs("    dname = gretl_dotdir();\n", fp);
+	    fputs("    fd = fopen(strcat(dname, str), \"r\");\n", fp);
+	    fputs("  else\n", fp);
+	    fputs("    fd = fopen(str, \"r\");\n", fp);
+            fputs("  endif\n", fp);
 	    fputs("  [r,c] = fscanf(fd, \"%d %d\", \"C\");\n", fp);
 	    fputs("  A = reshape(fscanf(fd, \"%g\", r*c),c,r)';\n", fp);
 	    fputs("  fclose(fd);\n", fp);
@@ -481,7 +495,7 @@ static int write_python_io_file (void)
 #endif	
 	    fputs("  return dotdir\n\n", fp);
 
-	    fputs("def gretl_export(M, fname, autodot=0):\n", fp);
+	    fputs("def gretl_export(M, fname, autodot=1):\n", fp);
 	    fputs("  from numpy import savetxt\n", fp);
 	    fputs("  r, c = M.shape\n", fp);
 	    fputs("  if autodot:\n", fp);
@@ -492,7 +506,7 @@ static int write_python_io_file (void)
 	    fputs("  f.close()\n", fp);
 	    fputs("  return\n\n", fp);  
 
-	    fputs("def gretl_loadmat(fname, autodot=0):\n", fp);
+	    fputs("def gretl_loadmat(fname, autodot=1):\n", fp);
 	    fputs("  from numpy import loadtxt\n", fp);
 	    fputs("  if autodot:\n", fp);
 	    fputs("    fname = gretl_dotdir() + fname\n", fp);
