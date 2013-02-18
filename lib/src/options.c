@@ -391,6 +391,7 @@ struct gretl_option gretl_opts[] = {
     { PANEL,    OPT_U, "random-effects", 0 },
     { PANEL,    OPT_V, "verbose", 0 },
     { PANEL,    OPT_W, "unit-weights", 0 },
+    { PANEL,    OPT_X, "reprobit", 0 },
     { POISSON,  OPT_R, "robust", 0 },
     { POISSON,  OPT_C, "cluster", 2 },
     { POISSON,  OPT_V, "verbose", 0 },

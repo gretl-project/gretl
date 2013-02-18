@@ -2718,7 +2718,8 @@ static double binary_model_fXb (bin_info *bin)
 }
 
 static void binary_model_stats (MODEL *pmod, bin_info *bin,
-				const DATASET *dset)
+				const DATASET *dset,
+				gretlopt opt)
 {
     int *act_pred;
     double *ll;
@@ -2785,7 +2786,7 @@ static void binary_model_stats (MODEL *pmod, bin_info *bin,
 
     mle_criteria(pmod, 0);
 
-    if (pmod->ci == PROBIT) {
+    if (pmod->ci == PROBIT && !(opt & OPT_X)) {
 	binary_probit_normtest(pmod, bin);
     }
 }
@@ -2819,7 +2820,7 @@ static int binary_model_finish (bin_info *bin, MODEL *pmod,
     }
 
     if (!pmod->errcode) {
-	binary_model_stats(pmod, bin, dset);
+	binary_model_stats(pmod, bin, dset, opt);
 	if (opt & OPT_A) {
 	    pmod->aux = AUX_AUX;
 	} else {
