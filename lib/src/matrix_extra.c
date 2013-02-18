@@ -2106,13 +2106,34 @@ static int gauss_quad_basic (int n, int kind, double *x, double *w)
     return err;
 }
 
+/**
+ * gretl_quadrule_matrix_new:
+ * @n: the order (i.e. the number of abscissae and weights).
+ * @method: should be one of the values in #QuadMethod.
+ * @a: for method = QUAD_LEGENDRE, the lower limit of integration.
+ * @b: for method = QUAD_LEGENDRE, the upper limit of integration.
+ * @err: location to receive error code.
+ *
+ * Calculates a quadrature "rule" (i.e. a set of abscissae or
+ * nodes and assoicated weights) for use in numerical integration.
+ * The three supported methods are Gauss-Hermite, Gauss-Legendre
+ * and Gauss-Laguerre. The arguments @a and @b are ignored for
+ * methods other than Legendre: in the Gauss-Hermite case the
+ * integral that is approximated runs from minus infinity to
+ * plus infinity, and in the Laguerre case it runs from zero to
+ * plus infinity.
+ * 
+ * Returns: an @n x 2 matrix containing the abscissae in the first
+ * column and the weights in the second, or NULL on failure.
+ */
+
 gretl_matrix *gretl_quadrule_matrix_new (int n, int method, 
 					 double a, double b,
 					 int *err)
 {
     gretl_matrix *m;
 
-    if (method < 0 || method >= QUADMETH_MAX) {
+    if (method < 0 || method >= QUAD_INVALID) {
 	*err = E_DATA;
 	return NULL;
     }

@@ -31,8 +31,8 @@ typedef enum {
     QUAD_GHERMITE,
     QUAD_LEGENDRE,
     QUAD_LAGUERRE,
-    QUADMETH_MAX
-} QuadratureMethod;
+    QUAD_INVALID
+} QuadMethod;
 
 gretl_vector *
 gretl_vector_from_array (const double *x, int n, GretlMatrixMod mod);
