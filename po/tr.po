@@ -4,20 +4,20 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # A. Talha YALTA <yalta@etu.edu.tr>, 2008, 2009, 2010.
-# A. Talha Yalta, 2010, 2011, 2012.
+# A. Talha Yalta, 2010, 2011, 2012, 2013.
 msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-02-04 09:09-0500\n"
-"PO-Revision-Date: 2012-06-04 11:16+0300\n"
-"Last-Translator: \n"
+"PO-Revision-Date: 2013-02-18 20:42+0200\n"
+"Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.2\n"
+"X-Generator: Lokalize 1.5\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: lib/src/adf_kpss.c:290
@@ -422,19 +422,16 @@ msgid "Null hypothesis"
 msgstr "Sıfır önsavı"
 
 #: lib/src/compare.c:276
-#, fuzzy
 msgid "no seasonal effects or trend"
-msgstr "= %s mevsimsel farkı"
+msgstr "mevsimsel etki ya da eğilim yok"
 
 #: lib/src/compare.c:279
-#, fuzzy
 msgid "no seasonal effects"
-msgstr "Mevsimsel-dışı farklar:"
+msgstr "mevsimsel etki yok"
 
 #: lib/src/compare.c:282
-#, fuzzy
 msgid "no trend"
-msgstr "Çokterimli eğilim"
+msgstr "eğilim yok"
 
 #: lib/src/compare.c:289
 msgid ""
@@ -445,9 +442,8 @@ msgstr ""
 "  Sıfır önsavı: Seçilen değişken(ler) için bağlanım katsayısı = 0\n"
 
 #: lib/src/compare.c:309
-#, fuzzy
 msgid "seasonal dummies"
-msgstr "artı mevsimsel kuklalar"
+msgstr "mevsimsel kuklalar"
 
 #: lib/src/compare.c:347
 #, c-format
@@ -607,14 +603,13 @@ msgid "autocorrelation"
 msgstr "özilinti"
 
 #: lib/src/compare.c:2109
-#, fuzzy
 msgid "Error calculating Ljung-Box statistic"
-msgstr "Model seçim ölçütleri hesaplama hatası\n"
+msgstr "Ljung-Box istatistiği hesaplama hatası"
 
 #: lib/src/compare.c:2112
-#, fuzzy, c-format
+#, c-format
 msgid "Test for autocorrelation up to order %d"
-msgstr "%s. dereceye kadar özilinti için LM sınaması"
+msgstr "%d. dereceye kadar özilinti sınaması"
 
 #: lib/src/compare.c:2284 lib/src/gretl_panel.c:3932
 msgid "Alternative statistic"
@@ -630,20 +625,17 @@ msgid "dummy variable for Chow test"
 msgstr "Chow sınaması kukla değişkeni"
 
 #: lib/src/compare.c:2431
-#, fuzzy
 msgid "Robust Wald test for break"
-msgstr "Kırılma için Chow F-sınaması"
+msgstr "Kırılma için sağlam Wald sınaması"
 
 #: lib/src/compare.c:2432
 msgid "Chow F-test for break"
 msgstr "Kırılma için Chow F-sınaması"
 
 #: lib/src/compare.c:2484
-#, fuzzy, c-format
+#, c-format
 msgid "Asymptotic p-value = %.4g for chi-square(%d) = %g"
-msgstr ""
-"(p-değeri = prob[Chi-square(%d) > %g] = %g)\n"
-"\n"
+msgstr "Kavuşmazsal p-değeri = %.4g (ki-kare %d = %g için)"
 
 #: lib/src/compare.c:2511
 msgid ""
@@ -654,9 +646,9 @@ msgstr ""
 "Quandt olabilirlik oranı sınaması"
 
 #: lib/src/compare.c:2515
-#, fuzzy, c-format
+#, c-format
 msgid "The maximum Wald test = %g occurs at observation %s"
-msgstr "En yüksek F(%d, %d) = %g, %s gözleminde ortaya çıkmaktadır"
+msgstr "En yüksek Wald sınaması = %g, %s gözleminde ortaya çıkıyor"
 
 #: lib/src/compare.c:2519
 #, c-format
@@ -997,9 +989,9 @@ msgid "scanning for variable names...\n"
 msgstr "değişken adları taranıyor...\n"
 
 #: lib/src/csvdata.c:2024
-#, fuzzy, c-format
+#, c-format
 msgid "   line: %.115s...\n"
-msgstr "   satır: %s\n"
+msgstr "   satır: %.115s...\n"
 
 #: lib/src/csvdata.c:2026
 #, c-format
@@ -1027,9 +1019,9 @@ msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' -- sayısal bir dönüştürme yapılamadı!"
 
 #: lib/src/csvdata.c:2298
-#, fuzzy, c-format
+#, c-format
 msgid "warning: %d labels were truncated.\n"
-msgstr "Uyarı: bazı değişken adları tekrarlı\n"
+msgstr "Uyarı: %d etiket kısaltıldı.\n"
 
 #: lib/src/csvdata.c:2315
 msgid "scanning for row labels and data...\n"
@@ -1108,7 +1100,7 @@ msgstr "Bellek yetersiz\n"
 
 #: lib/src/csvdata.c:3209 lib/src/csvdata.c:3284
 msgid "You need to specify an aggregation method for a 1:n join"
-msgstr ""
+msgstr "1:n birleştirmesi için bir toplulaştırma yöntemi belirtmelisiniz"
 
 #: lib/src/csvdata.c:4129 gui2/library.c:3965
 msgid "Series length does not match the dataset"
@@ -1293,9 +1285,8 @@ msgid "Data appended OK\n"
 msgstr "Verileri iliştirme başarılı\n"
 
 #: lib/src/dataio.c:2689
-#, fuzzy
 msgid "No markers are available for writing"
-msgstr "Elde çizilecek veri yok"
+msgstr "Elde yazmak için imleç yok"
 
 #: lib/src/dataio.c:2759
 #, c-format
@@ -1335,7 +1326,7 @@ msgstr "Verilerde yabancı simge (0x%x)"
 #: lib/src/dataio.c:3295 lib/src/dataio.c:3338
 #, c-format
 msgid "'%s' -- number out of range!"
-msgstr "'%s' -- sayı sınırlar dışında!"
+msgstr "'%s' -- sayı sınır dışında!"
 
 #: lib/src/dataio.c:3491
 #, c-format
@@ -1358,9 +1349,9 @@ msgid "Please open a data file first"
 msgstr "Lütfen ilk önce bir veri dosyası açınız"
 
 #: lib/src/dataset.c:1433 lib/src/gretl_utils.c:1616
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is read-only"
-msgstr "%s değişkeninin türü %s"
+msgstr "Değişken %s salt-okunur"
 
 #: lib/src/dataset.c:1660 lib/src/dataset.c:1670 lib/src/uservar.c:330
 #, c-format
@@ -1799,19 +1790,18 @@ msgid "Ex. kurtosis"
 msgstr "Basıklık"
 
 #: lib/src/describe.c:4444
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "5% percentile"
-msgstr "yüzde"
+msgstr "%5 yüzdebirliği"
 
 #: lib/src/describe.c:4446
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "95% percentile"
-msgstr "yüzde %g aralığı"
+msgstr "%95 yüzdebirliği"
 
 #: lib/src/describe.c:4447
-#, fuzzy
 msgid "Interquartile range"
-msgstr "eksen aralığı:"
+msgstr "Dörttebirlikler-arası aralığı"
 
 #: lib/src/describe.c:4448 lib/src/describe.c:4637 gui2/guiprint.c:770
 #: gui2/guiprint.c:1103
@@ -1862,14 +1852,13 @@ msgid "95% perc."
 msgstr ""
 
 #: lib/src/describe.c:4636 gui2/guiprint.c:770
-#, fuzzy
 msgid "IQ range"
-msgstr "x aralığı"
+msgstr "IQ aralığı"
 
 #: lib/src/describe.c:4856 lib/src/describe.c:4957
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
-msgstr "%s çıkarılıyor: örneklem aralığı geçerli gözlem içermiyor\n"
+msgstr "%s çıkarılıyor: örneklem aralığında geçerli gözlem yok\n"
 
 #: lib/src/describe.c:5318
 msgid "corr: needs at least two non-constant arguments"
@@ -3047,15 +3036,15 @@ msgstr "Bir ya da birden çok \"eklenen\" değişken zaten bulunuyor"
 
 #: lib/src/gretl_errors.c:62
 msgid "Error generating logarithms"
-msgstr "Logaritma alınırken bir hata oluştu"
+msgstr "Logaritma alma hatası"
 
 #: lib/src/gretl_errors.c:63
 msgid "Error generating squares"
-msgstr "Kareler alınırken bir hata oluştu"
+msgstr "Kare alma hatası"
 
 #: lib/src/gretl_errors.c:64
 msgid "Error generating lagged variables"
-msgstr "Gecikmeli değişkenler oluşturulurken bir hata oluştu"
+msgstr "Gecikmeli değişken oluşturma hatası"
 
 #: lib/src/gretl_errors.c:65
 msgid "Attempting to take square root of negative number"
@@ -3528,7 +3517,7 @@ msgstr "Sınama istatistiği hesaplama başarısız\n"
 
 #: lib/src/gretl_panel.c:2287
 msgid "Error estimating fixed effects model\n"
-msgstr "Sabit etkiler modeli tahmini başarısız\n"
+msgstr "Sabit etkiler modeli tahmin hatası\n"
 
 #: lib/src/gretl_panel.c:2340
 msgid ""
@@ -3718,13 +3707,13 @@ msgstr "%s: burada bölmeye izin verilmiyor"
 #: lib/src/gretl_restrict.c:1470
 #, c-format
 msgid "Coefficient number (%d) is out of range"
-msgstr "Katsayı numarası (%d) sınırlar dışında"
+msgstr "Katsayı numarası (%d) sınır dışında"
 
 #: lib/src/gretl_restrict.c:905 lib/src/gretl_restrict.c:1444
 #: lib/src/gretl_restrict.c:1454 lib/src/gretl_restrict.c:1466
 #, c-format
 msgid "Equation number (%d) is out of range"
-msgstr "Denklem numarası (%d) sınırlar dışında"
+msgstr "Denklem numarası (%d) sınır dışında"
 
 #: lib/src/gretl_restrict.c:1025 lib/src/gretl_restrict.c:1783
 #: lib/src/gretl_restrict.c:1806 lib/src/gretl_restrict.c:1829
@@ -3744,7 +3733,7 @@ msgstr "Sınırlama"
 #: lib/src/gretl_restrict.c:1457
 #, c-format
 msgid "Coefficient number (%d) out of range for equation %d"
-msgstr "Katsayı numarası (%d), denklem %d için sınırlar dışında"
+msgstr "Katsayı numarası (%d), denklem %d için sınır dışında"
 
 #: lib/src/gretl_restrict.c:1693
 msgid "Invalid restriction"
@@ -8227,7 +8216,7 @@ msgstr "Güncel"
 
 #: gui2/database.c:2172 gui2/database.c:2181
 msgid "Error unzipping compressed data"
-msgstr "Sıkıştırmalı dosya açılırken bir hata oluştu"
+msgstr "Sıkıştırılmış dosya açma hatası"
 
 #: gui2/database.c:2370 gui2/database.c:2403
 msgid "Unknown: access error"
@@ -8903,7 +8892,7 @@ msgstr "Seçilecek gözlem sayısı (en çok %d)"
 
 #: gui2/dialogs.c:2267
 msgid "Set sample range"
-msgstr "Örneklem aralığı"
+msgstr "Örneklem aralığı sapta"
 
 #: gui2/dialogs.c:2372
 #, fuzzy
@@ -8911,9 +8900,8 @@ msgid "gretl: define dummy"
 msgstr "gretl: çizim tanımla"
 
 #: gui2/dialogs.c:2382
-#, fuzzy
 msgid "Set dummy range"
-msgstr "Örneklem aralığı"
+msgstr "Kukla aralığı sapta"
 
 #: gui2/dialogs.c:2401 gui2/varinfo.c:998
 msgid "Name of variable:"
@@ -9805,9 +9793,8 @@ msgid "Requires gretl %s"
 msgstr ""
 
 #: gui2/fncall.c:3037
-#, fuzzy
 msgid "Error reading package"
-msgstr "%s okuma hatası\n"
+msgstr "Paket okuma hatası"
 
 #: gui2/fnsave.c:338
 msgid "Please add a sample script for this package"
@@ -11016,9 +11003,8 @@ msgid "_Time dummies"
 msgstr "_Zaman kuklaları"
 
 #: gui2/gretl.c:1533
-#, fuzzy
 msgid "_Observation range dummy"
-msgstr "_Gözlem"
+msgstr "_Gözlem aralığı kuklası"
 
 #: gui2/gretl.c:1534
 msgid "Dummies for selected _discrete variables"
@@ -11034,7 +11020,7 @@ msgstr "_Örneklem"
 
 #: gui2/gretl.c:1540
 msgid "_Set range..."
-msgstr "Aralık _sapta"
+msgstr "Aralık _sapta..."
 
 #: gui2/gretl.c:1541
 msgid "_Restore full range"
@@ -11559,9 +11545,8 @@ msgid "95\\% perc."
 msgstr ""
 
 #: gui2/guiprint.c:1102
-#, fuzzy
 msgid "IQ Range"
-msgstr "Aralık"
+msgstr "IQ Aralığı"
 
 #: gui2/guiprint.c:1194
 #, c-format
@@ -12500,7 +12485,7 @@ msgstr "gretl: yineleme bilgisi"
 
 #: gui2/library.c:500 gui2/library.c:507 gui2/library.c:5745
 msgid "Error adding variables"
-msgstr "Değişkenler eklenirken bir hata oluştu"
+msgstr "Değişken toplama hatası"
 
 #: gui2/library.c:619
 #, c-format
@@ -12940,7 +12925,7 @@ msgstr "Veri seti gitti"
 
 #: gui2/library.c:5481
 msgid "Error generating covariance matrix"
-msgstr "Kovaryans dizeyi oluşturulurken bir hata oluştu"
+msgstr "Kovaryans dizeyi oluşturma hatası"
 
 #: gui2/library.c:5485
 msgid "gretl: coefficient covariances"
@@ -12948,11 +12933,11 @@ msgstr "gretl: katsayı kovaryansları"
 
 #: gui2/library.c:5564
 msgid "Error generating time trend"
-msgstr "Zaman eğilimi oluşturulurken bir hata oluştu"
+msgstr "Zaman eğilimi oluşturma hatası"
 
 #: gui2/library.c:5565
 msgid "Error generating index variable"
-msgstr "Endeks değişkeni oluşturulurken bir hata oluştu"
+msgstr "Endeks değişkeni oluşturma hatası"
 
 #: gui2/library.c:5604
 #, c-format
@@ -15664,7 +15649,7 @@ msgstr "kullanıcı-belirtimli değerler"
 
 #: plugin/arma_common.c:684 plugin/arma_common.c:765
 msgid "Error in arma command"
-msgstr "arma komut hatası"
+msgstr "arma komutu hatası"
 
 #: plugin/arma_init.c:348
 msgid "Hannan-Rissanen method"
@@ -15692,7 +15677,7 @@ msgstr "Okunan değişken yok\n"
 
 #: plugin/eviews_import.c:525
 msgid "Error reading workfile header\n"
-msgstr "Çalışmadosyası başlığı okuma hatası\n"
+msgstr "Çalışmadosyası başlık okuma hatası\n"
 
 #: plugin/excel_import.c:88
 msgid "Perhaps you need to adjust the starting column or row?"
@@ -15797,7 +15782,7 @@ msgstr "Örneklem, Hurst üstü için aşırı küçük"
 #: plugin/fractals.c:250
 #, c-format
 msgid "Rescaled range figures for %s"
-msgstr "%s için yeniden ölçeklemeli aralık değerleri"
+msgstr "%s için yeniden-ölçeklemeli-aralık değerleri"
 
 #: plugin/fractals.c:253
 msgid "(logs are to base 2)"
@@ -16171,7 +16156,7 @@ msgstr "(1-L)%2$s için %1$.2f gecikme eklendi"
 #: plugin/panurc.c:583
 #, c-format
 msgid "Bartlett truncation at %d lags\n"
-msgstr "Bartlett budaması %d. gecikmede\n"
+msgstr "Bartlett budaması %d gecikmede\n"
 
 #: plugin/pca.c:107
 msgid "Components with eigenvalues > mean"
