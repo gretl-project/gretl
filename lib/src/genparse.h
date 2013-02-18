@@ -373,7 +373,7 @@ enum {
     F_NRMAX,
     F_LOESS,
     F_GHK,
-    F_QUADRULE,
+    F_QUADTAB,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 

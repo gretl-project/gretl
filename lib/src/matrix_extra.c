@@ -1903,8 +1903,8 @@ int gretl_matrix_mp_ols (const gretl_vector *y, const gretl_matrix *X,
 
 /* Diagonalize a Jacobi (symmetric tridiagonal) matrix. On entry, @d
    contains the diagonal and @e the sub-diagonal. On exit, @d contains
-   quadrature nodes and @z the square roots of the corresponding
-   weights. 
+   quadrature nodes or abscissae and @z the square roots of the 
+   corresponding weights; @e is used as workspace.
 
    This is a C adaptation of subroutine IMTQLX, by Sylvan Elhay,
    Jaroslav Kautsky and John Burkardt. See
@@ -2081,7 +2081,7 @@ static int legendre_scale (int n, double *x, double *w,
 
 /* compute basic Gauss quadrature formula */
 
-static int gauss_quad_default (int n, int kind, double *x, double *w)
+static int gauss_quad_basic (int n, int kind, double *x, double *w)
 {
     double z0, *tmp;
     int i, err;
@@ -2092,9 +2092,7 @@ static int gauss_quad_default (int n, int kind, double *x, double *w)
     }
 
     z0 = make_jacobi(n, kind, x, tmp);
-
     w[0] = sqrt(z0);
-
     err = diag_jacobi(n, x, tmp, w);
     
     if (!err) {
@@ -2134,7 +2132,7 @@ gretl_matrix *gretl_quadrule_matrix_new (int n, int method,
 	double *x = m->val;
 	double *w = x + n;
 
-	*err = gauss_quad_default(n, method, x, w);
+	*err = gauss_quad_basic(n, method, x, w);
 
 	if (!*err) {
 	    if (method == QUAD_LEGENDRE) {

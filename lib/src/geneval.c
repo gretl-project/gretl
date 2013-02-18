@@ -6767,11 +6767,11 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
     return ret;
 }
 
-static void n_args_error (int k, int n, const char *s, parser *p)
+static void n_args_error (int k, int n, int f, parser *p)
 {
     gretl_errmsg_sprintf( _("Number of arguments (%d) does not "
 			    "match the number of\nparameters for "
-			    "function %s (%d)"), k, s, n);
+			    "function %s (%d)"), k, getsymb(f, p), n);
     p->err = 1;
 }
 
@@ -6788,7 +6788,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	int bk[3] = {0};
 
 	if (k < 1 || k > 4) {
-	    n_args_error(k, 4, "bkfilt", p);
+	    n_args_error(k, 4, t->t, p);
 	} 
 
 	/* evaluate the first (series) argument */
@@ -6830,7 +6830,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	double y0 = 0;
 
 	if (k < 2 || k > 4) {
-	    n_args_error(k, 4, "filter", p);
+	    n_args_error(k, 4, t->t, p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -6902,7 +6902,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	int targ, maxlag = 0;
 
 	if (k != 4) {
-	    n_args_error(k, 4, "mcovg", p);
+	    n_args_error(k, 4, t->t, p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -6943,7 +6943,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	const char *G = NULL;
 
 	if (k > 5) {
-	    n_args_error(k, 5, "kfilter", p);
+	    n_args_error(k, 5, t->t, p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -6979,7 +6979,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	const char *U = NULL;
 
 	if (k > 2) {
-	    n_args_error(k, 2, "ksmooth", p);
+	    n_args_error(k, 2, t->t, p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -7012,7 +7012,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	int freeV = 0, freeW = 0;
 	
 	if (k < 1 || k > 3) {
-	    n_args_error(k, 1, "ksimul", p);
+	    n_args_error(k, 1, t->t, p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -7073,7 +7073,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	int freeY = 0, freeX = 0;
 
 	if (k < 2 || k > 4) {
-	    n_args_error(k, 1, (opt)? "mpols" : "mols", p);
+	    n_args_error(k, 1, t->t, p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -7134,7 +7134,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	const char *SV = NULL;
 
 	if (k < 4 || k > 6) {
-	    n_args_error(k, 1, "mrls", p);
+	    n_args_error(k, 1, t->t, p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -7184,7 +7184,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	const char *sh = NULL;
 
 	if (k < 2 || k > 4) {
-	    n_args_error(k, 4, "NRmax", p);
+	    n_args_error(k, 4, t->t, p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -7240,7 +7240,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	gretlopt opt = OPT_NONE;
 
 	if (k < 2 || k > 6) {
-	    n_args_error(k, 5, "loess", p);
+	    n_args_error(k, 5, t->t, p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -7294,7 +7294,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	gretl_matrix *U = NULL;
 
 	if (k != 4) {
-	    n_args_error(k, 4, "ghk", p);
+	    n_args_error(k, 4, t->t, p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -7322,13 +7322,13 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }	    
 	    ret->v.m = gretl_GHK(C, A, B, U, &p->err);
 	} 
-    } else if (t->t == F_QUADRULE) {
+    } else if (t->t == F_QUADTAB) {
 	int order = -1, method = 0;
 	double a = NADBL;
 	double b = NADBL;
 
 	if (k < 1 || k > 4) {
-	    n_args_error(k, 4, "quadrule", p);
+	    n_args_error(k, 4, t->t, p);
 	} 
 	
 	for (i=0; i<k && !p->err; i++) {
@@ -7348,7 +7348,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	}
 	if (method == QUAD_LEGENDRE && k < 4) {
-	    n_args_error(k, 4, "quadrule", p);
+	    n_args_error(k, 4, t->t, p);
 	}
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
@@ -9510,7 +9510,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_NRMAX:
     case F_LOESS:
     case F_GHK:
-    case F_QUADRULE:
+    case F_QUADTAB:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
 	break;
