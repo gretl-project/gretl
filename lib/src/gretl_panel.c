@@ -5191,13 +5191,13 @@ typedef struct reprob_container_ reprob_container;
 
 struct reprob_container_ {
     int *list;               /* model specification */
+    int depvar;		     /* location of y in array Z */
     int npar;		     /* no. of parameters */
     double ll;		     /* log-likelihood */
     panelmod_t *pan;         /* panel data information */
-   
-    int nobs, N, T;	     /* no. of obs, units, timespan */
-    int depvar;		     /* location of y in array Z */
-    int qp;                  /* quadrature points */
+
+    int N;	             /* number of included units */
+    int qp;                  /* number of quadrature points */
 
     int *y;	             /* dependent var (0/1) */
     gretl_matrix *X;	     /* main eq. regressors */
@@ -5207,7 +5207,6 @@ struct reprob_container_ {
     gretl_matrix *P;         /* probabilities (by individual and qpoints) */
     gretl_matrix *lik;       /* probabilities (by individual) */
     gretl_matrix_block *B;   /* holder for several of the above */
-
     gretl_vector *theta;     /* parameters (includes ln of variance 
 				of individual effect) */
 };
@@ -5255,6 +5254,7 @@ static int rep_container_fill (reprob_container *C,
     gretl_matrix *tmp = NULL;
     int nobs, vj, k = C->npar;
     int i, j, t, s, bigt;
+    double x;
     int err = 0;
 
     C->pan = pan;
@@ -5279,29 +5279,31 @@ static int rep_container_fill (reprob_container *C,
 	return E_ALLOC;
     }
 
-    /* now do the fillup */
+    for (i=0; i<k; i++) {
+	C->theta->val[i] = 0.0;
+    }    
+
+    /* now write the data into C->y and C->X, skipping
+       any observations with missing values */
 
     s = 0;
     for (i=0; i<pan->nunits; i++) {
 	int Ti = pan->unit_obs[i];
-	double x;
 
-	if (Ti == 0) {
-	    continue;
-	}
-
-	for (t=0; t<pan->T; t++) {
-	    bigt = panel_index(i, t);
-	    if (panel_missing(pan, bigt)) {
-		continue;
+	if (Ti > 0) {
+	    for (t=0; t<pan->T; t++) {
+		bigt = panel_index(i, t);
+		if (panel_missing(pan, bigt)) {
+		    continue;
+		}
+		C->y[s] = (dset->Z[C->depvar][bigt] != 0);
+		for (j=0; j<k-1; j++) {
+		    vj = C->list[j+2];
+		    x = dset->Z[vj][bigt];
+		    gretl_matrix_set(C->X, s, j, x);
+		}
+		s++;
 	    }
-	    C->y[s] = (dset->Z[C->depvar][bigt] != 0);
-	    for (j=0; j<k-1; j++) {
-		vj = C->list[j+2];
-		x = dset->Z[vj][bigt];
-		gretl_matrix_set(C->X, s, j, x);
-	    }
-	    s++;
 	}
     }	    
 
@@ -5339,24 +5341,22 @@ static double reprobit_ll (const double *theta, void *p)
     for (i=0; i<pan->nunits; i++) {
 	int Ti = pan->unit_obs[i];
 
-	if (Ti == 0) {
-	    continue;
-	}
-
-	for (j=0; j<h; j++) {
-	    a = gretl_vector_get(C->gh_nodes, j);
-	    pit = 1.0;
-	    for (t=0; t<Ti; t++) {
-		x = gretl_vector_get(C->ndx, s+t) + lambda * a;
-		/* the probability */
-		pit *= normal_cdf(C->y[s+t] ? x : -x);
-		if (pit < 1.0e-30) {
-		    break;
+	if (Ti > 0) {
+	    for (j=0; j<h; j++) {
+		a = gretl_vector_get(C->gh_nodes, j);
+		pit = 1.0;
+		for (t=0; t<Ti; t++) {
+		    x = gretl_vector_get(C->ndx, s+t) + lambda * a;
+		    /* the probability */
+		    pit *= normal_cdf(C->y[s+t] ? x : -x);
+		    if (pit < 1.0e-30) {
+			break;
+		    }
 		}
+		gretl_matrix_set(C->P, i, j, pit);
 	    }
-	    gretl_matrix_set(C->P, i, j, pit);
+	    s += Ti;
 	}
-	s += Ti;
     }
 
     err = gretl_matrix_multiply(C->P, C->gh_wts, C->lik);
@@ -5385,7 +5385,6 @@ static void transcribe_reprobit (MODEL *pmod, reprob_container *C)
     pmod->rsq = pmod->adjrsq = NADBL;
     pmod->lnL = C->ll;
     mle_criteria(pmod, 1);
-
 }
 
 static MODEL reprobit_model (const int *list, DATASET *dset,
@@ -5425,12 +5424,10 @@ static MODEL reprobit_model (const int *list, DATASET *dset,
     err = panelmod_setup(&pan, &mod, dset, 0, pan_opt);
 
     if (!err) {
-	/* actual reprobit call */
+	/* do the actual reprobit stuff */
 	reprob_container *C;
-	int k = list[0];
 	int quadpoints = 32;
-	double *theta;
-	int i, fc, gc;
+	int fc, gc;
 
 	C = rep_container_new(list);
 	if (C == NULL) {
@@ -5440,17 +5437,14 @@ static MODEL reprobit_model (const int *list, DATASET *dset,
 
 	rep_container_fill(C, &pan, dset, quadpoints);
 
-	theta = C->theta->val;
-	for (i=0; i<k; i++) {
-	    theta[i] = 0.0;
-	}
 
-	err = BFGS_max(theta, k, 100, 1.0e-9, &fc, &gc, reprobit_ll,
-		       C_LOGLIK, NULL, C, NULL, opt, prn);
-
+	err = BFGS_max(C->theta->val, C->npar, 100, 1.0e-9, 
+		       &fc, &gc, reprobit_ll, C_LOGLIK, 
+		       NULL, C, NULL, opt, prn);
 	
 	if (!err) {
-	    pprintf(prn, "estimate of ln(var(u)) = %g\n", theta[k-1]);
+	    pprintf(prn, "estimate of ln(var(u)) = %g\n", 
+		    C->theta->val[C->npar-1]);
 	    transcribe_reprobit(&mod, C);
 	}
 
