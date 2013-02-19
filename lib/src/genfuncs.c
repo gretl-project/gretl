@@ -4779,3 +4779,58 @@ int gretl_loess (const double *y, const double *x, int poly_order,
 
     return err;
 }
+
+gretl_matrix *aggregate_by (const double *x, const double *y,
+			    double (*afunc)(),
+			    const DATASET *dset,
+			    int *err)
+{
+    gretl_matrix *m = NULL;
+    gretl_matrix *yvals = NULL;
+    double *tmp = NULL;
+    int n, nv;
+
+    if (afunc == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    n = sample_size(dset);
+    y += dset->t1;
+    x += dset->t1;
+
+    yvals = gretl_matrix_values(y, n, OPT_S, err);
+
+    if (*err) {
+	nv = yvals->rows;
+	m = gretl_matrix_alloc(nv, 2);
+	tmp = malloc(n * sizeof *tmp);
+	if (m == NULL || tmp == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	double yi, fx;
+	int i, j, k;
+
+	for (i=0; i<nv; i++) {
+	    k = 0;
+	    yi = yvals->val[i];
+	    /* fill tmp with x for y == yi */
+	    for (j=0; j<n; j++) {
+		if (y[j] == yi) {
+		    tmp[k++] = x[j];
+		}
+	    }
+	    fx = (*afunc)(tmp, k);
+	    gretl_matrix_set(m, i, 1, fx);
+	    gretl_matrix_set(m, i, 0, yi);
+	}
+    }
+
+    gretl_matrix_free(yvals);
+    free(tmp);
+
+    return m;
+}

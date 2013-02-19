@@ -396,6 +396,7 @@ struct str_table funcs[] = {
     { F_ISNAN,    "isnan" },
     { F_TYPESTR,  "typestr" },
     { F_QUADTAB,  "quadtable" },
+    { F_AGGRBY,   "aggregate" },
     { 0,          NULL }
 };
 

@@ -6494,6 +6494,24 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		A = halton_matrix(rows, cols, offset, &p->err);
 	    }
 	}
+    } else if (f == F_AGGRBY) {
+	if (l->t != VEC) {
+	    node_type_error(f, 1, VEC, l, p);
+	} else if (m->t != VEC) {
+	    node_type_error(f, 2, VEC, m, p);
+	} else if (r->t != STR) {
+	    node_type_error(f, 3, STR, r, p);
+	} else {
+	    const double *x = l->v.xvec;
+	    const double *y = m->v.xvec;
+	    double (*afunc) (const double *, int) = NULL;
+
+	    /* get the function here! */
+
+	    if (!p->err) {
+		A = aggregate_by(x, y, afunc, p->dset, &p->err);
+	    }
+	}
     }	
 
     if (f != F_STRNCMP && f != F_WEEKDAY && 
@@ -9476,6 +9494,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_NADARWAT:
     case F_PRINCOMP:
     case F_HALTON:
+    case F_AGGRBY:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);
