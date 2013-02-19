@@ -176,9 +176,11 @@ static int rep_container_fill (reprob_container *C,
 	return E_ALLOC;
     }
 
-    for (i=0; i<k; i++) {
-	C->theta->val[i] = 0.0;
-    }    
+    for (i=0; i<k-1; i++) {
+	/* use pooled probit as a starting point */
+	C->theta->val[i] = pmod->coeff[i];
+    }
+    C->theta->val[k-1] = 0.0;
 
     /* write the data into C->y and C->X, skipping
        any observations with missing values */
