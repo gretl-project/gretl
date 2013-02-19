@@ -2261,8 +2261,8 @@ struct bin_info_ {
     int T;            /* number of observations */
     int pp_err;       /* to record perfect-prediction error */
     double *theta;    /* coeffs for Newton-Raphson */
+    int *y;           /* dependent variable */
     gretl_matrix_block *B;
-    gretl_matrix *y;  /* dependent variable */
     gretl_matrix *X;  /* regressors */
     gretl_matrix *pX; /* for use with Hessian */
     gretl_matrix *b;  /* coefficients in matrix form */
@@ -2274,6 +2274,7 @@ static void bin_info_destroy (bin_info *bin)
     if (bin != NULL) {
 	gretl_matrix_block_destroy(bin->B);
 	free(bin->theta);
+	free(bin->y);
 	free(bin);
     }
 }
@@ -2292,14 +2293,20 @@ static bin_info *bin_info_new (int ci, int k, int T)
 	    free(bin);
 	    return NULL;
 	}
-	bin->B = gretl_matrix_block_new(&bin->y, T, 1,
-					&bin->X, T, k,
+	bin->y = malloc(T * sizeof *bin->y);
+	if (bin->y == NULL) {
+	    free(bin->theta);
+	    free(bin);
+	    return NULL;
+	}	
+	bin->B = gretl_matrix_block_new(&bin->X, T, k,
 					&bin->pX, T, k,
 					&bin->b, k, 1,
 					&bin->Xb, T, 1,
 					NULL);
 	if (bin->B == NULL) {
 	    free(bin->theta);
+	    free(bin->y);
 	    free(bin);
 	    bin = NULL;
 	} 
@@ -2317,14 +2324,13 @@ static int perfect_prediction_check (bin_info *bin)
 {
     double max0 = -1.0e200;
     double min1 = 1.0e200;
-    const double *y = bin->y->val;
     const double *ndx = bin->Xb->val;
     int t;
 
     for (t=0; t<bin->T; t++) {
-	if (y[t] == 0 && ndx[t] > max0) {
+	if (bin->y[t] == 0 && ndx[t] > max0) {
 	    max0 = ndx[t];
-	} else if (y[t] == 1 && ndx[t] < min1) {
+	} else if (bin->y[t] == 1 && ndx[t] < min1) {
 	    min1 = ndx[t];
 	}
     }
@@ -2338,7 +2344,7 @@ static double binary_loglik (const double *theta, void *ptr)
 {
     bin_info *bin = (bin_info *) ptr;
     double e, ndx, p, ll = 0.0;
-    int y, i, t;
+    int yt, i, t;
 
     errno = 0;
 
@@ -2354,13 +2360,13 @@ static double binary_loglik (const double *theta, void *ptr)
     }
 
     for (t=0; t<bin->T && !errno; t++) {
-	y = gretl_vector_get(bin->y, t);
+	yt = bin->y[t];
 	ndx = gretl_vector_get(bin->Xb, t);
 	if (bin->ci == PROBIT) {
-	    p = y ? normal_cdf(ndx) : normal_cdf(-ndx);
+	    p = yt ? normal_cdf(ndx) : normal_cdf(-ndx);
 	} else {
 	    e = logit(ndx);
-	    p = y ? e : 1-e;
+	    p = yt ? e : 1-e;
 	}
 	ll += log(p);
     }
@@ -2377,7 +2383,7 @@ static int binary_score (double *theta, double *s, int k,
 {
     bin_info *bin = (bin_info *) ptr;
     double ndx, w;
-    int t, j, y;
+    int t, j, yt;
     int err = 0;
 
     errno = 0;
@@ -2387,12 +2393,12 @@ static int binary_score (double *theta, double *s, int k,
     }
 
     for (t=0; t<bin->T && !errno; t++) {
-	y = gretl_vector_get(bin->y, t);
+	yt = bin->y[t];
 	ndx = gretl_vector_get(bin->Xb, t);
 	if (bin->ci == PROBIT) {
-	    w = y ? invmills(-ndx) : -invmills(ndx);
+	    w = yt ? invmills(-ndx) : -invmills(ndx);
 	} else {
-	    w = y - logit(ndx);
+	    w = yt - logit(ndx);
 	}
 	for (j=0; j<bin->k; j++) {
 	    s[j] += w * gretl_matrix_get(bin->X, t, j);
@@ -2414,13 +2420,12 @@ static int binary_hessian (double *theta, gretl_matrix *H,
 {
     bin_info *bin = data;
     double w, p, ndx, xtj;
-    int y, t, j;
+    int t, j;
 
     for (t=0; t<bin->T; t++) {
-	y = gretl_vector_get(bin->y, t);
 	ndx = gretl_vector_get(bin->Xb, t);
 	if (bin->ci == PROBIT) {
-	    w = y ? invmills(-ndx) : -invmills(ndx);
+	    w = bin->y[t] ? invmills(-ndx) : -invmills(ndx);
 	    p = w * (ndx + w);
 	} else {
 	    p = logit(ndx);
@@ -2461,7 +2466,7 @@ static gretl_matrix *binary_score_matrix (bin_info *bin, int *err)
 {
     gretl_matrix *G;
     double w, ndx, xtj;
-    int y, j, t;
+    int yt, j, t;
 
     G = gretl_matrix_alloc(bin->T, bin->k);
 
@@ -2471,12 +2476,12 @@ static gretl_matrix *binary_score_matrix (bin_info *bin, int *err)
     }
 
     for (t=0; t<bin->T && !errno; t++) {
-	y = gretl_vector_get(bin->y, t);
+	yt = bin->y[t];
 	ndx = gretl_vector_get(bin->Xb, t);
 	if (bin->ci == PROBIT) {
-	    w = y ? invmills(-ndx) : -invmills(ndx);
+	    w = yt ? invmills(-ndx) : -invmills(ndx);
 	} else {
-	    w = y - logit(ndx);
+	    w = yt - logit(ndx);
 	}
 	for (j=0; j<bin->k; j++) {
 	    xtj = gretl_matrix_get(bin->X, t, j);
@@ -2533,7 +2538,7 @@ static void binary_model_chisq (bin_info *bin, MODEL *pmod)
     }
     
     for (t=0; t<bin->T; t++) {
-	ones += bin->y->val[t];
+	ones += bin->y[t];
     }
 
     zeros = bin->T - ones;
@@ -2717,13 +2722,15 @@ static double binary_model_fXb (bin_info *bin)
     return (bin->ci == LOGIT)? logit_pdf(Xb) : normal_pdf(Xb);    
 }
 
-static void binary_model_stats (MODEL *pmod, bin_info *bin,
-				const DATASET *dset,
-				gretlopt opt)
+void binary_model_hatvars (MODEL *pmod, 
+			   const gretl_matrix *ndx,
+			   const int *y,
+			   gretlopt opt)
 {
     int *act_pred;
-    double *ll;
+    double *ll = NULL;
     double F;
+    int n = pmod->full_n;
     int i, s, t;
 
     /* add space for actual/predicted matrix */
@@ -2734,37 +2741,39 @@ static void binary_model_stats (MODEL *pmod, bin_info *bin,
 	}
     }
 
-    ll = malloc(dset->n * sizeof *ll);
-    if (ll != NULL) {
-	for (t=0; t<dset->n; t++) {
-	    ll[t] = NADBL;
+    if (!(opt & OPT_E)) {
+	ll = malloc(n * sizeof *ll);
+	if (ll != NULL) {
+	    for (t=0; t<n; t++) {
+		ll[t] = NADBL;
+	    }
 	}
     }
 
     for (t=pmod->t1, s=0; t<=pmod->t2; t++) {
-	double ndx;
-	int y;
+	double ndxt;
+	int yt;
 
 	if (model_missing(pmod, t)) {
 	    continue;
 	} 
 
-	ndx = gretl_vector_get(bin->Xb, s);
-	y = gretl_vector_get(bin->y, s++);
+	ndxt = gretl_vector_get(ndx, s);
+	yt = y[s++];
 
 	if (act_pred != NULL) {
-	    i = 2 * y + (ndx > 0.0);
+	    i = 2 * yt + (ndxt > 0.0);
 	    act_pred[i] += 1;
 	}
 
 	if (pmod->ci == LOGIT) {
-	    F = exp(ndx) / (1.0 + exp(ndx));
+	    F = exp(ndxt) / (1.0 + exp(ndxt));
 	    pmod->yhat[t] = F; 
-	    pmod->uhat[t] = y - pmod->yhat[t];
+	    pmod->uhat[t] = yt - pmod->yhat[t];
 	} else {
-	    F = normal_cdf(ndx);
+	    F = normal_cdf(ndxt);
 	    pmod->yhat[t] = F; 
-	    pmod->uhat[t] = y ? invmills(-ndx) : -invmills(ndx);
+	    pmod->uhat[t] = y ? invmills(-ndxt) : -invmills(ndxt);
 	}
 
 	if (ll != NULL) {
@@ -2781,13 +2790,7 @@ static void binary_model_stats (MODEL *pmod, bin_info *bin,
     if (ll != NULL) {
 	gretl_model_set_data(pmod, "llt", ll, 
 			     GRETL_TYPE_DOUBLE_ARRAY,
-			     dset->n * sizeof *ll);
-    }
-
-    mle_criteria(pmod, 0);
-
-    if (pmod->ci == PROBIT && !(opt & OPT_X)) {
-	binary_probit_normtest(pmod, bin);
+			     n * sizeof *ll);
     }
 }
 
@@ -2820,7 +2823,11 @@ static int binary_model_finish (bin_info *bin, MODEL *pmod,
     }
 
     if (!pmod->errcode) {
-	binary_model_stats(pmod, bin, dset, opt);
+	binary_model_hatvars(pmod, bin->Xb, bin->y, opt);
+	if (pmod->ci == PROBIT && !(opt & OPT_X)) {
+	    binary_probit_normtest(pmod, bin);
+	}
+	mle_criteria(pmod, 0);
 	if (opt & OPT_A) {
 	    pmod->aux = AUX_AUX;
 	} else {
@@ -2915,7 +2922,7 @@ static MODEL binary_model (int ci, const int *inlist,
     s = 0;
     for (t=mod.t1; t<=mod.t2; t++) {
 	if (!na(mod.yhat[t])) {
-	    bin->y->val[s++] = dset->Z[depvar][t];
+	    bin->y[s++] = (dset->Z[depvar][t] != 0);
 	}
     }
 

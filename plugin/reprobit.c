@@ -180,7 +180,7 @@ static int rep_container_fill (reprob_container *C,
 	/* use pooled probit as a starting point */
 	C->theta->val[i] = pmod->coeff[i];
     }
-    C->theta->val[k-1] = 0.0;
+    C->theta->val[k-1] = log(0.5); /* rho = 0.5 */
 
     /* write the data into C->y and C->X, skipping
        any observations with missing values */
@@ -265,7 +265,7 @@ static double reprobit_ll (const double *theta, void *p)
 static void transcribe_reprobit (MODEL *pmod, reprob_container *C)
 {
     int Tmin = C->nobs, Tmax = 0;
-    int i, k = C->npar - 1;
+    int i, t, k = C->npar - 1;
 
     for (i=0; i<k; i++) {
 	pmod->coeff[i] = C->theta->val[i];
@@ -284,6 +284,9 @@ static void transcribe_reprobit (MODEL *pmod, reprob_container *C)
 	    Tmax = C->unit_obs[i];
 	}
     }
+
+    /* check that this is doing the right thing */
+    binary_model_hatvars(pmod, C->ndx, C->y, OPT_E);
 
     gretl_model_set_int(pmod, "n_included_units", C->N);
     gretl_model_set_int(pmod, "Tmin", Tmin);

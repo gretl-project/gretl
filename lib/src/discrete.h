@@ -74,6 +74,11 @@ double mn_logit_prediction (const gretl_matrix *Xt,
 			    const double *b,
 			    const gretl_matrix *yvals);
 
+void binary_model_hatvars (MODEL *pmod, 
+			   const gretl_matrix *ndx,
+			   const int *y,
+			   gretlopt opt);
+
 #endif /* DISCRETE_H */
 
 
