@@ -535,7 +535,7 @@ static fnpkg *function_package_alloc (const char *fname)
 
 static void set_listargs_from_call (fncall *call, DATASET *dset)
 {
-    int i, v;
+    int i, vi;
 
     if (dset == NULL) {
 	return;
@@ -547,12 +547,12 @@ static void set_listargs_from_call (fncall *call, DATASET *dset)
 
     if (call != NULL && call->listvars != NULL) {
 	for (i=1; i<=call->listvars[0]; i++) {
-	    v = call->listvars[i];
+	    vi = call->listvars[i];
 #if UDEBUG
 	    fprintf(stderr, "setting listarg status on var %d (%s)\n",
-		    v, dset->varname[v]);
+		    vi, dset->varname[vi]);
 #endif
-	    series_set_flag(dset, v, VAR_LISTARG);
+	    series_set_flag(dset, vi, VAR_LISTARG);
 	}
     }
 }
@@ -5842,6 +5842,27 @@ static int handle_bundle_return (fncall *call, void *ptr, int copy)
     return err;
 }
 
+static void replace_caller_series (int targ, int src, DATASET *dset)
+{
+    const char *s;
+    int t;
+
+    /* replace data values */
+    for (t=dset->t1; t<=dset->t2; t++) {
+	dset->Z[targ][t] = dset->Z[src][t];
+    }
+
+    /* replace variable info? */
+    s = series_get_label(dset, src);
+    if (s != NULL && *s != '\0') {
+	series_set_label(dset, targ, s);
+    }
+    s = series_get_display_name(dset, src);
+    if (s != NULL && *s != '\0') {
+	series_set_display_name(dset, targ, s);
+    }
+}
+
 /* Deal with a list that exists at the level of a user-defined
    function whose execution is now terminating.  Note that this list
    may be the direct return value of the function, or it may have been
@@ -5858,9 +5879,10 @@ static int unlocalize_list (const char *lname, struct fnarg *arg,
     int i, vi;
 
 #if UDEBUG
-    fprintf(stderr, "unlocalize_list: '%s', function depth = %d\n", lname, d);
+    fprintf(stderr, "\n*** unlocalize_list: '%s', function depth = %d\n", lname, d);
     printlist(list, lname);
     fprintf(stderr, " dset = %p, dset->v = %d\n", (void *) dset, dset->v);
+    fprintf(stderr, " list is direct return value? %s\n", arg == NULL ? "yes" : "no");
 #endif	    
 
     if (list == NULL) {
@@ -5884,30 +5906,29 @@ static int unlocalize_list (const char *lname, struct fnarg *arg,
 
     if (arg == NULL) {
 	/* we're looking at a direct return value */
-	int t, j, overwrite;
+	int j, lev, overwrite;
 	const char *vname;
-	
+
 	for (i=1; i<=list[0]; i++) {
 	    overwrite = 0;
 	    vi = list[i];
 	    vname = dset->varname[vi];
-	    series_unset_flag(dset, i, VAR_LISTARG);
+	    series_unset_flag(dset, vi, VAR_LISTARG);
 	    if (vi > 0 && vi < dset->v && series_get_stack_level(dset, vi) == d) {
-		for (j=1; j<dset->v; j++) { 
-		    if (series_get_stack_level(dset, j) == upd && 
-			!strcmp(dset->varname[j], vname)) {
+		for (j=1; j<dset->v; j++) {
+		    lev = series_get_stack_level(dset, j);
+		    if (lev == upd && !strcmp(dset->varname[j], vname)) {
 			overwrite = 1;
 			break;
 		    }
+		    if (lev == d && j < vi && series_is_listarg(dset, j) &&
+			!strcmp(dset->varname[j], vname)) {
+			overwrite = 1;
+			break;
+		    }			
 		}
 		if (overwrite) {
-		    /* replace data */
-		    for (t=dset->t1; t<=dset->t2; t++) {
-			dset->Z[j][t] = dset->Z[vi][t];
-		    }
-		    /* replace variable info */
-		    series_set_label(dset, j, series_get_label(dset, vi));
-		    series_set_display_name(dset, j, series_get_display_name(dset, vi));
+		    replace_caller_series(j, vi, dset);
 		    /* replace ID number in list */
 		    list[i] = j;
 		} else {
