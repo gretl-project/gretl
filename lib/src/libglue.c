@@ -318,6 +318,8 @@ MODEL logit_probit (int *list, DATASET *dset, int ci,
 
     if (ci == LOGIT && (opt & OPT_M)) {
 	return multinomial_logit(list, dset, opt, prn);
+    } else if (ci == PROBIT && (opt & OPT_E)) {
+	return reprobit_model(list, dset, opt, prn);
     } else if (gretl_isdummy(dset->t1, dset->t2, dset->Z[yv])) {
 	if (ci == LOGIT) {
 	    return binary_logit(list, dset, opt, prn);

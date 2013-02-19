@@ -88,6 +88,7 @@ enum {
     P_DURATION,
     P_INTERPOLATE,
     P_BIPROBIT,
+    P_REPROBIT,
     P_PANURC
 } plugin_codes;
 
@@ -142,6 +143,7 @@ struct plugin_info plugins[] = {
     { P_DURATION,        "duration" },
     { P_INTERPOLATE,     "interpolate" },
     { P_BIPROBIT,        "biprobit" },
+    { P_REPROBIT,        "reprobit" },
     { P_PANURC,          "panurc" }
 };  
 
@@ -218,6 +220,7 @@ struct plugin_function plugin_functions[] = {
     { "interval_estimate", P_INTREG },
     { "tobit_via_intreg",  P_INTREG },
     { "biprobit_estimate", P_BIPROBIT },
+    { "reprobit_estimate", P_REPROBIT },
 
     /* audio graphs etc */
     { "midi_play_graph",   P_AUDIO },

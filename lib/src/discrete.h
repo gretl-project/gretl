@@ -38,6 +38,9 @@ MODEL multinomial_logit (int *list, DATASET *dset,
 MODEL biprobit_model (int *list, DATASET *dset, 
 		      gretlopt opt, PRN *prn);
 
+MODEL reprobit_model (const int *list, DATASET *dset, 
+		      gretlopt opt, PRN *prn);
+
 MODEL logistic_model (const int *list, double lmax,
 		      DATASET *dset);
 

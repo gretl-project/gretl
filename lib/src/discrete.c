@@ -3692,7 +3692,7 @@ MODEL count_model (const int *list, int ci, DATASET *dset,
 MODEL heckit_model (const int *list, DATASET *dset, 
 		    gretlopt opt, PRN *prn)
 {
-    MODEL hmod;
+    MODEL model;
     void *handle;
     MODEL (* heckit_estimate) (const int *, DATASET *, 
 			       gretlopt, PRN *);
@@ -3701,16 +3701,64 @@ MODEL heckit_model (const int *list, DATASET *dset,
 
     heckit_estimate = get_plugin_function("heckit_estimate", &handle);
     if (heckit_estimate == NULL) {
-	gretl_model_init(&hmod);
-	hmod.errcode = E_FOPEN;
-	return hmod;
+	gretl_model_init(&model);
+	model.errcode = E_FOPEN;
+	return model;
     }
 
-    hmod = (*heckit_estimate) (list, dset, opt, prn);
+    model = (*heckit_estimate) (list, dset, opt, prn);
 
     close_plugin(handle);
 
-    set_model_id(&hmod);
+    set_model_id(&model);
 
-    return hmod;
+    return model;
+}
+
+/**
+ * reprobit_model:
+ * @list: dependent variable plus list of regressors.
+ * @dset: dataset struct.
+ * @opt: option flags (may include OPT_V for verbose output).
+ * @prn: printing struct for iteration info (or NULL is this is not
+ * wanted).
+ *
+ * Produce random-effects probit estimates of the model given in @list.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL reprobit_model (const int *list, DATASET *dset, 
+		      gretlopt opt, PRN *prn)
+{
+    MODEL model;
+    void *handle;
+    MODEL (* reprobit_estimate) (const int *, DATASET *,
+				 gretlopt, PRN *);
+    int err = 0;
+
+    gretl_error_clear();
+
+    if (!dataset_is_panel(dset)) {
+	err = E_PDWRONG;
+    } else {	
+	reprobit_estimate = get_plugin_function("reprobit_estimate", &handle);
+	if (reprobit_estimate == NULL) {
+	    err = E_FOPEN;
+	}
+    }
+
+    if (err) {
+	gretl_model_init(&model);
+	model.errcode = err;
+	return model;
+    }
+
+    model = (*reprobit_estimate) (list, dset, opt, prn);
+
+    close_plugin(handle);
+
+    set_model_id(&model);
+
+    return model;
 }

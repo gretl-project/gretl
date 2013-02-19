@@ -111,7 +111,8 @@ PLUGINSRC = \
 	quantreg.c \
 	interval.c \
 	anova.c \
-	biprobit.c
+	biprobit.c \
+	reprobit.c
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
@@ -153,6 +154,7 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/anova.dll \
 	plugins/interpolate.dll \
 	plugins/biprobit.dll \
+	plugins/reprobit.dll \
 	plugins/panurc.dll
 
 LIBSRC = adf_kpss.c \
@@ -507,6 +509,10 @@ plugins/interpolate.dll: interpolate.o dllinit.o
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 plugins/biprobit.dll: biprobit.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
+
+plugins/reprobit.dll: reprobit.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 

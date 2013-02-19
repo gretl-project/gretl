@@ -118,7 +118,8 @@ SRCS = excel_import.c \
 	quantreg.c \
 	interval.c \
 	anova.c \
-	biprobit.c
+	biprobit.c \
+	reprobit.c
 
 ZIPSRC = zfileio.c \
 	zsystem.c \
@@ -154,6 +155,7 @@ PLUGINS = arbond.la \
 	mp_ols.la \
 	interpolate.la \
 	biprobit.la \
+	reprobit.la \
 	panurc.la
 
 GUI_DEPENDENT_PLUGINS = arma_x12.la \
@@ -278,7 +280,10 @@ heckit.la: heckit.lo
 	$(LINK) -o $@ $< $(GRETLLIB) 
 
 biprobit.la: biprobit.lo
-	$(LINK) -o $@ $< $(GRETLLIB) 
+	$(LINK) -o $@ $< $(GRETLLIB)
+
+reprobit.la: reprobit.lo
+	$(LINK) -o $@ $< $(GRETLLIB)
 
 garch.la: garch.lo fcp.lo mod_garch.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)

@@ -894,7 +894,9 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("Logit");
 	}
     } else if (pmod->ci == PROBIT) {
-	if (gretl_model_get_int(pmod, "ordered")) {
+	if (pmod->opt & OPT_E) {
+	    return N_("Random-effects probit");
+	} else if (gretl_model_get_int(pmod, "ordered")) {
 	    return N_("Ordered Probit");
 	} else {
 	    return N_("Probit");
