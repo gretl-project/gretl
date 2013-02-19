@@ -5844,7 +5844,6 @@ static int handle_bundle_return (fncall *call, void *ptr, int copy)
 
 static void replace_caller_series (int targ, int src, DATASET *dset)
 {
-    const char *s;
     int t;
 
     /* replace data values */
@@ -5853,14 +5852,8 @@ static void replace_caller_series (int targ, int src, DATASET *dset)
     }
 
     /* replace variable info? */
-    s = series_get_label(dset, src);
-    if (s != NULL && *s != '\0') {
-	series_set_label(dset, targ, s);
-    }
-    s = series_get_display_name(dset, src);
-    if (s != NULL && *s != '\0') {
-	series_set_display_name(dset, targ, s);
-    }
+    series_set_label(dset, targ, series_get_label(dset, src));
+    series_set_display_name(dset, targ, series_get_display_name(dset, src));
 }
 
 /* Deal with a list that exists at the level of a user-defined
