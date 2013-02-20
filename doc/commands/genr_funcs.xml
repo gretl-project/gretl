@@ -939,15 +939,19 @@
 	  value given in the first column.
 	</para>
 	<para>
-	  The supported values of <argname>funcname</argname> are
-	  <fncref targ="sum"/>, <fncref targ="mean"/>, <fncref
+	  The following values of <argname>funcname</argname> are
+	  supported <quote>natively</quote>: <fncref targ="sum"/>,
+	  <fncref targ="sumall"/>, <fncref targ="mean"/>, <fncref
 	  targ="sd"/>, <fncref targ="var"/>, <fncref targ="sst"/>,
 	  <fncref targ="skewness"/>, <fncref targ="kurtosis"/>,
 	  <fncref targ="min"/>, <fncref targ="max"/>, <fncref
-	  targ="median"/> and <fncref targ="gini"/>. Each of these
-	  functions takes a series argument and returns a scalar
-	  value, and in that sense can be said to
-	  <quote>aggregate</quote> the series in some way.
+	  targ="median"/>, <fncref targ="nobs"/> and <fncref
+	  targ="gini"/>. Each of these functions takes a series
+	  argument and returns a scalar value, and in that sense can
+	  be said to <quote>aggregate</quote> the series in some way.
+	  You may give the name of a user-defined function as the
+	  aggregator; like the built-ins, such a function must
+	  take a single series argument and return a scalar value.
 	</para>
 	<para>
 	  For example, suppose that <lit>region</lit> represents a

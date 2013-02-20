@@ -4403,17 +4403,6 @@ static NODE *errmsg_node (NODE *l, parser *p)
     return ret;
 }
 
-static int series_get_nobs (int t1, int t2, const double *x)
-{
-    int t, n = 0;
-
-    for (t=t1; t<=t2; t++) {
-	if (!xna(x[t])) n++;
-    }
-
-    return n;
-}
-
 static int series_get_start (int t1, int t2, const double *x)
 {
     int t;
@@ -4465,23 +4454,6 @@ static void cast_to_series (NODE *n, int f, gretl_matrix **tmp,
 	    node_type_error(f, 1, VEC, n, p);
 	}
     } 
-}
-
-static int series_sum_all (int t1, int t2, const double *x)
-{
-    double xsum = 0.0;
-    int t;
-
-    for (t=t1; t<=t2; t++) {
-	if (na(x[t])) {
-	    xsum = NADBL;
-	    break;
-	} else {
-	    xsum += x[t];
-	}
-    }
-
-    return xsum;
 }
 
 /* functions taking a series as argument and returning a scalar */

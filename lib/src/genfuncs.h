@@ -164,6 +164,10 @@ int gretl_loess (const double *y, const double *x, int poly_order,
 		 double bandwidth, gretlopt opt, DATASET *dset, 
 		 double *m);
 
+double series_get_nobs (int t1, int t2, const double *x);
+
+double series_sum_all (int t1, int t2, const double *x);
+
 gretl_matrix *aggregate_by (const double *x, 
 			    const double *y,
 			    const char *fncall,

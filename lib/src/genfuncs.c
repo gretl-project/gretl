@@ -4780,16 +4780,46 @@ int gretl_loess (const double *y, const double *x, int poly_order,
     return err;
 }
 
+double series_get_nobs (int t1, int t2, const double *x)
+{
+    int t, n = 0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!xna(x[t])) n++;
+    }
+
+    return n;
+}
+
+double series_sum_all (int t1, int t2, const double *x)
+{
+    double xsum = 0.0;
+    int t;
+
+    for (t=t1; t<=t2; t++) {
+	if (na(x[t])) {
+	    xsum = NADBL;
+	    break;
+	} else {
+	    xsum += x[t];
+	}
+    }
+
+    return xsum;
+}
+
 gretl_matrix *aggregate_by (const double *x, 
 			    const double *y,
 			    const char *fncall,
 			    const DATASET *dset,
 			    int *err)
 {
+    DATASET *mydset = NULL;
     gretl_matrix *m = NULL;
     gretl_matrix *yvals = NULL;
     double *tmp = NULL;
     double (*builtin) (int, int, const double *) = NULL;
+    gchar *usercall = NULL;
     int f, n;
 
     if (fncall == NULL) {
@@ -4802,6 +4832,9 @@ gretl_matrix *aggregate_by (const double *x,
     switch (f) {
     case F_SUM:
 	builtin = gretl_sum;
+	break;
+    case F_SUMALL:
+	builtin = series_sum_all;
 	break;
     case F_MEAN:
 	builtin = gretl_mean;
@@ -4833,13 +4866,11 @@ gretl_matrix *aggregate_by (const double *x,
     case F_GINI:
 	builtin = gretl_gini;
 	break;
+    case F_NOBS:
+	builtin = series_get_nobs;
+	break;
     default:
 	break;
-    }
-
-    if (builtin == NULL) {
-	*err = E_DATA;
-	return NULL;
     }
 
     n = sample_size(dset);
@@ -4850,9 +4881,28 @@ gretl_matrix *aggregate_by (const double *x,
 
     if (!*err) {
 	m = gretl_matrix_alloc(yvals->rows, 2);
-	tmp = malloc(n * sizeof *tmp);
-	if (m == NULL || tmp == NULL) {
+	if (m == NULL) {
 	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	if (builtin != NULL) {
+	    /* nice and simple */
+	    tmp = malloc(n * sizeof *tmp);
+	    if (tmp == NULL) {
+		*err = E_ALLOC;
+	    }
+	} else {
+	    /* try treating as user-defined call */
+	    mydset = create_auxiliary_dataset(2, n, OPT_NONE);
+	    if (mydset == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		strcpy(mydset->varname[1], "x");
+		tmp = mydset->Z[1];
+		usercall = g_strdup_printf("%s(x)", fncall);
+	    }
 	}
     }
 
@@ -4860,7 +4910,7 @@ gretl_matrix *aggregate_by (const double *x,
 	double yi, fx;
 	int i, j, k;
 
-	for (i=0; i<yvals->rows; i++) {
+	for (i=0; i<yvals->rows && !*err; i++) {
 	    k = 0;
 	    yi = yvals->val[i];
 	    /* fill tmp with x for y == yi */
@@ -4869,14 +4919,30 @@ gretl_matrix *aggregate_by (const double *x,
 		    tmp[k++] = x[j];
 		}
 	    }
-	    fx = (*builtin)(0, k-1, tmp);
+	    if (builtin != NULL) {
+		fx = (*builtin)(0, k-1, tmp);
+	    } else {
+		mydset->t2 = k;
+		fx = generate_scalar(usercall, mydset, err);
+	    }
 	    gretl_matrix_set(m, i, 0, yi);
 	    gretl_matrix_set(m, i, 1, fx);
 	}
     }
 
+    if (m != NULL && *err) {
+	gretl_matrix_free(m);
+	m = NULL;
+    }
+
     gretl_matrix_free(yvals);
-    free(tmp);
+
+    if (mydset != NULL) {
+	g_free(usercall);
+	destroy_dataset(mydset);
+    } else {
+	free(tmp);
+    }
 
     return m;
 }
