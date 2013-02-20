@@ -922,6 +922,48 @@
       </description>
     </function>
 
+    <function name="aggregate" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series">x</fnarg>
+	<fnarg type="series">byvar</fnarg>
+	<fnarg type="string">funcname</fnarg>	
+      </fnargs>
+      <description>
+	<para>
+	  Returns a matrix with two columns: the first column holds
+	  the distinct values in the series <argname>byvar</argname>,
+	  sorted from smallest to largest, and the second holds values
+	  of the statistic specified by <argname>funcname</argname>
+	  calculated on series <argname>x</argname>, using only those
+	  observations at which <argname>byvar</argname> takes on the
+	  value given in the first column.
+	</para>
+	<para>
+	  The supported values of <argname>funcname</argname> are
+	  <fncref targ="sum"/>, <fncref targ="mean"/>, <fncref
+	  targ="sd"/>, <fncref targ="var"/>, <fncref targ="sst"/>,
+	  <fncref targ="skewness"/>, <fncref targ="kurtosis"/>,
+	  <fncref targ="min"/>, <fncref targ="max"/>, <fncref
+	  targ="median"/> and <fncref targ="gini"/>. Each of these
+	  functions takes a series argument and returns a scalar
+	  value, and in that sense can be said to
+	  <quote>aggregate</quote> the series in some way.
+	</para>
+	<para>
+	  For example, suppose that <lit>region</lit> represents a
+	  coding of geographical region using integer values 1 to
+	  <math>n</math>, and <lit>income</lit> represents household
+	  income. Then the following would produce and print an <by
+	  r="n" c="2"/> matrix holding the mean household income for
+	  each of the <math>n</math> regions:
+	</para>
+	<code>
+	  matrix m = aggregate(income, region, mean)
+	  print m
+	</code>
+      </description>
+    </function>
+
     <function name="argname" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
