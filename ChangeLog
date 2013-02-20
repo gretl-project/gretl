@@ -12,6 +12,7 @@ version 1.9.12, in progress
 - You can now use "bundle b = null" to create a new bundle or
   empty an existing one
 - Add new function strstrip()
+- Add new function aggregate()
 - lags() function: add an optional third parameter to control
   the ordering of terms in the output list
 - mread() and mwrite() functions: add an optional argument to
