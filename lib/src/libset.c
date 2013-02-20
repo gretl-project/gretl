@@ -1072,6 +1072,47 @@ static int set_initvals (const char *s, PRN *prn)
     return err;
 }
 
+static int set_panel_time (const char *s, DATASET *dset)
+{
+    char vname[VNAMELEN];
+    int err = 0;
+
+    if (!dataset_is_panel(dset)) {
+	return E_PDWRONG;
+    }
+
+    /* skip past "set panel_time" */
+    s += 14;
+
+    if (gretl_scan_varname(s, vname) != 1 || !strcmp(vname, "none")) {
+	dataset_set_panel_time(dset, NULL);
+    } else {
+	gretl_matrix *m = get_matrix_by_name(vname);
+	double *tvals = NULL;
+
+	if (m != NULL) {
+	    if (m->rows < dset->pd) {
+		err = E_PDWRONG;
+	    } else {
+		tvals = m->val;
+	    }
+	} else {
+	    int v = current_series_index(dset, vname);
+
+	    if (v < 0) {
+		err = E_DATA;
+	    } else {
+		tvals = dset->Z[v];
+	    }
+	}
+	if (!err) {
+	    err = dataset_set_panel_time(dset, tvals);
+	}
+    }
+
+    return err;
+}
+
 static int set_matmask (const char *s, const DATASET *dset,
 			PRN *prn)
 {
@@ -1593,8 +1634,8 @@ int execute_set_line (const char *line, DATASET *dset,
 	return print_settings(prn, OPT_D);
     }
 
-    /* specials which need the whole line */
     if (nw > 1) {
+	/* specials which need the whole line */
 	if (!strcmp(setobj, "initvals")) {
 	    return set_initvals(line, prn);
 	} else if (!strcmp(setobj, "matrix_mask")) {
@@ -1603,7 +1644,9 @@ int execute_set_line (const char *line, DATASET *dset,
 	    return set_shelldir(line);
 	} else if (!strcmp(setobj, "workdir")) {
 	    return set_workdir(line);
-	} 
+	} else if (!strcmp(setobj, "panel_time")) {
+	    return set_panel_time(line, dset);
+	}
     }
 
     if (nw == 1) {

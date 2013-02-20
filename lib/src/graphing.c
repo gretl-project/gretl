@@ -5046,18 +5046,23 @@ static int panel_means_ts_plot (const int vnum,
     int list[3] = {1, 1, 2};
     gchar *literal = NULL;
     gchar *title = NULL;
-    int nv, panvar = 0;
+    const double *tvals;
+    int nv, xvar = 0;
     int i, t, s, s0;
     int err = 0;
 
     nunits = panel_sample_size(dset);
     nv = 2;
 
-    panvar = plausible_panel_time_var(dset);
-    if (panvar > 0) {
+    tvals = dataset_get_panel_time(dset);
+    if (tvals == NULL) {
+	xvar = plausible_panel_time_var(dset);
+    }
+
+    if (tvals != NULL || xvar > 0) {
 	/* extra column for x-axis */
 	nv++;
-    }
+    }	
 
     gset = create_auxiliary_dataset(nv, T, 0);
     if (gset == NULL) {
@@ -5090,24 +5095,28 @@ static int panel_means_ts_plot (const int vnum,
 	}
     }
 
-    if (panvar > 0) {
-	/* time variable for x-axis */
-	strcpy(gset->varname[2], dset->varname[panvar]);
-	series_set_display_name(gset, 2, series_get_display_name(dset, panvar));
+    if (tvals != NULL) {
 	for (t=0; t<T; t++) {
-	    gset->Z[2][t] = dset->Z[panvar][t];
+	    gset->Z[2][t] = tvals[t];
+	}	
+    } else if (xvar > 0) {
+	/* time variable for x-axis */
+	strcpy(gset->varname[2], dset->varname[xvar]);
+	series_set_display_name(gset, 2, series_get_display_name(dset, xvar));
+	for (t=0; t<T; t++) {
+	    gset->Z[2][t] = dset->Z[xvar][t];
 	}
     }
 
     opt |= OPT_O; /* use lines */
-    if (!panvar) {
+    if (!tvals && !xvar) {
 	opt |= OPT_T;
     }
     
     title = g_strdup_printf(_("mean %s"), 
 			    series_get_graph_name(dset, vnum));
 
-    if (panvar) {
+    if (xvar) {
 	literal = g_strdup_printf("set ylabel \"%s\" ; set xlabel ;", 
 				  title);
     } else {
@@ -5262,7 +5271,8 @@ static int panel_overlay_ts_plot (const int vnum,
     int *list = NULL;
     gchar *literal = NULL;
     gchar *title = NULL;
-    int nv, panvar = 0;
+    const double *tvals;
+    int nv, xvar = 0;
     int panel_labels = 0;
     int use = 0, strip = 0;
     int i, t, s, s0;
@@ -5272,8 +5282,12 @@ static int panel_overlay_ts_plot (const int vnum,
     nv = nunits + 1;
     u0 = dset->t1 / T;
 
-    panvar = plausible_panel_time_var(dset);
-    if (panvar > 0) {
+    tvals = dataset_get_panel_time(dset);
+    if (tvals == NULL) {
+	xvar = plausible_panel_time_var(dset);
+    }
+
+    if (tvals != NULL || xvar > 0) {
 	/* extra column for x-axis */
 	nv++;
     }
@@ -5314,22 +5328,25 @@ static int panel_overlay_ts_plot (const int vnum,
 	}
     }
 
-    if (panvar > 0) {
-	/* time variable for x-axis */
-	strcpy(gset->varname[nv-1], dset->varname[panvar]);
+    if (tvals != NULL) {
 	for (t=0; t<T; t++) {
-	    gset->Z[nv-1][t] = dset->Z[panvar][t];
+	    gset->Z[nv-1][t] = tvals[t];
+	}	
+    } else if (xvar > 0) {
+	strcpy(gset->varname[nv-1], dset->varname[xvar]);
+	for (t=0; t<T; t++) {
+	    gset->Z[nv-1][t] = dset->Z[xvar][t];
 	}
     }
 
     opt |= OPT_O; /* use lines */
-    if (!panvar) {
+    if (!tvals && !xvar) {
 	opt |= OPT_T;
     }
 
     title = g_strdup_printf("%s by group", series_get_graph_name(dset, vnum));
 
-    if (panvar) {
+    if (xvar) {
 	literal = g_strdup_printf("set title \"%s\" ; set xlabel ;", title);
     } else {
 	literal = g_strdup_printf("set title \"%s\" ;", title);

@@ -1244,16 +1244,14 @@ GretlType gretl_type_from_name (const char *s, const DATASET *dset)
 double *copyvec (const double *src, int n)
 {
     double *targ = NULL;
-    int i;
+    size_t sz = n * sizeof *targ;
 
     if (n > 0 && src != NULL) {
-	targ = malloc(n * sizeof *targ);
+	targ = malloc(sz);
     }
 
     if (targ != NULL) {
-	for (i=0; i<n; i++) {
-	    targ[i] = src[i];
-	}
+	memcpy(targ, src, sz);
     }
 
     return targ;

@@ -482,4 +482,8 @@ const char **series_get_string_vals (const DATASET *dset, int i,
 int steal_string_table (DATASET *l_dset, int lvar,
 			DATASET *r_dset, int rvar);
 
+int dataset_set_panel_time (DATASET *dset, const double *tvals);
+
+const double *dataset_get_panel_time (const DATASET *dset);
+
 #endif /* DATASET_H */

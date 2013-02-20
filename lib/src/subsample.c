@@ -1013,6 +1013,12 @@ copy_data_to_subsample (DATASET *subset, const DATASET *dset,
 	}
     }
 
+    /* copy panel time data? */
+    if (dset->pantime != NULL && dataset_is_panel(subset) &&
+	subset->pd == dset->pd) {
+	subset->pantime = copyvec(dset->pantime, dset->pd);
+    }
+
     strcpy(subset->stobs, "1");
     sprintf(subset->endobs, "%d", subset->n);
 }

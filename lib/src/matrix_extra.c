@@ -2181,5 +2181,5 @@ gretl_matrix *gretl_quadrule_matrix_new (int n, int method,
 
 gretl_matrix *gretl_gauss_hermite_matrix_new (int n, int *err)
 {
-    return gretl_quadrule_matrix_new(n, QUAD_GHERMITE, 0, 0, err);
+    return gretl_quadrule_matrix_new(n, QUAD_GHERMITE, 0, 1, err);
 }
