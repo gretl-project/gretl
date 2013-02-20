@@ -104,7 +104,7 @@ static int reprobit_obs_accounts (reprob_container *C,
     /* count the included units */
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
-	    unit = (int) floor(t / (double) dset->pd);
+	    unit = t / dset->pd;
 	    if (unit != ubak) {
 		C->N += 1;
 	    }
@@ -127,7 +127,7 @@ static int reprobit_obs_accounts (reprob_container *C,
     /* build the obs-count array */
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
-	    unit = (int) floor(t / (double) dset->pd);
+	    unit = t / dset->pd;
 	    if (t > pmod->t1 && unit != ubak) {
 		C->unit_obs[++i] = 1;
 	    } else {
@@ -340,8 +340,12 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 		       NULL, C, NULL, opt, prn);
 	
 	if (!err) {
-	    pprintf(prn, "estimate of ln(var(u)) = %g\n", 
-		    C->theta->val[C->npar-1]);
+	    double lns2u = C->theta->val[C->npar-1];
+	    double s2u = exp(lns2u);
+
+	    pprintf(prn, "estimate of ln(var(u)) = %g\n", lns2u);
+	    pprintf(prn, "rho = %g\n", s2u / (1 + s2u));
+	    
 	    transcribe_reprobit(&mod, C);
 	}
 
