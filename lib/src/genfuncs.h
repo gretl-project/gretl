@@ -164,8 +164,9 @@ int gretl_loess (const double *y, const double *x, int poly_order,
 		 double bandwidth, gretlopt opt, DATASET *dset, 
 		 double *m);
 
-gretl_matrix *aggregate_by (const double *x, const double *y,
-			    double (*afunc)(),
+gretl_matrix *aggregate_by (const double *x, 
+			    const double *y,
+			    const char *fncall,
 			    const DATASET *dset,
 			    int *err);
 

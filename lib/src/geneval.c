@@ -6504,13 +6504,9 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else {
 	    const double *x = l->v.xvec;
 	    const double *y = m->v.xvec;
-	    double (*afunc) (const double *, int) = NULL;
+	    const char *fncall = r->v.str;
 
-	    /* get the function here! */
-
-	    if (!p->err) {
-		A = aggregate_by(x, y, afunc, p->dset, &p->err);
-	    }
+	    A = aggregate_by(x, y, fncall, p->dset, &p->err);
 	}
     }	
 

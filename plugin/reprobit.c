@@ -265,7 +265,7 @@ static double reprobit_ll (const double *theta, void *p)
 static void transcribe_reprobit (MODEL *pmod, reprob_container *C)
 {
     int Tmin = C->nobs, Tmax = 0;
-    int i, t, k = C->npar - 1;
+    int i, k = C->npar - 1;
 
     for (i=0; i<k; i++) {
 	pmod->coeff[i] = C->theta->val[i];

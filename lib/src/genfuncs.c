@@ -4780,17 +4780,64 @@ int gretl_loess (const double *y, const double *x, int poly_order,
     return err;
 }
 
-gretl_matrix *aggregate_by (const double *x, const double *y,
-			    double (*afunc)(),
+gretl_matrix *aggregate_by (const double *x, 
+			    const double *y,
+			    const char *fncall,
 			    const DATASET *dset,
 			    int *err)
 {
     gretl_matrix *m = NULL;
     gretl_matrix *yvals = NULL;
     double *tmp = NULL;
-    int n, nv;
+    double (*builtin) (int, int, const double *) = NULL;
+    int f, n;
 
-    if (afunc == NULL) {
+    if (fncall == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    f = function_lookup(fncall);
+
+    switch (f) {
+    case F_SUM:
+	builtin = gretl_sum;
+	break;
+    case F_MEAN:
+	builtin = gretl_mean;
+	break;
+    case F_SD:
+	builtin = gretl_stddev;
+	break;
+    case F_VCE:
+	builtin = gretl_variance;
+	break;
+    case F_SST:
+	builtin = gretl_sst;
+	break;
+    case F_SKEWNESS:
+	builtin = gretl_skewness;
+	break;	    
+    case F_KURTOSIS:
+	builtin = gretl_kurtosis;
+	break;	    
+    case F_MIN:
+	builtin = gretl_min;
+	break;	    
+    case F_MAX:
+	builtin = gretl_max;
+	break;
+    case F_MEDIAN:
+	builtin = gretl_median;
+	break;
+    case F_GINI:
+	builtin = gretl_gini;
+	break;
+    default:
+	break;
+    }
+
+    if (builtin == NULL) {
 	*err = E_DATA;
 	return NULL;
     }
@@ -4801,9 +4848,8 @@ gretl_matrix *aggregate_by (const double *x, const double *y,
 
     yvals = gretl_matrix_values(y, n, OPT_S, err);
 
-    if (*err) {
-	nv = yvals->rows;
-	m = gretl_matrix_alloc(nv, 2);
+    if (!*err) {
+	m = gretl_matrix_alloc(yvals->rows, 2);
 	tmp = malloc(n * sizeof *tmp);
 	if (m == NULL || tmp == NULL) {
 	    *err = E_ALLOC;
@@ -4814,7 +4860,7 @@ gretl_matrix *aggregate_by (const double *x, const double *y,
 	double yi, fx;
 	int i, j, k;
 
-	for (i=0; i<nv; i++) {
+	for (i=0; i<yvals->rows; i++) {
 	    k = 0;
 	    yi = yvals->val[i];
 	    /* fill tmp with x for y == yi */
@@ -4823,9 +4869,9 @@ gretl_matrix *aggregate_by (const double *x, const double *y,
 		    tmp[k++] = x[j];
 		}
 	    }
-	    fx = (*afunc)(tmp, k);
-	    gretl_matrix_set(m, i, 1, fx);
+	    fx = (*builtin)(0, k-1, tmp);
 	    gretl_matrix_set(m, i, 0, yi);
+	    gretl_matrix_set(m, i, 1, fx);
 	}
     }
 
