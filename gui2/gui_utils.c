@@ -2970,73 +2970,34 @@ static void x12_output_callback (GtkAction *action, gpointer p)
     }
 }
 
-static const gchar *model_ui =
-    "<ui>"
-    " <menubar>"
-    "  <menu action='File'>"
-    "   <menuitem action='SaveAs'/>"
-    "   <menuitem action='SaveAsIcon'/>"
-    "   <menuitem action='SaveAndClose'/>"
-    "   <menuitem action='Print'/>"
-    "   <menuitem action='TextEqn'/>"
-    "   <menuitem action='Close'/>"
-    "  </menu>"    
-    "  <menu action='Edit'>"
-    "   <menuitem action='Copy'/>"
-    "   <menuitem action='Revise'/>"
-#if 0
-    "   <menuitem action='Restore'/>"
-#endif
-    "  </menu> "     
-    "  <menu action='Tests'>"
-    "   <menuitem action='omit'/>"
-    "   <menuitem action='add'/>"
-    "   <menuitem action='coeffsum'/>"
-    "   <menuitem action='restrict'/>"
-    "   <separator/>"
-    "   <menuitem action='modtest:s'/>"
-    "   <menuitem action='modtest:l'/>"
-    "   <menuitem action='reset'/>"
-    "   <separator/>"
-    "   <menu action='Hsk'/>"
-    "   <menuitem action='modtest:n'/>"
-    "   <menuitem action='leverage'/>"
-    "   <menuitem action='vif'/>"
-    "   <menuitem action='chow'/>"
-    "   <separator/>"
-    "   <menuitem action='modtest:a'/>"
-    "   <menuitem action='dwpval'/>"
-    "   <menuitem action='modtest:h'/>"
-    "   <menuitem action='qlrtest'/>"
-    "   <menuitem action='cusum'/>"
-    "   <menuitem action='cusum:r'/>"
-    "   <menuitem action='modtest:c'/>"
-    "   <separator/>"
-    "   <menuitem action='hausman'/>"
-    "  </menu>"      
-    "  <menu action='Save'/>"
-    "  <menu action='Graphs'>"
-    "   <menu action='ResidPlot'/>"
-    "   <menu action='FittedActualPlot'/>"
-    "  </menu>"    
-    "  <menu action='Analysis'>"
-    "   <menuitem action='DisplayAFR'/>"
-    "   <menuitem action='Forecasts'/>"
-    "   <menuitem action='ConfIntervals'/>"
-    "   <menuitem action='ConfEllipse'/>"
-    "   <menuitem action='Covariance'/>"
-    "   <menuitem action='ANOVA'/>"
-    "   <menuitem action='Bootstrap'/>"
-    "  </menu>"     
-    " </menubar>"
-    "</ui>";
+static gchar *get_model_ui (void)
+{
+    gchar *ui = NULL;
+    gchar *fname;
+    int err;
+
+    fname = g_strdup_printf("%sui%cgretlmodel.xml", gretl_home(), SLASH);
+    err = gretl_file_get_contents(fname, &ui, NULL);
+    g_free(fname);
+
+    return err ? NULL : ui;
+}
 
 static void set_up_model_view_menu (windata_t *vwin) 
 {
+    static gchar *model_ui;
     MODEL *pmod = (MODEL *) vwin->data;
     GtkActionGroup *actions;
     GtkWidget *toplevel;
     GError *err = NULL;
+
+    if (model_ui == NULL) {
+	model_ui = get_model_ui();
+	if (model_ui == NULL) {
+	    errbox("building menus failed");
+	    return;
+	}
+    }
 
     actions = gtk_action_group_new("ModelActions");
     gtk_action_group_set_translation_domain(actions, "gretl");

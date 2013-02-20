@@ -1,0 +1,56 @@
+<ui>
+  <menubar>
+    <menu action="File">
+      <menuitem action="SaveAs"/>
+      <menuitem action="SaveAsIcon"/>
+      <menuitem action="SaveAndClose"/>
+      <menuitem action="Print"/>
+      <menuitem action="TextEqn"/>
+      <menuitem action="Close"/>
+    </menu>    
+    <menu action="Edit">
+      <menuitem action="Copy"/>
+      <menuitem action="Revise"/>
+    </menu>      
+    <menu action="Tests">
+      <menuitem action="omit"/>
+      <menuitem action="add"/>
+      <menuitem action="coeffsum"/>
+      <menuitem action="restrict"/>
+      <separator/>
+      <menuitem action="modtest:s"/>
+      <menuitem action="modtest:l"/>
+      <menuitem action="reset"/>
+      <separator/>
+      <menu action="Hsk"/>
+      <menuitem action="modtest:n"/>
+      <menuitem action="leverage"/>
+      <menuitem action="vif"/>
+      <menuitem action="chow"/>
+      <separator/>
+      <menuitem action="modtest:a"/>
+      <menuitem action="dwpval"/>
+      <menuitem action="modtest:h"/>
+      <menuitem action="qlrtest"/>
+      <menuitem action="cusum"/>
+      <menuitem action="cusum:r"/>
+      <menuitem action="modtest:c"/>
+      <separator/>
+      <menuitem action="hausman"/>
+    </menu>      
+    <menu action="Save"/>
+    <menu action="Graphs">
+      <menu action="ResidPlot"/>
+      <menu action="FittedActualPlot"/>
+    </menu>    
+    <menu action="Analysis">
+      <menuitem action="DisplayAFR"/>
+      <menuitem action="Forecasts"/>
+      <menuitem action="ConfIntervals"/>
+      <menuitem action="ConfEllipse"/>
+      <menuitem action="Covariance"/>
+      <menuitem action="ANOVA"/>
+      <menuitem action="Bootstrap"/>
+    </menu>     
+  </menubar>
+</ui>

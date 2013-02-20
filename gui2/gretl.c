@@ -1817,10 +1817,11 @@ static GtkWidget *make_main_menu (void)
 	    } else {
 		g_signal_connect(G_OBJECT(dataitem), "activate",
 				 G_CALLBACK(check_var_labels_state), mdata);
-		g_free(main_ui);
 	    }
 	}
     }
+
+    g_free(main_ui);
 
     return menu;
 }
