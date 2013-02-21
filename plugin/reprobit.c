@@ -250,10 +250,11 @@ static int reprobit_score (double *theta, double *g, int npar,
 
     update_ndx(C, &scale);
 
-    /* form the Q matrix, unit by unit */
+    /* form the Q and R matrices */
     s = 0;
     for (i=0; i<C->N; i++) {
 	int Ti = C->unit_obs[i];
+
 	for (j=0; j<h; j++) {
 	    node = scale * C->gh_nodes->val[j];
 	    qij = 1.0;
@@ -261,22 +262,12 @@ static int reprobit_score (double *theta, double *g, int npar,
 		ndxi = C->ndx->val[s+t];
 		sign = C->y[s+t] ? 1 : -1;
 		x = sign * (ndxi + node);
+		gretl_matrix_set(C->R, s+t, j, sign * invmills(-x));
 		qij *= normal_cdf(x);
 	    }
 	    gretl_matrix_set(Q, i, j, qij);
 	}
 	s += Ti;
-    }
-
-    /* form the big R matrix */
-    for (j=0; j<h; j++) {
-	node = scale * C->gh_nodes->val[j];
-	for (i=0; i<C->nobs; i++) {
-	    ndxi = C->ndx->val[i];
-	    sign = C->y[i] ? 1 : -1;
-	    x = sign * (ndxi + node);
-	    gretl_matrix_set(C->R, i, j, sign * invmills(-x));
-	}
     }
 
     gretl_matrix_multiply(Q, C->gh_wts, C->lik);
@@ -290,34 +281,25 @@ static int reprobit_score (double *theta, double *g, int npar,
 	int ii, Ti = C->unit_obs[i];
 	double rtj, tmp;
 
-	/* update the regular parameters */
-	for (ii=0; ii<k; ii++) {
+	for (ii=0; ii<=k; ii++) {
 	    for (j=0; j<h; j++) {
-		qi->val[j] = 0.0;
+		x = qi->val[j] = 0.0;
 		qij = gretl_matrix_get(Q, i, j);
+		if (ii == k) {
+		    x = scale * C->gh_nodes->val[j];
+		}
 		for (t=0; t<Ti; t++) {
-		    x = gretl_matrix_get(C->X, s+t, ii);
-		    rtj = gretl_matrix_get(C->R, s+t, j);
+                    if (ii < k) {
+		        x = gretl_matrix_get(C->X, s+t, ii);
+                    }
+ 		    rtj = gretl_matrix_get(C->R, s+t, j);
 		    qi->val[j] += x * rtj * qij;
 		}
 		qi->val[j] /= C->lik->val[i];
 	    }
-	    g[ii] += gretl_vector_dot_product(qi, C->gh_wts, &err);
-	}
-
-	/* update the variance parameter */
-	for (j=0; j<h; j++) {
-	    qi->val[j] = 0.0;
-	    qij = gretl_matrix_get(Q, i, j);
-	    for (t=0; t<Ti; t++) {
-		rtj = gretl_matrix_get(C->R, s+t, j);
-		qi->val[j] += qij * rtj;
-	    }
-	    qi->val[j] /= C->lik->val[i];
-	    qi->val[j] *= scale * C->gh_nodes->val[j];
-	}	
-	tmp = gretl_vector_dot_product(qi, C->gh_wts, &err);
-	g[k] += tmp * scale;
+            tmp = gretl_vector_dot_product(qi, C->gh_wts, &err);
+	    g[ii] += (ii < k)? tmp : tmp * scale;
+ 	}
 
 	s += Ti;
     }
