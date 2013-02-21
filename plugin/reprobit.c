@@ -32,12 +32,14 @@ struct reprob_container_ {
     MODEL *pmod;             /* pointer to model struct */
 
     int N;	             /* number of included units */
+    int Tmax;                /* maximum tim-series observations */
     int *unit_obs;           /* array of effective unit T's */
     int nobs;                /* total number of observations */
     int qp;                  /* number of quadrature points */
 
     int *y;	             /* dependent var (0/1) */
     gretl_matrix *X;	     /* main eq. regressors */
+    gretl_matrix *R;         /* holds inverse Mills ratios */
 
     gretl_matrix_block *B;   /* holder for the following */
     gretl_matrix *ndx;       /* index function */
@@ -47,6 +49,7 @@ struct reprob_container_ {
     gretl_matrix *lik;       /* probabilities (by individual) */
     gretl_vector *theta;     /* parameters (including log of variance 
 				of individual effect) */
+    gretl_matrix *qi;        /* storage for score caculation */
 };
 
 reprob_container *rep_container_new (const int *list)
@@ -69,6 +72,7 @@ reprob_container *rep_container_new (const int *list)
 	C->unit_obs = NULL;
 	C->y = NULL;
 	C->X = NULL;
+	C->R = NULL;
 	C->B = NULL;
     }
 
@@ -82,6 +86,7 @@ static void rep_container_destroy (reprob_container *C)
 	free(C->y);
 	free(C->unit_obs);
 	gretl_matrix_free(C->X);
+	gretl_matrix_free(C->R);
 	gretl_matrix_block_destroy(C->B);
 	free(C);
     }
@@ -121,6 +126,7 @@ static int reprobit_obs_accounts (reprob_container *C,
 	C->unit_obs[i] = 0;
     }
 
+    C->Tmax = 0;
     ubak = -1;
     i = 0;
 
@@ -129,6 +135,9 @@ static int reprobit_obs_accounts (reprob_container *C,
 	if (!na(pmod->uhat[t])) {
 	    unit = t / dset->pd;
 	    if (t > pmod->t1 && unit != ubak) {
+		if (C->unit_obs[i] > C->Tmax) {
+		    C->Tmax = C->unit_obs[i];
+		}
 		C->unit_obs[++i] = 1;
 	    } else {
 		C->unit_obs[i] += 1;
@@ -161,7 +170,9 @@ static int rep_container_fill (reprob_container *C,
 
     C->y = malloc(C->nobs * sizeof *C->y);
     C->X = gretl_matrix_alloc(C->nobs, k-1);
-    if (C->y == NULL || C->X == NULL) {
+    C->R = gretl_matrix_alloc(C->nobs, C->qp);
+
+    if (C->y == NULL || C->X == NULL || C->R == NULL) {
 	return E_ALLOC;
     }
 
@@ -171,6 +182,7 @@ static int rep_container_fill (reprob_container *C,
 				  &C->theta, k, 1,
 				  &C->gh_nodes, 1, C->qp,
 				  &C->gh_wts, C->qp, 1,
+				  &C->qi, 1, C->qp,
 				  NULL);
     if (C->B == NULL) {
 	return E_ALLOC;
@@ -213,6 +225,108 @@ static int rep_container_fill (reprob_container *C,
     return err;
 }
 
+static void update_ndx (reprob_container *C, double *lambda)
+{
+    gretl_matrix_reuse(C->theta, C->npar-1, 1);
+    gretl_matrix_multiply(C->X, C->theta, C->ndx);
+    gretl_matrix_reuse(C->theta, C->npar, 1);
+
+    *lambda = exp(C->theta->val[C->npar-1]/2.0);
+}
+
+static int reprobit_score (double *theta, double *g, int npar, 
+			   BFGS_CRIT_FUNC ll, void *p)
+{
+    reprob_container *C = (reprob_container *) p;
+    gretl_matrix *Q, *qi;
+    double lambda, x, ndxi, nodej;
+    int i, j, k, s, t, h = C->qp;
+    int sign = 1;
+    int err = 0;
+
+    k = C->npar - 1;
+    Q = C->P;   /* re-use existing storage of right size */
+    qi = C->qi; /* reduce verbosity below */ 
+
+    update_ndx(C, &lambda);
+
+    /* form the Q matrix, unit by unit */
+    s = 0;
+    for (i=0; i<C->N; i++) {
+	int Ti = C->unit_obs[i];
+	double qval;
+
+	for (j=0; j<h; j++) {
+	    nodej = lambda * C->gh_nodes->val[j];
+	    qval = 1.0;
+	    for (t=0; t<Ti; t++) {
+		ndxi = C->ndx->val[s+t];
+		sign = C->y[s+t] ? 1 : -1;
+		x = sign * (ndxi + nodej);
+		qval *= normal_cdf(x);
+	    }
+	    gretl_matrix_set(Q, i, j, qval);
+	}
+	s += Ti;
+    }
+
+    /* form the big R matrix */
+    for (j=0; j<h; j++) {
+	nodej = lambda * C->gh_nodes->val[j];
+	for (i=0; i<C->nobs; i++) {
+	    ndxi = C->ndx->val[i];
+	    sign = C->y[i] ? 1 : -1;
+	    x = sign * (ndxi + nodej);
+	    gretl_matrix_set(C->R, i, j, sign * invmills(-x));
+	}
+    }
+
+    gretl_matrix_multiply(Q, C->gh_wts, C->lik);
+
+    for (i=0; i<C->npar; i++) {
+	g[i] = 0.0;
+    }
+
+    s = 0;
+    for (i=0; i<C->N; i++) {
+	int ii, Ti = C->unit_obs[i];
+	double rtj, qij, tmp;
+
+	/* update the regular parameters */
+	for (ii=0; ii<k; ii++) {
+	    for (j=0; j<h; j++) {
+		qi->val[j] = 0.0;
+		qij = gretl_matrix_get(Q, i, j);
+		for (t=0; t<Ti; t++) {
+		    x = gretl_matrix_get(C->X, s+t, ii);
+		    rtj = gretl_matrix_get(C->R, s+t, j);
+		    qi->val[j] += x * rtj * qij;
+		}
+		qi->val[j] /= C->lik->val[i];
+	    }
+	    g[ii] += gretl_vector_dot_product(qi, C->gh_wts, &err);
+	}
+
+	/* update the variance parameter */
+	for (j=0; j<h; j++) {
+	    qi->val[j] = 0.0;
+	    qij = gretl_matrix_get(Q, i, j);
+	    for (t=0; t<Ti; t++) {
+		rtj = gretl_matrix_get(C->R, s+t, j);
+		qi->val[j] += qij * rtj;
+	    }
+	    qi->val[j] /= C->lik->val[i];
+	    qi->val[j] *= lambda * C->gh_nodes->val[j];
+	}	
+	tmp = gretl_vector_dot_product(qi, C->gh_wts, &err);
+	g[k] += tmp * lambda;
+
+	s += Ti;
+    }
+    
+    return err;
+}
+
 static double reprobit_ll (const double *theta, void *p)
 {
     reprob_container *C = (reprob_container *) p;
@@ -220,12 +334,7 @@ static double reprobit_ll (const double *theta, void *p)
     int i, j, t, s, h = C->qp;
     int err = 0;
 
-    /* note: theta and C->theta->val are the same object */
-    gretl_matrix_reuse(C->theta, C->npar - 1, 1);
-    err = gretl_matrix_multiply(C->X, C->theta, C->ndx);
-    gretl_matrix_reuse(C->theta, C->npar, 1);
-
-    lambda = exp(theta[C->npar-1]/2.0);
+    update_ndx(C, &lambda);
     gretl_matrix_zero(C->P);
 
     s = 0;
@@ -262,16 +371,29 @@ static double reprobit_ll (const double *theta, void *p)
     return C->ll;
 }
 
-static void transcribe_reprobit (MODEL *pmod, reprob_container *C)
+static int transcribe_reprobit (MODEL *pmod, reprob_container *C)
 {
+    gretl_matrix *Hinv;
     int Tmin = C->nobs, Tmax = 0;
     int i, k = C->npar - 1;
     double sigma;
+    int err = 0;
+
+    Hinv = hessian_inverse_from_score(C->theta->val, C->npar,
+				      reprobit_score,
+				      reprobit_ll,
+				      C, &err);
 
     for (i=0; i<k; i++) {
 	pmod->coeff[i] = C->theta->val[i];
-	pmod->sderr[i] = 0.0;
+	if (Hinv != NULL) {
+	    pmod->sderr[i] = sqrt(gretl_matrix_get(Hinv, i, i));
+	} else {
+	    pmod->sderr[i] = NADBL;
+	}
     }
+
+    gretl_matrix_free(Hinv);
 
     pmod->rsq = pmod->adjrsq = NADBL;
     pmod->lnL = C->ll;
@@ -289,6 +411,9 @@ static void transcribe_reprobit (MODEL *pmod, reprob_container *C)
     pmod->sigma = sigma = exp(C->theta->val[k]/2);
     pmod->rho = 1 - 1/(1 + sigma * sigma);
 
+    fprintf(stderr, "pmod->sigma = %g, pmod->rho = %g\n",
+	    pmod->sigma, pmod->rho);
+
     /* check that this is doing the right thing */
     binary_model_hatvars(pmod, C->ndx, C->y, OPT_E);
 
@@ -297,6 +422,8 @@ static void transcribe_reprobit (MODEL *pmod, reprob_container *C)
     gretl_model_set_int(pmod, "Tmax", Tmax);
 
     pmod->opt |= OPT_E;
+
+    return err;
 }
 
 MODEL reprobit_estimate (const int *list, DATASET *dset,
@@ -341,7 +468,7 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 
 	err = BFGS_max(C->theta->val, C->npar, 100, 1.0e-9, 
 		       &fc, &gc, reprobit_ll, C_LOGLIK, 
-		       NULL, C, NULL, opt, prn);
+		       reprobit_score, C, NULL, opt, prn);
 	
 	if (!err) {
 	    double lns2u = C->theta->val[C->npar-1];
