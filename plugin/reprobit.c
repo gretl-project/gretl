@@ -239,6 +239,7 @@ static int reprobit_score (double *theta, double *g, int npar,
 {
     reprob_container *C = (reprob_container *) p;
     gretl_matrix *Q, *qi;
+    const double *nodes = C->gh_nodes->val;
     double scale, x, qij, ndxi, node;
     int i, j, k, s, t, h = C->qp;
     int sign = 1;
@@ -256,7 +257,7 @@ static int reprobit_score (double *theta, double *g, int npar,
 	int Ti = C->unit_obs[i];
 
 	for (j=0; j<h; j++) {
-	    node = scale * C->gh_nodes->val[j];
+	    node = scale * nodes[j];
 	    qij = 1.0;
 	    for (t=0; t<Ti; t++) {
 		ndxi = C->ndx->val[s+t];
@@ -286,7 +287,7 @@ static int reprobit_score (double *theta, double *g, int npar,
 		x = qi->val[j] = 0.0;
 		qij = gretl_matrix_get(Q, i, j);
 		if (ii == k) {
-		    x = scale * C->gh_nodes->val[j];
+		    x = scale * nodes[j];
 		}
 		for (t=0; t<Ti; t++) {
                     if (ii < k) {
@@ -300,7 +301,6 @@ static int reprobit_score (double *theta, double *g, int npar,
             tmp = gretl_vector_dot_product(qi, C->gh_wts, &err);
 	    g[ii] += (ii < k)? tmp : tmp * scale;
  	}
-
 	s += Ti;
     }
     
@@ -325,7 +325,7 @@ static double reprobit_ll (const double *theta, void *p)
 	    node = gretl_vector_get(C->gh_nodes, j);
 	    pit = 1.0;
 	    for (t=0; t<Ti; t++) {
-		x = gretl_vector_get(C->ndx, s+t) + scale * node;
+		x = C->ndx->val[s+t] + scale * node;
 		/* the probability */
 		pit *= normal_cdf(C->y[s+t] ? x : -x);
 		if (pit < 1.0e-30) {
