@@ -239,7 +239,7 @@ static int reprobit_score (double *theta, double *g, int npar,
 {
     reprob_container *C = (reprob_container *) p;
     gretl_matrix *Q, *qi;
-    double scale, x, ndxi, node;
+    double scale, x, qij, ndxi, node;
     int i, j, k, s, t, h = C->qp;
     int sign = 1;
     int err = 0;
@@ -254,18 +254,16 @@ static int reprobit_score (double *theta, double *g, int npar,
     s = 0;
     for (i=0; i<C->N; i++) {
 	int Ti = C->unit_obs[i];
-	double qval;
-
 	for (j=0; j<h; j++) {
 	    node = scale * C->gh_nodes->val[j];
-	    qval = 1.0;
+	    qij = 1.0;
 	    for (t=0; t<Ti; t++) {
 		ndxi = C->ndx->val[s+t];
 		sign = C->y[s+t] ? 1 : -1;
 		x = sign * (ndxi + node);
-		qval *= normal_cdf(x);
+		qij *= normal_cdf(x);
 	    }
-	    gretl_matrix_set(Q, i, j, qval);
+	    gretl_matrix_set(Q, i, j, qij);
 	}
 	s += Ti;
     }
@@ -290,7 +288,7 @@ static int reprobit_score (double *theta, double *g, int npar,
     s = 0;
     for (i=0; i<C->N; i++) {
 	int ii, Ti = C->unit_obs[i];
-	double rtj, qij, tmp;
+	double rtj, tmp;
 
 	/* update the regular parameters */
 	for (ii=0; ii<k; ii++) {
