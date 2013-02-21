@@ -266,6 +266,7 @@ static void transcribe_reprobit (MODEL *pmod, reprob_container *C)
 {
     int Tmin = C->nobs, Tmax = 0;
     int i, k = C->npar - 1;
+    double sigma;
 
     for (i=0; i<k; i++) {
 	pmod->coeff[i] = C->theta->val[i];
@@ -284,6 +285,9 @@ static void transcribe_reprobit (MODEL *pmod, reprob_container *C)
 	    Tmax = C->unit_obs[i];
 	}
     }
+
+    pmod->sigma = sigma = exp(C->theta->val[k]/2);
+    pmod->rho = 1 - 1/(1 + sigma * sigma);
 
     /* check that this is doing the right thing */
     binary_model_hatvars(pmod, C->ndx, C->y, OPT_E);
