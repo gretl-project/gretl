@@ -225,13 +225,13 @@ static int rep_container_fill (reprob_container *C,
     return err;
 }
 
-static void update_ndx (reprob_container *C, double *lambda)
+static void update_ndx (reprob_container *C, double *scale)
 {
     gretl_matrix_reuse(C->theta, C->npar-1, 1);
     gretl_matrix_multiply(C->X, C->theta, C->ndx);
     gretl_matrix_reuse(C->theta, C->npar, 1);
 
-    *lambda = exp(C->theta->val[C->npar-1]/2.0);
+    *scale = exp(C->theta->val[C->npar-1]/2.0);
 }
 
 static int reprobit_score (double *theta, double *g, int npar, 
@@ -239,7 +239,7 @@ static int reprobit_score (double *theta, double *g, int npar,
 {
     reprob_container *C = (reprob_container *) p;
     gretl_matrix *Q, *qi;
-    double lambda, x, ndxi, nodej;
+    double scale, x, ndxi, node;
     int i, j, k, s, t, h = C->qp;
     int sign = 1;
     int err = 0;
@@ -248,7 +248,7 @@ static int reprobit_score (double *theta, double *g, int npar,
     Q = C->P;   /* re-use existing storage of right size */
     qi = C->qi; /* reduce verbosity below */ 
 
-    update_ndx(C, &lambda);
+    update_ndx(C, &scale);
 
     /* form the Q matrix, unit by unit */
     s = 0;
@@ -257,12 +257,12 @@ static int reprobit_score (double *theta, double *g, int npar,
 	double qval;
 
 	for (j=0; j<h; j++) {
-	    nodej = lambda * C->gh_nodes->val[j];
+	    node = scale * C->gh_nodes->val[j];
 	    qval = 1.0;
 	    for (t=0; t<Ti; t++) {
 		ndxi = C->ndx->val[s+t];
 		sign = C->y[s+t] ? 1 : -1;
-		x = sign * (ndxi + nodej);
+		x = sign * (ndxi + node);
 		qval *= normal_cdf(x);
 	    }
 	    gretl_matrix_set(Q, i, j, qval);
@@ -272,11 +272,11 @@ static int reprobit_score (double *theta, double *g, int npar,
 
     /* form the big R matrix */
     for (j=0; j<h; j++) {
-	nodej = lambda * C->gh_nodes->val[j];
+	node = scale * C->gh_nodes->val[j];
 	for (i=0; i<C->nobs; i++) {
 	    ndxi = C->ndx->val[i];
 	    sign = C->y[i] ? 1 : -1;
-	    x = sign * (ndxi + nodej);
+	    x = sign * (ndxi + node);
 	    gretl_matrix_set(C->R, i, j, sign * invmills(-x));
 	}
     }
@@ -316,10 +316,10 @@ static int reprobit_score (double *theta, double *g, int npar,
 		qi->val[j] += qij * rtj;
 	    }
 	    qi->val[j] /= C->lik->val[i];
-	    qi->val[j] *= lambda * C->gh_nodes->val[j];
+	    qi->val[j] *= scale * C->gh_nodes->val[j];
 	}	
 	tmp = gretl_vector_dot_product(qi, C->gh_wts, &err);
-	g[k] += tmp * lambda;
+	g[k] += tmp * scale;
 
 	s += Ti;
     }
@@ -330,11 +330,11 @@ static int reprobit_score (double *theta, double *g, int npar,
 static double reprobit_ll (const double *theta, void *p)
 {
     reprob_container *C = (reprob_container *) p;
-    double lambda, x, pit, a;
+    double scale, x, pit, node;
     int i, j, t, s, h = C->qp;
     int err = 0;
 
-    update_ndx(C, &lambda);
+    update_ndx(C, &scale);
     gretl_matrix_zero(C->P);
 
     s = 0;
@@ -342,10 +342,10 @@ static double reprobit_ll (const double *theta, void *p)
 	int Ti = C->unit_obs[i];
 
 	for (j=0; j<h; j++) {
-	    a = gretl_vector_get(C->gh_nodes, j);
+	    node = gretl_vector_get(C->gh_nodes, j);
 	    pit = 1.0;
 	    for (t=0; t<Ti; t++) {
-		x = gretl_vector_get(C->ndx, s+t) + lambda * a;
+		x = gretl_vector_get(C->ndx, s+t) + scale * node;
 		/* the probability */
 		pit *= normal_cdf(C->y[s+t] ? x : -x);
 		if (pit < 1.0e-30) {
@@ -411,9 +411,6 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C)
     pmod->sigma = sigma = exp(C->theta->val[k]/2);
     pmod->rho = 1 - 1/(1 + sigma * sigma);
 
-    fprintf(stderr, "pmod->sigma = %g, pmod->rho = %g\n",
-	    pmod->sigma, pmod->rho);
-
     /* check that this is doing the right thing */
     binary_model_hatvars(pmod, C->ndx, C->y, OPT_E);
 
@@ -465,10 +462,22 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	}
 
 	rep_container_fill(C, &mod, dset, quadpoints);
-
+#if 1
 	err = BFGS_max(C->theta->val, C->npar, 100, 1.0e-9, 
 		       &fc, &gc, reprobit_ll, C_LOGLIK, 
 		       reprobit_score, C, NULL, opt, prn);
+#else
+	double crittol = 1.0e-06;
+	double gradtol = 1.0e-05;
+	gretlopt maxopt = opt & OPT_V;
+	int quiet = opt & OPT_Q;
+	int maxit = 1000;
+
+	err = newton_raphson_max(C->theta->val, C->npar, maxit, 
+				 crittol, gradtol, &fc, C_LOGLIK, 
+				 reprobit_ll, reprobit_score, NULL, 
+				 C, maxopt, quiet ? NULL : prn);
+#endif
 	
 	if (!err) {
 	    double lns2u = C->theta->val[C->npar-1];
