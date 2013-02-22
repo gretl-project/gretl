@@ -2773,11 +2773,11 @@ void binary_model_hatvars (MODEL *pmod,
 	} else {
 	    F = normal_cdf(ndxt);
 	    pmod->yhat[t] = F; 
-	    pmod->uhat[t] = y ? invmills(-ndxt) : -invmills(ndxt);
+	    pmod->uhat[t] = yt ? invmills(-ndxt) : -invmills(ndxt);
 	}
 
 	if (ll != NULL) {
-	    ll[t] = y ? log(F) : log(1-F);
+	    ll[t] = yt ? log(F) : log(1-F);
 	}
     }
 
