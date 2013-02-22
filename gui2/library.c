@@ -5433,7 +5433,8 @@ void residual_qq_plot (GtkAction *action, gpointer p)
     }
 
     if (!err) {
-	int list[2] = {1, origv};
+	/* uhat will be the last variable in dset */ 
+	int list[2] = {1, dset->v - 1};
 
 	err = qq_plot(list, dset, OPT_NONE);
 	gui_graph_handler(err);

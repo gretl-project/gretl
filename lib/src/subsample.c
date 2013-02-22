@@ -1988,7 +1988,12 @@ int add_dataset_to_model (MODEL *pmod, const DATASET *dset,
 	/* FIXME? */
 	destroy_dataset(pmod->dataset);
 	pmod->dataset = NULL;
-    }    
+    }
+
+#if SUBDEBUG
+    fprintf(stderr, "add_dataset_to_model: fullset=%p, pmod->submask=%p\n",
+	    (void *) fullset, (void *) pmod->submask);
+#endif
 
     if (fullset != NULL) {
 	sync_datainfo_members(dset);
@@ -2001,9 +2006,6 @@ int add_dataset_to_model (MODEL *pmod, const DATASET *dset,
 	/* no subsample info: pmod was estimated on the full dataset,
 	   so we'll reconstruct the full dataset */
 	sn = srcset->n;
-#if SUBDEBUG
-	fprintf(stderr, "pmod->submask = NULL, set sn = %d\n", sn);
-#endif
     } else {
 	/* pmod was estimated on a subsample, which has to 
 	   be reconstructed */
