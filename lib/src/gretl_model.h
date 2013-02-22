@@ -214,6 +214,7 @@ typedef enum {
     GRETL_TEST_CHOWDUM,
     GRETL_TEST_COMFAC,
     GRETL_TEST_INDEP,
+    GRETL_TEST_RE,
     GRETL_TEST_MAX
 } ModelTestType;
 

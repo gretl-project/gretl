@@ -158,19 +158,16 @@ static int params_init_from_pooled (MODEL *pmod,
        sample autocorrelation of (generalized) residuals. 
        sigma_a and beta are scaled accordingly
      */
-
-    int i, s, t;
+    double rho, sigma2_a, e, elag = 0.0;
+    double num = 0.0;
+    double den = 0.0;
     int k = par->rows - 1;
+    int i, t;
 
     if (pmod->ncoeff != k) {
 	fprintf(stderr, "What??? %d vs %d\n", pmod->ncoeff, k);
 	return E_NONCONF;
     }
-
-    s = 0;
-    double rho, sigma2_a, e, elag = 0.0;
-    double num = 0.0;
-    double den = 0.0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	e = pmod->uhat[t];
@@ -181,7 +178,7 @@ static int params_init_from_pooled (MODEL *pmod,
 	}
     }
 
-    rho = (num>0) ? num/den : 0.001;
+    rho = (num > 0) ? num/den : 0.001;
     sigma2_a = rho / (1-rho);
 
 #if 0
@@ -194,6 +191,7 @@ static int params_init_from_pooled (MODEL *pmod,
     }
 
     par->val[k] = log(sigma2_a);
+
     return 0;
 }
 
@@ -398,11 +396,30 @@ static double reprobit_ll (const double *theta, void *p)
     return C->ll;
 }
 
-static int transcribe_reprobit (MODEL *pmod, reprob_container *C)
+static int add_rho_LR_test (MODEL *pmod, double LR)
+{
+    ModelTest *test = model_test_new(GRETL_TEST_RE);
+    int err = 0;
+
+    if (test == NULL) {
+	err = E_ALLOC;
+    } else {
+        model_test_set_teststat(test, GRETL_STAT_LR);
+        model_test_set_dfn(test, 1);
+        model_test_set_value(test, LR);
+        model_test_set_pvalue(test, chisq_cdf_comp(1, LR));
+        maybe_add_test_to_model(pmod, test);
+    } 
+
+    return err;
+}
+
+static int transcribe_reprobit (MODEL *pmod, reprob_container *C,
+				const DATASET *dset)
 {
     gretl_matrix *Hinv;
     int Tmin = C->nobs, Tmax = 0;
-    int i, k = pmod->ncoeff;
+    int i, vi, k = pmod->ncoeff;
     double sigma, LR;
     int err = 0;
 
@@ -411,23 +428,41 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C)
 				      reprobit_ll,
 				      C, &err);
 
-    for (i=0; i<k; i++) {
-	pmod->coeff[i] = C->theta->val[i];
-	if (Hinv != NULL) {
-	    pmod->sderr[i] = sqrt(gretl_matrix_get(Hinv, i, i));
-	} else {
-	    pmod->sderr[i] = NADBL;
+    if (!err) {
+	err = gretl_model_allocate_param_names(pmod, C->npar);
+	if (!err) {
+	    for (i=0; i<k; i++) {
+		vi = pmod->list[i+2];
+		gretl_model_set_param_name(pmod, i, dset->varname[vi]);
+	    }
+	    gretl_model_set_param_name(pmod, k, "ln(sigma_u^2)");
 	}
+    }
+
+    err = gretl_model_write_coeffs(pmod, C->theta->val, C->npar);
+    
+    if (!err) {
+	err = gretl_model_add_hessian_vcv(pmod, Hinv);
     }
 
     gretl_matrix_free(Hinv);
 
+    if (err) {
+	return err;
+    }
+
     pmod->rsq = pmod->adjrsq = NADBL;
+
     LR = 2.0 * (C->ll - pmod->lnL);
-    /* LR test for var(u) = 0 */
-    fprintf(stderr, "LR = %g\n", LR);
+    add_rho_LR_test(pmod, LR);
+
     pmod->lnL = C->ll;
     mle_criteria(pmod, 1);
+
+    pmod->sigma = sigma = exp(C->theta->val[k]/2);
+    pmod->rho = 1 - 1/(1 + sigma * sigma);
+
+    binary_model_hatvars(pmod, C->ndx, C->y, OPT_E);
 
     for (i=0; i<C->N; i++) {
 	if (C->unit_obs[i] < Tmin) {
@@ -437,12 +472,6 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C)
 	    Tmax = C->unit_obs[i];
 	}
     }
-
-    pmod->sigma = sigma = exp(C->theta->val[k]/2);
-    pmod->rho = 1 - 1/(1 + sigma * sigma);
-
-    /* check that this is doing the right thing */
-    binary_model_hatvars(pmod, C->ndx, C->y, OPT_E);
 
     gretl_model_set_int(pmod, "n_included_units", C->N);
     gretl_model_set_int(pmod, "Tmin", Tmin);
@@ -500,27 +529,13 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	}
 
 	rep_container_fill(C, &mod, dset, quadpoints);
-#if 1
+
 	err = BFGS_max(C->theta->val, C->npar, 100, 1.0e-9, 
 		       &fc, &gc, reprobit_ll, C_LOGLIK, 
 		       reprobit_score, C, NULL, opt, prn);
-#else
-	double crittol = 1.0e-06;
-	double gradtol = 1.0e-05;
-	gretlopt maxopt = opt & OPT_V;
-	int quiet = opt & OPT_Q;
-	int maxit = 1000;
-
-	err = newton_raphson_max(C->theta->val, C->npar, maxit, 
-				 crittol, gradtol, &fc, C_LOGLIK, 
-				 reprobit_ll, reprobit_score, NULL, 
-				 C, maxopt, quiet ? NULL : prn);
-#endif
-	
 	if (!err) {
-	    transcribe_reprobit(&mod, C);
+	    transcribe_reprobit(&mod, C, dset);
 	}
-
 	rep_container_destroy(C);
     }
 

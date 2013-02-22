@@ -47,7 +47,9 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn);
 
 #define multinomial_model(m) (m->ci == LOGIT && gretl_model_get_int(m, "multinom"))
 
-#define logit_probit_model(m) (m->ci == LOGIT || m->ci == PROBIT) 
+#define logit_probit_model(m) (m->ci == LOGIT || m->ci == PROBIT)
+
+#define re_probit_model(m) (m->ci == PROBIT && (m->opt & OPT_E))
 
 #define liml_equation(m) (gretl_model_get_int(m, "method") == SYS_METHOD_LIML)
 
@@ -564,9 +566,17 @@ static void print_duration_alpha (const MODEL *pmod, PRN *prn)
     }
 }
 
-static void print_biprobit_rho (const MODEL *pmod, PRN *prn)
+static void print_probit_rho (const MODEL *pmod, PRN *prn)
 {
     ensure_vsep(prn);
+
+    if (re_probit_model(pmod)) {
+	if (tex_format(prn)) {
+	    pprintf(prn, "$\\hat{\\sigma_u}$ = %.5f\n", pmod->sigma);
+	} else {
+	    pprintf(prn, "sigma_u = %g\n", pmod->sigma);
+	}
+    }
 
     if (tex_format(prn)) {
 	double r = pmod->rho;
@@ -578,7 +588,7 @@ static void print_biprobit_rho (const MODEL *pmod, PRN *prn)
 	}	    
     } else {
 	pprintf(prn, "rho = %g\n", pmod->rho);
-    }	
+    }
 
     gretl_prn_newline(prn);
 }
@@ -3175,6 +3185,11 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 	print_middle_table(pmod, prn, MIDDLE_REGULAR);
     }
 
+    /* random effects probit */
+    if (re_probit_model(pmod)) {
+	print_probit_rho(pmod, prn);
+    }
+
     /* additional stats/info for some cases */
     if ((pmod->aux == AUX_SYS && liml_equation(pmod)) || 
 	liml_model(pmod)) {
@@ -3204,7 +3219,7 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
     } else if (pmod->ci == DURATION) {
 	print_duration_alpha(pmod, prn);
     } else if (pmod->ci == BIPROBIT) {
-	print_biprobit_rho(pmod, prn);
+	print_probit_rho(pmod, prn);
     }
 
     /* FIXME alternate R^2 measures (within, centered) */

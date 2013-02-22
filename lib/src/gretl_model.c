@@ -3421,6 +3421,9 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_INDEP,
       N_("Test of independence"),
       N_("rho = 0") },
+    { GRETL_TEST_RE,
+      N_("LR test for rho = 0"), 
+      NULL },
     { GRETL_TEST_MAX, NULL, NULL }
 }; 
 
