@@ -192,7 +192,11 @@ static int rep_container_fill (reprob_container *C,
 	/* use pooled probit as a starting point */
 	C->theta->val[i] = pmod->coeff[i];
     }
-    C->theta->val[k-1] = log(0.5); /* rho = 0.5 */
+    if (pmod->ncoeff == k) {
+	C->theta->val[k-1] = log(pmod->coeff[k-1]);
+    } else {
+	C->theta->val[k-1] = log(0.5); /* rho = 0.5 */
+    }
 
     /* write the data into C->y and C->X, skipping
        any observations with missing values */
@@ -263,8 +267,9 @@ static int reprobit_score (double *theta, double *g, int npar,
 		ndxi = C->ndx->val[s+t];
 		sign = C->y[s+t] ? 1 : -1;
 		x = sign * (ndxi + node);
-		gretl_matrix_set(C->R, s+t, j, sign * invmills(-x));
 		qij *= normal_cdf(x);
+		x = sign * invmills(-x);
+		gretl_matrix_set(C->R, s+t, j, x);
 	    }
 	    gretl_matrix_set(Q, i, j, qij);
 	}
@@ -355,8 +360,8 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C)
 {
     gretl_matrix *Hinv;
     int Tmin = C->nobs, Tmax = 0;
-    int i, k = C->npar - 1;
-    double sigma;
+    int i, k = pmod->ncoeff;
+    double sigma, LR;
     int err = 0;
 
     Hinv = hessian_inverse_from_score(C->theta->val, C->npar,
@@ -376,6 +381,9 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C)
     gretl_matrix_free(Hinv);
 
     pmod->rsq = pmod->adjrsq = NADBL;
+    LR = 2.0 * (C->ll - pmod->lnL);
+    /* LR test for var(u) = 0 */
+    fprintf(stderr, "LR = %g\n", LR);
     pmod->lnL = C->ll;
     mle_criteria(pmod, 1);
 
@@ -403,31 +411,33 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C)
     return err;
 }
 
+static int reprobit_init (MODEL *pmod, const int *list,
+			  DATASET *dset, PRN *prn)
+{
+    int *tmplist = gretl_list_copy(list);
+
+    if (tmplist == NULL) {
+	gretl_model_init(pmod);
+	pmod->errcode = E_ALLOC;
+    } else {
+	*pmod = binary_probit(tmplist, dset, OPT_A | OPT_P | OPT_X, prn);
+	if (pmod->errcode) {
+	    fprintf(stderr, "reprobit_estimate: error %d in "
+		    "initial probit\n", pmod->errcode);
+	}
+	free(tmplist);
+    }
+
+    return pmod->errcode;
+}
+
 MODEL reprobit_estimate (const int *list, DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
     MODEL mod;
-    int *tmplist = NULL;
-    int err = 0;
+    int err;
 
-    gretl_model_init(&mod);
-
-    tmplist = gretl_list_copy(list);
-    if (tmplist == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }    
-
-    /* baseline: estimate via pooled probit */
-    mod = binary_probit(tmplist, dset, OPT_A | OPT_P | OPT_X, prn);
-    if (mod.errcode) {
-	err = mod.errcode;
-	fprintf(stderr, "real_panel_model: error %d in intial OLS\n", 
-		mod.errcode);
-	goto bailout;
-    } 
-
-    free(tmplist);
+    err = reprobit_init(&mod, list, dset, prn);
 
     if (!err) {
 	/* do the actual reprobit stuff */
@@ -460,12 +470,6 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 #endif
 	
 	if (!err) {
-	    double lns2u = C->theta->val[C->npar-1];
-	    double s2u = exp(lns2u);
-
-	    pprintf(prn, "estimate of ln(var(u)) = %g\n", lns2u);
-	    pprintf(prn, "rho = %g\n", s2u / (1 + s2u));
-	    
 	    transcribe_reprobit(&mod, C);
 	}
 
