@@ -627,7 +627,7 @@ static void retrieve_tobit_info (MODEL *pmod)
     } 
 }	
 
-/* support for the "Modify model..." menu item */
+/* support for the "Modify model..." Edit menu item */
 
 void selector_from_model (windata_t *vwin)
 {

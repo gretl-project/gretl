@@ -72,7 +72,8 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 static gint check_VAR_menu (GtkWidget *w, GdkEventButton *eb, 
 			    gpointer data);
 static void model_copy_callback (GtkAction *action, gpointer p);
-static int set_sample_from_model (MODEL *pmod);
+static int set_sample_from_model (void *ptr, int role);
+static gboolean maybe_set_sample_from_model (void *ptr, int role);
 
 static void close_model (GtkAction *action, gpointer data)
 {
@@ -126,22 +127,41 @@ gretlopt get_tex_eqn_opt (void)
     return tex_eqn_opt;
 }
 
+static void vwin_get_t1_t2 (void *ptr, int role, int *t1, int *t2)
+{
+    if (role == VIEW_MODEL) {
+	MODEL *pmod = ptr;
+
+	*t1 = pmod->t1;
+	*t2 = pmod->t2;
+    } else if (role == VAR || role == VECM) {
+	GRETL_VAR *var = ptr;
+
+	*t1 = var->t1;
+	*t2 = var->t2;
+    } else if (role == SYSTEM) {
+	equation_system *sys = ptr;
+
+	*t1 = sys->t1;
+	*t2 = sys->t2;
+    }
+}
+
 static void model_revise_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
-    
-    selector_from_model(vwin);
-}
+    int ok = 1, t1 = 0, t2 = 0;
 
-#if 0
-static void model_sample_callback (GtkAction *action, gpointer p)
-{
-    windata_t *vwin = (windata_t *) p;
-    MODEL *pmod = (MODEL *) vwin->data;
-    
-    set_sample_from_model(pmod);
+    vwin_get_t1_t2(vwin->data, vwin->role, &t1, &t2);
+
+    if (t1 != dataset->t1 || t2 != dataset->t2) {
+	ok = maybe_set_sample_from_model(vwin->data, vwin->role);
+    }
+
+    if (ok) {
+	selector_from_model(vwin);
+    }
 }
-#endif
 
 gchar *gretl_window_title (const char *s)
 {
@@ -4498,33 +4518,56 @@ static void add_bundle_menu_items (windata_t *vwin)
     }
 }
 
-static int set_sample_from_model (MODEL *pmod)
+static int set_sample_from_model (void *ptr, int role)
 {
-    int full = (pmod->submask == NULL);
+    MODEL *pmod = NULL;
+    int range_set = 0;
     int err = 0;
+
+    if (role == VIEW_MODEL) {
+	pmod = ptr;
+    }
 
     /* first restore the full dataset */
     err = restore_full_sample(dataset, NULL);
 
     /* then, if the model was subsampled, restore the subsample */
-    if (!err && !full) {
-	err = restrict_sample_from_mask(pmod->submask, dataset, OPT_NONE);
+    if (!err) {
+	if (pmod != NULL && pmod->submask != NULL) {
+	    err = restrict_sample_from_mask(pmod->submask, dataset, OPT_NONE);
+	    range_set = 1;
+	} else {
+	    int t1 = 0, t2 = 0;
+
+	    vwin_get_t1_t2(ptr, role, &t1, &t2);
+	    if (t1 == 0 && t2 == 0) {
+		err = E_DATA;
+	    } else if (t1 != dataset->t1 || t2 != dataset->t2) {
+		dataset->t1 = t1;
+		dataset->t2 = t2;
+		range_set = 1;
+	    }
+	}
     }
 
     if (err) {
 	gui_errmsg(err);
     } else {
-	if (full) {
-	    restore_sample_state(FALSE);
-	    lib_command_strcpy("smpl --full");
-	    record_command_verbatim();
-	} else {
+	if (range_set) {
 	    char comment[64];
 
 	    restore_sample_state(TRUE);
-	    sprintf(comment, "# restored sample from model %d\n", pmod->ID);
+	    if (pmod != NULL) {
+		sprintf(comment, "# restored sample from model %d\n", pmod->ID);
+	    } else {
+		strcpy(comment, "# restored sample from model\n");
+	    }
 	    add_command_to_stack(comment);
-	}
+	} else {
+	    restore_sample_state(FALSE);
+	    lib_command_strcpy("smpl --full");
+	    record_command_verbatim();
+	}	    
 
 	mark_session_changed();
 	set_sample_label(dataset);
@@ -4537,7 +4580,7 @@ static int set_sample_from_model (MODEL *pmod)
    (sample mismatch) is successfully handled, else FALSE.
 */
 
-static gboolean maybe_set_sample_from_model (MODEL *pmod)
+static gboolean maybe_set_sample_from_model (void *ptr, int role)
 {
     const char *msg = N_("The model sample differs from the dataset sample,\n"
 			 "so some menu options will be disabled.\n\n"
@@ -4551,7 +4594,7 @@ static gboolean maybe_set_sample_from_model (MODEL *pmod)
 	return FALSE;
     }
 
-    err = set_sample_from_model(pmod);
+    err = set_sample_from_model(ptr, role);
 
     return (err == 0);
 }
@@ -4596,7 +4639,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     }    
 
     if (s && !ok) {
-	ok = maybe_set_sample_from_model(pmod);
+	ok = maybe_set_sample_from_model(pmod, VIEW_MODEL);
 	if (ok) {
 	    return FALSE;
 	}
