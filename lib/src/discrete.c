@@ -2768,7 +2768,7 @@ void binary_model_hatvars (MODEL *pmod,
 
 	if (pmod->ci == LOGIT) {
 	    F = exp(ndxt) / (1.0 + exp(ndxt));
-	    pmod->yhat[t] = F; 
+	    pmod->yhat[t] = F;
 	    pmod->uhat[t] = yt - pmod->yhat[t];
 	} else {
 	    F = normal_cdf(ndxt);

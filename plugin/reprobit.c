@@ -149,6 +149,54 @@ static int reprobit_obs_accounts (reprob_container *C,
     return 0;
 }
 
+static int params_init_from_pooled (MODEL *pmod, 
+				    gretl_vector *par)
+{
+    /* 
+       use pooled probit as a starting point; an initial 
+       guess of rho is obtained by a rough estimate of the
+       sample autocorrelation of (generalized) residuals. 
+       sigma_a and beta are scaled accordingly
+     */
+
+    int i, s, t;
+    int k = par->rows - 1;
+
+    if (pmod->ncoeff != k) {
+	fprintf(stderr, "What??? %d vs %d\n", pmod->ncoeff, k);
+	return E_NONCONF;
+    }
+
+    s = 0;
+    double rho, sigma2_a, e, elag = 0.0;
+    double num = 0.0;
+    double den = 0.0;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	e = pmod->uhat[t];
+	if (!xna(e)) {
+	    num += e * elag;
+	    den += e * e;
+	    elag = e;
+	}
+    }
+
+    rho = (num>0) ? num/den : 0.001;
+    sigma2_a = rho / (1-rho);
+
+#if 0
+    fprintf(stderr, "num = %g, den = %g\n", num, den);
+    fprintf(stderr, "Initial rho = %g (sigma2_a = %g)\n", rho, sigma2_a);
+#endif
+
+    for (i=0; i<k; i++) {
+	par->val[i] = pmod->coeff[i] / (1-rho);
+    }
+
+    par->val[k] = log(sigma2_a);
+    return 0;
+}
+
 static int rep_container_fill (reprob_container *C,
 			       MODEL *pmod,
 			       DATASET *dset, 
@@ -188,15 +236,9 @@ static int rep_container_fill (reprob_container *C,
 	return E_ALLOC;
     }
 
-    for (i=0; i<k-1; i++) {
-	/* use pooled probit as a starting point */
-	C->theta->val[i] = pmod->coeff[i];
-    }
-    if (pmod->ncoeff == k) {
-	C->theta->val[k-1] = log(pmod->coeff[k-1]);
-    } else {
-	C->theta->val[k-1] = log(0.5); /* rho = 0.5 */
-    }
+    /* initialize the parameters vector */
+
+    err = params_init_from_pooled(pmod, C->theta);
 
     /* write the data into C->y and C->X, skipping
        any observations with missing values */
