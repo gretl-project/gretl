@@ -484,8 +484,14 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
     if (!err) {
 	/* do the actual reprobit stuff */
 	reprob_container *C;
-	int quadpoints = 32;
 	int fc, gc;
+	int quadpoints;
+	
+	if (opt & OPT_G) {
+	    quadpoints = get_optval_int(mod.ci, OPT_G, &err);
+	} else {
+	    quadpoints = 32;
+	}
 
 	C = rep_container_new(list);
 	if (C == NULL) {

@@ -412,6 +412,7 @@ struct gretl_option gretl_opts[] = {
     { PROBIT,   OPT_C, "cluster", 2 },
     { PROBIT,   OPT_V, "verbose", 0 },
     { PROBIT,   OPT_E, "random-effects", 0 },
+    { PROBIT,   OPT_G, "quadpoints", 2 },
     { QQPLOT,   OPT_R, "raw", 0 },
     { QQPLOT,   OPT_Z, "z-scores", 0 },      
     { QUANTREG, OPT_I, "intervals", 1 },
