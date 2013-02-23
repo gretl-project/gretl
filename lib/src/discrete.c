@@ -2988,7 +2988,7 @@ static MODEL binary_model (int ci, const int *inlist,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL binary_logit (int *list, DATASET *dset, 
+MODEL binary_logit (const int *list, DATASET *dset, 
 		    gretlopt opt, PRN *prn)
 {
     return binary_model(LOGIT, list, dset, opt, prn);
@@ -3011,7 +3011,7 @@ MODEL binary_logit (int *list, DATASET *dset,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL binary_probit (int *list, DATASET *dset, 
+MODEL binary_probit (const int *list, DATASET *dset, 
 		     gretlopt opt, PRN *prn)
 {
     return binary_model(PROBIT, list, dset, opt, prn);

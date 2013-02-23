@@ -20,10 +20,10 @@
 #ifndef DISCRETE_H
 #define DISCRETE_H
 
-MODEL binary_logit (int *list, DATASET *dset, 
+MODEL binary_logit (const int *list, DATASET *dset, 
 		    gretlopt opt, PRN *prn);
 
-MODEL binary_probit (int *list, DATASET *dset, 
+MODEL binary_probit (const int *list, DATASET *dset, 
 		     gretlopt opt, PRN *prn);
 
 MODEL ordered_logit (int *list, DATASET *dset, 

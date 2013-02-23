@@ -21,6 +21,7 @@
 #include "gretl_model.h"
 #include "matrix_extra.h"
 #include "gretl_bfgs.h"
+#include "libset.h"
 
 typedef struct reprob_container_ reprob_container;
 
@@ -29,10 +30,12 @@ struct reprob_container_ {
     int depvar;		     /* location of y in array Z */
     int npar;		     /* no. of parameters */
     double ll;		     /* log-likelihood */
+    double scale;            /* ln(sigma^2_u) */
     MODEL *pmod;             /* pointer to model struct */
 
     int N;	             /* number of included units */
-    int Tmax;                /* maximum tim-series observations */
+    int T;                   /* time dimension of panel */
+    int Tmax;                /* max usable time-series observations */
     int *unit_obs;           /* array of effective unit T's */
     int nobs;                /* total number of observations */
     int qp;                  /* number of quadrature points */
@@ -47,7 +50,7 @@ struct reprob_container_ {
     gretl_matrix *gh_wts;    /* Gauss-Hermite quadrature weights */
     gretl_matrix *P;         /* probabilities (by individual and qpoints) */
     gretl_matrix *lik;       /* probabilities (by individual) */
-    gretl_vector *theta;     /* parameters (including log of variance 
+    gretl_vector *beta;      /* parameters (excluding log of variance 
 				of individual effect) */
     gretl_matrix *qi;        /* storage for score caculation */
 };
@@ -105,11 +108,12 @@ static int reprobit_obs_accounts (reprob_container *C,
     int i, t;
 
     C->nobs = pmod->nobs;
+    C->T = dset->pd;
 
     /* count the included units */
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
-	    unit = t / dset->pd;
+	    unit = t / C->T;
 	    if (unit != ubak) {
 		C->N += 1;
 	    }
@@ -133,7 +137,7 @@ static int reprobit_obs_accounts (reprob_container *C,
     /* build the obs-count array */
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
-	    unit = t / dset->pd;
+	    unit = t / C->T;
 	    if (t > pmod->t1 && unit != ubak) {
 		if (C->unit_obs[i] > C->Tmax) {
 		    C->Tmax = C->unit_obs[i];
@@ -149,19 +153,19 @@ static int reprobit_obs_accounts (reprob_container *C,
     return 0;
 }
 
+/*  Use pooled probit as a starting point; an initial 
+    guess of rho is obtained by a rough estimate of the
+    sample autocorrelation of (generalized) residuals; 
+    sigma_a and beta are then scaled accordingly.
+*/
+
 static int params_init_from_pooled (MODEL *pmod, 
-				    gretl_vector *par)
+				    reprob_container *C,
+				    double *theta)
 {
-    /* 
-       use pooled probit as a starting point; an initial 
-       guess of rho is obtained by a rough estimate of the
-       sample autocorrelation of (generalized) residuals. 
-       sigma_a and beta are scaled accordingly
-     */
     double rho, sigma2_a, e, elag = 0.0;
-    double num = 0.0;
-    double den = 0.0;
-    int k = par->rows - 1;
+    double num = 0.0, den = 0.0;
+    int k = C->npar - 1;
     int i, t;
 
     if (pmod->ncoeff != k) {
@@ -170,6 +174,11 @@ static int params_init_from_pooled (MODEL *pmod,
     }
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (t / C->T > (t-1) / C->T) {
+	    /* first obs of a new unit */
+	    elag = 0.0;
+	    continue;
+	}
 	e = pmod->uhat[t];
 	if (!xna(e)) {
 	    num += e * elag;
@@ -178,19 +187,19 @@ static int params_init_from_pooled (MODEL *pmod,
 	}
     }
 
-    rho = (num > 0) ? num/den : 0.001;
+    rho = (num > 0.0) ? num/den : 0.001;
     sigma2_a = rho / (1-rho);
 
-#if 0
+#if 1
     fprintf(stderr, "num = %g, den = %g\n", num, den);
     fprintf(stderr, "Initial rho = %g (sigma2_a = %g)\n", rho, sigma2_a);
 #endif
 
     for (i=0; i<k; i++) {
-	par->val[i] = pmod->coeff[i] / (1-rho);
+	C->beta->val[i] = theta[i] = pmod->coeff[i] / (1-rho);
     }
 
-    par->val[k] = log(sigma2_a);
+    C->scale = theta[k] = log(sigma2_a);
 
     return 0;
 }
@@ -198,10 +207,11 @@ static int params_init_from_pooled (MODEL *pmod,
 static int rep_container_fill (reprob_container *C,
 			       MODEL *pmod,
 			       DATASET *dset, 
-			       int quadpoints)
+			       int quadpoints,
+			       double **ptheta)
 {
     gretl_matrix *tmp = NULL;
-    int vj, k = C->npar;
+    int vj, k = C->npar - 1;
     int i, j, t, s;
     double x;
     int err;
@@ -215,17 +225,22 @@ static int rep_container_fill (reprob_container *C,
     C->qp = quadpoints;
 
     C->y = malloc(C->nobs * sizeof *C->y);
-    C->X = gretl_matrix_alloc(C->nobs, k-1);
+    C->X = gretl_matrix_alloc(C->nobs, k);
     C->R = gretl_matrix_alloc(C->nobs, C->qp);
 
     if (C->y == NULL || C->X == NULL || C->R == NULL) {
 	return E_ALLOC;
     }
 
+    *ptheta = malloc(C->npar * sizeof **ptheta);
+    if (*ptheta == NULL) {
+	return E_ALLOC;
+    }
+
     C->B = gretl_matrix_block_new(&C->ndx, C->nobs, 1,
 				  &C->P, C->N, C->qp,
 				  &C->lik, C->N, 1,
-				  &C->theta, k, 1,
+				  &C->beta, k, 1,
 				  &C->gh_nodes, 1, C->qp,
 				  &C->gh_wts, C->qp, 1,
 				  &C->qi, 1, C->qp,
@@ -234,9 +249,8 @@ static int rep_container_fill (reprob_container *C,
 	return E_ALLOC;
     }
 
-    /* initialize the parameters vector */
-
-    err = params_init_from_pooled(pmod, C->theta);
+    /* initialize the parameter vector */
+    err = params_init_from_pooled(pmod, C, *ptheta);
 
     /* write the data into C->y and C->X, skipping
        any observations with missing values */
@@ -245,7 +259,7 @@ static int rep_container_fill (reprob_container *C,
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
 	    C->y[s] = (dset->Z[C->depvar][t] != 0);
-	    for (j=0; j<k-1; j++) {
+	    for (j=0; j<k; j++) {
 		vj = C->list[j+2];
 		x = dset->Z[vj][t];
 		gretl_matrix_set(C->X, s, j, x);
@@ -269,13 +283,17 @@ static int rep_container_fill (reprob_container *C,
     return err;
 }
 
-static void update_ndx (reprob_container *C, double *scale)
+static void update_ndx (reprob_container *C, const double *theta)
 {
-    gretl_matrix_reuse(C->theta, C->npar-1, 1);
-    gretl_matrix_multiply(C->X, C->theta, C->ndx);
-    gretl_matrix_reuse(C->theta, C->npar, 1);
+    int i;
 
-    *scale = exp(C->theta->val[C->npar-1]/2.0);
+    for (i=0; i<C->npar-1; i++) {
+	C->beta->val[i] = theta[i];
+    }
+
+    gretl_matrix_multiply(C->X, C->beta, C->ndx);
+
+    C->scale = exp(theta[C->npar-1]/2.0);
 }
 
 static int reprobit_score (double *theta, double *g, int npar, 
@@ -284,7 +302,7 @@ static int reprobit_score (double *theta, double *g, int npar,
     reprob_container *C = (reprob_container *) p;
     gretl_matrix *Q, *qi;
     const double *nodes = C->gh_nodes->val;
-    double scale, x, qij, ndxi, node;
+    double x, qij, ndxi, node;
     int i, j, k, s, t, h = C->qp;
     int sign = 1;
     int err = 0;
@@ -293,7 +311,7 @@ static int reprobit_score (double *theta, double *g, int npar,
     Q = C->P;   /* re-use existing storage of right size */
     qi = C->qi; /* reduce verbosity below */ 
 
-    update_ndx(C, &scale);
+    update_ndx(C, theta);
 
     /* form the Q and R matrices */
     s = 0;
@@ -301,7 +319,7 @@ static int reprobit_score (double *theta, double *g, int npar,
 	int Ti = C->unit_obs[i];
 
 	for (j=0; j<h; j++) {
-	    node = scale * nodes[j];
+	    node = C->scale * nodes[j];
 	    qij = 1.0;
 	    for (t=0; t<Ti; t++) {
 		ndxi = C->ndx->val[s+t];
@@ -332,7 +350,7 @@ static int reprobit_score (double *theta, double *g, int npar,
 		x = qi->val[j] = 0.0;
 		qij = gretl_matrix_get(Q, i, j);
 		if (ii == k) {
-		    x = scale * nodes[j];
+		    x = C->scale * nodes[j];
 		}
 		for (t=0; t<Ti; t++) {
                     if (ii < k) {
@@ -344,7 +362,7 @@ static int reprobit_score (double *theta, double *g, int npar,
 		qi->val[j] /= C->lik->val[i];
 	    }
             tmp = gretl_vector_dot_product(qi, C->gh_wts, &err);
-	    g[ii] += (ii < k)? tmp : tmp * scale;
+	    g[ii] += (ii < k)? tmp : tmp * C->scale;
  	}
 	s += Ti;
     }
@@ -355,11 +373,11 @@ static int reprobit_score (double *theta, double *g, int npar,
 static double reprobit_ll (const double *theta, void *p)
 {
     reprob_container *C = (reprob_container *) p;
-    double scale, x, pit, node;
+    double x, pit, node;
     int i, j, t, s, h = C->qp;
     int err = 0;
 
-    update_ndx(C, &scale);
+    update_ndx(C, theta);
     gretl_matrix_zero(C->P);
 
     s = 0;
@@ -370,7 +388,7 @@ static double reprobit_ll (const double *theta, void *p)
 	    node = gretl_vector_get(C->gh_nodes, j);
 	    pit = 1.0;
 	    for (t=0; t<Ti; t++) {
-		x = C->ndx->val[s+t] + scale * node;
+		x = C->ndx->val[s+t] + C->scale * node;
 		/* the probability */
 		pit *= normal_cdf(C->y[s+t] ? x : -x);
 		if (pit < 1.0e-30) {
@@ -415,15 +433,15 @@ static int add_rho_LR_test (MODEL *pmod, double LR)
 }
 
 static int transcribe_reprobit (MODEL *pmod, reprob_container *C,
-				const DATASET *dset)
+				double *theta, const DATASET *dset)
 {
     gretl_matrix *Hinv;
-    int Tmin = C->nobs, Tmax = 0;
+    int Tmin = C->nobs;
     int i, vi, k = pmod->ncoeff;
     double sigma, LR;
     int err = 0;
 
-    Hinv = hessian_inverse_from_score(C->theta->val, C->npar,
+    Hinv = hessian_inverse_from_score(theta, C->npar,
 				      reprobit_score,
 				      reprobit_ll,
 				      C, &err);
@@ -439,7 +457,9 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C,
 	}
     }
 
-    err = gretl_model_write_coeffs(pmod, C->theta->val, C->npar);
+    if (!err) {
+	err = gretl_model_write_coeffs(pmod, theta, C->npar);
+    }
     
     if (!err) {
 	err = gretl_model_add_hessian_vcv(pmod, Hinv);
@@ -451,55 +471,36 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C,
 	return err;
     }
 
+    /* mask McFadden R^2 */
     pmod->rsq = pmod->adjrsq = NADBL;
 
     LR = 2.0 * (C->ll - pmod->lnL);
     add_rho_LR_test(pmod, LR);
 
+    /* update the likelihood-based measures */
     pmod->lnL = C->ll;
     mle_criteria(pmod, 1);
 
-    pmod->sigma = sigma = exp(C->theta->val[k]/2);
+    pmod->sigma = sigma = exp(theta[k]/2);
     pmod->rho = 1 - 1/(1 + sigma * sigma);
 
+    /* note: this may need more thought */
     binary_model_hatvars(pmod, C->ndx, C->y, OPT_E);
 
+    /* panel observation stats */
     for (i=0; i<C->N; i++) {
 	if (C->unit_obs[i] < Tmin) {
 	    Tmin = C->unit_obs[i];
-	}
-	if (C->unit_obs[i] > Tmax) {
-	    Tmax = C->unit_obs[i];
 	}
     }
 
     gretl_model_set_int(pmod, "n_included_units", C->N);
     gretl_model_set_int(pmod, "Tmin", Tmin);
-    gretl_model_set_int(pmod, "Tmax", Tmax);
+    gretl_model_set_int(pmod, "Tmax", C->Tmax);
 
     pmod->opt |= OPT_E;
 
     return err;
-}
-
-static int reprobit_init (MODEL *pmod, const int *list,
-			  DATASET *dset, PRN *prn)
-{
-    int *tmplist = gretl_list_copy(list);
-
-    if (tmplist == NULL) {
-	gretl_model_init(pmod);
-	pmod->errcode = E_ALLOC;
-    } else {
-	*pmod = binary_probit(tmplist, dset, OPT_A | OPT_P | OPT_X, prn);
-	if (pmod->errcode) {
-	    fprintf(stderr, "reprobit_estimate: error %d in "
-		    "initial probit\n", pmod->errcode);
-	}
-	free(tmplist);
-    }
-
-    return pmod->errcode;
 }
 
 MODEL reprobit_estimate (const int *list, DATASET *dset,
@@ -508,18 +509,25 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
     MODEL mod;
     int err;
 
-    err = reprobit_init(&mod, list, dset, prn);
+    mod = binary_probit(list, dset, OPT_A | OPT_P | OPT_X, prn);
+    if ((err = mod.errcode) != 0) {
+	fprintf(stderr, "reprobit_estimate: error %d in "
+		"initial probit\n", err);
+    }    
 
     if (!err) {
 	/* do the actual reprobit stuff */
 	reprob_container *C;
-	int fc, gc;
-	int quadpoints;
+	double *theta = NULL;
+	int quadpoints = 32;
+	int fcount;
 	
 	if (opt & OPT_G) {
-	    quadpoints = get_optval_int(mod.ci, OPT_G, &err);
-	} else {
-	    quadpoints = 32;
+	    int qp = get_optval_int(mod.ci, OPT_G, &err);
+
+	    if (qp >= 3 && qp <= 100) {
+		quadpoints = qp;
+	    }
 	}
 
 	C = rep_container_new(list);
@@ -528,15 +536,36 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	    goto bailout;
 	}
 
-	rep_container_fill(C, &mod, dset, quadpoints);
+	err = rep_container_fill(C, &mod, dset, quadpoints, &theta);
+	if (err) {
+	    goto bailout;
+	}	
 
-	err = BFGS_max(C->theta->val, C->npar, 100, 1.0e-9, 
-		       &fc, &gc, reprobit_ll, C_LOGLIK, 
-		       reprobit_score, C, NULL, opt, prn);
-	if (!err) {
-	    transcribe_reprobit(&mod, C, dset);
+	if (libset_get_int(GRETL_OPTIM) == OPTIM_NEWTON) {
+	    double crittol = 1.0e-06;
+	    double gradtol = 1.0e-05;
+	    gretlopt maxopt = opt & OPT_V;
+	    int quiet = opt & OPT_Q;
+	    int maxit = 100;
+
+	    err = newton_raphson_max(theta, C->npar, maxit, 
+				     crittol, gradtol, &fcount, C_LOGLIK, 
+				     reprobit_ll, reprobit_score, NULL, 
+				     C, maxopt, quiet ? NULL : prn);
+	} else {
+	    int gcount;
+
+	    err = BFGS_max(theta, C->npar, 100, 1.0e-9, 
+			   &fcount, &gcount, reprobit_ll, C_LOGLIK, 
+			   reprobit_score, C, NULL, opt, prn);
 	}
+
+	if (!err) {
+	    transcribe_reprobit(&mod, C, theta, dset);
+	}
+
 	rep_container_destroy(C);
+	free(theta);	
     }
 
  bailout:
