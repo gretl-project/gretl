@@ -373,7 +373,7 @@ static int reprobit_score (double *theta, double *g, int npar,
 static double reprobit_ll (const double *theta, void *p)
 {
     reprob_container *C = (reprob_container *) p;
-    double x, pit, node;
+    double x, pij, node;
     int i, j, t, s, h = C->qp;
     int err = 0;
 
@@ -386,16 +386,16 @@ static double reprobit_ll (const double *theta, void *p)
 
 	for (j=0; j<h; j++) {
 	    node = gretl_vector_get(C->gh_nodes, j);
-	    pit = 1.0;
+	    pij = 1.0;
 	    for (t=0; t<Ti; t++) {
 		x = C->ndx->val[s+t] + C->scale * node;
 		/* the probability */
-		pit *= normal_cdf(C->y[s+t] ? x : -x);
-		if (pit < 1.0e-30) {
+		pij *= normal_cdf(C->y[s+t] ? x : -x);
+		if (pij < 1.0e-30) {
 		    break;
 		}
 	    }
-	    gretl_matrix_set(C->P, i, j, pit);
+	    gretl_matrix_set(C->P, i, j, pij);
 	}
 	s += Ti;
     }	    
@@ -520,6 +520,7 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	reprob_container *C;
 	double *theta = NULL;
 	int quadpoints = 32;
+	int maxit = 100;
 	int fcount;
 	
 	if (opt & OPT_G) {
@@ -533,10 +534,10 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	C = rep_container_new(list);
 	if (C == NULL) {
 	    err = E_ALLOC;
-	    goto bailout;
+	} else {
+	    err = rep_container_fill(C, &mod, dset, quadpoints, &theta);
 	}
 
-	err = rep_container_fill(C, &mod, dset, quadpoints, &theta);
 	if (err) {
 	    goto bailout;
 	}	
@@ -546,7 +547,6 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	    double gradtol = 1.0e-05;
 	    gretlopt maxopt = opt & OPT_V;
 	    int quiet = opt & OPT_Q;
-	    int maxit = 100;
 
 	    err = newton_raphson_max(theta, C->npar, maxit, 
 				     crittol, gradtol, &fcount, C_LOGLIK, 
@@ -555,7 +555,7 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	} else {
 	    int gcount;
 
-	    err = BFGS_max(theta, C->npar, 100, 1.0e-9, 
+	    err = BFGS_max(theta, C->npar, maxit, 1.0e-9, 
 			   &fcount, &gcount, reprobit_ll, C_LOGLIK, 
 			   reprobit_score, C, NULL, opt, prn);
 	}
