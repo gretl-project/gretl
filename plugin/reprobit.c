@@ -46,8 +46,8 @@ struct reprob_container_ {
 
     gretl_matrix_block *B;   /* holder for the following */
     gretl_matrix *ndx;       /* index function */
-    gretl_matrix *gh_nodes;  /* Gauss-Hermite quadrature nodes */
-    gretl_matrix *gh_wts;    /* Gauss-Hermite quadrature weights */
+    gretl_matrix *nodes;     /* Gauss-Hermite quadrature nodes */
+    gretl_matrix *wts;       /* Gauss-Hermite quadrature weights */
     gretl_matrix *P;         /* probabilities (by individual and qpoints) */
     gretl_matrix *lik;       /* probabilities (by individual) */
     gretl_vector *beta;      /* parameters (excluding log of variance 
@@ -241,8 +241,8 @@ static int rep_container_fill (reprob_container *C,
 				  &C->P, C->N, C->qp,
 				  &C->lik, C->N, 1,
 				  &C->beta, k, 1,
-				  &C->gh_nodes, 1, C->qp,
-				  &C->gh_wts, C->qp, 1,
+				  &C->nodes, 1, C->qp,
+				  &C->wts, C->qp, 1,
 				  &C->qi, 1, C->qp,
 				  NULL);
     if (C->B == NULL) {
@@ -274,8 +274,8 @@ static int rep_container_fill (reprob_container *C,
 
     if (!err) {
 	for (i=0; i<C->qp; i++) {
-	    gretl_vector_set(C->gh_nodes, i, gretl_matrix_get(tmp, i, 0));
-	    gretl_vector_set(C->gh_wts, i, gretl_matrix_get(tmp, i, 1));
+	    gretl_vector_set(C->nodes, i, gretl_matrix_get(tmp, i, 0));
+	    gretl_vector_set(C->wts, i, gretl_matrix_get(tmp, i, 1));
 	}
 	gretl_matrix_free(tmp);
     }
@@ -301,7 +301,7 @@ static int reprobit_score (double *theta, double *g, int npar,
 {
     reprob_container *C = (reprob_container *) p;
     gretl_matrix *Q, *qi;
-    const double *nodes = C->gh_nodes->val;
+    const double *nodes = C->nodes->val;
     double x, qij, ndxi, node;
     int i, j, k, s, t, h = C->qp;
     int sign = 1;
@@ -334,7 +334,7 @@ static int reprobit_score (double *theta, double *g, int npar,
 	s += Ti;
     }
 
-    gretl_matrix_multiply(Q, C->gh_wts, C->lik);
+    gretl_matrix_multiply(Q, C->wts, C->lik);
 
     for (i=0; i<C->npar; i++) {
 	g[i] = 0.0;
@@ -361,7 +361,7 @@ static int reprobit_score (double *theta, double *g, int npar,
 		}
 		qi->val[j] /= C->lik->val[i];
 	    }
-            tmp = gretl_vector_dot_product(qi, C->gh_wts, &err);
+            tmp = gretl_vector_dot_product(qi, C->wts, &err);
 	    g[ii] += (ii < k)? tmp : tmp * C->scale;
  	}
 	s += Ti;
@@ -385,7 +385,7 @@ static double reprobit_ll (const double *theta, void *p)
 	int Ti = C->unit_obs[i];
 
 	for (j=0; j<h; j++) {
-	    node = gretl_vector_get(C->gh_nodes, j);
+	    node = gretl_vector_get(C->nodes, j);
 	    pij = 1.0;
 	    for (t=0; t<Ti; t++) {
 		x = C->ndx->val[s+t] + C->scale * node;
@@ -400,7 +400,19 @@ static double reprobit_ll (const double *theta, void *p)
 	s += Ti;
     }	    
 
-    err = gretl_matrix_multiply(C->P, C->gh_wts, C->lik);
+    err = gretl_matrix_multiply(C->P, C->wts, C->lik);
+
+#if 0
+    if (1) {
+	/* for analysing the behavior of f(x) */
+	static int iter;
+	char pname[8];
+
+	sprintf(pname, "P%d.mat", iter);
+	gretl_matrix_write_as_text(C->P, pname, 0);
+	iter++;
+    }
+#endif
 
     if (!err) {
 	C->ll = 0.0;
