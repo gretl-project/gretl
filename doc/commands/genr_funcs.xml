@@ -3576,7 +3576,9 @@
 	</para>
 	<para context="notex">
 	  The returned matrix is given by
-	  sum_{j=-p}^{p} sum_j w_{|j|} (X_t' u_t u_{t-j} X_{t-j})
+	</para>
+	<para context="notex">	
+	  sum_{j=-p}^p sum_j w_{|j|} (X_t' u_t u_{t-j} X_{t-j})
 	</para>
 	<para>
 	  If <argname>u</argname> is given as <lit>null</lit> the
