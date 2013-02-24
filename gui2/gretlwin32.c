@@ -721,8 +721,8 @@ static void fontname_to_win32 (const char *src, int flag,
 
 void win32_font_selector (char *fontname, int flag)
 {
-    CHOOSEFONT cf;            /* common dialog box structure */
-    LOGFONT lf;               /* logical font structure */
+    CHOOSEFONT cf; /* common dialog box structure */
+    LOGFONT lf;    /* logical font structure */
 
     ZeroMemory(&cf, sizeof cf);
     cf.lStructSize = sizeof cf;
