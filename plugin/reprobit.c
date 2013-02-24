@@ -26,7 +26,7 @@
 typedef struct reprob_container_ reprob_container;
 
 struct reprob_container_ {
-    int *list;               /* model specification */
+    const int *list;         /* model specification */
     int depvar;		     /* location of y in array Z */
     int npar;		     /* no. of parameters */
     double ll;		     /* log-likelihood */
@@ -60,12 +60,7 @@ reprob_container *rep_container_new (const int *list)
     reprob_container *C = malloc(sizeof *C);
 
     if (C != NULL) {
-	C->list = gretl_list_copy(list);
-	if (C->list == NULL) {
-	    free(C);
-	    return NULL;
-	}
-
+	C->list = list;
 	C->depvar = C->list[1];
 	C->npar = list[0];
 	C->ll = NADBL;
@@ -85,7 +80,6 @@ reprob_container *rep_container_new (const int *list)
 static void rep_container_destroy (reprob_container *C)
 {
     if (C != NULL) {
-	free(C->list);
 	free(C->y);
 	free(C->unit_obs);
 	gretl_matrix_free(C->X);
