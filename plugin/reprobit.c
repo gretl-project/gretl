@@ -61,7 +61,7 @@ reprob_container *rep_container_new (const int *list)
 
     if (C != NULL) {
 	C->list = list;
-	C->depvar = C->list[1];
+	C->depvar = list[1];
 	C->npar = list[0];
 	C->ll = NADBL;
 	C->N = 0;
@@ -170,7 +170,8 @@ static int params_init_from_pooled (MODEL *pmod,
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (t / C->T > (t-1) / C->T) {
 	    /* first obs of a new unit */
-	    elag = 0.0;
+	    elag = pmod->uhat[t];
+	    elag = xna(elag) ? 0.0 : elag;
 	    continue;
 	}
 	e = pmod->uhat[t];
