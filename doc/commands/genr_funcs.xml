@@ -931,12 +931,13 @@
       <description>
 	<para>
 	  Returns a matrix with two columns: the first column holds
-	  the distinct values in the series <argname>byvar</argname>,
-	  sorted from smallest to largest, and the second holds values
-	  of the statistic specified by <argname>funcname</argname>
-	  calculated on series <argname>x</argname>, using only those
-	  observations at which <argname>byvar</argname> takes on the
-	  value given in the first column.
+	  the distinct values in the series <argname>byvar</argname>
+	  (which should be discrete), sorted in ascending order, and
+	  the second holds values of the statistic specified by
+	  <argname>funcname</argname> calculated on series
+	  <argname>x</argname>, using only those observations at which
+	  <argname>byvar</argname> takes on the value given in the
+	  first column.
 	</para>
 	<para>
 	  The following values of <argname>funcname</argname> are

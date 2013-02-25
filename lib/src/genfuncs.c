@@ -4827,6 +4827,13 @@ gretl_matrix *aggregate_by (const double *x,
 	return NULL;
     }
 
+    if (!gretl_isdiscrete(y, dset->t1, dset->t2)) {
+	gretl_errmsg_set("You must supply two variables, "
+			 "the second of which is discrete");
+	*err = E_DATA;
+	return NULL;
+    }	
+
     f = function_lookup(fncall);
 
     switch (f) {
