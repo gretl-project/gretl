@@ -684,7 +684,7 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
     int order = 0;
     int first = 1;
 
-    gretl_model_init(&rep);
+    gretl_model_init(&rep, dset);
 
     /* recreate options and auxiliary vars, if required */
 
@@ -1079,7 +1079,7 @@ static MODEL LM_add_test (MODEL *pmod, DATASET *dset, int *list,
 
     err = add_residual_to_dataset(pmod, dset);
     if (err) {
-	gretl_model_init(&aux);
+	gretl_model_init(&aux, dset);
 	aux.errcode = err;
 	return aux;
     }
@@ -1393,7 +1393,7 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
     int i, drop;
     int err = 0;
 
-    gretl_model_init(&omod);
+    gretl_model_init(&omod, dset);
 
     tmplist = gretl_list_copy(orig->list);
     if (tmplist == NULL) {
@@ -1671,7 +1671,7 @@ double get_DW_pvalue_for_model (const MODEL *pmod, DATASET *dset,
 	return NADBL;
     }
 
-    gretl_model_init(&dwmod);
+    gretl_model_init(&dwmod, dset);
 
     /* impose the sample range used for the original model */ 
     impose_model_smpl(pmod, dset);
@@ -1740,7 +1740,7 @@ int reset_test (MODEL *pmod, DATASET *dset,
     use_square = !(opt & OPT_C); /* not cubes-only */
     use_cube = !(opt & OPT_R);   /* not squares-only */
 
-    gretl_model_init(&aux);
+    gretl_model_init(&aux, dset);
 
     if (opt & OPT_R) {
 	addv = 1;
@@ -1980,7 +1980,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
     /* impose original sample range */
     impose_model_smpl(pmod, dset);
 
-    gretl_model_init(&aux);
+    gretl_model_init(&aux, dset);
 
     if (order <= 0) {
 	order = dset->pd;
@@ -2187,7 +2187,7 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 #endif
     }
 
-    gretl_model_init(&aux);
+    gretl_model_init(&aux, dset);
 
     if (order <= 0) {
 	order = dset->pd;
@@ -2603,7 +2603,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
        original model was estimated */
     impose_model_smpl(pmod, dset);
 
-    gretl_model_init(&chow_mod);
+    gretl_model_init(&chow_mod, dset);
 
     if (QLR) {
 	/* "15 percent trimming": exactly how this should be

@@ -1076,7 +1076,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     int nullmod = 0, ldv = 0;
     int yno, i;
 
-    gretl_model_init(&mdl);
+    gretl_model_init(&mdl, dset);
 
     if (list == NULL || dset == NULL || dset->Z == NULL) {
 	fprintf(stderr, "E_DATA: lsq: list = %p, dset = %p\n",
@@ -1084,8 +1084,6 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 	mdl.errcode = E_DATA;
         return mdl;
     }
-
-    gretl_model_smpl_init(&mdl, dset);
 
     if (opt & OPT_C) {
 	/* cluster option implies robust */
@@ -2142,7 +2140,7 @@ static double estimate_rho (const int *list, DATASET *dset,
 	goto bailout;
     }
 
-    gretl_model_init(&armod);
+    gretl_model_init(&armod, dset);
 
     if (opt & OPT_P) {
 	/* Prais-Winsten treatment of first observation */
@@ -3058,7 +3056,7 @@ int whites_test (MODEL *pmod, DATASET *dset,
 	}
     }
 
-    gretl_model_init(&white);
+    gretl_model_init(&white, dset);
 
     /* make space in data set */
     if (dataset_add_series(dset, 1)) {
@@ -3197,8 +3195,8 @@ MODEL ar_model (const int *list, DATASET *dset,
     MODEL ar, rhomod;
 
     gretl_error_clear();
-    gretl_model_init(&ar);
-    gretl_model_init(&rhomod);
+    gretl_model_init(&ar, dset);
+    gretl_model_init(&rhomod, dset);
 
     ar.errcode = gretl_list_split_on_separator(list, &arlist, &reglist);
 
@@ -3761,7 +3759,7 @@ MODEL arch_model (const int *list, int order, DATASET *dset,
     double xx;
 
     gretl_error_clear();
-    gretl_model_init(&amod);
+    gretl_model_init(&amod, dset);
 
     if (order == 0) {
 	/* use data frequency as default lag order */
@@ -4098,7 +4096,7 @@ MODEL arma (const int *list, const int *pqlags,
     void *handle;
     int err = 0;
 
-    gretl_model_init(&armod);
+    gretl_model_init(&armod, dset);
 
     err = incompatible_options(opt, OPT_G | OPT_H);
     if (err) {
@@ -4173,7 +4171,7 @@ MODEL garch (const int *list, DATASET *dset, gretlopt opt,
     garch_model = get_plugin_function("garch_model", &handle);
 
     if (garch_model == NULL) {
-	gretl_model_init(&gmod);
+	gretl_model_init(&gmod, dset);
 	gmod.errcode = E_FOPEN;
 	return gmod;
     }
@@ -4212,7 +4210,7 @@ MODEL mp_ols (const int *list, DATASET *dset)
 		 gretlopt);
     MODEL mpmod;
 
-    gretl_model_init(&mpmod);
+    gretl_model_init(&mpmod, dset);
 
     mplsq = get_plugin_function("mplsq", &handle);
     if (mplsq == NULL) {
@@ -4290,7 +4288,7 @@ MODEL panel_model (const int *list, DATASET *dset,
     MODEL mod;
 
     if (check_panel_options(opt)) {
-	gretl_model_init(&mod);
+	gretl_model_init(&mod, dset);
 	mod.errcode = E_BADOPT;
     } else if (opt & OPT_W) {
 	mod = panel_wls_by_unit(list, dset, opt, prn);
@@ -4333,7 +4331,7 @@ MODEL ivreg (const int *list, DATASET *dset, gretlopt opt)
     }
     
     if (err) {
-	gretl_model_init(&mod);
+	gretl_model_init(&mod, dset);
 	mod.errcode = err;
 	return mod;
     }
@@ -4378,7 +4376,7 @@ MODEL arbond_model (const int *list, const char *ispec,
 			      const DATASET *, gretlopt, PRN *);
     MODEL mod;
 
-    gretl_model_init(&mod);
+    gretl_model_init(&mod, dset);
 
     arbond_estimate = get_plugin_function("arbond_estimate", &handle);
     if (arbond_estimate == NULL) {
@@ -4422,7 +4420,7 @@ MODEL dpd_model (const int *list, const int *laglist,
 			   gretlopt, PRN *);
     MODEL mod;
 
-    gretl_model_init(&mod);
+    gretl_model_init(&mod, dset);
 
     dpd_estimate = get_plugin_function("dpd_estimate", &handle);
     if (dpd_estimate == NULL) {

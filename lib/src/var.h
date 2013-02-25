@@ -183,6 +183,8 @@ int gretl_VAR_get_t1 (const GRETL_VAR *var);
 
 int gretl_VAR_get_t2 (const GRETL_VAR *var);
 
+int gretl_var_get_sample (const GRETL_VAR *var, int *t1, int *t2);
+
 const MODEL *gretl_VAR_get_model (const GRETL_VAR *var, int i);
 
 double *gretl_VAR_get_resid_series (GRETL_VAR *var, int eqnum,

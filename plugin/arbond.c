@@ -2655,8 +2655,7 @@ arbond_estimate (const int *list, const char *ispec,
     MODEL mod;
     int err = 0;
 
-    gretl_model_init(&mod);
-    gretl_model_smpl_init(&mod, dset);
+    gretl_model_init(&mod, dset);
 
     /* parse GMM instrument info, if present */
     if (ispec != NULL && *ispec != '\0') {

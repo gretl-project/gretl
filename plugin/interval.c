@@ -943,7 +943,7 @@ MODEL interval_estimate (int *list, DATASET *dset,
     MODEL model;
     int *initlist = NULL;
 
-    gretl_model_init(&model);
+    gretl_model_init(&model, NULL);
     
     if (list[0] > 3) {
 	maybe_reposition_const(list, dset);

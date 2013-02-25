@@ -823,7 +823,7 @@ static MODEL garch_run_ols (const int *list, DATASET *dset,
 
     ols_list = make_ols_list(list, &err);
     if (err) {
-	gretl_model_init(&model);
+	gretl_model_init(&model, NULL);
 	model.errcode = err;
 	return model;
     }
@@ -901,7 +901,7 @@ MODEL garch_model (const int *cmdlist, DATASET *dset,
 
     list = get_garch_list(cmdlist, dset, opt, &ifc, &err);
     if (err) {
-	gretl_model_init(&model);
+	gretl_model_init(&model, NULL);
 	model.errcode = err;
 	return model;
     }

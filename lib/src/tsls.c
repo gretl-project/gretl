@@ -1292,7 +1292,7 @@ static int compute_first_stage_F (MODEL *pmod,
     int i, ev, vi;
     int err = 0;
 
-    gretl_model_init(&mod1);
+    gretl_model_init(&mod1, dset);
     ev = endolist[1];
 
     /* The regression list, list1, has endogenous regressor ev as the
@@ -1557,7 +1557,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 #endif
 
     /* initialize model in case we bail out early on error */
-    gretl_model_init(&tsls);
+    gretl_model_init(&tsls, dset);
 
     gretl_error_clear();
 

@@ -2027,7 +2027,7 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
     fprintf(stderr, "fixed_effects: using de-meaned data\n");
 #endif
 
-    gretl_model_init(&femod);
+    gretl_model_init(&femod, dset);
 
     felist = gretl_list_new(pan->vlist[0]); 
     if (felist == NULL) {
@@ -2392,7 +2392,7 @@ static int random_effects (panelmod_t *pan,
     double URSS = NADBL;
     int i, k, err = 0;
 
-    gretl_model_init(&remod);
+    gretl_model_init(&remod, dset);
 
     /* GLS regression list */
     relist = gretl_list_new(pan->pooled->list[0]);
@@ -3054,7 +3054,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     int ntdum = 0;
     int err = 0;
 
-    gretl_model_init(&mod);
+    gretl_model_init(&mod, dset);
     panelmod_init(&pan);
 
     if (!(opt & OPT_P)) {

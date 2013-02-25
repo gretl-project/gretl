@@ -1490,8 +1490,8 @@ static MODEL heckit_init (h_container *HC, DATASET *dset)
     int *sellist = NULL;
     int t, err = 0;
 
-    gretl_model_init(&hm);
-    gretl_model_init(&probmod);
+    gretl_model_init(&hm, dset);
+    gretl_model_init(&probmod, dset);
 
     err = gretl_list_split_on_separator(HC->list, &reglist, &sellist);
     if (!err && (reglist == NULL || sellist == NULL)) {
@@ -1596,7 +1596,7 @@ MODEL heckit_estimate (const int *list, DATASET *dset,
 	vprn = prn;
     }
 
-    gretl_model_init(&hm);
+    gretl_model_init(&hm, dset);
 
     HC = h_container_new(list);
     if (HC == NULL) {

@@ -310,7 +310,7 @@ static int biprobit_first_pass (bp_container *bp, MODEL *olsmod,
 
     T = bp->t2 - bp->t1 + 1;
 
-    gretl_model_init(&probmod); /* in case of failure below */
+    gretl_model_init(&probmod, NULL); /* in case of failure below */
 
     err = bp_add_coeff_vecs_and_mask(bp, T);
     if (err) {
@@ -498,7 +498,7 @@ MODEL bp_preliminary_ols (const int *list, DATASET *dset)
     tmplist = prelim_list(list);
 
     if (tmplist == NULL) {
-	gretl_model_init(&mod);
+	gretl_model_init(&mod, NULL);
 	mod.errcode = E_ALLOC;
 	return mod;
     }
@@ -1252,7 +1252,7 @@ MODEL biprobit_estimate (const int *list, DATASET *dset,
     }
 
     if (err) {
-	gretl_model_init(&mod);
+	gretl_model_init(&mod, NULL);
 	mod.errcode = err;
 	return mod;
     }

@@ -1476,8 +1476,7 @@ MODEL dpd_estimate (const int *list, const int *laglist,
     MODEL mod;
     int err = 0;
 
-    gretl_model_init(&mod);
-    gretl_model_smpl_init(&mod, dset);
+    gretl_model_init(&mod, dset);
 
     if (libset_get_bool(DPDSTYLE)) {
 	opt |= OPT_X;

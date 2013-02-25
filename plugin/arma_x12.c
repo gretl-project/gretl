@@ -860,8 +860,7 @@ MODEL arma_x12_model (const int *list, const int *pqspec,
     ainfo = &ainfo_s;
     arma_info_init(ainfo, opt | OPT_X, pqspec, dset);
     ainfo->prn = set_up_verbose_printer(opt, prn);
-    gretl_model_init(&armod); 
-    gretl_model_smpl_init(&armod, dset);
+    gretl_model_init(&armod, dset); 
 
     ainfo->alist = gretl_list_copy(list);
     if (ainfo->alist == NULL) {

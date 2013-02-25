@@ -5652,7 +5652,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (add_omit_save(cmd)) {
 	    MODEL mymod;
 
-	    gretl_model_init(&mymod);
+	    gretl_model_init(&mymod, dset);
 	    if (cmd->ci == ADD) {
 		err = add_test_full(model, &mymod, cmd->list, 
 				    dset, cmd->opt, prn);

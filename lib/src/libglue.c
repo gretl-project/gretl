@@ -296,7 +296,7 @@ MODEL quantreg_driver (const char *parm, const int *list,
     }
 
     if (err) {
-	gretl_model_init(&mod);
+	gretl_model_init(&mod, dset);
 	mod.errcode = err;
     } else {
 	mod = quantreg(tau, list, dset, opt, prn);
@@ -376,7 +376,7 @@ MODEL tobit_driver (const int *list, DATASET *dset,
     }
 
     if (err) {
-	gretl_model_init(&model);
+	gretl_model_init(&model, dset);
 	model.errcode = err;
 	return model;
     }

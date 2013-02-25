@@ -721,7 +721,7 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
     int *local_list = NULL;
     int i, t;
 
-    gretl_model_init(&tmpmod);
+    gretl_model_init(&tmpmod, NULL);
 
     /* set the sample to that of the initial OLS model */
     dset->t1 = pmod->t1;

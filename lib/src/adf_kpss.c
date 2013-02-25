@@ -761,7 +761,7 @@ static int real_adf_test (int varno, int order, int niv,
 	}
     }
 
-    gretl_model_init(&dfmod);
+    gretl_model_init(&dfmod, dset);
 
     for (i=UR_NO_CONST; i<UR_MAX; i++) {
 	int j, k, dfnum = (i > UR_NO_CONST);
@@ -1961,7 +1961,7 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
 	adf_opt |= OPT_V;
     }
 
-    gretl_model_init(&cmod);
+    gretl_model_init(&cmod, dset);
 
     if (!(opt & OPT_S)) {
 	/* test all candidate vars for unit root */

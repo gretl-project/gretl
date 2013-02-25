@@ -4374,7 +4374,7 @@ static int sys_print_reconstituted_models (const equation_system *sys,
     int i, j, t, k = 0;
     int err = 0;
 
-    gretl_model_init(&mod);
+    gretl_model_init(&mod, dset);
 
     mod.t1 = sys->t1;
     mod.t2 = sys->t2;
@@ -4708,7 +4708,7 @@ MODEL single_equation_liml (const int *list, DATASET *dset,
     MODEL model;
     int err = 0;
 
-    gretl_model_init(&model);
+    gretl_model_init(&model, dset);
 
     err = ivreg_process_lists(list, &mlist, &ilist);
 

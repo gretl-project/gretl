@@ -1679,7 +1679,7 @@ MODEL arma_model (const int *list, const int *pqspec,
     arma_info_init(ainfo, opt, pqspec, dset);
     ainfo->prn = set_up_verbose_printer(opt, prn);
 
-    gretl_model_init(&armod);
+    gretl_model_init(&armod, dset);
 
     err = check_arma_options(opt);
 

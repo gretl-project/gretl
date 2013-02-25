@@ -585,7 +585,7 @@ int run_gretl_mp_comparison (DATASET *dset,
     MODEL model;
     double acc;
 
-    gretl_model_init(&model);
+    gretl_model_init(&model, dset);
 
     /* create regression list */
     list = gretl_list_new(realv);

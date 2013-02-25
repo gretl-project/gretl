@@ -1794,7 +1794,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
        (derivatives) */
     gdset = create_auxiliary_dataset(spec->ncoeff + 2, dset->n, 0);
     if (gdset == NULL) {
-	gretl_model_init(&gnr);
+	gretl_model_init(&gnr, NULL);
 	gnr.errcode = E_ALLOC;
 	return gnr;
     }
@@ -1809,7 +1809,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 
     if (glist == NULL) {
 	destroy_dataset(gdset);
-	gretl_model_init(&gnr);
+	gretl_model_init(&gnr, NULL);
 	gnr.errcode = E_ALLOC;
 	return gnr;
     }
@@ -3030,7 +3030,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
     int i, t, origv;
     int err = 0;
 
-    gretl_model_init(&nlmod);
+    gretl_model_init(&nlmod, dset);
 
     if (dset == NULL || dset->v == 0) {
 	gretl_errmsg_set(_("No dataset is in place"));
@@ -3527,8 +3527,8 @@ MODEL ivreg_via_gmm (const int *list, DATASET *dset, gretlopt opt)
     int rv = 0;
     int err = 0;
 
-    gretl_model_init(&olsmod);
-    gretl_model_init(&model);
+    gretl_model_init(&olsmod, dset);
+    gretl_model_init(&model, dset);
 
     err = ivreg_process_lists(list, &mlist, &ilist);
 

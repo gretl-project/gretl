@@ -1509,6 +1509,21 @@ int gretl_VAR_get_t2 (const GRETL_VAR *var)
     return (var == NULL)? 0 : var->t2;
 }
 
+int gretl_var_get_sample (const GRETL_VAR *var, int *t1, int *t2)
+{
+    if (var != NULL && var->models != NULL && var->models[0] != NULL) {
+	MODEL *pmod = var->models[0];
+
+	if (pmod->smpl.t1 >= 0 && pmod->smpl.t2 > pmod->smpl.t1) {
+	    *t1 = pmod->smpl.t1;
+	    *t2 = pmod->smpl.t2;
+	    return 0;
+	}
+    }
+
+    return E_DATA;
+}
+
 const MODEL *gretl_VAR_get_model (const GRETL_VAR *var, int i)
 {
     if (var != NULL && i < var->neqns) {

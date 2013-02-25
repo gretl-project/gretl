@@ -127,34 +127,39 @@ gretlopt get_tex_eqn_opt (void)
     return tex_eqn_opt;
 }
 
-static void vwin_get_t1_t2 (void *ptr, int role, int *t1, int *t2)
+static int model_get_t1_t2 (void *ptr, int role, int *t1, int *t2)
 {
+    int err = 0;
+
     if (role == VIEW_MODEL) {
 	MODEL *pmod = ptr;
 
-	*t1 = pmod->t1;
-	*t2 = pmod->t2;
+	*t1 = pmod->smpl.t1;
+	*t2 = pmod->smpl.t2;
     } else if (role == VAR || role == VECM) {
 	GRETL_VAR *var = ptr;
 
-	*t1 = var->t1;
-	*t2 = var->t2;
+	err = gretl_var_get_sample(var, t1, t2);
     } else if (role == SYSTEM) {
+	/* FIXME? */
 	equation_system *sys = ptr;
 
 	*t1 = sys->t1;
 	*t2 = sys->t2;
     }
+
+    return err;
 }
 
 static void model_revise_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     int ok = 1, t1 = 0, t2 = 0;
+    int err;
 
-    vwin_get_t1_t2(vwin->data, vwin->role, &t1, &t2);
+    err = model_get_t1_t2(vwin->data, vwin->role, &t1, &t2);
 
-    if (t1 != dataset->t1 || t2 != dataset->t2) {
+    if (!err && (t1 != dataset->t1 || t2 != dataset->t2)) {
 	ok = maybe_set_sample_from_model(vwin->data, vwin->role);
     }
 
@@ -4539,7 +4544,7 @@ static int set_sample_from_model (void *ptr, int role)
 	} else {
 	    int t1 = 0, t2 = 0;
 
-	    vwin_get_t1_t2(ptr, role, &t1, &t2);
+	    model_get_t1_t2(ptr, role, &t1, &t2);
 	    if (t1 == 0 && t2 == 0) {
 		err = E_DATA;
 	    } else if (t1 != dataset->t1 || t2 != dataset->t2) {

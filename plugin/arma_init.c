@@ -167,7 +167,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 #endif
 
     /* in case we bomb before estimating a model */
-    gretl_model_init(&armod);
+    gretl_model_init(&armod, dset);
 
     /* Start building stuff for pass 1 */
 
@@ -1145,7 +1145,7 @@ int ar_arma_init (double *coeff, const DATASET *dset,
 	return 0;
     }
 
-    gretl_model_init(&armod); 
+    gretl_model_init(&armod, dset); 
 
     narmax = (arma_exact_ml(ainfo))? ainfo->nexo : 0;
     if (narmax > 0) {

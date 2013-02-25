@@ -2629,6 +2629,7 @@ static void gretl_model_init_pointers (MODEL *pmod)
 /**
  * gretl_model_init:
  * @pmod: pointer to model.
+ * @dset: pointer to dataset.
  *
  * Initializes a gretl #MODEL, including setting its pointer members
  * to %NULL. This initialization should be done if the caller has
@@ -2637,7 +2638,7 @@ static void gretl_model_init_pointers (MODEL *pmod)
  * done automatically).
  */
 
-void gretl_model_init (MODEL *pmod)
+void gretl_model_init (MODEL *pmod, const DATASET *dset)
 {
     if (pmod == NULL) return;
 
@@ -2653,8 +2654,13 @@ void gretl_model_init (MODEL *pmod)
     pmod->t1 = pmod->t2 = 0;
     pmod->nobs = 0;
 
-    pmod->smpl.t1 = 0;
-    pmod->smpl.t2 = 0;
+    if (dset != NULL) {
+	pmod->smpl.t1 = dset->t1;
+	pmod->smpl.t2 = dset->t2;
+    } else {
+	pmod->smpl.t1 = 0;
+	pmod->smpl.t2 = 0;
+    }	
 
     pmod->ncoeff = 0;
     pmod->ntests = 0;
@@ -2713,7 +2719,7 @@ MODEL *gretl_model_new (void)
 #endif
 
     if (pmod != NULL) {
-	gretl_model_init(pmod);
+	gretl_model_init(pmod, NULL);
     }
 
     return pmod;
@@ -2936,7 +2942,7 @@ void clear_model (MODEL *pmod)
     fprintf(stderr, "clear_model, calling gretl_model_init\n");
 #endif
 #if 1
-    gretl_model_init(pmod);
+    gretl_model_init(pmod, NULL);
 #endif
 }
 

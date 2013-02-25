@@ -1218,7 +1218,7 @@ static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
     int *dumlist = NULL;
     int ndum = 0;
 
-    gretl_model_init(&model);
+    gretl_model_init(&model, dset);
 
     model.errcode = ordered_depvar_check(list[1], dset);
 
@@ -2237,7 +2237,7 @@ MODEL biprobit_model (int *list, DATASET *dset,
     biprobit_estimate = get_plugin_function("biprobit_estimate", &handle);
 
     if (biprobit_estimate == NULL) {
-	gretl_model_init(&bpmod);
+	gretl_model_init(&bpmod, dset);
 	bpmod.errcode = E_FOPEN;
 	return bpmod;
     }
@@ -2857,7 +2857,7 @@ static MODEL binary_model (int ci, const int *inlist,
     int depvar;
     int i, vi, t, s;
 
-    gretl_model_init(&mod);
+    gretl_model_init(&mod, dset);
     depvar = inlist[1];
 
     if (!gretl_isdummy(dset->t1, dset->t2, dset->Z[depvar])) {
@@ -3244,7 +3244,7 @@ MODEL logistic_model (const int *list, double lmax,
 
     fprintf(stderr, "logistic model: lmax = %g\n", lmax);
 
-    gretl_model_init(&lmod); 
+    gretl_model_init(&lmod, dset); 
 
     llist = gretl_list_copy(list);
     if (llist == NULL) {
@@ -3409,7 +3409,7 @@ MODEL interval_model (int *list, DATASET *dset,
     interval_estimate = get_plugin_function("interval_estimate", &handle);
 
     if (interval_estimate == NULL) {
-	gretl_model_init(&intmod);
+	gretl_model_init(&intmod, dset);
 	intmod.errcode = E_FOPEN;
 	return intmod;
     }
@@ -3453,7 +3453,7 @@ MODEL tobit_model (const int *list, double llim, double rlim,
 
     tobit_estimate = get_plugin_function("tobit_via_intreg", &handle);
     if (tobit_estimate == NULL) {
-	gretl_model_init(&tmod);
+	gretl_model_init(&tmod, dset);
 	tmod.errcode = E_FOPEN;
 	return tmod;
     }
@@ -3570,7 +3570,7 @@ MODEL duration_model (const int *list, DATASET *dset,
 			       gretlopt, PRN *);
 
     gretl_error_clear();
-    gretl_model_init(&dmod);
+    gretl_model_init(&dmod, dset);
 
     dmod.errcode = duration_precheck(list, dset, &dmod,
 				     &censvar);
@@ -3635,7 +3635,7 @@ MODEL count_model (const int *list, int ci, DATASET *dset,
 
     gretl_error_clear();
 
-    gretl_model_init(&cmod);
+    gretl_model_init(&cmod, dset);
 
     if (!gretl_iscount(dset->t1, dset->t2, dset->Z[list[1]])) {
 	gretl_errmsg_sprintf(_("%s: the dependent variable must be count data"),
@@ -3708,7 +3708,7 @@ MODEL heckit_model (const int *list, DATASET *dset,
 
     heckit_estimate = get_plugin_function("heckit_estimate", &handle);
     if (heckit_estimate == NULL) {
-	gretl_model_init(&model);
+	gretl_model_init(&model, dset);
 	model.errcode = E_FOPEN;
 	return model;
     }
@@ -3756,7 +3756,7 @@ MODEL reprobit_model (const int *list, DATASET *dset,
     }
 
     if (err) {
-	gretl_model_init(&model);
+	gretl_model_init(&model, dset);
 	model.errcode = err;
 	return model;
     }
