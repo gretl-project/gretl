@@ -4936,7 +4936,7 @@ static gretl_matrix *aggregate_by_list (const double *x,
     }
 
     if (ii < maxcases) {
-	/* the matrix contains some null cases should we shrink it? */
+	/* the matrix contains some null cases: should we shrink it? */
 	fprintf(stderr, "maxcases = %d but ii = %d\n", maxcases, ii);
     }
 
@@ -5015,14 +5015,14 @@ gretl_matrix *aggregate_by (const double *x,
     gchar *usercall = NULL;
     int f, n;
 
-    if (fncall == NULL) {
+    if (fncall == NULL || (y == NULL && ylist == NULL)) {
 	*err = E_DATA;
 	return NULL;
     }
 
     if (y != NULL && !gretl_isdiscrete(dset->t1, dset->t2, y)) {
-	gretl_errmsg_set("You must supply two variables, "
-			 "the second of which is discrete");
+	gretl_errmsg_set(_("You must supply two variables, "
+			   "the second of which is discrete"));
 	*err = E_DATA;
 	return NULL;
     }	
