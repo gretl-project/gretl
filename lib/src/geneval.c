@@ -6484,18 +6484,24 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    }
 	}
     } else if (f == F_AGGRBY) {
-	if (l->t != VEC) {
+	if (l->t != VEC && l->t != LIST) {
 	    node_type_error(f, 1, VEC, l, p);
 	} else if (m->t != VEC && m->t != LIST) {
 	    node_type_error(f, 2, VEC, m, p);
 	} else if (r->t != STR) {
 	    node_type_error(f, 3, STR, r, p);
 	} else {
-	    const double *x = l->v.xvec;
 	    const char *fncall = r->v.str;
+	    const double *x = NULL;
 	    const double *y = NULL;
+	    const int *xlist = NULL;
 	    const int *ylist = NULL;
 
+	    if (l->t == VEC) {
+		x = l->v.xvec;
+	    } else {
+		xlist = l->v.ivec;
+	    }	    
 	    if (m->t == VEC) {
 		y = m->v.xvec;
 	    } else {
@@ -6504,7 +6510,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    }
 	    
 	    if (!p->err) {
-		A = aggregate_by(x, y, ylist, fncall, p->dset, &p->err);
+		A = aggregate_by(x, y, xlist, ylist, fncall, 
+				 p->dset, &p->err);
 	    }
 	}
     }	

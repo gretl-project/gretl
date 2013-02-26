@@ -4808,7 +4808,35 @@ double series_sum_all (int t1, int t2, const double *x)
     return xsum;
 }
 
-static gretl_matrix *aggregate_by_list (const double *x,
+static gretl_matrix *delete_null_cases (gretl_matrix *m,
+					int keeprows,
+					int *err)
+{
+    gretl_matrix *ret;
+
+    ret = gretl_matrix_alloc(keeprows, m->cols);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else {
+	double x;
+	int i, j;
+
+	for (i=0; i<keeprows; i++) {
+	    for (j=0; j<m->cols; j++) {
+		x = gretl_matrix_get(m, i, j);
+		gretl_matrix_set(ret, i, j, x);
+	    }
+	}
+    }
+
+    gretl_matrix_free(m);
+
+    return ret;
+}
+
+static gretl_matrix *real_aggregate_by (const double *x,
+					const double *y,
+					const int *xlist,
 					const int *ylist,
 					const DATASET *dset,
 					double *tmp,
@@ -4820,37 +4848,46 @@ static gretl_matrix *aggregate_by_list (const double *x,
     gretl_matrix *m = NULL;
     gretl_matrix **listvals;
     gretl_matrix *yvals;
-    const double *y;
-    int match, depth = ylist[0];
     int n = sample_size(dset);
+    int match, skipnull = 0;
+    int countcol = 1;
     int maxcases;
+    int ny, nx, mcols;
     int *idx;
     double *valvec;
     double fx;
-    int i, j, k, t, ii, vj;
+    int i, j, k, t, ni, ii;
 
-    valvec = malloc(depth * sizeof *valvec);
-    idx = malloc(depth * sizeof *idx);
-    listvals = malloc(depth * sizeof *listvals);
+    /* note: 
+       - to skip null cases in the output matrix, set skipnull = 1
+       - to eliminate the case-count column, set countcol = 0
+    */
+
+    ny = ylist == NULL ? 1 : ylist[0];
+
+    valvec = malloc(ny * sizeof *valvec);
+    idx = malloc(ny * sizeof *idx);
+    listvals = malloc(ny * sizeof *listvals);
 
     if (valvec == NULL || idx == NULL || listvals == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
 
-    for (j=0; j<depth; j++) {
+    for (j=0; j<ny; j++) {
 	listvals[j] = NULL;
     }
 
-    /* For each member of @ylist, create a vector holding its
-       distinct values. As we go, count the combinations of
+    /* For @y (or each member of @ylist), create a vector holding
+       its distinct values. As we go, count the combinations of
        y-values and initialize the valvec and idx arrays.
     */
 
     maxcases = 1;
-    for (j=0; j<depth && !*err; j++) {
-	vj = ylist[j+1];
-	y = dset->Z[vj] + dset->t1;
+    for (j=0; j<ny && !*err; j++) {
+	if (ylist != NULL) {
+	    y = dset->Z[ylist[j+1]] + dset->t1;
+	}
 	listvals[j] = gretl_matrix_values(y, n, OPT_S, err);
 	if (!*err) {
 	    maxcases *= listvals[j]->rows;
@@ -4859,14 +4896,17 @@ static gretl_matrix *aggregate_by_list (const double *x,
 	}
     }
 
+    nx = xlist == NULL ? 1 : xlist[0];
+    mcols = ny + nx + countcol;
+
     /* Allocate a matrix with enough rows to hold all the y-value
        combinations (maxcases) and enough columns to hold a
        record of the y values, a count of matching cases, and the
-       value of f(x).
+       value(s) of f(x).
     */
 
     if (!*err) {
-	m = gretl_zero_matrix_new(maxcases, depth + 2);
+	m = gretl_zero_matrix_new(maxcases, mcols);
 	if (m == NULL) {
 	    *err = E_ALLOC;
 	}
@@ -4879,37 +4919,50 @@ static gretl_matrix *aggregate_by_list (const double *x,
     ii = 0;
 
     for (i=0; i<maxcases; i++) {
-	/* fill tmp with x for {y} == {yi} */
-	k = 0;
-	for (t=0; t<n; t++) {
-	    match = 1;
-	    for (j=0; j<depth; j++) {
-		vj = ylist[j+1];
-		y = dset->Z[vj] + dset->t1;
-		if (y[t] != valvec[j]) {
-		    match = 0;
-		    break;
+	ni = 0;
+	for (k=0; k<nx && !*err; k++) {
+	    /* fill tmp with x for {y} == {yi} */
+	    if (xlist != NULL) {
+		x = dset->Z[xlist[k+1]] + dset->t1;
+	    }
+	    ni = 0;
+	    for (t=0; t<n; t++) {
+		match = 1;
+		for (j=0; j<ny; j++) {
+		    if (ylist != NULL) {
+			y = dset->Z[ylist[j+1]] + dset->t1;
+		    }
+		    if (y[t] != valvec[j]) {
+			match = 0;
+			break;
+		    }
+		}
+		if (match) {
+		    tmp[ni++] = x[t];
 		}
 	    }
-	    if (match) {
-		tmp[k++] = x[t];
+	    if (ni == 0 && skipnull) {
+		/* exclude cases where the obs count is 0 */
+		break;
+	    } else {
+		/* aggregate x at current y values */
+		if (builtin != NULL) {
+		    fx = (*builtin)(0, ni-1, tmp);
+		} else {
+		    tmpset->t2 = ni;
+		    fx = generate_scalar(usercall, tmpset, err);
+		}
+		gretl_matrix_set(m, ii, ny+k+countcol, fx);
 	    }
 	}
 
-	/* aggregate and record x at current y values */
-	if (1 || k > 0) {
-	    /* include cases where k == 0 or not? */
-	    for (j=0; j<depth; j++) {
+	if (ni > 0 || !skipnull) {
+	    for (j=0; j<ny; j++) {
 		gretl_matrix_set(m, ii, j, valvec[j]);
 	    }
-	    gretl_matrix_set(m, ii, j++, k);
-	    if (builtin != NULL) {
-		fx = (*builtin)(0, k-1, tmp);
-	    } else {
-		tmpset->t2 = k;
-		fx = generate_scalar(usercall, tmpset, err);
-	    }
-	    gretl_matrix_set(m, ii, j, fx);
+	    if (countcol) {
+		gretl_matrix_set(m, ii, ny, ni);
+	    }	    
 	    ii++;
 	}
 
@@ -4917,8 +4970,8 @@ static gretl_matrix *aggregate_by_list (const double *x,
 	    break;
 	}
 
-	/* find the next y-values vector */
-	for (j=depth-1; j>=0; j--) {
+	/* set up the next y-values array */
+	for (j=ny-1; j>=0; j--) {
 	    yvals = listvals[j];
 	    if (idx[j] == yvals->rows - 1) {
 		/* restart the index at this level and pass
@@ -4935,9 +4988,9 @@ static gretl_matrix *aggregate_by_list (const double *x,
 	}
     }
 
-    if (ii < maxcases) {
-	/* the matrix contains some null cases: should we shrink it? */
-	fprintf(stderr, "maxcases = %d but ii = %d\n", maxcases, ii);
+    if (skipnull && ii < maxcases) {
+	/* the matrix contains some null cases: shrink it */
+	m = delete_null_cases(m, ii, err);
     }
 
  bailout:
@@ -4946,7 +4999,7 @@ static gretl_matrix *aggregate_by_list (const double *x,
     free(idx);
 
     if (listvals != NULL) {
-	for (j=0; j<depth; j++) {
+	for (j=0; j<ny; j++) {
 	    gretl_matrix_free(listvals[j]);
 	}
 	free(listvals);
@@ -4955,54 +5008,9 @@ static gretl_matrix *aggregate_by_list (const double *x,
     return m;
 }
 
-static gretl_matrix *aggregate_by_series (const double *x,
-					  const double *y,
-					  int n,
-					  double *tmp,
-					  double (*builtin)(),
-					  gchar *usercall,
-					  DATASET *tmpset,
-					  int *err)
-{
-    gretl_matrix *m = NULL;
-    gretl_matrix *yvals;
-    double yi, fx;
-    int i, j, k;
-
-    yvals = gretl_matrix_values(y, n, OPT_S, err);
-    if (!*err) {
-	m = gretl_matrix_alloc(yvals->rows, 2);
-	if (m == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
-    if (!*err) {
-	for (i=0; i<yvals->rows && !*err; i++) {
-	    k = 0;
-	    yi = yvals->val[i];
-	    /* fill tmp with x for y == yi */
-	    for (j=0; j<n; j++) {
-		if (y[j] == yi) {
-		    tmp[k++] = x[j];
-		}
-	    }
-	    if (builtin != NULL) {
-		fx = (*builtin)(0, k-1, tmp);
-	    } else {
-		tmpset->t2 = k;
-		fx = generate_scalar(usercall, tmpset, err);
-	    }
-	    gretl_matrix_set(m, i, 0, yi);
-	    gretl_matrix_set(m, i, 1, fx);
-	}
-    }
-
-    return m;
-}
-
 gretl_matrix *aggregate_by (const double *x, 
 			    const double *y,
+			    const int *xlist,
 			    const int *ylist,
 			    const char *fncall,
 			    const DATASET *dset,
@@ -5094,15 +5102,10 @@ gretl_matrix *aggregate_by (const double *x,
     }
 
     if (!*err) {
-	x += dset->t1;
-	if (ylist != NULL) {
-	    m = aggregate_by_list(x, ylist, dset, tmp, builtin, 
-				  usercall, tmpset, err);
-	} else {
-	    y += dset->t1;
-	    m = aggregate_by_series(x, y, n, tmp, builtin, 
-				    usercall, tmpset, err);
-	}
+	x = (x == NULL)? NULL : x + dset->t1;
+	y = (y == NULL)? NULL : y + dset->t1;
+	m = real_aggregate_by(x, y, xlist, ylist, dset, tmp, 
+			      builtin, usercall, tmpset, err);
     }    
 
     if (m != NULL && *err) {
