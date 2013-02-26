@@ -6137,6 +6137,23 @@ static gretl_matrix *get_density_matrix (const double *x,
     return m;
 }
 
+static int aggregate_discrete_check (const int *list, const DATASET *dset)
+{
+    int i, vi;
+
+    for (i=1; i<=list[0]; i++) {
+	vi = list[i];
+	if (!series_is_discrete(dset, vi) && 
+	    !gretl_isdiscrete(dset->t1, dset->t2, dset->Z[vi])) {
+	    gretl_errmsg_sprintf(_("The variable '%s' is not discrete"),
+				 dset->varname[vi]);
+	    return E_DATA;
+	}
+    }
+
+    return 0;
+}
+
 /* evaluate a built-in function that has three arguments */
 
 static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
@@ -6469,16 +6486,26 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     } else if (f == F_AGGRBY) {
 	if (l->t != VEC) {
 	    node_type_error(f, 1, VEC, l, p);
-	} else if (m->t != VEC) {
+	} else if (m->t != VEC && m->t != LIST) {
 	    node_type_error(f, 2, VEC, m, p);
 	} else if (r->t != STR) {
 	    node_type_error(f, 3, STR, r, p);
 	} else {
 	    const double *x = l->v.xvec;
-	    const double *y = m->v.xvec;
 	    const char *fncall = r->v.str;
+	    const double *y = NULL;
+	    const int *ylist = NULL;
 
-	    A = aggregate_by(x, y, fncall, p->dset, &p->err);
+	    if (m->t == VEC) {
+		y = m->v.xvec;
+	    } else {
+		ylist = m->v.ivec;
+		p->err = aggregate_discrete_check(ylist, p->dset);
+	    }
+	    
+	    if (!p->err) {
+		A = aggregate_by(x, y, ylist, fncall, p->dset, &p->err);
+	    }
 	}
     }	
 

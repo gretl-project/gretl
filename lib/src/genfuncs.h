@@ -170,6 +170,7 @@ double series_sum_all (int t1, int t2, const double *x);
 
 gretl_matrix *aggregate_by (const double *x, 
 			    const double *y,
+			    const int *ylist,
 			    const char *fncall,
 			    const DATASET *dset,
 			    int *err);
