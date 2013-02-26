@@ -4808,6 +4808,12 @@ double series_sum_all (int t1, int t2, const double *x)
     return xsum;
 }
 
+static double aggr_get_count (int t1, int t2, const double *x)
+{
+    /* just a dummy function */
+    return 0;
+}
+
 static gretl_matrix *delete_null_cases (gretl_matrix *m,
 					int keeprows,
 					int *err)
@@ -4851,6 +4857,7 @@ static gretl_matrix *real_aggregate_by (const double *x,
     int n = sample_size(dset);
     int match, skipnull = 0;
     int countcol = 1;
+    int just_count = 0;
     int maxcases;
     int ny, nx, mcols;
     int *idx;
@@ -4896,7 +4903,18 @@ static gretl_matrix *real_aggregate_by (const double *x,
 	}
     }
 
-    nx = xlist == NULL ? 1 : xlist[0];
+    just_count = (builtin == aggr_get_count);
+
+    if (just_count) {
+	x = NULL;
+	xlist = NULL;
+	skipnull = 0;
+	countcol = 0;
+	nx = 1;
+    } else {
+	nx = xlist == NULL ? 1 : xlist[0];
+    }
+
     mcols = ny + nx + countcol;
 
     /* Allocate a matrix with enough rows to hold all the y-value
@@ -4938,10 +4956,16 @@ static gretl_matrix *real_aggregate_by (const double *x,
 		    }
 		}
 		if (match) {
-		    tmp[ni++] = x[t];
+		    if (x != NULL) {
+			tmp[ni] = x[t];
+		    }
+		    ni++;
 		}
 	    }
-	    if (ni == 0 && skipnull) {
+	    if (just_count) {
+		gretl_matrix_set(m, ii, ny, ni);
+		break;
+	    } else if (ni == 0 && skipnull) {
 		/* exclude cases where the obs count is 0 */
 		break;
 	    } else {
@@ -5023,7 +5047,8 @@ gretl_matrix *aggregate_by (const double *x,
     gchar *usercall = NULL;
     int f, n;
 
-    if (fncall == NULL || (y == NULL && ylist == NULL)) {
+    if ((x == NULL && xlist == NULL) ||
+	(y == NULL && ylist == NULL)) {
 	*err = E_DATA;
 	return NULL;
     }
@@ -5033,52 +5058,56 @@ gretl_matrix *aggregate_by (const double *x,
 			   "the second of which is discrete"));
 	*err = E_DATA;
 	return NULL;
-    }	
+    }
 
-    f = function_lookup(fncall);
+    if (fncall == NULL || !strcmp(fncall, "null")) {
+	builtin = aggr_get_count;
+    } else {
+	f = function_lookup(fncall);
 
-    switch (f) {
-    case F_SUM:
-	builtin = gretl_sum;
-	break;
-    case F_SUMALL:
-	builtin = series_sum_all;
-	break;
-    case F_MEAN:
-	builtin = gretl_mean;
-	break;
-    case F_SD:
-	builtin = gretl_stddev;
-	break;
-    case F_VCE:
-	builtin = gretl_variance;
-	break;
-    case F_SST:
-	builtin = gretl_sst;
-	break;
-    case F_SKEWNESS:
-	builtin = gretl_skewness;
-	break;	    
-    case F_KURTOSIS:
-	builtin = gretl_kurtosis;
-	break;	    
-    case F_MIN:
-	builtin = gretl_min;
-	break;	    
-    case F_MAX:
-	builtin = gretl_max;
-	break;
-    case F_MEDIAN:
-	builtin = gretl_median;
-	break;
-    case F_GINI:
-	builtin = gretl_gini;
-	break;
-    case F_NOBS:
-	builtin = series_get_nobs;
-	break;
-    default:
-	break;
+	switch (f) {
+	case F_SUM:
+	    builtin = gretl_sum;
+	    break;
+	case F_SUMALL:
+	    builtin = series_sum_all;
+	    break;
+	case F_MEAN:
+	    builtin = gretl_mean;
+	    break;
+	case F_SD:
+	    builtin = gretl_stddev;
+	    break;
+	case F_VCE:
+	    builtin = gretl_variance;
+	    break;
+	case F_SST:
+	    builtin = gretl_sst;
+	    break;
+	case F_SKEWNESS:
+	    builtin = gretl_skewness;
+	    break;	    
+	case F_KURTOSIS:
+	    builtin = gretl_kurtosis;
+	    break;	    
+	case F_MIN:
+	    builtin = gretl_min;
+	    break;	    
+	case F_MAX:
+	    builtin = gretl_max;
+	    break;
+	case F_MEDIAN:
+	    builtin = gretl_median;
+	    break;
+	case F_GINI:
+	    builtin = gretl_gini;
+	    break;
+	case F_NOBS:
+	    builtin = series_get_nobs;
+	    break;
+	default:
+	    break;
+	}
     }
 
     n = sample_size(dset);
