@@ -422,7 +422,15 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	} else if (what == W_COPY) {
 	    prn_to_clipboard(prn, fmt);
 	} else if (what == W_SAVE) {
-	    int action = (fmt & GRETL_FORMAT_TEX)? SAVE_TEX : SAVE_RTF;
+	    int action;
+
+	    if (fmt & GRETL_FORMAT_TEX) {
+		action = SAVE_TEX;
+	    } else if (fmt & GRETL_FORMAT_CSV) {
+		action = EXPORT_CSV;
+	    } else {
+		action = SAVE_RTF;
+	    }
 
 	    file_selector_with_parent(action, FSEL_DATA_PRN, 
 				      prn, vwin_toplevel(vwin));

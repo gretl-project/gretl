@@ -738,7 +738,7 @@ tab_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 }
 
 static GtkWidget *
-CSV_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
+csv_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 		 int pref)
 {
     GtkWidget *button;
@@ -749,7 +749,6 @@ CSV_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 		     G_CALLBACK(set_copy_format), finfo);
     g_object_set_data(G_OBJECT(button), "format", 
 		      GINT_TO_POINTER(GRETL_FORMAT_CSV));  
-
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
 				 (pref == GRETL_FORMAT_CSV));
 
@@ -830,7 +829,7 @@ void copy_format_dialog (windata_t *vwin, int action)
 
     if (can_do_csv(vwin)) {
 	/* comma-separated option */
-	button = CSV_copy_button(group, vbox, finfo, pref);
+	button = csv_copy_button(group, vbox, finfo, pref);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
