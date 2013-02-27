@@ -564,39 +564,39 @@ static int write_stata_io_file (void)
     return 0;
 }
 
-static void add_gretl_include (FILE *fp)
+static void add_gretl_include (int lang, FILE *fp)
 {
 #ifdef G_OS_WIN32
     gchar *dotcpy = win32_dotpath();
 
-    if (foreign_lang == LANG_OX) {
+    if (lang == LANG_OX) {
 	if (strchr(dotcpy, ' ')) {
 	    fprintf(fp, "#include \"%sgretl_io.ox\"\n", dotcpy);
 	} else {
 	    fprintf(fp, "#include <%sgretl_io.ox>\n", dotcpy);
 	}
-    } else if (foreign_lang == LANG_OCTAVE) {
+    } else if (lang == LANG_OCTAVE) {
 	fprintf(fp, "source(\"%sgretl_io.m\")\n", dotcpy);
-    } else if (foreign_lang == LANG_PYTHON) {
+    } else if (lang == LANG_PYTHON) {
 	fprintf(fp, "execfile(\"%sgretl_io.py\")\n", dotcpy);    
-    } else if (foreign_lang == LANG_STATA) {
+    } else if (lang == LANG_STATA) {
 	fprintf(fp, "quietly adopath + \"%s\"\n", dotcpy);
     }
     g_free(dotcpy);
 #else
     const char *dotdir = gretl_dotdir();
 
-    if (foreign_lang == LANG_OX) {
+    if (lang == LANG_OX) {
 	if (strchr(dotdir, ' ')) {
 	    fprintf(fp, "#include \"%sgretl_io.ox\"\n", dotdir);
 	} else {
 	    fprintf(fp, "#include <%sgretl_io.ox>\n", dotdir);
 	}
-    } else if (foreign_lang == LANG_OCTAVE) {
+    } else if (lang == LANG_OCTAVE) {
 	fprintf(fp, "source(\"%sgretl_io.m\")\n", dotdir);
-    } else if (foreign_lang == LANG_PYTHON) {
+    } else if (lang == LANG_PYTHON) {
 	fprintf(fp, "execfile(\"%sgretl_io.py\")\n", dotdir);
-    } else if (foreign_lang == LANG_STATA) {
+    } else if (lang == LANG_STATA) {
 	fprintf(fp, "quietly adopath + \"%s\"\n", dotdir);
     }
 #endif
@@ -630,10 +630,28 @@ static void put_foreign_lines (FILE *fp)
 	fprintf(fp, "%s\n", foreign_lines[i] + n);
 	if (foreign_lang == LANG_OX) {
 	    if (strstr(foreign_lines[i], "oxstd.h")) {
-		add_gretl_include(fp);
+		add_gretl_include(LANG_OX, fp);
 	    }
 	}
     }
+}
+
+static void put_foreign_buffer (const char *buf, FILE *fp)
+{
+    char line[1024];
+
+    bufgets_init(buf);
+
+    while (bufgets(line, sizeof line, buf)) {
+	fputs(line, fp);
+	if (foreign_lang == LANG_OX) {
+	    if (strstr(line, "oxstd.h")) {
+		add_gretl_include(LANG_OX, fp);
+	    }
+	}
+    }
+
+    bufgets_finalize(buf);
 }
 
 /**
@@ -652,23 +670,15 @@ int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname)
 {
     const gchar *fname = gretl_ox_filename();
     FILE *fp = gretl_fopen(fname, "w");
-    int err = write_ox_io_file();
+
+    write_ox_io_file();
 
     if (fp == NULL) {
 	return E_FOPEN;
     } else {
 	if (buf != NULL) {
 	    /* pass on the material supplied in the 'buf' argument */
-	    char line[1024];
-
-	    bufgets_init(buf);
-	    while (bufgets(line, sizeof line, buf)) {
-		fputs(line, fp);
-		if (!err && strstr(line, "oxstd.h")) {
-		    add_gretl_include(fp);
-		}
-	    }
-	    bufgets_finalize(buf);
+	    put_foreign_buffer(buf, fp);
 	} else {
 	    /* put out the stored 'foreign' lines */
 	    put_foreign_lines(fp);
@@ -698,23 +708,16 @@ int write_gretl_python_file (const char *buf, gretlopt opt, const char **pfname)
 {
     const gchar *fname = gretl_python_filename();
     FILE *fp = gretl_fopen(fname, "w");
-    int err = write_python_io_file();
+
+    write_python_io_file();
 
     if (fp == NULL) {
 	return E_FOPEN;
     } else {
-	if (!err) {
-	    add_gretl_include(fp);
-	}
+	add_gretl_include(LANG_PYTHON, fp);
 	if (buf != NULL) {
 	    /* pass on the material supplied in the 'buf' argument */
-	    char line[1024];
-
-	    bufgets_init(buf);
-	    while (bufgets(line, sizeof line, buf)) {
-		fputs(line, fp);
-	    }
-	    bufgets_finalize(buf);
+	    put_foreign_buffer(buf, fp);
 	} else {
 	    /* put out the stored 'foreign' lines */
 	    put_foreign_lines(fp);
@@ -760,16 +763,16 @@ int write_gretl_stata_file (const char *buf, gretlopt opt,
 {
     const gchar *fname = gretl_stata_filename();
     FILE *fp = gretl_fopen(fname, "w");
-    int err = write_stata_io_file();
+
+    write_stata_io_file();
 
     if (fp == NULL) {
 	return E_FOPEN;
     } else {
-	/* source the I-O functions */
-	if (!err) {
-	    add_gretl_include(fp);
-	}
+	int err;
 
+	/* source the I-O functions */
+	add_gretl_include(LANG_STATA, fp);
 	if (opt & OPT_D) {
 	    /* --send-data */
 	    err = write_data_for_stata(dset, fp);
@@ -778,16 +781,9 @@ int write_gretl_stata_file (const char *buf, gretlopt opt,
 		return err;
 	    }
 	}
-
 	if (buf != NULL) {
 	    /* pass on the material supplied in the 'buf' argument */
-	    char line[1024];
-
-	    bufgets_init(buf);
-	    while (bufgets(line, sizeof line, buf)) {
-		fputs(line, fp);
-	    }
-	    bufgets_finalize(buf);
+	    put_foreign_buffer(buf, fp);
 	} else {
 	    /* put out the stored 'foreign' lines */
 	    put_foreign_lines(fp);
@@ -832,16 +828,16 @@ int write_gretl_octave_file (const char *buf, gretlopt opt,
 {
     const gchar *fname = gretl_octave_filename();
     FILE *fp = gretl_fopen(fname, "w");
-    int err = write_octave_io_file();
+
+    write_octave_io_file();
 
     if (fp == NULL) {
 	return E_FOPEN;
     } else {
-	/* source the I-O functions */
-	if (!err) {
-	    add_gretl_include(fp);
-	}
+	int err;
 
+	/* source the I-O functions */
+	add_gretl_include(LANG_OCTAVE, fp);
 	if (opt & OPT_D) {
 	    /* --send-data */
 	    err = write_data_for_octave(dset, fp);
@@ -850,16 +846,9 @@ int write_gretl_octave_file (const char *buf, gretlopt opt,
 		return err;
 	    }
 	}
-
 	if (buf != NULL) {
 	    /* pass on the material supplied in the 'buf' argument */
-	    char line[1024];
-
-	    bufgets_init(buf);
-	    while (bufgets(line, sizeof line, buf)) {
-		fputs(line, fp);
-	    }
-	    bufgets_finalize(buf);
+	    put_foreign_buffer(buf, fp);
 	} else {
 	    /* put out the stored 'foreign' lines */
 	    put_foreign_lines(fp);
