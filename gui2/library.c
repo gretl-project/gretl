@@ -7987,7 +7987,9 @@ static int execute_script (const char *runfile, const char *buf,
 	    }
 
 	    if (!exec_err) {
-		if (!state.in_comment) {
+		if (state.in_comment || libcmd.context == FOREIGN) {
+		    tailstrip(line);
+		} else {
 		    contd = top_n_tail(line, sizeof line, &exec_err);
 		    while (contd && !state.in_comment && !exec_err) {
 			/* handle continued lines */
@@ -8003,8 +8005,6 @@ static int execute_script (const char *runfile, const char *buf,
 			}
 			contd = top_n_tail(line, sizeof line, &exec_err);
 		    }
-		} else {
-		    tailstrip(line);
 		}
 	    }
 

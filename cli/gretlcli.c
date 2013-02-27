@@ -605,10 +605,14 @@ int main (int argc, char *argv[])
 	}
 
 	if (!state.in_comment) {
-	    err = maybe_get_input_line_continuation(line); 
-	    if (err) {
-		errmsg(err, prn);
-		break;
+	    if (cmd.context == FOREIGN) {
+		tailstrip(line);
+	    } else {
+		err = maybe_get_input_line_continuation(line); 
+		if (err) {
+		    errmsg(err, prn);
+		    break;
+		}
 	    }
 	} 
 

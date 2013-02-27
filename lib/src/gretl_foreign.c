@@ -602,6 +602,40 @@ static void add_gretl_include (FILE *fp)
 #endif
 }
 
+static int get_foreign_indent (void)
+{
+    const char *s;
+    int i, n, ret = 100;
+
+    for (i=0; i<foreign_n_lines; i++) {
+	n = 0;
+	s = foreign_lines[i];
+	while (*s == ' ' || *s == '\t') {
+	    n++;
+	    s++;
+	}
+	if (n < ret) {
+	    ret = n;
+	}
+    }
+
+    return ret;
+}
+
+static void put_foreign_lines (FILE *fp)
+{
+    int i, n = get_foreign_indent();
+
+    for (i=0; i<foreign_n_lines; i++) { 
+	fprintf(fp, "%s\n", foreign_lines[i] + n);
+	if (foreign_lang == LANG_OX) {
+	    if (strstr(foreign_lines[i], "oxstd.h")) {
+		add_gretl_include(fp);
+	    }
+	}
+    }
+}
+
 /**
  * write_gretl_ox_file:
  * @buf: text buffer containing Ox code.
@@ -637,14 +671,7 @@ int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname)
 	    bufgets_finalize(buf);
 	} else {
 	    /* put out the stored 'foreign' lines */
-	    int i;
-
-	    for (i=0; i<foreign_n_lines; i++) { 
-		fprintf(fp, "%s\n", foreign_lines[i]);
-		if (!err && strstr(foreign_lines[i], "oxstd.h")) {
-		    add_gretl_include(fp);
-		}
-	    }
+	    put_foreign_lines(fp);
 	}
 	fclose(fp);
 	if (pfname != NULL) {
@@ -690,11 +717,7 @@ int write_gretl_python_file (const char *buf, gretlopt opt, const char **pfname)
 	    bufgets_finalize(buf);
 	} else {
 	    /* put out the stored 'foreign' lines */
-	    int i;
-
-	    for (i=0; i<foreign_n_lines; i++) { 
-		fprintf(fp, "%s\n", foreign_lines[i]);
-	    }
+	    put_foreign_lines(fp);
 	}
 	fclose(fp);
 	if (pfname != NULL) {
@@ -767,11 +790,7 @@ int write_gretl_stata_file (const char *buf, gretlopt opt,
 	    bufgets_finalize(buf);
 	} else {
 	    /* put out the stored 'foreign' lines */
-	    int i;
-
-	    for (i=0; i<foreign_n_lines; i++) { 
-		fprintf(fp, "%s\n", foreign_lines[i]);
-	    }
+	    put_foreign_lines(fp);
 	}
 	fclose(fp);
 	if (pfname != NULL) {
@@ -843,11 +862,7 @@ int write_gretl_octave_file (const char *buf, gretlopt opt,
 	    bufgets_finalize(buf);
 	} else {
 	    /* put out the stored 'foreign' lines */
-	    int i;
-
-	    for (i=0; i<foreign_n_lines; i++) { 
-		fprintf(fp, "%s\n", foreign_lines[i]);
-	    }
+	    put_foreign_lines(fp);
 	}
 	fclose(fp);
 	if (pfname != NULL) {
@@ -1021,7 +1036,7 @@ static int write_R_source_file (const char *buf,
 				gretlopt opt)
 {
     FILE *fp = gretl_fopen(gretl_Rsrc, "w");
-    int i, err = 0;
+    int err = 0;
 
 #if FDEBUG
     printf("write R source file: starting\n");
@@ -1080,9 +1095,7 @@ static int write_R_source_file (const char *buf,
 	    fputs(buf, fp);
 	} else if (!(opt & OPT_G)) {
 	    /* non-GUI */
-	    for (i=0; i<foreign_n_lines; i++) { 
-		fprintf(fp, "%s\n", foreign_lines[i]);
-	    }
+	    put_foreign_lines(fp);
 	}
 
 	if (sunk) {
@@ -1826,6 +1839,10 @@ int foreign_append_line (const char *line, gretlopt opt, PRN *prn)
     if (string_is_blank(line)) {
 	return 0;
     }
+
+#if 0
+    fprintf(stderr, "foreign_append_line: '%s'\n", line);
+#endif
 
     if (!foreign_started) {
 	/* starting from scratch */

@@ -2504,6 +2504,11 @@ static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->text), FALSE);
 
+    if (!script_editing(vwin->role)) {
+	/* don't mess with foreign stuff */
+	return FALSE;
+    }
+
     if (smarttab && !(mods & GDK_SHIFT_MASK)) {
 	if (maybe_insert_smart_tab(vwin)) {
 	    return TRUE;
