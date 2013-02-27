@@ -4808,12 +4808,6 @@ double series_sum_all (int t1, int t2, const double *x)
     return xsum;
 }
 
-static double aggr_get_count (int t1, int t2, const double *x)
-{
-    /* just a dummy function */
-    return 0;
-}
-
 static gretl_matrix *delete_null_cases (gretl_matrix *m,
 					int keeprows,
 					int *err)
@@ -4849,6 +4843,7 @@ static gretl_matrix *real_aggregate_by (const double *x,
 					double (*builtin)(),
 					gchar *usercall,
 					DATASET *tmpset,
+					int just_count,
 					int *err)
 {
     gretl_matrix *m = NULL;
@@ -4857,7 +4852,6 @@ static gretl_matrix *real_aggregate_by (const double *x,
     int n = sample_size(dset);
     int match, skipnull = 0;
     int countcol = 1;
-    int just_count = 0;
     int maxcases;
     int ny, nx, mcols;
     int *idx;
@@ -4902,8 +4896,6 @@ static gretl_matrix *real_aggregate_by (const double *x,
 	    idx[j] = 0;
 	}
     }
-
-    just_count = (builtin == aggr_get_count);
 
     if (just_count) {
 	x = NULL;
@@ -5045,10 +5037,15 @@ gretl_matrix *aggregate_by (const double *x,
     double *tmp = NULL;
     double (*builtin) (int, int, const double *) = NULL;
     gchar *usercall = NULL;
-    int f, n;
+    int just_count = 0;
+    int n;
 
-    if ((x == NULL && xlist == NULL) ||
-	(y == NULL && ylist == NULL)) {
+    if (fncall == NULL || !strcmp(fncall, "null")) {
+	just_count = 1;
+    }
+
+    if ((y == NULL && ylist == NULL) ||
+	(!just_count && x == NULL && xlist == NULL)) {
 	*err = E_DATA;
 	return NULL;
     }
@@ -5060,10 +5057,8 @@ gretl_matrix *aggregate_by (const double *x,
 	return NULL;
     }
 
-    if (fncall == NULL || !strcmp(fncall, "null")) {
-	builtin = aggr_get_count;
-    } else {
-	f = function_lookup(fncall);
+    if (!just_count) {
+	int f = function_lookup(fncall);
 
 	switch (f) {
 	case F_SUM:
@@ -5112,7 +5107,9 @@ gretl_matrix *aggregate_by (const double *x,
 
     n = sample_size(dset);
 
-    if (builtin != NULL) {
+    if (just_count) {
+	; /* nothing to do here */
+    } else if (builtin != NULL) {
 	/* nice and simple */
 	tmp = malloc(n * sizeof *tmp);
 	if (tmp == NULL) {
@@ -5134,7 +5131,8 @@ gretl_matrix *aggregate_by (const double *x,
 	x = (x == NULL)? NULL : x + dset->t1;
 	y = (y == NULL)? NULL : y + dset->t1;
 	m = real_aggregate_by(x, y, xlist, ylist, dset, tmp, 
-			      builtin, usercall, tmpset, err);
+			      builtin, usercall, tmpset, 
+			      just_count, err);
     }    
 
     if (m != NULL && *err) {

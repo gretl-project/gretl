@@ -6484,22 +6484,25 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    }
 	}
     } else if (f == F_AGGRBY) {
-	if (l->t != VEC && l->t != LIST) {
+	if (l->t != VEC && l->t != LIST && !null_or_empty(l)) {
 	    node_type_error(f, 1, VEC, l, p);
 	} else if (m->t != VEC && m->t != LIST) {
 	    node_type_error(f, 2, VEC, m, p);
-	} else if (r->t != STR) {
+	} else if (r->t != STR && !null_or_empty(r)) {
 	    node_type_error(f, 3, STR, r, p);
 	} else {
-	    const char *fncall = r->v.str;
+	    const char *fncall = NULL;
 	    const double *x = NULL;
 	    const double *y = NULL;
 	    const int *xlist = NULL;
 	    const int *ylist = NULL;
 
+	    if (r->t == STR) {
+		fncall = r->v.str;
+	    }
 	    if (l->t == VEC) {
 		x = l->v.xvec;
-	    } else {
+	    } else if (l->t == LIST) {
 		xlist = l->v.ivec;
 	    }	    
 	    if (m->t == VEC) {
