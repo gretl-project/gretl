@@ -2731,7 +2731,7 @@ static int johansen_degenerate_stage_1 (GRETL_VAR *v,
     const double **Z = (const double **) dset->Z;
     gretl_matrix *R0 = v->jinfo->R0;
     gretl_matrix *R1 = v->jinfo->R1;
-    int i, j, vi, s, t;
+    int i, vi, s, t, j = 0;
 
     fprintf(stderr, "degenerate stage 1\n");
 
@@ -2739,30 +2739,32 @@ static int johansen_degenerate_stage_1 (GRETL_VAR *v,
 	vi = v->ylist[i+1];
 	s = 0;
 	for (t=v->t1; t<=v->t2; t++) {
-	    gretl_matrix_set(R0, s, i, Z[vi][t] - Z[vi][t-1]);
-	    gretl_matrix_set(R1, s, i, Z[vi][t-1]);
+	    gretl_matrix_set(R0, s, j, Z[vi][t] - Z[vi][t-1]);
+	    gretl_matrix_set(R1, s, j, Z[vi][t-1]);
 	    s++;
 	}
+	j++;
     }
 
     if (auto_restr(v)) {
 	int trend = (jcode(v) == J_REST_TREND);
 
 	for (t=0; t<v->T; t++) {
-	    gretl_matrix_set(R1, t, v->neqns, (trend)? v->t1 + t : 1);
+	    gretl_matrix_set(R1, t, j, (trend)? v->t1 + t : 1);
 	}
+	j++;
     }
 
     if (v->rlist != NULL) {
 	for (i=0; i<v->rlist[0]; i++) {
 	    vi = v->rlist[i+1];
-	    j = v->neqns + i + 1;
 	    s = 0;
 	    for (t=v->t1; t<=v->t2; t++) {
 		gretl_matrix_set(R1, s++, j, Z[vi][t]); /* was t-1 */
 	    }
+	    j++;
 	}
-    } 
+    }
 
     johansen_fill_S_matrices(v);
 
