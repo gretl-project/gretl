@@ -2004,6 +2004,37 @@ static void normalize_indent (GtkTextBuffer *tbuf,
     bufgets_finalize(buf); 
 }
 
+static int in_foreign_land (GtkWidget *text_widget)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextIter start, end;
+    gchar *buf;
+    char *s, line[1024];
+    int inforeign = 0;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_widget));
+    gtk_text_buffer_get_start_iter(tbuf, &start);
+    gtk_text_buffer_get_iter_at_mark(tbuf, &end, 
+				     gtk_text_buffer_get_insert(tbuf));
+    buf = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+
+    bufgets_init(buf);
+
+    while (bufgets(line, sizeof line, buf)) {
+	s = line + strspn(line, " \t");
+	if (!strncmp(s, "foreign", 7)) {
+	    inforeign = 1;
+	} else if (!strncmp(s, "end foreign", 7)) {
+	    inforeign = 0;
+	}
+    }
+
+    bufgets_finalize(buf);
+    g_free(buf);
+
+    return inforeign;
+}
+
 static void auto_indent_script (GtkWidget *w, windata_t *vwin)
 {
     GtkTextBuffer *tbuf;
@@ -2410,7 +2441,7 @@ static gboolean script_electric_enter (windata_t *vwin)
     int targsp = 0;
     gboolean ret = FALSE;
 
-    if (!smarttab) {
+    if (!smarttab || in_foreign_land(vwin->text)) {
 	return FALSE;
     }
 
@@ -2507,7 +2538,7 @@ static gboolean script_electric_enter (windata_t *vwin)
     return ret;
 }
 
-/* handler for the user pressing the Tab key when editing a script */
+/* handler for the user pressing the Tab key when editing a gretl script */
 
 static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
 {
@@ -2515,6 +2546,10 @@ static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
     gboolean ret = FALSE;
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->text), FALSE);
+
+    if (in_foreign_land(vwin->text)) {
+	return FALSE;
+    }
 
     if (smarttab && !(mods & GDK_SHIFT_MASK)) {
 	if (maybe_insert_smart_tab(vwin)) {
