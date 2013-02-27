@@ -495,8 +495,9 @@ static int write_python_io_file (void)
 #endif	
 	    fputs("  return dotdir\n\n", fp);
 
-	    fputs("def gretl_export(M, fname, autodot=1):\n", fp);
-	    fputs("  from numpy import savetxt\n", fp);
+	    fputs("def gretl_export(X, fname, autodot=1):\n", fp);
+	    fputs("  from numpy import asmatrix, savetxt\n", fp);
+	    fputs("  M = asmatrix(X)\n", fp);
 	    fputs("  r, c = M.shape\n", fp);
 	    fputs("  if autodot:\n", fp);
             fputs("    fname = gretl_dotdir() + fname\n", fp);

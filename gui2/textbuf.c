@@ -1950,6 +1950,7 @@ static void normalize_indent (GtkTextBuffer *tbuf,
     char word[9], line[1024];
     const char *ins;
     int incomment = 0;
+    int inforeign = 0;
     int i, nsp;
 
     if (buf == NULL) {
@@ -1977,7 +1978,18 @@ static void normalize_indent (GtkTextBuffer *tbuf,
 	if (!incomment) {
 	    *word = '\0';
 	    textbuf_get_cmdword(ins, word);
-	    adjust_indent(word, &this_indent, &next_indent);
+	    if (!strcmp(word, "foreign")) {
+		inforeign = 1;
+	    } else if (inforeign) {
+		if (!strncmp(ins, "end foreign", 11)) {
+		    inforeign = 0;
+		} else {
+		    gtk_text_buffer_insert(tbuf, start, line, -1);
+		    continue;
+		}
+	    } else {
+		adjust_indent(word, &this_indent, &next_indent);
+	    }
 	}
 	nsp = this_indent * tabwidth;
 	if (incomment == 2) {
@@ -2503,11 +2515,6 @@ static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
     gboolean ret = FALSE;
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->text), FALSE);
-
-    if (!script_editing(vwin->role)) {
-	/* don't mess with foreign stuff */
-	return FALSE;
-    }
 
     if (smarttab && !(mods & GDK_SHIFT_MASK)) {
 	if (maybe_insert_smart_tab(vwin)) {
