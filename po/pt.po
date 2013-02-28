@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-02-04 09:09-0500\n"
-"PO-Revision-Date: 2013-02-01 22:56+0000\n"
+"PO-Revision-Date: 2013-02-28 00:43+0000\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
@@ -393,7 +393,7 @@ msgstr "grupo"
 
 #: lib/src/boxplots.c:731 gui2/library.c:6700
 msgid "You must supply two variables, the second of which is discrete"
-msgstr "Você tem que fornecer 2 variáveis, sendo a última delas dscreta"
+msgstr "Você tem que fornecer 2 variáveis, sendo a última delas discreta"
 
 #: lib/src/boxplots.c:797
 #, c-format
@@ -2489,7 +2489,7 @@ msgstr "Declaração inválida"
 #: lib/src/genfuncs.c:3510
 #, c-format
 msgid "List has %d members, but length of vector b is %d"
-msgstr ""
+msgstr "A lista tem %d membros, mas o comprimento do vetor b é %d"
 
 #: lib/src/genfuncs.c:3682
 msgid "Imhof integral gave negative value"
@@ -4308,9 +4308,9 @@ msgid "kalman: a required matrix is missing"
 msgstr "kalman: falta uma matriz"
 
 #: lib/src/kalman.c:478
-#, fuzzy, c-format
+#, c-format
 msgid "kalman: required matrix %s is missing"
-msgstr "kalman: falta uma matriz"
+msgstr "kalman: falta a matriz %s"
 
 #: lib/src/kalman.c:486
 msgid "No Kalman filter is defined"
@@ -7304,7 +7304,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 1 de fevereiro de 2013."
+"Tradução de 28 de fevereiro de 2013."
 
 #: gui2/about.c:164
 msgid "License"
@@ -8911,7 +8911,7 @@ msgstr "Grupos do painel"
 
 #: gui2/dialogs.c:1847 gui2/dialogs.c:2268 gui2/dialogs.c:2383
 msgid "Start:"
-msgstr "Ínicio:"
+msgstr "Inicio:"
 
 #: gui2/dialogs.c:1866 gui2/dialogs.c:2268 gui2/dialogs.c:2383
 msgid "End:"
@@ -8943,14 +8943,12 @@ msgid "Set sample range"
 msgstr "Definir intervalo da amostra"
 
 #: gui2/dialogs.c:2372
-#, fuzzy
 msgid "gretl: define dummy"
-msgstr "gretl: definir gráfico"
+msgstr "gretl: definir auxiliar"
 
 #: gui2/dialogs.c:2382
-#, fuzzy
 msgid "Set dummy range"
-msgstr "Definir intervalo da amostra"
+msgstr "Definir intervalo da auxiliar"
 
 #: gui2/dialogs.c:2401 gui2/varinfo.c:998
 msgid "Name of variable:"
@@ -11052,9 +11050,8 @@ msgid "_Time dummies"
 msgstr "Variáveis auxiliares _temporais"
 
 #: gui2/gretl.c:1533
-#, fuzzy
 msgid "_Observation range dummy"
-msgstr "Por número de _observação"
+msgstr "Auxiliar de intervalo de _observação"
 
 #: gui2/gretl.c:1534
 msgid "Dummies for selected _discrete variables"
@@ -14661,9 +14658,8 @@ msgid "Command to launch GNU R"
 msgstr "Comando para iniciar GNU R"
 
 #: gui2/settings.c:206
-#, fuzzy
 msgid "Path to Rterm.exe"
-msgstr "Caminho para tramo"
+msgstr "Caminho para Rterm.exe"
 
 #: gui2/settings.c:209
 msgid "Command to compile TeX files"
@@ -16559,17 +16555,17 @@ msgid "Unexpected error reading the file\n"
 msgstr "Erro inesperado durante a leitura do ficheiro\n"
 
 #: plugin/xlsx_import.c:704
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d variables and %d observations\n"
-msgstr "para a variável %s (%d observações válidas)"
+msgstr "Encontradas %d variáveis e %d observações\n"
 
 #: plugin/xlsx_import.c:707
 msgid "File contains no data\n"
-msgstr ""
+msgstr "O ficheiro não tem dados\n"
 
 #: plugin/xlsx_import.c:1046
 msgid "Found no sheets\n"
-msgstr ""
+msgstr "Não se encontraram folhas de cálculo\n"
 
 #: plugin/xlsx_import.c:1093
 #, c-format
@@ -16577,11 +16573,13 @@ msgid "'%s': no such worksheet"
 msgstr "%s: essa folha-de-trabalho não existe"
 
 #: plugin/xlsx_import.c:1111
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Found %d valid sheet(s)\n"
-msgstr "para a coluna %d (%d observações válidas)"
+msgstr ""
+"\n"
+"Encontradas %d folhas de cálculo válidas\n"
 
 #: doc/commands/matfuncs.c:50
 msgid "Creation and I/O"
