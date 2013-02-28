@@ -1108,14 +1108,14 @@ static GretlToolItem mainbar_items[] = {
     { N_("new script"),         GTK_STOCK_EDIT,      G_CALLBACK(tbar_new_script), 0 },
     { N_("open gretl console"), GRETL_STOCK_CONSOLE, G_CALLBACK(gretl_console), 0 },
     { N_("session icon view"),  GRETL_STOCK_ICONS,   G_CALLBACK(tbar_iconview), 0 },
-    { N_("Windows"),            GRETL_STOCK_COMPASS, GNULL, 0 },
     { N_("function packages"),  GRETL_STOCK_FUNC,    G_CALLBACK(tbar_show_funcs), 0 },
     { N_("user's guide"),       GRETL_STOCK_PDF,     G_CALLBACK(tbar_users_guide), 0 },
     { N_("command reference"),  GTK_STOCK_HELP,      G_CALLBACK(tbar_command_ref), 0 },
     { N_("X-Y graph"),          GRETL_STOCK_SCATTER, G_CALLBACK(tbar_xy_graph), 0 },
     { N_("OLS model"),          GRETL_STOCK_MODEL,   G_CALLBACK(tbar_model), 0 },
     { N_("gretl database"),     GRETL_STOCK_DB,      G_CALLBACK(show_native_dbs), 0 },
-    { N_("open dataset"),       GTK_STOCK_OPEN,      G_CALLBACK(tbar_open_data), 0 }
+    { N_("open dataset"),       GTK_STOCK_OPEN,      G_CALLBACK(tbar_open_data), 0 },
+    { N_("Windows"),            GRETL_STOCK_COMPASS, GNULL, 0 },
 };
 
 void add_mainwin_toolbar (GtkWidget *vbox)
