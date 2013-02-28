@@ -85,6 +85,7 @@
 #define lhscalar(p) (p->flags & P_LHSCAL)
 #define lhlist(p) (p->flags & P_LHLIST)
 #define lhstr(p) (p->flags & P_LHSTR)
+#define lhbundle(p) (p->flags & P_LHBUN)
 
 #define compiled(p) (p->flags & P_EXEC)
 
@@ -10339,7 +10340,7 @@ static NODE *lhs_copy_node (parser *p)
 static void parser_try_print (parser *p)
 {
     if (p->lh.v == 0 && p->lh.m0 == NULL && !lhlist(p) && 
-	!lhstr(p) && !lhscalar(p)) {
+	!lhstr(p) && !lhscalar(p) && !lhbundle(p)) {
 	/* varname on left is not the name of a current variable */
 	p->err = E_EQN;
     } else if (p->lh.substr != NULL) {

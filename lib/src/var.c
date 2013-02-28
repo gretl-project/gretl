@@ -2733,7 +2733,9 @@ static int johansen_degenerate_stage_1 (GRETL_VAR *v,
     gretl_matrix *R1 = v->jinfo->R1;
     int i, vi, s, t, j = 0;
 
+#if 0
     fprintf(stderr, "degenerate stage 1\n");
+#endif
 
     for (i=0; i<v->neqns; i++) {
 	vi = v->ylist[i+1];

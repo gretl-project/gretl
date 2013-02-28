@@ -2550,7 +2550,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 		cmd->opt = OPT_U;
 	    } else if (gretl_if_state_false()) {
 		cmd_set_nolist(cmd);
-		cmd->ci = CMD_NULL;
+		cmd->ci = CMD_MASKED;
 		return 0;
 	    } else {
 		cmd->err = 1;
@@ -2568,7 +2568,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
     /* if, else, endif controls: should this come earlier? */
     if (flow_control(line, dset, cmd)) {
 	cmd_set_nolist(cmd);
-	cmd->ci = CMD_NULL;
+	cmd->ci = CMD_MASKED;
 	return cmd->err;
     }
 
@@ -6071,10 +6071,6 @@ static int is_endloop (const char *s)
 
 int get_command_index (char *line, CMD *cmd)
 {
-#if 0
-    /* 2010-04-05: use cmd->context instead: is that a problem? */
-    static int context;
-#endif
     char cnext = 0;
     int done = 0;
 
@@ -6104,12 +6100,13 @@ int get_command_index (char *line, CMD *cmd)
 	    strcpy(cmd->word, "genr");
 	    cmd->ci = GENR;
 	} else {
+	    /* FIXME watch out for fallout! (2012-03-01) */
 	    cmd_set_nolist(cmd);
 	    cmd->ci = CMD_NULL;
 #if CMD_DEBUG
-	    fprintf(stderr, "get_command_index: got nothing, returning 0\n");
+	    fprintf(stderr, "get_command_word: got nothing!\n");
 #endif
-	    return 0;
+	    return E_PARSE; /* return 0 */
 	}
     }
 

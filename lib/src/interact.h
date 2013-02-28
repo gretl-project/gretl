@@ -25,6 +25,7 @@
 #define MAXSAVENAME 32
 #define CMD_NULL    -1
 #define CMD_COMMENT -2
+#define CMD_MASKED  -3
 
 typedef struct CMD_ CMD;
 typedef struct ExecState_ ExecState;

@@ -902,7 +902,7 @@ static int exec_line (ExecState *s, DATASET *dset)
     }
 
     if (cmd->ci < 0) {
-	/* there's nothing there */ 	
+	/* nothing there, comment, or masked by "if" */
 	return 0;
     }
 

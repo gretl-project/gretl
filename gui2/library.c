@@ -8382,7 +8382,8 @@ int gui_exec_line (ExecState *s, DATASET *dset)
     gretl_exec_state_transcribe_flags(s, cmd);
 
     if (cmd->ci < 0) {
-	return 0; /* nothing there, or a comment */
+	/* nothing there, a comment, or masked by "if" */
+	return 0;
     }
 
     if (s->sys != NULL && cmd->ci != END && cmd->ci != EQUATION &&
