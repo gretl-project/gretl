@@ -1637,7 +1637,7 @@ static gchar *make_viewer_title (int role, const char *fname)
     case EDIT_GP:
 	title = g_strdup(_("gretl: edit plot commands")); break;
     case EDIT_R:
-	title = g_strdup(_("gretl: edit R commands")); break;
+	title = g_strdup(_("gretl: edit R script")); break;
     case EDIT_OX:
 	title = g_strdup(_("gretl: edit Ox program")); break;
     case EDIT_OCTAVE:

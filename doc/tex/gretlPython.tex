@@ -30,18 +30,18 @@ the ``execute'' icon in the editor window will send your code to
 code within a \app{gretl} script using a \texttt{foreign} block, as
 described in connection with \app{R}.
 
-When you launch \app{Python} from within \app{gretl} three convenience
-functions are pre-defined, as follows.
+When you launch \app{Python} from within \app{gretl} one variable and
+two convenience functions are pre-defined, as follows.
 \begin{code}
-gretl_dotdir()
+gretl_dotdir
 gretl_loadmat(filename, autodot=1)
 gretl_export(M, filename, autodot=1)
 \end{code}
-The first of these returns the path to the user's ``dot directory.''
-The second loads a matrix of the given \texttt{filename} as written by
-\app{gretl}'s \texttt{mwrite} function, and the third writes matrix
-\texttt{M}, under the given \texttt{filename}, in the format wanted by
-\app{gretl}.
+The variable \verb|gretl_dotdir| holds the path to the user's ``dot
+directory.''  The first function loads a matrix of the given
+\texttt{filename} as written by \app{gretl}'s \texttt{mwrite}
+function, and the second writes matrix \texttt{M}, under the given
+\texttt{filename}, in the format wanted by \app{gretl}.
 
 By default the traffic in matrices goes via the dot directory on the
 \app{Python} side; that is, the name of this directory is prepended to
