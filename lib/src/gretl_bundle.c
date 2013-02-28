@@ -577,14 +577,41 @@ void *gretl_bundle_get_content (gretl_bundle *bundle)
     return (bundle == NULL)? NULL : (void *) bundle->ht;
 }
 
+#if 0 /* maybe? */
+static int check_bundle_key (const char *s)
+{
+    if (strlen(s) > 31) {
+	return E_DATA;
+    } else {
+	while (*s) {
+	    if (isspace(*s)) {
+		return E_DATA;
+	    }
+	    s++;
+	}
+    }
+
+    return 0;
+}
+#endif
+
 static int real_gretl_bundle_set_data (gretl_bundle *b, const char *key,
 				       void *ptr, GretlType type,
 				       int size, const char *note)
 {
-    bundled_item *item;
+    bundled_item *item = NULL;
     int err = 0;
 
+#if 0 /* maybe? */
+    err = check_bundle_key(key);
+    if (err) {
+	gretl_errmsg_sprintf(_("'%s': invalid key string"), key);
+    } else {
+	item = bundled_item_new(type, ptr, size, note, &err);
+    }
+#else
     item = bundled_item_new(type, ptr, size, note, &err);
+#endif
 
     if (!err) {
 	gchar *k = g_strdup(key);
