@@ -839,7 +839,7 @@ char *gretl_list_to_string (const int *list)
  * @err: location to receive error code.
  * 
  * Prints the names of the members of @list of integers into 
- * a newly allocated string, separated by single spaces.
+ * a newly allocated string, separated by commas.
  *
  * Returns: The string representation of the list on success,
  * or NULL on failure.
@@ -891,6 +891,58 @@ char *gretl_list_get_names (const int *list, const DATASET *dset,
     }    
 	
     return buf;
+}
+
+/**
+ * gretl_list_get_names_array:
+ * @list: array of integers.
+ * @dset: dataset information.
+ * @err: location to receive error code.
+ * 
+ * Returns: An array of strings holding the names of the
+ * members of @list, or NULL on failure.
+ */
+
+char **gretl_list_get_names_array (const int *list, 
+				   const DATASET *dset,
+				   int *err)
+{
+    char **S = NULL;
+    int i, vi, n;
+
+    if (list == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (list[0] == 0) {
+	return NULL;
+    }
+
+    n = list[0];
+
+    S = strings_array_new(n);
+    if (S == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	vi = list[i+1];
+	if (vi < 0 || vi >= dset->v) {
+	    S[i] = gretl_strdup("unknown");
+	} else {
+	    S[i] = gretl_strdup(dset->varname[vi]);
+	}
+	if (S[i] == NULL) {
+	    *err = E_ALLOC;
+	    strings_array_free(S, n);
+	    S = NULL;
+	    break;
+	}
+    }
+
+    return S;
 }
 
 /**
