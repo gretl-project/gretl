@@ -5071,7 +5071,7 @@ static void aggr_add_colnames (gretl_matrix *m,
 		free(Sx);
 	    }
 	} else {
-	    S[j] = gretl_strdup("x");
+	    S[j] = gretl_strdup("f(x)");
 	}
     }
 
