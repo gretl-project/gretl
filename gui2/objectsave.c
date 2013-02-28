@@ -23,6 +23,7 @@
 #include "session.h"
 #include "objectsave.h"
 #include "objstack.h"
+#include "gretl_bundle.h"
 
 static int gui_parse_object_request (const char *line, 
 				     char *objname, char **param,
@@ -39,6 +40,10 @@ static int gui_parse_object_request (const char *line,
     if (*param == NULL) {
 	return OBJ_ACTION_NONE;
     }
+
+    if (gretl_is_bundle(word)) {
+	return OBJ_ACTION_NONE;
+    }    
 
     /* see if there's an object associated with the name */
     *pptr = get_session_object_by_name(word, type);

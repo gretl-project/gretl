@@ -1086,6 +1086,8 @@ static void word_check_next_char (parser *p)
     } else if (p->ch == '.' && isalpha(*p->point)) {
 	if (p->sym == ULIST) {
 	    p->sym = LISTVAR;
+	} else if (p->sym == BUNDLE) {
+	    p->sym = BMEMB;
 	} else {
 	    p->err = E_PARSE;
 	}
@@ -1592,6 +1594,8 @@ const char *getsymb (int t, const parser *p)
 	return "LISTVAR";
     } else if (t == BOBJ) {
 	return "BOBJ";
+    } else if (t == BMEMB) {
+	return "BMEMB";
     } else if (t == LISTELEM) {
 	return "LISTELEM";
     } else if (t == VEC) {

@@ -35,6 +35,10 @@ static int cli_parse_object_request (const char *line,
 	return OBJ_ACTION_NONE;
     }
 
+    if (gretl_is_bundle(word)) {
+	return OBJ_ACTION_NONE;
+    }
+
     /* see if there's an object associated with the name */
     err = gretl_get_object_and_type(word, pptr, type);
 

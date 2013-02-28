@@ -112,13 +112,14 @@ enum {
 	      STR,	  /* string */
 	      BUNDLE,     /* gretl bundle (hash table) */
               BOBJ,       /* object inside a bundle */
+	      BMEMB,      /* object in bundle (dot notation) */
 	      FARGS,	  /* set of n function arguments */
               WLIST,      /* wildcard list spec */
               EMPTY,      /* "null" */
 	      ABSENT,
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
-              EROOT,	  /* dummy root for (...) expression */
-  /* 90 */    UFUN,	  /* user-defined function */
+  /* 90 */    EROOT,	  /* dummy root for (...) expression */
+	      UFUN,	  /* user-defined function */
 	      RFUN,       /* GNU R function */
 	      USTR,       /* string variable */
 	      IVEC,       /* array of ints, not a varlist */
@@ -428,7 +429,8 @@ enum {
 
 #define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
                    s == MSL2 || s == SUBSL || s == LAG || \
-                   s == OBS || s == BOBJ || s == LISTELEM)
+                   s == OBS || s == BOBJ || s == LISTELEM || \
+                   s == BMEMB)
 
 #define b1sym(s) (unary_op(s) || func1_symb(s) || funcn_symb(s) || \
                   s == G_LPR || s == EROOT)

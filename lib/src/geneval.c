@@ -5944,6 +5944,8 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 
     if (bundle == NULL) {
 	err = E_UNKVAR;
+    } else if (p->targ == BMEMB) {
+	key = p->lh.substr;
     } else if (*p->lh.substr == '"') {
 	key = gretl_strdup(p->lh.substr);
 	if (key == NULL) {
@@ -9109,10 +9111,11 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case BOBJ:
+    case BMEMB:
     case F_INBUNDLE:
 	/* name of bundle plus key */
 	if (l->t == BUNDLE && r->t == STR) {
-	    if (t->t == BOBJ) {
+	    if (t->t == BOBJ || t->t == BMEMB) {
 		ret = get_named_bundle_value(l, r, p);
 	    } else {
 		ret = test_bundle_key(l, r, p);
@@ -10045,8 +10048,7 @@ static int get_op (char *s)
 
 static void get_lhs_substr (char *str, parser *p)
 {
-    char *s = strchr(str, '[');
-    char *q;
+    char *q, *s = strchr(str, '[');
 
 #if EDEBUG
     fprintf(stderr, "get_lhs_substr: str = '%s'\n", str);
@@ -10066,6 +10068,24 @@ static void get_lhs_substr (char *str, parser *p)
 	}
 	p->lh.substr = q;
     }
+
+    *s = '\0';
+}
+
+static void get_lhs_dotstr (char *str, parser *p)
+{
+    char *q, *s = strchr(str, '.');
+
+    q = gretl_strdup(s + 1);
+    if (q == NULL) {
+	p->err = E_ALLOC;
+    } else {
+	p->lh.substr = q;
+    }
+
+#if EDEBUG
+    fprintf(stderr, "get_lhs_dotstr: '%s'\n", p->lh.substr);
+#endif
 
     *s = '\0';
 }
@@ -10194,28 +10214,33 @@ static void get_lh_obsnum (parser *p)
 /* check validity of "[...]" on the LHS, and evaluate
    the expression if needed */
 
-static void process_lhs_substr (const char *lname, parser *p)
+static void process_lhs_substr (const char *lname, char c, parser *p)
 {
 #if LHDEBUG || EDEBUG
     fprintf(stderr, "process_lhs_substr: p->lh.t = %d, substr = '%s'\n", 
 	    p->lh.t, p->lh.substr);
 #endif
 
-    /* FIXME stringvar[] ? */
+    /* support stringvar[] ? */
 
     if (p->lh.t == VEC) {
 	get_lh_obsnum(p);
     } else if (p->lh.t == MAT) {
 	get_lh_mspec(p);
     } else if (p->lh.t == BUNDLE) {
-	p->targ = BOBJ; /* substr should be key string; handled later */
+	/* substr should be key string; handled later */
+	if (c != 0) {
+	    p->targ = (c == '.')? BMEMB : BOBJ;
+	}
     } else if (p->lh.t == UNK) {
 	if (lname != NULL) {
 	    undefined_symbol_error(lname, p);
 	}
 	p->err = E_UNKVAR;
     } else {
-	gretl_errmsg_sprintf(_("The symbol '%c' is not valid in this context\n"), '[');
+	if (c != 0) {
+	    gretl_errmsg_sprintf(_("The symbol '%c' is not valid in this context\n"), c);
+	}
 	p->err = E_DATA;
     }	
 }
@@ -10432,7 +10457,7 @@ static int overwrite_type_check (parser *p)
 
     if (p->targ == NUM && p->lh.t == VEC && p->lh.obs >= 0) {
 	; /* OK */
-    } else if (p->targ == BOBJ && p->lh.t == BUNDLE) {
+    } else if ((p->targ == BOBJ || p->targ == BMEMB) && p->lh.t == BUNDLE) {
 	; /* OK */
     } else if (p->targ != p->lh.t) {
 	/* don't overwrite one type with another */
@@ -10480,6 +10505,7 @@ static void pre_process (parser *p, int flags)
     const char *s = p->input;
     char test[GENSTRLEN];
     char opstr[3] = {0};
+    char subchar = 0;
     int v, newvar = 1;
 
     while (isspace(*s)) s++;
@@ -10560,16 +10586,21 @@ static void pre_process (parser *p, int flags)
     /* grab LHS obs string, matrix slice, or bundle element, 
        if present */
     if (strchr(test, '[') != NULL) {
+	subchar = '[';
 	get_lhs_substr(test, p);
-	if (p->err) {
-	    return;
-	}
+    } else if (strchr(test, '.') != NULL) {
+	subchar = '.';
+	get_lhs_dotstr(test, p);
     }
+
+    if (p->err) {
+	return;
+    }    
 
 #if LHDEBUG || EDEBUG
     fprintf(stderr, "LHS: %s", test);
     if (p->lh.substr != NULL) {
-	fprintf(stderr, "[%s]\n", p->lh.substr);
+	fprintf(stderr, " substr: '%s'\n", p->lh.substr);
     } else {
 	fputc('\n', stderr);
     }
@@ -10633,7 +10664,7 @@ static void pre_process (parser *p, int flags)
     }
 
     if (p->lh.substr != NULL) {
-	process_lhs_substr(test, p);
+	process_lhs_substr(test, subchar, p);
 	if (p->err) {
 	    return;
 	}
@@ -11425,7 +11456,7 @@ static int gen_check_return_type (parser *p)
 	if (r->t != BUNDLE && r->t != EMPTY) {
 	    p->err = E_TYPES;
 	}
-    } else if (p->targ == BOBJ) {
+    } else if (p->targ == BOBJ || p->targ == BMEMB) {
 	if (!ok_bundled_type(r->t)) {
 	    p->err = E_TYPES;
 	}
@@ -11730,7 +11761,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    /* assignment from pre-existing named bundle */
 	    p->err = gretl_bundle_copy_as(p->rhs, p->lh.name);
 	}
-    } else if (p->targ == BOBJ) {
+    } else if (p->targ == BOBJ || p->targ == BMEMB) {
 	/* saving an object into a bundle */
 	p->err = set_named_bundle_value(p->lh.name, r, p);
     }
@@ -11797,7 +11828,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 	}
 	if (p->lh.substr != NULL) {
 	    /* reevaluate obs string */
-	    process_lhs_substr(NULL, p);
+	    process_lhs_substr(NULL, 0, p);
 	}
     } else if (p->targ == LIST) {
 	/* list target, check LH name */

@@ -715,6 +715,24 @@ static NODE *get_middle_string_arg (parser *p)
     return (p->err)? NULL : newstr(p->idstr);
 }
 
+static NODE *get_bundle_member_name (parser *p)
+{
+    int i, n = gretl_namechar_spn(p->point);
+
+    p->idstr = gretl_strndup(p->point, n);
+    if (p->idstr == NULL) {
+	p->err = E_ALLOC;
+	return NULL;
+    }     
+
+    for (i=0; i<=n; i++) {
+	parser_getc(p);
+    }
+    lex(p);
+
+    return newstr(p->idstr);
+}
+
 enum {
     RIGHT_STR = 1 << 0,
     MID_STR   = 1 << 1
@@ -1153,6 +1171,12 @@ static NODE *powterm (parser *p)
 	    t->v.b2.l = newref(p, BUNDLE);
 	    lex(p);
 	    t->v.b2.r = get_final_string_arg(p, sym, 1);
+	}
+    } else if (sym == BMEMB) {
+	t = newb2(sym, NULL, NULL);
+	if (t != NULL) {
+	    t->v.b2.l = newref(p, BUNDLE);
+	    t->v.b2.r = get_bundle_member_name(p);
 	}	
     } else if (sym == OVAR) {
 	t = newb2(sym, NULL, NULL);
