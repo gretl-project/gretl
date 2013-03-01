@@ -12520,11 +12520,6 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
 	gretl_matrix_free(UT);
 	return NULL;
     }
-    
-    xt.rows = ut.rows = 1;
-    xt.cols = ut.cols = n;
-    xtlag.rows = 1;
-    xtlag.cols = np;
 
     for (t=0; t<p; t++) {
 	for (i=0; i<n; i++) {
@@ -12533,9 +12528,9 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
 	}
     }
 
-    xt.val = X->val + np;
-    xtlag.val = X->val;
-    ut.val = UT->val;
+    gretl_matrix_init_full(&xt, 1, n, X->val + np);
+    gretl_matrix_init_full(&ut, 1, n, UT->val);
+    gretl_matrix_init_full(&xtlag, 1, np, X->val);
 
     for (t=p; t<T; t++) {
 	gretl_matrix_multiply(&xtlag, A2, &xt);
