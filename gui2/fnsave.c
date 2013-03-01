@@ -27,6 +27,7 @@
 #include "winstack.h"
 #include "selector.h"
 #include "textutil.h"
+#include "gretl_bundle.h"
 #include "fnsave.h"
 
 #include <libxml/xmlmemory.h>
@@ -1666,6 +1667,19 @@ static void maybe_print (PRN *prn, const char *key,
 
 int save_function_package_spec (const char *fname, gpointer p)
 {
+    const char *extra_keys[] = {
+	GUI_MAIN,
+	"label",
+	"menu-attachment",
+	BUNDLE_PRINT,
+	BUNDLE_PLOT,
+	BUNDLE_TEST,
+	BUNDLE_FCAST,
+	BUNDLE_EXTRA,
+	GUI_PRECHECK,
+	NULL
+    };
+    gchar *property;
     function_info *finfo = p;
     PRN *prn;
     const char *reqstr = NULL;
@@ -1702,6 +1716,18 @@ int save_function_package_spec (const char *fname, gpointer p)
 
     if (reqstr != NULL) {
 	pprintf(prn, "data-requirement = %s\n", reqstr);
+    }
+
+    for (i=0; extra_keys[i] != NULL; i++) {
+	function_package_get_properties(finfo->pkg, extra_keys[i],
+					&property, NULL);
+	if (property != NULL) {
+	    if (*property != '\0') {
+		pprintf(prn, "%s = %s\n", extra_keys[i], property);
+	    }
+	    g_free(property);
+	    property = NULL;
+	}
     }
 
     /* public interface names */
