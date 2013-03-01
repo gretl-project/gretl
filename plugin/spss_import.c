@@ -911,7 +911,10 @@ static int grab_var_label (spss_data *sdat, spss_var *v)
 	}
     }
 
-    fread(v->label, labread, 1, sdat->fp);
+    if (fread(v->label, labread, 1, sdat->fp) != 1) {
+	return sav_error("Variable %s: couldn't read label", v->name);
+    }	
+
     v->label[len] = '\0';
     tailstrip(v->label);
 
@@ -939,7 +942,9 @@ static int record_missing_vals_info (spss_data *sdat, spss_var *v,
 			  v->name);
     }
 
-    fread(mv, anmiss * sizeof *mv, 1, sdat->fp);
+    if (fread(mv, anmiss * sizeof *mv, 1, sdat->fp) != 1) {
+	return sav_error("%s: couldn't mv", v->name);
+    }
 
     if (sdat->swapends && v->type == SPSS_NUMERIC) {
 	for (j=0; j<anmiss; j++) {

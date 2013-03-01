@@ -938,10 +938,10 @@ static int check_mimetype (PRN *prn)
 	pprintf(prn, "Couldn't find mimetype\n");
 	err = E_FOPEN;
     } else {
-	fread(buf, 1, 46, fp);
-	if (strcmp(buf, odsmime)) {
-	    pprintf(prn, "Wrong mime type '%s',\n should be '%s'\n", 
-		    buf, odsmime);
+	if (fread(buf, 1, 46, fp) != 46 ||
+	    strcmp(buf, odsmime)) {
+	    pprintf(prn, "Wrong or missing mime type,\n should be '%s'\n", 
+		    odsmime);
 	    err = E_DATA;
 	}
 	fclose(fp);

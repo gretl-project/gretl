@@ -266,7 +266,12 @@ static int read_wf1_variables (FILE *fp, int ftype, unsigned pos,
 
 	/* grab the object name */
 	fseek(fp, pos + 22, SEEK_SET);
-	fscanf(fp, "%31s", vname);
+	*vname = '\0';
+	if (fscanf(fp, "%31s", vname) != 1) {
+	    err = E_DATA;
+	    break;
+	}
+	    
 	if (!strcmp(vname, "C") || !strcmp(vname, "RESID")) {
 	    discard = 1;
 	}

@@ -2010,10 +2010,10 @@ static int unpack_book_data (const char *fname)
 	*p = '\0';
     }
 
-    chdir(path);
-
-    if (errno != 0) {
-        gretl_errmsg_set_from_errno("chdir");
+    if (chdir(path) != 0) {
+	if (errno != 0) {
+	    gretl_errmsg_set_from_errno("chdir");
+	}
 	err = E_FOPEN;
     }
 
@@ -2242,15 +2242,16 @@ real_get_db_description (const char *fullname, const char *binname,
     if (fp != NULL) {
 	char tmp[DB_DESCRIP_LEN + 32] = {0};
 
-	fgets(tmp, sizeof tmp, fp);
-	fclose(fp);
-	if (*tmp == '#' && strlen(tmp) > 2) {
-	    char *s = tmp + 2;
+	if (fgets(tmp, sizeof tmp, fp) != NULL) {
+	    if (*tmp == '#' && strlen(tmp) > 2) {
+		char *s = tmp + 2;
 
-	    tailstrip(s);
-	    utf8_correct(s);
-	    descrip = g_strdup(s);
+		tailstrip(s);
+		utf8_correct(s);
+		descrip = g_strdup(s);
+	    }
 	}
+	fclose(fp);
     }
 
     return descrip;

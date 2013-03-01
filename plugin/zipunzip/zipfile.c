@@ -174,7 +174,9 @@ real_read_zipfile (zfile *zf, int task)
 	    buf[4096] = t[1];
 	    buf[4097] = t[2];
 	    buf[4098] = t[3];
-	    fread(buf, 1, 4096, zf->fp);
+	    if (fread(buf, 1, 4096, zf->fp) != 4096) {
+		return ZE_FORM;
+	    }
 	    fseek(zf->fp, -8192L, SEEK_CUR);
 	    t = &buf[4095];
 	    while (t >= buf) {

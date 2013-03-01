@@ -212,13 +212,6 @@ static int cli_clear_data (CMD *cmd, DATASET *dset, MODEL *model)
     return err;
 }
 
-static void get_a_filename (char *fname)
-{
-    *fname = 0;
-
-    fgets(fname, MAXLEN - 1, stdin);
-}
-
 static const char *get_prompt (ExecState *s)
 {
     if (s->flags & DEBUG_EXEC) {
@@ -752,8 +745,8 @@ static int cli_open_append (CMD *cmd, const char *line,
 	strcmp(newfile, datafile)) {
 	fprintf(stderr, _("Opening a new data file closes the "
 			  "present one.  Proceed? (y/n) "));
-	fgets(response, sizeof response, stdin);
-	if (*response != 'y' && *response != 'Y') {
+	if (fgets(response, sizeof response, stdin) != NULL && 
+	    *response != 'y' && *response != 'Y') {
 	    pprintf(prn, _("OK, staying with current data set\n"));
 	    return 0;
 	}
@@ -1032,10 +1025,11 @@ static int exec_line (ExecState *s, DATASET *dset)
 	}
 
 	printf(_("type a filename to store output (enter to quit): "));
-	get_a_filename(outfile);
-	top_n_tail(outfile, 0, NULL);
-
-	if (*outfile != 0 && *outfile != '\n' && *outfile != '\r' 
+	*outfile = '\0';
+	if (fgets(outfile, sizeof outfile, stdin)) {
+	    top_n_tail(outfile, 0, NULL);
+	}
+	if (*outfile != '\0' && *outfile != '\n' && *outfile != '\r' 
 	    && strcmp(outfile, "q")) {
 	    const char *udir = gretl_workdir();
 
