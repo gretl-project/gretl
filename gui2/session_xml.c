@@ -24,12 +24,15 @@ static int check_graph_file (const char *fname, int type)
 	if (type == GRETL_OBJ_PLOT) {
 	    char line[32] = {0};
 
-	    fgets(line, sizeof line, fp);
-	    fclose(fp);
-	    if (!strncmp(line, "# boxplot generated", 19)) {
-		fprintf(stderr, "Ignoring old boxplot file\n");
+	    if (fgets(line, sizeof line, fp) != NULL) {
+		if (!strncmp(line, "# boxplot generated", 19)) {
+		    fprintf(stderr, "Ignoring old boxplot file\n");
+		    err = 1;
+		}
+	    } else {
 		err = 1;
 	    }
+	    fclose(fp);
 	} else {
 	    fclose(fp);
 	    err = maybe_rewrite_gp_file(fullname);

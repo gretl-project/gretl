@@ -193,10 +193,10 @@ int gnuplot_test_command (const char *cmd)
     if (ok) {
 	char errbuf[128];
 	int test, status;
-	int errbytes;
+	int errbytes = 0;
 
-	write(sinp, cmd, strlen(cmd));
-	write(sinp, "\n", 1);
+	errbytes += write(sinp, cmd, strlen(cmd));
+	errbytes += write(sinp, "\n", 1);
 	close(sinp);
 	test = waitpid(child_pid, &status, 0);
 # if SPAWN_DEBUG

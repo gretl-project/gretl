@@ -838,8 +838,9 @@ int gretl_deltree (const char *path)
 	}
 	if (!err) {
 	    closedir(dir);
-	    chdir("..");
-	    err = gretl_remove(path);
+	    if (chdir("..") == 0) {
+		err = gretl_remove(path);
+	    }
 	}
     }
 
@@ -2946,8 +2947,7 @@ const char *gretl_maybe_switch_dir (const char *fname)
     if (fname[0] == '~' && fname[1] == '/') {
 	char *home = getenv("HOME");
 	
-	if (home != NULL) {
-	    chdir(home);
+	if (home != NULL && chdir(home) == 0) {
 	    fname += 2;
 	}
     } else if (!g_path_is_absolute(fname)) {

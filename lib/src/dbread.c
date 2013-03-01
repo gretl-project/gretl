@@ -507,7 +507,10 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 	    strcpy(sinfo->varname, sername);
 	}
 
-	fgets(s2, sizeof s2, fp);
+	if (fgets(s2, sizeof s2, fp) == NULL) {
+	    err = DB_PARSE_ERROR;
+	    break;
+	}
 
 	if (gotit) {
 	    get_native_series_comment(sinfo, s1);
@@ -533,7 +536,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 
     fclose(fp);
 
-    if (!gotit) {
+    if (!err && !gotit) {
 	gretl_errmsg_sprintf(_("Series not found, '%s'"), series);
 	err = DB_NO_SUCH_SERIES;
     }
@@ -898,24 +901,37 @@ static RECNUM read_rats_directory (FILE *fp, const char *series_name,
     RATSDirect rdir;
     DATEINFO dinfo;
     RECNUM ret;
+    int nread;
     int i, err = 0;
 
     memset(rdir.series_name, 0, NAMELENGTH);
 
-    fread(&rdir.back_point, sizeof(RECNUM), 1, fp);
-    fread(&rdir.forward_point, sizeof(RECNUM), 1, fp);
-    fseek(fp, 4L, SEEK_CUR); /* skip two shorts */
-    fread(&rdir.first_data, sizeof(RECNUM), 1, fp);
-    fread(rdir.series_name, NAMELENGTH, 1, fp);  
-    rdir.series_name[NAMELENGTH-1] = '\0';
+    if (fread(&rdir.back_point, sizeof(RECNUM), 1, fp) != 1) {
+	err = 1;
+    } else if (fread(&rdir.forward_point, sizeof(RECNUM), 1, fp) != 1) {
+	err = 1;
+    }
+    if (!err) {
+	fseek(fp, 4L, SEEK_CUR); /* skip two shorts */
+	if (fread(&rdir.first_data, sizeof(RECNUM), 1, fp) != 1) {
+	    err = 1;
+	} else if (fread(rdir.series_name, NAMELENGTH, 1, fp) != 1) {
+	    err = 1;
+	}
+    }
 
-    gretl_strstrip(rdir.series_name);
-
+    if (!err) {
+	rdir.series_name[NAMELENGTH-1] = '\0';
+	gretl_strstrip(rdir.series_name);
 #if DB_DEBUG
-    fprintf(stderr, "read_rats_directory: name='%s'\n", rdir.series_name);
+	fprintf(stderr, "read_rats_directory: name='%s'\n", rdir.series_name);
 #endif
+	if (!isprint(rdir.series_name[0])) {
+	    err = 1;
+	}
+    }
 
-    if (!isprint(rdir.series_name[0])) {
+    if (err) {
 	return RATS_PARSE_ERROR;
     }
 
@@ -928,13 +944,18 @@ static RECNUM read_rats_directory (FILE *fp, const char *series_name,
 
     /* skip long, short, long, short */
     fseek(fp, 12, SEEK_CUR);
-    fread(&dinfo.info, sizeof(gint32), 1, fp);
-    fread(&dinfo.digits, sizeof(short), 1, fp);
-    fread(&dinfo.year, sizeof(short), 1, fp);
-    fread(&dinfo.month, sizeof(short), 1, fp);
-    fread(&dinfo.day, sizeof(short), 1, fp);
+    nread = 0;
+    nread += fread(&dinfo.info, sizeof(gint32), 1, fp);
+    nread += fread(&dinfo.digits, sizeof(short), 1, fp);
+    nread += fread(&dinfo.year, sizeof(short), 1, fp);
+    nread += fread(&dinfo.month, sizeof(short), 1, fp);
+    nread += fread(&dinfo.day, sizeof(short), 1, fp);
+    nread += fread(&rdir.datapoints, sizeof(gint32), 1, fp);
 
-    fread(&rdir.datapoints, sizeof(gint32), 1, fp);
+    if (nread != 6) {
+	return RATS_PARSE_ERROR;
+    }
+
     fseek(fp, sizeof(short) * 4L, SEEK_CUR);  /* skip 4 shorts */
 
 #if DB_DEBUG
@@ -944,29 +965,37 @@ static RECNUM read_rats_directory (FILE *fp, const char *series_name,
     fprintf(stderr, "datapoints = %d\n", (int) rdir.datapoints);
 #endif
 
-    fread(&rdir.comment_lines, sizeof(short), 1, fp);
-    fseek(fp, 1L, SEEK_CUR); /* skip one char */
-
-    for (i=0; i<2; i++) {
-	if (i < rdir.comment_lines) {
-	    memset(rdir.comments[i], 0, 80);
-	    fread(rdir.comments[i], 80, 1, fp);
-	    rdir.comments[i][79] = '\0';
-	    gretl_strstrip(rdir.comments[i]);
-	} else {
-	    rdir.comments[i][0] = 0;
-	    fseek(fp, 80, SEEK_CUR);
+    if (fread(&rdir.comment_lines, sizeof(short), 1, fp) != 1) {
+	err = 1;
+    } else {
+	fseek(fp, 1L, SEEK_CUR); /* skip one char */
+	for (i=0; i<2 && !err; i++) {
+	    if (i < rdir.comment_lines) {
+		memset(rdir.comments[i], 0, 80);
+		err = (fread(rdir.comments[i], 80, 1, fp) != 1);
+		if (!err) {
+		    rdir.comments[i][79] = '\0';
+		    gretl_strstrip(rdir.comments[i]);
+		}
+	    } else {
+		rdir.comments[i][0] = 0;
+		fseek(fp, 80, SEEK_CUR);
+	    }
 	}
     }
 
 #if DB_DEBUG
-    fprintf(stderr, "comment_lines = %d\n", (int) rdir.comment_lines);
-    fprintf(stderr, "comment[0] = '%s'\n", rdir.comments[0]);
-    fprintf(stderr, "comment[1] = '%s'\n", rdir.comments[1]);
+    if (!err) {
+	fprintf(stderr, "comment_lines = %d\n", (int) rdir.comment_lines);
+	fprintf(stderr, "comment[0] = '%s'\n", rdir.comments[0]);
+	fprintf(stderr, "comment[1] = '%s'\n", rdir.comments[1]);
+    }
 #endif
 
-    err = dinfo_to_sinfo(&dinfo, sinfo, rdir.series_name, rdir.comments[0],
-			 rdir.datapoints, rdir.first_data);
+    if (!err) {
+	err = dinfo_to_sinfo(&dinfo, sinfo, rdir.series_name, rdir.comments[0],
+			     rdir.datapoints, rdir.first_data);
+    }
 
     ret = (err)? RATS_PARSE_ERROR : rdir.forward_point;
 
@@ -1232,15 +1261,16 @@ dbwrapper *read_pcgive_db (const char *fname, FILE *fp)
 dbwrapper *read_rats_db (const char *fname, FILE *fp) 
 {
     dbwrapper *dw;
-    long forward;
+    long forward = 0;
     int i, err = 0;
 
     gretl_error_clear();
     
     /* get into position */
     fseek(fp, 30L, SEEK_SET); /* skip unneeded fields */
-    fread(&forward, sizeof forward, 1, fp);
-    fseek(fp, 4L, SEEK_CUR);
+    if (fread(&forward, sizeof forward, 1, fp) == 1) {
+	fseek(fp, 4L, SEEK_CUR);
+    }
 
     /* basic check */
     if (forward <= 0) { 
@@ -1304,9 +1334,10 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 {
     RATSData rdata;
     double x;
-    int miss = 0;
     int v = sinfo->v;
     int i, t, T;
+    int miss = 0;
+    int err = 0;
  
     fprintf(stderr, "get_rats_series: starting from offset %d\n", offset);
 
@@ -1322,7 +1353,10 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
     while (rdata.forward_point) {
 	fseek(fp, (rdata.forward_point - 1) * 256L, SEEK_SET);
 	/* the RATSData struct is actually 256 bytes.  Yay! */
-	fread(&rdata, sizeof rdata, 1, fp);
+	if (fread(&rdata, sizeof rdata, 1, fp) != 1) {
+	    err = E_DATA;
+	    break;
+	}
 	for (i=0; i<31 && t<T; i++) {
 	    x = rdata.data[i];
 #if G_BYTE_ORDER == G_BIG_ENDIAN
@@ -1336,7 +1370,11 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 	}
     }
 
-    return miss;
+    if (miss && !err) {
+	err = DB_MISSING_DATA;
+    }
+
+    return err;
 }
 
 /**
@@ -1356,30 +1394,23 @@ int get_rats_db_data (const char *fname, SERIESINFO *sinfo,
 		      double **Z)
 {
     FILE *fp;
-    int ret = 0;
+    int err = 0;
 
     fp = gretl_fopen(fname, "rb");
     if (fp == NULL) {
-	return E_FOPEN;
-    }
-    
-#if DB_DEBUG
-    fprintf(stderr, "get_rats_db_data: offset = %d\n", sinfo->offset);
-#endif
-    
-    if (get_rats_series(sinfo->offset, sinfo, fp, Z)) {
-	ret = DB_MISSING_DATA; /* FIXME? */
+	err = E_FOPEN;
+    } else {
+	err = get_rats_series(sinfo->offset, sinfo, fp, Z);
+	fclose(fp);
     }
 
-    fclose(fp);
-
-    return ret;
+    return err;
 }
 
 static int get_rats_series_info (const char *series_name, SERIESINFO *sinfo)
 {
     FILE *fp;
-    long forward;
+    long forward = 0;
     int err = 0;
 
     gretl_error_clear();
@@ -1395,8 +1426,9 @@ static int get_rats_series_info (const char *series_name, SERIESINFO *sinfo)
 
     /* get into position */
     fseek(fp, 30L, SEEK_SET); 
-    fread(&forward, sizeof forward, 1, fp);
-    fseek(fp, 4L, SEEK_CUR);
+    if (fread(&forward, sizeof forward, 1, fp) == 1) {
+	fseek(fp, 4L, SEEK_CUR);
+    }
 
     /* basic check */
     if (forward <= 0) {

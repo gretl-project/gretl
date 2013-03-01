@@ -4245,8 +4245,7 @@ static int get_line_continuation (char *line, FILE *fp, PRN *prn)
 	    break;
 	}
 	*tmp = '\0';
-	fgets(tmp, sizeof tmp, fp);
-	if (*tmp != '\0') {
+	if (fgets(tmp, sizeof tmp, fp) && *tmp != '\0') {
 	    if (strlen(line) + strlen(tmp) > MAXLINE - 1) {
 		pprintf(prn, _("Maximum length of command line "
 			       "(%d bytes) exceeded\n"), MAXLINE);

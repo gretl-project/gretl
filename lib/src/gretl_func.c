@@ -2908,13 +2908,18 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
 		while (ends_with_backslash(line)) {
 		    gretl_charsub(line, '\\', '\0');
 		    *cont = '\0';
-		    fgets(cont, sizeof cont, fp);
-		    strcat(line, cont);
+		    if (fgets(cont, sizeof cont, fp)) {
+			strcat(line, cont);
+		    } else {
+			*err = E_DATA;
+		    }
 		}
-		tailstrip(line);
-		pubnames = gretl_string_split(line + 8, &npub);
-		if (npub == 0) {
-		    *err = E_DATA;
+		if (!*err) {
+		    tailstrip(line);
+		    pubnames = gretl_string_split(line + 8, &npub);
+		    if (npub == 0) {
+			*err = E_DATA;
+		    }
 		}
 	    } 
 	}

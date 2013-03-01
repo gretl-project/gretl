@@ -97,12 +97,13 @@ static int skip_esl_comments (FILE *fp, const char *str)
 {
     char word[MAXLEN];  /* should be big enough to accommodate
 			   strings among the comments? */
+    int n = 0;
 
     *word = '\0';
 
     if (strncmp(str, STARTCOMMENT, 2) == 0) {
         while (strcmp(word, ENDCOMMENT)) {
-            fscanf(fp, "%s", word);
+            n += fscanf(fp, "%s", word);
         }
         return 0;
     } 
@@ -205,11 +206,12 @@ static int read_esl_data (FILE *fp, const DATASET *dset, int byvar)
 	    }
 	    if (dset->markers) {
 		*marker = '\0';
-		fscanf(fp, sformat, marker);
-		if (*marker == '"' || *marker == '\'') {
-		    strcpy(dset->S[t], marker + 1);
-		} else {
-		    strcpy(dset->S[t], marker);
+		if (fscanf(fp, sformat, marker) == 1) {
+		    if (*marker == '"' || *marker == '\'') {
+			strcpy(dset->S[t], marker + 1);
+		    } else {
+			strcpy(dset->S[t], marker);
+		    }
 		}
 	    }
 	    for (i=1; i<dset->v; i++) {
@@ -299,7 +301,7 @@ static int read_esl_hdr (const char *hdrfile, DATASET *dset, int *byvar)
 {
     FILE *fp;
     char str[MAXLEN], byobs[6], option[8];
-    int n, i, descrip = 0;
+    int n, i = 0, descrip = 0;
     int err = 0;
 
     gretl_error_clear();
@@ -310,8 +312,9 @@ static int read_esl_hdr (const char *hdrfile, DATASET *dset, int *byvar)
 	return E_FOPEN;
     }
 
-    fscanf(fp, "%s", str);
-    i = skip_esl_comments(fp, str); 
+    if (fscanf(fp, "%s", str)) {
+	i = skip_esl_comments(fp, str);
+    } 
 
     /* find the number of variables */
 
@@ -344,17 +347,23 @@ static int read_esl_hdr (const char *hdrfile, DATASET *dset, int *byvar)
     rewind(fp);
 
     *str = '\0';
-    fscanf(fp, "%s", str);
-    if (skip_esl_comments(fp, str)) {
-	*dset->varname[i] = '\0';
-	strncat(dset->varname[i], str, VNAMELEN - 1);
-	err = check_varname(dset->varname[i++]);
+    if (fscanf(fp, "%s", str)) {
+	if (skip_esl_comments(fp, str)) {
+	    *dset->varname[i] = '\0';
+	    strncat(dset->varname[i], str, VNAMELEN - 1);
+	    err = check_varname(dset->varname[i++]);
+	} else {
+	    descrip = 1; /* comments were found */
+	}
     } else {
-	descrip = 1; /* comments were found */
+	err = E_DATA;
     }
 
     while (!err) {
-        fscanf(fp, "%s", str);
+        if (fscanf(fp, "%s", str) == 0) {
+	    err = E_DATA;
+	    break;
+	}
 	n = strlen(str);
 	if (str[n-1] != ';') {
 	    *dset->varname[i] = '\0';
@@ -370,13 +379,19 @@ static int read_esl_hdr (const char *hdrfile, DATASET *dset, int *byvar)
 	}
     }
 
+    if (!err) {
+	n = 0;
+	n += fscanf(fp, "%d", &dset->pd);
+	n += fscanf(fp, "%s", dset->stobs);
+	n += fscanf(fp, "%s", dset->endobs);
+	if (n != 3) {
+	    err = E_DATA;
+	}
+    }
+
     if (err) {
 	goto bailout;
     }
-
-    fscanf(fp, "%d", &dset->pd);
-    fscanf(fp, "%s", dset->stobs);
-    fscanf(fp, "%s", dset->endobs);
 
     colonize_obs(dset->stobs);
     colonize_obs(dset->endobs);
