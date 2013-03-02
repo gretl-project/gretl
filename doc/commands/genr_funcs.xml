@@ -931,29 +931,28 @@
       <description>
 	<para>
 	  In the simplest version, both <argname>x</argname> and
-	  <argname>byvar</argname> refer to single series. In that
-	  case this function returns a matrix with three columns: the
-	  first holds the distinct values of <argname>byvar</argname>,
+	  <argname>byvar</argname> are individual series. In that case
+	  this function returns a matrix with three columns: the first
+	  holds the distinct values of <argname>byvar</argname>,
 	  sorted in ascending order; the second holds the count of
-	  observations at which <argname>byvar</argname> takes on
-	  these particular values; and the third holds the values of
-	  the statistic specified by <argname>funcname</argname>
+	  observations at which <argname>byvar</argname> takes on each
+	  of these values; and the third holds the values of the
+	  statistic specified by <argname>funcname</argname>
 	  calculated on series <argname>x</argname>, using only those
 	  observations at which <argname>byvar</argname> takes on the
 	  value given in the first column.
 	</para>
 	<para>
-	  More generally, if <argname>x</argname> is a list then the
-	  return matrix has more columns, and the rightmost columns
-	  hold the value of the given statistic as indicated above.
-	  If <argname>byvar</argname> is a list with <math>n</math>
-	  members then the left-hand <math>n</math> columns hold the
-	  combinations of the distinct values of each of the
-	  <math>n</math> series; the count column holds the count of
-	  observations at which each combination is realized; and the
-	  rightmost columns hold the value of the given statistic
-	  for each member of the <argname>x</argname> list at each
-	  combination of <argname>byvar</argname> values.
+	  More generally, if <argname>byvar</argname> is a list with
+	  <math>n</math> members then the left-hand <math>n</math>
+	  columns hold the combinations of the distinct values of each
+	  of the <math>n</math> series and the count column holds the
+	  number of observations at which each combination is
+	  realized.  If <argname>x</argname> is a list with
+	  <math>m</math> members then the rightmost <math>m</math>
+	  columns hold the values of the specified statistic for each
+	  of the <argname>x</argname> variables, again calculated on
+	  the sub-sample indicated in the first column(s).
 	</para>
 	<para>
 	  The following values of <argname>funcname</argname> are
@@ -971,17 +970,53 @@
 	  take a single series argument and return a scalar value.
 	</para>
 	<para>
-	  For example, suppose that <lit>region</lit> represents a
-	  coding of geographical region using integer values 1 to
-	  <math>n</math>, and <lit>income</lit> represents household
-	  income. Then the following would produce and print an <by
+	  Note that although a count of cases is provided
+	  automatically the <lit>nobs</lit> function is not redundant
+	  as an aggregator, since it gives the number of valid
+	  (non-missing) observations on <argname>x</argname> at
+	  each <argname>byvar</argname> combination.
+	</para>
+	<para>
+	  For a simple example, suppose that <lit>region</lit>
+	  represents a coding of geographical region using integer
+	  values 1 to <math>n</math>, and <lit>income</lit> represents
+	  household income. Then the following would produce an <by
 	  r="n" c="3"/> matrix holding the region codes, the count of
 	  observations in each region, and mean household income for
 	  each of the regions:
 	</para>
 	<code>
 	  matrix m = aggregate(income, region, mean)
-	  print m
+	</code>
+	<para>
+	  For an example using lists, let <lit>gender</lit> be a
+	  male/female dummy variable and let <lit>race</lit> be a
+	  categorical variable with three values. Then the following
+	  will produce a matrix with 6 rows and 5 columns: the first
+	  two columns holding the gender/race combinations and the
+	  last two holding the sample standard deviations of 
+	  <lit>income</lit> and <lit>age</lit>:
+	</para>
+	<code>
+	  list BY = gender race
+	  list X = income age
+	  matrix m = aggregate(X, BY, sd)
+	</code>
+	<para>
+	  Note that if <argname>byvar</argname> is a list, some
+	  combinations of the <argname>byvar</argname> values may not
+	  be present in the data (giving a count of zero). In that
+	  case the value of the statistics for <argname>x</argname>
+	  are recorded as <lit>NaN</lit> (not a number).  If you want
+	  to ignore such cases you can use the <fncref targ="selifr"/>
+	  function to select only those rows that have a non-zero
+	  count. The column to test is one place to the right of the
+	  number of <argname>byvar</argname> variables, so we can do:
+	</para>
+	<code>
+	  matrix m = aggregate(X, BY, sd)
+	  scalar c = nelem(BY)
+	  m = selifr(m, m[,c+1])
 	</code>
       </description>
     </function>

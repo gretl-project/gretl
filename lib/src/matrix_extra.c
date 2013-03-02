@@ -1101,7 +1101,12 @@ static void make_numstr (char *s, double x)
 {
     if (x == -0.0) {
 	x = 0.0;
-    }   
+    }
+
+    if (isnan(x)) {
+	strcpy(s, "nan");
+	return;
+    }
 
     sprintf(s, "%#.5g", x);
 
@@ -1258,7 +1263,11 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 		if (colnames != NULL) {
 		    bufspace(strwidth - cmax - cpad, prn);
 		}
-		sprintf(numstr, "%g", x);
+		if (isnan(x)) {
+		    strcpy(numstr, "nan");
+		} else {
+		    sprintf(numstr, "%g", x);
+		}
 		pprintf(prn, "%*s ", cmax + cpad, numstr);
 	    } else {
 		make_numstr(numstr, x);
@@ -2055,30 +2064,6 @@ static double make_jacobi (int n, int kind, double *d, double *e)
     return z0;
 }
 
-/* Scale Legendre quadrature rule to the interval (a, b) */
-
-static int legendre_scale (int n, double *x, double *w,
-			   double a, double b)
-{
-    double shft, slp;
-    int i;
-
-    if (fabs(b - a) <= DBL_EPSILON) {
-	fprintf(stderr, "legendre: |b - a| too small\n");
-	return E_DATA;
-    }
-
-    shft = (a + b) / 2.0;
-    slp = (b - a) / 2.0;
-
-    for (i=0; i<n; i++) {
-	x[i] = shft + slp * x[i];
-	w[i] = w[i] * slp;
-    }
-
-    return 0;
-}
-
 /* compute basic Gauss quadrature formula */
 
 static int gauss_quad_basic (int n, int kind, double *x, double *w)
@@ -2104,6 +2089,42 @@ static int gauss_quad_basic (int n, int kind, double *x, double *w)
     free(tmp);
 
     return err;
+}
+
+/* Scale Legendre quadrature rule to the interval (a, b) */
+
+static int legendre_scale (int n, double *x, double *w,
+			   double a, double b)
+{
+    double shft, slp;
+    int i;
+
+    if (fabs(b - a) <= DBL_EPSILON) {
+	fprintf(stderr, "legendre: |b - a| too small\n");
+	return E_DATA;
+    }
+
+    shft = (a + b) / 2.0;
+    slp = (b - a) / 2.0;
+
+    for (i=0; i<n; i++) {
+	x[i] = shft + slp * x[i];
+	w[i] = w[i] * slp;
+    }
+
+    return 0;
+}
+
+static void hermite_scale (int n, double *x, double *w,
+			   double mu, double sigma)
+{
+    double rtpi = sqrt(M_PI);
+    int i;
+
+    for (i=0; i<n; i++) {
+	x[i] = mu + M_SQRT2 * sigma * x[i];
+	w[i] /= rtpi;
+    }
 }
 
 /**
@@ -2138,6 +2159,13 @@ gretl_matrix *gretl_quadrule_matrix_new (int n, int method,
 	return NULL;
     }
 
+    if (method == QUAD_LEGENDRE) {
+	if (na(a) || na(b)) {
+	    *err = E_MISSDATA;
+	    return NULL;
+	}
+    }
+
     if (n < 0) {
 	*err = E_DATA;
 	return NULL;
@@ -2159,14 +2187,13 @@ gretl_matrix *gretl_quadrule_matrix_new (int n, int method,
 	    if (method == QUAD_LEGENDRE) {
 		*err = legendre_scale(n, x, w, a, b);
 	    } else if (method == QUAD_GHERMITE) {
-		/* (how to) adjust the Laguerre variant? */
-		double rtpi = sqrt(M_PI);
-		int i;
-
-		for (i=0; i<n; i++) {
-		    x[i] *= M_SQRT2;
-		    w[i] /= rtpi;
+#if 1 /* change this? */
+		hermite_scale(n, x, w, 0.0, 1.0);
+#else
+		if (!na(a) && !na(b)) {
+		    hermite_scale(n, x, w, a, b);
 		}
+#endif
 	    }
 	}
     }
