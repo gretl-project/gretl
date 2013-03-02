@@ -924,20 +924,36 @@
 
     <function name="aggregate" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="series">x</fnarg>
-	<fnarg type="series">byvar</fnarg>
+	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="series-or-list">byvar</fnarg>
 	<fnarg type="string">funcname</fnarg>	
       </fnargs>
       <description>
 	<para>
-	  Returns a matrix with two columns: the first column holds
-	  the distinct values in the series <argname>byvar</argname>
-	  (which should be discrete), sorted in ascending order, and
-	  the second holds values of the statistic specified by
-	  <argname>funcname</argname> calculated on series
-	  <argname>x</argname>, using only those observations at which
-	  <argname>byvar</argname> takes on the value given in the
-	  first column.
+	  In the simplest version, both <argname>x</argname> and
+	  <argname>byvar</argname> refer to single series. In that
+	  case this function returns a matrix with three columns: the
+	  first holds the distinct values of <argname>byvar</argname>,
+	  sorted in ascending order; the second holds the count of
+	  observations at which <argname>byvar</argname> takes on
+	  these particular values; and the third holds the values of
+	  the statistic specified by <argname>funcname</argname>
+	  calculated on series <argname>x</argname>, using only those
+	  observations at which <argname>byvar</argname> takes on the
+	  value given in the first column.
+	</para>
+	<para>
+	  More generally, if <argname>x</argname> is a list then the
+	  return matrix has more columns, and the rightmost columns
+	  hold the value of the given statistic as indicated above.
+	  If <argname>byvar</argname> is a list with <math>n</math>
+	  members then the left-hand <math>n</math> columns hold the
+	  combinations of the distinct values of each of the
+	  <math>n</math> series; the count column holds the count of
+	  observations at which each combination is realized; and the
+	  rightmost columns hold the value of the given statistic
+	  for each member of the <argname>x</argname> list at each
+	  combination of <argname>byvar</argname> values.
 	</para>
 	<para>
 	  The following values of <argname>funcname</argname> are
@@ -959,8 +975,9 @@
 	  coding of geographical region using integer values 1 to
 	  <math>n</math>, and <lit>income</lit> represents household
 	  income. Then the following would produce and print an <by
-	  r="n" c="2"/> matrix holding the mean household income for
-	  each of the <math>n</math> regions:
+	  r="n" c="3"/> matrix holding the region codes, the count of
+	  observations in each region, and mean household income for
+	  each of the regions:
 	</para>
 	<code>
 	  matrix m = aggregate(income, region, mean)
