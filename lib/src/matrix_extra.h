@@ -28,7 +28,7 @@ typedef enum {
 } MMissingCode;
 
 typedef enum {
-    QUAD_GHERMITE,
+    QUAD_GHERMITE = 1,
     QUAD_LEGENDRE,
     QUAD_LAGUERRE,
     QUAD_INVALID

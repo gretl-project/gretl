@@ -7373,9 +7373,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		b = e->v.xval;
 	    }
 	}
-	if (method == QUAD_LEGENDRE && k < 4) {
-	    n_args_error(k, 4, t->t, p);
-	}
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}

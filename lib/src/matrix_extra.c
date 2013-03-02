@@ -2154,16 +2154,9 @@ gretl_matrix *gretl_quadrule_matrix_new (int n, int method,
 {
     gretl_matrix *m;
 
-    if (method < 0 || method >= QUAD_INVALID) {
+    if (method < QUAD_GHERMITE || method >= QUAD_INVALID) {
 	*err = E_DATA;
 	return NULL;
-    }
-
-    if (method == QUAD_LEGENDRE) {
-	if (na(a) || na(b)) {
-	    *err = E_MISSDATA;
-	    return NULL;
-	}
     }
 
     if (n < 0) {
@@ -2185,9 +2178,15 @@ gretl_matrix *gretl_quadrule_matrix_new (int n, int method,
 
 	if (!*err) {
 	    if (method == QUAD_LEGENDRE) {
-		*err = legendre_scale(n, x, w, a, b);
+		if (na(a) && na(b)) {
+		    ; /* default */
+		} else if (a == -1.0 && b == 1.0) {
+		    ; /* default */
+		} else {
+		    *err = legendre_scale(n, x, w, a, b);
+		}
 	    } else if (method == QUAD_GHERMITE) {
-#if 1 /* change this? */
+#if 1 /* FIXME: change this */
 		hermite_scale(n, x, w, 0.0, 1.0);
 #else
 		if (!na(a) && !na(b)) {
