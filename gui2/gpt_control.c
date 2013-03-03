@@ -4146,7 +4146,7 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
     }
 
     if (!plot->err) {
-	if (right_click(event, widget)) {
+	if (right_click(event)) {
 	    build_plot_menu(plot);
 	    gtk_menu_popup(GTK_MENU(plot->popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);

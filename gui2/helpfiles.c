@@ -742,10 +742,12 @@ void notify_string_not_found (GtkWidget *entry)
                           r == CLI_HELP_EN || \
                           r == FUNCS_HELP)
 
-static gboolean finder_key_handler (GtkEntry *entry, GdkEventKey *key,
+static gboolean finder_key_handler (GtkEntry *entry, GdkEventKey *event,
 				    windata_t *vwin)
 {
-    if (key->keyval == GDK_Tab && help_index_ok(vwin->role) &&
+    guint keyval = event->keyval;
+
+    if (keyval == GDK_Tab && help_index_ok(vwin->role) &&
 	vwin->active_var == 0) {
 	/* tab-completion in help index mode */
 	const gchar *s = gtk_entry_get_text(entry);
@@ -766,15 +768,10 @@ static gboolean finder_key_handler (GtkEntry *entry, GdkEventKey *key,
 
 	    return TRUE;
 	}
-    } else if (key->keyval == GDK_g) {
+    } else if (keyval == GDK_g && (event->state & GDK_CONTROL_MASK)) {
 	/* Ctrl-G: repeat search */
-	GdkModifierType mods = 
-	    widget_get_pointer_mask(GTK_WIDGET(entry));
-
-	if (mods & GDK_CONTROL_MASK) {
-	    vwin_finder_callback(entry, vwin);
-	    return TRUE;
-	}
+	vwin_finder_callback(entry, vwin);
+	return TRUE;
     }
 
     return FALSE;

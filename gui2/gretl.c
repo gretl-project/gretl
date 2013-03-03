@@ -765,12 +765,12 @@ static void mdata_avoid_zero (GtkTreeView *view, gpointer p)
 
 /* keystrokes recognized in the main gretl window */
 
-static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event, 
+			     windata_t *vwin)
 {
-    GdkModifierType mods = widget_get_pointer_mask(w);
-    int Ctrl = (mods & GDK_CONTROL_MASK);
-    int Alt = (mods & GDK_MOD1_MASK);
-    int k = key->keyval;
+    int Ctrl = (event->state & GDK_CONTROL_MASK);
+    int Alt = (event->state & GDK_MOD1_MASK);
+    int k = event->keyval;
 
     if (Ctrl && k == GDK_v) {
 	/* Ctrl-V for paste */
@@ -2188,7 +2188,7 @@ int mdata_active_var (void)
 static gboolean 
 main_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
 {
-    if (right_click(event, w)) {
+    if (right_click(event)) {
 	/* ignore all but right-clicks */
 	int selcount = vwin_selection_count(mdata, NULL);
 

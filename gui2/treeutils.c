@@ -259,12 +259,11 @@ static void update_dialogs_from_varclick (int active_var)
 /* Support for command-click as replacement for Ctrl-click
    on OS X */
 
-static gboolean maybe_do_meta_click (GtkWidget *widget, GtkTreeView *view,
+static gboolean maybe_do_meta_click (GdkEventButton *event, 
+				     GtkTreeView *view,
 				     GtkTreePath *path)
 {
-    GdkModifierType mods = widget_get_pointer_mask(widget);
-
-    if (mods & GDK_MOD2_MASK) {
+    if (event->state & GDK_MOD2_MASK) {
 	/* The idea here is that we add to the current selection
 	   and return TRUE to block further processing of the
 	   click, so as to implement selection of non-contiguous
@@ -315,7 +314,7 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 	    g_free(varnum);
 	    update_dialogs_from_varclick(vwin->active_var);
 #ifdef OS_OSX
-	    ret = maybe_do_meta_click(widget, view, path);
+	    ret = maybe_do_meta_click(event, view, path);
 #endif
 	} 
 
@@ -356,26 +355,23 @@ bool_col_toggled (GtkCellRendererToggle *cell, gchar *path_str, windata_t *vwin)
     gtk_tree_path_free(path);
 }
 
-static gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+static gint catch_listbox_key (GtkWidget *w, GdkEventKey *event, 
+			       windata_t *vwin)
 {
-    int k = key->keyval;
+    int key = event->keyval;
 
-    if (k == GDK_q) { 
+    if (key == GDK_q) { 
 	/* Q = quit */
 	if (vwin != mdata) {
 	    gtk_widget_destroy(vwin->main);
 	}
 	return TRUE;
-    } else if (k == GDK_f) {
+    } else if (key == GDK_f) {
 	/* F = find */
-	GdkModifierType mods;
-
 	if (vwin == mdata && !data_status) {
 	    return TRUE;
 	}
-
-	mods = widget_get_pointer_mask(w);
-	if (mods & GDK_CONTROL_MASK) {
+	if (event->state & GDK_CONTROL_MASK) {
 	    listbox_find(NULL, vwin);
 	    return TRUE;
 	}	

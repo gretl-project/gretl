@@ -176,10 +176,6 @@ void set_combo_box_default_text (GtkComboBox *box, const char *s);
 
 void depopulate_combo_box (GtkComboBox *box);
 
-GdkModifierType widget_get_pointer_mask (GtkWidget *w);
-
-GdkModifierType parent_get_pointer_mask (GtkWidget *w);
-
 gboolean widget_get_pointer_info (GtkWidget *w, gint *x, gint *y,
 				  GdkModifierType *mask);
 

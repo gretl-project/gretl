@@ -63,6 +63,15 @@
 # define gtk_widget_set_can_focus(w,s) GTK_WIDGET_SET_FLAGS(w, GTK_CAN_FOCUS)
 #endif
 
+/* remedial macro for Mac mouse */
+#ifdef OS_OSX
+# define right_click(e) (e->button == 3 || \
+			 (e->button == 1 && \
+			  (e->state & GDK_CONTROL_MASK)))
+#else
+# define right_click(e) (e->button == 3)
+#endif
+
 #include "gretltypes.h"
 #include "gui_utils.h"
 #include "callbacks.h"

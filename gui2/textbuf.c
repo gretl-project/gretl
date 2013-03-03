@@ -595,16 +595,16 @@ static void set_source_tabs (GtkWidget *w, int cw)
 */
 
 static gint 
-script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 {
-    GdkModifierType mods = widget_get_pointer_mask(w);
+    guint keyval = event->keyval;
     gboolean ret = FALSE;
 
-    if (mods & GDK_CONTROL_MASK) {
-	if (key->keyval == GDK_r)  {
+    if (event->state & GDK_CONTROL_MASK) {
+	if (keyval == GDK_r)  {
 	    do_run_script(w, vwin);
 	    ret = TRUE;
-	} else if (key->keyval == GDK_Return) {
+	} else if (keyval == GDK_Return) {
 	    gchar *str = textview_get_current_line_with_newline(w);
 
 	    if (str != NULL) {
@@ -616,14 +616,14 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    ret = TRUE;
 	}
     } else {
-	if (key->keyval == GDK_F1) {
+	if (keyval == GDK_F1) {
 	    set_window_help_active(vwin);
 	    interactive_script_help(NULL, NULL, vwin);
 	} else if (script_editing(vwin->role)) {    
-	    if (key->keyval == GDK_Return) {
+	    if (keyval == GDK_Return) {
 		ret = script_electric_enter(vwin);
-	    } else if (tabkey(key->keyval)) {
-		ret = script_tab_handler(vwin, mods);
+	    } else if (tabkey(keyval)) {
+		ret = script_tab_handler(vwin, event->state);
 	    }
 	}
     } 
@@ -1428,7 +1428,7 @@ cmdref_motion_notify (GtkWidget *w, GdkEventMotion *event)
     gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_WIDGET,
 					  event->x, event->y, &x, &y);
     set_cursor_if_appropriate(view, x, y);
-    widget_get_pointer_mask(w);
+    // widget_get_pointer_mask(w); /* ?? */
 
     return FALSE;
 }
@@ -1664,7 +1664,7 @@ static GtkWidget *build_help_popup (windata_t *hwin)
 gboolean 
 help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
-    if (right_click(event, w)) {
+    if (right_click(event)) {
 	windata_t *hwin = (windata_t *) p;
 
 	if (hwin->active_var == 0 && pop_backpage(w) == 0) {
@@ -2716,7 +2716,7 @@ static gboolean destroy_textbit (GtkWidget **pw, struct textbit *tc)
 static gboolean 
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
-    if (right_click(event, w)) {
+    if (right_click(event)) {
 	windata_t *vwin = (windata_t *) p;
 	struct textbit *tc = NULL;
 

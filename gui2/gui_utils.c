@@ -640,17 +640,16 @@ static void vwin_select_all (windata_t *vwin)
    and (b) help windows, where @w is the text area.
 */
 
-gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, 
+gint catch_viewer_key (GtkWidget *w, GdkEventKey *event, 
 		       windata_t *vwin)
 {
-    GdkModifierType mods = widget_get_pointer_mask(w);
-    int Ctrl = (mods & GDK_CONTROL_MASK);
-    int Alt = (mods & GDK_MOD1_MASK);
-    guint upkey = key->keyval;
+    int Ctrl = (event->state & GDK_CONTROL_MASK);
+    int Alt = (event->state & GDK_MOD1_MASK);
+    guint upkey = event->keyval;
     int editing = vwin_is_editing(vwin);
 
-    if (!gdk_keyval_is_upper(key->keyval)) {
-	upkey = gdk_keyval_to_upper(key->keyval);
+    if (!gdk_keyval_is_upper(event->keyval)) {
+	upkey = gdk_keyval_to_upper(event->keyval);
     }
 
     if (Ctrl) {
@@ -729,8 +728,8 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
 	return FALSE;
     }
 
-    if (!mods && vwin->finder != NULL && GTK_IS_ENTRY(vwin->finder)) {
-	if (jump_to_finder(key->keyval, vwin)) {
+    if (!event->state && vwin->finder != NULL && GTK_IS_ENTRY(vwin->finder)) {
+	if (jump_to_finder(event->keyval, vwin)) {
 	    return TRUE;
 	}
     }
@@ -1545,29 +1544,9 @@ void free_windata (GtkWidget *w, gpointer data)
     }
 }
 
-gboolean right_click (GdkEventButton *event, GtkWidget *w)
-{
-    if (event->type == GDK_BUTTON_PRESS) {
-	if (event->button == 3) {
-	    return TRUE;
-	}
-#ifdef OS_OSX
-	else if (w != NULL) {
-	    GdkModifierType mods = widget_get_pointer_mask(w);
-
-	    if (mods & GDK_CONTROL_MASK) {
-		return TRUE;
-	    }
-	}
-#endif
-    }
-
-    return FALSE;
-}
-
 gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
-    if (right_click(event, w)) {
+    if (right_click(event)) {
 	windata_t *vwin = (windata_t *) p;
 
 	if (vwin->popup != NULL) {
@@ -4810,7 +4789,7 @@ int gui_validate_varname_strict (const char *name, GretlType t)
 gint popup_menu_handler (GtkWidget *widget, GdkEventButton *event,
 			 gpointer data)
 {
-    if (right_click(event, widget)) {
+    if (right_click(event)) {
 	gtk_menu_popup(GTK_MENU(data), NULL, NULL, NULL, NULL,
 		       event->button, event->time);
 	return TRUE;

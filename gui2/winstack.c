@@ -986,11 +986,10 @@ void vwin_pack_toolbar (windata_t *vwin)
     }
 }
 
-static gint catch_winlist_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+static gint catch_winlist_key (GtkWidget *w, GdkEventKey *event, 
+			       windata_t *vwin)
 {
-    GdkModifierType mods = widget_get_pointer_mask(w);
-
-    if ((mods & GDK_MOD1_MASK) && key->keyval == GDK_w) {
+    if ((event->state & GDK_MOD1_MASK) && event->keyval == GDK_w) {
 	window_list_popup(w, NULL, vwin->main);
 	return TRUE;
     }

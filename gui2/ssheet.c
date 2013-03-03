@@ -2404,7 +2404,7 @@ static gint catch_spreadsheet_click (GtkWidget *view,
     }
 
     if (sheet->matrix == NULL && !editing_scalars(sheet) && 
-	(right_click(event, view))) {
+	(right_click(event))) {
 
 	if (sheet->popup == NULL) {
 	    build_sheet_popup(sheet);

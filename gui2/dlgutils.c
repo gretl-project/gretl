@@ -783,9 +783,10 @@ static GtkWidget *build_edit_popup (dialog_t *d)
 }
 
 static gboolean 
-edit_dialog_popup_handler (GtkWidget *w, GdkEventButton *event, dialog_t *d)
+edit_dialog_popup_handler (GtkWidget *w, GdkEventButton *event, 
+			   dialog_t *d)
 {
-    if (right_click(event, w)) {
+    if (right_click(event)) {
 	if (d->popup != NULL) {
 	    gtk_widget_destroy(d->popup);
 	    d->popup = NULL;
@@ -1471,30 +1472,6 @@ void combo_box_remove (gpointer p, int pos)
 #else
     gtk_combo_box_remove_text(GTK_COMBO_BOX(p), pos);
 #endif			   
-}
-
-GdkModifierType widget_get_pointer_mask (GtkWidget *w)
-{
-    GdkWindow *window = gtk_widget_get_window(w);
-    GdkModifierType mods = 0;
-
-    if (window != NULL) {
-	gdk_window_get_pointer(window, NULL, NULL, &mods);
-    }
-
-    return mods;
-}
-
-GdkModifierType parent_get_pointer_mask (GtkWidget *w)
-{
-    GdkWindow *window = gtk_widget_get_parent_window(w);
-    GdkModifierType mods = 0;
-
-    if (window != NULL) {
-	gdk_window_get_pointer(window, NULL, NULL, &mods);
-    }
-
-    return mods;
 }
 
 gboolean widget_get_pointer_info (GtkWidget *w, gint *x, gint *y,

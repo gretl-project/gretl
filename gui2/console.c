@@ -219,9 +219,7 @@ static gint console_click_handler (GtkWidget *w,
 				   GdkEventButton *event,
 				   gpointer p)
 {
-    GdkModifierType mods = widget_get_pointer_mask(w);
-
-    if (mods & GDK_BUTTON2_MASK) {
+    if (event->button == 2) {
 	return console_paste_text(w, GDK_SELECTION_PRIMARY);
     }
 
@@ -669,18 +667,18 @@ static gchar *console_get_current_line (GtkTextBuffer *buf,
 
 #define IS_BACKKEY(k) (k == GDK_BackSpace || k == GDK_Left)
 
-static gint console_key_handler (GtkWidget *cview, GdkEventKey *key, 
+static gint console_key_handler (GtkWidget *cview, GdkEventKey *event, 
 				 gpointer p)
 {
-    GdkModifierType mods = widget_get_pointer_mask(cview);
-    guint upkey = gdk_keyval_to_upper(key->keyval);
+    guint keyval = event->keyval;
+    guint upkey = gdk_keyval_to_upper(keyval);
     GtkTextIter ins, end;
     GtkTextBuffer *buf;
     GtkTextMark *mark;
     gint ctrl = 0;
 
-    if (mods & GDK_CONTROL_MASK) {
-	if (key->keyval == GDK_Control_L || key->keyval == GDK_Control_R) {
+    if (event->state & GDK_CONTROL_MASK) {
+	if (keyval == GDK_Control_L || keyval == GDK_Control_R) {
 	    return FALSE;
 	} else if (upkey == GDK_C || upkey == GDK_X) {
 	    /* allow regular copy/cut behavior */
@@ -704,7 +702,7 @@ static gint console_key_handler (GtkWidget *cview, GdkEventKey *key,
 	gtk_text_buffer_get_end_iter(buf, &ins);
     }
 
-    if (key->keyval == GDK_Home && (mods & GDK_SHIFT_MASK)) {
+    if (keyval == GDK_Home && (event->state & GDK_SHIFT_MASK)) {
 	/* "select to start of line" */
 	GtkTextIter start = ins;
 
@@ -713,13 +711,12 @@ static gint console_key_handler (GtkWidget *cview, GdkEventKey *key,
 	return TRUE;
     }
 
-    if (IS_BACKKEY(key->keyval)) {
+    if (IS_BACKKEY(keyval)) {
 	/* if we're at the start of the input line, block backspacing */
 	if (gtk_text_iter_get_line_index(&ins) < 3) {
 	    return TRUE;
 	}
-    } else if (key->keyval == GDK_Home || 
-	       (ctrl && key->keyval == GDK_A)) {
+    } else if (keyval == GDK_Home || (ctrl && upkey == GDK_A)) {
 	/* go to start of typing area */
 	gtk_text_iter_set_line_index(&ins, 2);	
 	gtk_text_buffer_place_cursor(buf, &ins);
@@ -731,7 +728,7 @@ static gint console_key_handler (GtkWidget *cview, GdkEventKey *key,
        These may or may not be the same thing.
     */
 
-    if (key->keyval == GDK_Return) {
+    if (keyval == GDK_Return) {
 	/* execute the command, unless backslash-continuation 
 	   is happening */
 	ExecState *state;
@@ -757,23 +754,23 @@ static gint console_key_handler (GtkWidget *cview, GdkEventKey *key,
 	    command_entered = 1;
 	}
 
-	key->keyval = GDK_End;
+	event->keyval = GDK_End;
 	return FALSE;
     }
 
-    if (key->keyval == GDK_Up || key->keyval == GDK_Down) {
+    if (keyval == GDK_Up || keyval == GDK_Down) {
 	/* up/down arrows: navigate the command history */
 	GtkTextIter start = ins;
 	const char *histline;
 
-	if (hpos == hlines && key->keyval == GDK_Up) {
+	if (hpos == hlines && keyval == GDK_Up) {
 	    g_free(hist0);
 	    hist0 = console_get_current_line(buf, &ins);
 	}
 
-	histline = fetch_history_line(key->keyval);
+	histline = fetch_history_line(keyval);
 
-	if (histline != NULL || key->keyval == GDK_Down) {
+	if (histline != NULL || keyval == GDK_Down) {
 	    gtk_text_iter_set_line_index(&start, 2);
 	    gtk_text_buffer_delete(buf, &start, &end);
 	    if (histline != NULL) {
@@ -786,7 +783,7 @@ static gint console_key_handler (GtkWidget *cview, GdkEventKey *key,
 	return TRUE;
     }
 
-    if (key->keyval == GDK_Tab) {
+    if (keyval == GDK_Tab) {
 	/* tab completion for gretl commands, variable names */
 	return console_complete_word(buf, &ins);
     } 

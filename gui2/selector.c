@@ -2043,28 +2043,6 @@ static void create_flag_item (GtkWidget *popup, int i, GtkWidget *view)
     gtk_menu_shell_append(GTK_MENU_SHELL(popup), item);
 }
 
-static gboolean parent_right_click (GdkEventButton *event, 
-				    GtkWidget *w)
-{
-    if (event->type == GDK_BUTTON_PRESS) {
-	if (event->button == 3) {
-	    return TRUE;
-	}
-#ifdef OS_OSX
-	else if (w != NULL) {
-	    GdkModifierType mods = parent_get_pointer_mask(w);
-
-	    if (mods & GDK_CONTROL_MASK) {
-		return TRUE;
-	    }
-	}
-#endif
-    }
-
-    return FALSE;
-
-}
-
 static gint listvar_flagcol_click (GtkWidget *widget, 
 				   GdkEventButton *event, 
 				   gpointer data)
@@ -2073,7 +2051,7 @@ static gint listvar_flagcol_click (GtkWidget *widget,
     GtkWidget *flag_popup;
     int i;
 
-    if (parent_right_click(event, view)) {
+    if (right_click(event)) {
 	flag_popup = gtk_menu_new();
 	for (i=0; i<2; i++) {
 	    create_flag_item(flag_popup, i, view);
@@ -2227,7 +2205,7 @@ static void move_selected_rows (GtkMenuItem *item, GtkTreeView *view)
 static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event, 
 				   gpointer data)
 {
-    if (parent_right_click(event, GTK_WIDGET(data))) {
+    if (right_click(event)) {
 	GtkTreeView *view = GTK_TREE_VIEW(data);
 	GtkTreeModel *model = gtk_tree_view_get_model(view);
 	GtkTreeSelection *sel = gtk_tree_view_get_selection(view);
@@ -2275,7 +2253,7 @@ static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event,
 static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event, 
 			       selector *sr)
 {
-    if (parent_right_click(event, sr->lvars)) {
+    if (right_click(event)) {
 	if (NONPARAM_CODE(sr->ci)) {
 	    set_extra_var_callback(NULL, sr);
 	} else if (sr->ci == GR_FBOX) {
