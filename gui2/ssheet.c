@@ -2393,7 +2393,6 @@ static gint catch_spreadsheet_click (GtkWidget *view,
 				     GdkEventButton *event,
 				     Spreadsheet *sheet)
 {   
-    GdkModifierType mods; 
     gint ret = FALSE;
 
 #if CELLDEBUG
@@ -2404,10 +2403,8 @@ static gint catch_spreadsheet_click (GtkWidget *view,
 	return FALSE;
     }
 
-    mods = widget_get_pointer_mask(view);
-
     if (sheet->matrix == NULL && !editing_scalars(sheet) && 
-	(RIGHT_CLICK(event, mods))) {
+	(right_click(event, view))) {
 
 	if (sheet->popup == NULL) {
 	    build_sheet_popup(sheet);
@@ -2418,7 +2415,7 @@ static gint catch_spreadsheet_click (GtkWidget *view,
 	return TRUE;
     }	    
 	
-    if (mods & GDK_BUTTON1_MASK) {
+    if (event->button == 1) {
 	GtkTreePath *path = NULL, *oldpath = NULL;
 	GtkTreeViewColumn *column = NULL, *oldcol = NULL;	
 

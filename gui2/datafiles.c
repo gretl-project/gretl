@@ -1255,9 +1255,7 @@ static void build_funcfiles_popup (windata_t *vwin)
 static gboolean 
 funcfiles_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
 {
-    GdkModifierType mods = widget_get_pointer_mask(w);
-
-    if (RIGHT_CLICK(event, mods)) {
+    if (right_click(event, w)) {
 	windata_t *vwin = (windata_t *) data;
 
 	if (vwin->popup != NULL) {

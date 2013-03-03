@@ -129,6 +129,8 @@ int gui_validate_varname_strict (const char *name, GretlType t);
 
 gretlopt get_tex_eqn_opt (void);
 
+gboolean right_click (GdkEventButton *event, GtkWidget *w);
+
 gint popup_menu_handler (GtkWidget *widget, GdkEventButton *event,
 			 gpointer data);
 

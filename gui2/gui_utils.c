@@ -1545,11 +1545,29 @@ void free_windata (GtkWidget *w, gpointer data)
     }
 }
 
+gboolean right_click (GdkEventButton *event, GtkWidget *w)
+{
+    if (event->type == GDK_BUTTON_PRESS) {
+	if (event->button == 3) {
+	    return TRUE;
+	}
+#ifdef OS_OSX
+	else if (w != NULL) {
+	    GdkModifierType mods = widget_get_pointer_mask(w);
+
+	    if (mods & GDK_CONTROL_MASK) {
+		return TRUE;
+	    }
+	}
+#endif
+    }
+
+    return FALSE;
+}
+
 gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
-    GdkModifierType mods = widget_get_pointer_mask(w);
-
-    if (RIGHT_CLICK(event, mods)) {
+    if (right_click(event, w)) {
 	windata_t *vwin = (windata_t *) p;
 
 	if (vwin->popup != NULL) {
@@ -4792,9 +4810,7 @@ int gui_validate_varname_strict (const char *name, GretlType t)
 gint popup_menu_handler (GtkWidget *widget, GdkEventButton *event,
 			 gpointer data)
 {
-    GdkModifierType mods = widget_get_pointer_mask(widget);
-
-    if (RIGHT_CLICK(event, mods)) {
+    if (right_click(event, widget)) {
 	gtk_menu_popup(GTK_MENU(data), NULL, NULL, NULL, NULL,
 		       event->button, event->time);
 	return TRUE;

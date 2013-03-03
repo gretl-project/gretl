@@ -1664,9 +1664,7 @@ static GtkWidget *build_help_popup (windata_t *hwin)
 gboolean 
 help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
-    GdkModifierType mods = widget_get_pointer_mask(w);
-
-    if (RIGHT_CLICK(event, mods)) {
+    if (right_click(event, w)) {
 	windata_t *hwin = (windata_t *) p;
 
 	if (hwin->active_var == 0 && pop_backpage(w) == 0) {
@@ -2718,9 +2716,7 @@ static gboolean destroy_textbit (GtkWidget **pw, struct textbit *tc)
 static gboolean 
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
-    GdkModifierType mods = widget_get_pointer_mask(w);
-
-    if (RIGHT_CLICK(event, mods)) {
+    if (right_click(event, w)) {
 	windata_t *vwin = (windata_t *) p;
 	struct textbit *tc = NULL;
 
