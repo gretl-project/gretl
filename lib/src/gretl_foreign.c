@@ -344,7 +344,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	argv[4] = "gretltmp.do";
 	argv[5] = NULL;
 	/* otherwise there's no way to control the location
-	   of the state output (gretltmp.log)
+	   of the stata output (gretltmp.log)
 	*/
 	gretl_chdir(gretl_dotdir());
     }	
