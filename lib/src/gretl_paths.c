@@ -69,6 +69,8 @@ struct INTERNAL_PATHS {
     char rlibpath[MAXLEN];
     char oxlpath[MAXLEN];
     char octpath[MAXLEN];
+    char statapath[MAXLEN];
+    char pypath[MAXLEN];
     char dbhost[32];
     char pngfont[128];
     unsigned char status;
@@ -2255,6 +2257,16 @@ const char *gretl_octave_path (void)
     return paths.octpath;
 }
 
+const char *gretl_stata_path (void)
+{
+    return paths.statapath;
+}
+
+const char *gretl_python_path (void)
+{
+    return paths.pypath;
+}
+
 const char *gretl_current_dir (void)
 {
     return current_dir;
@@ -2627,7 +2639,8 @@ static int maybe_transcribe_path (char *targ, char *src,
 
    gretldir
    gnuplot (but not on MS Windows)
-   tramo, x12a, rbinpath, rlibpath, oxlpath, octpath, dbhost
+   tramo, x12a, rbinpath, rlibpath, oxlpath, octpath, statapath,
+     pypath, dbhost
 
    * paths.workdir is updated via the separate working directory
      dialog
@@ -2660,6 +2673,8 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
     ndelta += maybe_transcribe_path(paths.rbinpath, cpaths->rbinpath, 0);
     ndelta += maybe_transcribe_path(paths.oxlpath, cpaths->oxlpath, 0);
     ndelta += maybe_transcribe_path(paths.octpath, cpaths->octpath, 0);
+    ndelta += maybe_transcribe_path(paths.statapath, cpaths->statapath, 0);
+    ndelta += maybe_transcribe_path(paths.pypath, cpaths->pypath, 0);
 
 #ifdef USE_RLIB
     if (maybe_transcribe_path(paths.rlibpath, cpaths->rlibpath, 0)) {
@@ -2720,6 +2735,10 @@ static void load_default_path (char *targ)
 	sprintf(targ, "%s\\OxMetrics6\\Ox\\bin\\oxl.exe", progfiles);
     } else if (targ == paths.octpath) {
 	strcpy(targ, "C:\\Octave\\3.2.3_gcc-4.0.0\\bin\\octave.exe");
+    } else if (targ == paths.statapath) {
+	sprintf(targ, "%s\\Stata\\stata.exe", progfiles);
+    } else if (targ == paths.pypath) {
+	strcpy(targ, "python.exe"); /* ?? */
     } else if (targ == paths.pngfont) {
 	strcpy(targ, "verdana 8");
     }
@@ -2755,6 +2774,22 @@ static void load_default_workdir (char *targ)
 
 static void load_default_path (char *targ)
 {
+#ifdef OS_OSX
+    const char *app_paths[] = {
+	"/Applications/OxMetrics6/ox/bin/oxl",
+	"/Applications/Octave.app/Contents/Resources/bin/octave",
+	"/Applications/Stata/Stata.app/Contents/MacOS/Stata",
+	"python"
+    };
+#else
+    const char *app_paths[] = {
+	"oxl",
+	"octave",
+	"stata",
+	"python"
+    };
+#endif  
+
     if (targ == paths.workdir) {
 	load_default_workdir(targ);
     } else if (targ == paths.dbhost) {
@@ -2766,13 +2801,13 @@ static void load_default_path (char *targ)
 	strcpy(targ, "x12a");
 #else
 	*targ = '\0';
-#endif /* HAVE_X12A */
+#endif
     } else if (targ == paths.tramo) {
 #ifdef HAVE_TRAMO
 	strcpy(targ, "tramo");
 #else
 	*targ = '\0';
-#endif /* HAVE_TRAMO */
+#endif
     } else if (targ == paths.rbinpath) {
 	strcpy(paths.rbinpath, "R");
     } else if (targ == paths.rlibpath) {
@@ -2780,22 +2815,18 @@ static void load_default_path (char *targ)
 	strcpy(paths.rlibpath, RLIBPATH);
 #else
 	*paths.rlibpath = '\0';
-#endif /* RLIBPATH */
+#endif
     } else if (targ == paths.oxlpath) {
-#ifdef OS_OSX
-	strcpy(paths.oxlpath, "/Applications/OxMetrics6/ox/bin/oxl");
-#else
-	strcpy(paths.oxlpath, "oxl");
-#endif /* OS_OSX */
+	strcpy(paths.oxlpath, app_paths[0]);
     } else if (targ == paths.octpath) {
-#ifdef OS_OSX
-	strcpy(paths.octpath, 
-	       "/Applications/Octave.app/Contents/Resources/bin/octave");
-#else
-	strcpy(paths.octpath, "octave");
-#endif /* OS_OSX */
+	strcpy(paths.octpath, app_paths[1]);
+    } else if (targ == paths.statapath) {
+	strcpy(paths.statapath, app_paths[2]);
+    } else if (targ == paths.pypath) {
+	strcpy(paths.pypath, app_paths[3]);
     } else if (targ == paths.pngfont) {
 #ifdef OS_OSX
+	/* FIXME native quartz */
 	strcpy(targ, "Sans 9");
 #else
 	if (chinese_locale()) {
@@ -2803,7 +2834,7 @@ static void load_default_path (char *targ)
 	} else {
 	    strcpy(targ, "Vera 9");
 	}
-#endif /* OS_OSX */	
+#endif
     }
 }
 
@@ -2860,6 +2891,8 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     path_init(paths.rlibpath, cpaths->rlibpath, 0);
     path_init(paths.oxlpath, cpaths->oxlpath, 0);
     path_init(paths.octpath, cpaths->octpath, 0);
+    path_init(paths.statapath, cpaths->statapath, 0);
+    path_init(paths.pypath, cpaths->pypath, 0);
 
     /* graphing font */
     path_init(paths.pngfont, cpaths->pngfont, 0);
@@ -3267,6 +3300,10 @@ int cli_read_rc (void)
 		strncat(cpaths.oxlpath, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "octave")) {
 		strncat(cpaths.octpath, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "stata")) {
+		strncat(cpaths.statapath, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "python")) {
+		strncat(cpaths.pypath, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "Png_font")) {
 		strncat(cpaths.pngfont, val, 128 - 1);
 	    } else if (!strcmp(key, "Gp_colors")) {

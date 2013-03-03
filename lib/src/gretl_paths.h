@@ -62,6 +62,8 @@ struct ConfigPaths_ {
     char rlibpath[MAXLEN];
     char oxlpath[MAXLEN];
     char octpath[MAXLEN];
+    char statapath[MAXLEN];
+    char pypath[MAXLEN];
     char dbhost[64];
     char pngfont[128];
 };
@@ -187,6 +189,10 @@ const char *gretl_png_font (void);
 const char *gretl_oxl_path (void);
 
 const char *gretl_octave_path (void);
+
+const char *gretl_stata_path (void);
+
+const char *gretl_python_path (void);
 
 const char *gretl_current_dir (void);
 

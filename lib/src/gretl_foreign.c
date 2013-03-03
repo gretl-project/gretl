@@ -207,10 +207,12 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	fname = gretl_octave_filename();
 	cmd = g_strdup_printf("\"%s\" --silent \"%s\"", path, fname);
     } else if (foreign_lang == LANG_STATA) {
-	cmd = g_strdup_printf("stata /q /e gretltmp.do");
+	path = gretl_stata_path();
+	cmd = g_strdup_printf("%s /q /e gretltmp.do", path);
     } else if (foreign_lang == LANG_PYTHON) {
+	path = gretl_python_path();
 	fname = gretl_python_filename();
-	cmd = g_strdup_printf("python \"%s\"", fname);
+	cmd = g_strdup_printf("%s \"%s\"", path, fname);
     } else {
 	return 1;
     }
@@ -318,7 +320,7 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
 static int lib_run_other_sync (gretlopt opt, PRN *prn)
 {
-    char *argv[5];
+    char *argv[6];
     int err;
 
     if (foreign_lang == LANG_OX) {
@@ -331,15 +333,16 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	argv[2] = (char *) gretl_octave_filename();
 	argv[3] = NULL;
     } else if (foreign_lang == LANG_PYTHON) {
-	argv[0] = "python";
+	argv[0] = (char *) gretl_python_path();
 	argv[1] = (char *) gretl_python_filename();
 	argv[2] = NULL;
     } else if (foreign_lang == LANG_STATA) {
-	argv[0] = "stata";
-	argv[1] = "-b";
-	argv[2] = "-q";
-	argv[3] = "gretltmp.do";
-	argv[4] = NULL;
+	argv[0] = (char *) gretl_stata_path();
+	argv[1] = "-q";
+	argv[2] = "-b";
+	argv[3] = "do";
+	argv[4] = "gretltmp.do";
+	argv[5] = NULL;
 	/* otherwise there's no way to control the location
 	   of the state output (gretltmp.log)
 	*/
