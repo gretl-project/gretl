@@ -5243,43 +5243,54 @@
 	  case simply $W(x) = 1$.
 	</para>
 	<para context="notex">
-	  For each specification of <math>W</math>, one can compute
-	  a set of nodes, <math>x</math><sub>i</sub>, and weights, 
+	  For each specification of <math>W</math>, one can compute a
+	  set of nodes, <math>x</math><sub>i</sub>, and weights,
 	  <math>w</math><sub>i</sub>, such that the sum from
 	  <math>i</math>=1 to <math>n</math> of
-	  <math>w</math><sub>i</sub><math>f(xi)</math>
-	  approximates the desired integral. The method of
-	  Golub and Welsch (1960) is used. 
+	  <math>w</math><sub>i</sub><math>f</math>(<math>x</math><sub>i</sub>)
+	  approximates the desired integral. The method of <cite
+	  key="golub69">Golub and Welsch (1969)</cite> is used.
 	</para>
 	<para context="tex">
 	  For each specification of $W(x)$, one can compute a set of
 	  nodes, $x_i$, and weights, $w_i$, such that $\sum_{i=1}^n
-	  f(x_i) w_i$ approximates the desired integral.
+	  f(x_i) w_i$ approximates the desired integral. The method of
+	  <cite key="golub69">Golub and Welsch (1969)</cite> is used.
 	</para>
-	<para>
+	<para context="notex">
 	  When the Gauss&ndash;Legendre type is selected, the 
 	  optional arguments <argname>a</argname> and
 	  <argname>b</argname> can be used to control the lower and
 	  upper limits of integration, the default values being
-	  &minus;1 and 1. In the Hermite and Laguerre cases the
-	  limits are fixed at minus and plus infinity (Hermite) 
-	  and zero to infinity (Laguerre).
+	  &minus;1 and 1. (In Hermite quadrature the
+	  limits are fixed at minus and plus infinity, while in
+	  the Laguerre case they are fixed at 0 and infinity.)
+	</para>
+	<para context="tex">
+	  When the Gauss&ndash;Legendre type is selected, the optional
+	  arguments <argname>a</argname> and <argname>b</argname> can
+	  be used to control the lower and upper limits of
+	  integration, the default values being $-1$ and 1. (In Hermite
+	  quadrature the limits are fixed at $-\infty$ and $+\infty$,
+	  while in the Laguerre case they are fixed at 0 and $\infty$.)
 	</para>
 	<para context="notex">
 	  In the Hermite case <argname>a</argname> and
 	  <argname>b</argname> play a different role: they can be used
-	  to replace the default value of <math>W(x)</math> with the
-	  (closely related) normal distribution with mean
-	  <argname>a</argname> and standard deviation
-	  <argname>b</argname>. Supplying values of 0 and 1 for these
-	  parameters, for example, has the effect of multiplying the
-	  default nodes by the square root of two and dividing the
-	  weights by the square root of &pi;.
+	  to replace the default form of
+	  <math>W</math>(<math>x</math>) with the (closely related)
+	  normal distribution with mean <argname>a</argname> and
+	  standard deviation <argname>b</argname>. Supplying values of
+	  0 and 1 for these parameters, for example, has the effect of
+	  making <math>W</math>(<math>x</math>) into the standard
+	  normal pdf, which is equivalent to multiplying the default
+	  nodes by the square root of two and dividing the weights by
+	  the square root of &pi;.
 	</para>
 	<para context="tex">
 	  In the Hermite case <argname>a</argname> and
 	  <argname>b</argname> play a different role: they can be used
-	  to replace the default value of $W(x)$ with the
+	  to replace the default form of $W(x)$ with the
 	  (closely related) normal distribution with mean
 	  <argname>a</argname> and standard deviation
 	  <argname>b</argname>. Supplying values of 0 and 1 for these
