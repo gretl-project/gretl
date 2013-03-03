@@ -2389,7 +2389,8 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
     return FALSE;
 }
 
-static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
+static gint catch_spreadsheet_click (GtkWidget *view, 
+				     GdkEventButton *event,
 				     Spreadsheet *sheet)
 {   
     GdkModifierType mods; 
@@ -2406,20 +2407,18 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
     mods = widget_get_pointer_mask(view);
 
     if (sheet->matrix == NULL && !editing_scalars(sheet) && 
-	(RIGHT_CLICK(mods))) {
-	GdkEventButton *bevent = (GdkEventButton *) event;
+	(RIGHT_CLICK(event, mods))) {
 
 	if (sheet->popup == NULL) {
 	    build_sheet_popup(sheet);
 	}
 
 	gtk_menu_popup(GTK_MENU(sheet->popup), NULL, NULL, NULL, NULL,
-		       bevent->button, bevent->time);
+		       event->button, event->time);
 	return TRUE;
     }	    
 	
     if (mods & GDK_BUTTON1_MASK) {
-	GdkEventButton *bevent = (GdkEventButton *) event;
 	GtkTreePath *path = NULL, *oldpath = NULL;
 	GtkTreeViewColumn *column = NULL, *oldcol = NULL;	
 
@@ -2446,8 +2445,8 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 	}
 
 	gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(sheet->view),
-				      (gint) bevent->x, 
-				      (gint) bevent->y,
+				      (gint) event->x, 
+				      (gint) event->y,
 				      &path, &column,
 				      NULL, NULL);
 

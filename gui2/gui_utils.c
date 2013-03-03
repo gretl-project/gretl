@@ -1549,7 +1549,7 @@ gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
 
-    if (RIGHT_CLICK(mods)) {
+    if (RIGHT_CLICK(event, mods)) {
 	windata_t *vwin = (windata_t *) p;
 
 	if (vwin->popup != NULL) {
@@ -4789,16 +4789,14 @@ int gui_validate_varname_strict (const char *name, GretlType t)
     return real_gui_validate_varname(name, t, 0);
 }
 
-gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
+gint popup_menu_handler (GtkWidget *widget, GdkEventButton *event,
 			 gpointer data)
 {
     GdkModifierType mods = widget_get_pointer_mask(widget);
 
-    if (RIGHT_CLICK(mods) && event->type == GDK_BUTTON_PRESS) {
-	GdkEventButton *bevent = (GdkEventButton *) event; 
-
+    if (RIGHT_CLICK(event, mods)) {
 	gtk_menu_popup(GTK_MENU(data), NULL, NULL, NULL, NULL,
-		       bevent->button, bevent->time);
+		       event->button, event->time);
 	return TRUE;
     }
 

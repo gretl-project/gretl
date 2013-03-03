@@ -1666,7 +1666,7 @@ help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
 
-    if (RIGHT_CLICK(mods)) {
+    if (RIGHT_CLICK(event, mods)) {
 	windata_t *hwin = (windata_t *) p;
 
 	if (hwin->active_var == 0 && pop_backpage(w) == 0) {
@@ -2720,7 +2720,7 @@ script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
 
-    if (RIGHT_CLICK(mods)) {
+    if (RIGHT_CLICK(event, mods)) {
 	windata_t *vwin = (windata_t *) p;
 	struct textbit *tc = NULL;
 

@@ -1257,7 +1257,7 @@ funcfiles_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
 
-    if (RIGHT_CLICK(mods)) {
+    if (RIGHT_CLICK(event, mods)) {
 	windata_t *vwin = (windata_t *) data;
 
 	if (vwin->popup != NULL) {

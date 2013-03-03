@@ -787,7 +787,7 @@ edit_dialog_popup_handler (GtkWidget *w, GdkEventButton *event, dialog_t *d)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
 
-    if (RIGHT_CLICK(mods)) {
+    if (RIGHT_CLICK(event, mods)) {
 	if (d->popup != NULL) {
 	    gtk_widget_destroy(d->popup);
 	    d->popup = NULL;

@@ -3165,7 +3165,7 @@ static gboolean session_icon_click (GtkWidget *icon,
     } else {
 	GdkModifierType mods = widget_get_pointer_mask(icon);
 
-	if (RIGHT_CLICK(mods)) {
+	if (RIGHT_CLICK(event, mods)) {
 	    if (obj->sort == GRETL_OBJ_EQN  || obj->sort == GRETL_OBJ_GRAPH || 
 		obj->sort == GRETL_OBJ_TEXT || obj->sort == GRETL_OBJ_DSET || 
 		obj->sort == GRETL_OBJ_INFO || obj->sort == GRETL_OBJ_GPAGE ||
@@ -3189,7 +3189,7 @@ static gboolean session_view_click (GtkWidget *widget,
     if (!in_icon) {
 	GdkModifierType mods = widget_get_pointer_mask(widget);
 
-	if (RIGHT_CLICK(mods)) {
+	if (RIGHT_CLICK(event, mods)) {
 	    /* right-click on iconview background */
 	    gtk_menu_popup(GTK_MENU(global_popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);

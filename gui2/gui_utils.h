@@ -129,7 +129,7 @@ int gui_validate_varname_strict (const char *name, GretlType t);
 
 gretlopt get_tex_eqn_opt (void);
 
-gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
+gint popup_menu_handler (GtkWidget *widget, GdkEventButton *event,
 			 gpointer data);
 
 void add_popup_item (const gchar *label, GtkWidget *menu,
