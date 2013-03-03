@@ -493,14 +493,17 @@ static int write_python_io_file (void)
 #endif	
 
 	    fputs("def gretl_export(X, fname, autodot=1):\n", fp);
-	    fputs("  from numpy import asmatrix, savetxt\n", fp);
+	    fputs("  from numpy import asmatrix\n", fp);
 	    fputs("  M = asmatrix(X)\n", fp);
 	    fputs("  r, c = M.shape\n", fp);
 	    fputs("  if autodot:\n", fp);
             fputs("    fname = gretl_dotdir + fname\n", fp);
 	    fputs("  f = open(fname, 'w')\n", fp);
 	    fputs("  f.write(repr(r) + '\\t' + repr(c) + '\\n')\n", fp);
-	    fputs("  savetxt(f, M, fmt='%.18e', delimiter=' ')\n", fp);
+	    fputs("  for i in range(0, r):\n", fp);
+	    fputs("    for j in range(0, c):\n", fp);
+	    fputs("      f.write('%.18e ' % M[i,j])\n", fp);
+            fputs("    f.write('\\n')\n", fp);
 	    fputs("  f.close()\n", fp);
 	    fputs("  return\n\n", fp);  
 
@@ -564,6 +567,12 @@ static int write_stata_io_file (void)
 
 static void add_gretl_include (int lang, FILE *fp)
 {
+    if (lang == LANG_PYTHON) {
+	fputs("from gretl_io import gretl_dotdir, gretl_loadmat, "
+	      "gretl_export\n", fp);
+	return;
+    }
+
 #ifdef G_OS_WIN32
     gchar *dotcpy = win32_dotpath();
 
@@ -575,8 +584,6 @@ static void add_gretl_include (int lang, FILE *fp)
 	}
     } else if (lang == LANG_OCTAVE) {
 	fprintf(fp, "source(\"%sgretl_io.m\")\n", dotcpy);
-    } else if (lang == LANG_PYTHON) {
-	fprintf(fp, "execfile(\"%sgretl_io.py\")\n", dotcpy);    
     } else if (lang == LANG_STATA) {
 	fprintf(fp, "quietly adopath + \"%s\"\n", dotcpy);
     }
@@ -592,8 +599,6 @@ static void add_gretl_include (int lang, FILE *fp)
 	}
     } else if (lang == LANG_OCTAVE) {
 	fprintf(fp, "source(\"%sgretl_io.m\")\n", dotdir);
-    } else if (lang == LANG_PYTHON) {
-	fprintf(fp, "execfile(\"%sgretl_io.py\")\n", dotdir);
     } else if (lang == LANG_STATA) {
 	fprintf(fp, "quietly adopath + \"%s\"\n", dotdir);
     }

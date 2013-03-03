@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.11\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-02-28 11:26-0500\n"
-"PO-Revision-Date: 2013-02-08 02:00-0400\n"
+"PO-Revision-Date: 2013-03-02 23:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -1112,21 +1112,21 @@ msgid "WARNING: ascii data read error at var %d, obs %d"
 msgstr "UWAGA: błędny odczyt danych dla zmiennej %d w obserwacji %d"
 
 #: lib/src/dataio.c:274
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "First char of varname '%s' is bad\n"
 "(first must be alphabetical)"
 msgstr ""
-"Pierwszy znak dla zmiennej ('%c') jest błędny\n"
+"Pierwszy znak dla zmiennej '%s' jest błędny\n"
 "(pierwszy znak musi być literą)"
 
 #: lib/src/dataio.c:278
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Varname '%s' contains illegal character '%c'\n"
 "Use only letters, digits and underscore"
 msgstr ""
-"Nazwa zmiennej zawiera błędny znak '%c'\n"
+"Zmienna  '%s' zawiera błędny znak '%c'\n"
 "Użyć można tylko: litery, cyfry i znak podkreślenia"
 
 #: lib/src/dataio.c:284
@@ -1230,13 +1230,13 @@ msgstr ""
 "Wczytywanie nagłówka pliku %s\n"
 
 #: lib/src/dataio.c:1707 lib/src/dataio.c:1870 lib/src/gretl_xml.c:2499
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "periodicity: %d, maxobs: %d\n"
 "observations range: %s to %s\n"
 msgstr ""
 "okresowość: %d, maksymalna liczba obserwacji: %d\n"
-"zakres obserwacji: %s-%s\n"
+"zakres obserwacji: od %s do %s\n"
 
 #: lib/src/dataio.c:1711
 msgid ""
@@ -2106,7 +2106,7 @@ msgstr "%s: zmienna zależna musi być licznikiem zdarzeń (liczba naturalna)"
 #: lib/src/estimate.c:192 plugin/mp_ols.c:1644
 #, c-format
 msgid "No. of obs (%d) is less than no. of parameters (%d)"
-msgstr "Liczba obserwacji (%d) jest mniejsza od liczby parametrów (%d)"
+msgstr "Liczba obserwacji (%d) jest mniejsza od liczby szacowanych parametrów (%d)"
 
 #: lib/src/estimate.c:617
 msgid "Weight variable is all zeros, aborting regression"
@@ -2486,7 +2486,7 @@ msgstr "Błąd w deklaracji"
 #: lib/src/genfuncs.c:3510
 #, c-format
 msgid "List has %d members, but length of vector b is %d"
-msgstr ""
+msgstr "Lista ma %d elementów, ale długość wektora b jest równa %d"
 
 #: lib/src/genfuncs.c:3682
 msgid "Imhof integral gave negative value"
@@ -2962,9 +2962,9 @@ msgid "no such item"
 msgstr "nie ten element"
 
 #: lib/src/gretl_bundle.c:608
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid key string"
-msgstr "'%s':, błąd indeksu obserwacji"
+msgstr "'%s':, błędny klucz znaków"
 
 #: lib/src/gretl_errors.c:40
 msgid "Data error"
@@ -3422,7 +3422,7 @@ msgstr "rho = 0"
 
 #: lib/src/gretl_model.c:3431
 msgid "LR test for rho = 0"
-msgstr ""
+msgstr "Statystyka testu LR dla rho = 0"
 
 #: lib/src/gretl_model.c:3450
 msgid "robust variant"
@@ -4758,7 +4758,7 @@ msgstr "Wielomianowy Nieuporządkowany Logit"
 #: lib/src/modelprint.c:908
 #, fuzzy
 msgid "Random-effects probit"
-msgstr "Losowe efekty"
+msgstr "Probit z losowymi efektami"
 
 #: lib/src/modelprint.c:910 gui2/selector.c:3647
 msgid "Ordered Probit"
@@ -12019,9 +12019,8 @@ msgid "gretl: edit plot commands"
 msgstr "gretl: edycja parametrów wykresu"
 
 #: gui2/gui_utils.c:1640
-#, fuzzy
 msgid "gretl: edit R script"
-msgstr "gretl: edycja skryptu Octave"
+msgstr "gretl: edycja skryptu R"
 
 #: gui2/gui_utils.c:1642
 msgid "gretl: edit Ox program"
@@ -16592,6 +16591,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "gretl: edit R commands"
-#~ msgstr "gretl: edycja skryptu R"

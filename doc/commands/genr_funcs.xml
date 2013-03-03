@@ -5201,6 +5201,96 @@
       </description>
     </function>
 
+    <function name="quadtable" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="scalar">n</fnarg>
+	<fnarg type="scalar" optional="true">type</fnarg>
+	<fnarg type="scalar" optional="true">a</fnarg>
+	<fnarg type="scalar" optional="true">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns an <by r="n" c="2"/> matrix for use with Gaussian
+	  quadrature (numerical integration). The first column holds
+	  the nodes or abscissae, the second the weights.
+	</para>
+	<para>
+	  The first argument specifies the number of points (rows) to
+	  compute. The second argument codes for the type of
+	  quadrature: use 1 for Gauss&ndash;Hermite (the default);
+	  2 for Gauss&ndash;Legendre; or 3 for Gauss&ndash;Laguerre.
+	  The significance of the optional parameters
+	  <argname>a</argname> and <argname>b</argname> depends on the
+	  selected <argname>type</argname>, as explained below.
+	</para>
+	<para context="notex">
+	  Gaussian quadrature is a method of approximating numerically
+	  the definite integral of some function of interest. Let the
+	  function be represented as the product
+	  <math>f(x)W(x)</math>. The types of quadrature differ in the
+	  specification of the component <math>W(x)</math>: in the
+	  Hermite case this is exp(&minus;<math>x</math><sup>2</sup>);
+	  in the Laguerre case, exp(&minus;<math>x</math>); and in the
+	  Legendre case simply <math>W(x)</math> = 1.
+	</para>
+	<para context="tex">
+	  Gaussian quadrature is a method of approximating numerically
+	  the definite integral of some function of interest. Let the
+	  function be represented as the product $f(x)W(x)$. The types
+	  of quadrature differ in the specification of the component
+	  $W(x)$: in the Hermite case we have $W(x) = \exp(-x^2)$; in
+	  the Laguerre case, $W(x) = \exp(-x)$; and in the Legendre
+	  case simply $W(x) = 1$.
+	</para>
+	<para context="notex">
+	  For each specification of <math>W</math>, one can compute
+	  a set of nodes, <math>x</math><sub>i</sub>, and weights, 
+	  <math>w</math><sub>i</sub>, such that the sum from
+	  <math>i</math>=1 to <math>n</math> of
+	  <math>w</math><sub>i</sub><math>f(xi)</math>
+	  approximates the desired integral. The method of
+	  Golub and Welsch (1960) is used. 
+	</para>
+	<para context="tex">
+	  For each specification of $W(x)$, one can compute a set of
+	  nodes, $x_i$, and weights, $w_i$, such that $\sum_{i=1}^n
+	  f(x_i) w_i$ approximates the desired integral.
+	</para>
+	<para>
+	  When the Gauss&ndash;Legendre type is selected, the 
+	  optional arguments <argname>a</argname> and
+	  <argname>b</argname> can be used to control the lower and
+	  upper limits of integration, the default values being
+	  &minus;1 and 1. In the Hermite and Laguerre cases the
+	  limits are fixed at minus and plus infinity (Hermite) 
+	  and zero to infinity (Laguerre).
+	</para>
+	<para context="notex">
+	  In the Hermite case <argname>a</argname> and
+	  <argname>b</argname> play a different role: they can be used
+	  to replace the default value of <math>W(x)</math> with the
+	  (closely related) normal distribution with mean
+	  <argname>a</argname> and standard deviation
+	  <argname>b</argname>. Supplying values of 0 and 1 for these
+	  parameters, for example, has the effect of multiplying the
+	  default nodes by the square root of two and dividing the
+	  weights by the square root of &pi;.
+	</para>
+	<para context="tex">
+	  In the Hermite case <argname>a</argname> and
+	  <argname>b</argname> play a different role: they can be used
+	  to replace the default value of $W(x)$ with the
+	  (closely related) normal distribution with mean
+	  <argname>a</argname> and standard deviation
+	  <argname>b</argname>. Supplying values of 0 and 1 for these
+	  parameters, for example, has the effect of making
+	  $W(x)$ into the standard normal pdf, which is equivalent
+	  to multiplying the default $x_i$ values by $\sqrt{2}$
+	  and dividing the default $w_i$ by $\sqrt{\pi}$.
+	</para>
+      </description>
+    </function>    
+
     <function name="quantile" section="stats" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>
