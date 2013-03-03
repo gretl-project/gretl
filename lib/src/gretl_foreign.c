@@ -504,8 +504,7 @@ static int write_python_io_file (void)
 	    fputs("    for j in range(0, c):\n", fp);
 	    fputs("      f.write('%.18e ' % M[i,j])\n", fp);
             fputs("    f.write('\\n')\n", fp);
-	    fputs("  f.close()\n", fp);
-	    fputs("  return\n\n", fp);  
+	    fputs("  f.close()\n\n", fp);
 
 	    fputs("def gretl_loadmat(fname, autodot=1):\n", fp);
 	    fputs("  from numpy import loadtxt\n", fp);
