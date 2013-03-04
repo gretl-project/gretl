@@ -13,6 +13,7 @@ version 1.9.12, in progress
   empty an existing one
 - Add new function strstrip()
 - Add new function aggregate()
+- Add new function quadtable(), for Gauss quadrature
 - lags() function: add an optional third parameter to control
   the ordering of terms in the output list
 - mread() and mwrite() functions: add an optional argument to
@@ -33,8 +34,10 @@ version 1.9.12, in progress
   appearing in the GUI icon view window
 - Fix bug: possible crash when regressors are dropped from a
   random-effects panel model due to near-prefect collinearity
+- Fix bug: possible crash in vecm with lag order 1 and no 
+  deterministic terms
 - User's Guide: clarify the use of string substitution, plus
-  various small updates
+  numerous small updates
 - Environment: respect GRETL_CONFIG_FILE to override the
   default of ~/.gretl2rc on unix-type systems
 - Daily dates: switch to ISO 8601 for output and preferred
