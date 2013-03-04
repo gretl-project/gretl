@@ -137,9 +137,9 @@ via the gretl GUI.
 
 A \texttt{bundle} is a container or wrapper for various sorts of
 objects --- specifically, scalars, series, matrices, strings and
-bundles. (Yes, a bundle can contain other bundles). A bundle takes
-the form of a hash table or associative array: each item placed in the
-bundle is associated with a key string which can used to retrieve it
+bundles. (Yes, a bundle can contain other bundles). A bundle takes the
+form of a hash table or associative array: each item placed in the
+bundle is associated with a key which can used to retrieve it
 subsequently. We begin by explaining the mechanics of bundles then
 offer some thoughts on what they are good for.
 
@@ -163,25 +163,38 @@ a given \app{gretl} session; it is an error to declare a variable that
 already exists. 
 
 To add an object to a bundle you assign to a compound left-hand value:
-the name of the bundle followed by the key string in square
-brackets. For example, the statement
+the name of the bundle followed by the key. Two forms of syntax are
+acceptable in this context. The original syntax (and the only form
+supported prior to version 1.9.12 of \app{gretl}) requires that the
+key be given as a quoted string literal enclosed in square brackets.
+For example, the statement
 
 \begin{code}
 foo["matrix1"] = m
 \end{code}
 
 adds an object called \texttt{m} (presumably a matrix) to bundle
-\texttt{foo} under the key \texttt{matrix1}. To get an item out of a
-bundle, again use the name of the bundle followed by the bracketed
-key, as in
+\texttt{foo} under the key \texttt{matrix1}. From \app{gretl} 1.9.12,
+however, a simpler syntax is available, \emph{provided} the key
+satisfies the rules for a \app{gretl} variable name (31 characters
+maximum, starting with a letter and composed of just letters, numbers
+or underscore).\footnote{When using the original syntax, keys do not
+  have to be valid as variable names --- for example, they can include
+  spaces --- but they are limited to 31 characters.}  In that case you
+can simply join the key to the bundle name with a dot, as in
+
+\begin{code}
+foo.matrix1 = m
+\end{code}
+
+To get an item out of a bundle, again use the name of the bundle
+followed by the key, as in
 
 \begin{code}
 matrix bm = foo["matrix1"]
+# or using the dot notation
+matrix m = foo.matrix1
 \end{code}
-
-A bundle key may be given as a double-quoted string literal, as shown
-above, or as the name of a pre-defined string variable. Key strings
-have a maximum length of 15 characters and cannot contain spaces.
 
 Note that the key identifying an object within a given bundle is
 necessarily unique. If you reuse an existing key in a new assignment,
@@ -197,20 +210,21 @@ object is replaced by another. Consider the following script fragment:
 \begin{code}
 bundle foo
 matrix m = I(3)
-foo["mykey"] = m
+foo.mykey = m
 scalar x = 20
-foo["mykey"] = x
+foo.mykey = x
 \end{code}
 
 After the above commands are completed bundle \texttt{foo} does not
 contain a matrix under \texttt{mykey}, but the original matrix
 \texttt{m} is still in good health.
 
-To delete an object from a bundle use the \texttt{delete} command, as
-in
+To delete an object from a bundle use the \texttt{delete} command,
+with the bundle/key combination, as in
 
 \begin{code}
-delete foo["mykey"]
+delete foo.mykey
+delete foo["quoted key"]
 \end{code}
 
 This destroys the object associated with the key and removes the key
@@ -262,9 +276,9 @@ out by a separate function.
 # modification of bundle (pointer) by user function
 
 function void fill_out_bundle (bundle *b)
-  b["mat"] =  I(3)
-  b["str"] = "foo"
-  b["x"] = 32
+  b.mat =  I(3)
+  b.str = "foo"
+  b.x = 32
 end function
 
 bundle my_bundle 
@@ -324,10 +338,8 @@ series y = log(x)
 matrix A = zeros(10,4)
 \end{code}
 
-With the exception of bundles (as noted above), new variables in
-\app{gretl} do not \textit{have} to be declared by type.  The
-traditional way of creating a new variable in \app{gretl} was via the
-\app{genr} command (which is still supported), as in
+The traditional way of creating a new variable in \app{gretl} was via
+the \app{genr} command (which is still supported), as in
 
 \begin{code}
 genr x = y/100
@@ -338,7 +350,8 @@ automatically depending on the context: if \texttt{y} is a scalar, a
 series or a matrix \texttt{x} will inherit \texttt{y}'s type
 (otherwise an error will be generated, since division is applicable to
 these types only). Moreover, the type of a new variable can be left
-implicit \textit{without} use of \texttt{genr}:
+implicit \textit{without} use of \texttt{genr}:\footnote{Apart from
+  the bundle type: that must always be specified.}
 
 \begin{code}
 x = y/100

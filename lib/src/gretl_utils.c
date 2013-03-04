@@ -1566,16 +1566,22 @@ int gretl_copy_file (const char *src, const char *dest)
     return 0;
 }  
 
-/* handle the case of "delete bundle[key]" */
+/* handle the case of "delete b[key]" or "delete b.key" */
 
 static int maybe_delete_bundle_value (const char *s, PRN *prn)
 {
     char bname[VNAMELEN];
     char key[VNAMELEN];
     char fmt[16];
+    int brackets = 0;
     int err = 0;
 
-    sprintf(fmt, "%%%d[^[][%%%d[^]]", VNAMELEN-1, VNAMELEN-1);
+    if (strchr(s, '[')) {
+	sprintf(fmt, "%%%d[^[][%%%d[^]]", VNAMELEN-1, VNAMELEN-1);
+	brackets = 1;
+    } else {
+	sprintf(fmt, "%%%d[^.].%%%ds", VNAMELEN-1, VNAMELEN-1);
+    }
 
     if (sscanf(s, fmt, bname, key) == 2) {
 	gretl_bundle *bundle;
@@ -1584,7 +1590,7 @@ static int maybe_delete_bundle_value (const char *s, PRN *prn)
 	bundle = get_bundle_by_name(bname);
 	if (bundle == NULL) {
 	    err = E_UNKVAR;
-	} else {
+	} else if (brackets) {
 	    if (*key == '"') {
 		s = gretl_unquote(key, &err);
 	    } else if (gretl_is_string(key)) {
@@ -1592,6 +1598,8 @@ static int maybe_delete_bundle_value (const char *s, PRN *prn)
 	    } else {
 		err = E_UNKVAR;
 	    }
+	} else {
+	    s = key;
 	}
 
 	if (!err) {

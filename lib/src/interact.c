@@ -1488,10 +1488,10 @@ static int print_name_ok (const char *s, CMD *cmd)
 static int delete_name_ok (const char *s, CMD *cmd)
 {
     char bname[VNAMELEN];
-    char fmt[8];
+    char fmt[10];
     int ok = 0;
 
-    sprintf(fmt, "%%%d[^[]", VNAMELEN - 1);
+    sprintf(fmt, "%%%d[^[.]", VNAMELEN - 1);
 
     if (sscanf(s, fmt, bname) == 1 &&
 	gretl_is_bundle(bname)) {
