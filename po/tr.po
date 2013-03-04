@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-02-28 11:26-0500\n"
-"PO-Revision-Date: 2013-02-19 14:31+0200\n"
+"PO-Revision-Date: 2013-03-04 13:25+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -1006,7 +1006,7 @@ msgstr "%d. değişken ismi eksik: çıkılıyor\n"
 #: lib/src/csvdata.c:2090 plugin/excel_import.c:1638
 #: plugin/gnumeric_import.c:692
 msgid "it seems there are no variable names\n"
-msgstr "değişken ismi yok gibi görünüyor\n"
+msgstr "değişken adı yok gibi görünüyor\n"
 
 #: lib/src/csvdata.c:2178 plugin/import_common.c:59
 #, c-format
@@ -1112,22 +1112,22 @@ msgid "WARNING: ascii data read error at var %d, obs %d"
 msgstr "Uyarı: %d. değişken, %d. gözlem ascii veri okuma hatası"
 
 #: lib/src/dataio.c:274
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "First char of varname '%s' is bad\n"
 "(first must be alphabetical)"
 msgstr ""
-"Değişken adının birinci harfi ('%c') hatalı\n"
-"(bir harf ile başlamalıdır)"
+"Değişken adının birinci harfi ('%s') hatalı\n"
+"(ilk harf alfabetik olmalıdır)"
 
 #: lib/src/dataio.c:278
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Varname '%s' contains illegal character '%c'\n"
 "Use only letters, digits and underscore"
 msgstr ""
-"Değişken ismi geçersiz simge '%c' içeriyor.\n"
-"Yalnızca harf, rakam veya altçizgi kullanınız"
+"Değişken adı '%s' geçersiz simge '%c' içeriyor.\n"
+"Yalnızca harf, rakam ve altçizgi kullanınız"
 
 #: lib/src/dataio.c:284
 #, c-format
@@ -1144,7 +1144,7 @@ msgid ""
 "Varname contains illegal character 0x%x\n"
 "Use only letters, digits and underscore"
 msgstr ""
-"Değişken ismi geçersiz simge 0x%x içeriyor.\n"
+"Değişken adı geçersiz simge 0x%x içeriyor.\n"
 "Yalnızca harf, rakam veya altçizgi kullanınız"
 
 #: lib/src/dataio.c:309 lib/src/dataio.c:1792
@@ -1230,13 +1230,13 @@ msgstr ""
 "Başlık dosyası %s okunuyor\n"
 
 #: lib/src/dataio.c:1707 lib/src/dataio.c:1870 lib/src/gretl_xml.c:2499
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "periodicity: %d, maxobs: %d\n"
 "observations range: %s to %s\n"
 msgstr ""
 "dönemsellik: %d, ençok gözlem: %d\n"
-"gözlem aralığı: %s-%s\n"
+"gözlem aralığı: %s - %s\n"
 
 #: lib/src/dataio.c:1711
 msgid ""
@@ -2954,9 +2954,9 @@ msgid "no such item"
 msgstr "böyle bir kalem yok"
 
 #: lib/src/gretl_bundle.c:608
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid key string"
-msgstr "'%s': geçersiz gözlem endeksi"
+msgstr "'%s': geçersiz anahtar dizgisi"
 
 #: lib/src/gretl_errors.c:40
 msgid "Data error"
@@ -3413,7 +3413,7 @@ msgstr "ro = 0"
 
 #: lib/src/gretl_model.c:3431
 msgid "LR test for rho = 0"
-msgstr ""
+msgstr "Rho = 0 olabilirlik oranı sınaması"
 
 #: lib/src/gretl_model.c:3450
 msgid "robust variant"
@@ -3826,7 +3826,7 @@ msgid ""
 "labels were found, and are printed below.\n"
 "\n"
 msgstr ""
-"Ayrıca, sayısal değerlerden metin etiketlerine bazı eşleştirmeler\n"
+"Ayrıca, sayısal değerlerden dizgi etiketlerine bazı eşleştirmeler\n"
 "bulundu ve aşağıda gösterildi.\n"
 "\n"
 
@@ -4743,9 +4743,8 @@ msgid "Multinomial Logit"
 msgstr "Çokterimli Logbirim"
 
 #: lib/src/modelprint.c:908
-#, fuzzy
 msgid "Random-effects probit"
-msgstr "Rastsal etkiler"
+msgstr "Rastsal etkiler olabirim"
 
 #: lib/src/modelprint.c:910 gui2/selector.c:3647
 msgid "Ordered Probit"
@@ -5721,7 +5720,7 @@ msgid ""
 "Error: Hessian non-negative definite? (err = %d); dropping back to OPG\n"
 msgstr ""
 "\n"
-" Hata: Hesseyen eksi tanımlı değil? (err = %d); OPG'ye geri geçiliyor\n"
+"Hata: Hesseyen eksi tanımlı değil? (err = %d); OPG'ye geri geçiliyor\n"
 
 #: lib/src/nls.c:2411 lib/src/nls.c:2512
 msgid "Invalid NLS specification"
@@ -11990,9 +11989,8 @@ msgid "gretl: edit plot commands"
 msgstr "gretl: çizim komutlarını düzenle"
 
 #: gui2/gui_utils.c:1640
-#, fuzzy
 msgid "gretl: edit R script"
-msgstr "gretl: Octave betiği düzenle"
+msgstr "gretl: R betiği düzenle"
 
 #: gui2/gui_utils.c:1642
 msgid "gretl: edit Ox program"
