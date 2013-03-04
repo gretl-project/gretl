@@ -54,7 +54,8 @@
 
 #define nullmat_ok(f) (f == F_ROWS || f == F_COLS || f == F_DET || \
 		       f == F_LDET || f == F_DIAG || f == F_TRANSP || \
-		       f == F_VEC || f == F_VECH || f == F_UNVECH)
+		       f == F_VEC || f == F_VECH || f == F_UNVECH || \
+		       f == F_DATAOK)
 
 #define dataset_dum(n) (n->t == DUM && n->v.idnum == DUM_DATASET)
 

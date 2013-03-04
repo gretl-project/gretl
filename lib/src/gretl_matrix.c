@@ -11213,22 +11213,21 @@ gretl_matrix *gretl_matrix_isfinite (const gretl_matrix *m, int *err)
 {
     gretl_matrix *f;
 
-    if (gretl_is_null_matrix(m)) {
-	f = gretl_null_matrix_new();
-    } else {
-	f = gretl_matrix_alloc(m->rows, m->cols);
-
-	if (f != NULL) {
-	    int i, n = m->rows * m->cols;
-
-	    for (i=0; i<n; i++) {
-		f->val[i] = (xna(m->val[i]))? 0 : 1;
-	    }
-	}
+    if (m == NULL) {
+	*err = E_DATA;
+	return NULL;
     }
+
+    f = gretl_matrix_alloc(m->rows, m->cols);
 
     if (f == NULL) {
 	*err = E_ALLOC;
+    } else {
+	int i, n = m->rows * m->cols;
+
+	for (i=0; i<n; i++) {
+	    f->val[i] = (xna(m->val[i]))? 0 : 1;
+	}
     }
 
     return f;
@@ -11251,10 +11250,10 @@ int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
     double ax, bx;
     int i, j;
 
-    if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
+    if (a == NULL || b == NULL) {
 	*err = E_DATA;
 	return -1;
-    }
+    }	
 
     if (a->rows != b->rows || a->cols != b->cols) {
 	*err = E_NONCONF;

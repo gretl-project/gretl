@@ -1195,10 +1195,10 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 	return;
     } else if (m->rows == 0 || m->cols == 0) {
 	if (msg != NULL && *msg != '\0') {
-	    pprintf(prn, "%s: matrix is null (%d x %d)\n", 
+	    pprintf(prn, "%s: matrix is empty (%d x %d)\n", 
 		    msg, m->rows, m->cols);
 	} else {
-	    pprintf(prn, "matrix is null (%d x %d)\n",
+	    pprintf(prn, "matrix is empty (%d x %d)\n",
 		    m->rows, m->cols);
 	}
 	return;
