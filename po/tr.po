@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-02-28 11:26-0500\n"
-"PO-Revision-Date: 2013-03-04 13:25+0200\n"
+"PO-Revision-Date: 2013-03-04 13:30+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -1722,7 +1722,7 @@ msgstr ""
 
 #: lib/src/describe.c:4065 lib/src/describe.c:4089
 msgid "fractional integration"
-msgstr "Kesirsel tümleşim"
+msgstr "Kesirli tümleşim"
 
 #: lib/src/describe.c:4070
 msgid "Local Whittle Estimator"
@@ -9446,7 +9446,7 @@ msgstr "Çokterimli eğilim"
 
 #: gui2/filters.c:104
 msgid "Fractional difference"
-msgstr "Kesirsel fark"
+msgstr "Kesirli fark"
 
 #: gui2/filters.c:205
 #, c-format
@@ -11117,7 +11117,7 @@ msgstr "_Levin-Lin-Chu sınaması"
 
 #: gui2/gretl.c:1570
 msgid "_Fractional integration"
-msgstr "_Kesirsel tümleşim"
+msgstr "_Kesirli tümleşim"
 
 #: gui2/gretl.c:1571
 msgid "_Correlogram"
@@ -11157,7 +11157,7 @@ msgstr "_Çokterimli eğilim"
 
 #: gui2/gretl.c:1580
 msgid "_Fractional difference"
-msgstr "_Kesirsel fark"
+msgstr "_Kesirli fark"
 
 #: gui2/gretl.c:1583 gui2/gretl.c:1736
 msgid "_X-12-ARIMA analysis"
@@ -12911,7 +12911,7 @@ msgstr "dönemçizit"
 
 #: gui2/library.c:5385
 msgid "gretl: fractional integration"
-msgstr "gretl: kesirsel tümleşim"
+msgstr "gretl: kesirli tümleşim"
 
 #: gui2/library.c:5460 gui2/toolbar.c:490
 msgid "gretl: coefficient confidence intervals"
