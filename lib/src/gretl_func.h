@@ -29,6 +29,18 @@ typedef enum {
     FN_NODATA_OK     /* function does not require a dataset */
 } FuncDataReq;
 
+typedef enum {
+    UFUN_ROLE_NONE,
+    UFUN_BUNDLE_PRINT,
+    UFUN_BUNDLE_PLOT,
+    UFUN_BUNDLE_TEST,
+    UFUN_BUNDLE_FCAST,
+    UFUN_BUNDLE_EXTRA,
+    UFUN_GUI_MAIN,
+    UFUN_GUI_PRECHECK,
+    UFUN_ROLE_MAX
+} UfunRole; 
+
 #define NEEDS_TS    "needs-time-series-data"
 #define NEEDS_QM    "needs-qm-data"
 #define NEEDS_PANEL "needs-panel-data"
@@ -140,6 +152,12 @@ int function_package_write_file (fnpkg *pkg);
 int create_and_write_function_package (const char *fname, 
 				       gretlopt opt,
 				       PRN *prn);
+
+int function_set_package_role (const char *name, fnpkg *pkg,
+			       const char *attr, 
+			       gretlopt opt, PRN *prn);
+
+const char *package_role_get_key (int flag);
 
 int check_function_needs (const DATASET *dset, FuncDataReq dreq,
 			  int minver);

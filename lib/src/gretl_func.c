@@ -96,16 +96,6 @@ enum {
     UFUN_NOPRINT  = 1 << 2  
 };
 
-enum {
-    UFUN_BUNDLE_PRINT = 1,
-    UFUN_BUNDLE_PLOT,
-    UFUN_BUNDLE_TEST,
-    UFUN_BUNDLE_FCAST,
-    UFUN_BUNDLE_EXTRA,
-    UFUN_GUI_MAIN,
-    UFUN_GUI_PRECHECK
-};    
-
 /* structure representing a user-defined function */
 
 struct ufunc_ {
@@ -239,16 +229,18 @@ static int pkg_key_get_role (const char *key)
 {
     int i;
 
-    for (i=0; pkg_lookups[i].flag > 0; i++) {
-	if (!strcmp(key, pkg_lookups[i].key)) {
-	    return pkg_lookups[i].flag;
+    if (key != NULL && *key != '\0') {
+	for (i=0; pkg_lookups[i].flag > 0; i++) {
+	    if (!strcmp(key, pkg_lookups[i].key)) {
+		return pkg_lookups[i].flag;
+	    }
 	}
     }
     
-    return 0;
+    return UFUN_ROLE_NONE;
 }
 
-static const char *pkg_role_get_key (int flag)
+const char *package_role_get_key (int flag)
 {
     int i;
 
@@ -1942,7 +1934,7 @@ static int write_function_xml (ufunc *fun, FILE *fp)
     }
 
     if (fun->pkg_role) {
-	fprintf(fp, " pkg-role=\"%s\"", pkg_role_get_key(fun->pkg_role));
+	fprintf(fp, " pkg-role=\"%s\"", package_role_get_key(fun->pkg_role));
     }
 
     fputs(">\n", fp);
@@ -2697,12 +2689,41 @@ static int pkg_boolean_from_string (const char *s)
     }
 }
 
-static int function_set_pkg_role (const char *name, fnpkg *pkg,
-				  const char *attr, PRN *prn)
+/* below: if opt & OPT_T we're just testing (return 0 if 
+   everything is OK). Otherwise if all is OK we actually 
+   hook up the function given by @name to the role
+   given by @attr in @pkg.
+*/
+
+int function_set_package_role (const char *name, fnpkg *pkg,
+			       const char *attr, 
+			       gretlopt opt, PRN *prn)
 {
-    ufunc *u;
+    ufunc *u = NULL;
     int role = pkg_key_get_role(attr);
+    int testing = (opt & OPT_T);
     int i, j, err = 0;
+
+    if (role == UFUN_ROLE_NONE) {
+	if (testing) {
+	    return 0;
+	}
+	for (i=0; i<pkg->n_priv; i++) {
+	    if (!strcmp(name, pkg->priv[i]->name)) {
+		u = pkg->priv[i];
+		u->pkg_role = role;
+		return 0;
+	    }
+	}
+	for (i=0; i<pkg->n_pub; i++) {
+	    if (!strcmp(name, pkg->pub[i]->name)) {
+		u = pkg->pub[i];
+		u->pkg_role = role;
+		return 0;
+	    }
+	}
+	return E_DATA;
+    }
 
     /* check that the function in question satisfies the
        requirements for its role, and if so, hook it up 
@@ -2719,7 +2740,7 @@ static int function_set_pkg_role (const char *name, fnpkg *pkg,
 		    pprintf(prn, "%s: no parameters are allowed\n", attr);
 		    err = E_TYPES;
 		}
-		if (!err) {
+		if (!err && !testing) {
 		    u->pkg_role = role;
 		}		
 		return err;
@@ -2756,7 +2777,7 @@ static int function_set_pkg_role (const char *name, fnpkg *pkg,
 		    }
 		}
 	    }
-	    if (!err) {
+	    if (!err && !testing) {
 		u->pkg_role = role;
 	    }
 	    return err;
@@ -2851,7 +2872,7 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		for (i=0; pkg_lookups[i].key != NULL; i++) {
 		    key = pkg_lookups[i].key;
 		    if (!strncmp(line, key, strlen(key))) {
-			err = function_set_pkg_role(p, pkg, key, prn);
+			err = function_set_package_role(p, pkg, key, OPT_NONE, prn);
 			if (!err) {
 			    pprintf(prn, "%s function is %s, OK\n", key, p);
 			}

@@ -56,6 +56,7 @@ struct function_info_ {
     GtkWidget *saveas;     /* "Save as" button in dialog */
     GtkWidget *validate;   /* Validate button */
     GtkWidget *popup;      /* popup menu */
+    GtkWidget *extra;      /* extra properties child dialog */
     windata_t *samplewin;  /* window for editing sample script */
     GList *codewins;       /* list of windows editing function code */
     fnpkg *pkg;            /* pointer to package being edited */
@@ -116,6 +117,7 @@ function_info *finfo_new (void)
     finfo->codewins = NULL;
     finfo->codesel = NULL;
     finfo->popup = NULL;
+    finfo->extra = NULL;
 
     finfo->help = NULL;
     finfo->pubnames = NULL;
@@ -1041,6 +1043,139 @@ static void toggle_upload (GtkToggleButton *b, function_info *finfo)
     finfo->upload = gtk_toggle_button_get_active(b);
 }
 
+#if 0 /* not ready yet */
+
+static void extra_properties_callback (GtkWidget *w, function_info *finfo)
+{
+    GtkWidget **c_array;
+    const char *key;
+    gchar *s1, *s0;
+    int n_changed = 0;
+    int i, err = 0;
+
+    c_array = g_object_get_data(G_OBJECT(finfo->extra), "combo-array");
+
+    for (i=1; i<UFUN_ROLE_MAX && !err; i++) {
+	if (gtk_widget_is_sensitive(c_array[i-1])) {
+	    int newnull = 0, oldnull = 0, changed = 0;
+
+	    s1 = combo_box_get_active_text(GTK_COMBO_BOX(c_array[i-1]));
+	    newnull = (s1 == NULL || *s1 == '\0' || !strcmp(s1, "none"));
+	    key = package_role_get_key(i);
+	    function_package_get_properties(finfo->pkg, key, &s0, NULL);
+	    oldnull = (s0 == NULL || *s0 == '\0' || !strcmp(s0, "none"));
+	    if (oldnull && !newnull) {
+		changed = 1;
+	    } else if (!oldnull && newnull) {
+		changed = 1;
+	    } else if (!oldnull && !newnull) {
+		changed = strcmp(s0, s1);
+	    } 
+	    if (changed) {
+		err = function_set_package_role(s1, finfo->pkg,
+						key, OPT_T, NULL);
+		n_changed++;
+	    }
+	    g_free(s0);
+	    g_free(s1);
+	}
+    }
+
+    infobox("Should make %d change(s)", n_changed);
+    
+    gtk_widget_destroy(finfo->extra);
+}
+
+static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
+{
+    GtkWidget *dlg, *combo, *table;
+    GtkWidget *tmp, *vbox, *hbox;
+    GtkWidget **combo_array;
+    const char *funname;
+    const char *key;
+    gchar *strval;
+    int nfuns, nrows;
+    int i, j;
+
+    if (finfo->extra != NULL) {
+	gtk_window_present(GTK_WINDOW(finfo->extra));
+	return;
+    }
+
+    dlg = gretl_dialog_new(_("gretl: extra properties"), finfo->dlg,
+			   GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
+    finfo->extra = dlg;
+    g_signal_connect(G_OBJECT(dlg), "destroy",
+		     G_CALLBACK(gtk_widget_destroyed), &finfo->extra);
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+
+    nrows = UFUN_ROLE_MAX - 1;
+    table = gtk_table_new(nrows, 2, TRUE);
+    gtk_table_set_row_spacings(GTK_TABLE(table), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(table), 5);
+
+    nfuns = finfo->n_priv + finfo->n_pub;
+    combo_array = g_malloc(nrows * sizeof *combo_array);
+    g_object_set_data_full(G_OBJECT(dlg), "combo-array", 
+			   combo_array, g_free);
+
+    for (i=1; i<UFUN_ROLE_MAX; i++) {
+	int err, n_cands = 0;
+	int selected = 0;
+
+	key = package_role_get_key(i);
+	function_package_get_properties(finfo->pkg, key, &strval, NULL);
+	combo = gtk_combo_box_text_new();
+	combo_box_append_text(combo, "none");
+
+	for (j=0; j<nfuns; j++) {
+	    if (j < finfo->n_priv) {
+		funname = finfo->privnames[j];
+	    } else {
+		funname = finfo->pubnames[j - finfo->n_priv];
+	    }
+	    err = function_set_package_role(funname, finfo->pkg,
+					    key, OPT_T, NULL);
+	    if (!err) {
+		combo_box_append_text(combo, funname);
+		if (strval != NULL && !selected && !strcmp(strval, funname)) {
+		    selected = n_cands + 1;
+		}
+		n_cands++;
+	    }
+	}
+
+	g_free(strval);
+	strval = NULL;
+
+	tmp = gtk_label_new(key);
+	gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 1, i-1, i);
+	gtk_table_attach_defaults(GTK_TABLE(table), combo, 1, 2, i-1, i);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), selected);
+	if (n_cands == 0) {
+	    gtk_widget_set_sensitive(combo, FALSE);
+	}
+	combo_array[i-1] = combo;
+    }
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), table, FALSE, FALSE, 5);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
+    
+    cancel_delete_button(hbox, dlg);
+    tmp = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(extra_properties_callback), finfo);
+    gtk_widget_grab_default(tmp);
+
+    gtk_widget_show_all(dlg);
+}
+
+#endif /* not ready yet */
+
 /* Dialog for editing function package.  The user can get here in
    either of two ways: after selecting functions to put into a
    newly created package, or upon selecting an existing package
@@ -1186,6 +1321,13 @@ static void finfo_dialog (function_info *finfo)
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(add_remove_callback), finfo);
+
+#if 0 /* not ready yet */
+    button = gtk_button_new_with_label(_("Extra properties"));
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(extra_properties_dialog), finfo);
+#endif
 
     /* write spec file button */
     button = gtk_button_new_with_label(_("Write spec file"));
