@@ -1679,7 +1679,8 @@ int save_function_package_spec (const char *fname, gpointer p)
 	GUI_PRECHECK,
 	NULL
     };
-    gchar *property;
+    gchar *strval;
+    int intval;
     function_info *finfo = p;
     PRN *prn;
     const char *reqstr = NULL;
@@ -1720,13 +1721,22 @@ int save_function_package_spec (const char *fname, gpointer p)
 
     for (i=0; extra_keys[i] != NULL; i++) {
 	function_package_get_properties(finfo->pkg, extra_keys[i],
-					&property, NULL);
-	if (property != NULL) {
-	    if (*property != '\0') {
-		pprintf(prn, "%s = %s\n", extra_keys[i], property);
+					&strval, NULL);
+	if (strval != NULL) {
+	    if (*strval != '\0') {
+		pprintf(prn, "%s = %s\n", extra_keys[i], strval);
 	    }
-	    g_free(property);
-	    property = NULL;
+	    g_free(strval);
+	    strval = NULL;
+	}
+    }
+
+    function_package_get_properties(finfo->pkg, "model-requirement",
+				    &intval, NULL);
+    if (intval > 0) {
+	reqstr = gretl_command_word(intval);
+	if (*reqstr != '\0') {
+	    pprintf(prn, "model-requirement = %s\n", reqstr);
 	}
     }
 
