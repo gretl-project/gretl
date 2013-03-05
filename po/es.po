@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-02-28 11:26-0500\n"
-"PO-Revision-Date: 2013-02-13 16:30+0000\n"
+"PO-Revision-Date: 2013-03-05 13:02+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -424,19 +424,16 @@ msgid "Null hypothesis"
 msgstr "Hipótesis nula"
 
 #: lib/src/compare.c:276
-#, fuzzy
 msgid "no seasonal effects or trend"
-msgstr "= diferencia estacional de %s"
+msgstr "sin efectos estacionales o tendencia"
 
 #: lib/src/compare.c:279
-#, fuzzy
 msgid "no seasonal effects"
-msgstr "Diferencias no estacionales:"
+msgstr "sin efectos estacionales"
 
 #: lib/src/compare.c:282
-#, fuzzy
 msgid "no trend"
-msgstr "Tendencia polinómica"
+msgstr "sin tendencia"
 
 #: lib/src/compare.c:289
 msgid ""
@@ -447,9 +444,8 @@ msgstr ""
 "  Hipótesis nula: los parámetros de regresión son cero para las variables\n"
 
 #: lib/src/compare.c:309
-#, fuzzy
 msgid "seasonal dummies"
-msgstr "más variables ficticias estacionales"
+msgstr "variables ficticias estacionales"
 
 #: lib/src/compare.c:347
 #, c-format
@@ -631,20 +627,17 @@ msgid "dummy variable for Chow test"
 msgstr "variable ficticia para el contraste de Chow"
 
 #: lib/src/compare.c:2431
-#, fuzzy
 msgid "Robust Wald test for break"
-msgstr "Contraste F de cambio estructural"
+msgstr "Contraste de Wald robusto para el cambio estructural"
 
 #: lib/src/compare.c:2432
 msgid "Chow F-test for break"
 msgstr "Contraste F de cambio estructural"
 
 #: lib/src/compare.c:2484
-#, fuzzy, c-format
+#, c-format
 msgid "Asymptotic p-value = %.4g for chi-square(%d) = %g"
-msgstr ""
-"con valor p = prob(Chi-cuadrado(%d) > %g) = %g\n"
-"\n"
+msgstr "Valor p asintótico = %.4g para Chi-cuadrado(%d)= %g"
 
 #: lib/src/compare.c:2511
 msgid ""
@@ -655,9 +648,10 @@ msgstr ""
 "en un punto desconocido, con recorte del 15 por ciento"
 
 #: lib/src/compare.c:2515
-#, fuzzy, c-format
+#, c-format
 msgid "The maximum Wald test = %g occurs at observation %s"
-msgstr "El valor máximo de F(%d, %d) = %g corresponde a la observación %s"
+msgstr ""
+"El valor máximo del estadístico de Wald = %g corresponde a la observación %s"
 
 #: lib/src/compare.c:2519
 #, c-format
@@ -1127,22 +1121,22 @@ msgstr ""
 "ATENCIÓN: error de lectura de datos ascii en variable %d, observación %d "
 
 #: lib/src/dataio.c:274
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "First char of varname '%s' is bad\n"
 "(first must be alphabetical)"
 msgstr ""
-"El primer carácter del nombre de variable ('%c') no es válido\n"
+"El primer carácter del nombre de variable '%s' no es válido\n"
 "(el primero debe ser alfabético)"
 
 #: lib/src/dataio.c:278
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Varname '%s' contains illegal character '%c'\n"
 "Use only letters, digits and underscore"
 msgstr ""
-"El nombre de variable contiene el carácter ilegal '%c'\n"
-"Use sólo letras, dígitos y carácter de subrayado (_)"
+"El nombre de variable '%s' contiene el carácter ilegal '%c'\n"
+"Use sólo letras, dígitos y el guión bajo (_)"
 
 #: lib/src/dataio.c:284
 #, c-format
@@ -1246,13 +1240,13 @@ msgstr ""
 "Leyendo fichero de cabecera %s\n"
 
 #: lib/src/dataio.c:1707 lib/src/dataio.c:1870 lib/src/gretl_xml.c:2499
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "periodicity: %d, maxobs: %d\n"
 "observations range: %s to %s\n"
 msgstr ""
-"periodicidad: %d, máx.obs: %d\n"
-"rango de observaciones: %s-%s\n"
+"periodicidad: %d, máx. obs: %d\n"
+"rango de observaciones: %s a %s\n"
 
 #: lib/src/dataio.c:1711
 msgid ""
@@ -2496,7 +2490,7 @@ msgstr "Declaración no válida"
 #: lib/src/genfuncs.c:3510
 #, c-format
 msgid "List has %d members, but length of vector b is %d"
-msgstr ""
+msgstr "La lista tiene %d miembros, pero el vector b tiene longitud %d"
 
 #: lib/src/genfuncs.c:3682
 msgid "Imhof integral gave negative value"
@@ -2976,9 +2970,9 @@ msgid "no such item"
 msgstr "no existe ese elemento"
 
 #: lib/src/gretl_bundle.c:608
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid key string"
-msgstr "'%s': índice de observation no válido"
+msgstr "'%s': carácter de tecla no válido"
 
 #: lib/src/gretl_errors.c:40
 msgid "Data error"
@@ -3447,7 +3441,7 @@ msgstr "rho = 0"
 
 #: lib/src/gretl_model.c:3431
 msgid "LR test for rho = 0"
-msgstr ""
+msgstr "Contraste LR para rho = 0"
 
 #: lib/src/gretl_model.c:3450
 msgid "robust variant"
@@ -3458,9 +3452,9 @@ msgid "Distribution free Wald test for heteroskedasticity"
 msgstr "Contraste de heterocedasticidad libre de distribución de Wald"
 
 #: lib/src/gretl_model.c:3612
-#, fuzzy, c-format
+#, c-format
 msgid "chi-square(%d) = %g at observation %s"
-msgstr "máxi F(%d, %d) = %g en la observación %s"
+msgstr "chi-cuadrado(%d) = %g en la observación %s"
 
 #: lib/src/gretl_model.c:3638 lib/src/gretl_model.c:3645
 msgid "failed"
@@ -3471,9 +3465,8 @@ msgid "Asymptotic test statistic"
 msgstr "Estadístico de contraste asintótico"
 
 #: lib/src/gretl_model.c:3760
-#, fuzzy
 msgid "with asymptotic p-value"
-msgstr "valor p asintótico"
+msgstr "con valor p asintótico"
 
 #: lib/src/gretl_model.c:3773 lib/src/gretl_model.c:3776
 #: lib/src/gretl_model.c:3779
@@ -4335,9 +4328,9 @@ msgid "kalman: a required matrix is missing"
 msgstr "kalman: falta una matriz necesaria"
 
 #: lib/src/kalman.c:478
-#, fuzzy, c-format
+#, c-format
 msgid "kalman: required matrix %s is missing"
-msgstr "kalman: falta una matriz necesaria"
+msgstr "kalman: falta la matriz %s, que es necesaria"
 
 #: lib/src/kalman.c:486
 msgid "No Kalman filter is defined"
@@ -4348,9 +4341,9 @@ msgid "modprint: the first matrix argument must have 2 columns"
 msgstr "modprint: el primer argumento de la matriz debe tener 2 columnas"
 
 #: lib/src/libset.c:936 lib/src/libset.c:1611
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid value '%s'"
-msgstr "%s: no hay valores válidos"
+msgstr "%s: valor no válido '%s'"
 
 #: lib/src/libset.c:1036
 #, c-format
@@ -4797,9 +4790,8 @@ msgid "Multinomial Logit"
 msgstr "Logit Multinomial"
 
 #: lib/src/modelprint.c:908
-#, fuzzy
 msgid "Random-effects probit"
-msgstr "Efectos aleatorios"
+msgstr "Probit de efectos aleatorios"
 
 #: lib/src/modelprint.c:910 gui2/selector.c:3647
 msgid "Ordered Probit"
@@ -6052,7 +6044,7 @@ msgstr ""
 "estimar el modelo de referencia\n"
 
 #: lib/src/options.c:1171
-#, fuzzy, c-format
+#, c-format
 msgid "Ambiguous option '--%s'"
 msgstr "La opción '--%s' es ambigua"
 
@@ -7202,13 +7194,12 @@ msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
 msgstr "retardos  log.veros   p(RV)       AIC          BIC          HQC"
 
 #: lib/src/vartest.c:772
-#, fuzzy
 msgid "Test on the original VAR"
-msgstr "Estadísticos basados en los datos originales"
+msgstr "Contraste sobre el VAR original"
 
 #: lib/src/vartest.c:1060
 msgid "Test on VAR"
-msgstr ""
+msgstr "Contraste sobre el VAR"
 
 #: cli/cli_object.c:92 gui2/objectsave.c:148
 #, c-format
@@ -8995,14 +8986,12 @@ msgid "Set sample range"
 msgstr "Establecer rango muestral"
 
 #: gui2/dialogs.c:2371
-#, fuzzy
 msgid "gretl: define dummy"
-msgstr "gretl: definir gráfico"
+msgstr "gretl: definir variable ficticia"
 
 #: gui2/dialogs.c:2381
-#, fuzzy
 msgid "Set dummy range"
-msgstr "Establecer rango muestral"
+msgstr "Establecer el rango de la variable ficticia"
 
 #: gui2/dialogs.c:2400 gui2/varinfo.c:998
 msgid "Name of variable:"
@@ -9507,9 +9496,8 @@ msgid "GNU Octave files (*.m)"
 msgstr "ficheros GNU Octave (*.m)"
 
 #: gui2/fileselect.c:802
-#, fuzzy
 msgid "Python files (*.py)"
-msgstr "ficheros PDF (*.pdf)"
+msgstr "ficheros Python (*.py)"
 
 #: gui2/fileselect.c:804
 msgid "Ox files (*.ox)"
@@ -10748,9 +10736,8 @@ msgid "Octave script"
 msgstr "Guion de Octave"
 
 #: gui2/gretl.c:1424
-#, fuzzy
 msgid "Python script"
-msgstr "guion nuevo"
+msgstr "guion de Python"
 
 #: gui2/gretl.c:1425 gui2/gretl.c:1754
 msgid "Ox program"
@@ -10857,7 +10844,6 @@ msgid "_Gretl console"
 msgstr "Co_nsola de Gretl"
 
 #: gui2/gretl.c:1459
-#, fuzzy
 msgid "_Gnuplot"
 msgstr "_Gnuplot"
 
@@ -11107,9 +11093,8 @@ msgid "_Time dummies"
 msgstr "Variables ficticias de tiemp_o"
 
 #: gui2/gretl.c:1533
-#, fuzzy
 msgid "_Observation range dummy"
-msgstr "_Observación"
+msgstr "Variable ficticia de rango de _observación"
 
 #: gui2/gretl.c:1534
 msgid "Dummies for selected _discrete variables"
@@ -12091,9 +12076,8 @@ msgid "gretl: edit plot commands"
 msgstr "gretl: editar instrucciones de gráfico"
 
 #: gui2/gui_utils.c:1640
-#, fuzzy
 msgid "gretl: edit R script"
-msgstr "gretl: editar un guion de Octave"
+msgstr "gretl: editar un guion de R"
 
 #: gui2/gui_utils.c:1642
 msgid "gretl: edit Ox program"
