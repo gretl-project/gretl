@@ -2889,7 +2889,7 @@ static int join_row_wanted (DATASET *dset, int i,
 	}
 
 	if (sx == NULL || sy == NULL) {
-	    fprintf(stderr, "join: missing string in filtering\n");
+	    gretl_errmsg_set("join: missing string in filtering");
 	    *err = E_MISSDATA;
 	} else if (filter->op == B_EQ) {
 	    ret = (strcmp(sx, sy) == 0);
@@ -2909,7 +2909,7 @@ static int join_row_wanted (DATASET *dset, int i,
 	double y = filter->rhcol ? dset->Z[filter->rhcol][i] : filter->rhval;
 	
 	if (na(x) || na(y)) {
-	    fprintf(stderr, "join: found NAs in filtering\n");
+	    gretl_errmsg_set("join: found NAs in filtering");
 	    *err = E_MISSDATA;
 	} else if (filter->op == B_EQ) {
 	    ret = x == y;
@@ -3033,10 +3033,14 @@ static int verify_filter (jr_filter *filter, int lhcol, int rhcol,
 /* get an integer key value from a double, checking for
    pathology */
 
-static int dtoi (double x, int *err)
+static int dtoi (double x, int obs, int *err)
 {
     if (xna(x) || fabs(x) > INT_MAX) {
-	*err = E_INVARG;
+	if (obs > 0) {
+	    gretl_errmsg_sprintf("join: invalid outer key value on row %d",
+				 obs);
+	}
+	*err = E_DATA;
 	return -1;
     } else {
 	return (int) trunc(x);
@@ -3082,15 +3086,19 @@ static joiner *joiner_new (csvjoin *jspec,
 
     if (*err) {
 	return NULL;
-    }
+    }      
 
     if (filter != NULL) {
 	/* count the filtered rows */
-	for (i=0; i<r_dset->n; i++) {
+	for (i=0; i<r_dset->n && !*err; i++) {
 	    if (join_row_wanted(r_dset, i, filter, err)) {
 		nrows++;
 	    }
 	}
+	if (*err) {
+	    free(jr);
+	    return NULL;
+	}  	
     } else {
 	nrows = r_dset->n;
     }
@@ -3128,11 +3136,11 @@ static joiner *joiner_new (csvjoin *jspec,
 		if (using_auto_keys(jr)) {
 		    *err = read_outer_auto_keys(jr, j, i);
 		} else if (keycol > 0) {
-		    jr->rows[j].keyval = dtoi(Z[keycol][i], err);
+		    jr->rows[j].keyval = dtoi(Z[keycol][i], i+1, err);
 		    if (key2col > 0) {
 			/* double key */
 			jr->rows[j].n_keys = 2;
-			jr->rows[j].keyval2 = dtoi(Z[key2col][i], err);
+			jr->rows[j].keyval2 = dtoi(Z[key2col][i], i+1, err);
 		    } else {
 			/* single key */
 			jr->rows[j].n_keys = 1;
@@ -3530,9 +3538,9 @@ static int get_inner_key_values (joiner *jr, int i,
 	if (xna(dk1) || xna(dk2)) {
 	    *missing = 1;
 	} else {
-	    k1 = dtoi(dk1, &err);
+	    k1 = dtoi(dk1, 0, &err);
 	    if (!err && jr->n_keys == 2) {
-		k2 = dtoi(dk2, &err);
+		k2 = dtoi(dk2, 0, &err);
 	    }
 	}
 	if (!err && !*missing) {

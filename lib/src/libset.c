@@ -170,7 +170,7 @@ static int gretl_debug;
 static int user_mp_bits;
 static int R_functions;
 static int R_lib = 1;
-static int csv_digits;
+static int csv_digits = UNSET_INT;
 static char data_delim = ',';
 static char data_export_decpoint = '.';
 static int mp_nmk_min = 65535;
@@ -1413,8 +1413,9 @@ static int print_settings (PRN *prn, gretlopt opt)
 	    pprintf(prn, "set csv_delim %s\n", arg_from_delim(data_delim));
 	}
 	pprintf(prn, "set csv_na %s\n", get_csv_na_string());
-    }	
+    }
 
+    libset_print_int(CSV_DIGITS, prn, opt);	    
     libset_print_bool(ECHO, prn, opt);
     libset_print_bool(FORCE_DECP, prn, opt);
     libset_print_bool(HALT_ON_ERR, prn, opt);
@@ -1663,7 +1664,7 @@ int execute_set_line (const char *line, DATASET *dset,
 	if (!strcmp(setobj, "csv_na")) {
 	    set_csv_na_string(setarg);
 	    return 0;
-	} else if (!strcmp(setobj, "csv_digits")) {
+	} else if (!strcmp(setobj, CSV_DIGITS)) {
 	    set_csv_digits(setarg);
 	    return 0;
 	}	    
@@ -2550,7 +2551,7 @@ static void set_csv_digits (const char *s)
 {
     int k = atoi(s);
 
-    if (k >= 0 && k < 26) {
+    if (k > 0 && k < 26) {
 	csv_digits = k;
     }
 }

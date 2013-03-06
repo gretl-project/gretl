@@ -1388,7 +1388,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 
     csv_digits = libset_get_int(CSV_DIGITS);
 
-    if (csv_digits == 0) {
+    if (csv_digits <= 0) {
 	/* the user has not overriden the default */
 	pmax = malloc(l0 * sizeof *pmax);
 	if (pmax != NULL) {

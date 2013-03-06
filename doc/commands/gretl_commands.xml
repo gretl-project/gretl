@@ -9640,6 +9640,16 @@
 	  </para>
 	</li>
 	<li>
+	  <para><lit>csv_digits</lit>: a positive integer specifying
+	  the number of significant digits to use when writing data in
+	  CSV format. By default up to 12 digits are used depending on
+	  the precision of the original data. Note that CSV output
+	  employs the C library's <lit>fprintf</lit> function with
+	  <quote><lit>%g</lit></quote> conversion, which means that
+	  trailing zeros are dropped.
+	  </para>
+	</li>
+	<li>
 	  <para><lit>echo</lit>: <lit>off</lit> or <lit>on</lit> (the
 	  default). Suppress or resume the echoing of commands in gretl's
 	    output.</para>
