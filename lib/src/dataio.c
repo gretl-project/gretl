@@ -1028,7 +1028,8 @@ static int alt_get_dec_places (const double *x, int n, int d)
 	    dt = strlen(s) - 1;
 	    if (dt < dmin) {
 		dmin = dt;
-	    } else if (dt > dmax) {
+	    } 
+	    if (dt > dmax) {
 		dmax = dt;
 	    }
 	} else {
