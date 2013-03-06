@@ -1008,33 +1008,39 @@ static int write_esl_hdr (const char *hdrfile, const int *list,
     return 0;
 }
 
-static int alt_get_dec_places (double zmin, double zmax, int d)
+static int alt_get_dec_places (const double *x, int n, int d)
 {
     char *s, numstr[32];
-    int d1 = 0, d2 = 0;
+    int dmin = 100, dmax = 0;
+    int dt, t;
 
-    /* see if we get a (close to) common number of decimal places if we
+    /* see if we get (close to) a common number of decimal places if we
        print to precision @d without forcing the inclusion of trailing
        zeros
     */
 
     gretl_push_c_numeric_locale();
 
-    sprintf(numstr, "%.*g", d, zmin);
-    s = strrchr(numstr, '.');
-    if (s != NULL && strchr(numstr, 'e') == NULL) {
-	d1 = strlen(s) - 1;
-	sprintf(numstr, "%.*g", d, zmax);
+    for (t=0; t<n; t++) {
+	sprintf(numstr, "%.*g", d, x[t]);
 	s = strrchr(numstr, '.');
 	if (s != NULL && strchr(numstr, 'e') == NULL) {
-	    d2 = strlen(s) - 1;
+	    dt = strlen(s) - 1;
+	    if (dt < dmin) {
+		dmin = dt;
+	    } else if (dt > dmax) {
+		dmax = dt;
+	    }
+	} else {
+	    dmin = dmax = 0;
+	    break;
 	}
     }
 
     gretl_pop_c_numeric_locale();
 
-    if (d1 > 0 && d2 > 0 && abs(d1 - d2) < 2) {
-	return d1 > d2 ? d1 : d2;
+    if (dmin > 0 && dmax > 0 && dmax - dmin < 2) {
+	return dmax;
     } else {
 	return 0;
     }
@@ -1085,7 +1091,7 @@ int get_precision (const double *x, int n, int placemax)
 
     if (placemax >= 10 && placemax < 24) {
 	/* interpret @placemax as number of significant digits */
-	p = alt_get_dec_places(zmin, zmax, placemax);
+	p = alt_get_dec_places(x, n, placemax);
 	if (p > 0) {
 	    return p;
 	}
