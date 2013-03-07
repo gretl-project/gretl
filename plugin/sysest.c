@@ -220,6 +220,9 @@ static void maybe_correct_model_dfd (equation_system *sys,
     int nr = system_n_restrictions(sys);
 
     if (nr > 0) {
+	/* adjust the df correction for the number of
+	   restrictions, averaged across the equations
+	*/
 	double avr = nr / (double) sys->neqns;
 
 	pmod->dfd = sys->T - pmod->ncoeff + floor(avr);

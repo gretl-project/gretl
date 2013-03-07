@@ -1059,49 +1059,72 @@ real_get_obj_matrix (void *p, GretlObjType type, int idx, int *err)
     return M;
 }
 
+#define list_carrying_type(t) (t == GRETL_OBJ_EQN || \
+			       t == GRETL_OBJ_VAR || \
+			       t == GRETL_OBJ_SYS)
+
 static int *
 real_get_obj_list (void *p, GretlObjType type, int idx, int *err)
 {
-    int *list = NULL;
+    const MODEL *pmod = NULL;
+    const GRETL_VAR *var = NULL;
+    const equation_system *sys = NULL;
+    const int *list = NULL;
+    int *ret = NULL;
     
-    if (idx <= 0) {
+    if (idx <= 0 || p == NULL || !list_carrying_type(type)) {
 	*err = E_DATA;
 	return NULL;
     }
 
     if (type == GRETL_OBJ_EQN) {
-	if (idx == M_XLIST) {
-	    list = gretl_model_get_x_list((const MODEL *) p);
-	} else if (idx == M_YLIST) {
-	    list = gretl_model_get_y_list((const MODEL *) p);
-	} else {
-	    *err = E_BADSTAT;
-	}
-    } else if (type == GRETL_OBJ_VAR || type == GRETL_OBJ_SYS) {
-	if (idx == M_YLIST) {
-	    const int *ylist = NULL;
+	pmod = p;
+    } else if (type == GRETL_OBJ_VAR) {
+	var = p;
+    } else {
+	sys = p;
+    }
 
+    if (idx == M_XLIST) {
+	if (type == GRETL_OBJ_EQN) {
+	    /* the list is already a copy */
+	    ret = gretl_model_get_x_list(pmod);
+	} else {
 	    if (type == GRETL_OBJ_VAR) {
-		ylist = gretl_VAR_get_endo_list((const GRETL_VAR *) p);
-	    } else if (type == GRETL_OBJ_SYS) {
-		ylist = system_get_endog_vars((const equation_system *) p);
+		list = var->xlist;
+	    } else {
+		list = sys->xlist;
 	    }
-	    if (ylist == NULL) {
+	    if (list == NULL) {
 		*err = E_BADSTAT;
 	    } else {
-		list = gretl_list_copy(ylist);
-		if (list == NULL) {
-		    *err = E_ALLOC;
-		}
+		ret = gretl_list_copy(list);
 	    }
+	}
+    } else if (idx == M_YLIST) {
+	if (type == GRETL_OBJ_EQN) {
+	    ret = gretl_model_get_y_list(pmod);
 	} else {
-	    *err = E_BADSTAT;
+	    if (type == GRETL_OBJ_VAR) {
+		list = gretl_VAR_get_endo_list(var);
+	    } else {
+		list = system_get_endog_vars(sys);
+	    }
+	    if (list == NULL) {
+		*err = E_BADSTAT;
+	    } else {
+		ret = gretl_list_copy(list);
+	    }
 	}
     } else {
 	*err = E_BADSTAT;
     }
 
-    return list;
+    if (ret == NULL && !*err) {
+	*err = E_ALLOC;
+    }
+
+    return ret;
 }
 
 static char *

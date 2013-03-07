@@ -1896,6 +1896,31 @@ static void tsls_style_shift_vars (equation_system *sys, int *xplist)
     xplist[0] = nxp;
 }
 
+/* for consistency with the way in which per-equation results
+   are organized, we should ensure that if a constant is present
+   among the exogenous terms in a system it appears as the 
+   first element of the system's "xlist".
+*/
+
+static void sys_xlist_reshuffle_const (int *list)
+{
+    int i, cpos = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == 0) {
+	    cpos = i;
+	    break;
+	}
+    }
+
+    if (cpos > 1) {
+	for (i=cpos; i>1; i--) {
+	    list[i] = list[i-1];
+	}
+	list[1] = 0;
+    }
+}
+
 /* prior to system estimation, get all the required lists of variables
    in order
 */
@@ -2085,10 +2110,6 @@ static int sys_check_lists (equation_system *sys,
 	}
     }
 
-#if SYSDEBUG
-    printlist(xplist, "final system exog list");
-#endif
-
     if (!err && sys->ylist[0] != nlhs) {
 	/* Note: check added 2009-08-10, modified 2012-04-05 */
 	if (tsls_style && sys->ylist[0] > nlhs) {
@@ -2102,6 +2123,14 @@ static int sys_check_lists (equation_system *sys,
 	    err = E_DATA;
 	}
     }
+
+    if (!err) {
+	sys_xlist_reshuffle_const(xplist);
+    }
+
+#if SYSDEBUG
+    printlist(xplist, "final system exog list");
+#endif
 
     if (!err) {
 	free(sys->xlist);
@@ -3023,8 +3052,8 @@ equation_system_get_series (const equation_system *sys,
 
 static int system_add_yhat_matrix (equation_system *sys)
 {
-    double x;
-    int avc, nc = 0;
+    double x, avc;
+    int k = 0;
     int i, s, t;
 
     sys->yhat = gretl_matrix_alloc(sys->T, sys->neqns);
@@ -3041,12 +3070,12 @@ static int system_add_yhat_matrix (equation_system *sys)
 	    x = sys->models[i]->yhat[t];
 	    gretl_matrix_set(sys->yhat, s++, i, x);
 	}
-	nc += sys->models[i]->ncoeff;
+	k += sys->models[i]->ncoeff;
     }
 
-    nc -= system_n_restrictions(sys);
+    k -= system_n_restrictions(sys);
 
-    avc = nc / (double) sys->neqns;
+    avc = k / (double) sys->neqns;
     sys->df = sys->T - floor(avc);
 
     return 0;
@@ -4438,7 +4467,13 @@ static int sys_print_reconstituted_models (const equation_system *sys,
 
 	mod.ncoeff = nc;
 	mod.dfn = nc - ifc;
-	mod.dfd = (sys->flags & SYSTEM_DFCORR)? mod.nobs - nc : mod.nobs;
+
+	if (sys->flags & SYSTEM_DFCORR) {
+	    gretl_model_set_int(&mod, "dfcorr", 1);
+	    mod.dfd = mod.nobs - nc;
+	} else {
+	    mod.dfd = mod.nobs;
+	}
 
 	y = dset->Z[mod.list[1]];
 	mod.ybar = gretl_mean(mod.t1, mod.t2, y);
@@ -4557,6 +4592,9 @@ int gretl_system_print (equation_system *sys, const DATASET *dset,
 
     if (sys->models != NULL) {
 	for (i=0; i<sys->neqns; i++) {
+	    if (sys->flags & SYSTEM_DFCORR) {
+		gretl_model_set_int(sys->models[i], "dfcorr", 1);
+	    }
 	    printmodel(sys->models[i], dset, OPT_NONE, prn);
 	}
     } else {

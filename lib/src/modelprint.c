@@ -2092,6 +2092,21 @@ static void print_model_heading (const MODEL *pmod,
     }
 }
 
+static int use_zscore (const MODEL *pmod)
+{
+    if (pmod == NULL) {
+	/* modprint */
+	return 1;
+    } else if (0 && gretl_model_get_int(pmod, "dfcorr")) {
+	/* override ASYMPTOTIC_MODEL in system case? */
+	return 0;
+    } else if (ASYMPTOTIC_MODEL(pmod->ci)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static void model_format_start (PRN *prn)
 {
     set_alt_gettext_mode(prn);
@@ -2143,7 +2158,7 @@ static int alt_print_coeff_table_start (const MODEL *pmod, int ci, PRN *prn)
     int seqcols = 0;
     int mp = 0, ret = 0;
 
-    if (ci == MODPRINT || ASYMPTOTIC_MODEL(ci)) {
+    if (use_zscore(pmod)) {
 	tlabel = (tex_format(prn))? N_("$z$") : N_("z");
     } else {
 	tlabel = (tex_format(prn))? N_("$t$-ratio") : N_("t-ratio");
@@ -4293,7 +4308,7 @@ static int plain_print_coeffs (const MODEL *pmod,
     int i, j, k;
     int err = 0;
 
-    if (ASYMPTOTIC_MODEL(pmod->ci)) {
+    if (use_zscore(pmod)) {
 	headings[2] = N_("z");
     } 
 
