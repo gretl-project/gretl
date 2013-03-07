@@ -839,8 +839,12 @@
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
-	  Returns the list of regressors from the last model (for
-	  single-equation models only).
+	  If the last model was a single equation, returns the list of
+	  regressors. If the last model was a system of equations,
+	  returns the <quote>global</quote> list of exogenous and
+	  predetermined variables (in the same order in which they
+	  appear in <fncref targ="$sysB"/>). In the last model was a
+	  VAR, returns the list of exogenous regressors, if any.
 	</para>
       </description>
     </function>

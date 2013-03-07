@@ -11,6 +11,7 @@ version 1.9.12, in progress
   Hansen's method (1997)
 - "modeltab" command: add --output option to direct the model
   table to a specified file
+- $xlist accessor: make available for system estimators
 - You can now use "bundle b = null" to create a new bundle or
   empty an existing one
 - Enable more streamlined syntax for setting and accessing
