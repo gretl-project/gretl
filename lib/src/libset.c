@@ -494,7 +494,7 @@ static void state_vars_init (set_vars *sv)
     sv->horizon = UNSET_INT;
     sv->bootrep = 1000;
     sv->nls_toler = NADBL;
-    sv->loop_maxiter = 250;
+    sv->loop_maxiter = 1000;
     sv->rq_maxiter = 1000;
     sv->gmm_maxiter = 250;
     sv->vecm_norm = NORM_PHILLIPS;
