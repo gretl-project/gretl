@@ -2689,6 +2689,29 @@ static int pkg_boolean_from_string (const char *s)
     }
 }
 
+static int pkg_remove_role (fnpkg *pkg, int role)
+{
+    ufunc *u;
+    int i;
+
+    for (i=0; i<pkg->n_priv; i++) {
+	u = pkg->priv[i];
+	if (u->pkg_role == role) {
+	    u->pkg_role = UFUN_ROLE_NONE;
+	    return 0;
+	}
+    }
+    for (i=0; i<pkg->n_pub; i++) {
+	u = pkg->pub[i];
+	if (u->pkg_role == role) {
+	    u->pkg_role = UFUN_ROLE_NONE;
+	    return 0;
+	}
+    }
+
+    return E_DATA;
+}
+
 /* below: if opt & OPT_T we're just testing (return 0 if 
    everything is OK). Otherwise if all is OK we actually 
    hook up the function given by @name to the role
@@ -2703,6 +2726,14 @@ int function_set_package_role (const char *name, fnpkg *pkg,
     int role = pkg_key_get_role(attr);
     int testing = (opt & OPT_T);
     int i, j, err = 0;
+
+    if (name == NULL) {
+	/* removing a role */
+	if (!testing) {
+	    pkg_remove_role(pkg, role);
+	}
+	return 0;
+    }
 
     if (role == UFUN_ROLE_NONE) {
 	if (testing) {

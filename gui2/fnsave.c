@@ -69,8 +69,10 @@ struct function_info_ {
     gchar *help;           /* package help text */
     char **pubnames;       /* names of public functions */
     char **privnames;      /* names of private functions */
+    char **specials;       /* names of special functions */
     int n_pub;             /* number of public functions */
     int n_priv;            /* number of private functions */
+    int n_special;         /* (max) number of special functions */
     char *active;          /* name of 'active' function */
     FuncDataReq dreq;      /* data requirement of package */
     int minver;            /* minimum gretl version, package */
@@ -95,11 +97,20 @@ static int validate_package_file (const char *fname,
 function_info *finfo_new (void)
 {
     function_info *finfo;
+    int ns = UFUN_ROLE_MAX - 1;
 
     finfo = mymalloc(sizeof *finfo);
     if (finfo == NULL) {
 	return NULL;
     }
+
+    finfo->specials = strings_array_new(ns);
+    if (finfo->specials == NULL) {
+	free(finfo);
+	return NULL;
+    }
+
+    finfo->n_special = ns;
 
     finfo->pkg = NULL;
     finfo->fname = NULL;
@@ -170,6 +181,10 @@ static void finfo_free (function_info *finfo)
     if (finfo->privnames != NULL) {
 	strings_array_free(finfo->privnames, finfo->n_priv);
     }
+
+    if (finfo->specials != NULL) {
+	strings_array_free(finfo->specials, finfo->n_special);
+    }    
 
     if (finfo->samplewin != NULL) {
 	gtk_widget_destroy(finfo->samplewin->main);
@@ -1043,48 +1058,99 @@ static void toggle_upload (GtkToggleButton *b, function_info *finfo)
     finfo->upload = gtk_toggle_button_get_active(b);
 }
 
-#if 0 /* not ready yet */
-
 static void extra_properties_callback (GtkWidget *w, function_info *finfo)
 {
     GtkWidget **c_array;
-    const char *key;
-    gchar *s1, *s0;
+    const char *oldfun;
+    gchar *newfun;
     int n_changed = 0;
     int i, err = 0;
 
     c_array = g_object_get_data(G_OBJECT(finfo->extra), "combo-array");
 
-    for (i=1; i<UFUN_ROLE_MAX && !err; i++) {
-	if (gtk_widget_is_sensitive(c_array[i-1])) {
+    /* For each special function slot, check to see if the 
+       currently selected function differs from what was
+       present originally, and if so update the record in
+       @finfo->specials. The changes are not yet saved to
+       the function package itself.
+    */
+
+    for (i=0; i<finfo->n_special && !err; i++) {
+	if (gtk_widget_is_sensitive(c_array[i])) {
 	    int newnull = 0, oldnull = 0, changed = 0;
 
-	    s1 = combo_box_get_active_text(GTK_COMBO_BOX(c_array[i-1]));
-	    newnull = (s1 == NULL || *s1 == '\0' || !strcmp(s1, "none"));
-	    key = package_role_get_key(i);
-	    function_package_get_properties(finfo->pkg, key, &s0, NULL);
-	    oldnull = (s0 == NULL || *s0 == '\0' || !strcmp(s0, "none"));
+	    /* retrieve and check the selected name */
+	    newfun = combo_box_get_active_text(GTK_COMBO_BOX(c_array[i]));
+	    newnull = (newfun == NULL || *newfun == '\0' || 
+		       !strcmp(newfun, "none"));
+
+	    /* retrieve and check what was there before */
+	    oldfun = finfo->specials[i];
+	    oldnull = (oldfun == NULL || *oldfun == '\0' || 
+		       !strcmp(oldfun, "none"));
+
 	    if (oldnull && !newnull) {
 		changed = 1;
 	    } else if (!oldnull && newnull) {
 		changed = 1;
 	    } else if (!oldnull && !newnull) {
-		changed = strcmp(s0, s1);
+		changed = strcmp(newfun, oldfun);
 	    } 
 	    if (changed) {
-		err = function_set_package_role(s1, finfo->pkg,
-						key, OPT_T, NULL);
+		free(finfo->specials[i]);
+		finfo->specials[i] = gretl_strdup(newfun);
 		n_changed++;
 	    }
-	    g_free(s0);
-	    g_free(s1);
+	    g_free(newfun);
 	}
     }
 
-    infobox("Should make %d change(s)", n_changed);
+    if (n_changed > 0) {
+	finfo_set_modified(finfo, TRUE);
+    }
     
     gtk_widget_destroy(finfo->extra);
 }
+
+/* Prevent the user from assigning a given function to more
+   then one special role: when a selection is changed, if
+   the given function is already selected for a different
+   role, deselect it in that role.
+*/
+
+static void special_changed_callback (GtkComboBox *this, 
+				      function_info *finfo)
+{
+    GtkWidget **c_array;
+    GtkWidget *other;
+    gchar *s0, *si;
+    int i, dup = 0;
+
+    s0 = combo_box_get_active_text(this);
+    c_array = g_object_get_data(G_OBJECT(finfo->extra), "combo-array");
+
+    for (i=0; i<finfo->n_special && !dup; i++) {
+	other = c_array[i];
+	if (other != GTK_WIDGET(this)) {
+	    si = combo_box_get_active_text(GTK_COMBO_BOX(other));
+	    if (!strcmp(si, s0)) {
+		/* switch to "none" */
+		gtk_combo_box_set_active(GTK_COMBO_BOX(other), 0);
+		dup = 1;
+	    }
+	    g_free(si);
+	}
+    }
+
+    g_free(s0);
+}
+
+/* Right now the following function just allows the user to select
+   functions in the package for the various "special" package
+   roles (e.g. gui-main, bundle-print). The idea is to extend it
+   to allow selection of menu attachment and GUI label, which
+   will probably want a tabbed notebook-style interface.
+*/
 
 static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 {
@@ -1093,9 +1159,8 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     GtkWidget **combo_array;
     const char *funname;
     const char *key;
-    gchar *strval;
-    int nfuns, nrows;
-    int i, j;
+    const char *special;
+    int nfuns, i, j;
 
     if (finfo->extra != NULL) {
 	gtk_window_present(GTK_WINDOW(finfo->extra));
@@ -1110,22 +1175,26 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
-    nrows = UFUN_ROLE_MAX - 1;
-    table = gtk_table_new(nrows, 2, TRUE);
+    table = gtk_table_new(finfo->n_special, 2, TRUE);
     gtk_table_set_row_spacings(GTK_TABLE(table), 5);
     gtk_table_set_col_spacings(GTK_TABLE(table), 5);
 
     nfuns = finfo->n_priv + finfo->n_pub;
-    combo_array = g_malloc(nrows * sizeof *combo_array);
+    combo_array = g_malloc(finfo->n_special * sizeof *combo_array);
     g_object_set_data_full(G_OBJECT(dlg), "combo-array", 
 			   combo_array, g_free);
 
-    for (i=1; i<UFUN_ROLE_MAX; i++) {
+    /* For each "special" function role, test the functions
+       in finfo->pkg to see if they qualify as candidates for
+       that role; if so, add them to the combo selector.
+    */
+
+    for (i=0; i<finfo->n_special; i++) {
 	int err, n_cands = 0;
 	int selected = 0;
 
-	key = package_role_get_key(i);
-	function_package_get_properties(finfo->pkg, key, &strval, NULL);
+	key = package_role_get_key(i+1);
+	special = finfo->specials[i];
 	combo = gtk_combo_box_text_new();
 	combo_box_append_text(combo, "none");
 
@@ -1135,28 +1204,30 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 	    } else {
 		funname = finfo->pubnames[j - finfo->n_priv];
 	    }
+	    /* test for validity in this role */
 	    err = function_set_package_role(funname, finfo->pkg,
 					    key, OPT_T, NULL);
 	    if (!err) {
 		combo_box_append_text(combo, funname);
-		if (strval != NULL && !selected && !strcmp(strval, funname)) {
+		if (special != NULL && !selected && !strcmp(special, funname)) {
 		    selected = n_cands + 1;
 		}
 		n_cands++;
 	    }
 	}
 
-	g_free(strval);
-	strval = NULL;
-
 	tmp = gtk_label_new(key);
-	gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 1, i-1, i);
-	gtk_table_attach_defaults(GTK_TABLE(table), combo, 1, 2, i-1, i);
+	gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 1, i, i+1);
+	gtk_table_attach_defaults(GTK_TABLE(table), combo, 1, 2, i, i+1);
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), selected);
 	if (n_cands == 0) {
 	    gtk_widget_set_sensitive(combo, FALSE);
+	} else {
+	    g_signal_connect(G_OBJECT(combo), "changed", 
+			     G_CALLBACK(special_changed_callback), 
+			     finfo);
 	}
-	combo_array[i-1] = combo;
+	combo_array[i] = combo;
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -1173,8 +1244,6 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 
     gtk_widget_show_all(dlg);
 }
-
-#endif /* not ready yet */
 
 /* Dialog for editing function package.  The user can get here in
    either of two ways: after selecting functions to put into a
@@ -1322,12 +1391,11 @@ static void finfo_dialog (function_info *finfo)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(add_remove_callback), finfo);
 
-#if 0 /* not ready yet */
+    /* extra package properties button */
     button = gtk_button_new_with_label(_("Extra properties"));
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(extra_properties_dialog), finfo);
-#endif
 
     /* write spec file button */
     button = gtk_button_new_with_label(_("Write spec file"));
@@ -1655,6 +1723,23 @@ static int dont_overwrite_pkg (const char *fname)
     return ret;
 }
 
+static int pkg_save_special_functions (function_info *finfo)
+{
+    const char *key;
+    int i, err = 0;
+
+    for (i=0; i<finfo->n_special && !err; i++) {
+	key = package_role_get_key(i+1);
+	err = function_set_package_role(finfo->specials[i], 
+					finfo->pkg,
+					key,
+					OPT_NONE,
+					NULL);
+    }
+
+    return err;
+}
+
 /* callback from file selector when saving a function package, or
    directly from the package editor if using the package's
    existing filename */
@@ -1714,6 +1799,10 @@ int save_function_package (const char *fname, gpointer p)
 	if (err) {
 	    fprintf(stderr, "function_package_set_properties: err = %d\n", err);
 	}
+    }
+
+    if (!err) {
+	pkg_save_special_functions(finfo);
     }
 
     if (!err) {
@@ -2012,6 +2101,21 @@ void revise_function_package (void *p)
     free(privlist);
 }
 
+static int finfo_set_special_names (function_info *finfo)
+{
+    const char *key;
+    int i, err = 0;
+
+    for (i=0; i<finfo->n_special && !err; i++) {
+	key = package_role_get_key(i+1);
+	err = function_package_get_properties(finfo->pkg, key,
+					      &finfo->specials[i],
+					      NULL);
+    }
+
+    return err;
+}
+
 void edit_function_package (const char *fname)
 {
     function_info *finfo;
@@ -2049,6 +2153,10 @@ void edit_function_package (const char *fname)
 
     if (!err && publist != NULL) {
 	err = finfo_set_function_names(finfo, publist, privlist);
+    }
+
+    if (!err) {
+	err = finfo_set_special_names(finfo);
     }
 
 #if PKG_DEBUG
