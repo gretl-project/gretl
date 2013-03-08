@@ -112,6 +112,7 @@ enum extra_cmds {
     NADARWAT,
     SSHEET,
     CLUSTER,
+    GUI_FUNCS,
     GUI_CMD_MAX
 };
 

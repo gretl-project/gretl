@@ -1145,6 +1145,9 @@ static void special_changed_callback (GtkComboBox *this,
     g_free(s0);
 }
 
+#define must_be_private(r) (r == UFUN_GUI_PRECHECK)
+#define must_be_public(r) (r != UFUN_GUI_PRECHECK)
+
 /* Right now the following function just allows the user to select
    functions in the package for the various "special" package
    roles (e.g. gui-main, bundle-print). The idea is to extend it
@@ -1192,16 +1195,23 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     for (i=0; i<finfo->n_special; i++) {
 	int err, n_cands = 0;
 	int selected = 0;
+	int role = i + 1;
 
-	key = package_role_get_key(i+1);
+	key = package_role_get_key(role);
 	special = finfo->specials[i];
 	combo = gtk_combo_box_text_new();
 	combo_box_append_text(combo, "none");
 
 	for (j=0; j<nfuns; j++) {
 	    if (j < finfo->n_priv) {
+		if (must_be_public(role)) {
+		    continue;
+		}
 		funname = finfo->privnames[j];
 	    } else {
+		if (must_be_private(role)) {
+		    continue;
+		}		
 		funname = finfo->pubnames[j - finfo->n_priv];
 	    }
 	    /* test for validity in this role */
@@ -1241,6 +1251,8 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(extra_properties_callback), finfo);
     gtk_widget_grab_default(tmp);
+
+    context_help_button(hbox, GUI_FUNCS);
 
     gtk_widget_show_all(dlg);
 }
