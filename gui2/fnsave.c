@@ -73,6 +73,8 @@ struct function_info_ {
     int n_pub;             /* number of public functions */
     int n_priv;            /* number of private functions */
     int n_special;         /* (max) number of special functions */
+    gchar *menupath;       /* path for menu attachment, if any */
+    gchar *menulabel;      /* label for menu attachment, if any */
     char *active;          /* name of 'active' function */
     FuncDataReq dreq;      /* data requirement of package */
     int minver;            /* minimum gretl version, package */
@@ -119,6 +121,8 @@ function_info *finfo_new (void)
     finfo->date = NULL;
     finfo->pkgdesc = NULL;
     finfo->sample = NULL;
+    finfo->menupath = NULL;
+    finfo->menulabel = NULL;
 
     finfo->upload = FALSE;
     finfo->modified = FALSE;
@@ -173,6 +177,8 @@ static void finfo_free (function_info *finfo)
     g_free(finfo->pkgdesc);
     g_free(finfo->sample);
     g_free(finfo->help);
+    g_free(finfo->menupath);
+    g_free(finfo->menulabel);
 
     if (finfo->pubnames != NULL) {
 	strings_array_free(finfo->pubnames, finfo->n_pub);
@@ -1058,7 +1064,159 @@ static void toggle_upload (GtkToggleButton *b, function_info *finfo)
     finfo->upload = gtk_toggle_button_get_active(b);
 }
 
-static void extra_properties_callback (GtkWidget *w, function_info *finfo)
+static GtkTreeStore *make_menu_attachment_tree (function_info *finfo,
+						GtkTreePath **ppath)
+{
+    const char *main_items = 
+	"0 Tools\n"
+	"0 Data\n"
+	"0 View\n"
+	"1 GraphVars\n"
+	"2 MultiPlots\n"
+	"0 Add\n"
+	"0 Sample\n"
+	"0 Variable\n"
+	"1 URTests\n"
+	"1 Filter\n"
+	"0 Model\n"
+	"1 ivreg\n"  
+	"1 LinearModels\n"
+	"1 LimdepModels\n"
+	"2 logit\n"
+	"2 probit\n"
+	"1 TSModels\n"
+	"1 PanelModels\n"
+	"1 RobustModels\n";
+    GtkTreeStore *store;
+    GtkTreeIter iter, parent0, parent1;
+    GtkTreeIter *iterp;
+    gchar *path, *ustr;
+    const char *s;
+    char words[3][16];
+    char *word;
+    int level;
+
+    store = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
+    s = main_items;
+
+    while (*s) {
+	level = atoi(s);
+	word = words[level];
+	s += 2;
+	sscanf(s, "%s", word);
+	ustr = get_user_menu_string(word, OPT_N);
+	if (level == 0) {
+	    path = g_strdup_printf("MAINWIN/%s", words[0]);
+	    gtk_tree_store_append(store, &parent0, NULL);
+	    iterp = &parent0;
+	} else if (level == 1) {
+	    path = g_strdup_printf("MAINWIN/%s/%s", words[0], words[1]);
+	    gtk_tree_store_append(store, &parent1, &parent0);
+	    iterp = &parent1;
+	} else {
+	    path = g_strdup_printf("MAINWIN/%s/%s/%s", words[0], words[1], 
+				   words[2]); 
+	    gtk_tree_store_append(store, &iter, &parent1);
+	    iterp = &iter;
+	}
+	gtk_tree_store_set(store, iterp, 0, ustr, 1, path, -1);
+	if (finfo->menupath != NULL && !strcmp(path, finfo->menupath)) {
+	    /* record the path of pre-selected menu entry */
+	    *ppath = gtk_tree_model_get_path(GTK_TREE_MODEL(store), iterp);
+	}	
+	g_free(path);
+	g_free(ustr);
+	s += strlen(word) + 1;
+    }
+
+    return store;
+}
+
+static GtkWidget *add_menu_navigator (GtkWidget *holder, 
+				      function_info *finfo)
+{
+    GtkTreeStore *store;
+    GtkWidget *view, *sw;
+    GtkCellRenderer *renderer;
+    GtkTreeViewColumn *column;
+    GtkTreeSelection *select;
+    GtkTreePath *path = NULL;
+
+    store = make_menu_attachment_tree(finfo, &path);
+    if (store == NULL) {
+	return NULL;
+    }
+
+    view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
+    gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
+    g_object_set(view, "enable-tree-lines", TRUE, NULL);
+
+    renderer = gtk_cell_renderer_text_new();
+    column = gtk_tree_view_column_new_with_attributes("",
+						      renderer,
+						      "text", 0,
+						      NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
+
+    select = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+    gtk_tree_selection_set_mode(select, GTK_SELECTION_SINGLE);
+
+    if (path != NULL) {
+	gtk_tree_view_expand_to_path(GTK_TREE_VIEW(view), path);
+	gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(view), path,
+				     NULL, FALSE, 0, 0);
+	gtk_tree_selection_select_path(select, path);
+	gtk_tree_path_free(path);
+    }
+
+    sw = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
+				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
+					GTK_SHADOW_IN);
+    gtk_container_add(GTK_CONTAINER(sw), view);
+
+    gtk_container_add(GTK_CONTAINER(holder), sw);
+    gtk_widget_set_size_request(sw, 150, -1);
+    gtk_tree_view_columns_autosize(GTK_TREE_VIEW(view));
+
+    return view;
+}
+
+static int process_menu_attachment (function_info *finfo)
+{
+    GtkTreeSelection *selection;
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    GtkWidget *view;
+    int changed = 0;
+
+    view = g_object_get_data(G_OBJECT(finfo->extra), "menu-tree");
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+
+    if (!gtk_tree_selection_get_selected(selection, &model, &iter)) {
+	if (finfo->menupath != NULL) {
+	    g_free(finfo->menupath);
+	    finfo->menupath = NULL;
+	    changed = 1;
+	}
+    } else {
+	gchar *newpath = NULL;
+
+	gtk_tree_model_get(model, &iter, 1, &newpath, -1);
+	if (finfo->menupath == NULL || strcmp(finfo->menupath, newpath)) {
+	    g_free(finfo->menupath);
+	    finfo->menupath = newpath;
+	    newpath = NULL;
+	    changed = 1;
+	}
+	g_free(newpath);
+    }
+
+    return changed;
+}
+
+static int process_special_functions (function_info *finfo)
 {
     GtkWidget **c_array;
     const char *oldfun;
@@ -1105,11 +1263,27 @@ static void extra_properties_callback (GtkWidget *w, function_info *finfo)
 	}
     }
 
-    if (n_changed > 0) {
-	finfo_set_modified(finfo, TRUE);
-    }
+    return n_changed;
+}
+
+static void extra_properties_callback (GtkWidget *w, function_info *finfo)
+{
+    GtkWidget *notebook;
+    gint page;
+    int changed;
+
+    notebook = g_object_get_data(G_OBJECT(finfo->extra), "book");
+    page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
     
-    gtk_widget_destroy(finfo->extra);
+    if (page == 0) {
+	changed = process_special_functions(finfo);
+    } else {
+	changed = process_menu_attachment(finfo);
+    }
+
+    if (changed) {
+	finfo_set_modified(finfo, TRUE);
+    }    
 }
 
 /* Prevent the user from assigning a given function to more
@@ -1160,6 +1334,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     GtkWidget *dlg, *combo, *table;
     GtkWidget *tmp, *vbox, *hbox;
     GtkWidget **combo_array;
+    GtkWidget *notebook;
     const char *funname;
     const char *key;
     const char *special;
@@ -1175,8 +1350,16 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     finfo->extra = dlg;
     g_signal_connect(G_OBJECT(dlg), "destroy",
 		     G_CALLBACK(gtk_widget_destroyed), &finfo->extra);
-
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+
+    notebook = gtk_notebook_new();
+    gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
+    g_object_set_data(G_OBJECT(dlg), "book", notebook);
+
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
+    tmp = gtk_label_new(_("Special functions"));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);  
 
     table = gtk_table_new(finfo->n_special, 2, TRUE);
     gtk_table_set_row_spacings(GTK_TABLE(table), 5);
@@ -1244,14 +1427,28 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), table, FALSE, FALSE, 5);
 
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
+    tmp = gtk_label_new(_("Menu attachment"));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);      
+    tmp = add_menu_navigator(vbox, finfo);
+    g_object_set_data(G_OBJECT(dlg), "menu-tree", tmp);    
+
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
-    
-    cancel_delete_button(hbox, dlg);
-    tmp = ok_button(hbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
+
+    /* Apply button */
+    tmp = apply_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(extra_properties_callback), finfo);
     gtk_widget_grab_default(tmp);
+    gtk_widget_show(tmp);
 
+    /* Close button */
+    tmp = close_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+                     G_CALLBACK(delete_widget), dlg);
+
+    /* Help button */
     context_help_button(hbox, GUI_FUNCS);
 
     gtk_widget_show_all(dlg);
@@ -1403,11 +1600,13 @@ static void finfo_dialog (function_info *finfo)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(add_remove_callback), finfo);
 
+#if 0 /* work in progress */
     /* extra package properties button */
     button = gtk_button_new_with_label(_("Extra properties"));
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(extra_properties_dialog), finfo);
+#endif
 
     /* write spec file button */
     button = gtk_button_new_with_label(_("Write spec file"));
@@ -1807,6 +2006,8 @@ int save_function_package (const char *fname, gpointer p)
 					      "sample-script", finfo->sample,
 					      "data-requirement", finfo->dreq,
 					      "min-version", finfo->minver,
+					      "menu-attachment", finfo->menupath,
+					      "label", finfo->menulabel,
 					      NULL);
 	if (err) {
 	    fprintf(stderr, "function_package_set_properties: err = %d\n", err);
@@ -2161,6 +2362,8 @@ void edit_function_package (const char *fname)
 					  "sample-script", &finfo->sample,
 					  "data-requirement", &finfo->dreq,
 					  "min-version", &finfo->minver,
+					  "menu-attachment", &finfo->menupath,
+					  "label", &finfo->menulabel,
 					  NULL);
 
     if (!err && publist != NULL) {
