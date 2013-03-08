@@ -1431,6 +1431,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
     tmp = gtk_label_new(_("Menu attachment"));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);      
+
     tmp = add_menu_navigator(vbox, finfo);
     g_object_set_data(G_OBJECT(dlg), "menu-tree", tmp);    
 
