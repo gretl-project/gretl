@@ -3150,14 +3150,30 @@ const char *function_package_get_name (fnpkg *pkg)
 
 static int maybe_replace_string_var (char **svar, const char *src)
 {
-    if (*svar == NULL) {
-	*svar = gretl_strdup(src);
-    } else if (strcmp(*svar, src)) {
+    if (src == NULL) {
+	gretl_errmsg_set("string value is missing");
+	return E_DATA;
+    } else {
 	free(*svar);
 	*svar = gretl_strdup(src);
+	return (*svar == NULL)? E_ALLOC : 0;
     }
+}
 
-    return (*svar == NULL)? E_ALLOC : 0;
+/* unlike the case above, here we'll accept NULL for @src, to wipe
+   out an existing string var */
+
+static int maybe_replace_optional_string_var (char **svar, const char *src)
+{
+    if (src == NULL) {
+	free(*svar);
+	*svar = NULL;
+	return 0;
+    } else {
+	free(*svar);
+	*svar = gretl_strdup(src);
+	return (*svar == NULL)? E_ALLOC : 0;
+    }
 }
 
 static int is_string_property (const char *key)
@@ -3193,29 +3209,29 @@ int function_package_set_properties (fnpkg *pkg, ...)
 	    break;
 	}
 	if (is_string_property(key)) {
-	    const char *cval = va_arg(ap, const char *);
+	    const char *sval = va_arg(ap, const char *);
 
 	    if (!strcmp(key, "fname")) {
-		err = maybe_replace_string_var(&pkg->fname, cval);
+		err = maybe_replace_string_var(&pkg->fname, sval);
 	    } else if (!strcmp(key, "author")) {
-		err = maybe_replace_string_var(&pkg->author, cval);
+		err = maybe_replace_string_var(&pkg->author, sval);
 	    } else if (!strcmp(key, "date")) {
-		err = maybe_replace_string_var(&pkg->date, cval);
+		err = maybe_replace_string_var(&pkg->date, sval);
 	    } else if (!strcmp(key, "version")) {
-		err = maybe_replace_string_var(&pkg->version, cval);
+		err = maybe_replace_string_var(&pkg->version, sval);
 	    } else if (!strcmp(key, "description")) {
-		err = maybe_replace_string_var(&pkg->descrip, cval);
-	    } else if (!strcmp(key, "label")) {
-		err = maybe_replace_string_var(&pkg->label, cval);
-	    } else if (!strcmp(key, "menu-attachment")) {
-		err = maybe_replace_string_var(&pkg->mpath, cval);
+		err = maybe_replace_string_var(&pkg->descrip, sval);
 	    } else if (!strcmp(key, "help")) {
-		err = maybe_replace_string_var(&pkg->help, cval);
+		err = maybe_replace_string_var(&pkg->help, sval);
 	    } else if (!strcmp(key, "gui-help")) {
-		err = maybe_replace_string_var(&pkg->gui_help, cval);
+		err = maybe_replace_string_var(&pkg->gui_help, sval);
 	    } else if (!strcmp(key, "sample-script")) {
-		err = maybe_replace_string_var(&pkg->sample, cval);
-	    } 
+		err = maybe_replace_string_var(&pkg->sample, sval);
+	    } else if (!strcmp(key, "label")) {
+		err = maybe_replace_optional_string_var(&pkg->label, sval);
+	    } else if (!strcmp(key, "menu-attachment")) {
+		err = maybe_replace_optional_string_var(&pkg->mpath, sval);
+	    }
 	} else {
 	    int ival = va_arg(ap, int);
 

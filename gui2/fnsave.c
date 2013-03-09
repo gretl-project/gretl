@@ -1601,7 +1601,7 @@ static void finfo_dialog (function_info *finfo)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(add_remove_callback), finfo);
 
-#if 0 /* work in progress */
+#if 1 /* work in progress */
     /* extra package properties button */
     button = gtk_button_new_with_label(_("Extra properties"));
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
