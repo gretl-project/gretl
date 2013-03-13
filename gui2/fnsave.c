@@ -28,6 +28,7 @@
 #include "selector.h"
 #include "textutil.h"
 #include "gretl_bundle.h"
+#include "fncall.h"
 #include "fnsave.h"
 
 #include <libxml/xmlmemory.h>
@@ -1291,7 +1292,7 @@ static void add_menu_attach_top (GtkWidget *holder,
     w = gtk_label_new(_("Label"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     entry = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(entry), 64);
+    gtk_entry_set_max_length(GTK_ENTRY(entry), 36);
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 32);
     if (finfo->menulabel != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(entry), finfo->menulabel);
@@ -1302,7 +1303,7 @@ static void add_menu_attach_top (GtkWidget *holder,
 
     /* menu attachment combo */
     hbox = gtk_hbox_new(FALSE, 5);
-    w = gtk_label_new(_("Attach to"));
+    w = gtk_label_new(_("Window"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     combo = gtk_combo_box_text_new();
     combo_box_append_text(combo, _("none"));    
@@ -1334,7 +1335,7 @@ static int process_menu_attachment (function_info *finfo)
 	    changed = 1;
 	}
 	finfo->menuwin = NO_WINDOW;
-	return changed;
+	goto finish;
     }
 
     entry = g_object_get_data(G_OBJECT(finfo->extra), "label-entry");
@@ -1377,6 +1378,13 @@ static int process_menu_attachment (function_info *finfo)
     }
 
     finfo_set_menuwin(finfo);
+
+ finish:
+
+    if (changed) {
+	infobox("To update the menu attachment, you should\n"
+		"(a) save this package, and (b) restart gretl.");
+    }
 
     return changed;
 }
@@ -1484,6 +1492,21 @@ static void special_changed_callback (GtkComboBox *this,
     g_free(s0);
 }
 
+static void finfo_extra_help (GtkWidget *w, function_info *finfo)
+{
+    GtkWidget *notebook;
+    gint page;
+
+    notebook = g_object_get_data(G_OBJECT(finfo->extra), "book");
+    page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+    
+    if (page == 0) {
+	show_gui_help(GUI_FUNCS);
+    } else {
+	show_gui_help(MENU_ATTACH);
+    }
+}
+
 static void unref_trees (GtkWidget *w, function_info *finfo)
 {
     g_object_unref(G_OBJECT(finfo->maintree));
@@ -1589,6 +1612,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 	}
 
 	tmp = gtk_label_new(key);
+	gtk_misc_set_alignment(GTK_MISC(tmp), 1, 0.5);
 	gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 1, i, i+1);
 	gtk_table_attach_defaults(GTK_TABLE(table), combo, 1, 2, i, i+1);
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), selected);
@@ -1616,6 +1640,10 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     finfo->maintree = add_menu_navigator(vbox, finfo, 0);
     finfo->modeltree = add_menu_navigator(vbox, finfo, 1);
 
+    if (finfo->menuwin == NO_WINDOW) {
+	gtk_widget_set_sensitive(finfo->currtree, FALSE);
+    }
+
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
 
     /* Apply button */
@@ -1631,7 +1659,13 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
                      G_CALLBACK(delete_widget), dlg);
 
     /* Help button */
-    context_help_button(hbox, GUI_FUNCS);
+    tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
+    gtk_container_add(GTK_CONTAINER(hbox), tmp);
+    gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
+				       tmp, TRUE);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(finfo_extra_help),
+		     finfo);
 
     gtk_widget_show_all(dlg);
 }
@@ -1782,7 +1816,7 @@ static void finfo_dialog (function_info *finfo)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(add_remove_callback), finfo);
 
-#if 0 /* work in progress */
+#if 1 /* work in progress */
     /* extra package properties button */
     button = gtk_button_new_with_label(_("Extra properties"));
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
@@ -2222,6 +2256,9 @@ int save_function_package (const char *fname, gpointer p)
 	maybe_update_func_files_window(EDIT_FN_PKG);
 	if (finfo->upload) {
 	    do_pkg_upload(finfo, fname);
+	}
+	if (finfo->menuwin != NO_WINDOW) {
+	    gui_add_package_to_menu(fname, 1);
 	}
     }
 

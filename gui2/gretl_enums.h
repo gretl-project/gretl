@@ -113,6 +113,7 @@ enum extra_cmds {
     SSHEET,
     CLUSTER,
     GUI_FUNCS,
+    MENU_ATTACH,
     GUI_CMD_MAX
 };
 

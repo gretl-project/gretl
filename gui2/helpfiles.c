@@ -146,6 +146,7 @@ static struct gui_help_item gui_help_items[] = {
     { NADARWAT,       "nadarwat" },
     { CLUSTER,        "cluster" },
     { GUI_FUNCS,      "gui-funcs" },
+    { MENU_ATTACH,    "menu-attach" },
     { -1,             NULL },
 };
 

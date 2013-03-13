@@ -6527,6 +6527,35 @@
     </description>
   </command>
 
+  <command name="menu-attach" section="Programming" 
+	   label="Menu attachment" context="gui">
+    <description>
+      <para>
+	This dialog enables you to specify a menu attachment for
+	a function package. To do this you must complete the three
+	fields in the dialog box.
+      </para>
+      <subhead>Label</subhead>
+      <para>
+	This requires a short label string, which will appear as
+	the menu entry for the package.
+      </para>
+      <subhead>Window</subhead>
+      <para>
+	Select <quote>model window</quote> for a function package that
+	does something with a gretl model, and should appear in the
+	menu bar in a gretl model window. Otherwise, select
+	<quote>main window</quote>.
+      </para>
+      <subhead>Menu tree</subhead>
+      <para>
+	Select the position within the menu tree (for either the
+	main window or the model window, as chosen above) where the
+	entry for the package should appear.
+      </para>
+    </description>
+  </command>
+
   <command name="mle" section="Estimation"
     label="Maximum likelihood estimation">
 
