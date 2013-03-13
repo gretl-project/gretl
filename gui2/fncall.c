@@ -2872,7 +2872,7 @@ static int register_package (const gchar *name,
     if (err) {
 	gui_errmsg(err);
     } else {
-	gchar *upath = get_user_menu_string(mpath, OPT_NONE);
+	gchar *upath = get_user_menu_string(mpath);
 
 	if (upath != NULL) {
 	    gchar *tmp = g_strdup_printf(_("Adding %s under %s."), 

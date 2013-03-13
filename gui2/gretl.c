@@ -1657,11 +1657,15 @@ GtkActionEntry main_entries[] = {
     { "About", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL, G_CALLBACK(about_dialog) }
 };
 
-gchar *get_user_menu_string (const gchar *mpath, gretlopt opt)
+/* Given an "internal" menu path, as in gretlmain.xml (with one or
+   two slash-separated components), return its user-visible
+   counterpart, translated.
+*/
+
+gchar *get_user_menu_string (const gchar *mpath)
 {
     gchar *ret = NULL;
     gchar **S;
-    int preslash = 1;
 
     if (!strncmp(mpath, "/menubar/", 9)) {
 	mpath += 8;
@@ -1671,10 +1675,6 @@ gchar *get_user_menu_string (const gchar *mpath, gretlopt opt)
 	mpath += 1;
     } else if (!strncmp(mpath, "MODELWIN/", 9)) {
 	return NULL;
-    }
-
-    if (opt & OPT_N) {
-	preslash = 0;
     }
 
 #if 0
@@ -1702,21 +1702,19 @@ gchar *get_user_menu_string (const gchar *mpath, gretlopt opt)
 	    }
 	}
 	if (p2 != NULL) {
-	    ret = g_strdup_printf("%s%s/%s", preslash ? "/" : "", p1, p2);
+	    ret = g_strdup_printf("%s/%s", p1, p2);
 	} else if (p1 != NULL) {
-	    ret = g_strdup_printf("%s%s", preslash ? "/" : "", p1);
+	    ret = g_strdup_printf("%s", p1);
 	}
     }
 	
     g_strfreev(S);
 
     if (ret != NULL) {
-	if (opt & OPT_N) {
-	    gchar *trstr = g_strdup(_(ret));
+	gchar *trstr = g_strdup(_(ret));
 
-	    g_free(ret);
-	    ret = trstr;
-	}
+	g_free(ret);
+	ret = trstr;
 	gretl_delchar('_', ret);
     }
 
