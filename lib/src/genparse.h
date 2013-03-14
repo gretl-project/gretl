@@ -269,6 +269,7 @@ enum {
     F_ISNAN,
     F_TYPESTR,
     F_STRSTRIP,
+    F_REMOVE,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
@@ -406,7 +407,8 @@ enum {
 #define string_arg_func(s) (s == F_ISSERIES || s == F_ISNULL || \
 			    s == F_ISLIST   || s == F_ISSTRING || \
 			    s == F_OBSNUM || s == F_BACKTICK || \
-			    s == F_VARNUM || s == F_ARGNAME)
+			    s == F_VARNUM || s == F_ARGNAME || \
+                            s == F_REMOVE)
 
 /* function with multiple args, character code for first arg */
 #define char0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \

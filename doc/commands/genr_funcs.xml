@@ -5597,6 +5597,20 @@
       </description>
     </function>
 
+    <function name="remove" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="string">fname</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  If a file by the name of <argname>fname</argname> exists and
+	  is writable by the user, removes (deletes) the named
+	  file. Returns 0 on successful completion, non-zero if there
+	  is no such file or the file cannot be removed.
+	</para>
+      </description>
+    </function>
+
     <function name="replace" section="data-utils" output="asinput">
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>

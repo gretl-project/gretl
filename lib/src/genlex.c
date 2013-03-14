@@ -397,6 +397,7 @@ struct str_table funcs[] = {
     { F_TYPESTR,  "typestr" },
     { F_QUADTAB,  "quadtable" },
     { F_AGGRBY,   "aggregate" },
+    { F_REMOVE,   "remove" },
     { 0,          NULL }
 };
 

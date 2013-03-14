@@ -19,6 +19,7 @@ version 1.9.12, in progress
 - Add new string function strstrip()
 - Add new data-manipulation function aggregate()
 - Add new function quadtable(), for Gauss quadrature
+- Add new function remove(), for file deletion
 - lags() function: add an optional third parameter to control
   the ordering of terms in the output list
 - mread() and mwrite() functions: add an optional argument to

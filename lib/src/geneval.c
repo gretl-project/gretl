@@ -4005,6 +4005,8 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	} else if (f == F_SSCANF) {
 	    p->err = do_sscanf(s, p->dset, NULL);
 	    ret->v.xval = (p->err)? NADBL : n_scanned_items();
+	} else if (f == F_REMOVE) {
+	    ret->v.xval = gretl_remove(s);
 	}
     }
 
@@ -9568,6 +9570,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISNULL:
     case F_STRLEN:
     case F_SSCANF:
+    case F_REMOVE:
 	if (l->t == STR) {
 	    ret = object_status(l, t->t, p);
 	} else {
