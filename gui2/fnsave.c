@@ -85,6 +85,7 @@ struct function_info_ {
     int n_pub;             /* number of public functions */
     int n_priv;            /* number of private functions */
     int n_special;         /* (max) number of special functions */
+    gboolean uses_subdir;  /* the package has its own subdir (0/1) */
     gchar *menupath;       /* path for menu attachment, if any */
     gchar *menulabel;      /* label for menu attachment, if any */
     int menuwin;           /* code for none/main/model window */
@@ -163,6 +164,7 @@ function_info *finfo_new (void)
 
     finfo->dreq = 0;
     finfo->minver = 10804;
+    finfo->uses_subdir = 0;
 
     return finfo;
 }
@@ -1382,8 +1384,8 @@ static int process_menu_attachment (function_info *finfo)
  finish:
 
     if (changed) {
-	infobox("To update the menu attachment, you should\n"
-		"(a) save this package, and (b) restart gretl.");
+	infobox(_("To update the menu attachment, you should\n"
+		  "(a) save this package, and (b) restart gretl."));
     }
 
     return changed;
@@ -1516,11 +1518,10 @@ static void unref_trees (GtkWidget *w, function_info *finfo)
 #define must_be_private(r) (r == UFUN_GUI_PRECHECK)
 #define must_be_public(r) (r != UFUN_GUI_PRECHECK)
 
-/* Right now the following function just allows the user to select
-   functions in the package for the various "special" package
-   roles (e.g. gui-main, bundle-print). The idea is to extend it
-   to allow selection of menu attachment and GUI label, which
-   will probably want a tabbed notebook-style interface.
+/* The following function supports two "notebook" tabs: one allows the
+   user to select functions in the package for the various "special"
+   package roles (e.g. gui-main, bundle-print). The other allows for
+   selection of a menu attachment point and GUI label.
 */
 
 static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
@@ -1539,10 +1540,8 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 	return;
     }
 
-    finfo->maintree = NULL;
-    finfo->modeltree = NULL;
-    finfo->currtree = NULL;
-    finfo->alttree = NULL;
+    finfo->maintree = finfo->modeltree = NULL;
+    finfo->currtree = finfo->alttree = NULL;
     finfo->treewin = NULL;
 
     dlg = gretl_dialog_new(_("gretl: extra properties"), finfo->dlg,
@@ -1816,7 +1815,7 @@ static void finfo_dialog (function_info *finfo)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(add_remove_callback), finfo);
 
-#if 1 /* work in progress */
+#if 0 /* still work in progress */
     /* extra package properties button */
     button = gtk_button_new_with_label(_("Extra properties"));
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
@@ -2596,6 +2595,7 @@ void edit_function_package (const char *fname)
 					  "min-version", &finfo->minver,
 					  "menu-attachment", &finfo->menupath,
 					  "label", &finfo->menulabel,
+					  "lives-in-subdir", &finfo->uses_subdir,
 					  NULL);
 
     if (!err && publist != NULL) {

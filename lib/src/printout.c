@@ -172,13 +172,11 @@ print_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 
     if (n > 16) {
 	pprintf(prn, "%.15s~ ", cf->names[i]);
-	n = 3;
+	bufspace(3, prn);
     } else {
 	pprintf(prn, "%14s ", cf->names[i]);
-	n = 5;
+	bufspace(5, prn);
     }
-
-    bufspace(n, prn);
 
     if (isnan(cf->coeff[i])) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 16), _("undefined"));

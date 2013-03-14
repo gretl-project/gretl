@@ -43,6 +43,8 @@ const char *ivpanel_translations[] = {
 
 const char *SVAR_translations[] = {
     N_("AB-model"),
+    N_("Bootstrap alpha"),
+    N_("Bootstrap replications"),
     N_("C-model"),
     N_("Constant"),
     N_("Exogenous regressors"),
@@ -56,6 +58,6 @@ const char *SVAR_translations[] = {
     N_("VAR variables"),
     N_("horizon"),
     N_("plain"),
-    N_("template")
+    N_("template matrix")
 };
 

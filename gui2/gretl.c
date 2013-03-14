@@ -1674,6 +1674,7 @@ gchar *get_user_menu_string (const gchar *mpath)
     } else if (*mpath == '/') {
 	mpath += 1;
     } else if (!strncmp(mpath, "MODELWIN/", 9)) {
+	/* this function is main-window only */
 	return NULL;
     }
 
@@ -1702,19 +1703,15 @@ gchar *get_user_menu_string (const gchar *mpath)
 	    }
 	}
 	if (p2 != NULL) {
-	    ret = g_strdup_printf("%s/%s", p1, p2);
+	    ret = g_strdup_printf("%s/%s", _(p1), _(p2));
 	} else if (p1 != NULL) {
-	    ret = g_strdup_printf("%s", p1);
+	    ret = g_strdup_printf("%s", _(p1));
 	}
     }
 	
     g_strfreev(S);
 
     if (ret != NULL) {
-	gchar *trstr = g_strdup(_(ret));
-
-	g_free(ret);
-	ret = trstr;
 	gretl_delchar('_', ret);
     }
 
