@@ -168,17 +168,23 @@ void gui_script_logo (PRN *prn)
 static void 
 print_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
-    pprintf(prn, " %*s ", VNAMELEN - 1, cf->names[i]);
+    int n = strlen(cf->names[i]);
 
-    bufspace(3, prn);
+    if (n > 16) {
+	pprintf(prn, "%.15s~ ", cf->names[i]);
+	n = 3;
+    } else {
+	pprintf(prn, "%14s ", cf->names[i]);
+	n = 5;
+    }
+
+    bufspace(n, prn);
 
     if (isnan(cf->coeff[i])) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 16), _("undefined"));
     } else {
 	gretl_print_value(cf->coeff[i], prn);
     }
-
-    bufspace(2, prn);
 
     if (isnan(cf->maxerr[i])) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 10), _("undefined"));
