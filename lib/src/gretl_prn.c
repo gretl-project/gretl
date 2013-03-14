@@ -832,7 +832,7 @@ static int pprintf_init (PRN *prn)
 {
     int ret = 0;
 
-    prn->bufsize = 2048;
+    prn->bufsize = 4096;
     prn->buf = malloc(prn->bufsize);
 
 #if PRN_DEBUG
@@ -849,6 +849,8 @@ static int pprintf_init (PRN *prn)
 
     return ret;
 }
+
+#define MINREM 2048
 
 /**
  * pprintf:
@@ -890,7 +892,7 @@ int pprintf (PRN *prn, const char *format, ...)
 	return 0;
     }
 
-    if (prn->bufsize - prn->blen < 1024) {
+    if (prn->bufsize - prn->blen < MINREM) {
 	if (realloc_prn_buffer(prn)) {
 	    return -1;
 	}
@@ -946,7 +948,7 @@ int pputs (PRN *prn, const char *s)
 
     bytesleft = prn->bufsize - prn->blen;
 
-    while (prn->bufsize - prn->blen < 1024 || bytesleft <= slen) {
+    while (prn->bufsize - prn->blen < MINREM || bytesleft <= slen) {
 	if (realloc_prn_buffer(prn)) {
 	    return -1;
 	}
@@ -988,7 +990,7 @@ int pputc (PRN *prn, int c)
 	return 0;
     }
 
-    if (prn->bufsize - prn->blen < 1024) {
+    if (prn->bufsize - prn->blen < MINREM) {
 	if (realloc_prn_buffer(prn)) {
 	    return -1;
 	}

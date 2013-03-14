@@ -1817,7 +1817,8 @@ static void print_listed_objects (const char *s,
 	} else if ((b = get_bundle_by_name(name)) != NULL) {
 	    gretl_bundle_print(b, prn);
 	} else if ((p = get_string_by_name(name)) != NULL) {
-	    pprintf(prn, "%s\n", p);	
+	    pputs(prn, p);
+	    pputc(prn, '\n');
 	} 
 	free(name);
     }

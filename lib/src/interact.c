@@ -4005,7 +4005,8 @@ static void do_print_string (char *str, PRN *prn)
 	str[len-1] = 0;
     }
 
-    pprintf(prn, "%s\n", str);
+    pputs(prn, str);
+    pputc(prn, '\n');
 }
 
 static int 
