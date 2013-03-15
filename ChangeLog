@@ -50,6 +50,8 @@
   default of ~/.gretl2rc on unix-type systems
 - Daily dates: switch to ISO 8601 for output and preferred
   input (but accept YYYY/MM/DD for backward compatibility)
+- MS Windows build: update GTK to version 2.24.17, and build
+  with openmp support
 
 2012-11-21 version 1.9.11
 - Substantial re-write of code for handling named variables
