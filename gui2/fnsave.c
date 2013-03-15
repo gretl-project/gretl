@@ -1815,7 +1815,7 @@ static void finfo_dialog (function_info *finfo)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(add_remove_callback), finfo);
 
-#if 0 /* still work in progress */
+#if 1 /* still work in progress */
     /* extra package properties button */
     button = gtk_button_new_with_label(_("Extra properties"));
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
@@ -2243,10 +2243,10 @@ int save_function_package (const char *fname, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	const char *pname = function_package_get_name(finfo->pkg);
+	const char *pkgname = function_package_get_name(finfo->pkg);
 	gchar *title;
 
-	title = g_strdup_printf("gretl: %s", pname);
+	title = g_strdup_printf("gretl: %s", pkgname);
 	gtk_window_set_title(GTK_WINDOW(finfo->dlg), title);
 	g_free(title);
 	finfo_set_modified(finfo, FALSE);
@@ -2256,8 +2256,12 @@ int save_function_package (const char *fname, gpointer p)
 	if (finfo->upload) {
 	    do_pkg_upload(finfo, fname);
 	}
-	if (finfo->menuwin != NO_WINDOW) {
-	    gui_add_package_to_menu(fname, 1);
+	if (1 || finfo->menuwin != NO_WINDOW) {
+	    revise_package_status(pkgname, 
+				  finfo->menulabel,
+				  finfo->menupath,
+				  finfo->uses_subdir,
+				  1);
 	}
     }
 

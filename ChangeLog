@@ -1,4 +1,4 @@
-version 1.9.12, in progress
+2013-03-15 version 1.9.12
 - Officially increase the maximum length of variable names
   to 31 characters
 - "foreign" command: add support for Python + NumPy

@@ -1,4 +1,4 @@
-version 1.9.12, in progress
+2013-03-15 version 1.9.12
 
 The special treatment that supported the use of @-substitution
 in an unquoted argument to printf has been removed. For example,

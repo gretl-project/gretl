@@ -1667,6 +1667,10 @@ gchar *get_user_menu_string (const gchar *mpath)
     gchar *ret = NULL;
     gchar **S;
 
+    if (mpath == NULL) {
+	return NULL;
+    }
+
     if (!strncmp(mpath, "/menubar/", 9)) {
 	mpath += 8;
     } else if (!strncmp(mpath, "MAINWIN/", 8)) {

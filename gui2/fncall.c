@@ -2733,6 +2733,11 @@ static void print_pkg_line (const gchar *name,
     const gchar *relpath;
     int modelwin = 0;
 
+    if (name == NULL || label == NULL || mpath == NULL) {
+	/* no-op */
+	return;
+    }
+
     relpath = pkg_get_attachment(mpath, &modelwin);
 
     fprintf(fp, "<package name=\"%s\" label=\"%s\"", name, label);
@@ -2751,6 +2756,44 @@ static void print_pkg_line (const gchar *name,
     }
 }
 
+static int got_package_entry (const char *line, 
+			      const char *pkgname)
+{
+    const char *p = strstr(line, "<package name=\"");
+
+    if (p != NULL) {
+	int len;
+
+	p += 15;
+	len = gretl_charpos('"', p);
+	if (len == strlen(pkgname) && 
+	    !strncmp(p, pkgname, len)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+static FILE *read_open_packages_xml (gchar **pfname)
+{
+    gchar *fname;
+    FILE *fp;
+
+    fname = g_strdup_printf("%sfunctions%cpackages.xml", 
+			     gretl_dotdir(), SLASH);
+    fp = gretl_fopen(fname, "r");
+
+    if (pfname != NULL) {
+	/* give the caller the filename */
+	*pfname = fname;
+    } else {
+	g_free(fname);
+    }
+
+    return fp;
+}
+
 /* When a package nominally appears in a menu but in fact
    it is not found, remove it from packages.xml.
 */
@@ -2761,10 +2804,7 @@ static void unregister_package (const gchar *pkgname)
     FILE *fp;
     int err = 0;
 
-    pkgxml = g_strdup_printf("%sfunctions%cpackages.xml", 
-			     gretl_dotdir(), SLASH);
-
-    fp = gretl_fopen(pkgxml, "r");
+    fp = read_open_packages_xml(&pkgxml);
 
     if (fp != NULL) {
 	gchar *tmpfile;
@@ -2778,20 +2818,12 @@ static void unregister_package (const gchar *pkgname)
 	if (fnew == NULL) {
 	    err = E_FOPEN;
 	} else {
-	    char *p, *q, *targ;
-	    int found = 0;
+	    int skip, done = 0;
 
 	    while (fgets(line, sizeof line, fp)) {
-		int skip = 0;
-
-		if (!found && (p = strstr(line, "<package name=\""))) {
-		    p += 15;
-		    q = strchr(p, '"');
-		    targ = gretl_strndup(p, q - p);
-		    if (!strcmp(pkgname, targ)) {
-			found = skip = 1;
-		    }
-		    free(targ);
+		skip = 0;
+		if (!done && got_package_entry(line, pkgname)) {
+		    done = skip = 1;
 		}
 		if (!skip) {
 		    fputs(line, fnew);
@@ -2810,20 +2842,18 @@ static void unregister_package (const gchar *pkgname)
     g_free(pkgxml);
 }
 
-static int register_package (const gchar *name,
-			     const gchar *label,
-			     const gchar *mpath,
-			     int uses_subdir)
+int revise_package_status (const gchar *pkgname,
+			   const gchar *label,
+			   const gchar *mpath,
+			   int uses_subdir,
+			   int maybe_edit)
 {
     int toplev = !uses_subdir;
     gchar *pkgxml;
     FILE *fp;
     int err = 0;
 
-    pkgxml = g_strdup_printf("%sfunctions%cpackages.xml", 
-			     gretl_dotdir(), SLASH);
-
-    fp = gretl_fopen(pkgxml, "r");
+    fp = read_open_packages_xml(&pkgxml);
 
     if (fp == NULL) {
 	/* starting a new packages.xml */
@@ -2833,12 +2863,12 @@ static int register_package (const gchar *name,
 	} else {
 	    fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", fp);
 	    fputs("<gretl-package-info>\n", fp);
-	    print_pkg_line(name, label, mpath, toplev, fp);
+	    print_pkg_line(pkgname, label, mpath, toplev, fp);
 	    fputs("</gretl-package-info>\n", fp);
 	    fclose(fp);
 	}
     } else {
-	/* adding to an existing packages.xml, open as @fp */
+	/* revising an existing packages.xml, open as @fp */
 	gchar *tmpfile;
 	char line[512];
 	FILE *fnew;
@@ -2850,12 +2880,27 @@ static int register_package (const gchar *name,
 	if (fnew == NULL) {
 	    err = E_FOPEN;
 	} else {
+	    int skip, done = 0;
+
 	    while (fgets(line, sizeof line, fp)) {
-		if (strstr(line, "</gretl-package-info>")) {
-		    /* reached the last line */
-		    print_pkg_line(name, label, mpath, toplev, fnew);
+		skip = 0;
+		if (maybe_edit) {
+		    /* check for an existing line for this package,
+		       and replace it if found -- or bypass it if
+		       the incoming @label or @mpath are NULL
+		    */
+		    if (!done && got_package_entry(line, pkgname)) {
+			print_pkg_line(pkgname, label, mpath, toplev, fnew);
+			done = skip = 1;
+		    }
 		}
-		fputs(line, fnew);
+		if (!done && strstr(line, "</gretl-package-info>")) {
+		    /* reached the last line */
+		    print_pkg_line(pkgname, label, mpath, toplev, fnew);
+		}
+		if (!skip) {
+		    fputs(line, fnew);
+		}
 	    }
 	    fclose(fnew);
 	}
@@ -2894,34 +2939,21 @@ static int register_package (const gchar *name,
    packages.xml file
 */
 
-static int package_already_registered (const char *name)
+static int package_already_registered (const char *pkgname)
 {
-    gchar *pkgxml;
     FILE *fp;
     int found = 0;
 
-    pkgxml = g_strdup_printf("%sfunctions%cpackages.xml", 
-			     gretl_dotdir(), SLASH);
-    fp = gretl_fopen(pkgxml, "r");
+    fp = read_open_packages_xml(NULL);
 
     if (fp != NULL) {
-	char *s, line[512];
-	int pos;
+	char line[512];
 
 	while (fgets(line, sizeof line, fp) && !found) {
-	    s = strstr(line, "<package name=");
-	    if (s != NULL) {
-		s += 15;
-		pos = gretl_charpos('"', s);
-		if (pos > 0 && strncmp(s, name, pos) == 0) {
-		    found = 1;
-		}
-	    }
+	    found = got_package_entry(line, pkgname);
 	}
 	fclose(fp);
     }
-
-    g_free(pkgxml);
 
     return found;
 }
@@ -2934,29 +2966,29 @@ int gui_add_package_to_menu (const char *path, gboolean prechecked)
     pkg = get_function_package_by_filename(path, &err);
 
     if (!err) {
-	gchar *name = NULL, *mpath = NULL, *label = NULL;
+	gchar *pkgname = NULL, *mpath = NULL, *label = NULL;
 	int registered = 0, uses_subdir = 0;
 	int addit = 0;
 
 	err = function_package_get_properties(pkg,
-					      "name", &name,
+					      "name", &pkgname,
 					      "label", &label,
 					      "menu-attachment", &mpath,
 					      "lives-in-subdir", &uses_subdir,
 					      NULL);
 
-	if (!err && !prechecked && name != NULL) {
-	    registered = package_already_registered(name);
+	if (!err && !prechecked && pkgname != NULL) {
+	    registered = package_already_registered(pkgname);
 	}
 
-	if (!err && !registered && name != NULL && 
+	if (!err && !registered && pkgname != NULL && 
 	    label != NULL && mpath != NULL) {
 	    if (prechecked) {
 		/* go right ahead */
 		addit = 1;
 	    } else {
 		/* not "prechecked": put up a dialog */
-		int resp = pkg_attach_dialog(name, label, mpath);
+		int resp = pkg_attach_dialog(pkgname, label, mpath);
 
 		if (resp >= 0) {
 		    ret = 1;
@@ -2968,10 +3000,11 @@ int gui_add_package_to_menu (const char *path, gboolean prechecked)
 	}
 
 	if (addit) {
-	    register_package(name, label, mpath, uses_subdir);
+	    revise_package_status(pkgname, label, mpath, 
+				  uses_subdir, FALSE);
 	}
 
-	g_free(name);
+	g_free(pkgname);
 	g_free(label);
 	g_free(mpath);
     }
