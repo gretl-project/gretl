@@ -8,7 +8,7 @@
 
   <bookinfo>
     <title>Libgretl Reference Manual</title>
-    <releaseinfo>for libgretl-1.0 (gretl 1.9.11)</releaseinfo>
+    <releaseinfo>for libgretl-1.0 (gretl 1.9.12)</releaseinfo>
   </bookinfo>
   
   <chapter id="ch-overview">
@@ -142,7 +142,6 @@
     <xi:include href="xml/gretl_utils.xml" />
     <xi:include href="xml/gretl_bfgs.xml" />
     <xi:include href="xml/gretl_paths.xml" />        
-    <xi:include href="xml/gretl_intl.xml" />        
   </chapter>
 
 </book>
