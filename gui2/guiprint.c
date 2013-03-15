@@ -2262,7 +2262,8 @@ int font_has_symbol (PangoFontDescription *desc, int symbol)
 	return 0;
     }
 
-    widget = gtk_label_new("");  
+    widget = gtk_label_new("");
+    g_object_ref_sink(widget);
     context = gtk_widget_get_pango_context(widget); 
 
     if (context == NULL) {

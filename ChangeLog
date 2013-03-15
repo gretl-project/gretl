@@ -1,3 +1,8 @@
+version 1.9.13, in progress
+- Improve internals of pprintf() -- handle big string args
+  properly
+- Fix a few small GUI memory leaks
+
 2013-03-15 version 1.9.12
 - Officially increase the maximum length of variable names
   to 31 characters

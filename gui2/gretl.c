@@ -2031,6 +2031,7 @@ void set_wm_icon (GtkWidget *w)
 
     if (icon != NULL) {
 	gtk_window_set_icon(GTK_WINDOW(w), icon);
+	g_object_unref(icon);
     } else {
 	fprintf(stderr, "Couldn't create icon for gretl_xpm\n");
     }

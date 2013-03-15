@@ -797,19 +797,21 @@ int gretl_print_has_minus (PRN *prn)
     }
 }
 
-static int realloc_prn_buffer (PRN *prn)
+static int realloc_prn_buffer (PRN *prn, size_t newlen)
 {
-    size_t newlen;
     char *tmp;
     int err = 0;
+
+    if (newlen <= 0) {
+	newlen = prn->bufsize * 2;
+    }    
 
 #if PRN_DEBUG
     fprintf(stderr, "%d bytes left\ndoing realloc(%p, %d)\n",
 	    (int) (prn->bufsize - prn->blen), prn->buf, 
-	    (int) (2 * prn->bufsize));
+	    (int) newlen);
 #endif
 
-    newlen = prn->bufsize * 2;
     tmp = realloc(prn->buf, newlen); 
 
     if (tmp == NULL) {
@@ -828,11 +830,14 @@ static int realloc_prn_buffer (PRN *prn)
     return err;
 }
 
+#define INIT_SIZE 2048
+#define MINREM 1024
+
 static int pprintf_init (PRN *prn)
 {
     int ret = 0;
 
-    prn->bufsize = 4096;
+    prn->bufsize = INIT_SIZE;
     prn->buf = malloc(prn->bufsize);
 
 #if PRN_DEBUG
@@ -850,18 +855,17 @@ static int pprintf_init (PRN *prn)
     return ret;
 }
 
-#define MINREM 2048
 
 /**
  * pprintf:
  * @prn: gretl printing struct.
- * @format: as in printf().
+ * @format: as in the C library's printf().
  * @Varargs: arguments to be printed.
  *
  * Multi-purpose printing function: can output to stream, to buffer
  * or to nowhere (silently discarding the output), depending on
- * how @prn was initialized.  It is not advisable to use this function
- * for large chunks of fixed text: use #pputs instead.
+ * how @prn was initialized.  Note that it's preferable to use 
+ * pputs() for large chunks of fixed text.
  * 
  * Returns: the number of bytes printed, or -1 on memory allocation
  * failure.
@@ -893,7 +897,7 @@ int pprintf (PRN *prn, const char *format, ...)
     }
 
     if (prn->bufsize - prn->blen < MINREM) {
-	if (realloc_prn_buffer(prn)) {
+	if (realloc_prn_buffer(prn, 0)) {
 	    return -1;
 	}
     }
@@ -909,11 +913,21 @@ int pprintf (PRN *prn, const char *format, ...)
     va_end(args);
 
     if (plen >= rem) {
-	fputs("pprintf warning: string was truncated\n", stderr);
-	prn->blen += rem;
-    } else {
-	prn->blen += plen;
+	/* buffer not big enough: try again */
+	size_t newsize = prn->bufsize + plen + 1024;
+
+	if (realloc_prn_buffer(prn, newsize)) {
+	    return -1;
+	}
+	rem = prn->bufsize - prn->blen - 1;
+	va_start(args, format);
+	plen = vsnprintf(prn->buf + prn->blen, rem, format, args);
+	va_end(args);
     }
+
+    if (plen > 0) {
+	prn->blen += plen;
+    }    
 
     return plen;
 }
@@ -949,7 +963,7 @@ int pputs (PRN *prn, const char *s)
     bytesleft = prn->bufsize - prn->blen;
 
     while (prn->bufsize - prn->blen < MINREM || bytesleft <= slen) {
-	if (realloc_prn_buffer(prn)) {
+	if (realloc_prn_buffer(prn, 0)) {
 	    return -1;
 	}
 	bytesleft = prn->bufsize - prn->blen;
@@ -991,7 +1005,7 @@ int pputc (PRN *prn, int c)
     }
 
     if (prn->bufsize - prn->blen < MINREM) {
-	if (realloc_prn_buffer(prn)) {
+	if (realloc_prn_buffer(prn, 0)) {
 	    return -1;
 	}
     }

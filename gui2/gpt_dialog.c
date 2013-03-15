@@ -203,6 +203,7 @@ static GtkWidget *get_image_for_color (const gretlRGB *color)
 
     icon = gdk_pixbuf_new_from_xpm_data((const char **) xpm);
     image = gtk_image_new_from_pixbuf(icon);
+    g_object_unref(icon);
     
     return image;
 }
@@ -3123,6 +3124,7 @@ static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins)
 			     G_CALLBACK(plot_position_click), spec->ptr);
 	    icon = gdk_pixbuf_new_from_xpm_data((const char **) mini_mouse_xpm);
 	    image = gtk_image_new_from_pixbuf(icon);
+	    g_object_unref(icon);
 	    gtk_widget_set_size_request(button, 32, 26);
 	    gtk_container_add(GTK_CONTAINER(button), image);
 	    gtk_container_add(GTK_CONTAINER(hbox), button);
@@ -3265,6 +3267,7 @@ static void gpt_tab_arrows (plot_editor *ed, GPT_SPEC *spec, int ins)
 				 G_CALLBACK(plot_position_click), spec->ptr);
 		icon = gdk_pixbuf_new_from_xpm_data((const char **) mini_mouse_xpm);
 		image = gtk_image_new_from_pixbuf(icon);
+		g_object_unref(icon);
 		gtk_widget_set_size_request(button, 32, 26);
 		gtk_container_add(GTK_CONTAINER(button), image);
 		gtk_container_add(GTK_CONTAINER(hbox), button);

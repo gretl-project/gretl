@@ -46,6 +46,7 @@ static GtkWidget *open_logo (void)
 	g_error_free(error);
     } else {
 	image = gtk_image_new_from_pixbuf(pbuf);
+	g_object_unref(pbuf);
     }
 
     g_free(fname);
