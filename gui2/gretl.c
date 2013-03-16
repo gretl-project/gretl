@@ -124,8 +124,10 @@ static GOptionEntry options[] = {
       N_("open a database on startup"), "DATABASE" },
     { "webdb", 'w', 0, G_OPTION_ARG_STRING, &optwebdb, 
       N_("open a remote (web) database on startup"), "REMOTE_DB" },
+#ifndef OS_OSX
     { "pkg", 'p', 0, G_OPTION_ARG_STRING, &optpkg, 
       N_("open (edit) a function package on startup"), "FUNCPKG" },
+#endif
     { "english", 'e', 0, G_OPTION_ARG_NONE, &opteng, 
       N_("force use of English"), NULL },
     { "basque", 'q', 0, G_OPTION_ARG_NONE, &optbasque, 
