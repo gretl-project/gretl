@@ -205,6 +205,30 @@ not a scalar.
 
 \subsection{Recoding a variable}
 
+\emph{Problem:} You want to perform a 1-to-1 recode on a variable. For
+example, consider tennis points: you may have a variable $x$ holding
+values 1 to 3 and you want to recode it to 15, 30, 40. 
+
+\emph{Solution 1:}
+\begin{code}
+series x = replace(x, 1, 15)
+series x = replace(x, 2, 30)
+series x = replace(x, 3, 40)
+\end{code}
+
+\emph{Solution 2:}
+\begin{code}
+matrix tennis = {15, 30, 40}
+series x = replace(x, seq(1,3), tennis)
+\end{code}
+
+\emph{Comment:} There are many equivalent ways to achieve the same
+effect, but for simple cases such as this, the \texttt{replace}
+function is simple and transparent. If you don't mind using matrices,
+scripts using \texttt{replace} can also be remarkably compact.
+
+\subsection{Recoding a variable by classes}
+
 \emph{Problem:} You want to recode a variable by classes. For example,
 you have the age of a sample of individuals ($x_i$) and you need to
 compute age classes ($y_i$) as
