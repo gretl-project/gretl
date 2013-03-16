@@ -124,10 +124,8 @@ static GOptionEntry options[] = {
       N_("open a database on startup"), "DATABASE" },
     { "webdb", 'w', 0, G_OPTION_ARG_STRING, &optwebdb, 
       N_("open a remote (web) database on startup"), "REMOTE_DB" },
-#ifndef OS_OSX
     { "pkg", 'p', 0, G_OPTION_ARG_STRING, &optpkg, 
       N_("open (edit) a function package on startup"), "FUNCPKG" },
-#endif
     { "english", 'e', 0, G_OPTION_ARG_NONE, &opteng, 
       N_("force use of English"), NULL },
     { "basque", 'q', 0, G_OPTION_ARG_NONE, &optbasque, 
@@ -424,6 +422,30 @@ static int have_data (void)
     return dataset != NULL && dataset->v > 0;
 }
 
+#ifdef OS_OSX
+
+/* don't barf on receiving "-psn_XXX" when
+   called by Mac launch services
+*/
+
+static void strip_psn_arg (int *argc, char ***argv)
+{
+    int i, j;
+
+    for (i=1; i<*argc; i++) {
+	if (!strncmp((*argv)[i], "-psn", 4)) {
+	    for (j=i; j<*argc-1; j++) {
+		(*argv)[j] = (*argv)[j+1];
+	    }
+	    (*argv)[*argc-1] = NULL;
+	    *argc -= 1;
+	    break;
+	}
+    }
+}
+
+#endif
+
 int main (int argc, char **argv)
 {
 #ifdef G_OS_WIN32
@@ -451,6 +473,10 @@ int main (int argc, char **argv)
 #if GUI_DEBUG
     fprintf(stderr, "starting gretl %s, build date %s\n", GRETL_VERSION, 
 	    BUILD_DATE);
+#endif
+
+#ifdef OS_OSX
+    strip_psn_arg(&argc, &argv);
 #endif
 
     gtk_init_with_args(&argc, &argv, _(param_msg), options, "gretl", &opterr);
