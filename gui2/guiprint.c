@@ -333,7 +333,6 @@ static void begin_text_print (GtkPrintOperation *op,
 			      GtkPrintContext *context,
 			      struct print_info *pinfo)
 {
-    PangoFontDescription *desc;
     GtkPageSetup *setup;
     gdouble x, y;
  
@@ -369,10 +368,7 @@ static void begin_text_print (GtkPrintOperation *op,
 
     pinfo->layout = gtk_print_context_create_pango_layout(context);
 
-    /* FIXME let the user choose a font? */
-    desc = pango_font_description_from_string("mono 10");
-    pango_layout_set_font_description(pinfo->layout, desc);
-    pango_font_description_free(desc);
+    pango_layout_set_font_description(pinfo->layout, fixed_font);
     pango_layout_set_width(pinfo->layout, -1);
     pango_layout_set_alignment(pinfo->layout, PANGO_ALIGN_LEFT);
 }
