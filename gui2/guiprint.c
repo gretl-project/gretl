@@ -86,7 +86,7 @@ static char *header_string (const char *fname)
 
 /* win32: print using Windows spooler */
 
-#if defined(G_OS_WIN32)
+#ifdef G_OS_WIN32
 
 void print_window_content (gchar *fullbuf, gchar *selbuf, 
 			   const char *fname,
@@ -312,9 +312,9 @@ int win32_print_graph (char *emfname)
     return !printok;
 }
 
-#elif defined(GTK_PRINTING)
+#else /* !G_OS_WIN32 */
 
-/* native GTK printing with recent GTK+ */
+/* native GTK printing */
 
 #define GRETL_PNG_TMP "gretltmp.png"
 
@@ -350,24 +350,10 @@ static void begin_text_print (GtkPrintOperation *op,
 	pinfo->y = 0;
     }
 
-#if 0  
-    /* redundant? */
-    gtk_page_setup_set_top_margin(setup, 72, GTK_UNIT_POINTS);
-    gtk_page_setup_set_bottom_margin(setup, 72, GTK_UNIT_POINTS);
-    gtk_page_setup_set_left_margin(setup, 72, GTK_UNIT_POINTS);
-    gtk_page_setup_set_right_margin(setup, 72, GTK_UNIT_POINTS);
-
-    gdouble x = gtk_print_context_get_width(context);
-    fprintf(stderr, "context width = %g\n", x);
-    x = gtk_print_context_get_height(context);
-    fprintf(stderr, "context height = %g\n", x);
-#endif
-
     pinfo->cr = gtk_print_context_get_cairo_context(context);
     cairo_set_source_rgb(pinfo->cr, 0, 0, 0);
 
     pinfo->layout = gtk_print_context_create_pango_layout(context);
-
     pango_layout_set_font_description(pinfo->layout, fixed_font);
     pango_layout_set_width(pinfo->layout, -1);
     pango_layout_set_alignment(pinfo->layout, PANGO_ALIGN_LEFT);
@@ -625,7 +611,7 @@ void gtk_print_graph (const char *fname, GtkWidget *parent)
     g_object_unref(op);
 }
 
-#endif /* GTK_PRINTING */
+#endif /* Windows vs GTK printing */
 
 void rtf_print_obs_marker (int t, const DATASET *pdinfo, PRN *prn)
 {

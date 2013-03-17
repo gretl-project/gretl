@@ -41,10 +41,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#ifndef _WIN32
-# define GTK_PRINTING
-#endif
-
 #define GNULL (gconstpointer) NULL
 
 /* fixups for GTK3 */

@@ -3671,7 +3671,7 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
     } else if (!strcmp(item_string, _("Replace full view"))) {
 	zoom_replaces_plot(plot);
     }
-#ifdef GTK_PRINTING
+#ifndef G_OS_WIN32
     else if (!strcmp(item_string, _("Print..."))) { 
 	gtk_print_graph(plot->spec->fname, plot->shell);
     }
@@ -3754,10 +3754,10 @@ static void build_plot_menu (png_plot *plot)
 	N_("All data labels"),
 	N_("Clear data labels"),
 	N_("Zoom..."),
-#if defined(GTK_PRINTING)
-	N_("Print..."),
-#elif defined(G_OS_WIN32)
+#ifdef G_OS_WIN32
 	N_("Print"),
+#else
+	N_("Print..."),
 #endif
 	N_("Display PDF"),
 	N_("OLS estimates"),
