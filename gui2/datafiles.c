@@ -1531,6 +1531,13 @@ db_window_handle_drag  (GtkWidget *widget,
 			guint time,
 			gpointer p)
 {
+#ifdef MAC_NATIVE
+    if (info == GRETL_REMOTE_DB_PTR && data != NULL) {
+	const guchar *seldata = gtk_selection_data_get_data(data);
+
+	install_file_from_server(NULL, *(void **) seldata);
+    }
+#else
     if (info == GRETL_REMOTE_DB_PTR && data != NULL) {
 	GdkAtom type = gtk_selection_data_get_data_type(data);
 	
@@ -1540,6 +1547,7 @@ db_window_handle_drag  (GtkWidget *widget,
 	    install_file_from_server(NULL, *(void **) seldata);
 	}
     }
+#endif
 }
 
 /* handle drag of pointer from remote function package window */
@@ -1554,6 +1562,13 @@ pkg_window_handle_drag  (GtkWidget *widget,
 			 guint time,
 			 gpointer p)
 {
+#ifdef MAC_NATIVE
+    if (info == GRETL_REMOTE_FNPKG_PTR && data != NULL) {
+	const guchar *seldata = gtk_selection_data_get_data(data);
+
+	install_file_from_server(NULL, *(void **) seldata);
+    }
+#else
     if (info == GRETL_REMOTE_FNPKG_PTR && data != NULL) {
 	GdkAtom type = gtk_selection_data_get_data_type(data);
 
@@ -1563,6 +1578,7 @@ pkg_window_handle_drag  (GtkWidget *widget,
 	    install_file_from_server(NULL, *(void **) seldata);
 	}
     }
+#endif
 }
 
 static void set_up_viewer_drag_target (windata_t *vwin)

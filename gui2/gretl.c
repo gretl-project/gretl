@@ -2076,11 +2076,19 @@ mdata_handle_drag  (GtkWidget *widget,
     }
 
     /* handle drag of pointer from database window */
+#ifdef MAC_NATIVE
+    if (info == GRETL_DBSERIES_PTR && data != NULL) {
+	/* GdkAtom stuff is X-specific? */
+	import_db_series(*(void **) seldata);
+	return;
+    }
+#else
     if (info == GRETL_DBSERIES_PTR && data != NULL && 
 	type == GDK_SELECTION_TYPE_INTEGER) {
 	import_db_series(*(void **) seldata);
 	return;
     }
+#endif
 
     if (info != GRETL_FILENAME) {
 	return;

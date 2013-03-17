@@ -2689,10 +2689,15 @@ void set_up_mac_look (void)
 	!strcmp(themepref, "Clearlooks")) {
 	const char *gretldir = gretl_home();
 	gchar *gtkrc;
+	FILE *fp;
 
 	gtkrc = g_strdup_printf("%s/../themes/%s/gtk-2.0/gtkrc", 
 				gretldir, themepref);
-	gtk_rc_parse(gtkrc);
+	fp = gretl_fopen(gtkrc, "r");
+	if (fp != NULL) {
+	    fclose(fp);
+	    gtk_rc_parse(gtkrc);
+	}
 	g_free(gtkrc);
     }
 }
