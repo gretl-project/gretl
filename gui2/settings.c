@@ -2694,7 +2694,7 @@ void set_up_mac_look (void)
 
 	fprintf(stderr, "rpath = '%s'\n", rpath);
 
-	if (bpath != NULL) {
+	if (rpath != NULL) {
 	    gtkrc = g_strdup_printf("%s/share/themes/%s/gtk-2.0/gtkrc", 
 				    rpath, themepref);
 	    gtk_rc_parse(gtkrc);
