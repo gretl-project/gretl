@@ -333,6 +333,8 @@ static void begin_text_print (GtkPrintOperation *op,
 			      GtkPrintContext *context,
 			      struct print_info *pinfo)
 {
+    PangoFontDescription *fdesc;
+    char *fstring;
     GtkPageSetup *setup;
     gdouble x, y;
  
@@ -353,10 +355,19 @@ static void begin_text_print (GtkPrintOperation *op,
     pinfo->cr = gtk_print_context_get_cairo_context(context);
     cairo_set_source_rgb(pinfo->cr, 0, 0, 0);
 
+    /* for printing purposes we'll respect the user's choice
+       of monospaced font, but coerce the size to 10-point
+    */
+    fstring = pango_font_description_to_string(fixed_font);
+    fdesc = pango_font_description_from_string(fstring);
+    free(fstring);
+    pango_font_description_set_size(fdesc, 10 * PANGO_SCALE);
+
     pinfo->layout = gtk_print_context_create_pango_layout(context);
-    pango_layout_set_font_description(pinfo->layout, fixed_font);
+    pango_layout_set_font_description(pinfo->layout, fdesc);
     pango_layout_set_width(pinfo->layout, -1);
     pango_layout_set_alignment(pinfo->layout, PANGO_ALIGN_LEFT);
+    pango_font_description_free(fdesc);
 }
 
 static void
