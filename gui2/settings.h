@@ -15,6 +15,10 @@ int get_tramo_ok (void);
 int get_x12a_ok (void);
 #endif
 
+#if defined(MAC_NATIVE) && defined(PKGBUILD)
+void set_up_mac_look (void);
+#endif
+
 void set_gretl_startdir (void);
 
 int using_hc_by_default (void);

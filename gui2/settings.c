@@ -58,6 +58,10 @@
 # endif
 #endif
 
+#if defined(MAC_NATIVE) && defined(PKGBUILD)
+# define THEMEPREF
+#endif
+
 static char rcfile[FILENAME_MAX];
 static char http_proxy[128];
 static int use_proxy;
@@ -110,6 +114,10 @@ static double graph_scale = 1.0;
 
 #ifdef G_OS_WIN32
 extern int use_wimp;
+#endif
+
+#ifdef THEMEPREF
+static char themepref[12];
 #endif
 
 #if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
@@ -169,6 +177,10 @@ RCVAR rc_vars[] = {
 #ifdef G_OS_WIN32 	 
     { "wimp", N_("Emulate Windows look"), NULL, &use_wimp, 	 
       BOOLSET | RESTART, 0, TAB_MAIN, NULL }, 	 
+#endif
+#ifdef THEMEPREF
+    { "themepref", N_("Theme preference"), NULL, themepref, 
+      LISTSET | RESTART, 12, TAB_MAIN, NULL },    
 #endif
 #if !defined(G_OS_WIN32) && !defined(OS_OSX)
     { "browser", N_("Web browser"), NULL, Browser, 
@@ -1101,7 +1113,18 @@ static const char **get_list_setting_strings (void *var, int *n)
     } else if (var == hc_garch) {
 	strs = garch_strs;
 	*n = sizeof garch_strs / sizeof garch_strs[0];
+    } 
+
+#ifdef THEMEPREF
+    else if (var == themepref) {
+	static const char *theme_strs[] = {
+	    "Lion-like", "Clearlooks", "Plain"
+	};	
+
+	strs = theme_strs;
+	*n = sizeof theme_strs / sizeof theme_strs[0];
     }
+#endif
 
     return strs;
 }
@@ -2657,3 +2680,28 @@ void working_dir_dialog (void)
 
     gtk_widget_show_all(dialog);
 }
+
+#ifdef THEMEPREF
+
+#include <gtkmacintegration/gtkosxapplication.h>
+
+void set_up_mac_look (void)
+{
+    if (!strcmp(themepref, "Lion-like") ||
+	!strcmp(themepref, "Clearlooks")) {
+	gchar *rpath = gtk_osx_application_get_resource_path();
+	gchar *gtkrc;
+
+	fprintf(stderr, "rpath = '%s'\n", rpath);
+
+	if (bpath != NULL) {
+	    gtkrc = g_strdup_printf("%s/share/themes/%s/gtk-2.0/gtkrc", 
+				    rpath, themepref);
+	    gtk_rc_parse(gtkrc);
+	    g_free(gtkrc);
+	    g_free(rpath);
+	}
+    }
+}
+
+#endif

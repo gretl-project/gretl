@@ -1196,6 +1196,8 @@ mainwin_config (GtkWidget *w, GdkEventConfigure *event, gpointer p)
     return FALSE;
 }
 
+
+
 /* scale up the main window if it seems to be too tiny in relation to
    the screen dimensions
 */
@@ -1260,6 +1262,10 @@ static void make_main_window (void)
 
 #ifdef G_OS_WIN32
     set_up_windows_look();
+#endif
+
+#if defined(MAC_NATIVE) && defined(PKGBUILD)
+    set_up_mac_look();
 #endif
 
     g_signal_connect(G_OBJECT(mdata->main), "configure-event",
