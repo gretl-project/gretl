@@ -117,7 +117,7 @@ extern int use_wimp;
 #endif
 
 #ifdef THEMEPREF
-static char themepref[12];
+static char themepref[12] = "Lion-like";
 #endif
 
 #if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
