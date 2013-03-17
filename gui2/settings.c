@@ -2683,24 +2683,17 @@ void working_dir_dialog (void)
 
 #ifdef THEMEPREF
 
-#include <gtkmacintegration/gtkosxapplication.h>
-
 void set_up_mac_look (void)
 {
     if (!strcmp(themepref, "Lion-like") ||
 	!strcmp(themepref, "Clearlooks")) {
-	gchar *rpath = gtk_osx_application_get_resource_path();
+	const char *gretldir = gretl_home();
 	gchar *gtkrc;
 
-	fprintf(stderr, "rpath = '%s'\n", rpath);
-
-	if (rpath != NULL) {
-	    gtkrc = g_strdup_printf("%s/share/themes/%s/gtk-2.0/gtkrc", 
-				    rpath, themepref);
-	    gtk_rc_parse(gtkrc);
-	    g_free(gtkrc);
-	    g_free(rpath);
-	}
+	gtkrc = g_strdup_printf("%s/../themes/%s/gtk-2.0/gtkrc", 
+				gretldir, themepref);
+	gtk_rc_parse(gtkrc);
+	g_free(gtkrc);
     }
 }
 
