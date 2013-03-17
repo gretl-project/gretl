@@ -145,4 +145,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Building for Mac OS X? */
 #undef OS_OSX
 
+/* On Mac, using quartz GTK? */
+#undef MAC_NATIVE
+
 #endif /* CONFIG_H */

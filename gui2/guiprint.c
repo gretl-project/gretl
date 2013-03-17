@@ -334,7 +334,7 @@ static void begin_text_print (GtkPrintOperation *op,
 			      struct print_info *pinfo)
 {
     PangoFontDescription *fdesc;
-    char *fstring;
+    gchar *fstring;
     GtkPageSetup *setup;
     gdouble x, y;
  
@@ -360,8 +360,8 @@ static void begin_text_print (GtkPrintOperation *op,
     */
     fstring = pango_font_description_to_string(fixed_font);
     fdesc = pango_font_description_from_string(fstring);
-    free(fstring);
     pango_font_description_set_size(fdesc, 10 * PANGO_SCALE);
+    g_free(fstring);
 
     pinfo->layout = gtk_print_context_create_pango_layout(context);
     pango_layout_set_font_description(pinfo->layout, fdesc);
