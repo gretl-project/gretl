@@ -62,6 +62,10 @@
 # include "gretlwin32.h"
 #endif
 
+#ifdef MAC_INTEGRATION
+# include <gtkosxapplication.h>
+#endif
+
 #define GUI_DEBUG 0
 
 #if GUI_DEBUG
@@ -428,6 +432,9 @@ int main (int argc, char **argv)
 #ifdef G_OS_WIN32
     char *callname = argv[0];
 #endif
+#ifdef MAC_INTEGRATION
+    GtkosxApplication *OsxApp;
+#endif
     int ftype = 0;
     char auxname[MAXLEN];
     char filearg[MAXLEN];
@@ -457,6 +464,10 @@ int main (int argc, char **argv)
 	g_print("%s\n", opterr->message);
 	exit(EXIT_FAILURE);
     }
+
+#ifdef MAC_INTEGRATION
+    OsxApp = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
+#endif
 
 #ifdef G_OS_WIN32
     /* let's call this before doing libgretl_init */
