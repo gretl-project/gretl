@@ -2687,18 +2687,15 @@ void set_up_mac_look (void)
 {
     if (!strcmp(themepref, "Lion-like") ||
 	!strcmp(themepref, "Clearlooks")) {
-	const char *gretldir = gretl_home();
+	char *topdir = getenv("GTK_DATA_PREFIX");
 	gchar *gtkrc;
-	FILE *fp;
 
-	gtkrc = g_strdup_printf("%s/../themes/%s/gtk-2.0/gtkrc", 
-				gretldir, themepref);
-	fp = gretl_fopen(gtkrc, "r");
-	if (fp != NULL) {
-	    fclose(fp);
+	if (topdir != NULL) {
+	    gtkrc = g_strdup_printf("%s/share/themes/%s/gtk-2.0/gtkrc", 
+				    topdir, themepref);
 	    gtk_rc_parse(gtkrc);
+	    g_free(gtkrc);
 	}
-	g_free(gtkrc);
     }
 }
 
