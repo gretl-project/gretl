@@ -2825,8 +2825,9 @@ static void load_default_path (char *targ)
     } else if (targ == paths.pypath) {
 	strcpy(paths.pypath, app_paths[3]);
     } else if (targ == paths.pngfont) {
-#ifdef OS_OSX
-	/* FIXME native quartz */
+#if defined(MAC_NATIVE)
+	strcpy(targ, "Sans 13");
+#elif defined(OS_OSX)
 	strcpy(targ, "Sans 9");
 #else
 	if (chinese_locale()) {

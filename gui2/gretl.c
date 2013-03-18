@@ -171,6 +171,7 @@ char Rcommand[MAXSTR] = "RGui.exe";
 char calculator[MAXSTR] = "/Applications/Calculator.app/Contents/MacOS/Calculator";
 char latex[MAXSTR] = "pdflatex";
 char viewdvi[MAXSTR] = "xdvi";
+/* FIXME MAC_NATIVE */
 char Rcommand[MAXSTR] = "/usr/X11R6/bin/xterm -e R";
 #else
 char Browser[MAXSTR] = "mozilla";
@@ -618,6 +619,14 @@ int main (int argc, char **argv)
 
 #if GUI_DEBUG
     fprintf(stderr, "about to build GUI...\n");
+#endif
+
+#ifdef G_OS_WIN32
+    set_up_windows_look();
+#endif
+
+#if defined(MAC_NATIVE) && defined(PKGBUILD)
+    set_up_mac_look();
 #endif
 
     /* create the GUI */
@@ -1259,14 +1268,6 @@ static void make_main_window (void)
 
     mdata->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     g_object_set_data(G_OBJECT(mdata->main), "vwin", mdata);
-
-#ifdef G_OS_WIN32
-    set_up_windows_look();
-#endif
-
-#if 0 /* defined(MAC_NATIVE) && defined(PKGBUILD) */
-    set_up_mac_look();
-#endif
 
     g_signal_connect(G_OBJECT(mdata->main), "configure-event",
 		     G_CALLBACK(mainwin_config), NULL);

@@ -58,9 +58,7 @@
 # endif
 #endif
 
-/* if defined(MAC_NATIVE) && defined(PKGBUILD) */
-/* but find/patch the crash first */
-#if 0
+#if defined(MAC_NATIVE) && defined(PKGBUILD)
 # define THEMEPREF
 #endif
 
@@ -78,14 +76,18 @@ static int read_gretlrc (void);
 #endif
 
 /* font handling */
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32)
 static char fixedfontname[MAXLEN] = "Courier New 10";
+#elif defined(MAC_NATIVE)
+static char fixedfontname[MAXLEN] = "Menlo 13";
 #else
 static char fixedfontname[MAXLEN] = "Monospace 10";
 #endif
 
 #if defined(G_OS_WIN32)
 static char appfontname[MAXLEN] = "tahoma 8";
+#elif defined(MAC_NATIVE)
+static char appfontname[MAXLEN] = "Lucida Grande 13";
 #else
 static char appfontname[MAXLEN] = "Sans 10";
 #endif
@@ -119,7 +121,7 @@ extern int use_wimp;
 #endif
 
 #ifdef THEMEPREF
-static char themepref[12] = "Lion-like";
+static char themepref[12] = "Clearlooks";
 #endif
 
 #if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
@@ -1120,7 +1122,7 @@ static const char **get_list_setting_strings (void *var, int *n)
 #ifdef THEMEPREF
     else if (var == themepref) {
 	static const char *theme_strs[] = {
-	    "Lion-like", "Clearlooks", "Plain"
+	    "Clearlooks", "Lion-like", "Plain"
 	};	
 
 	strs = theme_strs;
@@ -2687,8 +2689,8 @@ void working_dir_dialog (void)
 
 void set_up_mac_look (void)
 {
-    if (!strcmp(themepref, "Lion-like") ||
-	!strcmp(themepref, "Clearlooks")) {
+    if (!strcmp(themepref, "Clearlooks") ||
+	!strcmp(themepref, "Lion-like")) {
 	char *topdir = getenv("GTK_DATA_PREFIX");
 	gchar *gtkrc;
 

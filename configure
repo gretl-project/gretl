@@ -663,6 +663,8 @@ GTKSOURCEVIEW_LIBS
 GTKSOURCEVIEW_CFLAGS
 GTKSPINNER_LIBS
 GTKSPINNER_CFLAGS
+GTKMAC_LIBS
+GTKMAC_CFLAGS
 GTK_LIBS
 GTK_CFLAGS
 GLIB_LIBS
@@ -874,6 +876,8 @@ GLIB_CFLAGS
 GLIB_LIBS
 GTK_CFLAGS
 GTK_LIBS
+GTKMAC_CFLAGS
+GTKMAC_LIBS
 GTKSPINNER_CFLAGS
 GTKSPINNER_LIBS
 GTKSOURCEVIEW_CFLAGS
@@ -1570,6 +1574,9 @@ Some influential environment variables:
   GLIB_LIBS   linker flags for GLIB, overriding pkg-config
   GTK_CFLAGS  C compiler flags for GTK, overriding pkg-config
   GTK_LIBS    linker flags for GTK, overriding pkg-config
+  GTKMAC_CFLAGS
+              C compiler flags for GTKMAC, overriding pkg-config
+  GTKMAC_LIBS linker flags for GTKMAC, overriding pkg-config
   GTKSPINNER_CFLAGS
               C compiler flags for GTKSPINNER, overriding pkg-config
   GTKSPINNER_LIBS
@@ -2704,6 +2711,7 @@ quiet_build="no"
 swap_ends="no"
 pkg_build="no"
 mac_native="no"
+have_mac_integration="no"
 gui_disabled="no"
 MAKE="make"
 XML_LIBS=
@@ -17368,6 +17376,80 @@ else
   mac_native="no"
 fi
   fi
+fi
+
+if test "$mac_native" = "yes" ; then
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKMAC" >&5
+$as_echo_n "checking for GTKMAC... " >&6; }
+
+if test -n "$GTKMAC_CFLAGS"; then
+    pkg_cv_GTKMAC_CFLAGS="$GTKMAC_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk-mac-integration >= 2.0.1\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk-mac-integration >= 2.0.1") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTKMAC_CFLAGS=`$PKG_CONFIG --cflags "gtk-mac-integration >= 2.0.1" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$GTKMAC_LIBS"; then
+    pkg_cv_GTKMAC_LIBS="$GTKMAC_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk-mac-integration >= 2.0.1\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk-mac-integration >= 2.0.1") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTKMAC_LIBS=`$PKG_CONFIG --libs "gtk-mac-integration >= 2.0.1" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        GTKMAC_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk-mac-integration >= 2.0.1" 2>&1`
+        else
+	        GTKMAC_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk-mac-integration >= 2.0.1" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$GTKMAC_PKG_ERRORS" >&5
+
+	have_mac_integration="yes"
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	have_mac_integration="yes"
+else
+	GTKMAC_CFLAGS=$pkg_cv_GTKMAC_CFLAGS
+	GTKMAC_LIBS=$pkg_cv_GTKMAC_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	have_mac_integration="no"
+fi
 fi
 
 if test "$gtk_version" = "2.0" ; then

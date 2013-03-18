@@ -66,6 +66,7 @@ quiet_build="no"
 swap_ends="no"
 pkg_build="no"
 mac_native="no"
+have_mac_integration="no"
 gui_disabled="no"
 MAKE="make"
 XML_LIBS=
@@ -596,6 +597,16 @@ if test "$darwin_build" = "yes" ; then
      mac_native="yes", 
      mac_native="no")
   fi
+fi
+
+dnl
+dnl Mac: if using Quartz GTK, require mac-integration
+dnl
+if test "$mac_native" = "yes" ; then
+    PKG_CHECK_MODULES(GTKMAC, gtk-mac-integration >= 2.0.1,
+      have_mac_integration="no",
+      have_mac_integration="yes",      
+    )
 fi
 
 dnl
