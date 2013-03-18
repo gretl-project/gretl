@@ -58,7 +58,9 @@
 # endif
 #endif
 
-#if defined(MAC_NATIVE) && defined(PKGBUILD)
+/* if defined(MAC_NATIVE) && defined(PKGBUILD) */
+/* but find/patch the crash first */
+#if 0
 # define THEMEPREF
 #endif
 
