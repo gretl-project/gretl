@@ -1264,7 +1264,7 @@ static void make_main_window (void)
     set_up_windows_look();
 #endif
 
-#if defined(MAC_NATIVE) && defined(PKGBUILD)
+#if 0 /* defined(MAC_NATIVE) && defined(PKGBUILD) */
     set_up_mac_look();
 #endif
 
