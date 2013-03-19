@@ -470,7 +470,7 @@ int main (int argc, char **argv)
 
 #ifdef MAC_INTEGRATION
     OsxApp = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
-    gtkosx_application_set_use_quartz_accelerators(OsxApp, TRUE);
+    // gtkosx_application_set_use_quartz_accelerators(OsxApp, TRUE);
 #endif
 
 #ifdef G_OS_WIN32
@@ -675,7 +675,7 @@ int main (int argc, char **argv)
 #endif
 
 #ifdef MAC_INTEGRATION
-    gtkosx_application_ready(OsxApp);
+    // gtkosx_application_ready(OsxApp);
     gchar *bid = gtkosx_application_get_bundle_id();
     fprintf(stderr, "bundle id = '%s'\n", bid);
     g_free(bid);
