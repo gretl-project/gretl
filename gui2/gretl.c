@@ -436,7 +436,7 @@ int main (int argc, char **argv)
     char *callname = argv[0];
 #endif
 #ifdef MAC_INTEGRATION
-    GtkosxApplication *OsxApp;
+    GtkosxApplication *App;
 #endif
     int ftype = 0;
     char auxname[MAXLEN];
@@ -469,8 +469,8 @@ int main (int argc, char **argv)
     }
 
 #ifdef MAC_INTEGRATION
-    OsxApp = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
-    // gtkosx_application_set_use_quartz_accelerators(OsxApp, TRUE);
+    App = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
+    // gtkosx_application_set_use_quartz_accelerators(App, TRUE);
 #endif
 
 #ifdef G_OS_WIN32
@@ -675,13 +675,11 @@ int main (int argc, char **argv)
 #endif
 
 #ifdef MAC_INTEGRATION
-    // gtkosx_application_ready(OsxApp);
+    // gtkosx_application_ready(App);
     gchar *bid = gtkosx_application_get_bundle_id();
     fprintf(stderr, "bundle id = '%s'\n", bid);
     g_free(bid);
 #endif
-
-    /* FIXME run init script, if found? */
 
     if (have_data()) {
 	register_startup_data(tryfile);
