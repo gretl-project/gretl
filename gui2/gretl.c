@@ -809,6 +809,22 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	return TRUE;
     }
 
+#ifdef MAC_NATIVE
+    if (Ctrl && k == GDK_F2) {
+	/* Ctrl-F2 for menubar */
+	GtkWidget *menu;
+
+	menu = gtk_ui_manager_get_widget(mdata->ui, "/menubar");
+	if (menu != NULL) {
+	    gtk_menu_shell_select_first(GTK_MENU_SHELL(menu), TRUE);
+	}
+	return TRUE;
+    } else if (cmd_key(event) && k == GDK_v) {
+	mdata_handle_paste();
+	return TRUE;
+    }	
+#endif  
+
     if (k == GDK_h || k == GDK_F1) {
 	/* invoke help */
 	plain_text_cmdref(NULL);

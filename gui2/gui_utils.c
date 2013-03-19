@@ -652,6 +652,13 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	upkey = gdk_keyval_to_upper(event->keyval);
     }
 
+#ifdef MAC_NATIVE
+    if (!Ctrl && cmd_key(event)) {
+	/* treat Command as Ctrl */
+	Ctrl = 1;
+    }
+#endif
+
     if (Ctrl) {
 	if (upkey == GDK_F) {
 	    text_find(NULL, vwin);

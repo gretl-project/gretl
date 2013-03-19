@@ -677,6 +677,15 @@ static gint console_key_handler (GtkWidget *cview, GdkEventKey *event,
     GtkTextMark *mark;
     gint ctrl = 0;
 
+#ifdef MAC_NATIVE
+    if (cmd_key(event)) {
+	if (upkey == GDK_C || upkey == GDK_X) {
+	    /* allow regular copy/cut behavior */
+	    return FALSE;
+	}
+    }	
+#endif
+
     if (event->state & GDK_CONTROL_MASK) {
 	if (keyval == GDK_Control_L || keyval == GDK_Control_R) {
 	    return FALSE;

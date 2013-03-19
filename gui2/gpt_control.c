@@ -4180,8 +4180,10 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
     switch (k) {
     case GDK_q:
     case GDK_Q:
+#ifdef MAC_NATIVE
     case GDK_w:
     case GDK_W:
+#endif
 	gtk_widget_destroy(w);
 	break;
     case GDK_s:
