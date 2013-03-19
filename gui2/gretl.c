@@ -413,6 +413,28 @@ static void usr1_handler (int signal)
 
 #endif
 
+#ifdef MAC_INTEGRATION
+
+static gboolean app_should_quit_cb (GtkosxApplication *App, gpointer p)
+{
+    return exit_check();
+}
+
+static void app_will_quit_cb (GtkosxApplication *App, gpointer p)
+{
+    gtk_main_quit();
+}
+
+static void install_mac_signals (GtkosxApplication *App)
+{
+    g_signal_connect(App, "NSApplicationBlockTermination",
+		     G_CALLBACK(app_should_quit_cb), NULL);
+    g_signal_connect(App, "NSApplicationWillTerminate",
+		     G_CALLBACK(app_will_quit_cb), NULL);
+}
+
+#endif
+
 /* callback from within potentially lengthy libgretl
    operations: try to avoid having the GUI become
    totally unresponsive
@@ -462,6 +484,8 @@ int main (int argc, char **argv)
 	    BUILD_DATE);
 #endif
 
+    gdk_threads_init();
+
     gtk_init_with_args(&argc, &argv, _(param_msg), options, "gretl", &opterr);
     if (opterr != NULL) {
 	g_print("%s\n", opterr->message);
@@ -470,7 +494,7 @@ int main (int argc, char **argv)
 
 #ifdef MAC_INTEGRATION
     App = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
-    // gtkosx_application_set_use_quartz_accelerators(App, TRUE);
+    install_mac_signals(App);
 #endif
 
 #ifdef G_OS_WIN32
@@ -674,13 +698,6 @@ int main (int argc, char **argv)
     fprintf(stderr, "done setting GUI state\n");
 #endif
 
-#ifdef MAC_INTEGRATION
-    // gtkosx_application_ready(App);
-    gchar *bid = gtkosx_application_get_bundle_id();
-    fprintf(stderr, "bundle id = '%s'\n", bid);
-    g_free(bid);
-#endif
-
     if (have_data()) {
 	register_startup_data(tryfile);
 	maybe_display_string_table();
@@ -727,6 +744,16 @@ int main (int argc, char **argv)
     } else if (optpkg != NULL) {
 	edit_package_at_startup(auxname);
     }
+
+#ifdef MAC_INTEGRATION
+# if 0
+    GtkWidget *menubar = gtk_ui_manager_get_widget(mdata->ui, "/menubar");
+    gtk_widget_hide(menubar);
+    gtkosx_application_set_menu_bar(App, GTK_MENU_SHELL(menubar));
+# endif
+    gtkosx_application_set_use_quartz_accelerators(App, TRUE); /* ?? */
+    gtkosx_application_ready(App);
+#endif
 
 #if GUI_DEBUG
     fprintf(stderr, "calling gtk_main()\n");
@@ -820,7 +847,11 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
     } else if (cmd_key(event) && k == GDK_v) {
 	mdata_handle_paste();
 	return TRUE;
-    }	
+    } else if (cmd_key(event) && k == GDK_q) {
+	/* command-Q = quit */
+	menu_exit_check();
+	return TRUE;
+    }
 #endif  
 
     if (k == GDK_h || k == GDK_F1) {

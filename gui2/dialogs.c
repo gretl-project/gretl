@@ -222,7 +222,7 @@ static int save_session_prompt (int gui_session)
    to block the exit we return TRUE.
 */
 
-gboolean exit_check (void) 
+gboolean exit_check (void)
 {
     int resp, datamod, status = 0;
     int err = 0;
