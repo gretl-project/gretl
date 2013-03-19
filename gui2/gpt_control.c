@@ -5021,6 +5021,7 @@ static int get_terminal (char *s)
     }
 
     errbox(_("Couldn't find a usable terminal program"));
+
     return 1;
 }
 
@@ -5028,7 +5029,7 @@ static int get_terminal (char *s)
 
 void launch_gnuplot_interactive (const char *plotfile)
 {
-# ifdef G_OS_WIN32
+#if defined(G_OS_WIN32)
     gchar *gpline;
 
     if (plotfile == NULL) {
@@ -5040,7 +5041,20 @@ void launch_gnuplot_interactive (const char *plotfile)
     }	
     create_child_process(gpline);
     g_free(gpline);
-# else 
+#elif defined(MAC_NATIVE)
+    gchar *gpline;
+
+    if (plotfile == NULL) {
+	gpline = g_strdup_printf("open -a Terminal.app \"%s\""
+				 gretl_gnuplot_path());
+    } else {
+	gpline = g_strdup_printf("open -a Terminal.app \"%s\" \"%s\"",
+				 gretl_gnuplot_path(),
+				 plotfile());
+    }	
+    system(gpline);
+    g_free(gpline);    
+#else 
     char term[16];
     char fname[MAXLEN];
     int err = 0;
@@ -5123,7 +5137,7 @@ void launch_gnuplot_interactive (const char *plotfile)
 	    g_error_free(error);
 	} 
     }
-#endif /* !G_OS_WIN32 */
+#endif /* !(G_OS_WIN32 or MAC_NATIVE) */
 }
 
 

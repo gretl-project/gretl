@@ -175,8 +175,11 @@ char Rcommand[MAXSTR] = "RGui.exe";
 char calculator[MAXSTR] = "/Applications/Calculator.app/Contents/MacOS/Calculator";
 char latex[MAXSTR] = "pdflatex";
 char viewdvi[MAXSTR] = "xdvi";
-/* FIXME MAC_NATIVE */
+# ifdef MAC_NATIVE
+char Rcommand[MAXSTR] = "/Applications/R.app/Contents/MacOS/R";
+# else
 char Rcommand[MAXSTR] = "/usr/X11R6/bin/xterm -e R";
+# endif
 #else
 char Browser[MAXSTR] = "mozilla";
 char calculator[MAXSTR] = "xcalc";
@@ -432,7 +435,7 @@ int main (int argc, char **argv)
 #ifdef G_OS_WIN32
     char *callname = argv[0];
 #endif
-#ifdef MAC_INTEGRATION
+#ifdef MAC_NATIVE
     GtkosxApplication *OsxApp;
 #endif
     int ftype = 0;
@@ -465,8 +468,9 @@ int main (int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
 
-#ifdef MAC_INTEGRATION
+#ifdef MAC_NATIVE
     OsxApp = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
+    gtkosx_application_set_use_quartz_accelerators(OsxApp, TRUE);
 #endif
 
 #ifdef G_OS_WIN32
