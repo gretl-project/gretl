@@ -62,7 +62,7 @@
 # include "gretlwin32.h"
 #endif
 
-#ifdef MAC_INTEGRATION
+#ifdef MAC_NATIVE
 # include <gtkosxapplication.h>
 #endif
 
@@ -672,6 +672,13 @@ int main (int argc, char **argv)
 
 #if GUI_DEBUG
     fprintf(stderr, "done setting GUI state\n");
+#endif
+
+#ifdef MAC_NATIVE
+    gtkosx_application_ready(OsxApp);
+    gchar *bid = gtkosx_application_get_bundle_id(OsxApp);
+    fprintf(stderr, "bundle id = '%s'\n", bid);
+    g_free(bid);
 #endif
 
     /* FIXME run init script, if found? */

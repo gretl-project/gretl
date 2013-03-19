@@ -5045,12 +5045,11 @@ void launch_gnuplot_interactive (const char *plotfile)
     gchar *gpline;
 
     if (plotfile == NULL) {
-	gpline = g_strdup_printf("open -a Terminal.app \"%s\""
+	gpline = g_strdup_printf("open -a Terminal.app \"%s\"",
 				 gretl_gnuplot_path());
     } else {
 	gpline = g_strdup_printf("open -a Terminal.app \"%s\" \"%s\"",
-				 gretl_gnuplot_path(),
-				 plotfile());
+				 gretl_gnuplot_path(), plotfile);
     }	
     system(gpline);
     g_free(gpline);    
