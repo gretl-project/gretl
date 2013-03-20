@@ -417,7 +417,8 @@ static void usr1_handler (int signal)
 
 static gboolean app_should_quit_cb (GtkosxApplication *App, gpointer p)
 {
-    return exit_check();
+    // return exit_check();
+    return FALSE;
 }
 
 static void app_will_quit_cb (GtkosxApplication *App, gpointer p)
