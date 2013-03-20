@@ -738,7 +738,7 @@ int main (int argc, char **argv)
     }
 
 #ifdef MAC_INTEGRATION
-    populate_app_menu(App);
+    /* populate_app_menu(App); CRASH! */
     gtkosx_application_set_use_quartz_accelerators(App, FALSE); /* ? */
     gtkosx_application_ready(App);
 #endif
