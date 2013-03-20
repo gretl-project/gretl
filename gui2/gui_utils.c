@@ -2080,7 +2080,12 @@ windata_t *view_help_file (const char *filename, int role)
     } else {
 	g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
 			 G_CALLBACK(text_popup_handler), vwin);
-    }	
+    }
+
+#ifdef MAC_NATIVE
+    /* Help font too small by default */
+    text_larger(NULL, vwin);
+#endif	
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->main);

@@ -1264,8 +1264,6 @@ mainwin_config (GtkWidget *w, GdkEventConfigure *event, gpointer p)
     return FALSE;
 }
 
-
-
 /* scale up the main window if it seems to be too tiny in relation to
    the screen dimensions
 */
@@ -1725,7 +1723,7 @@ GtkActionEntry main_entries[] = {
 
 /* Given an "internal" menu path, as in gretlmain.xml (with one or
    two slash-separated components), return its user-visible
-   counterpart, translated.
+   counterpart, translated and with mnemonics stripped.
 */
 
 gchar *get_user_menu_string (const gchar *mpath)
@@ -1868,9 +1866,9 @@ static void populate_app_menu (GtkosxApplication *App)
     item = gtk_ui_manager_get_widget(mdata->ui, "/menubar/Preferences/PrefsGeneral");
     gtkosx_application_insert_app_menu_item(App, item, 0);
 
-    sep = gtk_separator_menu_item_new();
-    g_object_ref(sep);
-    gtkosx_application_insert_app_menu_item(App, sep, 1);
+    item = gtk_separator_menu_item_new();
+    g_object_ref(item);
+    gtkosx_application_insert_app_menu_item(App, item, 1);
 
     item = gtk_ui_manager_get_widget(mdata->ui, "/menubar/File/Quit");
     gtkosx_application_insert_app_menu_item(App, item, 0);
@@ -2123,8 +2121,6 @@ void set_wm_icon (GtkWidget *w)
     if (icon != NULL) {
 	gtk_window_set_icon(GTK_WINDOW(w), icon);
 	g_object_unref(icon);
-    } else {
-	fprintf(stderr, "Couldn't create icon for gretl_xpm\n");
     }
 }
 
