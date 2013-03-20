@@ -93,6 +93,10 @@ static void mdata_select_list (void);
 static int gui_query_stop (void);
 static void mdata_handle_paste (void);
 
+#ifdef MAC_INTEGRATION
+static void populate_app_menu (GtkosxApplication *App);
+#endif
+
 GtkTargetEntry gretl_drag_targets[] = {
     { "text/uri-list",  0, GRETL_FILENAME },
     { "db_series_ptr",  GTK_TARGET_SAME_APP, GRETL_DBSERIES_PTR },
@@ -485,7 +489,9 @@ int main (int argc, char **argv)
 	    BUILD_DATE);
 #endif
 
+#if 0 /* MAC_INTEGRATION? */
     gdk_threads_init();
+#endif
 
     gtk_init_with_args(&argc, &argv, _(param_msg), options, "gretl", &opterr);
     if (opterr != NULL) {
@@ -661,11 +667,9 @@ int main (int argc, char **argv)
     fprintf(stderr, "about to build GUI...\n");
 #endif
 
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32)
     set_up_windows_look();
-#endif
-
-#if defined(MAC_NATIVE) && defined(PKGBUILD)
+#elif defined(MAC_NATIVE) && defined(PKGBUILD)
     set_up_mac_look();
 #endif
 
@@ -724,19 +728,6 @@ int main (int argc, char **argv)
 	silent_update_query(); 
     }
 
-#if 0
-    fprintf(stderr, " at last step");
-    if (optdb != NULL) {
-	fprintf(stderr, ": optdb != NULL\n");
-    } else if (optwebdb != NULL) {
-	fprintf(stderr, ": optwebdb != NULL\n");
-    } else if (optpkg != NULL) {
-	fprintf(stderr, ": optpkg != NULL\n");
-    } else {
-	fputc('\n', stderr);
-    }
-#endif
-
     /* try opening specified database or package */
     if (optdb != NULL) {
 	open_named_db_index(auxname);
@@ -747,12 +738,8 @@ int main (int argc, char **argv)
     }
 
 #ifdef MAC_INTEGRATION
-# if 0
-    GtkWidget *menubar = gtk_ui_manager_get_widget(mdata->ui, "/menubar");
-    gtk_widget_hide(menubar);
-    gtkosx_application_set_menu_bar(App, GTK_MENU_SHELL(menubar));
-# endif
-    gtkosx_application_set_use_quartz_accelerators(App, TRUE); /* ?? */
+    populate_app_menu(App);
+    gtkosx_application_set_use_quartz_accelerators(App, FALSE); /* ? */
     gtkosx_application_ready(App);
 #endif
 
@@ -777,6 +764,10 @@ int main (int argc, char **argv)
 
     destroy_file_collections();
     free_command_stack();
+
+#ifdef MAC_INTEGRATION
+    g_object_unref(App);
+#endif
 
     return EXIT_SUCCESS;
 }
@@ -1861,6 +1852,31 @@ static gchar *get_main_ui (void)
 
     return err ? NULL : main_ui;
 }
+
+#ifdef MAC_INTEGRATION
+
+static void populate_app_menu (GtkosxApplication *App)
+{
+    GtkWidget *item;
+
+    /* 
+    gtkosx_application_set_menu_bar(theApp, GTK_MENU_SHELL(mbar));
+    */
+    item = gtk_ui_manager_get_widget(mdata->ui, "/menubar/Help/About");
+    gtkosx_application_insert_app_menu_item(App, item, 0);
+
+    item = gtk_ui_manager_get_widget(mdata->ui, "/menubar/Preferences/PrefsGeneral");
+    gtkosx_application_insert_app_menu_item(App, item, 0);
+
+    sep = gtk_separator_menu_item_new();
+    g_object_ref(sep);
+    gtkosx_application_insert_app_menu_item(App, sep, 1);
+
+    item = gtk_ui_manager_get_widget(mdata->ui, "/menubar/File/Quit");
+    gtkosx_application_insert_app_menu_item(App, item, 0);
+}
+
+#endif
 
 static GtkWidget *make_main_menu (void)
 {
