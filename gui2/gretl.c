@@ -94,7 +94,8 @@ static int gui_query_stop (void);
 static void mdata_handle_paste (void);
 
 #ifdef MAC_INTEGRATION
-static void populate_app_menu (GtkosxApplication *App);
+static GtkUIManager *add_mac_menu (void);
+static void finish_mac_ui (GtkUIManager *mgr);
 #endif
 
 GtkTargetEntry gretl_drag_targets[] = {
@@ -489,10 +490,6 @@ int main (int argc, char **argv)
 	    BUILD_DATE);
 #endif
 
-#if 0 /* MAC_INTEGRATION? */
-    gdk_threads_init();
-#endif
-
     gtk_init_with_args(&argc, &argv, _(param_msg), options, "gretl", &opterr);
     if (opterr != NULL) {
 	g_print("%s\n", opterr->message);
@@ -736,12 +733,6 @@ int main (int argc, char **argv)
     } else if (optpkg != NULL) {
 	edit_package_at_startup(auxname);
     }
-
-#ifdef MAC_INTEGRATION
-    /* populate_app_menu(App); CRASH! */
-    gtkosx_application_set_use_quartz_accelerators(App, FALSE); /* ? */
-    gtkosx_application_ready(App);
-#endif
 
 #if GUI_DEBUG
     fprintf(stderr, "calling gtk_main()\n");
@@ -1294,6 +1285,9 @@ static void set_main_window_scale (void)
 
 static void make_main_window (void) 
 {
+#ifdef MAC_INTEGRATION
+    GtkUIManager *mac_mgr;
+#endif
     GtkWidget *main_vbox;
     GtkWidget *box, *dlabel;
     GtkWidget *align;
@@ -1353,6 +1347,10 @@ static void make_main_window (void)
 
     /* put the main menu bar in place */
     gtk_box_pack_start(GTK_BOX(main_vbox), menu, FALSE, TRUE, 0);
+
+#ifdef MAC_INTEGRATION
+    mac_mgr = add_mac_menu();
+#endif
 
     /* label for name of datafile */
     dlabel = gtk_label_new(_(" No datafile loaded ")); 
@@ -1422,6 +1420,10 @@ static void make_main_window (void)
 #endif
 
     gtk_widget_show_all(mdata->main);
+
+#ifdef MAC_INTEGRATION
+    finish_mac_ui(mac_mgr);
+#endif
 
 #if GUI_DEBUG
     fprintf(stderr, "  gtk_widget_show_all done\n");
@@ -1853,28 +1855,64 @@ static gchar *get_main_ui (void)
 
 #ifdef MAC_INTEGRATION
 
-static void populate_app_menu (GtkosxApplication *App)
+static GtkActionEntry mac_entries[] = {
+    {"HelpMenuAction", NULL, "_Help", NULL, NULL, NULL },
+    {"AboutAction", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL,
+     G_CALLBACK(about_dialog)},
+};
+
+const gchar *mac_ui = 
+    "<ui>"
+    "  <menubar>"
+    "    <menu name='Help' action='HelpMenuAction'>"
+    "      <menuitem action='About' action='AboutAction'/>"
+    "    </menu>"
+    "  </menubar>"
+    "</ui>";
+
+static GtkUIManager *add_mac_menu (void)
 {
-    GtkWidget *item;
+    GtkUIManager *mgr;
+    GtkActionGroup *actions;
+    GtkWidget *menu;
+    GtkAccelGroup *accel_group;
+    GError *error = NULL;
 
-    /* 
-    gtkosx_application_set_menu_bar(theApp, GTK_MENU_SHELL(mbar));
-    */
-    item = gtk_ui_manager_get_widget(mdata->ui, "/menubar/Help/About");
-    gtkosx_application_insert_app_menu_item(App, item, 0);
+    mgr = gtk_ui_manager_new();
+    actions = gtk_action_group_new("MacActions");
+    gtk_action_group_set_translation_domain(actions, "gretl");
+    gtk_action_group_add_actions(actions, mac_entries, 
+				 G_N_ELEMENTS(mac_entries), mdata);
+    gtk_ui_manager_insert_action_group(mgr, actions, 0);
+    g_object_unref(actions);
 
-    item = gtk_ui_manager_get_widget(mdata->ui, "/menubar/Preferences/PrefsGeneral");
-    gtkosx_application_insert_app_menu_item(App, item, 0);
+    if (!gtk_ui_manager_add_ui_from_string(mgr, mac_ui, -1, &error)) {
+	g_message("building mac menu failed: %s", error->message);
+	g_error_free(error);
+    }
 
-    item = gtk_separator_menu_item_new();
-    g_object_ref(item);
-    gtkosx_application_insert_app_menu_item(App, item, 1);
+    accel_group = gtk_ui_manager_get_accel_group(mgr);
+    gtk_window_add_accel_group(GTK_WINDOW(mdata->main), accel_group);
 
-    item = gtk_ui_manager_get_widget(mdata->ui, "/menubar/File/Quit");
-    gtkosx_application_insert_app_menu_item(App, item, 0);
+    menu = gtk_ui_manager_get_widget(mgr, "/menubar");
+    g_object_ref_sink(menu);
+
+    return mgr;
 }
 
-#endif
+static void finish_mac_ui (GtkUIManager *mgr)
+{
+    GtkosxApplication *App;
+    GtkWidget *menu;
+
+    App = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
+    menu = gtk_ui_manager_get_widget(mgr, "/menubar");
+    gtkosx_application_set_menu_bar(App, GTK_MENU_SHELL(menu));
+    gtkosx_application_set_use_quartz_accelerators(App, FALSE); /* ? */
+    gtkosx_application_ready(App);
+}
+
+#endif /* MAC_INTEGRATION */
 
 static GtkWidget *make_main_menu (void)
 {

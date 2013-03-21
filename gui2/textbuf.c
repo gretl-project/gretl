@@ -763,24 +763,33 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     }	
 }
 
-static void text_change_size (windata_t *vwin, int larger)
+static int text_change_size (windata_t *vwin, int delta)
 {
     static PangoFontDescription *hpf;
-    static gint fsize;
+    static int fsize0;
+    int fsize;
 
     if (hpf == NULL) {
 	hpf = pango_font_description_copy(fixed_font);
-	fsize = pango_font_description_get_size(hpf) / PANGO_SCALE;
+	fsize0 = pango_font_description_get_size(hpf) / PANGO_SCALE;
     }
 
-    if (larger) {
-	fsize++;
-    } else {
-	fsize--;
-    } 
+    if (vwin == NULL) {
+	return fsize0;
+    }
+
+    fsize = widget_get_int(vwin->text, "fsize");
+    if (fsize == 0) {
+	fsize = fsize0;
+    }
+
+    fsize += delta;
 
     pango_font_description_set_size(hpf, fsize * PANGO_SCALE);
     gtk_widget_modify_font(vwin->text, hpf);
+    widget_set_int(vwin->text, "fsize", fsize);
+
+    return fsize;
 }
 
 void text_larger (GtkWidget *w, gpointer data)
@@ -790,15 +799,24 @@ void text_larger (GtkWidget *w, gpointer data)
 
 void text_smaller (GtkWidget *w, gpointer data)
 {
-    text_change_size((windata_t *) data, 0);
+    text_change_size((windata_t *) data, -1);
 }
 
-#define helpfont "sans"
+#ifdef MAC_NATIVE
+# define helpfont "Geneva"
+#else
+# define helpfont "sans"
+#endif
 
 static GtkTextTagTable *gretl_tags_new (void)
 {
     GtkTextTagTable *table;
     GtkTextTag *tag;
+    int bigsize;
+    int smallsize;
+
+    bigsize = 15 * PANGO_SCALE;
+    smallsize = 8 * PANGO_SCALE;
 
     table = gtk_text_tag_table_new(); 
 
@@ -814,11 +832,11 @@ static GtkTextTagTable *gretl_tags_new (void)
     g_object_set(tag, "justification", GTK_JUSTIFY_CENTER,
 		 "pixels_above_lines", 15,
 		 "family", helpfont,
-		 "size", 15 * PANGO_SCALE, NULL);
+		 "size", bigsize, NULL);
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("heading");
-    g_object_set(tag, "family", helpfont, 
+    g_object_set(tag, "family", helpfont,
 		 "weight", PANGO_WEIGHT_BOLD,
 		 NULL);
     gtk_text_tag_table_add(table, tag);
@@ -836,25 +854,26 @@ static GtkTextTagTable *gretl_tags_new (void)
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("superscript");
-    g_object_set(tag, "style", PANGO_STYLE_NORMAL,
+    g_object_set(tag, "family", helpfont,
+		 "style", PANGO_STYLE_NORMAL,
 		 "rise", 4 * PANGO_SCALE,
-		 "size", 8 * PANGO_SCALE,
+		 "size", smallsize,
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("subscript");
-    g_object_set(tag, "family", "sans",
+    g_object_set(tag, "family", helpfont,
 		 "style", PANGO_STYLE_ITALIC,
 		 "rise", -3 * PANGO_SCALE,
-		 "size", 8 * PANGO_SCALE,
+		 "size", smallsize,
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("subscript-numeral");
-    g_object_set(tag, "family", "sans",
+    g_object_set(tag, "family", helpfont,
 		 "style", PANGO_STYLE_NORMAL,
 		 "rise", -3 * PANGO_SCALE,
-		 "size", 8 * PANGO_SCALE,
+		 "size", smallsize,
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 		 
@@ -863,7 +882,7 @@ static GtkTextTagTable *gretl_tags_new (void)
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("optflag");
-    g_object_set(tag, "family", "monospace", 
+    g_object_set(tag, "family", "monospace",
 		 "foreground", "#396d60", NULL);
     gtk_text_tag_table_add(table, tag);
 
@@ -1112,7 +1131,7 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
     if (tag == NULL) {
 	if (page == GUIDE_PAGE || page == BIB_PAGE) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
-					     "family", "sans", NULL);
+					     "family", helpfont, NULL);
 	} else if (page == SCRIPT_PAGE || page == EXT_PAGE) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
 					     "family", "monospace", NULL);
@@ -1156,7 +1175,7 @@ static void insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	/* the required tag is not already in the table */
 	if (gfr) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
-					     "family", "sans", NULL);
+					     "family", helpfont, NULL);
 	} else if (indent != NULL) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
 					     "left_margin", 30, NULL);
@@ -1428,7 +1447,6 @@ cmdref_motion_notify (GtkWidget *w, GdkEventMotion *event)
     gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_WIDGET,
 					  event->x, event->y, &x, &y);
     set_cursor_if_appropriate(view, x, y);
-    // widget_get_pointer_mask(w); /* ?? */
 
     return FALSE;
 }
