@@ -505,6 +505,69 @@ static int auto_adjust_order (int *list, int order_max,
     return k;
 }
 
+#if 0 /* work in progress */
+
+static double get_MAIC (model *pmod, int k
+			const DATASET *dset)
+{
+    double b0, ttk, s2k = 0;
+    double sum_y2 = 0;
+    int T = pmod->nobs;
+    int pos, t;
+
+    pos = pos = k + pmod->ifc;
+    b0 = pmod->coeff[pos];
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	s2k += pmod->uhat[t] * pmod->uhat[t];
+	sum_y2 += 
+    }
+    s2k /= pmod->nobs;
+
+    ttk = b0 * b0 * sum_y2 / s2k;
+
+    return log(s2k) + 2 * (ttk + k)/T;
+}
+
+static int ng_perron_adjust_order (int *list, int order_max,
+				   DATASET *dset, int *err,
+				   PRN *prn)
+{
+    MODEL kmod;
+    double MAIC;
+    int k;
+
+    for (k=order_max; k>0; k--) {
+	kmod = lsq(list, dset, OLS, OPT_A);
+	if (!kmod.errcode && kmod.dfd == 0) {
+	    kmod.errcode = E_DF;
+	}
+	if (kmod.errcode) {
+	    fprintf(stderr, "auto_adjust_order: k = %d, err = %d\n", k,
+		    kmod.errcode);
+	    *err = kmod.errcode;
+	    clear_model(&kmod);
+	    k = -1;
+	    break;
+	}
+#if ADF_DEBUG
+	printmodel(&kmod, dset, OPT_NONE, prn);
+#endif
+	MAIC = get_MAIC(&kmod, k, dset);
+	clear_model(&kmod);
+
+	if (pval > 0.10) {
+	    gretl_list_delete_at_pos(list, k + 2);
+	} else {
+	    break;
+	}
+    }
+
+    return k;
+}
+
+#endif
+
 /* targ must be big enough to accept all of src! */
 
 static void copy_list_values (int *targ, const int *src)
