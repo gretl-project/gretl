@@ -460,7 +460,7 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C,
 		vi = pmod->list[i+2];
 		gretl_model_set_param_name(pmod, i, dset->varname[vi]);
 	    }
-	    gretl_model_set_param_name(pmod, k, "ln(sigma_u^2)");
+	    gretl_model_set_param_name(pmod, k, "lnsigma2");
 	}
     }
 
@@ -514,15 +514,17 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
     MODEL mod;
-    int err;
+    int err = 0;
 
-    mod = binary_probit(list, dset, OPT_A | OPT_P | OPT_X, prn);
+    mod = binary_probit(list, dset, OPT_P, prn);
+
     if ((err = mod.errcode) != 0) {
 	fprintf(stderr, "reprobit_estimate: error %d in "
 		"initial probit\n", err);
     }    
 
     if (!err) {
+
 	/* do the actual reprobit stuff */
 	reprob_container *C;
 	double *theta = NULL;
@@ -538,7 +540,18 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	    }
 	}
 
-	C = rep_container_new(list);
+	/* in case some explanatory variables were dropped */
+
+	int *newlist = NULL;
+	int i, nxvars = mod.ncoeff;
+	newlist = gretl_list_new(nxvars + 1);
+	newlist[1] = list[1];
+	for (i=2; i<=nxvars+1; i++) {
+	    newlist[i] = mod.list[i];
+	}
+
+	C = rep_container_new(newlist);
+
 	if (C == NULL) {
 	    err = E_ALLOC;
 	} else {

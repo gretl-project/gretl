@@ -572,7 +572,7 @@ static void print_probit_rho (const MODEL *pmod, PRN *prn)
 
     if (re_probit_model(pmod)) {
 	if (tex_format(prn)) {
-	    pprintf(prn, "$\\hat{\\sigma_u}$ = %.5f\n", pmod->sigma);
+	    pprintf(prn, "$\\hat{\\sigma}_u$ = %.5f\n", pmod->sigma);
 	} else {
 	    pprintf(prn, "sigma_u = %g\n", pmod->sigma);
 	}
