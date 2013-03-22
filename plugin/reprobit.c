@@ -478,15 +478,15 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C,
 	return err;
     }
 
-    /* mask McFadden R^2 */
+    /* mask R-squared  */
     pmod->rsq = pmod->adjrsq = NADBL;
 
     LR = 2.0 * (C->ll - pmod->lnL);
     add_rho_LR_test(pmod, LR);
 
-    /* update the likelihood-based measures */
+    /* set the likelihood-based measures */
     pmod->lnL = C->ll;
-    mle_criteria(pmod, 1);
+    mle_criteria(pmod, 0);
 
     pmod->sigma = sigma = exp(theta[k]/2);
     pmod->rho = 1 - 1/(1 + sigma * sigma);
@@ -516,7 +516,7 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
     MODEL mod;
     int err = 0;
 
-    mod = binary_probit(list, dset, OPT_P, prn);
+    mod = binary_probit(list, dset, OPT_P | OPT_X, prn);
 
     if ((err = mod.errcode) != 0) {
 	fprintf(stderr, "reprobit_estimate: error %d in "
@@ -524,7 +524,6 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
     }    
 
     if (!err) {
-
 	/* do the actual reprobit stuff */
 	reprob_container *C;
 	double *theta = NULL;
@@ -540,24 +539,7 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	    }
 	}
 
-	/* in case some explanatory variables were dropped */
-
-	int nxvars = mod.ncoeff;
-
-	if (list[0] == nxvars + 1) {
-	    C = rep_container_new(list);
-	} else {
-	    int *newlist = NULL;
-	    int i;
-
-	    newlist = gretl_list_new(nxvars + 1);
-	    newlist[1] = list[1];
-	    for (i=2; i<=nxvars+1; i++) {
-		newlist[i] = mod.list[i];
-	    }
-
-	    C = rep_container_new(newlist);
-	}
+	C = rep_container_new(mod.list);
 
 	if (C == NULL) {
 	    err = E_ALLOC;
@@ -592,7 +574,7 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	}
 
 	rep_container_destroy(C);
-	free(theta);	
+	free(theta);
     }
 
  bailout:
