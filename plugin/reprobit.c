@@ -542,15 +542,22 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 
 	/* in case some explanatory variables were dropped */
 
-	int *newlist = NULL;
-	int i, nxvars = mod.ncoeff;
-	newlist = gretl_list_new(nxvars + 1);
-	newlist[1] = list[1];
-	for (i=2; i<=nxvars+1; i++) {
-	    newlist[i] = mod.list[i];
-	}
+	int nxvars = mod.ncoeff;
 
-	C = rep_container_new(newlist);
+	if (list[0] == nxvars + 1) {
+	    C = rep_container_new(list);
+	} else {
+	    int *newlist = NULL;
+	    int i;
+
+	    newlist = gretl_list_new(nxvars + 1);
+	    newlist[1] = list[1];
+	    for (i=2; i<=nxvars+1; i++) {
+		newlist[i] = mod.list[i];
+	    }
+
+	    C = rep_container_new(newlist);
+	}
 
 	if (C == NULL) {
 	    err = E_ALLOC;
