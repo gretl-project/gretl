@@ -2585,11 +2585,9 @@ static int binary_probit_normtest (MODEL *pmod, bin_info *bin)
     }
 
     for (t=pmod->t1, s=0; t<=pmod->t2; t++) {
-
 	if (model_missing(pmod, t)) {
 	    continue;
 	} 
-
 	et = pmod->uhat[t];
 	Xb = gretl_vector_get(bin->Xb, s);
 	for (i=0; i<k; i++) {
@@ -2599,7 +2597,6 @@ static int binary_probit_normtest (MODEL *pmod, bin_info *bin)
 	gretl_matrix_set(X, s, k, et * Xb * Xb);
 	gretl_matrix_set(X, s, k+1, et * Xb * Xb * Xb);
 	gretl_vector_set(y, s, 1);
-
 	s++;
     }
 
@@ -2612,7 +2609,6 @@ static int binary_probit_normtest (MODEL *pmod, bin_info *bin)
 	for (t=0; t<y->rows; t++) {
 	    X2 -= (1 - y->val[t]) * (1 - y->val[t]);
 	}
-
 	if (X2 > 0) {
 	    gretl_model_add_normality_test(pmod, X2);
 	}
@@ -2804,10 +2800,17 @@ static int binary_model_finish (bin_info *bin, MODEL *pmod,
 	pmod->coeff[i] = bin->theta[i];
     }
 
-    pmod->lnL = binary_loglik(pmod->coeff, bin);
-    binary_model_chisq(bin, pmod);
     pmod->ci = bin->ci;
+    pmod->lnL = binary_loglik(pmod->coeff, bin);
 
+    if (pmod->ci == PROBIT && (opt & OPT_X)) {
+	/* this model is just the starting-point for
+	   random-effects probit estimation */
+	pmod->opt |= OPT_P;
+	return 0;
+    }
+
+    binary_model_chisq(bin, pmod);
     pmod->errcode = binary_variance_matrix(pmod, bin, dset, opt);
 
     if (!pmod->errcode) {
@@ -2824,7 +2827,7 @@ static int binary_model_finish (bin_info *bin, MODEL *pmod,
 
     if (!pmod->errcode) {
 	binary_model_hatvars(pmod, bin->Xb, bin->y, opt);
-	if (pmod->ci == PROBIT && !(opt & OPT_X)) {
+	if (pmod->ci == PROBIT) {
 	    binary_probit_normtest(pmod, bin);
 	}
 	mle_criteria(pmod, 0);
