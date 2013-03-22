@@ -71,6 +71,12 @@ enum {
     ADF_PANEL     = 1 << 2
 } adf_flags;
 
+enum {
+    AUTO_TSTAT = 1,
+    AUTO_MAIC,
+    AUTO_MBIC
+};
+
 /* replace y with demeaned or detrended y */
 
 static int GLS_demean_detrend (double *y, int T, int test)
@@ -505,33 +511,44 @@ static int t_adjust_order (int *list, int order_max,
     return k;
 }
 
-/* this gives MAIC, but could be generalized to MBIC, ... */
-
-static double get_MIC (MODEL *pmod, int k, const DATASET *dset)
+static double get_MIC (MODEL *pmod, int k, int which,
+		       const DATASET *dset)
 {
-    const double *y;
+    const double *ylag;
     double g, ttk, s2k = 0;
-    double sum_y2 = 0;
-    int T = pmod->nobs;
-    int t;
+    double CT, sum_ylag2 = 0;
+    int t, T = pmod->nobs;
 
-    y = dset->Z[pmod->list[2]];
+    /* ylag = the lagged level */
+    ylag = dset->Z[pmod->list[2]];
     g = pmod->coeff[pmod->ifc];
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	s2k += pmod->uhat[t] * pmod->uhat[t];
-	sum_y2 += y[t] * y[t];
+	sum_ylag2 += ylag[t] * ylag[t];
     }
 
     s2k /= pmod->nobs;
-    ttk = g * g * sum_y2 / s2k;
+    ttk = g * g * sum_ylag2 / s2k;
 
-    return log(s2k) + 2.0 * (ttk + k)/T;
+    if (which == AUTO_MBIC) {
+	/* Schwartz Bayesian */
+	CT = log(T);
+    } else {
+	/* Akaike */
+	CT = 2.0;
+    }
+
+    return log(s2k) + CT * (ttk + k)/T;
 }
 
-/* Using modified information criterion, as per Ng and Perron (2001) */
+/* Using modified information criterion, as per Ng and Perron,
+   "Lag Length Selection and the Construction of Unit Root Tests 
+   with Good Size and Power", Econometrica 69/6, Nov 2001, pp. 
+   1519-1554.
+*/
 
-static int ic_adjust_order (int *list, int kmax,
+static int ic_adjust_order (int *list, int kmax, int which,
 			    DATASET *dset, int *err,
 			    PRN *prn)
 {
@@ -561,8 +578,9 @@ static int ic_adjust_order (int *list, int kmax,
 	    kstar = -1;
 	    break;
 	}
-	MIC = get_MIC(&kmod, k, dset);
+	MIC = get_MIC(&kmod, k, which, dset);
 	if (k == kmax) {
+	    /* ensure a uniform sample */
 	    dset->t1 = kmod.t1;
 	    dset->t2 = kmod.t2;
 	    MICmin = MIC;
@@ -579,9 +597,13 @@ static int ic_adjust_order (int *list, int kmax,
 	gretl_list_delete_at_pos(tmplist, k + 2);
     }
 
-    /* now trim the 'real' list to kstar lags */
-    for (k=kmax; k>kstar; k--) {
-	gretl_list_delete_at_pos(list, k + 2);
+    free(tmplist);
+
+    if (kstar >= 0) {
+	/* now trim the 'real' list to kstar lags */
+	for (k=kmax; k>kstar; k--) {
+	    gretl_list_delete_at_pos(list, k + 2);
+	}
     }
 
     dset->t1 = save_t1;
@@ -736,11 +758,6 @@ static int gettrend (DATASET *dset, int square)
     return idx;
 }
 
-enum {
-    AUTO_TSTAT = 1,
-    AUTO_MAIC
-};
-
 static int get_auto_order_method (int *err)
 {
     const char *s = get_optval_string(ADF, OPT_E);
@@ -751,6 +768,8 @@ static int get_auto_order_method (int *err)
 	return AUTO_TSTAT;
     } else if (!strcmp(s, "MAIC")) {
 	return AUTO_MAIC;
+    } else if (!strcmp(s, "MBIC")) {
+	return AUTO_MBIC;
     } else {
 	gretl_errmsg_set(_("Invalid option"));
 	*err = E_DATA;
@@ -931,11 +950,12 @@ static int real_adf_test (int varno, int order, int niv,
     skipdet:
 
 	if (auto_order) {
-	    if (auto_order == AUTO_MAIC) {
-		order = ic_adjust_order(list, order_max, dset, &err, prn);
-	    } else {
+	    if (auto_order == AUTO_TSTAT) {
 		order = t_adjust_order(list, order_max, dset, &err, prn);
-	    }
+	    } else {
+		order = ic_adjust_order(list, order_max, auto_order,
+					dset, &err, prn);
+	    }	    
 	    if (err) {
 		clear_model(&dfmod);
 		goto bailout;
