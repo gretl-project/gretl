@@ -100,7 +100,7 @@ struct gretl_option gretl_opts[] = {
     { ADF,      OPT_T, "ct", 0 }, 
     { ADF,      OPT_V, "verbose", 0 },
     { ADF,      OPT_F, "difference", 0 },
-    { ADF,      OPT_E, "test-down", 0 },
+    { ADF,      OPT_E, "test-down", 1 },
     { ADF,      OPT_G, "gls", 0 },
     { AR1,      OPT_B, "no-corc", 0 },
     { AR1,      OPT_H, "hilu", 0 },

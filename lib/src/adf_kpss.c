@@ -458,9 +458,9 @@ print_adf_results (int order, int pmax, double DFt, double pv,
     } 
 }
 
-static int auto_adjust_order (int *list, int order_max,
-			      DATASET *dset, int *err,
-			      PRN *prn)
+static int t_adjust_order (int *list, int order_max,
+			   DATASET *dset, int *err,
+			   PRN *prn)
 {
     MODEL kmod;
     double tstat, pval;
@@ -472,7 +472,7 @@ static int auto_adjust_order (int *list, int order_max,
 	    kmod.errcode = E_DF;
 	}
 	if (kmod.errcode) {
-	    fprintf(stderr, "auto_adjust_order: k = %d, err = %d\n", k,
+	    fprintf(stderr, "t_adjust_order: k = %d, err = %d\n", k,
 		    kmod.errcode);
 	    *err = kmod.errcode;
 	    clear_model(&kmod);
@@ -489,13 +489,13 @@ static int auto_adjust_order (int *list, int order_max,
 
 	if (pval > 0.10) {
 #if ADF_DEBUG
-	    pprintf(prn, "\nauto_adjust_order: lagged difference not "
+	    pprintf(prn, "\nt_adjust_order: lagged difference not "
 		    "significant at order %d (t = %g)\n\n", k, tstat);
 #endif
 	    gretl_list_delete_at_pos(list, k + 2);
 	} else {
 #if ADF_DEBUG
-	    pprintf(prn, "\nauto_adjust_order: lagged difference is "
+	    pprintf(prn, "\nt_adjust_order: lagged difference is "
 		    "significant at order %d (t = %g)\n\n", k, tstat);
 #endif
 	    break;
@@ -505,68 +505,90 @@ static int auto_adjust_order (int *list, int order_max,
     return k;
 }
 
-#if 0 /* work in progress */
+/* this gives MAIC, but could be generalized to MBIC, ... */
 
-static double get_MAIC (model *pmod, int k
-			const DATASET *dset)
+static double get_MIC (MODEL *pmod, int k, const DATASET *dset)
 {
-    double b0, ttk, s2k = 0;
+    const double *y;
+    double g, ttk, s2k = 0;
     double sum_y2 = 0;
     int T = pmod->nobs;
-    int pos, t;
+    int t;
 
-    pos = pos = k + pmod->ifc;
-    b0 = pmod->coeff[pos];
+    y = dset->Z[pmod->list[2]];
+    g = pmod->coeff[pmod->ifc];
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	s2k += pmod->uhat[t] * pmod->uhat[t];
-	sum_y2 += 
+	sum_y2 += y[t] * y[t];
     }
+
     s2k /= pmod->nobs;
+    ttk = g * g * sum_y2 / s2k;
 
-    ttk = b0 * b0 * sum_y2 / s2k;
-
-    return log(s2k) + 2 * (ttk + k)/T;
+    return log(s2k) + 2.0 * (ttk + k)/T;
 }
 
-static int ng_perron_adjust_order (int *list, int order_max,
-				   DATASET *dset, int *err,
-				   PRN *prn)
+/* Using modified information criterion, as per Ng and Perron (2001) */
+
+static int ic_adjust_order (int *list, int kmax,
+			    DATASET *dset, int *err,
+			    PRN *prn)
 {
     MODEL kmod;
-    double MAIC;
-    int k;
+    double MIC, MICmin = 0;
+    int k, kstar = kmax;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
+    int *tmplist;
 
-    for (k=order_max; k>0; k--) {
-	kmod = lsq(list, dset, OLS, OPT_A);
+    tmplist = gretl_list_copy(list);
+    if (tmplist == NULL) {
+	*err = E_ALLOC;
+	return -1;
+    }
+
+    for (k=kmax; k>0; k--) {
+	kmod = lsq(tmplist, dset, OLS, OPT_A);
 	if (!kmod.errcode && kmod.dfd == 0) {
 	    kmod.errcode = E_DF;
 	}
 	if (kmod.errcode) {
-	    fprintf(stderr, "auto_adjust_order: k = %d, err = %d\n", k,
+	    fprintf(stderr, "ic_adjust_order: k = %d, err = %d\n", k,
 		    kmod.errcode);
 	    *err = kmod.errcode;
 	    clear_model(&kmod);
-	    k = -1;
+	    kstar = -1;
 	    break;
+	}
+	MIC = get_MIC(&kmod, k, dset);
+	if (k == kmax) {
+	    dset->t1 = kmod.t1;
+	    dset->t2 = kmod.t2;
+	    MICmin = MIC;
+	} else if (MIC < MICmin) {
+	    MICmin = MIC;
+	    kstar = k;
 	}
 #if ADF_DEBUG
 	printmodel(&kmod, dset, OPT_NONE, prn);
+	pprintf(prn, "MIC = %g for k = %d (b0 = %g)\n", MIC, k,
+		kmod.coeff[kmod.ifc]);
 #endif
-	MAIC = get_MAIC(&kmod, k, dset);
 	clear_model(&kmod);
-
-	if (pval > 0.10) {
-	    gretl_list_delete_at_pos(list, k + 2);
-	} else {
-	    break;
-	}
+	gretl_list_delete_at_pos(tmplist, k + 2);
     }
 
-    return k;
-}
+    /* now trim the 'real' list to kstar lags */
+    for (k=kmax; k>kstar; k--) {
+	gretl_list_delete_at_pos(list, k + 2);
+    }
 
-#endif
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
+
+    return kstar;
+}
 
 /* targ must be big enough to accept all of src! */
 
@@ -714,6 +736,28 @@ static int gettrend (DATASET *dset, int square)
     return idx;
 }
 
+enum {
+    AUTO_TSTAT = 1,
+    AUTO_MAIC
+};
+
+static int get_auto_order_method (int *err)
+{
+    const char *s = get_optval_string(ADF, OPT_E);
+
+    if (s == NULL || *s == '\0') {
+	return AUTO_TSTAT;
+    } else if (!strcmp(s, "tstat")) {
+	return AUTO_TSTAT;
+    } else if (!strcmp(s, "MAIC")) {
+	return AUTO_MAIC;
+    } else {
+	gretl_errmsg_set(_("Invalid option"));
+	*err = E_DATA;
+	return 0;
+    }
+}
+
 static int real_adf_test (int varno, int order, int niv,
 			  DATASET *dset, gretlopt opt, 
 			  unsigned char flags,
@@ -745,7 +789,10 @@ static int real_adf_test (int varno, int order, int niv,
 
     if (opt & OPT_E) {
 	/* testing down */
-	auto_order = 1;
+	auto_order = get_auto_order_method(&err);
+	if (err) {
+	    return err;
+	}
 	order_max = order;
     }
 
@@ -884,7 +931,11 @@ static int real_adf_test (int varno, int order, int niv,
     skipdet:
 
 	if (auto_order) {
-	    order = auto_adjust_order(list, order_max, dset, &err, prn);
+	    if (auto_order == AUTO_MAIC) {
+		order = ic_adjust_order(list, order_max, dset, &err, prn);
+	    } else {
+		order = t_adjust_order(list, order_max, dset, &err, prn);
+	    }
 	    if (err) {
 		clear_model(&dfmod);
 		goto bailout;
