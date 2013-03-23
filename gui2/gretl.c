@@ -1890,16 +1890,38 @@ static gchar *get_main_ui (void)
 
 #ifdef MAC_INTEGRATION
 
+static void new_gretl_window (void)
+{
+    char *topdir = getenv("GTK_DATA_PREFIX");
+
+    if (topdir != NULL) {
+	gchar *cmd;
+
+	cmd = g_strdup_printf("%s/../MacOS/Gretl", topdir);
+	system(cmd);
+	g_free(cmd);
+    }
+}
+
 static GtkActionEntry mac_entries[] = {
-    {"HelpMenuAction", NULL, "_Help", NULL, NULL, NULL },
-    {"AboutAction", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL,
-     G_CALLBACK(about_dialog)},
+    { "FileMenu", NULL, "_File", NULL, NULL, NULL },
+    { "NewWindowAction", NULL, "_New window", "<meta>Q", NULL,
+      G_CALLBACK(new_gretl_window)},    
+    { "QuitAction", GTK_STOCK_QUIT, "_Quit", "<meta>Q", NULL,
+      G_CALLBACK(menu_exit_check)},    
+    { "HelpMenu", NULL, "_Help", NULL, NULL, NULL },
+    { "AboutAction", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL,
+      G_CALLBACK(about_dialog)},
 };
 
 const gchar *mac_ui = 
     "<ui>"
     "  <menubar>"
-    "    <menu name='Help' action='HelpMenuAction'>"
+    "    <menu name='File' action='FileMenu'>"
+    "      <menuitem action='NewWindow' action='NewWindowAction'/>"
+    "      <menuitem action='Quit' action='QuitAction'/>"
+    "    </menu>"
+    "    <menu name='Help' action='HelpMenu'>"
     "      <menuitem action='About' action='AboutAction'/>"
     "    </menu>"
     "  </menubar>"
