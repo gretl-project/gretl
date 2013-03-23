@@ -4239,6 +4239,13 @@ static GtkWidget *option_checkbox (int *checkvar, const char *checktxt)
 static GtkWidget *check_extra;
 static int check_extra_pos;
 
+/* Mechanism to set an extra selector widget, linked
+   to the check button at position @i in a checks
+   dialog. The extra widget is placed following
+   button @i and its sensitivity is conditional
+   on button @i being checked.
+*/
+
 void set_checks_dialog_extra (int i, GtkWidget *extra)
 {
     check_extra_pos = i;
@@ -4296,9 +4303,11 @@ static void checks_dialog_add_checks (GtkWidget *dialog, GtkWidget *vbox,
 	}
 
 	if (check_extra != NULL && i == check_extra_pos) {
+	    /* insert the "extra" widget under @button */
 	    gtk_box_pack_start(GTK_BOX(vbox), check_extra, TRUE, TRUE, 0);
 	    gtk_widget_set_sensitive(check_extra, active[i]);
 	    sensitize_conditional_on(check_extra, button);
+	    /* and erase the "extra" specification */
 	    check_extra = NULL;
 	    check_extra_pos = -1;
 	}

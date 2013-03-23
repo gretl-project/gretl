@@ -634,6 +634,21 @@ static void vwin_select_all (windata_t *vwin)
     }
 }
 
+static int is_control_key (guint k)
+{
+    if (k == GDK_Control_L || k == GDK_Control_R) {
+	return 1;
+    } else if (k == GDK_Meta_L || k == GDK_Meta_R) {
+	return 1;
+    } else if (k == GDK_Alt_L || k == GDK_Alt_R) {
+	return 1;
+    } else if (k == GDK_Escape) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 /* Signal attached to editor/viewer windows. Note that @w is 
    generally the top-level GtkWidget vwin->main; exceptions
    are (a) tabbed windows, where @w is the embedding window,
@@ -647,6 +662,10 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
     int Alt = (event->state & GDK_MOD1_MASK);
     guint upkey = event->keyval;
     int editing = vwin_is_editing(vwin);
+
+    if (is_control_key(event->keyval)) {
+	return FALSE;
+    }
 
     if (!gdk_keyval_is_upper(event->keyval)) {
 	upkey = gdk_keyval_to_upper(event->keyval);
@@ -708,6 +727,9 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		tabwin_navigate(vwin, upkey);
 		return TRUE;
 	    }
+	} else if (upkey == GDK_Q || upkey == GDK_W) {
+	    gtk_widget_destroy(vwin->main);
+	    return TRUE;
 	}
     } else if (Alt) {
 	if (upkey == GDK_W) {

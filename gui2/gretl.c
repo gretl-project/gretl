@@ -1541,9 +1541,14 @@ GtkActionEntry main_entries[] = {
     { "NistBasic", NULL, N_("_Basic"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "NistVerbose", NULL, N_("_Verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "NistVVerbose", NULL, N_("V_ery verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },
-    { "Preferences", NULL, N_("_Preferences"), NULL, NULL, NULL },    
+    { "Preferences", NULL, N_("_Preferences"), NULL, NULL, NULL },
+#ifdef MAC_NATIVE
+    { "PrefsGeneral", GTK_STOCK_PREFERENCES, N_("_General..."), "<meta>,", NULL, 
+      G_CALLBACK(options_dialog_callback) },
+#else
     { "PrefsGeneral", GTK_STOCK_PREFERENCES, N_("_General..."), NULL, NULL, 
       G_CALLBACK(options_dialog_callback) },
+#endif
     { "FixedFont", GTK_STOCK_SELECT_FONT, N_("_Fixed font..."), NULL, NULL, 
       G_CALLBACK(font_selector) },
     { "MenuFont", GTK_STOCK_SELECT_FONT, N_("_Menu font..."), NULL, NULL, 
