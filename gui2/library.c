@@ -990,6 +990,12 @@ static int adf_get_options (const char *title, int panel,
  	*popt = opt;
     }
 
+    /* FIXME: if opt & OPT_E (test-down), then what are
+       we going to specify as the default criterion in
+       the GUI? At present it's the "last lag t-stat"
+       criterion, but maybe it should be MAIC?
+    */
+
     if (ts_active[5] < 0) {
 	ts_active[5] = save_seas;
     }
