@@ -865,6 +865,9 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	    /* command-Q = quit */
 	    menu_exit_check();
 	    return TRUE;
+	} else if (k == GDK_comma) {
+	    options_dialog(0, NULL, mdata->main);
+	    return TRUE;
 	}
     }
 #endif  
@@ -1561,13 +1564,8 @@ GtkActionEntry main_entries[] = {
     { "NistVerbose", NULL, N_("_Verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "NistVVerbose", NULL, N_("V_ery verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "Preferences", NULL, N_("_Preferences"), NULL, NULL, NULL },
-#ifdef MAC_NATIVE
-    { "PrefsGeneral", GTK_STOCK_PREFERENCES, N_("_General..."), "<meta>,", NULL, 
-      G_CALLBACK(options_dialog_callback) },
-#else
     { "PrefsGeneral", GTK_STOCK_PREFERENCES, N_("_General..."), NULL, NULL, 
       G_CALLBACK(options_dialog_callback) },
-#endif
     { "FixedFont", GTK_STOCK_SELECT_FONT, N_("_Fixed font..."), NULL, NULL, 
       G_CALLBACK(font_selector) },
     { "MenuFont", GTK_STOCK_SELECT_FONT, N_("_Menu font..."), NULL, NULL, 
