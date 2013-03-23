@@ -155,6 +155,7 @@
 	</option>
 	<option>
 	  <flag>--test-down</flag>
+	  <optparm optional="true">criterion</optparm>
 	  <effect>automatic lag order</effect>
 	</option>
       </options>
@@ -226,18 +227,31 @@
 	<math>T</math> is the sample size.  In either case, however,
 	if the <opt>--test-down</opt> option is given then
 	<math>k</math> is taken as the <emphasis>maximum</emphasis>
-	lag and the actual lag order used is obtained by testing down,
-	using this algorithm:
+	lag and the actual lag order used is obtained by testing down.
+	The criterion for testing down can be selected using the
+	option parameter, which must be one of <lit>MAIC</lit>,
+	<lit>MBIC</lit> or <lit>tstat</lit>. The MAIC and MBIC methods
+	are as described in <cite key="ng-perron01">Ng and Perron
+	(2001)</cite>; the lag order is chosen so as to optimize an
+	appropriately modified version of the Akaike Information
+	Criterion or the Schwartz Bayesian Criterion, respectively.
+	The tstat method is a follows:
       </para>
 
       <para context="gui">
 	If the lag order, <math>k</math>, is greater than 0, then
-	<math>k</math> lags of the dependent variable are included
-	on the right-hand side of the test regressions, subject to the
-	following qualification. If the box labeled <quote>test down from
-	  maximum lag</quote> is checked, the selected lag order is taken
-	as a maximum and the actual lag order used is obtained by testing
-	down, using this algorithm:
+	<math>k</math> lags of the dependent variable are included on
+	the right-hand side of the test regressions, subject to the
+	following qualification. If the box labeled <quote>test down
+	from maximum lag</quote> is checked, the selected lag order is
+	taken as a maximum and the actual lag order used is obtained
+	by testing down, using the criterion chosen via the
+	accompanying drop-down list. The modified AIC and modified BIC
+	methods are as described in <cite key="ng-perron01">Ng and
+	Perron (2001)</cite>; the lag order is chosen so as to
+	optimize an appropriately modified version of the Akaike
+	Information Criterion (AIC) or the Schwartz Bayesian Criterion
+	(BIC).  The <math>t</math>-statistic method is a follows:
       </para>
 
       <nlist>
