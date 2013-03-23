@@ -301,8 +301,20 @@ static void show_lags_test (MODEL *pmod, int order, PRN *prn)
     }
 }
 
+static const char *auto_order_string (int i)
+{
+    if (i == AUTO_MAIC) {
+	return _("modified AIC");
+    } else if (i == AUTO_MBIC) {
+	return _("modified BIC");
+    } else {
+	return _("t-statistic");
+    }
+}
+
 static void DF_header (const char *s, int p, int pmax,
-		       gretlopt opt, PRN *prn)
+		       int auto_order, gretlopt opt, 
+		       PRN *prn)
 {
     pputc(prn, '\n');
 
@@ -324,8 +336,11 @@ static void DF_header (const char *s, int p, int pmax,
 	    pprintf(prn, _("including %d lags of (1-L)%s"), p, s);
 	}
 	if (pmax >= p) {
-	    pputc(prn, ' ');
-	    pprintf(prn, _("(max was %d)"), pmax);
+	    const char *critstr = auto_order_string(auto_order);
+
+	    pputc(prn, '\n');
+	    pprintf(prn, _("(max was %d, criterion %s)"), 
+		    pmax, critstr);
 	}
 	pputc(prn, '\n');
     }
@@ -383,7 +398,8 @@ static void
 print_adf_results (int order, int pmax, double DFt, double pv, 
 		   MODEL *dfmod, int dfnum, const char *vname, 
 		   int *blurb_done, unsigned char flags, int i, 
-		   int niv, int nseas, gretlopt opt, PRN *prn)
+		   int niv, int nseas, gretlopt opt, 
+		   int auto_order, PRN *prn)
 {
     const char *urcstrs[] = {
 	"nc", "c", "ct", "ctt"
@@ -407,7 +423,7 @@ print_adf_results (int order, int pmax, double DFt, double pv,
     } 
 
     if (*blurb_done == 0) {
-	DF_header(vname, order, pmax, opt, prn);
+	DF_header(vname, order, pmax, auto_order, opt, prn);
 	pprintf(prn, _("sample size %d\n"), dfmod->nobs);
 	if (flags & ADF_PANEL) {
 	    pputc(prn, '\n');
@@ -1014,7 +1030,7 @@ static int real_adf_test (int varno, int order, int niv,
 	if (!(opt & OPT_Q) && !(flags & ADF_PANEL)) {
 	    print_adf_results(order, order_max, DFt, pv, &dfmod, dfnum, 
 			      dset->varname[varno], &blurb_done, flags,
-			      itv, niv, nseas, opt, prn);
+			      itv, niv, nseas, opt, auto_order, prn);
 	}
 
 	if ((opt & OPT_V) && !(flags & ADF_PANEL)) {
@@ -1255,7 +1271,8 @@ static int panel_DF_test (int v, int order, DATASET *dset,
     if (!quiet) {
 	int j = DF_index(opt);
 
-	DF_header(dset->varname[v], (opt & OPT_E)? 0 : order, 0, opt, prn);
+	DF_header(dset->varname[v], (opt & OPT_E)? 0 : order, 
+		  0, 0, opt, prn);
 	pprintf(prn, "   %s ", _(DF_test_string(j)));
 	pputc(prn, '\n');
 	pprintf(prn, "   %s: %s\n\n", _("model"), 

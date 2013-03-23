@@ -4236,6 +4236,15 @@ static GtkWidget *option_checkbox (int *checkvar, const char *checktxt)
     return hbox;
 }
 
+static GtkWidget *check_extra;
+static int check_extra_pos;
+
+void set_checks_dialog_extra (int i, GtkWidget *extra)
+{
+    check_extra_pos = i;
+    check_extra = extra;
+}
+
 static void set_checks_opt (GtkWidget *w, int *active)
 {
     int i = widget_get_int(w, "optnum");
@@ -4285,6 +4294,15 @@ static void checks_dialog_add_checks (GtkWidget *dialog, GtkWidget *vbox,
 	    g_object_set_data(G_OBJECT(button), "optnum", 
 			      GINT_TO_POINTER(i));
 	}
+
+	if (check_extra != NULL && i == check_extra_pos) {
+	    gtk_box_pack_start(GTK_BOX(vbox), check_extra, TRUE, TRUE, 0);
+	    gtk_widget_set_sensitive(check_extra, active[i]);
+	    sensitize_conditional_on(check_extra, button);
+	    check_extra = NULL;
+	    check_extra_pos = -1;
+	}
+
 	if (i+1 == nc1) {
 	    /* mark end of the "must check one" area */
 	    vbox_add_hsep(vbox);

@@ -914,6 +914,32 @@ static int ok_obs_in_series (int v)
     return t2 - t1 + 1;
 }
 
+static void switch_test_down_opt (GtkComboBox *combo,
+				  int *option) 
+{
+    *option = gtk_combo_box_get_active(combo);
+}
+
+static GtkWidget *adf_test_down_selector (int *option)
+{
+    GtkWidget *hbox, *label, *combo;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    label = gtk_label_new(_("criterion"));
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    combo = gtk_combo_box_text_new();
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+    combo_box_append_text(combo, _("modified AIC"));    
+    combo_box_append_text(combo, _("modified BIC"));    
+    combo_box_append_text(combo, _("t-statistic"));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+    g_signal_connect(G_OBJECT(combo), "changed",
+		     G_CALLBACK(switch_test_down_opt), 
+		     option);
+
+    return hbox;
+}
+
 static int adf_get_options (const char *title, int panel, 
 			    int omax, int *order,
 			    gretlopt *popt)
@@ -952,6 +978,8 @@ static int adf_get_options (const char *title, int panel,
     int difference = 0;
     int *radio_var = panel ? &pantrend : &difference;
     int save_seas = ts_active[5];
+    GtkWidget *tdown;
+    int test_down_opt = 0;
     gretlopt opt = OPT_NONE;
     int retval;
 
@@ -959,6 +987,9 @@ static int adf_get_options (const char *title, int panel,
 	/* disallow seasonal dummies option */
 	ts_active[5] = -1;
     }
+
+    tdown = adf_test_down_selector(&test_down_opt);
+    set_checks_dialog_extra(0, tdown);
 
     /* note: making nradios < 0 places the radio buttons before the
        check boxes in the dialog box produced by checks_dialog()
@@ -990,11 +1021,17 @@ static int adf_get_options (const char *title, int panel,
  	*popt = opt;
     }
 
-    /* FIXME: if opt & OPT_E (test-down), then what are
-       we going to specify as the default criterion in
-       the GUI? At present it's the "last lag t-stat"
-       criterion, but maybe it should be MAIC?
-    */
+    if (opt & OPT_E) {
+	if (test_down_opt == 0) {
+	    /* MAIC */
+	    set_optval_string(ADF, OPT_E, "MAIC");
+	} else if (test_down_opt == 1) {
+	    /* MBIC */
+	    set_optval_string(ADF, OPT_E, "MBIC"); 
+	} else {
+	    set_optval_string(ADF, OPT_E, "tstat");
+	}
+    }
 
     if (ts_active[5] < 0) {
 	ts_active[5] = save_seas;

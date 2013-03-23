@@ -110,6 +110,8 @@ int radio_dialog_with_check (const char *title, const char *label,
 			     int *checkvar, const char *checktxt,
 			     GtkWidget *parent);
 
+void set_checks_dialog_extra (int i, GtkWidget *extra);
+
 GtkWidget *
 build_checks_dialog (const char *title, const char *blurb,
 		     const char **opts, 
