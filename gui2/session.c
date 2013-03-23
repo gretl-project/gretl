@@ -1310,7 +1310,7 @@ static int set_session_dirname (const char *zdirname)
 /* note: the name of the file to be opened is in the global var
    'tryfile' */
 
-void do_open_session (void)
+gboolean do_open_session (void)
 {
     struct sample_info sinfo;
     char xmlname[MAXLEN]; /* path to master session XML file */
@@ -1329,7 +1329,7 @@ void do_open_session (void)
     } else {
 	file_read_errbox(tryfile);
 	delete_from_filelist(FILE_LIST_SESSION, tryfile);
-	return;
+	return FALSE;
     }
 
     /* close existing session, if any, and initialize */
@@ -1471,6 +1471,8 @@ void do_open_session (void)
 	    edit_session_notes();
 	}
     }
+
+    return !err;
 }
 
 void verify_clear_data (void)

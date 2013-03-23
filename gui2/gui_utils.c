@@ -1176,10 +1176,11 @@ static int get_native_data (char *fname, int ftype, int append,
 			   action == APPEND_SAS || \
                            action == APPEND_JMULTI)
 
-void do_open_data (windata_t *fwin, int code)
+gboolean do_open_data (windata_t *fwin, int code)
 {
     int append = APPENDING(code);
     gint ftype;
+    int err = 0;
 
     gretl_error_clear();
 
@@ -1225,21 +1226,23 @@ void do_open_data (windata_t *fwin, int code)
     }
 
     if (ftype == GRETL_CSV || ftype == GRETL_OCTAVE) {
-	get_csv_data(tryfile, ftype, append);
+	err = get_csv_data(tryfile, ftype, append);
     } else if (SPREADSHEET_IMPORT(ftype) || OTHER_IMPORT(ftype)) {
-	get_imported_data(tryfile, ftype, append);
+	err = get_imported_data(tryfile, ftype, append);
     } else { 
-	get_native_data(tryfile, ftype, append, fwin);
+	err = get_native_data(tryfile, ftype, append, fwin);
     }
+
+    return !err;
 }
 
 /* give user choice of not opening selected datafile, if there's
    already a datafile open */
 
-void verify_open_data (windata_t *vwin, int code)
+gboolean verify_open_data (windata_t *vwin, int code)
 {
     if (dataset_locked()) {
-	return;
+	return FALSE;
     }
 
     if (data_status) {
@@ -1249,21 +1252,22 @@ void verify_open_data (windata_t *vwin, int code)
 			     "close the current one.  Any unsaved work\n"
 			     "will be lost.  Proceed to open data file?"), 0);
 
-	if (resp != GRETL_YES) return;
+	if (resp != GRETL_YES) {
+	    return FALSE;
+	}
     } 
 
-    do_open_data(vwin, code);
+    return do_open_data(vwin, code);
 }
 
 /* give user choice of not opening session file, if there's already a
    datafile open */
 
-void verify_open_session (void)
+gboolean verify_open_session (void)
 {
     if (!gretl_is_pkzip_file(tryfile)) {
 	/* not a zipped session file */
-	do_open_script(EDIT_SCRIPT);
-	return;
+	return do_open_script(EDIT_SCRIPT);
     }
 
     if (data_status) {
@@ -1273,10 +1277,12 @@ void verify_open_session (void)
 			     "close the current session.  Any unsaved work\n"
 			     "will be lost.  Proceed to open session file?"), 0);
 
-	if (resp != GRETL_YES) return;
+	if (resp != GRETL_YES) {
+	    return FALSE;
+	}
     }
 
-    do_open_session();
+    return do_open_session();
 }
 
 void mark_vwin_content_changed (windata_t *vwin) 

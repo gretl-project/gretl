@@ -53,11 +53,11 @@ void register_data (int flag);
 
 void register_startup_data (const char *fname);
 
-void do_open_data (windata_t *vwin, int code);
+gboolean do_open_data (windata_t *vwin, int code);
 
-void verify_open_data (windata_t *vwin, int code);
+gboolean verify_open_data (windata_t *vwin, int code);
 
-void verify_open_session (void);
+gboolean verify_open_session (void);
 
 void free_windata (GtkWidget *w, gpointer data);
 

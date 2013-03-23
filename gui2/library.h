@@ -306,7 +306,7 @@ void display_var (void);
 
 /* script- and file-related functions */
 
-void do_open_script (int action);
+gboolean do_open_script (int action);
 
 void dataset_info (void);
 

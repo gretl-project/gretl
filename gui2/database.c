@@ -1573,8 +1573,9 @@ static dbwrapper *get_series_info (windata_t *vwin, int action)
 /* the following two functions are used when a database has been
    specified on the gretl command line */
 
-void open_named_db_index (char *dbname)
+gboolean open_named_db_index (char *dbname)
 {
+    gboolean ret = FALSE;
     int action;
     FILE *fp;
 
@@ -1599,11 +1600,15 @@ void open_named_db_index (char *dbname)
     } else {
 	fclose(fp);
 	make_db_index_window(action, dbname, NULL);
-    } 
+	ret = TRUE;
+    }
+    
+    return ret;
 }
 
-void open_named_remote_db_index (char *dbname)
+gboolean open_named_remote_db_index (char *dbname)
 {
+    gboolean ret = FALSE;
     char *getbuf = NULL;
     int err;
 
@@ -1614,11 +1619,15 @@ void open_named_remote_db_index (char *dbname)
     } else if (getbuf != NULL && !strncmp(getbuf, "Couldn't open", 13)) {
 	errbox(getbuf);
     } else {
-	make_db_index_window(REMOTE_SERIES, dbname, getbuf);
-	/* check for error */
+	err = make_db_index_window(REMOTE_SERIES, dbname, getbuf);
+	if (!err) {
+	    ret = TRUE;
+	}
     }
 
     free(getbuf);
+
+    return ret;
 }
 
 void open_db_index (GtkWidget *w, gpointer data)

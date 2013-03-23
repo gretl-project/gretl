@@ -92,6 +92,7 @@ static void mdata_select_all (void);
 static void mdata_select_list (void);
 static int gui_query_stop (void);
 static void mdata_handle_paste (void);
+static gboolean real_open_tryfile (void);
 
 #ifdef MAC_INTEGRATION
 static GtkUIManager *add_mac_menu (void);
@@ -434,8 +435,9 @@ static void app_will_quit_cb (GtkosxApplication *App, gpointer p)
 static gboolean app_open_file_cb (GtkosxApplication *app, 
 				  gchar *path, gpointer p)
 {
-    fprintf(stderr, "File open event for '%s'\n", path);
-    return FALSE;
+    *tryfile = '\0';
+    strncat(tryfile, path, MAXLEN - 1);
+    return real_open_tryfile();
 }
 
 static void install_mac_signals (GtkosxApplication *App)
@@ -444,7 +446,7 @@ static void install_mac_signals (GtkosxApplication *App)
 		     G_CALLBACK(app_should_quit_cb), NULL);
     g_signal_connect(App, "NSApplicationWillTerminate",
 		     G_CALLBACK(app_will_quit_cb), NULL);
-    g_signal_connect(theApp, "NSApplicationOpenFile",
+    g_signal_connect(App, "NSApplicationOpenFile",
 		     G_CALLBACK(app_open_file_cb), NULL);    
 }
 
@@ -2199,7 +2201,6 @@ mdata_handle_drag  (GtkWidget *widget,
     gchar *dfname;
     char tmp[MAXLEN];
     int pos, skip = 5;
-    int ftype = 0;
 
     if (data != NULL) {
 	seldata = gtk_selection_data_get_data(data);
@@ -2253,15 +2254,25 @@ mdata_handle_drag  (GtkWidget *widget,
     strcpy(tryfile, tmp);
 #endif
 
+    real_open_tryfile();
+}
+
+static gboolean real_open_tryfile (void)
+{
+    gboolean ret = FALSE;
+    int ftype = 0;
+
     if (has_db_suffix(tryfile)) {
-	open_named_db_index(tryfile);
+	ret = open_named_db_index(tryfile);
     } else if (has_suffix(tryfile, ".gretl") && gretl_is_pkzip_file(tryfile)) {
-	verify_open_session();
+	ret = verify_open_session();
     } else if ((ftype = script_type(tryfile))) {
-	do_open_script(ftype);
+	ret = do_open_script(ftype);
     } else {
-	verify_open_data(NULL, 0);
+	ret = verify_open_data(NULL, 0);
     }
+
+    return ret;
 }
 
 /* the callback for Save Data (Ctrl-S) in main window */

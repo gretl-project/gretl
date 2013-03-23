@@ -100,7 +100,7 @@ void mark_session_changed (void);
 
 void session_init (void);
 
-void do_open_session (void);
+gboolean do_open_session (void);
 
 void gui_clear_dataset (void);
 

@@ -3,11 +3,11 @@
 
 void open_db_index (GtkWidget *w, gpointer data);
 
-void open_named_db_index (char *dbname);
+gboolean open_named_db_index (char *dbname);
 
 void open_remote_db_index (GtkWidget *w, gpointer data);
 
-void open_named_remote_db_index (char *dbname);
+gboolean open_named_remote_db_index (char *dbname);
 
 void install_file_from_server (GtkWidget *w, windata_t *vwin);
 

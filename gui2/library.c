@@ -7238,7 +7238,7 @@ void run_script_fragment (windata_t *vwin, gchar *buf)
     run_native_script(vwin, buf, TRUE);
 }
 
-void do_open_script (int action)
+gboolean do_open_script (int action)
 {
     FILE *fp = NULL;
 
@@ -7250,7 +7250,7 @@ void do_open_script (int action)
 	    delete_from_filelist(FILE_LIST_SESSION, tryfile);
 	    delete_from_filelist(FILE_LIST_SCRIPT, tryfile);
 	}
-	return;
+	return FALSE;
     }
 
     fclose(fp);
@@ -7267,6 +7267,8 @@ void do_open_script (int action)
     } else {
 	view_script(tryfile, 1, action);
     } 
+
+    return TRUE;
 }
 
 void do_new_script (int code) 
