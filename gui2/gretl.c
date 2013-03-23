@@ -431,15 +431,24 @@ static void app_will_quit_cb (GtkosxApplication *App, gpointer p)
     gtk_main_quit();
 }
 
+static gboolean app_open_file_cb (GtkosxApplication *app, 
+				  gchar *path, gpointer p)
+{
+    fprintf(stderr, "File open event for '%s'\n", path);
+    return FALSE;
+}
+
 static void install_mac_signals (GtkosxApplication *App)
 {
     g_signal_connect(App, "NSApplicationBlockTermination",
 		     G_CALLBACK(app_should_quit_cb), NULL);
     g_signal_connect(App, "NSApplicationWillTerminate",
 		     G_CALLBACK(app_will_quit_cb), NULL);
+    g_signal_connect(theApp, "NSApplicationOpenFile",
+		     G_CALLBACK(app_open_file_cb), NULL);    
 }
 
-#endif
+#endif /* MAC_INTEGRATION */
 
 /* callback from within potentially lengthy libgretl
    operations: try to avoid having the GUI become
@@ -827,13 +836,15 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	    gtk_menu_shell_select_first(GTK_MENU_SHELL(menu), TRUE);
 	}
 	return TRUE;
-    } else if (cmd_key(event) && k == GDK_v) {
-	mdata_handle_paste();
-	return TRUE;
-    } else if (cmd_key(event) && k == GDK_q) {
-	/* command-Q = quit */
-	menu_exit_check();
-	return TRUE;
+    } else if (cmd_key(event)) {
+	if (k == GDK_v) {
+	    mdata_handle_paste();
+	    return TRUE;
+	} else if (k == GDK_q) {
+	    /* command-Q = quit */
+	    menu_exit_check();
+	    return TRUE;
+	}
     }
 #endif  
 
