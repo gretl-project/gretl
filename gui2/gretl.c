@@ -160,6 +160,7 @@ char tryfile[MAXLEN];
 
 MODEL *model;             /* gretl models struct */
 
+int instance_count;
 int data_status, orig_vars;
 float gui_scale;
 
@@ -452,6 +453,55 @@ static void install_mac_signals (GtkosxApplication *App)
 
 #endif /* MAC_INTEGRATION */
 
+#if defined(__linux) || defined(linux)
+
+static int get_instance_count (void) 
+{
+    DIR *dir;
+    struct dirent *ent;
+    char buf[128];
+    long pid;
+    char pname[32] = {0};
+    char state;
+    FILE *fp;
+    int count = 0;
+
+    if ((dir = opendir("/proc")) == NULL) {
+        perror("can't open /proc");
+        return -1;
+    }
+
+    while ((ent = readdir(dir)) != NULL) {
+        long lpid = atol(ent->d_name);
+
+        if (lpid < 0) {
+            continue;
+	}
+
+        snprintf(buf, sizeof(buf), "/proc/%ld/stat", lpid);
+        fp = fopen(buf, "r");
+
+        if (fp != NULL) {
+            if ((fscanf(fp, "%ld (%31[^)]) %c", &pid, pname, &state)) != 3) {
+                printf("proc fscanf failed\n");
+                fclose(fp);
+                closedir(dir);
+                return -1; 
+            }
+            if (!strcmp(pname, "gretl_x11") || !strcmp(pname, "lt-gretl_x11")) {
+		count++;
+            }
+            fclose(fp);
+        }
+    }
+
+    closedir(dir);
+
+    return count;
+}
+
+#endif /* linux only */
+
 /* callback from within potentially lengthy libgretl
    operations: try to avoid having the GUI become
    totally unresponsive
@@ -523,6 +573,10 @@ int main (int argc, char **argv)
     gretl_win32_init(callname, optdebug);
 #else 
     gretl_config_init();
+#endif
+
+#if defined(linux) || defined(__linux)
+    instance_count = get_instance_count();
 #endif
 
     if (optver) {
@@ -2230,13 +2284,24 @@ void set_wm_icon (GtkWidget *w)
 {
     GdkPixbuf *icon = gdk_pixbuf_new_from_xpm_data(gretl_xpm);
 
+# ifdef MAC_INTEGRATION
+    if (icon != NULL) {
+	GtkosxApplication *App;
+
+	App = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
+	gtkosx_application_set_dock_icon_pixbuf(App, icon);
+	gtk_window_set_icon(GTK_WINDOW(w), icon);
+	g_object_unref(icon);
+    }    
+# else
     if (icon != NULL) {
 	gtk_window_set_icon(GTK_WINDOW(w), icon);
 	g_object_unref(icon);
     }
+# endif
 }
 
-#endif
+#endif /* !G_OS_WIN32 */
 
 static int has_db_suffix (const char *fname)
 {

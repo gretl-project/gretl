@@ -612,26 +612,34 @@ void clear_sample_label (void)
 
 void set_main_window_title (const char *name, gboolean modified)
 {
-    if (name == NULL) {
+    char numstr[8] = "";
+
+    if (instance_count > 1 && instance_count < 1000) {
+	sprintf(numstr, " (%d)", instance_count);
+    }
+
+    if (name == NULL && *numstr == '\0') {
 	gtk_window_set_title(GTK_WINDOW(mdata->main), "gretl");
     } else {
 	/* FIXME encoding? */
 	gchar *title = NULL;
 
-	if (!g_utf8_validate(name, -1, NULL)) {
+	if (name == NULL) {
+	    title = g_strdup_printf("gretl%s", numstr);
+	} else if (!g_utf8_validate(name, -1, NULL)) {
 	    gchar *trname = my_filename_to_utf8(name);
 	    
 	    if (modified) {
-		title = g_strdup_printf("gretl: %s *", trname);
+		title = g_strdup_printf("gretl%s: %s *", numstr, trname);
 	    } else {
-		title = g_strdup_printf("gretl: %s", trname);
+		title = g_strdup_printf("gretl%s: %s", numstr, trname);
 	    }
 	    g_free(trname);
 	} else {
 	    if (modified) {
-		title = g_strdup_printf("gretl: %s *", name);
+		title = g_strdup_printf("gretl%s: %s *", numstr, name);
 	    } else {
-		title = g_strdup_printf("gretl: %s", name);
+		title = g_strdup_printf("gretl%s: %s", numstr, name);
 	    }
 	}
 

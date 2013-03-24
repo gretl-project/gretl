@@ -96,6 +96,7 @@ extern MODEL *model;
 
 /* global counters */
 extern int orig_vars;
+extern int instance_count;
 
 /* global state variables */
 extern int data_status;
