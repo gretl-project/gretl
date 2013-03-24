@@ -1506,7 +1506,7 @@ GtkActionEntry main_entries[] = {
     { "AppendSAS",      NULL, N_("_SAS (xport)..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendJMulTi",   NULL, N_("_JMulTi..."), NULL, NULL, G_CALLBACK(open_data) },
 
-    { "SaveData",  GTK_STOCK_SAVE, N_("_Save data"), "<control>S", NULL, G_CALLBACK(auto_store) },
+    { "SaveData",  GTK_STOCK_SAVE, N_("_Save data"), NULL, NULL, G_CALLBACK(auto_store) },
     { "SaveDataAs", GTK_STOCK_SAVE_AS, N_("Save data _as..."), NULL, NULL, G_CALLBACK(fsave_callback) }, 
     { "ExportData", NULL, N_("_Export data..."), NULL, NULL, G_CALLBACK(fsave_callback) },
 
@@ -1543,8 +1543,7 @@ GtkActionEntry main_entries[] = {
     { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
     { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_package_callback) },
     { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_package_callback) },
-
-    { "Quit", GTK_STOCK_QUIT, N_("E_xit"), "<control>X", NULL,  G_CALLBACK(menu_exit_check)},
+    { "Quit", GTK_STOCK_QUIT, NULL, NULL, NULL,  G_CALLBACK(menu_exit_check)},
 
     /* Tools */
     { "Tools", NULL, N_("_Tools"), NULL, NULL, NULL },
@@ -1890,7 +1889,8 @@ static gchar *get_main_ui (void)
 
 #ifdef MAC_INTEGRATION
 
-static void new_gretl_window (void)
+#if 0 /* doesn't work right */
+static void new_gretl_instance (GtkAction *action, gpointer data)
 {
     char *topdir = getenv("GTK_DATA_PREFIX");
 
@@ -1902,13 +1902,24 @@ static void new_gretl_window (void)
 	g_free(cmd);
     }
 }
+#endif
+
+static void mac_minimize (GtkAction *action, gpointer data)
+{
+    if (data != NULL) {
+	gtk_window_iconify(GTK_WINDOW(data));
+    }
+}
 
 static GtkActionEntry mac_entries[] = {
+#if 0
     { "FileMenu", NULL, "_File", NULL, NULL, NULL },
-    { "NewWindowAction", NULL, "_New window", "<meta>Q", NULL,
-      G_CALLBACK(new_gretl_window)},    
-    { "QuitAction", GTK_STOCK_QUIT, "_Quit", "<meta>Q", NULL,
-      G_CALLBACK(menu_exit_check)},    
+    { "NewInstanceAction", NULL, "_New gretl instance", NULL, NULL,
+      G_CALLBACK(new_gretl_instance)},
+#endif
+    { "WindowMenu", NULL, "_Window", NULL, NULL, NULL },
+    { "MinimizeAction", NULL, "_Minimize", "<meta>M", NULL,
+      G_CALLBACK(mac_minimize)},
     { "HelpMenu", NULL, "_Help", NULL, NULL, NULL },
     { "AboutAction", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL,
       G_CALLBACK(about_dialog)},
@@ -1917,10 +1928,11 @@ static GtkActionEntry mac_entries[] = {
 const gchar *mac_ui = 
     "<ui>"
     "  <menubar>"
-    "    <menu name='File' action='FileMenu'>"
-    "      <menuitem action='NewWindow' action='NewWindowAction'/>"
-    "      <menuitem action='Quit' action='QuitAction'/>"
-    "    </menu>"
+    "    <menu name='Window' action='WindowMenu'>"
+    "      <menuitem action='Minimize' action='MinimizeAction'/>"
+    "      <separator/>"
+    "      <placeholder name='WindowMenuPlace'/>"
+    "    </menu>"    
     "    <menu name='Help' action='HelpMenu'>"
     "      <menuitem action='About' action='AboutAction'/>"
     "    </menu>"
@@ -1939,7 +1951,8 @@ static GtkUIManager *add_mac_menu (void)
     actions = gtk_action_group_new("MacActions");
     gtk_action_group_set_translation_domain(actions, "gretl");
     gtk_action_group_add_actions(actions, mac_entries, 
-				 G_N_ELEMENTS(mac_entries), mdata);
+				 G_N_ELEMENTS(mac_entries), 
+				 mdata->main);
     gtk_ui_manager_insert_action_group(mgr, actions, 0);
     g_object_unref(actions);
 
@@ -1951,7 +1964,7 @@ static GtkUIManager *add_mac_menu (void)
     accel_group = gtk_ui_manager_get_accel_group(mgr);
     gtk_window_add_accel_group(GTK_WINDOW(mdata->main), accel_group);
 
-    menu = gtk_ui_manager_get_widget(mgr, "/menubar");
+    menu = gtk_ui_manager_get_widget(mgr, "/menubar/");
     g_object_ref_sink(menu);
 
     return mgr;
@@ -1965,6 +1978,10 @@ static void finish_mac_ui (GtkUIManager *mgr)
     App = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
     menu = gtk_ui_manager_get_widget(mgr, "/menubar");
     gtkosx_application_set_menu_bar(App, GTK_MENU_SHELL(menu));
+    menu = gtk_ui_manager_get_widget(mgr, "/menubar/Window");
+    gtkosx_application_set_window_menu(App, GTK_MENU_ITEM(menu));
+    menu = gtk_ui_manager_get_widget(mgr, "/menubar/Help");
+    gtkosx_application_set_help_menu(App, GTK_MENU_ITEM(menu));
     gtkosx_application_set_use_quartz_accelerators(App, FALSE); /* ? */
     gtkosx_application_ready(App);
 }
