@@ -163,7 +163,8 @@ static int params_init_from_pooled (MODEL *pmod,
     int i, t;
 
     if (pmod->ncoeff != k) {
-	fprintf(stderr, "What??? %d vs %d\n", pmod->ncoeff, k);
+	fprintf(stderr, "reprobit init: n. of coeffs doesn't match (%d vs %d)\n", 
+		pmod->ncoeff, k);
 	return E_NONCONF;
     }
 
@@ -182,7 +183,7 @@ static int params_init_from_pooled (MODEL *pmod,
 	}
     }
 
-    rho = (num > 0.0) ? num/den : 0.001;
+    rho = (num > 0.0) ? num/den : 0.01;
     sigma2_a = rho / (1-rho);
 
 #if 1
@@ -371,6 +372,11 @@ static double reprobit_ll (const double *theta, void *p)
     double x, pij, node;
     int i, j, t, s, h = C->qp;
     int err = 0;
+
+    if (theta[C->npar-1]<-6.0) {
+	fprintf(stderr, "reprobit_ll: scale too small\n");
+	return NADBL;
+    }
 
     update_ndx(C, theta);
     gretl_matrix_zero(C->P);
