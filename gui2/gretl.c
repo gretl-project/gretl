@@ -996,7 +996,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	    menu_exit_check();
 	    return TRUE;
 	} else if (k == GDK_comma) {
-	    options_dialog(0, NULL, mdata->main);
+	    options_dialog_callback();
 	    return TRUE;
 	}
     }
@@ -2043,6 +2043,8 @@ static GtkActionEntry mac_entries[] = {
     { "FileMenu", NULL, "_File", NULL, NULL, NULL },
     { "NewInstanceAction", NULL, "_New gretl instance", NULL, NULL,
       G_CALLBACK(new_gretl_instance)},
+    { "PrefsAction", NULL, "_Preferences", "<meta>comma", NULL,
+      G_CALLBACK(options_dialog_callback)},
     { "WindowMenu", NULL, "_Window", NULL, NULL, NULL },
     { "MinimizeAction", NULL, "_Minimize", "<meta>M", NULL,
       G_CALLBACK(mac_minimize)},
@@ -2055,7 +2057,8 @@ const gchar *mac_ui =
     "<ui>"
     "  <menubar>"
     "    <menu name='File' action='FileMenu'>"
-    "      <menuitem action='NewInstanceAction'/>"
+    "      <menuitem name='Preferences' action='PrefsAction'/>"
+    "      <menuitem name='NewInstance' action='NewInstanceAction'/>"
     "    </menu>"
     "    <menu name='Window' action='WindowMenu'>"
     "      <menuitem name='Minimize' action='MinimizeAction'/>"
