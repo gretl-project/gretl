@@ -262,9 +262,11 @@ static GtkWidget *small_tool_button (GretlToolItem *item,
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_widget_set_tooltip_text(GTK_WIDGET(button), _(item->tip));
     if (!strcmp(item->icon, GRETL_STOCK_COMPASS)) {
-	g_signal_connect(button, "button-press-event", item->func, plot->shell);
+	g_signal_connect(G_OBJECT(button), "button-press-event", 
+			 item->func, plot->shell);
     } else {
-	g_signal_connect(button, "clicked", item->func, plot);
+	g_signal_connect(G_OBJECT(button), "clicked", 
+			 item->func, plot);
     }
     gtk_widget_show_all(button);
 

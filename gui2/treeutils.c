@@ -493,7 +493,7 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 	if (types[i] == G_TYPE_BOOLEAN) {
 	    bool_renderer = gtk_cell_renderer_toggle_new();
 	    g_object_set_data(G_OBJECT(vwin->main), "boolcol", GINT_TO_POINTER(i));
-	    g_signal_connect(bool_renderer, "toggled",
+	    g_signal_connect(G_OBJECT(bool_renderer), "toggled",
 			     G_CALLBACK(bool_col_toggled), vwin);
 	    column = gtk_tree_view_column_new_with_attributes(_(titles[i]),
 							      bool_renderer,

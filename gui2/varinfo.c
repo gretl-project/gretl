@@ -689,20 +689,20 @@ static void varinfo_add_toolbar (gui_varinfo *vset, GtkWidget *hbox)
     tbar = gretl_toolbar_new();
 
     item = gtk_tool_button_new_from_stock(GTK_STOCK_APPLY);
-    g_signal_connect(item, "clicked", G_CALLBACK(varinfo_apply), vset);
+    g_signal_connect(G_OBJECT(item), "clicked", G_CALLBACK(varinfo_apply), vset);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     vset->apply = GTK_WIDGET(item);
     add_stock_tooltip(vset->apply, GTK_STOCK_APPLY);
     gtk_widget_set_sensitive(vset->apply, FALSE);
 
     item = gtk_tool_button_new_from_stock(GTK_STOCK_GO_UP);
-    g_signal_connect(item, "clicked", G_CALLBACK(varinfo_up_down), vset);
+    g_signal_connect(G_OBJECT(item), "clicked", G_CALLBACK(varinfo_up_down), vset);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     vset->up = GTK_WIDGET(item);
     gretl_tooltips_add(vset->up, _("Previous series"));
     
     item = gtk_tool_button_new_from_stock(GTK_STOCK_GO_DOWN);
-    g_signal_connect(item, "clicked", G_CALLBACK(varinfo_up_down), vset);
+    g_signal_connect(G_OBJECT(item), "clicked", G_CALLBACK(varinfo_up_down), vset);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     vset->down = GTK_WIDGET(item);
     gretl_tooltips_add(vset->down, _("Next series"));
@@ -947,7 +947,7 @@ void varinfo_dialog (int varnum)
 
     /* Cancel/Close button */
     tmp = close_button(hbox);
-    g_signal_connect(G_OBJECT (tmp), "clicked", 
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(varinfo_cancel), vset);
     gtk_widget_show(tmp);
 
@@ -1044,7 +1044,7 @@ void name_new_series_dialog (char *vname, char *descrip,
 
     /* Cancel button */
     tmp = cancel_button(hbox);
-    g_signal_connect(G_OBJECT (tmp), "clicked", 
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(name_setter_cancel), nset);
     gtk_widget_show(tmp);
 

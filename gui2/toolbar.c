@@ -533,7 +533,7 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
     gtk_box_pack_start(GTK_BOX(hb2), b, FALSE, FALSE, 0);
     adj = (GtkAdjustment *) gtk_adjustment_new(x, 0.60, 0.99, 0.01, 0, 0);
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.01, 2);
-    g_signal_connect(tmp, "value-changed", 
+    g_signal_connect(G_OBJECT(tmp), "value-changed", 
 		     G_CALLBACK(set_double_from_spinner), &x);
     gtk_widget_set_sensitive(tmp, !defset);
     g_signal_connect(G_OBJECT(b), "toggled", 
@@ -837,7 +837,7 @@ void vwin_toolbar_insert_winlist (windata_t *vwin)
 				   GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_container_add(GTK_CONTAINER(item), button);
-    g_signal_connect(button, "button-press-event", 
+    g_signal_connect(G_OBJECT(button), "button-press-event", 
 		     G_CALLBACK(vwin_winlist_popup), vwin);
     gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), item, -1);
 }
@@ -852,7 +852,7 @@ GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
 
     item = gtk_tool_button_new_from_stock(tool->icon);
     gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tool->tip));
-    g_signal_connect(item, "clicked", func, data);
+    g_signal_connect(G_OBJECT(item), "clicked", func, data);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, pos);
 
     return GTK_WIDGET(item);
@@ -871,7 +871,7 @@ static GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
     } else {
 	gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tool->tip));
     }
-    g_signal_connect(item, "clicked", func, vwin);
+    g_signal_connect(G_OBJECT(item), "clicked", func, vwin);
     gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), item, pos);
 
     return GTK_WIDGET(item);

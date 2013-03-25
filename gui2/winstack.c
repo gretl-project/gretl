@@ -951,7 +951,7 @@ static void menu_bar_add_winlist (windata_t *vwin)
 				   GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_widget_set_tooltip_text(GTK_WIDGET(button), _("Windows"));
-    g_signal_connect(button, "button-press-event",
+    g_signal_connect(G_OBJECT(button), "button-press-event",
 		     G_CALLBACK(window_list_popup), 
 		     vwin_toplevel(vwin));
     gtk_widget_show_all(button);

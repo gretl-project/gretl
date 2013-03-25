@@ -93,6 +93,7 @@ static void mdata_select_list (void);
 static int gui_query_stop (void);
 static void mdata_handle_paste (void);
 static gboolean real_open_tryfile (void);
+static int get_instance_count (void);
 
 #ifdef MAC_INTEGRATION
 static GtkUIManager *add_mac_menu (void);
@@ -453,131 +454,6 @@ static void install_mac_signals (GtkosxApplication *App)
 
 #endif /* MAC_INTEGRATION */
 
-#if defined(__linux) || defined(linux)
-
-static int get_instance_count (void) 
-{
-    DIR *dir;
-    struct dirent *ent;
-    char buf[128];
-    long pid;
-    char pname[32] = {0};
-    char state;
-    FILE *fp;
-    int count = 0;
-
-    if ((dir = opendir("/proc")) == NULL) {
-        perror("can't open /proc");
-        return -1;
-    }
-
-    while ((ent = readdir(dir)) != NULL) {
-        long lpid = atol(ent->d_name);
-
-        if (lpid < 0) {
-            continue;
-	}
-
-        snprintf(buf, sizeof(buf), "/proc/%ld/stat", lpid);
-        fp = fopen(buf, "r");
-
-        if (fp != NULL) {
-            if ((fscanf(fp, "%ld (%31[^)]) %c", &pid, pname, &state)) != 3) {
-                printf("proc fscanf failed\n");
-                fclose(fp);
-                closedir(dir);
-                return -1; 
-            }
-            if (!strcmp(pname, "gretl_x11") || !strcmp(pname, "lt-gretl_x11")) {
-		count++;
-            }
-            fclose(fp);
-        }
-    }
-
-    closedir(dir);
-
-    return count;
-}
-
-#elif defined(MAC_NATIVE)
-
-#include <sys/proc_info.h>
-#include <libproc.h>
-
-static int get_instance_count (void)
-{
-    int nproc = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
-    char buf[PROC_PIDPATHINFO_MAXSIZE];
-    size_t psize;
-    pid_t *pids;
-    int i, count = 0;
-    
-    psize = nproc * sizeof *pids;
-    pids = malloc(psize);
-    if (pids == NULL) {
-	return -1;
-    }
-
-    for (i=0; i<nproc; i++) {
-	pids[i] = 0;
-    }
-    
-    proc_listpids(PROC_ALL_PIDS, 0, pids, psize);
-
-    for (i=0; i<nproc; i++) {
-	if (pids[i] == 0) { 
-	    continue; 
-	}
-	memset(buf, 0, sizeof buf);
-	proc_pidpath(pids[i], buf, sizeof buf);
-	if (*buf != '\0') {
-	    char *s = strrchr(buf, '/');
-	    
-	    if (s != NULL) {
-	        count += !strcmp("gretl", s + 1);
-            } else {
-	        count += !strcmp("gretl", buf);
-            }
-	} 
-    }
-
-    free(pids);
-    
-    return count;
-}
-
-#elif defined (G_OS_WIN32)
-
-static int get_instance_count (void) 
-{
-    HANDLE hsnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    int count = 0;
-
-    if (hsnap) {
-        PROCESSENTRY32 pe32;
-	char *s;
-
-        pe32.dwSize = sizeof(PROCESSENTRY32);
-        if (Process32First(hsnap, &pe32)) {
-            do {
-		printf("pid %d %s\n", pe32.th32ProcessID, pe32.szExeFile);
-		s = strrchr(pe32.szExeFile, '\\');
-		if (s != NULL) {
-		    count += !strcmp(s + 1, "gretlw32.exe");
-		} else {
-		    count += !strcmp(pe32.szExeFiles, "gretlw32.exe");
-		}
-            } while (Process32Next(hsnap, &pe32));
-	}
-	CloseHandle(hsnap);
-    }
-
-    return count;
-}
-
-#endif
-
 /* callback from within potentially lengthy libgretl
    operations: try to avoid having the GUI become
    totally unresponsive
@@ -651,9 +527,7 @@ int main (int argc, char **argv)
     gretl_config_init();
 #endif
 
-#if defined(linux) || defined(__linux) || defined(MAC_NATIVE) || defined(G_OS_WIN32)
     instance_count = get_instance_count();
-#endif
 
     if (optver) {
 	gui_logo(NULL);
@@ -2615,3 +2489,139 @@ void do_stop_script (GtkWidget *w, windata_t *vwin)
 {
     script_stopper(1);
 }
+
+/* below: program instance counter, in various flavours */
+
+#if defined(__linux) || defined(linux)
+
+static int get_instance_count (void) 
+{
+    DIR *dir;
+    struct dirent *ent;
+    char buf[128];
+    long pid;
+    char pname[32] = {0};
+    char state;
+    FILE *fp;
+    int count = 0;
+
+    if ((dir = opendir("/proc")) == NULL) {
+        perror("can't open /proc");
+        return -1;
+    }
+
+    while ((ent = readdir(dir)) != NULL) {
+        long lpid = atol(ent->d_name);
+
+        if (lpid < 0) {
+            continue;
+	}
+
+        snprintf(buf, sizeof(buf), "/proc/%ld/stat", lpid);
+        fp = fopen(buf, "r");
+
+        if (fp != NULL) {
+            if ((fscanf(fp, "%ld (%31[^)]) %c", &pid, pname, &state)) != 3) {
+                printf("proc fscanf failed\n");
+                fclose(fp);
+                closedir(dir);
+                return -1; 
+            }
+            if (!strcmp(pname, "gretl_x11") || !strcmp(pname, "lt-gretl_x11")) {
+		count++;
+            }
+            fclose(fp);
+        }
+    }
+
+    closedir(dir);
+
+    return count;
+}
+
+#elif defined(MAC_NATIVE)
+
+#include <sys/proc_info.h>
+#include <libproc.h>
+
+static int get_instance_count (void)
+{
+    int nproc = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    char buf[PROC_PIDPATHINFO_MAXSIZE];
+    size_t psize;
+    pid_t *pids;
+    int i, count = 0;
+    
+    psize = nproc * sizeof *pids;
+    pids = malloc(psize);
+    if (pids == NULL) {
+	return -1;
+    }
+
+    for (i=0; i<nproc; i++) {
+	pids[i] = 0;
+    }
+    
+    proc_listpids(PROC_ALL_PIDS, 0, pids, psize);
+
+    for (i=0; i<nproc; i++) {
+	if (pids[i] == 0) { 
+	    continue; 
+	}
+	memset(buf, 0, sizeof buf);
+	proc_pidpath(pids[i], buf, sizeof buf);
+	if (*buf != '\0') {
+	    char *s = strrchr(buf, '/');
+	    
+	    if (s != NULL) {
+	        count += !strcmp("gretl", s + 1);
+            } else {
+	        count += !strcmp("gretl", buf);
+            }
+	} 
+    }
+
+    free(pids);
+    
+    return count;
+}
+
+#elif defined (G_OS_WIN32)
+
+#include <tlhelp32.h>
+
+static int get_instance_count (void) 
+{
+    HANDLE hsnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    int count = 0;
+
+    if (hsnap) {
+        PROCESSENTRY32 pe32;
+	char *s;
+
+        pe32.dwSize = sizeof(PROCESSENTRY32);
+        if (Process32First(hsnap, &pe32)) {
+            do {
+		fprintf(stderr, "pid %d %s\n", pe32.th32ProcessID, pe32.szExeFile);
+		s = strrchr(pe32.szExeFile, '\\');
+		if (s != NULL) {
+		    count += !strcmp(s + 1, "gretlw32.exe");
+		} else {
+		    count += !strcmp(pe32.szExeFile, "gretlw32.exe");
+		}
+            } while (Process32Next(hsnap, &pe32));
+	}
+	CloseHandle(hsnap);
+    }
+
+    return count;
+}
+
+#else
+
+static int get_instance_count (void) 
+{
+    return 0;
+}
+
+#endif /* none of the above */

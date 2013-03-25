@@ -369,7 +369,8 @@ static void viewer_tab_add_closer (GtkWidget *tab, windata_t *vwin)
     gtk_container_set_border_width(GTK_CONTAINER(button), 0);
     no_button_padding(button);
     gtk_container_add(GTK_CONTAINER(button), img);
-    g_signal_connect(button, "clicked", G_CALLBACK(tabwin_tab_close), 
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(tabwin_tab_close), 
 		     vwin);
     gtk_container_add(GTK_CONTAINER(tab), button);
     g_object_set_data(G_OBJECT(tab), "closer", button);
@@ -562,13 +563,13 @@ static tabwin_t *make_tabbed_viewer (int role)
     /* notebook with its signal handlers */
     tabwin->tabs = gtk_notebook_new();
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(tabwin->tabs), TRUE);
-    g_signal_connect(tabwin->tabs, "switch-page",
+    g_signal_connect(G_OBJECT(tabwin->tabs), "switch-page",
 		     G_CALLBACK(switch_page_callback), tabwin);
-    g_signal_connect(tabwin->tabs, "create-window",
+    g_signal_connect(G_OBJECT(tabwin->tabs), "create-window",
 		     G_CALLBACK(detach_tab_callback), tabwin);
-    g_signal_connect(tabwin->tabs, "page-added",
+    g_signal_connect(G_OBJECT(tabwin->tabs), "page-added",
 		     G_CALLBACK(page_added_callback), tabwin);
-    g_signal_connect(tabwin->tabs, "page-removed",
+    g_signal_connect(G_OBJECT(tabwin->tabs), "page-removed",
 		     G_CALLBACK(page_removed_callback), tabwin);
     gtk_container_add(GTK_CONTAINER(vbox), tabwin->tabs);
 

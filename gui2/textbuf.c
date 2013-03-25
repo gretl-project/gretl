@@ -496,8 +496,8 @@ void sourceview_print (windata_t *vwin)
 	gtk_source_print_compositor_set_bottom_margin(comp, 72, GTK_UNIT_POINTS);
     }
 
-    g_signal_connect(print, "begin_print", G_CALLBACK(begin_print), comp);
-    g_signal_connect(print, "draw_page", G_CALLBACK(draw_page), comp);
+    g_signal_connect(G_OBJECT(print), "begin_print", G_CALLBACK(begin_print), comp);
+    g_signal_connect(G_OBJECT(print), "draw_page", G_CALLBACK(draw_page), comp);
 
     mainwin = vwin_toplevel(vwin);
 
@@ -515,7 +515,7 @@ void sourceview_print (windata_t *vwin)
 				     GTK_BUTTONS_CLOSE,
 				     "Error printing file:\n%s",
 				     error->message);
-	g_signal_connect(dlg, "response", 
+	g_signal_connect(G_OBJECT(dlg), "response", 
 			 G_CALLBACK(gtk_widget_destroy), NULL);
 	gtk_widget_show(dlg);
 	g_error_free(error);
@@ -1481,13 +1481,13 @@ static void maybe_connect_help_signals (windata_t *hwin, int en)
     if (!done) {
 	gpointer en_ptr = GINT_TO_POINTER(en);
 
-	g_signal_connect(hwin->text, "key-press-event", 
+	g_signal_connect(G_OBJECT(hwin->text), "key-press-event", 
 			 G_CALLBACK(cmdref_key_press), en_ptr);
-	g_signal_connect(hwin->text, "event-after", 
+	g_signal_connect(G_OBJECT(hwin->text), "event-after", 
 			 G_CALLBACK(cmdref_event_after), en_ptr);
-	g_signal_connect(hwin->text, "motion-notify-event", 
+	g_signal_connect(G_OBJECT(hwin->text), "motion-notify-event", 
 			 G_CALLBACK(cmdref_motion_notify), NULL);
-	g_signal_connect(hwin->text, "visibility-notify-event", 
+	g_signal_connect(G_OBJECT(hwin->text), "visibility-notify-event", 
 			 G_CALLBACK(cmdref_visibility_notify), NULL);
 	g_object_set_data(G_OBJECT(hwin->text), "sigs_connected", 
 			  GINT_TO_POINTER(1));
