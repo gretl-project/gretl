@@ -500,7 +500,54 @@ static int get_instance_count (void)
     return count;
 }
 
-#endif /* linux only */
+#elif defined(MAC_NATIVE)
+
+#include <sys/proc_info.h>
+#include <libproc.h>
+
+static int get_instance_count (void)
+{
+    int nproc = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    char buf[PROC_PIDPATHINFO_MAXSIZE];
+    size_t psize;
+    pid_t *pids;
+    int i, count = 0;
+    
+    psize = nproc * sizeof *pids;
+    pids = malloc(psize);
+    if (pids == NULL) {
+	return -1;
+    }
+
+    for (i=0; i<nproc; i++) {
+	pids[i] = 0;
+    }
+    
+    proc_listpids(PROC_ALL_PIDS, 0, pids, psize);
+
+    for (i=0; i<nproc; i++) {
+	if (pids[i] == 0) { 
+	    continue; 
+	}
+	memset(buf, 0, sizeof buf);
+	proc_pidpath(pids[i], buf, sizeof buf);
+	if (*buf != '\0') {
+	    char *s = strrchr(buf, '/');
+	    
+	    if (s != NULL) {
+	        count += !strcmp("gretl", s + 1);
+            } else {
+	        count += !strcmp("gretl", buf);
+            }
+	} 
+    }
+
+    free(pids);
+    
+    return count;
+}
+
+#endif
 
 /* callback from within potentially lengthy libgretl
    operations: try to avoid having the GUI become
@@ -575,7 +622,7 @@ int main (int argc, char **argv)
     gretl_config_init();
 #endif
 
-#if defined(linux) || defined(__linux)
+#if defined(linux) || defined(__linux) || defined(MAC_NATIVE)
     instance_count = get_instance_count();
 #endif
 
@@ -1943,7 +1990,6 @@ static gchar *get_main_ui (void)
 
 #ifdef MAC_INTEGRATION
 
-#if 0 /* doesn't work right */
 static void new_gretl_instance (GtkAction *action, gpointer data)
 {
     char *topdir = getenv("GTK_DATA_PREFIX");
@@ -1951,12 +1997,11 @@ static void new_gretl_instance (GtkAction *action, gpointer data)
     if (topdir != NULL) {
 	gchar *cmd;
 
-	cmd = g_strdup_printf("%s/../MacOS/Gretl", topdir);
+	cmd = g_strdup_printf("open -n %s/../../../Gretl.app", topdir);
 	system(cmd);
 	g_free(cmd);
     }
 }
-#endif
 
 static void mac_minimize (GtkAction *action, gpointer data)
 {
@@ -1966,11 +2011,9 @@ static void mac_minimize (GtkAction *action, gpointer data)
 }
 
 static GtkActionEntry mac_entries[] = {
-#if 0
     { "FileMenu", NULL, "_File", NULL, NULL, NULL },
     { "NewInstanceAction", NULL, "_New gretl instance", NULL, NULL,
       G_CALLBACK(new_gretl_instance)},
-#endif
     { "WindowMenu", NULL, "_Window", NULL, NULL, NULL },
     { "MinimizeAction", NULL, "_Minimize", "<meta>M", NULL,
       G_CALLBACK(mac_minimize)},
@@ -1982,13 +2025,16 @@ static GtkActionEntry mac_entries[] = {
 const gchar *mac_ui = 
     "<ui>"
     "  <menubar>"
+    "    <menu name='File' action='FileMenu'>"
+    "      <menuitem action='NewInstanceAction'/>"
+    "    </menu>"
     "    <menu name='Window' action='WindowMenu'>"
-    "      <menuitem action='Minimize' action='MinimizeAction'/>"
+    "      <menuitem name='Minimize' action='MinimizeAction'/>"
     "      <separator/>"
     "      <placeholder name='WindowMenuPlace'/>"
     "    </menu>"    
     "    <menu name='Help' action='HelpMenu'>"
-    "      <menuitem action='About' action='AboutAction'/>"
+    "      <menuitem name='About' action='AboutAction'/>"
     "    </menu>"
     "  </menubar>"
     "</ui>";
