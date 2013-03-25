@@ -5578,6 +5578,7 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 
     fprintf(fp, "set xlabel '%s'\n", _("periods"));
     fputs("set xzeroaxis\n", fp);
+    fprintf(fp, "set xrange [-1:%d]\n", periods);
     fprintf(fp, "set title '%s'\n", title);
 
     if (confint) {
@@ -5607,7 +5608,7 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 
     if (confint && use_fill) {
 	for (t=0; t<periods; t++) {
-	    fprintf(fp, "%d %.10g %.10g\n", t+1, 
+	    fprintf(fp, "%d %.10g %.10g\n", t, 
 		    gretl_matrix_get(resp, t, 1),
 		    gretl_matrix_get(resp, t, 2));
 	}
@@ -5615,13 +5616,13 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     }
 
     for (t=0; t<periods; t++) {
-	fprintf(fp, "%d %.10g\n", t+1, gretl_matrix_get(resp, t, 0));
+	fprintf(fp, "%d %.10g\n", t, gretl_matrix_get(resp, t, 0));
     }
     fputs("e\n", fp);
 
     if (confint && !use_fill) {
 	for (t=0; t<periods; t++) {
-	    fprintf(fp, "%d %.10g %.10g %.10g\n", t+1, 
+	    fprintf(fp, "%d %.10g %.10g %.10g\n", t, 
 		    gretl_matrix_get(resp, t, 0),
 		    gretl_matrix_get(resp, t, 1),
 		    gretl_matrix_get(resp, t, 2));
@@ -5733,6 +5734,7 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
     }
 
     fputs("set xzeroaxis\n", fp);
+    fprintf(fp, "set xrange [-1:%d]\n", periods);
 
     gretl_push_c_numeric_locale();
 
@@ -5779,7 +5781,7 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 
 	    if (confint && use_fill) {
 		for (t=0; t<periods; t++) {
-		    fprintf(fp, "%d %.10g %.10g\n", t+1, 
+		    fprintf(fp, "%d %.10g %.10g\n", t, 
 			    gretl_matrix_get(resp, t, 1),
 			    gretl_matrix_get(resp, t, 2));
 		}
@@ -5787,13 +5789,13 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 	    }		
 
 	    for (t=0; t<periods; t++) {
-		fprintf(fp, "%d %.10g\n", t+1, gretl_matrix_get(resp, t, 0));
+		fprintf(fp, "%d %.10g\n", t, gretl_matrix_get(resp, t, 0));
 	    }
 	    fputs("e\n", fp);
 
 	    if (confint && !use_fill) {
 		for (t=0; t<periods; t++) {
-		    fprintf(fp, "%d %.10g %.10g %.10g\n", t+1, 
+		    fprintf(fp, "%d %.10g %.10g %.10g\n", t, 
 			    gretl_matrix_get(resp, t, 0),
 			    gretl_matrix_get(resp, t, 1),
 			    gretl_matrix_get(resp, t, 2));
