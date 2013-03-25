@@ -2602,7 +2602,6 @@ static int get_instance_count (void)
         pe32.dwSize = sizeof(PROCESSENTRY32);
         if (Process32First(hsnap, &pe32)) {
             do {
-		fprintf(stderr, "pid %d %s\n", pe32.th32ProcessID, pe32.szExeFile);
 		s = strrchr(pe32.szExeFile, '\\');
 		if (s != NULL) {
 		    count += !strcmp(s + 1, "gretlw32.exe");

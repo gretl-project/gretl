@@ -1587,16 +1587,12 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 	combo_box_append_text(combo, "none");
 
 	for (j=0; j<nfuns; j++) {
-	    if (j < finfo->n_priv) {
-		if (must_be_public(role)) {
-		    continue;
-		}
+	    if (j < finfo->n_priv && !must_be_public(role)) {
 		funname = finfo->privnames[j];
-	    } else {
-		if (must_be_private(role)) {
-		    continue;
-		}		
+	    } else if (j >= finfo->n_priv && !must_be_private(role)) {
 		funname = finfo->pubnames[j - finfo->n_priv];
+	    } else {
+		continue;
 	    }
 	    /* test for validity in this role */
 	    err = function_set_package_role(funname, finfo->pkg,
@@ -1779,7 +1775,7 @@ static void finfo_dialog (function_info *finfo)
     g_signal_connect(G_OBJECT(hbuf), "changed", 
 		     G_CALLBACK(pkg_changed), finfo);
 
-    /* edit code button, possibly with selector */
+    /* edit code button, possibly with function selector */
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
@@ -1815,13 +1811,11 @@ static void finfo_dialog (function_info *finfo)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(add_remove_callback), finfo);
 
-#if 1 /* work in progress */
     /* extra package properties button */
     button = gtk_button_new_with_label(_("Extra properties"));
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(extra_properties_dialog), finfo);
-#endif
 
     /* write spec file button */
     button = gtk_button_new_with_label(_("Write spec file"));
