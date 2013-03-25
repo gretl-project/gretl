@@ -547,6 +547,35 @@ static int get_instance_count (void)
     return count;
 }
 
+#elif defined (G_OS_WIN32)
+
+static int get_instance_count (void) 
+{
+    HANDLE hsnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    int count = 0;
+
+    if (hsnap) {
+        PROCESSENTRY32 pe32;
+	char *s;
+
+        pe32.dwSize = sizeof(PROCESSENTRY32);
+        if (Process32First(hsnap, &pe32)) {
+            do {
+		printf("pid %d %s\n", pe32.th32ProcessID, pe32.szExeFile);
+		s = strrchr(pe32.szExeFile, '\\');
+		if (s != NULL) {
+		    count += !strcmp(s + 1, "gretlw32.exe");
+		} else {
+		    count += !strcmp(pe32.szExeFiles, "gretlw32.exe");
+		}
+            } while (Process32Next(hsnap, &pe32));
+	}
+	CloseHandle(hsnap);
+    }
+
+    return count;
+}
+
 #endif
 
 /* callback from within potentially lengthy libgretl
@@ -622,7 +651,7 @@ int main (int argc, char **argv)
     gretl_config_init();
 #endif
 
-#if defined(linux) || defined(__linux) || defined(MAC_NATIVE)
+#if defined(linux) || defined(__linux) || defined(MAC_NATIVE) || defined(G_OS_WIN32)
     instance_count = get_instance_count();
 #endif
 
