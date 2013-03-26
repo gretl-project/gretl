@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.9.11cvs
+# Polish translation for gretl-1.9.12cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2013
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2013
@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.9.11\n"
+"Project-Id-Version: gretl-1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-03-25 10:41-0400\n"
-"PO-Revision-Date: 2013-03-02 23:00-0400\n"
+"PO-Revision-Date: 2013-03-25 21:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -25,16 +25,15 @@ msgstr "opóźnione różnice"
 
 #: lib/src/adf_kpss.c:307 gui2/library.c:932
 msgid "modified AIC"
-msgstr ""
+msgstr "zmodyfikowane AIC"
 
 #: lib/src/adf_kpss.c:309 gui2/library.c:933
 msgid "modified BIC"
-msgstr ""
+msgstr "zmodyfikowane BIC"
 
 #: lib/src/adf_kpss.c:311 gui2/library.c:934
-#, fuzzy
 msgid "t-statistic"
-msgstr "Statystyka testu"
+msgstr "t-statystyka"
 
 #: lib/src/adf_kpss.c:323
 #, c-format
@@ -67,9 +66,9 @@ msgid "including %d lags of (1-L)%s"
 msgstr "dla opóźnienia rzędu %d procesu (1-L)%s"
 
 #: lib/src/adf_kpss.c:342
-#, fuzzy, c-format
+#, c-format
 msgid "(max was %d, criterion %s)"
-msgstr "(maksymalne było %d)"
+msgstr "(maksymalne było %d, kryterium %s)"
 
 #: lib/src/adf_kpss.c:384 gui2/library.c:950 gui2/library.c:1169
 #: gui2/selector.c:6012 plugin/panurc.c:234
@@ -157,9 +156,8 @@ msgid "time trend variable"
 msgstr "zmienna czasowa t"
 
 #: lib/src/adf_kpss.c:790
-#, fuzzy
 msgid "Invalid option"
-msgstr "Błędna opcja '--%s'"
+msgstr "Błędna opcja"
 
 #: lib/src/adf_kpss.c:821 lib/src/adf_kpss.c:1583 lib/src/boxplots.c:777
 #: lib/src/describe.c:1620 lib/src/describe.c:3034 lib/src/describe.c:3554
@@ -4771,7 +4769,6 @@ msgid "Multinomial Logit"
 msgstr "Wielomianowy Nieuporządkowany Logit"
 
 #: lib/src/modelprint.c:908
-#, fuzzy
 msgid "Random-effects probit"
 msgstr "Probit z losowymi efektami"
 
@@ -6150,8 +6147,8 @@ msgstr ""
 #: lib/src/printout.c:326
 msgid "Test for null hypothesis of normal distribution"
 msgstr ""
-"Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny. Test "
-"Doornika-Hansena (1994)- transformowana skośność i kurtoza"
+"Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny."
+"Test Doornika-Hansena (1994)- transformowana skośność i kurtoza."
 
 #: lib/src/printout.c:333
 msgid "Test for null hypothesis of gamma distribution"
@@ -9471,7 +9468,7 @@ msgstr "Filtr Hodricka-Prescotta"
 
 #: gui2/filters.c:98
 msgid "Baxter-King Band-pass filter"
-msgstr "Pasmo filtru Baxtera-Kinga"
+msgstr "Pasmo filtru Baxter-Kinga"
 
 #: gui2/filters.c:100
 msgid "Butterworth filter"
@@ -9523,7 +9520,7 @@ msgstr "Przefiltrowany %s: cykl Hodricka-Prescotta (lambda = %g)"
 #: gui2/filters.c:232
 #, c-format
 msgid "Filtered %s: Baxter-King, frequency %d to %d"
-msgstr "Przefiltrowany %s: cykl Baxtera-Kinga, częstość od %d do %d"
+msgstr "Przefiltrowany %s: cykl Baxter-Kinga, częstość od %d do %d"
 
 #: gui2/filters.c:236
 #, c-format
@@ -9701,7 +9698,7 @@ msgstr "Składnik cykliczny dla %s"
 #: gui2/filters.c:948
 #, c-format
 msgid "Baxter-King component of %s at frequency %d to %d"
-msgstr "Składnik filtru Baxtera-Kinga dla %s o częstościach od %d do %d"
+msgstr "Składnik filtru Baxter-Kinga dla %s o częstościach od %d do %d"
 
 #: gui2/filters.c:972
 #, c-format
@@ -9901,12 +9898,10 @@ msgid "_Analysis"
 msgstr "_Analiza"
 
 #: gui2/fnsave.c:1294
-#, fuzzy
 msgid "Label"
-msgstr "Dodaj opis"
+msgstr "Opis"
 
 #: gui2/fnsave.c:1308
-#, fuzzy
 msgid "Window"
 msgstr "Okna"
 
@@ -9915,20 +9910,20 @@ msgid ""
 "To update the menu attachment, you should\n"
 "(a) save this package, and (b) restart gretl."
 msgstr ""
+"To update the menu attachment, you should\n"
+"(a) save this package, and (b) restart gretl."
 
 #: gui2/fnsave.c:1547
-#, fuzzy
 msgid "gretl: extra properties"
-msgstr "gretl: error"
+msgstr "gretl: dodatkowe własności"
 
 #: gui2/fnsave.c:1562
-#, fuzzy
 msgid "Special functions"
-msgstr "Zapisz funkcje"
+msgstr "Specjalne funkcje"
 
 #: gui2/fnsave.c:1634
 msgid "Menu attachment"
-msgstr ""
+msgstr "Menu załącznika"
 
 #: gui2/fnsave.c:1686
 msgid "Date (YYYY-MM-DD)"
@@ -9963,9 +9958,8 @@ msgid "Add/remove functions"
 msgstr "Dodaj/Zamień funkcje"
 
 #: gui2/fnsave.c:1820
-#, fuzzy
 msgid "Extra properties"
-msgstr "Własności"
+msgstr "Dodatkowe własności"
 
 #: gui2/fnsave.c:1827
 msgid "Write spec file"
@@ -11219,7 +11213,7 @@ msgstr "Filtr _Hodricka-Prescotta"
 
 #: gui2/gretl.c:1681
 msgid "_Baxter-King"
-msgstr "Filtr Baxtera-_Kinga"
+msgstr "Filtr Baxter-_Kinga"
 
 #: gui2/gretl.c:1682
 msgid "_Butterworth"
@@ -12596,7 +12590,6 @@ msgid "Principal Components Analysis"
 msgstr "Analiza głównych składowych"
 
 #: gui2/library.c:928
-#, fuzzy
 msgid "criterion"
 msgstr "Kryterium"
 
@@ -14648,9 +14641,8 @@ msgid "Emulate Windows look"
 msgstr "Emuluje wyląd okien windowsa"
 
 #: gui2/settings.c:186
-#, fuzzy
 msgid "Theme preference"
-msgstr "Wybór języka dla GUI"
+msgstr "Preferencje"
 
 #: gui2/settings.c:190
 msgid "Web browser"
@@ -14734,33 +14726,31 @@ msgstr "Kalkulator"
 
 #: gui2/settings.c:242
 msgid "Path to x12arima"
-msgstr "Program X12-ARIMA"
+msgstr "Ścieżka dla programu X12-ARIMA"
 
 #: gui2/settings.c:246
 msgid "Path to tramo"
-msgstr "Program TRAMO"
+msgstr "Ścieżka dla programu TRAMO"
 
 #: gui2/settings.c:250
 msgid "Path to R library"
-msgstr "Program R"
+msgstr "Ścieżka dla programu R Library"
 
 #: gui2/settings.c:253
 msgid "Path to oxl executable"
-msgstr "Program OX"
+msgstr "Ścieżka dla programu OX"
 
 #: gui2/settings.c:255
 msgid "Path to octave executable"
-msgstr "Program OCTAVE"
+msgstr "Ścieżka dla program OCTAVE"
 
 #: gui2/settings.c:257
-#, fuzzy
 msgid "Path to Stata executable"
-msgstr "Program OCTAVE"
+msgstr "Ścieżka dla programu STATA"
 
 #: gui2/settings.c:259
-#, fuzzy
 msgid "Path to Python executable"
-msgstr "Program OX"
+msgstr "Ścieżka dla program PYTHON"
 
 #: gui2/settings.c:261
 msgid "Database server name"
@@ -15643,14 +15633,12 @@ msgid "AB-model"
 msgstr "AB-model"
 
 #: plugin/addons-i18n.c:46
-#, fuzzy
 msgid "Bootstrap alpha"
-msgstr "_Bootstrapowe przedziały ufności..."
+msgstr "Bootstrap alpha"
 
 #: plugin/addons-i18n.c:47
-#, fuzzy
 msgid "Bootstrap replications"
-msgstr "bootstrapowa statystyka t"
+msgstr "Replikacje bootstrapowe"
 
 #: plugin/addons-i18n.c:48
 msgid "C-model"
@@ -15693,9 +15681,8 @@ msgid "plain"
 msgstr "prosty - plain"
 
 #: plugin/addons-i18n.c:61
-#, fuzzy
 msgid "template matrix"
-msgstr "Zamieniono macierz %s"
+msgstr "Szablon macierzy"
 
 #: plugin/anova.c:108 plugin/anova.c:110
 msgid "Treatment"
@@ -16584,7 +16571,7 @@ msgstr "Nieodpowiednia statystyka dla tego modelu"
 
 #: plugin/vif.c:237
 msgid "Variance Inflation Factors"
-msgstr "Ocena współliniowości VIF(j) - czynnik j rozdęcia wariancji"
+msgstr "Ocena współliniowości VIF(j) - czynnik rozdęcia wariancji"
 
 #: plugin/vif.c:239
 msgid "Minimum possible value = 1.0"
@@ -16668,12 +16655,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "'%s': invalid key string"
-#~ msgstr "'%s':, błędny klucz znaków"
-
-#~ msgid "E_xit"
-#~ msgstr "_Zakończ"
-
-#~ msgid "template"
-#~ msgstr "Restrykcje"

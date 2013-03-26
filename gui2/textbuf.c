@@ -37,6 +37,7 @@
 #endif
 
 #ifdef USE_GTKSOURCEVIEW_3
+# include <gtksourceview/gtksourcebuffer.h>
 # define GTK_IS_SOURCE_VIEW GTK_SOURCE_IS_VIEW
 #endif
 
