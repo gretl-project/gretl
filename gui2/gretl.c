@@ -414,9 +414,39 @@ static void record_filearg (char *targ, const char *src)
     }
 }
 
-static void usr1_handler (int signal) 
+static void open_handler (int sig, siginfo_t *sinfo, void *context)
 {
-    fprintf(stderr, "Hello from gretl's signal handler: got SIGUSR1\n");
+    if (sig == SIGUSR1) {
+#if 0
+	fprintf(stderr, "Sending PID: %ld, UID: %ld\n",
+			(long) sinfo->si_pid, (long) sinfo->si_uid);
+	fprintf(stderr, "signo = %d, code = %d\n", sinfo->si_signo, sinfo->si_code);
+	fprintf(stderr, "SIGUSR1 = %d, SI_QUEUE = %d\n", SIGUSR1, SI_QUEUE);
+#endif
+	if (sinfo->si_value.sival_ptr != NULL) {
+	    void *ptr = sinfo->si_value.sival_ptr;
+
+	    fprintf(stderr, "open_handler: got ptr %p\n", ptr);
+#if 0
+	    /* this doesn't work: crash! */
+	    char *s = (char *) ptr;
+	    fprintf(stderr, "string '%s'\n", s);
+#endif
+	}
+    }
+}
+
+static void install_open_handler (void)
+{
+    static struct sigaction action;
+    int err;
+
+    action.sa_sigaction = open_handler;
+    sigemptyset(&action.sa_mask);    
+    action.sa_flags = SA_SIGINFO;
+
+    err = sigaction(SIGUSR1, &action, NULL);
+    fprintf(stderr, "install_open_handler: err = %d\n", err);
 }
 
 #endif
@@ -487,7 +517,7 @@ int main (int argc, char **argv)
 #ifdef G_OS_WIN32
     win32_set_gretldir(callname);
 #else
-    signal(SIGUSR1, usr1_handler);
+    install_open_handler();
 #endif
 
     gui_nls_init();
