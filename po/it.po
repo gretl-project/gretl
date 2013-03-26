@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-03-25 10:41-0400\n"
-"PO-Revision-Date: 2011-12-23 21:37+0100\n"
+"PO-Revision-Date: 2013-03-26 22:34+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -22,14 +22,12 @@ msgid "lagged differences"
 msgstr "differenze ritardate"
 
 #: lib/src/adf_kpss.c:307 gui2/library.c:932
-#, fuzzy
 msgid "modified AIC"
-msgstr "Modificato"
+msgstr "AIC modificato"
 
 #: lib/src/adf_kpss.c:309 gui2/library.c:933
-#, fuzzy
 msgid "modified BIC"
-msgstr "Modificato"
+msgstr "BIC modificato"
 
 #: lib/src/adf_kpss.c:311 gui2/library.c:934
 msgid "t-statistic"
@@ -66,9 +64,9 @@ msgid "including %d lags of (1-L)%s"
 msgstr "inclusi %d ritardi di (1-L)%s"
 
 #: lib/src/adf_kpss.c:342
-#, fuzzy, c-format
+#, c-format
 msgid "(max was %d, criterion %s)"
-msgstr "(max era %d)"
+msgstr "(max era %d, criterio: %s)"
 
 #: lib/src/adf_kpss.c:384 gui2/library.c:950 gui2/library.c:1169
 #: gui2/selector.c:6012 plugin/panurc.c:234
@@ -156,9 +154,8 @@ msgid "time trend variable"
 msgstr "Trend temporale"
 
 #: lib/src/adf_kpss.c:790
-#, fuzzy
 msgid "Invalid option"
-msgstr "Opzione non valida '--%s'"
+msgstr "Opzione non valida"
 
 #: lib/src/adf_kpss.c:821 lib/src/adf_kpss.c:1583 lib/src/boxplots.c:777
 #: lib/src/describe.c:1620 lib/src/describe.c:3034 lib/src/describe.c:3554
@@ -169,7 +166,7 @@ msgstr "%s è una costante"
 
 #: lib/src/adf_kpss.c:1227
 msgid "Choi meta-tests:"
-msgstr "Meta test di Choi"
+msgstr "Meta test di Choi:"
 
 #: lib/src/adf_kpss.c:1228
 msgid "Inverse chi-square"
@@ -442,19 +439,16 @@ msgid "Null hypothesis"
 msgstr "Ipotesi nulla"
 
 #: lib/src/compare.c:276
-#, fuzzy
 msgid "no seasonal effects or trend"
-msgstr "= differenza stagionale di %s"
+msgstr "né trend né effetti stagionali"
 
 #: lib/src/compare.c:279
-#, fuzzy
 msgid "no seasonal effects"
-msgstr "Differenze non stagionali:"
+msgstr "No effetti stagionali"
 
 #: lib/src/compare.c:282
-#, fuzzy
 msgid "no trend"
-msgstr "Trend polinomiale"
+msgstr "No trend"
 
 #: lib/src/compare.c:289
 msgid ""
@@ -466,7 +460,6 @@ msgstr ""
 "variabili\n"
 
 #: lib/src/compare.c:309
-#, fuzzy
 msgid "seasonal dummies"
 msgstr "Con dummy stagionali"
 
@@ -633,14 +626,13 @@ msgid "autocorrelation"
 msgstr "Autocorrelazione"
 
 #: lib/src/compare.c:2109
-#, fuzzy
 msgid "Error calculating Ljung-Box statistic"
-msgstr "Errore nel calcolo dei criteri di selezione del modello\n"
+msgstr "Errore nel calcolo della statistica Ljung-Box"
 
 #: lib/src/compare.c:2112
-#, fuzzy, c-format
+#, c-format
 msgid "Test for autocorrelation up to order %d"
-msgstr "Test LM per l'autocorrelazione fino all'ordine %s"
+msgstr "Test per l'autocorrelazione fino all'ordine %d"
 
 #: lib/src/compare.c:2284 lib/src/gretl_panel.c:3932
 msgid "Alternative statistic"
@@ -656,9 +648,8 @@ msgid "dummy variable for Chow test"
 msgstr "Variabile dummy per il test Chow"
 
 #: lib/src/compare.c:2431
-#, fuzzy
 msgid "Robust Wald test for break"
-msgstr "Test F di Chow per il break strutturale"
+msgstr "Test di Wald robusto per un break strutturale"
 
 #: lib/src/compare.c:2432
 msgid "Chow F-test for break"
@@ -1135,7 +1126,7 @@ msgstr "Memoria esaurita\n"
 
 #: lib/src/csvdata.c:3318 lib/src/csvdata.c:3393
 msgid "You need to specify an aggregation method for a 1:n join"
-msgstr ""
+msgstr "Per una join 1:n bisogna specificare un metodo di aggregazione"
 
 #: lib/src/csvdata.c:4302 gui2/library.c:4008
 msgid "Series length does not match the dataset"
@@ -1376,7 +1367,7 @@ msgstr ""
 #: lib/src/dataio.c:3525
 #, c-format
 msgid "Data imported from %s, %s\n"
-msgstr ""
+msgstr "Dati importati da %s, %s\n"
 
 #: lib/src/dataset.c:379
 msgid "auto-generated constant"
@@ -1889,17 +1880,16 @@ msgstr "Dev. Std."
 #: lib/src/describe.c:4633
 #, no-c-format
 msgid "5% perc."
-msgstr ""
+msgstr "5% perc."
 
 #: lib/src/describe.c:4635
 #, no-c-format
 msgid "95% perc."
-msgstr ""
+msgstr "95% perc."
 
 #: lib/src/describe.c:4636 gui2/guiprint.c:763
-#, fuzzy
 msgid "IQ range"
-msgstr "Intervallo x"
+msgstr "Range interquartile"
 
 #: lib/src/describe.c:4856 lib/src/describe.c:4957
 #, c-format
@@ -2529,12 +2519,11 @@ msgstr "Dichiarazione non valida"
 #: lib/src/genfuncs.c:3510
 #, c-format
 msgid "List has %d members, but length of vector b is %d"
-msgstr ""
+msgstr "La lista ha %d elementi, ma il vettore b ne ha %d"
 
 #: lib/src/genfuncs.c:3682
-#, fuzzy
 msgid "Imhof integral gave negative value"
-msgstr "Valore negativo non valido"
+msgstr "L'integrale di Imhof ha dato un valore negativo"
 
 #: lib/src/genfuncs.c:4455
 msgid "model-related"
@@ -2982,22 +2971,21 @@ msgstr "Valutazioni del gradiente: %d\n"
 #: lib/src/gretl_bfgs.c:1893
 #, c-format
 msgid "Gradient within tolerance (%g)\n"
-msgstr ""
+msgstr "Gradiente nella tolleranza (%g)\n"
 
 #: lib/src/gretl_bfgs.c:1897
 #, c-format
 msgid "Successive criterion values within tolerance (%g)\n"
-msgstr ""
+msgstr "Valori successivi della funzione criterio nella tolleranza (%g)\n"
 
 #: lib/src/gretl_bfgs.c:1902
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: couldn't improve criterion (gradient = %g)\n"
-msgstr "Attenzione: impossibile aprire il file grafico %s"
+msgstr "Attenzione: impossibile migliorare la funz. criterio (grad. = %g)\n"
 
 #: lib/src/gretl_bfgs.c:1905
-#, fuzzy
 msgid "Warning: couldn't improve criterion\n"
-msgstr "Attenzione: impossibile calcolare l'Hessiana numerica"
+msgstr "Attenzione: impossibile migliorare la funz. criterio\n"
 
 #: lib/src/gretl_bfgs.c:2116
 msgid "Initial value of objective function is not finite"
@@ -3470,7 +3458,7 @@ msgstr "rho = 0"
 
 #: lib/src/gretl_model.c:3431
 msgid "LR test for rho = 0"
-msgstr ""
+msgstr "LR test per rho = 0"
 
 #: lib/src/gretl_model.c:3450
 msgid "robust variant"
@@ -5799,7 +5787,7 @@ msgstr ""
 msgid ""
 "\n"
 "Error: Hessian non-negative definite? (err = %d); dropping back to OPG\n"
-msgstr ""
+msgstr "\nErrore: Hessiana non definita negativa? (err = %d); passaggio a OPG\n"
 
 #: lib/src/nls.c:2411 lib/src/nls.c:2512
 msgid "Invalid NLS specification"
@@ -7213,7 +7201,7 @@ msgstr "Statistiche basate sui dati originali"
 
 #: lib/src/vartest.c:1060
 msgid "Test on VAR"
-msgstr ""
+msgstr "Test Wald su VAR"
 
 #: cli/cli_object.c:92 gui2/objectsave.c:148
 #, c-format
@@ -9404,11 +9392,11 @@ msgstr "'%s' non è il nome di una serie"
 
 #: gui2/dialogs.c:5638
 msgid "Select from Regular HCCME options"
-msgstr ""
+msgstr "Selezionare delle opzioni HCCME"
 
 #: gui2/dialogs.c:5649
 msgid "Cluster by"
-msgstr ""
+msgstr "Clusterizzare per"
 
 #: gui2/dlgutils.c:749
 msgid "Add equation"
@@ -9884,6 +9872,9 @@ msgid ""
 "as \"%s/%s\" in the %s.\n"
 "Do you want to do this?"
 msgstr ""
+"Il pacchetto %s può essere aggiunto al menu di gretl\n"
+"come \"%s/%s\" nel %s.\n"
+"Procedere?"
 
 #: gui2/fncall.c:2923
 #, fuzzy, c-format
@@ -9897,12 +9888,11 @@ msgstr "Questa modifica avrà effetto al riavvio di gretl"
 #: gui2/fncall.c:3064
 #, c-format
 msgid "Requires gretl %s"
-msgstr ""
+msgstr "Serve gretl %s"
 
 #: gui2/fncall.c:3070
-#, fuzzy
 msgid "Error reading package"
-msgstr "Errore nella lettura di %s\n"
+msgstr "Errore nella lettura del pacchetto"
 
 #: gui2/fnsave.c:384
 msgid "Please add a sample script for this package"
@@ -9963,34 +9953,32 @@ msgid "_Analysis"
 msgstr "_Analisi"
 
 #: gui2/fnsave.c:1294
-#, fuzzy
 msgid "Label"
-msgstr "Etichette"
+msgstr "Etichetta"
 
 #: gui2/fnsave.c:1308
-#, fuzzy
 msgid "Window"
-msgstr "Finestre"
+msgstr "Finestra"
 
 #: gui2/fnsave.c:1387
 msgid ""
 "To update the menu attachment, you should\n"
 "(a) save this package, and (b) restart gretl."
 msgstr ""
+"Per aggiornare l'aggiunta al menu, bisogna\n"
+"(a) salvare il pacchetto e (b) riavviare gretl"
 
 #: gui2/fnsave.c:1547
-#, fuzzy
 msgid "gretl: extra properties"
-msgstr "gretl: errore"
+msgstr "gretl: proprietà extra"
 
 #: gui2/fnsave.c:1562
-#, fuzzy
 msgid "Special functions"
-msgstr "Salva funzioni"
+msgstr "Funzioni speciali"
 
 #: gui2/fnsave.c:1634
 msgid "Menu attachment"
-msgstr ""
+msgstr "Aggiunta al menu"
 
 #: gui2/fnsave.c:1686
 msgid "Date (YYYY-MM-DD)"
@@ -10105,7 +10093,7 @@ msgstr "Riduci"
 
 #: gui2/gpt_control.c:313
 msgid "Bigger"
-msgstr ""
+msgstr "Ingrandisci"
 
 #: gui2/gpt_control.c:400
 msgid " Click to set position"
@@ -11371,7 +11359,7 @@ msgstr "_Serie storiche"
 
 #: gui2/gretl.c:1710
 msgid "_AR(1)..."
-msgstr ""
+msgstr "AR(1)..."
 
 #: gui2/gretl.c:1711
 msgid "_Autoregressive estimation..."
@@ -11536,7 +11524,7 @@ msgstr "Guida all'_uso di gretl"
 
 #: gui2/gretl.c:1758
 msgid "_Keyboard shortcuts"
-msgstr ""
+msgstr "Scelte rapide da tastiera"
 
 #: gui2/gretl.c:1759
 msgid "Check for _updates"
@@ -11660,11 +11648,11 @@ msgstr "per la variabile %s (%d osservazioni valide)"
 
 #: gui2/guiprint.c:763
 msgid "5% Perc."
-msgstr ""
+msgstr "5% Perc."
 
 #: gui2/guiprint.c:763
 msgid "95% Perc."
-msgstr ""
+msgstr "95% Perc."
 
 #: gui2/guiprint.c:882
 msgid "t-ratios in parentheses"
@@ -11689,17 +11677,16 @@ msgstr "Curtosi"
 #: gui2/guiprint.c:1092
 #, no-c-format
 msgid "5\\% perc."
-msgstr ""
+msgstr "5\\% perc."
 
 #: gui2/guiprint.c:1094
 #, no-c-format
 msgid "95\\% perc."
-msgstr ""
+msgstr "95\\% perc."
 
 #: gui2/guiprint.c:1095
-#, fuzzy
 msgid "IQ Range"
-msgstr "Intervallo"
+msgstr "Range interquartile"
 
 #: gui2/guiprint.c:1187
 #, c-format
@@ -12979,6 +12966,8 @@ msgid ""
 "Please note: the decimal character must be '.'\n"
 "in this context"
 msgstr ""
+"Nota bene: il separatore decimale dev'essere '.'\n"
+"in questo contesto"
 
 #: gui2/library.c:3665 gui2/library.c:5548 gui2/selector.c:6368
 msgid "ANOVA"
@@ -13693,7 +13682,7 @@ msgstr "Specificazione del quantile non valida"
 
 #: gui2/selector.c:3085 gui2/selector.c:5098
 msgid "Cluster"
-msgstr ""
+msgstr "Cluster"
 
 #: gui2/selector.c:3167
 msgid "You must select a weight variable"
@@ -13757,7 +13746,7 @@ msgstr "WLS corretti per eteroschedasticità"
 
 #: gui2/selector.c:3629
 msgid "AR(1)"
-msgstr ""
+msgstr "AR(1)"
 
 #: gui2/selector.c:3649
 msgid "Count data model"
@@ -14035,7 +14024,7 @@ msgstr "Stagionale"
 
 #: gui2/selector.c:4928
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: gui2/selector.c:4934
 msgid "Difference:"
@@ -14208,11 +14197,11 @@ msgstr "Effetti casuali"
 
 #: gui2/selector.c:5857
 msgid "Swamy-Arora"
-msgstr ""
+msgstr "Swamy-Arora"
 
 #: gui2/selector.c:5858
 msgid "Nerlove"
-msgstr ""
+msgstr "Nerlove"
 
 #: gui2/selector.c:5895
 msgid "Maximum likelihood estimation"
@@ -14768,11 +14757,11 @@ msgstr "Mostra automaticamente la finestra icone"
 
 #: gui2/settings.c:197
 msgid "Script editor uses tabs"
-msgstr ""
+msgstr "Usa i tab nell'editor"
 
 #: gui2/settings.c:199
 msgid "Model viewer uses tabs"
-msgstr ""
+msgstr "Usa i tab nella finestra modelli"
 
 #: gui2/settings.c:201
 msgid "Prompt to save session"
@@ -14953,7 +14942,7 @@ msgstr "Generali"
 
 #: gui2/settings.c:1221
 msgid "Network"
-msgstr ""
+msgstr "Rete"
 
 #: gui2/settings.c:1223
 msgid "Programs"
@@ -15207,22 +15196,19 @@ msgstr "Il dataset non può essere modificato al momento"
 #: gui2/tabwin.c:80
 #, c-format
 msgid "Editing %d scripts: really quit?"
-msgstr ""
+msgstr "Ci sono %d script aperti: uscire?"
 
 #: gui2/tabwin.c:87 gui2/tabwin.c:540
-#, fuzzy
 msgid "gretl: script editor"
-msgstr "script gretl"
+msgstr "gretl: editor di script"
 
 #: gui2/tabwin.c:400 gui2/tabwin.c:402
-#, fuzzy
 msgid "untitled"
-msgstr "gretl: carica"
+msgstr "senza titolo"
 
 #: gui2/tabwin.c:544
-#, fuzzy
 msgid "gretl: models"
-msgstr "gretl: modello %d"
+msgstr "gretl: modelli"
 
 #: gui2/tabwin.c:1082
 #, fuzzy
@@ -15231,7 +15217,7 @@ msgstr "Nuova finestra"
 
 #: gui2/tabwin.c:1094
 msgid "Move to tabbed window"
-msgstr ""
+msgstr "Vai a finestra coi tab"
 
 #: gui2/textbuf.c:291
 msgid "No redo information available"
@@ -16205,7 +16191,7 @@ msgstr "Permetti restrizione a priori, df = %d\n"
 
 #: plugin/johansen.c:2554
 msgid "Test of restrictions on cointegrating relations"
-msgstr ""
+msgstr "Test di vincoli sulle relazioni di cointegrazione"
 
 #: plugin/jrestrict.c:1249
 msgid "Switching algorithm: failed"
@@ -16745,7 +16731,7 @@ msgstr "Impossibile importare i dati"
 
 #: plugin/xlsx_import.c:1046
 msgid "Found no sheets\n"
-msgstr ""
+msgstr "Nessun foglio trovato\n"
 
 #: plugin/xlsx_import.c:1093
 #, c-format
