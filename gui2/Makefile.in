@@ -119,9 +119,10 @@ override LIBS += $(GDK_PIXBUF_LIBS)
 SHELL = /bin/sh
 LIBTOOL = ../libtool
 ifeq ($(mac_native),yes)
-  PROG = gretl_quartz
+  PROG = gretl
 else
   PROG = gretl_x11$(EXEEXT)
+  INSTALL_SCRIPT = install-script
 endif
 
 vpath %.c $(topsrc)/gui2
@@ -213,19 +214,21 @@ $(GRETL_LANG): $(MKLANG)
 
 .PHONY:
 
-install: install-exec install-ui install-data install-lang
+install: install-exec install-ui $(INSTALL_SCRIPT) install-data install-lang
 
 install-strip: $(PROG) install-data
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)
 
 install-data: installdirs
-	$(INSTALL_PROGRAM) ../gretl_sh $(DESTDIR)$(bindir)/gretl
 	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl-logo.xpm $(DESTDIR)$(gretldir)
 	$(INSTALL_DATA) $(topsrc)/COPYING $(DESTDIR)$(gretldir)
 
 install-ui: installdirs
 	$(INSTALL_DATA) $(topsrc)/gui2/gretlmain.xml $(DESTDIR)$(uidir)
 	$(INSTALL_DATA) $(topsrc)/gui2/gretlmodel.xml $(DESTDIR)$(uidir)
+
+install-script: installdirs
+	$(INSTALL_PROGRAM) ../gretl_sh $(DESTDIR)$(bindir)/gretl
 
 install-exec: $(PROG) installdirs 
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(PROG) $(DESTDIR)$(bindir)/$(PROG)
