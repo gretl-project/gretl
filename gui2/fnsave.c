@@ -963,7 +963,7 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     tmp = gtk_label_new(".");
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 2);
 
-    spin = gtk_spin_button_new_with_range(0, 9, 1);
+    spin = gtk_spin_button_new_with_range(0, 10, 1);
     if (min > 0) {
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) min);
     }
@@ -974,7 +974,7 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     tmp = gtk_label_new(".");
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 2);
 
-    spin = gtk_spin_button_new_with_range(0, 9, 1);
+    spin = gtk_spin_button_new_with_range(0, 19, 1);
     if (pl > 0) {
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) pl);
     }
