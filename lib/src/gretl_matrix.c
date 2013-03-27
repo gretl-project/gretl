@@ -6562,11 +6562,7 @@ double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err)
 
 double gretl_matrix_rcond (const gretl_matrix *m, int *err)
 {
-    if (gretl_matrix_is_symmetric(m)) {
-	return gretl_symmetric_matrix_rcond(m, err);
-    } else {
-	return gretl_general_matrix_rcond(m, err);
-    }
+    return gretl_general_matrix_rcond(m, err);
 }
 
 /**
