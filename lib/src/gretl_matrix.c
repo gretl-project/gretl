@@ -6464,6 +6464,7 @@ static double gretl_general_matrix_rcond (const gretl_matrix *A,
     if (info != 0) {
 	fprintf(stderr, "gretl_general_matrix_rcond:\n"
 		" dgetrf failed with info = %d (n = %d)\n", (int) info, (int) n);
+	gretl_matrix_print(A, "A in rcond");
 	rcond = 0.0;
     } else {
 	double anorm = gretl_matrix_one_norm(A);

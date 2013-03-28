@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-03-25 10:41-0400\n"
-"PO-Revision-Date: 2013-03-28 08:19+0100\n"
+"PO-Revision-Date: 2013-03-28 12:00+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -1312,9 +1312,8 @@ msgid "Data appended OK\n"
 msgstr "Dati aggiunti con successo\n"
 
 #: lib/src/dataio.c:2720
-#, fuzzy
 msgid "No markers are available for writing"
-msgstr "Non è disponibile alcuna variabile"
+msgstr "Non è disponibile alcun marcatore per la scrittura"
 
 #: lib/src/dataio.c:2790
 #, c-format
@@ -1356,16 +1355,14 @@ msgid "'%s' -- number out of range!"
 msgstr "'%s' -- numero fuori dall'intervallo!"
 
 #: lib/src/dataio.c:3522
-#, fuzzy, c-format
+#, c-format
 msgid "Data imported from %s file '%s', %s\n"
-msgstr ""
-"Informazioni sui dati nel file %s:\n"
-"\n"
+msgstr "Dati importati dal formato %s, file '%s' in data %s\n"
 
 #: lib/src/dataio.c:3525
 #, c-format
 msgid "Data imported from %s, %s\n"
-msgstr "Dati importati da %s, %s\n"
+msgstr "Dati importati dal formato %s, %s\n"
 
 #: lib/src/dataset.c:379
 msgid "auto-generated constant"
@@ -1378,9 +1375,9 @@ msgid "Please open a data file first"
 msgstr "Aprire un file di dati per prima cosa"
 
 #: lib/src/dataset.c:1440 lib/src/gretl_utils.c:1626
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is read-only"
-msgstr "La variabile %s è uno scalare\n"
+msgstr "La variabile %s è di sola lettura"
 
 #: lib/src/dataset.c:1667 lib/src/dataset.c:1677 lib/src/uservar.c:330
 #, c-format
@@ -1823,23 +1820,21 @@ msgid "Ex. kurtosis"
 msgstr "Curtosi"
 
 #: lib/src/describe.c:4444
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "5% percentile"
-msgstr "Intercetta"
+msgstr "5° percentile"
 
 #: lib/src/describe.c:4446
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "95% percentile"
-msgstr "intervallo al %g per cento"
+msgstr "95° percentile"
 
 #: lib/src/describe.c:4447
-#, fuzzy
 msgid "Interquartile range"
-msgstr "Intervallo asse manuale"
+msgstr "Range interquartile"
 
 #: lib/src/describe.c:4448 lib/src/describe.c:4637 gui2/guiprint.c:763
 #: gui2/guiprint.c:1096
-#, fuzzy
 msgid "Missing obs."
 msgstr "Osservazioni mancanti"
 
@@ -1859,12 +1854,12 @@ msgstr "Statistiche descrittive"
 #: lib/src/describe.c:4473
 #, fuzzy, c-format
 msgid "for column %d of %s (%d valid observations)"
-msgstr "per la variabile %s (%d osservazioni valide)"
+msgstr "Intervallo asse manuale<"
 
 #: lib/src/describe.c:4476
-#, fuzzy, c-format
+#, c-format
 msgid "for column %d (%d valid observations)"
-msgstr "per la variabile %s (%d osservazioni valide)"
+msgstr "per la colonna %d (%d osservazioni valide)"
 
 #: lib/src/describe.c:4480
 #, c-format
