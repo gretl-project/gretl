@@ -475,7 +475,7 @@ static int openmp_by_default (void)
     return ret;
 }
 
-#endif /* _OPENMP */
+#endif /* _OPENMP defined */
 
 static void state_vars_init (set_vars *sv)
 {
@@ -796,7 +796,17 @@ libset_numeric_string (const char *s, int *pi, double *px, int *err)
 
 static int negval_invalid (const char *var)
 {
-    return (var == NULL || strcmp(var, BLAS_NMK_MIN)); 
+    int ret = 1; /* presume invalid */
+
+    if (var != NULL) {
+	if (!strcmp(var, BLAS_NMK_MIN) ||
+	    !strcmp(var, MP_NMK_MIN)) {
+	    /* these can be set to -1 */
+	    ret = 0;
+	}
+    }
+
+    return ret;
 }
 
 static int libset_get_scalar (const char *var, const char *arg, 

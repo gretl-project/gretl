@@ -653,6 +653,8 @@ static void sheet_cell_edited (GtkCellRendererText *cell,
     fprintf(stderr, "*** sheet_cell_edited\n");
 #endif
 
+    gretl_error_clear();
+
     if (!strcmp(user_text, "na") || !strcmp(user_text, "NA")) {
 	/* allow conversion to missing or NaN */
 	if (sheet->matrix != NULL) {

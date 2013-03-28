@@ -310,6 +310,8 @@ double gui_double_from_string (const char *str, int *err)
     char s[32];
     int sub = 0;
 
+    gretl_error_clear();
+
     *s = '\0';
     strncat(s, str, 31);
 
