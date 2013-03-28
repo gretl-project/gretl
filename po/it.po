@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-03-25 10:41-0400\n"
-"PO-Revision-Date: 2013-03-26 22:34+0100\n"
+"PO-Revision-Date: 2013-03-28 08:19+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -656,11 +656,9 @@ msgid "Chow F-test for break"
 msgstr "Test F di Chow per il break strutturale"
 
 #: lib/src/compare.c:2484
-#, fuzzy, c-format
+#, c-format
 msgid "Asymptotic p-value = %.4g for chi-square(%d) = %g"
-msgstr ""
-"con p-value = prob(Chi-quadro(%d) > %g) = %g\n"
-"\n"
+msgstr "p-value asintotico = %.4g [Chi-quadro(%d) = %g]"
 
 #: lib/src/compare.c:2511
 msgid ""
@@ -672,9 +670,9 @@ msgstr ""
 "finale"
 
 #: lib/src/compare.c:2515
-#, fuzzy, c-format
+#, c-format
 msgid "The maximum Wald test = %g occurs at observation %s"
-msgstr "Il massimo di F(%d, %d) = %g corrisponde all'osservazione %s"
+msgstr "Il massimo test di Wald (%g) corrisponde all'osservazione %s"
 
 #: lib/src/compare.c:2519
 #, c-format
@@ -1015,9 +1013,9 @@ msgid "scanning for variable names...\n"
 msgstr "Ricerca dei nomi di variabile...\n"
 
 #: lib/src/csvdata.c:2025
-#, fuzzy, c-format
+#, c-format
 msgid "   line: %.115s...\n"
-msgstr "   Riga: %s\n"
+msgstr "   Riga: %.115s...\n"
 
 #: lib/src/csvdata.c:2027
 #, c-format
@@ -1045,9 +1043,9 @@ msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' -- nessuna conversione numerica eseguita!"
 
 #: lib/src/csvdata.c:2299
-#, fuzzy, c-format
+#, c-format
 msgid "warning: %d labels were truncated.\n"
-msgstr "attenzione: alcuni nomi di variabile sono stati duplicati\n"
+msgstr "attenzione: %d etichette sono state troncate\n"
 
 #: lib/src/csvdata.c:2316
 msgid "scanning for row labels and data...\n"
@@ -1140,21 +1138,21 @@ msgstr ""
 "all'osservazione %d"
 
 #: lib/src/dataio.c:276
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "First char of varname '%s' is bad\n"
 "(first must be alphabetical)"
 msgstr ""
-"Il primo carattere della variabile ('%c') è errato\n"
+"Il primo carattere della variabile '%s' è errato\n"
 "(dev'essere alfabetico)."
 
 #: lib/src/dataio.c:280
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Varname '%s' contains illegal character '%c'\n"
 "Use only letters, digits and underscore"
 msgstr ""
-"Il nome della variabile contiene il carattere non valido '%c'\n"
+"Il nome della variabile '%s' contiene il carattere non valido '%c'\n"
 "Usare solo lettere, numeri e trattino basso"
 
 #: lib/src/dataio.c:286
@@ -1259,7 +1257,7 @@ msgstr ""
 "Lettura del file con la descrizione dei dati %s\n"
 
 #: lib/src/dataio.c:1729 lib/src/dataio.c:1892 lib/src/gretl_xml.c:2499
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "periodicity: %d, maxobs: %d\n"
 "observations range: %s to %s\n"
