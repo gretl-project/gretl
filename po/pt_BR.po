@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-03-25 10:41-0400\n"
-"PO-Revision-Date: 2013-02-15 15:28-0300\n"
+"PO-Revision-Date: 2013-03-28 08:06+0100\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -3356,7 +3356,7 @@ msgstr "as unidades têm a mesma variância de erro"
 
 #: lib/src/gretl_model.c:3383
 msgid "Non-linearity test (logs)"
-msgstr "Teste de não-linearidade (defasagens)"
+msgstr "Teste de não-linearidade (logaritmos)"
 
 #: lib/src/gretl_model.c:3384 lib/src/gretl_model.c:3396
 msgid "relationship is linear"
