@@ -186,7 +186,12 @@ void set_gretl_charset (void)
     const char *charset = NULL;
     char gretl_charset[32];
 
+#ifdef MAC_NATIVE
+    /* FIXME - why is this necessary? */
+    native_utf8 = 1;
+#else
     native_utf8 = g_get_charset(&charset);
+#endif
 
     if (native_utf8) {
 	set_stdio_use_utf8();

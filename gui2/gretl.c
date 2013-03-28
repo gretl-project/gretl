@@ -1509,6 +1509,12 @@ static void make_main_window (void)
 #endif
 }
 
+#ifdef MAC_NATIVE
+# define CTRL_ALL "<meta>A"
+#else
+# define CTRL_ALL "<control>A"
+#endif
+
 GtkActionEntry main_entries[] = {
     /* File */
     { "File",         NULL, N_("_File"), NULL, NULL, NULL }, 
@@ -1606,7 +1612,7 @@ GtkActionEntry main_entries[] = {
 
     /* Data */
     { "Data", NULL, N_("_Data"), NULL, NULL, NULL },
-    { "DataSelectAll", NULL, N_("Select _all"), "<control>A", NULL, G_CALLBACK(mdata_select_all) },
+    { "DataSelectAll", NULL, N_("Select _all"), CTRL_ALL, NULL, G_CALLBACK(mdata_select_all) },
     { "VarFind", GTK_STOCK_FIND, N_("_Find variable..."), NULL, NULL, G_CALLBACK(listbox_find) },
     { "DefineList", NULL, N_("Define or edit _list..."), NULL, NULL, G_CALLBACK(gui_define_list) },
     { "SelectList", NULL, N_("_Set selection from list..."), NULL, NULL, G_CALLBACK(mdata_select_list) },
