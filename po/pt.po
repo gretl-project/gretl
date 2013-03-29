@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-03-25 10:41-0400\n"
-"PO-Revision-Date: 2013-02-28 00:43+0000\n"
+"PO-Revision-Date: 2013-03-29 16:48+0000\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
@@ -31,16 +31,15 @@ msgstr "diferenças desfasadas"
 
 #: lib/src/adf_kpss.c:307 gui2/library.c:932
 msgid "modified AIC"
-msgstr ""
+msgstr "AIC modificado"
 
 #: lib/src/adf_kpss.c:309 gui2/library.c:933
 msgid "modified BIC"
-msgstr ""
+msgstr "BIC modificado"
 
 #: lib/src/adf_kpss.c:311 gui2/library.c:934
-#, fuzzy
 msgid "t-statistic"
-msgstr "estatística de teste"
+msgstr "estatística t"
 
 #: lib/src/adf_kpss.c:323
 #, c-format
@@ -73,9 +72,9 @@ msgid "including %d lags of (1-L)%s"
 msgstr "incluindo %d desfasamentos de (1-L)%s"
 
 #: lib/src/adf_kpss.c:342
-#, fuzzy, c-format
+#, c-format
 msgid "(max was %d, criterion %s)"
-msgstr "(o máximo foi %d)"
+msgstr "(o máximo foi %d, critério %s)"
 
 #: lib/src/adf_kpss.c:384 gui2/library.c:950 gui2/library.c:1169
 #: gui2/selector.c:6012 plugin/panurc.c:234
@@ -163,9 +162,8 @@ msgid "time trend variable"
 msgstr "variável de tendência temporal"
 
 #: lib/src/adf_kpss.c:790
-#, fuzzy
 msgid "Invalid option"
-msgstr "opção inválida '--'%s'"
+msgstr "Opção inválida"
 
 #: lib/src/adf_kpss.c:821 lib/src/adf_kpss.c:1583 lib/src/boxplots.c:777
 #: lib/src/describe.c:1620 lib/src/describe.c:3034 lib/src/describe.c:3554
@@ -1140,21 +1138,21 @@ msgstr ""
 "Aviso: erro na leitura dos dados ASCII na variável %d, na observação %d"
 
 #: lib/src/dataio.c:276
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "First char of varname '%s' is bad\n"
 "(first must be alphabetical)"
 msgstr ""
-"O primeiro caractere da variável ('%c') é inválido\n"
-"(deve ser alfabético)."
+"O primeiro caractere da variável '%s' é inválido\n"
+"(o primeiro deve ser alfabético)."
 
 #: lib/src/dataio.c:280
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Varname '%s' contains illegal character '%c'\n"
 "Use only letters, digits and underscore"
 msgstr ""
-"O nome da variável contém o caractere inválido, '%c'\n"
+"O nome da variável '%s' contém o caractere inválido, '%c'\n"
 "Use apenas letras, dígitos e o sublinhado ('_')"
 
 #: lib/src/dataio.c:286
@@ -1259,13 +1257,13 @@ msgstr ""
 "Lendo o cabeçalho do ficheiro %s\n"
 
 #: lib/src/dataio.c:1729 lib/src/dataio.c:1892 lib/src/gretl_xml.c:2499
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "periodicity: %d, maxobs: %d\n"
 "observations range: %s to %s\n"
 msgstr ""
 "periodicidade: %d, máxobs: %d\n"
-"intervalo das observações: %s-%s\n"
+"intervalo das observações: %s a %s\n"
 
 #: lib/src/dataio.c:1733
 msgid ""
@@ -3442,7 +3440,7 @@ msgstr "rho = 0"
 
 #: lib/src/gretl_model.c:3431
 msgid "LR test for rho = 0"
-msgstr ""
+msgstr "Teste LR para rho = 0"
 
 #: lib/src/gretl_model.c:3450
 msgid "robust variant"
@@ -4791,9 +4789,8 @@ msgid "Multinomial Logit"
 msgstr "Logit Multinomial"
 
 #: lib/src/modelprint.c:908
-#, fuzzy
 msgid "Random-effects probit"
-msgstr "Efeitos aleatórios"
+msgstr "Probit com efeitos aleatórios"
 
 #: lib/src/modelprint.c:910 gui2/selector.c:3639
 msgid "Ordered Probit"
@@ -7333,7 +7330,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 28 de fevereiro de 2013."
+"Tradução de 29 de março de 2013."
 
 #: gui2/about.c:165
 msgid "License"
@@ -9932,34 +9929,32 @@ msgid "_Analysis"
 msgstr "_Análise"
 
 #: gui2/fnsave.c:1294
-#, fuzzy
 msgid "Label"
-msgstr "Etiquetas"
+msgstr "Etiqueta"
 
 #: gui2/fnsave.c:1308
-#, fuzzy
 msgid "Window"
-msgstr "Janelas"
+msgstr "Janela"
 
 #: gui2/fnsave.c:1387
 msgid ""
 "To update the menu attachment, you should\n"
 "(a) save this package, and (b) restart gretl."
 msgstr ""
+"Para actualizar o anexo de menu, você tem que\n"
+"(a) gravar este pacote, e (b) reiniciar gretl."
 
 #: gui2/fnsave.c:1547
-#, fuzzy
 msgid "gretl: extra properties"
-msgstr "gretl: erro"
+msgstr "gretl: propriedades adicionais"
 
 #: gui2/fnsave.c:1562
-#, fuzzy
 msgid "Special functions"
-msgstr "Gravar funções"
+msgstr "Funções especiais"
 
 #: gui2/fnsave.c:1634
 msgid "Menu attachment"
-msgstr ""
+msgstr "Anexo de menu"
 
 #: gui2/fnsave.c:1686
 msgid "Date (YYYY-MM-DD)"
@@ -9994,9 +9989,8 @@ msgid "Add/remove functions"
 msgstr "Acrescentar ou Remover funções"
 
 #: gui2/fnsave.c:1820
-#, fuzzy
 msgid "Extra properties"
-msgstr "Propriedades"
+msgstr "Propriedades adicionais"
 
 #: gui2/fnsave.c:1827
 msgid "Write spec file"
@@ -12091,9 +12085,8 @@ msgid "gretl: edit plot commands"
 msgstr "gretl: editar comandos do gráfico"
 
 #: gui2/gui_utils.c:1657
-#, fuzzy
 msgid "gretl: edit R script"
-msgstr "gretl: editar ficheiro de comandos Octave"
+msgstr "gretl: editar ficheiro de comandos R"
 
 #: gui2/gui_utils.c:1659
 msgid "gretl: edit Ox program"
@@ -12622,7 +12615,6 @@ msgid "Principal Components Analysis"
 msgstr "Análise de Componentes Principais"
 
 #: gui2/library.c:928
-#, fuzzy
 msgid "criterion"
 msgstr "Critério"
 
@@ -14673,9 +14665,8 @@ msgid "Emulate Windows look"
 msgstr "Emular o aspecto do Windows"
 
 #: gui2/settings.c:186
-#, fuzzy
 msgid "Theme preference"
-msgstr "Preferência de língua"
+msgstr "Preferência de tema"
 
 #: gui2/settings.c:190
 msgid "Web browser"
@@ -14778,14 +14769,12 @@ msgid "Path to octave executable"
 msgstr "Caminho para o executável octave"
 
 #: gui2/settings.c:257
-#, fuzzy
 msgid "Path to Stata executable"
-msgstr "Caminho para o executável octave"
+msgstr "Caminho para o executável Stata"
 
 #: gui2/settings.c:259
-#, fuzzy
 msgid "Path to Python executable"
-msgstr "Caminho para o executável oxl"
+msgstr "Caminho para o executável Python"
 
 #: gui2/settings.c:261
 msgid "Database server name"
@@ -15672,14 +15661,12 @@ msgid "AB-model"
 msgstr "modelo-AB"
 
 #: plugin/addons-i18n.c:46
-#, fuzzy
 msgid "Bootstrap alpha"
-msgstr "_Bootstrap..."
+msgstr "Alfa do Bootstrap"
 
 #: plugin/addons-i18n.c:47
-#, fuzzy
 msgid "Bootstrap replications"
-msgstr "bootstrap rácio-t"
+msgstr "Replicações do Bootstrap"
 
 #: plugin/addons-i18n.c:48
 msgid "C-model"
@@ -15723,9 +15710,8 @@ msgid "plain"
 msgstr "simples"
 
 #: plugin/addons-i18n.c:61
-#, fuzzy
 msgid "template matrix"
-msgstr "Matriz %s substituída"
+msgstr "modelo de matriz"
 
 #: plugin/anova.c:108 plugin/anova.c:110
 msgid "Treatment"
