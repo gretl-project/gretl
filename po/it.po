@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-03-25 10:41-0400\n"
-"PO-Revision-Date: 2013-03-28 12:00+0100\n"
+"PO-Revision-Date: 2013-03-29 02:25+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -1852,9 +1852,9 @@ msgid "Summary statistics"
 msgstr "Statistiche descrittive"
 
 #: lib/src/describe.c:4473
-#, fuzzy, c-format
+#, c-format
 msgid "for column %d of %s (%d valid observations)"
-msgstr "Intervallo asse manuale<"
+msgstr "per la colonna %d di %s (%d osservazioni valide)"
 
 #: lib/src/describe.c:4476
 #, c-format
@@ -2350,9 +2350,9 @@ msgid "%s: argument %d should be %s"
 msgstr "%s: l'argomento %d dovrebbe essere %s"
 
 #: lib/src/geneval.c:8631
-#, fuzzy, c-format
+#, c-format
 msgid ", is %s"
-msgstr "= %s per %s"
+msgstr ", ma è %s"
 
 #: lib/src/geneval.c:10244 lib/src/genlex.c:719
 #, c-format
@@ -2371,9 +2371,9 @@ msgid "The variable %s is of type %s"
 msgstr "La variabile %s è di tipo %s"
 
 #: lib/src/geneval.c:10612
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': name is too long (max %d characters)\n"
-msgstr "'%s': il nome è troppo lungo (max 15 caratteri)\n"
+msgstr "'%s': il nome è troppo lungo (max %d caratteri)\n"
 
 #: lib/src/geneval.c:10721
 #, c-format
@@ -2401,9 +2401,8 @@ msgid "'%s' : not implemented for this type"
 msgstr "'%s' : non implementato per questo tipo"
 
 #: lib/src/geneval.c:12016
-#, fuzzy
 msgid "Bare declarations are not allowed here"
-msgstr "%s: divisione non consentita"
+msgstr "Le pure dichiarazioni non sono consentite qui"
 
 #: lib/src/genfuncs.c:852 gui2/library.c:5088
 msgid "Input must be a monthly or quarterly time series"
@@ -3227,9 +3226,9 @@ msgid "Deleted function '%s'\n"
 msgstr "Cancellata la funzione '%s'\n"
 
 #: lib/src/gretl_func.c:4903
-#, fuzzy, c-format
+#, c-format
 msgid "%s: duplicated parameter name '%s'"
-msgstr "%s: non è un valido nome di parametro"
+msgstr "%s: nome di parametro duplicato (%s)"
 
 #: lib/src/gretl_func.c:5360
 msgid "You can't change the name of a function here"
@@ -3463,9 +3462,9 @@ msgid "Distribution free Wald test for heteroskedasticity"
 msgstr "Test di Wald per l'eteroschedasticità"
 
 #: lib/src/gretl_model.c:3612
-#, fuzzy, c-format
+#, c-format
 msgid "chi-square(%d) = %g at observation %s"
-msgstr "max F(%d, %d) = %g all'osservazione %s"
+msgstr "chi-quadro (%d) = %g all'osservazione %s"
 
 #: lib/src/gretl_model.c:3638 lib/src/gretl_model.c:3645
 msgid "failed"
@@ -3476,9 +3475,8 @@ msgid "Asymptotic test statistic"
 msgstr "Statistica test asintotica"
 
 #: lib/src/gretl_model.c:3760
-#, fuzzy
 msgid "with asymptotic p-value"
-msgstr "p-value asintotico"
+msgstr "con p-value asintotico"
 
 #: lib/src/gretl_model.c:3773 lib/src/gretl_model.c:3776
 #: lib/src/gretl_model.c:3779
@@ -4249,12 +4247,11 @@ msgid "No data information is available.\n"
 msgstr "Non sono disponibili informazioni sui dati.\n"
 
 #: lib/src/interact.c:4624 lib/src/interact.c:4632
-#, fuzzy
 msgid "Inner key is missing"
-msgstr "Manca il nome della variabile"
+msgstr "Manca la chiave interna"
 
 #: lib/src/interact.c:4676
-#, fuzzy, c-format
+#, c-format
 msgid "The \"%s\" command cannot be used in this context"
 msgstr "Il comando '%s' non è valido in questo contesto"
 
@@ -4264,9 +4261,9 @@ msgid "Read datafile %s\n"
 msgstr "Letto il file dati %s\n"
 
 #: lib/src/interact.c:4934
-#, fuzzy, c-format
+#, c-format
 msgid "Summary statistics for %s, by value of %s"
-msgstr "Statistiche descrittive"
+msgstr "Statistiche descrittive per %s, per valori di %s"
 
 #: lib/src/interact.c:5220
 msgid "You can't end a loop here, you haven't started one\n"
@@ -4330,9 +4327,9 @@ msgid "kalman: a required matrix is missing"
 msgstr "kalman: manca una matrice richiest"
 
 #: lib/src/kalman.c:478
-#, fuzzy, c-format
+#, c-format
 msgid "kalman: required matrix %s is missing"
-msgstr "kalman: manca una matrice richiest"
+msgstr "kalman: manca la matrice %s, richiesta"
 
 #: lib/src/kalman.c:486
 msgid "No Kalman filter is defined"
@@ -4789,9 +4786,8 @@ msgid "Multinomial Logit"
 msgstr "Logit multinomiale"
 
 #: lib/src/modelprint.c:908
-#, fuzzy
 msgid "Random-effects probit"
-msgstr "Effetti casuali"
+msgstr "Probit a effetti casuali"
 
 #: lib/src/modelprint.c:910 gui2/selector.c:3639
 msgid "Ordered Probit"
@@ -4947,9 +4943,8 @@ msgid "Standard errors clustered by %d values of %s"
 msgstr "Errori standard basati sull'Hessiana"
 
 #: lib/src/modelprint.c:1279
-#, fuzzy
 msgid "Clustered standard errors"
-msgstr "Calcola errori standard"
+msgstr "Errori standard clusterizzati"
 
 #: lib/src/modelprint.c:1295
 msgid "Could not compute Beck-Katz standard errors"
@@ -5596,9 +5591,8 @@ msgid "Number of cases `correctly predicted'"
 msgstr "Numero dei casi 'previsti correttamente'"
 
 #: lib/src/modelprint.c:5058
-#, fuzzy
 msgid "percent"
-msgstr "Intercetta"
+msgstr "per cento"
 
 #: lib/src/modelprint.c:5080 plugin/anova.c:502
 msgid "Analysis of Variance"
@@ -6038,9 +6032,9 @@ msgstr ""
 "stimato il modello di riferimento\n"
 
 #: lib/src/options.c:1171
-#, fuzzy, c-format
+#, c-format
 msgid "Ambiguous option '--%s'"
-msgstr "Opzione non valida '--%s'"
+msgstr "Opzione ambigua '--%s'"
 
 #: lib/src/options.c:1177
 #, c-format
@@ -6122,9 +6116,8 @@ msgid "center"
 msgstr "centra"
 
 #: lib/src/plotspec.c:1607
-#, fuzzy
 msgid "annual growth"
-msgstr "annuale"
+msgstr "crescita annuale"
 
 #: lib/src/plotspec.c:1946
 msgid "Dates file does not conform to the specification"
@@ -6823,9 +6816,9 @@ msgid "'%s': unrecognized name"
 msgstr "'%s': nome non riconosciuto"
 
 #: lib/src/system.c:2287
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no system was specified"
-msgstr "%s: non è stato specificato alcun parametro"
+msgstr "%s: non è stato specificato alcun sistema"
 
 #: lib/src/system.c:2484 lib/src/system.c:2486
 #, c-format
@@ -8392,9 +8385,8 @@ msgid "Execute"
 msgstr "Esegui"
 
 #: gui2/datafiles.c:1227 gui2/datafiles.c:1381
-#, fuzzy
 msgid "Add to menu"
-msgstr "Aggiungi al dataset"
+msgstr "Aggiungi al menu"
 
 #: gui2/datafiles.c:1234 gui2/datafiles.c:1385
 msgid "New"
@@ -8566,13 +8558,13 @@ msgid "Confirm dataset structure"
 msgstr "Conferma la struttura del dataset"
 
 #: gui2/datawiz.c:170
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter name for first variable\n"
 "(max. %d characters)"
 msgstr ""
 "Inserire un nome per la prima variabile\n"
-"(max. 15 caratteri)"
+"(max. %d caratteri)"
 
 #: gui2/datawiz.c:174 gui2/dialogs.c:5290 gui2/ssheet.c:964
 msgid "gretl: name variable"
@@ -9374,9 +9366,8 @@ msgid "Custom format"
 msgstr "Formato personalizzato"
 
 #: gui2/dialogs.c:5599
-#, fuzzy
 msgid "Please specify a cluster variable"
-msgstr "Occorre specificare una variabile limite superiore"
+msgstr "Occorre specificare una variabile di cluster"
 
 #: gui2/dialogs.c:5601
 #, fuzzy, c-format
@@ -9492,9 +9483,8 @@ msgid "GNU Octave files (*.m)"
 msgstr "file GNU Octave (*.m)"
 
 #: gui2/fileselect.c:802
-#, fuzzy
 msgid "Python files (*.py)"
-msgstr "file PDF (*.pdf)"
+msgstr "file Python (*.py)"
 
 #: gui2/fileselect.c:804
 msgid "Ox files (*.ox)"
