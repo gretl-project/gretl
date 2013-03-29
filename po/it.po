@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-03-25 10:41-0400\n"
-"PO-Revision-Date: 2013-03-29 02:25+0100\n"
+"PO-Revision-Date: 2013-03-29 13:00+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -4340,9 +4340,9 @@ msgid "modprint: the first matrix argument must have 2 columns"
 msgstr "modprint: il primo argomento matriciale deve avere 2 colonne"
 
 #: lib/src/libset.c:936 lib/src/libset.c:1612
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid value '%s'"
-msgstr "valori validi"
+msgstr "%s: valore non valido '%s'"
 
 #: lib/src/libset.c:1036
 #, c-format
@@ -4938,9 +4938,9 @@ msgid "Beck--Katz standard errors"
 msgstr "Errori standard di Beck--Katz"
 
 #: lib/src/modelprint.c:1276
-#, fuzzy, c-format
+#, c-format
 msgid "Standard errors clustered by %d values of %s"
-msgstr "Errori standard basati sull'Hessiana"
+msgstr "Errori standard clusterizzati su %d valori di %s"
 
 #: lib/src/modelprint.c:1279
 msgid "Clustered standard errors"
@@ -5146,9 +5146,8 @@ msgid "%s, using %d observations"
 msgstr "%s, usando %d osservazioni"
 
 #: lib/src/modelprint.c:1860
-#, fuzzy
 msgid "Using Nerlove's transformation"
-msgstr "Nessuna trasformazione logaritmica"
+msgstr "Con trasformazione di Nerlove"
 
 #: lib/src/modelprint.c:1864
 #, c-format
@@ -6439,9 +6438,8 @@ msgid "Gradients:  "
 msgstr "Gradienti:  "
 
 #: lib/src/printout.c:2800
-#, fuzzy
 msgid "norm"
-msgstr "Normale"
+msgstr "norma"
 
 #: lib/src/printscan.c:656 lib/src/printscan.c:954
 #, c-format
@@ -7181,9 +7179,8 @@ msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
 msgstr "ritardi     logver    p(LR)       AIC          BIC          HQC"
 
 #: lib/src/vartest.c:772
-#, fuzzy
 msgid "Test on the original VAR"
-msgstr "Statistiche basate sui dati originali"
+msgstr "Test sul VAR originale"
 
 #: lib/src/vartest.c:1060
 msgid "Test on VAR"
