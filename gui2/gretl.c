@@ -457,6 +457,21 @@ static void gui_show_activity (void)
     }
 }
 
+#ifdef GRETL_OPEN_HANDLER
+
+static gboolean start_new_instance (void)
+{
+    gint resp;
+
+    resp = yes_no_dialog("gretl", 
+			 _("Start a new gretl instance?"),
+			 0);
+
+    return resp == GRETL_YES;
+}
+
+#endif
+
 static int have_data (void)
 {
     return dataset != NULL && dataset->v > 0;
@@ -574,6 +589,18 @@ int main (int argc, char **argv)
     session_init();
     init_fileptrs();
 
+    if (argc > 1 && *filearg == '\0') {
+	strncat(filearg, argv[1], MAXLEN - 1);
+    }
+
+#ifdef GRETL_OPEN_HANDLER
+    if (gpid > 0 && !start_new_instance()) {
+	if (try_forwarding_open_request(gpid, filearg) == 0) {
+	    exit(EXIT_SUCCESS);
+	}
+    }
+#endif
+
 #if GUI_DEBUG
     fprintf(stderr, "finished miscellaneous init functions\n");
 #endif
@@ -585,20 +612,6 @@ int main (int argc, char **argv)
 	*/
 	PRN *prn; 
 	int err = 0;
-
-	if (*filearg == '\0') {
-	    /* not already registered */
-	    strncat(filearg, argv[1], MAXLEN - 1);
-	}	
-
-#ifdef GRETL_OPEN_HANDLER
-	if (gpid > 0) {
-	    err = try_forwarding_open_request(gpid, filearg);
-	    if (!err) {
-		exit(EXIT_SUCCESS);
-	    }
-	}
-#endif
 
 	prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
 	if (err) {

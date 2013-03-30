@@ -97,19 +97,23 @@ static void open_handler (int sig, siginfo_t *sinfo, void *context)
 	    FILE *fp;
 
 	    sprintf(fname, "%s/open-%ld", gretl_dotdir(), spid);
-	    fp = gretl_fopen(fname, "r");
+	    fp = fopen(fname, "r");
 	    if (fp != NULL) {
 		if (fgets(path, sizeof path, fp)) {
 		    tailstrip(path);
-		    *tryfile = '\0';
-		    strncat(tryfile, path, MAXLEN - 1);
-		    try_open = 1;
+		    if (strcmp(path, "none")) {
+			*tryfile = '\0';
+			strncat(tryfile, path, MAXLEN - 1);
+			try_open = 1;
+		    }
 		}	    
 		fclose(fp);
 	    }
 	    remove(fname);
 	}
     }
+
+    gtk_window_present(GTK_WINDOW(mdata->main));
 
     if (try_open) {
 	real_open_tryfile();
@@ -139,7 +143,7 @@ int try_forwarding_open_request (long gpid, const char *fname)
     if (fp != NULL) {
 	union sigval data;
 
-	fprintf(fp, "%s\n", fname);
+	fprintf(fp, "%s\n", (*fname == '\0')? "none" : fname);
 	fclose(fp);
 	data.sival_ptr = (void *) 0xf0;
 	err = sigqueue(gpid, SIGUSR1, data);
@@ -241,9 +245,9 @@ static HWND get_hwnd_for_pid (long gpid)
 	
 	GetWindowThreadProcessId(h, &pid);
 	if (pid == gpid) {
-              break;
-         }
-         h = GetNextWindow(h, GW_HWNDNEXT);
+	    break;
+	}
+	h = GetNextWindow(h, GW_HWNDNEXT);
     }
 
     return h;
@@ -273,18 +277,22 @@ static gboolean win32_peek_message (gpointer data)
 	    fprintf(stderr, "Got message 0xf0\n");
 
 	    sprintf(fname, "%s/open-%ld", gretl_dotdir(), gotpid);
-	    fp = gretl_fopen(fname, "r");
+	    fp = fopen(fname, "r");
 	    if (fp != NULL) {
 		if (fgets(path, sizeof path, fp)) {
 		    tailstrip(path);
-		    *tryfile = '\0';
-		    strncat(tryfile, path, MAXLEN - 1);
-		    try_open = 1;
+		    if (strcmp(path, "none")) {
+			*tryfile = '\0';
+			strncat(tryfile, path, MAXLEN - 1);
+			try_open = 1;
+		    }
 		}	    
 		fclose(fp);
 	    }
 	    remove(fname);
 	}
+
+	gtk_window_present(GTK_WINDOW(mdata->main));
 
 	if (try_open) {
 	    real_open_tryfile();
@@ -302,21 +310,23 @@ int install_open_handler (void)
 
 int try_forwarding_open_request (long gpid, const char *fname)
 {
-    HWND h = get_hwnd_for_pid(gpid);
+    HWND hw = get_hwnd_for_pid(gpid);
     int err = 0;
 
-    if (h) {
+    if (!hw) {
+	err = 1;
+    } else {
 	long mypid = (long) GetCurrentProcessId();
 	char tmpname[FILENAME_MAX];
 	FILE *fp;
 
-	sprintf(tmpname, "%s/open-%ld", gretl_dotdir(), mypid);
+	sprintf(tmpname, "%s\\open-%ld", gretl_dotdir(), mypid);
 	fp = fopen(tmpname, "w");
 	
 	if (fp != NULL) {
-	    fprintf(fp, "%s\n", fname);
+	    fprintf(fp, "%s\n", (*fname == '\0')? "none" : fname);
 	    fclose(fp);
-	    SendMessage(h, WM_APP, 0xf0, mypid);
+	    SendMessage(hw, WM_APP, 0xf0, mypid);
 	} else {
 	    err = 1;
 	}
@@ -325,11 +335,11 @@ int try_forwarding_open_request (long gpid, const char *fname)
     return err;
 }
 
-#else
+#else /* none of the above */
 
 int get_instance_count (long *ppid) 
 {
     return 0;
 }
 
-#endif /* none of the above */
+#endif /* OS variations */
