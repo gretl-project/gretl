@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-03-25 10:41-0400\n"
-"PO-Revision-Date: 2013-03-29 18:31+0100\n"
+"PO-Revision-Date: 2013-03-30 08:23+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -13121,7 +13121,7 @@ msgid "Akaike Information Criterion"
 msgstr "Criterio di informazione di Akaike"
 
 #: gui2/library.c:6043
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Statistic from model %d\n"
 "%s (value = %g)\n"
@@ -13129,7 +13129,7 @@ msgid ""
 msgstr ""
 "Statistica dal modello %d\n"
 "%s (valore = %g)\n"
-"Nome (max. 15 caratteri):"
+"Nome (max. %d caratteri):"
 
 #: gui2/library.c:6130
 msgid "standardized residual"
@@ -13187,9 +13187,9 @@ msgid "Plot the series"
 msgstr "Disegna le serie"
 
 #: gui2/library.c:7003
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no valid values"
-msgstr "valori validi"
+msgstr "%s: nessun valore valido"
 
 #: gui2/library.c:7189
 msgid "Non-interactive (just get output)"
@@ -13782,9 +13782,8 @@ msgid "Censoring variable"
 msgstr "Variabile di censura"
 
 #: gui2/selector.c:3714
-#, fuzzy
 msgid "Dependent variable 2"
-msgstr "Variabile dipendente"
+msgstr "Variabile dipendente 2"
 
 #: gui2/selector.c:3716
 msgid "List of AR lags"
@@ -13863,27 +13862,24 @@ msgid "Response variable"
 msgstr "Variabile di risposta"
 
 #: gui2/selector.c:4097
-#, fuzzy
 msgid "Dependent variable 1"
-msgstr "Variabile dipendente"
+msgstr "Variabile dipendente 1"
 
 #: gui2/selector.c:4157
 msgid "lag order:"
 msgstr "Ordine dei ritardi:"
 
 #: gui2/selector.c:4158
-#, fuzzy
 msgid "rank:"
-msgstr "Rango"
+msgstr "rango:"
 
 #: gui2/selector.c:4182
 msgid "maximum lag:"
 msgstr "Ritardo massimo:"
 
 #: gui2/selector.c:4197
-#, fuzzy
 msgid "Number of cointegrating vectors"
-msgstr "Beta (vettori di cointegrazione)"
+msgstr "Numero di vettori di cointegrazione"
 
 #: gui2/selector.c:4223
 msgid "ARCH order:"
@@ -13926,14 +13922,12 @@ msgid "Exogenous variables"
 msgstr "Variabili esogene"
 
 #: gui2/selector.c:4416
-#, fuzzy
 msgid "Selection regressors"
 msgstr "Regressori dell'equazione di selezione"
 
 #: gui2/selector.c:4418
-#, fuzzy
 msgid "Equation 2 regressors"
-msgstr "Regressori della prima equazione"
+msgstr "Regressori della seconda equazione"
 
 #: gui2/selector.c:4420
 msgid "Helper functions"
@@ -14281,7 +14275,6 @@ msgid "Endogenous variables"
 msgstr "Variabili endogene"
 
 #: gui2/selector.c:6405
-#, fuzzy
 msgid "Equation 1 regressors"
 msgstr "Regressori della prima equazione"
 
@@ -14358,9 +14351,8 @@ msgid "Define named list"
 msgstr "Definire una lista"
 
 #: gui2/selector.c:6937
-#, fuzzy
 msgid "Name of list"
-msgstr "Nome della lista:"
+msgstr "Nome della lista"
 
 #: gui2/selector.c:7248
 msgid "Too many items were selected"
@@ -14513,9 +14505,8 @@ msgid "versus"
 msgstr "Rispetto a"
 
 #: gui2/session.c:2210
-#, fuzzy
 msgid "Bundle is empty"
-msgstr "Il buffer è vuoto"
+msgstr "Il bundle è vuoto"
 
 #: gui2/session.c:2415
 #, c-format
@@ -14528,9 +14519,8 @@ msgid "'%s': there is already an object of this name"
 msgstr "'%s': c'è già un oggetto con questo nome"
 
 #: gui2/session.c:2644
-#, fuzzy
 msgid "Failed to copy object"
-msgstr "Impossibile copiare il file del grafico"
+msgstr "Impossibile copiare l'oggetto"
 
 #: gui2/session.c:2670 gui2/session.c:2712
 #, c-format
@@ -14542,9 +14532,8 @@ msgstr ""
 "(max. %d caratteri)"
 
 #: gui2/session.c:2672
-#, fuzzy
 msgid "gretl: copy object"
-msgstr "gretl: formati di copia"
+msgstr "gretl: copia oggetto"
 
 #: gui2/session.c:2714
 msgid "gretl: rename object"
@@ -14696,9 +14685,8 @@ msgid "Emulate Windows look"
 msgstr "Emula il look di Windows"
 
 #: gui2/settings.c:186
-#, fuzzy
 msgid "Theme preference"
-msgstr "Preferenza sulla lingua"
+msgstr "Preferenza sul tema"
 
 #: gui2/settings.c:190
 msgid "Web browser"
@@ -14741,9 +14729,8 @@ msgid "Language preference"
 msgstr "Preferenza sulla lingua"
 
 #: gui2/settings.c:213
-#, fuzzy
 msgid "Default graph scale"
-msgstr "Grafico salvato"
+msgstr "Scala del grafico di default"
 
 #: gui2/settings.c:216
 msgid "Command to launch gnuplot"
@@ -14754,9 +14741,8 @@ msgid "Command to launch GNU R"
 msgstr "Comando per eseguire GNU R"
 
 #: gui2/settings.c:222
-#, fuzzy
 msgid "Path to Rterm.exe"
-msgstr "Comando per eseguire TRAMO"
+msgstr "Path di Rterm.exe"
 
 #: gui2/settings.c:225
 msgid "Command to compile TeX files"
@@ -14803,23 +14789,20 @@ msgid "Path to octave executable"
 msgstr "Percorso per l'eseguibile octave"
 
 #: gui2/settings.c:257
-#, fuzzy
 msgid "Path to Stata executable"
-msgstr "Percorso per l'eseguibile octave"
+msgstr "Percorso per l'eseguibile Stata"
 
 #: gui2/settings.c:259
-#, fuzzy
 msgid "Path to Python executable"
-msgstr "Percorso per l'eseguibile oxl"
+msgstr "Percorso per l'eseguibile python"
 
 #: gui2/settings.c:261
 msgid "Database server name"
 msgstr "Indirizzo del server di database"
 
 #: gui2/settings.c:263
-#, fuzzy
 msgid "HTTP proxy"
-msgstr "Usa il proxy HTTP"
+msgstr "Proxy HTTP"
 
 #: gui2/settings.c:265
 msgid "Use HTTP proxy"
@@ -15007,22 +14990,22 @@ msgid "_Divide by scalar"
 msgstr "_Dividi per scalare"
 
 #: gui2/ssheet.c:960
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter name for new variable\n"
 "(max. %d characters)"
 msgstr ""
 "Inserire un nome per la nuova variabile\n"
-"(max. 15 caratteri)"
+"(max. %d caratteri)"
 
 #: gui2/ssheet.c:974
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter case marker for new obs\n"
 "(max. %d characters)"
 msgstr ""
 "Inserire il marcatore per le nuove oss.\n"
-"(max. 8 caratteri)"
+"(max. %d caratteri)"
 
 #: gui2/ssheet.c:978
 msgid "gretl: case marker"
@@ -15168,9 +15151,8 @@ msgid "gretl: models"
 msgstr "gretl: modelli"
 
 #: gui2/tabwin.c:1082
-#, fuzzy
 msgid "Move to new window"
-msgstr "Nuova finestra"
+msgstr "Vai a nuova finestra"
 
 #: gui2/tabwin.c:1094
 msgid "Move to tabbed window"
@@ -15411,9 +15393,8 @@ msgid "Help on command"
 msgstr "Aiuto sul comando"
 
 #: gui2/toolbar.c:870
-#, fuzzy
 msgid "New tab"
-msgstr "Nuova variabile"
+msgstr "Nuovo tab"
 
 #: gui2/toolbar.c:1107
 msgid "launch calculator"
@@ -15571,9 +15552,8 @@ msgid "Main window"
 msgstr "Finestra principale"
 
 #: gui2/winstack.c:424
-#, fuzzy
 msgid "Arrange"
-msgstr "Intervallo"
+msgstr "Riordina"
 
 #: plugin/addons-i18n.c:4
 msgid "gig"
@@ -15700,14 +15680,12 @@ msgid "AB-model"
 msgstr "Modello AB"
 
 #: plugin/addons-i18n.c:46
-#, fuzzy
 msgid "Bootstrap alpha"
-msgstr "_Bootstrap..."
+msgstr "alpha del bootstrap"
 
 #: plugin/addons-i18n.c:47
-#, fuzzy
 msgid "Bootstrap replications"
-msgstr "Rapporto t bootstrap"
+msgstr "Replicazioni bootstrap"
 
 #: plugin/addons-i18n.c:48
 msgid "C-model"
@@ -15750,9 +15728,8 @@ msgid "plain"
 msgstr "semplice"
 
 #: plugin/addons-i18n.c:61
-#, fuzzy
 msgid "template matrix"
-msgstr "Sostituita la matrice %s"
+msgstr "Matrice modello"
 
 #: plugin/anova.c:108 plugin/anova.c:110
 msgid "Treatment"
@@ -15784,14 +15761,13 @@ msgid "%s, response = %s, treatment = %s:"
 msgstr "%s, risposta = %s, trattamento = %s:"
 
 #: plugin/arma.c:178
-#, fuzzy, c-format
+#, c-format
 msgid "MA root %d = %g\n"
-msgstr " Prob(x = %d) = %g\n"
+msgstr " Radice MA n. %d = %g\n"
 
 #: plugin/arma.c:906
-#, fuzzy
 msgid "MA estimate(s) out of bounds\n"
-msgstr "T: un valore negativo è fuori dai limiti.\n"
+msgstr "La stima della parte MA è fuori dai limiti.\n"
 
 #: plugin/arma.c:1446 plugin/arma_init.c:347 plugin/arma_init.c:1143
 #: plugin/arma_init.c:1221 plugin/arma_init.c:1224
@@ -16677,14 +16653,13 @@ msgid "Unexpected error reading the file\n"
 msgstr "Errore inatteso durante la lettura del file\n"
 
 #: plugin/xlsx_import.c:704
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d variables and %d observations\n"
 msgstr "%d variabili trovate, per %d osservazioni\n"
 
 #: plugin/xlsx_import.c:707
-#, fuzzy
 msgid "File contains no data\n"
-msgstr "Il file non contiene dati"
+msgstr "Il file non contiene dati\n"
 
 #: plugin/xlsx_import.c:1046
 msgid "Found no sheets\n"
@@ -16696,11 +16671,11 @@ msgid "'%s': no such worksheet"
 msgstr "%s: nessun foglio di lavoro"
 
 #: plugin/xlsx_import.c:1111
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Found %d valid sheet(s)\n"
-msgstr "per la variabile %s (%d osservazioni valide)"
+msgstr "\nTrovati %d fogli validi\n"
 
 #: doc/commands/matfuncs.c:50
 msgid "Creation and I/O"
