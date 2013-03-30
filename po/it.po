@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.9.7\n"
+"Project-Id-Version: gretl 1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-03-25 10:41-0400\n"
-"PO-Revision-Date: 2013-03-29 13:00+0100\n"
+"PO-Revision-Date: 2013-03-29 18:31+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -7317,9 +7317,8 @@ msgid "About gretl"
 msgstr "Informazioni su gretl"
 
 #: gui2/about.c:121 plugin/excel_import.c:138
-#, fuzzy
 msgid "build date"
-msgstr "Dataset completo"
+msgstr "Data di compilazione"
 
 #: gui2/about.c:154 gui2/about.c:156
 msgid "translator_credits"
@@ -8967,14 +8966,12 @@ msgid "Set sample range"
 msgstr "Impostare un intervallo per il campione:"
 
 #: gui2/dialogs.c:2371
-#, fuzzy
 msgid "gretl: define dummy"
-msgstr "gretl: costruzione grafico"
+msgstr "gretl: definire dummy"
 
 #: gui2/dialogs.c:2381
-#, fuzzy
 msgid "Set dummy range"
-msgstr "Impostare un intervallo per il campione:"
+msgstr "Impostare un intervallo per la dummy"
 
 #: gui2/dialogs.c:2400 gui2/varinfo.c:998
 msgid "Name of variable:"
@@ -9367,7 +9364,7 @@ msgid "Please specify a cluster variable"
 msgstr "Occorre specificare una variabile di cluster"
 
 #: gui2/dialogs.c:5601
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a known series"
 msgstr "'%s' non è il nome di una serie"
 
@@ -9836,14 +9833,12 @@ msgstr ""
 "Si desidera provare a scaricarlo ora?"
 
 #: gui2/fncall.c:2708 gui2/fnsave.c:1312
-#, fuzzy
 msgid "main window"
 msgstr "Finestra principale"
 
 #: gui2/fncall.c:2709 gui2/fnsave.c:1313
-#, fuzzy
 msgid "model window"
-msgstr "Chiudi finestra"
+msgstr "Finestra del modello"
 
 #: gui2/fncall.c:2713
 #, c-format
@@ -9857,9 +9852,9 @@ msgstr ""
 "Procedere?"
 
 #: gui2/fncall.c:2923
-#, fuzzy, c-format
+#, c-format
 msgid "Adding %s under %s."
-msgstr "_Rispetto a %s e %s"
+msgstr "Aggiunta di %s sotto %s"
 
 #: gui2/fncall.c:2927 gui2/fncall.c:2931 gui2/settings.c:1697
 msgid "This change will take effect when you restart gretl"
@@ -9993,9 +9988,8 @@ msgid "Add/remove functions"
 msgstr "Aggiungi/rimuovi funzioni"
 
 #: gui2/fnsave.c:1820
-#, fuzzy
 msgid "Extra properties"
-msgstr "Proprietà"
+msgstr "Proprietà extra"
 
 #: gui2/fnsave.c:1827
 msgid "Write spec file"
@@ -10210,9 +10204,8 @@ msgid "gretl: graph"
 msgstr "gretl: grafico"
 
 #: gui2/gpt_control.c:4766
-#, fuzzy
 msgid " Right-click on graph for menu"
-msgstr " Fare clic sul grafico per aprire il menù"
+msgstr " Fare clic destro sul grafico per aprire il menù"
 
 #: gui2/gpt_control.c:5027
 msgid "Couldn't find a usable terminal program"
@@ -10761,9 +10754,8 @@ msgid "Octave script"
 msgstr "Script Octave"
 
 #: gui2/gretl.c:1529
-#, fuzzy
 msgid "Python script"
-msgstr "Nuovo file comandi"
+msgstr "Script di Python"
 
 #: gui2/gretl.c:1530 gui2/gretl.c:1870
 msgid "Ox program"
@@ -10866,9 +10858,8 @@ msgid "_Gretl console"
 msgstr "T_erminale di gretl"
 
 #: gui2/gretl.c:1563
-#, fuzzy
 msgid "_Gnuplot"
-msgstr "Colori Gnuplot"
+msgstr "_Gnuplot"
 
 #: gui2/gretl.c:1564
 msgid "Start GNU _R"
@@ -11117,9 +11108,8 @@ msgstr "Dummy _temporali"
 
 #  Menu della finestra spreadsheet
 #: gui2/gretl.c:1637
-#, fuzzy
 msgid "_Observation range dummy"
-msgstr "_Osservazioni"
+msgstr "Dummy per intervallo"
 
 #: gui2/gretl.c:1638
 msgid "Dummies for selected _discrete variables"
@@ -11398,9 +11388,8 @@ msgid "_Dynamic panel model..."
 msgstr "Modello _panel dinamico..."
 
 #: gui2/gretl.c:1726
-#, fuzzy
 msgid "_Limited dependent variable"
-msgstr "Prima variabile dipendente"
+msgstr "Variabile dipendente limitata"
 
 #: gui2/gretl.c:1727
 msgid "_Logit"
@@ -11519,14 +11508,12 @@ msgid "_About gretl"
 msgstr "I_nformazioni su gretl"
 
 #: gui2/gretl.c:2097
-#, fuzzy
 msgid "Enter name for list of series"
-msgstr "Inserire nome=formula per la nuova serie"
+msgstr "Inserire nome per la lista"
 
 #: gui2/gretl.c:2102
-#, fuzzy
 msgid "gretl: name list"
-msgstr "gretl: nome colonna"
+msgstr "gretl: nome lista"
 
 #: gui2/gretl.c:2154
 msgid "sample status"
@@ -12025,9 +12012,8 @@ msgid "_Graph"
 msgstr "_Grafico"
 
 #: gui2/gui_utils.c:456
-#, fuzzy
 msgid "Couldn't open temp file"
-msgstr "Impossibile aprire il file del grafico"
+msgstr "Impossibile aprire il file temporaneo"
 
 #: gui2/gui_utils.c:957 gui2/gui_utils.c:1257 gui2/library.c:8256
 msgid "gretl: open data"
@@ -12077,9 +12063,8 @@ msgid "Buffer is empty"
 msgstr "Il buffer è vuoto"
 
 #: gui2/gui_utils.c:1598
-#, fuzzy
 msgid "gretl: untitled"
-msgstr "gretl: carica"
+msgstr "gretl: senza titolo"
 
 #: gui2/gui_utils.c:1635
 msgid "gretl: help"
@@ -12106,9 +12091,8 @@ msgid "gretl: edit plot commands"
 msgstr "gretl: modifica grafico"
 
 #: gui2/gui_utils.c:1657
-#, fuzzy
 msgid "gretl: edit R script"
-msgstr "gretl: modifica script Octave"
+msgstr "gretl: modifica script R"
 
 #: gui2/gui_utils.c:1659
 msgid "gretl: edit Ox program"
@@ -12119,9 +12103,8 @@ msgid "gretl: edit Octave script"
 msgstr "gretl: modifica script Octave"
 
 #: gui2/gui_utils.c:1663
-#, fuzzy
 msgid "gretl: edit Python script"
-msgstr "gretl: modifica script Octave"
+msgstr "gretl: modifica script Python"
 
 #: gui2/gui_utils.c:1665 gui2/gui_utils.c:4930 gui2/gui_utils.c:5078
 msgid "gretl: script output"
@@ -12137,7 +12120,7 @@ msgid "gretl console"
 msgstr "Terminale di gretl"
 
 #: gui2/gui_utils.c:2309
-#, fuzzy, c-format
+#, c-format
 msgid "model %d"
 msgstr "Modello %d"
 
@@ -12321,14 +12304,12 @@ msgid "Omit exogenous variables..."
 msgstr "Ometti variabili esogene..."
 
 #: gui2/gui_utils.c:4126
-#, fuzzy
 msgid "Omit time trend"
-msgstr "Trend temporale"
+msgstr "Togli il trend temporale"
 
 #: gui2/gui_utils.c:4132
-#, fuzzy
 msgid "Omit seasonal dummies"
-msgstr "Con dummy stagionali"
+msgstr "Togli le dummy stagionali"
 
 #: gui2/gui_utils.c:4141
 msgid "Residuals from equation"
@@ -12347,19 +12328,16 @@ msgid "Impulse responses"
 msgstr "Impulso-risposta"
 
 #: gui2/gui_utils.c:4185
-#, fuzzy
 msgid "Residuals"
-msgstr "_Residui"
+msgstr "Residui"
 
 #: gui2/gui_utils.c:4192
-#, fuzzy
 msgid "Combined plot"
-msgstr "Grafico EC combinato"
+msgstr "Grafico combinato"
 
 #: gui2/gui_utils.c:4201
-#, fuzzy
 msgid "Multiple plots"
-msgstr "Grafici multipli a dispersione"
+msgstr "Grafici multipli"
 
 #: gui2/gui_utils.c:4210
 #, c-format
@@ -12645,7 +12623,6 @@ msgid "Principal Components Analysis"
 msgstr "Analisi delle componenti principali"
 
 #: gui2/library.c:928
-#, fuzzy
 msgid "criterion"
 msgstr "Criterio"
 
@@ -16702,12 +16679,12 @@ msgstr "Errore inatteso durante la lettura del file\n"
 #: plugin/xlsx_import.c:704
 #, fuzzy, c-format
 msgid "Found %d variables and %d observations\n"
-msgstr "per la variabile %s (%d osservazioni valide)"
+msgstr "%d variabili trovate, per %d osservazioni\n"
 
 #: plugin/xlsx_import.c:707
 #, fuzzy
 msgid "File contains no data\n"
-msgstr "Impossibile importare i dati"
+msgstr "Il file non contiene dati"
 
 #: plugin/xlsx_import.c:1046
 msgid "Found no sheets\n"
