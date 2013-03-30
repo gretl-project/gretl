@@ -313,7 +313,11 @@ int try_forwarding_open_request (long gpid, const char *fname)
     HWND hw = get_hwnd_for_pid(gpid);
     int err = 0;
 
+    fprintf(stderr, "try_forwarding: gpid=%ld, fname='%s'\n", 
+	    gpid, fname);
+
     if (!hw) {
+	fprintf(stderr, "Couldn't find HWND\n");
 	err = 1;
     } else {
 	long mypid = (long) GetCurrentProcessId();
@@ -326,8 +330,11 @@ int try_forwarding_open_request (long gpid, const char *fname)
 	if (fp != NULL) {
 	    fprintf(fp, "%s\n", (*fname == '\0')? "none" : fname);
 	    fclose(fp);
-	    SendMessage(hw, WM_APP, 0xf0, mypid);
+	    fprintf(stderr, "Calling SendMessage\n");
+	    SendMessage(hw, WM_APP, (WPARAM) 0xf0, 
+			(LPARAM) mypid);
 	} else {
+	    fprintf(stderr, "Couldn't write '%s'\n", tmpname);
 	    err = 1;
 	}
     }
