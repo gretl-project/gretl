@@ -155,6 +155,7 @@ void make_list_from_main (void);
 void do_stop_script (GtkWidget *w, windata_t *vwin);
 gchar *get_user_menu_string (const gchar *mpath);
 int is_control_key (guint k);
+gboolean real_open_tryfile (void);
 
 /* functions defined in files other than gretl.c */
 void about_dialog (void);

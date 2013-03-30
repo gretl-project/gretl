@@ -262,6 +262,7 @@ GUISRC = about.c \
 	graph_page.c \
 	gretl.c \
 	gretlwin32.c \
+	gretl_ipc.c \
 	guiprint.c \
 	gui_recode.c \
 	gui_utils.c \

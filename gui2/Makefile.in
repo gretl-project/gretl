@@ -149,6 +149,7 @@ SRCS = about.c \
 	gpt_control.c \
 	gpt_dialog.c \
 	gretl.c \
+	gretl_ipc.c \
 	guiprint.c \
 	gui_recode.c \
 	gui_utils.c \
