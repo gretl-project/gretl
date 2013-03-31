@@ -492,14 +492,14 @@ void infobox (const char *template, ...)
     vsprintf(msg, template, args);
     va_end(args);
 
-    dialog = gtk_message_dialog_new (NULL, 
-				     GTK_DIALOG_DESTROY_WITH_PARENT,
-				     GTK_MESSAGE_INFO,
-				     GTK_BUTTONS_CLOSE,
-				     "%s",
-				     msg);
-    gtk_dialog_run (GTK_DIALOG (dialog));
-    gtk_widget_destroy (dialog);
+    dialog = gtk_message_dialog_new(NULL, 
+				    GTK_DIALOG_DESTROY_WITH_PARENT,
+				    GTK_MESSAGE_INFO,
+				    GTK_BUTTONS_CLOSE,
+				    "%s",
+				    msg);
+    gtk_dialog_run(GTK_DIALOG (dialog));
+    gtk_widget_destroy(dialog);
 }
 
 # endif /* !WIN32 */

@@ -20,7 +20,12 @@
 #ifndef GRETL_IPC_H
 #define GRETL_IPC_H
 
-#if defined(__linux) || defined(linux) || defined(WIN32)
+/* In principle GRETL_OPEN_HANDLER should work on win32, but
+   right now it doesn't; it rresults in a crash on starting
+   a second gretl instance.
+*/
+
+#if defined(__linux) || defined(linux)
 # define GRETL_OPEN_HANDLER
 #endif
 

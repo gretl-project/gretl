@@ -33,6 +33,12 @@
 
 #if defined(__linux) || defined(linux)
 
+/* Get a count of currently running gretl instances. This
+   is not as clever as it should be, since it ignores UID.
+   On a true multi-user system it will count gretl
+   instances being run by other users. 
+*/
+
 int get_instance_count (long *ppid) 
 {
     DIR *dir;
@@ -84,6 +90,12 @@ int get_instance_count (long *ppid)
     return count;
 }
 
+/* Signal handler for the case where a newly started gretl
+   process hands off to a previously running process, 
+   passing the name of a file to be opened via a small file
+   in the user's dotdir.
+*/
+
 static void open_handler (int sig, siginfo_t *sinfo, void *context)
 {
     int try_open = 0;
@@ -120,6 +132,8 @@ static void open_handler (int sig, siginfo_t *sinfo, void *context)
     }
 }
 
+/* at start-up, install a handler for SIGUSR1 */
+
 int install_open_handler (void)
 {
     static struct sigaction action;
@@ -130,6 +144,14 @@ int install_open_handler (void)
 
     return sigaction(SIGUSR1, &action, NULL);
 }
+
+/* For the case where a new gretl process has been started
+   (possibly in response to double-clicking a suitable
+   filename), but the user doesn't really want a new
+   process and would prefer that the file be opened in
+   a previously running gretl instance. We send SIGUSR1
+   to the previous instance and exit.
+*/
 
 int try_forwarding_open_request (long gpid, const char *fname)
 {
@@ -238,20 +260,25 @@ int get_instance_count (long *ppid)
 
 static HWND get_hwnd_for_pid (long gpid)
 {
-    HWND h = GetTopWindow(0);
+    HWND hw = GetTopWindow(0);
 
-    while (h) {
+    while (hw) {
 	DWORD pid;
 	
-	GetWindowThreadProcessId(h, &pid);
+	GetWindowThreadProcessId(hw, &pid);
 	if (pid == gpid) {
 	    break;
 	}
-	h = GetNextWindow(h, GW_HWNDNEXT);
+	hw = GetNextWindow(hw, GW_HWNDNEXT);
     }
 
-    return h;
+    fprintf(stderr, "get_hwnd_for_pid: gpid=%d -> hw=%p\n",
+	    gpid, (void *) hw);
+
+    return hw;
 }
+
+#include <gdk/gdkwin32.h>
 
 static gboolean win32_peek_message (gpointer data)
 {
@@ -259,9 +286,10 @@ static gboolean win32_peek_message (gpointer data)
     MSG msg;
 
     if (!hw) {
-	long mypid = GetCurrentProcessId();
-
-	hw = get_hwnd_for_pid(mypid);
+	GdkWindow *w = gtk_widget_get_window(mdata->main);
+	
+	hw = GDK_WINDOW_HWND(w);
+	fprintf(stderr, "peek_message: my hw = %p\n", (void *) hw);
     }
  
     if (hw && PeekMessage(&msg, hw, WM_APP, WM_APP, PM_REMOVE)) {
