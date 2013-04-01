@@ -157,7 +157,6 @@ char tryfile[MAXLEN];
 
 MODEL *model;             /* gretl models struct */
 
-int instance_count;
 int data_status, orig_vars;
 float gui_scale;
 
@@ -536,8 +535,6 @@ int main (int argc, char **argv)
     gretl_config_init();
 #endif
 
-    instance_count = get_instance_count(&gpid);
-
     if (optver) {
 	gui_logo(NULL);
 	exit(EXIT_SUCCESS);
@@ -594,6 +591,7 @@ int main (int argc, char **argv)
     }
 
 #ifdef GRETL_OPEN_HANDLER
+    get_instance_count(&gpid);
     if (gpid > 0 && !start_new_instance()) {
 	if (try_forwarding_open_request(gpid, filearg) == 0) {
 	    exit(EXIT_SUCCESS);

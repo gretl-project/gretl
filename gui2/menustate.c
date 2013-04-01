@@ -27,6 +27,7 @@
 #include "varinfo.h"
 #include "treeutils.h"
 #include "session.h"
+#include "gretl_ipc.h"
 #include "menustate.h"
 
 void refresh_data (void)
@@ -612,40 +613,47 @@ void clear_sample_label (void)
 
 void set_main_window_title (const char *name, gboolean modified)
 {
-    char numstr[8] = "";
+    gchar *title = NULL;
 
-    if (instance_count > 1 && instance_count < 1000) {
-	sprintf(numstr, " (%d)", instance_count);
-    }
-
-    if (name == NULL && *numstr == '\0') {
-	gtk_window_set_title(GTK_WINDOW(mdata->main), "gretl");
-    } else {
-	/* FIXME encoding? */
-	gchar *title = NULL;
-
-	if (name == NULL) {
-	    title = g_strdup_printf("gretl%s", numstr);
-	} else if (!g_utf8_validate(name, -1, NULL)) {
+    if (name != NULL) {
+	if (!g_utf8_validate(name, -1, NULL)) {
 	    gchar *trname = my_filename_to_utf8(name);
 	    
 	    if (modified) {
-		title = g_strdup_printf("gretl%s: %s *", numstr, trname);
+		title = g_strdup_printf("gretl: %s *", trname);
 	    } else {
-		title = g_strdup_printf("gretl%s: %s", numstr, trname);
+		title = g_strdup_printf("gretl: %s", trname);
 	    }
 	    g_free(trname);
 	} else {
 	    if (modified) {
-		title = g_strdup_printf("gretl%s: %s *", numstr, name);
+		title = g_strdup_printf("gretl: %s *", name);
 	    } else {
-		title = g_strdup_printf("gretl%s: %s", numstr, name);
+		title = g_strdup_printf("gretl: %s", name);
 	    }
 	}
+    } else {
+	int pid = 0;
 
+	if (get_instance_count(NULL) > 1) {
+#ifdef G_OS_WIN32
+	    pid = (int) GetCurrentProcessId();
+#else
+	    pid = (int) getpid();
+#endif
+	}
+
+	if (pid > 0) {
+	    title = g_strdup_printf("gretl (%d)", pid);
+	} else {
+	    gtk_window_set_title(GTK_WINDOW(mdata->main), "gretl");
+	}
+    }
+
+    if (title != NULL) {
 	gtk_window_set_title(GTK_WINDOW(mdata->main), title);
 	g_free(title);
-    }
+    }	
 }
 
 static const char *get_pd_string (DATASET *dset)

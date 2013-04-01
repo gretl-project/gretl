@@ -76,7 +76,7 @@ int get_instance_count (long *ppid)
                 return -1; 
             }
             if (!strcmp(pname, "gretl_x11") || !strcmp(pname, "lt-gretl_x11")) {
-		if (lpid != mypid && *ppid <= 0) {
+		if (ppid != NULL && lpid != mypid && *ppid <= 0) {
 		    *ppid = lpid;
 		}
 		count++;
@@ -245,7 +245,7 @@ int get_instance_count (long *ppid)
 		    match = !strcmp(pe.szExeFile, "gretlw32.exe");
 		}
 		if (match) {
-		    if (pe.th32ProcessID != mypid && *ppid <= 0) {
+		    if (ppid != NULL && pe.th32ProcessID != mypid && *ppid <= 0) {
 			*ppid = pe.th32ProcessID;
 		    }
 		    count++;
