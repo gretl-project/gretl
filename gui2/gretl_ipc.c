@@ -260,53 +260,59 @@ long gretl_prior_instance (void)
     return gpid;
 }
 
-static gboolean win32_peek_message (gpointer data)
+static void win32_handle_message (long gotpid)
 {
-    MSG msg;
+    char fname[FILENAME_MAX];
+    char path[FILENAME_MAX];
+    int try_open = 0;
+    FILE *fp;
 
-    if (PeekMessage(&msg, NULL, WM_APP, WM_APP, PM_REMOVE)) {
-	int wp = (int) msg.wParam;
-	int try_open = 0;
+    fprintf(stderr, "win32_handle_message: from pid = %ld\n", gotpid);
 
-	fprintf(stderr, "peek_message: wp = %d\n", wp);
+    sprintf(fname, "%s/open-%ld", gretl_dotdir(), gotpid);
 
-	if (wp == 0xf0) {
-	    long gotpid = msg.lParam;
-	    char fname[FILENAME_MAX];
-	    char path[FILENAME_MAX];
-	    FILE *fp;
-
-	    fprintf(stderr, "Got message 0xf0\n");
-
-	    sprintf(fname, "%s/open-%ld", gretl_dotdir(), gotpid);
-	    fp = fopen(fname, "r");
-	    if (fp != NULL) {
-		if (fgets(path, sizeof path, fp)) {
-		    tailstrip(path);
-		    if (strcmp(path, "none")) {
-			*tryfile = '\0';
-			strncat(tryfile, path, MAXLEN - 1);
-			try_open = 1;
-		    }
-		}	    
-		fclose(fp);
+    fp = fopen(fname, "r");
+    if (fp != NULL) {
+	if (fgets(path, sizeof path, fp)) {
+	    tailstrip(path);
+	    if (strcmp(path, "none")) {
+		*tryfile = '\0';
+		strncat(tryfile, path, MAXLEN - 1);
+		try_open = 1;
 	    }
-	    remove(fname);
-	}
+	}	    
+	fclose(fp);
+    }
+    remove(fname);
 
-	gtk_window_present(GTK_WINDOW(mdata->main));
+    gtk_window_present(GTK_WINDOW(mdata->main));
 
-	if (try_open) {
-	    real_open_tryfile();
+    if (try_open) {
+	real_open_tryfile();
+    }
+}
+
+static GdkFilterReturn mdata_filter (GdkXEvent *xevent,
+				     GdkEvent *event,
+				     gpointer data)
+{
+    MSG *msg = (MSG *) xevent;
+
+    if (msg->message == WM_APP) {
+	fprintf(stderr, "mdata: got WM_APP\n");
+	if (msg->wParam == 0xf0) {
+	    fprintf(stderr, " and got 0xf0\n");
+	    win32_handle_message((long) msg->lParam);
+	    return GDK_FILTER_REMOVE;
 	}
     }
 
-    return TRUE;
+    return GDK_FILTER_CONTINUE;
 }
 
 int install_open_handler (void)
 {
-    g_timeout_add_seconds(1, win32_peek_message, NULL);
+    gdk_window_add_filter(NULL, mdata_filter, NULL);
     return 0;
 }
 
@@ -330,9 +336,6 @@ gboolean forward_open_request (long gpid, const char *fname)
 {
     HWND hw = get_hwnd_for_pid(gpid);
     gboolean ret = FALSE;
-
-    fprintf(stderr, "try_forwarding: gpid=%ld, fname='%s', hw = %d\n", 
-	    gpid, fname, (int) hw);
 
     if (!hw) {
 	fprintf(stderr, "Couldn't find HWND\n");

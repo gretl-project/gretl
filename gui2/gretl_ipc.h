@@ -20,12 +20,12 @@
 #ifndef GRETL_IPC_H
 #define GRETL_IPC_H
 
-/* In principle GRETL_OPEN_HANDLER should work on win32, but
-   right now it doesn't; it rresults in a crash on starting
-   a second gretl instance.
+/* In principle GRETL_OPEN_HANDLER should work on WIN32, but
+   right now it doesn't; no messages seem to be getting
+   through to the revelant handler.
 */
 
-#if defined(__linux) || defined(linux) || defined(WIN32)
+#if defined(__linux) || defined(linux)
 # define GRETL_OPEN_HANDLER
 #endif
 
