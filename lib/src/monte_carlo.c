@@ -118,7 +118,8 @@ enum loop_command_codes {
     LOOP_CMD_LIT     = 1 << 1, /* literal printing */
     LOOP_CMD_NODOL   = 1 << 2, /* no $-substitution this line */
     LOOP_CMD_NOSUB   = 1 << 3, /* no @-substitution this line */
-    LOOP_CMD_NOOPT   = 1 << 4  /* no option flags in this line */
+    LOOP_CMD_NOOPT   = 1 << 4, /* no option flags in this line */
+    LOOP_CMD_CATCH   = 1 << 5  /* "catch" flag present */
 };
 
 struct loop_command_ {
@@ -2796,20 +2797,24 @@ static int loop_next_command (char *targ, LOOPSET *loop, int *pj)
     return ret;
 }
 
-static int loop_process_error (int err, PRN *prn)
-{
-    if (libset_get_bool(HALT_ON_ERR) == 0) {
-	errmsg(err, prn);
-	err = 0;
-    }
-
-    return err;
-}
-
 #define genr_compiled(l,j) (l->cmds[j].flags & LOOP_CMD_GEN)
 #define loop_cmd_nodol(l,j) (l->cmds[j].flags & LOOP_CMD_NODOL)
 #define loop_cmd_nosub(l,j) (l->cmds[j].flags & LOOP_CMD_NOSUB)
 #define loop_cmd_noopt(l,j) (l->cmds[j].flags & LOOP_CMD_NOOPT)
+#define loop_cmd_catch(l,j) (l->cmds[j].flags & LOOP_CMD_CATCH)
+
+static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
+{
+    if (libset_get_bool(HALT_ON_ERR) == 0) {
+	errmsg(err, prn);
+	err = 0;
+    } else if (loop_cmd_catch(loop, j)) {
+	errmsg(err, prn);
+	err = 0;
+    }	
+
+    return err;
+}
 
 /* based on the stored flags in the loop-line record, set
    or unset some flags for the command parser: this can 
@@ -2842,6 +2847,12 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
     } else {
 	cmd->flags &= ~CMD_NOOPT;
     }
+
+    if (loop_cmd_catch(loop, j)) {
+	cmd->flags |= CMD_CATCH;
+    } else {
+	cmd->flags &= ~CMD_CATCH;
+    }
 }
 
 /* based on the parsed info in @cmd, maybe write some flags to
@@ -2865,6 +2876,10 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 	    /* record: no options are present on this line */
 	    loop->cmds[j].flags |= LOOP_CMD_NOOPT;
 	} 
+    }
+
+    if (cmd->flags & CMD_CATCH) {
+	loop->cmds[j].flags |= LOOP_CMD_CATCH;
     }
 }
 
@@ -3003,7 +3018,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		    err = execute_genr(genr, dset, prn);
 		}
 		if (err) {
-		    err = loop_process_error(err, prn);
+		    err = loop_process_error(loop, j, err, prn);
 		} else if (is_list_loop(loop) && 
 			   maybe_refresh_list(cmd, loop, line)) {
 		    loop_list_refresh(loop, dset);
@@ -3042,7 +3057,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    if (cmd->ci < 0) {
 		continue;
 	    } else if (err) {
-		err = loop_process_error(err, prn);
+		err = loop_process_error(loop, j, err, prn);
 		if (err) {
 		    break;
 		} else {

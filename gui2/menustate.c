@@ -635,7 +635,7 @@ void set_main_window_title (const char *name, gboolean modified)
     } else {
 	int pid = 0;
 
-	if (get_instance_count(NULL) > 1) {
+	if (gretl_prior_instance()) {
 #ifdef G_OS_WIN32
 	    pid = (int) GetCurrentProcessId();
 #else

@@ -33,35 +33,35 @@
 
 #if defined(__linux) || defined(linux)
 
-/* Get a count of currently running gretl instances. This
+/* Check for a prior running gretl instance. This
    is not as clever as it should be, since it ignores UID.
    On a true multi-user system it will count gretl
-   instances being run by other users. 
+   instances being run by other users. Returns the
+   pid of the prior instance or 0 if none.
 */
 
-int get_instance_count (long *ppid) 
+long gretl_prior_instance (void) 
 {
     DIR *dir;
     struct dirent *ent;
     char buf[128];
-    long pid;
     char pname[32] = {0};
     char state;
-    long mypid;
     FILE *fp;
-    int count = 0;
+    long pid, mypid;
+    long gpid = 0;
 
     if ((dir = opendir("/proc")) == NULL) {
         perror("can't open /proc");
-        return -1;
+        return 0;
     }
 
     mypid = (long) getpid();
 
-    while ((ent = readdir(dir)) != NULL) {
+    while ((ent = readdir(dir)) != NULL && gpid == 0) {
         long lpid = atol(ent->d_name);
 
-        if (lpid < 0) {
+        if (lpid < 0 || lpid == mypid) {
             continue;
 	}
 
@@ -73,13 +73,10 @@ int get_instance_count (long *ppid)
                 printf("proc fscanf failed\n");
                 fclose(fp);
                 closedir(dir);
-                return -1; 
+                return 0; 
             }
             if (!strcmp(pname, "gretl_x11") || !strcmp(pname, "lt-gretl_x11")) {
-		if (ppid != NULL && lpid != mypid && *ppid <= 0) {
-		    *ppid = lpid;
-		}
-		count++;
+		gpid = lpid;
             }
             fclose(fp);
         }
@@ -87,7 +84,7 @@ int get_instance_count (long *ppid)
 
     closedir(dir);
 
-    return count;
+    return gpid;
 }
 
 /* Signal handler for the case where a newly started gretl
@@ -153,44 +150,48 @@ int install_open_handler (void)
    to the previous instance and exit.
 */
 
-int try_forwarding_open_request (long gpid, const char *fname)
+gboolean forward_open_request (long gpid, const char *fname)
 {
+    gboolean ret = FALSE;
     char tmpname[FILENAME_MAX];
     FILE *fp;
-    int err = 0;
 
     sprintf(tmpname, "%s/open-%ld", gretl_dotdir(), (long) getpid());
     fp = fopen(tmpname, "w");
 
     if (fp != NULL) {
 	union sigval data;
+	int err;
 
-	fprintf(fp, "%s\n", (*fname == '\0')? "none" : fname);
+	fprintf(fp, "%s\n", *fname ? fname : "none");
 	fclose(fp);
 	data.sival_ptr = (void *) 0xf0;
 	err = sigqueue(gpid, SIGUSR1, data);
-    } else {
-	err = 1;
+	ret = !err;
     }
 
-    return err;
+    return ret;
 }
 
 #elif defined(MAC_NATIVE)
 
-int get_instance_count (long **ppid)
+long gretl_prior_instance (void)
 {
     int nproc = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
     char buf[PROC_PIDPATHINFO_MAXSIZE];
     size_t psize;
     pid_t *pids;
-    int i, count = 0;
+    pid_t mypid;
+    int i, match;
+    long gpid = 0;
     
     psize = nproc * sizeof *pids;
     pids = malloc(psize);
     if (pids == NULL) {
-	return -1;
+	return 0;
     }
+
+    mypid = getpid();
 
     for (i=0; i<nproc; i++) {
 	pids[i] = 0;
@@ -198,103 +199,76 @@ int get_instance_count (long **ppid)
     
     proc_listpids(PROC_ALL_PIDS, 0, pids, psize);
 
-    for (i=0; i<nproc; i++) {
-	if (pids[i] == 0) { 
+    for (i=0; i < nproc && gpid == 0; i++) {
+	if (pids[i] == 0 || pids[i] == mypid) { 
 	    continue; 
 	}
 	memset(buf, 0, sizeof buf);
 	proc_pidpath(pids[i], buf, sizeof buf);
 	if (*buf != '\0') {
 	    char *s = strrchr(buf, '/');
-	    
+
 	    if (s != NULL) {
-	        count += !strcmp("gretl", s + 1);
+	        match = !strcmp("gretl", s + 1);
             } else {
-	        count += !strcmp("gretl", buf);
+	        match = !strcmp("gretl", buf);
             }
+	    if (match) {
+		gpid = (long) pids[i];
+	    }
 	} 
     }
 
     free(pids);
-    
-    return count;
+
+    return gpid;
 }
 
 #elif defined WIN32
 
-int get_instance_count (long *ppid) 
+long gretl_prior_instance (void) 
 {
     HANDLE hsnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    long mypid;
-    int count = 0;
+    long mypid, gpid = 0;
 
     mypid = (long) GetCurrentProcessId();
 
     if (hsnap) {
         PROCESSENTRY32 pe;
-	int match = 0;
+	int match;
 	char *s;
 
         pe.dwSize = sizeof(PROCESSENTRY32);
         if (Process32First(hsnap, &pe)) {
             do {
-		s = strrchr(pe.szExeFile, '\\');
-		if (s != NULL) {
-		    match = !strcmp(s + 1, "gretlw32.exe");
-		} else {
-		    match = !strcmp(pe.szExeFile, "gretlw32.exe");
-		}
-		if (match) {
-		    if (ppid != NULL && pe.th32ProcessID != mypid && *ppid <= 0) {
-			*ppid = pe.th32ProcessID;
+		if (pe.th32ProcessID != mypid) {
+		    s = strrchr(pe.szExeFile, '\\');
+		    if (s != NULL) {
+			match = !strcmp(s + 1, "gretlw32.exe");
+		    } else {
+			match = !strcmp(pe.szExeFile, "gretlw32.exe");
 		    }
-		    count++;
+		    if (match) {
+			gpid = pe.th32ProcessID;
+		    }
 		}		    
-            } while (Process32Next(hsnap, &pe));
+            } while (gpid == 0 && Process32Next(hsnap, &pe));
 	}
 	CloseHandle(hsnap);
     }
 
-    return count;
+    return gpid;
 }
-
-static HWND get_hwnd_for_pid (long gpid)
-{
-    HWND hw = GetTopWindow(0);
-
-    while (hw) {
-	DWORD pid;
-	
-	GetWindowThreadProcessId(hw, &pid);
-	if (pid == gpid) {
-	    break;
-	}
-	hw = GetNextWindow(hw, GW_HWNDNEXT);
-    }
-
-    fprintf(stderr, "get_hwnd_for_pid: gpid=%d -> hw=%p\n",
-	    gpid, (void *) hw);
-
-    return hw;
-}
-
-#include <gdk/gdkwin32.h>
 
 static gboolean win32_peek_message (gpointer data)
 {
-    static HWND hw;
     MSG msg;
 
-    if (!hw) {
-	GdkWindow *w = gtk_widget_get_window(mdata->main);
-	
-	hw = GDK_WINDOW_HWND(w);
-	fprintf(stderr, "peek_message: my hw = %p\n", (void *) hw);
-    }
- 
-    if (hw && PeekMessage(&msg, hw, WM_APP, WM_APP, PM_REMOVE)) {
-	int wp = msg.wParam;
+    if (PeekMessage(&msg, NULL, WM_APP, WM_APP, PM_REMOVE)) {
+	int wp = (int) msg.wParam;
 	int try_open = 0;
+
+	fprintf(stderr, "peek_message: wp = %d\n", wp);
 
 	if (wp == 0xf0) {
 	    long gotpid = msg.lParam;
@@ -332,21 +306,36 @@ static gboolean win32_peek_message (gpointer data)
 
 int install_open_handler (void)
 {
-    g_idle_add(win32_peek_message, NULL);
+    g_timeout_add_seconds(1, win32_peek_message, NULL);
     return 0;
 }
 
-int try_forwarding_open_request (long gpid, const char *fname)
+static HWND get_hwnd_for_pid (long gpid)
+{
+    HWND hw = GetTopWindow(0);
+    DWORD pid;
+
+    while (hw) {
+	GetWindowThreadProcessId(hw, &pid);
+	if (pid == gpid) {
+	    break;
+	}
+	hw = GetNextWindow(hw, GW_HWNDNEXT);
+    }
+
+    return hw;
+}
+
+gboolean forward_open_request (long gpid, const char *fname)
 {
     HWND hw = get_hwnd_for_pid(gpid);
-    int err = 0;
+    gboolean ret = FALSE;
 
-    fprintf(stderr, "try_forwarding: gpid=%ld, fname='%s'\n", 
-	    gpid, fname);
+    fprintf(stderr, "try_forwarding: gpid=%ld, fname='%s', hw = %d\n", 
+	    gpid, fname, (int) hw);
 
     if (!hw) {
 	fprintf(stderr, "Couldn't find HWND\n");
-	err = 1;
     } else {
 	long mypid = (long) GetCurrentProcessId();
 	char tmpname[FILENAME_MAX];
@@ -355,24 +344,26 @@ int try_forwarding_open_request (long gpid, const char *fname)
 	sprintf(tmpname, "%s\\open-%ld", gretl_dotdir(), mypid);
 	fp = fopen(tmpname, "w");
 	
-	if (fp != NULL) {
-	    fprintf(fp, "%s\n", (*fname == '\0')? "none" : fname);
-	    fclose(fp);
-	    fprintf(stderr, "Calling SendMessage\n");
-	    SendMessage(hw, WM_APP, (WPARAM) 0xf0, 
-			(LPARAM) mypid);
-	} else {
+	if (fp == NULL) {
 	    fprintf(stderr, "Couldn't write '%s'\n", tmpname);
-	    err = 1;
+	} else {
+	    int result;
+
+	    fprintf(fp, "%s\n", *fname ? fname: "none");
+	    result = SendMessage(hw, WM_APP, 0xf0, mypid);
+	    fprintf(fp, "SendMessage to %d returned %d\n", (int) hw, result);
+	    fprintf(fp, "GetLastError gives %d\n", GetLastError());
+	    fclose(fp);
+	    ret = TRUE;
 	}
     }
 
-    return err;
+    return ret;
 }
 
 #else /* none of the above */
 
-int get_instance_count (long *ppid) 
+long gretl_prior_instance (void) 
 {
     return 0;
 }

@@ -413,7 +413,7 @@ int main (int argc, char *argv[])
 	if (opt & OPT_ENGLISH) {
 	    force_language(LANG_C);
 	}
-    } 
+    }
 
 #ifdef WIN32
     if (!batch) {
@@ -436,7 +436,7 @@ int main (int argc, char *argv[])
     line = malloc(MAXLINE);
     if (line == NULL) {
 	noalloc();
-    } 
+    }
 
 #ifdef WIN32
     cli_read_registry(callname);
@@ -548,7 +548,7 @@ int main (int argc, char *argv[])
 	    printf(_("help file %s is not accessible\n"), hpath);
 	    show_paths();
 	}
-    } 
+    }
 
     if (!batch) {
 	fb = stdin;
@@ -563,7 +563,7 @@ int main (int argc, char *argv[])
     /* note: this was conditional on !batch */
     initialize_readline();
 #endif
-
+    
     if (batch || runit) {
 	/* re-initialize: will be incremented by "run" cmd */
 	runit = 0;

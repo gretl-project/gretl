@@ -25,17 +25,17 @@
    a second gretl instance.
 */
 
-#if defined(__linux) || defined(linux)
+#if defined(__linux) || defined(linux) || defined(WIN32)
 # define GRETL_OPEN_HANDLER
 #endif
 
-int get_instance_count (long *ppid);
+long gretl_prior_instance (void);
 
 #ifdef GRETL_OPEN_HANDLER
 
 int install_open_handler (void);
 
-int try_forwarding_open_request (long gpid, const char *fname);
+gboolean forward_open_request (long gpid, const char *fname);
 
 #endif
 

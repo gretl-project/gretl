@@ -458,15 +458,31 @@ static void gui_show_activity (void)
 
 #ifdef GRETL_OPEN_HANDLER
 
-static gboolean start_new_instance (void)
+static gboolean maybe_hand_off (char *filearg, char *auxname)
 {
-    gint resp;
+    long gpid = gretl_prior_instance();
+    gboolean ret = FALSE;
 
-    resp = yes_no_dialog("gretl", 
-			 _("Start a new gretl instance?"),
-			 0);
+    if (gpid > 0) {
+	/* found pid of already-running gretl instance */
+	gint resp;
 
-    return resp == GRETL_YES;
+	resp = yes_no_dialog("gretl", 
+			     _("Start a new gretl instance?"),
+			     0);
+
+	if (resp != GRETL_YES) {
+	    /* try hand-off to prior gretl instance */
+	    char *fname = filearg;
+
+	    if (*fname == '\0') {
+		fname = *tryfile ? tryfile : auxname;
+	    }
+	    ret = forward_open_request(gpid, fname);
+	}
+    }
+
+    return ret;
 }
 
 #endif
@@ -485,17 +501,12 @@ int main (int argc, char **argv)
     GtkosxApplication *App;
 #endif
     int ftype = 0;
-    long gpid = 0;
     char auxname[MAXLEN];
     char filearg[MAXLEN];
     GError *opterr = NULL;
 
 #ifdef G_OS_WIN32
     win32_set_gretldir(callname);
-#endif
-
-#ifdef GRETL_OPEN_HANDLER
-    install_open_handler();
 #endif
 
     gui_nls_init();
@@ -591,11 +602,8 @@ int main (int argc, char **argv)
     }
 
 #ifdef GRETL_OPEN_HANDLER
-    get_instance_count(&gpid);
-    if (gpid > 0 && !start_new_instance()) {
-	if (try_forwarding_open_request(gpid, filearg) == 0) {
-	    exit(EXIT_SUCCESS);
-	}
+    if (maybe_hand_off(filearg, auxname)) {
+	exit(EXIT_SUCCESS);
     }
 #endif
 
@@ -762,6 +770,10 @@ int main (int argc, char **argv)
     } else if (optpkg != NULL) {
 	edit_package_at_startup(auxname);
     }
+
+#ifdef GRETL_OPEN_HANDLER
+    install_open_handler();
+#endif
 
 #if GUI_DEBUG
     fprintf(stderr, "calling gtk_main()\n");
