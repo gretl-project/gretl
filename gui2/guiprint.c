@@ -2314,8 +2314,6 @@ static int spawn_latex (char *texsrc)
     int ok, status;
     int ret = LATEX_OK;
 
-    signal(SIGCHLD, SIG_DFL);
-
     ok = g_spawn_sync (gretl_dotdir(), /* working dir */
 		       argv,
 		       NULL,    /* envp */

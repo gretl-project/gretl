@@ -472,8 +472,6 @@ static int get_dvips_path (char *path)
 
 #else
 
-#include <signal.h>
-
 static int spawn_dvips (char *texsrc)
 {
     GError *error = NULL;
@@ -491,18 +489,17 @@ static int spawn_dvips (char *texsrc)
     argv[3] = texsrc;
     argv[4] = NULL;
 
-    signal(SIGCHLD, SIG_DFL);
-
-    ok = g_spawn_sync (gretl_dotdir(),
-		       argv,
-		       NULL,    /* envp */
-		       G_SPAWN_SEARCH_PATH,
-		       NULL,    /* child_setup */
-		       NULL,    /* user_data */
-		       &sout,   /* standard output */
-		       NULL,    /* standard error */
-		       &status, /* exit status */
-		       &error);
+    ok = g_spawn_sync(gretl_dotdir(),
+		      argv,
+		      NULL,    /* envp */
+		      G_SPAWN_SEARCH_PATH |
+		      G_SPAWN_STDERR_TO_DEV_NULL,
+		      NULL,    /* child_setup */
+		      NULL,    /* user_data */
+		      &sout,   /* standard output */
+		      NULL,    /* standard error */
+		      &status, /* exit status */
+		      &error);
 
     if (!ok) {
 	errbox(error->message);

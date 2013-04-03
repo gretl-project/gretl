@@ -262,8 +262,6 @@ static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
     GError *gerr = NULL;
     int err = 0;
 
-    signal(SIGCHLD, SIG_DFL);
-
     g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
 		 NULL, NULL, &sout, &errout,
 		 &status, &gerr);

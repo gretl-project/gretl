@@ -34,8 +34,6 @@
 
 #ifdef WIN32
 # include <windows.h>
-#else
-# include <signal.h>
 #endif
 
 enum prog_codes {
@@ -121,18 +119,16 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
 
     gretl_error_clear();
 
-    signal(SIGCHLD, SIG_DFL);
-
-    ok = g_spawn_sync (workdir,
-		       argv,
-		       NULL,
-		       G_SPAWN_SEARCH_PATH,
-		       NULL,
-		       NULL,
-		       &sout,
-		       &serr,
-		       &status,
-		       &gerr);
+    ok = g_spawn_sync(workdir,
+		      argv,
+		      NULL,
+		      G_SPAWN_SEARCH_PATH,
+		      NULL,
+		      NULL,
+		      &sout,
+		      &serr,
+		      &status,
+		      &gerr);
 
     if (!ok) {
 	gretl_errmsg_set(gerr->message);

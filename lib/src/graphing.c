@@ -168,7 +168,7 @@ int gnuplot_test_command (const char *cmd)
 
     argv[0] = gnuplot_path;
 
-    signal(SIGCHLD, SIG_DFL);
+    // signal(SIGCHLD, SIG_DFL);
 
     ok = g_spawn_async_with_pipes (NULL,
 				   argv,
@@ -213,7 +213,7 @@ int gnuplot_test_command (const char *cmd)
 	    if (strstr(errbuf, "not find/open font")) {
 # if SPAWN_DEBUG
 		fprintf(stderr, "%s\n", errbuf);
-#endif
+# endif
 		if (strstr(cmd, "font") != NULL) {
 		    ret = 1;
 		}

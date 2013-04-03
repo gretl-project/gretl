@@ -4976,8 +4976,6 @@ int browser_open (const char *url)
 # endif /* !OSX */
 }
 
-#include <signal.h>
-
 /* Start an R session in asynchronous (interactive) mode.
    Note that there's a separate win32 function for this
    in gretlwin32.c.
@@ -4985,50 +4983,57 @@ int browser_open (const char *url)
 
 static void start_R_async (void)
 {
-    const char *supp1 = "--no-init-file";
-    const char *supp2 = "--no-restore-data";
     char *s0 = NULL, *s1 = NULL, *s2 = NULL;
-    pid_t pid;
-    int n;
+    int n = -1;
 
     s0 = mymalloc(64);
     s1 = mymalloc(32);
     s2 = mymalloc(32);
 
-    if (s0 == NULL || s1 == NULL || s2 == NULL) {
-	goto bailout;
+    if (s0 != NULL && s1 != NULL && s2 != NULL) {
+	*s0 = *s1 = *s2 = '\0';
+	/* probably "xterm -e R" or similar */
+	n = sscanf(Rcommand, "%63s %31s %31s", s0, s1, s2);
     }
-
-    *s0 = *s1 = *s2 = '\0';
-
-    /* probably "xterm -e R" or similar */
-    n = sscanf(Rcommand, "%63s %31s %31s", s0, s1, s2);
 
     if (n == 0) {
 	errbox(_("No command was supplied to start R"));
-	goto bailout;
-    }
-
-    signal(SIGCHLD, SIG_IGN); 
-    pid = fork();
-
-    if (pid == -1) {
-	errbox(_("Couldn't fork"));
-	perror("fork");
-	return;
-    } else if (pid == 0) {  
-	if (n == 1) {
-	    execlp(s0, s0, supp1, supp2, NULL);
-	} else if (n == 2) {
-	    execlp(s0, s0, s1, supp1, supp2, NULL);
-	} else if (n == 3) {
-	    execlp(s0, s0, s1, s2, supp1, supp2, NULL);
+    } else if (n > 0) {
+	char *supp1 = "--no-init-file";
+	char *supp2 = "--no-restore-data";
+	gchar *argv[6];
+	GError *error = NULL;
+	gboolean ok;
+	int i = 0;
+    
+	argv[i++] = s0;
+	if (n > 1) {
+	    argv[i++] = s1;
+	} 
+	if (n > 2) {
+	    argv[i++] = s2;
 	}
-	perror("execlp");
-	_exit(EXIT_FAILURE);
-    }
+	argv[i++] = supp1;
+	argv[i++] = supp2;
+	argv[i++] = NULL;
+	
+	ok = g_spawn_async(NULL,
+			   argv,
+			   NULL,
+			   G_SPAWN_SEARCH_PATH,
+			   NULL,
+			   NULL,
+			   NULL,
+			   &error);
 
- bailout:
+	if (error != NULL) {
+	    errbox(error->message);
+	    g_error_free(error);
+	} else if (!ok) {
+	    gui_errmsg(E_EXTERNAL);
+	    g_error_free(error);
+	}
+    }	
 
     free(s0); 
     free(s1); 
@@ -5046,8 +5051,6 @@ static void run_prog_sync (char **argv)
     gint status = 0;
     GError *gerr = NULL;
     PRN *prn = NULL;
-
-    signal(SIGCHLD, SIG_DFL);
 
     g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
 		 NULL, NULL, &sout, &errout,

@@ -4999,7 +4999,6 @@ static int get_png_bounds_info (png_bounds *bounds)
 
 #ifndef G_OS_WIN32
 
-#include <signal.h>
 #include <errno.h>
 
 static int get_terminal (char *s)

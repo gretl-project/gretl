@@ -39,7 +39,6 @@
 #include <errno.h>
 
 #ifndef WIN32
-# include <signal.h>
 # include <glib.h>
 #endif
 
@@ -1490,13 +1489,11 @@ int gretl_spawn (char *cmdline)
 
     gretl_error_clear();
 
-    signal(SIGCHLD, SIG_DFL);
-
-    ok = g_spawn_command_line_sync (cmdline,
-				    &sout,   /* standard output */
-				    &errout, /* standard error */
-				    &status, /* exit status */
-				    &error);
+    ok = g_spawn_command_line_sync(cmdline,
+				   &sout,   /* standard output */
+				   &errout, /* standard error */
+				   &status, /* exit status */
+				   &error);
 
     if (!ok) {
 	gretl_errmsg_set(error->message);

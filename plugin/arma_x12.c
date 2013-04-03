@@ -29,8 +29,6 @@
 #ifdef WIN32
 # include <windows.h>
 # include <io.h>
-#else
-# include <signal.h>
 #endif
 
 #ifndef WIN32
@@ -69,18 +67,16 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
 
     nargs = i;
 
-    signal(SIGCHLD, SIG_DFL);
-
-    ok = g_spawn_sync (workdir,
-		       argv,
-		       NULL,
-		       G_SPAWN_SEARCH_PATH,
-		       NULL,
-		       NULL,
-		       &sout,
-		       &serr,
-		       &status,
-		       &error);
+    ok = g_spawn_sync(workdir,
+		      argv,
+		      NULL,
+		      G_SPAWN_SEARCH_PATH,
+		      NULL,
+		      NULL,
+		      &sout,
+		      &serr,
+		      &status,
+		      &error);
 
     if (!ok) {
 	fprintf(stderr, "spawn: '%s'\n", error->message);
