@@ -1945,6 +1945,27 @@ static void mac_minimize (GtkAction *action, gpointer data)
     }
 }
 
+#define MAC_MINIMAL
+
+#ifdef MAC_MINIMAL
+
+static GtkActionEntry mac_entries[] = {
+    { "FileMenu", NULL, "_File", NULL, NULL, NULL },
+    { "NewInstanceAction", NULL, "_New gretl instance", NULL, NULL,
+      G_CALLBACK(new_gretl_instance)},
+};
+
+const gchar *mac_ui = 
+    "<ui>"
+    "  <menubar>"
+    "    <menu name='File' action='FileMenu'>"
+    "      <menuitem name='NewInstance' action='NewInstanceAction'/>"
+    "    </menu>"
+    "  </menubar>"
+    "</ui>";
+
+#else
+
 static GtkActionEntry mac_entries[] = {
     { "FileMenu", NULL, "_File", NULL, NULL, NULL },
     { "NewInstanceAction", NULL, "_New gretl instance", NULL, NULL,
@@ -1976,6 +1997,8 @@ const gchar *mac_ui =
     "    </menu>"
     "  </menubar>"
     "</ui>";
+
+#endif
 
 static GtkUIManager *add_mac_menu (void)
 {
@@ -2016,11 +2039,13 @@ static void finish_mac_ui (GtkUIManager *mgr)
     App = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
     menu = gtk_ui_manager_get_widget(mgr, "/menubar");
     gtkosx_application_set_menu_bar(App, GTK_MENU_SHELL(menu));
+#ifndef MAC_MINIMAL
     menu = gtk_ui_manager_get_widget(mgr, "/menubar/Window");
     gtkosx_application_set_window_menu(App, GTK_MENU_ITEM(menu));
     menu = gtk_ui_manager_get_widget(mgr, "/menubar/Help");
     gtkosx_application_set_help_menu(App, GTK_MENU_ITEM(menu));
-    gtkosx_application_set_use_quartz_accelerators(App, FALSE); /* ? */
+#endif
+    gtkosx_application_set_use_quartz_accelerators(App, FALSE);
     gtkosx_application_ready(App);
 }
 
