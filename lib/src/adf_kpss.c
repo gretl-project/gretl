@@ -146,34 +146,91 @@ static int GLS_demean_detrend (double *y, int T, int test)
     return err;
 }
 
-/* generate the various differences and lags required for
-   the ADF test */
+static int real_adf_form_list (int *list, int v, int order, int nseas, 
+			       int *d0, DATASET *dset)
+{
+    int save_t1 = dset->t1;
+    int i, j, err = 0;
+
+    /* temporararily reset sample */
+    dset->t1 = 0;
+
+    /* generate the first difference of the given variable:
+       this will be the LHS variable in the test
+    */
+    list[1] = diffgenr(v, DIFF, dset);
+    if (list[1] < 0) {
+	dset->t1 = save_t1;
+	return E_DATA;
+    }	
+
+    /* generate lag 1 of the given var: the basic RHS series */
+    list[2] = laggenr(v, 1, dset); 
+    if (list[2] < 0) {
+	dset->t1 = save_t1;
+	return E_DATA;
+    }
+
+    /* undo reset sample */
+    dset->t1 = save_t1;
+
+    /* generate lagged differences for augmented test */
+    j = 3;
+    for (i=1; i<=order && !err; i++) {
+	int lnum = laggenr(list[1], i, dset);
+
+	if (lnum < 0) {
+	    fprintf(stderr, "Error generating lag variable\n");
+	    err = E_DATA;
+	} else {
+	    list[j++] = lnum;
+	} 
+    }
+
+    if (!err && nseas > 0) {
+	*d0 = dummy(dset, 0); /* should we center these? */
+	if (*d0 < 0) {
+	    fprintf(stderr, "Error generating seasonal dummies\n");
+	    err = E_DATA;
+	} 
+    }
+
+    return err;
+}
+
+/* Generate the various differences and lags required for
+   the ADF test: return the list of such variables, or
+   NULL on failure.
+*/
 
 static int *
 adf_prepare_vars (int order, int varno, int nseas, int *d0,
-		  DATASET *dset, gretlopt opt)
+		  DATASET *dset, gretlopt opt, int *err)
 {
-    int nl = 5 + nseas;
-    int i, j, orig_t1 = dset->t1;
+    int listlen;
     int *list;
-    int err = 0;
 
     if (varno == 0) {
+	*err = E_DATA;
 	return NULL;
     }
 
-    list = gretl_list_new(nl + order);
+    /* the max number of terms (in case of quadratic trend) */
+    listlen = 5 + nseas + order;
+
+    list = gretl_list_new(listlen);
     if (list == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
     if (opt & OPT_G) {
-	/* GLS adjustment wanted */
+	/* GLS adjustment is wanted */
 	int test = (opt & OPT_T)? UR_TREND : UR_CONST;
 	int t, v = dset->v;
 
-	err = dataset_add_series(dset, 1);
-	if (!err) {
+	*err = dataset_add_series(dset, 1);
+	if (!*err) {
 	    int T, offset = 0;
 
 	    for (t=0; t<=dset->t2; t++) {
@@ -186,67 +243,27 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
 		offset = dset->t1 - order;
 	    }
 	    T = dset->t2 - offset + 1;
-	    err = GLS_demean_detrend(dset->Z[v] + offset, T, test);
+	    *err = GLS_demean_detrend(dset->Z[v] + offset, T, test);
 	}
-	if (err) {
-	    free(list);
-	    return NULL;
+	if (!*err) {
+	    /* replace with demeaned/detrended version */
+	    strcpy(dset->varname[v], "ydetrend");
+	    varno = v;
 	}
-	strcpy(dset->varname[v], "yd");
-	varno = v;
     }
 
-    /* temporararily reset sample */
-    dset->t1 = 0;
-
-    /* generate first difference of the given variable */
-    list[1] = diffgenr(varno, DIFF, dset);
-    if (list[1] < 0) {
-	dset->t1 = orig_t1;
-	free(list);
-	return NULL;
-    }	
-
-    /* generate lag of given var */
-    list[2] = laggenr(varno, 1, dset); 
-    if (list[2] < 0) {
-	dset->t1 = orig_t1;
-	free(list);
-	return NULL;
+    if (!*err) {
+	*err = real_adf_form_list(list, varno, order, nseas, d0, dset);
     }
-
-    /* undo reset sample */
-    dset->t1 = orig_t1;
-
-    /* generate lags of difference for augmented test */
-    j = 3;
-    for (i=1; i<=order && !err; i++) {
-	int lnum = laggenr(list[1], i, dset);
-
-	if (lnum < 0) {
-	    fprintf(stderr, "Error generating lag variable\n");
-	    err = 1;
-	} else {
-	    list[j++] = lnum;
-	} 
-    } 
-
-    if (nseas > 0 && !err) {
-	*d0 = dummy(dset, 0); /* should we center these? */
-	if (*d0 < 0) {
-	    fprintf(stderr, "Error generating seasonal dummies\n");
-	    err = 1;
-	} 
-    }
-
-    if (err) {
-	free(list);
-	list = NULL;
-    } 
 
 #if ADF_DEBUG
     printlist(list, "adf initial list");
 #endif
+
+    if (*err) {
+	free(list);
+	list = NULL;
+    }
 
     return list;
 }
@@ -480,6 +497,8 @@ print_adf_results (int order, int pmax, double DFt, double pv,
     } 
 }
 
+/* test the lag order down using the t-statistic criterion */
+
 static int t_adjust_order (int *list, int order_max,
 			   DATASET *dset, int *err,
 			   PRN *prn)
@@ -527,21 +546,16 @@ static int t_adjust_order (int *list, int order_max,
     return k;
 }
 
-static double get_MIC (MODEL *pmod, int k, int which,
+static double get_MIC (MODEL *pmod, int k, double sum_ylag2, int which,
 		       const DATASET *dset)
 {
-    const double *ylag;
-    double g, ttk, s2k = 0;
-    double CT, sum_ylag2 = 0;
+    double g, CT, ttk, s2k = 0;
     int t, T = pmod->nobs;
 
-    /* ylag = the lagged level */
-    ylag = dset->Z[pmod->list[2]];
     g = pmod->coeff[pmod->ifc];
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	s2k += pmod->uhat[t] * pmod->uhat[t];
-	sum_ylag2 += ylag[t] * ylag[t];
     }
 
     s2k /= pmod->nobs;
@@ -558,6 +572,19 @@ static double get_MIC (MODEL *pmod, int k, int which,
     return log(s2k) + CT * (ttk + k)/T;
 }
 
+static double get_sum_y2 (MODEL *pmod, int ylagno, const DATASET *dset)
+{
+    const double *ylag = dset->Z[ylagno];
+    double sumy2 = 0;
+    int t;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	sumy2 += ylag[t] * ylag[t];
+    }
+
+    return sumy2;
+}
+
 /* Using modified information criterion, as per Ng and Perron,
    "Lag Length Selection and the Construction of Unit Root Tests 
    with Good Size and Power", Econometrica 69/6, Nov 2001, pp. 
@@ -565,14 +592,16 @@ static double get_MIC (MODEL *pmod, int k, int which,
 */
 
 static int ic_adjust_order (int *list, int kmax, int which,
-			    DATASET *dset, int *err,
-			    PRN *prn)
+			    DATASET *dset, gretlopt opt,
+			    int *err, PRN *prn)
 {
     MODEL kmod;
     double MIC, MICmin = 0;
+    double sum_ylag2 = 0;
     int k, kstar = kmax;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
+    int ylagno = list[2];
     int *tmplist;
 
     tmplist = gretl_list_copy(list);
@@ -594,7 +623,11 @@ static int ic_adjust_order (int *list, int kmax, int which,
 	    kstar = -1;
 	    break;
 	}
-	MIC = get_MIC(&kmod, k, which, dset);
+	if (k == kmax) {
+	    /* this need only be done once */
+	    sum_ylag2 = get_sum_y2(&kmod, ylagno, dset);
+	}
+	MIC = get_MIC(&kmod, k, sum_ylag2, which, dset);
 	if (k == kmax) {
 	    /* ensure a uniform sample */
 	    dset->t1 = kmod.t1;
@@ -606,9 +639,13 @@ static int ic_adjust_order (int *list, int kmax, int which,
 	}
 #if ADF_DEBUG
 	printmodel(&kmod, dset, OPT_NONE, prn);
-	pprintf(prn, "MIC = %g for k = %d (b0 = %g)\n", MIC, k,
-		kmod.coeff[kmod.ifc]);
 #endif
+	if (opt & OPT_V) {
+	    if (k == kmax) {
+		pputc(prn, '\n');
+	    }
+	    pprintf(prn, "MIC = %#g for k = %02d\n", MIC, k);
+	}	    
 	clear_model(&kmod);
 	gretl_list_delete_at_pos(tmplist, k + 2);
     }
@@ -805,7 +842,7 @@ static int real_adf_test (int varno, int order, int niv,
     int blurb_done = 0;
     int auto_order = 0;
     int order_max = 0;
-    int *list;
+    int *list = NULL;
     int *biglist = NULL;
     double DFt = NADBL;
     double pv = NADBL;
@@ -833,7 +870,7 @@ static int real_adf_test (int varno, int order, int niv,
 
     if (order < 0) {
 	/* testing down: backward compatibility */
-	auto_order = 1;
+	auto_order = 1; /* best default? */
 	order = order_max = -order;
     }
 
@@ -846,7 +883,7 @@ static int real_adf_test (int varno, int order, int niv,
 	   will contain no deterministic terms, but the selection of the
 	   p-value is based on the deterministic terms in the cointegrating
 	   regression, represented by "eg_opt".
-	 */
+	*/
 	int verbose = (opt & OPT_V);
 
 	eg_opt = opt;
@@ -892,9 +929,9 @@ static int real_adf_test (int varno, int order, int niv,
 	}
     }
 
-    list = adf_prepare_vars(order, varno, nseas, &d0, dset, opt);
-    if (list == NULL) {
-	return E_ALLOC;
+    list = adf_prepare_vars(order, varno, nseas, &d0, dset, opt, &err);
+    if (err) {
+	return err;
     }
 
     if (auto_order) {
@@ -924,14 +961,14 @@ static int real_adf_test (int varno, int order, int niv,
 
 	if (opt & OPT_G) {
 	    /* DF-GLS: skip const, trend */
-	    list[0] = 2 + order;
+	    list[0] = order + 2;
 	    dfnum--;
 	    goto skipdet;
 	}
 
 	list[0] = 1 + order + i;
 
-	/* list[1] and list[2], plus the "order" lags, are in common
+	/* list[1] and list[2], plus the @order lags, are in common
 	   for all models */
 
 	if (i >= UR_TREND) {
@@ -970,7 +1007,7 @@ static int real_adf_test (int varno, int order, int niv,
 		order = t_adjust_order(list, order_max, dset, &err, prn);
 	    } else {
 		order = ic_adjust_order(list, order_max, auto_order,
-					dset, &err, prn);
+					dset, opt, &err, prn);
 	    }	    
 	    if (err) {
 		clear_model(&dfmod);
