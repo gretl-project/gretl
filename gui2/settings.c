@@ -58,8 +58,10 @@
 # endif
 #endif
 
-#if defined(MAC_NATIVE) && defined(PKGBUILD)
-# define THEMEPREF
+#ifdef PKGBUILD
+# if defined(MAC_NATIVE) || defined(MAC_THEMING)
+#  define THEMEPREF
+# endif
 #endif
 
 static char rcfile[FILENAME_MAX];

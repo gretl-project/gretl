@@ -33,10 +33,9 @@
 
 #if defined(__linux) || defined(linux)
 
-/* Check for a prior running gretl instance. This
-   is not as clever as it should be, since it ignores UID.
-   On a true multi-user system it will count gretl
-   instances being run by other users. Returns the
+/* Check for a prior running gretl instance. This is not as clever as
+   it should be, since it ignores UID.  On a true multi-user system it
+   will count gretl instances being run by other users. Returns the
    pid of the prior instance or 0 if none.
 */
 
@@ -87,10 +86,9 @@ long gretl_prior_instance (void)
     return gpid;
 }
 
-/* Signal handler for the case where a newly started gretl
-   process hands off to a previously running process, 
-   passing the name of a file to be opened via a small file
-   in the user's dotdir.
+/* Signal handler for the case where a newly started gretl process
+   hands off to a previously running process, passing the name of a
+   file to be opened via a small file in the user's dotdir.
 */
 
 static void open_handler (int sig, siginfo_t *sinfo, void *context)
@@ -147,7 +145,7 @@ int install_open_handler (void)
    filename), but the user doesn't really want a new
    process and would prefer that the file be opened in
    a previously running gretl instance. We send SIGUSR1
-   to the previous instance and exit.
+   to the prior instance and exit.
 */
 
 gboolean forward_open_request (long gpid, const char *fname)
@@ -173,7 +171,204 @@ gboolean forward_open_request (long gpid, const char *fname)
     return ret;
 }
 
+#elif defined WIN32
+
+/* Below: since POSIX signals are not supported on Windows,
+   we implement the equivalent of the above functionality
+   for Linux using the Windows messaging API.
+*/
+
+/* message number for inter-program communication */
+static UINT WM_GRETL;
+
+/* Look for an already running gretlw32 instance: if we find
+   one, return its pid, otherwise return 0. While we're at it
+   we register our custom IPC message ID if that's not
+   already done.
+*/
+
+long gretl_prior_instance (void) 
+{
+    HANDLE hsnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    long mypid, gpid = 0;
+
+    if (WM_GRETL == 0) {
+	WM_GRETL = RegisterWindowMessage((LPCTSTR) "gretl_message");
+    }
+
+    mypid = (long) GetCurrentProcessId();
+
+    if (hsnap) {
+        PROCESSENTRY32 pe;
+	int match;
+	char *s;
+
+        pe.dwSize = sizeof(PROCESSENTRY32);
+        if (Process32First(hsnap, &pe)) {
+            do {
+		if (pe.th32ProcessID != mypid) {
+		    s = strrchr(pe.szExeFile, '\\');
+		    if (s != NULL) {
+			match = !strcmp(s + 1, "gretlw32.exe");
+		    } else {
+			match = !strcmp(pe.szExeFile, "gretlw32.exe");
+		    }
+		    if (match) {
+			gpid = pe.th32ProcessID;
+		    }
+		}		    
+            } while (gpid == 0 && Process32Next(hsnap, &pe));
+	}
+	CloseHandle(hsnap);
+    }
+
+    return gpid;
+}
+
+/* Process a message coming from another gretlw32 instance (with pid
+   @gotpid). Such a message calls for a hand-off to "this" instance,
+   and some information regarding the hand-off is contained in a
+   little file in the user's dotdir, with a name on the pattern
+   "open-<pid>" where <pid> should equal @gotpid. Call this the IPC
+   file.
+
+   If the hand-off involves opening a file (which will be the case 
+   if the trigger is double-clicking on a gretl-associated file),
+   the name of this file is written into the IPC file; otherwise
+   the IPC file contains the word "none".
+*/
+
+static void win32_handle_message (long gotpid)
+{
+    char fname[FILENAME_MAX];
+    int try_open = 0;
+    FILE *fp;
+
+    sprintf(fname, "%sopen-%ld", gretl_dotdir(), gotpid);
+    fprintf(stderr, "handle_message: trying '%s'\n", fname);
+    fp = fopen(fname, "r");
+
+    if (fp != NULL) {
+	char path[FILENAME_MAX];
+
+	fprintf(stderr, " file opened OK\n");
+	if (fgets(path, sizeof path, fp) != NULL) {
+	    tailstrip(path);
+	    fprintf(stderr, " path = '%s'\n", path);
+	    if (strcmp(path, "none")) {
+		*tryfile = '\0';
+		strncat(tryfile, path, MAXLEN - 1);
+		try_open = 1;
+	    }
+	}	    
+	fclose(fp);
+    }
+    remove(fname);
+
+    gtk_window_present(GTK_WINDOW(mdata->main));
+
+    if (try_open) {
+	/* we picked up the name of a file to open */
+	real_open_tryfile();
+    }
+}
+
+/* If we receive a special WM_GRETL message from another gretlw32
+   instance, process it and remove it from the message queue;
+   otherwise hand the message off to GDK.
+*/
+
+static GdkFilterReturn mdata_filter (GdkXEvent *xevent,
+				     GdkEvent *event,
+				     gpointer data)
+{
+    MSG *msg = (MSG *) xevent;
+
+    if (msg->message == WM_GRETL && msg->wParam == 0xf0) {
+	fprintf(stderr, "mdata_filter: got WM_GRETL\n");
+	win32_handle_message((long) msg->lParam);
+	return GDK_FILTER_REMOVE;
+    }
+
+    return GDK_FILTER_CONTINUE;
+}
+
+/* Add a filter to intercept WM_GRETL messages, which would
+   otherwise get discarded by GDK */
+
+int install_open_handler (void)
+{
+    gdk_window_add_filter(NULL, mdata_filter, NULL);
+    return 0;
+}
+
+/* Find the window handle associated with a given pid:
+   this is used when we've found the pid of a running
+   gretlw32 instance and we need its window handle for
+   use with SendMessage().
+*/
+
+static HWND get_hwnd_for_pid (long gpid)
+{
+    HWND hw = GetTopWindow(NULL);
+    DWORD pid;
+
+    while (hw) {
+	GetWindowThreadProcessId(hw, &pid);
+	if (pid == gpid) {
+	    break;
+	}
+	hw = GetNextWindow(hw, GW_HWNDNEXT);
+    }
+
+    return hw;
+}
+
+/* Try forwarding a request to the prior gretlw32 instance with 
+   pid @gpid, either to open a file or just to show itself. 
+
+   Return TRUE if we're able to do this, otherwise FALSE.
+*/
+
+gboolean forward_open_request (long gpid, const char *fname)
+{
+    HWND hw = get_hwnd_for_pid(gpid);
+    gboolean ret = FALSE;
+
+    if (!hw) {
+	fprintf(stderr, "forward_open_request: couldn't find HWND\n");
+    } else {
+	long mypid = (long) GetCurrentProcessId();
+	char tmpname[FILENAME_MAX];
+	FILE *fp;
+
+	sprintf(tmpname, "%sopen-%ld", gretl_dotdir(), mypid);
+	fp = fopen(tmpname, "w");
+	
+	if (fp == NULL) {
+	    fprintf(stderr, "forward_open_request: couldn't write '%s'\n", tmpname);
+	} else {
+	    fprintf(fp, "%s\n", *fname ? fname: "none");
+	    fclose(fp);
+	    SendMessage(hw, WM_GRETL, 0xf0, mypid);
+	    ret = TRUE;
+	}
+    }
+
+    return ret;
+}
+
 #elif defined(MAC_NATIVE)
+
+/* Note: for the Mac we don't do the relatively fancy stuff that we
+   attempt above for Linux and Windows, because the default on Mac
+   is the other way round: the OS sticks with a single instance of
+   gretl unless we specifically request another instance.
+
+   Right now, all we use gretl_prior_instance() for on the Mac is
+   to adjust the window title when the user chooses to run more than 
+   one gretl instance.
+*/
 
 long gretl_prior_instance (void)
 {
@@ -222,146 +417,6 @@ long gretl_prior_instance (void)
     free(pids);
 
     return gpid;
-}
-
-#elif defined WIN32
-
-long gretl_prior_instance (void) 
-{
-    HANDLE hsnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    long mypid, gpid = 0;
-
-    mypid = (long) GetCurrentProcessId();
-
-    if (hsnap) {
-        PROCESSENTRY32 pe;
-	int match;
-	char *s;
-
-        pe.dwSize = sizeof(PROCESSENTRY32);
-        if (Process32First(hsnap, &pe)) {
-            do {
-		if (pe.th32ProcessID != mypid) {
-		    s = strrchr(pe.szExeFile, '\\');
-		    if (s != NULL) {
-			match = !strcmp(s + 1, "gretlw32.exe");
-		    } else {
-			match = !strcmp(pe.szExeFile, "gretlw32.exe");
-		    }
-		    if (match) {
-			gpid = pe.th32ProcessID;
-		    }
-		}		    
-            } while (gpid == 0 && Process32Next(hsnap, &pe));
-	}
-	CloseHandle(hsnap);
-    }
-
-    return gpid;
-}
-
-static void win32_handle_message (long gotpid)
-{
-    char fname[FILENAME_MAX];
-    char path[FILENAME_MAX];
-    int try_open = 0;
-    FILE *fp;
-
-    fprintf(stderr, "win32_handle_message: from pid = %ld\n", gotpid);
-
-    sprintf(fname, "%s/open-%ld", gretl_dotdir(), gotpid);
-
-    fp = fopen(fname, "r");
-    if (fp != NULL) {
-	if (fgets(path, sizeof path, fp)) {
-	    tailstrip(path);
-	    if (strcmp(path, "none")) {
-		*tryfile = '\0';
-		strncat(tryfile, path, MAXLEN - 1);
-		try_open = 1;
-	    }
-	}	    
-	fclose(fp);
-    }
-    remove(fname);
-
-    gtk_window_present(GTK_WINDOW(mdata->main));
-
-    if (try_open) {
-	real_open_tryfile();
-    }
-}
-
-static GdkFilterReturn mdata_filter (GdkXEvent *xevent,
-				     GdkEvent *event,
-				     gpointer data)
-{
-    MSG *msg = (MSG *) xevent;
-
-    if (msg->message == WM_APP) {
-	fprintf(stderr, "mdata: got WM_APP\n");
-	if (msg->wParam == 0xf0) {
-	    fprintf(stderr, " and got 0xf0\n");
-	    win32_handle_message((long) msg->lParam);
-	    return GDK_FILTER_REMOVE;
-	}
-    }
-
-    return GDK_FILTER_CONTINUE;
-}
-
-int install_open_handler (void)
-{
-    gdk_window_add_filter(NULL, mdata_filter, NULL);
-    return 0;
-}
-
-static HWND get_hwnd_for_pid (long gpid)
-{
-    HWND hw = GetTopWindow(0);
-    DWORD pid;
-
-    while (hw) {
-	GetWindowThreadProcessId(hw, &pid);
-	if (pid == gpid) {
-	    break;
-	}
-	hw = GetNextWindow(hw, GW_HWNDNEXT);
-    }
-
-    return hw;
-}
-
-gboolean forward_open_request (long gpid, const char *fname)
-{
-    HWND hw = get_hwnd_for_pid(gpid);
-    gboolean ret = FALSE;
-
-    if (!hw) {
-	fprintf(stderr, "Couldn't find HWND\n");
-    } else {
-	long mypid = (long) GetCurrentProcessId();
-	char tmpname[FILENAME_MAX];
-	FILE *fp;
-
-	sprintf(tmpname, "%s\\open-%ld", gretl_dotdir(), mypid);
-	fp = fopen(tmpname, "w");
-	
-	if (fp == NULL) {
-	    fprintf(stderr, "Couldn't write '%s'\n", tmpname);
-	} else {
-	    int result;
-
-	    fprintf(fp, "%s\n", *fname ? fname: "none");
-	    result = SendMessage(hw, WM_APP, 0xf0, mypid);
-	    fprintf(fp, "SendMessage to %d returned %d\n", (int) hw, result);
-	    fprintf(fp, "GetLastError gives %d\n", GetLastError());
-	    fclose(fp);
-	    ret = TRUE;
-	}
-    }
-
-    return ret;
 }
 
 #else /* none of the above */

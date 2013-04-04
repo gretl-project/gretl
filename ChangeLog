@@ -1,7 +1,14 @@
 version 1.9.13, in progress
+- "adf" command: add option to optimize the lag order using
+  the procedure recommended by Ng and Perron (2001)
 - Improve internals of pprintf() -- handle big string args
   properly
 - Fix a few small GUI memory leaks
+- Linux and Windows: add check for multiple instances of
+  gretl, and choice to open a double-clicked file in the
+  prior gretl instance, if any
+- Fix bug: "catch" not working properly when applied to
+  genr expressions within loops
 
 2013-03-15 version 1.9.12
 - Officially increase the maximum length of variable names
