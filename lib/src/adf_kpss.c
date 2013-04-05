@@ -1504,7 +1504,9 @@ int adf_test (int order, const int *list, DATASET *dset,
 	    if (!err && order == -1) {
 		/* default to L_{12}: see G. W. Schwert, "Tests for Unit Roots:
 		   A Monte Carlo Investigation", Journal of Business and
-		   Economic Statistics, 7(2), 1989, pp. 5-17.
+		   Economic Statistics, 7(2), 1989, pp. 5-17. Note that at
+		   some points Ng uses floor(T/100.0) in the following
+		   expression, which can give a lower max order.
 		*/
 		int T = dset->t2 - dset->t1 + 1;
 
