@@ -135,7 +135,7 @@ static int GLS_demean_detrend (double *y, int T, int test)
 		y[t] -= b1 * (t+1);
 	    }
 	}
-    }    
+    }
 
  bailout:
 
@@ -503,12 +503,13 @@ static int t_adjust_order (int *list, int order_max,
 			   DATASET *dset, int *err,
 			   PRN *prn)
 {
+    gretlopt kmod_opt = (OPT_A | OPT_Z);
     MODEL kmod;
     double tstat, pval;
     int k, pos;
 
     for (k=order_max; k>0; k--) {
-	kmod = lsq(list, dset, OLS, OPT_A);
+	kmod = lsq(list, dset, OLS, kmod_opt);
 	if (!kmod.errcode && kmod.dfd == 0) {
 	    kmod.errcode = E_DF;
 	}
@@ -596,6 +597,7 @@ static int ic_adjust_order (int *list, int kmax, int which,
 			    int *err, PRN *prn)
 {
     MODEL kmod;
+    gretlopt kmod_opt = (OPT_A | OPT_Z);
     double MIC, MICmin = 0;
     double sum_ylag2 = 0;
     int k, kstar = kmax;
@@ -611,7 +613,7 @@ static int ic_adjust_order (int *list, int kmax, int which,
     }
 
     for (k=kmax; k>0; k--) {
-	kmod = lsq(tmplist, dset, OLS, OPT_A);
+	kmod = lsq(tmplist, dset, OLS, kmod_opt);
 	if (!kmod.errcode && kmod.dfd == 0) {
 	    kmod.errcode = E_DF;
 	}
@@ -837,7 +839,7 @@ static int real_adf_test (int varno, int order, int niv,
 {
     MODEL dfmod;
     gretlopt eg_opt = OPT_NONE;
-    gretlopt df_mod_opt = OPT_A | OPT_Z;
+    gretlopt df_mod_opt = (OPT_A | OPT_Z);
     int orig_nvars = dset->v;
     int blurb_done = 0;
     int auto_order = 0;
@@ -892,16 +894,6 @@ static int real_adf_test (int varno, int order, int niv,
 	    opt |= OPT_V;
 	}
     }
-
-#if 0
-    if (flags & ADF_PANEL) {
-	/* testing for unit root with panel data: compute standard
-	   errors (and so the ADF t-statistic) without a degrees-of-
-	   freedom adjustment in the ADF regression
-	*/
-	df_mod_opt |= OPT_N;
-    }
-#endif
 
     if (opt & OPT_F) {
 	/* difference the variable before testing */
