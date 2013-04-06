@@ -82,6 +82,8 @@ static int read_gretlrc (void);
 static char fixedfontname[MAXLEN] = "Courier New 10";
 #elif defined(MAC_NATIVE)
 static char fixedfontname[MAXLEN] = "Menlo 13";
+#elif defined(MAC_THEMING) 
+static char fixedfontname[MAXLEN] = "Menlo 10";
 #else
 static char fixedfontname[MAXLEN] = "monospace 10";
 #endif

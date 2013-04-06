@@ -705,7 +705,7 @@ int main (int argc, char **argv)
     set_up_windows_look();
 #elif defined(MAC_NATIVE) && defined(PKGBUILD)
     set_up_mac_look();
-#elsif defined(MAC_THEMING)
+#elif defined(MAC_THEMING)
     set_up_mac_look();
 #endif
 
