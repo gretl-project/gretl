@@ -58,9 +58,9 @@
 # endif
 #endif
 
-#ifdef PKGBUILD
-# if defined(MAC_NATIVE) || defined(MAC_THEMING)
-#  define THEMEPREF
+#ifndef MAC_THEMING
+# if defined(MAC_NATIVE) && defined(PKGBUILD)
+#   define MAC_THEMING
 # endif
 #endif
 
@@ -83,7 +83,7 @@ static char fixedfontname[MAXLEN] = "Courier New 10";
 #elif defined(MAC_NATIVE)
 static char fixedfontname[MAXLEN] = "Menlo 13";
 #else
-static char fixedfontname[MAXLEN] = "Monospace 10";
+static char fixedfontname[MAXLEN] = "monospace 10";
 #endif
 
 #if defined(G_OS_WIN32)
@@ -91,7 +91,7 @@ static char appfontname[MAXLEN] = "tahoma 8";
 #elif defined(MAC_NATIVE)
 static char appfontname[MAXLEN] = "Lucida Grande 13";
 #else
-static char appfontname[MAXLEN] = "Sans 10";
+static char appfontname[MAXLEN] = "sans 10";
 #endif
 
 PangoFontDescription *fixed_font;
@@ -122,7 +122,7 @@ static double graph_scale = 1.0;
 extern int use_wimp;
 #endif
 
-#ifdef THEMEPREF
+#ifdef MAC_THEMING
 static char themepref[12] = "Clearlooks";
 #endif
 
@@ -184,7 +184,7 @@ RCVAR rc_vars[] = {
     { "wimp", N_("Emulate Windows look"), NULL, &use_wimp, 	 
       BOOLSET | RESTART, 0, TAB_MAIN, NULL }, 	 
 #endif
-#ifdef THEMEPREF
+#ifdef MAC_THEMING
     { "themepref", N_("Theme preference"), NULL, themepref, 
       LISTSET | RESTART, 12, TAB_MAIN, NULL },    
 #endif
@@ -1121,7 +1121,7 @@ static const char **get_list_setting_strings (void *var, int *n)
 	*n = sizeof garch_strs / sizeof garch_strs[0];
     } 
 
-#ifdef THEMEPREF
+#ifdef MAC_THEMING
     else if (var == themepref) {
 	static const char *theme_strs[] = {
 	    "Clearlooks", "Lion-like", "Plain"
@@ -2687,7 +2687,7 @@ void working_dir_dialog (void)
     gtk_widget_show_all(dialog);
 }
 
-#ifdef THEMEPREF
+#ifdef MAC_THEMING
 
 void set_up_mac_look (void)
 {
