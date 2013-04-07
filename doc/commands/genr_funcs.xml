@@ -3337,16 +3337,16 @@
       <description>
 	<para>
 	  Computes the Ljung&ndash;Box Q' statistic for the series
-	  <argname>y</argname> using lag order <argname>p</argname>. The
-	  currently defined sample range is used.  The lag order must be
-	  greater than or equal to 1 and less than the number of available
-	  observations.  
+	  <argname>y</argname> using lag order <argname>p</argname>,
+	  over the currently defined sample range.  The lag order must
+	  be greater than or equal to 1 and less than the number of
+	  available observations.
 	</para>
 	<para>
 	  This statistic may be referred to the chi-square
 	  distribution with <argname>p</argname> degrees of freedom as
 	  a test of the null hypothesis that the series
-	  <argname>y</argname> is serially incorrelated.
+	  <argname>y</argname> is not serially correlated.
 	  <seelist>
 	    <fncref targ="pvalue"/>
 	  </seelist>
