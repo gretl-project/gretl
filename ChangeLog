@@ -1,7 +1,8 @@
 version 1.9.13, in progress
 - Add Catalan translation
 - "adf" command: add option to optimize the lag order using
-  the procedure recommended by Ng and Perron (2001)
+  the procedure recommended by Ng and Perron (2001), and 
+  make the MAIC method the default
 - Improve internals of pprintf() -- handle big string args
   properly
 - Fix a few small GUI memory leaks

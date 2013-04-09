@@ -1,3 +1,11 @@
+version 1.9.13, in progress
+
+The default criterion used in connection with the --test-down
+option for the "adf" command is now the modified AIC as
+recommended by Ng and Perron (Econometrica, 2001). To obtain
+the same results as in earlier gretl versions you can specify
+--test-down=tstat.
+
 2013-03-15 version 1.9.12
 
 The special treatment that supported the use of @-substitution

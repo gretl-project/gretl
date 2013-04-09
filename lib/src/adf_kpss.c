@@ -72,9 +72,9 @@ enum {
 } adf_flags;
 
 enum {
-    AUTO_TSTAT = 1,
-    AUTO_MAIC,
-    AUTO_MBIC
+    AUTO_MAIC = 1,
+    AUTO_MBIC,
+    AUTO_TSTAT
 };
 
 /* replace y with demeaned or detrended y */
@@ -320,12 +320,13 @@ static void show_lags_test (MODEL *pmod, int order, PRN *prn)
 
 static const char *auto_order_string (int i)
 {
-    if (i == AUTO_MAIC) {
-	return _("modified AIC");
-    } else if (i == AUTO_MBIC) {
+    if (i == AUTO_MBIC) {
 	return _("modified BIC");
-    } else {
+    } else if (i == AUTO_TSTAT) {
 	return _("t-statistic");
+    } else {
+	/* the default */
+	return _("modified AIC");
     }
 }
 
@@ -818,13 +819,14 @@ static int get_auto_order_method (int *err)
     const char *s = get_optval_string(ADF, OPT_E);
 
     if (s == NULL || *s == '\0') {
-	return AUTO_TSTAT;
-    } else if (!strcmp(s, "tstat")) {
-	return AUTO_TSTAT;
+	/* the default */
+	return AUTO_MAIC;
     } else if (!strcmp(s, "MAIC")) {
 	return AUTO_MAIC;
     } else if (!strcmp(s, "MBIC")) {
 	return AUTO_MBIC;
+    } else if (!strcmp(s, "tstat")) {
+	return AUTO_TSTAT;
     } else {
 	gretl_errmsg_set(_("Invalid option"));
 	*err = E_DATA;
@@ -872,7 +874,7 @@ static int real_adf_test (int varno, int order, int niv,
 
     if (order < 0) {
 	/* testing down: backward compatibility */
-	auto_order = 1; /* best default? */
+	auto_order = AUTO_MAIC;
 	order = order_max = -order;
     }
 

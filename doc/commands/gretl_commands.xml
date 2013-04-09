@@ -235,7 +235,8 @@
 	(2001)</cite>; the lag order is chosen so as to optimize an
 	appropriately modified version of the Akaike Information
 	Criterion or the Schwartz Bayesian Criterion, respectively.
-	The tstat method is a follows:
+	The MAIC method is the default when no method is explicitly
+	specified. The tstat method is a follows:
       </para>
 
       <para context="gui">
