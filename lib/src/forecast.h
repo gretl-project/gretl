@@ -35,26 +35,6 @@ typedef enum {
     FC_MEAN_OK      = 1 << 4
 } ForecastFlags;
 
-struct FITRESID_ {
-    int model_ID;
-    int asymp;
-    int std;
-    int model_t1;
-    int method;
-    double *actual;
-    double *fitted;
-    double *resid;
-    double *sderr;
-    double sigma;
-    double alpha;
-    int pmax;
-    int df;
-    int t0, t1, t2;
-    int k; 
-    int nobs;
-    char depvar[VNAMELEN];
-};
-
 void free_fit_resid (FITRESID *fr);
 
 FITRESID *get_fit_resid (const MODEL *pmod, const DATASET *dset, 

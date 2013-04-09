@@ -3488,7 +3488,7 @@ int dataset_purge_missing_rows (DATASET *dset)
  * starting observation @yr0, @minor0. If the data are
  * annual (@pd = 1) then @minor0 is ignored.
 
- * Returns 0 on success, non-zero code on error.
+ * Returns: 0 on success, non-zero code on error.
  */
 
 int dataset_set_time_series (DATASET *dset, int pd, 

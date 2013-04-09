@@ -1343,6 +1343,9 @@ static NODE *factor (parser *p)
 		    lex(p);
 		    if (upsym == B_TRMUL && must_be_unary(p->sym)) {
 			/* dummy RHS for unary transpose */
+#if SDEBUG
+			fprintf(stderr, "factor: B_TRMUL and must_be_unary\n");
+#endif
 			t->v.b2.r = newempty();
 		    } else {
 			t->v.b2.r = powterm(p);

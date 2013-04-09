@@ -2028,6 +2028,20 @@ static NODE *matrix_transpose_node (NODE *n, parser *p)
     return ret;
 }
 
+static NODE *scalar_transpose_node (NODE *n, parser *p)
+{
+    NODE *ret = n;
+
+    if (reusable(p)) {
+	ret = aux_scalar_node(p);
+	if (starting(p) && !p->err) {
+	    ret->v.xval = n->v.xval;
+	}
+    }
+
+    return ret;
+}
+
 /* We're looking at a string argument that is supposed to represent
    a function call: we'll do a rudimentary heuristic check here.
    FIXME this should be more rigorous.
@@ -8864,7 +8878,7 @@ static NODE *eval (NODE *t, parser *p)
 	} else if (l->t == MAT && r->t == EMPTY) {
 	    ret = matrix_transpose_node(l, p);
 	} else if (l->t == NUM && r->t == EMPTY) {
-	    ret = l; /* no-op */
+	    ret = scalar_transpose_node(l, p);
 	} else {
 	    p->err = E_TYPES; 
 	}
@@ -11964,7 +11978,7 @@ void gen_cleanup (parser *p)
 
 #if EDEBUG
     fprintf(stderr, "gen cleanup: reusable = %d, err = %d\n", 
-	    reusable(p), p->err);
+	    reusable(p) ? 1 : 0, p->err);
 #endif
 
     if (p->err && (p->flags & P_COMPILE)) {
