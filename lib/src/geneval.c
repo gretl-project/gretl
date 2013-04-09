@@ -2033,6 +2033,7 @@ static NODE *scalar_transpose_node (NODE *n, parser *p)
     NODE *ret = n;
 
     if (reusable(p)) {
+	/* we must duplicate the node to avoid double-freeing */
 	ret = aux_scalar_node(p);
 	if (starting(p) && !p->err) {
 	    ret->v.xval = n->v.xval;
