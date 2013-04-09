@@ -184,18 +184,20 @@ static void print_intreg_info (const MODEL *pmod,
 	N_("Left-unbounded observations"),
 	N_("Right-unbounded observations"),
 	N_("Bounded observations"),
-	N_("Point observations")
+	N_("Point observations"),
+	N_("Pseudo-point observations"),
     };
     gchar *lstr = NULL, *rstr = NULL;
     int nl = gretl_model_get_int(pmod, "n_left");
     int nr = gretl_model_get_int(pmod, "n_right");
-    int nb = -1, np = -1;
+    int nb = -1, np = -1, nfp = -1;
     double llim = 0, rlim = NADBL;
     double se_sigma;
 
     if (pmod->ci == INTREG) {
 	nb = gretl_model_get_int(pmod, "n_both");
 	np = gretl_model_get_int(pmod, "n_point");
+	nfp = gretl_model_get_int(pmod, "n_fpoint");
     } else {
 	nstrs[0] = N_("Left-censored observations");
 	nstrs[1] = N_("Right-censored observations");
@@ -241,6 +243,9 @@ static void print_intreg_info (const MODEL *pmod,
 	    pprintf(prn, "%s: %d\n", _(nstrs[2]), nb);
 	    pprintf(prn, "%s: %d\n", _(nstrs[3]), np);
 	}
+	if (nfp > 0) {
+	    pprintf(prn, "%s: %d\n", _(nstrs[4]), nfp);
+	}
 	pputc(prn, '\n');
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g", A_("sigma"), pmod->sigma);
@@ -254,6 +259,9 @@ static void print_intreg_info (const MODEL *pmod,
 	    pprintf(prn, RTFTAB "%s: %d\n", A_(nstrs[2]), nb);
 	    pprintf(prn, RTFTAB "%s: %d\n", A_(nstrs[3]), np);
 	}
+	if (nfp > 0) {
+	    pprintf(prn, RTFTAB "%s: %d\n", A_(nstrs[4]), nfp);
+	}
     } else if (tex_format(prn)) {
 	pprintf(prn, "$\\hat{\\sigma}$ = %g", pmod->sigma);
 	if (!na(se_sigma)) {
@@ -266,6 +274,9 @@ static void print_intreg_info (const MODEL *pmod,
 	    pprintf(prn, "%s: %d \\\\\n", A_(nstrs[2]), nb);
 	    pprintf(prn, "%s: %d \\\\\n", A_(nstrs[3]), np);
 	}
+	if (nfp > 0) {
+	    pprintf(prn, "%s: %d \\\\\n", A_(nstrs[4]), nfp);
+	}
     } else if (csv_format(prn)) {
 	int d = prn_delim(prn);
 
@@ -275,6 +286,9 @@ static void print_intreg_info (const MODEL *pmod,
 	if (nb >= 0 && np >= 0) {
 	    pprintf(prn, "\"%s\"%c%d\n", A_(nstrs[2]), d, nb);
 	    pprintf(prn, "\"%s\"%c%d\n", A_(nstrs[3]), d, np);
+	}
+	if (nfp > 0) {
+	    pprintf(prn, "\"%s\"%c%d\n", A_(nstrs[4]), d, nfp);
 	}
     }
 

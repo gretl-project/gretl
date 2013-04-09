@@ -28,7 +28,8 @@ enum {
     INT_LOW,   /* no lower bound */
     INT_MID,   /* both bounds */
     INT_HIGH,  /* no upper bound */
-    INT_POINT  /* point value */
+    INT_POINT, /* point value */
+    INT_FPOINT /* forced to point value */
 };
 
 typedef struct int_container_ int_container;
@@ -40,7 +41,7 @@ struct int_container_ {
     double *dspace;   /* workspace */
     double *hi, *lo;  /* limit series for dependent variable */
     int *obstype;     /* dependent variable classifier */
-    int typecount[4]; /* no. of obs by category */
+    int typecount[5]; /* no. of obs by category */
     gretl_matrix *X;  /* regressors */
     int *list;        /* dependent vars plus regular regressors */
     int t1;           /* beginning of sample */
@@ -95,7 +96,7 @@ static int_container *int_container_new (int *list, DATASET *dset,
     nobs = IC->nobs = mod->nobs;
     IC->nx = mod->ncoeff;
     IC->k = mod->ncoeff + 1; /* beta + sigma */
-    for (i=0; i<4; i++) {
+    for (i=0; i<5; i++) {
 	IC->typecount[i] = 0;
     }
 
@@ -261,9 +262,13 @@ static void loglik_prelim (const double *theta, int_container *IC)
 	}
 
 	IC->ndx[t] = ndxt;
-
 	x0 = IC->lo[t];
 	x1 = IC->hi[t];
+
+	/* reset forced observations to mid just in case */ 
+	if (IC->obstype[t] == INT_FPOINT) {
+	    IC->obstype[t] = INT_MID;
+	}
 
 	switch (IC->obstype[t]) {
 	case INT_LOW:
@@ -282,8 +287,15 @@ static void loglik_prelim (const double *theta, int_container *IC)
 	    z0 = (x0 - ndxt)/sigma;
 	    z1 = (x1 - ndxt)/sigma;
 	    IC->dP[t] = normal_cdf(z1) - normal_cdf(z0);
-	    IC->f0[t] = normal_pdf(z0) / IC->dP[t];
-	    IC->f1[t] = normal_pdf(z1) / IC->dP[t];
+	    if (IC->dP[t] < 1.0e-12) {
+		fprintf(stderr, "obs %d forced to point\n", t);
+		IC->obstype[t] = INT_FPOINT;
+		IC->dP[t] = normal_pdf(z0)/sigma;
+		IC->f0[t] = IC->f1[t] = 0;
+	    } else {
+		IC->f0[t] = normal_pdf(z0) / IC->dP[t];
+		IC->f1[t] = normal_pdf(z1) / IC->dP[t];
+	    }
 	    break;
 	case INT_POINT:
 	    z0 = (x0 - ndxt)/sigma;
@@ -332,6 +344,7 @@ static double interval_loglik (const double *theta, void *ptr)
 	    derivs = (IC->f0[t]*z0 - IC->f1[t]*z1);
 	    break;
 	case INT_POINT:
+	case INT_FPOINT:
 	    z0 = (x0 - ndxt)/sigma;
 	    derivb = z0/sigma;
 	    derivs = z0*z0 - 1;
@@ -348,7 +361,8 @@ static double interval_loglik (const double *theta, void *ptr)
 	gretl_matrix_set(IC->G, t, k-1, derivs);
 	IC->g[k-1] += derivs;
     }
-    
+
+
 #if INTDEBUG > 1
     fprintf(stderr, "ll = %16.10f\n", ll);
 
@@ -434,10 +448,12 @@ int interval_hessian (double *theta, gretl_matrix *V, void *ptr)
 	    nu     = (f0 * q0 - f1 * q1)/sigma;
 	    break;
 	case INT_POINT:
+	case INT_FPOINT:
 	    z0 = (x0 - ndxt)/sigma;
 	}
 
-	if (IC->obstype[t] == INT_POINT) {
+	if ((IC->obstype[t] == INT_POINT) || 
+	    (IC->obstype[t] == INT_FPOINT)) {
 	    x = 1.0 / (sigma*sigma);
 	} else {
 	    x = (mu*mu - lambda/sigma);
@@ -453,7 +469,8 @@ int interval_hessian (double *theta, gretl_matrix *V, void *ptr)
 	    }
 	}
 
-	if (IC->obstype[t] == INT_POINT) {
+	if ((IC->obstype[t] == INT_POINT) || 
+	    (IC->obstype[t] == INT_FPOINT)) {
 	    x = 2 * z0 / sigma;
 	} else {
 	    x = (mu*lambda*sigma - nu);
@@ -466,7 +483,8 @@ int interval_hessian (double *theta, gretl_matrix *V, void *ptr)
 	    gretl_matrix_set(V, i, k-1, vij);
 	}
 
-	if (IC->obstype[t] == INT_POINT) {
+	if ((IC->obstype[t] == INT_POINT) || 
+	    (IC->obstype[t] == INT_FPOINT)) {
 	    x = 2 * (z0*z0);
 	    Hss += x;
 	} else {
@@ -586,6 +604,7 @@ static void int_compute_gresids (int_container *IC)
 	    IC->uhat[t] = sigma * (IC->f0[t] - IC->f1[t]);
 	    break;
 	case INT_POINT:
+	case INT_FPOINT:
 	    IC->uhat[t] = IC->lo[t] - IC->ndx[t];
 	}
     }
@@ -702,6 +721,7 @@ static gretl_matrix *cond_moments (int_container *IC, double *sm3,
 	    m4 = 3*m2 + (x *= a) - (y *= b);
 	    break;
 	case INT_POINT:
+	case INT_FPOINT:
 	    u = IC->uhat[t] / sigma;
 	    m3 = u*u*u;
 	    m4 = m3*u;
@@ -842,6 +862,7 @@ static int fill_intreg_model (int_container *IC,
 	gretl_model_set_int(pmod, "hivar", IC->hiv);
 	gretl_model_set_int(pmod, "n_both", IC->typecount[1]);
 	gretl_model_set_int(pmod, "n_point", IC->typecount[3]);
+	gretl_model_set_int(pmod, "n_fpoint", IC->typecount[4]);
     }
 
     if (IC->pmod->ifc && IC->nx > 1) {
