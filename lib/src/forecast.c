@@ -27,6 +27,16 @@
 
 #define AR_DEBUG 0
 
+/**
+ * SECTION:forecast
+ * @short_description: Forecasting based on models
+ * @title: Forecasting
+ * @include: gretl/libgretl.h, gretl/forecast.h
+ *
+ * Write-up needed here.
+ *
+ */
+
 #ifdef max
 # undef max
 #endif

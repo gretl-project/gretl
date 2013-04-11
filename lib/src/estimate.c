@@ -66,7 +66,7 @@
  *         printmodel(&amp;model, dset, OPT_NONE, prn);
  *     }
  *     clear_model(&amp;model);
-  *
+ *
  *     // method (b)
  *     pmod = gretl_model_new();
  *     *pmod = lsq(list, dset, OLS, OPT_NONE);

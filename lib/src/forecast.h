@@ -35,6 +35,29 @@ typedef enum {
     FC_MEAN_OK      = 1 << 4
 } ForecastFlags;
 
+struct _FITRESID {
+    int model_ID;   /* ID of model on which forecast is based */
+    int asymp;      /* 0/1 flag for asymptotic estimator */
+    int std;        /* 0/1 flag for standardized residuals */
+    int model_t1;   /* start of model estimation range */
+    int method;     /* one of the ForecastMethod options */
+    double *actual; /* array of values of dependent variable */
+    double *fitted; /* array of fitted values */
+    double *resid;  /* array of residuals */
+    double *sderr;  /* array of forecast standard errors (or NULL) */
+    double sigma;   /* standard error of regression */
+    double alpha;   /* for confidence intervals */
+    int pmax;       /* if positive, suggested number of decimal places
+                       for use in printing */
+    int df;         /* degrees of freedom for model */
+    int t0;         /* start of pre-forecast data range */
+    int t1;         /* start of forecast range */
+    int t2;         /* end of forecast range */
+    int k;          /* number of steps ahead (method = FC_KSTEP only) */
+    int nobs;       /* length of the arrays actual, fitted, resid */
+    char depvar[VNAMELEN]; /* name of dependent variable */
+};
+
 void free_fit_resid (FITRESID *fr);
 
 FITRESID *get_fit_resid (const MODEL *pmod, const DATASET *dset, 

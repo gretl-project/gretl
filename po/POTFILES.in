@@ -101,6 +101,7 @@ gui2/gpt_dialog.c
 gui2/graphics.c
 gui2/graph_page.c
 gui2/gretl.c
+gui2/gretl_ipc.c
 gui2/gretlwin32.c
 gui2/gtkfontselhack.c
 gui2/guiprint.c
@@ -173,6 +174,7 @@ plugin/poisson.c
 plugin/progress_bar.c
 plugin/quantreg.c
 plugin/range-mean.c
+plugin/reprobit.c
 plugin/sas_import.c
 plugin/spss_import.c
 plugin/stata_import.c

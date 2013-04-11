@@ -512,6 +512,7 @@ static struct localeinfo locales[] = {
     { LANG_C,     "english" },
     { LANG_SQ,    "albanian" },
     { LANG_EU,    "basque" },
+    { LANG_BG,    "bulgarian" },
     { LANG_CA,    "catalan" },
     { LANG_DE,    "german" },
     { LANG_ES,    "spanish" },
@@ -554,6 +555,7 @@ static struct langinfo langs[] = {
     { LANG_C,     "English",              "C"     },
     { LANG_SQ,    "Albanian",             "sq_AL" },
     { LANG_EU,    "Basque",               "eu_ES" },
+    { LANG_BG,    "Bulgarian",            "bg_BG" },    
     { LANG_CA,    "Catalan",              "ca_ES" },
     { LANG_ZH_TW, "Chinese (Taiwan)",     "zh_TW" },
     { LANG_CS,    "Czech",                "cs_CZ" },
@@ -618,7 +620,7 @@ static char *win32_set_numeric (const char *lang)
     char *set = NULL;
     int i;
 
-    for (i=LANG_EU; i<LANG_MAX; i++) {
+    for (i=LANG_SQ; i<LANG_MAX; i++) {
 	if (!strcmp(lang, langs[i].code) ||
 	    !strncmp(lang, langs[i].code, 2)) {
 	    set = setlocale(LC_NUMERIC, locales[i].code);

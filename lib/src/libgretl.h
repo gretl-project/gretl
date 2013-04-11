@@ -240,6 +240,7 @@ typedef struct _cmplx {
 #endif
 
 typedef struct GRETL_VAR_ GRETL_VAR;
+typedef struct _FITRESID FITRESID;
 
 typedef struct model_data_item_ model_data_item;
 typedef struct ModelTest_ ModelTest;
@@ -358,29 +359,6 @@ typedef struct MODEL_ {
     int n_data_items;            /* number of extra data items */
     model_data_item **data_items; /* pointer to additional data */
 } MODEL;
-
-typedef struct FITRESID_ {
-    int model_ID;   /* ID of model on which forecast is based */
-    int asymp;      /* 0/1 flag for asymptotic estimator */
-    int std;        /* 0/1 flag for standardized residuals */
-    int model_t1;   /* start of model estimation range */
-    int method;     /* one of the ForecastMethod options */
-    double *actual; /* array of values of dependent variable */
-    double *fitted; /* array of fitted values */
-    double *resid;  /* array of residuals */
-    double *sderr;  /* array of forecast standard errors (or NULL) */
-    double sigma;   /* standard error of regression */
-    double alpha;   /* for confidence intervals */
-    int pmax;       /* if positive, suggested number of decimal places
-                       for use in printing */
-    int df;         /* degrees of freedom for model */
-    int t0;         /* start of pre-forecast data range */
-    int t1;         /* start of forecast range */
-    int t2;         /* end of forecast range */
-    int k;          /* number of steps ahead (method = FC_KSTEP only) */
-    int nobs;       /* length of the arrays actual, fitted, resid */
-    char depvar[VNAMELEN]; /* name of dependent variable */
-} FITRESID;
 
 #include "gretl_commands.h"
 #include "gretl_prn.h"

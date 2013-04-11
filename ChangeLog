@@ -1,5 +1,5 @@
 version 1.9.13, in progress
-- Add Catalan translation
+- Add Catalan and Bulgarian translations
 - "adf" command: add option to optimize the lag order using
   the procedure recommended by Ng and Perron (2001), and 
   make the MAIC method the default
@@ -11,6 +11,8 @@ version 1.9.13, in progress
   prior gretl instance, if any
 - Fix bug: "catch" not working properly when applied to
   genr expressions within loops
+- Fix bug: bad behavior when taking the transpose of a
+  scalar variable in a loop
 
 2013-03-15 version 1.9.12
 - Officially increase the maximum length of variable names

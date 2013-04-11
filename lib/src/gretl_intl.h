@@ -41,6 +41,7 @@ typedef enum {
     LANG_C,
     LANG_SQ,
     LANG_EU,
+    LANG_BG,
     LANG_CA,
     LANG_ZH_TW,
     LANG_CS,
