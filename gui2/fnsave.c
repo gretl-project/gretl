@@ -2250,13 +2250,13 @@ int save_function_package (const char *fname, gpointer p)
 	if (finfo->upload) {
 	    do_pkg_upload(finfo, fname);
 	}
-	if (1 || finfo->menuwin != NO_WINDOW) {
-	    revise_package_status(pkgname, 
-				  finfo->menulabel,
-				  finfo->menupath,
-				  finfo->uses_subdir,
-				  1);
-	}
+	/* revise packages.xml in accordance with any
+	   changes above */
+	revise_package_status(pkgname, 
+			      finfo->menulabel,
+			      finfo->menupath,
+			      finfo->uses_subdir,
+			      1);
     }
 
     return err;
