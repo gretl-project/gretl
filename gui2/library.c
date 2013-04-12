@@ -8388,7 +8388,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 
     gretl_exec_state_set_callback(s, gui_exec_callback, OPT_G);
 
-    if (!s->in_comment && !cmd->context) {
+    if (!s->in_comment && !cmd->context && !gretl_if_state_false()) {
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
 	int action = saved_object_action(line, prn);

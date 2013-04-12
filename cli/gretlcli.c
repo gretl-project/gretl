@@ -853,7 +853,7 @@ static int exec_line (ExecState *s, DATASET *dset)
 	return err;
     } 
 
-    if (!s->in_comment && !cmd->context) {
+    if (!s->in_comment && !cmd->context && !gretl_if_state_false()) {
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
 	int action = saved_object_action(line, dset, prn);
