@@ -574,20 +574,23 @@ static void add_gretl_include (int lang, FILE *fp)
     }
 
 #ifdef G_OS_WIN32
-    gchar *dotcpy = win32_dotpath();
+    gchar *dotcpy;
 
     if (lang == LANG_OX) {
+	dotcpy = win32_dotpath();
 	if (strchr(dotcpy, ' ')) {
 	    fprintf(fp, "#include \"%sgretl_io.ox\"\n", dotcpy);
 	} else {
 	    fprintf(fp, "#include <%sgretl_io.ox>\n", dotcpy);
 	}
+	g_free(dotcpy);
     } else if (lang == LANG_OCTAVE) {
+	dotcpy = win32_dotpath();
 	fprintf(fp, "source(\"%sgretl_io.m\")\n", dotcpy);
+	g_free(dotcpy);
     } else if (lang == LANG_STATA) {
-	fprintf(fp, "quietly adopath + \"%s\"\n", dotcpy);
+	fprintf(fp, "quietly adopath + \"%s\"\n", gretl_dotdir());
     }
-    g_free(dotcpy);
 #else
     const char *dotdir = gretl_dotdir();
 
