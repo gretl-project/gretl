@@ -623,6 +623,25 @@ char *get_built_in_string_by_name (const char *name)
     return NULL;
 }
 
+static gchar *recode_content (gchar *orig, int *err)
+{
+    GError *gerr = NULL;
+    gsize wrote = 0;
+    gchar *tr;
+
+    tr = g_locale_to_utf8(orig, -1, NULL, &wrote, &gerr);
+
+    if (gerr != NULL) {
+	gretl_errmsg_set(gerr->message);
+	*err = E_DATA;
+	g_error_free(gerr);
+    }
+
+    g_free(orig);
+
+    return tr;
+}
+
 static int shell_grab (const char *arg, char **sout)
 {
     int err = 0;
@@ -639,11 +658,20 @@ static int shell_grab (const char *arg, char **sout)
     gretl_shell_grab(arg, sout);
 
     if (sout != NULL && *sout != NULL) {
-	/* trim trailing newline */
-	int n = strlen(*sout);
+	char *content = *sout;
 
-	if ((*sout)[n-1] == '\n') {
-	    (*sout)[n-1] = '\0';
+	if (!g_utf8_validate(content, -1, NULL)) {
+	    content = recode_content(content, &err);
+	    *sout = content;
+	}
+
+	if (content != NULL) {
+	    /* trim trailing newline */
+	    int n = strlen(content);
+
+	    if (content[n-1] == '\n') {
+		content[n-1] = '\0';
+	    }
 	}
     }
 
@@ -710,34 +738,14 @@ char *retrieve_date_string (int t, const DATASET *dset, int *err)
     return ret;
 }
 
-static gchar *recode_file_content (gchar *orig, int *err)
-{
-    GError *gerr = NULL;
-    gsize wrote = 0;
-    gchar *tr;
-
-    tr = g_locale_to_utf8(orig, -1, NULL, &wrote, &gerr);
-
-    if (gerr != NULL) {
-	gretl_errmsg_set(gerr->message);
-	*err = E_DATA;
-	g_error_free(gerr);
-    }
-
-    g_free(orig);
-
-    return tr;
-}
-
 char *retrieve_file_content (const char *fname, int *err)
 {
-    char *ret = NULL;
+    char *content = NULL;
 
     if (fname == NULL || *fname == '\0') {
 	*err = E_DATA;
     } else {
 	char fullname[FILENAME_MAX];
-	char *content = NULL;
 	GError *gerr = NULL;
 	gsize len = 0;
 
@@ -752,16 +760,11 @@ char *retrieve_file_content (const char *fname, int *err)
 	    *err = E_FOPEN;
 	    g_error_free(gerr);
 	} else if (!g_utf8_validate(content, len, NULL)) {
-	    content = recode_file_content(content, err);
-	}
-
-	if (!*err) {
-	    ret = gretl_strdup(content);
-	    g_free(content);
+	    content = recode_content(content, err);
 	}
     } 
 
-    return ret;
+    return content;
 }
 
 /* inserting string into format portion of (s)printf command:
