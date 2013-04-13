@@ -710,6 +710,25 @@ char *retrieve_date_string (int t, const DATASET *dset, int *err)
     return ret;
 }
 
+static gchar *recode_file_content (gchar *orig, int *err)
+{
+    GError *gerr = NULL;
+    gsize wrote = 0;
+    gchar *tr;
+
+    tr = g_locale_to_utf8(orig, -1, NULL, &wrote, &gerr);
+
+    if (gerr != NULL) {
+	gretl_errmsg_set(gerr->message);
+	*err = E_DATA;
+	g_error_free(gerr);
+    }
+
+    g_free(orig);
+
+    return tr;
+}
+
 char *retrieve_file_content (const char *fname, int *err)
 {
     char *ret = NULL;
@@ -718,6 +737,7 @@ char *retrieve_file_content (const char *fname, int *err)
 	*err = E_DATA;
     } else {
 	char fullname[FILENAME_MAX];
+	char *content = NULL;
 	GError *gerr = NULL;
 	gsize len = 0;
 
@@ -725,12 +745,19 @@ char *retrieve_file_content (const char *fname, int *err)
 	strncat(fullname, fname, FILENAME_MAX - 1);
 	gretl_addpath(fullname, 0);
 
-	g_file_get_contents(fullname, &ret, &len, &gerr);
+	g_file_get_contents(fullname, &content, &len, &gerr);
 
 	if (gerr != NULL) {
 	    gretl_errmsg_set(gerr->message);
-	    g_error_free(gerr);
 	    *err = E_FOPEN;
+	    g_error_free(gerr);
+	} else if (!g_utf8_validate(content, len, NULL)) {
+	    content = recode_file_content(content, err);
+	}
+
+	if (!*err) {
+	    ret = gretl_strdup(content);
+	    g_free(content);
 	}
     } 
 
