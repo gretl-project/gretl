@@ -1437,6 +1437,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_bool(WARNINGS, prn, opt);
     libset_print_int(GRETL_DEBUG, prn, opt);
     libset_print_int(BLAS_NMK_MIN, prn, opt);
+    libset_print_int(MP_NMK_MIN, prn, opt);
 
     if (opt & OPT_D) {
 	libset_print_bool(SHELL_OK, prn, opt);
@@ -1748,7 +1749,7 @@ int execute_set_line (const char *line, DATASET *dset,
 	if (!strcmp(setobj, "linewidth")) {
 	    err = set_line_width(setarg, setarg2, dset, prn);
 	} else {
-	    err = E_UNKVAR;
+	    err = E_PARSE;
 	}
     }
 		    
