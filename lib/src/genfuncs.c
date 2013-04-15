@@ -5082,6 +5082,27 @@ static void aggr_add_colnames (gretl_matrix *m,
     }
 }
 
+/**
+ * aggregate_by:
+ * @x: data array.
+ * @y: discrete variable.
+ * @xlist: list of x series or NULL.
+ * @ylist: list of y series or NULL.
+ * @fncall: the name of the aggregation function.
+ * @dset: data set information.
+ * @err: location to receive error code.
+ *
+ * Aggregates one or more data series (x) "by" the values of 
+ * one or more discrete series (y). In general either @x or
+ * @xlist should be non-NULL, and one of @y or @ylist should
+ * be non-NULL. (If @xlist is non-NULL then @x is ignored,
+ * and similarly for @ylist and @y). For an account of the
+ * matrix that is returned, see the help for gretl's
+ * "aggregate" command.
+ *
+ * Returns: allocated matrix, or NULL on failure.
+ */
+
 gretl_matrix *aggregate_by (const double *x, 
 			    const double *y,
 			    const int *xlist,
@@ -5104,13 +5125,6 @@ gretl_matrix *aggregate_by (const double *x,
 
     if ((y == NULL && ylist == NULL) ||
 	(!just_count && x == NULL && xlist == NULL)) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    if (y != NULL && !gretl_isdiscrete(dset->t1, dset->t2, y)) {
-	gretl_errmsg_set(_("You must supply two variables, "
-			   "the second of which is discrete"));
 	*err = E_DATA;
 	return NULL;
     }
