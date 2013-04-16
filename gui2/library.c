@@ -1649,6 +1649,8 @@ void markers_callback (void)
 	} else if (resp == 1) {
 	    dataset_destroy_obs_markers(dataset);
 	    mark_dataset_as_modified();
+	    lib_command_strcpy("markers --delete");
+	    record_command_verbatim();
 	}
     } else {
 	if (yes_no_dialog("gretl",
