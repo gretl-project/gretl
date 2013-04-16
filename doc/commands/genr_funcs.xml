@@ -4797,6 +4797,7 @@
 	    <fncref targ="psd"/>
 	    <fncref targ="pxsum"/>
 	    <fncref targ="pshrink"/>
+	    <fncref targ="psum"/>
 	  </seelist>
 	</para>
       </description>
@@ -4836,6 +4837,7 @@
 	    <fncref targ="psd"/>
 	    <fncref targ="pxsum"/>
 	    <fncref targ="pshrink"/>
+	    <fncref targ="psum"/>
 	  </seelist>
 	</para>
       </description>
@@ -4865,6 +4867,7 @@
 	    <fncref targ="pnobs"/>
 	    <fncref targ="psd"/>
 	    <fncref targ="pshrink"/>
+	    <fncref targ="psum"/>
 	  </seelist>
 	</para>
       </description>
@@ -4894,6 +4897,7 @@
 	    <fncref targ="pmean"/>
 	    <fncref targ="psd"/>
 	    <fncref targ="pshrink"/>
+	    <fncref targ="psum"/>
 	  </seelist>
 	</para>
       </description>
@@ -5029,6 +5033,7 @@
 	    <fncref targ="pmean"/>
 	    <fncref targ="pnobs"/>
 	    <fncref targ="pshrink"/>
+	    <fncref targ="psum"/>
 	  </seelist>
 	</para>
       </description>
@@ -5076,6 +5081,45 @@
 	  <fncref targ="pmean"/>, in which a value pertaining to
 	  each cross-sectional unit is repeated for each time
 	  period. 
+	</para>
+      </description>
+    </function>
+
+    <function name="psum" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="series" optional="true">mask</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Only applicable if the currently open dataset has a panel
+	  structure. Returns a series holding the sum over time of
+	  variable <argname>y</argname> for each cross-sectional unit,
+	  the values being repeated for each period. Missing
+	  observations are skipped in calculating the sums.
+	</para>
+	<para context="tex">
+	  Only applicable if the currently open dataset has a panel
+	  structure. Computes the sum over time of variable
+	  <argname>y</argname> for each cross-sectional unit; that is, 
+	  \[ S_i = \sum_{t=1}^{T_i} y_{i,t}\] 
+	  where $T_i$ is the number of valid observations for unit $i$.
+	</para>
+	<para>
+	  If the optional second argument is provided then
+	  observations for which the value of <argname>mask</argname>
+	  is zero are ignored.
+	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="pmax"/>
+	    <fncref targ="pmean"/>
+	    <fncref targ="pmin"/>
+	    <fncref targ="pnobs"/>
+	    <fncref targ="psd"/>
+	    <fncref targ="pxsum"/>
+	    <fncref targ="pshrink"/>
+	  </seelist>
 	</para>
       </description>
     </function>

@@ -5005,6 +5005,7 @@ static int get_logtrans (const char *s)
 #define is_panel_stat(f) (f == F_PNOBS || \
 			  f == F_PMIN ||  \
 			  f == F_PMAX ||  \
+			  f == F_PSUM || \
 			  f == F_PMEAN || \
 			  f == F_PXSUM ||  \
 			  f == F_PSD)
@@ -5110,6 +5111,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	case F_PNOBS:
 	case F_PMIN:
 	case F_PMAX:
+	case F_PSUM:
 	case F_PMEAN:
 	case F_PXSUM:
 	case F_PSD:
@@ -9168,6 +9170,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_PNOBS:
     case F_PMIN:
     case F_PMAX:
+    case F_PSUM:
     case F_PMEAN:
     case F_PXSUM:
     case F_PSD:

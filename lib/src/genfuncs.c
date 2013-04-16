@@ -910,7 +910,7 @@ static int new_unit (const DATASET *dset, int t)
  * @y: target into which to write.
  * @dset: data set information.
  * @k: code representing the desired statistic: F_PNOBS,
- * F_PMIN, F_PMAX, F_PMEAN, F_PXSUM or F_PSD.
+ * F_PMIN, F_PMAX, F_PSUM, F_PMEAN, F_PXSUM or F_PSD.
  * @mask: either NULL or a series with 0s for observations
  * to be excluded from the calculations, non-zero values
  * at other observations.
@@ -949,28 +949,30 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		Ti++;
 	    }
 	}
-    } else if (k == F_PMIN || k == F_PMAX) {
-	double mm = NADBL;
+    } else if (k == F_PMIN || k == F_PMAX || k == F_PSUM) {
+	double res = NADBL;
 
 	for (t=0; t<=dset->n; t++) {
 	    if (t == dset->n || new_unit(dset, t)) {
 		for (s=smin; s<t; s++) {
-		    y[s] = mm;
+		    y[s] = res;
 		}
 		if (t == dset->n) {
 		    break;
 		} else {
-		    mm = NADBL;
+		    res = NADBL;
 		    smin = t;
 		}
 	    }
 	    if (panel_obs_ok(x, t, mask)) {
-		if (na(mm)) {
-		    mm = x[t];
-		} else if (k == F_PMIN && x[t] < mm) {
-		    mm = x[t];
-		} else if (k == F_PMAX && x[t] > mm) {
-		    mm = x[t];
+		if (na(res)) {
+		    res = x[t];
+		} else if (k == F_PMIN && x[t] < res) {
+		    res = x[t];
+		} else if (k == F_PMAX && x[t] > res) {
+		    res = x[t];
+		} else if (k == F_PSUM) {
+		    res += x[t];
 		}
 	    }
 	}

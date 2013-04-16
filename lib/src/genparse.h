@@ -327,6 +327,7 @@ enum {
     F_PNOBS,
     F_PMIN,
     F_PMAX,
+    F_PSUM,
     F_PMEAN,
     F_PXSUM,
     F_PSD,

@@ -223,6 +223,7 @@ struct str_table funcs[] = {
     { F_PNOBS,    "pnobs" },     /* per-unit nobs in panels */
     { F_PMIN,     "pmin" },      /* panel min */
     { F_PMAX,     "pmax" },      /* panel max */
+    { F_PSUM,     "psum" },      /* panel sum */
     { F_PMEAN,    "pmean" },     /* panel mean */
     { F_PXSUM,    "pxsum" },     /* panel x-sectional sum */
     { F_PSD,      "psd" },       /* panel std dev */
