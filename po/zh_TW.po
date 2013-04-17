@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2013-04-17 16:43+0800\n"
+"PO-Revision-Date: 2013-04-17 21:20+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -1983,14 +1983,12 @@ msgid "periods"
 msgstr "期數"
 
 #: lib/src/describe.c:3906
-#, fuzzy
 msgid "radians"
-msgstr "Gradients:  "
+msgstr "弧度"
 
 #: lib/src/describe.c:3908
-#, fuzzy
 msgid "degrees"
-msgstr "資料 (series)"
+msgstr "度數"
 
 #: lib/src/describe.c:3910
 #, fuzzy
@@ -2014,21 +2012,21 @@ msgstr "/資料/更新顯示"
 
 #: lib/src/describe.c:3934
 #: gui2/dialogs.c:4633
-#, fuzzy
 msgid "log scale"
-msgstr "指令紀錄(_C)"
+msgstr "對數尺度"
 
 #: lib/src/describe.c:3992
-#, fuzzy
 msgid "Residual periodogram"
-msgstr "殘差自我相關函數"
+msgstr "殘差週期圖"
 
 #: lib/src/describe.c:3994
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Periodogram for %s\n"
-msgstr "檢查有無更新版(_u)"
+msgstr ""
+"\n"
+"週期圖 for %s\n"
 
 #: lib/src/describe.c:3997
 #: lib/src/describe.c:5546
@@ -2195,22 +2193,22 @@ msgstr ""
 #: gui2/menustate.c:497
 #: gui2/menustate.c:560
 msgid "Summary statistics"
-msgstr "Summary statistics"
+msgstr "敘述統計"
 
 #: lib/src/describe.c:4473
-#, fuzzy, c-format
+#, c-format
 msgid "for column %d of %s (%d valid observations)"
-msgstr "for the variable %s (%d valid observations)"
+msgstr "for column %d of %s (有效樣本數 %d)"
 
 #: lib/src/describe.c:4476
-#, fuzzy, c-format
+#, c-format
 msgid "for column %d (%d valid observations)"
-msgstr "for the variable %s (%d valid observations)"
+msgstr "for column %d (有效樣本數 %d)"
 
 #: lib/src/describe.c:4480
-#, fuzzy, c-format
+#, c-format
 msgid "for the variable '%s' (%d valid observations)"
-msgstr "輸入新變數的數學式"
+msgstr "for the variable '%s' (有效樣本數 %d)"
 
 #: lib/src/describe.c:4598
 #: lib/src/describe.c:4626
@@ -2515,9 +2513,9 @@ msgid "Durations must be positive"
 msgstr "最大值必須大於 %g"
 
 #: lib/src/discrete.c:3644
-#, fuzzy, c-format
+#, c-format
 msgid "%s: the dependent variable must be count data"
-msgstr "沒有任何自變數被消去 (omitted)"
+msgstr "%s: 自變數必須是計數資料 (count data)"
 
 #: lib/src/estimate.c:192
 #: plugin/mp_ols.c:1644
@@ -2540,9 +2538,9 @@ msgid "Missing value encountered for variable %d, obs %d"
 msgstr "變數 %d, 在觀察值位置 %d 處有遺漏值 (missing value) 之問題"
 
 #: lib/src/estimate.c:1717
-#, fuzzy, c-format
+#, c-format
 msgid "Error sum of squares (%g) is not > 0"
-msgstr "殘差平方和 (%g) 並未 > 0"
+msgstr "殘差平方和 (%g) 不大於 0"
 
 #: lib/src/estimate.c:2054
 #: lib/src/estimate.c:2167
@@ -2718,19 +2716,19 @@ msgid "%s: no such object\n"
 msgstr ""
 
 #: lib/src/geneval.c:8599
-#, fuzzy, c-format
+#, c-format
 msgid "%s: insufficient arguments"
-msgstr "指令中參數數目不足"
+msgstr "%s: 參數數目不足"
 
 #: lib/src/geneval.c:8601
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid argument type %s"
-msgstr "資料檔格式錯誤\n"
+msgstr "%s: 引數型態錯誤 %s"
 
 #: lib/src/geneval.c:8604
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument %d: invalid type %s"
-msgstr "資料檔格式錯誤\n"
+msgstr "%s: 引數 %d: 型態錯誤 %s"
 
 #: lib/src/geneval.c:8614
 #, c-format
@@ -2753,9 +2751,9 @@ msgid "%s: argument %d should be %s"
 msgstr "%s: 參數 %d 應該是 %s"
 
 #: lib/src/geneval.c:8631
-#, fuzzy, c-format
+#, c-format
 msgid ", is %s"
-msgstr "%s, 樣本從 %s 到 %s"
+msgstr ", is %s"
 
 #: lib/src/geneval.c:10244
 #: lib/src/genlex.c:719
@@ -4395,9 +4393,8 @@ msgid "no ':' allowed in starting obs with frequency 1"
 msgstr ""
 
 #: lib/src/gretl_utils.c:855
-#, fuzzy
 msgid "panel data must have frequency > 1"
-msgstr "橫斷面資料: frequency must be 1"
+msgstr "Panel 資料頻率必須 > 1"
 
 #: lib/src/gretl_utils.c:860
 msgid "starting obs must contain a ':' with frequency > 1"
@@ -4561,9 +4558,9 @@ msgid "Failed to parse endobs"
 msgstr ""
 
 #: lib/src/gretl_xml.c:2463
-#, fuzzy, c-format
+#, c-format
 msgid "dummy for %s = %lf"
-msgstr "檢查有無更新版(_u)"
+msgstr "%s 的虛擬變數 = %lf"
 
 #: lib/src/gretl_xml.c:2498
 #, c-format
@@ -4612,9 +4609,8 @@ msgid "command 'end %s' not recognized"
 msgstr ""
 
 #: lib/src/interact.c:1832
-#, fuzzy
 msgid "end: nothing to end"
-msgstr "複製資料"
+msgstr "end: nothing to end"
 
 #: lib/src/interact.c:1924
 #, c-format
@@ -4622,9 +4618,9 @@ msgid "%s: required parameter is missing"
 msgstr "%s: 少了必要參數"
 
 #: lib/src/interact.c:1949
-#, fuzzy, c-format
+#, c-format
 msgid "%s: expected an integer order"
-msgstr "ADF 檢定落後階次 (lag order):"
+msgstr "%s: 應是整數階次"
 
 #: lib/src/interact.c:2105
 #, c-format
@@ -4632,9 +4628,9 @@ msgid "%d is not a valid variable number"
 msgstr "%d 並非有效的變數代碼"
 
 #: lib/src/interact.c:2171
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not the name of a series"
-msgstr "殘差平方和 (%g) 並未 > 0"
+msgstr "'%s' 並非資料變數之名稱"
 
 #: lib/src/interact.c:2174
 #, c-format
@@ -4645,9 +4641,9 @@ msgstr "'%s' 並不是變數的名稱 (注意英大小寫是否有誤!)"
 #: lib/src/system.c:648
 #: lib/src/system.c:682
 #: plugin/arbond.c:2625
-#, fuzzy, c-format
+#, c-format
 msgid "variable %d duplicated in the command list."
-msgstr "變數 %d 並未定義在原來的變數集 (list) 之中"
+msgstr "變數 %d 重覆定義在指令 (command list) 之中"
 
 #: lib/src/interact.c:2557
 #: lib/src/interact.c:6150
@@ -4724,9 +4720,8 @@ msgid "No series are defined\n"
 msgstr "尚未定義任何資料變數 (no series)\n"
 
 #: lib/src/interact.c:3983
-#, fuzzy
 msgid "Listing labels for variables:\n"
-msgstr "/新增變數/Dummies for selected _discrete variables"
+msgstr "列出變數之標籤:\n"
 
 #: lib/src/interact.c:4032
 msgid "Output is not currently diverted to file\n"
@@ -4747,9 +4742,9 @@ msgid "Now discarding output\n"
 msgstr ""
 
 #: lib/src/interact.c:4074
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't open %s for writing\n"
-msgstr "無法開啟並寫入 %s "
+msgstr "無法開啟並寫入 %s \n"
 
 #: lib/src/interact.c:4080
 #, c-format
@@ -4778,14 +4773,14 @@ msgstr ""
 #: lib/src/interact.c:4765
 #: cli/gretlcli.c:794
 #: gui2/library.c:8312
-#, fuzzy, c-format
+#, c-format
 msgid "Read datafile %s\n"
-msgstr "讀取資訊(_R)"
+msgstr "讀取資訊檔 %s\n"
 
 #: lib/src/interact.c:4934
-#, fuzzy, c-format
+#, c-format
 msgid "Summary statistics for %s, by value of %s"
-msgstr "Summary statistics"
+msgstr "敘述統計 for %s, by value of %s"
 
 #: lib/src/interact.c:5220
 msgid "You can't end a loop here, you haven't started one\n"
@@ -4796,9 +4791,9 @@ msgid "This command requires one variable.\n"
 msgstr ""
 
 #: lib/src/interact.c:5482
-#, fuzzy, c-format
+#, c-format
 msgid "data frequency = %d\n"
-msgstr "頻率分配表(_F)"
+msgstr "資料頻率 = %d\n"
 
 #: lib/src/interact.c:5509
 msgid "store: no filename given\n"
@@ -4812,9 +4807,8 @@ msgstr ""
 
 #: lib/src/interact.c:5518
 #: lib/src/monte_carlo.c:2342
-#, fuzzy
 msgid "Data written OK.\n"
-msgstr "資料已順利加入\n"
+msgstr "資料已順利寫入\n"
 
 #: lib/src/interact.c:5562
 msgid "This estimator requires panel data"
@@ -8240,9 +8234,8 @@ msgid "Error reading %s\n"
 msgstr "資料錯誤"
 
 #: cli/gretlcli.c:1104
-#, fuzzy
 msgid "Dataset cleared\n"
-msgstr "資料類型(_s)"
+msgstr "資料檔已清除\n"
 
 #: gui2/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -9378,9 +9371,8 @@ msgid "Failed to retrieve description of data"
 msgstr "無法取得資料說明"
 
 #: gui2/datafiles.c:695
-#, fuzzy
 msgid "data info"
-msgstr "gretl: 變數資訊"
+msgstr "資料檔資訊"
 
 #: gui2/datafiles.c:769
 #, c-format
@@ -9531,9 +9523,8 @@ msgid "gretl: function packages on server"
 msgstr "gretl: 自伺服器讀取自訂函數套件 (function packages)"
 
 #: gui2/datafiles.c:1647
-#, fuzzy
 msgid "gretl: data packages on server"
-msgstr "gretl: 從伺服器資料庫讀取資料"
+msgstr "gretl: 從伺服器讀取函數套件"
 
 #: gui2/datafiles.c:1649
 #, fuzzy
@@ -9591,9 +9582,8 @@ msgid "Topic"
 msgstr "主題"
 
 #: gui2/datafiles.c:2156
-#, fuzzy
 msgid "Data"
-msgstr "資料(_D)"
+msgstr "資料"
 
 #: gui2/datafiles.c:2159
 #: gui2/datafiles.c:2163
@@ -10028,9 +10018,8 @@ msgid "Choose named list"
 msgstr "選擇變數集 (list)"
 
 #: gui2/dialogs.c:1424
-#, fuzzy
 msgid "gretl: iteration controls"
-msgstr "gretl: open data"
+msgstr "gretl: iteration controls"
 
 #: gui2/dialogs.c:1441
 msgid "BHHH maximizer"
@@ -10118,9 +10107,8 @@ msgid "gretl: define dummy"
 msgstr "產生新變數(_n)"
 
 #: gui2/dialogs.c:2381
-#, fuzzy
 msgid "Set dummy range"
-msgstr "設定子樣本範圍"
+msgstr "設定虛擬變數子樣本範圍"
 
 #: gui2/dialogs.c:2400
 #: gui2/varinfo.c:998
@@ -10204,9 +10192,8 @@ msgid "shaded area"
 msgstr "陰影區"
 
 #: gui2/dialogs.c:2944
-#, fuzzy
 msgid "Show interval for"
-msgstr "檢查有無更新版(_u)"
+msgstr "顯示區間 for "
 
 #: gui2/dialogs.c:2947
 #, fuzzy
@@ -10362,9 +10349,8 @@ msgid "gretl: expand data"
 msgstr "gretl: 低頻資料轉為高頻資料"
 
 #: gui2/dialogs.c:3874
-#, fuzzy
 msgid "Expand annual data to quarterly"
-msgstr "將季資料轉換為年資料"
+msgstr "將年資料展開轉換為季資料"
 
 #: gui2/dialogs.c:3876
 msgid "Expand quarterly data to monthly"
@@ -10390,18 +10376,16 @@ msgid "bandwidth adjustment factor:"
 msgstr ""
 
 #: gui2/dialogs.c:4110
-#, fuzzy
 msgid "paste data from clipboard"
-msgstr "無法從伺服器取得資料..."
+msgstr "從剪貼簿貼上"
 
 #: gui2/dialogs.c:4117
 msgid "Try pasting data from clipboard?"
 msgstr ""
 
 #: gui2/dialogs.c:4126
-#, fuzzy
 msgid "Clear current dataset first"
-msgstr "請先開啟資料檔"
+msgstr "請先清除目前開啟的資料檔"
 
 #: gui2/dialogs.c:4137
 #, fuzzy
@@ -10415,22 +10399,19 @@ msgstr "無任何 model"
 
 #: gui2/dialogs.c:4607
 msgid "gretl: periodogram"
-msgstr "gretl: periodogram"
+msgstr "gretl: 週期圖"
 
 #: gui2/dialogs.c:4613
-#, fuzzy
 msgid "Sample periodogram"
-msgstr "示範資料檔(_S)..."
+msgstr "樣本週期圖"
 
 #: gui2/dialogs.c:4618
-#, fuzzy
 msgid "Bartlett window, bandwidth:"
-msgstr "/資料/更新顯示"
+msgstr "Bartlett window, 頻寬:"
 
 #: gui2/dialogs.c:4640
-#, fuzzy
 msgid "frequency axis scale:"
-msgstr "資料頻率"
+msgstr "頻率軸尺度:"
 
 #: gui2/dialogs.c:4807
 msgid "Number of bins:"
@@ -10588,7 +10569,7 @@ msgstr "gretl: 新增變數資訊"
 
 #: gui2/dlgutils.c:853
 msgid "Show interval for median"
-msgstr ""
+msgstr "顯示中位數之區間"
 
 #: gui2/dlgutils.c:856
 #: gui2/dlgutils.c:1021
@@ -12505,7 +12486,7 @@ msgstr "常態性檢定(_Normality)"
 
 #: gui2/gretl.c:1661
 msgid "_Frequency distribution..."
-msgstr "頻率分配表(_F)"
+msgstr "次數分配表(_F)"
 
 #: gui2/gretl.c:1662
 msgid "Estimated _density plot..."
@@ -12968,7 +12949,7 @@ msgstr "敘述統計, 所使用的樣本為 %s - %s"
 #: gui2/guiprint.c:1017
 #, c-format
 msgid "for the variable %s (%d valid observations)"
-msgstr "for the variable %s (%d valid observations)"
+msgstr "for the variable %s (有效樣本數  %d)"
 
 #: gui2/guiprint.c:763
 msgid "5% Perc."
@@ -13603,9 +13584,8 @@ msgid "Residual _correlogram"
 msgstr "殘差自我相關圖 (_correlogram)"
 
 #: gui2/gui_utils.c:2824
-#, fuzzy
 msgid "Residual _periodogram"
-msgstr "殘差自我相關函數"
+msgstr "殘差週期圖(_p)"
 
 #: gui2/gui_utils.c:2833
 msgid "Residual _Q-Q plot"
@@ -14463,9 +14443,8 @@ msgstr "%s (n = %d, %s)"
 
 #: gui2/library.c:4874
 #: gui2/library.c:4929
-#, fuzzy
 msgid "frequency distribution"
-msgstr "頻率分配表(_F)"
+msgstr "次數分配表"
 
 #: gui2/library.c:5051
 msgid "gretl: TRAMO analysis"
@@ -14500,9 +14479,8 @@ msgid "Maximum lag:"
 msgstr "最大落後期數 (max. lag):"
 
 #: gui2/library.c:5393
-#, fuzzy
 msgid "periodogram"
-msgstr "程式"
+msgstr "週期圖 (periodogram)"
 
 #: gui2/library.c:5428
 #, fuzzy
@@ -14847,9 +14825,8 @@ msgstr "箱形圖 (Boxplot)"
 
 #: gui2/menustate.c:359
 #: gui2/menustate.c:503
-#, fuzzy
 msgid "Periodogram"
-msgstr "程式"
+msgstr "週期圖 (Periodogram)"
 
 #: gui2/menustate.c:361
 #, fuzzy
@@ -14950,9 +14927,8 @@ msgid "%s: Full range %s - %s"
 msgstr "%s: 全部樣本 %s - %s"
 
 #: gui2/menustate.c:773
-#, fuzzy
 msgid " Unsaved data "
-msgstr "開啟資料檔(_O)"
+msgstr " 未儲存的資料"
 
 #: gui2/model_table.c:81
 msgid "Model table is full"
@@ -15799,14 +15775,12 @@ msgid "CSV"
 msgstr "_CSV..."
 
 #: gui2/selector.c:6078
-#, fuzzy
 msgid "gretl datafile (.gdt)"
-msgstr "gretl: open data"
+msgstr "gretl 預設資料檔格式 (.gdt)"
 
 #: gui2/selector.c:6079
-#, fuzzy
 msgid "gretl database (.bin)"
-msgstr "從伺服器資料庫讀取資料(_s)"
+msgstr "gretl 資料庫格式 (.bin)"
 
 #: gui2/selector.c:6080
 #, fuzzy
@@ -15829,9 +15803,8 @@ msgid "PcGive"
 msgstr "_PcGive..."
 
 #: gui2/selector.c:6104
-#, fuzzy
 msgid "Select format"
-msgstr "全選(_a)"
+msgstr "選擇格式"
 
 #: gui2/selector.c:6354
 #, fuzzy
@@ -15965,9 +15938,8 @@ msgid "Copy data"
 msgstr "複製資料"
 
 #: gui2/selector.c:7394
-#, fuzzy
 msgid "Export data"
-msgstr "匯出資料(_E)"
+msgstr "匯出資料"
 
 #: gui2/selector.c:7413
 msgid "Save functions"
@@ -16484,19 +16456,16 @@ msgid "Use robust covariance matrix by default"
 msgstr "使用穩健共變數矩陣 (robust covariance matrix) 為預設功能"
 
 #: gui2/settings.c:293
-#, fuzzy
 msgid "For cross-sectional data"
-msgstr "橫斷面資料: frequency must be 1"
+msgstr "For 橫斷面資料"
 
 #: gui2/settings.c:295
-#, fuzzy
 msgid "For time-series data"
-msgstr "/變數/時間序列圖(_T)"
+msgstr "For 時間序列資料"
 
 #: gui2/settings.c:297
-#, fuzzy
 msgid "For panel data"
-msgstr "另存新檔(_a)"
+msgstr "For panel 資料"
 
 #: gui2/settings.c:299
 #, fuzzy
@@ -16798,9 +16767,8 @@ msgid "Couldn't open '%s'"
 msgstr "無法開啟 '%s'"
 
 #: gui2/ssheet.c:3845
-#, fuzzy
 msgid "The dataset cannot be modified at present"
-msgstr "此資料檔無法被設定為追踨資料 (panel) 類型"
+msgstr "此資料檔目前無法被修改"
 
 #: gui2/tabwin.c:80
 #, c-format
@@ -16855,9 +16823,8 @@ msgid "Back"
 msgstr "回上一頁"
 
 #: gui2/textbuf.c:2119
-#, fuzzy
 msgid "gretl: configure tabs"
-msgstr "gretl: open data"
+msgstr "gretl: configure tabs"
 
 #: gui2/textbuf.c:2120
 msgid "Spaces per tab"
@@ -17125,9 +17092,8 @@ msgid "OLS model"
 msgstr "OLS 模型"
 
 #: gui2/toolbar.c:1116
-#, fuzzy
 msgid "gretl database"
-msgstr "開啟指令視窗(_G)"
+msgstr "gretl 資料庫"
 
 #: gui2/toolbar.c:1117
 msgid "open dataset"
@@ -18008,9 +17974,8 @@ msgid "Note:"
 msgstr "Note:"
 
 #: plugin/mailer.c:609
-#, fuzzy
 msgid "gretl: send mail"
-msgstr "gretl: open data"
+msgstr "gretl: 寄信"
 
 #: plugin/mailer.c:624
 msgid "Message"
@@ -18470,9 +18435,9 @@ msgid "Unexpected error reading the file\n"
 msgstr "讀檔案時, 有非預期之錯誤\n"
 
 #: plugin/xlsx_import.c:704
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d variables and %d observations\n"
-msgstr "for the variable %s (%d valid observations)"
+msgstr "發現 %d 個變數 和 %d 樣本數\n"
 
 #: plugin/xlsx_import.c:707
 msgid "File contains no data\n"
