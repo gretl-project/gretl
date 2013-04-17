@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2013-04-17 15:57+0800\n"
+"PO-Revision-Date: 2013-04-17 16:43+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -9073,19 +9073,16 @@ msgid "Type a command:"
 msgstr "輸入指令:"
 
 #: gui2/callbacks.c:625
-#, fuzzy
 msgid "Simple boxplot"
-msgstr "gretl: 箱形圖資料"
+msgstr "簡單箱形圖"
 
 #: gui2/callbacks.c:626
-#, fuzzy
 msgid "With confidence interval for median"
-msgstr "信賴區間選擇、繪圖選項:"
+msgstr "畫中位數信賴區間"
 
 #: gui2/callbacks.c:627
-#, fuzzy
 msgid "Factorized"
-msgstr "頻率分配圖(_p)"
+msgstr "Factorized 箱形圖"
 
 #: gui2/callbacks.c:724
 msgid "gretl: create data set"
@@ -9354,7 +9351,7 @@ msgstr "非條件殘差變異數"
 #: gui2/database.c:2408
 #: gui2/fncall.c:3062
 msgid "Not up to date"
-msgstr ""
+msgstr "尚未更至最新"
 
 #: gui2/database.c:2415
 #: gui2/database.c:2701
@@ -10164,9 +10161,8 @@ msgstr "gretl: 箱形圖資料"
 
 #: gui2/dialogs.c:2494
 #: gui2/dialogs.c:2506
-#, fuzzy
 msgid "panel plot"
-msgstr "頻率分配圖(_p)"
+msgstr "panel 繪圖"
 
 #: gui2/dialogs.c:2609
 msgid "Enter boolean condition for selecting cases:"
@@ -11063,6 +11059,8 @@ msgid ""
 "The %s package was not found, or is not up to date.\n"
 "Would you like to try downloading it now?"
 msgstr ""
+"並未發現 %s 函數套件, 或者尚未更新.\n"
+"你想要試試現在下載?"
 
 #: gui2/fncall.c:2708
 #: gui2/fnsave.c:1312
@@ -11083,6 +11081,9 @@ msgid ""
 "as \"%s/%s\" in the %s.\n"
 "Do you want to do this?"
 msgstr ""
+"%s 這個套件可以被加入主選單中\n"
+"以 \"%s/%s\" 放在 %s.\n"
+"你想要這樣做嗎?"
 
 #: gui2/fncall.c:2923
 #, fuzzy, c-format
@@ -12033,12 +12034,10 @@ msgid "_Save data"
 msgstr "存檔(_S)"
 
 #: gui2/gretl.c:1514
-#, fuzzy
 msgid "Save data _as..."
 msgstr "另存新檔(_a)"
 
 #: gui2/gretl.c:1515
-#, fuzzy
 msgid "_Export data..."
 msgstr "匯出資料(_E)"
 
@@ -12194,9 +12193,8 @@ msgid "_Gretl console"
 msgstr "開啟 console 指令視窗(_G)"
 
 #: gui2/gretl.c:1563
-#, fuzzy
 msgid "_Gnuplot"
-msgstr "Gnuplot 的顏色"
+msgstr "_Gnuplot 繪圖"
 
 #: gui2/gretl.c:1564
 msgid "Start GNU _R"
@@ -12349,9 +12347,8 @@ msgid "_Boxplots..."
 msgstr "箱形圖 (_Boxplots)... "
 
 #: gui2/gretl.c:1607
-#, fuzzy
 msgid "_Factorized boxplot..."
-msgstr "gretl: 箱形圖資料"
+msgstr "_Factorized 箱形圖..."
 
 #: gui2/gretl.c:1608
 msgid "_Q-Q plot..."
@@ -12451,9 +12448,8 @@ msgid "_Time dummies"
 msgstr "新增時間虛擬變數(_T)"
 
 #: gui2/gretl.c:1637
-#, fuzzy
 msgid "_Observation range dummy"
-msgstr "恢復為全樣本(_R)"
+msgstr "以樣本區間設虛擬變數(_O)"
 
 #: gui2/gretl.c:1638
 msgid "Dummies for selected _discrete variables"
@@ -12516,9 +12512,8 @@ msgid "Estimated _density plot..."
 msgstr "估計機率密度圖 (_density plot)..."
 
 #: gui2/gretl.c:1663
-#, fuzzy
 msgid "_Boxplot"
-msgstr "gretl: 箱形圖資料"
+msgstr "箱形圖 (_Boxplot)"
 
 #: gui2/gretl.c:1664
 msgid "Normal _Q-Q plot..."
@@ -12537,9 +12532,8 @@ msgid "_Time series plot"
 msgstr "時間序列圖(_T)"
 
 #: gui2/gretl.c:1668
-#, fuzzy
 msgid "_Panel plot..."
-msgstr "頻率分配圖(_p)"
+msgstr "_Panel 繪圖"
 
 #: gui2/gretl.c:1669
 msgid "_Unit root tests"
@@ -12595,7 +12589,7 @@ msgstr "_Baxter-King 法"
 
 #: gui2/gretl.c:1682
 msgid "_Butterworth"
-msgstr ""
+msgstr "_Butterworth"
 
 #: gui2/gretl.c:1683
 msgid "_Polynomial trend"
@@ -12815,7 +12809,7 @@ msgstr "產生預測值 (_Forecasts)..."
 
 #: gui2/gretl.c:1746
 msgid "_Nadaraya-Watson..."
-msgstr ""
+msgstr "_Nadaraya-Watson..."
 
 #: gui2/gretl.c:1747
 msgid "_Nonlinear Least Squares..."
@@ -12839,9 +12833,8 @@ msgid "_Command reference"
 msgstr "指令參考說明"
 
 #: gui2/gretl.c:1755
-#, fuzzy
 msgid "_Function reference"
-msgstr "函數參考說明"
+msgstr "函數參考說明(_F)"
 
 #: gui2/gretl.c:1756
 msgid "_User's guide"
@@ -12849,16 +12842,15 @@ msgstr "gretl 操作說明 (_U)"
 
 #: gui2/gretl.c:1758
 msgid "_Keyboard shortcuts"
-msgstr ""
+msgstr "快捷鍵說明(_K)"
 
 #: gui2/gretl.c:1759
 msgid "Check for _updates"
 msgstr "檢查有無更新版(_u)"
 
 #: gui2/gretl.c:1760
-#, fuzzy
 msgid "Check for _addons"
-msgstr "檢查有無更新版(_u)"
+msgstr "檢查有無 _addons"
 
 #: gui2/gretl.c:1761
 #: gui2/gretl.c:1926
@@ -12871,9 +12863,8 @@ msgid "Enter name for list of series"
 msgstr "全部樣本之平均值"
 
 #: gui2/gretl.c:2102
-#, fuzzy
 msgid "gretl: name list"
-msgstr "gretl: 變數名稱"
+msgstr "gretl: 變數集"
 
 #: gui2/gretl.c:2154
 msgid "sample status"
@@ -13394,14 +13385,12 @@ msgid "_Forecasts"
 msgstr "預測 (_F)"
 
 #: gui2/gui_utils.c:385
-#, fuzzy
 msgid "_Save text as..."
-msgstr "另存新檔(_a)"
+msgstr "另存新文字檔(_S)"
 
 #: gui2/gui_utils.c:394
-#, fuzzy
 msgid "_Graph"
-msgstr "變數繪圖(_G)"
+msgstr "變數繪圖(_G) "
 
 #: gui2/gui_utils.c:456
 #, fuzzy
@@ -13461,9 +13450,8 @@ msgid "Buffer is empty"
 msgstr "殘差是常態分配"
 
 #: gui2/gui_utils.c:1598
-#, fuzzy
 msgid "gretl: untitled"
-msgstr "開啟指令視窗(_G)"
+msgstr "gretl: 尚未命名 untitled"
 
 #: gui2/gui_utils.c:1635
 msgid "gretl: help"
@@ -13491,23 +13479,20 @@ msgid "gretl: edit plot commands"
 msgstr "gretl: 編輯繪圖指令"
 
 #: gui2/gui_utils.c:1657
-#, fuzzy
 msgid "gretl: edit R script"
-msgstr "gretl: 指令檔"
+msgstr "gretl: 編輯 R script"
 
 #: gui2/gui_utils.c:1659
 msgid "gretl: edit Ox program"
 msgstr "gretl: 編輯 Ox 程式"
 
 #: gui2/gui_utils.c:1661
-#, fuzzy
 msgid "gretl: edit Octave script"
-msgstr "gretl 指令檔 (*.inp)"
+msgstr "gretl: 編輯 Octave script"
 
 #: gui2/gui_utils.c:1663
-#, fuzzy
 msgid "gretl: edit Python script"
-msgstr "gretl 指令檔 (*.inp)"
+msgstr "gretl: 編輯 Python script"
 
 #: gui2/gui_utils.c:1665
 #: gui2/gui_utils.c:4930
@@ -14847,9 +14832,8 @@ msgstr "時間序列圖"
 
 #: gui2/menustate.c:349
 #: gui2/menustate.c:499
-#, fuzzy
 msgid "Panel plot..."
-msgstr "頻率分配圖(_p)"
+msgstr "Panel 繪圖..."
 
 #: gui2/menustate.c:351
 #: gui2/menustate.c:500
@@ -14894,9 +14878,8 @@ msgstr "編輯變數值"
 
 #: gui2/menustate.c:376
 #: gui2/menustate.c:509
-#, fuzzy
 msgid "Add log"
-msgstr "指令紀錄(_C)"
+msgstr "將變數取自然對數"
 
 #: gui2/menustate.c:378
 #: gui2/menustate.c:510
@@ -15344,9 +15327,8 @@ msgid "Censoring variable"
 msgstr "新增指標變數(_I)"
 
 #: gui2/selector.c:3714
-#, fuzzy
 msgid "Dependent variable 2"
-msgstr "新增指標變數(_I)"
+msgstr "應變數 2"
 
 #: gui2/selector.c:3716
 msgid "List of AR lags"
@@ -15423,7 +15405,6 @@ msgid "Choose"
 msgstr "選取"
 
 #: gui2/selector.c:4053
-#, fuzzy
 msgid "Variable to plot"
 msgstr "選擇要繪圖的變數"
 
@@ -15437,9 +15418,8 @@ msgid "Response variable"
 msgstr "新增指標變數(_I)"
 
 #: gui2/selector.c:4097
-#, fuzzy
 msgid "Dependent variable 1"
-msgstr "新增指標變數(_I)"
+msgstr "應變數 1"
 
 #: gui2/selector.c:4157
 msgid "lag order:"
@@ -15475,7 +15455,7 @@ msgstr "新增指標變數(_I)"
 
 #: gui2/selector.c:4256
 msgid "Factor (discrete)"
-msgstr ""
+msgstr "Factor 分類因素 (不連續變數)"
 
 #: gui2/selector.c:4258
 msgid "Control variable"
@@ -15872,9 +15852,8 @@ msgid "factorized plot"
 msgstr "頻率分配圖(_p)"
 
 #: gui2/selector.c:6362
-#, fuzzy
 msgid "factorized boxplot"
-msgstr "gretl: 箱形圖資料"
+msgstr "factorized 箱形圖資料"
 
 #: gui2/selector.c:6364
 msgid "scatterplot with control"
