@@ -1480,12 +1480,16 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    } else if (langs) {
 		char *strvar = (char *) rc->var;
 		const char *str;
+		int jj = 0;
 
 		for (j=LANG_AUTO; j<LANG_MAX; j++) {
 		    str = lang_string_from_id(j);
-		    combo_box_append_text(rc->widget, str);
-		    if (!strcmp(str, strvar)) {
-			active = j;
+		    if (str != NULL) {
+			combo_box_append_text(rc->widget, str);
+			if (!strcmp(str, strvar)) {
+			    active = jj;
+			}
+			jj++;
 		    }
 		}
 	    } else {
@@ -1662,37 +1666,37 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     for (i=0; rc_vars[i].key != NULL; i++) {
 	rcvar = &rc_vars[i];
 	w = rcvar->widget;
-	if (w != NULL) {
-	    if (rcvar->flags & BOOLSET) {
-		int bval = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+	if (w == NULL) {
+	    continue;
+	} else if (rcvar->flags & BOOLSET) {
+	    int bval = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 
-		rcvar_set_int(rcvar, bval, &changed);
-	    } else if ((rcvar->flags & USERSET) || 
-		       (rcvar->flags & MACHSET) ||
-		       (rcvar->flags & MACHSET)) {
-		gchar *str = entry_box_get_trimmed_text(w);
+	    rcvar_set_int(rcvar, bval, &changed);
+	} else if ((rcvar->flags & USERSET) || 
+		   (rcvar->flags & MACHSET) ||
+		   (rcvar->flags & MACHSET)) {
+	    gchar *str = entry_box_get_trimmed_text(w);
 
-		if (str != NULL) {
-		    rcvar_set_string(rcvar, str, &changed);
-		    g_free(str);
-		} 
-	    } else if (rcvar->flags & LISTSET) {
-		GtkComboBox *box = GTK_COMBO_BOX(w);
+	    if (str != NULL) {
+		rcvar_set_string(rcvar, str, &changed);
+		g_free(str);
+	    } 
+	} else if (rcvar->flags & LISTSET) {
+	    GtkComboBox *box = GTK_COMBO_BOX(w);
 
-		if (rcvar->flags & INTSET) {
-		    int ival = gtk_combo_box_get_active(box);
+	    if (rcvar->flags & INTSET) {
+		int ival = gtk_combo_box_get_active(box);
 
-		    rcvar_set_int(rcvar, ival, &changed);
+		rcvar_set_int(rcvar, ival, &changed);
+	    } else {
+		gchar *str = combo_box_get_active_text(box);
+
+		if (rcvar->flags & FLOATSET) {
+		    rcvar_set_double(rcvar, str, &changed);
 		} else {
-		    gchar *str = combo_box_get_active_text(box);
-
-		    if (rcvar->flags & FLOATSET) {
-			rcvar_set_double(rcvar, str, &changed);
-		    } else {
-			rcvar_set_string(rcvar, str, &changed);
-		    }
-		    g_free(str);
+		    rcvar_set_string(rcvar, str, &changed);
 		}
+		g_free(str);
 	    }
 	}
     }
