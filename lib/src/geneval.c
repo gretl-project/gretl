@@ -4058,6 +4058,19 @@ static NODE *list_length_node (NODE *n, parser *p)
     return ret;
 }
 
+static int look_up_vname (const char *s, const DATASET *dset)
+{
+    int i;
+
+    for (i=0; i<dset->v; i++) {
+	if (!strcmp(s, dset->varname[i])) {
+	    return i;
+	}
+    }
+
+    return -1;
+}
+
 /* return scalar node holding the position of the series
    associated with node @r in the list associated with node
    @l, or zero if the series is not present in the list
@@ -4082,6 +4095,11 @@ static NODE *in_list_node (NODE *l, NODE *r, parser *p)
 	    } else if (r->t == NUM) {
 		if (r->v.xval >= 0 && r->v.xval < p->dset->v) {
 		    k = (int) r->v.xval;
+		}
+	    } else if (r->t == STR) {
+		k = look_up_vname(r->v.str, p->dset);
+		if (k < 0) {
+		    ret->v.xval = 0;
 		}
 	    } else {
 		node_type_error(F_INLIST, 2, VEC, r, p);
