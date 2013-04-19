@@ -33,7 +33,7 @@ int get_local_decpoint (void);
 char *iso_to_ascii (char *s);
 
 /* the following enumeration is organized by alphabetical order of
-   English name of language: Basque, Chinese, Czech, ...
+   English name of language: Albanian, Basque, Bulgarian, ...
 */
 
 typedef enum {

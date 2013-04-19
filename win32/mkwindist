@@ -113,25 +113,26 @@ for lang in $LANGS ; do
    mkdir -p windist/gretl/locale/${lang}/LC_MESSAGES
 done
 
-# auxiliary dlls
+# auxiliary dlls (this did include freetype6.dll)
 for f in \
-    libgmp-3.dll libmpfr-1.dll libxml2.dll readline5.dll history5.dll \
-    libblas-3.dll liblapack-3.dll libgtksourceview-2.0-0.dll \
-    libfftw3-3.dll libcurl-4.dll iconv.dll freetype6.dll
+    libgmp-3.dll libmpfr-1.dll readline5.dll history5.dll \
+    libblas-3.dll liblapack-3.dll libfftw3-3.dll
 do
     add_file ${WINFILES}/misc-dll/$f gretl/$f
 done
 
-# third-party dlls that are now supplied separately (they were drawn 
-# from ${WINFILES}/misc-dll)
-# zlib1.dll intl.dll libexpat-1.dll libfontconfig-1.dll
+# more auxiliary dlls
+for f in \
+    libxml2-2.dll libiconv-2.dll libcurl-4.dll \
+    libgtksourceview-2.0-0.dll libffi-6.dll libcairo-2.dll \
+    libpixman-1-0.dll
+do
+    add_file ${SYSBIN}/$f gretl/$f
+done
 
 # system DLLs for threads/openmp, if required
 add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
 add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
-
-# could roll this into gtk-3rdparty
-add_file ${SYSBIN}/libffi-6.dll gretl/libffi-6.dll
 
 # XML UI-definition files
 for f in ${TOPDIR}/gui2/*.xml ; do
@@ -284,7 +285,7 @@ add_file gretl.stamp gretl/gretl.stamp
 # add GTK runtime and gnuplot distribution: note that we move
 # into the "windist" subdir first
 # RTFILE=gtk-runtime.tar.gz
-RTFILE=gtk-2.24a-runtime.tgz
+RTFILE=gtk-2.24-runtime-2.tgz
 cd windist
 if [ ! -f ${WINFILES}/${RTFILE} ] ; then
   echo "Couldn't find ${RTFILE}"
@@ -293,9 +294,10 @@ else
   process_tarball ${WINFILES}/${RTFILE}
 fi
 
-# additional GTK-related runtime files
-if [ -f ${WINFILES}/gtk-3rdparty.tgz ] ; then
-  process_tarball ${WINFILES}/gtk-3rdparty.tgz
+# additional GTK-related runtime files (includes intl.dll,
+# libpng, zlib)
+if [ -f ${WINFILES}/gtk-3rdparty-2.tgz ] ; then
+  process_tarball ${WINFILES}/gtk-3rdparty-2.tgz
 fi
 
 if [ ! -f ${WINFILES}/gp462w32.tar.gz ] ; then

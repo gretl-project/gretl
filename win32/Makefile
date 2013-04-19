@@ -28,7 +28,7 @@ RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 GTKLIBS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs gtk+-win32-2.0)
 GLIBLIB := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs glib-2.0)
 CLI_LIBS = -lreadline -lhistory
-GUI_LIBS = -lwsock32 -lole32 $(GTKLIBS) -lgtksourceview-2.0 -lxml2 -L$(imports)
+GUI_LIBS = -lwsock32 -lole32 $(GTKLIBS) -lgtksourceview-2.0 -lxml2.dll -L$(imports)
 GRETLLIB = -L$(imports) -lgretl -lintl
 LIBS = -lm $(GRETLLIB) -ladvapi32
 LAPACK_LIBS = -llapack.dll -lblas.dll
@@ -335,7 +335,7 @@ mklang.o: mklang.c $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gre
 	$(CC) -c -I. -I$(libsrcdir) -I$(XML2_INC) $<
 
 mklang.exe: mklang.o
-	$(CC) -o $@ $< $(GRETLLIB) $(XML_LIBS)
+	$(CC) -o $@ $< $(GRETLLIB) -lxml2.dll -lz
 
 native_lang: mklang.exe
 	PATH=/bin:./dlls:/mingw/winbuild/misc-dll ./mklang.exe > gretl.lang
@@ -349,7 +349,7 @@ $(MOFILES):
 dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
-	-o $@ $^ -lm -L$(imports) -lxml2 -lz -lintl -lprob -lgmp.dll \
+	-o $@ $^ -lm -L$(imports) -lxml2.dll -lz -lintl -lprob -lgmp.dll \
 	-lmingwex -lwsock32 $(GLIBLIB) $(LAPACK_LIBS) $(FFTW_LIBS) $(CURL_LIBS)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
@@ -399,17 +399,17 @@ plugins/progress_bar.dll: progress_bar.o dllinit.o
 
 plugins/gnumeric_import.dll: gnumeric_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml2 \
+	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml2.dll \
 	$(GRETLLIB) $(GTKLIBS)
 
 plugins/ods_import.dll: ods_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml2 \
+	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml2.dll \
 	$(GRETLLIB) $(GTKLIBS)
 
 plugins/xlsx_import.dll: xlsx_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml2 \
+	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml2.dll \
 	$(GRETLLIB) $(GTKLIBS)
 
 plugins/excel_import.dll: excel_import.o workbook.o ms-ole.o dllinit.o
