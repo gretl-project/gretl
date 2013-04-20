@@ -34,8 +34,8 @@
  * SUCH DAMAGE.
  */
 
-/* The following calendar code is based on the source code for the
-   unix "cal" program, the provenance of which is given in the above
+/* The following calendar code is partly based on the source code for
+   the unix "cal" program, the provenance of which is given in the above
    notice.  Allin Cottrell, March 2002.
 */
 
