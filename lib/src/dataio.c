@@ -2345,6 +2345,26 @@ static int merge_data (DATASET *dset, DATASET *addset,
     return err;
 }
 
+/* We want to ensure that calendar dates are recorded as per
+   ISO 8601 -- that is, YYYY-MM-DD; here we remedy dates 
+   recorded in the form YYYY/MM/DD.
+*/
+
+static void maybe_fix_calendar_dates (DATASET *dset)
+{
+    if (strchr(dset->stobs, '/') != NULL) {
+	gretl_charsub(dset->stobs, '/', '-');
+	gretl_charsub(dset->endobs, '/', '-');
+	if (dset->S != NULL && dset->markers == DAILY_DATE_STRINGS) {
+	    int t;
+
+	    for (t=0; t<dset->n; t++) {
+		gretl_charsub(dset->S[t], '/', '-');
+	    }
+	}
+    }
+}
+
 /**
  * merge_or_replace_data:
  * @dset0: original dataset struct.
@@ -2370,11 +2390,17 @@ int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
     int err = 0;
 
     if (dset0->Z != NULL) {
+	/* we have an existing dataset into which the new data
+	   should be merged */
 	err = merge_data(dset0, *pdset1, opt, prn);
 	destroy_dataset(*pdset1);
     } else {
+	/* starting from scratch */
 	*dset0 = **pdset1;
 	free(*pdset1);
+	if (calendar_data(dset0)) {
+	    maybe_fix_calendar_dates(dset0);
+	}
     }
 
     *pdset1 = NULL;

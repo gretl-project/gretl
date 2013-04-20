@@ -270,7 +270,7 @@ void calendar_date_string (char *str, int t, const DATASET *dset)
  * the base is assumed to be 1899/12/31.
  * 
  * Writes to @date the calendar representation of the date of
- * observation @mst, in the form YYYY/MM/DD if @pd is 0, 5,
+ * observation @mst, in the form YYYY-MM-DD if @pd is 0, 5,
  * 6, 7 or 52 (unknown, daily, or weekly frequency), otherwise 
  * in the appropriate format for annual, quarterly or monthly data.
  * 

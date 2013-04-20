@@ -2530,6 +2530,33 @@ static int remedy_empty_data (DATASET *dset)
     return err;
 }
 
+static void check_for_daily_date_strings (DATASET *dset)
+{
+    int m, d, n;
+    int y1 = 0, y2 = 0;
+    int oldfmt = 0;
+
+    n = sscanf(dset->S[0], YMD_READ_FMT, &y1, &m, &d);
+    if (n != 3) {
+	oldfmt = 1;
+	n = sscanf(dset->S[0], "%d/%d/%d", &y1, &m, &d);
+    }
+
+    if (n == 3) {
+	int k = dset->n - 1;
+
+	if (oldfmt) {
+	    n = sscanf(dset->S[k], "%d/%d/%d", &y2, &m, &d);
+	} else {
+	    n = sscanf(dset->S[k], YMD_READ_FMT, &y2, &m, &d);
+	}
+    }
+
+    if (n == 3 && y2 >= y1) {
+	dset->markers = DAILY_DATE_STRINGS;
+    }
+}
+
 /**
  * gretl_read_gdt:
  * @fname: name of file to try.
@@ -2674,6 +2701,10 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
     if (!err && !gotobs) {
 	gretl_errmsg_set(_("No observations were found"));
 	err = 1;
+    }
+
+    if (!err && caldata && tmpset->S != NULL) {
+	check_for_daily_date_strings(tmpset);
     }
 
     if (!err) {
