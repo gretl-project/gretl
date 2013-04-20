@@ -369,7 +369,7 @@ int MS_excel_date_string (char *date, int mst, int pd, int d1904)
 
 /**
  * get_dec_date:
- * @date: calendar representation of date: YYYY/MM/DD.
+ * @date: calendar representation of date: YYYY-MM-DD.
  * 
  * Returns: representation of date as year plus fraction of year.
  */
@@ -377,27 +377,26 @@ int MS_excel_date_string (char *date, int mst, int pd, int d1904)
 double get_dec_date (const char *date)
 {
     char tmp[OBSLEN];
-    int yr, mo, day;
+    int yr, mo, day, n;
     long ed0, edn, edt;
     double dyr, frac;
 
-    if (sscanf(date, YMD_READ_FMT, &yr, &mo, &day) != 3) {
+    n = sscanf(date, YMD_READ_FMT, &yr, &mo, &day);
+
+    if (n != 3 && strchr(date, '/') != NULL) {
+	/* backward compatibility */
+	n = sscanf(date, "%d/%d/%d", &yr, &mo, &day);
+    }
+
+    if (n != 3) {
 	return NADBL;
     }
 
-#if USE_ISO_8601
     edt = get_epoch_day(date);
     sprintf(tmp, "%04d-01-01", yr);
     ed0 = get_epoch_day(tmp);
     sprintf(tmp, "%04d-12-31", yr);
     edn = get_epoch_day(tmp);
-#else
-    edt = get_epoch_day(date);
-    sprintf(tmp, "%04d/01/01", yr);
-    ed0 = get_epoch_day(tmp);
-    sprintf(tmp, "%04d/12/31", yr);
-    edn = get_epoch_day(tmp);
-#endif
 
     if (yr < 100) {
 	yr = FOUR_DIGIT_YEAR(yr);

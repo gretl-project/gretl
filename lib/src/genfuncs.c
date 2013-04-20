@@ -2778,6 +2778,7 @@ const double *gretl_plotx (const DATASET *dset)
     int t, y1, T;
     int new_ptype = 0;
     int panvar = 0;
+    int failed = 0;
     double sd0;
     float rm;
 
@@ -2826,6 +2827,8 @@ const double *gretl_plotx (const DATASET *dset)
 	return x;
     }
 
+ try_again:
+
     Tbak = T;
     ptype = new_ptype;
     sd0bak = sd0;
@@ -2867,6 +2870,10 @@ const double *gretl_plotx (const DATASET *dset)
 		calendar_date_string(datestr, t, dset);
 		x[t] = get_dec_date(datestr);
 	    }
+	    if (na(x[t])) {
+		failed++;
+		break;
+	    }
 	}
 	break;
     case PLOTVAR_DECADES:
@@ -2886,6 +2893,13 @@ const double *gretl_plotx (const DATASET *dset)
 	break;
     default:
 	break;
+    }
+
+    if (failed == 1) {
+	/* calendar dating failed */
+	failed++; /* ensure we don't loop */
+	new_ptype = PLOTVAR_TIME;
+	goto try_again;
     }
 
     return x;
