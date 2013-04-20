@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.9x\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2013-04-18 17:22+0800\n"
+"PO-Revision-Date: 2013-04-20 23:24+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung@cycu.edu.tw>\n"
 "Language-Team: gretl <gretl-users@lists.wfu.edu>\n"
 "MIME-Version: 1.0\n"
@@ -20,12 +20,12 @@ msgstr "lagged differences"
 #: lib/src/adf_kpss.c:307
 #: gui2/library.c:932
 msgid "modified AIC"
-msgstr ""
+msgstr "modified AIC"
 
 #: lib/src/adf_kpss.c:309
 #: gui2/library.c:933
 msgid "modified BIC"
-msgstr ""
+msgstr "modified BIC"
 
 #: lib/src/adf_kpss.c:311
 #: gui2/library.c:934
@@ -495,7 +495,7 @@ msgstr "mean"
 
 #: lib/src/boxplots.c:431
 msgid "group"
-msgstr ""
+msgstr "group"
 
 #: lib/src/boxplots.c:731
 #: lib/src/genfuncs.c:5112
@@ -542,7 +542,7 @@ msgstr "虛無假設 H0: 迴歸自變數  %s 之係數 = 0"
 #: lib/src/varprint.c:1255
 #: lib/src/varprint.c:1263
 msgid "Null hypothesis"
-msgstr "Null hypothesis"
+msgstr "虛無假設 H0 "
 
 #: lib/src/compare.c:276
 #, fuzzy
@@ -852,7 +852,7 @@ msgstr "Chow 的結構性轉變之 F 檢定"
 #: lib/src/compare.c:2484
 #, c-format
 msgid "Asymptotic p-value = %.4g for chi-square(%d) = %g"
-msgstr ""
+msgstr "漸近 (asymptotic) p-值 = %.4g for 卡方分配 chi-square(%d) = %g"
 
 #: lib/src/compare.c:2511
 msgid ""
@@ -897,12 +897,12 @@ msgstr "觀察值"
 #: lib/src/compare.c:3012
 #, no-c-format
 msgid "CUSUMSQ plot with 95% confidence band"
-msgstr ""
+msgstr "CUSUMSQ plot with 95% 信賴區間 (confidence band)"
 
 #: lib/src/compare.c:3020
 #, no-c-format
 msgid "CUSUM plot with 95% confidence band"
-msgstr ""
+msgstr "CUSUM plot with 95% 信賴區間 (confidence band)"
 
 #: lib/src/compare.c:3055
 #, c-format
@@ -911,10 +911,13 @@ msgid ""
 "Harvey-Collier t(%d) = %g with p-value %.4g\n"
 "\n"
 msgstr ""
+"\n"
+"Harvey-Collier t(%d) = %g with p-值 %.4g\n"
+"\n"
 
 #: lib/src/compare.c:3138
 msgid "CUSUMSQ test for stability of parameters"
-msgstr ""
+msgstr "CUSUMSQ 結構轉變檢定 (test for stability of parameters"
 
 #: lib/src/compare.c:3155
 #, fuzzy
@@ -923,7 +926,7 @@ msgstr "累計殘差平方和"
 
 #: lib/src/compare.c:3159
 msgid "CUSUM test for stability of parameters"
-msgstr ""
+msgstr "CUSUM 結構轉變檢定 (test for stability of parameters)"
 
 #: lib/src/compare.c:3160
 #, fuzzy, c-format
@@ -983,11 +986,14 @@ msgid ""
 "You need to have the same number of observations\n"
 "for each cross-sectional unit"
 msgstr ""
+"抱歉, 在不對稱 panel 資料 (unbalanced panel) 無法進行此檢定.\n"
+"每個 cross-sectional unit 中\n"
+"都必需有相同的樣本數"
 
 #: lib/src/compat.c:223
 #, c-format
 msgid "'o' stands for %s and 'x' stands for %s (+ means they are equal)"
-msgstr ""
+msgstr "'o' 代表 %s and 'x' 代表 %s (+ 加號表示他們並不相同)"
 
 #: lib/src/compat.c:341
 #, c-format
@@ -996,6 +1002,9 @@ msgid ""
 "\n"
 "%8c"
 msgstr ""
+"%25cNOTE: o 代表 %s\n"
+"\n"
+"%8c"
 
 #: lib/src/compat.c:406
 #, c-format
@@ -1003,6 +1012,8 @@ msgid ""
 "%17cNOTE: o stands for %s,   x stands for %s\n"
 "%17c+ means %s and %s are equal when scaled\n"
 msgstr ""
+"%17cNOTE: o 代表 %s,   x 代表 %s\n"
+"%17c+ 加號表示 %s 和 %s 並不相同 (在 scaled 之後)\n"
 
 #: lib/src/compat.c:410
 #, c-format
@@ -1102,9 +1113,10 @@ msgstr "   %s: 可能代表「年」... "
 msgid "   %s: probably not a year\n"
 msgstr "   %s: 可能不是代表「年」\n"
 
+# tbd
 #: lib/src/csvdata.c:919
 msgid "   but I can't make sense of the extra bit\n"
-msgstr ""
+msgstr "   but I can't make sense of the extra bit\n"
 
 #: lib/src/csvdata.c:921
 msgid "and just a year\n"
@@ -1153,9 +1165,10 @@ msgstr " (%d) 是二進位 (binary) 資料: 這不是一個一般的文字檔\n"
 msgid "Data file is empty\n"
 msgstr "資料檔中無資料 (Data file is empty)\n"
 
+# tbd
 #: lib/src/csvdata.c:1364
 msgid "Data file has trailing commas\n"
-msgstr ""
+msgstr "資料檔尾有英文逗號\n"
 
 #: lib/src/csvdata.c:1533
 #, fuzzy, c-format
@@ -1169,7 +1182,7 @@ msgstr "   似乎有樣本標記\n"
 #: lib/src/csvdata.c:1549
 #, c-format
 msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
-msgstr ""
+msgstr "   變數 %d, 樣本數 %d 的資料格內容是空的: 將之視為遺漏值 (missing value)\n"
 
 #: lib/src/csvdata.c:1559
 #, c-format
@@ -1190,6 +1203,12 @@ msgid ""
 "  in that case its row 1 entry should be blank, or should say 'obs' or 'date'.\n"
 "- The remainder of the file must be a rectangular array of data.\n"
 msgstr ""
+"\n"
+"請注意, CSV 檔中的:\n"
+"- 第一列 (row) 應該含有變數名稱.\n"
+"- 第一行 (column) 可包含日期字串, 或其它樣本資料註記 ('markers'):\n"
+"  在此情況下, 第一列第一行位置格內容通常是'空白', 或 'obs' or 'date'.\n"
+"- 檔案其餘的部份, 應該是矩形的資料區域.\n"
 
 #: lib/src/csvdata.c:1859
 #, c-format
@@ -1199,7 +1218,7 @@ msgstr "   欄 (column) 的數目 = %d\n"
 #: lib/src/csvdata.c:1861
 #, c-format
 msgid "   ...but row %d has %d fields: aborting\n"
-msgstr ""
+msgstr "   ...但列 (row) %d 有 %d 個橺 (fields): 離開處理程序中...\n"
 
 #: lib/src/csvdata.c:2009
 msgid "scanning for variable names...\n"
@@ -1230,7 +1249,7 @@ msgstr "似乎沒有定義變數名稱\n"
 #: plugin/import_common.c:59
 #, c-format
 msgid "At row %d, column %d:\n"
-msgstr ""
+msgstr "在第 %d 列 (row) , 第 %d 列 (column):\n"
 
 #: lib/src/csvdata.c:2179
 #: lib/src/dataio.c:3312
@@ -1344,7 +1363,7 @@ msgstr "記憶體不足\n"
 #: lib/src/csvdata.c:3318
 #: lib/src/csvdata.c:3393
 msgid "You need to specify an aggregation method for a 1:n join"
-msgstr ""
+msgstr "你必需提供 aggregation method for a 1:n join"
 
 #: lib/src/csvdata.c:4302
 #: gui2/library.c:4008
@@ -1641,7 +1660,7 @@ msgstr "沒有變數被讀取\n"
 
 #: lib/src/dataset.c:1681
 msgid "some data were in use"
-msgstr ""
+msgstr "仍有資料在使用中"
 
 #: lib/src/dataset.c:1834
 #: gui2/gui_utils.c:4707
@@ -1779,22 +1798,22 @@ msgstr "null sample 有問題"
 
 #: lib/src/dbread.c:2119
 msgid "Expected an SQL query string"
-msgstr ""
+msgstr "預期要有一個  SQL query 查詢字串"
 
 #: lib/src/dbread.c:2149
 #: plugin/tramo-x12a.c:370
 msgid "Expected a valid variable name"
-msgstr ""
+msgstr "預期要有一個合法的變數名稱"
 
 #: lib/src/dbread.c:2283
 #: lib/src/dbread.c:2463
 #: lib/src/dbread.c:2611
 msgid "No database has been opened"
-msgstr ""
+msgstr "沒有資料庫被開啟"
 
 #: lib/src/dbread.c:2288
 msgid "No series length has been defined"
-msgstr ""
+msgstr "資料的樣本長度沒有被定義"
 
 #: lib/src/dbread.c:2559
 msgid "Series imported OK"
@@ -1840,7 +1859,7 @@ msgstr "無法開啟並寫入 %s  "
 #: lib/src/dbwrite.c:612
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr ""
+msgstr "在所存資料變數, %d 已有同名的變數被儲存在資料庫中."
 
 #: lib/src/describe.c:1166
 msgid "Insufficient data"
@@ -1851,9 +1870,10 @@ msgstr "資料不足 (Insufficient data)"
 msgid "Residual correlation matrix, C"
 msgstr "共變數矩陣的反矩陣"
 
+# tbd
 #: lib/src/describe.c:1471
 msgid "Eigenvalues of C"
-msgstr ""
+msgstr "Eigenvalues of C"
 
 #: lib/src/describe.c:1551
 #: lib/src/describe.c:6567
@@ -1873,7 +1893,7 @@ msgstr "gnuplot 指令執行失敗\n"
 #: lib/src/describe.c:2432
 #, c-format
 msgid "Matrix %s does not represent a contingency table"
-msgstr ""
+msgstr "矩陣 %s 並不是一個 contingency table"
 
 #: lib/src/describe.c:2768
 #: lib/src/describe.c:3020
@@ -1955,7 +1975,7 @@ msgstr "無常數項之檢定"
 #: lib/src/describe.c:3586
 #, c-format
 msgid "Cross-correlation function for %s and %s"
-msgstr ""
+msgstr " %s 和 %s 的交叉相關函數 (Cross-correlation function)"
 
 #: lib/src/describe.c:3589
 #, fuzzy
@@ -2227,11 +2247,11 @@ msgstr "設定子樣本範圍(_S)"
 #: lib/src/describe.c:4957
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
-msgstr ""
+msgstr "消去 %s: 樣本範圍中不含包任何有效樣本\n"
 
 #: lib/src/describe.c:5318
 msgid "corr: needs at least two non-constant arguments"
-msgstr ""
+msgstr "corr: 至少需要兩個非常數之引數"
 
 #: lib/src/describe.c:5375
 #: lib/src/modelprint.c:3372
@@ -2943,9 +2963,9 @@ msgid "other"
 msgstr "其它線性模型(_l)"
 
 #: lib/src/genlex.c:696
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no such object"
-msgstr "共變數矩陣的反矩陣"
+msgstr "%s: 沒有這種物件 (object)"
 
 #: lib/src/genlex.c:698
 #, fuzzy, c-format
@@ -2954,9 +2974,9 @@ msgstr "殘差是常態分配"
 
 #: lib/src/genlex.c:708
 #: lib/src/genlex.c:710
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no argument was given"
-msgstr "%s: 參數應該是 %s"
+msgstr "'%s': 未給定參數"
 
 #: lib/src/genlex.c:721
 msgid "(for logical AND, use '&&')\n"
@@ -3117,11 +3137,8 @@ msgstr "標準差"
 
 #: lib/src/graphing.c:487
 #: gui2/library.c:6776
-#, fuzzy
 msgid "You must supply three variables, the last of which is discrete"
-msgstr ""
-"你必需選擇 3 個變數\n"
-"其中最後 1 個必需是虛擬變數 (即其值只能為 1 或 0)"
+msgstr "你必需選擇 3 個變數, 其中最後 1 個必需是不連續變數 (discrete 即其值只能是整數)"
 
 #: lib/src/graphing.c:1630
 msgid "Gnuplot does not support PDF output on this system"
@@ -3243,9 +3260,9 @@ msgid "Relative frequency"
 msgstr "相對機率 (Relative frequency)"
 
 #: lib/src/graphing.c:4470
-#, fuzzy, c-format
+#, c-format
 msgid "observations sorted by %s"
-msgstr "依變數ID排序(_I)"
+msgstr "樣本已依 %s 變數排序"
 
 #: lib/src/graphing.c:4491
 #: lib/src/graphing.c:4722
@@ -3328,9 +3345,8 @@ msgstr "向量自我迴歸之殘差 (VAR residuals)"
 
 #: lib/src/graphing.c:5883
 #: gui2/gui_utils.c:3190
-#, fuzzy
 msgid "System residuals"
-msgstr "向量自我迴歸之殘差"
+msgstr "System 殘差"
 
 #: lib/src/graphing.c:5961
 msgid "EC terms"
@@ -3357,9 +3373,9 @@ msgid "Q-Q plot"
 msgstr "分量散佈圖 (Q-Q plot)"
 
 #: lib/src/graphing.c:6405
-#, fuzzy, c-format
+#, c-format
 msgid "Q-Q plot for %s"
-msgstr "頻率分配圖(_p)"
+msgstr "%s 的 Q-Q 圖"
 
 #: lib/src/graphing.c:6408
 #, fuzzy
@@ -3962,14 +3978,12 @@ msgstr "要選擇的樣本數 (最多 %d)"
 
 #: lib/src/gretl_model.c:3638
 #: lib/src/gretl_model.c:3645
-#, fuzzy
 msgid "failed"
-msgstr "預測"
+msgstr "failed"
 
 #: lib/src/gretl_model.c:3743
-#, fuzzy
 msgid "Asymptotic test statistic"
-msgstr "基本假設檢定(_T)"
+msgstr "漸進統計值 (asymptotic test statistic)"
 
 #: lib/src/gretl_model.c:3760
 #, fuzzy
@@ -4147,7 +4161,7 @@ msgstr "群組異質變異 (Groupwise heteroskedasticity)"
 #: lib/src/gretl_panel.c:4272
 #, c-format
 msgid "Error: unit %g, period %g: duplicated observation"
-msgstr ""
+msgstr "Error: unit %g, period %g: 有重覆樣本"
 
 #: lib/src/gretl_paths.c:2115
 msgid "User directory is not set"
@@ -4167,7 +4181,7 @@ msgstr "無法寫入 '%s': gretl 無法正確運作"
 #: gui2/model_table.c:1368
 #, c-format
 msgid "wrote %s\n"
-msgstr ""
+msgstr "寫入 %s\n"
 
 #: lib/src/gretl_paths.c:2313
 #, c-format
@@ -4217,19 +4231,19 @@ msgstr "請輸入係數的數目"
 #: lib/src/gretl_restrict.c:746
 #, c-format
 msgid "%s: not a valid parameter name"
-msgstr ""
+msgstr "%s: 並不是合法的參數名稱"
 
 #: lib/src/gretl_restrict.c:851
 #, c-format
 msgid "%s: division not allowed here"
-msgstr ""
+msgstr "%s: division not allowed here"
 
 #: lib/src/gretl_restrict.c:889
 #: lib/src/gretl_restrict.c:1440
 #: lib/src/gretl_restrict.c:1470
 #, c-format
 msgid "Coefficient number (%d) is out of range"
-msgstr ""
+msgstr "係數總數 (%d) 超過範圍"
 
 #: lib/src/gretl_restrict.c:905
 #: lib/src/gretl_restrict.c:1444
@@ -4237,7 +4251,7 @@ msgstr ""
 #: lib/src/gretl_restrict.c:1466
 #, c-format
 msgid "Equation number (%d) is out of range"
-msgstr ""
+msgstr "方程式數 (%d) 超過範圍"
 
 #: lib/src/gretl_restrict.c:1025
 #: lib/src/gretl_restrict.c:1783
@@ -4261,7 +4275,7 @@ msgstr "限制式"
 #: lib/src/gretl_restrict.c:1457
 #, c-format
 msgid "Coefficient number (%d) out of range for equation %d"
-msgstr ""
+msgstr "第 %d 條方程式中的係數總數 (%d) 超過範圍"
 
 #: lib/src/gretl_restrict.c:1693
 #, fuzzy
@@ -4271,11 +4285,11 @@ msgstr "資料檔格式錯誤\n"
 #: lib/src/gretl_restrict.c:1757
 #, c-format
 msgid "Too many restrictions (maximum is %d)"
-msgstr ""
+msgstr "限制式太多 (最大值是 %d)"
 
 #: lib/src/gretl_restrict.c:1924
 msgid "Restricted estimates"
-msgstr ""
+msgstr "受限模型估計結果"
 
 #: lib/src/gretl_restrict.c:1940
 #: lib/src/modelprint.c:2734
@@ -4321,14 +4335,13 @@ msgstr "變數"
 #: lib/src/gretl_restrict.c:2786
 #: gui2/library.c:1999
 msgid "Sum of coefficients"
-msgstr "迴歸係數和 =0 之檢定"
+msgstr "迴歸估計係數之和 = "
 
 #: lib/src/gretl_restrict.c:2789
 #: lib/src/gretl_restrict.c:2798
 #: gui2/dialogs.c:5456
-#, fuzzy
 msgid "Standard error"
-msgstr "標準誤"
+msgstr "標準誤 (Standard error)"
 
 #: lib/src/gretl_restrict.c:2796
 #: lib/src/gretl_restrict.c:2806
@@ -5779,7 +5792,7 @@ msgstr ""
 #: lib/src/vartest.c:66
 #: lib/src/vartest.c:130
 msgid "Equation"
-msgstr ""
+msgstr "方程式 (Equation)"
 
 #: lib/src/modelprint.c:1807
 #: lib/src/modelprint.c:1809
@@ -5883,10 +5896,10 @@ msgstr "$t$-ratio"
 #: lib/src/modelprint.c:4281
 #: gui2/dialogs.c:5457
 #: plugin/panurc.c:562
-#, fuzzy
 msgid "t-ratio"
-msgstr "H0: Ratio of variances 變異數比率 = 1"
+msgstr "t-值"
 
+# 迴歸結果
 #: lib/src/modelprint.c:2183
 #: lib/src/modelprint.c:2186
 #: lib/src/modelprint.c:2194
@@ -5898,9 +5911,8 @@ msgstr "H0: Ratio of variances 變異數比率 = 1"
 #: lib/src/modelprint.c:4104
 #: lib/src/modelprint.c:4279
 #: plugin/panurc.c:561
-#, fuzzy
 msgid "coefficient"
-msgstr "Gini 係數(_G)"
+msgstr "coefficient"
 
 #: lib/src/modelprint.c:2183
 #: lib/src/modelprint.c:2186
@@ -5917,9 +5929,8 @@ msgstr "Gini 係數(_G)"
 #: gui2/guiprint.c:1703
 #: gui2/guiprint.c:1800
 #: plugin/fractals.c:271
-#, fuzzy
 msgid "std. error"
-msgstr "資料錯誤"
+msgstr "std. error"
 
 #: lib/src/modelprint.c:2187
 #, fuzzy
@@ -7123,7 +7134,7 @@ msgstr "error"
 #: lib/src/printout.c:1739
 #, c-format
 msgid "Listing %d variables:\n"
-msgstr "Listing %d variables:\n"
+msgstr "列出此檔之 %d 個變數 (variables):\n"
 
 #: lib/src/printout.c:1782
 msgid "list is empty"
@@ -7997,17 +8008,17 @@ msgstr "常態性檢定(_N)"
 #: lib/src/varprint.c:1171
 #: lib/src/varprint.c:1176
 #: lib/src/varprint.c:1186
-#, fuzzy, c-format
+#, c-format
 msgid "All lags of %s"
-msgstr "全選(_a)"
+msgstr "%s 變數之所有落後期"
 
 #: lib/src/varprint.c:986
 #: lib/src/varprint.c:1202
 #: lib/src/varprint.c:1207
 #: lib/src/varprint.c:1214
-#, fuzzy, c-format
+#, c-format
 msgid "All vars, lag %d"
-msgstr "選擇VAR落後期(_V)"
+msgstr "所有變數,落後期數: %d"
 
 #: lib/src/varprint.c:1048
 #, fuzzy, c-format
@@ -8015,14 +8026,14 @@ msgid "VECM system, lag order %d"
 msgstr "ADF 檢定落後階次 (lag order):"
 
 #: lib/src/varprint.c:1050
-#, fuzzy, c-format
+#, c-format
 msgid "VAR system, lag order %d"
-msgstr "ADF 檢定落後階次 (lag order):"
+msgstr "向量自我迴歸 (VAR system), 落後期數: %d"
 
 #: lib/src/varprint.c:1056
-#, fuzzy, c-format
+#, c-format
 msgid "%s estimates, observations %s--%s ($T=%d$)"
-msgstr "增加樣本(_A)"
+msgstr "%s 估計值, 使用中之子樣本範圍 %s--%s ($T=%d$)"
 
 #: lib/src/varprint.c:1057
 #: lib/src/varprint.c:1066
@@ -8032,9 +8043,9 @@ msgstr "最大概似值 (Maximum likelihood)"
 
 #: lib/src/varprint.c:1065
 #: lib/src/varprint.c:1073
-#, fuzzy, c-format
+#, c-format
 msgid "%s estimates, observations %s-%s (T = %d)"
-msgstr "增加樣本(_A)"
+msgstr "%s 估計值, 使用中之子樣本範圍 %s-%s (樣本總數 T = %d)"
 
 #: lib/src/varprint.c:1131
 #: lib/src/varprint.c:1135
@@ -8046,43 +8057,41 @@ msgstr "檢查有無更新版(_u)"
 #: lib/src/varprint.c:1150
 #: lib/src/varprint.c:1153
 #: lib/src/varprint.c:1155
-#, fuzzy
 msgid "F-tests of zero restrictions"
-msgstr "gretl: 無母數檢定(_N)"
+msgstr "此方程式, 係數=0 之 Ｆ檢定結果 (F-tests of zero restrictions)"
 
 #: lib/src/varprint.c:1242
 #: lib/src/varprint.c:1243
-#, fuzzy, c-format
+#, c-format
 msgid "the longest lag is %d"
-msgstr "選擇VAR落後期(_V)"
+msgstr "VAR 之最大落後期是 %d"
 
 #: lib/src/varprint.c:1248
 #: lib/src/varprint.c:1254
 #: lib/src/varprint.c:1262
 msgid "For the system as a whole"
-msgstr ""
+msgstr "對整個向量自迴歸 (VAR) 來看"
 
 #: lib/src/varprint.c:1250
 #: lib/src/varprint.c:1256
 #: lib/src/varprint.c:1264
-#, fuzzy
 msgid "Alternative hypothesis"
-msgstr "gretl: 假設檢定"
+msgstr "對立假設 H1 "
 
 #: lib/src/varprint.c:1269
 msgid "Comparison of information criteria"
-msgstr ""
+msgstr "資訊準則 (information criteria) 之比較"
 
 #: lib/src/varprint.c:1271
 #: lib/src/varprint.c:1275
-#, fuzzy, c-format
+#, c-format
 msgid "Lag order %*d"
-msgstr "落後期 %d\n"
+msgstr "落後期 %*d"
 
 #: lib/src/vartest.c:279
 #, c-format
 msgid "VAR system, maximum lag order %d"
-msgstr ""
+msgstr "向量自我迴歸 (VAR system), 所選之最大落後期數: %d"
 
 #: lib/src/vartest.c:282
 msgid ""
@@ -12991,7 +13000,7 @@ msgstr ""
 
 #: gui2/guiprint.c:1383
 msgid "Theil's $U$"
-msgstr ""
+msgstr "Theil's $U$"
 
 #: gui2/guiprint.c:1384
 msgid "Bias proportion, $U^M$"
@@ -13294,7 +13303,7 @@ msgstr "White 檢定 (不含交乘項)"
 
 #: gui2/gui_utils.c:267
 msgid "_groupwise"
-msgstr ""
+msgstr "_groupwise"
 
 #: gui2/gui_utils.c:271
 #, fuzzy
@@ -13311,13 +13320,13 @@ msgstr "_LaTeX"
 #: gui2/gui_utils.c:314
 #: gui2/gui_utils.c:317
 msgid "_Tabular"
-msgstr ""
+msgstr "_Tabular"
 
 #: gui2/gui_utils.c:312
 #: gui2/gui_utils.c:315
 #: gui2/gui_utils.c:318
 msgid "_Equation"
-msgstr ""
+msgstr "_Equation"
 
 #: gui2/gui_utils.c:319
 msgid "_Equation options"
@@ -13325,7 +13334,7 @@ msgstr "方程式選項(_E)"
 
 #: gui2/gui_utils.c:320
 msgid "_Tabular options..."
-msgstr ""
+msgstr "_Tabular options..."
 
 #: gui2/gui_utils.c:324
 msgid "Show _standard errors"
@@ -13602,7 +13611,7 @@ msgstr "gretl: 臨界值"
 
 #: gui2/gui_utils.c:3258
 msgid "View X-12-ARIMA output"
-msgstr ""
+msgstr "看 X-12-ARIMA 結果"
 
 #: gui2/gui_utils.c:3382
 msgid "Cholesky ordering:"
@@ -13660,7 +13669,7 @@ msgstr "欲檢定之落後期數 (lag order):"
 
 #: gui2/gui_utils.c:4107
 msgid "_Normality of residuals"
-msgstr "殘差的常態性檢定 (_Normality)"
+msgstr "殘差的常態性檢定 (_Nornality Test)"
 
 #: gui2/gui_utils.c:4113
 msgid "Linear restrictions"
@@ -14851,7 +14860,7 @@ msgstr "產生新變數..."
 #: gui2/menustate.c:415
 #: gui2/selector.c:5464
 msgid "Ensure uniform sample size"
-msgstr ""
+msgstr "讓樣本數相同"
 
 #: gui2/menustate.c:438
 #: gui2/menustate.c:561
@@ -15715,7 +15724,7 @@ msgstr "顯示欄 (colomn) 的百分比"
 
 #: gui2/selector.c:5936
 msgid "Fine-tune using Cochrane-Orcutt"
-msgstr ""
+msgstr "利用 Cochrane-Orcutt 來微調"
 
 #: gui2/selector.c:5961
 #: gui2/selector.c:5973
