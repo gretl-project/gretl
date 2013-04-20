@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.9x\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2013-04-20 23:24+0800\n"
+"PO-Revision-Date: 2013-04-21 01:19+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung@cycu.edu.tw>\n"
 "Language-Team: gretl <gretl-users@lists.wfu.edu>\n"
 "MIME-Version: 1.0\n"
@@ -2321,12 +2321,12 @@ msgstr "Correlation Coefficients"
 #: lib/src/describe.c:5510
 #: lib/src/describe.c:5594
 msgid "Sample range has no valid observations."
-msgstr ""
+msgstr "此樣本區間無任何有效樣本"
 
 #: lib/src/describe.c:5516
 #: lib/src/describe.c:5600
 msgid "Sample range has only one observation."
-msgstr ""
+msgstr "此樣本區間只有 1 個樣本"
 
 #: lib/src/describe.c:5543
 #, c-format
@@ -2654,6 +2654,8 @@ msgid ""
 "X-12-ARIMA can't handle more than %d observations.\n"
 "Please select a smaller sample."
 msgstr ""
+"X-12-ARIMA 無法處理超過 %d 樣本數的資料.\n"
+"請縮減樣本大小."
 
 #: lib/src/flow_control.c:68
 msgid "error evaluating 'if'"
@@ -2724,7 +2726,7 @@ msgstr "'%s': 錯誤的參數 for %s()\n"
 #: gui2/objectsave.c:54
 #, c-format
 msgid "%s: no such object\n"
-msgstr ""
+msgstr "%s: 沒有這種物件 (object)\n"
 
 #: lib/src/geneval.c:8599
 #, c-format
@@ -2800,12 +2802,12 @@ msgstr "'%s' : 尚不能用在矩陣運算"
 #: lib/src/geneval.c:10728
 #, c-format
 msgid "'%s' : not implemented for lists"
-msgstr ""
+msgstr "'%s' : 尚不能用在變數集 (lists)"
 
 #: lib/src/geneval.c:10735
 #, c-format
 msgid "'%s' : not implemented for strings"
-msgstr ""
+msgstr "'%s' : 尚不能用在字串 (strings)"
 
 #: lib/src/geneval.c:10742
 #, c-format
@@ -2815,7 +2817,7 @@ msgstr "'%s' : only defined for matrices"
 #: lib/src/geneval.c:10749
 #, c-format
 msgid "'%s' : not implemented for this type"
-msgstr ""
+msgstr "'%s' : 尚不能用在此變數形態 (type)"
 
 #: lib/src/geneval.c:12016
 msgid "Bare declarations are not allowed here"
@@ -2824,7 +2826,7 @@ msgstr ""
 #: lib/src/genfuncs.c:852
 #: gui2/library.c:5088
 msgid "Input must be a monthly or quarterly time series"
-msgstr ""
+msgstr "輸入必須是月或季資料"
 
 #: lib/src/genfuncs.c:862
 #: plugin/tramo-x12a.c:1309
@@ -2832,6 +2834,8 @@ msgid ""
 "TRAMO can't handle more than 600 observations.\n"
 "Please select a smaller sample."
 msgstr ""
+"TRAMO 無法處理超過 600 樣本數的資料.\n"
+"請縮減樣本大小."
 
 #: lib/src/genfuncs.c:2317
 #, fuzzy, c-format
@@ -2846,7 +2850,7 @@ msgstr "= 1 if 季 = %d, 否則為 0 "
 #: lib/src/genfuncs.c:2330
 #, c-format
 msgid "%s = 1 if period is %d, 0 otherwise"
-msgstr ""
+msgstr "%s = 1 若 period 是 %d 時; 否則 = 0 "
 
 #: lib/src/genfuncs.c:2360
 #: lib/src/gretl_errors.c:82
@@ -5075,9 +5079,8 @@ msgstr "常態性檢定(_N)"
 #: lib/src/modelprint.c:475
 #: lib/src/modelprint.c:477
 #: lib/src/printout.c:2756
-#, fuzzy
 msgid "GMM criterion"
-msgstr "樣本篩選(_R)"
+msgstr "GMM criterion"
 
 #: lib/src/modelprint.c:514
 #, fuzzy, c-format
@@ -6048,20 +6051,18 @@ msgid "Standard deviation of dep. var."
 msgstr "假設母體標準差相同"
 
 #: lib/src/modelprint.c:2740
-#, fuzzy
 msgid "Akaike information criterion"
-msgstr "樣本篩選(_R)"
+msgstr "Akaike information criterion"
 
 #: lib/src/modelprint.c:2741
 #: gui2/library.c:6027
-#, fuzzy
 msgid "Schwarz Bayesian criterion"
-msgstr "樣本篩選(_R)"
+msgstr "Schwarz Bayesian criterion"
 
 #: lib/src/modelprint.c:2742
 #: gui2/library.c:6032
 msgid "Hannan-Quinn Information Criterion"
-msgstr ""
+msgstr "Hannan-Quinn Information Criterion"
 
 #. TRANSLATORS: please do not translate literally: this is for
 #. your use in describing locale-specific abbreviations. It is
@@ -6130,15 +6131,13 @@ msgstr "最大概似法(_M)"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2795
-#, fuzzy
 msgid "Akaike criterion"
-msgstr "樣本篩選(_R)"
+msgstr "Akaike criterion"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2797
-#, fuzzy
 msgid "Schwarz criterion"
-msgstr "樣本篩選(_R)"
+msgstr "Schwarz criterion"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2799
@@ -6457,9 +6456,8 @@ msgid "Reached maximum iterations, %d"
 msgstr "已達所設定之最多反覆計算次數, %d"
 
 #: lib/src/monte_carlo.c:2110
-#, fuzzy
 msgid "Sorry, this command is not available in loop mode"
-msgstr "抱歉! 此指令無法在迴圈 (loop) 中執行\n"
+msgstr "抱歉! 此指令無法在迴圈 (loop) 中執行"
 
 #: lib/src/monte_carlo.c:2239
 #, fuzzy, c-format
@@ -6473,11 +6471,13 @@ msgid "Statistics for %d repetitions\n"
 msgstr "檢查有無更新版(_u)"
 
 #: lib/src/monte_carlo.c:2244
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Dependent variable: %s\n"
 "\n"
-msgstr "新增指標變數(_I)"
+msgstr ""
+"Dependent variable: %s\n"
+"\n"
 
 #: lib/src/monte_carlo.c:2247
 msgid ""
@@ -6492,9 +6492,8 @@ msgstr ""
 "\n"
 
 #: lib/src/monte_carlo.c:2344
-#, fuzzy
 msgid "write of data file failed\n"
-msgstr "/檔案/開啟資料檔/使用者資料檔_U..."
+msgstr "資料檔寫入錯誤\n"
 
 #: lib/src/monte_carlo.c:2370
 #, c-format
@@ -6523,9 +6522,9 @@ msgstr ""
 " 產生了一個數值"
 
 #: lib/src/nls.c:601
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': expected a scalar or vector"
-msgstr "ADF 檢定落後階次 (lag order):"
+msgstr "'%s': 須是數值變數 (scalar) 或向量 (vector)"
 
 #: lib/src/nls.c:1047
 #, c-format
@@ -6571,9 +6570,8 @@ msgstr ""
 
 #: lib/src/nls.c:2411
 #: lib/src/nls.c:2512
-#, fuzzy
 msgid "Invalid NLS specification"
-msgstr "資料檔格式錯誤\n"
+msgstr "NLS 模型格式錯誤"
 
 #: lib/src/nls.c:2422
 #: lib/src/nls.c:2524
@@ -6757,9 +6755,8 @@ msgstr "變異數 "
 
 #: lib/src/nonparam.c:1034
 #: lib/src/nonparam.c:1161
-#, fuzzy
 msgid "Sample too small for statistical significance"
-msgstr "樣本太少, 無法繪組距-均數圖\n"
+msgstr "樣本太少, 無法計算統計顯著性"
 
 #: lib/src/nonparam.c:1116
 msgid "Wilcoxon Rank-Sum Test"
@@ -6836,9 +6833,9 @@ msgid ""
 msgstr ""
 
 #: lib/src/options.c:1171
-#, fuzzy, c-format
+#, c-format
 msgid "Ambiguous option '--%s'"
-msgstr "錯誤的選項 (option) '--%s'"
+msgstr "錯誤的選項 (option) '--%s' "
 
 #: lib/src/options.c:1177
 #, c-format
@@ -6846,9 +6843,9 @@ msgid "Invalid option '--%s'"
 msgstr "錯誤的選項 (option) '--%s'"
 
 #: lib/src/options.c:1195
-#, fuzzy, c-format
+#, c-format
 msgid "The option '--%s' requires a parameter"
-msgstr "落後期截斷參數 = %d\n"
+msgstr "選項 '--%s' 需要一個參數"
 
 #: lib/src/options.c:1497
 #, c-format
@@ -7024,9 +7021,8 @@ msgid ""
 msgstr ""
 
 #: lib/src/printout.c:512
-#, fuzzy
 msgid "Missing observations"
-msgstr "增加樣本(_A)"
+msgstr "樣本中有遺漏值"
 
 #: lib/src/printout.c:548
 #, c-format
@@ -7076,9 +7072,8 @@ msgstr "使用中樣本數: %d observations\n"
 
 #: lib/src/printout.c:708
 #: lib/src/printout.c:731
-#, fuzzy
 msgid "Full data range"
-msgstr "恢復為全樣本(_R)"
+msgstr "全樣本區間 (Full data range)"
 
 #: lib/src/printout.c:729
 #: lib/src/subsample.c:2177
@@ -7230,7 +7225,7 @@ msgstr "loglikelihood"
 
 #: lib/src/printout.c:2757
 msgid "Criterion"
-msgstr ""
+msgstr "Criterion"
 
 #: lib/src/printout.c:2768
 msgid ""
@@ -7302,17 +7297,17 @@ msgstr "臨界值(Critical value) = %g"
 #: lib/src/pvalues.c:2993
 #, c-format
 msgid "area to the right of %g: NA\n"
-msgstr ""
+msgstr "%g 的右尾機率: NA\n"
 
 #: lib/src/pvalues.c:3000
-#, fuzzy, c-format
+#, c-format
 msgid "area to the right of %g =~ %g\n"
-msgstr "右尾機率"
+msgstr "%g 的右尾機率  =~ %g\n"
 
 #: lib/src/pvalues.c:3002
-#, fuzzy, c-format
+#, c-format
 msgid "area to the right of %g = %g\n"
-msgstr "右尾機率"
+msgstr "%g 的右尾機率 = %g\n"
 
 #: lib/src/pvalues.c:3031
 msgid "Standard normal"
@@ -7324,7 +7319,7 @@ msgstr "標準常態 (Standard normal)"
 #: lib/src/pvalues.c:3056
 #, c-format
 msgid "(two-tailed value = %g; complement = %g)\n"
-msgstr ""
+msgstr "(雙尾機率 = %g; complement = %g)\n"
 
 #: lib/src/pvalues.c:3039
 #: lib/src/pvalues.c:3055
@@ -7332,19 +7327,18 @@ msgstr ""
 #: lib/src/pvalues.c:3079
 #: lib/src/pvalues.c:3132
 #: lib/src/pvalues.c:3140
-#, fuzzy, c-format
+#, c-format
 msgid "(to the left: %g)\n"
-msgstr "寄送資料至"
+msgstr "(左尾機率: %g)\n"
 
 #: lib/src/pvalues.c:3085
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Gamma (shape %g, scale %g, mean %g, variance %g):\n"
 " area to the right of %g = %g\n"
 msgstr ""
-"\n"
 "Gamma (平均數 %g, 變異數 %g, shape %g, scale %g):\n"
-" area to the right of %g = %g\n"
+" 右尾機率 of %g = %g\n"
 
 #: lib/src/pvalues.c:3095
 #, c-format
@@ -7352,6 +7346,8 @@ msgid ""
 "Binomial (p = %g, n = %d):\n"
 " Prob(x > %d) = %g\n"
 msgstr ""
+"二項分配 (Binomial) (機率 Prob = %g, 試抽樣次數 = %d):\n"
+" Prob(x > %d) = %g\n"
 
 #: lib/src/pvalues.c:3100
 #: lib/src/pvalues.c:3116
@@ -7389,7 +7385,7 @@ msgstr "XML 編碼時記憶體不足"
 
 #: lib/src/subsample.c:603
 msgid "Missing sub-sample information; can't merge data\n"
-msgstr ""
+msgstr "Missing sub-sample information; 無法合併資料\n"
 
 #: lib/src/subsample.c:720
 #: lib/src/subsample.c:744
@@ -7413,7 +7409,7 @@ msgstr ""
 
 #: lib/src/subsample.c:1219
 msgid "No observations would be left!"
-msgstr ""
+msgstr "此篩選條件下沒有任何樣本!"
 
 #: lib/src/subsample.c:1224
 msgid "No observations were dropped!"
@@ -14036,9 +14032,8 @@ msgid "Principal Components Analysis"
 msgstr "/檢視/主成份分析法"
 
 #: gui2/library.c:928
-#, fuzzy
 msgid "criterion"
-msgstr "樣本篩選(_R)"
+msgstr "準則:"
 
 #: gui2/library.c:949
 #: gui2/library.c:965
@@ -14570,9 +14565,8 @@ msgid "degrees of freedom"
 msgstr ""
 
 #: gui2/library.c:6022
-#, fuzzy
 msgid "Akaike Information Criterion"
-msgstr "樣本篩選(_R)"
+msgstr "Akaike Information Criterion"
 
 #: gui2/library.c:6043
 #, c-format
@@ -17783,9 +17777,8 @@ msgid "Exogenous regressor(s)"
 msgstr "變數顯示順序(_S)"
 
 #: plugin/johansen.c:1564
-#, fuzzy
 msgid "including constant term"
-msgstr "無常數項之檢定"
+msgstr "包含常數項"
 
 #: plugin/johansen.c:1571
 msgid "Cointegration tests, ignoring exogenous variables"
@@ -17906,9 +17899,8 @@ msgstr "估計機率密度圖(_d)"
 
 #: plugin/leverage.c:120
 #: plugin/pca.c:101
-#, fuzzy
 msgid "Variables to save:"
-msgstr "選擇要儲存的變數"
+msgstr "選擇要儲存的變數:"
 
 #: plugin/leverage.c:125
 #: plugin/leverage.c:236
@@ -17942,14 +17934,12 @@ msgid "Cross-validation criterion"
 msgstr "橫斷面資料"
 
 #: plugin/mailer.c:583
-#, fuzzy
 msgid "To:"
-msgstr "%s, 樣本從 %s 到 %s"
+msgstr "寄給:"
 
 #: plugin/mailer.c:584
-#, fuzzy
 msgid "Reply-To:"
-msgstr "寄送資料至"
+msgstr "回覆至:"
 
 #: plugin/mailer.c:585
 msgid "Subject:"
@@ -17968,27 +17958,24 @@ msgid "Message"
 msgstr "Message"
 
 #: plugin/mailer.c:705
-#, fuzzy
 msgid "Append signature"
-msgstr "新增資料(_A)"
+msgstr "附加簽名"
 
 #: plugin/mailer.c:717
 msgid "Mail setup"
 msgstr "Mail setup"
 
 #: plugin/mailer.c:725
-#, fuzzy
 msgid "SMTP server:"
-msgstr "從伺服器讀取(_s)"
+msgstr "SMTP 伺服器:"
 
 #: plugin/mailer.c:735
 msgid "port:"
 msgstr "port:"
 
 #: plugin/mailer.c:781
-#, fuzzy
 msgid "POP server:"
-msgstr "從伺服器讀取(_s)"
+msgstr "POP 伺服器:"
 
 #: plugin/mailer.c:782
 msgid "Username:"
@@ -17999,9 +17986,8 @@ msgid "Password:"
 msgstr "密碼:"
 
 #: plugin/mailer.c:799
-#, fuzzy
 msgid "gretl: POP info"
-msgstr "gretl: 新增變數資訊"
+msgstr "gretl: POP 資訊"
 
 #: plugin/mp_ols.c:140
 #, c-format
@@ -18009,9 +17995,8 @@ msgid "Variable '%s' is all zeros"
 msgstr ""
 
 #: plugin/mp_ols.c:1414
-#, fuzzy
 msgid "Error sum of squares is not >= 0"
-msgstr "殘差平方和 (%g) 並未 > 0"
+msgstr "殘差平方和並未 > 0"
 
 #: plugin/ods_import.c:397
 #, c-format
@@ -18357,9 +18342,8 @@ msgid "Show full output"
 msgstr "顯示全部結果"
 
 #: plugin/tramo-x12a.c:334
-#, fuzzy
 msgid "Execute X-12-ARIMA directly"
-msgstr "gretl: X-12-ARIMA 分析法"
+msgstr "直接執行 X-12-ARIMA "
 
 #: plugin/tramo-x12a.c:338
 msgid "Make X-12-ARIMA command file"
@@ -18436,16 +18420,18 @@ msgid "Found no sheets\n"
 msgstr "找不到任何工作表 (sheets)\n"
 
 #: plugin/xlsx_import.c:1093
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no such worksheet"
-msgstr "共變數矩陣的反矩陣"
+msgstr "'%s': 無此工作表"
 
 #: plugin/xlsx_import.c:1111
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Found %d valid sheet(s)\n"
-msgstr "資料檔格式錯誤\n"
+msgstr ""
+"\n"
+"發現 %d 個有效的工作表 (sheets)\n"
 
 #: doc/commands/matfuncs.c:50
 #, fuzzy
