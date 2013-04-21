@@ -78,7 +78,7 @@ static const char *gretl_error_messages[] = {
     N_("Incompatible options"),                                  /* E_BADOPT */
     N_("The restrictions do not identify the parameters"),       /* E_NOIDENT */
     N_("External command failed"),                               /* E_EXTERNAL */
-    N_("Maximum length of command line (16384 bytes) exceeded"),  /* E_TOOLONG */
+    N_("Maximum length of command line (16384 bytes) exceeded"), /* E_TOOLONG */
     N_("No dataset is in place"),                                /* E_NODATA */
     N_("Matrix is not positive definite"),                       /* E_NOTPD */
     N_("Failed to calculate Jacobian"),                          /* E_JACOBIAN */

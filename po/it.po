@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-03-25 10:41-0400\n"
-"PO-Revision-Date: 2013-03-30 08:23+0100\n"
+"PO-Revision-Date: 2013-04-21 12:03+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -2433,7 +2433,7 @@ msgstr "%s = 1 se periodo è %d, altrimenti 0"
 
 #: lib/src/genfuncs.c:2360 lib/src/gretl_errors.c:82 lib/src/nls.c:3036
 msgid "No dataset is in place"
-msgstr "Nessun database aperto"
+msgstr "Non c'è un dataset aperto"
 
 #: lib/src/genfuncs.c:2368 lib/src/gretl_errors.c:49
 msgid "This command won't work with the current periodicity"
