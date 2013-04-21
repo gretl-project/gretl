@@ -50,6 +50,7 @@
 #define VERSION_7SE  111
 #define VERSION_8    113
 #define VERSION_10   114
+#define VERSION_12   115
 
 /* Stata format constants */
 #define STATA_STRINGOFFSET 0x7f
@@ -243,6 +244,11 @@ stata_get_version_and_namelen (unsigned char u, int *vnamelen)
 	break;
     case VERSION_10:
 	stata_version = 10;
+	stata_SE = 1;
+	*vnamelen = 32; 
+	break;
+    case VERSION_12:
+	stata_version = 12;
 	stata_SE = 1;
 	*vnamelen = 32; 
 	break;
@@ -856,7 +862,7 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs,
     }
 
     if (err) {
-	fputs("not a Stata version 5-11 .dta file\n", stderr);
+	fputs("not a Stata version 5-12 .dta file\n", stderr);
 	return err;
     } 
 
