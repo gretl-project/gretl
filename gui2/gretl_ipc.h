@@ -28,11 +28,11 @@ int write_pid_to_file (void);
 
 int delete_pid_from_file (void);
 
-long gretl_prior_instance (void);
-
 int gretl_sequence_number (void);
 
 #ifdef GRETL_OPEN_HANDLER
+
+long gretl_prior_instance (void);
 
 int install_open_handler (void);
 
