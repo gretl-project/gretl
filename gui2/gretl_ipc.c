@@ -31,6 +31,13 @@
 # include <libproc.h>
 #endif
 
+static int my_sequence_number;
+
+int gretl_sequence_number (void)
+{
+    return my_sequence_number;
+}
+
 #if defined(__linux) || defined(linux)
 
 /* Check for a prior running gretl instance. This is not as clever as
@@ -64,7 +71,7 @@ long gretl_prior_instance (void)
             continue;
 	}
 
-        snprintf(buf, sizeof(buf), "/proc/%ld/stat", lpid);
+        snprintf(buf, sizeof buf, "/proc/%ld/stat", lpid);
         fp = fopen(buf, "r");
 
         if (fp != NULL) {
@@ -84,6 +91,36 @@ long gretl_prior_instance (void)
     closedir(dir);
 
     return gpid;
+}
+
+static int invalid_pid (long test)
+{
+    char buf[128];
+    char pname[32] = {0};
+    FILE *fp;
+    int err = 0;
+
+    snprintf(buf, sizeof buf, "/proc/%ld/stat", test);
+    fp = fopen(buf, "r");
+    
+    if (fp == NULL) {
+	/* no such pid? */
+	return 1;
+    } else {
+	char state;
+	long pid;
+
+	if ((fscanf(fp, "%ld (%31[^)]) %c", &pid, pname, &state)) != 3) {
+	    /* huh? */
+	    err = 1;
+	} else if (strcmp(pname, "gretl_x11") && strcmp(pname, "lt-gretl_x11")) {
+	    /* it's not gretl */
+	    err = 1;
+	}
+	fclose(fp);
+    }
+
+    return err;
 }
 
 /* Signal handler for the case where a newly started gretl process
@@ -223,6 +260,42 @@ long gretl_prior_instance (void)
     }
 
     return gpid;
+}
+
+static int invalid_pid (long test)
+{
+    HANDLE hsnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    long mypid, gpid = 0;
+    int err = 0;
+
+    if (hsnap) {
+        PROCESSENTRY32 pe;
+	int match = 0;
+	char *s;
+
+        pe.dwSize = sizeof(PROCESSENTRY32);
+        if (Process32First(hsnap, &pe)) {
+            do {
+		if (pe.th32ProcessID == test) {
+		    match = 1;
+		    s = strrchr(pe.szExeFile, '\\');
+		    if (s != NULL) {
+			err = strcmp(s + 1, "gretlw32.exe");
+		    } else {
+			err = strcmp(pe.szExeFile, "gretlw32.exe");
+		    }
+		}		    
+            } while (!match && Process32Next(hsnap, &pe));
+	}
+	CloseHandle(hsnap);
+    }
+
+    if (!err && !match) {
+	/* test pid not found */
+	err = 1;
+    }
+
+    return err;
 }
 
 /* Process a message coming from another gretlw32 instance (with pid
@@ -419,6 +492,53 @@ long gretl_prior_instance (void)
     return gpid;
 }
 
+static int invalid_pid (long test)
+{
+    int nproc = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    char buf[PROC_PIDPATHINFO_MAXSIZE];
+    size_t psize;
+    pid_t *pids;
+    int i, match = 0;
+    int err = 0;
+    
+    psize = nproc * sizeof *pids;
+    pids = malloc(psize);
+    if (pids == NULL) {
+	return 0;
+    }
+
+    for (i=0; i<nproc; i++) {
+	pids[i] = 0;
+    }
+    
+    proc_listpids(PROC_ALL_PIDS, 0, pids, psize);
+
+    for (i=0; i < nproc && !match; i++) {
+	if (pids[i] == test) {
+	    match = 1;
+	    memset(buf, 0, sizeof buf);
+	    proc_pidpath(pids[i], buf, sizeof buf);
+	    if (*buf != '\0') {
+		char *s = strrchr(buf, '/');
+
+		if (s != NULL) {
+		    err = strcmp("gretl", s + 1);
+		} else {
+		    err = strcmp("gretl", buf);
+		}
+	    } 
+	} 
+    }
+
+    free(pids);
+
+    if (!err && !match) {
+	err = 1;
+    }
+
+    return err;
+}
+
 #else /* none of the above */
 
 long gretl_prior_instance (void) 
@@ -427,3 +547,110 @@ long gretl_prior_instance (void)
 }
 
 #endif /* OS variations */
+
+int write_pid_to_file (void)
+{
+    char pidfile[FILENAME_MAX];
+    FILE *f1;
+    long mypid;
+    int err = 0;
+
+#ifdef G_OS_WIN32
+    mypid = (long) GetCurrentProcessId();
+#else
+    mypid = (long) getpid();
+#endif
+
+    sprintf(pidfile, "%sgretl.pid", gretl_dotdir());
+    f1 = gretl_fopen(pidfile, "r");
+
+    if (f1 == NULL) {
+	/* no pid file, starting from scratch */
+	f1 = gretl_fopen(pidfile, "w");
+	if (f1 == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    fprintf(f1, "%ld 1\n", mypid);
+	    fclose(f1);
+	}
+    } else {
+	/* we already have a pid file */
+	char newfile[FILENAME_MAX];
+	char buf[32];
+	FILE *f2;
+	long pid;
+	int m, n = 0;
+
+	sprintf(newfile, "%sgretl.new", gretl_dotdir());
+	f2 = gretl_fopen(newfile, "w");
+	if (f2 == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    while (fgets(buf, sizeof buf, f1)) {
+		sscanf(buf, "%ld %d", &pid, &m);
+		if (!invalid_pid(pid)) {
+		    fputs(buf, f2);
+		    n = m;
+		}
+	    }
+	    n++;
+	    fprintf(f2, "%ld %d\n", mypid, n);
+	    fclose(f2);
+	    my_sequence_number = n;
+	}
+	fclose(f1);
+	err = gretl_rename(newfile, pidfile);
+    }
+
+    return err;
+}
+
+int delete_pid_from_file (void)
+{
+    char pidfile[FILENAME_MAX];
+    FILE *f1, *f2;
+    long mypid;
+    int err = 0;
+
+#ifdef G_OS_WIN32
+    mypid = (long) GetCurrentProcessId();
+#else
+    mypid = (long) getpid();
+#endif
+
+    sprintf(pidfile, "%sgretl.pid", gretl_dotdir());
+
+    f1 = fopen(pidfile, "r");
+    if (f1 == NULL) {
+	err = E_FOPEN;
+    } else {
+	char newfile[FILENAME_MAX];
+	char buf[32];
+	long pid;
+	int nleft = 0;
+
+	sprintf(newfile, "%sgretl.new", gretl_dotdir());
+	f2 = gretl_fopen(newfile, "w");
+	if (f2 == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    while (fgets(buf, sizeof buf, f1)) {
+		sscanf(buf, "%ld", &pid);
+		if (pid != mypid) {
+		    fputs(buf, f2);
+		    nleft++;
+		}
+	    }
+	    fclose(f2);
+	}
+	fclose(f1);
+	if (nleft > 0) {
+	    err = gretl_rename(newfile, pidfile);
+	} else {
+	    gretl_remove(newfile);
+	    gretl_remove(pidfile);
+	}
+    }
+
+    return err;
+}

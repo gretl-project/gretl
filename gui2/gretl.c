@@ -607,6 +607,8 @@ int main (int argc, char **argv)
     }
 #endif
 
+    write_pid_to_file();
+
 #if GUI_DEBUG
     fprintf(stderr, "finished miscellaneous init functions\n");
 #endif
@@ -802,6 +804,8 @@ int main (int argc, char **argv)
 #ifdef MAC_INTEGRATION
     g_object_unref(App);
 #endif
+
+    delete_pid_from_file();
 
     return EXIT_SUCCESS;
 }

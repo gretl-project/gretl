@@ -633,18 +633,10 @@ void set_main_window_title (const char *name, gboolean modified)
 	    }
 	}
     } else {
-	int pid = 0;
+	int seqno = gretl_sequence_number();
 
-	if (gretl_prior_instance()) {
-#ifdef G_OS_WIN32
-	    pid = (int) GetCurrentProcessId();
-#else
-	    pid = (int) getpid();
-#endif
-	}
-
-	if (pid > 0) {
-	    title = g_strdup_printf("gretl (%d)", pid);
+	if (seqno > 1) {
+	    title = g_strdup_printf("gretl (%d)", seqno);
 	} else {
 	    gtk_window_set_title(GTK_WINDOW(mdata->main), "gretl");
 	}
