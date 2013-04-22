@@ -1316,6 +1316,31 @@ static void parse_laglist_spec (const char *s, int *order, char **lname,
     }
 }
 
+static char *get_transform_param (const char *s, int *err)
+{
+    const char *p = s;
+    int inparen = 1;
+
+    while (*p) {
+	if (*p == '(') {
+	    inparen++;
+	} else if (*p == ')') {
+	    inparen--;
+	}
+	if (inparen == 0) {
+	    break;
+	}
+	p++;
+    }
+
+    if (inparen == 0 && p - s > 0) {
+	return gretl_strndup(s, p - s);
+    } else {
+	*err = E_PARSE;
+	return NULL;
+    }
+}
+
 static int auto_transform_ok (const char *s, int *lpos,
 			      DATASET *dset, CMD *cmd)
 {
@@ -1350,8 +1375,7 @@ static int auto_transform_ok (const char *s, int *lpos,
 		parse_laglist_spec(s, &order, &param, &vnum,
 				   dset);
 	    } else {
-		param = gretl_word_strdup(s, NULL, OPT_NONE, 
-					  &cmd->err);
+		param = get_transform_param(s, &cmd->err);
 	    }
 
 	    if (param != NULL) {
