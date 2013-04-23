@@ -561,13 +561,14 @@ check_add_transform (int ci, int lag, int vnum, const double *x,
 static int get_lag_ID (int srcv, int lag, const DATASET *dset)
 {
     const char *parent, *vname = dset->varname[srcv];
-    int i, vlag;
+    int i;
 
     for (i=1; i<dset->v; i++) {
-	vlag = series_get_lag(dset, i);
-	parent = series_get_parent_name(dset, i);
-	if (vlag == lag && !strcmp(vname, parent)) {
-	    return i;
+	if (lag == series_get_lag(dset, i)) {
+	    parent = series_get_parent_name(dset, i);
+	    if (parent != NULL && !strcmp(vname, parent)) {
+		return i;
+	    }
 	}
     }
 

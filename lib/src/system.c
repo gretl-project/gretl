@@ -2102,10 +2102,12 @@ static int sys_check_lists (equation_system *sys,
 	lag = series_get_lag(dset, vj);
 	if (lag > 0) {
 	    vname = series_get_parent_name(dset, vj);
-	    src = sys_get_lag_src(vname, dset);
-	    if (in_gretl_list(sys->ylist, src)) {
-		err = add_predet_to_sys(sys, dset, vj, src, lag);
-		gretl_list_delete_at_pos(xplist, j--);
+	    if (vname != NULL) {
+		src = sys_get_lag_src(vname, dset);
+		if (in_gretl_list(sys->ylist, src)) {
+		    err = add_predet_to_sys(sys, dset, vj, src, lag);
+		    gretl_list_delete_at_pos(xplist, j--);
+		}
 	    }
 	}
     }

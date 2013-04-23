@@ -398,7 +398,7 @@ static int has_depvar_lags (MODEL *pmod, const DATASET *dset)
 {
     const char *yname, *parent;
     const int *xlist;
-    int i, vi, lag;
+    int i, vi;
 
     xlist = model_xlist(pmod);
     if (xlist == NULL) {
@@ -409,10 +409,11 @@ static int has_depvar_lags (MODEL *pmod, const DATASET *dset)
 
     for (i=1; i<=xlist[0]; i++) {
         vi = xlist[i];
-	lag = series_get_lag(dset, vi);
-	parent = series_get_parent_name(dset, vi);
-	if (lag > 0 && parent != NULL && !strcmp(yname, parent)) {
-	    return 1;
+	if (series_get_lag(dset, vi) > 0) {
+	    parent = series_get_parent_name(dset, vi);
+	    if (parent != NULL && !strcmp(yname, parent)) {
+		return 1;
+	    }
 	}
     }
 
