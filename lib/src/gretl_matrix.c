@@ -2819,10 +2819,6 @@ static int sneq (double x, double y)
 	reldiff = fabs((y - x) / x);
     }
 
-    if (reldiff > eq_tol) {
-	fprintf(stderr, "relative difference = %g\n", reldiff);
-    }
-
     return reldiff > eq_tol;
 }
 
