@@ -24,11 +24,23 @@
 # define GRETL_OPEN_HANDLER
 #endif
 
+#if defined(__linux) || defined(linux)
+# define USE_PID_FILE
+#elif defined(WIN32)
+# define USE_PID_FILE
+#elif defined(HAVE_LIBPROC_H) && defined(HAVE_SYS_PROC_INFO_H)
+# define USE_PID_FILE
+#endif
+
 int write_pid_to_file (void);
+
+#ifdef USE_PID_FILE
 
 int delete_pid_from_file (void);
 
 int gretl_sequence_number (void);
+
+#endif
 
 #ifdef GRETL_OPEN_HANDLER
 

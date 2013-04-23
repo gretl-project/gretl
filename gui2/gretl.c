@@ -607,8 +607,6 @@ int main (int argc, char **argv)
     }
 #endif
 
-    write_pid_to_file();
-
 #if GUI_DEBUG
     fprintf(stderr, "finished miscellaneous init functions\n");
 #endif
@@ -779,6 +777,10 @@ int main (int argc, char **argv)
     install_open_handler();
 #endif
 
+#ifdef USE_PID_FILE
+    write_pid_to_file();
+#endif
+
 #if GUI_DEBUG
     fprintf(stderr, "calling gtk_main()\n");
 #endif
@@ -805,7 +807,9 @@ int main (int argc, char **argv)
     g_object_unref(App);
 #endif
 
+#ifdef USE_PID_FILE
     delete_pid_from_file();
+#endif
 
     return EXIT_SUCCESS;
 }

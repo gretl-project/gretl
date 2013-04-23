@@ -89,6 +89,12 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Do we have byteswap.h */
 #undef HAVE_BYTESWAP_H
 
+/* Do we have libproc.h */
+#undef HAVE_LIBPROC_H
+
+/* Do we have sys/proc_info.h */
+#undef HAVE_SYS_PROC_INFO_H
+
 /* Do we have mmap */
 #undef HAVE_MMAP
 
