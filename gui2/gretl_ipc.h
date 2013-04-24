@@ -36,7 +36,7 @@ int write_pid_to_file (void);
 
 #ifdef USE_PID_FILE
 
-int delete_pid_from_file (void);
+void delete_pid_from_file (void);
 
 int gretl_sequence_number (void);
 

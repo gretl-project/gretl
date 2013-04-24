@@ -731,6 +731,11 @@ int main (int argc, char **argv)
     fprintf(stderr, "done add_files_to_menus\n");
 #endif
 
+#ifdef USE_PID_FILE
+    write_pid_to_file();
+    atexit(delete_pid_from_file);
+#endif
+
     session_menu_state(FALSE);
     restore_sample_state(FALSE);
     dataset_menubar_state(FALSE);
@@ -777,10 +782,6 @@ int main (int argc, char **argv)
     install_open_handler();
 #endif
 
-#ifdef USE_PID_FILE
-    write_pid_to_file();
-#endif
-
 #if GUI_DEBUG
     fprintf(stderr, "calling gtk_main()\n");
 #endif
@@ -805,10 +806,6 @@ int main (int argc, char **argv)
 
 #ifdef MAC_INTEGRATION
     g_object_unref(App);
-#endif
-
-#ifdef USE_PID_FILE
-    delete_pid_from_file();
 #endif
 
     return EXIT_SUCCESS;

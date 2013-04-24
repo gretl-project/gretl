@@ -613,39 +613,46 @@ void clear_sample_label (void)
 
 void set_main_window_title (const char *name, gboolean modified)
 {
+    int seqno = gretl_sequence_number();
     gchar *title = NULL;
 
-    if (name != NULL) {
+    if (seqno <= 1 && name == NULL) {
+	gtk_window_set_title(GTK_WINDOW(mdata->main), "gretl");
+    } else if (name == NULL) {
+	title = g_strdup_printf("gretl (%d)", seqno);
+    } else {
+	gchar *prog;
+
+	if (seqno > 1) {
+	    prog = g_strdup_printf("gretl (%d)", seqno);
+	} else {
+	    prog = g_strdup("gretl");
+	}
+	
 	if (!g_utf8_validate(name, -1, NULL)) {
 	    gchar *trname = my_filename_to_utf8(name);
 	    
 	    if (modified) {
-		title = g_strdup_printf("gretl: %s *", trname);
+		title = g_strdup_printf("%s: %s *", prog, trname);
 	    } else {
-		title = g_strdup_printf("gretl: %s", trname);
+		title = g_strdup_printf("%s: %s", prog, trname);
 	    }
 	    g_free(trname);
 	} else {
 	    if (modified) {
-		title = g_strdup_printf("gretl: %s *", name);
+		title = g_strdup_printf("%s: %s *", prog, name);
 	    } else {
-		title = g_strdup_printf("gretl: %s", name);
+		title = g_strdup_printf("%s: %s", prog, name);
 	    }
 	}
-    } else {
-	int seqno = gretl_sequence_number();
 
-	if (seqno > 1) {
-	    title = g_strdup_printf("gretl (%d)", seqno);
-	} else {
-	    gtk_window_set_title(GTK_WINDOW(mdata->main), "gretl");
-	}
+	g_free(prog);
     }
 
     if (title != NULL) {
 	gtk_window_set_title(GTK_WINDOW(mdata->main), title);
 	g_free(title);
-    }	
+    }
 }
 
 static const char *get_pd_string (DATASET *dset)

@@ -608,7 +608,7 @@ int write_pid_to_file (void)
 
 /* On exit, delete our PID from gretl.pid in dotdir */
 
-int delete_pid_from_file (void)
+void delete_pid_from_file (void)
 {
     const char *dotdir;
     char pidfile[FILENAME_MAX];
@@ -663,8 +663,6 @@ int delete_pid_from_file (void)
 	    gretl_remove(pidfile);
 	}
     }
-
-    return err;
 }
 
 #endif /* USE_PID_FILE */
