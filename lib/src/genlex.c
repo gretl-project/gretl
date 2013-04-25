@@ -1240,10 +1240,9 @@ static int ok_dbl_char (parser *p, char *s, int i)
     return 0;
 }
 
-static double getdbl (parser *p)
+static void parse_number (parser *p)
 {
     char xstr[NUMLEN] = {0};
-    double d = NADBL;
     int gotcol = 0;
     int i = 0;
 
@@ -1261,32 +1260,30 @@ static double getdbl (parser *p)
     } 
 
 #if LDEBUG
-    fprintf(stderr, "getdbl: xstr = '%s'\n", xstr);
+    fprintf(stderr, "parse_number: xstr = '%s'\n", xstr);
 #endif
     
     if (gotcol) {
 #if LDEBUG
-	fprintf(stderr, "getdbl: gotcol\n");
+	fprintf(stderr, " got colon: obs identifier?\n");
 #endif
-	if (p->dset->pd == 1) {
+	if (p->dset == NULL || p->dset->n == 0) {
+	    p->err = E_NODATA;
+	} else if (p->dset->pd == 1) {
 	    p->err = E_PDWRONG;
+	} else if (dateton(xstr, p->dset) < 0) {
+	    p->err = E_DATA;
 	} else {
-	    d = (double) dateton(xstr, p->dset);
-	    if (d < 0) {
-		p->err = E_DATA;
-		d = NADBL;
-	    } else {
-		d += 1.0;
-	    }
+	    p->idstr = gretl_strdup(xstr);
+	    p->sym = STR;
 	}
     } else {
-	d = dot_atof(xstr);
+	p->xval = dot_atof(xstr);
+	p->sym = NUM;
 #if LDEBUG
-	fprintf(stderr, "getdbl: dot_atof gave %g\n", d);
+	fprintf(stderr, " dot_atof gave %g\n", p->xval);
 #endif
     }
-    
-    return d;
 }
 
 #define word_start_special(c) (c == '$' || c == '@' || c == '_')
@@ -1533,8 +1530,7 @@ void lex (parser *p)
 		return;
 	    }
 	    if (isdigit(p->ch) || (p->ch == '.' && isdigit(*p->point))) {
-		p->xval = getdbl(p);
-		p->sym = NUM;
+		parse_number(p);
 		return;
 	    } else if (islower(p->ch) || isupper(p->ch) || 
 		       word_start_special(p->ch)) {
