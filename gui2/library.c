@@ -6658,7 +6658,7 @@ void do_boxplot_var (int varnum, gretlopt opt)
 	return;
     }
 
-    err = boxplots(libcmd.list, dataset, plotopt);
+    err = boxplots(libcmd.list, NULL, dataset, plotopt);
     gui_graph_handler(err);
 
     if (!err) {
@@ -6704,14 +6704,14 @@ void do_box_graph (GtkWidget *w, dialog_t *dlg)
     }
 
     if (strchr(buf, '(')) {
-	err = boolean_boxplots(buf, dataset, opt);
+	err = boolean_boxplots(buf, NULL, dataset, opt);
     } else {
 	lib_command_sprintf("boxplot %s%s", 
 			    (opt & OPT_O)? "--notches " : "", buf);
 	if (parse_lib_command()) {
 	    return;
 	}
-	err = boxplots(libcmd.list, dataset, opt);
+	err = boxplots(libcmd.list, NULL, dataset, opt);
 	if (!err) {
 	    record_lib_command();
 	}
@@ -6748,7 +6748,7 @@ int do_factorized_boxplot (selector *sr)
 	return 1;
     }
 
-    err = boxplots(libcmd.list, dataset, OPT_Z);
+    err = boxplots(libcmd.list, NULL, dataset, OPT_Z);
     gui_graph_handler(err);
     if (!err) {
 	record_lib_command();

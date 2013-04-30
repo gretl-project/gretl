@@ -2734,7 +2734,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 	we begin by taking care of a few specials 
     */
 
-    if (cmd->ci == GNUPLOT) {
+    if (cmd->ci == GNUPLOT || cmd->ci == BXPLOT) {
 	/* we may have a block of stuff to pass literally
 	   to gnuplot */
 	grab_gnuplot_literal_block(rem, cmd);
@@ -5963,9 +5963,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (cmd->ci == SCATTERS) {
 	    err = multi_scatters(cmd->list, dset, cmd->opt);
 	} else if (cmd_nolist(cmd)) {
-	    err = boolean_boxplots(line, dset, cmd->opt);
+	    err = boolean_boxplots(line, cmd->param, dset, cmd->opt);
 	} else {
-	    err = boxplots(cmd->list, dset, cmd->opt);
+	    err = boxplots(cmd->list, cmd->param, dset, cmd->opt);
 	}
 	if (!err) {
 	    maybe_schedule_graph_callback(s);

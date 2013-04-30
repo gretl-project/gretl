@@ -191,7 +191,7 @@ static void graph_dbdata (DATASET *dbset)
     }
 
     if (dbset->structure == CROSS_SECTION) {
-	err = boxplots(list, dbset, OPT_NONE);
+	err = boxplots(list, NULL, dbset, OPT_NONE);
     } else {
 	err = gnuplot(list, NULL, dbset, OPT_G | OPT_O | OPT_T);
     }

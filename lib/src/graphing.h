@@ -288,6 +288,8 @@ int xy_plot_with_control (const int *list, const char *literal,
 
 int gnuplot_process_file (gretlopt opt, PRN *prn);
 
+void print_gnuplot_literal_lines (const char *s, FILE *fp);
+
 int is_auto_fit_string (const char *s);
 
 int gnuplot_has_ttf (int reset);

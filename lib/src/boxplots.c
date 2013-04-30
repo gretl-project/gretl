@@ -57,6 +57,7 @@ typedef struct {
     gretl_matrix *dvals;
     char xlabel[VNAMELEN];
     char ylabel[VNAMELEN];
+    const char *literal;
 } PLOTGROUP;
 
 #define show_mean(g)    (g->flags & BOX_SHOW_MEAN)
@@ -379,6 +380,7 @@ static int plotgroup_factor_setup (PLOTGROUP *grp,
 }
 
 static PLOTGROUP *plotgroup_new (const int *list, 
+				 const char *literal,
 				 const DATASET *dset,
 				 double limit,
 				 gretlopt opt)
@@ -397,6 +399,8 @@ static PLOTGROUP *plotgroup_new (const int *list,
     grp->x = NULL;
     grp->dvals = NULL;
     grp->title = NULL;
+
+    grp->literal = literal;
 
     if (na(limit)) {
 	grp->limit = 1.5;
@@ -497,7 +501,8 @@ static void get_box_y_range (PLOTGROUP *grp, double gyrange,
     }
 }
 
-static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
+static int write_gnuplot_boxplot (PLOTGROUP *grp, 
+				  gretlopt opt)
 {
     FILE *fp = NULL;
     BOXPLOT *bp;
@@ -601,6 +606,10 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
     }
 
     fputs("set boxwidth 0.3 relative\n", fp);
+
+    if (grp->literal != NULL) {
+	print_gnuplot_literal_lines(grp->literal, fp);
+    }
 
     fputs("plot \\\n", fp);
     /* the quartiles and extrema */
@@ -754,6 +763,7 @@ static int all_missing (int t1, int t2, const double *x)
    gnuplot_do_boxplot to write the command file */
 
 static int real_boxplots (const int *list, char **bools, 
+			  const char *literal,
 			  const DATASET *dset,
 			  gretlopt opt)
 {
@@ -788,7 +798,7 @@ static int real_boxplots (const int *list, char **bools,
 	} 
     } 
 
-    grp = plotgroup_new(list, dset, lim, opt);
+    grp = plotgroup_new(list, literal, dset, lim, opt);
     if (grp == NULL) {
 	return E_ALLOC;
     }
@@ -919,7 +929,7 @@ static int panel_group_boxplots (int vnum, const DATASET *dset,
 	}
     }
 
-    err = real_boxplots(list, NULL, gdset, opt);
+    err = real_boxplots(list, NULL, NULL, gdset, opt);
 
     destroy_dataset(gdset);
     free(list);
@@ -941,7 +951,8 @@ static int panel_group_boxplots (int vnum, const DATASET *dset,
  * Returns: 0 on success, error code on error.
  */
 
-int boxplots (const int *list, const DATASET *dset, gretlopt opt)
+int boxplots (const int *list, const char *literal, 
+	      const DATASET *dset, gretlopt opt)
 {
     int err;
 
@@ -953,7 +964,7 @@ int boxplots (const int *list, const DATASET *dset, gretlopt opt)
 	    err = panel_group_boxplots(list[1], dset, opt);
 	}
     } else {
-	err = real_boxplots(list, NULL, dset, opt);
+	err = real_boxplots(list, NULL, literal, dset, opt);
     }
 
     return err;
@@ -1007,7 +1018,8 @@ static char *boxplots_fix_parentheses (const char *line, int *err)
     return s;
 }
 
-int boolean_boxplots (const char *line, DATASET *dset, gretlopt opt)
+int boolean_boxplots (const char *line, const char *literal,
+		      DATASET *dset, gretlopt opt)
 {
     int i, k, v, nvars, nbool;
     int n = dset->n;
@@ -1121,7 +1133,7 @@ int boolean_boxplots (const char *line, DATASET *dset, gretlopt opt)
     }
 
     if (!err) {
-	err = real_boxplots(list, bools, dset, opt);
+	err = real_boxplots(list, bools, literal, dset, opt);
     } 
     
     free(list);
@@ -1269,6 +1281,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     char xvar[VNAMELEN];
     char vname[VNAMELEN];
     char fmt[16], line[512];
+    int parsing = 1;
     FILE *fp;
     int n = 0;
     int err = 0;
@@ -1284,6 +1297,14 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     /* first pass: count the plots, using labels as heuristic */
 
     while (fgets(line, sizeof line, fp)) {
+	if (parsing && !strncmp(line, "# start literal", 15)) {
+	    parsing = 0;
+	} else if (!parsing && !strncmp(line, "# end literal", 13)) {
+	    parsing = 1;
+	}
+	if (!parsing) {
+	    continue;
+	}
 	if (!strncmp(line, "1 ", 2)) {
 	    /* reached first data block */
 	    break;
@@ -1327,7 +1348,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     } else {
 	int list[2] = {n, 0};
 
-	grp = plotgroup_new(list, NULL, NADBL, OPT_NONE);
+	grp = plotgroup_new(list, NULL, NULL, NADBL, OPT_NONE);
 	if (grp == NULL) {
 	    err = E_ALLOC;
 	}
@@ -1345,8 +1366,17 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
 
 	rewind(fp);
 	gretl_push_c_numeric_locale();
+	parsing = 1;
 
 	while (fgets(line, sizeof line, fp) && !err) {
+	    if (parsing && !strncmp(line, "# start literal", 15)) {
+		parsing = 0;
+	    } else if (!parsing && !strncmp(line, "# end literal", 13)) {
+		parsing = 1;
+	    }
+	    if (!parsing) {
+		continue;
+	    }
 	    if (factorized && !strncmp(line, "set xtics (", 11)) {
 		err = get_vals_from_tics(grp, line + 10);
 	    } else if (!factorized && !strncmp(line, "set label ", 10)) {

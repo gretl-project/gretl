@@ -552,7 +552,7 @@ int matrix_command_driver (int ci,
     if (!err) {
 	opt &= ~OPT_X;
 	if (ci == BXPLOT) {
-	    err = boxplots(collist, mdset, opt);
+	    err = boxplots(collist, param, mdset, opt);
 	} else if (ci == GNUPLOT) {
 	    err = gnuplot(collist, param, mdset, opt);
 	} else if (ci == SUMMARY) {

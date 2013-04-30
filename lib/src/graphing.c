@@ -1760,11 +1760,17 @@ static void line_out (const char *s, int len, FILE *fp)
     }
 }
 
-static void print_gnuplot_literal_lines (const char *s, FILE *fp)
+void print_gnuplot_literal_lines (const char *s, FILE *fp)
 {
     const char *p;
 
+    if (s == NULL || *s == '\0') {
+	return;
+    }
+
     p = s = front_strip(s);
+
+    fputs(fp, "# start literal lines\n");
 
     while (*s && *s != '}') {
 	if (*s == ';') {
@@ -1773,6 +1779,8 @@ static void print_gnuplot_literal_lines (const char *s, FILE *fp)
 	}
 	s++;
     }
+
+    fputs(fp, "# end literal lines\n");
 }
 
 static int loess_plot (gnuplot_info *gi, const char *literal,

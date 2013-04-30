@@ -11535,7 +11535,7 @@
         </option>
         <option>
 	  <flag>--lagselect</flag>
-	  <effect>show information criteria for lag selection</effect>
+	  <effect>show criteria for lag selection</effect>
         </option>
       </options>
       <examples>
@@ -11576,21 +11576,37 @@
       </para>
 
       <para context="cli">
-	Sets up and estimates (using OLS) a vector autoregression (VAR).
-	The first argument specifies the lag order &mdash; or the maximum
-	lag order in case the <opt>--lagselect</opt> option is given (see
-	below).  The order may be given numerically, or as the name of a
-	pre-existing scalar variable. Then follows the setup for the first
-	equation.  Don't include lags among the elements of
-	<repl>ylist</repl> &mdash; they will be added automatically.
-	The semi-colon separates the stochastic variables, for which
-	<repl>order</repl> lags will be included, from any exogenous
-	variables in <repl>xlist</repl>.  Note that a constant is
-	included automatically unless you give the <opt>--nc</opt> flag, a
-	trend can be added with the <opt>--trend</opt> flag, and seasonal
-	dummy variables may be added using the <opt>--seasonals</opt>
-	flag.
+	Sets up and estimates (using OLS) a vector autoregression
+	(VAR).  The first argument specifies the lag order &mdash; or
+	the maximum lag order in case the <opt>--lagselect</opt>
+	option is given (see below).  The order may be given
+	numerically, or as the name of a pre-existing scalar variable.
+	Then follows the setup for the first equation.  Do not include
+	lags among the elements of <repl>ylist</repl> &mdash; they
+	will be added automatically.  The semi-colon separates the
+	stochastic variables, for which <repl>order</repl> lags will
+	be included, from any exogenous variables in
+	<repl>xlist</repl>.  Note that a constant is included
+	automatically unless you give the <opt>--nc</opt> flag, a
+	trend can be added with the <opt>--trend</opt> flag, and
+	seasonal dummy variables may be added using the
+	<opt>--seasonals</opt> flag.
       </para>
+
+      <para context="cli">
+	While a VAR specification usually includes all lags from 1
+	to a given maximum, it is possible to select a specific
+	set of lags. To do this, substitute for the regular
+	(scalar) <repl>order</repl> argument either the name of
+	a predefined vector or a comma-separated list of lags,
+	enclosed in braces. We show below two ways of specifying
+	that a VAR should include lags 1, 2 and 4 (but not lag 3):
+      </para>
+      <code context="cli">
+	var {1,2,4} ylist
+	matrix p = {1,2,4}
+	var p ylist
+      </code>      
 
       <para context="cli">
 	A separate regression is reported for each variable in
