@@ -86,10 +86,9 @@ struct GRETL_VAR_ {
 
 int var_max_order (const int *list, const DATASET *dset);
 
-GRETL_VAR *gretl_VAR (int order, int *list, 
-		      const DATASET *dset,
-		      gretlopt opt, PRN *prn, 
-		      int *errp);
+GRETL_VAR *gretl_VAR (int order, int *laglist, int *list, 
+		      const DATASET *dset, gretlopt opt, 
+		      PRN *prn, int *err);
 
 GRETL_VAR *gretl_VECM (int order, int rank, int *list, 
 		       const DATASET *dset, gretlopt opt, 

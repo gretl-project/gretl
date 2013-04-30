@@ -3236,44 +3236,29 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     } 
 }
 
-static char *VAR_dv_lags_string (const int *list, int *err)
-{
-    char *s = gretl_list_to_lags_string(list, err);
-    char *ret = NULL;
-
-    if (s != NULL) {
-	ret = malloc(strlen(s) + 9);
-	if (ret == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    sprintf(ret, " --lags=%s", s);
-	}
-	free(s);
-    }
-
-    return ret;
-}
-
-static void vec_get_spinner_data (selector *sr, int *order,
-				  char **dvlags)
+static void vec_get_spinner_data (selector *sr, int *order)
 {
     const int *llist;
-    int lmax;
+    char *dvlags;
     char numstr[8];
 
     /* lag order from global spinner */
-    lmax = spinner_get_int(sr->extra[0]);
-    sprintf(numstr, "%d", lmax);
-    add_to_cmdlist(sr, numstr);
-    *order = lmax;
+    *order = spinner_get_int(sr->extra[0]);
 
     /* possible list of specific lags */
     llist = get_VAR_lags_list();
 
     if (llist != NULL) {
-	/* "gappy" lag specification */
-	*dvlags = VAR_dv_lags_string(llist, &sr->error);
-    } 
+	/* "gappy" lag specification for VAR */
+	dvlags = gretl_list_to_lags_string(llist, &sr->error);
+	if (dvlags != NULL) {
+	    add_to_cmdlist(sr, dvlags);
+	    free(dvlags);
+	}
+    } else {
+	sprintf(numstr, "%d", *order);
+	add_to_cmdlist(sr, numstr);
+    }	
 
     if (sr->ci == VECM) {
 	/* cointegration rank */
@@ -3418,8 +3403,8 @@ static void compose_cmdlist (selector *sr)
 	       sr->ci == DPANEL) {
 	add_pdq_vals_to_cmdlist(sr);
     } else if (VEC_CODE(sr->ci)) {
-	vec_get_spinner_data(sr, &order, &dvlags);
-	if (sr->ci == VAR) {
+	vec_get_spinner_data(sr, &order);
+	if (sr->ci == VAR && !sr->error) {
 	    maybe_read_var_hac_option(sr);
 	}
     } else {

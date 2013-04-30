@@ -1022,7 +1022,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
     double pv;
     int i, j, k, v;
 
-    if (prn == NULL || (opt & OPT_X)) {
+    if (prn == NULL || (opt & OPT_S)) {
 	return 0;
     }
 

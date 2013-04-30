@@ -2426,37 +2426,25 @@ int transcribe_VAR_models (GRETL_VAR *var,
     return err;
 }
 
-/* If OPT_S (for Specific lags) was given, try to retrieve a list of
-   lags (in string form) from the gretl option mechanism.  If we don't
-   find any such string, that's an error.  If we do, convert the
-   string to a numeric list and sort it.
-*/
-
-static int *maybe_get_lags_list (int order, int *err)
+static int *lags_from_laglist (const int *llist, int *err)
 {
     int *lags = NULL;
-    const char *s;
 
-    s = get_optval_string(VAR, OPT_S);
-
-    if (s == NULL) {
-	*err = E_ARGS;
-	return NULL;
+    if (llist[0] == 0) {
+	*err = E_DATA;
+    } else {
+	lags = gretl_list_copy(llist);
+	if (lags == NULL) {
+	    *err = E_ALLOC;
+	}
     }
 
-    lags = gretl_list_from_string(s, err);
-    
     if (lags != NULL) {
-	int i;
-
 	gretl_list_sort(lags);
-	for (i=lags[0]; i>1; i--) {
-	    if (lags[i] > order) {
-		gretl_list_delete_at_pos(lags, i);
-	    }
-	}
-	if (lags[0] == 0) {
+	if (lags[1] < 1) {
 	    *err = E_DATA;
+	    free(lags);
+	    lags = NULL;
 	}
     }
 
@@ -2465,7 +2453,8 @@ static int *maybe_get_lags_list (int order, int *err)
 
 /**
  * gretl_VAR:
- * @order: lag order for the VAR
+ * @order: lag order for the VAR.
+ * @laglist: specific list of lags, or NULL.
  * @list: specification for the first model in the set.
  * @dset: dataset struct.
  * @opt: if includes %OPT_R, use robust VCV;
@@ -2477,9 +2466,9 @@ static int *maybe_get_lags_list (int order, int *err)
  *       if includes %OPT_Q, do not show individual regressions.
  *       if includes %OPT_T, include a linear trend.
  *       if includes %OPT_L, test for optimal lag length (only).
- *       if includes %OPT_S, look for a specific set of lags
+ *       if includes %OPT_S, silent (no printing).
  * @prn: gretl printing struct.
- * @errp: location to receive error code.
+ * @err: location to receive error code.
  *
  * Estimate a vector auto-regression (VAR), print and save
  * the results.
@@ -2487,19 +2476,20 @@ static int *maybe_get_lags_list (int order, int *err)
  * Returns: pointer to VAR struct, which may be %NULL on error.
  */
 
-GRETL_VAR *gretl_VAR (int order, int *list, const DATASET *dset,
-		      gretlopt opt, PRN *prn, int *err)
+GRETL_VAR *gretl_VAR (int order, int *laglist, int *list, 
+		      const DATASET *dset, gretlopt opt, 
+		      PRN *prn, int *err)
 {
     GRETL_VAR *var = NULL;
     int code = (opt & OPT_L)? VAR_LAGSEL : VAR_ESTIMATE;
     int *lags = NULL;
 
-    if (opt & OPT_S) {
-	lags = maybe_get_lags_list(order, err);
+    if (laglist != NULL) {
+	lags = lags_from_laglist(laglist, err);
 	if (*err) {
 	    return NULL;
 	}
-    }
+    }    
 
     /* allocation and initial set-up */
     var = gretl_VAR_new(code, order, 0, lags, list, dset, 
@@ -3128,13 +3118,6 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
 	gretl_errmsg_sprintf(_("vecm: rank %d is out of bounds"), rank);
 	*err = E_DATA;
 	return NULL;
-    }
-
-    if (opt & OPT_S) {
-	lags = maybe_get_lags_list(order, err);
-	if (*err) {
-	    return NULL;
-	}
     }
 
     jvar = johansen_wrapper(VECM_ESTIMATE, order, rank, lags, list, 

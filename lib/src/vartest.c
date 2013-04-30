@@ -886,7 +886,8 @@ GRETL_VAR *gretl_VAR_omit_test (GRETL_VAR *var, const int *omitlist,
     dset->t1 = var->t1;
     dset->t2 = var->t2;
 
-    vnew = gretl_VAR(var->order, varlist, dset, varopt, NULL, err);
+    vnew = gretl_VAR(var->order, var->lags, varlist, dset, 
+		     varopt, NULL, err);
 
     if (vnew != NULL) {
 	/* do the actual test(s) */

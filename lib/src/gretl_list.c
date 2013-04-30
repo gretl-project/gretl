@@ -951,8 +951,8 @@ char **gretl_list_get_names_array (const int *list,
  * @err: location to receive error code.
  * 
  * Prints the given @list of integers into a newly
- * allocated string, separated by commas.  Will fail
- * if the list contains any numbers greater than 998.
+ * allocated string, enclosed by braces and separated by commas.
+ * Will fail if @list contains any numbers greater than 998.
  *
  * Returns: The string representation of the list on success,
  * or NULL on failure.
@@ -964,7 +964,7 @@ char *gretl_list_to_lags_string (const int *list, int *err)
     char numstr[8];
     int len, i;
 
-    len = 4 * (list[0] + 1);
+    len = 4 * (list[0] + 1) + 2;
 
     if (len > MAXLINE - 32) {
 	*err = E_DATA;
@@ -985,13 +985,14 @@ char *gretl_list_to_lags_string (const int *list, int *err)
 	    break;
 	} else {
 	    if (i == 1) {
-		sprintf(numstr, "%d", list[i]);
+		sprintf(numstr, "{%d", list[i]);
 	    } else {
 		sprintf(numstr, ",%d", list[i]);
 	    }
 	    strcat(buf, numstr);
 	}
     }
+    strcat(buf, "}");
 
     if (*err) {
 	free(buf);

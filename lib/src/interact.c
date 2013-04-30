@@ -616,6 +616,8 @@ static int gappy_lags_check (char **S, int ns, int *specials, int ci)
 	err = E_PARSE;
     } else if (ci == DPANEL && ns != 1) {
 	err = E_PARSE;
+    } else if (ci == VAR && ns != 1) {
+	err = E_PARSE;
     }
 
     for (i=0; i<ns && !err; i++) {
@@ -667,7 +669,15 @@ static char **split_lag_fields (char *s, int *ns,
     char **S = NULL;
     int n;
 
+    if (cmd->ci == VAR) {
+	while (*p == ' ') p++;
+    }
+
     while (*p && !cmd->err) {
+	if (cmd->ci == VAR && *p == ' ') {
+	    *rem = p;
+	    break;
+	}		
 	while (*p == ' ') p++;
 	if (*p == ';') {
 	    /* reached the end of the portion of the command line
@@ -681,6 +691,10 @@ static char **split_lag_fields (char *s, int *ns,
 	    } else {
 		n = strcspn(p, "}");
 		cmd->err = push_lag_field(&S, p, n + 1, ns);
+		if (cmd->ci == VAR) {
+		    *rem = q + 1;
+		    break;
+		}
 		p = q;
 	    }
 	} else {
@@ -708,10 +722,10 @@ static char **split_lag_fields (char *s, int *ns,
 }
 
 /* here we have only one field to worry about, specifying the 
-   lag pattern for the dependent variable */
+   lag pattern for the dependent variable(s) */
 
-static void handle_dpanel_lags (CMD *cmd, const char *lspec,
-				char *line, char *rem)
+static void handle_single_lagvec (CMD *cmd, const char *lspec,
+				  char *line, const char *rem)
 {
     if (*lspec == '{') {
 	cmd->auxlist = gretl_list_from_string(lspec, &cmd->err);
@@ -734,8 +748,12 @@ static void handle_dpanel_lags (CMD *cmd, const char *lspec,
 	}
 
 	if (!cmd->err) {
-	    char *tmp = gretl_strdup(rem);
-	    char numstr[16];
+	    char *tmp, numstr[16];
+
+	    while (*rem == ' ') rem++;
+	    /* we have to copy here since @rem is actually
+	       a pointer into @line */
+	    tmp = gretl_strdup(rem);
 
 	    if (tmp == NULL) {
 		cmd->err = E_ALLOC;
@@ -879,6 +897,8 @@ static int maybe_rewrite_lags (char *s, CMD *cmd)
 	s += 6;
     } else if (!strncmp(s, "dpanel ", 7)) {
 	s += 7;
+    } else if (!strncmp(s, "var ", 4)) {
+	s += 4;
     }
 
 #if LAGS_DBG
@@ -901,10 +921,10 @@ static int maybe_rewrite_lags (char *s, CMD *cmd)
     free(cmd->extra);
     cmd->extra = gretl_strdup(line);
 
-    if (cmd->ci == DPANEL) {
-	handle_dpanel_lags(cmd, S[0], s, rem);
-    } else {
+    if (cmd->ci == ARMA) {
 	handle_arma_lags(cmd, S, ns, specials, s, rem);
+    } else {
+	handle_single_lagvec(cmd, S[0], s, rem);
     }
 
     strings_array_free(S, ns);
@@ -2718,7 +2738,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 	/* we may have a block of stuff to pass literally
 	   to gnuplot */
 	grab_gnuplot_literal_block(rem, cmd);
-    } else if (cmd->ci == ARMA || cmd->ci == DPANEL) {
+    } else if (cmd->ci == ARMA || cmd->ci == DPANEL || cmd->ci == VAR) {
 	/* allow for specific "gappy" lags */
 	maybe_rewrite_lags(line, cmd);
     } 
@@ -3624,7 +3644,7 @@ static int command_is_silent (const CMD *cmd, const char *line)
     return 0;
 }
 
-#define rewritten_lags(c) ((c->ci == ARMA || c->ci == DPANEL) && \
+#define rewritten_lags(c) ((c->ci == ARMA || c->ci == DPANEL || c->ci == VAR) && \
                            c->extra != NULL && \
 			   *c->extra != '\0')
 
@@ -3668,6 +3688,7 @@ void echo_cmd (const CMD *cmd, const DATASET *dset, const char *line,
 {
     int batch = (flags & CMD_BATCH_MODE);
     int recording = (flags & CMD_RECORDING);
+    int skiplist = 0;
     int len, llen = 0;
 
     if (line == NULL || prn == NULL || cmd->ci > NC) {
@@ -3748,7 +3769,9 @@ void echo_cmd (const CMD *cmd, const DATASET *dset, const char *line,
 	}
     }
 
-    if (dont_print_list(cmd)) {
+    skiplist = dont_print_list(cmd) || rewritten_lags(cmd);
+
+    if (skiplist) {
 	const char *s = line;
 	
 	if (rewritten_lags(cmd)) {
@@ -5571,10 +5594,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    *model = ar1_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == ARMA) {
 	    *model = arma(cmd->list, cmd->auxlist, dset, 
-			      cmd->opt, prn);
+			  cmd->opt, prn);
 	} else {
 	    *model = arch_model(cmd->list, cmd->order, dset,
-				    cmd->opt);
+				cmd->opt);
 	}
 	err = print_save_model(model, dset, cmd->opt, prn, s);
 	break;
@@ -5845,8 +5868,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case VAR:
     case VECM:
 	if (cmd->ci == VAR) {
-	    s->var = gretl_VAR(cmd->order, cmd->list, dset, 
-			       cmd->opt, prn, &err);
+	    s->var = gretl_VAR(cmd->order, cmd->auxlist, cmd->list, 
+			       dset, cmd->opt, prn, &err);
 	} else {
 	    int rank = gretl_int_from_string(cmd->extra, &err);
 

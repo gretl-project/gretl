@@ -4199,7 +4199,7 @@ int do_vector_model (selector *sr)
 
     if (action == VAR && !(libcmd.opt & OPT_L)) {
 	/* regular VAR, not VAR lag selection */
-	var = gretl_VAR(libcmd.order, libcmd.list, dataset, 
+	var = gretl_VAR(libcmd.order, libcmd.auxlist, libcmd.list, dataset, 
 			libcmd.opt, prn, &err);
 	if (!err) {
 	    view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
@@ -4207,7 +4207,7 @@ int do_vector_model (selector *sr)
 	}
     } else if (action == VAR) {
 	/* VAR lag selection */
-	gretl_VAR(libcmd.order, libcmd.list, dataset, 
+	gretl_VAR(libcmd.order, NULL, libcmd.list, dataset, 
 		  libcmd.opt, prn, &err);
 	if (!err) {
 	    view_buffer(prn, 72, 350, _("gretl: VAR lag selection"), 

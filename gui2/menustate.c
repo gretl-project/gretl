@@ -984,9 +984,14 @@ int vwin_menu_add_menu (windata_t *vwin, const gchar *path,
 {
     guint id = gtk_ui_manager_new_merge_id(vwin->ui);
     GtkActionGroup *actions;
+    gchar *grpname;
+    static int seq;
 
-    actions = gtk_action_group_new("NewMenu");
+    grpname = g_strdup_printf("NewMenu%d", seq);
+    actions = gtk_action_group_new(grpname);
     gtk_action_group_set_translation_domain(actions, "gretl");
+    g_free(grpname);
+    seq++;
 
     gtk_action_group_add_actions(actions, entry, 1, vwin);
     gtk_ui_manager_add_ui(vwin->ui, id, path, entry->name, entry->name,
