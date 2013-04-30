@@ -4,6 +4,9 @@ version 1.9.13, in progress
 - "adf" command: add option to optimize the lag order using
   the procedure recommended by Ng and Perron (2001), and 
   make the MAIC method the default
+- "var" command: add syntax to select specific lags
+- "boxplot" command: add facility to specify literal gnuplot
+  lines, as with the "gnuplot" command
 - Improve internals of pprintf() -- handle big string args
   properly
 - readfile() function: check for valid UTF-8 and recode if
