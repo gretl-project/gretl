@@ -1770,7 +1770,7 @@ void print_gnuplot_literal_lines (const char *s, FILE *fp)
 
     p = s = front_strip(s);
 
-    fputs(fp, "# start literal lines\n");
+    fputs("# start literal lines\n", fp);
 
     while (*s && *s != '}') {
 	if (*s == ';') {
@@ -1780,7 +1780,7 @@ void print_gnuplot_literal_lines (const char *s, FILE *fp)
 	s++;
     }
 
-    fputs(fp, "# end literal lines\n");
+    fputs("# end literal lines\n", fp);
 }
 
 static int loess_plot (gnuplot_info *gi, const char *literal,
