@@ -1284,6 +1284,14 @@
       </para>
 
       <para context="cli">
+	Gretl's boxplots are generated using
+	<program>gnuplot</program>, and it is possible to specify
+	the plot more fully by appending additional gnuplot commands,
+	enclosed in braces. For details, please see the help for
+	the <cmdref targ="gnuplot"/> command.
+      </para>
+
+      <para context="cli">
 	In interactive mode the result is displayed immediately. In
 	batch mode the default behavior is that a gnuplot command file
 	is written in the user's working directory, with a name on the
@@ -1292,7 +1300,7 @@
 	<program>gnuplot</program> (under MS Windows,
 	<program>wgnuplot</program>).  This behavior can be modified
 	by use of the <opt>--output=</opt><repl>filename</repl>
-	option.  For details, please see the <cmdref targ="gnuplot"/>
+	option. For details, please see the <cmdref targ="gnuplot"/>
 	command.
       </para>
 
