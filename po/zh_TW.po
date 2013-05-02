@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.9x\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2013-04-21 01:19+0800\n"
+"PO-Revision-Date: 2013-05-03 01:30+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung@cycu.edu.tw>\n"
 "Language-Team: gretl <gretl-users@lists.wfu.edu>\n"
 "MIME-Version: 1.0\n"
@@ -29,9 +29,8 @@ msgstr "modified BIC"
 
 #: lib/src/adf_kpss.c:311
 #: gui2/library.c:934
-#, fuzzy
 msgid "t-statistic"
-msgstr "基本假設檢定(_T)"
+msgstr "t-值"
 
 #: lib/src/adf_kpss.c:323
 #, c-format
@@ -68,7 +67,7 @@ msgstr "包含落後 %d 期 的 (1-L)%s"
 #: lib/src/adf_kpss.c:342
 #, c-format
 msgid "(max was %d, criterion %s)"
-msgstr "(最大落後階次: %d, 使用準擇: %s)"
+msgstr "(最大落後階次: %d, 使用準則: %s)"
 
 #: lib/src/adf_kpss.c:384
 #: gui2/library.c:950
@@ -514,15 +513,15 @@ msgid "got invalid variable number %d"
 msgstr "得到錯誤的變數代碼 %d"
 
 #: lib/src/boxplots.c:1078
-#, fuzzy, c-format
+#, c-format
 msgid "got invalid varname '%s'"
-msgstr "資料檔格式錯誤\n"
+msgstr "變數名稱錯誤 '%s'"
 
 #: lib/src/boxplots.c:1082
 #: lib/src/geneval.c:1483
-#, fuzzy, c-format
+#, c-format
 msgid "got invalid field '%s'"
-msgstr "資料檔格式錯誤\n"
+msgstr "欄位 field 錯誤 '%s'"
 
 #: lib/src/compare.c:269
 #, c-format
@@ -663,9 +662,9 @@ msgid "Adding variables improved %d of %d model selection statistics.\n"
 msgstr "Adding variables improved %d of %d model selection statistics.\n"
 
 #: lib/src/compare.c:394
-#, fuzzy, c-format
+#, c-format
 msgid "Omitting variables improved %d of %d model selection statistics.\n"
-msgstr "選擇VAR落後期(_V)"
+msgstr "Omitting variables improved %d of %d model selection statistics.\n"
 
 #: lib/src/compare.c:543
 #: lib/src/vartest.c:770
@@ -863,9 +862,9 @@ msgstr ""
 "樣本數前後各減去 15%"
 
 #: lib/src/compare.c:2515
-#, fuzzy, c-format
+#, c-format
 msgid "The maximum Wald test = %g occurs at observation %s"
-msgstr "最大值 F(%d, %d) = %g 出現在樣本位置 %s"
+msgstr " Wald test 最大值 = %g, 出現在樣本位置 %s"
 
 #: lib/src/compare.c:2519
 #, c-format
@@ -1047,9 +1046,9 @@ msgstr "資料檔格式錯誤\n"
 #: lib/src/usermat.c:1086
 #: lib/src/usermat.c:1318
 #: lib/src/usermat.c:1370
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no such matrix"
-msgstr "共變數矩陣的反矩陣"
+msgstr "'%s': 無此矩陣"
 
 #: lib/src/csvdata.c:536
 #, c-format
@@ -1138,9 +1137,8 @@ msgid "   but the dates are not complete and consistent\n"
 msgstr "   但日期格式不完整也不一致\n"
 
 #: lib/src/csvdata.c:1019
-#, fuzzy
 msgid "   dates are reversed?\n"
-msgstr "兩母體變異數相同"
+msgstr "   日期序要反過來嗎?\n"
 
 #: lib/src/csvdata.c:1215
 #, c-format
@@ -1156,9 +1154,9 @@ msgid "   definitely not a four-digit year\n"
 msgstr "   一定不是 4 位數的年變數標記\n"
 
 #: lib/src/csvdata.c:1334
-#, fuzzy, c-format
+#, c-format
 msgid "Binary data (%d) encountered (line %d:%d): this is not a valid text file\n"
-msgstr " (%d) 是二進位 (binary) 資料: 這不是一個一般的文字檔\n"
+msgstr " (%d) 是二進位 (binary) 資料 (line %d:%d): 這不是一個一般的文字檔\n"
 
 #: lib/src/csvdata.c:1362
 #: lib/src/dataio.c:2798
@@ -1171,9 +1169,9 @@ msgid "Data file has trailing commas\n"
 msgstr "資料檔尾有英文逗號\n"
 
 #: lib/src/csvdata.c:1533
-#, fuzzy, c-format
+#, c-format
 msgid "   first field: '%s'\n"
-msgstr "用一階差分"
+msgstr "   第一欄: '%s'\n"
 
 #: lib/src/csvdata.c:1536
 msgid "   seems to be observation label\n"
@@ -1225,9 +1223,9 @@ msgid "scanning for variable names...\n"
 msgstr "蒐尋變數名稱...\n"
 
 #: lib/src/csvdata.c:2025
-#, fuzzy, c-format
+#, c-format
 msgid "   line: %.115s...\n"
-msgstr "   變數列: %s\n"
+msgstr "   行: %.115s...\n"
 
 #: lib/src/csvdata.c:2027
 #, c-format
@@ -1259,9 +1257,9 @@ msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' -- 沒有任何數值轉換被執行!"
 
 #: lib/src/csvdata.c:2299
-#, fuzzy, c-format
+#, c-format
 msgid "warning: %d labels were truncated.\n"
-msgstr "警告: 有重覆的變數名稱\n"
+msgstr "警告: %d labels 被截斷\n"
 
 #: lib/src/csvdata.c:2316
 msgid "scanning for row labels and data...\n"
@@ -1377,21 +1375,21 @@ msgid "WARNING: ascii data read error at var %d, obs %d"
 msgstr "警告: ascii data read error at var %d, obs %d"
 
 #: lib/src/dataio.c:276
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "First char of varname '%s' is bad\n"
 "(first must be alphabetical)"
 msgstr ""
-"變數名稱第一個字 (0x%x) 不符命名規則\n"
+"變數名稱第一個字  '%s' 不符命名規則\n"
 "(第一個字必須為英文字母)"
 
 #: lib/src/dataio.c:280
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Varname '%s' contains illegal character '%c'\n"
 "Use only letters, digits and underscore"
 msgstr ""
-"變數名稱包含了不符規則的字元 '%c'\n"
+"變數名稱 '%s' 包含了不符規則的字元 '%c'\n"
 "只能用字母, 數字 和 底線"
 
 #: lib/src/dataio.c:286
@@ -1440,9 +1438,9 @@ msgstr "日期中有錯誤的字元: %d "
 #: lib/src/dataio.c:619
 #: lib/src/dataio.c:624
 #: lib/src/dataio.c:637
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid observation index"
-msgstr "資料檔格式錯誤\n"
+msgstr "'%s':樣本指標錯誤"
 
 #: lib/src/dataio.c:656
 #: lib/src/forecast.c:2379
@@ -2219,7 +2217,7 @@ msgstr "for column %d (有效樣本數 %d)"
 #: lib/src/describe.c:4480
 #, c-format
 msgid "for the variable '%s' (%d valid observations)"
-msgstr "for the variable '%s' (有效樣本數 %d)"
+msgstr "變數： '%s' (有效樣本數 %d)"
 
 #: lib/src/describe.c:4598
 #: lib/src/describe.c:4626
@@ -3640,9 +3638,8 @@ msgid "Insufficient observations for this operation"
 msgstr "此項操作所需之樣本數不足"
 
 #: lib/src/gretl_errors.c:86
-#, fuzzy
 msgid "Error executing function"
-msgstr "殘差自我相關函數"
+msgstr "函數執行錯誤"
 
 #: lib/src/gretl_errors.c:87
 #: gui2/gretl.c:2475
@@ -3654,14 +3651,12 @@ msgid "gradient is not close to zero"
 msgstr ""
 
 #: lib/src/gretl_errors.c:97
-#, fuzzy
 msgid "generated missing values"
-msgstr "gretl: 臨界值"
+msgstr "有遺漏值產生"
 
 #: lib/src/gretl_errors.c:98
-#, fuzzy
 msgid "generated non-finite values"
-msgstr "預測值 (predicted values)"
+msgstr "有 non-finite 值產生"
 
 #: lib/src/gretl_errors.c:232
 #: lib/src/gretl_errors.c:237
@@ -3683,14 +3678,11 @@ msgstr "無法開啟 %s"
 #: gui2/fnsave.c:2020
 #, c-format
 msgid "%s: validated against DTD OK"
-msgstr ""
+msgstr "%s: DTD 格式驗證 OK"
 
 #: lib/src/gretl_func.c:3115
-#, fuzzy
 msgid "No functions are available for packaging at present."
-msgstr ""
-"目前在本機電腦上並沒有發現任何自訂函數套件\n"
-"你想要自行撰寫一個函數套件嗎?"
+msgstr "目前在本機電腦上並沒有發現任何自訂函數套件"
 
 #: lib/src/gretl_func.c:4224
 msgid "No description available"
@@ -3716,9 +3708,9 @@ msgid "Deleted function '%s'\n"
 msgstr "函數 '%s' 已刪除\n"
 
 #: lib/src/gretl_func.c:4903
-#, fuzzy, c-format
+#, c-format
 msgid "%s: duplicated parameter name '%s'"
-msgstr "gretl: 變數名稱"
+msgstr "%s: 參數名稱重覆 '%s'"
 
 #: lib/src/gretl_func.c:5360
 msgid "You can't change the name of a function here"
@@ -3744,11 +3736,13 @@ msgid "%s: not enough arguments\n"
 msgstr "%s: 參數數目不足\n"
 
 #: lib/src/gretl_func.c:6551
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Error message from %s():\n"
 " %s"
-msgstr "無法從伺服器取得資料..."
+msgstr ""
+"來自 %s() 的錯誤訊息:\n"
+" %s"
 
 #: lib/src/gretl_func.c:7303
 #, c-format
@@ -4825,9 +4819,8 @@ msgid "This estimator requires panel data"
 msgstr ""
 
 #: lib/src/interact.c:5729
-#, fuzzy
 msgid "Couldn't format model\n"
-msgstr "無法開啟指令檔 \"%s\"\n"
+msgstr "無法 format model\n"
 
 #: lib/src/interact.c:5745
 #, fuzzy, c-format
@@ -4842,15 +4835,14 @@ msgstr ""
 
 #: lib/src/interact.c:5883
 #: lib/src/monte_carlo.c:2876
-#, fuzzy
 msgid "You cannot delete series in this context\n"
-msgstr "無法刪除 %s; 該變數正在使用中"
+msgstr "無法刪除正在使用中的變數\n"
 
 #: lib/src/interact.c:5933
 #: cli/gretlcli.c:660
-#, fuzzy, c-format
+#, c-format
 msgid "%s: command not available\n"
-msgstr "   %s: 可能不是1年\n"
+msgstr "%s: 指令無法使用\n"
 
 #: lib/src/interact.c:5939
 #, c-format
@@ -4862,9 +4854,9 @@ msgid "kalman: a required matrix is missing"
 msgstr ""
 
 #: lib/src/kalman.c:478
-#, fuzzy, c-format
+#, c-format
 msgid "kalman: required matrix %s is missing"
-msgstr "%s: 少了必要參數"
+msgstr "kalman: 缺少需要的矩陣 %s "
 
 #: lib/src/kalman.c:486
 msgid "No Kalman filter is defined"
@@ -4876,9 +4868,9 @@ msgstr ""
 
 #: lib/src/libset.c:936
 #: lib/src/libset.c:1612
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid value '%s'"
-msgstr "查P值(_P)"
+msgstr "%s: 不正確的值 '%s'"
 
 #: lib/src/libset.c:1036
 #, fuzzy, c-format
@@ -5092,9 +5084,8 @@ msgid "Warning: solution is probably not unique"
 msgstr ""
 
 #: lib/src/modelprint.c:607
-#, fuzzy
 msgid "Warning: couldn't compute numerical Hessian"
-msgstr "無法計算 Hessian 數值"
+msgstr "警告：無法計算 numerical Hessian "
 
 #: lib/src/modelprint.c:625
 #: lib/src/modelprint.c:643
@@ -5667,9 +5658,8 @@ msgid "Bollerslev-Wooldridge standard errors"
 msgstr ""
 
 #: lib/src/modelprint.c:1374
-#, fuzzy
 msgid "Warning: could not compute standard errors"
-msgstr "計算標準差"
+msgstr "警告: 無法計算標準誤"
 
 #: lib/src/modelprint.c:1398
 #, c-format
@@ -6434,9 +6424,9 @@ msgstr "變數名稱衝突"
 #: lib/src/monte_carlo.c:661
 #: lib/src/monte_carlo.c:1558
 #: lib/src/monte_carlo.c:1721
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': not a scalar"
-msgstr "   %s: 可能不是1年\n"
+msgstr "'%s': 不是數值 (scalar)"
 
 #: lib/src/monte_carlo.c:299
 #: lib/src/monte_carlo.c:323
@@ -6727,7 +6717,7 @@ msgstr "雙尾 P 值"
 #: lib/src/nonparam.c:889
 #, c-format
 msgid "Test for difference between %s and %s"
-msgstr "Test for difference between %s and %s"
+msgstr "%s 和 %s 兩者無差異之檢定"
 
 #: lib/src/nonparam.c:979
 msgid "Wilcoxon Signed-Rank Test"
@@ -6739,11 +6729,11 @@ msgstr "中位數無差異 (the median difference is zero)"
 
 #: lib/src/nonparam.c:1010
 msgid "zero differences"
-msgstr "zero differences"
+msgstr "已刪去無差異的樣本數 (zero differences)"
 
 #: lib/src/nonparam.c:1011
 msgid "non-zero ties"
-msgstr "non-zero ties"
+msgstr "非零且差異值相同之樣本種類 (non-zero ties)"
 
 #: lib/src/nonparam.c:1017
 msgid "Expected value"
@@ -6777,7 +6767,7 @@ msgstr "符號檢定 (Sign test)"
 #: lib/src/nonparam.c:1195
 #, c-format
 msgid "Number of differences: n = %d\n"
-msgstr "Number of differences: n = %d\n"
+msgstr "有差異的樣本數: n = %d\n"
 
 #: lib/src/nonparam.c:1197
 #, c-format
@@ -6787,7 +6777,7 @@ msgstr ""
 #: lib/src/nonparam.c:1202
 #, c-format
 msgid "Under the null hypothesis of no difference, W follows B(%d, %.1f)\n"
-msgstr "在無差異的虛無假設下, W 服從 B(%d, %.1f) 分配\n"
+msgstr "在無差異的虛無假設下, W 服從二項分配 B(%d, %.1f) \n"
 
 #: lib/src/nonparam.c:1204
 #: lib/src/nonparam.c:1211
@@ -7541,7 +7531,7 @@ msgid "Full range"
 msgstr "全部樣本"
 
 #: lib/src/subsample.c:2246
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Data file %s\n"
 "as of"
@@ -8661,9 +8651,8 @@ msgstr "變數 %d"
 #: gui2/guiprint.c:1891
 #: gui2/guiprint.c:1941
 #: gui2/selector.c:7839
-#, fuzzy
 msgid "Variable"
-msgstr "變數(_V)"
+msgstr "變數"
 
 #: gui2/calculator.c:2371
 msgid "Use variable from dataset"
@@ -8985,11 +8974,13 @@ msgid "gretl: missing code"
 msgstr "gretl: missing _value 代碼"
 
 #: gui2/callbacks.c:550
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter value to be read as \"missing\"\n"
 "for the variable \"%s\""
-msgstr "輸入將被視為\"遺漏值\"之代碼值:"
+msgstr ""
+"為變數 \"%s\"\n"
+"輸入將被視為遺漏值之代碼值:"
 
 #: gui2/callbacks.c:557
 msgid "Enter value to be read as \"missing\":"
@@ -9318,9 +9309,8 @@ msgstr ""
 #: gui2/database.c:2168
 #: gui2/datafiles.c:1014
 #: gui2/datafiles.c:1062
-#, fuzzy
 msgid "Installed"
-msgstr "安裝"
+msgstr "安裝完成"
 
 #: gui2/database.c:2172
 #: gui2/database.c:2195
@@ -9527,9 +9517,8 @@ msgid "gretl: data packages on server"
 msgstr "gretl: 從伺服器讀取函數套件"
 
 #: gui2/datafiles.c:1649
-#, fuzzy
 msgid "gretl: addons"
-msgstr "開啟指令視窗(_G)"
+msgstr "gretl: addons"
 
 #: gui2/datafiles.c:2056
 #: gui2/fnsave.c:2670
@@ -9654,13 +9643,13 @@ msgid "Confirm dataset structure"
 msgstr "確認資料類型: "
 
 #: gui2/datawiz.c:170
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter name for first variable\n"
 "(max. %d characters)"
 msgstr ""
 "請輸入第一個變數的名稱\n"
-"(最多 15 個英文字)"
+"(最多 %d 個英文字)"
 
 #: gui2/datawiz.c:174
 #: gui2/dialogs.c:5290
@@ -10042,9 +10031,9 @@ msgid "Use L-BFGS-B, memory size:"
 msgstr "使用 L-BFGS-B 演算法, 計憶體大小 (memory size):"
 
 #: gui2/dialogs.c:1735
-#, fuzzy, c-format
+#, c-format
 msgid "groups (N = %d)"
-msgstr "%s (n = %d, %s)"
+msgstr "選擇群組 groups (群組數 N = %d)"
 
 #: gui2/dialogs.c:1737
 #, c-format
@@ -10078,9 +10067,8 @@ msgid "gretl: set sample"
 msgstr "gretl: 設定樣本"
 
 #: gui2/dialogs.c:2028
-#, fuzzy
 msgid "Groups"
-msgstr "繪圖"
+msgstr "群組"
 
 #: gui2/dialogs.c:2028
 #, fuzzy
@@ -10102,9 +10090,8 @@ msgid "Set sample range"
 msgstr "設定子樣本範圍"
 
 #: gui2/dialogs.c:2371
-#, fuzzy
 msgid "gretl: define dummy"
-msgstr "產生新變數(_n)"
+msgstr "gretl: 定義虛擬變數"
 
 #: gui2/dialogs.c:2381
 msgid "Set dummy range"
@@ -10116,36 +10103,32 @@ msgid "Name of variable:"
 msgstr "變數名稱:"
 
 #: gui2/dialogs.c:2476
-#, fuzzy
 msgid "single graph: group means"
-msgstr " 在圖上按滑鼠鍵會出現選單"
+msgstr "畫在同一個圖: group means"
 
 #: gui2/dialogs.c:2477
 msgid "single graph: groups overlaid (N <= 80)"
-msgstr ""
+msgstr "畫在同一個圖: groups overlaid (N <= 80)"
 
 #: gui2/dialogs.c:2478
 msgid "single graph: groups in sequence (N <= 80)"
-msgstr ""
+msgstr "畫在同一個圖:: groups in sequence (群組數 N <= 80)"
 
 #: gui2/dialogs.c:2479
-#, fuzzy
 msgid "multiple plots in grid (N <= 16)"
-msgstr "以垂直方式排列多變數圖"
+msgstr "以格狀方式排列多變數圖 (群組數 N <=9)"
 
 #: gui2/dialogs.c:2480
-#, fuzzy
 msgid "multiple plots arranged vertically (N <= 6)"
-msgstr "以垂直方式排列多變數圖"
+msgstr "以垂直方式排列多變數圖 (群組數 N <=6)"
 
 #: gui2/dialogs.c:2481
 msgid "boxplots by group (N <= 150)"
-msgstr ""
+msgstr "依 group 畫箱形圖 (群組數 N <= 150)"
 
 #: gui2/dialogs.c:2482
-#, fuzzy
 msgid "single boxplot"
-msgstr "gretl: 箱形圖資料"
+msgstr "箱形圖"
 
 #: gui2/dialogs.c:2494
 #: gui2/dialogs.c:2506
@@ -11007,7 +10990,7 @@ msgstr "輸入函數之參數:"
 
 #: gui2/fncall.c:1349
 msgid "Assign return value (optional):"
-msgstr ""
+msgstr "指定回傳值 (optional):"
 
 #: gui2/fncall.c:1352
 msgid "selection (or new variable)"
@@ -11015,7 +10998,7 @@ msgstr "選擇 (或新變數)"
 
 #: gui2/fncall.c:1383
 msgid "close this dialog on \"OK\""
-msgstr ""
+msgstr "按 ［確定］ 後關閉此視窗"
 
 #: gui2/fncall.c:1824
 msgid "This function needs a model in place"
@@ -11155,6 +11138,8 @@ msgid ""
 "To update the menu attachment, you should\n"
 "(a) save this package, and (b) restart gretl."
 msgstr ""
+"要使套件函數加掛到主選單生效，你必須\n"
+"(a) 儲存套件函數, (b) 重新啟動 gretl."
 
 #: gui2/fnsave.c:1547
 msgid "gretl: extra properties"
@@ -11165,9 +11150,8 @@ msgid "Special functions"
 msgstr "特殊函數"
 
 #: gui2/fnsave.c:1634
-#, fuzzy
 msgid "Menu attachment"
-msgstr "設定功能表字形大小"
+msgstr "選單加掛位置"
 
 #: gui2/fnsave.c:1686
 msgid "Date (YYYY-MM-DD)"
@@ -11214,9 +11198,8 @@ msgid "Upload package to server on save"
 msgstr "在儲存時自訂函數, 同時更新伺服器中的版本"
 
 #: gui2/fnsave.c:1845
-#, fuzzy
 msgid "Validate"
-msgstr "變異數"
+msgstr "驗證格式 (Validate）"
 
 #: gui2/fnsave.c:1895
 msgid "gretl: upload"
@@ -12932,7 +12915,7 @@ msgstr "敘述統計, 所使用的樣本為 %s - %s"
 #: gui2/guiprint.c:1017
 #, c-format
 msgid "for the variable %s (%d valid observations)"
-msgstr "for the variable %s (有效樣本數  %d)"
+msgstr "變數： %s (有效樣本數  %d)"
 
 #: gui2/guiprint.c:763
 msgid "5% Perc."
@@ -13672,19 +13655,16 @@ msgid "Linear restrictions"
 msgstr "線性限制式"
 
 #: gui2/gui_utils.c:4120
-#, fuzzy
 msgid "Omit exogenous variables..."
-msgstr "取自然對數"
+msgstr "忽略外生變數..."
 
 #: gui2/gui_utils.c:4126
-#, fuzzy
 msgid "Omit time trend"
-msgstr "時間趨勢變數"
+msgstr "忽略時間趨勢變數"
 
 #: gui2/gui_utils.c:4132
-#, fuzzy
 msgid "Omit seasonal dummies"
-msgstr "加上季節虛擬變數"
+msgstr "忽略季節虛擬變數"
 
 #: gui2/gui_utils.c:4141
 msgid "Residuals from equation"
@@ -13951,9 +13931,8 @@ msgid "genrgui.hlp"
 msgstr "genrgui.hlp"
 
 #: gui2/helpfiles.c:1088
-#, fuzzy
 msgid "Sorry, no help is available"
-msgstr "%s: 抱歉, 尚無任何說明.\n"
+msgstr "抱歉, 無任何與此有關之說明"
 
 #: gui2/helpfiles.c:1437
 msgid "Sorry, help not found"
@@ -13982,9 +13961,8 @@ msgstr "gretl: 反覆運算資訊"
 #: gui2/library.c:500
 #: gui2/library.c:507
 #: gui2/library.c:5789
-#, fuzzy
 msgid "Error adding variables"
-msgstr "取自然對數"
+msgstr "新增變數錯誤"
 
 #: gui2/library.c:619
 #, fuzzy, c-format
@@ -14237,9 +14215,8 @@ msgstr ""
 
 #: gui2/library.c:2098
 #: gui2/selector.c:7338
-#, fuzzy
 msgid "No variables are selected"
-msgstr "取一階差分(_F)"
+msgstr "沒有選擇任何變數"
 
 #: gui2/library.c:2173
 #: gui2/library.c:2227
@@ -14598,9 +14575,8 @@ msgid "Really delete %s?"
 msgstr "真的要刪除 %s?"
 
 #: gui2/library.c:6471
-#, fuzzy
 msgid "Really delete the selected variables?"
-msgstr "取一階差分(_F)"
+msgstr "真的要刪除所選的變數?"
 
 #: gui2/library.c:6481
 #: gui2/session.c:2420
@@ -15147,23 +15123,20 @@ msgid "You must specify a selection variable"
 msgstr "你必需選擇 1 個變數"
 
 #: gui2/selector.c:3176
-#, fuzzy
 msgid "You must specify a second dependent variable"
-msgstr "你必需選擇 1 個應變數 (dependent variable)"
+msgstr "你必需選擇 第 2 個應變數 (a second dependent variable)"
 
 #: gui2/selector.c:3179
 msgid "You must specify an upper bound variable"
 msgstr "你必須設定上限 (upper bound)"
 
 #: gui2/selector.c:3182
-#, fuzzy
 msgid "You must specify a treatment variable"
-msgstr "你必需選擇 1 個變數"
+msgstr "你必需選擇 1 個處理變數 (treatment variable)"
 
 #: gui2/selector.c:3185
-#, fuzzy
 msgid "You must specify an independent variable"
-msgstr "你必需選擇 1 個應變數 (dependent variable)"
+msgstr "你必需選擇 1 個自變數 (independent variable)"
 
 #: gui2/selector.c:3337
 msgid "You must select a Z-axis variable"
@@ -16091,9 +16064,8 @@ msgid "versus"
 msgstr ""
 
 #: gui2/session.c:2210
-#, fuzzy
 msgid "Bundle is empty"
-msgstr "殘差是常態分配"
+msgstr "Bundle 是空的"
 
 #: gui2/session.c:2415
 #, fuzzy, c-format
@@ -16602,13 +16574,13 @@ msgid "_Divide by scalar"
 msgstr "除以數值 (scalar)(_D)"
 
 #: gui2/ssheet.c:960
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter name for new variable\n"
 "(max. %d characters)"
 msgstr ""
-"請輸入第一個變數的名稱\n"
-"(最多 15 個英文字)"
+"請輸入新變數的名稱\n"
+"(最多 %d 個英文字)"
 
 #: gui2/ssheet.c:974
 #, fuzzy, c-format
@@ -17717,9 +17689,8 @@ msgid "Sending debugging output to %s"
 msgstr "資料匯入的偵錯結果存檔至: %s"
 
 #: plugin/import_common.c:654
-#, fuzzy
 msgid "Sheet to import:"
-msgstr "複製資料"
+msgstr "要匯入的工作表:"
 
 #: plugin/import_common.c:694
 msgid "gretl: spreadsheet import"
@@ -18099,7 +18070,7 @@ msgstr "組距-均數圖 (range-mean plot) for"
 #: plugin/range-mean.c:114
 #: plugin/range-mean.c:226
 msgid "range"
-msgstr "\t組距(range)"
+msgstr "range"
 
 #: plugin/range-mean.c:204
 msgid "Sample is too small for range-mean graph\n"
@@ -18108,7 +18079,7 @@ msgstr "樣本太少, 無法繪組距-均數圖\n"
 #: plugin/range-mean.c:222
 #, c-format
 msgid "Range-mean statistics for %s\n"
-msgstr "組距-均數統計量 (Range-mean statistics) for %s\n"
+msgstr "%s 的組距-均數統計量 (Range-mean statistics)\n"
 
 #: plugin/range-mean.c:224
 #, c-format
