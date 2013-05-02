@@ -5531,6 +5531,25 @@ static int data_straddle_zero (const gretl_matrix *m)
     return 0;
 }
 
+static const char *period_label (const DATASET *dset)
+{
+    if (dset == NULL) {
+	return _("periods");
+    } else if (quarterly_or_monthly(dset)) {
+	return dset->pd == 4 ? _("quarters") : _("months");
+    } else if (annual_data(dset)) {
+	return _("years");
+    } else if (dataset_is_weekly(dset)) {
+	return _("weeks");
+    } else if (dataset_is_daily(dset)) {
+	return _("days");
+    } else if (dataset_is_hourly(dset)) {
+	return _("hours");
+    } else {
+	return _("periods");
+    }
+}
+
 int 
 gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, 
@@ -5584,7 +5603,7 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 		dset->varname[vtarg], dset->varname[vshock]);
     }
 
-    fprintf(fp, "set xlabel '%s'\n", _("periods"));
+    fprintf(fp, "set xlabel '%s'\n", period_label(dset));
     fputs("set xzeroaxis\n", fp);
     fprintf(fp, "set xrange [-1:%d]\n", periods);
     fprintf(fp, "set title '%s'\n", title);
@@ -5671,7 +5690,7 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
     fputs("set key left top\n", fp);
     title = g_strdup_printf(_("forecast variance decomposition for %s"), 
 			    dset->varname[v]);
-    fprintf(fp, "set xlabel '%s'\n", _("periods"));
+    fprintf(fp, "set xlabel '%s'\n", period_label(dset));
     fputs("set xzeroaxis\n", fp);
     fprintf(fp, "set title '%s'\n", title);
     g_free(title);
@@ -5736,7 +5755,7 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
     fprintf(fp, "set multiplot layout %d,%d\n", n, n);
 
     if (n < 4) {
-	fprintf(fp, "set xlabel '%s'\n", _("periods"));
+	fprintf(fp, "set xlabel '%s'\n", period_label(dset));
     } else {
 	fputs("set noxlabel\n", fp);
     }
