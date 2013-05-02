@@ -443,6 +443,11 @@ const char *get_app_fontname (void)
     return appfontname;
 }
 
+const char *get_fixed_fontname (void)
+{
+    return fixedfontname;
+}
+
 void set_app_font (const char *fontname)
 {
     GtkSettings *settings;

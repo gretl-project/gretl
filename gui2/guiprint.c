@@ -88,6 +88,24 @@ static char *header_string (const char *fname)
 
 #ifdef G_OS_WIN32
 
+static char *win32_fixed_font_name (void)
+{
+    const char *s = get_fixed_fontname();
+    int i, n;
+
+    /* trim off trailing point-size */
+    n = strlen(s);
+    for (i=n-1; i>0; i--) {
+	if (isdigit(s[i]) || s[i] == ' ') {
+	    n--;
+	} else {
+	    break;
+	}
+    }
+
+    return gretl_strndup(s, n);
+}
+
 void print_window_content (gchar *fullbuf, gchar *selbuf, 
 			   const char *fname,
 			   windata_t *vwin)
@@ -101,8 +119,9 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     TEXTMETRIC lptm;
     BYTE charset;
     int px, x, y, incr;
-    gchar *printbuf = NULL;
+    gchar *rawbuf, *printbuf = NULL;
     gchar *hdrstart, hdr[90];
+    char *winfont;
     size_t len;
 
     memset(&pdlg, 0, sizeof pdlg);
@@ -129,6 +148,8 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     } else {
 	charset = ANSI_CHARSET;
     }
+
+    winfont = win32_fixed_font_name();
     
     /* setup font specifics */
     /* first param to MulDiv is supposed to be point size */
@@ -145,9 +166,11 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     lfont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
     lfont.lfQuality = DEFAULT_QUALITY;
     lfont.lfPitchAndFamily = VARIABLE_PITCH | FF_MODERN; 
-    lstrcpy(lfont.lfFaceName, "Courier New");
+    lstrcpy(lfont.lfFaceName, winfont);
     fixed_font = CreateFontIndirect(&lfont);
     SelectObject(dc, fixed_font); 
+
+    free(winfont);
 
     incr = 120;
     if (GetTextMetrics(dc, &lptm)) {
@@ -162,9 +185,21 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     printok = StartDoc(dc, &di);
 
     if (selbuf != NULL && (pdlg.Flags & PD_SELECTION)) {
-	printbuf = my_locale_from_utf8(selbuf);
+	rawbuf = selbuf;
     } else {
-	printbuf = my_locale_from_utf8(fullbuf);
+	rawbuf = fullbuf;
+    }
+
+    if (has_unicode_minus(rawbuf)) {
+	/* we need to strip any utf-8 minus signs first? */
+	char *tmp = strip_unicode_minus(rawbuf);
+
+	if (tmp != NULL) {
+	    printbuf = my_locale_from_utf8(tmp);
+	    free(tmp);
+	}
+    } else {
+	printbuf = my_locale_from_utf8(rawbuf);
     }
 
     if (printbuf == NULL) {
@@ -175,7 +210,8 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     page = 1;
     x = px / 2; /* attempt at left margin */
     hdrstart = header_string(fname);
-    while (*printbuf && printok) { /* pages loop */
+    while (*printbuf && printok) { 
+	/* pages loop */
 	StartPage(dc);
 	SelectObject(dc, fixed_font);
 	SetMapMode(dc, MM_TEXT);
@@ -188,7 +224,8 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
 	TextOut(dc, x, px / 8, hdr, strlen(hdr));
 	line = 0;
 	y = px/2;
-	while (*printbuf && line < PAGE_LINES) { /* lines loop */
+	while (*printbuf && line < PAGE_LINES) { 
+	    /* lines loop */
 	    len = strcspn(printbuf, "\n");
 	    TextOut(dc, x, y, printbuf, len);
 	    printbuf += len + 1;

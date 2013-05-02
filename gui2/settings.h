@@ -57,6 +57,8 @@ void set_app_font (const char *fontname);
 
 const char *get_app_fontname (void);
 
+const char *get_fixed_fontname (void);
+
 void get_default_dir (char *s, int action);
 
 void working_dir_dialog (void);
