@@ -176,26 +176,22 @@ static void gretl_clipboard_set (int fmt)
    then see if there's anything non-ascii left to handle.
 */
 
-static char *strip_utf8 (char *buf, gchar **tmp)
+static char *strip_utf8 (char *buf)
 {
-    char *ret = NULL;
-
     strip_unicode_minus(buf);
 
     if (string_is_utf8((const unsigned char *) buf)) {
-	*tmp = ret = utf8_to_cp(buf);
+	return utf8_to_cp(buf);
     } else {
-	ret = buf;
+	return buf;
     }
-
-    return ret;
 }
 
 int prn_to_clipboard (PRN *prn, int fmt)
 {
     char *buf = gretl_print_steal_buffer(prn);
     const char *cset = NULL;
-    gchar *tmp = NULL;
+    gchar *trbuf = NULL;
     int utf8_ok = 1;
     int err = 0;
 
@@ -212,18 +208,19 @@ int prn_to_clipboard (PRN *prn, int fmt)
     }
 
     if (!utf8_ok && string_is_utf8((const unsigned char *) buf)) {
-	buf = strip_utf8(buf, &tmp);
+	trbuf = strip_utf8(buf);
+    } else {
+	trbuf = buf;
     }
 
     if (fmt == GRETL_FORMAT_RTF_TXT) {
-	clipboard_buf = dosify_buffer(buf, fmt);
+	clipboard_buf = dosify_buffer(trbuf, fmt);
     } else {
-	clipboard_buf = gretl_strdup(buf);
+	clipboard_buf = gretl_strdup(trbuf);
     }
 
-    if (tmp != NULL) {
-	/* i.e. tmp != buf */
-	g_free(tmp);
+    if (trbuf != buf) {
+	g_free(trbuf);
     }
 
     if (clipboard_buf == NULL) {
