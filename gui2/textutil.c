@@ -535,13 +535,17 @@ static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
 
 static gchar *maybe_amend_buffer (gchar *inbuf, int fmt)
 {
-    gchar *outbuf = my_locale_from_utf8(inbuf);
+    const gchar *cset;
+    gchar *outbuf = NULL;
 
-    free(inbuf);
-    inbuf = outbuf;
-
-    /* FIXME win32: saving as text?? */
-
+    if (!g_get_charset(&cset)) {
+	/* not native UTF-8 */ 
+	strip_unicode_minus(inbuf);
+	outbuf = my_locale_from_utf8(inbuf);
+	free(inbuf);
+	inbuf = outbuf;
+    }     
+    
     if (fmt == GRETL_FORMAT_RTF_TXT) {
 	outbuf = dosify_buffer(inbuf, fmt);
 	free(inbuf);
@@ -743,8 +747,11 @@ void system_print_buf (const gchar *buf, FILE *fp)
     }
 }
 
-/* convert a buffer to DOS/Windows text format, optionally
-   adding minimal RTF formatting */
+/* Convert a buffer to DOS/Windows text format, optionally
+   adding minimal RTF formatting. This function does not
+   take charge of text re-encoding, it just handles line
+   endings and (optional) RTF monospaced font spec.
+*/
 
 char *dosify_buffer (const char *buf, int format)
 {
@@ -808,4 +815,5 @@ char *dosify_buffer (const char *buf, int format)
 
     return targ;
 }
+
 

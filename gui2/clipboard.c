@@ -172,27 +172,20 @@ static void gretl_clipboard_set (int fmt)
 /* We call this when a buffer to be copied as RTF contains
    non-ascii characters but validates as UTF-8. Note that the 
    UTF-8 minus sign does not recode correctly into Windows 
-   codepages, it appears, so if it's present we have to remove 
-   it first, then see if there's anything non-ascii left to
-   handle.
+   codepages, so if it's present we have to remove it first, 
+   then see if there's anything non-ascii left to handle.
 */
 
-static gchar *fix_buffer_for_rtf (const char *buf)
+static char *strip_utf8 (char *buf, gchar **tmp)
 {
-    gchar *ret = NULL;
+    char *ret = NULL;
 
-    if (has_unicode_minus((const unsigned char *) buf)) {
-	gchar *tmp = g_strdup(buf);
-	
-	strip_unicode_minus(tmp);
-	if (string_is_utf8((const unsigned char *) tmp)) {
-	    ret = utf8_to_cp(tmp);
-	    g_free(tmp);
-	} else {
-	    ret = tmp;
-	}
+    strip_unicode_minus(buf);
+
+    if (string_is_utf8((const unsigned char *) buf)) {
+	*tmp = ret = utf8_to_cp(buf);
     } else {
-	ret = utf8_to_cp(buf);
+	ret = buf;
     }
 
     return ret;
@@ -200,7 +193,10 @@ static gchar *fix_buffer_for_rtf (const char *buf)
 
 int prn_to_clipboard (PRN *prn, int fmt)
 {
-    const char *buf = gretl_print_get_buffer(prn);
+    char *buf = gretl_print_steal_buffer(prn);
+    const char *cset = NULL;
+    gchar *tmp = NULL;
+    int utf8_ok = 1;
     int err = 0;
 
     if (buf == NULL || *buf == '\0') {
@@ -209,27 +205,25 @@ int prn_to_clipboard (PRN *prn, int fmt)
 
     gretl_clipboard_free();
 
-    if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) { 
-	/* RTF: ensure that we're not in UTF-8 */
-	if (string_is_utf8((const unsigned char *) buf)) {
-	    gchar *trbuf = fix_buffer_for_rtf(buf);
+    if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
+	utf8_ok = 0;
+    } else if (fmt == GRETL_FORMAT_TXT && !g_get_charset(&cset)) {
+	utf8_ok = 0;
+    }
 
-	    if (trbuf != NULL) {
-		if (fmt == GRETL_FORMAT_RTF_TXT) {
-		    clipboard_buf = dosify_buffer(trbuf, fmt);
-		} else {
-		    clipboard_buf = gretl_strdup(trbuf);
-		}
-		g_free(trbuf);
-	    }
-	} else if (fmt == GRETL_FORMAT_RTF_TXT) {
-	    clipboard_buf = dosify_buffer(buf, fmt);
-	} else {
-	    clipboard_buf = gretl_strdup(buf);
-	}
+    if (!utf8_ok && string_is_utf8((const unsigned char *) buf)) {
+	buf = strip_utf8(buf, &tmp);
+    }
+
+    if (fmt == GRETL_FORMAT_RTF_TXT) {
+	clipboard_buf = dosify_buffer(buf, fmt);
     } else {
-	/* plain text, TeX, CSV */
 	clipboard_buf = gretl_strdup(buf);
+    }
+
+    if (tmp != NULL) {
+	/* i.e. tmp != buf */
+	g_free(tmp);
     }
 
     if (clipboard_buf == NULL) {

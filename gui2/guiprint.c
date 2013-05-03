@@ -54,9 +54,9 @@ static const gchar *user_string (void)
 static char *header_string (const char *fname)
 {
     gchar *hdr;
-# ifndef G_OS_WIN32
+#ifndef G_OS_WIN32
     gchar *trans;
-# endif
+#endif
     char tstr[48];
 
     print_time(tstr);
@@ -73,13 +73,13 @@ static char *header_string (const char *fname)
 	}
     }
 
-# ifndef G_OS_WIN32
+#ifndef G_OS_WIN32
     trans = my_locale_to_utf8(hdr);
     if (trans != NULL) {
 	g_free(hdr);
 	hdr = trans;
     }
-# endif  
+#endif  
 
     return hdr;
 }
@@ -119,7 +119,7 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     TEXTMETRIC lptm;
     BYTE charset;
     int px, x, y, incr;
-    gchar *rawbuf, *printbuf = NULL;
+    gchar *text, *rawbuf, *printbuf = NULL;
     gchar *hdrstart, hdr[90];
     char *winfont;
     size_t len;
@@ -192,7 +192,7 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
 
     /* strip any utf-8 minus signs, then recode */
     strip_unicode_minus(rawbuf);
-    printbuf = my_locale_from_utf8(rawbuf);
+    text = printbuf = my_locale_from_utf8(rawbuf);
 
     if (printbuf == NULL) {
 	printok = 0;
@@ -202,7 +202,8 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     page = 1;
     x = px / 2; /* attempt at left margin */
     hdrstart = header_string(fname);
-    while (*printbuf && printok) { 
+
+    while (*text && printok) { 
 	/* pages loop */
 	StartPage(dc);
 	SelectObject(dc, fixed_font);
@@ -216,11 +217,11 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
 	TextOut(dc, x, px / 8, hdr, strlen(hdr));
 	line = 0;
 	y = px/2;
-	while (*printbuf && line < PAGE_LINES) { 
+	while (*text && line < PAGE_LINES) { 
 	    /* lines loop */
-	    len = strcspn(printbuf, "\n");
-	    TextOut(dc, x, y, printbuf, len);
-	    printbuf += len + 1;
+	    len = strcspn(text, "\n");
+	    TextOut(dc, x, y, text, len);
+	    text += len + 1;
 	    y += incr; /* line spacing */
 	    line++;
 	}
