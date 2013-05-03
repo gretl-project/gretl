@@ -5890,7 +5890,7 @@ static double row_prod (const gretl_matrix *m, int i)
 	    ret = 0;
 	    break; 
 	} else if (xna(x) || xna(ret)) {
-	    ret = NADBL;
+	    ret = M_NA;
 	} else {
 	    ret *= x;
 	}
@@ -5916,7 +5916,7 @@ static double col_prod (const gretl_matrix *m, int j)
 	    ret = 0;
 	    break; 
 	} else if (xna(x) || xna(ret)) {
-	    ret = NADBL;
+	    ret = M_NA;
 	} else {
 	    ret *= x;
 	}
@@ -5926,7 +5926,7 @@ static double col_prod (const gretl_matrix *m, int j)
 }
 
 /* return col vector containing row products, or row vector containing
-   column productss */
+   column products */
 
 static gretl_matrix *gretl_matrix_prod (const gretl_matrix *m, int bycol,
 				       int *err)
