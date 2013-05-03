@@ -433,6 +433,10 @@ gretl_matrix *gretl_matrix_row_sum (const gretl_matrix *m, int *err);
 
 gretl_matrix *gretl_matrix_column_sum (const gretl_matrix *m, int *err);
 
+gretl_matrix *gretl_matrix_row_prod (const gretl_matrix *m, int *err);
+
+gretl_matrix *gretl_matrix_column_prod (const gretl_matrix *m, int *err);
+
 gretl_matrix *gretl_matrix_row_mean (const gretl_matrix *m, int *err);
 
 gretl_matrix *gretl_matrix_column_mean (const gretl_matrix *m, int *err);

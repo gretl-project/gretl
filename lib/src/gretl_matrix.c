@@ -5873,6 +5873,118 @@ gretl_matrix *gretl_matrix_column_sum (const gretl_matrix *m, int *err)
     return gretl_matrix_sum(m, 1, err);
 }
 
+/* return product of elements in row i */
+
+static double row_prod (const gretl_matrix *m, int i)
+{
+    double x, ret = 1.0;
+    int j;
+
+    if (i < 0 || i >= m->rows) {
+	return NADBL;
+    }
+
+    for (j=0; j<m->cols; j++) {
+	x = gretl_matrix_get(m, i, j);
+	if (x == 0.0) {
+	    ret = 0;
+	    break; 
+	} else if (xna(x) || xna(ret)) {
+	    ret = NADBL;
+	} else {
+	    ret *= x;
+	}
+    }
+
+    return ret;
+}
+
+/* return product of elements in column j */
+
+static double col_prod (const gretl_matrix *m, int j)
+{
+    double x, ret = 1.0;
+    int i;
+
+    if (j < 0 || j >= m->cols) {
+	return NADBL;
+    }
+
+    for (i=0; i<m->rows; i++) {
+	x = gretl_matrix_get(m, i, j);
+	if (x == 0.0) {
+	    ret = 0;
+	    break; 
+	} else if (xna(x) || xna(ret)) {
+	    ret = NADBL;
+	} else {
+	    ret *= x;
+	}
+    }
+
+    return ret;
+}
+
+/* return col vector containing row products, or row vector containing
+   column productss */
+
+static gretl_matrix *gretl_matrix_prod (const gretl_matrix *m, int bycol,
+				       int *err)
+{
+
+    gretl_matrix *s = NULL;
+    int dim, i;
+
+    if (gretl_is_null_matrix(m)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (bycol) {
+	dim = m->cols;
+	s = gretl_matrix_alloc(1, dim);
+    } else {
+	dim = m->rows;
+	s = gretl_matrix_alloc(dim, 1);
+    }
+    
+    if (s == NULL) {
+	*err = E_ALLOC;
+    } else {
+	for (i=0; i<dim; i++) {
+	    s->val[i] = (bycol)? col_prod(m, i) : row_prod(m, i);
+	}
+    }
+
+    return s;
+}
+
+/**
+ * gretl_matrix_row_prod:
+ * @m: source matrix.
+ *
+ * Returns: a column vector containing the products of
+ * the rows of @m, or NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_row_prod (const gretl_matrix *m, int *err)
+{
+    return gretl_matrix_prod(m, 0, err);
+}
+
+/**
+ * gretl_matrix_column_prod:
+ * @m: source matrix.
+ *
+ * Returns: a row vector containing the products of
+ * the columns of @m, or NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_column_prod (const gretl_matrix *m, int *err)
+{
+    return gretl_matrix_prod(m, 1, err);
+}
+
 /**
  * gretl_matrix_row_mean:
  * @m: source matrix.

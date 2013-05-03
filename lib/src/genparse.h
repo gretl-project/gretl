@@ -192,6 +192,8 @@ enum {
     F_IMAT,
     F_SUMR,
     F_SUMC,
+    F_PRODR,
+    F_PRODC,
     F_MEANR,	 
     F_MEANC,
     F_MCOV,

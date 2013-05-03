@@ -245,6 +245,8 @@ struct str_table funcs[] = {
     { F_MNORM,    "mnormal" },
     { F_SUMC,     "sumc" },
     { F_SUMR,     "sumr" },
+    { F_PRODC,    "prodc" },
+    { F_PRODR,    "prodr" },
     { F_MEANC,    "meanc" },
     { F_MEANR,    "meanr" },
     { F_SDC,      "sdc" },

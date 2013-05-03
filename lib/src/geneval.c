@@ -2575,6 +2575,12 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	case F_SUMR:
 	    ret->v.m = gretl_matrix_row_sum(m, &p->err);
 	    break;
+	case F_PRODC:
+	    ret->v.m = gretl_matrix_column_prod(m, &p->err);
+	    break;
+	case F_PRODR:
+	    ret->v.m = gretl_matrix_row_prod(m, &p->err);
+	    break;
 	case F_MEANC:
 	    ret->v.m = gretl_matrix_column_mean(m, &p->err);
 	    break;
@@ -9374,9 +9380,11 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, 2, NUM, r, p);
 	}
-	break;
+	break;    
     case F_SUMC:
     case F_SUMR:
+    case F_PRODC:
+    case F_PRODR:
     case F_MEANC:
     case F_MEANR:
     case F_SDC:
