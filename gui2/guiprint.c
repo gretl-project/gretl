@@ -190,11 +190,8 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
 	rawbuf = fullbuf;
     }
 
-    if (has_unicode_minus(rawbuf)) {
-	/* we need to strip any utf-8 minus signs first */
-	strip_unicode_minus(rawbuf);
-    }
-
+    /* strip any utf-8 minus signs, then recode */
+    strip_unicode_minus(rawbuf);
     printbuf = my_locale_from_utf8(rawbuf);
 
     if (printbuf == NULL) {
