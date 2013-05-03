@@ -42,7 +42,6 @@
       </description>
     </function>
 
-
     <function name="$coeff" section="access" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s</fnarg>
@@ -123,7 +122,6 @@
       </description>
     </function>
 
-
     <function name="$dwpval" section="access" output="scalar">
       <description>
 	<para>
@@ -170,6 +168,68 @@
 	<para>
 	  Produce la somma dei quadrati degli errori dell'ultimo modello
           stimato.
+	</para>
+      </description>
+    </function>
+
+    <function name="$evals" section="access" output="matrix">
+      <description>
+	<para>
+	  Deve seguire la stima di un VECM; ritorna un vettore
+	  contenente gli autovalori usati nel calcolo del test traccia 
+	  per la cointegrazione.
+	</para>
+      </description>
+    </function>
+
+    <function name="$fcast" section="access" output="matrix">
+      <description>
+	<para>
+	  Deve seguire il comando <cmdref targ="fcast"/>; ritorna le
+	  previsioni sotto forma di matrice. Se il modello usato per
+	  le previsioni è un modello a più equazioni, ogni colonna
+	  corrisponde ad un'equazione; altrimenti, ritorna un vettore
+	  colonna.
+	</para>
+      </description>
+    </function>
+
+    <function name="$fcerr" section="access" output="matrix">
+      <description>
+	<para>
+	  Deve seguire il comando <cmdref targ="fcast"/>; ritorna gli
+	  errori standard per le previsioni sotto forma di matrice. Se
+	  il modello usato per le previsioni è un modello a più
+	  equazioni, ogni colonna corrisponde ad un'equazione;
+	  altrimenti, ritorna un vettore colonna.
+	</para>
+      </description>
+    </function>
+
+    <function name="$fevd" section="access" output="matrix">
+      <description>
+	<para>
+	  Deve seguire la stima di un VAR. Ritorna una matrice
+	  contenete la scomposizione della varianza dell'errore di
+	  previsione (FEVD). Questa avrà <math>h</math> righe, dove
+	  <math>h</math> è l'orizzonte di previsione, che può essere
+	  modificato tramite il comando <lit>set horizon</lit> o,
+	  altrimenti, viene fissato automaticamente sulla base della
+	  frequenza dei dati.  Per un VAR con <math>p</math>
+	  variabili, la matrice ha <math>p</math><sup>2</sup>
+	  colonne. La parte dell'errore di previsione sulla variabile
+	  <math>i</math> attribuibile allo shock alla variabile
+	  <math>j</math> si troverà nella colonna (<math>i</math> &minus;
+	  1)<math>p</math> + <math>j</math>.
+	</para>
+      </description>
+    </function>
+
+    <function name="$Fstat" section="access" output="scalar">
+      <description>
+	<para>
+	  Ritorna la statistica F complessiva per l'ultimo modello
+	  stimato, se disponibile.
 	</para>
       </description>
     </function>
@@ -2764,6 +2824,41 @@
       </description>
     </function>
 
+    <function name="prodc" section="stats" output="rvec">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Ritorna il prodotto degli elementi di <argname>X</argname>,
+	  per colonna.
+	  <seelist>
+	    <fncref targ="prodr"/>
+	    <fncref targ="meanc"/>
+	    <fncref targ="sdc"/>
+	    <fncref targ="sumc"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="prodr" section="stats" output="cvec">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Ritorna il prodotto degli elementi di <argname>X</argname>,
+	  per riga.
+	  <seelist>
+	    <fncref targ="prodc"/>
+	    <fncref targ="meanr"/>
+	    <fncref targ="sumr"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="psd" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -2796,6 +2891,52 @@
 	  <seelist>
 	    <fncref targ="pmean"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="psdroot" section="linalg" output="smatrix">
+      <fnargs>
+	<fnarg type="symmat">A</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Performs a generalized variant of the Cholesky decomposition of
+	  the matrix <argname>A</argname>, which must be positive
+	  semidefinite (but which may be singular). If the input matrix is
+	  not square an error is flagged, but symmetry is assumed and not
+	  tested; only the lower triangle of <argname>A</argname> is read.
+	  The result is a lower-triangular matrix <math>L</math> which
+	  satisfies <equation status="inline" ascii="A = LL'" tex="$A =
+	  LL'$"/>.  Indeterminate elements in the solution are set to
+	  zero.
+	</para>
+	<para>
+	  For the case where <argname>A</argname> is positive definite,
+	  see <fncref targ="cholesky"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="pshrink" section="data-utils" output="matrix">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Only applicable if the currently open dataset has a panel
+	  structure. Returns a column vector holding the first valid
+	  observation for the series <argname>y</argname> for each
+	  cross-sectional unit in the panel, over the current sample
+	  range. If a unit has no valid observations for the input
+	  series it is skipped.
+	</para>
+	<para>
+	  This function provides a means of compacting the series
+	  returned by functions such as <fncref targ="pmax"/> and
+	  <fncref targ="pmean"/>, in which a value pertaining to
+	  each cross-sectional unit is repeated for each time
+	  period. 
 	</para>
       </description>
     </function>

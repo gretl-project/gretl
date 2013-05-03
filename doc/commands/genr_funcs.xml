@@ -4990,6 +4990,41 @@
       </description>
     </function>
 
+    <function name="prodc" section="stats" output="rvec">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the product of the elements of <argname>X</argname>,
+	  by column.
+	  <seelist>
+	    <fncref targ="prodr"/>
+	    <fncref targ="meanc"/>
+	    <fncref targ="sdc"/>
+	    <fncref targ="sumc"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="prodr" section="stats" output="cvec">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the product of the elements of <argname>X</argname>,
+	  by row.
+	  <seelist>
+	    <fncref targ="prodc"/>
+	    <fncref targ="meanr"/>
+	    <fncref targ="sumr"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="psd" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
