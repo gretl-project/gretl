@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-05-02 13:40-0400\n"
-"PO-Revision-Date: 2013-03-25 21:00-0400\n"
+"PO-Revision-Date: 2013-05-02 23:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -2838,32 +2838,28 @@ msgid "time"
 msgstr "time"
 
 #: lib/src/graphing.c:5539
-#, fuzzy
 msgid "quarters"
-msgstr "kwartalne"
+msgstr "kwartały"
 
 #: lib/src/graphing.c:5539
-#, fuzzy
 msgid "months"
-msgstr "miesięczne"
+msgstr "miesięcy"
 
 #: lib/src/graphing.c:5541
 msgid "years"
-msgstr ""
+msgstr "lat"
 
 #: lib/src/graphing.c:5543
-#, fuzzy
 msgid "weeks"
-msgstr "tygodniowe"
+msgstr "tygodni"
 
 #: lib/src/graphing.c:5545
 msgid "days"
-msgstr ""
+msgstr "dni"
 
 #: lib/src/graphing.c:5547
-#, fuzzy
 msgid "hours"
-msgstr "godzinowe"
+msgstr "godzin"
 
 #: lib/src/graphing.c:5597
 #, c-format
@@ -4446,9 +4442,8 @@ msgid "Point observations"
 msgstr "Punktowe obserwacje"
 
 #: lib/src/modelprint.c:188
-#, fuzzy
 msgid "Pseudo-point observations"
-msgstr "Punktowe obserwacje"
+msgstr "Pseudo-punktowe obserwacje"
 
 #: lib/src/modelprint.c:202
 msgid "Left-censored observations"
@@ -16688,6 +16683,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "Couldn't fork"
-#~ msgstr "Nieudane rozdzielenie (fork)"
