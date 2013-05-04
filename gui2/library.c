@@ -8374,10 +8374,6 @@ int gui_exec_line (ExecState *s, DATASET *dset)
     fprintf(stderr, "gui_exec_line: flags = %d\n", s->flags);
 #endif
 
-    if (string_is_blank(line)) {
-	return 0;
-    }
-
     if (gretl_compiling_function()) {
 	err = gretl_function_append_line(line);
 	if (err) {
@@ -8386,7 +8382,11 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	    add_command_to_stack(line);
 	}
 	return err;
-    }  
+    }
+
+    if (string_is_blank(line)) {
+	return 0;
+    }
 
     gretl_exec_state_set_callback(s, gui_exec_callback, OPT_G);
 

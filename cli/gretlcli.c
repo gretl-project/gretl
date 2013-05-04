@@ -839,10 +839,6 @@ static int exec_line (ExecState *s, DATASET *dset)
     char runfile[MAXLEN];
     int err = 0;
 
-    if (string_is_blank(line)) {
-	return 0;
-    }
-
     if (gretl_compiling_function()) {
 	err = gretl_function_append_line(line);
 	if (err) {
@@ -851,7 +847,11 @@ static int exec_line (ExecState *s, DATASET *dset)
 	    pprintf(cmdprn, "%s\n", line);
 	}
 	return err;
-    } 
+    }
+
+    if (string_is_blank(line)) {
+	return 0;
+    }
 
     if (!s->in_comment && !cmd->context && !gretl_if_state_false()) {
 	/* catch requests relating to saved objects, which are not
