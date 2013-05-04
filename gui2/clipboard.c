@@ -187,6 +187,10 @@ static char *strip_utf8 (char *buf)
     }
 }
 
+/* note: there's a Windows-specific counterpart to this
+   in gretlwin32.c
+*/
+
 int prn_to_clipboard (PRN *prn, int fmt)
 {
     char *buf = gretl_print_steal_buffer(prn);

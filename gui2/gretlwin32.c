@@ -353,16 +353,15 @@ void gretl_win32_init (const char *progname, int debug)
     }
 }
 
-static int win_copy_buf (const char *buf, int fmt, size_t buflen)
+static int win_copy_buf (char *buf, int fmt)
 {
     HGLOBAL winclip;
     LPTSTR ptr;
-    char *winbuf;
+    char *winbuf = NULL;
     unsigned clip_format;
     size_t len;
-    gchar *tr = NULL;
 
-    if (buf == NULL) {
+    if (buf == NULL || *buf == '\0') {
 	errbox(_("Copy buffer was empty"));
 	return 0;
     }
@@ -374,13 +373,16 @@ static int win_copy_buf (const char *buf, int fmt, size_t buflen)
 
     EmptyClipboard();
 
-    if (doing_nls() && (fmt == GRETL_FORMAT_TXT || fmt == GRETL_FORMAT_RTF_TXT)) { 
-	tr = my_locale_from_utf8(buf);
-	if (tr == NULL) {
-	    CloseClipboard();
-	    return 1;
+    strip_unicode_minus(buf);
+
+    if ((fmt == GRETL_FORMAT_TXT || fmt == GRETL_FORMAT_RTF_TXT) &&
+	string_is_utf8((const unsigned char *) buf)) {
+	gchar *tr = my_locale_from_utf8(buf);
+
+	if (tr != NULL) {
+	    winbuf = dosify_buffer(tr, fmt);
+	    g_free(tr);
 	}
-	winbuf = dosify_buffer(tr, fmt);
     } else {
 	winbuf = dosify_buffer(buf, fmt);
     }
@@ -390,12 +392,7 @@ static int win_copy_buf (const char *buf, int fmt, size_t buflen)
 	return 1;
     }
 
-    if (buflen == 0) {
-	len = strlen(winbuf) + 1; 
-    } else {
-	len = buflen;
-    }
-        
+    len = strlen(winbuf) + 1; 
     winclip = GlobalAlloc(GMEM_MOVEABLE, len * sizeof(TCHAR));        
 
     ptr = GlobalLock(winclip);
@@ -414,10 +411,6 @@ static int win_copy_buf (const char *buf, int fmt, size_t buflen)
 
     CloseClipboard();
 
-    if (tr != NULL) {
-	free(tr);
-    }
-
     free(winbuf);
 
     return 0;
@@ -425,36 +418,9 @@ static int win_copy_buf (const char *buf, int fmt, size_t buflen)
 
 int prn_to_clipboard (PRN *prn, int fmt)
 {
-    const char *buf = gretl_print_get_buffer(prn);
+    char *buf = gretl_print_steal_buffer(prn);
 
-    return win_copy_buf(buf, fmt, 0);
-}
-
-int win_buf_to_clipboard (const char *buf)
-{
-    HGLOBAL winclip;
-    LPTSTR ptr;
-    size_t len;
-
-    if (!OpenClipboard(NULL)) {
-	errbox(_("Cannot open the clipboard"));
-	return 1;
-    }
-
-    EmptyClipboard();
-
-    len = strlen(buf);
-    winclip = GlobalAlloc(GMEM_MOVEABLE, (len + 1) * sizeof(TCHAR));        
-
-    ptr = GlobalLock(winclip);
-    memcpy(ptr, buf, len + 1);
-    GlobalUnlock(winclip); 
-
-    SetClipboardData(CF_TEXT, winclip);
-
-    CloseClipboard();
-
-    return 0;
+    return win_copy_buf(buf, fmt);
 }
 
 static char *fname_from_fullname (char *fullname)

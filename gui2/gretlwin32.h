@@ -46,8 +46,6 @@ void gretl_win32_init (const char *progname, int debug);
 
 int prn_to_clipboard (PRN *prn, int copycode);
 
-int win_buf_to_clipboard (const char *buf);
-
 int send_file (char *fullname);
 
 int emf_to_clipboard (char *emfname);
