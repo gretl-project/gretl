@@ -1,6 +1,6 @@
 version 1.9.13, in progress
 - Add Catalan and Bulgarian translations
-- Add new function psum()
+- Add new functions: psum(), prodc() and prodr()
 - "adf" command: add option to optimize the lag order using
   the procedure recommended by Ng and Perron (2001), and 
   make the MAIC method the default
