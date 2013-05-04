@@ -153,13 +153,13 @@
     <function name="$error" section="access" output="scalar">
       <description>
 	<para>
-	  Returns the program's internal error code, which will be non-zero in
-	  case an error has occurred but has been trapped using
-	  <cmdref targ="catch"/>. Note that using this accessor causes the
-	  internal error code to be reset to zero. See also 
-	  <fncref targ="errmsg"/>. If you want to get the error message
-	  associated with a given <lit>$error</lit> you need to
-	  store the value in a temporary variable, as in
+	  Returns the program's internal error code, which will be
+	  non-zero in case an error has occurred but has been trapped
+	  using <cmdref targ="catch"/>. Note that using this accessor
+	  causes the internal error code to be reset to zero. If you
+	  want to get the error message associated with a given
+	  <lit>$error</lit> you need to store the value in a temporary
+	  variable, as in
 	</para>
 	<code>
 	  err = $error
@@ -167,6 +167,10 @@
 	    printf "Got error %d (%s)\n", err, errmsg(err);
 	  endif
 	</code>
+	<seelist>
+	  <cmdref targ="catch"/>
+	  <fncref targ="errmsg"/>
+	</seelist>
       </description>
     </function>
 

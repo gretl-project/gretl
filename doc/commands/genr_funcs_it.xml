@@ -90,7 +90,7 @@
       <description>
 	<para>
 	  Deve seguire la stima di un VAR o un VECM; produce la matrice
-          relativa.
+          compagna.
 	</para>
       </description>
     </function>
@@ -98,9 +98,9 @@
     <function name="$datatype" section="access" output="scalar">
       <description>
 	<para>
-	  Returns an integer value representing the sort of dataset that
-	  is currently loaded: 0 = no data; 1 = cross-sectional (undated)
-	  data; 2 = time-series data; 3 = panel data.
+	  Ritorna un intero corrispondente al tipo di dataset
+	  attualmente in memoria: 0 = nessun dato; 1 = dati
+	  cross-sezionali (non datati); 2 = serie storiche; 3 = panel.
 	</para>
       </description>
     </function>
@@ -108,8 +108,8 @@
     <function name="$depvar" section="access" output="string">
       <description>
 	<para>
-	  Must follow the estimation of a single-equation model;
-	  returns the name of the dependent variable.
+	  Deve seguire la stima di un modello ad equazione singola e
+	  ritorna il nome della variabile dipendente.
 	</para>
       </description>
     </function>
@@ -117,7 +117,13 @@
     <function name="$df" section="access" output="scalar">
       <description>
 	<para>
-	  Produce i gradi di libertà dell'ultimo modello stimato.
+	  Produce i gradi di libertà dell'ultimo modello stimato. Se
+	  questo consiste di un sistema di equazioni, viene ritornato
+	  il numero dei gradi di libertà per equazione; se questo
+	  differeisce da un'equazione all'altra, allora il valore
+	  ritornato è pari al numero di osservazioni meno la media del
+	  numero di coefficienti per equazione (arrotondato all'intero
+	  più vicino).
 	</para>
       </description>
     </function>
@@ -125,9 +131,9 @@
     <function name="$dwpval" section="access" output="scalar">
       <description>
 	<para>
-	  Returns the p-value for the Durbin&ndash;Watson statistic for the
-	  model last estimated, if available.  This is computed using the
-	  Imhof procedure.
+	  Fornisce il p-value per la statistica Durbin&ndash;Watson
+	  relativa all'ultimo modello stimato, se disponibile. Tale
+	  valore è calcolato ramite la procedura di Imhof.
 	</para>
       </description>
     </function>
@@ -135,10 +141,11 @@
     <function name="$ec" section="access" output="matrix">
       <description>
 	<para>
-	  Must follow the estimation of a VECM; returns a matrix containing
-	  the error correction terms.  The number of rows equals the number 
-	  of observations used and the number of columns equals the
-	  cointegration rank of the system.
+	  Deve seguire la stima di un VECM e ritorna una matrice
+	  contenente i termini di correzione d'errore.  La matrice
+	  ritornata ha tante righe quante sono le osservazioni usate
+	  nella stima e un unmero di colonne pari al rango di
+	  cointegrazione del sistema.
 	</para>
       </description>
     </function>
@@ -146,20 +153,22 @@
     <function name="$error" section="access" output="scalar">
       <description>
 	<para>
-	  Returns the program's internal error code, which will be non-zero in
-	  case an error has occurred but has been trapped using
-	  <cmdref targ="catch"/>. Note that using this accessor causes the
-	  internal error code to be reset to zero. See also 
-	  <fncref targ="errmsg"/>. If you want to get the error message
-	  associated with a given <lit>$error</lit> you need to
-	  store the value in a temporary variable, as in
+	  Ritorna il codice interno di errore, che avrà un valore
+	  diverso da 0 se si è verificato un errore in presenza del
+	  modificatore <cmdref targ="catch"/>. Si noti che l'uso di
+	  questo accessore resetta il codice di errore interno a 0. Si
+	  veda anche <fncref targ="errmsg"/>. Per il messaggio
+	  d'errore associato a un dato codice, bisogna salvare il
+	  valore in una variabile temporanea; ad esempio:
 	</para>
 	<code>
-	  errval = $error
-	  if (errval) 
-	    printf "Got error %d (%s)\n", errval, errmsg(errval);
-	  endif
+	  errval = $error if (errval) printf "Errore %d (%s)\n",
+	  errval, errmsg(errval); endif
 	</code>
+	<seelist>
+	  <cmdref targ="catch"/>
+	  <fncref targ="errmsg"/>
+	</seelist>
       </description>
     </function>
 
@@ -271,6 +280,15 @@
       </description>
     </function>
 
+    <function name="$huge" section="access" output="scalar">
+      <description>
+	<para>
+	  Ritorna un numero positivo molto grande. Di default è pari a 1.0E100,
+	  ma tale valore si può cambiare usando il comando <cmdref targ="set"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="$jalpha" section="access" output="matrix">
       <description>
 	<para>
@@ -346,11 +364,43 @@
       </description>
     </function>
 
+    <function name="$llt" section="access" output="series">
+      <description>
+	<para>
+	  Per alcuni modelli stimati com massima verosimiglianza,
+	  produce la serie della log-verosimiglianza per
+	  osservazione. Al momento, questo accessore funziona solo per
+	  logit e probit binari, tobit e heckit.
+	</para>
+      </description>
+    </function>
+
     <function name="$lnl" section="access" output="scalar">
       <description>
 	<para>
 	  Produce la log-verosimiglianza dell'ultimo modello stimato (dove
           possibile).
+	</para>
+      </description>
+    </function>
+
+    <function name="$macheps" section="access" output="scalar">
+      <description>
+	<para>
+	  Ritorna il valore dell'<quote>epsilon macchina</quote>,
+	  ossia un limite superiore all'errore relativo dovuto
+	  all'arimetica a virgola mobile in doppia precisione.
+	</para>
+      </description>
+    </function>
+
+    <function name="$mnlprobs" section="access" output="matrix">
+      <description>
+	<para>
+	  Dopo la stima di un modello logit multinomiale, crea una
+	  matrice con le probabilità stimate per tutti i possibili
+	  esiti e tutte le osservazioni usate nella stima. Le
+	  osservazioni sono per riga e gli esiti per colonna.
 	</para>
       </description>
     </function>
@@ -379,11 +429,75 @@
       </description>
     </function>
 
+    <function name="$obsmajor" section="access" output="series">
+      <description>
+	<para>
+	  Applicable when the observations in the current dataset have
+	  a major:minor structure, as in quarterly time series
+	  (year:quarter), monthly time series (year:month), hourly
+	  data (day:hour) and panel data (individual:period).  Returns
+	  a series holding the major or low-frequency component of
+	  each observation (for example, the year).
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="$obsminor"/>
+	    <fncref targ="$obsmicro"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="$obsmicro" section="access" output="series">
+      <description>
+	<para>
+	  Applicable when the observations in the current dataset have
+	  a major:minor:micro structure, as in dated daily time series
+	  (year:month:day).  Returns a series holding the micro or
+	  highest-frequency component of each observation (for
+	  example, the day).
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="$obsmajor"/>
+	    <fncref targ="$obsminor"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="$obsminor" section="access" output="series">
+      <description>
+	<para>
+	  Applicable when the observations in the current dataset have
+	  a major:minor structure, as in quarterly time series
+	  (year:quarter), monthly time series (year:month), hourly
+	  data (day:hour) and panel data (individual:period).  Returns
+	  a series holding the minor or high-frequency component of
+	  each observation (for example, the month).
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="$obsmajor"/>
+	    <fncref targ="$obsmicro"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="$pd" section="access" output="scalar">
       <description>
 	<para>
 	  Produce la frequenza o la periodicità dei dati (es. 4 per dati
           trimestrali).
+	</para>
+      </description>
+    </function>
+
+    <function name="$pi" section="access" output="scalar">
+      <description>
+	<para>
+	  Ritorna il valore di &pi; in doppia precisione.
 	</para>
       </description>
     </function>
@@ -419,9 +533,30 @@
     <function name="$rsq" section="access" output="scalar">
       <description>
 	<para>
-	  Produce l'<math>R</math><sup>2</sup> non corretto dell'ultimo
-          modello stimato.
+	  Produce l'<math>R</math><sup>2</sup> non aggiustato
+	  dell'ultimo modello stimato.
 	</para>
+      </description>
+    </function>
+
+    <function name="$sample" section="access" output="series">
+      <description>
+	<para>
+	  Must follow estimation of a single-equation model.  Returns a dummy
+	  series with value 1 for observations used in estimation, 0 for
+	  observations within the currently defined sample range but not used
+	  (presumably because of missing values), and NA for observations
+	  outside of the current range.
+	</para>
+	<para>
+	  If you wish to compute statistics based on the sample that was
+	  used for a given model, you can do, for example: 
+	</para>
+	<code>
+	  ols y 0 xlist
+	  genr sdum = $sample
+	  smpl sdum --dummy
+	</code>
       </description>
     </function>
 
@@ -588,6 +723,16 @@
       </description>
     </function>
 
+    <function name="$unit" section="access" output="series">
+      <description>
+	<para>
+	  Valido solo per dataset di tipo panel.  Ritorna una serie
+	  con 1 per la prima unità cross-sezionale, 2 per la seconda e
+	  così via.
+	</para>
+      </description>
+    </function>
+
     <function name="$vcv" section="access" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s1</fnarg>
@@ -615,10 +760,96 @@
       </description>
     </function>
 
+    <function name="$vecGamma" section="access" output="matrix">
+      <description>
+	<para>
+	  Must follow the estimation of a VECM; returns a matrix in
+	  which the Gamma matrices (coefficients on the lagged differences
+	  of the cointegrated variables) are stacked side by side.
+	  Each row represents an equation; for a VECM of lag order
+	  <math>p</math> there are <math>p</math> &minus; 1 sub-matrices.
+	</para>
+      </description>
+    </function>    
+
+    <function name="$version" section="access" output="scalar">
+      <description>
+	<para>
+	  Returns an integer value that codes for the program version. The
+	  gretl version string takes the form <lit>x.y.z</lit> (for example,
+	  1.7.6).  The return value from this accessor is formed as
+	  <lit>10000*x + 100*y + z</lit>, so that 1.7.6 translates as 10706.
+	</para>
+      </description>
+    </function>
+
+
+    <function name="$vma" section="access" output="matrix">
+      <description>
+	<para>
+	  Must follow the estimation of a VAR or a VECM; returns a
+	  matrix containing the VMA representation up to the order
+	  specified via the <lit>set horizon</lit> command. See
+	  <guideref targ="sec:var-estim"/> for details.
+	</para>
+      </description>
+    </function>
+
+    <function name="$windows" section="access" output="scalar">
+      <description>
+	<para>
+	  Returns 1 if gretl is running on MS Windows, otherwise 0. By
+	  conditioning on the value of this variable you can write shell
+	  calls that are portable across different operating systems.
+	</para>
+	<para>
+	  Also see the <cmdref targ="shell"/> command.
+	</para>
+      </description>
+    </function>
+
+    <function name="$xlist" section="access" output="list">
+      <description>
+	<para>
+	  If the last model was a single equation, returns the list of
+	  regressors. If the last model was a system of equations,
+	  returns the <quote>global</quote> list of exogenous and
+	  predetermined variables (in the same order in which they
+	  appear in <fncref targ="$sysB"/>). In the last model was a
+	  VAR, returns the list of exogenous regressors, if any.
+	</para>
+      </description>
+    </function>
+
+    <function name="$xtxinv" section="access" output="matrix">
+      <description>
+	<para>
+	  Following estimation of a VAR or VECM (only), returns
+	  <math>X'X</math><sup>-1</sup>, where <math>X</math> is the common
+	  matrix of regressors used in each of the equations.  This accessor
+	  is not available for a VECM estimated with a restriction imposed on
+	  &agr;, the <quote>loadings</quote> matrix.
+	</para>
+      </description>
+    </function>
+
     <function name="$yhat" section="access" output="series">
       <description>
 	<para>
-	  Returns the fitted values from the last regression.
+	  Ritorna i valori stimati dall'ultima regressione.
+	</para>
+      </description>
+    </function>
+
+    <function name="$ylist" section="access" output="list">
+      <description>
+	<para>
+	  If the last model estimated was a VAR, VECM or simultaneous
+	  system, returns the associated list of endogenous variables.
+	  If the last model was a single equation, this accessor gives
+	  a list with a single element, the dependent variable. In the
+	  special case of the biprobit model the list contains two
+	  elements. 
 	</para>
       </description>
     </function>
