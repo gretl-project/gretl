@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-05-02 13:40-0400\n"
-"PO-Revision-Date: 2013-04-21 12:03+0200\n"
+"PO-Revision-Date: 2013-05-04 10:54+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -2858,18 +2858,16 @@ msgid "years"
 msgstr "Anni"
 
 #: lib/src/graphing.c:5543
-#, fuzzy
 msgid "weeks"
-msgstr "settimanale"
+msgstr "settimane"
 
 #: lib/src/graphing.c:5545
 msgid "days"
-msgstr ""
+msgstr "giorni"
 
 #: lib/src/graphing.c:5547
-#, fuzzy
 msgid "hours"
-msgstr "orario"
+msgstr "ore"
 
 #: lib/src/graphing.c:5597
 #, c-format
@@ -4461,9 +4459,8 @@ msgid "Point observations"
 msgstr "Osservazioni puntuali"
 
 #: lib/src/modelprint.c:188
-#, fuzzy
 msgid "Pseudo-point observations"
-msgstr "Osservazioni puntuali"
+msgstr "Osservazioni pseudo-puntuali"
 
 #: lib/src/modelprint.c:202
 msgid "Left-censored observations"
@@ -10651,7 +10648,7 @@ msgstr "%s trovato\n"
 
 #: gui2/gretl.c:471
 msgid "Start a new gretl instance?"
-msgstr ""
+msgstr "Aprire una nuova istanza di gretl?"
 
 #: gui2/gretl.c:1263
 msgid "No lists are currently defined"
