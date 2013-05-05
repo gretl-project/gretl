@@ -1376,6 +1376,11 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
     beta = arma_model_get_x_coeffs(pmod);
 
+#if 0
+    fprintf(stderr, "beta = %p\n", (void *) beta);
+    printlist(xlist, "xlist");
+#endif
+
     if (want_x_beta_prep(pmod, xlist)) {
 	if (gretl_is_arima_model(pmod)) {
 	    regarma = 1;

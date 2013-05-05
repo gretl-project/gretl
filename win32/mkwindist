@@ -124,8 +124,7 @@ done
 # more auxiliary dlls
 for f in \
     libxml2-2.dll libiconv-2.dll intl.dll libcurl-4.dll \
-    libgtksourceview-2.0-0.dll libffi-6.dll libcairo-2.dll \
-    libpixman-1-0.dll
+    libgtksourceview-2.0-0.dll libffi-6.dll libcairo-2.dll
 do
     add_file ${SYSBIN}/$f gretl/$f
 done
