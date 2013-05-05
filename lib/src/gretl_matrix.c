@@ -11299,7 +11299,9 @@ int gretl_is_zero_matrix (const gretl_matrix *m)
     n = m->rows * m->cols;
 
     for (i=0; i<n; i++) {
-	if (m->val[i] != 0.0) return 0;
+	if (m->val[i] != 0.0) {
+	    return 0;
+	}
     }
 
     return 1;

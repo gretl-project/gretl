@@ -1090,6 +1090,10 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
 {
     int ret = 0;
 
+#if 0 /* uninitialized stuff here? */
+    gretl_matrix_print(A, "A, in multiply_by_F");
+#endif
+
     if (gretl_is_zero_matrix(A)) {
 	gretl_matrix_zero(B);
     } else if (K->nonshift == K->r) {
