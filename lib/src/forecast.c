@@ -1383,9 +1383,6 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
     if (want_x_beta_prep(pmod, xlist)) {
 	if (gretl_is_arima_model(pmod)) {
-#if AR_DEBUG
-	    fprintf(stderr, "doing regarma thing\n");
-#endif
 	    regarma = 1;
 	    err = regarma_model_AR_coeffs(pmod, &phi0, &px);
 	}
@@ -1402,9 +1399,6 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	    }
 	} else {
 	    /* we have ARMAX terms */
-#if AR_DEBUG
-	    fprintf(stderr, "doing create_Xb_series\n");
-#endif
 	    Xb = create_Xb_series(fc, pmod, beta, xlist, 
 				  (const double **) dset->Z);
 	    if (Xb == NULL) {
