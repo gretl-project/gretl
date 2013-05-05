@@ -1348,6 +1348,10 @@ int regarma_model_AR_coeffs (const MODEL *pmod,
 
     pmax = p + s * P;
 
+#if 0
+    fprintf(stderr, "regarma_model_AR_coeffs: pmax = %d\n", pmax);
+#endif
+
     if (pmax == 0) {
 	*pp = 0;
 	return 0;
