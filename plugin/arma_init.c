@@ -36,6 +36,10 @@ static void transform_arma_const (double *b, arma_info *ainfo)
     double sarfac = 1.0;
     int i, k = 0;
 
+    if (ainfo->np == 0 && ainfo->P == 0) {
+	return;
+    }
+
 #if AINIT_DEBUG
     fprintf(stderr, "transform_arma_const: initially = %g\n", b[0]);
 #endif
@@ -430,18 +434,14 @@ static void arma_init_transcribe_coeffs (arma_info *ainfo,
 					 MODEL *pmod, double *b)
 {
     int q0 = ainfo->ifc + ainfo->np + ainfo->P;
-    int Q0 = q0 + ainfo->nq;
+    int totq = ainfo->nq + ainfo->Q;
     int i, j = 0;
 
     for (i=0; i<pmod->ncoeff; i++) {
-	if (i == q0) {
-	    /* reserve space for nonseasonal MA */
-	    j += ainfo->nq;
+	if (i == q0 && totq > 0) {
+	    /* reserve space for MA terms */
+	    j += totq;
 	} 
-	if (i == Q0) {
-	    /* and for seasonal MA */
-	    j += ainfo->Q;
-	}
 	if (j < ainfo->nc) {
 	    b[j++] = pmod->coeff[i];
 	}
@@ -452,15 +452,10 @@ static void arma_init_transcribe_coeffs (arma_info *ainfo,
 	b[0] /= ainfo->T;
     }
 
-    /* insert near-zeros for nonseasonal MA */
-    for (i=0; i<ainfo->nq; i++) {
+    /* insert near-zeros for MA terms */
+    for (i=0; i<totq; i++) {
 	b[q0 + i] = 0.0001;
     } 
-
-    /* and also seasonal MA */
-    for (i=0; i<ainfo->Q; i++) {
-	b[Q0 + i] = 0.0001;
-    }	
 }
 
 /* compose variable names for temporary dataset */
@@ -1132,7 +1127,8 @@ int ar_arma_init (double *coeff, const DATASET *dset,
     fprintf(stderr, "ar_arma_init: dset->t1=%d, dset->t2=%d (dset->n=%d);\n"
 	    " ainfo->t1=%d, ainfo->t2=%d, ",
 	    dset->t1, dset->t2, dset->n, ainfo->t1, ainfo->t2);
-    fprintf(stderr, "nmixed = %d, ptotal = %d\n", nmixed, ptotal);
+    fprintf(stderr, "nmixed = %d, ptotal = %d, ifc = %d, nexo = %d\n", 
+	    nmixed, ptotal, ainfo->ifc, ainfo->nexo);
 #endif
 
     if (ptotal == 0 && ainfo->nexo == 0 && !ainfo->ifc) {
@@ -1147,7 +1143,7 @@ int ar_arma_init (double *coeff, const DATASET *dset,
 
     gretl_model_init(&armod, dset); 
 
-    narmax = (arma_exact_ml(ainfo))? ainfo->nexo : 0;
+    narmax = arma_exact_ml(ainfo) ? ainfo->nexo : 0;
     if (narmax > 0) {
 	/* ARMAX-induced lags of exog vars */
 	av += ainfo->nexo * ptotal;
@@ -1193,11 +1189,8 @@ int ar_arma_init (double *coeff, const DATASET *dset,
 
 #if AINIT_DEBUG
     if (!err) {
-	fprintf(stderr, "LS init: ncoeff = %d, nobs = %d\n", 
-		armod.ncoeff, armod.nobs);
-	for (i=0; i<armod.ncoeff; i++) {
-	    fprintf(stderr, " coeff[%d] = %g\n", i, armod.coeff[i]);
-	}
+	pputs(prn, "*** armod, in ar_arma_init\n");
+	printmodel(&armod, aset, OPT_NONE, prn);
     } else {
 	fprintf(stderr, "LS init: armod.errcode = %d\n", err);
     }
