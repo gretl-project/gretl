@@ -39,7 +39,7 @@ int VAR_LR_lag_test (GRETL_VAR *var, const gretl_matrix *E);
 int VAR_portmanteau_test (GRETL_VAR *var);
 
 int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset, 
-		   PRN *prn);
+		   gretlopt opt, PRN *prn);
 
 int VAR_wald_omit_tests (GRETL_VAR *var);
 

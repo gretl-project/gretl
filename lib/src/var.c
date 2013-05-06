@@ -2508,7 +2508,7 @@ GRETL_VAR *gretl_VAR (int order, int *laglist, int *list,
 	    /* doing lag-length selection */
 	    *err = VAR_add_stats(var, code);
 	    if (!*err) {
-		*err = VAR_do_lagsel(var, dset, prn);
+		*err = VAR_do_lagsel(var, dset, opt, prn);
 	    }
 	} else {
 	    /* regular VAR estimation */
