@@ -1507,25 +1507,40 @@ static int arbond_get_depvar (const MODEL *pmod)
 
 static int arma_depvar_pos (const MODEL *pmod)
 {
+    int sep1 = 0, sep2 = 0;
     int seasonal = 0;
     int arima = 0;
-    int dvpos;
+    int i, dvpos;
 
-    if (gretl_model_get_int(pmod, "arma_P") ||
-	gretl_model_get_int(pmod, "arima_D") ||
-	gretl_model_get_int(pmod, "arma_Q")) {
-	seasonal = 1;
+    for (i=1; i<pmod->list[0]; i++) {
+	if (pmod->list[i] == LISTSEP) {
+	    if (sep1 == 0) {
+		sep1 = i;
+	    } else {
+		sep2 = i;
+	    }
+	}
     }
 
-    if (gretl_model_get_int(pmod, "arima_d") ||
-	gretl_model_get_int(pmod, "arima_D")) {
-	arima = 1;
-    }
-
-    if (arima) {
-	dvpos = (seasonal)? 9 : 5;
+    if (sep2) {
+	dvpos = sep2 + 1;
+    } else if (sep1) {
+	dvpos = sep1 + 1;
     } else {
-	dvpos = (seasonal)? 7 : 4;
+	if (gretl_model_get_int(pmod, "arma_P") ||
+	    gretl_model_get_int(pmod, "arima_D") ||
+	    gretl_model_get_int(pmod, "arma_Q")) {
+	    seasonal = 1;
+	}
+	if (gretl_model_get_int(pmod, "arima_d") ||
+	    gretl_model_get_int(pmod, "arima_D")) {
+	    arima = 1;
+	}
+	if (arima) {
+	    dvpos = (seasonal)? 9 : 5;
+	} else {
+	    dvpos = (seasonal)? 7 : 4;
+	}
     }
 
     /* safety: should be impossible */

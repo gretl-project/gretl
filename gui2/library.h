@@ -57,6 +57,9 @@ int parse_lib_command (void);
 
 int record_lib_command (void);
 
+int execute_script (const char *runfile, const char *buf,
+		    PRN *prn, int exec_code);
+
 int user_fopen (const char *fname, char *fullname, PRN **pprn);
 
 gint bufopen (PRN **pprn);

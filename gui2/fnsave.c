@@ -169,9 +169,9 @@ function_info *finfo_new (void)
     return finfo;
 }
 
-static char *funname_from_filename (const char *fname)
+static const char *funname_from_filename (const char *fname)
 {
-    char *p = strrchr(fname, '.');
+    const char *p = strrchr(fname, '.');
 
     return p + 1;
 }
@@ -434,6 +434,77 @@ static gboolean update_active_func (GtkComboBox *menu,
     return FALSE;
 }
 
+/* Given a line "function ..." get the function name, with
+   some error checking.  The @s we are given here is at an 
+   offset of 9 bytes into the line, skipping "function ".
+*/
+
+static int extract_funcname (char *name, const char *s)
+{
+    char word[FN_NAMELEN];
+    int n, type, err = 0;
+
+    s += strspn(s, " ");
+    n = strcspn(s, " (");
+
+    if (n == 0 || n > FN_NAMELEN - 1) {
+	return E_DATA;
+    }
+
+    *word = '\0';
+    strncat(word, s, n);
+
+    if (!strcmp(word, "void")) {
+	type = GRETL_TYPE_VOID;
+    } else {
+	type = gretl_type_from_string(word);
+    }
+
+    if (type == 0) {
+	/* old-style */
+	strcpy(name, word);
+    } else if (!ok_function_return_type(type)) {
+	err = E_DATA;
+    } else {
+	s += n;
+	s += strspn(s, " ");
+	n = strcspn(s, " (");
+	if (n == 0 || n > FN_NAMELEN - 1) {
+	    err = E_DATA;
+	} else {
+	    *name = '\0';
+	    strncat(name, s, n);
+	}
+    }
+
+    return err;
+}
+
+static int pretest_funcname (char *buf, const char *origname)
+{
+    char *s, line[MAXLINE], newname[FN_NAMELEN];
+    int err = 0;
+
+    bufgets_init(buf);
+
+    while (bufgets(line, sizeof line, buf) && !err) {
+	s = line + strspn(line, " \t");
+	if (!strncmp(s, "function ", 9)) {
+	    if (extract_funcname(newname, s + 9)) {
+		err = E_DATA;
+	    } else if (strcmp(newname, origname)) {
+		gretl_errmsg_set(_("You can't change the name of a function here"));
+		err = E_DATA;
+	    }
+	    break;
+	}
+    }
+
+    bufgets_finalize(buf);
+
+    return err;
+}
+
 /* callback used when editing a function in the context of the package
    editor: save window-content to file and pass this to gretl_func to
    revise the function definition.  
@@ -441,33 +512,26 @@ static gboolean update_active_func (GtkComboBox *menu,
 
 int update_func_code (windata_t *vwin)
 {
-    FILE *fp;
-    int err = 0;
+    gchar *text = textview_get_text(vwin->text);
+    function_info *finfo = vwin->data;
+    const char *funname;
+    int err;
 
-    fp = gretl_fopen(vwin->fname, "w");
+    funname = funname_from_filename(vwin->fname);
+    err = pretest_funcname(text, funname);
     
-    if (fp == NULL) {
-	file_write_errbox(vwin->fname);
-	err = E_FOPEN;
-    } else {
-	function_info *finfo = vwin->data;
-	gchar *text = textview_get_text(vwin->text);
-	char *funname;
-	
-	system_print_buf(text, fp);
-	fclose(fp);
-	g_free(text);
-
-	funname = funname_from_filename(vwin->fname);
-	err = update_function_from_script(funname, vwin->fname, finfo->pkg);
-
-	if (err) {
-	    gui_errmsg(err);
-	} else {
-	    mark_vwin_content_saved(vwin);
-	    finfo_set_modified(finfo, TRUE);
-	}
+    if (!err) {
+	err = execute_script(NULL, text, NULL, INCLUDE_EXEC);
     }
+
+    g_free(text);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	mark_vwin_content_saved(vwin);
+	finfo_set_modified(finfo, TRUE);
+    }    
 
     return err;
 }

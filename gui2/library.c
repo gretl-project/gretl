@@ -84,10 +84,6 @@
 
 #define CMD_DEBUG 0
 
-/* private functions */
-static int execute_script (const char *runfile, const char *buf,
-			   PRN *prn, int exec_code);
-
 /* file scope state variables */
 static CMD libcmd;
 static char libline[MAXLINE];
@@ -7974,8 +7970,8 @@ static char *gui_get_input_line (char *line, FILE *fp,
 
 /* run commands from runfile or buf, output to prn */
 
-static int execute_script (const char *runfile, const char *buf,
-			   PRN *prn, int exec_code)
+int execute_script (const char *runfile, const char *buf,
+		    PRN *prn, int exec_code)
 {
     ExecState state;
     FILE *fb = NULL;

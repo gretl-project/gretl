@@ -188,9 +188,6 @@ ufunc *get_function_from_package (const char *funname, fnpkg *pkg);
 
 int get_function_file_header (const char *fname, char **pdesc, char **pver);
 
-int update_function_from_script (const char *funname, const char *path,
-				 fnpkg *pkg);
-
 int user_function_help (const char *fnname, gretlopt opt, PRN *prn);
 
 int function_package_has_PDF_doc (fnpkg *pkg, char **pdfname);
