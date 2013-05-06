@@ -187,6 +187,7 @@ static ufunc *current_fdef; /* pointer to function currently being defined */
 static GList *callstack;    /* stack of function calls */
 static int n_pkgs;          /* number of loaded function packages */
 static fnpkg **pkgs;        /* array of pointers to loaded packages */
+static fnpkg *current_pkg;  /* pointer to function currently being edited */
 
 static int function_package_record (fnpkg *pkg);
 static void function_package_free (fnpkg *pkg);
@@ -4256,6 +4257,27 @@ int gretl_is_public_user_function (const char *name)
     return (fun != NULL && !function_is_private(fun));
 }
 
+void set_current_function_package (fnpkg *pkg)
+{
+    current_pkg = pkg;
+}
+
+static int skip_private_func (ufunc *ufun)
+{
+    int skip = 0;
+
+    if (function_is_private(ufun)) {
+	/* skip it, unless we're "authorized" to edit it,
+	   i.e. coming from the gui package editor */
+	skip = 1;
+	if (ufun->pkg != NULL && ufun->pkg == current_pkg) {
+	    skip = 0;
+	}
+    }
+
+    return skip;
+}
+
 static int check_func_name (const char *fname, ufunc **pfun, PRN *prn)
 {
     int i, err = 0;
@@ -4277,7 +4299,7 @@ static int check_func_name (const char *fname, ufunc **pfun, PRN *prn)
 	err = 1;
     } else {
 	for (i=0; i<n_ufuns; i++) {
-	    if (!function_is_private(ufuns[i]) && !strcmp(fname, ufuns[i]->name)) {
+	    if (!skip_private_func(ufuns[i]) && !strcmp(fname, ufuns[i]->name)) {
 #if FN_DEBUG
 		fprintf(stderr, "'%s': found an existing function of this name\n", fname);
 #endif
@@ -5145,22 +5167,20 @@ static int check_function_structure (ufunc *fun)
     return err;
 }
 
-/* Note: the input @fun may be NULL; in that case the assumption is
-   that we're appending to a function-in-progress that is
-   represented by the internal variable 'current_fdef'.  If
-   the @fun argument is non-NULL that means we're editing an
-   existing function.
-*/
+/**
+ * gretl_function_append_line:
+ * @line: line of code to append.
+ *
+ * Continuation of definition of user-function.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
 
-static int real_function_append_line (const char *line, ufunc *fun)
+int gretl_function_append_line (const char *line)
 {
-    int editing = 1;
+    ufunc *fun = current_fdef;
+    int editing = 0;
     int err = 0;
-
-    if (fun == NULL) {
-	fun = current_fdef;
-	editing = 0;
-    } 
 
 #if FNPARSE_DEBUG
     fprintf(stderr, "real_function_append_line: '%s'\n", line);
@@ -5208,20 +5228,6 @@ static int real_function_append_line (const char *line, ufunc *fun)
     }	
 
     return err;
-}
-
-/**
- * gretl_function_append_line:
- * @line: line of code to append.
- *
- * Continuation of definition of user-function.
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int gretl_function_append_line (const char *line)
-{
-    return real_function_append_line(line, NULL);
 }
 
 /* next block: handling function arguments */

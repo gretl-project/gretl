@@ -519,9 +519,11 @@ int update_func_code (windata_t *vwin)
 
     funname = funname_from_filename(vwin->fname);
     err = pretest_funcname(text, funname);
-    
+
     if (!err) {
+	set_current_function_package(finfo->pkg);
 	err = execute_script(NULL, text, NULL, INCLUDE_EXEC);
+	set_current_function_package(NULL);
     }
 
     g_free(text);
