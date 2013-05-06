@@ -2581,8 +2581,8 @@
 
     <usage>
       <arguments>
-        <argument>var1</argument>
-	<argument>var2</argument>
+        <argument>series1</argument>
+	<argument>series2</argument>
       </arguments>
       <options>
 	<option>
@@ -6485,8 +6485,8 @@
 
     <usage>
       <arguments>
-        <argument>var1</argument>
-        <argument>var2</argument>
+        <argument>series1</argument>
+        <argument>series2</argument>
       </arguments>
       <options>
         <option>
@@ -6500,8 +6500,8 @@
       <para context="cli">
 	Calculates the <math>t</math> statistic for the null
 	hypothesis that the population means are equal for the
-	variables <repl>var1</repl> and <repl>var2</repl>, and shows
-	its p-value.
+	variables <repl>series1</repl> and <repl>series2</repl>, and
+	shows its p-value.
       </para>
       <para>
 	By default the test statistic is calculated on the assumption
@@ -6509,16 +6509,16 @@
 	<opt>--unequal-vars</opt> option the variances are assumed to
 	be different.  This will make a difference to the test
 	statistic only if there are different numbers of non-missing
-	observations for the two variables.
+	observations for the two series.
       </para>
       <para context="gui">
 	Calculates the t statistic for the null hypothesis that the
-	population means are equal for two selected variables, and
+	population means are equal for two selected series, and
 	shows its p-value.  The command may be called with or without
 	the assumption that the variances are equal for the two
 	variables (although this will make a difference to the test
 	statistic only if there are different numbers of non-missing
-	observations for the two variables.)
+	observations for the two series.)
       </para>
     </description>
 
@@ -10635,8 +10635,8 @@
 
     <usage>
       <arguments>
-        <argument>var1</argument>
-        <argument>var2</argument>
+        <argument>series1</argument>
+        <argument>series2</argument>
       </arguments>
       <options>
         <option>
@@ -10649,13 +10649,13 @@
     <description>
       <para context="cli">
 	Prints Spearman's rank correlation coefficient for the
-	series <repl>var1</repl> and <repl>var2</repl>. The
+	series <repl>series1</repl> and <repl>series2</repl>. The
 	variables do not have to be ranked manually in advance; the
 	function takes care of this.
       </para>
       <para context="gui">
 	Prints Spearman's rank correlation coefficient for a specified
-	pair of variables.  The variables do not have to be ranked
+	pair of series.  The series do not have to be ranked
 	manually in advance; the function takes care of this.
       </para>
       <para>
@@ -11744,8 +11744,8 @@
 
     <usage>
       <arguments>
-        <argument>var1</argument>
-        <argument>var2</argument>
+        <argument>series1</argument>
+        <argument>series2</argument>
       </arguments>
     </usage>
 
@@ -11753,13 +11753,13 @@
       <para context="cli">
 	Calculates the <math>F</math> statistic for the null
 	hypothesis that the population variances for the variables
-	<repl>var1</repl> and <repl>var2</repl> are equal, and shows
-	its p-value.
+	<repl>series1</repl> and <repl>series2</repl> are equal, and
+	shows its p-value.
       </para>
       <para context="gui">
 	Calculates the <math>F</math> statistic for the null
 	hypothesis that the population variances are equal for the
-	two selected variables, and shows its p-value.
+	two selected series, and shows its p-value.
       </para>
     </description>
 
@@ -12146,8 +12146,8 @@
 
     <usage>
       <arguments>
-        <argument>var1</argument>
-        <argument>var2</argument>
+        <argument>series1</argument>
+        <argument>series2</argument>
         <argument optional="true">order</argument>
       </arguments>
       <examples>
@@ -12157,11 +12157,12 @@
 
     <description>
       <para>
-	Prints and graphs the cross-correlogram for variables
-	<repl>var1</repl> and <repl>var2</repl>, which may be specified by
-	name or number.  The values are the sample correlation coefficients
-	between the current value of <repl>var1</repl> and successive leads
-	and lags of <repl>var2</repl>.
+	Prints and graphs the cross-correlogram for
+	<repl>series1</repl> and <repl>series2</repl>, which may be
+	specified by name or number.  The values are the sample
+	correlation coefficients between the current value of
+	<repl>series1</repl> and successive leads and lags of
+	<repl>series2</repl>.
       </para>
       <para>
 	If an <repl>order</repl> value is specified the length of the
