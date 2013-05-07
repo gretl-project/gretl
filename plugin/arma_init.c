@@ -1144,7 +1144,7 @@ int ar_arma_init (double *coeff, const DATASET *dset,
     gretl_model_init(&armod, dset); 
 
     narmax = arma_exact_ml(ainfo) ? ainfo->nexo : 0;
-    if (narmax > 0) {
+    if (narmax > 0 && ptotal > 0) {
 	/* ARMAX-induced lags of exog vars */
 	av += ainfo->nexo * ptotal;
     } 
@@ -1166,7 +1166,7 @@ int ar_arma_init (double *coeff, const DATASET *dset,
 	arlist = make_ar_ols_list(ainfo, av);
     }
 
-    /* build temporary dataset */
+    /* build temporary dataset, dset -> aset */
     arma_init_build_dataset(ainfo, ptotal, narmax, list,
 			    dset, aset, nonlin);
 
@@ -1189,7 +1189,7 @@ int ar_arma_init (double *coeff, const DATASET *dset,
 
 #if AINIT_DEBUG
     if (!err) {
-	pputs(prn, "*** armod, in ar_arma_init\n");
+	pputs(prn, "\n*** armod, in ar_arma_init\n");
 	printmodel(&armod, aset, OPT_NONE, prn);
     } else {
 	fprintf(stderr, "LS init: armod.errcode = %d\n", err);
