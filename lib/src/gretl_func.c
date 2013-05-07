@@ -5591,7 +5591,7 @@ int check_function_needs (const DATASET *dset, FuncDataReq dreq,
 
     if (dreq == FN_NEEDS_QM && 
 	(!dataset_is_time_series(dset) || 
-	 (dset->pd != 4 || dset->pd != 12))) {
+	 (dset->pd != 4 && dset->pd != 12))) {
 	gretl_errmsg_set("This function needs quarterly or monthly data");
 	return 1;
     } 

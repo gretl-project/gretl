@@ -1875,6 +1875,7 @@ void call_function_package (const char *fname, windata_t *vwin,
     if (!err) {
 	/* do we have suitable data in place? */
 	err = check_function_needs(dataset, cinfo->dreq, minver);
+	fprintf(stderr, "check_function_needs: err = %d\n", err);
 	if (err) {
 	    if (loaderr != NULL) {
 		/* coming from package listing window */
