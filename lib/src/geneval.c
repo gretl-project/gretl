@@ -6137,7 +6137,7 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
     if (!xcf) {
 	/* acf/pacf */
 	if (l->t == VEC) {
-	    A = acf_vec(l->v.xvec, k, p->dset, 0, &p->err);
+	    A = acf_matrix(l->v.xvec, k, p->dset, 0, &p->err);
 	} else if (l->t == MAT) {
 	    A = multi_acf(l->v.m, NULL, NULL, k, &p->err);
 	} else {
@@ -6603,7 +6603,9 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     }
 
 #if IRF_RETURN_BUNDLE
-    return ret;
+    if (f == F_IRF) {
+	return ret;
+    }
 #endif
 
     if (f != F_STRNCMP && f != F_WEEKDAY && 

@@ -3913,7 +3913,7 @@ gretl_matrix *multi_acf (const gretl_matrix *m,
 
     for (j=0; j<nv; j++) {
 	/* get ACF/PACF for column/series */
-	a = acf_vec(x, p, NULL, T, err);
+	a = acf_matrix(x, p, NULL, T, err);
 	if (*err) {
 	    gretl_matrix_free(a);
 	    gretl_matrix_free(A);

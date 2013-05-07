@@ -3171,7 +3171,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 }
 
 /**
- * acf_vec:
+ * acf_matrix:
  * @x: series to analyse.
  * @order: maximum lag for autocorrelation function.
  * @dset: information on the data set, or %NULL.
@@ -3185,9 +3185,9 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
  * ACF and PACF at the successive lags, or %NULL on error.
  */
 
-gretl_matrix *acf_vec (const double *x, int order,
-		       const DATASET *dset, int n,
-		       int *err)
+gretl_matrix *acf_matrix (const double *x, int order,
+			  const DATASET *dset, int n,
+			  int *err)
 {
     gretl_matrix *A = NULL;
     double xbar;
@@ -3259,9 +3259,9 @@ gretl_matrix *acf_vec (const double *x, int order,
     }
 
     /* calculate ACF up to order m */
-    for (k=1; k<=m && !*err; k++) {
-	A->val[k-1] = gretl_acf(k, t1, t2, x, xbar);
-	if (na(A->val[k-1])) {
+    for (k=0; k<m && !*err; k++) {
+	A->val[k] = gretl_acf(k+1, t1, t2, x, xbar);
+	if (na(A->val[k])) {
 	    *err = E_DATA;
 	}
     }
@@ -3270,7 +3270,6 @@ gretl_matrix *acf_vec (const double *x, int order,
     if (!*err) {
 	*err = get_pacf(A);
     }
-    
 
     if (*err) {
 	gretl_matrix_free(A);

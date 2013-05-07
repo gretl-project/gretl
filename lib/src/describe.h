@@ -268,9 +268,9 @@ int gretl_normality_test (const char *varname,
 			  gretlopt opt,
 			  PRN *prn);
 
-gretl_matrix *acf_vec (const double *x, int order,
-		       const DATASET *dset, int n,
-		       int *err);
+gretl_matrix *acf_matrix (const double *x, int order,
+			  const DATASET *dset, int n,
+			  int *err);
 
 gretl_matrix *xcf_vec (const double *x, const double *y,
 		       int p, const DATASET *dset,
