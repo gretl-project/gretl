@@ -534,7 +534,7 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	reprob_container *C;
 	double *theta = NULL;
 	int quadpoints = 32;
-	int maxit = 100;
+	int maxit = libset_get_int(BFGS_MAXITER);
 	int fcount;
 	
 	if (opt & OPT_G) {
