@@ -2651,9 +2651,12 @@ int model_error_dist (const MODEL *pmod, DATASET *dset,
 
 /* PACF via Durbin-Levinson algorithm */
 
-static int get_pacf (double *pacf, const double *acf, int m)
+static int get_pacf (gretl_matrix *A)
 {
+    int m = gretl_matrix_rows(A);
     gretl_matrix *phi;
+    double *acf = A->val;
+    double *pacf = acf + m;
     double x, num, den;
     int i, j;
 
@@ -2662,7 +2665,7 @@ static int get_pacf (double *pacf, const double *acf, int m)
 	return E_ALLOC;
     }
 
-    pacf[0] = acf[0];
+    gretl_matrix_set(A, 0, 1, acf[0]);
     gretl_matrix_set(phi, 0, 0, acf[0]);
 
     for (i=1; i<m; i++) {
@@ -2881,8 +2884,11 @@ static void corrgm_min_max (const double *acf, const double *pacf,
     }
 }
 
-static int corrgram_graph (const char *vname, const double *acf, int m,
-			   const double *pacf, double pm, gretlopt opt)
+static int corrgram_graph (const char *vname,
+			   const double *acf, 
+			   const double *pacf,
+			   int m, double pm, 
+			   gretlopt opt)
 {
     char crit_string[16];
     double ymin, ymax;
@@ -2960,11 +2966,11 @@ static int corrgram_graph (const char *vname, const double *acf, int m,
 }
 
 static int corrgm_ascii_plot (const char *vname,
-			      const double *acf, int m,
+			      const gretl_matrix *A,
 			      PRN *prn)
 {
+    int k, m = gretl_matrix_rows(A);
     double *xk = malloc(m * sizeof *xk);
-    int k;
 
     if (xk == NULL) {
 	return E_ALLOC;
@@ -2975,7 +2981,7 @@ static int corrgm_ascii_plot (const char *vname,
     }
 
     pprintf(prn, "\n\n%s\n\n", _("Correlogram"));
-    graphyx(acf, xk, m, vname, _("lag"), prn);
+    graphyx(A->val, xk, m, vname, _("lag"), prn);
 
     free(xk);
 
@@ -3007,8 +3013,8 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     const double z[] = {1.65, 1.96, 2.58};
     double ybar, box, pm[3];
     double pval = NADBL;
-    double *acf = NULL;
-    double *pacf = NULL;
+    gretl_matrix *A;
+    double *acf, *pacf;
     const char *vname;
     int i, k, m, T, dfQ;
     int t1 = dset->t1, t2 = dset->t2;
@@ -3054,12 +3060,14 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	}
     }
 
-    acf = malloc(m * sizeof *acf);
-    pacf = malloc(m * sizeof *pacf); 
-    if (acf == NULL || pacf == NULL) {
+    A = gretl_matrix_alloc(m, 2);
+    if (A == NULL) {
 	err = E_ALLOC;   
 	goto bailout;
     }
+
+    acf = A->val;
+    pacf = acf + m;
 
     /* calculate acf up to order acf_m */
     for (k=1; k<=m; k++) {
@@ -3074,7 +3082,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 
     if ((opt & OPT_A) && !(opt & OPT_Q)) { 
 	/* use ASCII graphics */
-	corrgm_ascii_plot(vname, acf, m, prn);
+	corrgm_ascii_plot(vname, A, prn);
     } 
 
     if (opt & OPT_R) {
@@ -3096,7 +3104,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     /* generate (and if not in batch mode) plot partial 
        autocorrelation function */
 
-    err = pacf_err = get_pacf(pacf, acf, m);
+    err = pacf_err = get_pacf(A);
 
     pputs(prn, _("  LAG      ACF          PACF         Q-stat. [p-value]"));
     pputs(prn, "\n\n");
@@ -3151,14 +3159,13 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     record_test_result(box, pval, "Ljung-Box");
     
     if (!(opt & OPT_A) && !(opt & OPT_Q)) {
-	err = corrgram_graph(vname, acf, m, (pacf_err)? NULL : pacf, 
-			     pm[1], opt);
+	err = corrgram_graph(vname, acf, (pacf_err)? NULL : pacf, 
+			     m, pm[1], opt);
     }
 
  bailout:
 
-    free(acf);
-    free(pacf);
+    gretl_matrix_free(A);
 
     return err;
 }
@@ -3182,10 +3189,10 @@ gretl_matrix *acf_vec (const double *x, int order,
 		       const DATASET *dset, int n,
 		       int *err)
 {
-    int t1, t2;
-    gretl_matrix *acf = NULL;
+    gretl_matrix *A = NULL;
     double xbar;
     int m, k, t, T;
+    int t1, t2;
 
     if (dset != NULL) {
 	t1 = dset->t1;
@@ -3244,33 +3251,33 @@ gretl_matrix *acf_vec (const double *x, int order,
 	}
     }
 
-    acf = gretl_matrix_alloc(m, 2);
+    A = gretl_matrix_alloc(m, 2);
 
-    if (acf == NULL) {
+    if (A == NULL) {
 	*err = E_ALLOC;   
 	return NULL;
     }
 
     /* calculate ACF up to order m */
     for (k=1; k<=m && !*err; k++) {
-	acf->val[k-1] = gretl_acf(k, t1, t2, x, xbar);
-	if (na(acf->val[k-1])) {
+	A->val[k-1] = gretl_acf(k, t1, t2, x, xbar);
+	if (na(A->val[k-1])) {
 	    *err = E_DATA;
 	}
     }
 
     /* add PACF */
     if (!*err) {
-	*err = get_pacf(acf->val + m, acf->val, m);
+	*err = get_pacf(A);
     }
     
 
     if (*err) {
-	gretl_matrix_free(acf);
-	acf = NULL;
+	gretl_matrix_free(A);
+	A = NULL;
     }
 
-    return acf;
+    return A;
 }
 
 static int xcorrgm_graph (const char *xname, const char *yname,
