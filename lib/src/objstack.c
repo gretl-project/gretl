@@ -1384,14 +1384,14 @@ void *last_model_get_irf_bundle (int targ, int shock, double alpha,
 {
     stacker *smatch = find_smatch(NULL);
     GRETL_VAR *var = NULL;
-    gretl_matrix *M = NULL;
+    gretl_matrix *m = NULL;
     gretl_bundle *b = NULL;
 
     if (smatch == NULL || smatch->type != GRETL_OBJ_VAR) {
 	*err = E_BADSTAT;
     } else {
 	var = smatch->ptr;
-	M = gretl_VAR_get_impulse_response(var, targ, shock, 0,
+	m = gretl_VAR_get_impulse_response(var, targ, shock, 0,
 					   alpha, dset, err);
     }
 
@@ -1407,7 +1407,7 @@ void *last_model_get_irf_bundle (int targ, int shock, double alpha,
 	    const char *label = dataset_period_label(dset);
 	    int i, errs[6];
 
-	    errs[0] = gretl_bundle_set_data(b, "payload_matrix", M, GRETL_TYPE_MATRIX, 0);
+	    errs[0] = gretl_bundle_set_matrix(b, "payload_matrix", m);
 	    errs[1] = gretl_bundle_set_string(b, "targname", tname);
 	    errs[2] = gretl_bundle_set_string(b, "shockname", sname);
 	    errs[3] = gretl_bundle_set_string(b, "period_label", label);
@@ -1428,7 +1428,7 @@ void *last_model_get_irf_bundle (int targ, int shock, double alpha,
 	}
     }
 
-    gretl_matrix_free(M);
+    gretl_matrix_free(m);
 
     return b;
 }

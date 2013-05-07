@@ -87,6 +87,9 @@ int gretl_bundle_set_scalar (gretl_bundle *bundle, const char *key,
 int gretl_bundle_set_series (gretl_bundle *bundle, const char *key,
 			     const double *x, int n);
 
+int gretl_bundle_set_matrix (gretl_bundle *bundle, const char *key,
+			     const gretl_matrix *m);
+
 int gretl_bundle_set_note (gretl_bundle *bundle, const char *key,
 			   const char *note);
 

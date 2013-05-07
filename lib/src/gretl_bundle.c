@@ -731,6 +731,26 @@ int gretl_bundle_set_series (gretl_bundle *bundle, const char *key,
 }
 
 /**
+ * gretl_bundle_set_matrix:
+ * @bundle: target bundle.
+ * @key: name of key to create or replace.
+ * @m: gretl matrix.
+ * 
+ * Sets @m as a member of @bundle under the name @key.
+ * If @key is already present in the bundle the original 
+ * value is replaced and destroyed.
+ *
+ * Returns: 0 on success, error code on error.
+ */
+
+int gretl_bundle_set_matrix (gretl_bundle *bundle, const char *key,
+			     const gretl_matrix *m)
+{
+    return gretl_bundle_set_data(bundle, key, (void *) m, 
+				 GRETL_TYPE_MATRIX, 0);
+}
+
+/**
  * gretl_bundle_delete_data:
  * @bundle: target bundle.
  * @key: name of key to delete.
