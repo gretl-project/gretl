@@ -1405,13 +1405,26 @@ void *last_model_get_irf_bundle (int targ, int shock, double alpha,
 	    const char *tname = dset->varname[vtarg];
 	    const char *sname = dset->varname[vshock];
 	    const char *label = dataset_period_label(dset);
+	    int i, errs[6];
 
-	    gretl_bundle_set_data(b, "payload_matrix", M, GRETL_TYPE_MATRIX, 0);
-	    gretl_bundle_set_string(b, "targname", tname);
-	    gretl_bundle_set_string(b, "shockname", sname);
-	    gretl_bundle_set_string(b, "period_label", label);
-	    gretl_bundle_set_scalar(b, "alpha", alpha);
-	    gretl_bundle_set_creator(b, "gretl::irf");
+	    errs[0] = gretl_bundle_set_data(b, "payload_matrix", M, GRETL_TYPE_MATRIX, 0);
+	    errs[1] = gretl_bundle_set_string(b, "targname", tname);
+	    errs[2] = gretl_bundle_set_string(b, "shockname", sname);
+	    errs[3] = gretl_bundle_set_string(b, "period_label", label);
+	    errs[4] = gretl_bundle_set_scalar(b, "alpha", alpha);
+	    errs[5] = gretl_bundle_set_creator(b, "gretl::irf");
+
+	    for (i=0; i<6; i++) {
+		if (errs[i]) {
+		    *err = errs[i];
+		    break;
+		}
+	    }
+
+	    if (*err) {
+		gretl_bundle_destroy(b);
+		b = NULL;
+	    }
 	}
     }
 
