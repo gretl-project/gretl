@@ -373,6 +373,8 @@ int dataset_set_matrix_name (DATASET *dset, const char *name);
 
 const char *dataset_get_matrix_name (const DATASET *dset);
 
+const char *dataset_period_label (const DATASET *dset);
+
 int series_is_log (const DATASET *dset, int i, char *parent);
 
 void series_set_discrete (DATASET *dset, int i, int s);

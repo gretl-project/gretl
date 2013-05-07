@@ -28,6 +28,7 @@
 #include "plotspec.h"
 #include "usermat.h"
 #include "gretl_panel.h"
+#include "gretl_bundle.h"
 #include "missing_private.h"
 
 #include <unistd.h>
@@ -5531,62 +5532,23 @@ static int data_straddle_zero (const gretl_matrix *m)
     return 0;
 }
 
-static const char *period_label (const DATASET *dset)
+static int real_irf_print_plot (const gretl_matrix *resp,
+				const char *targname,
+				const char *shockname,
+				const char *perlabel,
+				double alpha,
+				int use_fill)
 {
-    if (dset == NULL) {
-	return _("periods");
-    } else if (quarterly_or_monthly(dset)) {
-	return dset->pd == 4 ? _("quarters") : _("months");
-    } else if (annual_data(dset)) {
-	return _("years");
-    } else if (dataset_is_weekly(dset)) {
-	return _("weeks");
-    } else if (dataset_is_daily(dset)) {
-	return _("days");
-    } else if (dataset_is_hourly(dset)) {
-	return _("hours");
-    } else {
-	return _("periods");
-    }
-}
-
-int 
-gretl_VAR_plot_impulse_response (GRETL_VAR *var,
-				 int targ, int shock, 
-				 int periods, double alpha,
-				 const DATASET *dset,
-				 gretlopt opt)
-{
-    FILE *fp = NULL;
-    int confint = 0;
-    int use_fill = !(opt & OPT_E);
-    int vtarg, vshock;
-    gretl_matrix *resp;
+    int periods = gretl_matrix_rows(resp);
+    int confint = (resp->cols > 1);
     char title[128];
+    FILE *fp;
     int t, err = 0;
-
-    if (alpha != 0 && (alpha < 0.01 || alpha > 0.5)) {
-	return E_DATA;
-    }
-
-    resp = gretl_VAR_get_impulse_response(var, targ, shock, periods, 
-					  alpha, dset, &err);
-    if (err) {
-	return err;
-    }
-
-    if (gretl_matrix_cols(resp) > 1) {
-	confint = 1;
-    }
 
     fp = get_plot_input_stream((confint)? PLOT_IRFBOOT : PLOT_REGULAR, &err);
     if (err) {
-	gretl_matrix_free(resp);
 	return err;
     }
-
-    vtarg = gretl_VAR_get_variable_number(var, targ);
-    vshock = gretl_VAR_get_variable_number(var, shock);
 
     if (!confint) {
 	fputs("# impulse response plot\n", fp);
@@ -5596,14 +5558,14 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 	fputs("set key left top\n", fp);
 	sprintf(title, _("response of %s to a shock in %s, "
 			 "with bootstrap confidence interval"),
-		dset->varname[vtarg], dset->varname[vshock]);
+		targname, shockname);
     } else {
 	fputs("set nokey\n", fp);
 	sprintf(title, _("response of %s to a shock in %s"), 
-		dset->varname[vtarg], dset->varname[vshock]);
+		targname, shockname);
     }
 
-    fprintf(fp, "set xlabel '%s'\n", period_label(dset));
+    fprintf(fp, "set xlabel '%s'\n", perlabel);
     fputs("set xzeroaxis\n", fp);
     fprintf(fp, "set xrange [-1:%d]\n", periods);
     fprintf(fp, "set title '%s'\n", title);
@@ -5660,9 +5622,103 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     gretl_pop_c_numeric_locale();
 
     fclose(fp);
-    gretl_matrix_free(resp);
 
-    return gnuplot_make_graph();
+    return 0;
+}
+
+int 
+gretl_VAR_plot_impulse_response (GRETL_VAR *var,
+				 int targ, int shock, 
+				 int periods, double alpha,
+				 const DATASET *dset,
+				 gretlopt opt)
+{
+    int use_fill = !(opt & OPT_E);
+    gretl_matrix *resp;
+    int err = 0;
+
+    if (alpha != 0 && (alpha < 0.01 || alpha > 0.5)) {
+	return E_DATA;
+    }
+
+    resp = gretl_VAR_get_impulse_response(var, targ, shock, periods, 
+					  alpha, dset, &err);
+
+    if (!err) {
+	int vtarg = gretl_VAR_get_variable_number(var, targ);
+	int vshock = gretl_VAR_get_variable_number(var, shock);
+
+	err = real_irf_print_plot(resp, dset->varname[vtarg],
+				  dset->varname[vshock],
+				  dataset_period_label(dset),
+				  alpha, use_fill);
+	gretl_matrix_free(resp);
+    }
+
+    if (!err) {
+	err = gnuplot_make_graph();
+    }
+
+    return err;
+}
+
+int irf_plot_from_bundle (void *data, const char *ospec)
+{
+    gretl_bundle *b = data;
+    const char *targname;
+    const char *shockname;
+    const char *perlabel;
+    const gretl_matrix *resp;
+    double alpha;
+    int use_fill = 1;
+    int err = 0;
+
+    /* FIXME: @ospec is currently ignored, but it should
+       be respected, to set the output type for the plot
+       (display, PDF, whatever).
+    */
+
+    alpha = gretl_bundle_get_scalar(b, "alpha", &err);
+    if (err) {
+	alpha = 0.0;
+	err = 0;
+    }
+
+    targname = gretl_bundle_get_string(b, "targname", &err);
+
+    if (!err) {
+	shockname = gretl_bundle_get_string(b, "shockname", &err);
+    }
+
+    if (!err) {
+	perlabel = gretl_bundle_get_string(b, "period_label", &err);
+    }
+
+    if (!err) {
+	GretlType type;
+	void *ptr;
+
+	ptr = gretl_bundle_get_data(b, "payload_matrix", 
+				    &type, NULL, &err);
+	if (!err) {
+	    if (type != GRETL_TYPE_MATRIX) {
+		err = E_TYPES;
+	    } else {
+		resp = (const gretl_matrix *) ptr;
+	    }
+	}
+    }
+
+    if (!err) {
+	err = real_irf_print_plot(resp, targname, shockname,
+				  perlabel, alpha, use_fill);
+    }
+
+    if (!err) {
+	err = gnuplot_make_graph();
+    }
+
+    return err;
 }
 
 int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods, 
@@ -5690,7 +5746,7 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
     fputs("set key left top\n", fp);
     title = g_strdup_printf(_("forecast variance decomposition for %s"), 
 			    dset->varname[v]);
-    fprintf(fp, "set xlabel '%s'\n", period_label(dset));
+    fprintf(fp, "set xlabel '%s'\n", dataset_period_label(dset));
     fputs("set xzeroaxis\n", fp);
     fprintf(fp, "set title '%s'\n", title);
     g_free(title);
@@ -5755,7 +5811,7 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
     fprintf(fp, "set multiplot layout %d,%d\n", n, n);
 
     if (n < 4) {
-	fprintf(fp, "set xlabel '%s'\n", period_label(dset));
+	fprintf(fp, "set xlabel '%s'\n", dataset_period_label(dset));
     } else {
 	fputs("set noxlabel\n", fp);
     }

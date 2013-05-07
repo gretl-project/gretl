@@ -431,6 +431,39 @@ double *gretl_bundle_get_series (gretl_bundle *bundle,
 }
 
 /**
+ * gretl_bundle_get_payload_matrix:
+ * @bundle: bundle to access.
+ * @err: location to receive error code.
+ *
+ * Returns: a copy of the matrix associated with the key 
+ * "payload_matrix" in the specified @bundle, if any; 
+ * otherwise NULL.
+ */
+
+gretl_matrix *gretl_bundle_get_payload_matrix (gretl_bundle *bundle,
+					       int *err)
+{
+    gretl_matrix *m = NULL;
+    GretlType type;
+    void *ptr;
+
+    ptr = gretl_bundle_get_data(bundle, "payload_matrix", &type, 
+				NULL, err);
+    if (!*err && type != GRETL_TYPE_MATRIX) {
+	*err = E_TYPES;
+    }
+
+    if (!*err) {
+	m = gretl_matrix_copy((gretl_matrix *) ptr);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    return m;
+}
+
+/**
  * gretl_bundle_get_scalar:
  * @bundle: bundle to access.
  * @key: name of key to access.
@@ -764,7 +797,7 @@ int gretl_bundle_set_note (gretl_bundle *bundle, const char *key,
  * @name: name of function package that built the bundle.
  * 
  * Sets the "creator" attribute of @bundle. This is called 
- * automatically when a bundle is returned to top-lavel 
+ * automatically when a bundle is returned to top-level 
  * userspace by a packaged function.
  *
  * Returns: 0 on success, error code on error.

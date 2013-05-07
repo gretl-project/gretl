@@ -5935,6 +5935,32 @@ static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *do_bundle_plot (NODE *l, NODE *r, parser *p)
+{
+    /* experimental! */
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL) {
+	gretl_bundle *bundle = l->v.b;
+	const char *spec = r->v.str;
+	const char *creator;
+
+	creator = gretl_bundle_get_creator(bundle);
+	if (creator == NULL) {
+	    ret->v.xval = E_DATA;
+	} else if (!strcmp(creator, "gretl::irf")) {
+	    ret->v.xval = irf_plot_from_bundle(bundle, spec);
+	} else {
+	    /* need to add more possibilities here, e.g.
+	       corrgm, pergm, ...
+	    */
+	    ret->v.xval = E_DATA;
+	}
+    }
+
+    return ret;
+}
+
 static NODE *type_string_node (NODE *n, parser *p)
 {
     NODE *ret = aux_string_node(p);
@@ -6201,6 +6227,8 @@ static int aggregate_discrete_check (const int *list, const DATASET *dset)
     return 0;
 }
 
+#define IRF_RETURN_BUNDLE 1
+
 /* evaluate a built-in function that has three arguments */
 
 static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
@@ -6439,8 +6467,16 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    int targ = (int) l->v.xval - 1;
 	    int shock = (int) m->v.xval - 1;
 
+#if IRF_RETURN_BUNDLE
+	    ret = aux_bundle_node(p);
+	    if (!p->err) {
+		ret->v.b = last_model_get_irf_bundle(targ, shock, alpha,
+						     p->dset, &p->err);
+	    }
+#else
 	    A = last_model_get_irf_matrix(targ, shock, alpha,
 					  p->dset, &p->err);
+#endif
 	}
     } else if (f == F_MLAG) {
 	if (l->t != MAT) {
@@ -6564,7 +6600,11 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 				 p->dset, &p->err);
 	    }
 	}
-    }	
+    }
+
+#if IRF_RETURN_BUNDLE
+    return ret;
+#endif
 
     if (f != F_STRNCMP && f != F_WEEKDAY && 
 	f != F_MONTHLEN && f != F_EPOCHDAY &&
@@ -9155,10 +9195,13 @@ static NODE *eval (NODE *t, parser *p)
     case BOBJ:
     case BMEMB:
     case F_INBUNDLE:
-	/* name of bundle plus key */
+    case F_BPLOT:
+	/* name of bundle plus string */
 	if (l->t == BUNDLE && r->t == STR) {
 	    if (t->t == BOBJ || t->t == BMEMB) {
 		ret = get_named_bundle_value(l, r, p);
+	    } else if (t->t == F_BPLOT) {
+		ret = do_bundle_plot(l, r, p);
 	    } else {
 		ret = test_bundle_key(l, r, p);
 	    }
@@ -11031,9 +11074,15 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p,
 		p->err = E_ALLOC;
 	    }
 	}
-	if (prechecked != NULL) {
+	if (p->err == 0 && prechecked != NULL) {
 	    *prechecked = 1;
 	}
+    } else if (r->t == BUNDLE) {
+	/* can the bundle be "cast" to a matrix? */
+	m = gretl_bundle_get_payload_matrix(r->v.b, &p->err);
+	if (p->err == 0 && prechecked != NULL) {
+	    *prechecked = 1;
+	}	
     } else {
 	fprintf(stderr, "Looking for matrix, but r->t = %d\n", r->t);
 	p->err = E_TYPES;

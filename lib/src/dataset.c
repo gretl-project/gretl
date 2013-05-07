@@ -1960,6 +1960,25 @@ const char *dataset_get_matrix_name (const DATASET *dset)
     }
 }
 
+const char *dataset_period_label (const DATASET *dset)
+{
+    if (dset == NULL) {
+	return _("periods");
+    } else if (quarterly_or_monthly(dset)) {
+	return dset->pd == 4 ? _("quarters") : _("months");
+    } else if (annual_data(dset)) {
+	return _("years");
+    } else if (dataset_is_weekly(dset)) {
+	return _("weeks");
+    } else if (dataset_is_daily(dset)) {
+	return _("days");
+    } else if (dataset_is_hourly(dset)) {
+	return _("hours");
+    } else {
+	return _("periods");
+    }
+}
+
 /* intended for use with newly imported data: trash any 
    series that contain nothing but NAs
 */
