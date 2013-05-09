@@ -392,7 +392,7 @@ static double reprobit_ll (const double *theta, void *p)
 		x = C->ndx->val[s+t] + C->scale * node;
 		/* the probability */
 		pij *= normal_cdf(C->y[s+t] ? x : -x);
-		if (pij < 1.0e-30) {
+		if (pij < 1.0e-200) {
 		    break;
 		}
 	    }
@@ -448,16 +448,43 @@ static int add_rho_LR_test (MODEL *pmod, double LR)
 static int transcribe_reprobit (MODEL *pmod, reprob_container *C,
 				double *theta, const DATASET *dset)
 {
-    gretl_matrix *Hinv;
     int Tmin = C->nobs;
-    int i, vi, k = pmod->ncoeff;
+    int i, vi, k = pmod->ncoeff, npar = C->npar;
     double sigma, LR;
     int err = 0;
+    gretl_matrix *Hinv = gretl_zero_matrix_new(npar, npar);
 
-    Hinv = hessian_inverse_from_score(theta, C->npar,
-				      reprobit_score,
-				      reprobit_ll,
-				      C, &err);
+    if (Hinv == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = hessian_from_score(theta, Hinv, reprobit_score, 
+				  reprobit_ll, C);
+    }
+
+    if (!err) {
+	err = gretl_invert_symmetric_matrix(Hinv);
+
+	if (err) {
+	    fprintf(stderr, "hessian_inverse_from_score: failed (err = %d)\n", err);
+	    /* try generic inverse */
+	} else {
+	    fprintf(stderr, "Hessian ok\n");
+	}
+
+	gretl_matrix_print(Hinv, "H");
+    }
+
+    if (err) {
+	err = gretl_invert_symmetric_indef_matrix(Hinv);
+
+	if (err) {
+	    fprintf(stderr, "hessian_inverse_from_score: failed again (err = %d)\n", err);
+	    gretl_matrix_free(Hinv);
+	    Hinv = NULL;
+	} else {
+	    fprintf(stderr, "Weird Hessian\n");
+	}
+    }
 
     if (!err) {
 	err = gretl_model_allocate_param_names(pmod, C->npar);
@@ -567,12 +594,14 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 				     crittol, gradtol, &fcount, C_LOGLIK, 
 				     reprobit_ll, reprobit_score, NULL, 
 				     C, maxopt, quiet ? NULL : prn);
+
 	} else {
 	    int gcount;
 
 	    err = BFGS_max(theta, C->npar, maxit, 1.0e-9, 
 			   &fcount, &gcount, reprobit_ll, C_LOGLIK, 
 			   reprobit_score, C, NULL, opt, prn);
+
 	}
 
 	if (!err) {
