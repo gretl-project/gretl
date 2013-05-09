@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-05-02 13:40-0400\n"
-"PO-Revision-Date: 2013-03-05 13:02+0100\n"
+"PO-Revision-Date: 2013-05-09 16:36+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -24,16 +24,15 @@ msgstr "diferencias retardadas"
 
 #: lib/src/adf_kpss.c:324 gui2/library.c:933
 msgid "modified BIC"
-msgstr ""
+msgstr "BIC modificado"
 
 #: lib/src/adf_kpss.c:326 gui2/library.c:934
-#, fuzzy
 msgid "t-statistic"
-msgstr "Estadístico de contraste"
+msgstr "Estadístico t"
 
 #: lib/src/adf_kpss.c:329 gui2/library.c:932
 msgid "modified AIC"
-msgstr ""
+msgstr "AIC modificado"
 
 #: lib/src/adf_kpss.c:341
 #, c-format
@@ -66,9 +65,9 @@ msgid "including %d lags of (1-L)%s"
 msgstr "incluyendo %d retardos de (1-L)%s"
 
 #: lib/src/adf_kpss.c:360
-#, fuzzy, c-format
+#, c-format
 msgid "(max was %d, criterion %s)"
-msgstr "(el máximo fue %d)"
+msgstr "(el máximo fue %d, el criterio %s)"
 
 #: lib/src/adf_kpss.c:402 gui2/library.c:950 gui2/library.c:1169
 #: gui2/selector.c:5997 plugin/panurc.c:234
@@ -156,9 +155,8 @@ msgid "time trend variable"
 msgstr "variable de tendencia temporal"
 
 #: lib/src/adf_kpss.c:831
-#, fuzzy
 msgid "Invalid option"
-msgstr "La opción '--%s' no es válida"
+msgstr "Opción no válida"
 
 #: lib/src/adf_kpss.c:862 lib/src/adf_kpss.c:1616 lib/src/boxplots.c:787
 #: lib/src/describe.c:1620 lib/src/describe.c:3034 lib/src/describe.c:3554
@@ -2859,18 +2857,16 @@ msgid "years"
 msgstr "años"
 
 #: lib/src/graphing.c:5543
-#, fuzzy
 msgid "weeks"
-msgstr "semanal"
+msgstr "semanas"
 
 #: lib/src/graphing.c:5545
 msgid "days"
-msgstr ""
+msgstr "días"
 
 #: lib/src/graphing.c:5547
-#, fuzzy
 msgid "hours"
-msgstr "horario"
+msgstr "horas"
 
 #: lib/src/graphing.c:5597
 #, c-format
@@ -4476,9 +4472,8 @@ msgid "Point observations"
 msgstr "Observaciones puntuales"
 
 #: lib/src/modelprint.c:188
-#, fuzzy
 msgid "Pseudo-point observations"
-msgstr "Observaciones puntuales"
+msgstr "Observaciones pseudo-puntos"
 
 #: lib/src/modelprint.c:202
 msgid "Left-censored observations"
@@ -9990,34 +9985,32 @@ msgid "_Analysis"
 msgstr "_Análisis"
 
 #: gui2/fnsave.c:1294
-#, fuzzy
 msgid "Label"
-msgstr "Etiquetas"
+msgstr "Etiqueta"
 
 #: gui2/fnsave.c:1308
-#, fuzzy
 msgid "Window"
-msgstr "Ventanas"
+msgstr "Ventana"
 
 #: gui2/fnsave.c:1387
 msgid ""
 "To update the menu attachment, you should\n"
 "(a) save this package, and (b) restart gretl."
 msgstr ""
+"Para actualizar el añadido al menú, debería\n"
+"(a) guardar este paquete y (b) reiniciar Gretl."
 
 #: gui2/fnsave.c:1547
-#, fuzzy
 msgid "gretl: extra properties"
-msgstr "gretl: error"
+msgstr "gretl: propiedades extra"
 
 #: gui2/fnsave.c:1562
-#, fuzzy
 msgid "Special functions"
-msgstr "Guardar funciones"
+msgstr "Funciones especiales"
 
 #: gui2/fnsave.c:1630
 msgid "Menu attachment"
-msgstr ""
+msgstr "Añadido al menú"
 
 #: gui2/fnsave.c:1682
 msgid "Date (YYYY-MM-DD)"
@@ -10052,9 +10045,8 @@ msgid "Add/remove functions"
 msgstr "Añadir/borrar funciones"
 
 #: gui2/fnsave.c:1815
-#, fuzzy
 msgid "Extra properties"
-msgstr "Propiedades"
+msgstr "Propiedades extra"
 
 #: gui2/fnsave.c:1821
 msgid "Write spec file"
@@ -10685,7 +10677,7 @@ msgstr "encontrado %s\n"
 
 #: gui2/gretl.c:471
 msgid "Start a new gretl instance?"
-msgstr ""
+msgstr "¿Iniciar una nueva instancia de Gretl?"
 
 #: gui2/gretl.c:1263
 msgid "No lists are currently defined"
@@ -12683,7 +12675,6 @@ msgid "Principal Components Analysis"
 msgstr "Análisis de Componentes Principales"
 
 #: gui2/library.c:928
-#, fuzzy
 msgid "criterion"
 msgstr "Criterio"
 
@@ -14733,9 +14724,8 @@ msgid "Emulate Windows look"
 msgstr "Emular la apariencia de Windows"
 
 #: gui2/settings.c:190
-#, fuzzy
 msgid "Theme preference"
-msgstr "Preferencia de idioma"
+msgstr "Preferencia de tema"
 
 #: gui2/settings.c:194
 msgid "Web browser"
@@ -14840,14 +14830,12 @@ msgid "Path to octave executable"
 msgstr "Camino al ejecutable de Octave"
 
 #: gui2/settings.c:261
-#, fuzzy
 msgid "Path to Stata executable"
-msgstr "Camino al ejecutable de Octave"
+msgstr "Camino al ejecutable de Stata"
 
 #: gui2/settings.c:263
-#, fuzzy
 msgid "Path to Python executable"
-msgstr "Camino al ejecutable de oxl"
+msgstr "Camino al ejecutable de Python"
 
 #: gui2/settings.c:265
 msgid "Database server name"
@@ -15736,14 +15724,12 @@ msgid "AB-model"
 msgstr "modelo AB"
 
 #: plugin/addons-i18n.c:46
-#, fuzzy
 msgid "Bootstrap alpha"
-msgstr "_Bootstrap..."
+msgstr "Alfa del bootstrap"
 
 #: plugin/addons-i18n.c:47
-#, fuzzy
 msgid "Bootstrap replications"
-msgstr "estadístico t mediante bootstrap"
+msgstr "Replicaciones bootstrap"
 
 #: plugin/addons-i18n.c:48
 msgid "C-model"
@@ -15786,9 +15772,8 @@ msgid "plain"
 msgstr "plano"
 
 #: plugin/addons-i18n.c:61
-#, fuzzy
 msgid "template matrix"
-msgstr "Se ha reemplazado la matriz %s"
+msgstr "matriz de plantilla"
 
 #: plugin/anova.c:108 plugin/anova.c:110
 msgid "Treatment"
