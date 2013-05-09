@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9x\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-05-02 13:40-0400\n"
-"PO-Revision-Date: 2013-05-07 00:50+0800\n"
+"PO-Revision-Date: 2013-05-09 17:51+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung@cycu.edu.tw>\n"
 "Language-Team: gretl <gretl-users@lists.wfu.edu>\n"
 "MIME-Version: 1.0\n"
@@ -13333,11 +13333,11 @@ msgstr "追蹤資料診斷(_Panel diagnostics)"
 #: gui2/gui_utils.c:259
 #: gui2/gui_utils.c:266
 msgid "White's test"
-msgstr "White 檢定 (含交乘項)"
+msgstr "White 檢定"
 
 #: gui2/gui_utils.c:260
 msgid "White's test (squares only)"
-msgstr "White 檢定 (不含交乘項)"
+msgstr "White 檢定 (只含平方項)"
 
 #: gui2/gui_utils.c:267
 msgid "_groupwise"
