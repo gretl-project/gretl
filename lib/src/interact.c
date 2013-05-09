@@ -325,6 +325,7 @@ static int catch_system_alias (CMD *cmd)
 			   c == MODPRINT || \
 			   c == NORMTEST || \
                            c == NULLDATA || \
+			   c == BPLOT || \
                            c == SETMISS)
 
 #define REQUIRES_ORDER(c) (c == ADF || \
@@ -338,6 +339,7 @@ static int catch_system_alias (CMD *cmd)
                            c == VECM)
 
 #define NO_VARLIST(c) (c == APPEND || \
+		       c == BPLOT ||  \
                        c == BREAK || \
                        c == CHOW || \
 		       c == CLEAR || \
@@ -5947,6 +5949,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case GNUPLOT:
     case BXPLOT:
+    case BPLOT:
     case SCATTERS:
 	if (cmd->opt & OPT_X) {
 	    err = matrix_command_driver(cmd->ci, cmd->list, cmd->param, 
@@ -5960,6 +5963,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    } else {
 		err = gnuplot(cmd->list, cmd->param, dset, cmd->opt);
 	    }
+	} else if (cmd->ci == BPLOT) {
+	    err = do_bundle_plot(cmd->param, cmd->opt);
 	} else if (cmd->ci == SCATTERS) {
 	    err = multi_scatters(cmd->list, dset, cmd->opt);
 	} else if (cmd_nolist(cmd)) {

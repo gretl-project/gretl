@@ -5935,32 +5935,6 @@ static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *do_bundle_plot (NODE *l, NODE *r, parser *p)
-{
-    /* experimental! */
-    NODE *ret = aux_scalar_node(p);
-
-    if (ret != NULL) {
-	gretl_bundle *bundle = l->v.b;
-	const char *spec = r->v.str;
-	const char *creator;
-
-	creator = gretl_bundle_get_creator(bundle);
-	if (creator == NULL) {
-	    ret->v.xval = E_DATA;
-	} else if (!strcmp(creator, "gretl::irf")) {
-	    ret->v.xval = irf_plot_from_bundle(bundle, spec);
-	} else {
-	    /* need to add more possibilities here, e.g.
-	       corrgm, pergm, ...
-	    */
-	    ret->v.xval = E_DATA;
-	}
-    }
-
-    return ret;
-}
-
 static NODE *type_string_node (NODE *n, parser *p)
 {
     NODE *ret = aux_string_node(p);
@@ -9197,13 +9171,10 @@ static NODE *eval (NODE *t, parser *p)
     case BOBJ:
     case BMEMB:
     case F_INBUNDLE:
-    case F_BPLOT:
 	/* name of bundle plus string */
 	if (l->t == BUNDLE && r->t == STR) {
 	    if (t->t == BOBJ || t->t == BMEMB) {
 		ret = get_named_bundle_value(l, r, p);
-	    } else if (t->t == F_BPLOT) {
-		ret = do_bundle_plot(l, r, p);
 	    } else {
 		ret = test_bundle_key(l, r, p);
 	    }

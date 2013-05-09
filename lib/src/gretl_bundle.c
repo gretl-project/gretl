@@ -1280,3 +1280,29 @@ int load_bundle_from_xml (void *p1, void *p2, const char *name)
 
     return err;
 }
+
+int do_bundle_plot (const char *param, gretlopt opt)
+{
+    gretl_bundle *bundle;
+    const char *creator;
+    int err = 0;
+
+    bundle = get_bundle_by_name(param);
+    if (bundle == NULL) {
+	return E_DATA;
+    }
+
+    creator = gretl_bundle_get_creator(bundle);
+    if (creator == NULL) {
+	err = E_DATA;
+    } else if (!strcmp(creator, "gretl::irf")) {
+	err = irf_plot_from_bundle(bundle, opt);
+    } else {
+	/* need to add more possibilities here, e.g.
+	   corrgm, pergm, ...
+	*/
+	err = E_DATA;
+    }
+
+    return err;
+}

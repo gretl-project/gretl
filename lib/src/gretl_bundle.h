@@ -128,6 +128,8 @@ int load_bundle_from_xml (void *p1, void *p2, const char *name);
 
 int bundle_contains_data (gretl_bundle *b, void *data);
 
+int do_bundle_plot (const char *param, gretlopt opt);
+
 #endif /* GRETL_BUNDLE_H_ */
 
 

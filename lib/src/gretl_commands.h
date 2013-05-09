@@ -34,6 +34,7 @@ typedef enum {
     BIPROBIT,
     BREAK,
     BXPLOT,
+    BPLOT,
     CHOW,
     CLEAR,
     COEFFSUM,

@@ -5662,7 +5662,7 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     return err;
 }
 
-int irf_plot_from_bundle (void *data, const char *ospec)
+int irf_plot_from_bundle (void *data, gretlopt opt)
 {
     gretl_bundle *b = data;
     const char *targname;
