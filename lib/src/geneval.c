@@ -6010,14 +6010,12 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 #endif
 
     if (!err && p->op != B_ASN) {
-	/* e.g. bundle.member += foo */
+	/* e.g. bundle.member += foo: note that right now we don't
+	   reach here: for bundles and their members, we choke off 
+	   modified assignment at the initial parse stage.
+	   AC, 2013-05-12
+	*/
 	type = gretl_bundle_get_type(bundle, key, &err);
-	if (!err) {
-	    /* FIXME support this somehow */
-	    gretl_errmsg_set("Modified assignment not supported for bundle "
-			     "members");
-	    err = E_DATA;
-	}
     }
 
     if (!err) {
@@ -10773,7 +10771,7 @@ static void pre_process (parser *p, int flags)
 	/* error message */
 	p->err = E_EQN;
 	return;
-    } 
+    }
 
     /* if the LHS variable does not already exist, then
        we can't do '+=' or anything of that sort, only 
@@ -10806,7 +10804,14 @@ static void pre_process (parser *p, int flags)
 	gretl_errmsg_sprintf(_("'%s' : not implemented for strings"), opstr);
 	p->err = E_PARSE;
 	return;
-    } 
+    }
+
+    /* bundles: we can't do any sort of modified assignment (yet) */
+    if (p->lh.t == BUNDLE && p->op != B_ASN) {
+	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"), opstr);
+	p->err = E_PARSE;
+	return;
+    }
 
     /* vertical concat: only OK for matrices */
     if (p->lh.t != MAT && (p->op == B_VCAT || p->op == B_DOTASN)) {
