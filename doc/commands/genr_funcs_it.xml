@@ -19,7 +19,7 @@
       <description>
 	<para>
 	  Produce il criterio di informazione di Akaike per l'ultimo modello
-          stimato.
+          stimato. Vedi <guideref targ="select-criteria"/> per dettagli.
 	</para>
       </description>
     </function>
@@ -28,7 +28,7 @@
       <description>
 	<para>
 	  Produce il criterio di informazione bayesiana di Schwarz per l'ultimo
-          modello stimato.
+          modello stimato. Vedi <guideref targ="select-criteria"/> per dettagli.
 	</para>
       </description>
     </function>
@@ -3295,7 +3295,7 @@
       </description>
     </function>
 
-    <function name="lower" section="matshape" output="smatrix">
+    <function name="lower" section="matbuild" output="smatrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
       </fnargs>
@@ -3609,29 +3609,48 @@
       </description>
     </function>
 
-    <function name="mlag" section="transforms" output="matrix">
+    <function name="mlag" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="scalar">p</fnarg>
+	<fnarg type="scalar-or-vec">p</fnarg>
+	<fnarg type="scalar" optional="true">m</fnarg>
       </fnargs>
       <description>
 	<para context="notex">
-	  For <argname>p</argname> &gt; 0, returns a matrix in which the
-	  columns of <argname>X</argname> are shifted down by
-	  <argname>p</argname> rows and the first <argname>p</argname>
-	  rows are filled with zeros. If <argname>p</argname> is a
-	  negative number, <argname>X</argname> is shifted up and the last
-	  rows are filled with zeros.
+	  Shifts up or down the rows of <argname>X</argname>.  If
+	  <argname>p</argname> is a positive scalar, returns a matrix
+	  in which the columns of <argname>X</argname> are shifted
+	  down by <argname>p</argname> rows and the first
+	  <argname>p</argname> rows are filled with the value
+	  <argname>m</argname>. If <argname>p</argname> is a negative
+	  number, <argname>X</argname> is shifted up and the last rows
+	  are filled with the value <argname>m</argname>. If
+	  <argname>m</argname> is omitted, it is understood to be
+	  zero.
 	</para>
 	<para context="tex">
-	  Shifts up or down the elements of <argname>X</argname>. If $p
-	  &gt; 0$ the returned matrix $Y$ has typical element $Y_{i,j} =
-	  X_{i-p,j}$ for $i \ge p$ and zero otherwise. In other words, the
-	  columns of <argname>X</argname> are shifted down by
+	  Shifts up or down the rows of <argname>X</argname>. If $p$
+	  is a positive scalar, the returned matrix $Y$ has typical
+	  element $Y_{i,j} = X_{i-p,j}$ for $i \ge p$ and zero
+	  otherwise. In other words, the columns of
+	  <argname>X</argname> are shifted down by
 	  <argname>p</argname> rows and the first <argname>p</argname>
-	  rows are filled with zeros. If <argname>p</argname> is a
-	  negative number, <argname>X</argname> is shifted up and the last
-	  rows are filled with zeros.
+	  rows are filled with the value <argname>m</argname>. If
+	  <argname>p</argname> is a negative number,
+	  <argname>X</argname> is shifted up and the last rows are
+	  filled with the value <argname>m</argname>. If
+	  <argname>m</argname> is omitted, it is understood to be
+	  zero.
+	</para>
+	<para context="notex">
+	  If <argname>p</argname> is a vector, the above operation is
+	  carried out for each element in <argname>p</argname>,
+	  joining the resulting matrices horizontally.
+	</para>
+	<para context="tex">
+	  If $p$ is a vector, the above operation is carried out for
+	  each element in $p$, joining the resulting matrices
+	  horizontally.
 	</para>
       </description>
     </function>
@@ -3671,6 +3690,23 @@
       </description>
     </function>
 
+    <function name="monthlen" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">month</fnarg>
+	<fnarg type="scalar">year</fnarg>
+	<fnarg type="scalar">weeklen</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the number of (relevant) days in the specified month in
+	  the specified year; <argname>weeklen</argname>, which must equal
+	  5, 6 or 7, gives the number of days in the week that should be
+	  counted (a value of 6 omits Sundays, and a value of 5 omits both
+	  Saturdays and Sundays).
+	</para>
+      </description>
+    </function>
+
     <function name="movavg" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
@@ -3697,6 +3733,62 @@
 	    y = tmp(+1)
 	</code>
     </description>
+    </function>
+
+    <function name="mpols" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">Y</fnarg>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Works exactly as <fncref targ="mols"/>, except that the calculations
+	  are done in multiple precision using the GMP library.
+	</para>
+	<para>
+	  By default GMP uses 256 bits for each floating point number, but
+	  you can adjust this using the environment variable
+	  <lit>GRETL_MP_BITS</lit>, &eg; <lit>GRETL_MP_BITS=1024</lit>.
+	</para>
+      </description>
+    </function>
+
+    <function name="mrandgen" section="probdist" output="matrix">
+      <fnargs>
+	<fnarg type="char">c</fnarg>
+	<fnarg type="scalar">a</fnarg>
+	<fnarg type="scalar">b</fnarg>
+	<fnarg type="scalar">r</fnarg>
+	<fnarg type="scalar">c</fnarg>
+      </fnargs>
+      <examples>
+	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
+	<example>matrix mt14 = mrandgen(t, 14, 20, 20)</example>
+      </examples>
+      <description>
+	<para>
+	  Works like <fncref targ="randgen"/> except that the return
+	  value is a matrix rather than a series. The initial
+	  arguments to this function are as described for
+	  <lit>randgen</lit>, but they must be followed by two
+	  integers to specify the number of rows
+	  (<argname>r</argname>) and columns (<argname>c</argname>) of
+	  the desired random matrix.
+	</para>
+	<para>
+	  The first example above calls for a uniform random column vector
+	  of length 50, while the second example specifies a <by r="20"
+	  c="20"/> random matrix with drawings from the the <math>t</math>
+	  distribution with 14 degrees of freedom.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="mnormal"/>
+	    <fncref targ="muniform"/>
+	  </seelist>
+	</para>
+      </description>
     </function>
 
     <function name="mread" section="matbuild" output="matrix">
@@ -3742,6 +3834,59 @@
       </description>
     </function>
 
+    <function name="mreverse" section="matshape" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a matrix containing the rows of <argname>X</argname> in
+	  reverse order.  If you wish to obtain a matrix in which the columns
+	  of <argname>X</argname> appear in reverse order you can do:
+	</para>
+	<code>
+	  matrix Y = mreverse(X')'
+	</code>
+      </description>
+    </function>  
+
+    <function name="mrls" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">Y</fnarg>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="matrix">R</fnarg>
+	<fnarg type="cvec">q</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Restricted least squares: returns a <by r="k" c="n"/> matrix
+	  of parameter estimates obtained by least-squares regression
+	  of the <by r="T" c="n"/> matrix <argname>Y</argname> on the
+	  <by r="T" c="k"/> matrix <argname>X</argname> subject to the
+	  linear restriction <math>RB</math> = <math>q</math>, where
+	  <math>B</math> denotes the stacked coefficient vector.
+	  <argname>R</argname> must have <math>k</math> *
+	  <math>n</math> columns; each row of this matrix represents a
+	  linear restriction. The number of rows in <argname>q</argname>
+	  must match the number of rows in <argname>R</argname>.
+	</para>
+	<para>
+	  If the fifth argument is not <lit>null</lit>, the <by r="T"
+	  c="n"/> matrix <argname>U</argname> will contain the
+	  residuals. If the final argument is given and is not
+	  <lit>null</lit> then the <by r="k" c="k"/> matrix
+	  <argname>V</argname> will hold the restricted counterpart to
+	  the matrix <math>X'X</math><sup>-1</sup>. The variance
+	  matrix of the estimates for equation <math>i</math> can be
+	  constructed by multiplying the appropriate sub-matrix of
+	  <argname>V</argname> by an estimate of the error variance
+	  for that equation.
+	</para>
+      </description>
+    </function>  
+
     <function name="mshape" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -3771,6 +3916,22 @@
       </description>
     </function>
 
+    <function name="msortby" section="matshape" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="scalar">j</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a matrix in which the rows of <argname>X</argname>
+	  are reordered by increasing value of the elements in
+	  column <argname>j</argname>. This is a stable sort: 
+	  rows that share the same value in column <argname>j</argname>
+	  will not be interchanged.
+	</para>
+      </description>
+    </function>
+
     <function name="muniform" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="scalar">r</fnarg>
@@ -3796,7 +3957,7 @@
       </description>
     </function>
 
-    <function name="mwrite" section="matbuild" output="scalar">
+    <function name="mwrite" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="string">s</fnarg>
@@ -3850,6 +4011,93 @@
       </description>
     </function>
 
+    <function name="nadarwat" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="series">x</fnarg>
+	<fnarg type="scalar">h</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the Nadaraya&ndash;Watson nonparametric estimator of the
+	  conditional mean of <argname>y</argname>
+	  given <argname>x</argname>. It returns a series holding the
+	  nonparametric estimate
+	  of <math>E(y</math><sub>i</sub><math>|x</math><sub>i</sub><math>)</math>
+	  for each nonmissing element of the
+	  series <argname>x</argname>.
+	</para>
+	<para context="tex">
+	  \[
+	  m(x_i) = \frac{ \sum_{j=1}^{n} y_j \cdot K_h(x_i -
+	  x_j)} {\sum_{j=1}^{n} K_h(x_i - x_j)}
+	  \]
+	  where the kernel function <math>K_h(\cdot)</math> is given
+	  by
+	  \[
+	  K_h(x) = \exp\left(-\frac{x^2}{2h}\right)
+	  \]
+	  for $|x| &lt; \tau$ and zero otherwise.
+	</para>
+	<para context="notex">
+	  The kernel function <math>K</math> is given
+	  by <math>K = exp(-x</math><sup>2</sup><math> / 2h)</math>
+	  for <math>|x| &lt; T</math> and zero otherwise.
+	</para>
+	<para context="tex">
+	  The argument <argname>h</argname>, known as the
+	  \emph{bandwidth}, is a parameter (a positive real number)
+	  given by the user. This is usually a small number: larger
+	  values of $h$ make $m(x)$ smoother; a popular choice is
+	  $n^{-0.2}$. More details are given in
+	  <guideref targ="sec:nadarwat"/>.
+	</para>
+	<para context="notex">
+	  The argument <argname>h</argname>, known as the bandwidth,
+	  is a parameter (a positive real number) given by the
+	  user. This is usually a small number: larger values
+	  of <argname>h</argname> make <math>m(x)</math> smoother; a
+	  popular choice is <math>n</math><sup>-0.2</sup>. More
+	  details are given in <guideref targ="sec:nadarwat"/>.
+	</para>
+	<para context="tex">
+	  The scalar $\tau$ is used to prevent numerical problems when
+	  the the kernel function is evaluated too far away from zero
+	  and is called the trim parameter.
+	</para>
+	<para context="notex">
+	  The scalar <math>T</math> is used to prevent numerical
+	  problems when the the kernel function is evaluated too far
+	  away from zero and is called the trim parameter.
+	</para>
+        <para>
+	  The trim parameter can be adjusted via
+	  the <lit>nadarwat_trim</lit> setting, as a multiple
+	  of <argname>h</argname>. The default value is 4.  
+        </para>
+	<para>
+	  The user may provide a negative value for the bandwidth:
+	  this is interpreted as conventional syntax to obtain the
+	  leave-one-out estimator, that is a variant of the estimator
+	  that does not use the <math>i</math>-th observation for
+	  evaluating <math>m(x</math><sub>i</sub><math>)</math>. This
+	  makes the Nadaraya&ndash;Watson estimator more robust
+	  numerically and its usage is normally advised when the
+	  estimator is computed for inference purposes. Of course, the
+	  bandwidth actually used is the absolute value of
+	  <argname>h</argname>.
+	</para>
+	  <para context="tex">
+	    In formulae, the leave-one-out estimator is
+	    \[
+	    m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i -
+	    x_j)} {\sum_{j \ne i} K_h(x_i - x_j)}
+	    \]
+	  </para>
+
+      </description>
+    </function>
+
     <function name="nelem" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="list">L</fnarg>
@@ -3857,6 +4105,20 @@
       <description>
 	<para>
 	  Returns the number of items in list <argname>L</argname>.
+	</para>
+      </description>
+    </function>
+
+    <function name="ngetenv" section="strings" output="scalar">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  If an environment variable by the name of
+	  <argname>s</argname> is defined and has a numerical value,
+	  returns that value; otherwise returns NA.  See also <fncref
+	  targ="getenv"/>.
 	</para>
       </description>
     </function>
@@ -3892,6 +4154,78 @@
 	    <fncref targ="genpois"/>
 	    <fncref targ="mnormal"/>
 	    <fncref targ="muniform"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="npv" section="math" output="scalar">
+      <fnargs>
+	<fnarg type="series-or-vec">x</fnarg>
+	<fnarg type="scalar">r</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the Net Present Value of <argname>x</argname>,
+	  considered as a sequence of payments (negative) and receipts
+	  (positive), evaluated at annual discount rate
+	  <argname>r</argname>.  The first value is taken as dated
+	  <quote>now</quote> and is not discounted.  To emulate an NPV
+	  function in which the first value is discounted, prepend zero to
+	  the input sequence.
+	</para>
+	<para>
+	  Supported data frequencies are annual, quarterly, monthly, and
+	  undated (undated data are treated as if annual).
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="irr"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="NRmax" section="numerical" output="scalar">
+      <fnargs>
+	<fnarg type="vector">b</fnarg>
+	<fnarg type="fncall">f</fnarg>
+	<fnarg type="fncall" optional="true">g</fnarg>
+	<fnarg type="fncall" optional="true">h</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Numerical maximization via the Newton&ndash;Raphson method.
+	  The vector <argname>b</argname> should hold the initial
+	  values of a set of parameters, and the argument
+	  <argname>f</argname> should specify a call to a function
+	  that calculates the (scalar) criterion to be maximized,
+	  given the current parameter values and any other relevant
+	  data. If the object is in fact minimization, this function
+	  should return the negative of the criterion.  On successful
+	  completion, <lit>NRmax</lit> returns the maximized value of
+	  the criterion, and <argname>b</argname> holds the parameter
+	  values which produce the maximum.
+	</para>
+	<para>
+	  The optional third and fourth arguments provide means of
+	  supplying analytical derivatives and an analytical
+	  (negative) Hessian, respectively. The functions referenced
+	  by <argname>g</argname> and <argname>h</argname> must take
+	  as their first argument a pre-defined matrix that is of the
+	  correct size to contain the gradient or Hessian,
+	  respectively, given in pointer form. They also must take the
+	  parameter vector as an argument (in pointer form or
+	  otherwise).  Other arguments are optional. If either or
+	  both of the optional arguments are omitted, a numerical
+	  approximation is used.
+	</para>
+	<para>
+	  For more details and examples see the chapter on numerical
+	  methods in <guideref targ="chap-numerical"/>.
+	  <seelist>
+	    <fncref targ="BFGSmax"/>
+	    <fncref targ="fdjac"/>
 	  </seelist>
 	</para>
       </description>
@@ -3947,6 +4281,19 @@
       </description>
     </function>
 
+    <function name="obslabel" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="scalar">t</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the observation label for observation <argname>t</argname>,
+	  where <argname>t</argname> is a 1-based index.  The inverse
+	  function is provided by <fncref targ="obsnum"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="obsnum" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -3974,17 +4321,28 @@
       </description>
     </function>
 
-    <function name="ok" section="data-utils" output="asinput">
+    <function name="ok" section="data-utils" output="seebelow">
       <fnargs>
-	<fnarg type="sslist">x</fnarg>
+	<fnarg type="anyfloat-or-list">x</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns a binary variable holding 1 if <math>x</math> is not
-	  <lit>NA</lit>. If <math>x</math> is a series, the comparison is
-	  done element by element. If <math>x</math> is a list of series,
-	  the output is a series with 0 at the observations for which at
-	  least one series in the list is missing, and 1 otherwise.
+	  If <argname>x</argname> is a scalar, returns 1 if
+	  <argname>x</argname> is not <lit>NA</lit>, otherwise 0.  If
+	  <argname>x</argname> is a series, returns a series with
+	  value 1 at observations with non-missing values and zeros
+	  elsewhere. If <argname>x</argname> is a list, the output is
+	  a series with 0 at observations for which at least one
+	  series in the list has a missing value, and 1 otherwise.
+	</para>
+	<para>
+	  If <argname>x</argname> is a matrix the behavior is a little
+	  different, since matrices cannot contain <lit>NA</lit>s: the
+	  function returns a matrix of the same dimensions as
+	  <argname>x</argname>, with 1s in positions corresponding to
+	  finite elements of <argname>x</argname> and 0s in positions
+	  where the elements are non-finite (either infinities or
+	  not-a-number, as per the IEEE 754 standard).
 	</para>
 	<para>
 	  <seelist>
@@ -3992,6 +4350,7 @@
 	    <fncref targ="misszero"/>
 	    <fncref targ="zeromiss"/>
 	  </seelist>
+	  But note that these functions are not applicable to matrices.
 	</para>
       </description>
     </function>
@@ -5037,6 +5396,163 @@
 	  <seelist> 
 	    <fncref targ="vec"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="weekday" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">year</fnarg>
+	<fnarg type="scalar">month</fnarg>
+	<fnarg type="scalar">day</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns the day of the week (Sunday = 0, Monday = 1, etc.) for the
+	  date specified by the three arguments, or <lit>NA</lit> if the date
+	  is invalid.
+	</para>
+      </description>
+    </function>
+
+    <function name="wmean" section="stats" output="series">
+      <fnargs>
+	<fnarg type="list">Y</fnarg>
+	<fnarg type="list">W</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns a series <math>y</math> such that <math>y</math><sub>t</sub>
+	  is the weighted mean of the values of the variables in list
+	  <argname>Y</argname> at observation <math>t</math>, the respective
+	  weights given by the values of the variables in list
+	  <argname>W</argname> at <math>t</math>.  The weights can therefore
+	  be time-varying. The lists <argname>Y</argname> and
+	  <argname>W</argname> must be of the same length and the weights must
+	  be non-negative.
+	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="wsd"/>
+	    <fncref targ="wvar"/>
+	  </seelist>
+	</para> 
+      </description>
+    </function>
+
+    <function name="wsd" section="stats" output="series">
+      <fnargs>
+	<fnarg type="list">Y</fnarg>
+	<fnarg type="list">W</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns a series <math>y</math> such that <math>y</math><sub>t</sub>
+	  is the weighted sample standard deviation of the values of the
+	  variables in list <argname>Y</argname> at observation
+	  <math>t</math>, the respective weights given by the values of the
+	  variables in list <argname>W</argname> at <math>t</math>.  The
+	  weights can therefore be time-varying. The lists
+	  <argname>Y</argname> and <argname>W</argname> must be of the same
+	  length and the weights must be non-negative.
+	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="wmean"/>
+	    <fncref targ="wvar"/>
+	  </seelist>
+	</para> 
+      </description>
+    </function>
+
+    <function name="wvar" section="stats" output="series">
+      <fnargs>
+	<fnarg type="list">X</fnarg>
+	<fnarg type="list">W</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns a series <math>y</math> such that <math>y</math><sub>t</sub>
+	  is the weighted sample variance of the values of the
+	  variables in list <argname>X</argname> at observation
+	  <math>t</math>, the respective weights given by the values of the
+	  variables in list <argname>W</argname> at <math>t</math>.  The
+	  weights can therefore be time-varying. The lists
+	  <argname>Y</argname> and <argname>W</argname> must be of the same
+	  length and the weights must be non-negative.
+	</para>
+	<para context="tex">
+	  The weighted sample variance is computed as
+	  \[ s^2_w = \frac{n'}{n'-1} \,
+	  \frac{\sum_{i=1}^n w_i(x_i - \bar{x}_w)^2}{\sum_{i=1}^n w_i} \]
+	  where $n'$ is the number of non-zero weights and $\bar{x}_w$ is
+	  the weighted mean.
+	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="wmean"/>
+	    <fncref targ="wsd"/>
+	  </seelist>
+	</para> 
+      </description>
+    </function>
+
+    <function name="xmax" section="math" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">x</fnarg>
+	<fnarg type="scalar">y</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Returns the greater of <argname>x</argname> and
+	  <argname>y</argname>, or <lit>NA</lit> if either value
+	  is missing.  
+	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="xmin"/>
+	    <fncref targ="max"/>
+	    <fncref targ="min"/>
+	  </seelist>
+	</para> 
+      </description>
+    </function>
+
+    <function name="xmin" section="math" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">x</fnarg>
+	<fnarg type="scalar">y</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Returns the lesser of <argname>x</argname> and
+	  <argname>y</argname>, or <lit>NA</lit> if either value
+	  is missing.
+	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="xmax"/>
+	    <fncref targ="max"/>
+	    <fncref targ="min"/>
+	  </seelist>
+	</para> 
+      </description>
+    </function>
+
+    <function name="xpx" section="transforms" output="list">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Returns a list that references the squares and cross-products
+	  of the variables in list <argname>L</argname>.  Squares are
+	  named on the pattern <lit>sq_</lit><repl>varname</repl> and
+	  cross-products on the pattern 
+	  <repl>var1</repl><lit>_</lit><repl>var2</repl>.  The input
+	  variable names are truncated if need be, and the output
+	  names may be adjusted in case of duplication
+	  of names in the returned list.
 	</para>
       </description>
     </function>
