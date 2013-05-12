@@ -190,16 +190,16 @@ either of two ways.
 \item One can construct a matrix containing the desired lags (positive
   integer values) and supply the name of this matrix in place of $p$
   or $q$.
-\item One can give a space-separated list of lags, enclosed in braces,
+\item One can give a comma-separated list of lags, enclosed in braces,
   in place of $p$ or $q$.
 \end{itemize}
 %
 The following code illustrates these options:
 %
 \begin{code}
-matrix pvec = {1, 4}
+matrix pvec = {1,4}
 arma pvec 1 ; y
-arma {1 4} 1 ; y
+arma {1,4} 1 ; y
 \end{code}
 %
 Both forms above specify an ARMA model in which AR lags 1 and 4 are

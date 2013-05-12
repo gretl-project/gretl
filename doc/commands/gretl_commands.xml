@@ -845,8 +845,8 @@
 	(as opposed to all lags up to a given order) you can substitute
 	for <repl>p</repl> and/or <repl>q</repl> either (a) the name of a
 	pre-defined matrix containing a set of integer values or (b) an
-	expression such as <lit>{1 4}</lit>; that is, a set of lags
-	separated by spaces and enclosed in braces.
+	expression such as <lit>{1,4}</lit>; that is, a set of lags
+	separated by commas and enclosed in braces.
       </para>
 
       <para context="cli">
