@@ -6015,7 +6015,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	if (!err) {
 	    /* FIXME support this somehow */
 	    gretl_errmsg_set("Modified assignment not supported for bundle "
-			 "members");
+			     "members");
 	    err = E_DATA;
 	}
     }

@@ -1359,8 +1359,6 @@ static FILE *gp_set_up_batch (char *fname, PlotType ptype,
 
     optname = get_optval_string(ci, OPT_U);
 
-    fprintf(stderr, "ci=%d, optname='%s'\n", ci, optname);
-
     if (optname != NULL && *optname != '\0') {
 	/* user gave --output=<filename> */
 	if (!strcmp(optname, "display")) {
