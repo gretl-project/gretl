@@ -1347,12 +1347,19 @@ static void print_set_output (const char *path, FILE *fp)
 }
 
 static FILE *gp_set_up_batch (char *fname, PlotType ptype, 
-			      GptFlags flags, int *err)
+			      int ci, GptFlags flags, int *err)
 {
-    int ci = command_index_from_plot_type(ptype);
-    const char *optname = get_optval_string(ci, OPT_U);
+    const char *optname;
     int fmt = GP_TERM_NONE;
     FILE *fp = NULL;
+
+    if (ci == 0) {
+	ci = command_index_from_plot_type(ptype);
+    }
+
+    optname = get_optval_string(ci, OPT_U);
+
+    fprintf(stderr, "ci=%d, optname='%s'\n", ci, optname);
 
     if (optname != NULL && *optname != '\0') {
 	/* user gave --output=<filename> */
@@ -1476,7 +1483,8 @@ static int gnuplot_too_old (void)
    for display in the GUI.
 */
 
-static FILE *open_gp_stream (PlotType ptype, GptFlags flags, int *err)
+static FILE *open_gp_stream_full (PlotType ptype, int ci,
+				  GptFlags flags, int *err)
 {
     char fname[FILENAME_MAX] = {0};
     int batch = (flags & GPT_BATCH);
@@ -1498,7 +1506,7 @@ static FILE *open_gp_stream (PlotType ptype, GptFlags flags, int *err)
     *gnuplot_outname = '\0';
 
     if (batch) {
-	fp = gp_set_up_batch(fname, ptype, flags, err);
+	fp = gp_set_up_batch(fname, ptype, ci, flags, err);
     }
 
     if (!batch || (fp == NULL && !*err)) {
@@ -1514,6 +1522,11 @@ static FILE *open_gp_stream (PlotType ptype, GptFlags flags, int *err)
 #endif
 
     return fp;
+}
+
+static FILE *open_gp_stream (PlotType ptype, GptFlags flags, int *err)
+{
+    return open_gp_stream_full(ptype, 0, flags, err);
 }
 
 /**
@@ -5537,18 +5550,13 @@ static int real_irf_print_plot (const gretl_matrix *resp,
 				const char *shockname,
 				const char *perlabel,
 				double alpha,
-				int use_fill)
+				int confint,
+				int use_fill,
+				FILE *fp)
 {
     int periods = gretl_matrix_rows(resp);
-    int confint = (resp->cols > 1);
     char title[128];
-    FILE *fp;
-    int t, err = 0;
-
-    fp = get_plot_input_stream((confint)? PLOT_IRFBOOT : PLOT_REGULAR, &err);
-    if (err) {
-	return err;
-    }
+    int t;
 
     if (!confint) {
 	fputs("# impulse response plot\n", fp);
@@ -5621,8 +5629,6 @@ static int real_irf_print_plot (const gretl_matrix *resp,
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
     return 0;
 }
 
@@ -5647,12 +5653,19 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     if (!err) {
 	int vtarg = gretl_VAR_get_variable_number(var, targ);
 	int vshock = gretl_VAR_get_variable_number(var, shock);
+	int confint = (resp->cols > 1);
+	FILE *fp;
 
-	err = real_irf_print_plot(resp, dset->varname[vtarg],
-				  dset->varname[vshock],
-				  dataset_period_label(dset),
-				  alpha, use_fill);
+	fp = get_plot_input_stream((confint)? PLOT_IRFBOOT : PLOT_REGULAR, &err);
+	if (!err) {
+	    err = real_irf_print_plot(resp, dset->varname[vtarg],
+				      dset->varname[vshock],
+				      dataset_period_label(dset),
+				      alpha, confint, use_fill,
+				      fp);
+	}
 	gretl_matrix_free(resp);
+	fclose(fp);
     }
 
     if (!err) {
@@ -5672,11 +5685,6 @@ int irf_plot_from_bundle (void *data, gretlopt opt)
     double alpha;
     int use_fill = 1;
     int err = 0;
-
-    /* FIXME: @ospec is currently ignored, but it should
-       be respected, to set the output type for the plot
-       (display, PDF, whatever).
-    */
 
     alpha = gretl_bundle_get_scalar(b, "alpha", &err);
     if (err) {
@@ -5710,8 +5718,17 @@ int irf_plot_from_bundle (void *data, gretlopt opt)
     }
 
     if (!err) {
-	err = real_irf_print_plot(resp, targname, shockname,
-				  perlabel, alpha, use_fill);
+	int confint = (resp->cols > 1);
+	FILE *fp;
+
+	fp = open_gp_stream_full((confint)? PLOT_IRFBOOT : PLOT_REGULAR, 
+				 BPLOT, GPT_BATCH, &err);
+	if (!err) {
+	    err = real_irf_print_plot(resp, targname, shockname,
+				      perlabel, alpha, use_fill,
+				      confint, fp);
+	}
+	fclose(fp);
     }
 
     if (!err) {
@@ -6721,4 +6738,3 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
 
     return err;
 }
-

@@ -6009,6 +6009,17 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     fprintf(stderr, "set_named_bundle_value: %s[\"%s\"]\n", name, key);
 #endif
 
+    if (!err && p->op != B_ASN) {
+	/* e.g. bundle.member += foo */
+	type = gretl_bundle_get_type(bundle, key, &err);
+	if (!err) {
+	    /* FIXME support this somehow */
+	    gretl_errmsg_set("Modified assignment not supported for bundle "
+			 "members");
+	    err = E_DATA;
+	}
+    }
+
     if (!err) {
 	switch (n->t) {
 	case NUM:
