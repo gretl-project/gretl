@@ -786,6 +786,11 @@ plain_text_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 		        v->role == VIEW_SERIES || \
                         v->role == VIEW_MODEL)
 
+/* This dialog allows for selection of a format option when saving
+   material to file or copying to the clipboard. The range of
+   formats offered depends on the content/role of @vwin.
+*/
+
 void copy_format_dialog (windata_t *vwin, int action)
 {
     GtkWidget *dialog, *tmp, *hbox;

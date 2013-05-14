@@ -533,10 +533,10 @@ static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
     return cpy;
 }
 
-static gchar *maybe_amend_buffer (gchar *inbuf, int fmt)
+static gchar *maybe_amend_save_buffer (gchar *inbuf, int fmt)
 {
     const gchar *cset;
-    gchar *outbuf = NULL;
+    gchar *outbuf = inbuf;
 
     if (!g_get_charset(&cset)) {
 	/* not native UTF-8 */ 
@@ -602,7 +602,7 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 	PRN *textprn;
 
 	if (action == W_SAVE) {
-	    cpybuf = maybe_amend_buffer(cpybuf, fmt);
+	    cpybuf = maybe_amend_save_buffer(cpybuf, fmt);
 	    if (cpybuf == NULL) {
 		return;
 	    }
