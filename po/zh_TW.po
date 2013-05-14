@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9x\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-05-02 13:40-0400\n"
-"PO-Revision-Date: 2013-05-14 11:18+0800\n"
+"PO-Revision-Date: 2013-05-14 11:34+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung@cycu.edu.tw>\n"
 "Language-Team: gretl <gretl-users@lists.wfu.edu>\n"
 "MIME-Version: 1.0\n"
@@ -14659,9 +14659,9 @@ msgid "Plot the series"
 msgstr "時間序列圖(_T)"
 
 #: gui2/library.c:7005
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no valid values"
-msgstr "gretl: 臨界值"
+msgstr "%s: 無任何有效樣本值"
 
 #: gui2/library.c:7191
 msgid "Non-interactive (just get output)"
@@ -14795,9 +14795,8 @@ msgid "Unterminated comment in script"
 msgstr ""
 
 #: gui2/library.c:8583
-#, fuzzy
 msgid "Script done\n"
-msgstr "開指令檔(_S)"
+msgstr "Script done\n"
 
 #: gui2/menustate.c:49
 #, c-format
@@ -14832,9 +14831,8 @@ msgid "Periodogram"
 msgstr "週期圖 (Periodogram)"
 
 #: gui2/menustate.c:362
-#, fuzzy
 msgid "ARIMA model"
-msgstr "/模型/最大概似法(_M)"
+msgstr "ARIMA model"
 
 #: gui2/menustate.c:365
 msgid "Dickey-Fuller test"
@@ -14904,14 +14902,12 @@ msgid "Daily"
 msgstr "日資料"
 
 #: gui2/menustate.c:683
-#, fuzzy
 msgid "Unknown"
-msgstr "未知"
+msgstr "Unknown"
 
 #: gui2/menustate.c:688
-#, fuzzy
 msgid "Undated"
-msgstr "未訂時間順序"
+msgstr "無特定日期"
 
 #: gui2/menustate.c:718
 #, c-format
@@ -14966,9 +14962,8 @@ msgstr ""
 #: gui2/model_table.c:408
 #: gui2/selector.c:3658
 #: plugin/addons-i18n.c:7
-#, fuzzy
 msgid "ARCH"
-msgstr "ARCH自我相關異質變異模型 (_A)"
+msgstr "ARCH"
 
 #: gui2/model_table.c:411
 msgid "MLE"
@@ -15119,9 +15114,9 @@ msgid "add exogenous variable"
 msgstr "新增外生變數"
 
 #: gui2/selector.c:1641
-#, fuzzy, c-format
+#, c-format
 msgid "Status of '%s' in VECM:"
-msgstr "錯誤的資料表示:  %s"
+msgstr "Status of '%s' in VECM:"
 
 #: gui2/selector.c:2390
 msgid "You must select an X-axis variable"
@@ -15132,9 +15127,8 @@ msgid "You must select a Y-axis variable"
 msgstr "你必需選擇 1 個變數當做 Y 軸變數"
 
 #: gui2/selector.c:2396
-#, fuzzy
 msgid "You must select a lower bound variable"
-msgstr "取自然對數"
+msgstr "你必需選一個 lower bound 變數"
 
 #: gui2/selector.c:2399
 #: gui2/selector.c:3450
@@ -15146,9 +15140,8 @@ msgid "You must specify a quantile"
 msgstr "你必需設定你指定的分位數 (quantile)"
 
 #: gui2/selector.c:2955
-#, fuzzy
 msgid "Invalid quantile specification"
-msgstr "資料檔格式錯誤\n"
+msgstr "錯誤的 quantile 設定"
 
 #: gui2/selector.c:3085
 #: gui2/selector.c:5083
@@ -15221,33 +15214,28 @@ msgid "AR(1)"
 msgstr "AR(1)"
 
 #: gui2/selector.c:3634
-#, fuzzy
 msgid "Count data model"
-msgstr "另存新檔(_a)"
+msgstr "Count data model"
 
 #: gui2/selector.c:3636
-#, fuzzy
 msgid "Duration model"
-msgstr "/模型/最大概似法(_M)"
+msgstr "Duration model"
 
 #: gui2/selector.c:3638
-#, fuzzy
 msgid "Panel model"
-msgstr "/模型/最大概似法(_M)"
+msgstr "Panel model"
 
 #: gui2/selector.c:3640
 msgid "Groupwise WLS"
 msgstr ""
 
 #: gui2/selector.c:3642
-#, fuzzy
 msgid "Between-groups model"
-msgstr "/模型/最大概似法(_M)"
+msgstr "Between-groups model"
 
 #: gui2/selector.c:3644
-#, fuzzy
 msgid "Dynamic panel model"
-msgstr "/模型/最大概似法(_M)"
+msgstr "Dynamic panel model"
 
 #: gui2/selector.c:3646
 msgid "Weighted least squares"
@@ -16559,7 +16547,7 @@ msgstr "gretl: 設定工作子目錄"
 
 #: gui2/ssheet.c:135
 msgid "Apply"
-msgstr "Apply"
+msgstr "確認變更"
 
 #: gui2/ssheet.c:172
 msgid "_Fill"
