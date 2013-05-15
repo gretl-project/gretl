@@ -5964,7 +5964,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 		err = gnuplot(cmd->list, cmd->param, dset, cmd->opt);
 	    }
 	} else if (cmd->ci == BPLOT) {
-	    err = do_bundle_plot(cmd->param, cmd->opt);
+	    err = plot_bundle_by_name(cmd->param, cmd->opt);
 	} else if (cmd->ci == SCATTERS) {
 	    err = multi_scatters(cmd->list, dset, cmd->opt);
 	} else if (cmd_nolist(cmd)) {

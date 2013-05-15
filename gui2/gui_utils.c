@@ -4423,6 +4423,15 @@ static void bundle_plot_call (GtkAction *action, gpointer p)
     exec_bundle_plot_function(bundle, gtk_action_get_name(action));
 }
 
+static void bundle_plot_call2 (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    gretl_bundle *bundle = vwin->data;
+    int err = do_bundle_plot(bundle, OPT_NONE);
+
+    gui_graph_handler(err);
+}
+
 static void add_bundled_item_to_menu (gpointer key, 
 				      gpointer value, 
 				      gpointer data)
@@ -4484,7 +4493,7 @@ static void add_bundle_menu_items (windata_t *vwin)
 {
     gretl_bundle *bundle = vwin->data;
     int n = gretl_bundle_get_n_keys(bundle);
-    gchar *plotfunc;
+    gchar *plotfunc = NULL;
 
     if (n > 0) {
 	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
@@ -4501,11 +4510,15 @@ static void add_bundle_menu_items (windata_t *vwin)
     plotfunc = get_bundle_plot_function(bundle);
 
     if (plotfunc != NULL) {
-	/* set up the bundle's Graph menu */
-	ufunc *fun = get_user_function_by_name(plotfunc);
+	/* a package-created bundle with a plot function */
+	GtkActionEntry item;
+	ufunc *fun = NULL;
 	const char **S = NULL;
 	int ng = 0;
-	GtkActionEntry item;
+
+	if (strcmp(plotfunc, "builtin")) {
+	    fun = get_user_function_by_name(plotfunc);
+	}
 
 	if (fun != NULL) {
 	    S = fn_param_value_labels(fun, 1, &ng);
@@ -4535,7 +4548,18 @@ static void add_bundle_menu_items (windata_t *vwin)
 	}
 
 	g_free(plotfunc);
+    } else if (can_do_bundle_plot(bundle)) {
+	/* a gretl-created bundle with built-in plotting supported */
+	GtkActionEntry item;
+
+	action_entry_init(&item);
+
+	item.name = "builtin-plot";
+	item.label = _("show plot");
+	item.callback = G_CALLBACK(bundle_plot_call2);
+	vwin_menu_add_item(vwin, "/menubar/Graph", &item);	
     } else {
+	/* no plotting capability for this bundle */
 	flip(vwin->ui, "/menubar/Graph", FALSE);
     }
 }
