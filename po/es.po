@@ -6249,7 +6249,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"         frequencia    rel.    acum.\n"
+"         frecuencia    rel.    acum.\n"
 "\n"
 
 #: lib/src/printout.c:425
@@ -8212,7 +8212,7 @@ msgid ""
 "Adding a lower frequency series to a\n"
 "higher frequency dataset"
 msgstr ""
-"Añadiendo una serie de baja frequencia a\n"
+"Añadiendo una serie de baja frecuencia a\n"
 "un conjunto de datos de alta frecuencia"
 
 #: gui2/database.c:229
@@ -8241,7 +8241,7 @@ msgid ""
 "There is already a variable of this name\n"
 "in the dataset.  OK to overwrite it?"
 msgstr ""
-"Ya hay una variable con este nombre.\n"
+"Ya hay una variable con este nombre\n"
 "en el conjunto de datos ¿Sobreescribirla?"
 
 #: gui2/database.c:560
@@ -9594,7 +9594,7 @@ msgstr "Media móvil exponencial de %s (ponderación actual %g)"
 #: gui2/filters.c:220
 #, c-format
 msgid "Residual from EMA of %s (current weight %g)"
-msgstr "Residuos de la media móvil exponencial de %s (poderación actual %g)"
+msgstr "Residuos de la media móvil exponencial de %s (ponderación actual %g)"
 
 #: gui2/filters.c:225
 #, c-format
@@ -9906,7 +9906,7 @@ msgid ""
 msgstr ""
 "El paquete %s puede añadirse a los menús de gretl\n"
 "como \"%s/%s\" en %s.\n"
-"Desea Vd. hacer esto?"
+"¿Desea Vd. hacer esto?"
 
 #: gui2/fncall.c:2923
 #, c-format
@@ -13084,7 +13084,7 @@ msgstr "El conjunto de datos se ha ido"
 
 #: gui2/library.c:5527
 msgid "Error generating covariance matrix"
-msgstr "Error al generar la matriz de correlación"
+msgstr "Error al generar la matriz de covarianzas"
 
 #: gui2/library.c:5531
 msgid "gretl: coefficient covariances"
@@ -13349,7 +13349,7 @@ msgid ""
 "Do you want to switch to the reduced version now?"
 msgstr ""
 "Ha guardado una versión reducida del conjunto de datos actual.\n"
-"Desea cambiar ahora a la versión reducida?"
+"¿Desea cambiar ahora a la versión reducida?"
 
 #: gui2/library.c:7919 gui2/library.c:8003
 msgid "No commands to execute"
@@ -13999,7 +13999,7 @@ msgstr "Utilizar \"dejar una fuera\""
 
 #: gui2/selector.c:4844
 msgid "GARCH p:"
-msgstr "ARCH p:"
+msgstr "GARCH p:"
 
 #: gui2/selector.c:4845
 msgid "ARCH q:"
@@ -15203,11 +15203,11 @@ msgstr "Mover a una ventana de pestaña"
 
 #: gui2/textbuf.c:292
 msgid "No redo information available"
-msgstr "No hay información disponible para 'deshacer'"
+msgstr "No hay información disponible para 'rehacer'"
 
 #: gui2/textbuf.c:301
 msgid "No undo information available"
-msgstr "No hay disponible información de 'deshacer'"
+msgstr "No hay información disponible para 'deshacer'"
 
 #: gui2/textbuf.c:1518
 msgid "Gretl Command Reference"
@@ -15811,7 +15811,7 @@ msgstr "Raíz MA %d = %g\n"
 
 #: plugin/arma.c:906
 msgid "MA estimate(s) out of bounds\n"
-msgstr "Las estimaciones de medias móviles están fueran de los límites\n"
+msgstr "Las estimaciones de medias móviles están fuera de los límites\n"
 
 #: plugin/arma.c:1446 plugin/arma_init.c:347 plugin/arma_init.c:1143
 #: plugin/arma_init.c:1221 plugin/arma_init.c:1224
