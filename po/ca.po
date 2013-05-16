@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-05-02 13:40-0400\n"
-"PO-Revision-Date: 2013-03-25 23:24+0100\n"
+"PO-Revision-Date: 2013-05-16 10:54+0100\n"
 "Last-Translator: Andreu Sansó <andreu.sanso@uib.cat>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -24,16 +24,15 @@ msgstr "diferències retardades"
 
 #: lib/src/adf_kpss.c:324 gui2/library.c:933
 msgid "modified BIC"
-msgstr ""
+msgstr "BIC modificat"
 
 #: lib/src/adf_kpss.c:326 gui2/library.c:934
-#, fuzzy
 msgid "t-statistic"
-msgstr "Estadístic de contrast"
+msgstr "Estadístic t"
 
 #: lib/src/adf_kpss.c:329 gui2/library.c:932
 msgid "modified AIC"
-msgstr ""
+msgstr "AIC modificat"
 
 #: lib/src/adf_kpss.c:341
 #, c-format
@@ -66,9 +65,9 @@ msgid "including %d lags of (1-L)%s"
 msgstr "incloent %d retards de (1-L)%s"
 
 #: lib/src/adf_kpss.c:360
-#, fuzzy, c-format
+#, c-format
 msgid "(max was %d, criterion %s)"
-msgstr "(el màxim va ser %d)"
+msgstr "(el màxim va ser %d,  criteri %s))"
 
 #: lib/src/adf_kpss.c:402 gui2/library.c:950 gui2/library.c:1169
 #: gui2/selector.c:5997 plugin/panurc.c:234
@@ -156,9 +155,8 @@ msgid "time trend variable"
 msgstr "variable de tendència temporal"
 
 #: lib/src/adf_kpss.c:831
-#, fuzzy
 msgid "Invalid option"
-msgstr "L'opció '--%s' no és vàlida"
+msgstr "Opció no vàlida"
 
 #: lib/src/adf_kpss.c:862 lib/src/adf_kpss.c:1616 lib/src/boxplots.c:787
 #: lib/src/describe.c:1620 lib/src/describe.c:3034 lib/src/describe.c:3554
@@ -1262,7 +1260,7 @@ msgid ""
 "observations range: %s to %s\n"
 msgstr ""
 "periodicitat: %d, màx. obs: %d\n"
-"rang d'observacions: %s a %s\n"
+"recorregut d'observacions: %s a %s\n"
 
 #: lib/src/dataio.c:1733
 msgid ""
@@ -1352,7 +1350,7 @@ msgstr "Caràcter estrany (0x%x) a les dades"
 #: lib/src/dataio.c:3352 lib/src/dataio.c:3395
 #, c-format
 msgid "'%s' -- number out of range!"
-msgstr "'%s' -- nombre fora de rang!"
+msgstr "'%s' -- nombre fora de recorregut!"
 
 #: lib/src/dataio.c:3548
 #, c-format
@@ -1828,7 +1826,7 @@ msgstr "Percentil del 95%"
 
 #: lib/src/describe.c:4447
 msgid "Interquartile range"
-msgstr "Rang interquartílic"
+msgstr "Recorregut interquartílic"
 
 #: lib/src/describe.c:4448 lib/src/describe.c:4637 gui2/guiprint.c:800
 #: gui2/guiprint.c:1133
@@ -1879,12 +1877,12 @@ msgstr "Perc. 95%"
 
 #: lib/src/describe.c:4636 gui2/guiprint.c:800
 msgid "IQ range"
-msgstr "Rang IQ"
+msgstr "Recorregut IQ"
 
 #: lib/src/describe.c:4856 lib/src/describe.c:4957
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
-msgstr "Descartant %s: el rang mostral no conté observacions vàlides\n"
+msgstr "Descartant %s: el recorregut mostral no conté observacions vàlides\n"
 
 #: lib/src/describe.c:5318
 msgid "corr: needs at least two non-constant arguments"
@@ -1931,11 +1929,11 @@ msgstr "Coeficients de correlació"
 
 #: lib/src/describe.c:5510 lib/src/describe.c:5594
 msgid "Sample range has no valid observations."
-msgstr "El rang mostral no conté observacions vàlides."
+msgstr "El recorregut mostral no conté observacions vàlides."
 
 #: lib/src/describe.c:5516 lib/src/describe.c:5600
 msgid "Sample range has only one observation."
-msgstr "El rang mostral només té una observació."
+msgstr "El recorregut mostral només té una observació."
 
 #: lib/src/describe.c:5543
 #, c-format
@@ -2858,18 +2856,16 @@ msgid "years"
 msgstr "años"
 
 #: lib/src/graphing.c:5543
-#, fuzzy
 msgid "weeks"
-msgstr "setmanal"
+msgstr "setmanes"
 
 #: lib/src/graphing.c:5545
 msgid "days"
-msgstr ""
+msgstr "dies"
 
 #: lib/src/graphing.c:5547
-#, fuzzy
 msgid "hours"
-msgstr "horàries"
+msgstr "hores"
 
 #: lib/src/graphing.c:5597
 #, c-format
@@ -4470,9 +4466,8 @@ msgid "Point observations"
 msgstr "Observacions puntuals"
 
 #: lib/src/modelprint.c:188
-#, fuzzy
 msgid "Pseudo-point observations"
-msgstr "Observacions puntuals"
+msgstr "Pseudo observacions puntuals"
 
 #: lib/src/modelprint.c:202
 msgid "Left-censored observations"
@@ -5373,15 +5368,15 @@ msgstr "Desviació típica de la var. dependente"
 
 #: lib/src/modelprint.c:2754
 msgid "Akaike information criterion"
-msgstr "Criterio d'informació d'Akaike"
+msgstr "Criteri d'informació d'Akaike"
 
 #: lib/src/modelprint.c:2755 gui2/library.c:6029
 msgid "Schwarz Bayesian criterion"
-msgstr "Criterio d'informació Bayesià de Schwarz"
+msgstr "Criteri d'informació Bayesià de Schwarz"
 
 #: lib/src/modelprint.c:2756 gui2/library.c:6034
 msgid "Hannan-Quinn Information Criterion"
-msgstr "Criterio d'informació de Hannan-Quinn"
+msgstr "Criteri d'informació de Hannan-Quinn"
 
 #. TRANSLATORS: please do not translate literally: this is for
 #. your use in describing locale-specific abbreviations. It is
@@ -5421,7 +5416,7 @@ msgstr "R-quadrat"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2802
 msgid "Adjusted R-squared"
-msgstr "mitjana corregit"
+msgstr "R-quadrat ajustat"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2805
@@ -6319,7 +6314,7 @@ msgstr "Mostra actual: %d observacions\n"
 
 #: lib/src/printout.c:708 lib/src/printout.c:731
 msgid "Full data range"
-msgstr "Rang de dades complet"
+msgstr "Recorregut de dades complet"
 
 #: lib/src/printout.c:729 lib/src/subsample.c:2177
 msgid "Current sample"
@@ -6364,7 +6359,7 @@ msgstr ""
 #: lib/src/printout.c:1245 gui2/guiprint.c:955
 #, c-format
 msgid "Model estimation range: %s - %s"
-msgstr "Rang d'estimació del model: %s - %s"
+msgstr "Recorregut d'estimació del model: %s - %s"
 
 #: lib/src/printout.c:1262
 msgid "error"
@@ -6729,7 +6724,7 @@ msgstr "Nombre de períodes temporals"
 
 #: lib/src/subsample.c:2198 lib/src/subsample.c:2266
 msgid "Range"
-msgstr "Rang"
+msgstr "Recorregut"
 
 #: lib/src/subsample.c:2201
 msgid "Subsampled data"
@@ -6737,7 +6732,7 @@ msgstr "dades submostrejades"
 
 #: lib/src/subsample.c:2220
 msgid "Full range"
-msgstr "Rang de dades complet"
+msgstr "Recorregut de dades complet"
 
 #: lib/src/subsample.c:2246
 #, c-format
@@ -7006,12 +7001,12 @@ msgstr "El valor de l'índex %d està fora dels límits"
 
 #: lib/src/usermat.c:157 gui2/calculator.c:1362
 msgid "Range is non-positive!"
-msgstr "El rang no és positiu!"
+msgstr "El recorregut no és positiu!"
 
 #: lib/src/usermat.c:179
 #, c-format
 msgid "Range %d to %d is non-positive!"
-msgstr "El rang des de %d fins a %d no és positiu!"
+msgstr "El recorregut des de %d fins a %d no és positiu!"
 
 #: lib/src/usermat.c:249
 msgid "Ambiguous matrix index"
@@ -9006,7 +9001,7 @@ msgstr "Nombre d'observacions a seleccionar (màx %d)"
 
 #: gui2/dialogs.c:2274
 msgid "Set sample range"
-msgstr "Establir rang mostral"
+msgstr "Establir recorregut mostral"
 
 #: gui2/dialogs.c:2379
 msgid "gretl: define dummy"
@@ -9014,7 +9009,7 @@ msgstr "gretl: definir variable fictícia"
 
 #: gui2/dialogs.c:2389
 msgid "Set dummy range"
-msgstr "Establir el rang de la variable fictícia"
+msgstr "Establir el recorregut de la variable fictícia"
 
 #: gui2/dialogs.c:2408 gui2/varinfo.c:998
 msgid "Name of variable:"
@@ -9130,7 +9125,7 @@ msgstr "gretl: predicció"
 
 #: gui2/dialogs.c:3072
 msgid "Forecast range:"
-msgstr "Rang de predicció:"
+msgstr "Horitzó de predicció:"
 
 #: gui2/dialogs.c:3073
 msgid "Start"
@@ -9142,7 +9137,7 @@ msgstr "Final"
 
 #: gui2/dialogs.c:3182
 msgid "Show fitted values for pre-forecast range"
-msgstr "Mostrar els valors ajustats per al rang anterior a la predicció"
+msgstr "Mostrar els valors ajustats per al recorregut anterior a la predicció"
 
 #: gui2/dialogs.c:3195
 msgid "low and high lines"
@@ -9968,34 +9963,32 @@ msgid "_Analysis"
 msgstr "_Anàlisi"
 
 #: gui2/fnsave.c:1294
-#, fuzzy
 msgid "Label"
-msgstr "Etiquetes"
+msgstr "Etiqueta"
 
 #: gui2/fnsave.c:1308
-#, fuzzy
 msgid "Window"
-msgstr "Finestres"
+msgstr "Finestra"
 
 #: gui2/fnsave.c:1387
 msgid ""
 "To update the menu attachment, you should\n"
 "(a) save this package, and (b) restart gretl."
 msgstr ""
+"Per actualitzar l'afegitó al menú adjunt, hauríeu de\n"
+"(a) guardar aquest paquet, i (b) reiniciar gretl."
 
 #: gui2/fnsave.c:1547
-#, fuzzy
 msgid "gretl: extra properties"
-msgstr "gretl: error"
+msgstr "gretl: propietats extra"
 
 #: gui2/fnsave.c:1562
-#, fuzzy
 msgid "Special functions"
-msgstr "Guardar funcions"
+msgstr "Funcions especials"
 
 #: gui2/fnsave.c:1630
 msgid "Menu attachment"
-msgstr ""
+msgstr "Afegitó al menú"
 
 #: gui2/fnsave.c:1682
 msgid "Date (YYYY-MM-DD)"
@@ -10030,9 +10023,8 @@ msgid "Add/remove functions"
 msgstr "Afegir/esborrar funcions"
 
 #: gui2/fnsave.c:1815
-#, fuzzy
 msgid "Extra properties"
-msgstr "Propietats"
+msgstr "Extra properties"
 
 #: gui2/fnsave.c:1821
 msgid "Write spec file"
@@ -10508,11 +10500,11 @@ msgstr "eix Y2"
 
 #: gui2/gpt_dialog.c:3381
 msgid "auto axis range"
-msgstr "rang d'eixos automàtic"
+msgstr "amplitud d'eixos automàtica"
 
 #: gui2/gpt_dialog.c:3394
 msgid "manual range:"
-msgstr "rang manual:"
+msgstr "amplitud manual:"
 
 #: gui2/gpt_dialog.c:3469
 msgid "linear scale"
@@ -10662,7 +10654,7 @@ msgstr "trobat %s\n"
 
 #: gui2/gretl.c:471
 msgid "Start a new gretl instance?"
-msgstr ""
+msgstr "Iniciar una nova instància de gretl?"
 
 #: gui2/gretl.c:1263
 msgid "No lists are currently defined"
@@ -11019,11 +11011,11 @@ msgstr "Esta_blir codi de 'valor absent'..."
 #: gui2/gretl.c:1637 gui2/gui_utils.c:310 gui2/gui_utils.c:355
 #: gui2/ssheet.c:177
 msgid "_View"
-msgstr "_Veuru"
+msgstr "_Veure"
 
 #: gui2/gretl.c:1638
 msgid "_Icon view"
-msgstr "Vista d' _icones"
+msgstr "Vista d'_icones"
 
 #: gui2/gretl.c:1639
 msgid "_Graph specified vars"
@@ -11155,7 +11147,7 @@ msgstr "Variables fictícies temp_orals"
 
 #: gui2/gretl.c:1676
 msgid "_Observation range dummy"
-msgstr "Variable fictíciade rang d'_observació"
+msgstr "Variable fictícia de recorregut d'_observació"
 
 #: gui2/gretl.c:1677
 msgid "Dummies for selected _discrete variables"
@@ -11171,11 +11163,11 @@ msgstr "_Mostra"
 
 #: gui2/gretl.c:1683
 msgid "_Set range..."
-msgstr "Establir _rang..."
+msgstr "Establir _recorregut..."
 
 #: gui2/gretl.c:1684
 msgid "_Restore full range"
-msgstr "Recuperar el rang _complet"
+msgstr "Recuperar el recorregut _complet"
 
 #: gui2/gretl.c:1685
 msgid "_Show status"
@@ -11231,7 +11223,7 @@ msgstr "Coeficient de _Gini"
 
 #: gui2/gretl.c:1705
 msgid "_Range-mean graph"
-msgstr "Gràfic _rang-mitjana"
+msgstr "Gràfic _recorregut-mitjana"
 
 #: gui2/gretl.c:1706
 msgid "_Time series plot"
@@ -11499,7 +11491,7 @@ msgstr "Regressió _quantílica..."
 
 #: gui2/gretl.c:1783
 msgid "_Rank correlation..."
-msgstr "Correlació prr _Rangs..."
+msgstr "Correlació per _Rangs..."
 
 #: gui2/gretl.c:1784
 msgid "_Loess..."
@@ -11696,7 +11688,7 @@ msgstr "porc. 95\\% "
 
 #: gui2/guiprint.c:1132
 msgid "IQ Range"
-msgstr "Rang IQ"
+msgstr "Recorregut IQ"
 
 #: gui2/guiprint.c:1224
 #, c-format
@@ -11735,7 +11727,7 @@ msgstr "Proporció de la pertorbació, $U^D$"
 
 #: gui2/guiprint.c:1478 gui2/guiprint.c:1496
 msgid "Model estimation range:"
-msgstr "Rang d'estimació del model:"
+msgstr "Recorregut d'estimació del model:"
 
 #: gui2/guiprint.c:1481 gui2/guiprint.c:1499
 #, c-format
@@ -12660,9 +12652,8 @@ msgid "Principal Components Analysis"
 msgstr "Anàlisi de Components Principals"
 
 #: gui2/library.c:928
-#, fuzzy
 msgid "criterion"
-msgstr "Criteri"
+msgstr "criteri"
 
 #: gui2/library.c:949 gui2/library.c:965 gui2/library.c:1049
 msgid "test down from maximum lag order"
@@ -12838,7 +12829,7 @@ msgstr ""
 "No hi ha observacions disponibles per fer\n"
 "prediccions fora de la mostra. Si ho vol, pot\n"
 "afegir observacions (menú de Dades, Editar valors),\n"
-"o pot escurçar el rang mostral sobre el qual\n"
+"o pot escurçar el recorregut mostral sobre el qual\n"
 "s'estima el model (menú Mostra)."
 
 #: gui2/library.c:2100 gui2/selector.c:7323
@@ -12887,7 +12878,7 @@ msgstr "gretl: diagnòstics del model de panell"
 
 #: gui2/library.c:2578
 msgid "gretl: leverage and influence"
-msgstr "gretl: palanquejament (leverage) i influència"
+msgstr "gretl: leverage i influència"
 
 #: gui2/library.c:2623
 msgid "gretl: collinearity"
@@ -13009,7 +13000,7 @@ msgstr "gretl: dist. dels residus."
 #: gui2/library.c:4873
 #, c-format
 msgid "range %g to %g"
-msgstr "rang %g a %g"
+msgstr "recorregut %g a %g"
 
 #: gui2/library.c:4874
 #, c-format
@@ -13034,11 +13025,11 @@ msgstr "Descartar el màxim i el mínim en les submostres"
 
 #: gui2/library.c:5189
 msgid "gretl: range-mean graph"
-msgstr "gretl: gràfico rang-mitjana"
+msgstr "gretl: gràfico recorregut-mitjana"
 
 #: gui2/library.c:5223
 msgid "gretl: range-mean statistics"
-msgstr "gretl: estadístics de l'anàlisi rang-mitjana"
+msgstr "gretl: estadístics de l'anàlisi recorregut-mitjana"
 
 #: gui2/library.c:5255
 msgid "gretl: Hurst exponent"
@@ -13252,8 +13243,8 @@ msgid ""
 "The data set is currently sub-sampled.\n"
 "Would you like to restore the full range?"
 msgstr ""
-"Ara el rang mostral és més curt que el del conjunt de dades.\n"
-"Vol restablir el rang mostral complet?"
+"Ara el recorregut mostral és més curt que el del conjunt de dades.\n"
+"Vol restablir el recorregut mostral complet?"
 
 #: gui2/library.c:7415
 msgid "gretl: Compact data"
@@ -13265,9 +13256,9 @@ msgid ""
 "You must restore the full range before compacting.\n"
 "Restore the full range now?"
 msgstr ""
-"Ara el rang mostral és més curt que el del conjunt de dades.\n"
-"Ha de restablir el rang mostral complet abans de compactar.\n"
-"Vol restablir ara el rang mostral complet?"
+"Ara el recorregut mostral és més curt que el del conjunt de dades.\n"
+"Ha de restablir el recorregut mostral complet abans de compactar.\n"
+"Vol restablir ara el recorregut mostral complet?"
 
 #: gui2/library.c:7420
 msgid "gretl: Expand data"
@@ -13279,9 +13270,9 @@ msgid ""
 "You must restore the full range before expanding.\n"
 "Restore the full range now?"
 msgstr ""
-"Ara el rang mostral és més curt que el del conjunt de dades.\n"
-"Ha de restablir el rang mostral complet abans d'expandir-lo.\n"
-"Vol restablir ara el rang mostral complet?"
+"Ara el recorregut mostral és més curt que el del conjunt de dades.\n"
+"Ha de restablir el recorregut mostral complet abans d'expandir-lo.\n"
+"Vol restablir ara el recorregut mostral complet?"
 
 #: gui2/library.c:7440
 msgid "gretl: transpose data"
@@ -13452,7 +13443,7 @@ msgstr "Sense data"
 #: gui2/menustate.c:718
 #, c-format
 msgid "Undated: Full range n = %d; current sample n = %d"
-msgstr "Sense data: rang complet n = %d; mostra actual n= %d"
+msgstr "Sense data: recorregut complet n = %d; mostra actual n= %d"
 
 #: gui2/menustate.c:729 gui2/menustate.c:741
 #, c-format
@@ -13462,7 +13453,7 @@ msgstr "%s; mostra actual %s - %s"
 #: gui2/menustate.c:734
 #, c-format
 msgid "%s: Full range %s - %s"
-msgstr "%s: Rang complet %s - %s"
+msgstr "%s: Recorregut complet %s - %s"
 
 #: gui2/menustate.c:780
 msgid " Unsaved data "
@@ -14710,9 +14701,8 @@ msgid "Emulate Windows look"
 msgstr "Emular l'apariència de Windows"
 
 #: gui2/settings.c:190
-#, fuzzy
 msgid "Theme preference"
-msgstr "Preferències d'idioma"
+msgstr "Preferències de tema"
 
 #: gui2/settings.c:194
 msgid "Web browser"
@@ -14816,14 +14806,12 @@ msgid "Path to octave executable"
 msgstr "Ruta a l'executable d'Octave"
 
 #: gui2/settings.c:261
-#, fuzzy
 msgid "Path to Stata executable"
-msgstr "Ruta a l'executable d'Octave"
+msgstr "Ruta a l'executable d'Stata"
 
 #: gui2/settings.c:263
-#, fuzzy
 msgid "Path to Python executable"
-msgstr "Ruta a l'executable de oxl"
+msgstr "Ruta a l'executable de Python"
 
 #: gui2/settings.c:265
 msgid "Database server name"
@@ -15709,14 +15697,12 @@ msgid "AB-model"
 msgstr "model AB"
 
 #: plugin/addons-i18n.c:46
-#, fuzzy
 msgid "Bootstrap alpha"
-msgstr "_Bootstrap..."
+msgstr "Bootstrap alpha"
 
 #: plugin/addons-i18n.c:47
-#, fuzzy
 msgid "Bootstrap replications"
-msgstr "estadístic t mitjançant bootstrap"
+msgstr "Replicacions bootstrap"
 
 #: plugin/addons-i18n.c:48
 msgid "C-model"
@@ -15759,9 +15745,8 @@ msgid "plain"
 msgstr "pla"
 
 #: plugin/addons-i18n.c:61
-#, fuzzy
 msgid "template matrix"
-msgstr "S'ha substituït la matriu %s"
+msgstr "matriu de plantilla"
 
 #: plugin/anova.c:108 plugin/anova.c:110
 msgid "Treatment"
@@ -15912,7 +15897,7 @@ msgstr "Gradients a la darrera iteració"
 
 #: plugin/fractals.c:43
 msgid "Rescaled-range plot for"
-msgstr "Gràfic de rang reescalat de"
+msgstr "Gràfic de recorregut reescalat de"
 
 #: plugin/fractals.c:44
 msgid "log(sample size)"
@@ -15945,7 +15930,7 @@ msgstr "La mostra és massa petita per calcular l'exponent de Hurst"
 #: plugin/fractals.c:250
 #, c-format
 msgid "Rescaled range figures for %s"
-msgstr "Xifres de rang reescalat de %s"
+msgstr "Xifres de recorregut reescalat de %s"
 
 #: plugin/fractals.c:253
 msgid "(logs are to base 2)"
@@ -16205,7 +16190,7 @@ msgstr "Variables a guardar:"
 
 #: plugin/leverage.c:125 plugin/leverage.c:236 plugin/leverage.c:309
 msgid "leverage"
-msgstr "palanquejament (leverage)"
+msgstr "leverage"
 
 #: plugin/leverage.c:133 plugin/leverage.c:262 plugin/leverage.c:310
 msgid "influence"
@@ -16217,11 +16202,11 @@ msgstr "DFFITS"
 
 #: plugin/leverage.c:347
 msgid "('*' indicates a leverage point)"
-msgstr "('*' indica un punto palanquejat (leverage))"
+msgstr "('*' indica un punt leverage)"
 
 #: plugin/leverage.c:349
 msgid "No leverage points were found"
-msgstr "No s'han trobat punts palanquejats (leverage)"
+msgstr "No s'han trobat punts leverage"
 
 #: plugin/leverage.c:352 plugin/leverage.c:492
 msgid "Cross-validation criterion"
@@ -16385,20 +16370,20 @@ msgstr "No s'han pogut calcular intervals de confiança per aquest model"
 
 #: plugin/range-mean.c:111
 msgid "range-mean plot for"
-msgstr "gràfic rang-mitjana de "
+msgstr "gràfic recorregut-mitjana de "
 
 #: plugin/range-mean.c:114 plugin/range-mean.c:226
 msgid "range"
-msgstr "rang"
+msgstr "recorregut"
 
 #: plugin/range-mean.c:204
 msgid "Sample is too small for range-mean graph\n"
-msgstr "La mostra és massa petita per a un gràfic rang-mitjana\n"
+msgstr "La mostra és massa petita per a un gràfic recorregut-mitjana\n"
 
 #: plugin/range-mean.c:222
 #, c-format
 msgid "Range-mean statistics for %s\n"
-msgstr "Estadístics de rang-mitjana per a %s\n"
+msgstr "Estadístics de recorregut-mitjana per a %s\n"
 
 #: plugin/range-mean.c:224
 #, c-format
@@ -16411,16 +16396,16 @@ msgstr ""
 
 #: plugin/range-mean.c:272
 msgid "Error estimating range-mean model\n"
-msgstr "Error en estimar el model rang-mitjana\n"
+msgstr "Error en estimar el model recorregut-mitjana\n"
 
 #: plugin/range-mean.c:280
 #, c-format
 msgid "slope of range against mean = %g\n"
-msgstr "pendent de 'rang' respecte a 'mitjana' = %g\n"
+msgstr "pendent de 'recorregut' respecte a 'mitjana' = %g\n"
 
 #: plugin/range-mean.c:287
 msgid "range-mean test"
-msgstr "contrast rang-mitjana"
+msgstr "contrast recorregut-mitjana"
 
 #: plugin/range-mean.c:289
 #, c-format

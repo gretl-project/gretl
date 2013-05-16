@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-05-02 13:40-0400\n"
-"PO-Revision-Date: 2013-05-09 16:36+0200\n"
+"PO-Revision-Date: 2013-05-16 12:04+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -4473,7 +4473,7 @@ msgstr "Observaciones puntuales"
 
 #: lib/src/modelprint.c:188
 msgid "Pseudo-point observations"
-msgstr "Observaciones pseudo-puntos"
+msgstr "Pseudo observaciones puntuales"
 
 #: lib/src/modelprint.c:202
 msgid "Left-censored observations"
