@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-05-17 15:56+0100\n"
-"PO-Revision-Date: 2013-05-04 10:54+0200\n"
+"PO-Revision-Date: 2013-05-17 22:54+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -3180,7 +3180,7 @@ msgstr "La matrice non è definita positiva"
 
 #: lib/src/gretl_errors.c:84
 msgid "Failed to calculate Jacobian"
-msgstr "Impossibile calcolare il Jacobiano"
+msgstr "Impossibile calcolare lo Jacobiano"
 
 #: lib/src/gretl_errors.c:85
 msgid "Insufficient observations for this operation"
@@ -16171,16 +16171,16 @@ msgstr "valori iniziali forniti dall'utente"
 
 #: plugin/jrestrict.c:1264
 msgid "Strong convergence"
-msgstr ""
+msgstr "Convergenza forte"
 
 #: plugin/jrestrict.c:1266
 msgid "Weak convergence"
-msgstr ""
+msgstr "Convergenza debole"
 
 #: plugin/jrestrict.c:1857
 #, c-format
 msgid "Rank of Jacobian = %d, number of free parameters = %d\n"
-msgstr "Rango del Jacobiano = %d, numero di parametri liberi = %d\n"
+msgstr "Rango dello Jacobiano = %d, numero di parametri liberi = %d\n"
 
 #: plugin/jrestrict.c:1860
 msgid "Model is not fully identified\n"
@@ -16193,7 +16193,7 @@ msgstr "Il modello è pienamente identificato\n"
 #: plugin/jrestrict.c:1869
 #, c-format
 msgid "Based on Jacobian, df = %d\n"
-msgstr "Basato sul Jacobiano, df = %d\n"
+msgstr "Basato sullo Jacobiano, df = %d\n"
 
 #: plugin/kernel.c:109
 #, c-format
