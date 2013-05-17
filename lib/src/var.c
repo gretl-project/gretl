@@ -3257,10 +3257,12 @@ real_gretl_restricted_vecm (GRETL_VAR *orig,
 	ropt = gretl_restriction_get_options(rset);
 	if (ropt & OPT_Q) {
 	    prnopt = OPT_Q;
-	}	
+	}
 
-	/* FIXME OPT_I, OPT_F, impulses and decomp */
-	gretl_VAR_print(jvar, dset, prnopt, prn);
+	if (!(ropt & OPT_S)) {
+	    /* FIXME OPT_I, OPT_F, impulses and decomp? */
+	    gretl_VAR_print(jvar, dset, prnopt, prn);
+	}
     } 
 
     free(list);

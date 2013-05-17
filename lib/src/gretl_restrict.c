@@ -2496,7 +2496,7 @@ GRETL_VAR *gretl_restricted_vecm (gretl_restriction *rset,
 
     *err = restriction_set_form_matrices(rset);
 
-    if (rset->rows != NULL) {
+    if (rset->rows != NULL && !(opt & OPT_S)) {
 	print_restriction_set(rset, dset, opt, prn);
     } 
 
