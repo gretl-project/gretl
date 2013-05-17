@@ -432,12 +432,12 @@
     <function name="$obsmajor" section="access" output="series">
       <description>
 	<para>
-	  Applicable when the observations in the current dataset have
-	  a major:minor structure, as in quarterly time series
-	  (year:quarter), monthly time series (year:month), hourly
-	  data (day:hour) and panel data (individual:period).  Returns
-	  a series holding the major or low-frequency component of
-	  each observation (for example, the year).
+	  Applicabile quando le osservazioni nel dataset aperto hanno
+	  una struttura maggiore:minore, come in serie storiche
+	  trimestrali (anno:trimestre), mensili (anno:mese), orarie
+	  (giorno:ora) e dati panel (individuo:periodo). Ritorna una
+	  serie contenente la componente maggiore (a frequenza più
+	  bassa, come l'anno).
 	</para>
 	<para>
 	  <seelist>
@@ -451,11 +451,11 @@
     <function name="$obsmicro" section="access" output="series">
       <description>
 	<para>
-	  Applicable when the observations in the current dataset have
-	  a major:minor:micro structure, as in dated daily time series
-	  (year:month:day).  Returns a series holding the micro or
-	  highest-frequency component of each observation (for
-	  example, the day).
+	  Applicabile quando le osservazioni nel dataset aperto hanno
+	  una struttura maggiore:minore:micro, come in serie storiche
+	  giornaliere (anno:mese:giorno). Ritorna una
+	  serie contenente la componente micro (a frequenza più
+	  alta, come il giorno).
 	</para>
 	<para>
 	  <seelist>
@@ -469,12 +469,12 @@
     <function name="$obsminor" section="access" output="series">
       <description>
 	<para>
-	  Applicable when the observations in the current dataset have
-	  a major:minor structure, as in quarterly time series
-	  (year:quarter), monthly time series (year:month), hourly
-	  data (day:hour) and panel data (individual:period).  Returns
-	  a series holding the minor or high-frequency component of
-	  each observation (for example, the month).
+	  Applicabile quando le osservazioni nel dataset aperto hanno
+	  una struttura maggiore:minore, come in serie storiche
+	  trimestrali (anno:trimestre), mensili (anno:mese), orarie
+	  (giorno:ora) e dati panel (individuo:periodo). Ritorna una
+	  serie contenente la componente minore (a frequenza più
+	  alta, come il mese).
 	</para>
 	<para>
 	  <seelist>
@@ -505,9 +505,10 @@
     <function name="$pvalue" section="access" targ="dpvalue" output="scalar-or-matrix">
       <description>
 	<para>
-	  Produce il p-value della statistica test generata dall'ultimo comando
-          esplicito di test di ipotesi (es.  <lit>chow</lit>).  Si veda <guideref
-          targ="sec:genr-internal"/> per i dettagli.
+	  Produce il p-value della statistica test generata
+	  dall'ultimo comando esplicito di test di ipotesi (es.
+	  <lit>chow</lit>).  Si veda <guideref
+	  targ="sec:genr-internal"/> per i dettagli.
 	  <seelist>
 	    <fncref targ="$test"/>
 	  </seelist>
@@ -542,15 +543,17 @@
     <function name="$sample" section="access" output="series">
       <description>
 	<para>
-	  Must follow estimation of a single-equation model.  Returns a dummy
-	  series with value 1 for observations used in estimation, 0 for
-	  observations within the currently defined sample range but not used
-	  (presumably because of missing values), and NA for observations
-	  outside of the current range.
+	  Deve seguire la stima di un modello ad equazione
+	  singola. Ritorna una variabile binaria con 1 per le
+	  osservazioni usate nella stima, 0 per osservazioni incluse
+	  nel campione corrente ma non usate nella stima (ad esempio,
+	  per via di valori mancanti nella variabile dipendente) e NA
+	  per osservazioni al di fuori del campione corrente.
 	</para>
 	<para>
-	  If you wish to compute statistics based on the sample that was
-	  used for a given model, you can do, for example: 
+	  Se fosse necessario calcolare statistiche basate sul
+	  campione usato per un certo modello, ad esempio, si potrebbe
+	  usare la seguente sintassi:
 	</para>
 	<code>
 	  ols y 0 xlist
