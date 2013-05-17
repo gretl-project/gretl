@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-05-02 13:40-0400\n"
+"POT-Creation-Date: 2013-05-17 15:56+0100\n"
 "PO-Revision-Date: 2011-09-11 16:17-0400\n"
 "Last-Translator: Ioannis Venetis <ivenetis@upatras.gr>\n"
 "Language-Team: Greek\n"
@@ -26,16 +26,16 @@ msgstr ""
 msgid "lagged differences"
 msgstr "υστερήσεις πρώτων διαφορών"
 
-#: lib/src/adf_kpss.c:324 gui2/library.c:933
+#: lib/src/adf_kpss.c:324 gui2/library.c:929
 msgid "modified BIC"
 msgstr ""
 
-#: lib/src/adf_kpss.c:326 gui2/library.c:934
+#: lib/src/adf_kpss.c:326 gui2/library.c:930
 #, fuzzy
 msgid "t-statistic"
 msgstr "στατιστική ελέγχου"
 
-#: lib/src/adf_kpss.c:329 gui2/library.c:932
+#: lib/src/adf_kpss.c:329 gui2/library.c:928
 msgid "modified AIC"
 msgstr ""
 
@@ -82,7 +82,7 @@ msgstr "συμπεριλαμβανομένου %d υστερήσεων για (1
 msgid "(max was %d, criterion %s)"
 msgstr ""
 
-#: lib/src/adf_kpss.c:402 gui2/library.c:950 gui2/library.c:1169
+#: lib/src/adf_kpss.c:402 gui2/library.c:946 gui2/library.c:1165
 #: gui2/selector.c:5997 plugin/panurc.c:234
 msgid "test without constant"
 msgstr "έλεγχος δίχως σταθερό όρο"
@@ -91,8 +91,8 @@ msgstr "έλεγχος δίχως σταθερό όρο"
 msgid "test with constant"
 msgstr "έλεγχος με σταθερό όρο"
 
-#: lib/src/adf_kpss.c:404 gui2/library.c:952 gui2/library.c:963
-#: gui2/library.c:1171 gui2/selector.c:5999 plugin/panurc.c:236
+#: lib/src/adf_kpss.c:404 gui2/library.c:948 gui2/library.c:959
+#: gui2/library.c:1167 gui2/selector.c:5999 plugin/panurc.c:236
 msgid "with constant and trend"
 msgstr "με σταθερό όρο και τάση"
 
@@ -107,8 +107,8 @@ msgstr "με σταθερό όρο και τετραγωνική τάση"
 #: lib/src/modelprint.c:2221 lib/src/modelprint.c:2241
 #: lib/src/modelprint.c:2883 lib/src/modelprint.c:3981
 #: lib/src/modelprint.c:4296 lib/src/modelprint.c:5172
-#: lib/src/modelprint.c:5174 lib/src/vartest.c:1065 gui2/dialogs.c:5466
-#: gui2/library.c:2992 plugin/anova.c:153 plugin/anova.c:155
+#: lib/src/modelprint.c:5174 lib/src/vartest.c:1068 gui2/dialogs.c:5471
+#: gui2/library.c:2988 plugin/anova.c:153 plugin/anova.c:155
 #: plugin/johansen.c:1575 plugin/johansen.c:1576 plugin/johansen.c:1595
 #: plugin/johansen.c:1621
 msgid "p-value"
@@ -149,8 +149,8 @@ msgstr "συντελεστής αυτοσυσχέτισης 1ης τάξης γ�
 msgid "estimated value of (a - 1)"
 msgstr "εκτιμώμενη τιμή του (a - 1)"
 
-#: lib/src/adf_kpss.c:487 lib/src/adf_kpss.c:1335 lib/src/describe.c:4072
-#: lib/src/describe.c:4098 gui2/calculator.c:591
+#: lib/src/adf_kpss.c:487 lib/src/adf_kpss.c:1335 lib/src/describe.c:4078
+#: lib/src/describe.c:4104 gui2/calculator.c:591
 msgid "test statistic"
 msgstr "στατιστική ελέγχου"
 
@@ -173,8 +173,8 @@ msgid "Invalid option"
 msgstr "Μη-έγκυρη επιλογή '--%s'"
 
 #: lib/src/adf_kpss.c:862 lib/src/adf_kpss.c:1616 lib/src/boxplots.c:787
-#: lib/src/describe.c:1620 lib/src/describe.c:3034 lib/src/describe.c:3554
-#: lib/src/describe.c:4205 lib/src/graphing.c:6401
+#: lib/src/describe.c:1620 lib/src/describe.c:3040 lib/src/describe.c:3560
+#: lib/src/describe.c:4211 lib/src/graphing.c:6472
 #, c-format
 msgid "%s is a constant"
 msgstr "%s είναι σταθερός όρος"
@@ -213,7 +213,7 @@ msgstr ""
 
 #: lib/src/adf_kpss.c:1431 lib/src/compare.c:2471 lib/src/estimate.c:3912
 #: lib/src/estimate.c:3971 lib/src/estimate.c:4134 lib/src/genfuncs.c:1903
-#: lib/src/gretl_func.c:6686 lib/src/pvalues.c:2386
+#: lib/src/gretl_func.c:6515 lib/src/pvalues.c:2386
 msgid "Couldn't load plugin function\n"
 msgstr "Αδυναμία φόρτωσης επιπρόσθετης συνάρτησης (plugin function)\n"
 
@@ -263,9 +263,9 @@ msgstr "Παράμετρος περικοπής υστέρησης = %d\n"
 
 #: lib/src/adf_kpss.c:1773 lib/src/compare.c:378 lib/src/compare.c:954
 #: lib/src/compare.c:1833 lib/src/compare.c:2051 lib/src/compare.c:2279
-#: lib/src/compare.c:3351 lib/src/describe.c:5630 lib/src/estimate.c:2738
+#: lib/src/compare.c:3351 lib/src/describe.c:5636 lib/src/estimate.c:2738
 #: lib/src/estimate.c:2751 lib/src/estimate.c:2759 lib/src/estimate.c:3525
-#: lib/src/estimate.c:3528 lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3744
+#: lib/src/estimate.c:3528 lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3763
 #: lib/src/gretl_panel.c:3927 lib/src/gretl_restrict.c:2226
 #: lib/src/gretl_restrict.c:2235 lib/src/modelprint.c:2356
 #: lib/src/modelprint.c:2360 lib/src/modelprint.c:2365
@@ -275,7 +275,7 @@ msgstr "Παράμετρος περικοπής υστέρησης = %d\n"
 msgid "Test statistic"
 msgstr "Στατιστική ελέγχου"
 
-#: lib/src/adf_kpss.c:1776 lib/src/adf_kpss.c:1779 gui2/dialogs.c:1055
+#: lib/src/adf_kpss.c:1776 lib/src/adf_kpss.c:1779 gui2/dialogs.c:1060
 msgid "P-value"
 msgstr "p-τιμή"
 
@@ -422,7 +422,7 @@ msgstr "μέσος"
 msgid "group"
 msgstr "διαστρωμάτωσης"
 
-#: lib/src/boxplots.c:740 gui2/library.c:6746
+#: lib/src/boxplots.c:740 gui2/library.c:6742
 #, fuzzy
 msgid "You must supply two variables, the second of which is discrete"
 msgstr ""
@@ -455,8 +455,8 @@ msgid "Null hypothesis: the regression parameter is zero for %s"
 msgstr "Μηδενική υπόθεση: η παράμετρος παλινδρόμησης είναι μηδέν για %s"
 
 #: lib/src/compare.c:275 lib/src/compare.c:278 lib/src/compare.c:281
-#: lib/src/describe.c:5628 lib/src/gretl_model.c:3571
-#: lib/src/gretl_model.c:3574 lib/src/gretl_model.c:3581
+#: lib/src/describe.c:5634 lib/src/gretl_model.c:3590
+#: lib/src/gretl_model.c:3593 lib/src/gretl_model.c:3600
 #: lib/src/nonparam.c:980 lib/src/nonparam.c:1117 lib/src/varprint.c:1249
 #: lib/src/varprint.c:1255 lib/src/varprint.c:1263
 msgid "Null hypothesis"
@@ -495,7 +495,7 @@ msgstr "συμπεριλαμβανομένου ψευδομεταβλητών ε
 msgid "Test on Model %d:"
 msgstr "Υπόδειγμα %d"
 
-#: lib/src/compare.c:354 lib/src/vartest.c:1063
+#: lib/src/compare.c:354 lib/src/vartest.c:1066
 #, fuzzy
 msgid "Wald test"
 msgstr "Wald (από-κοινού) έλεγχος"
@@ -504,9 +504,9 @@ msgstr "Wald (από-κοινού) έλεγχος"
 #: lib/src/compare.c:384 lib/src/compare.c:956 lib/src/compare.c:2117
 #: lib/src/compare.c:2286 lib/src/compare.c:2292 lib/src/compare.c:2768
 #: lib/src/describe.c:1552 lib/src/estimate.c:2763 lib/src/estimate.c:3531
-#: lib/src/graphing.c:3949 lib/src/gretl_model.c:3630
-#: lib/src/gretl_model.c:3644 lib/src/gretl_model.c:3647
-#: lib/src/gretl_model.c:3672 lib/src/gretl_panel.c:3678
+#: lib/src/graphing.c:3961 lib/src/gretl_model.c:3649
+#: lib/src/gretl_model.c:3663 lib/src/gretl_model.c:3666
+#: lib/src/gretl_model.c:3691 lib/src/gretl_panel.c:3678
 #: lib/src/gretl_panel.c:3934 lib/src/modelprint.c:167
 #: lib/src/modelprint.c:345 lib/src/modelprint.c:349 lib/src/modelprint.c:439
 #: lib/src/modelprint.c:442 lib/src/modelprint.c:463 lib/src/modelprint.c:466
@@ -518,12 +518,12 @@ msgstr "Wald (από-κοινού) έλεγχος"
 #: lib/src/system.c:3455 lib/src/system.c:3477 lib/src/system.c:3549
 #: lib/src/system.c:3567 lib/src/system.c:4674 lib/src/varprint.c:853
 #: lib/src/varprint.c:857 lib/src/varprint.c:1258 lib/src/varprint.c:1266
-#: lib/src/vartest.c:76 lib/src/vartest.c:777 lib/src/vartest.c:1064
+#: lib/src/vartest.c:76 lib/src/vartest.c:780 lib/src/vartest.c:1067
 #: plugin/johansen.c:1809 plugin/jrestrict.c:2802
 msgid "Chi-square"
 msgstr "χ-τετράγωνο"
 
-#: lib/src/compare.c:361 lib/src/compare.c:374 lib/src/vartest.c:776
+#: lib/src/compare.c:361 lib/src/compare.c:374 lib/src/vartest.c:779
 #, fuzzy
 msgid "LR test"
 msgstr "_QLR έλεγχος"
@@ -551,7 +551,7 @@ msgstr "  από τις %d στατιστικές επιλογής υποδεί�
 msgid "Omitting variables improved %d of %d model selection statistics.\n"
 msgstr "  από τις %d στατιστικές επιλογής υποδείγματος, %d "
 
-#: lib/src/compare.c:543 lib/src/vartest.c:770 lib/src/vartest.c:1057
+#: lib/src/compare.c:543 lib/src/vartest.c:773 lib/src/vartest.c:1060
 msgid "omit"
 msgstr "παράλειψη"
 
@@ -559,10 +559,10 @@ msgstr "παράλειψη"
 msgid "add"
 msgstr "προσθήκη"
 
-#: lib/src/compare.c:896 lib/src/compare.c:2225 lib/src/graphing.c:3117
-#: lib/src/graphing.c:3126 lib/src/graphing.c:3202 lib/src/graphing.c:4930
-#: lib/src/gretl_panel.c:3779 lib/src/printout.c:1262 gui2/guiprint.c:1539
-#: gui2/guiprint.c:1599 gui2/library.c:6129 plugin/leverage.c:308
+#: lib/src/compare.c:896 lib/src/compare.c:2225 lib/src/graphing.c:3129
+#: lib/src/graphing.c:3138 lib/src/graphing.c:3214 lib/src/graphing.c:4942
+#: lib/src/gretl_panel.c:3779 lib/src/printout.c:1262 gui2/guiprint.c:1532
+#: gui2/guiprint.c:1592 gui2/library.c:6125 plugin/leverage.c:308
 msgid "residual"
 msgstr "κατάλοιπα"
 
@@ -577,9 +577,9 @@ msgstr "Μη γραμμικός έλεγχος (λογαριθμικοί όρο�
 #: lib/src/compare.c:956 lib/src/compare.c:1834 lib/src/compare.c:2052
 #: lib/src/compare.c:2116 lib/src/compare.c:2280 lib/src/compare.c:2285
 #: lib/src/compare.c:2291 lib/src/compare.c:2769 lib/src/compare.c:2771
-#: lib/src/compare.c:2775 lib/src/describe.c:4073 lib/src/describe.c:4099
-#: lib/src/describe.c:6578 lib/src/describe.c:6581 lib/src/estimate.c:2740
-#: lib/src/estimate.c:2763 lib/src/estimate.c:3531 lib/src/gretl_model.c:3760
+#: lib/src/compare.c:2775 lib/src/describe.c:4079 lib/src/describe.c:4105
+#: lib/src/describe.c:6584 lib/src/describe.c:6587 lib/src/estimate.c:2740
+#: lib/src/estimate.c:2763 lib/src/estimate.c:3531 lib/src/gretl_model.c:3779
 #: lib/src/gretl_panel.c:1579 lib/src/gretl_panel.c:3679
 #: lib/src/gretl_panel.c:3928 lib/src/gretl_panel.c:3933
 #: lib/src/modelprint.c:2358 lib/src/modelprint.c:2363
@@ -605,20 +605,20 @@ msgstr "Σειριακή εξάλειψη με χρήση δικατάληκτο
 msgid " Dropping %-16s (p-value %.3f)\n"
 msgstr " Αγνόηση %-16s (p-τιμή %.3f)\n"
 
-#: lib/src/compare.c:1747 lib/src/estimate.c:2755 lib/src/gretl_model.c:3440
-#: lib/src/gretl_model.c:3446 lib/src/modelprint.c:769 gui2/library.c:2854
+#: lib/src/compare.c:1747 lib/src/estimate.c:2755 lib/src/gretl_model.c:3459
+#: lib/src/gretl_model.c:3465 lib/src/modelprint.c:769 gui2/library.c:2850
 msgid "squares only"
 msgstr "μόνο τετράγωνα"
 
-#: lib/src/compare.c:1750 lib/src/gretl_model.c:3442 gui2/library.c:2855
+#: lib/src/compare.c:1750 lib/src/gretl_model.c:3461 gui2/library.c:2851
 msgid "cubes only"
 msgstr "μόνο κύβοι"
 
-#: lib/src/compare.c:1753 gui2/library.c:2853
+#: lib/src/compare.c:1753 gui2/library.c:2849
 msgid "squares and cubes"
 msgstr "τετράγωνα και κύβοι"
 
-#: lib/src/compare.c:1826 lib/src/gretl_model.c:3392
+#: lib/src/compare.c:1826 lib/src/gretl_model.c:3411
 msgid "RESET test for specification"
 msgstr "έλεγχος RESET για την εξειδίκευση"
 
@@ -703,12 +703,12 @@ msgstr "Το μέγιστο F(%d, %d) = %g συμβαίνει στην παρα�
 msgid "The maximum F(%d, %d) = %g occurs at observation %s"
 msgstr "Το μέγιστο F(%d, %d) = %g συμβαίνει στην παρατήρηση %s"
 
-#: lib/src/compare.c:2758 lib/src/gretl_model.c:3371
+#: lib/src/compare.c:2758 lib/src/gretl_model.c:3390
 #, c-format
 msgid "Chow test for structural difference with respect to %s"
 msgstr "Έλεγχος Chow για διαρθρωτική μεταβολή ως προς την %s"
 
-#: lib/src/compare.c:2762 lib/src/gretl_model.c:3368
+#: lib/src/compare.c:2762 lib/src/gretl_model.c:3387
 #, c-format
 msgid "Chow test for structural break at observation %s"
 msgstr "Έλεγχος Chow για διαρθρωτική μεταβολή στην παρατήρηση %s"
@@ -777,13 +777,13 @@ msgstr "Σωρευτικό άθροισμα σταθμισμένων καταλ�
 msgid "('*' indicates a value outside of 95% confidence band)"
 msgstr "('*' δηλώνει τιμή έξω από το 95% του εύρους εμπιστοσύνης)"
 
-#: lib/src/compare.c:3348 lib/src/gretl_model.c:3425
+#: lib/src/compare.c:3348 lib/src/gretl_model.c:3444
 msgid "Test of common factor restriction"
 msgstr "Έλεγχος για περιορισμό κοινού παράγοντα"
 
 #: lib/src/compare.c:3353 lib/src/gretl_restrict.c:2242
 #: lib/src/gretl_restrict.c:2795 lib/src/gretl_restrict.c:2805
-#: lib/src/vartest.c:778
+#: lib/src/vartest.c:781
 #, c-format
 msgid "with p-value = %g\n"
 msgstr "με p-τιμή = %g\n"
@@ -852,8 +852,8 @@ msgstr ""
 msgid "Invalid column specification"
 msgstr "Μη-έγκυρη εξειδίκευση στήλης"
 
-#: lib/src/csvdata.c:319 lib/src/dbread.c:2382 lib/src/kalman.c:2073
-#: lib/src/kalman.c:2560 lib/src/libset.c:1068 lib/src/usermat.c:946
+#: lib/src/csvdata.c:319 lib/src/dbread.c:2382 lib/src/kalman.c:2077
+#: lib/src/kalman.c:2564 lib/src/libset.c:1068 lib/src/usermat.c:946
 #: lib/src/usermat.c:1006 lib/src/usermat.c:1015 lib/src/usermat.c:1067
 #: lib/src/usermat.c:1086 lib/src/usermat.c:1318 lib/src/usermat.c:1370
 #, c-format
@@ -1151,7 +1151,7 @@ msgstr "Ανεπαρκής μνήμη\n"
 msgid "You need to specify an aggregation method for a 1:n join"
 msgstr ""
 
-#: lib/src/csvdata.c:4302 gui2/library.c:4010
+#: lib/src/csvdata.c:4302 gui2/library.c:4006
 msgid "Series length does not match the dataset"
 msgstr ""
 
@@ -1228,7 +1228,7 @@ msgstr "Μη έγκυρος χαρακτήρας %d στην ημερομηνί�
 msgid "'%s': invalid observation index"
 msgstr "%s, χρησιμοποιώντας %d παρατηρήσεις"
 
-#: lib/src/dataio.c:656 lib/src/forecast.c:2390 lib/src/genfuncs.c:3164
+#: lib/src/dataio.c:656 lib/src/forecast.c:2395 lib/src/genfuncs.c:3164
 msgid "Observation number out of bounds"
 msgstr "Αριθμός παρατήρησης εκτός ορίων"
 
@@ -1397,7 +1397,7 @@ msgid "auto-generated constant"
 msgstr "αυτοδημιούργητη σταθερά"
 
 #: lib/src/dataset.c:1306 gui2/fncall.c:1422 gui2/fncall.c:1433
-#: gui2/gui_utils.c:5150 gui2/toolbar.c:1072 gui2/toolbar.c:1081
+#: gui2/gui_utils.c:5174 gui2/toolbar.c:1072 gui2/toolbar.c:1081
 #: gui2/toolbar.c:1090
 msgid "Please open a data file first"
 msgstr "Παρακαλώ, ανοίξτε πρώτα ένα αρχείο δεδομένων"
@@ -1426,61 +1426,92 @@ msgstr "Δεν αναγνώστηκε καμμία μεταβλητή\n"
 msgid "some data were in use"
 msgstr ""
 
-#: lib/src/dataset.c:1834 gui2/gui_utils.c:4707
+#: lib/src/dataset.c:1834 gui2/gui_utils.c:4731
 msgid "dataset is subsampled"
 msgstr "Το σύνολο δεδομένων υπο-δειγματοληπτείται"
 
-#: lib/src/dataset.c:2720
+#: lib/src/dataset.c:1966 lib/src/dataset.c:1978 lib/src/describe.c:3901
+#: lib/src/gretl_utils.c:874
+msgid "periods"
+msgstr "περίοδοι"
+
+#: lib/src/dataset.c:1968
+msgid "quarters"
+msgstr "τρίμηνα"
+
+#: lib/src/dataset.c:1968
+msgid "months"
+msgstr "μήνες"
+
+#: lib/src/dataset.c:1970
+msgid "years"
+msgstr "χρόνια"
+
+#: lib/src/dataset.c:1972
+#, fuzzy
+msgid "weeks"
+msgstr "εβδομαδιαία"
+
+#: lib/src/dataset.c:1974
+msgid "days"
+msgstr ""
+
+#: lib/src/dataset.c:1976
+#, fuzzy
+msgid "hours"
+msgstr "ωριαία"
+
+#: lib/src/dataset.c:2739
 msgid "Generated"
 msgstr "Δημιουργήθηκε"
 
-#: lib/src/dataset.c:2720 lib/src/gretl_list.c:2036
+#: lib/src/dataset.c:2739 lib/src/gretl_list.c:2036
 msgid "Replaced"
 msgstr "Αντικαταστάθηκε"
 
-#: lib/src/dataset.c:2721
+#: lib/src/dataset.c:2740
 msgid "series"
 msgstr "σειρές"
 
-#: lib/src/dataset.c:2893 lib/src/dataset.c:2913 gui2/library.c:5640
+#: lib/src/dataset.c:2912 lib/src/dataset.c:2932 gui2/library.c:5636
 msgid "The data set is currently sub-sampled.\n"
 msgstr "Το σύνολο δεδομένων υπο-δειγματοληπτείται αυτή τη στιγμή.\n"
 
-#: lib/src/dataset.c:2900
+#: lib/src/dataset.c:2919
 #, c-format
 msgid "Dataset extended by %d observations"
 msgstr "Το σύνολο δεδομένων επαυξήθηκε με %d παρατηρήσεις"
 
-#: lib/src/dataset.c:3174
+#: lib/src/dataset.c:3193
 #, fuzzy, c-format
 msgid "Variable %s cannot be renumbered"
 msgstr "Η μεταβλητή '%s' δεν είναι ορισμένη"
 
-#: lib/src/dataset.c:3177
+#: lib/src/dataset.c:3196
 #, fuzzy, c-format
 msgid "Target ID %d is not available"
 msgstr "Η μεταβλητή '%s' δεν είναι τύπου 0/1 ."
 
-#: lib/src/dataset.c:3186
+#: lib/src/dataset.c:3205
 #, fuzzy, c-format
 msgid "Renumbered %s as variable %d\n"
 msgstr "   αριθμός μεταβλητών: %d\n"
 
-#: lib/src/dataset.c:3231
+#: lib/src/dataset.c:3250
 msgid "The 'dataset' command is not available within functions"
 msgstr "Η εντολή 'dataset' δεν είναι διαθέσιμη μέσα από συναρτήσεις"
 
-#: lib/src/dataset.c:3236
+#: lib/src/dataset.c:3255
 msgid "Sorry, this command is not available in loop mode\n"
 msgstr ""
 "Συγγνώμη, αλλά αυτή η εντολή δεν είναι διαθέσιμη μέσα από διαδικασίες "
 "βρόγχου (not available in loop mode)\n"
 
-#: lib/src/dataset.c:3251
+#: lib/src/dataset.c:3270
 msgid "The data set is currently sub-sampled"
 msgstr "Το σύνολο δεδομένων υπο-δειγματοληπτείται αυτή τη στιγμή"
 
-#: lib/src/dataset.c:3300
+#: lib/src/dataset.c:3319
 msgid "dataset restore: dataset is not resampled\n"
 msgstr "dataset restore: δεν έγινε αναδειγματοληψία στο σύνολο δεδομένων\n"
 
@@ -1610,7 +1641,7 @@ msgstr "Μήτρα συσχετίσεων καταλοίπων, C"
 msgid "Eigenvalues of C"
 msgstr "Ιδιοτιμές της C"
 
-#: lib/src/describe.c:1551 lib/src/describe.c:6567
+#: lib/src/describe.c:1551 lib/src/describe.c:6573
 msgid "Doornik-Hansen test"
 msgstr "Doornik-Hansen έλεγχος"
 
@@ -1630,121 +1661,116 @@ msgstr "η εντολή gnuplot απέτυχε\n"
 msgid "Matrix %s does not represent a contingency table"
 msgstr "Η μήτρα %s δεν αναπαριστά πίνακα συνάφειας (contingency table)"
 
-#: lib/src/describe.c:2768 lib/src/describe.c:3020 lib/src/describe.c:3534
-#: lib/src/geneval.c:4745 lib/src/transforms.c:709 lib/src/transforms.c:1160
+#: lib/src/describe.c:2771 lib/src/describe.c:3026 lib/src/describe.c:3540
+#: lib/src/geneval.c:4751 lib/src/transforms.c:709 lib/src/transforms.c:1160
 #: lib/src/var.c:686
 #, c-format
 msgid "Invalid lag order %d"
 msgstr "Άκυρη τάξη υστέρησης %d"
 
-#: lib/src/describe.c:2909 lib/src/describe.c:2978 lib/src/describe.c:3297
-#: lib/src/describe.c:3344
+#: lib/src/describe.c:2915 lib/src/describe.c:2984 lib/src/describe.c:3303
+#: lib/src/describe.c:3350
 msgid "lag"
 msgstr "υστέρηση"
 
-#: lib/src/describe.c:2918
+#: lib/src/describe.c:2924
 msgid "Residual ACF"
 msgstr "Κατάλοιπα ACF"
 
-#: lib/src/describe.c:2920
+#: lib/src/describe.c:2926
 msgid "ACF for"
 msgstr "ACF για"
 
-#: lib/src/describe.c:2936
+#: lib/src/describe.c:2942
 msgid "Residual PACF"
 msgstr "Κατάλοιπα PACF"
 
-#: lib/src/describe.c:2938
+#: lib/src/describe.c:2944
 msgid "PACF for"
 msgstr "PACF για "
 
-#: lib/src/describe.c:2977 gui2/menustate.c:358 gui2/menustate.c:503
+#: lib/src/describe.c:2983 gui2/menustate.c:358 gui2/menustate.c:503
 msgid "Correlogram"
 msgstr "Κορρελόγραμμα"
 
-#: lib/src/describe.c:3081
+#: lib/src/describe.c:3089
 msgid "Residual autocorrelation function"
 msgstr "Συνάρτηση αυτοσυσχέτισης καταλοίπων"
 
-#: lib/src/describe.c:3084
+#: lib/src/describe.c:3092
 #, c-format
 msgid "Autocorrelation function for %s"
 msgstr "Συνάρτηση αυτοσυσχέτισης για %s"
 
-#: lib/src/describe.c:3101
+#: lib/src/describe.c:3109
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
 msgstr " Υστέρ.   ACF          PACF         Q-stat. [p-τιμή]"
 
-#: lib/src/describe.c:3217
+#: lib/src/describe.c:3224
 msgid "Argument is a constant"
 msgstr "Το όρισμα είναι μία σταθερά"
 
-#: lib/src/describe.c:3303
+#: lib/src/describe.c:3309
 #, c-format
 msgid "Correlations of %s and lagged %s"
 msgstr "Συσχέτιση της %s και %s με υστέρηση"
 
-#: lib/src/describe.c:3343 gui2/menustate.c:467 gui2/menustate.c:563
+#: lib/src/describe.c:3349 gui2/menustate.c:467 gui2/menustate.c:563
 msgid "Cross-correlogram"
 msgstr "Σταυροειδές κορρελόγραμμα"
 
-#: lib/src/describe.c:3492
+#: lib/src/describe.c:3498
 #, c-format
 msgid "Argument %d is a constant"
 msgstr "Όρισμα %d είναι σταθερά"
 
-#: lib/src/describe.c:3586
+#: lib/src/describe.c:3592
 #, c-format
 msgid "Cross-correlation function for %s and %s"
 msgstr ""
 "Συνάρτηση σταυροειδούς συσχέτισης (Cross-correlation function, XCF) για %s "
 "και %s"
 
-#: lib/src/describe.c:3589
+#: lib/src/describe.c:3595
 msgid "  LAG      XCF"
 msgstr " ΥΣΤΕΡ.     XCF"
 
-#: lib/src/describe.c:3895 lib/src/graphing.c:5537 lib/src/graphing.c:5549
-#: lib/src/gretl_utils.c:874
-msgid "periods"
-msgstr "περίοδοι"
-
-#: lib/src/describe.c:3906
+#: lib/src/describe.c:3912
 #, fuzzy
 msgid "radians"
 msgstr "Διανυσ. Κλίσεις:  "
 
-#: lib/src/describe.c:3908
+#: lib/src/describe.c:3914
 msgid "degrees"
 msgstr ""
 
-#: lib/src/describe.c:3910
+#: lib/src/describe.c:3916
 msgid "scaled frequency"
 msgstr "κλιμακωτή συχνότητα (1 με Τ/2)"
 
-#: lib/src/describe.c:3920
+#: lib/src/describe.c:3926
 msgid "Residual spectrum"
 msgstr "Φάσμα καταλοίπων"
 
-#: lib/src/describe.c:3922
+#: lib/src/describe.c:3928
 #, c-format
 msgid "Spectrum of %s"
 msgstr "Φάσμα του %s"
 
-#: lib/src/describe.c:3928
+#: lib/src/describe.c:3934
 #, c-format
 msgid "Bartlett window, length %d"
 msgstr "Παράθυρο Bartlett, μήκος %d"
 
-#: lib/src/describe.c:3934 gui2/dialogs.c:4641
+#: lib/src/describe.c:3940 gui2/dialogs.c:4646
 msgid "log scale"
 msgstr "λογαριθμική κλίμακα"
 
-#: lib/src/describe.c:3992
+#: lib/src/describe.c:3998
 msgid "Residual periodogram"
 msgstr "Περιοδόγραμμα καταλοίπων"
 
-#: lib/src/describe.c:3994
+#: lib/src/describe.c:4000
 #, c-format
 msgid ""
 "\n"
@@ -1753,13 +1779,13 @@ msgstr ""
 "\n"
 "Περιοδόγραμμα για %s\n"
 
-#: lib/src/describe.c:3997 lib/src/describe.c:5546 lib/src/describe.c:5548
-#: lib/src/describe.c:5624 lib/src/describe.c:5626 lib/src/describe.c:6072
+#: lib/src/describe.c:4003 lib/src/describe.c:5552 lib/src/describe.c:5554
+#: lib/src/describe.c:5630 lib/src/describe.c:5632 lib/src/describe.c:6078
 #, c-format
 msgid "Number of observations = %d\n"
 msgstr "Αριθμός παρατηρήσεων = %d\n"
 
-#: lib/src/describe.c:3999
+#: lib/src/describe.c:4005
 #, c-format
 msgid ""
 "Using Bartlett lag window, length %d\n"
@@ -1768,7 +1794,7 @@ msgstr ""
 "Χρήση παραθύρου υστέρησης Bartlett, μήκος %d\n"
 "\n"
 
-#: lib/src/describe.c:4005
+#: lib/src/describe.c:4011
 msgid ""
 " omega  scaled frequency  periods  log spectral density\n"
 "\n"
@@ -1776,7 +1802,7 @@ msgstr ""
 " Ωμέγα  κλιμ. συχνότητα   περίοδος  λογ. φασματική πυκνότητα\n"
 "\n"
 
-#: lib/src/describe.c:4007
+#: lib/src/describe.c:4013
 msgid ""
 " omega  scaled frequency  periods  spectral density\n"
 "\n"
@@ -1784,156 +1810,156 @@ msgstr ""
 " Ωμέγα  κλιμ. συχνότητα  περίοδος  φασματική πυκνότητα\n"
 "\n"
 
-#: lib/src/describe.c:4065 lib/src/describe.c:4089
+#: lib/src/describe.c:4071 lib/src/describe.c:4095
 #, fuzzy
 msgid "fractional integration"
 msgstr "Έλεγχος GPH για κλασματική ολοκλήρωση"
 
-#: lib/src/describe.c:4070
+#: lib/src/describe.c:4076
 msgid "Local Whittle Estimator"
 msgstr "Τοπικός εκτιμητής Whittle"
 
-#: lib/src/describe.c:4071 lib/src/describe.c:4097
+#: lib/src/describe.c:4077 lib/src/describe.c:4103
 msgid "Estimated degree of integration"
 msgstr "Εκτιμημένος βαθμός ολοκλήρωσης"
 
-#: lib/src/describe.c:4096
+#: lib/src/describe.c:4102
 #, fuzzy
 msgid "GPH test"
 msgstr "J έλεγχος"
 
-#: lib/src/describe.c:4363 lib/src/describe.c:4409 lib/src/printout.c:1101
+#: lib/src/describe.c:4369 lib/src/describe.c:4415 lib/src/printout.c:1101
 #: lib/src/printout.c:1102
 msgid "NA"
 msgstr "ΝΑ"
 
-#: lib/src/describe.c:4394 lib/src/describe.c:5415
+#: lib/src/describe.c:4400 lib/src/describe.c:5421
 #, c-format
 msgid "%s, using the observations %s - %s"
 msgstr "%s, χρήση των παρατηρήσεων %s - %s"
 
-#: lib/src/describe.c:4398 lib/src/describe.c:5420 gui2/guiprint.c:743
-#: gui2/guiprint.c:1061 gui2/guiprint.c:1228 gui2/guiprint.c:1321
+#: lib/src/describe.c:4404 lib/src/describe.c:5426 gui2/guiprint.c:736
+#: gui2/guiprint.c:1054 gui2/guiprint.c:1221 gui2/guiprint.c:1314
 msgid "(missing values were skipped)"
 msgstr "(απούσες τιμές αγνοήθηκαν)"
 
-#: lib/src/describe.c:4435 lib/src/describe.c:4595 lib/src/describe.c:4620
-#: gui2/guiprint.c:756 gui2/guiprint.c:1074
+#: lib/src/describe.c:4441 lib/src/describe.c:4601 lib/src/describe.c:4626
+#: gui2/guiprint.c:749 gui2/guiprint.c:1067
 msgid "Mean"
 msgstr "Μέσος"
 
-#: lib/src/describe.c:4436 lib/src/describe.c:4621 gui2/guiprint.c:756
-#: gui2/guiprint.c:1074
+#: lib/src/describe.c:4442 lib/src/describe.c:4627 gui2/guiprint.c:749
+#: gui2/guiprint.c:1067
 msgid "Median"
 msgstr "Διάμεσος"
 
-#: lib/src/describe.c:4437 lib/src/describe.c:4596 lib/src/describe.c:4622
-#: gui2/guiprint.c:756 gui2/guiprint.c:1074
+#: lib/src/describe.c:4443 lib/src/describe.c:4602 lib/src/describe.c:4628
+#: gui2/guiprint.c:749 gui2/guiprint.c:1067
 msgid "Minimum"
 msgstr "Ελάχιστο"
 
-#: lib/src/describe.c:4438 lib/src/describe.c:4597 lib/src/describe.c:4623
-#: gui2/guiprint.c:756 gui2/guiprint.c:1074
+#: lib/src/describe.c:4444 lib/src/describe.c:4603 lib/src/describe.c:4629
+#: gui2/guiprint.c:749 gui2/guiprint.c:1067
 msgid "Maximum"
 msgstr "Μέγιστο"
 
-#: lib/src/describe.c:4439
+#: lib/src/describe.c:4445
 msgid "Standard deviation"
 msgstr "Τυπ.Απόκ."
 
-#: lib/src/describe.c:4440 lib/src/describe.c:4627 gui2/guiprint.c:778
-#: gui2/guiprint.c:1101
+#: lib/src/describe.c:4446 lib/src/describe.c:4633 gui2/guiprint.c:771
+#: gui2/guiprint.c:1094
 msgid "C.V."
 msgstr "C.V."
 
-#: lib/src/describe.c:4441 lib/src/describe.c:4628 gui2/guiprint.c:778
-#: gui2/guiprint.c:1101
+#: lib/src/describe.c:4447 lib/src/describe.c:4634 gui2/guiprint.c:771
+#: gui2/guiprint.c:1094
 msgid "Skewness"
 msgstr "Ασυμμετρία"
 
-#: lib/src/describe.c:4442 lib/src/describe.c:4629 gui2/guiprint.c:778
+#: lib/src/describe.c:4448 lib/src/describe.c:4635 gui2/guiprint.c:771
 msgid "Ex. kurtosis"
 msgstr "Κύρτωση-3"
 
-#: lib/src/describe.c:4444
+#: lib/src/describe.c:4450
 #, fuzzy, no-c-format
 msgid "5% percentile"
 msgstr "Τεταγμένη"
 
-#: lib/src/describe.c:4446
+#: lib/src/describe.c:4452
 #, fuzzy, no-c-format
 msgid "95% percentile"
 msgstr "%g τοις εκατό διάστημα"
 
-#: lib/src/describe.c:4447
+#: lib/src/describe.c:4453
 #, fuzzy
 msgid "Interquartile range"
 msgstr "επιλογή εύρους:"
 
-#: lib/src/describe.c:4448 lib/src/describe.c:4637 gui2/guiprint.c:800
-#: gui2/guiprint.c:1133
+#: lib/src/describe.c:4454 lib/src/describe.c:4643 gui2/guiprint.c:793
+#: gui2/guiprint.c:1126
 #, fuzzy
 msgid "Missing obs."
 msgstr "Απούσες παρατηρήσεις"
 
-#: lib/src/describe.c:4450
+#: lib/src/describe.c:4456
 msgid "Within s.d."
 msgstr "Εντός s.d."
 
-#: lib/src/describe.c:4451
+#: lib/src/describe.c:4457
 msgid "Between s.d."
 msgstr "Μεταξύ s.d"
 
-#: lib/src/describe.c:4467 lib/src/describe.c:4586 gui2/menustate.c:346
+#: lib/src/describe.c:4473 lib/src/describe.c:4592 gui2/menustate.c:346
 #: gui2/menustate.c:437 gui2/menustate.c:498 gui2/menustate.c:561
 msgid "Summary statistics"
 msgstr "Περιληπτικά στατιστικά"
 
-#: lib/src/describe.c:4473
+#: lib/src/describe.c:4479
 #, fuzzy, c-format
 msgid "for column %d of %s (%d valid observations)"
 msgstr "για τη μεταβλ. %s (%d έγκυρες παρατηρ.)"
 
-#: lib/src/describe.c:4476
+#: lib/src/describe.c:4482
 #, fuzzy, c-format
 msgid "for column %d (%d valid observations)"
 msgstr "για τη μεταβλ. %s (%d έγκυρες παρατηρ.)"
 
-#: lib/src/describe.c:4480
+#: lib/src/describe.c:4486
 #, c-format
 msgid "for the variable '%s' (%d valid observations)"
 msgstr "για τη μεταβλ. '%s' (%d έγκυρες παρατηρ.)"
 
-#: lib/src/describe.c:4598 lib/src/describe.c:4626 gui2/guiprint.c:778
+#: lib/src/describe.c:4604 lib/src/describe.c:4632 gui2/guiprint.c:771
 msgid "Std. Dev."
 msgstr "Τυπ.Απόκ."
 
-#: lib/src/describe.c:4633
+#: lib/src/describe.c:4639
 #, no-c-format
 msgid "5% perc."
 msgstr ""
 
-#: lib/src/describe.c:4635
+#: lib/src/describe.c:4641
 #, no-c-format
 msgid "95% perc."
 msgstr ""
 
-#: lib/src/describe.c:4636 gui2/guiprint.c:800
+#: lib/src/describe.c:4642 gui2/guiprint.c:793
 #, fuzzy
 msgid "IQ range"
 msgstr "x εύρος"
 
-#: lib/src/describe.c:4856 lib/src/describe.c:4957
+#: lib/src/describe.c:4862 lib/src/describe.c:4963
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
 msgstr ""
 "Απόρριψη %s: το εύρος του δείγματος δεν περιέχει έγκυρες παρατηρήσεις\n"
 
-#: lib/src/describe.c:5318
+#: lib/src/describe.c:5324
 msgid "corr: needs at least two non-constant arguments"
 msgstr ""
 
-#: lib/src/describe.c:5375 lib/src/modelprint.c:3386 lib/src/modelprint.c:3398
+#: lib/src/describe.c:5381 lib/src/modelprint.c:3386 lib/src/modelprint.c:3398
 #: lib/src/modelprint.c:3399 lib/src/modelprint.c:3400
 #: lib/src/modelprint.c:3409 lib/src/modelprint.c:3419
 #: lib/src/modelprint.c:3451 lib/src/modelprint.c:3464
@@ -1942,14 +1968,14 @@ msgstr ""
 #: lib/src/modelprint.c:5164 lib/src/printout.c:182 lib/src/printout.c:188
 #: lib/src/texprint.c:591 lib/src/texprint.c:609 lib/src/texprint.c:626
 #: lib/src/texprint.c:640 lib/src/texprint.c:724 lib/src/texprint.c:735
-#: lib/src/texprint.c:741 gui2/guiprint.c:692 gui2/guiprint.c:694
-#: gui2/guiprint.c:1012 gui2/guiprint.c:1014 gui2/guiprint.c:1166
-#: gui2/guiprint.c:1175 gui2/guiprint.c:1889 gui2/guiprint.c:1898
-#: gui2/guiprint.c:1949 plugin/anova.c:148 plugin/leverage.c:335
+#: lib/src/texprint.c:741 gui2/guiprint.c:685 gui2/guiprint.c:687
+#: gui2/guiprint.c:1005 gui2/guiprint.c:1007 gui2/guiprint.c:1159
+#: gui2/guiprint.c:1168 gui2/guiprint.c:1882 gui2/guiprint.c:1891
+#: gui2/guiprint.c:1942 plugin/anova.c:148 plugin/leverage.c:335
 msgid "undefined"
 msgstr "μη-καθορισμένο"
 
-#: lib/src/describe.c:5382 lib/src/nonparam.c:338 lib/src/nonparam.c:344
+#: lib/src/describe.c:5388 lib/src/nonparam.c:338 lib/src/nonparam.c:344
 #: lib/src/nonparam.c:578
 msgid ""
 "Under the null hypothesis of no correlation:\n"
@@ -1958,29 +1984,29 @@ msgstr ""
 "Υπό την μηδενική υπόθεση της μη-συσχέτισης:\n"
 " "
 
-#: lib/src/describe.c:5383 lib/src/nonparam.c:345
+#: lib/src/describe.c:5389 lib/src/nonparam.c:345
 #, c-format
 msgid "t(%d) = %g, with two-tailed p-value %.4f\n"
 msgstr "t(%d) = %g, με δικατάληκτη p-τιμή %.4f\n"
 
-#: lib/src/describe.c:5387 lib/src/describe.c:5425 gui2/guiprint.c:1230
+#: lib/src/describe.c:5393 lib/src/describe.c:5431 gui2/guiprint.c:1223
 #, c-format
 msgid "5%% critical value (two-tailed) = %.4f for n = %d"
 msgstr "5%% κριτική τιμή (δικατάληκτη) = %.4f για n = %d"
 
-#: lib/src/describe.c:5416
+#: lib/src/describe.c:5422
 msgid "Correlation Coefficients"
 msgstr "Συντελεστές συσχέτισης"
 
-#: lib/src/describe.c:5510 lib/src/describe.c:5594
+#: lib/src/describe.c:5516 lib/src/describe.c:5600
 msgid "Sample range has no valid observations."
 msgstr "Το εύρος του δείγματος δεν περιέχει έγκυρες παρατηρήσεις"
 
-#: lib/src/describe.c:5516 lib/src/describe.c:5600
+#: lib/src/describe.c:5522 lib/src/describe.c:5606
 msgid "Sample range has only one observation."
 msgstr "Το εύρος του δείγματος περιέχει μόνο μία παρατήρηση"
 
-#: lib/src/describe.c:5543
+#: lib/src/describe.c:5549
 #, c-format
 msgid ""
 "\n"
@@ -1991,34 +2017,34 @@ msgstr ""
 "Έλεγχος ισότητας μέσων (υποθέτοντας %s διακυμάνσεις\n"
 "\n"
 
-#: lib/src/describe.c:5544
+#: lib/src/describe.c:5550
 msgid "unequal"
 msgstr "άνισα"
 
-#: lib/src/describe.c:5544
+#: lib/src/describe.c:5550
 msgid "equal"
 msgstr "ίσα"
 
-#: lib/src/describe.c:5549
+#: lib/src/describe.c:5555
 #, c-format
 msgid "   Difference between sample means = %g - %g = %g\n"
 msgstr "   Διαφορά μεταξύ δειγματικών μέσων = %g - %g = %g\n"
 
-#: lib/src/describe.c:5551
+#: lib/src/describe.c:5557
 msgid "   Null hypothesis: The two population means are the same.\n"
 msgstr "   Μηδενική υπόθεση: Οι δύο πληθυσμιακοί μέσοι είναι ίδιοι.\n"
 
-#: lib/src/describe.c:5552
+#: lib/src/describe.c:5558
 #, c-format
 msgid "   Estimated standard error = %g\n"
 msgstr "   Εκτιμημένο τυπικό σφάλμα = %g\n"
 
-#: lib/src/describe.c:5553
+#: lib/src/describe.c:5559
 #, c-format
 msgid "   Test statistic: t(%d) = %g\n"
 msgstr "   Στατιστική ελέγχου: t(%d) = %g\n"
 
-#: lib/src/describe.c:5554 lib/src/describe.c:5631
+#: lib/src/describe.c:5560 lib/src/describe.c:5637
 #, c-format
 msgid ""
 "   p-value (two-tailed) = %g\n"
@@ -2027,7 +2053,7 @@ msgstr ""
 "   p-τιμή (δικατάληκτη) = %g\n"
 "\n"
 
-#: lib/src/describe.c:5556 lib/src/describe.c:5633
+#: lib/src/describe.c:5562 lib/src/describe.c:5639
 msgid ""
 "   The difference is not statistically significant.\n"
 "\n"
@@ -2035,11 +2061,11 @@ msgstr ""
 "   Η διαφορά είναι στατιστικά μη-σημαντική.\n"
 "\n"
 
-#: lib/src/describe.c:5558
+#: lib/src/describe.c:5564
 msgid "difference of means"
 msgstr "διαφορά στους μέσους"
 
-#: lib/src/describe.c:5622
+#: lib/src/describe.c:5628
 msgid ""
 "\n"
 "Equality of variances test\n"
@@ -2049,85 +2075,85 @@ msgstr ""
 "Έλεγχος ισότητας διακυμάνσεων\n"
 "\n"
 
-#: lib/src/describe.c:5627
+#: lib/src/describe.c:5633
 #, c-format
 msgid "   Ratio of sample variances = %g\n"
 msgstr "   Λόγος δειγματικών διακυμάνσεων = %g\n"
 
-#: lib/src/describe.c:5629
+#: lib/src/describe.c:5635
 msgid "The two population variances are equal"
 msgstr "Οι δύο πληθυσμιακές διακυμάνσεις είναι ίσες"
 
-#: lib/src/describe.c:5635
+#: lib/src/describe.c:5641
 msgid "difference of variances"
 msgstr "διαφορά των διακυμάνσεων"
 
-#: lib/src/describe.c:5720 gui2/library.c:512 gui2/library.c:676
-#: gui2/library.c:829
+#: lib/src/describe.c:5726 gui2/library.c:508 gui2/library.c:672
+#: gui2/library.c:825
 msgid "Mahalanobis distances"
 msgstr "Αποστάσεις Mahalanobis"
 
-#: lib/src/describe.c:5761
+#: lib/src/describe.c:5767
 msgid "Covariance matrix"
 msgstr "Μήτρα συνδιακυμάνσεων"
 
-#: lib/src/describe.c:5767
+#: lib/src/describe.c:5773
 msgid "Inverse of covariance matrix"
 msgstr "Αντίστροφη της μήτρας συνδιακυμάνσεων"
 
-#: lib/src/describe.c:5782
+#: lib/src/describe.c:5788
 msgid "Mahalanobis distances from the centroid"
 msgstr "Αποστάσεις Mahalanobis από το κεντρικό σημείο"
 
-#: lib/src/describe.c:5783
+#: lib/src/describe.c:5789
 msgid "using the variables:"
 msgstr "με τη χρήση των μεταβλητών:"
 
-#: lib/src/describe.c:5828
+#: lib/src/describe.c:5834
 #, c-format
 msgid "Distances saved as '%s'"
 msgstr "Οι αποστάσεις αποθηκεύτηκαν ως '%s'"
 
-#: lib/src/describe.c:5901
+#: lib/src/describe.c:5907
 msgid "illegal negative value"
 msgstr "Μη-επιτρεπτή αρνητική τιμή"
 
-#: lib/src/describe.c:6008
+#: lib/src/describe.c:6014
 msgid "Lorenz curve"
 msgstr "Lorenz καμπύλη"
 
-#: lib/src/describe.c:6075 plugin/excel_import.c:1657
+#: lib/src/describe.c:6081 plugin/excel_import.c:1657
 #: plugin/gnumeric_import.c:767
 msgid "Warning: there were missing values\n"
 msgstr "Προειδοποίηση: υπήρξαν απούσες τιμές\n"
 
-#: lib/src/describe.c:6080
+#: lib/src/describe.c:6086
 msgid "Sample Gini coefficient"
 msgstr "Δειγματικός συντελεστής Gini"
 
-#: lib/src/describe.c:6081
+#: lib/src/describe.c:6087
 msgid "Estimate of population value"
 msgstr "Εκτίμηση τιμής πληθυσμού"
 
-#: lib/src/describe.c:6564
+#: lib/src/describe.c:6570
 msgid "Shapiro-Wilk W"
 msgstr "Shapiro-Wilk W"
 
-#: lib/src/describe.c:6565
+#: lib/src/describe.c:6571
 msgid "Jarque-Bera test"
 msgstr "Jarque-Bera έλεγχος"
 
-#: lib/src/describe.c:6566
+#: lib/src/describe.c:6572
 msgid "Lilliefors test"
 msgstr "Lilliefors έλεγχος"
 
-#: lib/src/describe.c:6629
+#: lib/src/describe.c:6635
 #, c-format
 msgid "Test for normality of %s:"
 msgstr "Έλεγχος για κανονικότητα της %s:"
 
-#: lib/src/discrete.c:1199 lib/src/geneval.c:6189 lib/src/gretl_list.c:1477
-#: lib/src/interact.c:4956
+#: lib/src/discrete.c:1199 lib/src/geneval.c:6204 lib/src/gretl_list.c:1477
+#: lib/src/interact.c:4958
 #, c-format
 msgid "The variable '%s' is not discrete"
 msgstr "Η μεταβλητή '%s' δεν είναι διακριτή"
@@ -2232,11 +2258,11 @@ msgstr ""
 msgid "                 ITER       RHO        ESS"
 msgstr "                 ΕΠΑΝ       RHO        ESS"
 
-#: lib/src/estimate.c:2737 lib/src/gretl_model.c:3422 lib/src/modelprint.c:774
+#: lib/src/estimate.c:2737 lib/src/gretl_model.c:3441 lib/src/modelprint.c:774
 msgid "Pesaran-Taylor test for heteroskedasticity"
 msgstr "Pesaran-Taylor έλεγχος για ετεροσκεδαστικότητα"
 
-#: lib/src/estimate.c:2747 lib/src/gretl_model.c:3401 lib/src/modelprint.c:772
+#: lib/src/estimate.c:2747 lib/src/gretl_model.c:3420 lib/src/modelprint.c:772
 msgid "Breusch-Pagan test for heteroskedasticity"
 msgstr "Breusch-Pagan έλεγχος για ετεροσκεδαστικότητα"
 
@@ -2244,7 +2270,7 @@ msgstr "Breusch-Pagan έλεγχος για ετεροσκεδαστικότητ
 msgid "with Koenker robust variance estimator"
 msgstr "με Koenker αξιόπιστο εκτιμητή τη διακύμανσης"
 
-#: lib/src/estimate.c:2753 lib/src/gretl_model.c:3398 lib/src/modelprint.c:767
+#: lib/src/estimate.c:2753 lib/src/gretl_model.c:3417 lib/src/modelprint.c:767
 msgid "White's test for heteroskedasticity"
 msgstr "Έλεγχος White ετεροσκεδαστικότητας"
 
@@ -2301,39 +2327,39 @@ msgstr "ασαφής συνθήκη για 'if'"
 msgid "Unmatched \"%s\""
 msgstr "Δεν υπάρχει αντιστοίχιση για την \"%s\""
 
-#: lib/src/flow_control.c:255 lib/src/interact.c:2376 lib/src/interact.c:4488
+#: lib/src/flow_control.c:255 lib/src/interact.c:2378 lib/src/interact.c:4490
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr "το πεδίο '%s' στην εντολή δεν είναι έγκυρο"
 
-#: lib/src/forecast.c:2910
+#: lib/src/forecast.c:2915
 msgid "predicted values"
 msgstr "προβλεφθείσες τιμές"
 
-#: lib/src/forecast.c:2914 lib/src/genmain.c:67
+#: lib/src/forecast.c:2919 lib/src/genmain.c:67
 #, c-format
 msgid "Replaced series %s (ID %d)"
 msgstr "Αντικαταστάθηκε σειρά %s (ID %d)"
 
-#: lib/src/forecast.c:2917 lib/src/genmain.c:70
+#: lib/src/forecast.c:2922 lib/src/genmain.c:70
 #, c-format
 msgid "Generated series %s (ID %d)"
 msgstr "Δημιουργημένη σειρά %s (ID %d)"
 
-#: lib/src/geneval.c:3517 lib/src/interact.c:1570
+#: lib/src/geneval.c:3523 lib/src/interact.c:1572
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "Αριθμός μεταβλητής %d είναι εκτός ορίων"
 
-#: lib/src/geneval.c:5288
+#: lib/src/geneval.c:5294
 msgid "Matrix specification is not coherent"
 msgstr "Η εξειδίκευση της μήτρας δεν είναι κατανοητή"
 
-#: lib/src/geneval.c:5444
+#: lib/src/geneval.c:5450
 msgid "Wrong type of operand for unary '&'"
 msgstr "Λάθος τύπος τελεστέου για μονομελή τελεστή '&'"
 
-#: lib/src/geneval.c:5491 lib/src/geneval.c:6836
+#: lib/src/geneval.c:5497 lib/src/geneval.c:6867
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
@@ -2342,108 +2368,108 @@ msgstr ""
 "Ο αριθμός των ορισμάτων (%d) δεν ταιριάζει με τον αριθμό των\n"
 "παραμέτρων στην συνάρτηση %s (%d)"
 
-#: lib/src/geneval.c:8338
+#: lib/src/geneval.c:8369
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': άκυρο όρισμα για %s()\n"
 
-#: lib/src/geneval.c:8389 cli/cli_object.c:48 gui2/objectsave.c:54
+#: lib/src/geneval.c:8420 cli/cli_object.c:48 gui2/objectsave.c:54
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: δεν υπάρχει τέτοιο αντικείμενο\n"
 
-#: lib/src/geneval.c:8634
+#: lib/src/geneval.c:8665
 #, fuzzy, c-format
 msgid "%s: insufficient arguments"
 msgstr "Η εντολή δεν έχει επαρκή ορίσματα"
 
-#: lib/src/geneval.c:8636
+#: lib/src/geneval.c:8667
 #, fuzzy, c-format
 msgid "%s: invalid argument type %s"
 msgstr "'%s': άκυρο όρισμα για %s()\n"
 
-#: lib/src/geneval.c:8639
+#: lib/src/geneval.c:8670
 #, fuzzy, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr "%s: όρισμα %d έπρεπε να είναι %s"
 
-#: lib/src/geneval.c:8649
+#: lib/src/geneval.c:8680
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: τελεστεό πρέπει να είναι %s"
 
-#: lib/src/geneval.c:8652
+#: lib/src/geneval.c:8683
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: τελεστέο %d πρέπει να είναι %s"
 
-#: lib/src/geneval.c:8657
+#: lib/src/geneval.c:8688
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: το όρισμα θα έπρεπε να είναι %s"
 
-#: lib/src/geneval.c:8660
+#: lib/src/geneval.c:8691
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: όρισμα %d έπρεπε να είναι %s"
 
-#: lib/src/geneval.c:8666
+#: lib/src/geneval.c:8697
 #, fuzzy, c-format
 msgid ", is %s"
 msgstr "= %s επί %s"
 
-#: lib/src/geneval.c:10280 lib/src/genlex.c:720
+#: lib/src/geneval.c:10313 lib/src/genlex.c:722
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "Το σύμβολο '%c' δεν είναι έγκυρο σε αυτό το πλαίσιο\n"
 
-#: lib/src/geneval.c:10431 lib/src/genlex.c:752 lib/src/genlex.c:822
+#: lib/src/geneval.c:10464 lib/src/genlex.c:754 lib/src/genlex.c:824
 #: lib/src/gensyntax.c:247
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "Δεν υπάρχει αντιστοίχιση για την '%c'\n"
 
-#: lib/src/geneval.c:10486
+#: lib/src/geneval.c:10519
 #, fuzzy, c-format
 msgid "The variable %s is of type %s"
 msgstr "Η μεταβλητή '%s' δεν είναι διακριτή"
 
-#: lib/src/geneval.c:10648
+#: lib/src/geneval.c:10681
 #, fuzzy, c-format
 msgid "'%s': name is too long (max %d characters)\n"
 msgstr "'%s': πολύ μακρύ όνομα (μεγ 15 χαρακτήρες)\n"
 
-#: lib/src/geneval.c:10757
+#: lib/src/geneval.c:10790
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s' : δεν εφαρμόζεται για μήτρες"
 
-#: lib/src/geneval.c:10764
+#: lib/src/geneval.c:10797
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s' : δεν εφαρμόζεται για λίστες"
 
-#: lib/src/geneval.c:10771
+#: lib/src/geneval.c:10804
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s' : δεν εφαρμόζεται σε αλφαριθμητικά"
 
-#: lib/src/geneval.c:10778
-#, c-format
-msgid "'%s' : only defined for matrices"
-msgstr "'%s' : ορίζεται μόνο για μήτρες"
-
-#: lib/src/geneval.c:10785
+#: lib/src/geneval.c:10811 lib/src/geneval.c:10825
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : δεν εφαρμόζεται σε αυτόν τον τύπο"
 
-#: lib/src/geneval.c:12052
+#: lib/src/geneval.c:10818
+#, c-format
+msgid "'%s' : only defined for matrices"
+msgstr "'%s' : ορίζεται μόνο για μήτρες"
+
+#: lib/src/geneval.c:12098
 #, fuzzy
 msgid "Bare declarations are not allowed here"
 msgstr "%s: η διαίρεση δεν επιτρέπετε στο συγκεκριμένο πλαίσιο"
 
-#: lib/src/genfuncs.c:852 gui2/library.c:5090
+#: lib/src/genfuncs.c:852 gui2/library.c:5086
 msgid "Input must be a monthly or quarterly time series"
 msgstr "Εισάγετε μηνιαία ή τριμηνιαία χρονοσειρά μόνο"
 
@@ -2562,7 +2588,7 @@ msgid "model-related"
 msgstr ""
 
 #: lib/src/genfuncs.c:4533 lib/src/plotspec.c:304 lib/src/plotspec.c:318
-#: lib/src/uservar.c:1213 gui2/fnsave.c:1311 gui2/gpt_dialog.c:135
+#: lib/src/uservar.c:1213 gui2/fnsave.c:1377 gui2/gpt_dialog.c:135
 #: gui2/gui_utils.c:2924
 msgid "none"
 msgstr "όχι"
@@ -2572,39 +2598,39 @@ msgstr "όχι"
 msgid "other"
 msgstr "Άλλη"
 
-#: lib/src/genlex.c:697
+#: lib/src/genlex.c:699
 #, fuzzy, c-format
 msgid "%s: no such object"
 msgstr "%s: δεν υπάρχει τέτοιο αντικείμενο\n"
 
-#: lib/src/genlex.c:699
+#: lib/src/genlex.c:701
 #, fuzzy, c-format
 msgid "The symbol '%s' is undefined"
 msgstr "Το σύμβολο '%s' είναι άγνωστο\n"
 
-#: lib/src/genlex.c:709 lib/src/genlex.c:711
+#: lib/src/genlex.c:711 lib/src/genlex.c:713
 #, fuzzy, c-format
 msgid "'%s': no argument was given"
 msgstr "'%s': δεν δόθηκε όρισμα\n"
 
-#: lib/src/genlex.c:722
+#: lib/src/genlex.c:724
 msgid "(for logical AND, use '&&')\n"
 msgstr "(για λογικό AND, χρησιμοποιείστε '&&')\n"
 
-#: lib/src/genlex.c:724
+#: lib/src/genlex.c:726
 msgid "(for logical OR, use '||')\n"
 msgstr "(για λογικό OR, χρησιμοποιείστε '||')\n"
 
-#: lib/src/genlex.c:732
+#: lib/src/genlex.c:734
 #, c-format
 msgid "The symbol '%s' is not valid in this context\n"
 msgstr "Το σύμβολο '%s' δεν είναι έγκυρο σε αυτό το πλαίσιο\n"
 
-#: lib/src/genlex.c:819
+#: lib/src/genlex.c:821
 msgid "Empty observation []\n"
 msgstr "Κενή παρατήρηση []\n"
 
-#: lib/src/genlex.c:1544
+#: lib/src/genlex.c:1546
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "Μη έγκυρος χαρακτήρας '%c'\n"
@@ -2664,7 +2690,7 @@ msgstr "Δημιουργήθηκε το αλφαριθμητικό %s"
 msgid "Replaced after model %d: "
 msgstr "Αντικαταστάθηκε μετά το υπόδειγμα %d: "
 
-#: lib/src/genmain.c:271 lib/src/interact.c:2373
+#: lib/src/genmain.c:271 lib/src/interact.c:2375
 #, c-format
 msgid "'%s' may not be used as a variable name"
 msgstr "'%s' δεν μπορεί να χρησιμοποιηθεί ως όνομα μεταβλητής"
@@ -2696,7 +2722,7 @@ msgid "too many arguments"
 msgstr "πάρα πολλά ορίσματα"
 
 #: lib/src/gmm.c:131 lib/src/gretl_list.c:2590 lib/src/gretl_panel.c:4637
-#: lib/src/gretl_panel.c:4647 lib/src/interact.c:3957 lib/src/nls.c:2759
+#: lib/src/gretl_panel.c:4647 lib/src/interact.c:3959 lib/src/nls.c:2759
 #, c-format
 msgid "Unknown variable '%s'"
 msgstr "Άγνωστη μεταβλητή '%s'"
@@ -2735,260 +2761,234 @@ msgstr "OC"
 msgid "std. dev"
 msgstr "Τυπ.Απόκ."
 
-#: lib/src/graphing.c:487 gui2/library.c:6778
+#: lib/src/graphing.c:488 gui2/library.c:6774
 #, fuzzy
 msgid "You must supply three variables, the last of which is discrete"
 msgstr ""
 "Πρέπει να δώσετε τρεις μεταβλητές,με την τελευταία\n"
 "να είναι ψευδομεταβλητή (τιμές 1 ή 0)"
 
-#: lib/src/graphing.c:1630
+#: lib/src/graphing.c:1642
 msgid "Gnuplot does not support PDF output on this system"
 msgstr "Το Gnuplot δεν υποστηρίζει PDF αποτελέσματα σε αυτό το σύστημα"
 
-#: lib/src/graphing.c:1689 gui2/gpt_dialog.c:564
+#: lib/src/graphing.c:1701 gui2/gpt_dialog.c:564
 #, c-format
 msgid "%s versus %s (with least squares fit)"
 msgstr "%s έναντι %s (με προσαρμογή ελαχ. τετραγ.)"
 
-#: lib/src/graphing.c:1692 gui2/gpt_dialog.c:573
+#: lib/src/graphing.c:1704 gui2/gpt_dialog.c:573
 #, c-format
 msgid "%s versus %s (with inverse fit)"
 msgstr "%s έναντι %s (με αντίστροφη προσαρμογή)"
 
-#: lib/src/graphing.c:1695 gui2/gpt_dialog.c:567
+#: lib/src/graphing.c:1707 gui2/gpt_dialog.c:567
 #, c-format
 msgid "%s versus %s (with quadratic fit)"
 msgstr "%s έναντι %s (με τετραγωνική προσαρμογή)"
 
-#: lib/src/graphing.c:1698 gui2/gpt_dialog.c:570
+#: lib/src/graphing.c:1710 gui2/gpt_dialog.c:570
 #, fuzzy, c-format
 msgid "%s versus %s (with cubic fit)"
 msgstr "%s έναντι %s (με τετραγωνική προσαρμογή)"
 
-#: lib/src/graphing.c:1705
+#: lib/src/graphing.c:1717
 #, c-format
 msgid "Regression residuals (= observed - fitted %s)"
 msgstr "Κατάλοιπα παλινδρόμησης (= παρατηρούμενη - προσαρμοσμένη %s)"
 
-#: lib/src/graphing.c:1710 lib/src/graphing.c:1714
+#: lib/src/graphing.c:1722 lib/src/graphing.c:1726
 #, c-format
 msgid "Actual and fitted %s"
 msgstr "Πραγματική και προσαρμοσμένη %s"
 
-#: lib/src/graphing.c:1716
+#: lib/src/graphing.c:1728
 #, c-format
 msgid "Actual and fitted %s versus %s"
 msgstr "Πραγματική και προσαρμοσμένη %s έναντι %s"
 
-#: lib/src/graphing.c:1839 gui2/gpt_dialog.c:576
+#: lib/src/graphing.c:1851 gui2/gpt_dialog.c:576
 #, c-format
 msgid "%s versus %s (with loess fit)"
 msgstr "%s έναντι %s (με loess προσαρμογή)"
 
-#: lib/src/graphing.c:1857 lib/src/plotspec.c:1501
+#: lib/src/graphing.c:1869 lib/src/plotspec.c:1501
 #, c-format
 msgid "loess fit, d = %d, q = %g"
 msgstr "loess προσαρμογή, d = %d, q = %g"
 
-#: lib/src/graphing.c:2911
+#: lib/src/graphing.c:2923
 msgid "time series by group"
 msgstr "χρονοσειρές ανά ομάδα"
 
-#: lib/src/graphing.c:3193 lib/src/plotspec.c:687 lib/src/plotspec.c:1335
+#: lib/src/graphing.c:3205 lib/src/plotspec.c:687 lib/src/plotspec.c:1335
 #: gui2/gpt_dialog.c:963 gui2/gpt_dialog.c:1484 gui2/gpt_dialog.c:2936
 msgid "right"
 msgstr "δεξιά"
 
-#: lib/src/graphing.c:3193 lib/src/plotspec.c:683 lib/src/plotspec.c:689
+#: lib/src/graphing.c:3205 lib/src/plotspec.c:683 lib/src/plotspec.c:689
 #: lib/src/plotspec.c:1333 gui2/gpt_dialog.c:1479 gui2/gpt_dialog.c:2935
 msgid "left"
 msgstr "αριστ."
 
-#: lib/src/graphing.c:3216 lib/src/graphing.c:3222
+#: lib/src/graphing.c:3228 lib/src/graphing.c:3234
 msgid "actual"
 msgstr "πραγματική"
 
-#: lib/src/graphing.c:3217 lib/src/graphing.c:3221 lib/src/printout.c:1261
-#: gui2/guiprint.c:962 gui2/guiprint.c:1539 gui2/guiprint.c:1599
-#: gui2/library.c:4125
+#: lib/src/graphing.c:3229 lib/src/graphing.c:3233 lib/src/printout.c:1261
+#: gui2/guiprint.c:955 gui2/guiprint.c:1532 gui2/guiprint.c:1592
+#: gui2/library.c:4121
 msgid "fitted"
 msgstr "προσαρμ."
 
-#: lib/src/graphing.c:3319
+#: lib/src/graphing.c:3331
 msgid "actual = predicted"
 msgstr "πραγματικές = προβλεφθείσες"
 
-#: lib/src/graphing.c:4049
+#: lib/src/graphing.c:4061
 #, c-format
 msgid "'%s' is a constant"
 msgstr "'%s' είναι σταθερός όρος"
 
-#: lib/src/graphing.c:4102
+#: lib/src/graphing.c:4114
 msgid "Test statistic for normality"
 msgstr "Στατιστική ελέγχου κανονικότητας"
 
-#: lib/src/graphing.c:4124
+#: lib/src/graphing.c:4136
 msgid "Test statistic for gamma"
 msgstr "Στατιστική ελέγχου για γάμμα"
 
-#: lib/src/graphing.c:4154 plugin/addons-i18n.c:10
+#: lib/src/graphing.c:4166 plugin/addons-i18n.c:10
 msgid "Density"
 msgstr "Πυκνότητα"
 
-#: lib/src/graphing.c:4156
+#: lib/src/graphing.c:4168
 msgid "Relative frequency"
 msgstr "Σχετική συχνότητα"
 
-#: lib/src/graphing.c:4478
+#: lib/src/graphing.c:4490
 #, fuzzy, c-format
 msgid "observations sorted by %s"
 msgstr "Δεν θα μείνουν καθόλου παρατηρήσεις!"
 
-#: lib/src/graphing.c:4499 lib/src/graphing.c:4730
+#: lib/src/graphing.c:4511 lib/src/graphing.c:4742
 #, c-format
 msgid "%g percent interval"
 msgstr "%g τοις εκατό διάστημα"
 
-#: lib/src/graphing.c:4513 lib/src/graphing.c:4520 lib/src/printout.c:1261
+#: lib/src/graphing.c:4525 lib/src/graphing.c:4532 lib/src/printout.c:1261
 msgid "forecast"
 msgstr "πρόβλεψη"
 
-#: lib/src/graphing.c:4728
+#: lib/src/graphing.c:4740
 #, fuzzy, c-format
 msgid "%g%% interval for mean"
 msgstr "%g%% διάστημα"
 
-#: lib/src/graphing.c:4833
+#: lib/src/graphing.c:4845
 #, c-format
 msgid "Coefficient on %s"
 msgstr "Συντελεστής της %s"
 
-#: lib/src/graphing.c:4857
+#: lib/src/graphing.c:4869
 #, c-format
 msgid "Quantile estimates with %g%% band"
 msgstr "Εκτιμήσεις ποσοστημορίου με %g%% ζώνη"
 
-#: lib/src/graphing.c:4865
+#: lib/src/graphing.c:4877
 #, c-format
 msgid "OLS estimate with %g%% band"
 msgstr "OLS εκτίμηση με %g%% ζώνη"
 
-#: lib/src/graphing.c:4930
+#: lib/src/graphing.c:4942
 msgid "+- sqrt(h(t))"
 msgstr "+- sqrt(h(t))"
 
-#: lib/src/graphing.c:5124
+#: lib/src/graphing.c:5136
 #, fuzzy, c-format
 msgid "mean %s"
 msgstr "μέσος"
 
-#: lib/src/graphing.c:5439
+#: lib/src/graphing.c:5451
 msgid "time"
 msgstr "χρόνος"
 
-#: lib/src/graphing.c:5539
-msgid "quarters"
-msgstr "τρίμηνα"
-
-#: lib/src/graphing.c:5539
-msgid "months"
-msgstr "μήνες"
-
-#: lib/src/graphing.c:5541
-msgid "years"
-msgstr "χρόνια"
-
-#: lib/src/graphing.c:5543
-#, fuzzy
-msgid "weeks"
-msgstr "εβδομαδιαία"
-
-#: lib/src/graphing.c:5545
-msgid "days"
-msgstr ""
-
-#: lib/src/graphing.c:5547
-#, fuzzy
-msgid "hours"
-msgstr "ωριαία"
-
-#: lib/src/graphing.c:5597
+#: lib/src/graphing.c:5565
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
 msgstr ""
 "απόκριση της %s σε σοκ στην %s, με αυτοδύναμο (bootstrap) διάστημα "
 "εμπιστοσύνης"
 
-#: lib/src/graphing.c:5602
+#: lib/src/graphing.c:5570
 #, c-format
 msgid "response of %s to a shock in %s"
 msgstr "απόκριση της %s σε σοκ στην %s"
 
-#: lib/src/graphing.c:5617
+#: lib/src/graphing.c:5585
 #, c-format
 msgid "%g percent confidence band"
 msgstr "%g τοις εκατό διάστημα εμπιστοσύνης"
 
-#: lib/src/graphing.c:5623 lib/src/graphing.c:5626
+#: lib/src/graphing.c:5591 lib/src/graphing.c:5594
 msgid "point estimate"
 msgstr "σημειακός εκτιμητής"
 
-#: lib/src/graphing.c:5627
+#: lib/src/graphing.c:5595
 #, c-format
 msgid "%g and %g quantiles"
 msgstr "%g και %g ποσοστημόρια"
 
-#: lib/src/graphing.c:5691
+#: lib/src/graphing.c:5762
 #, fuzzy, c-format
 msgid "forecast variance decomposition for %s"
 msgstr "Διαχωρισμός διακύμανσης πρόβλεψης"
 
-#: lib/src/graphing.c:5908
+#: lib/src/graphing.c:5979
 msgid "VAR residuals"
 msgstr "VAR κατάλοιπα"
 
-#: lib/src/graphing.c:5910 gui2/gui_utils.c:3190
+#: lib/src/graphing.c:5981 gui2/gui_utils.c:3190
 msgid "System residuals"
 msgstr "Κατάλοιπα συστήματος"
 
-#: lib/src/graphing.c:5988
+#: lib/src/graphing.c:6059
 #, fuzzy
 msgid "EC terms"
 msgstr "EC όρος"
 
-#: lib/src/graphing.c:5990 gui2/gui_utils.c:4318
+#: lib/src/graphing.c:6061 gui2/gui_utils.c:4318
 msgid "EC term"
 msgstr "EC όρος"
 
-#: lib/src/graphing.c:6143
+#: lib/src/graphing.c:6214
 msgid "VAR inverse roots in relation to the unit circle"
 msgstr "VAR αντίστροφες ρίζες σε σχέση με τον μοναδιαίο κύκλο"
 
-#: lib/src/graphing.c:6228
+#: lib/src/graphing.c:6299
 #, c-format
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "%g%% έλλειψη εμπιστοσύνης και %g%% οριακά διαστήματα"
 
-#: lib/src/graphing.c:6342 gui2/library.c:835 gui2/library.c:2669
+#: lib/src/graphing.c:6413 gui2/library.c:831 gui2/library.c:2665
 msgid "Q-Q plot"
 msgstr "Q-Q γράφημα"
 
-#: lib/src/graphing.c:6432
+#: lib/src/graphing.c:6503
 #, c-format
 msgid "Q-Q plot for %s"
 msgstr "Q-Q γράφημα της %s"
 
-#: lib/src/graphing.c:6435
+#: lib/src/graphing.c:6506
 msgid "Normal quantiles"
 msgstr "Κανονικά Ποσοστημόρια"
 
-#: lib/src/graphing.c:6552 lib/src/graphing.c:6555
+#: lib/src/graphing.c:6623 lib/src/graphing.c:6626
 #, c-format
 msgid "adjusted %s"
 msgstr "προσαρμοσμένη %s"
 
-#: lib/src/graphing.c:6618 plugin/range-mean.c:112
+#: lib/src/graphing.c:6689 plugin/range-mean.c:112
 msgid "with least squares fit"
 msgstr "με προσαρμογή ελαχίστων τετραγώνων"
 
@@ -3055,7 +3055,7 @@ msgid "Initial value of objective function is not finite"
 msgstr "Μη-πεπερασμένη αρχική τιμή αντικειμενικής συνάρτησης"
 
 #: lib/src/gretl_bundle.c:329 lib/src/gretl_bundle.c:362
-#: lib/src/objstack.c:1402
+#: lib/src/objstack.c:1457
 msgid "no such item"
 msgstr ""
 
@@ -3262,86 +3262,82 @@ msgstr "δημιουργήθηκαν μη-πεπερασμένες τιμές"
 msgid "Warning"
 msgstr "Προειδοποίηση"
 
-#: lib/src/gretl_func.c:2376 lib/src/gretl_func.c:2436
-#: lib/src/gretl_func.c:2512 lib/src/gretl_utils.c:1546
-#: lib/src/interact.c:4324 gui2/dialogs.c:5235 plugin/tramo-x12a.c:768
+#: lib/src/gretl_func.c:2382 lib/src/gretl_func.c:2442
+#: lib/src/gretl_func.c:2518 lib/src/gretl_utils.c:1546
+#: lib/src/interact.c:4326 gui2/dialogs.c:5240 plugin/tramo-x12a.c:768
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Δεν ήταν δυνατό το άνοιγμα του %s"
 
-#: lib/src/gretl_func.c:3081 gui2/fnsave.c:2014
+#: lib/src/gretl_func.c:3087 gui2/fnsave.c:2080
 #, c-format
 msgid "%s: validated against DTD OK"
 msgstr "%s: validated against DTD OK"
 
-#: lib/src/gretl_func.c:3115
+#: lib/src/gretl_func.c:3121
 #, fuzzy
 msgid "No functions are available for packaging at present."
 msgstr ""
 "Δεν υπάρχουν διαθέσιμες συναρτήσεις για να συμπτυχθούν (packaging).\n"
 "Θέλετε να γράψετε μία συνάρτηση τώρα?"
 
-#: lib/src/gretl_func.c:4224
+#: lib/src/gretl_func.c:4230
 msgid "No description available"
 msgstr "Δεν υπάρχει διαθέσιμη περιγραφή"
 
-#: lib/src/gretl_func.c:4263
+#: lib/src/gretl_func.c:4290
 msgid "Function names must start with a letter"
 msgstr "Τα ονόματα συναρτήσεων πρέπει να ξεκινούν με γράμμα"
 
-#: lib/src/gretl_func.c:4266
+#: lib/src/gretl_func.c:4293
 #, c-format
 msgid "'%s' is the name of a gretl command"
 msgstr "'%s' είναι το όνομα μίας εντολής gretl"
 
-#: lib/src/gretl_func.c:4270
+#: lib/src/gretl_func.c:4297
 #, c-format
 msgid "'%s' is the name of a built-in function"
 msgstr "'%s' είναι το όνομα μίας ενσωματωμένης συνάρτησης"
 
-#: lib/src/gretl_func.c:4309
+#: lib/src/gretl_func.c:4336
 #, c-format
 msgid "Deleted function '%s'\n"
 msgstr "Διαγράφηκε η συνάρτηση '%s'\n"
 
-#: lib/src/gretl_func.c:4903
+#: lib/src/gretl_func.c:4930
 #, fuzzy, c-format
 msgid "%s: duplicated parameter name '%s'"
 msgstr "%s: άκυρη ονομασία παραμέτρου"
 
-#: lib/src/gretl_func.c:5360
-msgid "You can't change the name of a function here"
-msgstr "Δεν μπορείτε να αλλάξετε το όνομα μίας συνάρτησης σε αυτό το σημείο"
-
-#: lib/src/gretl_func.c:5614
+#: lib/src/gretl_func.c:5438
 msgid "Duplicated pointer argument: not allowed"
 msgstr ""
 
-#: lib/src/gretl_func.c:6420
+#: lib/src/gretl_func.c:6244
 #, c-format
 msgid "%s: argument %d is of the wrong type (is %s, should be %s)\n"
 msgstr ""
 "%s: το όρισμα %d δεν είναι του σωστού τύπου (είναι %s, θα έπρεπε να είναι "
 "%s)\n"
 
-#: lib/src/gretl_func.c:6430
+#: lib/src/gretl_func.c:6254
 #, c-format
 msgid "%s, argument %d: value %g is out of bounds\n"
 msgstr "%s, όρισμα %d: τιμή %g είναι εκτός ορίων\n"
 
-#: lib/src/gretl_func.c:6441
+#: lib/src/gretl_func.c:6265
 #, c-format
 msgid "%s: not enough arguments\n"
 msgstr "%s: ανεπαρκή ορίσματα\n"
 
-#: lib/src/gretl_func.c:6551
+#: lib/src/gretl_func.c:6376
 #, fuzzy, c-format
 msgid ""
 "Error message from %s():\n"
 " %s"
 msgstr "Μήνυμα σφάλματος από %s:\n"
 
-#: lib/src/gretl_func.c:7303
+#: lib/src/gretl_func.c:7132
 #, c-format
 msgid "\"%s\" is not defined.\n"
 msgstr "\"%s\" δεν έχει οριστεί.\n"
@@ -3385,199 +3381,199 @@ msgstr ""
 "Δεν μπορεί να γίνει αυτό: ορισμένες μεταβλητές στο αρχικό υπόδειγμα έχουν "
 "ξαναδηλωθεί"
 
-#: lib/src/gretl_model.c:3359
+#: lib/src/gretl_model.c:3378
 msgid "Test for addition of variables"
 msgstr "Έλεγχος για πρόσθεση μεταβλητών"
 
-#: lib/src/gretl_model.c:3360 lib/src/gretl_model.c:3390
+#: lib/src/gretl_model.c:3379 lib/src/gretl_model.c:3409
 msgid "parameters are zero for the variables"
 msgstr "μηδενικοί παράμετροι για τις μεταβλητές"
 
-#: lib/src/gretl_model.c:3362
+#: lib/src/gretl_model.c:3381
 #, c-format
 msgid "Test for ARCH of order %s"
 msgstr "Έλεγχος για ARCH τάξεως %s"
 
-#: lib/src/gretl_model.c:3363
+#: lib/src/gretl_model.c:3382
 msgid "no ARCH effect is present"
 msgstr "δεν υπάρχει επίδραση τύπου ARCH"
 
-#: lib/src/gretl_model.c:3365
+#: lib/src/gretl_model.c:3384
 #, c-format
 msgid "LM test for autocorrelation up to order %s"
 msgstr "LM έλεγχος για αυτοσυσχέτιση μέχρι τάξεως %s"
 
-#: lib/src/gretl_model.c:3366
+#: lib/src/gretl_model.c:3385
 msgid "no autocorrelation"
 msgstr "όχι αυτοσυσχέτιση"
 
-#: lib/src/gretl_model.c:3369 lib/src/gretl_model.c:3378
+#: lib/src/gretl_model.c:3388 lib/src/gretl_model.c:3397
 msgid "no structural break"
 msgstr "δεν υπάρχει διαρθρωτική μεταβολή"
 
-#: lib/src/gretl_model.c:3372
+#: lib/src/gretl_model.c:3391
 msgid "no structural difference"
 msgstr "δεν υπάρχει διαρθρωτική μεταβολή"
 
-#: lib/src/gretl_model.c:3374
+#: lib/src/gretl_model.c:3393
 msgid "CUSUM test for parameter stability"
 msgstr "CUSUM έλεγχος σταθερότητας παραμέτρων"
 
-#: lib/src/gretl_model.c:3375
+#: lib/src/gretl_model.c:3394
 msgid "no change in parameters"
 msgstr "δεν υπάρχει αλλαγή στις παραμέτρους"
 
-#: lib/src/gretl_model.c:3377
+#: lib/src/gretl_model.c:3396
 msgid "QLR test for structural break"
 msgstr "QLR έλεγχος διαρθρωτικής μεταβολής"
 
-#: lib/src/gretl_model.c:3380
+#: lib/src/gretl_model.c:3399
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
 msgstr "Έλεγχος λόγου πιθανοφάνειας για ετεροσκεδαστικότητα ομαδοποίησης"
 
-#: lib/src/gretl_model.c:3381
+#: lib/src/gretl_model.c:3400
 msgid "the units have a common error variance"
 msgstr "οι μονάδες έχουν κοινή διακύμανση σφάλματος"
 
-#: lib/src/gretl_model.c:3383
+#: lib/src/gretl_model.c:3402
 msgid "Non-linearity test (logs)"
 msgstr "Έλεγχος μη-γραμμικότητας (λογάρ.)"
 
-#: lib/src/gretl_model.c:3384 lib/src/gretl_model.c:3396
+#: lib/src/gretl_model.c:3403 lib/src/gretl_model.c:3415
 msgid "relationship is linear"
 msgstr "η σχέση είναι γραμμική"
 
-#: lib/src/gretl_model.c:3386 gui2/gui_utils.c:3986
+#: lib/src/gretl_model.c:3405 gui2/gui_utils.c:3986
 msgid "Test for normality of residual"
 msgstr "Έλεγχος κανονικότητας καταλοίπων"
 
-#: lib/src/gretl_model.c:3387
+#: lib/src/gretl_model.c:3406
 msgid "error is normally distributed"
 msgstr "το σφάλμα κατανέμεται κανονικά"
 
-#: lib/src/gretl_model.c:3389
+#: lib/src/gretl_model.c:3408
 msgid "Test for omission of variables"
 msgstr "Έλεγχος για παραλειπόμενες μεταβλητές"
 
-#: lib/src/gretl_model.c:3393
+#: lib/src/gretl_model.c:3412
 msgid "specification is adequate"
 msgstr "Η εξειδίκευση είναι επαρκής"
 
-#: lib/src/gretl_model.c:3395
+#: lib/src/gretl_model.c:3414
 msgid "Non-linearity test (squares)"
 msgstr "Έλεγχος μη-γραμμικότητας (τετράγωνα)"
 
-#: lib/src/gretl_model.c:3399 lib/src/gretl_model.c:3402
-#: lib/src/gretl_model.c:3423
+#: lib/src/gretl_model.c:3418 lib/src/gretl_model.c:3421
+#: lib/src/gretl_model.c:3442
 msgid "heteroskedasticity not present"
 msgstr "δεν υπάρχει ετεροσκεδαστικότητα"
 
-#: lib/src/gretl_model.c:3404 lib/src/modelprint.c:396
+#: lib/src/gretl_model.c:3423 lib/src/modelprint.c:396
 msgid "Sargan over-identification test"
 msgstr "Sargan έλεγχος υπερ-ταυτοποίησης"
 
-#: lib/src/gretl_model.c:3405
+#: lib/src/gretl_model.c:3424
 msgid "all instruments are valid"
 msgstr "όλες οι τεχνητές μεταβλητές είναι έγκυρες"
 
-#: lib/src/gretl_model.c:3407 lib/src/gretl_model.c:3410
+#: lib/src/gretl_model.c:3426 lib/src/gretl_model.c:3429
 msgid "Hausman test"
 msgstr "Hausman έλεγχος"
 
-#: lib/src/gretl_model.c:3408
+#: lib/src/gretl_model.c:3427
 msgid "OLS estimates are consistent"
 msgstr "Οι εκτιμητές OLS είναι συνεπείς"
 
-#: lib/src/gretl_model.c:3411
+#: lib/src/gretl_model.c:3430
 msgid "GLS estimates are consistent"
 msgstr "Οι εκτιμητές GLS είναι συνεπείς"
 
-#: lib/src/gretl_model.c:3413
+#: lib/src/gretl_model.c:3432
 msgid "Test for differing group intercepts"
 msgstr "Έλεγχος για διαφορετικές σταθερές ανά ομάδα"
 
-#: lib/src/gretl_model.c:3414
+#: lib/src/gretl_model.c:3433
 msgid "The groups have a common intercept"
 msgstr "Οι ομάδες έχουν ένα κοινό σταθερό όρο"
 
-#: lib/src/gretl_model.c:3416
+#: lib/src/gretl_model.c:3435
 msgid "Breusch-Pagan test"
 msgstr "Breusch-Pagan έλεγχος"
 
-#: lib/src/gretl_model.c:3417
+#: lib/src/gretl_model.c:3436
 msgid "Variance of the unit-specific error = 0"
 msgstr "Διακύμανση διαστρωματικών σφαλμάτων = 0"
 
-#: lib/src/gretl_model.c:3419
+#: lib/src/gretl_model.c:3438
 msgid "Wald test for joint significance of time dummies"
 msgstr "Wald έλεγχος για απο-κοινού σημαντικότητα των χρονικών ψευδομεταβλητών"
 
-#: lib/src/gretl_model.c:3426
+#: lib/src/gretl_model.c:3445
 msgid "restriction is acceptable"
 msgstr "αποδεκτός περιορισμός"
 
-#: lib/src/gretl_model.c:3428
+#: lib/src/gretl_model.c:3447
 #, fuzzy
 msgid "Test of independence"
 msgstr "στον μέσο των ανεξάρτητων μεταβλ."
 
-#: lib/src/gretl_model.c:3429
+#: lib/src/gretl_model.c:3448
 msgid "rho = 0"
 msgstr ""
 
-#: lib/src/gretl_model.c:3431
+#: lib/src/gretl_model.c:3450
 msgid "LR test for rho = 0"
 msgstr ""
 
-#: lib/src/gretl_model.c:3450
+#: lib/src/gretl_model.c:3469
 msgid "robust variant"
 msgstr "σθεναρή(robust) εκδοχή"
 
-#: lib/src/gretl_model.c:3470 lib/src/gretl_panel.c:3677
+#: lib/src/gretl_model.c:3489 lib/src/gretl_panel.c:3677
 msgid "Distribution free Wald test for heteroskedasticity"
 msgstr "Wald έλεγχος (ελεύθερος κατανομής) για ετεροσκεδαστικότητα"
 
-#: lib/src/gretl_model.c:3612
+#: lib/src/gretl_model.c:3631
 #, fuzzy, c-format
 msgid "chi-square(%d) = %g at observation %s"
 msgstr "max F(%d, %d) = %g στην παρατήρηση %s"
 
-#: lib/src/gretl_model.c:3638 lib/src/gretl_model.c:3645
+#: lib/src/gretl_model.c:3657 lib/src/gretl_model.c:3664
 msgid "failed"
 msgstr "απέτυχε"
 
-#: lib/src/gretl_model.c:3743
+#: lib/src/gretl_model.c:3762
 msgid "Asymptotic test statistic"
 msgstr "Ασυμπτωτική στατιστική ελέγχου"
 
-#: lib/src/gretl_model.c:3760
+#: lib/src/gretl_model.c:3779
 #, fuzzy
 msgid "with asymptotic p-value"
 msgstr "ασυμπτωτική p-τιμή"
 
-#: lib/src/gretl_model.c:3773 lib/src/gretl_model.c:3776
-#: lib/src/gretl_model.c:3779
+#: lib/src/gretl_model.c:3792 lib/src/gretl_model.c:3795
+#: lib/src/gretl_model.c:3798
 #, c-format
 msgid "%g percent critical value"
 msgstr "%g τοις εκατό κριτική τιμή"
 
-#: lib/src/gretl_model.c:5868
+#: lib/src/gretl_model.c:5887
 msgid "Can't retrieve uhat: data set has changed"
 msgstr "Δεν γίνεται ανάκτηση των uhat: το σύνολο δεδομένων άλλαξε"
 
-#: lib/src/gretl_model.c:5870
+#: lib/src/gretl_model.c:5889
 msgid "Can't retrieve yhat: data set has changed"
 msgstr "Δεν γίνεται ανάκτηση των yhat: το σύνολο δεδομένων άλλαξε"
 
-#: lib/src/gretl_model.c:5872
+#: lib/src/gretl_model.c:5891
 msgid "Can't retrieve ht: data set has changed"
 msgstr "Δεν γίνεται ανάκτηση των ηt: το σύνολο δεδομένων άλλαξε"
 
-#: lib/src/gretl_model.c:5873
+#: lib/src/gretl_model.c:5892
 msgid "Can't retrieve series: data set has changed"
 msgstr "Δεν γίνεται ανάκτηση χρονοσειράς: το σύνολο δεδομένων άλλαξε"
 
-#: lib/src/gretl_model.c:6355 gui2/library.c:444
+#: lib/src/gretl_model.c:6374 gui2/library.c:440
 msgid "The model exhibits an exact linear fit"
 msgstr "Το υπόδειγμα παρουσιάζει τέλεια γραμμική προσαρμογή"
 
@@ -3879,7 +3875,7 @@ msgid "Restricted estimates"
 msgstr "Περιορισμένοι εκτιμητές"
 
 #: lib/src/gretl_restrict.c:1940 lib/src/modelprint.c:2748
-#: lib/src/printout.c:1251 gui2/library.c:6014
+#: lib/src/printout.c:1251 gui2/library.c:6010
 msgid "Standard error of the regression"
 msgstr "Τυπικό σφάλμα παλινδρόμησης"
 
@@ -3913,12 +3909,12 @@ msgstr "Μη-έγκυρη εισαγωγή\n"
 msgid "Variables"
 msgstr "Μεταβλητές"
 
-#: lib/src/gretl_restrict.c:2786 gui2/library.c:2001
+#: lib/src/gretl_restrict.c:2786 gui2/library.c:1997
 msgid "Sum of coefficients"
 msgstr "Άθροισμα των συντελεστών"
 
 #: lib/src/gretl_restrict.c:2789 lib/src/gretl_restrict.c:2798
-#: gui2/dialogs.c:5464
+#: gui2/dialogs.c:5469
 msgid "Standard error"
 msgstr "Τυπικό σφάλμα"
 
@@ -3963,11 +3959,11 @@ msgid ""
 msgstr ""
 
 #: lib/src/gretl_string_table.c:654 lib/src/gretl_win32.c:648
-#: lib/src/interact.c:3381
+#: lib/src/interact.c:3383
 msgid "The shell command is not activated."
 msgstr "Η εντολή shell δεν είναι ενεργοποιημένη"
 
-#: lib/src/gretl_string_table.c:837 lib/src/interact.c:4298
+#: lib/src/gretl_string_table.c:837 lib/src/interact.c:4300
 #, c-format
 msgid "Maximum length of command line (%d bytes) exceeded\n"
 msgstr "Το μέγιστο μήκος της γραμμής εντολών (%d bytes) έχει ξεπεραστεί\n"
@@ -4022,7 +4018,7 @@ msgstr "εναρκτήρια παρατήρηση '%s' είναι μη-έγκυ�
 msgid "Command failed"
 msgstr "Εντολή απέτυχε"
 
-#: lib/src/gretl_utils.c:1551 gui2/dialogs.c:5249
+#: lib/src/gretl_utils.c:1551 gui2/dialogs.c:5254
 #, c-format
 msgid "Couldn't write to %s"
 msgstr "Αδυναμία εγγραφής στο %s"
@@ -4164,67 +4160,67 @@ msgstr "Δεν υπάρχει πληροφόρηση για τις μεταβλ�
 msgid "No observations were found"
 msgstr "Δεν βρέθηκαν παρατηρήσεις"
 
-#: lib/src/interact.c:1273
+#: lib/src/interact.c:1275
 msgid "generation of lag variable failed"
 msgstr "δημιουργία των μεταβλητών υστέρησης απέτυχε"
 
-#: lib/src/interact.c:1586 gui2/gui_utils.c:4718 gui2/library.c:4697
+#: lib/src/interact.c:1588 gui2/gui_utils.c:4742 gui2/library.c:4693
 #, c-format
 msgid "A series named %s already exists"
 msgstr "Μία σειρά με όνομα %s υπάρχει ήδη"
 
-#: lib/src/interact.c:1871
+#: lib/src/interact.c:1873
 #, c-format
 msgid "command 'end %s' not recognized"
 msgstr "άγνωστη εντολή 'end %s'"
 
-#: lib/src/interact.c:1876
+#: lib/src/interact.c:1878
 msgid "end: nothing to end"
 msgstr "end: δεν τερματίζει τίποτα"
 
-#: lib/src/interact.c:1968
+#: lib/src/interact.c:1970
 #, c-format
 msgid "%s: required parameter is missing"
 msgstr "%s: απαιτούμενη παράμετρος δεν βρέθηκε"
 
-#: lib/src/interact.c:1993
+#: lib/src/interact.c:1995
 #, c-format
 msgid "%s: expected an integer order"
 msgstr "%s: ανέμενα ακέραιο αριθμό τάξης"
 
-#: lib/src/interact.c:2149
+#: lib/src/interact.c:2151
 #, c-format
 msgid "%d is not a valid variable number"
 msgstr "%d δεν είναι έγκυρος αριθμός μεταβλητής"
 
-#: lib/src/interact.c:2215
+#: lib/src/interact.c:2217
 #, c-format
 msgid "'%s' is not the name of a series"
 msgstr "'%s' δεν αντιστοιχεί σε όνομα χρονοσειράς"
 
-#: lib/src/interact.c:2218
+#: lib/src/interact.c:2220
 #, c-format
 msgid "'%s' is not the name of a variable"
 msgstr "'%s' δεν είναι όνομα μεταβλητής"
 
-#: lib/src/interact.c:2461 lib/src/system.c:648 lib/src/system.c:682
+#: lib/src/interact.c:2463 lib/src/system.c:648 lib/src/system.c:682
 #: plugin/arbond.c:2625
 #, fuzzy, c-format
 msgid "variable %d duplicated in the command list."
 msgstr "επανεμφάνιση αριθμού μεταβλητής %d στη λίστα εντολών."
 
-#: lib/src/interact.c:2601 lib/src/interact.c:6197 cli/cli_object.c:56
+#: lib/src/interact.c:2603 lib/src/interact.c:6202 cli/cli_object.c:56
 #: gui2/objectsave.c:62
 #, c-format
 msgid "command '%s' not recognized"
 msgstr "άγνωστη εντολή '%s'"
 
-#: lib/src/interact.c:2912 lib/src/interact.c:3138
+#: lib/src/interact.c:2914 lib/src/interact.c:3140
 #, c-format
 msgid "Unable to access the file %s.\n"
 msgstr "Δεν ήταν δυνατή η πρόσβαση στο αρχείο %s.\n"
 
-#: lib/src/interact.c:2940
+#: lib/src/interact.c:2942
 msgid ""
 "\n"
 "\n"
@@ -4234,11 +4230,11 @@ msgstr ""
 "\n"
 "Για βοήθεια σε συγκεκριμένη συνάρτηση, πληκτρολογήστε:  help funname "
 
-#: lib/src/interact.c:2941
+#: lib/src/interact.c:2943
 msgid " (e.g. help qrdecomp)\n"
 msgstr " (π.χ. help qrdecomp)\n"
 
-#: lib/src/interact.c:3085
+#: lib/src/interact.c:3087
 msgid ""
 "\n"
 "Valid gretl commands are:\n"
@@ -4246,7 +4242,7 @@ msgstr ""
 "\n"
 "Έγκυρες εντολές gretl είναι:\n"
 
-#: lib/src/interact.c:3100
+#: lib/src/interact.c:3102
 msgid ""
 "\n"
 "\n"
@@ -4256,151 +4252,151 @@ msgstr ""
 "\n"
 "Για βοήθεια σε συγκεκριμένη εντολή, πληκτρολογήστε: help cmdname"
 
-#: lib/src/interact.c:3101
+#: lib/src/interact.c:3103
 msgid " (e.g. help smpl)\n"
 msgstr " (π.χ. help smpl)\n"
 
-#: lib/src/interact.c:3102
+#: lib/src/interact.c:3104
 msgid "You can also do 'help functions' for a list of functions\n"
 msgstr ""
 "Μπορείτε επίσης να πληκτρολογήσετε 'help functions' για μία λίστα των "
 "διαθέσιμων συναρτήσεων\n"
 
-#: lib/src/interact.c:3108
+#: lib/src/interact.c:3110
 msgid "genrcli.hlp"
 msgstr "genrcli.hlp"
 
-#: lib/src/interact.c:3133
+#: lib/src/interact.c:3135
 #, c-format
 msgid "\"%s\" is not a gretl command.\n"
 msgstr "\"%s\" δεν είναι εντολή gretl.\n"
 
-#: lib/src/interact.c:3149 lib/src/interact.c:3175
+#: lib/src/interact.c:3151 lib/src/interact.c:3177
 #, c-format
 msgid "%s: sorry, no help available.\n"
 msgstr "%s: δυστυχώς, δεν υπάρχει διαθέσιμη βοήθεια.\n"
 
-#: lib/src/interact.c:4011 lib/src/printout.c:1717
+#: lib/src/interact.c:4013 lib/src/printout.c:1717
 msgid "No series are defined\n"
 msgstr "Δεν έχουν οριστεί χρονοσειρές\n"
 
-#: lib/src/interact.c:4030
+#: lib/src/interact.c:4032
 msgid "Listing labels for variables:\n"
 msgstr "Εμφάνιση ετικετών των μεταβλητών:\n"
 
-#: lib/src/interact.c:4079
+#: lib/src/interact.c:4081
 msgid "Output is not currently diverted to file\n"
 msgstr "Η έξοδος αυτή τη στιγμή δεν εκτρέπεται σε αρχείο\n"
 
-#: lib/src/interact.c:4084
+#: lib/src/interact.c:4086
 #, c-format
 msgid "Closed output file '%s'\n"
 msgstr "Το αρχείο εξόδου '%s' είναι κλειστό\n"
 
-#: lib/src/interact.c:4092
+#: lib/src/interact.c:4094
 #, c-format
 msgid "Output is already diverted to '%s'\n"
 msgstr "Η έξοδος ήδη εκτρέπεται στο '%s'\n"
 
-#: lib/src/interact.c:4099
+#: lib/src/interact.c:4101
 msgid "Now discarding output\n"
 msgstr "Αυτή τη στιγμή, η έξοδος απορρίπτεται\n"
 
-#: lib/src/interact.c:4121
+#: lib/src/interact.c:4123
 #, c-format
 msgid "Couldn't open %s for writing\n"
 msgstr "Αδυναμία ανοίγματος %s για εγγραφή\n"
 
-#: lib/src/interact.c:4127
+#: lib/src/interact.c:4129
 #, c-format
 msgid "Now writing output to '%s'\n"
 msgstr "Γίνεται εγγραφή στο αρχείο '%s'\n"
 
-#: lib/src/interact.c:4129
+#: lib/src/interact.c:4131
 #, c-format
 msgid "Now appending output to '%s'\n"
 msgstr "Γίνεται προσάρτηση στο αρχείο '%s'\n"
 
-#: lib/src/interact.c:4191
+#: lib/src/interact.c:4193
 msgid "No data information is available.\n"
 msgstr "Δεν υπάρχει διαθέσιμη πληροφόρηση για τα δεδομένα.\n"
 
-#: lib/src/interact.c:4671 lib/src/interact.c:4679
+#: lib/src/interact.c:4673 lib/src/interact.c:4681
 #, fuzzy
 msgid "Inner key is missing"
 msgstr "Λείπει το όνομα της μεταβλητής"
 
-#: lib/src/interact.c:4723
+#: lib/src/interact.c:4725
 #, fuzzy, c-format
 msgid "The \"%s\" command cannot be used in this context"
 msgstr "η εντολή '%s' είναι άκυρη στο συγκεκριμένο πλαίσιο"
 
-#: lib/src/interact.c:4812 cli/gretlcli.c:794 gui2/library.c:8314
+#: lib/src/interact.c:4814 cli/gretlcli.c:794 gui2/library.c:8311
 #, fuzzy, c-format
 msgid "Read datafile %s\n"
 msgstr ""
 "\n"
 "Ανάγνωση αρχείου δεδομένων %s\n"
 
-#: lib/src/interact.c:4981
+#: lib/src/interact.c:4983
 #, fuzzy, c-format
 msgid "Summary statistics for %s, by value of %s"
 msgstr "Περιληπτικά στατιστικά"
 
-#: lib/src/interact.c:5267
+#: lib/src/interact.c:5269
 msgid "You can't end a loop here, you haven't started one\n"
 msgstr "Δεν μπορείτε να κλείσετε τον βρόγχο εδώ, δεν έχετε ξεκινήσει βρόγχο\n"
 
-#: lib/src/interact.c:5383
+#: lib/src/interact.c:5385
 msgid "This command requires one variable.\n"
 msgstr "Η συγκεκριμένη εντολή απαιτεί μία μεταβλητή.\n"
 
-#: lib/src/interact.c:5529
+#: lib/src/interact.c:5531
 #, fuzzy, c-format
 msgid "data frequency = %d\n"
 msgstr "θέτωντας την συχνότητα των δεδομένων = %d\n"
 
-#: lib/src/interact.c:5556
+#: lib/src/interact.c:5558
 msgid "store: no filename given\n"
 msgstr "αποθήκευση (store): δεν δόθηκε όνομα αρχείου\n"
 
-#: lib/src/interact.c:5559 lib/src/monte_carlo.c:2339
+#: lib/src/interact.c:5561 lib/src/monte_carlo.c:2339
 #, c-format
 msgid "store: using filename %s\n"
 msgstr "αποθήκευση (store): στο αρχείο με όνομα %s\n"
 
-#: lib/src/interact.c:5565 lib/src/monte_carlo.c:2343
+#: lib/src/interact.c:5567 lib/src/monte_carlo.c:2343
 msgid "Data written OK.\n"
 msgstr "Εγγραφή δεδομένων OK.\n"
 
-#: lib/src/interact.c:5609
+#: lib/src/interact.c:5611
 msgid "This estimator requires panel data"
 msgstr "Αυτός ο εκτιμητής χρειάζεται δεδομένα panel"
 
-#: lib/src/interact.c:5776
+#: lib/src/interact.c:5778
 msgid "Couldn't format model\n"
 msgstr "Αδυναμία μορφοποίησης υποδείγματος\n"
 
-#: lib/src/interact.c:5792
+#: lib/src/interact.c:5794
 #, c-format
 msgid "Model printed to %s\n"
 msgstr "Υπόδειγμα εκτυπώθηκε στο %s\n"
 
-#: lib/src/interact.c:5905 cli/gretlcli.c:1074 gui2/library.c:8608
+#: lib/src/interact.c:5907 cli/gretlcli.c:1074 gui2/library.c:8605
 msgid "Infinite loop detected in script\n"
 msgstr "Βρόγχος χωρίς τέλος (Infinite loop) εντοπίστηκε στο script\n"
 
-#: lib/src/interact.c:5930 lib/src/monte_carlo.c:2891
+#: lib/src/interact.c:5932 lib/src/monte_carlo.c:2891
 #, fuzzy
 msgid "You cannot delete series in this context\n"
 msgstr "Δεν μπορείτε να διαγράψετε μεταβλητές σε αυτό το πλαίσιο\n"
 
-#: lib/src/interact.c:5980 cli/gretlcli.c:660
+#: lib/src/interact.c:5985 cli/gretlcli.c:660
 #, c-format
 msgid "%s: command not available\n"
 msgstr "%s: μη- διαθέσιμη εντολή\n"
 
-#: lib/src/interact.c:5986
+#: lib/src/interact.c:5991
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
 msgstr "Η εντολή %s δεν έχει ακόμα εφαρμοστεί στην libgretl\n"
@@ -4538,11 +4534,11 @@ msgstr "Μη-φραγμένες παρατηρήσεις από δεξιά"
 msgid "sigma"
 msgstr "σίγμα"
 
-#: lib/src/modelprint.c:302 lib/src/modelprint.c:2749 gui2/library.c:5999
+#: lib/src/modelprint.c:302 lib/src/modelprint.c:2749 gui2/library.c:5995
 msgid "Unadjusted R-squared"
 msgstr "R-τετράγωνο"
 
-#: lib/src/modelprint.c:309 lib/src/modelprint.c:2747 gui2/library.c:5994
+#: lib/src/modelprint.c:309 lib/src/modelprint.c:2747 gui2/library.c:5990
 msgid "Sum of squared residuals"
 msgstr "Άθροισμα τετραγώνων καταλοίπων"
 
@@ -5221,8 +5217,8 @@ msgstr "T"
 msgid "Equation"
 msgstr "Εξίσωση"
 
-#: lib/src/modelprint.c:1821 lib/src/modelprint.c:1823 lib/src/objstack.c:657
-#: lib/src/objstack.c:689 lib/src/objstack.c:691
+#: lib/src/modelprint.c:1821 lib/src/modelprint.c:1823 lib/src/objstack.c:658
+#: lib/src/objstack.c:690 lib/src/objstack.c:692
 msgid "Model"
 msgstr "Υπόδειγμα"
 
@@ -5309,7 +5305,7 @@ msgid "$t$-ratio"
 msgstr "$t$-λόγος"
 
 #: lib/src/modelprint.c:2178 lib/src/modelprint.c:3583
-#: lib/src/modelprint.c:3980 lib/src/modelprint.c:4295 gui2/dialogs.c:5465
+#: lib/src/modelprint.c:3980 lib/src/modelprint.c:4295 gui2/dialogs.c:5470
 #: plugin/panurc.c:562
 msgid "t-ratio"
 msgstr "t-λόγος"
@@ -5327,7 +5323,7 @@ msgstr "συντελεστής"
 #: lib/src/modelprint.c:2220 lib/src/modelprint.c:3582
 #: lib/src/modelprint.c:3979 lib/src/modelprint.c:4119
 #: lib/src/modelprint.c:4294 lib/src/varprint.c:452 lib/src/varprint.c:454
-#: lib/src/varprint.c:456 gui2/guiprint.c:1740 gui2/guiprint.c:1837
+#: lib/src/varprint.c:456 gui2/guiprint.c:1733 gui2/guiprint.c:1830
 #: plugin/fractals.c:271
 msgid "std. error"
 msgstr "τυπ. σφάλμα"
@@ -5354,8 +5350,8 @@ msgstr "άνω"
 msgid "Estimate"
 msgstr "Εκτίμηση"
 
-#: lib/src/modelprint.c:2228 gui2/dialogs.c:1017 gui2/dialogs.c:5463
-#: gui2/guiprint.c:1928 gui2/guiprint.c:1978
+#: lib/src/modelprint.c:2228 gui2/dialogs.c:1022 gui2/dialogs.c:5468
+#: gui2/guiprint.c:1921 gui2/guiprint.c:1971
 msgid "Coefficient"
 msgstr "Συντελεστής"
 
@@ -5432,11 +5428,11 @@ msgstr "Τυπική απόκλιση εξαρτ. μεταβλ."
 msgid "Akaike information criterion"
 msgstr "Akaike πληροφοριακό κριτήριο"
 
-#: lib/src/modelprint.c:2755 gui2/library.c:6029
+#: lib/src/modelprint.c:2755 gui2/library.c:6025
 msgid "Schwarz Bayesian criterion"
 msgstr "Schwarz Bayesian κριτήριο"
 
-#: lib/src/modelprint.c:2756 gui2/library.c:6034
+#: lib/src/modelprint.c:2756 gui2/library.c:6030
 msgid "Hannan-Quinn Information Criterion"
 msgstr "Hannan-Quinn Πληροφοριακό Κριτήριο"
 
@@ -5472,7 +5468,7 @@ msgid "S.E. of regression"
 msgstr "Τυπικό Σφάλμα παλινδρόμησης"
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2800 lib/src/modelprint.c:3187 gui2/guiprint.c:907
+#: lib/src/modelprint.c:2800 lib/src/modelprint.c:3187 gui2/guiprint.c:900
 #: gui2/model_table.c:761
 msgid "R-squared"
 msgstr "R-τετράγωνο"
@@ -5490,7 +5486,7 @@ msgstr "P-τιμή(F)"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2807 lib/src/system.c:4577 lib/src/system.c:4584
 #: lib/src/texprint.c:1083 lib/src/varprint.c:1093 lib/src/varprint.c:1102
-#: gui2/library.c:6019 plugin/johansen.c:1563
+#: gui2/library.c:6015 plugin/johansen.c:1563
 msgid "Log-likelihood"
 msgstr "Λογαριθμική πιθανοφάνεια"
 
@@ -5515,7 +5511,7 @@ msgid "rho"
 msgstr "rho"
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2817 gui2/library.c:2989
+#: lib/src/modelprint.c:2817 gui2/library.c:2985
 msgid "Durbin-Watson"
 msgstr "Durbin-Watson"
 
@@ -6100,30 +6096,30 @@ msgstr ""
 msgid "Prob"
 msgstr "Πιθανότητα"
 
-#: lib/src/objstack.c:663 lib/src/objstack.c:699 lib/src/objstack.c:701
+#: lib/src/objstack.c:664 lib/src/objstack.c:700 lib/src/objstack.c:702
 #: gui2/selector.c:3662
 msgid "VAR"
 msgstr "VAR"
 
-#: lib/src/objstack.c:665 lib/src/objstack.c:705 lib/src/objstack.c:707
+#: lib/src/objstack.c:666 lib/src/objstack.c:706 lib/src/objstack.c:708
 #: gui2/selector.c:3666
 msgid "VECM"
 msgstr "VECM"
 
-#: lib/src/objstack.c:671 lib/src/objstack.c:715 lib/src/objstack.c:717
+#: lib/src/objstack.c:672 lib/src/objstack.c:716 lib/src/objstack.c:718
 msgid "System"
 msgstr "Σύστημα"
 
-#: lib/src/objstack.c:937 gui2/objectsave.c:84 gui2/objectsave.c:101
+#: lib/src/objstack.c:938 gui2/objectsave.c:84 gui2/objectsave.c:101
 #, c-format
 msgid "%s saved\n"
 msgstr "%s αποθηκεύτηκε\n"
 
-#: lib/src/objstack.c:1555
+#: lib/src/objstack.c:1610
 msgid "Can't do this: no model has been estimated yet\n"
 msgstr "Δεν μπορώ να προχωρήσω: δεν έχει εκτιμηθεί κανένα υπόδειγμα ακόμα\n"
 
-#: lib/src/objstack.c:1566
+#: lib/src/objstack.c:1621
 msgid ""
 "Can't do: the current data set is different from the one on which\n"
 "the reference model was estimated\n"
@@ -6131,22 +6127,22 @@ msgstr ""
 "Δεν γίνεται: το τρέχον σύνολο δεδομένων είναι διαφορετικό από αυτό\n"
 "με το οποίο το υπόδειγμα αναφοράς εκτιμήθηκε\n"
 
-#: lib/src/options.c:1170
+#: lib/src/options.c:1171
 #, fuzzy, c-format
 msgid "Ambiguous option '--%s'"
 msgstr "Μη-έγκυρη επιλογή '--%s'"
 
-#: lib/src/options.c:1176
+#: lib/src/options.c:1177
 #, c-format
 msgid "Invalid option '--%s'"
 msgstr "Μη-έγκυρη επιλογή '--%s'"
 
-#: lib/src/options.c:1194
+#: lib/src/options.c:1195
 #, c-format
 msgid "The option '--%s' requires a parameter"
 msgstr "Η επιλογή '--%s' απαιτεί μία παράμετρο"
 
-#: lib/src/options.c:1496
+#: lib/src/options.c:1497
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr "Προειδοποίηση: επιλογή%s αγνοείται εκτός του βρόγχου (loop)"
@@ -6179,7 +6175,7 @@ msgstr "βήματα"
 msgid "boxes"
 msgstr "κουτιά"
 
-#: lib/src/plotspec.c:214 gui2/dialogs.c:2906 gui2/dialogs.c:3194
+#: lib/src/plotspec.c:214 gui2/dialogs.c:2911 gui2/dialogs.c:3199
 msgid "error bars"
 msgstr "με γραμμές σφάλματος"
 
@@ -6415,7 +6411,7 @@ msgstr ""
 "Πραγματική πρόβλεψη μόνο όταν όλοι οι στοχαστικοί παλινδρομητές\n"
 "είναι σε υστέρηση."
 
-#: lib/src/printout.c:1245 gui2/guiprint.c:955
+#: lib/src/printout.c:1245 gui2/guiprint.c:948
 #, c-format
 msgid "Model estimation range: %s - %s"
 msgstr "Εύρος εκτίμησης υποδείγματος: %s - %s"
@@ -6433,27 +6429,27 @@ msgstr "Θέτοντας σε λίστα %d μεταβλητές:\n"
 msgid "list is empty"
 msgstr "η λίστα είναι κενή"
 
-#: lib/src/printout.c:2417 gui2/guiprint.c:1414
+#: lib/src/printout.c:2417 gui2/guiprint.c:1407
 msgid "Mean Error"
 msgstr "Μέσο σφάλμα"
 
-#: lib/src/printout.c:2418 gui2/guiprint.c:1415
+#: lib/src/printout.c:2418 gui2/guiprint.c:1408
 msgid "Mean Squared Error"
 msgstr "Μέσο τετραγωνικό σφάλμα"
 
-#: lib/src/printout.c:2419 gui2/guiprint.c:1416
+#: lib/src/printout.c:2419 gui2/guiprint.c:1409
 msgid "Root Mean Squared Error"
 msgstr "Ρίζα μέσου τετραγωνικού σφάλματος"
 
-#: lib/src/printout.c:2420 gui2/guiprint.c:1417
+#: lib/src/printout.c:2420 gui2/guiprint.c:1410
 msgid "Mean Absolute Error"
 msgstr "Μέσο απόλυτο σφάλμα"
 
-#: lib/src/printout.c:2421 gui2/guiprint.c:1418
+#: lib/src/printout.c:2421 gui2/guiprint.c:1411
 msgid "Mean Percentage Error"
 msgstr "Μέσο επί τοις εκατό σφάλμα"
 
-#: lib/src/printout.c:2422 gui2/guiprint.c:1419
+#: lib/src/printout.c:2422 gui2/guiprint.c:1412
 msgid "Mean Absolute Percentage Error"
 msgstr "Μέσο απόλυτο επί τοις εκατό σφάλμα"
 
@@ -6473,7 +6469,7 @@ msgstr "Αναλογία παλινδρόμησης, UR"
 msgid "Disturbance proportion, UD"
 msgstr "Αναλογία διαταράξεων, UD"
 
-#: lib/src/printout.c:2464 gui2/guiprint.c:1443
+#: lib/src/printout.c:2464 gui2/guiprint.c:1436
 msgid "Forecast evaluation statistics"
 msgstr "Στατιστικές αποτίμησης πρόβλεψης"
 
@@ -6492,8 +6488,8 @@ msgstr " Για %g%% διαστήματα εμπιστοσύνης, z(%g) = %.2f
 msgid " For %g%% confidence intervals, t(%d, %g) = %.3f\n"
 msgstr " Για %g%% διαστήματα εμπιστοσύνης, t(%d, %g) = %.3f\n"
 
-#: lib/src/printout.c:2627 gui2/guiprint.c:1677 gui2/guiprint.c:1740
-#: gui2/guiprint.c:1795 gui2/guiprint.c:1836
+#: lib/src/printout.c:2627 gui2/guiprint.c:1670 gui2/guiprint.c:1733
+#: gui2/guiprint.c:1788 gui2/guiprint.c:1829
 msgid "prediction"
 msgstr "πρόβλεψη"
 
@@ -6506,7 +6502,7 @@ msgstr " τυπ. σφάλμα"
 msgid "        %g%% interval\n"
 msgstr "        %g%% διάστημα\n"
 
-#: lib/src/printout.c:2755 gui2/guiprint.c:910 plugin/jrestrict.c:2789
+#: lib/src/printout.c:2755 gui2/guiprint.c:903 plugin/jrestrict.c:2789
 msgid "loglikelihood"
 msgstr "λογ.πιθανοφάνεια"
 
@@ -6743,11 +6739,11 @@ msgstr "δίχως ημερομηνία"
 msgid "special"
 msgstr "ειδικό"
 
-#: lib/src/subsample.c:2151 gui2/dialogs.c:3748
+#: lib/src/subsample.c:2151 gui2/dialogs.c:3753
 msgid "quarterly"
 msgstr "τριμηνιαία"
 
-#: lib/src/subsample.c:2153 gui2/dialogs.c:3748
+#: lib/src/subsample.c:2153 gui2/dialogs.c:3753
 msgid "monthly"
 msgstr "μηνιαία"
 
@@ -6979,7 +6975,7 @@ msgid "Cointegrating vectors"
 msgstr "Διανύσματα συνολοκλήρωσης"
 
 #: lib/src/texprint.c:972 lib/src/texprint.c:1028 lib/src/texprint.c:1582
-#: lib/src/varprint.c:621 lib/src/varprint.c:677 gui2/guiprint.c:920
+#: lib/src/varprint.c:621 lib/src/varprint.c:677 gui2/guiprint.c:913
 #: plugin/jrestrict.c:2811 plugin/jrestrict.c:2845
 msgid "standard errors in parentheses"
 msgstr "τυπικά σφάλματα σε παρενθέσεις"
@@ -7289,12 +7285,12 @@ msgstr ""
 msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
 msgstr "υστ.        λογ.-πιθ  p(LR)       AIC          BIC          HQC"
 
-#: lib/src/vartest.c:772
+#: lib/src/vartest.c:775
 #, fuzzy
 msgid "Test on the original VAR"
 msgstr "Στατιστικές με βάση τα αρχικά δεδομένα"
 
-#: lib/src/vartest.c:1061
+#: lib/src/vartest.c:1064
 msgid "Test on VAR"
 msgstr ""
 
@@ -7374,21 +7370,21 @@ msgstr ""
 msgid "OK, staying with current data set\n"
 msgstr "OK, παραμένω με το τρέχον σύνολο δεδομένων\n"
 
-#: cli/gretlcli.c:904 gui2/library.c:8438
+#: cli/gretlcli.c:904 gui2/library.c:8435
 #, c-format
 msgid "Command '%s' ignored; not valid within equation system\n"
 msgstr "Εντολή '%s' αγνοήθηκε, άκυρη μέσα σε σύστημα εξισώσεων\n"
 
-#: cli/gretlcli.c:912 gui2/library.c:8446
+#: cli/gretlcli.c:912 gui2/library.c:8443
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
 msgstr ""
 "Εισάγετε εντολές για βρόγχο (loop).  Πληκτρολογείστε 'endloop' για έξοδο\n"
 
-#: cli/gretlcli.c:973 gui2/library.c:6524 gui2/library.c:8524
+#: cli/gretlcli.c:973 gui2/library.c:6520 gui2/library.c:8521
 msgid "Take note: variables have been renumbered"
 msgstr "Σημείωση: οι μεταβλητές αριθμήθηκαν ξανά"
 
-#: cli/gretlcli.c:995 gui2/library.c:8570
+#: cli/gretlcli.c:995 gui2/library.c:8567
 msgid "Data series length count missing or invalid\n"
 msgstr "Η μέτρηση του μήκους της σειράς λείπει ή είναι μη-έγκυρη\n"
 
@@ -7412,7 +7408,7 @@ msgstr ""
 msgid "writing session output to %s%s\n"
 msgstr "εγγραφή αποτελέσματος συνεδρίας στο %s%s\n"
 
-#: cli/gretlcli.c:1067 cli/gretlcli.c:1082 gui2/library.c:8603
+#: cli/gretlcli.c:1067 cli/gretlcli.c:1082 gui2/library.c:8600
 #, c-format
 msgid "Error reading %s\n"
 msgstr "Σφάλμα στην ανάγνωση του %s\n"
@@ -7504,7 +7500,7 @@ msgstr "Τυπικά σφάλματα"
 msgid "Incomplete entry"
 msgstr "Ατελής εισαγωγή"
 
-#: gui2/calculator.c:1023 gui2/dialogs.c:935
+#: gui2/calculator.c:1023 gui2/dialogs.c:940
 msgid "Invalid entry"
 msgstr "Άκυρη εισαγωγή"
 
@@ -7817,9 +7813,9 @@ msgstr "Απούσες τιμές για τη μεταβλητή '%s'"
 msgid "Variable %d"
 msgstr "Μεταβλητή %d"
 
-#: gui2/calculator.c:2332 gui2/guiprint.c:747 gui2/guiprint.c:770
-#: gui2/guiprint.c:792 gui2/guiprint.c:1067 gui2/guiprint.c:1094
-#: gui2/guiprint.c:1121 gui2/guiprint.c:1928 gui2/guiprint.c:1978
+#: gui2/calculator.c:2332 gui2/guiprint.c:740 gui2/guiprint.c:763
+#: gui2/guiprint.c:785 gui2/guiprint.c:1060 gui2/guiprint.c:1087
+#: gui2/guiprint.c:1114 gui2/guiprint.c:1921 gui2/guiprint.c:1971
 #: gui2/selector.c:7824
 msgid "Variable"
 msgstr "Μεταβλητή"
@@ -7968,7 +7964,7 @@ msgstr "αναλογία, δείγμα 2"
 msgid "H0: Difference of proportions = 0"
 msgstr "H0: Διαφορά αναλογιών = 0"
 
-#: gui2/calculator.c:2713 gui2/dialogs.c:1102
+#: gui2/calculator.c:2713 gui2/dialogs.c:1107
 msgid "Show graph of sampling distribution"
 msgstr "Εμφάνιση γραφήματος κατανομής δειγματοληψίας"
 
@@ -8053,7 +8049,7 @@ msgstr "gretl: προσθήκη μεταβλητής"
 msgid "Enter formula for new variable:"
 msgstr "Εισάγετε εξίσωση (όνομα = ) της νέας μεταβλητής:"
 
-#: gui2/callbacks.c:423 gui2/library.c:891
+#: gui2/callbacks.c:423 gui2/library.c:887
 msgid "gretl: cointegration test"
 msgstr "gretl: έλεγχος συνολοκλήρωσης"
 
@@ -8061,17 +8057,17 @@ msgstr "gretl: έλεγχος συνολοκλήρωσης"
 msgid "gretl: VAR"
 msgstr "gretl: VAR"
 
-#: gui2/callbacks.c:425 gui2/library.c:3194 gui2/library.c:4225
+#: gui2/callbacks.c:425 gui2/library.c:3190 gui2/library.c:4221
 #: gui2/selector.c:818
 msgid "gretl: VECM"
 msgstr "gretl: VECM"
 
-#: gui2/callbacks.c:428 gui2/library.c:4213
+#: gui2/callbacks.c:428 gui2/library.c:4209
 msgid "gretl: VAR lag selection"
 msgstr "gretl: VAR επιλογή υστέρησης"
 
 #: gui2/callbacks.c:457 gui2/callbacks.c:471 gui2/callbacks.c:474
-#: gui2/callbacks.c:631 gui2/callbacks.c:640 gui2/library.c:6952
+#: gui2/callbacks.c:631 gui2/callbacks.c:640 gui2/library.c:6948
 #: gui2/toolbar.c:1068
 msgid "gretl: define graph"
 msgstr "gretl: καθορισμός γραφήματος"
@@ -8081,7 +8077,7 @@ msgstr "gretl: καθορισμός γραφήματος"
 msgid "gretl: model tests"
 msgstr "gretl: έλεγχοι υποδείγματος"
 
-#: gui2/callbacks.c:479 gui2/library.c:1344
+#: gui2/callbacks.c:479 gui2/library.c:1340
 msgid "rank correlation"
 msgstr "συσχέτιση βαθμού"
 
@@ -8089,7 +8085,7 @@ msgstr "συσχέτιση βαθμού"
 msgid "Loess"
 msgstr ""
 
-#: gui2/callbacks.c:485 gui2/library.c:3984 gui2/selector.c:3681
+#: gui2/callbacks.c:485 gui2/library.c:3980 gui2/selector.c:3681
 msgid "Nadaraya-Watson"
 msgstr ""
 
@@ -8158,7 +8154,7 @@ msgstr "gretl: μη-γραμμικά ελάχιστα τετράγωνα"
 msgid "NLS: Specify function, and derivatives if possible:"
 msgstr "NLS: καθορισμός συνάρτησης, και παραγώγων αν είναι δυνατόν:"
 
-#: gui2/callbacks.c:589 gui2/callbacks.c:685 gui2/library.c:3344
+#: gui2/callbacks.c:589 gui2/callbacks.c:685 gui2/library.c:3340
 msgid "gretl: simultaneous equations system"
 msgstr "gretl: σύστημα ταυτόχρονων εξισώσεων"
 
@@ -8209,7 +8205,7 @@ msgstr "Αριθμός παρατηρήσεων:"
 msgid "Failed to create empty data set"
 msgstr "Αποτυχία στην κατασκευή κενού αρχείου δεδομένων"
 
-#: gui2/callbacks.c:749 gui2/library.c:1378
+#: gui2/callbacks.c:749 gui2/library.c:1374
 msgid "cross-correlogram"
 msgstr "σταυροειδές κορρελλόγραμμα"
 
@@ -8256,12 +8252,12 @@ msgstr "Ανάκτηση δεδομένων..."
 msgid "gretl: display database series"
 msgstr "gretl: προβολή σειρών συνόλου δεδομένων"
 
-#: gui2/database.c:213 gui2/dialogs.c:3848
+#: gui2/database.c:213 gui2/dialogs.c:3853
 #, fuzzy
 msgid "Interpolate higher frequency values"
 msgstr "Σχετική συχνότητα"
 
-#: gui2/database.c:214 gui2/dialogs.c:3849
+#: gui2/database.c:214 gui2/dialogs.c:3854
 msgid "Repeat the lower frequency values"
 msgstr ""
 
@@ -8572,7 +8568,7 @@ msgstr "gretl: επακέτα δεδομένων στον διακομιστή"
 msgid "gretl: addons"
 msgstr "gretl: πρόσθεση πληροφοριών"
 
-#: gui2/datafiles.c:2056 gui2/fnsave.c:2664
+#: gui2/datafiles.c:2056 gui2/fnsave.c:2730
 msgid "gretl: function packages"
 msgstr "gretl: πακέτα συναρτήσεων"
 
@@ -8630,7 +8626,7 @@ msgid "Package"
 msgstr "Πακέτο"
 
 #: gui2/datafiles.c:2169 gui2/datafiles.c:2175 gui2/datafiles.c:2182
-#: gui2/fnsave.c:1681
+#: gui2/fnsave.c:1747
 msgid "Version"
 msgstr "Έκδοση"
 
@@ -8638,7 +8634,7 @@ msgstr "Έκδοση"
 msgid "Loaded?"
 msgstr "Φορτώθηκε;"
 
-#: gui2/datafiles.c:2176 gui2/fnsave.c:1680
+#: gui2/datafiles.c:2176 gui2/fnsave.c:1746
 msgid "Author"
 msgstr "Συγγραφέας"
 
@@ -8683,7 +8679,7 @@ msgstr ""
 "Εισάγετε ονομασία για την πρώτη μεταβλητή\n"
 "(max 15 χαρακτήρες)"
 
-#: gui2/datawiz.c:174 gui2/dialogs.c:5298 gui2/ssheet.c:966
+#: gui2/datawiz.c:174 gui2/dialogs.c:5303 gui2/ssheet.c:966
 msgid "gretl: name variable"
 msgstr "gretl: ονομασία μεταβλητής"
 
@@ -8691,31 +8687,31 @@ msgstr "gretl: ονομασία μεταβλητής"
 msgid "No changes were made"
 msgstr "Δεν έγιναν αλλαγές"
 
-#: gui2/datawiz.c:399 gui2/dialogs.c:3531 gui2/menustate.c:667
+#: gui2/datawiz.c:399 gui2/dialogs.c:3536 gui2/menustate.c:667
 msgid "Annual"
 msgstr "Ετήσια"
 
-#: gui2/datawiz.c:400 gui2/dialogs.c:3530 gui2/menustate.c:669
+#: gui2/datawiz.c:400 gui2/dialogs.c:3535 gui2/menustate.c:669
 msgid "Quarterly"
 msgstr "Τριμηνιαία"
 
-#: gui2/datawiz.c:401 gui2/dialogs.c:3536 gui2/menustate.c:671
+#: gui2/datawiz.c:401 gui2/dialogs.c:3541 gui2/menustate.c:671
 msgid "Monthly"
 msgstr "Μηνιαία"
 
-#: gui2/datawiz.c:402 gui2/dialogs.c:3535 gui2/menustate.c:675
+#: gui2/datawiz.c:402 gui2/dialogs.c:3540 gui2/menustate.c:675
 msgid "Weekly"
 msgstr "Εβδομαδιαία"
 
-#: gui2/datawiz.c:403 gui2/dialogs.c:3542
+#: gui2/datawiz.c:403 gui2/dialogs.c:3547
 msgid "Daily (5 days)"
 msgstr "Ημερήσια (5 ημέρες)"
 
-#: gui2/datawiz.c:404 gui2/dialogs.c:3543
+#: gui2/datawiz.c:404 gui2/dialogs.c:3548
 msgid "Daily (6 days)"
 msgstr "Ημερήσια (6 ημέρες)"
 
-#: gui2/datawiz.c:405 gui2/dialogs.c:3541
+#: gui2/datawiz.c:405 gui2/dialogs.c:3546
 msgid "Daily (7 days)"
 msgstr "Ημερήσια (7 ημέρες)"
 
@@ -8755,31 +8751,31 @@ msgstr "Διαστρωματικά δεδομένα"
 msgid "Panel"
 msgstr "Panel δεδομένα"
 
-#: gui2/datawiz.c:511 gui2/dialogs.c:3597
+#: gui2/datawiz.c:511 gui2/dialogs.c:3602
 msgid "Monday"
 msgstr "Δευτέρα"
 
-#: gui2/datawiz.c:512 gui2/dialogs.c:3598
+#: gui2/datawiz.c:512 gui2/dialogs.c:3603
 msgid "Tuesday"
 msgstr "Τρίτη"
 
-#: gui2/datawiz.c:513 gui2/dialogs.c:3599
+#: gui2/datawiz.c:513 gui2/dialogs.c:3604
 msgid "Wednesday"
 msgstr "Τετάρτη"
 
-#: gui2/datawiz.c:514 gui2/dialogs.c:3600
+#: gui2/datawiz.c:514 gui2/dialogs.c:3605
 msgid "Thursday"
 msgstr "Πέμπτη"
 
-#: gui2/datawiz.c:515 gui2/dialogs.c:3601
+#: gui2/datawiz.c:515 gui2/dialogs.c:3606
 msgid "Friday"
 msgstr "Παρασκευή"
 
-#: gui2/datawiz.c:516 gui2/dialogs.c:3602
+#: gui2/datawiz.c:516 gui2/dialogs.c:3607
 msgid "Saturday"
 msgstr "Σάββατο"
 
-#: gui2/datawiz.c:517 gui2/dialogs.c:3596
+#: gui2/datawiz.c:517 gui2/dialogs.c:3601
 msgid "Sunday"
 msgstr "Κυριακή"
 
@@ -8952,572 +8948,572 @@ msgstr "Comma διαχωρισμός"
 msgid "plain text"
 msgstr "απλό κείμενο (plain text)"
 
-#: gui2/dialogs.c:805
+#: gui2/dialogs.c:810
 msgid "gretl: select format"
 msgstr "gretl: επιλογή μορφότυπου"
 
-#: gui2/dialogs.c:822
+#: gui2/dialogs.c:827
 msgid "Copy as:"
 msgstr "Αντιγραφή ως:"
 
-#: gui2/dialogs.c:822
+#: gui2/dialogs.c:827
 msgid "Save as"
 msgstr "Αποθήκευση ως"
 
-#: gui2/dialogs.c:1011 gui2/library.c:1966
+#: gui2/dialogs.c:1016 gui2/library.c:1962
 msgid "gretl: bootstrap analysis"
 msgstr "gretil: αυτοδύναμη (bootstrap) ανάλυση"
 
-#: gui2/dialogs.c:1039
+#: gui2/dialogs.c:1044
 msgid "Confidence interval"
 msgstr "Διάστημα εμπιστοσύνης"
 
-#: gui2/dialogs.c:1047
+#: gui2/dialogs.c:1052
 msgid "Studentized confidence interval"
 msgstr "Studentized διάστημα εμπιστοσύνης"
 
-#: gui2/dialogs.c:1068
+#: gui2/dialogs.c:1073
 msgid "Resample residuals"
 msgstr "Αναδειγματοληψία καταλοίπων"
 
-#: gui2/dialogs.c:1076
+#: gui2/dialogs.c:1081
 msgid "Simulate normal errors"
 msgstr "Προσομοίωση κανονικών σφαλμάτων"
 
-#: gui2/dialogs.c:1088
+#: gui2/dialogs.c:1093
 msgid "Number of replications:"
 msgstr "Αριθμός επαναλήψεων:"
 
-#: gui2/dialogs.c:1109
+#: gui2/dialogs.c:1114
 msgid "Save bootstrap data to file"
 msgstr "Αποθήκευση bootstrap δεδομένων σε αρχείο"
 
-#: gui2/dialogs.c:1185
+#: gui2/dialogs.c:1190
 msgid "gretl: database description"
 msgstr "gretl: περιγραφή βάσης δεδομένων"
 
-#: gui2/dialogs.c:1189
+#: gui2/dialogs.c:1194
 msgid "description:"
 msgstr "περιγραφή:"
 
-#: gui2/dialogs.c:1247
+#: gui2/dialogs.c:1252
 msgid "gretl: seed for random numbers"
 msgstr "gretl: φύτρο τυχαίων αριθμών"
 
-#: gui2/dialogs.c:1251
+#: gui2/dialogs.c:1256
 msgid "Seed for generator:"
 msgstr "Φύτρο γεννήτριας:"
 
-#: gui2/dialogs.c:1318
+#: gui2/dialogs.c:1323
 #, fuzzy
 msgid "Choose named list"
 msgstr "Ορισμός λίστας (με όνομα)"
 
-#: gui2/dialogs.c:1432
+#: gui2/dialogs.c:1437
 msgid "gretl: iteration controls"
 msgstr "gretl:ρυθμίσεις επαναλήψεων"
 
-#: gui2/dialogs.c:1449
+#: gui2/dialogs.c:1454
 msgid "BHHH maximizer"
 msgstr "BHHH αλγόριθμος μεγιστοποίησης"
 
-#: gui2/dialogs.c:1450
+#: gui2/dialogs.c:1455
 msgid "BFGS maximizer"
 msgstr "BFGS αλγόριθμος μεγιστοποίησης"
 
-#: gui2/dialogs.c:1458
+#: gui2/dialogs.c:1463
 msgid "Maximum iterations:"
 msgstr "Μέγιστο όριο επαναλήψεων:"
 
-#: gui2/dialogs.c:1469
+#: gui2/dialogs.c:1474
 msgid "Convergence tolerance:"
 msgstr "Ανεκτικότητα σύγκλισης:"
 
-#: gui2/dialogs.c:1492
+#: gui2/dialogs.c:1497
 msgid "Use L-BFGS-B, memory size:"
 msgstr "Χρήση L-BFGS-B, μέγεθος μνήμης:"
 
-#: gui2/dialogs.c:1743
+#: gui2/dialogs.c:1748
 #, fuzzy, c-format
 msgid "groups (N = %d)"
 msgstr "%s (n = %d, %s)"
 
-#: gui2/dialogs.c:1745
+#: gui2/dialogs.c:1750
 #, c-format
 msgid "Included groups: %d"
 msgstr "Ομάδες που περιλήφθησαν: %d"
 
-#: gui2/dialogs.c:1747
+#: gui2/dialogs.c:1752
 #, c-format
 msgid "Observations: %d"
 msgstr "Παρατηρήσεις: %d"
 
-#: gui2/dialogs.c:1848
+#: gui2/dialogs.c:1853
 msgid "Panel groups"
 msgstr "Panel ομάδες"
 
-#: gui2/dialogs.c:1854 gui2/dialogs.c:2275 gui2/dialogs.c:2390
+#: gui2/dialogs.c:1859 gui2/dialogs.c:2280 gui2/dialogs.c:2395
 msgid "Start:"
 msgstr "Αρχή:"
 
-#: gui2/dialogs.c:1873 gui2/dialogs.c:2275 gui2/dialogs.c:2390
+#: gui2/dialogs.c:1878 gui2/dialogs.c:2280 gui2/dialogs.c:2395
 msgid "End:"
 msgstr "Τέλος:"
 
-#: gui2/dialogs.c:1915 gui2/dialogs.c:2243
+#: gui2/dialogs.c:1920 gui2/dialogs.c:2248
 msgid "gretl: set sample"
 msgstr "gretl: καθορισμός δείγματος"
 
-#: gui2/dialogs.c:2036
+#: gui2/dialogs.c:2041
 #, fuzzy
 msgid "Groups"
 msgstr "WLS με διαστρωματική διακύμανση (Groupwise WLS)"
 
-#: gui2/dialogs.c:2036
+#: gui2/dialogs.c:2041
 #, fuzzy
 msgid "Periods"
 msgstr "περίοδοι"
 
-#: gui2/dialogs.c:2043 gui2/selector.c:7880
+#: gui2/dialogs.c:2048 gui2/selector.c:7880
 msgid "to"
 msgstr "σε"
 
-#: gui2/dialogs.c:2254
+#: gui2/dialogs.c:2259
 #, c-format
 msgid "Number of observations to select (max %d)"
 msgstr "Αριθμός παρατηρήσεων προς επιλογή (max %d)"
 
-#: gui2/dialogs.c:2274
+#: gui2/dialogs.c:2279
 msgid "Set sample range"
 msgstr "Θέστε το εύρος του δείγματος"
 
-#: gui2/dialogs.c:2379
+#: gui2/dialogs.c:2384
 #, fuzzy
 msgid "gretl: define dummy"
 msgstr "gretl: καθορισμός γραφήματος"
 
-#: gui2/dialogs.c:2389
+#: gui2/dialogs.c:2394
 #, fuzzy
 msgid "Set dummy range"
 msgstr "Θέστε το εύρος του δείγματος"
 
-#: gui2/dialogs.c:2408 gui2/varinfo.c:998
+#: gui2/dialogs.c:2413 gui2/varinfo.c:998
 msgid "Name of variable:"
 msgstr "Όνομα μεταβλητής:"
 
-#: gui2/dialogs.c:2484
+#: gui2/dialogs.c:2489
 #, fuzzy
 msgid "single graph: group means"
 msgstr "Κάντε κλίκ στο γράφημα για αναδυόμενο μενού"
 
-#: gui2/dialogs.c:2485
+#: gui2/dialogs.c:2490
 msgid "single graph: groups overlaid (N <= 80)"
 msgstr ""
 
-#: gui2/dialogs.c:2486
+#: gui2/dialogs.c:2491
 msgid "single graph: groups in sequence (N <= 80)"
 msgstr ""
 
-#: gui2/dialogs.c:2487
+#: gui2/dialogs.c:2492
 #, fuzzy
 msgid "multiple plots in grid (N <= 16)"
 msgstr "πολλαπλά γραφήματα σε πλαίσιο"
 
-#: gui2/dialogs.c:2488
+#: gui2/dialogs.c:2493
 #, fuzzy
 msgid "multiple plots arranged vertically (N <= 6)"
 msgstr "πολλαπλά γραφήματα σε κάθετη διευθέτηση"
 
-#: gui2/dialogs.c:2489
+#: gui2/dialogs.c:2494
 msgid "boxplots by group (N <= 150)"
 msgstr ""
 
-#: gui2/dialogs.c:2490
+#: gui2/dialogs.c:2495
 #, fuzzy
 msgid "single boxplot"
 msgstr "gretl: θηκογράμματα"
 
-#: gui2/dialogs.c:2502 gui2/dialogs.c:2514
+#: gui2/dialogs.c:2507 gui2/dialogs.c:2519
 #, fuzzy
 msgid "panel plot"
 msgstr "panel"
 
-#: gui2/dialogs.c:2617
+#: gui2/dialogs.c:2622
 msgid "Enter boolean condition for selecting cases:"
 msgstr "Εισάγετε λογική συνθήκη (boolean condition) για επιλογή δείγματος:"
 
-#: gui2/dialogs.c:2625
+#: gui2/dialogs.c:2630
 msgid "gretl: restrict sample"
 msgstr "gretl: περιορισμός δείγματος"
 
-#: gui2/dialogs.c:2663
+#: gui2/dialogs.c:2668
 msgid "Use dummy variable:"
 msgstr "Χρήση ψευδομεταβλητής:"
 
-#: gui2/dialogs.c:2681
+#: gui2/dialogs.c:2686
 msgid "add to current restriction"
 msgstr "Προσθήκη στον τρέχοντα περιορισμό"
 
-#: gui2/dialogs.c:2689
+#: gui2/dialogs.c:2694
 msgid "replace current restriction"
 msgstr "Αντικατάσταση τρέχοντα περιορισμού"
 
-#: gui2/dialogs.c:2747
+#: gui2/dialogs.c:2752
 msgid "Observation at which to split the sample:"
 msgstr "Παρατήρηση στην οποία θα διαχωριστεί το δείγμαe:"
 
-#: gui2/dialogs.c:2748
+#: gui2/dialogs.c:2753
 msgid "Name of dummy variable to use:"
 msgstr "Ονομασία ψευδομεταβλητής προς χρήση:"
 
-#: gui2/dialogs.c:2758
+#: gui2/dialogs.c:2763
 msgid "gretl: Chow test"
 msgstr "gretl: Chow έλεγχος"
 
-#: gui2/dialogs.c:2900 gui2/dialogs.c:3196
+#: gui2/dialogs.c:2905 gui2/dialogs.c:3201
 msgid "shaded area"
 msgstr "σκιασμένη περιοχή"
 
-#: gui2/dialogs.c:2952
+#: gui2/dialogs.c:2957
 #, fuzzy
 msgid "Show interval for"
 msgstr "%g%% διάστημα"
 
-#: gui2/dialogs.c:2955
+#: gui2/dialogs.c:2960
 #, fuzzy
 msgid "actual Y"
 msgstr "πραγματική"
 
-#: gui2/dialogs.c:2956
+#: gui2/dialogs.c:2961
 #, fuzzy
 msgid "mean Y"
 msgstr "μέσος"
 
-#: gui2/dialogs.c:2992
+#: gui2/dialogs.c:2997
 msgid "Produce forecast for"
 msgstr "Δημιουργία πρόβλεψης για"
 
-#: gui2/dialogs.c:3044
+#: gui2/dialogs.c:3049
 msgid "Number of pre-forecast observations to graph"
 msgstr "Αριθμός παρατηρήσεων προ της πρόβλεψης για το γράφημα"
 
-#: gui2/dialogs.c:3047
+#: gui2/dialogs.c:3052
 msgid "automatic forecast (dynamic out of sample)"
 msgstr "αυτόματη πρόβλεψη (δυναμική εκτός δείγματος)"
 
-#: gui2/dialogs.c:3048
+#: gui2/dialogs.c:3053
 msgid "dynamic forecast"
 msgstr "δυναμική πρόβλεψη"
 
-#: gui2/dialogs.c:3049
+#: gui2/dialogs.c:3054
 msgid "static forecast"
 msgstr "στατική πρόβλεψη"
 
-#: gui2/dialogs.c:3050
+#: gui2/dialogs.c:3055
 msgid "rolling k-step ahead forecasts: k = "
 msgstr "κυλιόμενες k-βηματικές εμπρός προβλέψεις: k = "
 
-#: gui2/dialogs.c:3063
+#: gui2/dialogs.c:3068
 msgid "gretl: forecast"
 msgstr "gretl: πρόβλεψη"
 
-#: gui2/dialogs.c:3072
+#: gui2/dialogs.c:3077
 msgid "Forecast range:"
 msgstr "Εύρος Πρόβλεψης:"
 
-#: gui2/dialogs.c:3073
+#: gui2/dialogs.c:3078
 msgid "Start"
 msgstr "Αρχή"
 
-#: gui2/dialogs.c:3073
+#: gui2/dialogs.c:3078
 msgid "End"
 msgstr "Τέλος"
 
-#: gui2/dialogs.c:3182
+#: gui2/dialogs.c:3187
 msgid "Show fitted values for pre-forecast range"
 msgstr "Προβολή προσαρμοσμένων τιμών στο προ της προβλεψεως εύρος"
 
-#: gui2/dialogs.c:3195
+#: gui2/dialogs.c:3200
 msgid "low and high lines"
 msgstr "κάτω και άνω γραμμές"
 
-#: gui2/dialogs.c:3226
+#: gui2/dialogs.c:3231
 msgid "Plot confidence interval using"
 msgstr "Γράφημα διαστήματος εμπιστοσύνης με χρήση"
 
-#: gui2/dialogs.c:3291
+#: gui2/dialogs.c:3296
 msgid "Add observations"
 msgstr "Προσθήκη παρατήρησης"
 
-#: gui2/dialogs.c:3304
+#: gui2/dialogs.c:3309
 msgid "Number of observations to add:"
 msgstr "Αριθμός παρατηρήσεων:"
 
-#: gui2/dialogs.c:3395
+#: gui2/dialogs.c:3400
 msgid "select variable"
 msgstr "επιλογή μεταβλητής"
 
-#: gui2/dialogs.c:3574
+#: gui2/dialogs.c:3579
 msgid "Week starts on Monday"
 msgstr "Εβδομάδα ξεκινά την Δευτέρα"
 
-#: gui2/dialogs.c:3585
+#: gui2/dialogs.c:3590
 msgid "Week starts on Sunday"
 msgstr "Εβδομάδα ξεκινά την Δευτέρα"
 
-#: gui2/dialogs.c:3625
+#: gui2/dialogs.c:3630
 msgid "Compact by averaging"
 msgstr "Συμπύκνωση με χρήση μέσου όρου"
 
-#: gui2/dialogs.c:3626
+#: gui2/dialogs.c:3631
 msgid "Compact by summing"
 msgstr "Συμπύκνωση μέσω αθροίσματος"
 
-#: gui2/dialogs.c:3627
+#: gui2/dialogs.c:3632
 msgid "Use end-of-period values"
 msgstr "Χρήση τελευταίας τιμής περιόδου"
 
-#: gui2/dialogs.c:3628
+#: gui2/dialogs.c:3633
 msgid "Use start-of-period values"
 msgstr "Χρήση πρώτης τιμής περιόδου"
 
-#: gui2/dialogs.c:3646
+#: gui2/dialogs.c:3651
 msgid "Default method:"
 msgstr "Προκαθορισμένη μέθοδος:"
 
-#: gui2/dialogs.c:3669
+#: gui2/dialogs.c:3674
 msgid "Use representative day"
 msgstr "Χρήση αντιπροσωπευτικής ημέρας"
 
-#: gui2/dialogs.c:3732
+#: gui2/dialogs.c:3737
 msgid "gretl: compact data"
 msgstr "gretl: συμπύκνωση δεδομένων"
 
-#: gui2/dialogs.c:3747
+#: gui2/dialogs.c:3752
 #, c-format
 msgid "You are adding a %s series to %s dataset"
 msgstr "Προσθέτετε μία %s σειρά στο %s σύνολο δεδομένων"
 
-#: gui2/dialogs.c:3749
+#: gui2/dialogs.c:3754
 msgid "a quarterly"
 msgstr ""
 
-#: gui2/dialogs.c:3749
+#: gui2/dialogs.c:3754
 msgid "an annual"
 msgstr ""
 
-#: gui2/dialogs.c:3754
+#: gui2/dialogs.c:3759
 msgid "Compact quarterly data to annual"
 msgstr "Συμπίεση τριμηνιαίων δεδομένων σε ετήσια"
 
-#: gui2/dialogs.c:3757
+#: gui2/dialogs.c:3762
 msgid "Compact monthly data to:"
 msgstr "Συμπίεση μηνιαίων δεδομένων σε:"
 
-#: gui2/dialogs.c:3763
+#: gui2/dialogs.c:3768
 msgid "Compact daily data to:"
 msgstr "Συμπίεση ημερήσιων δεδομένων σε:"
 
-#: gui2/dialogs.c:3766
+#: gui2/dialogs.c:3771
 msgid "Compact daily data to weekly"
 msgstr "Συμπίεση ημερήσιων δεδομένων σε εβδομαδιαία"
 
-#: gui2/dialogs.c:3773
+#: gui2/dialogs.c:3778
 msgid "Compact weekly data to monthly"
 msgstr "Συμπίεση εβδομαδιαίων δεδομένων σε μηνιαία"
 
-#: gui2/dialogs.c:3776
+#: gui2/dialogs.c:3781
 msgid "Compact hourly data to:"
 msgstr "Συμπίεση ωριαίων δεδομένων σε:"
 
-#: gui2/dialogs.c:3879
+#: gui2/dialogs.c:3884
 msgid "gretl: expand data"
 msgstr "gretl: διαστολή δεδομένων"
 
-#: gui2/dialogs.c:3882
+#: gui2/dialogs.c:3887
 #, fuzzy
 msgid "Expand annual data to quarterly"
 msgstr "Διαστολή ετήσιων δεδομένων σε:"
 
-#: gui2/dialogs.c:3884
+#: gui2/dialogs.c:3889
 msgid "Expand quarterly data to monthly"
 msgstr "Διαστολή τριμηνιαίων δεδομένων σε μηνιαία"
 
-#: gui2/dialogs.c:4047
+#: gui2/dialogs.c:4052
 msgid "density estimation options"
 msgstr "Επιλογές εκτίμησης πυκνότητας"
 
-#: gui2/dialogs.c:4054 plugin/kernel.c:107
+#: gui2/dialogs.c:4059 plugin/kernel.c:107
 msgid "Gaussian kernel"
 msgstr "Gaussian kernel (Gaussian συνάρτηση πυρήνα)"
 
-#: gui2/dialogs.c:4064 plugin/kernel.c:108
+#: gui2/dialogs.c:4069 plugin/kernel.c:108
 msgid "Epanechnikov kernel"
 msgstr "Epanechnikov kernel (Συνάρτηση πυρήνα Epanechnikov)"
 
-#: gui2/dialogs.c:4079
+#: gui2/dialogs.c:4084
 msgid "bandwidth adjustment factor:"
 msgstr "Παράγοντας προσαρμογής εύρους ζώνης (bandwidth adjustment factor):"
 
-#: gui2/dialogs.c:4118
+#: gui2/dialogs.c:4123
 #, fuzzy
 msgid "paste data from clipboard"
 msgstr "Αντιγραφή στο Πρόχειρο"
 
-#: gui2/dialogs.c:4125
+#: gui2/dialogs.c:4130
 msgid "Try pasting data from clipboard?"
 msgstr ""
 
-#: gui2/dialogs.c:4134
+#: gui2/dialogs.c:4139
 #, fuzzy
 msgid "Clear current dataset first"
 msgstr "Παρακαλώ, ανοίξτε πρώτα ένα αρχείο δεδομένων"
 
-#: gui2/dialogs.c:4145
+#: gui2/dialogs.c:4150
 #, fuzzy
 msgid "Try appending to current dataset"
 msgstr "OK, παραμένω με το τρέχον σύνολο δεδομένων\n"
 
-#: gui2/dialogs.c:4393
+#: gui2/dialogs.c:4398
 #, fuzzy
 msgid "No model is specified"
 msgstr "Δεν υπάρχει διαθέσιμο υπόδειγμα"
 
-#: gui2/dialogs.c:4615
+#: gui2/dialogs.c:4620
 msgid "gretl: periodogram"
 msgstr "περιοδόγραμμα"
 
-#: gui2/dialogs.c:4621
+#: gui2/dialogs.c:4626
 #, fuzzy
 msgid "Sample periodogram"
 msgstr "Δειγματικό Περιοδόγραμμα"
 
-#: gui2/dialogs.c:4626
+#: gui2/dialogs.c:4631
 #, fuzzy
 msgid "Bartlett window, bandwidth:"
 msgstr "Παράθυρο Bartlett, μήκος %d"
 
-#: gui2/dialogs.c:4648
+#: gui2/dialogs.c:4653
 #, fuzzy
 msgid "frequency axis scale:"
 msgstr "συχνότητα %d δεν υποστηρίζεται"
 
-#: gui2/dialogs.c:4815
+#: gui2/dialogs.c:4820
 msgid "Number of bins:"
 msgstr "Αριθμός κλάσεων"
 
-#: gui2/dialogs.c:4816
+#: gui2/dialogs.c:4821
 msgid "Minimum value, left bin:"
 msgstr "Ελάχιστη τιμή, αριστερή κλάση"
 
-#: gui2/dialogs.c:4817
+#: gui2/dialogs.c:4822
 msgid "Bin width:"
 msgstr "Εύρος κλάσης:"
 
-#: gui2/dialogs.c:4820
+#: gui2/dialogs.c:4825
 msgid "Show data only"
 msgstr "Εμφάνισε μόνο τα δεδομένα"
 
-#: gui2/dialogs.c:4821
+#: gui2/dialogs.c:4826
 msgid "Test against normal distribution"
 msgstr "Έλεγχος ως προς την κανονική κατανομή"
 
-#: gui2/dialogs.c:4822
+#: gui2/dialogs.c:4827
 msgid "Test against gamma distribution"
 msgstr "Έλεγχος ως προς την κατανομή γάμμα"
 
-#: gui2/dialogs.c:4938 gui2/gui_utils.c:4532
+#: gui2/dialogs.c:4943 gui2/gui_utils.c:4545 gui2/gui_utils.c:4558
 msgid "show plot"
 msgstr "εμφάνιση γραφήματος"
 
-#: gui2/dialogs.c:5008
+#: gui2/dialogs.c:5013
 msgid "Use model names"
 msgstr "Χρληση ονομάτων υποδειγμάτων"
 
-#: gui2/dialogs.c:5011
+#: gui2/dialogs.c:5016
 msgid "Show standard errors in parentheses"
 msgstr "Εμφάνιση τυπικών σφαλμάτων σε παρενθέσεις"
 
-#: gui2/dialogs.c:5012
+#: gui2/dialogs.c:5017
 msgid "Show t-statistics in parentheses"
 msgstr "Εμφάνιση t-στατιστικών σε παρενθέσεις"
 
-#: gui2/dialogs.c:5030
+#: gui2/dialogs.c:5035
 msgid "model table options"
 msgstr "επιλογές πίνακα υποδείγματος"
 
-#: gui2/dialogs.c:5037
+#: gui2/dialogs.c:5042
 msgid "column headings"
 msgstr "Επικεφαλίδα στήλης"
 
-#: gui2/dialogs.c:5078 gui2/selector.c:5684
+#: gui2/dialogs.c:5083 gui2/selector.c:5684
 msgid "Show p-values"
 msgstr "Εμφάνιση p-τιμών"
 
-#: gui2/dialogs.c:5085
+#: gui2/dialogs.c:5090
 msgid "Show significance asterisks"
 msgstr "Επίδειξη αστερίσκων σημαντικότητας"
 
-#: gui2/dialogs.c:5094 gui2/dialogs.c:5531 gui2/series_view.c:670
+#: gui2/dialogs.c:5099 gui2/dialogs.c:5536 gui2/series_view.c:670
 msgid "Show"
 msgstr "Προβολή"
 
-#: gui2/dialogs.c:5102 gui2/dialogs.c:5542 gui2/series_view.c:684
+#: gui2/dialogs.c:5107 gui2/dialogs.c:5547 gui2/series_view.c:684
 msgid "significant figures"
 msgstr "σημαντικά ψηφία"
 
-#: gui2/dialogs.c:5103 gui2/dialogs.c:5539 gui2/series_view.c:685
+#: gui2/dialogs.c:5108 gui2/dialogs.c:5544 gui2/series_view.c:685
 msgid "decimal places"
 msgstr "δεκαδικές θέσεις"
 
-#: gui2/dialogs.c:5136
+#: gui2/dialogs.c:5141
 msgid "gretl: error"
 msgstr "gretl: σφάλμα"
 
-#: gui2/dialogs.c:5137
+#: gui2/dialogs.c:5142
 msgid "gretl: warning"
 msgstr "gretl: προειδοποίηση"
 
-#: gui2/dialogs.c:5138
+#: gui2/dialogs.c:5143
 msgid "gretl: information"
 msgstr "gretl: πληροφορίες"
 
-#: gui2/dialogs.c:5324
+#: gui2/dialogs.c:5329
 msgid "show scalars window"
 msgstr ""
 
-#: gui2/dialogs.c:5325
+#: gui2/dialogs.c:5330
 #, fuzzy
 msgid "show icons window"
 msgstr "Κύριο παράθυρο"
 
-#: gui2/dialogs.c:5482
+#: gui2/dialogs.c:5487
 msgid "gretl: TeX tabular format"
 msgstr "gretl: TeX πινακοειδής μορφότυπος"
 
-#: gui2/dialogs.c:5489 gui2/series_view.c:662
+#: gui2/dialogs.c:5494 gui2/series_view.c:662
 msgid "Standard format"
 msgstr "Τυπική μορφοποίηση"
 
-#: gui2/dialogs.c:5492
+#: gui2/dialogs.c:5497
 msgid "Custom format"
 msgstr "Διαμόρφωση μορφότυπου"
 
-#: gui2/dialogs.c:5607
+#: gui2/dialogs.c:5612
 #, fuzzy
 msgid "Please specify a cluster variable"
 msgstr "Πρέπει να ορίσετε μία μεταβλητή άνω φράγματος"
 
-#: gui2/dialogs.c:5609
+#: gui2/dialogs.c:5614
 #, fuzzy, c-format
 msgid "'%s' is not a known series"
 msgstr "'%s' δεν αντιστοιχεί σε όνομα χρονοσειράς"
 
-#: gui2/dialogs.c:5646
+#: gui2/dialogs.c:5651
 msgid "Select from Regular HCCME options"
 msgstr ""
 
-#: gui2/dialogs.c:5657
+#: gui2/dialogs.c:5662
 msgid "Cluster by"
 msgstr ""
 
@@ -9938,7 +9934,7 @@ msgstr "σειρές"
 msgid "Enter name=formula for new series"
 msgstr "Εισάγετε εξίσωση (όνομα = ) της νέας μεταβλητής:"
 
-#: gui2/fncall.c:739 gui2/library.c:6051
+#: gui2/fncall.c:739 gui2/library.c:6047
 #, fuzzy
 msgid "add scalar"
 msgstr "gretl: προσθήκη βαθμωτού"
@@ -9992,12 +9988,12 @@ msgid ""
 "Would you like to try downloading it now?"
 msgstr ""
 
-#: gui2/fncall.c:2708 gui2/fnsave.c:1312
+#: gui2/fncall.c:2708 gui2/fnsave.c:1378
 #, fuzzy
 msgid "main window"
 msgstr "Κύριο παράθυρο"
 
-#: gui2/fncall.c:2709 gui2/fnsave.c:1313
+#: gui2/fncall.c:2709 gui2/fnsave.c:1379
 #, fuzzy
 msgid "model window"
 msgstr "Κλείσιμο παραθύρου"
@@ -10037,154 +10033,158 @@ msgstr "Παρακαλώ προσθέστε ένα script ως δείγμα γι
 msgid "Invalid version string: use numbers and '.' only"
 msgstr "Μη-έγκυρος τύπος αλφαριθμητικού: χρησιμοποιείστε αριθμούς και '.' μόνο"
 
-#: gui2/fnsave.c:537
+#: gui2/fnsave.c:496
+msgid "You can't change the name of a function here"
+msgstr "Δεν μπορείτε να αλλάξετε το όνομα μίας συνάρτησης σε αυτό το σημείο"
+
+#: gui2/fnsave.c:603
 #, c-format
 msgid "Can't find the function '%s'"
 msgstr "Δεν μπορώ να βρώ την συνάρτηση '%s'"
 
-#: gui2/fnsave.c:854
+#: gui2/fnsave.c:920
 msgid "private"
 msgstr "ιδιωτικό"
 
-#: gui2/fnsave.c:885
+#: gui2/fnsave.c:951
 msgid "No special requirement"
 msgstr "Δεν υπάρχουν ειδικές απαιτήσεις"
 
-#: gui2/fnsave.c:886
+#: gui2/fnsave.c:952
 msgid "Time-series data"
 msgstr "Δεδομένα χρονοσειρών"
 
-#: gui2/fnsave.c:887
+#: gui2/fnsave.c:953
 msgid "Quarterly or monthly data"
 msgstr "Τριμηνιαία ή μηνιαία δεδομένα"
 
-#: gui2/fnsave.c:888
+#: gui2/fnsave.c:954
 msgid "Panel data"
 msgstr "Panel δεδομένα"
 
-#: gui2/fnsave.c:889
+#: gui2/fnsave.c:955
 #, fuzzy
 msgid "No dataset needed"
 msgstr "Δεν ελήφθησαν δεδομένα"
 
-#: gui2/fnsave.c:894
+#: gui2/fnsave.c:960
 msgid "Data requirement"
 msgstr "Απαιτήσεις δεδομένων"
 
-#: gui2/fnsave.c:948
+#: gui2/fnsave.c:1014
 msgid "Minimum gretl version"
 msgstr "Ελάχιστη έκδοση του gretl"
 
-#: gui2/fnsave.c:1036
+#: gui2/fnsave.c:1102
 msgid "Insert today's date"
 msgstr "Εισαγωγή σημερινής ημερομηνίας"
 
-#: gui2/fnsave.c:1054 gui2/gui_utils.c:2244 gui2/ssheet.c:2795
+#: gui2/fnsave.c:1120 gui2/gui_utils.c:2244 gui2/ssheet.c:2795
 #: gui2/ssheet.c:2820
 msgid "Save changes?"
 msgstr "Να αποθηκευτούν οι αλλαγές;"
 
-#: gui2/fnsave.c:1094 gui2/gui_utils.c:223 gui2/gui_utils.c:347
+#: gui2/fnsave.c:1160 gui2/gui_utils.c:223 gui2/gui_utils.c:347
 msgid "_Analysis"
 msgstr "Ανάλυση"
 
-#: gui2/fnsave.c:1294
+#: gui2/fnsave.c:1360
 #, fuzzy
 msgid "Label"
 msgstr "Ετικέτ."
 
-#: gui2/fnsave.c:1308
+#: gui2/fnsave.c:1374
 #, fuzzy
 msgid "Window"
 msgstr "Παράθυρα"
 
-#: gui2/fnsave.c:1387
+#: gui2/fnsave.c:1453
 msgid ""
 "To update the menu attachment, you should\n"
 "(a) save this package, and (b) restart gretl."
 msgstr ""
 
-#: gui2/fnsave.c:1547
+#: gui2/fnsave.c:1613
 #, fuzzy
 msgid "gretl: extra properties"
 msgstr "gretl: σφάλμα"
 
-#: gui2/fnsave.c:1562
+#: gui2/fnsave.c:1628
 #, fuzzy
 msgid "Special functions"
 msgstr "Αποθήκευση συναρτήσεων"
 
-#: gui2/fnsave.c:1630
+#: gui2/fnsave.c:1696
 msgid "Menu attachment"
 msgstr ""
 
-#: gui2/fnsave.c:1682
+#: gui2/fnsave.c:1748
 msgid "Date (YYYY-MM-DD)"
 msgstr "Ημερομηνία (YYYY-MM-DD)"
 
-#: gui2/fnsave.c:1683
+#: gui2/fnsave.c:1749
 msgid "Package description"
 msgstr "Περιγραφή πακέτου"
 
-#: gui2/fnsave.c:1704
+#: gui2/fnsave.c:1770
 msgid "gretl: function package editor"
 msgstr "gretl: κειμενογράφος πακέτου συνάρτησης"
 
-#: gui2/fnsave.c:1767
+#: gui2/fnsave.c:1833
 msgid "Help text:"
 msgstr "Βοηθητικό κείμενο:"
 
-#: gui2/fnsave.c:1782
+#: gui2/fnsave.c:1848
 msgid "Edit function code"
 msgstr "Επεξεργασία κώδικα συνάρτησης"
 
-#: gui2/fnsave.c:1795
+#: gui2/fnsave.c:1861
 msgid "Save as script"
 msgstr "Αποθήκευση ως script"
 
-#: gui2/fnsave.c:1803
+#: gui2/fnsave.c:1869
 msgid "Edit sample script"
 msgstr "Επεξεργασία script (παραδείγματος)"
 
-#: gui2/fnsave.c:1809
+#: gui2/fnsave.c:1875
 msgid "Add/remove functions"
 msgstr "Εισαγωγή/αφαίρεση συναρτήσεων"
 
-#: gui2/fnsave.c:1815
+#: gui2/fnsave.c:1881
 #, fuzzy
 msgid "Extra properties"
 msgstr "Ιδιότητες"
 
-#: gui2/fnsave.c:1821
+#: gui2/fnsave.c:1887
 #, fuzzy
 msgid "Write spec file"
 msgstr "Εγγραφή στο αρχείο ετικετών απέτυχε"
 
-#: gui2/fnsave.c:1828
+#: gui2/fnsave.c:1894
 msgid "Upload package to server on save"
 msgstr "Φόρτωση πακέτου στον διακομιστή κατά την αποθήκευση"
 
-#: gui2/fnsave.c:1839
+#: gui2/fnsave.c:1905
 msgid "Validate"
 msgstr "Επικύρωση"
 
-#: gui2/fnsave.c:1889
+#: gui2/fnsave.c:1955
 msgid "gretl: upload"
 msgstr "gretl: φόρτωση"
 
-#: gui2/fnsave.c:1892
+#: gui2/fnsave.c:1958
 msgid "Upload function package"
 msgstr "Φόρτωση πακέτου συναρτήσεων"
 
-#: gui2/fnsave.c:1901
+#: gui2/fnsave.c:1967
 msgid "Login"
 msgstr "Login"
 
-#: gui2/fnsave.c:1901
+#: gui2/fnsave.c:1967
 msgid "Password"
 msgstr "Κωδικός"
 
-#: gui2/fnsave.c:1923
+#: gui2/fnsave.c:1989
 msgid ""
 "If you don't have a login to the gretl server\n"
 "please see http://gretl.ecn.wfu.edu/apply/.\n"
@@ -10196,7 +10196,7 @@ msgstr ""
 "Το κουμπί 'Website' (παρακάτω) ανοίγει την ιστοσελίδα\n"
 "στον διαδικτυακό πλοηγό σας."
 
-#: gui2/fnsave.c:2123
+#: gui2/fnsave.c:2189
 msgid ""
 "Invalid package filename: the name must start with a letter,\n"
 "must be less than 32 characters in length, must include only\n"
@@ -10206,11 +10206,11 @@ msgstr ""
 "πρέπει να είναι μικρότερο από 32 χαρακτήρες, πρέπει να περιλαμβάνει μόνο\n"
 "ASCII γράμματα, αριθμούς και '_', και πρέπει να λήγει με \".gfn\""
 
-#: gui2/fnsave.c:2137 gui2/library.c:7537
+#: gui2/fnsave.c:2203 gui2/library.c:7533
 msgid "OK to overwrite?"
 msgstr "OK για επανεγγραφή?"
 
-#: gui2/fnsave.c:2665
+#: gui2/fnsave.c:2731
 msgid ""
 "No functions are available for packaging at present.\n"
 "Do you want to write a function now?"
@@ -10728,7 +10728,7 @@ msgstr "Προεπισκόπηση"
 msgid "The graph page is full"
 msgstr "Η σελίδα γραφήματος είναι πλήρης"
 
-#: gui2/graph_page.c:512 gui2/guiprint.c:2376 gui2/guiprint.c:2491
+#: gui2/graph_page.c:512 gui2/guiprint.c:2369 gui2/guiprint.c:2484
 msgid "Failed to process TeX file"
 msgstr "Αποτυχία επεξεργασίας TEX αρχείου"
 
@@ -11721,20 +11721,20 @@ msgstr "gretl: ονομασία στήλης"
 msgid "sample status"
 msgstr "κατάσταση δείγματος"
 
-#: gui2/gretlwin32.c:366
+#: gui2/gretlwin32.c:365
 msgid "Copy buffer was empty"
 msgstr "Κενή ενδιάμεση μνήμη αντιγραφής"
 
-#: gui2/gretlwin32.c:371 gui2/gretlwin32.c:440 gui2/gretlwin32.c:571
+#: gui2/gretlwin32.c:370 gui2/gretlwin32.c:537
 msgid "Cannot open the clipboard"
 msgstr "Δεν ήταν δυνατόν να ανοιχτεί το Πρόχειρο"
 
-#: gui2/gretlwin32.c:495 plugin/mailer.c:671
+#: gui2/gretlwin32.c:461 plugin/mailer.c:671
 #, c-format
 msgid "Please find the gretl data file %s attached."
 msgstr "Βρείτε συνημμένα το αρχείο δεδομένων gretl %s"
 
-#: gui2/gretlwin32.c:499 plugin/mailer.c:674
+#: gui2/gretlwin32.c:465 plugin/mailer.c:674
 #, c-format
 msgid "Please find the gretl script %s attached."
 msgstr "Παρακαλώ, βρείτε επισυναπτόμενο το gretl script %s ."
@@ -11796,111 +11796,111 @@ msgstr "gretl έξοδος"
 msgid "for"
 msgstr "για (for)"
 
-#: gui2/guiprint.c:220
+#: gui2/guiprint.c:213
 #, c-format
 msgid "%s, page %d"
 msgstr "%s, σελίδα %d"
 
-#: gui2/guiprint.c:418
+#: gui2/guiprint.c:411
 #, c-format
 msgid "%s page %d of %d"
 msgstr "%s σελίδα %d από %d"
 
-#: gui2/guiprint.c:731
+#: gui2/guiprint.c:724
 #, c-format
 msgid "Summary Statistics, using the observations %s - %s"
 msgstr "Summary Statistics, using the observations %s - %s"
 
-#: gui2/guiprint.c:737 gui2/guiprint.c:1054
+#: gui2/guiprint.c:730 gui2/guiprint.c:1047
 #, c-format
 msgid "for the variable %s (%d valid observations)"
 msgstr "για τη μεταβλ. %s (%d έγκυρες παρατηρ.)"
 
-#: gui2/guiprint.c:800
+#: gui2/guiprint.c:793
 msgid "5% Perc."
 msgstr ""
 
-#: gui2/guiprint.c:800
+#: gui2/guiprint.c:793
 msgid "95% Perc."
 msgstr ""
 
-#: gui2/guiprint.c:919
+#: gui2/guiprint.c:912
 msgid "t-ratios in parentheses"
 msgstr "t-στατιστικές σε παρενθέσεις"
 
-#: gui2/guiprint.c:1047
+#: gui2/guiprint.c:1040
 #, c-format
 msgid "Summary Statistics, using the observations %s--%s"
 msgstr "Περιληπτικά στατιστικά, χρησιμοποιώντας τις παρατηρήσεις %s - %s"
 
-#: gui2/guiprint.c:1101
+#: gui2/guiprint.c:1094
 msgid "Std.\\ Dev."
 msgstr "Τυπ.\\ Αποκλ."
 
-#: gui2/guiprint.c:1101
+#: gui2/guiprint.c:1094
 msgid "Ex.\\ kurtosis"
 msgstr "Περ.\\ κύρτωση"
 
-#: gui2/guiprint.c:1129
+#: gui2/guiprint.c:1122
 #, no-c-format
 msgid "5\\% perc."
 msgstr ""
 
-#: gui2/guiprint.c:1131
+#: gui2/guiprint.c:1124
 #, no-c-format
 msgid "95\\% perc."
 msgstr ""
 
-#: gui2/guiprint.c:1132
+#: gui2/guiprint.c:1125
 #, fuzzy
 msgid "IQ Range"
 msgstr "Εύρος"
 
-#: gui2/guiprint.c:1224
+#: gui2/guiprint.c:1217
 #, c-format
 msgid "Correlation coefficients, using the observations %s - %s"
 msgstr "Συντελεστές συσχέτισης, χρησιμοποιώντας τις παρατηρήσεις %s - %s"
 
-#: gui2/guiprint.c:1235 gui2/guiprint.c:1329
+#: gui2/guiprint.c:1228 gui2/guiprint.c:1322
 msgid "Coefficient covariance matrix"
 msgstr "Μήτρα συνδιακυμάνσεων συντελεστών"
 
-#: gui2/guiprint.c:1317
+#: gui2/guiprint.c:1310
 #, c-format
 msgid "Correlation coefficients, using the observations %s--%s"
 msgstr "Συντελεστές συσχέτισης, για τις παρατηρήσεις %s--%s"
 
-#: gui2/guiprint.c:1324
+#: gui2/guiprint.c:1317
 #, c-format
 msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
 msgstr "5\\%% κριτική τιμή (δικατάληκτη) = %.4f για n = %d"
 
-#: gui2/guiprint.c:1420
+#: gui2/guiprint.c:1413
 msgid "Theil's $U$"
 msgstr "Theil's $U$"
 
-#: gui2/guiprint.c:1421
+#: gui2/guiprint.c:1414
 msgid "Bias proportion, $U^M$"
 msgstr "Αναλογία μεροληψίας, $U^M$"
 
-#: gui2/guiprint.c:1422
+#: gui2/guiprint.c:1415
 msgid "Regression proportion, $U^R$"
 msgstr "Αναλογία παλινδρόμησης, $U^R$"
 
-#: gui2/guiprint.c:1423
+#: gui2/guiprint.c:1416
 msgid "Disturbance proportion, $U^D$"
 msgstr "Αναλογία διαταράξεων, $U^D$"
 
-#: gui2/guiprint.c:1478 gui2/guiprint.c:1496
+#: gui2/guiprint.c:1471 gui2/guiprint.c:1489
 msgid "Model estimation range:"
 msgstr "Εύρος εκτίμησης υποδείγματος:"
 
-#: gui2/guiprint.c:1481 gui2/guiprint.c:1499
+#: gui2/guiprint.c:1474 gui2/guiprint.c:1492
 #, c-format
 msgid "Standard error of residuals = %g"
 msgstr "Τυπικό σφάλμα καταλοίπων = %g"
 
-#: gui2/guiprint.c:1568
+#: gui2/guiprint.c:1561
 msgid ""
 "\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
 "\n"
@@ -11909,19 +11909,19 @@ msgstr ""
 "τυπ. απόκλ.\n"
 "\n"
 
-#: gui2/guiprint.c:1629
+#: gui2/guiprint.c:1622
 msgid "Note: * denotes a residual in excess of 2.5 standard errors"
 msgstr ""
 "Σημείωση: * υποδηλώνει κατάλοιπα που ξεπερνούν 2.5 φορές το τυπικό σφάλμα"
 
-#: gui2/guiprint.c:1677 gui2/guiprint.c:1739 gui2/guiprint.c:1795
-#: gui2/guiprint.c:1836
+#: gui2/guiprint.c:1670 gui2/guiprint.c:1732 gui2/guiprint.c:1788
+#: gui2/guiprint.c:1829
 msgid "Obs"
 msgstr ""
 "Παρατή-\n"
 "     ρηση"
 
-#: gui2/guiprint.c:1709
+#: gui2/guiprint.c:1702
 #, c-format
 msgid ""
 "For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
@@ -11930,7 +11930,7 @@ msgstr ""
 "Για %g\\%% διαστήματα εμπιστοσύνης, $z(%g) = %.2f$\n"
 "\n"
 
-#: gui2/guiprint.c:1713
+#: gui2/guiprint.c:1706
 #, c-format
 msgid ""
 "For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
@@ -11939,32 +11939,32 @@ msgstr ""
 "Για %g\\%% διαστήματα εμπιστοσύνης, $t(%d, %g) = %.3f$\n"
 "\n"
 
-#: gui2/guiprint.c:1733
+#: gui2/guiprint.c:1726
 #, c-format
 msgid "%g\\%% interval"
 msgstr "%g\\%% διάστημα"
 
-#: gui2/guiprint.c:1817
+#: gui2/guiprint.c:1810
 #, c-format
 msgid "For %g%% confidence intervals, z(%g) = %.2f"
 msgstr "Για %g%% διαστήματα εμπιστοσύνης, z(%g) = %.2f"
 
-#: gui2/guiprint.c:1821
+#: gui2/guiprint.c:1814
 #, c-format
 msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
 msgstr "Για %g%% διαστήματα εμπιστοσύνης, t(%d, %g) = %.3f"
 
-#: gui2/guiprint.c:1826
+#: gui2/guiprint.c:1819
 #, c-format
 msgid "%g%% interval"
 msgstr "%g%% διάστημα"
 
-#: gui2/guiprint.c:1923 gui2/guiprint.c:1970
+#: gui2/guiprint.c:1916 gui2/guiprint.c:1963
 #, c-format
 msgid "%g\\%% confidence interval"
 msgstr "διάστημα εμπιστοσύνης %g\\%%"
 
-#: gui2/guiprint.c:2011
+#: gui2/guiprint.c:2004
 msgid ""
 "You can't use the same character for the column delimiter and the decimal "
 "point"
@@ -11972,7 +11972,7 @@ msgstr ""
 "Δεν μπορείτε να χρησιμοποιήσετε τον ίδιο χαρακτήρα για τον διαχωρισμό στηλών "
 "και συμβολισμό δεκαδικών αριθμών"
 
-#: gui2/guiprint.c:2190
+#: gui2/guiprint.c:2183
 msgid "No scalar variables are currently defined"
 msgstr "Δεν έχουν οριστεί βαθμωτές μεταβλητές"
 
@@ -12221,7 +12221,7 @@ msgstr "Γράφημα"
 msgid "Couldn't open temp file"
 msgstr "Δεν μπόρεσε να ανοιχτεί το αρχείο %s"
 
-#: gui2/gui_utils.c:957 gui2/gui_utils.c:1257 gui2/library.c:8258
+#: gui2/gui_utils.c:957 gui2/gui_utils.c:1257 gui2/library.c:8255
 msgid "gretl: open data"
 msgstr "gretl: φόρτωση δεδομένων"
 
@@ -12240,7 +12240,7 @@ msgstr ""
 msgid "gretl: import %s data"
 msgstr "gretl: εισαγωγή %s δεδομένων"
 
-#: gui2/gui_utils.c:1258 gui2/library.c:8259
+#: gui2/gui_utils.c:1258 gui2/library.c:8256
 msgid ""
 "Opening a new data file will automatically\n"
 "close the current one.  Any unsaved work\n"
@@ -12315,12 +12315,12 @@ msgstr "gretl: επεξεργασία Octave script"
 msgid "gretl: edit Python script"
 msgstr "gretl: επεξεργασία Octave script"
 
-#: gui2/gui_utils.c:1665 gui2/gui_utils.c:4930 gui2/gui_utils.c:5081
+#: gui2/gui_utils.c:1665 gui2/gui_utils.c:4954 gui2/gui_utils.c:5105
 msgid "gretl: script output"
 msgstr "gretl: έξοδος script"
 
-#: gui2/gui_utils.c:1667 gui2/library.c:6346 gui2/library.c:6381
-#: gui2/library.c:6385
+#: gui2/gui_utils.c:1667 gui2/library.c:6342 gui2/library.c:6377
+#: gui2/library.c:6381
 msgid "gretl: display data"
 msgstr "gretl: προβολή δεδομένων"
 
@@ -12482,21 +12482,21 @@ msgstr "Διαχωρισμός διακύμανσης πρόβλεψης"
 msgid "variance decompositions"
 msgstr "διαχωρισμοί διακύμανσης"
 
-#: gui2/gui_utils.c:3900 gui2/library.c:1927
+#: gui2/gui_utils.c:3900 gui2/library.c:1923
 msgid "gretl: forecasts"
 msgstr "gretl: προβλέψεις"
 
-#: gui2/gui_utils.c:3956 gui2/gui_utils.c:3967 gui2/library.c:2939
-#: gui2/library.c:2960
+#: gui2/gui_utils.c:3956 gui2/gui_utils.c:3967 gui2/library.c:2935
+#: gui2/library.c:2956
 msgid "gretl: autocorrelation"
 msgstr "gretl: αυτοσυσχέτιση"
 
-#: gui2/gui_utils.c:3957 gui2/gui_utils.c:3978 gui2/library.c:2448
-#: gui2/library.c:2467
+#: gui2/gui_utils.c:3957 gui2/gui_utils.c:3978 gui2/library.c:2444
+#: gui2/library.c:2463
 msgid "gretl: ARCH test"
 msgstr "gretl: ARCH έλεγχος"
 
-#: gui2/gui_utils.c:3958 gui2/library.c:2940
+#: gui2/gui_utils.c:3958 gui2/library.c:2936
 msgid "Lag order for test:"
 msgstr "Τάξη υστέρησης για έλεγχο:"
 
@@ -12586,7 +12586,7 @@ msgstr "Απόκριση της %s"
 msgid "to %s"
 msgstr "στην %s"
 
-#: gui2/gui_utils.c:4607
+#: gui2/gui_utils.c:4631
 msgid ""
 "The model sample differs from the dataset sample,\n"
 "so some menu options will be disabled.\n"
@@ -12600,31 +12600,31 @@ msgstr ""
 "Θέλετε να αποκαταστήσετε το δείγμα με βάση\n"
 "το οποίο εκτιμάται το υπόδειγμα?"
 
-#: gui2/gui_utils.c:4720
+#: gui2/gui_utils.c:4744
 #, c-format
 msgid "A matrix named %s already exists"
 msgstr "Η μήτρα με όνομα %s ήδη υπάρχει"
 
-#: gui2/gui_utils.c:4722
+#: gui2/gui_utils.c:4746
 #, c-format
 msgid "A scalar named %s already exists"
 msgstr "Το βαθμωτό με όνομα %s ήδη υπάρχει"
 
-#: gui2/gui_utils.c:4724
+#: gui2/gui_utils.c:4748
 #, c-format
 msgid "A list named %s already exists"
 msgstr "Η λίστα με όνομα %s ήδη υπάρχει"
 
-#: gui2/gui_utils.c:4726
+#: gui2/gui_utils.c:4750
 #, c-format
 msgid "A string named %s already exists"
 msgstr "Το αλφαριθμητικό με όνομα %s ήδη υπάρχει"
 
-#: gui2/gui_utils.c:4735
+#: gui2/gui_utils.c:4759
 msgid "OK to overwrite it?"
 msgstr "OK για αντικατάσταση?"
 
-#: gui2/gui_utils.c:4757
+#: gui2/gui_utils.c:4781
 #, c-format
 msgid ""
 "Variable name %s... is too long\n"
@@ -12633,7 +12633,7 @@ msgstr ""
 "Το όνομα μεταβλητής %s... είναι πολύ μακρύ\n"
 "(το μέγιστο είναι %d χαρακτήρες)"
 
-#: gui2/gui_utils.c:4762
+#: gui2/gui_utils.c:4786
 #, c-format
 msgid ""
 "First char of name ('%c') is bad\n"
@@ -12642,7 +12642,7 @@ msgstr ""
 "Άκυρος πρώτος χαρακτήρας ονόματος ('%c')\n"
 "(πρέπει να είναι αλφαβητικός)"
 
-#: gui2/gui_utils.c:4770
+#: gui2/gui_utils.c:4794
 #, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
@@ -12651,7 +12651,7 @@ msgstr ""
 "Ονομασία περιέχει μη-επιτρεπτό χαρακτήρα (θέση %d)\n"
 "Χρησιμοποιήστε μόνο άτονα γράμματα, ψηφία και underscore"
 
-#: gui2/gui_utils.c:5000
+#: gui2/gui_utils.c:5024
 msgid "No command was supplied to start R"
 msgstr "Δεν δόθηκε εντολή για εκκίνηση του R"
 
@@ -12792,125 +12792,125 @@ msgstr "Ονόματα μεταβλ. μόνο (διάκριση πεζών/κε�
 msgid "Failed to download file"
 msgstr "Αποτυχία \"κατεβάσματος\" αρχείου"
 
-#: gui2/library.c:136
+#: gui2/library.c:132
 msgid "gretl: iteration info"
 msgstr "gretl: πληροφορία επανάληψης"
 
-#: gui2/library.c:500 gui2/library.c:507 gui2/library.c:5791
+#: gui2/library.c:496 gui2/library.c:503 gui2/library.c:5787
 msgid "Error adding variables"
 msgstr "Σφάλμα κατά την προσθήκη μεταβλητών"
 
-#: gui2/library.c:619
+#: gui2/library.c:615
 #, c-format
 msgid "forecast of %s"
 msgstr "πρόγνωση του %s"
 
-#: gui2/library.c:662 gui2/library.c:666 gui2/library.c:833
+#: gui2/library.c:658 gui2/library.c:662 gui2/library.c:829
 #: gui2/menustate.c:444
 msgid "correlation matrix"
 msgstr "μήτρα συσχέτισης"
 
-#: gui2/library.c:671
+#: gui2/library.c:667
 msgid "principal components"
 msgstr "κύριες συνιστώσες"
 
-#: gui2/library.c:680 gui2/library.c:837
+#: gui2/library.c:676 gui2/library.c:833
 msgid "cross tabulation"
 msgstr "πίνακας συνάφειας"
 
-#: gui2/library.c:685 gui2/library.c:689 gui2/library.c:831
+#: gui2/library.c:681 gui2/library.c:685 gui2/library.c:827
 msgid "summary statistics"
 msgstr "περιληπτικά στατιστικά"
 
-#: gui2/library.c:694
+#: gui2/library.c:690
 msgid "summary stats: "
 msgstr "περιληπτ. στατ: "
 
-#: gui2/library.c:701 gui2/library.c:4760
+#: gui2/library.c:697 gui2/library.c:4756
 msgid "normality test"
 msgstr "έλεγχος κανονικότητας"
 
-#: gui2/library.c:827 plugin/pca.c:171
+#: gui2/library.c:823 plugin/pca.c:171
 msgid "Principal Components Analysis"
 msgstr "Ανάλυση Κύριων Συνιστωσών"
 
-#: gui2/library.c:928
+#: gui2/library.c:924
 #, fuzzy
 msgid "criterion"
 msgstr "Κριτήριο"
 
-#: gui2/library.c:949 gui2/library.c:965 gui2/library.c:1049
+#: gui2/library.c:945 gui2/library.c:961 gui2/library.c:1045
 msgid "test down from maximum lag order"
 msgstr "έλεγχοι προς τα κάτω με εκκίνηση την μέγιστη τάξη υστέρησης"
 
-#: gui2/library.c:951 gui2/library.c:962 gui2/library.c:1170
+#: gui2/library.c:947 gui2/library.c:958 gui2/library.c:1166
 msgid "with constant"
 msgstr "με σταθερό όρο"
 
-#: gui2/library.c:953
+#: gui2/library.c:949
 msgid "with constant, trend and trend squared"
 msgstr "με σταθερό όρο, τάση και τετραγωνική τάση"
 
-#: gui2/library.c:954 gui2/library.c:1106
+#: gui2/library.c:950 gui2/library.c:1102
 msgid "include seasonal dummies"
 msgstr "συμπεριλαμβανομένου εποχικών ψευδομεταβλητών"
 
-#: gui2/library.c:955 gui2/library.c:1051 gui2/library.c:1107
+#: gui2/library.c:951 gui2/library.c:1047 gui2/library.c:1103
 msgid "show regression results"
 msgstr "εμφάνιση αποτελέσματος παλινδρόμησης"
 
-#: gui2/library.c:957 gui2/library.c:1053 gui2/library.c:1109
+#: gui2/library.c:953 gui2/library.c:1049 gui2/library.c:1105
 msgid "use level of variable"
 msgstr "χρήση επιπέδων μεταβλητής"
 
-#: gui2/library.c:958 gui2/library.c:966 gui2/library.c:1054
-#: gui2/library.c:1059 gui2/library.c:1110 gui2/library.c:1115
+#: gui2/library.c:954 gui2/library.c:962 gui2/library.c:1050
+#: gui2/library.c:1055 gui2/library.c:1106 gui2/library.c:1111
 msgid "use first difference of variable"
 msgstr "χρήση πρώτων διαφορών μεταβλητής"
 
-#: gui2/library.c:967 gui2/library.c:1060 gui2/library.c:1116
+#: gui2/library.c:963 gui2/library.c:1056 gui2/library.c:1112
 msgid "show individual test results"
 msgstr ""
 
-#: gui2/library.c:1002 gui2/library.c:1076 gui2/library.c:1180
+#: gui2/library.c:998 gui2/library.c:1072 gui2/library.c:1176
 msgid "Lag order for ADF test:"
 msgstr "Τάξη υστέρησης για ADF έλεγχο:"
 
-#: gui2/library.c:1050 gui2/library.c:1058 gui2/library.c:1105
-#: gui2/library.c:1114
+#: gui2/library.c:1046 gui2/library.c:1054 gui2/library.c:1101
+#: gui2/library.c:1110
 msgid "include a trend"
 msgstr "να περιληφθεί τάση"
 
-#: gui2/library.c:1138
+#: gui2/library.c:1134
 msgid "Lag order for KPSS test:"
 msgstr "Τάξη υστέρησης για KPSS έλεγχο:"
 
-#: gui2/library.c:1199
+#: gui2/library.c:1195
 msgid "gretl: ADF test"
 msgstr "gretl: ADF έλεγχος"
 
-#: gui2/library.c:1200
+#: gui2/library.c:1196
 msgid "gretl: ADF-GLS test"
 msgstr "gretl: ADF-GLS έλεγχος"
 
-#: gui2/library.c:1201
+#: gui2/library.c:1197
 msgid "gretl: KPSS test"
 msgstr "gretl: KPSS έλεγχος"
 
-#: gui2/library.c:1202
+#: gui2/library.c:1198
 #, fuzzy
 msgid "gretl: Levin-Lin-Chu test"
 msgstr "gretl: Chow έλεγχος"
 
-#: gui2/library.c:1385 gui2/library.c:5438
+#: gui2/library.c:1381 gui2/library.c:5434
 msgid "Lag order:"
 msgstr "Τάξη υστέρησης:"
 
-#: gui2/library.c:1424
+#: gui2/library.c:1420
 msgid "gretl: add info"
 msgstr "gretl: πρόσθεση πληροφοριών"
 
-#: gui2/library.c:1425
+#: gui2/library.c:1421
 msgid ""
 "The data file contains no informative comments.\n"
 "Would you like to add some now?"
@@ -12918,43 +12918,43 @@ msgstr ""
 "Το αρχείο δεδομένων δεν περιέχει πληροφορίες ή σχόλια.\n"
 "Θέλετε να εισάγετε;"
 
-#: gui2/library.c:1428 gui2/library.c:1440
+#: gui2/library.c:1424 gui2/library.c:1436
 msgid "gretl: edit data info"
 msgstr "gretl: επεξεργασία πληροφοριών δεδομένων"
 
-#: gui2/library.c:1437
+#: gui2/library.c:1433
 msgid "gretl: data info"
 msgstr "gretl: πληροφορίες για τα δεδομένα"
 
-#: gui2/library.c:1454
+#: gui2/library.c:1450
 msgid "Unspecified error"
 msgstr "Μη-καθορισμένο σφάλμα"
 
-#: gui2/library.c:1502
+#: gui2/library.c:1498
 msgid "Sample now includes only complete observations"
 msgstr ""
 
-#: gui2/library.c:1553
+#: gui2/library.c:1549
 msgid "Show count of missing values at each observation"
 msgstr "Θέαση αριθμού των τιμών που απουσιάζουν σε κάθε παρατήρηση"
 
-#: gui2/library.c:1562 gui2/library.c:1585
+#: gui2/library.c:1558 gui2/library.c:1581
 msgid "No missing data values"
 msgstr "Δεν υπάρχουν απούσες τιμές"
 
-#: gui2/library.c:1568 gui2/library.c:1579
+#: gui2/library.c:1564 gui2/library.c:1575
 msgid "gretl: missing values info"
 msgstr "gretl: πληροφόρηση για απούσες τιμές"
 
-#: gui2/library.c:1639
+#: gui2/library.c:1635
 msgid "Export the markers to file"
 msgstr "Εξαγωγή ετικετών σε αρχείο"
 
-#: gui2/library.c:1640
+#: gui2/library.c:1636
 msgid "Remove the markers"
 msgstr "Αφαίρεση ετικετών"
 
-#: gui2/library.c:1644
+#: gui2/library.c:1640
 msgid ""
 "The dataset has observation markers.\n"
 "Would you like to:"
@@ -12962,7 +12962,7 @@ msgstr ""
 "Το σύνολο δεδομένων έχει ετικέτες παρατηρήσεων.\n"
 "Θέλετε να:"
 
-#: gui2/library.c:1657
+#: gui2/library.c:1653
 msgid ""
 "The dataset has no observation markers.\n"
 "Add some from file now?"
@@ -12970,15 +12970,15 @@ msgstr ""
 "Το σύνολο δεδομένων δεν έχει ετικέτες παρατηρήσεων.\n"
 "Να εισαχθούν από αρχείο?"
 
-#: gui2/library.c:1712
+#: gui2/library.c:1708
 msgid "Export the labels to file"
 msgstr "Εξαγωγή περιγραφικών ονομασιών σε αρχείο"
 
-#: gui2/library.c:1713
+#: gui2/library.c:1709
 msgid "Remove the labels"
 msgstr "Αφαίρεση περιγραφικών ονομασιών"
 
-#: gui2/library.c:1717
+#: gui2/library.c:1713
 msgid ""
 "The dataset has variable labels.\n"
 "Would you like to:"
@@ -12986,7 +12986,7 @@ msgstr ""
 "Το σύνολο δεδομένωνπεριέχει περιγραφικές ονομασίες.\n"
 "Θέτετε να:"
 
-#: gui2/library.c:1726
+#: gui2/library.c:1722
 msgid ""
 "The dataset has no variable labels.\n"
 "Add some from file now?"
@@ -12994,7 +12994,7 @@ msgstr ""
 "Το σύνολο δεδομένων δεν περιέχει περιγραφικές ονομασίες.\n"
 "Να προστεθούν κάποιες μέσω αρχείου?"
 
-#: gui2/library.c:1737
+#: gui2/library.c:1733
 msgid ""
 "There are no observations available for forecasting\n"
 "out of sample.  You can add some observations now\n"
@@ -13004,7 +13004,7 @@ msgstr ""
 "εκτός δείγματος. Μπορείτε να προσθέσετε παρατηρήσεις\n"
 "αν το επιθυμείτε."
 
-#: gui2/library.c:1761
+#: gui2/library.c:1757
 msgid ""
 "There are no observations available for forecasting\n"
 "out of sample.  If you wish, you can add observations\n"
@@ -13018,324 +13018,324 @@ msgstr ""
 "το \n"
 "υπόδειγμα (μενού Δείγμα)."
 
-#: gui2/library.c:2100 gui2/selector.c:7323
+#: gui2/library.c:2096 gui2/selector.c:7323
 #, fuzzy
 msgid "No variables are selected"
 msgstr "Δεν αναγνώστηκε καμμία μεταβλητή\n"
 
-#: gui2/library.c:2175 gui2/library.c:2229 gui2/library.c:2273
+#: gui2/library.c:2171 gui2/library.c:2225 gui2/library.c:2269
 msgid "gretl: Wald omit test"
 msgstr "gretl: Wald έλεγχος παράλειψης (omit test)"
 
-#: gui2/library.c:2176
+#: gui2/library.c:2172
 #, fuzzy
 msgid "gretl: LM test"
 msgstr "gretl: έλεγχος LM "
 
-#: gui2/library.c:2234 gui2/library.c:4205
+#: gui2/library.c:2230 gui2/library.c:4201
 msgid "gretl: vector autoregression"
 msgstr "gretl: διανυσματική αυτοπαλινδρόμηση"
 
-#: gui2/library.c:2383
+#: gui2/library.c:2379
 msgid "gretl: LM test "
 msgstr "gretl: έλεγχος LM "
 
-#: gui2/library.c:2386 gui2/library.c:2390 gui2/library.c:2394
+#: gui2/library.c:2382 gui2/library.c:2386 gui2/library.c:2390
 msgid "(heteroskedasticity)"
 msgstr "(ετεροσκεδαστικότητα)"
 
-#: gui2/library.c:2402
+#: gui2/library.c:2398
 msgid "gretl: groupwise heteroskedasticity"
 msgstr "gretl: ετεροσκεδαστικότητα διαστρωμάτωσης"
 
-#: gui2/library.c:2408
+#: gui2/library.c:2404
 msgid "(non-linearity)"
 msgstr "(μη-γραμμικότητα)"
 
-#: gui2/library.c:2416
+#: gui2/library.c:2412
 msgid "gretl: common factor test"
 msgstr "gretl: έλεγχος κοινού παράγοντα"
 
-#: gui2/library.c:2449
+#: gui2/library.c:2445
 msgid "Lag order for ARCH test:"
 msgstr "Τάξη υστέρησης για ARCH έλεγχο:"
 
-#: gui2/library.c:2496
+#: gui2/library.c:2492
 msgid "gretl: panel model diagnostics"
 msgstr "gretl: διαγνωστικά υποδείγματος panel"
 
-#: gui2/library.c:2578
+#: gui2/library.c:2574
 msgid "gretl: leverage and influence"
 msgstr "gretl: δραστικότητα και επιρροή (leverage and influence)"
 
-#: gui2/library.c:2623
+#: gui2/library.c:2619
 msgid "gretl: collinearity"
 msgstr "gretl: συγγραμικότητα"
 
-#: gui2/library.c:2649 gui2/menustate.c:356
+#: gui2/library.c:2645 gui2/menustate.c:356
 msgid "Gini coefficient"
 msgstr "Συντελεστής Gini"
 
-#: gui2/library.c:2660
+#: gui2/library.c:2656
 msgid "use sample mean and variance for normal quantiles"
 msgstr "χρήση δειγματικού μέσου και διακύμανσης για κανονικά ποσοστημόρια"
 
-#: gui2/library.c:2661
+#: gui2/library.c:2657
 msgid "standardize the data"
 msgstr "τυποποίησε τα δεδομένα"
 
-#: gui2/library.c:2662
+#: gui2/library.c:2658
 msgid "raw quantiles versus N(0, 1)"
 msgstr "δειγματικά ποσοστημόρια έναντι N(0, 1)"
 
-#: gui2/library.c:2670
+#: gui2/library.c:2666
 msgid "Normal Q-Q plot"
 msgstr "Κανονική κατανομή Q-Q γράφημα"
 
-#: gui2/library.c:2768
+#: gui2/library.c:2764
 msgid "This test only implemented for OLS models"
 msgstr "Αυτός ο έλεγχος εφαρμόζεται μόνο σε OLS υποδείγματα"
 
-#: gui2/library.c:2836
+#: gui2/library.c:2832
 msgid "gretl: Chow test output"
 msgstr "gretl: Chow έλεγχος αποτελέσματα"
 
-#: gui2/library.c:2838
+#: gui2/library.c:2834
 msgid "gretl: QLR test output"
 msgstr "gretl: QLR έλεγχος αποτελέσματα"
 
-#: gui2/library.c:2840
+#: gui2/library.c:2836
 msgid "gretl: CUSUM test output"
 msgstr "gretl: CUSUM έλεγχος αποτελέσματα"
 
-#: gui2/library.c:2841
+#: gui2/library.c:2837
 msgid "gretl: CUSUMSQ test output"
 msgstr "gretl: CUSUMSQ έλεγχος αποτελέσματα"
 
-#: gui2/library.c:2856
+#: gui2/library.c:2852
 msgid "all variants"
 msgstr "όλες οι εκδοχές"
 
-#: gui2/library.c:2867 gui2/library.c:2918
+#: gui2/library.c:2863 gui2/library.c:2914
 msgid "gretl: RESET test"
 msgstr "gretl: RESET έλεγχος"
 
-#: gui2/library.c:2868
+#: gui2/library.c:2864
 msgid "RESET specification test"
 msgstr "RESET έλεγχος εξειδίκευσης"
 
-#: gui2/library.c:2991
+#: gui2/library.c:2987
 msgid "Durbin-Watson statistic"
 msgstr "Durbin-Watson στατιστική"
 
-#: gui2/library.c:3196
+#: gui2/library.c:3192
 msgid "linear restrictions"
 msgstr "γραμμικοί περιορισμοί"
 
-#: gui2/library.c:3393
+#: gui2/library.c:3389
 msgid ""
 "Please note: the decimal character must be '.'\n"
 "in this context"
 msgstr ""
 
-#: gui2/library.c:3667 gui2/library.c:5550 gui2/selector.c:6353
+#: gui2/library.c:3663 gui2/library.c:5546 gui2/selector.c:6353
 msgid "ANOVA"
 msgstr "ANOVA"
 
-#: gui2/library.c:3781
+#: gui2/library.c:3777
 msgid "Sorry, not implemented yet!"
 msgstr "Συγγνώμη, δεν έχει μπει σε εφαρμογή ακόμα!"
 
-#: gui2/library.c:3797
+#: gui2/library.c:3793
 msgid "gretl: GARCH"
 msgstr "gretl: GARCH"
 
-#: gui2/library.c:3983
+#: gui2/library.c:3979
 msgid "loess"
 msgstr ""
 
-#: gui2/library.c:4137
+#: gui2/library.c:4133
 #, fuzzy, c-format
 msgid "%s versus %s with loess fit"
 msgstr "%s έναντι %s (με loess προσαρμογή)"
 
-#: gui2/library.c:4140
+#: gui2/library.c:4136
 #, fuzzy, c-format
 msgid "%s versus %s with Nadaraya_Watson fit"
 msgstr "%s έναντι %s (με τετραγωνική προσαρμογή)"
 
-#: gui2/library.c:4652
+#: gui2/library.c:4648
 #, c-format
 msgid "Set %d values to \"missing\""
 msgstr "Τέθηκαν %d τιμές ως απούσες \"missing\""
 
-#: gui2/library.c:4655 gui2/library.c:4683
+#: gui2/library.c:4651 gui2/library.c:4679
 msgid "Didn't find any matching observations"
 msgstr "Δεν βρέθηκαν παρατ. που ταιριάζουν"
 
-#: gui2/library.c:4680
+#: gui2/library.c:4676
 #, c-format
 msgid "Set %d observations to \"missing\""
 msgstr "Τέθηκαν %d παρατηρήσεις ως απούσες \"missing\""
 
-#: gui2/library.c:4808
+#: gui2/library.c:4804
 msgid "gretl: residual dist."
 msgstr "gretl: κατανομή καταλοίπων"
 
-#: gui2/library.c:4873
+#: gui2/library.c:4869
 #, c-format
 msgid "range %g to %g"
 msgstr "εύρος %g με %g"
 
-#: gui2/library.c:4874
+#: gui2/library.c:4870
 #, c-format
 msgid "%s (n = %d, %s)"
 msgstr "%s (n = %d, %s)"
 
-#: gui2/library.c:4876 gui2/library.c:4931
+#: gui2/library.c:4872 gui2/library.c:4927
 msgid "frequency distribution"
 msgstr "Κατανομή συχνότητας"
 
-#: gui2/library.c:5053
+#: gui2/library.c:5049
 msgid "gretl: TRAMO analysis"
 msgstr "gretl: TRAMO ανάλυση"
 
-#: gui2/library.c:5054
+#: gui2/library.c:5050
 msgid "gretl: X-12-ARIMA analysis"
 msgstr "gretl: X-12-ARIMA ανάλυση"
 
-#: gui2/library.c:5181
+#: gui2/library.c:5177
 msgid "Trim maximum and minimum in sub-samples"
 msgstr ""
 
-#: gui2/library.c:5189
+#: gui2/library.c:5185
 #, fuzzy
 msgid "gretl: range-mean graph"
 msgstr "Γράφημα Εύρους-Μέσου"
 
-#: gui2/library.c:5223
+#: gui2/library.c:5219
 msgid "gretl: range-mean statistics"
 msgstr "gretl: στατιστικές εύρους-μέσου"
 
-#: gui2/library.c:5255
+#: gui2/library.c:5251
 msgid "gretl: Hurst exponent"
 msgstr "gretl: Εκθέτης Hurst"
 
-#: gui2/library.c:5273
+#: gui2/library.c:5269
 msgid "correlogram"
 msgstr "κορρελόγραμμα"
 
-#: gui2/library.c:5275
+#: gui2/library.c:5271
 msgid "Maximum lag:"
 msgstr "Μέγιστη υστέρηση:"
 
-#: gui2/library.c:5395
+#: gui2/library.c:5391
 #, fuzzy
 msgid "periodogram"
 msgstr "Προγράμματα"
 
-#: gui2/library.c:5430
+#: gui2/library.c:5426
 #, fuzzy
 msgid "gretl: fractional integration"
 msgstr "Έλεγχος GPH για κλασματική ολοκλήρωση"
 
-#: gui2/library.c:5505 gui2/toolbar.c:490
+#: gui2/library.c:5501 gui2/toolbar.c:490
 msgid "gretl: coefficient confidence intervals"
 msgstr "gretl: διαστήματα εμπιστοσύνης συντελεστών"
 
-#: gui2/library.c:5518
+#: gui2/library.c:5514
 msgid "Data set is gone"
 msgstr "Το σύνολο δεδομένων χάθηκε"
 
-#: gui2/library.c:5527
+#: gui2/library.c:5523
 msgid "Error generating covariance matrix"
 msgstr "Σφάλμα στην δημιουργία μήτρας συνδιακυμάνσεων"
 
-#: gui2/library.c:5531
+#: gui2/library.c:5527
 msgid "gretl: coefficient covariances"
 msgstr "gretl: συνδιακυμάνσεις συντελεστών"
 
-#: gui2/library.c:5610
+#: gui2/library.c:5606
 msgid "Error generating time trend"
 msgstr "Σφάλμα κατά τη δημιουργία χρονικής τάσης"
 
-#: gui2/library.c:5611
+#: gui2/library.c:5607
 msgid "Error generating index variable"
 msgstr "Σφάλμα κατά τη δημιουργία μεταβλητής δείκτη (index variable)"
 
-#: gui2/library.c:5650
+#: gui2/library.c:5646
 #, c-format
 msgid "Really delete the last %d observations?"
 msgstr "Να διαγραφούν οι τελευταίες %d παρατηρήσεις?"
 
-#: gui2/library.c:5652
+#: gui2/library.c:5648
 msgid "gretl: drop observations"
 msgstr "gretl: απόρριψη παρατηρήσεων"
 
-#: gui2/library.c:5666
+#: gui2/library.c:5662
 msgid "There are no extra observations to drop"
 msgstr "Δεν υπάρχουν επιπλέον παρατηρήσεις προς απόρριψη"
 
-#: gui2/library.c:5674
+#: gui2/library.c:5670
 msgid "Encode all values"
 msgstr ""
 
-#: gui2/library.c:5675
+#: gui2/library.c:5671
 msgid "Skip the lowest value"
 msgstr "Παράλειψη κατώτατης τιμής"
 
-#: gui2/library.c:5676
+#: gui2/library.c:5672
 msgid "Skip the highest value"
 msgstr "Παράλειψη ανώτατης τιμής"
 
-#: gui2/library.c:5680
+#: gui2/library.c:5676
 msgid "gretl: create dummy variables"
 msgstr "gretl: δημιουργία ψευδομεταβλητών"
 
-#: gui2/library.c:5681
+#: gui2/library.c:5677
 msgid "Encoding variables as dummies"
 msgstr ""
 
-#: gui2/library.c:5710
+#: gui2/library.c:5706
 msgid "gretl: generate lags"
 msgstr "gretl: δημιουργία υστερήσεων"
 
-#: gui2/library.c:5711
+#: gui2/library.c:5707
 msgid "Number of lags to create:"
 msgstr "Αριθμός υστερήσεων:"
 
-#: gui2/library.c:5747
+#: gui2/library.c:5743
 msgid "No discrete variables were selected"
 msgstr "Δεν επιλέχθηκε καμμία διακριτή μεταβλητή"
 
-#: gui2/library.c:5943
+#: gui2/library.c:5939
 #, c-format
 msgid "residual from VAR system, equation %d"
 msgstr "κατάλοιπο από VAR σύστημα, εξίσωση %d"
 
-#: gui2/library.c:5946
+#: gui2/library.c:5942
 #, c-format
 msgid "residual from VECM system, equation %d"
 msgstr "κατάλοιπο από VECM σύστημα, εξίσωση %d"
 
-#: gui2/library.c:5949
+#: gui2/library.c:5945
 #, c-format
 msgid "system residual, equation %d"
 msgstr "κατάλοιπο συστήματος, εξίσωση %d"
 
-#: gui2/library.c:6004
+#: gui2/library.c:6000
 msgid "T*R-squared"
 msgstr "T*R-τετράγωνο"
 
-#: gui2/library.c:6009
+#: gui2/library.c:6005
 msgid "degrees of freedom"
 msgstr "βαθμοί ελευθερίας"
 
-#: gui2/library.c:6024
+#: gui2/library.c:6020
 msgid "Akaike Information Criterion"
 msgstr "Akaike Πληροφοριακό Κριτήριο"
 
-#: gui2/library.c:6045
+#: gui2/library.c:6041
 #, c-format
 msgid ""
 "Statistic from model %d\n"
@@ -13343,88 +13343,88 @@ msgid ""
 "Name (max. %d characters):"
 msgstr ""
 
-#: gui2/library.c:6132
+#: gui2/library.c:6128
 msgid "standardized residual"
 msgstr "Τυποποιημένα κατάλοιπα"
 
-#: gui2/library.c:6181
+#: gui2/library.c:6177
 #, c-format
 msgid "predicted %s"
 msgstr "προβλεφθείσες τιμές %s"
 
-#: gui2/library.c:6461
+#: gui2/library.c:6457
 #, c-format
 msgid "Cannot delete %s; variable is in use"
 msgstr "Αδυναμία διαγραφής %s; η μεταβλητή χρησιμοποιείται"
 
-#: gui2/library.c:6465 gui2/library.c:6475 gui2/session.c:2418
+#: gui2/library.c:6461 gui2/library.c:6471 gui2/session.c:2418
 #, c-format
 msgid "Really delete %s?"
 msgstr "Σίγουρα να διαγραφούν οι μεταβλητές , %s ?"
 
-#: gui2/library.c:6473
+#: gui2/library.c:6469
 #, fuzzy
 msgid "Really delete the selected variables?"
 msgstr "Αδυναμία διαγραφής των επιλεγμένων μεταβλητών"
 
-#: gui2/library.c:6483 gui2/session.c:2420
+#: gui2/library.c:6479 gui2/session.c:2420
 msgid "gretl: delete"
 msgstr "gretl: διαγραφή"
 
-#: gui2/library.c:6509
+#: gui2/library.c:6505
 msgid "Cannot delete the specified variables"
 msgstr "Αδυναμία διαγραφής των επιλεγμένων μεταβλητών"
 
-#: gui2/library.c:6512
+#: gui2/library.c:6508
 msgid "Cannot delete all of the specified variables"
 msgstr "Αδυναμία διαγραφής όλων των επιλεγμένων μεταβλητών"
 
-#: gui2/library.c:6807
+#: gui2/library.c:6803
 msgid "You must supply three variables"
 msgstr "Πρέπει να δώσετε τρείς μεταβλητές"
 
-#: gui2/library.c:6892 gui2/selector.c:3738 gui2/selector.c:4041
+#: gui2/library.c:6888 gui2/selector.c:3738 gui2/selector.c:4041
 msgid "X-axis variable"
 msgstr "Μεταβλητή άξονα Χ"
 
-#: gui2/library.c:6947
+#: gui2/library.c:6943
 msgid "on a single graph"
 msgstr "σε ένα μόνο γράφημα"
 
-#: gui2/library.c:6948
+#: gui2/library.c:6944
 msgid "in separate small graphs"
 msgstr "σε ξεχωριστά μικρότερα γραφήματα"
 
-#: gui2/library.c:6953
+#: gui2/library.c:6949
 msgid "Plot the series"
 msgstr "Γράφημα σειράς"
 
-#: gui2/library.c:7005
+#: gui2/library.c:7001
 #, fuzzy, c-format
 msgid "%s: no valid values"
 msgstr "έγκυρες τιμές"
 
-#: gui2/library.c:7191
+#: gui2/library.c:7187
 msgid "Non-interactive (just get output)"
 msgstr "Μη διαδραστικό (μόνο λήψη αποτελεσμάτων)"
 
-#: gui2/library.c:7192
+#: gui2/library.c:7188
 msgid "Interactive R session"
 msgstr "Διαδραστική R συνεδρία"
 
-#: gui2/library.c:7198 gui2/library.c:7203
+#: gui2/library.c:7194 gui2/library.c:7199
 msgid "R mode"
 msgstr "R mode"
 
-#: gui2/library.c:7200
+#: gui2/library.c:7196
 msgid "pre-load data"
 msgstr "Εκ των προτέρων φόρτωση δεδομένων"
 
-#: gui2/library.c:7411 plugin/leverage.c:106 plugin/pca.c:89
+#: gui2/library.c:7407 plugin/leverage.c:106 plugin/pca.c:89
 msgid "gretl: save data"
 msgstr "gretl: αποθήκευση δεδομένων"
 
-#: gui2/library.c:7412
+#: gui2/library.c:7408
 msgid ""
 "The data set is currently sub-sampled.\n"
 "Would you like to restore the full range?"
@@ -13432,11 +13432,11 @@ msgstr ""
 "Το τρέχων σύνολο δεδομένων έχει υπο-δειγματοληφθεί.\n"
 "Θέλετε να ανακτήσετε το πλήρες εύρος του δείγματος?"
 
-#: gui2/library.c:7415
+#: gui2/library.c:7411
 msgid "gretl: Compact data"
 msgstr "gretl: Συμπίεση δεδομένων"
 
-#: gui2/library.c:7416
+#: gui2/library.c:7412
 msgid ""
 "The data set is currently sub-sampled.\n"
 "You must restore the full range before compacting.\n"
@@ -13446,11 +13446,11 @@ msgstr ""
 "Πρέπει να επαναφέρετε στο πλήρες εύρος πριν την συμπίεση.\n"
 "Επαναφορά πλήρους εύρους τώρα?"
 
-#: gui2/library.c:7420
+#: gui2/library.c:7416
 msgid "gretl: Expand data"
 msgstr "gretl: Επέκταση δεδομένων"
 
-#: gui2/library.c:7421
+#: gui2/library.c:7417
 msgid ""
 "The data set is currently sub-sampled.\n"
 "You must restore the full range before expanding.\n"
@@ -13460,11 +13460,11 @@ msgstr ""
 "Πρέπει να επαναφέρετε στο πλήρες εύρος πριν την επέκταση.\n"
 "Επαναφορά πλήρους εύρους τώρα?"
 
-#: gui2/library.c:7440
+#: gui2/library.c:7436
 msgid "gretl: transpose data"
 msgstr "gretl: αναστροφή δεδομένων"
 
-#: gui2/library.c:7441
+#: gui2/library.c:7437
 msgid ""
 "Transposing means that each variable becomes interpreted\n"
 "as an observation, and each observation as a variable.\n"
@@ -13474,39 +13474,39 @@ msgstr ""
 "ως παρατήρηση και κάθε παρατήρηση ως μία μεταβλητή.\n"
 "Θέλετε να συνεχίσετε;"
 
-#: gui2/library.c:7453
+#: gui2/library.c:7449
 msgid "Data transposed"
 msgstr "Τα δεδομένα αναστράφηκαν"
 
-#: gui2/library.c:7472
+#: gui2/library.c:7468
 msgid "Ascending"
 msgstr "Αύξουσα σειρά"
 
-#: gui2/library.c:7473
+#: gui2/library.c:7469
 msgid "Descending"
 msgstr "Φθίνουσα σειρά"
 
-#: gui2/library.c:7489
+#: gui2/library.c:7485
 msgid "Select sort key"
 msgstr "Επιλογή μεταβλητής ταξινόμησης"
 
-#: gui2/library.c:7508
+#: gui2/library.c:7504
 msgid "resample dataset"
 msgstr "αναδειγματοληψία δεδομένων"
 
-#: gui2/library.c:7511
+#: gui2/library.c:7507
 msgid "Resampling with replacement"
 msgstr "Αναδειγματοληψία με επανάθεση"
 
-#: gui2/library.c:7512
+#: gui2/library.c:7508
 msgid "Number of cases"
 msgstr "Αριθμός περιπτώσεων"
 
-#: gui2/library.c:7580
+#: gui2/library.c:7576
 msgid "gretl: revised data set"
 msgstr "gretl: αναθεωρημένο σύνολο δεδομένων"
 
-#: gui2/library.c:7581
+#: gui2/library.c:7577
 msgid ""
 "You have saved a reduced version of the current data set.\n"
 "Do you want to switch to the reduced version now?"
@@ -13514,11 +13514,11 @@ msgstr ""
 "Αποθηκεύσατε μία περιορισμένη έκδοση του τρέχοντος συνόλου δεδομένων.\n"
 "Θέλετε να αλλάξετε στην περιορισμένη έκδοση τώρα?"
 
-#: gui2/library.c:7919 gui2/library.c:8003
+#: gui2/library.c:7915 gui2/library.c:7999
 msgid "No commands to execute"
 msgstr "Δεν υπάρχουν εντολές προς εκτέλεση"
 
-#: gui2/library.c:8080
+#: gui2/library.c:8076
 msgid ""
 "\n"
 "Error executing script: halting\n"
@@ -13526,11 +13526,11 @@ msgstr ""
 "\n"
 "Σφάλμα κατά την εκτέλεση του script: η εκτέλεση σταμάτησε\n"
 
-#: gui2/library.c:8113
+#: gui2/library.c:8109
 msgid "Unterminated comment in script"
 msgstr "Σχόλιο χωρίς σαφές τέλος στο script"
 
-#: gui2/library.c:8583
+#: gui2/library.c:8580
 msgid "Script done\n"
 msgstr "Script ολοκληρώθηκε\n"
 
@@ -16071,8 +16071,8 @@ msgstr " Prob(x = %d) = %g\n"
 msgid "MA estimate(s) out of bounds\n"
 msgstr "%s: αρνητική τιμή είναι εκτός ορίων.\n"
 
-#: plugin/arma.c:1446 plugin/arma_init.c:347 plugin/arma_init.c:1143
-#: plugin/arma_init.c:1221 plugin/arma_init.c:1224
+#: plugin/arma.c:1446 plugin/arma_init.c:351 plugin/arma_init.c:1139
+#: plugin/arma_init.c:1214 plugin/arma_init.c:1217
 msgid "ARMA initialization"
 msgstr "ARMA τοποθέτηση αρχικών τιμών"
 
@@ -16085,20 +16085,20 @@ msgstr "καθορισμένες από τον χρήστη αρχικές τι�
 msgid "Error in arma command"
 msgstr "Σφάλμα σε arma εντολή"
 
-#: plugin/arma_init.c:348
+#: plugin/arma_init.c:352
 msgid "Hannan-Rissanen method"
 msgstr ""
 
-#: plugin/arma_init.c:1144
+#: plugin/arma_init.c:1140
 #, fuzzy
 msgid "small MA values"
 msgstr "έγκυρες τιμές"
 
-#: plugin/arma_init.c:1222
+#: plugin/arma_init.c:1215
 msgid "using nonlinear AR model"
 msgstr "χρήση μη-γραμμικού AR υποδείγματος"
 
-#: plugin/arma_init.c:1225
+#: plugin/arma_init.c:1218
 msgid "using linear AR model"
 msgstr "χρήση γραμμικού AR υποδείγματος"
 
@@ -16445,6 +16445,14 @@ msgstr "Αλλαγή αλγορίθμου: %d επαναλήψεις"
 #: plugin/jrestrict.c:1255
 msgid "user-supplied initial values"
 msgstr "καθορισμένες από τον χρήστη αρχικές τιμές"
+
+#: plugin/jrestrict.c:1264
+msgid "Strong convergence"
+msgstr ""
+
+#: plugin/jrestrict.c:1266
+msgid "Weak convergence"
+msgstr ""
 
 #: plugin/jrestrict.c:1857
 #, c-format
