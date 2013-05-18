@@ -4152,6 +4152,62 @@
     </description>
   </command>
 
+  <command name="gui-funcs" section="Programming" 
+	   label="Special functions" context="gui">
+    <description>
+      <para>
+	This dialog enables you to specify which functions within a
+	package, if any, should be assigned to certain special roles.
+	Note that a given function can be assigned to at most one of
+	the following roles, and to qualify as a candidate for one
+	of these roles a function has to satisfy certain criteria.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>bundle-print</lit>: prints output based on the
+	    content of a bundle produced by your package. Criteria:
+	    this function must have as its first parameter a
+	    bundle-pointer. If a second parameter is present it
+	    must take the form of an integer switch that has a
+	    default value.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>bundle-plot</lit>: produces one or more plots using
+	    a bundle produced by your package. Criteria: as for
+	    <lit>bundle-print</lit>.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>bundle-test</lit>: carries out some sort of
+	    statistical test using a bundle produced by your package.
+	    Criteria: as for <lit>bundle-print</lit>.
+	  </para>
+	</li>	
+	<li>
+	  <para>
+	    <lit>gui-main</lit>: the public interface that should be
+	    presented to users by default in GUI use. This is useful
+	    only if the package has more than one public interface.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>gui-precheck</lit>: gate-keeper function which returns
+	    0 if the functionality of your package is applicable in the
+	    current context, non-zero otherwise. This is intended for
+	    use with packages that operate on a model in some way, to
+	    screen out types of model that are not handled by the
+	    package.
+	  </para>
+	</li>	
+      </ilist>
+    </description>
+  </command>
+
   <command name="gui-htest" section="Tests" context="gui"
     label="Calcolatore per le statistiche test">
 
@@ -5716,6 +5772,35 @@
       Variabile e immettere il valore <quote>-1</quote> (senza le
       virgolette); gretl interpreterà quindi i valori -1 come osservazioni
       mancanti.</para>
+    </description>
+  </command>
+
+  <command name="menu-attach" section="Programming" 
+	   label="Menu attachment" context="gui">
+    <description>
+      <para>
+	This dialog enables you to specify a menu attachment for
+	a function package. To do this you must complete the three
+	fields in the dialog box.
+      </para>
+      <subhead>Label</subhead>
+      <para>
+	This requires a short label string, which will appear as
+	the menu entry for the package.
+      </para>
+      <subhead>Window</subhead>
+      <para>
+	Select <quote>model window</quote> for a function package that
+	does something with a gretl model, and should appear in the
+	menu bar in a gretl model window. Otherwise, select
+	<quote>main window</quote>.
+      </para>
+      <subhead>Menu tree</subhead>
+      <para>
+	Select the position within the menu tree (for either the
+	main window or the model window, as chosen above) where the
+	entry for the package should appear.
+      </para>
     </description>
   </command>
 
