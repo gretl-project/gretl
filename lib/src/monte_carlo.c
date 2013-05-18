@@ -2805,6 +2805,10 @@ static int loop_next_command (char *targ, LOOPSET *loop, int *pj)
 
 static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 {
+#if LOOP_DEBUG
+    fprintf(stderr, "loop_process_error: j=%d, catch=%d\n",
+	    j, loop_cmd_catch(loop, j));
+#endif
     if (libset_get_bool(HALT_ON_ERR) == 0) {
 	errmsg(err, prn);
 	err = 0;
@@ -2850,7 +2854,7 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
 
     if (loop_cmd_catch(loop, j)) {
 	cmd->flags |= CMD_CATCH;
-    } else {
+    } else if (!cmd->context) {
 	cmd->flags &= ~CMD_CATCH;
     }
 }
@@ -3175,7 +3179,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		cmd->flags ^= CMD_CATCH;
 		err = 0;
 	    }
-
 	} /* end execution of commands within loop */
 
 	if (err) {

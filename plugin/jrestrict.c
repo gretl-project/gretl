@@ -1261,9 +1261,9 @@ static int switchit (Jwrap *J, PRN *prn)
 	}
 
 	if (conv == 1) {
-	    pputs(prn, "Strong convergence\n"); 
+	    pprintf(prn, "%s\n", _("Strong convergence")); 
 	} else if (conv == 2) {
-	    pputs(prn, "Weak convergence\n"); 
+	    pprintf(prn, "%s\n", _("Weak convergence")); 
 	}
     }
 
