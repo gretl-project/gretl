@@ -1748,7 +1748,6 @@ static int read_user_lists (xmlDocPtr doc, xmlNodePtr cur)
 
 static int read_user_bundles (xmlDocPtr doc, xmlNodePtr cur)
 {
-    char *name;
     int err = 0;
 
     gretl_push_c_numeric_locale();
@@ -1757,12 +1756,18 @@ static int read_user_bundles (xmlDocPtr doc, xmlNodePtr cur)
 
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (XUC) "gretl-bundle")) {
+	    char *name, *creator = NULL;
+
 	    name = (char *) xmlGetProp(cur, (XUC) "name");
 	    if (name == NULL) {
 		err = 1;
 	    } else {
-		err = load_bundle_from_xml(cur, doc, name);
+		creator = (char *) xmlGetProp(cur, (XUC) "creator");
+		err = load_bundle_from_xml(cur, doc, name, creator);
 		free(name);
+		if (creator != NULL) {
+		    free(creator);
+		}
 	    }
 	}
 	cur = cur->next;

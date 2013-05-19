@@ -1175,19 +1175,25 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
 
 void xml_put_bundle (gretl_bundle *b, const char *name, FILE *fp)
 {
-    fprintf(fp, "<gretl-bundle name=\"%s\">\n", name);
+    if (b->creator != NULL && *b->creator != '\0') {
+	fprintf(fp, "<gretl-bundle name=\"%s\" creator=\"%s\">\n", 
+		name, b->creator);
+    } else {
+	fprintf(fp, "<gretl-bundle name=\"%s\">\n", name);
+    }
     g_hash_table_foreach(b->ht, xml_put_bundled_item, fp);
     fputs("</gretl-bundle>\n", fp); 
 }
 
-/* For internal use only, called from gretl_xml.c: @p1 should be of
+/* For internal use only, called from uservar.c: @p1 should be of
    type xmlNodePtr and @p2 should be an xmlDocPtr. We suppress the
    actual pointer types in the prototype so that it's possible for a
    module to include gretl_bundle.h without including the full libxml
    headers.  
 */
 
-int load_bundle_from_xml (void *p1, void *p2, const char *name)
+int load_bundle_from_xml (void *p1, void *p2, const char *name,
+			  const char *creator)
 {
     xmlNodePtr node = (xmlNodePtr) p1;
     xmlDocPtr doc = (xmlDocPtr) p2;
@@ -1202,6 +1208,10 @@ int load_bundle_from_xml (void *p1, void *p2, const char *name)
     }
 
     fprintf(stderr, "load_bundle_from_xml: '%s'\n", name);
+
+    if (creator != NULL && *creator != '\0') {
+	b->creator = gretl_strdup(creator);
+    }
 
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (XUC) "bundled-item")) {
