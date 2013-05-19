@@ -242,7 +242,7 @@ static int real_user_var_add (const char *name,
     }
 
     if (user_var_callback != NULL && u->level == 0 &&
-	!(opt & (OPT_P | OPT_S)) && 
+	!(opt & (OPT_P | OPT_S)) && *name != '$' &&
 	(type == GRETL_TYPE_MATRIX ||
 	 type == GRETL_TYPE_BUNDLE) &&
 	!(type == GRETL_TYPE_BUNDLE && bname_is_temp(name))) {
