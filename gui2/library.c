@@ -7067,6 +7067,13 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
     return 0;
 }
 
+static int script_wait;
+
+int waiting_for_output (void)
+{
+    return script_wait;
+}
+
 /* Start a spinner as visual indication that there's
    something going on: the argument @w should be of
    type GTK_BOX, into which a spinner may be packed.
@@ -7089,6 +7096,7 @@ void start_wait_for_output (GtkWidget *w, gboolean big)
 
     gtk_widget_show(spinner);
     gtk_spinner_start(GTK_SPINNER(spinner));
+    script_wait = 1;
 }
 
 /* done: stop spinner */
@@ -7103,6 +7111,8 @@ void stop_wait_for_output (GtkWidget *w)
     }
 
     gdk_flush();
+    script_wait = 0;
+    maybe_sensitize_iconview();
 }
 
 static void stop_button_set_sensitive (windata_t *vwin,

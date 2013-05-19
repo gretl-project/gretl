@@ -2923,6 +2923,9 @@ static int gui_user_var_callback (const char *name, GretlType type,
 	} else if (autoicon_on()) {
 	    view_session();
 	}
+	if (waiting_for_output()) {
+	    gtk_widget_set_sensitive(iconview, FALSE);
+	}
 	mark_session_changed();
     } else if (action == UVAR_DELETE) {
 	/* variable not yet deleted (deferred to GUI) */
@@ -2939,6 +2942,13 @@ static int gui_user_var_callback (const char *name, GretlType type,
     }	
     
     return err;
+}
+
+void maybe_sensitize_iconview (void)
+{
+    if (iconview != NULL && !gtk_widget_is_sensitive(iconview)) {
+	gtk_widget_set_sensitive(iconview, TRUE);
+    }
 }
 
 int have_session_objects (void)

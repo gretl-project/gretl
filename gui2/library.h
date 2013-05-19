@@ -331,6 +331,8 @@ void start_wait_for_output (GtkWidget *w, gboolean big);
 
 void stop_wait_for_output (GtkWidget *w);
 
+int waiting_for_output (void);
+
 /* other */
 
 gchar *get_genr_string (GtkWidget *entry, dialog_t *dlg);

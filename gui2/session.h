@@ -116,6 +116,8 @@ int is_session_model (void *p);
 
 void view_session (void);
 
+void maybe_sensitize_iconview (void);
+
 void save_session_callback (GtkAction *action);
 
 int session_file_is_open (void);
