@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-05-17 15:56+0100\n"
-"PO-Revision-Date: 2013-03-29 16:48+0000\n"
+"PO-Revision-Date: 2013-05-19 22:57+0100\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
@@ -1407,32 +1407,28 @@ msgid "periods"
 msgstr "períodos"
 
 #: lib/src/dataset.c:1968
-#, fuzzy
 msgid "quarters"
-msgstr "trimestral"
+msgstr "trimestres"
 
 #: lib/src/dataset.c:1968
-#, fuzzy
 msgid "months"
-msgstr "mensal"
+msgstr "meses"
 
 #: lib/src/dataset.c:1970
 msgid "years"
-msgstr ""
+msgstr "anos"
 
 #: lib/src/dataset.c:1972
-#, fuzzy
 msgid "weeks"
-msgstr "semanal"
+msgstr "semanas"
 
 #: lib/src/dataset.c:1974
 msgid "days"
-msgstr ""
+msgstr "dias"
 
 #: lib/src/dataset.c:1976
-#, fuzzy
 msgid "hours"
-msgstr "horária"
+msgstr "horas"
 
 #: lib/src/dataset.c:2739
 msgid "Generated"
@@ -2866,7 +2862,31 @@ msgstr "média %s"
 msgid "time"
 msgstr "tempo"
 
-#: lib/src/graphing.c:5565
+#: lib/src/graphing.c:5539
+msgid "quarters"
+msgstr "trimestres"
+
+#: lib/src/graphing.c:5539
+msgid "months"
+msgstr "meses"
+
+#: lib/src/graphing.c:5541
+msgid "years"
+msgstr "anos"
+
+#: lib/src/graphing.c:5543
+msgid "weeks"
+msgstr "semanas"
+
+#: lib/src/graphing.c:5545
+msgid "days"
+msgstr "dias"
+
+#: lib/src/graphing.c:5547
+msgid "hours"
+msgstr "horas"
+
+#: lib/src/graphing.c:5597
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
 msgstr "resposta de %s a um choque em %s, com intervalo de confiança bootstrap"
@@ -4462,9 +4482,8 @@ msgid "Point observations"
 msgstr "Observações pontuais"
 
 #: lib/src/modelprint.c:188
-#, fuzzy
 msgid "Pseudo-point observations"
-msgstr "Observações pontuais"
+msgstr "Observações pseudo-pontuais"
 
 #: lib/src/modelprint.c:202
 msgid "Left-censored observations"
@@ -7359,7 +7378,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 29 de março de 2013."
+"Tradução de 19 de maio de 2013."
 
 #: gui2/about.c:165
 msgid "License"
@@ -10653,7 +10672,7 @@ msgstr "encontrado %s\n"
 
 #: gui2/gretl.c:471
 msgid "Start a new gretl instance?"
-msgstr ""
+msgstr "Iniciar uma nova instância de gretl?"
 
 #: gui2/gretl.c:1263
 msgid "No lists are currently defined"
@@ -16157,11 +16176,11 @@ msgstr "valores iniciais fornecidos pelo utilizador"
 
 #: plugin/jrestrict.c:1264
 msgid "Strong convergence"
-msgstr ""
+msgstr "Convergência forte"
 
 #: plugin/jrestrict.c:1266
 msgid "Weak convergence"
-msgstr ""
+msgstr "Convergência fraca"
 
 #: plugin/jrestrict.c:1857
 #, c-format
