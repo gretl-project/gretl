@@ -1406,30 +1406,6 @@ msgstr "o conjunto de dados é sub-amostrado"
 msgid "periods"
 msgstr "períodos"
 
-#: lib/src/dataset.c:1968
-msgid "quarters"
-msgstr "trimestres"
-
-#: lib/src/dataset.c:1968
-msgid "months"
-msgstr "meses"
-
-#: lib/src/dataset.c:1970
-msgid "years"
-msgstr "anos"
-
-#: lib/src/dataset.c:1972
-msgid "weeks"
-msgstr "semanas"
-
-#: lib/src/dataset.c:1974
-msgid "days"
-msgstr "dias"
-
-#: lib/src/dataset.c:1976
-msgid "hours"
-msgstr "horas"
-
 #: lib/src/dataset.c:2739
 msgid "Generated"
 msgstr "Gerado"
