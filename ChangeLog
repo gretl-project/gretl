@@ -18,7 +18,8 @@ version 1.9.13, in progress
 - Fix bug: encoding problem when printing from model window
   on Windows
 - Fix bug: "catch" not working properly when applied to
-  genr expressions within loops
+  genr expressions within loops, and also for multi-line
+  commands in loops
 - Fix bug: bad behavior when taking the transpose of a
   scalar variable in a loop
 - Fix bug: daily dates in old format YYYY/MM/DD not handled
