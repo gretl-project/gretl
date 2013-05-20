@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-05-17 15:56+0100\n"
-"PO-Revision-Date: 2013-05-16 12:04+0200\n"
+"PO-Revision-Date: 2013-05-20 13:17+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -16185,11 +16185,11 @@ msgstr "valores iniciales proporcionados por el usuario"
 
 #: plugin/jrestrict.c:1264
 msgid "Strong convergence"
-msgstr ""
+msgstr "Convergencia fuerte"
 
 #: plugin/jrestrict.c:1266
 msgid "Weak convergence"
-msgstr ""
+msgstr "Convergencia débil"
 
 #: plugin/jrestrict.c:1857
 #, c-format
