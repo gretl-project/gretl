@@ -8087,6 +8087,7 @@ static double *dvar_get_series (int i, const DATASET *dset,
 {
     double *x = NULL;
     int t;
+    int YMD = dated_daily_data(dset) || dated_weekly_data(dset);
 
     if (dset == NULL || dset->n == 0) {
 	*err = E_NODATA;
@@ -8098,7 +8099,7 @@ static double *dvar_get_series (int i, const DATASET *dset,
 	return NULL;
     }    
 
-    if (i == R_OBSMIC && !dated_daily_data(dset)) {
+    if (i == R_OBSMIC && !YMD) {
 	*err = E_PDWRONG;
 	return NULL;
     }
@@ -8126,7 +8127,7 @@ static double *dvar_get_series (int i, const DATASET *dset,
 	for (t=0; t<dset->n; t++) {
 	    x[t] = t + 1;
 	} 	
-    } else if (dated_daily_data(dset) && i != R_INDEX) {
+    } else if (YMD && i != R_INDEX) {
 	char obs[12];
 	int y, m, d;
 
