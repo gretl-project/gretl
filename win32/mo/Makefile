@@ -1,12 +1,9 @@
 include ../config.mk
 
-vpath %.po ../../po
+LANGS = $(shell cat ../../po/LINGUAS | grep -v \\\#)
 
-%.mo: %.po
-	$(WIN32_MSGFMT) -o $@ $<
-
-all: de.mo el.mo es.mo eu.mo fr.mo it.mo pl.mo ru.mo rw.mo tr.mo pt.mo \
-	pt_BR.mo zh_TW.mo cs.mo sq.mo ca.mo bg.mo gl.mo
+all:
+	for f in $(LANGS) ; do $(WIN32_MSGFMT) -o $$f.mo ../../po/$$f.po ; done
 
 clean:
 	rm -f *.mo
