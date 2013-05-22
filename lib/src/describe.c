@@ -3324,11 +3324,9 @@ gretl_bundle *acf_bundle (int vnum, int order, const DATASET *dset,
 			  int *err)
 {
     gretl_bundle *b = NULL;
-    const double *x;
+    const double *x = dset->Z[vnum];
     gretl_matrix *C;
-    int T = 0;
 
-    x = dset->Z[vnum];
     C = acf_matrix(x, order, dset, 0, err);
 
     if (!*err) {
@@ -3338,6 +3336,7 @@ gretl_bundle *acf_bundle (int vnum, int order, const DATASET *dset,
 	} else {
 	    int t1 = dset->t1;
 	    int t2 = dset->t2;
+	    int T;
 
 	    while (na(x[t1])) t1++;
 	    while (na(x[t2])) t2--;
