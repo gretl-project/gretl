@@ -26,7 +26,6 @@
 #include "uservar.h"
 #include "cmd_private.h"
 #include "gretl_www.h"
-#include "gretl_bundle.h"
 #include "gretl_xml.h"
 #include "database.h"
 #include "guiprint.h"

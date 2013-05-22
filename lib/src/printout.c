@@ -26,7 +26,6 @@
 #include "gretl_func.h"
 #include "matrix_extra.h"
 #include "uservar.h"
-#include "gretl_bundle.h"
 #include "gretl_string_table.h"
 
 #include <time.h>

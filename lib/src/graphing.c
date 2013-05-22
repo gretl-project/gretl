@@ -28,7 +28,6 @@
 #include "plotspec.h"
 #include "usermat.h"
 #include "gretl_panel.h"
-#include "gretl_bundle.h"
 #include "missing_private.h"
 
 #include <unistd.h>
@@ -5673,9 +5672,8 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     return err;
 }
 
-int irf_plot_from_bundle (void *data, gretlopt opt)
+int irf_plot_from_bundle (gretl_bundle *bundle, gretlopt opt)
 {
-    gretl_bundle *b = data;
     const char *targname;
     const char *shockname;
     const char *perlabel;
@@ -5684,27 +5682,27 @@ int irf_plot_from_bundle (void *data, gretlopt opt)
     int use_fill = 1;
     int err = 0;
 
-    alpha = gretl_bundle_get_scalar(b, "alpha", &err);
+    alpha = gretl_bundle_get_scalar(bundle, "alpha", &err);
     if (err) {
 	alpha = 0.0;
 	err = 0;
     }
 
-    targname = gretl_bundle_get_string(b, "targname", &err);
+    targname = gretl_bundle_get_string(bundle, "targname", &err);
 
     if (!err) {
-	shockname = gretl_bundle_get_string(b, "shockname", &err);
+	shockname = gretl_bundle_get_string(bundle, "shockname", &err);
     }
 
     if (!err) {
-	perlabel = gretl_bundle_get_string(b, "period_label", &err);
+	perlabel = gretl_bundle_get_string(bundle, "period_label", &err);
     }
 
     if (!err) {
 	GretlType type;
 	void *ptr;
 
-	ptr = gretl_bundle_get_data(b, "payload_matrix", 
+	ptr = gretl_bundle_get_data(bundle, "payload_matrix", 
 				    &type, NULL, &err);
 	if (!err) {
 	    if (type != GRETL_TYPE_MATRIX) {

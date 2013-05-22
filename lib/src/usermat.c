@@ -22,7 +22,6 @@
 #include "matrix_extra.h"
 #include "usermat.h"
 #include "genparse.h"
-#include "gretl_bundle.h"
 #include "uservar.h"
 
 #define MDEBUG 0

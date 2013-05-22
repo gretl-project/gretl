@@ -36,7 +36,6 @@
 #include "menustate.h"
 #include "toolbar.h"
 #include "winstack.h"
-#include "gretl_bundle.h"
 #include "fncall.h"
 #include "lib_private.h"
 

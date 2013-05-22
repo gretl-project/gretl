@@ -2965,6 +2965,47 @@ static int corrgram_graph (const char *vname,
     return gnuplot_make_graph();
 }
 
+int corrgram_graph_from_bundle (gretl_bundle *bundle, gretlopt opt)
+{
+    const char *vname = NULL;
+    const gretl_matrix *C = NULL;
+    const double *acf, *pacf = NULL;
+    double pm = 0.0;
+    int m, T, err = 0;
+
+    vname = gretl_bundle_get_string(bundle, "vname", &err);
+
+    if (!err) {
+	T = gretl_bundle_get_scalar(bundle, "T", &err);
+    }
+    
+    if (!err) {
+	C = gretl_bundle_get_matrix(bundle, "payload_matrix", &err);
+	if (!err && C->cols > 2) {
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	m = C->rows;
+	acf = C->val;
+	if (C->cols == 2) {
+	    pacf = acf + m;
+	}
+	/* for confidence bands */
+	pm = 1.96 / sqrt((double) T);
+	if (pm > 0.5) {
+	    pm = 0.5;
+	}
+    }
+
+    if (!err) {
+	err = corrgram_graph(vname, acf, pacf, m, pm, opt);
+    }
+
+    return err;
+}
+
 static int corrgm_ascii_plot (const char *vname,
 			      const gretl_matrix *A,
 			      PRN *prn)
@@ -3277,6 +3318,53 @@ gretl_matrix *acf_matrix (const double *x, int order,
     }
 
     return A;
+}
+
+gretl_bundle *acf_bundle (int vnum, int order, const DATASET *dset,
+			  int *err)
+{
+    gretl_bundle *b = NULL;
+    const double *x;
+    gretl_matrix *C;
+    int T = 0;
+
+    x = dset->Z[vnum];
+    C = acf_matrix(x, order, dset, 0, err);
+
+    if (!*err) {
+	b = gretl_bundle_new();
+	if (b == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    int t1 = dset->t1;
+	    int t2 = dset->t2;
+
+	    while (na(x[t1])) t1++;
+	    while (na(x[t2])) t2--;
+
+	    T = t2 - t1 + 1;
+
+	    *err = gretl_bundle_set_matrix(b, "payload_matrix", C);
+	    if (!*err) {
+		*err = gretl_bundle_set_string(b, "vname", dset->varname[vnum]);
+	    }
+	    if (!*err) {
+		*err = gretl_bundle_set_scalar(b, "T", (double) T);
+	    }	    
+	}
+	gretl_matrix_free(C);
+    }
+
+    if (b != NULL && !*err) {
+	*err = gretl_bundle_set_creator(b, "gretl::corrgm");
+    }
+
+    if (b != NULL && *err) {
+	gretl_bundle_destroy(b);
+	b = NULL;
+    }    
+
+    return b;
 }
 
 static int xcorrgm_graph (const char *xname, const char *yname,

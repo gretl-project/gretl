@@ -21,7 +21,6 @@
 #include "libgretl.h"
 #include "gretl_xml.h"
 #include "gretl_func.h"
-#include "gretl_bundle.h"
 #include "usermat.h"
 #include "gretl_string_table.h"
 #include "libset.h"

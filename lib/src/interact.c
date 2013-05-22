@@ -33,7 +33,6 @@
 #include "gretl_panel.h"
 #include "texprint.h"
 #include "gretl_xml.h"
-#include "gretl_bundle.h"
 #include "gretl_string_table.h"
 #include "dbread.h"
 #include "gretl_foreign.h"

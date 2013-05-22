@@ -29,7 +29,6 @@
 #include "matrix_extra.h"
 #include "bootstrap.h"
 #include "gretl_foreign.h"
-#include "gretl_bundle.h"
 #include "uservar.h"
 
 #include <sys/stat.h>

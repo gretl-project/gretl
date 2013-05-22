@@ -23,7 +23,6 @@
 #include "session.h"
 #include "objectsave.h"
 #include "objstack.h"
-#include "gretl_bundle.h"
 
 static int gui_parse_object_request (const char *line, 
 				     char *objname, char **param,

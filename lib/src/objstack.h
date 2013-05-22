@@ -133,8 +133,8 @@ gretl_matrix *
 last_model_get_irf_matrix (int targ, int shock, double alpha, 
 			   const DATASET *dset, int *err);
 
-void *last_model_get_irf_bundle (int targ, int shock, double alpha, 
-				 const DATASET *dset, int *err);
+gretl_bundle *last_model_get_irf_bundle (int targ, int shock, double alpha, 
+					 const DATASET *dset, int *err);
 
 void *last_model_get_data (const char *key, GretlType *type, 
 			   int *size, int *err);

@@ -25,7 +25,6 @@
 #include "libset.h"
 #include "uservar.h"
 #include "gretl_panel.h"
-#include "gretl_bundle.h"
 #include "gretl_string_table.h"
 #include "gretl_xml.h"
 #include "forecast.h"

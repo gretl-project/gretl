@@ -181,6 +181,8 @@ int corrgram (int varno, int order, int nparam,
 int xcorrgram (const int *list, int order, 
 	       DATASET *dset, gretlopt opt, PRN *prn);
 
+int corrgram_graph_from_bundle (gretl_bundle *bundle, gretlopt opt);
+
 int periodogram (int varno, int width, 
 		 const DATASET *dset, 
 		 gretlopt opt, PRN *prn);
@@ -270,6 +272,9 @@ int gretl_normality_test (const char *varname,
 
 gretl_matrix *acf_matrix (const double *x, int order,
 			  const DATASET *dset, int n,
+			  int *err);
+
+gretl_bundle *acf_bundle (int vnum, int order, const DATASET *dset,
 			  int *err);
 
 gretl_matrix *xcf_vec (const double *x, const double *y,

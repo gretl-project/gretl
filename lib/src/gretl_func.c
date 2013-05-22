@@ -28,7 +28,6 @@
 #include "gretl_xml.h"
 #include "cmd_private.h"
 #include "gretl_string_table.h"
-#include "gretl_bundle.h"
 #include "uservar.h"
 #include "flow_control.h"
 #include "kalman.h"

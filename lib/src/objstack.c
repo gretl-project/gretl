@@ -26,7 +26,6 @@
 #include "usermat.h"
 #include "forecast.h"
 #include "kalman.h"
-#include "gretl_bundle.h"
 
 #define ODEBUG 0
 
@@ -1379,8 +1378,8 @@ last_model_get_irf_matrix (int targ, int shock, double alpha,
     return M;
 }
 
-void *last_model_get_irf_bundle (int targ, int shock, double alpha, 
-				 const DATASET *dset, int *err)
+gretl_bundle *last_model_get_irf_bundle (int targ, int shock, double alpha, 
+					 const DATASET *dset, int *err)
 {
     stacker *smatch = find_smatch(NULL);
     GRETL_VAR *var = NULL;

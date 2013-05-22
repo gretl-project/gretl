@@ -24,7 +24,6 @@
 #include "gretl_xml.h"
 #include "libset.h"
 #include "uservar.h"
-#include "gretl_bundle.h"
 
 #include "treeutils.h"
 #include "ssheet.h"

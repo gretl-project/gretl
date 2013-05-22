@@ -261,7 +261,7 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 const DATASET *dset,
 				 gretlopt opt);
 
-int irf_plot_from_bundle (void *data, gretlopt opt);
+int irf_plot_from_bundle (gretl_bundle *bundle, gretlopt opt);
 
 int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods, 
 			 const DATASET *dset);

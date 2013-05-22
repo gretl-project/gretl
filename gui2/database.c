@@ -31,7 +31,6 @@
 #include "winstack.h"
 #include "toolbar.h"
 #include "dlgutils.h"
-#include "gretl_bundle.h"
 #include "fncall.h"
 
 #include <sys/types.h>

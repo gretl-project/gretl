@@ -24,7 +24,6 @@
 #include "libset.h"
 #include "uservar.h"
 #include "gretl_xml.h"
-#include "gretl_bundle.h"
 
 #include <glib.h>
 
@@ -1305,10 +1304,10 @@ int do_bundle_plot (gretl_bundle *b, gretlopt opt)
 	err = E_DATA;
     } else if (!strcmp(creator, "gretl::irf")) {
 	err = irf_plot_from_bundle(b, opt);
+    } else if (!strcmp(creator, "gretl::corrgm")) {
+	err = corrgram_graph_from_bundle(b, opt);
     } else {
-	/* need to add more possibilities here, e.g.
-	   corrgm, pergm, ...
-	*/
+	/* need to add more possibilities here */
 	err = E_DATA;
     }
 
@@ -1331,7 +1330,9 @@ int can_do_bundle_plot (gretl_bundle *bundle)
     if (creator != NULL) {
 	if (!strcmp(creator, "gretl::irf")) {
 	    ret = 1;
-	}
+	} else if (!strcmp(creator, "gretl::corrgm")) {
+	    ret = 1;
+	}    
     }
 
     return ret;

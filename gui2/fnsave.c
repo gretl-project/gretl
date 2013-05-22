@@ -27,7 +27,6 @@
 #include "winstack.h"
 #include "selector.h"
 #include "textutil.h"
-#include "gretl_bundle.h"
 #include "fncall.h"
 #include "fnsave.h"
 

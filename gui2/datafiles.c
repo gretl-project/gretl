@@ -28,7 +28,6 @@
 #include "gretl_www.h"
 #include "menustate.h"
 #include "fnsave.h"
-#include "gretl_bundle.h"
 #include "fncall.h"
 #include "treeutils.h"
 #include "selector.h"

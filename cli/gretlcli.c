@@ -37,7 +37,6 @@
 #include "objstack.h"
 #include "gretl_xml.h"
 #include "gretl_string_table.h"
-#include "gretl_bundle.h"
 #include "dbread.h"
 #include "gretl_www.h"
 #include "uservar.h"

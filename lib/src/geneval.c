@@ -6124,7 +6124,7 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
 	} else if (l->t == MAT) {
 	    A = multi_acf(l->v.m, NULL, NULL, k, &p->err);
 	} else {
-	    /* must be a list */
+	    /* it must be a list */
 	    A = multi_acf(NULL, list, p->dset, k, &p->err);
 	}
     } else {
@@ -6150,6 +6150,18 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
     free(list);
 
     return A;
+}
+
+static gretl_bundle *get_corrgm_bundle (NODE *l, NODE *m, parser *p)
+{
+    gretl_bundle *b = NULL;
+    int k = node_get_int(m, p);
+
+    if (!p->err) {
+	b = acf_bundle(l->vnum, k, p->dset, &p->err);
+    }
+
+    return b;
 }
 
 static const char *ptr_node_get_matrix_name (NODE *t, parser *p)
@@ -6218,6 +6230,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 {
     NODE *ret = NULL;
     gretl_matrix *A = NULL;
+    int post_process = 1;
 
     if (f == F_MSHAPE || f == F_TRIMR) {
 	if (l->t != MAT) {
@@ -6273,6 +6286,12 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    node_type_error(f, 2, NUM, m, p);
 	} else if (r->t != EMPTY && r->t != VEC && r->t != MAT) {
 	    node_type_error(f, 3, VEC, r, p);
+	} else if (null_or_empty(r) && useries_node(l)) {
+	    ret = aux_bundle_node(p);
+	    if (!p->err) {
+		ret->v.b = get_corrgm_bundle(l, m, p);
+		post_process = 0;
+	    }
 	} else {
 	    A = get_corrgm_matrix(l, m, r, p);
 	}
@@ -6293,6 +6312,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    }
 	}
     } else if (f == F_STRNCMP) {
+	post_process = 0;
 	if (l->t != STR) {
 	    node_type_error(f, 1, STR, l, p);
 	} else if (m->t != STR) {
@@ -6311,6 +6331,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    }
 	}
     } else if (f == F_WEEKDAY) {
+	post_process = 0;
 	if (l->t != NUM) {
 	    node_type_error(f, 1, NUM, l, p);
 	} else if (m->t != NUM) {
@@ -6343,6 +6364,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 				   ctrl, &p->err);
 	}
     } else if (f == F_MONTHLEN) {
+	post_process = 0;
 	if (l->t != NUM) {
 	    node_type_error(f, 1, NUM, l, p);
 	} else if (m->t != NUM) {
@@ -6365,6 +6387,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    }
 	}
     } else if (f == F_EPOCHDAY) {
+	post_process = 0;
 	if (l->t != NUM) {
 	    node_type_error(f, 1, NUM, l, p);
 	} else if (m->t != NUM) {
@@ -6389,6 +6412,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    }
 	}
     } else if (f == F_SETNOTE) {
+	post_process = 0;
 	if (l->t != BUNDLE) {
 	    node_type_error(f, 1, BUNDLE, l, p);
 	} else if (m->t != STR) {
@@ -6405,6 +6429,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     } else if (f == F_BWFILT) {
 	gretl_matrix *tmp = NULL;
 
+	post_process = 0;
 	if (l->t != VEC) {
 	    if (l->t == MAT) {
 		cast_to_series(l, f, &tmp, NULL, NULL, p);
@@ -6451,6 +6476,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    int shock = (int) m->v.xval - 1;
 
 #if IRF_RETURN_BUNDLE
+	    post_process = 0;
 	    ret = aux_bundle_node(p);
 	    if (!p->err) {
 		ret->v.b = last_model_get_irf_bundle(targ, shock, alpha,
@@ -6500,6 +6526,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    A = user_gensymm_eigenvals(l->v.m, m->v.m, rname, &p->err);
 	}
     } else if (f == F_NADARWAT) {
+	post_process = 0;
 	if (l->t != VEC) {
 	    node_type_error(f, 1, VEC, l, p);
 	} else if (m->t != VEC) {
@@ -6585,19 +6612,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	}
     }
 
-#if IRF_RETURN_BUNDLE
-    if (f == F_IRF) {
-	return ret;
-    }
-#endif
-
-    if (f != F_STRNCMP && f != F_WEEKDAY && 
-	f != F_MONTHLEN && f != F_EPOCHDAY &&
-	f != F_SETNOTE && f != F_BWFILT && 
-	f != F_NADARWAT) {
-	if (!p->err) {
-	    ret = aux_matrix_node(p);
-	}
+    if (!p->err && post_process) {
+	ret = aux_matrix_node(p);
 	if (!p->err) {
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
