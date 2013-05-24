@@ -980,7 +980,7 @@ static void get_maj_min_pl (int v, int *maj, int *min, int *pl)
 {
     *maj = v / 10000;
     *min = (v - *maj * 10000) / 100;
-    *pl = v % 10;
+    *pl = v - *maj * 10000 - *min * 100;
 }
 
 static void adjust_minver (GtkWidget *w, function_info *finfo)
