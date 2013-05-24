@@ -181,8 +181,6 @@ int corrgram (int varno, int order, int nparam,
 int xcorrgram (const int *list, int order, 
 	       DATASET *dset, gretlopt opt, PRN *prn);
 
-int corrgram_graph_from_bundle (gretl_bundle *bundle, gretlopt opt);
-
 int periodogram (int varno, int width, 
 		 const DATASET *dset, 
 		 gretlopt opt, PRN *prn);

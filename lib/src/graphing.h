@@ -238,6 +238,14 @@ int hurstplot (const int *list, DATASET *dset,
 
 int qq_plot (const int *list, const DATASET *dset, gretlopt opt);
 
+int correlogram_plot (const char *vname,
+		      const double *acf, 
+		      const double *pacf,
+		      int m, double pm, 
+		      gretlopt opt);
+
+int correlogram_plot_from_bundle (gretl_bundle *bundle, gretlopt opt);
+
 int theil_forecast_plot (const int *plotlist, const DATASET *dset, 
 			 gretlopt opt);
 

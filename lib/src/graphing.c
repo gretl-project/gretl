@@ -5660,9 +5660,9 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				      dataset_period_label(dset),
 				      alpha, confint, use_fill,
 				      fp);
+	    fclose(fp);
 	}
 	gretl_matrix_free(resp);
-	fclose(fp);
     }
 
     if (!err) {
@@ -6326,6 +6326,200 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b,
     fclose(fp);
 
     return gnuplot_make_graph();
+}
+
+static void corrgm_min_max (const double *acf, const double *pacf,
+			    int m, double pm, double *ymin, double *ymax)
+{
+    int k;
+
+    /* the range should include the plus/minus bands, but
+       should not go outside (-1, 1) */
+    *ymax = pm * 1.2;
+    if (*ymax > 1) *ymax = 1;
+    *ymin = -pm * 1.2;
+    if (*ymin < -1) *ymin = -1;
+
+    /* adjust based on min and max of ACF, PACF */
+    for (k=0; k<m; k++) {
+	if (acf[k] > *ymax) {
+	    *ymax = acf[k];
+	} else if (acf[k] < *ymin) {
+	    *ymin = acf[k];
+	}
+	if (pacf[k] > *ymax) {
+	    *ymax = pacf[k];
+	} else if (pacf[k] < *ymin) {
+	    *ymin = pacf[k];
+	}
+    }
+
+    if (*ymax > 0.5) {
+	*ymax = 1;
+    } else {
+	*ymax *= 1.2;
+    }
+
+    if (*ymin < -0.5) {
+	*ymin = -1;
+    } else {
+	*ymin *= 1.2;
+    }
+
+    /* make the range symmetrical */
+    if (fabs(*ymin) > *ymax) {
+	*ymax = -*ymin;
+    } else if (*ymax > fabs(*ymin)) {
+	*ymin = -*ymax;
+    }
+}
+
+static int real_correlogram_print_plot (const char *vname,
+					const double *acf, 
+					const double *pacf,
+					int m, double pm, 
+					gretlopt opt,
+					FILE *fp)
+{
+    char crit_string[16];
+    double ymin, ymax;
+    int k;
+
+    sprintf(crit_string, "%.2f/T^%.1f", 1.96, 0.5);
+
+    corrgm_min_max(acf, pacf, m, pm, &ymin, &ymax);
+
+    gretl_push_c_numeric_locale();
+
+    /* create two separate plots, if both are OK */
+    if (pacf != NULL) {
+	fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fp);
+    }
+    fputs("set xzeroaxis\n", fp);
+    print_keypos_string(GP_KEY_RIGHT_TOP, fp);
+    fprintf(fp, "set xlabel '%s'\n", _("lag"));
+
+    fprintf(fp, "set yrange [%.2f:%.2f]\n", ymin, ymax);
+
+    /* upper plot: Autocorrelation Function or ACF */
+    if (pacf != NULL) {
+	fputs("set origin 0.0,0.50\n", fp);
+    }
+    if (opt & OPT_R) {
+	fprintf(fp, "set title '%s'\n", _("Residual ACF"));
+    } else {
+	fprintf(fp, "set title '%s %s'\n", _("ACF for"), vname);
+    }
+    fprintf(fp, "set xrange [0:%d]\n", m + 1);
+    fprintf(fp, "plot \\\n"
+	    "'-' using 1:2 notitle w impulses lw 5, \\\n"
+	    "%g title '+- %s' lt 2, \\\n"
+	    "%g notitle lt 2\n", pm, crit_string, -pm);
+    for (k=0; k<m; k++) {
+	fprintf(fp, "%d %g\n", k + 1, acf[k]);
+    }
+    fputs("e\n", fp);
+
+    if (pacf != NULL) {
+	/* lower plot: Partial Autocorrelation Function or PACF */
+	fputs("set origin 0.0,0.0\n", fp);
+	if (opt & OPT_R) {
+	    fprintf(fp, "set title '%s'\n", _("Residual PACF"));
+	} else {
+	    fprintf(fp, "set title '%s %s'\n", _("PACF for"), vname);
+	}
+	fprintf(fp, "set xrange [0:%d]\n", m + 1);
+	fprintf(fp, "plot \\\n"
+		"'-' using 1:2 notitle w impulses lw 5, \\\n"
+		"%g title '+- %s' lt 2, \\\n"
+		"%g notitle lt 2\n", pm, crit_string, -pm);
+	for (k=0; k<m; k++) {
+	    fprintf(fp, "%d %g\n", k + 1, pacf[k]);
+	}
+	fputs("e\n", fp);
+    }
+
+    if (pacf != NULL) {
+	fputs("unset multiplot\n", fp);
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    return 0;
+}
+
+int correlogram_plot (const char *vname,
+		      const double *acf, 
+		      const double *pacf,
+		      int m, double pm, 
+		      gretlopt opt)
+{
+    FILE *fp;
+    int err = 0;
+
+    fp = get_plot_input_stream(PLOT_CORRELOGRAM, &err);
+
+    if (!err) {
+	real_correlogram_print_plot(vname, acf, pacf, 
+				    m, pm, opt, fp);
+	fclose(fp);
+	err = gnuplot_make_graph();
+    }
+
+    return err;
+}
+
+int correlogram_plot_from_bundle (gretl_bundle *bundle, gretlopt opt)
+{
+    const char *vname = NULL;
+    const gretl_matrix *C = NULL;
+    const double *acf, *pacf = NULL;
+    double pm = 0.0;
+    int m, T, err = 0;
+
+    vname = gretl_bundle_get_string(bundle, "vname", &err);
+
+    if (!err) {
+	T = gretl_bundle_get_scalar(bundle, "T", &err);
+    }
+    
+    if (!err) {
+	C = gretl_bundle_get_matrix(bundle, "payload_matrix", &err);
+	if (!err && C->cols > 2) {
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	m = C->rows;
+	acf = C->val;
+	if (C->cols == 2) {
+	    pacf = acf + m;
+	}
+	/* for confidence bands */
+	pm = 1.96 / sqrt((double) T);
+	if (pm > 0.5) {
+	    pm = 0.5;
+	}
+    }
+
+    if (!err) {
+	FILE *fp;
+
+	fp = open_gp_stream_full(PLOT_CORRELOGRAM, BPLOT, 
+				 GPT_BATCH, &err);
+	if (!err) {
+	    real_correlogram_print_plot(vname, acf, pacf, 
+					m, pm, opt, fp);
+	    fclose(fp);
+	}
+    }
+
+    if (!err) {
+	err = gnuplot_make_graph();
+    }
+
+    return err;
 }
 
 #define MAKKONEN_POS 0
