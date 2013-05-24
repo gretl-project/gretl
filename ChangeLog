@@ -26,6 +26,8 @@ version 1.9.13, in progress
   correctly in the context of time-series plots
 - Fix bug: incomplete error-detection when parsing calls to
   diff() and log() on model-specification command line
+- Fix bug: $obsminor and $obsmicro not working with weekly 
+  datasets
 - Stata .dta importer: read Stata 12 data files
 
 2013-03-15 version 1.9.12

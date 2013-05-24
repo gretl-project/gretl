@@ -4118,7 +4118,8 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the number of items in list <argname>L</argname>.
+	  Restituisce il numero di elementi nella lista
+	  <argname>L</argname>.
 	</para>
       </description>
     </function>
@@ -4281,11 +4282,12 @@
     <function name="obs" section="data-utils" output="series">
       <description>
 	<para>
-	  Returns a series of consecutive integers, setting 1 at the start
-	  of the dataset. Note that the result is invariant to
-	  subsampling. This function is especially useful with time-series
-	  datasets. Note: you can write <lit>t</lit> instead of
-	  <lit>obs</lit> with the same effect.
+	  Ritorna una serie di interi consecutivi, partendo da 1 in
+	  corrispondenza con l'inizio del dataset. Si noti che il
+	  risultato è indipendente dal sottocampionamento. Questa
+	  funzione è particolarmente utile con dataset di serie
+	  storiche. Nota: la funzione <lit>t</lit> è un sinonimo
+	  perfetto di <lit>obs</lit>.
 	</para>
 	<para>
 	  <seelist>
@@ -6167,7 +6169,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the hyperbolic tangent of <argname>x</argname>. 
+	  Ritorna la tangente iperbolica di <argname>x</argname>. 
 	</para>
 	<para context="tex">
 	  \[ \tanh x = \frac{e^{2x} - 1}{e^{2x} + 1}  \]
