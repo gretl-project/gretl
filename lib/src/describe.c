@@ -3175,7 +3175,7 @@ gretl_bundle *acf_bundle (int vnum, int order, const DATASET *dset,
 
 	    T = t2 - t1 + 1;
 
-	    *err = gretl_bundle_set_matrix(b, "payload_matrix", C);
+	    *err = gretl_bundle_set_payload_matrix(b, C);
 	    if (!*err) {
 		*err = gretl_bundle_set_string(b, "vname", dset->varname[vnum]);
 	    }

@@ -2313,6 +2313,33 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
     return ret;
 }
 
+static NODE *matrix_bundle_calc (NODE *l, NODE *r, int op, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+    gretl_matrix *ml, *mr;
+    gretl_matrix *mtmp = NULL;
+
+    if (ret == NULL) {
+	return NULL;
+    }
+
+    if (l->t == BUNDLE) {
+	mtmp = ml = gretl_bundle_get_payload_matrix(l->v.b, &p->err);
+	mr = r->v.m;
+    } else {
+	ml = l->v.m;
+	mtmp = mr = gretl_bundle_get_payload_matrix(r->v.b, &p->err);
+    }
+
+    if (!p->err) {
+	ret->v.m = real_matrix_calc(ml, mr, op, &p->err);
+    }
+
+    gretl_matrix_free(mtmp);
+
+    return ret;
+}
+
 static NODE *matrix_and_or (NODE *l, NODE *r, int op, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
@@ -8992,6 +9019,9 @@ static NODE *eval (NODE *t, parser *p)
 	} else if (t->t == B_HCAT && l->t == STR && r->t == STR) {
 	    /* exception: string concatenation */
 	    ret = two_string_func(l, r, t->t, p);
+	} else if ((l->t == MAT && r->t == BUNDLE) ||
+		   (l->t == BUNDLE && r->t == MAT)) {
+	    ret = matrix_bundle_calc(l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, (l->t == MAT)? 2 : 1,
 			    MAT, (l->t == MAT)? r : l, p);

@@ -66,6 +66,9 @@ const char *gretl_bundle_get_string (gretl_bundle *bundle,
 gretl_matrix *gretl_bundle_get_payload_matrix (gretl_bundle *bundle,
 					       int *err);
 
+int gretl_bundle_set_payload_matrix (gretl_bundle *bundle,
+				     const gretl_matrix *m);
+
 const char *gretl_bundle_get_note (gretl_bundle *bundle, const char *key);
 
 const char *gretl_bundle_get_creator (gretl_bundle *bundle);

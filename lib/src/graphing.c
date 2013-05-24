@@ -5699,18 +5699,7 @@ int irf_plot_from_bundle (gretl_bundle *bundle, gretlopt opt)
     }
 
     if (!err) {
-	GretlType type;
-	void *ptr;
-
-	ptr = gretl_bundle_get_data(bundle, "payload_matrix", 
-				    &type, NULL, &err);
-	if (!err) {
-	    if (type != GRETL_TYPE_MATRIX) {
-		err = E_TYPES;
-	    } else {
-		resp = (const gretl_matrix *) ptr;
-	    }
-	}
+	resp = gretl_bundle_get_payload_matrix(bundle, &err);
     }
 
     if (!err) {
@@ -6484,7 +6473,7 @@ int correlogram_plot_from_bundle (gretl_bundle *bundle, gretlopt opt)
     }
     
     if (!err) {
-	C = gretl_bundle_get_matrix(bundle, "payload_matrix", &err);
+	C = gretl_bundle_get_payload_matrix(bundle, &err);
 	if (!err && C->cols > 2) {
 	    err = E_DATA;
 	}

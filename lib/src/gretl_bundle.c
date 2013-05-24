@@ -54,6 +54,10 @@ struct bundled_item_ {
     char *note;
 };
 
+static int real_bundle_set_data (gretl_bundle *b, const char *key,
+				 void *ptr, GretlType type,
+				 int size, const char *note);
+
 int gretl_bundle_set_name (gretl_bundle *b, const char *name)
 {
     user_var *u = get_user_var_by_data(b);
@@ -435,8 +439,7 @@ double *gretl_bundle_get_series (gretl_bundle *bundle,
  * @err: location to receive error code.
  *
  * Returns: a copy of the matrix associated with the key 
- * "payload_matrix" in the specified @bundle, if any; 
- * otherwise NULL.
+ * "payload" in the specified @bundle, if any; otherwise NULL.
  */
 
 gretl_matrix *gretl_bundle_get_payload_matrix (gretl_bundle *bundle,
@@ -446,7 +449,7 @@ gretl_matrix *gretl_bundle_get_payload_matrix (gretl_bundle *bundle,
     GretlType type;
     void *ptr;
 
-    ptr = gretl_bundle_get_data(bundle, "payload_matrix", &type, 
+    ptr = gretl_bundle_get_data(bundle, "payload", &type, 
 				NULL, err);
     if (!*err && type != GRETL_TYPE_MATRIX) {
 	*err = E_TYPES;
@@ -460,6 +463,21 @@ gretl_matrix *gretl_bundle_get_payload_matrix (gretl_bundle *bundle,
     }
 
     return m;
+}
+
+/**
+ * gretl_bundle_set_payload_matrix:
+ * @bundle: bundle to access.
+ * @m: matrix to set as payload.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int gretl_bundle_set_payload_matrix (gretl_bundle *bundle,
+				     const gretl_matrix *m)
+{
+    return real_bundle_set_data(bundle, "payload", (void *) m,
+				GRETL_TYPE_MATRIX, 0, NULL);
 }
 
 /**
@@ -609,9 +627,9 @@ void *gretl_bundle_get_content (gretl_bundle *bundle)
     return (bundle == NULL)? NULL : (void *) bundle->ht;
 }
 
-static int real_gretl_bundle_set_data (gretl_bundle *b, const char *key,
-				       void *ptr, GretlType type,
-				       int size, const char *note)
+static int real_bundle_set_data (gretl_bundle *b, const char *key,
+				 void *ptr, GretlType type,
+				 int size, const char *note)
 {
     bundled_item *item = NULL;
     int err;
@@ -662,7 +680,7 @@ int gretl_bundle_set_data (gretl_bundle *bundle, const char *key,
     if (bundle == NULL) {
 	err = E_UNKVAR;
     } else {
-	err = real_gretl_bundle_set_data(bundle, key, ptr, type, size, NULL);
+	err = real_bundle_set_data(bundle, key, ptr, type, size, NULL);
     }
 
     return err;
@@ -854,9 +872,9 @@ static void copy_new_bundled_item (gpointer key, gpointer value, gpointer p)
     gretl_bundle *targ = (gretl_bundle *) p;
 
     if (!gretl_bundle_has_data(targ, (const char *) key)) {
-	real_gretl_bundle_set_data(targ, (const char *) key,
-				   item->data, item->type,
-				   item->size, item->note);
+	real_bundle_set_data(targ, (const char *) key,
+			     item->data, item->type,
+			     item->size, item->note);
     }
 }
 
@@ -868,9 +886,9 @@ static void copy_bundled_item (gpointer key, gpointer value, gpointer p)
     bundled_item *item = (bundled_item *) value;
     gretl_bundle *targ = (gretl_bundle *) p;
 
-    real_gretl_bundle_set_data(targ, (const char *) key,
-			       item->data, item->type,
-			       item->size, item->note);
+    real_bundle_set_data(targ, (const char *) key,
+			 item->data, item->type,
+			 item->size, item->note);
 }
 
 /* Create a new bundle as the union of two existing bundles:
