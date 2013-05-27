@@ -534,8 +534,8 @@ static void update_combo_selectors (call_info *cinfo,
 	/* iterate over the affected selectors */
 	GtkComboBox *sel = GTK_COMBO_BOX(sellist->data);
 	int target = GTK_WIDGET(sel) == refsel;
+	int null_OK, selpos;
 	gchar *saved = NULL;
-	int old, null_OK;
 
 	/* target == 1 means that we're looking at the
 	   selector whose button was clicked to add a
@@ -560,25 +560,27 @@ static void update_combo_selectors (call_info *cinfo,
 	if (target) {
 	    /* select the newly added var, which will be at the 
 	       end, or thereabouts */
-	    int addpos = llen - 1;
-
+	    selpos = llen - 1;
 	    if (series_arg(ptype)) {
-		addpos--; /* the const is always in last place */
+		selpos--; /* the const is always in last place */
 	    } 
-	    gtk_combo_box_set_active(sel, addpos);
-	} else {	    
-	    if (saved != NULL) {
-		/* reinstate the previous selection */
-		old = combo_list_index(saved, newlist);
-		if (*saved == '\0' && old < 0) {
+	    gtk_combo_box_set_active(sel, selpos);
+	} else if (saved != NULL) {
+	    /* reinstate the previous selection */
+	    selpos = combo_list_index(saved, newlist);
+	    if (selpos < 0) {
+		if (*saved == '\0') {
 		    combo_box_prepend_text(sel, "");
-		}  
-		gtk_combo_box_set_active(sel, (old >= 0)? old : 0);
-		g_free(saved);
-	    } else {
-		/* reinstate empty selection */
-		gtk_combo_box_set_active(sel, -1);
+		    selpos = 0;
+		} else if (!strcmp(saved, "null")) {
+		    selpos = llen;
+		}
 	    }
+	    gtk_combo_box_set_active(sel, selpos);
+	    g_free(saved);
+	} else {
+	    /* reinstate empty selection */
+	    gtk_combo_box_set_active(sel, -1);
 	} 
 
 	sellist = sellist->next;
@@ -2723,36 +2725,48 @@ static int pkg_attach_dialog (const gchar *name,
     return resp;
 }
 
-static void print_pkg_line (const gchar *name, 
+static char *make_pkg_line (const gchar *name, 
 			    const gchar *label, 
 			    const gchar *mpath, 
-			    int toplev, 
-			    FILE *fp)
+			    int toplev)
 {
     const gchar *relpath;
     int modelwin = 0;
+    PRN *prn = NULL;
+    char *pkgline;
 
     if (name == NULL || label == NULL || mpath == NULL) {
-	/* no-op */
-	return;
+	return NULL;
     }
+
+    if (bufopen(&prn)) {
+	return NULL;
+    }    
 
     relpath = pkg_get_attachment(mpath, &modelwin);
 
-    fprintf(fp, "<package name=\"%s\" label=\"%s\"", name, label);
+    pprintf(prn, "<package name=\"%s\" label=\"%s\"", name, label);
+
     if (modelwin) {
-	fputs(" model-window=\"true\"", fp);
+	pputs(prn, " model-window=\"true\"");
     }
+
     if (!strncmp(relpath, "/menubar", 8)) {
-	fprintf(fp, " path=\"%s\"", relpath);
+	pprintf(prn, " path=\"%s\"", relpath);
     } else {
-	fprintf(fp, " path=\"/menubar%s\"", relpath);
+	pprintf(prn, " path=\"/menubar%s\"", relpath);
     }
+
     if (toplev) {
-	fputs(" toplev=\"true\"/>\n", fp);
-    } else {
-	fputs("/>\n", fp);
+	pputs(prn, " toplev=\"true\"");
     }
+
+    pputs(prn, "/>\n");
+    
+    pkgline = gretl_print_steal_buffer(prn);
+    gretl_print_destroy(prn);
+    
+    return pkgline;
 }
 
 static int got_package_entry (const char *line, 
@@ -2841,6 +2855,24 @@ static void unregister_package (const gchar *pkgname)
     g_free(pkgxml);
 }
 
+static char *retrieve_pkg_line (const gchar *pkgname,
+				FILE *fp)
+{
+    char line[1024];
+    char *ret = NULL;
+
+    while (fgets(line, sizeof line, fp)) {
+	if (got_package_entry(line, pkgname)) {
+	    ret = gretl_strdup(line);
+	    break;
+	}
+    }
+
+    rewind(fp);
+
+    return ret;
+}
+
 int revise_package_status (const gchar *pkgname,
 			   const gchar *label,
 			   const gchar *mpath,
@@ -2848,29 +2880,59 @@ int revise_package_status (const gchar *pkgname,
 			   int maybe_edit)
 {
     int toplev = !uses_subdir;
+    char *pkgline;
     gchar *pkgxml;
+    int pkgmod = 0;
     FILE *fp;
     int err = 0;
 
+    pkgline = make_pkg_line(pkgname, label, mpath, toplev);
     fp = read_open_packages_xml(&pkgxml);
 
     if (fp == NULL) {
-	/* starting a new packages.xml */
-	fp = gretl_fopen(pkgxml, "w");
-	if (fp == NULL) {
-	    err = E_FOPEN;
-	} else {
-	    fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", fp);
-	    fputs("<gretl-package-info>\n", fp);
-	    print_pkg_line(pkgname, label, mpath, toplev, fp);
-	    fputs("</gretl-package-info>\n", fp);
-	    fclose(fp);
+	/* start a new packages.xml? */
+	if (pkgline != NULL) {
+	    fp = gretl_fopen(pkgxml, "w");
+	    if (fp == NULL) {
+		err = E_FOPEN;
+	    } else {
+		fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", fp);
+		fputs("<gretl-package-info>\n", fp);
+		fputs(pkgline, fp);
+		fputs("</gretl-package-info>\n", fp);
+		fclose(fp);
+		pkgmod = 1;
+	    }
 	}
     } else {
 	/* revising an existing packages.xml, open as @fp */
 	gchar *tmpfile;
 	char line[512];
 	FILE *fnew;
+
+	if (maybe_edit) {
+	    char *origline = retrieve_pkg_line(pkgname, fp);
+
+	    if (origline != NULL) {
+		if (pkgline == NULL) {
+		    /* package line should be removed */
+		    pkgmod = 1;
+		} else if (strcmp(origline, pkgline)) {
+		    /* package line should be modified */
+		    pkgmod = 1;
+		}
+		free(origline);
+	    } else if (pkgline != NULL) {
+		/* package line should be added */
+		pkgmod = 1;
+	    } else {
+		/* nothing to be done here */
+		fclose(fp);
+		g_free(pkgxml);
+		free(pkgline);
+		return 0;
+	    }
+	}
 
 	tmpfile = g_strdup_printf("%sfunctions%cpackages.xml.new", 
 				  gretl_dotdir(), SLASH);
@@ -2886,16 +2948,21 @@ int revise_package_status (const gchar *pkgname,
 		if (maybe_edit) {
 		    /* check for an existing line for this package,
 		       and replace it if found -- or bypass it if
-		       the incoming @label or @mpath are NULL
+		       @pkgline is NULL
 		    */
 		    if (!done && got_package_entry(line, pkgname)) {
-			print_pkg_line(pkgname, label, mpath, toplev, fnew);
+			if (pkgline != NULL) {
+			    fputs(pkgline, fp);
+			}
 			done = skip = 1;
 		    }
 		}
 		if (!done && strstr(line, "</gretl-package-info>")) {
 		    /* reached the last line */
-		    print_pkg_line(pkgname, label, mpath, toplev, fnew);
+		    if (pkgline != NULL) {
+			fputs(pkgline, fp);
+			pkgmod = 1;
+		    }
 		}
 		if (!skip) {
 		    fputs(line, fnew);
@@ -2912,10 +2979,11 @@ int revise_package_status (const gchar *pkgname,
     } 
 
     g_free(pkgxml);
+    free(pkgline);
 
     if (err) {
 	gui_errmsg(err);
-    } else {
+    } else if (pkgmod) {
 	gchar *upath = get_user_menu_string(mpath);
 
 	if (upath != NULL) {
