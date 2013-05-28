@@ -1187,6 +1187,7 @@ static GtkTreeStore *make_menu_attachment_tree (function_info *finfo,
 	"2 logit\n"
 	"2 probit\n"
 	"1 TSModels\n"
+	"2 CointMenu\n"
 	"1 PanelModels\n"
 	"1 RobustModels\n";
     const char *model_items = 
