@@ -2952,7 +2952,7 @@ int revise_package_status (const gchar *pkgname,
 		    */
 		    if (!done && got_package_entry(line, pkgname)) {
 			if (pkgline != NULL) {
-			    fputs(pkgline, fp);
+			    fputs(pkgline, fnew);
 			}
 			done = skip = 1;
 		    }
@@ -2960,7 +2960,7 @@ int revise_package_status (const gchar *pkgname,
 		if (!done && strstr(line, "</gretl-package-info>")) {
 		    /* reached the last line */
 		    if (pkgline != NULL) {
-			fputs(pkgline, fp);
+			fputs(pkgline, fnew);
 			pkgmod = 1;
 		    }
 		}
