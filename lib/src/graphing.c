@@ -5724,12 +5724,12 @@ int irf_plot_from_bundle (gretl_bundle *bundle, gretlopt opt)
 }
 
 int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods, 
-			 const DATASET *dset)
+			 const DATASET *dset, gretlopt opt)
 {
     FILE *fp = NULL;
     gretl_matrix *V;
     gchar *title;
-    int i, t, v;
+    int i, t, v, histo;
     int err = 0;
 
     V = gretl_VAR_get_FEVD_matrix(var, targ, periods, dset, &err);
@@ -5743,21 +5743,37 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
 	return err;
     }
 
+    histo = (opt & OPT_H)? 1 : 0;
+
     v = gretl_VAR_get_variable_number(var, targ);
 
-    fputs("set key left top\n", fp);
+    fprintf(fp, "set xlabel '%s'\n", dataset_period_label(dset));
     title = g_strdup_printf(_("forecast variance decomposition for %s"), 
 			    dset->varname[v]);
-    fprintf(fp, "set xlabel '%s'\n", dataset_period_label(dset));
-    fputs("set xzeroaxis\n", fp);
     fprintf(fp, "set title '%s'\n", title);
     g_free(title);
 
+    if (histo) {
+	fputs("set key outside\n", fp);
+	fputs("set style fill solid 0.35\n", fp);
+	fputs("set style histogram rowstacked\n", fp);
+	fputs("set style data histogram\n", fp);
+	fprintf(fp, "set xrange [-1:%d]\n", periods);
+    } else {
+	fputs("set key left top\n", fp);
+	fputs("set xzeroaxis\n", fp);
+    }
+
+    fputs("set yrange [0:100]\n", fp);
     fputs("plot \\\n", fp);
 
     for (i=0; i<var->neqns; i++) {
 	v = gretl_VAR_get_variable_number(var, i);
-	fprintf(fp, "'-' using 1:2 title '%s' w lines", dset->varname[v]);
+	if (histo) {
+	    fprintf(fp, "'-' using 2 title '%s'", dset->varname[v]);
+	} else {
+	    fprintf(fp, "'-' using 1:2 title '%s' w lines", dset->varname[v]);
+	}
 	if (i < var->neqns - 1) {
 	    fputs(", \\\n", fp);
 	} else {
@@ -5769,7 +5785,7 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
 
     for (i=0; i<var->neqns; i++) {
 	for (t=0; t<periods; t++) {
-	    fprintf(fp, "%d %.10g\n", t, gretl_matrix_get(V, t, i));
+	    fprintf(fp, "%d %.4f\n", t, 100 * gretl_matrix_get(V, t, i));
 	}
 	fputs("e\n", fp);
     }

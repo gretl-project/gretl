@@ -3502,18 +3502,24 @@ impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
 }
 
 static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec, 
-		       int *horizon, GtkWidget *parent) 
+		       int *horizon, gretlopt *opt,
+		       GtkWidget *parent) 
 {
+    const char *opts[] = {
+	N_("line graph"),
+	N_("stacked bar graph")
+    };
     gchar *title;
     int h = default_VAR_horizon(dataset);
     GtkWidget *dlg;
+    int histo = 0;
     int resp = -1;
 
     title = g_strdup_printf("gretl: %s", _("Forecast variance decomposition"));
 
-    dlg = build_checks_dialog(title, NULL,
-			      NULL, 0, NULL, 0, 0, /* no checks */
-			      0, NULL, /* no radios */
+    dlg = build_checks_dialog(title, NULL, opts,
+			      0, NULL, 0, 0, /* no checks */
+			      2, &histo, /* two radio buttons */
 			      &h, _("forecast horizon (periods):"),
 			      2, dataset->n / 2, 0, 
 			      parent, &resp);
@@ -3530,11 +3536,16 @@ static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
 
     gtk_widget_show_all(dlg);
 
+    
+
     if (resp < 0) {
 	/* cancelled */
 	*horizon = 0;
     } else {
 	*horizon = h;
+	if (histo) {
+	    *opt = OPT_H;
+	}
     }
 
     return resp;
@@ -3596,12 +3607,13 @@ static void FEVD_plot_call (GtkAction *action, gpointer p)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     int targ, horizon;
     gretl_matrix *ordvec = NULL;
+    gretlopt opt = OPT_NONE;
     int resp, err;
 
     FEVD_param_from_action(action, &targ);
     ordvec = cholesky_order_vector(var);
 
-    resp = FEVD_setup(var, ordvec, &horizon, vwin->main);
+    resp = FEVD_setup(var, ordvec, &horizon, &opt, vwin->main);
     
     if (resp < 0) {
 	/* canceled */
@@ -3618,7 +3630,7 @@ static void FEVD_plot_call (GtkAction *action, gpointer p)
 	}
     }
 
-    err = gretl_VAR_plot_FEVD(var, targ, horizon, dataset);
+    err = gretl_VAR_plot_FEVD(var, targ, horizon, dataset, opt);
     gui_graph_handler(err);
 }
 

@@ -11,6 +11,8 @@ version 1.9.13, in progress
   properly
 - readfile() function: check for valid UTF-8 and recode if
   possible if the text is not UTF-8
+- GUI: add stacked-bar option for FEVD plot in connection
+  with VAR estimation
 - Fix a few small GUI memory leaks
 - Linux and Windows: add check for multiple instances of
   gretl, and choice to open a double-clicked file in the

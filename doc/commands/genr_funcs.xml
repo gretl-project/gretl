@@ -221,14 +221,20 @@
       <description>
 	<para>
 	  Must follow estimation of a VAR. Returns a matrix containing
-	  the forecast error variance decomposition. This matrix has
-	  <math>h</math> rows where <math>h</math> is the forecast
-	  horizon, which can be chosen using <lit>set horizon</lit> or
-	  otherwise is set automatically based on the frequency of the
-	  data.  For a VAR with <math>p</math> variables, the matrix
-	  has <math>p</math><sup>2</sup> columns. The fraction of the
-	  forecast error for variable <math>i</math> attributable to
-	  innovation in variable <math>j</math> is found in column
+	  the forecast error variance decomposition (FEVD). This
+	  matrix has <math>h</math> rows where <math>h</math> is the
+	  forecast horizon, which can be chosen using <lit>set
+	  horizon</lit> or otherwise is set automatically based on the
+	  frequency of the data.
+	</para>
+	<para>
+	  For a VAR with <math>p</math> variables, the matrix has
+	  <math>p</math><sup>2</sup> columns: the first <math>p</math>
+	  columns contain the FEVD for the first variable in the VAR;
+	  the second <math>p</math> columns the FEVD for the second
+	  variable; and so on.  The (decimal) fraction of the forecast
+	  error for variable <math>i</math> attributable to innovation
+	  in variable <math>j</math> is therefore found in column
 	  (<math>i</math> &minus; 1)<math>p</math> + <math>j</math>.
 	</para>
       </description>
