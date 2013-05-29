@@ -1657,7 +1657,6 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     if (!err && cinfo->rettype == GRETL_TYPE_BUNDLE) {
 	if (grab_bundle) {
 	    bundle = get_bundle_by_name(tmpname);
-	    fprintf(stderr, "grab_bundle: '%s' -> %p\n", tmpname, (void *) bundle);
 	    if (bundle != NULL && gretl_bundle_get_n_keys(bundle) == 0) {
 		/* we got a useless empty bundle */
 		gretl_bundle_pull_from_stack(tmpname, &err);
