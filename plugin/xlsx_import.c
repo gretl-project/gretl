@@ -545,7 +545,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "c")) {
-	    /* we got a cell */
+	    /* we got a cell in the given row */
 	    char *cref = NULL;
 	    char *formula = NULL;
 	    const char *strval = NULL;
@@ -576,18 +576,29 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 	    tmp = (char *) xmlGetProp(cur, (XUC) "t");
 	    if (tmp != NULL) {
 		if (!strcmp(tmp, "s")) {
+		    /* string from string table */
 		    stringcell = 1;
+		} else if (!strcmp(tmp, "str")) {
+		    /* "inline" string literal? */
+		    stringcell = 2;
 		}
 		free(tmp);
 	    }
 
 	    val = cur->xmlChildrenNode;
+
+	    /* find a value in the current row/cell */
+
 	    while (val && !err && !gotv) {
 		if (!xmlStrcmp(val->name, (XUC) "v")) {
 		    tmp = (char *) xmlNodeGetContent(val);
 		    if (tmp != NULL) {
 			if (stringcell) {
-			    strval = xlsx_string_value(tmp, xinfo, prn);
+			    if (stringcell == 1) {
+				strval = xlsx_string_value(tmp, xinfo, prn);
+			    } else {
+				strval = gretl_strdup(tmp);
+			    }
 			    if (strval == NULL) {
 				pputs(myprn, " value = ?\n");
 				err = E_DATA;
@@ -644,11 +655,17 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		    } else if (strval != NULL) {
 			err = xlsx_handle_stringval(strval, row, col, prn);
 		    }
+		    if (stringcell == 2) {
+			/* finished with copy of string literal */
+			free((char *) strval);
+		    }
 		} else if (gotv) {
 		    err = xlsx_set_value(xinfo, i, t, xval);
 		} else if (gotf) {
 		    xlsx_maybe_handle_formula(xinfo, formula, i, t);
 		}
+	    } else if (stringcell == 2 && strval != NULL) {
+		free((char *) strval);
 	    }
 
 	    if (gotv || gotf) {
@@ -660,8 +677,10 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 	    free(cref);
 	    free(formula);
 	}
+
+	/* move onto next cell in row */
 	cur = cur->next;
-    }
+    } /* end loop across cells in row */
 
     if (!err) {
 	if (empty) {
