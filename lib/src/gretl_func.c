@@ -2825,6 +2825,38 @@ int function_set_package_role (const char *name, fnpkg *pkg,
     return E_DATA;
 }
 
+static int pkg_set_no_print_funcs (fnpkg *pkg, const char *s)
+{
+    /* introduced 2013-05-30 (1.9.12cvs) */
+    char **S;
+    int ns = 0, err = 0;
+
+    S = gretl_string_split(s, &ns);
+    if (ns == 0) {
+	err = E_DATA;
+    } else {
+	int i, j, match;
+
+	for (i=0; i<ns && !err; i++) {
+	    match = 0;
+	    for (j=0; j<pkg->n_pub; j++) {
+		if (!strcmp(S[i], pkg->pub[j]->name)) {
+		    pkg->pub[j]->flags |= UFUN_NOPRINT;
+		    match = 1;
+		    break;
+		}
+	    }
+	    if (!match) {
+		err = E_DATA;
+	    }
+	}
+
+	strings_array_free(S, ns);
+    }
+
+    return err;
+}
+
 /* having assembled and checked the function-listing for a new
    package, now retrieve the additional information from the
    spec file
@@ -2901,6 +2933,8 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		got++;
 	    } else if (!strncmp(line, "lives-in-subdir", 15)) {
 		pkg->uses_subdir = pkg_boolean_from_string(p);
+	    } else if (!strncmp(line, "no-print", 8)) {
+		err = pkg_set_no_print_funcs(pkg, p);
 	    } else {
 		const char *key;
 		int i;

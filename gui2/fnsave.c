@@ -2410,8 +2410,8 @@ int save_function_package_spec (const char *fname, gpointer p)
     function_info *finfo = p;
     PRN *prn;
     const char *reqstr = NULL;
-    int v, v1, v2, v3;
-    int i, len;
+    int v1, v2, v3;
+    int i, len, nnp = 0;
     int err = 0;
 
     prn = gretl_print_new_with_filename(fname, &err);
@@ -2425,10 +2425,7 @@ int save_function_package_spec (const char *fname, gpointer p)
     maybe_print(prn, "date", finfo->date);
     maybe_print(prn, "description", finfo->pkgdesc);
 
-    v = finfo->minver;
-    v1 = v / 10000;
-    v2 = (v - v1 * 10000) / 100;
-    v3 = v % 100;
+    get_maj_min_pl(finfo->minver, &v1, &v2, &v3);
     pprintf(prn,"min-version = %d.%d.%d\n", v1, v2, v3); 
 
     if (finfo->dreq == FN_NEEDS_TS) {
@@ -2472,6 +2469,7 @@ int save_function_package_spec (const char *fname, gpointer p)
     for (i=0; i<finfo->n_pub; i++) {
 	const char *s = finfo->pubnames[i];
 	int n = strlen(s);
+	ufunc *fun;
 
 	len += n;
 	if (len > 72) {
@@ -2482,8 +2480,26 @@ int save_function_package_spec (const char *fname, gpointer p)
 	    pprintf(prn, "%s ", s);
 	    len++;
 	}
+	fun = get_function_from_package(s, finfo->pkg);
+	if (user_func_is_noprint(fun)) {
+	    nnp++;
+	}
     }
-    pputc(prn, '\n');	
+    pputc(prn, '\n');
+
+    if (nnp > 0) {
+	/* no-print interface names */
+	pputs(prn, "no-print = ");
+	for (i=0; i<finfo->n_pub; i++) {
+	    const char *s = finfo->pubnames[i];
+	    ufunc *fun = get_function_from_package(s, finfo->pkg);
+
+	    if (user_func_is_noprint(fun)) {
+		pprintf(prn, "%s ", s);
+	    }
+	}
+	pputc(prn, '\n');
+    }    
 
     pputs(prn, "# filenames needed below\n");
     pputs(prn, "help = \n");
