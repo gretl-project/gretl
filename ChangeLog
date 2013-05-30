@@ -11,6 +11,7 @@ version 1.9.13, in progress
   properly
 - readfile() function: check for valid UTF-8 and recode if
   possible if the text is not UTF-8
+- setnote() function: add an entry to the function reference
 - GUI: add stacked-bar option for FEVD plot in connection
   with VAR estimation
 - Fix a few small GUI memory leaks
@@ -31,6 +32,7 @@ version 1.9.13, in progress
 - Fix bug: $obsminor and $obsmicro not working with weekly 
   datasets
 - Stata .dta importer: read Stata 12 data files
+- xlsx importer: handle "inline" strings
 
 2013-03-15 version 1.9.12
 - Officially increase the maximum length of variable names

@@ -5991,6 +5991,25 @@
       </description>
     </function>
 
+    <function name="setnote" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bundle">b</fnarg>
+	<fnarg type="string">key</fnarg>
+	<fnarg type="string">note</fnarg>
+      </fnargs>   
+      <description>
+	<para>
+	  Sets a descriptive note for the object identified by
+	  <argname>key</argname> in the bundle <argname>b</argname>.
+	  This note will be shown when the <lit>print</lit> command is
+	  used on the bundle. This function returns 0 on success or
+	  non-zero on failure (for example, if there is no object in
+	  <argname>b</argname> under the given
+	  <argname>key</argname>).
+	</para>
+      </description>
+    </function>    
+
     <function name="simann" section="numerical" output="scalar">
       <fnargs>
 	<fnarg type="vector">b</fnarg>
