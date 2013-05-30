@@ -5693,11 +5693,12 @@
       </fnargs>   
       <description>
 	<para>
-	  Returns a row vector filled with consecutive integers, with
-	  <argname>a</argname> as first element and <argname>b</argname>
-	  last. If <argname>a</argname> is greater than
-	  <argname>b</argname> the sequence will be decreasing. If either
-	  argument is not integral its fractional part is discarded.
+	  Ritorna un vettore riga pieno di interi consecutivi, con
+	  <argname>a</argname> come primo elemento e
+	  <argname>b</argname> come ultimo. Se <argname>a</argname> è
+	  maggiore di <argname>b</argname>, la sequenza sarà
+	  decrescente. L'eventale parte non intera viene ignorata per
+	  entrambi gli argomenti.
 	</para>
 	<para>
 	  <seelist>
@@ -5707,6 +5708,25 @@
 	</para>
       </description>
     </function>
+
+    <function name="setnote" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bundle">b</fnarg>
+	<fnarg type="string">key</fnarg>
+	<fnarg type="string">note</fnarg>
+      </fnargs>   
+      <description>
+	<para>
+	  Imposta una nota descrittiva per l'oggeto identificato dalla
+	  chiave <argname>key</argname> nel bundle
+	  <argname>b</argname>.  Essa verrà mostrata quando il comando
+	  <lit>print</lit> viene applicato al bundle. Questa funzione
+	  ritorna 0 se è andata a buon fine e non-zero in caso
+	  contrario (ad esempio, se nel bundle <argname>b</argname> la
+	  chiave <argname>key</argname> non c'è).
+	</para>
+      </description>
+    </function>    
 
     <function name="simann" section="numerical" output="scalar">
       <fnargs>
