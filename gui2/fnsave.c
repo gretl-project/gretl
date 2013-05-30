@@ -63,8 +63,8 @@ struct function_info_ {
     GtkWidget *validate;   /* Validate button */
     GtkWidget *popup;      /* popup menu */
     GtkWidget *extra;      /* extra properties child dialog */
-    GtkWidget *maintree;   /* extra properties child dialog */
-    GtkWidget *modeltree;  /* extra properties child dialog */
+    GtkWidget *maintree;   /* main menu selection tree */
+    GtkWidget *modeltree;  /* model menu selection tree */
     GtkWidget *currtree;   /* currently displayed menu treeview */
     GtkWidget *alttree;    /* currently undisplayed menu treeview */
     GtkWidget *treewin;    /* scrolled window to hold menu trees */
@@ -1384,7 +1384,8 @@ static void add_menu_attach_top (GtkWidget *holder,
 		     G_CALLBACK(switch_menu_view), finfo);
 }
 
-static int process_menu_attachment (function_info *finfo)
+static int process_menu_attachment (function_info *finfo,
+				    int *focus_label)
 {
     GtkTreeSelection *selection;
     GtkTreeModel *model;
@@ -1394,17 +1395,6 @@ static int process_menu_attachment (function_info *finfo)
     int changed = 0;
 
     view = finfo->currtree;
-
-    if (!gtk_widget_is_sensitive(view)) {
-	/* no menu attachment at present */
-	if (finfo->menupath != NULL) {
-	    g_free(finfo->menupath);
-	    finfo->menupath = NULL;
-	    changed = 1;
-	}
-	finfo->menuwin = NO_WINDOW;
-	goto finish;
-    }
 
     entry = g_object_get_data(G_OBJECT(finfo->extra), "label-entry");
     label = entry_box_get_trimmed_text(entry);
@@ -1423,6 +1413,17 @@ static int process_menu_attachment (function_info *finfo)
     }
 
     g_free(label);
+
+    if (!gtk_widget_is_sensitive(view)) {
+	/* no menu attachment at present */
+	if (finfo->menupath != NULL) {
+	    g_free(finfo->menupath);
+	    finfo->menupath = NULL;
+	    changed = 1;
+	}
+	finfo->menuwin = NO_WINDOW;
+	goto finish;
+    }	
 
     selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
 
@@ -1449,7 +1450,11 @@ static int process_menu_attachment (function_info *finfo)
 
  finish:
 
-    if (changed) {
+    if (finfo->menupath != NULL && *finfo->menupath != '\0' &&
+	(finfo->menulabel == NULL || *finfo->menulabel == '\0')) {
+	warnbox(_("To create a menu attachment, you must supply a label."));
+	*focus_label = 1;
+    } else if (changed) {
 	infobox(_("To update the menu attachment, you should\n"
 		  "(a) save this package, and (b) restart gretl."));
     }
@@ -1519,7 +1524,14 @@ static void extra_properties_callback (GtkWidget *w, function_info *finfo)
     if (page == 0) {
 	changed = process_special_functions(finfo);
     } else {
-	changed = process_menu_attachment(finfo);
+	int focus_label = 0;
+
+	changed = process_menu_attachment(finfo, &focus_label);
+	if (focus_label) {
+	    GtkWidget *w = g_object_get_data(G_OBJECT(finfo->extra), "label-entry");
+
+	    gtk_widget_grab_focus(w);
+	}
     }
 
     if (changed) {
