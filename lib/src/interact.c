@@ -53,7 +53,7 @@
 # endif
 #endif
 
-#define CMD_DEBUG 0
+#define CMD_DEBUG 2
 #define LAGS_DBG 0
 
 #include "laginfo.c"
@@ -592,6 +592,34 @@ static void grab_gnuplot_literal_block (char *s, CMD *cmd)
 	cmd->param = gretl_strdup(s);
 	*s = 0;
     }
+}
+
+static int boxplot_booleans_present (const char *s)
+{
+    int ret = 0;
+
+    /* note: the '(' character might appear inside a gnuplot
+       literal block, "{...}", in which case it should not be 
+       taken as indicating that boolean conditions are present
+       on the command line
+    */
+
+    if (strchr(s, '(')) {
+	int braced = 0;
+
+	while (*s && !ret) {
+	    if (*s == '{') {
+		braced++;
+	    } else if (*s == '}') {
+		braced--;
+	    } else if (!braced && *s == '(') {
+		ret = 1;
+	    }
+	    s++;
+	}
+    }
+
+    return ret;
 }
 
 static int is_special_lag_field (const char *s)
@@ -2543,7 +2571,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 	if (cmd->err) {
 	    return cmd->err;
 	}
-    } 
+    }
 
     if (!cmd->context) {
 	if (gretl_function_depth() == 0 && strstr(line, " <- ") != NULL) {
@@ -2693,7 +2721,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
     } else if (cmd->ci == BXPLOT) {
 	/* boxplots take a list, but if there are Boolean conditions
 	   embedded, the line has to be parsed specially */
-	if (strchr(line, '(')) {
+	if (boxplot_booleans_present(line)) {
 	    cmd_set_nolist(cmd);
 	    return cmd->err;
 	}
