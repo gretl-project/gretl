@@ -4540,7 +4540,13 @@ series_scalar_func (NODE *n, int f, parser *p)
 	const double *x;
 
 	if (n->t == MAT) {
-	    if (f == F_T1 || f == F_T2) {
+	    if (f == F_SUM) {
+		/* we'll sum all elements of a matrix */
+		tmp = n->v.m;
+		t1 = 0;
+		t2 = tmp->rows * tmp->cols - 1;
+		n->v.xvec = tmp->val;
+	    } else if (f == F_T1 || f == F_T2) {
 		cast_to_series(n, f, &tmp, NULL, NULL, p);
 	    } else {
 		cast_to_series(n, f, &tmp, &t1, &t2, p);

@@ -6353,7 +6353,7 @@
 
     <function name="sum" section="stats" output="scalar-or-series">
       <fnargs>
-	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="smlist">x</fnarg>
       </fnargs>      
       <description>
 	<para>
@@ -6361,6 +6361,10 @@
 	  non-missing observations in <argname>x</argname>. See also
 	  <fncref targ="sumall"/>.
 	</para>
+	<para>
+	  If <argname>x</argname> is a matrix, returns the sum of the
+	  elements of the matrix.
+	</para>	
 	<para>
 	  If <argname>x</argname> is a list, returns a series <math>y</math>
 	  such that <math>y</math><sub>t</sub> is the sum of the values of the
