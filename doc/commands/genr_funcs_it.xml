@@ -4935,9 +4935,8 @@
       </fnargs>
       <description>
 	<para>
-	  Returns quantiles for the standard normal distribution. If
-	  <argname>x</argname> is not between 0 and 1, <lit>NA</lit> is
-	  returned. 
+	  Ritorna i quantili della normale standardizzata. Se
+	  <argname>x</argname> non è fra 0 e 1, ritorna <lit>NA</lit>. 
 	  <seelist>
 	    <fncref targ="cnorm"/>
 	    <fncref targ="dnorm"/>
@@ -5078,13 +5077,13 @@
       </fnargs>
       <description>
 	<para>
-	  Given a series argument, returns the
-	  <argname>p</argname>-quantile for the series. For example, when
-	  <math>p</math> = 0.5, the median is returned. Given a
-	  matrix argument, returns a row vector containing the 
-	  <argname>p</argname>-quantiles for the columns of 
-	  <argname>y</argname>; that is, each column is treated
-	  as a series.
+	  Se <argname>y</argname> è una serie, restituisce il suo
+	  <argname>p</argname>-esimo quantile. Ad sesmpio, se
+	  <math>p</math> = 0.5, si avrà la mediana. Se l'argomento è
+	  invece una matrice, ritorna un vettore riga contenente i
+	  <argname>p</argname>-esimi quantili per le colonne di
+	  <argname>y</argname>; in pratica, ogni colonna è trattata
+	  come se fosse una serie.
 	</para>
 	<para context="tex">
 	  For a series of length $n$, the $p$-quantile, $q$, is defined
@@ -5446,10 +5445,10 @@
       </fnargs>    
       <description>
 	<para>
-	  If a file by the name of <argname>fname</argname> exists and
-	  is writable by the user, removes (deletes) the named
-	  file. Returns 0 on successful completion, non-zero if there
-	  is no such file or the file cannot be removed.
+	  Se il file <argname>fname</argname> esiste e l'utente ha i
+	  permessi di scrittura, lo cancella. Ritorna 0 se il comando
+	  è andato a buon fine, non-zero se il file non esiste o non
+	  può essere cancellato.
 	</para>
       </description>
     </function>
@@ -5717,8 +5716,8 @@
       </fnargs>   
       <description>
 	<para>
-	  Imposta una nota descrittiva per l'oggeto identificato dalla
-	  chiave <argname>key</argname> nel bundle
+	  Imposta una nota descrittiva per l'oggetto identificato
+	  dalla chiave <argname>key</argname> nel bundle
 	  <argname>b</argname>.  Essa verrà mostrata quando il comando
 	  <lit>print</lit> viene applicato al bundle. Questa funzione
 	  ritorna 0 se è andata a buon fine e non-zero in caso
