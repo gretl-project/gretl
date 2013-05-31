@@ -931,21 +931,32 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
     return err;
 }
 
-static int skip_matrix_comment (FILE *fp, int *err)
+static int skip_matrix_comment (FILE *fp, gzFile fz, int *err)
 {
-    int c = fgetc(fp);
-    int ret = 0;
+    int c, ret = 0;
+
+    if (fz) {
+	c = gzgetc(fz);
+    } else {
+	c = fgetc(fp);
+    }
 
     if (c == '#') {
 	ret = 1;
-	while (c != '\n' && c != EOF) {
-	    c = fgetc(fp);
+	while (c != '\n' && c != EOF && c != -1) {
+	    if (fz) {
+		c = gzgetc(fz);
+	    } else {
+		c = fgetc(fp);
+	    }	    
 	}
+    } else if (fz) {
+	gzungetc(c, fz);
     } else {
 	ungetc(c, fp);
     }
 
-    if (c == EOF) {
+    if (c == EOF || c == -1) {
 	fprintf(stderr, "reached premature end of file\n");
 	*err = E_DATA;
     }
@@ -971,34 +982,62 @@ static int skip_matrix_comment (FILE *fp, int *err)
 gretl_matrix *gretl_matrix_read_from_text (const char *fname, 
 					   int import, int *err)
 {
-    int r, c, i, j, n;
+    char tmp[FILENAME_MAX];
+    char *zbuf = NULL;
+    int r, c, n, gz;
     double x;
     gretl_matrix *A = NULL;
-    FILE *fp;
+    gzFile fz = Z_NULL;
+    FILE *fp = NULL;
+
+    gz = has_suffix(fname, ".gz");
 
     if (import) {
-	char targ[FILENAME_MAX];
-
-	build_path(targ, gretl_dotdir(), fname, NULL);
-	fp = gretl_fopen(targ, "r");
+	build_path(tmp, gretl_dotdir(), fname, NULL);
+	if (gz) {
+	    fz = gretl_gzopen(tmp, "r");
+	} else {
+	    fp = gretl_fopen(tmp, "r");
+	}
     } else {
-	fp = gretl_read_user_file(fname);
+	strcpy(tmp, fname);
+	if (gz) {
+	    fz = gretl_gzopen(tmp, "r");
+	} else {
+	    fp = gretl_fopen(tmp, "r");
+	}
+	if (fz == Z_NULL && fp == NULL) {
+	    gretl_maybe_prepend_dir(tmp);
+	    if (strcmp(tmp, fname)) {
+		if (gz) {
+		    fz = gretl_gzopen(tmp, "r");
+		} else {
+		    fp = gretl_fopen(tmp, "r");
+		}
+	    }
+	}
     }
 
-    if (fp == NULL) {
+    if (fz == Z_NULL && fp == NULL) {
 	*err = E_FOPEN;
 	return NULL;
     }
-
+    
     /* skip any leading comment lines starting with '#' */
-    while (!*err && skip_matrix_comment(fp, err)) {
+    while (!*err && skip_matrix_comment(fp, fz, err)) {
 	;
     }
 
     if (!*err) {
-	n = fscanf(fp, "%d %d\n", &r, &c);
+	if (fz) {
+	    zbuf = gzgets(fz, tmp, sizeof tmp);
+	    n = (zbuf == NULL)? 0 : sscanf(tmp, "%d %d\n", &r, &c);
+	} else {
+	    n = fscanf(fp, "%d %d\n", &r, &c);
+	}
 	if (n < 2 || r <= 0 || c <= 0) {
-	    fprintf(stderr, "error reading rows, cols\n");
+	    fprintf(stderr, "error reading rows, cols (n=%d, r=%d, c=%d)\n",
+		    n, r, c);
 	    *err = E_DATA;
 	} else {
 	    A = gretl_matrix_alloc(r, c);
@@ -1008,29 +1047,38 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname,
 	}
     }
 
-    if (*err) {
-	fclose(fp);
-	return NULL;
-    }
+    if (!*err) {
+	int i, j;
 
-    gretl_push_c_numeric_locale();
+	gretl_push_c_numeric_locale();
 
-    for (i=0; i<r && !*err; i++) {
-	for (j=0; j<c && !*err; j++) {
-	    if (fscanf(fp, "%lf", &x) != 1) {
-		*err = E_DATA;
-		fprintf(stderr, "error reading row %d, column %d\n", i+1, j+1);
-	    } else {
-		gretl_matrix_set(A, i, j, x);
+	for (i=0; i<r && !*err; i++) {
+	    for (j=0; j<c && !*err; j++) {
+		if (fz) {
+		    zbuf = gzgets(fz, tmp, sizeof tmp);
+		    n = (zbuf == NULL)? 0 : sscanf(tmp, "%lf", &x);
+		} else {
+		    n = fscanf(fp, "%lf", &x);
+		}
+		if (n != 1) {
+		    *err = E_DATA;
+		    fprintf(stderr, "error reading row %d, column %d\n", i+1, j+1);
+		} else {
+		    gretl_matrix_set(A, i, j, x);
+		}
 	    }
 	}
+
+	gretl_pop_c_numeric_locale();
     }
 
-    gretl_pop_c_numeric_locale();
-    
-    fclose(fp);
+    if (fz) {
+	gzclose(fz);
+    } else {
+	fclose(fp);
+    }
 
-    if (*err) {
+    if (*err && A != NULL) {
 	gretl_matrix_free(A);
 	A = NULL;
     }
@@ -1058,41 +1106,63 @@ int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname,
     int r = A->rows;
     int c = A->cols;
     int i, j, err = 0;
-    FILE *fp;
+    gzFile fz = Z_NULL;
+    FILE *fp = NULL;
     char d = '\t';
+    int gz;
+
+    gz = has_suffix(fname, ".gz");
 
     if (export) {
 	char targ[FILENAME_MAX];
 
 	build_path(targ, gretl_dotdir(), fname, NULL);
-	fp = gretl_fopen(targ, "w");
+	if (gz) {
+	    fz = gretl_gzopen(targ, "w");
+	} else {
+	    fp = gretl_fopen(targ, "w");
+	}
     } else {
 	fname = gretl_maybe_switch_dir(fname);
-	fp = gretl_fopen(fname, "w");
+	if (gz) {
+	    fz = gretl_gzopen(fname, "w");
+	} else {
+	    fp = gretl_fopen(fname, "w");
+	}
     }
 
-    if (fp == NULL) {
+    if (fz) {
+	gzprintf(fz, "%d %d\n", r, c);
+    } else if (fp) {
+	fprintf(fp, "%d%c%d\n", r, d, c);
+    } else {
 	return E_FOPEN;
     }
-
-    fprintf(fp, "%d%c%d\n", r, d, c);
     
     gretl_push_c_numeric_locale();
 
     for (i=0; i<r; i++) {
 	for (j=0; j<c; j++) {
-	    fprintf(fp, "%26.18E", gretl_matrix_get(A, i, j));
-	    if (j == c-1) {
-		fputc('\n', fp); 
+	    if (fz) {
+		gzprintf(fz, "%26.18E\n", gretl_matrix_get(A, i, j));
 	    } else {
-		fputc(d, fp);
+		fprintf(fp, "%26.18E", gretl_matrix_get(A, i, j));
+		if (j == c-1) {
+		    fputc('\n', fp); 
+		} else {
+		    fputc(d, fp);
+		}
 	    }
 	}
     }
 
     gretl_pop_c_numeric_locale();
-    
-    fclose(fp);
+
+    if (fz) {
+	gzclose(fz);
+    } else {
+	fclose(fp);
+    }
 
     return err;
 }

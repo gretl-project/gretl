@@ -4072,12 +4072,16 @@
       <description>
 	<para>
 	  Reads a matrix from a text file. The string
-	  <argname>fname</argname> must contain the name of the (plain
-	  text) file from which the matrix is to be read. The file in
-	  question may start with any number of comment lines, defined
-	  as lines that start with the hash mark, <lit>#</lit>; such
-	  lines are ignored.  Beyond that, the content must conform to
-	  the following rules:
+	  <argname>fname</argname> must contain the name of the file
+	  from which the matrix is to be read. If this name has the
+	  suffix <quote><lit>.gz</lit></quote> it is assumed that gzip
+	  compression has been applied in writing the file.
+	</para>
+	<para>
+	  The file in question may start with any number of comment
+	  lines, defined as lines that start with the hash mark,
+	  <lit>#</lit>; such lines are ignored.  Beyond that, the
+	  content must conform to the following rules:
 	</para>
 	<ilist>
 	  <li>
@@ -4089,7 +4093,10 @@
 	  </li>
 	  <li>
 	    <para>
-	      The columns must be separated by spaces or tab characters.
+	      In the standard case, the columns must be separated by
+	      spaces or tab characters.  In the case of
+	      gzip-compressed data the elements of the matrix must be
+	      written in a single column.
 	    </para>
 	  </li>
 	  <li>
@@ -4277,6 +4284,12 @@
 	  Matrices stored via the <lit>mwrite</lit> command can be
 	  easily read by other programs; see <guideref
 	  targ="chap:matrices"/> for details.
+	</para>
+	<para>
+	  An extension to the basic behavior of this function is
+	  available: if <argname>fname</argname> has the suffix
+	  <quote><lit>.gz</lit></quote> then the file is written
+	  with gzip compression.
 	</para>
 	<para>
 	  <seelist>

@@ -830,6 +830,14 @@ endif
   \end{scode}
 \end{script}
 
+Optionally, the \texttt{mwrite} and \texttt{mread} functions can use
+gzip compression: this is invoked if the name of the matrix file has
+the suffix ``\texttt{.gz}.'' In this case the elements of the matrix
+are written in a single column. Note, however, that compression should
+not be applied when writing matrices for reading by third-party
+software unless you are sure that the software can handle compressed
+data.
+
 \section{Matrix accessors}
 \label{matrix-accessors}
 

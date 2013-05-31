@@ -1015,6 +1015,39 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATASET *dset,
     return err;
 }
 
+/* in context of "foreach" loop, split a string variable by
+   both spaces and newlines */
+
+static int count_each_fields (const char *s)
+{
+    int nf = 0;
+
+    if (s != NULL && *s != '\0') {
+	const char *p;
+
+	s += strspn(s, " ");
+
+	if (*s != '\0' && *s != '\n') {
+	    s++;
+	    nf++;
+	}
+
+	while (*s) {
+	    p = strpbrk(s, " \n");
+	    if (p != NULL) {
+		s = p + strspn(p, " \n");
+		if (*s) {
+		    nf++;
+		}
+	    } else {
+		break;
+	    }
+	}
+    }
+	    
+    return nf;
+}
+
 static int
 parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
 {
@@ -1038,7 +1071,11 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
     } 
 
     s += strlen(ivar);
-    nf = count_fields(s);
+    nf = count_each_fields(s);
+
+#if LOOP_DEBUG
+    fprintf(stderr, " number of fields = %d\n", nf);
+#endif 
 
     if (nf == 0) {
 	return E_PARSE;
@@ -1069,7 +1106,7 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
 	    int len;
 
 	    while (isspace((unsigned char) *s)) s++;
-	    len = strcspn(s, " ");
+	    len = strcspn(s, " \n");
 
 	    loop->eachstrs[i] = gretl_strndup(s, len);
 	    if (loop->eachstrs[i] == NULL) {
