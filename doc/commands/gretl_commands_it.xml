@@ -3896,10 +3896,17 @@
       <options>
         <option>
 	  <flag>--with-lines</flag>
+	  <optparm optional="true">varspec</optparm>
 	  <effect>usa linee invece che punti</effect>
         </option>
         <option>
+	  <flag>--with-lp</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>usa linee e punti</effect>
+        </option>
+        <option>
 	  <flag>--with-impulses</flag>
+	  <optparm optional="true">varspec</optparm>
 	  <effect>usa linee verticali</effect>
         </option>
         <option>
@@ -3909,6 +3916,10 @@
         <option>
 	  <flag>--suppress-fitted</flag>
 	  <effect>non mostra la linea stimata</effect>
+        </option>
+        <option>
+	  <flag>--single-yaxis</flag>
+	  <effect>forza l'uso di un solo asse delle ordinate</effect>
         </option>
         <option>
 	  <flag>--linear-fit</flag>
@@ -3923,36 +3934,98 @@
 	  <effect>mostra fit quadratico</effect>
         </option>
         <option>
+	  <flag>--cubic-fit</flag>
+	  <effect>mostra fit cubico</effect>
+        </option>
+        <option>
 	  <flag>--loess-fit</flag>
-	  <effect>mostra fit loess</effect>
+	  <effect>mostra fit non-parametrico</effect>
+        </option>
+        <option>
+	  <flag>--semilog-fit</flag>
+	  <effect>mostra fit semilogaritmico</effect>
         </option>
         <option>
 	  <flag>--dummy</flag>
 	  <effect>si veda sotto</effect>
+        </option>
+        <option>
+	  <flag>--matrix</flag>
+	  <optparm>name</optparm>
+	  <effect>mostra le colonne di una data matrice</effect>
+        </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>ridirige l'output su file</effect>
+        </option>
+        <option>
+	  <flag>--input</flag>
+	  <optparm>filename</optparm>
+	  <effect>prende l'input da file</effect>
         </option>
       </options>
       <examples>
         <example>gnuplot y1 y2 x</example>
         <example>gnuplot x --time-series --with-lines</example>
 	<example>gnuplot wages educ gender --dummy</example>
+	<example>gnuplot y1 y2 x --with-lines=y2</example>
       </examples>
     </usage>
 
     <description>
        <para>
- 	Le variabili nella lista <repl>variabili-y</repl> vengono mostrate
-        rispetto alle <repl>variabili-x</repl>. Per avere un grafico storico
-        è possibile usare <lit>time</lit> come <repl>variabile-x</repl>, oppure
-        usare l'opzione <lit>--time-series</lit>.
+ 	Le variabili nella lista <repl>variabili-y</repl> vengono
+ 	mostrate rispetto alla variabile <repl>variabile-x</repl>. Per
+ 	avere un grafico storico è possibile usare <lit>time</lit>
+ 	come <repl>variabile-x</repl>, oppure usare l'opzione
+ 	<lit>--time-series</lit>.
        </para>
+      <para>
+	Per default, i dati sono mostrati come punti; ma questa scelta
+	può essere modificata usando una delle opzioni
+	<opt>--with-lines</opt>, <opt>--with-lp</opt> or
+	<opt>--with-impulses</opt>. Se il grafico contiene più di una
+	serie, l'effetto di queste opzioni può essere limitato ad un
+	sottoinsieme delle variabili usando il parametro
+	<repl>varspec</repl>. Esso deve essere dato sotto forma di una
+	lista separata da virgole dei nomi (o dei numeri) delle
+	variabili da tracciare con linee e/o con impulsi. L'esempio
+	più sotto mostra come tracciare <lit>y1</lit> e <lit>y2</lit>
+	contro <lit>x</lit>, in modo tale che <lit>y2</lit> sia
+	rappresentata da una linea ma <lit>y1</lit> da punti.
+      </para>
 
       <para>
- 	Usando l'opzione <lit>--dummy</lit>, occorre fornire esattamente tre variabili:
-        una variabile <math>y</math>, una variabile <math>x</math>, e una
-        variabile dummy <repl>dumvar</repl>. L'effetto è quello di mostrare
- 	<repl>y</repl> rispetto a <repl>x</repl> colorando in modo diverso i
-        vari punti, a seconda che <repl>dumvar</repl> valga 1 o 0.
+ 	Usando l'opzione <lit>--dummy</lit>, occorre fornire
+ 	esattamente tre variabili: una variabile <math>y</math>, una
+ 	variabile <math>x</math>, e una variabile dummy
+ 	<repl>dumvar</repl>. L'effetto è quello di mostrare
+ 	<repl>y</repl> rispetto a <repl>x</repl> colorando in modo
+ 	diverso i vari punti, a seconda che <repl>dumvar</repl> valga
+ 	1 o 0.
       </para>
+
+       <para>
+	Generally, the arguments <repl>yvars</repl> and
+	<repl>xvar</repl> are required, and refer to series in the
+	current dataset (given either by name or ID number).  But if a
+	named matrix is supplied via the <opt>--matrix</opt> option
+	these arguments become optional: if the specified matrix has
+	<math>k</math> columns, by default the first <math>k</math>
+	&minus; 1 columns are treated as the <repl>yvars</repl> and
+	the last column as <repl>xvar</repl>.  If the
+	<opt>--time-series</opt> option is given, however, all
+	<math>k</math> columns are plotted against time. If you wish
+	to plot selected columns of the matrix, you should specify
+	<repl>yvars</repl> and <repl>xvar</repl> in the form of
+	1-based column numbers.  For example if you want a scatterplot
+	of column 2 of matrix <lit>M</lit> against column 1, you can
+	do:
+      </para>
+      <code>
+	gnuplot 2 1 --matrix=M
+      </code>
 
       <para>
 	In modalità interattiva il risultato è mostrato immediatamente.
@@ -3960,9 +4033,21 @@
         gnuplot, chiamato <filename>gpttmpN.plt</filename>, a partire da N
 	= <lit>01</lit>; il grafico vero e proprio può essere generato
         usando il programma <program>gnuplot</program> (su MS Windows:
-	<program>wgnuplot</program>).
+	<program>wgnuplot</program>). This behavior can be
+	modified by use of the <opt>--output=</opt><repl>filename</repl>
+	option.  This option controls the filename used, and at the same time
+	allows you to specify a particular output format via the three-letter
+	extension of the file name, as follows: <lit>.eps</lit> results in the
+	production of an Encapsulated PostScript (EPS) file; <lit>.pdf</lit>
+	produces PDF; <lit>.png</lit> produces PNG format, <lit>.emf</lit>
+	calls for EMF (Enhanced MetaFile), <lit>.fig</lit> calls for an Xfig
+	file, and <lit>.svg</lit> for SVG (Scalable Vector Graphics). If the
+	dummy filename <quote><lit>display</lit></quote> is given then the
+	plot is shown on screen as in interactive mode. If a filename with any
+	extension other than those just mentioned is given, a gnuplot command
+	file is written.
       </para>
- 
+
       <para>
 	Le varie opzioni <quote>fit</quote> si applicano solo nel caso di un
         diagramma a dispersione bivariato. Il comportamento predefinito consiste
