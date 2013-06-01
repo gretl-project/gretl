@@ -1,9 +1,14 @@
 include ../config.mk
 
 LANGS = $(shell cat ../../po/LINGUAS | grep -v \\\#)
+MO = $(LANGS:=.mo)
 
-all:
-	for f in $(LANGS) ; do $(WIN32_MSGFMT) -o $$f.mo ../../po/$$f.po ; done
+vpath %.po ../../po
+
+%.mo: %.po
+	$(WIN32_MSGFMT) -o $@ $<
+
+all: $(MO)
 
 clean:
 	rm -f *.mo
