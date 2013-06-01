@@ -4093,10 +4093,8 @@
 	  </li>
 	  <li>
 	    <para>
-	      In the standard case, the columns must be separated by
-	      spaces or tab characters.  In the case of
-	      gzip-compressed data the elements of the matrix must be
-	      written in a single column.
+	      The columns must be separated by spaces or tab
+	      characters.
 	    </para>
 	  </li>
 	  <li>
