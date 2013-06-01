@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-05-17 15:56+0100\n"
-"PO-Revision-Date: 2013-05-26 15:51-0300\n"
+"PO-Revision-Date: 2013-06-01 18:10-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -7348,7 +7348,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 26 de maio de 2013."
+"Tradução de 1 de junho de 2013."
 
 #: gui2/about.c:165
 msgid "License"
@@ -11506,11 +11506,11 @@ msgstr "_Ajuda"
 
 #: gui2/gretl.c:1793 gui2/gretl.c:1796
 msgid "_Command reference"
-msgstr "Manual dos _comandos"
+msgstr "Manual de _comandos"
 
 #: gui2/gretl.c:1794
 msgid "_Function reference"
-msgstr "Manual das _funções"
+msgstr "Manual de _funções"
 
 #: gui2/gretl.c:1795
 msgid "_User's guide"
@@ -12089,11 +12089,11 @@ msgstr "gretl: ajuda"
 
 #: gui2/gui_utils.c:1637
 msgid "gretl: function reference"
-msgstr "gretl: manual de referência das funções"
+msgstr "gretl: manual de referência de funções"
 
 #: gui2/gui_utils.c:1639
 msgid "gretl: command reference"
-msgstr "gretl: manual de referência dos comandos"
+msgstr "gretl: manual de referência de comandos"
 
 #: gui2/gui_utils.c:1645
 msgid "gretl: command log"
