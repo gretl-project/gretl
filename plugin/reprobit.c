@@ -465,24 +465,22 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C,
 	err = gretl_invert_symmetric_matrix(Hinv);
 
 	if (err) {
-	    fprintf(stderr, "hessian_inverse_from_score: failed (err = %d)\n", err);
-	    /* try generic inverse */
-	} else {
-	    fprintf(stderr, "Hessian ok\n");
-	}
-
-	gretl_matrix_print(Hinv, "H");
+	    fprintf(stderr, "hessian_inverse_from_score: failed (err = %d)\n", 
+		    err);
+	} 
     }
 
     if (err) {
+	/* try generic inverse */
 	err = gretl_invert_symmetric_indef_matrix(Hinv);
 
 	if (err) {
-	    fprintf(stderr, "hessian_inverse_from_score: failed again (err = %d)\n", err);
+	    fprintf(stderr, "hessian_inverse_from_score: failed again (err = %d)\n", 
+		    err);
 	    gretl_matrix_free(Hinv);
 	    Hinv = NULL;
 	} else {
-	    fprintf(stderr, "Weird Hessian\n");
+	    gretl_model_set_int(pmod, "non-pd-hess", 1);
 	}
     }
 

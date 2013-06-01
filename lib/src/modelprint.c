@@ -64,6 +64,9 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn);
 
 #define intreg_model(m) (m->ci == INTREG || m->ci == TOBIT)
 
+#define hessian_maybe_fishy(m) (m->ci == ARMA || \
+				(m->ci == PROBIT && (m->opt & OPT_E)))
+
 void model_coeff_init (model_coeff *mc)
 {
     mc->b = NADBL;
@@ -619,6 +622,10 @@ static void maybe_print_hessian_warning (const MODEL *pmod, PRN *prn)
 {
     if (gretl_model_get_int(pmod, "hess-error")) {
 	pputs(prn, A_("Warning: couldn't compute numerical Hessian"));
+	pputc(prn, '\n');
+    }
+    if (gretl_model_get_int(pmod, "non-pd-hess")) {
+	pputs(prn, A_("Warning: non-pd Hessian (but still nonsingular)"));
 	pputc(prn, '\n');
     }
 }
@@ -2088,7 +2095,9 @@ static void print_model_heading (const MODEL *pmod,
 
     if (plain_format(prn) && pmod->ci == LAD) {
 	maybe_print_lad_warning(pmod, prn);
-    } else if (plain_format(prn) && pmod->ci == ARMA) {
+    } 
+
+    if (plain_format(prn) && hessian_maybe_fishy(pmod)) {
 	maybe_print_hessian_warning(pmod, prn);
     }    
 
