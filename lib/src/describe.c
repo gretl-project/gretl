@@ -3546,11 +3546,6 @@ int xcorrgram (const int *list, int order, DATASET *dset,
     return err;
 }
 
-static int roundup_mod (int i, double x)
-{
-    return (int) ceil((double) x * i);
-}
-
 struct fractint_test {
     double d;    /* estimated degree of integration */
     double se;   /* standard error of the above */
@@ -3800,112 +3795,6 @@ static int fract_int_LWE (const double *x, int m, int t1, int t2,
     return err;
 }
 
-static int pergm_graph (const char *vname,
-			int T, int L, const double *x,
-			gretlopt opt)
-{
-    char s[80];
-    FILE *fp;
-    double ft;
-    int T2 = T / 2;
-    int k, t, err = 0;
-
-    fp = get_plot_input_stream(PLOT_PERIODOGRAM, &err);
-    if (err) {
-	return err;
-    }
-
-    fputs("set xtics nomirror\n", fp); 
-
-    fprintf(fp, "set x2label '%s'\n", _("periods"));
-    fprintf(fp, "set x2range [0:%d]\n", roundup_mod(T, 2.0));
-
-    fputs("set x2tics (", fp);
-    k = T2 / 6;
-    for (t = 1; t <= T2; t += k) {
-	fprintf(fp, "\"%.1f\" %d, ", (double) T / t, 4 * t);
-    }
-    fprintf(fp, "\"\" %d)\n", 2 * T);
-
-    if (opt & OPT_R) {
-	fprintf(fp, "set xlabel '%s'\n", _("radians"));
-    } else if (opt & OPT_D) {
-	fprintf(fp, "set xlabel '%s'\n", _("degrees"));
-    } else {
-	fprintf(fp, "set xlabel '%s'\n", _("scaled frequency"));
-    }
-
-    fputs("set xzeroaxis\n", fp);
-    fputs("set nokey\n", fp);
-
-    /* open gnuplot title string */
-    fputs("set title '", fp);
-
-    if (opt & OPT_R) {
-	fputs(_("Residual spectrum"), fp);
-    } else {
-	sprintf(s, _("Spectrum of %s"), vname);
-	fputs(s, fp);
-    }
-
-    if (opt & OPT_O) {
-	fputs(" (", fp);
-	fprintf(fp, _("Bartlett window, length %d"), L);
-	fputc(')', fp);
-    } 
-
-    if (opt & OPT_L) {
-	fputs(" (", fp);
-	fputs(_("log scale"), fp);
-	fputc(')', fp);
-    }
-
-    /* close gnuplot title string */
-    fputs("'\n", fp);
-
-    gretl_push_c_numeric_locale();
-
-    if (opt & OPT_R) {
-	/* frequency scale in radians */
-	fputs("set xrange [0:3.1416]\n", fp);
-    } else if (opt & OPT_D) {
-	/* frequency scale in degrees */
-	fputs("set xrange [0:180]\n", fp);
-    } else {
-	/* data-scaled frequency */
-	fprintf(fp, "set xrange [0:%d]\n", roundup_mod(T, 0.5));
-    }
-
-    if (!(opt & OPT_L)) {
-	fprintf(fp, "set yrange [0:%g]\n", 1.2 * gretl_max(0, T/2, x));
-    }
-
-    if (opt & OPT_R) {
-	fputs("set xtics (\"0\" 0, \"π/4\" pi/4, \"π/2\" pi/2, "
-	      "\"3π/4\" 3*pi/4, \"π\" pi)\n", fp);
-    }
-
-    fputs("plot '-' using 1:2 w lines\n", fp);
-
-    for (t=1; t<=T2; t++) {
-	if (opt & OPT_R) {
-	    ft = M_PI * (double) t / T2;
-	} else if (opt & OPT_D) {
-	    ft = 180 * (double) t / T2;
-	} else {
-	    ft = t;
-	}
-	fprintf(fp, "%g %g\n", ft, (opt & OPT_L)? log(x[t]) : x[t]);
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    fputs("e\n", fp);
-    fclose(fp);
-
-    return gnuplot_make_graph();
-}
-
 static void pergm_print (const char *vname, const double *d, 
 			 int T, int L, gretlopt opt, PRN *prn)
 {
@@ -3951,7 +3840,7 @@ static void pergm_print (const char *vname, const double *d,
 
     if (!(opt & OPT_N)) {
 	/* OPT_N == suppress graph */
-	pergm_graph(vname, T, L, d, opt);
+	periodogram_plot(vname, T, L, d, opt);
     }    
 }
 
@@ -4091,17 +3980,18 @@ static double *pergm_compute_density (const double *x, int t1, int t2,
    three use cases:
 
    1) Implementing the "pergm" command, with or without the
-   option of using a Bartlett window (OPT_O).
+   option of using a Bartlett window (OPT_O); in this case the
+   final matrix-location argument will be NULL.
 
-   3) Implementing the user-space pergm function: in this case
-   (only) the final matrix-location argument will be non-NULL,
-   and the @vname argument will be NULL.
+   2) Implementing the user-space pergm function: in this case 
+   the final matrix-location argument will be non-NULL, and the 
+   @vname argument will be NULL.
 
    3) Implementing the fractint command, computing the Local
-   Whittle Estimator and/or the GPH test. If we're doing
-   Whittle only, we don't need to compute the spectral
-   density via the autocovariances approach; that is handled
-   via FFT in the LWE functions above.
+   Whittle Estimator and/or the GPH test -- this is flagged by
+   opt & OPT_F. If we're doing Whittle only, we don't need to compute 
+   the spectral density via the autocovariances approach; that is 
+   handled via FFT in the LWE functions above.
 */
 
 static int 
@@ -4219,7 +4109,7 @@ int periodogram (int varno, int width, const DATASET *dset,
 }
 
 /**
- * periodogram_func:
+ * periodogram_matrix:
  * @x: the series to process.
  * @t1: starting observation in @x.
  * @t2: ending observation in @x.
@@ -4234,8 +4124,8 @@ int periodogram (int varno, int width, const DATASET *dset,
  * Returns: allocated matrix on success, NULL on failure.
  */
 
-gretl_matrix *periodogram_func (const double *x, int t1, int t2,
-				int width, int *err)
+gretl_matrix *periodogram_matrix (const double *x, int t1, int t2,
+				  int width, int *err)
 {
     gretlopt opt = (width < 0)? OPT_NONE : OPT_O;
     gretl_matrix *m = NULL;
@@ -4244,6 +4134,48 @@ gretl_matrix *periodogram_func (const double *x, int t1, int t2,
 			     opt, NULL, &m);
 
     return m;
+}
+
+/**
+ * periodogram_bundle:
+ * @varno: ID number of the series to process.
+ * @width: width of Bartlett window, or -1 for plain sample
+ * periodogram.
+ * @dset: pointer to dataset.
+ * @err: location to receive error code.
+ *
+ * Implements the userspace gretl pergm function in its bundle
+ * variant, which can only be used on a dataset series.
+ *
+ * Returns: allocated bundle on success, NULL on failure.
+ */
+
+gretl_bundle *periodogram_bundle (int varno, int width,
+				  const DATASET *dset,
+				  int *err)
+{
+    gretlopt opt = (width < 0)? OPT_NONE : OPT_O;
+    gretl_matrix *m = NULL;
+    gretl_bundle *b = NULL;
+
+    *err = pergm_or_fractint(dset->Z[varno], 
+			     dset->t1, dset->t2, width,
+			     NULL, opt, NULL, &m);
+
+    if (!*err) {
+	b = gretl_bundle_new();
+	if (b == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    gretl_bundle_set_payload_matrix(b, m);
+	    gretl_bundle_set_scalar(b, "width", width);
+	    gretl_bundle_set_string(b, "vname", dset->varname[varno]);
+	    gretl_bundle_set_creator(b, "gretl::pergm");
+	}
+	gretl_matrix_free(m);
+    }
+
+    return b;
 }
 
 /**

@@ -246,6 +246,12 @@ int correlogram_plot (const char *vname,
 
 int correlogram_plot_from_bundle (gretl_bundle *bundle, gretlopt opt);
 
+int periodogram_plot (const char *vname,
+		      int T, int L, const double *x,
+		      gretlopt opt);
+
+int periodogram_plot_from_bundle (gretl_bundle *bundle, gretlopt opt);
+
 int theil_forecast_plot (const int *plotlist, const DATASET *dset, 
 			 gretlopt opt);
 

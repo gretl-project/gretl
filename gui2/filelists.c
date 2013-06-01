@@ -161,7 +161,7 @@ static void rc_print_filelist (int filetype, FILE *fp)
     for (i=0; i<MAXRECENT; i++) {
 	if (filep[i] != NULL && *filep[i] != 0) {
 	    fprintf(fp, "%s%d %s\n", file_sections[filetype], i, filep[i]);
-	} 
+	}
     }
 }
 

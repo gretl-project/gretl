@@ -5208,6 +5208,7 @@ static NODE *do_panel_shrink (NODE *l, parser *p)
 static NODE *pergm_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
+    int vnum = -1;
 
     if (!empty_or_num(r)) {
 	/* optional 'r' node must be scalar */
@@ -5215,6 +5216,9 @@ static NODE *pergm_node (NODE *l, NODE *r, parser *p)
     } else if (l->t == MAT && gretl_vector_get_length(l->v.m) == 0) {
 	/* if 'l' node is not a series, must be a vector */
 	node_type_error(F_PERGM, 1, VEC, l, p);
+    } else if (useries_node(l)) {
+	vnum = l->vnum;
+	ret = aux_bundle_node(p);
     } else {
 	ret = aux_matrix_node(p);
     }
@@ -5238,7 +5242,11 @@ static NODE *pergm_node (NODE *l, NODE *r, parser *p)
 	    width = r->v.xval;
 	}
 
-	ret->v.m = periodogram_func(x, t1, t2, width, &p->err);
+	if (vnum >= 0) {
+	    ret->v.b = periodogram_bundle(vnum, width, p->dset, &p->err);
+	} else {
+	    ret->v.m = periodogram_matrix(x, t1, t2, width, &p->err);
+	}
     }
 
     return ret;

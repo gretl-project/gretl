@@ -185,8 +185,12 @@ int periodogram (int varno, int width,
 		 const DATASET *dset, 
 		 gretlopt opt, PRN *prn);
 
-gretl_matrix *periodogram_func (const double *x, int t1, int t2,
-				int width, int *err);
+gretl_matrix *periodogram_matrix (const double *x, int t1, int t2,
+				  int width, int *err);
+
+gretl_bundle *periodogram_bundle (int varno, int width,
+				  const DATASET *dset,
+				  int *err);
 
 int fractint (int varno, int order, 
 	      const DATASET *dset, 

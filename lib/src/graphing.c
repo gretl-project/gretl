@@ -6527,6 +6527,171 @@ int correlogram_plot_from_bundle (gretl_bundle *bundle, gretlopt opt)
     return err;
 }
 
+static int roundup_mod (int i, double x)
+{
+    return (int) ceil((double) x * i);
+}
+
+/* options: OPT_R use radians as unit
+            OPT_D use degrees as unit
+            OPT_L use log scale
+*/
+
+static int real_pergm_plot (const char *vname,
+			    int T, int L, 
+			    const double *x,
+			    gretlopt opt,
+			    FILE *fp)
+{
+    char s[80];
+    double ft;
+    int T2 = T / 2;
+    int k, t, err = 0;
+
+    fputs("set xtics nomirror\n", fp); 
+
+    fprintf(fp, "set x2label '%s'\n", _("periods"));
+    fprintf(fp, "set x2range [0:%d]\n", roundup_mod(T, 2.0));
+
+    fputs("set x2tics (", fp);
+    k = T2 / 6;
+    for (t = 1; t <= T2; t += k) {
+	fprintf(fp, "\"%.1f\" %d, ", (double) T / t, 4 * t);
+    }
+    fprintf(fp, "\"\" %d)\n", 2 * T);
+
+    if (opt & OPT_R) {
+	fprintf(fp, "set xlabel '%s'\n", _("radians"));
+    } else if (opt & OPT_D) {
+	fprintf(fp, "set xlabel '%s'\n", _("degrees"));
+    } else {
+	fprintf(fp, "set xlabel '%s'\n", _("scaled frequency"));
+    }
+
+    fputs("set xzeroaxis\n", fp);
+    fputs("set nokey\n", fp);
+
+    /* open gnuplot title string */
+    fputs("set title '", fp);
+
+    if (opt & OPT_R) {
+	fputs(_("Residual spectrum"), fp);
+    } else {
+	sprintf(s, _("Spectrum of %s"), vname);
+	fputs(s, fp);
+    }
+
+    if (opt & OPT_O) {
+	fputs(" (", fp);
+	fprintf(fp, _("Bartlett window, length %d"), L);
+	fputc(')', fp);
+    } 
+
+    if (opt & OPT_L) {
+	fputs(" (", fp);
+	fputs(_("log scale"), fp);
+	fputc(')', fp);
+    }
+
+    /* close gnuplot title string */
+    fputs("'\n", fp);
+
+    gretl_push_c_numeric_locale();
+
+    if (opt & OPT_R) {
+	/* frequency scale in radians */
+	fputs("set xrange [0:3.1416]\n", fp);
+    } else if (opt & OPT_D) {
+	/* frequency scale in degrees */
+	fputs("set xrange [0:180]\n", fp);
+    } else {
+	/* data-scaled frequency */
+	fprintf(fp, "set xrange [0:%d]\n", roundup_mod(T, 0.5));
+    }
+
+    if (!(opt & OPT_L)) {
+	fprintf(fp, "set yrange [0:%g]\n", 1.2 * gretl_max(0, T/2, x));
+    }
+
+    if (opt & OPT_R) {
+	fputs("set xtics (\"0\" 0, \"π/4\" pi/4, \"π/2\" pi/2, "
+	      "\"3π/4\" 3*pi/4, \"π\" pi)\n", fp);
+    }
+
+    fputs("plot '-' using 1:2 w lines\n", fp);
+
+    for (t=1; t<=T2; t++) {
+	if (opt & OPT_R) {
+	    ft = M_PI * (double) t / T2;
+	} else if (opt & OPT_D) {
+	    ft = 180 * (double) t / T2;
+	} else {
+	    ft = t;
+	}
+	fprintf(fp, "%g %g\n", ft, (opt & OPT_L)? log(x[t]) : x[t]);
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    fputs("e\n", fp);
+
+    return err;
+}
+
+int periodogram_plot (const char *vname,
+		      int T, int L, const double *x,
+		      gretlopt opt)
+{
+    FILE *fp;
+    int err = 0;
+
+    fp = get_plot_input_stream(PLOT_PERIODOGRAM, &err);
+
+    if (!err) {
+	real_pergm_plot(vname, T, L, x, opt, fp);
+	fclose(fp);
+	err = gnuplot_make_graph();
+    }
+
+    return err;
+}
+
+int periodogram_plot_from_bundle (gretl_bundle *bundle, gretlopt opt)
+{
+    const char *vname = NULL;
+    const gretl_matrix *m = NULL;
+    int L, err = 0;
+
+    vname = gretl_bundle_get_string(bundle, "vname", &err);
+
+    if (!err) {
+	L = gretl_bundle_get_scalar(bundle, "width", &err);
+    }    
+    
+    if (!err) {
+	m = gretl_bundle_get_payload_matrix(bundle, &err);
+    }
+
+    if (!err) {
+	const double *x = m->val + m->rows - 1;
+	int T = m->rows * 2;
+	FILE *fp;
+
+	fp = open_gp_stream_full(PLOT_PERIODOGRAM, BPLOT, 
+				 GPT_BATCH, &err);
+	if (!err) {
+	    real_pergm_plot(vname, T, L, x, opt, fp);
+	    fclose(fp);
+	}
+    }
+
+    if (!err) {
+	err = gnuplot_make_graph();
+    }
+
+    return err;
+}
+
 #define MAKKONEN_POS 0
 
 /* Probability of non-exceedance of the kth value in a set of n

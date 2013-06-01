@@ -2403,6 +2403,52 @@ static void maybe_print (PRN *prn, const char *key,
     }
 }
 
+static const char *aux_basename (const char *fname)
+{
+    const char *p = strrchr(fname, SLASH);
+
+    if (p != NULL) {
+	/* take last part of filename */
+	return p + 1;
+    } else {
+	return fname;
+    }
+}
+
+static int maybe_write_aux_file (const char *fname, 
+				 const gchar *content,
+				 const char *sfx,
+				 PRN *prn)
+{
+    int ret = 0;
+
+    if (content != NULL && *content != '\0') {
+	char *s, tmp[FILENAME_MAX];
+	FILE *fp;
+
+	strcpy(tmp, fname);
+	s = strstr(tmp, ".spec");
+	if (s != NULL) {
+	    *s = '\0';
+	    strncat(s, sfx, strlen(sfx));
+	    fp = gretl_fopen(tmp, "w");
+	    if (fp != NULL) {
+		fputs(content, fp);
+		fclose(fp);
+		pputs(prn, aux_basename(tmp));
+		ret = 1;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+/* Given the in-memory representation of a gfn package, write
+   out the corresponding .spec file. Also write out to separate
+   files the package's help text and sample script, if available.
+*/
+
 int save_function_package_spec (const char *fname, gpointer p)
 {
     const char *extra_keys[] = {
@@ -2511,11 +2557,22 @@ int save_function_package_spec (const char *fname, gpointer p)
 	    }
 	}
 	pputc(prn, '\n');
-    }    
+    }
 
-    pputs(prn, "# filenames needed below\n");
-    pputs(prn, "help = \n");
-    pputs(prn, "sample-script = \n");
+    /* write out help text file and/or sample script? */
+
+    pputs(prn, "help = ");
+    if (finfo->text != NULL) {
+	gchar *help = textview_get_trimmed_text(finfo->text);
+
+	maybe_write_aux_file(fname, help, "_help.txt", prn);
+	pputc(prn, '\n');
+	g_free(help);
+    }
+
+    pputs(prn, "sample-script = ");
+    maybe_write_aux_file(fname, finfo->sample, "_sample.inp", prn);
+    pputc(prn, '\n');
 
     gretl_print_destroy(prn);
 

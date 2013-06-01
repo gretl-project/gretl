@@ -964,6 +964,60 @@ static int skip_matrix_comment (FILE *fp, gzFile fz, int *err)
     return ret;
 }
 
+static char *decompress_matrix_buffer (gzFile fz, const char *fname,
+				       int rows, int cols, int *err)
+{
+    char *buf;
+    int len;
+
+    /* Initial guess at uncompressed size in bytes: this should 
+       be OK for gretl-generated mat.gz files; we resize below if
+       needed.
+    */
+    len = rows * cols * 27 + 1;
+    len += len % 16;
+
+    buf = malloc(len);
+
+    if (buf == NULL) {
+	*err = E_ALLOC;
+    } else {
+	int zc, zret, bytes = 0;
+	char *tmp;
+	
+	while (!*err) {
+	    memset(buf + bytes, 0, len - bytes);
+	    zret = gzread(fz, buf + bytes, len - bytes);
+	    if (zret == Z_OK || zret == Z_BUF_ERROR) {
+		break;
+	    } else {
+		bytes += zret;
+		/* is there any more to be read? */
+		zc = gzgetc(fz);
+		if (zc >= 0) {
+		    gzungetc(zc, fz);
+		    len += 1024;
+		    tmp = realloc(buf, len);
+		    if (tmp == NULL) {
+			*err = E_ALLOC;
+		    } else {
+			buf = tmp;
+		    }
+		} else {
+		    break;
+		}
+	    }
+	}
+
+	if (*err) {
+	    free(buf);
+	    buf = NULL;
+	}
+    }
+
+    return buf;
+}
+
 /**
  * gretl_matrix_read_from_text:
  * @fname: name of text file.
@@ -974,7 +1028,7 @@ static int skip_matrix_comment (FILE *fp, gzFile fz, int *err)
  * separator must be space or tab. It is assumed that the dimensions of
  * the matrix (number of rows and columns) are found on the first line
  * of the csv file, so no heuristics are necessary. In case of error,
- * an empty matrix is returned and @err is filled appropriately.
+ * @err is filled appropriately.
  *
  * Returns: The matrix read from file, or NULL.
  */
@@ -982,10 +1036,8 @@ static int skip_matrix_comment (FILE *fp, gzFile fz, int *err)
 gretl_matrix *gretl_matrix_read_from_text (const char *fname, 
 					   int import, int *err)
 {
-    char tmp[FILENAME_MAX];
-    char *zbuf = NULL;
+    char fullname[FILENAME_MAX];
     int r, c, n, gz;
-    double x;
     gretl_matrix *A = NULL;
     gzFile fz = Z_NULL;
     FILE *fp = NULL;
@@ -993,26 +1045,26 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname,
     gz = has_suffix(fname, ".gz");
 
     if (import) {
-	build_path(tmp, gretl_dotdir(), fname, NULL);
+	build_path(fullname, gretl_dotdir(), fname, NULL);
 	if (gz) {
-	    fz = gretl_gzopen(tmp, "r");
+	    fz = gretl_gzopen(fullname, "r");
 	} else {
-	    fp = gretl_fopen(tmp, "r");
+	    fp = gretl_fopen(fullname, "r");
 	}
     } else {
-	strcpy(tmp, fname);
+	strcpy(fullname, fname);
 	if (gz) {
-	    fz = gretl_gzopen(tmp, "r");
+	    fz = gretl_gzopen(fullname, "r");
 	} else {
-	    fp = gretl_fopen(tmp, "r");
+	    fp = gretl_fopen(fullname, "r");
 	}
 	if (fz == Z_NULL && fp == NULL) {
-	    gretl_maybe_prepend_dir(tmp);
-	    if (strcmp(tmp, fname)) {
+	    gretl_maybe_prepend_dir(fullname);
+	    if (strcmp(fullname, fname)) {
 		if (gz) {
-		    fz = gretl_gzopen(tmp, "r");
+		    fz = gretl_gzopen(fullname, "r");
 		} else {
-		    fp = gretl_fopen(tmp, "r");
+		    fp = gretl_fopen(fullname, "r");
 		}
 	    }
 	}
@@ -1022,7 +1074,7 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname,
 	*err = E_FOPEN;
 	return NULL;
     }
-    
+
     /* skip any leading comment lines starting with '#' */
     while (!*err && skip_matrix_comment(fp, fz, err)) {
 	;
@@ -1030,8 +1082,13 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname,
 
     if (!*err) {
 	if (fz) {
-	    zbuf = gzgets(fz, tmp, sizeof tmp);
-	    n = (zbuf == NULL)? 0 : sscanf(tmp, "%d %d\n", &r, &c);
+	    char tmp[64];
+
+	    if (gzgets(fz, tmp, sizeof tmp) != NULL) {
+		n = sscanf(tmp, "%d %d\n", &r, &c);
+	    } else {
+		n = 0;
+	    }
 	} else {
 	    n = fscanf(fp, "%d %d\n", &r, &c);
 	}
@@ -1048,15 +1105,20 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname,
     }
 
     if (!*err) {
+	char *p = NULL, *zbuf = NULL;
+	double x;
 	int i, j;
+
+	if (fz) {
+	    p = zbuf = decompress_matrix_buffer(fz, fullname, r, c, err);
+	}
 
 	gretl_push_c_numeric_locale();
 
 	for (i=0; i<r && !*err; i++) {
 	    for (j=0; j<c && !*err; j++) {
 		if (fz) {
-		    zbuf = gzgets(fz, tmp, sizeof tmp);
-		    n = (zbuf == NULL)? 0 : sscanf(tmp, "%lf", &x);
+		    n = sscanf(p, "%lf", &x);
 		} else {
 		    n = fscanf(fp, "%lf", &x);
 		}
@@ -1065,11 +1127,19 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname,
 		    fprintf(stderr, "error reading row %d, column %d\n", i+1, j+1);
 		} else {
 		    gretl_matrix_set(A, i, j, x);
+		    if (fz) {
+			p += strspn(p, " \t\r\n");
+			p += strcspn(p, " \t\r\n");
+		    }
 		}
 	    }
 	}
 
 	gretl_pop_c_numeric_locale();
+
+	if (zbuf != NULL) {
+	    free(zbuf);
+	}
     }
 
     if (fz) {
@@ -1132,7 +1202,7 @@ int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname,
     }
 
     if (fz) {
-	gzprintf(fz, "%d %d\n", r, c);
+	gzprintf(fz, "%d%c%d\n", r, d, c);
     } else if (fp) {
 	fprintf(fp, "%d%c%d\n", r, d, c);
     } else {
@@ -1144,7 +1214,12 @@ int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname,
     for (i=0; i<r; i++) {
 	for (j=0; j<c; j++) {
 	    if (fz) {
-		gzprintf(fz, "%26.18E\n", gretl_matrix_get(A, i, j));
+		gzprintf(fz, "%26.18E", gretl_matrix_get(A, i, j));
+		if (j == c-1) {
+		    gzputc(fz, '\n'); 
+		} else {
+		    gzputc(fz, d);
+		}		
 	    } else {
 		fprintf(fp, "%26.18E", gretl_matrix_get(A, i, j));
 		if (j == c-1) {
