@@ -975,7 +975,9 @@ static char *decompress_matrix_buffer (gzFile fz, const char *fname,
        needed.
     */
     len = rows * cols * 27 + 1;
-    len += len % 16;
+    if (len % 16) {
+	len += 16 - (len % 16);
+    }
 
     buf = malloc(len);
 
