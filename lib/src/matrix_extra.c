@@ -968,15 +968,15 @@ static char *decompress_matrix_buffer (gzFile fz, const char *fname,
 				       int rows, int cols, int *err)
 {
     char *buf;
-    int len;
+    int len, rem;
 
     /* Initial guess at uncompressed size in bytes: this should 
        be OK for gretl-generated mat.gz files; we resize below if
        needed.
     */
     len = rows * cols * 27 + 1;
-    if (len % 16) {
-	len += 16 - (len % 16);
+    if ((rem = len % 16) > 0) {
+	len += 16 - rem;
     }
 
     buf = malloc(len);
