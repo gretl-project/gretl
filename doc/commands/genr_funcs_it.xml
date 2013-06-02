@@ -1236,55 +1236,66 @@
       </examples>
       <description>
 	<para>
-	  Cumulative distribution function calculator. Returns 
-	  <equation status="inline" ascii="P(X &lt; x)"  
-	  tex="$P(X \le x)$"/>, where the distribution <math>X</math> is
-	  determined by the character <argname>c</argname>. Between the
-	  arguments <argname>c</argname> and <argname>x</argname>, zero or
-	  more additional arguments are required to specify the parameters
-	  of the distribution, as follows.
+	  Calcola funzioni di ripartizione. Ritorna <equation
+	  status="inline" ascii="P(X &lt; x)" tex="$P(X \le x)$"/>,
+	  dove la distribuzione di <math>X</math> è determinata dal
+	  carattere <argname>c</argname>. Tra gli argomenti
+	  <argname>c</argname> e <argname>x</argname>, possono essere
+	  richiesti parametri aggiuntivi a seconda della
+	  distribuzione, come specificato qui di seguito.
 	</para>
 	<ilist context="notex">
 	  <li>
 	    <para>
-	      Standard normal (c = z, n, or N): no extra arguments
+	      Normale standard (c = z, n, or N): no argomenti extra
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Bivariate normal (D): correlation coefficient
+	      Normale bivariata (D): coefficiente di correlazione
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Student's t (t): degrees of freedom
+	      t di Student (t): gradi di libertà 
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Chi square (c, x, or X): degrees of freedom
+	      Chi quadro (c, x, or X): gradi di libertà
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Snedecor's F (f or F): df (num.); df (den.)
+	      F di Snedecor (f or F): gradi di libertà (num.); gradi
+	      di libertà (den.)
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Gamma (g or G): shape; scale
+	      Gamma (g or G): forma; scala
 	    </para>
 	  </li>	  
 	  <li>
 	    <para>
-	      Binomial (b or B): probability; number of trials
+	      Binomiale (b or B): probabilità; numero di prove
 	    </para>
 	  </li>	  
 	  <li>
 	    <para>
-	      Poisson (p or P): Mean
+	      Poisson (p or P): Media
 	    </para>
 	  </li>	  
+	  <li>
+	    <para>
+	      Weibull (w or W): forma; scala
+	    </para>
+	  </li>	
+	  <li>
+	    <para>
+	      Generalized Error (E): forma
+	    </para>
+	  </li>	
 	</ilist>
 	<para context="tex">
 	  \begin{center} 
@@ -1311,20 +1322,18 @@
 	  \end{center}
 	</para>
 	<para>
-	  Note that most cases have aliases to help memorizing the codes.
-	  The bivariate normal case is special: the syntax is <lit>x =
-	    cdf(D, rho, z1, z2)</lit> where <lit>rho</lit> is the
-	  correlation between the variables <lit>z1</lit> and
-	  <lit>z2</lit>.
+	  La maggior parte delle distribzioni usano degli aliases per
+	  rendere più agevole la memorizzazione dei codici.  Il caso
+	  della normale bivariata è particolare: la sintassi è <lit>x
+	  = cdf(D, rho, z1, z2)</lit> dove <lit>rho</lit> è la
+	  correlazione fra <lit>z1</lit> e <lit>z2</lit>.
 	</para>
 	<para context="tex">
-	  The parametrization \app{gretl} uses for the Gamma random variate
-	  implies that its density function can be written as
-	  \[
-	  f(x; k, \theta) = \frac{x^{k-1}}{\theta^k} \frac{e^{-x/\theta}}{\Gamma(k)}
-	  \]
-	  where $k>0$ is the shape parameter and $\theta>0$ is the scale
-	  parameter.
+	  La parametrizzazione che \app{gretl} adotta per la
+	  v.c. Gamma implica che la funzione di densità possa essere
+	  scitta come \[ f(x; k, \theta) = \frac{x^{k-1}}{\theta^k}
+	  \frac{e^{-x/\theta}}{\Gamma(k)} \] dove $k>0$ è il parametro
+	  di forma e $\theta>0$ è il parametro di scala.
 	</para>
 	<para>
 	  <seelist>
@@ -1636,59 +1645,47 @@
       </examples>
       <description>
 	<para>
-	  Critical value calculator. Returns <math>x</math> such that
-	  <equation status="inline" ascii="P(X &gt; x) = p"  
-	  tex="$P(X &gt; x) = p$"/>, where the distribution <math>X</math>
-	  is determined by the character <argname>c</argname>. Between the
-	  arguments <argname>c</argname> and <argname>p</argname>, zero or
-	  more additional arguments are required to specify the parameters
-	  of the distribution, as follows.
+	  Calcola i valori critici, ossia <math>x</math> tale che
+	  <equation status="inline" ascii="P(X &gt; x) = p" tex="$P(X
+	  &gt; x) = p$"/>, dove la distribuzione di <math>X</math> è
+	  determinata dal carattere <argname>c</argname>. Tra gli
+	  argomenti <argname>c</argname> e <argname>x</argname>,
+	  possono essere richiesti parametri aggiuntivi a seconda
+	  della distribuzione, come specificato qui di seguito.
 	</para>
 	<ilist context="notex">
 	  <li>
 	    <para>
-	      Standard normal (c = z, n, or N): no extra arguments
+	      Normale standard (c = z, n, or N): no argomenti extra
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Student's t (t): degrees of freedom
+	      t di Student (t): gradi di libertà 
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Chi square (c, x, or X): degrees of freedom
+	      Chi quadro (c, x, or X): gradi di libertà
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Snedecor's F (f or F): df (num.); df (den.)
+	      F di Snedecor (f or F): gradi di libertà (num.); gradi
+	      di libertà (den.)
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Binomial (b or B): probability; trials
+	      Binomiale (b or B): probabilità; numero di prove
 	    </para>
-	  </li>
+	  </li>	  
+	  <li>
+	    <para>
+	      Poisson (p or P): Media
+	    </para>
+	  </li>	  
 	</ilist>
-	<para context="tex">
-	  \begin{center} 
-	  \begin{tabular}{llll} 
-	  \textit{Distribution} &amp; \textsl{c} &amp;
-	  \textit{Arg} 2 &amp; \textit{Arg} 3 \\[4pt]
-	  Standard normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp;
-	  -- &amp; -- \\ 
-	  Student's $t$ (central) &amp; \texttt{t} &amp; 
-	  degrees of freedom &amp; -- \\ 
-	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; 
-	  degrees of freedom &amp; -- \\
-	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp; 
-	  df (num.) &amp; df (den.) \\ 
-	  Binomial &amp; \texttt{b} or \texttt{B} &amp; 
-	  $p$ &amp; $n$ \\ 
-	  \end{tabular}
-	  \end{center}
-	</para>
 	<para>
 	  <seelist>
 	    <fncref targ="cdf"/>
@@ -4455,18 +4452,20 @@
       </examples>
       <description>
 	<para>
-	  Probability density function calculator. Returns the density at
-	  <argname>x</argname> of the distribution identified by the code
-	  <argname>c</argname>.  See <fncref targ="cdf"/> for details of the
-	  required (scalar) arguments.  The distributions supported by the
-	  <lit>pdf</lit> function are the normal, Student's <math>t</math>,
-	  chi-square, <math>F</math>, Gamma, Weibull, Generalized Error,
-	  Binomial and Poisson. Note that for the Binomial and the
-	  Poisson what's calculated is in fact the probability
-	  mass at the specified point.
+	  Calcola funzioni di densità o di probabilità. Ritorna la
+	  densità (se continue) o la probabilità (se discrete)
+	  <argname>x</argname> della distribzion identificata dal
+	  carattere <argname>c</argname>.  Vedi <fncref targ="cdf"/>
+	  per dettagli sugli argomenti.  Le distribuzioni supportate
+	  dalla funzione <lit>pdf</lit> sono la normale,
+	  <math>t</math> di Student, chi-quadro, <math>F</math>,
+	  gamma, Weibull, Generalized Error, binomiale and Poisson. Si
+	  noti che per la binomiale e la Poisson ciò che viene
+	  calcolato è in effetti la probabilità nel punto specificato.
 	</para>
 	<para>
-	  For the normal distribution, see also <fncref targ="dnorm"/>.
+	  Per la normale, vedi anche la funzione <fncref
+	  targ="dnorm"/>.
 	</para>
       </description>
     </function>
