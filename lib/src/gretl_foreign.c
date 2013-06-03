@@ -416,6 +416,7 @@ static int write_octave_io_file (void)
 	const char *dotdir = gretl_dotdir();
 	gchar *fname;
 	FILE *fp;
+	int i;
 
 	fname = g_strdup_printf("%sgretl_io.m", dotdir);
 	fp = gretl_fopen(fname, "w");
@@ -444,7 +445,10 @@ static int write_octave_io_file (void)
 	    fputs("    fd = fopen(str, \"w\");\n", fp);
 	    fputs("  endif\n", fp);
 	    fputs("  fprintf(fd, \"%d %d\\n\", size(X));\n", fp);
-	    fputs("  fprintf(fd, \"%.15g\\n\", X');\n", fp);
+	    fputs("  c = columns(X);", fp);
+            fputs("  fs = strcat(strrep(sprintf(\"%d \", ones(1, c)),\"1\", \"%.15g\"), \"\\n\");",
+		  fp);
+	    fputs("  fprintf(fd, fs, X');\n", fp);
 	    fputs("  fclose(fd);\n", fp);
 	    fputs("endfunction\n\n", fp);  
 
