@@ -444,7 +444,7 @@ static int write_octave_io_file (void)
 	    fputs("    fd = fopen(str, \"w\");\n", fp);
 	    fputs("  endif\n", fp);
 	    fputs("  fprintf(fd, \"%d %d\\n\", size(X));\n", fp);
-	    fputs("  fprintf(fd, \"%.15g\\n\", X);\n", fp);
+	    fputs("  fprintf(fd, \"%.15g\\n\", X');\n", fp);
 	    fputs("  fclose(fd);\n", fp);
 	    fputs("endfunction\n\n", fp);  
 
