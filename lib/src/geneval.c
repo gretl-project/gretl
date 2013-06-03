@@ -5844,6 +5844,10 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     void *val = NULL;
     NODE *ret = NULL;
 
+    /* 2013-06-03: can we try to pull out "slices" of a bundled
+       matrix here?
+    */
+
 #if EDEBUG
     fprintf(stderr, "get_named_bundle_value: %s[\"%s\"]\n", name, key);
 #endif
