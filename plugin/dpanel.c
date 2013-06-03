@@ -178,10 +178,10 @@ static void copy_diag_info (diag_info *targ, diag_info *src)
    lags that have been specified for the given instrument.
    These lags are relative to the "base" of the differenced
    observation, that is, the x_t from which x_{t-k} is
-   subtracted to foem a difference. With non-gappy data
+   subtracted to form a difference. With non-gappy data
    k = 1 (the differences are x_t - x_{t-1}) but with
    gappy data we may have k > 1 for some observations;
-   nonethless, we "impute" a difference-base index of
+   nonetheless, we "impute" a difference-base index of
    (the subtractive term's index + 1). This ensures
    that we don't use level instruments that are entangled 
    in the difference they are supposed to be instrumenting.
