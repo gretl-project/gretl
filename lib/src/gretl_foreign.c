@@ -445,9 +445,10 @@ static int write_octave_io_file (void)
 	    fputs("    fd = fopen(str, \"w\");\n", fp);
 	    fputs("  endif\n", fp);
 	    fputs("  fprintf(fd, \"%d %d\\n\", size(X));\n", fp);
-	    fputs("  c = columns(X);", fp);
+	    fputs("  c = columns(X);\n", fp);
             fputs("  fs = strcat(strrep(sprintf(\"%d \", ones(1, c)),\"1\", \"%.15g\"), \"\\n\");",
 		  fp);
+	    fputc('\n', fp);
 	    fputs("  fprintf(fd, fs, X');\n", fp);
 	    fputs("  fclose(fd);\n", fp);
 	    fputs("endfunction\n\n", fp);  
