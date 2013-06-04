@@ -4300,9 +4300,9 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the observation label for observation <argname>t</argname>,
-	  where <argname>t</argname> is a 1-based index.  The inverse
-	  function is provided by <fncref targ="obsnum"/>.
+	  Ritorna l'etichetta per la <argname>t</argname>-esima
+	  osservazione, dove <argname>t</argname> è un indice che
+	  parte da 1.  La funzione inversa è <fncref targ="obsnum"/>.
 	</para>
       </description>
     </function>
@@ -4313,18 +4313,20 @@
       </fnargs>
       <description>
 	<para>
-	  Returns an integer corresponding to the observation specified by
-	  the string <math>s</math>. Note that the result is invariant to
-	  subsampling. This function is especially useful with time-series
-	  datasets.  For example, the following code
+	  Ritorna un intero corrispondente all'osservazione
+	  specificata dalla stringa <math>s</math>. Si noti che il
+	  risultato è invariante al sottocampionamento. Questa
+	  funzione è particolarmente utile con campioni di serie
+	  storiche. Ad esempio, il codice
 	</para>
 	<code>
 	  open denmark 
 	  k = obsnum(1980:1)
 	</code>
 	<para>
-	  yields <lit>k = 25</lit>, indicating that the first quarter of
-	  1980 is the 25th observation in the <lit>denmark</lit> dataset.
+	  produce <lit>k = 25</lit>, ciò che indica che il primo
+	  trimestre 1980 è la venticinquesima osservazione nel dataset
+	  <lit>denmark</lit>.
 	</para>
 	<para>
 	  <seelist>
