@@ -868,21 +868,21 @@
     context="gui">
     <description>
       <para>
-	This dialog allows you to control some aspects of the operation of the
-	BFGS maximizer.  In case the maximizer fails to converge it may help
-	matters, in some cases, to increase the number of iterations allowed
-	and/or to increase (make more permissive) the convergence tolerance.
-	However, you should be suspicious of results obtained using a high
-	tolerance and should consider the possibility that the model you
-	are estimating is misspecified. 
+	Questa finestra di dialogo consente di controllare alcuni
+	dettagli dell'algoritmo BFGS. Nel caso di mancata convergenza
+	può essere utile, in certi casi, aumentare il numero massimo
+	di iterazioni e/o il parametro di tolleranza. Tuttavia,
+	risultati ottentuti con tolleranze molto alte dovrebbero
+	essere considerati un po' sospetti, e va considerata la
+	possibilità che il modello sia mal specificato.
       </para>
       <para>
-	For most applications we recommend use of the regular BFGS maximizer
-	but for some problems the <quote>limited memory</quote> variant of the
-	algorithm, L-BFGS-B, may produce more rapid convergence.  When
-	L-BFGS-B is selected, you have the option of setting the number of
-	corrections used in the limited memory matrix (between 3 and 20, with
-	a default of 8).
+	Nella maggioranza dei casi, consigliamo l'uso dell'algoritmo
+	BFGS standard, ma per alcuni problemi, la sua variante
+	<quote>a memoria limitata</quote>, L-BFGS-B, può essere più
+	efficace. Con questo algoritmo, è possibile fissare il numero
+	di correzioni nella matrice di memoria limitata (tra 3 e 20,
+	default 8).
       </para>
     </description>
   </command>
