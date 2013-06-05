@@ -719,11 +719,30 @@ static NODE *get_bundle_member_name (parser *p)
 {
     int i, n = gretl_namechar_spn(p->point);
 
+#if 1
+    if (*(p->point + n) == '[') {
+	const char *s = p->point + (++n);
+	int br = 1;
+
+	while (*s && br > 0) {
+	    if (*s == '[') br++;
+	    else if (*s == ']') br--;
+	    n++;
+	    s++;
+	}
+
+	if (br != 0) {
+	    unmatched_symbol_error('[', p);
+	    return NULL;
+	}
+    }
+#endif
+
     p->idstr = gretl_strndup(p->point, n);
     if (p->idstr == NULL) {
 	p->err = E_ALLOC;
 	return NULL;
-    }     
+    }
 
     for (i=0; i<=n; i++) {
 	parser_getc(p);

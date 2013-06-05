@@ -5829,6 +5829,48 @@ static gretl_matrix *complex_array_to_matrix (cmplx *c, int sz,
     return m;
 }
 
+static void process_bundle_member_subspec (NODE *n, parser *p,
+					   char *spec)
+{
+    if (n->t == MAT) {
+	gretl_matrix *m = NULL;
+	gchar *tmp;
+
+	tmp = g_strdup_printf("gentmpmat___%s", spec);
+	p->err = private_matrix_add(n->v.m, "gentmpmat___");
+	if (!p->err) {
+	    m = generate_matrix(tmp, p->dset, &p->err);
+	}
+	user_var_delete_by_name("gentmpmat___", NULL);
+	g_free(tmp);
+	if (!p->err) {
+	    /* replace the outgoing matrix */
+	    n->v.m = m;
+	    n->flags &= ~PTR_NODE;
+	    n->flags |= TMP_NODE;
+	}
+    } else if (n->t == VEC) {
+	char *s = strrchr(spec, ']');
+	double xt;
+	int t;
+
+	*s = '\0';
+	t = get_observation_number(spec + 1, p->dset);
+	if (t > 0) {
+	    /* revise outgoing node to hold scalar */
+	    xt = n->v.xvec[t-1];
+	    free(n->v.xvec);
+	    n->t = NUM;
+	    n->v.xval = xt;
+	    n->flags &= ~TMP_NODE;
+	} else {
+	    p->err = E_DATA;
+	}
+    } else {
+	context_error('[', p);
+    }
+}
+
 /* Getting an object from within a bundle: on the left is the
    bundle reference, on the right should be a string -- the
    key to look up to get content. 
@@ -5837,20 +5879,23 @@ static gretl_matrix *complex_array_to_matrix (cmplx *c, int sz,
 static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 {
     const char *name = l->vname;
-    const char *key = r->v.str;
+    char *key = r->v.str;
+    char *s, *extra = NULL;
     gretl_bundle *bundle;
     GretlType type;
     int size = 0;
     void *val = NULL;
     NODE *ret = NULL;
 
-    /* 2013-06-03: can we try to pull out "slices" of a bundled
-       matrix here?
-    */
-
 #if EDEBUG
     fprintf(stderr, "get_named_bundle_value: %s[\"%s\"]\n", name, key);
 #endif
+
+    if ((s = strchr(key, '[')) != NULL) {
+	/* a matrix slice spec is appended to the key? */
+	extra = gretl_strdup(s);
+	*s = '\0';
+    }
 
     if (!strcmp(name, "$")) {
 	/* special: treat the 'last model' as a bundle */
@@ -5940,6 +5985,12 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	}
     } else {
 	p->err = E_DATA;
+    }
+
+    if (extra != NULL) {
+	process_bundle_member_subspec(ret, p, extra);
+	free(extra);
+	*s = '['; /* reinstate full incoming string */
     }
 
     return ret;

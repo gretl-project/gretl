@@ -322,7 +322,7 @@ static double garch_ll (fcpinfo *f)
     uncvar /= n;
 
 #if FDEBUG
-    fprintf(stderr, "uncvar = %.9g (T=%d)\n", uncvar, n);
+    fprintf(stderr, "uncvar = %.9g (T=%d, t1=%d, t2=%d)\n", uncvar, n, t1, t2);
 #endif
 
     /* 
@@ -354,6 +354,10 @@ static double garch_ll (fcpinfo *f)
 
     ll = 0.0;
     scale2 = f->scale * f->scale;
+
+#if FDEBUG
+    fprintf(stderr, " re-scaled uncvar = %g\n", uncvar * scale2);
+#endif	    
 
     for (t=t1; t<=t2; t++) {
 	hts = f->h[t] * scale2;
