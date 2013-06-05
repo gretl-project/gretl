@@ -719,8 +719,8 @@ static NODE *get_bundle_member_name (parser *p)
 {
     int i, n = gretl_namechar_spn(p->point);
 
-#if 1
     if (*(p->point + n) == '[') {
+	/* support "[...]" spec following member name */
 	const char *s = p->point + (++n);
 	int br = 1;
 
@@ -736,7 +736,6 @@ static NODE *get_bundle_member_name (parser *p)
 	    return NULL;
 	}
     }
-#endif
 
     p->idstr = gretl_strndup(p->point, n);
     if (p->idstr == NULL) {
