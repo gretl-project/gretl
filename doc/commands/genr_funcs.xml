@@ -4052,7 +4052,7 @@
 	<para>
 	  The first example above calls for a uniform random column vector
 	  of length 50, while the second example specifies a <by r="20"
-	  c="20"/> random matrix with drawings from the the <math>t</math>
+	  c="20"/> random matrix with drawings from the <math>t</math>
 	  distribution with 14 degrees of freedom.
 	</para>
 	<para>
@@ -4370,12 +4370,12 @@
 	</para>
 	<para context="tex">
 	  The scalar $\tau$ is used to prevent numerical problems when
-	  the the kernel function is evaluated too far away from zero
+	  the kernel function is evaluated too far away from zero
 	  and is called the trim parameter.
 	</para>
 	<para context="notex">
 	  The scalar <math>T</math> is used to prevent numerical
-	  problems when the the kernel function is evaluated too far
+	  problems when the kernel function is evaluated too far
 	  away from zero and is called the trim parameter.
 	</para>
         <para>

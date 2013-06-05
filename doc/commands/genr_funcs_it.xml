@@ -4030,76 +4030,79 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the Nadaraya&ndash;Watson nonparametric estimator of the
-	  conditional mean of <argname>y</argname>
-	  given <argname>x</argname>. It returns a series holding the
-	  nonparametric estimate
-	  of <math>E(y</math><sub>i</sub><math>|x</math><sub>i</sub><math>)</math>
-	  for each nonmissing element of the
-	  series <argname>x</argname>.
+	  Stima nonparametrica della media condizionale di
+	  <argname>y</argname> dato <argname>x</argname> col metodo di
+	  Nadaraya&ndash;Watson. Ritorna una serie contenente la stima
+	  nonparametrica di
+	  <math>E(y</math><sub>i</sub><math>|x</math><sub>i</sub><math>)</math>
+	  per ogni elemento non-missing della serie
+	  <argname>x</argname>.
 	</para>
 	<para context="tex">
 	  \[
 	  m(x_i) = \frac{ \sum_{j=1}^{n} y_j \cdot K_h(x_i -
 	  x_j)} {\sum_{j=1}^{n} K_h(x_i - x_j)}
 	  \]
-	  where the kernel function <math>K_h(\cdot)</math> is given
-	  by
+	  dove la funzione kernel <math>K_h(\cdot)</math> è data da
 	  \[
 	  K_h(x) = \exp\left(-\frac{x^2}{2h}\right)
 	  \]
-	  for $|x| &lt; \tau$ and zero otherwise.
+	  per $|x| &lt; \tau$ e 0 altrimenti.
 	</para>
 	<para context="notex">
-	  The kernel function <math>K</math> is given
-	  by <math>K = exp(-x</math><sup>2</sup><math> / 2h)</math>
-	  for <math>|x| &lt; T</math> and zero otherwise.
+	  La funzione kernel <math>K</math> è data da <math>K =
+	  exp(-x</math><sup>2</sup><math> / 2h)</math> per <math>|x|
+	  &lt; T</math> e 0 altrimenti.
 	</para>
 	<para context="tex">
-	  The argument <argname>h</argname>, known as the
-	  \emph{bandwidth}, is a parameter (a positive real number)
-	  given by the user. This is usually a small number: larger
-	  values of $h$ make $m(x)$ smoother; a popular choice is
-	  $n^{-0.2}$. More details are given in
+	  L'argomento <argname>h</argname>, noto come \emph{ampiezza
+	  di banda}, è un parametro (reale positivo) indicato
+	  dall'utente. Normalmente, è un numero piccolo: valori grandi
+	  di $h$ rendono $m(x)$ più liscia; una scelta molto comune è
+	  $n^{-0.2}$. Per più dettagli, vedi <guideref
+	  targ="sec:nadarwat"/>.
+	</para>
+	<para context="notex">
+	  L'argomento <argname>h</argname>, noto come ampiezza di
+	  banda, è un parametro (reale positivo) indicato
+	  dall'utente. Normalmente, è un numero piccolo: valori grandi
+	  di <argname>h</argname> rendono <math>m(x)</math> più
+	  liscia; una scelta molto comune è
+	  <math>n</math><sup>-0.2</sup>. Per più dettagli, vedi
 	  <guideref targ="sec:nadarwat"/>.
 	</para>
-	<para context="notex">
-	  The argument <argname>h</argname>, known as the bandwidth,
-	  is a parameter (a positive real number) given by the
-	  user. This is usually a small number: larger values
-	  of <argname>h</argname> make <math>m(x)</math> smoother; a
-	  popular choice is <math>n</math><sup>-0.2</sup>. More
-	  details are given in <guideref targ="sec:nadarwat"/>.
-	</para>
 	<para context="tex">
-	  The scalar $\tau$ is used to prevent numerical problems when
-	  the the kernel function is evaluated too far away from zero
-	  and is called the trim parameter.
+	  Lo scalare $\tau$ viene usato per prevenire problemi
+	  numerici che si verificano quando la funzione kernel è
+	  clacolata troppo lontano dallo zero e viene detto il
+	  parametro di taglio.
 	</para>
 	<para context="notex">
-	  The scalar <math>T</math> is used to prevent numerical
-	  problems when the the kernel function is evaluated too far
-	  away from zero and is called the trim parameter.
+	  Lo scalare <math>T</math> viene usato per prevenire problemi
+	  numerici che si verificano quando la funzione kernel è
+	  clacolata troppo lontano dallo zero e viene detto il
+	  parametro di taglio.
 	</para>
         <para>
-	  The trim parameter can be adjusted via
-	  the <lit>nadarwat_trim</lit> setting, as a multiple
-	  of <argname>h</argname>. The default value is 4.  
+	  Quest'ultimo può essere tarato a piacere via il comando
+	  <lit>set nadarwat_trim</lit>; è espresso come multiplo di
+	  <argname>h</argname>, e il valore di default è 4.
         </para>
 	<para>
-	  The user may provide a negative value for the bandwidth:
-	  this is interpreted as conventional syntax to obtain the
-	  leave-one-out estimator, that is a variant of the estimator
-	  that does not use the <math>i</math>-th observation for
-	  evaluating <math>m(x</math><sub>i</sub><math>)</math>. This
-	  makes the Nadaraya&ndash;Watson estimator more robust
-	  numerically and its usage is normally advised when the
-	  estimator is computed for inference purposes. Of course, the
-	  bandwidth actually used is the absolute value of
-	  <argname>h</argname>.
+	  L'utente può indicare un valore negativo per l'ampiezza di
+	  banda: ciò viene interpretato come una sintassi
+	  comvenzionale per la cosiddetta variante
+	  <quote>leave-one-out</quote> dello stimatore, ossia una
+	  variante che non usa la <math>i</math>-esima osservazione
+	  per calcolare
+	  <math>m(x</math><sub>i</sub><math>)</math>. Questa variante
+	  rende il procedimento numericamente più robusto e il suo uso
+	  è sovente consigliato quando lo stimatore è usato a fini
+	  inferenziali. Ovviamente, l'ampiezza di banda effettivamente
+	  usata è il valore assoluto di <argname>h</argname>.
 	</para>
 	  <para context="tex">
-	    In formulae, the leave-one-out estimator is
+	    In formule, lo stimatore ``leave-one-out'' è
 	    \[
 	    m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i -
 	    x_j)} {\sum_{j \ne i} K_h(x_i - x_j)}
