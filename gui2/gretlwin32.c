@@ -267,6 +267,8 @@ static void maybe_get_windows_font (void)
 
     fontspec = default_windows_menu_fontspec();
 
+    fprintf(stderr, "maybe_get_windows_font: fontspec = '%s'\n", fontspec);
+
     if (fontspec != NULL) {
 	int match = 0;
 	PangoFontDescription *pfd;
