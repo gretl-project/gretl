@@ -1742,8 +1742,8 @@ int set_sample (const char *line, DATASET *dset)
 {
     int nf, new_t1 = dset->t1, new_t2 = dset->t2;
     int tmin = 0, tmax = 0;
-    char newstart[VNAMELEN+1];
-    char newstop[VNAMELEN+1];
+    char newstart[64];
+    char newstop[64];
 
     if (dset == NULL) {
 	return E_NODATA;
@@ -1782,7 +1782,7 @@ int set_sample (const char *line, DATASET *dset)
 #endif
 	
     if (nf == 1) {
-	if (sscanf(line, "%16s", newstart) != 1) {
+	if (sscanf(line, "%63s", newstart) != 1) {
 	    gretl_errmsg_set(_("error reading smpl line"));
 	    return 1;
 	} else {
@@ -1799,7 +1799,7 @@ int set_sample (const char *line, DATASET *dset)
 
     /* now we're looking at nf = 2 (2 fields) case */
 
-    if (sscanf(line, "%16s %16s", newstart, newstop) != 2) {
+    if (sscanf(line, "%63s %63s", newstart, newstop) != 2) {
 	gretl_errmsg_set(_("error reading smpl line"));
 	return 1;
     }
