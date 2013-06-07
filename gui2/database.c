@@ -2102,6 +2102,10 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     gboolean zipfile = FALSE;
     int err = 0;
 
+    /* note: addon files are handled separately, by the function
+       install_addon_callback() in datafiles.c 
+    */
+
     if (vwin->role == REMOTE_DB) {
 	GtkTreeSelection *sel;
 	GtkTreeModel *model;
@@ -2182,6 +2186,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 		infobox("Restart gretl to access this database");
 	    }
 	} else {
+	    /* gretl-zipped database package */
 	    fprintf(stderr, "downloaded '%s'\n", path);
 	    err = ggz_extract(path);
 	    if (err) {
@@ -2733,7 +2738,7 @@ gint populate_remote_addons_list (windata_t *vwin)
     if (!err) {
 	GtkListStore *store;
 	GtkTreeIter iter;
-	char *S[5] = {0};
+	char *S[5] = { NULL };
 	int i;
 
 	store = GTK_LIST_STORE(gtk_tree_view_get_model 
@@ -2745,20 +2750,22 @@ gint populate_remote_addons_list (windata_t *vwin)
 	while (node != NULL && !err) {
 	    if (!xmlStrcmp(node->name, (XUC) "gretl-addon")) {
 		gretl_xml_get_prop_as_string(node, "name", &S[0]);
-		if (S[0] != NULL && 
-		    (err = get_addon_info(node, doc, S)) == 0) {
-		    gtk_list_store_append(store, &iter);
-		    gtk_list_store_set(store, &iter, 
-				       0, S[0], 1, S[1],
-				       2, S[2], 3, S[3], 
-				       4, S[4], -1);
-		    for (i=0; i<5; i++) {
-			free(S[i]);
-			S[i] = NULL;
-		    }
-		    n++;
-		} else {
+		if (S[0] == NULL) {
 		    err = E_DATA;
+		} else {
+		    err = get_addon_info(node, doc, S);
+		    if (!err) {
+			gtk_list_store_append(store, &iter);
+			gtk_list_store_set(store, &iter, 
+					   0, S[0], 1, S[1],
+					   2, S[2], 3, S[3], 
+					   4, S[4], -1);
+			for (i=0; i<5; i++) {
+			    free(S[i]);
+			    S[i] = NULL;
+			}
+			n++;
+		    }
 		}
 	    } 
 	    node = node->next;

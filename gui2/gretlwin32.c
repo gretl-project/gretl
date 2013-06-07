@@ -253,14 +253,16 @@ char *default_windows_menu_fontspec (void)
     return fontspec;
 }
 
-static void try_to_get_windows_font (void)
+static void maybe_get_windows_font (void)
 {
     char regfont[MAXLEN];
     gchar *fontspec;
 
     /* don't override user's choice of font */
     if (read_reg_val(HKEY_CURRENT_USER, "gretl", "App_font", regfont) == 0) {
-	if (*regfont != '\0') return;
+	if (*regfont != '\0') {
+	    return;
+	}
     }
 
     fontspec = default_windows_menu_fontspec();
@@ -317,12 +319,14 @@ void set_up_windows_look (void)
 	int needslash = (gretldir[n-1] != SLASH);
 	gchar *wimprc;
 
+	fprintf(stderr, "set_up_windows_look: reading wimprc\n");
 	wimprc = g_strdup_printf("%s%sshare\\themes\\MS-Windows\\gtk-2.0\\gtkrc", 
 				 gretldir, (needslash)? "\\" : "");
 	gtk_rc_parse(wimprc);
 	g_free(wimprc);
     } else {
-	try_to_get_windows_font();
+	fprintf(stderr, "set_up_windows_look: not using wimprc\n");
+	maybe_get_windows_font();
     }
 }
 

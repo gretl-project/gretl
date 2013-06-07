@@ -1010,7 +1010,7 @@ static void show_addon_info (GtkWidget *w, gpointer data)
     } else {
 	gchar *local = NULL;
 
-	if (status != NULL && !strcmp(status, _("Installed"))) {
+	if (status != NULL && !strcmp(status, _("Not up to date"))) {
 	    char *path = gretl_function_package_get_path(pkgname, PKG_SUBDIR);
 	    gchar *ver = NULL, *date = NULL;
 	    fnpkg *pkg = NULL;
@@ -1030,6 +1030,7 @@ static void show_addon_info (GtkWidget *w, gpointer data)
 		free(path);
 	    }
 	}
+
 	if (local != NULL) {
 	    infobox("%s:\n%s\n%s", pkgname, descrip, local);
 	    g_free(local);
@@ -1058,7 +1059,7 @@ static void install_addon_callback (GtkWidget *w, gpointer data)
 
 	if (!err) {
 	    list_store_set_string(GTK_TREE_VIEW(vwin->listbox), v, 3,
-				  _("Installed"));
+				  _("Up to date"));
 	} 
 
 	g_free(pkgname);
