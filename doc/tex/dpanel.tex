@@ -421,9 +421,8 @@ the variable \texttt{x} is considered an endogenous regressor, and up to
 
 Note that in the following script fragment
 \begin{code}
-  dz = diff(z)
-  dpanel 1 ; y dz
-  dpanel 1 ; y dz ; GMM(z,0,0)
+  dpanel 1 ; y z
+  dpanel 1 ; y z ; GMM(z,0,0)
 \end{code}
 the two estimation commands should not be expected to give the same
 result, as the sets of orthogonality relationships are subtly
@@ -432,19 +431,19 @@ relationships pertaining to $z_{it}$, none of which has any
 implication for the other ones; in the former case, you only have one.
 In terms of the $\bZ_i$ matrix, the first form adds a single row to
 the bottom of the instruments matrix, while the second form adds a
-diagonal block with $T-2$ columns, that is
+diagonal block with $T-2$ columns; that is,
 \[
   \left[ \begin{array}{cccc}
-         \Delta z_{i3} & \Delta z_{i4} & \cdots & \Delta z_{it}
+         z_{i3} & z_{i4} & \cdots & z_{it}
        \end{array} \right]
 \] 
 versus
 \[
   \left[ \begin{array}{cccc}
-         \Delta z_{i3} & 0 & \cdots & 0 \\
-         0 & \Delta z_{i4} & \cdots & 0 \\
+         z_{i3} & 0 & \cdots & 0 \\
+         0 & z_{i4} & \cdots & 0 \\
           & \ddots & \ddots &  \\
-         0 & 0 & \cdots & \Delta z_{it} 
+         0 & 0 & \cdots & z_{it} 
        \end{array} \right]
 \]
 
