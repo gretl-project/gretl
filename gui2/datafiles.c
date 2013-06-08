@@ -1055,11 +1055,19 @@ static void install_addon_callback (GtkWidget *w, gpointer data)
     if (pkgname == NULL) {
 	gui_errmsg(E_DATA);
     } else {
-	int err = download_addon(pkgname, NULL);
+	char *local_path = NULL;
+	int err = download_addon(pkgname, &local_path);
 
 	if (!err) {
 	    list_store_set_string(GTK_TREE_VIEW(vwin->listbox), v, 3,
 				  _("Up to date"));
+	    /* if there was an old version of the addon loaded,
+	       we need to unload it now so as to get correct 
+	       information in response to a subsequent call to
+	       "check for addons"
+	    */
+	    function_package_unload_full_by_filename(local_path);
+	    free(local_path);
 	} 
 
 	g_free(pkgname);
