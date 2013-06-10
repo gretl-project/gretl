@@ -36,6 +36,34 @@
 # define N_PIDS 8
 #endif
 
+/* gretl inter-process communication:
+
+   First, the functions conditional on the GRETL_PID_FILE definition 
+   are to do with the file gretl.pid in the user's "dotdir"; this
+   is used to put a "sequence number" into the gretl main window 
+   title bar in case the user chooses to run more than one
+   concurrent gretl process.
+
+   Second, the functions conditional on GRETL_OPEN_HANDLER are to do
+   with the case where a user has one or more gretl processes
+   running already, and performs an action that would by default
+   cause a new instance to be started. We give the user the option
+   to activate an existing gretl instance rather than starting a 
+   new one.
+
+   The GRETL_PID_FILE functionality is supported for Linux, MS
+   Windows and systems with BSD libproc. The GRETL_OPEN_HANDLER
+   functionality is supported for Linux and Windows only. Note
+   that on Mac the OS preserves uniqueness of GUI application
+   instances by default -- so the situation is the opposite of
+   that on Linux and Windows. In the GTK-quartz version of
+   gretl we offer a top-level menu item to override this and
+   launch a second (or third, etc.) gretl instance.
+   
+   GRETL_OPEN_HANDLER depends on GRETL_PID_FILE for its
+   mechanism but not vice versa. 
+*/
+
 #ifdef GRETL_PID_FILE
 
 static int my_sequence_number;
@@ -85,7 +113,7 @@ static void get_prior_gretl_pids (long *gpids, long mypid)
 
 # elif defined(BSD_PROC)
 
-/* The Mac/BSD veriant of the above */
+/* The Mac/BSD variant of the above */
 
 static void get_prior_gretl_pids (long *gpids, long mypid)
 {
@@ -398,7 +426,7 @@ static UINT WM_GRETL;
    instance. If so, return the PID, otherwise return 0.
    We read from dotdir/gretl.pid in the first instance
    but then validate any PID(s) we find against the current
-   process table in /proc.
+   process table.
 */
 
 long gretl_prior_instance (void)
@@ -422,26 +450,29 @@ long gretl_prior_instance (void)
     if (fp != NULL) {
 	char buf[32];
 	int prune = 0;
-	int nvalid = 0;
+	int n_valid = 0;
 	long tmp;
 
 	while (fgets(buf, sizeof buf, fp)) {
 	    sscanf(buf, "%ld", &tmp);
 	    if (pid_is_valid(tmp, mypid)) {
 		ret = tmp;
-		nvalid++;
+		n_valid++;
 	    } else {
 		prune = 1;
 	    }
 	}
 
-	if (nvalid == 0) {
+	if (n_valid == 0) {
+	    /* trash the pid file */
 	    fclose(fp);
 	    gretl_remove(pidfile);
 	} else if (prune) {
+	    /* rewrite the pid file */
 	    rewind(fp);
 	    prune_pid_file(pidfile, fp, buf, sizeof buf, mypid);
 	} else {
+	    /* leave well alone */
 	    fclose(fp);
 	}
     }
