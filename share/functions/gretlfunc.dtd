@@ -69,7 +69,7 @@
    optional (true|false) 'false'
    const    (true|false) 'false'
    type (bool | boolean | int | obs | scalar | series | list |
-         matrix | scalarref | seriesref | matrixref |
+         matrix | bundle | scalarref | seriesref | matrixref |
          bundleref | string) 'series'
 >
 
