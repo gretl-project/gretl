@@ -20,21 +20,21 @@
 #ifndef GRETL_IPC_H
 #define GRETL_IPC_H
 
+#if defined(__linux) || defined(linux)
+# define GRETL_PID_FILE
+#elif defined(WIN32)
+# define GRETL_PID_FILE
+#elif defined(HAVE_LIBPROC_H) && defined(HAVE_SYS_PROC_INFO_H)
+# define GRETL_PID_FILE
+#endif
+
 #if defined(__linux) || defined(linux) || defined(WIN32)
 # define GRETL_OPEN_HANDLER
 #endif
 
-#if defined(__linux) || defined(linux)
-# define USE_PID_FILE
-#elif defined(WIN32)
-# define USE_PID_FILE
-#elif defined(HAVE_LIBPROC_H) && defined(HAVE_SYS_PROC_INFO_H)
-# define USE_PID_FILE
-#endif
+#ifdef GRETL_PID_FILE
 
 int write_pid_to_file (void);
-
-#ifdef USE_PID_FILE
 
 void delete_pid_from_file (void);
 

@@ -613,7 +613,11 @@ void clear_sample_label (void)
 
 void set_main_window_title (const char *name, gboolean modified)
 {
+#ifdef GRETL_PID_FILE
     int seqno = gretl_sequence_number();
+#else
+    int seqno = 0;
+#endif
     gchar *title = NULL;
 
     if (seqno <= 1 && name == NULL) {

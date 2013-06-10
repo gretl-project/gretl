@@ -730,7 +730,7 @@ int main (int argc, char **argv)
     fprintf(stderr, "done add_files_to_menus\n");
 #endif
 
-#ifdef USE_PID_FILE
+#ifdef GRETL_PID_FILE
     write_pid_to_file();
     atexit(delete_pid_from_file);
 #endif
