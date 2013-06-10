@@ -36,7 +36,7 @@
 # define N_PIDS 8
 #endif
 
-/* gretl inter-process communication:
+/* gretl_ipc: inter-process communication
 
    First, the functions conditional on the GRETL_PID_FILE definition 
    are to do with the file gretl.pid in the user's "dotdir"; this

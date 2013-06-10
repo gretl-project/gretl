@@ -3,6 +3,8 @@
 
 #ifdef G_OS_WIN32
 int read_win32_config (int debug);
+void set_use_wimp (int s);
+int get_use_wimp (void);
 #else
 int gretl_config_init (void);
 #endif

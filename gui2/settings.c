@@ -39,9 +39,9 @@
 #include <dirent.h>
 
 #if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 2
-# define USE_GTK_FONT_CHOOSER 1
+# define HAVE_GTK_FONT_CHOOSER 1
 #else
-# define USE_GTK_FONT_CHOOSER 0
+# define HAVE_GTK_FONT_CHOOSER 0
 #endif
 
 #ifdef G_OS_WIN32
@@ -51,7 +51,7 @@
 # include <sys/stat.h>
 # include <fcntl.h>
 # include <errno.h>
-# if USE_GTK_FONT_CHOOSER
+# if HAVE_GTK_FONT_CHOOSER
 #  include "fontfilter.h"
 # else
 #  include "gtkfontselhack.h"
@@ -89,7 +89,7 @@ static char fixedfontname[MAXLEN] = "monospace 10";
 #endif
 
 #if defined(G_OS_WIN32)
-static char appfontname[MAXLEN] = "tahoma 8";
+static char appfontname[MAXLEN] = "";
 #elif defined(MAC_NATIVE)
 static char appfontname[MAXLEN] = "Lucida Grande 13";
 #else
@@ -121,7 +121,7 @@ static int lcnumeric = 1;
 static double graph_scale = 1.0;
 
 #ifdef G_OS_WIN32
-extern int use_wimp;
+static int use_wimp;
 #endif
 
 #ifdef MAC_THEMING
@@ -377,6 +377,20 @@ int get_keep_folder (void)
     return keep_folder;
 }
 
+#ifdef G_OS_WIN32
+
+void set_use_wimp (int s)
+{
+    use_wimp = (s != 0);
+}
+
+int get_use_wimp (void)
+{
+    return use_wimp;
+}
+
+#endif
+
 static gretlopt set_paths_opt = OPT_X;
 
 void force_english_help (void)
@@ -451,6 +465,10 @@ const char *get_fixed_fontname (void)
 void set_app_font (const char *fontname)
 {
     GtkSettings *settings;
+    gchar *deffont;
+
+    fprintf(stderr, "set_app_font: arg='%s', appfontname='%s'\n",
+	    fontname, appfontname);
 
     if (fontname != NULL && *fontname == '\0') {
 	return;
@@ -458,11 +476,33 @@ void set_app_font (const char *fontname)
 
     settings = gtk_settings_get_default();
 
-    /* dammit, we want these! */
+    /* not font-related but, dammit, we want these! */
     g_object_set(G_OBJECT(settings), "gtk-menu-images", TRUE, NULL);
 
+#ifdef G_OS_WIN32
+    if (fontname == NULL && *appfontname == '\0') {
+	get_default_windows_app_font(appfontname);
+    }
+#endif
+
+    /* check for nothing else to be done */
+    g_object_get(G_OBJECT(settings), "gtk-font-name", &deffont, NULL);
+    if (deffont != NULL) {
+	const char *test = fontname ? fontname : appfontname;
+	int noop = 0;
+
+	if (strcmp(deffont, test) == 0) {
+	    noop = 1;
+	}
+	g_free(deffont);
+	if (noop) {
+	    fprintf(stderr, "set_app_font: no-op\n");
+	    return;
+	}
+    }
+
     if (fontname == NULL) {
-	/* just loading the default font */
+	/* just loading the default font (pre-checked) */
 	g_object_set(G_OBJECT(settings), "gtk-font-name", appfontname, NULL);
     } else {
 	/* loading a user-specified font: check that it works */
@@ -480,6 +520,7 @@ void set_app_font (const char *fontname)
 	    /* OK, found it */
 	    strcpy(appfontname, fontname);
 	    g_object_set(G_OBJECT(settings), "gtk-font-name", appfontname, NULL);
+	    fprintf(stderr, "set_app_font: set '%s'\n", appfontname);
 	}
 
 	gtk_widget_destroy(w);
@@ -1830,26 +1871,6 @@ static void str_to_double (const char *s, void *b)
     }
 }
 
-static int dir_exists (const char *dname, FILE *fp)
-{
-    DIR *test;
-    int ok = 0;
-
-    test = gretl_opendir(dname);
-
-    if (test != NULL) {
-	ok = 1;
-	if (fp != NULL) {
-	    fprintf(fp, "Directory '%s' exists, OK\n", dname);
-	}
-	closedir(test);
-    } else if (fp != NULL) {
-	fprintf(fp, "Directory '%s' does not exist\n", dname);
-    }
-
-    return ok;
-}
-
 #if !defined(G_OS_WIN32) && !defined(OS_OSX)
 
 static void maybe_fix_viewpdf (void)
@@ -2085,7 +2106,8 @@ static void win32_read_gretlrc (void)
 }
 
 /* This function is not static since it is called from
-   gretl_win32_init() in gretlwin32.c */
+   gretl_win32_init() in gretlwin32.c 
+*/
 
 int read_win32_config (int debug) 
 {
@@ -2144,7 +2166,7 @@ int read_win32_config (int debug)
 	}
 	    
 	if (!regerr && *value != '\0') {
-	    /* replace defaults only if we got something */
+	    /* replace defaults only if we actually got something */
 	    if (rcvar->flags & BOOLSET) {
 		str_to_boolvar(value, rcvar->var);
 	    } else if (rcvar->flags & INTSET) {
@@ -2158,9 +2180,6 @@ int read_win32_config (int debug)
     }
 
     err = common_read_rc_setup();
-
-    set_fixed_font();
-    set_app_font(NULL);
 
     if (debug) {
 	fprintf(stderr, "read_win32_config: returning %d\n", err);
@@ -2236,13 +2255,28 @@ void font_selector (GtkAction *action)
     int which = fontsel_code(action);
     char fontname[128];
 
+    *fontname = '\0';
+
     if (which == FIXED_FONT_SELECTION) {
 	strcpy(fontname, fixedfontname);
+	win32_font_selector(fontname, which);
     } else {
-	strcpy(fontname, appfontname);
-    }
+	const char *opts[] = {
+	    N_("Select a specific font"),
+	    N_("Reset to Windows default")
+	};
+	int resp;
 
-    win32_font_selector(fontname, which);
+	resp = radio_dialog(NULL, NULL, opts, 2, 0, 0, 
+			    mdata->main);
+
+	if (resp == 0) {
+	    strcpy(fontname, appfontname);
+	    win32_font_selector(fontname, which);
+	} else if (resp == 1) {
+	    get_default_windows_app_font(fontname);
+	}
+    }
 
     if (*fontname != '\0') {
 	if (which == FIXED_FONT_SELECTION) {
@@ -2258,7 +2292,7 @@ void font_selector (GtkAction *action)
 
 /* font selection via GtkFontChooser */
 
-#elif USE_GTK_FONT_CHOOSER
+#elif HAVE_GTK_FONT_CHOOSER
 
 gboolean latin_font_filter (PangoFontFamily *family,
 			    PangoFontFace *face,
@@ -2454,6 +2488,8 @@ void update_persistent_graph_colors (void)
 void dump_rc (void) 
 {
     char dumper[MAXLEN];
+    const char *hname;
+    DIR *test;
     FILE *fp;
     char *tmp;
     char val[6];
@@ -2490,7 +2526,15 @@ void dump_rc (void)
 	}
     }
 
-    dir_exists(gretl_home(), fp);
+    hname = gretl_home();
+    test = gretl_opendir(hname);
+
+    if (test != NULL) {
+	fprintf(fp, "Directory '%s' exists, OK\n", hname);
+	closedir(test);
+    } else {
+	fprintf(fp, "Directory '%s' does not exist\n", hname);
+    }
 
     printf("Config info written to %s\n", dumper);
 

@@ -30,8 +30,6 @@ enum {
     WIN32_TO_PRINTER
 };
 
-extern int use_wimp;
-
 int create_child_process (char *prog);
 
 void win32_start_R_async (void);
@@ -59,5 +57,7 @@ void win32_font_selector (char *fontname, int flag);
 int windows_uses_virtual_store (void);
 
 int win32_rename_dir (const char *oldname, const char *newname);
+
+void get_default_windows_app_font (char *target);
 
 #endif /* GRETLWIN32_H */

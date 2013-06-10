@@ -231,9 +231,8 @@ static void set_g_logging (int debug)
     g_log_set_handler("GtkSourceView", flags, (GLogFunc) handler, NULL);
 }
 
-char *default_windows_menu_fontspec (void)
+void get_default_windows_app_font (char *target)
 {
-    gchar *fontspec = NULL;
     NONCLIENTMETRICS ncm;
 
     memset(&ncm, 0, sizeof ncm);
@@ -245,77 +244,17 @@ char *default_windows_menu_fontspec (void)
 	int point_size = (int) (ncm.lfMenuFont.lfHeight * y_scale);
 
 	if (point_size < 0) point_size = -point_size;
-	fontspec = g_strdup_printf("%s %d", ncm.lfMenuFont.lfFaceName,
-				   point_size);
+	sprintf(target, "%s %d", ncm.lfMenuFont.lfFaceName, point_size);
 	ReleaseDC(0, screen);
-    }
-
-    return fontspec;
-}
-
-static void maybe_get_windows_font (void)
-{
-    char regfont[MAXLEN];
-    gchar *fontspec;
-
-    /* don't override user's choice of font */
-    if (read_reg_val(HKEY_CURRENT_USER, "gretl", "App_font", regfont) == 0) {
-	if (*regfont != '\0') {
-	    return;
-	}
-    }
-
-    fontspec = default_windows_menu_fontspec();
-
-    fprintf(stderr, "maybe_get_windows_font: fontspec = '%s'\n", fontspec);
-
-    if (fontspec != NULL) {
-	int match = 0;
-	PangoFontDescription *pfd;
-	PangoFont *pfont;
-	PangoContext *pc;
-	GtkWidget *w;
-
-	pfd = pango_font_description_from_string(fontspec);
-
-	w = gtk_label_new(NULL);
-	pc = gtk_widget_get_pango_context(w);
-	pfont = pango_context_load_font(pc, pfd);
-	match = (pfont != NULL);
-
-	pango_font_description_free(pfd);
-	g_object_unref(G_OBJECT(pc));
-	gtk_widget_destroy(w);
-
-	if (match) {
-	    set_app_font(fontspec);
-	}
-	g_free(fontspec);
-    }
-}
-
-int use_wimp; /* note: published via gretlwin32.h */
-
-static void wimp_init (void)
-{
-    char tmp[4] = {0};
-
-    /* Are we using the XP theme (as opposed to "classic")?
-       In that case we'll make use of libwimp the default.
-    */
-
-    read_reg_val(HKEY_CURRENT_USER, 
-		 "Microsoft\\Windows\\CurrentVersion\\ThemeManager", 
-		 "ThemeActive", tmp);
-
-    if (!strcmp(tmp, "1")) {
-	use_wimp = 1;
+    } else {
+	/* fallback */
+	strcpy(target, "tahoma 8");
     }
 }
 
 void set_up_windows_look (void)
 {
-    if (use_wimp) { 
+    if (get_use_wimp()) { 
 	const char *gretldir = gretl_home();
 	size_t n = strlen(gretldir);
 	int needslash = (gretldir[n-1] != SLASH);
@@ -326,9 +265,6 @@ void set_up_windows_look (void)
 				 gretldir, (needslash)? "\\" : "");
 	gtk_rc_parse(wimprc);
 	g_free(wimprc);
-    } else {
-	fprintf(stderr, "set_up_windows_look: not using wimprc\n");
-	maybe_get_windows_font();
     }
 }
 
@@ -341,21 +277,33 @@ void gretl_win32_debug_init (int debug)
     set_g_logging(debug);
 }
 
-/* carry out some Windows-specific start-up tasks, and
-   call read_rc to get configuration info 
+/* Carry out some Windows-specific start-up tasks, and
+   call read_rc to get the per-user configuration info. 
 */
 
 void gretl_win32_init (const char *progname, int debug)
 {
+    char tmp[4] = {0};
+
     set_gretlnet_filename(progname);
-    wimp_init();
-    if (debug) {
-	fprintf(stderr, "after wimp_init: use_wimp = %d\n", use_wimp);
-    }    
+
+    /* Are we using the XP theme (as opposed to "classic")?
+       In that case we'll make use of libwimp the default,
+       prior to reading the user's config file.
+    */
+    read_reg_val(HKEY_CURRENT_USER, 
+		 "Microsoft\\Windows\\CurrentVersion\\ThemeManager", 
+		 "ThemeActive", tmp);
+    if (!strcmp(tmp, "1")) {
+	set_use_wimp(1);
+    }
+
     read_win32_config(debug);
     set_gretl_startdir();
+
     if (debug) {
-	fprintf(stderr, "gretl_win32_init: done (use_wimp = %d)\n", use_wimp);
+	fprintf(stderr, "gretl_win32_init: done (use_wimp = %d)\n",
+		get_use_wimp());
     }
 }
 
