@@ -89,23 +89,15 @@ static void build_params (char const **params, int content,
 
 int real_apply_xslt (xmlDocPtr doc, 
 		     xsltStylesheetPtr style, 
-		     char const **params,
-		     const char *outname)
+		     char const **params)
 {
     xmlDocPtr result;
-    FILE *fp;
     int err = 0;
 
     result = xsltApplyStylesheet(style, doc, params);
 
     if (result != NULL) {
-	fp = fopen(outname, "w");
-	if (fp != NULL) {
-	    xsltSaveResultToFile(fp, result, style);
-	    fclose(fp);
-	} else {
-	    err = 1;
-	}
+	xsltSaveResultToFile(stdout, result, style);
 	xmlFreeDoc(result);
     } else {
 	err = 1;
@@ -115,8 +107,7 @@ int real_apply_xslt (xmlDocPtr doc,
 }
 
 int apply_xslt (xmlDocPtr doc, int content, int format, 
-		const char *lang, const char *docdir,
-		const char *outfile)
+		const char *lang, const char *docdir)
 {
     xsltStylesheetPtr style;
     char styname[FILENAME_MAX];
@@ -140,7 +131,7 @@ int apply_xslt (xmlDocPtr doc, int content, int format,
 	err = 1;
     } else {
 	build_params(xsl_params, content, format, lang);
-	err = real_apply_xslt(doc, style, xsl_params, outfile);
+	err = real_apply_xslt(doc, style, xsl_params);
 	xsltFreeStylesheet(style);
     }
 
@@ -161,8 +152,7 @@ char *get_abbreviated_lang (char *lang, const char *full_lang)
 }
 
 int parse_commands_data (const char *fname, int content, 
-			 int format, const char *docdir,
-			 const char *outfile) 
+			 int format, const char *docdir)
 {
     const char *rootnode = "commandlist";
     xmlDocPtr doc;
@@ -205,7 +195,7 @@ int parse_commands_data (const char *fname, int content,
 	free(tmp);
     }
 
-    apply_xslt(doc, content, format, lang, docdir, outfile);
+    apply_xslt(doc, content, format, lang, docdir);
 
  bailout:
 
@@ -239,7 +229,6 @@ int main (int argc, char **argv)
 {
     const char *fname = NULL;
     char docdir[FILENAME_MAX];
-    char outfile[32];
     int content = 0;
     int format = 0;
     int i, err;
@@ -248,7 +237,7 @@ int main (int argc, char **argv)
 	usage();
     }
 
-    *docdir = *outfile = '\0';
+    *docdir = '\0';
 
     for (i=1; i<argc; i++) {
 	if (!strcmp(argv[i], "--plain")) {
@@ -267,8 +256,6 @@ int main (int argc, char **argv)
 	    content = CONTENT_GUI;
 	} else if (!strncmp(argv[i], "--docdir=", 9)) {
 	    strcpy(docdir, argv[i] + 9);
-	} else if (!strncmp(argv[i], "--output=", 9)) {
-	    strncat(outfile, argv[i] + 9, 31);
 	} else {
 	    fname = argv[i];
 	}
@@ -282,13 +269,9 @@ int main (int argc, char **argv)
 	get_docdir(docdir, fname);
     }
 
-    if (*outfile == '\0') {
-	strcpy(outfile, "tmp.txt");
-    }    
-
     fprintf(stderr, "%s: input file '%s'\n", argv[0], fname);
 
-    err = parse_commands_data(fname, content, format, docdir, outfile);
+    err = parse_commands_data(fname, content, format, docdir);
 
     return err;
 }

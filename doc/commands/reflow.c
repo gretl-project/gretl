@@ -670,9 +670,9 @@ int main (int argc, char **argv)
     int markup = 0;
 
     if (argc == 2) {
-	if (!strcmp(argv[1], "--markup")) {
+	if (!strcmp(argv[1], "-m") || !strcmp(argv[1], "--markup")) {
 	    markup = 1;
-	} else if (!strcmp(argv[1], "--html")) {
+	} else if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--html")) {
 	    html = 1;
 	}
     } else {
