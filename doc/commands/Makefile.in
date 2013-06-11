@@ -346,6 +346,8 @@ help-it: $(IT_HLPSTAMP) $(IT_GENSTAMP)
 
 help-pt: $(PT_HLPSTAMP) $(PT_GENSTAMP)
 
+.NOTPARALLEL: help-all
+
 help-all: help-en help-it help-pt $(HELPREFS)
 
 # Validate the commands "master" XML files against libgretl
