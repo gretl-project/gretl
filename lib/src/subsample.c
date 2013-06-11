@@ -911,13 +911,7 @@ int complex_subsampled (void)
 
 int get_full_length_n (void)
 {
-    int n = 0;
-
-    if (fullset != NULL) {
-	n = fullset->n;
-    }
-
-    return n;
+    return (fullset != NULL) ? fullset->n : 0;
 }
 
 /* When sub-sampling on some boolean criterion, check to see if we can
