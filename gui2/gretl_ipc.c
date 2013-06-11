@@ -38,30 +38,28 @@
 
 /* gretl_ipc: inter-process communication
 
-   First, the functions conditional on the GRETL_PID_FILE definition 
-   are to do with the file gretl.pid in the user's "dotdir"; this
-   is used to put a "sequence number" into the gretl main window 
-   title bar in case the user chooses to run more than one
-   concurrent gretl process.
+   First, the functions conditional on the GRETL_PID_FILE definition
+   are to do with the file gretl.pid in the user's "dotdir"; this is
+   used to put a "sequence number" into the gretl main window title
+   bar in case the user chooses to run more than one concurrent gretl
+   process.
 
    Second, the functions conditional on GRETL_OPEN_HANDLER are to do
-   with the case where a user has one or more gretl processes
-   running already, and performs an action that would by default
-   cause a new instance to be started. We give the user the option
-   to activate an existing gretl instance rather than starting a 
-   new one.
+   with the case where a user has one or more gretl processes running
+   already, and performs an action that would by default cause a new
+   instance to be started. We give the user the option to activate an
+   existing gretl instance rather than starting a new one.
 
-   The GRETL_PID_FILE functionality is supported for Linux, MS
-   Windows and systems with BSD libproc. The GRETL_OPEN_HANDLER
-   functionality is supported for Linux and Windows only. Note
-   that on Mac the OS preserves uniqueness of GUI application
-   instances by default -- so the situation is the opposite of
-   that on Linux and Windows. In the GTK-quartz version of
-   gretl we offer a top-level menu item to override this and
-   launch a second (or third, etc.) gretl instance.
+   The GRETL_PID_FILE functionality is supported for Linux, MS Windows
+   and systems with BSD libproc. The GRETL_OPEN_HANDLER functionality
+   is supported for Linux and Windows only. Note that on Mac the OS
+   preserves uniqueness of GUI application instances by default -- so
+   the situation is the opposite of that on Linux and Windows. In the
+   GTK-quartz version of gretl we offer a top-level menu item to
+   override this and launch a second (or third, etc.) gretl instance.
    
-   GRETL_OPEN_HANDLER depends on GRETL_PID_FILE for its
-   mechanism but not vice versa. 
+   GRETL_OPEN_HANDLER depends on GRETL_PID_FILE for its mechanism but
+   not vice versa.x 
 */
 
 #ifdef GRETL_PID_FILE
@@ -272,11 +270,10 @@ static int prune_pid_file (const char *pidfile, FILE *f1,
     return err;
 }
 
-/* On start-up, write our PID and sequence number into
-   gretl.pid in dotdir; while we're at it, we check any
-   other (putative) gretl PIDs recorded in that file 
-   just in case they've gone bad (e.g. gretl crashed
-   or the OS crashed).
+/* On start-up, write our PID and sequence number into gretl.pid in
+   dotdir; while we're at it, we check any other (putative) gretl PIDs
+   recorded in that file just in case they've gone bad (e.g. gretl
+   crashed or the OS crashed).
 */
 
 int write_pid_to_file (void)
@@ -480,6 +477,72 @@ long gretl_prior_instance (void)
     return ret;
 }
 
+/* Process a message coming from another gretl instance (with pid
+   @caller). Such a message calls for a hand-off to "this" instance,
+   and some information regarding the hand-off is contained in a
+   little file in the user's dotdir, with a name on the pattern
+   "open-<pid>" where <pid> should equal @gotpid. Call this the IPC
+   file.
+
+   If the hand-off involves opening a file (which will be the case if
+   the trigger is double-clicking on a gretl-associated file), the
+   name of this file is written into the IPC file; otherwise the IPC
+   file contains the word "none".  
+*/
+
+static void process_handoff_message (long caller)
+{
+    int try_open = 0;
+
+    if (caller > 0) {
+	char fname[FILENAME_MAX];
+	FILE *fp;
+
+	sprintf(fname, "%s/open-%ld", gretl_dotdir(), caller);
+	fp = fopen(fname, "r");
+
+	if (fp != NULL) {
+	    char path[FILENAME_MAX];
+
+	    if (fgets(path, sizeof path, fp)) {
+		tailstrip(path);
+		if (strcmp(path, "none")) {
+		    *tryfile = '\0';
+		    strncat(tryfile, path, MAXLEN - 1);
+		    try_open = 1;
+		}
+	    }	    
+	    fclose(fp);
+	}
+	remove(fname);
+    }
+
+    gtk_window_present(GTK_WINDOW(mdata->main));
+
+    if (try_open) {
+	/* we picked up the name of a file to open */
+	real_open_tryfile();
+    }
+}
+
+static gboolean write_request_file (long mypid, const char *fname)
+{
+    char tmpname[FILENAME_MAX];
+    FILE *fp;
+
+    sprintf(tmpname, "%s/open-%ld", gretl_dotdir(), mypid);
+    fp = fopen(tmpname, "w");
+
+    if (fp == NULL) {
+	return FALSE;
+    } else {
+	fprintf(fp, "%s\n", *fname ? fname : "none");
+	fclose(fp);
+    }
+
+    return TRUE;
+}
+
 # if defined(__linux) || defined(linux)
 
 /* Signal handler for the case where a newly started gretl process
@@ -489,38 +552,16 @@ long gretl_prior_instance (void)
 
 static void open_handler (int sig, siginfo_t *sinfo, void *context)
 {
-    int try_open = 0;
+    long caller = 0;
 
     if (sig == SIGUSR1 && sinfo->si_code == SI_QUEUE) {
 	if (sinfo->si_uid == getuid() &&
 	    sinfo->si_value.sival_ptr == (void *) 0xf0) {
-	    char fname[FILENAME_MAX];
-	    char path[FILENAME_MAX];
-	    long spid = sinfo->si_pid;
-	    FILE *fp;
-
-	    sprintf(fname, "%s/open-%ld", gretl_dotdir(), spid);
-	    fp = fopen(fname, "r");
-	    if (fp != NULL) {
-		if (fgets(path, sizeof path, fp)) {
-		    tailstrip(path);
-		    if (strcmp(path, "none")) {
-			*tryfile = '\0';
-			strncat(tryfile, path, MAXLEN - 1);
-			try_open = 1;
-		    }
-		}	    
-		fclose(fp);
-	    }
-	    remove(fname);
+	    caller = sinfo->si_pid;
 	}
     }
-
-    gtk_window_present(GTK_WINDOW(mdata->main));
-
-    if (try_open) {
-	real_open_tryfile();
-    }
+    
+    process_handoff_message(caller);
 }
 
 /* linux: at start-up, install a handler for SIGUSR1 */
@@ -536,37 +577,26 @@ int install_open_handler (void)
     return sigaction(SIGUSR1, &action, NULL);
 }
 
-/* For the case where a new gretl process has been started
-   (possibly in response to double-clicking a suitable
-   filename), but the user doesn't really want a new
-   process and would prefer that the file be opened in
-   a previously running gretl instance. We send SIGUSR1
-   to the prior instance and exit. The @fname argument
-   is used if the new instance of gretl was invoked with
-   a filename argument.
+/* For the case where a new gretl process has been started (possibly
+   in response to double-clicking a suitable filename), but the user
+   doesn't really want a new process and would prefer that the file be
+   opened in a previously running gretl instance. We send SIGUSR1 to
+   the prior instance and exit. The @fname argument is used if the new
+   instance of gretl was invoked with a filename argument.
 */
 
 gboolean forward_open_request (long gpid, const char *fname)
 {
-    gboolean ret = FALSE;
-    char tmpname[FILENAME_MAX];
-    FILE *fp;
+    gboolean ok = write_request_file(gpid, fname);
 
-    sprintf(tmpname, "%s/open-%ld", gretl_dotdir(), (long) getpid());
-    fp = fopen(tmpname, "w");
-
-    if (fp != NULL) {
+    if (ok) {
 	union sigval data;
-	int err;
 
-	fprintf(fp, "%s\n", *fname ? fname : "none");
-	fclose(fp);
 	data.sival_ptr = (void *) 0xf0;
-	err = sigqueue(gpid, SIGUSR1, data);
-	ret = !err;
+	ok = (sigqueue(gpid, SIGUSR1, data) == 0);
     }
 
-    return ret;
+    return ok;
 }
 
 # elif defined(WIN32)
@@ -576,57 +606,9 @@ gboolean forward_open_request (long gpid, const char *fname)
    for Linux using the Windows messaging API.
 */
 
-/* Process a message coming from another gretlw32 instance (with pid
-   @gotpid). Such a message calls for a hand-off to "this" instance,
-   and some information regarding the hand-off is contained in a
-   little file in the user's dotdir, with a name on the pattern
-   "open-<pid>" where <pid> should equal @gotpid. Call this the IPC
-   file.
-
-   If the hand-off involves opening a file (which will be the case 
-   if the trigger is double-clicking on a gretl-associated file),
-   the name of this file is written into the IPC file; otherwise
-   the IPC file contains the word "none".
-*/
-
-static void win32_handle_message (long gotpid)
-{
-    char fname[FILENAME_MAX];
-    int try_open = 0;
-    FILE *fp;
-
-    sprintf(fname, "%sopen-%ld", gretl_dotdir(), gotpid);
-    fprintf(stderr, "handle_message: trying '%s'\n", fname);
-    fp = fopen(fname, "r");
-
-    if (fp != NULL) {
-	char path[FILENAME_MAX];
-
-	fprintf(stderr, " file opened OK\n");
-	if (fgets(path, sizeof path, fp) != NULL) {
-	    tailstrip(path);
-	    fprintf(stderr, " path = '%s'\n", path);
-	    if (strcmp(path, "none")) {
-		*tryfile = '\0';
-		strncat(tryfile, path, MAXLEN - 1);
-		try_open = 1;
-	    }
-	}	    
-	fclose(fp);
-    }
-    remove(fname);
-
-    gtk_window_present(GTK_WINDOW(mdata->main));
-
-    if (try_open) {
-	/* we picked up the name of a file to open */
-	real_open_tryfile();
-    }
-}
-
 /* If we receive a special WM_GRETL message from another gretlw32
    instance, process it and remove it from the message queue;
-   otherwise hand the message off to GDK.
+   otherwise hand the message off to GDK.  
 */
 
 static GdkFilterReturn mdata_filter (GdkXEvent *xevent,
@@ -637,7 +619,7 @@ static GdkFilterReturn mdata_filter (GdkXEvent *xevent,
 
     if (msg->message == WM_GRETL && msg->wParam == 0xf0) {
 	fprintf(stderr, "mdata_filter: got WM_GRETL\n");
-	win32_handle_message((long) msg->lParam);
+	process_handoff_message((long) msg->lParam);
 	return GDK_FILTER_REMOVE;
     }
 
@@ -653,8 +635,8 @@ int install_open_handler (void)
     return 0;
 }
 
-/* Find the window handle associated with a given pid:
-   this is used when we've found the pid of a running
+/* Find the window handle associated with a given PID:
+   this is used when we've found the PID of a running
    gretlw32 instance and we need its window handle for
    use with SendMessage().
 */
@@ -676,7 +658,7 @@ static HWND get_hwnd_for_pid (long gpid)
 }
 
 /* Try forwarding a request to the prior gretlw32 instance with 
-   pid @gpid, either to open a file or just to show itself. 
+   PID @gpid, either to open a file or just to show itself. 
 
    Return TRUE if we're able to do this, otherwise FALSE.
 */
@@ -684,29 +666,20 @@ static HWND get_hwnd_for_pid (long gpid)
 gboolean forward_open_request (long gpid, const char *fname)
 {
     HWND hw = get_hwnd_for_pid(gpid);
-    gboolean ret = FALSE;
+    gboolean ok = FALSE;
 
     if (!hw) {
 	fprintf(stderr, "forward_open_request: couldn't find HWND\n");
     } else {
 	long mypid = (long) GetCurrentProcessId();
-	char tmpname[FILENAME_MAX];
-	FILE *fp;
 
-	sprintf(tmpname, "%sopen-%ld", gretl_dotdir(), mypid);
-	fp = fopen(tmpname, "w");
-	
-	if (fp == NULL) {
-	    fprintf(stderr, "forward_open_request: couldn't write '%s'\n", tmpname);
-	} else {
-	    fprintf(fp, "%s\n", *fname ? fname: "none");
-	    fclose(fp);
+	ok = write_request_file(gpid, fname);
+	if (ok) {
 	    SendMessage(hw, WM_GRETL, 0xf0, mypid);
-	    ret = TRUE;
 	}
     }
 
-    return ret;
+    return ok;
 }
 
 # endif /* OS variations */
