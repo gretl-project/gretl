@@ -4144,7 +4144,7 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
 	    MPE = MAPE = U = M_NA;
 	} else {
 	    MPE += 100 * x / y[t];
-	    MAPE += 100 * fabs(x) / y[t];
+	    MAPE += 100 * fabs(x / y[t]);
 	    if (t < t2) {
 		x = (f[t+1] - y[t+1]) / y[t];
 		u[0] += x * x;
