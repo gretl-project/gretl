@@ -2278,7 +2278,6 @@ int font_has_symbol (PangoFontDescription *desc, int symbol)
     PangoLayout *layout = NULL;
     PangoLanguage *lang = NULL;
     PangoCoverage *coverage = NULL;
-    PangoFont *pfont = NULL;
     int ret = 0;
 
     if (desc == NULL) {
@@ -2298,14 +2297,15 @@ int font_has_symbol (PangoFontDescription *desc, int symbol)
     lang = pango_language_from_string("eng");
 
     if (layout != NULL && lang != NULL) {
-	pfont = pango_context_load_font(context, desc);
-	if (pfont != NULL) {
-	    coverage = pango_font_get_coverage(pfont, lang);
+	PangoFont *font = pango_context_load_font(context, desc);
+
+	if (font != NULL) {
+	    coverage = pango_font_get_coverage(font, lang);
 	    if (coverage != NULL) {
 		ret = (pango_coverage_get(coverage, symbol) == PANGO_COVERAGE_EXACT);
 		pango_coverage_unref(coverage);
 	    }
-	    g_object_unref(G_OBJECT(pfont));
+	    g_object_unref(font);
 	}
     } 
 

@@ -467,9 +467,6 @@ void set_app_font (const char *fontname)
     GtkSettings *settings;
     gchar *deffont;
 
-    fprintf(stderr, "set_app_font: arg='%s', appfontname='%s'\n",
-	    fontname, appfontname);
-
     if (fontname != NULL && *fontname == '\0') {
 	return;
     }
@@ -509,18 +506,19 @@ void set_app_font (const char *fontname)
 	GtkWidget *w;
 	PangoFontDescription *pfd;
 	PangoContext *pc;
-	PangoFont *pfont;
+	PangoFont *font;
 
 	w = gtk_label_new("");
 	pfd = pango_font_description_from_string(fontname);
 	pc = gtk_widget_get_pango_context(w);
-	pfont = pango_context_load_font(pc, pfd);
+	font = pango_context_load_font(pc, pfd);
 
-	if (pfont != NULL) {
+	if (font != NULL) {
 	    /* OK, found it */
 	    strcpy(appfontname, fontname);
+	    fprintf(stderr, "set_app_font: setting '%s'\n", appfontname);
 	    g_object_set(G_OBJECT(settings), "gtk-font-name", appfontname, NULL);
-	    fprintf(stderr, "set_app_font: set '%s'\n", appfontname);
+	    g_object_unref(font);
 	}
 
 	gtk_widget_destroy(w);

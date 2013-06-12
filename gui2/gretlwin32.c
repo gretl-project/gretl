@@ -28,6 +28,7 @@
 #include "gretl_www.h"
 
 #include <gdk/gdkwin32.h>
+#include <pango/pangowin32.h>
 #include <dirent.h>
 
 #include <windows.h>
@@ -604,75 +605,69 @@ int win32_open_file (const char *fname)
     return err;
 }
 
-static const char *font_weight_string (int weight)
+/* convert from gretl font string @src to a pango font specification,
+   and thence to Windows LOGFONT
+*/
+
+static void fontspec_to_win32 (CHOOSEFONT *cf, const char *src, int which)
 {
-    if (weight >= FW_THIN && weight <= FW_LIGHT) {
-	return " Light";
-    }
-    if (weight >= FW_NORMAL && weight <= FW_DEMIBOLD) {
-	return "";
-    }
-    if (weight >= FW_BOLD) {
-	return " Bold";
-    }
-    return "";
+    PangoFontDescription *pfd;
+    PangoFontMap *map;
+    PangoContext *pc;
+    PangoFont *font;
+
+    pfd = pango_font_description_from_string(src);
+    map = pango_win32_font_map_for_display();
+    pc = pango_font_map_create_context(map);
+    font = pango_context_load_font(pc, pfd);
+    cf->lpLogFont = pango_win32_font_logfont(font);
+    g_object_unref(font);
+    g_object_unref(pc);
+    pango_font_description_free(pfd);
 }
 
-static void fontname_to_win32 (const char *src, int flag,
-			       char *name, int *pts)
+/* convert from Windows CHOOSEFONT to pango font specification,
+   and thence to the string @spec for use by gretl
+*/
+
+static void winfont_to_fontspec (char *spec, CHOOSEFONT *cf)
 {
-    int sz;
+    PangoFontDescription *pfd;
+    char *fstr;
 
-    if (sscanf(src, "%31[^0123456789]%d", name, &sz) == 2) {
-	size_t i, n = strlen(name);
-
-	for (i=n-1; i>0; i--) {
-	    if (name[i] == ' ') name[i] = 0;
-	    else break;
-	}
-	*pts = sz * 10; /* measured in tenths of a point */
-    } else {
-	*name = 0;
-	strncat(name, src, 31);
-	if (flag == FIXED_FONT_SELECTION) *pts = 100;
-	else *pts = 80;
-    }
+    pfd = pango_win32_font_description_from_logfont(cf->lpLogFont);
+    pango_font_description_set_size(pfd, PANGO_SCALE * cf->iPointSize / 10);
+    fstr = pango_font_description_to_string(pfd);
+    strcpy(spec, fstr);
+    g_free(fstr);
+    pango_font_description_free(pfd);
 }
 
 void win32_font_selector (char *fontname, int flag)
 {
-    CHOOSEFONT cf; /* common dialog box structure */
-    LOGFONT lf;    /* logical font structure */
+    CHOOSEFONT cf; /* info for font selection dialog */
 
     ZeroMemory(&cf, sizeof cf);
     cf.lStructSize = sizeof cf;
-    cf.Flags = CF_SCREENFONTS | CF_TTONLY | CF_LIMITSIZE | CF_INITTOLOGFONTSTRUCT;
-    cf.nSizeMin = 6;
-    cf.nSizeMax = 24;
-
-    ZeroMemory(&lf, sizeof lf);
-
-    cf.Flags |= CF_NOSCRIPTSEL;
-    
-    lf.lfWeight = FW_REGULAR;
-    lf.lfCharSet = DEFAULT_CHARSET;
-
+    cf.Flags = CF_SCREENFONTS | CF_TTONLY | CF_LIMITSIZE | 
+	CF_INITTOLOGFONTSTRUCT | CF_NOSCRIPTSEL;
     if (flag == FIXED_FONT_SELECTION) {
 	cf.Flags |= CF_FIXEDPITCHONLY;
     } 
+    cf.nSizeMin = 6;
+    cf.nSizeMax = 24;
 
-    fontname_to_win32(fontname, flag, lf.lfFaceName, &(cf.iPointSize));
+    fontspec_to_win32(&cf, fontname, flag);
 
-    cf.lpLogFont = &lf;
-
-    if (ChooseFont(&cf) == TRUE && *(cf.lpLogFont->lfFaceName)) {
-	sprintf(fontname, "%s%s %d", cf.lpLogFont->lfFaceName, 
-		font_weight_string(cf.lpLogFont->lfWeight), 
-		cf.iPointSize / 10);
+    if (ChooseFont(&cf)) {
+	winfont_to_fontspec(fontname, &cf);
     } else {
 	/* signal cancellation */
 	*fontname = '\0';
     }
+
+    /* allocated via pango */
+    g_free(cf.lpLogFont); 
 }
 
 static BOOL running_as_admin (void)

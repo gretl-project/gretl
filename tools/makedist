@@ -13,13 +13,11 @@ echo "making dist file for gretl $version using filename $tarfile"
 # make time stamp
 cd ${parent}/gretl && date > share/gretl.stamp
 
-# make the archive and remove the dist dir
+# make the distribution archive
 cd $parent 
 echo "making archive..."
 mv gretl ${versiondir}
-rm -f $tarfile 
+rm -f $tarfile
 tar cvjfX $tarfile tar_exclude ${versiondir}
 mv ${versiondir} gretl
-
-
 

@@ -69,29 +69,27 @@ enum {
 static int get_font_characteristics (PangoFontFamily *family,
 				     PangoFontDescription *desc)
 {
-    PangoCoverage *coverage = NULL;
-    PangoFont *pfont = NULL;
+    PangoFont *font;
     int ret = 0;
 
-    pfont = pango_context_load_font(font_test_context, desc);
-    if (pfont == NULL) {
-	return 0;
-    }
+    font = pango_context_load_font(font_test_context, desc);
 
-    coverage = pango_font_get_coverage(pfont, font_test_lang);
-    if (coverage == NULL) {
-	return 0;
-    }
+    if (font != NULL) {
+	PangoCoverage *coverage;
 
-    if (pango_coverage_get(coverage, 'i') == PANGO_COVERAGE_EXACT &&
-	pango_coverage_get(coverage, 'W') == PANGO_COVERAGE_EXACT) {
-	ret = HACK_LATIN_FONT;
-	if (pango_font_family_is_monospace(family)) {
-	    ret |= HACK_MONO_FONT;
+	coverage = pango_font_get_coverage(font, font_test_lang);
+	if (coverage != NULL) {
+	    if (pango_coverage_get(coverage, 'i') == PANGO_COVERAGE_EXACT &&
+		pango_coverage_get(coverage, 'W') == PANGO_COVERAGE_EXACT) {
+		ret = HACK_LATIN_FONT;
+		if (pango_font_family_is_monospace(family)) {
+		    ret |= HACK_MONO_FONT;
+		}
+	    }
+	    pango_coverage_unref(coverage);
 	}
+	g_object_unref(font);
     }
-
-    pango_coverage_unref(coverage);
 
 #if FDEBUG
     fprintf(stderr, " latin %s, monospaced %s\n",
@@ -174,14 +172,15 @@ int validate_font_family (PangoFontFamily *family,
 	if (weird_font(famname)) {
 	    fcache[i] = HACK_WEIRD_FONT;
 	} else {
-	    gchar *font = g_strdup_printf("%s 10", famname);
-	    PangoFontDescription *desc = pango_font_description_from_string(font);
+	    gchar *fontname = g_strdup_printf("%s 10", famname);
+	    PangoFontDescription *desc = 
+		pango_font_description_from_string(fontname);
 
 	    if (desc != NULL) {
 		fcache[i] = get_font_characteristics(family, desc);
 		pango_font_description_free(desc);
 	    }
-	    g_free(font);
+	    g_free(fontname);
 	}
     } 
 
