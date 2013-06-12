@@ -49,7 +49,7 @@ int options_dialog (int page, const char *varname, GtkWidget *parent);
 
 void font_selector (GtkAction *action);
 
-void set_fixed_font (void);
+void set_fixed_font (const char *fontname);
 
 void update_persistent_graph_colors (void);
 

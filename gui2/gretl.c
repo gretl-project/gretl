@@ -1471,7 +1471,7 @@ static void make_main_window (void)
 #endif
 
     /* get a monospaced font for various windows */
-    set_fixed_font();
+    set_fixed_font(NULL);
 
 #if GUI_DEBUG
     fprintf(stderr, "  set_fixed_font done\n");

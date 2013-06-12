@@ -399,10 +399,14 @@ void force_english_help (void)
     gretl_update_paths(&paths, set_paths_opt);
 }
 
-void set_fixed_font (void)
+void set_fixed_font (const char *fontname)
 {
     if (fixed_font != NULL) {
 	pango_font_description_free(fixed_font);
+    }
+    
+    if (fontname != NULL && fontname != fixedfontname) {
+	strcpy(fixedfontname, fontname);
     }
 
     fixed_font = pango_font_description_from_string(fixedfontname);
@@ -2278,8 +2282,7 @@ void font_selector (GtkAction *action)
 
     if (*fontname != '\0') {
 	if (which == FIXED_FONT_SELECTION) {
-	    strcpy(fixedfontname, fontname);
-	    set_fixed_font();
+	    set_fixed_font(fontname);
 	    write_rc();
 	} else {
 	    set_app_font(fontname);
@@ -2333,8 +2336,7 @@ static void font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
 	int mono = widget_get_int(fc, "mono");
 
 	if (mono) {
-	    strcpy(fixedfontname, fontname);
-	    set_fixed_font();
+	    set_fixed_font(fontname);
 	    write_rc();
 	} else {
 	    set_app_font(fontname);
@@ -2419,8 +2421,7 @@ static void font_selection_ok (GtkWidget *w, GtkFontselHackDialog *fs)
 	int filter = gtk_fontsel_hack_dialog_get_filter(fs); 
 
 	if (filter == FONT_HACK_LATIN_MONO) {
-	    strcpy(fixedfontname, fontname);
-	    set_fixed_font();
+	    set_fixed_font(fontname);
 	    write_rc();
 	} else if (filter == FONT_HACK_LATIN) {
 	    set_app_font(fontname);
