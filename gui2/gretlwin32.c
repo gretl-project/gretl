@@ -27,8 +27,8 @@
 #include "menustate.h"
 #include "gretl_www.h"
 
-#include <gdk/gdkwin32.h>
 #include <pango/pangowin32.h>
+#include <gdk/gdkwin32.h>
 #include <dirent.h>
 
 #include <windows.h>
