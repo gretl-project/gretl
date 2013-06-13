@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-06-10 15:37-0400\n"
-"PO-Revision-Date: 2013-05-17 22:54+0200\n"
+"PO-Revision-Date: 2013-06-13 14:49+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -4541,7 +4541,7 @@ msgstr "Attenzione: impossibile calcolare l'Hessiana numerica"
 
 #: lib/src/modelprint.c:628
 msgid "Warning: non-pd Hessian (but still nonsingular)"
-msgstr ""
+msgstr "Attenzione: l'hessiano non è pd (ma è comunque invertibile)"
 
 #: lib/src/modelprint.c:646 lib/src/modelprint.c:664 lib/src/modelprint.c:672
 msgid "'Within' variance"
@@ -9971,7 +9971,7 @@ msgstr "Finestra"
 
 #: gui2/fnsave.c:1455
 msgid "To create a menu attachment, you must supply a label."
-msgstr ""
+msgstr "È necessario inserire un'etichetta per creare un'aggiunta al menu"
 
 #: gui2/fnsave.c:1458
 msgid ""
@@ -12308,14 +12308,12 @@ msgid "forecast horizon (periods):"
 msgstr "Orizzonte di previsione (periodi)"
 
 #: gui2/gui_utils.c:3509
-#, fuzzy
 msgid "line graph"
-msgstr "salva grafico"
+msgstr "grafico a linee"
 
 #: gui2/gui_utils.c:3510
-#, fuzzy
 msgid "stacked bar graph"
-msgstr "salva grafico"
+msgstr "grafico a barre sovrapposte"
 
 #: gui2/gui_utils.c:3518 gui2/gui_utils.c:4188 gui2/gui_utils.c:4310
 msgid "Forecast variance decomposition"
@@ -14945,14 +14943,12 @@ msgid "Manuals"
 msgstr "Manuali"
 
 #: gui2/settings.c:2265
-#, fuzzy
 msgid "Select a specific font"
-msgstr "Test RESET di specificazione"
+msgstr "Seleziona un font specifico"
 
 #: gui2/settings.c:2266
-#, fuzzy
 msgid "Reset to Windows default"
-msgstr "Imposta al valore predefinito"
+msgstr "Reimposta al valore predefinito di Windows"
 
 #: gui2/settings.c:2367 gui2/settings.c:2450
 msgid "Font for gretl output windows"
