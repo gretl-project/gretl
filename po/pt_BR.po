@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-06-10 15:37-0400\n"
-"PO-Revision-Date: 2013-06-01 18:10-0300\n"
+"PO-Revision-Date: 2013-06-12 23:32-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -929,7 +929,7 @@ msgstr " O rótulo da primeira linha é \"%s\" e da última é \"%s\".\n"
 
 #: lib/src/csvdata.c:1235
 msgid "trying to parse row labels as dates...\n"
-msgstr "Tentando interpretar os rótulos das linhas como sendo datas...\n"
+msgstr "Tentando interpretar os rótulos das linhas como sendo datas…\n"
 
 #: lib/src/csvdata.c:1249
 msgid "   definitely not a four-digit year\n"
@@ -1047,7 +1047,7 @@ msgstr "aviso: %d nomes de variáveis foram truncados.\n"
 
 #: lib/src/csvdata.c:2316
 msgid "scanning for row labels and data...\n"
-msgstr "procurando rótulos de linhas e dados...\n"
+msgstr "procurando rótulos de linhas e dados…\n"
 
 #: lib/src/csvdata.c:2335 lib/src/csvdata.c:2338 lib/src/dataio.c:2847
 msgid "parsing"
@@ -4539,7 +4539,7 @@ msgstr "Aviso: não foi possível calcular a hessiana numérica"
 
 #: lib/src/modelprint.c:628
 msgid "Warning: non-pd Hessian (but still nonsingular)"
-msgstr ""
+msgstr "Aviso: Hessiana não positiva definida (mas ainda não singular)"
 
 #: lib/src/modelprint.c:646 lib/src/modelprint.c:664 lib/src/modelprint.c:672
 msgid "'Within' variance"
@@ -7352,7 +7352,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 1 de junho de 2013."
+"Tradução de 12 de junho de 2013."
 
 #: gui2/about.c:165
 msgid "License"
@@ -9722,7 +9722,7 @@ msgstr "Apresentar gráfico das séries diferenciadas"
 
 #: gui2/filters.c:794
 msgid "Graph original and smoothed series"
-msgstr "Apresentar gráfico da série original e suavizada"
+msgstr "Apresentar gráfico da série original e da suavizada"
 
 #: gui2/filters.c:796
 msgid "Graph residual or cycle series"
@@ -9965,6 +9965,7 @@ msgstr "Janela"
 #: gui2/fnsave.c:1455
 msgid "To create a menu attachment, you must supply a label."
 msgstr ""
+"Para criar um item complementar do menu é necessário fornecer um rótulo."
 
 #: gui2/fnsave.c:1458
 msgid ""
@@ -12290,14 +12291,12 @@ msgid "forecast horizon (periods):"
 msgstr "horizonte de previsão (períodos):"
 
 #: gui2/gui_utils.c:3509
-#, fuzzy
 msgid "line graph"
-msgstr "salvar gráfico"
+msgstr "gráfico de linha"
 
 #: gui2/gui_utils.c:3510
-#, fuzzy
 msgid "stacked bar graph"
-msgstr "salvar gráfico"
+msgstr "gráfico com barras empilhadas"
 
 #: gui2/gui_utils.c:3518 gui2/gui_utils.c:4188 gui2/gui_utils.c:4310
 msgid "Forecast variance decomposition"
@@ -14484,7 +14483,7 @@ msgstr "Propriedades"
 
 #: gui2/session.c:862 gui2/session.c:925 gui2/session.c:944
 msgid "Failed to copy graph file"
-msgstr "Falhou a cópia do arquivo de gráfico"
+msgstr "Falha na cópia do arquivo de gráfico"
 
 #: gui2/session.c:1084
 msgid "Model is already saved"
@@ -14521,7 +14520,7 @@ msgstr "versus"
 
 #: gui2/session.c:2209
 msgid "Bundle is empty"
-msgstr "O pacote (\"bundle\") está vazio"
+msgstr "O grupo (\"bundle\") está vazio"
 
 #: gui2/session.c:2414
 #, c-format
@@ -14914,14 +14913,12 @@ msgid "Manuals"
 msgstr "Manuais"
 
 #: gui2/settings.c:2265
-#, fuzzy
 msgid "Select a specific font"
-msgstr "Teste RESET para especificação"
+msgstr "Selecionar uma fonte específica"
 
 #: gui2/settings.c:2266
-#, fuzzy
 msgid "Reset to Windows default"
-msgstr "Restaurar padrão"
+msgstr "Restaurar para o padrão do Windows"
 
 #: gui2/settings.c:2367 gui2/settings.c:2450
 msgid "Font for gretl output windows"
