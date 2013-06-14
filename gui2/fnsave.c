@@ -1151,20 +1151,6 @@ static void toggle_upload (GtkToggleButton *b, function_info *finfo)
     finfo->upload = gtk_toggle_button_get_active(b);
 }
 
-static gchar *get_model_menu_string (const char *s)
-{
-    gchar *ret;
-
-    if (!strcmp(s, "Analysis")) {
-	ret = g_strdup(_("_Analysis"));
-	gretl_delchar('_', ret);
-    } else {
-	ret = g_strdup(_(s));
-    }
-
-    return ret;
-}
-
 static GtkTreeStore *make_menu_attachment_tree (function_info *finfo,
 						GtkTreePath **ppath,
 						int modelwin)
@@ -2334,7 +2320,7 @@ int save_function_package (const char *fname, gpointer p)
 			      finfo->menulabel,
 			      finfo->menupath,
 			      finfo->uses_subdir,
-			      1);
+			      TRUE, FALSE);
     }
 
     return err;
@@ -2565,9 +2551,15 @@ int save_function_package_spec (const char *fname, gpointer p)
     if (finfo->text != NULL) {
 	gchar *help = textview_get_trimmed_text(finfo->text);
 
-	maybe_write_aux_file(fname, help, "_help.txt", prn);
+	if (help != NULL) {
+	    if (!strncmp(help, "pdfdoc:", 7)) {
+		pputs(prn, help + 7);
+	    } else {
+		maybe_write_aux_file(fname, help, "_help.txt", prn);
+	    }
+	    g_free(help);
+	}
 	pputc(prn, '\n');
-	g_free(help);
     }
 
     pputs(prn, "sample-script = ");

@@ -61,7 +61,8 @@ char *installed_addon_status_string (const char *path,
 int revise_package_status (const gchar *pkgname,
 			   const gchar *label,
 			   const gchar *mpath,
-			   int uses_subdir,
-			   int maybe_edit);
+			   gboolean uses_subdir,
+			   gboolean maybe_edit,
+			   gboolean installing);
 
 #endif /* FNCALL_H */

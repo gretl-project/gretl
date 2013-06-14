@@ -3132,6 +3132,20 @@ static void set_up_model_view_menu (windata_t *vwin)
     vwin_pack_toolbar(vwin);
 }
 
+gchar *get_model_menu_string (const char *s)
+{
+    gchar *ret;
+
+    if (!strcmp(s, "Analysis")) {
+	ret = g_strdup(_("_Analysis"));
+	gretl_delchar('_', ret);
+    } else {
+	ret = g_strdup(_(s));
+    }
+
+    return ret;
+}
+
 enum {
     SYS_DATA_RESIDS,
     SYS_DATA_FITTED,

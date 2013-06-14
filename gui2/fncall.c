@@ -2708,18 +2708,25 @@ static int pkg_attach_dialog (const gchar *name,
 	const gchar *window_names[] = {
 	    N_("main window"),
 	    N_("model window")
-	};	
-	gchar *msg;
+	};
+	gchar *msg, *ustr = NULL;
+
+	if (modelwin) {
+	    ustr = get_model_menu_string(relpath);
+	} else {
+	    ustr = get_user_menu_string(relpath);
+	}	
 
 	msg = g_strdup_printf(_("The package %s can be attached to the "
 				"gretl menus\n"
 				"as \"%s/%s\" in the %s.\n"
 				"Do you want to do this?"),
-			      name, relpath, _(label),
+			      name, ustr ? ustr : relpath, _(label),
 			      modelwin ? _(window_names[1]) :
 			      _(window_names[0]));
 	resp = yes_no_dialog(NULL, msg, 0);
 	g_free(msg);
+	g_free(ustr);
     }
 
     return resp;
@@ -2876,8 +2883,9 @@ static char *retrieve_pkg_line (const gchar *pkgname,
 int revise_package_status (const gchar *pkgname,
 			   const gchar *label,
 			   const gchar *mpath,
-			   int uses_subdir,
-			   int maybe_edit)
+			   gboolean uses_subdir,
+			   gboolean maybe_edit,
+			   gboolean installing)
 {
     int toplev = !uses_subdir;
     char *pkgline;
@@ -2984,7 +2992,11 @@ int revise_package_status (const gchar *pkgname,
     if (err) {
 	gui_errmsg(err);
     } else if (pkgmod) {
-	gchar *upath = get_user_menu_string(mpath);
+	gchar *upath = NULL;
+
+	if (!installing) {
+	    upath = get_user_menu_string(mpath);
+	}
 
 	if (upath != NULL) {
 	    gchar *tmp = g_strdup_printf(_("Adding %s under %s."), 
@@ -3068,7 +3080,7 @@ int gui_add_package_to_menu (const char *path, gboolean prechecked)
 
 	if (addit) {
 	    revise_package_status(pkgname, label, mpath, 
-				  uses_subdir, FALSE);
+				  uses_subdir, FALSE, TRUE);
 	}
 
 	g_free(pkgname);

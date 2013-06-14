@@ -324,8 +324,8 @@ static void urlinfo_set_params (urlinfo *u, CGIOpt opt,
 
 static void maybe_revise_www_paths (void)
 {
-    if (!strcmp(dbhost, "dev.ricardo.ecn.wfu.edu")) {
-	strcpy(gretlhost, "dev.ricardo.ecn.wfu.edu");
+    if (!strcmp(dbhost, "localhost")) {
+	strcpy(gretlhost, "localhost");
     } else if (!strcmp(dbhost, "www.wfu.edu")) {
 	strcpy(gretlhost, "www.wfu.edu");
 	strcpy(datacgi, "/~cottrell/gretl/gretldata.cgi");
@@ -470,6 +470,10 @@ static int retrieve_url (const char *hostname,
 	strcat(u.url, datapkg_list);
     } else {
 	strcat(u.url, datacgi);
+    }
+
+    if (strstr(gretlhost, "ricardo") == NULL) {
+	fprintf(stderr, "using gretlhost = '%s'\n", gretlhost);
     }
 
     if (opt != GRAB_PDF && opt != GRAB_FOREIGN &&
