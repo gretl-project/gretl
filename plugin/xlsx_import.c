@@ -385,6 +385,8 @@ static int xlsx_handle_stringval (const char *s, int r, int c,
 {
     if (import_na_string(s)) {
 	return 0; /* OK */
+    } else if (*s == '\0') {
+	return 0; /* sigh */
     } else {
 	pprintf(prn, _("Expected numeric data, found string:\n"
 		       "'%s' at row %d, column %d\n"), s, r, c);
