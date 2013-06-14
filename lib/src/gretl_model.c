@@ -23,6 +23,15 @@
 #include "gretl_xml.h"
 #include "matrix_extra.h"
 
+/**
+ * SECTION:gretl_model
+ * @short_description: handling of the MODEL struct
+ * @title: Model structure
+ * @include: libgretl.h
+ *
+ * Provides underlying functionality for gretl's MODEL datatype.
+ */
+
 #define MDEBUG 0
 
 struct model_data_item_ {

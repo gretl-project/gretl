@@ -26,6 +26,16 @@
 #include "gretl_panel.h"
 #include "libset.h"
 
+/**
+ * SECTION:gretl_panel
+ * @short_description: estimation of panel data models
+ * @title: Panel data
+ * @include: libgretl.h
+ *
+ * Provides support for estimating panel data models
+ * such as fixed and random effects.
+ */
+
 #define PDEBUG 0
 
 enum vcv_ops {
