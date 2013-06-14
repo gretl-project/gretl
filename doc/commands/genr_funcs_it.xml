@@ -2606,7 +2606,7 @@
       </fnargs>    
       <description>
 	<para>
-	  Ritorna un vettore contenente gli indici riga dei miniimi
+	  Ritorna un vettore contenente gli indici riga dei minimi
 	  delle colonne di <argname>X</argname>.
 	  <seelist>
 	    <fncref targ="imaxc"/>
@@ -2623,8 +2623,8 @@
       </fnargs>    
       <description>
 	<para>
-	  Ritorna un vettore contenente gli indici riga dei massimi
-	  delle colonne di <argname>X</argname>.
+	  Ritorna un vettore contenente gli indici colonna dei minimi
+	  delle righe di <argname>X</argname>.
 	  <seelist>
 	    <fncref targ="imaxr"/> 
 	    <fncref targ="iminc"/>
