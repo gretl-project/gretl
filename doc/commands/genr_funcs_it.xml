@@ -2542,8 +2542,8 @@
       </fnargs>
       <description>
 	<para>
-	  Returns a vector containing the row indices of the maxima of the
-	  columns of <argname>X</argname>. 
+	  Ritorna un vettore contenente gli indici riga dei massimi
+	  delle colonne di <argname>X</argname>.
 	  <seelist> 
 	    <fncref targ="imaxr"/> 
 	    <fncref targ="iminc"/>
@@ -2559,8 +2559,8 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns a vector containing the column indices of the maxima of
-	  the rows of <argname>X</argname>. 
+	  Ritorna un vettore contenente gli indici colonna dei massimi
+	  delle righe di <argname>X</argname>.
 	  <seelist> 
 	    <fncref targ="imaxc"/>
 	    <fncref targ="iminr"/>
@@ -2606,8 +2606,8 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns the row indices of the minima of the columns of
-	  <math>X</math>. 
+	  Ritorna un vettore contenente gli indici riga dei miniimi
+	  delle colonne di <argname>X</argname>.
 	  <seelist>
 	    <fncref targ="imaxc"/>
 	    <fncref targ="iminr"/>
@@ -2623,8 +2623,8 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns the column indices of the maxima of the rows of
-	  <math>X</math>. 
+	  Ritorna un vettore contenente gli indici riga dei massimi
+	  delle colonne di <argname>X</argname>.
 	  <seelist>
 	    <fncref targ="imaxr"/> 
 	    <fncref targ="iminc"/>
