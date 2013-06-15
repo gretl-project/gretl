@@ -1228,7 +1228,7 @@ static int no_scalar_default (fn_param *fp)
  * gretl_arg_type_name:
  * @type: a gretl type.
  *
- * Returns: the name of gretl type that is valid as a 
+ * Returns: the name of a gretl type that is valid as a 
  * function argument or return value.
  */
 
@@ -7078,8 +7078,13 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
     if (fun->n_params > 0) {
 	pputc(prn, '\n');
 	for (i=0; i<fun->n_params; i++) {
-	    pprintf(prn, " %s (%s)\n", 
+	    pprintf(prn, " %s (%s", 
 		    fun->params[i].name, gretl_arg_type_name(fun->params[i].type));
+	    if (fun->params[i].descrip != NULL) {
+		pprintf(prn, ": %s)\n", fun->params[i].descrip);
+	    } else {
+		pputs(prn, ")\n");
+	    }
 	}
 	pputc(prn, '\n');
     } else {
