@@ -763,7 +763,8 @@ static int gui_load_user_functions (const char *fname)
     return err;
 }
 
-static int gui_delete_fn_pkg (const char *fname, windata_t *vwin)
+static int gui_delete_fn_pkg (const char *pkgname, const char *fname, 
+			      windata_t *vwin)
 {
     char *msg = g_strdup_printf(_("Function package %s"), fname);
     const char *opts[] = {
@@ -781,6 +782,9 @@ static int gui_delete_fn_pkg (const char *fname, windata_t *vwin)
 	/* canceled, or equivalent */
 	return 0;
     }
+
+    /* remove entry from packages.xml, if present */
+    unregister_function_package(pkgname);
 
     if (active[1]) {
 	/* unload the package and its members from memory */
@@ -968,7 +972,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
     if (task == LOAD_FN_PKG) {
 	err = gui_load_user_functions(path);
     } else if (task == DELETE_FN_PKG) {
-	err = gui_delete_fn_pkg(path, vwin);
+	err = gui_delete_fn_pkg(pkgname, path, vwin);
     } else if (task == VIEW_FN_PKG_INFO) {
 	display_function_package_data(pkgname, path, VIEW_PKG_INFO);
     } else if (task == VIEW_FN_PKG_CODE) {

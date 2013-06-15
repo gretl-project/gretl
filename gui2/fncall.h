@@ -53,6 +53,8 @@ int maybe_handle_pkg_menu_option (const char *path,
 int package_is_available_for_menu (const gchar *pkgname,
 				   const char *path);
 
+void unregister_function_package (const gchar *pkgname);
+
 int query_addons (void);
 
 int download_addon (const char *pkgname, char **local_path);

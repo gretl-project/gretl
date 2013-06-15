@@ -73,7 +73,6 @@ static GtkWidget *open_fncall_dlg;
 static gboolean close_on_OK = TRUE;
 
 static void fncall_exec_callback (GtkWidget *w, call_info *cinfo);
-static void unregister_package (const gchar *pkgname);
 
 static gchar **glib_str_array_new (int n)
 {
@@ -2260,6 +2259,7 @@ struct addon_info_ {
     char *filepath;
     PkgType ptype;
     int modelwin;
+    guint merge_id;
 };
 
 typedef struct addon_info_ addon_info;
@@ -2367,7 +2367,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     if (addon->filepath != NULL) {
 	call_function_package(addon->filepath, vwin, NULL);
     } else {
-	unregister_package(pkgname);
+	unregister_function_package(pkgname);
     }
 }
 
@@ -2423,6 +2423,7 @@ static int real_read_packages_file (const char *fname, int *pn,
 		    addons[n].filepath = NULL;
 		    addons[n].ptype = (top)? PKG_TOPLEV : PKG_SUBDIR;
 		    addons[n].modelwin = mw;
+		    addons[n].merge_id = 0;
 		    n++;
 		} 
 	    }
@@ -2478,12 +2479,11 @@ static int read_addons_info (void)
 
 #define PKG_DEBUG 0
 
-/* For recognized function packages: given the internal
-   package name (e.g. "gig") and a menu path where we'd like
-   it to appear (e.g. "/menubar/Model/TSModels" -- see the
-   ui definition file gui2/gretlmain.xml), construct the
-   appropriate menu item and connect it to gfn_menu_callback(), 
-   for which see above.
+/* For function packages offering a menu attachment point: given the
+   internal package name (e.g. "gig") and a menu path where we'd like
+   it to appear (e.g. "/menubar/Model/TSModels" -- see the ui
+   definition file gui2/gretlmain.xml), construct the appropriate menu
+   item and connect it to gfn_menu_callback(), for which see above.
 */
 
 static void add_package_to_menu (addon_info *addon,
@@ -2493,6 +2493,7 @@ static void add_package_to_menu (addon_info *addon,
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gfn_menu_callback)
     };
     GtkActionGroup *actions;
+    guint merge_id;
 
 #if PKG_DEBUG
     fprintf(stderr, "add_package_to_menu:\n pkgname='%s', menupath='%s'\n",
@@ -2506,10 +2507,16 @@ static void add_package_to_menu (addon_info *addon,
 	pkg_item.label = addon->pkgname;
     }
 
-    gtk_ui_manager_add_ui(vwin->ui, gtk_ui_manager_new_merge_id(vwin->ui),
-			  addon->menupath, pkg_item.label, pkg_item.name,
+    merge_id = gtk_ui_manager_new_merge_id(vwin->ui);
+
+    gtk_ui_manager_add_ui(vwin->ui, merge_id, addon->menupath, 
+			  pkg_item.label, pkg_item.name,
 			  GTK_UI_MANAGER_MENUITEM, 
 			  FALSE);
+
+    if (vwin == mdata) {
+	addon->merge_id = merge_id;
+    }
 
     actions = gtk_action_group_new(pkg_item.name);
     gtk_action_group_add_actions(actions, &pkg_item, 1, vwin);
@@ -2814,7 +2821,7 @@ static FILE *read_open_packages_xml (gchar **pfname)
    it is not found, remove it from packages.xml.
 */
 
-static void unregister_package (const gchar *pkgname)
+void unregister_function_package (const gchar *pkgname)
 {
     gchar *pkgxml;
     FILE *fp;
@@ -2826,6 +2833,7 @@ static void unregister_package (const gchar *pkgname)
 	gchar *tmpfile;
 	char line[512];
 	FILE *fnew;
+	int done = 0;
 
 	tmpfile = g_strdup_printf("%sfunctions%cpackages.xml.new", 
 				  gretl_dotdir(), SLASH);
@@ -2834,7 +2842,7 @@ static void unregister_package (const gchar *pkgname)
 	if (fnew == NULL) {
 	    err = E_FOPEN;
 	} else {
-	    int skip, done = 0;
+	    int skip;
 
 	    while (fgets(line, sizeof line, fp)) {
 		skip = 0;
@@ -2849,7 +2857,17 @@ static void unregister_package (const gchar *pkgname)
 	}
 	fclose(fp);
 	if (!err) {
-	    err = gretl_copy_file(tmpfile, pkgxml);
+	    if (done) {
+		/* we actually removed an entry */
+		addon_info *addon;
+
+		addon = retrieve_addon_info(pkgname);
+		if (addon != NULL && addon->merge_id > 0) {
+		    gtk_ui_manager_remove_ui(mdata->ui, 
+					     addon->merge_id);
+		}
+		err = gretl_copy_file(tmpfile, pkgxml);
+	    }
 	    gretl_remove(tmpfile);
 	}
 	g_free(tmpfile);
