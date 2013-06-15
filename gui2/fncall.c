@@ -2696,7 +2696,8 @@ static const gchar *pkg_get_attachment (const gchar *mpath,
 
 static int pkg_attach_dialog (const gchar *name,
 			      const gchar *label,
-			      const gchar *mpath)
+			      const gchar *mpath,
+			      GtkWidget *parent)
 {
     const gchar *relpath = NULL;
     int modelwin = 0;
@@ -2711,12 +2712,7 @@ static int pkg_attach_dialog (const gchar *name,
 	};
 	gchar *msg, *ustr = NULL;
 
-	if (modelwin) {
-	    ustr = get_model_menu_string(relpath);
-	} else {
-	    ustr = get_user_menu_string(relpath);
-	}	
-
+	ustr = user_friendly_menu_path(relpath, modelwin);
 	msg = g_strdup_printf(_("The package %s can be attached to the "
 				"gretl menus\n"
 				"as \"%s/%s\" in the %s.\n"
@@ -2724,7 +2720,7 @@ static int pkg_attach_dialog (const gchar *name,
 			      name, ustr ? ustr : relpath, _(label),
 			      modelwin ? _(window_names[1]) :
 			      _(window_names[0]));
-	resp = yes_no_dialog(NULL, msg, 0);
+	resp = yes_no_dialog_with_parent(NULL, msg, 0, parent);
 	g_free(msg);
 	g_free(ustr);
     }
@@ -2735,10 +2731,10 @@ static int pkg_attach_dialog (const gchar *name,
 static char *make_pkg_line (const gchar *name, 
 			    const gchar *label, 
 			    const gchar *mpath, 
-			    int toplev)
+			    int toplev,
+			    int *modelwin)
 {
     const gchar *relpath;
-    int modelwin = 0;
     PRN *prn = NULL;
     char *pkgline;
 
@@ -2750,11 +2746,11 @@ static char *make_pkg_line (const gchar *name,
 	return NULL;
     }    
 
-    relpath = pkg_get_attachment(mpath, &modelwin);
+    relpath = pkg_get_attachment(mpath, modelwin);
 
     pprintf(prn, "<package name=\"%s\" label=\"%s\"", name, label);
 
-    if (modelwin) {
+    if (*modelwin) {
 	pputs(prn, " model-window=\"true\"");
     }
 
@@ -2891,10 +2887,11 @@ int revise_package_status (const gchar *pkgname,
     char *pkgline;
     gchar *pkgxml;
     int pkgmod = 0;
+    int modelwin = 0;
     FILE *fp;
     int err = 0;
 
-    pkgline = make_pkg_line(pkgname, label, mpath, toplev);
+    pkgline = make_pkg_line(pkgname, label, mpath, toplev, &modelwin);
     fp = read_open_packages_xml(&pkgxml);
 
     if (fp == NULL) {
@@ -2992,19 +2989,19 @@ int revise_package_status (const gchar *pkgname,
     if (err) {
 	gui_errmsg(err);
     } else if (pkgmod) {
-	gchar *upath = NULL;
+	gchar *ustr = NULL;
 
 	if (!installing) {
-	    upath = get_user_menu_string(mpath);
+	    ustr = user_friendly_menu_path(mpath, modelwin);
 	}
 
-	if (upath != NULL) {
+	if (ustr != NULL) {
 	    gchar *tmp = g_strdup_printf(_("Adding %s under %s."), 
-					 label, upath);
+					 label, ustr);
 
 	    infobox("%s\n%s", tmp, 
 		    _("This change will take effect when you restart gretl"));
-	    g_free(upath);
+	    g_free(ustr);
 	    g_free(tmp);
 	} else {
 	    infobox(_("This change will take effect when you restart gretl"));
@@ -3037,7 +3034,8 @@ static int package_already_registered (const char *pkgname)
     return found;
 }
 
-int gui_add_package_to_menu (const char *path, gboolean prechecked)
+int gui_add_package_to_menu (const char *path, gboolean prechecked,
+			     GtkWidget *parent)
 {
     fnpkg *pkg;
     int err = 0, ret = 0;
@@ -3067,7 +3065,7 @@ int gui_add_package_to_menu (const char *path, gboolean prechecked)
 		addit = 1;
 	    } else {
 		/* not "prechecked": put up a dialog */
-		int resp = pkg_attach_dialog(pkgname, label, mpath);
+		int resp = pkg_attach_dialog(pkgname, label, mpath, parent);
 
 		if (resp >= 0) {
 		    ret = 1;
@@ -3093,9 +3091,10 @@ int gui_add_package_to_menu (const char *path, gboolean prechecked)
 
 /* returns non-zero if we put up a dialog box */
 
-int maybe_handle_pkg_menu_option (const char *path)
+int maybe_handle_pkg_menu_option (const char *path,
+				  GtkWidget *parent)
 {
-    return gui_add_package_to_menu(path, FALSE);
+    return gui_add_package_to_menu(path, FALSE, parent);
 }
 
 char *installed_addon_status_string (const char *path,

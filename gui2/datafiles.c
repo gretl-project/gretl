@@ -976,7 +976,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
     } else if (task == EDIT_FN_PKG) {
 	edit_function_package(path);
     } else if (task == MENU_ADD_FN_PKG) {
-	gui_add_package_to_menu(path, TRUE);
+	gui_add_package_to_menu(path, TRUE, vwin->main);
     } else if (task == CALL_FN_PKG) {
 	/* note: this is the double-click default */
 	call_function_package(path, vwin, &err);

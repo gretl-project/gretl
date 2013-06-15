@@ -2167,7 +2167,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	windata_t *local = get_local_viewer(vwin->role);
 	
 	if (vwin->role == REMOTE_FUNC_FILES) {
-	    if (!maybe_handle_pkg_menu_option(path)) {
+	    if (!maybe_handle_pkg_menu_option(path, vwin->main)) {
 		infobox(_("Installed"));
 	    }
 	    list_store_set_string(GTK_TREE_VIEW(vwin->listbox),

@@ -145,8 +145,6 @@ int get_imported_data (char *fname, int ftype, int append);
 
 char *double_underscores (char *targ, const char *src);
 
-gchar *get_model_menu_string (const char *s);
-
 void verbose_gerror_report (GError *gerr, const char *src);
 
 int gretl_file_get_contents (const gchar *fname, gchar **contents, gsize *size);

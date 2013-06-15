@@ -1206,11 +1206,7 @@ static GtkTreeStore *make_menu_attachment_tree (function_info *finfo,
 	word = words[level];
 	s += 2;
 	sscanf(s, "%s", word);
-	if (modelwin) {
-	    ustr = get_model_menu_string(word);
-	} else {
-	    ustr = get_user_menu_string(word);
-	}
+	ustr = user_friendly_menu_path(word, modelwin);
 	if (level == 0) {
 	    path = g_strdup_printf("%s/%s", leader, words[0]);
 	    gtk_tree_store_append(store, &parents[0], NULL);

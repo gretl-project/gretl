@@ -44,9 +44,11 @@ void maybe_add_packages_to_model_menus (windata_t *vwin);
 
 void maybe_add_packages_to_menus (windata_t *vwin);
 
-int gui_add_package_to_menu (const char *path, gboolean prechecked);
+int gui_add_package_to_menu (const char *path, gboolean prechecked,
+			     GtkWidget *parent);
 
-int maybe_handle_pkg_menu_option (const char *path);
+int maybe_handle_pkg_menu_option (const char *path, 
+				  GtkWidget *parent);
 
 int package_is_available_for_menu (const gchar *pkgname,
 				   const char *path);

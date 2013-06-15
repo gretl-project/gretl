@@ -1804,7 +1804,7 @@ GtkActionEntry main_entries[] = {
    counterpart, translated and with mnemonics stripped.
 */
 
-gchar *get_user_menu_string (const gchar *mpath)
+static gchar *main_menu_user_string (const gchar *mpath)
 {
     gchar *ret = NULL;
     gchar **S;
@@ -1859,6 +1859,25 @@ gchar *get_user_menu_string (const gchar *mpath)
 
     if (ret != NULL) {
 	gretl_delchar('_', ret);
+    }
+
+    return ret;
+}
+
+gchar *user_friendly_menu_path (const char *mpath,
+				gboolean modelwin)
+{
+    gchar *ret = NULL;
+
+    if (modelwin) {
+	if (!strcmp(mpath, "Analysis")) {
+	    ret = g_strdup(_("_Analysis"));
+	    gretl_delchar('_', ret);
+	} else {
+	    ret = g_strdup(_(mpath));
+	}
+    } else {
+	ret = main_menu_user_string(mpath);
     }
 
     return ret;

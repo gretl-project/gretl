@@ -383,9 +383,9 @@ static GtkActionEntry bundle_items[] = {
     { "File", NULL, N_("_File"), NULL, NULL, NULL },  
     { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save text as..."), NULL, NULL, 
       G_CALLBACK(model_output_save) }, 
-    { "SaveAsIcon", NULL, N_("Save to session as _icon"), NULL, NULL, 
+    { "SaveAsIcon", NULL, N_("Save bundle to session as _icon"), NULL, NULL, 
       G_CALLBACK(bundle_add_as_icon) },
-    { "SaveAndClose", NULL, N_("Save as icon and cl_ose"), NULL, NULL, 
+    { "SaveAndClose", NULL, N_("Save bundle as icon and cl_ose"), NULL, NULL, 
       G_CALLBACK(bundle_add_as_icon) },
     { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
     { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
@@ -3130,20 +3130,6 @@ static void set_up_model_view_menu (windata_t *vwin)
 		     G_CALLBACK(check_model_menu), vwin);
 
     vwin_pack_toolbar(vwin);
-}
-
-gchar *get_model_menu_string (const char *s)
-{
-    gchar *ret;
-
-    if (!strcmp(s, "Analysis")) {
-	ret = g_strdup(_("_Analysis"));
-	gretl_delchar('_', ret);
-    } else {
-	ret = g_strdup(_(s));
-    }
-
-    return ret;
 }
 
 enum {

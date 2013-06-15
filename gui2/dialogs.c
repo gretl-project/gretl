@@ -91,9 +91,9 @@ void gretl_dialog_add_message (GtkWidget *dlg, const char *msg)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 12);
 }
 
-gint yes_no_dialog (const char *title, const char *msg, int cancel)
+gint yes_no_dialog_with_parent (const char *title, const char *msg, 
+				int cancel, GtkWidget *parent)
 {
-    GtkWindow *parent = NULL;
     GtkDialogFlags flags = GTK_DIALOG_MODAL;
     GtkWidget *dlg;
     int ret = GTK_RESPONSE_HELP;
@@ -102,13 +102,15 @@ gint yes_no_dialog (const char *title, const char *msg, int cancel)
 	title = "gretl";
     }
 
-    if (mdata != NULL && mdata->main != NULL) {
-	parent = GTK_WINDOW(mdata->main);
+    if (parent != NULL) {
+	flags |= GTK_DIALOG_DESTROY_WITH_PARENT;
+    } else if (mdata != NULL && mdata->main != NULL) {
+	parent = mdata->main;
 	flags |= GTK_DIALOG_DESTROY_WITH_PARENT;
     }
 
     dlg = gtk_dialog_new_with_buttons(title,
-				      parent,
+				      GTK_WINDOW(parent),
 				      flags,
 				      GTK_STOCK_YES,
 				      GTK_RESPONSE_ACCEPT,
@@ -140,6 +142,11 @@ gint yes_no_dialog (const char *title, const char *msg, int cancel)
     default: 
 	return GRETL_CANCEL;
     }
+}
+
+gint yes_no_dialog (const char *title, const char *msg, int cancel)
+{
+    return yes_no_dialog_with_parent(title, msg, cancel, NULL);
 }
 
 static void toggle_session_prompt (GtkToggleButton *b)
