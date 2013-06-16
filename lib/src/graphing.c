@@ -970,15 +970,16 @@ const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags)
     static char pdf_term_line[128];
 
     if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-#ifdef G_OS_WIN32
-	strcpy(pdf_term_line, "set term pdfcairo font \"sans,10\"");
-#else
-	if (gnuplot_get_version() > 4.4) {
-	    strcpy(pdf_term_line, "set term pdfcairo font \"sans,10\"");
-	} else {
-	    strcpy(pdf_term_line, "set term pdfcairo font \"sans,5\"");
+	int ptsize = 10;
+
+	if (ptype == PLOT_MULTI_SCATTER) {
+	    ptsize = 6;
 	}
-#endif
+	if (gnuplot_get_version() <= 4.4) {
+	    ptsize /= 2;
+	}
+	sprintf(pdf_term_line, "set term pdfcairo font \"sans,%d\"", 
+		ptsize);
     } else {
 	strcpy(pdf_term_line, "set term pdf");
     }
