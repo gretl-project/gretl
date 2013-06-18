@@ -11,14 +11,14 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-06-14 21:35-0400\n"
-"PO-Revision-Date: 2013-06-12 23:32-0300\n"
+"PO-Revision-Date: 2013-06-17 21:42-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.5\n"
+"X-Generator: Poedit 1.5.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -160,7 +160,7 @@ msgstr "variável de tendência temporal"
 
 #: lib/src/adf_kpss.c:831
 msgid "Invalid option"
-msgstr "Opção ilegal'"
+msgstr "Opção ilegal"
 
 #: lib/src/adf_kpss.c:862 lib/src/adf_kpss.c:1616 lib/src/boxplots.c:787
 #: lib/src/describe.c:1620 lib/src/describe.c:2913 lib/src/describe.c:3479
@@ -7352,7 +7352,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 12 de junho de 2013."
+"Tradução de 17 de junho de 2013."
 
 #: gui2/about.c:165
 msgid "License"
@@ -12034,14 +12034,12 @@ msgid "_Save text as..."
 msgstr "_Salvar texto como..."
 
 #: gui2/gui_utils.c:386
-#, fuzzy
 msgid "Save bundle to session as _icon"
-msgstr "Salvar para sessão como í_cone"
+msgstr "Salvar grupo (\"bundle\") para sessão como í_cone"
 
 #: gui2/gui_utils.c:388
-#, fuzzy
 msgid "Save bundle as icon and cl_ose"
-msgstr "Salvar c_omo ícone e sair"
+msgstr "Salvar grupo (\"bundle\") c_omo ícone e sair"
 
 #: gui2/gui_utils.c:393
 msgid "_Graph"
