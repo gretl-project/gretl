@@ -2351,9 +2351,6 @@ void libset_cleanup (void)
    state of the program calling libgretl, they are not user-settable
 */
 
-static int batch_mode;
-static int gui_mode;
-
 void set_loop_on (int quiet, int progressive)
 {
     state->flags |= STATE_LOOPING;
@@ -2426,24 +2423,46 @@ int gretl_looping_progressive (void)
     return (state->flags & STATE_LOOP_PROG)? 1 : 0;
 }
 
+static int batch_mode_switch (int set, int val)
+{
+    static int bmode;
+
+    if (set) {
+	bmode = val;
+    }
+
+    return bmode;
+}
+
 void gretl_set_batch_mode (int b)
 {
-    batch_mode = b;
+    batch_mode_switch(1, b);
 }
 
 int gretl_in_batch_mode (void)
 {
-    return batch_mode;
+    return batch_mode_switch(0, 0);
+}
+
+static int gui_mode_switch (int set, int val)
+{
+    static int gmode;
+
+    if (set) {
+	gmode = val;
+    }
+
+    return gmode;
 }
 
 void gretl_set_gui_mode (int g)
 {
-    gui_mode = g;
+    gui_mode_switch(1, g);
 }
 
 int gretl_in_gui_mode (void)
 {
-    return gui_mode;
+    return gui_mode_switch(0, 0);
 }
 
 /* mechanism to support callback for printing iteration info */

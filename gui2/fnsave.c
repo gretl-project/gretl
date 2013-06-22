@@ -19,6 +19,7 @@
 
 #include "gretl.h"
 #include "gretl_xml.h"
+#include "libset.h"
 #include "dlgutils.h"
 #include "datafiles.h"
 #include "textbuf.h"
@@ -520,9 +521,12 @@ int update_func_code (windata_t *vwin)
     err = pretest_funcname(text, funname);
 
     if (!err) {
+	int save_batch = gretl_in_batch_mode();
+
 	set_current_function_package(finfo->pkg);
 	err = execute_script(NULL, text, NULL, INCLUDE_EXEC);
 	set_current_function_package(NULL);
+	gretl_set_batch_mode(save_batch);
     }
 
     g_free(text);
