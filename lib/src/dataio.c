@@ -1961,9 +1961,20 @@ static int compare_ranges (const DATASET *targ,
 			   int *offset)
 {
     int ed0 = dateton(targ->endobs, targ);
-    int sd1 = merge_dateton(src->stobs, targ);
-    int ed1 = merge_dateton(src->endobs, targ);
-    int addobs = -1;
+    int sd1, ed1, addobs = -1;
+
+    if (dataset_is_cross_section(targ) &&
+	dataset_is_cross_section(src) &&
+	!targ->markers && !src->markers) {
+	/* we have no meaningful row information: just
+	   stick the new data onto the end 
+	*/
+	*offset = ed0 + 1;
+	return src->n;
+    }
+
+    sd1 = merge_dateton(src->stobs, targ);
+    ed1 = merge_dateton(src->endobs, targ);
 
 #if 0
     fprintf(stderr, "compare_ranges:\n"
@@ -2213,9 +2224,11 @@ static int merge_data (DATASET *dset, DATASET *addset,
     if (!err) {
 	if (!addsimple && !addpanel) {
 	    addobs = compare_ranges(dset, addset, &offset);
+	    fprintf(stderr, "addobs (1) = %d\n", addobs);
 	}
 	if (addobs <= 0 && addvars == 0) {
 	    addobs = just_append_rows(dset, addset, &offset);
+	    fprintf(stderr, "addobs (2) = %d\n", addobs);
 	}
     }
 
