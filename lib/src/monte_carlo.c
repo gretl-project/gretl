@@ -187,8 +187,6 @@ struct LOOPSET_ {
 #define loop_is_quiet(l)        (l->flags & LOOP_QUIET)
 #define loop_set_quiet(l)       (l->flags |= LOOP_QUIET)
 
-#define is_list_loop(l) (l->listname[0] != '\0')
-
 #define model_print_deferred(o) (o & OPT_F)
 
 static void controller_init (controller *clr);
