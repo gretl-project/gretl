@@ -2797,20 +2797,6 @@ static GENERATOR *get_loop_genr_by_line (LOOPSET *loop, int lno,
     return genr;
 }
 
-static GENERATOR *get_compiled_conditional (LOOPSET *loop, int lno)
-{
-    int i, ll;
-
-    for (i=0; i<loop->n_genrs; i++) {
-	ll = genr_get_loopline(loop->genrs[i]);
-	if (ll == lno) {
-	    return loop->genrs[i];
-	}
-    }
-
-    return NULL;
-}
-
 static int loop_print_save_model (MODEL *pmod, DATASET *dset,
 				  PRN *prn, ExecState *s)
 {
@@ -2994,7 +2980,11 @@ static int conditional_line (LOOPSET *loop, int j)
     return loop->cmds[j].ci == IF || loop->cmds[j].ci == ELIF;
 }
 
-static int compile_conditional (LOOPSET *loop, int j)
+#define COMPILE_IF 1
+
+#if COMPILE_IF 
+
+static int do_compile_conditional (LOOPSET *loop, int j)
 {
     if ((loop->cmds[j].ci == IF || loop->cmds[j].ci == ELIF) &&
 	loop_cmd_nodol(loop, j) && loop_cmd_nosub(loop, j)) {
@@ -3002,7 +2992,23 @@ static int compile_conditional (LOOPSET *loop, int j)
     } else {
 	return 0;
     }
-}	
+}
+
+static GENERATOR *get_compiled_conditional (LOOPSET *loop, int lno)
+{
+    int i, ll;
+
+    for (i=0; i<loop->n_genrs; i++) {
+	ll = genr_get_loopline(loop->genrs[i]);
+	if (ll == lno) {
+	    return loop->genrs[i];
+	}
+    }
+
+    return NULL;
+}
+
+#endif	
 
 static int block_model (CMD *cmd)
 {
@@ -3073,7 +3079,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	}
 
 	while (!err && loop_next_command(line, loop, &j)) {
+#if COMPILE_IF
 	    GENERATOR *ifgen = NULL;
+#endif
 	    int subst = 0;
 
 #if LOOP_DEBUG
@@ -3129,11 +3137,11 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	       for "if" or "elif" conditions that may be already
 	       compiled, or that should now be compiled
 	    */
-#if 0
+#if COMPILE_IF
 	    if (conditional_compiled(loop, j)) {
 		ifgen = get_compiled_conditional(loop, j);
 		err = parse_command_line(line, cmd, dset, &ifgen);
-	    } else if (compile_conditional(loop, j)) {
+	    } else if (do_compile_conditional(loop, j)) {
 		err = parse_command_line(line, cmd, dset, &ifgen);
 		if (!err && ifgen != NULL) {
 		    err = add_loop_genr(loop, ifgen, j, LOOP_CMD_COND);
