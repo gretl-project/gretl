@@ -2912,7 +2912,7 @@ static int conditional_line (LOOPSET *loop, int j)
     return loop->cmds[j].ci == IF || loop->cmds[j].ci == ELIF;
 }
 
-#define COMPILE_IF 0 /* needs some more work */
+#define COMPILE_IF 0 /* needs some more work! */
 
 #if COMPILE_IF 
 

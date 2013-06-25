@@ -74,6 +74,9 @@ static int if_eval (const char *s, DATASET *dset, void *ptr, int *err)
     }
 
     if (ifgen != NULL) {
+#if 0
+	fprintf(stderr, "if_eval: using ifgen at %p (%s)\n", (void *) ifgen, s);
+#endif
 	val = evaluate_if_cond(ifgen, dset, err);
     } else {
 	*err = 0;
