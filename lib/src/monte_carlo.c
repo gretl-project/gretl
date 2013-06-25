@@ -114,12 +114,13 @@ struct controller_ {
 typedef struct controller_ controller;
 
 enum loop_command_codes {
-    LOOP_CMD_GEN     = 1 << 0, /* compiled genr */
+    LOOP_CMD_GENR    = 1 << 0, /* compiled "genr" */
     LOOP_CMD_LIT     = 1 << 1, /* literal printing */
     LOOP_CMD_NODOL   = 1 << 2, /* no $-substitution this line */
     LOOP_CMD_NOSUB   = 1 << 3, /* no @-substitution this line */
     LOOP_CMD_NOOPT   = 1 << 4, /* no option flags in this line */
-    LOOP_CMD_CATCH   = 1 << 5  /* "catch" flag present */
+    LOOP_CMD_CATCH   = 1 << 5, /* "catch" flag present */
+    LOOP_CMD_COND    = 1 << 6  /* compiled conditional */
 };
 
 struct loop_command_ {
@@ -2745,7 +2746,8 @@ static LOOPSET *get_child_loop_by_line (LOOPSET *loop, int lno)
     return NULL;
 }
 
-static int add_loop_genr (LOOPSET *loop, GENERATOR *genr, int lno)
+static int add_loop_genr (LOOPSET *loop, GENERATOR *genr, int lno,
+			  int flag)
 {
     GENERATOR **genrs;
     int n = loop->n_genrs;
@@ -2759,7 +2761,7 @@ static int add_loop_genr (LOOPSET *loop, GENERATOR *genr, int lno)
     loop->genrs[n] = genr;
     loop->n_genrs = n + 1;
     genr_set_loopline(genr, lno);
-    loop->cmds[lno].flags |= LOOP_CMD_GEN;
+    loop->cmds[lno].flags |= flag;
 
     return 0;
 }
@@ -2789,10 +2791,24 @@ static GENERATOR *get_loop_genr_by_line (LOOPSET *loop, int lno,
 	fprintf(stderr, "compiled genr on line %d of loop %p:\n"
 		" '%s'\n", lno, (void *) loop, line);
 #endif
-	*err = add_loop_genr(loop, genr, lno);
+	*err = add_loop_genr(loop, genr, lno, LOOP_CMD_GENR);
     }
 
     return genr;
+}
+
+static GENERATOR *get_compiled_conditional (LOOPSET *loop, int lno)
+{
+    int i, ll;
+
+    for (i=0; i<loop->n_genrs; i++) {
+	ll = genr_get_loopline(loop->genrs[i]);
+	if (ll == lno) {
+	    return loop->genrs[i];
+	}
+    }
+
+    return NULL;
 }
 
 static int loop_print_save_model (MODEL *pmod, DATASET *dset,
@@ -2834,11 +2850,12 @@ static int loop_next_command (char *targ, LOOPSET *loop, int *pj)
     return ret;
 }
 
-#define genr_compiled(l,j) (l->cmds[j].flags & LOOP_CMD_GEN)
+#define genr_compiled(l,j) (l->cmds[j].flags & LOOP_CMD_GENR)
 #define loop_cmd_nodol(l,j) (l->cmds[j].flags & LOOP_CMD_NODOL)
 #define loop_cmd_nosub(l,j) (l->cmds[j].flags & LOOP_CMD_NOSUB)
 #define loop_cmd_noopt(l,j) (l->cmds[j].flags & LOOP_CMD_NOOPT)
 #define loop_cmd_catch(l,j) (l->cmds[j].flags & LOOP_CMD_CATCH)
+#define conditional_compiled(l,j) (l->cmds[j].flags & LOOP_CMD_COND)
 
 static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 {
@@ -2857,10 +2874,10 @@ static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
     return err;
 }
 
-/* based on the stored flags in the loop-line record, set
+/* Based on the stored flags in the loop-line record, set
    or unset some flags for the command parser: this can 
    reduce the amount of work the parser has to do on each
-   iteration of a loop
+   iteration of a loop.
 */
 
 static inline void loop_info_to_cmd (LOOPSET *loop, int j,
@@ -2883,7 +2900,7 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
 	/* tell parser not to try for option flags */
 	cmd->flags |= CMD_NOOPT;
 	/* since the cmd->opt is (or can be) persistent, we
-	   should zero it */
+	   should zero it here */
 	cmd->opt = OPT_NONE;
     } else {
 	cmd->flags &= ~CMD_NOOPT;
@@ -2896,14 +2913,17 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
     }
 }
 
-/* based on the parsed info in @cmd, maybe write some flags to
-   the current loop-line record
+/* Based on the parsed info in @cmd, maybe modify some flags in
+   the current loop-line record.
 */
 
 static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 				     CMD *cmd, int *subst)
 {
     if (!loop_cmd_nosub(loop, j)) {
+	/* this loop line has not already been marked as
+	   free of @-substitution
+	*/
 	if (cmd_subst(cmd)) {
 	    *subst = 1;
 	} else {
@@ -2967,6 +2987,21 @@ static int loop_report_error (LOOPSET *loop, int err,
     }
 
     return err;
+}
+
+static int conditional_line (LOOPSET *loop, int j)
+{
+    return loop->cmds[j].ci == IF || loop->cmds[j].ci == ELIF;
+}
+
+static int compile_conditional (LOOPSET *loop, int j)
+{
+    if ((loop->cmds[j].ci == IF || loop->cmds[j].ci == ELIF) &&
+	loop_cmd_nodol(loop, j) && loop_cmd_nosub(loop, j)) {
+	return 1;
+    } else {
+	return 0;
+    }
 }	
 
 static int block_model (CMD *cmd)
@@ -3024,7 +3059,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
     
     while (!err && loop_condition(loop, dset, &err)) {
 #if LOOP_DEBUG
-	fprintf(stderr, "top of loop: iter = %d\n", loop->iter);
+	fprintf(stderr, "*** top of loop: iter = %d\n", loop->iter);
 #endif
 	lrefresh = 0;
 	j = -1;
@@ -3038,6 +3073,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	}
 
 	while (!err && loop_next_command(line, loop, &j)) {
+	    GENERATOR *ifgen = NULL;
 	    int subst = 0;
 
 #if LOOP_DEBUG
@@ -3071,12 +3107,17 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		}
 	    }
 
-	    if (!loop_cmd_nodol(loop, j) && strchr(line, '$')) {
-		err = make_dollar_substitutions(line, MAXLINE, loop, 
-						dset, &subst, OPT_NONE);
-		if (err) {
-		    break;
-		} else if (!subst) {
+	    if (!loop_cmd_nodol(loop, j)) {
+		if (strchr(line, '$')) {
+		    /* handle loop-specific $-string substitution */
+		    err = make_dollar_substitutions(line, MAXLINE, loop, 
+						    dset, &subst, OPT_NONE);
+		    if (err) {
+			break;
+		    } else if (!subst) {
+			loop->cmds[j].flags |= LOOP_CMD_NODOL;
+		    }
+		} else {
 		    loop->cmds[j].flags |= LOOP_CMD_NODOL;
 		}
 	    }
@@ -3084,10 +3125,25 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    /* transcribe loop -> cmd */
 	    loop_info_to_cmd(loop, j, cmd);
 
-	    /* We already have the "ci" index recorded, but here
-	       we do some further parsing. 
+	    /* call the full command parser, with special treatment
+	       for "if" or "elif" conditions that may be already
+	       compiled, or that should now be compiled
 	    */
-	    err = parse_command_line(line, cmd, dset);
+#if 0
+	    if (conditional_compiled(loop, j)) {
+		ifgen = get_compiled_conditional(loop, j);
+		err = parse_command_line(line, cmd, dset, &ifgen);
+	    } else if (compile_conditional(loop, j)) {
+		err = parse_command_line(line, cmd, dset, &ifgen);
+		if (!err && ifgen != NULL) {
+		    err = add_loop_genr(loop, ifgen, j, LOOP_CMD_COND);
+		}
+	    } else {
+		err = parse_command_line(line, cmd, dset, NULL);
+	    }
+#else
+	    err = parse_command_line(line, cmd, dset, NULL);
+#endif
 
 #if LOOP_DEBUG
 	    fprintf(stderr, "    after: '%s'\n", line);
@@ -3096,6 +3152,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 #endif
 
 	    if (cmd->ci < 0) {
+		if (conditional_line(loop, j)) {
+		    cmd_info_to_loop(loop, j, cmd, &subst);
+		}
 		continue;
 	    } else if (err) {
 		err = loop_process_error(loop, j, err, prn);

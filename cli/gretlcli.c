@@ -871,7 +871,7 @@ static int exec_line (ExecState *s, DATASET *dset)
 	/* if we're stacking commands for a loop, parse "lightly" */
 	err = get_command_index(line, cmd);
     } else {
-	err = parse_command_line(line, cmd, dset);
+	err = parse_command_line(line, cmd, dset, NULL);
     }
 
     if (err) {

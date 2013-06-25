@@ -6365,7 +6365,7 @@ static int debug_command_loop (ExecState *state,
 	}
 
 	err = parse_command_line(state->line, state->cmd, 
-				 dset);
+				 dset, NULL);
 	if (err) {
 	    if (!strcmp(state->line, "c")) {
 		/* short for 'continue' */

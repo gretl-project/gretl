@@ -41,6 +41,7 @@ enum {
 
 static int if_eval (const char *s, DATASET *dset, void *ptr, int *err)
 {
+    GENERATOR *ifgen = NULL;
     double val = NADBL;
     int ret = -1;
 
@@ -56,17 +57,31 @@ static int if_eval (const char *s, DATASET *dset, void *ptr, int *err)
 
     while (*s == ' ') s++;
 
-#if 0
-    if (ptr != NULL) 
-	fprintf(stderr, "if_eval: ptr = %p\n", ptr);
-#endif
+    if (ptr != NULL) {
+	/* We're being called from a loop, with the implicit
+	   request that the if-condition be "compiled" (if
+	   that's not already done) and subsequently executed
+	   without having to be evaluated from scratch.
+	*/
+	ifgen = *(GENERATOR **) ptr;
 
-    val = generate_scalar(s, dset, err);
+	if (ifgen == NULL) {
+	    /* generator not compiled yet: do it now */
+	    GENERATOR **pgen = (GENERATOR **) ptr;
+
+	    *pgen = ifgen = genr_compile(s, dset, OPT_P | OPT_S, err);
+	}
+    }
+
+    if (ifgen != NULL) {
+	val = evaluate_if_cond(ifgen, dset, err);
+    } else {
+	*err = 0;
+	val = generate_scalar(s, dset, err);
+    }
 
 #if IFDEBUG
-    if (err) {
-	fprintf(stderr, "if_eval: generate returned %d\n", *err);
-    }
+    fprintf(stderr, "if_eval: generate returned %d\n", *err);
 #endif
 
     if (*err) {
@@ -269,7 +284,7 @@ int flow_control (const char *line, DATASET *dset, CMD *cmd,
 
     blocked = get_if_state(IS_FALSE);
 
-    if (ci != IF && ci != ELSE && ci != ENDIF) {
+    if (ci != IF && ci != ELSE && ci != ELIF && ci != ENDIF) {
 	return blocked;
     }
 
@@ -284,7 +299,7 @@ int flow_control (const char *line, DATASET *dset, CMD *cmd,
 	}
     } else if (ci == ENDIF) {
 	err = set_if_state(SET_ENDIF);
-    } else if (ci == ELSE && (cmd->opt & OPT_I)) {
+    } else if (ci == ELIF) {
 	err = set_if_state(SET_ELIF);
 	if (!err && get_if_state(IS_TRUE)) {
 	    set_if_state(UNINDENT);

@@ -219,8 +219,8 @@ static void deprecate_alias (const char *targ, const char *repl)
 			  targ, repl);
 }
 
-/* catch aliased command words and assign ci; return
-   ci if alias caught, else 0. */
+/* catch aliased command words and assign cmd->ci; return
+   cmd->ci if alias caught, else 0. */
 
 static int catch_command_alias (char *line, CMD *cmd)
 {
@@ -276,9 +276,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 	}
     } else if (*s == '!' || !strcmp(s, "launch")) {
 	cmd->ci = SHELL;
-    } else if (!strcmp(s, "elif")) {
-	cmd->ci = ELSE;
-	cmd->opt = OPT_I;
     } else if (!strcmp(s, "addobs")) {
 	char *tmp = gretl_strdup(line);
 
@@ -2500,13 +2497,15 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
  * @line: the command line.
  * @cmd: pointer to command struct.
  * @dset: dataset struct.
+ * @ptr: pointer for use with "compilation" of
+ * conditionals in loops.
  *
  * Parses @line and fills out @cmd accordingly. 
  *
  * Returns: 0 on success, non-zero code on error.
  */
 
-int parse_command_line (char *line, CMD *cmd, DATASET *dset) 
+int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr) 
 {
     int nf, subst = 0;
     char *rem = NULL;
@@ -2638,24 +2637,11 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
     fprintf(stderr, "cmd->ci = %d\n", cmd->ci);
 #endif
 
-    if (!cmd->err) {
-	/* begin experimental */
-	void *ptr = NULL;
-	int x = 3;
-
-	if (cmd->ci == IF || (cmd->ci == ELSE && (cmd->opt & OPT_I))) {
-	    if (gretl_looping_currently() && !(cmd->flags & CMD_SUBST)) {
-		ptr = &x;
-	    }
-	}
-	/* end experimental */
-
-	/* if, else, endif controls: should this come earlier? */
-	if (flow_control(line, dset, cmd, ptr)) {
-	    cmd_set_nolist(cmd);
-	    cmd->ci = CMD_MASKED;
-	    return cmd->err;
-	}
+    /* if, else, endif controls: should this come earlier? */
+    if (flow_control(line, dset, cmd, ptr)) {
+	cmd_set_nolist(cmd);
+	cmd->ci = CMD_MASKED;
+	return cmd->err;
     }
 
     /* special: list <listname> delete */
@@ -6081,7 +6067,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset)
     if (gretl_compiling_loop()) { 
 	err = get_command_index(s->line, s->cmd);
     } else {
-	err = parse_command_line(s->line, s->cmd, dset);
+	err = parse_command_line(s->line, s->cmd, dset, NULL);
     }
 
     if (err) {

@@ -398,7 +398,7 @@ int parse_lib_command (void)
     fprintf(stderr, "parse_lib_command: '%s'\n", libline);
 #endif
 
-    err = parse_command_line(libline, &libcmd, dataset); 
+    err = parse_command_line(libline, &libcmd, dataset, NULL); 
     if (err) {
 	gui_errmsg(err);
     } 
@@ -418,7 +418,7 @@ static int *command_list_from_string (char *s)
     err = gretl_cmd_init(&mycmd);
 
     if (!err) {
-	err = parse_command_line(s, &mycmd, dataset);
+	err = parse_command_line(s, &mycmd, dataset, NULL);
 	if (!err) {
 	    list = gretl_list_copy(mycmd.list);
 	}
@@ -8412,7 +8412,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	/* when stacking commands for a loop, parse "lightly" */
 	err = get_command_index(line, cmd);
     } else {
-	err = parse_command_line(line, cmd, dset);
+	err = parse_command_line(line, cmd, dset, NULL);
     }
 
 #if CMD_DEBUG

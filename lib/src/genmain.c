@@ -851,6 +851,10 @@ parser *genr_compile (const char *s, DATASET *dset,
 	flags |= P_UFUN;
     }
 
+    if (opt & OPT_S) {
+	flags |= P_SCALAR;
+    }
+
     *err = realgen(s, p, dset, NULL, flags);
 
     if (*err) {
@@ -888,6 +892,38 @@ int execute_genr (parser *p, DATASET *dset, PRN *prn)
 #endif
 
     return p->err;
+}
+
+double evaluate_if_cond (parser *p, DATASET *dset, int *err)
+{
+    double x = NADBL;
+
+    *err = realgen(NULL, p, dset, NULL, 
+		   P_EXEC | P_SCALAR | P_PRIVATE);
+
+    if (!*err) {
+	if (p->ret->t == MAT) {
+	    gretl_matrix *m = p->ret->v.m;
+
+	    if (gretl_matrix_is_scalar(m)) {
+		x = p->ret->v.m->val[0];
+	    } else if (!gretl_is_null_matrix(m)) {
+		fprintf(stderr, "generate_scalar: got %d x %d matrix\n",
+			m->rows, m->cols);
+		*err = E_TYPES;
+	    }
+	} else if (p->ret->t == NUM) {
+	    x = p->ret->v.xval;
+	} else {
+	    *err = E_TYPES;
+	}
+    } else if (*err == 1) {
+	*err = E_PARSE;
+    }
+
+    gen_cleanup(p);
+
+    return x;
 }
 
 /* destroy a previously compiled generator */
