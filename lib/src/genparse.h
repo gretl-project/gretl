@@ -543,12 +543,11 @@ enum {
     P_LHBUN   = 1 << 21, /* there was a pre-existing LHS bundle */
     P_QUIET   = 1 << 22, /* don't print any messages or labels */
     P_GETSTR  = 1 << 23, /* state: flag acceptance of plain strings */
-    P_LOOP    = 1 << 24, /* executing pre-built genr in loop context */
-    P_SLAVE   = 1 << 25, /* running as "slave" of NLS/MLE/GMM */
-    P_LHPTR   = 1 << 26, /* left-hand side: pointer type wanted */
-    P_MMASK   = 1 << 27, /* genr result is masked matrix */
-    P_SLICING = 1 << 28, /* calculating matrix slice (temporary) */
-    P_LAGPRSE = 1 << 29  /* parsing lag spec (temporary) */
+    P_SLAVE   = 1 << 24, /* running as "slave" of NLS/MLE/GMM */
+    P_LHPTR   = 1 << 25, /* left-hand side: pointer type wanted */
+    P_MMASK   = 1 << 26, /* genr result is masked matrix */
+    P_SLICING = 1 << 27, /* calculating matrix slice (temporary) */
+    P_LAGPRSE = 1 << 28  /* parsing lag spec (temporary) */
 };
 
 struct lhinfo {
@@ -581,7 +580,6 @@ struct parser_ {
     NODE **aux;        /* auxiliary nodes used in evaluation */
     int n_aux;         /* the number of the above */
     int aux_i;         /* the current ID of the above */
-    int loopline;      /* line number within loop, if applicable */
     /* below: parser state variables */
     int obs;
     int sym;

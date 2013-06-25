@@ -145,10 +145,6 @@ int execute_genr (GENERATOR *genr, DATASET *dset, PRN *prn);
 
 void destroy_genr (GENERATOR *genr);
 
-void genr_set_loopline (GENERATOR *genr, int i);
-
-int genr_get_loopline (GENERATOR *genr);
-
 int genr_get_output_type (const GENERATOR *genr);
 
 int genr_get_output_varnum (const GENERATOR *genr);

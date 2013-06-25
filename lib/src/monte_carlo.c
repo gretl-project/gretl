@@ -127,6 +127,7 @@ struct loop_command_ {
     char *line;
     int ci;
     char flags;
+    GENERATOR *genr;
 };
 
 typedef struct loop_command_ loop_command;
@@ -164,13 +165,11 @@ struct LOOPSET_ {
     int n_models;
     int n_loop_models;
     int n_prints;
-    int n_genrs;
     int n_children;
 
     /* subsidiary objects */
     loop_command *cmds;   /* saved command info */
     char **eachstrs;      /* for use with "foreach" loop */
-    GENERATOR **genrs;    /* saved genr trees */
     MODEL **models;       /* regular model pointers */
     int *model_lines;     
     LOOP_MODEL *lmodels;
@@ -477,9 +476,6 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->n_loop_models = 0;
     loop->n_prints = 0;
 
-    loop->n_genrs = 0;
-    loop->genrs = NULL;
-
     loop->cmds = NULL;
     loop->model_lines = NULL;
 
@@ -540,6 +536,9 @@ static void gretl_loop_destroy (LOOPSET *loop)
     if (loop->cmds != NULL) {
 	for (i=0; i<loop->n_cmds; i++) {
 	    free(loop->cmds[i].line);
+	    if (loop->cmds[i].genr != NULL) {
+		destroy_genr(loop->cmds[i].genr);
+	    }	    
 	}
 	free(loop->cmds);
     }
@@ -569,11 +568,6 @@ static void gretl_loop_destroy (LOOPSET *loop)
     }
 
     loop_store_free(&loop->store);
-
-    for (i=0; i<loop->n_genrs; i++) {
-	destroy_genr(loop->genrs[i]);
-    }
-    free(loop->genrs);    
 
     if (loop->children != NULL) {
 	free(loop->children);
@@ -838,6 +832,7 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
     int err = 0;
 
     if (strchr(loop->listname, '$') != NULL) {
+	/* $-string substitution required */
 	char lname[VNAMELEN];
 
 	strcpy(lname, loop->listname);
@@ -847,12 +842,14 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 	    list = get_list_by_name(lname);
 	}
     } else if (*loop->listname == '@') {
+	/* @-string substitution required */
 	const char *s = get_string_by_name(loop->listname + 1);
 
 	if (s != NULL && strlen(s) < VNAMELEN) {
 	    list = get_list_by_name(s);
 	}
     } else {
+	/* no string substitution needed */
 	list = get_list_by_name(loop->listname);
     }
 
@@ -1399,6 +1396,7 @@ static void loop_cmds_init (LOOPSET *loop, int i1, int i2)
 	loop->cmds[i].line = NULL;
 	loop->cmds[i].ci = 0;
 	loop->cmds[i].flags = 0;
+	loop->cmds[i].genr = NULL;
     }
 }
 
@@ -2612,7 +2610,7 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
 
     loop->iter = 0;
 
-    if (is_list_loop(loop)) {
+    if (loop->listname[0] != '\0') {
 	err = loop_list_refresh(loop, dset);
     } else if (loop->type == INDEX_LOOP) {
 	loop->init.val = controller_get_val(&loop->init, loop, dset, &err);
@@ -2706,33 +2704,6 @@ make_dollar_substitutions (char *str, int maxlen,
     return err;
 }
 
-/* Check for the name of the list that's defining the loop
-   appearing on the left-hand side of a genr-type expression:
-   if so, we'd better refresh the loop-controller.
-*/
-
-static inline int maybe_refresh_list (CMD *cmd, const LOOPSET *loop,
-				      const char *line)
-{
-    if (cmd->ci == GENR) {
-	char *p = strstr(line, loop->listname);
-
-	if (p != NULL) {
-	    int n = strlen(loop->listname);
-
-	    if (n == gretl_namechar_spn(p)) {
-		char *q = strchr(line, '=');
-		
-		if (q != NULL && q - p > 0) {
-		    return 1;
-		}
-	    }
-	}
-    }
-
-    return 0;
-}
-
 static LOOPSET *get_child_loop_by_line (LOOPSET *loop, int lno)
 {
     int i;
@@ -2746,55 +2717,18 @@ static LOOPSET *get_child_loop_by_line (LOOPSET *loop, int lno)
     return NULL;
 }
 
-static int add_loop_genr (LOOPSET *loop, GENERATOR *genr, int lno,
-			  int flag)
+static int add_loop_genr (LOOPSET *loop, int lno, 
+			  const char *line, 
+			  DATASET *dset)
 {
-    GENERATOR **genrs;
-    int n = loop->n_genrs;
+    int err = 0;
 
-    genrs = realloc(loop->genrs, (n+1) * sizeof *genrs);
-    if (genrs == NULL) {
-	return E_ALLOC;
-    } 
-
-    loop->genrs = genrs;
-    loop->genrs[n] = genr;
-    loop->n_genrs = n + 1;
-    genr_set_loopline(genr, lno);
-    loop->cmds[lno].flags |= flag;
-
-    return 0;
-}
-
-static GENERATOR *get_loop_genr_by_line (LOOPSET *loop, int lno, 
-					 const char *line, 
-					 DATASET *dset,
-					 int *err)
-{
-    GENERATOR *genr;
-    int i, ll;
-
-    for (i=0; i<loop->n_genrs; i++) {
-	ll = genr_get_loopline(loop->genrs[i]);
-	if (ll == lno) {
-#if LOOP_DEBUG > 1
-	    fprintf(stderr, "retrieving loop genr %d\n", i);
-#endif
-	    return loop->genrs[i];
-	}
+    loop->cmds[lno].genr = genr_compile(line, dset, OPT_NONE, &err);
+    if (!err) {
+	loop->cmds[lno].flags |= LOOP_CMD_GENR;
     }
 
-    genr = genr_compile(line, dset, OPT_NONE, err);
-
-    if (!*err) {
-#if LOOP_DEBUG > 1
-	fprintf(stderr, "compiled genr on line %d of loop %p:\n"
-		" '%s'\n", lno, (void *) loop, line);
-#endif
-	*err = add_loop_genr(loop, genr, lno, LOOP_CMD_GENR);
-    }
-
-    return genr;
+    return err;
 }
 
 static int loop_print_save_model (MODEL *pmod, DATASET *dset,
@@ -2980,7 +2914,7 @@ static int conditional_line (LOOPSET *loop, int j)
     return loop->cmds[j].ci == IF || loop->cmds[j].ci == ELIF;
 }
 
-#define COMPILE_IF 1
+#define COMPILE_IF 0 /* needs some more work */
 
 #if COMPILE_IF 
 
@@ -2992,20 +2926,6 @@ static int do_compile_conditional (LOOPSET *loop, int j)
     } else {
 	return 0;
     }
-}
-
-static GENERATOR *get_compiled_conditional (LOOPSET *loop, int lno)
-{
-    int i, ll;
-
-    for (i=0; i<loop->n_genrs; i++) {
-	ll = genr_get_loopline(loop->genrs[i]);
-	if (ll == lno) {
-	    return loop->genrs[i];
-	}
-    }
-
-    return NULL;
 }
 
 #endif	
@@ -3025,7 +2945,6 @@ static int block_model (CMD *cmd)
 
 int gretl_loop_exec (ExecState *s, DATASET *dset) 
 {
-    GENERATOR *genr;
     LOOPSET *loop = currloop;
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -3034,7 +2953,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
     LOOP_MODEL *lmod;
     LOOP_PRINT *lprn;
     char errline[MAXLINE];
-    int indent0, lrefresh;
+    int indent0;
     int show_activity = 0;
     int j, err = 0;
 
@@ -3067,7 +2986,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 #if LOOP_DEBUG
 	fprintf(stderr, "*** top of loop: iter = %d\n", loop->iter);
 #endif
-	lrefresh = 0;
 	j = -1;
 
 	pmod = NULL;
@@ -3079,9 +2997,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	}
 
 	while (!err && loop_next_command(line, loop, &j)) {
-#if COMPILE_IF
-	    GENERATOR *ifgen = NULL;
-#endif
 	    int subst = 0;
 
 #if LOOP_DEBUG
@@ -3091,22 +3006,16 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    strcpy(errline, line);
 
 	    if (!gretl_if_state_false() && genr_compiled(loop, j)) {
-		/* if the current line already has "compiled genr" status,
+		/* If the current line already has "compiled genr" status,
 		   we should be able to skip several steps that are
-		   potentially quite time-consuming 
+		   potentially quite time-consuming.
 		*/
 		if (gretl_echo_on() && !loop_is_quiet(loop)) {
 		    pprintf(prn, "? %s\n", line);
 		}
-		genr = get_loop_genr_by_line(loop, j, line, dset, &err);
-		if (!err) {
-		    err = execute_genr(genr, dset, prn);
-		}
+		err = execute_genr(loop->cmds[j].genr, dset, prn);
 		if (err) {
 		    err = loop_process_error(loop, j, err, prn);
-		} else if (is_list_loop(loop) && 
-			   maybe_refresh_list(cmd, loop, line)) {
-		    loop_list_refresh(loop, dset);
 		}
 		if (err) {
 		    break;
@@ -3139,12 +3048,14 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    */
 #if COMPILE_IF
 	    if (conditional_compiled(loop, j)) {
-		ifgen = get_compiled_conditional(loop, j);
-		err = parse_command_line(line, cmd, dset, &ifgen);
+		err = parse_command_line(line, cmd, dset, &loop->cmds[j].genr);
 	    } else if (do_compile_conditional(loop, j)) {
+		GENERATOR *ifgen = NULL;
+
 		err = parse_command_line(line, cmd, dset, &ifgen);
-		if (!err && ifgen != NULL) {
-		    err = add_loop_genr(loop, ifgen, j, LOOP_CMD_COND);
+		if (ifgen != NULL) {
+		    loop->cmds[j].genr = ifgen;
+		    loop->cmds[j].flags |= LOOP_CMD_COND;
 		}
 	    } else {
 		err = parse_command_line(line, cmd, dset, NULL);
@@ -3174,10 +3085,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    } else {
 		gretl_exec_state_transcribe_flags(s, cmd);
 		cmd_info_to_loop(loop, j, cmd, &subst);
-	    }
-
-	    if (is_list_loop(loop) && maybe_refresh_list(cmd, loop, line)) {
-		lrefresh = 1;
 	    }
 
 	    if (gretl_echo_on()) {
@@ -3263,9 +3170,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		    }
 		    err = generate(line, dset, cmd->opt, prn);
 		} else {
-		    genr = get_loop_genr_by_line(loop, j, line, dset, &err);
+		    err = add_loop_genr(loop, j, line, dset);
 		    if (!err) {
-			err = execute_genr(genr, dset, prn);
+			err = execute_genr(loop->cmds[j].genr, dset, prn);
 		    }
 		}
 	    } else if (cmd->ci == DELEET && !(cmd->opt & (OPT_F | OPT_T))) {
@@ -3309,8 +3216,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    if (indexed_loop(loop)) {
 		loop->idxval += 1;
 		gretl_scalar_set_value(loop->idxname, loop->idxval);
-	    } else if (lrefresh) {
-		loop_list_refresh(loop, dset);
 	    }
 	    if (show_activity && (loop->iter % 10 == 0)) {
 		show_activity_callback();

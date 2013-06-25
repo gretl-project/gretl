@@ -975,9 +975,11 @@ const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags)
 	if (ptype == PLOT_MULTI_SCATTER) {
 	    ptsize = 6;
 	}
+#ifndef WIN32
 	if (gnuplot_get_version() <= 4.4) {
 	    ptsize /= 2;
 	}
+#endif
 	sprintf(pdf_term_line, "set term pdfcairo font \"sans,%d\"", 
 		ptsize);
     } else {

@@ -945,20 +945,6 @@ void destroy_genr (parser *p)
     }
 }
 
-void genr_set_loopline (parser *p, int i)
-{
-    p->loopline = i;
-}
-
-int genr_get_loopline (parser *p)
-{
-    if (p == NULL) {
-	return -1;
-    } else {
-	return p->loopline;
-    }
-}
-
 int genr_get_output_type (const parser *p)
 {
     int t = GRETL_TYPE_NONE;

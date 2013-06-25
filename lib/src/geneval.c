@@ -11983,7 +11983,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     /* flags that should be reinstated if they were
        present at compile time */
     int repflags[] = { P_PRINT, P_NATEST, P_AUTOREG,
-		       P_LOOP, P_SLAVE, P_SLICE, P_UFUN,
+		       P_SLAVE, P_SLICE, P_UFUN,
 		       P_LHPTR, P_DISCARD, 0 };
     int i, saveflags = p->flags;
 
