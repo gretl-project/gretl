@@ -2638,11 +2638,24 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
     fprintf(stderr, "cmd->ci = %d\n", cmd->ci);
 #endif
 
-    /* if, else, endif controls: should this come earlier? */
-    if (flow_control(line, dset, cmd)) {
-	cmd_set_nolist(cmd);
-	cmd->ci = CMD_MASKED;
-	return cmd->err;
+    if (!cmd->err) {
+	/* begin experimental */
+	void *ptr = NULL;
+	int x = 3;
+
+	if (cmd->ci == IF || (cmd->ci == ELSE && (cmd->opt & OPT_I))) {
+	    if (gretl_looping_currently() && !(cmd->flags & CMD_SUBST)) {
+		ptr = &x;
+	    }
+	}
+	/* end experimental */
+
+	/* if, else, endif controls: should this come earlier? */
+	if (flow_control(line, dset, cmd, ptr)) {
+	    cmd_set_nolist(cmd);
+	    cmd->ci = CMD_MASKED;
+	    return cmd->err;
+	}
     }
 
     /* special: list <listname> delete */
