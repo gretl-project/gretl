@@ -4626,12 +4626,14 @@ static int lib_join_data (ExecState *s,
     p += strspn(p, " \"");
     if (*p == '\0') {
 	return E_ARGS;
+    } else if (strlen(p) != gretl_namechar_spn(p)) {
+	return E_PARSE;
     }
 
     time_opt = (opt & (OPT_R | OPT_T | OPT_K)) != 0;
 
     varname = gretl_strdup(p);
-
+    
     if (current_series_index(dset, varname) < 0) {
 	err = check_varname(varname);
 	if (!err && gretl_type_from_name(varname, NULL)) {

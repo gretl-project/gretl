@@ -1089,29 +1089,39 @@ static int handle_optval (char *s, int ci, gretlopt opt, int status)
 {
     char *p = s + 1; /* skip '=' */
     char *val = NULL;
-    int quoted = 0;
-    int n, err = 0;
+    int len = 0, quoted = 0;
+    int err = 0;
 
     if (*p == '"') {
 	/* handle a quoted value (e.g. a filename) */
 	quoted = 1;
 	p++;
-	n = strcspn(p, "\"");
-	if (n > 0 && *(p + n) == '"') {
-	    val = gretl_strndup(p, n);
+	len = strcspn(p, "\"");
+	if (len > 0 && *(p + len) == '"') {
+	    val = gretl_strndup(p, len);
 	} else {
 	    err = E_PARSE;
 	}
     } else if (*p != '\0') {
 	/* plain unquoted value */
-	n = strcspn(p, " =");
-	if (n > 0) {
-	    val = gretl_strndup(p, n);
+	len = strcspn(p, " =");
+	if (len > 0) {
+	    val = gretl_strndup(p, len);
 	} else {
 	    err = E_PARSE;
 	}
     } else {
 	err = E_PARSE;
+    }
+
+    if (!err) {
+	/* there shouldn't be anything "stuck onto" the end of
+	   an option parameter */
+	p += len + quoted;
+	if (*p != '\0' && *p != ' ') {
+	    gretl_errmsg_sprintf("got invalid field '%s'\n", p);
+	    err = E_PARSE;
+	}
     }
 
 #if OPTDEBUG
@@ -1134,7 +1144,7 @@ static int handle_optval (char *s, int ci, gretlopt opt, int status)
     if (err) {
 	free(val);
     } else {
-	gretl_delete(s, 0, 1 + strlen(val) + 2 * quoted);
+	gretl_delete(s, 0, 1 + len + 2 * quoted);
     }
 
     return err;
@@ -1302,8 +1312,7 @@ gretlopt get_gretl_options (char *line, int *err)
 	*err = 0;
     }
 
-    if (strlen(line) < 2 || *line == '#' ||
-	strchr(line, '-') == NULL) {
+    if (strlen(line) < 2 || *line == '#' || strchr(line, '-') == NULL) {
 	return 0;
     }
 
