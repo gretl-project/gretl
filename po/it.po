@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-06-14 21:35-0400\n"
-"PO-Revision-Date: 2013-06-13 14:49+0200\n"
+"PO-Revision-Date: 2013-06-25 21:24+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -12050,14 +12050,12 @@ msgid "_Save text as..."
 msgstr "Salva _testo come..."
 
 #: gui2/gui_utils.c:386
-#, fuzzy
 msgid "Save bundle to session as _icon"
-msgstr "Salva alla sessione come _icona"
+msgstr "Salva il bundle alla sessione come _icona"
 
 #: gui2/gui_utils.c:388
-#, fuzzy
 msgid "Save bundle as icon and cl_ose"
-msgstr "Salva come _icona e chiudi"
+msgstr "Salva il bundle come _icona e chiudi"
 
 #: gui2/gui_utils.c:393
 msgid "_Graph"
