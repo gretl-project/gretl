@@ -855,6 +855,10 @@ parser *genr_compile (const char *s, DATASET *dset,
 	flags |= P_SCALAR;
     }
 
+     if (opt & OPT_I) {
+	flags |= P_LOOPIF;
+    }   
+
     *err = realgen(s, p, dset, NULL, flags);
 
     if (*err) {

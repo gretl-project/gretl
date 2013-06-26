@@ -176,14 +176,6 @@ static void free_tree (NODE *t, parser *p, const char *msg)
 	return;
     }
 
-#if 0
-    if ((p->flags & P_PRIVATE) && (p->flags & P_SCALAR)) {
-	fprintf(stderr, "free_tree: private scalar thingy at %p\n", (void *) p);
-	fprintf(stderr, "%-8s: starting with t at %p (type %03d, %s)\n", msg, 
-		(void *) t, t->t, getsymb(t->t, NULL));
-    }
-#endif
-
 #if EDEBUG
     fprintf(stderr, "%-8s: starting with t at %p (type %03d, %s)\n", msg, 
 	    (void *) t, t->t, getsymb(t->t, NULL));
@@ -11992,7 +11984,8 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
        present at compile time */
     int repflags[] = { P_PRINT, P_NATEST, P_AUTOREG,
 		       P_SLAVE, P_SLICE, P_UFUN,
-		       P_LHPTR, P_DISCARD, P_SCALAR, 0 };
+		       P_LHPTR, P_DISCARD, P_SCALAR, 
+		       P_LOOPIF, 0 };
     int i, saveflags = p->flags;
 
     /* P_LHSCAL, P_LHLIST, P_LHSTR ? */

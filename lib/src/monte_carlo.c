@@ -3047,6 +3047,14 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 #if COMPILE_IF
 	    if (conditional_compiled(loop, j)) {
 		err = parse_command_line(line, cmd, dset, &loop->cmds[j].genr);
+		if (err) {
+		    err = loop_process_error(loop, j, err, prn);
+		}		
+		if (err) {
+		    break;
+		} else {
+		    continue;
+		}
 	    } else if (do_compile_conditional(loop, j)) {
 		GENERATOR *ifgen = NULL;
 
@@ -3054,6 +3062,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		if (ifgen != NULL) {
 		    loop->cmds[j].genr = ifgen;
 		    loop->cmds[j].flags |= LOOP_CMD_COND;
+		    if (err) {
+			err = loop_process_error(loop, j, err, prn);
+		    }		
 		}
 	    } else {
 		err = parse_command_line(line, cmd, dset, NULL);

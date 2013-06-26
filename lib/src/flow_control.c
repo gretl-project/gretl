@@ -69,12 +69,12 @@ static int if_eval (const char *s, DATASET *dset, void *ptr, int *err)
 	    /* generator not compiled yet: do it now */
 	    GENERATOR **pgen = (GENERATOR **) ptr;
 
-	    *pgen = ifgen = genr_compile(s, dset, OPT_P | OPT_S, err);
+	    *pgen = ifgen = genr_compile(s, dset, OPT_P | OPT_S | OPT_I, err);
 	}
     }
 
     if (ifgen != NULL) {
-#if 0
+#if IFDEBUG
 	fprintf(stderr, "if_eval: using ifgen at %p (%s)\n", (void *) ifgen, s);
 #endif
 	val = evaluate_if_cond(ifgen, dset, err);
