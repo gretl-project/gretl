@@ -2607,7 +2607,10 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
     }
 
     if (cmd->ci == 0) {
-	if (cnext != '(') {
+	if (!strcmp(cmd->word, "elif") && cnext == '(') {
+	    /* temporary reprieve for SVAR */
+	    cmd->ci = ELIF;
+	} else if (cnext != '(') {
 	    /* regular command, not a function call */
 	    cmd->ci = gretl_command_number(cmd->word);
 	}
@@ -2626,8 +2629,10 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 		return 0;
 	    } else {
 		cmd->err = 1;
-		gretl_errmsg_sprintf(_("command '%s' not recognized"), 
-				     cmd->word);
+		if (gretl_command_number(cmd->word) == 0) {
+		    gretl_errmsg_sprintf(_("command '%s' not recognized"), 
+					 cmd->word);
+		}
 		goto cmd_exit;
 	    }
 	}
