@@ -164,11 +164,45 @@ static void print_tree (NODE *t, parser *p, int level)
 	print_tree(t->v.b1.b, p, level);
     }
 
-    fprintf(stderr, "%d: node at %p (type %03d, flags = %d), vname='%s'\n",
-	    level, (void *) t, t->t, t->flags, t->vname);
+    fprintf(stderr, "%d: node at %p (type %03d, %s, flags %d), vname='%s'\n",
+	    level, (void *) t, t->t, getsymb(t->t, NULL), t->flags, t->vname);
 }
 
 #endif
+
+/* determine if node @n is located anywhere in tree @t */
+
+static int in_tree (NODE *t, NODE *n)
+{
+    if (t == NULL || n == NULL) {
+	return 0;
+    }
+
+    if (n == t) {
+	return 1;
+    }
+
+    if (bnsym(t->t)) {
+	int i;
+
+	for (i=0; i<t->v.bn.n_nodes; i++) {
+	    if (in_tree(t->v.bn.n[i], n)) {
+		return 1;
+	    }
+	}
+    } else if (b3sym(t->t)) {
+	if (in_tree(t->v.b3.l, n)) return 1;
+	if (in_tree(t->v.b3.m, n)) return 1;
+	if (in_tree(t->v.b3.r, n)) return 1;
+    } else if (b2sym(t->t)) {
+	if (in_tree(t->v.b2.l, n)) return 1;
+	if (in_tree(t->v.b2.r, n)) return 1;
+    } else if (b1sym(t->t)) {
+	if (in_tree(t->v.b1.b, n)) return 1;
+    }
+
+    return 0;
+}
 
 static void free_tree (NODE *t, parser *p, const char *msg)
 {
@@ -9928,8 +9962,8 @@ static NODE *eval (NODE *t, parser *p)
  bailout:
 
 #if EDEBUG
-    fprintf(stderr, "eval (t->t = %03d): returning NODE at %p\n", 
-	    t->t, (void *) ret);
+    fprintf(stderr, "eval (t->t = %03d, %s): returning NODE at %p\n", 
+	    t->t, getsymb(t->t, NULL), (void *) ret);
     if (t->t == VEC) 
 	fprintf(stderr, " (VEC node, xvec at %p, vnum = %d)\n", 
 		(void *) t->v.xvec, t->vnum);
@@ -11985,7 +12019,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     int repflags[] = { P_PRINT, P_NATEST, P_AUTOREG,
 		       P_SLAVE, P_SLICE, P_UFUN,
 		       P_LHPTR, P_DISCARD, P_SCALAR, 
-		       P_LOOPIF, 0 };
+		       0 };
     int i, saveflags = p->flags;
 
     /* P_LHSCAL, P_LHLIST, P_LHSTR ? */
@@ -12172,7 +12206,7 @@ void gen_cleanup (parser *p)
 
     if (protect) {
 	/* just do limited cleanup */
-	if (p->ret != p->tree) {
+	if (!in_tree(p->tree, p->ret)) {
 	    free_tree(p->ret, p, "p->ret");
 	    p->ret = NULL;
 	}

@@ -32,10 +32,15 @@
 static NODE *powterm (parser *p);
 
 #if SDEBUG
-static void notify (const char *s, NODE *t, parser *p)
+static void notify (const char *s, NODE *n, parser *p)
 {
-    fprintf(stderr, "%-8s: returning node at %p (type %d), err = %d\n", 
-	    s, (void *) t, (t != NULL)? t->t : 0, p->err);
+    if (n == NULL) {
+	fprintf(stderr, "%-8s: returning NULL node, err = %d\n", 
+		s, p->err);
+    } else {
+	fprintf(stderr, "%-8s: returning node of type %d (%s) at %p, err = %d\n", 
+		s, n->t, getsymb(n->t, NULL), (void *) n, p->err);
+    }
 }
 #endif
 
@@ -1060,8 +1065,8 @@ static NODE *powterm (parser *p)
     }
 
 #if SDEBUG
-    fprintf(stderr, "powterm: p->sym = %d, p->ch = '%c' (%d)\n",
-	    p->sym, p->ch? p->ch : '0', p->ch);
+    fprintf(stderr, "powterm: p->sym = %d ('%s'), p->ch = '%c' (%d)\n",
+	    p->sym, getsymb(p->sym, NULL), p->ch? p->ch : '0', p->ch);
 #endif
 
     if (string_last_func(sym)) {

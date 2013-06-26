@@ -1602,6 +1602,8 @@ const char *getsymb (int t, const parser *p)
 	return "VEC";
     } else if (t == MAT) {
 	return "MAT";
+    } else if (t == EROOT) {
+	return "EROOT";
     }
 
     if (p != NULL) {

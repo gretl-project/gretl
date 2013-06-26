@@ -1119,7 +1119,7 @@ static int handle_optval (char *s, int ci, gretlopt opt, int status)
 	   an option parameter */
 	p += len + quoted;
 	if (*p != '\0' && *p != ' ') {
-	    gretl_errmsg_sprintf("got invalid field '%s'\n", p);
+	    gretl_errmsg_sprintf(_("field '%s' in command is invalid"), p);
 	    err = E_PARSE;
 	}
     }

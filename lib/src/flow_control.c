@@ -39,6 +39,15 @@ enum {
     IFRESET
 };
 
+/* if_eval: evaluate an "if" condition by generating a scalar
+   (integer) representing the truth or falsity of the condition.
+   The condition is expressed in the string @s. If a loop is
+   being executed currently the @ptr argument may be non-NULL:
+   this will happen if the conditional is known NOT to be 
+   subject to string substitution, in which case it can be
+   "compiled" and reused.
+*/
+
 static int if_eval (const char *s, DATASET *dset, void *ptr, int *err)
 {
     GENERATOR *ifgen = NULL;
@@ -46,14 +55,8 @@ static int if_eval (const char *s, DATASET *dset, void *ptr, int *err)
     int ret = -1;
 
 #if IFDEBUG
-    fprintf(stderr, "if_eval: line = '%s'\n", s);
+    fprintf(stderr, "if_eval: s = '%s'\n", s);
 #endif
-
-    if (!strncmp(s, "if", 2)) {
-	s += 2;
-    } else if (!strncmp(s, "elif", 4)) {
-	s += 4;
-    }
 
     while (*s == ' ') s++;
 
@@ -66,17 +69,17 @@ static int if_eval (const char *s, DATASET *dset, void *ptr, int *err)
 	ifgen = *(GENERATOR **) ptr;
 
 	if (ifgen == NULL) {
-	    /* generator not compiled yet: do it now */
+	    /* Generator not compiled yet: do it now. The
+	       flags OPT_P and OPT_S indicate that we're
+	       generating a "private" scalar.
+	    */
 	    GENERATOR **pgen = (GENERATOR **) ptr;
 
-	    *pgen = ifgen = genr_compile(s, dset, OPT_P | OPT_S | OPT_I, err);
+	    *pgen = ifgen = genr_compile(s, dset, OPT_P | OPT_S, err);
 	}
     }
 
     if (ifgen != NULL) {
-#if IFDEBUG
-	fprintf(stderr, "if_eval: using ifgen at %p (%s)\n", (void *) ifgen, s);
-#endif
 	val = evaluate_if_cond(ifgen, dset, err);
     } else {
 	*err = 0;
@@ -279,6 +282,23 @@ static int trailing_junk_error (const char *s)
     return E_PARSE;
 }
 
+/* flow_control: if the ci (command index) member of @cmd
+   is something other than one of the flow control symbols
+   IF, ELSE, ELIF or ENDIF, this function simply returns
+   1 if execution if blocked by a false IF condition or 0
+   otherwise. 
+
+   If we get one of the flow control symbols we operate
+   on the program's "if state", pushing a term onto, or 
+   popping a term off, the existing stack. And in this case 
+   we always return 1, which indicates to the machinery in 
+   interact.c that execution of the current command is 
+   completed.
+
+   We need the @line (command line) and @dset arguments
+   in case we have to evaluate a new IF condition.
+*/
+
 int flow_control (const char *line, DATASET *dset, CMD *cmd,
 		  void *ptr)
 {
@@ -295,7 +315,7 @@ int flow_control (const char *line, DATASET *dset, CMD *cmd,
 	if (blocked) {
 	    err = set_if_state(SET_FALSE);
 	} else {
-	    ok = if_eval(line, dset, ptr, &err);
+	    ok = if_eval(line + 2, dset, ptr, &err);
 	    if (!err) {
 		err = set_if_state(ok? SET_TRUE : SET_FALSE);
 	    }
@@ -306,7 +326,7 @@ int flow_control (const char *line, DATASET *dset, CMD *cmd,
 	err = set_if_state(SET_ELIF);
 	if (!err && get_if_state(IS_TRUE)) {
 	    set_if_state(UNINDENT);
-	    ok = if_eval(line, dset, ptr, &err);
+	    ok = if_eval(line + 4, dset, ptr, &err);
 	    if (!err) {
 		err = set_if_state(ok? SET_TRUE : SET_FALSE);
 	    }

@@ -547,8 +547,7 @@ enum {
     P_LHPTR   = 1 << 25, /* left-hand side: pointer type wanted */
     P_MMASK   = 1 << 26, /* genr result is masked matrix */
     P_SLICING = 1 << 27, /* calculating matrix slice (temporary) */
-    P_LAGPRSE = 1 << 28, /* parsing lag spec (temporary) */
-    P_LOOPIF  = 1 << 29  /* compiled loop conditional */
+    P_LAGPRSE = 1 << 28  /* parsing lag spec (temporary) */
 };
 
 struct lhinfo {
