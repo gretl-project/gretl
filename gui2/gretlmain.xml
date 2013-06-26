@@ -246,6 +246,7 @@
 	  <menuitem action="bprobit"/>
 	  <menuitem action="oprobit"/>
 	  <menuitem action="biprobit"/>
+	  <menuitem action="reprobit"/>
 	</menu>
 	<menuitem action="tobit"/>
 	<menuitem action="heckit"/>

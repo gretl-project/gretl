@@ -2027,6 +2027,13 @@ static void print_model_heading (const MODEL *pmod,
 	    }
 	    gretl_prn_newline(prn);
 	}
+    } else if (pmod->ci == PROBIT && (pmod->opt & OPT_E)) {
+	int qp = gretl_model_get_int(pmod, "quadpoints");
+
+	if (qp > 0) {
+	    pprintf(prn, A_("Using %d quadrature points"), qp);
+	    gretl_prn_newline(prn);
+	}
     }
 
     /* VCV variants */

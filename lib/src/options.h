@@ -58,6 +58,8 @@ const char *get_optval_string (int ci, gretlopt opt);
 
 int set_optval_string (int ci, gretlopt opt, const char *s);
 
+int set_optval_int (int ci, gretlopt opt, int k);
+
 int get_optval_int (int ci, gretlopt opt, int *err);
 
 void clear_option_params (void);

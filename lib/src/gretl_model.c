@@ -1638,6 +1638,21 @@ static int ordered_model (const MODEL *pmod)
     return 0;
 }
 
+static int longlist_model (const MODEL *pmod)
+{
+    if (pmod->ci == LOGIT || 
+	pmod->ci == NEGBIN ||
+	pmod->ci == DURATION ||
+	pmod->ci == PANEL) {
+	return 1;
+    } else if (pmod->ci == PROBIT && (pmod->opt & OPT_E)) {
+	/* random-effects probit */
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 /**
  * gretl_model_get_x_list:
  * @pmod: pointer to gretl model.
@@ -1715,10 +1730,7 @@ int *gretl_model_get_x_list (const MODEL *pmod)
     } else if (!NONLIST_MODEL(pmod->ci)) {
 	if (pmod->ci == HECKIT) {
 	    nx = gretl_model_get_int(pmod, "base-coeffs");
-	} else if (pmod->ci == LOGIT || 
-		   pmod->ci == NEGBIN ||
-		   pmod->ci == DURATION ||
-		   pmod->ci == PANEL) {
+	} else if (longlist_model(pmod)) {
 	    /* models in which the array of coefficients
 	       is (or may be) longer than the list of
 	       regressors 

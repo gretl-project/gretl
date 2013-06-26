@@ -3848,6 +3848,10 @@ int do_model (selector *sr)
     } else if (ci == OPROBIT) {
 	/* ordered probit */
 	ci = PROBIT;
+    } else if (ci == REPROBIT) {
+	/* random-effects probit */
+	ci = PROBIT;
+	addopt = OPT_E;
     } else if (ci == IV_LIML || ci == IV_GMM) {
 	/* single-equation LIML, GMM */
 	if (ci == IV_LIML) {

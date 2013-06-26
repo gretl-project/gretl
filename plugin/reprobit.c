@@ -532,6 +532,7 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C,
 	}
     }
 
+    gretl_model_set_int(pmod, "quadpoints", C->qp);
     gretl_model_set_int(pmod, "n_included_units", C->N);
     gretl_model_set_int(pmod, "Tmin", Tmin);
     gretl_model_set_int(pmod, "Tmax", C->Tmax);
@@ -570,12 +571,13 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	    }
 	}
 
-	C = rep_container_new(mod.list);
-
-	if (C == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    err = rep_container_fill(C, &mod, dset, quadpoints, &theta);
+	if (!err) {
+	    C = rep_container_new(mod.list);
+	    if (C == NULL) {
+		err = E_ALLOC;
+	    } else {
+		err = rep_container_fill(C, &mod, dset, quadpoints, &theta);
+	    }
 	}
 
 	if (err) {

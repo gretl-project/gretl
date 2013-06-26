@@ -1793,6 +1793,8 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
 
 	if (cinfo->dlg != NULL && close_on_OK) {
 	    gtk_widget_destroy(cinfo->dlg);
+	} else if (cinfo->dlg == NULL) {
+	    cinfo_free(cinfo);
 	}
     }
 }

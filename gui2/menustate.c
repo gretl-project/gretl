@@ -249,6 +249,7 @@ void panel_menu_state (gboolean s)
 	flip(mdata->ui, "/menubar/Add/TimeDums", s);
 	flip(mdata->ui, "/menubar/Add/RangeDum", !s);
 	flip(mdata->ui, "/menubar/Model/PanelModels", s);
+	flip(mdata->ui, "/menubar/Model/LimdepModels/probit/reprobit", s);
 	if (s && dataset->pd <= 2) {
 	    flip(mdata->ui, "/menubar/Model/PanelModels/dpanel", 0);
 	}

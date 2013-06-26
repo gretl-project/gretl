@@ -291,6 +291,8 @@ static int model_action_code (GtkAction *action)
 	    ci = PROBIT;
 	else if (!strcmp(s, "oprobit"))
 	    ci = OPROBIT;
+	else if (!strcmp(s, "reprobit"))
+	    ci = REPROBIT;
 	else if (!strcmp(s, "iv-liml"))
 	    ci = IV_LIML;
 	else if (!strcmp(s, "iv-gmm"))

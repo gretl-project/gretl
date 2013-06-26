@@ -102,8 +102,9 @@ enum {
 
 /* single-equation estimation commands plus some GUI extensions */
 #define MODEL_CODE(c) (MODEL_COMMAND(c) || c == PANEL_WLS || c == PANEL_B || \
-                       c == OLOGIT || c == OPROBIT || c == MLOGIT || \
-	               c == IV_LIML || c == IV_GMM || c == COUNTMOD)
+                       c == OLOGIT || c == OPROBIT || c == REPROBIT || \
+		       c == MLOGIT || c == IV_LIML || c == IV_GMM || \
+		       c == COUNTMOD)
 
 #define IV_MODEL(c) (c == IVREG || c == IV_LIML || c == IV_GMM)
 
@@ -153,6 +154,7 @@ enum {
 			 c == DURATION || \
                          c == PROBIT || \
                          c == OPROBIT || \
+			 c == REPROBIT || \
 	                 c == QUANTREG || \
 			 c == SPEARMAN || \
                          c == TOBIT || \
@@ -758,6 +760,8 @@ void selector_from_model (windata_t *vwin)
 	} else if (pmod->ci == PROBIT) {
 	    if (gretl_model_get_int(pmod, "ordered")) {
 		sel_ci = OPROBIT;
+	    } else if (pmod->opt & OPT_E) {
+		sel_ci = REPROBIT;
 	    }
 	} else if (pmod->ci == TOBIT) {
 	    retrieve_tobit_info(pmod);
@@ -2994,6 +2998,15 @@ static void read_omit_cutoff (selector *sr)
     }
 }
 
+static void read_reprobit_quadpoints (selector *sr)
+{
+    if (sr->extra[0] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[0])) {
+	int qp = spinner_get_int(sr->extra[0]);
+
+	set_optval_int(PROBIT, OPT_G, qp);
+    }
+}
+
 #define TOBIT_UNSET -1.0e300
 
 static void read_tobit_limits (selector *sr)
@@ -3155,7 +3168,12 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     if (sr->ci == TOBIT) {
 	read_tobit_limits(sr);
 	return;
-    }	
+    }
+
+    if (sr->ci == REPROBIT) {
+	read_reprobit_quadpoints(sr);
+	return;
+    }
 
     if (sr->ci == WLS || sr->ci == COUNTMOD || sr->ci == DURATION ||
 	sr->ci == AR || sr->ci == HECKIT || sr->ci == BIPROBIT ||
@@ -3622,6 +3640,8 @@ static char *est_str (int cmdnum)
 	return N_("Probit");
     case OPROBIT:
 	return N_("Ordered Probit");
+    case REPROBIT:
+	return N_("Random effects probit");
     case TOBIT:
 	return N_("Tobit");
     case HECKIT:
@@ -4646,7 +4666,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
 
     sr->blocking = 0;
     sr->ci = ci;
-    sr->opts = (ci == PANEL_WLS)? OPT_W : OPT_NONE;
+    sr->opts = OPT_NONE;
     sr->data = data;
     
     if (MODEL_CODE(ci)) {
@@ -4668,6 +4688,8 @@ static void selector_init (selector *sr, guint ci, const char *title,
 	dlgy += 60;
     } else if (ci == ANOVA) {
 	dlgy -= 60;
+    } else if (ci == PANEL_WLS) {
+	sr->opts |= OPT_W;
     } else if (VEC_CODE(ci)) {
 	dlgy = 450;
 	if (ci == VAR || ci == VECM) {
@@ -5320,6 +5342,19 @@ static void build_selector_switches (selector *sr)
 {
     GtkWidget *hbox, *tmp;
 
+    if (sr->ci == REPROBIT) {
+	/* number of quadrature points for random-effects probit */
+	vbox_add_hwedge(sr->vbox);
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_label_new(_("Quadrature points"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+	sr->extra[0] = tmp = gtk_spin_button_new_with_range(4, 32, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), 8);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+	sr->opts |= OPT_G;
+    }	
+
     if (sr->ci == OLS || sr->ci == WLS || sr->ci == INTREG ||
 	sr->ci == GARCH || sr->ci == IVREG || sr->ci == VAR || 
 	sr->ci == LOGIT || sr->ci == PROBIT || sr->ci == MLOGIT ||
@@ -5328,7 +5363,7 @@ static void build_selector_switches (selector *sr)
 	sr->ci == HECKIT || sr->ci == BIPROBIT || sr->ci == TOBIT) {
 	GtkWidget *b1;
 
-	/* FIXME arma robust variant? */
+	/* FIXME arma robust variant? (and REPROBIT should be here?) */
 
 	vbox_add_hwedge(sr->vbox);
 
@@ -5391,7 +5426,7 @@ static void build_selector_switches (selector *sr)
     if (sr->ci == TOBIT || sr->ci == ARMA || sr->ci == GARCH ||
 	sr->ci == LOGIT || sr->ci == PROBIT || sr->ci == HECKIT ||
 	sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == MLOGIT ||
-	sr->ci == BIPROBIT) {
+	sr->ci == BIPROBIT || sr->ci == REPROBIT) {
 	if (sr->ci == ARMA) {
 	    vbox_add_vwedge(sr->vbox);
 	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
@@ -6210,7 +6245,7 @@ static void build_selector_buttons (selector *sr)
 
 	if (sr->ci == OLOGIT || sr->ci == MLOGIT) {
 	    ci = LOGIT;
-	} else if (sr->ci == OPROBIT) {
+	} else if (sr->ci == OPROBIT || sr->ci == REPROBIT) {
 	    ci = PROBIT;
 	} else if (IV_MODEL(sr->ci)) {
 	    ci = IVREG;

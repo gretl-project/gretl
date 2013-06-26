@@ -3730,7 +3730,7 @@ MODEL heckit_model (const int *list, DATASET *dset,
  * @list: dependent variable plus list of regressors.
  * @dset: dataset struct.
  * @opt: option flags (may include OPT_V for verbose output).
- * @prn: printing struct for iteration info (or NULL is this is not
+ * @prn: printing struct for iteration info (or NULL if this is not
  * wanted).
  *
  * Produce random-effects probit estimates of the model given in @list.

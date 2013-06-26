@@ -101,6 +101,7 @@ enum extra_cmds {
     OLOGIT,
     MLOGIT,
     OPROBIT,
+    REPROBIT,
     IV_LIML,
     IV_GMM,
     BFGS_CONFIG,

@@ -1008,6 +1008,25 @@ int set_optval_double (int ci, gretlopt opt, double x)
 }
 
 /**
+ * set_optval_int:
+ * @ci: gretl command index.
+ * @opt: gretl option value.
+ * @k: value to set.
+ *
+ * Sets a integer ancillary value to be associated
+ * with option @opt for command @ci.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int set_optval_int (int ci, gretlopt opt, int k)
+{
+    char *s = gretl_strdup_printf("%d", k);
+
+    return real_push_option_param(ci, opt, s, 1);
+}
+
+/**
  * set_optval_string:
  * @ci: gretl command index.
  * @opt: gretl option value.

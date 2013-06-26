@@ -1806,6 +1806,7 @@ static void toggle_vname_search (GtkToggleButton *tb, GtkWidget *w)
 
 static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 {
+    GtkWidget *parent;
     GtkWidget *label;
     GtkWidget *button;
     GtkWidget *vbox;
@@ -1818,9 +1819,9 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 	return;
     }
 
-    find_dialog = gretl_dialog_new(_("gretl: find"), vwin->main, 0);
+    parent = vwin->topmain != NULL ? vwin->topmain : vwin->main;
+    find_dialog = gretl_dialog_new(_("gretl: find"), parent, 0);
     g_object_set_data(G_OBJECT(find_dialog), "windat", vwin);
-    parent_find(find_dialog, vwin);
 
     g_signal_connect(G_OBJECT(find_dialog), "destroy",
 		     G_CALLBACK(close_find_dialog),

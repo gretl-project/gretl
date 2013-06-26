@@ -25,7 +25,8 @@
                         c != QUANTREG && c != INTREG && \
                         c != MLOGIT && c != COUNTMOD && \
                         c != DURATION && c != HECKIT && \
-			c != BIPROBIT && c != TOBIT)
+			c != BIPROBIT && c != REPROBIT && \
+			c != TOBIT)
 
 typedef struct iterinfo_t iterinfo;
 
