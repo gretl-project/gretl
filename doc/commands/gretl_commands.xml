@@ -8996,7 +8996,7 @@
 	<li>
 	  <para>
 	    <lit>lnsigma2</lit>: the maximum likelihood estimate of
-	    the log of the variance of the individual effect.
+	    the log of the variance of the individual effect;
 	  </para>
 	</li>
 	<li>
@@ -9021,8 +9021,8 @@
 	pooled probit specification is adequate.
       </para>
       <para>
-	In scripting mode, the random effect probit model is 
-	estimating using the <lit>probit</lit> command with 
+	In scripting mode, the random effects probit model is 
+	estimated using the <lit>probit</lit> command with 
 	the <opt>random-effects</opt> option. 
       </para>
     </description>
