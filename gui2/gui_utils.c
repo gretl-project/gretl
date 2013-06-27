@@ -2518,6 +2518,10 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	/* relax this? */
 	flip(vwin->ui, "/menubar/Analysis/Forecasts", FALSE);
 	add_multinomial_probs_item(vwin);
+    } else if (pmod->ci == PROBIT && (pmod->opt & OPT_E)) {
+	/* random effects probit */
+	flip(vwin->ui, "/menubar/Tests/modtest:n", FALSE);
+	flip(vwin->ui, "/menubar/Analysis/Forecasts", FALSE);
     } else if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
 	arma_x12_menu_mod(vwin);
     } 

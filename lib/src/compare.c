@@ -726,6 +726,12 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	    myopt |= OPT_D;
 	} else if (gretl_model_get_int(orig, "multinom")) {
 	    myopt |= OPT_M;
+	} else if (orig->ci == PROBIT && (orig->opt & OPT_E)) {
+	    /* random effects */
+	    int qp = gretl_model_get_int(orig, "quadpoints");
+
+	    myopt |= (OPT_E | OPT_G);
+	    set_optval_double(PROBIT, OPT_G, qp);
 	}
     } else if (orig->ci == PANEL) {
 	if (gretl_model_get_int(orig, "pooled")) {

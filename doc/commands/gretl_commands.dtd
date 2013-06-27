@@ -79,9 +79,9 @@
 <!ELEMENT example  (#PCDATA)>
 <!ELEMENT demo     (#PCDATA)>
 <!ELEMENT flag     (#PCDATA)>
-<!ELEMENT effect   (#PCDATA)>
 <!ELEMENT optparm  (#PCDATA)>
 <!ELEMENT note     (#PCDATA)>
+<!ELEMENT effect   (#PCDATA | cmdref)*>
 
 <!ELEMENT subhead  (#PCDATA)>
 <!ATTLIST subhead

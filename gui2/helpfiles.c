@@ -147,6 +147,7 @@ static struct gui_help_item gui_help_items[] = {
     { CLUSTER,        "cluster" },
     { GUI_FUNCS,      "gui-funcs" },
     { MENU_ATTACH,    "menu-attach" },
+    { REPROBIT,       "reprobit" },
     { -1,             NULL },
 };
 

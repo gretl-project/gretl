@@ -373,7 +373,7 @@ static double reprobit_ll (const double *theta, void *p)
     int i, j, t, s, h = C->qp;
     int err = 0;
 
-    if (theta[C->npar-1]<-6.0) {
+    if (theta[C->npar-1] < -6.0) {
 	fprintf(stderr, "reprobit_ll: scale too small\n");
 	return NADBL;
     }

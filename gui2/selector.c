@@ -5343,12 +5343,12 @@ static void build_selector_switches (selector *sr)
     GtkWidget *hbox, *tmp;
 
     if (sr->ci == REPROBIT) {
-	/* number of quadrature points for random-effects probit */
+	/* number of quadrature points for random effects probit */
 	vbox_add_hwedge(sr->vbox);
 	hbox = gtk_hbox_new(FALSE, 5);
 	tmp = gtk_label_new(_("Quadrature points"));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
-	sr->extra[0] = tmp = gtk_spin_button_new_with_range(4, 32, 1);
+	sr->extra[0] = tmp = gtk_spin_button_new_with_range(3, 64, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), 8);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
@@ -6245,7 +6245,7 @@ static void build_selector_buttons (selector *sr)
 
 	if (sr->ci == OLOGIT || sr->ci == MLOGIT) {
 	    ci = LOGIT;
-	} else if (sr->ci == OPROBIT || sr->ci == REPROBIT) {
+	} else if (sr->ci == OPROBIT) {
 	    ci = PROBIT;
 	} else if (IV_MODEL(sr->ci)) {
 	    ci = IVREG;

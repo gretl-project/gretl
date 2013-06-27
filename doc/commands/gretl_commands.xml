@@ -8964,6 +8964,71 @@
 
   </command>
 
+  <command name="reprobit" section="Estimation" label="Random effects probit"
+	   context="gui">
+
+    <description>
+      <para>
+	The random effects probit estimator provides a means of
+	estimating a (binary) probit model for panel data. The error
+	term is assumed to be composed of two normally distributed
+	components: one time-invariant term that is specific to the
+	cross-sectional unit or <quote>individual</quote> (and is
+	known as the individual effect); and one term that is specific
+	to the particular observation.
+      </para>
+      <para>
+	Evaluation of the likelihood for this model involves the
+	use of Gauss-Hermite quadrature for approximating the value 
+	of integrals of the normal density. In this dialog you can
+	select the number of quadrature points used. Using more
+	points will increase the accuracy of the results, but at
+	the cost of longer compute time; with many quadrature points
+	and a large dataset estimation may be quite time consuming. 
+      </para>
+      <para>
+	Besides the usual parameter estimates (and associated
+	statistics) relating to the included regressors, certain
+	additional information is presented on estimation of this
+	sort of model:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>lnsigma2</lit>: the maximum likelihood estimate of
+	    the log of the variance of the individual effect.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>sigma_u</lit>: the estimated standard deviation of
+	    the individual effect; and
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>rho</lit>: the estimated share of the individual
+	    effect in the composite error variance.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	The Likelihood Ratio test of the null hypothesis that
+	<lit>rho</lit> equals zero provides a means of assessing
+	whether the random effects specification is needed. If
+	the null is not rejected that suggests that a simple
+	pooled probit specification is adequate.
+      </para>
+      <para>
+	In scripting mode, the random effect probit model is 
+	estimating using the <lit>probit</lit> command with 
+	the <opt>random-effects</opt> option. 
+      </para>
+    </description>
+
+  </command>
+  
+
   <command name="reset" section="Tests" label="Ramsey's RESET">
 
     <usage>
