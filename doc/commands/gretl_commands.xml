@@ -9008,7 +9008,8 @@
 	<li>
 	  <para>
 	    <lit>rho</lit>: the estimated share of the individual
-	    effect in the composite error variance.
+	    effect in the composite error variance (also known as the
+	    intra-class correlation).
 	  </para>
 	</li>
       </ilist>
