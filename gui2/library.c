@@ -6081,6 +6081,19 @@ static void xvar_from_action (GtkAction *action, int *xvar)
     }
 }
 
+static void residual_boxplot (const int *list, DATASET *dset)
+{
+    gretlopt plotopt = OPT_NONE;
+    int err = 0;
+
+    if (multi_unit_panel_sample(dataset)) {
+	plotopt = OPT_P;
+    }
+
+    err = boxplots(list, NULL, dset, plotopt);
+    gui_graph_handler(err);
+}
+
 void resid_plot (GtkAction *action, gpointer p)
 {
     gretlopt opt = OPT_NONE;
@@ -6088,8 +6101,9 @@ void resid_plot (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     int pdum = vwin->active_var; 
-    int ts, xvar = 0;
-    int yno, uhatno;
+    int xvar = 0;
+    int uhatno;
+    int boxplot = 0;
     DATASET *dset;
     int origv = dataset->v;
     int err = 0;
@@ -6101,7 +6115,11 @@ void resid_plot (GtkAction *action, gpointer p)
 	return;
     }
 
-    xvar_from_action(action, &xvar);
+    if (!strcmp(gtk_action_get_name(action), "r:box")) {
+	boxplot = 1;
+    } else {
+	xvar_from_action(action, &xvar);
+    }
 
     /* FIXME OPT_F? */
     dset = maybe_get_model_data(pmod, OPT_F, &err);
@@ -6114,12 +6132,6 @@ void resid_plot (GtkAction *action, gpointer p)
 	return;
     }
 
-    opt = OPT_G | OPT_R; /* gui, resids */
-    if (pdum) {
-	opt |= OPT_Z; /* dummy */
-    }
-
-    ts = dataset_is_time_series(dset);
     uhatno = dset->v - 1; /* residual: last var added */
 
     plotlist[0] = 1;
@@ -6127,16 +6139,30 @@ void resid_plot (GtkAction *action, gpointer p)
 
     strcpy(dset->varname[uhatno], _("residual"));
 
+    if (boxplot) {
+        residual_boxplot(plotlist, dset);
+	trim_dataset(pmod, origv);
+	return;
+    }
+
+    opt = OPT_G | OPT_R; /* gui, resids */
+    if (pdum) {
+	opt |= OPT_Z; /* dummy */
+    }
+
     if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
 	series_set_display_name(dset, uhatno, _("standardized residual"));
 	opt ^= OPT_R;
     } else {
-	char label[MAXLABEL];
+	int yno = gretl_model_get_depvar(pmod); 
 
-	yno = gretl_model_get_depvar(pmod);
-	sprintf(label, "residual for %s", dset->varname[yno]);
-	series_set_label(dset, uhatno, label);
-    }
+	if (yno > 0) {
+	    char label[MAXLABEL];
+
+	    sprintf(label, "residual for %s", dset->varname[yno]);
+	    series_set_label(dset, uhatno, label);
+	}
+    }    
 
     if (xvar) { 
 	/* plot against specified xvar */
@@ -6145,7 +6171,7 @@ void resid_plot (GtkAction *action, gpointer p)
     } else {    
 	/* plot against obs index or time */
 	opt |= OPT_T;
-	if (ts) {
+	if (dataset_is_time_series(dset)) {
 	    opt |= OPT_O; /* use lines */
 	}
     } 

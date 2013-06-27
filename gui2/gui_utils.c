@@ -2749,6 +2749,14 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 
     action_entry_init(&entry);
 
+    /* non-time series: residual boxplot */
+    if (!dataset_is_time_series(dataset)) {
+	entry.label = _("_Boxplot");
+	entry.name = "r:box";
+	entry.callback = G_CALLBACK(resid_plot);
+	vwin_menu_add_item(vwin, mpath[0], &entry);
+    }
+
     xlist = gretl_model_get_x_list(pmod);
     
     for (i=0; i<2; i++) {
