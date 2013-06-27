@@ -743,22 +743,20 @@
       </fnargs>
       <description>
 	<para>
-	  The <lit>$stderr</lit> accessor can be used in two ways: with no
-	  arguments, it returns a square matrix containing the estimated
-	  covariance matrix for the coefficients of the last model. With
-	  the optional arguments, it returns a scalar, which is the
-	  estimated covariance between the parameters named
-	  <argname>s1</argname> and <argname>s2</argname>.  
+	  Senza argomenti, ritorna una matrica quadrata contentente le
+	  covarianze stimate dei coefficienti dell'ultimo modello. Con
+	  gli argomenti opzionali, ritorna uno scalare, con la
+	  covarianza stimata fra i parametri di nome
+	  <argname>s1</argname> e <argname>s2</argname>.
 	  <seelist>
 	    <fncref targ="$coeff"/> 
 	    <fncref targ="$stderr"/>
 	  </seelist>
 	</para>
 	<para>
-	  If the <quote>model</quote> in question is actually a system (a
-	  VAR or VECM, or system of simultaneous equations),
-	  <lit>$vcv</lit> with no parameters returns the cross-equation
-	  covariance matrix.
+	  Questo accessore non è disponibile per modelli di tipo VAR o
+	  VECM; in tal caso, vedi piuttosto <fncref targ="$sigma"/> e
+	  <fncref targ="$xtxinv"/>.
 	</para>
       </description>
     </function>
@@ -778,10 +776,11 @@
     <function name="$version" section="access" output="scalar">
       <description>
 	<para>
-	  Returns an integer value that codes for the program version. The
-	  gretl version string takes the form <lit>x.y.z</lit> (for example,
-	  1.7.6).  The return value from this accessor is formed as
-	  <lit>10000*x + 100*y + z</lit>, so that 1.7.6 translates as 10706.
+	  Ritorna un valore intero che codifica la versione del
+	  programma, sotto la forma <lit>x.y.z</lit> (ad esempio,
+	  1.7.6).  Il valore prodotto da questo accessore è pari a
+	  <lit>10000*x + 100*y + z</lit>, cosicché 1.7.6 diventa
+	  10706.
 	</para>
       </description>
     </function>
@@ -6245,8 +6244,20 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns a copy of <argname>s</argname> in which any upper-case
-	  characters are converted to lower case.
+	  Ritorna una copia di <argname>s</argname> in cui ogni
+	  lettera maiuscola è convertita in minuscola.
+	</para>
+      </description>
+    </function>
+
+    <function name="toupper" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Ritorna una copia di <argname>s</argname> in cui ogni
+	  lettera minuscola è convertita in maiuscola.
 	</para>
       </description>
     </function>
