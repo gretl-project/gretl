@@ -458,7 +458,7 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C,
 	err = E_ALLOC;
     } else {
 	err = hessian_from_score(theta, Hinv, reprobit_score, 
-				  reprobit_ll, C);
+				 reprobit_ll, C);
     }
 
     if (!err) {
@@ -548,6 +548,7 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
     MODEL mod;
     int err = 0;
 
+    /* estimate pooled model as starting point */
     mod = binary_probit(list, dset, OPT_P | OPT_X, prn);
 
     if ((err = mod.errcode) != 0) {

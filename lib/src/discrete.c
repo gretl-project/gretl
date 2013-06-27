@@ -2738,6 +2738,7 @@ void binary_model_hatvars (MODEL *pmod,
     }
 
     if (!(opt & OPT_E)) {
+	/* OPT_E indicates random effects */
 	ll = malloc(n * sizeof *ll);
 	if (ll != NULL) {
 	    for (t=0; t<n; t++) {

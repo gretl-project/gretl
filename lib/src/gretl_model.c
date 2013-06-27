@@ -2106,7 +2106,9 @@ static int model_make_clustered_GG (MODEL *pmod, int ci,
  * 
  * Write a QML covariance matrix into the model @pmod, and set
  * the standard errors to the square root of the diagonal
- * elements of this matrix. 
+ * elements of this matrix. The @ci argument, specifying the
+ * estimator for @pmod, is required only if @opt includes
+ & OPT_C; otherwise it is ignored.
  * 
  * Returns: 0 on success, non-zero code on error.
  */

@@ -259,6 +259,7 @@ enum {
     F_VARNAME,
     F_VARNUM,
     F_TOLOWER,
+    F_TOUPPER,
     F_SSCANF,
     F_IRR,
     F_LOGISTIC,

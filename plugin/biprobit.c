@@ -1169,7 +1169,7 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
 {
     double *tmp;
     int npar = bp->npar - 1;
-    int i, err = 0;
+    int i, xi, err = 0;
 
     tmp = realloc(pmod->coeff, npar * sizeof *tmp);
 
@@ -1186,12 +1186,14 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
     }
 
     for (i=0; i<bp->k1; i++) {
-	gretl_model_set_param_name(pmod, i, dset->varname[bp->X1list[i+1]]);
+	xi = bp->X1list[i+1];
+	gretl_model_set_param_name(pmod, i, dset->varname[xi]);
 	pmod->coeff[i] = gretl_vector_get(bp->beta, i);
     }
 	
     for (i=0; i<bp->k2; i++) {
-	gretl_model_set_param_name(pmod, i+bp->k1, dset->varname[bp->X2list[i+1]]);
+	xi = bp->X2list[i+1];
+	gretl_model_set_param_name(pmod, i+bp->k1, dset->varname[xi]);
 	pmod->coeff[i + bp->k1] = gretl_vector_get(bp->gama, i);
     }
 

@@ -6553,6 +6553,18 @@
       </description>
     </function>
 
+    <function name="toupper" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns a copy of <argname>s</argname> in which any lower-case
+	  characters are converted to upper case.
+	</para>
+      </description>
+    </function>
+
     <function name="tr" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>

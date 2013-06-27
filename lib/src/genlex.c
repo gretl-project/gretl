@@ -351,6 +351,7 @@ struct str_table funcs[] = {
     { F_VARNAME,  "varname" },
     { F_VARNUM,   "varnum" },
     { F_TOLOWER,  "tolower" },
+    { F_TOUPPER,  "toupper" },
     { F_COLNAMES, "colnames" },
     { F_ROWNAMES, "rownames" },
     { F_LJUNGBOX, "ljungbox" },

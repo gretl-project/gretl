@@ -3641,7 +3641,7 @@ static char *est_str (int cmdnum)
     case OPROBIT:
 	return N_("Ordered Probit");
     case REPROBIT:
-	return N_("Random effects probit");
+	return N_("Random effects (binary) probit");
     case TOBIT:
 	return N_("Tobit");
     case HECKIT:

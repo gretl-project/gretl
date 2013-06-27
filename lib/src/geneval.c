@@ -4421,6 +4421,12 @@ static NODE *one_string_func (NODE *n, int f, parser *p)
 		*s = tolower(*s);
 		s++;
 	    }
+	} else if (f == F_TOUPPER) {
+	    s = ret->v.str = gretl_strdup(n->v.str);
+	    while (s && *s) {
+		*s = toupper(*s);
+		s++;
+	    }	    
 	} else {
 	    p->err = E_DATA;
 	}
@@ -9918,8 +9924,9 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_VARNUM:
     case F_TOLOWER:
+    case F_TOUPPER:
 	if (l->t == STR) {
-	    if (t->t == F_TOLOWER) {
+	    if (t->t == F_TOLOWER || t->t == F_TOUPPER) {
 		ret = one_string_func(l, t->t, p);
 	    } else {
 		ret = varnum_node(l, p);
