@@ -7750,48 +7750,52 @@
 	</option>
 	<option>
 	  <flag>--p-values</flag>
-	  <effect>mostra i p-value invece delle pendenze</effect>
+	  <effect>mostra i p-value invece degli effetti
+	  marginali</effect>
 	</option>
       </options>
     </usage>
 
     <description>
       <para>
-        Se la variabile dipendente è binaria (tutti i suoi valori sono 0 o 1),
-        esegue una stima di massima verosimiglianza dei coefficienti delle
-        <repl>variabili-indipendenti</repl> con il metodo
-        <quote>binary response model regression</quote> (BRMR) descritto in
-        Davidson e MacKinnon (2004). Visto che il modello è nonlineare, le
-        pendenze dipendono dai valori delle variabili indipendenti: per
-        impostazione predefinita, al posto dei p-value vengono mostrate le
-        pendenze rispetto ad ognuna delle variabili indipendenti, calcolate in
-        corrispondenza della media della variabile. Questo comportamento può
-        essere soppresso usando l'opzione <lit>--p-values</lit>.  La statistica
-        chi-quadro testa l'ipotesi nulla che tutti i coefficienti tranne la
-        costante siano pari a zero.
+        Se la variabile dipendente è binaria (tutti i suoi valori sono
+        0 o 1), esegue una stima di massima verosimiglianza dei
+        coefficienti delle <repl>variabili-indipendenti</repl> con il
+        metodo Newton-Raphson. Visto che il modello è nonlineare, gli
+        effetti marginali (pendenze) dipendono dai valori delle
+        variabili indipendenti: per impostazione predefinita, al posto
+        dei p-value vengono mostrate le pendenze rispetto ad ognuna
+        delle variabili indipendenti, calcolate in corrispondenza
+        della media della variabile. Questo comportamento può essere
+        soppresso usando l'opzione <lit>--p-values</lit>.  La
+        statistica chi-quadro testa l'ipotesi nulla che tutti i
+        coefficienti tranne la costante siano pari a zero.
       </para>
       <para context="cli">
-        In modalità predefinita, gli errori standard sono calcolati con
-        l'inversa negativa dell'Hessiana.  Se si usa l'opzione
-        <lit>--robust</lit>, verranno calcolati gli errori standard QML o quelli
-        di Huber&ndash;White. In questo caso, la matrice di covarianza stimata è
-        un <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e del
-        prodotto esterno del gradiente. Per i dettagli, si veda Davidson e
-        MacKinnon 2004, cap. 10.
+        In modalità predefinita, gli errori standard sono calcolati
+        tramite l'Hessiana.  Se si usa l'opzione <lit>--robust</lit>,
+        verranno calcolati gli errori standard QML
+        (Huber&ndash;White). In questo caso, la matrice di covarianza
+        stimata è un <quote>sandwich</quote> dell'inversa
+        dell'Hessiana stimata e del prodotto esterno del
+        gradiente. Per i dettagli, si veda Davidson e MacKinnon 2004,
+        cap. 10.
       </para>
       <para context="gui">
-        In modalità predefinita, gli errori standard sono calcolati con
-        l'inversa negativa dell'Hessiana.  Se si seleziona la casella "Errori
-        standard robusti", verranno calcolati gli errori standard QML o quelli
-        di Huber&ndash;White. In questo caso, la matrice di covarianza stimata è
-        un <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e del
-        prodotto esterno del gradiente. Per i dettagli, si veda Davidson e
-        MacKinnon 2004, cap. 10.
+        In modalità predefinita, gli errori standard sono calcolati
+        tramite l'Hessiana.  Se si seleziona la casella "Errori
+        standard robusti", verranno calcolati gli errori standard QML
+        (Huber&ndash;White). In questo caso, la matrice di covarianza
+        stimata è un <quote>sandwich</quote> dell'inversa
+        dell'Hessiana stimata e del prodotto esterno del
+        gradiente. Per i dettagli, si veda Davidson e MacKinnon 2004,
+        cap. 10.
       </para>
       <para>
-        Se la variabile dipendente non è binaria, ma è discreta, si ottengono
-        stime Logit ordinate. Se la variabile scelta come dipendente non è
-        discreta, viene emesso un messaggio di errore.
+        Se la variabile dipendente non è binaria, ma è discreta, si
+        ottengono stime Probit ordinali. Se la variabile scelta come
+        dipendente non è discreta, viene emesso un messaggio di
+        errore.
       </para>
       <para>
 	Il probit per l'analisi delle proporzioni non è ancora stato
@@ -8086,25 +8090,93 @@
 
     <usage>
       <altforms>
-	<altform><lit>rename</lit> <repl>numero-var</repl> <repl>nuovo-nome</repl></altform>
-	<altform><lit>rename</lit> <repl>nome-var</repl> <repl>nuovo-nome</repl></altform>
+	<altform><lit>rename</lit> <repl>numero-var</repl>
+	<repl>nuovo-nome</repl></altform>
+	<altform><lit>rename</lit> <repl>nome-var</repl>
+	<repl>nuovo-nome</repl></altform>
       </altforms>
     </usage>
 
     <description>
-      <para>Modifica il nome di una variabile con numero identificativo
-        <repl>numero-var</repl> o nome <repl>nome-var</repl> in
-        <repl>nuovo-nome</repl>. Il <repl>numero-var</repl> deve essere compreso
-        tra 1 e il numero di variabili nel dataset. Il nuovo nome deve essere
-        lungo al massimo 15 caratteri, deve iniziare con una lettera e deve
-        essere composto di sole lettere, numeri e il carattere trattino basso.
+      <para>Modifica il nome di una variabile con numero
+      identificativo <repl>numero-var</repl> o nome
+      <repl>nome-var</repl> in <repl>nuovo-nome</repl>. Il
+      <repl>numero-var</repl> deve essere compreso tra 1 e il numero
+      di variabili nel dataset. Il nuovo nome deve essere lungo al
+      massimo 15 caratteri, deve iniziare con una lettera e deve
+      essere composto di sole lettere, numeri e il carattere trattino
+      basso.
       </para>
     </description>
 
     <gui-access>
       <menu-path>/Variabile/Modifica attributi</menu-path>
-      <other-access>Menù pop-up nella finestra principale (selezione singola)</other-access>
+      <other-access>Menù pop-up nella finestra principale (selezione
+      singola)</other-access>
     </gui-access>
+
+  </command>
+
+  <command name="reprobit" section="Estimation" label="Random effects probit"
+	   context="gui">
+
+    <description>
+      <para>
+	Lo stimatore a effetti random consente di stimare un modello
+	proit binario in dataset di tipo panel. Il termine di errore è
+	composto per ipotesi da due componenti gaussiane: una,
+	specifica per l'unità cross-sezionale e invariante nel tempo
+	(nota come <quote>effetto individuale</quote>) e l'altra
+	specifica per quella particolare osservazione.
+      </para>
+      <para>
+	Il calcolo della log-verosimiglianza per questo modello viene
+	effettuato tramite la quadratura di Gauss-Hermite per
+	approssimare il valore di valori attesi di funzioni di
+	variabili casuali normali.  In questa finestra di dialogo è
+	possibile scegliere il numero di punti di quadratura usati. Un
+	numero elevato di questi aumenta l'accuratezza dei risultati,
+	ma al costo di tempi di calcolo più lunghi; in questo caso la
+	stima può richiedere molto tempo con dataset grandi.
+      </para>
+      <para>
+	Oltre ai parametri standard (e statistiche associate) relativi
+	alle variabili esplicative, dopo la stima di questo tipo di
+	modello vengono presentati alcuni risultati aggiuntivi:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>lnsigma2</lit>: la stima ML del logaritmo della
+	    varianza dell'effetto individuale;
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>sigma_u</lit>: la stima dell'errore quadratico medio
+	    dell'effetto individuale;
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>rho</lit>: la quota stima dell'effetto individuale
+	    sulla varianza totale del termine di errore composito
+	    (anche nota come correlazione intra-classe).
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Il test LR per l'ipotesi <lit>rho</lit>=0 consente di
+	stabilire se la specificazione a effetti random è in effetti
+	necessaria. Sotto la nulla, una semplice specificazione probit
+	è del tutto adeguata.
+      </para>
+      <para>
+	In modalità scripting, il modello probit a effetti random si
+	ottiene usando il comando <lit>probit</lit> con l'opzione
+	<opt>random-effects</opt>.
+      </para>
+    </description>
 
   </command>
 

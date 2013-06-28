@@ -8978,13 +8978,13 @@
 	to the particular observation.
       </para>
       <para>
-	Evaluation of the likelihood for this model involves the
-	use of Gauss-Hermite quadrature for approximating the value 
-	of integrals of the normal density. In this dialog you can
-	select the number of quadrature points used. Using more
-	points will increase the accuracy of the results, but at
+	Evaluation of the likelihood for this model involves the use
+	of Gauss-Hermite quadrature for approximating the value of
+	expectations of functions of normal variates. In this dialog
+	you can select the number of quadrature points used. Using
+	more points will increase the accuracy of the results, but at
 	the cost of longer compute time; with many quadrature points
-	and a large dataset estimation may be quite time consuming. 
+	and a large dataset estimation may be quite time consuming.
       </para>
       <para>
 	Besides the usual parameter estimates (and associated
