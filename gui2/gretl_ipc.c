@@ -36,7 +36,7 @@
 # define N_PIDS 8
 #endif
 
-#define IPC_DEBUG 1
+#define IPC_DEBUG 0
 
 /* gretl_ipc: inter-process communication
 
