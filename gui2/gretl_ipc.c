@@ -36,6 +36,8 @@
 # define N_PIDS 8
 #endif
 
+#define IPC_DEBUG 1
+
 /* gretl_ipc: inter-process communication
 
    First, the functions conditional on the GRETL_PID_FILE definition
@@ -439,20 +441,29 @@ long gretl_prior_instance (void)
     mypid = (long) GetCurrentProcessId();
 # else
     mypid = getpid();
-# endif    
+# endif   
 
     sprintf(pidfile, "%sgretl.pid", gretl_dotdir());
     fp = gretl_fopen(pidfile, "r");
 
+#if IPC_DEBUG
+    fprintf(stderr, "*** gretl_prior_instance: pidfile='%s', fp=%p\n",
+	    pidfile, (void *) fp);
+#endif
+
     if (fp != NULL) {
 	char buf[32];
 	int prune = 0;
-	int n_valid = 0;
+	int ok, n_valid = 0;
 	long tmp;
 
 	while (fgets(buf, sizeof buf, fp)) {
 	    sscanf(buf, "%ld", &tmp);
-	    if (pid_is_valid(tmp, mypid)) {
+	    ok = pid_is_valid(tmp, mypid);
+#if IPC_DEBUG
+	    fprintf(stderr, " got prior PID %d, ok = %d\n", (int) tmp, ok);
+#endif
+	    if (ok) {
 		ret = tmp;
 		n_valid++;
 	    } else {
@@ -477,12 +488,11 @@ long gretl_prior_instance (void)
     return ret;
 }
 
-/* Process a message coming from another gretl instance (with pid
-   @caller). Such a message calls for a hand-off to "this" instance,
-   and some information regarding the hand-off is contained in a
-   little file in the user's dotdir, with a name on the pattern
-   "open-<pid>" where <pid> should equal @gotpid. Call this the IPC
-   file.
+/* Process a message coming from another gretl instance.  Such a
+   message calls for a hand-off to "this" instance, and some
+   information regarding the hand-off is contained in a little file in
+   the user's dotdir, with a name on the pattern "open-<pid>" where
+   <pid> should equal "this" instance's PID.
 
    If the hand-off involves opening a file (which will be the case if
    the trigger is double-clicking on a gretl-associated file), the
@@ -490,32 +500,42 @@ long gretl_prior_instance (void)
    file contains the word "none".  
 */
 
-static void process_handoff_message (long caller)
+static void process_handoff_message (void)
 {
+    char fname[FILENAME_MAX];
+    FILE *fp;
     int try_open = 0;
+    long mypid;
 
-    if (caller > 0) {
-	char fname[FILENAME_MAX];
-	FILE *fp;
+#ifdef WIN32
+    mypid = (long) GetCurrentProcessId();
+#else
+    mypid = (long) getpid();
+#endif
 
-	sprintf(fname, "%s/open-%ld", gretl_dotdir(), caller);
-	fp = fopen(fname, "r");
+    sprintf(fname, "%sopen-%ld", gretl_dotdir(), mypid);
+    fp = fopen(fname, "r");
 
-	if (fp != NULL) {
-	    char path[FILENAME_MAX];
+#if IPC_DEBUG
+    fprintf(stderr, "*** process_handoff_message\n"
+	    " fname='%s', fp = %p\n", fname, (void *) fp);
+#endif
 
-	    if (fgets(path, sizeof path, fp)) {
-		tailstrip(path);
-		if (strcmp(path, "none")) {
-		    *tryfile = '\0';
-		    strncat(tryfile, path, MAXLEN - 1);
-		    try_open = 1;
-		}
-	    }	    
-	    fclose(fp);
+    if (fp != NULL) {
+	char path[FILENAME_MAX];
+
+	if (fgets(path, sizeof path, fp)) {
+	    tailstrip(path);
+	    if (strcmp(path, "none")) {
+		*tryfile = '\0';
+		strncat(tryfile, path, MAXLEN - 1);
+		try_open = 1;
+	    }
 	}
-	remove(fname);
+	fclose(fp);
     }
+
+    remove(fname);
 
     gtk_window_present(GTK_WINDOW(mdata->main));
 
@@ -525,12 +545,12 @@ static void process_handoff_message (long caller)
     }
 }
 
-static gboolean write_request_file (long mypid, const char *fname)
+static gboolean write_request_file (long gpid, const char *fname)
 {
     char tmpname[FILENAME_MAX];
     FILE *fp;
 
-    sprintf(tmpname, "%s/open-%ld", gretl_dotdir(), mypid);
+    sprintf(tmpname, "%sopen-%ld", gretl_dotdir(), gpid);
     fp = fopen(tmpname, "w");
 
     if (fp == NULL) {
@@ -552,16 +572,12 @@ static gboolean write_request_file (long mypid, const char *fname)
 
 static void open_handler (int sig, siginfo_t *sinfo, void *context)
 {
-    long caller = 0;
-
     if (sig == SIGUSR1 && sinfo->si_code == SI_QUEUE) {
 	if (sinfo->si_uid == getuid() &&
 	    sinfo->si_value.sival_ptr == (void *) 0xf0) {
-	    caller = sinfo->si_pid;
 	}
+	process_handoff_message();
     }
-    
-    process_handoff_message(caller);
 }
 
 /* linux: at start-up, install a handler for SIGUSR1 */
@@ -589,10 +605,17 @@ gboolean forward_open_request (long gpid, const char *fname)
 {
     gboolean ok = write_request_file(gpid, fname);
 
+#if IPC_DEBUG
+    fprintf(stderr, "*** forward_open_request\n");
+#endif
+
     if (ok) {
 	union sigval data;
 
 	data.sival_ptr = (void *) 0xf0;
+	/* note: gpid is the PID of the previously running
+	   process to which the signal should be sent 
+	*/
 	ok = (sigqueue(gpid, SIGUSR1, data) == 0);
     }
 
@@ -619,7 +642,7 @@ static GdkFilterReturn mdata_filter (GdkXEvent *xevent,
 
     if (msg->message == WM_GRETL && msg->wParam == 0xf0) {
 	fprintf(stderr, "mdata_filter: got WM_GRETL\n");
-	process_handoff_message((long) msg->lParam);
+	process_handoff_message();
 	return GDK_FILTER_REMOVE;
     }
 

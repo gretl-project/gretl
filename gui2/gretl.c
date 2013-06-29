@@ -588,7 +588,7 @@ int main (int argc, char **argv)
     model = allocate_working_model();
     if (model == NULL) {
 	noalloc();
-    } 
+    }
 
     library_command_init();
 
@@ -602,6 +602,7 @@ int main (int argc, char **argv)
 
 #ifdef GRETL_OPEN_HANDLER
     if (maybe_hand_off(filearg, auxname)) {
+	fflush(stderr);
 	exit(EXIT_SUCCESS);
     }
 #endif
