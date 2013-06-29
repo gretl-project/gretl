@@ -807,8 +807,17 @@ static int real_boxplots (const int *list, char **bools,
 	grp->title = gretl_strdup_printf(_("Distribution of %s by %s"),
 					 grp->ylabel, grp->xlabel);
     } else if (list[0] == 1 && bools == NULL) {
-	/* doing a single straight plot */
-	grp->title = gretl_strdup(dset->varname[list[1]]);
+	/* doing a single, standard plot */
+	const char *s = series_get_label(dset, list[1]);
+	char yname[VNAMELEN];
+
+	if (s != NULL && strncmp(s, "residual for ", 13) == 0 &&
+	    gretl_scan_varname(s + 13, yname) == 1) {
+	    grp->title = gretl_strdup_printf(_("Regression residuals (= observed - fitted %s)"), 
+					     yname);
+	} else {
+	    grp->title = gretl_strdup(dset->varname[list[1]]);
+	}
     }
 
     if (opt & OPT_O) {

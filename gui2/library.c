@@ -6081,19 +6081,6 @@ static void xvar_from_action (GtkAction *action, int *xvar)
     }
 }
 
-static void residual_boxplot (const int *list, DATASET *dset)
-{
-    gretlopt plotopt = OPT_NONE;
-    int err = 0;
-
-    if (multi_unit_panel_sample(dataset)) {
-	plotopt = OPT_P;
-    }
-
-    err = boxplots(list, NULL, dset, plotopt);
-    gui_graph_handler(err);
-}
-
 void resid_plot (GtkAction *action, gpointer p)
 {
     gretlopt opt = OPT_NONE;
@@ -6102,7 +6089,7 @@ void resid_plot (GtkAction *action, gpointer p)
     MODEL *pmod = (MODEL *) vwin->data;
     int pdum = vwin->active_var; 
     int xvar = 0;
-    int uhatno;
+    int uhatno, yno = 0;
     int boxplot = 0;
     DATASET *dset;
     int origv = dataset->v;
@@ -6133,16 +6120,18 @@ void resid_plot (GtkAction *action, gpointer p)
     }
 
     uhatno = dset->v - 1; /* residual: last var added */
+    yno = gretl_model_get_depvar(pmod);
 
     plotlist[0] = 1;
-    plotlist[1] = uhatno; 
+    plotlist[1] = uhatno;
 
     strcpy(dset->varname[uhatno], _("residual"));
+    if (yno > 0) {
+	gchar *label;
 
-    if (boxplot) {
-        residual_boxplot(plotlist, dset);
-	trim_dataset(pmod, origv);
-	return;
+	label = g_strdup_printf("residual for %s", dset->varname[yno]);
+	series_set_label(dset, uhatno, label);
+	g_free(label);
     }
 
     opt = OPT_G | OPT_R; /* gui, resids */
@@ -6153,15 +6142,14 @@ void resid_plot (GtkAction *action, gpointer p)
     if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
 	series_set_display_name(dset, uhatno, _("standardized residual"));
 	opt ^= OPT_R;
-    } else {
-	int yno = gretl_model_get_depvar(pmod); 
-
-	if (yno > 0) {
-	    char label[MAXLABEL];
-
-	    sprintf(label, "residual for %s", dset->varname[yno]);
-	    series_set_label(dset, uhatno, label);
+    } else if (boxplot) {
+	if (multi_unit_panel_sample(dset)) {
+	    opt = OPT_P;
 	}
+	err = boxplots(plotlist, NULL, dset, opt);
+	gui_graph_handler(err);
+	trim_dataset(pmod, origv);
+	return;
     }    
 
     if (xvar) { 
