@@ -919,6 +919,15 @@ void gretl_rand_uniform (double *a, int t1, int t2)
     }
 }
 
+static double gretl_rand_uniform_one (void) 
+{
+    if (use_sfmt) {
+	return to_real2(sfmt_rand32());
+    } else {
+	return g_rand_double(gretl_GRand);
+    }
+}
+
 double gretl_rand_gamma_one (double shape, double scale)
 {
     double k = shape;
@@ -1403,6 +1412,86 @@ int gretl_rand_GED (double *a, int t1, int t2, double nu)
     }
 
     return err;
+}
+
+/**
+ * gretl_rand_beta:
+ * @x: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @s1: shape parameter > 0.
+ * @s2: shape parameter > 0.
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the beta distribution with shape parameters @s1 and @s2.
+ * The code here is adapted from http://www.netlib.org/random/random.f90
+ * which implements the method of R.C.H. Cheng, "Generating beta 
+ * variates with nonintegral shape parameters", Communications of the
+ * ACM, 21(4), April 1978.
+ *
+ * Returns: 0 on success, non-zero if @s1 or @s2 are out of bounds.
+ */
+
+int gretl_rand_beta (double *x, int t1, int t2, 
+		     double s1, double s2)
+{
+    double aln4 = 1.3862944;
+    double a, b, s, u, v, y, z;
+    double d, f, h, u0, c;
+    int t, j, swap;
+    double val;
+
+    if (s1 <= 0 || s2 <= 0) {
+	return E_DATA;
+    }
+
+    /* initialization */
+    a = s1;
+    b = s2;
+    swap = b > a;
+    if (swap) {
+	f = b;
+	b = a;
+	a = f;
+    }
+    d = a/b;
+    f = a+b;
+    if (b > 1) {
+	h = sqrt((2*a*b - f)/(f - 2.0));
+	u0 = 1.0;
+    } else {
+	h = b;
+	u0 = 1.0/(1.0 + pow(a/(DBL_MAX*b), b));
+    }
+    c = a+h;
+
+    /* generation */
+    for (t=t1; t<=t2; t++) {
+	for (j=0; ; j++) {
+	    u = gretl_rand_uniform_one();
+	    v = gretl_rand_uniform_one();
+	    s = u*u*v;
+	    if (u < DBL_MIN || s <= 0) continue;
+	    if (u < u0) {
+		v = log(u/(1.0 - u))/h;
+		y = d*exp(v);
+		z = c*v + f*log((1.0 + d)/(1.0 + y)) - aln4;
+		if (s - 1.0 > z) {
+		    if (s - s*z > 1.0) continue;
+		    if (log(s) > z) continue;
+		}
+		val = y/(1.0 + y);
+	    } else {
+		if (4.0*s > pow(1.0 + 1.0/d, f)) continue;
+		val = 1.0;
+	    }
+	    break;
+	}
+
+	x[t] = swap ? (1.0 - val) : val;
+    }
+
+    return 0;
 }
 
 /**
