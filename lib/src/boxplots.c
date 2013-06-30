@@ -1274,11 +1274,20 @@ static int read_plot_data_block (PLOTGROUP *grp, char *line,
     return err;
 }
 
+static void title_to_varname (PLOTGROUP *grp, const char *title)
+{
+    int len = strlen(title);
+
+    if (len < 16 && len == gretl_namechar_spn(title)) {
+	strcpy(grp->plots[0].varname, title);
+    } 
+}
+
 /* Given a gnuplot boxplot file created by gretl, parse out the
    "numerical summary" information.  Note that this requires a
    strictly regimented plot file, so if you make any changes to the
-   way boxplot files are printed (see gnuplot_from_boxplot above) you
-   should check this function for breakage.
+   way boxplot files are printed you should check this function for 
+   breakage.
 */
 
 int boxplot_numerical_summary (const char *fname, PRN *prn)
@@ -1288,8 +1297,8 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     int plotlines = 0;
     char yvar[VNAMELEN];
     char xvar[VNAMELEN];
-    char vname[VNAMELEN];
-    char fmt[16], line[512];
+    char title[128];
+    char fmt[16], tfmt[16], line[512];
     int parsing = 1;
     FILE *fp;
     int n = 0;
@@ -1300,8 +1309,9 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
 	return E_FOPEN;
     }
 
-    *yvar = *xvar = *vname = '\0';
+    *yvar = *xvar = *title = '\0';
     sprintf(fmt, "%%%d[^\\\"]", VNAMELEN-1);
+    sprintf(tfmt, "%%%d[^\\\"]", 127);
 
     /* first pass: count the plots, using labels as heuristic */
 
@@ -1322,7 +1332,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
 	} else if (!strncmp(line, "set xlabel ", 11)) {
 	    sscanf(line + 12, fmt, xvar);
 	} else if (!strncmp(line, "set title ", 10)) {
-	    sscanf(line + 11, fmt, vname);
+	    sscanf(line + 11, tfmt, title);
 	} else if (!strncmp(line, "set label ", 10)) {
 	    if (!strncmp(line + 10, "\"(", 2)) {
 		; /* boolean specifier */
@@ -1347,7 +1357,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
 	if (n > 0) {
 	    factorized = 1;
 	}
-    } else if (n == 0 && *vname != '\0') {
+    } else if (n == 0 && *title != '\0') {
 	/* plotting a single variable, no labels */
 	n = 1;
     }
@@ -1429,8 +1439,8 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
 
     if (!err) {
 	if (n == 1 && grp->plots[0].varname[0] == '\0' &&
-	    *vname != '\0') {
-	    strcpy(grp->plots[0].varname, vname);
+	    *title != '\0') {
+	    title_to_varname(grp, title);
 	}
 	strcpy(grp->ylabel, yvar);
 	strcpy(grp->xlabel, xvar);
