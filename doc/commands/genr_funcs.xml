@@ -4029,11 +4029,12 @@
 
     <function name="mrandgen" section="probdist" output="matrix">
       <fnargs>
-	<fnarg type="char">c</fnarg>
-	<fnarg type="scalar">a</fnarg>
-	<fnarg type="scalar">b</fnarg>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg type="scalar">c</fnarg>
+	<fnarg type="string">d</fnarg>
+	<fnarg type="scalar">p1</fnarg>
+	<fnarg type="scalar" conditional="true">p2</fnarg>
+	<fnarg type="scalar" conditional="true">p3</fnarg>
+	<fnarg type="scalar">rows</fnarg>
+	<fnarg type="scalar">cols</fnarg>
       </fnargs>
       <examples>
 	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
@@ -4043,10 +4044,10 @@
 	<para>
 	  Works like <fncref targ="randgen"/> except that the return
 	  value is a matrix rather than a series. The initial
-	  arguments to this function are as described for
+	  arguments to this function (the number of which depends on
+	  the selected distribution) are as described for
 	  <lit>randgen</lit>, but they must be followed by two
-	  integers to specify the number of rows
-	  (<argname>r</argname>) and columns (<argname>c</argname>) of
+	  integers to specify the number of rows and columns of
 	  the desired random matrix.
 	</para>
 	<para>
@@ -5444,9 +5445,10 @@
 
     <function name="randgen" section="probdist" output="series">
       <fnargs>
-	<fnarg type="char">c</fnarg>
-	<fnarg type="scalar-or-series">a</fnarg>
-	<fnarg type="scalar-or-series">b</fnarg>
+	<fnarg type="string">d</fnarg>
+	<fnarg type="scalar-or-series">p1</fnarg>
+	<fnarg type="scalar-or-series" conditional="true">p2</fnarg>
+	<fnarg type="scalar" conditional="true">p3</fnarg>
       </fnargs>
       <examples>
 	<example>series x = randgen(u, 0, 100)</example>
@@ -5457,37 +5459,45 @@
       </examples>
       <description>
 	<para>
-	  All-purpose random number generator. The parameter
-	  <argname>c</argname> is a character, which specifies from which
-	  distribution the pseudo-random numbers should be drawn. The
-	  arguments <argname>a</argname> and (in some cases)
-	  <argname>b</argname> provide the parameters of the selected
-	  distribution. If these are given as scalars the output series is
-	  identically distributed; if a series is given for
-	  <argname>a</argname> or <argname>b</argname> the distribution is
-	  conditional on the parameter value at each observation.
+	  All-purpose random number generator. The argument
+	  <argname>d</argname> is a string (in most cases just a
+	  single character) which specifies the distribution from
+	  which the pseudo-random numbers should be drawn. The
+	  arguments <argname>p1</argname> to <argname>p3</argname>
+	  specify the parameters of the selected distribution; the
+	  number of such parameters depends on the distribution.  For
+	  distributions other than the beta-binomial, the parameters
+	  <argname>p1</argname> and (if applicable)
+	  <argname>p2</argname> may be given as either scalars or
+	  series: if they are given as scalars the output series is
+	  identically distributed, while if a series is given for
+	  <argname>p1</argname> or <argname>p2</argname> the
+	  distribution is conditional on the parameter value at each
+	  observation. In the case of the beta-binomial all the
+	  parameters must be scalars.
 	</para>
 	<para>
-	  Specifics are given below: the character codes for each
-	  distribution are shown in parentheses, followed by the
-	  interpretation of the argument <argname>a</argname> and,
-	  where applicable, <argname>b</argname>.
+	  Specifics are given below: the string code for each
+	  distribution is shown in parentheses, followed by the
+	  interpretation of the argument <argname>p1</argname> and,
+	  where applicable, <argname>p2</argname> and
+	  <argname>p3</argname>.
 	</para>
 	  
 	<ilist context="notex">
 	  <li>
 	    <para>
-	      Uniform (continuous) (c = u or U): minimum; maximum
+	      Uniform (continuous) (u or U): minimum, maximum
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Uniform (discrete) (c = i): minimum; maximum
+	      Uniform (discrete) (i): minimum, maximum
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Normal (c = z, n, or N): mean; standard deviation
+	      Normal (z, n, or N): mean, standard deviation
 	    </para>
 	  </li>
 	  <li>
@@ -5502,50 +5512,62 @@
 	  </li>
 	  <li>
 	    <para>
-	      Snedecor's F (f or F): df (num.); df (den.)
+	      Snedecor's F (f or F): df (num.), df (den.)
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Gamma (g or G): shape; scale
+	      Gamma (g or G): shape, scale
 	    </para>
 	  </li>	  
 	  <li>
 	    <para>
-	      Binomial (b or B): probability; number of trials
+	      Binomial (b or B): probability, number of trials
 	    </para>
 	  </li>	  
 	  <li>
 	    <para>
-	      Poisson (p or P): Mean
+	      Poisson (p or P): mean
 	    </para>
 	  </li>	
 	  <li>
 	    <para>
-	      Weibull (w or W): shape; scale
+	      Weibull (w or W): shape, scale
 	    </para>
 	  </li>	
 	  <li>
 	    <para>
 	      Generalized Error (E): shape
 	    </para>
-	  </li>	
+	  </li>
+	  <li>
+	    <para>
+	      Beta (beta): shape1, shape2
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Beta-Binomial (bb): trials, shape1, shape2
+	    </para>
+	  </li>
 	</ilist>
 	<para context="tex">
 	  \begin{center}
-	  \begin{tabular}{llll}
-	  \textbf{Distribution} &amp; \textsl{c} &amp; \textsl{a} &amp; \textsl{b} \\[4pt]
-	  Uniform (continuous) &amp; \texttt{u} or \texttt{U} &amp; minimum &amp; maximum\\
-	  Uniform (discrete) &amp; \texttt{i} &amp; minimum &amp; maximum\\
-	  Normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp; mean &amp; standard deviation\\
-	  Student's $t$ &amp; \texttt{t} &amp; degrees of freedom &amp; --\\
-	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; degrees of freedom &amp; --\\
-	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp; df (num.) &amp; df (den.)\\
-	  Gamma &amp; \texttt{g} or \texttt{G} &amp; shape &amp; scale \\
-	  Binomial &amp; \texttt{b} or \texttt{B} &amp; $p$ &amp; $n$ \\
-	  Poisson &amp; \texttt{p} or \texttt{P} &amp; mean &amp; -- \\
-	  Weibull &amp; \texttt{w} or \texttt{W} &amp; shape &amp; scale \\
-	  Generalized Error &amp; \texttt{e} or \texttt{E} &amp; shape &amp; -- 
+	  \begin{tabular}{lllll}
+	  \textbf{Distribution} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
+	  Uniform (continuous) &amp; \texttt{u} or \texttt{U} &amp; minimum &amp; maximum &amp; --\\
+	  Uniform (discrete) &amp; \texttt{i} &amp; minimum &amp; maximum &amp; --\\
+	  Normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp; mean &amp; standard deviation &amp; --\\
+	  Student's $t$ &amp; \texttt{t} &amp; degrees of freedom &amp; -- &amp; --\\
+	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; degrees of freedom &amp; -- &amp; --\\
+	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp; df (num.) &amp; df (den.) &amp; --\\
+	  Gamma &amp; \texttt{g} or \texttt{G} &amp; shape &amp; scale  &amp; --\\
+	  Binomial &amp; \texttt{b} or \texttt{B} &amp; $p$ &amp; $n$  &amp; --\\
+	  Poisson &amp; \texttt{p} or \texttt{P} &amp; mean &amp; --  &amp; --\\
+	  Weibull &amp; \texttt{w} or \texttt{W} &amp; shape &amp; scale &amp; --\\
+	  Generalized Error &amp; \texttt{e} or \texttt{E} &amp; shape &amp; -- &amp; --\\
+	  Beta &amp; \texttt{beta} &amp; shape1 &amp; shape2 &amp; --\\
+	  Beta-Binomial &amp; \texttt{bb} &amp; $n$ &amp; shape1 &amp; shape2
 	  \end{tabular}
 	  \end{center}
 	</para>
@@ -5562,9 +5584,9 @@
 
     <function name="randgen1" section="probdist" output="scalar">
       <fnargs>
-	<fnarg type="char">c</fnarg>
-	<fnarg type="scalar">a</fnarg>
-	<fnarg type="scalar">b</fnarg>
+	<fnarg type="char">d</fnarg>
+	<fnarg type="scalar">p1</fnarg>
+	<fnarg type="scalar" conditional="true">p2</fnarg>
       </fnargs>
       <examples>
 	<example>scalar x = randgen1(z, 0, 1)</example>

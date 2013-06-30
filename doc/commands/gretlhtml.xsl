@@ -485,7 +485,13 @@
         </xsl:call-template>
       </xsl:otherwise>
     </xsl:choose>
-  </xsl:if> 
+  </xsl:if>
+  <xsl:if test="(@conditional)">
+    <xsl:text>, </xsl:text>
+    <xsl:call-template name="gettext-nospace">
+      <xsl:with-param name="key" select="'conditional'"/>
+    </xsl:call-template>
+  </xsl:if>
   <xsl:text>)</xsl:text>
   <xsl:text>&lt;/td&gt;&lt;/tr&gt;&#10;</xsl:text>
 </xsl:template>

@@ -62,6 +62,7 @@
                anyfloat-or-list | list-or-string | scalar-or-vec |
                scalar-or-list | scalar-or-matrix | bundle | varargs) "series"
     optional  (true | false) "false"
+    conditional (true | false) "false"
 >
 
 <!ELEMENT example  (#PCDATA)>
