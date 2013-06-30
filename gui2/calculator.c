@@ -19,6 +19,14 @@
 
 /* calculator.c for gretl */
 
+#include "gretl.h"
+#include "calculator.h"
+#include "dlgutils.h"
+#include "gpt_control.h"
+#include "lib_private.h"
+#include "cmdstack.h"
+#include "winstack.h"
+
 #define NTESTS 6
 #define NPTESTS 2
 #define NPVAL 8
@@ -27,14 +35,6 @@
 #define NRAND 9
 #define NTESTENTRY 7
 #define NDISTENTRY 4
-
-#include "gretl.h"
-#include "calculator.h"
-#include "dlgutils.h"
-#include "gpt_control.h"
-#include "lib_private.h"
-#include "cmdstack.h"
-#include "winstack.h"
 
 typedef struct CalcChild_ CalcChild;
 typedef struct test_t_ test_t;
@@ -1118,11 +1118,35 @@ static int dist_from_page (int code, int page)
     return 0;
 }
 
-static char dist_to_char (int d)
-{
-    const char *dchars = "uztXFGBPW";
+/* translate from the subset-encoding of distributions
+   used here to the coding used in pvalues.c
+*/
 
-    return (d >= 0 && d < 10)? dchars[d] : 0;
+static int d_to_pdist (int d)
+{
+    if (d == UNIFORM_DIST) {
+	return D_UNIFORM;
+    } else if (d == NORMAL_DIST) {
+	return D_NORMAL;
+    } else if (d == T_DIST) {
+	return D_STUDENT;
+    } else if (d == CHISQ_DIST) {
+	return D_CHISQ;
+    } else if (d == F_DIST) {
+	return D_SNEDECOR;
+    } else if (d == GAMMA_DIST) {
+	return D_GAMMA;
+    } else if (d == BINOMIAL_DIST) {
+	return D_BINOMIAL;
+    } else if (d == POISSON_DIST) {
+	return D_POISSON;
+    } else if (d == WEIBULL_DIST) {
+	return D_WEIBULL;
+    } else if (d == DW_DIST) {
+	return D_DW;
+    } else {
+	return D_NONE;
+    }
 }
 
 static int 
@@ -1213,7 +1237,7 @@ static void get_critical (GtkWidget *w, CalcChild *child)
     double c = NADBL;
     double a, parm[2];
     int i, d, j = 0;
-    char st;
+    int pdist;
     PRN *prn;
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
@@ -1233,9 +1257,9 @@ static void get_critical (GtkWidget *w, CalcChild *child)
     a = getval(tabs[i]->entry[j], C_FRAC);
     if (na(a)) return;
 
-    st = dist_to_char(d);
+    pdist = d_to_pdist(d);
 
-    c = gretl_get_critval(st, parm, a);
+    c = gretl_get_critval(pdist, parm, a);
     if (na(c)) {
 	errbox(_("Failed to compute critical value"));
 	return;
@@ -1248,7 +1272,7 @@ static void get_critical (GtkWidget *w, CalcChild *child)
     if (d == NORMAL_DIST) {
 	print_normal_critval(parm, a, c, prn);
     } else {
-	print_critval(st, parm, a, c, prn);
+	print_critval(pdist, parm, a, c, prn);
     }
 
     view_buffer(prn, 60, 200, _("gretl: critical values"), 
@@ -1259,7 +1283,7 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
 {
     dist_t **tabs = child->calcp;
     double pv, x = 0, parm[2];
-    char st = 0;
+    int pdist = 0;
     int i, d, j = 0;
     PRN *prn;
 
@@ -1292,7 +1316,7 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
 	break;
     };
 
-    st = dist_to_char(d);
+    pdist = d_to_pdist(d);
 
     if (d == NORMAL_DIST) {
 	/* transform to z-score */
@@ -1301,12 +1325,12 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
 
     if (bufopen(&prn)) return;
 
-    pv = gretl_get_pvalue(st, parm, x);
+    pv = gretl_get_pvalue(pdist, parm, x);
 
     if (na(pv)) {
 	errbox(_("Failed to compute p-value"));
     } else {
-	print_pvalue(st, parm, x, pv, prn);
+	print_pvalue(pdist, parm, x, pv, prn);
 	view_buffer(prn, 78, 200, _("gretl: p-value"), PVALUE, NULL);
     }
 }
@@ -1367,38 +1391,38 @@ static void get_random (GtkWidget *w, CalcChild *child)
 
     switch (d) {
     case UNIFORM_DIST:
-	lib_command_sprintf("genr %s = randgen(u,%g,%g)", vname,
+	lib_command_sprintf("series %s = randgen(u,%g,%g)", vname,
 			    x[0], x[1]);
 	break;
     case NORMAL_DIST:
-	lib_command_sprintf("genr %s = randgen(N,%g,%g)", vname,
+	lib_command_sprintf("series %s = randgen(N,%g,%g)", vname,
 			    x[0], x[1]);
 	break;
     case T_DIST: 
-	lib_command_sprintf("genr %s = randgen(t,%g)", vname, x[0]);
+	lib_command_sprintf("series %s = randgen(t,%g)", vname, x[0]);
 	break;
     case CHISQ_DIST:
-	lib_command_sprintf("genr %s = randgen(X,%g)", vname, x[0]);
+	lib_command_sprintf("series %s = randgen(X,%g)", vname, x[0]);
 	break;
     case F_DIST:
-	lib_command_sprintf("genr %s = randgen(F,%g,%g)", vname, 
+	lib_command_sprintf("series %s = randgen(F,%g,%g)", vname, 
 			    x[0], x[1]);
 	break;
     case GAMMA_DIST:
-	lib_command_sprintf("genr %s = randgen(G,%g,%g)", vname, 
+	lib_command_sprintf("series %s = randgen(G,%g,%g)", vname, 
 			    x[0], x[1]);
 	break;
     case WEIBULL_DIST:
-	lib_command_sprintf("genr %s = randgen(W,%g,%g)", vname, 
+	lib_command_sprintf("series %s = randgen(W,%g,%g)", vname, 
 			    x[0], x[1]);
 	break;
     case BINOMIAL_DIST: 
-	lib_command_sprintf("genr %s = randgen(B,%g,%g)", vname, 
+	lib_command_sprintf("series %s = randgen(B,%g,%g)", vname, 
 			    x[0], x[1]);
 	break;
     case POISSON_DIST: 
 	/* FIXME allow variable as param? */
-	lib_command_sprintf("genr %s = randgen(P,%g)", vname, x[0]);
+	lib_command_sprintf("series %s = randgen(P,%g)", vname, x[0]);
 	break;
     }
 

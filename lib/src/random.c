@@ -1282,6 +1282,34 @@ int gretl_rand_binomial (double *a, int t1, int t2, int n, double p)
     return 0;
 }
 
+static double gretl_rand_binomial_one (int n, double p,
+				       double *b)
+{
+    double ret;
+
+    if (n < 0 || p < 0 || p > 1) {
+	return NADBL;
+    }
+
+    if (n == 0 || p == 0.0) {
+	ret = 0.0;
+    } else if (p == 1.0) {
+	ret = n;
+    } else {
+	int i;
+
+	ret = 0.0;
+	gretl_rand_uniform(b, 0, n - 1);
+	for (i=0; i<n; i++) {
+	    if (b[i] <= p) {
+		ret += 1;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /* Poisson rv with mean m */
 
 static double genpois (const double m)
@@ -1492,6 +1520,46 @@ int gretl_rand_beta (double *x, int t1, int t2,
     }
 
     return 0;
+}
+
+/**
+ * gretl_rand_beta_binomial:
+ * @x: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @n: number of trials.
+ * @s1: beta shape parameter > 0.
+ * @s2: beta shape parameter > 0.
+ *
+ * Fill the selected range of array @x with pseudo-random drawings
+ * from the binomial distribution with @n trials and success
+ * probability distributed according to the beta distribution with
+ * shape parameters @s1 and @s2.
+ *
+ * Returns: 0 on success, non-zero if @n, @s1 or @s2 are out of bounds.
+ */
+
+int gretl_rand_beta_binomial (double *x, int t1, int t2, 
+			      int n, double s1, double s2)
+{
+    int t, err;
+
+    err = gretl_rand_beta(x, t1, t2, s1, s2);
+
+    if (!err) {
+	double *b = malloc(n * sizeof *b);
+
+	if (b == NULL) {
+	    return E_ALLOC;
+	} else {
+	    for (t=t1; t<=t2; t++) {
+		x[t] = gretl_rand_binomial_one(n, x[t], b);
+	    }
+	    free(b);
+	}
+    }
+
+    return err;
 }
 
 /**

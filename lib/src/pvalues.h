@@ -20,6 +20,26 @@
 #ifndef PVALUES_H
 #define PVALUES_H
 
+typedef enum {
+    D_NONE = 0,
+    D_UNIFORM,
+    D_UDISCRT,
+    D_NORMAL,
+    D_STUDENT,
+    D_CHISQ,
+    D_SNEDECOR,
+    D_BINOMIAL,
+    D_POISSON,
+    D_WEIBULL,
+    D_GAMMA,
+    D_GED,
+    D_BETA,
+    D_DW,
+    D_BINORM,
+    D_JOHANSEN,
+    D_BETABIN
+} DistCode;
+
 double gamma_function (double x);
 
 double ln_gamma (double x);
@@ -102,38 +122,40 @@ double cephes_gamma (double x);
 
 double cephes_lgamma (double x); 
 
-double gretl_get_pvalue (char st, const double *parm, double x);
+double gretl_get_pvalue (int dist, const double *parm, double x);
 
-double gretl_get_pdf (char st, const double *parm, double x);
+double gretl_get_pdf (int dist, const double *parm, double x);
 
-int gretl_fill_pdf_array (char st, const double *parm, double *x, int n);
+int gretl_fill_pdf_array (int dist, const double *parm, double *x, int n);
 
-double gretl_get_cdf (char st, const double *parm, double x);
+double gretl_get_cdf (int dist, const double *parm, double x);
 
-double gretl_get_cdf_inverse (char st, const double *parm, double a);
+double gretl_get_cdf_inverse (int dist, const double *parm, double a);
 
-double gretl_get_critval (char st, const double *parm, double a);
+double gretl_get_critval (int dist, const double *parm, double a);
 
-double *gretl_get_random_series (char st, const double *parm,
+double *gretl_get_random_series (int dist, const double *parm,
 				 const double *vecp1, 
 				 const double *vecp2, 
 				 const DATASET *dset,
 				 int *err);
 
-gretl_matrix *gretl_get_random_matrix (char st, const double *parm,
+gretl_matrix *gretl_get_random_matrix (int dist, const double *parm,
 				       int rows, int cols, 
 				       int *err);
 
-double gretl_get_random_scalar (char st, const double *parm,
+double gretl_get_random_scalar (int dist, const double *parm,
 				int *err);
 
 int batch_pvalue (const char *str, DATASET *dset, PRN *prn);
 
-void print_pvalue (char st, const double *parm, double x, double pv, PRN *prn);
+void print_pvalue (int dist, const double *parm, double x, double pv, PRN *prn);
 
-void print_critval (char st, const double *parm, double a, double c, PRN *prn);
+void print_critval (int dist, const double *parm, double a, double c, PRN *prn);
 
 gretl_matrix *gretl_get_DW (int n, int k, int *err);
+
+int dist_code_from_string (const char *s);
 
 #endif /* PVALUES_H */
 

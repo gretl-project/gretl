@@ -2392,10 +2392,60 @@ double johansen_trace_pval (int N, int det, int T, double tr)
     return pv;
 }
 
+struct distmap {
+    int code;
+    char *s;
+};
+
+int dist_code_from_string (const char *s)
+{
+    struct distmap dmap[] = {
+	{ D_UNIFORM,  "u" },
+	{ D_UDISCRT,  "i" },
+	{ D_NORMAL,   "z" },
+	{ D_STUDENT,  "t" },
+	{ D_CHISQ,    "x" },
+	{ D_SNEDECOR, "f" },
+	{ D_BINOMIAL, "b" },
+	{ D_POISSON,  "p" },
+	{ D_WEIBULL,  "w" },
+	{ D_GAMMA,    "g" },
+	{ D_GED,      "e" },
+	{ D_BETA,     "beta" },
+	{ D_DW,       "d" },
+	{ D_BINORM,   "D" },
+	{ D_JOHANSEN, "J" },
+	{ D_BETABIN,  "bb" },
+	{ D_NONE,     NULL }
+    };
+    char test[8];
+    int i;
+
+    for (i=0; i<8 && s[i]; i++) {
+	test[i] = tolower(s[i]);
+    }
+    test[i] = '\0';
+
+    for (i=0; dmap[i].code; i++) {
+	if (!strcmp(test, dmap[i].s)) {
+	    return dmap[i].code;
+	}
+    }
+
+    /* backward compatibility (do we need this?) */
+    if (!strcmp(test, "n")) {
+	return D_NORMAL;
+    } else if (!strcmp(test, "c")) {
+	return D_CHISQ;
+    }
+
+    return D_NONE;
+}
+
 /**
  * print_critval:
- * @st: distribution code.
- * @parm: array holding 1 or 2 parameter values.
+ * @dist: distribution code.
+ * @parm: array holding 0 to 2 parameter values.
  * @a: alpha.
  * @c: the critical value.
  * @prn: gretl printer.
@@ -2403,28 +2453,28 @@ double johansen_trace_pval (int N, int det, int T, double tr)
  * Prints the critical value information in a consistent manner.
  */
 
-void print_critval (char st, const double *parm, double a, double c, PRN *prn)
+void print_critval (int dist, const double *parm, double a, double c, PRN *prn)
 {
-    switch (st) {
-    case 'z':
+    switch (dist) {
+    case D_NORMAL:
 	pprintf(prn, "%s", _("Standard normal distribution"));
 	break;
-    case 't':
+    case D_STUDENT:
 	pprintf(prn, "t(%g)", parm[0]);
 	break;
-    case 'X':
+    case D_CHISQ:
 	pprintf(prn, "%s(%g)", _("Chi-square"), parm[0]);
 	break;
-    case 'F':
+    case D_SNEDECOR:
 	pprintf(prn, "F(%g, %g)", parm[0], parm[1]);
 	break;
-    case 'B':
+    case D_BINOMIAL:
 	pprintf(prn, "Binomial (P = %g, %g trials)", parm[0], parm[1]);
 	break;
-    case 'P':
+    case D_POISSON:
 	pprintf(prn, "Poisson (mean = %g)", parm[0]);
 	break;
-    case 'W':
+    case D_WEIBULL:
 	pprintf(prn, "Weibull (shape = %g, scale = %g)", parm[0], parm[1]);
 	break;
     }
@@ -2433,7 +2483,7 @@ void print_critval (char st, const double *parm, double a, double c, PRN *prn)
     pprintf(prn, _("right-tail probability = %g"), a);
     pputs(prn, "\n ");
     pprintf(prn, _("complementary probability = %g"), 1.0 - a);
-    if (a < 0.5 && (st == 'z' || st == 't')) {
+    if (a < 0.5 && (dist == D_NORMAL || dist == D_STUDENT)) {
 	pputs(prn, "\n ");
 	pprintf(prn, _("two-tailed probability = %g"), 2.0 * a);
     }
@@ -2459,7 +2509,7 @@ static void remember_pvalue_args (const double *p, double x)
 
 /* end remember parameters */
 
-static int pdist_check_input (char st, const double *parm,
+static int pdist_check_input (int dist, const double *parm,
 			      double x)
 {
     int i, np = 1;
@@ -2468,12 +2518,12 @@ static int pdist_check_input (char st, const double *parm,
 	return E_MISSDATA;
     }
 
-    if (st == 'z') {
+    if (dist == D_NORMAL) {
 	np = 0;
-    } else if (st == 'F' || st == 'G' ||
-	       st == 'B' || st == 'W') {
+    } else if (dist == D_SNEDECOR || dist == D_GAMMA ||
+	       dist == D_BINOMIAL || dist == D_WEIBULL) {
 	np = 2;
-    } else if (st == 'J') {
+    } else if (dist == D_JOHANSEN || dist == D_BETABIN) {
 	np = 3;
     }
 
@@ -2488,40 +2538,40 @@ static int pdist_check_input (char st, const double *parm,
 
 /**
  * gretl_get_cdf_inverse:
- * @st: distribution code.
+ * @dist: distribution code.
  * @parm: array holding from zero to two parameter values, 
  * depending on the distribution.
  * @a: probability value.
  *
  * Returns: the argument, y, for which the area under the PDF
- * specified by @st and @parm, integrated from its minimum to y,
+ * specified by @dist and @parm, integrated from its minimum to y,
  * is equal to @a, or #NADBL on failure.
  */
 
-double gretl_get_cdf_inverse (char st, const double *parm, 
+double gretl_get_cdf_inverse (int dist, const double *parm, 
 			      double a)
 {
     double y = NADBL;
 
-    if (pdist_check_input(st, parm, a) == E_MISSDATA) {
+    if (pdist_check_input(dist, parm, a) == E_MISSDATA) {
 	return y;
     }
 
-    if (st == 'z') {
+    if (dist == D_NORMAL) {
 	y = normal_cdf_inverse(a);
-    } else if (st == 't') {
+    } else if (dist == D_STUDENT) {
 	y = student_cdf_inverse(parm[0], a);
-    } else if (st == 'X') {
+    } else if (dist == D_CHISQ) {
 	y = chisq_cdf_inverse((int) parm[0], a);
-    } else if (st == 'G') {
+    } else if (dist == D_GAMMA) {
 	y = gamma_cdf_inverse(parm[0], parm[1], a);
-    } else if (st == 'F') {
+    } else if (dist == D_SNEDECOR) {
 	y = snedecor_cdf_inverse((int) parm[0], (int) parm[1], a);
-    } else if (st == 'B') {
+    } else if (dist == D_BINOMIAL) {
 	y = binomial_cdf_inverse((int) parm[0], (int) parm[1], a);
-    } else if (st == 'P') {
+    } else if (dist == D_POISSON) {
 	y = poisson_cdf_inverse((int) parm[0], a);
-    } else if (st == 'E') {
+    } else if (dist == D_GED) {
 	y = GED_cdf_inverse(parm[0], a);
     } 
 
@@ -2530,37 +2580,37 @@ double gretl_get_cdf_inverse (char st, const double *parm,
 
 /**
  * gretl_get_critval:
- * @st: distribution code.
+ * @dist: distribution code.
  * @parm: array holding from zero to two parameter values, 
  * depending on the distribution.
  * @a: right-tail probability.
  *
  * Returns: the abcsissa value x for the distribution specified
- * by @st and @parm, such that P(X >= x) = @a, or #NADBL on 
+ * by @dist and @parm, such that P(X >= x) = @a, or #NADBL on 
  * failure.
  */
 
-double gretl_get_critval (char st, const double *parm, double a)
+double gretl_get_critval (int dist, const double *parm, double a)
 {
     double x = NADBL;
 
-    if (pdist_check_input(st, parm, a) == E_MISSDATA) {
+    if (pdist_check_input(dist, parm, a) == E_MISSDATA) {
 	return x;
     }
 
-    if (st == 'z') {
+    if (dist == D_NORMAL) {
 	x = normal_critval(a);
-    } else if (st == 't') {
+    } else if (dist == D_STUDENT) {
 	x = student_critval(parm[0], a);
-    } else if (st == 'X') {	
+    } else if (dist == D_CHISQ) {	
 	x = chisq_critval((int) parm[0], a);
-    } else if (st == 'F') {
+    } else if (dist == D_SNEDECOR) {
 	x = snedecor_critval((int) parm[0], (int) parm[1], a);
-    } else if (st == 'B') {
+    } else if (dist == D_BINOMIAL) {
 	x = binomial_critval(parm[0], (int) parm[1], a);
-    } else if (st == 'P') {
+    } else if (dist == D_POISSON) {
 	x = poisson_critval(parm[0], a);
-    } else if (st == 'W') {
+    } else if (dist == D_WEIBULL) {
 	x = weibull_critval(parm[0], parm[1], a);
     } 
 
@@ -2569,42 +2619,42 @@ double gretl_get_critval (char st, const double *parm, double a)
 
 /**
  * gretl_get_cdf:
- * @st: distribution code.
+ * @dist: distribution code.
  * @parm: array holding from zero to two parameter values, 
  * depending on the distribution.
  * @x: abscissa value.
  *
  * Evaluates the CDF for the distribution specified by
- * @st and @parm applicable at @x. 
+ * @dist and @parm applicable at @x. 
  *
  * Returns: the CDF value, or #NADBL on error.
  */
 
-double gretl_get_cdf (char st, const double *parm, double x)
+double gretl_get_cdf (int dist, const double *parm, double x)
 {
     double y = NADBL;
 
-    if (pdist_check_input(st, parm, x) == E_MISSDATA) {
+    if (pdist_check_input(dist, parm, x) == E_MISSDATA) {
 	return y;
     }    
 
-    if (st == 'z') {
+    if (dist == D_NORMAL) {
 	y = normal_cdf(x);
-    } else if (st == 't') {
+    } else if (dist == D_STUDENT) {
 	y = student_cdf(parm[0], x);
-    } else if (st == 'X') {
+    } else if (dist == D_CHISQ) {
 	y = chisq_cdf((int) parm[0], x);
-    } else if (st == 'F') {
+    } else if (dist == D_SNEDECOR) {
 	y = snedecor_cdf((int) parm[0], (int) parm[1], x);
-    } else if (st == 'G') {
+    } else if (dist == D_GAMMA) {
 	y = gamma_cdf(parm[0], parm[1], x, 1);
-    } else if (st == 'B') {
+    } else if (dist == D_BINOMIAL) {
 	y = binomial_cdf(parm[0], (int) parm[1], (int) x);
-    } else if (st == 'P') {
+    } else if (dist == D_POISSON) {
 	y = poisson_cdf(parm[0], (int) x);
-    } else if (st == 'W') {
+    } else if (dist == D_WEIBULL) {
 	y = weibull_cdf(parm[0], parm[1], x);
-    } else if (st == 'E') {
+    } else if (dist == D_GED) {
 	y = GED_cdf(parm[0], x);
     }
 
@@ -2613,42 +2663,42 @@ double gretl_get_cdf (char st, const double *parm, double x)
 
 /**
  * gretl_get_pdf:
- * @st: distribution code.
+ * @dist: distribution code.
  * @parm: array holding from zero to two parameter values, 
  * depending on the distribution.
  * @x: abscissa value.
  *
  * Evaluates the PDF for the distribution specified by
- * @st and @parm at @x. 
+ * @dist and @parm at @x. 
  *
  * Returns: the PDF value, or #NADBL on error.
  */
 
-double gretl_get_pdf (char st, const double *parm, double x)
+double gretl_get_pdf (int dist, const double *parm, double x)
 {
     double y = NADBL;
 
-    if (pdist_check_input(st, parm, x) == E_MISSDATA) {
+    if (pdist_check_input(dist, parm, x) == E_MISSDATA) {
 	return y;
     } 
 
-    if (st == 'z') {
+    if (dist == D_NORMAL) {
 	y = normal_pdf(x);
-    } else if (st == 't') {
+    } else if (dist == D_STUDENT) {
 	y = student_pdf(parm[0], x);
-    } else if (st == 'X') {
+    } else if (dist == D_CHISQ) {
 	y = chisq_pdf((int) parm[0], x);
-    } else if (st == 'F') {
+    } else if (dist == D_SNEDECOR) {
 	y = snedecor_pdf((int) parm[0], (int) parm[1], x);
-    } else if (st == 'G') {
+    } else if (dist == D_GAMMA) {
 	y = gamma_pdf(parm[0], parm[1], x);
-    } else if (st == 'B') {
+    } else if (dist == D_BINOMIAL) {
 	y = binomial_pmf(parm[0], parm[1], x);
-    } else if (st == 'P') {
+    } else if (dist == D_POISSON) {
 	y = poisson_pmf(parm[0], x);
-    } else if (st == 'W') {
+    } else if (dist == D_WEIBULL) {
 	y = weibull_pdf(parm[0], parm[1], x);
-    } else if (st == 'E') {
+    } else if (dist == D_GED) {
 	y = GED_pdf(parm[0], x);
     }
 
@@ -2657,45 +2707,45 @@ double gretl_get_pdf (char st, const double *parm, double x)
 
 /**
  * gretl_fill_pdf_array:
- * @st: distribution code.
+ * @dist: distribution code.
  * @parm: array holding from zero to two parameter values,
  * depending on the distribution.
  * @x: see below.
  * @n: number of elements in @x.
  *
  * On input, @x contains an array of abscissae at which the
- * PDF specified by @st and @parm should be evaluated.  On
+ * PDF specified by @dist and @parm should be evaluated.  On
  * output it contains the corresponding PDF values.
  * 
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_fill_pdf_array (char st, const double *parm, 
+int gretl_fill_pdf_array (int dist, const double *parm, 
 			  double *x, int n)
 {
     int err = E_DATA;
 
-    if (pdist_check_input(st, parm, 0) == E_MISSDATA) {
+    if (pdist_check_input(dist, parm, 0) == E_MISSDATA) {
 	return E_MISSDATA;
     } 
 
-    if (st == 'z') {
+    if (dist == D_NORMAL) {
 	err = normal_pdf_array(x, n);
-    } else if (st == 't') {
+    } else if (dist == D_STUDENT) {
 	err = student_pdf_array(parm[0], x, n);
-    } else if (st == 'X') {
+    } else if (dist == D_CHISQ) {
 	err = chisq_pdf_array(parm[0], x, n);
-    } else if (st == 'F') {
+    } else if (dist == D_SNEDECOR) {
 	err = snedecor_pdf_array((int) parm[0], (int) parm[1], x, n);
-    } else if (st == 'G') {
+    } else if (dist == D_GAMMA) {
 	err = gamma_pdf_array(parm[0], parm[1], x, n); 
-    } else if (st == 'B') {
+    } else if (dist == D_BINOMIAL) {
 	err = binomial_pmf_array(parm[0], parm[1], x, n);
-    } else if (st == 'P') {
+    } else if (dist == D_POISSON) {
 	err = poisson_pmf_array(parm[0], x, n);
-    } else if (st == 'W') {
+    } else if (dist == D_WEIBULL) {
 	err = weibull_pdf_array(parm[0], parm[1], x, n);
-    } else if (st == 'E') {
+    } else if (dist == D_GED) {
 	err = GED_pdf_array(parm[0], x, n);
     }
 
@@ -2704,42 +2754,42 @@ int gretl_fill_pdf_array (char st, const double *parm,
 
 /**
  * gretl_get_pvalue:
- * @st: distribution code.
+ * @dist: distribution code.
  * @parm: array holding from zero to two parameter values, 
  * depending on the distribution.
  * @x: abscissa value.
  *
- * Returns: the integral of the PDF specified by @st and
+ * Returns: the integral of the PDF specified by @dist and
  * @parm from @x to infinity, or #NADBL on error.
  */
 
-double gretl_get_pvalue (char st, const double *parm, double x)
+double gretl_get_pvalue (int dist, const double *parm, double x)
 {
     double y = NADBL;
 
-    if (pdist_check_input(st, parm, x) == E_MISSDATA) {
+    if (pdist_check_input(dist, parm, x) == E_MISSDATA) {
 	return y;
     } 
 
-    if (st == 'z') {
+    if (dist == D_NORMAL) {
 	y = normal_cdf_comp(x);
-    } else if (st == 't') {
+    } else if (dist == D_STUDENT) {
 	y = student_cdf_comp(parm[0], x);
-    } else if (st == 'X') {
+    } else if (dist == D_CHISQ) {
 	y = chisq_cdf_comp((int) parm[0], x);
-    } else if (st == 'F') {
+    } else if (dist == D_SNEDECOR) {
 	y = snedecor_cdf_comp((int) parm[0], (int) parm[1], x);
-    } else if (st == 'G') {
+    } else if (dist == D_GAMMA) {
 	y = gamma_cdf_comp(parm[0], parm[1], x, 1);
-    } else if (st == 'B') {
+    } else if (dist == D_BINOMIAL) {
 	y = binomial_cdf_comp(parm[0], (int) parm[1], x);
-    } else if (st == 'P') {
+    } else if (dist == D_POISSON) {
 	y = poisson_cdf_comp(parm[0], x);
-    } else if (st == 'W') {
+    } else if (dist == D_WEIBULL) {
 	y = weibull_cdf_comp(parm[0], parm[1], x);
-    } else if (st == 'E') {
+    } else if (dist == D_GED) {
 	y = GED_cdf_comp(parm[0], x);
-    } else if (st == 'J') {
+    } else if (dist == D_JOHANSEN) {
 	y = johansen_trace_pval((int) parm[0], (int) parm[1], 
 				(int) parm[2], x);
     }
@@ -2750,13 +2800,13 @@ double gretl_get_pvalue (char st, const double *parm, double x)
 }
 
 static int gretl_fill_random_array (double *x, int t1, int t2,
-				    char st, const double *parm,
+				    int dist, const double *parm,
 				    const double *vecp1, 
 				    const double *vecp2)
 {
     int t, err = 0;
 
-    if (st == 'u') {
+    if (dist == D_UNIFORM) {
 	/* uniform, continuous */
 	double min = parm[0], max = parm[1];
 
@@ -2769,7 +2819,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	} else {
 	    err = gretl_rand_uniform_minmax(x, t1, t2, min, max);
 	}
-    } else if (st == 'i') {
+    } else if (dist == D_UDISCRT) {
 	/* uniform, discrete */
 	int min = (int) parm[0], max = (int) parm[1];
 
@@ -2784,8 +2834,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	    err = gretl_rand_uniform_int_minmax(x, t1, t2, min, max,
 						OPT_NONE);
 	}	
-    } else if (st == 'z') {
-	/* normal */
+    } else if (dist == D_NORMAL) {
 	double mu = parm[0], sd = parm[1];
 
 	if (vecp1 != NULL || vecp2 != NULL) {
@@ -2797,7 +2846,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	} else {
 	    err = gretl_rand_normal_full(x, t1, t2, mu, sd);
 	}
-    } else if (st == 't') {
+    } else if (dist == D_STUDENT) {
 	/* Student's t */
 	double v = parm[0];
 
@@ -2809,7 +2858,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	} else {	
 	    err = gretl_rand_student(x, t1, t2, v);
 	}
-    } else if (st == 'X') {
+    } else if (dist == D_CHISQ) {
 	/* chi-square */
 	int v = parm[0];
 
@@ -2821,8 +2870,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	} else {
 	    err = gretl_rand_chisq(x, t1, t2, v);
 	}
-    } else if (st == 'F') {
-	/* Snedecor F */
+    } else if (dist == D_SNEDECOR) {
 	int v1 = parm[0], v2 = parm[1];
 
 	if (vecp1 != NULL || vecp2 != NULL) {
@@ -2834,8 +2882,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	} else {
 	    err = gretl_rand_F(x, t1, t2, v1, v2);
 	}
-    } else if (st == 'G') {
-	/* gamma */
+    } else if (dist == D_GAMMA) {
 	double shape = parm[0], scale = parm[1];
 
 	if (vecp1 != NULL || vecp2 != NULL) {
@@ -2847,8 +2894,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	} else {
 	    err = gretl_rand_gamma(x, t1, t2, shape, scale);
 	}
-    } else if (st == 'B') {
-	/* binomial */
+    } else if (dist == D_BINOMIAL) {
 	double pr = parm[0];
 	int n = parm[1];
 
@@ -2861,8 +2907,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	} else {
 	    err = gretl_rand_binomial(x, t1, t2, n, pr);
 	}
-    } else if (st == 'P') {
-	/* Poisson */
+    } else if (dist == D_POISSON) {
 	double m = parm[0];
 
 	if (vecp1 != NULL) {
@@ -2873,8 +2918,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	} else {
 	    err = gretl_rand_poisson(x, t1, t2, &m, 0);
 	}
-    } else if (st == 'W') {
-	/* Weibull */ 
+    } else if (dist == D_WEIBULL) {
 	double shape = parm[0], scale = parm[1];
 
 	if (vecp1 != NULL || vecp2 != NULL) {
@@ -2886,8 +2930,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	} else {
 	    err = gretl_rand_weibull(x, t1, t2, shape, scale);
 	}
-    } else if (st == 'E') {
-	/* GED */ 
+    } else if (dist == D_GED) {
 	double nu = parm[0];
 
 	if (vecp1 != NULL) {
@@ -2898,14 +2941,31 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	} else {
 	    err = gretl_rand_GED(x, t1, t2, nu);
 	}
-    }	
+    } else if (dist == D_BETA) {
+	double shape1 = parm[0], shape2 = parm[1];
+
+	if (vecp1 != NULL || vecp2 != NULL) {
+	    for (t=t1; t<=t2 && !err; t++) {
+		if (vecp1 != NULL) shape1 = vecp1[t];
+		if (vecp2 != NULL) shape2 = vecp2[t];
+		err = gretl_rand_beta(x, t, t, shape1, shape2);
+	    }
+	} else {
+	    err = gretl_rand_beta(x, t1, t2, shape1, shape2);
+	}
+    } else if (dist == D_BETABIN) {
+	double shape1 = parm[1], shape2 = parm[2];
+	int n = parm[0];
+
+	err = gretl_rand_beta_binomial(x, t1, t2, n, shape1, shape2);
+    }
 
     return err;
 }
 
 /**
  * gretl_get_random_series:
- * @st: distribution code.
+ * @dist: distribution code.
  * @parm: array holding either one or two scalar 
  * parameter values, depending on the distribution.
  * @vecp1: series containing values for first param,
@@ -2916,7 +2976,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
  * @err: location to receive error code.
  *
  * Produces a random series conforming to the distribution
- * given by @st, which may require specification of either
+ * given by @dist, which may require specification of either
  * one or two parameters. These parameters are either
  * given as (scalar) elements of @parm, or they may vary
  * by observation, in which case they are given as the
@@ -2926,7 +2986,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
  * on error.
  */
 
-double *gretl_get_random_series (char st, const double *parm,
+double *gretl_get_random_series (int dist, const double *parm,
 				 const double *vecp1, 
 				 const double *vecp2,
 				 const DATASET *dset,
@@ -2943,14 +3003,14 @@ double *gretl_get_random_series (char st, const double *parm,
 	    x[t] = NADBL;
 	}
 
-	*err = gretl_fill_random_array(x, dset->t1, dset->t2, st,
+	*err = gretl_fill_random_array(x, dset->t1, dset->t2, dist,
 				       parm, vecp1, vecp2);
     }
 
     return x;
 }
 
-gretl_matrix *gretl_get_random_matrix (char st, const double *parm,
+gretl_matrix *gretl_get_random_matrix (int dist, const double *parm,
 				       int rows, int cols,
 				       int *err)
 {
@@ -2965,7 +3025,7 @@ gretl_matrix *gretl_get_random_matrix (char st, const double *parm,
 	    *err = E_ALLOC;
 	    return NULL;
 	} else {
-	    *err = gretl_fill_random_array(m->val, 0, n - 1, st,
+	    *err = gretl_fill_random_array(m->val, 0, n - 1, dist,
 					   parm, NULL, NULL);
 	}
     }
@@ -2973,12 +3033,12 @@ gretl_matrix *gretl_get_random_matrix (char st, const double *parm,
     return m;
 }
 
-double gretl_get_random_scalar (char st, const double *parm,
+double gretl_get_random_scalar (int dist, const double *parm,
 				int *err)
 {
     double x;
 
-    *err = gretl_fill_random_array(&x, 0, 0, st,
+    *err = gretl_fill_random_array(&x, 0, 0, dist,
 				   parm, NULL, NULL);
 
     return x;
@@ -3007,7 +3067,7 @@ print_pv_string (double x, double p, PRN *prn)
 
 /**
  * print_pvalue:
- * @st: distribution code.
+ * @dist: distribution code.
  * @parm: array holding 1 or 2 parameter values.
  * @x: the value in the distribution.
  * @pv: the p-value.
@@ -3016,18 +3076,15 @@ print_pv_string (double x, double p, PRN *prn)
  * Prints the p-value information in a consistent manner.
  */
 
-void print_pvalue (char st, const double *parm, double x,
+void print_pvalue (int dist, const double *parm, double x,
 		   double pv, PRN *prn)
 {
     double pc;
     int err;
 
-    switch (st) {
+    switch (dist) {
 
-    case 'z':
-    case 'n':
-    case 'N':
-    case '1':
+    case D_NORMAL:
 	pprintf(prn, "%s: ", _("Standard normal"));
 	err = print_pv_string(x, pv, prn);
 	if (err) return;
@@ -3042,8 +3099,7 @@ void print_pvalue (char st, const double *parm, double x,
 	}
 	break;
 
-    case 't':
-    case '2':
+    case D_STUDENT:
 	pprintf(prn, "t(%d): ", (int) parm[0]);
 	err = print_pv_string(x, pv, prn);
 	if (err) return;
@@ -3058,10 +3114,7 @@ void print_pvalue (char st, const double *parm, double x,
 	}
 	break;
 
-    case 'X':
-    case 'x':
-    case 'c':
-    case '3':
+    case D_CHISQ:
 	pprintf(prn, "%s(%d): ", _("Chi-square"), (int) parm[0]);
 	err = print_pv_string(x, pv, prn);
 	if (err) return;
@@ -3069,9 +3122,7 @@ void print_pvalue (char st, const double *parm, double x,
 	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;
 
-    case 'F':
-    case 'f':
-    case '4':
+    case D_SNEDECOR:
 	pprintf(prn, "F(%d, %d): ", (int) parm[0], (int) parm[1]);
 	err = print_pv_string(x, pv, prn);
 	if (err) return;
@@ -3079,9 +3130,7 @@ void print_pvalue (char st, const double *parm, double x,
 	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;
 
-    case 'G':
-    case 'g':
-    case '5':
+    case D_GAMMA:
 	pprintf(prn, _("Gamma (shape %g, scale %g, mean %g, variance %g):"
 		       "\n area to the right of %g = %g\n"), 
 		parm[0], parm[1], parm[0] * parm[1], 
@@ -3089,9 +3138,7 @@ void print_pvalue (char st, const double *parm, double x,
 		x, pv);
 	break;
 
-    case 'B':
-    case 'b':
-    case '6':
+    case D_BINOMIAL:
 	pprintf(prn, _("Binomial (p = %g, n = %d):"
 		       "\n Prob(x > %d) = %g\n"), 
 		parm[0], (int) parm[1], (int) x, pv);
@@ -3105,9 +3152,7 @@ void print_pvalue (char st, const double *parm, double x,
 	}
 	break;
 
-    case 'p':
-    case 'P':
-    case '8':
+    case D_POISSON:
 	pprintf(prn, _("Poisson (mean = %g): "), parm[0]);
 	err = print_pv_string(x, pv, prn);
 	if (err) return;
@@ -3121,9 +3166,7 @@ void print_pvalue (char st, const double *parm, double x,
 	}
 	break;	
 
-    case 'w':
-    case 'W':
-    case '9':
+    case D_WEIBULL:
 	pprintf(prn, _("Weibull (shape = %g, scale = %g): "), 
 		parm[0], parm[1]);
 	err = print_pv_string(x, pv, prn);
@@ -3132,7 +3175,7 @@ void print_pvalue (char st, const double *parm, double x,
 	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;
 
-    case 'E':
+    case D_GED:
 	pprintf(prn, _("GED (shape = %g): "), parm[0]);
 	err = print_pv_string(x, pv, prn);
 	if (err) return;
@@ -3171,7 +3214,7 @@ int batch_pvalue (const char *str, DATASET *dset, PRN *prn)
     double pv = NADBL;
     char line[MAXLEN];
     char **S;
-    char st;
+    int dist;
     int i, n, m;
     int err = 0;
     
@@ -3184,17 +3227,21 @@ int batch_pvalue (const char *str, DATASET *dset, PRN *prn)
 	return E_ALLOC;
     }
 
-    st = S[0][0];
+    dist = dist_code_from_string(S[0]);
 
-    strcpy(line, "pvalue(");
-    m = 8;
-    for (i=0; i<n && !err; i++) {
-	m += strlen(S[i]) + 1;
-	if (m > MAXLEN) {
-	    err = E_DATA;
-	} else {
-	    strcat(line, S[i]);
-	    strcat(line, (i == n - 1)? ")" : ",");
+    if (dist == D_NONE) {
+	err = E_INVARG;
+    } else {
+	strcpy(line, "pvalue(");
+	m = 8;
+	for (i=0; i<n && !err; i++) {
+	    m += strlen(S[i]) + 1;
+	    if (m > MAXLEN) {
+		err = E_DATA;
+	    } else {
+		strcat(line, S[i]);
+		strcat(line, (i == n - 1)? ")" : ",");
+	    }
 	}
     }
 
@@ -3205,7 +3252,7 @@ int batch_pvalue (const char *str, DATASET *dset, PRN *prn)
     }
 
     if (!err) {
-	print_pvalue(st, pvargs, pvargs[2], pv, prn);
+	print_pvalue(dist, pvargs, pvargs[2], pv, prn);
     }
 
     return err;

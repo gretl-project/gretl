@@ -722,102 +722,96 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 
 #define randgen(f) (f == F_RANDGEN || f == F_MRANDGEN || f == F_RANDGEN1)
 
-static int check_dist_count (char *s, int f, int *np, int *argc)
+static int check_dist_count (int d, int f, int *np, int *argc)
 {
     int err = 0;
 
-    if (strlen(s) > 1) {
-	return E_INVARG;
-    }
-
     *np = *argc = 0;
 
-    if (*s == 'u' || *s == 'U' || *s == 'i') {
-	/* uniform: only RANDGEN is supported */
+    if (d == D_UNIFORM || d == D_UDISCRT) {
+	/* only RANDGEN is supported */
 	if (randgen(f)) {
-	    if (*s == 'U') {
-		*s = 'u';
-	    }
 	    *np = 2; /* min, max */
 	} else {
 	    err = E_INVARG;
 	}
-    } else if (*s == 'z' || *s == 'Z' ||
-	       *s == 'n' || *s == 'N') {
-	/* normal: all functions supported */
-	*s = 'z';
+    } else if (d == D_NORMAL) {
+	/* all functions supported */
 	if (randgen(f)) {
 	    *np = 2; /* mu, sigma */
 	} else {
 	    *np = 0; /* N(0,1) is assumed */
 	}
-    } else if (*s == 't') {
+    } else if (d == D_STUDENT) {
 	/* Student t: all functions supported */
-	*s = 't';
 	*np = 1; /* df */
-    } else if (*s == 'c' || *s == 'x' || *s == 'X') {
+    } else if (d == D_CHISQ) {
 	/* chi-square: all functions supported */
-	*s = 'X';
 	*np = 1; /* df */
-    } else if (*s == 'f' || *s == 'F') {
-	/* Snedecor: all functions supported */
-	*s = 'F';
+    } else if (d == D_SNEDECOR) {
+	/* all functions supported */
 	*np = 2; /* dfn, dfd */
-    } else if (*s == 'g' || *s == 'G') {
-	/* Gamma: partial support */
-	*s = 'G';
+    } else if (d == D_GAMMA) {
+	/* partial support */
 	if (f == F_CRIT) {
 	    err = 1;
 	} else {
 	    *np = 2; /* shape, scale */
 	}
-    } else if (*s == 'b' || *s == 'B') {
-	/* Binomial */
-	*s = 'B';
+    } else if (d == D_BINOMIAL) {
 	*np = 2; /* prob, trials */
-    } else if (*s == 'D') {
+    } else if (d == D_BINORM) {
 	/* bivariate normal: cdf only */
-	*s = 'D';
 	if (f == F_CDF) {
 	    *np = 1; /* rho */
 	    *argc = 2; /* note: special */
 	} else {
 	    err = E_INVARG;
 	}
-    } else if (*s == 'p' || *s == 'P') {
-	/* Poisson */
-	*s = 'P';
+    } else if (d == D_POISSON) {
 	*np = 1;
-    } else if (*s == 'w' || *s == 'W') {
-	/* Weibull: inverse cdf not supported */
-	*s = 'W';
+    } else if (d == D_WEIBULL) {
+	/* inverse cdf not supported */
 	if (f == F_INVCDF) {
 	    err = E_INVARG;
 	} else {
 	    *np = 2; /* shape, scale */
 	}
-    } else if (*s == 'e' || *s == 'E') {
+    } else if (d == D_GED) {
 	/* GED: critical values not supported */
-	*s = 'E';
 	if (f == F_CRIT) {
 	    err = E_INVARG;
 	} else {
 	    *np = 1; /* shape */
 	}	
-    } else if (*s == 'd') {
+    } else if (d == D_DW) {
 	/* Durbin-Watson: only critical value */
 	if (f == F_CRIT) {
 	    *np = 2; /* n, k */
 	} else {
 	    err = E_INVARG;
 	}
-    } else if (*s == 'J') {
+    } else if (d == D_JOHANSEN) {
 	/* Johansen trace test: only p-value */
 	if (f == F_PVAL) {
 	    *np = 3;
 	} else {
 	    err = E_INVARG;
 	}
+    } else if (d == D_BETA) {
+	/* randgen only */
+	if (randgen(f)) {
+	    *np = 2; /* shape1, shape2 */
+	} else {
+	    err = E_INVARG;
+	}
+    } else if (d == D_BETABIN) {
+	/* randgen only */
+	if (randgen(f)) {
+	    *np = 3; /* n, shape1, shape2 */
+	} else {
+	    err = E_INVARG;
+	}	
     } else {
 	err = E_INVARG;
     }
@@ -829,7 +823,7 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
     return err;
 }
 
-static double scalar_pdist (int t, char d, const double *parm,
+static double scalar_pdist (int t, int d, const double *parm,
 			    int np, double arg, parser *p)
 {
     double x = NADBL;
@@ -878,7 +872,7 @@ static double *full_length_NA_vec (parser *p)
    @argvec contains a series of argument values.
 */
 
-static double *series_pdist (int f, char d, 
+static double *series_pdist (int f, int d, 
 			     double *parm, int np,
 			     const double *argvec,
 			     parser *p)
@@ -912,7 +906,7 @@ static double *series_pdist (int f, char d,
    @argmat contains an array of argument values.
 */
 
-static gretl_matrix *matrix_pdist (int f, char d, 
+static gretl_matrix *matrix_pdist (int f, int d, 
 				   double *parm, int np,
 				   gretl_matrix *argmat, 
 				   parser *p)
@@ -1228,8 +1222,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	double *argvec = NULL;
 	gretl_matrix *argmat = NULL;
 	int rows = 0, cols = 0;
-	int np, argc;
-	char d, *dist;
+	int d, np, argc, bb;
 
 	if (mrgen) {
 	    if (m < 4 || m > 7) {
@@ -1243,13 +1236,17 @@ static NODE *eval_pdist (NODE *n, parser *p)
 
 	s = r->v.bn.n[0];
 	if (s->t == STR) {
-	    dist = s->v.str;
+	    d = dist_code_from_string(s->v.str);
+	    if (d == 0) {
+		p->err = E_INVARG;
+		goto disterr;
+	    }
 	} else {
 	    node_type_error(n->t, 0, STR, s, p);
 	    goto disterr;
 	}
 
-	p->err = check_dist_count(dist, n->t, &np, &argc);
+	p->err = check_dist_count(d, n->t, &np, &argc);
 	k = np + argc + 2 * mrgen;
 	if (!p->err && k != m - 1) {
 	    p->err = E_INVARG;
@@ -1258,11 +1255,12 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    goto disterr;
 	}
 
-	d = dist[0];
-	if (d == 'd') {
+	bb = (d == D_BETABIN);
+
+	if (d == D_DW) {
 	    /* special: Durbin-Watson */
 	    return DW_node(r, p);
-	} else if (d == 'D') {
+	} else if (d == D_BINORM) {
 	    /* special: bivariate normal */
 	    return bvnorm_node(r, p);
 	} 
@@ -1290,7 +1288,9 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		}
 	    } else if (i == k && e->t == VEC) {
 		/* a series in the last place? */
-		if (rgen) {
+		if (bb) {
+		    node_type_error(n->t, i, NUM, e, p);
+		} else if (rgen) {
 		    parmvec[i-1] = e->v.xvec;
 		} else if (mrgen) {
 		    node_type_error(n->t, i, NUM, e, p);
@@ -1306,7 +1306,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		}
 	    } else if (e->t == VEC) {
 		/* a series param for randgen? */
-		if (rgen) {
+		if (rgen && !bb) {
 		    parmvec[i-1] = e->v.xvec;
 		} else {
 		    node_type_error(n->t, i, NUM, e, p);

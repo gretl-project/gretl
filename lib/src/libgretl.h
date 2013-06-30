@@ -219,13 +219,6 @@ typedef enum {
 } GretlOp;
 
 typedef enum {
-    D_NONE = 0,
-    D_UNIFORM,
-    D_NORMAL,
-    D_GAMMA
-} DistCode;
-
-typedef enum {
     C_AIC,
     C_BIC,
     C_HQC,

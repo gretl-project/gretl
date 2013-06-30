@@ -414,10 +414,10 @@ enum {
 			    s == F_VARNUM || s == F_ARGNAME || \
                             s == F_REMOVE)
 
-/* function with multiple args, character code for first arg */
-#define char0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
-		       s == F_CRIT || s == F_RANDGEN || s == F_PDF ||	\
-		       s == F_BESSEL || s == F_MRANDGEN || s == F_RANDGEN1)
+/* function with multiple args, string for first arg */
+#define str0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
+		      s == F_CRIT || s == F_RANDGEN || s == F_PDF ||	\
+		      s == F_BESSEL || s == F_MRANDGEN || s == F_RANDGEN1)
 
 /* functions taking a string arg in last position */
 #define string_last_func(s) (s == F_FDJAC || s == F_BFGSMAX || \
@@ -441,7 +441,7 @@ enum {
 #define b1sym(s) (unary_op(s) || func1_symb(s) || funcn_symb(s) || \
                   s == G_LPR || s == EROOT)
 
-#define evalb1(s) (b1sym(s) && !(char0_func(s)) && s != U_ADDR && \
+#define evalb1(s) (b1sym(s) && !(str0_func(s)) && s != U_ADDR && \
                    !func2_symb(s) && s != EROOT)
 
 #define b2sym(s) (evalb2(s) || s == DMSTR || s == DMSL || \
