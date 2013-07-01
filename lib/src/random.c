@@ -1666,6 +1666,7 @@ gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
  * wishart_matrix:
  * @v: degrees of freedom.
  * @p: dimension of output matrix.
+ * @S: @p x @p scale matrix, or NULL for unit variance.
  * @err: location to receive error code.
  *
  * Computes a draw from the Wishart distribution, using the
@@ -1678,9 +1679,10 @@ gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
  * NULL on error.
  */
 
-gretl_matrix *wishart_matrix (int v, int p, int *err)
+gretl_matrix *wishart_matrix (int v, int p, const gretl_matrix *S,
+			      int *err)
 {
-    gretl_matrix *B;
+    gretl_matrix *B, *C = NULL;
     double Vi, Zki, Zkj;
     double bii, bij;
     double *Z;
@@ -1689,7 +1691,25 @@ gretl_matrix *wishart_matrix (int v, int p, int *err)
     if (p < 1 || v < p) {
 	*err = E_DATA;
 	return NULL;
-    }	
+    }
+
+    if (S != NULL) {
+	/* copy and decompose */
+	if (S->rows != p || S->cols != p) {
+	    *err = E_DATA;
+	} else {
+	    C = gretl_matrix_copy(S);
+	    if (C == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		*err = gretl_matrix_cholesky_decomp(C);
+	    }
+	}
+	if (*err) {
+	    gretl_matrix_free(C);
+	    return NULL;
+	}
+    }
 
     B = gretl_matrix_alloc(p, p);
     if (B == NULL) {
@@ -1726,6 +1746,21 @@ gretl_matrix *wishart_matrix (int v, int p, int *err)
 	    gretl_matrix_set(B, i, j, bij);
 	    gretl_matrix_set(B, j, i, bij);
 	}
+    }
+    
+    if (C != NULL) {
+	gretl_matrix *Tmp = gretl_matrix_copy(B);
+
+	if (Tmp == NULL) {
+	    *err = E_ALLOC;
+	    gretl_matrix_free(B);
+	    B = NULL;
+	} else {
+	    gretl_matrix_qform(C, GRETL_MOD_TRANSPOSE,
+			       Tmp, B, GRETL_MOD_NONE);
+	    gretl_matrix_free(Tmp);
+	}
+	gretl_matrix_free(C);
     }
 
     free(Z);
