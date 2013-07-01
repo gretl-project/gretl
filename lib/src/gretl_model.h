@@ -436,6 +436,8 @@ double coeff_pval (int ci, double x, int df);
 
 int exact_fit_check (const MODEL *pmod, PRN *prn);
 
+void maybe_suppress_time_dummies (MODEL *pmod, int ndum);
+
 int gretl_model_allocate_param_names (MODEL *pmod, int k);
 
 int gretl_model_set_param_name (MODEL *pmod, int i, const char *name);

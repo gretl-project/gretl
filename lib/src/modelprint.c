@@ -4370,6 +4370,8 @@ static int plain_print_coeffs (const MODEL *pmod,
 	return err;
     }
 
+    nc -= gretl_model_get_int(pmod, "skipdums");
+
     vals = allocate_printvals(nc, ncols);
     if (vals == NULL) {
 	return E_ALLOC;

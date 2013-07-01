@@ -1821,7 +1821,7 @@ static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
 		pmod->yhat[t] = y[t] - pmod->uhat[t];
 	    }
 	}
-    }  
+    }
 
     /* additional dpd-specific data */
 
@@ -1854,6 +1854,9 @@ static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
 	}
 	if (dpd->A != NULL) {
 	    gretl_model_set_int(pmod, "ninst", dpd->A->rows);
+	}
+	if (opt & OPT_D) {
+	    maybe_suppress_time_dummies(pmod, dpd->ndum);
 	}
     }
 

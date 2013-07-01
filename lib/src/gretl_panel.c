@@ -3221,6 +3221,9 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	    mod = *pan.realmod;
 	}
 	gretl_model_smpl_init(&mod, dset);
+	if ((opt & OPT_D) && pan.ntdum > 0) {
+	    maybe_suppress_time_dummies(&mod, pan.ntdum);
+	}
 #if CLEAN_UP_DUMMIES
 	if (opt & OPT_D) {
 	    process_time_dummies(&mod, dset, orig_v);

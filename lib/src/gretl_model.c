@@ -6401,5 +6401,14 @@ int exact_fit_check (const MODEL *pmod, PRN *prn)
 
     return 0;
 }
+
+void maybe_suppress_time_dummies (MODEL *pmod, int ndum)
+{
+    const char *s = get_optval_string(pmod->ci, OPT_D);
+
+    if (s != NULL && !strcmp(s, "noprint")) {
+	gretl_model_set_int(pmod, "skipdums", ndum);
+    }
+}
 	
 
