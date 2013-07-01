@@ -3152,6 +3152,8 @@ static int get_screen_height (void)
     return screen_height;
 }
 
+#define HDEBUG 0
+
 void create_text (windata_t *vwin, int hsize, int vsize, 
 		  int nlines, gboolean editable)
 {
@@ -3166,6 +3168,10 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 
     gtk_widget_modify_font(GTK_WIDGET(w), fixed_font);
 
+#if HDEBUG
+    fprintf(stderr, "create_text: initial hsize = %d\n", hsize);
+#endif
+
     if (hsize > 0 || nlines > 0) {
 	int px, py;
 
@@ -3175,6 +3181,10 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	    hsize *= px;
 	    hsize += 48;
 	}
+
+#if HDEBUG
+	fprintf(stderr, " px = %d, hsize now = %d\n", px, hsize);
+#endif
 
 	if (nlines > 0) {
 	    double v1 = (nlines + 2) * py;
@@ -3192,6 +3202,10 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	if (window_is_tab(vwin)) {
 	    vsize += 15;
 	}
+
+#if HDEBUG
+	fprintf(stderr, " setting default size (%d, %d)\n", hsize, vsize);
+#endif
 	gtk_window_set_default_size(GTK_WINDOW(vmain), hsize, vsize);
     }
 

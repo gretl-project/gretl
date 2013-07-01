@@ -2047,7 +2047,7 @@ windata_t *view_help_file (const char *filename, int role)
     windata_t *vwin;
     gchar *fbuf = NULL;
     gchar *title = NULL;
-    int hsize = 80, vsize = 400;
+    int hsize = 82, vsize = 450;
 
     /* grab content of the appropriate help file into a buffer */
     gretl_file_get_contents(filename, &fbuf, NULL);
@@ -2069,7 +2069,6 @@ windata_t *view_help_file (const char *filename, int role)
     }
 
     if (role == FUNCS_HELP) {
-	hsize = 82;
 	vsize = 500;
     }
 
