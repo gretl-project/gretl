@@ -1749,6 +1749,7 @@ gretl_matrix *wishart_matrix (int v, int p, const gretl_matrix *S,
     }
     
     if (C != NULL) {
+	/* scaling is needed */
 	gretl_matrix *Tmp = gretl_matrix_copy(B);
 
 	if (Tmp == NULL) {
