@@ -1,12 +1,13 @@
 \chapter{Dynamic panel models}
 \label{chap-dpanel}
 
-\newcommand{\by}{\mathbf{y}}
-\newcommand{\bx}{\mathbf{x}}
-\newcommand{\bv}{\mathbf{v}}
-\newcommand{\bX}{\mathbf{X}}
-\newcommand{\bW}{\mathbf{W}}
-\newcommand{\bZ}{\mathbf{Z}}
+\newcommand{\by}{\boldsymbol{y}}
+\newcommand{\bx}{\boldsymbol{x}}
+\newcommand{\bv}{\boldsymbol{v}}
+\newcommand{\bX}{\boldsymbol{X}}
+\newcommand{\bW}{\boldsymbol{W}}
+\newcommand{\bZ}{\boldsymbol{Z}}
+\newcommand{\bA}{\boldsymbol{A}}
 \newcommand{\biota}{\bm{\iota}}
 
 \DefineVerbatimEnvironment%
@@ -17,7 +18,7 @@
 {altcode}%
 {\vspace{1ex}\small\leftmargin 1em}{\vspace{1ex}}
 
-As of \textsf{gretl} version 1.9.2, the primary command for estimating
+Since \textsf{gretl} version 1.9.2, the primary command for estimating
 dynamic panel models is \texttt{dpanel}. The closely related
 \texttt{arbond} command has been available for some time, and is still
 present, but whereas \texttt{arbond} only supports the so-called
@@ -37,11 +38,8 @@ A dynamic linear panel data model can be represented as follows
 \end{equation}
 
 The main idea on which the difference estimator is based is to get rid
-of the individual effect via differencing:\footnote{An alternative is
-  ``orthogonal deviations'': this is implemented in \texttt{arbond},
-  but not in \texttt{dpanel}, since it was a lot of work and OD is
-  very rarely seen in the wild.} first-differencing
-eq.\ (\ref{eq:dpd-def}) yields
+of the individual effect via differencing.  First-differencing eq.\
+(\ref{eq:dpd-def}) yields
 \begin{equation}
   \label{eq:dpd-dif}
   \Delta y_{it} = \alpha \Delta y_{i,t-1} + \beta'\Delta x_{it} +
@@ -61,47 +59,47 @@ the language of GMM, this amounts to using the relation
 \end{equation}
 as an orthogonality condition.
 
-Autocorrelation is dealt with by noting that, if $v_{it}$ is a white
-noise, then the covariance matrix of the vector whose typical element
-is $\Delta v_{it}$ is proportional to a matrix $H$ that has 2 on the
-main diagonal, $-1$ on the first subdiagonals and 0 elsewhere. In
-practice, one-step GMM estimation of equation (\ref{eq:dpd-dif})
-amounts to computing
-\begin{align}
-  \hat{\gamma} = & \left[ 
-    \left( \sum_{i=1}^N \bW_i'\bZ_i \right)
-    \left( \sum_{i=1}^N \bZ_i' H \bZ_i \right)^{-1}
-    \left( \sum_{i=1}^N \bZ_i'\bW_i \right)
-      \right]^{-1} \times \notag \\
-    \times & \left( \sum_{i=1}^N \bW_i'\bZ_i \right)
-    \left( \sum_{i=1}^N \bZ_i' H \bZ_i \right)^{-1}
-    \left( \sum_{i=1}^N \bZ_i'\Delta \by_i \right) \label{eq:dif-gmm}
-\end{align}
+Autocorrelation is dealt with by noting that if $v_{it}$ is white
+noise, the covariance matrix of the vector whose typical element is
+$\Delta v_{it}$ is proportional to a matrix $H$ that has 2 on the main
+diagonal, $-1$ on the first subdiagonals and 0 elsewhere.  One-step
+GMM estimation of equation (\ref{eq:dpd-dif}) amounts to computing
+\begin{equation}
+\label{eq:dif-gmm}
+  \hat{\gamma} = \left[ 
+    \left( \sum_{i=1}^N \bW_i'\bZ_i \right) \bA_N
+    \left( \sum_{i=1}^N \bZ_i'\bW_i \right) \right]^{-1} 
+    \left( \sum_{i=1}^N \bW_i'\bZ_i \right) \bA_N
+    \left( \sum_{i=1}^N \bZ_i'\Delta \by_i \right)
+\end{equation}
 where
-\begin{eqnarray*}
-  \Delta \by_i  & = &
+\begin{align*}
+  \Delta \by_i  & =
      \left[ \begin{array}{ccc}
          \Delta y_{i,3} & \cdots & \Delta y_{i,T}
        \end{array} \right]' \\
-  \bW_i  & = &
+  \bW_i  & = 
      \left[ \begin{array}{ccc}
          \Delta y_{i,2} & \cdots & \Delta y_{i,T-1} \\
          \Delta x_{i,3} & \cdots & \Delta x_{i,T} \\
        \end{array} \right]' \\
-  \bZ_i  & = &
+  \bZ_i  & = 
      \left[ \begin{array}{ccccccc}
          y_{i1} & 0 & 0 & \cdots & 0 & \Delta x_{i3}\\
          0 & y_{i1} & y_{i2} & \cdots & 0 & \Delta x_{i4}\\
          & & \vdots \\
          0 & 0 & 0 & \cdots & y_{i, T-2} & \Delta x_{iT} \\
-       \end{array} \right]' 
-\end{eqnarray*}
+       \end{array} \right]' \\
+  \intertext{and}
+  \bA_N & = \left( \sum_{i=1}^N \bZ_i' H \bZ_i \right)^{-1}
+\end{align*}
+
 Once the 1-step estimator is computed, the sample covariance matrix of
 the estimated residuals can be used instead of $H$ to obtain 2-step
 estimates, which are not only consistent but asymptotically
-efficient.\footnote{In theory, the process may be iterated, but nobody
-  seems to be interested.} Standard GMM theory applies, except for
-one thing: \cite{Windmeijer05} has computed finite-sample corrections to the
+efficient. (In principle the process may be iterated, but nobody seems
+to be interested.) Standard GMM theory applies, except for one thing:
+\cite{Windmeijer05} has computed finite-sample corrections to the
 asymptotic covariance matrix of the parameters, which are nowadays
 almost universally used.
 
@@ -125,28 +123,26 @@ already used for the equations in differences.
 
 The key equations of the system estimator can be written as
 
-\begin{align}
-  \tilde{\gamma} = & \left[ 
-    \left( \sum_{i=1}^N \tilde{\bW}'\tilde{\bZ} \right)
-    \left( \sum_{i=1}^N \tilde{\bZ}' H^* \tilde{\bZ} \right)^{-1}
-    \left( \sum_{i=1}^N \tilde{\bZ}'\tilde{\bW} \right)
-      \right]^{-1} \times \notag \\
-    \times & \left( \sum_{i=1}^N \tilde{\bW}'\tilde{\bZ} \right)
-    \left( \sum_{i=1}^N \tilde{\bZ}' H^* \tilde{\bZ} \right)^{-1}
-    \left( \sum_{i=1}^N \tilde{\bZ}'\Delta \tilde{\by}_i \right)  \label{eq:sys-gmm}
-\end{align}
+\begin{equation}
+\label{eq:sys-gmm}
+  \tilde{\gamma} = \left[ 
+    \left( \sum_{i=1}^N \tilde{\bW}'\tilde{\bZ} \right) \bA_N
+    \left( \sum_{i=1}^N \tilde{\bZ}'\tilde{\bW} \right) \right]^{-1} 
+    \left( \sum_{i=1}^N \tilde{\bW}'\tilde{\bZ} \right) \bA_N
+    \left( \sum_{i=1}^N \tilde{\bZ}'\Delta \tilde{\by}_i \right)
+\end{equation}
 where
-\begin{eqnarray*}
-  \Delta \tilde{\by}_i  & = &
+\begin{align*}
+  \Delta \tilde{\by}_i  & =
      \left[ \begin{array}{ccccccc}
          \Delta y_{i3} & \cdots & \Delta y_{iT} & y_{i3} & \cdots & y_{iT}
        \end{array} \right]' \\
-  \tilde{\bW}_i  & = &
+  \tilde{\bW}_i  & =
      \left[ \begin{array}{cccccc}
          \Delta y_{i2} & \cdots & \Delta y_{i,T-1} & y_{i2} & \cdots & y_{i,T-1} \\
          \Delta x_{i3} & \cdots & \Delta x_{iT}  & x_{i3} & \cdots & x_{iT} \\
        \end{array} \right]' \\
-  \tilde{\bZ}_i  & = &
+  \tilde{\bZ}_i  & =
      \left[ \begin{array}{ccccccccc}
          y_{i1} & 0 & 0       & \cdots & 0  & 0  & \cdots & 0 & \Delta x_{i,3}\\
          0 & y_{i1} & y_{i2} & \cdots & 0  & 0  & \cdots & 0 & \Delta x_{i,4}\\
@@ -156,8 +152,10 @@ where
          0 & 0 & 0 & \cdots & 0 & \Delta y_{i2} & \cdots & 0  & x_{i3}\\
          & & \vdots \\
          0 & 0 & 0 & \cdots & 0 & 0 & \cdots & \Delta y_{i,T-1}  & x_{iT}\\
-       \end{array} \right]' 
-\end{eqnarray*}
+       \end{array} \right]' \\
+  \intertext{and}
+  \bA_N & = \left( \sum_{i=1}^N \tilde{\bZ}' H^* \tilde{\bZ} \right)^{-1}
+\end{align*}
 
 In this case choosing a precise form for the matrix $H^*$ for the
 first step is no trivial matter. Its north-west block should be as
@@ -181,33 +179,32 @@ difference between the resulting estimates can be noticeable.
 
 Both the difference estimator (\ref{eq:dif-gmm}) and the system
 estimator (\ref{eq:sys-gmm}) depend, for their existence, on the
-invertibility of $A = \sum_{i=1}^N \tilde{\bZ}' H^* \tilde{\bZ}$. This
-matrix may turn out to be singular for several reasons. However, this
-does not mean that the estimator is not computable: in some cases,
-adjustments are possible such that the estimator does exist, but the
-user must be aware that in these cases not all software packages use
-the same strategy and replication of results may prove difficult or
-even impossible.
+invertibility of $\bA_N$. This matrix may turn out to be singular for
+several reasons. However, this does not mean that the estimator is not
+computable: in some cases, adjustments are possible such that the
+estimator does exist, but the user should be aware that in these cases
+not all software packages use the same strategy and replication of
+results may prove difficult or even impossible.
 
-A first reason why $A$ may be singular could be the unavailability of
-instruments, chiefly because of missing observations. This case is
+A first reason why $\bA_N$ may be singular could be the unavailability
+of instruments, chiefly because of missing observations. This case is
 easy to handle. If a particular row of $\tilde{\bZ}_i$ is zero for all
 units, the corresponding orthogonality condition (or the corresponding
 instrument if you prefer) is automatically dropped; of course, the
 overidentification rank is adjusted for testing purposes.
 
-Even if no instruments are zero, however, $A$ could be rank
+Even if no instruments are zero, however, $\bA_N$ could be rank
 deficient. A trivial case occurs if there are collinear instruments,
 but a less trivial case may arise when $T$ (the total number of time
 periods available) is not much smaller than $N$ (the number of units),
 as, for example, in some macro datasets where the units are
 countries. The total number of potentially usable orthogonality
 conditions is $O(T^2)$, which may well exceed $N$ in some cases. Of
-course $A$ is the sum of $N$ matrices which have, at most, rank $2T -
-3$ and therefore it could well happen that $A$ is singular.
+course $\bA_N$ is the sum of $N$ matrices which have, at most, rank $2T -
+3$ and therefore it could well happen that the sum is singular.
 
 In all these cases, what we consider the ``proper'' way to go is to
-substitute the pseudo-inverse of $A$ (Moore--Penrose) for its regular
+substitute the pseudo-inverse of $\bA_N$ (Moore--Penrose) for its regular
 inverse. Again, our choice is shared by some software packages, but
 not all, so replication may be hard.
 
@@ -825,37 +822,48 @@ In this case all three programs use 479 observations; gretl and
 \texttt{xtabond2} use 41 instruments and produce the same estimates
 (when using the same $H$ matrix) while Ox/DPD nominally uses
 66.\footnote{This is a case of the issue described in
-  section~\ref{sec:rankdef}: the full $A$ matrix turns out to be
+  section~\ref{sec:rankdef}: the full $\bA_N$ matrix turns out to be
   singular and special measures must be taken to produce estimates.}
 It is noteworthy that with GMM-SYS plus ``messy'' missing
 observations, the results depend on the precise array of instruments
 used, which in turn depends on the details of the implementation of
 the estimator.
 
-\subsection*{Auxiliary test statistics}
+\section{Auxiliary test statistics}
 
 We have concentrated above on the parameter estimates and standard
 errors. It may be worth adding a few words on the additional test
 statistics that typically accompany both GMM-DIF and GMM-SYS
 estimation. These include the Sargan test for overidentification, one
-or more Wald tests for the joint significance of the regressors, and time
-dummies if applicable, and tests for first- and second-order
+or more Wald tests for the joint significance of the regressors (and time
+dummies, if applicable) and tests for first- and second-order
 autocorrelation of the residuals from the equations in differences.
+
+As in Ox/DPD, the Sargan test statistic reported by \textsf{gretl} is
+\[
+  S = \left(\sum_{i=1}^N \hat{\bv}^{*\prime}_i \bZ_i\right)  
+   \bA_N \left(\sum_{i=1}^N \bZ_i' \hat{\bv}^*_i\right)
+\]
+where the $\hat{\bv}^*_i$ are the transformed (e.g.\ differenced)
+residuals for unit $i$.  Under the null hypothesis that the
+instruments are valid, $S$ is asymptotically distributed as chi-square
+with degrees of freedom equal to the number of overidentifying
+restrictions.
 
 In general we see a good level of agreement between gretl, DPD and
 \texttt{xtabond2} with regard to these statistics, with a few
 relatively minor exceptions. Specifically, \texttt{xtabond2} computes
 both a ``Sargan test'' and a ``Hansen test'' for overidentification,
-but what it calls the Hansen test is what DPD and gretl call the
+but what it calls the Hansen test is, apparently, what DPD calls the
 Sargan test. (We have had difficulty determining from the
 \texttt{xtabond2} documentation \citep{Roodman2006} exactly how its
 Sargan test is computed.) In addition there are cases where the
 degrees of freedom for the Sargan test differ between DPD and gretl;
-this occurs when the $A$ matrix is singular
+this occurs when the $\bA_N$ matrix is singular
 (section~\ref{sec:rankdef}). In concept the df equals the number of
 instruments minus the number of parameters estimated; for the first of
-these terms gretl uses the rank of $A$, while DPD appears to use the
-full dimension of $A$.
+these terms gretl uses the rank of $\bA_N$, while DPD appears to use
+the full dimension of this matrix.
 
 \section{Memo: \texttt{dpanel} options}
 \label{sec:options}
@@ -877,5 +885,15 @@ full dimension of $A$.
   \verb|--quiet| & Suppresses the printing of results \\
 \end{tabular}
 \end{center}
+
+The time dummies option supports the qualifier \texttt{noprint}, as
+in
+
+\verb|  --time-dummies=noprint|
+
+This means that although the dummies are included in the specification
+their coefficients, standard errors and so on are not printed.
+
+
 
 
