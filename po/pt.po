@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-06-14 21:35-0400\n"
-"PO-Revision-Date: 2013-05-19 22:57+0100\n"
+"PO-Revision-Date: 2013-06-29 23:44+0100\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
@@ -4544,7 +4544,7 @@ msgstr "Aviso: Falha no cálculo da Hessiana numérica"
 
 #: lib/src/modelprint.c:628
 msgid "Warning: non-pd Hessian (but still nonsingular)"
-msgstr ""
+msgstr "Aviso: Hessiana não definida positiva (mas ainda não singular)"
 
 #: lib/src/modelprint.c:646 lib/src/modelprint.c:664 lib/src/modelprint.c:672
 msgid "'Within' variance"
@@ -7358,7 +7358,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 19 de maio de 2013."
+"Tradução de 29 de junho de 2013."
 
 #: gui2/about.c:165
 msgid "License"
@@ -9966,7 +9966,7 @@ msgstr "Janela"
 
 #: gui2/fnsave.c:1437
 msgid "To create a menu attachment, you must supply a label."
-msgstr ""
+msgstr "Para criar um anexo de menu, você tem que indicar uma etiqueta."
 
 #: gui2/fnsave.c:1440
 msgid ""
@@ -12042,14 +12042,12 @@ msgid "_Save text as..."
 msgstr "_Guardar texto como..."
 
 #: gui2/gui_utils.c:386
-#, fuzzy
 msgid "Save bundle to session as _icon"
-msgstr "Guardar para sessão como ícone (_i)"
+msgstr "Guardar \"bundle\" para sessão como _ícone"
 
 #: gui2/gui_utils.c:388
-#, fuzzy
 msgid "Save bundle as icon and cl_ose"
-msgstr "Guardar como ícone e sair (_x)"
+msgstr "Guardar \"bundle\" como ícone e sair (_o)"
 
 #: gui2/gui_utils.c:393
 msgid "_Graph"
@@ -12309,14 +12307,12 @@ msgid "forecast horizon (periods):"
 msgstr "horizonte de predição (períodos):"
 
 #: gui2/gui_utils.c:3509
-#, fuzzy
 msgid "line graph"
-msgstr "guardar gráfico"
+msgstr "gráfico de linha"
 
 #: gui2/gui_utils.c:3510
-#, fuzzy
 msgid "stacked bar graph"
-msgstr "guardar gráfico"
+msgstr "gráfico de barras empilhadas"
 
 #: gui2/gui_utils.c:3518 gui2/gui_utils.c:4188 gui2/gui_utils.c:4310
 msgid "Forecast variance decomposition"
@@ -14935,14 +14931,12 @@ msgid "Manuals"
 msgstr "Manuais"
 
 #: gui2/settings.c:2267
-#, fuzzy
 msgid "Select a specific font"
-msgstr "Teste RESET para especificação"
+msgstr "Selecionar uma fonte específica"
 
 #: gui2/settings.c:2268
-#, fuzzy
 msgid "Reset to Windows default"
-msgstr "Reverter para omissão"
+msgstr "Reverter para omissão do Windows"
 
 #: gui2/settings.c:2367 gui2/settings.c:2449
 msgid "Font for gretl output windows"
