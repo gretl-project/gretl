@@ -1131,7 +1131,7 @@ int gretl_rand_gamma (double *a, int t1, int t2,
  * @v: degrees of freedom.
  *
  * Fill the selected range of array @a with pseudo-random drawings
- * from the Chi-Squared distribution with @v degrees of freedom, 
+ * from the Chi-squared distribution with @v degrees of freedom, 
  * using the gamma r.v. generator.
  *
  * Returns: 0 on success, non-zero on error.
@@ -1635,7 +1635,7 @@ gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
     double hij;
     int i, j, k, n;
 
-    if (m > 40 || offset < 0) {
+    if (m > 40 || offset < 0 || m <= 0 || r <= 0) {
 	*err = E_DATA;
 	return NULL;
     }
@@ -1661,3 +1661,75 @@ gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
 
     return H;
 }
+
+/**
+ * wishart_matrix:
+ * @v: degrees of freedom.
+ * @p: dimension of output matrix.
+ * @err: location to receive error code.
+ *
+ * Computes a draw from the Wishart distribution, using the
+ * method of Odell and Feiveson, "A numerical procedure to 
+ * generate a sample covariance matrix", JASA 61, pp. 199­203,
+ * 1966.
+ *
+ * Returns: a @p x @p matrix containing a draw from the
+ * Wishart distribution with @v degrees of freedom, or
+ * NULL on error.
+ */
+
+gretl_matrix *wishart_matrix (int v, int p, int *err)
+{
+    gretl_matrix *B;
+    double Vi, Zki, Zkj;
+    double bii, bij;
+    double *Z;
+    int i, j, k;
+
+    if (p < 1 || v < p) {
+	*err = E_DATA;
+	return NULL;
+    }	
+
+    B = gretl_matrix_alloc(p, p);
+    if (B == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    k = p * (p + 1) / 2;
+
+    Z = malloc(k * sizeof *Z);
+    if (Z == NULL) {
+	*err = E_ALLOC;
+	gretl_matrix_free(B);
+	return NULL;
+    }
+
+    gretl_rand_normal(Z, 0, k - 1);  
+
+    for (i=0; i<p; i++) {
+	gretl_rand_chisq(&Vi, 0, 0, v - i);
+	bii = Vi;
+	for (k=0; k<i; k++) {
+	    Zki = Z[ijton(k, i, p)];
+	    bii += Zki * Zki;
+	}
+	gretl_matrix_set(B, i, i, bii);
+	for (j=i+1; j<p; j++) {
+	    bij = Z[ijton(i, j, p)] * sqrt(Vi);
+	    for (k=0; k<i; k++) {
+		Zki = Z[ijton(k, i, p)];
+		Zkj = Z[ijton(k, j, p)];
+		bij += Zki * Zkj;
+	    }
+	    gretl_matrix_set(B, i, j, bij);
+	    gretl_matrix_set(B, j, i, bij);
+	}
+    }
+
+    free(Z);
+
+    return B;
+}
+
