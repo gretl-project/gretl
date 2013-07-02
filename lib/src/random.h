@@ -81,9 +81,8 @@ int gretl_rand_beta_binomial (double *x, int t1, int t2,
 
 gretl_matrix *halton_matrix (int m, int r, int offset, int *err);
 
-gretl_matrix *wishart_matrix (int v, int p, int inverse,
-			      const gretl_matrix *C,
-			      int *err);
+gretl_matrix *inverse_wishart_matrix (const gretl_matrix *S,
+				      int v, int *err);
 
 void gretl_rand_set_sfmt (int s);
 

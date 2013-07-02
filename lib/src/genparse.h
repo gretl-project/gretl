@@ -336,6 +336,7 @@ enum {
     F_PSD,
     F_RANDINT,
     F_MREAD,
+    F_IWISHART,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,
@@ -381,7 +382,6 @@ enum {
     F_LOESS,
     F_GHK,
     F_QUADTAB,
-    F_WISHART,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 

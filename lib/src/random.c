@@ -1663,56 +1663,70 @@ gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
 }
 
 /**
- * wishart_matrix:
+ * inversewishart_matrix:
+ * @S: p x p positive definite scale matrix.
  * @v: degrees of freedom.
- * @p: dimension of output matrix.
- * @inverse: give a non-zero argument to get the inverse matrix.
- * @C: Cholesky factor (lower triangular) of the @p x @p scale matrix, 
- * or NULL for unit variance.
  * @err: location to receive error code.
  *
- * Computes a draw from the Wishart distribution, using the
- * method of Odell and Feiveson, "A numerical procedure to 
- * generate a sample covariance matrix", JASA 61, pp. 199­203,
- * 1966. If the @inverse flag is non-zero the draw is from
- * the Inverse-Wishart distribution; if @C is non-NULL it is
- * used to scale the result.
+ * Computes a draw from the Inverse Wishart distribution
+ * with @v degrees of freedom, using the method of Odell and 
+ * Feiveson, "A numerical procedure to generate a sample 
+ * covariance matrix", JASA 61, pp. 199­203, 1966.
  *
- * Returns: a @p x @p Wishart matrix with @v degrees of freedom, 
- * or NULL on error.
+ * Returns: a p x p Inverse Wishart matrix, or NULL on error.
  */
 
-gretl_matrix *wishart_matrix (int v, int p, int inverse,
-			      const gretl_matrix *C,
-			      int *err)
+gretl_matrix *inverse_wishart_matrix (const gretl_matrix *S,
+				      int v, int *err)
 {
-    gretl_matrix *W;
+    gretl_matrix *B, *C, *W = NULL;
+    double *Z = NULL;
     double Xi, Zri, Zrj;
     double wii, wij;
-    double *Z;
-    int i, j, r;
+    int p, i, j, r;
 
-    if (p < 1 || v < p) {
+    if (S == NULL || S->cols != S->rows || v < S->rows) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    W = gretl_matrix_alloc(p, p);
-    if (W == NULL) {
+    *err = 0;
+    p = S->rows;
+
+    /* copy, invert and decompose S */
+    C = gretl_matrix_copy(S);
+    if (C == NULL) {
 	*err = E_ALLOC;
-	return NULL;
+    } else {
+	*err = gretl_invert_symmetric_matrix(C);
+	if (!*err) {
+	    *err = gretl_matrix_cholesky_decomp(C);
+	}
     }
 
-    r = p * (p + 1) / 2;
+    if (!*err) {
+	W = gretl_matrix_alloc(p, p);
+	if (W == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
 
-    Z = malloc(r * sizeof *Z);
-    if (Z == NULL) {
-	*err = E_ALLOC;
+    if (!*err) {
+	r = p * (p + 1) / 2;
+	Z = malloc(r * sizeof *Z);
+	if (Z == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    gretl_rand_normal(Z, 0, r - 1);
+	}
+    }
+
+    if (*err) {
+	gretl_matrix_free(C);
 	gretl_matrix_free(W);
+	free(Z);
 	return NULL;
     }
-
-    gretl_rand_normal(Z, 0, r - 1);  
 
     for (i=0; i<p; i++) {
 	gretl_rand_chisq(&Xi, 0, 0, v - i);
@@ -1733,21 +1747,19 @@ gretl_matrix *wishart_matrix (int v, int p, int inverse,
 	    gretl_matrix_set(W, j, i, wij);
 	}
     }
-    
-    if (C != NULL) {
-	/* scaling is wanted */
-	gretl_matrix *B = gretl_matrix_copy(W);
 
-	if (B == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    gretl_matrix_qform(C, GRETL_MOD_NONE,
-			       B, W, GRETL_MOD_NONE);
-	    gretl_matrix_free(B);
-	}
+    /* compute quadratic form */
+    B = gretl_matrix_copy(W);
+    if (B == NULL) {
+	*err = E_ALLOC;
+    } else {
+	gretl_matrix_qform(C, GRETL_MOD_NONE,
+			   B, W, GRETL_MOD_NONE);
+	gretl_matrix_free(B);
     }
+    gretl_matrix_free(C);
 
-    if (!*err && inverse) {
+    if (!*err) {
 	*err = gretl_invert_symmetric_matrix(W);
     }
 

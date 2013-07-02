@@ -2584,6 +2584,22 @@ static NODE *matrix_imhof (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *matrix_iwishart (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const gretl_matrix *S = l->v.m;
+	int v = node_get_int(r, p);
+
+	if (!p->err) {
+	    ret->v.m = inverse_wishart_matrix(S, v, &p->err);
+	}
+    }
+
+    return ret;
+}
+
 static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 {
     *mm = (f == F_MAXR || f == F_MAXC || f == F_IMAXR || f == F_IMAXC);
@@ -7604,46 +7620,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret->v.m = gretl_quadrule_matrix_new(order, method, 
 						 a, b, &p->err);
 	} 
-    } else if (t->t == F_WISHART) {
-	int v = -1, dim = -1, inverse = 0;
-	gretl_matrix *C = NULL;
-
-	if (k < 2 || k > 4) {
-	    n_args_error(k, 4, t->t, p);
-	} 
-	
-	for (i=0; i<k && !p->err; i++) {
-	    e = eval(n->v.bn.n[i], p);
-	    if (e == NULL) {
-		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-	    } else if (i == 0) {
-		v = node_get_int(e, p);
-	    } else if (i == 1) {
-		dim = node_get_int(e, p);
-	    } else if (i == 2) {
-		if (!empty_or_num(e)) {
-		    node_type_error(t->t, i+1, NUM, e, p);
-		} else {
-		    inverse = node_get_int(e, p);
-		}
-	    } else {
-		if (e->t == MAT) {
-		    C = e->v.m;
-		} else if (!null_or_empty(e)) {
-		    node_type_error(t->t, i+1, MAT, e, p);
-		}
-	    }
-	}
-	if (!p->err) {
-	    ret = aux_matrix_node(p);
-	}
-	if (!p->err) {
-	    if (ret->v.m != NULL) {
-		gretl_matrix_free(ret->v.m);
-	    }	    
-	    ret->v.m = wishart_matrix(v, dim, inverse, C, &p->err);
-	} 
-    }	
+    }
 
     return ret;
 }
@@ -9710,9 +9687,14 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;
     case F_IMHOF:
+    case F_IWISHART:
 	/* matrix, scalar as second arg */
 	if (l->t == MAT && scalar_node(r)) {
-	    ret = matrix_imhof(l, r, p);
+	    if (t->t == F_IMHOF) {
+		ret = matrix_imhof(l, r, p);
+	    } else {
+		ret = matrix_iwishart(l, r, p);
+	    }
 	} else {
 	    p->err = E_TYPES;
 	} 
@@ -9803,7 +9785,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_LOESS:
     case F_GHK:
     case F_QUADTAB:
-    case F_WISHART:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
 	break;
