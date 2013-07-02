@@ -397,6 +397,7 @@ struct str_table funcs[] = {
     { F_FREQ,     "freq" },
     { F_GHK,      "ghk" },
     { F_HALTON,   "halton" },
+    { F_WISHART,  "wishart" },
     { F_ISNAN,    "isnan" },
     { F_TYPESTR,  "typestr" },
     { F_QUADTAB,  "quadtable" },

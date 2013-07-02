@@ -3391,7 +3391,7 @@ static int QR_solve (gretl_matrix *a, gretl_matrix *b,
  *
  * Solves ax = b for the unknown x, using LU decomposition,
  * then proceeds to use the decomposition to invert @a. Calls
- * the lapack functions dgetrf(), dgetrs() and dgetri(); the
+ * the LAPACK functions dgetrf(), dgetrs() and dgetri(); the
  * decomposition proceeds via partial pivoting with row
  * interchanges.
  *
@@ -3493,7 +3493,7 @@ int gretl_LU_solve_invert (gretl_matrix *a, gretl_matrix *b)
  * Solves ax = b for the unknown x, via LU decomposition
  * using partial pivoting with row interchanges.
  * On exit, @b is replaced by the solution and @a is replaced 
- * by its decomposition. Calls the lapack functions dgetrf() 
+ * by its decomposition. Calls the LAPACK functions dgetrf() 
  * and dgetrs().
  * 
  * Returns: 0 on successful completion, non-zero code on error.
@@ -3600,7 +3600,7 @@ static int gretl_matrix_solve (gretl_matrix *a, gretl_matrix *b)
    of X'X, and b is the right-hand side on entry, the solution on
    successful exit.  This may not be as efficient as lapack's
    dpotrf/dpotrs, but the advantage is that this function flags
-   near-singularity whereas the lapack functions generate an error
+   near-singularity whereas the LAPACK functions generate an error
    condition only on outright singularity.
 
    Note that the matrix @a is overwritten.
@@ -3701,7 +3701,7 @@ static int native_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
  * @b: vector 'x' on input, solution 'b' on output.
  *
  * Solves ax = b for the unknown vector x, using Cholesky decomposition
- * via the lapack functions dpotrf and dpotrs.
+ * via the LAPACK functions dpotrf() and dpotrs().
  * 
  * On exit, @b is replaced by the solution and @a is replaced by its 
  * Cholesky decomposition.
@@ -6530,8 +6530,8 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
  * @err: location to receive error code.
  * 
  * Estimates the reciprocal condition number of the general
- * real matrix @m (in the 1-norm), using the lapack 
- * functions dgetrf and dgecon.
+ * real matrix @m (in the 1-norm), using the LAPACK 
+ * functions dgetrf() and dgecon().
  *
  * Returns: the estimate, or #NADBL on failure to allocate memory.
  */
@@ -6600,8 +6600,8 @@ static double gretl_general_matrix_rcond (const gretl_matrix *A,
  * @err: location to receive error code.
  * 
  * Estimates the reciprocal condition number of the real symmetric
- * positive definite matrix @m (in the 1-norm), using the lapack 
- * functions dpotrf and dpocon.
+ * positive definite matrix @m (in the 1-norm), using the LAPACK 
+ * functions dpotrf() and dpocon().
  *
  * Returns: the estimate, or #NADBL on failure to allocate memory.
  */
@@ -6907,8 +6907,8 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
  * 
  * Computes the QR factorization of @M.  On successful exit
  * the matrix @M holds Q, and, if @R is not NULL, the upper 
- * triangle of @R holds R.  Uses the lapack functions 
- * dgeqrf and dorgqr.
+ * triangle of @R holds R.  Uses the LAPACK functions 
+ * dgeqrf() and dorgqr().
  *
  * Returns: 0 on success, non-zero on failure.
  */
@@ -7185,7 +7185,7 @@ int gretl_invert_triangular_matrix (gretl_matrix *a, char uplo)
  * 
  * Computes the inverse of a general matrix using LU
  * factorization.  On exit @a is overwritten with the inverse.
- * Uses the lapack functions dgetrf() and dgetri().
+ * Uses the LAPACK functions dgetrf() and dgetri().
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
@@ -7393,8 +7393,8 @@ int gretl_invert_matrix (gretl_matrix *a)
  * @a: matrix to invert.
  * 
  * Computes the inverse of a real symmetric matrix via the 
- * Bunch-Kaufman diagonal pivoting method.  Uses the lapack 
- * functions dsytrf and dsytri.  On exit @a is overwritten
+ * Bunch-Kaufman diagonal pivoting method.  Uses the LAPACK 
+ * functions dsytrf() and dsytri().  On exit @a is overwritten
  * with the inverse.
  *
  * Returns: 0 on success; non-zero error code on failure.
@@ -7507,7 +7507,7 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
  * 
  * Computes the inverse of a symmetric positive definite matrix
  * using Cholesky factorization.  On exit @a is overwritten with 
- * the inverse. Uses the lapack functions dpotrf and dpotri.
+ * the inverse. Uses the LAPACK functions dpotrf() and dpotri().
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
@@ -7635,7 +7635,7 @@ int real_gretl_invpd (gretl_matrix *a, int verbose)
  * 
  * Computes the inverse of a symmetric positive definite matrix
  * using Cholesky factorization.  On exit @a is overwritten with 
- * the inverse. Uses the lapack functions dpotrf and dpotri.
+ * the inverse. Uses the LAPACK functions dpotrf() and dpotri().
  * Little checking is done, for speed: we assume the caller
  * knows what he's doing.
  *
@@ -7653,7 +7653,7 @@ int gretl_invpd (gretl_matrix *a)
  * 
  * Attempts to computes the inverse of a matrix which may be
  * positive definite.  On exit @a is overwritten with 
- * the inverse. Uses the lapack functions dpotrf and dpotri.
+ * the inverse. Uses the LAPACK functions dpotrf() and dpotri().
  * Little checking is done, for speed: we assume the caller
  * knows what he's doing.  Unlike gretl_invpd() this function
  * does not dump error messages to %stderr in case the matrix
@@ -7720,7 +7720,7 @@ int gretl_inverse_from_cholesky_decomp (gretl_matrix *targ,
  * using Cholesky factorization, computing the log-determinant 
  * in the process.  On exit @a is overwritten with the inverse 
  * and if @ldet is not NULL the log-determinant is written to 
- * that location.  Uses the lapack functions dpotrf and dpotri.
+ * that location.  Uses the LAPACK functions dpotrf() and dpotri().
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
@@ -7840,7 +7840,7 @@ static int invert_packed_symm_indef_matrix (gretl_matrix *v,
  * Computes the inverse of a symmetric positive definite matrix,
  * stored in vech form, using Cholesky factorization.  On exit 
  * @v is overwritten with the lower triangle of the inverse.
- * Uses the lapack functions dpptrf and dpptri.
+ * Uses the LAPACK functions dpptrf() and dpptri().
  *
  * Returns: 0 on success; non-zero error code on failure.
  */

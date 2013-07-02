@@ -7604,7 +7604,46 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret->v.m = gretl_quadrule_matrix_new(order, method, 
 						 a, b, &p->err);
 	} 
-    }
+    } else if (t->t == F_WISHART) {
+	int v = -1, dim = -1, inverse = 0;
+	gretl_matrix *C = NULL;
+
+	if (k < 2 || k > 4) {
+	    n_args_error(k, 4, t->t, p);
+	} 
+	
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else if (i == 0) {
+		v = node_get_int(e, p);
+	    } else if (i == 1) {
+		dim = node_get_int(e, p);
+	    } else if (i == 2) {
+		if (!empty_or_num(e)) {
+		    node_type_error(t->t, i+1, NUM, e, p);
+		} else {
+		    inverse = node_get_int(e, p);
+		}
+	    } else {
+		if (e->t == MAT) {
+		    C = e->v.m;
+		} else if (!null_or_empty(e)) {
+		    node_type_error(t->t, i+1, MAT, e, p);
+		}
+	    }
+	}
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
+	if (!p->err) {
+	    if (ret->v.m != NULL) {
+		gretl_matrix_free(ret->v.m);
+	    }	    
+	    ret->v.m = wishart_matrix(v, dim, inverse, C, &p->err);
+	} 
+    }	
 
     return ret;
 }
@@ -9764,6 +9803,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_LOESS:
     case F_GHK:
     case F_QUADTAB:
+    case F_WISHART:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
 	break;

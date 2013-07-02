@@ -2450,7 +2450,7 @@
 	</para>
 	<para>
 	  The argument <argname>C</argname> (<by r="m" c="m"/>) should give
-	  the Cholesky decomposition (lower triangular) of the covariance
+	  the Cholesky factor (lower triangular) of the covariance
 	  matrix of the <math>m</math> normal variates.  The arguments
 	  <argname>A</argname> and <argname>B</argname> should both be <by
 	  r="n" c="m"/>, giving respectively the lower and upper bounds
@@ -6954,6 +6954,43 @@
 	  date specified by the three arguments, or <lit>NA</lit> if the date
 	  is invalid.
 	</para>
+      </description>
+    </function>
+
+    <function name="wishart" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="scalar">v</fnarg>
+	<fnarg type="scalar">p</fnarg>
+	<fnarg optional="true" type="scalar">inverse</fnarg>
+	<fnarg optional="true" type="matrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a <by r="p" c="p"/> drawing from the Wishart
+	  distribution (or the Inverse-Wishart distribution if a
+	  non-zero value is given for the <argname>inverse</argname>
+	  argument) with <argname>v</argname> degrees of freedom.
+	</para>
+	<para>
+	  If the optional <argname>C</argname> argument is provided,
+	  it is used to scale the result: this matrix should be the
+	  (lower triangular) Cholesky factor of the required positive
+	  definite <by r="p" c="p"/> scale matrix.
+	</para>
+	<para>
+	  The first example below calls for a plain <by r="k" c="k"/>
+	  Wishart matrix with <math>T</math> degrees of freedom; the
+	  second calls for an Inverse-Wishart draw with scale matrix
+	  <math>V</math>.
+	</para>
+	<code>
+	  # example 1
+	  matrix W1 = wishart(T, k)
+
+	  # example 2
+	  matrix C = cholesky(V)
+	  matrix W2 = wishart(T, k, 1, C)
+	</code>
       </description>
     </function>
 

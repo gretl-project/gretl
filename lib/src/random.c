@@ -1498,7 +1498,7 @@ int gretl_rand_beta (double *x, int t1, int t2,
 	for (j=0; ; j++) {
 	    u = gretl_rand_uniform_one();
 	    v = gretl_rand_uniform_one();
-	    s = u*u*v;
+	    s = u * u * v;
 	    if (u < DBL_MIN || s <= 0) continue;
 	    if (u < u0) {
 		v = log(u/(1.0 - u))/h;
@@ -1666,106 +1666,98 @@ gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
  * wishart_matrix:
  * @v: degrees of freedom.
  * @p: dimension of output matrix.
- * @S: @p x @p scale matrix, or NULL for unit variance.
+ * @inverse: give a non-zero argument to get the inverse matrix.
+ * @C: Cholesky factor (lower triangular) of the @p x @p scale matrix, 
+ * or NULL for unit variance.
  * @err: location to receive error code.
  *
  * Computes a draw from the Wishart distribution, using the
  * method of Odell and Feiveson, "A numerical procedure to 
  * generate a sample covariance matrix", JASA 61, pp. 199­203,
- * 1966.
+ * 1966. If the @inverse flag is non-zero the draw is from
+ * the Inverse-Wishart distribution; if @C is non-NULL it is
+ * used to scale the result.
  *
- * Returns: a @p x @p matrix containing a draw from the
- * Wishart distribution with @v degrees of freedom, or
- * NULL on error.
+ * Returns: a @p x @p Wishart matrix with @v degrees of freedom, 
+ * or NULL on error.
  */
 
-gretl_matrix *wishart_matrix (int v, int p, const gretl_matrix *S,
+gretl_matrix *wishart_matrix (int v, int p, int inverse,
+			      const gretl_matrix *C,
 			      int *err)
 {
-    gretl_matrix *B, *C = NULL;
-    double Vi, Zki, Zkj;
-    double bii, bij;
+    gretl_matrix *W;
+    double Xi, Zri, Zrj;
+    double wii, wij;
     double *Z;
-    int i, j, k;
+    int i, j, r;
 
     if (p < 1 || v < p) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    if (S != NULL) {
-	/* copy and decompose */
-	if (S->rows != p || S->cols != p) {
-	    *err = E_DATA;
-	} else {
-	    C = gretl_matrix_copy(S);
-	    if (C == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		*err = gretl_matrix_cholesky_decomp(C);
-	    }
-	}
-	if (*err) {
-	    gretl_matrix_free(C);
-	    return NULL;
-	}
-    }
-
-    B = gretl_matrix_alloc(p, p);
-    if (B == NULL) {
+    W = gretl_matrix_alloc(p, p);
+    if (W == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    k = p * (p + 1) / 2;
+    r = p * (p + 1) / 2;
 
-    Z = malloc(k * sizeof *Z);
+    Z = malloc(r * sizeof *Z);
     if (Z == NULL) {
 	*err = E_ALLOC;
-	gretl_matrix_free(B);
+	gretl_matrix_free(W);
 	return NULL;
     }
 
-    gretl_rand_normal(Z, 0, k - 1);  
+    gretl_rand_normal(Z, 0, r - 1);  
 
     for (i=0; i<p; i++) {
-	gretl_rand_chisq(&Vi, 0, 0, v - i);
-	bii = Vi;
-	for (k=0; k<i; k++) {
-	    Zki = Z[ijton(k, i, p)];
-	    bii += Zki * Zki;
+	gretl_rand_chisq(&Xi, 0, 0, v - i);
+	wii = Xi;
+	for (r=0; r<i; r++) {
+	    Zri = Z[ijton(r, i, p)];
+	    wii += Zri * Zri;
 	}
-	gretl_matrix_set(B, i, i, bii);
+	gretl_matrix_set(W, i, i, wii);
 	for (j=i+1; j<p; j++) {
-	    bij = Z[ijton(i, j, p)] * sqrt(Vi);
-	    for (k=0; k<i; k++) {
-		Zki = Z[ijton(k, i, p)];
-		Zkj = Z[ijton(k, j, p)];
-		bij += Zki * Zkj;
+	    wij = Z[ijton(i, j, p)] * sqrt(Xi);
+	    for (r=0; r<i; r++) {
+		Zri = Z[ijton(r, i, p)];
+		Zrj = Z[ijton(r, j, p)];
+		wij += Zri * Zrj;
 	    }
-	    gretl_matrix_set(B, i, j, bij);
-	    gretl_matrix_set(B, j, i, bij);
+	    gretl_matrix_set(W, i, j, wij);
+	    gretl_matrix_set(W, j, i, wij);
 	}
     }
     
     if (C != NULL) {
-	/* scaling is needed */
-	gretl_matrix *Tmp = gretl_matrix_copy(B);
+	/* scaling is wanted */
+	gretl_matrix *B = gretl_matrix_copy(W);
 
-	if (Tmp == NULL) {
+	if (B == NULL) {
 	    *err = E_ALLOC;
-	    gretl_matrix_free(B);
-	    B = NULL;
 	} else {
-	    gretl_matrix_qform(C, GRETL_MOD_TRANSPOSE,
-			       Tmp, B, GRETL_MOD_NONE);
-	    gretl_matrix_free(Tmp);
+	    gretl_matrix_qform(C, GRETL_MOD_NONE,
+			       B, W, GRETL_MOD_NONE);
+	    gretl_matrix_free(B);
 	}
-	gretl_matrix_free(C);
+    }
+
+    if (!*err && inverse) {
+	*err = gretl_invert_symmetric_matrix(W);
+    }
+
+    if (*err) {
+	gretl_matrix_free(W);
+	W = NULL;
     }
 
     free(Z);
 
-    return B;
+    return W;
 }
 

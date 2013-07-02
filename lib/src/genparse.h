@@ -381,6 +381,7 @@ enum {
     F_LOESS,
     F_GHK,
     F_QUADTAB,
+    F_WISHART,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 
