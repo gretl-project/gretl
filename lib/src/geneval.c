@@ -2584,22 +2584,6 @@ static NODE *matrix_imhof (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *matrix_iwishart (NODE *l, NODE *r, parser *p)
-{
-    NODE *ret = aux_matrix_node(p);
-
-    if (ret != NULL && starting(p)) {
-	const gretl_matrix *S = l->v.m;
-	int v = node_get_int(r, p);
-
-	if (!p->err) {
-	    ret->v.m = inverse_wishart_matrix(S, v, &p->err);
-	}
-    }
-
-    return ret;
-}
-
 static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 {
     *mm = (f == F_MAXR || f == F_MAXC || f == F_IMAXR || f == F_IMAXC);
@@ -6728,6 +6712,27 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		A = halton_matrix(rows, cols, offset, &p->err);
 	    }
 	}
+    } else if (f == F_IWISHART) {
+	if (l->t != MAT) {
+	    node_type_error(f, 1, MAT, l, p);
+	} else if (m->t != NUM) {
+	    node_type_error(f, 2, NUM, m, p);
+	} else if (r->t != EMPTY && r->t != NUM) {
+	    /* optional number of replications */
+	    node_type_error(f, 3, NUM, r, p);
+	} else {
+	    const gretl_matrix *S = l->v.m;
+	    int v = node_get_int(m, p);
+	    int N = (r->t == EMPTY)? 0 : node_get_int(r, p);
+
+	    if (!p->err) {
+		if (N == 0) {
+		    A = inverse_wishart_matrix(S, v, &p->err);
+		} else {
+		    A = inverse_wishart_sequence(S, v, N, &p->err);
+		}
+	    }
+	}
     } else if (f == F_AGGRBY) {
 	if (l->t != VEC && l->t != LIST && !null_or_empty(l)) {
 	    node_type_error(f, 1, VEC, l, p);
@@ -9687,14 +9692,9 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;
     case F_IMHOF:
-    case F_IWISHART:
 	/* matrix, scalar as second arg */
 	if (l->t == MAT && scalar_node(r)) {
-	    if (t->t == F_IMHOF) {
-		ret = matrix_imhof(l, r, p);
-	    } else {
-		ret = matrix_iwishart(l, r, p);
-	    }
+	    ret = matrix_imhof(l, r, p);
 	} else {
 	    p->err = E_TYPES;
 	} 
@@ -9750,6 +9750,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_PRINCOMP:
     case F_HALTON:
     case F_AGGRBY:
+    case F_IWISHART:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);

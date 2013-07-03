@@ -43,8 +43,8 @@
             matshape | numerical | probdist | stats | strings | 
             transforms | access) "math" 
    output  (scalar | series | matrix | smatrix | string | seebelow |
-            rvec | cvec | list | asinput | scalar-or-series |
-            scalar-or-matrix) "series"
+            rvec | cvec | list | asinput | scalar-or-series | int |
+            scalar-or-matrix | matrix-or-bundle) "series"
    altout  (none | scalar | series | rvec | matrix | list) "none"
 >
 
@@ -60,7 +60,8 @@
                series-or-mat | list | coeffname | string | char | sslist | 
                series-or-list | smlist | pscalar | seebelow | fncall |
                anyfloat-or-list | list-or-string | scalar-or-vec |
-               scalar-or-list | scalar-or-matrix | bundle | varargs) "series"
+               int-or-list | scalar-or-matrix | int | bool | pdmat |
+               bundle | varargs) "series"
     optional  (true | false) "false"
     conditional (true | false) "false"
 >

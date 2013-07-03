@@ -419,7 +419,7 @@
       </description>
     </function>
 
-    <function name="$ncoeff" section="access" output="scalar">
+    <function name="$ncoeff" section="access" output="int">
       <description>
 	<para>
 	  Returns the total number of coefficients estimated in the last
@@ -428,7 +428,7 @@
       </description>
     </function>
 
-    <function name="$nobs" section="access" targ="dnobs" output="scalar">
+    <function name="$nobs" section="access" targ="dnobs" output="int">
       <description>
 	<para>
 	  Returns the number of observations in the currently selected
@@ -437,7 +437,7 @@
       </description>
     </function>
 
-    <function name="$nvars" section="access" output="scalar">
+    <function name="$nvars" section="access" output="int">
       <description>
 	<para>
 	  Returns the number of variables in the dataset (including the
@@ -502,7 +502,7 @@
       </description>
     </function>
 
-    <function name="$pd" section="access" output="scalar">
+    <function name="$pd" section="access" output="int">
       <description>
 	<para>
 	  Returns the frequency or periodicity of the data (e.g. 4 for
@@ -687,7 +687,7 @@
       </description>
     </function>
 
-    <function name="$T" section="access" output="scalar">
+    <function name="$T" section="access" output="int">
       <description>
 	<para>
 	  Returns the number of observations used in estimating the last
@@ -696,7 +696,7 @@
       </description>
     </function>
 
-    <function name="$t1" section="access" output="scalar">
+    <function name="$t1" section="access" output="int">
       <description>
 	<para>
 	  Returns the 1-based index of the first observation in the currently
@@ -705,7 +705,7 @@
       </description>
     </function>
 
-    <function name="$t2" section="access" output="scalar">
+    <function name="$t2" section="access" output="int">
       <description>
 	<para>
 	  Returns the 1-based index of the last observation in the currently
@@ -833,7 +833,7 @@
       </description>
     </function>
 
-    <function name="$windows" section="access" output="scalar">
+    <function name="$windows" section="access" output="int">
       <description>
 	<para>
 	  Returns 1 if gretl is running on MS Windows, otherwise 0. By
@@ -1004,18 +1004,23 @@
 	</code>
 	<para>
 	  For an example using lists, let <lit>gender</lit> be a
-	  male/female dummy variable and let <lit>race</lit> be a
-	  categorical variable with three values. Then the following
-	  will produce a matrix with 6 rows and 5 columns: the first
-	  two columns holding the gender/race combinations and the
-	  last two holding the sample standard deviations of 
-	  <lit>income</lit> and <lit>age</lit>:
+	  male/female dummy variable, let <lit>race</lit> be a
+	  categorical variable with three values, and consider
+	  the following:
 	</para>
 	<code>
 	  list BY = gender race
 	  list X = income age
 	  matrix m = aggregate(X, BY, sd)
-	</code>
+	</code>	
+	<para>
+	  The <lit>aggregate</lit> call here will produce a <by r="6"
+	  c="5"/> matrix. The first two columns hold the 6 distinct
+	  combinations of gender and race values; the middle column
+	  holds the count for each of these combinations; and the
+	  rightmost two columns contain the sample standard deviations
+	  of <lit>income</lit> and <lit>age</lit>.
+	</para>
 	<para>
 	  Note that if <argname>byvar</argname> is a list, some
 	  combinations of the <argname>byvar</argname> values may not
@@ -1185,9 +1190,9 @@
     <function name="bkfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-	<fnarg type="scalar" optional="true">f1</fnarg>
-	<fnarg type="scalar" optional="true">f2</fnarg>
-	<fnarg type="scalar" optional="true">k</fnarg>
+	<fnarg type="int" optional="true">f1</fnarg>
+	<fnarg type="int" optional="true">f2</fnarg>
+	<fnarg type="int" optional="true">k</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -1234,7 +1239,7 @@
     <function name="bwfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-	<fnarg type="scalar">n</fnarg>
+	<fnarg type="int">n</fnarg>
 	<fnarg type="scalar">omega</fnarg>
       </fnargs>
       <description>
@@ -1439,7 +1444,7 @@
 
     <function name="cholesky" section="linalg" output="smatrix">
       <fnargs>
-	<fnarg type="symmat">A</fnarg>
+	<fnarg type="pdmat">A</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -1459,7 +1464,7 @@
     <function name="chowlin" section="transforms" output="matrix">
       <fnargs>
 	<fnarg type="matrix">Y</fnarg>
-	<fnarg type="scalar">xfac</fnarg>
+	<fnarg type="int">xfac</fnarg>
 	<fnarg type="matrix" optional="true">X</fnarg>
       </fnargs>
       <description>
@@ -1529,7 +1534,7 @@
     <function name="colname" section="strings" output="string">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
-	<fnarg type="scalar">col</fnarg>
+	<fnarg type="int">col</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -1562,14 +1567,14 @@
 	  Example:
 	</para>
 	<code>
-	  matrix M = {1,2;2,1;4,1}
+	  matrix M = {1, 2; 2, 1; 4, 1}
 	  colnames(M, "Col1 Col2")
 	  print M
 	</code>
       </description>
     </function>
 
-    <function name="cols" section="matshape" output="scalar">
+    <function name="cols" section="matshape" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -1609,7 +1614,7 @@
     <function name="corrgm" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>
-	<fnarg type="scalar">p</fnarg>
+	<fnarg type="int">p</fnarg>
 	<fnarg optional="true" type="series-or-vec">y</fnarg>
       </fnargs>
       <description>
@@ -1916,9 +1921,9 @@
       </fnargs>    
       <description>
 	<para context="notex">
-	  Returns the digamma (or Psi) function
-	  of <argname>x</argname>, that is the derivative of the log
-	  of the Gamma function.
+	  Returns the digamma (or Psi) function of
+	  <argname>x</argname>, that is the derivative of the log of
+	  the Gamma function.
 	</para>
 	<para context="tex">
 	  Returns the digamma (or Psi) function of $x$, that is 
@@ -2103,11 +2108,11 @@
       </description>
     </function>
 
-    <function name="epochday" section="data-utils" output="scalar">
+    <function name="epochday" section="data-utils" output="int">
       <fnargs>
-	<fnarg type="scalar">year</fnarg>
-	<fnarg type="scalar">month</fnarg>
-	<fnarg type="scalar">day</fnarg>
+	<fnarg type="int">year</fnarg>
+	<fnarg type="int">month</fnarg>
+	<fnarg type="int">day</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2120,7 +2125,7 @@
 
     <function name="errmsg" section="strings" output="string">
       <fnargs>
-	<fnarg type="scalar">errno</fnarg>
+	<fnarg type="int">errno</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2351,7 +2356,7 @@
       </description>
     </function>
 
-    <function name="firstobs" section="data-utils" output="scalar">
+    <function name="firstobs" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -2543,9 +2548,9 @@
 
     <function name="halton" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="scalar">m</fnarg>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg optional="true" type="scalar">offset</fnarg>
+	<fnarg type="int">m</fnarg>
+	<fnarg type="int">r</fnarg>
+	<fnarg optional="true" type="int">offset</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2633,7 +2638,7 @@
 
     <function name="I" section="matbuild" output="smatrix">
       <fnargs>
-	<fnarg type="scalar">n</fnarg>
+	<fnarg type="int">n</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2749,7 +2754,7 @@
       </description>
     </function>
 
-    <function name="inbundle" section="data-utils" output="scalar">
+    <function name="inbundle" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="bundle">b</fnarg>
 	<fnarg type="string">key</fnarg>
@@ -2790,7 +2795,7 @@
       </description>
     </function>
 
-    <function name="inlist" section="data-utils" output="scalar">
+    <function name="inlist" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="list">L</fnarg>
 	<fnarg type="series">y</fnarg>
@@ -2971,7 +2976,7 @@
 
     <function name="invpd" section="linalg" output="smatrix">
       <fnargs>
-	<fnarg type="symmat">A</fnarg>
+	<fnarg type="pdmat">A</fnarg>
       </fnargs>  
       <description>
 	<para>
@@ -2984,10 +2989,10 @@
       </description>
     </function>
 
-    <function name="irf" section="stats" output="matrix">
+    <function name="irf" section="stats" output="matrix-or-bundle">
       <fnargs>
-	<fnarg type="scalar">target</fnarg>
-	<fnarg type="scalar">shock</fnarg>
+	<fnarg type="int">target</fnarg>
+	<fnarg type="int">shock</fnarg>
 	<fnarg type="pscalar" optional="true">alpha</fnarg>
       </fnargs>  
       <description>
@@ -3038,10 +3043,10 @@
       </description>
     </function>
 
-    <function name="isconst" section="data-utils" output="scalar">
+    <function name="isconst" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
-	<fnarg type="scalar" optional="true">panel-code</fnarg>
+	<fnarg type="int" optional="true">panel-code</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3081,7 +3086,7 @@
       </description>
     </function>
 
-    <function name="isnull" section="data-utils" output="scalar">
+    <function name="isnull" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">name</fnarg>
       </fnargs>
@@ -3097,14 +3102,16 @@
     <function name="iwishart" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="symmat">S</fnarg>
-	<fnarg type="scalar">v</fnarg>
+	<fnarg type="int">v</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Given <argname>S</argname> (a positive definite <by r="p"
 	  c="p"/> scale matrix), returns a drawing from the Inverse
 	  Wishart distribution with <argname>v</argname> degrees of
-	  freedom. The returned matrix is also <by r="p" c="p"/>.
+	  freedom. The returned matrix is also <by r="p" c="p"/>.  The
+	  algorithm of <cite key="odell-feiveson66">Odell and Feiveson
+	  (1966)</cite> is used.
 	</para>
       </description>
     </function>
@@ -3113,7 +3120,7 @@
       <fnargs>
 	<fnarg type="series">x</fnarg>
 	<fnarg type="scalar" optional="true">scale</fnarg>
-	<fnarg type="scalar" optional="true">control</fnarg>
+	<fnarg type="bool" optional="true">control</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3242,9 +3249,9 @@
 
     <function name="lags" section="transforms" output="list">
       <fnargs>
-	<fnarg type="scalar">p</fnarg>
+	<fnarg type="int">p</fnarg>
 	<fnarg type="series-or-list">y</fnarg>
-	<fnarg type="scalar" optional="true">bylag</fnarg>
+	<fnarg type="bool" optional="true">bylag</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3275,7 +3282,7 @@
       </description>
     </function>
 
-    <function name="lastobs" section="data-utils" output="scalar">
+    <function name="lastobs" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -3357,7 +3364,7 @@
     <function name="ljungbox" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-	<fnarg type="scalar">p</fnarg>
+	<fnarg type="int">p</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3439,9 +3446,9 @@
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series">x</fnarg>
-	<fnarg optional="true" type="scalar">d</fnarg>
+	<fnarg optional="true" type="int">d</fnarg>
 	<fnarg optional="true" type="scalar">q</fnarg>
-	<fnarg optional="true" type="scalar">robust</fnarg>
+	<fnarg optional="true" type="bool">robust</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3521,7 +3528,7 @@
     <function name="lrvar" section="filters" output="scalar">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
-	<fnarg type="scalar">k</fnarg>
+	<fnarg type="int">k</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3640,7 +3647,7 @@
 	<fnarg type="matrix">X</fnarg>
 	<fnarg optional="true" type="vector">u</fnarg>
 	<fnarg optional="true" type="vector">w</fnarg>
-	<fnarg type="scalar">p</fnarg>
+	<fnarg type="int">p</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3648,7 +3655,7 @@
 	  <argname>X</argname> (typically containing regressors), an
 	  (optional) <math>T</math>-vector <argname>u</argname> (typically
 	  containing residuals), an (optional) (<math>p</math>+1)-vector
-	  of weights <argname>w</argname>, and a scalar lag order
+	  of weights <argname>w</argname>, and a lag order
 	  <argname>p</argname>, which must be greater than or equal to 0.
 	</para>
 	<para context="tex">
@@ -3903,8 +3910,8 @@
 
     <function name="mnormal" section="matbuild" output="matrix">
       <fnargs>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg type="scalar">c</fnarg>
+	<fnarg type="int">r</fnarg>
+	<fnarg type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3958,11 +3965,11 @@
       </description>
     </function>
 
-    <function name="monthlen" section="data-utils" output="scalar">
+    <function name="monthlen" section="data-utils" output="int">
       <fnargs>
-	<fnarg type="scalar">month</fnarg>
-	<fnarg type="scalar">year</fnarg>
-	<fnarg type="scalar">weeklen</fnarg>
+	<fnarg type="int">month</fnarg>
+	<fnarg type="int">year</fnarg>
+	<fnarg type="int">weeklen</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3979,7 +3986,7 @@
       <fnargs>
 	<fnarg type="series">x</fnarg>
 	<fnarg type="scalar">p</fnarg>
-	<fnarg type="scalar" optional="true">control</fnarg>
+	<fnarg type="int" optional="true">control</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4048,8 +4055,8 @@
 	<fnarg type="scalar">p1</fnarg>
 	<fnarg type="scalar" conditional="true">p2</fnarg>
 	<fnarg type="scalar" conditional="true">p3</fnarg>
-	<fnarg type="scalar">rows</fnarg>
-	<fnarg type="scalar">cols</fnarg>
+	<fnarg type="int">rows</fnarg>
+	<fnarg type="int">cols</fnarg>
       </fnargs>
       <examples>
 	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
@@ -4083,7 +4090,7 @@
     <function name="mread" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
-	<fnarg optional="true" type="scalar">import</fnarg>
+	<fnarg optional="true" type="bool">import</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4197,8 +4204,8 @@
     <function name="mshape" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg type="scalar">c</fnarg>
+	<fnarg type="int">r</fnarg>
+	<fnarg type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4226,7 +4233,7 @@
     <function name="msortby" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="scalar">j</fnarg>
+	<fnarg type="int">j</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4241,8 +4248,8 @@
 
     <function name="muniform" section="matbuild" output="matrix">
       <fnargs>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg type="scalar">c</fnarg>
+	<fnarg type="int">r</fnarg>
+	<fnarg type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4264,11 +4271,11 @@
       </description>
     </function>
 
-    <function name="mwrite" section="data-utils" output="scalar">
+    <function name="mwrite" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="string">fname</fnarg>
-	<fnarg optional="true" type="scalar">export</fnarg>
+	<fnarg optional="true" type="bool">export</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4422,7 +4429,7 @@
       </description>
     </function>
 
-    <function name="nelem" section="data-utils" output="scalar">
+    <function name="nelem" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="list">L</fnarg>
       </fnargs>
@@ -4448,7 +4455,7 @@
       </description>
     </function>
 
-    <function name="nobs" section="stats" output="scalar">
+    <function name="nobs" section="stats" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -4608,7 +4615,7 @@
 
     <function name="obslabel" section="data-utils" output="string">
       <fnargs>
-	<fnarg type="scalar">t</fnarg>
+	<fnarg type="int">t</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4619,7 +4626,7 @@
       </description>
     </function>
 
-    <function name="obsnum" section="data-utils" output="scalar">
+    <function name="obsnum" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>
@@ -4707,8 +4714,8 @@
 
     <function name="ones" section="matbuild" output="matrix">
       <fnargs>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg type="scalar">c</fnarg>
+	<fnarg type="int">r</fnarg>
+	<fnarg type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4964,7 +4971,7 @@
     <function name="polyfit" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-	<fnarg type="scalar">q</fnarg>
+	<fnarg type="int">q</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4979,8 +4986,8 @@
     <function name="princomp" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="scalar">p</fnarg>
-	<fnarg optional="true" type="scalar">covmat</fnarg>
+	<fnarg type="int">p</fnarg>
+	<fnarg optional="true" type="bool">covmat</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5323,8 +5330,8 @@
 
     <function name="quadtable" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="scalar">n</fnarg>
-	<fnarg type="scalar" optional="true">type</fnarg>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int" optional="true">type</fnarg>
 	<fnarg type="scalar" optional="true">a</fnarg>
 	<fnarg type="scalar" optional="true">b</fnarg>
       </fnargs>
@@ -5625,10 +5632,10 @@
       </description>
     </function>
 
-    <function name="randint" section="probdist" output="scalar">
+    <function name="randint" section="probdist" output="int">
       <fnargs>
-	<fnarg type="scalar">min</fnarg>
-	<fnarg type="scalar">max</fnarg>
+	<fnarg type="int">min</fnarg>
+	<fnarg type="int">max</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5641,7 +5648,7 @@
       </description>
     </function>
 
-    <function name="rank" section="linalg" output="scalar">
+    <function name="rank" section="linalg" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -5734,7 +5741,7 @@
       </description>
     </function>
 
-    <function name="remove" section="data-utils" output="scalar">
+    <function name="remove" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
       </fnargs>    
@@ -5798,7 +5805,7 @@
     <function name="resample" section="stats" output="asinput">
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
-	<fnarg optional="true" type="scalar">b</fnarg>
+	<fnarg optional="true" type="int">b</fnarg>
       </fnargs>    
       <description>
 	<para>
@@ -5845,7 +5852,7 @@
       </description>
     </function>
 
-    <function name="rownames" section="matbuild" output="scalar">
+    <function name="rownames" section="matbuild" output="int">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
 	<fnarg type="list-or-string">s</fnarg>
@@ -5871,7 +5878,7 @@
 	  </description>
     </function>
 
-    <function name="rows" section="matshape" output="scalar">
+    <function name="rows" section="matshape" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -6006,9 +6013,9 @@
 
     <function name="seq" section="matbuild" output="rvec">
       <fnargs>
-	<fnarg type="scalar">a</fnarg>
-	<fnarg type="scalar">b</fnarg>
-	<fnarg optional="true" type="scalar">k</fnarg>
+	<fnarg type="int">a</fnarg>
+	<fnarg type="int">b</fnarg>
+	<fnarg optional="true" type="int">k</fnarg>
       </fnargs>   
       <description>
 	<para>
@@ -6039,7 +6046,7 @@
       </description>
     </function>
 
-    <function name="setnote" section="data-utils" output="scalar">
+    <function name="setnote" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="bundle">b</fnarg>
 	<fnarg type="string">key</fnarg>
@@ -6062,7 +6069,7 @@
       <fnargs>
 	<fnarg type="vector">b</fnarg>
 	<fnarg type="fncall">f</fnarg>
-	<fnarg type="scalar" optional="true">maxit</fnarg>
+	<fnarg type="int" optional="true">maxit</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6194,7 +6201,7 @@
       </description>
     </function>
 
-    <function name="sscanf" section="strings" output="scalar">
+    <function name="sscanf" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">src</fnarg>
 	<fnarg type="string">format</fnarg>
@@ -6304,7 +6311,7 @@
       </description>
     </function>
 
-    <function name="strlen" section="strings" output="scalar">
+    <function name="strlen" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>  
@@ -6315,11 +6322,11 @@
       </description>
     </function>
 
-    <function name="strncmp" section="strings" output="scalar">
+    <function name="strncmp" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">s1</fnarg>
 	<fnarg type="string">s2</fnarg>
-	<fnarg optional="true" type="scalar">n</fnarg>
+	<fnarg optional="true" type="int">n</fnarg>
       </fnargs>  
       <description>
 	<para>
@@ -6340,7 +6347,7 @@
     <function name="strsplit" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-	<fnarg type="scalar">i</fnarg>
+	<fnarg type="int">i</fnarg>
       </fnargs>  
       <description>
 	<para>
@@ -6633,16 +6640,16 @@
     <function name="trimr" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="scalar">ttop</fnarg>
-	<fnarg type="scalar">tbot</fnarg>
+	<fnarg type="int">ttop</fnarg>
+	<fnarg type="int">tbot</fnarg>
       </fnargs>   
       <description>
 	<para>
 	  Returns a matrix that is a copy of <argname>X</argname> with
 	  <argname>ttop</argname> rows trimmed at the top and
-	  <argname>tbot</argname> rows trimmed at the bottom.  The latter two
-	  arguments must be non-negative, and must sum to less than the total
-	  rows of <argname>X</argname>.
+	  <argname>tbot</argname> rows trimmed at the bottom.  The
+	  latter two arguments must be non-negative, and must sum to
+	  less than the total rows of <argname>X</argname>.
 	</para>
 	<para>
 	  <seelist>
@@ -6654,12 +6661,12 @@
 
     <function name="typestr" section="data-utils" output="string">
       <fnargs>
-	<fnarg type="scalar">code</fnarg>
+	<fnarg type="int">typecode</fnarg>
       </fnargs>      
       <description>
 	<para>
 	  Returns the name of the gretl data-type corresponding to
-	  <argname>code</argname>. This is intended for use in
+	  <argname>typecode</argname>. This is intended for use in
 	  conjunction with the function <fncref targ="inbundle"/>.
 	  The value returned is one of <quote>scalar</quote>,
 	  <quote>series</quote>, <quote>matrix</quote>,
@@ -6757,9 +6764,9 @@
     <function name="urcpval" section="probdist" output="scalar">
       <fnargs>
 	<fnarg type="scalar">tau</fnarg>
-	<fnarg type="scalar">n</fnarg>
-	<fnarg type="scalar">niv</fnarg>
-	<fnarg type="scalar">itv</fnarg>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int">niv</fnarg>
+	<fnarg type="int">itv</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6844,11 +6851,11 @@
 
     <function name="varname" section="strings" output="string">
       <fnargs>
-	<fnarg type="scalar-or-list">v</fnarg>
+	<fnarg type="int-or-list">v</fnarg>
       </fnargs>     
       <description>
 	<para>
-	  If given a scalar argument, returns the name of the variable with ID
+	  If given an integer argument, returns the name of the variable with ID
 	  number <argname>v</argname>, or generates an error if there is no
 	  such variable.
 	</para>
@@ -6860,7 +6867,7 @@
       </description>
     </function>
 
-    <function name="varnum" section="data-utils" output="scalar">
+    <function name="varnum" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">varname</fnarg>
       </fnargs>     
@@ -6957,11 +6964,11 @@
       </description>
     </function>
 
-    <function name="weekday" section="data-utils" output="scalar">
+    <function name="weekday" section="data-utils" output="int">
       <fnargs>
-	<fnarg type="scalar">year</fnarg>
-	<fnarg type="scalar">month</fnarg>
-	<fnarg type="scalar">day</fnarg>
+	<fnarg type="int">year</fnarg>
+	<fnarg type="int">month</fnarg>
+	<fnarg type="int">day</fnarg>
       </fnargs>    
       <description>
 	<para>
@@ -7133,8 +7140,8 @@
 
     <function name="zeros" section="matbuild" output="matrix">
       <fnargs>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg type="scalar">c</fnarg>
+	<fnarg type="int">r</fnarg>
+	<fnarg type="int">c</fnarg>
       </fnargs> 
       <description>
 	<para>

@@ -20,21 +20,25 @@
  <gentext key="series-or-vec" text="série ou vector"/>
  <gentext key="series-or-mat" text="série ou matriz"/>
  <gentext key="scalar-or-series" text="escalar ou série"/>
- <gentext key="scalar-or-list" text="escalar ou lista"/>
+ <gentext key="int-or-list"   text="número inteiro ou lista"/>
  <gentext key="series-or-list" text="série ou lista"/>
  <gentext key="scalar-or-vec" text="escalar ou vector"/>
  <gentext key="scalar-or-matrix" text="escalar ou matriz"/>
  <gentext key="anyfloat-or-list" text="escalar, série, matriz ou lista"/>
  <gentext key="list-or-string" text="lista ou texto"/>
+ <gentext key="matrix-or-bundle" text="matriz ou bundle"/>
  <gentext key="asinput"       text="o mesmo tipo que o argumento"/>
  <gentext key="scalar"        text="escalar"/>
  <gentext key="bundle"        text="bundle"/>
  <gentext key="pscalar"       text="escalar entre 0 e 1"/>
+ <gentext key="int"           text="número inteiro"/>
+ <gentext key="bool"          text="boolean"/>
  <gentext key="séries"        text="série"/>
  <gentext key="vector"        text="vector"/>
  <gentext key="matrix"        text="matriz"/>
  <gentext key="smatrix"       text="matriz quadrada"/>
  <gentext key="symmat"        text="matriz simétrica"/>
+ <gentext key="pdmat"         text="matriz positiva definida"/>
  <gentext key="matrixref"     text="referência a matriz"/>
  <gentext key="cvec"          text="vector coluna"/>
  <gentext key="rvec"          text="vector linha"/>

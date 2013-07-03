@@ -1663,7 +1663,7 @@ gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
 }
 
 static gretl_matrix *
-cholesky_factor_of_S_inverse (const gretl_matrix *S, int *err)
+cholesky_factor_of_inverse (const gretl_matrix *S, int *err)
 {
     gretl_matrix *C = gretl_matrix_copy(S);
 
@@ -1777,14 +1777,14 @@ gretl_matrix *inverse_wishart_matrix (const gretl_matrix *S,
     double *Z = NULL;
 
     if (S == NULL || S->cols != S->rows || v < S->rows) {
-	*err = E_DATA;
+	*err = E_INVARG;
 	return NULL;
     }
 
     *err = 0;
 
     /* copy, invert and decompose S */
-    C = cholesky_factor_of_S_inverse(S, err);
+    C = cholesky_factor_of_inverse(S, err);
 
     if (!*err) {
 	*err = wishart_workspace(&W, &B, &Z, S->rows);
@@ -1796,7 +1796,6 @@ gretl_matrix *inverse_wishart_matrix (const gretl_matrix *S,
     }
 
     odell_feiveson_compute(W, Z, v);
-
     *err = wishart_inverse_finalize(C, B, W);
 
     if (*err) {
@@ -1810,8 +1809,6 @@ gretl_matrix *inverse_wishart_matrix (const gretl_matrix *S,
 
     return W;
 }
-
-#if 0 /* not yet */
 
 static void vech_into_row (gretl_matrix *targ, int row,
 			   const gretl_matrix *m)
@@ -1838,19 +1835,19 @@ gretl_matrix *inverse_wishart_sequence (const gretl_matrix *S,
     int k, np = 0;
 
     if (S == NULL || S->cols != S->rows || v < S->rows) {
-	*err = E_DATA;
+	*err = E_INVARG;
 	return NULL;
     }
 
     if (replics < 1) {
-	*err = E_DATA;
+	*err = E_INVARG;
 	return NULL;
     }	
 
     *err = 0;
 
     /* copy, invert and decompose S */
-    C = cholesky_factor_of_S_inverse(S, err);
+    C = cholesky_factor_of_inverse(S, err);
 
     if (!*err) {
 	*err = wishart_workspace(&W, &B, &Z, S->rows);
@@ -1892,4 +1889,3 @@ gretl_matrix *inverse_wishart_sequence (const gretl_matrix *S,
     return Seq;
 }
 
-#endif /* not yet */

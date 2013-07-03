@@ -6343,7 +6343,7 @@
 
     <function name="varname" section="strings" output="string">
       <fnargs>
-	<fnarg type="scalar-or-list">v</fnarg>
+	<fnarg type="int-or-list">v</fnarg>
       </fnargs>     
       <description>
 	<para>

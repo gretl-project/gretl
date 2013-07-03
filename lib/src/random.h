@@ -84,6 +84,10 @@ gretl_matrix *halton_matrix (int m, int r, int offset, int *err);
 gretl_matrix *inverse_wishart_matrix (const gretl_matrix *S,
 				      int v, int *err);
 
+gretl_matrix *inverse_wishart_sequence (const gretl_matrix *S,
+					int v, int replics, 
+					int *err);
+
 void gretl_rand_set_sfmt (int s);
 
 int gretl_rand_get_sfmt (void);
