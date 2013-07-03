@@ -112,6 +112,8 @@ static int validate_package_file (const char *fname,
 
 static void finfo_set_menuwin (function_info *finfo);
 
+static void edit_code_callback (GtkWidget *w, function_info *finfo);
+
 function_info *finfo_new (void)
 {
     function_info *finfo;
@@ -548,11 +550,76 @@ static void finfo_remove_codewin (GtkWidget *w, function_info *finfo)
     finfo->codewins = g_list_remove(finfo->codewins, p);
 }
 
+static gboolean funcname_limit (gunichar c, gpointer p)
+{
+    return (!isalpha(c) && c != '_');
+}
+
+static gint catch_codewin_key (GtkWidget *w, GdkEventKey *event, 
+			       function_info *finfo)
+{
+    if (finfo->n_pub + finfo->n_priv < 2) {
+	/* we don't have multiple functions */
+	return FALSE;
+    }
+
+    /* implement Alt-dot in a given function editing window to
+       traverse to another window editing a different function
+    */
+
+    if ((event->state & GDK_MOD1_MASK) && event->keyval == GDK_period) {
+	/* Alt + dot */
+	windata_t *vwin = g_object_get_data(G_OBJECT(w), "vwin");
+	GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
+	GtkTextBuffer *buf = gtk_text_view_get_buffer(view); 
+	GtkTextMark *mark = gtk_text_buffer_get_insert(buf);
+	GtkTextIter iter, istart, iend;
+	gchar *word = NULL;
+
+	gtk_text_buffer_get_iter_at_mark(buf, &iter, mark);
+	istart = iend = iter;
+	if (gtk_text_iter_backward_find_char(&istart, funcname_limit, NULL, NULL) &&
+	    gtk_text_iter_forward_char(&istart) &&
+	    gtk_text_iter_forward_find_char(&iend, funcname_limit, NULL, NULL)) {
+	    word = gtk_text_buffer_get_text(buf, &istart, &iend, FALSE);
+	}
+
+	if (word != NULL) {
+	    /* we got a "word": is it the name of a function in
+	       this pachage? */
+	    char *active = NULL;
+	    int i;
+
+	    for (i=0; i<finfo->n_pub && !active; i++) {
+		if (!strcmp(word, finfo->pubnames[i])) {
+		    active = finfo->pubnames[i];
+		}
+	    }
+	    for (i=0; i<finfo->n_priv && !active; i++) {
+		if (!strcmp(word, finfo->privnames[i])) {
+		    active = finfo->privnames[i];
+		}
+	    }
+	    if (active != NULL) {
+		finfo->active = active;
+		edit_code_callback(NULL, finfo);
+	    }
+	    g_free(word);
+	}
+
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
 static void finfo_add_codewin (function_info *finfo, windata_t *vwin)
 {
     finfo->codewins = g_list_append(finfo->codewins, vwin);
 
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+		     G_CALLBACK(catch_codewin_key), finfo);
     g_signal_connect(G_OBJECT(vwin->main), "destroy",
 		     G_CALLBACK(finfo_remove_codewin),
 		     finfo);
@@ -581,16 +648,17 @@ static windata_t *get_codewin_by_filename (const char *fname,
 
 static void edit_code_callback (GtkWidget *w, function_info *finfo)
 {
+    char *funname = finfo->active;
     char fname[FILENAME_MAX];
     ufunc *fun;
     windata_t *vwin;
     PRN *prn = NULL;
 
-    if (finfo->active == NULL) {
+    if (funname == NULL) {
 	return;
     }
 
-    filename_from_funname(fname, finfo->active);
+    filename_from_funname(fname, funname);
 
     vwin = get_codewin_by_filename(fname, finfo);
     if (vwin != NULL) {
@@ -598,12 +666,12 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
 	return;
     }
 
-    fun = get_function_from_package(finfo->active, finfo->pkg);
+    fun = get_function_from_package(funname, finfo->pkg);
     if (fun == NULL) {
 	/* the package may not be saved yet */
-	fun = get_user_function_by_name(finfo->active);
+	fun = get_user_function_by_name(funname);
 	if (fun == NULL) {
-	    errbox(_("Can't find the function '%s'"), finfo->active);
+	    errbox(_("Can't find the function '%s'"), funname);
 	}
     }
 
