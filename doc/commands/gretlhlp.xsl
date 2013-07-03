@@ -668,7 +668,7 @@
 
 <xsl:template match="by">
   <xsl:choose>
-    <xsl:when test="contains(@r,'1') or contains(@r,'2')">
+    <xsl:when test="number(@r) = @r">
       <xsl:value-of select="@r"/>
     </xsl:when>    
     <xsl:otherwise>
@@ -679,7 +679,7 @@
   </xsl:choose>
   <xsl:text>&#215;</xsl:text> 
   <xsl:choose>
-    <xsl:when test="contains(@r,'1') or contains(@r,'2')">
+    <xsl:when test="number(@c) = @c">
       <xsl:value-of select="@c"/>
     </xsl:when>    
     <xsl:otherwise>
