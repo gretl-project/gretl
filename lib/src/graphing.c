@@ -1317,7 +1317,11 @@ void reset_plot_count (void)
     gretl_plot_count = 0;
 }
 
-static void print_set_output (const char *path, FILE *fp)
+/* if @path is non-NULL we use it, otherwise we make a path
+   using dotdir and gretltmp.png
+*/
+
+void write_plot_output_line (const char *path, FILE *fp)
 {
 #ifdef WIN32
     char *s, buf[FILENAME_MAX];
@@ -1341,9 +1345,9 @@ static void print_set_output (const char *path, FILE *fp)
     }
 #else
     if (path == NULL) {
-	fprintf(fp, "set output '%sgretltmp.png'\n", gretl_dotdir());
+	fprintf(fp, "set output \"%sgretltmp.png\"\n", gretl_dotdir());
     } else {
-	fprintf(fp, "set output '%s'\n", path);
+	fprintf(fp, "set output \"%s\"\n", path);
     }
 #endif
 }
@@ -1396,7 +1400,7 @@ static FILE *gp_set_up_batch (char *fname, PlotType ptype,
 	if (*gnuplot_outname != '\0') {
 	    /* write terminal/output lines */
 	    print_term_string(fmt, ptype, flags, fp);
-	    print_set_output(gnuplot_outname, fp);
+	    write_plot_output_line(gnuplot_outname, fp);
 	}
 	if (get_local_decpoint() == ',') {
 	    fputs("set decimalsign ','\n", fp);
@@ -1435,7 +1439,7 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 		fputs("# auto linewidth\n", fp);
 		gretl_pop_c_numeric_locale();
 	    }
-	    print_set_output(NULL, fp);
+	    write_plot_output_line(NULL, fp);
 	}
 	write_plot_type_string(ptype, flags, fp);
 	write_plot_line_styles(ptype, fp);

@@ -453,7 +453,7 @@ static void check_win32_png_spec (char *s)
     }
 }
 
-#endif	
+#endif
 
 static int 
 add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
@@ -514,8 +514,8 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	    fprintf(ftmp, "%s\n", get_png_line_for_plotspec(spec));
 	} else {
 	    fprintf(ftmp, "%s\n", get_gretl_png_term_line(PLOT_REGULAR, flags));
-	}	    
-	fprintf(ftmp, "set output '%sgretltmp.png'\n", gretl_dotdir());
+	}
+	write_plot_output_line(NULL, ftmp);
 
 	if (add_line_styles) {
 	    write_plot_line_styles(PLOT_REGULAR, ftmp);
@@ -620,7 +620,7 @@ static int gnuplot_png_init (png_plot *plot, FILE **fpp)
     }
 
     fprintf(*fpp, "%s\n", get_png_line_for_plotspec(spec));
-    fprintf(*fpp, "set output '%sgretltmp.png'\n", gretl_dotdir());
+    write_plot_output_line(NULL, *fpp);
 
     return 0;
 }
@@ -870,7 +870,7 @@ static int revise_plot_file (GPT_SPEC *spec,
 
     if (outtarg != NULL && *outtarg != '\0') {
 	fprintf(fpout, "%s\n", setterm);
-	fprintf(fpout, "set output '%s'\n", outtarg);
+	write_plot_output_line(outtarg, fpout);
     }	
 
     filter_gnuplot_file(ttype, latin, mono, fpin, fpout);
@@ -884,14 +884,13 @@ static int revise_plot_file (GPT_SPEC *spec,
 void save_graph_to_file (gpointer data, const char *fname)
 {
     GPT_SPEC *spec = (GPT_SPEC *) data;
+    char pltname[FILENAME_MAX];
     char setterm[MAXLEN];
-    char pltname[MAXLEN];
     int err = 0;
 
     get_full_term_string(spec, setterm);
 
-    build_path(pltname, gretl_dotdir(), "gptout.tmp", NULL);
-
+    sprintf(pltname, "%sgptout.tmp", gretl_dotdir());
     err = revise_plot_file(spec, pltname, fname, setterm);
 
     if (!err) {
@@ -4324,7 +4323,6 @@ static int render_pngfile (png_plot *plot, int view)
     char pngname[MAXLEN];
 
     build_path(pngname, gretl_dotdir(), "gretltmp.png", NULL);
-
     pbuf = gretl_pixbuf_new_from_file(pngname);
 
     if (pbuf == NULL) {
