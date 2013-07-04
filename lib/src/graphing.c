@@ -912,13 +912,34 @@ void write_plot_line_styles (int ptype, FILE *fp)
     fputs("set style increment user\n", fp);
 }
 
+#ifdef WIN32
+
+static void reslash_filename (char *buf, const char *src)
+{
+    strcpy(buf, src);
+
+    while (*buf) {
+	if (*buf == '\\') *buf = '/';
+	buf++;
+    }
+}
+
+#endif
+
 /* Get gnuplot to print the dimensions of a PNG plot, in terms
    of both pixels and data bounds (gnuplot >= 4.4.0).
 */
 
 void print_plot_bounding_box_request (FILE *fp)
 {
-    fprintf(fp, "set print '%sgretltmp.png.bounds'\n", gretl_dotdir());
+#ifdef WIN32
+    char buf[FILENAME_MAX];
+
+    reslash_filename(buf, gretl_dotdir());
+    fprintf(fp, "set print \"%sgretltmp.png.bounds\"\n", buf);
+#else
+    fprintf(fp, "set print \"%sgretltmp.png.bounds\"\n", gretl_dotdir());
+#endif
     fputs("print \"pixel_bounds: \", GPVAL_TERM_XMIN, GPVAL_TERM_XMAX, "
 	  "GPVAL_TERM_YMIN, GPVAL_TERM_YMAX\n", fp);
     fputs("print \"data_bounds: \", GPVAL_X_MIN, GPVAL_X_MAX, "
@@ -1324,23 +1345,13 @@ void reset_plot_count (void)
 void write_plot_output_line (const char *path, FILE *fp)
 {
 #ifdef WIN32
-    char *s, buf[FILENAME_MAX];
+    char buf[FILENAME_MAX];
 
     if (path == NULL) {
-	strcpy(buf, gretl_dotdir());
-    } else {
-	strcpy(buf, path);
-    }
-
-    s = buf;
-    while (*s) {
-	if (*s == '\\') *s = '/';
-	s++;
-    }
-
-    if (path == NULL) {
+	reslash_filename(buf, gretl_dotdir());
 	fprintf(fp, "set output \"%sgretltmp.png\"\n", buf);
     } else {
+	reslash_filename(buf, path);
 	fprintf(fp, "set output \"%s\"\n", buf);
     }
 #else
