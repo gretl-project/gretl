@@ -3,19 +3,22 @@
 # This file is distributed under the same license as the gretl package.
 #
 #
+# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>, 2013.
 msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-06-14 21:35-0400\n"
+"PO-Revision-Date: 2013-07-04 11:19+0200\n"
+"POT-Creation-Date: 2013-06-14 21:35-0400\n"
 "PO-Revision-Date: 2013-05-16 10:54+0100\n"
-"Last-Translator: Andreu Sansó <andreu.sanso@uib.cat>\n"
+"Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.5\n"
+"X-Generator: Lokalize 1.4\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: lib/src/adf_kpss.c:313
@@ -4549,7 +4552,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:628
 msgid "Warning: non-pd Hessian (but still nonsingular)"
-msgstr ""
+msgstr "Atenció: hessià no definit positiu (però no singular)"
 
 #: lib/src/modelprint.c:646 lib/src/modelprint.c:664 lib/src/modelprint.c:672
 msgid "'Within' variance"
@@ -9972,7 +9975,7 @@ msgstr "Finestra"
 
 #: gui2/fnsave.c:1437
 msgid "To create a menu attachment, you must supply a label."
-msgstr ""
+msgstr "Per crear un menú adjunt s'ha de proporcionar una etiqueta"
 
 #: gui2/fnsave.c:1440
 msgid ""
@@ -12050,14 +12053,12 @@ msgid "_Save text as..."
 msgstr "_Guardar el text com..."
 
 #: gui2/gui_utils.c:386
-#, fuzzy
 msgid "Save bundle to session as _icon"
-msgstr "Guardar a sessió com a _icona"
+msgstr "Guardar el bundle a sessió com a _icona"
 
 #: gui2/gui_utils.c:388
-#, fuzzy
 msgid "Save bundle as icon and cl_ose"
-msgstr "Guardar c_om a icona i tancar"
+msgstr "Guardar com a icona i _tancar"
 
 #: gui2/gui_utils.c:393
 msgid "_Graph"
@@ -12317,14 +12318,12 @@ msgid "forecast horizon (periods):"
 msgstr "horitzó de predicció (períodes):"
 
 #: gui2/gui_utils.c:3509
-#, fuzzy
 msgid "line graph"
-msgstr "guardar el gràfic"
+msgstr "gràfic de línies"
 
 #: gui2/gui_utils.c:3510
-#, fuzzy
 msgid "stacked bar graph"
-msgstr "guardar el gràfic"
+msgstr "gràfic de barres apilades"
 
 #: gui2/gui_utils.c:3518 gui2/gui_utils.c:4188 gui2/gui_utils.c:4310
 msgid "Forecast variance decomposition"
@@ -14942,14 +14941,12 @@ msgid "Manuals"
 msgstr "Manuals"
 
 #: gui2/settings.c:2267
-#, fuzzy
 msgid "Select a specific font"
-msgstr "Contrast d'especificació RESET"
+msgstr "Selecciona una font específica"
 
 #: gui2/settings.c:2268
-#, fuzzy
 msgid "Reset to Windows default"
-msgstr "Restablir opcions per defecte"
+msgstr "Restablir opcions per defecte de Windows"
 
 #: gui2/settings.c:2367 gui2/settings.c:2449
 msgid "Font for gretl output windows"
@@ -16196,11 +16193,11 @@ msgstr "valors inicials proporcionats per l'usuari"
 
 #: plugin/jrestrict.c:1264
 msgid "Strong convergence"
-msgstr ""
+msgstr "Conveergència forta"
 
 #: plugin/jrestrict.c:1266
 msgid "Weak convergence"
-msgstr ""
+msgstr "Conveergència dèbil"
 
 #: plugin/jrestrict.c:1857
 #, c-format
