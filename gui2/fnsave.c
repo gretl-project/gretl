@@ -681,7 +681,8 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
 
     gretl_function_print_code(fun, prn);
 
-    vwin = view_buffer(prn, 78, 350, finfo->active, EDIT_PKG_CODE, finfo);
+    vwin = view_buffer(prn, SCRIPT_WIDTH, SCRIPT_HEIGHT, 
+		       finfo->active, EDIT_PKG_CODE, finfo);
 
     if (vwin != NULL) {
 	strcpy(vwin->fname, fname);

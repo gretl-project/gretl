@@ -30,12 +30,11 @@ strict order:
   the function, if any.  This must be one of \texttt{void} (if the
   function does not return anything), \texttt{scalar},
   \texttt{series}, \texttt{matrix}, \texttt{list} or \texttt{string}.
-\item \textsl{function-name}, the unique identifier for the
-  function.  Names must start with a letter. They have a maximum
-  length of 31 characters; if you type a longer name it will be
-  truncated.  Function names cannot contain spaces.  You will get an
-  error if you try to define a function having the same name as an
-  existing \app{gretl} command.
+\item \textsl{function-name}, the unique identifier for the function.
+  Function names have a maximum length of 31 characters; they must
+  start with a letter and can contain only letters, numerals and the
+  underscore character.  You will get an error if you try to define a
+  function having the same name as an existing \app{gretl} command.
 \item The functions's \textsl{parameters}, in the form of a
   comma-separated list enclosed in parentheses.  This may be run
   into the function name, or separated by white space as shown.

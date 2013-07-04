@@ -1758,7 +1758,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 {
     static windata_t *script_out;
     windata_t *vwin;
-    int width, nlines;
+    int width = 0, nlines = 0;
 
     if (role == SCRIPT_OUT && script_out != NULL) {
 	return reuse_script_out(script_out, prn);
@@ -1803,17 +1803,14 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
     }
 
-    if (role == VIEW_PKG_CODE) {
-	width = nlines = 0;
-    } else {
+    if (role != VIEW_PKG_CODE && 
+	role != EDIT_PKG_CODE &&
+	role != SCRIPT_OUT) {
 	gretl_print_get_size(prn, &width, &nlines);
+	if (width > 0 && width + 2 < hsize) {
+	    hsize = width + 2;
+	}	
     }
-
-#if 1
-    if (role != SCRIPT_OUT && width > 0 && width + 2 < hsize) {
-	hsize = width + 2;
-    }
-#endif
 
     if (role == VIEW_PKG_CODE) {
 	create_source(vwin, hsize, vsize, FALSE);

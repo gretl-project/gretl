@@ -7194,7 +7194,7 @@ static void run_native_script (windata_t *vwin, gchar *buf,
     }
 
     if (!shown) {
-	view_buffer(prn, 78, 450, NULL, SCRIPT_OUT, vp);
+	view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, vp);
     }
 
     if (!err && !selection && vwin->role != EDIT_PKG_SAMPLE &&
