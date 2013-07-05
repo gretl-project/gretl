@@ -2989,7 +2989,7 @@
       </description>
     </function>
 
-    <function name="irf" section="stats" output="matrix-or-bundle">
+    <function name="irf" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="int">target</fnarg>
 	<fnarg type="int">shock</fnarg>

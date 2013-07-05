@@ -1161,6 +1161,7 @@ int top_n_tail (char *str, size_t maxlen, int *err)
     if (*str != '\0') {
 	/* Drop any leading spaces, also possible questionmark.  Try
 	   to catch non-breaking spaces too -- ugh, Windows!
+	   (NBSP is 0xA0 in Windows CP1252)
 	*/
 	i = 0;
 	while (isspace((unsigned char) str[i]) || 
