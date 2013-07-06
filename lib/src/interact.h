@@ -111,6 +111,8 @@ int call_pca_plugin (VMatrix *cmat, DATASET *dset,
 
 int gretl_shell_grab (const char *arg, char **sout);
 
+void set_plot_produced (void);
+
 #endif /* INTERACT_H */
 
 

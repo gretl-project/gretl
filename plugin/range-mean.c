@@ -295,7 +295,7 @@ int range_mean_graph (int vnum, DATASET *dset,
 	}
 
 	if (!err) {
-	    if (verbose && !gretl_in_batch_mode() && !gretl_looping()) {
+	    if (verbose && !gretl_in_batch_mode()) {
 		err = do_range_mean_plot(y, X, b0, b1, dset->varname[vnum]);
 	    }
 	}

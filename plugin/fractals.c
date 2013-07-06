@@ -288,7 +288,7 @@ int hurst_exponent (int vnum, const DATASET *dset, PRN *prn)
 	pprintf(prn, "%s = %g\n", _("Estimated Hurst exponent"), hmod.coeff[1]);
     }
 
-    if (!err && !gretl_in_batch_mode() && !gretl_looping()) {
+    if (!err && !gretl_in_batch_mode()) {
 	err = do_hurst_plot(k, hset, &hmod, dset->varname[vnum]);
     }
 

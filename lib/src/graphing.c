@@ -1575,12 +1575,20 @@ FILE *open_plot_input_file (PlotType ptype, int *err)
 
 int finalize_plot_input_file (FILE *fp)
 {
+    int err;
+
     if (fp != NULL) {
 	fclose(fp);
-	return gnuplot_make_graph();
+	err = gnuplot_make_graph();
+	if (!err) {
+	    /* for the benefit of gretl_cmd_exec() in interact.c */
+	    set_plot_produced();
+	}
     } else {
-	return 1;
+	err = 1;
     }
+
+    return err;
 }
 
 /**
@@ -3273,11 +3281,11 @@ int gnuplot (const int *plotlist, const char *literal,
 	print_gp_data(&gi, dset);
     }
 
+    gretl_pop_c_numeric_locale();
+
     /* flush stream */
     fclose(gi.fp);
     gi.fp = NULL;
-
-    gretl_pop_c_numeric_locale();
 
     err = gnuplot_make_graph();
 
@@ -7042,7 +7050,7 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
 	return E_FOPEN;
     }
 
-    fq = open_gp_stream(PLOT_USER, 0, &err);
+    fq = open_plot_input_file(PLOT_USER, &err);
 
     if (err) {
 	fclose(fp);
@@ -7054,9 +7062,7 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
 	}
 
 	fclose(fp);
-	fclose(fq);
-
-	err = gnuplot_make_graph();
+	err = finalize_plot_input_file(fq);
     }
 
     return err;

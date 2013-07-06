@@ -5056,28 +5056,8 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
     return err;
 }
 
-static void maybe_schedule_graph_callback (ExecState *s)
-{
-    int gui_mode = gretl_in_gui_mode();
-
-    if (graph_written_to_file()) {
-	if (gui_mode && *s->cmd->savename != '\0' &&
-	    get_current_gp_term() == GP_TERM_PLT) {
-	    /* got plotname <- gnuplot ... in GUI */
-	    schedule_callback(s);
-	} else {
-	    report_plot_written(s->prn);
-	}
-    } else if (gui_mode) {
-	schedule_callback(s);
-    }
-}
-
 static void exec_state_prep (ExecState *s)
 {
-#if 0
-    gretl_error_clear(); /* disabled AC 2009-04-20 */
-#endif
     s->flags &= ~CALLBACK_EXEC;
     s->pmod = NULL;
 }
@@ -5169,6 +5149,34 @@ static void abort_execution (ExecState *s)
     errmsg(E_STOP, s->prn);
 }
 
+static int plot_ok;
+
+void set_plot_produced (void)
+{
+    plot_ok = 1;
+}
+
+static void maybe_schedule_graph_callback (ExecState *s)
+{
+    int gui_mode = gretl_in_gui_mode();
+
+    if (!plot_ok) {
+	return;
+    }
+
+    if (graph_written_to_file()) {
+	if (gui_mode && *s->cmd->savename != '\0' &&
+	    get_current_gp_term() == GP_TERM_PLT) {
+	    /* got plotname <- gnuplot ... in GUI */
+	    schedule_callback(s);
+	} else {
+	    report_plot_written(s->prn);
+	}
+    } else if (gui_mode) {
+	schedule_callback(s);
+    }
+}
+
 int gretl_cmd_exec (ExecState *s, DATASET *dset)
 {
     CMD *cmd = s->cmd;
@@ -5180,6 +5188,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     int err = 0;
 
     exec_state_prep(s);
+    plot_ok = 0;
 
     if (gretl_in_gui_mode() && check_for_stop()) {
 	/* the GUI user clicked the "Stop" button */
