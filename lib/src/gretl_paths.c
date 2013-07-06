@@ -2451,8 +2451,7 @@ static void check_gretldir (char *config_path)
    gretldir right, and on changing gretldir via the GUI (though that's
    likely to be a disaster, isn't it?).
 
-   OPT_X means that we're working with the GUI program. OPT_N (a
-   GUI-only option) indicates that we should force use of the
+   OPT_N (a GUI-only option) indicates that we should force use of the
    English-language helpfiles.
 */
 
@@ -2460,8 +2459,8 @@ static void set_helpfile_paths (gretlopt opt)
 {
     const char *ghome = paths.gretldir;
 
-    if (!(opt & OPT_X)) {
-	/* not GUI, CLI program */
+    if (!gretl_in_gui_mode()) {
+	/* CLI program, not GUI */
 #ifdef WIN32
 	sprintf(paths.helpfile, "%s%s", ghome, _("gretlcli_hlp.txt"));
 	strcpy(paths.cli_helpfile, paths.helpfile);
@@ -2909,10 +2908,6 @@ int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
 {
     int err0 = 0, err1 = 0;
     int retval = 0;
-
-    if (opt & OPT_X) {
-	gretl_set_gui_mode(1);
-    }  
 
     *current_dir = '\0';	
     *paths.workdir = '\0';

@@ -391,7 +391,7 @@ int get_use_wimp (void)
 
 #endif
 
-static gretlopt set_paths_opt = OPT_X;
+static gretlopt set_paths_opt = OPT_NONE;
 
 void force_english_help (void)
 {
@@ -1910,7 +1910,9 @@ static void maybe_fix_viewpdf (void)
 
 /* The various things we need to do after reading gretl's
    configuration info -- or perhaps after failing to do so. 
-   We do this only at start-up time.
+   We do this only at start-up time. This function is 
+   called by the config-file reading function, either 
+   read_gretlrc() or on MS Windows, read_win32_config().
 */
 
 static int common_read_rc_setup (void)

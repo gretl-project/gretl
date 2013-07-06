@@ -549,7 +549,7 @@ static int graph_series (const DATASET *dset, tx_request *req)
 	return E_ALLOC;
     }
 
-    fp = get_plot_input_stream(PLOT_TRI_GRAPH, &err);
+    fp = open_plot_input_file(PLOT_TRI_GRAPH, &err);
     if (err) {
 	return err;
     }
@@ -655,6 +655,8 @@ static int graph_series (const DATASET *dset, tx_request *req)
     gretl_pop_c_numeric_locale();
 
     fclose(fp);
+
+    /* display of graph handled in GUI */
 
     return 0;
 }

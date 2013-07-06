@@ -92,7 +92,7 @@ static int density_plot (kernel_info *kinfo, const char *vname)
     double xt, xdt;
     int t, err = 0;
     
-    fp = get_plot_input_stream(PLOT_KERNEL, &err);
+    fp = open_plot_input_file(PLOT_KERNEL, &err);
     if (err) {
 	return err;
     }
@@ -125,6 +125,8 @@ static int density_plot (kernel_info *kinfo, const char *vname)
     gretl_pop_c_numeric_locale();
 
     fclose(fp);
+
+    /* display of plot handled in GUI */
 
     return 0;
 }

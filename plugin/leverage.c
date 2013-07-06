@@ -201,7 +201,7 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     const double *obs = NULL;
     int t, err = 0;
 
-    fp = get_plot_input_stream(PLOT_LEVERAGE, &err);
+    fp = open_plot_input_file(PLOT_LEVERAGE, &err);
     if (err) {
 	return err;
     }
@@ -286,6 +286,8 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     gretl_pop_c_numeric_locale();
 
     fclose(fp);
+
+    /* display of graph handled in GUI */
 
     return 0;
 }

@@ -356,22 +356,12 @@ static int plain_lines_spec (gretlopt opt)
     }
 }
 
-#define gp_interactive(f) (!(f & GPT_BATCH))
-
 static void get_gp_flags (gnuplot_info *gi, gretlopt opt, 
 			  const int *list, const DATASET *dset)
 {
     int n_yvars = list[0] - 1;
 
     gi->flags = 0;
-
-    if (gretl_in_batch_mode() || (opt & OPT_U)) {
-	gi->flags |= GPT_BATCH;
-    }
-
-    if (opt & OPT_G) {
-	gi->flags |= GPT_GUI;
-    } 
 
     if (opt & OPT_R) {
 	gi->flags |= GPT_RESIDS;
@@ -930,7 +920,7 @@ static void reslash_filename (char *buf, const char *src)
    of both pixels and data bounds (gnuplot >= 4.4.0).
 */
 
-void print_plot_bounding_box_request (FILE *fp)
+void write_plot_bounding_box_request (FILE *fp)
 {
 #ifdef WIN32
     char buf[FILENAME_MAX];
@@ -951,7 +941,7 @@ static void do_plot_bounding_box (void)
     FILE *fp = fopen(gretl_plotfile(), "a");
 
     if (fp != NULL) {
-	print_plot_bounding_box_request(fp);
+	write_plot_bounding_box_request(fp);
 	fclose(fp);
     }
 }
@@ -1295,6 +1285,10 @@ static int command_index_from_plot_type (PlotType p)
 	return BXPLOT;
     } else if (p == PLOT_FORECAST) {
 	return FCAST;
+    } else if (p == PLOT_CORRELOGRAM) {
+	return CORRGM;
+    } else if (p == PLOT_PERIODOGRAM) {
+	return PERGM;
     } else {
 	/* all other cases */
 	return GNUPLOT;
@@ -1363,25 +1357,17 @@ void write_plot_output_line (const char *path, FILE *fp)
 #endif
 }
 
-static FILE *gp_set_up_batch (char *fname, PlotType ptype, 
-			      int ci, GptFlags flags, int *err)
+static FILE *gp_set_up_batch (char *fname, 
+			      PlotType ptype, 
+			      GptFlags flags,
+			      const char *optname,
+			      int *err)
 {
-    const char *optname;
     int fmt = GP_TERM_NONE;
     FILE *fp = NULL;
 
-    if (ci == 0) {
-	ci = command_index_from_plot_type(ptype);
-    }
-
-    optname = get_optval_string(ci, OPT_U);
-
     if (optname != NULL && *optname != '\0') {
 	/* user gave --output=<filename> */
-	if (!strcmp(optname, "display")) {
-	    /* switch to interactive mode */
-	    return NULL;
-	}
 	fmt = set_term_type_from_fname(optname);
 	if (fmt) {
 	    /* input needs processing */
@@ -1420,6 +1406,19 @@ static FILE *gp_set_up_batch (char *fname, PlotType ptype,
 
     return fp;
 }
+
+/* Set-up for an "interactive" plot: we open a file in the user's
+   dotdir into which gnuplot commands will be written.  If we're
+   running the GUI program this command file will eventually be used
+   to create a PNG file for display in a gretl window; otherwise
+   (gretlcli) the commands will eventually be sent to gnuplot for
+   "direct" display (e.g. using the x11 or windows terminal).
+
+   In this function we just open the file for writing; if in GUI
+   mode insert a suitable PNG terminal line and output spec line;
+   and write some header-type material including our line style
+   specifications.
+*/
 
 static FILE *gp_set_up_interactive (char *fname, PlotType ptype, 
 				    GptFlags flags, int *err)
@@ -1479,30 +1478,28 @@ static int gnuplot_too_old (void)
 
 #endif
 
-/* Open stream into which gnuplot commands will be written.
+static int got_display_option (const char *s)
+{
+    return s != NULL && !strcmp(s, "display");
+}
 
-   When GPT_BATCH is set, we're either just dumping a 
-   gnuplot command file for the user to process, or possibly
-   generating output such as EPS, PDF, etc., in response to
-   the --output=filename option.
-
-   When GPT_BATCH is not set we're handling a graph that
-   was set up interactively, either via the gretl GUI or
-   in interactive mode in gretlcli.  We're going to display
-   this graph, either as PNG in a gretl window or via
-   gnuplot itself.
+/* Open file into which gnuplot commands will be written.
 
    Depending on the prospective use of the stream, we
    may write some initializations into it, the primary
    case being when we're going to produce PNG output
    for display in the GUI.
+
+   At present the @ci argument is required only the caller
+   is driven by the "bplot" command (so that we can pick
+   up bplot's --output option-param string.
 */
 
 static FILE *open_gp_stream_full (PlotType ptype, int ci,
 				  GptFlags flags, int *err)
 {
     char fname[FILENAME_MAX] = {0};
-    int batch = (flags & GPT_BATCH);
+    const char *optname = NULL;
     FILE *fp = NULL;
 
     /* ensure we have 'gnuplot_path' in place (file-scope static var) */
@@ -1517,48 +1514,43 @@ static FILE *open_gp_stream_full (PlotType ptype, int ci,
     }
 #endif
 
+    /* initialize */
     this_term_type = GP_TERM_NONE;
     *gnuplot_outname = '\0';
 
-    if (batch) {
-	fp = gp_set_up_batch(fname, ptype, ci, flags, err);
+    /* check for command index and --output=whatever option */
+    if (ci == 0) {
+	ci = command_index_from_plot_type(ptype);
     }
+    optname = get_optval_string(ci, OPT_U);
 
-    if (!batch || (fp == NULL && !*err)) {
+    if (gretl_in_batch_mode() && !got_display_option(optname)) {
+	fp = gp_set_up_batch(fname, ptype, flags, optname, err);
+    } else {
 	fp = gp_set_up_interactive(fname, ptype, flags, err);
     }
 
-    if (fp == NULL && *fname) {
-	fprintf(stderr, "open_gp_stream: couldn't write to %s\n", fname);
-    }
-
 #if GPDEBUG
-    fprintf(stderr, "open_gp_stream: '%s'\n", gretl_plotfile());
+    fprintf(stderr, "open_gp_stream_full: '%s'\n", gretl_plotfile());
 #endif
 
     return fp;
 }
 
+/* a slightly fuller version of open_plot_input_file() for internal
+   use: allows for specifying non-zero GptFlags where needed
+*/
+
 static FILE *open_gp_stream (PlotType ptype, GptFlags flags, int *err)
 {
+    /* we set 0 for the @ci argument; ci is then auto-detected
+       based on @ptype
+    */
     return open_gp_stream_full(ptype, 0, flags, err);
 }
 
 /**
- * get_gnuplot_batch_stream:
- * @ptype: indication of the sort of plot to be made.
- * @err: location to receive error code.
- *
- * Returns: writable stream on success, %NULL on failure.
- */
-
-FILE *get_gnuplot_batch_stream (PlotType ptype, int *err)
-{
-    return open_gp_stream(ptype, GPT_BATCH, err);
-}
-
-/**
- * get_plot_input_stream:
+ * open_plot_input_file:
  * @ptype: indication of the sort of plot to be made.
  * @err: location to receive error code.
  *
@@ -1571,14 +1563,24 @@ FILE *get_gnuplot_batch_stream (PlotType ptype, int *err)
  * If not in GUI mode, opens the file %gpttmp.plt in the gretl
  * user directory.  
  *
- * This function is not for use in batch mode.
- *
  * Returns: writable stream on success, %NULL on failure.
  */
 
-FILE *get_plot_input_stream (PlotType ptype, int *err)
+FILE *open_plot_input_file (PlotType ptype, int *err)
 {
-    return open_gp_stream(ptype, 0, err);
+    FILE *fp = open_gp_stream_full(ptype, 0, 0, err);
+
+    return fp;
+}
+
+int finalize_plot_input_file (FILE *fp)
+{
+    if (fp != NULL) {
+	fclose(fp);
+	return gnuplot_make_graph();
+    } else {
+	return 1;
+    }
 }
 
 /**
@@ -1646,8 +1648,10 @@ int gnuplot_make_graph (void)
     int fmt, err = 0;
 
     graph_file_written = 0;
-
     current_gp_term = fmt = specified_gp_output_format();
+
+    fprintf(stderr, "gnuplot_make_graph: fmt=%d, gui=%d\n",
+	    fmt, gui);
 
     if (fmt == GP_TERM_PLT) {
 	/* no-op: just the plot commands are wanted */
@@ -1902,9 +1906,7 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    err = gnuplot_make_graph();
+    err = finalize_plot_input_file(fp);
 
  bailout:
 
@@ -2074,9 +2076,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    err = gnuplot_make_graph();
+    err = finalize_plot_input_file(fp);
 
     clear_gpinfo(gi);
 
@@ -2547,12 +2547,6 @@ static void print_gnuplot_flags (int flags, int revised)
     }
     if (flags & GPT_XYZ) {
 	fprintf(stderr, " GPT_XYZ\n");
-    }
-    if (flags & GPT_BATCH) {
-	fprintf(stderr, " GPT_BATCH\n");
-    }
-    if (flags & GPT_GUI) {
-	fprintf(stderr, " GPT_GUI\n");
     }
     if (flags & GPT_FIT_OMIT) {
 	fprintf(stderr, " GPT_FIT_OMIT\n");
@@ -3391,10 +3385,6 @@ int multi_scatters (const int *list, const DATASET *dset,
     FILE *fp = NULL;
     int i, t, err = 0;
 
-    if (gretl_in_batch_mode()) {
-	flags |= GPT_BATCH;
-    }
-
     if (opt & OPT_L) {
 	flags |= GPT_LINES;
     }
@@ -3528,10 +3518,9 @@ int multi_scatters (const int *list, const DATASET *dset,
 
     fputs("unset multiplot\n", fp);
 
-    fclose(fp);
     free(plotlist);
 
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 static int matrix_plotx_ok (const gretl_matrix *m, const DATASET *dset,
@@ -3620,10 +3609,6 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 
     if (gretl_is_null_matrix(m)) {
 	return E_DATA;
-    }
-
-    if (gretl_in_batch_mode()) {
-	flags |= GPT_BATCH;
     }
 
     if (opt & OPT_L) {
@@ -3790,10 +3775,9 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 
     fputs("unset multiplot\n", fp);
 
-    fclose(fp);
     free(plotlist);
 
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 static int get_3d_output_file (FILE **fpp)
@@ -3855,8 +3839,8 @@ static gchar *maybe_get_surface (const int *list,
  * gnuplot_3d:
  * @list: list of variables to plot, by ID number: Y, X, Z
  * @literal: literal command(s) to pass to gnuplot (or NULL)
- * @dset: dataset struct.
- * @opt: unused at present.
+ * @dset: pointer to dataset.
+ * @opt: may include OPT_F to force display of fitted surface.
  *
  * Writes a gnuplot plot file to display a 3D plot (Z on
  * the vertical axis, X and Y on base plane).
@@ -4087,7 +4071,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	plottype = PLOT_FREQ_SIMPLE;
     }
 
-    fp = get_plot_input_stream(plottype, &err);
+    fp = open_plot_input_file(plottype, &err);
     if (err) {
 	return err;
     }  
@@ -4226,11 +4210,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
 
     gretl_pop_c_numeric_locale();
 
-    if (fp != NULL) {
-	fclose(fp);
-    }
-
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 static void print_y_data (const double *x, 
@@ -4459,11 +4439,6 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	return E_ALLOC;
     }
 
-    if (opt & OPT_U) {
-	/* respond to command-line --plot=fname option */
-	flags = GPT_BATCH;
-    }
-
     fp = open_gp_stream(PLOT_FORECAST, flags, &err);
     if (err) {
 	return err;
@@ -4601,9 +4576,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	free(order);
     }
 
-    fclose(fp);
-
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 static int *get_x_sorted_order (const FITRESID *fr, 
@@ -4723,11 +4696,6 @@ int plot_simple_fcast_bands (const MODEL *pmod,
 	return E_ALLOC;
     }
 
-    if (opt & OPT_U) {
-	/* respond to command-line --plot=fname option */
-	flags = GPT_BATCH;
-    }
-
     fp = open_gp_stream(PLOT_FORECAST, flags, &err);
     if (err) {
 	return err;
@@ -4777,9 +4745,8 @@ int plot_simple_fcast_bands (const MODEL *pmod,
     gretl_pop_c_numeric_locale();
 
     free(order);
-    fclose(fp);
 
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 #ifndef min
@@ -4812,7 +4779,7 @@ int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
 	return E_DATA;
     }
 
-    fp = get_plot_input_stream(PLOT_RQ_TAU, &err);
+    fp = open_plot_input_file(PLOT_RQ_TAU, &err);
     if (err) {
 	return err;
     } 
@@ -4923,9 +4890,7 @@ int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    return gnuplot_make_graph();    
+    return finalize_plot_input_file(fp);    
 }
 
 int garch_resid_plot (const MODEL *pmod, const DATASET *dset)
@@ -4946,7 +4911,7 @@ int garch_resid_plot (const MODEL *pmod, const DATASET *dset)
 	return E_ALLOC;
     }
 
-    fp = get_plot_input_stream(PLOT_GARCH, &err);
+    fp = open_plot_input_file(PLOT_GARCH, &err);
     if (err) {
 	return err;
     }
@@ -4979,9 +4944,7 @@ int garch_resid_plot (const MODEL *pmod, const DATASET *dset)
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 int rmplot (const int *list, DATASET *dset, 
@@ -5441,7 +5404,7 @@ static int panel_grid_ts_plot (int vnum, DATASET *dset,
 
     maybe_set_small_font(nunits);
 
-    fp = get_plot_input_stream(PLOT_PANEL, &err);
+    fp = open_plot_input_file(PLOT_PANEL, &err);
     if (err) {
 	return err;
     }
@@ -5522,9 +5485,7 @@ static int panel_grid_ts_plot (int vnum, DATASET *dset,
 
     fputs("unset multiplot\n", fp);
 
-    fclose(fp);
-
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 int gretl_panel_ts_plot (int vnum, DATASET *dset, gretlopt opt)
@@ -5671,7 +5632,7 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 	int confint = (resp->cols > 1);
 	FILE *fp;
 
-	fp = get_plot_input_stream((confint)? PLOT_IRFBOOT : PLOT_REGULAR, &err);
+	fp = open_plot_input_file((confint)? PLOT_IRFBOOT : PLOT_REGULAR, &err);
 	if (!err) {
 	    err = real_irf_print_plot(resp, dset->varname[vtarg],
 				      dset->varname[vshock],
@@ -5725,7 +5686,7 @@ int irf_plot_from_bundle (gretl_bundle *bundle, gretlopt opt)
 	FILE *fp;
 
 	fp = open_gp_stream_full((confint)? PLOT_IRFBOOT : PLOT_REGULAR, 
-				 BPLOT, GPT_BATCH, &err);
+				 BPLOT, 0, &err);
 	if (!err) {
 	    err = real_irf_print_plot(resp, targname, shockname,
 				      perlabel, alpha, use_fill,
@@ -5755,7 +5716,7 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
 	return E_ALLOC;
     }
 
-    fp = get_plot_input_stream(PLOT_REGULAR, &err);
+    fp = open_plot_input_file(PLOT_REGULAR, &err);
     if (err) {
 	gretl_matrix_free(V);
 	return err;
@@ -5810,10 +5771,9 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
     gretl_matrix_free(V);
 
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 int gretl_VAR_plot_multiple_irf (GRETL_VAR *var, 
@@ -5928,15 +5888,14 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 
     gretl_pop_c_numeric_locale();
 
-    fputs("unset multiplot\n", fp);
-
-    fclose(fp);
-
-    if (!err) {
-	err = gnuplot_make_graph();
+    if (err) {
+	fclose(fp);
+	return err;
     }
 
-    return err;
+    fputs("unset multiplot\n", fp);
+
+    return finalize_plot_input_file(fp);
 }
 
 int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
@@ -5979,7 +5938,7 @@ int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
 	single = (nvars == 1);
     }
 
-    fp = get_plot_input_stream(PLOT_REGULAR, &err);
+    fp = open_plot_input_file(PLOT_REGULAR, &err);
     if (err) {
 	return err;
     }
@@ -6041,9 +6000,7 @@ int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 int gretl_VECM_combined_EC_plot (GRETL_VAR *var, 
@@ -6063,7 +6020,7 @@ int gretl_VECM_combined_EC_plot (GRETL_VAR *var,
 
     t1 = gretl_matrix_get_t1(EC);
 
-    fp = get_plot_input_stream(PLOT_REGULAR, &err);
+    fp = open_plot_input_file(PLOT_REGULAR, &err);
     if (err) {
 	return err;
     }
@@ -6113,9 +6070,7 @@ int gretl_VECM_combined_EC_plot (GRETL_VAR *var,
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset) 
@@ -6156,7 +6111,7 @@ int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset)
     nobs = gretl_matrix_rows(E);
     t1 = gretl_matrix_get_t1(E);
 
-    fp = get_plot_input_stream(PLOT_MULTI_SCATTER, &err);
+    fp = open_plot_input_file(PLOT_MULTI_SCATTER, &err);
     if (err) {
 	return err;
     }
@@ -6206,9 +6161,7 @@ int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset)
     gretl_pop_c_numeric_locale();
     fputs("unset multiplot\n", fp);
 
-    fclose(fp);
-
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 int gretl_VAR_roots_plot (GRETL_VAR *var)
@@ -6224,7 +6177,7 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
 	return err;
     }
 
-    fp = get_plot_input_stream(PLOT_ROOTS, &err);
+    fp = open_plot_input_file(PLOT_ROOTS, &err);
     if (err) {
 	return err;
     }
@@ -6257,9 +6210,8 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
     gretl_pop_c_numeric_locale();
 
     fputs("e\n", fp);
-    fclose(fp);
 
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 /**
@@ -6312,7 +6264,7 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b,
 
     gretl_matrix_free(e);
 
-    fp = get_plot_input_stream(PLOT_ELLIPSE, &err);
+    fp = open_plot_input_file(PLOT_ELLIPSE, &err);
     if (err) {
 	return err;
     }
@@ -6346,9 +6298,7 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b,
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 static void corrgm_min_max (const double *acf, const double *pacf,
@@ -6480,13 +6430,12 @@ int correlogram_plot (const char *vname,
     FILE *fp;
     int err = 0;
 
-    fp = get_plot_input_stream(PLOT_CORRELOGRAM, &err);
+    fp = open_plot_input_file(PLOT_CORRELOGRAM, &err);
 
     if (!err) {
 	real_correlogram_print_plot(vname, acf, pacf, 
 				    m, pm, opt, fp);
-	fclose(fp);
-	err = gnuplot_make_graph();
+	err = finalize_plot_input_file(fp);
     }
 
     return err;
@@ -6530,7 +6479,7 @@ int correlogram_plot_from_bundle (gretl_bundle *bundle, gretlopt opt)
 	FILE *fp;
 
 	fp = open_gp_stream_full(PLOT_CORRELOGRAM, BPLOT, 
-				 GPT_BATCH, &err);
+				 0, &err);
 	if (!err) {
 	    real_correlogram_print_plot(vname, acf, pacf, 
 					m, pm, opt, fp);
@@ -6663,12 +6612,11 @@ int periodogram_plot (const char *vname,
     FILE *fp;
     int err = 0;
 
-    fp = get_plot_input_stream(PLOT_PERIODOGRAM, &err);
+    fp = open_plot_input_file(PLOT_PERIODOGRAM, &err);
 
     if (!err) {
 	real_pergm_plot(vname, T, L, x, opt, fp);
-	fclose(fp);
-	err = gnuplot_make_graph();
+	err = finalize_plot_input_file(fp);
     }
 
     return err;
@@ -6696,7 +6644,7 @@ int periodogram_plot_from_bundle (gretl_bundle *bundle, gretlopt opt)
 	FILE *fp;
 
 	fp = open_gp_stream_full(PLOT_PERIODOGRAM, BPLOT, 
-				 GPT_BATCH, &err);
+				 0, &err);
 	if (!err) {
 	    real_pergm_plot(vname, T, L, x, opt, fp);
 	    fclose(fp);
@@ -6781,7 +6729,7 @@ static int qq_plot_two_series (const int *list,
     }
 
     if (!err) {
-	fp = get_plot_input_stream(PLOT_QQ, &err);
+	fp = open_plot_input_file(PLOT_QQ, &err);
     }
 
     if (err) {
@@ -6827,9 +6775,7 @@ static int qq_plot_two_series (const int *list,
     free(x);
     free(y);
 
-    fclose(fp);
-
-    return gnuplot_make_graph();    
+    return finalize_plot_input_file(fp);    
 }
 
 static int normal_qq_plot (const int *list, 
@@ -6874,7 +6820,7 @@ static int normal_qq_plot (const int *list,
 	}
     }
 
-    fp = get_plot_input_stream(PLOT_QQ, &err);
+    fp = open_plot_input_file(PLOT_QQ, &err);
     if (err) {
 	free(y);
 	return err;
@@ -6917,9 +6863,8 @@ static int normal_qq_plot (const int *list,
     gretl_pop_c_numeric_locale();
 
     free(y);
-    fclose(fp);
 
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 int qq_plot (const int *list, const DATASET *dset, gretlopt opt)
@@ -7097,7 +7042,7 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
 	return E_FOPEN;
     }
 
-    fq = open_gp_stream(PLOT_USER, GPT_BATCH, &err);
+    fq = open_gp_stream(PLOT_USER, 0, &err);
 
     if (err) {
 	fclose(fp);

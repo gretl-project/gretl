@@ -538,6 +538,7 @@ int main (int argc, char **argv)
 #endif
 
     libgretl_init();
+    gretl_set_gui_mode();
 
 #ifdef G_OS_WIN32
     gretl_win32_init(callname, optdebug);

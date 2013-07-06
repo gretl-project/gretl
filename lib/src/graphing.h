@@ -31,29 +31,27 @@ typedef enum {
     GPT_FA             = 1 << 3,  /* doing fitted/actual plot */
     GPT_DUMMY          = 1 << 4,  /* using a dummy for separation */
     GPT_XYZ            = 1 << 5,  /* X-Y, controlling for Z */
-    GPT_BATCH          = 1 << 6,  /* working in batch mode */
-    GPT_GUI            = 1 << 7,  /* called from GUI context */
-    GPT_FIT_OMIT       = 1 << 8,  /* user said don't draw fitted line on graph */
-    GPT_DATA_STYLE     = 1 << 9,  /* data style is set by user */
-    GPT_IDX            = 1 << 10, /* plot against time or obs index */
-    GPT_TS             = 1 << 11, /* doing time series plot */
-    GPT_Y2AXIS         = 1 << 12, /* plot has second y-axis */
-    GPT_AUTO_FIT       = 1 << 13, /* automatic (OLS) fitted line was added */
-    GPT_FIT_HIDDEN     = 1 << 14, /* autofit line calculated, but suppressed */
-    GPT_PNG_OUTPUT     = 1 << 15, /* output is to PNG file */
-    GPT_PRINT_MARKERS  = 1 << 16, /* print observation markers */
-    GPT_LETTERBOX      = 1 << 17, /* special format for time series graphs */
-    GPT_PARAMETRIC     = 1 << 18, /* gnuplot should be in parametric mode */
-    GPT_XZEROAXIS      = 1 << 19, /* show x = 0 line */
-    GPT_YZEROAXIS      = 1 << 20, /* show y = 0 line */
-    GPT_FILL_SWITCH    = 1 << 21, /* switching from errorbars to fill */
-    GPT_ERR_SWITCH     = 1 << 22, /* switching from fill to errorbars */
-    GPT_MONO           = 1 << 23, /* monochrome output */
-    GPT_GRID_Y         = 1 << 24, /* display horizontal grid lines */
-    GPT_GRID_X         = 1 << 25, /* display vertical grid lines */
-    GPT_POLAR          = 1 << 26, /* plot is in polar mode */
-    GPT_XL             = 1 << 27, /* large */
-    GPT_XXL            = 1 << 28  /* extra-large */
+    GPT_FIT_OMIT       = 1 << 6,  /* user said don't draw fitted line on graph */
+    GPT_DATA_STYLE     = 1 << 7,  /* data style is set by user */
+    GPT_IDX            = 1 << 8,  /* plot against time or obs index */
+    GPT_TS             = 1 << 9,  /* doing time series plot */
+    GPT_Y2AXIS         = 1 << 10, /* plot has second y-axis */
+    GPT_AUTO_FIT       = 1 << 11, /* automatic (OLS) fitted line was added */
+    GPT_FIT_HIDDEN     = 1 << 12, /* autofit line calculated, but suppressed */
+    GPT_PNG_OUTPUT     = 1 << 13, /* output is to PNG file */
+    GPT_PRINT_MARKERS  = 1 << 14, /* print observation markers */
+    GPT_LETTERBOX      = 1 << 15, /* special format for time series graphs */
+    GPT_PARAMETRIC     = 1 << 16, /* gnuplot should be in parametric mode */
+    GPT_XZEROAXIS      = 1 << 17, /* show x = 0 line */
+    GPT_YZEROAXIS      = 1 << 18, /* show y = 0 line */
+    GPT_FILL_SWITCH    = 1 << 19, /* switching from errorbars to fill */
+    GPT_ERR_SWITCH     = 1 << 20, /* switching from fill to errorbars */
+    GPT_MONO           = 1 << 21, /* monochrome output */
+    GPT_GRID_Y         = 1 << 22, /* display horizontal grid lines */
+    GPT_GRID_X         = 1 << 23, /* display vertical grid lines */
+    GPT_POLAR          = 1 << 24, /* plot is in polar mode */
+    GPT_XL             = 1 << 25, /* large */
+    GPT_XXL            = 1 << 26  /* extra-large */
 } GptFlags; 
 
 typedef struct gretlRGB_ gretlRGB;
@@ -185,9 +183,9 @@ int split_graph_fontspec (const char *s, char *name, int *psz);
 
 void gnuplot_missval_string (FILE *fp);
 
-FILE *get_plot_input_stream (PlotType ptype, int *err);
+FILE *open_plot_input_file (PlotType ptype, int *err);
 
-FILE *get_gnuplot_batch_stream (PlotType ptype, int *err);
+int finalize_plot_input_file (FILE *fp);
 
 void gnuplot_cleanup (void);
 
@@ -199,7 +197,7 @@ int write_plot_type_string (PlotType ptype, GptFlags flags, FILE *fp);
 
 void write_plot_line_styles (int ptype, FILE *fp);
 
-void print_plot_bounding_box_request (FILE *fp);
+void write_plot_bounding_box_request (FILE *fp);
 
 PlotType plot_type_from_string (const char *str);
 

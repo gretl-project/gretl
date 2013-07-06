@@ -2423,7 +2423,7 @@ static int QLR_graph (const double *testvec, int t1, int t2,
     FILE *fp;
     int t, err = 0;
 
-    fp = get_plot_input_stream(PLOT_REGULAR, &err);
+    fp = open_plot_input_file(PLOT_REGULAR, &err);
     if (err) {
 	return err;
     }
@@ -2442,10 +2442,8 @@ static int QLR_graph (const double *testvec, int t1, int t2,
     fputs("e\n", fp);
 
     gretl_pop_c_numeric_locale();
-    
-    fclose(fp);
 
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 static void save_QLR_test (MODEL *pmod, const char *datestr,
@@ -2993,7 +2991,7 @@ static int cusum_do_graph (double a, double b, const double *W,
     double x0 = 0.0;
     int j, t, err = 0;
 
-    fp = get_plot_input_stream(PLOT_CUSUM, &err);
+    fp = open_plot_input_file(PLOT_CUSUM, &err);
     if (err) {
 	return err;
     }
@@ -3043,11 +3041,7 @@ static int cusum_do_graph (double a, double b, const double *W,
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    err = gnuplot_make_graph();
-
-    return err;
+    return finalize_plot_input_file(fp);
 }
 
 static void cusum_harvey_collier (double wbar, double sigma, int m,

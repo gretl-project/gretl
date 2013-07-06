@@ -1472,7 +1472,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
     gretl_pop_c_numeric_locale();
 
     if (png) {
-	print_plot_bounding_box_request(fp);
+	write_plot_bounding_box_request(fp);
     }
 
     return miss;

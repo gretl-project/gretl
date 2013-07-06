@@ -511,28 +511,20 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp,
     double ymin, ymax;
     int anybool, n_outliers;
     int lwidth = 2;
-    int fmt = 0;
-    int qtype = 2;
+    int fmt, qtype = 2;
     int i, err = 0;
 
-    if (gretl_in_batch_mode()) {
-	/* batch mode: auto-named file */
-	fp = get_gnuplot_batch_stream(PLOT_BOXPLOTS, &err);
-	if (!err) {
-	    fmt = specified_gp_output_format();
-	    if (fmt == GP_TERM_EPS || fmt == GP_TERM_PLT) {
-		/* line type for main outline, monochrome */
-		qtype = 1;
-	    }
-	}	    
-    } else {
-	/* displaying graph: auto-named temp file */
-	fp = get_plot_input_stream(PLOT_BOXPLOTS, &err);
-    }
+    fp = open_plot_input_file(PLOT_BOXPLOTS, &err);
 
     if (err) {
 	return err;
     }
+
+    fmt = specified_gp_output_format();
+    if (fmt == GP_TERM_EPS || fmt == GP_TERM_PLT) {
+	/* line type for main outline, monochrome */
+	qtype = 1;
+    }    
 
     anybool = test_for_bool(grp);
     n_outliers = test_for_outliers(grp);
@@ -699,13 +691,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp,
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    if (!err) {
-	err = gnuplot_make_graph();
-    }
-
-    return err;
+    return finalize_plot_input_file(fp);
 }
 
 static int transcribe_array_factorized (PLOTGROUP *grp, int i,

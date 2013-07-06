@@ -96,7 +96,7 @@ static int do_range_mean_plot (const gretl_matrix *y,
     int fitline = 0;
     int t, err = 0;
 
-    fp = get_plot_input_stream(PLOT_RANGE_MEAN, &err);
+    fp = open_plot_input_file(PLOT_RANGE_MEAN, &err);
     if (err) {
 	return err;
     }
@@ -129,9 +129,7 @@ static int do_range_mean_plot (const gretl_matrix *y,
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 /* drop first/last observations from sample if missing obs 

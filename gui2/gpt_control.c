@@ -536,7 +536,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 		fputs(fline, ftmp);
 	    }
 	}
-	print_plot_bounding_box_request(ftmp);
+	write_plot_bounding_box_request(ftmp);
     } else {
 	/* not ADD_PNG: we're removing the png term line */
 	int printit, png_line_saved = 0;

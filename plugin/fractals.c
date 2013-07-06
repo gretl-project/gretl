@@ -33,7 +33,7 @@ do_hurst_plot (int n, DATASET *dset, const MODEL *pmod,
     FILE *fp;
     int t, err = 0;
 
-    fp = get_plot_input_stream(PLOT_HURST, &err);
+    fp = open_plot_input_file(PLOT_HURST, &err);
     if (err) {
 	return err;
     }
@@ -58,9 +58,7 @@ do_hurst_plot (int n, DATASET *dset, const MODEL *pmod,
     
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 #define log_2(x) (log(x) / LOG2)

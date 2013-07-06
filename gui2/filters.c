@@ -868,7 +868,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	twoplot = 1;
     } 
 
-    fp = get_plot_input_stream((twoplot)? PLOT_TRI_GRAPH : PLOT_REGULAR, &err);
+    fp = open_plot_input_file((twoplot)? PLOT_TRI_GRAPH : PLOT_REGULAR, &err);
     if (err) { 
 	return err;
     }
@@ -959,9 +959,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    err = gnuplot_make_graph();
+    err = finalize_plot_input_file(fp);
     gui_graph_handler(err);
 
     return err;
@@ -977,7 +975,7 @@ static void butterworth_poles_graph (GtkWidget *button, filter_info *finfo)
     int i, n = finfo->order;
     int err = 0;
 
-    fp = get_plot_input_stream(PLOT_ROOTS, &err);
+    fp = open_plot_input_file(PLOT_ROOTS, &err);
     if (err) { 
 	gui_errmsg(err);
 	return;
@@ -1016,9 +1014,7 @@ static void butterworth_poles_graph (GtkWidget *button, filter_info *finfo)
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    err = gnuplot_make_graph();
+    err = finalize_plot_input_file(fp);
     gui_graph_handler(err);
 }
 
@@ -1086,7 +1082,7 @@ static int do_filter_response_graph (filter_info *finfo)
 	return E_ALLOC;
     }
 
-    fp = get_plot_input_stream(PLOT_REGULAR, &err);
+    fp = open_plot_input_file(PLOT_REGULAR, &err);
     if (err) { 
 	gui_errmsg(err);
 	gretl_matrix_free(G);
@@ -1127,9 +1123,8 @@ static int do_filter_response_graph (filter_info *finfo)
     gretl_pop_c_numeric_locale();
 
     gretl_matrix_free(G);
-    fclose(fp);
 
-    err = gnuplot_make_graph();
+    err = finalize_plot_input_file(fp);
     gui_graph_handler(err);
 
     return err;

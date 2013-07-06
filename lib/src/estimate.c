@@ -2043,7 +2043,7 @@ static int hilu_plot (double *ssr, double *rho, int n)
     FILE *fp;
     int i, err = 0;
 
-    fp = get_plot_input_stream(PLOT_REGULAR, &err);
+    fp = open_plot_input_file(PLOT_REGULAR, &err);
     if (err) {
 	return err; 
     }
@@ -2066,11 +2066,7 @@ static int hilu_plot (double *ssr, double *rho, int n)
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    gnuplot_make_graph();
-
-    return 0;
+    return finalize_plot_input_file(fp);
 }
 
 static double autores (MODEL *pmod, const double **Z, gretlopt opt)

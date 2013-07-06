@@ -2861,6 +2861,46 @@ static int corrgm_ascii_plot (const char *vname,
     return 0;
 }
 
+static void handle_corrgm_plot_options (int ci, 
+					gretlopt opt,
+					int *ascii,
+					int *gp)
+{
+    if (opt & OPT_Q) {
+	/* backward compat: --quiet = no plot */
+	*ascii = *gp = 0;
+	return;
+    } 
+
+    if (opt & OPT_U) {
+	/* --plot=whatever */
+	const char *s = get_optval_string(ci, OPT_U);
+
+	if (s != NULL) {
+	    if (!strcmp(s, "none")) {
+		/* no plot */
+		*ascii = *gp = 0;
+		return;
+	    } else if (!strcmp(s, "ascii")) {
+		*ascii = 1;
+		*gp = 0;
+		return;
+	    } else {
+		/* implies use of gnuplot */
+		*gp = 1;
+		return;
+	    }
+	}
+    } 
+
+    /* the defaults */
+    if (gretl_in_batch_mode()) {
+	*ascii = 1;
+    } else {
+	*gp = 1;
+    }
+}
+
 /**
  * corrgram:
  * @varno: ID number of variable to process.
@@ -2869,9 +2909,9 @@ static int corrgm_ascii_plot (const char *vname,
  * case of ARMA), used to correct the degrees of freedom 
  * for Q test.
  * @dset: dataset struct.
- * @opt: if includes OPT_Q, no plot, else if includes OPT_A, 
- * use ASCII graphics; if includes OPT_R, variable in question 
- * is a model residual generated "on the fly".
+ * @opt: if includes OPT_R, variable in question is a model 
+ * residual generated "on the fly"; OPT_U can be used to
+ * specify a plot option.
  * @prn: gretl printing struct.
  *
  * Computes the autocorrelation function and plots the correlogram for
@@ -2890,6 +2930,8 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     double *acf, *pacf;
     const char *vname;
     int i, k, m, T, dfQ;
+    int ascii_plot = 0;
+    int use_gnuplot = 0;
     int t1 = dset->t1, t2 = dset->t2;
     int err = 0, pacf_err = 0;
 
@@ -2947,14 +2989,10 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	acf[k-1] = gretl_acf(k, t1, t2, dset->Z[varno], ybar);
     }
 
-    if ((opt & OPT_A) && (opt & OPT_G)) {
-	/* experimental: --gui-graph overrides the internal 
-	   ascii option */
-	opt &= ~OPT_A;
-    }
+    /* graphing? */
+    handle_corrgm_plot_options(CORRGM, opt, &ascii_plot, &use_gnuplot);
 
-    if ((opt & OPT_A) && !(opt & OPT_Q)) { 
-	/* use ASCII graphics */
+    if (ascii_plot) { 
 	corrgm_ascii_plot(vname, A, prn);
     } 
 
@@ -3031,7 +3069,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 
     record_test_result(box, pval, "Ljung-Box");
     
-    if (!(opt & OPT_A) && !(opt & OPT_Q)) {
+    if (use_gnuplot) {
 	err = correlogram_plot(vname, acf, (pacf_err)? NULL : pacf, 
 			       m, pm[1], opt);
     }
@@ -3207,7 +3245,7 @@ static int xcorrgm_graph (const char *xname, const char *yname,
     FILE *fp;
     int k, err = 0;
 
-    fp = get_plot_input_stream(PLOT_CORRELOGRAM, &err);
+    fp = open_plot_input_file(PLOT_CORRELOGRAM, &err);
     if (err) {
 	return err;
     }
@@ -3247,9 +3285,7 @@ static int xcorrgm_graph (const char *xname, const char *yname,
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    return gnuplot_make_graph();
+    return finalize_plot_input_file(fp);
 }
 
 static int xcorrgm_ascii_plot (double *xcf, int xcf_m, PRN *prn)
@@ -3431,8 +3467,7 @@ gretl_matrix *xcf_vec (const double *x, const double *y,
  * @list: should contain ID numbers of two variables.
  * @order: integer order for autocorrelation function.
  * @dset: dataset struct.
- * @opt: if includes OPT_Q, no graphics; else if includes 
- * OPT_A, use ASCII graphics.
+ * @opt: may include OPT_U for plot options.
  * @prn: gretl printing struct.
  *
  * Computes the cross-correlation function and plots the 
@@ -3448,9 +3483,10 @@ int xcorrgram (const int *list, int order, DATASET *dset,
     double pm[3];
     const char *xname, *yname;
     const double *x, *y;
-    int k, p;
     int t1 = dset->t1, t2 = dset->t2;
-    int badvar = 0;
+    int ascii_plot = 0;
+    int use_gnuplot = 0;
+    int k, p, badvar = 0;
     int T, err = 0;
 
     gretl_error_clear();
@@ -3497,8 +3533,10 @@ int xcorrgram (const int *list, int order, DATASET *dset,
 	return err;    
     }
 
-    if ((opt & OPT_A) && !(opt & OPT_Q)) { 
-	/* use ASCII graphics, not gnuplot */
+    /* graphing? */
+    handle_corrgm_plot_options(XCORRGM, opt, &ascii_plot, &use_gnuplot);
+
+    if (ascii_plot) { 
 	xcorrgm_ascii_plot(xcf->val, p, prn);
     } 
 
@@ -3529,7 +3567,7 @@ int xcorrgram (const int *list, int order, DATASET *dset,
     }
     pputc(prn, '\n');
 
-    if (!(opt & OPT_A) && !(opt & OPT_Q)) {
+    if (use_gnuplot) {
 	int allpos = 1;
 
 	for (k=-p; k<=p; k++) {
@@ -3795,6 +3833,26 @@ static int fract_int_LWE (const double *x, int m, int t1, int t2,
     return err;
 }
 
+static int pergm_do_plot (gretlopt opt)
+{
+    if (opt & OPT_U) {
+	/* --plot=whatever */
+	const char *s = get_optval_string(PERGM, OPT_U);
+
+	if (s != NULL) {
+	    if (!strcmp(s, "none")) {
+		return 0;
+	    } else {
+		/* implies use of gnuplot */
+		return 1;
+	    }
+	}
+    } 
+
+    /* the default */
+    return !gretl_in_batch_mode();
+}
+
 static void pergm_print (const char *vname, const double *d, 
 			 int T, int L, gretlopt opt, PRN *prn)
 {
@@ -3838,8 +3896,7 @@ static void pergm_print (const char *vname, const double *d,
 
     pputc(prn, '\n');
 
-    if (!(opt & OPT_N)) {
-	/* OPT_N == suppress graph */
+    if (pergm_do_plot(opt)) {
 	periodogram_plot(vname, T, L, d, opt);
     }    
 }
@@ -3976,6 +4033,12 @@ static double *pergm_compute_density (const double *x, int t1, int t2,
     return dens;
 }
 
+enum {
+    PERGM_CMD,
+    PERGM_FUNC,
+    FRACTINT_CMD
+};
+
 /* The following is a little complicated because we're supporting
    three use cases:
 
@@ -3995,8 +4058,8 @@ static double *pergm_compute_density (const double *x, int t1, int t2,
 */
 
 static int 
-pergm_or_fractint (const double *x, int t1, int t2, int width,
-		   const char *vname, gretlopt opt, 
+pergm_or_fractint (int usage, const double *x, int t1, int t2, 
+		   int width, const char *vname, gretlopt opt, 
 		   PRN *prn, gretl_matrix **pmat)
 {
     double *dens = NULL;
@@ -4026,7 +4089,7 @@ pergm_or_fractint (const double *x, int t1, int t2, int width,
 	return err;
     }
 
-    if (opt & OPT_F) {
+    if (usage == FRACTINT_CMD) {
 	/* doing fractint */
 	if (!(opt & (OPT_A | OPT_G))) {
 	    /* not --all, not --gph */
@@ -4053,8 +4116,8 @@ pergm_or_fractint (const double *x, int t1, int t2, int width,
 	}
     }
 
-    if (pmat != NULL) {
-	/* make matrix for pergm function */
+    if (usage == PERGM_FUNC) {
+	/* make matrix for pergm() function */
 	int T2 = T / 2;
 	gretl_matrix *pm;
 
@@ -4068,7 +4131,7 @@ pergm_or_fractint (const double *x, int t1, int t2, int width,
 		gretl_matrix_set(pm, t-1, 1, dens[t]);
 	    }
 	}
-    } else if (opt & OPT_F) {
+    } else if (usage == FRACTINT_CMD) {
 	/* supporting "fractint" command */
 	err = finalize_fractint(x, dens, t1, t2, width,
 				vname, opt, prn);
@@ -4088,8 +4151,7 @@ pergm_or_fractint (const double *x, int t1, int t2, int width,
  * @width: width of window.
  * @dset: dataset struct.
  * @opt: if includes OPT_O, use Bartlett lag window for periodogram;
- * if includes OPT_N, don't display gnuplot graph; if includes
- * OPT_R, the variable is a model residual; OPT_L, use log scale.
+ * if includes OPT_R, the variable is a model residual; OPT_L, use log scale.
  * @prn: gretl printing struct.
  *
  * Computes and displays the periodogram for the series specified 
@@ -4101,7 +4163,7 @@ pergm_or_fractint (const double *x, int t1, int t2, int width,
 int periodogram (int varno, int width, const DATASET *dset, 
 		 gretlopt opt, PRN *prn)
 {
-    return pergm_or_fractint(dset->Z[varno], 
+    return pergm_or_fractint(PERGM_CMD, dset->Z[varno], 
 			     dset->t1, dset->t2, 
 			     width, 
 			     dset->varname[varno],
@@ -4130,8 +4192,8 @@ gretl_matrix *periodogram_matrix (const double *x, int t1, int t2,
     gretlopt opt = (width < 0)? OPT_NONE : OPT_O;
     gretl_matrix *m = NULL;
 
-    *err = pergm_or_fractint(x, t1, t2, width, NULL, 
-			     opt, NULL, &m);
+    *err = pergm_or_fractint(PERGM_FUNC, x, t1, t2, width,
+			     NULL, opt, NULL, &m);
 
     return m;
 }
@@ -4158,7 +4220,7 @@ gretl_bundle *periodogram_bundle (int varno, int width,
     gretl_matrix *m = NULL;
     gretl_bundle *b = NULL;
 
-    *err = pergm_or_fractint(dset->Z[varno], 
+    *err = pergm_or_fractint(PERGM_FUNC, dset->Z[varno], 
 			     dset->t1, dset->t2, width,
 			     NULL, opt, NULL, &m);
 
@@ -4203,11 +4265,11 @@ int fractint (int varno, int order, const DATASET *dset,
     int err = incompatible_options(opt, (OPT_G | OPT_A));
 
     if (!err) {
-	err = pergm_or_fractint(dset->Z[varno], 
+	err = pergm_or_fractint(FRACTINT_CMD, dset->Z[varno], 
 				dset->t1, dset->t2, 
 				order, 
 				dset->varname[varno],
-				opt | OPT_F, prn, NULL);
+				opt, prn, NULL);
     }
 
     return err;
@@ -5851,7 +5913,7 @@ static int lorenz_graph (const char *vname, double *lz, int n)
     int downsample = 0;
     int t, err = 0;
 
-    fp = get_plot_input_stream(PLOT_REGULAR, &err);
+    fp = open_plot_input_file(PLOT_REGULAR, &err);
     if (err) {
 	return err;
     }
@@ -5890,11 +5952,7 @@ static int lorenz_graph (const char *vname, double *lz, int n)
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    err = gnuplot_make_graph();
-
-    return err;
+    return finalize_plot_input_file(fp);
 }
 
 /**

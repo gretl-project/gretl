@@ -145,7 +145,7 @@ int gretl_looping_progressive (void);
 void gretl_set_batch_mode (int b);
 int gretl_in_batch_mode (void);
 
-void gretl_set_gui_mode (int g);
+void gretl_set_gui_mode (void);
 int gretl_in_gui_mode (void);
 
 void set_gretl_echo (int e);

@@ -5271,21 +5271,27 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case CORRGM:
 	err = corrgram(cmd->list[1], cmd->order, 0, dset, 
-		       cmd->opt | OPT_A, prn);
-	if (!err && (cmd->opt & OPT_G)) {
-	    /* experimental */
+		       cmd->opt, prn);
+	if (!err) {
+	    /* FIXME (also below) */
 	    maybe_schedule_graph_callback(s);
 	}
 	break;
 
     case XCORRGM:
 	err = xcorrgram(cmd->list, cmd->order, dset, 
-			cmd->opt | OPT_A, prn);
+			cmd->opt, prn);
+	if (!err) {
+	    maybe_schedule_graph_callback(s);
+	}	
 	break;
 
     case PERGM:
 	err = periodogram(cmd->list[1], cmd->order, dset, 
-			  cmd->opt | OPT_N, prn);
+			  cmd->opt, prn);
+	if (!err) {
+	    maybe_schedule_graph_callback(s);
+	}	
 	break;
 
     case FRACTINT:
@@ -5422,7 +5428,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 		err = rmplot(cmd->list, dset, cmd->opt, prn);
 	    } else {
 		err = hurstplot(cmd->list, dset, prn);
-	    } 
+	    }
+	    if (!err) {
+		maybe_schedule_graph_callback(s);
+	    }
 	}
 	break;
 

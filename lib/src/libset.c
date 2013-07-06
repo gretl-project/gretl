@@ -2439,30 +2439,34 @@ void gretl_set_batch_mode (int b)
     batch_mode_switch(1, b);
 }
 
+/* Returns 1 if we're running a script, otherwise 0.
+   Note: a 0 return indicates that we're in an interactive
+   mode, whether GUI or CLI.
+*/
+
 int gretl_in_batch_mode (void)
 {
     return batch_mode_switch(0, 0);
 }
 
-static int gui_mode_switch (int set, int val)
+static int gui_mode;
+
+/* set by the GUI program at start-up */
+
+void gretl_set_gui_mode (void)
 {
-    static int gmode;
-
-    if (set) {
-	gmode = val;
-    }
-
-    return gmode;
+    gui_mode = 1;
 }
 
-void gretl_set_gui_mode (int g)
-{
-    gui_mode_switch(1, g);
-}
+/* Returns 1 if we're running the GUI program. The current
+   usage may be interactive (menu-driven or typing at the
+   GUI "console") or script/batch. See also 
+   gretl_in_batch_mode().
+*/
 
 int gretl_in_gui_mode (void)
 {
-    return gui_mode_switch(0, 0);
+    return gui_mode;
 }
 
 /* mechanism to support callback for printing iteration info */

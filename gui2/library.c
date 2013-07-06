@@ -5211,14 +5211,13 @@ void do_range_mean (void)
     if (err) {
 	gui_errmsg(err);
     } else {
-	err = make_and_display_graph();
-	if (!err) {
-	    lib_command_sprintf("rmplot %s", dataset->varname[v]);
-	    if (opt & OPT_T) {
-		lib_command_strcat(" --trim");
-	    }
-	    record_command_verbatim();
+	/* plot generation handled in plugin */
+	display_new_graph();
+	lib_command_sprintf("rmplot %s", dataset->varname[v]);
+	if (opt & OPT_T) {
+	    lib_command_strcat(" --trim");
 	}
+	record_command_verbatim();
 	view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), 
 		    RMPLOT, NULL);
     }
@@ -5248,7 +5247,10 @@ void do_hurst (void)
     close_plugin(handle);
 
     if (!err) {
-	make_and_display_graph();
+	/* plot generation handled in plugin */
+	display_new_graph();
+	lib_command_sprintf("hurst %s", dataset->varname[v]);
+	record_command_verbatim();
     }
 
     view_buffer(prn, 60, 350, _("gretl: Hurst exponent"), 
@@ -6300,7 +6302,7 @@ void fit_actual_splot (GtkAction *action, gpointer p)
 
     free(xlist);
 
-    err = gnuplot_3d(list, NULL, dset, GPT_GUI | GPT_FA);
+    err = gnuplot_3d(list, NULL, dset, OPT_F);
 
     if (err) {
 	gui_errmsg(err);
@@ -6874,7 +6876,7 @@ int do_splot_from_selector (selector *sr)
 	return err;
     }
 
-    err = gnuplot_3d(list, NULL, dataset, GPT_GUI);
+    err = gnuplot_3d(list, NULL, dataset, OPT_NONE);
 
     if (err) {
 	gui_errmsg(err);
@@ -8153,7 +8155,8 @@ static int graph_saved_to_specified_file (void)
 
 #define GRAPHING_CI(c) (c==GNUPLOT || c==SCATTERS || \
                         c==BXPLOT || c==CORRGM || \
-			c==BPLOT)
+			c==BPLOT || c==RMPLOT || \
+			c==HURST || c==XCORRGM)
 
 static void gui_exec_callback (ExecState *s, void *ptr,
 			       GretlObjType type)

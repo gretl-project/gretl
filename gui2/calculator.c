@@ -527,7 +527,7 @@ static void htest_graph (int d, double x, double *parms)
     FILE *fp;
     int alt = 0, err = 0;
 
-    fp = get_plot_input_stream(PLOT_H_TEST, &err);
+    fp = open_plot_input_file(PLOT_H_TEST, &err);
     if (err) {
 	return;
     }
@@ -595,9 +595,7 @@ static void htest_graph (int d, double x, double *parms)
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    err = gnuplot_make_graph();
+    err = finalize_plot_input_file(fp);
     gui_graph_handler(err);
 }
 
@@ -610,7 +608,7 @@ static void dist_graph (int d, double *parms)
     FILE *fp;
     int alt = 0, err = 0;
 
-    fp = get_plot_input_stream(PLOT_PROB_DIST, &err);
+    fp = open_plot_input_file(PLOT_PROB_DIST, &err);
     if (err) {
 	return;
     }
@@ -684,9 +682,7 @@ static void dist_graph (int d, double *parms)
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    err = gnuplot_make_graph();
+    err = finalize_plot_input_file(fp);
     gui_graph_handler(err);
 }
 
@@ -3171,7 +3167,7 @@ static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
 
     g_free(s0);
 
-    fp = get_plot_input_stream(PLOT_CURVE, &err);
+    fp = open_plot_input_file(PLOT_CURVE, &err);
     if (err) { 
 	return;
     }
@@ -3192,9 +3188,7 @@ static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    err = gnuplot_make_graph();
+    err = finalize_plot_input_file(fp);
     gui_graph_handler(err);
 
     if (!err) {
@@ -3292,7 +3286,7 @@ static void do_plot_cdf (GtkWidget *w, GtkWidget *dlg)
     double xmax = 4.0;
     int opt, err = 0;
 
-    fp = get_plot_input_stream(PLOT_CURVE, &err);
+    fp = open_plot_input_file(PLOT_CURVE, &err);
     if (err) { 
 	return;
     }
@@ -3332,9 +3326,7 @@ static void do_plot_cdf (GtkWidget *w, GtkWidget *dlg)
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    err = gnuplot_make_graph();
+    err = finalize_plot_input_file(fp);
     gui_graph_handler(err);
 
     gtk_widget_destroy(dlg);
