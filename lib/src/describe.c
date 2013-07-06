@@ -3245,7 +3245,7 @@ static int xcorrgm_graph (const char *xname, const char *yname,
     FILE *fp;
     int k, err = 0;
 
-    fp = open_plot_input_file(PLOT_CORRELOGRAM, &err);
+    fp = open_plot_input_file(PLOT_XCORRELOGRAM, &err);
     if (err) {
 	return err;
     }

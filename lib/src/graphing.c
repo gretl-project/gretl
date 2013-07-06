@@ -123,6 +123,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_CURVE,          "curve" },
     { PLOT_QQ,             "QQ plot" },
     { PLOT_USER,           "user-defined plot" },
+    { PLOT_XCORRELOGRAM,   "cross-correlogram" },
     { PLOT_TYPE_MAX,       NULL }
 };
 
@@ -1287,6 +1288,8 @@ static int command_index_from_plot_type (PlotType p)
 	return FCAST;
     } else if (p == PLOT_CORRELOGRAM) {
 	return CORRGM;
+    } else if (p == PLOT_XCORRELOGRAM) {
+	return XCORRGM;
     } else if (p == PLOT_PERIODOGRAM) {
 	return PERGM;
     } else {
@@ -1657,9 +1660,6 @@ int gnuplot_make_graph (void)
 
     graph_file_written = 0;
     current_gp_term = fmt = specified_gp_output_format();
-
-    fprintf(stderr, "gnuplot_make_graph: fmt=%d, gui=%d\n",
-	    fmt, gui);
 
     if (fmt == GP_TERM_PLT) {
 	/* no-op: just the plot commands are wanted */

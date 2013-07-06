@@ -110,6 +110,7 @@ typedef enum {
     PLOT_CURVE,
     PLOT_QQ,
     PLOT_USER,
+    PLOT_XCORRELOGRAM,
     PLOT_TYPE_MAX
 } PlotType;
 

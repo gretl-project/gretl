@@ -5282,7 +5282,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	err = corrgram(cmd->list[1], cmd->order, 0, dset, 
 		       cmd->opt, prn);
 	if (!err) {
-	    /* FIXME (also below) */
 	    maybe_schedule_graph_callback(s);
 	}
 	break;

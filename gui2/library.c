@@ -8153,10 +8153,11 @@ static int graph_saved_to_specified_file (void)
     }
 }
 
-#define GRAPHING_CI(c) (c==GNUPLOT || c==SCATTERS || \
-                        c==BXPLOT || c==CORRGM || \
-			c==BPLOT || c==RMPLOT || \
-			c==HURST || c==XCORRGM)
+#define GRAPHING_CI(c) (c == GNUPLOT || c == SCATTERS || \
+                        c == BXPLOT || c == CORRGM || \
+			c == BPLOT || c == RMPLOT || \
+			c == HURST || c == XCORRGM || \
+			c == PERGM)
 
 static void gui_exec_callback (ExecState *s, void *ptr,
 			       GretlObjType type)
