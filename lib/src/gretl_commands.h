@@ -219,14 +219,16 @@ typedef enum {
                               c == TABPRINT || \
                               c == VIF)
 
-#define USES_BFGS(c) ((c) == ARMA || \
-                      (c) == GARCH || \
-                      (c) == GMM || \
-		      (c) == HECKIT || \
-		      (c) == INTREG || \
-                      (c) == MLE || \
-                      (c) == TOBIT)
-
+#define GRAPHING_COMMAND(c) (c == GNUPLOT || \
+			     c == BXPLOT ||  \
+			     c == SCATTERS || \
+			     c == CORRGM || \
+			     c == XCORRGM || \
+			     c == PERGM || \
+			     c == RMPLOT || \
+			     c == HURST || \
+			     c == QQPLOT)
+	
 int gretl_command_number (const char *s);
 
 const char *gretl_command_word (int i);

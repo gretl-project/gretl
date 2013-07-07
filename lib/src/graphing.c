@@ -1278,26 +1278,6 @@ static void print_term_string (int ttype, PlotType ptype,
     }
 }
 
-static int command_index_from_plot_type (PlotType p)
-{
-    if (p == PLOT_MULTI_SCATTER) {
-	return SCATTERS;
-    } else if (p == PLOT_BOXPLOTS) {
-	return BXPLOT;
-    } else if (p == PLOT_FORECAST) {
-	return FCAST;
-    } else if (p == PLOT_CORRELOGRAM) {
-	return CORRGM;
-    } else if (p == PLOT_XCORRELOGRAM) {
-	return XCORRGM;
-    } else if (p == PLOT_PERIODOGRAM) {
-	return PERGM;
-    } else {
-	/* all other cases */
-	return GNUPLOT;
-    }
-}
-
 static int gretl_plot_count;
 static int this_term_type;
 
@@ -1486,6 +1466,43 @@ static int got_display_option (const char *s)
     return s != NULL && !strcmp(s, "display");
 }
 
+static const char *plot_output_option (PlotType p, int ci)
+{
+    const char *s;
+
+    if (ci == 0) {
+	if (p == PLOT_MULTI_SCATTER) {
+	    ci = SCATTERS;
+	} else if (p == PLOT_BOXPLOTS) {
+	    ci = BXPLOT;
+	} else if (p == PLOT_FORECAST) {
+	    ci = FCAST;
+	} else if (p == PLOT_CORRELOGRAM) {
+	    ci = CORRGM;
+	} else if (p == PLOT_XCORRELOGRAM) {
+	    ci = XCORRGM;
+	} else if (p == PLOT_PERIODOGRAM) {
+	    ci = PERGM;
+	} else if (p == PLOT_HURST) {
+	    ci = HURST;
+	} else if (p == PLOT_QQ) {
+	    ci = QQPLOT;
+	} else if (p == PLOT_RANGE_MEAN) {
+	    ci = RMPLOT;
+	} else {
+	    /* all other cases */
+	    ci = GNUPLOT;
+	}
+    }
+    
+    s = get_optval_string(ci, OPT_U);
+    if (s != NULL && *s == '\0') {
+	s = NULL;
+    }
+
+    return s;
+}
+
 /* Open file into which gnuplot commands will be written.
 
    Depending on the prospective use of the stream, we
@@ -1503,6 +1520,7 @@ static FILE *open_gp_stream_full (PlotType ptype, int ci,
 {
     char fname[FILENAME_MAX] = {0};
     const char *optname = NULL;
+    int interactive = 0;
     FILE *fp = NULL;
 
     /* ensure we have 'gnuplot_path' in place (file-scope static var) */
@@ -1521,16 +1539,24 @@ static FILE *open_gp_stream_full (PlotType ptype, int ci,
     this_term_type = GP_TERM_NONE;
     *gnuplot_outname = '\0';
 
-    /* check for command index and --output=whatever option */
-    if (ci == 0) {
-	ci = command_index_from_plot_type(ptype);
-    }
-    optname = get_optval_string(ci, OPT_U);
+    /* check for --output=whatever option */
+    optname = plot_output_option(ptype, ci);
 
-    if (gretl_in_batch_mode() && !got_display_option(optname)) {
-	fp = gp_set_up_batch(fname, ptype, flags, optname, err);
+    if (got_display_option(optname)) {
+	/* --output=display specified */
+	interactive = 1;
+    } else if (optname != NULL) {
+	/* --output=filename specified */
+	interactive = 0;
     } else {
+	/* defaults */
+	interactive = !gretl_in_batch_mode();
+    }
+
+    if (interactive) {
 	fp = gp_set_up_interactive(fname, ptype, flags, err);
+    } else {
+	fp = gp_set_up_batch(fname, ptype, flags, optname, err);
     }
 
 #if GPDEBUG

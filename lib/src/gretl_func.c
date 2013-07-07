@@ -6225,10 +6225,8 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 static void func_exec_callback (ExecState *s, void *ptr,
 				GretlObjType type)
 {
-    int ci = s->cmd->ci;
-
-    if (ci == GNUPLOT || ci == SCATTERS || ci == BXPLOT || ci == BPLOT) {
-	/* we permit "reach-back" into the GUI here */
+    if (GRAPHING_COMMAND(s->cmd->ci)) {
+	/* we permit "reach-back" into the GUI for these */
 	EXEC_CALLBACK gc = get_gui_callback();
 
 	if (gc != NULL) {

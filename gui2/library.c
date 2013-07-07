@@ -8153,12 +8153,6 @@ static int graph_saved_to_specified_file (void)
     }
 }
 
-#define GRAPHING_CI(c) (c == GNUPLOT || c == SCATTERS || \
-                        c == BXPLOT || c == CORRGM || \
-			c == BPLOT || c == RMPLOT || \
-			c == HURST || c == XCORRGM || \
-			c == PERGM)
-
 static void gui_exec_callback (ExecState *s, void *ptr,
 			       GretlObjType type)
 {
@@ -8188,7 +8182,7 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 	err = modeltab_parse_line(s->line, s->cmd->opt, s->prn);
     } else if (ci == GRAPHPG) {
 	err = graph_page_parse_line(s->line, s->cmd->opt);
-    } else if (GRAPHING_CI(ci)) {
+    } else if (GRAPHING_COMMAND(ci)) {
 	if (graph_saved_to_specified_file()) {
 	    ; /* no-op: handled */
 	} else if (*s->cmd->savename != '\0') {
@@ -8559,15 +8553,6 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	}
 	if (err) {
 	    errmsg(err, prn);
-	} 
-	break;
-
-    case QQPLOT:
-	err = qq_plot(cmd->list, dset, cmd->opt);
-	if (err) {
-	    errmsg(err, prn);
-	} else {
-	    register_graph(prn);
 	} 
 	break;
 

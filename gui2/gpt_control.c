@@ -55,7 +55,8 @@ enum {
     PLOT_DONT_ZOOM      = 1 << 7,
     PLOT_DONT_EDIT      = 1 << 8,
     PLOT_DONT_MOUSE     = 1 << 9,
-    PLOT_POSITIONING    = 1 << 10
+    PLOT_POSITIONING    = 1 << 10,
+    PLOT_CURSOR_LABEL   = 1 << 11
 } plot_status_flags;
 
 enum {
@@ -75,7 +76,6 @@ enum {
 #define plot_has_png_coords(p)  (p->status & PLOT_PNG_COORDS)
 #define plot_has_xrange(p)      (p->status & PLOT_HAS_XRANGE)
 #define plot_has_yrange(p)      (p->status & PLOT_HAS_YRANGE)
-#define plot_not_zoomable(p)    (p->status & PLOT_DONT_ZOOM)
 #define plot_not_editable(p)    (p->status & PLOT_DONT_EDIT)
 #define plot_is_editable(p)     (!(p->status & PLOT_DONT_EDIT))
 #define plot_doing_position(p)  (p->status & PLOT_POSITIONING)
@@ -96,6 +96,8 @@ enum {
 
 #define labels_frozen(p)        (p->spec->flags & GPT_PRINT_MARKERS)
 #define cant_do_labels(p)       (p->status & PLOT_NO_MARKERS)
+
+#define plot_show_cursor_label(p) (p->status & PLOT_CURSOR_LABEL)
 
 #define plot_has_controller(p) (p->editor != NULL)
 
@@ -146,7 +148,7 @@ static int render_pngfile (png_plot *plot, int view);
 static int repaint_png (png_plot *plot, int view);
 static int zoom_replaces_plot (png_plot *plot);
 static void prepare_for_zoom (png_plot *plot);
-static int get_plot_ranges (png_plot *plot);
+static int get_plot_ranges (png_plot *plot, PlotType ptype);
 static void graph_display_pdf (GPT_SPEC *spec);
 #ifdef G_OS_WIN32
 static void win32_process_graph (GPT_SPEC *spec, int dest);
@@ -3119,12 +3121,13 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
 #define float_fmt(i,x) ((i) && fabs(x) < 1.0e7)
 
 static gint
-motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
+plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 {
     GdkModifierType state;
     gchar label[48], label_y[24];
     const char *xfmt = NULL;
     const char *yfmt = NULL;
+    int do_label;
     int x, y;
 
     if (plot->err) {
@@ -3147,7 +3150,8 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 	yfmt = plot->spec->yfmt;
     }
 
-    *label = 0;
+    *label = '\0';
+    do_label = plot_show_cursor_label(plot);
 
     if (x > plot->pixel_xmin && x < plot->pixel_xmax && 
 	y > plot->pixel_ymin && y < plot->pixel_ymax) {
@@ -3164,16 +3168,18 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 	    identify_point(plot, x, y, data_x, data_y);
 	}
 
-	if (plot->pd == 4 || plot->pd == 12) {
-	    x_to_date(data_x, plot->pd, label);
-	} else if (xfmt != NULL) {
-	    sprintf(label, xfmt, data_x);
-	} else {
-	    sprintf(label, (float_fmt(plot->xint, data_x))? "%7.0f" : 
-		    "%#7.4g", data_x);
+	if (do_label) {
+	    if (plot->pd == 4 || plot->pd == 12) {
+		x_to_date(data_x, plot->pd, label);
+	    } else if (xfmt != NULL) {
+		sprintf(label, xfmt, data_x);
+	    } else {
+		sprintf(label, (float_fmt(plot->xint, data_x))? "%7.0f" : 
+			"%#7.4g", data_x);
+	    }
 	}
 
-	if (!na(data_y)) {
+	if (do_label && !na(data_y)) {
 	    if (plot_has_png_coords(plot)) {
 		if (yfmt != NULL) {
 		    sprintf(label_y, yfmt, data_y);
@@ -3194,7 +3200,9 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 	}
     }
 
-    gtk_label_set_text(GTK_LABEL(plot->cursor_label), label);
+    if (do_label) {
+	gtk_label_set_text(GTK_LABEL(plot->cursor_label), label);
+    }
   
     return TRUE;
 }
@@ -3733,6 +3741,10 @@ static void attach_color_popup (GtkWidget *w, png_plot *plot)
                            f == PLOT_FIT_QUADRATIC || \
                            f == PLOT_FIT_INVERSE)
 
+#define plot_not_zoomable(p) ((p->status & PLOT_DONT_ZOOM) || \
+			      (p->spec != NULL && \
+			       p->spec->code == PLOT_ROOTS))
+
 static void build_plot_menu (png_plot *plot)
 {
     GtkWidget *item;    
@@ -3939,7 +3951,7 @@ int redisplay_edited_plot (png_plot *plot)
     set_plot_format_flags(plot);
 
     /* grab (possibly modified) data ranges */
-    get_plot_ranges(plot);
+    get_plot_ranges(plot, plot->spec->code);
 
     /* put the newly created PNG onto the plot canvas */
     return render_pngfile(plot, PNG_REDISPLAY);
@@ -4422,7 +4434,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
    when the user moves the pointer over the graph.
 */
 
-static int get_plot_ranges (png_plot *plot)
+static int get_plot_ranges (png_plot *plot, PlotType ptype)
 {
     FILE *fp;
     char line[MAXLEN];
@@ -4502,6 +4514,9 @@ static int get_plot_ranges (png_plot *plot)
     if (plot_has_png_coords(plot)) {
 	plot->status |= PLOT_HAS_XRANGE;
 	plot->status |= PLOT_HAS_YRANGE;
+	if (ptype != PLOT_ROOTS && ptype != PLOT_QQ) {
+	    plot->status |= PLOT_CURSOR_LABEL;
+	}
 	if ((plot->xmax - plot->xmin) / 
 	    (plot->pixel_xmax - plot->pixel_xmin) >= 1.0) {
 	    plot->xint = 1;
@@ -4663,7 +4678,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
     }
 
     if (!plot->err) {
-	int range_err = get_plot_ranges(plot);
+	int range_err = get_plot_ranges(plot, plot->spec->code);
 
 #if GPDEBUG
 	fprintf(stderr, "range_err = %d\n", range_err);
@@ -4736,11 +4751,10 @@ static int gnuplot_show_png (const char *fname, const char *name,
 		     G_CALLBACK(plot_button_release), plot);
 
     /* create the contents of the status area */
-    if (plot_has_xrange(plot)) {
+    if (plot_show_cursor_label(plot)) {
 	/* cursor label (graph position indicator) */
 	label_frame = gtk_frame_new(NULL);
 	gtk_frame_set_shadow_type(GTK_FRAME(label_frame), GTK_SHADOW_IN);
-
 	plot->cursor_label = gtk_label_new(" ");
 	gtk_container_add(GTK_CONTAINER(label_frame), plot->cursor_label);
 	gtk_widget_show(plot->cursor_label);
@@ -4766,14 +4780,14 @@ static int gnuplot_show_png (const char *fname, const char *name,
     
     if (plot_has_xrange(plot)) {
 	g_signal_connect(G_OBJECT(plot->canvas), "motion-notify-event",
-			 G_CALLBACK(motion_notify_event), plot);
+			 G_CALLBACK(plot_motion_callback), plot);
     }
 
     /* pack the widgets */
     gtk_box_pack_start(GTK_BOX(canvas_hbox), plot->canvas, FALSE, FALSE, 0);
 
     /* fill the status area */
-    if (plot_has_xrange(plot)) {
+    if (plot_show_cursor_label(plot)) {
 	gtk_box_pack_start(GTK_BOX(status_hbox), label_frame, FALSE, FALSE, 0);
     }
 
@@ -4784,7 +4798,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
     /* show stuff */
     gtk_widget_show(plot->canvas);
 
-    if (plot_has_xrange(plot)) {
+    if (plot_show_cursor_label(plot)) {
 	gtk_widget_show(label_frame);
     }
 
@@ -4798,7 +4812,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
     gdk_window_set_back_pixmap(plot->window, NULL, FALSE);
 #endif
 
-    if (plot_has_xrange(plot)) {
+    if (plot_show_cursor_label(plot)) {
 	gtk_widget_realize(plot->cursor_label);
 	gtk_widget_set_size_request(plot->cursor_label, 160, -1);
     }

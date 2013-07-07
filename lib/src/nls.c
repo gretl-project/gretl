@@ -3091,6 +3091,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
     }
 
     if (spec->ci == GRETL_TYPE_DOUBLE) {
+	/* FIXME what's this -- a typo?? 2013-07-07 */
 	spec->fvec = NULL;
 	spec->jac = NULL;
     } else {
@@ -3116,7 +3117,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
     }
 
     /* get tolerance from user setting or default */
-    if (USES_BFGS(spec->ci)) {
+    if (spec->ci == MLE || spec->ci == GMM) {
 	spec->tol = libset_get_double(BFGS_TOLER);
     } else {
 	spec->tol = libset_get_double(NLS_TOLER);
