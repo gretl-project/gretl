@@ -1694,6 +1694,12 @@ int execute_set_line (const char *line, DATASET *dset,
 #endif
 	    } else {
 		err = check_set_bool(setobj, setarg);
+		if (!err && !strcmp(setobj, HALT_ON_ERR) &&
+		    boolean_off(setarg)) {
+		    pputs(prn, "Warning: \"set halt_on_error off\" is "
+			  "deprecated and will be removed.\nPlease use "
+			  "\"catch\" to trap errors instead.\n");
+		}
 	    }
 	} else if (libset_double(setobj)) {
 	    if (default_ok(setobj) && default_str(setarg)) {
@@ -1899,6 +1905,8 @@ int libset_get_int (const char *key)
 	return gretl_debug;
     } else if (!strcmp(key, BLAS_NMK_MIN)) {
 	return get_blas_nmk_min();
+    } else if (!strcmp(key, MP_NMK_MIN)) {
+	return mp_nmk_min;
     } else if (!strcmp(key, BFGS_VERBSKIP)) {
 	return state->bfgs_verbskip;
     } else if (!strcmp(key, CSV_DIGITS)) {
