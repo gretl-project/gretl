@@ -5160,10 +5160,6 @@ static void maybe_schedule_graph_callback (ExecState *s)
 {
     int gui_mode = gretl_in_gui_mode();
 
-    if (!plot_ok) {
-	return;
-    }
-
     if (graph_written_to_file()) {
 	if (gui_mode && *s->cmd->savename != '\0' &&
 	    get_current_gp_term() == GP_TERM_PLT) {
@@ -6040,7 +6036,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	err = 0;
     }
 
-    if (!err && GRAPHING_COMMAND(cmd->ci)) {
+    if (!err && GRAPHING_COMMAND(cmd->ci) && plot_ok) {
 	maybe_schedule_graph_callback(s);
     }
 

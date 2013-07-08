@@ -1503,7 +1503,7 @@ static const char *plot_output_option (PlotType p, int ci)
     return s;
 }
 
-/* Open file into which gnuplot commands will be written.
+/* Open a file into which gnuplot commands will be written.
 
    Depending on the prospective use of the stream, we
    may write some initializations into it, the primary
@@ -1553,6 +1553,11 @@ static FILE *open_gp_stream_full (PlotType ptype, int ci,
 	interactive = !gretl_in_batch_mode();
     }
 
+#if 1 || GPDEBUG
+    fprintf(stderr, "optname = '%s', interactive = %d\n", 
+	    optname, interactive);
+#endif
+
     if (interactive) {
 	fp = gp_set_up_interactive(fname, ptype, flags, err);
     } else {
@@ -1583,14 +1588,11 @@ static FILE *open_gp_stream (PlotType ptype, GptFlags flags, int *err)
  * @ptype: indication of the sort of plot to be made.
  * @err: location to receive error code.
  *
- * If we're in GUI mode: writes a unique temporary filename into
- * the internal variable #gretl_plotfile; opens plotfile for writing;
- * and writes initial lines into the output file to select 
- * the PNG terminal type and direct gnuplot's output to a temporary
- * file in the gretl user directory.  
- *
- * If not in GUI mode, opens the file %gpttmp.plt in the gretl
- * user directory.  
+ * Opens a file into which gnuplot commands will be written.
+ * Depending on the prospective use of the stream, we
+ * may write some initializations into it, the primary
+ * case being when we're going to produce PNG output
+ * for display in the GUI.
  *
  * Returns: writable stream on success, %NULL on failure.
  */
@@ -3309,11 +3311,8 @@ int gnuplot (const int *plotlist, const char *literal,
 
     gretl_pop_c_numeric_locale();
 
-    /* flush stream */
-    fclose(gi.fp);
+    err = finalize_plot_input_file(gi.fp);
     gi.fp = NULL;
-
-    err = gnuplot_make_graph();
 
  bailout:
 
@@ -3377,12 +3376,10 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
 
     print_gp_data(&gi, dset);
 
-    fclose(gi.fp);
-    gi.fp = NULL;
-
     gretl_pop_c_numeric_locale();
 
-    err = gnuplot_make_graph();
+    err = finalize_plot_input_file(gi.fp);
+    gi.fp = NULL;
 
  bailout:
 
@@ -5555,14 +5552,14 @@ static int data_straddle_zero (const gretl_matrix *m)
     return 0;
 }
 
-static int real_irf_print_plot (const gretl_matrix *resp,
-				const char *targname,
-				const char *shockname,
-				const char *perlabel,
-				double alpha,
-				int confint,
-				int use_fill,
-				FILE *fp)
+static void real_irf_print_plot (const gretl_matrix *resp,
+				 const char *targname,
+				 const char *shockname,
+				 const char *perlabel,
+				 double alpha,
+				 int confint,
+				 int use_fill,
+				 FILE *fp)
 {
     int periods = gretl_matrix_rows(resp);
     char title[128];
@@ -5638,8 +5635,6 @@ static int real_irf_print_plot (const gretl_matrix *resp,
     }
 
     gretl_pop_c_numeric_locale();
-
-    return 0;
 }
 
 int 
@@ -5668,18 +5663,14 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 
 	fp = open_plot_input_file((confint)? PLOT_IRFBOOT : PLOT_REGULAR, &err);
 	if (!err) {
-	    err = real_irf_print_plot(resp, dset->varname[vtarg],
-				      dset->varname[vshock],
-				      dataset_period_label(dset),
-				      alpha, confint, use_fill,
-				      fp);
-	    fclose(fp);
+	    real_irf_print_plot(resp, dset->varname[vtarg],
+				dset->varname[vshock],
+				dataset_period_label(dset),
+				alpha, confint, use_fill,
+				fp);
+	    err = finalize_plot_input_file(fp);
 	}
 	gretl_matrix_free(resp);
-    }
-
-    if (!err) {
-	err = gnuplot_make_graph();
     }
 
     return err;
@@ -5722,15 +5713,11 @@ int irf_plot_from_bundle (gretl_bundle *bundle, gretlopt opt)
 	fp = open_gp_stream_full((confint)? PLOT_IRFBOOT : PLOT_REGULAR, 
 				 BPLOT, 0, &err);
 	if (!err) {
-	    err = real_irf_print_plot(resp, targname, shockname,
-				      perlabel, alpha, use_fill,
-				      confint, fp);
+	    real_irf_print_plot(resp, targname, shockname,
+				perlabel, alpha, use_fill,
+				confint, fp);
+	    err = finalize_plot_input_file(fp);
 	}
-	fclose(fp);
-    }
-
-    if (!err) {
-	err = gnuplot_make_graph();
     }
 
     return err;
@@ -6517,12 +6504,8 @@ int correlogram_plot_from_bundle (gretl_bundle *bundle, gretlopt opt)
 	if (!err) {
 	    real_correlogram_print_plot(vname, acf, pacf, 
 					m, pm, opt, fp);
-	    fclose(fp);
+	    err = finalize_plot_input_file(fp);
 	}
-    }
-
-    if (!err) {
-	err = gnuplot_make_graph();
     }
 
     return err;
@@ -6681,12 +6664,8 @@ int periodogram_plot_from_bundle (gretl_bundle *bundle, gretlopt opt)
 				 0, &err);
 	if (!err) {
 	    real_pergm_plot(vname, T, L, x, opt, fp);
-	    fclose(fp);
+	    err = finalize_plot_input_file(fp);
 	}
-    }
-
-    if (!err) {
-	err = gnuplot_make_graph();
     }
 
     return err;
