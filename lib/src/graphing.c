@@ -65,7 +65,6 @@ struct gnuplot_info_ {
     double xrange;
     char xtics[64];
     char fmt[16];
-    FILE *fp;
     const char *yformula;
     const double *x;
     gretl_matrix *dvals;
@@ -1779,7 +1778,8 @@ enum {
 } graph_titles;
 
 static void make_gtitle (gnuplot_info *gi, int code, 
-			 const char *s1, const char *s2)
+			 const char *s1, const char *s2,
+			 FILE *fp)
 {
     char depvar[VNAMELEN];
     char title[128];
@@ -1823,7 +1823,7 @@ static void make_gtitle (gnuplot_info *gi, int code,
     }
 
     if (*title != '\0') {
-	fprintf(gi->fp, "set title \"%s\"\n", title);
+	fprintf(fp, "set title \"%s\"\n", title);
     }
 }
 
@@ -1854,7 +1854,7 @@ static void line_out (const char *s, int len, FILE *fp)
     char *p = malloc(len + 1);
 
     if (p != NULL) {
-	*p = 0;
+	*p = '\0';
 	strncat(p, s, len);
 	fprintf(fp, "%s\n", front_strip(p));
 	free(p);
@@ -2203,7 +2203,8 @@ static void check_y_tics (gnuplot_info *gi, const double **Z,
 
 static void print_x_range_from_list (gnuplot_info *gi, 
 				     const DATASET *dset, 
-				     const int *list)
+				     const int *list,
+				     FILE *fp)
 {
     const double *x, *d = NULL;
     int k, l0 = list[0];
@@ -2221,8 +2222,8 @@ static void print_x_range_from_list (gnuplot_info *gi,
     x = dset->Z[list[k]];
 
     if (gretl_isdummy(gi->t1, gi->t2, x)) {
-	fputs("set xrange [-1:2]\n", gi->fp);	
-	fputs("set xtics (\"0\" 0, \"1\" 1)\n", gi->fp);
+	fputs("set xrange [-1:2]\n", fp);	
+	fputs("set xtics (\"0\" 0, \"1\" 1)\n", fp);
 	gi->xrange = 3;
     } else {
 	double xmin, xmin0 = NADBL;
@@ -2265,18 +2266,18 @@ static void print_x_range_from_list (gnuplot_info *gi,
 	    xmax = xmax0 + gi->xrange * .025;
 	}
 
-	fprintf(gi->fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
+	fprintf(fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
 	gi->xrange = xmax - xmin;
 	check_tic_labels(xmin0, xmax0, gi);
     }
 }
 
 static void 
-print_x_range (gnuplot_info *gi, const double *x)
+print_x_range (gnuplot_info *gi, const double *x, FILE *fp)
 {
     if (gretl_isdummy(gi->t1, gi->t2, x)) {
-	fputs("set xrange [-1:2]\n", gi->fp);	
-	fputs("set xtics (\"0\" 0, \"1\" 1)\n", gi->fp);
+	fputs("set xrange [-1:2]\n", fp);	
+	fputs("set xtics (\"0\" 0, \"1\" 1)\n", fp);
 	gi->xrange = 3;
     } else {
 	double xmin0, xmin, xmax0, xmax;
@@ -2288,7 +2289,7 @@ print_x_range (gnuplot_info *gi, const double *x)
 	    xmin = 0.0;
 	}
 	xmax = xmax0 + gi->xrange * .025;
-	fprintf(gi->fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
+	fprintf(fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
 	gi->xrange = xmax - xmin;
     }
 }
@@ -2341,7 +2342,8 @@ check_for_yscale (gnuplot_info *gi, const double **Z, int *oddman)
 }
 
 static int print_gp_dummy_data (gnuplot_info *gi, 
-				const DATASET *dset)
+				const DATASET *dset,
+				FILE *fp)
 {
     const double *d = dset->Z[gi->list[3]];
     const double *y = dset->Z[gi->list[1]];
@@ -2365,23 +2367,23 @@ static int print_gp_dummy_data (gnuplot_info *gi,
 	    }
 	    yt = (d[t] == gi->dvals->val[i])? y[t] : NADBL;
 	    if (na(yt)) {
-		fprintf(gi->fp, "%.10g ?\n", xt);
+		fprintf(fp, "%.10g ?\n", xt);
 	    } else {
-		fprintf(gi->fp, "%.10g %.10g", xt, yt);
+		fprintf(fp, "%.10g %.10g", xt, yt);
 		if (!(gi->flags & GPT_TS)) {
 		    if (dset->markers) {
-			fprintf(gi->fp, " # %s", dset->S[t]);
+			fprintf(fp, " # %s", dset->S[t]);
 		    } else if (dataset_is_time_series(dset)) {
 			char obs[OBSLEN];
 
 			ntodate(obs, t, dset);
-			fprintf(gi->fp, " # %s", obs);
+			fprintf(fp, " # %s", obs);
 		    }
 		}
-		fputc('\n', gi->fp);
+		fputc('\n', fp);
 	    }
 	}
-	fputs("e\n", gi->fp);
+	fputs("e\n", fp);
     }
 
     return 0;
@@ -2449,7 +2451,8 @@ static int use_lines (gnuplot_info *gi)
     return 0;
 }
 
-static void print_gp_data (gnuplot_info *gi, const DATASET *dset)
+static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
+			   FILE *fp)
 {
     int n = gi->t2 - gi->t1 + 1;
     double offset = 0.0;
@@ -2501,14 +2504,14 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset)
 	    }
 
 	    if ((gi->flags & GPT_TS) && dset->structure == STACKED_TIME_SERIES) {
-		maybe_print_panel_jot(t, dset, gi->fp);
+		maybe_print_panel_jot(t, dset, fp);
 	    }
 
-	    printvars(gi->fp, t, datlist, (const double **) dset->Z, 
+	    printvars(fp, t, datlist, (const double **) dset->Z, 
 		      gi->x, label, xoff);
 	}
 
-	fputs("e\n", gi->fp);
+	fputs("e\n", fp);
     }
 }
 
@@ -2537,7 +2540,6 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     gi->xtics[0] = '\0';
     gi->fmt[0] = '\0';
     gi->yformula = NULL;
-    gi->fp = NULL;
 
     gi->x = NULL;
     gi->list = NULL;
@@ -2589,10 +2591,6 @@ static void clear_gpinfo (gnuplot_info *gi)
     free(gi->list);
     gretl_matrix_free(gi->dvals);
     free(gi->withlist);
-
-    if (gi->fp != NULL) {
-	fclose(gi->fp);
-    }
 }
 
 #if GP_DEBUG
@@ -3183,7 +3181,6 @@ int gnuplot (const int *plotlist, const char *literal,
 	goto bailout;
     } 
 
-    gi.fp = fp;
     fputs(gretl_print_get_buffer(prn), fp);
     gretl_print_destroy(prn);
 
@@ -3197,14 +3194,15 @@ int gnuplot (const int *plotlist, const char *literal,
 	    print_auto_fit_string(gi.fit, fp);
 	    if (gi.flags & GPT_FA) {
 		make_gtitle(&gi, GTITLE_AFV, series_get_graph_name(dset, list[1]), 
-			    series_get_graph_name(dset, list[2]));
+			    series_get_graph_name(dset, list[2]), fp);
 	    } else {
 		make_gtitle(&gi, GTITLE_VLS, series_get_graph_name(dset, list[1]), 
-			    xlabel);
+			    xlabel, fp);
 	    }
 	}
 	if (gi.flags & GPT_RESIDS && !(gi.flags & GPT_DUMMY)) { 
-	    make_gtitle(&gi, GTITLE_RESID, series_get_label(dset, list[1]), NULL);
+	    make_gtitle(&gi, GTITLE_RESID, series_get_label(dset, list[1]), 
+			NULL, fp);
 	    fprintf(fp, "set ylabel '%s'\n", _("residual"));
 	} else {
 	    print_axis_label('y', series_get_graph_name(dset, list[1]), fp);
@@ -3213,15 +3211,17 @@ int gnuplot (const int *plotlist, const char *literal,
 	    strcpy(keystr, "set nokey\n");
 	}
     } else if ((gi.flags & GPT_RESIDS) && (gi.flags & GPT_DUMMY)) { 
-	make_gtitle(&gi, GTITLE_RESID, series_get_label(dset, list[1]), NULL);
+	make_gtitle(&gi, GTITLE_RESID, series_get_label(dset, list[1]), 
+		    NULL, fp);
 	fprintf(fp, "set ylabel '%s'\n", _("residual"));
     } else if (gi.flags & GPT_FA) {
 	if (list[3] == dset->v - 1) { 
 	    /* x var is just time or index: is this always right? */
-	    make_gtitle(&gi, GTITLE_AF, series_get_graph_name(dset, list[2]), NULL);
+	    make_gtitle(&gi, GTITLE_AF, series_get_graph_name(dset, list[2]), 
+			NULL, fp);
 	} else {
 	    make_gtitle(&gi, GTITLE_AFV, series_get_graph_name(dset, list[2]), 
-			series_get_graph_name(dset, list[3]));
+			series_get_graph_name(dset, list[3]), fp);
 	}
 	print_axis_label('y', series_get_graph_name(dset, list[2]), fp);
     } 
@@ -3235,9 +3235,9 @@ int gnuplot (const int *plotlist, const char *literal,
     gretl_push_c_numeric_locale();
 
     if (gi.x != NULL) {
-	print_x_range(&gi, gi.x);
+	print_x_range(&gi, gi.x, fp);
     } else {
-	print_x_range_from_list(&gi, dset, list);
+	print_x_range_from_list(&gi, dset, list, fp);
     }
 
     if (*gi.fmt != '\0' && *gi.xtics != '\0') {
@@ -3336,15 +3336,14 @@ int gnuplot (const int *plotlist, const char *literal,
 
     /* print the data to be graphed */
     if (gi.flags & GPT_DUMMY) {
-	print_gp_dummy_data(&gi, dset);
+	print_gp_dummy_data(&gi, dset, fp);
     } else {
-	print_gp_data(&gi, dset);
+	print_gp_data(&gi, dset, fp);
     }
 
     gretl_pop_c_numeric_locale();
 
-    err = finalize_plot_input_file(gi.fp);
-    gi.fp = NULL;
+    err = finalize_plot_input_file(fp);
 
  bailout:
 
@@ -3386,8 +3385,6 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
 	goto bailout;
     } 
 
-    gi.fp = fp;
-
     vx = gi.list[2];
     vy = gi.list[1];
 
@@ -3400,18 +3397,17 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
 
     gretl_push_c_numeric_locale();
 
-    print_x_range_from_list(&gi, dset, gi.list);
+    print_x_range_from_list(&gi, dset, gi.list, fp);
 
     fputs("plot \\\n", fp);
     fputs(" '-' using 1:($2) notitle w points , \\\n", fp);
     fprintf(fp, " x title \"%s\" w lines\n", _("actual = predicted"));
 
-    print_gp_data(&gi, dset);
+    print_gp_data(&gi, dset, fp);
 
     gretl_pop_c_numeric_locale();
 
-    err = finalize_plot_input_file(gi.fp);
-    gi.fp = NULL;
+    err = finalize_plot_input_file(fp);
 
  bailout:
 

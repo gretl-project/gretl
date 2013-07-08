@@ -585,7 +585,7 @@ static void grab_gnuplot_literal_block (char *s, CMD *cmd)
     if (s != NULL) {
 	free(cmd->param);
 	cmd->param = gretl_strdup(s);
-	*s = 0;
+	*s = '\0';
     }
 }
 
@@ -593,10 +593,10 @@ static int boxplot_booleans_present (const char *s)
 {
     int ret = 0;
 
-    /* note: the '(' character might appear inside a gnuplot
+    /* Note: the '(' character might appear inside a gnuplot
        literal block, "{...}", in which case it should not be 
        taken as indicating that boolean conditions are present
-       on the command line
+       on the command line.
     */
 
     if (strchr(s, '(')) {
