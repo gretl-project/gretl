@@ -211,7 +211,8 @@ static int h_adjust_t1t2 (int v, const DATASET *dset,
     return miss;
 }
 
-int hurst_exponent (int vnum, const DATASET *dset, PRN *prn)
+int hurst_exponent (int vnum, const DATASET *dset, gretlopt opt,
+		    PRN *prn)
 {
     DATASET *hset;
     MODEL hmod;
@@ -288,7 +289,7 @@ int hurst_exponent (int vnum, const DATASET *dset, PRN *prn)
 	pprintf(prn, "%s = %g\n", _("Estimated Hurst exponent"), hmod.coeff[1]);
     }
 
-    if (!err && !gretl_in_batch_mode()) {
+    if (!err && gnuplot_graph_wanted(PLOT_HURST, opt)) {
 	err = do_hurst_plot(k, hset, &hmod, dset->varname[vnum]);
     }
 

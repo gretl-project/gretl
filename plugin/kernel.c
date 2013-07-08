@@ -124,11 +124,7 @@ static int density_plot (kernel_info *kinfo, const char *vname)
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    /* display of plot handled in GUI */
-
-    return 0;
+    return finalize_plot_input_file(fp);
 }
 
 static gretl_matrix *density_matrix (kernel_info *kinfo, 

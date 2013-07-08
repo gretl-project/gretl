@@ -654,11 +654,7 @@ static int graph_series (const DATASET *dset, tx_request *req)
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    /* display of graph handled in GUI */
-
-    return 0;
+    return finalize_plot_input_file(fp);
 }
 
 static void copy_variable (DATASET *targ, int targv,

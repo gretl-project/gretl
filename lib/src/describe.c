@@ -3190,52 +3190,6 @@ gretl_matrix *acf_matrix (const double *x, int order,
     return A;
 }
 
-gretl_bundle *acf_bundle (int vnum, int order, const DATASET *dset,
-			  int *err)
-{
-    gretl_bundle *b = NULL;
-    const double *x = dset->Z[vnum];
-    gretl_matrix *C;
-
-    C = acf_matrix(x, order, dset, 0, err);
-
-    if (!*err) {
-	b = gretl_bundle_new();
-	if (b == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    int t1 = dset->t1;
-	    int t2 = dset->t2;
-	    int T;
-
-	    while (na(x[t1])) t1++;
-	    while (na(x[t2])) t2--;
-
-	    T = t2 - t1 + 1;
-
-	    *err = gretl_bundle_set_payload_matrix(b, C);
-	    if (!*err) {
-		*err = gretl_bundle_set_string(b, "vname", dset->varname[vnum]);
-	    }
-	    if (!*err) {
-		*err = gretl_bundle_set_scalar(b, "T", (double) T);
-	    }	    
-	}
-	gretl_matrix_free(C);
-    }
-
-    if (b != NULL && !*err) {
-	*err = gretl_bundle_set_creator(b, "gretl::corrgm");
-    }
-
-    if (b != NULL && *err) {
-	gretl_bundle_destroy(b);
-	b = NULL;
-    }    
-
-    return b;
-}
-
 static int xcorrgm_graph (const char *xname, const char *yname,
 			  double *xcf, int m, double *pm,
 			  int allpos)
@@ -4196,48 +4150,6 @@ gretl_matrix *periodogram_matrix (const double *x, int t1, int t2,
 			     NULL, opt, NULL, &m);
 
     return m;
-}
-
-/**
- * periodogram_bundle:
- * @varno: ID number of the series to process.
- * @width: width of Bartlett window, or -1 for plain sample
- * periodogram.
- * @dset: pointer to dataset.
- * @err: location to receive error code.
- *
- * Implements the userspace gretl pergm function in its bundle
- * variant, which can only be used on a dataset series.
- *
- * Returns: allocated bundle on success, NULL on failure.
- */
-
-gretl_bundle *periodogram_bundle (int varno, int width,
-				  const DATASET *dset,
-				  int *err)
-{
-    gretlopt opt = (width < 0)? OPT_NONE : OPT_O;
-    gretl_matrix *m = NULL;
-    gretl_bundle *b = NULL;
-
-    *err = pergm_or_fractint(PERGM_FUNC, dset->Z[varno], 
-			     dset->t1, dset->t2, width,
-			     NULL, opt, NULL, &m);
-
-    if (!*err) {
-	b = gretl_bundle_new();
-	if (b == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    gretl_bundle_set_payload_matrix(b, m);
-	    gretl_bundle_set_scalar(b, "width", width);
-	    gretl_bundle_set_string(b, "vname", dset->varname[varno]);
-	    gretl_bundle_set_creator(b, "gretl::pergm");
-	}
-	gretl_matrix_free(m);
-    }
-
-    return b;
 }
 
 /**

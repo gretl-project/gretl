@@ -183,7 +183,7 @@ int range_mean_graph (int vnum, DATASET *dset,
     gretl_matrix_block *B;
     gretl_matrix *y, *X, *b, *V;
     int k, t, m, T, mmin, rem;
-    int verbose = !(opt & OPT_Q);
+    int quiet = (opt & OPT_Q);
     char startdate[OBSLEN], enddate[OBSLEN];
     int t1 = dset->t1;
     int t2 = dset->t2;
@@ -216,7 +216,7 @@ int range_mean_graph (int vnum, DATASET *dset,
 	return E_ALLOC;
     }
 
-    if (verbose) {
+    if (!quiet) {
 	pprintf(prn, _("Range-mean statistics for %s\n"), 
 		dset->varname[vnum]);
 	pprintf(prn, _("using %d sub-samples of size %d\n\n"),
@@ -247,7 +247,7 @@ int range_mean_graph (int vnum, DATASET *dset,
 	gretl_matrix_set(X, t, 0, 1.0);
 	gretl_matrix_set(X, t, 1, mean);
 
-	if (verbose) {
+	if (!quiet) {
 	    int len;
 
 	    ntodate(startdate, start, dset);
@@ -273,7 +273,7 @@ int range_mean_graph (int vnum, DATASET *dset,
 	    double bse = sqrt(gretl_matrix_get(V, 1, 1));
 	    double tstat, pv;
 
-	    if (verbose) {
+	    if (!quiet) {
 		pputc(prn, '\n');
 		pprintf(prn, _("slope of range against mean = %g\n"),
 			b->val[1]);
@@ -283,7 +283,7 @@ int range_mean_graph (int vnum, DATASET *dset,
 		tstat = b->val[1] / bse;
 		pv = student_pvalue_2(m - 2, tstat);
 		record_test_result(tstat, pv, _("range-mean test"));
-		if (verbose) {
+		if (!quiet) {
 		    pprintf(prn, _("p-value for H0: slope = 0 is %g\n"), pv);
 		}
 		if (pv < .10) {
@@ -294,8 +294,8 @@ int range_mean_graph (int vnum, DATASET *dset,
 	    }
 	}
 
-	if (!err) {
-	    if (verbose && !gretl_in_batch_mode()) {
+	if (!err && !quiet) {
+	    if (gnuplot_graph_wanted(PLOT_RANGE_MEAN, opt)) {
 		err = do_range_mean_plot(y, X, b0, b1, dset->varname[vnum]);
 	    }
 	}

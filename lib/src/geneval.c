@@ -5248,7 +5248,6 @@ static NODE *do_panel_shrink (NODE *l, parser *p)
 static NODE *pergm_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
-    int vnum = -1;
 
     if (!empty_or_num(r)) {
 	/* optional 'r' node must be scalar */
@@ -5256,9 +5255,6 @@ static NODE *pergm_node (NODE *l, NODE *r, parser *p)
     } else if (l->t == MAT && gretl_vector_get_length(l->v.m) == 0) {
 	/* if 'l' node is not a series, must be a vector */
 	node_type_error(F_PERGM, 1, VEC, l, p);
-    } else if (useries_node(l)) {
-	vnum = l->vnum;
-	ret = aux_bundle_node(p);
     } else {
 	ret = aux_matrix_node(p);
     }
@@ -5282,11 +5278,7 @@ static NODE *pergm_node (NODE *l, NODE *r, parser *p)
 	    width = r->v.xval;
 	}
 
-	if (vnum >= 0) {
-	    ret->v.b = periodogram_bundle(vnum, width, p->dset, &p->err);
-	} else {
-	    ret->v.m = periodogram_matrix(x, t1, t2, width, &p->err);
-	}
+	ret->v.m = periodogram_matrix(x, t1, t2, width, &p->err);
     }
 
     return ret;
@@ -6288,18 +6280,6 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
     return A;
 }
 
-static gretl_bundle *get_corrgm_bundle (NODE *l, NODE *m, parser *p)
-{
-    gretl_bundle *b = NULL;
-    int k = node_get_int(m, p);
-
-    if (!p->err) {
-	b = acf_bundle(l->vnum, k, p->dset, &p->err);
-    }
-
-    return b;
-}
-
 static const char *ptr_node_get_matrix_name (NODE *t, parser *p)
 {
     const char *name = NULL;
@@ -6357,8 +6337,6 @@ static int aggregate_discrete_check (const int *list, const DATASET *dset)
 
     return 0;
 }
-
-#define IRF_RETURN_BUNDLE 1
 
 /* evaluate a built-in function that has three arguments */
 
@@ -6422,12 +6400,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    node_type_error(f, 2, NUM, m, p);
 	} else if (r->t != EMPTY && r->t != VEC && r->t != MAT) {
 	    node_type_error(f, 3, VEC, r, p);
-	} else if (null_or_empty(r) && useries_node(l)) {
-	    ret = aux_bundle_node(p);
-	    if (!p->err) {
-		ret->v.b = get_corrgm_bundle(l, m, p);
-		post_process = 0;
-	    }
 	} else {
 	    A = get_corrgm_matrix(l, m, r, p);
 	}
@@ -6611,17 +6583,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    int targ = (int) l->v.xval - 1;
 	    int shock = (int) m->v.xval - 1;
 
-#if IRF_RETURN_BUNDLE
-	    post_process = 0;
-	    ret = aux_bundle_node(p);
-	    if (!p->err) {
-		ret->v.b = last_model_get_irf_bundle(targ, shock, alpha,
-						     p->dset, &p->err);
-	    }
-#else
 	    A = last_model_get_irf_matrix(targ, shock, alpha,
 					  p->dset, &p->err);
-#endif
 	}
     } else if (f == F_MLAG) {
 	if (l->t != MAT) {

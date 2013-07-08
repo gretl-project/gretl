@@ -905,7 +905,7 @@ static void make_graph_filename (char *shortname)
     }
 }
 
-/* Callback for a command on the pattern "grfnname <- plotspec".
+/* Callback for a command on the pattern "gname <- plotspec".
    Note @gname may contain non-ASCII characters (which will be 
    in UTF-8). So we'd best not use @gname to construct a filename
    for the graph in case we're on a non-UTF-8 system.

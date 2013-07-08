@@ -153,33 +153,13 @@ void library_command_free (void)
     gretl_cmd_free(&libcmd);
 }
 
-static void register_graph (PRN *prn)
-{
-    if (graph_written_to_file()) {
-	report_plot_written(prn);
-    } else {
-	gretl_error_clear();
-	/* now hand off to gpt_control.c */
-	display_new_graph();
-    }
-}
-
 void gui_graph_handler (int err)
 {
     if (err) {
 	gui_errmsg(err);
     } else {
-	register_graph(NULL);
+	register_graph();
     }
-}
-
-static int make_and_display_graph (void)
-{
-    int err = gnuplot_make_graph();
-
-    gui_graph_handler(err);
-
-    return err;
 }
 
 /* the following three functions are used to write
@@ -1404,7 +1384,7 @@ int do_xcorrgm (selector *sr)
 	} else {
 	    record_lib_command();
 	    view_buffer(prn, 60, 300, title, XCORRGM, NULL); 
-	    register_graph(NULL);
+	    register_graph();
 	}
     }
 
@@ -1913,7 +1893,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	    gopt |= OPT_P;
 	}
 	if (!err && (gopt & OPT_P)) {
-	    register_graph(NULL);
+	    register_graph();
 	}
 	if (!rolling && fr->sderr == NULL) {
 	    width = 60;
@@ -1961,7 +1941,7 @@ void do_bootstrap (GtkAction *action, gpointer p)
 				    _("gretl: bootstrap analysis"), 
 				    PRINT, NULL);
 	if (opt & OPT_G) {
-	    make_and_display_graph();
+	    register_graph();
 	}
 	if (opt & OPT_A) {
 	    file_selector(SAVE_BOOT_DATA, FSEL_DATA_VWIN, w);
@@ -2560,7 +2540,7 @@ void do_leverage (GtkAction *action, gpointer p)
 	return;
     }	
 	
-    m = (*model_leverage)(pmod, dataset, OPT_P, prn, &err);
+    m = (*model_leverage)(pmod, dataset, OPT_NONE, prn, &err);
     close_plugin(handle);
 
     if (err) {
@@ -2573,7 +2553,7 @@ void do_leverage (GtkAction *action, gpointer p)
 				       _("gretl: leverage and influence"), 
 				       LEVERAGE, m); 
 	set_model_id_on_vwin(vbuf, pmod->ID);
-	make_and_display_graph();
+	register_graph();
 	lib_command_strcpy("leverage");
 	record_model_command_verbatim(pmod->ID);
     } 
@@ -2645,7 +2625,7 @@ void do_gini (void)
 
 	view_buffer(prn, 78, 200, title, PRINT, NULL);
 	g_free(title);
-	register_graph(NULL);
+	register_graph();
     } 
 }
 
@@ -2726,11 +2706,7 @@ void do_kernel (void)
 			    opt);
     close_plugin(handle);
 
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	make_and_display_graph();
-    } 
+    gui_graph_handler(err);
 }
 
 static int chow_cusum_ci (GtkAction *action)
@@ -2820,7 +2796,7 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 	gretl_print_destroy(prn);
     } else {
 	if (ci == CUSUM || ci == CUSUMSQ || ci == QLRTEST) {
-	    register_graph(NULL);
+	    register_graph();
 	}
 
 	update_model_tests(vwin);
@@ -3783,7 +3759,7 @@ static int real_do_model (int action)
     }
 
     if (!err && action == AR1 && (libcmd.opt & OPT_H)) {
-	register_graph(NULL);
+	register_graph();
     }
 
     if (err) {
@@ -4808,7 +4784,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
 				    MODTEST, NULL);
 	    /* show the graph too */
 	    if (plot_freq(freq, D_NORMAL) == 0) {
-		register_graph(NULL);
+		register_graph();
 	    }
 	}
     }
@@ -5055,7 +5031,7 @@ static void display_tx_output (const char *fname, int graph_ok,
     }
 
     if (graph_ok && (opt & OPT_G)) {
-	make_and_display_graph();
+	register_graph();
     }
 
     if (oldv > 0 && dataset->v > oldv) {
@@ -5212,7 +5188,7 @@ void do_range_mean (void)
 	gui_errmsg(err);
     } else {
 	/* plot generation handled in plugin */
-	display_new_graph();
+	register_graph();
 	lib_command_sprintf("rmplot %s", dataset->varname[v]);
 	if (opt & OPT_T) {
 	    lib_command_strcat(" --trim");
@@ -5228,7 +5204,7 @@ void do_hurst (void)
     gint err;
     int v = mdata_active_var();
     void *handle;
-    int (*hurst_exponent) (int, const DATASET *, PRN *);
+    int (*hurst_exponent) (int, const DATASET *, gretlopt, PRN *);
     PRN *prn;
 
     hurst_exponent = gui_get_plugin_function("hurst_exponent", 
@@ -5242,13 +5218,13 @@ void do_hurst (void)
 	return; 
     }
 
-    err = hurst_exponent(v, dataset, prn);
+    err = hurst_exponent(v, dataset, OPT_NONE, prn);
 
     close_plugin(handle);
 
     if (!err) {
 	/* plot generation handled in plugin */
-	display_new_graph();
+	register_graph();
 	lib_command_sprintf("hurst %s", dataset->varname[v]);
 	record_command_verbatim();
     }
@@ -5302,7 +5278,7 @@ static void real_do_corrgm (DATASET *dset, int code,
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	register_graph(NULL);
+	register_graph();
 	view_buffer(prn, 78, 360, title, CORRGM, NULL);
     }
 
@@ -5395,7 +5371,7 @@ static void real_do_pergm (DATASET *dset, int code,
     } else {
 	gchar *title = gretl_window_title(_("periodogram"));
 
-	register_graph(NULL);
+	register_graph();
 	view_buffer(prn, 60, 400, _(title), PERGM, NULL);
 	g_free(title);
     }
@@ -8142,17 +8118,6 @@ int execute_script (const char *runfile, const char *buf,
     return exec_err;
 }
 
-static int graph_saved_to_specified_file (void)
-{
-    if (graph_written_to_file()) {
-	const char *test = gretl_plotfile();
-
-	return strstr(test, "gpttmp") == NULL;
-    } else {
-	return 0;
-    }
-}
-
 static void gui_exec_callback (ExecState *s, void *ptr,
 			       GretlObjType type)
 {
@@ -8167,7 +8132,7 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 	add_model_to_session_callback(ptr, type);
     } else if (ci == FREQ && ((s->flags & CONSOLE_EXEC) ||
 			      (s->cmd->opt & OPT_G))) {
-	register_graph(NULL);
+	register_graph();
     } else if (ci == SETOBS) {
 	set_sample_label(dataset);
 	mark_dataset_as_modified();
@@ -8183,12 +8148,13 @@ static void gui_exec_callback (ExecState *s, void *ptr,
     } else if (ci == GRAPHPG) {
 	err = graph_page_parse_line(s->line, s->cmd->opt);
     } else if (GRAPHING_COMMAND(ci)) {
-	if (graph_saved_to_specified_file()) {
-	    ; /* no-op: handled */
-	} else if (*s->cmd->savename != '\0') {
+	fprintf(stderr, "library.c: GRAPHING_COMMAND, plotfile='%s'\n", gretl_plotfile());
+	if (*s->cmd->savename != '\0') {
+	    fprintf(stderr, " case 1\n");
 	    maybe_save_graph(s->cmd->savename, ci, s->prn);
 	} else {
-	    register_graph(NULL);
+	    fprintf(stderr, " case 2\n");
+	    register_graph();
 	}
     } 
 

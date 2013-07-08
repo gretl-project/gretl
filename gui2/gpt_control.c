@@ -4601,6 +4601,8 @@ static int gnuplot_show_png (const char *fname, const char *name,
 	return 0;
     }
 
+    gretl_error_clear(); 
+
 #if GPDEBUG
     fprintf(stderr, "gnuplot_show_png:\n fname='%s', spec=%p, saved=%d\n",
 	    fname, (void *) spec, saved);
@@ -4858,7 +4860,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
    input file (set of gnuplot commands).
 */
 
-void display_new_graph (void)
+void register_graph (void)
 {
     gnuplot_show_png(gretl_plotfile(), NULL, NULL, 0);
 }

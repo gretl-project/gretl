@@ -34,7 +34,6 @@ typedef enum {
     BIPROBIT,
     BREAK,
     BXPLOT,
-    BPLOT,
     CHOW,
     CLEAR,
     COEFFSUM,
@@ -227,6 +226,7 @@ typedef enum {
 			     c == PERGM || \
 			     c == RMPLOT || \
 			     c == HURST || \
+			     c == LEVERAGE || \
 			     c == QQPLOT)
 	
 int gretl_command_number (const char *s);

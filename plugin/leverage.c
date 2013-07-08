@@ -285,11 +285,7 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
-    /* display of graph handled in GUI */
-
-    return 0;
+    return finalize_plot_input_file(fp);
 }
 
 static void leverage_print (const MODEL *pmod,
@@ -499,7 +495,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
     /* print the results, unless in quiet mode */
     if (!(opt & OPT_Q)) {
 	leverage_print(pmod, S, Xvalcrit, dset, prn);
-	if (opt & OPT_P) {
+	if (gnuplot_graph_wanted(PLOT_LEVERAGE, opt)) {
 	    leverage_plot(pmod, S, dset);
 	}
     }

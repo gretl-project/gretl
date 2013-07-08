@@ -321,7 +321,6 @@ static int catch_system_alias (CMD *cmd)
 			   c == MODPRINT || \
 			   c == NORMTEST || \
                            c == NULLDATA || \
-			   c == BPLOT || \
                            c == SETMISS)
 
 #define REQUIRES_ORDER(c) (c == ADF || \
@@ -335,7 +334,6 @@ static int catch_system_alias (CMD *cmd)
                            c == VECM)
 
 #define NO_VARLIST(c) (c == APPEND || \
-		       c == BPLOT ||  \
                        c == BREAK || \
                        c == CHOW || \
 		       c == CLEAR || \
@@ -5161,13 +5159,10 @@ static void maybe_schedule_graph_callback (ExecState *s)
     int gui_mode = gretl_in_gui_mode();
 
     if (graph_written_to_file()) {
-	if (gui_mode && *s->cmd->savename != '\0' &&
-	    get_current_gp_term() == GP_TERM_PLT) {
-	    /* got plotname <- gnuplot ... in GUI */
-	    schedule_callback(s);
-	} else {
-	    report_plot_written(s->prn);
-	}
+	if (gui_mode && *s->cmd->savename != '\0') {
+	    pprintf(s->prn, "Warning: ignoring \"%s <-\"\n", s->cmd->savename);
+	}	
+	report_plot_written(s->prn);
     } else if (gui_mode) {
 	schedule_callback(s);
     }
@@ -5322,7 +5317,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 			       cmd->opt, prn);
 	    }
 	    if (!err && graph) {
-		schedule_callback(s);
+		maybe_schedule_graph_callback(s);
 	    }
 	}
 	break;
@@ -5422,7 +5417,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    if (cmd->ci == RMPLOT) {
 		err = rmplot(cmd->list, dset, cmd->opt, prn);
 	    } else {
-		err = hurstplot(cmd->list, dset, prn);
+		err = hurstplot(cmd->list, dset, cmd->opt, prn);
 	    }
 	}
 	break;
@@ -5983,7 +5978,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case GNUPLOT:
     case BXPLOT:
-    case BPLOT:
     case SCATTERS:
 	if (cmd->opt & OPT_X) {
 	    err = matrix_command_driver(cmd->ci, cmd->list, cmd->param, 
@@ -5997,8 +5991,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    } else {
 		err = gnuplot(cmd->list, cmd->param, dset, cmd->opt);
 	    }
-	} else if (cmd->ci == BPLOT) {
-	    err = plot_bundle_by_name(cmd->param, cmd->opt);
 	} else if (cmd->ci == SCATTERS) {
 	    err = multi_scatters(cmd->list, dset, cmd->opt);
 	} else if (cmd_nolist(cmd)) {
@@ -6036,7 +6028,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	err = 0;
     }
 
-    if (!err && GRAPHING_COMMAND(cmd->ci) && plot_ok) {
+    if (!err && plot_ok) {
 	maybe_schedule_graph_callback(s);
     }
 

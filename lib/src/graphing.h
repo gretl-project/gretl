@@ -188,6 +188,8 @@ FILE *open_plot_input_file (PlotType ptype, int *err);
 
 int finalize_plot_input_file (FILE *fp);
 
+int gnuplot_graph_wanted (PlotType ptype, gretlopt opt);
+
 void gnuplot_cleanup (void);
 
 int specified_gp_output_format (void);
@@ -204,11 +206,7 @@ PlotType plot_type_from_string (const char *str);
 
 void plot_get_scaled_dimensions (int *width, int *height, double scale);
 
-int gnuplot_make_graph (void);
-
 int graph_written_to_file (void);
-
-int get_current_gp_term (void);
 
 void reset_plot_count (void);
 
@@ -234,7 +232,7 @@ int garch_resid_plot (const MODEL *pmod, const DATASET *dset);
 int rmplot (const int *list, DATASET *dset, 
 	    gretlopt opt, PRN *prn);
 
-int hurstplot (const int *list, DATASET *dset, 
+int hurstplot (const int *list, DATASET *dset, gretlopt opt,
 	       PRN *prn);
 
 int qq_plot (const int *list, const DATASET *dset, gretlopt opt);
@@ -245,13 +243,9 @@ int correlogram_plot (const char *vname,
 		      int m, double pm, 
 		      gretlopt opt);
 
-int correlogram_plot_from_bundle (gretl_bundle *bundle, gretlopt opt);
-
 int periodogram_plot (const char *vname,
 		      int T, int L, const double *x,
 		      gretlopt opt);
-
-int periodogram_plot_from_bundle (gretl_bundle *bundle, gretlopt opt);
 
 int theil_forecast_plot (const int *plotlist, const DATASET *dset, 
 			 gretlopt opt);
@@ -275,8 +269,6 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int periods, double alpha,
 				 const DATASET *dset,
 				 gretlopt opt);
-
-int irf_plot_from_bundle (gretl_bundle *bundle, gretlopt opt);
 
 int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods, 
 			 const DATASET *dset, gretlopt opt);

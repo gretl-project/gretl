@@ -72,6 +72,11 @@ int maybe_save_graph (const char *name, int ci, PRN *prn)
     GretlObjType type;
     int add, err = 0;
 
+    /* note: gretl_plotfile() below should give the name of
+       a temporary file to which gnuplot commands have
+       been written.
+    */
+
     type = (ci == BXPLOT)? GRETL_OBJ_PLOT : GRETL_OBJ_GRAPH;
     add = cli_add_graph_to_session(gretl_plotfile(), name, type);
 

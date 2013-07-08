@@ -28,7 +28,7 @@ int remove_png_term_from_plot_by_name (const char *fname);
 
 void display_session_graph (const char *path, const char *title);
 
-void display_new_graph (void);
+void register_graph (void);
 
 void saver_preview_graph (GPT_SPEC *spec, char *termstr);
 

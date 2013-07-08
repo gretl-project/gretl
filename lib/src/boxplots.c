@@ -521,7 +521,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp,
     }
 
     fmt = specified_gp_output_format();
-    if (fmt == GP_TERM_EPS || fmt == GP_TERM_PLT) {
+    if (fmt == GP_TERM_EPS) {
 	/* line type for main outline, monochrome */
 	qtype = 1;
     }    

@@ -1999,17 +1999,20 @@
     </usage>
 
     <description>
-      <para>
+      <para context="notex">
 	Prints the values of the autocorrelation function for
-	<repl>series</repl>, which may be specified by name or number.  The
-	values are defined as 
-	<equation status="inline" 
-	  tex="$\hat{\rho}(u_t, u_{t-s})$" 
-	  ascii="rho(u(t), u(t-s))" 
-	  graphic="autocorr"/> where
-	<math>u</math><sub>t</sub> is the <math>t</math><sup>th</sup>
-	observation of the variable <math>u</math> and
-	<math>s</math> is the number of lags.
+	<repl>series</repl>, which may be specified by name or number.
+	The values are defined as &rgr;(<math>u</math><sub>t</sub>,
+	<math>u</math><sub>t-s</sub>) where <math>u</math><sub>t</sub>
+	is the <math>t</math><sup>th</sup> observation of the variable
+	<math>u</math> and <math>s</math> denotes the number of lags.
+      </para>
+      <para context="tex">
+	Prints the values of the autocorrelation function for
+	<repl>series</repl>, which may be specified by name or number. The
+	values are defined as $\hat{\rho}(u_t, u_{t-s})$, where
+	$u_t$ is the $t^{\rm th}$ observation of the variable $u$ and
+	$s$ denotes the number of lags.
       </para>
       <para>
 	The partial autocorrelations (calculated using the
@@ -3351,7 +3354,7 @@
         </option>
         <option>
 	  <flag>--plot</flag>
-	  <optparm optional="true">filename</optparm>
+	  <optparm>filename</optparm>
 	  <effect>see below</effect>
         </option>
       </options>
@@ -3438,23 +3441,21 @@
 	The <opt>--plot</opt> option (available only in the case of
 	single-equation estimation) calls for a plot file to be
 	produced, containing a graphical representation of the
-	forecast.  When no <repl>filename</repl> parameter is given,
-	gretl writes a gnuplot command file with a name on the pattern
-	<lit>gpttmp01.plt</lit> to the user's gretl working directory
-	(with the number incremented for successive plots).  If a
-	<repl>filename</repl> is appended, its extension is used to
-	determine the type of file to be written (<lit>.eps</lit> for
-	EPS, <lit>.pdf</lit> for PDF, or <lit>.png</lit> for PNG; any
-	other extension gives a gnuplot command file).  For example,
+	forecast. The suffix of the <repl>filename</repl> argument to
+	this option controls the format of the plot: <lit>.eps</lit>
+	for EPS, <lit>.pdf</lit> for PDF, <lit>.png</lit> for PNG,
+	<lit>.plt</lit> for a gnuplot command file. The dummy filename
+	<lit>display</lit> can be used to force display of the plot in
+	a window. For example,
       </para>
       <code>
 	fcast --plot=fc.pdf
       </code>
       <para>
 	will generate a graphic in PDF format.  Absolute pathnames are
-	respected, otherwise files are written to the gretl working directory.
+	respected, otherwise files are written to the gretl working
+	directory.
       </para>
-
       <para>
 	The nature of the forecast standard errors (if available) depends
 	on the nature of the model and the forecast.  For static linear
@@ -5888,20 +5889,19 @@
 
     <description>
       <para>
-	Must follow an <cmd>ols</cmd> command. Calculates the
-	leverage (<math>h</math>, which must lie in the range 0 to 1) for
-	each data point in the sample on which the previous model was
+	Must follow an <cmd>ols</cmd> command. Calculates the leverage
+	(<math>h</math>, which must lie in the range 0 to 1) for each
+	data point in the sample on which the previous model was
 	estimated.  Displays the residual (<math>u</math>) for each
-	observation along with its leverage and a measure of its influence
-	on the estimates, <equation status="inline" tex="$uh/(1 - h)$"
-	ascii="u*h/(1-h)" graphic="influence"/>. <quote>Leverage
-	points</quote> for which the value of <math>h</math> exceeds
-	2<math>k</math>/<math>n</math> (where <math>k</math> is the number
-	of parameters being estimated and <math>n</math> is the sample
-	size) are flagged with an asterisk.  For details on the concepts
-	of leverage and influence see <cite
-	key="davidson-mackinnon93">Davidson and MacKinnon (1993)</cite>,
-	Chapter 2.
+	observation along with its leverage and a measure of its
+	influence on the estimates, <math>uh</math>/(1 &minus;
+	<math>h</math>).  <quote>Leverage points</quote> for which the
+	value of <math>h</math> exceeds 2<math>k</math>/<math>n</math>
+	(where <math>k</math> is the number of parameters being
+	estimated and <math>n</math> is the sample size) are flagged
+	with an asterisk.  For details on the concepts of leverage and
+	influence see <cite key="davidson-mackinnon93">Davidson and
+	MacKinnon (1993)</cite>, Chapter 2.
       </para>
       <para>
 	DFFITS values are also computed: these are <quote>studentized
