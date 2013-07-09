@@ -2421,6 +2421,12 @@ int dist_code_from_string (const char *s)
     char test[8];
     int i;
 
+    if (!strcmp(s, "D")) {
+	/* special: case counts for bivariate normal */
+	return D_BINORM;
+    }
+
+    /* otherwise we'll ignore case */
     for (i=0; i<8 && s[i]; i++) {
 	test[i] = tolower(s[i]);
     }
