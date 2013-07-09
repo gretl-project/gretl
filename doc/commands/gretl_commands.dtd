@@ -23,8 +23,8 @@
 <!ENTITY eg     "e.g.">
 <!ENTITY ie     "i.e.">
 
-<!ELEMENT commandlist (command)+>
-<!ATTLIST commandlist
+<!ELEMENT commandref (command)+>
+<!ATTLIST commandref
    language    CDATA #REQUIRED
 >
 

@@ -16,16 +16,16 @@ void print_top (const char *dtddir)
 {
     puts("<?xml version=\"1.0\"?>");
     if (dtddir != NULL) {
-	printf("<!DOCTYPE commandlist SYSTEM \"%s/gretl_commands.dtd\">\n", dtddir);
+	printf("<!DOCTYPE commandref SYSTEM \"%s/gretl_commands.dtd\">\n", dtddir);
     } else {
-	puts("<!DOCTYPE commandlist SYSTEM \"gretl_commands.dtd\">");
+	puts("<!DOCTYPE commandref SYSTEM \"gretl_commands.dtd\">");
     }
-    puts("<commandlist language=\"english\">\n"); 
+    puts("<commandref language=\"english\">\n"); 
 }
 
 void print_foot (void)
 {
-    puts("</commandlist>\n"); 
+    puts("</commandref>\n"); 
 }
 
 /* print a 'skeleton' reference entry for the given command */

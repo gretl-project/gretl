@@ -53,7 +53,7 @@
   </xsl:choose>  
 </xsl:template>
 
-<xsl:template match="commandlist">
+<xsl:template match="commandref">
   <xsl:apply-templates/> 
 </xsl:template>
 

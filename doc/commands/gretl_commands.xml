@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
-<!DOCTYPE commandlist SYSTEM "gretl_commands.dtd">
+<!DOCTYPE commandref SYSTEM "gretl_commands.dtd">
 
-<commandlist language="english">
+<commandref language="english">
 
 <?PSGML NOFILL label code altforms altform menu-path equation other-access?>
 
@@ -12409,5 +12409,5 @@
 
   </command>
 
-</commandlist>
+</commandref>
 

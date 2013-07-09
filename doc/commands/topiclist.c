@@ -16,7 +16,7 @@
 
 #include <glib.h>
 
-#define ROOTNODE "commandlist"
+#define ROOTNODE "commandref"
 #define UTF const xmlChar *
 
 #define VERBOSE 0

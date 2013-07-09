@@ -93,7 +93,7 @@
   </xsl:for-each>
 </xsl:template>
 
-<xsl:template match="commandlist">
+<xsl:template match="commandref">
   <xsl:text>&lt;h1&gt;</xsl:text>
   <xsl:text>Gretl Command Reference</xsl:text>
   <xsl:text>&lt;/h1&gt;&#10;</xsl:text>

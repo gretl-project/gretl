@@ -154,7 +154,7 @@ char *get_abbreviated_lang (char *lang, const char *full_lang)
 int parse_commands_data (const char *fname, int content, 
 			 int format, const char *docdir)
 {
-    const char *rootnode = "commandlist";
+    const char *rootnode = "commandref";
     xmlDocPtr doc;
     xmlNodePtr cur;
     char *tmp = NULL;

@@ -248,7 +248,7 @@ static int parse_ref_file (cmdlist *clist)
     if (clist->type == GRETL_FUNCTIONS) {
 	rootnode = "funcref";
     } else {
-	rootnode = "commandlist";
+	rootnode = "commandref";
     }
 
     if (xmlStrcmp(cur->name, (UTF) rootnode)) {

@@ -32,13 +32,13 @@
   </xsl:choose>  
 </xsl:template>
 
-<xsl:template match="commandlist">
+<xsl:template match="commandref">
   <xsl:text>headings </xsl:text>
   <xsl:value-of select="count(command[not(@section = preceding-sibling::command/@section)])"/>
   <xsl:text>&#10;</xsl:text>
   <xsl:for-each select="command[not(@section = preceding-sibling::command/@section)]">
     <xsl:variable name="cmd-count">
-      <xsl:value-of select="count(/commandlist/command[@section = current()/@section 
+      <xsl:value-of select="count(/commandref/command[@section = current()/@section 
                             and (not(@context) or @context=$hlp)])"/>
     </xsl:variable>
     <xsl:if test="$cmd-count &gt; 0">
@@ -46,7 +46,7 @@
       <xsl:text> </xsl:text>
       <xsl:value-of select="$cmd-count"/>
       <xsl:text>&#10;</xsl:text>
-      <xsl:for-each select="/commandlist/command[@section = current()/@section and (not(@context) or @context=$hlp)]">
+      <xsl:for-each select="/commandref/command[@section = current()/@section and (not(@context) or @context=$hlp)]">
         <xsl:value-of select="@name"/>
         <xsl:if test="$hlp='gui'">
           <xsl:text> "</xsl:text>
