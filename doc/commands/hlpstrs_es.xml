@@ -54,5 +54,6 @@
  <gentext key="seebelow"      text="see below"/>
  <gentext key="varargs"       text="see below"/>  
  <gentext key="chapter"       text="Chapter"/> 
+ <gentext key="applies-to"    text="Applies to"/> 
  
 </localization>

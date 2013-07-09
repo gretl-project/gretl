@@ -87,6 +87,8 @@
 </xsl:if>
 </xsl:template>
 
+<xsl:template match="common-opt" />
+
 <xsl:template match="description">
   <xsl:if test="not(@context) or @context=$hlp">
     <xsl:apply-templates/>

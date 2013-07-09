@@ -147,6 +147,8 @@
   </xsl:if>
 </xsl:template>
 
+<xsl:template match="common-opt" />
+
 <xsl:template match="usage">
   <xsl:text>&#10;&#10;</xsl:text>
   <xsl:text>\begin{tabular}{ll}&#10;</xsl:text>

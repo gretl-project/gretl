@@ -23,7 +23,7 @@
 <!ENTITY eg     "e.g.">
 <!ENTITY ie     "i.e.">
 
-<!ELEMENT commandref (command)+>
+<!ELEMENT commandref (command+, common-opt+)>
 <!ATTLIST commandref
    language    CDATA #REQUIRED
 >
@@ -226,6 +226,11 @@
    c    CDATA #REQUIRED
 >
 
+<!ELEMENT common-opt (applies-to+, description)>
 
+<!ATTLIST common-opt
+   name   CDATA #REQUIRED
+   param  CDATA #IMPLIED
+>
 
 

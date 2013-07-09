@@ -59,30 +59,72 @@
 
 <xsl:template match="command">
   <xsl:if test="not(@context) or @context=$hlp">
+    <xsl:if test="position() > 1">
+      <xsl:call-template name="nl"/>
+    </xsl:if>
+    <xsl:text># </xsl:text>
+    <xsl:value-of select="@name"/>
+    <xsl:text> </xsl:text>
+    <xsl:value-of select="@section"/>
+    <xsl:if test="$hlp='gui'">
+      <xsl:text> "</xsl:text>
+      <xsl:value-of select="@label"/>
+      <xsl:text>"</xsl:text>
+    </xsl:if>
+    <xsl:text>&#10;</xsl:text>
+    <xsl:apply-templates/>
+    <xsl:call-template name="dnl"/>
+    <xsl:if test="(not(@context) and $hlp='gui')">
+      <xsl:call-template name="gettext">
+	<xsl:with-param name="key" select="'scriptcommand'"/>
+      </xsl:call-template>
+      <xsl:text>&lt;@ref="</xsl:text>
+      <xsl:value-of select="@name"/>
+      <xsl:text>"&gt;&#10;</xsl:text>
+    </xsl:if>
+  </xsl:if>
+</xsl:template>
+
+<xsl:template match="common-opt" />
+
+<xsl:template match="not-ready-common-opt">
   <xsl:if test="position() > 1">
     <xsl:call-template name="nl"/>
   </xsl:if>
-  <xsl:text># </xsl:text>
+  <xsl:text># option:</xsl:text>
   <xsl:value-of select="@name"/>
-  <xsl:text> </xsl:text>
-  <xsl:value-of select="@section"/>
-  <xsl:if test="$hlp='gui'">
-    <xsl:text> "</xsl:text>
-    <xsl:value-of select="@label"/>
-    <xsl:text>"</xsl:text>
+  <xsl:call-template name="dnl"/>
+  <xsl:text>&lt;@lit="--</xsl:text>
+  <xsl:value-of select="@name"/>
+  <xsl:if test="@param">
+    <xsl:text>=</xsl:text>
+    <xsl:text>"&gt;</xsl:text>
+    <xsl:text>&lt;@var="</xsl:text>
+    <xsl:value-of select="@param"/>
   </xsl:if>
+  <xsl:text>"&gt;</xsl:text>
   <xsl:text>&#10;</xsl:text>
   <xsl:apply-templates/>
   <xsl:call-template name="dnl"/>
-  <xsl:if test="(not(@context) and $hlp='gui')">
-    <xsl:call-template name="gettext">
-      <xsl:with-param name="key" select="'scriptcommand'"/>
+</xsl:template>
+
+<xsl:template match="applies-to">
+  <xsl:if test="position() = 1">
+    <xsl:text>&#10;</xsl:text>
+    <xsl:call-template name="gettext-nospace">
+      <xsl:with-param name="key" select="'applies-to'"/>
     </xsl:call-template>
-    <xsl:text>&lt;@ref="</xsl:text>
-    <xsl:value-of select="@name"/>
-    <xsl:text>"&gt;&#10;</xsl:text>
+    <xsl:text>:&#10;</xsl:text>
   </xsl:if>
-</xsl:if>
+  <xsl:if test="position() > 1">
+    <xsl:call-template name="nl"/>
+  </xsl:if>
+  <xsl:text>&lt;@lit="</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>"&gt;</xsl:text>
+  <xsl:if test="not(following-sibling::applies-to)">
+    <xsl:text>&#10;</xsl:text>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="description">
