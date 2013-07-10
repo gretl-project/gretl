@@ -10383,10 +10383,14 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
     }
 
     if (!err) {
-	err = nasty = gretl_cholesky_decomp_solve(XTX, B);
-	if (err == E_SINGULAR) {
-	    fprintf(stderr, "gretl_matrix_multi_ols: switching to QR decomp\n");
+	if (getenv("MULTI_OLS_USE_QR") != NULL) { 
 	    err = gretl_matrix_QR_ols(Y, X, B, E, XTXi, NULL);
+	} else {
+	    err = nasty = gretl_cholesky_decomp_solve(XTX, B);
+	    if (err == E_SINGULAR) {
+		fprintf(stderr, "gretl_matrix_multi_ols: switching to QR decomp\n");
+		err = gretl_matrix_QR_ols(Y, X, B, E, XTXi, NULL);
+	    }
 	}
     }
 
