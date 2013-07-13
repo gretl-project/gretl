@@ -2498,9 +2498,10 @@ GRETL_VAR *gretl_VAR (int order, int *laglist, int *list,
 	return NULL;
     }
 
+    /* run the regressions */
     if (getenv("VAR_USE_QR") != NULL) {
 	*err = gretl_matrix_QR_ols(var->Y, var->X, 
-				   var->B, var->E,
+				   var->B, var->E, 
 				   &var->XTX, NULL);
     } else {
 	/* use Cholesky or QR as needed */

@@ -496,6 +496,7 @@ struct gretl_option gretl_opts[] = {
     { VAR,      OPT_R, "robust", 0 }, 
     { VAR,      OPT_T, "trend", 0 }, 
     { VAR,      OPT_S, "silent", 0 },
+    { VAR,      OPT_M, "minlag", 2 },
     { VARLIST,  OPT_A, "accessors", 0 },
     { VARLIST,  OPT_S, "scalars", 0 },    
     { VECM,     OPT_A, "crt", 0 },
