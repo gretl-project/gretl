@@ -329,6 +329,7 @@ int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset,
     double crit[N_IVALS];
     double LRtest;
     double ldet = NADBL;
+    int use_QR = 0;
     int cols0;
     int j, m = 0;
     int err = 0;
@@ -349,6 +350,10 @@ int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset,
 	goto bailout;
     }
 
+    if (getenv("VAR_USE_QR") != NULL) {
+	use_QR = 1;
+    }
+
     /* number of cols in X that are not Y lags */
     cols0 = var->ncoeff - p * n; 
 
@@ -360,8 +365,13 @@ int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset,
 	gretl_matrix_reuse(var->X, T, jxcols);
 	gretl_matrix_reuse(var->B, jxcols, n);
 
-	err = gretl_matrix_multi_ols(var->Y, var->X, var->B, 
-				     E, NULL);
+	if (use_QR) {
+	    err = gretl_matrix_QR_ols(var->Y, var->X, var->B, 
+				      E, NULL, NULL);
+	} else {
+	    err = gretl_matrix_multi_ols(var->Y, var->X, var->B, 
+					 E, NULL);
+	}
 
 	if (!err) {
 	    ldet = gretl_VAR_ldet(var, E, &err);
