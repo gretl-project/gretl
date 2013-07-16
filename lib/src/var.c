@@ -2096,10 +2096,7 @@ double gretl_VAR_ldet (GRETL_VAR *var, const gretl_matrix *E,
 				  E, GRETL_MOD_NONE,
 				  S, GRETL_MOD_NONE);
 	gretl_matrix_divide_by_scalar(S, var->T);
-	ldet = gretl_vcv_log_determinant(S);
-	if (na(ldet)) {
-	    *err = 1;
-	}
+	ldet = gretl_vcv_log_determinant(S, err);
 	gretl_matrix_free(S);
     }
 
@@ -2194,15 +2191,12 @@ static int VAR_add_stats (GRETL_VAR *var, int code)
     }
 
     if (!err) {
-	var->ldet = gretl_vcv_log_determinant(var->S);
-	if (na(var->ldet)) {
-	    err = 1;
-	}
+	var->ldet = gretl_vcv_log_determinant(var->S, &err);
 
 #if VAR_S_DFCORR
 	/* Hmm, should we df-adjust var->S here?  Note that this
 	   will affect the impulse response output */
-	if (1) {
+	if (!err) {
 	    double cfac = var->T / (double) var->df;
 	
 	    gretl_matrix_multiply_by_scalar(var->S, cfac);

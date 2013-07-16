@@ -1463,8 +1463,12 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
     int T = vecm->T;
     int g = vecm->neqns;
     int k = g * (vecm->order + 1); /* FIXME gappy */
+    int err = 0;
 
-    vecm->ldet = gretl_vcv_log_determinant(vecm->S);
+    vecm->ldet = gretl_vcv_log_determinant(vecm->S, &err);
+    if (err) {
+	return err;
+    }
 
     k += vecm->jinfo->seasonals;
 

@@ -607,6 +607,7 @@ double sur_loglik (equation_system *sys)
     int T = sys->T;
     gretl_matrix *tmp;
     double ldet;
+    int err = 0;
 
     tmp = gretl_matrix_alloc(m, m);
     if (tmp == NULL) {
@@ -614,7 +615,7 @@ double sur_loglik (equation_system *sys)
     }
 
     gls_sigma_from_uhat(sys, tmp, 0);
-    ldet = gretl_vcv_log_determinant(tmp);
+    ldet = gretl_vcv_log_determinant(tmp, &err);
 
     if (na(ldet)) {
 	sys->ll = NADBL;

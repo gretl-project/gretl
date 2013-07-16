@@ -690,19 +690,18 @@ static int fiml_ll (fiml_system *fsys, const DATASET *dset,
 	return err;
     }
 
-    /* note: make copies because the determinant calculations 
-       destroy the original matrix */
-
+    /* note: make copy because this determinant calculation
+       destroys the original matrix */
     gretl_matrix_copy_values(fsys->Gtmp, fsys->G);
     ldetG = gretl_matrix_log_abs_determinant(fsys->Gtmp, &err);
-    if (na(ldetG)) {
+    if (err) {
 	return err;
     }
 
-    gretl_matrix_copy_values(fsys->Stmp, fsys->sigma);
-    ldetS = gretl_vcv_log_determinant(fsys->Stmp);
-    if (na(ldetS)) {
-	return 1;
+    /* vcv_log_determinant() doesn't overwrite */
+    ldetS = gretl_vcv_log_determinant(fsys->sigma, &err);
+    if (err) {
+	return err;
     }
 
     /* Davidson and MacKinnon, ETM, equation (12.80) */

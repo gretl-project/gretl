@@ -4641,9 +4641,11 @@ system_save_and_print_results (equation_system *sys, DATASET *dset,
 	sur_ols_diag(sys);
     }
 
-    sys->ldet = gretl_vcv_log_determinant(sys->S);
+    sys->ldet = gretl_vcv_log_determinant(sys->S, &err);
 
-    err = system_add_yhat_matrix(sys);
+    if (!err) {
+	err = system_add_yhat_matrix(sys);
+    }
 
     if (!err) {
 	err = sys_add_structural_form(sys);

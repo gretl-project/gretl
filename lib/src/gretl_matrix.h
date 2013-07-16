@@ -466,7 +466,7 @@ double gretl_matrix_log_determinant (gretl_matrix *a, int *err);
 
 double gretl_matrix_log_abs_determinant (gretl_matrix *a, int *err);
 
-double gretl_vcv_log_determinant (const gretl_matrix *m);
+double gretl_vcv_log_determinant (const gretl_matrix *m, int *err);
 
 double gretl_matrix_one_norm (const gretl_matrix *m);
 

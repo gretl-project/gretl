@@ -2964,6 +2964,7 @@ double gretl_matrix_one_norm (const gretl_matrix *m)
 /**
  * gretl_vcv_log_determinant:
  * @m: gretl_matrix.
+ * @err: location to receive error code.
  *
  * Compute the log determinant of the symmetric positive-definite
  * matrix @m using Cholesky decomposition.  
@@ -2971,7 +2972,7 @@ double gretl_matrix_one_norm (const gretl_matrix *m)
  * Returns: the log determinant, or #NADBL on failure.
  */
 
-double gretl_vcv_log_determinant (const gretl_matrix *m)
+double gretl_vcv_log_determinant (const gretl_matrix *m, int *err)
 {
     gretl_matrix *a = NULL;
     char uplo = 'L';
@@ -2987,17 +2988,20 @@ double gretl_vcv_log_determinant (const gretl_matrix *m)
 
     if (m->rows != m->cols) {
 	fputs("gretl_vcv_log_determinant: matrix must be square\n", stderr);
+	*err = E_INVARG;
 	return det;
     }
 
     if (!real_gretl_matrix_is_symmetric(m, 1)) {
 	fputs("gretl_vcv_log_determinant: matrix is not symmetric\n", stderr);
+	*err = E_INVARG;
 	return det;
     }
 
     a = gretl_matrix_copy_tmp(m);
     if (a == NULL) {
 	fputs("gretl_vcv_log_determinant: out of memory\n", stderr);
+	*err = E_ALLOC;
 	return det;
     }
 
@@ -3007,9 +3011,11 @@ double gretl_vcv_log_determinant (const gretl_matrix *m)
 	if (info > 0) {
 	    fputs("gretl_vcv_log_determinant: matrix not positive definite\n", 
 		  stderr);
+	    *err = E_NOTPD;
 	} else {
 	    fputs("gretl_vcv_log_determinant: illegal argument to dpotrf\n", 
 		  stderr);
+	    *err = E_INVARG;
 	}
     } else {
 	double x;
