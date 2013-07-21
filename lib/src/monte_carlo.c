@@ -2785,7 +2785,6 @@ static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 	errmsg(err, prn);
 	err = 0;
     } else if (loop_cmd_catch(loop, j)) {
-	errmsg(err, prn);
 	err = 0;
     }	
 

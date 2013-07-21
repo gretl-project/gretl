@@ -15,6 +15,12 @@
   \includegraphics{figures/gretl-logo} 
 }
 
+\newcommand{\htitle}[1]{\vspace*{1in}
+   {\Huge \sffamily #1}\par
+   \vspace{.5in}
+  \includegraphics{figures/hansl-logo} 
+}
+
 \newcommand{\gsubtitle}[1]{%
    {\Large \sffamily #1}
    \vspace{.5in}
