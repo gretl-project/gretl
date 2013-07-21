@@ -2781,12 +2781,12 @@ static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
     fprintf(stderr, "loop_process_error: j=%d, catch=%d\n",
 	    j, loop_cmd_catch(loop, j));
 #endif
-    if (libset_get_bool(HALT_ON_ERR) == 0) {
+    if (loop_cmd_catch(loop, j)) {
+	err = 0;
+    } else if (!libset_get_bool(HALT_ON_ERR)) {
 	errmsg(err, prn);
 	err = 0;
-    } else if (loop_cmd_catch(loop, j)) {
-	err = 0;
-    }	
+    }
 
     return err;
 }

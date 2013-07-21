@@ -5168,6 +5168,21 @@ static void maybe_schedule_graph_callback (ExecState *s)
     }
 }
 
+static void maybe_print_error_message (CMD *cmd, int err, PRN *prn)
+{
+    if (gretl_function_depth() > 0) {
+	; /* defer printing */
+    } else if (cmd->flags & CMD_CATCH) {
+	/* print only if messages on */
+	if (gretl_messages_on()) {
+	    errmsg(err, prn);
+	}
+    } else {
+	/* otherwise go ahead and print */
+	errmsg(err, prn);
+    }
+}
+
 int gretl_cmd_exec (ExecState *s, DATASET *dset)
 {
     CMD *cmd = s->cmd;
@@ -6038,8 +6053,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
  bailout:
 
-    if (err && gretl_function_depth() == 0) {
-	errmsg(err, prn);
+    if (err) {
+	maybe_print_error_message(cmd, err, prn);
     }
 
     err = process_command_error(cmd, err);

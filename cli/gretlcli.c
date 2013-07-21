@@ -881,7 +881,7 @@ static int exec_line (ExecState *s, DATASET *dset)
 	if (err != E_ALLOC && (cmd->flags & CMD_CATCH)) {
 	    set_gretl_errno(err);
 	    catch = 1;
-	}	
+	}
         errmsg(err, prn);
 	return (catch)? 0 : err;
     }
