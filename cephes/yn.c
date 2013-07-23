@@ -65,9 +65,9 @@ double cephes_bessel_Yn (int n, double x)
     }
 
     if (n == 0)
-	return sign * y0(x);
+	return sign * cephes_y0(x);
     if (n == 1)
-	return sign * y1(x);
+	return sign * cephes_y1(x);
 
     /* test for overflow */
     if (x <= 0.0) {
@@ -77,8 +77,8 @@ double cephes_bessel_Yn (int n, double x)
 
     /* forward recurrence on n */
 
-    anm2 = y0(x);
-    anm1 = y1(x);
+    anm2 = cephes_y0(x);
+    anm1 = cephes_y1(x);
     k = 1;
     r = 2 * k;
     do {

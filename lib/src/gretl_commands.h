@@ -118,7 +118,7 @@ typedef enum {
     PRINT, 
     PRINTF,
     PROBIT,
-    PVALUE, 
+    PVAL, 
     QUANTREG,
     QLRTEST,
     QQPLOT,
@@ -191,7 +191,7 @@ typedef enum {
                         c == PLOT || \
                         c == PRINT || \
                         c == PRINTF || \
-                        c == PVALUE || \
+                        c == PVAL || \
                         c == QLRTEST || \
                         c == RESET || \
                         c == RMPLOT || \

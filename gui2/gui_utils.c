@@ -62,6 +62,12 @@
 # include "gretlwin32.h"
 #endif
 
+#if defined(HAVE_FLITE) || defined(WIN32_SAPI)
+# define USE_SOUND 1
+#else
+# define USE_SOUND 0
+#endif
+
 static void set_up_model_view_menu (windata_t *vwin);
 static void add_system_menu_items (windata_t *vwin, int vecm);
 static void add_bundle_menu_items (windata_t *vwin);
@@ -469,7 +475,7 @@ void delete_widget (GtkWidget *widget, gpointer data)
     gtk_widget_destroy(GTK_WIDGET(data));
 }
 
-#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
+#if USE_SOUND
 
 static int set_or_get_audio_stop (int set, int val)
 {
@@ -758,7 +764,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	model_add_as_icon(NULL, vwin);
     } 
 
-#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
+#if USE_SOUND
     /* respond to 'a' and 'x', but not if Ctrl- or Alt-modified */
     else if (!Ctrl && !Alt) {
 	if (upkey == GDK_A) {

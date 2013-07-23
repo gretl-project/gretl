@@ -172,7 +172,7 @@ static double Z2 = 4.92184563216946036703E1;
 
 extern double TWOOPI, THPIO4, SQ2OPI;
 
-double j1 (double x)
+double cephes_j1 (double x)
 {
     double z, p, q, xn, w = x;
 
@@ -196,7 +196,7 @@ double j1 (double x)
     return p * SQ2OPI / sqrt(x);
 }
 
-double y1 (double x)
+double cephes_y1 (double x)
 {
     double w, z, p, q, xn;
 
@@ -207,7 +207,7 @@ double y1 (double x)
 	}
 	z = x * x;
 	w = x * (polevl(z, YP, 5) / p1evl(z, YQ, 8));
-	w += TWOOPI * (j1(x) * log(x)  -  1.0/x);
+	w += TWOOPI * (cephes_j1(x) * log(x)  -  1.0/x);
 	return w;
     }
 

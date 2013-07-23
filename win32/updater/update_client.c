@@ -7,6 +7,10 @@
 #include <time.h>
 #include <unistd.h>
 
+#ifdef WIN64
+# include <winsock2.h>
+#endif
+
 #ifdef WIN32
 # include <windows.h>
 # include <shellapi.h>
@@ -347,7 +351,7 @@ static char *get_size_string (size_t fsize)
     } else if (fsize >= 10 * 1024) {
 	sprintf(sizestr, " (%.1f KB)", (double) fsize / 1024.);
     } else {
-	sprintf(sizestr, " (%u bytes)", fsize);
+	sprintf(sizestr, " (%u bytes)", (unsigned int) fsize);
     }
 
     return sizestr;
@@ -493,7 +497,7 @@ static int real_program (void)
     int unpack_ok = 0;
     char *getbuf = NULL;
     char *line;
-    size_t fsize;
+    unsigned int fsize;
 
     if (argcount == 1) {
 	/* no arguments: a default update */
@@ -524,7 +528,7 @@ static int real_program (void)
 	i = 0;
 	while ((line = strtok((i)? NULL: getbuf, "\n"))) {
 	    *get_fname = '\0';
-	    fsize = (size_t) 0;
+	    fsize = 0;
 
 	    if (logit) {
 		fprintf(flg, "working on line %d of getbuf\n = '%s'\n", 

@@ -716,7 +716,8 @@ int win32_write_access (char *path)
 	BuildTrusteeWithSid(&t, sid);
 	ret = GetNamedSecurityInfo(path, SE_FILE_OBJECT, 
 				   DACL_SECURITY_INFORMATION, 
-				   NULL, NULL, &dacl, NULL, &sd);
+				   NULL, NULL, &dacl, NULL, 
+				   (void **) &sd);
 	err = (ret != ERROR_SUCCESS);
     }
 

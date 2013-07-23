@@ -74,9 +74,9 @@ double cephes_bessel_Jv (double n, double x)
 	    x = -x;
 	}
 	if (n == 0.0)
-	    return j0(x);
+	    return cephes_j0(x);
 	if (n == 1.0)
-	    return sign * j1(x);
+	    return sign * cephes_j1(x);
     }
 
     if (x < 0.0 && y != an) {
@@ -106,11 +106,11 @@ double cephes_bessel_Jv (double n, double x)
 	    k = 0.0;
 	    q = recur(&n, x, &k, 1);
 	    if (k == 0.0) {
-		y = j0(x)/q;
+		y = cephes_j0(x)/q;
 		goto done;
 	    }
 	    if (k == 1.0) {
-		y = j1(x)/q;
+		y = cephes_j1(x)/q;
 		goto done;
 	    }
 	}

@@ -24,6 +24,10 @@
    or libgretl.
 */
 
+#ifdef WIN64
+# include <winsock2.h>
+#endif
+
 #ifndef STANDALONE
 # include "libgretl.h"
 # include "libset.h"
@@ -537,7 +541,7 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
 	strcat(u.url, "?opt=QUERY&date=");
     } 
 
-    sprintf(tmp, "%lu", filedate); /* FIXME? */
+    sprintf(tmp, "%d", (int) filedate); /* FIXME? */
     strcat(u.url, tmp);
 
     err = curl_get(&u);

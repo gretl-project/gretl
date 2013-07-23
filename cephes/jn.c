@@ -69,11 +69,11 @@ double cephes_bessel_Jn (int n, double x)
     }
 
     if (n == 0)
-	return sign * j0(x);
+	return sign * cephes_j0(x);
     if (n == 1)
-	return sign * j1(x);
+	return sign * cephes_j1(x);
     if (n == 2)
-	return sign * (2.0 * j1(x) / x - j0(x));
+	return sign * (2.0 * cephes_j1(x) / x - cephes_j0(x));
 
     if (x < MACHEP)
 	return 0.0;
@@ -107,9 +107,9 @@ double cephes_bessel_Jn (int n, double x)
     } while (--k > 0);
 
     if (fabs(pk) > fabs(pkm1))
-	ans = j1(x)/pk;
+	ans = cephes_j1(x)/pk;
     else
-	ans = j0(x)/pkm1;
+	ans = cephes_j0(x)/pkm1;
 
     return sign * ans;
 }

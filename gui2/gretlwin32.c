@@ -19,6 +19,11 @@
 
 #undef CHILD_DEBUG
 
+#ifdef _WIN64
+# include <pango/pangowin32.h>
+# include <gdk/gdkwin32.h>
+#endif
+
 #include "gretl.h"
 #include "gretlwin32.h"
 #include "textutil.h"
@@ -27,17 +32,26 @@
 #include "menustate.h"
 #include "gretl_www.h"
 
-#include <pango/pangowin32.h>
-#include <gdk/gdkwin32.h>
 #include <dirent.h>
 
-#include <windows.h>
+#ifndef _WIN64
+# include <pango/pangowin32.h>
+# include <gdk/gdkwin32.h>
+#endif
+
+/* extra Windows headers */
 #include <mapi.h>
 #include <shlobj.h>
 #include <shellapi.h>
 #include <fcntl.h>
 
 #define MAX_CONSOLE_LINES 500
+
+#ifdef _WIN64
+# define ptrcast gint64
+#else
+# define ptrcast long
+#endif
 
 void redirect_io_to_console (void)
 {
@@ -56,14 +70,14 @@ void redirect_io_to_console (void)
 			       coninfo.dwSize);
 
     /* redirect unbuffered STDOUT to the console */
-    stdhandle = (long) GetStdHandle(STD_OUTPUT_HANDLE);
+    stdhandle = (ptrcast) GetStdHandle(STD_OUTPUT_HANDLE);
     conhandle = _open_osfhandle(stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
     *stdout = *fp;
     setvbuf(stdout, NULL, _IONBF, 0);
 
     /* redirect unbuffered STDERR to the console */
-    stdhandle = (long) GetStdHandle(STD_ERROR_HANDLE);
+    stdhandle = (ptrcast) GetStdHandle(STD_ERROR_HANDLE);
     conhandle = _open_osfhandle(stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
     *stderr = *fp;
@@ -544,7 +558,7 @@ static int win32_open_arg (const char *arg, char *ext)
     char key[MAX_PATH + MAX_PATH];
     int err = 0;
 
-    if ((long) ShellExecute(NULL, "open", arg, NULL, NULL, SW_SHOW) <= 32) {
+    if ((ptrcast) ShellExecute(NULL, "open", arg, NULL, NULL, SW_SHOW) <= 32) {
 	/* if the above fails, get the appropriate fileext regkey and 
 	   look up the program */
 	if (GetRegKey(HKEY_CLASSES_ROOT, ext, key) == ERROR_SUCCESS) {

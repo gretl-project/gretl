@@ -1577,7 +1577,7 @@ void free_session (gretlopt opt)
 	*session.dirname = '\0';
     }
 
-#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
+#if defined(HAVE_FLITE) || defined(WIN32_SAPI)
     stop_talking();
 #endif
 }

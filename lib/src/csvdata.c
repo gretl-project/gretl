@@ -3825,7 +3825,7 @@ static int process_outer_key (const char *s, int n_keys,
 	n_okeys = 1;
     } else {
 	/* two comma-separated keys */
-	int n2, n1 = strcspn(s, ",");
+	int n2 = 0, n1 = strcspn(s, ",");
 
 	if (n1 >= CSVSTRLEN) {
 	    err = E_PARSE;

@@ -33,6 +33,9 @@
 #    define unlink(fn)          _unlink(fn)
 #    define access(path,mode)   _access(path,mode)
 #  else
+#    ifdef _WIN64
+#      include <direct.h>
+#    endif
 #    define mkdir(dirname,mode) _mkdir(dirname)
 #  endif
 #endif

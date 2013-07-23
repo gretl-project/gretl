@@ -43,6 +43,11 @@ double cephes_bessel_I1 (double x);
 double cephes_bessel_K0 (double x);
 double cephes_bessel_K1 (double x);
 
+double cephes_j0 (double x);
+double cephes_j1 (double x);
+double cephes_y0 (double x);
+double cephes_y1 (double x);
+
 /* interloper from elsewhere in netlib repository */
 double netlib_bessel_K (double v, double x, int ize);
 

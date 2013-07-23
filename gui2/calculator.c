@@ -1327,7 +1327,7 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
 	errbox(_("Failed to compute p-value"));
     } else {
 	print_pvalue(pdist, parm, x, pv, prn);
-	view_buffer(prn, 78, 200, _("gretl: p-value"), PVALUE, NULL);
+	view_buffer(prn, 78, 200, _("gretl: p-value"), PVAL, NULL);
     }
 }
 

@@ -183,7 +183,7 @@ static double RQ[8] = {
 
 extern double TWOOPI, SQ2OPI, PIO4;
 
-double j0 (double x)
+double cephes_j0 (double x)
 {
     double w, z, p, q, xn;
 
@@ -218,18 +218,18 @@ double j0 (double x)
  * = 0.073804295108687225.
  */
 
-double y0 (double x)
+double cephes_y0 (double x)
 {
     double w, z, p, q, xn;
 
     if (x <= 5.0) {
 	if (x <= 0.0) {
-	    mtherr("y0", CEPHES_DOMAIN);
+	    mtherr("cephes_y0", CEPHES_DOMAIN);
 	    return -MAXNUM;
 	}
 	z = x * x;
 	w = polevl(z, YP, 7) / p1evl(z, YQ, 7);
-	w += TWOOPI * log(x) * j0(x);
+	w += TWOOPI * log(x) * cephes_j0(x);
 	return w;
     }
 

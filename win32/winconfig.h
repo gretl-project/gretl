@@ -80,4 +80,7 @@
 
 #define WINVER 0x0500 /* XP */
 
+/* sapi speech support */
+#define WIN32_SAPI 1
+
 #endif /* WINCONFIG_H */

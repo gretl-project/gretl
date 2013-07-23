@@ -372,7 +372,7 @@ static int catch_system_alias (CMD *cmd)
 		       c == OPEN || \
                        c == OUTFILE || \
                        c == PRINTF || \
-	               c == PVALUE || \
+	               c == PVAL || \
                        c == QLRTEST || \
 	               c == QUIT || \
                        c == RENAME || \
@@ -5513,7 +5513,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	err = do_sscanf(line, dset, prn);
 	break;
 
-    case PVALUE:
+    case PVAL:
 	err = batch_pvalue(line, dset, prn);
 	break;
 

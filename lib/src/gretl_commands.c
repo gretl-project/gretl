@@ -128,7 +128,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { PRINT,    "print" }, 
     { PRINTF,   "printf" },
     { PROBIT,   "probit" },
-    { PVALUE,   "pvalue" }, 
+    { PVAL,     "pvalue" }, 
     { QUANTREG, "quantreg" },
     { QLRTEST,  "qlrtest" }, 
     { QQPLOT,   "qqplot" },

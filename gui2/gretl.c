@@ -938,7 +938,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	goto suppress;
     }
 
-#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
+#if defined(HAVE_FLITE) || defined(WIN32_SAPI)
     if (!Ctrl && !Alt) {
 	if (k == GDK_a) {
 	    audio_render_window(vwin, AUDIO_LISTBOX);

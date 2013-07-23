@@ -40,12 +40,12 @@
 extern cst_voice *register_cmu_us_kal (void);
 #endif
 
-#ifdef G_OS_WIN32
+#ifdef WIN32_SAPI
 # define COBJMACROS
 # include <sapi.h>
 #endif
 
-#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
+#if defined(HAVE_FLITE) || defined(WIN32_SAPI)
 # define DO_SPEECH
 # include "libgretl.h"
 #endif
@@ -692,7 +692,7 @@ static void speak_dataset_comments (const dataset *dset)
     }
 }
 
-#elif defined(G_OS_WIN32)
+#elif defined(WIN32_SAPI)
 
 static WCHAR *wide_string (const char *s)
 {
@@ -766,7 +766,7 @@ static void audio_graph_error (const char *msg)
 #ifdef HAVE_FLITE
     cst_voice *v;
 #endif
-#ifdef G_OS_WIN32
+#ifdef WIN32_SAPI
     ISpVoice *v = NULL;
     HRESULT hr;
 #endif    
@@ -779,7 +779,7 @@ static void audio_graph_error (const char *msg)
     v = register_cmu_us_kal();
     flite_text_to_speech(msg, v, "play");
 #endif
-#ifdef G_OS_WIN32
+#ifdef WIN32_SAPI
     hr = CoInitialize(NULL);
     if (!SUCCEEDED(hr)) return;
 
@@ -934,10 +934,17 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 
 static int midi_fork (const char *fname, const char *midiplayer)
 {
-    int err = 0; 
-    
-    if ((long) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) < 32)
+    int err = 0;
+
+#ifdef _WIN64
+    if ((gint64) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) < 32) {
 	err = 1;
+    }
+#else
+    if ((int) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) < 32) {
+	err = 1;
+    }
+#endif
 
     return err;
 }
