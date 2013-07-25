@@ -14,7 +14,7 @@ install="cp -a"
 
 # put binaries in place
 ${install} gretlcli.exe $PREFIX
-${install} gretlw32.exe $PREFIX
+${install} gretl.exe $PREFIX
 
 # gretl dynamic libs
 for f in dlls/*.dll ; do

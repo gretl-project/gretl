@@ -97,9 +97,9 @@ static void get_prior_gretl_pids (long *gpids, long mypid)
 		if (pe.th32ProcessID != mypid) {
 		    s = strrchr(pe.szExeFile, '\\');
 		    if (s != NULL) {
-			match = !strcmp(s + 1, "gretlw32.exe");
+			match = !strcmp(s + 1, "gretl.exe");
 		    } else {
-			match = !strcmp(pe.szExeFile, "gretlw32.exe");
+			match = !strcmp(pe.szExeFile, "gretl.exe");
 		    }
 		    if (match && j < N_PIDS) {
 			gpids[j++] = pe.th32ProcessID;
@@ -629,7 +629,7 @@ gboolean forward_open_request (long gpid, const char *fname)
    for Linux using the Windows messaging API.
 */
 
-/* If we receive a special WM_GRETL message from another gretlw32
+/* If we receive a special WM_GRETL message from another gretl
    instance, process it and remove it from the message queue;
    otherwise hand the message off to GDK.  
 */
@@ -660,7 +660,7 @@ int install_open_handler (void)
 
 /* Find the window handle associated with a given PID:
    this is used when we've found the PID of a running
-   gretlw32 instance and we need its window handle for
+   gretl instance and we need its window handle for
    use with SendMessage().
 */
 
@@ -680,7 +680,7 @@ static HWND get_hwnd_for_pid (long gpid)
     return hw;
 }
 
-/* Try forwarding a request to the prior gretlw32 instance with 
+/* Try forwarding a request to the prior gretl instance with 
    PID @gpid, either to open a file or just to show itself. 
 
    Return TRUE if we're able to do this, otherwise FALSE.

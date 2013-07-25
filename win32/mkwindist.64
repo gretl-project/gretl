@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Shell script to make gretl win32 distribution
+# Shell script to make gretl win64 distribution
 
 BUILDTYPE=$1
 
@@ -19,14 +19,21 @@ if [ "$BUILDTYPE" = "cross" ] ; then
   ADDONS=/home/cottrell/stats/gretl-addons
   HLPDIR=${TOPDIR}/share
   DOCDIR=${TOPDIR}/build/doc/tex
-  SYSBIN=/opt/cross-tools/mingw32/bin
+  SYSBASE=/opt/win64/x86_64-w64-mingw32
+  SYSBIN=${SYSBASE}/bin
+  SYSTRANS=${SYSBASE}/share/locale
+  SYSTHEME=${SYSBASE}/share/themes
   INNO_CMD="wine c:/innodir/ISCC.exe"
 else
   WINFILES=/mingw/winbuild
   ADDONS=${WINFILES}/gretl-addons
   HLPDIR=${WINFILES}/help
   DOCDIR=${WINFILES}/doc
-  SYSBIN=c:/mingw/bin
+  SYSBASE=c:/mingw
+  SYSBIN=${SYSBASE}/bin
+  SYSTRANS=${SYSBASE}/share/locale
+  SYSTHEME=${SYSBASE}/share/themes
+  SYSTRANS=c:/mingw/share/locale
   # C:/Program Files/Inno Setup 5/ISCC.exe
   INNO_CMD="c:/progra~1/innose~1/iscc.exe"
 fi
@@ -93,6 +100,34 @@ mkdir -p windist/gretl/plugins
 mkdir -p windist/gretl/plugins/data
 mkdir -p windist/gretl/ui
 
+mkdir -p windist/gretl/share/themes/Emacs/gtk-2.0-key
+mkdir -p windist/gretl/share/themes/Default/gtk-2.0-key
+mkdir -p windist/gretl/share/themes/MS-Windows/gtk-2.0
+mkdir -p windist/gretl/share/themes/Raleigh/gtk-2.0
+
+mkdir -p windist/gretl/lib/gtk-2.0/modules
+mkdir -p windist/gretl/lib/gtk-2.0/2.10.0/engines
+mkdir -p windist/gretl/etc/gtk-2.0
+
+# for glib20.mo and gtk20.mo
+mkdir -p windist/gretl/share/locale/bg/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/ca/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/cs/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/de/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/es/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/eu/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/fr/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/it/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/ja/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/pl/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/pt_BR/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/pt/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/ru/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/rw/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/sq/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/tr/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/zh_TW/LC_MESSAGES
+
 # put binaries in place
 add_file gretlcli.exe gretl/gretlcli.exe
 add_file gretl.exe gretl/gretl.exe
@@ -113,25 +148,57 @@ for lang in $LANGS ; do
    mkdir -p windist/gretl/locale/${lang}/LC_MESSAGES
 done
 
-# auxiliary dlls (this did include freetype6.dll)
+# GTK and other basic dlls
 for f in \
-    libgmp-3.dll libmpfr-1.dll readline5.dll history5.dll \
-    libblas-3.dll liblapack-3.dll libfftw3-3.dll
-do
-    add_file ${WINFILES}/misc-dll/$f gretl/$f
-done
-
-# more auxiliary dlls
-for f in \
-    libxml2-2.dll libiconv-2.dll intl.dll libcurl-4.dll \
-    libgtksourceview-2.0-0.dll libffi-6.dll libcairo-2.dll
+	intl.dll \
+	libatk-1.0-0.dll \
+	libblas-3.dll \
+	libcairo-2.dll \
+	libcairo-gobject-2.dll \
+	libcurl-4.dll \
+	libffi-6.dll \
+	libfftw3-3.dll \
+	libgailutil-18.dll \
+	libgdk_pixbuf-2.0-0.dll \
+	libgdk-win32-2.0-0.dll \
+	libgio-2.0-0.dll \
+	libglib-2.0-0.dll \
+	libgmodule-2.0-0.dll \
+	libgmp-10.dll \
+	libgobject-2.0-0.dll \
+	libgthread-2.0-0.dll \
+	libgtksourceview-2.0-0.dll \
+	libgtk-win32-2.0-0.dll \
+	libiconv-2.dll \
+	liblapack-3.dll \
+	libmpfr-4.dll \
+	libpango-1.0-0.dll \
+	libpangocairo-1.0-0.dll \
+	libpangowin32-1.0-0.dll \
+	libpixman-1-0.dll \
+	libpng16-16.dll \
+	libreadline6.dll \
+	libxml2-2.dll \
+	zlib1.dll
 do
     add_file ${SYSBIN}/$f gretl/$f
 done
 
 # system DLLs for threads/openmp, if required
-add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
+# add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
 add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
+
+# GTK aux. files
+add_file $WINFILES/auxfiles/locale.alias gretl/share/locale/locale.alias
+add_file $SYSTHEME/Emacs/gtk-2.0-key/gtkrc gretl/share/themes/Emacs/gtk-2.0-key/gtkrc
+add_file $SYSTHEME/Default/gtk-2.0-key/gtkrc gretl/share/themes/Default/gtk-2.0-key/gtkrc
+add_file $WINFILES/auxfiles/gtkrc gretl/share/themes/MS-Windows/gtk-2.0/gtkrc
+add_file $SYSTHEME/Raleigh/gtk-2.0/gtkrc gretl/share/themes/Raleigh/gtk-2.0/gtkrc
+
+add_file $SYSBASE/lib/gtk-2.0/modules/libgail.dll gretl/lib/gtk-2.0/modules/libgail.dll
+add_file $SYSBASE/lib/gtk-2.0/2.10.0/engines/libpixmap.dll gretl/lib/gtk-2.0/2.10.0/engines/libpixmap.dll
+add_file $SYSBASE/lib/gtk-2.0/2.10.0/engines/libwimp.dll gretl/lib/gtk-2.0/2.10.0/engines/libwimp.dll
+add_file $SYSBASE/etc/gtk-2.0/im-multipress.conf gretl/etc/gtk-2.0/im-multipress.conf
 
 # XML UI-definition files
 for f in ${TOPDIR}/gui2/*.xml ; do
@@ -268,6 +335,8 @@ fi
 make -C mo
 for lang in $LANGS ; do
   add_file mo/$lang.mo gretl/locale/$lang/LC_MESSAGES/gretl.mo
+  add_file $SYSTRANS/$lang/LC_MESSAGES/glib20.mo gretl/share/locale/$lang/LC_MESSAGES/glib20.mo
+  add_file $SYSTRANS/$lang/LC_MESSAGES/gtk20.mo gretl/share/locale/$lang/LC_MESSAGES/gtk20.mo
 done
 
 # ensure updater is au courant
@@ -281,29 +350,11 @@ add_file updater/gretl_updater.exe gretl/gretl_updater.exe
 date > gretl.stamp
 add_file gretl.stamp gretl/gretl.stamp
 
-# add GTK runtime and gnuplot distribution: note that we move
-# into the "windist" subdir first
-# RTFILE=gtk-runtime.tar.gz
-RTFILE=gtk-2.24-runtime.tgz
-cd windist
-if [ ! -f ${WINFILES}/${RTFILE} ] ; then
-  echo "Couldn't find ${RTFILE}"
-  exit 1
-else 
-  process_tarball ${WINFILES}/${RTFILE}
-fi
-
-# additional GTK-related runtime files (includes intl.dll,
-# libpng, zlib)
-if [ -f ${WINFILES}/gtk-3rdparty.tgz ] ; then
-  process_tarball ${WINFILES}/gtk-3rdparty.tgz
-fi
-
-if [ ! -f ${WINFILES}/gp463w32.tar.gz ] ; then
-  echo "Couldn't find gp463w32.tar.gz"
+if [ ! -f ${WINFILES}/gp47w64.tar.gz ] ; then
+  echo "Couldn't find gp47w64.tar.gz"
   exit 1
 else
-  process_tarball ${WINFILES}/gp463w32.tar.gz
+  process_tarball ${WINFILES}/gp47w64.tar.gz
 fi
 
 # add the approved gretl addons

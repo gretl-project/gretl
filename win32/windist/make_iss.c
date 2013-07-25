@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* filter: convert MANIFEST file to .iss script for making Win32 installer */
+/* filter: convert MANIFEST file to .iss script for making Windows installer */
 
 void usage (const char *s)
 {
@@ -48,11 +48,11 @@ void add_languages (void)
 void define_program_icons (void)
 {
     printf("\n[Icons]\n");
-    printf("Name: \"{group}\\gretl\"; Filename: \"{app}\\gretlw32.exe\"\n");
+    printf("Name: \"{group}\\gretl\"; Filename: \"{app}\\gretl.exe\"\n");
     printf("Name: \"{group}\\Gretl Web Site\"; Filename: \"{app}\\gretl_website.url\"\n");
     printf("Name: \"{group}\\gretl updater\"; Filename: \"{app}\\gretl_updater.exe\"\n");
     printf("Name: \"{group}\\uninstall gretl\"; Filename: \"{app}\\unins000.exe\"\n");
-    printf("Name: \"{userdesktop}\\gretl\"; Filename: \"{app}\\gretlw32.exe\"; WorkingDir: \"{app}\"\n");
+    printf("Name: \"{userdesktop}\\gretl\"; Filename: \"{app}\\gretl.exe\"; WorkingDir: \"{app}\"\n");
 }
 
 void LM_entry (const char *valname, const char *valdata)
@@ -78,17 +78,17 @@ void reg_suffix (const char *sfx, const char *name, const char *mime,
 	   name, descrip);
     /* map from filetype name to icon */
     printf("Root: HKCR; Subkey: \"%s\\DefaultIcon\"; ValueType: string; "
-	   "ValueName: \"\"; ValueData: \"{app}\\gretlw32.exe,%d\"\n",
+	   "ValueName: \"\"; ValueData: \"{app}\\gretl.exe,%d\"\n",
 	   name, iconnum);
     /* map from filetype name to 'open' action */
     if (iconnum == 1) {
 	printf("Root: HKCR; Subkey: \"%s\\shell\\open\\command\"; "
 	       "ValueType: string; ValueName: \"\"; ValueData: "
-	       "\"\"\"{app}\\gretlw32.exe\"\" \"\"%%1\"\"\"\n", name);
+	       "\"\"\"{app}\\gretl.exe\"\" \"\"%%1\"\"\"\n", name);
     } else {
 	printf("Root: HKCR; Subkey: \"%s\\shell\\open\\command\"; "
 	       "ValueType: string; ValueName: \"\"; ValueData: "
-	       "\"\"\"{app}\\gretlw32.exe\"\" -r \"\"%%1\"\"\"\n", name);
+	       "\"\"\"{app}\\gretl.exe\"\" -r \"\"%%1\"\"\"\n", name);
     }
 }
 
@@ -126,7 +126,7 @@ void preamble (const char *s)
     printf("DefaultDirName={pf}\\gretl\n");
     printf("DefaultGroupName=gretl\n");
     printf("PrivilegesRequired=poweruser\n");
-    printf("UninstallDisplayIcon={app}\\gretlw32.exe\n");
+    printf("UninstallDisplayIcon={app}\\gretl.exe\n");
     printf("ChangesAssociations=yes\n");
     printf("DirExistsWarning=no\n");
 

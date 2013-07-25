@@ -302,7 +302,7 @@ BOOL CALLBACK record_gretl_running (HWND hw, LPARAM lp)
 	int len;
 
 	len = GetWindowText(hw, wtitle, sizeof wtitle);
-	if (len > 0 && !strncmp(wtitle, "gretlw32", 7)) {
+	if (len > 0 && !strncmp(wtitle, "gretl", 7)) {
 	    gretl_run_status = GRETL_RUNNING;
 	}
 	return TRUE;
@@ -622,7 +622,7 @@ static int real_program (void)
 
 	resp = yes_no_dialog("gretl update succeeded.\r\nStart gretl now?");
 	if (resp == IDYES) {
-	    create_child_process("gretlw32.exe");
+	    create_child_process("gretl.exe");
 	}
     }
 #else

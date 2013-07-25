@@ -1,4 +1,4 @@
-# This makefile can be used for cross-compiling gretl for Windows
+# This makefile can be used for cross-compiling gretl for win32
 # on Linux, or for a native build on MS Windows.  In both cases we
 # assume that the mingw compiler is used.  The build type is
 # controlled by the BUILDTYPE variable in config.mk, included
@@ -16,7 +16,7 @@ imports = ./import-libs
 host_builddir = $(topsrc)/build
 
 # tools (can add -fopenmp to CC if wanted)
-CC = $(MGW_PREFIX)gcc -msse2 -fopenmp -Wall -O2 -mms-bitfields -DWIN32
+CC = $(MGW_PREFIX)gcc -msse2 -fopenmp -Wall -O2 -mms-bitfields -DWIN32 -DWIN64
 AS = $(MGW_PREFIX)as
 DLLWRAP = $(MGW_PREFIX)dllwrap
 DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
