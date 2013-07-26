@@ -80,8 +80,6 @@ echo "DATE `date`" >> windist/MANIFEST
 rm -rf windist/gretl
 
 # make gretl directory structure
-mkdir -p windist
-mkdir -p windist/gretl
 mkdir -p windist/gretl/data
 mkdir -p windist/gretl/data/misc
 mkdir -p windist/gretl/data/greene
@@ -109,24 +107,12 @@ mkdir -p windist/gretl/lib/gtk-2.0/modules
 mkdir -p windist/gretl/lib/gtk-2.0/2.10.0/engines
 mkdir -p windist/gretl/etc/gtk-2.0
 
-# for glib20.mo and gtk20.mo
-mkdir -p windist/gretl/share/locale/bg/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/ca/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/cs/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/de/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/es/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/eu/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/fr/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/it/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/ja/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/pl/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/pt_BR/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/pt/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/ru/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/rw/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/sq/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/tr/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/zh_TW/LC_MESSAGES
+# gretl and GTK translations
+LANGS=`cat ${TOPDIR}/po/LINGUAS | grep -v ^#`
+for lang in $LANGS ; do
+  mkdir -p windist/gretl/locale/${lang}/LC_MESSAGES
+  mkdir -p windist/gretl/share/locale/$lang/LC_MESSAGES
+done
 
 # put binaries in place
 add_file gretlcli.exe gretl/gretlcli.exe
@@ -140,12 +126,6 @@ done
 # gretl plugins
 for f in plugins/*.dll ; do
     add_file $f gretl/plugins/`basename $f`
-done
-
-# gretl translations
-LANGS=`cat ${TOPDIR}/po/LINGUAS | grep -v ^#`
-for lang in $LANGS ; do
-   mkdir -p windist/gretl/locale/${lang}/LC_MESSAGES
 done
 
 # GTK and other basic dlls
@@ -350,6 +330,10 @@ add_file updater/gretl_updater.exe gretl/gretl_updater.exe
 date > gretl.stamp
 add_file gretl.stamp gretl/gretl.stamp
 
+# cd into distribution subdirectory
+cd windist
+WINDIST=`pwd`
+
 if [ ! -f ${WINFILES}/gp47w64.tar.gz ] ; then
   echo "Couldn't find gp47w64.tar.gz"
   exit 1
@@ -358,7 +342,6 @@ else
 fi
 
 # add the approved gretl addons
-WINDIST=`pwd`
 cd gretl/functions
 for f in gig ivpanel SVAR ; do
   if [ ! -f ${ADDONS}/${f}/${f}.zip ] ; then
@@ -368,6 +351,7 @@ for f in gig ivpanel SVAR ; do
     process_addon ${ADDONS}/$f/$f.zip
   fi
 done
+
 cd $WINDIST
 
 make gretl.iss

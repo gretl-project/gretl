@@ -13,5 +13,5 @@ icon_2 ICON "icons/icon2.ico"
 icon_3 ICON "icons/icon3.ico"
 
 /* embedded manifest file (is this a good idea?) */
-1 RT_MANIFEST "gretlw32.exe.manifest"
+1 RT_MANIFEST "gretl.exe.manifest"
 
