@@ -30,6 +30,8 @@ void add_languages (void)
 	{ "ru", "Russian" },
 	{ "es", "Spanish" },
 	{ "tr", "Turkish" },
+	{ "ca", "Catalan" },
+	{ "el", "Greek" },
 	{ NULL, NULL }
     };
     int i;
@@ -113,13 +115,21 @@ void set_registry_entries (void)
 	       "Gretl session file", 3);
 }
 
-void preamble (const char *s)
+void preamble (const char *s, int x64)
 {
     printf("; -- gretl.iss --\n");
     printf("\n[Setup]\n");
     printf("AppName=gretl\n");
-    printf("AppVerName=gretl version %s\n", s);
+    if (x64) {
+	printf("AppVerName=gretl version %s (x86_64)\n", s);
+    } else {
+	printf("AppVerName=gretl version %s\n", s);
+    }
     printf("AppVersion=%s\n", s);
+    if (x64) {
+	printf("ArchitecturesAllowed=x64\n");
+	printf("ArchitecturesInstallIn64BitMode=x64\n");
+    }
     printf("AppPublisher=The gretl team\n");
     printf("AppPublisherURL=http://gretl.sourceforge.net/\n");
     printf("AppSupportURL=http://gretl.sourceforge.net/\n");
@@ -178,7 +188,9 @@ int main (int argc, char **argv)
     char *pathbits[MAXBITS];
     char line[512];
     char version[16];
+    char arch[8];
     char *path;
+    int x64 = 0;
     int i, n;
 
     if (fgets(line, sizeof line, stdin) == NULL) {
@@ -190,13 +202,28 @@ int main (int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
 
-    *version = '\0';
-    strncat(version, line + 8, 15);
-    tailstrip(version);
+    *version = *arch = '\0';
 
-    fprintf(stderr, "Making installer script for gretl version %s...\n",
-	    version);
-    preamble(version);
+    n = sscanf(line + 8, "%15s %7s", version, arch);
+
+    if (n < 1) {
+	fprintf(stderr, "malformed MANIFEST: expected VERSION ...\n");
+	exit(EXIT_FAILURE);
+    } else if (n == 2) {
+	if (!strcmp(arch, "x64")) {
+	    x64 = 1;
+	    fprintf(stderr, "Making installer script for gretl version %s (x64)...\n",
+		    version);
+	} else {
+	    fprintf(stderr, "malformed MANIFEST: if arch is present, it must be \"x64\"\n");
+	    exit(EXIT_FAILURE);
+	}
+    } else {
+	fprintf(stderr, "Making installer script for gretl version %s...\n",
+		version);
+    }	
+
+    preamble(version, x64);
 
     add_languages();
 

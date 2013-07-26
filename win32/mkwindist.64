@@ -75,7 +75,7 @@ VERSION=$(grep GRETL_VERSION[^_] $TOPDIR/lib/src/version.h | \
 if [ -f windist/MANIFEST ] ; then
    cp windist/MANIFEST windist/MANIFEST.`date +%Y-%m-%d`
 fi
-echo "VERSION $VERSION" > windist/MANIFEST
+echo "VERSION $VERSION x64" > windist/MANIFEST
 echo "DATE `date`" >> windist/MANIFEST
 rm -rf windist/gretl
 

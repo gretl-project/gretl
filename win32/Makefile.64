@@ -1,4 +1,4 @@
-# This makefile can be used for cross-compiling gretl for win32
+# This makefile can be used for cross-compiling gretl for Windows
 # on Linux, or for a native build on MS Windows.  In both cases we
 # assume that the mingw compiler is used.  The build type is
 # controlled by the BUILDTYPE variable in config.mk, included
