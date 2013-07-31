@@ -19,7 +19,9 @@ void add_languages (void)
 {
     struct isl languages[] = {
 	{ "en", "Default" },
-	{ "eu", "Basque" },
+	/* { "eu", "Basque" }, out of date translation */
+	{ "eu", "Spanish" },
+	{ "gl", "Spanish" },
 	{ "pt_BR", "BrazilianPortuguese" },
 	{ "cs", "Czech" },
 	{ "fr", "French" },
