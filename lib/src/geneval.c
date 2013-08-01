@@ -6346,7 +6346,33 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     gretl_matrix *A = NULL;
     int post_process = 1;
 
-    if (f == F_MSHAPE || f == F_TRIMR) {
+    if (f == F_MSHAPE) {
+	if (l->t != MAT & !scalar_node(l)) {
+	    node_type_error(f, 1, MAT, l, p);
+	} else if (!scalar_node(m)) {
+	    node_type_error(f, 2, NUM, m, p);
+	} else if (!scalar_node(r)) {
+	    node_type_error(f, 3, NUM, r, p);
+	} else {
+	    int k1 = node_get_int(m, p);
+	    int k2 = node_get_int(r, p);
+
+	    if (!p->err) {
+		if (scalar_node(l)) {
+		    A = gretl_matrix_alloc(k1, k2);
+		    if (A != NULL) {
+			double x = l->v.xval;
+			int i, n = k1*k2;
+			for (i=0; i<n; i++) {
+			    A->val[i] = x;
+			}
+		    }
+		} else {
+		    A = gretl_matrix_shape(l->v.m, k1, k2);
+		}
+	    }
+	}
+    } else if (f == F_TRIMR) {
 	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
 	} else if (!scalar_node(m)) {
@@ -6358,11 +6384,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    int k2 = node_get_int(r, p);
 
 	    if (!p->err) {
-		if (f == F_MSHAPE) {
-		    A = gretl_matrix_shape(l->v.m, k1, k2);
-		} else {
-		    A = gretl_matrix_trim_rows(l->v.m, k1, k2, &p->err);
-		}
+		A = gretl_matrix_trim_rows(l->v.m, k1, k2, &p->err);
 	    }
 	}
     } else if (f == F_SVD) {

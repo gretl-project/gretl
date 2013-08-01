@@ -16,6 +16,7 @@ version 1.9.13, in progress
 - mwrite() and mread() functions: add support for gzip
   compression
 - setnote() function: add an entry to the function reference
+- mshape() function: allow scalar as first argument
 - GUI: add stacked-bar option for FEVD plot in connection
   with VAR estimation
 - Fix a few small GUI memory leaks
