@@ -34,4 +34,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset);
 
 int model_is_in_loop (const MODEL *pmod);
 
+int scalar_is_read_only_index (const char *name);
+
 #endif /* MONTE_CARLO_H */

@@ -606,7 +606,7 @@ static int loop_attach_index_var (LOOPSET *loop, const char *vname,
 
     if (gretl_is_scalar(vname)) {
 	strcpy(loop->idxname, vname);
-	gretl_scalar_set_value(vname, loop->init.val);
+	gretl_scalar_set_value_authorized(vname, loop->init.val);
     } else {
 	char genline[64];
 	
@@ -1337,7 +1337,7 @@ static int loop_count_too_high (LOOPSET *loop)
  * @dset: data information struct.
  * @err: location to receive error code.
  *
- * Check whether a looping condition is still satisfied.
+ * Check whether a loop continuation condition is still satisfied.
  *
  * Returns: 1 to indicate looping should continue, 0 to terminate.
  */
@@ -1354,6 +1354,10 @@ loop_condition (LOOPSET *loop, DATASET *dset, int *err)
     } else if (loop->type == COUNT_LOOP || indexed_loop(loop)) {
 	if (loop->iter < loop->itermax) {
 	    ok = 1;
+	    if (indexed_loop(loop) && loop->iter > 0) {
+		loop->idxval += 1;
+		gretl_scalar_set_value_authorized(loop->idxname, loop->idxval);
+	    }
 	}
     } else if (!loop_count_too_high(loop)) {
 	/* more complex forms of control (for, while) */
@@ -2634,7 +2638,7 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
     if (!err) {
 	if (indexed_loop(loop)) {
 	    loop->idxval = loop->init.val;
-	    gretl_scalar_set_value(loop->idxname, loop->idxval);
+	    gretl_scalar_set_value_authorized(loop->idxname, loop->idxval);
 	}
 
 	/* initialization, in case this loop is being run more than
@@ -2700,6 +2704,20 @@ make_dollar_substitutions (char *str, int maxlen,
     }
 
     return err;
+}
+
+int scalar_is_read_only_index (const char *name)
+{
+    const LOOPSET *loop = currloop;
+
+    while (loop != NULL) {
+	if (indexed_loop(loop) && !strcmp(name, loop->idxname)) {
+	    return 1;
+	}
+	loop = loop->parent;
+    }
+
+    return 0;
 }
 
 static LOOPSET *get_child_loop_by_line (LOOPSET *loop, int lno)
@@ -3210,10 +3228,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 
 	if (!err && !loop->brk) {
 	    loop->iter += 1;
-	    if (indexed_loop(loop)) {
-		loop->idxval += 1;
-		gretl_scalar_set_value(loop->idxname, loop->idxval);
-	    }
 	    if (show_activity && (loop->iter % 10 == 0)) {
 		show_activity_callback();
 	    }

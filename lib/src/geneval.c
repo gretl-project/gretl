@@ -11886,7 +11886,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		p->err = E_TYPES;
 	    }
 	    if (!p->err) {
-		gretl_scalar_set_value(p->lh.name, x);
+		p->err = gretl_scalar_set_value(p->lh.name, x);
 	    }
 	} else {
 	    /* a new scalar */

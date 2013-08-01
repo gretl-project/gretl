@@ -24,6 +24,7 @@
 #include "usermat.h"
 #include "gretl_string_table.h"
 #include "libset.h"
+#include "monte_carlo.h"
 #include "uservar.h"
 
 #define UVDEBUG 0
@@ -1311,7 +1312,8 @@ int add_auxiliary_scalar (const char *name, double val)
     return err;
 }
 
-int gretl_scalar_set_value (const char *name, double val)
+static int real_scalar_set_value (const char *name, double val,
+				  int authorized)
 {
     user_var *u;
     int err = 0;
@@ -1320,6 +1322,9 @@ int gretl_scalar_set_value (const char *name, double val)
 
     if (u == NULL) {
 	err = E_DATA;
+    } else if (!authorized && scalar_is_read_only_index(name)) {
+	err = E_DATA;
+	gretl_errmsg_sprintf(_("The variable %s is currently read-only"), name);
     } else {
 	*(double *) u->ptr = val;
 
@@ -1329,6 +1334,16 @@ int gretl_scalar_set_value (const char *name, double val)
     }
 
     return err;
+}
+
+int gretl_scalar_set_value (const char *name, double val)
+{
+    return real_scalar_set_value(name, val, 0);
+}
+
+int gretl_scalar_set_value_authorized (const char *name, double val)
+{
+    return real_scalar_set_value(name, val, 1);
 }
 
 double gretl_scalar_get_value (const char *name, int *err)
