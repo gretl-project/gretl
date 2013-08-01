@@ -1321,7 +1321,7 @@ static int loop_count_too_high (LOOPSET *loop)
     } else {
 	int maxit = libset_get_int(LOOP_MAXITER);
 
-	if (nt > maxit) {
+	if ( (maxit > 0) && (nt > maxit) ) {
 	    gretl_errmsg_sprintf(_("Reached maximum iterations, %d"),
 				 maxit);
 	    loop->err = 1;

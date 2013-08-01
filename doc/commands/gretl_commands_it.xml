@@ -8854,12 +8854,15 @@
 	  </para>
 	</li>
         <li>
-          <para><lit>loop_maxiter</lit>: un valore intero positivo.
-          Imposta il numero massimo di iterazioni consentite prima che un loop
-          di tipo <lit>while</lit> si fermi (si veda <cmdref targ="loop"/>).
-          Si noti che questa impostazione riguarda solo la variante
-          <lit>while</lit>, visto che lo scopo è quello di interrompere
-          possibili cicli infiniti.
+          <para><lit>loop_maxiter</lit>: un valore intero non
+          negativo.  Imposta il numero massimo di iterazioni
+          consentite prima che un loop di tipo <lit>while</lit> si
+          fermi (si veda <cmdref targ="loop"/>).  Si noti che questa
+          impostazione riguarda solo la variante <lit>while</lit>,
+          visto che lo scopo è quello di interrompere possibili cicli
+          infiniti. Il valore speciale 0 viene usato per rendere tali
+          cicli potenzialmente infiniti, visto che non viene fatto
+          alcun controllo sul numero di iterazioni. Usare con cautela.
          </para>
         </li>
 	<li>
