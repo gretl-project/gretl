@@ -3043,7 +3043,8 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
  * and pooled OLS only); %OPT_M to use the matrix-difference 
  * version of the Hausman test (random effects only); %OPT_B for 
  * the "between" model; %OPT_P for pooled OLS; and %OPT_D to 
- * include time dummies.
+ * include time dummies. If and only if %OPT_P is given, %OPT_C
+ * (clustered standard errors) is accepted.
  * @prn: printing struct.
  *
  * Estimates a panel model, by default the fixed effects model.
@@ -3060,6 +3061,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     MODEL mod;
     panelmod_t pan;
     gretlopt pan_opt = opt;
+    gretlopt ols_opt = OPT_A;
     int *olslist = NULL;
     int ntdum = 0;
     int err = 0;
@@ -3067,7 +3069,13 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     gretl_model_init(&mod, dset);
     panelmod_init(&pan);
 
-    if (!(opt & OPT_P)) {
+    if (opt & OPT_P) {
+	/* doing pooled OLS */
+	if (opt & OPT_C) {
+	    /* clustered */
+	    ols_opt |= (OPT_C | OPT_R);
+	}
+    } else {
 	/* not just pooled OLS */
 	mod.errcode = panel_check_for_const(list);
 	if (mod.errcode) {
@@ -3093,7 +3101,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     }
 
     /* baseline: estimate via pooled OLS */
-    mod = lsq(olslist, dset, OLS, OPT_A);
+    mod = lsq(olslist, dset, OLS, ols_opt);
     if (mod.errcode) {
 	err = mod.errcode;
 	fprintf(stderr, "real_panel_model: error %d in intial OLS\n", 

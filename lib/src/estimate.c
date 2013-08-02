@@ -4240,7 +4240,10 @@ static int check_panel_options (gretlopt opt)
 	/* iterate option requires weighted least squares option */
 	return E_BADOPT;
     } else if ((opt & OPT_N) && !(opt & OPT_U)) {
-	/* the nerlove option requires random effects */
+	/* the Nerlove option requires random effects */
+	return E_BADOPT;
+    } else if ((opt & OPT_C) && !(opt & OPT_P)) {
+	/* explicit cluster option only OK with pooled OLS */
 	return E_BADOPT;
     } else if (incompatible_options(opt, OPT_B | OPT_U | OPT_P)) {
 	/* mutually exclusive estimator requests */
