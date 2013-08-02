@@ -6347,7 +6347,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     int post_process = 1;
 
     if (f == F_MSHAPE) {
-	if (l->t != MAT & !scalar_node(l)) {
+	if (l->t != MAT && !scalar_node(l)) {
 	    node_type_error(f, 1, MAT, l, p);
 	} else if (!scalar_node(m)) {
 	    node_type_error(f, 2, NUM, m, p);
