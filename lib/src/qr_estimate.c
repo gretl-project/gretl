@@ -1326,11 +1326,19 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
     return V;
 }
 
+/* Get the sorted values of the clustering series, @cvar, checking
+   for missing values as we go. This is a little more complicated
+   if there are interior missing values for the regressand or
+   regressors: in that case we need to construct a temporary
+   array to hold the relevant values of the clustering series.
+*/
+
 static gretl_matrix *cluster_var_values (const double *cvar,
 					 MODEL *pmod,
 					 int *err)
 {
     gretl_matrix *cvals = NULL;
+    int t;
 
     if (pmod->missmask != NULL) {
 	double *ctmp = malloc(pmod->nobs * sizeof *ctmp);
@@ -1338,7 +1346,7 @@ static gretl_matrix *cluster_var_values (const double *cvar,
 	if (ctmp == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    int t, i = 0;
+	    int i = 0;
 
 	    for (t=pmod->t1; t<=pmod->t2 && !*err; t++) {
 		if (pmod->missmask[t] != '1') {
@@ -1356,9 +1364,16 @@ static gretl_matrix *cluster_var_values (const double *cvar,
 	    free(ctmp);
 	}
     } else {
-	/* no interior missing values */
-	cvals = gretl_matrix_values(cvar + pmod->t1, pmod->nobs, 
-				    OPT_S, err);
+	/* no interior missing values for y or X */
+	for (t=pmod->t1; t<=pmod->t2 && !*err; t++) {
+	    if (na(cvar[t])) {
+		*err = E_MISSDATA;
+	    }
+	}
+	if (!*err) {
+	    cvals = gretl_matrix_values(cvar + pmod->t1, pmod->nobs, 
+					OPT_S, err);
+	}
     }
 
     return cvals;
