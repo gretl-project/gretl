@@ -1326,6 +1326,44 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
     return V;
 }
 
+static gretl_matrix *cluster_var_values (const double *cvar,
+					 MODEL *pmod,
+					 int *err)
+{
+    gretl_matrix *cvals = NULL;
+
+    if (pmod->missmask != NULL) {
+	double *ctmp = malloc(pmod->nobs * sizeof *ctmp);
+
+	if (ctmp == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    int t, i = 0;
+
+	    for (t=pmod->t1; t<=pmod->t2 && !*err; t++) {
+		if (pmod->missmask[t] != '1') {
+		    if (na(cvar[t])) {
+			*err = E_MISSDATA;
+		    } else {
+			ctmp[i++] = cvar[t];
+		    }
+		}
+	    }
+
+	    if (!*err) {
+		cvals = gretl_matrix_values(ctmp, pmod->nobs, OPT_S, err);
+	    }
+	    free(ctmp);
+	}
+    } else {
+	/* no interior missing values */
+	cvals = gretl_matrix_values(cvar + pmod->t1, pmod->nobs, 
+				    OPT_S, err);
+    }
+
+    return cvals;
+}
+
 /**
  * qr_make_cluster_vcv:
  * @pmod: pointer to model.
@@ -1367,8 +1405,7 @@ static int qr_make_cluster_vcv (MODEL *pmod, int ci,
     }
 
     if (!err) {
-	cvals = gretl_matrix_values(dset->Z[cvar] + pmod->t1,
-				    pmod->nobs, OPT_S, &err);
+	cvals = cluster_var_values(dset->Z[cvar], pmod, &err);
 	if (!err) {
 	    n_c = gretl_vector_get_length(cvals);
 	    if (n_c < 2) {
@@ -1378,6 +1415,7 @@ static int qr_make_cluster_vcv (MODEL *pmod, int ci,
     }
 
 #if CDEBUG
+    fprintf(stderr, "qr_make_cluster_vcv: err = %d\n", err);
     fprintf(stderr, "cluster var = %s (%d)\n", cname, cvar);
     gretl_matrix_print(cvals, "cvals");
 #endif
