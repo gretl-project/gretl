@@ -24,13 +24,6 @@
 
 #define OPTDEBUG 0
 
-typedef enum {
-    OPT_NO_PARM = 0,
-    OPT_ACCEPTS_PARM,
-    OPT_NEEDS_PARM,
-    OPT_AMBIGUOUS
-} OptStatus;
-
 #define vcv_opt_ok(c) (MODEL_COMMAND(c) || c == ADD || c == OMIT)
 
 #define quiet_opt_ok(c) (MODEL_COMMAND(c) ||	\
@@ -898,7 +891,10 @@ static int real_push_option_param (int ci, gretlopt opt, char *val,
  * @val: parameter value as string.
  *
  * Pushes onto an internal stack a record of the @val
- * to be associated with @opt for the current @ci.
+ * to be associated with @opt for the current @ci. Note
+ * that the command option apparatus takes ownership of
+ * @val, so the value passed in should be copied if need
+ * be.
  *
  * Returns: 0 on success, non-zero on failure.
  */
@@ -1049,7 +1045,11 @@ int set_optval_string (int ci, gretlopt opt, const char *s)
     return real_push_option_param(ci, opt, gretl_strdup(s), 1);
 }
 
-static gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
+/* valid_long_opt: this is (semi-) public because we have need of
+   it in the experimental command tokenizer
+*/
+
+gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
 {
     gretlopt opt = OPT_NONE;
     int i;
@@ -1105,6 +1105,30 @@ static gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
 	*status = 0;
     }
 
+    return opt;
+}
+
+/* see valid_long_opt() above */
+
+gretlopt valid_short_opt (int ci, char c)
+{
+    gretlopt opt = 0;
+    int i, ok;
+
+    for (i=0; flag_matches[i].c != '\0'; i++) {
+	if (c == flag_matches[i].c) {
+	    opt = flag_matches[i].o;
+	    break;
+	}
+    }
+
+    if (opt) {
+	ok = opt_is_valid(opt, ci, c);
+	if (!ok) {
+	    opt = 0;
+	}
+    }
+	
     return opt;
 }
 
