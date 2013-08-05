@@ -35,8 +35,8 @@ struct CMD_ {
     CmdFlags flags;             /* internal flags */
     char savename[MAXSAVENAME]; /* name used to save an object from the command */
     int *list;                  /* list of variables by ID number */
-    char *param;                /* general-purpose parameter to command */
-    char *extra;                /* second parameter for some special uses */
+    char *param1;               /* general-purpose parameter to command */
+    char *param2;               /* second parameter for some special uses */
     int *auxlist;               /* auxiliary list for some uses */
     int err;                    /* error code */
     Laginfo *linfo;             /* struct for recording info on automatically

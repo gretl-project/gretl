@@ -843,7 +843,7 @@ int do_coint (selector *sr)
 	return 1;
     }
 
-    order = atoi(libcmd.param);
+    order = atoi(libcmd.param1);
 
     if (action == COINT) {
 	err = engle_granger_test(order, libcmd.list, dataset, 
@@ -3726,7 +3726,7 @@ static int real_do_model (int action)
 		     libcmd.opt, prn);
 	break;
     case ARCH:
-	*pmod = arch_model(libcmd.list, atoi(libcmd.param), dataset, 
+	*pmod = arch_model(libcmd.list, atoi(libcmd.param1), dataset, 
 			   libcmd.opt); 
 	break;
     case GARCH:
@@ -3739,7 +3739,7 @@ static int real_do_model (int action)
 	*pmod = lad(libcmd.list, dataset);
 	break;	
     case QUANTREG:
-	*pmod = quantreg_driver(libcmd.param, libcmd.list, dataset, 
+	*pmod = quantreg_driver(libcmd.param1, libcmd.list, dataset, 
 				libcmd.opt, prn);
 	break;	
     case INTREG:
@@ -4190,7 +4190,7 @@ int do_vector_model (selector *sr)
 	}	
     } else if (action == VECM) {
 	/* Vector Error Correction Model */
-	int rank = gretl_int_from_string(libcmd.extra, &err);
+	int rank = gretl_int_from_string(libcmd.param2, &err);
 
 	if (!err) {
 	    var = gretl_VECM(libcmd.order, rank, libcmd.list, 
@@ -8274,7 +8274,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
     } else if (ftype == GRETL_XML_DATA) {
 	err = gretl_read_gdt(myfile, dset, opt | OPT_B, vprn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
-	err = import_spreadsheet(myfile, ftype, cmd->list, cmd->extra, dset, 
+	err = import_spreadsheet(myfile, ftype, cmd->list, cmd->param2, dset, 
 				 opt, vprn);
     } else if (OTHER_IMPORT(ftype)) {
 	err = import_other(myfile, ftype, dset, opt, vprn);
@@ -8339,7 +8339,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
     return err;
 }
 
-#define try_gui_help(c) (c->param != NULL && *c->param != '\0' && !c->opt)
+#define try_gui_help(c) (c->param1 != NULL && *c->param1 != '\0' && !c->opt)
 
 /* gui_exec_line: this is called from the gretl console, from the
    command "minibuffer", from execute_script(), and when initiating a
@@ -8399,7 +8399,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 
 #if CMD_DEBUG
     fprintf(stderr, "gui_exec_line: '%s'\n cmd = %p, cmd->ci = %d, param = '%s'\n", 
-	    line, (void *) cmd, cmd->ci, cmd->param);
+	    line, (void *) cmd, cmd->ci, cmd->param1);
 #endif
 
     if (err) {
@@ -8468,31 +8468,31 @@ int gui_exec_line (ExecState *s, DATASET *dset)
     case DELEET:
 	if (cmd->opt & OPT_D) {
 	    /* delete from database */
-	    err = db_delete_series_by_name(cmd->param, prn);
+	    err = db_delete_series_by_name(cmd->param1, prn);
 	    if (!err) {
 		sync_db_windows();
 	    }
 	} else if (cmd->opt & OPT_T) {
 	    /* delete all by type (not series) */
 	    err = gretl_cmd_exec(s, dset);
-	} else if (*cmd->param != '\0') {
+	} else if (*cmd->param1 != '\0') {
 	    /* note that this does not catch the case where objects
 	       are deleted within a loop; but that is handled via
 	       callbacks from libgretl
 	    */
-	    if (gretl_is_matrix(cmd->param)) {
-		err = session_user_var_destroy_by_name(cmd->param,
+	    if (gretl_is_matrix(cmd->param1)) {
+		err = session_user_var_destroy_by_name(cmd->param1,
 						       GRETL_OBJ_MATRIX);
-	    } else if (gretl_is_bundle(cmd->param)) {
-		err = session_user_var_destroy_by_name(cmd->param,
+	    } else if (gretl_is_bundle(cmd->param1)) {
+		err = session_user_var_destroy_by_name(cmd->param1,
 						       GRETL_OBJ_BUNDLE);
 	    } else {
-		err = gretl_delete_var_by_name(cmd->param, prn);
+		err = gretl_delete_var_by_name(cmd->param1, prn);
 	    }
-	} else if (*cmd->extra != '\0') {
+	} else if (*cmd->param2 != '\0') {
 	    /* "extra" means we got "list <listname> delete" */
-	    if (get_list_by_name(cmd->extra)) {
-		err = user_var_delete_by_name(cmd->extra, prn);
+	    if (get_list_by_name(cmd->param2)) {
+		err = user_var_delete_by_name(cmd->param2, prn);
 	    } else {
 		err = E_UNKVAR;
 	    }
@@ -8524,14 +8524,14 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 
     case HELP:
 	if ((s->flags & CONSOLE_EXEC) && try_gui_help(cmd)) {
-	    err = gui_console_help(cmd->param);
+	    err = gui_console_help(cmd->param1);
 	    if (err) {
 		/* fallback */
 		err = 0;
-		cli_help(cmd->param, cmd->opt, prn);
+		cli_help(cmd->param1, cmd->opt, prn);
 	    }
 	} else {
-	    cli_help(cmd->param, cmd->opt, prn);
+	    cli_help(cmd->param1, cmd->opt, prn);
 	}
 	break;
 
@@ -8637,7 +8637,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	    close_session(cmd->opt);
 	    break;
 	} else if (cmd->aux == DS_RENUMBER) {
-	    err = script_renumber_series(cmd->param, dset, prn);
+	    err = script_renumber_series(cmd->param1, dset, prn);
 	    break;
 	}
 	/* else fall-through intended */

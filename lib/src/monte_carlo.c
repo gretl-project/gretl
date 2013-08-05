@@ -2886,11 +2886,11 @@ static int loop_delete_object (CMD *cmd, PRN *prn)
     if (cmd->list != NULL && cmd->list[0] > 0) {
 	pputs(prn, _("You cannot delete series in this context\n"));
 	err = 1;
-    } else if (gretl_is_scalar(cmd->param)) {
+    } else if (gretl_is_scalar(cmd->param1)) {
 	pputs(prn, _("You cannot delete scalars in this context\n"));
 	err = 1;
     } else {
-	err = gretl_delete_var_by_name(cmd->param, prn);
+	err = gretl_delete_var_by_name(cmd->param1, prn);
     }
 
     return err;
@@ -2948,9 +2948,9 @@ static int do_compile_conditional (LOOPSET *loop, int j)
 static int block_model (CMD *cmd)
 {
     return cmd->ci == END && 
-	(!strcmp(cmd->param, "mle") || 
-	 !strcmp(cmd->param, "nls") ||
-	 !strcmp(cmd->param, "gmm"));
+	(!strcmp(cmd->param1, "mle") || 
+	 !strcmp(cmd->param1, "nls") ||
+	 !strcmp(cmd->param1, "gmm"));
 }
 
 #define not_ok_in_progloop(c) (NEEDS_MODEL_CHECK(c) || \
@@ -3162,14 +3162,14 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 			loop_print_save_model(s->model, dset, prn, s);
 		    }
 		}
-	    } else if (cmd->ci == PRINT && *cmd->param == '\0' &&
+	    } else if (cmd->ci == PRINT && *cmd->param1 == '\0' &&
 		       loop_is_progressive(loop)) {
 		lprn = get_loop_print_by_line(loop, j, &err);
 		if (!err) {
-		    err = loop_print_update(lprn, cmd->extra);
+		    err = loop_print_update(lprn, cmd->param2);
 		}
 	    } else if (cmd->ci == STORE && loop_is_progressive(loop)) {
-		err = loop_store_update(loop, j, cmd->extra, cmd->param,
+		err = loop_store_update(loop, j, cmd->param2, cmd->param1,
 					cmd->opt);
 	    } else if (loop_is_progressive(loop) && not_ok_in_progloop(cmd->ci)) {
 		gretl_errmsg_sprintf(_("%s: not implemented in 'progressive' loops"),

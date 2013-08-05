@@ -2199,7 +2199,7 @@ int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2)
  * with the separator prepended.  But it is not acceptable that
  * @list2 be null; in that this function returns NULL.
  *
- * Returns: alllcated list  on success or NULL on failure.
+ * Returns: alllcated list on success or NULL on failure.
  */
 
 int *gretl_lists_join_with_separator (const int *list1, const int *list2)

@@ -803,13 +803,20 @@ int *generate_list (const char *s, DATASET *dset, int *err)
     *err = realgen(s, &p, dset, NULL, P_LIST | P_PRIVATE);
 
     if (!*err) {
-	if (p.ret->t == LIST) {
-	    const int *nlist = p.ret->v.ivec;
+	NODE *n = p.ret;
+
+	if (n->t == LIST) {
+	    const int *nlist = n->v.ivec;
 
 	    if (nlist == NULL) {
 		*err = E_DATA;
 	    } else {
 		ret = gretl_list_copy(nlist);
+	    }
+	} else if (n->t == VEC && n->vnum >= 0) {
+	    ret = gretl_list_new(1);
+	    if (ret != NULL) {
+		ret[1] = n->vnum;
 	    }
 	} else {
 	    *err = E_TYPES;
