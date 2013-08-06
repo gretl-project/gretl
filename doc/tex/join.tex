@@ -610,11 +610,12 @@ options that can be used if the default is not applicable.
 \begin{itemize}
 \item The default assumption is that period information appears in the
   first column, and conforms to the ISO 8601 standard: this covers
-  daily dates (format \texttt{YYYY-MM-DD}, for example 2013-01-31) and
-  monthly observations (format \texttt{YYYY-MM}, for example 2013-03).
-\item If the data have a frequency other than daily or monthly, or if
-  the representation of the date is not as per ISO 8601, the
-  \option{time} option can be used to specify the format in which
+  daily dates (format \texttt{YYYY-MM-DD}, for example 2013-01-31),
+  monthly observations (format \texttt{YYYY-MM}, for example 2013-03)
+  and annual observations (format \texttt{YYYY}, 4-digit year).
+\item If the data have a frequency other than daily, monthly or
+  annual, or if the representation of the date is not as per ISO 8601,
+  the \option{time} option can be used to specify the format in which
   dates are written in the outer file.
 \item If dates do not appear in the first column of the outer file,
   the \option{tkey} option can be used to indicate which column should
@@ -682,7 +683,7 @@ Table~\ref{tab:oecd-gdp} shows an excerpt from a CSV file provided
 by the OECD statistical site (\url{stat.oecd.org}) in response to a
 request for GDP at constant prices for several
 countries.\footnote{Retrieved 2013-08-05. The OECD files in fact
-  contain two more columns with very long labels; these are irrelevant
+  contain two leading columns with very long labels; these are irrelevant
   to the present example and can be omitted without altering the
   sample script.}
 
@@ -713,13 +714,12 @@ Frequency,Period,Country,Value,Flags
 
 This is an instance of data in what we call \emph{atomic format}, that
 is, a format in which each line of the outer file contains only one
-figure and extracting data is mainly requires filtering the
-appropriate lines. The outer key is under the \texttt{Period} heading,
-and has the format \texttt{Q\emph{<quarter>-<year>}}. Assuming that
-the file in Table \ref{tab:oecd-gdp} has the name
-\texttt{oecd.csv}, the following is an example script which
-reconstructs the time series of Gross Domestic Product for several
-countries:
+figure and extracting data mainly requires filtering the appropriate
+lines. The outer time key is under the \texttt{Period} heading, and
+has the format \texttt{Q\emph{<quarter>-<year>}}. Assuming that the
+file in Table~\ref{tab:oecd-gdp} has the name \texttt{oecd.csv}, the
+following script reconstructs the time series of Gross Domestic
+Product for several countries:
 
 \begin{footnotesize}
 \begin{verbatim}
@@ -733,10 +733,10 @@ join oecd.csv  UK --time="Q%q-%Y" --tkey=Period --data=Value --filter="Country==
 \end{verbatim}
 \end{footnotesize}
 
-in which we used the format code \verb|%q| for the quarter and
+Note the use of the format codes \verb|%q| for the quarter and
 \verb|%Y| for the 4-digit year. A touch of elegance could
-have been added by storing the invariant part of the \cmd{join} option
-into a string and then using string substitution, as in
+have been added by storing the invariant part of the \cmd{join}
+command into a string and then using string substitution, as in
 
 \begin{footnotesize}
 \begin{verbatim}
@@ -751,6 +751,7 @@ join oecd.csv ITA @optstr --filter="Country==Italy"
 join oecd.csv  UK @optstr --filter="Country==United Kingdom"
 \end{verbatim}
 \end{footnotesize}
+
 
 \section{A related change}
 \label{sec:join-cols}
