@@ -8996,7 +8996,7 @@
     <description>
       <para>
 	Changes the name of <repl>series</repl> (identified by name or ID
-	number) to <repl>newname</repl>.  The new name must be of 15
+	number) to <repl>newname</repl>.  The new name must be of 31
 	characters maximum, must start with a letter, and must be composed of
 	only letters, digits, and the underscore character.
       </para>

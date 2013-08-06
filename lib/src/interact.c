@@ -204,8 +204,8 @@ static int get_lags_param (CMD *cmd, char **ps)
 	    tmp = g_strdup_printf("%d", lag);
 	}
 
-	free(cmd->param1);
-	cmd->param1 = tmp;
+	free(cmd->param);
+	cmd->param = tmp;
 	*ps = *ps + k + 1;
 	ret = 1;
     }
@@ -261,8 +261,8 @@ static int catch_command_alias (char *line, CMD *cmd)
 	} else if (gretl_string_ends_with(line, "delete")) {
 	    sprintf(fmt, "list %%%ds delete", VNAMELEN - 1);
 	    if (sscanf(line, fmt, lname)) {
-		free(cmd->param2);
-		cmd->param2 = gretl_strdup(lname);
+		free(cmd->parm2);
+		cmd->parm2 = gretl_strdup(lname);
 		cmd->ci = DELEET;
 	    }
 	} else {
@@ -539,8 +539,8 @@ static int filename_to_param (CMD *cmd, const char *s,
 	*len = strcspn(s, " ");
     }
 
-    free(cmd->param1);
-    cmd->param1 = NULL;
+    free(cmd->param);
+    cmd->param = NULL;
 
     fname = gretl_strndup(s + *quoted, *len);
     if (fname == NULL) {
@@ -548,13 +548,13 @@ static int filename_to_param (CMD *cmd, const char *s,
     }
 
     if (libset_get_bool(USE_CWD) || fname_has_path(fname)) {
-	cmd->param1 = fname;
+	cmd->param = fname;
     } else if (cmd->ci == OUTFILE && !strcmp(fname, "null")) {
-	cmd->param1 = fname;
+	cmd->param = fname;
     } else {
-	cmd->param1 = gretl_strdup_printf("%s%s", gretl_workdir(), fname);
+	cmd->param = gretl_strdup_printf("%s%s", gretl_workdir(), fname);
 	free(fname);
-	if (cmd->param1 == NULL) {
+	if (cmd->param == NULL) {
 	    return E_ALLOC;
 	}
     }
@@ -581,8 +581,8 @@ static void grab_gnuplot_literal_block (char *s, CMD *cmd)
 {
     s = strchr(s, '{');
     if (s != NULL) {
-	free(cmd->param1);
-	cmd->param1 = gretl_strdup(s);
+	free(cmd->param);
+	cmd->param = gretl_strdup(s);
 	*s = '\0';
     }
 }
@@ -940,8 +940,8 @@ static int maybe_rewrite_lags (char *s, CMD *cmd)
 #endif
 
     /* save original command line for echo, before modifying */
-    free(cmd->param2);
-    cmd->param2 = gretl_strdup(line);
+    free(cmd->parm2);
+    cmd->parm2 = gretl_strdup(line);
 
     if (cmd->ci == ARMA) {
 	handle_arma_lags(cmd, S, ns, specials, s, rem);
@@ -1011,8 +1011,8 @@ static void grab_arbond_diag (char *s, CMD *cmd)
     }
 
     if (param != NULL) {
-	free(cmd->param1);
-	cmd->param1 = param;
+	free(cmd->param);
+	cmd->param = param;
 	tailstrip(s0);
     }
 }
@@ -1141,8 +1141,8 @@ static int cmd_full_list (const DATASET *dset, CMD *cmd)
     int nv = 0, err = 0;
     int *list;
 
-    if (cmd->ci == PRINT && cmd->param2 != NULL &&
-	*cmd->param2 != '\0') {
+    if (cmd->ci == PRINT && cmd->parm2 != NULL &&
+	*cmd->parm2 != '\0') {
 	/* no-op */
 	return 0;
     }
@@ -1542,7 +1542,7 @@ static int print_name_ok (const char *s, CMD *cmd)
 	    t == GRETL_TYPE_STRING ||
 	    t == GRETL_TYPE_BUNDLE ||
 	    !strcmp(s, "scalars")) {
-	    cmd->param2 = gretl_str_expand(&cmd->param2, s, " ");
+	    cmd->parm2 = gretl_str_expand(&cmd->parm2, s, " ");
 	    cmd->list[0] -= 1;
 	    ok = 1;
 	}
@@ -1561,8 +1561,8 @@ static int delete_name_ok (const char *s, CMD *cmd)
 
     if (sscanf(s, fmt, bname) == 1 &&
 	gretl_is_bundle(bname)) {
-	free(cmd->param1);
-	cmd->param1 = gretl_strdup(s);
+	free(cmd->param);
+	cmd->param = gretl_strdup(s);
 	cmd->list[0] -= 1;
 	ok = 1;
     }
@@ -1621,16 +1621,16 @@ static void parse_rename_cmd (const char *s, CMD *cmd,
 	}
     }
 
-    /* write newname into cmd->param1 */
-    free(cmd->param1);
-    cmd->param1 = gretl_strdup(newname);
+    /* write newname into cmd->param */
+    free(cmd->param);
+    cmd->param = gretl_strdup(newname);
 
-    /* write target ID into cmd->param2 */
+    /* write target ID into cmd->parm2 */
     sprintf(numstr, "%d", vtarg);
-    free(cmd->param2);
-    cmd->param2 = gretl_strdup(numstr);
+    free(cmd->parm2);
+    cmd->parm2 = gretl_strdup(numstr);
 
-    if (cmd->param1 == NULL || cmd->param2 == NULL) {
+    if (cmd->param == NULL || cmd->parm2 == NULL) {
 	cmd->err = E_ALLOC;
     }
 }
@@ -1716,9 +1716,9 @@ static void handle_spreadsheet_params (const char *rem, CMD *cmd)
 		    cmd->list[1] = atoi(s);
 		} else if (s != NULL) {
 		    /* take it as giving a sheet name */
-		    free(cmd->param2);
-		    cmd->param2 = gretl_strdup(s);
-		    if (cmd->param2 == NULL) {
+		    free(cmd->parm2);
+		    cmd->parm2 = gretl_strdup(s);
+		    if (cmd->parm2 == NULL) {
 			err = E_ALLOC;
 		    }
 		}
@@ -1847,7 +1847,7 @@ static int fix_semicolon_separation (char *s, CMD *cmd)
 
 static int check_datamod_command (CMD *cmd, const char *s)
 {
-    cmd->aux = dataset_op_from_string(cmd->param1);
+    cmd->aux = dataset_op_from_string(cmd->param);
 
     if (cmd->aux == DS_NONE) {
 	cmd->err = E_PARSE;
@@ -1855,16 +1855,16 @@ static int check_datamod_command (CMD *cmd, const char *s)
 	/* skip param word and space */
 	s += strcspn(s, " ");
 	s += strspn(s, " ");
-	free(cmd->param1);
-	cmd->param1 = gretl_strdup(s);
-	if (cmd->param1 == NULL) {
+	free(cmd->param);
+	cmd->param = gretl_strdup(s);
+	if (cmd->param == NULL) {
 	    cmd->err = E_ALLOC;
 	} 
     }
 
 #if CMD_DEBUG
     fprintf(stderr, "check_datamod_command: param='%s', aux = %d\n", 
-	    cmd->param1, cmd->aux);
+	    cmd->param, cmd->aux);
 #endif
 
     return cmd->err;
@@ -1883,15 +1883,15 @@ static int check_datamod_command (CMD *cmd, const char *s)
 
 static int check_end_command (CMD *cmd)
 {
-    if (cmd->param1 != NULL && *cmd->param1 != 0) {
-	int cmdcode = gretl_command_number(cmd->param1);
+    if (cmd->param != NULL && *cmd->param != 0) {
+	int cmdcode = gretl_command_number(cmd->param);
 
 	if (cmdcode == LOOP) {
 	    cmd->ci = ENDLOOP;
 	} else if (!COMMAND_CAN_END(cmdcode)) {
 	    cmd->err = 1;
 	    gretl_errmsg_sprintf(_("command 'end %s' not recognized"), 
-				 cmd->param1);
+				 cmd->param);
 	}
     } else {
 	cmd->err = 1;
@@ -1903,9 +1903,9 @@ static int check_end_command (CMD *cmd)
 
 static void cmd_param_grab_string (CMD *cmd, const char *s)
 {
-    free(cmd->param1);
-    cmd->param1 = gretl_strdup(s);
-    if (cmd->param1 == NULL) {
+    free(cmd->param);
+    cmd->param = gretl_strdup(s);
+    if (cmd->param == NULL) {
 	cmd->err = E_ALLOC;
     }
 }
@@ -1915,9 +1915,9 @@ static void cmd_param_grab_word (CMD *cmd, const char *s)
     int n = strcspn(s, " =\n\t");
 
     if (n > 0) {
-	free(cmd->param1);
-	cmd->param1 = gretl_strndup(s, n);
-	if (cmd->param1 == NULL) {
+	free(cmd->param);
+	cmd->param = gretl_strndup(s, n);
+	if (cmd->param == NULL) {
 	    cmd->err = E_ALLOC;
 	} 
     }
@@ -1933,9 +1933,9 @@ static void param_grab_braced (CMD *cmd, const char *s)
 	} else {
 	    int n = p - s + 1;
 
-	    free(cmd->param1);
-	    cmd->param1 = gretl_strndup(s, n);
-	    if (cmd->param1 == NULL) {
+	    free(cmd->param);
+	    cmd->param = gretl_strndup(s, n);
+	    if (cmd->param == NULL) {
 		cmd->err = E_ALLOC;
 	    } 
 	}	    
@@ -1954,9 +1954,9 @@ static void param_grab_quoted (CMD *cmd, const char *s)
 	} else {
 	    int n = p - s - 1;
 
-	    free(cmd->param1);
-	    cmd->param1 = gretl_strndup(s+1, n);
-	    if (cmd->param1 == NULL) {
+	    free(cmd->param);
+	    cmd->param = gretl_strndup(s+1, n);
+	    if (cmd->param == NULL) {
 		cmd->err = E_ALLOC;
 	    } 
 	}	    
@@ -1975,7 +1975,7 @@ static int capture_param (CMD *cmd, const char *s)
 {
     /* if param has already been written by some special
        routine, don't overwrite it */
-    if (*cmd->param1 != '\0') {
+    if (*cmd->param != '\0') {
 	if (cmd->ci == DATAMOD) {
 	    check_datamod_command(cmd, s);
 	}
@@ -2007,10 +2007,10 @@ static int capture_param (CMD *cmd, const char *s)
 	}
 #if CMD_DEBUG
 	fprintf(stderr, "capture_param: s='%s', param='%s'\n",
-		s, cmd->param1);
+		s, cmd->param);
 #endif
 	if (REQUIRES_ORDER(cmd->ci) && cmd->ci != LEVINLIN) {
-	    cmd->order = gretl_int_from_string(cmd->param1, &cmd->err);
+	    cmd->order = gretl_int_from_string(cmd->param, &cmd->err);
 	    if (cmd->err) {
 		gretl_errmsg_sprintf(_("%s: expected an integer order"),
 				     cmd->word);
@@ -2040,12 +2040,12 @@ static int gretl_cmd_clear (CMD *cmd)
 
     cmd_unset_nolist(cmd);
 
-    if (cmd->list == NULL || cmd->param1 == NULL || cmd->param2 == NULL) {
+    if (cmd->list == NULL || cmd->param == NULL || cmd->parm2 == NULL) {
 	cmd->err = E_ALLOC;
     } else {
 	cmd->list[0] = 0;
-	*cmd->param1 = '\0';
-	*cmd->param2 = '\0';
+	*cmd->param = '\0';
+	*cmd->parm2 = '\0';
     }
 
     free(cmd->auxlist);
@@ -2650,7 +2650,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
     }
 
     /* special: list <listname> delete */
-    if (cmd->ci == DELEET && *cmd->param2 != '\0') {
+    if (cmd->ci == DELEET && *cmd->parm2 != '\0') {
 	cmd_set_nolist(cmd);
 	return cmd->err;
     }
@@ -2708,9 +2708,9 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 	    return cmd->err;
 	} else if (cmd->flags & CMD_PROG) {
 	    /* print in progressive loop */
-	    free(cmd->param2);
-	    cmd->param2 = gretl_strdup(rem);
-	    if (cmd->param2 == NULL) {
+	    free(cmd->parm2);
+	    cmd->parm2 = gretl_strdup(rem);
+	    if (cmd->parm2 == NULL) {
 		cmd->err = E_ALLOC;
 	    }
 	    return cmd->err;
@@ -2754,9 +2754,9 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 	/* store in progressive loop */
 	cmd->err = get_maybe_quoted_filename(cmd, &rem);
 	if (!cmd->err) {
-	    free(cmd->param2);
-	    cmd->param2 = gretl_strdup(rem);
-	    if (cmd->param2 == NULL) {
+	    free(cmd->parm2);
+	    cmd->parm2 = gretl_strdup(rem);
+	    if (cmd->parm2 == NULL) {
 		cmd->err = E_ALLOC;
 	    }
 	}
@@ -2785,7 +2785,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
     /* arbond special: if there's a block-diagonal instruments
        portion to the command, grab that in literal form for
        later processing. Note that this modifies @line, cutting
-       out the special GMM() bits and storing them in cmd->param1.
+       out the special GMM() bits and storing them in cmd->param.
     */
     if ((cmd->ci == ARBOND || cmd->ci == DPANEL) && get_sepcount(line) == 2) {
 	grab_arbond_diag(line, cmd);
@@ -2837,7 +2837,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
     }
 
     /* "setmiss" takes a value to be interpreted as missing;
-       this are captured in cmd->param1, as is the 'order' for
+       this are captured in cmd->param, as is the 'order' for
        a command that needs same
     */
     if (REQUIRES_ORDER(cmd->ci) || cmd->ci == SETMISS) {
@@ -2845,7 +2845,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 	if (cmd->err) {
 	    goto cmd_exit;
 	} else {
-	    rem += strlen(cmd->param1) + 1;
+	    rem += strlen(cmd->param) + 1;
 	    nf--;
 	} 
     }
@@ -2856,7 +2856,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 	if (cmd->err) {
 	    goto cmd_exit;
 	} else {
-	    rem += strlen(cmd->param1) + 1;
+	    rem += strlen(cmd->param) + 1;
 	    nf = count_free_fields(rem);
 	} 
     } else if (cmd->ci == DATAMOD) {
@@ -2866,9 +2866,9 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 	rem += strcspn(rem, " ");
 	nf--;
     } else if (cmd->ci == VECM) { 
-	free(cmd->param2);
-	cmd->param2 = gretl_word_strdup(rem, NULL, OPT_NONE, &cmd->err);
-	rem += strlen(cmd->param2) + 1;
+	free(cmd->parm2);
+	cmd->parm2 = gretl_word_strdup(rem, NULL, OPT_NONE, &cmd->err);
+	rem += strlen(cmd->parm2) + 1;
 	nf--;
     }
 
@@ -2881,8 +2881,8 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
  cmd_exit:
 
     /* double-check that allocation hasn't failed */
-    if (cmd->err == 0 && (cmd->list == NULL || cmd->param1 == NULL || 
-			  cmd->param2 == NULL)) {
+    if (cmd->err == 0 && (cmd->list == NULL || cmd->param == NULL || 
+			  cmd->parm2 == NULL)) {
 	cmd->err = E_ALLOC;
     }
 
@@ -3558,17 +3558,17 @@ static int effective_ci (const CMD *cmd)
     int ci = cmd->ci;
 
     if (ci == END) {
-	if (!strcmp(cmd->param1, "nls")) {
+	if (!strcmp(cmd->param, "nls")) {
 	    ci = NLS;
-	} else if (!strcmp(cmd->param1, "mle")) {
+	} else if (!strcmp(cmd->param, "mle")) {
 	    ci = MLE;
-	} else if (!strcmp(cmd->param1, "gmm")) {
+	} else if (!strcmp(cmd->param, "gmm")) {
 	    ci = GMM;
-	} else if (!strcmp(cmd->param1, "restrict")) {
+	} else if (!strcmp(cmd->param, "restrict")) {
 	    ci = RESTRICT;
-	} else if (!strcmp(cmd->param1, "foreign")) {
+	} else if (!strcmp(cmd->param, "foreign")) {
 	    ci = FOREIGN;
-	} else if (!strcmp(cmd->param1, "kalman")) {
+	} else if (!strcmp(cmd->param, "kalman")) {
 	    ci = KALMAN;
 	}
     }
@@ -3610,15 +3610,15 @@ cmd_print_list (const CMD *cmd, const DATASET *dset,
     nsep = n_separators(cmd->list);
 
     if (cmd->ci == LAGS) {
-	if (cmd->param1[0] != '\0') {
-	    *plen += pprintf(prn, " %s;", cmd->param1);
+	if (cmd->param[0] != '\0') {
+	    *plen += pprintf(prn, " %s;", cmd->param);
 	}
-    } else if (cmd->param1[0] != '\0' && !hold_param(cmd->ci)) {
-	*plen += print_command_param(cmd->param1, prn);
+    } else if (cmd->param[0] != '\0' && !hold_param(cmd->ci)) {
+	*plen += print_command_param(cmd->param, prn);
     }
 
-    if (cmd->ci == VECM && cmd->param2 != NULL) {
-	*plen += pprintf(prn, " %s", cmd->param2);
+    if (cmd->ci == VECM && cmd->parm2 != NULL) {
+	*plen += pprintf(prn, " %s", cmd->parm2);
     }
 
     gotsep = 0;
@@ -3661,7 +3661,7 @@ static int command_is_silent (const CMD *cmd, const char *line)
 	return 1;
     }
 
-    if (cmd->ci == SET && !strcmp(cmd->param1, "echo") &&
+    if (cmd->ci == SET && !strcmp(cmd->param, "echo") &&
 	gretl_function_depth() > 0) {
 	return 1;
     }
@@ -3678,8 +3678,8 @@ static int command_is_silent (const CMD *cmd, const char *line)
 }
 
 #define rewritten_lags(c) ((c->ci == ARMA || c->ci == DPANEL || c->ci == VAR) && \
-                           c->param2 != NULL && \
-			   *c->param2 != '\0')
+                           c->parm2 != NULL && \
+			   *c->parm2 != '\0')
 
 /* these commands have sub-lists that may contain either
    numerical values or the names of scalar variables:
@@ -3730,7 +3730,7 @@ void echo_cmd (const CMD *cmd, const DATASET *dset, const char *line,
 
 #if ECHO_DEBUG
     fprintf(stderr, "echo_cmd:\n line='%s'\n param='%s'\n extra='%s'\n", 
-	    line, cmd->param1, cmd->param2);
+	    line, cmd->param, cmd->parm2);
     fprintf(stderr, " cmd->opt=%d, batch=%d, recording=%d, nolist=%d\n",
 	    cmd->opt, batch, recording, cmd_nolist(cmd));
     fprintf(stderr, " cmd->word = '%s'\n", cmd->word);
@@ -3759,7 +3759,7 @@ void echo_cmd (const CMD *cmd, const DATASET *dset, const char *line,
 
     /* special case: "store" command: record as comment */
     if (recording && cmd->ci == STORE) {
-	pprintf(prn, "# store '%s'", cmd->param1);
+	pprintf(prn, "# store '%s'", cmd->param);
 	if (cmd->opt) { 
 	    const char *flagstr = print_flags(cmd->opt, cmd->ci);
 
@@ -3782,7 +3782,7 @@ void echo_cmd (const CMD *cmd, const DATASET *dset, const char *line,
 
     /* special: printing a list */
     if (cmd->ci == PRINT && !strcmp(cmd->word, "list")) {
-	pprintf(prn, "list %s print\n", cmd->param2);
+	pprintf(prn, "list %s print\n", cmd->parm2);
 	return;
     }
 
@@ -3808,7 +3808,7 @@ void echo_cmd (const CMD *cmd, const DATASET *dset, const char *line,
 	const char *s = line;
 	
 	if (rewritten_lags(cmd)) {
-	    s = cmd->param2;
+	    s = cmd->parm2;
 	}
 	if (strlen(s) > SAFELEN - 2) {
 	    safe_print_line(s, &llen, prn);
@@ -3825,14 +3825,14 @@ void echo_cmd (const CMD *cmd, const DATASET *dset, const char *line,
     } 
 
     /* print parameter after list, if wanted */
-    if (print_param_last(cmd->ci) && *cmd->param1 != '\0') {
-	len = strlen(cmd->param1) + 1;
+    if (print_param_last(cmd->ci) && *cmd->param != '\0') {
+	len = strlen(cmd->param) + 1;
 	if (llen + len > LINELEN) {
 	    pputs(prn, " \\\n ");
 	    llen = 0;
 	}	    
 	pputc(prn, ' ');
-	pputs(prn, cmd->param1);
+	pputs(prn, cmd->param);
 	llen += len;
     }
 
@@ -3943,11 +3943,11 @@ static void get_optional_filename (const char *s, CMD *cmd)
     char *p = get_flag_field(s, 'f');
 
     if (p != NULL && *p != '\0') {
-	free(cmd->param1);
+	free(cmd->param);
 	if (libset_get_bool(USE_CWD) || fname_has_path(p)) {
-	    cmd->param1 = p;
+	    cmd->param = p;
 	} else {
-	    cmd->param1 = gretl_strdup_printf("%s%s", gretl_workdir(), p);
+	    cmd->param = gretl_strdup_printf("%s%s", gretl_workdir(), p);
 	    free(p);
 	}
     }
@@ -4301,7 +4301,7 @@ static int model_test_check (CMD *cmd, DATASET *dset, PRN *prn)
 {
     int err = last_model_test_ok(cmd->ci, cmd->opt, dset, prn);
 
-    if (err == E_DATA && cmd->ci == RESTRICT && *cmd->param1 == '\0') {
+    if (err == E_DATA && cmd->ci == RESTRICT && *cmd->param == '\0') {
 	/* try for a not-yet estimated anonymous system */
 	if (get_anonymous_equation_system() != NULL) {
 	    gretl_error_clear();
@@ -4622,12 +4622,12 @@ static int lib_join_data (ExecState *s,
 	}
     }
 
-    p = strstr(s->line, s->cmd->param1);
+    p = strstr(s->line, s->cmd->param);
     if (p == NULL) {
 	return E_DATA;
     }
 
-    p += strlen(s->cmd->param1);
+    p += strlen(s->cmd->param);
     p += strspn(p, " \"");
     if (*p == '\0') {
 	return E_ARGS;
@@ -4817,7 +4817,7 @@ static int lib_open_append (ExecState *s,
     if (ftype == GRETL_CSV) {
 	err = import_csv(newfile, dset, opt, vprn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
-	err = import_spreadsheet(newfile, ftype, cmd->list, cmd->param2,
+	err = import_spreadsheet(newfile, ftype, cmd->list, cmd->parm2,
 				 dset, opt, vprn);
     } else if (OTHER_IMPORT(ftype)) {
 	err = import_other(newfile, ftype, dset, opt, vprn);
@@ -5231,7 +5231,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     }
 
     if (want_param_to_order(cmd->ci)) {
-	cmd->order = param_to_order(cmd->param1);
+	cmd->order = param_to_order(cmd->param);
     }
 
     switch (cmd->ci) {
@@ -5258,7 +5258,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case LEVINLIN:
-	err = llc_test_driver(cmd->param1, cmd->list, dset, 
+	err = llc_test_driver(cmd->param, cmd->list, dset, 
 			      cmd->opt, prn);
 	break;
 
@@ -5307,7 +5307,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;	
 
     case FUNDEBUG:
-	err = do_debug_command(s, cmd->param1, cmd->opt);
+	err = do_debug_command(s, cmd->param, cmd->opt);
 	break;
 
     case BREAK:
@@ -5364,7 +5364,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case DATAMOD:
-	err = modify_dataset(dset, cmd->aux, cmd->list, cmd->param1, 
+	err = modify_dataset(dset, cmd->aux, cmd->list, cmd->param, 
 			     prn);
 	if (!err) { 
 	    schedule_callback(s);
@@ -5448,7 +5448,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case RENAME:
-	err = dataset_rename_series(dset, atoi(cmd->param2), cmd->param1);
+	fprintf(stderr, "RENAME: param='%s', parm2='%s'\n", cmd->param, cmd->parm2);
+	err = dataset_rename_series(dset, atoi(cmd->parm2), cmd->param);
 	if (!err) {
 	    maybe_list_vars(dset, prn);
 	}
@@ -5466,7 +5467,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	if (dset == NULL || dset->Z == NULL) {
 	    err = E_DATA;
 	} else {
-	    set_miss(cmd->list, cmd->param1, dset, prn);
+	    set_miss(cmd->list, cmd->param, dset, prn);
 	}
         break;
 
@@ -5499,10 +5500,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case PRINT:
-	if (*cmd->param1 != '\0') {
-	    do_print_string(cmd->param1, prn);
+	if (*cmd->param != '\0') {
+	    do_print_string(cmd->param, prn);
 	} else {
-	    printdata(cmd->list, cmd->param2, dset, cmd->opt, prn);
+	    printdata(cmd->list, cmd->parm2, dset, cmd->opt, prn);
 	}
 	break;
 
@@ -5523,7 +5524,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	if (cmd->opt & OPT_B) {
 	    err = do_command_by(cmd, dset, prn);
 	} else if (cmd->opt & OPT_X) {
-	    err = matrix_command_driver(cmd->ci, cmd->list, cmd->param1,
+	    err = matrix_command_driver(cmd->ci, cmd->list, cmd->param,
 					dset, cmd->opt, prn);
 	} else {
 	    err = list_summary(cmd->list, dset, cmd->opt, prn);
@@ -5564,7 +5565,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case OUTFILE:
-	err = do_outfile_command(cmd->opt, cmd->param1, prn);
+	err = do_outfile_command(cmd->opt, cmd->param, prn);
 	break;
 
     case SETOBS:
@@ -5594,20 +5595,20 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case MAKEPKG:
-	err = create_and_write_function_package(cmd->param1, cmd->opt, prn);
+	err = create_and_write_function_package(cmd->param, cmd->opt, prn);
 	break;
 
     case STORE:
 	if (dset == NULL || dset->Z == NULL) {
 	    err = E_NODATA;
-	} else if (*cmd->param1 == '\0') {
+	} else if (*cmd->param == '\0') {
 	    pputs(prn, _("store: no filename given\n"));
 	    err = E_PARSE;
 	} else if (gretl_messages_on()) {
-	    pprintf(prn, _("store: using filename %s\n"), cmd->param1);
+	    pprintf(prn, _("store: using filename %s\n"), cmd->param);
 	}
 	if (!err) {
-	    err = write_data(cmd->param1, cmd->list, dset, cmd->opt, 0);
+	    err = write_data(cmd->param, cmd->list, dset, cmd->opt, 0);
 	}
 	if (!err && gretl_messages_on()) {
 	    pprintf(prn, _("Data written OK.\n"));
@@ -5691,7 +5692,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (cmd->ci == LAD) {
 	    *model = lad(cmd->list, dset);
 	} else if (cmd->ci == QUANTREG) {
-	    *model = quantreg_driver(cmd->param1, cmd->list, dset,
+	    *model = quantreg_driver(cmd->param, cmd->list, dset,
 					 cmd->opt, prn);
 	} else if (cmd->ci == DURATION) {
 	    *model = duration_model(cmd->list, dset, cmd->opt, prn);
@@ -5700,10 +5701,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (cmd->ci == PANEL) {
 	    *model = panel_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == ARBOND) {
-	    *model = arbond_model(cmd->list, cmd->param1, dset, 
+	    *model = arbond_model(cmd->list, cmd->param, dset, 
 				      cmd->opt, prn);
 	} else if (cmd->ci == DPANEL) {
-	    *model = dpd_model(cmd->list, cmd->auxlist, cmd->param1, 
+	    *model = dpd_model(cmd->list, cmd->auxlist, cmd->param, 
 				   dset, cmd->opt, prn);
 	} else if (cmd->ci == INTREG) {
 	    *model = interval_model(cmd->list, dset, cmd->opt, prn);
@@ -5808,7 +5809,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case MODTEST:
-	err = model_test_driver(cmd->param1, dset, cmd->opt, prn);
+	err = model_test_driver(cmd->param, dset, cmd->opt, prn);
 	break;
 
     case LEVERAGE:
@@ -5826,7 +5827,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    char fname[FILENAME_MAX];
 	    gretlopt opt = cmd->opt;
 
-	    strcpy(fname, cmd->param1);
+	    strcpy(fname, cmd->param);
 
 	    if (cmd->opt & OPT_R) {
 		err = rtfprint(model, dset, fname, cmd->opt);
@@ -5845,7 +5846,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case RESTRICT:
 	/* joint hypothesis test on model */
 	if (s->rset == NULL) {
-	    if (*cmd->param1 == '\0') {
+	    if (*cmd->param == '\0') {
 		/* if param is non-blank, we're restricting a named system */
 		err = model_test_check(cmd, dset, prn);
 		if (err) break;
@@ -5879,7 +5880,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case EQUATION:
 	if (cmd->opt & OPT_M) {
-	    err = equation_system_append_multi(s->sys, cmd->param1, dset);
+	    err = equation_system_append_multi(s->sys, cmd->param, dset);
 	} else {
 	    err = equation_system_append(s->sys, cmd->list);
 	}
@@ -5889,24 +5890,24 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case END:
-	if (!strcmp(cmd->param1, "system")) {
+	if (!strcmp(cmd->param, "system")) {
 	    err = equation_system_finalize(s->sys, dset, cmd->opt, prn);
 	    if (!err) {
 		gui_save_system(s);
 	    }
 	    /* clear for next use */
 	    s->sys = NULL;
-	} else if (!strcmp(cmd->param1, "mle") || 
-		   !strcmp(cmd->param1, "nls") ||
-		   !strcmp(cmd->param1, "gmm")) {
+	} else if (!strcmp(cmd->param, "mle") || 
+		   !strcmp(cmd->param, "nls") ||
+		   !strcmp(cmd->param, "gmm")) {
 	    clear_model(model);
 	    *model = nl_model(dset, cmd->opt, prn);
 	    err = print_save_model(model, dset, cmd->opt, prn, s);
-	} else if (!strcmp(cmd->param1, "restrict")) {
+	} else if (!strcmp(cmd->param, "restrict")) {
 	    err = do_end_restrict(s, dset);
-	} else if (!strcmp(cmd->param1, "foreign")) {
+	} else if (!strcmp(cmd->param, "foreign")) {
 	    err = foreign_execute(dset, cmd->opt, prn);
-	} else if (!strcmp(cmd->param1, "kalman")) {
+	} else if (!strcmp(cmd->param, "kalman")) {
 	    err = kalman_parse_line(line, dset, cmd->opt);
 	} else {
 	    err = 1;
@@ -5919,7 +5920,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    s->var = gretl_VAR(cmd->order, cmd->auxlist, cmd->list, 
 			       dset, cmd->opt, prn, &err);
 	} else {
-	    int rank = gretl_int_from_string(cmd->param2, &err);
+	    int rank = gretl_int_from_string(cmd->parm2, &err);
 
 	    if (!err) {
 		s->var = gretl_VECM(cmd->order, rank, cmd->list, dset, 
@@ -5979,13 +5980,13 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 		err = 1;
 	    }
 	} else if (cmd->opt & OPT_T) {
-	    GretlType type = get_type_for_deletion(cmd->param1, &err);
+	    GretlType type = get_type_for_deletion(cmd->param, &err);
 
 	    if (!err) {
 		err = delete_user_vars_of_type(type, prn);
 	    }
 	} else {
-	    err = gretl_delete_var_by_name(cmd->param1, prn);
+	    err = gretl_delete_var_by_name(cmd->param, prn);
 	}
 	break;
 
@@ -5997,23 +5998,23 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case BXPLOT:
     case SCATTERS:
 	if (cmd->opt & OPT_X) {
-	    err = matrix_command_driver(cmd->ci, cmd->list, cmd->param1, 
+	    err = matrix_command_driver(cmd->ci, cmd->list, cmd->param, 
 					dset, cmd->opt, prn);
 	} else if (cmd->ci == GNUPLOT) {
 	    if (cmd->opt & OPT_D) {
 		err = gnuplot_process_file(cmd->opt, prn);
 	    } else if (cmd->opt & OPT_C) {
-		err = xy_plot_with_control(cmd->list, cmd->param1, 
+		err = xy_plot_with_control(cmd->list, cmd->param, 
 					   dset, cmd->opt);
 	    } else {
-		err = gnuplot(cmd->list, cmd->param1, dset, cmd->opt);
+		err = gnuplot(cmd->list, cmd->param, dset, cmd->opt);
 	    }
 	} else if (cmd->ci == SCATTERS) {
 	    err = multi_scatters(cmd->list, dset, cmd->opt);
 	} else if (cmd_nolist(cmd)) {
-	    err = boolean_boxplots(line, cmd->param1, dset, cmd->opt);
+	    err = boolean_boxplots(line, cmd->param, dset, cmd->opt);
 	} else {
-	    err = boxplots(cmd->list, cmd->param1, dset, cmd->opt);
+	    err = boxplots(cmd->list, cmd->param, dset, cmd->opt);
 	}
 	break;
 
@@ -6172,7 +6173,7 @@ int get_command_index (char *line, CMD *cmd)
 
     cmd->ci = 0;
     cmd->opt = OPT_NONE;
-    *cmd->param2 = *cmd->param1 = '\0';
+    *cmd->parm2 = *cmd->param = '\0';
 
     while (isspace(*line)) {
 	line++;
@@ -6275,8 +6276,8 @@ int gretl_cmd_init (CMD *cmd)
     *cmd->savename = '\0';
 
     cmd->list = NULL;
-    cmd->param1 = NULL;
-    cmd->param2 = NULL;
+    cmd->param = NULL;
+    cmd->parm2 = NULL;
     cmd->auxlist = NULL;
     cmd->linfo = NULL;
 
@@ -6289,17 +6290,17 @@ int gretl_cmd_init (CMD *cmd)
     }
 
     if (cmd->err == 0) {
-	cmd->param1 = calloc(1, 1);
-	if (cmd->param1 == NULL) {
+	cmd->param = calloc(1, 1);
+	if (cmd->param == NULL) {
 	    cmd->err = E_ALLOC;
 	}
     }
 
     if (cmd->err == 0) {
-	cmd->param2 = calloc(1, 1);
-	if (cmd->param2 == NULL) {
-	    free(cmd->param1);
-	    cmd->param1 = NULL;
+	cmd->parm2 = calloc(1, 1);
+	if (cmd->parm2 == NULL) {
+	    free(cmd->param);
+	    cmd->param = NULL;
 	    cmd->err = E_ALLOC;
 	}
     }    
@@ -6310,8 +6311,8 @@ int gretl_cmd_init (CMD *cmd)
 void gretl_cmd_free (CMD *cmd)
 {
     free(cmd->list);
-    free(cmd->param1);
-    free(cmd->param2);
+    free(cmd->param);
+    free(cmd->parm2);
     free(cmd->auxlist);
 
     cmd_lag_info_destroy(cmd);

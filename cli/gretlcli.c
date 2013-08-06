@@ -763,7 +763,7 @@ static int cli_open_append (CMD *cmd, const char *line,
     if (ftype == GRETL_CSV) {
 	err = import_csv(newfile, dset, opt, vprn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
-	err = import_spreadsheet(newfile, ftype, cmd->list, cmd->param2,
+	err = import_spreadsheet(newfile, ftype, cmd->list, cmd->parm2,
 				 dset, opt, vprn);
     } else if (OTHER_IMPORT(ftype)) {
 	err = import_other(newfile, ftype, dset, opt, vprn);
@@ -948,17 +948,17 @@ static int exec_line (ExecState *s, DATASET *dset)
     case DELEET:
 	if (cmd->opt & OPT_D) {
 	    /* delete from database */
-	    err = db_delete_series_by_name(cmd->param1, prn);
+	    err = db_delete_series_by_name(cmd->param, prn);
 	} else if (cmd->opt & OPT_T) {
 	    /* delete all by type (not series) */
 	    err = gretl_cmd_exec(s, dset);
-	} else if (*cmd->param1 != '\0') {
+	} else if (*cmd->param != '\0') {
 	    /* got a named non-series variable */
-	    err = gretl_delete_var_by_name(cmd->param1, prn);
-	} else if (*cmd->param2 != '\0') {
+	    err = gretl_delete_var_by_name(cmd->param, prn);
+	} else if (*cmd->parm2 != '\0') {
 	    /* "extra" means we got "list <listname> delete" */
-	    if (get_list_by_name(cmd->param2)) {
-		err = user_var_delete_by_name(cmd->param2, prn);
+	    if (get_list_by_name(cmd->parm2)) {
+		err = user_var_delete_by_name(cmd->parm2, prn);
 	    } else {
 		err = E_UNKVAR;
 	    }
@@ -980,7 +980,7 @@ static int exec_line (ExecState *s, DATASET *dset)
 	break;
 
     case HELP:
-	cli_help(cmd->param1, cmd->opt, prn);
+	cli_help(cmd->param, cmd->opt, prn);
 	break;
 
     case OPEN:
@@ -1103,7 +1103,7 @@ static int exec_line (ExecState *s, DATASET *dset)
 	    pputs(prn, _("Dataset cleared\n"));
 	    break;
 	} else if (cmd->aux == DS_RENUMBER) {
-	    err = cli_renumber_series(cmd->param1, dset, prn);
+	    err = cli_renumber_series(cmd->param, dset, prn);
 	    break;
 	}
 	/* else fall-through intended */

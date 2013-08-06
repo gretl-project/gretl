@@ -6405,7 +6405,7 @@ static void set_function_error_message (int err, ufunc *u,
     if (err == E_FUNCERR) {
 	/* let the function writer set the message */
 	gretl_errmsg_sprintf(_("Error message from %s():\n %s"), u->name,
-			     state->cmd->param1);
+			     state->cmd->param);
     } else if (err == E_STOP) {
 	; /* no-op */
     } else {
@@ -6498,8 +6498,8 @@ static int handle_return_statement (fncall *call,
 static void fn_state_init (CMD *cmd, ExecState *state, int *indent0)
 {
     cmd->list = NULL;
-    cmd->param1 = NULL;
-    cmd->param2 = NULL;
+    cmd->param = NULL;
+    cmd->parm2 = NULL;
     cmd->linfo = NULL;
 
     state->cmd = NULL;
