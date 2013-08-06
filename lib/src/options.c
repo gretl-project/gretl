@@ -98,6 +98,7 @@ struct gretl_option gretl_opts[] = {
     { AR1,      OPT_B, "no-corc", 0 },
     { AR1,      OPT_H, "hilu", 0 },
     { AR1,      OPT_P, "pwe", 0 },
+    { APPEND,   OPT_A, "all-cols", 0 },
     { APPEND,   OPT_T, "time-series", 0 },
     { APPEND,   OPT_R, "rowoffset", 2 },
     { APPEND,   OPT_C, "coloffset", 2 },
@@ -358,6 +359,7 @@ struct gretl_option gretl_opts[] = {
     { OMIT,     OPT_W, "test-only", 0 },
     { OMIT,     OPT_T, "trend", 0 },      /* omit auto-trend: VAR only */
     { OMIT,     OPT_E, "seasonals", 0 },  /* omit auto-seasonals: VAR only */
+    { OPEN,     OPT_A, "all-cols", 0 },
     { OPEN,     OPT_B, "progress-bar", 0 },
     { OPEN,     OPT_D, "drop-empty", 0 },
     { OPEN,     OPT_F, "fixed-cols", 2 },    

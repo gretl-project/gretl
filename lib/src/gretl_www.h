@@ -84,6 +84,9 @@ int upload_function_package (const char *login, const char *pass,
 
 int retrieve_public_file (const char *uri, char *localname);
 
+char *retrieve_public_file_as_buffer (const char *uri, size_t *len,
+				      int *err);
+
 int query_sourceforge (const char *query, char **getbuf);
 
 #endif /* GRETL_WWW_H */

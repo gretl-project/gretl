@@ -778,6 +778,21 @@ int retrieve_manfile (const char *fname, const char *localname)
 			localname, NULL);
 }
 
+static int proto_length (const char *s)
+{
+    if (s == NULL) {
+	return 0;
+    } else if (!strncmp(s, "http://", 7)) {
+	return 7;
+    } else if (!strncmp(s, "https://", 8)) {
+	return 8;
+    } else if (!strncmp(s, "ftp://", 6)) {
+	return 6;
+    } else {
+	return 0;
+    }
+}
+
 /**
  * retrieve_public_file:
  * @uri: complete URI for file to grab: protocol, host and path.
@@ -796,14 +811,14 @@ int retrieve_manfile (const char *fname, const char *localname)
 
 int retrieve_public_file (const char *uri, char *localname)
 {
-    urlinfo u;
+    int pl = proto_length(uri);
     int err = 0;
 
-    if (strncmp(uri, "http://", 7)) {
-	err = E_DATA;
+    if (pl == 0) {
+	return E_DATA;
     } else if (*localname == '\0') {
 	/* extract the filename from the uri */
-	const char *s = strrchr(uri + 7, '/');
+	const char *s = strrchr(uri + pl, '/');
 
 	if (s == NULL || *(s+1) == '\0') {
 	    err = E_DATA;
@@ -815,6 +830,8 @@ int retrieve_public_file (const char *uri, char *localname)
     }
 
     if (!err) {
+	urlinfo u;
+
 	urlinfo_init(&u, NULL, SAVE_TO_FILE, localname);
 	strcpy(u.url, uri);
 	if (gretl_in_gui_mode()) {
@@ -834,6 +851,46 @@ int retrieve_public_file (const char *uri, char *localname)
     }
 
     return err;
+}
+
+/**
+ * retrieve_public_file_as_buffer:
+ * @uri: complete URI for file to grab: protocol, host and path.
+ * @len: location to receive length of data retreived (bytes).
+ * @err: location to receive error code.
+ *
+ * Returns: allocated buffer containing the specified resource, 
+ * or NULL on failure.
+ */
+
+char *retrieve_public_file_as_buffer (const char *uri, size_t *len,
+				      int *err)
+{
+    char *buf = NULL;
+
+    if (proto_length(uri) == 0) {
+	*err = E_DATA;
+	return NULL;
+    } else {
+	urlinfo u;
+
+	urlinfo_init(&u, NULL, SAVE_TO_BUFFER, NULL);
+	strcpy(u.url, uri);
+	*err = curl_get(&u);
+	urlinfo_finalize(&u, &buf, *err);
+	*len = (*err)? 0 : u.datalen;
+    }
+
+    if (*err) {
+	const char *s = gretl_errmsg_get();
+
+	if (*s == '\0') {
+	    /* no error message in place */
+	    gretl_errmsg_sprintf("%s\ndownload failed", uri);
+	}
+    }
+
+    return buf;
 }
 
 #endif /* !STANDALONE */

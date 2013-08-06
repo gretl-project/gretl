@@ -43,7 +43,8 @@ enum {
     CSV_TRAIL    = 1 << 6,
     CSV_AUTONAME = 1 << 7,
     CSV_REVERSED = 1 << 8,
-    CSV_DOTSUB   = 1 << 9
+    CSV_DOTSUB   = 1 << 9,
+    CSV_ALLCOLS  = 1 << 10
 };
 
 enum {
@@ -98,6 +99,7 @@ struct csvdata_ {
 #define csv_have_data(c)          (c->flags & CSV_HAVEDATA)
 #define csv_data_reversed(c)      (c->flags & CSV_REVERSED)
 #define csv_do_dotsub(c)          (c->flags & CSV_DOTSUB)
+#define csv_all_cols(c)           (c->flags & CSV_ALLCOLS)
 
 #define csv_set_trailing_comma(c)   (c->flags |= CSV_TRAIL)
 #define csv_unset_trailing_comma(c) (c->flags &= ~CSV_TRAIL)
@@ -109,6 +111,7 @@ struct csvdata_ {
 #define csv_set_autoname(c)         (c->flags |= CSV_AUTONAME)
 #define csv_set_data_reversed(c)    (c->flags |= CSV_REVERSED)
 #define csv_set_dotsub(c)           (c->flags |= CSV_DOTSUB)
+#define csv_set_all_cols(c)         (c->flags |= CSV_ALLCOLS)
 
 #define csv_skip_bad(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
@@ -1528,7 +1531,10 @@ static void check_first_field (const char *line, csvdata *c, PRN *prn)
 
 	if (joining(c) && join_wants_col_zero(c, field1)) {
 	    return;
-	}	
+	} else if (csv_all_cols(c)) {
+	    /* open/append wants all columns as data */
+	    return;
+	}
 
 	pprintf(prn, A_("   first field: '%s'\n"), field1);
 
@@ -2488,6 +2494,8 @@ static int real_import_csv (const char *fname,
 
     if (join != NULL) {
 	c->jspec = join;
+    } else if (opt & OPT_A) {
+	csv_set_all_cols(c);
     }
 
     if (mprn != NULL) {

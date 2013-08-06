@@ -5736,6 +5736,13 @@
 	  this file, otherwise flags an error.  
 	</para>
 	<para>
+	  In the case where <argname>fname</argname> starts with the
+	  indentifier of a supported internet protocol
+	  (<lit>http://</lit>, <lit>ftp://</lit>,
+	  <lit>https://</lit>), libcurl is invoked to download the
+	  resource.
+	</para>
+	<para>
 	  Also see the <fncref targ="sscanf"/> function.
 	</para>
       </description>

@@ -21,6 +21,7 @@
 #include "libset.h"
 #include "gretl_func.h"
 #include "uservar.h"
+#include "gretl_www.h"
 #include "gretl_string_table.h"
 
 #include <glib.h>
@@ -738,16 +739,32 @@ char *retrieve_date_string (int t, const DATASET *dset, int *err)
     return ret;
 }
 
+static int is_web_resource (const char *s)
+{
+    if (!strncmp(s, "http://", 7) ||
+	!strncmp(s, "https://", 8) ||
+	!strncmp(s, "ftp://", 6)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 char *retrieve_file_content (const char *fname, int *err)
 {
     char *content = NULL;
+    size_t len = 0;
 
     if (fname == NULL || *fname == '\0') {
 	*err = E_DATA;
+    } else if (is_web_resource(fname)) {
+	content = retrieve_public_file_as_buffer(fname, &len, err);
+	if (!*err && !g_utf8_validate(content, len, NULL)) {
+	    content = recode_content(content, err);
+	}
     } else {
 	char fullname[FILENAME_MAX];
 	GError *gerr = NULL;
-	gsize len = 0;
 
 	*fullname = '\0';
 	strncat(fullname, fname, FILENAME_MAX - 1);
@@ -762,7 +779,7 @@ char *retrieve_file_content (const char *fname, int *err)
 	} else if (!g_utf8_validate(content, len, NULL)) {
 	    content = recode_content(content, err);
 	}
-    } 
+    }
 
     return content;
 }
