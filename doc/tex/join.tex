@@ -3,16 +3,17 @@
 
 \section{Introduction}
 
-As of version 1.9.10 gretl has a new command, \texttt{join}. The basic
-function of this command is to pull data from file into an existing
-in-memory dataset; it therefore overlaps to some degree with the
-\texttt{append} command, but \texttt{join} is much more flexible and
-sophisticated. This chapter gives an overview of the functionality of
-the new command along with a detailed account of its syntax and
-options. We provide several toy examples and discuss one real-world
-case.
+Gretl provides two commands for adding data from file to an existing
+dataset in the program's workspace, namely \texttt{append} and
+\texttt{join}. The \texttt{append} command, which has been available
+for a long time, is relatively simple and is described in the
+\GCR. Here we focus on the \texttt{join} command (available since
+version 1.9.10), which is much more flexible and sophisticated. This
+chapter gives an overview of the functionality of \texttt{join} along
+with a detailed account of its syntax and options. We provide several
+toy examples and discuss one real-world case at length.
 
-First, a point on terminology: in the following we use the terms 
+First, a note on terminology: in the following we use the terms 
 ``left-hand'' and ``inner'' to refer to the dataset that is already in
 memory, and the terms ``right-hand'' and ``outer'' to refer to the
 dataset in the file from which data are to be drawn. 
@@ -380,134 +381,13 @@ characters). However, there are limits.
   71 bytes. 
 \end{itemize}
 
-\section{Time-series data}
-\label{sec:join-timeser}
 
-Whan dealing with time-series data, the inner and outer keys are,
-almost invariably, dates (and possibly time, with high-frequency
-data). \app{Gretl} provides two more options to the \cmd{join} command
-to handle this case swiftly:
-\begin{itemize}
-\item the \option{tkey} option can be used to indicate which column of
-  the outer file contains the outer key, and
-\item the \option{time} option specifies the format in which the date
-  is written in the outer file.
-\end{itemize}
-
-For example, Table \ref{tab:oecd-gdp-csv} shows an excerpt from the
-CSV file that, at the moment of this writing, the OECD statistical
-site (\url{stat.oecd.org}) gives you when requested the GDP at
-constant prices for several countries.\footnote{In fact, actual files
-  from the OECD would contain two more columns with very long labels
-  which are totally irrelevant to the present example and can be
-  omitted without altering the example script.}
-
-\begin{table}
-\begin{code}
-Frequency,Period,Country,Value,Flags
-"Quarterly","Q1-1960","France",463876.148126845,E
-"Quarterly","Q1-1960","Germany",768802.119278467,E
-"Quarterly","Q1-1960","Italy",414629.791450547,E
-"Quarterly","Q1-1960","United Kingdom",578437.090291889,E
-"Quarterly","Q2-1960","France",465618.977328614,E
-"Quarterly","Q2-1960","Germany",782484.138122549,E
-"Quarterly","Q2-1960","Italy",420714.910290157,E
-"Quarterly","Q2-1960","United Kingdom",572853.474696578,E
-"Quarterly","Q3-1960","France",469104.41925852,E
-"Quarterly","Q3-1960","Germany",809532.161494483,E
-"Quarterly","Q3-1960","Italy",426893.675840156,E
-"Quarterly","Q3-1960","United Kingdom",581252.066618986,E
-"Quarterly","Q4-1960","France",474664.327992619,E
-"Quarterly","Q4-1960","Germany",817806.132384948,E
-"Quarterly","Q4-1960","Italy",427221.338414114,E
-...
-\end{code}
-\label{tab:oecd-gdp-csv}  
-\caption{Example of CSV file as provided by the OECD statistical website}
-\end{table}
-
-This is an example of data in what we call \emph{atomic format}, that
-is, a format in which each line of the outer file contains only one
-figure and extracting data is mainly requires filtering the
-appropriate lines. The outer key is under the \texttt{Period} heading,
-and has the format \texttt{Q\emph{<quarter>-<year>}}. Assuming that
-the file in Table \ref{tab:oecd-gdp-csv} has the name
-\texttt{oecd.org}, the following is an example script which
-reconstructs the time series of Gross Domestic Products for several
-countries:
-
-\begin{footnotesize}
-\begin{verbatim}
-nulldata 220
-setobs 4 1960:1
-
-join oecd.csv FRA --time="%q-%Y" --tkey=Period --data=Value --filter="Country==France"
-join oecd.csv GER --time="%q-%Y" --tkey=Period --data=Value --filter="Country==Germany"
-join oecd.csv ITA --time="%q-%Y" --tkey=Period --data=Value --filter="Country==Italy"
-join oecd.csv  UK --time="%q-%Y" --tkey=Period --data=Value --filter="Country==United Kingdom"
-\end{verbatim}
-\end{footnotesize}
-
-in which we used the format code \verb|%q| for the quarter and
-\verb|%Y| for the 4-digits year. Table \ref{tab:join-datefmt} contains
-a list of the most-often used format codes. A touch of elegance could
-have been added by storing the invariant part of the \cmd{join} option
-into a string and then using string substitution, as in
-
-\begin{footnotesize}
-\begin{verbatim}
-nulldata 220
-setobs 4 1960:1
-
-sprintf optstr "--time=\"Q%%q-%%Y\" --tkey=Period --data=Value"
-
-join oecd.csv FRA @optstr --filter="Country==France"
-join oecd.csv GER @optstr --filter="Country==Germany"
-join oecd.csv ITA @optstr --filter="Country==Italy"
-join oecd.csv  UK @optstr --filter="Country==United Kingdom"
-\end{verbatim}
-\end{footnotesize}
-
-
-\begin{table}[htbp]
-  \centering
-  \begin{tabular}{rp{0.7\textwidth}}
-    \textbf{Code} & \textbf{Meaning} \\
-    \hline
-    \verb|%%| &     The \% character. \\
-    \verb|%C| &     The century number (0-99).\\
-    \verb|%d| or \verb|%e| & The day of month (1-31). \\
-    \verb|%D| & Equivalent to \verb|%m/%d/%y|.  (This is the American
-    style date, very  confusing  to  non-Americans, especially
-    since \verb|%d/%m/%y| is widely used in Europe.  The 
-    ISO 8601 standard format is \verb|%Y-%m-%d|.) \\
-    \verb|%H| &  The hour (0-23).\\
-    \verb|%j| &  The day number in the year (1-366).\\
-    \verb|%m| &  The month number (1-12).\\
-    \verb|%M| &  The minute (0-59).\\
-    \verb|%n| &  Arbitrary whitespace.\\
-    \verb|%q| &  The quarter (1-4).\\
-    \verb|%R| &  Equivalent to \verb|%H:%M|.\\
-    \verb|%S| &  The second (0-60; 60 may occur  for  leap  seconds).\\
-    \verb|%t| &  Arbitrary whitespace.\\
-    \verb|%T| &  Equivalent to \verb|%H:%M:%S|.\\
-    \verb|%w| &  The weekday number (0-6) with Sunday = 0.\\
-    \verb|%y| &  The year within century (0-99).  When a century is
-    not otherwise specified, values in  the  range  69-99  refer
-    to  years  in  the  twentieth  century (1969-1999);  values
-    in the range 00-68 refer to years in the twenty-first century (2000-2068).\\
-    \verb|%Y| &  The year, including century (for example, 1991).\\
-    \hline
-  \end{tabular}
-  \caption{Date formats}
-  \label{tab:join-datefmt}
-\end{table}
 \section{A real-world case}
 \label{sec:join-SHIW}
 
-For a real use-case for \texttt{join}, we turn to the Bank of Italy's
-\textit{Survey on Household Income and Wealth}
-(SHIW).\footnote{Details of the survey can be found at
+For a real use-case for \texttt{join} with cross-sectional data, we
+turn to the Bank of Italy's \textit{Survey on Household Income and
+  Wealth} (SHIW).\footnote{Details of the survey can be found at
   \url{http://www.bancaditalia.it/statistiche/indcamp/bilfait/dismicro}.
   The ASCII (CSV) data files for the 2010 survey are available at
   \url{http://www.bancaditalia.it/statistiche/indcamp/bilfait/dismicro/annuale/ascii/ind10_ascii.zip}.}
@@ -702,6 +582,175 @@ for \texttt{mroz87.gdt}.\footnote{One other change is needed: in
   William Greene's specification of the heckit model an additional
   regressor named \texttt{CIT} is used. You can simply comment this
   out.} It turns out that the results are qualitatively very similar.
+
+
+\section{Time-series data}
+\label{sec:join-timeser}
+
+Up to this point all the data we have considered have been
+cross-sectional. Some different issues arise in the case of
+time-series data. 
+
+Suppose our left-hand dataset is recognized by gretl as time series
+with a supported frequency (annual, quarterly, monthly, weekly, daily
+or hourly). This will be the case if the original data were read from
+a file that contained suitable time or date information, or if a
+time-series interpretation has been imposed using either the
+\texttt{setobs} command or its GUI equivalent.  Then---apart, perhaps,
+from some very special cases---joining additional data is bound to be
+a matter of matching observations by time-period. Since gretl knows
+the period of each observation on the left, no ``inner key'' is
+required; all that is needed is a means of identifying the period
+on the right. Most likely, this information will appear in a single
+column in the outer datafile, often but not always the first column.
+
+The \texttt{join} command provides a simple (but limited) default for
+extracting period information from the outer datafile, plus two
+options that can be used if the default is not applicable.
+\begin{itemize}
+\item The default assumption is that period information appears in the
+  first column, and conforms to the ISO 8601 standard: this covers
+  daily dates (format \texttt{YYYY-MM-DD}, for example 2013-01-31) and
+  monthly observations (format \texttt{YYYY-MM}, for example 2013-03).
+\item If the data have a frequency other than daily or monthly, or if
+  the representation of the date is not as per ISO 8601, the
+  \option{time} option can be used to specify the format in which
+  dates are written in the outer file.
+\item If dates do not appear in the first column of the outer file,
+  the \option{tkey} option can be used to indicate which column should
+  be used.
+\end{itemize}
+
+\subsection{Setting the time format and column}
+
+The \option{time} option requires a (double-quoted) parameter
+specifying the format in which dates/times are written in the outer
+file. This format string should be composed using the codes employed
+by the POSIX function \texttt{strptime}; Table \ref{tab:join-datefmt}
+contains a list of the most-often used codes.\footnote{The
+  \texttt{\%q} code for quarter is not present in \texttt{strptime};
+  it is added for use with \texttt{join} since quarterly data are
+  common in economics.} Here are a couple of simple examples:
+
+\begin{code}
+--time="%d/%m/%Y" # day, month, 4-digit year, e.g. 28/2/2012
+--time="%Ym%m"    # monthly, e.g. 2013m11
+\end{code}
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{rp{0.7\textwidth}}
+    \textbf{Code} & \textbf{Meaning} \\
+    \hline
+    \verb|%%| &     The \% character. \\
+    \verb|%C| &     The century number (0-99).\\
+    \verb|%d| or \verb|%e| & The day of month (1-31). \\
+    \verb|%D| & Equivalent to \verb|%m/%d/%y|.  (This is the American
+    style date, very  confusing  to  non-Americans, especially
+    since \verb|%d/%m/%y| is widely used in Europe.  The 
+    ISO 8601 standard format is \verb|%Y-%m-%d|.) \\
+    \verb|%H| &  The hour (0-23).\\
+    \verb|%j| &  The day number in the year (1-366).\\
+    \verb|%m| &  The month number (1-12).\\
+    \verb|%M| &  The minute (0-59).\\
+    \verb|%n| &  Arbitrary whitespace.\\
+    \verb|%q| &  The quarter (1-4).\\
+    \verb|%R| &  Equivalent to \verb|%H:%M|.\\
+    \verb|%S| &  The second (0-60; 60 may occur for leap seconds).\\
+    \verb|%t| &  Arbitrary whitespace.\\
+    \verb|%T| &  Equivalent to \verb|%H:%M:%S|.\\
+    \verb|%w| &  The weekday number (0-6) with Sunday = 0.\\
+    \verb|%y| &  The year within century (0-99).  When a century is
+    not otherwise specified, values in  the  range  69-99  refer
+    to  years  in  the  twentieth  century (1969-1999);  values
+    in the range 00-68 refer to years in the twenty-first century (2000-2068).\\
+    \verb|%Y| &  The year, including century (for example, 1991).\\
+    \hline
+  \end{tabular}
+  \caption{Date formats}
+  \label{tab:join-datefmt}
+\end{table}
+
+The \option{tkey} option requires a string giving the heading of
+the column in which dates/times are found in the outer file. The
+requirements for this parameter are the same as for the \option{okey}
+option, discussed above.
+
+\subsection{Example: OECD quarterly data}
+
+Table~\ref{tab:oecd-gdp} shows an excerpt from a CSV file provided
+by the OECD statistical site (\url{stat.oecd.org}) in response to a
+request for GDP at constant prices for several
+countries.\footnote{Retrieved 2013-08-05. The OECD files in fact
+  contain two more columns with very long labels; these are irrelevant
+  to the present example and can be omitted without altering the
+  sample script.}
+
+\begin{table}[htbp]
+\begin{code}
+Frequency,Period,Country,Value,Flags
+"Quarterly","Q1-1960","France",463876.148126845,E
+"Quarterly","Q1-1960","Germany",768802.119278467,E
+"Quarterly","Q1-1960","Italy",414629.791450547,E
+"Quarterly","Q1-1960","United Kingdom",578437.090291889,E
+"Quarterly","Q2-1960","France",465618.977328614,E
+"Quarterly","Q2-1960","Germany",782484.138122549,E
+"Quarterly","Q2-1960","Italy",420714.910290157,E
+"Quarterly","Q2-1960","United Kingdom",572853.474696578,E
+"Quarterly","Q3-1960","France",469104.41925852,E
+"Quarterly","Q3-1960","Germany",809532.161494483,E
+"Quarterly","Q3-1960","Italy",426893.675840156,E
+"Quarterly","Q3-1960","United Kingdom",581252.066618986,E
+"Quarterly","Q4-1960","France",474664.327992619,E
+"Quarterly","Q4-1960","Germany",817806.132384948,E
+"Quarterly","Q4-1960","Italy",427221.338414114,E
+...
+\end{code}
+\caption{Example of CSV file as provided by the OECD statistical
+  website}
+\label{tab:oecd-gdp}  
+\end{table}
+
+This is an instance of data in what we call \emph{atomic format}, that
+is, a format in which each line of the outer file contains only one
+figure and extracting data is mainly requires filtering the
+appropriate lines. The outer key is under the \texttt{Period} heading,
+and has the format \texttt{Q\emph{<quarter>-<year>}}. Assuming that
+the file in Table \ref{tab:oecd-gdp} has the name
+\texttt{oecd.csv}, the following is an example script which
+reconstructs the time series of Gross Domestic Product for several
+countries:
+
+\begin{footnotesize}
+\begin{verbatim}
+nulldata 220
+setobs 4 1960:1
+
+join oecd.csv FRA --time="Q%q-%Y" --tkey=Period --data=Value --filter="Country==France"
+join oecd.csv GER --time="Q%q-%Y" --tkey=Period --data=Value --filter="Country==Germany"
+join oecd.csv ITA --time="Q%q-%Y" --tkey=Period --data=Value --filter="Country==Italy"
+join oecd.csv  UK --time="Q%q-%Y" --tkey=Period --data=Value --filter="Country==United Kingdom"
+\end{verbatim}
+\end{footnotesize}
+
+in which we used the format code \verb|%q| for the quarter and
+\verb|%Y| for the 4-digit year. A touch of elegance could
+have been added by storing the invariant part of the \cmd{join} option
+into a string and then using string substitution, as in
+
+\begin{footnotesize}
+\begin{verbatim}
+nulldata 220
+setobs 4 1960:1
+
+sprintf optstr "--time=\"Q%%q-%%Y\" --tkey=Period --data=Value"
+
+join oecd.csv FRA @optstr --filter="Country==France"
+join oecd.csv GER @optstr --filter="Country==Germany"
+join oecd.csv ITA @optstr --filter="Country==Italy"
+join oecd.csv  UK @optstr --filter="Country==United Kingdom"
+\end{verbatim}
+\end{footnotesize}
 
 \section{A related change}
 \label{sec:join-cols}
