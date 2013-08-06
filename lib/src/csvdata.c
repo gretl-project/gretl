@@ -3975,7 +3975,9 @@ static int auto_keys_check (const DATASET *l_dset,
 		if (pd == 4) {
 		    check_for_quarterly(auto_keys);
 		}
-		if (calendar_data(l_dset)) {
+		if (annual_data(l_dset)) {
+		    *n_keys = 1;
+		} else if (calendar_data(l_dset)) {
 		    *n_keys = 1;
 		} else {
 		    *n_keys = 2;
@@ -3997,6 +3999,13 @@ static int auto_keys_check (const DATASET *l_dset,
 		err = E_ALLOC;
 	    } else {
 		*n_keys = 2;
+	    }
+	} else if (annual_data(l_dset)) {
+	    auto_keys->timefmt = gretl_strdup("%Y");
+	    if (auto_keys->timefmt == NULL) {
+		err = E_ALLOC;
+	    } else {
+		*n_keys = 1;
 	    }	    
 	} else {
 	    err = E_PDWRONG;
