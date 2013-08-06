@@ -5474,6 +5474,16 @@
 	  <optparm>method</optparm>
 	  <effect>see below</effect>
 	</option>
+	<option>
+	  <flag>--time</flag>
+	  <optparm>format-string</optparm>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--tkey</flag>
+	  <optparm>column-name</optparm>
+	  <effect>see below</effect>
+	</option>
       </options>
     </usage>
 
@@ -5505,7 +5515,14 @@
 	The <opt>aggr</opt> option is used when the mapping between
 	observations in the current dataset and the source is not
 	one-to-one.
-      </para>      
+      </para>
+      <para>
+	The <opt>time</opt> and <opt>tkey</opt> options are applicable
+	only when the current dataset has a time-series
+	structure. These options are used to specify, respectively,
+	the format in which dates/times are represented in the source
+	file and the name of the column which contains dates/times.
+      </para>     
       <para>
 	See also <cmdref targ="append"/> for simpler joining
 	operations.
