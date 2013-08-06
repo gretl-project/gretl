@@ -597,16 +597,16 @@ or hourly). This will be the case if the original data were read from
 a file that contained suitable time or date information, or if a
 time-series interpretation has been imposed using either the
 \texttt{setobs} command or its GUI equivalent.  Then---apart, perhaps,
-from some very special cases---joining additional data is bound to be
-a matter of matching observations by time-period. Since gretl knows
-the period of each observation on the left, no ``inner key'' is
-required; all that is needed is a means of identifying the period
-on the right. Most likely, this information will appear in a single
-column in the outer datafile, often but not always the first column.
+from some very special cases---joining additional data is bound to
+involve matching observations by time-period. Since gretl knows the
+period of each observation on the left, no ``inner key'' is required;
+all we need is a means of identifying the period on the right. Most
+likely, this information will appear in a single column in the outer
+datafile, often but not always the first column.
 
 The \texttt{join} command provides a simple (but limited) default for
 extracting period information from the outer datafile, plus two
-options that can be used if the default is not applicable.
+options that can be used if the default is not applicable, as follows.
 \begin{itemize}
 \item The default assumption is that period information appears in the
   first column, and conforms to the ISO 8601 standard: this covers
@@ -631,7 +631,7 @@ by the POSIX function \texttt{strptime}; Table \ref{tab:join-datefmt}
 contains a list of the most-often used codes.\footnote{The
   \texttt{\%q} code for quarter is not present in \texttt{strptime};
   it is added for use with \texttt{join} since quarterly data are
-  common in economics.} Here are a couple of simple examples:
+  common in macroeconomics.} Here are a couple of simple examples:
 
 \begin{code}
 --time="%d/%m/%Y" # day, month, 4-digit year, e.g. 28/2/2012
@@ -676,6 +676,39 @@ The \option{tkey} option requires a string giving the heading of
 the column in which dates/times are found in the outer file. The
 requirements for this parameter are the same as for the \option{okey}
 option, discussed above.
+
+\subsection{Example: daily stock prices}
+
+We show below the first few lines of a file named \texttt{IBM.csv}
+containing stock-price data for IBM corporation.
+
+\begin{code}
+Date,Open,High,Low,Close,Volume,Adj Close
+2013-08-02,195.50,195.50,193.22,195.16,3861000,195.16
+2013-08-01,196.65,197.17,195.41,195.81,2856900,195.81
+2013-07-31,194.49,196.91,194.49,195.04,3810000,195.04
+\end{code}
+
+Note that the data are in reverse time-series order---that won't
+matter to \texttt{join}, the data can appear in any order. Also note
+that the first column is headed \texttt{Date} and holds daily dates in
+ISO 8601 format. That means we can pull the data into gretl very
+easily. In the following fragment we create a suitably dimensioned
+empty daily dataset then rely on the default behavior of \texttt{join}
+with time-series data to import the closing stock price.
+
+\begin{code}
+nulldata 500
+setobs 5 2012-01-01
+join IBM.csv Close
+\end{code}
+
+To make explicit what we're doing, we could accomplish exactly the
+same using the \option{time} and \option{tkey} options:
+
+\begin{code}
+join IBM.csv Close --time="%Y-%m-%d" --tkey=Date
+\end{code}
 
 \subsection{Example: OECD quarterly data}
 
