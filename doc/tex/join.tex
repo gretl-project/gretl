@@ -380,6 +380,128 @@ characters). However, there are limits.
   71 bytes. 
 \end{itemize}
 
+\section{Time-series data}
+\label{sec:join-timeser}
+
+Whan dealing with time-series data, the inner and outer keys are,
+almost invariably, dates (and possibly time, with high-frequency
+data). \app{Gretl} provides two more options to the \cmd{join} command
+to handle this case swiftly:
+\begin{itemize}
+\item the \option{tkey} option can be used to indicate which column of
+  the outer file contains the outer key, and
+\item the \option{time} option specifies the format in which the date
+  is written in the outer file.
+\end{itemize}
+
+For example, Table \ref{tab:oecd-gdp-csv} shows an excerpt from the
+CSV file that, at the moment of this writing, the OECD statistical
+site (\url{stat.oecd.org}) gives you when requested the GDP at
+constant prices for several countries.\footnote{In fact, actual files
+  from the OECD would contain two more columns with very long labels
+  which are totally irrelevant to the present example and can be
+  omitted without altering the example script.}
+
+\begin{table}
+\begin{code}
+Frequency,Period,Country,Value,Flags
+"Quarterly","Q1-1960","France",463876.148126845,E
+"Quarterly","Q1-1960","Germany",768802.119278467,E
+"Quarterly","Q1-1960","Italy",414629.791450547,E
+"Quarterly","Q1-1960","United Kingdom",578437.090291889,E
+"Quarterly","Q2-1960","France",465618.977328614,E
+"Quarterly","Q2-1960","Germany",782484.138122549,E
+"Quarterly","Q2-1960","Italy",420714.910290157,E
+"Quarterly","Q2-1960","United Kingdom",572853.474696578,E
+"Quarterly","Q3-1960","France",469104.41925852,E
+"Quarterly","Q3-1960","Germany",809532.161494483,E
+"Quarterly","Q3-1960","Italy",426893.675840156,E
+"Quarterly","Q3-1960","United Kingdom",581252.066618986,E
+"Quarterly","Q4-1960","France",474664.327992619,E
+"Quarterly","Q4-1960","Germany",817806.132384948,E
+"Quarterly","Q4-1960","Italy",427221.338414114,E
+...
+\end{code}
+\label{tab:oecd-gdp-csv}  
+\caption{Example of CSV file as provided by the OECD statistical website}
+\end{table}
+
+This is an example of data in what we call \emph{atomic format}, that
+is, a format in which each line of the outer file contains only one
+figure and extracting data is mainly requires filtering the
+appropriate lines. The outer key is under the \texttt{Period} heading,
+and has the format \texttt{Q\emph{<quarter>-<year>}}. Assuming that
+the file in Table \ref{tab:oecd-gdp-csv} has the name
+\texttt{oecd.org}, the following is an example script which
+reconstructs the time series of Gross Domestic Products for several
+countries:
+
+\begin{footnotesize}
+\begin{verbatim}
+nulldata 220
+setobs 4 1960:1
+
+join oecd.csv FRA --time="%q-%Y" --tkey=Period --data=Value --filter="Country==France"
+join oecd.csv GER --time="%q-%Y" --tkey=Period --data=Value --filter="Country==Germany"
+join oecd.csv ITA --time="%q-%Y" --tkey=Period --data=Value --filter="Country==Italy"
+join oecd.csv  UK --time="%q-%Y" --tkey=Period --data=Value --filter="Country==United Kingdom"
+\end{verbatim}
+\end{footnotesize}
+
+in which we used the format code \verb|%q| for the quarter and
+\verb|%Y| for the 4-digits year. Table \ref{tab:join-datefmt} contains
+a list of the most-often used format codes. A touch of elegance could
+have been added by storing the invariant part of the \cmd{join} option
+into a string and then using string substitution, as in
+
+\begin{footnotesize}
+\begin{verbatim}
+nulldata 220
+setobs 4 1960:1
+
+sprintf optstr "--time=\"Q%%q-%%Y\" --tkey=Period --data=Value"
+
+join oecd.csv FRA @optstr --filter="Country==France"
+join oecd.csv GER @optstr --filter="Country==Germany"
+join oecd.csv ITA @optstr --filter="Country==Italy"
+join oecd.csv  UK @optstr --filter="Country==United Kingdom"
+\end{verbatim}
+\end{footnotesize}
+
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{rp{0.7\textwidth}}
+    \textbf{Code} & \textbf{Meaning} \\
+    \hline
+    \verb|%%| &     The \% character. \\
+    \verb|%C| &     The century number (0-99).\\
+    \verb|%d| or \verb|%e| & The day of month (1-31). \\
+    \verb|%D| & Equivalent to \verb|%m/%d/%y|.  (This is the American
+    style date, very  confusing  to  non-Americans, especially
+    since \verb|%d/%m/%y| is widely used in Europe.  The 
+    ISO 8601 standard format is \verb|%Y-%m-%d|.) \\
+    \verb|%H| &  The hour (0-23).\\
+    \verb|%j| &  The day number in the year (1-366).\\
+    \verb|%m| &  The month number (1-12).\\
+    \verb|%M| &  The minute (0-59).\\
+    \verb|%n| &  Arbitrary whitespace.\\
+    \verb|%q| &  The quarter (1-4).\\
+    \verb|%R| &  Equivalent to \verb|%H:%M|.\\
+    \verb|%S| &  The second (0-60; 60 may occur  for  leap  seconds).\\
+    \verb|%t| &  Arbitrary whitespace.\\
+    \verb|%T| &  Equivalent to \verb|%H:%M:%S|.\\
+    \verb|%w| &  The weekday number (0-6) with Sunday = 0.\\
+    \verb|%y| &  The year within century (0-99).  When a century is
+    not otherwise specified, values in  the  range  69-99  refer
+    to  years  in  the  twentieth  century (1969-1999);  values
+    in the range 00-68 refer to years in the twenty-first century (2000-2068).\\
+    \verb|%Y| &  The year, including century (for example, 1991).\\
+    \hline
+  \end{tabular}
+  \caption{Date formats}
+  \label{tab:join-datefmt}
+\end{table}
 \section{A real-world case}
 \label{sec:join-SHIW}
 
