@@ -721,8 +721,8 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 	}
 	break;
     case NORMTEST:
-	err = gretl_normality_test(selected_varname(),
-				   dataset, OPT_A, prn);
+	err = gretl_normality_test(libcmd.list[1], dataset,
+				   OPT_A, prn);
 	ci = PRINT;
 	break;
     }

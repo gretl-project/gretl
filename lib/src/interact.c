@@ -319,7 +319,6 @@ static int catch_system_alias (CMD *cmd)
                            c == LOOP || \
                            c == MAKEPKG || \
 			   c == MODPRINT || \
-			   c == NORMTEST || \
                            c == NULLDATA || \
                            c == SETMISS)
 
@@ -367,7 +366,6 @@ static int catch_system_alias (CMD *cmd)
                        c == MODPRINT || \
                        c == MODTEST || \
                        c == NLS || \
-		       c == NORMTEST || \
                        c == NULLDATA || \
 		       c == OPEN || \
                        c == OUTFILE || \
@@ -2558,6 +2556,10 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 	    return cmd->err;
 	}
     }
+
+#if 0
+    test_tokenize(line, cmd, dset, ptr);
+#endif
 
     /* check for "catch" */
     maybe_set_catch_flag(line, cmd);
@@ -5798,7 +5800,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case NORMTEST:
-	err = gretl_normality_test(cmd->param1, dset, cmd->opt, prn);
+	err = gretl_normality_test(cmd->list[1], dset, cmd->opt, prn);
 	break;
 
     case HAUSMAN:

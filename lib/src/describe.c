@@ -6409,35 +6409,36 @@ static void print_normality_stat (double test, double pval,
     }
 }
 
-/* OPT_A: all tests
-   OPT_D: Doornik-Hansen
-   OPT_W: Shapiro-Wilk
-   OPT_D: Jarque-Bera
-   OPT_W: Lilliefors
-   OPT_Q: quiet
-*/
+/**
+ * gretl_normality_test:
+ * @varno: ID number of the variable to process.
+ * @dset: dataset struct.
+ * @opt: OPT_A: all tests; OPT_D: Doornik-Hansen; OPT_W: Shapiro-Wilk;
+ * OPT_J: Jarque-Bera; OPT_L: Lilliefors; default is Doornik-Hansen.
+ * Also use OPT_Q for quiet.
+ * @prn: gretl printing struct.
+ *
+ * Performs, and prints the results of, the specified test(s) randomness
+ * for the variable specified by @v.
+ * 
+ * Returns: 0 on successful completion, non-zero on error.
+ */
 
-int gretl_normality_test (const char *varname,
-			  const DATASET *dset,
-			  gretlopt opt,
-			  PRN *prn)
+int gretl_normality_test (int varno, const DATASET *dset,
+			  gretlopt opt, PRN *prn)
 {
     gretlopt alltests = OPT_D | OPT_W | OPT_J | OPT_L;
     double test = NADBL;
     double pval = NADBL;
     double trec = NADBL;
     double pvrec = NADBL;
-    int v, err;
+    int err;
 
-    err = incompatible_options(opt, OPT_A | alltests);
-
-    if (!err) {
-	v = current_series_index(dset, varname);
-	if (v < 0) {
-	    err = E_UNKVAR;
-	} 
+    if (varno < 0 || varno >= dset->v) {
+	return E_DATA;
     }
 
+    err = incompatible_options(opt, OPT_A | alltests);
     if (err) {
 	return err;
     }
@@ -6453,7 +6454,7 @@ int gretl_normality_test (const char *varname,
     }
 
     if (!(opt & OPT_Q)) {
-	pprintf(prn, _("Test for normality of %s:"), varname);
+	pprintf(prn, _("Test for normality of %s:"), dset->varname[varno]);
 	if (opt & OPT_A) {
 	    pputs(prn, "\n\n");
 	} else {
@@ -6462,7 +6463,7 @@ int gretl_normality_test (const char *varname,
     }
 
     if (opt & OPT_D) {
-	err = skew_kurt_test(dset->Z[v], dset->t1, dset->t2, 
+	err = skew_kurt_test(dset->Z[varno], dset->t1, dset->t2, 
 			     &test, &pval, OPT_D);
 	if (!err && !(opt & OPT_Q)) {
 	    print_normality_stat(test, pval, OPT_D, prn);
@@ -6475,7 +6476,7 @@ int gretl_normality_test (const char *varname,
     }    
 
     if (opt & OPT_W) {
-	err = shapiro_wilk(dset->Z[v], dset->t1, dset->t2, 
+	err = shapiro_wilk(dset->Z[varno], dset->t1, dset->t2, 
 			   &test, &pval);
 	if (!err && !(opt & OPT_Q)) {
 	    print_normality_stat(test, pval, OPT_W, prn);
@@ -6483,7 +6484,7 @@ int gretl_normality_test (const char *varname,
     } 
 
     if (opt & OPT_L) {
-	err = lilliefors_test(dset->Z[v], dset->t1, dset->t2, 
+	err = lilliefors_test(dset->Z[varno], dset->t1, dset->t2, 
 			      &test, &pval);
 	if (!err && !(opt & OPT_Q)) {
 	    print_normality_stat(test, pval, OPT_L, prn);
@@ -6491,7 +6492,7 @@ int gretl_normality_test (const char *varname,
     } 
 
     if (opt & OPT_J) {
-	err = skew_kurt_test(dset->Z[v], dset->t1, dset->t2, 
+	err = skew_kurt_test(dset->Z[varno], dset->t1, dset->t2, 
 			     &test, &pval, OPT_J);
 	if (!err && !(opt & OPT_Q)) {
 	    print_normality_stat(test, pval, OPT_J, prn);

@@ -1033,7 +1033,7 @@ static int set_line_width (const char *s0, const char *s1,
 	v = current_series_index(dset, s0);
     }
 
-    if (v < 0) {
+    if (v < 0 || v >= dset->v) {
 	return E_DATA;
     }
 
