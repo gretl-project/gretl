@@ -5787,10 +5787,10 @@
     label="Create lags" context="cli">
 
     <usage>
-      <altforms>
-        <altform><lit>lags</lit> <repl>varlist</repl></altform>
-	<altform><lit>lags</lit> <repl>order</repl> <lit>;</lit> <repl>varlist</repl></altform>
-      </altforms>
+      <arguments>
+        <argument optional="true" separated="true">order</argument>
+	<argument>laglist</argument>
+      </arguments>
       <examples>
 	<example>lags x y</example>
 	<example>lags 12 ; x y</example>
@@ -5812,7 +5812,8 @@
       </mono>
       <para>
 	The number of lags created can be controlled by the optional
-	first parameter.
+	first parameter (which, if present, must be followed by a 
+	semicolon).
       </para>
     </description>
 

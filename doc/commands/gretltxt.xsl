@@ -128,7 +128,7 @@
 
 <xsl:template match="argument">
   <xsl:if test="(@optional)">[ </xsl:if> 
-  <xsl:if test="(@separated)">; </xsl:if>
+  <xsl:if test="(@separated and preceding-sibling::argument)">; </xsl:if>
   <xsl:if test="(@alternate)">
     <xsl:call-template name="gettext">
       <xsl:with-param name="key" select="'or'"/>
@@ -139,6 +139,7 @@
   </xsl:if> 
   <xsl:apply-templates/>
   <xsl:text> </xsl:text>
+  <xsl:if test="(@separated and not(preceding-sibling::argument))">; </xsl:if>
   <xsl:if test="(@optional)">] </xsl:if> 
 </xsl:template>
 
