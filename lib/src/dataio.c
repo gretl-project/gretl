@@ -3157,7 +3157,7 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
     } else {
 	char thisdir[FILENAME_MAX];
 
-	if (getcwd(thisdir, MAXLEN - 1) == NULL) {
+	if (!getcwd(thisdir, FILENAME_MAX - 1)) {
 	    *thisdir = '\0';
 	}	
 

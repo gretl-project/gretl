@@ -1215,7 +1215,7 @@ static int xlsx_sheet_dialog (xlsx_info *xinfo)
 static void xlsx_dates_check (DATASET *dset)
 {
     int t, maybe_dates = 1;
-    int date_min, date_max;
+    int date_min = 0, date_max = 0;
     int d, delta_min = 0, delta_max = 0;
 
 #if DATE_DEBUG
