@@ -3155,8 +3155,19 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
     if (importer == NULL) {
         err = 1;
     } else {
+	char thisdir[FILENAME_MAX];
+
+	if (getcwd(thisdir, MAXLEN - 1) == NULL) {
+	    *thisdir = '\0';
+	}	
+
 	err = (*importer)(fname, list, sheetname, dset, opt, prn);
 	close_plugin(handle);
+
+	if (*thisdir != '\0') {
+	    /* come back out of dotdir? */
+	    chdir(thisdir);
+	}
     }
 
  bailout:

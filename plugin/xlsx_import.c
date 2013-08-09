@@ -1215,7 +1215,8 @@ static int xlsx_sheet_dialog (xlsx_info *xinfo)
 static void xlsx_dates_check (DATASET *dset)
 {
     int t, maybe_dates = 1;
-    int d, dmin = 0, dmax = 0;
+    int date_min, date_max;
+    int d, delta_min = 0, delta_max = 0;
 
 #if DATE_DEBUG
     fprintf(stderr, "xlsx_dates_check: starting\n");
@@ -1231,6 +1232,9 @@ static void xlsx_dates_check (DATASET *dset)
        integer strings, and that the gap between successive values
        should be constant, or variable to a degree that's consistent
        with a sane time-series frequency.
+
+       We should bear in mind, however, that the numeric values that
+       we started with could be plain years rather than MS dates.
     */
 
     for (t=0; t<dset->n && maybe_dates; t++) {
@@ -1242,56 +1246,75 @@ static void xlsx_dates_check (DATASET *dset)
 	} else if (t == 0) {
 	    if (!strcmp(dset->S[0], "1")) {
 		maybe_dates = 0;
-	    }	
+	    } else {
+		date_min = date_max = atoi(dset->S[t]);
+	    }
 	} else {
+	    d = atoi(dset->S[t]);
+	    if (d < date_min) {
+		date_min = d;
+	    }
+	    if (d > date_max) {
+		date_max = d;
+	    }
 	    d = atoi(dset->S[t]) - atoi(dset->S[t-1]);
 	    if (t == 1) {
+		delta_min = delta_max = d;
+	    } else if (d < delta_min) {
 #if DATE_DEBUG
-		fprintf(stderr, " t=1, setting dmin = dmax = %d\n", d);
-#endif		
-		dmin = dmax = d;
-	    } else if (d < dmin) {
-#if DATE_DEBUG
-		fprintf(stderr, " at t=%d, dmin = %d - %d = %d\n",
+		fprintf(stderr, " at t=%d, delta_min = %d - %d = %d\n",
 			t, atoi(dset->S[t]), atoi(dset->S[t-1]), d);
 #endif
-		dmin = d;
-	    } else if (d > dmax) {
-		dmax = d;
+		delta_min = d;
+	    } else if (d > delta_max) {
+		delta_max = d;
 	    }
 	}
     }
 
 #if DATE_DEBUG
-    fprintf(stderr, "after obs loop, maybe_dates = %d (dmax = %d)\n", 
-	    maybe_dates, dmax);
+    fprintf(stderr, "after obs loop, maybe_dates=%d\n"
+	    " (date_min=%d, date_max=%d, delta_min=%d, delta_max=%d)\n",
+	    maybe_dates, date_min, date_max, delta_min, delta_max);
 #endif
 
-    if (maybe_dates && dmax < 0) {
+    if (maybe_dates && delta_max < 0) {
 	/* allow for the possibility that time runs backwards */
-	int tmp = dmin;
+	int tmp = delta_min;
 
-	dmin = -dmax;
-	dmax = -tmp;
+	delta_min = -delta_max;
+	delta_max = -tmp;
 	fprintf(stderr, "xlsx_dates_check: diffmin=%d, diffmax=%d\n", 
-		dmin, dmax);
+		delta_min, delta_max);
     }
 
     if (maybe_dates) {
-	if (dmin >= 364 && dmax <= 365) {
+	/* are these things in fact more plausibly years? */
+	if (delta_min == 1 && delta_max == 1 &&
+	    date_min > 1749 && date_max < 2050) {
+#if DATE_DEBUG
+	    fprintf(stderr, "assuming these are years, not MS dates\n");
+#endif
+	    maybe_dates = 0;
+	}
+    }
+
+    if (maybe_dates) {
+	if (delta_min >= 364 && delta_max <= 365) {
 	    ; /* annual? */
-	} else if (dmin >= 90 && dmax <= 92) {
+	} else if (delta_min >= 90 && delta_max <= 92) {
 	    ; /* quarterly? */
-	} else if (dmin >= 28 && dmax <= 31) {
+	} else if (delta_min >= 28 && delta_max <= 31) {
 	    ; /* monthly? */
-	} else if (dmin == 7 && dmax == 7) {
+	} else if (delta_min == 7 && delta_max == 7) {
 	    ; /* weekly? */
-	} else if (dmin == 1 && dmax <= 5) {
+	} else if (delta_min == 1 && delta_max <= 5) {
 	    ; /* daily? */
 	} else {
 	    /* unsupported frequency or nonsensical */
 #if DATE_DEBUG
-	    fprintf(stderr, "dmax = %d, dmin = %d, unsupported\n", dmax, dmin);
+	    fprintf(stderr, "delta_max = %d, delta_min = %d, unsupported\n", 
+		    delta_max, delta_min);
 #endif
 	    maybe_dates = 0;
 	} 
