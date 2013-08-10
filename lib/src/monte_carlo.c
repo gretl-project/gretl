@@ -389,7 +389,6 @@ int ok_in_loop (int c)
 
     if (c == CORRGM ||
 	c == CUSUM ||
-	c == EQNPRINT ||
 	c == FUNC ||
 	c == HURST ||
 	c == INCLUDE ||
@@ -398,7 +397,6 @@ int ok_in_loop (int c)
 	c == RMPLOT ||
 	c == RUN ||
 	c == SETMISS ||
-	c == TABPRINT ||
 	c == VIF)  {
 	return 0;
     }
