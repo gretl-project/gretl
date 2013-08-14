@@ -655,9 +655,9 @@ static void compute_default_ts_info (DATASET *dwinfo, int newdata)
 	    strcpy(dwinfo->stobs, "1");
 	}
     } else if (dwinfo->pd == 1) {
-	strcpy(dwinfo->stobs, "1700");
-	dwinfo->n = 400;
-	dwinfo->t1 = 250;
+	strcpy(dwinfo->stobs, "1500");
+	dwinfo->n = 600; 
+	dwinfo->t1 = 450; /* 1950, rollable back to 1500 */
     } else if (dwinfo->pd == 10) {
 	int dd = default_start_decade();
 
