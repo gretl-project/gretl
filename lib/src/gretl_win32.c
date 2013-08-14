@@ -875,16 +875,36 @@ int R_path_from_registry (char *s, int which)
 	if (fp != NULL) {
 	    fclose(fp);
 	} else {
+#ifdef _WIN64
+	    const char *arch[] = {
+		"x64\\",
+		"i386\\"
+	    };
+#else
+	    const char *arch[] = {
+		"i386\\",
+		"x64\\"
+	    };
+#endif
 	    char *p = strrchr(s, 'R');
 
 	    *p = '\0';
-	    strcat(s, "i386\\");
+	    strcat(s, arch[0]);
 	    append_R_filename(s, which);
 	    fp = fopen(s, "r");
 	    if (fp != NULL) {
 		fclose(fp);
 	    } else {
-		err = E_FOPEN;
+		/* try for alternate arch */
+		*p = '\0';
+		strcat(s, arch[1]);
+		append_R_filename(s, which);
+		fp = fopen(s, "r");
+		if (fp != NULL) {
+		    fclose(fp);
+		} else {
+		    err = E_FOPEN;
+		}
 	    }
 	}
     }
