@@ -27,6 +27,8 @@
 # include <gdk/gdkkeysyms.h>
 #endif
 
+#include "gretl_zip.h"
+
 static int check_imported_varname (char *vname, int row, int col,
 				   PRN *prn)
 {
@@ -172,12 +174,10 @@ static int gretl_make_tempdir (char *dname)
 static int open_import_zipfile (const char *fname, char *dname,
 				PRN *prn)
 {
-    int (*gretl_unzip_file)(const char *, GError **);
     const char *udir = gretl_dotdir();
     const char *real_fname = fname;
     char *recoded_fname = NULL;
     char *abspath = NULL;
-    void *handle = NULL;
     GError *gerr = NULL;
     FILE *fp;
     int err = 0;
@@ -227,16 +227,7 @@ static int open_import_zipfile (const char *fname, char *dname,
     }
     
     if (!err) {
-	gretl_unzip_file = get_plugin_function("gretl_unzip_file", 
-					       &handle);
-	if (gretl_unzip_file == NULL) {
-	    gretl_remove(dname);
-	    err = E_FOPEN;
-	}
-    }
-
-    if (!err) {
-	err = (*gretl_unzip_file)(real_fname, &gerr);
+	err = gretl_unzip_file(real_fname, &gerr);
 	if (gerr != NULL) {
 	    pprintf(prn, "gretl_unzip_file: '%s'\n", gerr->message);
 	    g_error_free(gerr);
@@ -247,7 +238,6 @@ static int open_import_zipfile (const char *fname, char *dname,
 
     free(abspath);
     free(recoded_fname);
-    close_plugin(handle);
 
     return err;
 }

@@ -203,6 +203,7 @@ LIBSRC = adf_kpss.c \
 	gretl_win32.c \
 	gretl_www.c \
 	gretl_xml.c \
+	gretl_zip.c \
 	interact.c \
 	kalman.c \
 	libglue.c \

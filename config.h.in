@@ -53,6 +53,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Define if zlib is available */
 #undef HAVE_ZLIB
 
+/* Define if using libgsf (>= 1.14.28) */
+#undef USE_GSF
+
 /* Is LaTeX available? */
 #undef HAVE_LATEX
 

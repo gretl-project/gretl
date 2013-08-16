@@ -43,6 +43,7 @@ gtk_version="none"
 use_xdg="yes"
 use_xdg_utils="no"
 try_xdg_utils="yes"
+use_gsf="no"
 have_gmp="no"
 have_mpfr="no"
 have_lapack="no"
@@ -203,6 +204,16 @@ else
   try_mpfr=yes
 fi,
 try_mpfr=yes)
+
+AC_ARG_WITH(gsf,
+[  --with-gsf             Use libgsf library [[default=auto]]],
+if test "x${withval}" = "xno"
+then
+  try_gsf=no
+else
+  try_gsf=yes
+fi,
+try_gsf=yes)
 
 AC_ARG_WITH(x-12-arima,
 [  --with-x-12-arima      include X-12-ARIMA support [[default=yes]]],
@@ -711,6 +722,19 @@ if test "$try_libR" = "yes" ; then
     )
 fi
 
+dnl
+dnl Check for libgsf-1?
+dnl NOT READY yet: use AC_DEFINE(USE_GSF) when ready
+dnl
+if test "$try_gsf" = "yes" ; then
+    PKG_CHECK_MODULES(GSF, libgsf-1 >= 1.14.28,
+      CFLAGS="$CFLAGS $GSF_CFLAGS"
+      LIBS="$LIBS $GSF_LIBS"
+      use_gsf="no",
+      echo "libgsf >= 1.14.28 not found"     
+    )
+fi
+
 dnl If building docs was requested, see if we can do it
 if test "${build_docs}" = "yes" ; then
    if test "$have_xslt" = "no" || test "$have_latex" = "no" ; then
@@ -723,6 +747,7 @@ AC_SUBST(build_docs)
 AC_SUBST(quiet_build)
 AC_SUBST(pkg_build)
 AC_SUBST(swap_ends)
+AC_SUBST(use_gsf)
 
 dnl record results on various libraries
 AC_SUBST(XML_CFLAGS)
@@ -848,6 +873,7 @@ Configuration:
   Use readline library:                   ${have_readline}
   Use gnuplot for graphs:                 ${have_gnuplot}
   Use LaTeX for typesetting output:       ${have_latex}
+  Use libgsf for zip/unzip:               ${use_gsf}
   MPFR support:                           ${have_mpfr}
   sse2 support for RNG:                   ${sse2_result}
   openMP support:                         ${ac_openmp_result}

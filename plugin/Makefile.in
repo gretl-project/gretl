@@ -17,6 +17,7 @@ build_mailer = @build_mailer@
 have_odbc = @have_odbc@
 quiet_build = @quiet_build@
 gtk_version = @gtk_version@
+use_gsf = @use_gsf@
 
 GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
@@ -71,8 +72,6 @@ GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../lib/libgretl-1.0.la
 
 GRETL_LIBOLE2_CFLAGS := -I$(topsrc)/plugin $(GLIB_CFLAGS)
-GRETL_ZIP_CFLAGS := -I$(topsrc)/plugin/zipunzip $(GLIB_CFLAGS)
-GRETL_ZIP_LIBS := $(GLIB_LIBS) -lz
 
 SRCS = excel_import.c \
 	fiml.c \
@@ -147,7 +146,6 @@ PLUGINS = arbond.la \
 	vif.la \
 	poisson.la \
 	duration.la \
-	gretlzip.la \
 	heckit.la \
 	quantreg.la \
 	interval.la \
@@ -181,6 +179,12 @@ ifeq ($(build_gui),yes)
      AUDIO_CFLAGS = $(FLITE_CFLAGS)
      AUDIO_LIBS = $(FLITE_LIBS)
   endif  
+endif
+
+ifeq ($(use_gsf),no)
+  PLUGINS += gretlzip.la
+  GRETL_ZIP_CFLAGS := -I$(topsrc)/plugin/zipunzip $(GLIB_CFLAGS)
+  GRETL_ZIP_LIBS := $(GLIB_LIBS) -lz
 endif
 
 ifeq ($(have_odbc),yes)

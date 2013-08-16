@@ -25,6 +25,7 @@
 #include "datafiles.h"
 #include "gretl_www.h"
 #include "gretl_untar.h"
+#include "gretl_zip.h"
 #include "gretl_xml.h"
 #include "menustate.h"
 #include "treeutils.h"
@@ -2035,8 +2036,6 @@ static int unpack_book_data (const char *fname)
 int unzip_package_file (const char *zipname, const char *path)
 {
     char *p, dirname[FILENAME_MAX];
-    int (*gretl_unzip_file) (const char *, GError **);
-    void *handle = NULL;
     GError *gerr = NULL;
     int err = 0;
 
@@ -2062,13 +2061,7 @@ int unzip_package_file (const char *zipname, const char *path)
     }
 #endif
 
-    gretl_unzip_file = gui_get_plugin_function("gretl_unzip_file", 
-					       &handle);
-    if (gretl_unzip_file == NULL) {
-        return 1;
-    }
-
-    err = (*gretl_unzip_file)(zipname, &gerr);
+    err = gretl_unzip_file(zipname, &gerr);
     if (gerr != NULL) {
 	gretl_errmsg_set(gerr->message);
 	if (!err) {
@@ -2077,7 +2070,6 @@ int unzip_package_file (const char *zipname, const char *path)
 	g_error_free(gerr);
     }
 
-    close_plugin(handle);
     gretl_remove(zipname);
 
     if (err) {

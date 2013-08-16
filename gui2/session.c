@@ -48,6 +48,7 @@
 #include "matrix_extra.h"
 #include "cmd_private.h"
 #include "uservar.h"
+#include "gretl_zip.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -1176,55 +1177,6 @@ session_name_from_session_file (char *sname, const char *fname)
 	    fname, sname);
 }
 
-static int unzip_session_file (const char *fname, char **zdirname)
-{
-    gchar *(*gretl_zipfile_get_topdir) (const char *);
-    int (*gretl_unzip_file) (const char *, GError **);
-    void *handle = NULL;
-    GError *gerr = NULL;
-    int err = 0;
-
-    gretl_zipfile_get_topdir = gui_get_plugin_function("gretl_zipfile_get_topdir",
-						       &handle);
-    if (gretl_zipfile_get_topdir == NULL) {
-        return 1;
-    }
-
-    *zdirname = gretl_zipfile_get_topdir(fname);
-    close_plugin(handle);
-    handle = NULL;
-
-    if (zdirname == NULL) {
-	errbox("Couldn't read session directory name");
-	return 1;
-    }
-    
-    gretl_chdir(gretl_dotdir());
-
-    gretl_unzip_file = gui_get_plugin_function("gretl_unzip_file", 
-					       &handle);
-    if (gretl_unzip_file == NULL) {
-        return 1;
-    }
-
-    err = (*gretl_unzip_file)(fname, &gerr);
-    if (gerr != NULL) {
-	fprintf(stderr, "gretl_unzip_file: '%s'\n", gerr->message);
-	if (!err) {
-	    err = 1;
-	}
-	g_error_free(gerr);
-    } else if (err) {
-	fprintf(stderr, "gretl_unzip_file: err = %d\n", err);
-    }
-
-    close_plugin(handle);
-
-    fprintf(stderr, "unzip_session_file: returning %d\n", err);
-
-    return err;
-}
-
 /* remedial action in case of mis-coded filename */
 
 static int get_session_dataname (char *fname, struct sample_info *sinfo)
@@ -1316,6 +1268,7 @@ gboolean do_open_session (void)
     char gdtname[MAXLEN]; /* path to session data file */
     char fname[MAXLEN];   /* multi-purpose temp variable */
     gchar *zdirname = NULL;
+    GError *gerr = NULL;
     FILE *fp;
     int nodata = 0;
     int err = 0;
@@ -1337,12 +1290,21 @@ gboolean do_open_session (void)
     fprintf(stderr, I_("\nReading session file %s\n"), tryfile);
 
     gretl_chdir(gretl_dotdir());
-    err = unzip_session_file(tryfile, &zdirname);
+    err = gretl_unzip_session_file(tryfile, &zdirname, &gerr);
+
+    if (gerr != NULL && err == 0) {
+	err = 1;
+    } 
 
     if (err) {
-	/* FIXME more explicit error message */
+	if (gerr != NULL) {
+	    errbox(gerr->message);
+	    g_error_free(gerr);
+	} else {
+	    /* FIXME more explicit error message */
+	    file_read_errbox(tryfile);
+	}
 	g_free(zdirname);
-	file_read_errbox(tryfile);
 	goto bailout;
     } 
 
@@ -1851,8 +1813,6 @@ int save_session (char *fname)
     char *dirbak = NULL;
     char datname[MAXLEN];
     char dirname[MAXLEN];
-    void *handle;
-    int (*gretl_make_zipfile) (const char *, const char *, GError **);
     int len, err = 0;
     int log_code = LOG_SAVE;
     GError *gerr = NULL;
@@ -1945,20 +1905,19 @@ int save_session (char *fname)
     }
     
     if (!err) {
-	gretl_make_zipfile = gui_get_plugin_function("gretl_make_zipfile", 
-						     &handle);
-	if (gretl_make_zipfile == NULL) {
-	    return 1;
+	/* make zipfile containing session files */
+	err = gretl_make_zipfile(fname, dirname, &gerr);
+	fprintf(stderr, " gretl_make_zipfile: err = %d\n", err);
+
+	if (gerr != NULL && !err) {
+	    err = 1;
 	}
 
-	/* make zipfile containing session files */
-	err = (*gretl_make_zipfile)(fname, dirname, &gerr);
-	fprintf(stderr, " gretl_make_zipfile: err = %d\n", err);
-	close_plugin(handle);
-
-	if (gerr != NULL) {
-	    errbox(gerr->message);
-	    g_error_free(gerr);
+	if (err) {
+	    if (gerr != NULL) {
+		errbox(gerr->message);
+		g_error_free(gerr);
+	    }
 	} else {
 	    mkfilelist(FILE_LIST_SESSION, fname);
 	    if (fname != sessionfile) {

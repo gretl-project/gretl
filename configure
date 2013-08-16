@@ -634,10 +634,13 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 USE_SSE2
 RLIB
+use_gsf
 swap_ends
 pkg_build
 quiet_build
 build_docs
+GSF_LIBS
+GSF_CFLAGS
 RLIB_LIBS
 RLIB_CFLAGS
 XSLT_LIBS
@@ -833,6 +836,7 @@ with_lucida
 with_gmake
 with_readline
 with_mpfr
+with_gsf
 with_x_12_arima
 with_tramo_seats
 with_libR
@@ -889,7 +893,9 @@ XML_LIBS
 XSLT_CFLAGS
 XSLT_LIBS
 RLIB_CFLAGS
-RLIB_LIBS'
+RLIB_LIBS
+GSF_CFLAGS
+GSF_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1532,6 +1538,7 @@ Optional Packages:
   --with-gmake            Use GNU make explicitly [default=no]
   --with-readline      Build with libreadline support [default=auto]
   --with-mpfr            Use MPFR library [default=auto]
+  --with-gsf             Use libgsf library [default=auto]
   --with-x-12-arima      include X-12-ARIMA support [default=yes]
   --with-tramo-seats     include TRAMO/SEATS support [default=yes]
   --with-libR            include libR support [default=auto]
@@ -1595,6 +1602,8 @@ Some influential environment variables:
   XSLT_LIBS   linker flags for XSLT, overriding pkg-config
   RLIB_CFLAGS C compiler flags for RLIB, overriding pkg-config
   RLIB_LIBS   linker flags for RLIB, overriding pkg-config
+  GSF_CFLAGS  C compiler flags for GSF, overriding pkg-config
+  GSF_LIBS    linker flags for GSF, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -2688,6 +2697,7 @@ gtk_version="none"
 use_xdg="yes"
 use_xdg_utils="no"
 try_xdg_utils="yes"
+use_gsf="no"
 have_gmp="no"
 have_mpfr="no"
 have_lapack="no"
@@ -6334,6 +6344,20 @@ else
 fi
 else
   try_mpfr=yes
+fi
+
+
+
+# Check whether --with-gsf was given.
+if test "${with_gsf+set}" = set; then :
+  withval=$with_gsf; if test "x${withval}" = "xno"
+then
+  try_gsf=no
+else
+  try_gsf=yes
+fi
+else
+  try_gsf=yes
 fi
 
 
@@ -18060,12 +18084,91 @@ _ACEOF
 fi
 fi
 
+if test "$try_gsf" = "yes" ; then
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GSF" >&5
+$as_echo_n "checking for GSF... " >&6; }
+
+if test -n "$GSF_CFLAGS"; then
+    pkg_cv_GSF_CFLAGS="$GSF_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libgsf-1 >= 1.14.28\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libgsf-1 >= 1.14.28") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GSF_CFLAGS=`$PKG_CONFIG --cflags "libgsf-1 >= 1.14.28" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$GSF_LIBS"; then
+    pkg_cv_GSF_LIBS="$GSF_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libgsf-1 >= 1.14.28\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libgsf-1 >= 1.14.28") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GSF_LIBS=`$PKG_CONFIG --libs "libgsf-1 >= 1.14.28" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        GSF_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libgsf-1 >= 1.14.28" 2>&1`
+        else
+	        GSF_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libgsf-1 >= 1.14.28" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$GSF_PKG_ERRORS" >&5
+
+	echo "libgsf >= 1.14.28 not found"
+
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	echo "libgsf >= 1.14.28 not found"
+
+else
+	GSF_CFLAGS=$pkg_cv_GSF_CFLAGS
+	GSF_LIBS=$pkg_cv_GSF_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	CFLAGS="$CFLAGS $GSF_CFLAGS"
+      LIBS="$LIBS $GSF_LIBS"
+      use_gsf="no"
+fi
+fi
+
 if test "${build_docs}" = "yes" ; then
    if test "$have_xslt" = "no" || test "$have_latex" = "no" ; then
       build_docs="no"
       echo "*** Can't build gretl docs: XSLT and/or LaTeX not found"
    fi
 fi
+
 
 
 
@@ -22878,6 +22981,7 @@ Configuration:
   Use readline library:                   ${have_readline}
   Use gnuplot for graphs:                 ${have_gnuplot}
   Use LaTeX for typesetting output:       ${have_latex}
+  Use libgsf for zip/unzip:               ${use_gsf}
   MPFR support:                           ${have_mpfr}
   sse2 support for RNG:                   ${sse2_result}
   openMP support:                         ${ac_openmp_result}

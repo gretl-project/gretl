@@ -241,9 +241,9 @@ struct plugin_function plugin_functions[] = {
     { "email_file",    P_MAILER },
 
     /* zip and unzip */
-    { "gretl_make_zipfile",       P_ZIPFILE},
-    { "gretl_unzip_file",         P_ZIPFILE},
-    { "gretl_zipfile_get_topdir", P_ZIPFILE},
+    { "gretl_native_make_zipfile",       P_ZIPFILE},
+    { "gretl_native_unzip_file",         P_ZIPFILE},
+    { "gretl_native_unzip_session_file", P_ZIPFILE},
 
     /* Dynamic panel data estimation */
     { "arbond_estimate",    P_ARBOND},
