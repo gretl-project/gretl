@@ -65,11 +65,9 @@ static int transcribe_gsf_data (GsfInput *input, GsfOutput *output)
 	    len = CHUNK;
 	}
 	if ((data = gsf_input_read(input, len, NULL)) == NULL) {
-	    g_warning("error reading ?");
 	    return 1;
 	}
 	if (!gsf_output_write(output, len, data)) {
-	    g_warning("error writing ?");
 	    return 1;
 	}
     }
@@ -77,27 +75,30 @@ static int transcribe_gsf_data (GsfInput *input, GsfOutput *output)
     return 0;
 }
 
-static void clone_recursive (GsfInput *input, GsfOutput *output)
+static int clone_to_zip (GsfInput *input, GsfOutput *output)
 {
+    int err = 0;
+
     if (gsf_input_size(input) > 0) {
-	transcribe_gsf_data(input, output);
+	err = transcribe_gsf_data(input, output);
     } 
 
     if (GSF_IS_INFILE(input) && gsf_infile_num_children(GSF_INFILE(input)) > 0) {
 	GsfInfile *in = GSF_INFILE(input);
 	GsfOutfile *out = GSF_OUTFILE(output);
+	int i, n = gsf_infile_num_children(in);
+	char const *name;
 	GsfInput *src;
 	GsfOutput *dest;
 	gboolean is_dir;
 	GDateTime *modtime;
-	int i;
 
-	for (i=0; i<gsf_infile_num_children(in); i++) {
-#if ZDEBUG
-	    fprintf(stderr, "gsf_clone_recursive: i = %d (%s)\n", i, 
-		    gsf_infile_name_by_index(in, i));
-#endif
+	for (i=0; i<n && !err; i++) {
 	    src = gsf_infile_child_by_index(in, i);
+	    name = gsf_infile_name_by_index(in, i);
+#if ZDEBUG
+	    fprintf(stderr, "clone_to_zip: i = %d (%s)\n", i, name); 
+#endif
 	    is_dir = gsf_is_dir(src);
 	    modtime = gsf_input_get_modtime(src);
 	    dest = gsf_outfile_new_child_full(out,
@@ -105,13 +106,15 @@ static void clone_recursive (GsfInput *input, GsfOutput *output)
 					      is_dir,
 					      "modtime", modtime,
 					      NULL);
-	    clone_recursive(src, dest);
+	    err = clone_to_zip(src, dest);
 	}
     }
 
     gsf_output_close(output);
     g_object_unref(G_OBJECT(output));
     g_object_unref(G_OBJECT(input));
+
+    return err;
 }
 
 int gretl_make_zipfile (const char *fname, const char *path,
@@ -120,7 +123,7 @@ int gretl_make_zipfile (const char *fname, const char *path,
     GsfInfile *infile;
     GsfOutput *output, *ziproot;
     GsfOutfile *outfile = NULL;
-    int ok = 1;
+    int err = 0;
 
     ensure_gsf_init();
 
@@ -131,31 +134,29 @@ int gretl_make_zipfile (const char *fname, const char *path,
     infile = gsf_infile_stdio_new(path, gerr);
 
     if (infile == NULL) {
-	ok = 0;
-    }
-
-    if (ok) {
+	err = 1;
+    } else {
 	output = gsf_output_stdio_new(fname, gerr);
 	if (output == NULL) {
-	    ok = 0;
+	    err = 1;
 	}
     }  
     
-    if (ok) {
+    if (!err) {
 	outfile = gsf_outfile_zip_new(output, gerr);
 	g_object_unref(G_OBJECT(output));
 	if (outfile == NULL) {
-	    ok = 0;
+	    err = 1;
 	}
     }  
 
-    if (ok) {
+    if (!err) {
 	ziproot = gsf_outfile_new_child(outfile, path, 1);
 	if (ziproot == NULL) {
-	    g_warning("failed to create ziproot for '%s'\n", path);
-	    ok = 0;
+	    fprintf(stderr, "failed to create ziproot for '%s'\n", path);
+	    err = 1;
 	} else {
-	    clone_recursive(GSF_INPUT(infile), ziproot);
+	    err = clone_to_zip(GSF_INPUT(infile), ziproot);
 	}
     }
 
@@ -164,87 +165,148 @@ int gretl_make_zipfile (const char *fname, const char *path,
 	g_object_unref(outfile);
     }
 
-    fprintf(stderr, "*** gretl_make_zipfile: returning %d\n", !ok);
+#if ZDEBUG
+    fprintf(stderr, "*** gretl_make_zipfile: returning %d\n", err);
+#endif
 
-    return !ok;
+    return err;
+}
+
+static int clone_to_stdio (GsfInfile *in, GsfOutput *output)
+{
+    GsfInput *input = GSF_INPUT(in);
+    int err = 0;
+
+#if ZDEBUG
+    fprintf(stderr, "clone_to_stdio: in = %p (%s), output = %p\n", (void *) in, 
+	    gsf_input_name(input), (void *) output);
+#endif
+
+    if (gsf_input_size(input) > 0) {
+	transcribe_gsf_data(input, output);
+    } else {
+	GsfOutfile *out = output ? GSF_OUTFILE(output) : NULL;
+	int i, n = gsf_infile_num_children(in);
+	char const *name;
+	gboolean is_dir;
+	GDateTime *modtime;
+
+	for (i=0; i<n && !err; i++) {
+	    GError *gerr = NULL;
+
+	    input = gsf_infile_child_by_index(in, i);
+	    if (input == NULL) {
+		err = 1;
+		break;
+	    }
+
+	    name = gsf_infile_name_by_index(in, i);
+	    is_dir = gsf_is_dir(input);
+
+	    if (out == NULL) {
+		if (is_dir) {
+		    out = gsf_outfile_stdio_new(name, &gerr);
+		    output = GSF_OUTPUT(out);
+		    err = clone_to_stdio(GSF_INFILE(input), output);
+		    g_object_unref(input);
+		    gsf_output_close(output);
+		    g_object_unref(output);
+		    output = NULL;
+		    out = NULL;
+		} else {
+		    output = gsf_output_stdio_new(name, &gerr);
+		    err = clone_to_stdio(GSF_INFILE(input), output);
+		    g_object_unref(input);
+		    gsf_output_close(output);
+		    g_object_unref(output);
+		    output = NULL;
+		    out = NULL;
+		}
+	    } else {
+		modtime = gsf_input_get_modtime(input);
+		output = gsf_outfile_new_child_full(out, name, is_dir, 
+						    "modtime", modtime,
+						    NULL);
+		err = clone_to_stdio(GSF_INFILE(input), output);
+		g_object_unref(input);
+		gsf_output_close(output);
+		g_object_unref(output);
+		output = NULL;
+	    }
+
+	    if (gerr != NULL) {
+		fprintf(stderr, "error: %s\n", gerr->message);
+		g_error_free(gerr);
+	    }
+	}
+    }
+
+    return err;
 }
 
 int gretl_unzip_file (const char *fname, GError **gerr)
 {
     GsfInput *input;
     GsfInfile *infile;
-    GsfOutfile *outfile = NULL;
-    int ok = 1;
+    int err = 0;
 
     ensure_gsf_init();
-
     input = gsf_input_stdio_new(fname, gerr);
 
+#if ZDEBUG
     fprintf(stderr, "*** gretl_unzip_file (gsf): fname='%s', input=%p\n", 
 	    fname, (void *) input);
+#endif
 
     if (input == NULL) {
-	ok = 0;
+	err = 1;
     } else {
 	infile = gsf_infile_zip_new(input, gerr);
 	g_object_unref(G_OBJECT(input));
-	if (infile != NULL) {
-	    /* FIXME!! */
-	    outfile = gsf_outfile_stdio_new("foo", gerr);
-	    if (outfile == NULL) {
-		ok = 0;
-	    } else {
-		clone_recursive(GSF_INPUT(infile), GSF_OUTPUT(outfile));
-	    }
+	if (infile == NULL) {
+	    err = 1;
 	} else {
-	    ok = 0;
+	    err = clone_to_stdio(infile, NULL);
+	    g_object_unref(infile);
 	}
     }
 
-#if 0
-    if (outfile != NULL) { /* ?? */
-	gsf_output_close(GSF_OUTPUT(outfile));
-	g_object_unref(outfile);
-    }
+#if ZDEBUG
+    fprintf(stderr, "*** gretl_unzip_file: returning %d\n", err);
 #endif
 
-    fprintf(stderr, "*** gretl_unzip_file: returning %d\n", !ok);
-
-    return !ok;
+    return err;
 }
 
 int gretl_unzip_session_file (const char *fname, gchar **zdirname, GError **gerr)
 {
     GsfInput *input;
     GsfInfile *infile;
-    GsfOutfile *outfile = NULL;
-    int ok = 1;
+    int err = 0;
 
-    check_gsf_init();
-
+    ensure_gsf_init();
     input = gsf_input_stdio_new(fname, gerr);
-    fprintf(stderr, "*** gsf: input = %p\n", (void *) input);
 
     if (input == NULL) {
-	ok = 0;
+	err = 1;
     } else {
 	infile = gsf_infile_zip_new(input, gerr);
 	g_object_unref(G_OBJECT(input));
-
 	if (infile == NULL) {
-	    ok = 0;
+	    err = 1;
 	} else {
 	    *zdirname = g_strdup(gsf_infile_name_by_index(infile, 0));
-	    /* FIXME!! */
-	    clone_recursive(GSF_INPUT(infile), NULL);
+	    err = clone_to_stdio(infile, NULL);
 	    g_object_unref(infile);
 	}
     }
 
-    fprintf(stderr, "*** gretl_unzip_session_file: zdirname = '%s', ok = %d\n", 
-	    *zdirname, ok);
+#if ZDEBUG
+    fprintf(stderr, "*** gretl_unzip_session_file: zdirname = '%s', err = %d\n", 
+	    *zdirname, err);
+#endif
 
-    return !ok;
+    return err;
 }
 
 #else /* native, using gretlzip plugin, not libgsf */

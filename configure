@@ -1538,7 +1538,7 @@ Optional Packages:
   --with-gmake            Use GNU make explicitly [default=no]
   --with-readline      Build with libreadline support [default=auto]
   --with-mpfr            Use MPFR library [default=auto]
-  --with-gsf             Use libgsf library [default=auto]
+  --with-gsf             Use libgsf library [default=no]
   --with-x-12-arima      include X-12-ARIMA support [default=yes]
   --with-tramo-seats     include TRAMO/SEATS support [default=yes]
   --with-libR            include libR support [default=auto]
@@ -6350,14 +6350,12 @@ fi
 
 # Check whether --with-gsf was given.
 if test "${with_gsf+set}" = set; then :
-  withval=$with_gsf; if test "x${withval}" = "xno"
+  withval=$with_gsf; if test "x${withval}" = "xyes"
 then
-  try_gsf=no
-else
   try_gsf=yes
 fi
 else
-  try_gsf=yes
+  try_gsf=no
 fi
 
 
@@ -18158,7 +18156,9 @@ else
 $as_echo "yes" >&6; }
 	CFLAGS="$CFLAGS $GSF_CFLAGS"
       LIBS="$LIBS $GSF_LIBS"
-      use_gsf="no"
+      $as_echo "#define USE_GSF 1" >>confdefs.h
+
+      use_gsf="yes"
 fi
 fi
 

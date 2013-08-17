@@ -206,14 +206,12 @@ fi,
 try_mpfr=yes)
 
 AC_ARG_WITH(gsf,
-[  --with-gsf             Use libgsf library [[default=auto]]],
-if test "x${withval}" = "xno"
+[  --with-gsf             Use libgsf library [[default=no]]],
+if test "x${withval}" = "xyes"
 then
-  try_gsf=no
-else
   try_gsf=yes
 fi,
-try_gsf=yes)
+try_gsf=no)
 
 AC_ARG_WITH(x-12-arima,
 [  --with-x-12-arima      include X-12-ARIMA support [[default=yes]]],
@@ -723,14 +721,14 @@ if test "$try_libR" = "yes" ; then
 fi
 
 dnl
-dnl Check for libgsf-1?
-dnl NOT READY yet: use AC_DEFINE(USE_GSF) when ready
+dnl Check for libgsf-1, if requested
 dnl
 if test "$try_gsf" = "yes" ; then
     PKG_CHECK_MODULES(GSF, libgsf-1 >= 1.14.28,
       CFLAGS="$CFLAGS $GSF_CFLAGS"
       LIBS="$LIBS $GSF_LIBS"
-      use_gsf="no",
+      AC_DEFINE(USE_GSF)
+      use_gsf="yes",
       echo "libgsf >= 1.14.28 not found"     
     )
 fi
