@@ -41,9 +41,11 @@
 
 #define ZDEBUG 1
 
-#define CHUNK 4096
+#define CHUNK 8192
 
-static void check_gsf_init (void)
+#define gsf_is_dir(i) (GSF_IS_INFILE(i) && gsf_infile_num_children(GSF_INFILE(i)) >= 0)
+
+static void ensure_gsf_init (void)
 {
     static int initted;
 
@@ -53,7 +55,7 @@ static void check_gsf_init (void)
     }
 }
 
-static int gsf_transcribe_data (GsfInput *input, GsfOutput *output)
+static int transcribe_gsf_data (GsfInput *input, GsfOutput *output)
 {
     guint8 const *data;
     size_t len;
@@ -67,7 +69,7 @@ static int gsf_transcribe_data (GsfInput *input, GsfOutput *output)
 	    return 1;
 	}
 	if (!gsf_output_write(output, len, data)) {
-	    g_warning ("error writing ?");
+	    g_warning("error writing ?");
 	    return 1;
 	}
     }
@@ -75,71 +77,10 @@ static int gsf_transcribe_data (GsfInput *input, GsfOutput *output)
     return 0;
 }
 
-static void clone_to_stdio (GsfInput *input, GsfOutput *output)
+static void clone_recursive (GsfInput *input, GsfOutput *output)
 {
     if (gsf_input_size(input) > 0) {
-	gsf_transcribe_data(input, output);
-    } else {
-	GsfInfile *in = GSF_INFILE(input);
-	GsfOutfile *out = GSF_OUTFILE(output);
-	int i, n = gsf_infile_num_children(in);
-	char const *name;
-	gchar *display_name;
-	gboolean is_dir;
-	GDateTime *modtime;
-	GError *err = NULL;
-
-#if ZDEBUG
-	fprintf(stderr, "*** gsf_infile_num_children = %d\n", n);
-#endif
-
-	for (i=0; i<n; i++) {
-	    name = gsf_infile_name_by_index(in, i);
-	    display_name = (name != NULL)? g_filename_display_name(name) : NULL;
-
-	    input = gsf_infile_child_by_index(in, i);
-	    if (input == NULL) {
-		g_print("Error opening '%s', index = %d\n",
-			display_name ? display_name : "?", i);
-		g_free(display_name);
-		continue;
-	    }
-
-	    is_dir = gsf_infile_num_children(GSF_INFILE(input)) >= 0;
-#if ZDEBUG	    
-	    fprintf(stderr, "i=%d (%s), size %ld, %s\n", i, display_name ? display_name : "??",
-		    (long) gsf_input_size(input), is_dir ? "directory" : "file");
-#endif
-	    g_free(display_name);
-
-	    if (output == NULL) {
-		out = gsf_outfile_stdio_new(name, &err);
-		output = GSF_OUTPUT(out);
-	    } else {
-		modtime = gsf_input_get_modtime(input);
-		output = gsf_outfile_new_child_full(out, name, is_dir, 
-						    "modtime", modtime,
-						    NULL);
-	    }
-
-	    clone_to_stdio(input, output);
-
-	    g_object_unref(input);
-	    gsf_output_close(output);
-	    // g_object_unref(output);
-	    // output = NULL;
-	}
-	g_object_unref(output);
-	output = NULL;
-    }
-}
-
-#define gsf_is_dir(i) (GSF_IS_INFILE(i) && gsf_infile_num_children(GSF_INFILE(i)) >= 0)
-
-static void clone_to_zip (GsfInput *input, GsfOutput *output)
-{
-    if (gsf_input_size(input) > 0) {
-	gsf_transcribe_data(input, output);
+	transcribe_gsf_data(input, output);
     } 
 
     if (GSF_IS_INFILE(input) && gsf_infile_num_children(GSF_INFILE(input)) > 0) {
@@ -153,7 +94,8 @@ static void clone_to_zip (GsfInput *input, GsfOutput *output)
 
 	for (i=0; i<gsf_infile_num_children(in); i++) {
 #if ZDEBUG
-	    fprintf(stderr, "clone_to_zip: i = %d (%s)\n", i, gsf_infile_name_by_index(in, i));
+	    fprintf(stderr, "gsf_clone_recursive: i = %d (%s)\n", i, 
+		    gsf_infile_name_by_index(in, i));
 #endif
 	    src = gsf_infile_child_by_index(in, i);
 	    is_dir = gsf_is_dir(src);
@@ -163,7 +105,7 @@ static void clone_to_zip (GsfInput *input, GsfOutput *output)
 					      is_dir,
 					      "modtime", modtime,
 					      NULL);
-	    clone_to_zip(src, dest);
+	    clone_recursive(src, dest);
 	}
     }
 
@@ -180,7 +122,8 @@ int gretl_make_zipfile (const char *fname, const char *path,
     GsfOutfile *outfile = NULL;
     int ok = 1;
 
-    check_gsf_init();
+    ensure_gsf_init();
+
 #if ZDEBUG
     fprintf(stderr, "gretl_make_zipfile (gsf); fname='%s', path='%s'\n", fname, path);
 #endif
@@ -212,7 +155,7 @@ int gretl_make_zipfile (const char *fname, const char *path,
 	    g_warning("failed to create ziproot for '%s'\n", path);
 	    ok = 0;
 	} else {
-	    clone_to_zip(GSF_INPUT(infile), ziproot);
+	    clone_recursive(GSF_INPUT(infile), ziproot);
 	}
     }
 
@@ -221,6 +164,8 @@ int gretl_make_zipfile (const char *fname, const char *path,
 	g_object_unref(outfile);
     }
 
+    fprintf(stderr, "*** gretl_make_zipfile: returning %d\n", !ok);
+
     return !ok;
 }
 
@@ -228,12 +173,15 @@ int gretl_unzip_file (const char *fname, GError **gerr)
 {
     GsfInput *input;
     GsfInfile *infile;
+    GsfOutfile *outfile = NULL;
     int ok = 1;
 
-    check_gsf_init();
+    ensure_gsf_init();
 
     input = gsf_input_stdio_new(fname, gerr);
-    fprintf(stderr, "*** gsf: input = %p\n", (void *) input);
+
+    fprintf(stderr, "*** gretl_unzip_file (gsf): fname='%s', input=%p\n", 
+	    fname, (void *) input);
 
     if (input == NULL) {
 	ok = 0;
@@ -241,14 +189,24 @@ int gretl_unzip_file (const char *fname, GError **gerr)
 	infile = gsf_infile_zip_new(input, gerr);
 	g_object_unref(G_OBJECT(input));
 	if (infile != NULL) {
-	    outfile = gsf_outfile_stdio_new(name, &err);
-
-	    clone_to_stdio(GSF_INPUT(infile), NULL);
-	    g_object_unref(infile);
+	    /* FIXME!! */
+	    outfile = gsf_outfile_stdio_new("foo", gerr);
+	    if (outfile == NULL) {
+		ok = 0;
+	    } else {
+		clone_recursive(GSF_INPUT(infile), GSF_OUTPUT(outfile));
+	    }
 	} else {
 	    ok = 0;
 	}
     }
+
+#if 0
+    if (outfile != NULL) { /* ?? */
+	gsf_output_close(GSF_OUTPUT(outfile));
+	g_object_unref(outfile);
+    }
+#endif
 
     fprintf(stderr, "*** gretl_unzip_file: returning %d\n", !ok);
 
@@ -259,6 +217,7 @@ int gretl_unzip_session_file (const char *fname, gchar **zdirname, GError **gerr
 {
     GsfInput *input;
     GsfInfile *infile;
+    GsfOutfile *outfile = NULL;
     int ok = 1;
 
     check_gsf_init();
@@ -276,7 +235,8 @@ int gretl_unzip_session_file (const char *fname, gchar **zdirname, GError **gerr
 	    ok = 0;
 	} else {
 	    *zdirname = g_strdup(gsf_infile_name_by_index(infile, 0));
-	    clone_to_stdio(GSF_INPUT(infile), NULL);
+	    /* FIXME!! */
+	    clone_recursive(GSF_INPUT(infile), NULL);
 	    g_object_unref(infile);
 	}
     }
