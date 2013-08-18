@@ -47,9 +47,15 @@
 static GtkWidget *window_from_action (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
+#ifdef _WIN64
+    unsigned long long llptr = strtoull(s, NULL, 16);
+
+    return (GtkWidget *) llptr;
+#else
     unsigned long lptr = strtoul(s, NULL, 16);
 
     return (GtkWidget *) lptr;
+#endif
 }
 
 /* callback to bring a selected window to the top */

@@ -32,6 +32,9 @@
 /* Define if zlib is available */
 #define HAVE_ZLIB 1
 
+/* Define if using libgsf (>= 1.14.29) */
+#undef USE_GSF
+
 /* Is LaTeX available? */
 #define HAVE_LATEX 1
 

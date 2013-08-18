@@ -28,7 +28,7 @@
 
 static size_t get_bufsize (const char *buf)
 {
-    size_t i, newsize = 0L;
+    unsigned i, newsize = 0L;
     int pos;
     char line[60];
 
