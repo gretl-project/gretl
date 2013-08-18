@@ -18092,12 +18092,12 @@ if test -n "$GSF_CFLAGS"; then
     pkg_cv_GSF_CFLAGS="$GSF_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libgsf-1 >= 1.14.28\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "libgsf-1 >= 1.14.28") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libgsf-1 >= 1.14.29\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libgsf-1 >= 1.14.29") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GSF_CFLAGS=`$PKG_CONFIG --cflags "libgsf-1 >= 1.14.28" 2>/dev/null`
+  pkg_cv_GSF_CFLAGS=`$PKG_CONFIG --cflags "libgsf-1 >= 1.14.29" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -18109,12 +18109,12 @@ if test -n "$GSF_LIBS"; then
     pkg_cv_GSF_LIBS="$GSF_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libgsf-1 >= 1.14.28\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "libgsf-1 >= 1.14.28") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libgsf-1 >= 1.14.29\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libgsf-1 >= 1.14.29") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GSF_LIBS=`$PKG_CONFIG --libs "libgsf-1 >= 1.14.28" 2>/dev/null`
+  pkg_cv_GSF_LIBS=`$PKG_CONFIG --libs "libgsf-1 >= 1.14.29" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -18135,19 +18135,19 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GSF_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libgsf-1 >= 1.14.28" 2>&1`
+	        GSF_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libgsf-1 >= 1.14.29" 2>&1`
         else
-	        GSF_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libgsf-1 >= 1.14.28" 2>&1`
+	        GSF_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libgsf-1 >= 1.14.29" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GSF_PKG_ERRORS" >&5
 
-	echo "libgsf >= 1.14.28 not found"
+	echo "libgsf >= 1.14.29 not found"
 
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	echo "libgsf >= 1.14.28 not found"
+	echo "libgsf >= 1.14.29 not found"
 
 else
 	GSF_CFLAGS=$pkg_cv_GSF_CFLAGS

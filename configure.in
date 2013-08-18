@@ -724,12 +724,12 @@ dnl
 dnl Check for libgsf-1, if requested
 dnl
 if test "$try_gsf" = "yes" ; then
-    PKG_CHECK_MODULES(GSF, libgsf-1 >= 1.14.28,
+    PKG_CHECK_MODULES(GSF, libgsf-1 >= 1.14.29,
       CFLAGS="$CFLAGS $GSF_CFLAGS"
       LIBS="$LIBS $GSF_LIBS"
       AC_DEFINE(USE_GSF)
       use_gsf="yes",
-      echo "libgsf >= 1.14.28 not found"     
+      echo "libgsf >= 1.14.29 not found"     
     )
 fi
 
