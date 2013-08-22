@@ -1335,6 +1335,10 @@ static int print_model_table_direct (const char *fname,
 	return E_DATA;
     }
 
+    if (make_full_param_list()) {
+	return E_DATA;
+    }
+
     strcpy(outfile, fname);
     gretl_maybe_switch_dir(fname);
 
