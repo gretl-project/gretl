@@ -520,18 +520,40 @@ static void unwrap_string_arg (parser *p)
    Depending on the context we may or may not want to "consume" the
    trailing right paren that follows the string of interest; that's
    controlled by the second argument.
+
+   Added 2013-08-25: The above is all very well, but it breaks the
+   case where a function that returns a string is given as an
+   argument, rather than a plain string variable or string literal -- 
+   the function call was getting passed as a string literal. A block
+   is now inserted to test for this case.
 */
 
-static NODE *get_final_string_arg (parser *p, int sym, int eat_last)
+static NODE *get_final_string_arg (parser *p, NODE *t, int sym, 
+				   int eat_last)
 {
     char p0 = (sym == BOBJ)? '[' : '(';
     char p1 = (sym == BOBJ)? ']' : ')';
     const char *src = NULL;
-    int wrapped = 0;
+    int n, wrapped = 0;
     int strsym = STR;
 
     while (p->ch == ' ') {
 	parser_getc(p);
+    }
+
+    /* check for a nested function call (2013-08-25) */
+    src = p->point - 1;
+    n = gretl_namechar_spn(src);
+    if (n > 0 && n < FN_NAMELEN && src[n] == '(') {
+	char fntest[FN_NAMELEN];
+
+	*fntest = '\0';
+	strncat(fntest, src, n);
+	src = NULL;
+	if (function_lookup(fntest) ||
+	    get_user_function_by_name(fntest)) {
+	    return base(p, t);
+	}
     }
 
     if (p->ch == '"') {
@@ -983,7 +1005,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	if (i > 0 && i < k - 1 && (opt & MID_STR)) {
 	    child = get_middle_string_arg(p);
 	} else if (i == k - 1 && (opt & RIGHT_STR)) {
-	    child = get_final_string_arg(p, 0, 0);
+	    child = get_final_string_arg(p, t, 0, 0);
 	} else {
 	    child = expr(p);
 	}
@@ -1132,7 +1154,7 @@ static NODE *powterm (parser *p)
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b1.b = get_final_string_arg(p, sym, 1);
+	    t->v.b1.b = get_final_string_arg(p, t, sym, 1);
 	}	
     } else if (func1_symb(sym)) {
 	t = newb1(sym, NULL);
@@ -1175,7 +1197,7 @@ static NODE *powterm (parser *p)
 	if (t != NULL) {
 	    t->v.b2.l = newref(p, MVAR);
 	    lex(p);
-	    t->v.b2.r = get_final_string_arg(p, sym, 1);
+	    t->v.b2.r = get_final_string_arg(p, t, sym, 1);
 	}
     } else if (sym == LISTELEM || sym == MLISTELEM) {
 	t = newb2(LISTELEM, NULL, NULL);
@@ -1193,7 +1215,7 @@ static NODE *powterm (parser *p)
 	if (t != NULL) {
 	    t->v.b2.l = newref(p, BUNDLE);
 	    lex(p);
-	    t->v.b2.r = get_final_string_arg(p, sym, 1);
+	    t->v.b2.r = get_final_string_arg(p, t, sym, 1);
 	}
     } else if (sym == BMEMB) {
 	t = newb2(sym, NULL, NULL);
