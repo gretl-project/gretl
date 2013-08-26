@@ -636,7 +636,7 @@ static void put_foreign_lines (FILE *fp)
 {
     int i, n = get_foreign_indent();
 
-    for (i=0; i<foreign_n_lines; i++) { 
+    for (i=0; i<foreign_n_lines; i++) {
 	fprintf(fp, "%s\n", foreign_lines[i] + n);
 	if (foreign_lang == LANG_OX) {
 	    if (strstr(foreign_lines[i], "oxstd.h")) {

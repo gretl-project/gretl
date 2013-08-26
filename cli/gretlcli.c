@@ -140,7 +140,7 @@ static int file_get_line (ExecState *s)
     } else if (len == MAXLINE - 1 && line[len-1] != '\n') {
 	return E_TOOLONG;
     } else {
-	*linebak = 0;
+	*linebak = '\0';
 	strncat(linebak, line, MAXLINE-1);
 	tailstrip(linebak);
     }

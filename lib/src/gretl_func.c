@@ -5244,6 +5244,8 @@ int gretl_function_append_line (const char *line)
     } else if (function_return_line(line) && !ignore_line(fun)) {
 	err = parse_function_return(fun, line);
     } else {
+	/* FIXME: if this is a foreign-python line, we need to
+	   flag that indentation must be respected */
 	err = strings_array_add(&fun->lines, &fun->n_lines, line);
     }
 
