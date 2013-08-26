@@ -8035,7 +8035,8 @@ int execute_script (const char *runfile, const char *buf,
 	    }
 
 	    if (!exec_err) {
-		if (state.in_comment || libcmd.context == FOREIGN) {
+		if (state.in_comment || libcmd.context == FOREIGN ||
+		    gretl_compiling_python(line)) {
 		    tailstrip(line);
 		} else {
 		    contd = top_n_tail(line, sizeof line, &exec_err);

@@ -196,6 +196,7 @@ static int version_number_from_string (const char *s);
 
 static int compiling;    /* boolean: are we compiling a function currently? */
 static int fn_executing; /* depth of function call stack */
+static int compiling_python;
 
 #define function_is_private(f) (f->flags & UFUN_PRIVATE)
 #define function_is_plugin(f)  (f->flags & UFUN_PLUGIN)
@@ -267,6 +268,20 @@ int gretl_compiling_function (void)
     return compiling;
 }
 
+int gretl_compiling_python (const char *line)
+{
+    if (compiling_python) {
+	char s1[4], s2[8];
+
+	if (sscanf(line, "%3s %7s", s1, s2) == 2 && 
+	    !strcmp(s1, "end") && !strcmp(s2, "foreign")) {
+	    compiling_python = 0;
+	}
+    }
+
+    return compiling_python;
+}
+
 static void set_compiling_on (void)
 {
     compiling = 1;
@@ -274,7 +289,7 @@ static void set_compiling_on (void)
 
 static void set_compiling_off (void)
 {
-    compiling = 0;
+    compiling = compiling_python = 0;
 }
 
 int gretl_function_depth (void)
@@ -5200,6 +5215,19 @@ static int check_function_structure (ufunc *fun)
     return err;
 }
 
+static void python_check (const char *line)
+{
+    char s1[8], s2[16];
+
+    if (sscanf(line, "%7s %15s", s1, s2) == 2) {
+	if (!strcmp(s1, "foreign") && strstr(s2, "ython")) {
+	    compiling_python = 1;
+	} else if (!strcmp(s1, "end") && !strcmp(s2, "foreign")) {
+	    compiling_python = 0;
+	}
+    }
+}
+
 /**
  * gretl_function_append_line:
  * @line: line of code to append.
@@ -5216,13 +5244,11 @@ int gretl_function_append_line (const char *line)
     int err = 0;
 
 #if FNPARSE_DEBUG
-    fprintf(stderr, "real_function_append_line: '%s'\n", line);
+    fprintf(stderr, "gretl_function_append_line: '%s'\n", line);
 #endif
 
     if (fun == NULL) {
-#if FN_DEBUG
-	fprintf(stderr, "real_function_append_line: fun is NULL\n");
-#endif
+	fprintf(stderr, "gretl_function_append_line: fun is NULL\n");
 	return 1;
     }
 
@@ -5244,9 +5270,10 @@ int gretl_function_append_line (const char *line)
     } else if (function_return_line(line) && !ignore_line(fun)) {
 	err = parse_function_return(fun, line);
     } else {
-	/* FIXME: if this is a foreign-python line, we need to
-	   flag that indentation must be respected */
 	err = strings_array_add(&fun->lines, &fun->n_lines, line);
+	if (!err) {
+	    python_check(line);
+	}
     }
 
     if (err && !editing) {

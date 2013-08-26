@@ -108,6 +108,8 @@ const char *next_available_function_name (int *idxp);
 
 int gretl_compiling_function (void);
 
+int gretl_compiling_python (const char *line);
+
 int gretl_function_depth (void);
 
 int gretl_start_compiling_function (const char *line, PRN *prn);
