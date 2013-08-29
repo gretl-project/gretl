@@ -103,6 +103,8 @@ static NODE *newref (parser *p, int t)
 	    n->t = STR;
 	    n->vname = p->idstr;
 	    n->v.str = p->uval;
+	} else if (t == TBD) {
+	    n->vname = p->idstr;
 	} else if (t == UOBJ || t == WLIST) {
 	    /* FIXME ? */
 	    n->v.str = p->idstr;
@@ -289,6 +291,7 @@ static NODE *base (parser *p, NODE *up)
     case USTR:
     case UNUM_P:
     case UNUM_M:
+    case TBD:
 	t = newref(p, p->sym);
 	lex(p);
 	break;
@@ -1599,6 +1602,7 @@ NODE *expr (parser *p)
     while (!p->err && p->sym == QUERY) {
 	t = newb3(p->sym, t);
 	if (t != NULL) {
+	    set_parsing_query(1);
 	    lex(p);
 	    t->v.b3.m = expr(p);
 	    if (p->sym == P_COL) {
@@ -1607,6 +1611,7 @@ NODE *expr (parser *p)
 	    } else {
 		expected_symbol_error(':', p);
 	    }
+	    set_parsing_query(0);
 	}
     }
 

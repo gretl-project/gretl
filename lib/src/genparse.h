@@ -123,11 +123,12 @@ enum {
 	      RFUN,       /* GNU R function */
 	      USTR,       /* string variable */
 	      IVEC,       /* array of ints, not a varlist */
-              INC,   
-              DEC,
-	      QUERY,
+              INC,        /* increment */
+              DEC,        /* decrement */
+	      QUERY,      /* ternary "?" expression */
+	      TBD,        /* To Be Determined (in "query" context) */
               EOT,	  /* end of transmission */
-	      UNK 
+  /* 100 */   UNK 
 };
 
 /* functions: don't collide with the enumeration above */
@@ -612,6 +613,7 @@ NODE *msl_node_direct (parser *p);
 void context_error (int c, parser *p);
 void undefined_symbol_error (const char *s, parser *p);
 const char *getsymb (int t, const parser *p);
+void set_parsing_query (int s);
 
 int realgen (const char *s, parser *p, DATASET *dset, 
 	     PRN *prn, int flags);

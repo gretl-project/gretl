@@ -7961,9 +7961,10 @@ static NODE *query_eval_vec (const double *c, NODE *n, parser *p)
 static NODE *query_eval_scalar (double x, NODE *n, parser *p)
 {
     NODE *l = NULL, *r = NULL, *ret = NULL;
+    int indef = na(x) || isnan(x);
     int branch;
 
-    branch = (xna(x))? FORK_NONE : (x != 0)? FORK_L : FORK_R;
+    branch = indef ? FORK_NONE : (x != 0 ? FORK_L : FORK_R);
 
     if (autoreg(p) || branch != FORK_R) {
 	l = eval(n->v.b3.m, p);
@@ -8980,6 +8981,9 @@ static NODE *eval (NODE *t, parser *p)
 	    node_reattach_data(t, p);
 	}
 	ret = t;
+	break;
+    case TBD:
+	undefined_symbol_error(t->vname, p);
 	break;
     case U_ADDR:
 	p->err = check_uaddr_type(t, p);

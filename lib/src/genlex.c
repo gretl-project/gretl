@@ -926,6 +926,13 @@ static int maybe_get_R_function (const char *s)
     }
 }
 
+static int parsing_query;
+
+void set_parsing_query (int s)
+{
+    parsing_query = s;
+}
+
 #else /* !USE_RLIB */
 # define maybe_get_R_function(s) (0)
 #endif
@@ -992,6 +999,9 @@ static void look_up_word (const char *s, parser *p)
 		    /* note: all "native" types take precedence over this */
 		    p->sym = RFUN;
 		    p->idstr = gretl_strdup(s + 2);
+		} else if (parsing_query) {
+		    p->sym = TBD;
+		    p->idstr = gretl_strdup(s);
 		} else {
 		    err = E_UNKVAR;
 		}
@@ -1606,6 +1616,8 @@ const char *getsymb (int t, const parser *p)
 	return "MAT";
     } else if (t == EROOT) {
 	return "EROOT";
+    } else if (t == TBD) {
+	return "TBD";
     }
 
     if (p != NULL) {
