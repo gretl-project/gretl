@@ -8982,7 +8982,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	ret = t;
 	break;
-    case TBD:
+    case UNDEF:
 	undefined_symbol_error(t->vname, p);
 	break;
     case U_ADDR:

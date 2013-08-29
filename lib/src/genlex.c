@@ -926,6 +926,24 @@ static int maybe_get_R_function (const char *s)
     }
 }
 
+/* @parsing_query: we want to keep track of the case
+   where we're lexing/parsing the branches of a
+   ternary "query" expression. When such an expression
+   is evaluated, it's OK if the branch _not_ taken
+   contains an undefined symbol; indeed, this can
+   occur by design, as in
+
+     scalar y = isnull(x) ? 0 : x
+
+   when "x" is in fact undefined.
+
+   We therefore use the "UNDEF" node type to defuse the
+   error that would otherwise arise on parsing. An error
+   is triggered only if the branch that references the
+   UNDEF node is selected (attempting to evaluate an UNDEF
+   node automatically throws an error.)
+ */ 
+
 static int parsing_query;
 
 void set_parsing_query (int s)
@@ -1000,7 +1018,7 @@ static void look_up_word (const char *s, parser *p)
 		    p->sym = RFUN;
 		    p->idstr = gretl_strdup(s + 2);
 		} else if (parsing_query) {
-		    p->sym = TBD;
+		    p->sym = UNDEF;
 		    p->idstr = gretl_strdup(s);
 		} else {
 		    err = E_UNKVAR;
@@ -1616,8 +1634,8 @@ const char *getsymb (int t, const parser *p)
 	return "MAT";
     } else if (t == EROOT) {
 	return "EROOT";
-    } else if (t == TBD) {
-	return "TBD";
+    } else if (t == UNDEF) {
+	return "UNDEF";
     }
 
     if (p != NULL) {

@@ -103,7 +103,7 @@ static NODE *newref (parser *p, int t)
 	    n->t = STR;
 	    n->vname = p->idstr;
 	    n->v.str = p->uval;
-	} else if (t == TBD) {
+	} else if (t == UNDEF) {
 	    n->vname = p->idstr;
 	} else if (t == UOBJ || t == WLIST) {
 	    /* FIXME ? */
@@ -291,7 +291,7 @@ static NODE *base (parser *p, NODE *up)
     case USTR:
     case UNUM_P:
     case UNUM_M:
-    case TBD:
+    case UNDEF:
 	t = newref(p, p->sym);
 	lex(p);
 	break;

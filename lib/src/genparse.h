@@ -126,7 +126,7 @@ enum {
               INC,        /* increment */
               DEC,        /* decrement */
 	      QUERY,      /* ternary "?" expression */
-	      TBD,        /* To Be Determined (in "query" context) */
+	      UNDEF,      /* undefined (in "query" context only) */
               EOT,	  /* end of transmission */
   /* 100 */   UNK 
 };
