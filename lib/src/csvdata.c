@@ -1756,13 +1756,13 @@ static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
     int err = 0;
 
     if (c->st != NULL) {
-	/* second round, with string table added */
+	/* second round, handling string-valued variables */
 	if (in_gretl_list(c->codelist, i)) {
 	    double zit = c->dset->Z[i][t];
 	    int ix;
 
 	    if (na(zit) && *c->str != '\0' && c->user_na == NULL) {
-		/* by default only blanks count as NAs */
+		/* by default (no user_na) only blanks count as NAs */
 		zit = NON_NUMERIC;
 	    }
 	    if (!na(zit)) {
