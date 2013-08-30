@@ -517,8 +517,9 @@ static void state_vars_init (set_vars *sv)
     sv->nadarwat_trim = 4.0;
 
     *sv->shelldir = '\0';
-    *sv->csv_write_na = '\0';
-    *sv->csv_read_na = '\0';
+
+    strcpy(sv->csv_write_na, "NA");
+    strcpy(sv->csv_read_na, "default");
 
     robust_opts_init(&sv->ropts);
 }
@@ -2583,7 +2584,7 @@ int check_for_stop (void)
 
 const char *get_csv_na_write_string (void)
 {
-    if (check_for_state() || *state->csv_write_na == '\0') {
+    if (check_for_state()) {
 	return "NA";
     } else {
 	return state->csv_write_na;
@@ -2604,7 +2605,7 @@ void set_csv_na_write_string (const char *s)
 
 const char *get_csv_na_read_string (void)
 {
-    if (check_for_state() || *state->csv_read_na == '\0') {
+    if (check_for_state()) {
 	return "default";
     } else {
 	return state->csv_read_na;

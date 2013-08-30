@@ -30,18 +30,9 @@ typedef enum {
     AGGR_SEQ
 } AggrType;
 
-#define import_na_string(s) (!strcmp(s, "NA") || \
-                             !strcmp(s, "N.A.") || \
-                             !strcmp(s, "n.a.") || \
-                             !strcmp(s, "na") || \
-                             !strcmp(s, "N/A") || \
-			     !strcmp(s, "#N/A") || \
-                             !strcmp(s, "NaN") || \
-                             !strcmp(s, ".NaN") || \
-                             !strcmp(s, ".") || \
-                             !strcmp(s, "..") || \
-                             !strcmp(s, "-999") || \
-                             !strcmp(s, "-9999"))
+void import_na_init (void);
+
+int import_na_string (const char *s);
 
 int import_obs_label (const char *s);
 

@@ -3126,6 +3126,7 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
 		     DATASET *, gretlopt, PRN *);
     int err = 0;
 
+    import_na_init();
     set_alt_gettext_mode(prn);
 
     fp = gretl_fopen(fname, "r");

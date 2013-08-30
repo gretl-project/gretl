@@ -80,6 +80,7 @@ struct csvdata_ {
     char skipstr[8];
     int *codelist;
     char *descrip;
+    const char *user_na;
     gretl_string_table *st;
     int *cols_list;
     int *width_list;
@@ -124,6 +125,8 @@ struct csvdata_ {
 
 static int
 time_series_label_check (DATASET *dset, int reversed, char *skipstr, PRN *prn);
+
+static char import_na[8];
 
 static void csvdata_free (csvdata *c)
 {
@@ -178,11 +181,16 @@ static csvdata *csvdata_new (DATASET *dset)
     *c->skipstr = '\0';
     c->codelist = NULL;
     c->descrip = NULL;
+    c->user_na = NULL;
     c->st = NULL;
     c->cols_list = NULL;
     c->width_list = NULL;
     c->rowmask = NULL;
     c->masklen = 0;
+
+    if (strcmp(import_na, "default")) {
+	c->user_na = import_na;
+    }
 
     c->jspec = NULL;
 
@@ -1545,6 +1553,45 @@ static void check_first_field (const char *line, csvdata *c, PRN *prn)
     }
 }
 
+void import_na_init (void)
+{
+    const char *s = get_csv_na_read_string();
+
+    strcpy(import_na, s);
+}
+
+int import_na_string (const char *s)
+{
+    if (strcmp(import_na, "default")) {
+	return !strcmp(s, import_na);
+    } else {
+	const char *defaults[] = {
+	    "NA",
+	    "N.A.",
+	    "n.a.",
+	    "na",
+	    "N/A",
+	    "#N/A",
+	    "NaN",
+	    ".NaN",
+	    ".",
+	    "..",
+	    "-999",
+	    "-9999",
+	    NULL
+	};
+	int i;
+
+	for (i=0; defaults[i] != NULL; i++) {
+	    if (!strcmp(s, defaults[i])) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 static int csv_missval (const char *str, int i, int t, 
 			int *miss_shown, PRN *prn)
 {
@@ -1706,15 +1753,25 @@ static double csv_atof (csvdata *c, const char *s)
 static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
 			    PRN *prn)
 {
-    int ix, err = 0;
+    int err = 0;
 
     if (c->st != NULL) {
-	if (in_gretl_list(c->codelist, i) && !na(c->dset->Z[i][t])) {
-	    ix = gretl_string_table_index(c->st, c->str, i, 0, prn);
-	    if (ix > 0) {
-		c->dset->Z[i][t] = (double) ix;
-	    } else {
-		err = E_DATA;
+	/* second round, with string table added */
+	if (in_gretl_list(c->codelist, i)) {
+	    double zit = c->dset->Z[i][t];
+	    int ix;
+
+	    if (na(zit) && *c->str != '\0' && c->user_na == NULL) {
+		/* by default only blanks count as NAs */
+		zit = NON_NUMERIC;
+	    }
+	    if (!na(zit)) {
+		ix = gretl_string_table_index(c->st, c->str, i, 0, prn);
+		if (ix > 0) {
+		    c->dset->Z[i][t] = (double) ix;
+		} else {
+		    err = E_DATA;
+		}
 	    }
 	}
     } else if (csv_missval(c->str, i, t+1, miss_shown, prn)) {
@@ -2318,8 +2375,10 @@ static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 {
     int reversed = csv_data_reversed(c);
     int err;
-
-    pputs(mprn, A_("scanning for row labels and data...\n"));
+    
+    if (mprn != NULL) {
+	pputs(mprn, A_("scanning for row labels and data...\n"));
+    }
     err = real_read_labels_and_data(c, fp, prn);
 
     if (!err && csv_skip_column(c) && !rows_subset(c) && !joining(c)) {
@@ -2454,6 +2513,8 @@ static int real_import_csv (const char *fname,
     int popit = 0;
     long datapos;
     int i, err = 0;
+
+    import_na_init();
 
     if (prn != NULL) {
 	set_alt_gettext_mode(prn);

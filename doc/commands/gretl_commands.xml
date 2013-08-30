@@ -9854,9 +9854,29 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>csv_na</lit>: string to represent missing values when
-	    writing data to file in CSV format.  Maximum 7 characters; the
-	    default is <lit>NA</lit>.
+	  <para><lit>csv_write_na</lit>: the string used to represent
+	  missing values when writing data to file in CSV format.
+	  Maximum 7 characters; the default is <lit>NA</lit>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>csv_read_na</lit>: the string taken to represent
+	  missing values (NAs) when reading data in CSV
+	  format. Maximum 7 characters. The default depends on whether
+	  a data column is found to contain numerical data (mostly) or
+	  string values. For numerical data the following are taken as
+	  indicating NAs: an empty cell, or any of the strings
+	  <lit>NA</lit>, <lit>N.A.</lit>, <lit>na</lit>,
+	  <lit>n.a.</lit>, <lit>N/A</lit>, <lit>#N/A</lit>,
+	  <lit>NaN</lit>, <lit>.NaN</lit>, <lit>.</lit>,
+	  <lit>..</lit>, <lit>-999</lit>, and <lit>-9999</lit>.  For
+	  string-valued data only a blank cell, or a cell containing
+	  an empty string, is counted as NA. These defaults can be
+	  reimposed by giving <lit>default</lit> as the value for
+	  <lit>csv_read_na</lit>. To specify that only empty cells
+	  are read as NAs, give a value of <lit>""</lit>. Note that
+	  empty cells are always read as NAs even if a specific
+	  string is provided.
 	  </para>
 	</li>
 	<li>
