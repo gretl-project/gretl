@@ -2319,7 +2319,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
 	if (get_local_decpoint() == ',' && delim == ',') {
 	    delim = ';';
 	}
-	csv_na = get_csv_na_string();
+	csv_na = get_csv_na_write_string();
 	if (opt & OPT_X) {
 	    print_obs = 0;
 	    obslen = -1;

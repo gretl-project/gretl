@@ -166,8 +166,11 @@ char get_data_export_decpoint (void);
 void set_data_export_delimiter (char c);
 char get_data_export_delimiter (void);
 
-const char *get_csv_na_string (void);
-void set_csv_na_string (const char *s);
+const char *get_csv_na_write_string (void);
+void set_csv_na_write_string (const char *s);
+
+const char *get_csv_na_read_string (void);
+void set_csv_na_read_string (const char *s);
 
 int execute_set_line (const char *line, DATASET *dset, 
 		      gretlopt opt, PRN *prn);

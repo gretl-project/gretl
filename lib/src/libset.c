@@ -107,7 +107,8 @@ struct set_vars_ {
     gretl_matrix *matmask;      /* mask for series -> matrix conversion */
     struct robust_opts ropts;   /* robust standard error options */
     char shelldir[MAXLEN];      /* working dir for shell commands */
-    char csv_na[8];             /* representation of NA in CSV output */
+    char csv_write_na[8];       /* representation of NA in CSV output */
+    char csv_read_na[8];        /* representation of NA in CSV input */
     double nadarwat_trim;       /* multiple of h to use in nadarwat() for trimming */
 };
 
@@ -408,7 +409,8 @@ static void state_vars_copy (set_vars *sv)
     sv->initvals = gretl_matrix_copy(state->initvals);
     sv->matmask = gretl_matrix_copy(state->matmask);
     strcpy(sv->shelldir, state->shelldir);
-    strcpy(sv->csv_na, state->csv_na);
+    strcpy(sv->csv_write_na, state->csv_write_na);
+    strcpy(sv->csv_read_na, state->csv_read_na);
 
     robust_opts_copy(&sv->ropts);
 }
@@ -515,7 +517,8 @@ static void state_vars_init (set_vars *sv)
     sv->nadarwat_trim = 4.0;
 
     *sv->shelldir = '\0';
-    *sv->csv_na = '\0';
+    *sv->csv_write_na = '\0';
+    *sv->csv_read_na = '\0';
 
     robust_opts_init(&sv->ropts);
 }
@@ -1414,15 +1417,19 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_header(N_("Program interaction and behavior"), prn, opt);
 
     if (opt & OPT_D) {
+	const char *s;
+
 	pprintf(prn, " csv_delim = %s\n", arg_from_delim(data_delim));
-	pprintf(prn, " csv_na = %s\n", get_csv_na_string());
+	pprintf(prn, " csv_write_na = %s\n", get_csv_na_write_string());
+	pprintf(prn, " csv_read_na = %s\n", get_csv_na_read_string());
     } else {
 	const char *dl = arg_from_delim(data_delim);
 
 	if (strcmp(dl, "unset")) {
 	    pprintf(prn, "set csv_delim %s\n", arg_from_delim(data_delim));
 	}
-	pprintf(prn, "set csv_na %s\n", get_csv_na_string());
+	pprintf(prn, "set csv_write_na %s\n", get_csv_na_write_string());
+	pprintf(prn, "set csv_read_na %s\n", get_csv_na_read_string());
     }
 
     libset_print_int(CSV_DIGITS, prn, opt);	    
@@ -1564,9 +1571,12 @@ static int libset_query_settings (const char *s, PRN *prn)
     } else if (!strcmp(s, "workdir")) {
 	pprintf(prn, "%s: string, currently \"%s\"\n", s,
 		gretl_workdir());
-    } else if (!strcmp(s, "csv_na")) {
+    } else if (!strcmp(s, "csv_write_na")) {
 	pprintf(prn, "%s: string, currently \"%s\"\n", s,
-		state->csv_na);
+		state->csv_write_na);
+    } else if (!strcmp(s, "csv_read_na")) {
+	pprintf(prn, "%s: string, currently \"%s\"\n", s,
+		state->csv_read_na);
     } else if (!strcmp(s, "stopwatch")) {
 	err = 0;
     } else {
@@ -1672,8 +1682,11 @@ int execute_set_line (const char *line, DATASET *dset,
 	    return libset_query_settings(setobj, prn);
 	}
     } else if (nw == 2) {
-	if (!strcmp(setobj, "csv_na")) {
-	    set_csv_na_string(setarg);
+	if (!strcmp(setobj, "csv_write_na") || !strcmp(setobj, "csv_na")) {
+	    set_csv_na_write_string(setarg);
+	    return 0;
+	} else if (!strcmp(setobj, "csv_read_na")) {
+	    set_csv_na_read_string(setarg);
 	    return 0;
 	} else if (!strcmp(setobj, CSV_DIGITS)) {
 	    set_csv_digits(setarg);
@@ -2570,23 +2583,44 @@ int check_for_stop (void)
 
 /* for setting what we print for NAs on CSV output */
 
-const char *get_csv_na_string (void)
+const char *get_csv_na_write_string (void)
 {
-    if (check_for_state() || *state->csv_na == '\0') {
+    if (check_for_state() || *state->csv_write_na == '\0') {
 	return "NA";
     } else {
-	return state->csv_na;
+	return state->csv_write_na;
     }
 }
 
-void set_csv_na_string (const char *s)
+void set_csv_na_write_string (const char *s)
 {
     if (check_for_state()) {
 	return;
     }
 
-    *state->csv_na = '\0';
-    strncat(state->csv_na, s, 7);
+    *state->csv_write_na = '\0';
+    strncat(state->csv_write_na, s, 7);
+}
+
+/* and for setting what we read as NA on CSV input */
+
+const char *get_csv_na_read_string (void)
+{
+    if (check_for_state() || *state->csv_read_na == '\0') {
+	return "default";
+    } else {
+	return state->csv_read_na;
+    }
+}
+
+void set_csv_na_read_string (const char *s)
+{
+    if (check_for_state()) {
+	return;
+    }
+
+    *state->csv_read_na = '\0';
+    strncat(state->csv_read_na, s, 7);
 }
 
 static void set_csv_digits (const char *s)

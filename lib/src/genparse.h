@@ -429,6 +429,10 @@ enum {
 /* functions taking string arg in middle position */
 #define string_mid_func(s) (s == F_BFGSMAX || s == F_NRMAX || s == F_SIMANN)
 
+/* functions taking one or more "fncall" string arguments */
+#define fncall_func(s) (s == F_BFGSMAX || s == F_FDJAC || \
+			s == F_NRMAX || s == F_SIMANN)
+
 #define unary_op(s)  (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)
 #define bool_comp(s) (s >= B_EQ && s <= B_OR)

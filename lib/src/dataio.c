@@ -1201,7 +1201,7 @@ static void csv_data_out (const DATASET *dset, const int *list,
 			  int print_obs, int digits, int *pmax, 
 			  char decpoint, char delim, FILE *fp)
 {
-    const char *NA = get_csv_na_string();
+    const char *NA = get_csv_na_write_string();
     char tmp[64];
     double xt;
     int popit = 0, dotsub = 0;

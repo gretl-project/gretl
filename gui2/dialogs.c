@@ -365,7 +365,7 @@ static void csv_na_callback (GtkComboBox *box, gpointer p)
 {
     char *s = combo_box_get_active_text(box);
 
-    set_csv_na_string(s);
+    set_csv_na_write_string(s);
 }
 
 static GtkWidget *csv_na_combo (void)
@@ -374,7 +374,7 @@ static GtkWidget *csv_na_combo (void)
     const char *na_strs[] = {
 	"NA", ".NaN", "-999", "-9999.0", "?", "."
     };
-    const char *setna = get_csv_na_string();
+    const char *setna = get_csv_na_write_string();
     int i, n = G_N_ELEMENTS(na_strs);
     int matched = 0;
 

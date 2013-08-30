@@ -2831,6 +2831,12 @@ struct joiner_ {
 
 typedef struct joiner_ joiner;
 
+enum {
+    FILT_NUMERIC,
+    FILT_STRING,
+    FILT_MISSMASK
+};
+
 struct jr_filter_ {
     char *lhname;
     double lhval;
@@ -2839,7 +2845,7 @@ struct jr_filter_ {
     double rhval;
     int rhcol;
     int op;
-    int is_string;
+    int mode;
 };
 
 typedef struct jr_filter_ jr_filter;
@@ -2879,7 +2885,7 @@ static int join_row_wanted (DATASET *dset, int i,
 	return 1;
     }
 
-    if (filter->is_string) {
+    if (filter->mode == FILT_STRING) {
 	const char *sx;
 	const char *sy;
 	size_t slen;
@@ -2898,6 +2904,16 @@ static int join_row_wanted (DATASET *dset, int i,
 
 	if (sx == NULL || sy == NULL) {
 	    gretl_errmsg_set("join: missing string in filtering");
+	    if (filter->lhcol) {
+		fprintf(stderr, "filter: LHS='%s' (from column %d),", sx, filter->lhcol);
+	    } else {
+		fprintf(stderr, "filter: LHS='%s' (string constant),", sx);
+	    }
+	    if (filter->rhcol) {
+		fprintf(stderr, " RHS='%s' (from column %d)\n", sy, filter->rhcol);
+	    } else {
+		fprintf(stderr, " RHS='%s' (string constant)\n", sy);
+	    }	    
 	    *err = E_MISSDATA;
 	} else if (filter->op == B_EQ) {
 	    ret = (strcmp(sx, sy) == 0);
@@ -2911,6 +2927,14 @@ static int join_row_wanted (DATASET *dset, int i,
 	    ret = (strcmp(sx, sy) != 0);
 	} else {
 	    *err = E_PARSE;
+	}
+    } else if (filter->mode == FILT_MISSMASK) {
+	double x = dset->Z[filter->lhcol][i];
+
+	if (filter->op == B_EQ) {
+	    ret = na(x);
+	} else {
+	    ret = !na(x);
 	}
     } else {
 	double x = filter->lhcol ? dset->Z[filter->lhcol][i] : filter->lhval;
@@ -3023,11 +3047,14 @@ static int verify_filter (jr_filter *filter, int lhcol, int rhcol,
 	err = E_DATA;
     } else {
 	filter->lhcol = lhcol;
-	filter->is_string = series_has_string_table(r_dset, lhcol);
+	if (filter->mode != FILT_MISSMASK && 
+	    series_has_string_table(r_dset, lhcol)) {
+	    filter->mode = FILT_STRING;
+	}
 	if (filter->rhname != NULL) {
 	    if (rhcol > 0) {
 		filter->rhcol = rhcol;
-	    } else if (!filter->is_string) {
+	    } else if (filter->mode != FILT_STRING) {
 		fprintf(stderr, "join: filter column '%s' was not found\n", 
 			filter->rhname);
 		err = E_DATA;
@@ -3692,6 +3719,56 @@ static int join_fetch_data (joiner *jr, int v)
     return err;
 }
 
+static jr_filter *join_filter_new (int *err)
+{
+    jr_filter *filter = malloc(sizeof *filter);
+
+    if (filter == NULL) {
+	*err = E_ALLOC;
+    } else {
+	filter->lhname = NULL;
+	filter->rhname = NULL;
+	filter->lhval = NADBL;
+	filter->rhval = NADBL;
+	filter->lhcol = 0;
+	filter->rhcol = 0;
+	filter->mode = FILT_NUMERIC;
+    }
+
+    return filter;
+}
+
+/* Check for a filter of the MISSMASK type; that is, of the
+   form missing(colname), !missing(colname) or ok(colname),
+   where "colname" should identify a column in the outer
+   data file. Such a filter selects rows on which the
+   target series is NA, or not-NA, as the case may be.
+*/
+
+static jr_filter *try_missval_filter (const char *s, int *err)
+{
+    jr_filter *filter = NULL;
+
+    if (!strncmp(s, "missing(", 8) || !strncmp(s, "!missing(", 9) ||
+	!strncmp(s, "ok(", 3)) {
+	const char *p = strrchr(s, ')');
+
+	if (p != NULL && *(p+1) == '\0' && strchr(s, ')') == p) {
+	    int op = *s == 'm' ? B_EQ : B_NEQ;
+
+	    filter = join_filter_new(err);
+	    if (filter != NULL) {
+		s = strchr(s, '(') + 1;
+		filter->lhname = gretl_strndup(s, strlen(s) - 1);
+		filter->op = op;
+		filter->mode = FILT_MISSMASK;
+	    }
+	}
+    }
+
+    return filter;
+}
+
 /* parse a filter string of the form <lhs> <op> <rhs> */
 
 static jr_filter *make_join_filter (const char *s,
@@ -3744,17 +3821,7 @@ static jr_filter *make_join_filter (const char *s,
     }
 
     if (!*err) {
-	filter = malloc(sizeof *filter);
-	if (filter == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    filter->lhname = NULL;
-	    filter->rhname = NULL;
-	    filter->lhval = NADBL;
-	    filter->rhval = NADBL;
-	    filter->lhcol = 0;
-	    filter->rhcol = 0;
-	}
+	filter = join_filter_new(err);
     }
 
     if (!*err) {
@@ -4131,7 +4198,10 @@ int join_from_csv (const char *fname,
 #endif
 
     if (filtstr != NULL) {
-	filter = make_join_filter(filtstr, &err);
+	filter = try_missval_filter(filtstr, &err);
+	if (filter == NULL && !err) {
+	    filter = make_join_filter(filtstr, &err);
+	}
 	if (err) {
 	    fprintf(stderr, "join: error %d processing row filter\n", err);
 	}

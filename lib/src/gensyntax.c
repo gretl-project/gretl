@@ -544,18 +544,20 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	parser_getc(p);
     }
 
-    /* check for a nested function call (2013-08-25) */
-    src = p->point - 1;
-    n = gretl_namechar_spn(src);
-    if (n > 0 && n < FN_NAMELEN && src[n] == '(') {
-	char fntest[FN_NAMELEN];
+    if (!fncall_func(sym)) {
+	/* check for a nested function call (2013-08-25) */
+	src = p->point - 1;
+	n = gretl_namechar_spn(src);
+	if (n > 0 && n < FN_NAMELEN && src[n] == '(') {
+	    char fntest[FN_NAMELEN];
 
-	*fntest = '\0';
-	strncat(fntest, src, n);
-	src = NULL;
-	if (function_lookup(fntest) ||
-	    get_user_function_by_name(fntest)) {
-	    return base(p, t);
+	    *fntest = '\0';
+	    strncat(fntest, src, n);
+	    src = NULL;
+	    if (function_lookup(fntest) ||
+		get_user_function_by_name(fntest)) {
+		return base(p, t);
+	    }
 	}
     }
 
@@ -1008,7 +1010,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	if (i > 0 && i < k - 1 && (opt & MID_STR)) {
 	    child = get_middle_string_arg(p);
 	} else if (i == k - 1 && (opt & RIGHT_STR)) {
-	    child = get_final_string_arg(p, t, 0, 0);
+	    child = get_final_string_arg(p, t, f, 0);
 	} else {
 	    child = expr(p);
 	}

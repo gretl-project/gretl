@@ -749,11 +749,11 @@ static int write_data_for_stata (const DATASET *dset,
     int err;
 
     *save_na = '\0';
-    strncat(save_na, get_csv_na_string(), 7);
-    set_csv_na_string(".");
+    strncat(save_na, get_csv_na_write_string(), 7);
+    set_csv_na_write_string(".");
     sdata = g_strdup_printf("%sstata.csv", gretl_dotdir());
     err = write_data(sdata, NULL, dset, OPT_C, 0);
-    set_csv_na_string(save_na);
+    set_csv_na_write_string(save_na);
  
     if (err) {
 	gretl_errmsg_sprintf("write_data_for_stata: failed with err = %d\n", err);
