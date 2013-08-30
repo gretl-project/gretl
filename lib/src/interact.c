@@ -5448,7 +5448,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case RENAME:
-	fprintf(stderr, "RENAME: param='%s', parm2='%s'\n", cmd->param, cmd->parm2);
 	err = dataset_rename_series(dset, atoi(cmd->parm2), cmd->param);
 	if (!err) {
 	    maybe_list_vars(dset, prn);

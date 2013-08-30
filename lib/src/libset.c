@@ -1417,8 +1417,6 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_header(N_("Program interaction and behavior"), prn, opt);
 
     if (opt & OPT_D) {
-	const char *s;
-
 	pprintf(prn, " csv_delim = %s\n", arg_from_delim(data_delim));
 	pprintf(prn, " csv_write_na = %s\n", get_csv_na_write_string());
 	pprintf(prn, " csv_read_na = %s\n", get_csv_na_read_string());
