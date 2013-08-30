@@ -37,6 +37,19 @@ version 1.9.13, in progress
 - Fix bug: $obsminor and $obsmicro not working with weekly 
   datasets
 - Fix bug: matrix re-import from octave was broken
+- Fix bug: functions such as obsnum() which expect a string 
+  argument were failing when the argument was given in the form 
+  of a function that returns a string
+- Fix bug: when python code is embedded in a gretl "foreign" 
+  block within a user-defined function, indentation of the 
+  python code was not being respected
+- Fix bug: in the context of the ternary query operator (as in 
+  "condition ? true_branch : false_branch") the presence of an
+  undefined symbol was generating an error even if this symbol
+  was confined to the non-selected branch
+- Fix bug: the "modeltab" command with the --output=filename
+  option was not working properly unless "modeltab show" was 
+  executed first
 - Stata .dta importer: read Stata 12 data files
 - xlsx importer: handle "inline" strings
 
