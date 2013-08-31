@@ -2866,6 +2866,7 @@ struct obskey_ {
     char *timefmt;
     int keycol;
     int m_means_q;
+    int convert;
 };
 
 typedef struct obskey_ obskey;
@@ -3029,6 +3030,16 @@ static int join_row_wanted (DATASET *dset, int i,
     return ret;
 }
 
+static int convert_to_string (char *targ, double x)
+{
+    if (na(x)) {
+	return E_MISSDATA;
+    } else {
+	sprintf(targ, "%.16g", x);
+	return 0;
+    }
+}
+
 /* Parse the obs string on row @i of the outer dataset and set the
    key(s) on row @j of the joiner struct, representing year and month or
    quarter. We get here only if we have verified that the obs strings
@@ -3040,13 +3051,20 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     char *tfmt = jr->auto_keys.timefmt;
     int tcol = jr->auto_keys.keycol;
     struct tm t = {0};
+    char sconv[32];
     const char *s;
     char *test;
     int err = 0;
 
     if (tcol >= 0) {
-	/* using a specified string-valued column */
-	s = series_get_string_val(jr->r_dset, tcol, i);	
+	/* using a specified column */
+	if (jr->auto_keys.convert) {
+	    convert_to_string(sconv, jr->r_dset->Z[tcol][i]);
+	    s = sconv;
+	} else {
+	    /* column is string-valued, fine */
+	    s = series_get_string_val(jr->r_dset, tcol, i);
+	}
     } else {
 	/* using first-column observation strings */
 	s = jr->r_dset->S[i];
@@ -4222,6 +4240,7 @@ int join_from_csv (const char *fname,
 
     auto_keys.timefmt = NULL;
     auto_keys.keycol = -1;
+    auto_keys.convert = 0;
 
 #if CDEBUG
     fputs("*** join_from_csv:\n", stderr);
@@ -4371,10 +4390,11 @@ int join_from_csv (const char *fname,
 	    /* time key on right: should be string */
 	    int rstr = series_has_string_table(jspec.c->dset, okeyvars[1]);
 	    
-	    if (!rstr) {
-		err = E_TYPES;
+	    if (rstr) {
+		auto_keys.keycol = okeyvars[1];
 	    } else {
 		auto_keys.keycol = okeyvars[1];
+		auto_keys.convert = 1;
 	    }
 	} else {
 	    int lstr = series_has_string_table(dset, ikeyvars[1]);

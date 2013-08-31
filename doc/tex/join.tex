@@ -90,7 +90,8 @@ import it as \texttt{x}.
 \section{Filtering}
 
 Rows from the outer dataset can be filtered using the \verb|--filter|
-option, which has a required argument of the form
+option. In its basic version this option has a required argument of
+the form
 
 \qquad \textsl{term1} \textsl{op} \textsl{term2}
 
@@ -98,8 +99,8 @@ option, which has a required argument of the form
 \textsl{term2} must be the name of a series (column) present in the
 right-hand side dataset. The other may also be the name of a
 right-hand series, or it may be a numerical or string constant (with
-the type matching the specified series). For numerical data
-\textsl{op} can be one of
+the type---numeric or string---matching that of the specified
+series). For numerical data \textsl{op} can be any one of
 
 \qquad \verb|==|, \verb|>|, \verb|<|, \verb|>=|, \verb|<=|, or
 \verb|!=|
@@ -134,6 +135,28 @@ specified right-hand side columns are found):
 
 --filter=nkids>2
 \end{code}
+
+\subsection{Filtering on missing/non-missing values}
+
+A variant of the filter option is available, to select rows based on
+whether the value in a given named column is valid or missing. Let
+\texttt{colname} stand in for the name of the column in question; then
+
+\begin{code}
+--filter=missing(colname)
+\end{code}
+
+will select only rows on which there is no valid \texttt{colname}
+value, while
+
+\begin{code}
+--filter=!missing(colname)
+\end{code}
+
+will select only rows on which a valid \texttt{colname} value is
+present. The selector \texttt{ok()} may be used as a synonym for
+\texttt{!missing()}.
+
 
 \section{Matching with keys}
 \label{sec:join-keys}
