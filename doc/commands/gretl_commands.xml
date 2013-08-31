@@ -9875,8 +9875,8 @@
 	  reimposed by giving <lit>default</lit> as the value for
 	  <lit>csv_read_na</lit>. To specify that only empty cells
 	  are read as NAs, give a value of <lit>""</lit>. Note that
-	  empty cells are always read as NAs even if a specific
-	  string is provided.
+	  empty cells are always read as NAs regardless of the setting
+	  of this variable.
 	  </para>
 	</li>
 	<li>

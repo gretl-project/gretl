@@ -3041,9 +3041,9 @@ static int convert_to_string (char *targ, double x)
 }
 
 /* Parse the obs string on row @i of the outer dataset and set the
-   key(s) on row @j of the joiner struct, representing year and month or
-   quarter. We get here only if we have verified that the obs strings
-   exist. The indices @i and @j may not be equal if a filter is being used.
+   key(s) on row @j of the joiner struct. We get here only if we have 
+   verified that the obs strings exist. The indices @i and @j may not 
+   be equal if a filter is being used.
 */
 
 static int read_outer_auto_keys (joiner *jr, int j, int i)
@@ -4180,6 +4180,14 @@ static int auto_keys_check (const DATASET *l_dset,
     return err;
 }
 
+static void obskey_init (obskey *keys)
+{
+    keys->timefmt = NULL;
+    keys->keycol = -1;
+    keys->m_means_q = 0;
+    keys->convert = 0;
+}
+
 /**
  * join_from_csv:
  * @fname: name of delimited text data file.
@@ -4221,7 +4229,7 @@ int join_from_csv (const char *fname,
     int okeyvars[3] = {0, 0, 0};
     char okeyname1[CSVSTRLEN] = {0};
     char okeyname2[CSVSTRLEN] = {0};
-    obskey auto_keys = {0};
+    obskey auto_keys;
     int targvar, orig_v = dset->v;
     int str_keys = 0;
     int str_keys2 = 0;
@@ -4238,9 +4246,7 @@ int join_from_csv (const char *fname,
 	n_keys = ikeyvars[0];
     }
 
-    auto_keys.timefmt = NULL;
-    auto_keys.keycol = -1;
-    auto_keys.convert = 0;
+    obskey_init(&auto_keys);
 
 #if CDEBUG
     fputs("*** join_from_csv:\n", stderr);
@@ -4387,13 +4393,12 @@ int join_from_csv (const char *fname,
 	    fprintf(stderr, "join: error finding outer key columns\n");
 	    err = E_DATA;
 	} else if (opt & OPT_K) {
-	    /* time key on right: should be string */
+	    /* time key on right */
 	    int rstr = series_has_string_table(jspec.c->dset, okeyvars[1]);
-	    
-	    if (rstr) {
-		auto_keys.keycol = okeyvars[1];
-	    } else {
-		auto_keys.keycol = okeyvars[1];
+
+	    auto_keys.keycol = okeyvars[1];
+	    if (!rstr) {
+		/* flag the need to convert to string later */
 		auto_keys.convert = 1;
 	    }
 	} else {
