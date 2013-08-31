@@ -4462,11 +4462,16 @@ static int join_aggregation_method (const char *s, int *seqval,
     int ret = -1;
 
     if (!strncmp(s, "seq:", 4)) {
-	*seqval = atoi(s + 4);
-	if (*seqval >= 1) {
+	if (!strncmp(s + 4, "last", 4)) {
+	    *seqval = INT_MAX;
 	    ret = AGGR_SEQ;
 	} else {
-	    *err = E_DATA;
+	    *seqval = atoi(s + 4);
+	    if (*seqval != 0) {
+		ret = AGGR_SEQ;
+	    } else {
+		*err = E_DATA;
+	    }
 	}
     } else if (!strcmp(s, "count")) {
 	ret = AGGR_COUNT;

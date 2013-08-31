@@ -3368,6 +3368,20 @@ static void joiner_print (joiner *jr)
 
 #endif
 
+static int seqval_out_of_bounds (joiner *jr, int seqmax)
+{
+    if (jr->seqval == INT_MAX) {
+	/* signal for last match */
+	return 0;
+    } else if (jr->seqval < 0) {
+	/* counting down from last match */
+	return -jr->seqval >= seqmax;
+    } else {
+	/* counting up from first match */
+	return jr->seqval > seqmax;
+    }
+}
+
 static double aggr_retval (int key, const char *lstr,
 			   const char **rlabels,
 			   int key2, const char *lstr2,
@@ -3424,7 +3438,7 @@ static double aggr_retval (int key, const char *lstr,
 	if (jr->aggr == AGGR_COUNT) {
 	    /* simple, we're done */
 	    return n1;
-	} else if (jr->aggr == AGGR_SEQ && jr->seqval > n1) {
+	} else if (jr->aggr == AGGR_SEQ && seqval_out_of_bounds(jr, n1)) {
 	    /* out of bounds sequence index */
 	    return NADBL;
 	} else if (n1 > 1 && jr->aggr == AGGR_NONE) {
@@ -3531,9 +3545,15 @@ static double aggr_retval (int key, const char *lstr,
     } else if (jr->aggr == AGGR_NONE) {
 	x = xmatch[0];
     } else if (jr->aggr == AGGR_SEQ) {
-	i = jr->seqval - 1;
-	if (i >= 0 && i < n) {
-	    x = xmatch[i];
+	if (jr->seqval == INT_MAX) {
+	    x = xmatch[n-1];
+	} else {
+	    int sval = jr->seqval - 1;
+
+	    i = sval < 0 ? n + sval : sval;
+	    if (i >= 0 && i < n) {
+		x = xmatch[i];
+	    }	    
 	}
     } else if (jr->aggr == AGGR_MAX) {
 	if (jr->auxcol) {

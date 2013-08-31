@@ -318,10 +318,14 @@ methods require that ``actual data'' are found on the right.  Also
 note that when \texttt{count} is used, the value returned when no
 match is found is (as one might expect) zero rather than \texttt{NA}.
 
-With 1:$n$ matching, it may be that the number of matches differs
-across the observations on the left. The \texttt{seq} method returns
-\texttt{NA} when the (1-based) sequence parameter $i$ exceeds the
-number of matches for a given observation.
+The \texttt{seq} method accepts three sorts of suffix. The basic one
+is shown above: a positive integer representing the (1-based) position
+of the observation in the sequence of matched rows. Alternatively, a
+suffix of \texttt{last} can be given to select the last matching
+observation, or a negative integer can be used to count down from the
+last match (for instance, \texttt{seq:-1} selects the second-last
+match). If the specified sequence number is out of bounds for
+a given observation this method returns \texttt{NA}.
 
 Referring again to the data in Table~\ref{tab:csv}, suppose we want to
 import data from the persons file into a dataset established at
