@@ -424,7 +424,7 @@ enum {
 /* functions taking a string arg in last position */
 #define string_last_func(s) (s == F_FDJAC || s == F_BFGSMAX || \
                              s == F_NRMAX || s == F_DESEAS || \
-			     s == F_AGGRBY)
+			     s == F_AGGRBY || s == F_INBUNDLE)
 
 /* functions taking string arg in middle position */
 #define string_mid_func(s) (s == F_BFGSMAX || s == F_NRMAX || s == F_SIMANN)

@@ -230,6 +230,25 @@ delete foo["quoted key"]
 This destroys the object associated with the key and removes the key
 from the hash table.
 
+To determine whether a bundle contains an object associated with a
+given key, use the \texttt{inbundle()} function. This takes two
+arguments: the name of the bundle and the key string. If the key
+string contains embedded spaces it must be double-quoted, otherwise
+quotation is optional. The value returned by this function is an
+integer which codes for the type of the object (0 for no match, 1 for
+scalar, 2 for series, 3 for matrix, 4 for string and 5 for
+bundle). The function \texttt{typestr()} may be used to get the string
+corresponding to this code. For example:
+
+\begin{code}
+scalar type = inbundle(foo, x)
+if type == 0
+  print "x: no such object"
+else
+  printf "x is of type %s\n", typestr(type)
+endif
+\end{code}
+
 Besides adding, accessing, replacing and deleting individual items,
 the other operations that are supported for bundles are union,
 printing and deletion. As regards union, if bundles \texttt{b1} and
