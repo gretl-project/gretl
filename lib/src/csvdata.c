@@ -1475,7 +1475,7 @@ static void compress_csv_line (csvdata *c)
 
 int import_obs_label (const char *s)
 {
-    char tmp[OBSLEN];
+    char tmp[VNAMELEN];
 
     if (s == NULL) {
 	return 1;
@@ -1487,18 +1487,20 @@ int import_obs_label (const char *s)
 	return 1;
     }
 
-    if (strlen(s) > OBSLEN - 1) {
+    if (strlen(s) > VNAMELEN - 1) {
 	return 0;
     }
 
     *tmp = '\0';
-    strncat(tmp, s, OBSLEN - 1);
+    strncat(tmp, s, VNAMELEN - 1);
     gretl_lower(tmp);
 
     return (!strcmp(tmp, "obs") ||
 	    !strcmp(tmp, "date") || 
 	    !strcmp(tmp, "year") || 
-	    !strcmp(tmp, "period"));    
+	    !strcmp(tmp, "period") ||
+	    !strcmp(tmp, "observation") ||
+	    !strcmp(tmp, "observation_date"));
 }
 
 static int join_wants_col_zero (csvdata *c, const char *s)
