@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-06-14 21:35-0400\n"
-"PO-Revision-Date: 2013-06-14 10:03+0200\n"
+"PO-Revision-Date: 2013-09-02 12:16+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -12073,14 +12073,12 @@ msgid "_Save text as..."
 msgstr "_Guardar el texto como..."
 
 #: gui2/gui_utils.c:386
-#, fuzzy
 msgid "Save bundle to session as _icon"
-msgstr "Guardar a sesión como _icono"
+msgstr "Guardar el bundle en la sesión como _icono"
 
 #: gui2/gui_utils.c:388
-#, fuzzy
 msgid "Save bundle as icon and cl_ose"
-msgstr "Guardar c_omo icono y cerrar"
+msgstr "Guardar el bundle c_omo icono y cerrar"
 
 #: gui2/gui_utils.c:393
 msgid "_Graph"
