@@ -4554,7 +4554,6 @@ static NODE *getline_node (NODE *l, NODE *r, parser *p)
 	    gretl_errmsg_set("getline: the source must be a string variable");
 	    p->err = E_TYPES;
 	} else if (null_or_empty(r)) {
-	    fprintf(stderr, "HERE: null or empty\n");
 	    bufgets_finalize(buf);
 	} else if (r->vname == NULL) {
 	    gretl_errmsg_set("getline: the target must be a string variable");
@@ -4570,15 +4569,9 @@ static NODE *getline_node (NODE *l, NODE *r, parser *p)
 		} else {
 		    r->v.str = user_string_resize(r->vname, len, &p->err);
 		    if (!p->err) {
-			char *test = bufgets(r->v.str, len, buf);
-
-			if (test == NULL) {
-			    strcpy(r->v.str, "");
-			    ret->v.xval = 0;
-			} else {
-			    strip_newline(r->v.str);
-			    ret->v.xval = 1;
-			}
+			bufgets(r->v.str, len, buf);
+			strip_newline(r->v.str);
+			ret->v.xval = 1;
 		    }
 		}
 	    }
