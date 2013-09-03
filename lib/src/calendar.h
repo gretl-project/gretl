@@ -32,6 +32,8 @@
 
 long epoch_day_from_ymd (int y, int m, int d);
 
+char *ymd_from_epoch_day (long ed, int *err);
+
 long get_epoch_day (const char *date);
 
 int get_day_of_week (const char *date);

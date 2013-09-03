@@ -697,6 +697,30 @@ int user_var_replace_value (user_var *uvar, void *value)
     return 0;
 }
 
+char *user_string_resize (const char *name, size_t len, int *err)
+{
+    user_var *u = get_user_var_by_name(name);
+
+    if (u == NULL) {
+	*err = E_UNKVAR;
+	return NULL;
+    } else {
+	char *orig = u->ptr;
+
+	if (orig == NULL || len > strlen(orig) + 1) {
+	    char *tmp = realloc(u->ptr, len);
+
+	    if (tmp == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		u->ptr = tmp;
+	    }
+	}
+    }
+
+    return (char *) u->ptr;
+}
+
 int user_var_add_or_replace (const char *name,
 			     GretlType type,
 			     void *value)

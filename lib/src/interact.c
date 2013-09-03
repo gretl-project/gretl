@@ -4462,16 +4462,14 @@ static int join_aggregation_method (const char *s, int *seqval,
     int ret = -1;
 
     if (!strncmp(s, "seq:", 4)) {
-	if (!strncmp(s + 4, "last", 4)) {
-	    *seqval = INT_MAX;
+	char *endptr;
+
+	*seqval = (int) strtol(s + 4, &endptr, 10);
+	if (*endptr == '\0' && *seqval != 0) {
 	    ret = AGGR_SEQ;
 	} else {
-	    *seqval = atoi(s + 4);
-	    if (*seqval != 0) {
-		ret = AGGR_SEQ;
-	    } else {
-		*err = E_DATA;
-	    }
+	    gretl_errmsg_sprintf(_("%s: invalid input '%s'\n"), "--seq", s + 4);
+	    *err = E_DATA;
 	}
     } else if (!strcmp(s, "count")) {
 	ret = AGGR_COUNT;
@@ -4598,12 +4596,13 @@ static int lib_join_data (ExecState *s,
 	OPT_R, /* revision spec (real-time) */ 
 	OPT_T, /* time/date format spec */ 
 	OPT_K, /* outer time-column name */
+	OPT_X, /* list of time/date columns */
 	0 
     };
     const char *param;
     char *p, *okey = NULL, *filter = NULL;
     char *varname = NULL, *dataname = NULL;
-    char *auxname = NULL;
+    char *auxname = NULL, *timecols = NULL;
     int *ikeyvars = NULL;
     int aggr = 0, seqval = 0;
     int time_opt = 0;
@@ -4680,6 +4679,9 @@ static int lib_join_data (ExecState *s,
 	    } else if (jopt == OPT_K) {
 		/* string specifying outer time key */
 		okey = gretl_strdup(param);
+	    } else if (jopt == OPT_X) {
+		/* string holding list of time/date cols */
+		timecols = gretl_strdup(param);
 	    }
 	}
     }
@@ -4726,7 +4728,8 @@ static int lib_join_data (ExecState *s,
 	err = join_from_csv(newfile, varname, dset, 
 			    ikeyvars, okey, filter,
 			    dataname, aggr, seqval, 
-			    auxname, opt, vprn);
+			    auxname, timecols,
+			    opt, vprn);
     }	
 
     free(ikeyvars);
@@ -4735,6 +4738,7 @@ static int lib_join_data (ExecState *s,
     free(dataname);
     free(varname);
     free(auxname);
+    free(timecols);
 
     return err;
 }

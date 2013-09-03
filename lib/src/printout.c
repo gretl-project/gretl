@@ -2868,10 +2868,9 @@ static readbuf *matching_buffer (const char *s)
 
 int bufgets_init (const char *buf)
 {
-    readbuf *tmp = NULL;
+    readbuf *tmp = matching_buffer(buf);
     int i, err = 0;
 
-    tmp = matching_buffer(buf);
     if (tmp != NULL) {
 	fprintf(stderr, "GRETL ERROR: buffer at %p is already "
 		"initialized\n", (void *) buf);
@@ -2897,6 +2896,15 @@ int bufgets_init (const char *buf)
     }
 
     return err;
+}
+
+int query_bufgets_init (const char *buf)
+{
+    if (matching_buffer(buf) != NULL) {
+	return 0; /* OK */
+    } else {
+	return bufgets_init(buf);
+    }
 }
 
 static const char *rbuf_get_point (const char *s)
@@ -3014,6 +3022,27 @@ char *bufgets (char *s, size_t size, const char *buf)
     rbuf_set_point(buf, p);
 
     return s;
+}
+
+size_t bufgets_peek_line_length (const char *buf)
+{
+    const char *p = rbuf_get_point(buf);
+    size_t len = 0;
+ 
+    if (p == NULL || *p == '\0') {
+	return 0;
+    }
+
+    while (*p) {
+	if (*p == '\r' || *p == '\n') {
+	    break;
+	} else {
+	    len++;
+	    p++;
+	}
+    }
+
+    return len + 1;
 }
 
 /**

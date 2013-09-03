@@ -4513,6 +4513,81 @@ static NODE *errmsg_node (NODE *l, parser *p)
     return ret;
 }
 
+static NODE *ymd_node (NODE *l, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL && starting(p)) {
+	if (l->v.xval >= 1 && l->v.xval <= LONG_MAX) {
+	    ret->v.str = ymd_from_epoch_day((long) l->v.xval, &p->err);
+	} else {
+	    p->err = E_DATA;
+	}
+    }
+
+    return ret;
+}
+
+static void strip_newline (char *s)
+{
+    if (s != NULL && *s != '\0') {
+	int i, len = strlen(s);
+
+	for (i=len-1; i>=0; i--) {
+	    if (s[i] == '\n' || s[i] == '\r') {
+		s[i] = '\0';
+	    } else {
+		break;
+	    }
+	}
+    }
+} 
+
+static NODE *getline_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const char *buf = l->v.str;
+
+	if (l->vname == NULL) {
+	    gretl_errmsg_set("getline: the source must be a string variable");
+	    p->err = E_TYPES;
+	} else if (null_or_empty(r)) {
+	    fprintf(stderr, "HERE: null or empty\n");
+	    bufgets_finalize(buf);
+	} else if (r->vname == NULL) {
+	    gretl_errmsg_set("getline: the target must be a string variable");
+	} else {
+	    p->err = query_bufgets_init(buf);
+	    if (!p->err) {
+		size_t len = bufgets_peek_line_length(buf);
+
+		if (len == 0) {
+		    bufgets_finalize(buf);
+		    strcpy(r->v.str, "");
+		    ret->v.xval = 0;
+		} else {
+		    r->v.str = user_string_resize(r->vname, len, &p->err);
+		    if (!p->err) {
+			char *test = bufgets(r->v.str, len, buf);
+
+			if (test == NULL) {
+			    strcpy(r->v.str, "");
+			    ret->v.xval = 0;
+			} else {
+			    strip_newline(r->v.str);
+			    ret->v.xval = 1;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static int series_get_start (int t1, int t2, const double *x)
 {
     int t;
@@ -6495,18 +6570,20 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	}
     } else if (f == F_MONTHLEN) {
 	post_process = 0;
-	if (l->t != NUM) {
+	if (!scalar_node(l)) {
 	    node_type_error(f, 1, NUM, l, p);
-	} else if (m->t != NUM) {
+	} else if (!scalar_node(m)) {
 	    node_type_error(f, 2, NUM, m, p);
-	} else if (r->t != NUM) {
+	} else if (!scalar_node(r)) {
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
-	    int mo = l->v.xval;
-	    int yr = m->v.xval;
-	    int wk = r->v.xval;
+	    int mo = node_get_int(l, p);
+	    int yr = node_get_int(m, p);
+	    int wk = node_get_int(r, p);
 
-	    if (yr < 0 || mo < 1 || mo > 12 ||
+	    if (p->err) {
+		; /* from node_get_int() */
+	    } else if (yr < 0 || mo < 1 || mo > 12 ||
 		(wk != 5 && wk != 6 && wk != 7)) {
 		p->err = E_INVARG;
 	    } else {
@@ -6518,18 +6595,20 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	}
     } else if (f == F_EPOCHDAY) {
 	post_process = 0;
-	if (l->t != NUM) {
+	if (!scalar_node(l)) {
 	    node_type_error(f, 1, NUM, l, p);
-	} else if (m->t != NUM) {
+	} else if (!scalar_node(m)) {
 	    node_type_error(f, 2, NUM, m, p);
-	} else if (r->t != NUM) {
+	} else if (!scalar_node(r)) {
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
-	    int y = l->v.xval;
-	    int mo = m->v.xval;
-	    int d = r->v.xval;
+	    int y = node_get_int(l, p);
+	    int mo = node_get_int(m, p);
+	    int d = node_get_int(r, p);
 
-	    if (y < 0 || mo < 1 || mo > 12 || d < 0 || d > 31) {
+	    if (p->err) {
+		; /* from node_get_int() */
+	    } else if (y < 0 || mo < 1 || mo > 12 || d < 0 || d > 31) {
 		p->err = E_INVARG;
 	    } else {
 		ret = aux_scalar_node(p);
@@ -9963,9 +10042,24 @@ static NODE *eval (NODE *t, parser *p)
 			    (l->t == STR)? r : l, p);
 	}
 	break;
+    case F_GETLINE:
+	if (l->t == STR && (r->t == STR || null_or_empty(r))) {
+	    ret = getline_node(l, r, p);
+	} else {
+	    node_type_error(t->t, (l->t == STR)? 2 : 1,
+			    STR, (l->t == STR)? r : l, p);
+	}
+	break;
     case F_ERRMSG:
 	if (l->t == NUM || l->t == EMPTY) {
 	    ret = errmsg_node(l, p);
+	} else {
+	    node_type_error(t->t, 0, NUM, l, p);
+	}
+	break;
+    case F_YMD:
+	if (l->t == NUM) {
+	    ret = ymd_node(l, p);
 	} else {
 	    node_type_error(t->t, 0, NUM, l, p);
 	}

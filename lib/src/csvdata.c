@@ -63,6 +63,8 @@ typedef struct csvdata_ csvdata;
 struct csvjoin_ {
     const char *colnames[JOIN_MAXCOL];
     char colnums[JOIN_MAXCOL];
+    char colstatus[JOIN_MAXCOL];
+    int *tcollist;
     csvdata *c;
 };    
 
@@ -1562,6 +1564,12 @@ void import_na_init (void)
     strcpy(import_na, s);
 }
 
+/* Returns 1 if the string @s should be counted representing
+   an NA or missing value, 0 otherwise. If there is a user-set 
+   "csv_read_na" value this is used for comparison, otherwise
+   a set of default values is consulted.
+*/
+
 int import_na_string (const char *s)
 {
     if (strcmp(import_na, "default")) {
@@ -1621,6 +1629,15 @@ static int csv_missval (const char *str, int i, int t,
     return miss;
 }
 
+static int is_join_timecol (csvdata *c, int i)
+{
+    if (c->jspec != NULL) {
+	return in_gretl_list(c->jspec->tcollist, i);
+    } else {
+	return 0;
+    }
+}
+
 static int non_numeric_check (csvdata *c, PRN *prn)
 {
     int *list = NULL;
@@ -1628,6 +1645,16 @@ static int non_numeric_check (csvdata *c, PRN *prn)
     int err = 0;
 
     for (i=1; i<c->dset->v; i++) {
+	if (is_join_timecol(c, i)) {
+	    /* we'll treat all "time columns" as string-valued */
+	    for (t=0; t<c->dset->n; t++) {
+		if (!na(c->dset->Z[i][t])) {
+		    c->dset->Z[i][t] = NON_NUMERIC;
+		}
+	    }
+	    nn++;
+	    break;
+	}
 	for (t=0; t<c->dset->n; t++) {
 	    if (c->dset->Z[i][t] == NON_NUMERIC) {
 		nn++;
@@ -1983,9 +2010,11 @@ static int update_join_cols_list (csvdata *c, int k)
     int *test;
     int err = 0;
 
+#if 0
     if (!csv_skip_column(c)) {
 	k++;
     }
+#endif
 
     test = gretl_list_append_term(&c->cols_list, k);
 
@@ -2031,8 +2060,12 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
     int i, j = *pj;
 
 #if CDEBUG
-    fprintf(stderr, "varnames: looking at '%s'\n", c->str);
+    fprintf(stderr, "join_varname: looking at '%s'\n", c->str);
 #endif
+
+    if (!csv_skip_column(c)) {
+	k++;
+    }
 
     for (i=0; i<JOIN_MAXCOL; i++) {
 	/* find "wanted name" i */
@@ -2052,6 +2085,9 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 		strncat(c->dset->varname[j], c->str, VNAMELEN - 1);
 		update_join_cols_list(c, k);
 		*pj += 1;
+		if (in_gretl_list(c->jspec->tcollist, k)) {
+		    c->jspec->colstatus[i] = 't';
+		}
 	    }
 	}
     }
@@ -2381,6 +2417,7 @@ static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     if (mprn != NULL) {
 	pputs(mprn, A_("scanning for row labels and data...\n"));
     }
+
     err = real_read_labels_and_data(c, fp, prn);
 
     if (!err && csv_skip_column(c) && !rows_subset(c) && !joining(c)) {
@@ -2933,6 +2970,61 @@ static void joiner_destroy (joiner *jr)
     }
 }
 
+static int filter_by_date (const char *s1, const char *s2, int op, 
+			   int *err)
+{
+    const char *isofmt = "%Y-%m-%d";
+    char *test;
+    int i, ed[2];
+    int ret = 0;
+
+    for (i=0; i<2 && !*err; i++) {
+	const char *s = i == 0 ? s1 : s2;
+	struct tm t = {0};
+
+	test = strptime(s, isofmt, &t);
+	if (test == NULL || *test != '\0') {
+	    gretl_errmsg_sprintf("'%s' does not match the format '%s'", s, isofmt);
+	    *err = E_DATA;
+	} else {
+	    int y = t.tm_year + 1900;
+	    int m = t.tm_mon + 1;
+	    int d = t.tm_mday;
+
+	    ed[i] = epoch_day_from_ymd(y, m, d);
+	    if (ed[i] < 0) {
+		gretl_errmsg_sprintf("'%s' is not a valid date", s);
+		*err = E_DATA;
+	    }
+	}
+    }
+
+    if (!*err) {
+	if (op == B_EQ) {
+	    ret = ed[0] == ed[1];
+	} else if (op == B_GT) {
+	    ret = ed[0] > ed[1];
+	} else if (op == B_LT) {
+	    ret = ed[0] < ed[1];
+	} else if (op == B_GTE) {
+	    ret = ed[0] >= ed[1];
+	} else if (op == B_LTE) {
+	    ret = ed[0] <= ed[1];
+	} else if (op == B_NEQ) {
+	    ret = ed[0] != ed[1];
+	} else {
+	    *err = E_PARSE;
+	}	
+    }
+
+#if CDEBUG > 1
+    fprintf(stderr, "date filter: '%s' -> %d and '%s' -> %d; ret = %d\n",
+	    s1, ed[0], s1, ed[1], ret);
+#endif
+
+    return ret;
+}
+
 /* In relation to join, determine whether or not row @i of the data
    read from CSV satisfies the filter criterion; return 1 iff the
    condition is met.  
@@ -2940,6 +3032,7 @@ static void joiner_destroy (joiner *jr)
 
 static int join_row_wanted (DATASET *dset, int i,
 			    jr_filter *filter, 
+			    csvjoin *jspec,
 			    int *err)
 {
     int ret = 0;
@@ -2950,24 +3043,27 @@ static int join_row_wanted (DATASET *dset, int i,
     }
 
     if (filter->mode == FILT_STRING) {
+	int lhdate = 0, rhdate = 0;
 	const char *sx;
 	const char *sy;
 	size_t slen;
 
 	if (filter->lhcol) {
 	    sx = series_get_string_val(dset, filter->lhcol, i);
+	    lhdate = (jspec->colstatus[JOIN_LHF] == 't');
 	} else {
 	    sx = filter->lhname;
 	}
 
 	if (filter->rhcol) {
 	    sy = series_get_string_val(dset, filter->rhcol, i);
+	    rhdate = (jspec->colstatus[JOIN_RHF] == 't');
 	} else {
 	    sy = filter->rhname;
 	}
 
 	if (sx == NULL || sy == NULL) {
-	    gretl_errmsg_set("join: missing string in filtering");
+	    gretl_errmsg_sprintf(_("%s: missing string in filtering"), "join");
 	    if (filter->lhcol) {
 		fprintf(stderr, "filter: LHS='%s' (from column %d),", sx, filter->lhcol);
 	    } else {
@@ -2979,6 +3075,11 @@ static int join_row_wanted (DATASET *dset, int i,
 		fprintf(stderr, " RHS='%s' (string constant)\n", sy);
 	    }	    
 	    *err = E_MISSDATA;
+	} else if (filter->lhcol && filter->rhcol && lhdate != rhdate) {
+	    gretl_errmsg_set(_("type mismatch in join filter"));
+	    *err = E_TYPES;
+	} else if (lhdate || rhdate) {
+	    ret = filter_by_date(sx, sy, filter->op, err);
 	} else if (filter->op == B_EQ) {
 	    ret = (strcmp(sx, sy) == 0);
 	} else if (filter->op == B_GT) {
@@ -3005,7 +3106,7 @@ static int join_row_wanted (DATASET *dset, int i,
 	double y = filter->rhcol ? dset->Z[filter->rhcol][i] : filter->rhval;
 	
 	if (na(x) || na(y)) {
-	    gretl_errmsg_set("join: found NAs in filtering");
+	    gretl_errmsg_sprintf(_("%s: found NAs in filtering"), "join");
 	    *err = E_MISSDATA;
 	} else if (filter->op == B_EQ) {
 	    ret = x == y;
@@ -3056,6 +3157,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     char sconv[32];
     const char *s;
     char *test;
+    int s_src = 0;
     int err = 0;
 
     if (tcol >= 0) {
@@ -3063,18 +3165,23 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 	if (jr->auto_keys.convert) {
 	    convert_to_string(sconv, jr->r_dset->Z[tcol][i]);
 	    s = sconv;
+	    s_src = 1;
 	} else {
 	    /* column is string-valued, fine */
 	    s = series_get_string_val(jr->r_dset, tcol, i);
+	    s_src = 2;
 	}
     } else {
 	/* using first-column observation strings */
 	s = jr->r_dset->S[i];
+	s_src = 3;
     }
 
     test = strptime(s, tfmt, &t);
     if (test == NULL || *test != '\0') {
 	gretl_errmsg_sprintf("'%s' does not match the format '%s'", s, tfmt);
+	fprintf(stderr, "time-format match error in read_outer_auto_keys: src=%d\n",
+		s_src);
 	err = E_DATA;
     } else if (calendar_data(jr->l_dset)) {
 	int y, m, d, eday;
@@ -3122,9 +3229,8 @@ static int verify_filter (jr_filter *filter, int lhcol, int rhcol,
     int err = 0;
 
     if (filter->lhname != NULL && lhcol == 0) {
-	/* a required filter column is missing */
-	fprintf(stderr, "join: filter column '%s' was not found\n", 
-		filter->lhname);
+	gretl_errmsg_sprintf(_("%s: filter column '%s' was not found"),
+		"join", filter->lhname);
 	err = E_DATA;
     } else {
 	filter->lhcol = lhcol;
@@ -3136,12 +3242,17 @@ static int verify_filter (jr_filter *filter, int lhcol, int rhcol,
 	    if (rhcol > 0) {
 		filter->rhcol = rhcol;
 	    } else if (filter->mode != FILT_STRING) {
-		fprintf(stderr, "join: filter column '%s' was not found\n", 
-			filter->rhname);
+		gretl_errmsg_sprintf(_("%s: filter column '%s' was not found"),
+				     "join", filter->rhname);
 		err = E_DATA;
 	    }
 	}
     }
+
+#if CDEBUG
+    fprintf(stderr, "verify_filter: mode = %d, lhhcol = %d, rhcol = %d\n", 
+	    filter->mode, filter->lhcol, filter->rhcol);
+#endif
 
     return err;
 }
@@ -3153,8 +3264,8 @@ static int dtoi (double x, int obs, int *err)
 {
     if (xna(x) || fabs(x) > INT_MAX) {
 	if (obs > 0) {
-	    gretl_errmsg_sprintf("join: invalid outer key value on row %d",
-				 obs);
+	    gretl_errmsg_sprintf("%s: invalid outer key value on row %d",
+				 "join", obs);
 	}
 	*err = E_DATA;
 	return -1;
@@ -3163,15 +3274,39 @@ static int dtoi (double x, int obs, int *err)
     }
 }
 
+static joiner *joiner_new (int nrows)
+{
+    joiner *jr = malloc(sizeof *jr);
+
+    if (jr != NULL) {
+	jr->rows = malloc(nrows * sizeof *jr->rows);
+	if (jr->rows == NULL) {
+	    free(jr);
+	    jr = NULL;
+	}
+    }
+
+    if (jr != NULL) {
+	jr->n_rows = nrows;
+	jr->n_unique = 0;
+	jr->keys = NULL;
+	jr->key_freq = NULL;
+	jr->l_keyno = NULL;
+	jr->r_keyno = NULL;
+    }
+
+    return jr;
+}
+
 #define using_auto_keys(j) (j->auto_keys.timefmt != NULL)
 
-static joiner *joiner_new (csvjoin *jspec, 
-			   DATASET *l_dset,
-			   jr_filter *filter,
-			   AggrType aggr,
-			   int seqval,
-			   obskey *auto_keys,
-			   int *err)
+static joiner *build_joiner (csvjoin *jspec, 
+			     DATASET *l_dset,
+			     jr_filter *filter,
+			     AggrType aggr,
+			     int seqval,
+			     obskey *auto_keys,
+			     int *err)
 {
     joiner *jr = NULL;
     DATASET *r_dset = jspec->c->dset;
@@ -3181,7 +3316,7 @@ static joiner *joiner_new (csvjoin *jspec,
     int rhfcol  = jspec->colnums[JOIN_RHF];
     int key2col = jspec->colnums[JOIN_KEY2];
     int auxcol  = jspec->colnums[JOIN_AUX];
-    int i, nrows = 0;
+    int i, nrows = r_dset->n;
 
 #if CDEBUG
     fprintf(stderr, "joiner columns:\n"
@@ -3191,47 +3326,35 @@ static joiner *joiner_new (csvjoin *jspec,
 
     if (filter != NULL) {
 	*err = verify_filter(filter, lhfcol, rhfcol, r_dset);
-    }
-
-    if (!*err) {
-	jr = malloc(sizeof *jr);
-	if (jr == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
-    if (*err) {
-	return NULL;
-    }      
-
-    if (filter != NULL) {
-	/* count the filtered rows */
-	for (i=0; i<r_dset->n && !*err; i++) {
-	    if (join_row_wanted(r_dset, i, filter, err)) {
-		nrows++;
+	if (!*err) {
+	    /* count the filtered rows */
+	    nrows = 0;
+	    for (i=0; i<r_dset->n && !*err; i++) {
+		if (join_row_wanted(r_dset, i, filter, jspec, err)) {
+		    nrows++;
+		}
 	    }
 	}
-	if (*err) {
-	    free(jr);
-	    return NULL;
-	}  	
-    } else {
-	nrows = r_dset->n;
     }
 
-    jr->keys = NULL;
-    jr->key_freq = NULL;
-    jr->l_keyno = NULL;
-    jr->r_keyno = NULL;
+#if CDEBUG
+    fprintf(stderr, "after filtering: dset->n = %d, nrows = %d\n",
+	    r_dset->n, nrows);
+#endif
 
-    jr->rows = malloc(nrows * sizeof *jr->rows);
-    if (jr->rows == NULL) {
+    if (*err || nrows == 0) {
+	fprintf(stderr, "No matching data after filtering\n");
+	return NULL;
+    }
+
+    jr = joiner_new(nrows);
+
+    if (jr == NULL) {
 	*err = E_ALLOC;
-	joiner_destroy(jr);
-	jr = NULL;
     } else {
-	jr->n_rows = nrows;
-	jr->n_unique = 0;
+	double **Z = r_dset->Z;
+	int j = 0;
+
 	jr->aggr = aggr;
 	jr->seqval = seqval;
 	jr->auxcol = auxcol;
@@ -3239,15 +3362,11 @@ static joiner *joiner_new (csvjoin *jspec,
 	jr->l_dset = l_dset;
 	jr->r_dset = r_dset;
 	jr->auto_keys = *auto_keys;
-    }
 
-    if (jr != NULL) {
-	/* transcribe the rows we want */
-	double **Z = r_dset->Z;
-	int j = 0;
+	/* now transcribe the rows we want */
 
 	for (i=0; i<r_dset->n && !*err; i++) {
-	    if (join_row_wanted(r_dset, i, filter, err)) {
+	    if (join_row_wanted(r_dset, i, filter, jspec, err)) {
 		/* the keys */
 		if (using_auto_keys(jr)) {
 		    *err = read_outer_auto_keys(jr, j, i);
@@ -3372,12 +3491,9 @@ static void joiner_print (joiner *jr)
 
 static int seqval_out_of_bounds (joiner *jr, int seqmax)
 {
-    if (jr->seqval == INT_MAX) {
-	/* signal for last match */
-	return 0;
-    } else if (jr->seqval < 0) {
+    if (jr->seqval < 0) {
 	/* counting down from last match */
-	return -jr->seqval >= seqmax;
+	return -jr->seqval > seqmax;
     } else {
 	/* counting up from first match */
 	return jr->seqval > seqmax;
@@ -3547,16 +3663,12 @@ static double aggr_retval (int key, const char *lstr,
     } else if (jr->aggr == AGGR_NONE) {
 	x = xmatch[0];
     } else if (jr->aggr == AGGR_SEQ) {
-	if (jr->seqval == INT_MAX) {
-	    x = xmatch[n-1];
-	} else {
-	    int sval = jr->seqval - 1;
+	int sval = jr->seqval;
 
-	    i = sval < 0 ? n + sval : sval;
-	    if (i >= 0 && i < n) {
-		x = xmatch[i];
-	    }	    
-	}
+	i = sval < 0 ? n + sval : sval - 1;
+	if (i >= 0 && i < n) {
+	    x = xmatch[i];
+	}	    
     } else if (jr->aggr == AGGR_MAX) {
 	if (jr->auxcol) {
 	    /* using the max of an auxiliary var */
@@ -3917,6 +4029,8 @@ static jr_filter *make_join_filter (const char *s,
 	} else if (!strcmp(opstr, "!=")) {
 	    op = B_NEQ;
 	} else {
+	    gretl_errmsg_sprintf(_("%s: invalid operator '%s' in filter"), 
+				 "join", opstr);
 	    *err = E_PARSE;
 	}
     }
@@ -4202,6 +4316,56 @@ static int auto_keys_check (const DATASET *l_dset,
     return err;
 }
 
+static int *process_timecols (const char *s, int *err)
+{
+    const char *p = s;
+    int *list = NULL;
+    char *endptr;
+    int ti, n = 1;
+
+    while (*p) {
+	if (*p == ',') {
+	    n++;
+	}
+	p++;
+    }
+
+    list = gretl_list_new(n);
+    if (list == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    n = 0;
+
+    while (*s) {
+	ti = (int) strtol(s, &endptr, 10);
+	if (*endptr == '\0') {
+	    list[++n] = ti;
+	    break;
+	} else if (*endptr != ',') {
+	    *err = E_PARSE;
+	    break;
+	} else {
+	    list[++n] = ti;
+	}
+	s = endptr + 1;
+    }
+
+    if (n == 0 && !*err) {
+	*err = E_DATA;
+    }
+
+    if (*err) {
+	free(list);
+	list = NULL;
+    } else {
+	list[0] = n;
+    }
+
+    return list;
+}
+
 static void obskey_init (obskey *keys)
 {
     keys->timefmt = NULL;
@@ -4223,6 +4387,7 @@ static void obskey_init (obskey *keys)
  * @seqval: 1-based sequence number for aggregation, or 0.
  * @auxname: name of auxiliary column for max or min aggregation,
  * or NULL.
+ * @timecols: list of time/date columns, or NULL.
  * @opt: may contain OPT_V for verbose operation.
  * @prn: gretl printing struct (or NULL).
  * 
@@ -4242,6 +4407,7 @@ int join_from_csv (const char *fname,
 		   AggrType aggr,
 		   int seqval,
 		   const char *auxname,
+		   const char *timecols,
 		   gretlopt opt,
 		   PRN *prn)
 {
@@ -4249,6 +4415,7 @@ int join_from_csv (const char *fname,
     joiner *jr = NULL;
     jr_filter *filter = NULL;
     int okeyvars[3] = {0, 0, 0};
+    int *tcollist = NULL;
     char okeyname1[CSVSTRLEN] = {0};
     char okeyname2[CSVSTRLEN] = {0};
     obskey auto_keys;
@@ -4303,6 +4470,9 @@ int join_from_csv (const char *fname,
     if (auxname != NULL) {
 	fprintf(stderr, " aggr auxiliary column = '%s'\n", auxname);
     }
+    if (timecols != NULL) {
+	fprintf(stderr, " timecols = '%s'\n", timecols);
+    }    
 #endif
 
     if (filtstr != NULL) {
@@ -4321,6 +4491,12 @@ int join_from_csv (const char *fname,
 	    fprintf(stderr, "join: error %d processing outer key(s)\n", err);
 	}
     }
+
+#if 1 /* not ready */
+    if (!err && timecols != NULL) {
+	jspec.tcollist = tcollist = process_timecols(timecols, &err);
+    }
+#endif
 
     /* Below: fill out the array of required column names,
        jspec.colnames.  This array has space for JOIN_MAXCOL strings;
@@ -4466,9 +4642,12 @@ int join_from_csv (const char *fname,
 	printdata(NULL, NULL, jspec.c->dset, OPT_O, eprn);
 	gretl_print_destroy(eprn);
 #endif
-	jr = joiner_new(&jspec, dset, filter, aggr, seqval, &auto_keys, &err);
+	jr = build_joiner(&jspec, dset, filter, aggr, seqval, &auto_keys, &err);
 	if (err) {
-	    fprintf(stderr, "join: error %d from joiner_new()\n", err);
+	    fprintf(stderr, "join: error %d from build_joiner()\n", err);
+	} else if (jr == NULL) {
+	    /* no matching data to join */
+	    goto bailout;
 	}
     }
 
@@ -4528,6 +4707,8 @@ int join_from_csv (const char *fname,
 	dataset_drop_last_variables(dset, dset->v - orig_v);
     }
 
+ bailout:
+
     if (auto_keys.timefmt != NULL) {
 	free(auto_keys.timefmt);
     }
@@ -4535,6 +4716,7 @@ int join_from_csv (const char *fname,
     csvdata_free(jspec.c);
     joiner_destroy(jr);
     jr_filter_destroy(filter);
+    free(tcollist);
 
     return err;
 }

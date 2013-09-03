@@ -2116,9 +2116,10 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the number of the day in the current epoch specified by
-	  year, month and day (which equals 1 for the first of January in
-	  the year 1 AD).
+	  Returns the number of the day in the current epoch specified
+	  by year, month and day. The epoch day equals 1 for the
+	  first of January in the year 1 AD. For the inverse function,
+	  see <fncref targ="ymd"/>.
 	</para>
       </description>
     </function>
@@ -7124,6 +7125,21 @@
 	  variable names are truncated if need be, and the output
 	  names may be adjusted in case of duplication
 	  of names in the returned list.
+	</para>
+      </description>
+    </function>
+
+    <function name="ymd" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="int">ed</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The argument <argname>ed</argname> is interpreted as an
+	  epoch day (which equals 1 for the first of January in the
+	  year 1 AD). The value returned is a string holding the day's
+	  date in ISO 8601 format, <lit>YYYY-MM-DD</lit>.  For the
+	  inverse function, see <fncref targ="epochday"/>.
 	</para>
       </description>
     </function>

@@ -403,6 +403,8 @@ struct str_table funcs[] = {
     { F_QUADTAB,  "quadtable" },
     { F_AGGRBY,   "aggregate" },
     { F_REMOVE,   "remove" },
+    { F_YMD,      "ymd" },
+    { F_GETLINE,  "getline" },
     { 0,          NULL }
 };
 

@@ -274,6 +274,7 @@ enum {
     F_TYPESTR,
     F_STRSTRIP,
     F_REMOVE,
+    F_YMD,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
@@ -337,6 +338,7 @@ enum {
     F_PSD,
     F_RANDINT,
     F_MREAD,
+    F_GETLINE,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,

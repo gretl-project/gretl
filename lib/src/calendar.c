@@ -94,18 +94,19 @@ static int day_in_year (int day, int month, int year)
 
 /**
  * epoch_day_from_ymd:
- * @y: year.
- * @m: month.
- * @d: day of month.
+ * @y: year (1 <= y <= 9999).
+ * @m: month (1 <= m <= 12).
+ * @d: day of month (1 <= d <= 31).
  * 
- * Returns: the epoch day number, or -1 on failure.
+ * Returns: the epoch day number, which equals 1 for the first of
+ * January in the year 1 AD, or -1 on error.
  */
 
 long epoch_day_from_ymd (int y, int m, int d)
 {
     long ret;
 
-    if (y < 0 || m < 0 || d < 0) {
+    if (y < 1 || m < 1 || d < 1) {
 	return -1;
     }
 
@@ -115,6 +116,70 @@ long epoch_day_from_ymd (int y, int m, int d)
 
     ret = (long)(y - 1) * 365 + leap_years_since_year_1(y - 1)
 	+ day_in_year(d, m, y);
+
+    return ret;
+}
+
+/**
+ * ymd_from_epoch_day:
+ * @ed: epoch day (ed >= 1).
+ * @err: location to receive error code.
+ * 
+ * Returns: YYYY-MM-DD (ISO 8601 date format) given the epoch
+ * day number, which equals 1 for the first of January in the 
+ * year 1 AD, or NULL on error.
+ */
+
+char *ymd_from_epoch_day (long ed, int *err)
+{
+    char *ret;
+    int y, m, d, delta;
+    long days = 0L;
+
+    if (ed < 1) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    ret = calloc(12, 1);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (y=1; ; y++) {
+	delta = leap_year(y) ? 366 : 365;
+	if (days + delta <= ed) {
+	    days += delta;
+	} else {
+	    break;
+	}
+    }
+
+    if (days == ed) {
+	if (y > 1) y--;
+	m = 12;
+	d = 31;
+    } else {
+	int i = leap_year(y);
+
+	for (m=1; ; m++) {
+	    delta = days_in_month[i][m];
+	    if (days + delta <= ed) {
+		days += delta;
+	    } else {
+		break;
+	    }
+	}
+	if (days == ed) {
+	    m--;
+	    d = days_in_month[i][m];
+	} else {
+	    d = ed - days;
+	}
+    }
+
+    sprintf(ret, "%04d-%02d-%02d", y, m, d);
 
     return ret;
 }
