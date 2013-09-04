@@ -2388,7 +2388,7 @@ char *gretl_regexp_replace (const char *orig,
  *
  * Builds a string based on @orig but in which all
  * occurrences of @match (which is interpreted as a
- * straight string literal are replaced by @repl (also
+ * straight string literal) are replaced by @repl (also
  * a straight string literal).
  *
  * Returns: newly allocated string or NULL on failure.
