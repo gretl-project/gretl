@@ -389,6 +389,7 @@ struct str_table funcs[] = {
     { F_IRF,      "irf" },
     { F_INBUNDLE, "inbundle" },
     { F_STRSUB,   "strsub" },
+    { F_REGSUB,   "regsub" },
     { F_COLNAME,  "colname" },
     { F_RANDINT,  "randint" },
     { F_NADARWAT, "nadarwat" },   /* Nadaraya-Watson */

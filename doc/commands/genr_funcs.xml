@@ -2440,6 +2440,53 @@
       </description>
     </function>
 
+    <function name="getline" section="strings" output="scalar">
+      <fnargs>
+	<fnarg type="string">source</fnarg>
+	<fnarg type="string">target</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  This function is used to read successive lines from
+	  <argname>source</argname>, which should be a named string
+	  variable. On each call a line from the source is written to
+	  <argname>target</argname> (which must also be a named string
+	  variable), with the newline character stripped off. The
+	  valued returned is 1 if there was anything to be read
+	  (including blank lines), 0 if the source has been exhausted.
+	</para>
+	<para>
+	  Here is an example in which the content of a text file is
+	  broken into lines:
+	</para>
+	<code>
+	  string s = readfile("data.txt")
+	  string line
+	  scalar i = 1
+	  loop while getline(s, line)
+	    printf "line %d = '%s'\n", i++, line
+          endloop
+	</code>
+	<para>
+	  In this example we can be sure that the source is exhausted
+	  when the loop terminates. If the source might not be
+	  exhausted you should follow your regular call(s) to
+	  <lit>getline</lit> with a <quote>clean up</quote> call, in which
+	  <argname>target</argname> is replaced by <lit>null</lit> (or
+	  omitted altogether) as in
+	</para>
+	<code>
+	  getline(s, line)
+	  getline(s, null)
+	</code>
+	<para>
+	  Note that although the reading position advances at each call
+	  to <lit>getline</lit>, <argname>source</argname> is not modified
+	  by this function, only <argname>target</argname>.
+	</para>
+      </description>
+    </function>
+
     <function name="ghk" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">C</fnarg>
@@ -3096,6 +3143,21 @@
 	  Returns 0 if <argname>name</argname> is the identifier for a
 	  currently defined object, be it a scalar, a series, a matrix,
 	  list, string or bundle; otherwise returns 1.
+	</para>
+      </description>
+    </function>
+
+    <function name="isodate" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="int">ed</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The argument <argname>ed</argname> is interpreted as an
+	  epoch day (which equals 1 for the first of January in the
+	  year 1 AD). The value returned is a string holding the day's
+	  date in ISO 8601 format, <lit>YYYY-MM-DD</lit>.  For the
+	  inverse function, see <fncref targ="epochday"/>.
 	</para>
       </description>
     </function>
@@ -5749,6 +5811,27 @@
       </description>
     </function>
 
+    <function name="regsub" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+	<fnarg type="string">match</fnarg>
+	<fnarg type="string">repl</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Returns a copy of <argname>s</argname> in which all
+	  occurrences of the pattern <argname>match</argname> are
+	  replaced using <argname>repl</argname>. The arguments
+	  <argname>match</argname> and <argname>repl</argname>
+	  are interpreted as Perl-style regular expressions.
+	</para>
+	<para>
+	  See also <fncref targ="strsub"/> for simple substitution of
+	  literal strings.
+	</para>
+      </description>
+    </function>
+
     <function name="remove" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
@@ -6409,7 +6492,8 @@
 	<para>
 	  Returns a copy of <argname>s</argname> in which all
 	  occurrences of <argname>find</argname> are replaced by
-	  <argname>subst</argname>.
+	  <argname>subst</argname>. See also <fncref targ="regsub"/>
+	  for more complex string replacement via regular expressions.
 	</para>
       </description>
     </function>
@@ -7125,21 +7209,6 @@
 	  variable names are truncated if need be, and the output
 	  names may be adjusted in case of duplication
 	  of names in the returned list.
-	</para>
-      </description>
-    </function>
-
-    <function name="isodate" section="data-utils" output="string">
-      <fnargs>
-	<fnarg type="int">ed</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  The argument <argname>ed</argname> is interpreted as an
-	  epoch day (which equals 1 for the first of January in the
-	  year 1 AD). The value returned is a string holding the day's
-	  date in ISO 8601 format, <lit>YYYY-MM-DD</lit>.  For the
-	  inverse function, see <fncref targ="epochday"/>.
 	</para>
       </description>
     </function>

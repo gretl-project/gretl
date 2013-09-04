@@ -363,6 +363,7 @@ enum {
     F_VARSIMUL,
     F_IRF,
     F_STRSUB,
+    F_REGSUB,
     F_MLAG,
     F_EIGSOLVE,
     F_NADARWAT,

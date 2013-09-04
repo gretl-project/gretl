@@ -6914,26 +6914,103 @@ static double subst_val (double x, const double *x0, int n0,
     return x;
 }
 
+static char *regexp_replace (const char *orig,
+			     const char *match,
+			     const char *repl,
+			     int *err)
+{
+    GRegex *regex;
+    GError *error = NULL;
+    char *mod = NULL;
+
+    regex = g_regex_new(match, 0, 0, &error);
+
+    if (error == NULL) {
+	mod = g_regex_replace(regex, orig, -1, 0, repl, 0, &error);
+    }
+
+    if (error != NULL) {
+	*err = 1;
+	gretl_errmsg_set(error->message);
+	g_error_free(error);
+    }
+    
+    if (regex != NULL) {
+	g_regex_unref(regex);
+    }
+
+    return mod;
+}
+
+static char *literal_replace (const char *orig,
+			      const char *match,
+			      const char *repl,
+			      int *err)
+{
+    char *mod = NULL;
+    const char *q, *r;
+    int mlen = strlen(match);
+    int nrep = 0;
+
+    if (mlen > 0) {
+	/* count the occurrences of the string to be replaced */
+	q = orig;
+	while ((r = strstr(q, match)) != NULL) {
+	    nrep++;
+	    q = r + mlen;
+	}
+    }
+
+    if (nrep == 0) {
+	/* no replacement needed */
+	mod = gretl_strdup(orig);
+    } else {
+	int rlen = strlen(repl);
+	int ldiff = nrep * (rlen - mlen);
+
+	mod = malloc(strlen(orig) + ldiff + 1);
+
+	if (mod == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    q = orig;
+	    *mod = '\0';
+	    while ((r = strstr(q, match)) != NULL) {
+		strncat(mod, q, r - q);
+		strncat(mod, repl, rlen);
+		q = r + mlen;
+	    }
+	    if (*q) {
+		strncat(mod, q, strlen(q));
+	    }
+	}
+    }
+
+    return mod;
+}
+
 /* String search and replace: return a node containing a copy
    of the string on node @src in which all occurrences of
    the string on @n0 are replaced by the string on @n1.
+   This is literal string replacement if @f is F_STRSUB,
+   regular expression replacement if @f is F_REGSUB.
 */
 
-static NODE *string_replace (NODE *src, NODE *n0, NODE *n1, parser *p)
+static NODE *string_replace (NODE *src, NODE *n0, NODE *n1, int f,
+			     parser *p)
 {
     if (!starting(p)) {
 	return aux_string_node(p);
     } else {
 	NODE *ret = NULL;
 	NODE *n[3] = {src, n0, n1};
-	char *S[3];
-	const char *q, *r;
-	int i, len1, nrep = 0;
+	char const *S[3];
+	int i;
 	
 	for (i=0; i<3; i++) {
 	    /* all nodes must be of string type */
 	    if (n[i]->t != STR) {
-		node_type_error(F_STRSUB, i, STR, n[i], p);
+		node_type_error(f, i, STR, n[i], p);
 		return NULL;
 	    } else {
 		S[i] = n[i]->v.str;
@@ -6945,42 +7022,10 @@ static NODE *string_replace (NODE *src, NODE *n0, NODE *n1, parser *p)
 	    return NULL;
 	}
 
-	len1 = strlen(S[1]);
-
-	if (len1 > 0) {
-	    /* count the occurrences of the string to be replaced */
-	    q = S[0];
-	    while ((r = strstr(q, S[1])) != NULL) {
-		nrep++;
-		q = r + len1;
-	    }
-	}
-
-	if (nrep == 0) {
-	    /* no replacement needed */
-	    ret->v.str = gretl_strdup(S[0]);
+	if (f == F_REGSUB) {
+	    ret->v.str = regexp_replace(S[0], S[1], S[2], &p->err);
 	} else {
-	    int len2 = strlen(S[2]);
-	    int ldiff = nrep * (len2 - len1);
-	    char *s = malloc(strlen(S[0]) + ldiff + 1);
-
-	    if (s != NULL) {
-		q = S[0];
-		*s = '\0';
-		while ((r = strstr(q, S[1])) != NULL) {
-		    strncat(s, q, r - q);
-		    strncat(s, S[2], len2);
-		    q = r + len1;
-		}
-		if (*q) {
-		    strncat(s, q, strlen(q));
-		}
-	    }
-	    ret->v.str = s;
-	}
-
-	if (!p->err && ret->v.str == NULL) {
-	    p->err = E_ALLOC;
+	    ret->v.str = literal_replace(S[0], S[1], S[2], &p->err);
 	}
 	
 	return ret;
@@ -9805,6 +9850,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_VARSIMUL:
     case F_IRF:
     case F_STRSUB:
+    case F_REGSUB:
     case F_MLAG:
     case F_EIGSOLVE:
     case F_NADARWAT:
@@ -9815,8 +9861,8 @@ static NODE *eval (NODE *t, parser *p)
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);
-	} else if (t->t == F_STRSUB) {
-	    ret = string_replace(l, m, r, p);
+	} else if (t->t == F_STRSUB || t->t == F_REGSUB) {
+	    ret = string_replace(l, m, r, t->t, p);
 	} else {
 	    ret = eval_3args_func(l, m, r, t->t, p);
 	}
