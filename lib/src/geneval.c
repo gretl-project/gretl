@@ -6953,7 +6953,7 @@ static char *literal_replace (const char *orig,
     int nrep = 0;
 
     if (mlen > 0) {
-	/* count the occurrences of the string to be replaced */
+	/* count the occurrences of @match */
 	q = orig;
 	while ((r = strstr(q, match)) != NULL) {
 	    nrep++;
@@ -6969,10 +6969,7 @@ static char *literal_replace (const char *orig,
 	int ldiff = nrep * (rlen - mlen);
 
 	mod = malloc(strlen(orig) + ldiff + 1);
-
-	if (mod == NULL) {
-	    *err = E_ALLOC;
-	} else {
+	if (mod != NULL) {
 	    q = orig;
 	    *mod = '\0';
 	    while ((r = strstr(q, match)) != NULL) {
@@ -6984,6 +6981,10 @@ static char *literal_replace (const char *orig,
 		strncat(mod, q, strlen(q));
 	    }
 	}
+    }
+
+    if (mod == NULL) {
+	*err = E_ALLOC;
     }
 
     return mod;
