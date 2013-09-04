@@ -1,6 +1,7 @@
 version 1.9.13, in progress
 - Add Bulgarian, Catalan and Galician translations
-- Add new functions: psum(), prodc(), prodr(), toupper()
+- Add new functions: psum(), prodc(), prodr(), toupper(),
+  getline(), isodate() and regsub()
 - "adf" command: add option to optimize the lag order using
   the procedure recommended by Ng and Perron (2001), and 
   make their modified AIC method the default
