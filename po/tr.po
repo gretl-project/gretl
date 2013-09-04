@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-09-03 10:35-0400\n"
-"PO-Revision-Date: 2013-03-04 13:30+0200\n"
+"PO-Revision-Date: 2013-09-04 14:30+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -26,16 +26,15 @@ msgstr "gecikmeli farklar"
 
 #: lib/src/adf_kpss.c:324 gui2/library.c:908
 msgid "modified BIC"
-msgstr ""
+msgstr "kiplemeli (modified) BIC"
 
 #: lib/src/adf_kpss.c:326 gui2/library.c:909
-#, fuzzy
 msgid "t-statistic"
-msgstr "sınama istatistiği"
+msgstr "t-istatistiği"
 
 #: lib/src/adf_kpss.c:329 gui2/library.c:907
 msgid "modified AIC"
-msgstr ""
+msgstr "kiplemeli (modified) AIC"
 
 #: lib/src/adf_kpss.c:341
 #, c-format
@@ -68,9 +67,9 @@ msgid "including %d lags of (1-L)%s"
 msgstr "(1-L)%2$s için %1$d gecikme eklendi"
 
 #: lib/src/adf_kpss.c:360
-#, fuzzy, c-format
+#, c-format
 msgid "(max was %d, criterion %s)"
-msgstr "(ençok %d idi)"
+msgstr "(ençok %d idi, ölçüt: %s)"
 
 #: lib/src/adf_kpss.c:402 gui2/library.c:925 gui2/library.c:1144
 #: gui2/selector.c:6032 plugin/panurc.c:234
@@ -158,9 +157,8 @@ msgid "time trend variable"
 msgstr "zaman eğilimi değişkeni"
 
 #: lib/src/adf_kpss.c:831
-#, fuzzy
 msgid "Invalid option"
-msgstr "Geçersiz seçenek '--%s'"
+msgstr "Geçersiz seçenek"
 
 #: lib/src/adf_kpss.c:862 lib/src/adf_kpss.c:1616 lib/src/boxplots.c:773
 #: lib/src/describe.c:1620 lib/src/describe.c:2955 lib/src/describe.c:3469
@@ -859,7 +857,7 @@ msgstr "Büyük olasılıkla haftalık veriler\n"
 #: lib/src/csvdata.c:564
 #, c-format
 msgid "Missing daily observations: %d\n"
-msgstr "Eksik gün gözlemleri: %d\n"
+msgstr "Kayıp gün gözlemleri: %d\n"
 
 #: lib/src/csvdata.c:816
 msgid "reversing the data!\n"
@@ -966,12 +964,12 @@ msgstr "   gözlem etiketi gibi görünüyor\n"
 msgid ""
 "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
-"   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
+"   %d değişkeni, %d. gözlem hücresi boş: kayıp değer olarak işlem yapılıyor\n"
 
 #: lib/src/csvdata.c:1622
 #, c-format
 msgid "   warning: missing value for variable %d, obs %d\n"
-msgstr "   Uyarı: %d değişkeni, %d. gözlem değeri eksik\n"
+msgstr "   Uyarı: %d değişkeni, %d. gözlem değeri kayıp\n"
 
 #: lib/src/csvdata.c:1711
 #, c-format
@@ -1124,30 +1122,30 @@ msgstr "Bellek yetersiz\n"
 #: lib/src/csvdata.c:3066
 #, c-format
 msgid "%s: missing string in filtering"
-msgstr ""
+msgstr "%s: filtreleme sırasında kayıp dizgi"
 
 #: lib/src/csvdata.c:3079
 msgid "type mismatch in join filter"
-msgstr ""
+msgstr "birleştirme süzgecinde tür uyuşmazlığı"
 
 #: lib/src/csvdata.c:3109
 #, c-format
 msgid "%s: found NAs in filtering"
-msgstr ""
+msgstr "%s: filtreleme sırasında NA'lar bulundu"
 
 #: lib/src/csvdata.c:3232 lib/src/csvdata.c:3245
 #, c-format
 msgid "%s: filter column '%s' was not found"
-msgstr ""
+msgstr "%s: süzgeç sütunu '%s' bulunamadı"
 
 #: lib/src/csvdata.c:3564 lib/src/csvdata.c:3639
 msgid "You need to specify an aggregation method for a 1:n join"
 msgstr "1:n birleştirmesi için bir toplulaştırma yöntemi belirtmelisiniz"
 
 #: lib/src/csvdata.c:4032
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid operator '%s' in filter"
-msgstr "'%s': geçersiz gözlem endeksi"
+msgstr "'%s': filtre için geçersiz işlemci '%s'"
 
 #: lib/src/csvdata.c:4676 gui2/library.c:3985
 msgid "Series length does not match the dataset"
@@ -1440,18 +1438,16 @@ msgid "years"
 msgstr "yıllar"
 
 #: lib/src/dataset.c:1972
-#, fuzzy
 msgid "weeks"
-msgstr "haftalık"
+msgstr "hafta"
 
 #: lib/src/dataset.c:1974
 msgid "days"
-msgstr ""
+msgstr "gün"
 
 #: lib/src/dataset.c:1976
-#, fuzzy
 msgid "hours"
-msgstr "saatlik"
+msgstr "saat"
 
 #: lib/src/dataset.c:2739
 msgid "Generated"
@@ -1776,7 +1772,7 @@ msgstr "%s, kullanılan gözlemler: %s - %s"
 #: lib/src/describe.c:4229 lib/src/describe.c:5251 gui2/guiprint.c:736
 #: gui2/guiprint.c:1054 gui2/guiprint.c:1221 gui2/guiprint.c:1314
 msgid "(missing values were skipped)"
-msgstr "(eksik değerler atlandı)"
+msgstr "(kayıp değerler atlandı)"
 
 #: lib/src/describe.c:4266 lib/src/describe.c:4426 lib/src/describe.c:4451
 #: gui2/guiprint.c:749 gui2/guiprint.c:1067
@@ -1833,7 +1829,7 @@ msgstr "Dörttebirlikler-arası aralığı"
 #: lib/src/describe.c:4279 lib/src/describe.c:4468 gui2/guiprint.c:793
 #: gui2/guiprint.c:1126
 msgid "Missing obs."
-msgstr "Eksik göz."
+msgstr "Kayıp göz."
 
 #: lib/src/describe.c:4281
 msgid "Within s.d."
@@ -2056,7 +2052,7 @@ msgstr "Lorenz eğrisi"
 #: lib/src/describe.c:5902 plugin/excel_import.c:1657
 #: plugin/gnumeric_import.c:767
 msgid "Warning: there were missing values\n"
-msgstr "Uyarı: eksik değerler ile karşılaşıldı\n"
+msgstr "Uyarı: kayıp değerler ile karşılaşıldı\n"
 
 #: lib/src/describe.c:5907
 msgid "Sample Gini coefficient"
@@ -2140,7 +2136,7 @@ msgstr "Ağırlık değişkeni eksi değerler içeriyor"
 #: lib/src/estimate.c:1154 plugin/arma.c:1708
 #, c-format
 msgid "Missing value encountered for variable %d, obs %d"
-msgstr "%d no'lu değişkenin %d. gözleminde eksik değer ile karşılaşıldı"
+msgstr "%d no'lu değişkenin %d. gözleminde kayıp değer ile karşılaşıldı"
 
 #: lib/src/estimate.c:1717
 #, c-format
@@ -2576,12 +2572,12 @@ msgstr "%s adlı sayıl oluşturuldu"
 #: lib/src/genmain.c:60
 #, c-format
 msgid "Modified series %s (ID %d)"
-msgstr "%s serisi (Kimlik# %d) kiplendi (modified)"
+msgstr "%s serisi (Kimlik# %d) kiplendi (modify)"
 
 #: lib/src/genmain.c:76
 #, c-format
 msgid "Modified matrix %s"
-msgstr "%s dizeyi kiplendi (modified)"
+msgstr "%s dizeyi kiplendi (modify)"
 
 #: lib/src/genmain.c:78
 #, c-format
@@ -3149,7 +3145,7 @@ msgstr "İşlem iptal edildi"
 
 #: lib/src/gretl_errors.c:73
 msgid "Missing values encountered"
-msgstr "Eksik değerler ile karşılaşıldı"
+msgstr "Kayıp değerler ile karşılaşıldı"
 
 #: lib/src/gretl_errors.c:74
 msgid "Not a Number in calculation"
@@ -3209,7 +3205,7 @@ msgstr "Düşüm sıfıra yakın değil"
 
 #: lib/src/gretl_errors.c:97
 msgid "generated missing values"
-msgstr "eksik değerler oluştu"
+msgstr "kayıp değerler oluşturuldu"
 
 #: lib/src/gretl_errors.c:98
 msgid "generated non-finite values"
@@ -4047,7 +4043,7 @@ msgstr "%d. gözlemin durum imleçi eksik"
 #: lib/src/gretl_xml.c:2170
 #, c-format
 msgid "Values missing at observation %d"
-msgstr "%d. gözlemde eksik değerler"
+msgstr "%d. gözlemde kayıp değerler"
 
 #: lib/src/gretl_xml.c:2202
 msgid "Number of observations does not match declaration"
@@ -4175,7 +4171,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Belirgin bir işlev ile ilgili yardım için, 'help <işlevadı>' giriniz"
+"Belli bir işlev ile ilgili yardım için, 'help <işlevadı>' giriniz"
 
 #: lib/src/interact.c:2974
 msgid " (e.g. help qrdecomp)\n"
@@ -4197,7 +4193,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Belirgin bir komut ile ilgili yardım için, 'help <komutadı>' giriniz"
+"Belli bir komut ile ilgili yardım için, 'help <komutadı>' giriniz"
 
 #: lib/src/interact.c:3134
 msgid " (e.g. help smpl)\n"
@@ -4267,9 +4263,9 @@ msgid "No data information is available.\n"
 msgstr "Elde veri bilgisi yok.\n"
 
 #: lib/src/interact.c:4471
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid input '%s'\n"
-msgstr "%s: geçersiz değer '%s'"
+msgstr "%s: geçersiz girdi '%s'\n"
 
 #: lib/src/interact.c:4713 lib/src/interact.c:4721
 msgid "Inner key is missing"
@@ -4415,7 +4411,7 @@ msgstr "Pozitif-dışı değerler ile karşılaşıldı"
 #: lib/src/missing.c:778
 #, c-format
 msgid "Set %d values to \"missing\"\n"
-msgstr "%d değerlerini \"missing\" olarak sapta\n"
+msgstr "%d değerlerini \"kayıp\" olarak sapta\n"
 
 #: lib/src/missing.c:781
 msgid "Didn't find any matching observations\n"
@@ -4424,7 +4420,7 @@ msgstr "Uyuşan gözlem bulunamadı\n"
 #: lib/src/missing.c:788
 #, c-format
 msgid "%s: set %d observations to \"missing\"\n"
-msgstr "%s: %d gözlemi \"missing\" olarak sapta\n"
+msgstr "%s: %d gözlemi \"kayıp\" olarak sapta\n"
 
 #: lib/src/missing.c:792
 #, c-format
@@ -4460,9 +4456,8 @@ msgid "Point observations"
 msgstr "Nokta gözlemler"
 
 #: lib/src/modelprint.c:191
-#, fuzzy
 msgid "Pseudo-point observations"
-msgstr "Nokta gözlemler"
+msgstr "Sahte-nokta gözlemleri"
 
 #: lib/src/modelprint.c:205
 msgid "Left-censored observations"
@@ -4547,7 +4542,7 @@ msgstr "Uyarı: sayısal Hesseyen hesaplanamadı"
 
 #: lib/src/modelprint.c:628
 msgid "Warning: non-pd Hessian (but still nonsingular)"
-msgstr ""
+msgstr "Uyarı: Artı-tanımlı-dışı Hesseyen (yine de tekil değil)"
 
 #: lib/src/modelprint.c:646 lib/src/modelprint.c:664 lib/src/modelprint.c:672
 msgid "'Within' variance"
@@ -5168,7 +5163,7 @@ msgstr "%s, göz. %s%s%s"
 
 #: lib/src/modelprint.c:1868
 msgid "Missing or incomplete observations dropped"
-msgstr "Çıkarılan eksik veya noksan gözlemler"
+msgstr "Çıkarılan kayıp veya noksan gözlemler"
 
 #: lib/src/modelprint.c:1877 plugin/panurc.c:585
 #, c-format
@@ -5211,7 +5206,7 @@ msgstr "Seçim değişkeni"
 #: lib/src/modelprint.c:2034
 #, c-format
 msgid "Using %d quadrature points"
-msgstr ""
+msgstr "%d kareleme noktası kullanıldı"
 
 #: lib/src/modelprint.c:2048
 msgid "Allowing for groupwise heteroskedasticity"
@@ -6239,7 +6234,7 @@ msgstr ""
 
 #: lib/src/printout.c:511
 msgid "Missing observations"
-msgstr "Eksik gözlemler"
+msgstr "Kayıp gözlemler"
 
 #: lib/src/printout.c:547
 #, c-format
@@ -6258,7 +6253,7 @@ msgstr "TOPLAM"
 #: lib/src/printout.c:646
 #, c-format
 msgid "%d missing values"
-msgstr "%d eksik değer"
+msgstr "%d kayıp değer"
 
 #: lib/src/printout.c:651
 #, c-format
@@ -6611,7 +6606,7 @@ msgstr "yeni bitiş gözleminde hata"
 
 #: lib/src/subsample.c:1904 lib/src/subsample.c:1910 lib/src/subsample.c:1932
 msgid "missing values"
-msgstr "eksik değer"
+msgstr "kayıp değerler"
 
 #: lib/src/subsample.c:1919
 #, c-format
@@ -6620,14 +6615,15 @@ msgid ""
 "Number of observations (rows) with missing data values = %d (%.2f%%)\n"
 msgstr ""
 "\n"
-"Eksik veri değerli gözlem (satır) sayısı = %d (%%%.2f)\n"
+"Kayıp veri değerli gözlem (satır) sayısı = %d (%%%.2f)\n"
 
 #: lib/src/subsample.c:1922
 #, c-format
 msgid ""
 "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr ""
-"Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %%%.2f)\n"
+"Toplam kayıp veri değerleri sayısı = %d (toplam veri değerleri içinde %%%"
+".2f)\n"
 
 #: lib/src/subsample.c:1933
 msgid "valid values"
@@ -6995,9 +6991,9 @@ msgid "Matrix decomposition failed"
 msgstr "Dizey ayrıştırması başarısız"
 
 #: lib/src/uservar.c:1327
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is currently read-only"
-msgstr "Değişken %s salt-okunur"
+msgstr "Değişken %s şu an salt-okunur"
 
 #: lib/src/var.c:714 lib/src/var.c:3119
 #, c-format
@@ -7302,7 +7298,7 @@ msgstr "Dikkat: değişkenler yeniden numaralandırıldı"
 
 #: cli/gretlcli.c:994 gui2/library.c:8550
 msgid "Data series length count missing or invalid\n"
-msgstr "Veri serisi uzunluk sayısı eksik veya geçersiz\n"
+msgstr "Veri serisinin uzunluk sayısı eksik veya geçersiz\n"
 
 #: cli/gretlcli.c:1013
 msgid "Done\n"
@@ -7723,7 +7719,7 @@ msgstr "Yoğunluk yerine yığınsal"
 #: gui2/calculator.c:2219
 #, c-format
 msgid "Data missing for variable '%s'"
-msgstr "Değişken '%s' için eksik veriler"
+msgstr "Değişken '%s' için veriler eksik"
 
 #: gui2/calculator.c:2348
 #, c-format
@@ -8020,7 +8016,7 @@ msgstr ""
 
 #: gui2/callbacks.c:551 gui2/callbacks.c:558
 msgid "gretl: missing code"
-msgstr "gretl: eksik kodu"
+msgstr "gretl: eksik kod"
 
 #: gui2/callbacks.c:552
 #, c-format
@@ -8028,12 +8024,12 @@ msgid ""
 "Enter value to be read as \"missing\"\n"
 "for the variable \"%s\""
 msgstr ""
-"\"%s\" değişkeni için \"eksik\"\n"
+"\"%s\" değişkeni için \"kayıp\"\n"
 "diye okunacak değeri giriniz"
 
 #: gui2/callbacks.c:559
 msgid "Enter value to be read as \"missing\":"
-msgstr "\"eksik\" olarak okunacak değeri giriniz:"
+msgstr "\"kayıp\" olarak okunacak değeri giriniz:"
 
 #: gui2/callbacks.c:563
 msgid "gretl: boxplots"
@@ -8218,7 +8214,7 @@ msgstr ""
 
 #: gui2/database.c:720
 msgid "Warning: series has missing observations"
-msgstr "Uyarı: seride eksik gözlemler var"
+msgstr "Uyarı: seride kayıp gözlemler var"
 
 #: gui2/database.c:724
 msgid "Couldn't access binary datafile"
@@ -8721,7 +8717,7 @@ msgstr "istifli yatay-kesitler"
 
 #: gui2/datawiz.c:597
 msgid "(dropping missing observations)"
-msgstr "(eksik gözlemler çıkarılıyor)"
+msgstr "(kayıp gözlemler çıkarılıyor)"
 
 #: gui2/datawiz.c:810
 msgid "The unit and time index variables must be distinct"
@@ -8745,7 +8741,7 @@ msgstr "Zaman endeksi değişkeni"
 
 #: gui2/datawiz.c:1306
 msgid "purge missing observations"
-msgstr "eksik gözlemlerden arındır"
+msgstr "kayıp gözlemlerden arındır"
 
 #: gui2/datawiz.c:1429
 msgid "The data set contains no suitable index variables"
@@ -8797,7 +8793,7 @@ msgstr ""
 
 #: gui2/dialogs.c:382
 msgid "Print missing values as:"
-msgstr "Eksik değerleri şöyle göster:"
+msgstr "Kayıp değerleri şöyle göster:"
 
 #: gui2/dialogs.c:487
 msgid "gretl: data delimiter"
@@ -9947,38 +9943,36 @@ msgid "Save changes?"
 msgstr "Değişiklikler kaydedilsin mi?"
 
 #: gui2/fnsave.c:1415
-#, fuzzy
 msgid "Label"
-msgstr "Etiketler"
+msgstr "Etiket"
 
 #: gui2/fnsave.c:1429
-#, fuzzy
 msgid "Window"
-msgstr "Pencereler"
+msgstr "Pencere"
 
 #: gui2/fnsave.c:1510
 msgid "To create a menu attachment, you must supply a label."
-msgstr ""
+msgstr "Menü eklentisi yaratmak için, bir etiket sağlamalısınız."
 
 #: gui2/fnsave.c:1513
 msgid ""
 "To update the menu attachment, you should\n"
 "(a) save this package, and (b) restart gretl."
 msgstr ""
+"Menü eklentisini güncellemek için,\n"
+"(a) paketi kaydetmeli ve (b) gretl'ı yeniden başlatmalısınız."
 
 #: gui2/fnsave.c:1680
-#, fuzzy
 msgid "gretl: extra properties"
-msgstr "gretl: hata"
+msgstr "gretl: fazladan özellikler"
 
 #: gui2/fnsave.c:1695
-#, fuzzy
 msgid "Special functions"
-msgstr "İşlevleri kaydet"
+msgstr "Özel işlevler"
 
 #: gui2/fnsave.c:1763
 msgid "Menu attachment"
-msgstr ""
+msgstr "Menü eklentisi"
 
 #: gui2/fnsave.c:1815
 msgid "Date (YYYY-MM-DD)"
@@ -10013,9 +10007,8 @@ msgid "Add/remove functions"
 msgstr "İşlev ekle/çıkar"
 
 #: gui2/fnsave.c:1948
-#, fuzzy
 msgid "Extra properties"
-msgstr "Özellikler"
+msgstr "Fazladan özellikler"
 
 #: gui2/fnsave.c:1954
 msgid "Write spec file"
@@ -10299,7 +10292,7 @@ msgstr "Renk %d"
 
 #: gui2/gpt_dialog.c:1591
 msgid "Reset to default"
-msgstr "Öntanımlı değerler"
+msgstr "Öntanımlıya dön"
 
 #: gui2/gpt_dialog.c:1647 gui2/gpt_dialog.c:2076
 msgid "other..."
@@ -10644,7 +10637,7 @@ msgstr "%s bulundu\n"
 
 #: gui2/gretl.c:470
 msgid "Start a new gretl instance?"
-msgstr ""
+msgstr "Yeni bir gretl durumu başlatılsın mı?"
 
 #: gui2/gretl.c:1264
 msgid "No lists are currently defined"
@@ -10996,7 +10989,7 @@ msgstr "Verileri _sırala..."
 
 #: gui2/gretl.c:1635 gui2/gretl.c:1734
 msgid "Set missing _value code..."
-msgstr "Eksik değer kodunu sa_pta..."
+msgstr "Kayıp değer kodunu sa_pta..."
 
 #: gui2/gretl.c:1638 gui2/gui_utils.c:315 gui2/gui_utils.c:360
 #: gui2/ssheet.c:177
@@ -11177,11 +11170,11 @@ msgstr "_Yerine koyarak yeniden örnekle..."
 
 #: gui2/gretl.c:1692
 msgid "Drop all obs with _missing values"
-msgstr "Eksik değerli tüm gözlemleri _çıkar"
+msgstr "Kayıp değerli tüm gözlemleri _çıkar"
 
 #: gui2/gretl.c:1694
 msgid "_Count missing values"
-msgstr "Eksik değerleri _say"
+msgstr "Kayıp değerleri _say"
 
 #: gui2/gretl.c:1697
 msgid "_Variable"
@@ -11444,9 +11437,8 @@ msgid "Bi_variate..."
 msgstr "_İkideğişkenli..."
 
 #: gui2/gretl.c:1775
-#, fuzzy
 msgid "_Random effects..."
-msgstr "Rastsal etkiler"
+msgstr "_Rastsal etkiler..."
 
 #: gui2/gretl.c:1776
 msgid "To_bit..."
@@ -12040,14 +12032,12 @@ msgid "_Save text as..."
 msgstr "_Metni farklı kaydet..."
 
 #: gui2/gui_utils.c:392
-#, fuzzy
 msgid "Save bundle to session as _icon"
-msgstr "_Simge olarak oturuma kaydet"
+msgstr "Bohçayı _simge olarak oturuma kaydet"
 
 #: gui2/gui_utils.c:394
-#, fuzzy
 msgid "Save bundle as icon and cl_ose"
-msgstr "Simge olarak kaydet ve _kapat"
+msgstr "Bohçayı simge olarak kaydet ve _kapat"
 
 #: gui2/gui_utils.c:399
 msgid "_Graph"
@@ -12306,14 +12296,12 @@ msgid "forecast horizon (periods):"
 msgstr "yordama uzaklığı  (dönem):"
 
 #: gui2/gui_utils.c:3523
-#, fuzzy
 msgid "line graph"
-msgstr "Çizimi kaydet"
+msgstr "Çizgi çizimi"
 
 #: gui2/gui_utils.c:3524
-#, fuzzy
 msgid "stacked bar graph"
-msgstr "Çizimi kaydet"
+msgstr "İstifli çubuk çizimi"
 
 #: gui2/gui_utils.c:3532 gui2/gui_utils.c:4202 gui2/gui_utils.c:4324
 msgid "Forecast variance decomposition"
@@ -12669,9 +12657,8 @@ msgid "Principal Components Analysis"
 msgstr "Temel bileşen çözümlemesi"
 
 #: gui2/library.c:903
-#, fuzzy
 msgid "criterion"
-msgstr "Ölçüt"
+msgstr "ölçüt"
 
 #: gui2/library.c:924 gui2/library.c:940 gui2/library.c:1024
 msgid "test down from maximum lag order"
@@ -12769,15 +12756,15 @@ msgstr "Örneklem şimdi yalnızca tam gözlemler içeriyor"
 
 #: gui2/library.c:1528
 msgid "Show count of missing values at each observation"
-msgstr "Her gözlem için eksik değer sayısını göster"
+msgstr "Her gözlem için kayıp değer sayısını göster"
 
 #: gui2/library.c:1537 gui2/library.c:1560
 msgid "No missing data values"
-msgstr "Eksik veri değeri yok"
+msgstr "Kayıp veri değeri yok"
 
 #: gui2/library.c:1543 gui2/library.c:1554
 msgid "gretl: missing values info"
-msgstr "gretl: eksik değerler bilgisi"
+msgstr "gretl: kayıp değerler bilgisi"
 
 #: gui2/library.c:1614
 msgid "Export the markers to file"
@@ -12998,7 +12985,7 @@ msgstr "%s ve %s (Nadaraya-Watson yakıştırması ile)"
 #: gui2/library.c:4627
 #, c-format
 msgid "Set %d values to \"missing\""
-msgstr "%d değerlerini \"missing\" olarak sapta"
+msgstr "%d değerlerini \"kayıp\" olarak sapta"
 
 #: gui2/library.c:4630 gui2/library.c:4658
 msgid "Didn't find any matching observations"
@@ -13007,7 +12994,7 @@ msgstr "Uyuşan gözlem bulunamadı"
 #: gui2/library.c:4655
 #, c-format
 msgid "Set %d observations to \"missing\""
-msgstr "%d gözlemi \"missing\" olarak sapta"
+msgstr "%d gözlemi \"kayıp\" olarak sapta"
 
 #: gui2/library.c:4783
 msgid "gretl: residual dist."
@@ -13737,9 +13724,8 @@ msgid "AR(1)"
 msgstr "AR(1)"
 
 #: gui2/selector.c:3644
-#, fuzzy
 msgid "Random effects (binary) probit"
-msgstr "Rastsal etkiler olabirim"
+msgstr "Rastsal etkiler (ikili) olabirim"
 
 #: gui2/selector.c:3654
 msgid "Count data model"
@@ -14023,7 +14009,7 @@ msgstr "MA derecesi:"
 
 #: gui2/selector.c:4964 gui2/selector.c:4993
 msgid "or specific lags"
-msgstr "belirli gecikmeler"
+msgstr "ya da belli gecikmeler"
 
 #: gui2/selector.c:5310
 msgid "Bits per floating-point value"
@@ -14031,7 +14017,7 @@ msgstr "Kayan-nokta başına düşen bit sayısı"
 
 #: gui2/selector.c:5349
 msgid "Quadrature points"
-msgstr ""
+msgstr "Kareleme noktaları"
 
 #: gui2/selector.c:5371
 msgid "Robust standard errors/intervals"
@@ -14427,7 +14413,7 @@ msgstr "veya"
 
 #: gui2/selector.c:7869
 msgid "specific lags"
-msgstr "belirli gecikmeler"
+msgstr "belli gecikmeler"
 
 #: gui2/selector.c:7884
 msgid "Lags of dependent variable"
@@ -14724,9 +14710,8 @@ msgid "Emulate Windows look"
 msgstr "Windows görünümünü benzet"
 
 #: gui2/settings.c:190
-#, fuzzy
 msgid "Theme preference"
-msgstr "Dil seçimi"
+msgstr "Tema seçimi"
 
 #: gui2/settings.c:194
 msgid "Web browser"
@@ -14829,14 +14814,12 @@ msgid "Path to octave executable"
 msgstr "Octave programı yolu"
 
 #: gui2/settings.c:261
-#, fuzzy
 msgid "Path to Stata executable"
-msgstr "Octave programı yolu"
+msgstr "Stata programı yolu"
 
 #: gui2/settings.c:263
-#, fuzzy
 msgid "Path to Python executable"
-msgstr "oxl programı yolu"
+msgstr "Python programı yolu"
 
 #: gui2/settings.c:265
 msgid "Database server name"
@@ -14941,14 +14924,12 @@ msgid "Manuals"
 msgstr "Belgeler"
 
 #: gui2/settings.c:2269
-#, fuzzy
 msgid "Select a specific font"
-msgstr "RESET belirtim sınaması"
+msgstr "Belli bir yazı tipini seç"
 
 #: gui2/settings.c:2270
-#, fuzzy
 msgid "Reset to Windows default"
-msgstr "Öntanımlı değerler"
+msgstr "Windows öntanımına dön"
 
 #: gui2/settings.c:2369 gui2/settings.c:2451
 msgid "Font for gretl output windows"
@@ -15098,7 +15079,7 @@ msgstr "Araya gözlem ekle"
 
 #: gui2/ssheet.c:1580 gui2/ssheet.c:2786
 msgid "Warning: there were missing observations"
-msgstr "Uyarı: eksik gözlemler vardı"
+msgstr "Uyarı: kayıp gözlemler vardı"
 
 #: gui2/ssheet.c:1607 gui2/toolbar.c:348
 msgid "gretl: save matrix"
@@ -15731,14 +15712,12 @@ msgid "AB-model"
 msgstr "AB-modeli"
 
 #: plugin/addons-i18n.c:46
-#, fuzzy
 msgid "Bootstrap alpha"
-msgstr "_Özyetinim..."
+msgstr "Özyetinim alfa değeri"
 
 #: plugin/addons-i18n.c:47
-#, fuzzy
 msgid "Bootstrap replications"
-msgstr "özyetinim t-oranı"
+msgstr "Özyetinim çoğaltma sayısı"
 
 #: plugin/addons-i18n.c:48
 msgid "C-model"
@@ -15781,9 +15760,8 @@ msgid "plain"
 msgstr "basit"
 
 #: plugin/addons-i18n.c:61
-#, fuzzy
 msgid "template matrix"
-msgstr "%s dizeyi değiştirildi"
+msgstr "şablon dizey"
 
 #: plugin/anova.c:108 plugin/anova.c:110
 msgid "Treatment"
@@ -15958,7 +15936,7 @@ msgstr "log(Büyüklük)"
 
 #: plugin/fractals.c:231
 msgid "There were missing data values"
-msgstr "Eksik veri değerleri vardı"
+msgstr "Kayıp veri değerleri vardı"
 
 #: plugin/fractals.c:239
 msgid "Sample is too small for Hurst exponent"
@@ -16195,11 +16173,11 @@ msgstr "kullanıcının sağladığı ilk değerler"
 
 #: plugin/jrestrict.c:1264
 msgid "Strong convergence"
-msgstr ""
+msgstr "Güçlü yakınsama"
 
 #: plugin/jrestrict.c:1266
 msgid "Weak convergence"
-msgstr ""
+msgstr "Zayıf yakınsama"
 
 #: plugin/jrestrict.c:1857
 #, c-format
