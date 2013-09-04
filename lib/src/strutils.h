@@ -172,4 +172,14 @@ char *gretl_utf8_strncat_trim (char *dest, const char *src, size_t n);
 
 int gretl_scan_varname (const char *src, char *targ);
 
+char *gretl_regexp_replace (const char *orig,
+			    const char *match,
+			    const char *repl,
+			    int *err);
+
+char *gretl_literal_replace (const char *orig,
+			     const char *match,
+			     const char *repl,
+			     int *err);
+
 #endif /* STRUTILS_H */

@@ -6914,82 +6914,6 @@ static double subst_val (double x, const double *x0, int n0,
     return x;
 }
 
-static char *regexp_replace (const char *orig,
-			     const char *match,
-			     const char *repl,
-			     int *err)
-{
-    GRegex *regex;
-    GError *error = NULL;
-    char *mod = NULL;
-
-    regex = g_regex_new(match, 0, 0, &error);
-
-    if (error == NULL) {
-	mod = g_regex_replace(regex, orig, -1, 0, repl, 0, &error);
-    }
-
-    if (error != NULL) {
-	*err = 1;
-	gretl_errmsg_set(error->message);
-	g_error_free(error);
-    }
-    
-    if (regex != NULL) {
-	g_regex_unref(regex);
-    }
-
-    return mod;
-}
-
-static char *literal_replace (const char *orig,
-			      const char *match,
-			      const char *repl,
-			      int *err)
-{
-    char *mod = NULL;
-    const char *q, *r;
-    int mlen = strlen(match);
-    int nrep = 0;
-
-    if (mlen > 0) {
-	/* count the occurrences of @match */
-	q = orig;
-	while ((r = strstr(q, match)) != NULL) {
-	    nrep++;
-	    q = r + mlen;
-	}
-    }
-
-    if (nrep == 0) {
-	/* no replacement needed */
-	mod = gretl_strdup(orig);
-    } else {
-	int rlen = strlen(repl);
-	int ldiff = nrep * (rlen - mlen);
-
-	mod = malloc(strlen(orig) + ldiff + 1);
-	if (mod != NULL) {
-	    q = orig;
-	    *mod = '\0';
-	    while ((r = strstr(q, match)) != NULL) {
-		strncat(mod, q, r - q);
-		strncat(mod, repl, rlen);
-		q = r + mlen;
-	    }
-	    if (*q) {
-		strncat(mod, q, strlen(q));
-	    }
-	}
-    }
-
-    if (mod == NULL) {
-	*err = E_ALLOC;
-    }
-
-    return mod;
-}
-
 /* String search and replace: return a node containing a copy
    of the string on node @src in which all occurrences of
    the string on @n0 are replaced by the string on @n1.
@@ -7024,9 +6948,9 @@ static NODE *string_replace (NODE *src, NODE *n0, NODE *n1, int f,
 	}
 
 	if (f == F_REGSUB) {
-	    ret->v.str = regexp_replace(S[0], S[1], S[2], &p->err);
+	    ret->v.str = gretl_regexp_replace(S[0], S[1], S[2], &p->err);
 	} else {
-	    ret->v.str = literal_replace(S[0], S[1], S[2], &p->err);
+	    ret->v.str = gretl_literal_replace(S[0], S[1], S[2], &p->err);
 	}
 	
 	return ret;

@@ -6,6 +6,15 @@ recommended by Ng and Perron (Econometrica, 2001). To obtain
 the same results as in earlier gretl versions you can specify
 --test-down=tstat.
 
+The (undocumented) way in which date identifiers (such as 
+2004:01 for January 2004) could stand in for numerical values
+in some commands has been removed. If you need the 1-based
+observation number based on such dates, use the obsnum()
+function. This applies only to contexts where the documentation
+of a command calls for a scalar numerical value; if a command
+claims to accept a date or observation string as an argument,
+it still does.
+
 2013-03-15 version 1.9.12
 
 The special treatment that supported the use of @-substitution
@@ -19,7 +28,9 @@ in an unquoted argument to printf has been removed. For example,
 2012-11-21 version 1.9.11
 
 The functions islist(), isseries() and isstring() are deprecated,
-and will be removed before long.
+and will be removed before long. Note that the generic isnull()
+can be used to check whether or not a function argument that has
+a default of "null" has been supplied by the caller.
 
 2012-11-05 version 1.9.10
 

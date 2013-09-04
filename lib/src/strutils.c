@@ -2334,3 +2334,110 @@ int gretl_scan_varname (const char *src, char *targ)
     sprintf(fmt, "%%%ds", VNAMELEN-1);
     return sscanf(src, fmt, targ);
 }
+
+/**
+ * gretl_regexp_replace:
+ * @orig: the original string.
+ * @match: the pattern to match.
+ * @repl: the replacement expression for @match.
+ * @err: location to receive error code.
+ *
+ * Builds a string based on @orig but in which all
+ * occurrences of @match (which is interpreted as a
+ * regular expression of the Perl type) are replaced
+ * by means of @repl (also interpreted as a regular
+ * expression).
+ *
+ * Returns: newly allocated string or NULL on failure.
+ */
+
+char *gretl_regexp_replace (const char *orig,
+			    const char *match,
+			    const char *repl,
+			    int *err)
+{
+    GRegex *regex;
+    GError *error = NULL;
+    char *mod = NULL;
+
+    regex = g_regex_new(match, 0, 0, &error);
+
+    if (error == NULL) {
+	mod = g_regex_replace(regex, orig, -1, 0, repl, 0, &error);
+    }
+
+    if (error != NULL) {
+	*err = 1;
+	gretl_errmsg_set(error->message);
+	g_error_free(error);
+    }
+    
+    if (regex != NULL) {
+	g_regex_unref(regex);
+    }
+
+    return mod;
+}
+
+/**
+ * gretl_literal_replace:
+ * @orig: the original string.
+ * @match: the substring to match.
+ * @repl: the replacement string for @match.
+ * @err: location to receive error code.
+ *
+ * Builds a string based on @orig but in which all
+ * occurrences of @match (which is interpreted as a
+ * straight string literal are replaced by @repl (also
+ * a straight string literal).
+ *
+ * Returns: newly allocated string or NULL on failure.
+ */
+
+char *gretl_literal_replace (const char *orig,
+			     const char *match,
+			     const char *repl,
+			     int *err)
+{
+    char *mod = NULL;
+    const char *q, *r;
+    int mlen = strlen(match);
+    int nrep = 0;
+
+    if (mlen > 0) {
+	/* count the occurrences of @match */
+	q = orig;
+	while ((r = strstr(q, match)) != NULL) {
+	    nrep++;
+	    q = r + mlen;
+	}
+    }
+
+    if (nrep == 0) {
+	/* no replacement needed */
+	mod = gretl_strdup(orig);
+    } else {
+	int rlen = strlen(repl);
+	int ldiff = nrep * (rlen - mlen);
+
+	mod = malloc(strlen(orig) + ldiff + 1);
+	if (mod != NULL) {
+	    q = orig;
+	    *mod = '\0';
+	    while ((r = strstr(q, match)) != NULL) {
+		strncat(mod, q, r - q);
+		strncat(mod, repl, rlen);
+		q = r + mlen;
+	    }
+	    if (*q) {
+		strncat(mod, q, strlen(q));
+	    }
+	}
+    }
+
+    if (mod == NULL) {
+	*err = E_ALLOC;
+    }
+
+    return mod;
+}
