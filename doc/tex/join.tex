@@ -16,7 +16,7 @@ toy examples and discuss one real-world case at length.
 First, a note on terminology: in the following we use the terms 
 ``left-hand'' and ``inner'' to refer to the dataset that is already in
 memory, and the terms ``right-hand'' and ``outer'' to refer to the
-dataset in the file from which data are to be drawn. 
+dataset in the file from which additional data are to be drawn. 
 
 Two main things are new in \texttt{join}: 
 \begin{itemize}
@@ -38,10 +38,10 @@ command loop can be used to apply \texttt{join} to multiple series.
 
 A related aspect of \texttt{join} should be noted---one that makes
 this command particularly useful when dealing with very large
-datafiles.  That is, when gretl executes a join it does not, in
-general, read into memory the entire content of the right-hand side
+datafiles.  That is, when gretl executes a join operation it does not,
+in general, read into memory the entire content of the right-hand side
 dataset.  Only those columns that are actually needed for the
-operation are read in full. This makes the join operation faster and
+operation are read in full. This makes \texttt{join} faster and
 less demanding of RAM than the methods available in most other
 software. On the other hand, gretl's asymmetrical treatment of the
 ``inner'' and ``outer'' datasets in \texttt{join} may require some
@@ -136,11 +136,17 @@ specified right-hand side columns are found):
 --filter=nkids>2
 \end{code}
 
-\subsection{Filtering on missing/non-missing values}
+When a filter of this sort is applied, an error is flagged if a
+missing value is encountered in the series referenced in the filter
+expression This is because the condition then becomes
+indeterminate; taking the last example above, if the \texttt{nkids}
+value is \texttt{NA} on any given row we are not in a position to
+evaluate the condition \texttt{nkids>2}. 
 
-A variant of the filter option is available, to select rows based on
-whether the value in a given named column is valid or missing. Let
-\texttt{colname} stand in for the name of the column in question; then
+A variant of the filter option is available, however, to select rows
+based on whether the value in a given named column is valid or
+missing. Let \texttt{colname} stand in for the name of the column in
+question; then
 
 \begin{code}
 --filter=missing(colname)

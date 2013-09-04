@@ -274,7 +274,7 @@ enum {
     F_TYPESTR,
     F_STRSTRIP,
     F_REMOVE,
-    F_YMD,
+    F_ISODATE,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,

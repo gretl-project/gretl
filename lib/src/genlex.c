@@ -403,7 +403,7 @@ struct str_table funcs[] = {
     { F_QUADTAB,  "quadtable" },
     { F_AGGRBY,   "aggregate" },
     { F_REMOVE,   "remove" },
-    { F_YMD,      "ymd" },
+    { F_ISODATE,  "isodate" },
     { F_GETLINE,  "getline" },
     { 0,          NULL }
 };
@@ -928,6 +928,10 @@ static int maybe_get_R_function (const char *s)
     }
 }
 
+#else /* !USE_RLIB */
+# define maybe_get_R_function(s) (0)
+#endif
+
 /* @parsing_query: we want to keep track of the case
    where we're lexing/parsing the branches of a
    ternary "query" expression. When such an expression
@@ -944,7 +948,7 @@ static int maybe_get_R_function (const char *s)
    is triggered only if the branch that references the
    UNDEF node is selected (attempting to evaluate an UNDEF
    node automatically throws an error.)
- */ 
+*/ 
 
 static int parsing_query;
 
@@ -952,10 +956,6 @@ void set_parsing_query (int s)
 {
     parsing_query = s;
 }
-
-#else /* !USE_RLIB */
-# define maybe_get_R_function(s) (0)
-#endif
 
 static void look_up_word (const char *s, parser *p)
 {

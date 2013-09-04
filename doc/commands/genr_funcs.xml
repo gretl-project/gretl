@@ -2119,7 +2119,7 @@
 	  Returns the number of the day in the current epoch specified
 	  by year, month and day. The epoch day equals 1 for the
 	  first of January in the year 1 AD. For the inverse function,
-	  see <fncref targ="ymd"/>.
+	  see <fncref targ="isodate"/>.
 	</para>
       </description>
     </function>
@@ -7129,7 +7129,7 @@
       </description>
     </function>
 
-    <function name="ymd" section="data-utils" output="string">
+    <function name="isodate" section="data-utils" output="string">
       <fnargs>
 	<fnarg type="int">ed</fnarg>
       </fnargs>

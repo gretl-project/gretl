@@ -6126,7 +6126,6 @@ static int restore_obs_info (obsinfo *oi, DATASET *dset)
 static int stop_fncall (fncall *call, int rtype, void *ret,
 			DATASET *dset, PRN *prn, int orig_v)
 {
-    int destroy_locals = 1;
     int i, d = gretl_function_depth();
     int delv, anyerr = 0;
     int err = 0;
@@ -6175,6 +6174,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
        the ID numbers of the variables in the return list may be
        changed due to the deletion of function-local variables.
     */
+
     if (!err && rtype == GRETL_TYPE_LIST) {
 	int *lret = gretl_list_copy(get_list_by_name(call->retname));
 
@@ -6185,9 +6185,8 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 	}
     }
 
-    if (destroy_locals) {
-	anyerr = destroy_user_vars_at_level(d);
-    }    
+    /* now we're ready to trash function-local vars */
+    anyerr = destroy_user_vars_at_level(d);
 
     if (anyerr && !err) {
 	err = anyerr;
@@ -6196,7 +6195,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     /* if the function defined a Kalman filter, clean that up */
     delete_kalman(NULL);
 
-    /* if any anonymous equations system defined: clean up */
+    /* if any anonymous equations system was defined: clean up */
     delete_anonymous_equation_system(d);
 
     pop_program_state();

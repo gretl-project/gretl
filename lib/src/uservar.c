@@ -142,8 +142,11 @@ static void uvar_free_value (user_var *u)
 	gretl_matrix_free(u->ptr);
     } else if (u->type == GRETL_TYPE_BUNDLE) {
 	gretl_bundle_destroy(u->ptr);
+    } else if (u->type == GRETL_TYPE_STRING) {
+	bufgets_finalize(u->ptr);
+	free(u->ptr);
     } else {
-	/* scalar, string, list */
+	/* scalar, list */
 	free(u->ptr);
     }
 }
@@ -1012,7 +1015,7 @@ static int real_destroy_user_vars_at_level (int level, int type,
 	    break;
 	}
 	if (type > 0 && uvars[i]->type != type) {
-	    /* preserving this variable */
+	    /* preserve this variable */
 	    nv++;
 	    continue;
 	}

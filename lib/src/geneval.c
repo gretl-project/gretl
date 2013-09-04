@@ -4513,7 +4513,7 @@ static NODE *errmsg_node (NODE *l, parser *p)
     return ret;
 }
 
-static NODE *ymd_node (NODE *l, parser *p)
+static NODE *isodate_node (NODE *l, parser *p)
 {
     NODE *ret = aux_string_node(p);
 
@@ -10050,9 +10050,9 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 0, NUM, l, p);
 	}
 	break;
-    case F_YMD:
+    case F_ISODATE:
 	if (l->t == NUM) {
-	    ret = ymd_node(l, p);
+	    ret = isodate_node(l, p);
 	} else {
 	    node_type_error(t->t, 0, NUM, l, p);
 	}
