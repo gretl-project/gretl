@@ -406,6 +406,7 @@ struct str_table funcs[] = {
     { F_REMOVE,   "remove" },
     { F_ISODATE,  "isodate" },
     { F_GETLINE,  "getline" },
+    { F_TYPEOF,   "typeof" },
     { 0,          NULL }
 };
 

@@ -4054,6 +4054,25 @@ static NODE *mxtab_func (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static int type_translate_to_int (GretlType type)
+{
+    if (type == GRETL_TYPE_DOUBLE) {
+	return 1;
+    } else if (type == GRETL_TYPE_SERIES) {
+	return 2;
+    } else if (type == GRETL_TYPE_MATRIX) {
+	return 3;
+    } else if (type == GRETL_TYPE_STRING) {
+	return 4;
+    } else if (type == GRETL_TYPE_BUNDLE) {
+	return 5;
+    } else if (type == GRETL_TYPE_MATRIX_REF) {
+	return 6;
+    } else {
+	return 0;
+    }
+}
+
 static NODE *object_status (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -4089,6 +4108,15 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	    ret->v.xval = (p->err)? NADBL : n_scanned_items();
 	} else if (f == F_REMOVE) {
 	    ret->v.xval = gretl_remove(s);
+	} else if (f == F_TYPEOF) {
+	    GretlType type = 0;
+
+	    if (current_series_index(p->dset, s) >= 0) {
+		type = GRETL_TYPE_SERIES;
+	    } else {
+		user_var_get_value_and_type(s, &type);
+	    }
+	    ret->v.xval = type_translate_to_int(type);
 	}
     }
 
@@ -6096,25 +6124,6 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static int bundle_type_translate (GretlType type)
-{
-    if (type == GRETL_TYPE_DOUBLE) {
-	return 1;
-    } else if (type == GRETL_TYPE_SERIES) {
-	return 2;
-    } else if (type == GRETL_TYPE_MATRIX) {
-	return 3;
-    } else if (type == GRETL_TYPE_STRING) {
-	return 4;
-    } else if (type == GRETL_TYPE_BUNDLE) {
-	return 5;
-    } else if (type == GRETL_TYPE_MATRIX_REF) {
-	return 6;
-    } else {
-	return 0;
-    }
-}
-
 static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -6125,7 +6134,7 @@ static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
 	GretlType type = 0;
 
 	gretl_bundle_get_data(bundle, key, &type, NULL, NULL);
-	ret->v.xval = bundle_type_translate(type);
+	ret->v.xval = type_translate_to_int(type);
     }
 
     return ret;
@@ -9850,6 +9859,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_STRLEN:
     case F_SSCANF:
     case F_REMOVE:
+    case F_TYPEOF:
 	if (l->t == STR) {
 	    ret = object_status(l, t->t, p);
 	} else {
