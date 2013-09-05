@@ -9916,14 +9916,13 @@
 	</li>
 	<li>	  
 	  <para><lit>loop_maxiter</lit>: one non-negative integer
-	  value (default 1000).  Sets the maximum number of iterations
-	  that a <lit>while</lit> loop is allowed before halting (see
-	  <cmdref targ="loop"/>). Note that this setting only affects
-	  the <lit>while</lit> variant, as its purpose is to forcibly
-	  break potentially infinite loops. The special value 0 is
-	  used to make <lit>while</lit> loops <quote>unsafe</quote>:
-	  in this case, check is skipped and the loop may go on
-	  forever. Use with caution.
+	  value (default 100000).  Sets the maximum number of
+	  iterations that a <lit>while</lit> loop is allowed before
+	  halting (see <cmdref targ="loop"/>). Note that this setting
+	  only affects the <lit>while</lit> variant; its purpose is to
+	  guard against inadvertently infinite loops. Setting this
+	  value to 0 has the effect of disabling the limit; use with
+	  caution.
 	  </para>
 	</li>
 	<li>

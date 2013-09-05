@@ -1149,7 +1149,7 @@ static int handle_optval (char *s, int ci, gretlopt opt, int status)
 	quoted = 1;
 	p++;
 	len = strcspn(p, "\"");
-	if (len > 0 && *(p + len) == '"') {
+	if (len >= 0 && *(p + len) == '"') {
 	    val = gretl_strndup(p, len);
 	} else {
 	    err = E_PARSE;
