@@ -501,6 +501,8 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	    ret = newstring();
 	} else if (t == BUNDLE) {
 	    ret = newbundle();
+	} else if (t == EMPTY) {
+	    ret = newempty();
 	}
 
 	if (ret == NULL) {
@@ -590,6 +592,11 @@ static NODE *aux_string_node (parser *p)
 static NODE *aux_bundle_node (parser *p)
 {
     return get_aux_node(p, BUNDLE, 0, 0);
+}
+
+static NODE *aux_empty_node (parser *p)
+{
+    return get_aux_node(p, EMPTY, 0, 0);
 }
 
 static NODE *aux_any_node (parser *p)
@@ -8159,8 +8166,26 @@ static NODE *ternary_return_node (NODE *n, parser *p)
 	    if (ret->v.str == NULL) {
 		p->err = E_ALLOC;
 	    }	    
+	}
+    } else if (n->t == LIST) {
+	ret = aux_list_node(p);
+	if (ret != NULL) {
+	    if (is_tmp_node(ret)) {
+		free(ret->v.ivec);
+	    }
+	    ret->v.ivec = gretl_list_copy(n->v.ivec);
+	    if (ret->v.ivec == NULL) {
+		p->err = E_ALLOC;
+	    }	    
+	}
+    } else if (n->t == EMPTY) {
+	ret = aux_empty_node(p);
+	if (ret == NULL) {
+	    p->err = E_ALLOC;
 	}	
     } else {
+	fprintf(stderr, "ternary_return_node: unhandled type '%s'\n", 
+		getsymb(n->t, p));
 	p->err = E_TYPES;
     }
 
@@ -8969,8 +8994,8 @@ static NODE *eval (NODE *t, parser *p)
     }
 
 #if EDEBUG
-    fprintf(stderr, "eval: incoming node %p (t=%d, vname=%s)\n", 
-	    (void *) t, t->t, t->vname);
+    fprintf(stderr, "eval: incoming node %p ('%s', vname=%s)\n", 
+	    (void *) t, getsymb(t->t, p), t->vname);
 #endif
 
     if (!p->err && eval_left(t->t)) {

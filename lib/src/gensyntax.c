@@ -63,7 +63,7 @@ NODE *new_node (int t)
     return n;
 }
 
-static NODE *newempty (void)
+NODE *newempty (void)
 {  
     NODE *n = new_node(EMPTY);
 

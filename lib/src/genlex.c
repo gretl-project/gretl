@@ -1788,7 +1788,7 @@ const char *getsymb (int t, const parser *p)
     case P_COL: 
 	return ":";
     case QUERY: 
-	return "?";
+	return "query";
     case LAG:
 	return "lag";
     default: 

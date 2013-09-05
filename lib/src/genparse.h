@@ -616,6 +616,7 @@ void lex (parser *s);
 NODE *new_node (int t);
 NODE *expr (parser *s);
 NODE *newdbl (double x);
+NODE *newempty (void);
 NODE *obs_node (parser *p);
 NODE *msl_node_direct (parser *p);
 void context_error (int c, parser *p);
