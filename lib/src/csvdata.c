@@ -3026,8 +3026,8 @@ static int filter_by_date (const char *s1, const char *s2, int op,
 }
 
 /* In relation to join, determine whether or not row @i of the data
-   read from CSV satisfies the filter criterion; return 1 iff the
-   condition is met.  
+   read from CSV satisfies the filter criterion; return 1 if the
+   condition is met, 0 otherwise.
 */
 
 static int join_row_wanted (DATASET *dset, int i,
@@ -3102,6 +3102,7 @@ static int join_row_wanted (DATASET *dset, int i,
 	    ret = !na(x);
 	}
     } else {
+	/* numerical comparison */
 	double x = filter->lhcol ? dset->Z[filter->lhcol][i] : filter->lhval;
 	double y = filter->rhcol ? dset->Z[filter->rhcol][i] : filter->rhval;
 	
@@ -3984,8 +3985,7 @@ static jr_filter *try_missval_filter (const char *s, int *err)
 
 /* parse a filter string of the form <lhs> <op> <rhs> */
 
-static jr_filter *make_join_filter (const char *s,
-				    int *err)
+static jr_filter *make_join_filter (const char *s, int *err)
 {
     jr_filter *filter = NULL;
     const char *opchars = "=!><";

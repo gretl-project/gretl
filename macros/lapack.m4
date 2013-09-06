@@ -1,5 +1,5 @@
 # Configure paths for lapack
-# Allin Cottrell <cottrell@wfu.edu>, last updated August 2005
+# Allin Cottrell <cottrell@wfu.edu>, last updated September 2013
 
 dnl AM_PATH_LAPACK([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl Test for LAPACK, and define LAPACK_CFLAGS and LAPACK_LIBS.
@@ -9,12 +9,6 @@ AC_DEFUN([AM_PATH_LAPACK],
 AC_ARG_WITH(lapack-prefix,[  --with-lapack-prefix=PFX   Prefix where LAPACK is installed (optional)],
             lapack_config_prefix="$withval", lapack_config_prefix="")
 AC_ARG_VAR([LAPACK_LIBS],[linker flags for lapack, overriding auto-detection])
-
-  if test x$lapack_config_prefix = x ; then
-     lapack_config_prefix="/usr/lib"
-  fi
-
-  lapack_config_args="$lapack_config_args --prefix=$lapack_config_prefix"
 
   if test x"${LAPACK_LIBS}" = x ; then 
      AC_MSG_CHECKING(for libgfortran, libg2c or libf2c)
@@ -27,12 +21,17 @@ AC_ARG_VAR([LAPACK_LIBS],[linker flags for lapack, overriding auto-detection])
      fi
      if test $FLIB = "none" ; then
         echo "*** Couldn't find libgfortran, libg2c or libf2c"
+        FLIB=""
      fi
   fi
 
   AC_MSG_CHECKING(for LAPACK)
-  if test x"${LAPACK_LIBS}" = x ; then  
-     LAPACK_LIBS="-L$lapack_config_prefix -llapack -lblas $FLIB"
+  if test x"${LAPACK_LIBS}" = x ; then
+     if test x$lapack_config_prefix = x ; then
+        LAPACK_LIBS="-llapack -lblas $FLIB"
+     else
+        LAPACK_LIBS="-L$lapack_config_prefix -llapack -lblas $FLIB"
+     fi
   fi
 
   ac_save_CFLAGS="$CFLAGS"
