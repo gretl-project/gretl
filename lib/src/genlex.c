@@ -407,6 +407,7 @@ struct str_table funcs[] = {
     { F_ISODATE,  "isodate" },
     { F_GETLINE,  "getline" },
     { F_TYPEOF,   "typeof" },
+    { F_ATOF,     "atof" },
     { 0,          NULL }
 };
 

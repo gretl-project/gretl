@@ -1106,6 +1106,42 @@
       </description>
     </function>
 
+    <function name="atof" section="strings" output="scalar">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Closely related to the C library function of the same name.
+	  Returns the result of converting the string
+	  <argname>s</argname> (or the leading portion thereof, after
+	  discarding any initial white space) to a floating-point
+	  number.  Unlike C's <lit>atof</lit>, however, the decimal
+	  character is always assumed (for reasons of portability) to
+	  be <quote><lit>.</lit></quote>. Any characters that follow
+	  the portion of <argname>s</argname> that converts to a
+	  floating-point number under this assumption are ignored.
+	</para>
+	<para>
+	  If none of <argname>s</argname> (following any discarded
+	  white space) is convertible under the stated assumption,
+	  <lit>NA</lit> is returned.
+	</para>
+	<code>
+	  # examples
+	  x = atof("1.234") # gives x = 1.234 
+	  x = atof("1,234") # gives x = 1
+	  x = atof("1.2y")  # gives x = 1.2
+	  x = atof("y")     # gives x = NA
+	  x = atof(",234")  # gives x = NA
+	</code>	
+	<para>
+	  See also <fncref targ="sscanf"/> for more flexible string to
+	  numeric conversion.
+	</para>
+      </description>
+    </function>
+
     <function name="bessel" section="math" output="asinput">
       <fnargs>
 	<fnarg type="char">type</fnarg>

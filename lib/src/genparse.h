@@ -276,6 +276,7 @@ enum {
     F_REMOVE,
     F_ISODATE,
     F_TYPEOF,
+    F_ATOF,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
@@ -418,7 +419,8 @@ enum {
 			    s == F_ISLIST   || s == F_ISSTRING || \
 			    s == F_OBSNUM || s == F_BACKTICK || \
 			    s == F_VARNUM || s == F_ARGNAME || \
-                            s == F_REMOVE || s == F_TYPEOF)
+                            s == F_REMOVE || s == F_TYPEOF || \
+			    s == F_ATOF)
 
 /* function with multiple args, string for first arg */
 #define str0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \

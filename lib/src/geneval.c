@@ -4563,6 +4563,26 @@ static NODE *isodate_node (NODE *l, parser *p)
     return ret;
 }
 
+static NODE *atof_node (NODE *l, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	char *endptr = NULL;
+
+	errno = 0;
+	gretl_push_c_numeric_locale();
+	ret->v.xval = strtod(l->v.str, &endptr);
+	if (errno || endptr == l->v.str) {
+	    errno = 0;
+	    ret->v.xval = NADBL;
+	}
+	gretl_pop_c_numeric_locale();
+    }
+
+    return ret;
+}
+
 static void strip_newline (char *s)
 {
     if (s != NULL && *s != '\0') {
@@ -10061,6 +10081,13 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = isodate_node(l, p);
 	} else {
 	    node_type_error(t->t, 0, NUM, l, p);
+	}
+	break;
+    case F_ATOF:
+	if (l->t == STR) {
+	    ret = atof_node(l, p);
+	} else {
+	    node_type_error(t->t, 0, STR, l, p);
 	}
 	break;
     default: 
