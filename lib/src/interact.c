@@ -4089,10 +4089,36 @@ static void do_print_string (char *str, PRN *prn)
     pputc(prn, '\n');
 }
 
+static void outfile_redirect (PRN *prn, FILE *fp, gretlopt opt,
+			      int *parms)
+{
+    if (opt & OPT_Q) {
+	parms[0] = gretl_echo_on();
+	parms[1] = gretl_messages_on();
+	set_gretl_echo(0);
+	set_gretl_messages(0);
+    } else {
+	parms[0] = parms[1] = -1;
+    }
+    print_start_redirection(prn, fp);
+}
+
+static void maybe_restore_vparms (int *parms)
+{
+    if (parms[0] == 1) {
+	set_gretl_echo(1);
+    }
+    if (parms[1] == 1) {
+	set_gretl_messages(1);
+    }    
+    parms[0] = parms[1] = -1;
+}
+
 static int 
-do_outfile_command (gretlopt flag, const char *fname, PRN *prn)
+do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 {
     static char outname[MAXLEN];
+    static int vparms[2];
     int diverted = 0;
     int err = 0;
 
@@ -4100,19 +4126,20 @@ do_outfile_command (gretlopt flag, const char *fname, PRN *prn)
 	return 0;
     }
 
-    if (flag != OPT_W && flag != OPT_A && flag != OPT_C) {
+    if (!(opt & (OPT_W | OPT_A | OPT_C))) {
 	return E_ARGS;
     }
 
     diverted = printing_is_redirected(prn);
 
     /* command to close outfile */
-    if (flag == OPT_C) {
+    if (opt & OPT_C) {
 	if (!diverted) {
 	    pputs(prn, _("Output is not currently diverted to file\n"));
 	    return 1;
 	} else {
 	    print_end_redirection(prn);
+	    maybe_restore_vparms(vparms);
 	    if (gretl_messages_on() && *outname != '\0') {
 		pprintf(prn, _("Closed output file '%s'\n"), outname);
 	    }
@@ -4131,20 +4158,20 @@ do_outfile_command (gretlopt flag, const char *fname, PRN *prn)
 	if (gretl_messages_on()) {
 	   pputs(prn, _("Now discarding output\n")); 
 	}
-	print_start_redirection(prn, NULL);
+	outfile_redirect(prn, NULL, opt, vparms);
 	*outname = '\0';
     } else if (!strcmp(fname, "stderr")) {
-	print_start_redirection(prn, stderr);
+	outfile_redirect(prn, stderr, opt, vparms);
 	*outname = '\0';
     } else if (!strcmp(fname, "stdout")) {
-	print_start_redirection(prn, stdout);
+	outfile_redirect(prn, stdout, opt, vparms);
 	*outname = '\0';
     } else {
 	FILE *fp;
 
 	fname = gretl_maybe_switch_dir(fname);
 
-	if (flag == OPT_W) {
+	if (opt & OPT_W) {
 	    fp = gretl_fopen(fname, "w");
 	} else {
 	    fp = gretl_fopen(fname, "a");
@@ -4156,7 +4183,7 @@ do_outfile_command (gretlopt flag, const char *fname, PRN *prn)
 	}
 
 	if (gretl_messages_on()) {
-	    if (flag == OPT_W) {
+	    if (opt == OPT_W) {
 		pprintf(prn, _("Now writing output to '%s'\n"), fname);
 	    } else {
 		pprintf(prn, _("Now appending output to '%s'\n"), fname);
@@ -4164,7 +4191,7 @@ do_outfile_command (gretlopt flag, const char *fname, PRN *prn)
 	    
 	}
 
-	print_start_redirection(prn, fp);
+	outfile_redirect(prn, fp, opt, vparms);
 	strcpy(outname, fname);
     }
 

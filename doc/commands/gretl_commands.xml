@@ -7952,6 +7952,10 @@
 	  <flag>--write</flag>
 	  <effect>overwrite file</effect>
         </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>see below</effect>
+        </option>	
       </options>
       <examples>
         <example>outfile regress.txt --write</example>
@@ -7985,11 +7989,26 @@
 	Three special variants on the above are available. If you give
 	the keyword <lit>null</lit> in place of a real filename along
 	with the <opt>--write</opt> option, the effect is to suppress
-	all printed output until the next <lit>outfile
-	--close</lit>. In addition if the keywords <lit>stdout</lit>
-	or <lit>stderr</lit> are given in place of a regular filename
-	the effect is to redirect output to standard output or
-	standard error output respectively.
+	all printed output until redirection is ended. If either of
+	the keywords <lit>stdout</lit> or <lit>stderr</lit> are given
+	in place of a regular filename the effect is to redirect
+	output to standard output or standard error output
+	respectively.
+      </para>
+      <para>
+	The <opt>--quiet</opt> option is for use with <opt>--write</opt>
+	or <opt>--append</opt>: its effect is to turn off the echoing
+	of commands and the printing of auxiliary messages while
+	output is redirected. It is equivalent to doing
+      </para>
+      <code>
+	set echo off
+	set messages off
+      </code>
+      <para>
+	except that when redirection is ended the original values of
+	the <lit>echo</lit> and <lit>messages</lit> variables are
+	restored.
       </para>
     </description>
 
