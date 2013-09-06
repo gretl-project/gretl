@@ -53,7 +53,7 @@
 #include "../pixmaps/mini.en.xpm"
 #include "../pixmaps/mini.split_h.xpm"
 #include "../pixmaps/mini.split_v.xpm"
-#include "../pixmaps/mini.compass.xpm"
+#include "../pixmaps/mini.winlist.xpm"
 #include "../pixmaps/mini.spreadsheet.xpm"
 
 /* for main-window toolbar */
@@ -133,7 +133,7 @@ void gretl_stock_icons_init (void)
 	{ mini_en_xpm, GRETL_STOCK_EN },
 	{ mini_split_h_xpm, GRETL_STOCK_SPLIT_H },
 	{ mini_split_v_xpm, GRETL_STOCK_SPLIT_V },
-	{ mini_compass_xpm, GRETL_STOCK_COMPASS },
+	{ mini_winlist_xpm, GRETL_STOCK_WINLIST },
 	{ mini_spreadsheet_xpm, GRETL_STOCK_SHEET },
 	{ mini_db_xpm, GRETL_STOCK_DB},
 	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
@@ -681,7 +681,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_x12a_help), X12A_HELP_ITEM },
-    { N_("Windows"), GRETL_STOCK_COMPASS, GNULL, 0 },
+    { N_("Windows"), GRETL_STOCK_WINLIST, GNULL, 0 },
     { N_("Close"), GTK_STOCK_CLOSE, G_CALLBACK(delete_file_viewer), 0 }
 };
 
@@ -833,7 +833,7 @@ void vwin_toolbar_insert_winlist (windata_t *vwin)
 
     gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("Windows"));
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    img = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, 
+    img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, 
 				   GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_container_add(GTK_CONTAINER(item), button);
@@ -1115,7 +1115,7 @@ static GretlToolItem mainbar_items[] = {
     { N_("OLS model"),          GRETL_STOCK_MODEL,   G_CALLBACK(tbar_model), 0 },
     { N_("gretl database"),     GRETL_STOCK_DB,      G_CALLBACK(show_native_dbs), 0 },
     { N_("open dataset"),       GTK_STOCK_OPEN,      G_CALLBACK(tbar_open_data), 0 },
-    { N_("Windows"),            GRETL_STOCK_COMPASS, GNULL, 0 },
+    { N_("Windows"),            GRETL_STOCK_WINLIST, GNULL, 0 },
 };
 
 void add_mainwin_toolbar (GtkWidget *vbox)

@@ -133,13 +133,13 @@ enum {
 static GretlToolItem series_items[] = {
     { N_("Add..."), GTK_STOCK_ADD,    G_CALLBACK(sheet_show_popup),    SHEET_ADD_BTN },
     { N_("Apply"),  GTK_STOCK_APPLY,  G_CALLBACK(get_data_from_sheet), SHEET_APPLY_BTN },
-    { N_("Windows"), GRETL_STOCK_COMPASS, GNULL, 0 },
+    { N_("Windows"), GRETL_STOCK_WINLIST, GNULL, 0 },
     { N_("Close"),  GTK_STOCK_CLOSE,  G_CALLBACK(maybe_exit_sheet),    0 }
 };
 
 static GretlToolItem scalar_items[] = {
     { N_("Add..."),  GTK_STOCK_ADD,    G_CALLBACK(add_scalar_callback), 0 },
-    { N_("Windows"), GRETL_STOCK_COMPASS, GNULL, 0 },
+    { N_("Windows"), GRETL_STOCK_WINLIST, GNULL, 0 },
     { N_("Close"),   GTK_STOCK_CLOSE,  G_CALLBACK(maybe_exit_sheet), 0 }
 };
 
@@ -2969,7 +2969,7 @@ static void sheet_toolbar_insert_winlist (Spreadsheet *sheet,
 
     gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("Windows"));
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    img = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, GTK_ICON_SIZE_MENU);
+    img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_container_add(GTK_CONTAINER(item), button);
     g_signal_connect(button, "button-press-event", 

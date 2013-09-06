@@ -76,7 +76,7 @@ static GretlToolItem help_tools[] = {
     { N_("Smaller"), GTK_STOCK_ZOOM_OUT, G_CALLBACK(text_smaller), 0},
     { N_("Show English help"), GRETL_STOCK_EN, G_CALLBACK(en_help_callback), 
       EN_ITEM },
-    { N_("Windows"), GRETL_STOCK_COMPASS, GNULL, 0 },
+    { N_("Windows"), GRETL_STOCK_WINLIST, GNULL, 0 },
     { N_("Close"), GTK_STOCK_CLOSE, G_CALLBACK(delete_help_viewer), 0 }
 };
 

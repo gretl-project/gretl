@@ -263,7 +263,7 @@ static GtkWidget *small_tool_button (GretlToolItem *item,
     img = gtk_image_new_from_stock(item->icon, GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_widget_set_tooltip_text(GTK_WIDGET(button), _(item->tip));
-    if (!strcmp(item->icon, GRETL_STOCK_COMPASS)) {
+    if (!strcmp(item->icon, GRETL_STOCK_WINLIST)) {
 	g_signal_connect(G_OBJECT(button), "button-press-event", 
 			 item->func, plot->shell);
     } else {
@@ -307,7 +307,7 @@ static void close_plot_callback (GtkWidget *w, png_plot *plot)
 
 static GretlToolItem plotbar_items[] = {
     { N_("Close"),       GTK_STOCK_CLOSE,     G_CALLBACK(close_plot_callback), 0 },
-    { N_("Windows"),     GRETL_STOCK_COMPASS, G_CALLBACK(window_list_popup), 0 },
+    { N_("Windows"),     GRETL_STOCK_WINLIST, G_CALLBACK(window_list_popup), 0 },
     { N_("Edit"),        GTK_STOCK_EDIT,      G_CALLBACK(graph_edit_callback), 0 },
     { N_("Zoom..."),     GTK_STOCK_ZOOM_IN,   G_CALLBACK(graph_zoom_callback), 0 },
     { N_("Display PDF"), GRETL_STOCK_PDF,     G_CALLBACK(show_pdf_callback), 0 },

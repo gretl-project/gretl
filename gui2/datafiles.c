@@ -1395,7 +1395,7 @@ static GretlToolItem files_items[] = {
     { N_("Look on server"), GTK_STOCK_NETWORK,    NULL,                          BTN_WWW },
     { N_("Local machine"),  GTK_STOCK_HOME,       NULL,                          BTN_HOME },
     { N_("New"),            GTK_STOCK_NEW,        G_CALLBACK(new_package_callback), BTN_NEW },
-    { N_("Windows"),        GRETL_STOCK_COMPASS,  GNULL, 0 },
+    { N_("Windows"),        GRETL_STOCK_WINLIST,  GNULL, 0 },
     { N_("Close"),          GTK_STOCK_CLOSE,      G_CALLBACK(close_files_viewer), BTN_CLOSE }
 };
 

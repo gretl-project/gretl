@@ -428,7 +428,7 @@ void window_list_popup (GtkWidget *src, GdkEventButton *event,
 	GtkWidget *image;
 
 	item = gtk_image_menu_item_new_with_label(_("Arrange"));
-	image = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, 
+	image = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, 
 					 GTK_ICON_SIZE_MENU);
 	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), 
 				      image);
@@ -953,7 +953,7 @@ static void menu_bar_add_winlist (windata_t *vwin)
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
 #endif
 
-    img = gtk_image_new_from_stock(GRETL_STOCK_COMPASS, 
+    img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, 
 				   GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_widget_set_tooltip_text(GTK_WIDGET(button), _("Windows"));

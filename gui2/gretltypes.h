@@ -37,7 +37,7 @@
 #define GRETL_STOCK_EN      "gretl-en"
 #define GRETL_STOCK_SPLIT_H "gretl-split-h"
 #define GRETL_STOCK_SPLIT_V "gretl-split-v"
-#define GRETL_STOCK_COMPASS "gretl-compass"
+#define GRETL_STOCK_WINLIST "gretl-winlist"
 #define GRETL_STOCK_SHEET   "gretl-sheet"
 #define GRETL_STOCK_DB      "gretl-db"
 #define GRETL_STOCK_GRETL   "gretl-gretl"

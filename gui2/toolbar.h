@@ -25,7 +25,7 @@ typedef enum {
     VIEWBAR_HAS_TEXT = 1 << 1
 } ViewbarFlags;
 
-#define winlist_item(i) (strcmp(i->icon, GRETL_STOCK_COMPASS) == 0)
+#define winlist_item(i) (strcmp(i->icon, GRETL_STOCK_WINLIST) == 0)
 
 void gretl_stock_icons_init (void);
 
