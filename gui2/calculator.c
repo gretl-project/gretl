@@ -270,8 +270,8 @@ static void
 dist_xmin_xmax (int d, double *parm, double *xmin, double *xmax, int alt)
 {
     double arg;
-    char st = 0;
-
+    int dcode = D_NONE;
+    
     if (d == NORMAL_DIST) {
 	*xmin = parm[0] - 4.5 * parm[1];
 	*xmax = parm[0] + 4.5 * parm[1];
@@ -279,11 +279,11 @@ dist_xmin_xmax (int d, double *parm, double *xmin, double *xmax, int alt)
 	*xmin = -4.5;
 	*xmax = 4.5;
     } else if (d == CHISQ_DIST) {
-	st = 'X';
+	dcode = D_CHISQ;
 	*xmin = 0;
 	arg = 0.005;
     } else if (d == F_DIST) {
-	st = 'F';
+	dcode = D_SNEDECOR;
 	*xmin = 0;
 	if (parm[0] + parm[1] < 16) {
 	    arg = 0.009;
@@ -303,37 +303,37 @@ dist_xmin_xmax (int d, double *parm, double *xmin, double *xmax, int alt)
 		*xmin = 0;
 	    }
 	} else {
-	    st = 'B';
+	    dcode = D_BINOMIAL;
 	    *xmin = 0;
 	    arg = 0.001;
 	}
     } else if (d == POISSON_DIST) {
-	st = 'P';
+	dcode = D_POISSON;
 	*xmin = 0;
 	arg = 0.0015;
     } else if (d == WEIBULL_DIST) {
-	st = 'W';
+	dcode = D_WEIBULL;
 	*xmin = 0;
 	arg = 0.0004;
     }
 
-    if (st) {
-	*xmax = gretl_get_critval(st, parm, arg);
+    if (dcode != D_NONE) {
+	*xmax = gretl_get_critval(dcode, parm, arg);
     }
 }
 
 static double dist_xmax (int d, double *parm)
 {
     double arg = NADBL;
-    char st = 0;
+    int dcode = D_NONE;
 
     switch (d) {
     case CHISQ_DIST:
-	st = 'X';
+	dcode = D_CHISQ;
 	arg = 0.005;
 	break;
     case F_DIST:
-	st = 'F';
+	dcode = D_SNEDECOR;
 	if (parm[0] + parm[1] < 16) {
 	    arg = 0.009;
 	} else {
@@ -341,20 +341,20 @@ static double dist_xmax (int d, double *parm)
 	}
 	break;
     case BINOMIAL_DIST:
-	st = 'B';
+	dcode = D_BINOMIAL;
 	arg = 0.001;
 	break;
     case POISSON_DIST:
-	st = 'P';
+	dcode = D_POISSON;
 	arg = 0.0015;
 	break;
     case WEIBULL_DIST:
-	st = 'W';
+	dcode = D_WEIBULL;
 	arg = 0.0004;
 	break;
     }
 
-    return gretl_get_critval(st, parm, arg);
+    return gretl_get_critval(dcode, parm, arg);
 }
 
 static int n_literal_lines (int d, int ptype)
