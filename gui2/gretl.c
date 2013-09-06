@@ -1792,8 +1792,8 @@ GtkActionEntry main_entries[] = {
 
     /* Help */
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },
-    { "TextCmdRef", GRETL_STOCK_BOOK, N_("_Command reference"), NULL, NULL, G_CALLBACK(plain_text_cmdref) },
-    { "FuncRef",   NULL, N_("_Function reference"), NULL, NULL, G_CALLBACK(genr_funcs_ref) },
+    { "TextCmdRef", GTK_STOCK_HELP, N_("_Command reference"), NULL, NULL, G_CALLBACK(plain_text_cmdref) },
+    { "FuncRef",   GTK_STOCK_HELP, N_("_Function reference"), "", NULL, G_CALLBACK(genr_funcs_ref) },
     { "UserGuide", GRETL_STOCK_PDF, N_("_User's guide"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "PDFCmdRef", GRETL_STOCK_PDF, N_("_Command reference"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "KbdRef", GRETL_STOCK_PDF, N_("_Keyboard shortcuts"), NULL, NULL, G_CALLBACK(display_pdf_help) },
