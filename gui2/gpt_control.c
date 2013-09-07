@@ -2810,12 +2810,13 @@ static void copy_state_to_pixbuf (png_plot *plot)
 	g_object_unref(plot->savebuf);
     } 
 
-    plot->savebuf = gdk_pixbuf_get_from_drawable(NULL,
-						 plot->pixmap,
-						 NULL,
-						 0, 0, 0, 0,
-						 plot->pixel_width,
-						 plot->pixel_height);
+    plot->savebuf = 
+	gdk_pixbuf_get_from_drawable(NULL,
+				     plot->pixmap,
+				     NULL,
+				     0, 0, 0, 0,
+				     plot->pixel_width,
+				     plot->pixel_height);
 }
 
 # endif

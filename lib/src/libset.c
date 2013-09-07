@@ -1017,43 +1017,6 @@ void set_garch_robust_vcv (const char *s)
     }
 }
 
-static int set_line_width (const char *s0, const char *s1,
-			   DATASET *dset, PRN *prn)
-{
-    int v, w, err = 0;
-
-    if (dset == NULL) {
-	/* treat as no-op */
-	return 0;
-    }
-
-    if (!isdigit((unsigned char) *s1)) {
-	return 1;
-    }
-
-    if (isdigit((unsigned char) *s0)) {
-	v = atoi(s0);
-    } else {
-	v = current_series_index(dset, s0);
-    }
-
-    if (v < 0 || v >= dset->v) {
-	return E_DATA;
-    }
-
-    w = atoi(s1);
-
-    if (w < 0 || w > 32) {
-	err = E_DATA;
-    } else {
-	series_set_linewidth(dset, v, w);
-	pprintf(prn, _("Line width for %s = %d\n"), 
-		dset->varname[v], w);
-    }
-
-    return err;
-}
-
 static int set_initvals (const char *s, PRN *prn)
 {
     gretl_matrix *m;
@@ -1637,8 +1600,8 @@ static int check_set_bool (const char *setobj, const char *setarg)
 int execute_set_line (const char *line, DATASET *dset, 
 		      gretlopt opt, PRN *prn)
 {
-    char setobj[32], setarg[32], setarg2[32];
-    int k, nw, err = E_PARSE;
+    char setobj[32], setarg[32];
+    int k, argc, err = E_PARSE;
     double x;
 
     check_for_state();
@@ -1647,15 +1610,15 @@ int execute_set_line (const char *line, DATASET *dset,
 	return write_or_read_settings(opt, prn);
     }
 
-    *setobj = *setarg = *setarg2 = '\0';
+    *setobj = *setarg = '\0';
 
-    nw = sscanf(line, "%*s %31s %31s %31s", setobj, setarg, setarg2);
+    argc = sscanf(line, "%*s %31s %31s", setobj, setarg);
 
-    if (nw <= 0) {
+    if (argc == 0) {
 	return print_settings(prn, OPT_D);
     }
 
-    if (nw > 1) {
+    if (argc > 1) {
 	/* specials which need the whole line */
 	if (!strcmp(setobj, "initvals")) {
 	    return set_initvals(line, prn);
@@ -1670,7 +1633,7 @@ int execute_set_line (const char *line, DATASET *dset,
 	}
     }
 
-    if (nw == 1) {
+    if (argc == 1) {
 	if (!strcmp(setobj, ECHO)) {
 	    state->flags |= STATE_ECHO_ON;
 	    err = 0;
@@ -1680,7 +1643,7 @@ int execute_set_line (const char *line, DATASET *dset,
 	} else {
 	    return libset_query_settings(setobj, prn);
 	}
-    } else if (nw == 2) {
+    } else if (argc == 2) {
 	if (!strcmp(setobj, "csv_write_na") || !strcmp(setobj, "csv_na")) {
 	    set_csv_na_write_string(setarg);
 	    return 0;
@@ -1762,12 +1725,6 @@ int execute_set_line (const char *line, DATASET *dset,
 	    }
 	} else {
 	    err = E_UNKVAR;
-	}
-    } else if (nw == 3) {
-	if (!strcmp(setobj, "linewidth")) {
-	    err = set_line_width(setarg, setarg2, dset, prn);
-	} else {
-	    err = E_PARSE;
 	}
     }
 		    
