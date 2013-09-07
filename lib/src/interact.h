@@ -31,13 +31,6 @@ typedef struct CMD_ CMD;
 typedef struct ExecState_ ExecState;
 
 typedef enum {
-    CMD_BATCH_MODE     = 1 << 0,
-    CMD_STACKING       = 1 << 1,
-    CMD_RECORDING      = 1 << 2,
-    CMD_CLI            = 1 << 3
-} CmdEchoFlags;
-
-typedef enum {
     OPT_BATCH   = 1 << 0,
     OPT_HELP    = 1 << 1,
     OPT_VERSION = 1 << 2,
@@ -97,10 +90,11 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn);
 int parseopt (int *pargc, char ***pargv, gretlopt *popt, 
 	      double *scriptval, char *fname);
 
-void echo_cmd (const CMD *cmd, const DATASET *dset, const char *line, 
-	       unsigned char flags, PRN *prn);
+void echo_command (const CMD *cmd, const DATASET *dset, 
+		   const char *line, PRN *prn);
 
-void echo_function_call (const char *line, unsigned char flags, PRN *prn);
+void gretl_record_command (const CMD *cmd, const DATASET *dset, 
+			   const char *line, PRN *prn);
 
 void safe_print_line (const char *line, int *plen, PRN *prn);
 

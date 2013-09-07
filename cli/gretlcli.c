@@ -834,7 +834,6 @@ static int exec_line (ExecState *s, DATASET *dset)
     PRN *prn = s->prn;
     MODEL *model = s->model;
     int old_runit = runit;
-    unsigned char eflag;
     char runfile[MAXLEN];
     int err = 0;
 
@@ -915,16 +914,14 @@ static int exec_line (ExecState *s, DATASET *dset)
     if (cmd->ci == LOOP || gretl_compiling_loop()) {  
 	/* accumulating loop commands */
 	if (gretl_echo_on() && (!gretl_compiling_loop() || batch || runit)) {
-	    eflag = gretl_compiling_loop()? CMD_STACKING : CMD_BATCH_MODE;
 	    /* straight visual echo */
-	    echo_cmd(cmd, dset, line, eflag, prn);
+	    echo_command(cmd, dset, line, prn);
 	}
 	err = gretl_loop_append_line(s, dset);
 	if (err) {
 	    errmsg(err, prn);
 	} else if (!batch && !runit) {
-	    /* echo to record */
-	    echo_cmd(cmd, dset, line, CMD_RECORDING, cmdprn);
+	    gretl_record_command(cmd, dset, line, cmdprn);
 	}
 	return err;
     }
@@ -933,9 +930,8 @@ static int exec_line (ExecState *s, DATASET *dset)
 	/* visual feedback, not recording */
 	if (cmd->ci == FUNC && runit > 1) {
 	    ; /* don't echo */
-	} else {
-	    eflag = (batch || runit)? CMD_BATCH_MODE : CMD_CLI;
-	    echo_cmd(cmd, dset, line, eflag, prn);
+	} else if (batch || runit) {
+	    echo_command(cmd, dset, line, prn);
 	}
     }
 
@@ -1115,7 +1111,7 @@ static int exec_line (ExecState *s, DATASET *dset)
 
     if (!err && cmd->ci != QUIT && gretl_echo_on() && !batch && !old_runit) {
 	/* record a successful interactive command */
-	echo_cmd(cmd, dset, line, CMD_RECORDING, cmdprn);
+	gretl_record_command(cmd, dset, line, cmdprn);
     }
 
     if (err) {

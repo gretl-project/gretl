@@ -3701,26 +3701,25 @@ static int command_is_silent (const CMD *cmd, const char *line)
 	                     c == FRACTINT || \
                              c == XCORRGM)
 
-/**
- * echo_cmd:
+/*
+ * real_echo_cmd:
  * @cmd: pointer to #CMD struct.
- * @dset: pointer to data information struct.
+ * @dset: pointer to dataset.
  * @line: "raw" command line associated with @cmd.
- * @flags: bitwise OR of elements from #CmdEchoFlags.
- * @prn: pointer to gretl printing struct (or %NULL).
+ * @recording: echo is going to command log (0/1).
+ * @prn: pointer to gretl printing struct.
  *
- * Echoes the user command represented by @cmd and @line, to
- * %stdout (if @prn is %NULL) or @prn.  This is used for two
- * distinct purposes: to give visual feedback on the
- * command supplied, and (in some contexts) to record a
- * command that was executed interactively.
+ * Echoes the user command represented by @cmd and @line to
+ * @prn.  This is used for two distinct purposes: to give 
+ * visual feedback on the command supplied, and (in some 
+ * contexts) to record a command that was executed interactively.
  */
 
-void echo_cmd (const CMD *cmd, const DATASET *dset, const char *line, 
-	       unsigned char flags, PRN *prn)
+static void real_echo_cmd (const CMD *cmd, const DATASET *dset, 
+			   const char *line, int recording, 
+			   PRN *prn)
 {
-    int batch = (flags & CMD_BATCH_MODE);
-    int recording = (flags & CMD_RECORDING);
+    int compiling = 0;
     int skiplist = 0;
     int len, llen = 0;
 
@@ -3728,22 +3727,26 @@ void echo_cmd (const CMD *cmd, const DATASET *dset, const char *line,
 	return;
     }
 
+    if (gretl_compiling_function() || gretl_compiling_loop()) {
+	compiling = 1;
+    }
+
 #if ECHO_DEBUG
-    fprintf(stderr, "echo_cmd:\n line='%s'\n param='%s'\n extra='%s'\n", 
+    fprintf(stderr, "echo_cmd:\n*** line='%s'\n param='%s' extra='%s'\n", 
 	    line, cmd->param, cmd->parm2);
-    fprintf(stderr, " cmd->opt=%d, batch=%d, recording=%d, nolist=%d\n",
-	    cmd->opt, batch, recording, cmd_nolist(cmd));
+    fprintf(stderr, " cmd->opt=%d, recording=%d, compiling=%d, nolist=%d\n",
+	    cmd->opt, recording, compiling, cmd_nolist(cmd));
     fprintf(stderr, " cmd->word = '%s'\n", cmd->word);
     fprintf(stderr, " cmd->ci = %d, context = %d\n", cmd->ci, cmd->context);
     fprintf(stderr, " cmd->savename = '%s'\n", cmd->savename);
     if (!cmd_nolist(cmd)) {
 	printlist(cmd->list, "cmd->list");
     }
-    fprintf(stderr, " prn = %p\n", (void *) prn);
 #endif
 
-    /* certain things don't get echoed at all, if not recording */
-    if (!recording && command_is_silent(cmd, line)) {
+    /* certain things don't get echoed at all, if not recording or
+       compiling a function or loop */
+    if (!recording && !compiling && command_is_silent(cmd, line)) {
 	return;
     }
 
@@ -3769,14 +3772,12 @@ void echo_cmd (const CMD *cmd, const DATASET *dset, const char *line,
 	return;
     }
 
-    /* print leading string before echo? not if we're recording */
+    /* print leading string before echo? only if not recording */
     if (!recording) {
-	if ((flags & CMD_STACKING) || gretl_compiling_function()) {
+	if (compiling) {
 	    llen += pputs(prn, "> ");
-	} else if (batch) {
+	} else {
 	    llen += pputs(prn, "? ");
-	} else if (flags & CMD_CLI) {
-	    llen += pputc(prn, ' ');
 	}
     }
 
@@ -3854,13 +3855,16 @@ void echo_cmd (const CMD *cmd, const DATASET *dset, const char *line,
     gretl_print_flush_stream(prn);
 }
 
-void echo_function_call (const char *line, unsigned char flags, PRN *prn)
+void echo_command (const CMD *cmd, const DATASET *dset, 
+		   const char *line, PRN *prn)
 {
-    char leadchar = (flags & CMD_STACKING)? '>' : '?';
+    real_echo_cmd(cmd, dset, line, 0, prn);
+}
 
-    if (gretl_echo_on()) {
-	pprintf(prn, "%c %s\n", leadchar, line);
-    }
+void gretl_record_command (const CMD *cmd, const DATASET *dset, 
+			   const char *line, PRN *prn)
+{
+    real_echo_cmd(cmd, dset, line, 1, prn);
 }
 
 /* Look for a flag of the form " -x" which occurs outside of any

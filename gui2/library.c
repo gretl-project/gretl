@@ -238,6 +238,22 @@ gint bufopen (PRN **pprn)
     return err;
 }
 
+static char *cmd_to_buf (CMD *cmd, DATASET *dset, const char *line)
+{
+    PRN *cmdprn = NULL;
+    char *buf = NULL;
+
+    bufopen(&cmdprn);
+
+    if (cmdprn != NULL) {
+	gretl_record_command(cmd, dataset, libline, cmdprn);
+	buf = gretl_print_steal_buffer(cmdprn);
+	gretl_print_destroy(cmdprn);
+    }
+
+    return buf;
+}
+
 /*                 -- A note on recording commands --
 
    Wherever it's appropriate, we want to record the CLI equivalent of
@@ -259,8 +275,9 @@ gint bufopen (PRN **pprn)
    The MORE COMPLEX variant uses parse_lib_command() followed by
    record_lib_command(). The first of these functions runs the stored
    @libline through the libgretl command parser, and the second calls
-   the libgretl function echo_cmd() to produce the "canonical form" of
-   the command, which is then entered in the command log.
+   the libgretl function gretl_record_command() to produce the 
+   "canonical form" of the command, which is then entered in the 
+   command log.
 
    Why bother with the more complex variant? First, parsing the
    command line may expose an error which we'll then be able to
@@ -269,7 +286,7 @@ gint bufopen (PRN **pprn)
    (ID numbers of series), but it makes for a more comprehensible log
    entry to cash out such lists using the names of the series -- as is
    done by echo_cmd. And echo_cmd also automatically breaks overly
-   long lines, making for better legibility.
+   long lines, making for better legibility. (FIXME doc here)
 
    IMPORTANT: when the second command-logging method is used,
    parse_lib_command() must always be called before
@@ -295,7 +312,7 @@ gint bufopen (PRN **pprn)
 
 static int real_record_lib_command (int model_ID)
 {
-    PRN *echo;
+    char *buf;
     int err = 0;
 
     /* @libcmd must be filled out using parse_lib_command()
@@ -310,22 +327,20 @@ static int real_record_lib_command (int model_ID)
     fprintf(stderr, " line: '%s'\n", libline);
 #endif
 
-    if (bufopen(&echo)) {
+    buf = cmd_to_buf(&libcmd, dataset, libline);
+
+    if (buf == NULL) {
 	err = 1;
     } else {
-	const char *buf;
-
-	echo_cmd(&libcmd, dataset, libline, CMD_RECORDING, echo);
-	buf = gretl_print_get_buffer(echo);
 #if CMD_DEBUG
-	fprintf(stderr, "from echo_cmd: buf='%s'\n", buf);
+	fprintf(stderr, "from gretl_record_command: buf='%s'\n", buf);
 #endif
 	if (model_ID > 0) {
 	    err = add_model_command_to_stack(buf, model_ID);
 	} else {
 	    err = add_command_to_stack(buf);
 	}
-	gretl_print_destroy(echo);
+	free(buf);
     }
 
     return err;
@@ -8650,16 +8665,12 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 
     if ((s->flags & CONSOLE_EXEC) && !err) {
 	/* log the specific command */
-	PRN *echo;
+	char *buf = cmd_to_buf(cmd, dataset, line);
 
-	if (bufopen(&echo) == 0) {
-	    const char *buf;
-
-	    echo_cmd(cmd, dataset, line, CMD_RECORDING, echo);
-	    buf = gretl_print_get_buffer(echo);
+	if (buf != NULL) {
 	    lib_command_strcpy(buf);
 	    record_command_verbatim();
-	    gretl_print_destroy(echo);
+	    free(buf);
 	}
 	/* and check for display of scalars */
 	sync_scalars_window();
