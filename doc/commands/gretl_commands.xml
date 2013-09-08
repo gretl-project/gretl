@@ -10109,10 +10109,12 @@
 	  </para>
 	</li>
 	<li>	  
-	  <para><lit>initvals</lit>: a pre-specified matrix. Allows manual
-	    setting of the initial parameter estimates for numerical
-	    optimization problems (such as ARMA estimation). For details see
-	    <guideref targ="arma-estimation"/>.
+	  <para><lit>initvals</lit>: either <lit>auto</lit> (the
+	  default) or the name of a pre-specified matrix. Allows
+	  manual setting of the initial parameter estimates for
+	  numerical optimization problems (such as ARMA
+	  estimation). For details see <guideref
+	  targ="arma-estimation"/>.
 	  </para>
 	</li>
 	<li>

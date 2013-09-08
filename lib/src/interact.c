@@ -237,20 +237,12 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (!strcmp(s, "pooled")) {
 	deprecate_alias("pooled", "ols");
 	cmd->ci = OLS;
-    } else if (!strcmp(s, "import")) {
-	deprecate_alias("import", "open");
-	cmd->ci = OPEN;
     } else if (!strcmp(line, "smpl full")) {
 	strcpy(line, "smpl");
 	cmd->opt = OPT_F;
     } else if (!strcmp(s, "equations")) {
 	cmd->ci = EQUATION;
 	cmd->opt |= OPT_M;
-    } else if (!strcmp(s, "graph")) {
-	cmd->ci = PLOT;
-    } else if (!strcmp(s, "plot")) {
-	cmd->ci = PLOT;
-	cmd->opt = OPT_S;
     } else if (!strcmp(s, "list")) {
 	char lname[VNAMELEN];
 	char fmt[24];
@@ -276,16 +268,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 	}
     } else if (*s == '!' || !strcmp(s, "launch")) {
 	cmd->ci = SHELL;
-    } else if (!strcmp(s, "addobs")) {
-	char *tmp = gretl_strdup(line);
-
-	strcpy(line, "dataset ");
-	strcat(line, tmp);
-	cmd->ci = DATAMOD;
-	free(tmp);
-    } else if (!strcmp(s, "fcasterr")) {
-	cmd->ci = FCAST;
-	cmd->opt |= OPT_E;
     } else if (!strcmp(s, "continue")) {
 	cmd->ci = FUNDEBUG;
 	cmd->opt |= OPT_C;
