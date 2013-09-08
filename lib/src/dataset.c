@@ -40,7 +40,6 @@ struct VARINFO_ {
     int lag;
     char compact_method;
     char stack_level; /* FIXME should be int? */
-    char line_width;
     series_table *st;
 };
 
@@ -300,7 +299,6 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     vinfo->transform = 0;
     vinfo->lag = 0;
     vinfo->compact_method = COMPACT_NONE;
-    vinfo->line_width = 1;
     vinfo->stack_level = gretl_function_depth();
     vinfo->st = NULL;
 }
@@ -327,7 +325,6 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
     targ->lag = src->lag;
     targ->compact_method = src->compact_method;
     targ->stack_level = src->stack_level;
-    targ->line_width = src->line_width;
 }
 
 /**
@@ -2825,41 +2822,6 @@ void series_set_discrete (DATASET *dset, int i, int s)
 	    dset->varinfo[i]->flags &= ~VAR_DISCRETE;
 	    set_dataset_is_changed();
 	}
-    }
-}
-
-/**
- * series_set_linewidth:
- * @dset: pointer to data information struct.
- * @i: index number of series.
- * @w: with of plot line.
- *
- * Set the line width for use when this variable is displayed
- * in a line graph.
- */
-
-void series_set_linewidth (DATASET *dset, int i, int w) 
-{
-    if (w >= 1 && w <= 32 && i > 0 && i < dset->v) {
-	dset->varinfo[i]->line_width = w;
-    }
-}
-
-/**
- * series_get_linewidth:
- * @dset: pointer to data information struct.
- * @i: index number of series.
- *
- * Returns: the line width set for use when graphing
- * variable @i.
- */
-
-int series_get_linewidth (const DATASET *dset, int i) 
-{
-    if (i > 0 && i < dset->v) {
-	return dset->varinfo[i]->line_width;
-    } else {
-	return 0;
     }
 }
 

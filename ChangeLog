@@ -1,15 +1,16 @@
 version 1.9.13, in progress
 - Add Bulgarian, Catalan and Galician translations
 - Add new functions: psum(), prodc(), prodr(), toupper(),
-  getline(), isodate() and regsub()
+  getline(), isodate(), regsub(), atof()
 - "adf" command: add option to optimize the lag order using
   the procedure recommended by Ng and Perron (2001), and 
   make their modified AIC method the default
-- make it legal to set loop_maxiter to 0 (conventional for 
-  unsafe while loops)
+- "outfile" command: add --quiet option
 - "var" command: add syntax to select specific lags
 - "boxplot" command: add facility to specify literal gnuplot
   lines, as with the "gnuplot" command
+- Make it legal to set loop_maxiter to 0 (hence disabling  
+  the safety iteration limit for "while" loops)
 - Improve internals of pprintf() -- handle big string args
   properly
 - readfile() function: check for valid UTF-8 and recode if

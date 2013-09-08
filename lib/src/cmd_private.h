@@ -28,17 +28,17 @@ typedef enum {
 struct CMD_ {
     char word[FN_NAMELEN];      /* command word */
     int ci;                     /* command index number */
+    int err;                    /* error code */
     int context;                /* context for subsetted commands */
+    gretlopt opt;               /* option flags */
     int order;                  /* lag order, for various commands */
     int aux;                    /* auxiliary int (e.g. for VECM rank) */
-    gretlopt opt;               /* option flags */
     CmdFlags flags;             /* internal flags */
-    char savename[MAXSAVENAME]; /* name used to save an object from the command */
-    int *list;                  /* list of variables by ID number */
     char *param;                /* general-purpose parameter to command */
     char *parm2;                /* second parameter for some special uses */
+    int *list;                  /* list of variables by ID number */
     int *auxlist;               /* auxiliary list for some uses */
-    int err;                    /* error code */
+    char savename[MAXSAVENAME]; /* for object-saving mechanism */
     Laginfo *linfo;             /* struct for recording info on automatically
                                    generated lags */
 };

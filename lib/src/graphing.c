@@ -2640,15 +2640,7 @@ static void print_gnuplot_flags (int flags, int revised)
 
 static void set_lwstr (const DATASET *dset, int v, char *s)
 {
-    int w = 1;
-    
-    if (dset != NULL) {
-	w = series_get_linewidth(dset, v);
-    }
-
-    if (w > 1) {
-	sprintf(s, " lw %d", w);
-    } else if (default_png_scale > 1.0) {
+    if (default_png_scale > 1.0) {
 	strcpy(s, " lw 2");
     } else {
 	*s = '\0';

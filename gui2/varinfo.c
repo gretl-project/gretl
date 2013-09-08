@@ -28,8 +28,6 @@
 
 #include "uservar.h"
 
-#define VSET_MAX_FIELDS 6
-
 /* symbolic names for the things which can be set here */
 
 enum {
@@ -37,7 +35,6 @@ enum {
     VSET_LABEL,
     VSET_DISPLAY,
     VSET_COMPACT,
-    VSET_LINEWIDTH,
     VSET_DISCRETE,
     VSET_IDNUM,
     VSET_MAX
@@ -55,7 +52,6 @@ struct gui_varinfo_ {
     GtkWidget *label_entry;
     GtkWidget *display_entry;
     GtkWidget *compaction_menu;
-    GtkWidget *line_spin;
     GtkWidget *discrete_check;
     GtkWidget *id_spin;
     GtkWidget *apply;
@@ -94,7 +90,6 @@ static void gui_varinfo_init (gui_varinfo *vset, int v)
     vset->label_label = NULL;
     vset->display_entry = NULL;
     vset->compaction_menu = NULL;
-    vset->line_spin = NULL;
     vset->discrete_check = NULL;
     vset->id_spin = NULL;
     vset->up = vset->down = NULL;
@@ -290,11 +285,6 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 	    series_set_compact_method(dataset, v, ival);
 	    set_dataset_is_changed();
 	}
-    }
-
-    if (!err && vset->changed[VSET_LINEWIDTH]) {
-	ival = spinner_get_int(vset->line_spin);
-	series_set_linewidth(dataset, v, ival);
     }
 
     if (!err && vset->changed[VSET_DISCRETE]) {
@@ -503,13 +493,6 @@ static void varinfo_insert_info (gui_varinfo *vset, int v)
 			   series_get_display_name(dataset, v));
     }
 
-    if (vset->line_spin != NULL) { 
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vset->compaction_menu), 
-				 series_get_compact_method(dataset, v));
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(vset->line_spin), 
-				  series_get_linewidth(dataset, v));
-    } 
-
     if (vset->discrete_check != NULL) {
 	int d2 = 0, d1 = series_is_discrete(dataset, v);
 
@@ -587,14 +570,6 @@ static void varinfo_discrete_changed (GtkToggleButton *button, gui_varinfo *vset
     int orig = series_is_discrete(dataset, vset->varnum);
 
     varinfo_set_field_changed(vset, VSET_DISCRETE, d != orig);
-}
-
-static void varinfo_linewidth_changed (GtkSpinButton *spin, gui_varinfo *vset)
-{
-    int lw = gtk_spin_button_get_value_as_int(spin);
-    int orig = series_get_linewidth(dataset, vset->varnum);
-
-    varinfo_set_field_changed(vset, VSET_LINEWIDTH, lw != orig);
 }
 
 static void varinfo_compact_changed (GtkComboBox *box, gui_varinfo *vset)
@@ -897,30 +872,6 @@ void varinfo_dialog (int varnum)
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 	gtk_widget_show(hbox); 
     }
-
-    if (dataset_is_time_series(dataset)) {  
-	/* graph line width */
-	int w;
-
-	hbox = gtk_hbox_new(FALSE, 5);
-	tmp = gtk_label_new (_("Graph line width:"));
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-	gtk_widget_show(tmp);
-
-	tmp = gtk_spin_button_new_with_range(1, 8, 1);
-	w = series_get_linewidth(dataset, varnum);
-	if (w > 1) {
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), w);
-	}
-	g_signal_connect(G_OBJECT(tmp), "value-changed",
-			 G_CALLBACK(varinfo_linewidth_changed), vset);
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-	gtk_widget_show(tmp);
-	vset->line_spin = tmp;
-
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-	gtk_widget_show(hbox); 
-    }    
 
     if (1) {
 	/* mark variable as discrete or not */

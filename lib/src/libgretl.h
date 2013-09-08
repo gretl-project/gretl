@@ -241,17 +241,8 @@ typedef struct equation_system_ equation_system;
 
 /**
  * VARINFO:
- * @label: descriptive label.
- * @display_name: name shown in graphs.
- * @parent: name of "parent" series if applicable (e.g. logs). 
- * @flags: to record boolean status flags.
- * @transform:
- * @lag:
- * @compact_method:
- * @stack_level:
- * @line_width: for use in graphing.
  *
- * Holds extended information on an individual data series.
+ * Holds extended private information on an individual data series.
  */
 
 typedef struct VARINFO_ VARINFO;

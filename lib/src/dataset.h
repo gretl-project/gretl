@@ -379,10 +379,6 @@ int series_is_log (const DATASET *dset, int i, char *parent);
 
 void series_set_discrete (DATASET *dset, int i, int s);
 
-void series_set_linewidth (DATASET *dset, int i, int w);
-
-int series_get_linewidth (const DATASET *dset, int i);
-
 int series_record_display_name (DATASET *dset, int i,
 				const char *s); 
 
