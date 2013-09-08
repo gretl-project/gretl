@@ -2010,14 +2010,7 @@ static int update_join_cols_list (csvdata *c, int k)
     int *test;
     int err = 0;
 
-#if 0
-    if (!csv_skip_column(c)) {
-	k++;
-    }
-#endif
-
     test = gretl_list_append_term(&c->cols_list, k);
-
     if (test == NULL) {
 	err = E_ALLOC;
     }

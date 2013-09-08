@@ -1017,16 +1017,12 @@ void set_garch_robust_vcv (const char *s)
     }
 }
 
-static int set_initvals (const char *s, PRN *prn)
+static int set_initvals (const char *mname, PRN *prn)
 {
     gretl_matrix *m;
-    char mname[VNAMELEN];
     int err = 0;
 
-    /* skip past "set initvals" */
-    s += 12;
-
-    if (gretl_scan_varname(s, mname) != 1 || !strcmp(mname, "auto")) {
+    if (!strcmp(mname, "auto")) {
 	gretl_matrix_free(state->initvals);
 	state->initvals = NULL;
     } else {
@@ -1049,19 +1045,15 @@ static int set_initvals (const char *s, PRN *prn)
     return err;
 }
 
-static int set_panel_time (const char *s, DATASET *dset)
+static int set_panel_time (const char *vname, DATASET *dset)
 {
-    char vname[VNAMELEN];
     int err = 0;
 
     if (!dataset_is_panel(dset)) {
 	return E_PDWRONG;
     }
 
-    /* skip past "set panel_time" */
-    s += 14;
-
-    if (gretl_scan_varname(s, vname) != 1 || !strcmp(vname, "none")) {
+    if (!strcmp(vname, "none")) {
 	dataset_set_panel_time(dset, NULL);
     } else {
 	gretl_matrix *m = get_matrix_by_name(vname);
@@ -1090,16 +1082,12 @@ static int set_panel_time (const char *s, DATASET *dset)
     return err;
 }
 
-static int set_matmask (const char *s, const DATASET *dset,
+static int set_matmask (const char *vname, const DATASET *dset,
 			PRN *prn)
 {
-    char vname[VNAMELEN];
     int err = 0;
 
-    /* skip past "set matrix_mask" */
-    s += 15;
-
-    if (gretl_scan_varname(s, vname) != 1 || !strcmp(vname, "null")) {
+    if (!strcmp(vname, "null")) {
 	gretl_matrix_free(state->matmask);
 	state->matmask = NULL;
     } else {
@@ -1619,17 +1607,11 @@ int execute_set_line (const char *line, DATASET *dset,
     }
 
     if (argc > 1) {
-	/* specials which need the whole line */
-	if (!strcmp(setobj, "initvals")) {
-	    return set_initvals(line, prn);
-	} else if (!strcmp(setobj, "matrix_mask")) {
-	    return set_matmask(line, dset, prn);
-	} else if (!strcmp(setobj, "shelldir")) {
+	/* specials which need the whole line (FIXME) */
+	if (!strcmp(setobj, "shelldir")) {
 	    return set_shelldir(line);
 	} else if (!strcmp(setobj, "workdir")) {
 	    return set_workdir(line);
-	} else if (!strcmp(setobj, "panel_time")) {
-	    return set_panel_time(line, dset);
 	}
     }
 
@@ -1653,7 +1635,13 @@ int execute_set_line (const char *line, DATASET *dset,
 	} else if (!strcmp(setobj, CSV_DIGITS)) {
 	    set_csv_digits(setarg);
 	    return 0;
-	}	    
+	} else if (!strcmp(setobj, "panel_time")) {
+	    return set_panel_time(setarg, dset);
+	} else if (!strcmp(setobj, "initvals")) {
+	    return set_initvals(setarg, prn);
+	} else if (!strcmp(setobj, "matrix_mask")) {
+	    return set_matmask(setarg, dset, prn);
+	}
 
 	gretl_lower(setarg);
 
