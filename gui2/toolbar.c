@@ -106,8 +106,6 @@ enum {
     NEW_ITEM
 } viewbar_flags;
 
-static GtkIconFactory *gretl_stock_ifac;
-
 struct stock_maker {
     char **xpm;
     const char *str;
@@ -143,30 +141,25 @@ void gretl_stock_icons_init (void)
 	{ upsize_xpm, GRETL_STOCK_BIGGER},
 	{ downsize_xpm, GRETL_STOCK_SMALLER}
     };
+    static GtkIconFactory *gretl_factory;
     int n = G_N_ELEMENTS(stocks);
 
-    if (gretl_stock_ifac == NULL) {
-	GtkIconSource *source;
+    if (gretl_factory == NULL) {
 	GtkIconSet *iset;
 	GdkPixbuf *pbuf;
 	int i;
 
-	gretl_stock_ifac = gtk_icon_factory_new();
+	gretl_factory = gtk_icon_factory_new();
 
 	for (i=0; i<n; i++) {
-	    iset = gtk_icon_set_new();
-	    source = gtk_icon_source_new();
-	    gtk_icon_source_set_size(source, GTK_ICON_SIZE_MENU);
 	    pbuf = gdk_pixbuf_new_from_xpm_data((const char **) stocks[i].xpm);
-	    gtk_icon_source_set_pixbuf(source, pbuf);
+	    iset = gtk_icon_set_new_from_pixbuf(pbuf);
 	    g_object_unref(pbuf);
-	    gtk_icon_set_add_source(iset, source);
-	    gtk_icon_source_free(source);
-	    gtk_icon_factory_add(gretl_stock_ifac, stocks[i].str, iset);
+	    gtk_icon_factory_add(gretl_factory, stocks[i].str, iset);
 	    gtk_icon_set_unref(iset);
 	}
 
-	gtk_icon_factory_add_default(gretl_stock_ifac);
+	gtk_icon_factory_add_default(gretl_factory);
     }
 }
 
