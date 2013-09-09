@@ -3593,6 +3593,24 @@ void series_unset_flag (DATASET *dset, int i, int flag)
 }
 
 /**
+ * series_get_flags:
+ * @dset: pointer to dataset.
+ * @i: index number of series.
+ *
+ * Returns: the flags set series @i.
+ */
+
+int series_get_flags (DATASET *dset, int i)
+{
+    if (i >= 0 && i < dset->v) {
+	return dset->varinfo[i]->flags;
+    } else {
+	return 0;
+    }
+}
+
+
+/**
  * series_zero_flags:
  * @dset: pointer to dataset.
  * @i: index number of series.

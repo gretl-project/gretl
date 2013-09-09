@@ -941,6 +941,10 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
     }
 
     pd = gretl_int_from_string(pdstr, &err);
+    if (!err && pd < 1) {
+	gretl_errmsg_sprintf(_("frequency (%d) does not make seem to make sense"), pd);
+	err = E_DATA;
+    }
     if (err) {
 	return err;
     }
@@ -950,11 +954,6 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
 	dated = 1;
     } else {
 	stobs[8] = '\0';
-    }
-
-    if (pd < 1 || (dset->n > 0 && pd > dset->n && opt != OPT_T)) {
-	gretl_errmsg_sprintf(_("frequency (%d) does not make seem to make sense"), pd);
-	return 1;
     }
 
     /* if an explicit structure option was passed in, respect it */
@@ -968,6 +967,13 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
 	structure = STACKED_CROSS_SECTION;
     } else if (opt == OPT_N) {
 	structure = SPECIAL_TIME_SERIES;
+    }
+
+    if (structure == STACKED_TIME_SERIES || structure == STACKED_CROSS_SECTION) {
+	if (dset->n > 0 && pd > dset->n) {
+	    gretl_errmsg_sprintf(_("frequency (%d) does not make seem to make sense"), pd);
+	    return 1;
+	}
     }
 
     if (dated) {

@@ -63,7 +63,6 @@ typedef struct csvdata_ csvdata;
 struct csvjoin_ {
     const char *colnames[JOIN_MAXCOL];
     char colnums[JOIN_MAXCOL];
-    char colstatus[JOIN_MAXCOL];
     int *tcollist;
     csvdata *c;
 };    
@@ -1629,23 +1628,18 @@ static int csv_missval (const char *str, int i, int t,
     return miss;
 }
 
-static int is_join_timecol (csvdata *c, int i)
-{
-    if (c->jspec != NULL) {
-	return in_gretl_list(c->jspec->tcollist, i);
-    } else {
-	return 0;
-    }
-}
-
 static int non_numeric_check (csvdata *c, PRN *prn)
 {
     int *list = NULL;
     int i, j, t, nn = 0;
     int err = 0;
 
+#if CDEBUG > 1
+    fprintf(stderr, "non_numeric_check: testing %d series\n", c->dset->v - 1);
+#endif
+
     for (i=1; i<c->dset->v; i++) {
-	if (is_join_timecol(c, i)) {
+	if (series_get_flags(c->dset, i) & VAR_TIMECOL) {
 	    /* we'll treat all "time columns" as string-valued */
 	    for (t=0; t<c->dset->n; t++) {
 		if (!na(c->dset->Z[i][t])) {
@@ -2069,7 +2063,7 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 	}
 	if (!strcmp(c->str, colname)) {
 #if CDEBUG
-	    fprintf(stderr, " target %d matched at col k=%d, j=%d\n", i, k, j); 
+	    fprintf(stderr, " target %d matched at CSV col %d, j=%d\n", i, k, j); 
 #endif
 	    c->jspec->colnums[i] = j;
 	    if (!matched) {
@@ -2079,7 +2073,7 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 		update_join_cols_list(c, k);
 		*pj += 1;
 		if (in_gretl_list(c->jspec->tcollist, k)) {
-		    c->jspec->colstatus[i] = 't';
+		    series_set_flag(c->dset, j, VAR_TIMECOL);
 		}
 	    }
 	}
@@ -3043,14 +3037,14 @@ static int join_row_wanted (DATASET *dset, int i,
 
 	if (filter->lhcol) {
 	    sx = series_get_string_val(dset, filter->lhcol, i);
-	    lhdate = (jspec->colstatus[JOIN_LHF] == 't');
+	    lhdate = series_get_flags(dset, filter->lhcol) & VAR_TIMECOL;
 	} else {
 	    sx = filter->lhname;
 	}
 
 	if (filter->rhcol) {
 	    sy = series_get_string_val(dset, filter->rhcol, i);
-	    rhdate = (jspec->colstatus[JOIN_RHF] == 't');
+	    rhdate = series_get_flags(dset, filter->rhcol) & VAR_TIMECOL;
 	} else {
 	    sy = filter->rhname;
 	}
@@ -3468,7 +3462,7 @@ static void joiner_print (joiner *jr)
 
     fprintf(stderr, "\njoiner: n_rows = %d\n", jr->n_rows);
     for (i=0; i<jr->n_rows; i++) {
-	fprintf(stderr, " row %d: keyval=%d, val=%g\n", i, jr->rows[i].keyval,
+	fprintf(stderr, " row %d: keyval=%d, val=%.12g\n", i, jr->rows[i].keyval,
 		jr->rows[i].val);
     }
 
@@ -3876,7 +3870,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 	z = aggr_retval(key, keystr, rlabels, key2, key2str, rlabels2,
 			jr, xmatch, auxmatch, &err);
 #if CDEBUG
-	fprintf(stderr, " aggr_retval: got %g (keys=%d,%d, err=%d)\n", 
+	fprintf(stderr, " aggr_retval: got %.12g (keys=%d,%d, err=%d)\n", 
 		z, key, key2, err);
 #endif
 	if (!err && strcheck && !na(z)) {
