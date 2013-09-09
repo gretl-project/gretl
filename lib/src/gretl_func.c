@@ -6523,20 +6523,6 @@ static int handle_return_statement (fncall *call,
     return err;
 }
 
-static void fn_state_init (CMD *cmd, ExecState *state, int *indent0)
-{
-    cmd->list = NULL;
-    cmd->param = NULL;
-    cmd->parm2 = NULL;
-    cmd->linfo = NULL;
-
-    state->cmd = NULL;
-    state->model = NULL;
-    state->submask = NULL;
-
-    *indent0 = gretl_if_state_record();
-}
-
 static int do_debugging (ExecState *s)
 {
     return s->cmd->ci > 0 && !s->cmd->context &&
@@ -6724,7 +6710,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
     if (!function_is_plugin(u)) {
 	/* precaution */
-	fn_state_init(&cmd, &state, &indent0);
+	function_state_init(&cmd, &state, &indent0);
 	call = fncall_new(u);
 	if (call == NULL) {
 	    fprintf(stderr, "fncall_new() returned NULL\n");

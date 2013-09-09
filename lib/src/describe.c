@@ -4855,7 +4855,7 @@ int list_summary (const int *list, const DATASET *dset,
     Summary *summ;
     int err = 0;
 
-    if (list[0] == 0) {
+    if (list != NULL && list[0] == 0) {
 	return 0;
     }
 

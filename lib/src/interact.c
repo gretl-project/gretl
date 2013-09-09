@@ -5521,7 +5521,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case PRINT:
-	if (*cmd->param != '\0') {
+	if (cmd->param != NULL && *cmd->param != '\0') {
 	    do_print_string(cmd->param, prn);
 	} else {
 	    printdata(cmd->list, cmd->parm2, dset, cmd->opt, prn);
@@ -6438,6 +6438,20 @@ void gretl_exec_state_init (ExecState *s,
 
     s->submask = NULL;
     s->callback = NULL;
+}
+
+void function_state_init (CMD *cmd, ExecState *state, int *indent0)
+{
+    cmd->list = NULL;
+    cmd->param = NULL;
+    cmd->parm2 = NULL;
+    cmd->linfo = NULL;
+
+    state->cmd = NULL;
+    state->model = NULL;
+    state->submask = NULL;
+
+    *indent0 = gretl_if_state_record();
 }
 
 static EXEC_CALLBACK gui_callback;

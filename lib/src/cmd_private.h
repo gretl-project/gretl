@@ -71,6 +71,8 @@ void gretl_exec_state_init (ExecState *s,
 			    MODEL *model, 
 			    PRN *prn);
 
+void function_state_init (CMD *cmd, ExecState *state, int *indent0);
+
 void gretl_exec_state_set_callback (ExecState *s, EXEC_CALLBACK callback,
 				    gretlopt opt);
 
