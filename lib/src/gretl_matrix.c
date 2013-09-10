@@ -12292,6 +12292,7 @@ static int compare_rows (const void *a, const void *b)
     int ret = (*da > *db) - (*da < *db);
 
     if (ret == 0) {
+	/* ensure stable sort */
 	ret = a - b > 0 ? 1 : -1;
     }
 
