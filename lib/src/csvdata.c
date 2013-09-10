@@ -2922,10 +2922,13 @@ typedef struct joiner_ joiner;
 enum {
     FILT_NUMERIC,
     FILT_STRING,
-    FILT_MISSMASK
+    FILT_MISSMASK,
+    FILT_GENR
 };
 
 struct jr_filter_ {
+    const char *expr;
+    const double *val;
     char *lhname;
     double lhval;
     int lhcol;
@@ -3027,6 +3030,10 @@ static int join_row_wanted (DATASET *dset, int i,
     if (filter == NULL) {
 	/* no-op */
 	return 1;
+    }
+
+    if (filter->val != NULL) {
+	return filter->val[i] != 0;
     }
 
     if (filter->mode == FILT_STRING) {
@@ -3211,6 +3218,38 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     return err;
 }
 
+static int verify_genr_filter (jr_filter *filter, DATASET *r_dset,
+			       int *nrows)
+{
+    char *line;
+    int i, err = 0;
+
+    line = gretl_strdup_printf("series filtered__ = %s", filter->expr);
+    if (line == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = generate(line, r_dset, OPT_P | OPT_Q, NULL);
+	free(line);
+    }
+
+    if (!err) {
+	int v = r_dset->v - 1;
+
+	filter->val = r_dset->Z[v];
+	*nrows = 0;
+	for (i=0; i<r_dset->n; i++) {
+	    if (na(filter->val[i])) {
+		err = E_MISSDATA;
+		break;
+	    } else if (filter->val[i] != 0.0) {
+		*nrows += 1;
+	    }
+	}
+    }
+
+    return err;
+}
+
 static int verify_filter (jr_filter *filter, int lhcol, int rhcol,
 			  const DATASET *r_dset)
 {
@@ -3313,13 +3352,17 @@ static joiner *build_joiner (csvjoin *jspec,
 #endif
 
     if (filter != NULL) {
-	*err = verify_filter(filter, lhfcol, rhfcol, r_dset);
-	if (!*err) {
-	    /* count the filtered rows */
-	    nrows = 0;
-	    for (i=0; i<r_dset->n && !*err; i++) {
-		if (join_row_wanted(r_dset, i, filter, jspec, err)) {
-		    nrows++;
+	if (filter->mode == FILT_GENR) {
+	    *err = verify_genr_filter(filter, r_dset, &nrows);
+	} else {
+	    *err = verify_filter(filter, lhfcol, rhfcol, r_dset);
+	    if (!*err) {
+		/* count the filtered rows */
+		nrows = 0;
+		for (i=0; i<r_dset->n && !*err; i++) {
+		    if (join_row_wanted(r_dset, i, filter, jspec, err)) {
+			nrows++;
+		    }
 		}
 	    }
 	}
@@ -3939,6 +3982,41 @@ static jr_filter *join_filter_new (int *err)
     return filter;
 }
 
+static jr_filter *make_genr_filter (const char *s, int *err)
+{
+    jr_filter *filter = join_filter_new(err);
+
+    if (filter != NULL) {
+	char test[VNAMELEN];
+	int n, ngot = 0;
+
+	filter->expr = s;
+	filter->mode = FILT_GENR;
+
+	while (*s && ngot < 2) {
+	    n = gretl_namechar_spn(s);
+	    if (n > 0) {
+		if (n < VNAMELEN && s[n] != '(') {
+		    *test = '\0';
+		    strncat(test, s, n);
+		    if (!gretl_is_scalar(test)) {
+			if (++ngot == 1) {
+			    filter->lhname = gretl_strdup(test);
+			} else {
+			    filter->rhname = gretl_strdup(test);
+			}
+		    }
+		}
+		s += n;
+	    } else {
+		s++;
+	    }
+	}
+    }
+
+    return filter;
+}
+
 /* Check for a filter of the MISSMASK type; that is, of the
    form missing(colname), !missing(colname) or ok(colname),
    where "colname" should identify a column in the outer
@@ -4463,9 +4541,13 @@ int join_from_csv (const char *fname,
 #endif
 
     if (filtstr != NULL) {
-	filter = try_missval_filter(filtstr, &err);
-	if (filter == NULL && !err) {
-	    filter = make_join_filter(filtstr, &err);
+	if (getenv("GENR_FILTER") != NULL) {
+	    filter = make_genr_filter(filtstr, &err);
+	} else {
+	    filter = try_missval_filter(filtstr, &err);
+	    if (filter == NULL && !err) {
+		filter = make_join_filter(filtstr, &err);
+	    }
 	}
 	if (err) {
 	    fprintf(stderr, "join: error %d processing row filter\n", err);
@@ -4479,7 +4561,7 @@ int join_from_csv (const char *fname,
 	}
     }
 
-#if 1 /* not ready */
+#if 1 /* not ready? */
     if (!err && timecols != NULL) {
 	jspec.tcollist = tcollist = process_timecols(timecols, &err);
     }
