@@ -6107,6 +6107,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset)
     if (gretl_compiling_loop()) { 
 	err = get_command_index(s->line, s->cmd);
     } else {
+	/* FIXME last arg to parse_command_line() ? */
 	err = parse_command_line(s->line, s->cmd, dset, NULL);
     }
 

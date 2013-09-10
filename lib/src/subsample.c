@@ -224,6 +224,10 @@ void maybe_free_full_dataset (const DATASET *dset)
 {
     if (dset == peerset) {
 	if (fullset != NULL) {
+#if SUBDEBUG
+	    fprintf(stderr, "maybe_free_full_dataset: freeing fullset at %p (Z at %p)\n",
+		    (void *) fullset, (void *) fullset->Z);
+#endif
 	    if (fullset->Z != NULL) {
 		free_Z(fullset);
 	    }
@@ -240,9 +244,9 @@ void maybe_free_full_dataset (const DATASET *dset)
 static void relink_to_full_dataset (DATASET *dset)
 {
 #if SUBDEBUG
-    fprintf(stderr, "relink_to_full_dataset: fullset = %p\n",
+    fprintf(stderr, "relink_to_full_dataset: fullset = %p (freeing and nulling)\n",
 	    (void *) fullset);
-    fprintf(stderr, "fullset->v = %d\n", fullset->v);
+    fprintf(stderr, "fullset: v = %d, n = %d\n", fullset->v, fullset->n);
 #endif
 
     *dset = *fullset;
@@ -579,7 +583,7 @@ int restore_full_sample (DATASET *dset, ExecState *state)
     }
 
 #if FULLDEBUG || SUBDEBUG
-    fprintf(stderr, "\nrestore_full_sample: dset=%p\n", (void *) dset);
+    fprintf(stderr, "\nrestore_full_sample: dset=%p, state=%p\n", (void *) dset, (void *) state);
 #endif
 
     /* beyond this point we are doing a non-trivial restoration
@@ -591,6 +595,7 @@ int restore_full_sample (DATASET *dset, ExecState *state)
 	err = resample_sync_dataset(dset);
     } else {
 	if (dset->padmask != NULL) {
+	    fprintf(stderr, "restore_full_sample: calling undo_panel_padding\n");
 	    err = undo_panel_padding(dset);
 	}
 	if (!err) {
@@ -609,8 +614,9 @@ int restore_full_sample (DATASET *dset, ExecState *state)
 
     /* destroy sub-sampled data array */
 #if SUBDEBUG
-    fprintf(stderr, "restore_full_sample: freeing sub-sampled Z at %p (v = %d)\n"
-	    "and clearing dset at %p\n", (void *) dset->Z, dset->v, (void *) dset);
+    fprintf(stderr, "restore_full_sample: freeing sub-sampled Z at %p (v = %d, n = %d)\n"
+	    " and clearing dset at %p\n", (void *) dset->Z, dset->v, dset->n,
+	    (void *) dset);
 #endif
     free_Z(dset);
     clear_datainfo(dset, CLEAR_SUBSAMPLE);
@@ -1177,6 +1183,10 @@ make_restriction_mask (int mode, const char *s,
     if (mask == NULL) {
 	return E_ALLOC;
     }
+
+#if SUBDEBUG
+    fprintf(stderr, "make_restriction_mask: oldmask = %p\n", (void *) oldmask);
+#endif
 
     /* construct subsample mask in one of several possible ways */
 

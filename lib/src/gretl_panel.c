@@ -4424,10 +4424,13 @@ static int normalize_uid_tid (const double *tid, int T,
     return 0;
 }
 
-/* handle the case where a sub-sampled panel dataset has been
-   padded to recreate a balanced panel structure: we have to
-   get rid of the padding before we try restoring the full
-   data range
+/* Handle the case where a sub-sampled panel dataset has been
+   padded with rows containing NAs to recreate a balanced panel
+   structure: we have to get rid of the padding before we try
+   restoring the full data range. Note that while this function
+   "shrinks" @dset in the sense of reducing the series length
+   as recorded in dset->n, it does not "physically" shrink the
+   array members of @dset->Z.
 */
 
 int undo_panel_padding (DATASET *dset)
@@ -4435,7 +4438,7 @@ int undo_panel_padding (DATASET *dset)
     char *mask = dset->padmask;
     double *Zi;
     char **S = NULL;
-    int n_orig = dset->n;
+    int padded_n = dset->n;
     int real_n = dset->n;
     int i, t;
     int err = 0;
@@ -4448,11 +4451,12 @@ int undo_panel_padding (DATASET *dset)
 	}
     }
 
-    if (real_n == n_orig) {
+    if (real_n == padded_n) {
 	fprintf(stderr, "strange, couldn't find any padding!\n");
 	return E_DATA;
     }
 
+    /* temporary holder for shorter series */
     Zi = malloc(real_n * sizeof *Zi);
 
     if (Zi == NULL) {
@@ -4460,17 +4464,18 @@ int undo_panel_padding (DATASET *dset)
     } 
 
     if (dset->S != NULL) {
-	S = strings_array_new_with_length(dset->n, OBSLEN);
+	/* holder for shorter obs labels array */
+	S = strings_array_new_with_length(real_n, OBSLEN);
     }
 
     if (!err) {
-	/* write non-padding rows from Z into the right places 
-	   in the reduced dataset */
+	/* write non-padding rows from dset->Z (and dset->S, if present)
+	   into the right places in the reduced-size arrays */
 	int s;
 	
 	for (i=0; i<dset->v; i++) {
 	    s = 0;
-	    for (t=0; t<n_orig; t++) {
+	    for (t=0; t<padded_n; t++) {
 		if (!mask[t]) {
 		   Zi[s] = dset->Z[i][t]; 
 		   if (i == 0 && S != NULL) {
@@ -4484,7 +4489,7 @@ int undo_panel_padding (DATASET *dset)
 	}
 
 	if (dset->S != NULL && S != NULL) {
-	    strings_array_free(dset->S, n_orig);
+	    strings_array_free(dset->S, padded_n);
 	    dset->S = S;
 	}
     }
@@ -4712,8 +4717,11 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
     int nperiods = 0;
     int ustrs = 0;
     int err = 0;
-
-    /* FIXME sub-sampled dataset (needs to be disallowed?) */
+    
+    if (complex_subsampled()) {
+	gretl_errmsg_set(_("Sorry, can't do this with a complexly sub-sampled dataset"));
+	return E_DATA;
+    }
 
 #if PDEBUG
     fprintf(stderr, "set_panel_structure_from_vars:\n "
@@ -4764,10 +4772,11 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
 #endif
 
     if (!err && totmiss > 0) {
-	/* do we want this? */
+	/* re-establish a balanced panel */
 	mask = malloc(fulln);
 	rearrange_id_array(uid, nunits, n);
 	rearrange_id_array(tid, nperiods, n);
+	fprintf(stderr, "*** padding panel dataset\n");
 	err = pad_panel_dataset(uid, uv, nunits, 
 				tid, tv, nperiods, 
 				dset, ustrs, 
@@ -5193,6 +5202,3 @@ int panel_variance_info (const double *x, const DATASET *dset,
 
     return 0;
 }
-
-
-
