@@ -60,19 +60,14 @@ extern void initialize_readline (void);
 
 char datafile[MAXLEN];
 char cmdfile[MAXLEN];
-char outfile[MAXLEN];
-char hdrfile[MAXLEN];
-char syscmd[MAXLEN];
-PRN *cmdprn;
 FILE *fb;
 int batch;
 int runit;
-int makepkg;
 int data_status;
 char linebak[MAXLINE];      /* for storing comments */
 char *line_read;
 
-static int exec_line (ExecState *s, DATASET *dset);
+static int exec_line (ExecState *s, DATASET *dset, PRN *cmdprn);
 static int push_input_file (FILE *fp);
 static FILE *pop_input_file (void);
 static int saved_object_action (const char *line, 
@@ -147,7 +142,7 @@ static int file_get_line (ExecState *s)
 
     if (gretl_echo_on() && s->cmd->ci == RUN && batch && *line == '(') {
 	printf("%s", line);
-	*linebak = 0;
+	*linebak = '\0';
     }
 
     return 0;
@@ -326,22 +321,107 @@ static int ctrl_x (int count, int key)
 }
 #endif
 
+static void handle_datafile (char *filearg, char *runfile,
+			     DATASET *dset, PRN *prn,
+			     PRN *cmdprn)
+{
+    char given_file[MAXLEN];
+    int load_datafile = 1;
+    int ftype, err = 0;
+
+    strcpy(given_file, filearg);
+    strcpy(datafile, filearg);
+
+    ftype = detect_filetype(datafile, OPT_P);
+
+    switch (ftype) {
+    case GRETL_UNRECOGNIZED:
+    case GRETL_NATIVE_DB:
+    case GRETL_RATS_DB:
+	exit(EXIT_FAILURE);
+	break;
+    case GRETL_NATIVE_DATA:
+	err = gretl_get_data(datafile, dset, OPT_NONE, prn);
+	break;
+    case GRETL_XML_DATA:
+	err = gretl_read_gdt(datafile, dset, OPT_NONE, prn);
+	break;
+    case GRETL_CSV:
+	err = import_csv(datafile, dset, OPT_NONE, prn);
+	break;
+    case GRETL_XLS:
+    case GRETL_GNUMERIC:
+    case GRETL_ODS:
+	err = import_spreadsheet(datafile, ftype, NULL, NULL,
+				 dset, OPT_NONE, prn);
+	break;
+    case GRETL_DTA:
+    case GRETL_SAV:
+    case GRETL_SAS:
+    case GRETL_JMULTI:
+    case GRETL_OCTAVE:
+    case GRETL_WF1:
+	err = import_other(datafile, ftype, dset, 
+			   OPT_NONE, prn);
+	break;
+    case GRETL_SCRIPT:
+	runit = 1;
+	strcpy(runfile, datafile); 
+	memset(datafile, 0, sizeof datafile);
+	load_datafile = 0;
+	break;
+    default:
+	break;
+    }
+
+    if (load_datafile) {
+	if (err) {
+	    errmsg(err, prn);
+	    if (err == E_FOPEN) {
+		show_paths();
+	    }
+	    exit(EXIT_FAILURE);
+	}
+	data_status = 1;
+	if (!batch) { 
+	    pprintf(cmdprn, "open %s\n", given_file);
+	}
+    }
+}
+
+static void check_help_file (void)
+{
+    const char *hpath = helpfile_path(GRETL_HELPFILE);
+    FILE *fp = fopen(hpath, "r");
+
+    if (fp != NULL) { 
+	printf(_("\n\"help\" gives a list of commands\n"));
+	fclose(fp);
+    } else {
+	printf(_("help file %s is not accessible\n"), hpath);
+	show_paths();
+    }
+}
+
 int main (int argc, char *argv[])
 {
 #ifdef WIN32
     char *callname = argv[0];
 #endif
+    char linecopy[MAXLINE];
     DATASET *dset = NULL;
     MODEL *model = NULL;
     ExecState state;
     char *line = NULL;
     int quiet = 0;
+    int makepkg = 0;
     int load_datafile = 1;
     char filearg[MAXLEN];
     char runfile[MAXLEN];
     double scriptval = NADBL;
     CMD cmd;
-    PRN *prn;
+    PRN *prn = NULL;
+    PRN *cmdprn = NULL;
     int err = 0;
 
 #ifdef G_OS_WIN32
@@ -454,67 +534,7 @@ int main (int argc, char *argv[])
     }
 
     if (load_datafile) {
-	char given_file[MAXLEN];
-	int ftype;
-
-	strcpy(given_file, filearg);
-	strcpy(datafile, filearg);
-
-	ftype = detect_filetype(datafile, OPT_P);
-
-	switch (ftype) {
-	case GRETL_UNRECOGNIZED:
-	case GRETL_NATIVE_DB:
-	case GRETL_RATS_DB:
-	    exit(EXIT_FAILURE);
-	    break;
-	case GRETL_NATIVE_DATA:
-	    err = gretl_get_data(datafile, dset, OPT_NONE, prn);
-	    break;
-	case GRETL_XML_DATA:
-	    err = gretl_read_gdt(datafile, dset, OPT_NONE, prn);
-	    break;
-	case GRETL_CSV:
-	    err = import_csv(datafile, dset, OPT_NONE, prn);
-	    break;
-	case GRETL_XLS:
-	case GRETL_GNUMERIC:
-	case GRETL_ODS:
-	    err = import_spreadsheet(datafile, ftype, NULL, NULL,
-				     dset, OPT_NONE, prn);
-	    break;
-	case GRETL_DTA:
-	case GRETL_SAV:
-	case GRETL_SAS:
-	case GRETL_JMULTI:
-	case GRETL_OCTAVE:
-	case GRETL_WF1:
-	    err = import_other(datafile, ftype, dset, 
-			       OPT_NONE, prn);
-	    break;
-	case GRETL_SCRIPT:
-	    runit = 1;
-	    strcpy(runfile, datafile); 
-	    memset(datafile, 0, sizeof datafile);
-	    load_datafile = 0;
-	    break;
-	default:
-	    break;
-	}
-
-	if (load_datafile) {
-	    if (err) {
-		errmsg(err, prn);
-		if (err == E_FOPEN) {
-		    show_paths();
-		}
-		return EXIT_FAILURE;
-	    }
-	    data_status = 1;
-	    if (!batch) { 
-		pprintf(cmdprn, "open %s\n", given_file);
-	    }
-	}
+	handle_datafile(filearg, runfile, dset, prn, cmdprn);
     }
 
     /* allocate memory for model */
@@ -535,31 +555,17 @@ int main (int argc, char *argv[])
     /* define "scriptopt" */
     gretl_scalar_add("scriptopt", scriptval);
 
-    /* check for help file */
+    /* misc. interactive-mode setup */
     if (!batch) {
-	const char *hpath = helpfile_path(GRETL_HELPFILE);
-	FILE *fp = fopen(hpath, "r");
-
-	if (fp != NULL) { 
-	    printf(_("\n\"help\" gives a list of commands\n"));
-	    fclose(fp);
-	} else {
-	    printf(_("help file %s is not accessible\n"), hpath);
-	    show_paths();
+	check_help_file();
+	fb = stdin;
+	push_input_file(fb);
+	if (!runit && !data_status) {
+	    fputs(_("Type \"open filename\" to open a data set\n"), stdout);
 	}
     }
 
-    if (!batch) {
-	fb = stdin;
-	push_input_file(fb);
-    }
-
-    if (!batch && !runit && !data_status) {
-	fprintf(stderr, _("Type \"open filename\" to open a data set\n"));
-    }
-
 #ifdef HAVE_READLINE
-    /* note: this was conditional on !batch */
     initialize_readline();
 #endif
     
@@ -570,13 +576,13 @@ int main (int argc, char *argv[])
 	    set_gretl_echo(0);
 	} 
 	sprintf(line, "run %s\n", runfile);
-	err = exec_line(&state, dset);
+	err = exec_line(&state, dset, cmdprn);
     }
+
+    *linecopy = '\0';
 
     /* main command loop */
     while (cmd.ci != QUIT && fb != NULL && !xout) {
-	char linecopy[MAXLINE];
-
 	if (err && gretl_error_is_fatal()) {
 	    gretl_abort(linecopy);
 	}
@@ -607,7 +613,7 @@ int main (int argc, char *argv[])
 
 	strcpy(linecopy, line);
 	tailstrip(linecopy);
-	err = exec_line(&state, dset);
+	err = exec_line(&state, dset, cmdprn);
     } /* end of get commands loop */
 
     if (!err) {
@@ -620,7 +626,7 @@ int main (int argc, char *argv[])
     if (makepkg && !err) {
 	switch_ext(filearg, runfile, "gfn");
 	sprintf(line, "makepkg %s\n", filearg);
-	exec_line(&state, dset);
+	exec_line(&state, dset, cmdprn);
     }
 
     /* leak check -- try explicitly freeing all memory allocated */
@@ -817,6 +823,38 @@ static int cli_open_append (CMD *cmd, const char *line,
     return err;
 }
 
+static void maybe_save_session_output (const char *cmdfile)
+{
+    char outfile[FILENAME_MAX];
+
+    printf(_("type a filename to store output (enter to quit): "));
+
+    *outfile = '\0';
+
+    if (fgets(outfile, sizeof outfile, stdin) != NULL) {
+	top_n_tail(outfile, 0, NULL);
+    }
+
+    if (*outfile != '\0' && *outfile != '\n' && *outfile != '\r' 
+	&& strcmp(outfile, "q")) {
+	const char *udir = gretl_workdir();
+	char *syscmd;
+
+	printf(_("writing session output to %s%s\n"), udir, outfile);
+#ifdef WIN32
+	syscmd = gretl_strdup_printf("\"%sgretlcli\" -b \"%s\" > \"%s%s\"", 
+				     gretl_home(), cmdfile, udir, outfile);
+	system(syscmd);
+#else
+	syscmd = gretl_strdup_printf("gretlcli -b \"%s\" > \"%s%s\"", 
+				     cmdfile, udir, outfile);
+	gretl_spawn(syscmd);
+#endif
+	printf("%s\n", syscmd);
+	free(syscmd);
+    }
+}
+
 #define ENDRUN (NC + 1)
 
 /* exec_line: this is called to execute both interactive and script
@@ -827,7 +865,7 @@ static int cli_open_append (CMD *cmd, const char *line,
    see also gui_exec_line() in gui2/library.c
 */
 
-static int exec_line (ExecState *s, DATASET *dset)
+static int exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 {
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -1010,36 +1048,13 @@ static int exec_line (ExecState *s, DATASET *dset)
 	    } else {
 		cmd->ci = ENDRUN;
 	    }
-	    break;
+	} else {
+	    printf(_("commands saved as %s\n"), cmdfile);
+	    gretl_print_destroy(cmdprn);
+	    if (!(cmd->opt & OPT_X)) {
+		maybe_save_session_output(cmdfile);
+	    }
 	}
-	printf(_("commands saved as %s\n"), cmdfile);
-	gretl_print_destroy(cmdprn);
-
-	if (cmd->opt & OPT_X) {
-	    break;
-	}
-
-	printf(_("type a filename to store output (enter to quit): "));
-	*outfile = '\0';
-	if (fgets(outfile, sizeof outfile, stdin)) {
-	    top_n_tail(outfile, 0, NULL);
-	}
-	if (*outfile != '\0' && *outfile != '\n' && *outfile != '\r' 
-	    && strcmp(outfile, "q")) {
-	    const char *udir = gretl_workdir();
-
-	    printf(_("writing session output to %s%s\n"), udir, outfile);
-#ifdef WIN32
-	    sprintf(syscmd, "\"%sgretlcli\" -b \"%s\" > \"%s%s\"", 
-		    gretl_home(), cmdfile, udir, outfile);
-	    system(syscmd);
-#else
-	    sprintf(syscmd, "gretlcli -b \"%s\" > \"%s%s\"", 
-		    cmdfile, udir, outfile);
-	    gretl_spawn(syscmd);
-#endif
-	    printf("%s\n", syscmd);
-	} 
 	break;
 
     case RUN:

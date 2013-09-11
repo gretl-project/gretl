@@ -4299,6 +4299,26 @@ static int check_indices (sorter *s, int n)
     return 0;
 }
 
+static int panel_is_sorted (DATASET *dset, int uv, int tv)
+{
+    const double *unit = dset->Z[uv];
+    const double *period = dset->Z[tv];
+    int t, ret = 1;
+
+    for (t=1; t<dset->n && ret; t++) {
+	if (unit[t] < unit[t-1]) {
+	    /* the unit variable must be non-decreasing */
+	    ret = 0;
+	} else if (unit[t] == unit[t-1] && period[t] <= period[t-1]) {
+	    /* the period variable must be increasing within the
+	       observations for each unit */
+	    ret = 0;
+	}
+    }
+
+    return ret;
+}
+
 static int panel_data_sort_by (DATASET *dset, int uv, int tv, int *ustrs)
 {
     int n = dset->n;
@@ -4385,7 +4405,8 @@ static int panel_data_sort_by (DATASET *dset, int uv, int tv, int *ustrs)
 
 static int normalize_uid_tid (const double *tid, int T,
 			      const DATASET *dset,
-			      int uv, int tv, int **pnuid, int **pntid)
+			      int uv, int tv, 
+			      int **pnuid, int **pntid)
 {
     int *nuid = NULL;
     int *ntid = NULL;
@@ -4443,13 +4464,14 @@ int undo_panel_padding (DATASET *dset)
     int i, t;
     int err = 0;
 
-    fprintf(stderr, "*** undoing panel padding\n");
-
     for (t=0; t<dset->n; t++) {
 	if (mask[t]) {
 	    real_n--;
 	}
     }
+
+    fprintf(stderr, "undo_panel_padding: padded n*T = %d, original dset->n = %d\n",
+	    padded_n, real_n);
 
     if (real_n == padded_n) {
 	fprintf(stderr, "strange, couldn't find any padding!\n");
@@ -4516,11 +4538,17 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
     int i, s, t;
     int err = 0;
 
-    err = normalize_uid_tid(tid, nperiods, dset, uv, tv, 
-			    &nuid, &ntid);
-
     big_n = nunits * nperiods;
 
+    fprintf(stderr, "pad_panel_dataset: n*T = %d*%d = %d but dset->n = %d\n",
+	    nunits, nperiods, big_n, n_orig);
+
+    err = normalize_uid_tid(tid, nperiods, dset, uv, tv, 
+			    &nuid, &ntid);
+    if (err) {
+	return err;
+    }
+    
     bigZ = doubles_array_new(dset->v, big_n);
     if (bigZ == NULL) {
 	err = E_ALLOC;
@@ -4596,7 +4624,7 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
     free(nuid);
     free(ntid);
 
-    if (dset->S != NULL) {
+    if (!err && dset->S != NULL) {
 	/* expand the obs (unit) marker strings appropriately */
 	if (S == NULL) {
 	    strings_array_free(dset->S, n_orig);
@@ -4707,6 +4735,8 @@ static void finalize_panel_datainfo (DATASET *dset, int nperiods)
 
 int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
 {
+    int subsampled;
+    int presorted;
     double *uid = NULL;
     double *tid = NULL;
     char *mask = NULL;
@@ -4717,11 +4747,6 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
     int nperiods = 0;
     int ustrs = 0;
     int err = 0;
-    
-    if (complex_subsampled()) {
-	gretl_errmsg_set(_("Sorry, can't do this with a complexly sub-sampled dataset"));
-	return E_DATA;
-    }
 
 #if PDEBUG
     fprintf(stderr, "set_panel_structure_from_vars:\n "
@@ -4764,19 +4789,36 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
     fprintf(stderr, "Missing rows = %d - %d = %d\n", fulln, dset->n, totmiss);
 #endif
 
-    /* sort full dataset by unit and period */
-    err = panel_data_sort_by(dset, uv, tv, &ustrs);
+    subsampled = complex_subsampled();
+
+    if (totmiss > 0 && subsampled && !dataset_is_panel(dset)) {
+	gretl_errmsg_set(_("Sorry, can't do this with a sub-sampled dataset"));
+	err = E_DATA;
+	goto bailout;
+    }
+
+    presorted = panel_is_sorted(dset, uv, tv);
+
+    if (!presorted) {
+	if (subsampled) {
+	    /* this restriction may not be necessary? */
+	    gretl_errmsg_set(_("Sorry, can't do this with a sub-sampled dataset"));
+	    err = E_DATA;
+	} else {
+	    /* sort full dataset by unit and period */
+	    err = panel_data_sort_by(dset, uv, tv, &ustrs);
+	}
+    }
 
 #if PDEBUG
-    print_unit_var(uv, dset->Z, n, 1);
+    if (!err) print_unit_var(uv, dset->Z, n, 1);
 #endif
 
     if (!err && totmiss > 0) {
-	/* re-establish a balanced panel */
+	/* establish a balanced panel */
 	mask = malloc(fulln);
 	rearrange_id_array(uid, nunits, n);
 	rearrange_id_array(tid, nperiods, n);
-	fprintf(stderr, "*** padding panel dataset\n");
 	err = pad_panel_dataset(uid, uv, nunits, 
 				tid, tv, nperiods, 
 				dset, ustrs, 

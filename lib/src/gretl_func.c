@@ -6751,8 +6751,11 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	*line = '\0';
 	gretl_exec_state_init(&state, FUNCTION_EXEC, line, &cmd, 
 			      model, prn);
-	if (dset != NULL && dset->submask != NULL) {
-	    state.submask = copy_datainfo_submask(dset, &err);
+	if (dset != NULL) {
+	    if (dset->submask != NULL) {
+		state.submask = copy_datainfo_submask(dset, &err);
+	    }
+	    state.padded = dset->padmask != NULL;
 	}
 	state.callback = func_exec_callback;
     }
@@ -6846,8 +6849,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 		restore_full_sample(dset, NULL);
 	    } else if (submask_cmp(state.submask, dset->submask)) {
 		/* we were sub-sampled differently on entry */
+		gretlopt opt = state.padded ? OPT_B : OPT_NONE;
+
 		restore_full_sample(dset, NULL);
-		restrict_sample_from_mask(state.submask, dset, OPT_NONE);
+		restrict_sample_from_mask(state.submask, dset, opt);
 	    } 
 	}
 	dset->t1 = orig_t1;

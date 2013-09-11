@@ -15,6 +15,15 @@ of a command calls for a scalar numerical value; if a command
 claims to accept a date or observation string as an argument,
 it still does.
 
+The following old, undocumented command aliases have finally
+been removed:
+
+"fcasterr" (use "fcast")
+"addobs"   (use "dataset addobs")
+"import"   (use "open")
+"graph"    (use "textplot")
+"plot"     (use "textplot")
+
 2013-03-15 version 1.9.12
 
 The special treatment that supported the use of @-substitution

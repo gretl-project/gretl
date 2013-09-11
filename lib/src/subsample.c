@@ -1267,8 +1267,9 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
     subset->v = dset->v;
 
 #if SUBDEBUG
-    fprintf(stderr, "restrict_sample_from_mask: new subset=%p, %d obs in subsample\n",
-	    (void *) subset, subset->n);
+    fprintf(stderr, "restrict_sample_from_mask:\n new subset=%p, "
+	    "%d obs in subsample vs %d in full dataset\n",
+	    (void *) subset, subset->n, dset->n);
 #endif
 
     if (dataset_is_panel(dset)) {
@@ -1293,7 +1294,6 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 		subset->structure = STACKED_TIME_SERIES;
 		subset->n += npad;
 		subset->pd = subset->n / nunits;
-		/* note: revised panel indices are added below */
 	    }
 	} else if (nunits == 1 && subset->n == dset->pd) {
 	    /* time series for single panel unit */

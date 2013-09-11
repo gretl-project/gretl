@@ -46,9 +46,8 @@
  * FILE argument goes last). 
  *
  * Note that whenever a PRN appears as a function parameter
- * in libgretl it is OK to give a NULL argument: in that case 
- * printing is suppressed. (This obviously makes sense only if the
- * function in question does something besides just printing.)
+ * in libgretl it is OK to give a NULL argument: in that case
+ * pprintf(), pputs() and pputc() are no-ops.
  */
 
 struct PRN_ {
@@ -61,7 +60,7 @@ struct PRN_ {
     PrnFormat format;  /* plain, TeX, RTF */
     int fixed;         /* = 1 for fixed-size buffer */
     char delim;        /* CSV field delimiter */
-    char *fname;       /* file name, or NULL */
+    char *fname;       /* temp file name, or NULL */
 };
 
 #define PRN_DEBUG 0

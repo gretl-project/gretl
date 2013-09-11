@@ -6412,6 +6412,7 @@ void gretl_exec_state_init (ExecState *s,
     s->rset = NULL;
     s->var = NULL;
     s->in_comment = 0;
+    s->padded = 0;
 
     if (flags == FUNCTION_EXEC) {
 	/* On entry to function execution we check if there's
@@ -6451,6 +6452,8 @@ void function_state_init (CMD *cmd, ExecState *state, int *indent0)
     state->cmd = NULL;
     state->model = NULL;
     state->submask = NULL;
+
+    state->padded = 0;
 
     *indent0 = gretl_if_state_record();
 }

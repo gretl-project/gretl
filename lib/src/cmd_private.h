@@ -60,6 +60,7 @@ struct ExecState_ {
     GretlObjType prev_type;
     int prev_model_count;
     char *submask;        /* record of incoming sub-sample for functions */
+    int padded;           /* record of incoming panel padding, if any */
     int in_comment;
     EXEC_CALLBACK callback;
 };
