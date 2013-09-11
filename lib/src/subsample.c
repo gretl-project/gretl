@@ -551,13 +551,6 @@ int restore_full_sample (DATASET *dset, ExecState *state)
 	return E_NODATA;
     }
 
-#if 0 
-    /* 2012-03-18: this can mask errors in functions in which
-       sub-sampling occurs, making script debugging difficult 
-    */
-    gretl_error_clear();
-#endif
-
     if (!complex_subsampled()) {
 	int t1min, t2max;
 
@@ -583,7 +576,8 @@ int restore_full_sample (DATASET *dset, ExecState *state)
     }
 
 #if FULLDEBUG || SUBDEBUG
-    fprintf(stderr, "\nrestore_full_sample: dset=%p, state=%p\n", (void *) dset, (void *) state);
+    fprintf(stderr, "\nrestore_full_sample: dset=%p, state=%p\n", (void *) dset, 
+	    (void *) state);
 #endif
 
     /* beyond this point we are doing a non-trivial restoration
@@ -595,7 +589,7 @@ int restore_full_sample (DATASET *dset, ExecState *state)
 	err = resample_sync_dataset(dset);
     } else {
 	if (dset->padmask != NULL) {
-	    fprintf(stderr, "restore_full_sample: calling undo_panel_padding\n");
+	    fprintf(stderr, "restore_full_sample: first undo panel padding\n");
 	    err = undo_panel_padding(dset);
 	}
 	if (!err) {
@@ -1059,11 +1053,11 @@ static int copy_periods_list (int *T0, const int *Ti)
     return ret;
 }
 
-/* When sub-sampling panel data with the "--no-missing" option: see if
-   the exclusion of missing values leaves a balanced panel.  Note that
-   the requirement is not simply that each unit has the same number of
-   temporal observations -- they must have the _same_ observations, 
-   and in addition the observations must be temporally contiguous.
+/* When sub-sampling panel data on some boolean criterion: see if the
+   exclusion of certain rows leaves a balanced panel.  Note that the
+   requirement is not simply that each unit has the same number of
+   temporal observations -- they must have the _same_ observations,
+   and in addition the observations must be temporally contiguous.  
 */
 
 static int mask_leaves_balanced_panel (char *mask, const DATASET *dset)
@@ -1241,10 +1235,14 @@ make_restriction_mask (int mode, const char *s,
     return err;
 }
 
-/* This is also used elsewhere: in session.c, when re-establishing a
-   previously sub-sampled data state on reopening a saved session, and
-   on exit from a user function when the dataset was sub-sampled on
-   entry to the function.
+/* This is also used elsewhere: 
+
+   in gui2/session.c, when re-establishing a previously sub-sampled data 
+   state on reopening a saved session
+
+   in gretl_func.c, on exit from a user function when the dataset was 
+   sub-sampled on entry to the function (and we need to re-establish the
+   original sub-sample)
 */
 
 int 
@@ -1278,8 +1276,9 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 	int ok = 0, npad = 0;
 
 	if (nunits > 1 && subset->n > nunits) {
+	    /* there's some possibility of doing so */
 	    if (opt & OPT_B) {
-		/* only add padding rows if this was requested */
+		/* add padding rows? only if this was requested */
 		npad = make_panel_submask(mask, dset, &err);
 		fprintf(stderr, "npad = %d\n", npad);
 		if (err) {
