@@ -1038,9 +1038,11 @@ static int reglist_remove_redundant_vars (const MODEL *tmod,
 	       Second, delete the redundant term from both endolist
 	       and hatlist, so that subsequent calculations will not
 	       get messed up.
-	    */	    
-	    dlist[i] = endolist[pos];
-	    gretl_list_delete_at_pos(endolist, pos);
+	    */
+	    if (endolist != NULL) {
+		dlist[i] = endolist[pos];
+		gretl_list_delete_at_pos(endolist, pos);
+	    }
 	    gretl_list_delete_at_pos(hatlist, pos);
 	}
     }
@@ -1710,7 +1712,9 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	OverIdRank += s2list[0] - tsls.list[0];
 	reglist_remove_redundant_vars(&tsls, s2list, reglist, endolist,
 				      hatlist);
-	nendo = endolist[0];
+	if (endolist != NULL) {
+	    nendo = endolist[0];
+	}
 #if TDEBUG
 	fprintf(stderr, "tsls: dropped collinear vars\n");
 #endif
