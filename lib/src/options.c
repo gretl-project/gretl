@@ -1136,6 +1136,64 @@ gretlopt valid_short_opt (int ci, char c)
     return opt;
 }
 
+#define OPTVAL_ESCAPE 1
+
+#if OPTVAL_ESCAPE
+
+static char *get_quoted_optval (char *s, int *len)
+{
+    char *val = NULL;
+    char *p = s;
+    int n = 0, nesc = 0;
+
+    while (*p) {
+	if (*p == '"') {
+	    if (*(p-1) != '\\') {
+		break;
+	    } else {
+		nesc++;
+	    }
+	} 
+	n++;
+	p++;
+    }
+
+    if (*p == '"' && n > 0) {
+	val = calloc(n - nesc + 1, 1);
+	n = 0;
+	while (*s) {
+	    if (*s == '"' && *(s-1) != '\\') {
+		break;
+	    } else if (*s == '\\' && *(s+1) == '"') {
+		; /* skip */
+	    } else {
+		val[n++] = *s;
+	    }
+	    s++;
+	}
+	*len = n + nesc;
+    }
+	    
+    return val;
+}
+
+#else
+
+static char *get_quoted_optval (char *s, int *len)
+{
+    int n = strcspn(s, "\"");
+    char *val = NULL;
+
+    if (n >= 0 && *(s + n) == '"') {
+	val = gretl_strndup(s, n);
+	*len = n;
+    }
+	    
+    return val;
+}
+
+#endif
+
 /* extract an option parameter value following '=' */
 
 static int handle_optval (char *s, int ci, gretlopt opt, int status)
@@ -1149,10 +1207,8 @@ static int handle_optval (char *s, int ci, gretlopt opt, int status)
 	/* handle a quoted value (e.g. a filename) */
 	quoted = 1;
 	p++;
-	len = strcspn(p, "\"");
-	if (len >= 0 && *(p + len) == '"') {
-	    val = gretl_strndup(p, len);
-	} else {
+	val = get_quoted_optval(p, &len);
+	if (val == NULL) {
 	    err = E_PARSE;
 	}
     } else if (*p != '\0') {
