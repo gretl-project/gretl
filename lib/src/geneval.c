@@ -10163,8 +10163,10 @@ void parser_ungetc (parser *p)
     p->ch = *(p->point - 1);
 }
 
-/* look ahead to the position of a given character in
-   the remaining input stream */
+/* Look ahead for the first occurrence of a given character in
+   the remaining input stream; return its 0-based index or
+   -1 if not found.
+*/
 
 int parser_char_index (parser *p, int c)
 {
@@ -10201,7 +10203,7 @@ int parser_next_nonspace_char (parser *p, int skip)
     return 0;
 }
 
-/* look ahead to the next character and return it */
+/* gets the next character in the input stream */
 
 int parser_next_char (parser *p)
 {
@@ -10580,7 +10582,7 @@ static void process_lhs_substr (const char *lname, char c, parser *p)
 	    p->lh.t, p->lh.substr);
 #endif
 
-    /* support stringvar[] ? */
+    /* FIXME support stringvar[] ? */
 
     if (p->lh.t == VEC) {
 	get_lh_obsnum(p);
@@ -11056,7 +11058,6 @@ static void pre_process (parser *p, int flags)
     /* operator: '=' or '+=' etc. */
     strncat(opstr, s, 2);
     if ((p->op = get_op(opstr)) == 0) {
-	/* error message */
 	p->err = E_EQN;
 	return;
     }
@@ -11437,7 +11438,7 @@ static void assign_to_matrix (parser *p, int *prechecked)
     if (LHS_matrix_reusable(p)) {
 	/* result is conformable with original matrix */
 #if EDEBUG
-	fprintf(stderr, "assign_to_matrix: LHS is reusable\n");
+	fprintf(stderr, "assign_to_matrix: reusing LHS\n");
 #endif
 	m = p->lh.m0;
 	if (p->ret->t == NUM) {
@@ -11797,9 +11798,10 @@ static int gen_check_return_type (parser *p)
     }
 
     if (p->targ == NUM) {
-	/* result must be scalar or 1 x 1 matrix */
 	if (r->t == NUM || scalar_matrix_node(r)) {
-	    ; /* OK */
+	    ; /* scalar or 1 x 1 matrix: OK */
+	} else if (r->t == STR && p->lh.obs >= 0) {
+	    ; /* a string value might be acceptable */
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -11996,6 +11998,8 @@ static int save_generated_var (parser *p, PRN *prn)
 		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, NUM, p);
 	    } else if (r->t == MAT) {
 		Z[v][t] = xy_calc(Z[v][t], r->v.m->val[0], p->op, NUM, p);
+	    } else if (r->t == STR) {
+		p->err = series_set_string_val(p->dset, v, t, r->v.str);
 	    }
 	    strcpy(p->dset->varname[v], p->lh.name);
 	    set_dataset_is_changed();

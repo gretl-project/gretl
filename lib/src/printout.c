@@ -2092,7 +2092,8 @@ int printdata (const int *list, const char *mstr,
     }
 
     if (opt & OPT_O) {
-	if (plist[0] == 1 && series_has_string_table(dset, plist[1])) {
+	if (plist[0] == 1 && !(opt & OPT_U) &&
+	    series_has_string_table(dset, plist[1])) {
 	    opt |= OPT_S;
 	}
 	err = print_by_obs(plist, dset, opt, screenvar, prn);

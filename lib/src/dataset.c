@@ -3888,6 +3888,48 @@ const char *series_get_string_val (const DATASET *dset, int i, int t)
 }
 
 /**
+ * series_set_string_val:
+ * @dset: pointer to dataset.
+ * @i: index number of series.
+ * @t: 0-based index of observation.
+ * @s: the string value to set.
+ *
+ * Attempts to set the string value for observation @t of series @i
+ * to @s. This will fail if the series in question does not have
+ * an associated table of string values.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int series_set_string_val (DATASET *dset, int i, int t, const char *s)
+{
+    int err = 0;
+
+    if (i <= 0 || i >= dset->v) {
+	err = E_DATA;
+    } else if (dset->varinfo[i]->st == NULL) {
+	err = E_TYPES;
+    } else {
+	series_table *st = dset->varinfo[i]->st;
+	double x = series_table_get_value(st, s);
+
+	if (na(x)) {
+	    int k = series_table_add_string(st, s);
+
+	    if (k < 0) {
+		err = E_ALLOC;
+	    } else {
+		dset->Z[i][t] = k;
+	    }
+	} else {
+	    dset->Z[i][t] = x;
+	}
+    }
+
+    return err;
+}
+
+/**
  * series_decode_string:
  * @dset: pointer to dataset.
  * @i: index number of series.

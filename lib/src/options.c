@@ -407,6 +407,7 @@ struct gretl_option gretl_opts[] = {
     { PLOT,     OPT_T, "tall", 0 },
     { PRINT,    OPT_O, "byobs", 0 },
     { PRINT,    OPT_N, "no-dates", 0 },
+    { PRINT,    OPT_U, "numeric", 0 },
     { PROBIT,   OPT_P, "p-values", 0 },
     { PROBIT,   OPT_R, "robust", 0 },
     { PROBIT,   OPT_C, "cluster", 2 },
@@ -1165,7 +1166,7 @@ static char *get_quoted_optval (char *s, int *len)
 	    if (*s == '"' && *(s-1) != '\\') {
 		break;
 	    } else if (*s == '\\' && *(s+1) == '"') {
-		; /* skip */
+		; /* skip the backslash */
 	    } else {
 		val[n++] = *s;
 	    }

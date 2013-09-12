@@ -443,7 +443,7 @@ enum {
 #define binary_op(s) (s > U_MAX && s < OP_MAX)
 #define bool_comp(s) (s >= B_EQ && s <= B_OR)
 
-#define evalb3(s) (func3_symb(s)) /* plus ternary op? */
+#define evalb3(s) (func3_symb(s))
 
 #define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
                    s == MSL2 || s == SUBSL || s == LAG || \
