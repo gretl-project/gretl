@@ -1042,6 +1042,9 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		    for (s=smin; s<t; s++) {
 			y[s] = sd;
 		    }
+		    if (t == dset->n) {
+			break;
+		    }
 		    Ti = 0;
 		    smin = t;
 		}

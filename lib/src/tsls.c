@@ -369,14 +369,14 @@ ivreg_list_add (const int *orig, const int *add, gretlopt opt, int *err)
  * but not in @instlist, then it is added to @instlist and this
  * is flagged by writing 1 into @addconst.
  *
- * Returns: allocated list of variables to be instrumented,
- * or NULL if there are no such variables.
+ * Returns: allocated list of variables to be instrumented or
+ * NULL if there are no such variables.
  */
 
 int *tsls_make_endolist (const int *reglist, int **instlist, 
 			 int *addconst, int *err)
 {
-    int *hatlist = NULL;
+    int *endolist = NULL;
     int i, vi;
 
     for (i=2; i<=reglist[0]; i++) {
@@ -389,8 +389,8 @@ int *tsls_make_endolist (const int *reglist, int **instlist,
 		    *addconst = 1;
 		}
 	    } else {
-		hatlist = gretl_list_append_term(&hatlist, vi);
-		if (hatlist == NULL) {
+		endolist = gretl_list_append_term(&endolist, vi);
+		if (endolist == NULL) {
 		    *err = E_ALLOC;
 		    return NULL;
 		}
@@ -405,7 +405,7 @@ int *tsls_make_endolist (const int *reglist, int **instlist,
 	*err = gretl_list_insert_list(instlist, clist, 1);
     }
 
-    return hatlist;
+    return endolist;
 }
 
 /* fill the residuals matrix for tsls likelihood calculation */
@@ -1026,24 +1026,25 @@ static int reglist_remove_redundant_vars (const MODEL *tmod,
 	if (pos > 1) {
 	    gretl_list_delete_at_pos(reglist, pos);
 	}
-	pos = in_gretl_list(hatlist, dlist[i]);
-	if (pos > 1) {
-	    /* First replace dlist[i] with the ID of the original
-	       regressor from @endolist, in place of the "hatlist"
-	       variable (which will be deleted when the model is
-	       returned), so that the printout of regressors that are
-	       dropped due to exact collinearity will show the
-	       appropriate names.
+	if (endolist != NULL) {
+	    /* note: if endolist is NULL, so is hatlist */
+	    pos = in_gretl_list(hatlist, dlist[i]);
+	    if (pos > 1) {
+		/* First replace dlist[i] with the ID of the original
+		   regressor from @endolist, in place of the "hatlist"
+		   variable (which will be deleted when the model is
+		   returned), so that the printout of regressors that are
+		   dropped due to exact collinearity will show the
+		   appropriate names.
 
-	       Second, delete the redundant term from both endolist
-	       and hatlist, so that subsequent calculations will not
-	       get messed up.
-	    */
-	    if (endolist != NULL) {
+		   Second, delete the redundant term from both endolist
+		   and hatlist, so that subsequent calculations will not
+		   get messed up.
+		*/
 		dlist[i] = endolist[pos];
 		gretl_list_delete_at_pos(endolist, pos);
+		gretl_list_delete_at_pos(hatlist, pos);
 	    }
-	    gretl_list_delete_at_pos(hatlist, pos);
 	}
     }
 
@@ -1547,7 +1548,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     int *exolist = NULL, *endolist = NULL;
     int *idroplist = NULL;
     int addconst = 0;
-    int nendo, nreg = 0;
+    int nendo = 0, nreg = 0;
     int orig_nvar = dset->v;
     int sysest = (opt & OPT_E);
     int no_tests = (opt & OPT_X);
@@ -1624,10 +1625,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	if (hatlist == NULL) {
 	    err = E_ALLOC;
 	}
-    } else {
-	/* no endogenous regressors */
-	nendo = 0;
-    }
+    } 
 
     if (!err) {
 	Q = tsls_Q(instlist, &idroplist, dset, missmask, &err);
@@ -1650,7 +1648,6 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     }
 
 #if TDEBUG
-    printlist(endolist, "endolist, after tsls_Q");
     fprintf(stderr, "nreg = %d, OverIdRank = %d\n", nreg, OverIdRank);
 #endif
 
@@ -1729,7 +1726,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 		/* handles robust estimation, for single endogenous regressor */
 		compute_first_stage_F(&tsls, endolist, reglist, instlist, 
 				      dset, opt);
-	    } else if (!(opt & OPT_R) && nendo > 0) {
+	    } else if (nendo > 0 && !(opt & OPT_R)) {
 		/* at present, only handles case of i.i.d. errors */
 		compute_stock_yogo(&tsls, endolist, instlist, hatlist, dset);
 	    }
@@ -1800,7 +1797,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	tsls.errcode = err;
     }
 
-    if (!tsls.errcode && endolist != NULL) {
+    if (!tsls.errcode && nendo > 0) {
 	if (sysest) {
 	    /* save first-stage fitted values */
 	    tsls_save_data(&tsls, hatlist, exolist, dset);

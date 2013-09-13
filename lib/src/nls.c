@@ -3509,7 +3509,7 @@ static int finalize_ivreg_model (MODEL *pmod, MODEL *ols,
     
     endolist = tsls_make_endolist(mlist, ilist, NULL, &err);
 
-    if (!err) {
+    if (endolist != NULL) {
 	gretl_model_set_list_as_data(pmod, "endolist", endolist);
     }
 

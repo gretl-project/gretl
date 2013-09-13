@@ -1202,7 +1202,7 @@ print_ivreg_instruments (const MODEL *pmod, const DATASET *dset, PRN *prn)
 
 	if (j == 0) {
 	    list = (const int *) gretl_model_get_data(pmod, "endolist");
-	    imin = (list == NULL)? -1 : 1;
+	    imin = list == NULL ? -1 : 1;
 	} else {
 	    list = pmod->list;
 	    imin = gretl_list_separator_position(list);
