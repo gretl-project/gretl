@@ -1,12 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
-     "http://www.w3.org/TR/REC-html40/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html><head><title>dependencias de gretl</title>
 
-<head><title>dependencias de gretl</title>
-<LINK REL=STYLESHEET TYPE="text/css"
-HREF="./css-gretl.html">
-<META NAME="GENERATOR" CONTENT="GNU Emacs">
-</head>
-<body>
+
+
+<link rel="STYLESHEET" type="text/css" href="./css-gretl.html">
+<meta name="GENERATOR" content="GNU Emacs"></head><body>
 
 [<a href="./gretl_espanol.html">página pricipal de gretl</a>]
 
@@ -17,108 +15,76 @@ HREF="./css-gretl.html">
 <p>Gretl, para algunas de sus funciones, depende de varias bibliotecas y del
 programa <tt>gnuplot</tt>. La tabla de abajo muestra un
 resumen de esas dependencias. Los enlaces de la izquierda llevan al
-sitio web principal de cada paquete en cuestión (comprobado en abril de
-2002) y los enlaces de la derecha conducen a una búsqueda del paquete en
+sitio web principal de cada paquete en cuestión (comprobado en octubre de
+2013) y los enlaces de la derecha conducen a una búsqueda del paquete en
 <tt>rpmfind.net</tt>.</p>
 
-<table width="90%" border=0 cellspacing=4 cellpadding=4>
-<tr><th align=left bgcolor="#808080"><FONT 
-COLOR="white">Paquete</font></th>
-  <th align=left bgcolor="#808080"><FONT COLOR="white">status en gretl
+<table border="0" cellpadding="4" cellspacing="4" width="90%">
+<tbody><tr><th align="left" bgcolor="#808080"><font color="white">Paquete</font></th>
+  <th align="left" bgcolor="#808080"><font color="white">status en gretl
 </font></th>
-  <th align=left bgcolor="#808080"><FONT 
-COLOR="white">función</font></th>
-  <th align=left bgcolor="#808080"><FONT COLOR="white">rpmfind</font></th>
+  <th align="left" bgcolor="#808080"><font color="white">función</font></th>
+  <th align="left" bgcolor="#808080"><font color="white">rpmfind</font></th>
 </tr> 
-<tr bgcolor="#E0E0E0">
+<tr bgcolor="#e0e0e0">
   <td><a href="http://www.gtk.org/">gtk</a></td>
   <td>necesario</td>
   <td>proporciona el GUI(Interface gráfico de usuario) de gretl</td>
-  <td><a
-href="http://rpmfind.net/linux/rpm2html/search.php?query=gtk">buscarlo</a></td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gtk">buscarlo</a></td>
 </tr>
-<tr bgcolor="#E0E0E0">
-  <td><a href="http://gtkextra.sourceforge.net/">gtkextra</a></td>
-  <td>opcional</td>
-  <td>diálogos de selección de ficheros, vista de iconos de sesión, edición de 
-datos mediante hoja de cálculo</td>
-  <td><a
-href="http://rpmfind.net/linux/rpm2html/search.php?query=gtk%2Bextra">buscarlo</a></td>
-</tr>
-<tr bgcolor="#E0E0E0">
+    <tr bgcolor="#e0e0e0">
+<td><a href="http://projects.gnome.org/gtksourceview/">gtksourceview</a></td><td><p>necesario<br>
+</p>
+</td><td><p>proporciona el resaltado de sintaxis en los guiones de gretl</p></td><td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gtksourceview">search</a></td></tr>
+
+<tr bgcolor="#e0e0e0">
   <td><a href="http://www.xmlsoft.org/">libxml</a></td>
   <td>necesario</td>
   <td>para abrir y guardar ficheros en el formato por defecto</td>
-  <td><a
-href="http://rpmfind.net/linux/rpm2html/search.php?query=libxml">buscarlo</a></td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=libxml">buscarlo</a></td>
 </tr>
-<tr bgcolor="#E0E0E0">
+<tr bgcolor="#e0e0e0">
   <td><a href="http://www.netlib.org/lapack/">lapack</a></td>
   <td>necesario</td>
   <td>álgebra linear</td>
-  <td><a
-href="http://rpmfind.net/linux/rpm2html/search.php?query=lapack">buscarlo</a></td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=lapack">buscarlo</a></td>
 </tr>
-<tr bgcolor="#E0E0E0">
+    <tr bgcolor="#e0e0e0">
+<td><a href="http://www.fftw.org/">fftw3</a></td><td><p>necesario</p>
+</td><td><p>Transformación rápida de Fourier</p></td><td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=fftw3">search</a></td></tr>
+<tr bgcolor="#e0e0e0">
   <td><a href="http://www.gnuplot.info/">gnuplot</a></td>
   <td>necesario</td>
   <td>genera los gráficos</td>
-  <td><a
-href="http://rpmfind.net/linux/rpm2html/search.php?query=gnuplot">buscarlo</a></td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gnuplot">buscarlo</a></td>
 </tr>
-<tr bgcolor="#E0E0E0">
-  <td><a
-href="ftp://ftp.gnome.org/pub/GNOME/stable/latest/sources/">gdk-pixbuf</a></td>
-  <td>recomendado [<a href="#note1">1</a>]</td>
-  <td>maneja los gráficos en formato PNG; hace a los gráficos gnuplot 
-interactivos</td>
-  <td><a
-href="http://rpmfind.net/linux/rpm2html/search.php?query=gdk-pixbuf">buscarlo</a></td>
-</tr>
-<tr bgcolor="#E0E0E0">
-  <td><a
-href="http://cnswww.cns.cwru.edu/~chet/readline/rltop.html">readline</a></td>
+
+    <tr bgcolor="#e0e0e0">
+<td><a href="http://gmplib.org/">GMP</a></td><td><p>necesario<br>
+</p><br>
+</td><td><p>complemento para manejar MCO de precisión múltiple</p></td><td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=libgmp">search</a></td></tr>
+
+    <tr bgcolor="#e0e0e0">
+<td><a href="http://curl.haxx.se/libcurl/">libcurl</a></td><td><p>necesario<br>
+</p><br>
+</td><td><p>maneja la transferencia de ficheros mediante el protocolo HTTP</p></td><td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=libcurl">search</a></td></tr>
+    <tr bgcolor="#e0e0e0">
+<td><a href="http://www.mpfr.org/">MPFR</a></td><td><p>opcional</p></td><td><p>funcionalidad adicional de&nbsp; precisión múltiple</p></td><td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=libmpfr">search</a></td></tr>
+<tr bgcolor="#e0e0e0">
+  <td><a href="http://cnswww.cns.cwru.edu/%7Echet/readline/rltop.html">readline</a></td>
   <td>ocional</td>
   <td>proporciona una línea de instrucciones editable de forma agradable bajo 
 <tt>gretlcli</tt>, el programa de línea de instrucciones</td>
-  <td><a
-href="http://rpmfind.net/linux/rpm2html/search.php?query=readline">buscarlo</a></td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=readline">buscarlo</a></td>
 </tr>
-<tr bgcolor="#E0E0E0">
+<tr bgcolor="#e0e0e0">
   <td><a href="http://www.gnome.org/">gnome</a></td>
   <td>opcional</td>
   <td>gretl se integra en el escritorio gnome (iconos de fichero y
 asociaciones, sistema de ayuda HTML, ...)</td>
-  <td><a
-href="http://rpmfind.net/linux/rpm2html/search.php?query=gnome">buscarlo</a></td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gnome">buscarlo</a></td>
 </tr>
-<tr bgcolor="#E0E0E0">
-  <td><a href="ftp://ftp.gnome.org/pub/GNOME/sources/libole2/">libole2</a></td>
-  <td>opcional [<a href="#note2">2</a>]</td>
-  <td>importar datos desde MS Excel</td>
-  <td><a
-href="http://rpmfind.net/linux/rpm2html/search.php?query=libole2">buscarlo</a></td>
-</tr>
-<tr bgcolor="#E0E0E0">
-  <td><a href="http://swox.com/gmp/">GMP</a></td>
-  <td>opcional</td>
-  <td>suporte para el plugin de MCO de precisión múltiple</td>
-  <td><a
-href="http://rpmfind.net/linux/rpm2html/search.php?query=libgmp">buscarlo</a></td>
-</tr>
-</table>
-
-<h3>Notas</h3>
-
-<p><a name="note1">1.</a> Si va a compilar gretl Vd. mismo, puede quitar la 
-dependencia de gdk-pixbuf dando la opción
-<tt>--disable-png-graphics</tt> a <tt>configure</tt>. Aún se obtendrán bien los 
-gráficos, aunque no serán interactivos.</p>
 
 
-<p><a name="note2">2.</a> En el paquete fuente de gretl se incluye la parte
-relevante del código de libole2, de manera que si en su sistema no se encuentra
-libole2 este código se compilará dentro de gretl.</p>
-
-
-</body>
+</tbody></table><br>
+</body></html>
