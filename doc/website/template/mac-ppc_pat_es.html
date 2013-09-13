@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html><head><title>gretl on OS X</title>
+ 
+
+<link rel="STYLESHEET" type="text/css" href="css-gretl.html"></head><body>
+
+<p>[<a href="http://gretl.sourceforge.net/index.html">gretl main page</a>]</p>
+
+<center>
+<h1>Gretl: Gnu Regression, Econometrics and Time-series Library</h1>
+<h2>para Mac OS X sobre PPC</h2>
+</center>
+
+<h2>Paso 1: asegúrese de que tiene instalado X11</h2>
+
+<p>Para ejecutar gretl es necesario que tenga instalado el sistema de
+ventanas X11 en su Mac. Esto debería ser automático en los OS X
+recientes, pero si está usando una versión antigua es posible que
+necesite volver al DVD de instalación para instalar X11.</p>
+
+<p>¿Cómo saber si X11 está instalado? Abra el buscador (Finder) y vaya a <kbd>Aplicaciones</kbd>. Bajo Aplicaciones, busque la carpeta de <kbd>Utilidades</kbd>, ábrala y compruébela hasta el final: si X11 está instalado debería aparecer allí como un icono.</p>
+
+
+<h2>Paso 2: instale GTK</h2>
+
+<p>Para mantener gretl son necesarias algunas bibliotecas añadidas, en concreto GTK y algunas relacionadas. 
+Instale GTK usando <a href="http://r.research.att.com/gtk2-framework.dmg">gtk2-framework.dmg</a>
+(o <a href="http://ricardo.ecn.wfu.edu/pub/gretl/gtk2-framework.dmg">descarga alternativa</a>).
+</p>
+ 
+<h2>Paso 3: instale gretl</h2><br>
+<h2>Paso 2: instale gretl</h2>
+ 
+
+<p>Ahora para instalar el propio gretl: descargue e instale la última
+versión publicada o la versión "instantánea".
+La versión "instantánea" suele estar más actualizada: normalmente
+contendrá correcciones de errores pero a veces tendrá también
+introducidas nuevas prestaciones y con ellas, nuevos errores. Para ver
+qué hay de nuevo en la versión "instantánea" eche un vistazo al <a href="../ChangeLog.html">Historial de cambios de gretl</a> (la versión "in progress").</p>
+
+
+<table cellpadding="2">
+
+<tbody><tr>
+<td><p>ültima versión publicada (SHORTDATE)</p></td>
+<td><p>
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-ppc.dmg.gz">gretl-VERSION-ppc.dmg.gz</a>
+</p></td>
+</tr>
+
+<tr>
+<td><p>O versión "instantánea" actual</p></td>
+<td><p>
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-ppc.dmg.gz/download">gretl-ppc.dmg.gz</a>
+</p></td>
+</tr>
+</tbody>
+</table>
+
+
+<p>Después de la descarga, pulse dos veces sobre el fichero <kbd>dmg.gz</kbd> para descomprimirlo.
+Esto producirá un fichero <kbd>dmg</kbd>;
+haga dpoble click sobre él para montar la imagen de disco. Abra la
+imagen de disco en el buscador (Finder) y arrastre Gretl a
+Aplicaciones. <i>Pero tenga en cuenta</i>: si está actualizando una
+instalación de gretl preexistente, primero debería abrir Aplicaciones
+en el buscador (Finder) y borrar el elemento Gretl antiguo.
+</p>
+
+<p>Una vez que ha acabado de instalar gretl puede extraer la imagen de disco y borrar los ficheros <kbd>dmg</kbd> y
+<kbd>dmg.gz</kbd>.
+</p>
+
+
+<h2>¿Problemas?</h2>
+
+
+<p>Hay documentación sobre la imagen de disco de gretl en <a href="README.pdf">README.pdf</a>,
+que contiene algunas sugerencias para evitar problemas. En breve si Vd.
+quiere averiguar lo que ocurre con un gretl que no funciona sobre OS X,
+por favor intente esto: abra una ventana de terminal X11; cambie el
+directorio
+(<kbd>cd</kbd>) a <kbd>Gretl.app</kbd> (donde instaló el paquete); 
+cambie el directorio a <kbd>Contents/Resources/bin</kbd> y ejecute la instrucción</p>
+
+<p>./gretl<br>
+</p>
+
+
+
+
+
+<p>esto debería de darle algo de infromación sobre lo que no funciona.</p>
+
+
+<h2>Extras opcionales</h2>
+
+
+<p>Puede que le interese instalar X-12-ARIMA y/o TRAMO/SEATS. Estos son
+programas especializados en el análisis de series temporales
+estacionales, y aquí tiene una versión compatible con gretl.
+</p>
+
+
+<table cellpadding="2">
+
+
+<tbody><tr>
+<td><p>X-12-ARIMA para Intel Mac</p></td>
+<td><p><a href="http://sourceforge.net/projects/gretl/files/x12a/x12arima-ppc.dmg/download">x12arima-ppc.dmg</a></p></td>
+</tr>
+
+<tr>
+<td><p>TRAMO/SEATS para Intel Mac</p></td>
+<td><p><a href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats-ppc.dmg/download">tramo-seats-ppc.dmg</a></p></td>
+</tr>
+
+</tbody>
+</table>
+&nbsp;
+
+
+</body></html>
