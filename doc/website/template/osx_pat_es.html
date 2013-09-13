@@ -1,264 +1,31 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
-<html> <head>
-<title>gretl sobre OS X</title>
-<LINK REL=STYLESHEET TYPE="text/css" HREF="./css-gretl.html">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-</head>
+<html><head><title>gretl sobre OS X</title>
+ 
 
-<body>
+<link rel="STYLESHEET" type="text/css" href="./css-gretl.html">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body>
+<p>[<a href="http://gretl.sourceforge.net/index.html">gretl main page</a>]</p>
 
-<p>[<a href="http://gretl.sourceforge.net/index.html">página principal de gretl</a>]</p>
 
 <center>
 <h1>Gretl: Gnu Regression, Econometrics and Time-series Library</h1>
 <h2>para Mac OS X</h2>
 </center>
 
-<h2>Imagen de disco pre-compilada</h2>
-
-<p>La forma más simple de instalar gretl para OS X es grabar e instalar dos ficheros de imagen 
-(<kbd>dmg</kbd>) siguiendo los pasos:
-
-<ul>
- <li><p>En primer lugar, instalar el paquete 
-  <a href="http://r.research.att.com/gtk2-framework.dmg">GTK+ Framework</a>
-  para OS X (o <a href="http://ricardo.ecn.wfu.edu/pub/gretl/gtk2-framework.dmg">desde este otro sitio</a>)</p>
-  </li>
- <li><p>Luego, grabar e instalar <b>uno de los siguientes</b>
-  <a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-intel.dmg.gz">gretl-VERSION-intel.dmg.gz</a>
-  para un Mac basado en Intel, <b>o</b>
-  <a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-ppc.dmg.gz">gretl-VERSION-ppc.dmg.gz</a>
-  para un Mac PPC.</p>
- </li>
-</ul>
-
-<p>Los enlaces de arriba a gretl apuntan a la última versión oficial publicada.  Otra posibilidad es descargar la versión 
-"instantánea" de gretl:
-o <a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-intel.dmg.gz/download">gretl-intel.dmg.gz</a>
-para Intel o
-<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-ppc.dmg.gz/download">gretl-ppc.dmg.gz</a>
-para PPC.
-Es probable que ésta esté más actualizada: a veces contendrá correcciones de errores,
-y otras veces ¡contendrá errores nuevos!  
-Las traducciones a idiomas diferentes del Inglés es probable que estén incompletas.
-¿Qué hay de nuevo en la versión "instantánea"? para saberlo, eche un vitazo al 
-<a href="../ChangeLog.html">historial de cambios</a> (la lisa de cosas "en preparación").</p>
-
-<p>La imagen de disco de gretl está documentada abreviadamente en  
-<a href="./README.pdf">README.pdf</a>, que contiene algunas sugerencias 
-para resolución de problemas.  En breve, si Vd desea chequear los errores de
-un gretl sobre OS X que no funciona, por favor intente esto: abra una ventana de terminal X11;
-cambie el directorio (<kbd>cd</kbd>) a <kbd>Gretl.app</kbd> (donde Vd. instaló el programa); 
-cambie el directorio a <kbd>Contents/Resources/bin</kbd> y ejecute la instrucción</p>
-
-<pre>
-./gretl
-</pre>
-
-<p>Esto debería de darle algo de información sobre qué es lo que está yendo mal.</p>
-
-<p><i>Por favor, tenga en cuenta que</i>: este paquete depende del X11 de Apple (la versión Mac
-del sistema de ventanas X).  Este está disponible en los DVDs de instalación de OS X.</p>
-
-<p>Cosas opcionales que es posible que Vd. desee instalar:</p>
-
-<center>
-<table cellpadding="4">
-
-<tr>
-<td><p>X-12-ARIMA (ajuste estacional, modelos ARIMA; para Intel Macs)</p></td>
-<td><p><a
-href="http://sourceforge.net/projects/gretl/files/x12a/x12arima-intel.dmg/download">x12arima-intel.dmg</a></p></td>
-</tr>
-
-<tr>
-<td><p>X-12-ARIMA (ajuste estacional, modelos ARIMA; para PPC Macs)</p></td>
-<td><p><a
-href="http://sourceforge.net/projects/gretl/files/x12a/x12arima-ppc.dmg/download">x12arima-ppc.dmg</a></p></td>
-</tr>
-
-<tr>
-<td><p>TRAMO/SEATS (ajute estacional, detección de outliers, modelos ARIMA)</p></td>
-<td><p><a 
-href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats.dmg/download">tramo-seats.dmg</a></p></td>
-</tr>
-
-</table>
-</center>
-
-<h2>Método alternativo: compilar usando Fink</h2>
-
-<p>Si la imagen precompilada no le funciona, o si Vd. quiere más control sobre el proceso de 
-configuración y compilación, Vd puede compilar gretl desde los archivos fuente.  Ona manera de hacer esto
-is por medio del sistema Fink, disponible en
-<a
-  href="http://fink.sourceforge.net/download/">http://fink.sourceforge.net/download/</a>.</p>
-
-<p>Además de la instalación básica del propio Fink, para compilar y ejecutar gretl Vd necesitará 
-asegurarse de que los siguientes paquetes de Fink están disponibles (algunos de ellos
-es posible que ya estén instalados y actualizados, en ese caso Fink le informará de ello).
-Después de cada paquete, se presenta la instrucción (a ser ejecutada en el símbolo del sistema
-en un xterm o la aplicación de terminal de Mac) que hará el trabajo:</p>
-
-<table cellspacing=8>
-  <tr>
-    <td><p class="in-cell">system-xfree86</p></td>
-    <td><kbd>fink install system-xfree86</kbd></td>
-    </tr>
-  <tr>
-    <td><p class="in-cell">gtk+2</p></td>
-    <td><kbd>fink install gtk+2</kbd></td>
-    </tr>
-  <tr>
-    <td><p class="in-cell">gtk+2-dev</p></td>
-    <td><kbd>fink install gtk+2-dev</kbd></td>
-    </tr>
-  <tr>    
-    <td><p class="in-cell">libxml2</p></td>
-    <td><kbd>fink install libxml2</kbd></td>
-    </tr>
-  <tr>
-    <td><p class="in-cell">gnuplot</p></td>
-    <td><kbd>fink install gnuplot</kbd></td>
-    </tr>
-  <tr>
-    <td><p class="in-cell">fftw3</p></td>
-    <td><kbd>fink install fftw3</kbd></td>
-    </tr>
-</table>
-
-<p>En particular, Vd debería asegurarse de que gnuplot esté actualizado
-(la versión debería ser al menos la 4.0 para funcionar bien con gretl).</p>
-
-<p>En algún tiempo podría Vd necesitar también los siguiente, pero esto puede ser redundante ahora:
+<p>En primer lugar Vd. necesita determinar si su Mac tiene un
+procesador Intel o PPC. Los Macs más nuevos (desde 2006) todos
+funcionan con Intel. Si Vd. tiene un Mac&nbsp; más viejo y no está
+seguro, haga click sobre el icono de Apple arriba a la izquierda de su
+pantalla y seleccione "Acerca de este Mac". En la ventana que aparece
+verá Vd. la versión del sistema operativo OS X y el tipo de procesador.
 </p>
 
-<table cellspacing=8>
-  <tr>
-    <td><p class="in-cell">dlcompat</p></td><td>
-    <kbd>fink install dlcompat</kbd></td>
-    </tr>
-  <tr>
-    <td><p class="in-cell">dlcompat-dev</p></td>
-    <td><kbd>fink install dlcompat-dev</kbd></td>
-    </tr>
-</table>
+
+<p>Cuenado esté listo, seleccione uno de enlaces de aquí abajo.
+</p>
 
 
-<h2>Variables de entorno</h2>
-
-<p>Para compilar gretl usando Fink, Vd necesita asegurarse de que el 
-<i>entorno</i> está correctamente configurado -- antes de ejecutar el guión configure de gretl.  
-Esto implica especificar varias variables de entorno;
-cómo hacer esto exactamente depende de si su intérprete de instrucciones 
-es tcsh o bash (tcsh era la opción por defecto en OS X antes de Panther,
-pero creo que bash la opción por defecto bajo Panther).  Vd puede ejecutar las siguientes instrucciones
-una por una o (mejor) ponerlas en el fichero de inicio de su intérprete de instrucciones,
-<kbd>.tcshrc</kbd> o <kbd>.bashrc</kbd> (creo) en su directorio personal.</p>
-
-<p>versión tcsh:</p>
-
-<pre>
-setenv CFLAGS -I/sw/include
-setenv LDFLAGS -L/sw/lib
-setenv CXXFLAGS $CFLAGS
-setenv CPPFLAGS $CXXFLAGS
-setenv ACLOCAL_FLAGS "-I/sw/share/aclocal"
-setenv PKG_CONFIG_PATH "/sw/lib/pkgconfig"
-</pre>
-
-<p>versión bash:</p>
-
-<pre>
-export CFLAGS=-I/sw/include
-export LDFLAGS=-L/sw/lib
-export CXXFLAGS=$CFLAGS
-export CPPFLAGS=$CXXFLAGS
-export ACLOCAL_FLAGS="-I/sw/share/aclocal"
-export PKG_CONFIG_PATH="/sw/lib/pkgconfig"
-</pre>
-
-<p>Vd también debería asegurarse de ejecuar 'source' para el <kbd>init.sh</kbd> suministrado por 
-fink:</p>
-
-<pre>
-source /sw/bin/init.sh
-</pre>
-
-<p>Es posible que Vd desee echar un vistazo a las
-<a href="http://fink.sourceforge.net/faq/usage-general.php">FAQ de fink</a>.</p>
-
-<h2>Configurar y compilar</h2>
-
-<p>Una vez que Vd ya tiene las versiones correctas de OS X, X11 de Apple, Fink, y los paquetes requeridos por Fink,
-y que Vd ha configurado correctamente el entorno, instalar gretl debería ser bastante directo.
-Espero dejar disponible un paquete de gretl para Fink dentro de poco, pero por ahora Vd tiene que instalarlo 
-desde la fuente. Aquí le explico cómo se hace:</p>
-
-<ol>
-<li><p class-"in-list">Descargue el paquete fuente:<br>
-
-   <kbd>curl -O http://ricardo.ecn.wfu.edu/pub/gretl/gretl-VERSION.tar.bz2</kbd>
-    </p></li>
-
-<li><p class-"in-list">Descomprima las fuentes:<br>
-
-   <kbd>tar xvfj gretl-VERSION.tar.bz2</kbd>
-    </p></li>
-
-<li><p class-"in-list">Cambie al directorio de fuentes de gretl:<br> 
-
-   <kbd>cd gretl-VERSION</kbd></p></li>
-
-<li><p class-"in-list">Configure el paquete de código fuente:<br>
-
-   <kbd>./configure --prefix=/sw --disable-png-comments</kbd></p></li>
-
-<li><p class-"in-list">Escriba <kbd>make</kbd> para compilar gretl.  Esto lleva un rato.</p></li>
-
-<li><p class-"in-list">Escriba <kbd>sudo make install</kbd> para instalar gretl.</p></li>
-</ol>
-
-<p>Por si puede serle útil, aquí está todo el lote en forma de un guión para el intérprete de instrucciones:</p>
-
-<pre>
-#!/bin/sh
-# initialize fink
-. /sw/bin/init.sh
-# set up the compilation environment
-export CFLAGS="-O2 -I/sw/include"
-export LDFLAGS=-L/sw/lib
-export CXXFLAGS=$CFLAGS
-export CPPFLAGS=$CXXFLAGS
-export ACLOCAL_FLAGS="-I/sw/share/aclocal"
-export PKG_CONFIG_PATH="/sw/lib/pkgconfig"
-# download the gretl source
-curl -O http://ricardo.ecn.wfu.edu/pub/gretl/gretl-VERSION.tar.bz2
-# unpack the source archive
-tar xvfj gretl-VERSION.tar.bz2
-# move into the gretl source directory
-cd gretl-VERSION
-# configure the build
-./configure --prefix=/sw
-# make the program
-make
-# install gretl (root password needed)
-sudo make install
-</pre>
-  
-
-<p>Ahora Vd debería de poder ejecutar gretl escribiendo "gretl" en el símbolo del sistema en un xterm (que se lanza iniciando el X11 de Apple).</p>
-
-</body>
-</html>
-
-
-
-
-
-
-
-
-
-
- 
+<div id="menucontent">
+ <ul class="menu"><li><a href="mac-intel.html">Intel Mac (nuevo)</a></li><li><a href="mac-ppc.html">PPC Mac (viejo)</a></li></ul>
+</div>
+</body></html>
