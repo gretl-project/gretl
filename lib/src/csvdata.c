@@ -3457,7 +3457,9 @@ static int compare_jr_rows (const void *a, const void *b)
 
 /* Sort the rows of the joiner struct, by either one or two keys, then
    figure out how many unique (primary) key values we have and
-   construct an array of frequency of occurrence of these values.
+   construct (a) an array of frequency of occurrence of these values
+   and (b) an array which records the first row of the joiner on
+   which each of these values is found.
 */
 
 static int joiner_sort (joiner *jr)
@@ -3487,18 +3489,25 @@ static int joiner_sort (joiner *jr)
 	}
 
 	jr->keys[0] = jr->rows[0].keyval;
+	jr->key_row[0] = 0;
 
 	for (i=1; i<jr->n_rows; i++) {
 	    if (jr->rows[i].keyval != jr->rows[i-1].keyval) {
+		/* finalize info for key j */
 		jr->keys[j] = jr->rows[i-1].keyval;
 		jr->key_freq[j] = nj;
+		/* and initialize for next key */
 		nj = 1;
+		if (j < jr->n_unique - 1) {
+		    jr->key_row[j+1] = i;
+		}
 		j++;
 	    } else {
 		nj++;
 	    }
 	}
 
+	/* make sure the last row is right */
 	jr->keys[j] = jr->rows[i-1].keyval;
 	jr->key_freq[j] = nj;
     }
@@ -3588,7 +3597,7 @@ static double aggr_retval (int key, const char *lstr,
     }
 
     if (pos < 0) {
-	/* (primary) key not found */
+	/* (primary) left-hand key not found */
 #if CDEBUG
 	fprintf(stderr, "  no match on primary key\n");
 #endif    
@@ -3852,41 +3861,6 @@ static int get_inner_key_values (joiner *jr, int i,
     return err;
 }
 
-static void add_key_row_indices (joiner *jr, const char **rlabels)
-{
-    int k, r;
-
-    /* For each unique (primary) key on the right, determine
-       and record the first row on which it appears in the
-       "joiner rectangle". If we do this once before running
-       aggregation it can save a lot of time for a big join.
-    */
-
-    if (jr->str_keys) {
-	const char *sk, *sr;
-
-	for (k=0; k<jr->n_unique; k++) {
-	    sk = rlabels[k];
-	    for (r=0; r<jr->n_rows; r++) {
-		sr = rlabels[jr->rows[r].keyval - 1];
-		if (!strcmp(sk, sr)) {
-		    jr->key_row[k] = r;
-		    break;
-		}
-	    }
-	}		
-    } else {
-	for (k=0; k<jr->n_unique; k++) {
-	    for (r=0; r<jr->n_rows; r++) {
-		if (jr->keys[k] == jr->rows[r].keyval) {
-		    jr->key_row[k] = r;
-		    break;
-		}
-	    }
-	}
-    }
-}
-
 static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 {
     series_table *rst = NULL;
@@ -3948,7 +3922,9 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 	strcheck = (rst != NULL && lst != NULL);
     }
 
-    add_key_row_indices(jr, rlabels);
+    /* run through the observations in the current sample range of
+       the left-hand dataset, looking for key-matches on the right
+    */
 
     for (i=dset->t1; i<=dset->t2 && !err; i++) {
 	int missing = 0;
