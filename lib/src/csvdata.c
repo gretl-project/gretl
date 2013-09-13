@@ -2904,6 +2904,7 @@ struct joiner_ {
     jr_row *rows;   /* array of table rows */
     int *keys;      /* array of unique (primary) key values as integers */
     int *key_freq;  /* counts of occurrences of (primary) key values */
+    int *key_row;   /* record of starting row for primary keys */
     int str_keys;   /* flag for string comparison of primary keys */
     int str_keys2;  /* flag for string comparison of secondary keys */
     const int *l_keyno; /* for string comparison: list of ikey IDs in lhs dset */
@@ -2956,6 +2957,7 @@ static void joiner_destroy (joiner *jr)
 	free(jr->rows);
 	free(jr->keys);
 	free(jr->key_freq);
+	free(jr->key_row);
 	free(jr);
     }
 }
@@ -3318,6 +3320,7 @@ static joiner *joiner_new (int nrows)
 	jr->n_unique = 0;
 	jr->keys = NULL;
 	jr->key_freq = NULL;
+	jr->key_row = NULL;
 	jr->l_keyno = NULL;
 	jr->r_keyno = NULL;
     }
@@ -3472,8 +3475,9 @@ static int joiner_sort (joiner *jr)
 
     jr->keys = malloc(jr->n_unique * sizeof *jr->keys);
     jr->key_freq = malloc(jr->n_unique * sizeof *jr->key_freq);
+    jr->key_row = malloc(jr->n_unique * sizeof *jr->key_row);
 
-    if (jr->keys == NULL || jr->key_freq == NULL) {
+    if (jr->keys == NULL || jr->key_freq == NULL || jr->key_row == NULL) {
 	err = E_ALLOC;
     } else {
 	int j = 0, nj = 1;
@@ -3612,13 +3616,15 @@ static double aggr_retval (int key, const char *lstr,
 	}
     }
 
-    pos = -1;
-    
+#if 1 /* pre-computed */
+    pos = jr->key_row[pos];
+#else
     /* At this point @jr is already sorted: we now need to
        find the starting row of the target (primary) key 
        value in the rectangle proper.
-    */
+    */    
 
+    pos = -1;
     if (jr->str_keys) {
 	/* matching by string values */
 	for (i=0; i<jr->n_rows && pos<0; i++) {
@@ -3635,7 +3641,8 @@ static double aggr_retval (int key, const char *lstr,
 	    }
 	}
     }
-
+#endif
+    
     if (pos < 0) {
 	/* "can't happen" */
 	return NADBL;
@@ -3845,6 +3852,41 @@ static int get_inner_key_values (joiner *jr, int i,
     return err;
 }
 
+static void add_key_row_indices (joiner *jr, const char **rlabels)
+{
+    int k, r;
+
+    /* For each unique (primary) key on the right, determine
+       and record the first row on which it appears in the
+       "joiner rectangle". If we do this once before running
+       aggregation it can save a lot of time for a big join.
+    */
+
+    if (jr->str_keys) {
+	const char *sk, *sr;
+
+	for (k=0; k<jr->n_unique; k++) {
+	    sk = rlabels[k];
+	    for (r=0; r<jr->n_rows; r++) {
+		sr = rlabels[jr->rows[r].keyval - 1];
+		if (!strcmp(sk, sr)) {
+		    jr->key_row[k] = r;
+		    break;
+		}
+	    }
+	}		
+    } else {
+	for (k=0; k<jr->n_unique; k++) {
+	    for (r=0; r<jr->n_rows; r++) {
+		if (jr->keys[k] == jr->rows[r].keyval) {
+		    jr->key_row[k] = r;
+		    break;
+		}
+	    }
+	}
+    }
+}
+
 static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 {
     series_table *rst = NULL;
@@ -3905,6 +3947,8 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 	lst = series_get_string_table(jr->l_dset, v);
 	strcheck = (rst != NULL && lst != NULL);
     }
+
+    add_key_row_indices(jr, rlabels);
 
     for (i=dset->t1; i<=dset->t2 && !err; i++) {
 	int missing = 0;
