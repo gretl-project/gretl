@@ -584,7 +584,7 @@ lagged_depvar_check (MODEL *pmod, const DATASET *dset)
     if (ldv) {
 	gretl_model_set_int(pmod, "ldepvar", ldv);
     } else if (gretl_model_get_int(pmod, "ldepvar")) {
-	gretl_model_set_int(pmod, "ldepvar", 0);
+	gretl_model_destroy_data_item(pmod, "ldepvar");
     }
 
     return ldv;

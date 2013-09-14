@@ -926,46 +926,36 @@ static void
 drop_redundant_vars (MODEL *pmod, DATASET *dset, gretl_matrix *R, 
 		     int rank, gretlopt opt)
 {
-    int *dlist = NULL;
+    int *droplist = NULL;
+    int i, vi, pos, nd;
     double d;
-    int nd = R->rows - rank;
-    int i, j;
-
-    if (1 || !(opt & OPT_A)) {
-	dlist = gretl_list_new(nd);
-	if (dlist != NULL) {
-	    dlist[0] = 0;
-	}
-    }
 
 #if REDEBUG
     printlist(pmod->list, "pmod->list, into drop_redundant_vars");
     fprintf(stderr, "rank = %d\n", rank);
 #endif
 
-    j = 2;
+    pos = 2;
     nd = 0;
     for (i=0; i<R->rows; i++) {
 	d = gretl_matrix_get(R, i, i);
 	if (fabs(d) < R_DIAG_MIN) {
-	    if (dlist != NULL) {
-		dlist[0] += 1;
-		dlist[dlist[0]] = pmod->list[j];
-	    }
+	    vi = pmod->list[pos];
+	    gretl_list_append_term(&droplist, vi);
 	    fprintf(stderr, "drop redundant variable %d (%s)\n",
-		    pmod->list[j], dset->varname[pmod->list[j]]);
-	    gretl_list_delete_at_pos(pmod->list, j--);
+		    vi, dset->varname[vi]);
+	    gretl_list_delete_at_pos(pmod->list, pos--);
 	    nd++;
 	}
-	j++;
+	pos++;
     }
 
     pmod->ncoeff -= nd;
     pmod->dfd = pmod->nobs - pmod->ncoeff;
     pmod->dfn = pmod->ncoeff - pmod->ifc;
 
-    if (dlist != NULL) {
-	gretl_model_set_list_as_data(pmod, "droplist", dlist);
+    if (droplist != NULL) {
+	gretl_model_set_list_as_data(pmod, "droplist", droplist);
     }   
 }
 

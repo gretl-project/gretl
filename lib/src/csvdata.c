@@ -2905,7 +2905,6 @@ struct joiner_ {
     int *keys;      /* array of unique (primary) key values as integers */
     int *key_freq;  /* counts of occurrences of (primary) key values */
     int *key_row;   /* record of starting row in joiner row for primary keys */
-    int *key_map;   /* mapping from inner key values to outer */
     int str_keys;   /* flag for string comparison of primary keys */
     int str_keys2;  /* flag for string comparison of secondary keys */
     const int *l_keyno; /* list of ikey IDs in lhs dset */
@@ -2959,7 +2958,6 @@ static void joiner_destroy (joiner *jr)
 	free(jr->keys);
 	free(jr->key_freq);
 	free(jr->key_row);
-	free(jr->key_map);
 	free(jr);
     }
 }
@@ -3323,7 +3321,6 @@ static joiner *joiner_new (int nrows)
 	jr->keys = NULL;
 	jr->key_freq = NULL;
 	jr->key_row = NULL;
-	jr->key_map = NULL;
 	jr->l_keyno = NULL;
 	jr->r_keyno = NULL;
     }
@@ -3559,12 +3556,12 @@ static int seqval_out_of_bounds (joiner *jr, int seqmax)
     }
 }
 
-static double aggr_retval (int key, const char *lstr,
-			   const char **rlabels,
-			   int key2, const char *lstr2,
-			   const char **rlabels2,
-			   joiner *jr, double *xmatch,
-			   double *auxmatch, int *err)
+static double aggr_value (int key, const char *lstr,
+			  const char **rlabels,
+			  int key2, const char *lstr2,
+			  const char **rlabels2,
+			  joiner *jr, double *xmatch,
+			  double *auxmatch, int *err)
 {
     const char *rstr = NULL;
     double x, y, xa;
@@ -3580,35 +3577,30 @@ static double aggr_retval (int key, const char *lstr,
     }    
 #endif
 
-    /* is the (primary) key present in the joiner rectangle? */
+    /* find the position of the inner (primary) key in the 
+       array of unique outer key values */
 
     if (jr->str_keys) {
-	for (i=0; i<jr->n_unique && pos<0; i++) {
+	for (i=0; i<jr->n_unique; i++) {
 	    rstr = rlabels[jr->keys[i] - 1];
 	    if (!strcmp(lstr, rstr)) {
 		/* got a match on strings */
 		pos = i;
+		break;
 	    }
 	}
     } else {
-	for (i=0; i<jr->n_unique && pos<0; i++) {
+	for (i=0; i<jr->n_unique; i++) {
 	    if (key == jr->keys[i]) {
 		/* got a numerical match */
 		pos = i;
+		break;
 	    }
-	}
-    }
-
-    if (jr->key_map != NULL) {
-	int alt = jr->key_map[key-1];
-
-	if (alt != pos) {
-	    fprintf(stderr, "*** pos = %d but altpos = %d\n", pos, alt);
 	}
     }
 
     if (pos < 0) {
-	/* (primary) left-hand key not found */
+	/* (primary) inner key value not found */
 #if CDEBUG
 	fprintf(stderr, "  no match on primary key\n");
 #endif    
@@ -3872,73 +3864,6 @@ static int get_inner_key_values (joiner *jr, int i,
     return err;
 }
 
-/* Pre-compute the mapping from unique values of the inner
-   key to 0-based position in the array of unique values of
-   the outer key (or -1 if no match). This involves some
-   overhead but should speed things up significantly if there
-   are many values of the outer key and the inner key values
-   recur, on average, on many lines of the inner dataset.
-*/
-
-static int record_key_map (joiner *jr, const char **llabels,
-			   int nl, const char **rlabels,
-			   int nr)
-{
-    int i, j, err = 0;
-
-    if (jr->str_keys) {
-	const char *lstr, *rstr;
-
-	jr->key_map = malloc(nl * sizeof *jr->key_map);
-	if (jr->key_map == NULL) {
-	    return E_ALLOC;
-	}
-
-	for (i=0; i<nl; i++) {
-	    jr->key_map[i] = -1;
-	    lstr = llabels[i];
-	    for (j=0; j<nr; j++) {
-		rstr = rlabels[j];
-		if (!strcmp(lstr, rstr)) {
-		    jr->key_map[i] = j;
-		    break;
-		}
-	    }
-	}	
-    } else {
-	const double *x;
-	gretl_matrix *m;
-	int lkey, keyvar, n;
-
-	keyvar = jr->l_keyno[1];
-	n = jr->l_dset->t2 - jr->l_dset->t1 + 1;
-	x = jr->l_dset->Z[keyvar] + jr->l_dset->t1;
-	m = gretl_matrix_values(x, n, OPT_S, &err);
-
-	if (!err) {
-	    jr->key_map = malloc(m->rows * sizeof *jr->key_map);
-	    if (jr->key_map == NULL) {
-		err = E_ALLOC;
-	    } else {
-		n = m->rows;
-		for (i=0; i<n; i++) {
-		    jr->key_map[i] = -1;
-		    lkey = m->val[i];
-		    for (j=0; j<jr->n_unique; j++) {
-			if (lkey == jr->keys[j]) {
-			    jr->key_map[i] = j;
-			    break;
-			}
-		    }
-		}
-	    }
-	    gretl_matrix_free(m);
-	}
-    }
-
-    return err;
-}
-
 static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 {
     series_table *rst = NULL;
@@ -3953,7 +3878,6 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
     double *xmatch = NULL;
     double *auxmatch = NULL;
     int strcheck = 0;
-    int lns = 0, rns = 0;
     int i, nmax, key, key2 = 0;
     int err = 0;
 
@@ -3963,8 +3887,8 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 
     if (jr->str_keys) {
 	/* matching on primary key by strings */
-	llabels = series_get_string_vals(jr->l_dset, jr->l_keyno[1], &lns);
-	rlabels = series_get_string_vals(jr->r_dset, jr->r_keyno[1], &rns);
+	llabels = series_get_string_vals(jr->l_dset, jr->l_keyno[1], NULL);
+	rlabels = series_get_string_vals(jr->r_dset, jr->r_keyno[1], NULL);
     }
 
     if (jr->str_keys2) {
@@ -4001,10 +3925,6 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 	strcheck = (rst != NULL && lst != NULL);
     }
 
-#if 0 /* not ready yet */
-    record_key_map(jr, llabels, lns, rlabels, rns);
-#endif
-
     /* run through the observations in the current sample range of
        the left-hand dataset, looking for key-matches on the right
     */
@@ -4027,14 +3947,14 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 	if (jr->n_keys == 2 && llabels2 != NULL) {
 	    key2str = llabels2[key2-1];
 	}
-	z = aggr_retval(key, keystr, rlabels, key2, key2str, rlabels2,
-			jr, xmatch, auxmatch, &err);
+	z = aggr_value(key, keystr, rlabels, key2, key2str, rlabels2,
+		       jr, xmatch, auxmatch, &err);
 #if CDEBUG
 	if (na(z)) {
-	    fprintf(stderr, " aggr_retval: got NA (keys=%d,%d, err=%d)\n", 
+	    fprintf(stderr, " aggr_value: got NA (keys=%d,%d, err=%d)\n", 
 		    key, key2, err);
 	} else {
-	    fprintf(stderr, " aggr_retval: got %.12g (keys=%d,%d, err=%d)\n", 
+	    fprintf(stderr, " aggr_value: got %.12g (keys=%d,%d, err=%d)\n", 
 		    z, key, key2, err);
 	}
 #endif
