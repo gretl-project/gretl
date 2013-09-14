@@ -3407,8 +3407,9 @@ static int modelvar_iszero (const MODEL *pmod, const double *x)
     return 1;
 }
 
-/* From position 2 to end of list, omits variables with all zero
-   observations and re-packs the rest of them */
+/* From the position of the first regressorto end of list, omits
+   variables with all zero observations and re-packs the rest of
+   them */
 
 static void omitzero (MODEL *pmod, const DATASET *dset,
 		      gretlopt opt)

@@ -3805,6 +3805,32 @@ static NODE *list_list_comp (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+static NODE *num_string_comp (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	NODE *xnode = l->t == NUM ? l : r;
+	NODE *snode = l->t == STR ? l : r;
+	const char *s = snode->v.str;
+	int v = xnode->vnum;
+
+	if (v <= 0 || !series_has_string_table(p->dset, v)) {
+	    p->err = E_TYPES;
+	} else {
+	    double sx = series_decode_string(p->dset, v, s);
+
+	    if (f == B_EQ) {
+		ret->v.xval = (sx == xnode->v.xval);
+	    } else {
+		ret->v.xval = (sx != xnode->v.xval);
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /* argument is list; value returned is series */
 
 static NODE *list_to_series_func (NODE *n, int f, parser *p)
@@ -4925,6 +4951,7 @@ static NODE *series_obs (NODE *l, NODE *r, parser *p)
 
 	if (t >= 0 && t < p->dset->n) {
 	    ret->v.xval = l->v.xvec[t];
+	    ret->vnum = l->vnum; /* added 2013-09-14 */
 	} else {
 	    ret->v.xval = NADBL;
 	}
@@ -9160,6 +9187,10 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = list_list_op(l, r, t->t, p);
 	} else if (t->t == B_POW && ok_list_node(l) && ok_list_node(r)) {
 	    ret = list_list_op(l, r, t->t, p);
+	} else if ((t->t == B_EQ || t->t == B_NEQ) && 
+		   ((l->t == NUM && r->t == STR) ||
+		    (l->t == STR && r->t == NUM))) {
+	    ret = num_string_comp(l, r, t->t, p);
 	} else if (bool_comp(t->t)) {
 	    if (ok_list_node(l) && (r->t == NUM || r->t == VEC)) {
 		ret = list_bool_comp(l, r, t->t, 0, p);
