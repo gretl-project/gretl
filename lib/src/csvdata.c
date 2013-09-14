@@ -2900,15 +2900,16 @@ typedef struct obskey_ obskey;
 struct joiner_ {
     int n_rows;     /* number of rows in data table */
     int n_keys;     /* number of keys used (1 or 2) */
-    int n_unique;   /* number of unique keys found, primary key */
+    int n_unique;   /* number of unique keys found on right, primary key */
     jr_row *rows;   /* array of table rows */
     int *keys;      /* array of unique (primary) key values as integers */
     int *key_freq;  /* counts of occurrences of (primary) key values */
-    int *key_row;   /* record of starting row for primary keys */
+    int *key_row;   /* record of starting row in joiner row for primary keys */
+    int *key_map;   /* mapping from inner key values to outer */
     int str_keys;   /* flag for string comparison of primary keys */
     int str_keys2;  /* flag for string comparison of secondary keys */
-    const int *l_keyno; /* for string comparison: list of ikey IDs in lhs dset */
-    const int *r_keyno; /* for string comparison: list of okey IDs in rhs dset */
+    const int *l_keyno; /* list of ikey IDs in lhs dset */
+    const int *r_keyno; /* list of okey IDs in rhs dset */
     AggrType aggr;    /* aggregation method for 1:n joining */
     int seqval;       /* aux. sequence number for aggregation */
     int auxcol;       /* aux. data column for aggregation */
@@ -2958,6 +2959,7 @@ static void joiner_destroy (joiner *jr)
 	free(jr->keys);
 	free(jr->key_freq);
 	free(jr->key_row);
+	free(jr->key_map);
 	free(jr);
     }
 }
@@ -3321,6 +3323,7 @@ static joiner *joiner_new (int nrows)
 	jr->keys = NULL;
 	jr->key_freq = NULL;
 	jr->key_row = NULL;
+	jr->key_map = NULL;
 	jr->l_keyno = NULL;
 	jr->r_keyno = NULL;
     }
@@ -3596,6 +3599,14 @@ static double aggr_retval (int key, const char *lstr,
 	}
     }
 
+    if (jr->key_map != NULL) {
+	int alt = jr->key_map[key-1];
+
+	if (alt != pos) {
+	    fprintf(stderr, "*** pos = %d but altpos = %d\n", pos, alt);
+	}
+    }
+
     if (pos < 0) {
 	/* (primary) left-hand key not found */
 #if CDEBUG
@@ -3861,6 +3872,73 @@ static int get_inner_key_values (joiner *jr, int i,
     return err;
 }
 
+/* Pre-compute the mapping from unique values of the inner
+   key to 0-based position in the array of unique values of
+   the outer key (or -1 if no match). This involves some
+   overhead but should speed things up significantly if there
+   are many values of the outer key and the inner key values
+   recur, on average, on many lines of the inner dataset.
+*/
+
+static int record_key_map (joiner *jr, const char **llabels,
+			   int nl, const char **rlabels,
+			   int nr)
+{
+    int i, j, err = 0;
+
+    if (jr->str_keys) {
+	const char *lstr, *rstr;
+
+	jr->key_map = malloc(nl * sizeof *jr->key_map);
+	if (jr->key_map == NULL) {
+	    return E_ALLOC;
+	}
+
+	for (i=0; i<nl; i++) {
+	    jr->key_map[i] = -1;
+	    lstr = llabels[i];
+	    for (j=0; j<nr; j++) {
+		rstr = rlabels[j];
+		if (!strcmp(lstr, rstr)) {
+		    jr->key_map[i] = j;
+		    break;
+		}
+	    }
+	}	
+    } else {
+	const double *x;
+	gretl_matrix *m;
+	int lkey, keyvar, n;
+
+	keyvar = jr->l_keyno[1];
+	n = jr->l_dset->t2 - jr->l_dset->t1 + 1;
+	x = jr->l_dset->Z[keyvar] + jr->l_dset->t1;
+	m = gretl_matrix_values(x, n, OPT_S, &err);
+
+	if (!err) {
+	    jr->key_map = malloc(m->rows * sizeof *jr->key_map);
+	    if (jr->key_map == NULL) {
+		err = E_ALLOC;
+	    } else {
+		n = m->rows;
+		for (i=0; i<n; i++) {
+		    jr->key_map[i] = -1;
+		    lkey = m->val[i];
+		    for (j=0; j<jr->n_unique; j++) {
+			if (lkey == jr->keys[j]) {
+			    jr->key_map[i] = j;
+			    break;
+			}
+		    }
+		}
+	    }
+	    gretl_matrix_free(m);
+	}
+    }
+
+    return err;
+}
+
 static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 {
     series_table *rst = NULL;
@@ -3875,6 +3953,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
     double *xmatch = NULL;
     double *auxmatch = NULL;
     int strcheck = 0;
+    int lns = 0, rns = 0;
     int i, nmax, key, key2 = 0;
     int err = 0;
 
@@ -3884,8 +3963,8 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 
     if (jr->str_keys) {
 	/* matching on primary key by strings */
-	llabels = series_get_string_vals(jr->l_dset, jr->l_keyno[1], NULL);
-	rlabels = series_get_string_vals(jr->r_dset, jr->r_keyno[1], NULL);
+	llabels = series_get_string_vals(jr->l_dset, jr->l_keyno[1], &lns);
+	rlabels = series_get_string_vals(jr->r_dset, jr->r_keyno[1], &rns);
     }
 
     if (jr->str_keys2) {
@@ -3921,6 +4000,10 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 	lst = series_get_string_table(jr->l_dset, v);
 	strcheck = (rst != NULL && lst != NULL);
     }
+
+#if 0 /* not ready yet */
+    record_key_map(jr, llabels, lns, rlabels, rns);
+#endif
 
     /* run through the observations in the current sample range of
        the left-hand dataset, looking for key-matches on the right
@@ -4770,10 +4853,8 @@ int join_from_csv (const char *fname,
 	jr->n_keys = n_keys;
 	jr->str_keys = str_keys;
 	jr->str_keys2 = str_keys2;
-	if (jr->str_keys || jr->str_keys2) {
-	    jr->l_keyno = ikeyvars;
-	    jr->r_keyno = okeyvars;
-	}
+	jr->l_keyno = ikeyvars;
+	jr->r_keyno = okeyvars;
 	if (jr->n_keys > 0) {
 	    err = joiner_sort(jr);
 	}	
