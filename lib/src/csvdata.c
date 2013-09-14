@@ -3591,6 +3591,23 @@ static int seqval_out_of_bounds (joiner *jr, int seqmax)
     }
 }
 
+static int binsearch (int targ, const int *vals, int n, int offset)
+{
+    int m = n/2;
+
+    if (targ < vals[0] || targ > vals[n-1]) {
+	return -1;
+    }
+
+    if (targ == vals[m]) {
+	return m + offset;
+    } else if (targ < vals[m]) {
+	return binsearch(targ, vals, m, offset);
+    } else {
+	return binsearch(targ, vals + m, n - m, offset + m);
+    }
+}
+
 static double aggr_value (int key, const char *lstr,
 			  const char **rlabels,
 			  int key2, const char *lstr2,
@@ -3625,13 +3642,7 @@ static double aggr_value (int key, const char *lstr,
 	    }
 	}
     } else {
-	for (i=0; i<jr->n_unique; i++) {
-	    if (key == jr->keys[i]) {
-		/* got a numerical match */
-		pos = i;
-		break;
-	    }
-	}
+	pos = binsearch(key, jr->keys, jr->n_unique, 0);
     }
 
     if (pos < 0) {
@@ -3663,32 +3674,7 @@ static double aggr_value (int key, const char *lstr,
 	}
     }
 
-#if 1 /* pre-computed */
     pos = jr->key_row[pos];
-#else
-    /* At this point @jr is already sorted: we now need to
-       find the starting row of the target (primary) key 
-       value in the rectangle proper.
-    */    
-
-    pos = -1;
-    if (jr->str_keys) {
-	/* matching by string values */
-	for (i=0; i<jr->n_rows && pos<0; i++) {
-	    rstr = rlabels[jr->rows[i].keyval - 1];
-	    if (!strcmp(lstr, rstr)) {
-		pos = i;
-	    }
-	}
-    } else {
-	/* matching numerically */
-	for (i=0; i<jr->n_rows && pos<0; i++) {
-	    if (key == jr->rows[i].keyval) {
-		pos = i;
-	    }
-	}
-    }
-#endif
     
     if (pos < 0) {
 	/* "can't happen" */
