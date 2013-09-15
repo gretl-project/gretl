@@ -182,6 +182,47 @@ const char *series_table_get_string (series_table *st, double val)
 }
 
 /**
+ * series_table_map:
+ * @st_from: gretl series table.
+ * @st_to: gretl series table.
+ *
+ * Constructs a mapping from the integer codes in @st_from
+ * to those in @st_to. For example, if the string "foo"
+ * has code 3 in @st_from and code 12 in @st_to, then 
+ * element 3 in the mapping array will have value 12.
+ * For any strings in @st_from that are not matched
+ * in @st_to, the associated element of the map is set
+ * to -1.
+ *
+ * Element 0 of the map holds the number of following
+ * elements, which is the same as the number of strings in
+ * @st_from.
+ *
+ * Returns: allocated array of int or NULL in case of failure.
+ */
+
+int *series_table_map (series_table *st_from, series_table *st_to)
+{
+    int *map = NULL;
+    int n = st_from->n_strs;
+
+    map = gretl_list_new(n);
+
+    if (map != NULL) {
+	const char *s1;
+	int i, i2;
+
+	for (i=0; i<n; i++) {
+	    s1 = st_from->strs[i];
+	    i2 = series_table_get_index(st_to, s1);
+	    map[i+1] = i2 == 0 ? -1 : i2;
+	}
+    }
+
+    return map;
+}
+
+/**
  * series_table_get_strings:
  * @st: a gretl series table.
  * @n_strs: location to receive the number of strings.

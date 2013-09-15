@@ -2916,7 +2916,7 @@ int import_csv (const char *fname, DATASET *dset,
 struct jr_row_ {
     int n_keys;  /* number of keys (needed for qsort callback) */
     int keyval;  /* primary key value */
-    int keyval2; /* seconary key value, if applicable */
+    int keyval2; /* secondary key value, if applicable */
     double val;  /* data value */
     double aux;  /* auxiliary value */
 };
@@ -3499,9 +3499,68 @@ static int compare_jr_rows (const void *a, const void *b)
 
 static int joiner_sort (joiner *jr)
 {
+    int matches = jr->n_rows;
     int i, err = 0;
 
+    /* If there are string keys, we begin by mapping from the string
+       indices on the right -- held in the keyval and/or keyval2
+       members of the each joiner row -- to the indices for the same
+       strings on the left. This enables us to avoid doing string
+       comparisons when running aggr_value() later; we can just
+       compare the indices of the strings. In addition, if on any
+       given row we get no match for the right-hand key string on the
+       left (signalled by a strmap value of -1) we can exploit this
+       information by shuffling such rows to the end of the joiner
+       rectangle and ignoring them when aggregating.
+    */ 
+
+    if (jr->str_keys || jr->str_keys2) {
+	series_table *stl, *str;
+	int *strmap;
+	int k, kmin, kmax, lkeyval, rkeyval;
+
+	kmin = jr->str_keys ? 1 : 2;
+	kmax = jr->str_keys2 ? 2 : 1;
+
+	for (k=kmin; k<=kmax; k++) {
+	    stl = series_get_string_table(jr->l_dset, jr->l_keyno[k]);
+	    str = series_get_string_table(jr->r_dset, jr->r_keyno[k]);
+	    strmap = series_table_map(str, stl);
+
+	    for (i=0; i<jr->n_rows; i++) {
+		if (k == 1) {
+		    rkeyval = jr->rows[i].keyval;
+		} else if (jr->rows[i].keyval == INT_MAX) {
+		    continue;
+		} else {
+		    rkeyval = jr->rows[i].keyval2;
+		}
+		lkeyval = strmap[rkeyval];
+#if CDEBUG > 1
+		fprintf(stderr, "k = %d, row %d, keyval: %d -> %d\n", k, i, rkeyval, lkeyval);
+#endif
+		if (lkeyval > 0) {
+		    if (k == 1) {
+			jr->rows[i].keyval = lkeyval;
+		    } else {
+			jr->rows[i].keyval2 = lkeyval;
+		    }
+		} else {
+		    /* arrange for qsort to move row to end */
+		    jr->rows[i].keyval = INT_MAX;
+		    matches--;
+		}
+	    }
+
+	    free(strmap);
+	}
+    }
+
     qsort(jr->rows, jr->n_rows, sizeof *jr->rows, compare_jr_rows);
+
+    if (matches < jr->n_rows) {
+	jr->n_rows = matches;
+    }
 
     jr->n_unique = 1;
     for (i=1; i<jr->n_rows; i++) {
@@ -3554,18 +3613,28 @@ static int joiner_sort (joiner *jr)
 
 static void joiner_print (joiner *jr)
 {
+    const char **labels = NULL;
     jr_row *row;
     int i;
+
+    if (jr->str_keys) {
+	labels = series_get_string_vals(jr->l_dset, jr->l_keyno[1], NULL);
+    }
 
     fprintf(stderr, "\njoiner: n_rows = %d\n", jr->n_rows);
     for (i=0; i<jr->n_rows; i++) {
 	row = &jr->rows[i];
 	if (row->n_keys > 1) {
 	    fprintf(stderr, " row %d: keyvals=(%d,%d), data=%.12g\n", i, 
-		    row->keyval, row->keyval2, row->val);	    
+		    row->keyval, row->keyval2, row->val);
 	} else {
-	    fprintf(stderr, " row %d: keyval=%d, data=%.12g\n", i, row->keyval,
-		    row->val);
+	    if (jr->str_keys && row->keyval >= 0) {
+		fprintf(stderr, " row %d: keyval=%d (%s), data=%.12g\n", i, 
+			row->keyval, labels[row->keyval - 1], row->val);
+	    } else {
+		fprintf(stderr, " row %d: keyval=%d, data=%.12g\n", i, row->keyval,
+			row->val);
+	    }
 	}
     }
 
@@ -3595,12 +3664,10 @@ static int binsearch (int targ, const int *vals, int n, int offset)
 {
     int m = n/2;
 
-    if (targ < vals[0] || targ > vals[n-1]) {
-	return -1;
-    }
-
     if (targ == vals[m]) {
 	return m + offset;
+    } else if (targ < vals[0] || targ > vals[n-1]) {
+	return -1;
     } else if (targ < vals[m]) {
 	return binsearch(targ, vals, m, offset);
     } else {
@@ -3608,65 +3675,42 @@ static int binsearch (int targ, const int *vals, int n, int offset)
     }
 }
 
-static double aggr_value (int key, const char *lstr,
-			  const char **rlabels,
-			  int key2, const char *lstr2,
-			  const char **rlabels2,
-			  joiner *jr, double *xmatch,
-			  double *auxmatch, int *err)
+static double aggr_value (joiner *jr, int key, int key2,
+			  double *xmatch, double *auxmatch, 
+			  int *err)
 {
-    const char *rstr = NULL;
     double x, y, xa;
-    int imax, pos = -1;
-    int i, n1, n;
-
-#if CDEBUG
-    if (lstr != NULL) {
-	fprintf(stderr, "  left-hand (primary) key string = '%s'\n", lstr);	
-    }
-    if (lstr2 != NULL) {
-	fprintf(stderr, "  left-hand secondary key string = '%s'\n", lstr2);	
-    }    
-#endif
+    int imin, imax, pos;
+    int i, n;
 
     /* find the position of the inner (primary) key in the 
        array of unique outer key values */
+    pos = binsearch(key, jr->keys, jr->n_unique, 0);
 
-    if (jr->str_keys) {
-	for (i=0; i<jr->n_unique; i++) {
-	    rstr = rlabels[jr->keys[i] - 1];
-	    if (!strcmp(lstr, rstr)) {
-		/* got a match on strings */
-		pos = i;
-		break;
-	    }
-	}
+#if CDEBUG
+    if (pos < 0) {
+	fprintf(stderr, "  no match on primary key\n");
     } else {
-	pos = binsearch(key, jr->keys, jr->n_unique, 0);
+	fprintf(stderr, "  position on right, among unique keys = %d\n", pos);
     }
+#endif    
 
     if (pos < 0) {
 	/* (primary) inner key value not found */
-#if CDEBUG
-	fprintf(stderr, "  no match on primary key\n");
-#endif    
 	return jr->aggr == AGGR_COUNT ? 0 : NADBL;
     }
 
-#if CDEBUG
-    fprintf(stderr, "  position on right, among unique keys = %d\n", pos);
-#endif    
-
-    n1 = jr->key_freq[pos];
+    /* how many matches at @pos? */
+    n = jr->key_freq[pos];
 
     if (jr->n_keys == 1) {
 	if (jr->aggr == AGGR_COUNT) {
 	    /* simple, we're done */
-	    return n1;
-	} else if (jr->aggr == AGGR_SEQ && seqval_out_of_bounds(jr, n1)) {
+	    return n;
+	} else if (jr->aggr == AGGR_SEQ && seqval_out_of_bounds(jr, n)) {
 	    /* out of bounds sequence index */
 	    return NADBL;
-	} else if (n1 > 1 && jr->aggr == AGGR_NONE) {
+	} else if (n > 1 && jr->aggr == AGGR_NONE) {
 	    *err = E_DATA;
 	    gretl_errmsg_set(_("You need to specify an aggregation "
 			       "method for a 1:n join"));
@@ -3674,15 +3718,16 @@ static double aggr_value (int key, const char *lstr,
 	}
     }
 
-    pos = jr->key_row[pos];
+    /* set the starting row in joiner rectangle */
+    imin = jr->key_row[pos];
     
-    if (pos < 0) {
+    if (imin < 0) {
 	/* "can't happen" */
 	return NADBL;
     }
 
-    imax = pos + n1;
-    n = 0; /* will hold count of non-NA matches */
+    imax = imin + n;
+    n = 0; /* will now hold count of non-NA matches */
 
     /* If we also have a secondary key, we need to find how
        many instances of the secondary match fall under the
@@ -3693,16 +3738,10 @@ static double aggr_value (int key, const char *lstr,
 
     if (jr->n_keys > 1) {
 	/* note: @totcount ignores the OK/NA distinction */
-	int match, totcount = 0;
+	int totcount = 0;
 
-	for (i=pos; i<imax; i++) {
-	    if (jr->str_keys2) {
-		rstr = rlabels2[jr->rows[i].keyval2 - 1];
-		match = (strcmp(lstr2, rstr) == 0);
-	    } else {
-		match = (key2 == jr->rows[i].keyval2);
-	    }
-	    if (match) {
+	for (i=imin; i<imax; i++) {
+	    if (key2 == jr->rows[i].keyval2) {
 		totcount++;
 		x = jr->rows[i].val;
 		if (jr->auxcol) {
@@ -3727,7 +3766,7 @@ static double aggr_value (int key, const char *lstr,
 	}
     } else {
 	/* just one key */
-	for (i=pos; i<imax; i++) {
+	for (i=imin; i<imax; i++) {
 	    x = jr->rows[i].val;
 	    if (jr->auxcol) {
 		xa = jr->rows[i].aux;
@@ -3889,12 +3928,6 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 {
     series_table *rst = NULL;
     series_table *lst = NULL;
-    const char **llabels = NULL;
-    const char **rlabels = NULL;
-    const char **llabels2 = NULL;
-    const char **rlabels2 = NULL;
-    const char *keystr = NULL;
-    const char *key2str = NULL;
     DATASET *dset = jr->l_dset;
     double *xmatch = NULL;
     double *auxmatch = NULL;
@@ -3905,18 +3938,6 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 #if CDEBUG
     fputs("\naggregate data:\n", stderr);
 #endif
-
-    if (jr->str_keys) {
-	/* matching on primary key by strings */
-	llabels = series_get_string_vals(jr->l_dset, jr->l_keyno[1], NULL);
-	rlabels = series_get_string_vals(jr->r_dset, jr->r_keyno[1], NULL);
-    }
-
-    if (jr->str_keys2) {
-	/* matching on secondary key by strings */
-	llabels2 = series_get_string_vals(jr->l_dset, jr->l_keyno[2], NULL);
-	rlabels2 = series_get_string_vals(jr->r_dset, jr->r_keyno[2], NULL);
-    }
 
     /* find the greatest (primary) key frequency */
     nmax = 0;
@@ -3962,14 +3983,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 	    continue;
 	}
 
-	if (llabels != NULL) {
-	    keystr = llabels[key-1];
-	}
-	if (jr->n_keys == 2 && llabels2 != NULL) {
-	    key2str = llabels2[key2-1];
-	}
-	z = aggr_value(key, keystr, rlabels, key2, key2str, rlabels2,
-		       jr, xmatch, auxmatch, &err);
+	z = aggr_value(jr, key, key2, xmatch, auxmatch, &err);
 #if CDEBUG
 	if (na(z)) {
 	    fprintf(stderr, " aggr_value: got NA (keys=%d,%d, err=%d)\n", 
