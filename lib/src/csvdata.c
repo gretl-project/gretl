@@ -4418,7 +4418,7 @@ static int join_data_type_check (joiner *jr, int targvar,
 	*/
 	if (series_has_string_table(jr->r_dset, jr->auxcol)) {
 	    gretl_errmsg_sprintf("'%s' is a string variable: aggregation type "
-				 "is not applicable\n", 
+				 "is not applicable", 
 				 jr->r_dset->varname[jr->auxcol]);
 	    err = E_TYPES;
 	}
@@ -4592,11 +4592,11 @@ static void obskey_init (obskey *keys)
     keys->convert = 0;
 }
 
-static int aggr_type_check (csvjoin *jspec, int aggr, int valcol)
+static int aggr_type_check (csvjoin *jspec, int valcol)
 {
     if (series_has_string_table(jspec->c->dset, valcol)) {
 	gretl_errmsg_sprintf("'%s' is a string variable: aggregation type "
-			     "is not applicable\n", jspec->colnames[JOIN_VAL]);
+			     "is not applicable", jspec->colnames[JOIN_VAL]);
 	return E_TYPES;
     } else {
 	return 0;
@@ -4788,7 +4788,7 @@ int join_from_csv (const char *fname,
 	    gretl_errmsg_sprintf("Series not found, '%s'", jspec.colnames[JOIN_VAL]);
 	    err = E_UNKVAR;
 	} else if (aggr != AGGR_NONE && aggr != AGGR_SEQ) {
-	    err = aggr_type_check(&jspec, aggr, valcol);
+	    err = aggr_type_check(&jspec, valcol);
 	}
     }
 
