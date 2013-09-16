@@ -469,6 +469,8 @@ void series_decrement_stack_level (DATASET *dset, int i);
 
 void series_attach_string_table (DATASET *dset, int i, void *ptr);
 
+void series_destroy_string_table (DATASET *dset, int i);
+
 int series_has_string_table (const DATASET *dset, int i);
 
 series_table *series_get_string_table (const DATASET *dset, int i);

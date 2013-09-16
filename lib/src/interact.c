@@ -4618,7 +4618,7 @@ static int lib_join_data (ExecState *s,
     char *auxname = NULL, *timecols = NULL;
     int *ikeyvars = NULL;
     int aggr = 0, seqval = 0;
-    int time_opt = 0;
+    int tseries = 0;
     int revdate = 0;
     int i, err = 0;
 
@@ -4652,7 +4652,11 @@ static int lib_join_data (ExecState *s,
 	return E_PARSE;
     }
 
-    time_opt = (opt & (OPT_R | OPT_T | OPT_K)) != 0;
+#if 1 /* note: changed 2013-09-16 */
+    tseries = dataset_is_time_series(dset);
+#else
+    tseries = (opt & (OPT_R | OPT_T | OPT_K)) != 0;
+#endif
 
     varname = gretl_strdup(p);
     
@@ -4727,7 +4731,7 @@ static int lib_join_data (ExecState *s,
 	err = E_PARSE;
     }
 
-    if (!err && aggr != 0 && ikeyvars == NULL && !time_opt) {
+    if (!err && aggr != 0 && ikeyvars == NULL && !tseries) {
 	/* aggregation requires ikeyvars, unless there's
 	   an implicit time-series inner key
 	*/

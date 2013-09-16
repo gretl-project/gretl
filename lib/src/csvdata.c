@@ -2989,9 +2989,9 @@ struct joiner_ {
     int seqval;       /* aux. sequence number for aggregation */
     int auxcol;       /* aux. data column for aggregation */
     int valcol;       /* column of RHS dataset holding payload */
-    obskey auto_keys; /* struct to hold info on obs-based key(s) */
-    DATASET *l_dset;  /* the main (left-hand) dataset */
-    DATASET *r_dset;  /* the temporary CSV dataset */
+    obskey *auto_keys; /* struct to hold info on obs-based key(s) */
+    DATASET *l_dset;   /* the main (left-hand) dataset */
+    DATASET *r_dset;   /* the temporary CSV dataset */
 };
 
 typedef struct joiner_ joiner;
@@ -3224,8 +3224,8 @@ static int convert_to_string (char *targ, double x)
 
 static int read_outer_auto_keys (joiner *jr, int j, int i)
 {
-    char *tfmt = jr->auto_keys.timefmt;
-    int tcol = jr->auto_keys.keycol;
+    char *tfmt = jr->auto_keys->timefmt;
+    int tcol = jr->auto_keys->keycol;
     struct tm t = {0};
     char sconv[32];
     const char *s;
@@ -3235,7 +3235,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 
     if (tcol >= 0) {
 	/* using a specified column */
-	if (jr->auto_keys.convert) {
+	if (jr->auto_keys->convert) {
 	    convert_to_string(sconv, jr->r_dset->Z[tcol][i]);
 	    s = sconv;
 	    s_src = 1;
@@ -3263,8 +3263,8 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 	    char *chk = strptime(s, "%Y-%m-%d", &t);
 
 	    if (chk != NULL && *chk == '\0') {
-		free(jr->auto_keys.timefmt);
-		jr->auto_keys.timefmt = gretl_strdup("%Y-%m-%d");
+		free(jr->auto_keys->timefmt);
+		jr->auto_keys->timefmt = gretl_strdup("%Y-%m-%d");
 		err = 0; /* we might be OK, cancel the error */
 	    }
 	}
@@ -3297,7 +3297,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 
 	maj = t.tm_year + 1900;
 	min = t.tm_mon + 1;
-	if (jr->auto_keys.m_means_q) {
+	if (jr->auto_keys->m_means_q) {
 	    /* using the gretl-specific "%q" conversion */
 	    if (min > 4) {
 		gretl_errmsg_sprintf("'%s' is not a valid date", s);
@@ -3425,7 +3425,7 @@ static joiner *joiner_new (int nrows)
     return jr;
 }
 
-#define using_auto_keys(j) (j->auto_keys.timefmt != NULL)
+#define using_auto_keys(j) (j->auto_keys->timefmt != NULL)
 
 static joiner *build_joiner (csvjoin *jspec, 
 			     DATASET *l_dset,
@@ -3492,7 +3492,7 @@ static joiner *build_joiner (csvjoin *jspec,
 	jr->valcol = valcol;
 	jr->l_dset = l_dset;
 	jr->r_dset = r_dset;
-	jr->auto_keys = *auto_keys;
+	jr->auto_keys = auto_keys;
 
 	/* now transcribe the rows we want */
 
@@ -4417,6 +4417,9 @@ static int join_data_type_check (joiner *jr, int targvar,
 	   that variable cannot be string-valued 
 	*/
 	if (series_has_string_table(jr->r_dset, jr->auxcol)) {
+	    gretl_errmsg_sprintf("'%s' is a string variable: aggregation type "
+				 "is not applicable\n", 
+				 jr->r_dset->varname[jr->auxcol]);
 	    err = E_TYPES;
 	}
     }
@@ -4587,6 +4590,17 @@ static void obskey_init (obskey *keys)
     keys->keycol = -1;
     keys->m_means_q = 0;
     keys->convert = 0;
+}
+
+static int aggr_type_check (csvjoin *jspec, int aggr, int valcol)
+{
+    if (series_has_string_table(jspec->c->dset, valcol)) {
+	gretl_errmsg_sprintf("'%s' is a string variable: aggregation type "
+			     "is not applicable\n", jspec->colnames[JOIN_VAL]);
+	return E_TYPES;
+    } else {
+	return 0;
+    }
 }
 
 /**
@@ -4774,12 +4788,7 @@ int join_from_csv (const char *fname,
 	    gretl_errmsg_sprintf("Series not found, '%s'", jspec.colnames[JOIN_VAL]);
 	    err = E_UNKVAR;
 	} else if (aggr != AGGR_NONE && aggr != AGGR_SEQ) {
-	    if (series_has_string_table(jspec.c->dset, valcol)) {
-		/* maybe this should just be a warning? */
-		fprintf(stderr, "'%s' is a string variable: aggregation type "
-			"is not applicable\n", jspec.colnames[JOIN_VAL]);
-		err = E_TYPES;
-	    }
+	    err = aggr_type_check(&jspec, aggr, valcol);
 	}
     }
 

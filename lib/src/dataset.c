@@ -3828,6 +3828,14 @@ void series_attach_string_table (DATASET *dset, int i, void *ptr)
     dset->varinfo[i]->st = ptr;
 }
 
+void series_destroy_string_table (DATASET *dset, int i)
+{
+    if (dset != NULL && i > 0 && i < dset->v) {
+	series_table_destroy(dset->varinfo[i]->st);
+	dset->varinfo[i]->st = NULL;
+    }
+}
+
 /**
  * series_has_string_table:
  * @dset: pointer to dataset.
