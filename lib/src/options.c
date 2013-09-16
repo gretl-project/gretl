@@ -1159,7 +1159,7 @@ static char *get_quoted_optval (char *s, int *len)
 	p++;
     }
 
-    if (*p == '"' && n > 0) {
+    if (*p == '"') {
 	val = calloc(n - nesc + 1, 1);
 	n = 0;
 	while (*s) {
