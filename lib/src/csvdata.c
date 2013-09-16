@@ -44,7 +44,8 @@ enum {
     CSV_AUTONAME = 1 << 7,
     CSV_REVERSED = 1 << 8,
     CSV_DOTSUB   = 1 << 9,
-    CSV_ALLCOLS  = 1 << 10
+    CSV_ALLCOLS  = 1 << 10,
+    CSV_BOM      = 1 << 11
 };
 
 enum {
@@ -102,6 +103,7 @@ struct csvdata_ {
 #define csv_data_reversed(c)      (c->flags & CSV_REVERSED)
 #define csv_do_dotsub(c)          (c->flags & CSV_DOTSUB)
 #define csv_all_cols(c)           (c->flags & CSV_ALLCOLS)
+#define csv_has_bom(c)            (c->flags & CSV_BOM)
 
 #define csv_set_trailing_comma(c)   (c->flags |= CSV_TRAIL)
 #define csv_unset_trailing_comma(c) (c->flags &= ~CSV_TRAIL)
@@ -114,6 +116,7 @@ struct csvdata_ {
 #define csv_set_data_reversed(c)    (c->flags |= CSV_REVERSED)
 #define csv_set_dotsub(c)           (c->flags |= CSV_DOTSUB)
 #define csv_set_all_cols(c)         (c->flags |= CSV_ALLCOLS)
+#define csv_set_has_bom(c)          (c->flags |= CSV_BOM)
 
 #define csv_skip_bad(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
@@ -1296,6 +1299,24 @@ static int utf8_ok (FILE *fp, int pos)
     return ret;
 }
 
+/* check for leading BOM (thanks a lot, Microsoft!) */
+
+static void check_for_bom (FILE *fp, csvdata *c, PRN *prn)
+{
+    unsigned char buf[4];
+    int n;
+
+    n = fread(buf, 1, 4, fp);
+
+    if (n == 4 && buf[0] == 0xEF && buf[1] == 0xBB && buf[2] == 0xBF) {
+	pputs(prn, "file starts with BOM!\n");
+	csv_set_has_bom(c);
+	fseek(fp, 3, SEEK_SET); 
+    } else {
+	rewind(fp);
+    }
+}
+
 /* The function below checks for the maximum line length in the given
    file.  It also checks for extraneous binary data (the file is 
    supposed to be plain text), and checks whether the 'delim'
@@ -1312,7 +1333,10 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
     int comment = 0, maxlen = 0;
     int lines = 0;
 
-    csv_set_trailing_comma(cdata);
+    csv_set_trailing_comma(cdata); /* just provisionally */
+
+    /* check for leading BOM (oh, Microsoft!) */
+    check_for_bom(fp, cdata, prn);
 
     while ((c = fgetc(fp)) != EOF) {
 	if (c == 0x0d) {
@@ -1897,6 +1921,10 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 
     c->ncols = c->nrows = 0;
 
+    if (csv_has_bom(c)) {
+	fseek(fp, 3, SEEK_SET);
+    }
+
     while (csv_fgets(c->line, c->maxlen, fp) && !err) {
 
 	/* skip comment lines */
@@ -2131,6 +2159,10 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 
     pputs(mprn, A_("scanning for variable names...\n"));
 
+    if (csv_has_bom(c)) {
+	fseek(fp, 3, SEEK_SET);
+    }
+
     while (csv_fgets(c->line, c->maxlen, fp)) {
 	if (*c->line == '#' || string_is_blank(c->line)) {
 	    continue;
@@ -2216,8 +2248,13 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	    err = add_single_obs(c->dset);
 	}
 	if (!err) {
+	    /* set up handle the no varnames case */
 	    csv_set_autoname(c);
-	    rewind(fp);
+	    if (csv_has_bom(c)) {
+		fseek(fp, 3, SEEK_SET);
+	    } else {
+		rewind(fp);
+	    }
 	    if (obs_labels_no_varnames(obscol, c->dset, numcount)) {
 		err = csv_reconfigure_for_markers(c->dset);
 		if (!err) {
@@ -2264,6 +2301,10 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
     int err = 0;
 
     c->real_n = c->dset->n;
+
+    if (csv_has_bom(c)) {
+	fseek(fp, 3, SEEK_SET);
+    }
 
     while (csv_fgets(c->line, c->maxlen, fp) && !err) {
 
@@ -2431,7 +2472,7 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
     return err;
 }
 
-static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
+static int csv_read_data (csvdata *c, FILE *fp, long pos, PRN *prn, PRN *mprn)
 {
     int reversed = csv_data_reversed(c);
     int err;
@@ -2439,6 +2480,8 @@ static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     if (mprn != NULL) {
 	pputs(mprn, A_("scanning for row labels and data...\n"));
     }
+
+    fseek(fp, pos, SEEK_SET);
 
     err = real_read_labels_and_data(c, fp, prn);
 
@@ -2735,20 +2778,18 @@ static int real_import_csv (const char *fname,
 
     datapos = ftell(fp);
 
-    err = csv_read_data(c, fp, prn, mprn);
+    err = csv_read_data(c, fp, datapos, prn, mprn);
 
     if (!err && csv_skip_bad(c)) {
 	/* try again */
-	fseek(fp, datapos, SEEK_SET);
-	err = csv_read_data(c, fp, prn, NULL);
+	err = csv_read_data(c, fp, datapos, prn, NULL);
     }
 
     if (!err) {
 	err = non_numeric_check(c, prn);
 	if (!err && csv_has_non_numeric(c)) {
 	    /* try once more */
-	    fseek(fp, datapos, SEEK_SET);
-	    err = csv_read_data(c, fp, prn, NULL);
+	    err = csv_read_data(c, fp, datapos, prn, NULL);
 	}
     }
 
@@ -3210,12 +3251,33 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     }
 
     test = strptime(s, tfmt, &t);
+
     if (test == NULL || *test != '\0') {
-	gretl_errmsg_sprintf("'%s' does not match the format '%s'", s, tfmt);
-	fprintf(stderr, "time-format match error in read_outer_auto_keys: src=%d\n",
-		s_src);
 	err = E_DATA;
-    } else if (calendar_data(jr->l_dset)) {
+	if (i == 0 && test != NULL && jr->l_dset->pd == 12) {
+	    /* if we're on the first row of the outer data, allow for
+	       the possibility that we got "excess precision", i.e.
+	       a daily date string when the left-hand dataset is
+	       monthly
+	    */
+	    char *chk = strptime(s, "%Y-%m-%d", &t);
+
+	    if (chk != NULL && *chk == '\0') {
+		free(jr->auto_keys.timefmt);
+		jr->auto_keys.timefmt = gretl_strdup("%Y-%m-%d");
+		err = 0; /* we might be OK, cancel the error */
+	    }
+	}
+	if (err) {
+	    gretl_errmsg_sprintf("'%s' does not match the format '%s'", s, tfmt);
+	    fprintf(stderr, "time-format match error in read_outer_auto_keys:\n"
+		    " remainder = '%s' (source = %s)\n", test ? test : "null", 
+		    s_src < 3 ? "specified time column" : "first-column strings");
+	    return err;
+	}
+    }
+
+    if (calendar_data(jr->l_dset)) {
 	int y, m, d, eday;
 
 	y = t.tm_year + 1900;
@@ -3527,6 +3589,11 @@ static int joiner_sort (joiner *jr)
 	    str = series_get_string_table(jr->r_dset, jr->r_keyno[k]);
 	    strmap = series_table_map(str, stl);
 
+	    if (strmap == NULL) {
+		err = E_ALLOC;
+		break;
+	    }
+
 	    for (i=0; i<jr->n_rows; i++) {
 		if (k == 1) {
 		    rkeyval = jr->rows[i].keyval;
@@ -3554,6 +3621,10 @@ static int joiner_sort (joiner *jr)
 
 	    free(strmap);
 	}
+    }
+
+    if (err) {
+	return err;
     }
 
     qsort(jr->rows, jr->n_rows, sizeof *jr->rows, compare_jr_rows);
@@ -4814,7 +4885,7 @@ int join_from_csv (const char *fname,
 	    err = joiner_sort(jr);
 	}	
 #if CDEBUG > 1
-	joiner_print(jr);
+	if (!err) joiner_print(jr);
 #endif
     }
 
