@@ -51,8 +51,8 @@ enum {
 enum {
     JOIN_KEY,
     JOIN_VAL,
-    JOIN_LHF,
-    JOIN_RHF,
+    JOIN_F1,
+    JOIN_F2,
     JOIN_KEY2,
     JOIN_AUX,
     JOIN_MAXCOL
@@ -64,7 +64,7 @@ typedef struct csvdata_ csvdata;
 struct csvjoin_ {
     const char *colnames[JOIN_MAXCOL];
     char colnums[JOIN_MAXCOL];
-    int *tcollist;
+    int *timecols;
     csvdata *c;
 };    
 
@@ -1663,16 +1663,6 @@ static int non_numeric_check (csvdata *c, PRN *prn)
 #endif
 
     for (i=1; i<c->dset->v; i++) {
-	if (series_get_flags(c->dset, i) & VAR_TIMECOL) {
-	    /* we'll treat all "time columns" as string-valued */
-	    for (t=0; t<c->dset->n; t++) {
-		if (!na(c->dset->Z[i][t])) {
-		    c->dset->Z[i][t] = NON_NUMERIC;
-		}
-	    }
-	    nn++;
-	    break;
-	}
 	for (t=0; t<c->dset->n; t++) {
 	    if (c->dset->Z[i][t] == NON_NUMERIC) {
 		nn++;
@@ -1748,7 +1738,25 @@ static int non_numeric_check (csvdata *c, PRN *prn)
     return err;
 }
 
-static double csv_atof (csvdata *c, const char *s)
+static double eval_non_numeric (csvdata *c, int i, const char *s)
+{
+    double x = NON_NUMERIC;
+
+    if (series_get_flags(c->dset, i) & VAR_TIMECOL) {
+	int y, m, d, n;
+
+	n = sscanf(s, "%d-%d-%d", &y, &m, &d);
+	if (n == 3) {
+	    x = 10000*y + 100*m + d;
+	} else {
+	    x = NADBL;
+	}
+    }
+
+    return x;
+}
+
+static double csv_atof (csvdata *c, int i, const char *s)
 {
     double x = NON_NUMERIC;
     char *test;
@@ -1763,7 +1771,7 @@ static double csv_atof (csvdata *c, const char *s)
 	if (*test == '\0' && errno == 0) {
 	    return x;
 	} else {
-	    x = NON_NUMERIC;
+	    x = eval_non_numeric(c, i, s);
 	}
     } else if (csv_do_dotsub(c) && strlen(s) <= 31) {
 	/* substitute dot for comma */
@@ -1776,7 +1784,7 @@ static double csv_atof (csvdata *c, const char *s)
 	if (*test == '\0' && errno == 0) {
 	    return x;
 	} else {
-	    x = NON_NUMERIC;
+	    x = eval_non_numeric(c, i, s);
 	}
     }
 
@@ -1790,7 +1798,7 @@ static double csv_atof (csvdata *c, const char *s)
 
 	x = strtod(tmp, &test);
 	if (*test != '\0' || errno != 0) {
-	    x = NON_NUMERIC;
+	    x = eval_non_numeric(c, i, s);
 	} 
     }
 
@@ -1824,7 +1832,7 @@ static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
     } else if (csv_missval(c->str, i, t+1, miss_shown, prn)) {
 	c->dset->Z[i][t] = NADBL;
     } else {
-	c->dset->Z[i][t] = csv_atof(c, gretl_strstrip(c->str));
+	c->dset->Z[i][t] = csv_atof(c, i, gretl_strstrip(c->str));
     } 
 
     return err;
@@ -2027,9 +2035,7 @@ static int skip_data_column (csvdata *c, int k)
     }
 }
 
-#if 0 /* not ready yet */
-
-void normalize_colname (char *targ, const char *src, int k)
+void normalize_csv_colname (char *targ, const char *src, int k)
 {
     const char *letters = "abcdefghijklmnopqrstuvwxyz"
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -2059,8 +2065,6 @@ void normalize_colname (char *targ, const char *src, int k)
 	sprintf(targ, "col%d", k);
     }
 }
-
-#endif
 
 static int update_join_cols_list (csvdata *c, int k)
 {
@@ -2106,16 +2110,19 @@ static int update_join_cols_list (csvdata *c, int k)
 static int handle_join_varname (csvdata *c, int k, int *pj)
 {
     const char *colname;
+    char okname[VNAMELEN];
     int matched = 0;
     int i, j = *pj;
 
-#if CDEBUG
-    fprintf(stderr, "join_varname: looking at '%s'\n", c->str);
-#endif
-
     if (!csv_skip_column(c)) {
 	k++;
-    }
+    }    
+
+    normalize_csv_colname(okname, c->str, k);
+
+#if CDEBUG
+    fprintf(stderr, "handle_join_varname: looking at '%s' (%s)\n", c->str, okname);
+#endif
 
     for (i=0; i<JOIN_MAXCOL; i++) {
 	/* find "wanted name" i */
@@ -2124,18 +2131,17 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 	    /* name not wanted, or already found */
 	    continue;
 	}
-	if (!strcmp(c->str, colname)) {
+	if (!strcmp(okname, colname)) {
 #if CDEBUG
 	    fprintf(stderr, " target %d matched at CSV col %d, j=%d\n", i, k, j); 
 #endif
 	    c->jspec->colnums[i] = j;
 	    if (!matched) {
 		matched = 1;
-		c->dset->varname[j][0] = '\0';
-		strncat(c->dset->varname[j], c->str, VNAMELEN - 1);
+		strcpy(c->dset->varname[j], okname);
 		update_join_cols_list(c, k);
 		*pj += 1;
-		if (in_gretl_list(c->jspec->tcollist, k)) {
+		if (in_gretl_list(c->jspec->timecols, i)) {
 		    series_set_flag(c->dset, j, VAR_TIMECOL);
 		}
 	    }
@@ -2337,7 +2343,7 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 	    if (csv_missval(c->str, i, t+1, &miss_shown, prn)) {
 		c->dset->Z[i][t] = NADBL;
 	    } else {
-		c->dset->Z[i][t] = csv_atof(c, c->str);
+		c->dset->Z[i][t] = csv_atof(c, i, c->str);
 		if (c->dset->Z[i][t] == NON_NUMERIC) {
 		    gretl_errmsg_sprintf(_("At row %d, column %d:\n"), t+1, k);
 		    gretl_errmsg_sprintf(_("'%s' -- no numeric conversion performed!"),
@@ -2393,10 +2399,10 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 {
     char *p;
     int miss_shown = 0;
+    int truncated = 0;
     int t = 0, s = 0;
     int i, j, k;
     int err = 0;
-    int truncated = 0;
 
     c->real_n = c->dset->n;
 
@@ -2996,24 +3002,11 @@ struct joiner_ {
 
 typedef struct joiner_ joiner;
 
-enum {
-    FILT_NUMERIC,
-    FILT_STRING,
-    FILT_MISSMASK,
-    FILT_GENR
-};
-
 struct jr_filter_ {
     const char *expr;
     const double *val;
-    char *lhname;
-    double lhval;
-    int lhcol;
-    char *rhname;
-    double rhval;
-    int rhcol;
-    int op;
-    int mode;
+    char *vname1;
+    char *vname2;
 };
 
 typedef struct jr_filter_ jr_filter;
@@ -3021,8 +3014,8 @@ typedef struct jr_filter_ jr_filter;
 static void jr_filter_destroy (jr_filter *f)
 {
     if (f != NULL) {
-	free(f->lhname);
-	free(f->rhname);
+	free(f->vname1);
+	free(f->vname2);
 	free(f);
     }
 }
@@ -3038,165 +3031,21 @@ static void joiner_destroy (joiner *jr)
     }
 }
 
-static int filter_by_date (const char *s1, const char *s2, int op, 
-			   int *err)
-{
-    const char *isofmt = "%Y-%m-%d";
-    char *test;
-    int i, ed[2];
-    int ret = 0;
-
-    for (i=0; i<2 && !*err; i++) {
-	const char *s = i == 0 ? s1 : s2;
-	struct tm t = {0};
-
-	test = strptime(s, isofmt, &t);
-	if (test == NULL || *test != '\0') {
-	    gretl_errmsg_sprintf("'%s' does not match the format '%s'", s, isofmt);
-	    *err = E_DATA;
-	} else {
-	    int y = t.tm_year + 1900;
-	    int m = t.tm_mon + 1;
-	    int d = t.tm_mday;
-
-	    ed[i] = epoch_day_from_ymd(y, m, d);
-	    if (ed[i] < 0) {
-		gretl_errmsg_sprintf("'%s' is not a valid date", s);
-		*err = E_DATA;
-	    }
-	}
-    }
-
-    if (!*err) {
-	if (op == B_EQ) {
-	    ret = ed[0] == ed[1];
-	} else if (op == B_GT) {
-	    ret = ed[0] > ed[1];
-	} else if (op == B_LT) {
-	    ret = ed[0] < ed[1];
-	} else if (op == B_GTE) {
-	    ret = ed[0] >= ed[1];
-	} else if (op == B_LTE) {
-	    ret = ed[0] <= ed[1];
-	} else if (op == B_NEQ) {
-	    ret = ed[0] != ed[1];
-	} else {
-	    *err = E_PARSE;
-	}	
-    }
-
-#if CDEBUG > 1
-    fprintf(stderr, "date filter: '%s' -> %d and '%s' -> %d; ret = %d\n",
-	    s1, ed[0], s1, ed[1], ret);
-#endif
-
-    return ret;
-}
-
 /* In relation to join, determine whether or not row @i of the data
    read from CSV satisfies the filter criterion; return 1 if the
    condition is met, 0 otherwise.
 */
 
-static int join_row_wanted (DATASET *dset, int i,
-			    jr_filter *filter, 
-			    csvjoin *jspec,
-			    int *err)
+static int join_row_wanted (jr_filter *filter, int i)
 {
-    int ret = 0;
+    int ret;
 
     if (filter == NULL) {
 	/* no-op */
 	return 1;
     }
 
-    if (filter->val != NULL) {
-	return filter->val[i] != 0;
-    }
-
-    if (filter->mode == FILT_STRING) {
-	int lhdate = 0, rhdate = 0;
-	const char *sx;
-	const char *sy;
-	size_t slen;
-
-	if (filter->lhcol) {
-	    sx = series_get_string_val(dset, filter->lhcol, i);
-	    lhdate = series_get_flags(dset, filter->lhcol) & VAR_TIMECOL;
-	} else {
-	    sx = filter->lhname;
-	}
-
-	if (filter->rhcol) {
-	    sy = series_get_string_val(dset, filter->rhcol, i);
-	    rhdate = series_get_flags(dset, filter->rhcol) & VAR_TIMECOL;
-	} else {
-	    sy = filter->rhname;
-	}
-
-	if (sx == NULL || sy == NULL) {
-	    gretl_errmsg_sprintf(_("%s: missing string in filtering"), "join");
-	    if (filter->lhcol) {
-		fprintf(stderr, "filter: LHS='%s' (from column %d),", sx, filter->lhcol);
-	    } else {
-		fprintf(stderr, "filter: LHS='%s' (string constant),", sx);
-	    }
-	    if (filter->rhcol) {
-		fprintf(stderr, " RHS='%s' (from column %d)\n", sy, filter->rhcol);
-	    } else {
-		fprintf(stderr, " RHS='%s' (string constant)\n", sy);
-	    }	    
-	    *err = E_MISSDATA;
-	} else if (filter->lhcol && filter->rhcol && lhdate != rhdate) {
-	    gretl_errmsg_set(_("type mismatch in join filter"));
-	    *err = E_TYPES;
-	} else if (lhdate || rhdate) {
-	    ret = filter_by_date(sx, sy, filter->op, err);
-	} else if (filter->op == B_EQ) {
-	    ret = (strcmp(sx, sy) == 0);
-	} else if (filter->op == B_GT) {
-	    slen = strlen(sy);
-	    ret = (strlen(sx) > slen) && (strncmp(sx, sy, slen) == 0);
-	} else if (filter->op == B_LT) {
-	    slen = strlen(sx);
-	    ret = (strlen(sy) > slen) && (strncmp(sx, sy, slen) == 0);
-	} else if (filter->op == B_NEQ) {
-	    ret = (strcmp(sx, sy) != 0);
-	} else {
-	    *err = E_PARSE;
-	}
-    } else if (filter->mode == FILT_MISSMASK) {
-	double x = dset->Z[filter->lhcol][i];
-
-	if (filter->op == B_EQ) {
-	    ret = na(x);
-	} else {
-	    ret = !na(x);
-	}
-    } else {
-	/* numerical comparison */
-	double x = filter->lhcol ? dset->Z[filter->lhcol][i] : filter->lhval;
-	double y = filter->rhcol ? dset->Z[filter->rhcol][i] : filter->rhval;
-	
-	if (na(x) || na(y)) {
-	    gretl_errmsg_sprintf(_("%s: found NAs in filtering"), "join");
-	    *err = E_MISSDATA;
-	} else if (filter->op == B_EQ) {
-	    ret = x == y;
-	} else if (filter->op == B_GT) {
-	    ret = x > y;
-	} else if (filter->op == B_LT) {
-	    ret = x < y;
-	} else if (filter->op == B_GTE) {
-	    ret = x >= y;
-	} else if (filter->op == B_LTE) {
-	    ret = x <= y;
-	} else if (filter->op == B_NEQ) {
-	    ret = x != y;
-	} else {
-	    *err = E_PARSE;
-	}
-    }
+    ret = filter->val[i] != 0;
 
 #if CDEBUG > 2
     fprintf(stderr, "join filter: %s row %d\n",
@@ -3317,8 +3166,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     return err;
 }
 
-static int verify_genr_filter (jr_filter *filter, DATASET *r_dset,
-			       int *nrows)
+static int verify_filter (jr_filter *filter, DATASET *r_dset, int *nrows)
 {
     char *line;
     int i, err = 0;
@@ -3345,40 +3193,6 @@ static int verify_genr_filter (jr_filter *filter, DATASET *r_dset,
 	    }
 	}
     }
-
-    return err;
-}
-
-static int verify_filter (jr_filter *filter, int lhcol, int rhcol,
-			  const DATASET *r_dset)
-{
-    int err = 0;
-
-    if (filter->lhname != NULL && lhcol == 0) {
-	gretl_errmsg_sprintf(_("%s: filter column '%s' was not found"),
-		"join", filter->lhname);
-	err = E_DATA;
-    } else {
-	filter->lhcol = lhcol;
-	if (filter->mode != FILT_MISSMASK && 
-	    series_has_string_table(r_dset, lhcol)) {
-	    filter->mode = FILT_STRING;
-	}
-	if (filter->rhname != NULL) {
-	    if (rhcol > 0) {
-		filter->rhcol = rhcol;
-	    } else if (filter->mode != FILT_STRING) {
-		gretl_errmsg_sprintf(_("%s: filter column '%s' was not found"),
-				     "join", filter->rhname);
-		err = E_DATA;
-	    }
-	}
-    }
-
-#if CDEBUG
-    fprintf(stderr, "verify_filter: mode = %d, lhhcol = %d, rhcol = %d\n", 
-	    filter->mode, filter->lhcol, filter->rhcol);
-#endif
 
     return err;
 }
@@ -3439,33 +3253,19 @@ static joiner *build_joiner (csvjoin *jspec,
     DATASET *r_dset = jspec->c->dset;
     int keycol  = jspec->colnums[JOIN_KEY];
     int valcol  = jspec->colnums[JOIN_VAL];
-    int lhfcol  = jspec->colnums[JOIN_LHF];
-    int rhfcol  = jspec->colnums[JOIN_RHF];
     int key2col = jspec->colnums[JOIN_KEY2];
     int auxcol  = jspec->colnums[JOIN_AUX];
     int i, nrows = r_dset->n;
 
 #if CDEBUG
     fprintf(stderr, "joiner columns:\n"
-	    "KEY=%d, VAL=%d, LHF=%d, RHF=%d, KEY2=%d, AUX=%d\n",
-	    keycol, valcol, lhfcol, rhfcol, key2col, auxcol);
+	    "KEY=%d, VAL=%d, F1=%d, F2=%d, KEY2=%d, AUX=%d\n",
+	    keycol, valcol, jspec->colnums[JOIN_F1], 
+	    jspec->colnums[JOIN_F2], key2col, auxcol);
 #endif
 
     if (filter != NULL) {
-	if (filter->mode == FILT_GENR) {
-	    *err = verify_genr_filter(filter, r_dset, &nrows);
-	} else {
-	    *err = verify_filter(filter, lhfcol, rhfcol, r_dset);
-	    if (!*err) {
-		/* count the filtered rows */
-		nrows = 0;
-		for (i=0; i<r_dset->n && !*err; i++) {
-		    if (join_row_wanted(r_dset, i, filter, jspec, err)) {
-			nrows++;
-		    }
-		}
-	    }
-	}
+	*err = verify_filter(filter, r_dset, &nrows);
     }
 
 #if CDEBUG
@@ -3497,7 +3297,7 @@ static joiner *build_joiner (csvjoin *jspec,
 	/* now transcribe the rows we want */
 
 	for (i=0; i<r_dset->n && !*err; i++) {
-	    if (join_row_wanted(r_dset, i, filter, jspec, err)) {
+	    if (join_row_wanted(filter, i)) {
 		/* the keys */
 		if (using_auto_keys(jr)) {
 		    *err = read_outer_auto_keys(jr, j, i);
@@ -4120,13 +3920,8 @@ static jr_filter *join_filter_new (int *err)
     } else {
 	filter->expr = NULL;
 	filter->val = NULL;
-	filter->lhname = NULL;
-	filter->rhname = NULL;
-	filter->lhval = NADBL;
-	filter->rhval = NADBL;
-	filter->lhcol = 0;
-	filter->rhcol = 0;
-	filter->mode = FILT_NUMERIC;
+	filter->vname1 = NULL;
+	filter->vname2 = NULL;
     }
 
     return filter;
@@ -4141,7 +3936,6 @@ static jr_filter *make_genr_filter (const char *s, int *err)
 	int n, ngot = 0;
 
 	filter->expr = s;
-	filter->mode = FILT_GENR;
 
 	while (*s && ngot < 2) {
 	    n = gretl_namechar_spn(s);
@@ -4151,9 +3945,9 @@ static jr_filter *make_genr_filter (const char *s, int *err)
 		    strncat(test, s, n);
 		    if (!gretl_is_scalar(test)) {
 			if (++ngot == 1) {
-			    filter->lhname = gretl_strdup(test);
+			    filter->vname1 = gretl_strdup(test);
 			} else {
-			    filter->rhname = gretl_strdup(test);
+			    filter->vname2 = gretl_strdup(test);
 			}
 		    }
 		}
@@ -4163,120 +3957,6 @@ static jr_filter *make_genr_filter (const char *s, int *err)
 	    }
 	}
     }
-
-    return filter;
-}
-
-/* Check for a filter of the MISSMASK type; that is, of the
-   form missing(colname), !missing(colname) or ok(colname),
-   where "colname" should identify a column in the outer
-   data file. Such a filter selects rows on which the
-   target series is NA, or not-NA, as the case may be.
-*/
-
-static jr_filter *try_missval_filter (const char *s, int *err)
-{
-    jr_filter *filter = NULL;
-
-    if (!strncmp(s, "missing(", 8) || !strncmp(s, "!missing(", 9) ||
-	!strncmp(s, "ok(", 3)) {
-	const char *p = strrchr(s, ')');
-
-	if (p != NULL && *(p+1) == '\0' && strchr(s, ')') == p) {
-	    int op = *s == 'm' ? B_EQ : B_NEQ;
-
-	    filter = join_filter_new(err);
-	    if (filter != NULL) {
-		s = strchr(s, '(') + 1;
-		filter->lhname = gretl_strndup(s, strlen(s) - 1);
-		filter->op = op;
-		filter->mode = FILT_MISSMASK;
-	    }
-	}
-    }
-
-    return filter;
-}
-
-/* parse a filter string of the form <lhs> <op> <rhs> */
-
-static jr_filter *make_join_filter (const char *s, int *err)
-{
-    jr_filter *filter = NULL;
-    const char *opchars = "=!><";
-    char *lhs = NULL, *opstr = NULL, *rhs = NULL;
-    size_t nop, len = strlen(s);
-    size_t nlhs = strcspn(s, opchars);
-    int op = 0;
-
-    if (nlhs == len) {
-	*err = E_PARSE;
-    } else {
-	lhs = gretl_strndup(s, nlhs);
-	g_strstrip(lhs);
-	nop = strspn(s + nlhs, opchars);
-	opstr = gretl_strndup(s + nlhs, nop);
-	if (nlhs + nop == len) {
-	    *err = E_PARSE;
-	} else {
-	    rhs = gretl_strdup(s + nlhs + nop);
-	    g_strstrip(rhs);
-	}
-
-#if CDEBUG
-	fprintf(stderr,"lhs = '%s'\n", lhs);
-	fprintf(stderr,"op = '%s'\n", opstr);
-	fprintf(stderr,"rhs = '%s'\n", rhs);
-#endif
-    }
-
-    if (!*err) {
-	if (!strcmp(opstr, "==")) {
-	    op = B_EQ;
-	} else if (!strcmp(opstr, "<")) {
-	    op = B_LT;
-	} else if (!strcmp(opstr, ">")) {
-	    op = B_GT;
-	} else if (!strcmp(opstr, "<=")) {
-	    op = B_LTE;
-	} else if (!strcmp(opstr, ">=")) {
-	    op = B_GTE;
-	} else if (!strcmp(opstr, "!=")) {
-	    op = B_NEQ;
-	} else {
-	    gretl_errmsg_sprintf(_("%s: invalid operator '%s' in filter"), 
-				 "join", opstr);
-	    *err = E_PARSE;
-	}
-    }
-
-    if (!*err) {
-	filter = join_filter_new(err);
-    }
-
-    if (!*err) {
-	filter->op = op;
-	if (numeric_string(lhs)) {
-	    filter->lhval = dot_atof(lhs);
-	} else if (gretl_is_scalar(lhs)) {
-	    filter->lhval = gretl_scalar_get_value(lhs, NULL);
-	} else {
-	    filter->lhname = lhs;
-	    lhs = NULL;
-	}
-	if (numeric_string(rhs)) {
-	    filter->rhval = dot_atof(rhs);
-	} else if (gretl_is_scalar(rhs)) {
-	    filter->rhval = gretl_scalar_get_value(rhs, NULL);
-	} else {
-	    filter->rhname = rhs;
-	    rhs = NULL;
-	}
-    }
-
-    free(lhs);
-    free(opstr);
-    free(rhs);
 
     return filter;
 }
@@ -4534,54 +4214,31 @@ static int auto_keys_check (const DATASET *l_dset,
     return err;
 }
 
-static int *process_timecols (const char *s, int *err)
+static int process_timecols (csvjoin *jspec, const char *s)
 {
-    const char *p = s;
     int *list = NULL;
-    char *endptr;
-    int ti, n = 1;
+    char *name;
+    int i, err = 0;
 
-    while (*p) {
-	if (*p == ',') {
-	    n++;
+    while (!err && (name = gretl_word_strdup(s, &s, OPT_NONE, &err)) != NULL) {
+	for (i=0; i<JOIN_MAXCOL; i++) {
+	    if (jspec->colnames[i] != NULL && !strcmp(name, jspec->colnames[i])) {
+		gretl_list_append_term(&list, i);
+		if (list == NULL) {
+		    err = E_ALLOC;
+		}
+		break;
+	    }
 	}
-	p++;
+	free(name);
     }
 
-    list = gretl_list_new(n);
-    if (list == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
+#if CDEBUG
+    printlist(list, "timecols list");
+#endif
+    jspec->timecols = list;
 
-    n = 0;
-
-    while (*s) {
-	ti = (int) strtol(s, &endptr, 10);
-	if (*endptr == '\0') {
-	    list[++n] = ti;
-	    break;
-	} else if (*endptr != ',') {
-	    *err = E_PARSE;
-	    break;
-	} else {
-	    list[++n] = ti;
-	}
-	s = endptr + 1;
-    }
-
-    if (n == 0 && !*err) {
-	*err = E_DATA;
-    }
-
-    if (*err) {
-	free(list);
-	list = NULL;
-    } else {
-	list[0] = n;
-    }
-
-    return list;
+    return err;
 }
 
 static void obskey_init (obskey *keys)
@@ -4616,7 +4273,7 @@ static int aggr_type_check (csvjoin *jspec, int valcol)
  * @seqval: 1-based sequence number for aggregation, or 0.
  * @auxname: name of auxiliary column for max or min aggregation,
  * or NULL.
- * @timecols: list of time/date columns, or NULL.
+ * @timecolstr: string specifying time/date columns, or NULL.
  * @opt: may contain OPT_V for verbose operation.
  * @prn: gretl printing struct (or NULL).
  * 
@@ -4636,7 +4293,7 @@ int join_from_csv (const char *fname,
 		   AggrType aggr,
 		   int seqval,
 		   const char *auxname,
-		   const char *timecols,
+		   const char *timecolstr,
 		   gretlopt opt,
 		   PRN *prn)
 {
@@ -4644,7 +4301,6 @@ int join_from_csv (const char *fname,
     joiner *jr = NULL;
     jr_filter *filter = NULL;
     int okeyvars[3] = {0, 0, 0};
-    int *tcollist = NULL;
     char okeyname1[CSVSTRLEN] = {0};
     char okeyname2[CSVSTRLEN] = {0};
     obskey auto_keys;
@@ -4699,20 +4355,13 @@ int join_from_csv (const char *fname,
     if (auxname != NULL) {
 	fprintf(stderr, " aggr auxiliary column = '%s'\n", auxname);
     }
-    if (timecols != NULL) {
-	fprintf(stderr, " timecols = '%s'\n", timecols);
+    if (timecolstr != NULL) {
+	fprintf(stderr, " timecols = '%s'\n", timecolstr);
     }    
 #endif
 
     if (filtstr != NULL) {
-	if (getenv("GENR_FILTER") != NULL) {
-	    filter = make_genr_filter(filtstr, &err);
-	} else {
-	    filter = try_missval_filter(filtstr, &err);
-	    if (filter == NULL && !err) {
-		filter = make_join_filter(filtstr, &err);
-	    }
-	}
+	filter = make_genr_filter(filtstr, &err);
 	if (err) {
 	    fprintf(stderr, "join: error %d processing row filter\n", err);
 	}
@@ -4724,12 +4373,6 @@ int join_from_csv (const char *fname,
 	    fprintf(stderr, "join: error %d processing outer key(s)\n", err);
 	}
     }
-
-#if 1 /* experimental, still */
-    if (!err && timecols != NULL) {
-	jspec.tcollist = tcollist = process_timecols(timecols, &err);
-    }
-#endif
 
     /* Below: fill out the array of required column names,
        jspec.colnames.  This array has space for JOIN_MAXCOL strings;
@@ -4755,8 +4398,8 @@ int join_from_csv (const char *fname,
 
 	/* handle filter columns, if applicable */
 	if (filter != NULL) {
-	    jspec.colnames[JOIN_LHF] = filter->lhname;
-	    jspec.colnames[JOIN_RHF] = filter->rhname;
+	    jspec.colnames[JOIN_F1] = filter->vname1;
+	    jspec.colnames[JOIN_F2] = filter->vname2;
 	}
 
 	/* the second outer key, if present */
@@ -4771,12 +4414,19 @@ int join_from_csv (const char *fname,
 	    jspec.colnames[JOIN_AUX] = auxname;
 	}
 
+	if (timecolstr != NULL) {
+	    err = process_timecols(&jspec, timecolstr);
+	}
+    }
+
+    if (!err) {
+	/* now we can actually grab the data wanted */
 	err = real_import_csv(fname, dset, NULL, NULL,
 			      &jspec, opt, prn);
 	if (err) {
 	    fprintf(stderr, "join: error %d from real_import_csv\n", err);
 	}
-    }
+    }	
 
     if (!err && aggr != AGGR_COUNT) {
 	/* run some sanity tests on the payload (there's no need
@@ -4938,11 +4588,13 @@ int join_from_csv (const char *fname,
     if (auto_keys.timefmt != NULL) {
 	free(auto_keys.timefmt);
     }
+    if (jspec.timecols != NULL) {
+	free(jspec.timecols);
+    }    
 
     csvdata_free(jspec.c);
     joiner_destroy(jr);
     jr_filter_destroy(filter);
-    free(tcollist);
 
     return err;
 }

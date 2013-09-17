@@ -77,6 +77,8 @@
 #define scalar_matrix_node(n) (n->t == MAT && gretl_matrix_is_scalar(n->v.m))
 #define scalar_node(n) (n->t == NUM || scalar_matrix_node(n))
 
+#define stringvec_node(n) (n->flags & SVL_NODE)
+
 #define empty_or_num(n) (n == NULL || n->t == EMPTY || n->t == NUM)
 #define null_or_empty(n) (n == NULL || n->t == EMPTY)
 
@@ -1588,6 +1590,38 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 	    yt = y[t];
 	}
 	ret->v.xvec[t] = xy_calc(xt, yt, f, VEC, p);
+    }
+
+    return ret;
+}
+
+/* Both nodes are string-valued series */
+
+static NODE *stringvec_calc (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = NULL;
+    const char *sl, *sr;
+    int t, eq;
+
+    if (f != B_EQ && f != B_NEQ) {
+	p->err = E_TYPES;
+	return NULL;
+    }
+
+    ret = aux_vec_node(p, p->dset->n);
+    if (ret == NULL) {
+	return NULL;
+    }
+
+    for (t=p->dset->t1; t<=p->dset->t2; t++) {
+	sl = series_get_string_val(p->dset, l->vnum, t);
+	sr = series_get_string_val(p->dset, r->vnum, t);
+	if (sl == NULL || sr == NULL) {
+	    ret->v.xvec[t] = NADBL;
+	} else {
+	    eq = strcmp(sl, sr) == 0;
+	    ret->v.xvec[t] = (f == B_EQ)? eq : !eq;
+	}
     }
 
     return ret;
@@ -3820,7 +3854,9 @@ static NODE *num_string_comp (NODE *l, NODE *r, int f, parser *p)
 	} else {
 	    double sx = series_decode_string(p->dset, v, s);
 
-	    if (f == B_EQ) {
+	    if (na(sx)) {
+		ret->v.xval = NADBL;
+	    } else if (f == B_EQ) {
 		ret->v.xval = (sx == xnode->v.xval);
 	    } else {
 		ret->v.xval = (sx != xnode->v.xval);
@@ -9164,6 +9200,8 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = scalar_calc(l, r, t->t, p);
 	} else if (l->t == BUNDLE && r->t == BUNDLE) {
 	    ret = bundle_op(l, r, t->t, p);
+	} else if (stringvec_node(l) && stringvec_node(r)) {
+	    ret = stringvec_calc(l, r, t->t, p);
 	} else if (series_calc_nodes(l, r)) {
 	    ret = series_calc(l, r, t->t, p);
 	} else if (l->t == MAT && r->t == MAT) {

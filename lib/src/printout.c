@@ -1340,11 +1340,31 @@ static void fcast_print_x (double x, int n, int pmax, PRN *prn)
     }
 }
 
-/* prints series z from current sample t1 to t2 */
-
-static void print_series_by_var (const double *z, const DATASET *dset, 
-				 PRN *prn)
+static void print_stringvals_for_var (const DATASET *dset, int v, PRN *prn)
 {
+    const char *s;
+    int ls = 0;
+    int t, n;
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	s = series_get_string_val(dset, v, t);
+	n = strlen(s);
+	if (ls + n > 78) {
+	    pputc(prn, '\n');
+	    ls = 0;
+	}
+	pprintf(prn, "%s ", s);
+	ls += n;
+    }
+
+    pputc(prn, '\n');
+}
+
+/* prints series @v from current sample t1 to t2 */
+
+static void print_series_by_var (const DATASET *dset, int v, PRN *prn)
+{
+    const double *z = dset->Z[v];
     char format[12];
     int t, ls = 0;
     int anyneg = 0;
@@ -1892,6 +1912,24 @@ static int *get_pmax_array (const int *list, const DATASET *dset)
     return pmax;
 }
 
+static void bufprint_string (char *buf, const char *s, int width)
+{
+    int i, n = width - strlen(s);
+
+    *buf = '\0';
+		    
+    if (n > 0) {
+	for (i=0; i<n; i++) {
+	    strcat(buf, " ");
+	}
+	strcat(buf, s);
+    } else {
+	strcat(buf, " ");
+	strncat(buf, s, width - 3);
+	strcat(buf, "..");
+    }
+}
+
 int column_width_from_list (const int *list, const DATASET *dset)
 {
     int i, n, vi, w = 13;
@@ -1913,12 +1951,11 @@ int column_width_from_list (const int *list, const DATASET *dset)
 
 /* print the series referenced in 'list' by observation */
 
-static int print_by_obs (int *list, 
-			 const DATASET *dset, 
+static int print_by_obs (int *list, const DATASET *dset, 
 			 gretlopt opt, int screenvar,
 			 PRN *prn)
 {
-    int i, j, j0, k, t, nrem;
+    int i, j, j0, k, t, v, nrem;
     int colwidth, obslen = 0;
     int *pmax = NULL;
     char buf[128];
@@ -1968,19 +2005,24 @@ static int print_by_obs (int *list,
 		real_print_obs_marker(t, dset, obslen, 0, prn);
 	    }
 	    for (i=1, j=j0; i<=blist[0]; i++, j++) {
-		x = dset->Z[blist[i]][t];
-		if (na(x)) {
-		    bufspace(colwidth, prn);
-		} else if (opt & OPT_S) {
-		    const char *s = series_get_string_val(dset, blist[i], t);
+		v = blist[i];
+		if (!(opt & OPT_U) && series_has_string_table(dset, v)) {
+		    const char *s = series_get_string_val(dset, v, t);
 
-		    if (s != NULL) {
-			bufspace(6, prn);
-			pputs(prn, s);
+		    if (s == NULL || *s == '\0') {
+			bufspace(colwidth, prn);
+		    } else {
+			bufprint_string(buf, s, colwidth);
+			pputs(prn, buf);
 		    }
 		} else {
-		    bufprintnum(buf, x, pmax[j-1], gprec, colwidth);
-		    pputs(prn, buf);
+		    x = dset->Z[v][t];
+		    if (na(x)) {
+			bufspace(colwidth, prn);
+		    } else {
+			bufprintnum(buf, x, pmax[j-1], gprec, colwidth);
+			pputs(prn, buf);
+		    }
 		}
 	    }
 	    pputc(prn, '\n');
@@ -1995,7 +2037,7 @@ static int print_by_obs (int *list,
 }
 
 static int print_by_var (const int *list, const DATASET *dset, 
-			 PRN *prn)
+			 gretlopt opt, PRN *prn)
 {
     int i, vi;
 
@@ -2011,7 +2053,11 @@ static int print_by_var (const int *list, const DATASET *dset,
 	}
 	print_var_smpl(vi, dset, prn);
 	pputc(prn, '\n');
-	print_series_by_var(dset->Z[vi], dset, prn);
+	if (!(opt & OPT_U) && series_has_string_table(dset, vi)) {
+	    print_stringvals_for_var(dset, vi, prn);
+	} else {
+	    print_series_by_var(dset, vi, prn);
+	}
 	pputc(prn, '\n');
     }
 
@@ -2092,13 +2138,9 @@ int printdata (const int *list, const char *mstr,
     }
 
     if (opt & OPT_O) {
-	if (plist[0] == 1 && !(opt & OPT_U) &&
-	    series_has_string_table(dset, plist[1])) {
-	    opt |= OPT_S;
-	}
 	err = print_by_obs(plist, dset, opt, screenvar, prn);
     } else {
-	err = print_by_var(plist, dset, prn);
+	err = print_by_var(plist, dset, opt, prn);
     }
 
  endprint:

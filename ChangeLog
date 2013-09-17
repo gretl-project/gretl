@@ -54,6 +54,7 @@ version 1.9.13, in progress
   executed first
 - Stata .dta importer: read Stata 12 data files
 - xlsx importer: handle "inline" strings
+- CSV importer: ignore leading byte order mark
 
 2013-03-15 version 1.9.12
 - Officially increase the maximum length of variable names

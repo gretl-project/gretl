@@ -520,7 +520,8 @@ union val {
 enum {
     AUX_NODE = 1 << 0, /* auxiliary: free on exit */
     TMP_NODE = 1 << 1, /* temporary: free content on exit */
-    PTR_NODE = 1 << 2  /* node is compatible with P_LHPTR */
+    PTR_NODE = 1 << 2, /* node is compatible with P_LHPTR */
+    SVL_NODE = 1 << 3  /* holds string-valued series */
 };
 
 struct node {
