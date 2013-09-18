@@ -131,6 +131,8 @@ static int
 time_series_label_check (DATASET *dset, int reversed, char *skipstr, PRN *prn);
 
 static char import_na[8];
+static char *g_timecol_fmt;
+static int g_m_means_q;
 
 static void csvdata_free (csvdata *c)
 {
@@ -1738,18 +1740,56 @@ static int non_numeric_check (csvdata *c, PRN *prn)
     return err;
 }
 
+static double special_time_val (const char *s)
+{
+    struct tm t = {0};
+    char *test;
+
+    test = strptime(s, g_timecol_fmt, &t);
+    
+    if (test == NULL || *test != '\0') {
+	/* conversion didn't work right */
+	return NADBL;
+    } else {
+	int y, m, d;
+
+	y = t.tm_year + 1900;
+	m = t.tm_mon + 1;
+	d = t.tm_mday;
+
+	if (g_m_means_q) {
+	    /* convert to 1st month of quarter */
+	    if (m == 2) m = 4;
+	    else if (m == 3) m = 7;
+	    else if (m == 4) m = 10;
+	    else if (m != 1) {
+		return NADBL;
+	    }
+	}
+
+	if (d == 0) d = 1;
+
+	return 10000*y + 100*m + d;
+    }
+}
+
 static double eval_non_numeric (csvdata *c, int i, const char *s)
 {
     double x = NON_NUMERIC;
 
     if (series_get_flags(c->dset, i) & VAR_TIMECOL) {
-	int y, m, d, n;
-
-	n = sscanf(s, "%d-%d-%d", &y, &m, &d);
-	if (n == 3) {
-	    x = 10000*y + 100*m + d;
+	if (g_timecol_fmt != NULL) {
+	    /* the user gave a format for this */
+	    x = special_time_val(s);
 	} else {
-	    x = NADBL;
+	    int y, m, d, n;
+
+	    n = sscanf(s, "%d-%d-%d", &y, &m, &d);
+	    if (n == 3) {
+		x = 10000*y + 100*m + d;
+	    } else {
+		x = NADBL;
+	    }
 	}
     }
 
@@ -4150,17 +4190,19 @@ static int join_data_type_check (joiner *jr, int targvar,
    strptime(), but record that the fact that "month means quarter".
 */
 
-static void check_for_quarterly (obskey *auto_keys)
+static int format_uses_quarterly (char *fmt)
 {
-    char *s = auto_keys->timefmt;
-    int i;
+    char *s = fmt;
+    int i, ret = 0;
 
     for (i=0; s[i]; i++) {
 	if (s[i] == '%' && s[i+1] == 'q' && (i == 0 || s[i-1] != '%')) {
 	    s[i+1] = 'm';
-	    auto_keys->m_means_q = 1;
+	    ret = 1;
 	}
     }
+
+    return ret;
 }
 
 /* time-series data on the left, and no explicit keys supplied */
@@ -4194,8 +4236,8 @@ static int auto_keys_check (const DATASET *l_dset,
 	if (auto_keys->timefmt == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    if (pd == 4) {
-		check_for_quarterly(auto_keys);
+	    if (pd == 4 && format_uses_quarterly(auto_keys->timefmt)) {
+		auto_keys->m_means_q = 1;
 	    }
 	    if (annual_data(l_dset)) {
 		*n_keys = 1;
@@ -4326,6 +4368,7 @@ int join_from_csv (const char *fname,
 		   int seqval,
 		   const char *auxname,
 		   const char *timecolstr,
+		   const char *timecolfmt,
 		   gretlopt opt,
 		   PRN *prn)
 {
@@ -4458,6 +4501,13 @@ int join_from_csv (const char *fname,
 
     if (!err) {
 	/* now we can actually grab the data wanted */
+	if (timecolfmt != NULL) {
+	    /* publish "timecols" format info */
+	    g_timecol_fmt = gretl_strdup(timecolfmt);
+	    if (format_uses_quarterly(g_timecol_fmt)) {
+		g_m_means_q = 1;
+	    }
+	}
 	err = real_import_csv(fname, dset, NULL, NULL,
 			      &jspec, opt, prn);
 	if (err) {
@@ -4620,6 +4670,11 @@ int join_from_csv (const char *fname,
     }
 
  bailout:
+
+    /* null out file-scope global */
+    free(g_timecol_fmt);
+    g_timecol_fmt = NULL;
+    g_m_means_q = 0;
 
     if (auto_keys.timefmt != NULL) {
 	free(auto_keys.timefmt);

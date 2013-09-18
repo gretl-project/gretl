@@ -4607,8 +4607,8 @@ static int lib_join_data (ExecState *s,
 	OPT_A, /* aggregation */
 	OPT_D, /* "data" spec */
 	OPT_R, /* revision spec (real-time) */ 
-	OPT_T, /* time/date format spec */ 
-	OPT_K, /* outer time-column name */
+	OPT_T, /* "timecols" format */ 
+	OPT_K, /* outer time-key name,format */
 	OPT_X, /* list of time/date columns */
 	0 
     };
@@ -4616,6 +4616,7 @@ static int lib_join_data (ExecState *s,
     char *p, *okey = NULL, *filter = NULL;
     char *varname = NULL, *dataname = NULL;
     char *auxname = NULL, *timecols = NULL;
+    char *timecolfmt = NULL;
     int *ikeyvars = NULL;
     int aggr = 0, seqval = 0;
     int tseries = 0;
@@ -4695,6 +4696,9 @@ static int lib_join_data (ExecState *s,
 	    } else if (jopt == OPT_X) {
 		/* string holding list of time/date cols */
 		timecols = gretl_strdup(param);
+	    } else if (jopt == OPT_T) {
+		/* format for timecols columns */
+		timecolfmt = gretl_strdup(param);
 	    }
 	}
     }
@@ -4742,6 +4746,7 @@ static int lib_join_data (ExecState *s,
 			    ikeyvars, okey, filter,
 			    dataname, aggr, seqval, 
 			    auxname, timecols,
+			    timecolfmt,
 			    opt, vprn);
     }	
 
@@ -4752,6 +4757,7 @@ static int lib_join_data (ExecState *s,
     free(varname);
     free(auxname);
     free(timecols);
+    free(timecolfmt);
 
     return err;
 }
