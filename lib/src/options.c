@@ -1504,18 +1504,40 @@ gretlopt get_gretl_options (char *line, int *err)
     return oflags;
 }
 
-static int option_parm_needs_quoting (const char *s)
+static void print_option_param (const char *s, PRN *prn)
 {
     const char *qchars = "=%, ";
+    const char *p = s;
+    int wrap = 0;
+    int escape = 0;
 
-    while (*s) {
-	if (strspn(s, qchars)) {
-	    return 1;
+    while (*p) {
+	if (strspn(p, qchars)) {
+	    wrap = 1;
+	} else if (*p == '"') {
+	    escape = 1;
 	}
-	s++;
+	p++;
     }
 
-    return 0;
+    if (wrap) {
+	if (escape) {
+	    pputs(prn, "=\"");
+	    while (*s) {
+		if (*s == '"') {
+		    pputs(prn, "\\\"");
+		} else {
+		    pputc(prn, *s);
+		}
+		s++;
+	    }
+	    pputs(prn, "\"\n");
+	} else {
+	    pprintf(prn, "=\"%s\"", s);
+	}
+    } else {
+	pprintf(prn, "=%s", s);
+    }
 }
 
 static PRN *flagprn;
@@ -1576,11 +1598,7 @@ const char *print_flags (gretlopt oflags, int ci)
 	    if (gretl_opts[i].parminfo) {
 		parm = get_optval_string(ci, opt);
 		if (parm != NULL && *parm != '\0') {
-		    if (option_parm_needs_quoting(parm)) {
-			pprintf(flagprn, "=\"%s\"", parm);
-		    } else {
-			pprintf(flagprn, "=%s", parm);
-		    }
+		    print_option_param(parm, flagprn);
 		}
 	    }
 	}
