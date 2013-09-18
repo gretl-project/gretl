@@ -408,6 +408,7 @@ struct str_table funcs[] = {
     { F_GETLINE,  "getline" },
     { F_TYPEOF,   "typeof" },
     { F_ATOF,     "atof" },
+    { F_FIXNAME,  "fixname" },
     { 0,          NULL }
 };
 

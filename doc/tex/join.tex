@@ -72,111 +72,112 @@ sample are set to \texttt{NA}; if it exists already then observations
 outside of the current sample are left unchanged.
 
 The case where you want to rename a series on import is handled by the
-\verb|--data| option. This option has one required argument, the name
-by which the series is known on the right. While the \textsl{varname}
-argument must be a valid gretl variable name, the right-hand
-\texttt{data} name need not be;\footnote{But see
-  section~\ref{sec:join-colnames} below.} for example it can contain
-embedded spaces (in which case it must be enclosed in double
-quotes). For example, the command
+\option{data} option. This option has one required argument, the name
+by which the series is known on the right. At this point we need to
+explain something about right-hand variable names (column
+headings). 
+
+\subsection{Right-hand names}
+
+We accept on input arbitrary column heading strings, but if these
+strings do not qualify as valid gretl identifiers they are
+automatically converted, and in the context of \texttt{join} you must
+use the converted names. A gretl identifier must start with a letter,
+contain nothing but (ASCII) letters, digits and the underscore
+character, and must not exceed 31 characters. The rules used in name
+conversion are:
+
+\begin{enumerate}
+\item Skip any leading non-letters.
+\item Thereafter, skip any ``illegal'' characters apart from spaces;
+  one or more consecutive spaces are replaced by an underscore.
+\item Stop when we reach 31 characters or the input is exhausted.
+\end{enumerate}
+
+In the unlikely event that this policy yields an empty string, we
+replace the original with \texttt{col}\textsl{n}, where \textsl{n} is
+replaced by the 1-based index of the column in question among those
+used in the join operation. If you are in doubt regarding the
+converted name of a given column, the function \texttt{fixname()} can
+be used as a check: it takes the original string as an argument and
+returns the converted name. Examples:
+
+\begin{code}
+? eval fixname("valid_identifier")
+valid_identifier
+? eval fixname("12. Some name")
+Some_name
+\end{code}
+
+Returning to the use of the \option{data} option, suppose we have a
+column headed \verb|"12. Some name"| on the right and wish to import
+it as \texttt{x}. After figuring how the right-hand name converts, we
+can do
 %
 \begin{code}
-join foo.csv x --data="12. Some name"
+join foo.csv x --data="Some_name"
 \end{code}
-%
-will look for a column headed \verb|"12. Some name"| on the right and
-import it as \texttt{x}.
 
 \section{Filtering}
 
 Rows from the outer dataset can be filtered using the \verb|--filter|
-option. In its basic version this option has a required argument of
-the form
+option. The required parameter for this option is a Boolean condition,
+that is, an expression which evaluates to non-zero (true, include the
+row) or zero (false, skip the row) for each of the outer rows. The
+filter expression may include the names of up to two right-hand
+series (under their converted names as explained above), scalar or
+string variables defined ``on the left'', any of the operators and
+functions available in gretl, and numeric or string constants.
 
-\qquad \textsl{term1} \textsl{op} \textsl{term2}
+Here are a few simple examples of potentially valid filter options
+(assuming that the specified right-hand side columns are found):
 
-(with or without spaces). At least one of \textsl{term1} and
-\textsl{term2} must be the name of a series (column) present in the
-right-hand side dataset. The other may also be the name of a
-right-hand series, or it may be a numerical or string constant (with
-the type---numeric or string---matching that of the specified
-series). For numerical data \textsl{op} can be any one of
-
-\qquad \verb|==|, \verb|>|, \verb|<|, \verb|>=|, \verb|<=|, or
-\verb|!=|
-
-where these symbols have their usual meanings. If the series term in
-the filter is string-valued, the following subset of operators is
-supported: \verb|==| and \verb|!=| (the strings compare equal and
-unequal respectively), \verb|>=| (the first string compares equal to
-the second up to the length of the latter, but may be longer than the
-second) and \verb|<=| (the second string compares equal with the first
-up to the length of the first, but may be longer).
-
-The filter specifies a Boolean condition in terms of either two
-right-hand side variables or one right-hand variable and a constant,
-and only those rows on which the condition is satisfied are
-imported. If the filter string contains spaces or an equals sign it
-must be double-quoted, otherwise double-quoting is optional. As with
-the \texttt{data} option, the names of series in the outer dataset
-need not be valid gretl identifiers.
-
-Note that only a single filter, of binary form, is supported---this
-may be generalized in the future. However, in some cases the effect of
-a more elaborate filter may be achieved through subsampling the
-left-hand dataset (see section~\ref{sec:join-SHIW} below).
-
-Examples of potentially valid filter options (assuming that the
-specified right-hand side columns are found):
 \begin{code}
+# 1. relationship between two right-hand variables
 --filter="x15<=x17"
 
---filter="SEX==F"
+# 2. comparison of right-hand variable with constant
+--filter="nkids>2"
 
---filter=nkids>2
+# 3. comparison of string-valued right-hand variable with string constant
+--filter="SEX==\"F\""
+
+# 4. filter on valid values of a right-hand variable
+--filter=!missing(income)
+
+# 5. compound condition
+--filter="x < 100 && (y > 0 || z > 0)"
 \end{code}
 
-When a filter of this sort is applied, an error is flagged if a
-missing value is encountered in the series referenced in the filter
-expression This is because the condition then becomes
-indeterminate; taking the last example above, if the \texttt{nkids}
-value is \texttt{NA} on any given row we are not in a position to
-evaluate the condition \texttt{nkids>2}. 
+Note that if you are comparing against a string constant (as in
+example 3 above) it is necessary to put the string in ``escaped''
+double-quotes (each double-quote preceded by a backslash) so the
+interpreter knows that \texttt{F} is not supposed to be the name of a
+variable.
 
-A variant of the filter option is available, however, to select rows
-based on whether the value in a given named column is valid or
-missing. Let \texttt{colname} stand in for the name of the column in
-question; then
-
-\begin{code}
---filter=missing(colname)
-\end{code}
-
-will select only rows on which there is no valid \texttt{colname}
-value, while
-
-\begin{code}
---filter=!missing(colname)
-\end{code}
-
-will select only rows on which a valid \texttt{colname} value is
-present. The selector \texttt{ok()} may be used as a synonym for
-\texttt{!missing()}.
+In general, an error is flagged if a missing value is encountered in
+a series referenced in a filter expression. This is because the
+condition then becomes indeterminate; taking example 2 above, if the
+\texttt{nkids} value is \texttt{NA} on any given row we are not in a
+position to evaluate the condition \texttt{nkids>2}. However, you can
+use the \texttt{missing()} function---or \texttt{ok()}, which is a
+shorthand for \texttt{!missing()}---if you need a filter that keys off
+the missing or non-missing status of a variable.
 
 
 \section{Matching with keys}
 \label{sec:join-keys}
 
-Things begin to get interesting when we come to key-matching. The
-purpose of this facility is perhaps best introduced by example.
-Suppose that (as with many survey and census-based datasets) we have a
-dataset that is composed of two or more related files, each having a
-different unit of observation; for example we have a ``persons'' data
-file and a ``households'' datafile. Table~\ref{tab:csv} shows a
-simple, artificial case. The file \texttt{people.csv} contains a
-unique identifier for the individuals, \texttt{pid}. The households
-file, \texttt{hholds.csv}, contains the unique household identifier
-\texttt{hid}, which is also present in the persons file. 
+Things get interesting when we come to key-matching. The purpose of
+this facility is perhaps best introduced by example.  Suppose that (as
+with many survey and census-based datasets) we have a dataset that is
+composed of two or more related files, each having a different unit of
+observation; for example we have a ``persons'' data file and a
+``households'' datafile. Table~\ref{tab:csv} shows a simple,
+artificial case. The file \texttt{people.csv} contains a unique
+identifier for the individuals, \texttt{pid}. The households file,
+\texttt{hholds.csv}, contains the unique household identifier
+\texttt{hid}, which is also present in the persons file.
 
 As a first example of \texttt{join} with keys, let's add the
 household-level variable \texttt{xh} to the persons dataset:
@@ -313,7 +314,12 @@ argument, which must be one of the following:
 \texttt{sum} & sum of matching values \\
 \texttt{min} & minimum of matching values \\
 \texttt{max} & maximum of matching values \\
-\texttt{seq:}$i$ & the $i^{\rm th}$ matching value (e.g.\ \texttt{seq:2}) 
+\texttt{seq:}$i$ & the $i^{\rm th}$ matching 
+  value (e.g.\ \texttt{seq:2}) \\
+\texttt{min(}\textsl{aux}\texttt{)} & 
+  minimum of matching values of auxiliary variable \\
+\texttt{max(}\textsl{aux}\texttt{)} & 
+  maximum of matching values of auxiliary variable\\
 \end{tabular}
 \end{center}
 
@@ -350,8 +356,18 @@ and for women.
 \begin{code}
 open hholds.csv --quiet
 join people.csv young_xp --ikey=hid --filter="age<40" --data=xp --aggr=sum
-join people.csv female_xp --ikey=hid --filter="gender==F" --data=xp --aggr=sum
+join people.csv female_xp --ikey=hid --filter="gender==\"F\"" --data=xp --aggr=sum
 \end{code}
+
+The possibility of using an auxiliary variable with the \texttt{min}
+and \texttt{max} modes of aggregation gives extra flexibility. For
+example, suppose we want for each household the income of its oldest
+member:
+\begin{code}
+open hholds.csv --quiet
+join people.csv oldest_xp --ikey=hid --data=xp --aggr=max(age)
+\end{code}
+
 
 \section{String-valued key variables}
 \label{sec:join-strings}
@@ -394,24 +410,6 @@ which gives
 5            2            1          500
 6            5            2          150
 \end{code}
-
-\section{Right-hand column names}
-\label{sec:join-colnames}
-
-As noted above, the column names in the datafile from which data
-are to be joined do not have to be valid gretl identifiers (that
-is, composed of nothing but ASCII letters, numbers and the underscore
-character, starting with a letter and with a maximum length of 31
-characters). However, there are limits. 
-\begin{itemize}
-\item Names that include a comma will break the double-key
-  mechanism, in which a comma is used to separate the two keys in
-  the \texttt{okey} option.
-\item Names that include any of the characters used in the operators
-  for the \texttt{filter} option will break that option.
-\item In reading a delimited text file, gretl truncates strings at
-  71 bytes. 
-\end{itemize}
 
 
 \section{A real-world case}
@@ -632,43 +630,54 @@ time-series interpretation has been imposed using either the
 from some very special cases---joining additional data is bound to
 involve matching observations by time-period. Since gretl knows the
 period of each observation on the left, no ``inner key'' is required;
-all we need is a means of identifying the period on the right. Most
-likely, this information will appear in a single column in the outer
-datafile, often but not always the first column.
+all we need is a means of identifying the period on the right; we'll
+refer to this as the ``time key''. Most likely, this information will
+appear in a single column in the outer datafile, often but not always
+the first column.
 
 The \texttt{join} command provides a simple (but limited) default for
-extracting period information from the outer datafile, plus two
-options that can be used if the default is not applicable, as follows.
+extracting period information from the outer datafile, plus an
+option that can be used if the default is not applicable, as follows.
 \begin{itemize}
-\item The default assumption is that period information appears in the
-  first column, and conforms to the ISO 8601 standard: this covers
-  daily dates (format \texttt{YYYY-MM-DD}, for example 2013-01-31),
-  monthly observations (format \texttt{YYYY-MM}, for example 2013-03)
-  and annual observations (format \texttt{YYYY}, 4-digit year).
-\item If the data have a frequency other than daily, monthly or
-  annual, or if the representation of the date is not as per ISO 8601,
-  the \option{time} option can be used to specify the format in which
-  dates are written in the outer file.
-\item If dates do not appear in the first column of the outer file,
-  the \option{tkey} option can be used to indicate which column should
-  be used.
+\item The default assumption is that time key appears in the first
+  column, and conforms to the ISO 8601 standard: this covers daily
+  dates (format \texttt{YYYY-MM-DD}, for example 2013-01-31), monthly
+  observations (format \texttt{YYYY-MM}, for example 2013-03) and
+  annual observations (format \texttt{YYYY}, 4-digit year).
+\item If dates do not appear in the first column of the outer file, or
+  if the format is not as described above, the \option{tkey} option
+  can be used to indicate which column should be used and/or what
+  format should be assumed.
 \end{itemize}
 
-\subsection{Setting the time format and column}
+\subsection{Setting the time-key column and/or format}
 
-The \option{time} option requires a (double-quoted) parameter
-specifying the format in which dates/times are written in the outer
-file. This format string should be composed using the codes employed
-by the POSIX function \texttt{strptime}; Table \ref{tab:join-datefmt}
+The \option{tkey} option requires a parameter holding the name of the
+column in which the time key is located and/or a string specifying the
+format in which dates/times are written in the time-key column. This
+parameter should be enclosed in double-quotes. If both elements are
+present they should be separated by a comma; if only a format is given
+it should be preceded by a comma. Some examples:
+
+\begin{code}
+--tkey="Period,%m/%d/%Y"
+--tkey="Period"
+--tkey=",%Ym%m"
+\end{code}
+
+The first of these applies if \texttt{Period} is not the first column
+on the right, and dates are given in the US format of month, day,
+year, separated by slashes. The second implies that although
+\texttt{Period} is not the first column, the date format is ISO 8601.
+The third implies that dates are in the first column but are given
+in the non-standard format year, ``\texttt{m}'', month.
+
+The date format string should be composed using the codes employed by
+the POSIX function \texttt{strptime}; Table \ref{tab:join-datefmt}
 contains a list of the most-often used codes.\footnote{The
   \texttt{\%q} code for quarter is not present in \texttt{strptime};
   it is added for use with \texttt{join} since quarterly data are
-  common in macroeconomics.} Here are a couple of simple examples:
-
-\begin{code}
---time="%d/%m/%Y" # day, month, 4-digit year, e.g. 28/2/2012
---time="%Ym%m"    # monthly, e.g. 2013m11
-\end{code}
+  common in macroeconomics.}
 
 \begin{table}[htbp]
   \centering
@@ -704,11 +713,6 @@ contains a list of the most-often used codes.\footnote{The
   \label{tab:join-datefmt}
 \end{table}
 
-The \option{tkey} option requires a string giving the heading of
-the column in which dates/times are found in the outer file. The
-requirements for this parameter are the same as for the \option{okey}
-option, discussed above.
-
 \subsection{Example: daily stock prices}
 
 We show below the first few lines of a file named \texttt{IBM.csv}
@@ -736,10 +740,10 @@ join IBM.csv Close
 \end{code}
 
 To make explicit what we're doing, we could accomplish exactly the
-same using the \option{time} and \option{tkey} options:
+same using the \option{tkey} option:
 
 \begin{code}
-join IBM.csv Close --time="%Y-%m-%d" --tkey=Date
+join IBM.csv Close --tkey="Date,%Y-%m-%d"
 \end{code}
 
 \subsection{Example: OECD quarterly data}
@@ -791,10 +795,10 @@ Product for several countries:
 nulldata 220
 setobs 4 1960:1
 
-join oecd.csv FRA --time="Q%q-%Y" --tkey=Period --data=Value --filter="Country==France"
-join oecd.csv GER --time="Q%q-%Y" --tkey=Period --data=Value --filter="Country==Germany"
-join oecd.csv ITA --time="Q%q-%Y" --tkey=Period --data=Value --filter="Country==Italy"
-join oecd.csv  UK --time="Q%q-%Y" --tkey=Period --data=Value --filter="Country==United Kingdom"
+join oecd.csv FRA --tkey="Period,Q%q-%Y" --data=Value --filter="Country==\"France\""
+join oecd.csv GER --tkey="Period,Q%q-%Y" --data=Value --filter="Country==\"Germany\""
+join oecd.csv ITA --tkey="Period,Q%q-%Y" --data=Value --filter="Country==\"Italy\""
+join oecd.csv  UK --tkey="Period,Q%q-%Y" --data=Value --filter="Country==\"United Kingdom\""
 \end{verbatim}
 \end{footnotesize}
 
@@ -808,12 +812,12 @@ command into a string and then using string substitution, as in
 nulldata 220
 setobs 4 1960:1
 
-sprintf optstr "--time=\"Q%%q-%%Y\" --tkey=Period --data=Value"
+sprintf optstr "--tkey=\"Period,Q%%q-%%Y\" --data=Value"
 
-join oecd.csv FRA @optstr --filter="Country==France"
-join oecd.csv GER @optstr --filter="Country==Germany"
-join oecd.csv ITA @optstr --filter="Country==Italy"
-join oecd.csv  UK @optstr --filter="Country==United Kingdom"
+join oecd.csv FRA @optstr --filter="Country==\"France\""
+join oecd.csv GER @optstr --filter="Country==\"Germany\""
+join oecd.csv ITA @optstr --filter="Country==\"Italy\""
+join oecd.csv  UK @optstr --filter="Country==\"United Kingdom\""
 \end{verbatim}
 \end{footnotesize}
 

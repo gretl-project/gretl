@@ -2035,7 +2035,7 @@ static int skip_data_column (csvdata *c, int k)
     }
 }
 
-void normalize_csv_colname (char *targ, const char *src, int k)
+void normalize_join_colname (char *targ, const char *src, int k)
 {
     const char *letters = "abcdefghijklmnopqrstuvwxyz"
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -2061,6 +2061,8 @@ void normalize_csv_colname (char *targ, const char *src, int k)
 
     if (i > 0) {
 	targ[i] = '\0';
+    } else if (k <= 0) {
+	strcpy(targ, "col[n]");
     } else {
 	sprintf(targ, "col%d", k);
     }
@@ -2118,7 +2120,7 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 	k++;
     }    
 
-    normalize_csv_colname(okname, c->str, k);
+    normalize_join_colname(okname, c->str, k);
 
 #if CDEBUG
     fprintf(stderr, "handle_join_varname: looking at '%s' (%s)\n", c->str, okname);
@@ -3103,8 +3105,8 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 
     if (test == NULL || *test != '\0') {
 	err = E_DATA;
-	if (i == 0 && test != NULL && jr->l_dset->pd == 12) {
-	    /* if we're on the first row of the outer data, allow for
+	if (j == 0 && test != NULL && jr->l_dset->pd == 12) {
+	    /* if we're on the first row of the filtered data, allow for
 	       the possibility that we got "excess precision", i.e.
 	       a daily date string when the left-hand dataset is
 	       monthly
@@ -3546,11 +3548,14 @@ static int binsearch (int targ, const int *vals, int n, int offset)
     }
 }
 
+
+#define min_max_cond(x,y,a) ((a==AGGR_MAX && x>y) || (a!=AGGR_MAX && x<y))
+
 static double aggr_value (joiner *jr, int key, int key2,
 			  double *xmatch, double *auxmatch, 
 			  int *err)
 {
-    double x, y, xa;
+    double x, xa;
     int imin, imax, pos;
     int i, n;
 
@@ -3560,9 +3565,9 @@ static double aggr_value (joiner *jr, int key, int key2,
 
 #if CDEBUG
     if (pos < 0) {
-	fprintf(stderr, "  no match on primary key\n");
+	fprintf(stderr, "  key = %d: no match\n", key);
     } else {
-	fprintf(stderr, "  position on right, among unique keys = %d\n", pos);
+	fprintf(stderr, "  key = %d: matched at position %d\n", key, pos);
     }
 #endif    
 
@@ -3573,6 +3578,10 @@ static double aggr_value (joiner *jr, int key, int key2,
 
     /* how many matches at @pos? */
     n = jr->key_freq[pos];
+
+#if CDEBUG > 1
+    fprintf(stderr, "  number of matches = %d\n", n);
+#endif
 
     if (jr->n_keys == 1) {
 	if (jr->aggr == AGGR_COUNT) {
@@ -3591,7 +3600,7 @@ static double aggr_value (joiner *jr, int key, int key2,
 
     /* set the starting row in joiner rectangle */
     imin = jr->key_row[pos];
-    
+
     if (imin < 0) {
 	/* "can't happen" */
 	return NADBL;
@@ -3599,6 +3608,10 @@ static double aggr_value (joiner *jr, int key, int key2,
 
     imax = imin + n;
     n = 0; /* will now hold count of non-NA matches */
+
+#if CDEBUG > 1
+    fprintf(stderr, "  aggregation row range: %d to %d\n", imin+1, imax);
+#endif
 
     /* If we also have a secondary key, we need to find how
        many instances of the secondary match fall under the
@@ -3626,7 +3639,6 @@ static double aggr_value (joiner *jr, int key, int key2,
 		}
 	    }		
 	}
-
 	if (jr->aggr == AGGR_COUNT) {
 	    return totcount;
 	} else if (totcount > 1 && jr->aggr == AGGR_NONE) {
@@ -3641,6 +3653,11 @@ static double aggr_value (joiner *jr, int key, int key2,
 	    x = jr->rows[i].val;
 	    if (jr->auxcol) {
 		xa = jr->rows[i].aux;
+		if (!na(x) && na(xa)) {
+		    /* we can't know the min/max of the aux var */
+		    *err = E_MISSDATA;
+		    return NADBL;
+		}
 		if (!na(xa)) {
 		    auxmatch[n] = xa;
 		    xmatch[n++] = x;
@@ -3664,41 +3681,25 @@ static double aggr_value (joiner *jr, int key, int key2,
 	if (i >= 0 && i < n) {
 	    x = xmatch[i];
 	}	    
-    } else if (jr->aggr == AGGR_MAX) {
+    } else if (jr->aggr == AGGR_MAX || jr->aggr == AGGR_MIN) {
 	if (jr->auxcol) {
-	    /* using the max of an auxiliary var */
-	    xa = auxmatch[0];
-	}
-	x = xmatch[0];
-	for (i=1; i<n; i++) {
-	    if (jr->auxcol) {
-		y = auxmatch[i];
-		if (y > xa) {
-		    x = xmatch[i];
-		}
-	    } else {
-		y = xmatch[i];
-		if (y > x) {
-		    x = y;
+	    /* using the max/min of an auxiliary var */
+	    int idx = 0;
+
+	    x = auxmatch[0];
+	    for (i=1; i<n; i++) {
+		if (min_max_cond(auxmatch[i], x, jr->aggr)) {
+		    x = auxmatch[i];
+		    idx = i;
 		}
 	    }
-	}
-    } else if (jr->aggr == AGGR_MIN) {
-	if (jr->auxcol) {
-	    /* using the min of an auxiliary var */
-	    xa = auxmatch[0];
-	}
-	x = xmatch[0];
-	for (i=1; i<n; i++) {
-	    if (jr->auxcol) {
-		y = auxmatch[i];
-		if (y < xa) {
+	    x = xmatch[idx];
+	} else {
+	    /* using the target variable itself */
+	    x = xmatch[0];
+	    for (i=1; i<n; i++) {
+		if (min_max_cond(xmatch[i], x, jr->aggr)) {
 		    x = xmatch[i];
-		}
-	    } else {	    
-		y = xmatch[i];
-		if (y < x) {
-		    x = y;
 		}
 	    }
 	}
@@ -3986,6 +3987,42 @@ static int get_target_varnum (const char *vname,
     return targ;
 }
 
+/* Parse either one or two elements (time-key column name, 
+   time format string) out of @s. If both elements are
+   present they must be comma-separated; if only the second
+   element is present it must be preceded by a comma.
+*/
+
+static int process_time_key (const char *s, char *tkeyname,
+			     char *tkeyfmt)
+{
+    int err = 0;
+
+    if (*s == ',') {
+	/* only time-key format supplied */
+	strncat(tkeyfmt, s + 1, 31);
+    } else {
+	const char *p = strchr(s, ',');
+
+	if (p == NULL) {
+	    /* only column name given */
+	    strncat(tkeyname, s, CSVSTRLEN - 1);
+	} else {
+	    int n = p - s;
+
+	    n = (n > CSVSTRLEN - 1)? CSVSTRLEN - 1 : n;
+	    strncat(tkeyname, s, n);
+	    strncat(tkeyfmt, p + 1, 31);
+	}
+    }
+
+    if (*tkeyname == '\0' && *tkeyfmt == '\0') {
+	err = E_DATA;
+    }
+
+    return err;
+}
+
 /* Parse either one column-name or two comma-separated names out of
    @s. If @s contains a comma, we accept a zero-length name on either
    the left or the right -- but not both -- as indicating that we
@@ -4003,6 +4040,7 @@ static int process_outer_key (const char *s, int n_keys,
     int err = 0;
 
     if (opt & OPT_K) {
+	/* time-key spec */
 	strncat(name1, s, CSVSTRLEN - 1);
     } else if (strchr(s, ',') == NULL) {
 	/* just one outer key */
@@ -4130,6 +4168,7 @@ static void check_for_quarterly (obskey *auto_keys)
 static int auto_keys_check (const DATASET *l_dset,
 			    const DATASET *r_dset,
 			    gretlopt opt,
+			    const char *tkeyfmt,
 			    obskey *auto_keys,
 			    int *n_keys)
 {
@@ -4149,27 +4188,21 @@ static int auto_keys_check (const DATASET *l_dset,
 	goto bailout;
     }
 
-    if (opt & OPT_T) {
-	/* the user should have supplied a time-format spec */
-	const char *s = get_optval_string(JOIN, OPT_T);
-
-	if (s == NULL) {
-	    err = E_DATA;
+    if (*tkeyfmt != '\0') {
+	/* the user supplied a time-format spec */
+	auto_keys->timefmt = gretl_strdup(tkeyfmt);
+	if (auto_keys->timefmt == NULL) {
+	    err = E_ALLOC;
 	} else {
-	    auto_keys->timefmt = gretl_strdup(s);
-	    if (auto_keys->timefmt == NULL) {
-		err = E_ALLOC;
+	    if (pd == 4) {
+		check_for_quarterly(auto_keys);
+	    }
+	    if (annual_data(l_dset)) {
+		*n_keys = 1;
+	    } else if (calendar_data(l_dset)) {
+		*n_keys = 1;
 	    } else {
-		if (pd == 4) {
-		    check_for_quarterly(auto_keys);
-		}
-		if (annual_data(l_dset)) {
-		    *n_keys = 1;
-		} else if (calendar_data(l_dset)) {
-		    *n_keys = 1;
-		} else {
-		    *n_keys = 2;
-		}
+		*n_keys = 2;
 	    }
 	}
     } else {
@@ -4204,10 +4237,9 @@ static int auto_keys_check (const DATASET *l_dset,
     
     /* we should flag an error here only if the user
        explicitly requested use of this apparatus,
-       by giving --time=<format> (that is, OPT_T)
-       and/or --tkey=<colname> (OPT_K)
+       by giving --tkey=<whatever> (OPT_K)
     */
-    if (err && !(opt & (OPT_T | OPT_K))) {
+    if (err && !(opt & OPT_K)) {
 	err = 0;
     }
 
@@ -4303,6 +4335,7 @@ int join_from_csv (const char *fname,
     int okeyvars[3] = {0, 0, 0};
     char okeyname1[CSVSTRLEN] = {0};
     char okeyname2[CSVSTRLEN] = {0};
+    char tkeyfmt[32] = {0};
     obskey auto_keys;
     int targvar, orig_v = dset->v;
     int str_keys = 0;
@@ -4368,7 +4401,11 @@ int join_from_csv (const char *fname,
     }
 
     if (!err && okey != NULL) {
-	err = process_outer_key(okey, n_keys, okeyname1, okeyname2, opt);
+	if (opt & OPT_K) {
+	    err = process_time_key(okey, okeyname1, tkeyfmt);
+	} else {
+	    err = process_outer_key(okey, n_keys, okeyname1, okeyname2, opt);
+	}
 	if (err) {
 	    fprintf(stderr, "join: error %d processing outer key(s)\n", err);
 	}
@@ -4506,9 +4543,8 @@ int join_from_csv (const char *fname,
 	}
     }
 
-    if (!err && n_keys == 0 && 
-	(dataset_is_time_series(dset) || (opt & OPT_T))) {
-	err = auto_keys_check(dset, jspec.c->dset, opt, 
+    if (!err && n_keys == 0 && dataset_is_time_series(dset)) {
+	err = auto_keys_check(dset, jspec.c->dset, opt, tkeyfmt,
 			      &auto_keys, &n_keys);
     }
 

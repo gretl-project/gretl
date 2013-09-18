@@ -31,6 +31,7 @@
 #include "kalman.h"
 #include "libset.h"
 #include "version.h"
+#include "csvdata.h"
 
 #ifdef USE_RLIB
 # include "gretl_foreign.h"
@@ -4427,6 +4428,9 @@ static NODE *single_string_func (NODE *n, int f, parser *p)
 	    ret->v.str = gretl_backtick(s, &p->err);
 	} else if (f == F_STRSTRIP) {
 	    ret->v.str = gretl_strstrip_copy(s, &p->err);
+	} else if (f == F_FIXNAME) {
+	    ret->v.str = calloc(VNAMELEN, 1);
+	    normalize_join_colname(ret->v.str, s, 0);
 	} else {
 	    p->err = E_DATA;
 	}
@@ -10080,6 +10084,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_READFILE:
     case F_BACKTICK:
     case F_STRSTRIP:
+    case F_FIXNAME:
 	if (l->t == STR) {
 	    ret = single_string_func(l, t->t, p);
 	} else if (t->t == F_ARGNAME && (uscalar_node(l) || useries_node(l))) {

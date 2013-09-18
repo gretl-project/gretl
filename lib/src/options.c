@@ -269,7 +269,7 @@ struct gretl_option gretl_opts[] = {
     { JOIN,     OPT_A, "aggr", 2 },
     { JOIN,     OPT_D, "data", 2 },
     { JOIN,     OPT_R, "rev", 2 },
-    { JOIN,     OPT_T, "time", 2 },
+    { JOIN,     OPT_T, "timecol-fmt", 2 },
     { JOIN,     OPT_K, "tkey", 2 },
     { JOIN,     OPT_X, "timecols", 2 },
     { JOIN,     OPT_V, "verbose", 0 },

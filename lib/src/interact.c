@@ -4652,11 +4652,7 @@ static int lib_join_data (ExecState *s,
 	return E_PARSE;
     }
 
-#if 1 /* note: changed 2013-09-16 */
     tseries = dataset_is_time_series(dset);
-#else
-    tseries = (opt & (OPT_R | OPT_T | OPT_K)) != 0;
-#endif
 
     varname = gretl_strdup(p);
     
