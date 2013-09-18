@@ -54,6 +54,9 @@ int boxcox_series (const double *x, double *y, double d,
 int filter_series (const double *x, double *y, const DATASET *dset, 
 		   gretl_matrix *A, gretl_matrix *C, double y0);
 
+gretl_matrix *filter_matrix (gretl_matrix *X, gretl_vector *A, gretl_vector *C, 
+			     double y0, int *err);
+
 int exponential_movavg_series (const double *x, double *y, 
 			       const DATASET *dset,
 			       double d, int n);

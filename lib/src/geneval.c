@@ -7220,7 +7220,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	const double *x = NULL;
 	gretl_matrix *C = NULL;
 	gretl_matrix *A = NULL;
-	int freeA = 0, freeC = 0;
+	gretl_matrix *X = NULL;
+	int freeA = 0, freeC = 0, outtype;
 	double y0 = 0;
 
 	if (k < 2 || k > 4) {
@@ -7233,10 +7234,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
 	    } else if (i == 0) {
 		/* the series to filter */
-		if (e->t != VEC) {
-		   node_type_error(t->t, i+1, VEC, e, p);
-		} else {
+		if (e->t != VEC && e->t != MAT) {
+		   node_type_error(t->t, i+1, 0, e, p);
+		} else if (e->t == VEC) {
 		   x = e->v.xvec;
+		   outtype = VEC;
+		} else {
+		   X = e->v.m;
+		   outtype = MAT;
 		} 
 	    } else if (i == 1) {
 		/* matrix for MA polynomial (but we'll take a scalar) */
@@ -7280,9 +7285,16 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	} 
 	
 	if (!p->err) {
-	    ret = aux_vec_node(p, p->dset->n);
-	    if (!p->err) {
-		p->err = filter_series(x, ret->v.xvec, p->dset, A, C, y0);
+	    if (outtype == VEC) {
+		ret = aux_vec_node(p, p->dset->n);
+		if (!p->err) {
+		    p->err = filter_series(x, ret->v.xvec, p->dset, A, C, y0);
+		}
+	    } else if (outtype == MAT) {
+		ret = aux_matrix_node(p);
+		if (!p->err) {
+		    ret->v.m = filter_matrix(X, A, C, y0, &(p->err));
+		}
 	    }
 	}
 

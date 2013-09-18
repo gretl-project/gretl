@@ -585,10 +585,11 @@ int block_resample_series (const double *x, double *y, int blocklen,
 }
 
 /**
- * filter_series:
+ * filter_vector:
  * @x: array of original data.
  * @y: array into which to write the result.
- * @dset: data set information.
+ * @t1: first element
+ * @t2: last element.
  * @A: vector for autoregressive polynomial.
  * @C: vector for moving average polynomial.
  * @y0: initial value of output series.
@@ -603,11 +604,9 @@ int block_resample_series (const double *x, double *y, int blocklen,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int filter_series (const double *x, double *y, const DATASET *dset, 
-		   gretl_vector *A, gretl_vector *C, double y0)
+static int filter_vector (const double *x, double *y, int t1, int t2, 
+			  gretl_vector *A, gretl_vector *C, double y0)
 {
-    int t1 = dset->t1;
-    int t2 = dset->t2;
     int t, s, i, n;
     int amax, cmax;
     double xlag, coef, *e;
@@ -632,11 +631,6 @@ int filter_series (const double *x, double *y, const DATASET *dset,
 	    return E_NONCONF;
 	}
     }
-
-    err = series_adjust_sample(x, &t1, &t2);
-    if (err) {
-	return err;
-    } 
 
     n = t2 - t1 + 1;
     e = malloc(n * sizeof *e);
@@ -697,6 +691,99 @@ int filter_series (const double *x, double *y, const DATASET *dset,
     free(e);
 
     return err;
+}
+
+/**
+ * filter_series:
+ * @x: array of original data.
+ * @y: array into which to write the result.
+ * @dset: data set information.
+ * @A: vector for autoregressive polynomial.
+ * @C: vector for moving average polynomial.
+ * @y0: initial value of output series.
+ *
+ * Filters x according to y_t = C(L)/A(L) x_t.  If the intended
+ * AR order is p, @A should be a vector of length p.  If the 
+ * intended MA order is q, @C should be vector of length (q+1), 
+ * the first entry giving the coefficient at lag 0.  However, if 
+ * @C is NULL this is taken to mean that the lag-0 MA coefficient 
+ * is unity (and all others are zero).
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int filter_series (const double *x, double *y, const DATASET *dset, 
+		   gretl_vector *A, gretl_vector *C, double y0)
+{
+    int t1 = dset->t1;
+    int t2 = dset->t2;
+    int err;
+
+    err = series_adjust_sample(x, &t1, &t2);
+    if (err) {
+	return err;
+    } 
+
+    err = filter_vector(x, y, dset->t1, dset->t2, A, C, y0);
+
+    return err;
+}
+
+/**
+ * filter_matrix:
+ * @X: matrix of original data.
+ * @Y: result matrix (newly allocated).
+ * @A: vector for autoregressive polynomial.
+ * @C: vector for moving average polynomial.
+ * @y0: initial value of output series.
+ *
+ * Filters the columns of x according to y_t = C(L)/A(L) x_t.  If the
+ * intended AR order is p, @A should be a vector of length p.  If the
+ * intended MA order is q, @C should be vector of length (q+1), the
+ * first entry giving the coefficient at lag 0.  However, if @C is
+ * NULL this is taken to mean that the lag-0 MA coefficient is unity
+ * (and all others are zero).
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+gretl_matrix *filter_matrix (gretl_matrix *X, gretl_vector *A, gretl_vector *C, 
+			     double y0, int *err)
+{
+    int r = X->rows;
+    int c = X->cols;
+    gretl_matrix *Y = NULL;
+    int j, i, ini;
+    double *a = NULL, *b = NULL;
+
+    Y = gretl_matrix_alloc(r, c);
+    a = malloc(r * sizeof *a);
+    b = malloc(r * sizeof *b);
+
+    if (Y == NULL || a == NULL || b == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    ini = 0;
+    for (j=0; j<c; j++) {
+	for (i=0; i<r; i++) {
+	    a[i] = gretl_matrix_get(X, i, j);
+	}
+	*err = filter_vector(a, b, 0, r-1, A, C, y0);
+	if (*err) {
+	    break;
+	} else {
+	    for (i=0; i<r; i++) {
+		gretl_matrix_set(Y, i, j, b[i]);
+	    }
+	}
+    }
+
+    free(a);
+    free(b);
+
+    return Y;
 }
 
 /**
