@@ -1348,6 +1348,9 @@ static void print_stringvals_for_var (const DATASET *dset, int v, PRN *prn)
 
     for (t=dset->t1; t<=dset->t2; t++) {
 	s = series_get_string_val(dset, v, t);
+	if (s == NULL) {
+	    s = "(null)";
+	}
 	n = strlen(s);
 	if (ls + n > 78) {
 	    pputc(prn, '\n');

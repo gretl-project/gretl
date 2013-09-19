@@ -146,7 +146,7 @@ Here are a few simple examples of potentially valid filter options
 --filter=!missing(income)
 
 # 5. compound condition
---filter="x < 100 && (y > 0 || z > 0)"
+--filter="x < 100 && (x > 0 || y > 0)"
 \end{code}
 
 Note that if you are comparing against a string constant (as in
@@ -154,6 +154,10 @@ example 3 above) it is necessary to put the string in ``escaped''
 double-quotes (each double-quote preceded by a backslash) so the
 interpreter knows that \texttt{F} is not supposed to be the name of a
 variable.
+
+It is safest to enclose the whole filter expression in double quotes,
+however this is not strictly required unless the expression contains
+spaces or the equals sign.
 
 In general, an error is flagged if a missing value is encountered in
 a series referenced in a filter expression. This is because the

@@ -4440,35 +4440,6 @@ static int lib_clear_data (ExecState *s, DATASET *dset)
     return err;
 }
 
-#define REV_EARLIEST (-2)
-#define REV_LATEST (-3)
-
-static int join_revision_date (const char *s, const DATASET *dset,
-			       int *err)
-{
-    int d = -1;
-
-    if (!strcmp(s, "earliest")) {
-	return REV_EARLIEST;
-    } else if (!strcmp(s, "latest")) {
-	return REV_LATEST;
-    }
-
-    if (integer_string(s)) {
-	d = atoi(s);
-    } else if (gretl_is_scalar(s)) {
-	d = gretl_scalar_get_value(s, NULL);
-    } else {
-	*err = E_PARSE;
-    }
-
-    if (!*err && d <= 0) {
-	*err = E_PARSE;
-    }
-
-    return d;
-}
-
 static int join_aggregation_method (const char *s, int *seqval,
 				    char **auxname, int *err)
 {
@@ -4601,15 +4572,14 @@ static int lib_join_data (ExecState *s,
 			  PRN *prn)
 {
     gretlopt opts[] = { 
-	OPT_I, /* inner key(s) */
-	OPT_O, /* outer key(s) */
-	OPT_F, /* filter */
-	OPT_A, /* aggregation */
-	OPT_D, /* "data" spec */
-	OPT_R, /* revision spec (real-time) */ 
-	OPT_T, /* "timecols" format */ 
-	OPT_K, /* outer time-key name,format */
-	OPT_X, /* list of time/date columns */
+	OPT_I, /* ikey: inner key(s) */
+	OPT_O, /* okey: outer key(s) */
+	OPT_F, /* filter: filter expression */
+	OPT_A, /* aggr: aggregation method */
+	OPT_D, /* data: "payload" spec */
+	OPT_K, /* tkey: outer time-key name,format */
+	OPT_X, /* timecols: list of time/date columns */
+	OPT_T, /* timecol-fmt: format for "timecols" */ 
 	0 
     };
     const char *param;
@@ -4620,16 +4590,7 @@ static int lib_join_data (ExecState *s,
     int *ikeyvars = NULL;
     int aggr = 0, seqval = 0;
     int tseries = 0;
-    int revdate = 0;
     int i, err = 0;
-
-    if (opt & OPT_R) {
-	/* --rev implies special handling of --filter and --aggr,
-	   so these cannot be specified manually */
-	if (opt & (OPT_A | OPT_F)) {
-	    return E_BADOPT;
-	}
-    }
 
     if (opt & OPT_K) {
 	/* --tkey implies special handling of keys */
@@ -4687,9 +4648,6 @@ static int lib_join_data (ExecState *s,
 	    } else if (jopt == OPT_D) {
 		/* string specifying the wanted data series */
 		dataname = gretl_strdup(param);
-	    } else if (jopt == OPT_R) {
-		/* string specifying the wanted revision */
-		revdate = join_revision_date(param, dset, &err);
 	    } else if (jopt == OPT_K) {
 		/* string specifying outer time key */
 		okey = gretl_strdup(param);
@@ -4701,25 +4659,6 @@ static int lib_join_data (ExecState *s,
 		timecolfmt = gretl_strdup(param);
 	    }
 	}
-    }
-
-    if (!err) {
-	if (revdate > 0) {
-	    /* A positive value of revdate implies 
-	       --filter="pubperiod<=revdate" and --aggr=max(pubperiod)
-	    */
-	    aggr = AGGR_MAX;
-	    auxname = gretl_strdup("pubperiod");
-	    filter = gretl_strdup_printf("pubperiod<=%d", revdate);
-	} else if (revdate == REV_EARLIEST) {
-	    /* --rev="earliest" */
-	    aggr = AGGR_MIN;
-	    auxname = gretl_strdup("pubperiod");
-	} else if (revdate == REV_LATEST) {
-	    /* --rev="latest" */
-	    aggr = AGGR_MAX;
-	    auxname = gretl_strdup("pubperiod");
-	}	    
     }
 
     if (!err && okey != NULL && ikeyvars == NULL && !(opt & OPT_K)) {

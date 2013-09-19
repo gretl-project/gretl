@@ -12080,15 +12080,23 @@ static int save_generated_var (parser *p, PRN *prn)
 	if (p->lh.obs >= 0) {
 	    /* target is actually a specific observation in a series */
 	    t = p->lh.obs;
-	    if (r->t == NUM) {
+	    if (series_has_string_table(p->dset, v)) {
+		if (r->t == STR) {
+		    p->err = series_set_string_val(p->dset, v, t, r->v.str);
+		} else {
+		    gretl_errmsg_sprintf(_("type error: %s is string-valued"), 
+					 p->lh.name);
+		    p->err = E_TYPES;
+		}
+	    } else if (r->t == NUM) {
 		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, NUM, p);
 	    } else if (r->t == MAT) {
 		Z[v][t] = xy_calc(Z[v][t], r->v.m->val[0], p->op, NUM, p);
-	    } else if (r->t == STR) {
-		p->err = series_set_string_val(p->dset, v, t, r->v.str);
 	    }
-	    strcpy(p->dset->varname[v], p->lh.name);
-	    set_dataset_is_changed();
+	    if (p->err == 0) {
+		strcpy(p->dset->varname[v], p->lh.name);
+		set_dataset_is_changed();
+	    }
 	} else if (p->flags & P_LHSCAL) {
 	    /* modifying existing scalar */
 	    x = gretl_scalar_get_value(p->lh.name, NULL);

@@ -3013,42 +3013,42 @@ struct jr_row_ {
 typedef struct jr_row_ jr_row;
 
 struct obskey_ {
-    char *timefmt;
-    int keycol;
-    int m_means_q;
-    int convert;
+    char *timefmt; /* time format, as in strptime */
+    int keycol;    /* the column holding the outer time-key */
+    int m_means_q; /* "monthly means quarterly" */
+    int convert;   /* flag for conversion from numeric to string */
 };
 
 typedef struct obskey_ obskey;
 
 struct joiner_ {
     int n_rows;     /* number of rows in data table */
-    int n_keys;     /* number of keys used (1 or 2) */
-    int n_unique;   /* number of unique keys found on right, primary key */
+    int n_keys;     /* number of keys used (0, 1 or 2) */
+    int n_unique;   /* number of unique primary key values on right */
     jr_row *rows;   /* array of table rows */
     int *keys;      /* array of unique (primary) key values as integers */
     int *key_freq;  /* counts of occurrences of (primary) key values */
-    int *key_row;   /* record of starting row in joiner row for primary keys */
+    int *key_row;   /* record of starting row in joiner table for primary keys */
     int str_keys;   /* flag for string comparison of primary keys */
     int str_keys2;  /* flag for string comparison of secondary keys */
-    const int *l_keyno; /* list of ikey IDs in lhs dset */
-    const int *r_keyno; /* list of okey IDs in rhs dset */
+    const int *l_keyno; /* list of key columns in left-hand dataset */
+    const int *r_keyno; /* list of key columns in right-hand dataset */
     AggrType aggr;    /* aggregation method for 1:n joining */
-    int seqval;       /* aux. sequence number for aggregation */
-    int auxcol;       /* aux. data column for aggregation */
+    int seqval;       /* sequence number for aggregation */
+    int auxcol;       /* auxiliary data column for aggregation */
     int valcol;       /* column of RHS dataset holding payload */
     obskey *auto_keys; /* struct to hold info on obs-based key(s) */
-    DATASET *l_dset;   /* the main (left-hand) dataset */
+    DATASET *l_dset;   /* the left-hand or inner dataset */
     DATASET *r_dset;   /* the temporary CSV dataset */
 };
 
 typedef struct joiner_ joiner;
 
 struct jr_filter_ {
-    const char *expr;
-    const double *val;
-    char *vname1;
-    char *vname2;
+    const char *expr;  /* expression to be run through "genr" */
+    const double *val; /* result of evaluating @expr */
+    char *vname1;      /* first right-hand variable name */
+    char *vname2;      /* second right-hand variable name */
 };
 
 typedef struct jr_filter_ jr_filter;
@@ -3097,6 +3097,9 @@ static int join_row_wanted (jr_filter *filter, int i)
     return ret;
 }
 
+/* convert a numerical value to string for use with
+   strptime as time-key */
+
 static int convert_to_string (char *targ, double x)
 {
     if (na(x)) {
@@ -3117,6 +3120,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 {
     char *tfmt = jr->auto_keys->timefmt;
     int tcol = jr->auto_keys->keycol;
+    int pd = jr->l_dset->pd;
     struct tm t = {0};
     char sconv[32];
     const char *s;
@@ -3145,11 +3149,11 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 
     if (test == NULL || *test != '\0') {
 	err = E_DATA;
-	if (j == 0 && test != NULL && jr->l_dset->pd == 12) {
-	    /* if we're on the first row of the filtered data, allow for
-	       the possibility that we got "excess precision", i.e.
-	       a daily date string when the left-hand dataset is
-	       monthly
+	if (j == 0 && test != NULL && (pd == 12 || pd == 4 || pd == 1)) {
+	    /* If we're looking at the first row of the filtered data,
+	       allow for the possibility that we got "excess
+	       precision", i.e. a daily date string when the left-hand
+	       dataset is monthly, quarterly or annual.
 	    */
 	    char *chk = strptime(s, "%Y-%m-%d", &t);
 
@@ -3194,7 +3198,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 		gretl_errmsg_sprintf("'%s' is not a valid date", s);
 		err = E_DATA;
 	    }
-	} else if (jr->l_dset->pd == 4) {
+	} else if (pd == 4) {
 	    /* map from month on right to quarter on left */
 	    min = (int) ceil(min / 3.0);
 	}
@@ -3208,7 +3212,11 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     return err;
 }
 
-static int verify_filter (jr_filter *filter, DATASET *r_dset, int *nrows)
+/* evaluate the filter expression provided by the user, and if it works
+   OK count the number of rows on which the filter returns non-zero 
+*/
+
+static int evaluate_filter (jr_filter *filter, DATASET *r_dset, int *nrows)
 {
     char *line;
     int i, err = 0;
@@ -3239,8 +3247,7 @@ static int verify_filter (jr_filter *filter, DATASET *r_dset, int *nrows)
     return err;
 }
 
-/* get an integer key value from a double, checking for
-   pathology */
+/* get an integer key value from a double, checking for pathology */
 
 static int dtoi (double x, int obs, int *err)
 {
@@ -3307,18 +3314,19 @@ static joiner *build_joiner (csvjoin *jspec,
 #endif
 
     if (filter != NULL) {
-	*err = verify_filter(filter, r_dset, &nrows);
+	*err = evaluate_filter(filter, r_dset, &nrows);
+	if (*err) {
+	    return NULL;
+	} else if (nrows == 0) {
+	    gretl_warnmsg_set(_("No matching data after filtering"));
+	    return NULL;
+	}
     }
 
 #if CDEBUG
     fprintf(stderr, "after filtering: dset->n = %d, nrows = %d\n",
 	    r_dset->n, nrows);
 #endif
-
-    if (*err || nrows == 0) {
-	fprintf(stderr, "No matching data after filtering\n");
-	return NULL;
-    }
 
     jr = joiner_new(nrows);
 
@@ -3573,6 +3581,11 @@ static int seqval_out_of_bounds (joiner *jr, int seqmax)
     }
 }
 
+/* do a binary search among the sorted array of unique right-hand key
+   values, @vals, for the left-hand key value @targ; return the
+   position among @vals at which @targ matches, or -1 if not found.
+*/
+
 static int binsearch (int targ, const int *vals, int n, int offset)
 {
     int m = n/2;
@@ -3588,8 +3601,47 @@ static int binsearch (int targ, const int *vals, int n, int offset)
     }
 }
 
+/* In some cases we can figure out what aggr_value() should return
+   just based on the number of matches, @n, and the characteristics
+   of the joiner. If so, write the value into @x and return 1; if
+   nor, return 0.
+*/
 
-#define min_max_cond(x,y,a) ((a==AGGR_MAX && x>y) || (a!=AGGR_MAX && x<y))
+static int aggr_val_determined (joiner *jr, int n, double *x, int *err)
+{
+    if (jr->aggr == AGGR_COUNT) {
+	/* just return the number of matches */
+	*x = n;
+	return 1;
+    } else if (jr->aggr == AGGR_SEQ && seqval_out_of_bounds(jr, n)) {
+	/* out of bounds sequence index: return NA */
+	*x = NADBL;
+	return 1;
+    } else if (n > 1 && jr->aggr == AGGR_NONE) {
+	/* fail */
+	*err = E_DATA;
+	gretl_errmsg_set(_("You need to specify an aggregation "
+			   "method for a 1:n join"));
+	*x = NADBL;
+	return 1;
+    } else {
+	/* not enough information so far */
+	return 0;
+    }
+}
+
+#define min_max_cond(x,y,a) ((a==AGGR_MAX && x>y) || (a==AGGR_MIN && x<y))
+
+/* aggr_value: here we're working on a given row of the left-hand
+   dataset. The values @key and (if applicable) @key2 are the
+   left-hand keys for this row. We count the key-matches on the
+   right and apply an aggregation procedure if the user specified
+   one. We return the value that should be entered for the imported
+   series on this row.
+
+   Note: @xmatch and @auxmatch are workspace arrays allocated by
+   the caller.
+*/
 
 static double aggr_value (joiner *jr, int key, int key2,
 			  double *xmatch, double *auxmatch, 
@@ -3597,7 +3649,7 @@ static double aggr_value (joiner *jr, int key, int key2,
 {
     double x, xa;
     int imin, imax, pos;
-    int i, n;
+    int i, n, ntotal;
 
     /* find the position of the inner (primary) key in the 
        array of unique outer key values */
@@ -3616,7 +3668,9 @@ static double aggr_value (joiner *jr, int key, int key2,
 	return jr->aggr == AGGR_COUNT ? 0 : NADBL;
     }
 
-    /* how many matches at @pos? */
+    /* how many matches at @pos? (must be at least 1 unless
+       something very bad has happened) 
+    */
     n = jr->key_freq[pos];
 
 #if CDEBUG > 1
@@ -3624,21 +3678,14 @@ static double aggr_value (joiner *jr, int key, int key2,
 #endif
 
     if (jr->n_keys == 1) {
-	if (jr->aggr == AGGR_COUNT) {
-	    /* simple, we're done */
-	    return n;
-	} else if (jr->aggr == AGGR_SEQ && seqval_out_of_bounds(jr, n)) {
-	    /* out of bounds sequence index */
-	    return NADBL;
-	} else if (n > 1 && jr->aggr == AGGR_NONE) {
-	    *err = E_DATA;
-	    gretl_errmsg_set(_("You need to specify an aggregation "
-			       "method for a 1:n join"));
-	    return NADBL;
+	/* if there's just a single key, we can figure some
+	   cases out already */
+	if (aggr_val_determined(jr, n, &x, err)) {
+	    return x;
 	}
     }
 
-    /* set the starting row in joiner rectangle */
+    /* set the first row for reading from the joiner rectangle */
     imin = jr->key_row[pos];
 
     if (imin < 0) {
@@ -3647,49 +3694,22 @@ static double aggr_value (joiner *jr, int key, int key2,
     }
 
     imax = imin + n;
-    n = 0; /* will now hold count of non-NA matches */
 
 #if CDEBUG > 1
     fprintf(stderr, "  aggregation row range: %d to %d\n", imin+1, imax);
 #endif
 
-    /* If we also have a secondary key, we need to find how
-       many instances of the secondary match fall under the
-       primary match. While we're at it fill out the array
-       @xmatch with non-missing values from the relevant
-       rows.
+    /* We now fill out the array @xmatch with non-missing values
+       from the matching outer rows. If we have a secondary key
+       we have to screen for matches on that as we go.
     */
 
-    if (jr->n_keys > 1) {
-	/* note: @totcount ignores the OK/NA distinction */
-	int totcount = 0;
+    n = 0;      /* will now hold count of non-NA matches */
+    ntotal = 0; /* will ignore the OK/NA distinction */
 
-	for (i=imin; i<imax; i++) {
-	    if (key2 == jr->rows[i].keyval2) {
-		totcount++;
-		x = jr->rows[i].val;
-		if (jr->auxcol) {
-		    xa = jr->rows[i].aux;
-		    if (!na(xa)) {
-			auxmatch[n] = xa;
-			xmatch[n++] = x;
-		    }
-		} else if (!na(x)) {
-		    xmatch[n++] = x;
-		}
-	    }		
-	}
-	if (jr->aggr == AGGR_COUNT) {
-	    return totcount;
-	} else if (totcount > 1 && jr->aggr == AGGR_NONE) {
-	    *err = E_DATA;
-	    gretl_errmsg_set(_("You need to specify an aggregation "
-			       "method for a 1:n join"));
-	    return NADBL;
-	}
-    } else {
-	/* just one key */
-	for (i=imin; i<imax; i++) {
+    for (i=imin; i<imax; i++) {
+	if (jr->n_keys == 1 || key2 == jr->rows[i].keyval2) {
+	    ntotal++;
 	    x = jr->rows[i].val;
 	    if (jr->auxcol) {
 		xa = jr->rows[i].aux;
@@ -3697,7 +3717,7 @@ static double aggr_value (joiner *jr, int key, int key2,
 		    /* we can't know the min/max of the aux var */
 		    *err = E_MISSDATA;
 		    return NADBL;
-		}
+		}		    
 		if (!na(xa)) {
 		    auxmatch[n] = xa;
 		    xmatch[n++] = x;
@@ -3705,13 +3725,20 @@ static double aggr_value (joiner *jr, int key, int key2,
 	    } else if (!na(x)) {
 		xmatch[n++] = x;
 	    }
+	}		
+    }
+
+    if (jr->n_keys > 1) {
+	/* we've already checked this for the 1-key case */
+	if (aggr_val_determined(jr, n, &x, err)) {
+	    return x;
 	}
     }
 
     x = NADBL;
 
     if (n == 0) {
-	; /* all obs. are NAs */
+	; /* all matched observations are NA */
     } else if (jr->aggr == AGGR_NONE) {
 	x = xmatch[0];
     } else if (jr->aggr == AGGR_SEQ) {
@@ -3735,7 +3762,7 @@ static double aggr_value (joiner *jr, int key, int key2,
 	    }
 	    x = xmatch[idx];
 	} else {
-	    /* using the target variable itself */
+	    /* max/min of the target variable itself */
 	    x = xmatch[0];
 	    for (i=1; i<n; i++) {
 		if (min_max_cond(xmatch[i], x, jr->aggr)) {
@@ -3844,7 +3871,8 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
     double *xmatch = NULL;
     double *auxmatch = NULL;
     int strcheck = 0;
-    int i, nmax, key, key2 = 0;
+    int key, key2 = 0;
+    int i, t, nmax;
     int err = 0;
 
 #if CDEBUG
@@ -3860,6 +3888,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
     }
 
     if (nmax > 0) {
+	/* allocate workspace for aggregation */
 	xmatch = malloc(nmax * sizeof *xmatch);
 	if (xmatch == NULL) {
 	    return E_ALLOC;
@@ -3874,24 +3903,28 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
     }
 
     if (jr->valcol > 0) {
+	/* check for the case where both the target variable on the
+	   left and the series to be imported are string-valued
+	*/
 	rst = series_get_string_table(jr->r_dset, jr->valcol);
 	lst = series_get_string_table(jr->l_dset, v);
 	strcheck = (rst != NULL && lst != NULL);
     }
 
-    /* run through the observations in the current sample range of
-       the left-hand dataset, looking for key-matches on the right
+    /* run through the rows in the current sample range of the
+       left-hand dataset and determine the value that should be
+       imported from the right
     */
 
-    for (i=dset->t1; i<=dset->t2 && !err; i++) {
+    for (t=dset->t1; t<=dset->t2 && !err; t++) {
 	int missing = 0;
 	double z;
 
-	err = get_inner_key_values(jr, i, ikeyvars, &key, &key2, &missing);
+	err = get_inner_key_values(jr, t, ikeyvars, &key, &key2, &missing);
 	if (err) {
 	    break;
 	} else if (missing) {
-	    dset->Z[v][i] = NADBL;
+	    dset->Z[v][t] = NADBL;
 	    continue;
 	}
 
@@ -3909,7 +3942,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 	    z = maybe_adjust_string_code(rst, lst, z, &err);
 	}
 	if (!err) {
-	    dset->Z[v][i] = z;
+	    dset->Z[v][t] = z;
 	}
     }
 
@@ -3968,6 +4001,13 @@ static jr_filter *join_filter_new (int *err)
     return filter;
 }
 
+/* Allocate the filter struct and crawl along the filter expression,
+   @s, looking for up to two names of right-hand columns. We need to
+   record these names so we can be sure to read the associated column
+   data, or else the filter won't work. We could increase the maximum
+   number of column-names to store but maybe 2 is enough.
+*/
+
 static jr_filter *make_genr_filter (const char *s, int *err)
 {
     jr_filter *filter = join_filter_new(err);
@@ -4002,14 +4042,12 @@ static jr_filter *make_genr_filter (const char *s, int *err)
     return filter;
 }
 
-/* Add a series to hold the join data and return its
-   ID number, or -1 on failure. We come here only if
-   the target series is not already present in the
-   left-hand dataset.
+/* Add a series to hold the join data and return its ID number, or -1
+   on failure. We come here only if the target series is not already
+   present in the left-hand dataset.  
 */
 
-static int get_target_varnum (const char *vname,
-			      DATASET *dset,
+static int get_target_varnum (const char *vname, DATASET *dset,
 			      int *err)
 {
     int i, targ = -1;
@@ -4027,10 +4065,10 @@ static int get_target_varnum (const char *vname,
     return targ;
 }
 
-/* Parse either one or two elements (time-key column name, 
-   time format string) out of @s. If both elements are
-   present they must be comma-separated; if only the second
-   element is present it must be preceded by a comma.
+/* Parse either one or two elements (time-key column name, time format
+   string) out of @s. If both elements are present they must be
+   comma-separated; if only the second element is present it must be
+   preceded by a comma.  
 */
 
 static int process_time_key (const char *s, char *tkeyname,
@@ -4067,9 +4105,6 @@ static int process_time_key (const char *s, char *tkeyname,
    @s. If @s contains a comma, we accept a zero-length name on either
    the left or the right -- but not both -- as indicating that we
    should use the corresponding inner key name.
-
-   If opt contains OPT_K (--tkey) we assume there's just one 
-   column name here.
 */
 
 static int process_outer_key (const char *s, int n_keys, 
@@ -4079,10 +4114,7 @@ static int process_outer_key (const char *s, int n_keys,
     int n_okeys = 0;
     int err = 0;
 
-    if (opt & OPT_K) {
-	/* time-key spec */
-	strncat(name1, s, CSVSTRLEN - 1);
-    } else if (strchr(s, ',') == NULL) {
+    if (strchr(s, ',') == NULL) {
 	/* just one outer key */
 	strncat(name1, s, CSVSTRLEN - 1);
 	n_okeys = 1;
@@ -4120,6 +4152,10 @@ static int process_outer_key (const char *s, int n_keys,
     return err;
 }
 
+/* for type-checking purposes, determine if the user-specified 
+   aggregation method is bound to involve numerical operations
+*/
+
 static int numerical_aggr (joiner *jr, int aggr)
 {
     if (aggr == AGGR_SUM || aggr == AGGR_AVG) {
@@ -4133,9 +4169,9 @@ static int numerical_aggr (joiner *jr, int aggr)
 
 #define lr_mismatch(l,r) ((l > 0 && r == 0) || (r > 0 && l == 0))
 
-/* Run some checks pertaining to the nature of the payload
+/* Run some checks pertaining to the nature of the "payload"
    (string-valued vs numeric) in relation to the aggregation
-   method specified, and the nature of the existing left-hand
+   method specified and the nature of the existing left-hand
    series, if any.
 */
 
@@ -4287,6 +4323,14 @@ static int auto_keys_check (const DATASET *l_dset,
 
     return err;
 }
+
+/* Crawl along the string containing comma-separated names of columns
+   that are to be treated as "timecols". For each name, look for a
+   match among the names of columns selected from the CSV file for
+   some role in the join operation (data, key or whatever). Note that
+   it's not considered an error if there's no match for a given
+   "timecol" name; we just ignore that name.  
+*/
 
 static int process_timecols (csvjoin *jspec, const char *s)
 {
