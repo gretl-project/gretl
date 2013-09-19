@@ -167,10 +167,12 @@
 	    printf "Got error %d (%s)\n", err, errmsg(err);
 	  endif
 	</code>
-	<seelist>
-	  <cmdref targ="catch"/>
-	  <fncref targ="errmsg"/>
-	</seelist>
+	<para>
+	  <seelist>
+	    <cmdref targ="catch"/>
+	    <fncref targ="errmsg"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -2407,6 +2409,33 @@
 	  <seelist> 
 	    <fncref targ="lastobs"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="fixname" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">rawname</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Intended for use in connection with the <cmdref
+	  targ="join"/> command.  Returns the result of converting
+	  <argname>rawname</argname> to a valid gretl identifier,
+	  which must start with a letter, contain nothing but (ASCII)
+	  letters, digits and the underscore character, and must not
+	  exceed 31 characters. The rules used in conversion are:
+	</para>
+	<para>
+	  1. Skip any leading non-letters.
+	</para>
+	<para>
+	  2. Until the 31-character limit is reached or the input is
+	  exhausted: transcribe <quote>legal</quote> characters; skip
+	  <quote>illegal</quote> characters apart from spaces; and
+	  replace one or more consecutive spaces with an underscore,
+	  unless the last character transcribed is an underscore in
+	  which case space is skipped.
 	</para>
       </description>
     </function>

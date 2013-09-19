@@ -89,9 +89,11 @@ conversion are:
 
 \begin{enumerate}
 \item Skip any leading non-letters.
-\item Thereafter, skip any ``illegal'' characters apart from spaces;
-  one or more consecutive spaces are replaced by an underscore.
-\item Stop when we reach 31 characters or the input is exhausted.
+\item Until the 31-character is reached or the input is exhausted:
+  transcribe ``legal'' characters; skip ``illegal'' characters apart
+  from spaces; and replace one or more consecutive spaces with an
+  underscore, unless the last character transcribed is an underscore
+  in which case space is skipped.
 \end{enumerate}
 
 In the unlikely event that this policy yields an empty string, we
@@ -623,7 +625,7 @@ for \texttt{mroz87.gdt}.\footnote{One other change is needed: in
 
 Up to this point all the data we have considered have been
 cross-sectional. Some different issues arise in the case of
-time-series data. 
+time-series data.
 
 Suppose our left-hand dataset is recognized by gretl as time series
 with a supported frequency (annual, quarterly, monthly, weekly, daily
@@ -643,15 +645,19 @@ The \texttt{join} command provides a simple (but limited) default for
 extracting period information from the outer datafile, plus an
 option that can be used if the default is not applicable, as follows.
 \begin{itemize}
-\item The default assumption is that time key appears in the first
-  column, and conforms to the ISO 8601 standard: this covers daily
-  dates (format \texttt{YYYY-MM-DD}, for example 2013-01-31), monthly
-  observations (format \texttt{YYYY-MM}, for example 2013-03) and
-  annual observations (format \texttt{YYYY}, 4-digit year).
+\item The default assumptions are: (1) the time key appears in the
+  first column; (2) the heading of this column is either left blank or
+  is one of \texttt{obs}, \texttt{date}, \texttt{year},
+  \texttt{period}, \texttt{observation}, or \verb|observation_date|
+  (on a case-insensitive comparison); and (3) the time format conforms
+  to the ISO 8601 standard. This standard covers daily dates (format
+  \texttt{YYYY-MM-DD}, for example 2013-01-31), monthly observations
+  (format \texttt{YYYY-MM}, for example 2013-03) and annual
+  observations (format \texttt{YYYY}, 4-digit year).
 \item If dates do not appear in the first column of the outer file, or
-  if the format is not as described above, the \option{tkey} option
-  can be used to indicate which column should be used and/or what
-  format should be assumed.
+  if the column heading or format is not as just described, the
+  \option{tkey} option can be used to indicate which column should be
+  used and/or what format should be assumed.
 \end{itemize}
 
 \subsection{Setting the time-key column and/or format}
@@ -666,6 +672,7 @@ it should be preceded by a comma. Some examples:
 \begin{code}
 --tkey="Period,%m/%d/%Y"
 --tkey="Period"
+--tkey="obsperiod"
 --tkey=",%Ym%m"
 \end{code}
 
@@ -673,8 +680,12 @@ The first of these applies if \texttt{Period} is not the first column
 on the right, and dates are given in the US format of month, day,
 year, separated by slashes. The second implies that although
 \texttt{Period} is not the first column, the date format is ISO 8601.
-The third implies that dates are in the first column but are given
-in the non-standard format year, ``\texttt{m}'', month.
+The third again implies that the date format is OK; here the name is
+required even if \texttt{obsperiod} is the first column since this
+heading is not one recognized by gretl's heuristic. The last example
+implies that dates are in the first column (with one of the recognized
+headings), but are given in the non-standard format year,
+``\texttt{m}'', month.
 
 The date format string should be composed using the codes employed by
 the POSIX function \texttt{strptime}; Table \ref{tab:join-datefmt}
@@ -688,32 +699,29 @@ contains a list of the most-often used codes.\footnote{The
   \begin{tabular}{rp{0.7\textwidth}}
     \textbf{Code} & \textbf{Meaning} \\
     \hline
-    \verb|%%| &     The \% character. \\
-    \verb|%C| &     The century number (0-99).\\
-    \verb|%d| or \verb|%e| & The day of month (1-31). \\
+    \verb|%%| & The \% character. \\
+    \verb|%b| & The month name according to the current locale, in 
+    abbreviated or full.\\
+    \verb|%C| & The century number (0--99).\\
+    \verb|%d| & The day of month (1--31). \\
     \verb|%D| & Equivalent to \verb|%m/%d/%y|.  (This is the American
     style date, very  confusing  to  non-Americans, especially
     since \verb|%d/%m/%y| is widely used in Europe.  The 
     ISO 8601 standard format is \verb|%Y-%m-%d|.) \\
-    \verb|%H| &  The hour (0-23).\\
-    \verb|%j| &  The day number in the year (1-366).\\
-    \verb|%m| &  The month number (1-12).\\
-    \verb|%M| &  The minute (0-59).\\
-    \verb|%n| &  Arbitrary whitespace.\\
-    \verb|%q| &  The quarter (1-4).\\
-    \verb|%R| &  Equivalent to \verb|%H:%M|.\\
-    \verb|%S| &  The second (0-60; 60 may occur for leap seconds).\\
-    \verb|%t| &  Arbitrary whitespace.\\
-    \verb|%T| &  Equivalent to \verb|%H:%M:%S|.\\
-    \verb|%w| &  The weekday number (0-6) with Sunday = 0.\\
-    \verb|%y| &  The year within century (0-99).  When a century is
-    not otherwise specified, values in  the  range  69-99  refer
-    to  years  in  the  twentieth  century (1969-1999);  values
-    in the range 00-68 refer to years in the twenty-first century (2000-2068).\\
+    \verb|%H| & The hour (0--23).\\
+    \verb|%j| & The day number in the year (1--366).\\
+    \verb|%m| & The month number (1--12).\\
+    \verb|%n| & Arbitrary whitespace.\\
+    \verb|%q| & The quarter (1--4).\\
+    \verb|%w| & The weekday number (0--6) with Sunday = 0.\\
+    \verb|%y| & The year within century (0--99).  When a century is
+    not otherwise specified, values in  the  range  69--99  refer
+    to  years  in  the  twentieth  century (1969--1999);  values
+    in the range 00--68 refer to years in the twenty-first century (2000--2068).\\
     \verb|%Y| &  The year, including century (for example, 1991).\\
     \hline
   \end{tabular}
-  \caption{Date formats}
+  \caption{Date format codes}
   \label{tab:join-datefmt}
 \end{table}
 
