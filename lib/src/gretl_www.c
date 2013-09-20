@@ -199,6 +199,30 @@ static void stop_progress_bar (urlinfo *u)
     }
 }
 
+static int grow_read_buffer (urlinfo *u, size_t bgot)
+{
+    size_t newlen = 2 * u->buflen;
+    char *newbuf;
+
+    while (newlen < u->datalen + bgot) {
+	newlen *= 2;
+    }
+
+    newbuf = realloc(u->getbuf, newlen);
+
+    if (newbuf == NULL) {
+	return E_ALLOC;
+    } else {
+	size_t addlen = newlen - u->buflen;
+
+	/* zero the additional memory chunk */
+	memset(newbuf + u->datalen, 0, addlen);
+	u->getbuf = newbuf;
+	u->buflen = newlen;
+	return 0;
+    }
+}
+
 static size_t write_func (void *buf, size_t size, size_t nmemb, 
 			  void *data)
 {
@@ -233,16 +257,11 @@ static size_t write_func (void *buf, size_t size, size_t nmemb,
 	    }
 	    u->buflen = WBUFSIZE;
 	} 
-	while (u->datalen + bgot >= u->buflen) {
-	    size_t newlen = 2 * u->buflen;
-	    char *newbuf = realloc(u->getbuf, newlen);
-
-	    if (newbuf == NULL) {
-		u->err = E_ALLOC;
+	if (u->datalen + bgot > u->buflen) {
+	    u->err = grow_read_buffer(u, bgot);
+	    if (u->err) {
 		return 0;
 	    }
-	    u->getbuf = newbuf;
-	    u->buflen = newlen;
 	}
 	memcpy(u->getbuf + u->datalen, buf, bgot);
 	ret = nmemb;
