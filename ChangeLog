@@ -19,6 +19,7 @@ version 1.9.13, in progress
   compression
 - setnote() function: add an entry to the function reference
 - mshape() function: allow scalar as first argument
+- filter() function: allow matrix as first argument
 - GUI: add stacked-bar option for FEVD plot in connection
   with VAR estimation
 - Fix a few small GUI memory leaks

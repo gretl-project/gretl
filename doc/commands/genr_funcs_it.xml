@@ -2170,16 +2170,15 @@
 
     <function name="filter" section="filters" output="series">
       <fnargs>
-	<fnarg type="series">x</fnarg>
+	<fnarg type="series-or-mat">x</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">a</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">b</fnarg>
 	<fnarg optional="true" type="scalar">y0</fnarg>
       </fnargs>
       <description>
 	<para>
-	Computes an ARMA-like filtering of the
-	series <argname>x</argname>. The transformation can be written
-	as
+	Applica un filtro di tipo ARMA all'argomento
+	<argname>x</argname>. In formule, la trasformazione è
 	</para>
 	<para context="tex">
 	  \[ y_t = \sum_{i=0}^q a_i x_{t-i} + \sum_{i=i}^p b_i y_{t-i} \]
@@ -2195,36 +2194,43 @@
 	  <math>b</math><sub>p</sub> <math>y</math><sub>t-p</sub>
 	</para>
 	<para>
-	  The two arguments <argname>a</argname>
-	  and <argname>b</argname> are optional. They may be scalars,
-	  vectors or the keyword <lit>null</lit>.
+	  Se l'algomento <argname>x</argname> è una serie, il risultato
+	  sarà esso stesso una serie. Se invece <argname>x</argname>
+	  è una matrice con <math>T</math> righe e <math>k</math>
+	  colonne, il risultato sarà una matrice delle stesse dimensioni, in
+	  cui il filtraggio vien fatto colonna per colonna.
 	</para>
 	<para>
-	  If <argname>a</argname> is a scalar, this is used
-	  as <math>a</math><sub>0</sub> and implies <math>q=0</math>;
-	  if it is a vector of <math>q+1</math> elements, they contain
-	  the coefficients from <math>a</math><sub>0</sub>
-	  to <math>a</math><sub>q</sub>. If <argname>a</argname>
-	  is <lit>null</lit> or omitted, this is equivalent to
-	  setting <math>a</math><sub>0</sub><math>=1</math>
-	  and <math>q=0</math>.
+	  I due argomenti <argname>a</argname> e <argname>b</argname>
+	  sono opzionali. Possono essere scalari, vettori o la
+	  parola <lit>null</lit>.
 	</para>
 	<para>
-	  If <argname>b</argname> is a scalar, this is
-	  used as <math>b</math><sub>1</sub> and
-	  implies <math>p=1</math>; if it is a vector
-	  of <math>p</math> elements, they contain the coefficients
-	  from <math>b</math><sub>1</sub>
-	  to <math>b</math><sub>p</sub>. If <argname>b</argname>
-	  is <lit>null</lit> or omitted, this is equivalent to
-	  setting <math>B(L)=1</math>.
+	  Se <argname>a</argname> è uno scalare, viene usato come
+	  <math>a</math><sub>0</sub> e implica <math>q=0</math>; se è
+	  un vettore di <math>q+1</math> elementi, contiene i
+	  coefficienti da <math>a</math><sub>0</sub> ad
+	  <math>a</math><sub>q</sub>. Se <argname>a</argname> è
+	  <lit>null</lit> oppure omesso, è equivalente ad
+	  <math>a</math><sub>0</sub><math>=1</math> e
+	  <math>q=0</math>.
 	</para>
 	<para>
-	  The optional scalar argument <argname>y0</argname> is taken
-	  to represent all values of <math>y</math> prior to the
-	  beginning of sample (used only when <math>p>0</math>). If
-	  omitted, it is understood to be 0.  Pre-sample values
-	  of <argname>x</argname> are always assumed zero.
+	  Se <argname>b</argname> è uno scalare, viene usato come
+	  <math>b</math><sub>1</sub> ed implica <math>p=1</math>; se è
+	  un vettore di <math>p</math> elementi, essi sono
+	  interpretati come i coefficienti da
+	  <math>b</math><sub>1</sub> a <math>b</math><sub>p</sub>. Se
+	  <argname>b</argname> è <lit>null</lit> oppure omesso, è
+	  equivalente a <math>B(L)=1</math>.
+	</para>
+	<para>
+	  L'argomento scalare opzionale <argname>y0</argname>
+	  rappresenta i valori di <math>y</math> antecedenti
+	  all'inizio del campione (usato solo se <math>p>0</math>). Se
+	  omesso, si intende 0.  Valori di <argname>x</argname>
+	  antecedenti all'inizio del campione sono sempre considerati
+	  0.
 	</para>
 	<para>
 	  <seelist> 
@@ -2233,15 +2239,19 @@
 	    <fncref targ="fracdiff"/>
 	    <fncref targ="hpfilt"/>
 	    <fncref targ="movavg"/>
+	    <fncref targ="varsimul"/>
 	  </seelist>
 	</para>
 	<para>
-	  Example:
+	  Esempio:
 	</para>
 	<code>
 	  nulldata 5
 	  y = filter(index, 0.5, -0.9, 1)
 	  print index y --byobs
+	  x = seq(1,5)' ~ (1 | zeros(4,1))
+	  w = filter(x, 0.5, -0.9, 1)
+	  print x w
 	</code>
 	<para>
 	  produces
@@ -2254,6 +2264,22 @@
           3            3      0.27600   
           4            4      1.75160   
           5            5      0.92356   
+
+          x (5 x 2)
+           
+            1   1 
+            2   0 
+            3   0 
+            4   0 
+            5   0 
+           
+          w (5 x 2)
+           
+              -0.40000     -0.40000 
+                1.3600      0.36000 
+               0.27600     -0.32400 
+                1.7516      0.29160 
+               0.92356     -0.26244 
 	</code>
       </description>
     </function>

@@ -2307,16 +2307,15 @@
 
     <function name="filter" section="filters" output="series">
       <fnargs>
-	<fnarg type="series">x</fnarg>
+	<fnarg type="series-or-mat">x</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">a</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">b</fnarg>
 	<fnarg optional="true" type="scalar">y0</fnarg>
       </fnargs>
       <description>
 	<para>
-	Computes an ARMA-like filtering of the
-	series <argname>x</argname>. The transformation can be written
-	as
+	Computes an ARMA-like filtering of the argument
+	<argname>x</argname>. The transformation can be written as
 	</para>
 	<para context="tex">
 	  \[ y_t = \sum_{i=0}^q a_i x_{t-i} + \sum_{i=i}^p b_i y_{t-i} \]
@@ -2332,8 +2331,15 @@
 	  <math>b</math><sub>p</sub> <math>y</math><sub>t-p</sub>
 	</para>
 	<para>
-	  The two arguments <argname>a</argname>
-	  and <argname>b</argname> are optional. They may be scalars,
+	  If argument <argname>x</argname> is a series, the result
+	  will be itself a series. Otherwise, if <argname>x</argname>
+	  is a matrix with <math>T</math> rows and <math>k</math>
+	  columns, the result will be a matrix of the same size, in
+	  which the filtering is performed column by column.
+	</para>
+	<para>
+	  The two arguments <argname>a</argname> and
+	  <argname>b</argname> are optional. They may be scalars,
 	  vectors or the keyword <lit>null</lit>.
 	</para>
 	<para>
@@ -2370,6 +2376,7 @@
 	    <fncref targ="fracdiff"/>
 	    <fncref targ="hpfilt"/>
 	    <fncref targ="movavg"/>
+	    <fncref targ="varsimul"/>
 	  </seelist>
 	</para>
 	<para>
@@ -2379,6 +2386,9 @@
 	  nulldata 5
 	  y = filter(index, 0.5, -0.9, 1)
 	  print index y --byobs
+	  x = seq(1,5)' ~ (1 | zeros(4,1))
+	  w = filter(x, 0.5, -0.9, 1)
+	  print x w
 	</code>
 	<para>
 	  produces
@@ -2391,6 +2401,22 @@
           3            3      0.27600   
           4            4      1.75160   
           5            5      0.92356   
+
+          x (5 x 2)
+           
+            1   1 
+            2   0 
+            3   0 
+            4   0 
+            5   0 
+           
+          w (5 x 2)
+           
+              -0.40000     -0.40000 
+                1.3600      0.36000 
+               0.27600     -0.32400 
+                1.7516      0.29160 
+               0.92356     -0.26244 
 	</code>
       </description>
     </function>
