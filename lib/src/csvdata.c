@@ -1673,72 +1673,84 @@ static int non_numeric_check (csvdata *c, PRN *prn)
 	}
     }
 
-    if (nn > 0) {
-	list = gretl_list_new(nn);
-	if (list == NULL) {
-	    err = E_ALLOC;
+    if (nn == 0) {
+	return 0; /* nothing to be done */
+    }
+
+    list = gretl_list_new(nn);
+    if (list == NULL) {
+	return E_ALLOC;
+    }
+
+    j = 1;
+    for (i=1; i<c->dset->v; i++) {
+	for (t=0; t<c->dset->n; t++) {
+	    if (c->dset->Z[i][t] == NON_NUMERIC) {
+		list[j++] = i;
+		break;
+	    }
 	}
     }
 
-    if (list != NULL) {
-	j = 1;
-	for (i=1; i<c->dset->v; i++) {
-	    for (t=0; t<c->dset->n; t++) {
-		if (c->dset->Z[i][t] == NON_NUMERIC) {
-		    list[j++] = i;
-		    break;
-		}
-	    }
-	}
-
 #if CDEBUG > 1
-	printlist(list, "non-numeric vars list");
+    printlist(list, "non-numeric vars list");
 #endif
 
-	for (i=1; i<=list[0]; i++) {
-	    double nnfrac;
-	    int nnon = 0;
-	    int nok = 0;
-	    int tn = 0;
-	    int v = list[i];
+    for (i=1; i<=list[0]; i++) {
+	double nnfrac;
+	int nnon = 0;
+	int nok = 0;
+	int tn = 0;
+	int v = list[i];
 
-	    series_set_flag(c->dset, v, VAR_DISCRETE);
+	series_set_flag(c->dset, v, VAR_DISCRETE);
 
-	    for (t=0; t<c->dset->n; t++) {
-		if (c->dset->Z[v][t] == NON_NUMERIC) {
-		    if (!tn) tn = t + 1;
-		    nnon++;
-		} else if (!na(c->dset->Z[v][t])) {
-		    nok++;
+	for (t=0; t<c->dset->n; t++) {
+	    if (c->dset->Z[v][t] == NON_NUMERIC) {
+		if (tn == 0) {
+		    /* record the first non-numeric obs */
+		    tn = t + 1;
 		}
-	    }
-
-	    nnfrac = (nok == 0)? 1.0 : (double) nnon / (nnon + nok);
-	    pprintf(prn, "variable %d (%s): non-numeric values = %d "
-		    "(%.2f percent)\n", v, c->dset->varname[v], 
-		    nnon, 100 * nnfrac);
-	    if (nnon < 2 || nnfrac < 0.01) {
-		pprintf(prn, A_("ERROR: variable %d (%s), observation %d, "
-				"non-numeric value\n"), 
-			v, c->dset->varname[v], tn);
-		err = E_DATA;
+		nnon++;
+	    } else if (!na(c->dset->Z[v][t])) {
+		nok++;
 	    }
 	}
 
-	if (!err) {
-	    pputs(prn, "allocating string table\n");
-	    c->st = gretl_string_table_new(list);
-	    if (c->st == NULL) {
-		err = E_ALLOC;
-		free(list);
-	    } else {
-		c->codelist = list;
-	    }
+	nnfrac = (nok == 0)? 1.0 : (double) nnon / (nnon + nok);
+	pprintf(prn, "variable %d (%s): non-numeric values = %d "
+		"(%.2f percent)\n", v, c->dset->varname[v], 
+		nnon, 100 * nnfrac);
+	if (nnon < 2 || nnfrac < 0.01) {
+	    /* if we got just a few non-numeric values, we'll assume
+	       that the data file is broken
+	    */
+	    pprintf(prn, A_("ERROR: variable %d (%s), observation %d, "
+			    "non-numeric value\n"), 
+		    v, c->dset->varname[v], tn);
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	pputs(prn, "allocating string table\n");
+	c->st = gretl_string_table_new(list);
+	if (c->st == NULL) {
+	    err = E_ALLOC;
+	    free(list);
+	} else {
+	    c->codelist = list;
 	}
     }
 
     return err;
 }
+
+/* Handle the case in "join" where the user specified some "timecols"
+   for conversion to numeric and also gave a specific format for the
+   conversion: this format will have been copied into the file-scope
+   global variable g_timecol_fmt.
+*/
 
 static double special_time_val (const char *s)
 {
@@ -1879,7 +1891,7 @@ static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
 }
 
 /* wrapper for fgets(), designed to handle any sort of line
-   termination (unix, DOS, Mac or an unholy mixture)
+   termination (unix, DOS, Mac or even an unholy mixture)
 */
 
 static char *csv_fgets (char *s, int n, FILE *fp)
@@ -2010,7 +2022,7 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 	compress_csv_line(c);
 
 	if (!gotdata) {
-	    /* scrutinize first "real" line */
+	    /* scrutinize the first "real" line */
 	    check_first_field(c->line, c, prn);
 	    gotdata = 1;
 	} 
@@ -2075,6 +2087,11 @@ static int skip_data_column (csvdata *c, int k)
     }
 }
 
+/* special fix-up for column names in the context of "join":
+   the algorithm here is also used in the userspace fixname()
+   function
+*/
+
 void normalize_join_colname (char *targ, const char *src, int k)
 {
     const char *letters = "abcdefghijklmnopqrstuvwxyz"
@@ -2128,7 +2145,7 @@ static int update_join_cols_list (csvdata *c, int k)
 /* handle_join_varname: the index @k contains the column number
    relative to the entire CSV file, while @pj points to j, the column
    number relative to the reduced dataset that will be constructed by
-   selection of columns from file.
+   selection of columns from the file.
 
    Here we're examining a column heading read from file (c->str) to
    see whether it matches any of the column-names required for an
@@ -2138,8 +2155,8 @@ static int update_join_cols_list (csvdata *c, int k)
    to find the required data. (The j value is bound to be at least 1
    since column 0 is reserved to the constant.)
 
-   In some cases a given named column may perform a double role in a
-   join operation -- for example, it may serve as an element in a
+   In some cases a given named column may perform more than one role in
+   a join operation -- for example, it may serve as an element in a
    filter and also as the auxiliary variable in an "aggregation"
    method. To allow for this we don't stop scanning at the first match
    of c->str with a required column name.
@@ -2160,6 +2177,7 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 	k++;
     }    
 
+    /* convert to valid gretl identifier */
     normalize_join_colname(okname, c->str, k);
 
 #if CDEBUG
@@ -2296,7 +2314,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	    err = add_single_obs(c->dset);
 	}
 	if (!err) {
-	    /* set up handle the no varnames case */
+	    /* set up to handle the "no varnames" case */
 	    csv_set_autoname(c);
 	    if (csv_has_bom(c)) {
 		fseek(fp, 3, SEEK_SET);
@@ -3033,20 +3051,20 @@ struct joiner_ {
     int str_keys2;  /* flag for string comparison of secondary keys */
     const int *l_keyno; /* list of key columns in left-hand dataset */
     const int *r_keyno; /* list of key columns in right-hand dataset */
-    AggrType aggr;    /* aggregation method for 1:n joining */
-    int seqval;       /* sequence number for aggregation */
-    int auxcol;       /* auxiliary data column for aggregation */
-    int valcol;       /* column of RHS dataset holding payload */
-    obskey *auto_keys; /* struct to hold info on obs-based key(s) */
-    DATASET *l_dset;   /* the left-hand or inner dataset */
-    DATASET *r_dset;   /* the temporary CSV dataset */
+    AggrType aggr;      /* aggregation method for 1:n joining */
+    int seqval;         /* sequence number for aggregation */
+    int auxcol;         /* auxiliary data column for aggregation */
+    int valcol;         /* column of RHS dataset holding payload */
+    obskey *auto_keys;  /* struct to hold info on obs-based key(s) */
+    DATASET *l_dset;    /* the left-hand or inner dataset */
+    DATASET *r_dset;    /* the temporary CSV dataset */
 };
 
 typedef struct joiner_ joiner;
 
 struct jr_filter_ {
     const char *expr;  /* expression to be run through "genr" */
-    const double *val; /* result of evaluating @expr */
+    const double *val; /* (series) result of evaluating @expr */
     char *vname1;      /* first right-hand variable name */
     char *vname2;      /* second right-hand variable name */
 };
@@ -3073,28 +3091,29 @@ static void joiner_destroy (joiner *jr)
     }
 }
 
-/* In relation to join, determine whether or not row @i of the data
-   read from CSV satisfies the filter criterion; return 1 if the
-   condition is met, 0 otherwise.
-*/
-
-static int join_row_wanted (jr_filter *filter, int i)
+static joiner *joiner_new (int nrows)
 {
-    int ret;
+    joiner *jr = malloc(sizeof *jr);
 
-    if (filter == NULL) {
-	/* no-op */
-	return 1;
+    if (jr != NULL) {
+	jr->rows = malloc(nrows * sizeof *jr->rows);
+	if (jr->rows == NULL) {
+	    free(jr);
+	    jr = NULL;
+	}
     }
 
-    ret = filter->val[i] != 0;
+    if (jr != NULL) {
+	jr->n_rows = nrows;
+	jr->n_unique = 0;
+	jr->keys = NULL;
+	jr->key_freq = NULL;
+	jr->key_row = NULL;
+	jr->l_keyno = NULL;
+	jr->r_keyno = NULL;
+    }
 
-#if CDEBUG > 2
-    fprintf(stderr, "join filter: %s row %d\n",
-	    ret ? "keeping" : "discarding", i);
-#endif
-
-    return ret;
+    return jr;
 }
 
 /* convert a numerical value to string for use with
@@ -3212,8 +3231,10 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     return err;
 }
 
-/* evaluate the filter expression provided by the user, and if it works
-   OK count the number of rows on which the filter returns non-zero 
+/* Evaluate the filter expression provided by the user, and if it works
+   OK count the number of rows on which the filter returns non-zero.
+   Flag an error if the filter gives NA on any row, since the filter
+   is then indeterminate.
 */
 
 static int evaluate_filter (jr_filter *filter, DATASET *r_dset, int *nrows)
@@ -3263,29 +3284,27 @@ static int dtoi (double x, int obs, int *err)
     }
 }
 
-static joiner *joiner_new (int nrows)
+/* Determine whether or not row @i of the outer data satisfies the
+   filter criterion; return 1 if the condition is met, 0 otherwise.
+*/
+
+static int join_row_wanted (jr_filter *filter, int i)
 {
-    joiner *jr = malloc(sizeof *jr);
+    int ret;
 
-    if (jr != NULL) {
-	jr->rows = malloc(nrows * sizeof *jr->rows);
-	if (jr->rows == NULL) {
-	    free(jr);
-	    jr = NULL;
-	}
+    if (filter == NULL) {
+	/* no-op */
+	return 1;
     }
 
-    if (jr != NULL) {
-	jr->n_rows = nrows;
-	jr->n_unique = 0;
-	jr->keys = NULL;
-	jr->key_freq = NULL;
-	jr->key_row = NULL;
-	jr->l_keyno = NULL;
-	jr->r_keyno = NULL;
-    }
+    ret = filter->val[i] != 0;
 
-    return jr;
+#if CDEBUG > 2
+    fprintf(stderr, "join filter: %s row %d\n",
+	    ret ? "keeping" : "discarding", i);
+#endif
+
+    return ret;
 }
 
 #define using_auto_keys(j) (j->auto_keys->timefmt != NULL)
@@ -3344,7 +3363,12 @@ static joiner *build_joiner (csvjoin *jspec,
 	jr->r_dset = r_dset;
 	jr->auto_keys = auto_keys;
 
-	/* now transcribe the rows we want */
+	/* Now transcribe the data we want: we're pulling from the
+	   full outer dataset and writing into the array of joiner row
+	   structs. At this point we're applying the join filter (if
+	   any) but are not doing any matching by key to the inner
+	   dataset.
+	*/
 
 	for (i=0; i<r_dset->n && !*err; i++) {
 	    if (join_row_wanted(filter, i)) {
@@ -3581,9 +3605,9 @@ static int seqval_out_of_bounds (joiner *jr, int seqmax)
     }
 }
 
-/* do a binary search among the sorted array of unique right-hand key
-   values, @vals, for the left-hand key value @targ; return the
-   position among @vals at which @targ matches, or -1 if not found.
+/* do a binary search for the left-hand key value @targ in the sorted
+   array of unique right-hand key values, @vals; return the position
+   among @vals at which @targ matches, or -1 for no match.  
 */
 
 static int binsearch (int targ, const int *vals, int n, int offset)
@@ -3604,7 +3628,7 @@ static int binsearch (int targ, const int *vals, int n, int offset)
 /* In some cases we can figure out what aggr_value() should return
    just based on the number of matches, @n, and the characteristics
    of the joiner. If so, write the value into @x and return 1; if
-   nor, return 0.
+   not, return 0.
 */
 
 static int aggr_val_determined (joiner *jr, int n, double *x, int *err)
@@ -3685,14 +3709,13 @@ static double aggr_value (joiner *jr, int key, int key2,
 	}
     }
 
-    /* set the first row for reading from the joiner rectangle */
-    imin = jr->key_row[pos];
-
-    if (imin < 0) {
+    if (jr->key_row[pos] < 0) {
 	/* "can't happen" */
 	return NADBL;
     }
 
+    /* set the range of rows for reading from the joiner rectangle */
+    imin = jr->key_row[pos];
     imax = imin + n;
 
 #if CDEBUG > 1
@@ -3762,7 +3785,7 @@ static double aggr_value (joiner *jr, int key, int key2,
 	    }
 	    x = xmatch[idx];
 	} else {
-	    /* max/min of the target variable itself */
+	    /* max/min of the actual data */
 	    x = xmatch[0];
 	    for (i=1; i<n; i++) {
 		if (min_max_cond(xmatch[i], x, jr->aggr)) {
@@ -3912,8 +3935,8 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
     }
 
     /* run through the rows in the current sample range of the
-       left-hand dataset and determine the value that should be
-       imported from the right
+       left-hand dataset, pick up the value of the inner key(s), and
+       determine the value that should be imported from the right
     */
 
     for (t=dset->t1; t<=dset->t2 && !err; t++) {
@@ -3952,17 +3975,17 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
     return err;
 }
 
-/* For use when no keys are given: we come here only if we've verified
-   that the number of obs on the right matches the number of obs in
-   the current sample range on the left.  
+/* Simple transcription: we come here only if there are no keys, and
+   we've verified that the number of rows on the right matches the
+   number of rows in the current sample range on the left.
 */
 
-static int join_fetch_data (joiner *jr, int v)
+static int join_transcribe_data (joiner *jr, int v)
 {
     series_table *rst = NULL;
     series_table *lst = NULL;
     DATASET *dset = jr->l_dset;
-    double z;
+    double zi;
     int strcheck = 0;
     int i, err = 0;
 
@@ -3973,12 +3996,12 @@ static int join_fetch_data (joiner *jr, int v)
     }
 
     for (i=0; i<jr->n_rows && !err; i++) {
-	z = jr->rows[i].val;
-	if (strcheck && !na(z)) {
-	    z = maybe_adjust_string_code(rst, lst, z, &err);
+	zi = jr->rows[i].val;
+	if (strcheck && !na(zi)) {
+	    zi = maybe_adjust_string_code(rst, lst, zi, &err);
 	}
 	if (!err) {
-	    dset->Z[v][dset->t1 + i] = z;
+	    dset->Z[v][dset->t1 + i] = zi;
 	}
     }
 
@@ -4005,7 +4028,7 @@ static jr_filter *join_filter_new (int *err)
    @s, looking for up to two names of right-hand columns. We need to
    record these names so we can be sure to read the associated column
    data, or else the filter won't work. We could increase the maximum
-   number of column-names to store but maybe 2 is enough.
+   number of column-names to store but probably 2 is enough.
 */
 
 static jr_filter *make_genr_filter (const char *s, int *err)
@@ -4692,7 +4715,7 @@ int join_from_csv (const char *fname,
 
     if (!err) {
 	if (jr->n_keys == 0) {
-	    err = join_fetch_data(jr, targvar);
+	    err = join_transcribe_data(jr, targvar);
 	} else {
 	    err = aggregate_data(jr, ikeyvars, targvar);
 	}
