@@ -4218,42 +4218,6 @@ static int process_outer_key (const char *s, int n_keys,
     return err;
 }
 
-#define lr_mismatch(l,r) ((l > 0 && r == 0) || (r > 0 && l == 0))
-
-/* Run some checks pertaining to the nature of the "payload"
-   (string-valued vs numeric) in relation to the aggregation
-   method specified and the nature of the existing left-hand
-   series, if any.
-*/
-
-static int join_data_type_check (joiner *jr, int targvar,
-				 int aggr)
-{
-    int lstr = -1, rstr = -1;
-    int err = 0;
-
-    if (targvar > 0) {
-	/* there's an existing LHS series */
-	lstr = series_has_string_table(jr->l_dset, targvar);
-	if (lstr && aggr == AGGR_COUNT) {
-	    /* count values can't be mixed with strings */
-	    err = E_TYPES;
-	}
-    }
-
-    if (!err && jr->valcol > 0) {
-	/* there's a payload variable on the right */
-	rstr = series_has_string_table(jr->r_dset, jr->valcol);
-    }
-
-    if (!err && lr_mismatch(lstr, rstr)) {
-	/* one of (L, R) is string-valued, but not the other */
-	err = E_TYPES;
-    }    
-
-    return err;
-}
-
 /* Handle the case where the user gave a "%q" conversion specifier
    (which we take to mean quarter). We convert this to %m for use with
    strptime(), but record that the fact that "month means quarter".
@@ -4398,6 +4362,46 @@ static void obskey_init (obskey *keys)
     keys->keycol = -1;
     keys->m_means_q = 0;
     keys->convert = 0;
+}
+
+#define lr_mismatch(l,r) ((l > 0 && r == 0) || (r > 0 && l == 0))
+
+/* Run a check pertaining to the nature of the "payload"
+   (string-valued vs numeric) in relation to the aggregation
+   method specified and the nature of the existing left-hand
+   series, if any.
+*/
+
+static int join_data_type_check (csvjoin *jspec,
+				 const DATASET *l_dset,
+				 int targvar, 
+				 AggrType aggr)
+{
+    DATASET *r_dset = jspec->c->dset;
+    int valcol = jspec->colnums[JOIN_VAL];
+    int lstr = -1, rstr = -1;
+    int err = 0;
+
+    if (targvar > 0) {
+	/* there's an existing LHS series */
+	lstr = series_has_string_table(l_dset, targvar);
+	if (lstr && aggr == AGGR_COUNT) {
+	    /* count values can't be mixed with strings */
+	    err = E_TYPES;
+	}
+    }
+
+    if (!err && valcol > 0) {
+	/* there's a payload variable on the right */
+	rstr = series_has_string_table(r_dset, valcol);
+    }
+
+    if (!err && lr_mismatch(lstr, rstr)) {
+	/* one of (L, R) is string-valued, but not the other */
+	err = E_TYPES;
+    }    
+
+    return err;
 }
 
 static int aggregation_type_check (csvjoin *jspec, AggrType aggr)
@@ -4699,8 +4703,7 @@ int join_from_csv (const char *fname,
     }	    
 
     /* Step 4: read data from the outer file; check we got all the
-       required columns; check that the aggregation spec isn't screwed
-       up type-wise
+       required columns; check that nothing is screwed up type-wise
      */
 
     if (!err) {
@@ -4716,6 +4719,9 @@ int join_from_csv (const char *fname,
 	}
 	if (!err) {
 	    err = aggregation_type_check(&jspec, aggr);
+	}
+	if (!err) {
+	    err = join_data_type_check(&jspec, dset, targvar, aggr);
 	}
     }
 
@@ -4743,13 +4749,7 @@ int join_from_csv (const char *fname,
 	}
     }
 
-    /* Step 7: check for mix-up of string data and numeric */
-
-    if (!err) {
-	err = join_data_type_check(jr, targvar, aggr);
-    }
-
-    /* Step 8: fill out and sort the "joiner" struct */
+    /* Step 7: transcribe more info and sort the "joiner" struct */
 
     if (!err) {
 	jr->n_keys = n_keys;
@@ -4764,18 +4764,19 @@ int join_from_csv (const char *fname,
 #endif
     }
 
-    /* Step 9: more checks now the joiner struct is ready */
+    /* Step 8: another check now the joiner struct is ready */
 
     if (!err && jr->n_keys == 0 && jr->n_rows != sample_size(jr->l_dset)) {
 	gretl_errmsg_set(_("Series length does not match the dataset"));
 	err = E_DATA;
     }
 
-    if (!err && targvar < 0) {
-	err = add_target_series(varname, dset, &targvar);
-    }
+    /* Step 9: transcribe or aggregate the data */
 
-    /* Step 10: transcribe or aggregate the data */
+    if (!err && targvar < 0) {
+	/* we need to add a new series on the left */
+	err = add_target_series(varname, dset, &targvar);
+    }   
 
     if (!err) {
 	if (jr->n_keys == 0) {
@@ -4786,7 +4787,7 @@ int join_from_csv (const char *fname,
     }
 
     if (!err && dset->v > orig_v && jr->valcol > 0) {
-	/* we got a newly added payload series */
+	/* we added a new series */
 	if (series_has_string_table(jr->r_dset, jr->valcol)) {
 	    /* let the new series grab the RHS string table */
 	    steal_string_table(jr->l_dset, targvar, jr->r_dset, jr->valcol); 
