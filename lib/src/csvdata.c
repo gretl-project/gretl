@@ -3018,6 +3018,23 @@ int import_csv (const char *fname, DATASET *dset,
 			   NULL, opt, prn);
 }
 
+int csv_open_needs_matrix (gretlopt opt)
+{
+    int ret = 0;
+
+    if (opt & OPT_M) {
+	/* --rowmask=matrix */
+	ret = 1;
+    } else if (opt & OPT_F) {
+	/* --fixed-cols=whatever */
+	const char *s = get_optval_string(OPEN, OPT_F);
+
+	ret = gretl_is_matrix(s);
+    }
+
+    return ret;
+}
+
 /* below: apparatus to implement the "join" command */
 
 struct jr_row_ {
@@ -3047,8 +3064,7 @@ struct joiner_ {
     int *keys;      /* array of unique (primary) key values as integers */
     int *key_freq;  /* counts of occurrences of (primary) key values */
     int *key_row;   /* record of starting row in joiner table for primary keys */
-    int str_keys;   /* flag for string comparison of primary keys */
-    int str_keys2;  /* flag for string comparison of secondary keys */
+    int *str_keys;  /* flags for string comparison of key(s) */
     const int *l_keyno; /* list of key columns in left-hand dataset */
     const int *r_keyno; /* list of key columns in right-hand dataset */
     AggrType aggr;      /* aggregation method for 1:n joining */
@@ -3450,13 +3466,13 @@ static int joiner_sort (joiner *jr)
        rectangle and ignoring them when aggregating.
     */ 
 
-    if (jr->str_keys || jr->str_keys2) {
+    if (jr->str_keys[0] || jr->str_keys[1]) {
 	series_table *stl, *str;
 	int *strmap;
 	int k, kmin, kmax, lkeyval, rkeyval;
 
-	kmin = jr->str_keys ? 1 : 2;
-	kmax = jr->str_keys2 ? 2 : 1;
+	kmin = jr->str_keys[0] ? 1 : 2;
+	kmax = jr->str_keys[1] ? 2 : 1;
 
 	for (k=kmin; k<=kmax; k++) {
 	    stl = series_get_string_table(jr->l_dset, jr->l_keyno[k]);
@@ -3562,7 +3578,7 @@ static void joiner_print (joiner *jr)
     jr_row *row;
     int i;
 
-    if (jr->str_keys) {
+    if (jr->str_keys[0]) {
 	labels = series_get_string_vals(jr->l_dset, jr->l_keyno[1], NULL);
     }
 
@@ -3573,7 +3589,7 @@ static void joiner_print (joiner *jr)
 	    fprintf(stderr, " row %d: keyvals=(%d,%d), data=%.12g\n", i, 
 		    row->keyval, row->keyval2, row->val);
 	} else {
-	    if (jr->str_keys && row->keyval >= 0) {
+	    if (jr->str_keys[0] && row->keyval >= 0) {
 		fprintf(stderr, " row %d: keyval=%d (%s), data=%.12g\n", i, 
 			row->keyval, labels[row->keyval - 1], row->val);
 	    } else {
@@ -3590,6 +3606,15 @@ static void joiner_print (joiner *jr)
 		    jr->keys[i], jr->key_freq[i]);
 	}
     }
+}
+
+static void print_outer_dataset (const DATASET *dset, const char *fname)
+{
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+
+    pprintf(prn, "Data extracted from %s:\n", fname);
+    printdata(NULL, NULL, dset, OPT_O, prn);
+    gretl_print_destroy(prn);
 }
 
 #endif
@@ -4029,9 +4054,14 @@ static jr_filter *join_filter_new (int *err)
    record these names so we can be sure to read the associated column
    data, or else the filter won't work. We could increase the maximum
    number of column-names to store but probably 2 is enough.
+
+   The heuristic for column-name detection is that we find a portion
+   if *s which is legal as a gretl identifier but which is not
+   enclosed in quotes, is not directly followed by '(', and is not
+   the name of a scalar or string variable on the left.
 */
 
-static jr_filter *make_genr_filter (const char *s, int *err)
+static jr_filter *make_join_filter (const char *s, int *err)
 {
     jr_filter *filter = join_filter_new(err);
 
@@ -4041,13 +4071,26 @@ static jr_filter *make_genr_filter (const char *s, int *err)
 
 	filter->expr = s;
 
-	while (*s && ngot < 2) {
+	while (*s) {
+	    if (*s == '"') {
+		/* skip double-quoted stuff */
+		s = strchr(s + 1, '"');
+		if (s == NULL) {
+		    *err = E_PARSE;
+		    break;
+		} else {
+		    s++;
+		    if (*s == '\0') {
+			break;
+		    }
+		}
+	    }
 	    n = gretl_namechar_spn(s);
 	    if (n > 0) {
 		if (n < VNAMELEN && s[n] != '(') {
 		    *test = '\0';
 		    strncat(test, s, n);
-		    if (!gretl_is_scalar(test)) {
+		    if (!gretl_is_scalar(test) && !gretl_is_string(test)) {
 			if (++ngot == 1) {
 			    filter->vname1 = gretl_strdup(test);
 			} else {
@@ -4070,22 +4113,22 @@ static jr_filter *make_genr_filter (const char *s, int *err)
    present in the left-hand dataset.  
 */
 
-static int get_target_varnum (const char *vname, DATASET *dset,
-			      int *err)
+static int add_target_series (const char *vname, DATASET *dset,
+			      int *varnum)
 {
-    int i, targ = -1;
+    int err = dataset_add_series(dset, 1);
 
-    *err = dataset_add_series(dset, 1);
+    if (!err) {
+	int i, v = dset->v - 1;
 
-    if (!*err) {
-	targ = dset->v - 1;
-	strcpy(dset->varname[targ], vname);
+	strcpy(dset->varname[v], vname);
 	for (i=0; i<dset->n; i++) {
-	    dset->Z[targ][i] = NADBL;
+	    dset->Z[v][i] = NADBL;
 	}
+	*varnum = v;
     }
 
-    return targ;
+    return err;
 }
 
 /* Parse either one or two elements (time-key column name, time format
@@ -4107,11 +4150,11 @@ static int process_time_key (const char *s, char *tkeyname,
 
 	if (p == NULL) {
 	    /* only column name given */
-	    strncat(tkeyname, s, CSVSTRLEN - 1);
+	    strncat(tkeyname, s, VNAMELEN - 1);
 	} else {
 	    int n = p - s;
 
-	    n = (n > CSVSTRLEN - 1)? CSVSTRLEN - 1 : n;
+	    n = (n > VNAMELEN - 1)? VNAMELEN - 1 : n;
 	    strncat(tkeyname, s, n);
 	    strncat(tkeyfmt, p + 1, 31);
 	}
@@ -4139,19 +4182,19 @@ static int process_outer_key (const char *s, int n_keys,
 
     if (strchr(s, ',') == NULL) {
 	/* just one outer key */
-	strncat(name1, s, CSVSTRLEN - 1);
+	strncat(name1, s, VNAMELEN - 1);
 	n_okeys = 1;
     } else {
 	/* two comma-separated keys */
 	int n2 = 0, n1 = strcspn(s, ",");
 
-	if (n1 >= CSVSTRLEN) {
+	if (n1 >= VNAMELEN) {
 	    err = E_PARSE;
 	} else {
 	    strncat(name1, s, n1);
 	    s += n1 + 1;
 	    n2 = strlen(s);
-	    if (n2 >= CSVSTRLEN) {
+	    if (n2 >= VNAMELEN) {
 		err = E_PARSE;
 	    } else {
 		strncat(name2, s, n2);
@@ -4173,21 +4216,6 @@ static int process_outer_key (const char *s, int n_keys,
     }
 
     return err;
-}
-
-/* for type-checking purposes, determine if the user-specified 
-   aggregation method is bound to involve numerical operations
-*/
-
-static int numerical_aggr (joiner *jr, int aggr)
-{
-    if (aggr == AGGR_SUM || aggr == AGGR_AVG) {
-	return 1;
-    } else if (aggr == AGGR_MIN || aggr == AGGR_MAX) {
-	return jr->auxcol == 0;
-    } else {
-	return 0;
-    }
 }
 
 #define lr_mismatch(l,r) ((l > 0 && r == 0) || (r > 0 && l == 0))
@@ -4216,30 +4244,12 @@ static int join_data_type_check (joiner *jr, int targvar,
     if (!err && jr->valcol > 0) {
 	/* there's a payload variable on the right */
 	rstr = series_has_string_table(jr->r_dset, jr->valcol);
-	if (rstr && numerical_aggr(jr, aggr)) {
-	    /* if the RHS series is string-valued, numerical
-	       aggregation methods are not meaningful
-	    */
-	    err = E_TYPES;
-	}
     }
 
     if (!err && lr_mismatch(lstr, rstr)) {
 	/* one of (L, R) is string-valued, but not the other */
 	err = E_TYPES;
     }    
-
-    if (!err && jr->auxcol > 0) {
-	/* we're using an aux. column for min/max aggregation:
-	   that variable cannot be string-valued 
-	*/
-	if (series_has_string_table(jr->r_dset, jr->auxcol)) {
-	    gretl_errmsg_sprintf("'%s' is a string variable: aggregation type "
-				 "is not applicable", 
-				 jr->r_dset->varname[jr->auxcol]);
-	    err = E_TYPES;
-	}
-    }
 
     return err;
 }
@@ -4390,15 +4400,123 @@ static void obskey_init (obskey *keys)
     keys->convert = 0;
 }
 
-static int aggr_type_check (csvjoin *jspec, int valcol)
+static int aggregation_type_check (csvjoin *jspec, AggrType aggr)
 {
-    if (series_has_string_table(jspec->c->dset, valcol)) {
-	gretl_errmsg_sprintf("'%s' is a string variable: aggregation type "
-			     "is not applicable", jspec->colnames[JOIN_VAL]);
-	return E_TYPES;
+    int err = 0;
+
+    if (aggr == AGGR_NONE || aggr == AGGR_COUNT || aggr == AGGR_SEQ) {
+	; /* no problem */
     } else {
-	return 0;
+	/* the aggregation method requires numerical data: flag
+	   an error if we got strings instead 
+	*/
+	const DATASET *dset = jspec->c->dset;
+	int aggcol = 0;
+
+	if (jspec->colnums[JOIN_AUX] > 0) {
+	    aggcol = jspec->colnums[JOIN_AUX];
+	} else if (jspec->colnums[JOIN_VAL] > 0) {
+	    aggcol = jspec->colnums[JOIN_VAL];
+	}
+
+	if (aggcol > 0 && series_has_string_table(dset, aggcol)) {
+	    gretl_errmsg_sprintf("'%s' is a string variable: aggregation type "
+				 "is not applicable", dset->varname[aggcol]);
+	    err = E_TYPES;
+	}
     }
+
+    return err;
+}
+
+static int check_for_missing_columns (csvjoin *jspec)
+{
+    const char *name;
+    int i;
+
+    /* Note: it's possible, though we hope unlikely, that our
+       heuristic for extracting column names from the filter
+       expression (if present) gave a false positive. In that case the
+       name at position JOIN_FI or JOIN_F2 might be spuriously
+       "missing": not found, but not really wanted. To guard against
+       this eventuality we'll skip the check for the JOIN_FI and
+       JOIN_F2 columns here. If either one is really missing, that
+       will show up before long, when the filter is evaluated.
+    */
+
+    for (i=0; i<JOIN_MAXCOL; i++) {
+	if (i == JOIN_F1 || i == JOIN_F2) {
+	    continue;
+	}
+	name = jspec->colnames[i];
+	if (name != NULL && jspec->colnums[i] == 0) {
+	    gretl_errmsg_sprintf(_("%s: column '%s' was not found"), "join", name);
+	    return E_DATA;
+	}
+    }
+
+    return 0;
+}
+
+static int key_types_error (int lstr, int rstr)
+{
+    if (lstr) {
+	gretl_errmsg_sprintf(_("%s: string key on left but numeric on right"), "join");
+    } else {
+	gretl_errmsg_sprintf(_("%s: string key on right but numeric on left"), "join");
+    }	
+    return E_TYPES;
+}
+
+static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
+			      gretlopt opt, const int *ikeyvars, 
+			      int *okeyvars, obskey *auto_keys, 
+			      int *str_keys)
+{
+    int lstr, rstr;
+    int err = 0;
+
+    if (jspec->colnums[JOIN_KEY] > 0) {
+	okeyvars[0] += 1;
+	okeyvars[1] = jspec->colnums[JOIN_KEY];
+    }
+
+    if (jspec->colnums[JOIN_KEY2] > 0) {
+	okeyvars[0] += 1;
+	okeyvars[2] = jspec->colnums[JOIN_KEY2];
+    }
+
+    if (opt & OPT_K) {
+	/* time key on right */
+	rstr = series_has_string_table(jspec->c->dset, okeyvars[1]);
+	auto_keys->keycol = okeyvars[1];
+	if (!rstr) {
+	    /* flag the need to convert to string later */
+	    auto_keys->convert = 1;
+	}
+    } else {
+	/* regular key(s) on right */
+	lstr = series_has_string_table(dset, ikeyvars[1]);
+	rstr = series_has_string_table(jspec->c->dset, okeyvars[1]);
+
+	if (lstr != rstr) {
+	    err = key_types_error(lstr, rstr);
+	} else if (lstr) {
+	    str_keys[0] = 1;
+	}
+
+	if (!err && okeyvars[2] > 0) {
+	    lstr = series_has_string_table(dset, ikeyvars[2]);
+	    rstr = series_has_string_table(jspec->c->dset, okeyvars[2]);
+	    if (lstr != rstr) {
+		err = key_types_error(lstr, rstr);
+	    } else if (lstr) {
+		str_keys[1] = 1;
+	    }
+	}		
+    }
+
+    return err;
 }
 
 /**
@@ -4443,15 +4561,16 @@ int join_from_csv (const char *fname,
     joiner *jr = NULL;
     jr_filter *filter = NULL;
     int okeyvars[3] = {0, 0, 0};
-    char okeyname1[CSVSTRLEN] = {0};
-    char okeyname2[CSVSTRLEN] = {0};
+    char okeyname1[VNAMELEN] = {0};
+    char okeyname2[VNAMELEN] = {0};
     char tkeyfmt[32] = {0};
     obskey auto_keys;
     int targvar, orig_v = dset->v;
-    int str_keys = 0;
-    int str_keys2 = 0;
+    int str_keys[2] = {0};
     int n_keys = 0;
     int err = 0;
+
+    /** Step 0: preliminaries **/
 
     targvar = current_series_index(dset, varname);
     if (targvar == 0) {
@@ -4503,11 +4622,13 @@ int join_from_csv (const char *fname,
     }    
 #endif
 
+    /* Step 1: process the arguments we got with regard to filtering
+       and keys: extract the names of the columns that are required
+       from the outer datafile, checking for errors as we go.
+    */
+
     if (filtstr != NULL) {
-	filter = make_genr_filter(filtstr, &err);
-	if (err) {
-	    fprintf(stderr, "join: error %d processing row filter\n", err);
-	}
+	filter = make_join_filter(filtstr, &err);
     }
 
     if (!err && okey != NULL) {
@@ -4516,23 +4637,28 @@ int join_from_csv (const char *fname,
 	} else {
 	    err = process_outer_key(okey, n_keys, okeyname1, okeyname2, opt);
 	}
-	if (err) {
-	    fprintf(stderr, "join: error %d processing outer key(s)\n", err);
-	}
     }
 
-    /* Below: fill out the array of required column names,
-       jspec.colnames.  This array has space for JOIN_MAXCOL strings;
-       we leave any unneeded elements as NULL.
+    /* Step 2: set up the array of required column names,
+       jspec.colnames. This is an array of const *char, pointers
+       to strings that "live" elsewhere. The array has space for
+       JOIN_MAXCOL strings; we leave any unneeded elements as NULL.
     */
 
     if (!err) {
-	/* handle the "outer" key column, if any */
+	/* handle the primary outer key column, if any */
 	if (*okeyname1 != '\0') {
 	    jspec.colnames[JOIN_KEY] = okeyname1;
 	} else if (n_keys > 0) {
 	    jspec.colnames[JOIN_KEY] = dset->varname[ikeyvars[1]];
 	}
+
+	/* and the secondary outer key, if any */
+	if (*okeyname2 != '\0') {
+	    jspec.colnames[JOIN_KEY2] = okeyname2;
+	} else if (n_keys > 1) {
+	    jspec.colnames[JOIN_KEY2] = dset->varname[ikeyvars[2]];
+	}	
 
 	/* the data or "payload" column */
 	if (aggr != AGGR_COUNT) {
@@ -4543,121 +4669,61 @@ int join_from_csv (const char *fname,
 	    }
 	}
 
-	/* handle filter columns, if applicable */
+	/* the filter columns, if applicable */
 	if (filter != NULL) {
 	    jspec.colnames[JOIN_F1] = filter->vname1;
 	    jspec.colnames[JOIN_F2] = filter->vname2;
-	}
-
-	/* the second outer key, if present */
-	if (*okeyname2 != '\0') {
-	    jspec.colnames[JOIN_KEY2] = okeyname2;
-	} else if (n_keys > 1) {
-	    jspec.colnames[JOIN_KEY2] = dset->varname[ikeyvars[2]];
 	}
 
 	/* the auxiliary var for aggregation, if present */
 	if (auxname != NULL) {
 	    jspec.colnames[JOIN_AUX] = auxname;
 	}
+    }
 
+    /* Step 3: handle the timecols and/or timecol-fmt options */
+
+    if (!err) {
 	if (timecolstr != NULL) {
 	    err = process_timecols(&jspec, timecolstr);
 	}
-    }
-
-    if (!err) {
-	/* now we can actually grab the data wanted */
-	if (timecolfmt != NULL) {
-	    /* publish "timecols" format info */
+	if (!err && timecolfmt != NULL) {
+	    /* publish the timecols format info */
 	    g_timecol_fmt = gretl_strdup(timecolfmt);
-	    if (format_uses_quarterly(g_timecol_fmt)) {
+	    if (g_timecol_fmt == NULL) {
+		err = E_ALLOC;
+	    } else if (format_uses_quarterly(g_timecol_fmt)) {
 		g_m_means_q = 1;
 	    }
 	}
+    }	    
+
+    /* Step 4: read data from the outer file; check we got all the
+       required columns; check that the aggregation spec isn't screwed
+       up type-wise
+     */
+
+    if (!err) {
 	err = real_import_csv(fname, dset, NULL, NULL,
 			      &jspec, opt, prn);
-	if (err) {
-	    fprintf(stderr, "join: error %d from real_import_csv\n", err);
+#if CDEBUG > 1
+	if (!err) {
+	    print_outer_dataset(jspec.c->dset, fname);
 	}
-    }	
-
-    if (!err && aggr != AGGR_COUNT) {
-	/* run some sanity tests on the payload (there's no need
-	   for a payload with AGGR_COUNT)
-	*/
-	int valcol = jspec.colnums[JOIN_VAL];
-
-	if (valcol == 0) {
-	    gretl_errmsg_sprintf("Series not found, '%s'", jspec.colnames[JOIN_VAL]);
-	    err = E_UNKVAR;
-	} else if (aggr != AGGR_NONE && aggr != AGGR_SEQ) {
-	    err = aggr_type_check(&jspec, valcol);
+#endif
+	if (!err) {
+	    err = check_for_missing_columns(&jspec);
+	}
+	if (!err) {
+	    err = aggregation_type_check(&jspec, aggr);
 	}
     }
 
-    if (!err && auxname != NULL && jspec.colnums[JOIN_AUX] == 0) {
-	/* an auxiliary variable was specified for aggr but was
-	   not found */
-	fprintf(stderr, "join: auxiliary column '%s' was not found\n", 
-		jspec.colnames[JOIN_AUX]);
-	err = E_UNKVAR;
-    }	
+    /* Step 5: set up keys and check for conformability errors */
 
-    if (!err && jspec.colnames[0] != NULL) {
-	/* check that outer key was found in the right-hand-side
-	   file, and is conformable to the inner key 
-	*/
-	if (jspec.colnums[JOIN_KEY] > 0) {
-	    okeyvars[0] += 1;
-	    okeyvars[1] = jspec.colnums[JOIN_KEY];
-	}
-
-	if (jspec.colnums[JOIN_KEY2] > 0) {
-	    okeyvars[0] += 1;
-	    okeyvars[2] = jspec.colnums[JOIN_KEY2];
-	}	
-
-	if ((jspec.colnames[JOIN_KEY] != NULL && okeyvars[1] == 0) ||
-	    (jspec.colnames[JOIN_KEY2] != NULL && okeyvars[2] == 0)) {
-	    fprintf(stderr, "join: error finding outer key columns\n");
-	    err = E_DATA;
-	} else if (opt & OPT_K) {
-	    /* time key on right */
-	    int rstr = series_has_string_table(jspec.c->dset, okeyvars[1]);
-
-	    auto_keys.keycol = okeyvars[1];
-	    if (!rstr) {
-		/* flag the need to convert to string later */
-		auto_keys.convert = 1;
-	    }
-	} else {
-	    int lstr = series_has_string_table(dset, ikeyvars[1]);
-	    int rstr = series_has_string_table(jspec.c->dset, okeyvars[1]);
-
-	    if (lstr != rstr) {
-		if (lstr) {
-		    fprintf(stderr, "key 1: string on left but not on right\n");
-		} else {
-		    fprintf(stderr, "key 1: string on right but not on left\n");
-		}
-		err = E_TYPES; 
-	    } else if (lstr) {
-		str_keys = 1;
-	    }
-
-	    if (!err && okeyvars[2] > 0) {
-		lstr = series_has_string_table(dset, ikeyvars[2]);
-		rstr = series_has_string_table(jspec.c->dset, okeyvars[2]);
-
-		if (lstr != rstr) {
-		    fprintf(stderr, "key 2: numeric/string mismatch\n");
-		    err = E_TYPES; 
-		} else if (lstr) {
-		    str_keys2 = 1;
-		}
-	    }		
-	}
+    if (!err && jspec.colnames[JOIN_KEY] != NULL) {
+	err = set_up_outer_keys(&jspec, dset, opt, ikeyvars, okeyvars,
+				&auto_keys, str_keys);
     }
 
     if (!err && n_keys == 0 && dataset_is_time_series(dset)) {
@@ -4665,32 +4731,29 @@ int join_from_csv (const char *fname,
 			      &auto_keys, &n_keys);
     }
 
-    if (!err) {
-#if CDEBUG > 1
-	PRN *eprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    /* Step 6: build the joiner struct from the outer dataset,
+       applying a filter if one is specified
+    */
 
-	pprintf(eprn, "Data extracted from %s:\n", fname);
-	printdata(NULL, NULL, jspec.c->dset, OPT_O, eprn);
-	gretl_print_destroy(eprn);
-#endif
+    if (!err) {
 	jr = build_joiner(&jspec, dset, filter, aggr, seqval, &auto_keys, &err);
-	if (err) {
-	    fprintf(stderr, "join: error %d from build_joiner()\n", err);
-	} else if (jr == NULL) {
+	if (!err && jr == NULL) {
 	    /* no matching data to join */
 	    goto bailout;
 	}
     }
 
+    /* Step 7: check for mix-up of string data and numeric */
+
     if (!err) {
-	/* initial check for mash-up of string data and numeric */
 	err = join_data_type_check(jr, targvar, aggr);
     }
+
+    /* Step 8: fill out and sort the "joiner" struct */
 
     if (!err) {
 	jr->n_keys = n_keys;
 	jr->str_keys = str_keys;
-	jr->str_keys2 = str_keys2;
 	jr->l_keyno = ikeyvars;
 	jr->r_keyno = okeyvars;
 	if (jr->n_keys > 0) {
@@ -4701,26 +4764,24 @@ int join_from_csv (const char *fname,
 #endif
     }
 
+    /* Step 9: more checks now the joiner struct is ready */
+
     if (!err && jr->n_keys == 0 && jr->n_rows != sample_size(jr->l_dset)) {
 	gretl_errmsg_set(_("Series length does not match the dataset"));
 	err = E_DATA;
     }
 
     if (!err && targvar < 0) {
-	targvar = get_target_varnum(varname, dset, &err);
-	if (err) {
-	    fprintf(stderr, "join: error %d from get_target_varnum()\n", err);
-	}	
+	err = add_target_series(varname, dset, &targvar);
     }
+
+    /* Step 10: transcribe or aggregate the data */
 
     if (!err) {
 	if (jr->n_keys == 0) {
 	    err = join_transcribe_data(jr, targvar);
 	} else {
 	    err = aggregate_data(jr, ikeyvars, targvar);
-	}
-	if (err) {
-	    fprintf(stderr, "join: error %d from aggregate_data()\n", err);
 	}
     }
 
@@ -4738,7 +4799,7 @@ int join_from_csv (const char *fname,
 
  bailout:
 
-    /* null out file-scope global */
+    /* null out file-scope "timecols" globals */
     free(g_timecol_fmt);
     g_timecol_fmt = NULL;
     g_m_means_q = 0;
@@ -4755,21 +4816,4 @@ int join_from_csv (const char *fname,
     jr_filter_destroy(filter);
 
     return err;
-}
-
-int csv_open_needs_matrix (gretlopt opt)
-{
-    int ret = 0;
-
-    if (opt & OPT_M) {
-	/* --rowmask=matrix */
-	ret = 1;
-    } else if (opt & OPT_F) {
-	/* --fixed-cols=whatever */
-	const char *s = get_optval_string(OPEN, OPT_F);
-
-	ret = gretl_is_matrix(s);
-    }
-
-    return ret;
 }
