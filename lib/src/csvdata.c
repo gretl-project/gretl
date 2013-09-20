@@ -3937,17 +3937,15 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 
     if (nmax > 0) {
 	/* allocate workspace for aggregation */
-	xmatch = malloc(nmax * sizeof *xmatch);
+	int nx = (jr->auxcol > 0)? 2 * nmax : nmax;
+
+	xmatch = malloc(nx * sizeof *xmatch);
 	if (xmatch == NULL) {
 	    return E_ALLOC;
 	}
 	if (jr->auxcol) {
-	    auxmatch = malloc(nmax * sizeof *auxmatch);
-	    if (auxmatch == NULL) {
-		free(xmatch);
-		return E_ALLOC;
-	    }
-	}	    
+	    auxmatch = xmatch + nmax;
+	}
     }
 
     if (jr->valcol > 0) {
@@ -3961,7 +3959,8 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 
     /* run through the rows in the current sample range of the
        left-hand dataset, pick up the value of the inner key(s), and
-       determine the value that should be imported from the right
+       call aggr_value() to determine the value that should be 
+       imported from the right
     */
 
     for (t=dset->t1; t<=dset->t2 && !err; t++) {
@@ -3995,7 +3994,6 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
     }
 
     free(xmatch);
-    free(auxmatch);
 
     return err;
 }
@@ -4108,9 +4106,8 @@ static jr_filter *make_join_filter (const char *s, int *err)
     return filter;
 }
 
-/* Add a series to hold the join data and return its ID number, or -1
-   on failure. We come here only if the target series is not already
-   present in the left-hand dataset.  
+/* Add a series to hold the join data.  We come here only if the
+   target series is not already present in the left-hand dataset.
 */
 
 static int add_target_series (const char *vname, DATASET *dset,
