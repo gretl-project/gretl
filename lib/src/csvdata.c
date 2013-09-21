@@ -3630,7 +3630,7 @@ static int seqval_out_of_bounds (joiner *jr, int seqmax)
     }
 }
 
-/* do a binary search for the left-hand key value @targ in the sorted
+/* Do a binary search for the left-hand key value @targ in the sorted
    array of unique right-hand key values, @vals; return the position
    among @vals at which @targ matches, or -1 for no match.  
 */
