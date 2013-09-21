@@ -3797,6 +3797,12 @@ static int version_number_from_string (const char *s)
     int x, y, z;
 
     sscanf(s, "%d.%d.%d", &x, &y, &z);
+
+    if (strstr(GRETL_VERSION, "cvs")) {
+	/* useful for testing packages between releases */
+	z++;
+    }
+
     return 10000 * x + 100 * y + z;
 }
 
