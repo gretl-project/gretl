@@ -25,6 +25,8 @@
 #include "gretl_model.h"
 #include "gretl_panel.h"
 #include "libset.h"
+#include "uservar.h"
+#include "gretl_string_table.h"
 
 /**
  * SECTION:gretl_panel
@@ -4865,6 +4867,134 @@ int set_panel_structure_from_line (const char *line, DATASET *dset)
 
     if (!err) {
 	err = set_panel_structure_from_vars(uv, tv, dset);
+    }
+
+    return err;
+}
+
+/* 2013-09-21: enable construction of a string-valued series
+   holding a name for each panel group/unit. The name of this
+   series is set on the 'pangrps' member of @dset, and the
+   names are then used in panel graphs where appropriate.
+
+   @line should contain: (a) the name of a series, either an
+   existing one (which will be overwritten) or a new one to
+   create; and (b) either a string literal or the name of
+   a string variable, which in either case should hold N
+   space-separated strings, where N is the number of panel
+   groups.
+*/
+
+int set_panel_group_strings (const char *line, DATASET *dset)
+{
+    char vname[VNAMELEN];
+    char strname[VNAMELEN];
+    char *namestr = NULL;
+    char **S = NULL;
+    int ng = dset->n / dset->pd;
+    int v, orig_v = dset->v;
+    int freeit = 0;
+    int err = 0;
+
+    if (!strncmp(line, "setobs", 6)) {
+	line += 7;
+	line += strspn(line, " ");
+    }
+
+    if (sscanf(line, "%31s", vname) != 1) {
+	err = E_PARSE;
+    } else {
+	/* get the string containing the names */
+	line += strcspn(line, " ");
+	line += strspn(line, " ");
+	if (*line == '"') {
+	    /* got a string literal */
+	    const char *s = strchr(line + 1, '"');
+	    
+	    if (s == NULL) {
+		err = E_PARSE;
+	    } else {
+		namestr = gretl_strndup(line + 1, s - line - 1);
+		if (namestr == NULL) {
+		    err = E_ALLOC;
+		} else {
+		    freeit = 1;
+		}
+	    }
+	} else {
+	    /* should be the name of a string variable */
+	    if (sscanf(line, "%31s", strname) != 1) {
+		err = E_PARSE;
+	    } else if (!gretl_is_string(strname)) {
+		err = E_DATA;
+	    } else {
+		namestr = get_string_by_name(strname);
+	    }
+	}
+    }
+    
+    if (namestr != NULL) {
+	/* FIXME space-separation not flexible enough? */
+	int ngtest = count_fields(namestr);
+
+	if (ngtest != ng) {
+	    fprintf(stderr, "Got %d strings but there are %d groups\n",
+		    ngtest, ng);
+	    err = E_DATA;
+	} else {
+	    S = gretl_string_split(namestr, &ngtest);
+	    if (S == NULL) {
+		err = E_ALLOC;
+	    } else if (ngtest != ng) {
+		err = E_DATA;
+	    }
+	}
+	if (freeit) {
+	    free(namestr);
+	}
+    }
+
+    if (!err) {
+	v = current_series_index(dset, vname);
+	if (v < 0) {
+	    /* we need to add a series */
+	    char *gen = gretl_strdup_printf("series %s", vname);
+
+	    err = generate(gen, dset, OPT_Q, NULL);
+	    if (!err) {
+		v = dset->v - 1;
+	    }
+	    free(gen);
+	}
+    }
+
+    if (!err) {
+	series_table *st = series_table_new(S, ng);
+
+	if (st == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    int i, g = 0;
+
+	    series_attach_string_table(dset, v, st);
+	    for (i=0; i<dset->n; i++) {
+		if (i % dset->pd == 0) {
+		    g++;
+		}	    
+		dset->Z[v][i] = g;
+	    }
+	}
+    }
+
+    if (err) {
+	if (S != NULL) {
+	    strings_array_free(S, ng);
+	}
+	if (dset->v > orig_v) {
+	    dataset_drop_last_variables(dset, dset->v - orig_v);
+	}
+    } else {
+	set_panel_groups_name(dset, vname);
     }
 
     return err;

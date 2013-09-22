@@ -931,6 +931,8 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
 
     if (opt & OPT_P) {
 	return set_panel_structure_from_line(line, dset);
+    } else if (opt & OPT_G) {
+	return set_panel_group_strings(line, dset);
     }
 
     /* now we get down to business */

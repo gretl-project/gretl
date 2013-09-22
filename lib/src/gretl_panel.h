@@ -41,6 +41,8 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset);
 
 int set_panel_structure_from_line (const char *line, DATASET *dset);
 
+int set_panel_group_strings (const char *line, DATASET *dset);
+
 int switch_panel_orientation (DATASET *dset);
 
 int balanced_panel (const DATASET *dset);

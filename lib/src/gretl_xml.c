@@ -1877,6 +1877,14 @@ int gretl_write_gdt (const char *fname, const int *list,
 	alt_puts("</string-tables>\n", fp, fz);
     }
 
+    if (panel_group_names_ok(dset)) {
+	if (gz) {
+	    gzprintf(fz, "<group-names series-name=\"%s\" />\n", dset->pangrps);
+	} else {
+	    fprintf(fp, "<group-names series-name=\"%s\" />\n", dset->pangrps);
+	}
+    }
+
     alt_puts("</gretldata>\n", fp, fz);
 
  cleanup: 
@@ -2558,18 +2566,14 @@ static void check_for_daily_date_strings (DATASET *dset)
 
 /**
  * gretl_read_gdt:
- * @fname: name of file to try.
+ * @fname: name of file to open for reading.
  * @dset: dataset struct.
  * @opt: use OPT_B to display gui progress bar; may also
  * use OPT_T when appending to panel data (see the "append"
  * command in the gretl manual). Otherwise use OPT_NONE.
- * @prn: where messages should be written.
+ * @prn: where any messages should be written.
  * 
- * Read data from file into gretl's work space, allocating memory as
- * required.  It is OK if the array to which @pZ points is
- * NULL, but if it is non-NULL then this function attempts
- * to merge the new data with the original data, which will
- * fail if the new data are not conformable.
+ * Read data from native file into gretl's workspace.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
  */
@@ -2668,8 +2672,7 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 	    if (!gotvars) {
 		gretl_errmsg_set(_("Variables information is missing"));
 		err = 1;
-	    }
-	    if (process_observations(doc, cur, tmpset, progress)) {
+	    } else if (process_observations(doc, cur, tmpset, progress)) {
 		err = 1;
 	    } else {
 		gotobs = 1;
@@ -2678,10 +2681,18 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 	    if (!gotvars) {
 		gretl_errmsg_set(_("Variables information is missing"));
 		err = 1;
-	    }
-	    if (process_string_tables(doc, cur, tmpset)) {
+	    } else if (process_string_tables(doc, cur, tmpset)) {
 		err = 1;
 	    }	    
+	} else if (!xmlStrcmp(cur->name, (XUC) "group-names")) {
+	    if (!gotvars) {
+		gretl_errmsg_set(_("Variables information is missing"));
+		err = 1;
+	    } else {
+		xmlChar *vname = xmlGetProp(cur, (XUC) "series-name");
+
+		tmpset->pangrps = (char *) vname;
+	    }
 	}
 	if (!err) {
 	    cur = cur->next;

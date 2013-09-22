@@ -4113,12 +4113,16 @@ static jr_filter *make_join_filter (const char *s, int *err)
 static int add_target_series (const char *vname, DATASET *dset,
 			      int *varnum)
 {
-    int err = dataset_add_series(dset, 1);
+    char *gen;
+    int err;
+
+    gen = gretl_strdup_printf("series %s", vname);
+    err = generate(gen, dset, OPT_Q, NULL);
+    free(gen);
 
     if (!err) {
 	int i, v = dset->v - 1;
 
-	strcpy(dset->varname[v], vname);
 	for (i=0; i<dset->n; i++) {
 	    dset->Z[v][i] = NADBL;
 	}

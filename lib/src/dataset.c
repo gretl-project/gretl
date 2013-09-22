@@ -174,7 +174,12 @@ void clear_datainfo (DATASET *dset, int code)
     if (dset->pantime != NULL) {
 	free(dset->pantime);
 	dset->pantime = NULL;
-    }    
+    }
+
+    if (dset->pangrps != NULL) {
+	free(dset->pangrps);
+	dset->pangrps = NULL;
+    }	
 
     /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
 
@@ -412,6 +417,7 @@ void datainfo_init (DATASET *dset)
     dset->restriction = NULL;
     dset->padmask = NULL;
     dset->pantime = NULL;
+    dset->pangrps = NULL;
 
     dset->auxiliary = 0;
 }
@@ -605,6 +611,7 @@ int start_new_Z (DATASET *dset, gretlopt opt)
     dset->restriction = NULL;
     dset->padmask = NULL;
     dset->pantime = NULL;
+    dset->pangrps = NULL;
     
     return 0;
 }
@@ -3825,6 +3832,7 @@ void series_decrement_stack_level (DATASET *dset, int i)
 
 void series_attach_string_table (DATASET *dset, int i, void *ptr)
 {
+    series_set_discrete(dset, i, 1);
     dset->varinfo[i]->st = ptr;
 }
 
@@ -4006,6 +4014,7 @@ int steal_string_table (DATASET *l_dset, int lvar,
     if (l_dset != r_dset || lvar != rvar) {
 	l_dset->varinfo[lvar]->st = r_dset->varinfo[rvar]->st;
 	r_dset->varinfo[rvar]->st = NULL;
+	series_set_discrete(l_dset, lvar, 1);
     }
 
     return 0;
@@ -4045,4 +4054,54 @@ int dataset_set_panel_time (DATASET *dset, const double *tvals)
 const double *dataset_get_panel_time (const DATASET *dset)
 {
     return (dset == NULL)? NULL : dset->pantime;
+}
+
+int set_panel_groups_name (DATASET *dset, const char *vname)
+{
+    if (dset->pangrps != NULL) {
+	free(dset->pangrps);
+    }
+
+    dset->pangrps = gretl_strdup(vname);
+
+    return (dset->pangrps == NULL)? E_ALLOC : 0;
+}
+
+char const **get_panel_group_names (DATASET *dset)
+{
+    char const **S = NULL;
+
+    if (dataset_is_panel(dset) && dset->pangrps != NULL) {
+	int n, v = current_series_index(dset, dset->pangrps);
+
+	if (v > 0 && v < dset->v) {
+	    S = series_get_string_vals(dset, v, &n);
+	    if (S != NULL && n != dset->n / dset->pd) {
+		free(dset->pangrps);
+		dset->pangrps = NULL;
+		S = NULL;
+	    }
+	}
+    }
+
+    return S;
+}
+
+int panel_group_names_ok (const DATASET *dset)
+{
+    int ret = 0;
+
+    if (dataset_is_panel(dset) && dset->pangrps != NULL) {
+	int n, v = current_series_index(dset, dset->pangrps);
+
+	if (v > 0 && v < dset->v) {
+	    char const **S = series_get_string_vals(dset, v, &n);
+
+	    if (S != NULL && n == dset->n / dset->pd) {
+		ret = 1;
+	    }
+	}
+    }
+
+    return ret;
 }

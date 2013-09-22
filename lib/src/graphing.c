@@ -5314,7 +5314,7 @@ static int dataset_has_panel_labels (const DATASET *dset,
 */
 
 static int panel_overlay_ts_plot (const int vnum, 
-				  const DATASET *dset,
+				  DATASET *dset,
 				  gretlopt opt)
 {
     DATASET *gset;
@@ -5323,6 +5323,7 @@ static int panel_overlay_ts_plot (const int vnum,
     gchar *literal = NULL;
     gchar *title = NULL;
     const double *tvals;
+    char const **grpnames;
     int nv, xvar = 0;
     int panel_labels = 0;
     int use = 0, strip = 0;
@@ -5354,7 +5355,9 @@ static int panel_overlay_ts_plot (const int vnum,
 	return E_ALLOC;
     }
 
-    if (dset->S != NULL) {
+    grpnames = get_panel_group_names(dset);
+
+    if (grpnames == NULL && dset->S != NULL) {
 	panel_labels = dataset_has_panel_labels(dset, &use, &strip);
     }
 
@@ -5362,7 +5365,9 @@ static int panel_overlay_ts_plot (const int vnum,
 
     for (i=0; i<nunits; i++) {
 	s = s0 + i * T;
-	if (panel_labels) {
+	if (grpnames != NULL) {
+	    strncat(gset->varname[i+1], grpnames[u0+i], VNAMELEN-1);
+	} else if (panel_labels) {
 	    if (use > 0) {
 		strncat(gset->varname[i+1], dset->S[s], use);
 	    } else if (strip > 0) {

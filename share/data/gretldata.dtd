@@ -63,4 +63,9 @@
    count     CDATA #REQUIRED
 >
 
+<!ELEMENT group-names EMPTY>
+<!ATTLIST group-names
+   series-name CDATA #REQUIRED
+>
+
 
