@@ -986,7 +986,11 @@ static void tsls_recreate_full_list (MODEL *pmod, const int *reglist,
 {
     int *full_list;
 
-    full_list = gretl_lists_join_with_separator(reglist, instlist);
+    if (instlist != NULL && instlist[0] > 0) {
+	full_list = gretl_lists_join_with_separator(reglist, instlist);
+    } else {
+	full_list = gretl_list_copy(reglist);
+    }
 
     if (full_list == NULL) {
 	pmod->errcode = E_ALLOC;
@@ -1712,13 +1716,15 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	if (endolist != NULL) {
 	    nendo = endolist[0];
 	}
-#if TDEBUG
+#if 1 || TDEBUG
 	fprintf(stderr, "tsls: dropped collinear vars\n");
 #endif
     }
 
-    /* record the number of instruments used */
-    gretl_model_set_int(&tsls, "ninst", instlist[0]);
+    if (instlist != NULL) {
+	/* record the number of instruments used */
+	gretl_model_set_int(&tsls, "ninst", instlist[0]);
+    }
 
     if (!no_tests) {
 	if (!sysest || (opt & OPT_H)) {
