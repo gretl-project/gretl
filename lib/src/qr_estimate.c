@@ -942,10 +942,9 @@ drop_redundant_vars (MODEL *pmod, DATASET *dset, gretl_matrix *R,
 	if (fabs(d) < R_DIAG_MIN) {
 	    vi = pmod->list[pos];
 	    gretl_list_append_term(&droplist, vi);
-	    fprintf(stderr, "redundant variable %d (%s)...\n",
+	    fprintf(stderr, "dropping redundant variable %d (%s)\n",
 		    vi, dset->varname[vi]);
 	    gretl_list_delete_at_pos(pmod->list, pos--);
-	    fprintf(stderr, " dropped\n"); 
 	    nd++;
 	}
 	pos++;
@@ -958,8 +957,6 @@ drop_redundant_vars (MODEL *pmod, DATASET *dset, gretl_matrix *R,
     if (droplist != NULL) {
 	gretl_model_set_list_as_data(pmod, "droplist", droplist);
     }
-
-    fprintf(stderr, "finished drop_redundant_vars\n"); 
 }
 
 int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)

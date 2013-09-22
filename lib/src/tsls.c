@@ -1716,12 +1716,12 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	if (endolist != NULL) {
 	    nendo = endolist[0];
 	}
-#if 1 || TDEBUG
+#if TDEBUG
 	fprintf(stderr, "tsls: dropped collinear vars\n");
 #endif
     }
 
-    if (instlist != NULL) {
+    if (instlist != NULL && instlist[0] > 0) {
 	/* record the number of instruments used */
 	gretl_model_set_int(&tsls, "ninst", instlist[0]);
     }
