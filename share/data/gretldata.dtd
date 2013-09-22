@@ -2,7 +2,7 @@
   Document Type Definition (DTD) for gretl data files
  -->
 
-<!ELEMENT gretldata (description?, variables, observations, string-tables?)>
+<!ELEMENT gretldata (description?, variables, observations, string-tables?, group-names?)>
 <!ATTLIST gretldata
    version      NMTOKEN #IMPLIED
    name         NMTOKEN #IMPLIED
