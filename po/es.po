@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-09-03 10:35-0400\n"
-"PO-Revision-Date: 2013-09-02 12:16+0200\n"
+"PO-Revision-Date: 2013-09-23 11:29+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -1128,21 +1128,21 @@ msgstr "Falta de memoria\n"
 #: lib/src/csvdata.c:3066
 #, c-format
 msgid "%s: missing string in filtering"
-msgstr ""
+msgstr "%s: falta una cadena de caracteres en el filtrado"
 
 #: lib/src/csvdata.c:3079
 msgid "type mismatch in join filter"
-msgstr ""
+msgstr "los tipos no casan en el filtro de 'join'"
 
 #: lib/src/csvdata.c:3109
 #, c-format
 msgid "%s: found NAs in filtering"
-msgstr ""
+msgstr "%s: se han encontrado NAs en el filtrado"
 
 #: lib/src/csvdata.c:3232 lib/src/csvdata.c:3245
 #, c-format
 msgid "%s: filter column '%s' was not found"
-msgstr ""
+msgstr "%s: no se ha encontrado la columna de filtrado '%s'"
 
 #: lib/src/csvdata.c:3564 lib/src/csvdata.c:3639
 msgid "You need to specify an aggregation method for a 1:n join"
@@ -1151,9 +1151,9 @@ msgstr ""
 "de 1 a n"
 
 #: lib/src/csvdata.c:4032
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid operator '%s' in filter"
-msgstr "'%s': índice de observation no válido"
+msgstr "%s: el operador '%s' no es válido en el filtro"
 
 #: lib/src/csvdata.c:4676 gui2/library.c:3985
 msgid "Series length does not match the dataset"
@@ -4305,9 +4305,9 @@ msgid "No data information is available.\n"
 msgstr "No hay información disponible sobre los datos.\n"
 
 #: lib/src/interact.c:4471
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid input '%s'\n"
-msgstr "%s: valor no válido '%s'"
+msgstr "%s: entrada no válida '%s'\n"
 
 #: lib/src/interact.c:4713 lib/src/interact.c:4721
 msgid "Inner key is missing"
@@ -5253,7 +5253,7 @@ msgstr "Variable de selección"
 #: lib/src/modelprint.c:2034
 #, c-format
 msgid "Using %d quadrature points"
-msgstr ""
+msgstr "Usando %d puntos de cuadratura"
 
 #: lib/src/modelprint.c:2048
 msgid "Allowing for groupwise heteroskedasticity"
@@ -7065,9 +7065,9 @@ msgid "Matrix decomposition failed"
 msgstr "Falló la descomposición de una matriz"
 
 #: lib/src/uservar.c:1327
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is currently read-only"
-msgstr "La variable %s es de sólo lectura"
+msgstr "La variable %s ahora es de sólo lectura"
 
 #: lib/src/var.c:714 lib/src/var.c:3119
 #, c-format
@@ -11521,9 +11521,8 @@ msgid "Bi_variate..."
 msgstr "Bi_variante..."
 
 #: gui2/gretl.c:1775
-#, fuzzy
 msgid "_Random effects..."
-msgstr "Efectos aleatorios"
+msgstr "Efectos _aleatorios..."
 
 #: gui2/gretl.c:1776
 msgid "To_bit..."
@@ -12087,7 +12086,7 @@ msgstr "en modo _tabular"
 
 #: gui2/gui_utils.c:317 gui2/gui_utils.c:320 gui2/gui_utils.c:323
 msgid "_Equation"
-msgstr "en modo _ecuación"
+msgstr "_Ecuación"
 
 #: gui2/gui_utils.c:324
 msgid "_Equation options"
@@ -13815,9 +13814,8 @@ msgid "AR(1)"
 msgstr "AR(1)"
 
 #: gui2/selector.c:3644
-#, fuzzy
 msgid "Random effects (binary) probit"
-msgstr "Probit de efectos aleatorios"
+msgstr "Probit (binario) de efectos aleatorios"
 
 #: gui2/selector.c:3654
 msgid "Count data model"
@@ -14109,7 +14107,7 @@ msgstr "Bits por valor de punto flotante"
 
 #: gui2/selector.c:5349
 msgid "Quadrature points"
-msgstr ""
+msgstr "Puntos de cuadratura"
 
 #: gui2/selector.c:5371
 msgid "Robust standard errors/intervals"
