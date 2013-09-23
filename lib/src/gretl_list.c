@@ -2521,7 +2521,7 @@ int *gretl_list_build (const char *s, const DATASET *dset, int *err)
 	return NULL;
     }
 
-    nf = count_fields(s);
+    nf = count_fields(s, NULL);
     
     for (i=0; i<nf && !*err; i++) {
 	s += strspn(s, " ");

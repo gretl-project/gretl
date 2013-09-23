@@ -453,6 +453,7 @@ struct gretl_option gretl_opts[] = {
     { SETOBS,   OPT_X, "cross-section", 0 },
     { SETOBS,   OPT_N, "special-time-series", 0 },
     { SETOBS,   OPT_G, "panel-groups", 0 },
+    { SETOBS,   OPT_I, "panel-time", 0 },
     { SMPL,     OPT_B, "balanced", 0 },
     { SMPL,     OPT_C, "contiguous", 0 },
     { SMPL,     OPT_F, "full", 0 },

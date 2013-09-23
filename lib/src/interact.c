@@ -2803,7 +2803,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
        before the first semicolon */
     if (cmd->ci == LAGS) {
 	if (get_lags_param(cmd, &rem)) {
-	    nf = count_fields(rem);
+	    nf = count_fields(rem, NULL);
 	} 
     }    
 
@@ -5538,7 +5538,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	err = set_obs(line, dset, cmd->opt);
 	if (!err) {
 	    if (dset->n > 0) {
-		print_smpl(dset, 0, prn);
+		if (!(cmd->opt & (OPT_I | OPT_G))) {
+		    print_smpl(dset, 0, prn);
+		}
 		schedule_callback(s);
 	    } else {
 		pprintf(prn, _("data frequency = %d\n"), dset->pd);

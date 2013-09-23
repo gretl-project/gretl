@@ -654,7 +654,7 @@ static int nlspec_add_param_names (nlspec *spec, const char *s)
 static int 
 nlspec_add_params_from_line (nlspec *s, const char *str)
 {
-    int i, nf = count_fields(str);
+    int i, nf = count_fields(str, NULL);
     int err = 0;
 
     if (s->params != NULL || nf == 0) {

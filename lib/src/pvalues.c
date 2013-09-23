@@ -3228,7 +3228,7 @@ int batch_pvalue (const char *str, DATASET *dset, PRN *prn)
 	str += 7;
     }
 
-    S = gretl_string_split(str, &n);
+    S = gretl_string_split(str, &n, NULL);
     if (S == NULL) {
 	return E_ALLOC;
     }

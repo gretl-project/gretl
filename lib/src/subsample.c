@@ -1007,10 +1007,10 @@ copy_data_to_subsample (DATASET *subset, const DATASET *dset,
 	}
     }
 
-    /* copy panel time data? */
-    if (dset->pantime != NULL && dataset_is_panel(subset) &&
-	subset->pd == dset->pd) {
-	subset->pantime = copyvec(dset->pantime, dset->pd);
+    /* copy panel time info? */
+    if (dataset_is_panel(subset) && subset->pd == dset->pd) {
+	subset->panel_pd = dset->panel_pd;
+	subset->panel_sd0 = dset->panel_sd0;
     }
 
     strcpy(subset->stobs, "1");
@@ -1757,7 +1757,7 @@ int set_sample (const char *line, DATASET *dset)
     line += strcspn(line, " ");
     line += strspn(line, " ");
 
-    nf = count_fields(line);
+    nf = count_fields(line, NULL);
 
 #if SUBDEBUG
     fprintf(stderr, "set_sample: line='%s', nf=%d, dset=%p\n", 

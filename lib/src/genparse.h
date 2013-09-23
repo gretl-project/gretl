@@ -342,6 +342,7 @@ enum {
     F_RANDINT,
     F_MREAD,
     F_GETLINE,
+    F_PDATE,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,
@@ -431,7 +432,8 @@ enum {
 /* functions taking a string arg in last position */
 #define string_last_func(s) (s == F_FDJAC || s == F_BFGSMAX || \
                              s == F_NRMAX || s == F_DESEAS || \
-			     s == F_AGGRBY || s == F_INBUNDLE)
+			     s == F_AGGRBY || s == F_INBUNDLE || \
+			     s == F_PDATE)
 
 /* functions taking string arg in middle position */
 #define string_mid_func(s) (s == F_BFGSMAX || s == F_NRMAX || s == F_SIMANN)

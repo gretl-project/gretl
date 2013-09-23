@@ -1583,7 +1583,7 @@ static int loop_print_start (LOOP_PRINT *lprn, const char *namestr)
 {
     int i, nv;
 
-    lprn->names = gretl_string_split(namestr, &lprn->nvars);
+    lprn->names = gretl_string_split(namestr, &lprn->nvars, NULL);
     if (lprn->names == NULL) {
 	return E_ALLOC;
     }
@@ -1729,7 +1729,7 @@ static int loop_store_start (LOOPSET *loop, const char *names,
 	return E_DATA;
     }
 
-    lstore->names = gretl_string_split(names, &lstore->nvars);
+    lstore->names = gretl_string_split(names, &lstore->nvars, NULL);
     if (lstore->names == NULL) {
 	return E_ALLOC;
     }

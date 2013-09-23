@@ -2846,7 +2846,7 @@ static int pkg_set_no_print_funcs (fnpkg *pkg, const char *s)
     char **S;
     int ns = 0, err = 0;
 
-    S = gretl_string_split(s, &ns);
+    S = gretl_string_split(s, &ns, NULL);
     if (ns == 0) {
 	err = E_DATA;
     } else {
@@ -3022,7 +3022,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
 		}
 		if (!*err) {
 		    tailstrip(line);
-		    pubnames = gretl_string_split(line + 8, &npub);
+		    pubnames = gretl_string_split(line + 8, &npub, NULL);
 		    if (npub == 0) {
 			*err = E_DATA;
 		    }

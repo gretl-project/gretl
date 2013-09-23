@@ -2752,7 +2752,7 @@ static int maybe_add_plotx (gnuplot_info *gi,
 	return 0;
     }
 
-    gi->x = gretl_plotx(dset);
+    gi->x = gretl_plotx(dset, OPT_NONE);
     if (gi->x == NULL) {
 	return E_ALLOC;
     }
@@ -3444,7 +3444,7 @@ int multi_scatters (const int *list, const DATASET *dset,
 
     if (pos == 0) {
 	/* plot against time or index */
-	obs = gretl_plotx(dset);
+	obs = gretl_plotx(dset, OPT_NONE);
 	if (obs == NULL) {
 	    return E_ALLOC;
 	}
@@ -3687,7 +3687,7 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
     if (pos == 0) {
 	/* plot against time or index */
 	if (matrix_plotx_ok(m, dset, &t1, &t2, &pd)) {
-	    obs = gretl_plotx(dset);
+	    obs = gretl_plotx(dset, OPT_NONE);
 	    if (obs == NULL) {
 		return E_ALLOC;
 	    }	
@@ -4485,7 +4485,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	return 1;
     }
 
-    obs = gretl_plotx(dset);
+    obs = gretl_plotx(dset, OPT_NONE);
     if (obs == NULL) {
 	return E_ALLOC;
     }
@@ -4957,7 +4957,7 @@ int garch_resid_plot (const MODEL *pmod, const DATASET *dset)
 	return E_DATA;
     }
 
-    obs = gretl_plotx(dset);
+    obs = gretl_plotx(dset, OPT_NONE);
     if (obs == NULL) {
 	return E_ALLOC;
     }
@@ -5094,33 +5094,24 @@ static int panel_means_ts_plot (const int vnum,
 {
     DATASET *gset;
     int nunits, T = dset->pd;
-    int list[3] = {1, 1, 2};
+    int list[3] = {2, 1, 2};
     gchar *literal = NULL;
     gchar *title = NULL;
-    const double *tvals;
-    int nv, xvar = 0;
+    const double *obs;
     int i, t, s, s0;
     int err = 0;
 
     nunits = panel_sample_size(dset);
-    nv = 2;
 
-    tvals = dataset_get_panel_time(dset);
-    if (tvals == NULL) {
-	xvar = plausible_panel_time_var(dset);
-    }
-
-    if (tvals != NULL || xvar > 0) {
-	/* extra column for x-axis */
-	nv++;
-    }	
-
-    gset = create_auxiliary_dataset(nv, T, 0);
-    if (gset == NULL) {
+    obs = gretl_plotx(dset, OPT_P);
+    if (obs == NULL) {
 	return E_ALLOC;
     }
 
-    list[0] = nv - 1;
+    gset = create_auxiliary_dataset(3, T, 0);
+    if (gset == NULL) {
+	return E_ALLOC;
+    }
 
     strcpy(gset->varname[1], dset->varname[vnum]);
     series_set_display_name(gset, 1, series_get_display_name(dset, vnum));
@@ -5144,36 +5135,15 @@ static int panel_means_ts_plot (const int vnum,
 	} else {
 	    gset->Z[1][t] = xsum / n;
 	}
-    }
-
-    if (tvals != NULL) {
-	for (t=0; t<T; t++) {
-	    gset->Z[2][t] = tvals[t];
-	}	
-    } else if (xvar > 0) {
-	/* time variable for x-axis */
-	strcpy(gset->varname[2], dset->varname[xvar]);
-	series_set_display_name(gset, 2, series_get_display_name(dset, xvar));
-	for (t=0; t<T; t++) {
-	    gset->Z[2][t] = dset->Z[xvar][t];
-	}
+	gset->Z[2][t] = obs[t];
     }
 
     opt |= OPT_O; /* use lines */
-    if (!tvals && !xvar) {
-	opt |= OPT_T;
-    }
     
     title = g_strdup_printf(_("mean %s"), 
 			    series_get_graph_name(dset, vnum));
-
-    if (xvar) {
-	literal = g_strdup_printf("set ylabel \"%s\" ; set xlabel ;", 
-				  title);
-    } else {
-	literal = g_strdup_printf("set ylabel \"%s\" ;", title);
-    } 
-
+    literal = g_strdup_printf("set ylabel \"%s\" ; set xlabel ;", 
+			      title);
     err = gnuplot(list, literal, gset, opt);
 
     g_free(title);
@@ -5322,26 +5292,20 @@ static int panel_overlay_ts_plot (const int vnum,
     int *list = NULL;
     gchar *literal = NULL;
     gchar *title = NULL;
-    const double *tvals;
+    const double *obs = NULL;
     char const **grpnames;
-    int nv, xvar = 0;
-    int panel_labels = 0;
+    int nv, panel_labels = 0;
     int use = 0, strip = 0;
     int i, t, s, s0;
     int err = 0;
 
     nunits = panel_sample_size(dset);
-    nv = nunits + 1;
+    nv = nunits + 2;
     u0 = dset->t1 / T;
 
-    tvals = dataset_get_panel_time(dset);
-    if (tvals == NULL) {
-	xvar = plausible_panel_time_var(dset);
-    }
-
-    if (tvals != NULL || xvar > 0) {
-	/* extra column for x-axis */
-	nv++;
+    obs = gretl_plotx(dset, OPT_P);
+    if (obs == NULL) {
+	return E_ALLOC;
     }
 
     gset = create_auxiliary_dataset(nv, T, 0);
@@ -5384,30 +5348,14 @@ static int panel_overlay_ts_plot (const int vnum,
 	}
     }
 
-    if (tvals != NULL) {
-	for (t=0; t<T; t++) {
-	    gset->Z[nv-1][t] = tvals[t];
-	}	
-    } else if (xvar > 0) {
-	strcpy(gset->varname[nv-1], dset->varname[xvar]);
-	for (t=0; t<T; t++) {
-	    gset->Z[nv-1][t] = dset->Z[xvar][t];
-	}
-    }
+    for (t=0; t<T; t++) {
+	gset->Z[nv-1][t] = obs[t];
+    }	
 
     opt |= OPT_O; /* use lines */
-    if (!tvals && !xvar) {
-	opt |= OPT_T;
-    }
 
     title = g_strdup_printf("%s by group", series_get_graph_name(dset, vnum));
-
-    if (xvar) {
-	literal = g_strdup_printf("set title \"%s\" ; set xlabel ;", title);
-    } else {
-	literal = g_strdup_printf("set title \"%s\" ;", title);
-    }
-
+    literal = g_strdup_printf("set title \"%s\" ; set xlabel ;", title);
     err = gnuplot(list, literal, gset, opt);
 
     g_free(title);
@@ -5942,7 +5890,7 @@ int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
 	return err;
     }
 
-    obs = gretl_plotx(dset);
+    obs = gretl_plotx(dset, OPT_NONE);
 
     if (quarterly_or_monthly(dset)) {
 	fprintf(fp, "# timeseries %d\n", dset->pd);
@@ -6024,7 +5972,7 @@ int gretl_VECM_combined_EC_plot (GRETL_VAR *var,
 	return err;
     }
 
-    obs = gretl_plotx(dset);
+    obs = gretl_plotx(dset, OPT_NONE);
 
     nvars = gretl_matrix_cols(EC);
     nobs = gretl_matrix_rows(EC);
@@ -6102,7 +6050,7 @@ int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset)
 	return 1;
     }
 
-    obs = gretl_plotx(dset);
+    obs = gretl_plotx(dset, OPT_NONE);
     if (obs == NULL) {
 	return E_ALLOC;
     }

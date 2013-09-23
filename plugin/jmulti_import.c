@@ -232,7 +232,7 @@ static int get_jmulti_var_info (FILE *fp, char *line, int len,
     tailstrip(line);
     fprintf(stderr, "jmulti var line: %s\n", line);
 
-    *nv = count_fields(line);
+    *nv = count_fields(line, NULL);
 
     while (fgets(line, len, fp)) {
 	if (!string_is_blank(line)) {

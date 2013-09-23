@@ -267,8 +267,9 @@ typedef struct DATASET_ {
     char *restriction;  /* record of sub-sampling restriction */
     char *padmask;      /* record of padding to re-balance panel data */
     int auxiliary;      /* = 0 for regular dataset, 1 for aux dataset */
-    double *pantime;    /* panel-data time values (e.g. years) */
     char *pangrps;      /* panel-only: name of series holding group names */
+    int panel_pd;       /* panel-only: panel time-series frequency */
+    double panel_sd0;   /* panel-only: time-series start */
 } DATASET;
 
 typedef struct VMatrix_ {

@@ -4934,20 +4934,20 @@ int set_panel_group_strings (const char *line, DATASET *dset)
     }
     
     if (namestr != NULL) {
-	/* FIXME space-separation not flexible enough? */
-	int ngtest = count_fields(namestr);
+	int ngtest = 0;
 
-	if (ngtest != ng) {
+	if (strchr(namestr, '"') != NULL) {
+	    S = gretl_string_split_quoted(namestr, &ngtest, &err);
+	} else {
+	    S = gretl_string_split(namestr, &ngtest, " \n\t");
+	}
+	if (!err && S == NULL) {
+	    err = E_ALLOC;
+	}
+	if (!err && ngtest != ng) {
 	    fprintf(stderr, "Got %d strings but there are %d groups\n",
 		    ngtest, ng);
 	    err = E_DATA;
-	} else {
-	    S = gretl_string_split(namestr, &ngtest);
-	    if (S == NULL) {
-		err = E_ALLOC;
-	    } else if (ngtest != ng) {
-		err = E_DATA;
-	    }
 	}
 	if (freeit) {
 	    free(namestr);
@@ -5000,6 +5000,66 @@ int set_panel_group_strings (const char *line, DATASET *dset)
     return err;
 }
 
+/* Given @pd = annual frequency of time-dimension of panel and @s =
+   string representing a starting date, construct in @x a series of
+   the form YYYYMMDD, where a quarter maps onto its first month and
+   the day is taken to be 1.
+*/
+
+int make_panel_date_series (DATASET *dset, int pd, const char *s, double *x)
+{
+    int y1, p1, n;
+    char c;
+    int err = 0;
+
+    if (pd != 4 && pd != 12) {
+	return E_PDWRONG;
+    }
+
+    if (pd == 4) {
+	n = sscanf(s, "%4d%c%d", &y1, &c, &p1);
+    } else {
+	n = sscanf(s, "%4d%c%2d", &y1, &c, &p1);
+    }
+
+    if (n != 3 || y1 < 0 || y1 > 9999 || p1 < 1 || p1 > pd) {
+	err = E_DATA;
+    } else if (c != '.' && c != ':' && c != '-') {
+	err = E_DATA;
+    } else {
+	int m, m1, mmax, dm;
+	int i, date, y = y1;
+
+	if (pd == 4) {
+	    m = m1 = (p1 - 1) * 3 + 1;
+	    mmax = 10;
+	    dm = 3;
+	} else {
+	    m = m1 = p1;
+	    mmax = 12;
+	    dm = 1;
+	}
+
+	for (i=0; i<dset->n; i++) {
+	    date = 10000*y + 100*m + 1;
+	    x[i] = date;
+	    if ((i + 1) % dset->pd == 0) {
+		y = y1;
+		m = m1;
+	    } else if (m == mmax) {
+		y++;
+		m = 1;
+	    } else {
+		m += dm;
+	    }
+	}
+    }
+
+    return err;
+}
+
+/* utility functions */
+
 static int find_time_var (const DATASET *dset)
 {
     const char *tnames[] = {
@@ -5020,8 +5080,6 @@ static int find_time_var (const DATASET *dset)
 
     return 0;
 }
-    
-/* utility functions */
 
 int guess_panel_structure (double **Z, DATASET *dset)
 {

@@ -4629,6 +4629,29 @@ static NODE *isodate_node (NODE *l, parser *p)
     return ret;
 }
 
+static NODE *panel_date_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret;
+
+    if (!dataset_is_panel(p->dset)) {
+	p->err = E_PDWRONG;
+	return NULL;
+    }
+
+    ret = aux_vec_node(p, p->dset->n);
+
+    if (ret != NULL && starting(p)) {
+	int pd = node_get_int(l, p);
+	const char *s = r->v.str;
+
+	if (!p->err) {
+	    p->err = make_panel_date_series(p->dset, pd, s, ret->v.xvec);
+	}
+    }
+
+    return ret;
+}
+
 static NODE *atof_node (NODE *l, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -10176,6 +10199,15 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 0, STR, l, p);
 	}
 	break;
+    case F_PDATE:
+	if (l->t == NUM && r->t == STR) {
+	    ret = panel_date_node(l, r, p);
+	} else {
+	    node_type_error(t->t, (l->t == NUM)? 2 : 1,
+			    (l->t == NUM)? STR : NUM,
+			    (l->t == NUM)? r : l, p);
+	}
+	break;
     default: 
 	printf("eval: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),
 	       t->t);
@@ -10910,6 +10942,11 @@ static int overwrite_type_check (parser *p)
 	/* don't overwrite one type with another */
 	maybe_do_type_errmsg(p->lh.name, p->lh.t);
 	err = E_TYPES;
+    } else if (p->lh.t == VEC && p->lh.obs < 0 && 
+	       series_has_string_table(p->dset, p->lh.v)) {
+	/* FIXME not getting here */
+	gretl_errmsg_set("Cannot overwrite string-valued series");
+	err = E_TYPES;
     }
 
     return err;
@@ -10917,23 +10954,12 @@ static int overwrite_type_check (parser *p)
 
 static int overwrite_const_check (const char *s, parser *p)
 {
-    int err = 0;
-
     if (object_is_const(s)) {
-	err = 1;
-    }
-
-#if 0
-    if (p->lh.t == VEC && series_is_parent(p->dset, p->lh.v)) {
-	err = 1;
-    }
-#endif
-
-    if (err) {
 	p->err = overwrite_err(s);
+	return p->err;
+    } else {
+	return 0;
     }
-
-    return err;
 }
 
 static void maybe_set_matrix_target (parser *p)

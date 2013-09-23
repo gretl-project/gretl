@@ -43,6 +43,9 @@ int set_panel_structure_from_line (const char *line, DATASET *dset);
 
 int set_panel_group_strings (const char *line, DATASET *dset);
 
+int make_panel_date_series (DATASET *dset, int pd, const char *s, 
+			    double *x);
+
 int switch_panel_orientation (DATASET *dset);
 
 int balanced_panel (const DATASET *dset);

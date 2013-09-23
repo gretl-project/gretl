@@ -2419,7 +2419,7 @@ make_chow_list (const MODEL *pmod, DATASET *dset,
 static int QLR_graph (const double *testvec, int t1, int t2, 
 		      const DATASET *dset, int robust)
 {
-    const double *x = gretl_plotx(dset);
+    const double *x = gretl_plotx(dset, OPT_NONE);
     FILE *fp;
     int t, err = 0;
 
@@ -2999,7 +2999,7 @@ static int cusum_do_graph (double a, double b, const double *W,
     if (dataset_is_time_series(dset) && okfreq(dset->pd)) {
 	b *= dset->pd;
 	frac /= dset->pd;
-        obs = gretl_plotx(dset);
+        obs = gretl_plotx(dset, OPT_NONE);
 	if (obs != NULL) {
 	    x0 = obs[t1 + k];
 	}

@@ -893,11 +893,13 @@ static int likely_calendar_obs_string (const char *s)
  * @opt: %OPT_S for stacked time-series, %OPT_C for stacked cross-section,
  * %OPT_T for time series, %OPT_X for cross section, %OPT_P to set
  * panel structure via two variables representing unit and period
- * respectively.
+ * respectively. For data already set as panel, %OPT_G to set panel
+ * group names or %OPT_I to set panel time-dimension information.
  * 
- * Set the frequency and initial observation for a dataset.
+ * Set the frequency and initial observation for a dataset, or
+ * in the case of a panel dataset, extra group or time information.
  *
- * Returns: 0 on successful completion, 1 on error.
+ * Returns: 0 on successful completion, non-zero on error.
  */
 
 int set_obs (const char *line, DATASET *dset, gretlopt opt)
@@ -915,6 +917,10 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
 
     if ((opt & (OPT_R | OPT_P)) && dset->Z == NULL) {
 	return E_NODATA;
+    }
+
+    if ((opt & (OPT_G | OPT_I)) && !dataset_is_panel(dset)) {
+	return E_DATA;
     }
 
     gretl_error_clear();
@@ -969,6 +975,8 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
 	structure = STACKED_CROSS_SECTION;
     } else if (opt == OPT_N) {
 	structure = SPECIAL_TIME_SERIES;
+    } else if (opt == OPT_I) {
+	structure = TIME_SERIES;
     }
 
     if (structure == STACKED_TIME_SERIES || structure == STACKED_CROSS_SECTION) {
@@ -996,8 +1004,10 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
 	    sd0 = ed0;
 	    structure = TIME_SERIES;
 
-	    /* replace any existing markers with date strings */
-	    dataset_destroy_obs_markers(dset);
+	    if (!(opt & OPT_I)) {
+		/* replace any existing markers with date strings */
+		dataset_destroy_obs_markers(dset);
+	    }
 	} else {
 	    gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), stobs);
 	    return 1;
@@ -1045,6 +1055,12 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
 
 	/* for non-calendar data */
 	sd0 = dot_atof(stobs);
+    }
+
+    if (opt == OPT_I) {
+	dset->panel_pd = pd;
+	dset->panel_sd0 = sd0;
+	return 0;
     }
 
     if (structure == TIME_SERIES && (pd == 1 || pd == 4 || pd == 12)) {
@@ -1770,7 +1786,7 @@ void libgretl_session_cleanup (int mode)
     gretl_transforms_cleanup();
     gretl_lists_cleanup();
     gretl_tests_cleanup();
-    gretl_plotx(NULL);
+    gretl_plotx(NULL, OPT_NONE);
 
     if (mode != SESSION_CLEAR_DATASET) {
 	destroy_user_vars();

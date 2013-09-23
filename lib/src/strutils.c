@@ -749,17 +749,21 @@ char *gretl_quoted_string_strdup (const char *s, const char **ptr)
  * gretl_string_split:
  * @s: the source string.
  * @n: location to receive the number of substrings.
+ * @sep: string containing the character(s) to count as
+ * field separators, or NULL. If @sep is NULL only the
+ * space character counts.
  *
- * Parses @s into a set of zero or more substrings, separated
- * by one or more spaces, and creates an array of those substrings. 
- * On sucessful exit, @n holds the number of substrings. 
+ * Parses @s into a set of zero or more substrings and 
+ * creates an array of those substrings. On sucessful exit
+ * @n holds the number of substrings. 
  *
  * Returns: the allocated array or NULL in case of failure.
  */
 
-char **gretl_string_split (const char *s, int *n)
+char **gretl_string_split (const char *s, int *n,
+			   const char *sep)
 {
-    int i, k, m = count_fields(s);
+    int i, k, m = count_fields(s, sep);
     char *word;
     char **S;
 
@@ -774,9 +778,13 @@ char **gretl_string_split (const char *s, int *n)
 	return NULL;
     }
 
+    if (sep == NULL) {
+	sep = " ";
+    }
+
     for (i=0; i<m; i++) {
-	s += strspn(s, " ");
-	k = strcspn(s, " ");
+	s += strspn(s, sep);
+	k = strcspn(s, sep);
 	word = gretl_strndup(s, k);
 	if (word == NULL) {
 	    strings_array_free(S, m);
@@ -905,31 +913,36 @@ int gretl_namechar_spn (const char *s)
 /**
  * count_fields:
  * @s: the string to process.
+ * @sep: string containing the character(s) to count as
+ * field separators, or NULL. If @sep is NULL only the
+ * space character counts. 
  *
- * Returns: the number of space-separated fields in @s.
+ * Returns: the number of fields in @s.
  */
 
-int count_fields (const char *s)
+int count_fields (const char *s, const char *sep)
 {
     int nf = 0;
+
+    if (sep == NULL) {
+	sep = " ";
+    }
 
     if (s != NULL && *s != '\0') {
 	const char *p;
 
-	/* step past any leading space */
-	while (*s == ' ') {
-	    s++;
-	}
+	/* step past separator(s) */
+	s += strspn(s, sep);
 
-	if (*s != '\0' && *s != ' ') {
+	if (*s != '\0') {
 	    s++;
 	    nf++;
 	}
 
 	while (*s) {
-	    p = strpbrk(s, " ");
+	    p = strpbrk(s, sep);
 	    if (p != NULL) {
-		s = p + strspn(p, " ");
+		s = p + strspn(p, sep);
 		if (*s) {
 		    nf++;
 		}

@@ -2805,7 +2805,7 @@ typedef enum {
     PLOTVAR_MAX
 } plotvar_type; 
 
-int plotvar_code (const DATASET *dset)
+static int plotvar_code (const DATASET *dset)
 {
     if (!dataset_is_time_series(dset)) {
 	return PLOTVAR_INDEX;
@@ -2826,9 +2826,34 @@ int plotvar_code (const DATASET *dset)
     }
 }
 
+static int panel_plotvar_code (const DATASET *dset)
+{
+    int pd = dset->panel_pd;
+
+    if (pd == 0) {
+	return 0;
+    } else if (pd == 1) {
+	return PLOTVAR_ANNUAL;
+    } else if (pd == 4) {
+	return PLOTVAR_QUARTERS;
+    } else if (pd == 12) {
+	return PLOTVAR_MONTHS;
+    } else if (pd == 24) {
+	return PLOTVAR_HOURLY;
+    } else if ((pd == 5 || pd == 6 || pd == 7 || pd == 52) &&
+	       dset->panel_sd0 > 10000.0) {
+	return PLOTVAR_CALENDAR;
+    } else if (pd == 10) {
+	return PLOTVAR_DECADES;
+    } else {
+	return 0;
+    }
+}
+
 /**
  * gretl_plotx:
  * @dset: data information struct.
+ * @opt: can include OPT_P for panel time-series plot.
  *
  * Finds or creates a special dummy variable for use on the
  * x-axis in plotting; this will have the full length of the
@@ -2839,17 +2864,17 @@ int plotvar_code (const DATASET *dset)
  * Returns: pointer to plot x-variable, or NULL on failure.
  */
 
-const double *gretl_plotx (const DATASET *dset)
+const double *gretl_plotx (const DATASET *dset, gretlopt opt)
 {
     static double *x;
     static int ptype;
     static int Tbak;
     static double sd0bak;
-    int t, y1, T;
+    int t, y1, T = 0;
     int new_ptype = 0;
     int panvar = 0;
     int failed = 0;
-    double sd0;
+    double sd0 = 0;
     float rm;
 
     if (dset == NULL) {
@@ -2862,21 +2887,32 @@ const double *gretl_plotx (const DATASET *dset)
 	return NULL;
     }
 
-    if (dataset_is_panel(dset) && 
-	sample_size(dset) == dset->pd && dset->Z != NULL) {
-	/* handle the case of a time-series plot for a single panel unit */
-	panvar = plausible_panel_time_var(dset);
-	if (panvar > 0) {
-	    new_ptype = PLOTVAR_PANEL;
-	}
+    if (dataset_is_panel(dset) && ((opt & OPT_P) || 
+				   sample_size(dset) == dset->pd)) {
+	/* we're plotting a single time-series from a panel */
+	new_ptype = panel_plotvar_code(dset);
+	if (new_ptype != 0) {
+	    sd0 = dset->panel_sd0;
+	} else {
+	    panvar = plausible_panel_time_var(dset);
+	    if (panvar > 0) {
+		new_ptype = PLOTVAR_PANEL;
+	    } else {
+		new_ptype = PLOTVAR_INDEX;
+	    }
+	}		
+	T = dset->pd;
     }
 
     if (new_ptype == 0) {
 	new_ptype = plotvar_code(dset);
     }
-
-    T = dset->n;
-    sd0 = dset->sd0;
+    if (T == 0) {
+	T = dset->n;
+    }
+    if (sd0 == 0.0) {
+	sd0 = dset->sd0;
+    }
 
     if (x != NULL && new_ptype == ptype && Tbak == T && sd0 == sd0bak) {
 	/* a suitable array is already at hand */
@@ -2952,11 +2988,7 @@ const double *gretl_plotx (const DATASET *dset)
 	}
 	break;
     case PLOTVAR_INDEX:
-	for (t=0; t<T; t++) {
-	    x[t] = (double) (t + 1);
-	}
-	break;
-    case PLOTVAR_TIME:
+    case PLOTVAR_TIME:	
 	for (t=0; t<T; t++) {
 	    x[t] = (double) (t + 1);
 	}

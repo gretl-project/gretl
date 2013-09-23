@@ -45,7 +45,7 @@ int numeric_string (const char *str);
 
 int integer_string (const char *str);
 
-int count_fields (const char *s);
+int count_fields (const char *s, const char *sep);
 
 double dot_atof (const char *s);
 
@@ -80,7 +80,7 @@ char *gretl_word_strdup (const char *src, const char **ptr,
 
 char *gretl_quoted_string_strdup (const char *s, const char **ptr);
 
-char **gretl_string_split (const char *s, int *n);
+char **gretl_string_split (const char *s, int *n, const char *sep);
 
 char **gretl_string_split_quoted (const char *s, int *n, int *err);
 

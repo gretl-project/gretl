@@ -544,7 +544,7 @@ static int graph_series (const DATASET *dset, tx_request *req)
     char title[32];
     int t, err = 0;
 
-    obs = gretl_plotx(dset);
+    obs = gretl_plotx(dset, OPT_NONE);
     if (obs == NULL) {
 	return E_ALLOC;
     }

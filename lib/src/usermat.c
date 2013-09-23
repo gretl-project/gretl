@@ -579,7 +579,7 @@ int umatrix_set_names_from_string (gretl_matrix *M,
 	char **S;
 	int ns;
 
-	S = gretl_string_split(s, &ns);
+	S = gretl_string_split(s, &ns, " \n\t");
 	if (S == NULL) {
 	    err = E_ALLOC;
 	} else if (ns != n) {

@@ -171,11 +171,6 @@ void clear_datainfo (DATASET *dset, int code)
 	dset->padmask = NULL;
     }
 
-    if (dset->pantime != NULL) {
-	free(dset->pantime);
-	dset->pantime = NULL;
-    }
-
     if (dset->pangrps != NULL) {
 	free(dset->pangrps);
 	dset->pangrps = NULL;
@@ -416,8 +411,9 @@ void datainfo_init (DATASET *dset)
     dset->submask = NULL;
     dset->restriction = NULL;
     dset->padmask = NULL;
-    dset->pantime = NULL;
     dset->pangrps = NULL;
+    dset->panel_pd = 0;
+    dset->panel_sd0 = 0;
 
     dset->auxiliary = 0;
 }
@@ -610,7 +606,6 @@ int start_new_Z (DATASET *dset, gretlopt opt)
     dset->submask = NULL;
     dset->restriction = NULL;
     dset->padmask = NULL;
-    dset->pantime = NULL;
     dset->pangrps = NULL;
     
     return 0;
@@ -4018,42 +4013,6 @@ int steal_string_table (DATASET *l_dset, int lvar,
     }
 
     return 0;
-}
-
-int dataset_set_panel_time (DATASET *dset, const double *tvals)
-{
-    int err = 0;
-
-    if (tvals == NULL) {
-	free(dset->pantime);
-	dset->pantime = NULL;
-    } else {
-	/* minimal sanity check: no NaNs, strictly increasing
-	   values */
-	double ti;
-	int i;
-	
-	for (i=0; i<dset->pd && !err; i++) {
-	    ti = tvals[i];
-	    if (xna(ti) || (i > 0 && ti <= tvals[i-1])) {
-		err = E_DATA;
-	    }
-	}
-	if (!err) {
-	    free(dset->pantime); 
-	    dset->pantime = copyvec(tvals, dset->pd);
-	    if (dset->pantime == NULL) {
-		err = E_ALLOC;
-	    }
-	}
-    }
-
-    return err;
-}
-
-const double *dataset_get_panel_time (const DATASET *dset)
-{
-    return (dset == NULL)? NULL : dset->pantime;
 }
 
 int set_panel_groups_name (DATASET *dset, const char *vname)

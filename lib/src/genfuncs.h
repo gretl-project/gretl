@@ -108,9 +108,7 @@ int gen_time (DATASET *dset, int tm);
 
 int gen_wkday (DATASET *dset);
 
-int plotvar_code (const DATASET *dset);
-
-const double *gretl_plotx (const DATASET *dset);
+const double *gretl_plotx (const DATASET *dset, gretlopt opt);
 
 double *get_fit_or_resid (const MODEL *pmod, DATASET *dset, 
 			  ModelDataIndex idx, char *vname, 

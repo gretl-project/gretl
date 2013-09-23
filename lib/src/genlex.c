@@ -409,6 +409,7 @@ struct str_table funcs[] = {
     { F_TYPEOF,   "typeof" },
     { F_ATOF,     "atof" },
     { F_FIXNAME,  "fixname" },
+    { F_PDATE,    "pdate" },
     { 0,          NULL }
 };
 
