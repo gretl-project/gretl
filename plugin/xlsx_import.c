@@ -324,7 +324,8 @@ xlsx_real_set_obs_string (xlsx_info *xinfo, int t, const char *s)
     gretl_utf8_strncat_trim(xinfo->dset->S[t], s, OBSLEN - 1);
 }
 
-static int xlsx_set_obs_string (xlsx_info *xinfo, int t, const char *s)
+static int xlsx_set_obs_string (xlsx_info *xinfo, int row, int col, 
+				int t, const char *s, PRN *prn)
 {
     int err = 0;
 
@@ -336,7 +337,8 @@ static int xlsx_set_obs_string (xlsx_info *xinfo, int t, const char *s)
     }
 
     if (xinfo->dset->S == NULL) {
-	fprintf(stderr, "error in xlsx_set_obs_string: no markers allocated\n");
+	pprintf(prn, _("Expected numeric data, found string:\n"
+		       "'%s' at row %d, column %d\n"), s, row, col);
 	err = E_DATA;
     } else if (t < 0 || t >= xinfo->dset->n) {
 	fprintf(stderr, "error in xlsx_set_obs_string: t = %d\n", t);
@@ -653,7 +655,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		    if (row == xinfo->yoffset + 1) {
 			err = xlsx_set_varname(xinfo, i, strval, row, col, prn);
 		    } else if (col == xinfo->xoffset + 1) {
-			err = xlsx_set_obs_string(xinfo, t, strval);
+			err = xlsx_set_obs_string(xinfo, row, col, t, strval, prn);
 		    } else if (strval != NULL) {
 			err = xlsx_handle_stringval(strval, row, col, prn);
 		    }
