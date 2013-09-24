@@ -10942,11 +10942,6 @@ static int overwrite_type_check (parser *p)
 	/* don't overwrite one type with another */
 	maybe_do_type_errmsg(p->lh.name, p->lh.t);
 	err = E_TYPES;
-    } else if (p->lh.t == VEC && p->lh.obs < 0 && 
-	       series_has_string_table(p->dset, p->lh.v)) {
-	/* FIXME not getting here */
-	gretl_errmsg_set("Cannot overwrite string-valued series");
-	err = E_TYPES;
     }
 
     return err;
@@ -11226,7 +11221,15 @@ static void pre_process (parser *p, int flags)
 	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"), opstr);
 	p->err = E_PARSE;
 	return;
-    }	
+    }
+
+    /* string-valued series: do not overwrite wholesale */
+    if (p->lh.t == VEC && p->lh.obs < 0 && 
+	series_has_string_table(p->dset, p->lh.v)) {
+	gretl_errmsg_set("Cannot overwrite entire string-valued series");
+	p->err = E_TYPES;
+	return;
+    }
 
     /* advance past operator */
     s += strlen(opstr);
