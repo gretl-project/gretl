@@ -840,8 +840,10 @@ static int get_stobs_maj_min (char *stobs, int structure,
 }
 
 static int 
-catch_setobs_errors (const char *stobs, int pd, int n, int min, gretlopt opt)
+catch_setobs_errors (const char *stobs, int pd, int min, int structure)
 {
+    int panel = structure == STACKED_TIME_SERIES || 
+	structure == STACKED_CROSS_SECTION;
     int err = 0;
 
     if (pd == 1) {
@@ -849,7 +851,7 @@ catch_setobs_errors (const char *stobs, int pd, int n, int min, gretlopt opt)
 	    gretl_errmsg_set(_("no ':' allowed in starting obs with "
 			       "frequency 1"));
 	    err = 1;
-	} else if (opt == OPT_S || opt == OPT_C) {
+	} else if (panel) {
 	    gretl_errmsg_set(_("panel data must have frequency > 1"));
 	    err = 1;
 	}
@@ -862,29 +864,117 @@ catch_setobs_errors (const char *stobs, int pd, int n, int min, gretlopt opt)
 	    gretl_errmsg_sprintf(_("starting obs '%s' is incompatible with frequency"), 
 				 stobs);
 	    err = 1;
-	} else if (opt == OPT_X) {
+	} else if (structure == CROSS_SECTION) {
 	    gretl_errmsg_set(_("cross-sectional data: frequency must be 1"));
 	    err = 1;
-	} else if (n % pd != 0) {
-	    if (opt == OPT_S || opt == OPT_C) {
-		gretl_errmsg_sprintf(_("Panel datasets must be balanced.\n"
-				       "The number of observations (%d) is not a multiple\n"
-				       "of the number of %s (%d)."), 
-				     n, ((opt == OPT_S)? _("periods") : _("units")), pd);
-		err = 1;
-	    }
 	}
     }
 
     return err;
 }
 
-static int likely_calendar_obs_string (const char *s)
+static int invalid_stobs (const char *s)
 {
-    return strchr(s, '-') != NULL || strchr(s, '/') != NULL;
+    gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), s);
+    return E_DATA;
 }
 
+#define likely_calendar_obs_string(s) (strchr(s, '-') || strchr(s, '/'))
+
 #define recognized_ts_frequency(f) (f == 4 || f == 12 || f == 24)
+
+int process_starting_obs (char *stobs, int pd, int *pstructure,
+			  double *psd0, int *pdated)
+{
+    int structure = *pstructure;
+    double sd0 = 0.0;
+    int maybe_tseries = 1;
+    int dated = 0;
+    int err = 0;
+
+    if (structure == CROSS_SECTION || 
+	structure == STACKED_TIME_SERIES || 
+	structure == STACKED_CROSS_SECTION) {
+	maybe_tseries = 0;
+    }
+
+    /* truncate stobs if not a calendar date */
+
+    if (likely_calendar_obs_string(stobs)) {
+	if (maybe_tseries) {
+	    dated = 1;
+	} else {
+	    return invalid_stobs(stobs);
+	}
+    } else {
+	stobs[8] = '\0';
+    }
+
+    if (dated) {
+	if (pd == 5 || pd == 6 || pd == 7 || pd == 52) {
+	    /* calendar-dated data, daily or weekly */
+	    double ed0 = get_epoch_day(stobs);
+
+	    if (ed0 < 0) {
+		return invalid_stobs(stobs);
+	    } else {
+		sd0 = ed0;
+		structure = TIME_SERIES;
+	    }
+	} else {
+	    return invalid_stobs(stobs);
+	}
+    } else if (structure == TIME_SERIES && pd == 10) {
+	/* decennial data */
+	sd0 = (double) atoi(stobs);
+    } else {
+	int maj = 0, min = 0;
+
+	if (get_stobs_maj_min(stobs, structure, &maj, &min)) {
+	    return invalid_stobs(stobs);
+	}
+
+	if ((pd == 5 || pd == 6 || pd == 7 || pd == 52) && 
+	    min == 0 && maybe_tseries) {  
+	    /* catch undated daily or weekly data */
+	    structure = TIME_SERIES;
+	} else {
+	    if (catch_setobs_errors(stobs, pd, min, structure)) {
+		return E_DATA;
+	    } else if (pd == 1) {
+		sprintf(stobs, "%d", maj);
+		if (structure == STRUCTURE_UNKNOWN) {
+		    if (maj > 1) {
+			structure = TIME_SERIES; /* annual? */
+		    } else {
+			structure = CROSS_SECTION;
+		    }
+		}
+	    } else {
+		if (structure == TIME_SERIES && min > 0 &&
+		    !recognized_ts_frequency(pd)) {
+		    structure = SPECIAL_TIME_SERIES;
+		}
+		real_format_obs(stobs, maj, min, pd, '.');
+		if (structure == STRUCTURE_UNKNOWN && 
+		    recognized_ts_frequency(pd)) {
+		    structure = TIME_SERIES;
+		}
+	    }
+	}
+
+	/* for non-calendar data */
+	sd0 = dot_atof(stobs);
+    }
+
+    if (!err) {
+	*pstructure = structure;
+	*psd0 = sd0;
+	*pdated = dated;
+    }
+
+    return err;
+}
 
 /**
  * set_obs:
@@ -909,6 +999,7 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
     int structure = STRUCTURE_UNKNOWN;
     double sd0 = dset->sd0;
     int pd, dated = 0;
+    int panel = 0;
     int err = 0;
 
     if (dset == NULL) {
@@ -938,6 +1029,7 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
     if (opt & OPT_P) {
 	return set_panel_structure_from_line(line, dset);
     } else if (opt & OPT_G) {
+	/* --panel-groups */
 	return set_panel_group_strings(line, dset);
     }
 
@@ -945,7 +1037,7 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
 
     if (sscanf(line, "%*s %15s %10s", pdstr, stobs) != 2) {
 	gretl_errmsg_set(_("Failed to parse line as frequency, startobs"));
-	return 1;
+	return E_PARSE;
     }
 
     pd = gretl_int_from_string(pdstr, &err);
@@ -957,13 +1049,6 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
 	return err;
     }
 
-    /* truncate stobs if not a calendar date */
-    if (likely_calendar_obs_string(stobs)) {
-	dated = 1;
-    } else {
-	stobs[8] = '\0';
-    }
-
     /* if an explicit structure option was passed in, respect it */
     if (opt == OPT_X) {
 	structure = CROSS_SECTION;
@@ -971,99 +1056,48 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
 	structure = TIME_SERIES;
     } else if (opt == OPT_S) {
 	structure = STACKED_TIME_SERIES;
+	panel = 1;
     } else if (opt == OPT_C) {
 	structure = STACKED_CROSS_SECTION;
+	panel = 1;
     } else if (opt == OPT_N) {
 	structure = SPECIAL_TIME_SERIES;
     } else if (opt == OPT_I) {
+	/* --panel-time */
 	structure = TIME_SERIES;
     }
 
-    if (structure == STACKED_TIME_SERIES || structure == STACKED_CROSS_SECTION) {
-	if (dset->n > 0 && pd > dset->n) {
-	    gretl_errmsg_sprintf(_("frequency (%d) does not make seem to make sense"), pd);
-	    return 1;
-	}
+    if (panel && dset->n > 0 && pd > dset->n) {
+	gretl_errmsg_sprintf(_("frequency (%d) does not make seem to make sense"), pd);
+	return 1;
     }
 
-    if (dated) {
-	if (opt == OPT_X || opt == OPT_S || opt == OPT_C) {
-	    gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), stobs);
-	    return 1;
-	}
+    err = process_starting_obs(stobs, pd, &structure, &sd0, &dated);
 
-	if (pd == 5 || pd == 6 || pd == 7 || pd == 52) {
-	    /* calendar-dated data, daily or weekly */
-	    double ed0 = get_epoch_day(stobs);
-
-	    if (ed0 < 0) {
-		gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), stobs);
-		return 1;
-	    }
-
-	    sd0 = ed0;
-	    structure = TIME_SERIES;
-
-	    if (!(opt & OPT_I)) {
-		/* replace any existing markers with date strings */
-		dataset_destroy_obs_markers(dset);
-	    }
-	} else {
-	    gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), stobs);
-	    return 1;
-	}
-    } else if (structure == TIME_SERIES && pd == 10) {
-	/* decennial data */
-	sd0 = (double) atoi(stobs);
-    } else {
-	int maj = 0, min = 0;
-
-	if (get_stobs_maj_min(stobs, structure, &maj, &min)) {
-	    gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), stobs);
-	    return 1;
-	}
-
-	if ((pd == 5 || pd == 6 || pd == 7 || pd == 52)  
-	    && min == 0 && opt != OPT_X && opt != OPT_S && opt != OPT_C) {
-	    /* catch undated daily or weekly data */
-	    structure = TIME_SERIES;
-	} else {
-	    if (catch_setobs_errors(stobs, pd, dset->n, min, opt)) {
-		return 1;
-	    }
-	    if (pd == 1) {
-		sprintf(stobs, "%d", maj);
-		if (structure == STRUCTURE_UNKNOWN) {
-		    if (maj > 1) {
-			structure = TIME_SERIES; /* annual? */
-		    } else {
-			structure = CROSS_SECTION;
-		    }
-		}
-	    } else {
-		if (structure == TIME_SERIES && min > 0 &&
-		    !recognized_ts_frequency(pd)) {
-		    structure = SPECIAL_TIME_SERIES;
-		}
-		real_format_obs(stobs, maj, min, pd, '.');
-		if (structure == STRUCTURE_UNKNOWN && 
-		    recognized_ts_frequency(pd)) {
-		    structure = TIME_SERIES;
-		}
-	    }
-	}
-
-	/* for non-calendar data */
-	sd0 = dot_atof(stobs);
+    if (err) {
+	return err;
     }
 
     if (opt == OPT_I) {
 	dset->panel_pd = pd;
 	dset->panel_sd0 = sd0;
 	return 0;
+    }   
+
+    if (panel && dset->n % pd != 0) {
+	int sts = structure == STACKED_TIME_SERIES;
+
+	gretl_errmsg_sprintf(_("Panel datasets must be balanced.\n"
+			       "The number of observations (%d) is not a multiple\n"
+			       "of the number of %s (%d)."), 
+			     dset->n, sts ? _("periods") : _("units"), pd);
+	return E_DATA;
     }
 
-    if (structure == TIME_SERIES && (pd == 1 || pd == 4 || pd == 12)) {
+    if (dated) {
+	/* replace any existing markers with date strings */
+	dataset_destroy_obs_markers(dset);
+    } else if (structure == TIME_SERIES && (pd == 1 || pd == 4 || pd == 12)) {
 	/* force use of regular time-series obs labels */
 	dataset_destroy_obs_markers(dset);
     }

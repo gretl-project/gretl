@@ -50,7 +50,7 @@ int days_in_month_after (int yr, int mon, int day, int wkdays);
 
 int calendar_obs_number (const char *date, const DATASET *dset);
 
-void calendar_date_string (char *str, int t, const DATASET *dset);
+int calendar_date_string (char *str, int t, const DATASET *dset);
 
 int MS_excel_date_string (char *date, int mst, int pd, int d1904);
 

@@ -2,7 +2,7 @@
   Document Type Definition (DTD) for gretl data files
  -->
 
-<!ELEMENT gretldata (description?, variables, observations, string-tables?, group-names?)>
+<!ELEMENT gretldata (description?, variables, observations, string-tables?, panel-info?)>
 <!ATTLIST gretldata
    version      NMTOKEN #IMPLIED
    name         NMTOKEN #IMPLIED
@@ -63,9 +63,11 @@
    count     CDATA #REQUIRED
 >
 
-<!ELEMENT group-names EMPTY>
-<!ATTLIST group-names
-   series-name CDATA #REQUIRED
+<!ELEMENT panel-info EMPTY>
+<!ATTLIST panel-info
+   group-names    CDATA #IMPLIED
+   time-frequency CDATA #IMPLIED
+   time-start     CDATA #IMPLIED
 >
 
 

@@ -5000,7 +5000,133 @@ int set_panel_group_strings (const char *line, DATASET *dset)
     return err;
 }
 
-/* Given @pd = annual frequency of time-dimension of panel and @s =
+static int panel_monthly_or_quarterly (DATASET *dset, int pd, 
+				       const char *s, double *x)
+{
+    int len = strlen(s);
+    int y, p, n;
+    char c;
+    int err = 0;
+
+    if (pd == 4) {
+	if (len != 6) {
+	    err = 1;
+	} else {
+	    n = sscanf(s, "%4d%c%d", &y, &c, &p);
+	}
+    } else {
+	if (len < 6 || len > 7) {
+	    err = 1;
+	} else {
+	    n = sscanf(s, "%4d%c%2d", &y, &c, &p);
+	}	
+    }
+
+    if (err || n != 3 || y < 0 || y > 3000 || p < 1 || p > pd) {
+	gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), s);
+	err = E_DATA;
+    } else if (c != '.' && c != ':' && c != '-') {
+	err = E_DATA;
+    } else {
+	int i, m, mmax, dm;
+
+	if (pd == 4) {
+	    m = (p - 1) * 3 + 1;
+	    mmax = 10;
+	    dm = 3;
+	} else {
+	    m = p;
+	    mmax = 12;
+	    dm = 1;
+	}
+
+	for (i=0; i<dset->pd; i++) {
+	    x[i] = 10000*y + 100*m + 1;
+	    if (m == mmax) {
+		y++;
+		m = 1;
+	    } else {
+		m += dm;
+	    }
+	}
+    }
+
+    return err;
+}
+
+static int panel_annual_or_decennial (DATASET *dset, int pd, 
+				      const char *s, double *x)
+{
+    char *test = NULL;
+    int i, y = 0;
+    int err = 0;
+
+    if (strlen(s) != 4) {
+	err = E_DATA;
+    } else {
+	y = (int) strtol(s, &test, 10);
+	if (test == NULL || *test != '\0' || y < 0 || y > 3000) {
+	    err = E_DATA;
+	}
+    }
+
+    if (err) {
+	gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), s);
+    } else {
+	for (i=0; i<dset->pd; i++) {
+	    x[i] = 10000*y + 101;
+	    y += pd;
+	}
+    }	
+
+    return err;
+}
+
+static int panel_daily_or_weekly (DATASET *dset, int pd, 
+				  const char *s, double *x)
+{
+    char stobs[16];
+    int structure = TIME_SERIES;
+    int dated = 0;
+    double sd0 = 0.0;
+    int err;
+
+    if (strlen(s) > 10) {
+	gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), s);
+	return E_DATA;
+    }
+
+    strcpy(stobs, s);
+    err = process_starting_obs(stobs, pd, &structure, &sd0, &dated);
+
+    if (!err && !dated) {
+	gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), s);
+	err = E_DATA;
+    } else {
+	DATASET tsset = {0};
+	char datestr[16];
+	int t, y, m, d, n;
+
+	tsset.structure = TIME_SERIES;
+	tsset.pd = pd;
+	tsset.sd0 = sd0;
+	tsset.n = dset->pd;
+
+	for (t=0; t<dset->pd && !err; t++) {
+	    ntodate(datestr, t, &tsset);
+	    n = sscanf(datestr, "%d-%d-%d", &y, &m, &d);
+	    if (n != 3) {
+		err = E_DATA;
+	    } else {
+		x[t] = 10000*y + 100*m + d;
+	    }
+	}
+    }
+
+    return err;
+}
+
+/* Given @pd = frequency of time-dimension of panel and @s =
    string representing a starting date, construct in @x a series of
    the form YYYYMMDD, where a quarter maps onto its first month and
    the day is taken to be 1.
@@ -5008,50 +5134,36 @@ int set_panel_group_strings (const char *line, DATASET *dset)
 
 int make_panel_date_series (DATASET *dset, int pd, const char *s, double *x)
 {
-    int y1, p1, n;
-    char c;
-    int err = 0;
+    int ok_pd[] = {1, 4, 5, 6, 7, 10, 12, 52, 0};
+    int i, err = E_PDWRONG;
 
-    if (pd != 4 && pd != 12) {
-	return E_PDWRONG;
-    }
-
-    if (pd == 4) {
-	n = sscanf(s, "%4d%c%d", &y1, &c, &p1);
-    } else {
-	n = sscanf(s, "%4d%c%2d", &y1, &c, &p1);
-    }
-
-    if (n != 3 || y1 < 0 || y1 > 9999 || p1 < 1 || p1 > pd) {
-	err = E_DATA;
-    } else if (c != '.' && c != ':' && c != '-') {
-	err = E_DATA;
-    } else {
-	int m, m1, mmax, dm;
-	int i, date, y = y1;
-
-	if (pd == 4) {
-	    m = m1 = (p1 - 1) * 3 + 1;
-	    mmax = 10;
-	    dm = 3;
-	} else {
-	    m = m1 = p1;
-	    mmax = 12;
-	    dm = 1;
+    for (i=0; ok_pd[i]; i++) {
+	if (pd == ok_pd[i]) {
+	    err = 0;
 	}
+    }
 
-	for (i=0; i<dset->n; i++) {
-	    date = 10000*y + 100*m + 1;
-	    x[i] = date;
-	    if ((i + 1) % dset->pd == 0) {
-		y = y1;
-		m = m1;
-	    } else if (m == mmax) {
-		y++;
-		m = 1;
-	    } else {
-		m += dm;
-	    }
+    if (err) {
+	return err;
+    }
+
+    if (pd == 4 || pd == 12) {
+	err = panel_monthly_or_quarterly(dset, pd, s, x);
+    } else if (pd == 1 || pd == 10) {
+	err = panel_annual_or_decennial(dset, pd, s, x);
+    } else {
+	err = panel_daily_or_weekly(dset, pd, s, x);
+    }
+
+    if (!err) {
+	/* expand the date series for all groups */
+	int N = dset->n / dset->pd;
+	size_t bytes = dset->pd * sizeof *x;
+	double *dest = x + dset->pd;
+
+	for (i=1; i<N; i++) {
+	    memcpy(dest, x, bytes);
+	    dest += dset->pd;
 	}
     }
 

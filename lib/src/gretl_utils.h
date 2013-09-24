@@ -71,6 +71,9 @@ int true_const (int v, const DATASET *dset);
 
 char *format_obs (char *obs, int maj, int min, int pd);
 
+int process_starting_obs (char *stobs, int pd, int *pstructure,
+			  double *psd0, int *pdated);
+
 int set_obs (const char *line, DATASET *dset, gretlopt opt);
 
 /* sorting and comparison */

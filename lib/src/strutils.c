@@ -805,42 +805,61 @@ char **gretl_string_split (const char *s, int *n,
  * @n: location to receive the number of substrings.
  * @err: location to receive error code.
  *
- * Similar to gretl_string_split(), except that for this
- * function the sub-strings are assumed to be delimited by
- * ASCII double-quote characters, and may therefore
- * contain embedded spaces. The quotes are removed in the
- * members of the returned array. Note that this function
- * is not fully general in that it doesn't handle escaped
- * double-quotes.
+ * Similar to gretl_string_split(), except that this variant
+ * allows for the presence of double-quoted substrings
+ * which may contain spaces. The quotes are removed in the
+ * members of the returned array.
  *
  * Returns: allocated array of substrings or NULL in case of failure.
  */
 
 char **gretl_string_split_quoted (const char *s, int *n, int *err)
 {
-    const char *p = s;
+    const char *ignore = " \t\n";
+    const char *q, *p = s;
     int i, len, m = 0;
+    int quoted = 0;
+    int grabit;
     char *substr;
     char **S;
 
     *n = 0;
 
     while (*p) {
-	if (*p == '"') m++;
+	p += strspn(p, ignore);
+	if (*p == '"') {
+	    if (quoted) {
+		/* reached the end of quoted substring */
+		m++;
+	    } else {
+		/* starting a quoted substring */
+		q = strchr(p + 1, '"');
+		if (q == NULL) {
+		    *err = E_PARSE;
+		    return NULL;
+		}
+		p = q - 1;
+	    }
+	    quoted = !quoted;
+	} else if (!quoted) {
+	    len = strcspn(p, ignore);
+	    if (len > 0) {
+		/* an unquoted substring */
+		m++;
+		p += len - 1;
+	    }
+	}
 	p++;
     }
 
-    if (m % 2 != 0) {
+    if (quoted != 0) {
 	/* unbalanced quotes */
 	*err = E_PARSE;
-	return NULL;
     }
 
-    if (m == 0) {
+    if (*err || m == 0) {
 	return NULL;
     }
-
-    m /= 2;
 
     S = strings_array_new(m);
     if (S == NULL) {
@@ -848,18 +867,30 @@ char **gretl_string_split_quoted (const char *s, int *n, int *err)
 	return NULL;
     }
 
-    for (i=0; i<m; i++) {
-	s = strchr(s, '"') + 1;
-	p = strchr(s, '"');
-	len = p - s;
-	substr = gretl_strndup(s, len);
-	if (substr == NULL) {
-	    *err = E_ALLOC;
-	    strings_array_free(S, m);
-	    return NULL;
+    p = s;
+    i = 0;
+
+    while (*p && i < m) {
+	grabit = quoted = 0;
+	p += strspn(p, ignore);
+	if (*p == '"') {
+	    grabit = quoted = 1;
+	    p++;
+	    len = strcspn(p, "\"");
+	} else {	    
+	    len = strcspn(p, ignore);
+	    grabit = (len > 0);
 	}
-	S[i] = substr;
-	s = p + 1;
+	if (grabit) {
+	    substr = gretl_strndup(p, len);
+	    if (substr == NULL) {
+		*err = E_ALLOC;
+		strings_array_free(S, m);
+		return NULL;
+	    }
+	    S[i++] = substr;	    
+	    p += len + quoted;
+	}	    
     }
 
     *n = m;

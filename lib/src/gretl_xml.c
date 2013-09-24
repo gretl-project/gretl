@@ -1546,6 +1546,36 @@ static int string_table_count (const DATASET *dset,
     return n;
 }
 
+static void maybe_print_panel_info (const DATASET *dset, FILE *fp,
+				    gzFile fz)
+{
+    int names = panel_group_names_ok(dset);
+    int pd = dset->panel_pd;
+    double sd0 = dset->panel_sd0;
+    int times = pd > 0 && sd0 > 0.0;
+
+    if (names || times) {
+	alt_puts("<panel-info\n", fp, fz);
+	if (names) {
+	    if (fz) {
+		gzprintf(fz, " group-names=\"%s\"\n", dset->pangrps);
+	    } else {
+		fprintf(fp, " group-names=\"%s\"\n", dset->pangrps);
+	    }
+	}
+	if (times) {
+	    if (fz) {
+		gzprintf(fz, " time-frequency=\"%d\"\n", pd);
+		gzprintf(fz, " time-start=\"%.10g\"\n", sd0);
+	    } else {
+		fprintf(fp, " time-frequency=\"%d\"\n", pd);
+		fprintf(fp, " time-start=\"%.10g\"\n", sd0);
+	    }
+	}
+	alt_puts("/>\n", fp, fz);
+    }
+}
+
 #define GDT_DIGITS 17
 
 /**
@@ -1877,12 +1907,8 @@ int gretl_write_gdt (const char *fname, const int *list,
 	alt_puts("</string-tables>\n", fp, fz);
     }
 
-    if (panel_group_names_ok(dset)) {
-	if (gz) {
-	    gzprintf(fz, "<group-names series-name=\"%s\" />\n", dset->pangrps);
-	} else {
-	    fprintf(fp, "<group-names series-name=\"%s\" />\n", dset->pangrps);
-	}
+    if (dataset_is_panel(dset)) {
+	maybe_print_panel_info(dset, fp, fz);
     }
 
     alt_puts("</gretldata>\n", fp, fz);
@@ -2297,6 +2323,37 @@ static int process_string_tables (xmlDocPtr doc, xmlNodePtr node,
     return err;
 }
 
+static int process_panel_info (xmlNodePtr cur, DATASET *dset)
+{
+    xmlChar *tmp;
+    double sd0 = 0.0;
+    int pd = 0;
+
+    tmp = xmlGetProp(cur, (XUC) "group-names");
+    if (tmp != NULL) {
+	dset->pangrps = (char *) tmp;
+    }
+
+    tmp = xmlGetProp(cur, (XUC) "time-frequency");
+    if (tmp != NULL) {
+	pd = atoi((const char *) tmp);
+	free(tmp);
+    }
+
+    tmp = xmlGetProp(cur, (XUC) "time-start");
+    if (tmp != NULL) {
+	sd0 = atof((const char *) tmp);
+	free(tmp);
+    } 
+
+    if (pd > 0 && sd0 > 0.0) {
+	dset->panel_pd = pd;
+	dset->panel_sd0 = sd0;
+    }
+
+    return 0;
+}
+
 static double get_gdt_version (xmlNodePtr node)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) "version");
@@ -2684,14 +2741,12 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 	    } else if (process_string_tables(doc, cur, tmpset)) {
 		err = 1;
 	    }	    
-	} else if (!xmlStrcmp(cur->name, (XUC) "group-names")) {
+	} else if (!xmlStrcmp(cur->name, (XUC) "panel-info")) {
 	    if (!gotvars) {
 		gretl_errmsg_set(_("Variables information is missing"));
 		err = 1;
 	    } else {
-		xmlChar *vname = xmlGetProp(cur, (XUC) "series-name");
-
-		tmpset->pangrps = (char *) vname;
+		err = process_panel_info(cur, tmpset);
 	    }
 	}
 	if (!err) {

@@ -92,6 +92,27 @@ static int day_in_year (int day, int month, int year)
     return day;
 }
 
+static int day_of_week_from_ymd (int yr, int mo, int day)
+{
+    int c, d;
+
+    /* Uspensky and Heaslet, Elementary Number Theory (1939) */
+
+    if (mo < 3) {
+	yr--;
+	mo += 10;
+    } else {
+	mo -= 2;
+    }
+
+    c = yr / 100;
+    d = yr % 100;
+
+    return ((day % 7) + ((int) floor(2.6 * mo - 0.2) % 7) + 
+	    (d % 7) + ((int) floor(d / 4.0) % 7) + ((int) floor(c / 4.0) % 7)
+	    - ((2 * c) % 7)) % 7; 
+}
+
 /**
  * epoch_day_from_ymd:
  * @y: year (1 <= y <= 9999).
@@ -182,6 +203,46 @@ char *ymd_from_epoch_day (long ed, int *err)
     sprintf(ret, "%04d-%02d-%02d", y, m, d);
 
     return ret;
+}
+
+static int weekday_from_epoch_day (long ed)
+{
+    int y, m, d, delta;
+    long days = 0L;
+
+    for (y=1; ; y++) {
+	delta = leap_year(y) ? 366 : 365;
+	if (days + delta <= ed) {
+	    days += delta;
+	} else {
+	    break;
+	}
+    }
+
+    if (days == ed) {
+	if (y > 1) y--;
+	m = 12;
+	d = 31;
+    } else {
+	int i = leap_year(y);
+
+	for (m=1; ; m++) {
+	    delta = days_in_month[i][m];
+	    if (days + delta <= ed) {
+		days += delta;
+	    } else {
+		break;
+	    }
+	}
+	if (days == ed) {
+	    m--;
+	    d = days_in_month[i][m];
+	} else {
+	    d = ed - days;
+	}
+    }
+
+    return day_of_week_from_ymd(y, m, d);
 }
 
 /**
@@ -283,20 +344,33 @@ static int t_to_epoch_day (int t, long start, int wkdays)
  * 
  * Writes to @str the calendar representation of the date of
  * observation @t, in the form YY[YY]/MM/DD.
+ *
+ * Returns: 0 on success, non-zero on error.
  */
 
-void calendar_date_string (char *str, int t, const DATASET *dset)
+int calendar_date_string (char *str, int t, const DATASET *dset)
 {
     int rem, yr;
     int add, day, mo = 0, modays = 0;
     long yrstart, dfind;
+    long d0 = (long) dset->sd0;
 
     if (dset->pd == 52) {
-	dfind = (long) dset->sd0 + 7 * t;
+	dfind = d0 + 7 * t;
     } else if (dset->pd == 7) {
-	dfind = (long) dset->sd0 + t;
+	dfind = d0 + t;
     } else {
-	dfind = t_to_epoch_day(t, (long) dset->sd0, dset->pd);
+	/* 5- or 6-day data */
+	if (t == 0 && dset->pd == 5) {
+	    int wday = weekday_from_epoch_day(d0);
+
+	    if (wday == 0 || wday == 6) {
+		gretl_errmsg_sprintf(_("Invalid starting date for %d-day data"), dset->pd);
+		*str = '\0';
+		return E_DATA;
+	    }
+	}
+	dfind = t_to_epoch_day(t, d0, dset->pd);
     }
 
     yr = 1 + (double) dfind / 365.248; 
@@ -324,6 +398,8 @@ void calendar_date_string (char *str, int t, const DATASET *dset)
     } else {
 	sprintf(str, YMD_WRITE_Y4_FMT, yr, mo, day);
     }
+
+    return 0;
 }
 
 /**
@@ -471,27 +547,6 @@ double get_dec_date (const char *date)
     frac = ((double) edt - ed0) / ((double) edn - ed0 + 1.0);
 
     return dyr + frac;
-}
-
-static int day_of_week_from_ymd (int yr, int mo, int day)
-{
-    int c, d;
-
-    /* Uspensky and Heaslet, Elementary Number Theory (1939) */
-
-    if (mo < 3) {
-	yr--;
-	mo += 10;
-    } else {
-	mo -= 2;
-    }
-
-    c = yr / 100;
-    d = yr % 100;
-
-    return ((day % 7) + ((int) floor(2.6 * mo - 0.2) % 7) + 
-	    (d % 7) + ((int) floor(d / 4.0) % 7) + ((int) floor(c / 4.0) % 7)
-	    - ((2 * c) % 7)) % 7; 
 }
 
 /**

@@ -45,6 +45,8 @@ struct xlsx_info_ {
     int trydates;
     int maxrow;
     int maxcol;
+    int namerow;
+    int obscol;
     int xoffset;
     int yoffset;
     char sheetfile[FILENAME_MAX];
@@ -66,6 +68,8 @@ static void xlsx_info_init (xlsx_info *xinfo)
     xinfo->trydates = 0;
     xinfo->maxrow = 0;
     xinfo->maxcol = 0;
+    xinfo->namerow = -1;
+    xinfo->obscol = -1;
     xinfo->xoffset = 0;
     xinfo->yoffset = 0;
     xinfo->sheetfile[0] = '\0';
@@ -337,6 +341,8 @@ static int xlsx_set_obs_string (xlsx_info *xinfo, int row, int col,
     }
 
     if (xinfo->dset->S == NULL) {
+	/* "can't happen" */
+	fprintf(stderr, "error in xlsx_set_obs_string: S not allocated!\n");
 	pprintf(prn, _("Expected numeric data, found string:\n"
 		       "'%s' at row %d, column %d\n"), s, row, col);
 	err = E_DATA;
@@ -445,11 +451,13 @@ static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
 		"s='%s'\n", r, c, x, stringcell, s);
 #endif
 	if (!na(x)) {
-	    /* numerical value */
+	    /* got a valid numerical value: that means we don't
+	       have variable names on the top row */
 	    xinfo->flags |= BOOK_AUTO_VARNAMES;
 	} else if (stringcell && import_obs_label(s)) {
 	    /* blank or "obs" or similar */
 	    xinfo->flags |= BOOK_OBS_LABELS;
+	    xinfo->obscol = c;
 	}
 	if (!na(x) || stringcell) {
 	    /* record the fact that the top-left corner is not empty */
@@ -460,6 +468,8 @@ static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
 	if (!na(x)) {
 	    /* got a number, not a varname */
 	    xinfo->flags |= BOOK_AUTO_VARNAMES;
+	} else {
+	    xinfo->namerow = r;
 	}
     }
 }
@@ -547,6 +557,8 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 
     cur = cur->xmlChildrenNode;
 
+    /* loop across cells in row */
+
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "c")) {
 	    /* we got a cell in the given row */
@@ -630,6 +642,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 	    }
 
 	    if (!err && xinfo->dset == NULL) {
+		/* on the first pass, check for obs column, varname status */
 		xlsx_check_top_left(xinfo, row, col, stringcell, 
 				    strval, xval);
 	    }
@@ -651,10 +664,12 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		int i = xlsx_var_index(xinfo, col);
 		int t = xlsx_obs_index(xinfo, row);
 
+		/* here we're on the second pass, with a dataset allocated */
+
 		if (stringcell) {
-		    if (row == xinfo->yoffset + 1) {
+		    if (row == xinfo->namerow) {
 			err = xlsx_set_varname(xinfo, i, strval, row, col, prn);
-		    } else if (col == xinfo->xoffset + 1) {
+		    } else if (col == xinfo->obscol) {
 			err = xlsx_set_obs_string(xinfo, row, col, t, strval, prn);
 		    } else if (strval != NULL) {
 			err = xlsx_handle_stringval(strval, row, col, prn);

@@ -1604,8 +1604,6 @@ int execute_set_line (const char *line, DATASET *dset,
 	    return set_matmask(setarg, dset, prn);
 	}
 
-	gretl_lower(setarg);
-
 	if (libset_boolvar(setobj)) {
 	    if (!strcmp(setobj, SHELL_OK)) {
 		pprintf(prn, "You can only set this variable "
