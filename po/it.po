@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-09-23 09:01-0400\n"
-"PO-Revision-Date: 2013-06-25 21:24+0200\n"
+"PO-Revision-Date: 2013-09-24 21:05+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -1129,26 +1129,26 @@ msgstr "Memoria esaurita\n"
 
 #: lib/src/csvdata.c:3356
 msgid "No matching data after filtering"
-msgstr ""
+msgstr "Nessun dato corrispondente rimasto dopo il filtraggio"
 
 #: lib/src/csvdata.c:3672
 msgid "You need to specify an aggregation method for a 1:n join"
 msgstr "Per una join 1:n bisogna specificare un metodo di aggregazione"
 
 #: lib/src/csvdata.c:4458
-#, fuzzy, c-format
+#, c-format
 msgid "%s: column '%s' was not found"
-msgstr "comando '%s' non riconosciuto"
+msgstr "%s: colonna '%s' non trovata"
 
 #: lib/src/csvdata.c:4485
 #, c-format
 msgid "%s: string key on left but numeric on right"
-msgstr ""
+msgstr "%s: nessun dato corrispondente dopo il filtraggio"
 
 #: lib/src/csvdata.c:4488
 #, c-format
 msgid "%s: string key on right but numeric on left"
-msgstr ""
+msgstr "%s: chiave alfabetica a sinistra ma numerica a destra"
 
 #: lib/src/csvdata.c:4790 gui2/library.c:4000
 msgid "Series length does not match the dataset"
@@ -2404,7 +2404,7 @@ msgstr "'%s' : definito solo per le matrici"
 #: lib/src/geneval.c:12087
 #, c-format
 msgid "type error: %s is string-valued"
-msgstr ""
+msgstr "errore di tipo: %s è di tipo stringa"
 
 #: lib/src/geneval.c:12485
 msgid "Bare declarations are not allowed here"
@@ -3721,9 +3721,8 @@ msgid "Error: unit %g, period %g: duplicated observation"
 msgstr "Errore: unità %g, periodo %g: osservazione duplicata"
 
 #: lib/src/gretl_panel.c:4797 lib/src/gretl_panel.c:4807
-#, fuzzy
 msgid "Sorry, can't do this with a sub-sampled dataset"
-msgstr "Impossibile eseguire l'operazione mentre si modifica il dataset"
+msgstr "Impossibile eseguire l'operazione su un dataset sotto-campionato"
 
 #: lib/src/gretl_paths.c:2115
 msgid "User directory is not set"
@@ -4298,9 +4297,9 @@ msgid "No data information is available.\n"
 msgstr "Non sono disponibili informazioni sui dati.\n"
 
 #: lib/src/interact.c:4455
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid input '%s'\n"
-msgstr "%s: valore non valido '%s'"
+msgstr "%s: input non valido '%s'\n"
 
 #: lib/src/interact.c:4669 lib/src/interact.c:4677
 msgid "Inner key is missing"
@@ -5240,7 +5239,7 @@ msgstr "Variabile di selezione"
 #: lib/src/modelprint.c:2034
 #, c-format
 msgid "Using %d quadrature points"
-msgstr ""
+msgstr "%d punti di quadratura utilizzati"
 
 #: lib/src/modelprint.c:2048
 msgid "Allowing for groupwise heteroskedasticity"
@@ -7041,7 +7040,7 @@ msgid "Matrix decomposition failed"
 msgstr "Decomposizione della matrice fallita"
 
 #: lib/src/uservar.c:1354
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is currently read-only"
 msgstr "La variabile %s è di sola lettura"
 
@@ -11494,7 +11493,6 @@ msgid "Bi_variate..."
 msgstr "_Bivariata..."
 
 #: gui2/gretl.c:1775
-#, fuzzy
 msgid "_Random effects..."
 msgstr "Effetti casuali"
 
@@ -13805,7 +13803,6 @@ msgid "AR(1)"
 msgstr "AR(1)"
 
 #: gui2/selector.c:3644
-#, fuzzy
 msgid "Random effects (binary) probit"
 msgstr "Probit a effetti casuali"
 
@@ -14099,7 +14096,7 @@ msgstr "Bit per i valori in virgola mobile"
 
 #: gui2/selector.c:5349
 msgid "Quadrature points"
-msgstr ""
+msgstr "Punti di quadratura"
 
 #: gui2/selector.c:5371
 msgid "Robust standard errors/intervals"
