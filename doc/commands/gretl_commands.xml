@@ -10892,27 +10892,6 @@
 
   </command>
 
-  <command name="sscanf" section="Programming" 
-    label="Scanning a string" context="cli">
-
-    <usage>
-      <arguments>
-	<argument>source</argument>
-	<argpunct>, </argpunct>
-        <argument>format</argument>
-	<argpunct>, </argpunct>
-        <argument>args</argument>
-      </arguments>
-    </usage>
-
-    <description>
-      <para>
-	Deprecated command-style version of the <fncref targ="sscanf"/>
-	function. 
-      </para>
-    </description>
-  </command>
-
   <command name="store" section="Dataset" label="Save data">
 
     <usage>
