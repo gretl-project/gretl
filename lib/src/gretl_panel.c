@@ -4872,6 +4872,23 @@ int set_panel_structure_from_line (const char *line, DATASET *dset)
     return err;
 }
 
+static int group_uniqueness_check (char **S, int n)
+{
+    int i, j;
+
+    for (i=0; i<n-1; i++) {
+	for (j=i+1; j<n; j++) {
+	    if (!strcmp(S[i], S[j])) {
+		gretl_errmsg_sprintf("The string '%s' is given for "
+				     "two or more groups", S[i]);
+		return E_DATA;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 /* 2013-09-21: enable construction of a string-valued series
    holding a name for each panel group/unit. The name of this
    series is set on the 'pangrps' member of @dset, and the
@@ -4948,6 +4965,9 @@ int set_panel_group_strings (const char *line, DATASET *dset)
 	    fprintf(stderr, "Got %d strings but there are %d groups\n",
 		    ngtest, ng);
 	    err = E_DATA;
+	}
+	if (!err) {
+	    err = group_uniqueness_check(S, ng);
 	}
 	if (freeit) {
 	    free(namestr);
