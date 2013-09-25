@@ -918,7 +918,7 @@ get_scanf_format_chunk (const char *s, int *fc, int *len,
 }
 
 static int 
-scan_string (const char *targ, char **psrc, int width, 
+scan_string (char *targ, const char **psrc, int width, 
 	     struct bracket_scan *bscan, int *ns)
 {
     int n, err = 0;
@@ -973,7 +973,7 @@ scan_string (const char *targ, char **psrc, int width,
     return err;
 }
 
-static int scan_scalar (char *targ, char **psrc,
+static int scan_scalar (char *targ, const char **psrc,
 			int fc, int width, DATASET *dset, 
 			int *ns)
 {
@@ -1004,7 +1004,7 @@ static int scan_scalar (char *targ, char **psrc,
 	    } else {
 		x = strtod(tmp, &endp);
 	    }
-	    endp = *psrc + width;
+	    endp = (char *) *psrc + width;
 	    free(tmp);
 	}
     }
@@ -1018,8 +1018,10 @@ static int scan_scalar (char *targ, char **psrc,
 	    genline = gretl_strdup_printf("%s=%.16g", targ, x);
 	}
 	err = generate(genline, dset, OPT_P, NULL);
+	if (!err) {
+	    *ns += 1;
+	}
 	free(genline);
-	*ns += 1;
     }
 
     *psrc = endp;
@@ -1027,9 +1029,9 @@ static int scan_scalar (char *targ, char **psrc,
     return err;
 }
 
-static int scan_matrix (const char *targ, char **psrc, int rows, int *ns)
+static int scan_matrix (char *targ, const char **psrc, int rows, int *ns)
 {
-    char *src = *psrc;
+    const char *src = *psrc;
     char *endp = NULL;
     gretl_matrix *m = NULL;
     double x;
@@ -1101,7 +1103,7 @@ static int scan_matrix (const char *targ, char **psrc, int rows, int *ns)
     return err;
 }
 
-static int scan_arg (char **psrc, char **pfmt, char **pargs, 
+static int scan_arg (const char **psrc, const char **pfmt, const char **pargs, 
 		     DATASET *dset, int *ns)
 {
     char *fmt = NULL;
@@ -1150,9 +1152,6 @@ static int scan_arg (char **psrc, char **pfmt, char **pargs,
     /* do the actual scanning */
 
     if (!err && fc == 's') {
-#if PSDEBUG
-	fprintf(stderr, "calling scan_string\n");
-#endif
 	err = scan_string(targ, psrc, wid, &bscan, ns);
     } else if (!err && fc == 'm') {
 	err = scan_matrix(targ, psrc, wid, ns);
@@ -1166,82 +1165,6 @@ static int scan_arg (char **psrc, char **pfmt, char **pargs,
     free(bscan.chrs);
     
     return err;
-}
-
-static int get_literal_length (const char *s)
-{
-    int n = 0;
-
-    while (*s) {
-	if (*s == '"' && *(s-1) != '\\') {
-	    break;
-	}
-	n++;
-	s++;
-    }
-
-    return n;
-}
-
-static char *get_literal_or_stringvar (const char **src, int *err)
-{
-    const char *s = *src;
-    char *ret = NULL;
-    char *tmp = NULL;
-    int literal = 0;
-    int svar = 0;
-    int n = 0;
-
-    if (*s == '"') {
-	literal = 1;
-	s++;
-	n = get_literal_length(s);
-    } else if (*s == '@') {
-	svar = 1;
-	s++;
-	n = gretl_namechar_spn(s);
-    } else {
-	n = gretl_charpos(',', s);
-	if (n == gretl_namechar_spn(s)) {
-	    svar = 1;
-	}
-    }
-
-    if (n == 0) {
-	/* nothing there */
-	*err = E_PARSE;
-	return NULL;
-    }
-
-    tmp = gretl_strndup(s, n);
-    if (tmp == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    if (literal) {
-	ret = tmp;
-	s++;
-    } else if (svar) {
-	const char *p = get_string_by_name(tmp);
-
-	if (p == NULL) {
-	    *err = E_UNKVAR;
-	} else {
-	    ret = gretl_strdup(p);
-	    if (ret == NULL) {
-		*err = E_ALLOC;
-	    }
-	}
-	free(tmp);
-    } else {
-	ret = generate_string(tmp, NULL, err);
-    }
-
-    /* advance the caller's pointer */
-    *src = s + n;
-
-    return ret;
 }
 
 /* Eat white space; detect comma and eat if found; eat more white
@@ -1266,99 +1189,33 @@ int eat_comma (const char **src)
     return ret;
 }
 
-/* split line into source string, format and arguments: 
-   acceptable sources are string literals or string variables
-*/
-
-static int 
-split_scanf_line (const char *s, char **psrc, char **pfmt, 
-		  char **args)
-{
-    int gotcom, err = 0;
-
-    if (!strncmp(s, "sscanf ", 7)) {
-	s += 7;
-    } 
-
-    s += strspn(s, " ");
-
-    /* get the source string */
-    *psrc = get_literal_or_stringvar(&s, &err);
-    if (err) {
-	return err;
-    }
-    
-    /* skip to format string */
-    gotcom = eat_comma(&s);
-    if (!gotcom) {
-	/* empty format */
-	return E_PARSE;
-    }
-
-    /* get format string */
-    *pfmt = get_literal_or_stringvar(&s, &err);
-    if (err) {
-	return err;
-    }
-
-    /* skip to first arg */
-    gotcom = eat_comma(&s);
-    if (!gotcom) {
-	/* empty args */
-	return E_PARSE;
-    }
-
-    *args = gretl_strdup(s);
-    if (*args == NULL) {
-	return E_ALLOC;
-    }
-
-    return 0;
-}
-
-static int nscan;
-
-int n_scanned_items (void)
-{
-    return nscan;
-}
-
 /**
  * do_sscanf:
- * @line: command line.
+ * @src: the source string.
+ * @format: the format string.
+ * @src: the arguments, as composite string.
  * @dset: dataset struct.
- * @prn: printing struct.
+ * @n_items: location to receive the number of scanned items.
  *
- * Implements a somewhat limited version of C's sscanf()
+ * Implements a somewhat simplified version of C's sscanf()
  * for use in gretl scripts.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int do_sscanf (const char *line, DATASET *dset, PRN *prn)
+int do_sscanf (const char *src, const char *format, const char *args,
+	       DATASET *dset, int *n_items)
 {
-    char *r, *p, *q;
-    char *src = NULL;
-    char *format = NULL;
-    char *args = NULL;
+    const char *r, *p, *q;
+    int nscan = 0;
     int err = 0;
 
-    nscan = 0;
     gretl_error_clear();
 
 #if PSDEBUG
-    fprintf(stderr, "do_sscanf: line = '%s'\n", line);
-#endif
-
-    err = split_scanf_line(line, &src, &format, &args);
-    if (err) {
-	return err;
-    }
-
-#if PSDEBUG
-    fprintf(stderr, " src = '%s'\n", src);
-    fprintf(stderr, " format = '%s'\n", format);
-    fprintf(stderr, " args = '%s'\n", args);
+    fprintf(stderr, "do_sscanf: src = '%s'\n", src);
+    fprintf(stderr, "do_sscanf: format = '%s'\n", format);
+    fprintf(stderr, "do_sscanf: args = '%s'\n", args);
 #endif
 
     r = src;
@@ -1386,13 +1243,8 @@ int do_sscanf (const char *line, DATASET *dset, PRN *prn)
 	}
     }
 
-    free(src);
-    free(format);
-    free(args);
-
-    if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
-	pprintf(prn, "Number of items successfully scanned = %d\n", 
-		nscan);
+    if (!err) {
+	*n_items = nscan;
     }
 
     return err;

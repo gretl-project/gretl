@@ -261,7 +261,6 @@ enum {
     F_VARNUM,
     F_TOLOWER,
     F_TOUPPER,
-    F_SSCANF,
     F_IRR,
     F_LOGISTIC,
     F_INVMILLS,
@@ -376,6 +375,7 @@ enum {
     F_MWRITE,
     F_AGGRBY,
     F_IWISHART,
+    F_SSCANF,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
@@ -433,7 +433,7 @@ enum {
 #define string_last_func(s) (s == F_FDJAC || s == F_BFGSMAX || \
                              s == F_NRMAX || s == F_DESEAS || \
 			     s == F_AGGRBY || s == F_INBUNDLE || \
-			     s == F_PDATE)
+			     s == F_PDATE || s == F_SSCANF)
 
 /* functions taking string arg in middle position */
 #define string_mid_func(s) (s == F_BFGSMAX || s == F_NRMAX || s == F_SIMANN)

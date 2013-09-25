@@ -4173,9 +4173,6 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	    }
 	} else if (f == F_STRLEN) {
 	    ret->v.xval = strlen(s);
-	} else if (f == F_SSCANF) {
-	    p->err = do_sscanf(s, p->dset, NULL);
-	    ret->v.xval = (p->err)? NADBL : n_scanned_items();
 	} else if (f == F_REMOVE) {
 	    ret->v.xval = gretl_remove(s);
 	} else if (f == F_TYPEOF) {
@@ -6775,7 +6772,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 					    m->v.xval, r->v.xval);
 	    }
 	}
-
 	if (tmp != NULL) {
 	    l->v.m = tmp;
 	}
@@ -6959,6 +6955,22 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		gretl_matrix_free(ret->v.m);
 	    }
 	    ret->v.m = A;
+	}
+    }
+
+    return ret;
+}
+
+static NODE *eval_sscanf (NODE *l, NODE *m, NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL) {
+	int n = 0;
+
+	p->err = do_sscanf(l->v.str, m->v.str, r->v.str, p->dset, &n);
+	if (!p->err) {
+	    ret->v.xval = n;
 	}
     }
 
@@ -8418,8 +8430,6 @@ double dvar_get_scalar (int i, const DATASET *dset,
 	return (double) ival;
     case R_STOPWATCH:
 	return gretl_stopwatch();
-    case R_NSCAN:
-	return n_scanned_items();
     case R_WINDOWS:
 #ifdef WIN32
 	return 1;
@@ -9954,6 +9964,13 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = eval_3args_func(l, m, r, t->t, p);
 	}
 	break;
+    case F_SSCANF:
+	if (l->t == STR && m->t == STR && r->t == STR) {
+	    ret = eval_sscanf(l, m, r, p);
+	} else {
+	    node_type_error(t->t, 0, STR, NULL, p);
+	}
+	break;
     case F_BESSEL:
 	/* functions taking one char, one scalar/series and one 
 	   matrix/series/scalar as args */
@@ -10010,7 +10027,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISSTRING:
     case F_ISNULL:
     case F_STRLEN:
-    case F_SSCANF:
     case F_REMOVE:
     case F_TYPEOF:
 	if (l->t == STR) {

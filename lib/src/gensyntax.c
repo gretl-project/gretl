@@ -1151,13 +1151,6 @@ static NODE *powterm (parser *p)
 		get_args(t->v.b1.b, p, sym, -1, opt, &next);
 	    }
 	}
-    } else if (sym == F_SSCANF) {
-	/* string arg is handled specially */
-	t = newb1(sym, NULL);
-	if (t != NULL) {
-	    lex(p);
-	    t->v.b1.b = get_sscanf_args(p);
-	}	
     } else if (string_arg_func(sym)) {
 	t = newb1(sym, NULL);
 	if (t != NULL) {
