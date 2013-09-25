@@ -180,7 +180,7 @@ static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
 static int real_libset_read_script (const char *fname,
 				    PRN *prn);
-static void set_csv_digits (const char *s);
+static int set_csv_digits (const char *s);
 
 static void robust_opts_init (struct robust_opts *r)
 {
@@ -1551,7 +1551,7 @@ static int check_set_bool (const char *setobj, const char *setarg)
 int execute_set_line (const char *line, DATASET *dset, 
 		      gretlopt opt, PRN *prn)
 {
-    char setobj[32], setarg[32];
+    char setobj[32], setarg[32], junk[8];
     int k, argc, err = E_PARSE;
     double x;
 
@@ -1561,11 +1561,11 @@ int execute_set_line (const char *line, DATASET *dset,
 	return write_or_read_settings(opt, prn);
     }
 
-    *setobj = *setarg = '\0';
+    *setobj = *setarg = *junk = '\0';
 
-    argc = sscanf(line, "%*s %31s %31s", setobj, setarg);
+    argc = sscanf(line, "%*s %31s %31s %7s", setobj, setarg, junk);
 
-    if (argc == 0) {
+    if (argc <= 0) {
 	return print_settings(prn, OPT_D);
     }
 
@@ -1576,6 +1576,11 @@ int execute_set_line (const char *line, DATASET *dset,
 	} else if (!strcmp(setobj, "workdir")) {
 	    return set_workdir(line);
 	}
+    }
+
+    if (argc == 3) {
+	/* got some extraneous stuff */
+	return err;
     }
 
     if (argc == 1) {
@@ -1590,14 +1595,11 @@ int execute_set_line (const char *line, DATASET *dset,
 	}
     } else if (argc == 2) {
 	if (!strcmp(setobj, "csv_write_na") || !strcmp(setobj, "csv_na")) {
-	    set_csv_na_write_string(setarg);
-	    return 0;
+	    return set_csv_na_write_string(setarg);
 	} else if (!strcmp(setobj, "csv_read_na")) {
-	    set_csv_na_read_string(setarg);
-	    return 0;
+	    return set_csv_na_read_string(setarg);
 	} else if (!strcmp(setobj, CSV_DIGITS)) {
-	    set_csv_digits(setarg);
-	    return 0;
+	    return set_csv_digits(setarg);
 	} else if (!strcmp(setobj, "initvals")) {
 	    return set_initvals(setarg, prn);
 	} else if (!strcmp(setobj, "matrix_mask")) {
@@ -2484,6 +2486,25 @@ int check_for_stop (void)
     }
 }
 
+static int set_string_setvar (char *targ, const char *s, int len)
+{
+    *targ = '\0';
+
+    if (*s == '"') {
+	const char *p = strchr(s+1, '"');
+
+	if (p == NULL) {
+	    return E_PARSE;
+	} else {
+	    strncat(targ, s+1, p-s-1);
+	}
+    } else {
+	strncat(targ, s, len);
+    }
+
+    return 0;
+}
+
 /* for setting what we print for NAs on CSV output */
 
 const char *get_csv_na_write_string (void)
@@ -2495,14 +2516,13 @@ const char *get_csv_na_write_string (void)
     }
 }
 
-void set_csv_na_write_string (const char *s)
+int set_csv_na_write_string (const char *s)
 {
     if (check_for_state()) {
-	return;
+	return E_DATA;
+    } else {
+	return set_string_setvar(state->csv_write_na, s, 7);
     }
-
-    *state->csv_write_na = '\0';
-    strncat(state->csv_write_na, s, 7);
 }
 
 /* and for setting what we read as NA on CSV input */
@@ -2516,22 +2536,24 @@ const char *get_csv_na_read_string (void)
     }
 }
 
-void set_csv_na_read_string (const char *s)
+int set_csv_na_read_string (const char *s)
 {
     if (check_for_state()) {
-	return;
+	return E_DATA;
+    } else {
+	return set_string_setvar(state->csv_read_na, s, 7);
     }
-
-    *state->csv_read_na = '\0';
-    strncat(state->csv_read_na, s, 7);
 }
 
-static void set_csv_digits (const char *s)
+static int set_csv_digits (const char *s)
 {
     int k = atoi(s);
 
     if (k > 0 && k < 26) {
 	csv_digits = k;
+	return 0;
+    } else {
+	return E_DATA;
     }
 }
 
