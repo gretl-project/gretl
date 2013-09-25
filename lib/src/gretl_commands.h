@@ -140,7 +140,6 @@ typedef enum {
     SPEARMAN,
     SPRINTF,
     SQUARE,
-    SSCANF,
     STORE, 
     SUMMARY,
     SYSTEM,

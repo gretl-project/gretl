@@ -1,5 +1,8 @@
 version 1.9.13, in progress
 
+The "sscanf" command, deprecated since gretl 1.9.4, has been
+removed: use the function of the same name instead.
+
 The default criterion used in connection with the --test-down
 option for the "adf" command is now the modified AIC as
 recommended by Ng and Perron (Econometrica, 2001). To obtain

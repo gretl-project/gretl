@@ -364,7 +364,6 @@ static int catch_system_alias (CMD *cmd)
 	               c == SETOBS || \
 	               c == SHELL || \
                        c == SPRINTF || \
-		       c == SSCANF || \
                        c == SYSTEM || \
                        c == TABPRINT || \
                        c == VARLIST || \
@@ -5476,10 +5475,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case PRINTF:
     case SPRINTF:
 	err = do_printf(line, dset, prn);
-	break;
-
-    case SSCANF:
-	err = do_sscanf(line, dset, prn);
 	break;
 
     case PVAL:
