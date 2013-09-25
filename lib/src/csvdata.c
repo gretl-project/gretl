@@ -4468,28 +4468,15 @@ static int check_for_missing_columns (csvjoin *jspec)
    vice versa.
 */
 
-static int key_types_check (int lstr, int rstr, gretlopt opt)
+static int key_types_error (int lstr, int rstr)
 {
-    int err = 0;
-
-    /* We'll accept the case where we have numeric on the left and
-       string on the right, but only if OPE_E (--keymap) was given.
-       By giving that option the user is insisting that it's OK to
-       treat the numeric coding of the right-hand strings as matching
-       up with something numeric on the left.
-    */
-
-    if (rstr && (opt & OPT_E)) {
-	; /* OK? */
-    } else if (lstr) {
+    if (lstr) {
 	gretl_errmsg_sprintf(_("%s: string key on left but numeric on right"), "join");
-	err = E_TYPES;
     } else {
 	gretl_errmsg_sprintf(_("%s: string key on right but numeric on left"), "join");
-	err = E_TYPES;
     }	
 
-    return err;
+    return E_TYPES;
 }
 
 static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
@@ -4524,7 +4511,7 @@ static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
 	rstr = series_has_string_table(jspec->c->dset, okeyvars[1]);
 
 	if (lstr != rstr) {
-	    err = key_types_check(lstr, rstr, opt);
+	    err = key_types_error(lstr, rstr);
 	} else if (lstr) {
 	    str_keys[0] = 1;
 	}
@@ -4533,7 +4520,7 @@ static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
 	    lstr = series_has_string_table(dset, ikeyvars[2]);
 	    rstr = series_has_string_table(jspec->c->dset, okeyvars[2]);
 	    if (lstr != rstr) {
-		err = key_types_check(lstr, rstr, opt);
+		err = key_types_error(lstr, rstr);
 	    } else if (lstr) {
 		str_keys[1] = 1;
 	    }

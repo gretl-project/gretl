@@ -855,7 +855,7 @@
 	  regressors. If the last model was a system of equations,
 	  returns the <quote>global</quote> list of exogenous and
 	  predetermined variables (in the same order in which they
-	  appear in <fncref targ="$sysB"/>). In the last model was a
+	  appear in <fncref targ="$sysB"/>). If the last model was a
 	  VAR, returns the list of exogenous regressors, if any.
 	</para>
       </description>

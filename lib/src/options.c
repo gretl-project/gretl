@@ -272,7 +272,6 @@ struct gretl_option gretl_opts[] = {
     { JOIN,     OPT_K, "tkey", 2 },
     { JOIN,     OPT_X, "timecols", 2 },
     { JOIN,     OPT_V, "verbose", 0 },
-    { JOIN,     OPT_E, "keymap", 0 },
     { KALMAN,   OPT_C, "cross", 0 },
     { KALMAN,   OPT_D, "diffuse", 0 },
     { KPSS,     OPT_T, "trend", 0 },
