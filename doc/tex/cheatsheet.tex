@@ -25,6 +25,27 @@ setobs 20 9:1 --special
 difference) or estimation methods like seasonal ARIMA will work as
 expected.
 
+\subsection{Generating a panel dataset of given dimensions}
+
+\emph{Problem:} You want to generate via \cmd{nulldata} a panel
+dataset and specify in advance the number of units and the time length
+of your series via two scalar variables. 
+
+\emph{Solution:}
+\begin{code}
+scalar n_units = 100
+scalar T = 12
+scalar NT = T * n_units
+
+nulldata NT --preserve
+setobs T 1:1 --stacked-time-series
+\end{code}
+
+\emph{Comment:} The essential ingredient that we use here is the
+\option{preserve} option: it protects existing scalars (and matrices,
+for that matter) from being thrashed by \cmd{nulldata}, thus making it
+possible to use the scalar $T$ in the \cmd{setobs} command.
+
 \subsection{Help, my data are backwards!}
 
 \emph{Problem:} Gretl expects time series data to be in chronological
