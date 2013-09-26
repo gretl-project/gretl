@@ -63,6 +63,7 @@ TEXSRC = cli.tex \
 	nonparam.tex \
 	system.tex \
 	operators.tex \
+	realtime.tex \
 	hansl-intro.tex
 
 BIBSRC = gretl.bib gretl.bst

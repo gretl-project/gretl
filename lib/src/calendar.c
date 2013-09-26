@@ -223,7 +223,7 @@ char *ymd_extended_from_epoch_day (long ed, int *err)
  * 
  * Returns: an 8-digit number on the pattern YYYYMMDD (ISO 8601 basic 
  * date format) given the epoch day number, which equals 1 for the
- * first of January in the year 1 AD, or NULL on error.
+ * first of January in the year 1 AD, or #NADBL on error.
  */
 
 double ymd_basic_from_epoch_day (long ed, int *err)
