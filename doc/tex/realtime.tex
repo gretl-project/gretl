@@ -4,12 +4,13 @@
 \section{Introduction}
 \label{sec:realtime-intro}
 
-As of \app{gretl} version 1.9.13 the \cmd{join} command has been
-enhanced to deal with so-called realtime datasets in a straightforward
-manner.  Such datasets contain information on when the observations in
-a time series were actually published by statistical agencies and how
-they have been revised over time. Probably the most popular source of
-such data is the ``Alfred'' online database at the St. Louis Fed
+As of \app{gretl} version 1.9.13 the \cmd{join} command (see chapter
+\ref{chap:join}) has been enhanced to deal with so-called realtime
+datasets in a straightforward manner.  Such datasets contain
+information on when the observations in a time series were actually
+published by statistical agencies and how they have been revised over
+time. Probably the most popular source of such data is the ``Alfred''
+online database at the St. Louis Fed
 (\url{http://alfred.stlouisfed.org/}); there are similar offerings at
 the OECD.  The description in this section covers the case of a
 typical file downloaded from Alfred, but should be easy to adapt to
@@ -113,8 +114,8 @@ with \cmd{join}, arbitrarily choosing the self-explanatory series
 identifier of \texttt{ip\_asof\_20110615}.
 
 \begin{code}
-join @fname ip_asof_20110615 --tkey=observation_date \
---data=INDPRO --timecols="realtime_start_date,realtime_end_date"
+join @fname ip_asof_20110615 --tkey=observation_date --data=INDPRO \
+--timecols="realtime_start_date,realtime_end_date" \
 --filter="realtime_start_date<=20110615 && \
 (missing(realtime_end_date) || 20110615<=realtime_end_date)"
 \end{code}
@@ -183,8 +184,7 @@ Here some detailed explanations of the various options are warranted:
   well-formed source files: 
 \end{itemize}
 \begin{code}
-  --filter="realtime_start_date<=20110615" \
-  --aggr=max(realtime_start_date)
+  --filter="realtime_start_date<=20110615" --aggr=max(realtime_start_date)
 \end{code}
 As a result, your dataset will now contain a time series named
 \verb|ip_asof_20110615| with the values that a researcher would have
@@ -200,8 +200,7 @@ irrespective of \emph{when} each of these $n$-th releases was
 published. Suppose we are interested in the third release, then the
 relevant \cmd{join} command becomes:
 \begin{code}
-  join @fname ip_3rdpub --tkey=observation_date --data=INDPRO \
-    --aggr="seq:3"
+  join @fname ip_3rdpub --tkey=observation_date --data=INDPRO --aggr="seq:3"
 \end{code}
 Since we do not need the \verb|realtime_start_date| and
 \verb|realtime_end_date| information for this retrieval, we have
