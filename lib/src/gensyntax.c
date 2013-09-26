@@ -288,6 +288,7 @@ static NODE *base (parser *p, NODE *up)
     case DVAR:
     case MVAR:
     case OBS:
+    case DOBS:
     case ULIST:
     case WLIST:
     case BUNDLE:
@@ -295,6 +296,9 @@ static NODE *base (parser *p, NODE *up)
     case UNUM_P:
     case UNUM_M:
     case UNDEF:
+	if (p->sym == OBS || p->sym == DOBS) {
+	    fprintf(stderr, "*** HERE 1: sym OBS or DOBS\n");
+	}
 	t = newref(p, p->sym);
 	lex(p);
 	break;
@@ -324,7 +328,7 @@ static NODE *base (parser *p, NODE *up)
 	if (up == NULL) {
 	    goto deferr;
 	}
-	if (up->t == OBS) {
+	if (up->t == OBS || up->t == DOBS) {
 	    t = obs_node(p);
 	} else if (up->t == LISTELEM) {
 	    lex(p);
@@ -424,83 +428,6 @@ static NODE *listvar_node (parser *p)
     }
 
     return ret;    
-}
-
-/* here we grab all the arguments to sscanf() as one big string,
-   which will be parsed later */
-
-static NODE *get_sscanf_args (parser *p)
-{
-    const char *src = NULL;
-    int wrapped = 0;
-
-    while (p->ch == ' ') {
-	parser_getc(p);
-    }
-
-    if (p->ch == '"') {
-	wrapped = 1;
-	/* don't lose the leading quote */
-	src = p->point - 1;
-	parser_getc(p);
-    }
-
-    if (p->ch == ')') {
-	p->err = (wrapped)? E_PARSE : E_ARGS;
-	return NULL;
-    } else {
-	const char *s = p->point;
-	int i, paren = 1, quoted = wrapped;
-	int len, close = -1;
-
-	/* find length of string to closing paren */
-	i = 0;
-	while (*s) {
-	    if (!quoted && *s == ')') paren--;
-	    if (paren == 0) {
-		close = i;
-		break;
-	    }
-	    if (*s == '"') {
-		quoted = !quoted;
-	    } else if (!quoted && *s == '(') {
-		paren++;
-	    } 
-	    s++;
-	    i++;
-	}
-
-	if (close < 0) {
-	    unmatched_symbol_error('(', p);
-	    return NULL;
-	}
-
-	if (src == NULL) {
-	    src = p->point - 1;
-	    len = close + 1;
-	} else {
-	    len = close + 2;
-	}
-
-	p->idstr = gretl_strndup(src, len);
-
-	if (p->idstr == NULL) {
-	    p->err = E_ALLOC;
-	    return NULL;
-	}
-
-	tailstrip(p->idstr);
-	parser_advance(p, close);
-    }
-
-    parser_getc(p);
-    lex(p);
-
-#if SDEBUG
-    fprintf(stderr, "get_sscanf_args: '%s'\n", p->idstr);
-#endif
-
-    return newstr(p->idstr);
 }
 
 static void unwrap_string_arg (parser *p)
@@ -1166,13 +1093,13 @@ static NODE *powterm (parser *p)
 		next = G_LBR;
 	    }
 	}
-    } else if (sym == LAG || sym == OBS) {
+    } else if (sym == LAG || sym == OBS || sym == DOBS) {
 	if (sym == LAG) {
 	    set_lag_parse_on(p);
 	}
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newref(p, UVEC); 
+	    t->v.b2.l = newref(p, sym == DOBS ? DVAR : UVEC);
 	    lex(p);
 	    t->v.b2.r = base(p, t);
 	}

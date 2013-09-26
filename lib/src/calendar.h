@@ -32,7 +32,9 @@
 
 long epoch_day_from_ymd (int y, int m, int d);
 
-char *ymd_from_epoch_day (long ed, int *err);
+char *ymd_extended_from_epoch_day (long ed, int *err);
+
+double ymd_basic_from_epoch_day (long ed, int *err);
 
 long get_epoch_day (const char *date);
 

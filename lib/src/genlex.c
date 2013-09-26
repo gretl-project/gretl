@@ -39,14 +39,6 @@ const char *wordchars = "abcdefghijklmnopqrstuvwxyz"
                         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                         "0123456789_";
 
-static char *fromdbl (double x)
-{ 
-    static char num[NUMLEN];
-   
-    sprintf(num, "%g", x);
-    return num;
-}
-
 struct str_table {
     int id;
     const char *str;
@@ -844,7 +836,7 @@ NODE *obs_node (parser *p)
     if (special && !p->err) {
 	t = get_t_from_obs_string(word, p->dset);
 	if (t >= 0) {
-	    /* convert to use-style 1-based index */
+	    /* convert to user-style 1-based index */
 	    t++;
 	}
     }
@@ -1059,6 +1051,8 @@ static void maybe_treat_as_postfix (parser *p)
     }
 }
 
+#define dollar_series(t) (t > R_SCALAR_MAX && t < R_SERIES_MAX)
+
 #define could_be_matrix(t) (model_data_matrix(t) || \
 			    model_data_matrix_builder(t) || \
 			    t == M_UHAT || t == M_YHAT || \
@@ -1100,6 +1094,9 @@ static void word_check_next_char (parser *p)
 	} else if (p->sym == UVEC) {
 	    /* observation from series */
 	    p->sym = OBS;
+	} else if (p->sym == DVAR && dollar_series(p->idnum)) {
+	    /* observation from "dollar" series */
+	    p->sym = DOBS;
 	} else if (p->sym == ULIST) {
 	    /* element of list */
 	    p->sym = LISTELEM;
@@ -1600,7 +1597,7 @@ const char *getsymb (int t, const parser *p)
     }
 
     /* yes, well */
-    if (t == OBS) {
+    if (t == OBS || t == DOBS) {
 	return "OBS";
     } else if (t == MSL) {
 	return "MSL";
@@ -1642,12 +1639,12 @@ const char *getsymb (int t, const parser *p)
 	return "EROOT";
     } else if (t == UNDEF) {
 	return "UNDEF";
+    } else if (t == NUM) {
+	return "NUM";
     }
 
     if (p != NULL) {
-	if (t == NUM) {
-	    return fromdbl(p->xval); 
-	} else if (t == UVEC) {
+	if (t == UVEC) {
 	    return p->dset->varname[p->idnum];
 	} else if (t == UNUM) {
 	    return p->idstr;
@@ -1669,9 +1666,7 @@ const char *getsymb (int t, const parser *p)
 	    return p->idstr;
 	}
     } else {
-	if (t == NUM) {
-	    return "NUM"; 
-	} else if (t == UVEC) {
+	if (t == UVEC) {
 	    return "UVEC";
 	} else if (t == UNUM) {
 	    return "UNUM";

@@ -94,11 +94,12 @@ enum {
 	      VEC,	  /* series, evaluated */
 	      MAT,	  /* matrix, evaluated */
 	      OBS,	  /* observation from a series */
+	      DOBS,       /* observation from "dollar" series */
               MSL,	  /* matrix plus subspec */
               DMSL,	  /* "dollar" matrix plus subspec */
 	      DMSTR,	  /* "dollar" matrix plus string subspec */
-	      MSL2,	  /* unevaluated matrix subspec */
-  /* 70 */    MSPEC,	  /* evaluated matrix subspec */
+  /* 70 */    MSL2,	  /* unevaluated matrix subspec */
+	      MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
               LAG,        /* variable plus lag length */	  
@@ -107,8 +108,8 @@ enum {
               OVAR,	  /* object variable: variable "under" an object */
               LIST,	  /* list, evaluated */
 	      LISTVAR,    /* variable in list, dot syntax */
-	      LISTELEM,   /* list member, [...] syntax) */
-  /* 80 */    MLISTELEM,  /* accessor list member, [...] syntax) */
+  /* 80 */    LISTELEM,   /* list member, [...] syntax) */
+	      MLISTELEM,  /* accessor list member, [...] syntax) */
 	      STR,	  /* string */
 	      BUNDLE,     /* gretl bundle (hash table) */
               BOBJ,       /* object inside a bundle */
@@ -117,8 +118,8 @@ enum {
               WLIST,      /* wildcard list spec */
               EMPTY,      /* "null" */
 	      ABSENT,
-	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
-  /* 90 */    EROOT,	  /* dummy root for (...) expression */
+  /* 90 */    DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
+	      EROOT,	  /* dummy root for (...) expression */
 	      UFUN,	  /* user-defined function */
 	      RFUN,       /* GNU R function */
 	      USTR,       /* string variable */
@@ -127,8 +128,8 @@ enum {
               DEC,        /* decrement */
 	      QUERY,      /* ternary "?" expression */
 	      UNDEF,      /* undefined (in "query" context only) */
-              EOT,	  /* end of transmission */
-  /* 100 */   UNK 
+  /* 100 */   EOT,	  /* end of transmission */
+	      UNK 
 };
 
 /* functions: don't collide with the enumeration above */
@@ -273,7 +274,6 @@ enum {
     F_TYPESTR,
     F_STRSTRIP,
     F_REMOVE,
-    F_ISODATE,
     F_TYPEOF,
     F_ATOF,
     F_FIXNAME,
@@ -342,6 +342,7 @@ enum {
     F_MREAD,
     F_GETLINE,
     F_PDATE,
+    F_ISODATE,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,
@@ -451,7 +452,7 @@ enum {
 #define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
                    s == MSL2 || s == SUBSL || s == LAG || \
                    s == OBS || s == BOBJ || s == LISTELEM || \
-                   s == BMEMB)
+                   s == BMEMB || s == DOBS)
 
 #define b1sym(s) (unary_op(s) || func1_symb(s) || funcn_symb(s) || \
                   s == G_LPR || s == EROOT)

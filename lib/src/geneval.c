@@ -4611,15 +4611,58 @@ static NODE *errmsg_node (NODE *l, parser *p)
     return ret;
 }
 
-static NODE *isodate_node (NODE *l, parser *p)
+static NODE *isodate_node (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret = aux_string_node(p);
+    NODE *ret = NULL;
 
-    if (ret != NULL && starting(p)) {
-	if (l->v.xval >= 1 && l->v.xval <= LONG_MAX) {
-	    ret->v.str = ymd_from_epoch_day((long) l->v.xval, &p->err);
+    if (l->t != NUM && l->t != VEC) {
+	node_type_error(F_ISODATE, 1, NUM, l, p);
+    } else if (r->t != NUM && r->t != EMPTY) {
+	node_type_error(F_ISODATE, 2, NUM, r, p);
+    }
+
+    if (!p->err) {
+	if (l->t == NUM) {
+	    /* epoch day node is scalar */
+	    int as_number = (r->t == NUM)? node_get_int(r, p) : 0;
+
+	    if (!p->err) {
+		ret = as_number ? aux_scalar_node(p) : aux_string_node(p);
+	    }
+	    if (ret != NULL) {
+		double x = l->v.xval;
+
+		if (as_number && na(x)) {
+		    ret->v.xval = NADBL;
+		} else if (x >= 1 && x <= LONG_MAX) {
+		    if (as_number) {
+			ret->v.xval = ymd_basic_from_epoch_day((long) x, &p->err);
+		    } else {
+			ret->v.str = ymd_extended_from_epoch_day((long) x, &p->err);
+		    }
+		} else {
+		    p->err = E_INVARG;
+		}
+	    }
 	} else {
-	    p->err = E_DATA;
+	    /* epoch day node is series */
+	    ret = aux_vec_node(p, p->dset->n);
+	    if (ret != NULL) {
+		double xt;
+		int t;
+
+		for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		    xt = l->v.xvec[t];
+		    if (na(xt)) {
+			ret->v.xvec[t] = NADBL;
+		    } else if (xt >= 1 && xt <= LONG_MAX) {
+			ret->v.xvec[t] = ymd_basic_from_epoch_day((long) xt, &p->err);
+		    } else {
+			p->err = E_INVARG;
+			break;
+		    }
+		}
+	    }
 	}
     }
 
@@ -6709,33 +6752,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		}
 	    }
 	}
-    } else if (f == F_EPOCHDAY) {
-	post_process = 0;
-	if (!scalar_node(l)) {
-	    node_type_error(f, 1, NUM, l, p);
-	} else if (!scalar_node(m)) {
-	    node_type_error(f, 2, NUM, m, p);
-	} else if (!scalar_node(r)) {
-	    node_type_error(f, 3, NUM, r, p);
-	} else {
-	    int y = node_get_int(l, p);
-	    int mo = node_get_int(m, p);
-	    int d = node_get_int(r, p);
-
-	    if (p->err) {
-		; /* from node_get_int() */
-	    } else if (y < 0 || mo < 1 || mo > 12 || d < 0 || d > 31) {
-		p->err = E_INVARG;
-	    } else {
-		ret = aux_scalar_node(p);
-		if (!p->err) {
-		    ret->v.xval = epoch_day_from_ymd(y, mo, d);
-		    if (ret->v.xval < 0) {
-			ret->v.xval = NADBL;
-		    }
-		}
-	    }
-	}
     } else if (f == F_SETNOTE) {
 	post_process = 0;
 	if (l->t != BUNDLE) {
@@ -6971,6 +6987,93 @@ static NODE *eval_sscanf (NODE *l, NODE *m, NODE *r, parser *p)
 	p->err = do_sscanf(l->v.str, m->v.str, r->v.str, p->dset, &n);
 	if (!p->err) {
 	    ret->v.xval = n;
+	}
+    }
+
+    return ret;
+}
+
+static int x_to_period (double x, char c, int *err)
+{
+    if (na(x)) {
+	return -1;
+    } else if (x < 0 || fabs(x) > INT_MAX) {
+	*err = E_INVARG;
+	return -1;
+    } else {
+	int k = x;
+
+	if (c == 'y' && k < 0) {
+	    k = -1;
+	} else if (c == 'm' && (k < 1 || k > 12)) {
+	    k = -1;
+	} else if (c == 'd' && (k < 1 || k > 31)) {
+	    k = -1;
+	}
+
+	if (k < 0) {
+	    *err = E_INVARG;
+	}
+
+	return k;
+    }
+}
+
+static NODE *eval_epochday (NODE *ny, NODE *nm, NODE *nd, parser *p)
+{
+    NODE *ret = NULL;
+    NODE *nodes[3] = {ny, nm, nd};
+    double *x[3] = {NULL, NULL, NULL};
+    int ymd[3] = {-1, -1, -1};
+    int i, y, m, d;
+
+    for (i=0; i<3; i++) {
+	if (scalar_node(nodes[i])) {
+	    ymd[i] = node_get_int(nodes[i], p);
+	} else if (nodes[i]->t == VEC) {
+	    x[i] = nodes[i]->v.xvec;
+	} else {
+	    node_type_error(F_EPOCHDAY, i+1, NUM, nodes[i], p);
+	    break;
+	}
+    }
+
+    y = ymd[0]; m = ymd[1]; d = ymd[2];
+
+    if (!p->err) {
+	if (x[0] == NULL && x[1] == NULL && x[2] == NULL) {
+	    if (y < 0 || m < 1 || m > 12 || d < 1 || d > 31) {
+		p->err = E_INVARG;
+	    } else {	    
+		ret = aux_scalar_node(p);
+	    }
+	    if (!p->err) {
+		ret->v.xval = epoch_day_from_ymd(y, m, d);
+		if (ret->v.xval < 0) {
+		    ret->v.xval = NADBL;
+		}
+	    }
+	} else {
+	    ret = aux_vec_node(p, p->dset->n);
+	    if (!p->err) {
+		int t;
+
+		for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		    y = (x[0] == NULL)? y : x_to_period(x[0][t], 'y', &p->err);
+		    m = (x[1] == NULL)? m : x_to_period(x[1][t], 'm', &p->err);
+		    d = (x[2] == NULL)? d : x_to_period(x[2][t], 'd', &p->err);
+		    if (p->err) {
+			break;
+		    } else if (y < 0 || m < 0 || d < 0) {
+			ret->v.xvec[t] = NADBL;
+		    } else {
+			ret->v.xvec[t] = epoch_day_from_ymd(y, m, d);
+			if (ret->v.xvec[t] < 0) {
+			    ret->v.xvec[t] = NADBL;
+			}
+		    }		    
+		}
+	    }
 	}
     }
 
@@ -8453,8 +8556,8 @@ static double *dvar_get_series (int i, const DATASET *dset,
 				int *err)
 {
     double *x = NULL;
+    int YMD = calendar_data(dset);
     int t;
-    int YMD = dated_daily_data(dset) || dated_weekly_data(dset);
 
     if (dset == NULL || dset->n == 0) {
 	*err = E_NODATA;
@@ -8589,7 +8692,6 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 {
     NODE *ret = NULL;
 
-
     if (starting(p)) {
 	int idx, mslice = (t->t == DMSL);
 
@@ -8602,18 +8704,18 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 
 	if (mslice) {
 	    ret = aux_matrix_node(p);
-	    if (ret != NULL && starting(p)) {
+	    if (ret != NULL) {
 		ret->v.m = dvar_get_submatrix(idx, t, p);
 	    }
 	} else if (dvar_scalar(idx)) {
 	    ret = aux_scalar_node(p);
-	    if (ret != NULL && starting(p)) {
+	    if (ret != NULL) {
 		ret->v.xval = dvar_get_scalar(idx, p->dset, 
 					      p->lh.label);
 	    }
 	} else if (dvar_series(idx)) {
 	    ret = aux_vec_node(p, 0);
-	    if (ret != NULL && starting(p)) {
+	    if (ret != NULL) {
 		ret->v.xvec = dvar_get_series(idx, p->dset,
 					      &p->err);
 	    }
@@ -8622,13 +8724,13 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 
 	    if (type == GRETL_TYPE_MATRIX) {
 		ret = aux_matrix_node(p);
-		if (ret != NULL && starting(p)) {
+		if (ret != NULL) {
 		    ret->v.m = dvar_get_matrix(idx, &p->err);
 		}		
 	    } else {
 		/* scalar or none */
 		ret = aux_scalar_node(p);
-		if (ret != NULL && starting(p)) {
+		if (ret != NULL) {
 		    ret->v.xval = dvar_get_scalar(idx, p->dset, 
 						  p->lh.label);
 		}
@@ -9167,7 +9269,7 @@ static NODE *eval (NODE *t, parser *p)
 		p->err = 1;
 	    }
 	}
-    }	
+    }
 
     if (p->err) {
 	goto bailout;
@@ -9516,6 +9618,7 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;
     case OBS:
+    case DOBS:
 	if (l->t != VEC) {
 	    node_type_error(t->t, 1, VEC, l, p);
 	} else if (!scalar_node(r) && r->t != STR) {
@@ -9960,6 +10063,8 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = replace_value(l, m, r, p);
 	} else if (t->t == F_STRSUB || t->t == F_REGSUB) {
 	    ret = string_replace(l, m, r, t->t, p);
+	} else if (t->t == F_EPOCHDAY) {
+	    ret = eval_epochday(l, m, r, p);
 	} else {
 	    ret = eval_3args_func(l, m, r, t->t, p);
 	}
@@ -10202,11 +10307,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_ISODATE:
-	if (l->t == NUM) {
-	    ret = isodate_node(l, p);
-	} else {
-	    node_type_error(t->t, 0, NUM, l, p);
-	}
+	ret = isodate_node(l, r, p);
 	break;
     case F_ATOF:
 	if (l->t == STR) {

@@ -141,31 +141,13 @@ long epoch_day_from_ymd (int y, int m, int d)
     return ret;
 }
 
-/**
- * ymd_from_epoch_day:
- * @ed: epoch day (ed >= 1).
- * @err: location to receive error code.
- * 
- * Returns: YYYY-MM-DD (ISO 8601 date format) given the epoch
- * day number, which equals 1 for the first of January in the 
- * year 1 AD, or NULL on error.
- */
-
-char *ymd_from_epoch_day (long ed, int *err)
+static int real_ymd_from_epoch_day (long ed, int *py, int *pm, int *pd)
 {
-    char *ret;
     int y, m, d, delta;
     long days = 0L;
 
     if (ed < 1) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    ret = calloc(12, 1);
-    if (ret == NULL) {
-	*err = E_ALLOC;
-	return NULL;
+	return E_INVARG;
     }
 
     for (y=1; ; y++) {
@@ -200,9 +182,62 @@ char *ymd_from_epoch_day (long ed, int *err)
 	}
     }
 
-    sprintf(ret, "%04d-%02d-%02d", y, m, d);
+    *py = y; *pm = m; *pd = d;
+
+    return 0;
+}
+
+/**
+ * ymd_extended_from_epoch_day:
+ * @ed: epoch day (ed >= 1).
+ * @err: location to receive error code.
+ * 
+ * Returns: a string on the pattern YYYY-MM-DD (ISO 8601 extended 
+ * date format) given the epoch day number, which equals 1 for the
+ * first of January in the year 1 AD, or NULL on error.
+ */
+
+char *ymd_extended_from_epoch_day (long ed, int *err)
+{
+    char *ret = NULL;
+    int y, m, d;
+
+    *err = real_ymd_from_epoch_day(ed, &y, &m, &d);
+
+    if (!*err) {
+	ret = calloc(12, 1);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    sprintf(ret, "%04d-%02d-%02d", y, m, d);
+	}
+    }
 
     return ret;
+}
+
+/**
+ * ymd_basic_from_epoch_day:
+ * @ed: epoch day (ed >= 1).
+ * @err: location to receive error code.
+ * 
+ * Returns: an 8-digit number on the pattern YYYYMMDD (ISO 8601 basic 
+ * date format) given the epoch day number, which equals 1 for the
+ * first of January in the year 1 AD, or NULL on error.
+ */
+
+double ymd_basic_from_epoch_day (long ed, int *err)
+{
+    double x = NADBL;
+    int y, m, d;
+
+    *err = real_ymd_from_epoch_day(ed, &y, &m, &d);
+
+    if (!*err) {
+	x = 10000*y + 100*m + d;
+    }
+
+    return x;
 }
 
 static int weekday_from_epoch_day (long ed)

@@ -2146,18 +2146,22 @@
       </description>
     </function>
 
-    <function name="epochday" section="data-utils" output="int">
+    <function name="epochday" section="data-utils" output="scalar-or-series">
       <fnargs>
-	<fnarg type="int">year</fnarg>
-	<fnarg type="int">month</fnarg>
-	<fnarg type="int">day</fnarg>
+	<fnarg type="scalar-or-series">year</fnarg>
+	<fnarg type="scalar-or-series">month</fnarg>
+	<fnarg type="scalar-or-series">day</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns the number of the day in the current epoch specified
-	  by year, month and day. The epoch day equals 1 for the
-	  first of January in the year 1 AD. For the inverse function,
-	  see <fncref targ="isodate"/>.
+	  by year, month and day. The epoch day equals 1 for the first
+	  of January in the year 1 AD; it stood at 733786 on
+	  2010-01-01. If any of the arguments are given as series the
+	  value returned is a series, otherwise it is a scalar.
+	</para>
+	<para>
+	  For the inverse function, see <fncref targ="isodate"/>.
 	</para>
       </description>
     </function>
@@ -3238,17 +3242,26 @@
       </description>
     </function>
 
-    <function name="isodate" section="data-utils" output="string">
+    <function name="isodate" section="data-utils" output="seebelow">
       <fnargs>
-	<fnarg type="int">ed</fnarg>
+	<fnarg type="scalar-or-series">ed</fnarg>
+	<fnarg type="bool" optional="true">as-number</fnarg>
       </fnargs>
       <description>
 	<para>
 	  The argument <argname>ed</argname> is interpreted as an
 	  epoch day (which equals 1 for the first of January in the
-	  year 1 AD). The value returned is a string holding the day's
-	  date in ISO 8601 format, <lit>YYYY-MM-DD</lit>.  For the
-	  inverse function, see <fncref targ="epochday"/>.
+	  year 1 AD). If this argument is a scalar, the default return
+	  value is a string holding the day's date in ISO 8601
+	  extended format, <lit>YYYY-MM-DD</lit>, but if the optional
+	  <argname>as-number</argname> argument is non-zero an 8-digit
+	  number on the pattern <lit>YYYYMMDD</lit> is returned
+	  instead.  If <argname>ed</argname> is a series, however, the
+	  second argument is ignored and the return value is always a
+	  numerical series holding <lit>YYYYMMDD</lit> values.
+	</para>
+	<para>
+	  For the inverse function, see <fncref targ="epochday"/>.
 	</para>
       </description>
     </function>
