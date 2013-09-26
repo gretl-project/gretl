@@ -212,16 +212,16 @@ entries in each sequence of matches could have yielded a result
 different from the one intended. This assumptions, however, holds for
 Alfred files and is rather safe to assume generally.
 
-As a result of this operation, the values of the variable in the
-\app{gretl} workfile named \texttt{ip\_3rdpub} were published at
-different dates, so the variable is effectively a mix of different
-vintages. Depending on the type of variable, this may also imply
-drastic jumps in the values; for example, index numbers are regularly
-rebased to different base periods. This problem also carries over to
-inflation-adjusted economic variables, where the base period of the
-price index changes over time. Mixing vintages in general also means
-mixing different scales in the output, with which you would have to
-deal appropriately.\footnote{Some user-contributed functions may be
+As a result of this operation, the values of the variable imported as
+\texttt{ip\_3rdpub} were published at different dates, so the variable
+is effectively a mix of different vintages. Depending on the type of
+variable, this may also imply drastic jumps in the values; for
+example, index numbers are regularly rebased to different base
+periods. This problem also carries over to inflation-adjusted economic
+variables, where the base period of the price index changes over
+time. Mixing vintages in general also means mixing different scales in
+the output, with which you would have to deal
+appropriately.\footnote{Some user-contributed functions may be
   available that address this issue, but it is beyond the scope of the
   user guide here. Another even more complicated issue in the realtime
   context is that of ``benchmark revisions'' applied by statistical
@@ -244,10 +244,10 @@ you might be interested in the extent of revisions between the data
 published two and three months after each observation period.
 
 This is not trivial, however, and our solution here is to first create
-various auxiliary variables in the \app{gretl} workfile, also using
+various auxiliary variables in the \app{gretl} dataset, also using
 information from the source file. This implies that several passes of
 \cmd{join} will be needed. First we will need a variable which for
-each observation period in the workfile describes the (daily) target
+each observation period in the dataset describes the (daily) target
 date $n$ periods after the observation period. This boils down to an
 exercise in manipulating calendar date numbers, making use of the
 \app{gretl} accessors \dollar{obsmajor}, \dollar{obsminor},
@@ -262,9 +262,9 @@ auxiliary variable holding the target dates in basic ISO format
 \begin{code}
 series targetdate = getLagdate(2)
 \end{code}
-But because we cannot use variables from the \app{gretl} workfile directly
+But because we cannot use variables from the current dataset directly
 in a \cmd{join} filter we first have to import essentially all the realtime
-information into our workfile. 
+information into our dataset. 
 
 The first step is to determine the number of needed passes, that is,
 what is the maximum number of available releases for a single observation
@@ -278,13 +278,13 @@ followed by:
 scalar maxpubs = max(counter)
 \end{code}
 
-Next we load all the information into the workfile, which may be
-somewhat inefficient but should not be a problem unless you have a
-truly huge dataset (which is unlikely with macroeconomic data --- the
-following loop with three joins and 27 iterations through a file with
-roughly 24000 lines, 1MB, takes roughly 25 seconds on a reasonably
-fast 2013 vintage laptop). As a bonus, we demonstrate how to
-abbreviate reused option parts with string variables:
+Next we load all the information into the dataset, which may be
+somewhat inefficient but should not be a problem unless you are
+dealing with truly huge data (which is unlikely with macroeconomic
+data --- the following loop with three joins and 27 iterations through
+a file with roughly 24000 lines, 1MB, takes roughly 25 seconds on a
+reasonably fast 2013 vintage laptop). As a bonus, we demonstrate how
+to abbreviate reused option parts with string variables:
 \begin{code}
   # recycled options (note the escaped quotes)
   sprintf baseopt "--tkey=observation_date \
@@ -297,7 +297,7 @@ abbreviate reused option parts with string variables:
   endloop
 \end{code}
 For the remaining operations we can work purely within the \app{gretl}
-workfile, which is rather fast. Looping again through the various
+dataset, which is rather fast. Looping again through the various
 releases we check observation per observation (but using the
 convenient and fast functions available for series) whether the target
 date falls between the realtime start and end dates, i.e. whether the
