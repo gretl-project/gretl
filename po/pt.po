@@ -10,15 +10,15 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-09-23 09:01-0400\n"
-"PO-Revision-Date: 2013-09-04 21:07+0100\n"
-"Last-Translator: Hélio <helio_guilherme@hotmail.com>\n"
+"PO-Revision-Date: 2013-09-26 11:22+0100\n"
+"Last-Translator: Helio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Virtaal 0.7.0\n"
+"X-Generator: Virtaal 0.7.1\n"
 "X-Poedit-Language: Portuguese\n"
 "X-Poedit-Country: PORTUGAL\n"
 "X-Poedit-SourceCharset: iso-8859-15\n"
@@ -1128,7 +1128,7 @@ msgstr "Memória esgotada\n"
 
 #: lib/src/csvdata.c:3356
 msgid "No matching data after filtering"
-msgstr ""
+msgstr "Não existem dados depois da filtragem"
 
 #: lib/src/csvdata.c:3672
 msgid "You need to specify an aggregation method for a 1:n join"
@@ -1136,19 +1136,19 @@ msgstr ""
 "Você precisa de especificar um método de agregação para uma junção de 1:n"
 
 #: lib/src/csvdata.c:4458
-#, fuzzy, c-format
+#, c-format
 msgid "%s: column '%s' was not found"
-msgstr "%s: a coluna de filtragem '%s' não foi encontrada"
+msgstr "%s: a coluna '%s' não foi encontrada"
 
 #: lib/src/csvdata.c:4485
 #, c-format
 msgid "%s: string key on left but numeric on right"
-msgstr ""
+msgstr "%s: chave de texto à direita mas numérico à esquerda"
 
 #: lib/src/csvdata.c:4488
 #, c-format
 msgid "%s: string key on right but numeric on left"
-msgstr ""
+msgstr "%s: chave de texto à direita mas numérico à esquerda"
 
 #: lib/src/csvdata.c:4790 gui2/library.c:4000
 msgid "Series length does not match the dataset"
@@ -1463,7 +1463,7 @@ msgstr "Substituído"
 
 #: lib/src/dataset.c:2744
 msgid "series"
-msgstr "série temporal"
+msgstr "séries"
 
 #: lib/src/dataset.c:2881 lib/src/dataset.c:2901 gui2/library.c:5632
 msgid "The data set is currently sub-sampled.\n"
@@ -2272,12 +2272,12 @@ msgstr "valores de predição"
 #: lib/src/forecast.c:2919 lib/src/genmain.c:67
 #, c-format
 msgid "Replaced series %s (ID %d)"
-msgstr "Substituiu-se a série temporal %s (ID %d)"
+msgstr "Substituiu-se a série %s (ID %d)"
 
 #: lib/src/forecast.c:2922 lib/src/genmain.c:70
 #, c-format
 msgid "Generated series %s (ID %d)"
-msgstr "Gerou-se a série temporal %s (ID %d)"
+msgstr "Gerou-se a série %s (ID %d)"
 
 #: lib/src/geneval.c:3626 lib/src/interact.c:1574
 #, c-format
@@ -2400,7 +2400,7 @@ msgstr "'%s' : apenas definido para matrizes"
 #: lib/src/geneval.c:12087
 #, c-format
 msgid "type error: %s is string-valued"
-msgstr ""
+msgstr "erro de tipo: %s é valor de texto"
 
 #: lib/src/geneval.c:12485
 msgid "Bare declarations are not allowed here"
@@ -2583,7 +2583,7 @@ msgstr "Gerou-se o escalar %s"
 #: lib/src/genmain.c:60
 #, c-format
 msgid "Modified series %s (ID %d)"
-msgstr "Série temporal modificada, %s (ID %d)"
+msgstr "Série modificada, %s (ID %d)"
 
 #: lib/src/genmain.c:76
 #, c-format
@@ -3531,7 +3531,7 @@ msgstr "Não se conseguiu obter ht: o conjunto de dados foi alterado"
 
 #: lib/src/gretl_model.c:5915
 msgid "Can't retrieve series: data set has changed"
-msgstr "Não se pode obter a série: o conjunto de dados for alterado"
+msgstr "Não se pode obter a série: o conjunto de dados foi alterado"
 
 #: lib/src/gretl_model.c:6397 gui2/library.c:434
 msgid "The model exhibits an exact linear fit"
@@ -3718,6 +3718,7 @@ msgstr "Erro: unidade %g, período %g: observação duplicada"
 #: lib/src/gretl_panel.c:4797 lib/src/gretl_panel.c:4807
 msgid "Sorry, can't do this with a sub-sampled dataset"
 msgstr ""
+"Desculpe, isto não pode ser feito com um conjunto de dados sub-amostrado"
 
 #: lib/src/gretl_paths.c:2115
 msgid "User directory is not set"
@@ -7396,7 +7397,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 4 de setembro de 2013."
+"Tradução de 26 de setembro de 2013."
 
 #: gui2/about.c:165
 msgid "License"
@@ -8221,7 +8222,7 @@ msgid ""
 "Adding a lower frequency series to a\n"
 "higher frequency dataset"
 msgstr ""
-"Acrescentando um série de baixa frequência a\n"
+"Acrescentando uma série de baixa frequência a\n"
 "um conjunto de dados com frequência mais alta"
 
 #: gui2/database.c:229
@@ -8260,7 +8261,7 @@ msgid ""
 "from the database '%s'?"
 msgstr ""
 "Deseja realmente apagar as séries\n"
-"seleccionadas da base de dados '%s'?"
+"selecionadas da base de dados '%s'?"
 
 #: gui2/database.c:720
 msgid "Warning: series has missing observations"
@@ -8463,7 +8464,7 @@ msgstr "Instalar"
 
 #: gui2/datafiles.c:1299 gui2/datafiles.c:1306 gui2/datafiles.c:1390
 msgid "List series"
-msgstr "Listar séries temporais"
+msgstr "Listar séries"
 
 #: gui2/datafiles.c:1302 gui2/datafiles.c:1312 gui2/toolbar.c:653
 msgid "Find..."
@@ -9229,7 +9230,7 @@ msgstr "gretl: compactar dados"
 #: gui2/dialogs.c:3759
 #, c-format
 msgid "You are adding a %s series to %s dataset"
-msgstr "Está a acrescentar uma série %s a um conjunto de dados %s"
+msgstr "Está a acrescentar uma série %s ao conjunto de dados %s"
 
 #: gui2/dialogs.c:3761
 msgid "a quarterly"
@@ -9839,11 +9840,11 @@ msgstr "Definir lista"
 
 #: gui2/fncall.c:729
 msgid "add series"
-msgstr "acrescentar série temporal"
+msgstr "acrescentar série"
 
 #: gui2/fncall.c:730
 msgid "Enter name=formula for new series"
-msgstr "Entrar nome=fórmula para nova série temporal"
+msgstr "Entrar nome=fórmula para nova série"
 
 #: gui2/fncall.c:739 gui2/library.c:6043
 msgid "add scalar"
@@ -11059,7 +11060,7 @@ msgstr "_Gráfico das variáveis"
 
 #: gui2/gretl.c:1641
 msgid "_Time series plot..."
-msgstr "Série temporal..."
+msgstr "Gráfico de série _temporal..."
 
 #: gui2/gretl.c:1642
 msgid "X-Y _scatter..."
@@ -11591,7 +11592,7 @@ msgstr "_Análise"
 
 #: gui2/gretl.c:2182
 msgid "Enter name for list of series"
-msgstr "Entrar nome para lista de séries temporais"
+msgstr "Entrar nome para lista de séries"
 
 #: gui2/gretl.c:2187
 msgid "gretl: name list"
@@ -13267,7 +13268,7 @@ msgstr "em vários pequenos gráficos separados"
 
 #: gui2/library.c:6959
 msgid "Plot the series"
-msgstr "Gráfico da série temporal"
+msgstr "Gráfico da série"
 
 #: gui2/library.c:7011
 #, c-format
@@ -15194,7 +15195,7 @@ msgstr "Nome:"
 
 #: gui2/ssheet.c:3513
 msgid "Build from series"
-msgstr "Criar a partir da série temporal"
+msgstr "Criar a partir da série"
 
 #: gui2/ssheet.c:3522
 msgid "Build numerically"
@@ -15604,7 +15605,7 @@ msgstr "Série temporal anterior"
 
 #: gui2/varinfo.c:683
 msgid "Next series"
-msgstr "Série temporal seguinte"
+msgstr "Série seguinte"
 
 #: gui2/varinfo.c:695
 msgid "ID number:"
