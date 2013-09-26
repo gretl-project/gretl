@@ -3245,20 +3245,24 @@
     <function name="isodate" section="data-utils" output="seebelow">
       <fnargs>
 	<fnarg type="scalar-or-series">ed</fnarg>
-	<fnarg type="bool" optional="true">as-number</fnarg>
+	<fnarg type="bool" optional="true">as-string</fnarg>
       </fnargs>
       <description>
 	<para>
 	  The argument <argname>ed</argname> is interpreted as an
 	  epoch day (which equals 1 for the first of January in the
-	  year 1 AD). If this argument is a scalar, the default return
-	  value is a string holding the day's date in ISO 8601
-	  extended format, <lit>YYYY-MM-DD</lit>, but if the optional
-	  <argname>as-number</argname> argument is non-zero an 8-digit
-	  number on the pattern <lit>YYYYMMDD</lit> is returned
-	  instead.  If <argname>ed</argname> is a series, however, the
-	  second argument is ignored and the return value is always a
-	  numerical series holding <lit>YYYYMMDD</lit> values.
+	  year 1 AD). The default return value &mdash; of the same
+	  type as <argname>ed</argname> &mdash; is an 8-digit number,
+	  or a series of such numbers, on the pattern
+	  <lit>YYYYMMDD</lit> (ISO 8601 <quote>basic</quote> format),
+	  giving the calendar date corresponding to the epoch day.
+	</para>
+	<para>
+	  If <argname>ed</argname> is a scalar (only) and the optional
+	  second argument <argname>as-string</argname> is non-zero,
+	  the return value is not numeric but rather a string on the
+	  pattern <lit>YYYY-MM-DD</lit> (ISO 8601
+	  <quote>extended</quote> format).
 	</para>
 	<para>
 	  For the inverse function, see <fncref targ="epochday"/>.

@@ -4624,21 +4624,21 @@ static NODE *isodate_node (NODE *l, NODE *r, parser *p)
     if (!p->err) {
 	if (l->t == NUM) {
 	    /* epoch day node is scalar */
-	    int as_number = (r->t == NUM)? node_get_int(r, p) : 0;
+	    int as_string = (r->t == NUM)? node_get_int(r, p) : 0;
 
 	    if (!p->err) {
-		ret = as_number ? aux_scalar_node(p) : aux_string_node(p);
+		ret = as_string ? aux_string_node(p) : aux_scalar_node(p);
 	    }
 	    if (ret != NULL) {
 		double x = l->v.xval;
 
-		if (as_number && na(x)) {
+		if (!as_string && na(x)) {
 		    ret->v.xval = NADBL;
 		} else if (x >= 1 && x <= LONG_MAX) {
-		    if (as_number) {
-			ret->v.xval = ymd_basic_from_epoch_day((long) x, &p->err);
-		    } else {
+		    if (as_string) {
 			ret->v.str = ymd_extended_from_epoch_day((long) x, &p->err);
+		    } else {
+			ret->v.xval = ymd_basic_from_epoch_day((long) x, &p->err);
 		    }
 		} else {
 		    p->err = E_INVARG;
