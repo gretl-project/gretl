@@ -785,7 +785,7 @@ static int cli_open_append (CMD *cmd, const char *line,
 
     if (vprn != prn) {
 	if (err) {
-	    /* The user asked for quiet operation, but something
+	    /* The user asked for --quiet operation, but something
 	       went wrong so let's print any info we got on
 	       vprn.
 	    */

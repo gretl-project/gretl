@@ -4799,7 +4799,7 @@ static int lib_open_append (ExecState *s,
 
     if (vprn != prn) {
 	if (err) {
-	    /* The user asked for quiet operation, but something
+	    /* The user asked for --quiet operation, but something
 	       went wrong so let's print any info we got on
 	       vprn.
 	    */
