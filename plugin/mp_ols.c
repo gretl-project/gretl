@@ -742,19 +742,25 @@ static void mp_dwstat (const MPMODEL *mpmod, MODEL *pmod,
 	mpf_add(u11, u11, x);
     }
 
-    mpf_div(x, num, mpmod->ess);
-    pmod->dw = mpf_get_d(x);
-
-    if (isnan(pmod->dw) || isinf(pmod->dw)) {
+    if (mpf_sgn(mpmod->ess) <= 0) {
 	pmod->dw = NADBL;
-    }    
+    } else {
+	mpf_div(x, num, mpmod->ess);
+	pmod->dw = mpf_get_d(x);
+	if (isnan(pmod->dw) || isinf(pmod->dw)) {
+	    pmod->dw = NADBL;
+	}
+    }
 
-    mpf_div(x, ut1, u11);
-    pmod->rho = mpf_get_d(x);
-
-    if (isnan(pmod->rho) || isinf(pmod->rho)) {
-	pmod->dw = NADBL;
+    if (mpf_sgn(u11) <= 0) {
 	pmod->rho = NADBL;
+    } else {
+	mpf_div(x, ut1, u11);
+	pmod->rho = mpf_get_d(x);
+	if (isnan(pmod->rho) || isinf(pmod->rho)) {
+	    pmod->dw = NADBL;
+	    pmod->rho = NADBL;
+	}
     }
 
     mpf_clear(num);
