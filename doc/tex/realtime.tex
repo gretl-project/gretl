@@ -290,9 +290,9 @@ to abbreviate reused option parts with string variables:
     --timecols=\"realtime_start_date,realtime_end_date\"
   loop i=1..maxpubs -q
     # get the starting and end dates of the i-th publication          
-    join @fname sd$i --data=realtime_start_date @baseopt --seq=$i
-    join @fname ed$i --data=realtime_end_date @baseopt --seq=$i
-    join @fname rel$i --data=INDPRO @baseopt --seq=$i
+    join @fname sd$i --data=realtime_start_date @baseopt --aggr=seq:$i
+    join @fname ed$i --data=realtime_end_date @baseopt --aggr=seq:$i
+    join @fname rel$i --data=INDPRO @baseopt --aggr=seq:$i
   endloop
 \end{code}
 For the remaining operations we can work purely within the \app{gretl}
