@@ -65,18 +65,18 @@ of the same file (most likely, further down).
 
 The daily dates in the line are given in a format that follows the
 relevant ISO standard, \texttt{YYYY-MM-DD}, but below we also describe
-how to deal with differently formatted dates. Note that having daily
-dates is required for the last two columns, which record the interval
-over which that data vintage was current. Daily dates are not
-mandatory for the first column defining the observation or reference
-period (the period to which the data \textit{refer}), since the
-frequency may well be annual, quarterly or monthly. However, following
-Alfred's practice it is OK to specify the first day in the period even
-for non-daily data. Notice that this implies that in the example above
-it is not clear without further information whether the observation
-period is the second quarter of 2010, the month April 2010, or the
-day April 1st 2010.  However, we assume that in practice this meta
-information is always available.
+how to deal with differently formatted dates. Note that daily dates
+are appropriate for the last two columns, which jointly record the
+interval over which a given data vintage was current. Daily dates are
+not mandatory for the first column defining the observation or
+reference period (the period to which the data \textit{refer}), since
+the frequency may well be annual, quarterly or monthly. However,
+following Alfred's practice it is OK to specify the first day in the
+period even for non-daily data. Notice that this implies that in the
+example above it is not clear without further information whether the
+observation period is the second quarter of 2010, the month April
+2010, or the day April 1st 2010.  However, we assume that in practice
+this meta information is always available.
 
 We will use Alfred's column names in our code examples, but of course
 these exact column header names are not mandatory in general, as long
@@ -206,41 +206,40 @@ Since we do not need the \verb|realtime_start_date| and
 \verb|realtime_end_date| information for this retrieval, we have
 dropped the \option{timecols} option here. Note that this formulation
 assumes that the source file is ordered chronologically, otherwise
-using the \option{aggr="seq:3"} option, i.e. to retrieve the third
+using the \option{aggr="seq:3"} option, i.e.\ to retrieve the third
 entries in each sequence of matches could have yielded a result
-different from the one intended. This assumptions, however, holds for
-Alfred files and is rather safe to assume generally.
+different from the one intended. This assumption, however, holds for
+Alfred files and is probably rather safe in general.
 
-As a result of this operation, the values of the variable imported as
-\texttt{ip\_3rdpub} were published at different dates, so the variable
-is effectively a mix of different vintages. Depending on the type of
-variable, this may also imply drastic jumps in the values; for
-example, index numbers are regularly rebased to different base
-periods. This problem also carries over to inflation-adjusted economic
-variables, where the base period of the price index changes over
-time. Mixing vintages in general also means mixing different scales in
-the output, with which you would have to deal
-appropriately.\footnote{Some user-contributed functions may be
+The values of the variable imported as \texttt{ip\_3rdpub} in this way
+were published at different dates, so the variable is effectively a
+mix of different vintages. Depending on the type of variable, this may
+also imply drastic jumps in the values; for example, index numbers are
+regularly rebased to different base periods. This problem also carries
+over to inflation-adjusted economic variables, where the base period
+of the price index changes over time. Mixing vintages in general also
+means mixing different scales in the output, with which you would have
+to deal appropriately.\footnote{Some user-contributed functions may be
   available that address this issue, but it is beyond the scope of the
   user guide here. Another even more complicated issue in the realtime
   context is that of ``benchmark revisions'' applied by statistical
   agencies, where the underlying definition or composition of a
   variable changes on some date, which goes beyond a mere
-  rescaling. However, this type of structural is not, in principle, a
-  feature of real-time datsets, but applies to any timeseries data
-  set.}
+  rescaling. However, this type of structural change is not, in
+  principle, a feature of realtime data alone, but applies to any
+  time-series data.}
 
 
 \section{Getting the values at a fixed lag after the observation
   period}
 
 New data releases may (and in general, will) take place literally on
-any day. However, if you are working with, say, monthly or quarterly
-data, you will sometimes want to adjust also your realtime axis
-granularity to a monthly or quarterly frequency. For example, in order
-to analyse the data revision process of monthly industrial production
-you might be interested in the extent of revisions between the data
-published two and three months after each observation period.
+any day of the month. However, if you are working with, say, monthly
+or quarterly data you may sometimes want to adjust the granularity of
+your realtime axis to a monthly or quarterly frequency. For example,
+in order to analyse the data revision process of monthly industrial
+production you might be interested in the extent of revisions between
+the data published two and three months after each observation period.
 
 This is not trivial, however, and our solution here is to first create
 various auxiliary variables in the \app{gretl} dataset, also using
@@ -280,7 +279,7 @@ scalar maxpubs = max(counter)
 Next we load all the information into the dataset, which may be
 somewhat inefficient but should not be a problem unless you are
 dealing with truly huge data (which is unlikely with macroeconomic
-data --- the following loop with three joins and 27 iterations through
+data---the following loop with three joins and 27 iterations through
 a file with roughly 24000 lines, 1MB, takes roughly 25 seconds on a
 reasonably fast 2013 vintage laptop). As a bonus, we demonstrate how
 to abbreviate reused option parts with string variables:
@@ -297,9 +296,9 @@ to abbreviate reused option parts with string variables:
 \end{code}
 For the remaining operations we can work purely within the \app{gretl}
 dataset, which is rather fast. Looping again through the various
-releases we check observation per observation (but using the
+releases we check observation by observation (but using the
 convenient and fast functions available for series) whether the target
-date falls between the realtime start and end dates, i.e. whether the
+date falls between the realtime start and end dates, i.e.\ whether the
 respective release was current on the day $n$ periods after the
 observation period.
 \begin{code}
@@ -312,7 +311,7 @@ loop i=1..maxpubs -q
     series tmp_e = misszero((missing(ed$i) || (ed$i >= targetdate)))
 
     # whenever both criteria are met, copy the values
-    series after2 = (tmp_s + tmp_e == 2) ? rel$i : after2
+    series after2 = (tmp_s && tmp_e) ? rel$i : after2
 endloop
 \end{code}
 A caveat to remember is that here, too, the problem of base period

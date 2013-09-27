@@ -4765,14 +4765,18 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
     /* the statusbar */
     plot->statusbar = gtk_statusbar_new();
+#if 0 /* redundant, wrong? */
     gtk_widget_set_size_request(plot->statusbar, 1, -1);
+#endif
 
 #if GTK_MAJOR_VERSION < 3
     gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(plot->statusbar), FALSE);
 #endif
 
+#if 0 /* redundant, wrong? */
     gtk_container_set_resize_mode(GTK_CONTAINER (plot->statusbar),
-				  GTK_RESIZE_QUEUE);
+				  GTK_RESIZE_PARENT);
+#endif
     plot->cid = gtk_statusbar_get_context_id(GTK_STATUSBAR(plot->statusbar),
 					     "plot_message");
 
