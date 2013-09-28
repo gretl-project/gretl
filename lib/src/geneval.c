@@ -641,8 +641,9 @@ static void eval_warning (parser *p, int op, int errnum)
     }
 }
 
-/* implementation of binary operators for scalar operands
-   (also increment/decrement operators) */
+/* evaluation of binary operators (yielding x op y) for
+   scalar operands (also increment/decrement operators) 
+*/
 
 static double xy_calc (double x, double y, int op, int targ, parser *p)
 {
@@ -676,8 +677,8 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 	return 0;
     }
 
-    /* logical OR: if x is non-zero, ignore NA for y */
-    if (op == B_OR && x != 0) {
+    /* logical OR: if x is valid and non-zero, ignore NA for y */
+    if (op == B_OR && !na(x) && x != 0) {
 	return 1.0;
     }  
 
@@ -9190,7 +9191,9 @@ static NODE *bool_node (int s, parser *p)
 
 static int node_is_true (NODE *n, parser *p)
 {
-    return (node_get_scalar(n, p) != 0.0);
+    double x = node_get_scalar(n, p);
+
+    return !na(x) && x != 0.0;
 }
 
 static int node_is_false (NODE *n, parser *p)

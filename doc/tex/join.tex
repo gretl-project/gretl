@@ -126,10 +126,11 @@ Rows from the outer dataset can be filtered using the \verb|--filter|
 option. The required parameter for this option is a Boolean condition,
 that is, an expression which evaluates to non-zero (true, include the
 row) or zero (false, skip the row) for each of the outer rows. The
-filter expression may include the names of up to two right-hand
-series (under their converted names as explained above), scalar or
-string variables defined ``on the left'', any of the operators and
-functions available in gretl, and numeric or string constants.
+filter expression may include any of the following terms: up to three
+``right-hand'' series (under their converted names as explained
+above); scalar or string variables defined ``on the left''; any of the
+operators and functions available in gretl (including user-defined
+functions); and numeric or string constants.
 
 Here are a few simple examples of potentially valid filter options
 (assuming that the specified right-hand side columns are found):
