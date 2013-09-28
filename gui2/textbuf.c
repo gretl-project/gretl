@@ -1505,7 +1505,7 @@ static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     const char *header = N_("Gretl Command Reference");
     const gchar *s = (const gchar *) hwin->data;
     GtkTextIter iter;
-    char word[10];
+    char word[12];
     int llen, llen_max = 6;
     int idx, j, n;
 
@@ -1519,8 +1519,8 @@ static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 
     while (*s) {
 	if (*s == '\n' && *(s+1) == '#' && *(s+2) != '\0') {
-	    if (sscanf(s + 2, "%8s", word)) {
-		idx = command_help_index(word);
+	    if (sscanf(s + 2, "%10s", word)) {
+		idx = gretl_command_number(word);
 		insert_link(tbuf, &iter, word, idx, NULL);
 		if (++llen == llen_max) {
 		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);

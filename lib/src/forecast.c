@@ -2421,9 +2421,7 @@ static int parse_forecast_string (const char *s,
 	return err;
     }
 
-    if (!strncmp(s, "fcasterr", 8)) {
-        s += 8;
-    } else if (!strncmp(s, "fcast", 5)) {
+    if (!strncmp(s, "fcast", 5)) {
 	s += 5;
     }
 

@@ -1863,7 +1863,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     } else {
 	ntodate(startobs, t1, dataset);
 	ntodate(endobs, t2, dataset);
-	lib_command_sprintf("fcasterr %s %s%s", startobs, endobs,
+	lib_command_sprintf("fcast %s %s%s", startobs, endobs,
 			    print_flags(opt, FCAST));
 	if (parse_lib_command()) {
 	    return;

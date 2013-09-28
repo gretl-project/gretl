@@ -3249,7 +3249,7 @@ int parseopt (int *pargc, char ***pargv, gretlopt *popt,
 	    opt |= OPT_QUIET;
 	} else if (!strcmp(s, "-m") || !strcmp(s, "--makepkg")) { 
 	    opt |= OPT_MAKEPKG;
-	} else if (!strncmp(s, "--scriptopt=", 12)) { 
+	} else if (!strncmp(s, "--scriptopt=", 12)) {
 	    *scriptval = atof(s + 12);
 	} else if (*s == '-') {
 	    /* not a valid option */

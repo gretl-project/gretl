@@ -127,7 +127,7 @@ typedef struct {
 struct GPT_SPEC_ {
     FILE *fp;
     char fname[MAXLEN];        /* for gui purposes */
-    PlotType code;             /* to deal with FREQ, FCASTERR... */
+    PlotType code;             /* to deal with FREQ, FCAST... */
     GptFlags flags;            /* bitwise OR of options */
     FitType fit;               /* type of fitted line shown */
     int nobs;                  /* number of observations */

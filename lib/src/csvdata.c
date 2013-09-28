@@ -53,6 +53,7 @@ enum {
     JOIN_VAL,
     JOIN_F1,
     JOIN_F2,
+    JOIN_F3,
     JOIN_KEY2,
     JOIN_AUX,
     JOIN_MAXCOL
@@ -2919,7 +2920,6 @@ static int real_import_csv (const char *fname,
 #if CDEBUG
 	int ii;
 
-	fprintf(stderr, "HERE, calling fix_varname_duplicates\n");
 	for (ii=0; ii<c->dset->v; ii++) {
 	    fprintf(stderr, " c->dset->varname[%d] = '%s'\n", ii, c->dset->varname[ii]);
 	}
@@ -3083,6 +3083,7 @@ struct jr_filter_ {
     const double *val; /* (series) result of evaluating @expr */
     char *vname1;      /* first right-hand variable name */
     char *vname2;      /* second right-hand variable name */
+    char *vname3;      /* third right-hand variable name */
 };
 
 typedef struct jr_filter_ jr_filter;
@@ -3092,6 +3093,7 @@ static void jr_filter_destroy (jr_filter *f)
     if (f != NULL) {
 	free(f->vname1);
 	free(f->vname2);
+	free(f->vname3);
 	free(f);
     }
 }
@@ -3253,17 +3255,17 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
    is then indeterminate.
 */
 
-static int evaluate_filter (jr_filter *filter, DATASET *r_dset, int *nrows)
+static int evaluate_filter (jr_filter *filter, DATASET *r_dset, 
+			    int *nrows)
 {
     char *line;
     int i, err = 0;
 
-    line = gretl_strdup_printf("series filtered__ = %s", filter->expr);
+    line = gretl_strdup_printf("series filtered__=%s", filter->expr);
     if (line == NULL) {
 	err = E_ALLOC;
     } else {
 	err = generate(line, r_dset, OPT_P | OPT_Q, NULL);
-	free(line);
     }
 
     if (!err) {
@@ -3271,8 +3273,17 @@ static int evaluate_filter (jr_filter *filter, DATASET *r_dset, int *nrows)
 
 	filter->val = r_dset->Z[v];
 	*nrows = 0;
+
+#if CDEBUG > 1
+	fprintf(stderr, "filter genr: '%s':\n", line);
+	for (i=0; i<r_dset->n; i++) {
+	    fprintf(stderr, " %d: %g\n", i+1, filter->val[i]);
+	}
+#endif
 	for (i=0; i<r_dset->n; i++) {
 	    if (na(filter->val[i])) {
+		gretl_errmsg_sprintf("join filter: indeterminate "
+				     "value on row %d", i+1);
 		err = E_MISSDATA;
 		break;
 	    } else if (filter->val[i] != 0.0) {
@@ -3280,6 +3291,8 @@ static int evaluate_filter (jr_filter *filter, DATASET *r_dset, int *nrows)
 	    }
 	}
     }
+
+    free(line);
 
     return err;
 }
@@ -3343,9 +3356,10 @@ static joiner *build_joiner (csvjoin *jspec,
 
 #if CDEBUG
     fprintf(stderr, "joiner columns:\n"
-	    "KEY=%d, VAL=%d, F1=%d, F2=%d, KEY2=%d, AUX=%d\n",
+	    "KEY=%d, VAL=%d, F1=%d, F2=%d, F3=%d, KEY2=%d, AUX=%d\n",
 	    keycol, valcol, jspec->colnums[JOIN_F1], 
-	    jspec->colnums[JOIN_F2], key2col, auxcol);
+	    jspec->colnums[JOIN_F2], jspec->colnums[JOIN_F3],
+	    key2col, auxcol);
 #endif
 
     if (filter != NULL) {
@@ -4042,16 +4056,39 @@ static jr_filter *join_filter_new (int *err)
 	filter->val = NULL;
 	filter->vname1 = NULL;
 	filter->vname2 = NULL;
+	filter->vname3 = NULL;
     }
 
     return filter;
 }
 
+#if CDEBUG
+
+static void print_filter_vnames (jr_filter *f)
+{
+    if (f == NULL) return;
+
+    if (f->vname1 != NULL) {
+	fprintf(stderr, "filter varname 1 (target %d): %s\n",
+		JOIN_F1, f->vname1);
+    }
+    if (f->vname2 != NULL) {
+	fprintf(stderr, "filter varname 2 (target %d): %s\n",
+		JOIN_F2, f->vname2);
+    }
+    if (f->vname3 != NULL) {
+	fprintf(stderr, "filter varname 3 (target %d): %s\n",
+		JOIN_F3, f->vname3);
+    }
+}
+
+#endif
+
 /* Allocate the filter struct and crawl along the filter expression,
-   @s, looking for up to two names of right-hand columns. We need to
+   @s, looking for up to three names of right-hand columns. We need to
    record these names so we can be sure to read the associated column
    data, or else the filter won't work. We could increase the maximum
-   number of column-names to store but probably 2 is enough.
+   number of column-names to store but probably 3 is enough.
 
    The heuristic for column-name detection is that we find a portion
    if *s which is legal as a gretl identifier but which is not
@@ -4069,7 +4106,7 @@ static jr_filter *make_join_filter (const char *s, int *err)
 
 	filter->expr = s;
 
-	while (*s) {
+	while (*s && ngot < 3) {
 	    if (*s == '"') {
 		/* skip double-quoted stuff */
 		s = strchr(s + 1, '"');
@@ -4089,11 +4126,14 @@ static jr_filter *make_join_filter (const char *s, int *err)
 		    *test = '\0';
 		    strncat(test, s, n);
 		    if (!gretl_is_scalar(test) && !gretl_is_string(test)) {
-			if (++ngot == 1) {
+			if (ngot == 0) {
 			    filter->vname1 = gretl_strdup(test);
-			} else {
+			} else if (ngot == 1) {
 			    filter->vname2 = gretl_strdup(test);
+			} else if (ngot == 2) {
+			    filter->vname3 = gretl_strdup(test);
 			}
+			ngot++;
 		    }
 		}
 		s += n;
@@ -4102,6 +4142,10 @@ static jr_filter *make_join_filter (const char *s, int *err)
 	    }
 	}
     }
+
+#if CDEBUG
+    print_filter_vnames(filter);
+#endif
 
     return filter;
 }
@@ -4442,15 +4486,15 @@ static int check_for_missing_columns (csvjoin *jspec)
     /* Note: it's possible, though we hope unlikely, that our
        heuristic for extracting column names from the filter
        expression (if present) gave a false positive. In that case the
-       name at position JOIN_FI or JOIN_F2 might be spuriously
-       "missing": not found, but not really wanted. To guard against
-       this eventuality we'll skip the check for the JOIN_FI and
-       JOIN_F2 columns here. If either one is really missing, that
-       will show up before long, when the filter is evaluated.
+       name at position JOIN_F* might be spuriously "missing": not
+       found, but not really wanted. To guard against this eventuality
+       we'll skip the check for the JOIN_F* columns here. If either
+       one is really missing, that will show up before long, when the
+       filter is evaluated.
     */
 
     for (i=0; i<JOIN_MAXCOL; i++) {
-	if (i == JOIN_F1 || i == JOIN_F2) {
+	if (i == JOIN_F1 || i == JOIN_F2 || i == JOIN_F3) {
 	    continue;
 	}
 	name = jspec->colnames[i];
@@ -4577,6 +4621,7 @@ int join_from_csv (const char *fname,
     char tkeyfmt[32] = {0};
     obskey auto_keys;
     int targvar, orig_v = dset->v;
+    int verbose = (opt & OPT_V);
     int str_keys[2] = {0};
     int n_keys = 0;
     int err = 0;
@@ -4684,6 +4729,7 @@ int join_from_csv (const char *fname,
 	if (filter != NULL) {
 	    jspec.colnames[JOIN_F1] = filter->vname1;
 	    jspec.colnames[JOIN_F2] = filter->vname2;
+	    jspec.colnames[JOIN_F3] = filter->vname3;
 	}
 
 	/* the auxiliary var for aggregation, if present */
@@ -4732,6 +4778,11 @@ int join_from_csv (const char *fname,
 	}
     }
 
+    if (!err && verbose) {
+	pprintf(prn, "Outer dataset: read %d columns and %d rows\n",
+		jspec.c->dset->v - 1, jspec.c->dset->n);
+    }
+
     /* Step 5: set up keys and check for conformability errors */
 
     if (!err && jspec.colnames[JOIN_KEY] != NULL) {
@@ -4755,6 +4806,10 @@ int join_from_csv (const char *fname,
 	    goto bailout;
 	}
     }
+
+    if (!err && verbose) {
+	pprintf(prn, "After filtering: %d selected rows\n", jr->n_rows);
+    }    
 
     /* Step 7: transcribe more info and sort the "joiner" struct */
 

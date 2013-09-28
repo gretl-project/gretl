@@ -552,8 +552,10 @@ int main (int argc, char *argv[])
 	varlist(dset, prn);
     }
 
-    /* define "scriptopt" */
-    gretl_scalar_add("scriptopt", scriptval);
+    if (!na(scriptval)) {
+	/* define "scriptopt" */
+	gretl_scalar_add("scriptopt", scriptval);
+    }
 
     /* misc. interactive-mode setup */
     if (!batch) {

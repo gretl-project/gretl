@@ -151,16 +151,6 @@ static struct gui_help_item gui_help_items[] = {
     { -1,             NULL },
 };
 
-enum {
-    COMPAT_FCASTERR = GUI_CMD_MAX + 1
-};
-
-static struct gui_help_item compat_help_items[] = {
-    { GUI_CMD_MAX,     "nothing" },
-    { COMPAT_FCASTERR, "fcasterr" },
-    { -1,              NULL }
-};
-
 /* state the topic headings from the script help files so they 
    can be translated */
 
@@ -218,19 +208,6 @@ static int extra_command_number (const char *s)
     for (i=1; gui_help_items[i].code > 0; i++) {
 	if (!strcmp(s, gui_help_items[i].string)) {
 	    return gui_help_items[i].code;
-	}
-    }
-
-    return -1;
-}
-
-static int compat_command_number (const char *s)
-{
-    int i;
-
-    for (i=1; compat_help_items[i].code > 0; i++) {
-	if (!strcmp(s, compat_help_items[i].string)) {
-	    return compat_help_items[i].code;
 	}
     }
 
@@ -299,26 +276,12 @@ char *quoted_help_string (const char *s)
     return g_strdup("Missing string");
 }
 
-int command_help_index (const char *word)
-{
-    int h = gretl_command_number(word);
-
-    if (h == 0) {
-	h = compat_command_number(word);
-    }
-
-    return h;
-}
-
 static int gui_help_topic_index (const char *word)
 {
     int h = gretl_command_number(word);
 
     if (h == 0) {
 	h = extra_command_number(word);
-	if (h <= 0) {
-	    h = compat_command_number(word);
-	}
     }
 
     return h;
@@ -472,7 +435,7 @@ static GtkTreeStore *make_help_topics_tree (int role)
 		} else if (role == GUI_HELP || role == GUI_HELP_EN) {
 		    idx = gui_help_topic_index(word);
 		} else {
-		    idx = command_help_index(word);
+		    idx = gretl_command_number(word);
 		} 
 		gtk_tree_store_set(store, &iter, 
 				   STRING_COL, word,
@@ -886,7 +849,7 @@ static int maybe_go_to_page (windata_t *vwin)
 	}
     } else {
 	/* looking for a command */
-	idx = command_help_index(needle);
+	idx = gretl_command_number(needle);
 	if (idx > 0) {
 	    pos = help_pos_from_index(idx, vwin->role);
 	}
