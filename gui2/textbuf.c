@@ -1498,14 +1498,17 @@ static void maybe_set_help_tabs (windata_t *hwin)
     }
 }
 
-/* construct the index page for the gretl command reference */
+/* Construct the index page for the gretl command reference.
+   Note: we assume here that the maximum length of a gretl
+   command word is 8 characters.
+*/
 
 static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 {
     const char *header = N_("Gretl Command Reference");
     const gchar *s = (const gchar *) hwin->data;
     GtkTextIter iter;
-    char word[12];
+    char word[10];
     int llen, llen_max = 6;
     int idx, j, n;
 
@@ -1519,7 +1522,7 @@ static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 
     while (*s) {
 	if (*s == '\n' && *(s+1) == '#' && *(s+2) != '\0') {
-	    if (sscanf(s + 2, "%10s", word)) {
+	    if (sscanf(s + 2, "%8s", word)) {
 		idx = gretl_command_number(word);
 		insert_link(tbuf, &iter, word, idx, NULL);
 		if (++llen == llen_max) {
