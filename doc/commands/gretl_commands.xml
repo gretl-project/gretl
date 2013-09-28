@@ -10477,6 +10477,10 @@
 	  <flag>--panel-vars</flag>
 	  <effect>use index variables, see below</effect>
         </option>
+        <option>
+	  <flag>--panel-time</flag>
+	  <effect>see below</effect>
+        </option>	
       </options>
       <examples>
         <example>setobs 4 1990:1 --time-series</example>
@@ -10514,6 +10518,11 @@
 	YYYY-MM-DD (or simply as 1 for undated data).
       </para>
       <para>
+	If no explicit option flag is given to indicate the structure
+	of the data the program will attempt to guess the structure
+	from the information given.
+      </para>
+      <para>
 	The second form of the command (which requires the
 	<opt>--panel-vars</opt> flag) may be used to impose a panel
 	interpretation when the data set contains variables that uniquely
@@ -10522,10 +10531,18 @@
 	the units variable, <repl>unitvar</repl>.
       </para>
       <para>
-	If no explicit option flag is given to indicate the structure
-	of the data the program will attempt to guess the structure
-	from the information given.
+	The <opt>panel-time</opt> option can only be used with a
+	dataset which has already been defined as a panel; its purpose
+	is to set extra information regarding the time dimension of
+	the panel.  This information should be given on the pattern of
+	the first form of <lit>setobs</lit> noted above. For example,
+	the following may be used to indicate that the time dimension
+	of a panel is quarterly, starting in the first quarter of
+	1990.
       </para>
+      <code>
+	setobs 4 1990:1 --panel-time
+      </code>
     </description> 
 
     <gui-access>

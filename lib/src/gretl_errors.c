@@ -45,7 +45,6 @@ static const char *gretl_error_messages[] = {
     N_("Sum of squared residuals negative!"),                    /* E_ESS */
     N_("Sorry, command not available for this estimator"),       /* E_NOTIMP */
     N_("Unspecified error -- FIXME"),                            /* E_UNSPEC */
-    N_("Syntax error in genr formula"),                          /* E_SYNTAX */
     N_("This command won't work with the current periodicity"),  /* E_PDWRONG */
     N_("Error attempting to open file"),                         /* E_FOPEN */
     N_("Out of memory!"),                                        /* E_ALLOC */
@@ -53,8 +52,8 @@ static const char *gretl_error_messages[] = {
     N_("Unknown variable name in command"),                      /* E_UNKVAR */
     N_("Command has insufficient arguments"),                    /* E_ARGS */
     N_("This command is implemented only for OLS models"),       /* E_OLSONLY */
-    N_("Invalid argument for function"),                         /* E_INVARG */
-    N_("Syntax error in command line"),                          /* E_PARSE */
+    N_("Invalid argument"),                                      /* E_INVARG */
+    N_("Syntax error"),                                          /* E_PARSE */
     N_("No independent variables left after omissions"),         /* E_NOVARS */
     N_("No independent variables were omitted"),                 /* E_NOOMIT */
     N_("No new independent variables were added"),               /* E_NOADD */
@@ -85,7 +84,6 @@ static const char *gretl_error_messages[] = {
     N_("Insufficient observations for this operation"),          /* E_TOOFEW */
     N_("Error executing function"),                              /* E_FUNCERR */
     N_("Execution aborted by request"),                          /* E_STOP */
-    N_("Syntax error in genr formula"),                          /* E_BADCOMMA */
     NULL,                                                        /* E_DB_DUP */
     NULL,                                                        /* E_OK */
     NULL                                                         /* E_MAX */

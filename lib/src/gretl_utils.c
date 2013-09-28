@@ -883,8 +883,8 @@ static int invalid_stobs (const char *s)
 
 #define recognized_ts_frequency(f) (f == 4 || f == 12 || f == 24)
 
-int process_starting_obs (char *stobs, int pd, int *pstructure,
-			  double *psd0, int *pdated)
+static int process_starting_obs (char *stobs, int pd, int *pstructure,
+				 double *psd0, int *pdated)
 {
     int structure = *pstructure;
     double sd0 = 0.0;

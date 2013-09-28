@@ -79,6 +79,7 @@ struct str_table dvars[] = {
     { R_OBSMAJ,    "$obsmajor" },
     { R_OBSMIN,    "$obsminor" },
     { R_OBSMIC,    "$obsmicro" },
+    { R_DATES,     "$obsdate" },
     { R_WINDOWS,   "$windows" },
     { R_VERSION,   "$version" },
     { R_ERRNO,     "$error" },
@@ -400,7 +401,6 @@ struct str_table funcs[] = {
     { F_TYPEOF,   "typeof" },
     { F_ATOF,     "atof" },
     { F_FIXNAME,  "fixname" },
-    { F_PDATE,    "pdate" },
     { 0,          NULL }
 };
 
@@ -725,7 +725,7 @@ void context_error (int c, parser *p)
 	} else if (c == '|') {
 	    pputs(p->prn, _("(for logical OR, use '||')\n"));
 	} else if (c == ',') {
-	    p->err = E_BADCOMMA;
+	    p->err = E_PARSE;
 	}
     } else {
 	const char *s = getsymb(p->sym, p);

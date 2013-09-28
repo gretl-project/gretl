@@ -448,6 +448,26 @@
       </description>
     </function>
 
+    <function name="$obsdate" section="access" output="series">
+      <description>
+	<para>
+	  Applicable when the current dataset is time-series with
+	  annual, quarterly, monthly or decennial frequency, or is
+	  dated daily or weekly, or when the dataset is a panel with
+	  time-series information set appropriately (see the <cmdref
+	  targ="setobs"/> command).  The returned series holds 8-digit
+	  numbers on the pattern <lit>YYYYMMDD</lit> (ISO 8601
+	  <quote>basic</quote> date format), which correspond to the
+	  day of the observation, of the first day of the observation
+	  period in case of a time-series frequency less than daily.
+	</para>
+	<para>
+	  Such a series can be helpful when using the <cmdref
+	  targ="join"/> command.
+	</para>
+      </description>
+    </function>
+
     <function name="$obsmajor" section="access" output="series">
       <description>
 	<para>

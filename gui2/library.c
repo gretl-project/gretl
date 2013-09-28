@@ -3375,7 +3375,7 @@ void errmsg_plus (int err, const char *plus)
 	gchar *s2 = g_strstrip(g_strdup(plus));
 	const char *s3 = NULL;
 
-	if (err == E_BADCOMMA && get_local_decpoint() == ',') {
+	if (err == E_PARSE && get_local_decpoint() == ',') {
 	    s3 = N_("Please note: the decimal character must be '.'\n"
 		    "in this context");
 	}

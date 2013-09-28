@@ -95,7 +95,7 @@ typedef struct _series_table series_table;
  * dataset_is_cross_section:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a data set contains cross-sectional
+ * Attempt to determine whether a dataset contains cross-sectional
  * data (1) or not (0).
  */
 #define dataset_is_cross_section(p) (p != NULL && p->structure == CROSS_SECTION)
@@ -104,7 +104,7 @@ typedef struct _series_table series_table;
  * dataset_is_time_series:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a data set contains time series
+ * Attempt to determine whether a dataset contains time series
  * data (1) or not (0).
  */
 #define dataset_is_time_series(p) (p != NULL && (p->structure == TIME_SERIES || \
@@ -114,7 +114,7 @@ typedef struct _series_table series_table;
  * dataset_is_seasonal:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a data set contains seasonal time series
+ * Attempt to determine whether a dataset contains seasonal time series
  * data (1) or not (0).
  */
 #define dataset_is_seasonal(p) (p != NULL && (p->structure == TIME_SERIES || \
@@ -125,7 +125,7 @@ typedef struct _series_table series_table;
  * custom_time_series:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a data set contains time series
+ * Attempt to determine whether a dataset contains time series
  * data with custom (non-standard) frequency (1) or not (0).
  */
 #define custom_time_series(p) (p != NULL && p->structure == SPECIAL_TIME_SERIES)
@@ -134,7 +134,7 @@ typedef struct _series_table series_table;
  * dataset_is_daily:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a data set contains daily time series
+ * Attempt to determine whether a dataset contains daily time series
  * data (1) or not (0).
  */
 #define dataset_is_daily(p) (p != NULL && p->structure == TIME_SERIES \
@@ -144,7 +144,7 @@ typedef struct _series_table series_table;
  * dataset_is_weekly:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a data set contains weekly time series
+ * Attempt to determine whether a dataset contains weekly time series
  * data (1) or not (0).
  */
 #define dataset_is_weekly(p) (p != NULL && p->structure == TIME_SERIES \
@@ -154,7 +154,7 @@ typedef struct _series_table series_table;
  * dataset_is_hourly:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a data set contains hourly time series
+ * Attempt to determine whether a dataset contains hourly time series
  * data (1) or not (0).
  */
 #define dataset_is_hourly(p) (p != NULL && p->structure == TIME_SERIES \
@@ -164,7 +164,7 @@ typedef struct _series_table series_table;
  * dataset_is_decennial:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a data set contains decennial time series
+ * Attempt to determine whether a dataset contains decennial time series
  * data (1) or not (0).
  */
 #define dataset_is_decennial(p) (p != NULL && p->structure == TIME_SERIES \
@@ -174,7 +174,7 @@ typedef struct _series_table series_table;
  * dated_daily_data:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a data set contains dated daily time series
+ * Attempt to determine whether a dataset contains dated daily time series
  * data (1) or not (0).
  */
 #define dated_daily_data(p) (p != NULL && p->structure == TIME_SERIES \
@@ -185,7 +185,7 @@ typedef struct _series_table series_table;
  * dated_seven_day_data:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a data set contains dated daily 
+ * Attempt to determine whether a dataset contains dated daily 
  * (seven-day) time series data (1) or not (0).
  */
 #define dated_seven_day_data(p) (p != NULL && p->structure == TIME_SERIES \
@@ -196,7 +196,7 @@ typedef struct _series_table series_table;
  * dated_weekly_data:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a data set contains dated weekly 
+ * Attempt to determine whether a dataset contains dated weekly 
  * time series data (1) or not (0).
  */
 #define dated_weekly_data(p) (p != NULL && p->structure == TIME_SERIES \
@@ -207,7 +207,7 @@ typedef struct _series_table series_table;
  * calendar_data:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a data set uses calendar
+ * Attempt to determine whether a dataset uses calendar
  * dates for observation strings (1) or not (0).
  */
 #define calendar_data(p) (p != NULL && p->structure == TIME_SERIES && \
@@ -218,7 +218,7 @@ typedef struct _series_table series_table;
  * quarterly_or_monthly:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a data set is a quarterly
+ * Attempt to determine whether a dataset is a quarterly
  * or monthly time series (1), or something else (0).
  */
 #define quarterly_or_monthly(p) (p != NULL && p->structure == TIME_SERIES && \
@@ -228,17 +228,27 @@ typedef struct _series_table series_table;
  * annual_data:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a data set is an annual
+ * Attempt to determine whether a dataset is an annual
  * time series (1), or something else (0).
  */
 #define annual_data(p) (p != NULL && p->structure == TIME_SERIES && \
 			p->pd == 1)
 
 /**
+ * decennial_data:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a dataset is a decemmial
+ * time series (1), or something else (0).
+ */
+#define decennial_data(p) (p != NULL && p->structure == TIME_SERIES && \
+			   p->pd == 10 && p->sd0 > 1000)
+
+/**
  * dataset_is_panel:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a data set contains panel
+ * Attempt to determine whether a dataset contains panel
  * data (1) or not (0).
  */
 #define dataset_is_panel(p) (p != NULL && p->structure == STACKED_TIME_SERIES)
@@ -247,10 +257,21 @@ typedef struct _series_table series_table;
  * dataset_has_markers:
  * @p: pointer to data information struct.
  *
- * Determine whether a data set has observation marker strings (1)
+ * Determine whether a dataset has observation marker strings (1)
  * or not (0).
  */
 #define dataset_has_markers(p) (p != NULL && p->markers && p->S != NULL)
+
+/**
+ * dataset_has_panel_time:
+ * @p: pointer to data information struct.
+ *
+ * Determine whether a panel dataset has information on its time
+ * dimension recorded (1) or not (0).
+ */
+#define dataset_has_panel_time(p) (p != NULL && \
+				   p->structure == STACKED_TIME_SERIES && \
+				   p->panel_pd > 0 && p->panel_sd0 > 0.0)
 
 /**
  * sample_size:

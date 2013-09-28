@@ -177,4 +177,6 @@ gretl_matrix *aggregate_by (const double *x,
 			    const DATASET *dset,
 			    int *err);
 
+int fill_dataset_dates_series (const DATASET *dset, double *x);
+
 #endif /* GENFUNCS_H */

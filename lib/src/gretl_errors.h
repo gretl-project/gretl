@@ -29,50 +29,48 @@ typedef enum {
     E_ESS,          /* 7 */
     E_NOTIMP,       /* 8 */
     E_UNSPEC,       /* 9 */
-    E_SYNTAX,      /* 10 */
-    E_PDWRONG,     /* 11 */
-    E_FOPEN,       /* 12 */
-    E_ALLOC,       /* 13 */
-    E_EQN,         /* 14 */
-    E_UNKVAR,      /* 15 */
-    E_ARGS,        /* 16 */
-    E_OLSONLY,     /* 17 */
-    E_INVARG,      /* 18 */
-    E_PARSE,       /* 19 */
-    E_NOVARS,      /* 20 */
-    E_NOOMIT,      /* 21 */
-    E_NOADD,       /* 22 */
-    E_ADDDUP,      /* 23 */
-    E_LOGS,        /* 24 */
-    E_SQUARES,     /* 25 */
-    E_LAGS,        /* 26 */
-    E_SQRT,        /* 27 */
-    E_HIGH,        /* 28 */
-    E_OBS,         /* 29 */
-    E_NOCONST,     /* 30 */
-    E_BADSTAT,     /* 31 */
-    E_NOMERGE,     /* 32 */
-    E_NOCONV,      /* 33 */
-    E_CANCEL,      /* 34 */
-    E_MISSDATA,    /* 35 */
-    E_NAN,         /* 36 */
-    E_NONCONF,     /* 37 */
-    E_TYPES,       /* 38 */
-    E_DATATYPE,    /* 39 */
-    E_BADOPT,      /* 40 */
-    E_NOIDENT,     /* 41 */
-    E_EXTERNAL,    /* 42 */
-    E_TOOLONG,     /* 43 */
-    E_NODATA,      /* 44 */
-    E_NOTPD,       /* 45 */
-    E_JACOBIAN,    /* 46 */
-    E_TOOFEW,      /* 47 */
-    E_FUNCERR,     /* 48 : error set by function writer */
-    E_STOP,        /* 49 : user aborted execution */
-    E_BADCOMMA,    /* 50 */
-    E_DB_DUP,      /* 51 : duplicate vars found when saving to database */
-    E_OK,          /* 52 : not really an error */
-    E_MAX          /* 53 */
+    E_PDWRONG,     /* 10 */
+    E_FOPEN,       /* 11 */
+    E_ALLOC,       /* 12 */
+    E_EQN,         /* 13 */
+    E_UNKVAR,      /* 14 */
+    E_ARGS,        /* 15 */
+    E_OLSONLY,     /* 16 */
+    E_INVARG,      /* 17 */
+    E_PARSE,       /* 18 */
+    E_NOVARS,      /* 19 */
+    E_NOOMIT,      /* 20 */
+    E_NOADD,       /* 21 */
+    E_ADDDUP,      /* 22 */
+    E_LOGS,        /* 23 */
+    E_SQUARES,     /* 24 */
+    E_LAGS,        /* 25 */
+    E_SQRT,        /* 26 */
+    E_HIGH,        /* 27 */
+    E_OBS,         /* 28 */
+    E_NOCONST,     /* 29 */
+    E_BADSTAT,     /* 30 */
+    E_NOMERGE,     /* 31 */
+    E_NOCONV,      /* 32 */
+    E_CANCEL,      /* 33 */
+    E_MISSDATA,    /* 34 */
+    E_NAN,         /* 35 */
+    E_NONCONF,     /* 36 */
+    E_TYPES,       /* 37 */
+    E_DATATYPE,    /* 38 */
+    E_BADOPT,      /* 39 */
+    E_NOIDENT,     /* 40 */
+    E_EXTERNAL,    /* 41 */
+    E_TOOLONG,     /* 42 */
+    E_NODATA,      /* 43 */
+    E_NOTPD,       /* 44 */
+    E_JACOBIAN,    /* 45 */
+    E_TOOFEW,      /* 46 */
+    E_FUNCERR,     /* 47 : error set by function writer */
+    E_STOP,        /* 48 : user aborted execution */
+    E_DB_DUP,      /* 49 : duplicate vars found when saving to database */
+    E_OK,          /* 50 : not really an error */
+    E_MAX          /* 51 */
 } GretlError; 
 
 enum gretl_warning_codes {

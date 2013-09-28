@@ -3073,7 +3073,7 @@ struct joiner_ {
     int valcol;         /* column of RHS dataset holding payload */
     obskey *auto_keys;  /* struct to hold info on obs-based key(s) */
     DATASET *l_dset;    /* the left-hand or inner dataset */
-    DATASET *r_dset;    /* the temporary CSV dataset */
+    DATASET *r_dset;    /* the right-hand or outer temporary dataset */
 };
 
 typedef struct joiner_ joiner;
@@ -4779,7 +4779,7 @@ int join_from_csv (const char *fname,
     }
 
     if (!err && verbose) {
-	pprintf(prn, "Outer dataset: read %d columns and %d rows\n",
+	pprintf(prn, _("Outer dataset: read %d columns and %d rows\n"),
 		jspec.c->dset->v - 1, jspec.c->dset->n);
     }
 
@@ -4807,8 +4807,8 @@ int join_from_csv (const char *fname,
 	}
     }
 
-    if (!err && verbose) {
-	pprintf(prn, "After filtering: %d selected rows\n", jr->n_rows);
+    if (!err && filter != NULL && verbose) {
+	pprintf(prn, "Filter: %d rows were selected\n", jr->n_rows);
     }    
 
     /* Step 7: transcribe more info and sort the "joiner" struct */

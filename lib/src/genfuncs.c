@@ -5337,3 +5337,146 @@ gretl_matrix *aggregate_by (const double *x,
 
     return m;
 }
+
+static int monthly_or_quarterly_dates (const DATASET *dset, 
+				       int pd, double sd0, int T,
+				       double *x)
+{
+    char obstr[8];
+    int mo, yr = floor(sd0);
+    int t, mmax, dm;
+
+    if (pd == 4) {
+	sprintf(obstr, "%.1f", sd0 - yr);
+	mo = 1 + (atoi(obstr + 2) - 1) * 3;
+	mmax = 10;
+	dm = 3;
+    } else {
+	sprintf(obstr, "%.2f", sd0 - yr);
+	mo = atoi(obstr + 2);
+	mmax = 12;
+	dm = 1;
+    }
+
+    for (t=0; t<T; t++) {
+	x[t] = 10000*yr + 100*mo + 1;
+	if (mo == mmax) {
+	    yr++;
+	    mo = 1;
+	} else {
+	    mo += dm;
+	}
+    }
+
+    return 0;
+}
+
+static int annual_or_decennial_dates (const DATASET *dset, 
+				      int pd, double sd0, int T,
+				      double *x)
+{
+    int t, yr = (int) sd0;
+ 
+    for (t=0; t<T; t++) {
+	x[t] = 10000*yr + 101;
+	yr += pd;
+    }
+
+    return 0;
+}
+
+static int panel_daily_or_weekly (const DATASET *dset, double *x)
+{
+    DATASET tsset = {0};
+    char datestr[16];
+    int t, y, m, d, n;
+    int err = 0;
+
+    tsset.structure = TIME_SERIES;
+    tsset.pd = dset->panel_pd;
+    tsset.sd0 = dset->panel_sd0;
+    tsset.n = dset->pd;
+
+    for (t=0; t<dset->pd && !err; t++) {
+	ntodate(datestr, t, &tsset);
+	n = sscanf(datestr, "%d-%d-%d", &y, &m, &d);
+	if (n != 3) {
+	    err = E_DATA;
+	} else {
+	    x[t] = 10000*y + 100*m + d;
+	}
+    }
+
+    return err;
+}
+
+static int regular_daily_or_weekly (const DATASET *dset, double *x)
+{
+    char datestr[16];
+    int t, y, m, d, n;
+    int err = 0;
+
+    for (t=0; t<dset->n && !err; t++) {
+	ntodate(datestr, t, dset);
+	fprintf(stderr, "regular: datestr = '%s'\n", datestr);
+	n = sscanf(datestr, "%d-%d-%d", &y, &m, &d);
+	if (n != 3) {
+	    err = E_DATA;
+	} else {
+	    x[t] = 10000*y + 100*m + d;
+	}
+    }
+
+    return err;
+}
+
+int fill_dataset_dates_series (const DATASET *dset, double *x)
+{
+    double sd0;
+    int pd, T;
+    int err = 0;
+
+    if (dataset_is_panel(dset)) {
+	/* looking at time dimension of panel */
+	pd = dset->panel_pd;
+	sd0 = dset->panel_sd0;
+	T = dset->pd;
+    } else {
+	/* regular time series */
+	pd = dset->pd;
+	sd0 = dset->sd0;
+	T = dset->n;
+    }
+
+    if (dataset_has_panel_time(dset)) {
+	if (pd == 4 || pd == 12) {
+	    err = monthly_or_quarterly_dates(dset, pd, sd0, T, x);
+	} else if (pd == 1 || pd == 10) {
+	    err = annual_or_decennial_dates(dset, pd, sd0, T, x);
+	} else if (pd == 5 || pd == 6 || pd == 7 || pd == 52) {
+	    panel_daily_or_weekly(dset, x);
+	}
+    } else if (calendar_data(dset)) {
+	err = regular_daily_or_weekly(dset, x);
+    } else if (quarterly_or_monthly(dset)) {
+	err = monthly_or_quarterly_dates(dset, pd, sd0, T, x);
+    } else if (annual_data(dset) || decennial_data(dset)) {
+	err = annual_or_decennial_dates(dset, pd, sd0, T, x);
+    } else {
+	err = E_PDWRONG;
+    }
+
+    if (!err && dataset_is_panel(dset)) {
+	/* expand the date series for all groups */
+	int i, N = dset->n / dset->pd;
+	size_t bytes = dset->pd * sizeof *x;
+	double *dest = x + dset->pd;
+
+	for (i=1; i<N; i++) {
+	    memcpy(dest, x, bytes);
+	    dest += dset->pd;
+	}
+    }
+
+    return err;
+}

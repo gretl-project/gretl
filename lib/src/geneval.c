@@ -4670,29 +4670,6 @@ static NODE *isodate_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *panel_date_node (NODE *l, NODE *r, parser *p)
-{
-    NODE *ret;
-
-    if (!dataset_is_panel(p->dset)) {
-	p->err = E_PDWRONG;
-	return NULL;
-    }
-
-    ret = aux_vec_node(p, p->dset->n);
-
-    if (ret != NULL && starting(p)) {
-	int pd = node_get_int(l, p);
-	const char *s = r->v.str;
-
-	if (!p->err) {
-	    p->err = make_panel_date_series(p->dset, pd, s, ret->v.xvec);
-	}
-    }
-
-    return ret;
-}
-
 static NODE *atof_node (NODE *l, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -7003,20 +6980,22 @@ static int x_to_period (double x, char c, int *err)
 	return -1;
     } else {
 	int k = x;
+	int ret = x;
 
 	if (c == 'y' && k < 0) {
-	    k = -1;
+	    ret = -1;
 	} else if (c == 'm' && (k < 1 || k > 12)) {
-	    k = -1;
+	    ret = -1;
 	} else if (c == 'd' && (k < 1 || k > 31)) {
-	    k = -1;
+	    ret = -1;
 	}
 
-	if (k < 0) {
+	if (ret < 0) {
+	    fprintf(stderr, "epochday: got %c = %d!\n", c, k);
 	    *err = E_INVARG;
 	}
 
-	return k;
+	return ret;
     }
 }
 
@@ -7026,32 +7005,49 @@ static NODE *eval_epochday (NODE *ny, NODE *nm, NODE *nd, parser *p)
     NODE *nodes[3] = {ny, nm, nd};
     double *x[3] = {NULL, NULL, NULL};
     int ymd[3] = {-1, -1, -1};
-    int i, y, m, d;
+    const char *code = "ymd";
+    double sval;
+    int i;
 
-    for (i=0; i<3; i++) {
+    /* Policy: NA for y, m, or d will give an NA result;
+       non-NA but out-of-bounds values for y, m or d produce
+       an error.  
+    */
+
+    for (i=0; i<3 && !p->err; i++) {
 	if (scalar_node(nodes[i])) {
-	    ymd[i] = node_get_int(nodes[i], p);
+	    sval = node_get_scalar(nodes[i], p);
+	    if (!p->err) {
+		ymd[i] = x_to_period(sval, code[i], &p->err);
+	    }
 	} else if (nodes[i]->t == VEC) {
 	    x[i] = nodes[i]->v.xvec;
 	} else {
 	    node_type_error(F_EPOCHDAY, i+1, NUM, nodes[i], p);
-	    break;
 	}
     }
 
-    y = ymd[0]; m = ymd[1]; d = ymd[2];
-
     if (!p->err) {
+	int y = ymd[0];
+	int m = ymd[1];
+	int d = ymd[2];
+
+	/* From this point, -1 for y, m or d indicates either an NA
+	   or the fact that a series and not a scalar was given for
+	   that date-element.
+	*/
+
 	if (x[0] == NULL && x[1] == NULL && x[2] == NULL) {
-	    if (y < 0 || m < 1 || m > 12 || d < 1 || d > 31) {
-		p->err = E_INVARG;
-	    } else {	    
-		ret = aux_scalar_node(p);
-	    }
+	    /* y, m and d all given as scalars */
+	    ret = aux_scalar_node(p);
 	    if (!p->err) {
-		ret->v.xval = epoch_day_from_ymd(y, m, d);
-		if (ret->v.xval < 0) {
+		if (y < 0 || m < 0 || d < 0) {
 		    ret->v.xval = NADBL;
+		} else {
+		    ret->v.xval = epoch_day_from_ymd(y, m, d);
+		    if (ret->v.xval < 0) {
+			p->err = E_INVARG;
+		    }
 		}
 	    }
 	} else {
@@ -7066,11 +7062,12 @@ static NODE *eval_epochday (NODE *ny, NODE *nm, NODE *nd, parser *p)
 		    if (p->err) {
 			break;
 		    } else if (y < 0 || m < 0 || d < 0) {
+			/* got an NA somewhere */
 			ret->v.xvec[t] = NADBL;
 		    } else {
 			ret->v.xvec[t] = epoch_day_from_ymd(y, m, d);
 			if (ret->v.xvec[t] < 0) {
-			    ret->v.xvec[t] = NADBL;
+			    p->err = E_INVARG;
 			}
 		    }		    
 		}
@@ -8553,6 +8550,21 @@ double dvar_get_scalar (int i, const DATASET *dset,
     }
 }
 
+static int date_series_ok (const DATASET *dset)
+{
+    if (calendar_data(dset)) {
+	return 1;
+    } else if (quarterly_or_monthly(dset)) {
+	return 1;
+    } else if (annual_data(dset) || decennial_data(dset)) {
+	return 1;
+    } else if (dataset_has_panel_time(dset)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static double *dvar_get_series (int i, const DATASET *dset, 
 				int *err)
 {
@@ -8580,6 +8592,11 @@ static double *dvar_get_series (int i, const DATASET *dset,
 	return NULL;
     }
 
+    if (i == R_DATES && !date_series_ok(dset)) {
+	*err = E_PDWRONG;
+	return NULL;
+    }
+
     if (i == R_OBSMAJ) {
 	if (dset->pd == 1 && !dataset_is_time_series(dset)) {
 	    i = R_INDEX;
@@ -8598,7 +8615,11 @@ static double *dvar_get_series (int i, const DATASET *dset,
 	for (t=0; t<dset->n; t++) {
 	    x[t] = t + 1;
 	} 	
-    } else if (YMD && i != R_INDEX) {
+    } else if (YMD && i != R_INDEX && i != R_DATES) {
+	/* Watch out: we're handling most calendar-data cases
+	   here, so we have to explicitly exclude cases that
+	   require different treatment.
+	*/
 	char obs[12];
 	int y, m, d;
 
@@ -8631,7 +8652,13 @@ static double *dvar_get_series (int i, const DATASET *dset,
 	for (t=0; t<dset->n; t++) {
 	    date_maj_min(t, dset, NULL, &min);
 	    x[t] = min;
-	}		
+	}
+    } else if (i == R_DATES) {
+	*err = fill_dataset_dates_series(dset, x);
+	if (*err) {
+	    free(x);
+	    x = NULL;
+	}
     } else {
 	*err = E_DATA;
     }
@@ -10317,15 +10344,6 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = atof_node(l, p);
 	} else {
 	    node_type_error(t->t, 0, STR, l, p);
-	}
-	break;
-    case F_PDATE:
-	if (l->t == NUM && r->t == STR) {
-	    ret = panel_date_node(l, r, p);
-	} else {
-	    node_type_error(t->t, (l->t == NUM)? 2 : 1,
-			    (l->t == NUM)? STR : NUM,
-			    (l->t == NUM)? r : l, p);
 	}
 	break;
     default: 
