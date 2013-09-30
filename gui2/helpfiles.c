@@ -368,6 +368,8 @@ static const char *real_funcs_heading (const char *s)
 	return _("Data utilities");
     } else if (!strcmp(s, "strings")) {
 	return _("Strings");
+    } else if (!strcmp(s, "calendar")) {
+	return _("Calendar");
     } else {
 	return "??";
     }
