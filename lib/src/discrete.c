@@ -2882,7 +2882,7 @@ static MODEL binary_model (int ci, const int *inlist,
 	opt |= OPT_R;
     }
 
-    list_adjust_sample(list, &dset->t1, &dset->t2, dset);
+    list_adjust_sample(list, &dset->t1, &dset->t2, dset, NULL);
 
     mask = classifier_check(list, dset, prn, &mod.errcode);
     if (mod.errcode) {

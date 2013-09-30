@@ -571,17 +571,22 @@ int series_adjust_sample (const double *x, int *t1, int *t2)
  * @t2: on entry, initial end of sample range; on exit, end
  *      of sample range adjusted for missing values.
  * @dset: dataset struct.
+ * @nmiss: location to receive number of missing values within
+ * (possibly adjusted) sample range.
  *
  * Drops leading or trailing observations from the sample range
  * initially given by the values in @t1 and @t2, if missing values are 
  * found for any of the variables given in @list.
  *
- * Returns: %E_MISSDATA if missing values are found within the
- * (possibly adjusted) sample range, else 0.
+ * If @nmiss is non-NULL it receives the number of missing values
+ * inside the (possibly reduced) sample range, otherwise it is
+ * considered an error if there are any such missing values.
+ *
+ * Returns: 0 on success or %E_MISSDATA or error.
  */
 
 int list_adjust_sample (const int *list, int *t1, int *t2, 
-			const DATASET *dset)
+			const DATASET *dset, int *nmiss)
 {
     int i, t, t1min = *t1, t2max = *t2;
     int vi, missing, err = 0;
@@ -624,15 +629,22 @@ int list_adjust_sample (const int *list, int *t1, int *t2,
 	}	
     }
 
-    /* check for missing values within remaining range and
-       flag an error in case any are found */
+    if (nmiss != NULL) {
+	*nmiss = 0;
+    }
+
+    /* check for missing values within remaining range */
     for (t=t1min; t<=t2max && !err; t++) {
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
 	    if (vi > 0 && vi != LISTSEP) {
 		if (na(dset->Z[vi][t])) {
-		    err = E_MISSDATA;
-		    break;
+		    if (nmiss == NULL) {
+			err = E_MISSDATA;
+			break;
+		    } else {
+			*nmiss += 1;
+		    }
 		}
 	    }
 	}

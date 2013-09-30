@@ -348,6 +348,7 @@ int gretl_anova (const int *list, const DATASET *dset,
     const double *y, *xt, *xb;
     double ybar, dev;
     int i, t, t1, t2;
+    int missvals = 0;
     int err = 0;
 
     if (list[0] < 2 || list[0] > 3) {
@@ -359,9 +360,9 @@ int gretl_anova (const int *list, const DATASET *dset,
     t1 = dset->t1;
     t2 = dset->t2;
 
-    list_adjust_sample(list, &t1, &t2, dset);
+    list_adjust_sample(list, &t1, &t2, dset, &missvals);
 
-    v.n = t2 - t1 + 1;
+    v.n = t2 - t1 + 1 - missvals;
     if (v.n < 2) {
 	return E_TOOFEW;
     }

@@ -1671,7 +1671,7 @@ int system_adjust_t1t2 (equation_system *sys, const DATASET *dset)
     sys->t1 = dset->t1;
     sys->t2 = dset->t2;
 
-    err = list_adjust_sample(sys->biglist, &sys->t1, &sys->t2, dset);
+    err = list_adjust_sample(sys->biglist, &sys->t1, &sys->t2, dset, NULL);
 
     if (!err) {
 	sys->T = sys->t2 - sys->t1 + 1;

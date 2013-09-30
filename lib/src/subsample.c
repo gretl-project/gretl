@@ -1409,7 +1409,7 @@ static int set_contiguous_sample (const int *list,
     }
 
     if (list != NULL && list[0] > 0) {
-	err = list_adjust_sample(list, &dset->t1, &dset->t2, dset);
+	err = list_adjust_sample(list, &dset->t1, &dset->t2, dset, NULL);
     } else {
 	int *biglist = NULL;
 	int nvars = 0;
@@ -1421,7 +1421,7 @@ static int set_contiguous_sample (const int *list,
 	    err = E_ALLOC;
 	} else {
 	    err = list_adjust_sample(biglist, &dset->t1, &dset->t2, 
-				     dset);
+				     dset, NULL);
 	    free(biglist);
 	}
     } 

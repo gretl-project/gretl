@@ -3275,7 +3275,16 @@
 	  ISO 8601 <quote>basic</quote> format (<lit>YYYYMMDD</lit>),
 	  this function writes the year, month and (optionally)
 	  day components into the series named by the second and
-	  subsequent arguments.
+	  subsequent arguments. An example call, assuming the
+	  series <lit>dates</lit> contains suitable 8-digit values:
+	</para>
+	<code>
+	  series y, m, d
+	  isoconv(dates, &amp;y, &amp;m, &amp;d)
+	</code>
+	<para>
+	  The return value from this function is 0 on successful
+	  completion, non-zero on error.
 	</para>
       </description>
     </function>

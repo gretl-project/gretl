@@ -1502,7 +1502,7 @@ int adf_test (int order, const int *list, DATASET *dset,
 
 	for (i=1; i<=list[0] && !err; i++) {
 	    vlist[1] = v = list[i];
-	    err = list_adjust_sample(vlist, &dset->t1, &dset->t2, dset);
+	    err = list_adjust_sample(vlist, &dset->t1, &dset->t2, dset, NULL);
 	    if (!err && order == -1) {
 		/* default to L_{12}: see G. W. Schwert, "Tests for Unit Roots:
 		   A Monte Carlo Investigation", Journal of Business and
@@ -1930,7 +1930,7 @@ int kpss_test (int order, const int *list, DATASET *dset,
 	    v = list[i];
 	    vlist[1] = v;
 	    err = list_adjust_sample(vlist, &dset->t1, &dset->t2, 
-				     dset);
+				     dset, NULL);
 	    if (!err) {
 		err = real_kpss_test(order, v, dset, opt, NULL, prn);
 	    }

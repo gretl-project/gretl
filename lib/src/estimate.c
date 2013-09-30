@@ -2131,7 +2131,7 @@ static double estimate_rho (const int *list, DATASET *dset,
     int ascii = !(opt & OPT_G);
     MODEL armod;
 
-    *err = list_adjust_sample(list, &dset->t1, &dset->t2, dset);
+    *err = list_adjust_sample(list, &dset->t1, &dset->t2, dset, NULL);
     if (*err) {
 	goto bailout;
     }

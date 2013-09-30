@@ -3457,7 +3457,7 @@ int xcorrgram (const int *list, int order, DATASET *dset,
     x = dset->Z[list[1]];
     y = dset->Z[list[2]];
     
-    err = list_adjust_sample(list, &t1, &t2, dset);
+    err = list_adjust_sample(list, &t1, &t2, dset, NULL);
     
     if (!err) {
 	T = t2 - t1 + 1;
@@ -5566,7 +5566,7 @@ real_mahalanobis_distance (const int *list, DATASET *dset,
     int orig_t2 = dset->t2;
     int n, err = 0;
 
-    list_adjust_sample(list, &dset->t1, &dset->t2, dset);
+    list_adjust_sample(list, &dset->t1, &dset->t2, dset, NULL);
 
     n = sample_size(dset);
     if (n < 2) {

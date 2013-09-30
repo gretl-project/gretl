@@ -3919,7 +3919,7 @@ int gnuplot_3d (int *list, const char *literal,
 	return E_FOPEN;
     }
 
-    list_adjust_sample(list, &t1, &t2, dset);
+    list_adjust_sample(list, &t1, &t2, dset, NULL);
 
     /* if resulting sample range is empty, complain */
     if (t1 >= t2) {
@@ -6778,19 +6778,10 @@ int xy_plot_with_control (const int *list, const char *literal,
     vx = list[2];
     vz = list[3];
 
-    missvals = list_adjust_sample(list, &t1, &t2, dset);
+    list_adjust_sample(list, &t1, &t2, dset, &missvals);
 
     /* maximum usable observations */
-    T = t2 - t1 + 1;
-
-    if (missvals) {
-	/* count the usable observations, allowing for NAs */
-	for (t=t1; t<=t2; t++) {
-	    if (na(dset->Z[vy][t]) || na(dset->Z[vx][t]) || na(dset->Z[vz][t])) {
-		T--;
-	    }
-	}
-    }
+    T = t2 - t1 + 1 - missvals;
 
     if (T < 3) {
 	return E_DF;

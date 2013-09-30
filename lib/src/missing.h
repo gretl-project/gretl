@@ -46,7 +46,7 @@ int first_missing_index (const double *x, int t1, int t2);
 int series_adjust_sample (const double *x, int *t1, int *t2);
 
 int list_adjust_sample (const int *list, int *t1, int *t2, 
-			const DATASET *dset);
+			const DATASET *dset, int *nmiss);
 
 int set_miss (const int *list, const char *param,
 	      DATASET *dset, PRN *prn);

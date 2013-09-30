@@ -173,6 +173,7 @@ static int function_in_gretl (const char *funword)
 static int not_wanted (const char *s)
 {
     if (!strcmp(s, "probdist") ||
+	!strcmp(s, "calendar") ||
 	!strcmp(s, "math")) {
 	return 1;
     }
@@ -191,15 +192,15 @@ maybe_add_section (xmlDocPtr doc, xmlNodePtr node, sectlist *slist)
     if (tmp == NULL) {
 	missing_attrib("function", "section");
 	return 1;
-    } 
-
-    if (!approved_section_title(tmp)) {
-	fprintf(stderr, "*** Found unapproved section heading '%s'\n", tmp);
-	return 1;
     }
 
     if (not_wanted(tmp)) {
 	return 0;
+    }
+
+    if (!approved_section_title(tmp)) {
+	fprintf(stderr, "*** Found unapproved section heading '%s'\n", tmp);
+	return 1;
     }
 
 #if VERBOSE

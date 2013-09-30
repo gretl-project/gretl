@@ -41,6 +41,7 @@ typedef struct {
     int ID;                      /* ID number for model */
     int t1, t2, nobs;            /* starting observation, ending
                                     observation, and number of obs */
+    char *mask;                  /* missing obs mask */
     int ncoeff, dfn, dfd;        /* number of coefficents; degrees of
                                     freedom in numerator and denominator */
     int *list;                   /* list of variables by (translated) ID number */
@@ -115,25 +116,48 @@ static void mp_2d_array_free (mpf_t **X, int v, int n)
     free(X);
 }
 
+static mpf_t **mp_2d_array_alloc (int v, int n)
+{
+    mpf_t **X = malloc(v * sizeof *X);
+    int i, j;
+
+    if (X != NULL) {
+	for (i=0; i<v; i++) {
+	    X[i] = malloc(n * sizeof **X);
+	    if (X[i] == NULL) {
+		for (j=0; j<i; j++) {
+		    free(X[j]);
+		}
+		free(X);
+		return NULL;
+	    }
+	}
+    }
+
+    return X;
+}
+
 /* somewhat arbitrary */
 
 #define eqzero(x) (fabs(x) < 1.0e-300)
 
-/* reject the incoming data (a) if any values are missing, (b) if any
-   vars are all "zero" */
+/* reject the incoming data if any vars are all "zero" */
 
 static int data_problems (const int *list, const DATASET *dset)
 {
     int i, t, allzero;
+    double xit;
 
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == 0) {
 	    continue; 
 	}
 	allzero = 1;
-	for (t=dset->t1; t<=dset->t2; t++) { 
-	    if (!eqzero(dset->Z[list[i]][t])) {
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    xit = dset->Z[list[i]][t];
+	    if (!na(xit) && !eqzero(xit)) {
 		allzero = 0;
+		break;
 	    }
 	}
 	if (allzero) {
@@ -146,34 +170,42 @@ static int data_problems (const int *list, const DATASET *dset)
     return 0;
 }
 
-static void make_poly_series (MPMODEL *pmod, mpf_t **mpZ,
-			      int pli, int ppos, int mpi)
+#define mpmod_missing(m,t) (m->mask != NULL && m->mask[t-m->t1] != 0)
+
+static void make_poly_series (MPMODEL *mpmod, mpf_t **mpZ,
+			      int i, int ppos, int mpi)
 {
-    unsigned long pwr = pmod->polylist[pli];
+    unsigned long pwr = mpmod->polylist[i];
     int t, s = 0;
 
-    for (t=pmod->t1; t<=pmod->t2; t++) {
+    for (t=mpmod->t1; t<=mpmod->t2; t++) {
+	if (mpmod_missing(mpmod, t)) {
+	    continue;
+	}
 #if MP_DEBUG
 	printf("generating mpZ[%d][%d] from mpZ[%d][%d],\n"
 	       "using power %lu taken from polylist[%d]\n", 
-	       mpi, s, ppos, s, pwr, pli);
+	       mpi, s, ppos, s, pwr, i);
 #endif
 	mpf_init(mpZ[mpi][s]);
-	mpf_pow_ui(mpZ[mpi][s],            /* target */
-		   mpZ[ppos][s],           /* source */ 
-		   pwr);                   /* power */
+	mpf_pow_ui(mpZ[mpi][s],   /* target */
+		   mpZ[ppos][s],  /* source */ 
+		   pwr);          /* power */
 	s++;
     }
 }
 
-static void fill_mp_series (MPMODEL *pmod, const DATASET *dset,
+static void fill_mp_series (MPMODEL *mpmod, const DATASET *dset,
 			    mpf_t **mpZ, const int *zdigits, 
 			    int i, int mpi)
 {
     char numstr[64];
     int t, s = 0; 
 
-    for (t=pmod->t1; t<=pmod->t2; t++) {
+    for (t=mpmod->t1; t<=mpmod->t2; t++) {
+	if (mpmod_missing(mpmod, t)) {
+	    continue;
+	}	
 	if (zdigits != NULL && zdigits[i] > 0 && zdigits[i] < DBL_DIG) {
 	    /* do trick with strings */
 	    sprintf(numstr, "%.*g", zdigits[i], dset->Z[i][t]);
@@ -209,114 +241,79 @@ static void fill_mp_series (MPMODEL *pmod, const DATASET *dset,
 static mpf_t **make_mpZ (MPMODEL *mpmod, const int *zdigits,
 			 const DATASET *dset, char **xnames)
 {
-    int i, s, t;
-    int n = mpmod->t2 - mpmod->t1 + 1;
+    int i, j, k, t, xn;
     int l0 = mpmod->list[0];
-    int npoly, mp_poly_pos = 0;
-    int listpt, nvars = 0, v = 0;
+    int n = mpmod->nobs;
+    int nv, npoly, poly_pos = 0;
     mpf_t **mpZ = NULL;
-    int err = 0;
-
-    if (n <= 0) {
-	return NULL;
-    }
 
     /* "varlist" holds the regression specification, using
        the numbering of variables from the original dataset 
     */
 
-    mpmod->varlist = gretl_list_new(l0);
+    mpmod->varlist = gretl_list_copy(mpmod->list);
     if (mpmod->varlist == NULL) {
 	return NULL;
     }
 
-    mpZ = malloc(l0 * sizeof *mpZ);
+    mpZ = mp_2d_array_alloc(l0, n);
     if (mpZ == NULL) {
 	return NULL;
     }
 
-    for (i=0; i<l0; i++) {
-	mpZ[i] = NULL;
-    }
+    /* number of polynomial terms to be generated */
+    npoly = mpmod->polylist != NULL ? mpmod->polylist[0] : 0;
 
-    if (mpmod->ifc) { 
-	mpZ[0] = malloc(n * sizeof **mpZ);
-	s = 0;
-	for (t=mpmod->t1; t<=mpmod->t2; t++) {
-	    mpf_init_set_d(mpZ[0][s++], 1.0);
+    /* number of ordinary vars in list */
+    nv = l0 - npoly;
+
+    /* start Z-column and x-name counters */
+    j = xn = 0;
+
+    if (mpmod->ifc) {
+	/* handle the constant first */
+	for (t=0; t<n; t++) {
+	    mpf_init_set_d(mpZ[j][t], 1.0);
 	}
 	if (xnames != NULL) { 	 
-	    strcpy(xnames[v++], dset->varname[0]); 	 
+	    strcpy(xnames[xn++], dset->varname[0]); 	 
 	}
-	nvars++;
-    } 
-
-    /* number of polynomial terms to be generated */
-    if (mpmod->polylist != NULL) {
-	npoly = mpmod->polylist[0];
-    } else {
-	npoly = 0;
+	j++;
     }
 
-    /* process the ordinary data */
-    for (i=1; i<=l0-npoly; i++) {
-	if (mpmod->list[i] == 0) {
-	    /* the constant is already handled */	    
-	    mpmod->varlist[i] = 0;
-	    continue;
+    /* start polylist read-position counter */
+    k = 1;
+
+    for (i=1; i<=l0; i++) {
+	int vi = mpmod->list[i];
+
+	if (vi == 0) {
+	    /* the constant */
+	    mpmod->list[i] = 0;
+	} else if (i <= nv) {
+	    /* a regular variable */
+	    if (vi == mpmod->polyvar) {
+		/* record column in mpZ of the var to be raised 
+		   to various powers, if applicable */
+		poly_pos = j;
+	    }
+	    fill_mp_series(mpmod, dset, mpZ, zdigits, vi, j); 
+	    if (xnames != NULL && i > 1) { 	 
+		strcpy(xnames[xn++], dset->varname[vi]); 	 
+	    }
+	    mpmod->list[i] = j++;
+	} else {
+	    /* a polynomial term */
+	    make_poly_series(mpmod, mpZ, k, poly_pos, j);
+	    mpmod->varlist[i] = mpmod->polyvar;
+	    if (xnames != NULL) { 	 
+		sprintf(xnames[xn++], "%s^%d", 	 
+			dset->varname[mpmod->polyvar], 	 
+			mpmod->polylist[k]); 	 
+	    }
+	    mpmod->list[i] = j++;
+	    k++;
 	}
-	mpZ[nvars] = malloc(n * sizeof **mpZ);
-	if (mpZ[nvars] == NULL) {
-	    err = 1;
-	    break;
-	}
-	if (mpmod->list[i] == mpmod->polyvar) {
-	    /* record position in mpZ of the var to be raised 
-	       to various powers, if applicable */
-#if MP_DEBUG
-	    fprintf(stderr, "var to be raised to powers: it's "
-		   "at position %d in the regression list,\n"
-		   "and at slot %d in mpZ\n", i, nvars);
-#endif
-	    mp_poly_pos = nvars;
-	}
-	    
-	fill_mp_series(mpmod, dset, mpZ, zdigits, mpmod->list[i], nvars); 
-	mpmod->varlist[i] = mpmod->list[i];
-        if (xnames != NULL && i > 1) { 	 
-	    strcpy(xnames[v++], dset->varname[mpmod->list[i]]); 	 
-	}
-	mpmod->list[i] = nvars;
-	nvars++;
-    } /* end processing ordinary data */
-
-    listpt = i;
-
-    /* generate polynomial data (if applicable) */
-
-    for (i=0; i<npoly && !err; i++) {  
-	mpZ[nvars] = malloc(n * sizeof **mpZ);
-	if (mpZ[nvars] == NULL) {
-	    err = 1;
-	    break;
-	}
-
-	make_poly_series(mpmod, mpZ, i+1, mp_poly_pos, nvars);
-	mpmod->varlist[i+listpt] = mpmod->polyvar;
-
-        if (xnames != NULL) { 	 
-	    sprintf(xnames[v++], "%s^%d", 	 
-		    dset->varname[mpmod->polyvar], 	 
-		    mpmod->polylist[i+1]); 	 
-	}
-
-	mpmod->list[i+listpt] = nvars;
-	nvars++;
-    }
-
-    if (err) {
-	mp_2d_array_free(mpZ, nvars, n);
-	mpZ = NULL;
     }
 
     return mpZ;
@@ -329,32 +326,16 @@ static mpf_t **mpZ_from_matrices (const gretl_matrix *y,
 				  const gretl_matrix *X,
 				  int *err)
 {
-    mpf_t **mpZ = NULL;
+    mpf_t **mpZ;
     int T = y->rows;
     int k = X->cols + 1;
     double x;
     int i, t;
 
-    mpZ = malloc(k * sizeof *mpZ);
+    mpZ = mp_2d_array_alloc(k, T);
+
     if (mpZ == NULL) {
 	*err = E_ALLOC;
-	return NULL;
-    }
-
-    for (i=0; i<k; i++) {
-	mpZ[i] = NULL;
-    }
-
-    for (i=0; i<k && !*err; i++) {
-	mpZ[i] = malloc(T * sizeof **mpZ);
-	if (mpZ[i] == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
-    if (*err) {
-	mp_2d_array_free(mpZ, k, T);
-	mpZ = NULL;
     } else {
 	for (t=0; t<T; t++) {
 	    x = gretl_vector_get(y, t);
@@ -382,6 +363,7 @@ static void mp_model_free (MPMODEL *mpmod)
 
     free(mpmod->list);
     free(mpmod->varlist);
+    free(mpmod->mask);
 
     if (mpmod->coeff != NULL) {
 	for (i=0; i<mpmod->ncoeff; i++) { 
@@ -425,6 +407,7 @@ static void mp_model_init (MPMODEL *mpmod)
     mpmod->coeff = NULL;
     mpmod->sderr = NULL;
     mpmod->xpx = NULL;
+    mpmod->mask = NULL;
 
     mpf_init(mpmod->ess);
     mpf_init(mpmod->tss);
@@ -514,20 +497,21 @@ int mp_vector_ln (const double *srcvec, double *targvec, int n)
 
 #endif
 
-static int poly_check (MPMODEL *mpmod, const int *list)
+static int poly_check (MPMODEL *mpmod, const int *polylist, const int *list)
 {
     int i;
 
-    /* check that all powers are > 1 */
+    /* check that all powers of x are > 1 */
 
-    for (i=1; i<=mpmod->polylist[0]; i++) {
-	if (mpmod->polylist[i] < 2) {
-	    return 1;
+    for (i=1; i<=polylist[0]; i++) {
+	if (polylist[i] < 2) {
+	    return E_INVARG;
 	}
     }
 
     /* take the rightmost var in the regression list (other than 
-       the constant) as the one to be raised to various powers */
+       the constant) as the one to be raised to various powers 
+    */
 
     for (i=list[0]; i>1; i--) {
 	if (list[i] != 0) {
@@ -536,30 +520,27 @@ static int poly_check (MPMODEL *mpmod, const int *list)
 	}
     }
 
-    if (mpmod->polyvar == 0) {
-	return 1;
-    }
-
-    return 0;
+    return mpmod->polyvar == 0 ? E_DATA : 0;
 }
 
 static int *poly_copy_list (const int *list, const int *poly)
 {
     int *targ;
-    int i;
+    int i, n = list[0] + poly[0];
 
-    targ = gretl_list_new(list[0] + poly[0]);
+    targ = gretl_list_new(n);
+
     if (targ == NULL) {
 	return NULL;
     }
 
-    for (i=1; i<=list[0]; i++) {
-	targ[i] = list[i];
+    for (i=1; i<=n; i++) {
+	if (i <= list[0]) {
+	    targ[i] = list[i];
+	} else {
+	    targ[i] = i - 1;
+	}
     }
-
-    for (i=1; i<=poly[0]; i++) {
-	targ[list[0] + i] = list[0] + i - 1; 
-    }  
 
     return targ;
 }
@@ -727,6 +708,11 @@ static void mp_dwstat (const MPMODEL *mpmod, MODEL *pmod,
     mpf_t ut1, u11;
     int t;
 
+    if (mpmod->mask != NULL || mpf_sgn(mpmod->ess) <= 0) {
+	pmod->dw = pmod->rho = NADBL;
+	return;
+    }
+
     mpf_init(num);
     mpf_init(x);
     mpf_init(ut1);
@@ -742,14 +728,10 @@ static void mp_dwstat (const MPMODEL *mpmod, MODEL *pmod,
 	mpf_add(u11, u11, x);
     }
 
-    if (mpf_sgn(mpmod->ess) <= 0) {
+    mpf_div(x, num, mpmod->ess);
+    pmod->dw = mpf_get_d(x);
+    if (isnan(pmod->dw) || isinf(pmod->dw)) {
 	pmod->dw = NADBL;
-    } else {
-	mpf_div(x, num, mpmod->ess);
-	pmod->dw = mpf_get_d(x);
-	if (isnan(pmod->dw) || isinf(pmod->dw)) {
-	    pmod->dw = NADBL;
-	}
     }
 
     if (mpf_sgn(u11) <= 0) {
@@ -941,13 +923,13 @@ static void mp_hatvars (const MPMODEL *mpmod, MODEL *pmod,
     mpf_t *uhat = NULL;
     mpf_t yht, uht, xbi;
     int yno = mpmod->list[1];
-    int i, t;
+    int i, t, s;
 
-    if (tseries) {
+    if (tseries && mpmod->mask == NULL) {
 	uhat = malloc(mpmod->nobs * sizeof *uhat);
 	if (uhat != NULL) {
-	    for (t=0; t<mpmod->nobs; t++) {
-		mpf_init(uhat[t]);
+	    for (s=0; s<mpmod->nobs; s++) {
+		mpf_init(uhat[s]);
 	    }
 	}
     }
@@ -956,22 +938,28 @@ static void mp_hatvars (const MPMODEL *mpmod, MODEL *pmod,
     mpf_init(uht);
     mpf_init(xbi);
 
-    for (t=0; t<mpmod->nobs; t++) {
+    s = 0;
+
+    for (t=mpmod->t1; t<=mpmod->t2; t++) {
+	if (mpmod_missing(mpmod, t)) {
+	    continue;
+	}
 	mpf_set_d(yht, 0.0);
 	for (i=0; i<mpmod->ncoeff; i++) {
-	    mpf_mul(xbi, mpmod->coeff[i], mpZ[mpmod->list[i+2]][t]);
+	    mpf_mul(xbi, mpmod->coeff[i], mpZ[mpmod->list[i+2]][s]);
 	    mpf_add(yht, yht, xbi);
 	}
-	mpf_sub(uht, mpZ[yno][t], yht);
+	mpf_sub(uht, mpZ[yno][s], yht);
 	if (pmod != NULL) {
-	    pmod->yhat[t + mpmod->t1] = mpf_get_d(yht);
-	    pmod->uhat[t + mpmod->t1] = mpf_get_d(uht);
+	    pmod->yhat[t] = mpf_get_d(yht);
+	    pmod->uhat[t] = mpf_get_d(uht);
 	} else if (uvec != NULL) {
-	    uvec->val[t] = mpf_get_d(uht);
+	    uvec->val[s] = mpf_get_d(uht);
 	}
 	if (uhat != NULL) {
-	    mpf_set(uhat[t], uht);
+	    mpf_set(uhat[s], uht);
 	}
+	s++;
     }
 
     mpf_clear(yht);
@@ -980,8 +968,8 @@ static void mp_hatvars (const MPMODEL *mpmod, MODEL *pmod,
 
     if (uhat != NULL) {
 	mp_dwstat(mpmod, pmod, uhat);
-	for (t=0; t<mpmod->nobs; t++) {
-	    mpf_clear(uhat[t]);
+	for (s=0; s<mpmod->nobs; s++) {
+	    mpf_clear(uhat[s]);
 	}
 	free(uhat);
     } else if (pmod != NULL) {
@@ -1540,6 +1528,30 @@ static int mp_rearrange (int *list)
     return (list[2] == 0);
 }
 
+static int add_missvals_mask (MPMODEL *mpmod, const int *list,
+			      const DATASET *dset)
+{
+    int s, t, i;
+
+    mpmod->mask = calloc(dset->t2 - dset->t1 + 1, 1);
+    if (mpmod->mask == NULL) {
+	return E_ALLOC;
+    }
+
+    s = 0;
+    for (t=dset->t1; t<=dset->t2; t++) {
+	for (i=1; i<=list[0]; i++) {
+	    if (na(dset->Z[list[i]][t])) {
+		mpmod->mask[s] = 1;
+		break;
+	    }
+	}
+	s++;
+    }
+
+    return 0;
+}
+
 /* public interface */
 
 /**
@@ -1570,6 +1582,7 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
     MPMODEL mpmod;
     int orig_t1 = dset->t1;
     int orig_t2 = dset->t2;
+    int missvals = 0;
     int err = 0;
 
     gretl_error_clear();
@@ -1583,8 +1596,12 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
 
     mp_model_init(&mpmod);
 
-    mpmod.t1 = dset->t1;
-    mpmod.t2 = dset->t2;
+    if (polylist != NULL) {
+	err = poly_check(&mpmod, polylist, list);
+	if (err) {
+	    return err;
+	}
+    }
 
     if (polylist == NULL) {
 	mpmod.list = gretl_list_copy(list);
@@ -1596,20 +1613,27 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
 	return E_ALLOC;
     }
 
+    l0 = mpmod.list[0];  
+    mpmod.ncoeff = l0 - 1; 
+
     mpmod.polylist = polylist; /* attached for convenience */
 
-    if (polylist != NULL && poly_check(&mpmod, list)) {
-	err = E_DATA;
+    /* check for missing obs in sample */
+    list_adjust_sample(list, &dset->t1, &dset->t2, dset, &missvals);
+    mpmod.nobs = dset->t2 - dset->t1 + 1 - missvals;
+
+    if (mpmod.nobs < mpmod.ncoeff) {
+	err = E_DF;
 	goto bailout;
     }
 
-    /* check for missing obs in sample */
-    err = list_adjust_sample(list, &dset->t1, &dset->t2, dset);
-    if (err) {
-	goto bailout;
+    if (missvals > 0) {
+	err = add_missvals_mask(&mpmod, list, dset);
+	if (err) {
+	    goto bailout;
+	}
     }
     
-    /* in case of any changes */
     mpmod.t1 = dset->t1;
     mpmod.t2 = dset->t2;
 
@@ -1640,21 +1664,6 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
     }
 
     mpf_constants_init();
-
-    l0 = mpmod.list[0];  
-    mpmod.ncoeff = l0 - 1; 
-    mpmod.nobs = mpmod.t2 - mpmod.t1 + 1;
-
-    /* check degrees of freedom */
-    if (mpmod.nobs < mpmod.ncoeff) { 
-        gretl_errmsg_sprintf(_("No. of obs (%d) is less than no. "
-			       "of parameters (%d)"), mpmod.nobs, 
-			     mpmod.ncoeff);
-	mp_2d_array_free(mpZ, l0, mpmod.nobs);
-	mpf_constants_clear();
-	err = E_DF;
-	goto bailout;
-    }
 
     /* calculate regression results */
 

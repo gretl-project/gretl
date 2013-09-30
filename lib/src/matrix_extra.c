@@ -469,7 +469,7 @@ real_gretl_matrix_data_subset (const int *list,
     if (mask != NULL) {
 	T -= get_mask_count(mask, Tmax);
     } else if (op == M_MISSING_TRIM) {
-	*err = list_adjust_sample(list, &t1, &t2, dset);
+	*err = list_adjust_sample(list, &t1, &t2, dset, NULL);
 	if (*err) {
 	    return NULL;
 	} else {

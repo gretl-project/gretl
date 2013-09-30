@@ -10190,7 +10190,7 @@ static NODE *eval (NODE *t, parser *p)
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
 	break;
-    case F_ISOCONV: /* experimental */
+    case F_ISOCONV:
 	ret = isoconv_node(t, p);
 	break;
     case USTR:
