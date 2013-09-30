@@ -7309,6 +7309,61 @@ static void n_args_error (int k, int n, int f, parser *p)
     p->err = 1;
 }
 
+static NODE *isoconv_node (NODE *t, parser *p)
+{
+    NODE *e, *n = t->v.b1.b;
+    NODE *ret = NULL;
+    const double *x = NULL;
+    double *ymd[3] = {NULL, NULL, NULL};
+    int i, k = n->v.bn.n_nodes;
+
+    if (p->dset == NULL) {
+	p->err = E_NODATA;
+	return NULL;
+    }
+
+    if (k < 3 || k > 4) {
+	n_args_error(k, 4, t->t, p);
+    } else {
+	/* evaluate the first (series) argument */
+	e = eval(n->v.bn.n[0], p);
+	if (!p->err && e->t != VEC) {
+	    node_type_error(t->t, 1, VEC, e, p);
+	} else {
+	    x = e->v.xvec + p->dset->t1;
+	}
+    }
+
+    for (i=1; i<k && !p->err; i++) {
+	/* the remaining args must be addresses of series */
+	e = n->v.bn.n[i];
+	if (i == 3 && null_or_empty(e)) {
+	    ; /* OK for the last one to be omitted */
+	} else if (e->t != U_ADDR) {
+	    node_type_error(t->t, i+1, U_ADDR, e, p);
+	} else {
+	    e = e->v.b1.b;
+	    if (e->t != VEC) {
+		node_type_error(t->t, i+1, VEC, e, p);
+	    } else {
+		ymd[i-1] = p->dset->Z[e->vnum] + p->dset->t1;
+	    }
+	}
+    }
+
+    if (!p->err) {
+	ret = aux_scalar_node(p);
+    }
+
+    if (!p->err) {
+	int n = sample_size(p->dset);
+
+	ret->v.xval = iso_basic_to_extended(x, ymd[0], ymd[1], ymd[2], n);
+    }
+
+    return ret;
+}
+
 /* evaluate a built-in function that has more than three arguments */
 
 static NODE *eval_nargs_func (NODE *t, parser *p)
@@ -10135,6 +10190,9 @@ static NODE *eval (NODE *t, parser *p)
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
 	break;
+    case F_ISOCONV: /* experimental */
+	ret = isoconv_node(t, p);
+	break;
     case USTR:
 	/* string variable */
 	ret = string_var_node(t, p);
@@ -11049,7 +11107,7 @@ static void maybe_do_type_errmsg (const char *name, int t)
 
 	if (t == NUM) {
 	    tstr = "scalar";
-	} else if (t == UVEC || t == VEC) {
+	} else if (t == VEC || t == UVEC) {
 	    tstr = "series";
 	} else if (t == MAT) {
 	    tstr = "matrix";

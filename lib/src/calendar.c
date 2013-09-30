@@ -906,3 +906,29 @@ int guess_daily_pd (const DATASET *dset)
     return pd;
 }
 
+int iso_basic_to_extended (const double *b, double *y, double *m, double *d,
+			   int n)
+{
+    int bi, yi, mi;
+    int i;
+
+    for (i=0; i<n; i++) {
+	if (na(b[i])) {
+	    y[i] = m[i] = NADBL;
+	    if (d != NULL) {
+		d[i] = NADBL;
+	    }
+	} else {
+	    bi = (int) b[i];
+	    yi = bi / 10000;
+	    mi = (bi - 10000*yi) / 100;
+	    y[i] = yi; m[i] = mi;
+	    if (d != NULL) {
+		d[i] = bi - 10000*yi - 100*mi;
+	    }
+	}
+    }
+
+    return 0;
+}
+
