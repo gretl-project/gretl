@@ -2166,7 +2166,7 @@
       </description>
     </function>
 
-    <function name="epochday" section="data-utils" output="scalar-or-series">
+    <function name="epochday" section="calendar" output="scalar-or-series">
       <fnargs>
 	<fnarg type="scalar-or-series">year</fnarg>
 	<fnarg type="scalar-or-series">month</fnarg>
@@ -3262,7 +3262,25 @@
       </description>
     </function>
 
-    <function name="isodate" section="data-utils" output="seebelow">
+    <function name="isoconv" section="calendar" output="scalar">
+      <fnargs>
+	<fnarg type="series">date</fnarg>
+	<fnarg type="seriesref">&amp;year</fnarg>
+	<fnarg type="seriesref">&amp;month</fnarg>
+	<fnarg type="seriesref" optional="true">&amp;day</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Given a series <argname>date</argname> holding dates in
+	  ISO 8601 <quote>basic</quote> format (<lit>YYYYMMDD</lit>),
+	  this function writes the year, month and (optionally)
+	  day components into the series named by the second and
+	  subsequent arguments.
+	</para>
+      </description>
+    </function>
+
+    <function name="isodate" section="calendar" output="seebelow">
       <fnargs>
 	<fnarg type="scalar-or-series">ed</fnarg>
 	<fnarg type="bool" optional="true">as-string</fnarg>
@@ -4156,7 +4174,7 @@
       </description>
     </function>
 
-    <function name="monthlen" section="data-utils" output="int">
+    <function name="monthlen" section="calendar" output="int">
       <fnargs>
 	<fnarg type="int">month</fnarg>
 	<fnarg type="int">year</fnarg>
@@ -7184,7 +7202,7 @@
       </description>
     </function>
 
-    <function name="weekday" section="data-utils" output="int">
+    <function name="weekday" section="calendar" output="int">
       <fnargs>
 	<fnarg type="int">year</fnarg>
 	<fnarg type="int">month</fnarg>

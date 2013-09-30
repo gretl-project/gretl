@@ -40,6 +40,7 @@
  <gentext key="symmat"        text="matriz simétrica"/>
  <gentext key="pdmat"         text="matriz positiva definida"/>
  <gentext key="matrixref"     text="referência a matriz"/>
+ <gentext key="matrixref"     text="referência a série"/>
  <gentext key="cvec"          text="vector coluna"/>
  <gentext key="rvec"          text="vector linha"/>
  <gentext key="list"          text="lista"/>
