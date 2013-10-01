@@ -1,8 +1,8 @@
 <ui>
   <menubar>
     <menu action="File">
-      <menu action="OpenData">
-	<menuitem action="OpenGdt"/>
+      <menu action="OpenDataMenu">
+	<menuitem action="OpenData"/>
 	<menuitem action="DisplayDataFiles"/>
 	<separator/>
 	<menu action="ImportData">
@@ -20,8 +20,8 @@
 	<separator/>
 	<placeholder name="RecentData"/>
       </menu>      
-      <menu action="AppendData">
-	<menuitem action="AppendGdt"/>
+      <menu action="AppendDataMenu">
+	<menuitem action="AppendData"/>
 	<menuitem action="AppendCSV"/>
 	<menuitem action="AppendOctave"/>
 	<menuitem action="AppendGnumeric"/>

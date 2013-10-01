@@ -1177,6 +1177,7 @@ static int get_native_data (char *fname, int ftype, int append,
 }
 
 #define APPENDING(action) (action == APPEND_DATA || \
+			   action == APPEND_GDT ||  \
                            action == APPEND_CSV || \
                            action == APPEND_GNUMERIC || \
                            action == APPEND_XLS || \
@@ -1202,7 +1203,7 @@ gboolean do_open_data (windata_t *fwin, int code)
 	}
     }
 
-    if (code == OPEN_DATA || code == APPEND_DATA) {
+    if (code == OPEN_GDT || code == APPEND_GDT) {
 	/* native .gdt files */
 	ftype = GRETL_XML_DATA;
     } else if (code == OPEN_CSV || code == APPEND_CSV) {

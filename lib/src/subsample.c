@@ -1062,12 +1062,13 @@ static int copy_periods_list (int *T0, const int *Ti)
 
 static int mask_leaves_balanced_panel (char *mask, const DATASET *dset)
 {
+    int T = dset->pd;
     int *T0, *Ti;
     int i, u, ubak = -1;
     int ret = 1;
 
-    T0 = gretl_list_new(dset->pd);
-    Ti = gretl_list_new(dset->pd);
+    T0 = gretl_list_new(T);
+    Ti = gretl_list_new(T);
 
     if (T0 == NULL || Ti == NULL) {
 	free(T0);
@@ -1079,7 +1080,7 @@ static int mask_leaves_balanced_panel (char *mask, const DATASET *dset)
 
     for (i=0; i<dset->n && ret; i++) {
 	if (mask[i]) {
-	    u = i / dset->pd;
+	    u = i / T;
 	    if (u != ubak) {
 		if (Ti[0] > 0) {
 		    if (T0[0] == 0) {
@@ -1091,10 +1092,10 @@ static int mask_leaves_balanced_panel (char *mask, const DATASET *dset)
 		    }
 		}
 		Ti[0] = 1;
-		Ti[1] = i % dset->pd;
+		Ti[1] = i % T;
 	    } else {
 		Ti[0] += 1;
-		Ti[Ti[0]] = i % dset->pd;
+		Ti[Ti[0]] = i % T;
 	    }
 	    ubak = u;
 	}
@@ -1111,34 +1112,27 @@ make_panel_submask (char *mask, const DATASET *dset, int *err)
 {
     int T = dset->pd;
     int N = dset->n / T;
-    char *umask = NULL;
-    char *pmask = NULL;
+    char *umask, *pmask;
     int i, np = 0;
 
-    umask = calloc(N, 1);
+    umask = calloc(N + T, 1);
     if (umask == NULL) {
 	*err = E_ALLOC;
 	return 0;
     }
 
-    pmask = calloc(T, 1);
-    if (pmask == NULL) {
-	free(umask);
-	*err = E_ALLOC;
-	return 0;
-    }
-
+    pmask = umask + N;
+ 
     for (i=0; i<dset->n; i++) {
 	if (mask[i]) {
-	    umask[i / dset->pd] = 1;
-	    pmask[i % dset->pd] = 1;
+	    umask[i / T] = 1;
+	    pmask[i % T] = 1;
 	}
     }
 
     for (i=0; i<dset->n; i++) {
 	if (!mask[i]) {
-	    if (umask[i / dset->pd] &&
-		pmask[i % dset->pd]) {
+	    if (umask[i / T] && pmask[i % T]) {
 		mask[i] = 'p'; /* mark as padding row */
 		np++;
 	    }
@@ -1151,7 +1145,6 @@ make_panel_submask (char *mask, const DATASET *dset, int *err)
 #endif
 
     free(umask);
-    free(pmask);
 
     return np;
 }
@@ -1280,7 +1273,6 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 	    if (opt & OPT_B) {
 		/* add padding rows? only if this was requested */
 		npad = make_panel_submask(mask, dset, &err);
-		fprintf(stderr, "npad = %d\n", npad);
 		if (err) {
 		    free(subset);
 		    return err;

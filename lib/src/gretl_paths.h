@@ -156,6 +156,8 @@ const char *gretl_default_workdir (void);
 
 const char *maybe_get_default_workdir (void);
 
+char *gretl_make_dotpath (const char *basename);
+
 int set_gretl_work_dir (const char *path);
 
 const char *gretl_maybe_switch_dir (const char *fname);

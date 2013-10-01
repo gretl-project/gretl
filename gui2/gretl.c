@@ -1522,8 +1522,8 @@ static void make_main_window (void)
 GtkActionEntry main_entries[] = {
     /* File */
     { "File",         NULL, N_("_File"), NULL, NULL, NULL }, 
-    { "OpenData",     NULL, N_("_Open data"), NULL, NULL, NULL }, 
-    { "OpenGdt",      GTK_STOCK_OPEN, N_("_User file..."), NULL, NULL, G_CALLBACK(open_data) },
+    { "OpenDataMenu", NULL, N_("_Open data"), NULL, NULL, NULL }, 
+    { "OpenData",     GTK_STOCK_OPEN, N_("_User file..."), NULL, NULL, G_CALLBACK(open_data) },
     { "DisplayDataFiles", GTK_STOCK_OPEN, N_("_Sample file..."), "", NULL, G_CALLBACK(show_files) },
     { "ImportData",   NULL, N_("_Import"), NULL, NULL, NULL }, 
     { "OpenCSV",      NULL, N_("_text/CSV..."), NULL, NULL, G_CALLBACK(open_data) },
@@ -1537,8 +1537,8 @@ GtkActionEntry main_entries[] = {
     { "OpenSAS",      NULL, N_("_SAS (xport)..."), NULL, NULL, G_CALLBACK(open_data) },
     { "OpenJMulTi",   NULL, N_("_JMulTi..."), NULL, NULL, G_CALLBACK(open_data) },
 
-    { "AppendData",     NULL, N_("_Append data"), NULL, NULL, NULL }, 
-    { "AppendGdt",      NULL, N_("_Standard format..."), NULL, NULL, G_CALLBACK(open_data) },
+    { "AppendDataMenu", NULL, N_("_Append data"), NULL, NULL, NULL }, 
+    { "AppendData",     NULL, N_("_Standard format..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendCSV",      NULL, N_("_text/CSV..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendOctave",   NULL, N_("_Octave..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendGnumeric", NULL, N_("_Gnumeric..."), NULL, NULL, G_CALLBACK(open_data) },

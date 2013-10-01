@@ -42,6 +42,7 @@
 #endif
 
 #define OPEN_DATA_ACTION(i)  (i == OPEN_DATA || \
+			      i == OPEN_GDT ||	\
                               i == OPEN_CSV || \
                               i == OPEN_OCTAVE || \
                               i == OPEN_GNUMERIC || \
@@ -54,6 +55,7 @@
                               i == OPEN_ODS)
 
 #define APPEND_DATA_ACTION(i) (i == APPEND_DATA || \
+			       i == APPEND_GDT ||  \
                                i == APPEND_CSV || \
                                i == APPEND_OCTAVE || \
                                i == APPEND_GNUMERIC || \
@@ -75,8 +77,8 @@
                        i == SAVE_DATA_AS || \
                        i == SAVE_BOOT_DATA || \
                        i == EXPORT_GDT || \
-                       i == OPEN_DATA || \
-                       i == APPEND_DATA)
+                       i == OPEN_GDT || \
+                       i == APPEND_GDT)
 
 #define SET_DIR_ACTION(i) (i == SET_DIR || i == SET_WDIR || \
                            i == SET_FDIR || i == SET_DBDIR)
@@ -787,7 +789,22 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 				 FselDataSrc src, gpointer data,
 				 int *maxlen)
 {
-    if (action == OPEN_CSV || action == APPEND_CSV) {
+    if (action == OPEN_DATA || action == APPEND_DATA) {
+	filesel_add_filter(filesel, N_("Gretl data files (*.gdt)"), "*.gdt", maxlen);
+	filesel_add_filter(filesel, N_("CSV files (*.csv)"), "*.csv", maxlen);
+	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt", maxlen);
+	filesel_add_filter(filesel, N_("Gnumeric files (*.gnumeric"), "*.gnumeric", maxlen);
+	filesel_add_filter(filesel, N_("Open Document files (*.ods)"), "*.ods", maxlen);
+	filesel_add_filter(filesel, N_("Excel files (*.xls)"), "*.xls", maxlen);
+	filesel_add_filter(filesel, N_("Excel files (*.xlsx)"), "*.xlsx", maxlen);
+	filesel_add_filter(filesel, N_("Stata files (*.dta)"), "*.dta", maxlen);
+	filesel_add_filter(filesel, N_("Eviews files (*.wf1)"), "*.wf1", maxlen);
+	filesel_add_filter(filesel, N_("SPSS files (*.sav)"), "*.sav", maxlen);
+	filesel_add_filter(filesel, N_("SAS xport files (*.xpt)"), "*.xpt", maxlen);
+	filesel_add_filter(filesel, N_("Octave files (*.m)"), "*.m", maxlen);
+	filesel_add_filter(filesel, N_("JMulTi files (*.dat)"), "*.dat", maxlen);
+	filesel_add_filter(filesel, N_("all files (*.*)"), "*", maxlen);
+    } else if (action == OPEN_CSV || action == APPEND_CSV) {
 	filesel_add_filter(filesel, N_("CSV files (*.csv)"), "*.csv", maxlen);
 	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt", maxlen);
 	filesel_add_filter(filesel, N_("all files (*.*)"), "*", maxlen);

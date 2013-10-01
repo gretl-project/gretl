@@ -2007,6 +2007,27 @@ const char *gretl_dotdir (void)
     return paths.dotdir;
 }
 
+char *gretl_make_dotpath (const char *basename)
+{
+    int n = strlen(paths.dotdir);
+    int m = strlen(basename);
+    char *path = NULL;
+
+    if (paths.dotdir[n-1] != SLASH) {
+	path = calloc(n + m + 2, 1);
+	if (path != NULL) {
+	    sprintf(path, "%s%c%s", paths.dotdir, SLASH, basename);
+	}
+    } else {
+	path = calloc(n + m + 1, 1);
+	if (path != NULL) {
+	    sprintf(path, "%s%s", paths.dotdir, basename);
+	}
+    }
+
+    return path;
+}
+
 const char *gretl_workdir (void)
 {
     return paths.workdir;

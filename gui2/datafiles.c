@@ -714,7 +714,7 @@ void browser_open_data (GtkWidget *w, gpointer data)
 
     set_datapage(collection->title);
 
-    verify_open_data(vwin, OPEN_DATA);
+    verify_open_data(vwin, OPEN_GDT);
 }
 
 void browser_open_ps (GtkWidget *w, gpointer data)

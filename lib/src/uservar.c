@@ -1882,6 +1882,8 @@ int serialize_user_vars (const char *dirname)
     return err;
 }
 
+#define UDEBUG 0
+
 int deserialize_user_vars (const char *dirname)
 {
     xmlDocPtr doc = NULL;
@@ -1892,18 +1894,30 @@ int deserialize_user_vars (const char *dirname)
     char path[MAXLEN];
     FILE *fp;
     int i, n;
+    int n_failed = 0;
     int err = 0;
 
     n = sizeof uvar_files / sizeof uvar_files[0];
+
+#if UDEBUG
+    fprintf(stderr, "deserialize_user_vars:\n");
+#endif
 
     for (i=0; i<n; i++) {
 	int err_i = 0;
 
 	typestr = uvar_files[i].typestr;
 	sprintf(path, "%s%c%s.xml", dirname, SLASH, typestr);
+
+#if UDEBUG
+	fprintf(stderr, " checking for '%s.xml'\n", typestr);
+#endif
 	fp = gretl_fopen(path, "r");
 	if (fp == NULL) {
 	    /* OK, no user-vars of this type */
+#if UDEBUG
+	    fprintf(stderr, "  not found\n");
+#endif
 	    continue;
 	}
 	fclose(fp);
@@ -1911,20 +1925,28 @@ int deserialize_user_vars (const char *dirname)
 	err_i = gretl_xml_open_doc_root(path, root_name, &doc, &cur);
 	if (!err_i) {
 	    read_func = uvar_files[i].read_func;
+#if UDEBUG
+	    fprintf(stderr, "  found, reading...\n");
+#endif
 	    err_i = read_func(doc, cur);
+#if UDEBUG
+	    fprintf(stderr, "  done.\n");
+#endif
 	}
 	if (doc != NULL) {
 	    xmlFreeDoc(doc);
 	    doc = NULL;
 	}
 	if (err_i) {
-	    err++;
+	    n_failed++;
+	    if (!err) {
+		err = err_i;
+	    }
 	}
     }
 
-    if (err > 0) {
-	fprintf(stderr, "Failed reading %d user_var files\n", err);
-	err = E_FOPEN;
+    if (n_failed > 0) {
+	fprintf(stderr, "Failed reading %d user_var files\n", n_failed);
     }
 	    
     return err;

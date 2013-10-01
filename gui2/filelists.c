@@ -457,7 +457,7 @@ static void real_add_files_to_menus (int ftype)
     guint *id;
     GtkActionEntry entry;
     const gchar *mpath[] = {
-	"/menubar/File/OpenData/RecentData",
+	"/menubar/File/OpenDataMenu/RecentData",
 	"/menubar/File/SessionFiles/RecentSessions",
 	"/menubar/File/ScriptFiles/RecentScripts"
     };

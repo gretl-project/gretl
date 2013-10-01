@@ -1209,6 +1209,52 @@ int gretl_xml_child_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
     return ret;
 }
 
+static int get_matrix_values_via_file (gretl_matrix *m, const char *s)
+{
+    char *fname;
+    FILE *fp;
+    int err = 0;
+
+    fname = gretl_make_dotpath("matrix.xml.tmp");
+    if (fname == NULL) {
+	return E_ALLOC;
+    }
+
+    fp = gretl_fopen(fname, "wb");
+    if (fp == NULL) {
+	free(fname);
+	return E_FOPEN;
+    }
+
+    fputs(s, fp);
+    fclose(fp);
+    fp = fopen(fname, "r");
+
+    if (fp == NULL) {
+	err = E_FOPEN;
+    } else {
+	double x;
+	int i, j;
+
+	for (i=0; i<m->rows && !err; i++) {
+	    for (j=0; j<m->cols && !err; j++) {
+		if (fscanf(fp, "%lf", &x) != 1) {
+		    err = E_DATA;
+		} else {
+		    gretl_matrix_set(m, i, j, x);
+		}
+	    }
+	}
+
+	fclose(fp);
+    }
+
+    remove(fname);
+    free(fname);
+
+    return err;
+}
+
 /**
  * xml_get_user_matrix:
  * @node: XML node pointer.
@@ -1309,19 +1355,25 @@ gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
     }
 
     p = (const char *) tmp;
-    p += strspn(p, " \r\n");
 
     gretl_push_c_numeric_locale();
 
-    for (i=0; i<rows && !*err; i++) {
-	for (j=0; j<cols && !*err; j++) {
-	    if (sscanf(p, "%lf", &x) != 1) {
-		*err = E_DATA;
-		break;
-	    } else {
-		gretl_matrix_set(m, i, j, x);
-		p += strspn(p, " \r\n");
-		p += strcspn(p, " \r\n");
+    if (0 && rows * cols > 5000) {
+	/* it's relatively slow to crawl along the string holding
+	   many matrix elements using sscanf plus str* functions
+	*/
+	*err = get_matrix_values_via_file(m, p);
+    } else {
+	p += strspn(p, " \r\n");
+	for (i=0; i<rows && !*err; i++) {
+	    for (j=0; j<cols && !*err; j++) {
+		if (sscanf(p, "%lf", &x) != 1) {
+		    *err = E_DATA;
+		} else {
+		    gretl_matrix_set(m, i, j, x);
+		    p += strspn(p, " \r\n");
+		    p += strcspn(p, " \r\n");
+		}
 	    }
 	}
     }

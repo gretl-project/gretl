@@ -925,7 +925,7 @@ static void mp_hatvars (const MPMODEL *mpmod, MODEL *pmod,
     mpf_t *uhat = NULL;
     mpf_t yht, uht, xbi;
     int yno = mpmod->list[1];
-    int i, t, s;
+    int i, vi, t, s;
 
     if (tseries && mpmod->mask == NULL) {
 	uhat = malloc(mpmod->nobs * sizeof *uhat);
@@ -948,7 +948,8 @@ static void mp_hatvars (const MPMODEL *mpmod, MODEL *pmod,
 	}
 	mpf_set_d(yht, 0.0);
 	for (i=0; i<mpmod->ncoeff; i++) {
-	    mpf_mul(xbi, mpmod->coeff[i], mpZ[mpmod->list[i+2]][s]);
+	    vi = mpmod->list[i+2];
+	    mpf_mul(xbi, mpmod->coeff[i], mpZ[vi][s]);
 	    mpf_add(yht, yht, xbi);
 	}
 	mpf_sub(uht, mpZ[yno][s], yht);

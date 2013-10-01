@@ -154,7 +154,8 @@ struct open_data_code {
 };
 
 struct open_data_code open_data_codes[] = {
-    { OPEN_DATA,       "OpenGdt" },
+    { OPEN_DATA,       "OpenData" },    
+    { OPEN_GDT,        "OpenGdt" },
     { APPEND_DATA,     "AppendGdt" },
     { OPEN_CSV,        "OpenCSV" },
     { APPEND_CSV,      "AppendCSV" },
