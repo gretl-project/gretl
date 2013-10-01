@@ -1358,7 +1358,7 @@ gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
 
     gretl_push_c_numeric_locale();
 
-    if (0 && rows * cols > 5000) {
+    if (rows * cols > 5000) {
 	/* it's relatively slow to crawl along the string holding
 	   many matrix elements using sscanf plus str* functions
 	*/
