@@ -575,8 +575,8 @@ int series_adjust_sample (const double *x, int *t1, int *t2)
  * (possibly adjusted) sample range.
  *
  * Drops leading or trailing observations from the sample range
- * initially given by the values in @t1 and @t2, if missing values are 
- * found for any of the variables given in @list.
+ * initially given by the values in @t1 and @t2 if missing values
+ * are found for any of the variables given in @list.
  *
  * If @nmiss is non-NULL it receives the number of missing values
  * inside the (possibly reduced) sample range, otherwise it is
@@ -635,20 +635,21 @@ int list_adjust_sample (const int *list, int *t1, int *t2,
 
     /* check for missing values within remaining range */
     for (t=t1min; t<=t2max && !err; t++) {
+	missing = 0;
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
 	    if (vi > 0 && vi != LISTSEP) {
 		if (na(dset->Z[vi][t])) {
 		    if (nmiss == NULL) {
 			err = E_MISSDATA;
-			break;
 		    } else {
 			*nmiss += 1;
 		    }
+		    break;
 		}
 	    }
 	}
-    }     
+    } 
 
     *t1 = t1min; 
     *t2 = t2max;
