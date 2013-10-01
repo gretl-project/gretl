@@ -372,13 +372,49 @@ estimators are available for the pooled and fixed effects model but
 not currently for random effects.  Please see
 section~\ref{sec:vcv-panel} for details.
 
+\subsection{The constant in the fixed effects model}
+
+Users are sometimes puzzled by the constant or intercept reported by
+gretl on estimation of the fixed effects model: how can a constant
+remain when the group means have been subtracted from the data? The
+method of calculation of this term is a matter of convention, but the
+gretl authors decided to follow the convention employed by
+\app{Stata}; this involves adding the global mean back into the
+variables from which the group means have been removed.\footnote{See
+  \url{http://www.stata.com/support/faqs/statistics/intercept-in-fixed-effects-model/}
+  for an explanation from William Gould of StataCorp.}
+
+The method that gretl uses internally is exemplified in
+Example~\ref{fe-intercept}. The coefficients in the final OLS
+estimation, including the intercept, agree with those in the initial
+fixed effects model, though the standard errors differ due to a
+degrees of freedom correction in the fixed-effects covariance matrix.
+(Note that the \texttt{pmean} function returns the group mean of a
+series.)
+
+\begin{script}[htbp]
+  \caption{Calculating the intercept in the fixed effects model}
+  \label{fe-intercept}
+\begin{scode}
+open abdata.gdt
+panel n const w k ys --fixed-effects
+
+depvar = n - pmean(n) + mean(n)
+list indepvars = const
+loop foreach i w k ys --quiet
+  x_$i = $i - pmean($i) + mean($i)
+  indepvars += x_$i
+endloop
+ols depvar indepvars
+\end{scode}
+\end{script}
 
 \section{Autoregressive panel models}
 \label{panel-auto}
 
 Special problems arise when a lag of the dependent variable is
 included among the regressors in a panel model.  Consider a dynamic
-variant of the pooled model (\ref{eq:pooled}):
+variant of the pooled model (eq.\ \ref{eq:pooled}):
 \begin{equation}
 \label{eq:pooled-dyn}
 y_{it} = X_{it}\beta + \rho y_{it-1} + u_{it}
