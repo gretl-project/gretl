@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-09-30 08:49-0400\n"
-"PO-Revision-Date: 2013-09-23 11:29+0200\n"
+"PO-Revision-Date: 2013-10-01 14:46+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -432,9 +432,9 @@ msgid "got invalid field '%s'"
 msgstr "se obtuvo un campo '%s' no válido"
 
 #: lib/src/calendar.c:403
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid starting date for %d-day data"
-msgstr "Número de retardos no válido para arch (%d)"
+msgstr "Fecha de inicio no válida para datos de %d días"
 
 #: lib/src/compare.c:269
 #, c-format
@@ -1132,7 +1132,7 @@ msgstr "Falta de memoria\n"
 
 #: lib/src/csvdata.c:3370
 msgid "No matching data after filtering"
-msgstr ""
+msgstr "No hay datos que casen después del filtrado"
 
 #: lib/src/csvdata.c:3686
 msgid "You need to specify an aggregation method for a 1:n join"
@@ -1141,24 +1141,26 @@ msgstr ""
 "de 1 a n"
 
 #: lib/src/csvdata.c:4502
-#, fuzzy, c-format
+#, c-format
 msgid "%s: column '%s' was not found"
-msgstr "%s: no se ha encontrado la columna de filtrado '%s'"
+msgstr "%s: no se ha encontrado la columna '%s'"
 
 #: lib/src/csvdata.c:4518
 #, c-format
 msgid "%s: string key on left but numeric on right"
 msgstr ""
+"%s: clave alfabética (string) a la izquierda pero numérica a la derecha"
 
 #: lib/src/csvdata.c:4520
 #, c-format
 msgid "%s: string key on right but numeric on left"
 msgstr ""
+"%s: clave alfabética (string) a la derecha pero numérica a la izquierda"
 
 #: lib/src/csvdata.c:4782
 #, c-format
 msgid "Outer dataset: read %d columns and %d rows\n"
-msgstr ""
+msgstr "Conjunto de datos externo: leer %d columnas y %d filas\n"
 
 #: lib/src/csvdata.c:4832 gui2/library.c:4000
 msgid "Series length does not match the dataset"
@@ -2409,7 +2411,7 @@ msgstr "'%s' : sólo está definido para matrices"
 #: lib/src/geneval.c:12254
 #, c-format
 msgid "type error: %s is string-valued"
-msgstr ""
+msgstr "error de tipos: %s es una cadena de caracteres"
 
 #: lib/src/geneval.c:12652
 msgid "Bare declarations are not allowed here"
@@ -3098,14 +3100,12 @@ msgid "This command is implemented only for OLS models"
 msgstr "Esta instrucción está implementada sólo para modelos MCO"
 
 #: lib/src/gretl_errors.c:55
-#, fuzzy
 msgid "Invalid argument"
-msgstr "entrada no válida"
+msgstr "argumento no válido"
 
 #: lib/src/gretl_errors.c:56
-#, fuzzy
 msgid "Syntax error"
-msgstr "Error de datos"
+msgstr "Error de sintaxis"
 
 #: lib/src/gretl_errors.c:57
 msgid "No independent variables left after omissions"
@@ -3736,9 +3736,9 @@ msgid "Error: unit %g, period %g: duplicated observation"
 msgstr "Error: unidad %g, periodo %g: observación duplicada"
 
 #: lib/src/gretl_panel.c:4797 lib/src/gretl_panel.c:4807
-#, fuzzy
 msgid "Sorry, can't do this with a sub-sampled dataset"
-msgstr "Vd. no puede hacer esto mientras edita el conjunto de datos"
+msgstr ""
+"Lo siento, no puede hacer esto con una submuestra de un conjunto de datos"
 
 #: lib/src/gretl_paths.c:2115
 msgid "User directory is not set"
