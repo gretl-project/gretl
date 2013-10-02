@@ -480,7 +480,7 @@ static int sync_data_to_full (DATASET *dset)
     int err;
 
     /* update values for pre-existing series, which may have been
-       modified via genr etc */
+       modified via "genr" etc. */
     update_full_data_values(dset);
 
     /* if case markers were added when subsampled, carry them back */
@@ -529,6 +529,36 @@ static char *make_current_sample_mask (DATASET *dset)
     return currmask;
 }
 
+/* Deal with the case where sampling has been done simply by
+   moving the sample-range endpoints
+*/
+
+static int restore_full_easy (DATASET *dset, ExecState *state)
+{
+    int t1min, t2max;
+
+    if (state == NULL) {
+	/* not inside a function */
+	t1min = 0;
+	t2max = dset->n - 1;
+    } else {
+	/* don't go outside the bounds set on entry to
+	   a function */
+	sample_range_get_extrema(dset, &t1min, &t2max);
+    }
+
+    if (dset->t1 != t1min || dset->t2 != t2max) {
+	dset->t1 = t1min;
+	dset->t2 = t2max;
+#if SUBDEBUG
+	fprintf(stderr, "restore_full_sample: just set t1=%d and t2=%d\n",
+		t1min, t2max);
+#endif
+    }
+
+    return 0;
+}
+
 /* restore_full_sample: 
  * @dset: dataset struct.
  * @state: structure representing program execution state,
@@ -549,40 +579,18 @@ int restore_full_sample (DATASET *dset, ExecState *state)
 
     if (dset == NULL) {
 	return E_NODATA;
-    }
-
-    if (!complex_subsampled()) {
-	int t1min, t2max;
-
-	if (state == NULL) {
-	    /* not inside a function */
-	    t1min = 0;
-	    t2max = dset->n - 1;
-	} else {
-	    /* don't go outside the bounds set on entry to
-	       a function */
-	    sample_range_get_extrema(dset, &t1min, &t2max);
-	}
-
-	if (dset->t1 != t1min || dset->t2 != t2max) {
-	    dset->t1 = t1min;
-	    dset->t2 = t2max;
-#if SUBDEBUG
-	    fprintf(stderr, "restore_full_sample: just set t1=%d and t2=%d\n",
-		    t1min, t2max);
-#endif
-	}
-	return 0;
+    } else if (!complex_subsampled()) {
+	return restore_full_easy(dset, state);
     }
 
 #if FULLDEBUG || SUBDEBUG
-    fprintf(stderr, "\nrestore_full_sample: dset=%p, state=%p\n", (void *) dset, 
-	    (void *) state);
+    fprintf(stderr, "\nrestore_full_sample: dset=%p, state=%p, fullset=%p\n", 
+	    (void *) dset, (void *) state, (void *) fullset);
 #endif
 
-    /* beyond this point we are doing a non-trivial restoration
-       of a stored full dataset, which has previously been
-       subsampled, e.g., by some boolean criterion 
+    /* Beyond this point we are doing a non-trivial restoration
+       of a stored "full" dataset which has previously been
+       subsampled, e.g., by some boolean criterion.
     */
 
     if (dset->submask == RESAMPLED) {
@@ -618,7 +626,9 @@ int restore_full_sample (DATASET *dset, ExecState *state)
     relink_to_full_dataset(dset);
 
     if (state != NULL) {
-	/* "full" really means, relative to the original state */
+	/* in this case restoring the "full" sample really means, relative 
+	   to the original state 
+	*/
 	if (state->submask != NULL) {
 	    err = restrict_sample_from_mask(state->submask, dset,
 					    OPT_NONE);
@@ -1299,6 +1309,11 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 	return err;
     }
 
+#if SUBDEBUG
+    fprintf(stderr, "started new Z for subset (v=%d, n=%d, Z=%p)\n", 
+	    subset->v, subset->n, (void *) subset->Z);
+#endif
+
     /* link (don't copy) varnames and descriptions, since these are
        not dependent on the series length */
     subset->varname = dset->varname;
@@ -1544,8 +1559,8 @@ int restrict_sample (const char *line, const int *list,
 
 #if FULLDEBUG || SUBDEBUG
     fprintf(stderr, "\nrestrict_sample: '%s'\n", line);
-    fprintf(stderr, " dset=%p, state=%p\n", (void *) dset, 
-	    (void *) state);
+    fprintf(stderr, " dset=%p, state=%p, fullset=%p\n", (void *) dset, 
+	    (void *) state, (void *) fullset);
 #endif
 
     if (line != NULL) {
@@ -1607,9 +1622,6 @@ int restrict_sample (const char *line, const int *list,
 	int contig = 0;
 
 	if (mode != SUBSAMPLE_RANDOM) {
-	    /* AC 2009-04-11: this check was not being done
-	       for cross-sectional data.  Why not?
-	    */
 	    contig = mask_contiguous(mask, dset, &t1, &t2);
 	}
 

@@ -4447,13 +4447,13 @@ static int normalize_uid_tid (const double *tid, int T,
     return 0;
 }
 
-/* Handle the case where a sub-sampled panel dataset has been
-   padded with rows containing NAs to recreate a balanced panel
-   structure: we have to get rid of the padding before we try
+/* Handle the case where a sub-sampled panel dataset has been padded
+   with rows containing NAs to recreate a (nominally) balanced panel
+   structure. We have to get rid of the padding before we try
    restoring the full data range. Note that while this function
-   "shrinks" @dset in the sense of reducing the series length
-   as recorded in dset->n, it does not "physically" shrink the
-   array members of @dset->Z.
+   "shrinks" @dset in the sense of reducing the series length as
+   recorded in dset->n, it does not "physically" shrink the array
+   members of dset->Z.
 */
 
 int undo_panel_padding (DATASET *dset)
@@ -4461,8 +4461,8 @@ int undo_panel_padding (DATASET *dset)
     char *mask = dset->padmask;
     double *Zi;
     char **S = NULL;
-    int padded_n = dset->n;
-    int real_n = dset->n;
+    int padded_n = dset->n; /* current series length */
+    int real_n = dset->n;   /* target series length */
     int i, t;
     int err = 0;
 
@@ -4735,6 +4735,18 @@ static void finalize_panel_datainfo (DATASET *dset, int nperiods)
     ntodate(dset->endobs, dset->n - 1, dset);
 }
 
+/**
+ * set_panel_structure_from_vars:
+ * @uv: index of series uniquely identifying units/groups.
+ * @tv: index of series uniquely identifying time periods.
+ * @dset: pointer to dataset.
+ *
+ * Sets the panel structure of @dset based on the information
+ * in the series with indices @uv and @tv, if possible.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
 int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
 {
     int subsampled;
@@ -4751,11 +4763,15 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
     int err = 0;
 
 #if PDEBUG
-    fprintf(stderr, "set_panel_structure_from_vars:\n "
+    fprintf(stderr, "\n*** set_panel_structure_from_vars:\n "
 	    "using var %d ('%s') for unit, var %d ('%s') for time\n",
 	    uv, dset->varname[uv], tv, dset->varname[tv]);
     print_unit_var(uv, dset->Z, n, 0);
 #endif
+
+    /* start by making sorted copies of the unit and time 
+       variables and counting the unique values of each
+    */
 
     uid = copyvec(dset->Z[uv], n);
     tid = copyvec(dset->Z[tv], n);
@@ -4771,6 +4787,8 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
     qsort(tid, n, sizeof *tid, gretl_compare_doubles);
     nperiods = count_distinct_values(tid, dset->n);
 
+    /* check that we have a possible panel structure */
+
     if (nunits == 1 || nperiods == 1 || 
 	nunits == n || nperiods == n ||
 	n > nunits * nperiods) {
@@ -4779,6 +4797,10 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
 	err = E_DATA;
 	goto bailout;
     }
+
+    /* figure how many panel-data rows are implied, and how many
+       "padding" rows are needed to complete the structure
+    */
 
     fulln = nunits * nperiods;
     totmiss = fulln - dset->n;
@@ -4793,38 +4815,53 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
 
     subsampled = complex_subsampled();
 
+#if 1
     if (totmiss > 0 && subsampled && !dataset_is_panel(dset)) {
 	gretl_errmsg_set(_("Sorry, can't do this with a sub-sampled dataset"));
 	err = E_DATA;
 	goto bailout;
     }
+#endif
+
+    /* determine if the data rows are already in sort order by unit,
+       and by period for each unit */
 
     presorted = panel_is_sorted(dset, uv, tv);
 
+#if PDEBUG
+    fprintf(stderr, "panel_is_sorted? %s\n", presorted ? "yes" : "no");
+#endif
+
     if (!presorted) {
 	if (subsampled) {
-	    /* this restriction may not be necessary? */
+	    /* We can't re-order the rows in a subsampled dataset, or the
+	       data will get scrambled when restoration of the full dataset
+	       is attempted.
+	    */
 	    gretl_errmsg_set(_("Sorry, can't do this with a sub-sampled dataset"));
 	    err = E_DATA;
 	} else {
 	    /* sort full dataset by unit and period */
 	    err = panel_data_sort_by(dset, uv, tv, &ustrs);
 	}
+#if PDEBUG
+	if (!err) print_unit_var(uv, dset->Z, n, 1);
+#endif
     }
 
-#if PDEBUG
-    if (!err) print_unit_var(uv, dset->Z, n, 1);
-#endif
-
     if (!err && totmiss > 0) {
-	/* establish a balanced panel */
+	/* establish a nominally balanced panel */
 	mask = malloc(fulln);
-	rearrange_id_array(uid, nunits, n);
-	rearrange_id_array(tid, nperiods, n);
-	err = pad_panel_dataset(uid, uv, nunits, 
-				tid, tv, nperiods, 
-				dset, ustrs, 
-				mask);
+	if (mask == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    rearrange_id_array(uid, nunits, n);
+	    rearrange_id_array(tid, nperiods, n);
+	    err = pad_panel_dataset(uid, uv, nunits, 
+				    tid, tv, nperiods, 
+				    dset, ustrs, 
+				    mask);
+	}
     }
 
     if (!err) {

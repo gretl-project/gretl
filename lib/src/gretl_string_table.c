@@ -438,8 +438,6 @@ void gretl_string_table_destroy (gretl_string_table *gst)
     free(gst);
 }
 
-#define SAVE_STRING_TABLES 1
-
 /**
  * gretl_string_table_print:
  * @gst: gretl string table.
@@ -487,8 +485,7 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
     if (ncols > 0) {
 	fputc('\n', fp);
 	fputs(_("One or more non-numeric variables were found.\n"
-		"Gretl cannot handle such variables directly, so they\n"
-		"have been given numeric codes as follows.\n\n"), fp);
+		"These variables have been given numeric codes as follows.\n\n"), fp);
 	if (gst->extra != NULL) {
 	    fputs(_("In addition, some mappings from numerical values to string\n"
 		    "labels were found, and are printed below.\n\n"), fp);
@@ -507,12 +504,10 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 	for (j=0; j<st->n_strs; j++) {
 	    fprintf(fp, "%3d = '%s'\n", j+1, st->strs[j]);
 	}
-#if SAVE_STRING_TABLES
 	if (dset->varinfo != NULL) {
 	    series_attach_string_table(dset, vi, st);
 	    gst->cols[i] = NULL;
 	}
-#endif
     }
 
     if (gst->extra != NULL) {
