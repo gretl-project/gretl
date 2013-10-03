@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-10-02 08:48-0400\n"
-"PO-Revision-Date: 2013-09-26 11:22+0100\n"
+"PO-Revision-Date: 2013-10-03 10:21+0100\n"
 "Last-Translator: Helio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -436,9 +436,9 @@ msgid "got invalid field '%s'"
 msgstr "encontrado campo inválido '%s'"
 
 #: lib/src/calendar.c:403
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid starting date for %d-day data"
-msgstr "Ordem de desfasamento inválida para arch (%d)"
+msgstr "Data inválida para dados de %d-dias"
 
 #: lib/src/compare.c:269
 #, c-format
@@ -1158,7 +1158,7 @@ msgstr "%s: chave de texto à direita mas numérico à esquerda"
 #: lib/src/csvdata.c:4782
 #, c-format
 msgid "Outer dataset: read %d columns and %d rows\n"
-msgstr ""
+msgstr "Conjunto de dados exterior: lido %d colunas e %d linhas\n"
 
 #: lib/src/csvdata.c:4832 gui2/library.c:4000
 msgid "Series length does not match the dataset"
@@ -3092,14 +3092,12 @@ msgstr ""
 "Este comando está implementado apenas para modelos Mínimos Quadrados (OLS)"
 
 #: lib/src/gretl_errors.c:55
-#, fuzzy
 msgid "Invalid argument"
-msgstr "Entrada inválida"
+msgstr "Argumento inválido"
 
 #: lib/src/gretl_errors.c:56
-#, fuzzy
 msgid "Syntax error"
-msgstr "Erro de dados"
+msgstr "Erro de sintaxe"
 
 #: lib/src/gretl_errors.c:57
 msgid "No independent variables left after omissions"
@@ -3902,16 +3900,14 @@ msgid "variable %d: translating from strings to code numbers\n"
 msgstr "variável %d: traduzindo de texto para números de código\n"
 
 #: lib/src/gretl_string_table.c:487
-#, fuzzy
 msgid ""
 "One or more non-numeric variables were found.\n"
 "These variables have been given numeric codes as follows.\n"
 "\n"
 msgstr ""
 "Foram encontradas uma ou mais variáveis não-numéricas.\n"
-"Gretl não consegue lidar com essas variáveis directamente,\n"
-" por isso foram atribuídos códigos numéricos conforme adiante\n"
-"se mostra.\n"
+"A essas variáveis foram atribuídos códigos numéricos conforme adiante se "
+"mostra.\n"
 "\n"
 
 #: lib/src/gretl_string_table.c:490
@@ -7404,7 +7400,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 26 de setembro de 2013."
+"Tradução de 3 de outubro de 2013."
 
 #: gui2/about.c:165
 msgid "License"
@@ -9517,26 +9513,24 @@ msgstr ""
 "Confirma escrever por cima?"
 
 #: gui2/fileselect.c:793
-#, fuzzy
 msgid "Gretl data files (*.gdt)"
-msgstr "ficheiro de dados gretl (.gdt)"
+msgstr "Ficheiro de dados gretl (.gdt)"
 
 #: gui2/fileselect.c:794 gui2/fileselect.c:808
 msgid "CSV files (*.csv)"
-msgstr "ficheiros de valores separados por vírgulas (CSV) (*.csv)"
+msgstr "Ficheiros de valores separados por vírgulas (CSV) (*.csv)"
 
 #: gui2/fileselect.c:795 gui2/fileselect.c:809 gui2/fileselect.c:824
 msgid "ASCII files (*.txt)"
-msgstr "ficheiros ASCII (*.txt)"
+msgstr "Ficheiros ASCII (*.txt)"
 
 #: gui2/fileselect.c:796
 msgid "Gnumeric files (*.gnumeric"
-msgstr ""
+msgstr "Ficheiros Gnumeric (*.gnumeric)"
 
 #: gui2/fileselect.c:797
-#, fuzzy
 msgid "Open Document files (*.ods)"
-msgstr "_Open Document..."
+msgstr "Ficheiros Open Document (*.ods)"
 
 #: gui2/fileselect.c:798 gui2/fileselect.c:812
 msgid "Excel files (*.xls)"
@@ -9547,62 +9541,56 @@ msgid "Excel files (*.xlsx)"
 msgstr "Ficheiros Excel (*.xlsx)"
 
 #: gui2/fileselect.c:800
-#, fuzzy
 msgid "Stata files (*.dta)"
-msgstr "todos os ficheiros (*.*)"
+msgstr "Ficheiros Stata (*.dta)"
 
 #: gui2/fileselect.c:801
-#, fuzzy
 msgid "Eviews files (*.wf1)"
-msgstr "Ficheiros Excel (*.xls)"
+msgstr "Ficheiros Eviews (*.wf1)"
 
 #: gui2/fileselect.c:802
-#, fuzzy
 msgid "SPSS files (*.sav)"
-msgstr "ficheiros de valores separados por vírgulas (CSV) (*.csv)"
+msgstr "Ficheiros SPSS (*.sav)"
 
 #: gui2/fileselect.c:803
-#, fuzzy
 msgid "SAS xport files (*.xpt)"
-msgstr "ficheiros gnuplot (*.plt)"
+msgstr "Ficheiros exportados do SAS (*.xpt)"
 
 #: gui2/fileselect.c:804
-#, fuzzy
 msgid "Octave files (*.m)"
-msgstr "ficheiros GNU Octave (*.m)"
+msgstr "Ficheiros Octave (*.m)"
 
 #: gui2/fileselect.c:805
-#, fuzzy
 msgid "JMulTi files (*.dat)"
-msgstr "todos os ficheiros (*.*)"
+msgstr "Ficheiros JMulTi (*.dat)"
 
 #: gui2/fileselect.c:806 gui2/fileselect.c:810 gui2/fileselect.c:825
 msgid "all files (*.*)"
-msgstr "todos os ficheiros (*.*)"
+msgstr "Todos os ficheiros (*.*)"
 
 #: gui2/fileselect.c:815
 msgid "gretl script files (*.inp)"
-msgstr "ficheiros de sequência de comandos gretl (*.inp)"
+msgstr "Ficheiros de sequência de comandos gretl (*.inp)"
 
 #: gui2/fileselect.c:816
 msgid "GNU R files (*.R)"
-msgstr "ficheiros GNU R (*.R)"
+msgstr "Ficheiros GNU R (*.R)"
 
 #: gui2/fileselect.c:817
 msgid "gnuplot files (*.plt)"
-msgstr "ficheiros gnuplot (*.plt)"
+msgstr "Ficheiros gnuplot (*.plt)"
 
 #: gui2/fileselect.c:818
 msgid "GNU Octave files (*.m)"
-msgstr "ficheiros GNU Octave (*.m)"
+msgstr "Ficheiros GNU Octave (*.m)"
 
 #: gui2/fileselect.c:819
 msgid "Python files (*.py)"
-msgstr "ficheiros Python (*.py)"
+msgstr "Ficheiros Python (*.py)"
 
 #: gui2/fileselect.c:821
 msgid "Ox files (*.ox)"
-msgstr "ficheiros Ox (*.ox)"
+msgstr "Ficheiros Ox (*.ox)"
 
 #: gui2/filters.c:92
 msgid "Simple moving average"
@@ -12672,7 +12660,7 @@ msgstr "Cadeias de caracteres"
 
 #: gui2/helpfiles.c:372
 msgid "Calendar"
-msgstr ""
+msgstr "Calendário"
 
 #: gui2/helpfiles.c:412 gui2/textbuf.c:1643
 msgid "Index"
