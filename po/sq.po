@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-10-02 08:48-0400\n"
+"POT-Creation-Date: 2013-10-03 08:28-0400\n"
 "PO-Revision-Date: 2013-07-25 13:28+0100\n"
 "Last-Translator: \n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
@@ -100,7 +100,7 @@ msgid "p-value"
 msgstr "p. kritik"
 
 #: lib/src/adf_kpss.c:434 lib/src/modelprint.c:3433 lib/src/modelprint.c:3498
-#: lib/src/subsample.c:2160
+#: lib/src/subsample.c:2178
 msgid "unknown"
 msgstr "i panjohur"
 
@@ -1567,11 +1567,11 @@ msgstr "Asnjë seri e vlefshme nuk u gjet"
 msgid "Out of memory!"
 msgstr "Kujtesë e pamjaftueshme!"
 
-#: lib/src/dbread.c:1875 lib/src/subsample.c:1781 lib/src/subsample.c:1798
+#: lib/src/dbread.c:1875 lib/src/subsample.c:1799 lib/src/subsample.c:1816
 msgid "error reading smpl line"
 msgstr "gabim gjatë leximit të rreshtit smpl"
 
-#: lib/src/dbread.c:1892 lib/src/subsample.c:1822
+#: lib/src/dbread.c:1892 lib/src/subsample.c:1840
 msgid "Invalid null sample"
 msgstr "Kampioni është bosh, pra i pavlefshëm"
 
@@ -3333,7 +3333,7 @@ msgstr "\"%s\" s'është përcaktuar.\n"
 msgid "_Open data"
 msgstr "_Hap një skedë të dhënash"
 
-#: lib/src/gretl_intl.c:105 lib/src/subsample.c:2144
+#: lib/src/gretl_intl.c:105 lib/src/subsample.c:2162
 msgid "annual"
 msgstr "vjetore"
 
@@ -3740,7 +3740,7 @@ msgstr "heteroskedasticiteti mes grupeve"
 msgid "Error: unit %g, period %g: duplicated observation"
 msgstr "Gabim : individi %g, periudha %g : vlerë e duplikuar"
 
-#: lib/src/gretl_panel.c:4797 lib/src/gretl_panel.c:4807
+#: lib/src/gretl_panel.c:4854
 msgid "Sorry, can't do this with a sub-sampled dataset"
 msgstr ""
 
@@ -3871,7 +3871,7 @@ msgstr "Gabimi std. i regresionit"
 msgid "Robust chi^2"
 msgstr "Hi^2 i qëndrueshëm"
 
-#: lib/src/gretl_restrict.c:2250 lib/src/subsample.c:2198
+#: lib/src/gretl_restrict.c:2250 lib/src/subsample.c:2216
 #: lib/src/system.c:1303
 msgid "restriction"
 msgstr "kusht"
@@ -5616,7 +5616,7 @@ msgid "Modulus"
 msgstr "Modulo"
 
 #: lib/src/modelprint.c:4837 lib/src/modelprint.c:4845
-#: lib/src/subsample.c:2186 lib/src/subsample.c:2208 lib/src/subsample.c:2258
+#: lib/src/subsample.c:2204 lib/src/subsample.c:2226 lib/src/subsample.c:2276
 msgid "Frequency"
 msgstr "Frekuenca"
 
@@ -6360,7 +6360,7 @@ msgstr "Kampioni në përdorim: %d vrojtime\n"
 msgid "Full data range"
 msgstr "Kampioni i plotë i të dhënave"
 
-#: lib/src/printout.c:728 lib/src/subsample.c:2172
+#: lib/src/printout.c:728 lib/src/subsample.c:2190
 msgid "Current sample"
 msgstr "Kampioni në përdorim"
 
@@ -6639,52 +6639,56 @@ msgstr "GED (forma = %g): "
 msgid "out of memory in XML encoding"
 msgstr "kujtesë e pamjaftueshme për kodifikimin XML"
 
-#: lib/src/subsample.c:602
+#: lib/src/subsample.c:610
 msgid "Missing sub-sample information; can't merge data\n"
 msgstr ""
 "Shkrirja e të dhënave nuk mund të bëhet pasi mungojnë hollësitë mbi nën-"
 "kampionin\n"
 
-#: lib/src/subsample.c:720 lib/src/subsample.c:744
+#: lib/src/subsample.c:730 lib/src/subsample.c:754
 #, c-format
 msgid "'%s' is not a dummy variable"
 msgstr "« %s » nuk është ndryshore treguese"
 
-#: lib/src/subsample.c:739
+#: lib/src/subsample.c:749
 #, c-format
 msgid "Variable '%s' not defined"
 msgstr "Ndryshorja « %s » është e papërcaktuar"
 
-#: lib/src/subsample.c:827
+#: lib/src/subsample.c:837
 #, c-format
 msgid "Invalid number of cases %d"
 msgstr "Numri i rasteve të pavlefshme %d"
 
-#: lib/src/subsample.c:1189
+#: lib/src/subsample.c:1199
 msgid "Sub-sample command failed mysteriously"
 msgstr "Zgjedhja e nën-kampionit dështoi papritur"
 
-#: lib/src/subsample.c:1210
+#: lib/src/subsample.c:1220
 msgid "No observations would be left!"
 msgstr "Asnjë vrojtim nuk do të mbetej!"
 
-#: lib/src/subsample.c:1215
+#: lib/src/subsample.c:1225
 msgid "No observations were dropped!"
 msgstr "Asnjë vrojtim nuk është hequr!"
 
-#: lib/src/subsample.c:1787 lib/src/subsample.c:1806
+#: lib/src/subsample.c:1263
+msgid "--balanced option is invalid: the (full) dataset is not a panel"
+msgstr ""
+
+#: lib/src/subsample.c:1805 lib/src/subsample.c:1824
 msgid "error in new starting obs"
 msgstr "gabim në vrojtimin ri të parë"
 
-#: lib/src/subsample.c:1815
+#: lib/src/subsample.c:1833
 msgid "error in new ending obs"
 msgstr "gabim në vrojtimin e ri të fundit "
 
-#: lib/src/subsample.c:1905 lib/src/subsample.c:1911 lib/src/subsample.c:1933
+#: lib/src/subsample.c:1923 lib/src/subsample.c:1929 lib/src/subsample.c:1951
 msgid "missing values"
 msgstr "vlera munguese"
 
-#: lib/src/subsample.c:1920
+#: lib/src/subsample.c:1938
 #, c-format
 msgid ""
 "\n"
@@ -6693,98 +6697,98 @@ msgstr ""
 "\n"
 "Numri i vrojtimeve (rreshtat) me vlera munguese = %d (%.2f%%)\n"
 
-#: lib/src/subsample.c:1923
+#: lib/src/subsample.c:1941
 #, c-format
 msgid ""
 "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr "Totali i vlerave munguese = %d (%.2f%% i totalit të vlerave)\n"
 
-#: lib/src/subsample.c:1934
+#: lib/src/subsample.c:1952
 msgid "valid values"
 msgstr "vlera të vlefshme"
 
-#: lib/src/subsample.c:2103 lib/src/subsample.c:2104
+#: lib/src/subsample.c:2121 lib/src/subsample.c:2122
 msgid "dataset is subsampled, model is not\n"
 msgstr "të dhënat i përkasin një nën-kampioni kurse modeli jo\n"
 
-#: lib/src/subsample.c:2110 lib/src/subsample.c:2111
+#: lib/src/subsample.c:2128 lib/src/subsample.c:2129
 msgid "model is subsampled, dataset is not\n"
 msgstr "Modeli i përket një nën-kampioni kurse të dhënat jo.\n"
 
-#: lib/src/subsample.c:2118
+#: lib/src/subsample.c:2136
 msgid "model and dataset subsamples not the same\n"
 msgstr "kampioni në përdorim nuk përputhet me atë të modelit\n"
 
-#: lib/src/subsample.c:2129
+#: lib/src/subsample.c:2147
 msgid "time series"
 msgstr "seri kohore"
 
-#: lib/src/subsample.c:2131
+#: lib/src/subsample.c:2149
 msgid "panel"
 msgstr "panel"
 
-#: lib/src/subsample.c:2133
+#: lib/src/subsample.c:2151
 msgid "undated"
 msgstr "të dhëna të padatuara"
 
-#: lib/src/subsample.c:2140
+#: lib/src/subsample.c:2158
 msgid "special"
 msgstr "e veçantë"
 
-#: lib/src/subsample.c:2146 gui2/dialogs.c:3760
+#: lib/src/subsample.c:2164 gui2/dialogs.c:3760
 msgid "quarterly"
 msgstr "tremujore"
 
-#: lib/src/subsample.c:2148 gui2/dialogs.c:3760
+#: lib/src/subsample.c:2166 gui2/dialogs.c:3760
 msgid "monthly"
 msgstr "mujore"
 
-#: lib/src/subsample.c:2150
+#: lib/src/subsample.c:2168
 msgid "hourly"
 msgstr "orare"
 
-#: lib/src/subsample.c:2152
+#: lib/src/subsample.c:2170
 msgid "weekly"
 msgstr "javore"
 
-#: lib/src/subsample.c:2156
+#: lib/src/subsample.c:2174
 msgid "daily"
 msgstr "ditore"
 
-#: lib/src/subsample.c:2158
+#: lib/src/subsample.c:2176
 msgid "decennial"
 msgstr "10-vjeçare"
 
-#: lib/src/subsample.c:2181
+#: lib/src/subsample.c:2199
 msgid "Full dataset"
 msgstr "Të dhënat e plota"
 
-#: lib/src/subsample.c:2183 lib/src/subsample.c:2205
+#: lib/src/subsample.c:2201 lib/src/subsample.c:2223
 msgid "Type"
 msgstr "Lloji"
 
-#: lib/src/subsample.c:2190 lib/src/subsample.c:2212 gui2/datawiz.c:1246
+#: lib/src/subsample.c:2208 lib/src/subsample.c:2230 gui2/datawiz.c:1246
 msgid "Number of cross-sectional units"
 msgstr "Numri i individëve"
 
-#: lib/src/subsample.c:2191 lib/src/subsample.c:2213 gui2/datawiz.c:1247
+#: lib/src/subsample.c:2209 lib/src/subsample.c:2231 gui2/datawiz.c:1247
 msgid "Number of time periods"
 msgstr "Numri i periudhave:"
 
-#: lib/src/subsample.c:2193 lib/src/subsample.c:2261
+#: lib/src/subsample.c:2211 lib/src/subsample.c:2279
 msgid "Range"
 msgstr "Amplituda"
 
-#: lib/src/subsample.c:2196
+#: lib/src/subsample.c:2214
 msgid "Subsampled data"
 msgstr "Nën-kampion të dhënash"
 
-#: lib/src/subsample.c:2215
+#: lib/src/subsample.c:2233
 msgid "Full range"
 msgstr "Kampioni i plotë"
 
 # të testohet
-#: lib/src/subsample.c:2241
+#: lib/src/subsample.c:2259
 #, c-format
 msgid ""
 "Data file %s\n"
@@ -6793,19 +6797,19 @@ msgstr ""
 "Të dhënat %s\n"
 "sipas"
 
-#: lib/src/subsample.c:2242
+#: lib/src/subsample.c:2260
 msgid "(unsaved)"
 msgstr "(i pa ruajtur)"
 
-#: lib/src/subsample.c:2248 gui2/database.c:1376
+#: lib/src/subsample.c:2266 gui2/database.c:1376
 msgid "Description"
 msgstr "Përshkrim"
 
-#: lib/src/subsample.c:2254
+#: lib/src/subsample.c:2272
 msgid "Type of data"
 msgstr "Lloji i të dhënave"
 
-#: lib/src/subsample.c:2264
+#: lib/src/subsample.c:2282
 msgid "Listing of variables"
 msgstr "Lista e ndryshoreve"
 
@@ -9552,7 +9556,7 @@ msgid "ASCII files (*.txt)"
 msgstr "skedë ASCII (*.txt)"
 
 #: gui2/fileselect.c:796
-msgid "Gnumeric files (*.gnumeric"
+msgid "Gnumeric files (*.gnumeric)"
 msgstr ""
 
 #: gui2/fileselect.c:797

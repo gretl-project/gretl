@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-10-02 08:48-0400\n"
+"POT-Creation-Date: 2013-10-03 08:28-0400\n"
 "PO-Revision-Date: 2013-05-02 23:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
@@ -103,7 +103,7 @@ msgid "p-value"
 msgstr "wartość p"
 
 #: lib/src/adf_kpss.c:434 lib/src/modelprint.c:3433 lib/src/modelprint.c:3498
-#: lib/src/subsample.c:2160
+#: lib/src/subsample.c:2178
 msgid "unknown"
 msgstr "nieznany"
 
@@ -1550,11 +1550,11 @@ msgstr "Nie znaleziono serii danych"
 msgid "Out of memory!"
 msgstr "Brak pamięci!"
 
-#: lib/src/dbread.c:1875 lib/src/subsample.c:1781 lib/src/subsample.c:1798
+#: lib/src/dbread.c:1875 lib/src/subsample.c:1799 lib/src/subsample.c:1816
 msgid "error reading smpl line"
 msgstr "Błąd wczytania lini z poleceniem zakresu próby (smpl)"
 
-#: lib/src/dbread.c:1892 lib/src/subsample.c:1822
+#: lib/src/dbread.c:1892 lib/src/subsample.c:1840
 msgid "Invalid null sample"
 msgstr "Błąd zakresu próby - pusta próba"
 
@@ -3313,7 +3313,7 @@ msgstr "\"%s\" nie jest zdefiniowane.\n"
 msgid "_Open data"
 msgstr "_Otwórz dane"
 
-#: lib/src/gretl_intl.c:105 lib/src/subsample.c:2144
+#: lib/src/gretl_intl.c:105 lib/src/subsample.c:2162
 msgid "annual"
 msgstr "roczne"
 
@@ -3715,7 +3715,7 @@ msgstr "groupwise heteroskedasticity"
 msgid "Error: unit %g, period %g: duplicated observation"
 msgstr "Błąd: jednostka %g, okres %g: obserwacja zduplikowana"
 
-#: lib/src/gretl_panel.c:4797 lib/src/gretl_panel.c:4807
+#: lib/src/gretl_panel.c:4854
 msgid "Sorry, can't do this with a sub-sampled dataset"
 msgstr ""
 
@@ -3844,7 +3844,7 @@ msgstr "Błąd standardowy reszt"
 msgid "Robust chi^2"
 msgstr "Robust chi^2"
 
-#: lib/src/gretl_restrict.c:2250 lib/src/subsample.c:2198
+#: lib/src/gretl_restrict.c:2250 lib/src/subsample.c:2216
 #: lib/src/system.c:1303
 msgid "restriction"
 msgstr "Restrykcje"
@@ -5577,7 +5577,7 @@ msgid "Modulus"
 msgstr "Moduł"
 
 #: lib/src/modelprint.c:4837 lib/src/modelprint.c:4845
-#: lib/src/subsample.c:2186 lib/src/subsample.c:2208 lib/src/subsample.c:2258
+#: lib/src/subsample.c:2204 lib/src/subsample.c:2226 lib/src/subsample.c:2276
 msgid "Frequency"
 msgstr "Okresowość"
 
@@ -6316,7 +6316,7 @@ msgstr "Bieżąca próba: %d obserwacji\n"
 msgid "Full data range"
 msgstr "Pełny zakres danych"
 
-#: lib/src/printout.c:728 lib/src/subsample.c:2172
+#: lib/src/printout.c:728 lib/src/subsample.c:2190
 msgid "Current sample"
 msgstr "Bieżąca próba"
 
@@ -6593,50 +6593,54 @@ msgstr "GED (parametr kształtu = %g)"
 msgid "out of memory in XML encoding"
 msgstr "Bład pamięci w kodowaniu XML"
 
-#: lib/src/subsample.c:602
+#: lib/src/subsample.c:610
 msgid "Missing sub-sample information; can't merge data\n"
 msgstr "Błędna inforamcja o podpróbie; niemożliwe połączenie danych\n"
 
-#: lib/src/subsample.c:720 lib/src/subsample.c:744
+#: lib/src/subsample.c:730 lib/src/subsample.c:754
 #, c-format
 msgid "'%s' is not a dummy variable"
 msgstr "'%s' nie jest zmienną zero-jedynkową"
 
-#: lib/src/subsample.c:739
+#: lib/src/subsample.c:749
 #, c-format
 msgid "Variable '%s' not defined"
 msgstr "Zmienna '%s' jest niezdefiniowana"
 
-#: lib/src/subsample.c:827
+#: lib/src/subsample.c:837
 #, c-format
 msgid "Invalid number of cases %d"
 msgstr "Błędna liczba obserwacji %d"
 
-#: lib/src/subsample.c:1189
+#: lib/src/subsample.c:1199
 msgid "Sub-sample command failed mysteriously"
 msgstr "Nieznany błąd w podpróbie"
 
-#: lib/src/subsample.c:1210
+#: lib/src/subsample.c:1220
 msgid "No observations would be left!"
 msgstr "Żadna obserwacja nie będzie pominięta!"
 
-#: lib/src/subsample.c:1215
+#: lib/src/subsample.c:1225
 msgid "No observations were dropped!"
 msgstr "Brak obserwacji do pominięcia!"
 
-#: lib/src/subsample.c:1787 lib/src/subsample.c:1806
+#: lib/src/subsample.c:1263
+msgid "--balanced option is invalid: the (full) dataset is not a panel"
+msgstr ""
+
+#: lib/src/subsample.c:1805 lib/src/subsample.c:1824
 msgid "error in new starting obs"
 msgstr "błędna nowa startowa obserwacja"
 
-#: lib/src/subsample.c:1815
+#: lib/src/subsample.c:1833
 msgid "error in new ending obs"
 msgstr "błędna nowa końcowa obserwacja"
 
-#: lib/src/subsample.c:1905 lib/src/subsample.c:1911 lib/src/subsample.c:1933
+#: lib/src/subsample.c:1923 lib/src/subsample.c:1929 lib/src/subsample.c:1951
 msgid "missing values"
 msgstr "brak danych"
 
-#: lib/src/subsample.c:1920
+#: lib/src/subsample.c:1938
 #, c-format
 msgid ""
 "\n"
@@ -6645,98 +6649,98 @@ msgstr ""
 "\n"
 "Liczba obserwacji (wierszy) z brakującymi danymi = %d (%.2f%%)\n"
 
-#: lib/src/subsample.c:1923
+#: lib/src/subsample.c:1941
 #, c-format
 msgid ""
 "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr "Liczba brakujących danych = %d (%.2f%% z ogólnej liczby danych)\n"
 
-#: lib/src/subsample.c:1934
+#: lib/src/subsample.c:1952
 msgid "valid values"
 msgstr "Poprawne wartości"
 
-#: lib/src/subsample.c:2103 lib/src/subsample.c:2104
+#: lib/src/subsample.c:2121 lib/src/subsample.c:2122
 msgid "dataset is subsampled, model is not\n"
 msgstr "Dane są podpróbą, a model oszacowano nie dla tego zakresu danych\n"
 
-#: lib/src/subsample.c:2110 lib/src/subsample.c:2111
+#: lib/src/subsample.c:2128 lib/src/subsample.c:2129
 msgid "model is subsampled, dataset is not\n"
 msgstr ""
 "Model wyznaczono dla podpróby, a dane aktualnie posiadają odmienny zakres\n"
 
-#: lib/src/subsample.c:2118
+#: lib/src/subsample.c:2136
 msgid "model and dataset subsamples not the same\n"
 msgstr "Podpróba dla modelu i danych nie jest jednakowa\n"
 
-#: lib/src/subsample.c:2129
+#: lib/src/subsample.c:2147
 msgid "time series"
 msgstr "szeregi czasowe"
 
-#: lib/src/subsample.c:2131
+#: lib/src/subsample.c:2149
 msgid "panel"
 msgstr "panel"
 
-#: lib/src/subsample.c:2133
+#: lib/src/subsample.c:2151
 msgid "undated"
 msgstr "niedatowane"
 
-#: lib/src/subsample.c:2140
+#: lib/src/subsample.c:2158
 msgid "special"
 msgstr "specjalne"
 
-#: lib/src/subsample.c:2146 gui2/dialogs.c:3760
+#: lib/src/subsample.c:2164 gui2/dialogs.c:3760
 msgid "quarterly"
 msgstr "kwartalne"
 
-#: lib/src/subsample.c:2148 gui2/dialogs.c:3760
+#: lib/src/subsample.c:2166 gui2/dialogs.c:3760
 msgid "monthly"
 msgstr "miesięczne"
 
-#: lib/src/subsample.c:2150
+#: lib/src/subsample.c:2168
 msgid "hourly"
 msgstr "godzinowe"
 
-#: lib/src/subsample.c:2152
+#: lib/src/subsample.c:2170
 msgid "weekly"
 msgstr "tygodniowe"
 
-#: lib/src/subsample.c:2156
+#: lib/src/subsample.c:2174
 msgid "daily"
 msgstr "dzienne"
 
-#: lib/src/subsample.c:2158
+#: lib/src/subsample.c:2176
 msgid "decennial"
 msgstr "Dziesięcioletnie"
 
-#: lib/src/subsample.c:2181
+#: lib/src/subsample.c:2199
 msgid "Full dataset"
 msgstr "Pełny zakres danych"
 
-#: lib/src/subsample.c:2183 lib/src/subsample.c:2205
+#: lib/src/subsample.c:2201 lib/src/subsample.c:2223
 msgid "Type"
 msgstr "Typ"
 
-#: lib/src/subsample.c:2190 lib/src/subsample.c:2212 gui2/datawiz.c:1246
+#: lib/src/subsample.c:2208 lib/src/subsample.c:2230 gui2/datawiz.c:1246
 msgid "Number of cross-sectional units"
 msgstr "Liczba przekrojów w jednosce czasu"
 
-#: lib/src/subsample.c:2191 lib/src/subsample.c:2213 gui2/datawiz.c:1247
+#: lib/src/subsample.c:2209 lib/src/subsample.c:2231 gui2/datawiz.c:1247
 msgid "Number of time periods"
 msgstr "Liczba jednostek czasu w panelu"
 
-#: lib/src/subsample.c:2193 lib/src/subsample.c:2261
+#: lib/src/subsample.c:2211 lib/src/subsample.c:2279
 msgid "Range"
 msgstr "Zakres"
 
-#: lib/src/subsample.c:2196
+#: lib/src/subsample.c:2214
 msgid "Subsampled data"
 msgstr "Podpróba"
 
-#: lib/src/subsample.c:2215
+#: lib/src/subsample.c:2233
 msgid "Full range"
 msgstr "Pełny zakres danych"
 
-#: lib/src/subsample.c:2241
+#: lib/src/subsample.c:2259
 #, c-format
 msgid ""
 "Data file %s\n"
@@ -6745,19 +6749,19 @@ msgstr ""
 "Plik danych %s\n"
 "stan na:"
 
-#: lib/src/subsample.c:2242
+#: lib/src/subsample.c:2260
 msgid "(unsaved)"
 msgstr "(niezapisane)"
 
-#: lib/src/subsample.c:2248 gui2/database.c:1376
+#: lib/src/subsample.c:2266 gui2/database.c:1376
 msgid "Description"
 msgstr "Opis"
 
-#: lib/src/subsample.c:2254
+#: lib/src/subsample.c:2272
 msgid "Type of data"
 msgstr "Typ danych"
 
-#: lib/src/subsample.c:2264
+#: lib/src/subsample.c:2282
 msgid "Listing of variables"
 msgstr "Lista zmiennych"
 
@@ -9498,7 +9502,7 @@ msgid "ASCII files (*.txt)"
 msgstr "pliki tekstowe ASCII (*.txt)"
 
 #: gui2/fileselect.c:796
-msgid "Gnumeric files (*.gnumeric"
+msgid "Gnumeric files (*.gnumeric)"
 msgstr ""
 
 #: gui2/fileselect.c:797

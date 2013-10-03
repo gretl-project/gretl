@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-10-02 08:48-0400\n"
+"POT-Creation-Date: 2013-10-03 08:28-0400\n"
 "PO-Revision-Date: 2012-04-02 16:08-0500\n"
 "Last-Translator: Pavla Nikolovova <nikolovova@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -104,7 +104,7 @@ msgid "p-value"
 msgstr "p-hodnota"
 
 #: lib/src/adf_kpss.c:434 lib/src/modelprint.c:3433 lib/src/modelprint.c:3498
-#: lib/src/subsample.c:2160
+#: lib/src/subsample.c:2178
 msgid "unknown"
 msgstr "neznámá"
 
@@ -1559,11 +1559,11 @@ msgstr "Nebyla nalezena platná řada"
 msgid "Out of memory!"
 msgstr "Nedostatek paměti!"
 
-#: lib/src/dbread.c:1875 lib/src/subsample.c:1781 lib/src/subsample.c:1798
+#: lib/src/dbread.c:1875 lib/src/subsample.c:1799 lib/src/subsample.c:1816
 msgid "error reading smpl line"
 msgstr "chyba při načítání řádku smpl"
 
-#: lib/src/dbread.c:1892 lib/src/subsample.c:1822
+#: lib/src/dbread.c:1892 lib/src/subsample.c:1840
 msgid "Invalid null sample"
 msgstr "Neplatný nulový výběr"
 
@@ -3315,7 +3315,7 @@ msgstr "\"%s\" není definováno.\n"
 msgid "_Open data"
 msgstr "_Otevřít data"
 
-#: lib/src/gretl_intl.c:105 lib/src/subsample.c:2144
+#: lib/src/gretl_intl.c:105 lib/src/subsample.c:2162
 msgid "annual"
 msgstr "roční"
 
@@ -3716,7 +3716,7 @@ msgstr "heteroskedasticita po skupinách"
 msgid "Error: unit %g, period %g: duplicated observation"
 msgstr "Chyba: jednotka %g, perioda %g: zdvojené pozorování"
 
-#: lib/src/gretl_panel.c:4797 lib/src/gretl_panel.c:4807
+#: lib/src/gretl_panel.c:4854
 #, fuzzy
 msgid "Sorry, can't do this with a sub-sampled dataset"
 msgstr "Toto nelze udělat při upravování datového souboru"
@@ -3848,7 +3848,7 @@ msgstr "Standardní chyba regrese"
 msgid "Robust chi^2"
 msgstr "Robustní chí^2"
 
-#: lib/src/gretl_restrict.c:2250 lib/src/subsample.c:2198
+#: lib/src/gretl_restrict.c:2250 lib/src/subsample.c:2216
 #: lib/src/system.c:1303
 msgid "restriction"
 msgstr "omezení"
@@ -5583,7 +5583,7 @@ msgid "Modulus"
 msgstr "Absolutní hodnota"
 
 #: lib/src/modelprint.c:4837 lib/src/modelprint.c:4845
-#: lib/src/subsample.c:2186 lib/src/subsample.c:2208 lib/src/subsample.c:2258
+#: lib/src/subsample.c:2204 lib/src/subsample.c:2226 lib/src/subsample.c:2276
 msgid "Frequency"
 msgstr "Frekvence"
 
@@ -6320,7 +6320,7 @@ msgstr "Aktuální výběr: %d pozorování\n"
 msgid "Full data range"
 msgstr "Celý rozsah dat"
 
-#: lib/src/printout.c:728 lib/src/subsample.c:2172
+#: lib/src/printout.c:728 lib/src/subsample.c:2190
 msgid "Current sample"
 msgstr "Aktuální výběr"
 
@@ -6597,51 +6597,55 @@ msgstr "GED (tvar = %g)"
 msgid "out of memory in XML encoding"
 msgstr "nedostatek paměti v XML kódování"
 
-#: lib/src/subsample.c:602
+#: lib/src/subsample.c:610
 msgid "Missing sub-sample information; can't merge data\n"
 msgstr "Chybí informace o podmnožině výběru; nelze sloučit data\n"
 
-#: lib/src/subsample.c:720 lib/src/subsample.c:744
+#: lib/src/subsample.c:730 lib/src/subsample.c:754
 #, c-format
 msgid "'%s' is not a dummy variable"
 msgstr "'%s' není indikátorová proměnná"
 
-#: lib/src/subsample.c:739
+#: lib/src/subsample.c:749
 #, c-format
 msgid "Variable '%s' not defined"
 msgstr "Proměnná '%s' není definovaná"
 
-#: lib/src/subsample.c:827
+#: lib/src/subsample.c:837
 #, c-format
 msgid "Invalid number of cases %d"
 msgstr "Neplatný počet případů %d"
 
-#: lib/src/subsample.c:1189
+#: lib/src/subsample.c:1199
 msgid "Sub-sample command failed mysteriously"
 msgstr ""
 "Příkaz pro výběr podmožiny dat se z neznámého důvodu nepodařilo vykonat"
 
-#: lib/src/subsample.c:1210
+#: lib/src/subsample.c:1220
 msgid "No observations would be left!"
 msgstr "Nezbyla by žádná pozorování!"
 
-#: lib/src/subsample.c:1215
+#: lib/src/subsample.c:1225
 msgid "No observations were dropped!"
 msgstr "Žádná pozorování nebyla vynechána!"
 
-#: lib/src/subsample.c:1787 lib/src/subsample.c:1806
+#: lib/src/subsample.c:1263
+msgid "--balanced option is invalid: the (full) dataset is not a panel"
+msgstr ""
+
+#: lib/src/subsample.c:1805 lib/src/subsample.c:1824
 msgid "error in new starting obs"
 msgstr "chyba v novém počátečním pozorování"
 
-#: lib/src/subsample.c:1815
+#: lib/src/subsample.c:1833
 msgid "error in new ending obs"
 msgstr "chyba v novém koncovém pozorování"
 
-#: lib/src/subsample.c:1905 lib/src/subsample.c:1911 lib/src/subsample.c:1933
+#: lib/src/subsample.c:1923 lib/src/subsample.c:1929 lib/src/subsample.c:1951
 msgid "missing values"
 msgstr "chybějící hodnoty"
 
-#: lib/src/subsample.c:1920
+#: lib/src/subsample.c:1938
 #, c-format
 msgid ""
 "\n"
@@ -6650,98 +6654,98 @@ msgstr ""
 "\n"
 "Počet pozorování (řádků) s chybějícími hodnotami dat = %d (%.2f%%)\n"
 
-#: lib/src/subsample.c:1923
+#: lib/src/subsample.c:1941
 #, c-format
 msgid ""
 "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr ""
 "Celkový počet chybějících hodnot dat = %d (%.2f%% celkových hodnot dat)\n"
 
-#: lib/src/subsample.c:1934
+#: lib/src/subsample.c:1952
 msgid "valid values"
 msgstr "platné hodnoty"
 
-#: lib/src/subsample.c:2103 lib/src/subsample.c:2104
+#: lib/src/subsample.c:2121 lib/src/subsample.c:2122
 msgid "dataset is subsampled, model is not\n"
 msgstr "datový soubor je podvýběrem, model není odhadován na podvýběru\n"
 
-#: lib/src/subsample.c:2110 lib/src/subsample.c:2111
+#: lib/src/subsample.c:2128 lib/src/subsample.c:2129
 msgid "model is subsampled, dataset is not\n"
 msgstr "model je odhadován na podvýběru, datový soubor není podvýběrem\n"
 
-#: lib/src/subsample.c:2118
+#: lib/src/subsample.c:2136
 msgid "model and dataset subsamples not the same\n"
 msgstr "model a podmnožina souboru dat nejsou stejné\n"
 
-#: lib/src/subsample.c:2129
+#: lib/src/subsample.c:2147
 msgid "time series"
 msgstr "časová řada"
 
-#: lib/src/subsample.c:2131
+#: lib/src/subsample.c:2149
 msgid "panel"
 msgstr "panel"
 
-#: lib/src/subsample.c:2133
+#: lib/src/subsample.c:2151
 msgid "undated"
 msgstr "nedatovaný"
 
-#: lib/src/subsample.c:2140
+#: lib/src/subsample.c:2158
 msgid "special"
 msgstr "speciální"
 
-#: lib/src/subsample.c:2146 gui2/dialogs.c:3760
+#: lib/src/subsample.c:2164 gui2/dialogs.c:3760
 msgid "quarterly"
 msgstr "čtvrtletní"
 
-#: lib/src/subsample.c:2148 gui2/dialogs.c:3760
+#: lib/src/subsample.c:2166 gui2/dialogs.c:3760
 msgid "monthly"
 msgstr "měsíční"
 
-#: lib/src/subsample.c:2150
+#: lib/src/subsample.c:2168
 msgid "hourly"
 msgstr "hodinový"
 
-#: lib/src/subsample.c:2152
+#: lib/src/subsample.c:2170
 msgid "weekly"
 msgstr "týdenní"
 
-#: lib/src/subsample.c:2156
+#: lib/src/subsample.c:2174
 msgid "daily"
 msgstr "denní"
 
-#: lib/src/subsample.c:2158
+#: lib/src/subsample.c:2176
 msgid "decennial"
 msgstr "desetiroční"
 
-#: lib/src/subsample.c:2181
+#: lib/src/subsample.c:2199
 msgid "Full dataset"
 msgstr "Úplný datový soubor"
 
-#: lib/src/subsample.c:2183 lib/src/subsample.c:2205
+#: lib/src/subsample.c:2201 lib/src/subsample.c:2223
 msgid "Type"
 msgstr "Typ"
 
-#: lib/src/subsample.c:2190 lib/src/subsample.c:2212 gui2/datawiz.c:1246
+#: lib/src/subsample.c:2208 lib/src/subsample.c:2230 gui2/datawiz.c:1246
 msgid "Number of cross-sectional units"
 msgstr "Počet průřezových jednotek"
 
-#: lib/src/subsample.c:2191 lib/src/subsample.c:2213 gui2/datawiz.c:1247
+#: lib/src/subsample.c:2209 lib/src/subsample.c:2231 gui2/datawiz.c:1247
 msgid "Number of time periods"
 msgstr "Počet časových období"
 
-#: lib/src/subsample.c:2193 lib/src/subsample.c:2261
+#: lib/src/subsample.c:2211 lib/src/subsample.c:2279
 msgid "Range"
 msgstr "Rozsah"
 
-#: lib/src/subsample.c:2196
+#: lib/src/subsample.c:2214
 msgid "Subsampled data"
 msgstr "Podvýběr dat"
 
-#: lib/src/subsample.c:2215
+#: lib/src/subsample.c:2233
 msgid "Full range"
 msgstr "Plný rozsah"
 
-#: lib/src/subsample.c:2241
+#: lib/src/subsample.c:2259
 #, c-format
 msgid ""
 "Data file %s\n"
@@ -6750,19 +6754,19 @@ msgstr ""
 "Datový soubor %s\n"
 "jako"
 
-#: lib/src/subsample.c:2242
+#: lib/src/subsample.c:2260
 msgid "(unsaved)"
 msgstr "(neuloženo)"
 
-#: lib/src/subsample.c:2248 gui2/database.c:1376
+#: lib/src/subsample.c:2266 gui2/database.c:1376
 msgid "Description"
 msgstr "Popis"
 
-#: lib/src/subsample.c:2254
+#: lib/src/subsample.c:2272
 msgid "Type of data"
 msgstr "Typ dat"
 
-#: lib/src/subsample.c:2264
+#: lib/src/subsample.c:2282
 msgid "Listing of variables"
 msgstr "Seznam proměnných"
 
@@ -9503,7 +9507,7 @@ msgstr "ASCII soubory (*.txt)"
 
 #: gui2/fileselect.c:796
 #, fuzzy
-msgid "Gnumeric files (*.gnumeric"
+msgid "Gnumeric files (*.gnumeric)"
 msgstr "Gnumeric soubory (*.gnumeric)"
 
 #: gui2/fileselect.c:797

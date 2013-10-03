@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bg\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-10-02 08:48-0400\n"
+"POT-Creation-Date: 2013-10-03 08:28-0400\n"
 "PO-Revision-Date: 2013-04-16 13:16-0400\n"
 "Last-Translator: Plamen Petkov <ppet@uni-svishtov.bg>\n"
 "Language-Team: bulgarian <LL@li.org>\n"
@@ -106,7 +106,7 @@ msgid "p-value"
 msgstr "p-value"
 
 #: lib/src/adf_kpss.c:434 lib/src/modelprint.c:3433 lib/src/modelprint.c:3498
-#: lib/src/subsample.c:2160
+#: lib/src/subsample.c:2178
 msgid "unknown"
 msgstr "неизвестен/неизвестна"
 
@@ -1568,11 +1568,11 @@ msgstr "Не са намерени подходящи редове"
 msgid "Out of memory!"
 msgstr "Недостатъчна памет!"
 
-#: lib/src/dbread.c:1875 lib/src/subsample.c:1781 lib/src/subsample.c:1798
+#: lib/src/dbread.c:1875 lib/src/subsample.c:1799 lib/src/subsample.c:1816
 msgid "error reading smpl line"
 msgstr "грешка при разчитането на ред smpl"
 
-#: lib/src/dbread.c:1892 lib/src/subsample.c:1822
+#: lib/src/dbread.c:1892 lib/src/subsample.c:1840
 msgid "Invalid null sample"
 msgstr "Невалидна празна извадка"
 
@@ -3327,7 +3327,7 @@ msgstr "\"%s\"не е дефиниран.\n"
 msgid "_Open data"
 msgstr "_Отвори"
 
-#: lib/src/gretl_intl.c:105 lib/src/subsample.c:2144
+#: lib/src/gretl_intl.c:105 lib/src/subsample.c:2162
 msgid "annual"
 msgstr "годишен"
 
@@ -3735,7 +3735,7 @@ msgstr "Групова хетероскедастичност"
 msgid "Error: unit %g, period %g: duplicated observation"
 msgstr "Грешка: единица %g, период %g: повтарящи се наблюдения"
 
-#: lib/src/gretl_panel.c:4797 lib/src/gretl_panel.c:4807
+#: lib/src/gretl_panel.c:4854
 msgid "Sorry, can't do this with a sub-sampled dataset"
 msgstr ""
 
@@ -3867,7 +3867,7 @@ msgstr "Стандартна грешка в регресията"
 msgid "Robust chi^2"
 msgstr "Устойчив Хи-квадрат"
 
-#: lib/src/gretl_restrict.c:2250 lib/src/subsample.c:2198
+#: lib/src/gretl_restrict.c:2250 lib/src/subsample.c:2216
 #: lib/src/system.c:1303
 msgid "restriction"
 msgstr "ограничение"
@@ -5607,7 +5607,7 @@ msgid "Modulus"
 msgstr "Модул"
 
 #: lib/src/modelprint.c:4837 lib/src/modelprint.c:4845
-#: lib/src/subsample.c:2186 lib/src/subsample.c:2208 lib/src/subsample.c:2258
+#: lib/src/subsample.c:2204 lib/src/subsample.c:2226 lib/src/subsample.c:2276
 msgid "Frequency"
 msgstr "Честота"
 
@@ -6350,7 +6350,7 @@ msgstr "Текуща извадка:  %d наблюдения\n"
 msgid "Full data range"
 msgstr "Пълен диапазон"
 
-#: lib/src/printout.c:728 lib/src/subsample.c:2172
+#: lib/src/printout.c:728 lib/src/subsample.c:2190
 msgid "Current sample"
 msgstr "Текуща извадка"
 
@@ -6628,50 +6628,54 @@ msgstr "GED (форма = %g): "
 msgid "out of memory in XML encoding"
 msgstr "недостатъчна памет за XML кодиране"
 
-#: lib/src/subsample.c:602
+#: lib/src/subsample.c:610
 msgid "Missing sub-sample information; can't merge data\n"
 msgstr "Липсва информация за подизвадката: данните не могат да се обединят\n"
 
-#: lib/src/subsample.c:720 lib/src/subsample.c:744
+#: lib/src/subsample.c:730 lib/src/subsample.c:754
 #, c-format
 msgid "'%s' is not a dummy variable"
 msgstr "'%s' не е фиктивна променлива"
 
-#: lib/src/subsample.c:739
+#: lib/src/subsample.c:749
 #, c-format
 msgid "Variable '%s' not defined"
 msgstr "Променливата '%s' не е дефинирана"
 
-#: lib/src/subsample.c:827
+#: lib/src/subsample.c:837
 #, c-format
 msgid "Invalid number of cases %d"
 msgstr "Невалиден брой на случаите  %d"
 
-#: lib/src/subsample.c:1189
+#: lib/src/subsample.c:1199
 msgid "Sub-sample command failed mysteriously"
 msgstr "Неизвестна грешка при формиране на извадка"
 
-#: lib/src/subsample.c:1210
+#: lib/src/subsample.c:1220
 msgid "No observations would be left!"
 msgstr "Не остана нито едно наблюдение"
 
-#: lib/src/subsample.c:1215
+#: lib/src/subsample.c:1225
 msgid "No observations were dropped!"
 msgstr "Нито едно наблюдение не е изключено!"
 
-#: lib/src/subsample.c:1787 lib/src/subsample.c:1806
+#: lib/src/subsample.c:1263
+msgid "--balanced option is invalid: the (full) dataset is not a panel"
+msgstr ""
+
+#: lib/src/subsample.c:1805 lib/src/subsample.c:1824
 msgid "error in new starting obs"
 msgstr "Грешка при първото наблюдение"
 
-#: lib/src/subsample.c:1815
+#: lib/src/subsample.c:1833
 msgid "error in new ending obs"
 msgstr "Грешка при последното наблюдение"
 
-#: lib/src/subsample.c:1905 lib/src/subsample.c:1911 lib/src/subsample.c:1933
+#: lib/src/subsample.c:1923 lib/src/subsample.c:1929 lib/src/subsample.c:1951
 msgid "missing values"
 msgstr "липсващи значения"
 
-#: lib/src/subsample.c:1920
+#: lib/src/subsample.c:1938
 #, c-format
 msgid ""
 "\n"
@@ -6680,97 +6684,97 @@ msgstr ""
 "\n"
 "Броят на наблюденията (редовете) с липсващи значения = %d (%.2f%%)\n"
 
-#: lib/src/subsample.c:1923
+#: lib/src/subsample.c:1941
 #, c-format
 msgid ""
 "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr "Общ брой на липсващите значения = %d (%.2f%% от всички значения)\n"
 
-#: lib/src/subsample.c:1934
+#: lib/src/subsample.c:1952
 msgid "valid values"
 msgstr "съществуващи значения"
 
-#: lib/src/subsample.c:2103 lib/src/subsample.c:2104
+#: lib/src/subsample.c:2121 lib/src/subsample.c:2122
 msgid "dataset is subsampled, model is not\n"
 msgstr "За данните извадката е ограничена, но за модела не е\n"
 
-#: lib/src/subsample.c:2110 lib/src/subsample.c:2111
+#: lib/src/subsample.c:2128 lib/src/subsample.c:2129
 msgid "model is subsampled, dataset is not\n"
 msgstr "за модела извадката е ограничена, но за данните не е\n"
 
-#: lib/src/subsample.c:2118
+#: lib/src/subsample.c:2136
 msgid "model and dataset subsamples not the same\n"
 msgstr "за модела и данните ограниченията за извадката не съвпадат\n"
 
-#: lib/src/subsample.c:2129
+#: lib/src/subsample.c:2147
 msgid "time series"
 msgstr "динамични редове"
 
-#: lib/src/subsample.c:2131
+#: lib/src/subsample.c:2149
 msgid "panel"
 msgstr "панелни данни"
 
-#: lib/src/subsample.c:2133
+#: lib/src/subsample.c:2151
 msgid "undated"
 msgstr "пространствени данни"
 
-#: lib/src/subsample.c:2140
+#: lib/src/subsample.c:2158
 msgid "special"
 msgstr "специални"
 
-#: lib/src/subsample.c:2146 gui2/dialogs.c:3760
+#: lib/src/subsample.c:2164 gui2/dialogs.c:3760
 msgid "quarterly"
 msgstr "тримесечни"
 
-#: lib/src/subsample.c:2148 gui2/dialogs.c:3760
+#: lib/src/subsample.c:2166 gui2/dialogs.c:3760
 msgid "monthly"
 msgstr "месечни"
 
-#: lib/src/subsample.c:2150
+#: lib/src/subsample.c:2168
 msgid "hourly"
 msgstr "почасови"
 
-#: lib/src/subsample.c:2152
+#: lib/src/subsample.c:2170
 msgid "weekly"
 msgstr "седмични"
 
-#: lib/src/subsample.c:2156
+#: lib/src/subsample.c:2174
 msgid "daily"
 msgstr "дневни"
 
-#: lib/src/subsample.c:2158
+#: lib/src/subsample.c:2176
 msgid "decennial"
 msgstr "десетилетни"
 
-#: lib/src/subsample.c:2181
+#: lib/src/subsample.c:2199
 msgid "Full dataset"
 msgstr "Пълен набор от данни"
 
-#: lib/src/subsample.c:2183 lib/src/subsample.c:2205
+#: lib/src/subsample.c:2201 lib/src/subsample.c:2223
 msgid "Type"
 msgstr "Тип"
 
-#: lib/src/subsample.c:2190 lib/src/subsample.c:2212 gui2/datawiz.c:1246
+#: lib/src/subsample.c:2208 lib/src/subsample.c:2230 gui2/datawiz.c:1246
 msgid "Number of cross-sectional units"
 msgstr "Брой на пространствените единици"
 
-#: lib/src/subsample.c:2191 lib/src/subsample.c:2213 gui2/datawiz.c:1247
+#: lib/src/subsample.c:2209 lib/src/subsample.c:2231 gui2/datawiz.c:1247
 msgid "Number of time periods"
 msgstr "Брой на времевите периоди"
 
-#: lib/src/subsample.c:2193 lib/src/subsample.c:2261
+#: lib/src/subsample.c:2211 lib/src/subsample.c:2279
 msgid "Range"
 msgstr "Диапазон"
 
-#: lib/src/subsample.c:2196
+#: lib/src/subsample.c:2214
 msgid "Subsampled data"
 msgstr "Подизвадкови данни"
 
-#: lib/src/subsample.c:2215
+#: lib/src/subsample.c:2233
 msgid "Full range"
 msgstr "Пълен диапазон"
 
-#: lib/src/subsample.c:2241
+#: lib/src/subsample.c:2259
 #, c-format
 msgid ""
 "Data file %s\n"
@@ -6779,19 +6783,19 @@ msgstr ""
 "Файл с данни%s\n"
 "Достъп от"
 
-#: lib/src/subsample.c:2242
+#: lib/src/subsample.c:2260
 msgid "(unsaved)"
 msgstr "(несъхранени)"
 
-#: lib/src/subsample.c:2248 gui2/database.c:1376
+#: lib/src/subsample.c:2266 gui2/database.c:1376
 msgid "Description"
 msgstr "Описание"
 
-#: lib/src/subsample.c:2254
+#: lib/src/subsample.c:2272
 msgid "Type of data"
 msgstr "Тип на данните"
 
-#: lib/src/subsample.c:2264
+#: lib/src/subsample.c:2282
 msgid "Listing of variables"
 msgstr "Списък на променливите"
 
@@ -9532,7 +9536,7 @@ msgid "ASCII files (*.txt)"
 msgstr "Текстови (ASCII) файл  (*.txt)"
 
 #: gui2/fileselect.c:796
-msgid "Gnumeric files (*.gnumeric"
+msgid "Gnumeric files (*.gnumeric)"
 msgstr ""
 
 #: gui2/fileselect.c:797

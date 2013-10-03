@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-10-02 08:48-0400\n"
+"POT-Creation-Date: 2013-10-03 08:28-0400\n"
 "PO-Revision-Date: 2011-12-17 16:17+0100\n"
 "Last-Translator: \n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -102,7 +102,7 @@ msgid "p-value"
 msgstr "p. critique"
 
 #: lib/src/adf_kpss.c:434 lib/src/modelprint.c:3433 lib/src/modelprint.c:3498
-#: lib/src/subsample.c:2160
+#: lib/src/subsample.c:2178
 msgid "unknown"
 msgstr "inconnu"
 
@@ -1577,11 +1577,11 @@ msgstr "Aucune série valide trouvée"
 msgid "Out of memory!"
 msgstr "Mémoire insuffisante !"
 
-#: lib/src/dbread.c:1875 lib/src/subsample.c:1781 lib/src/subsample.c:1798
+#: lib/src/dbread.c:1875 lib/src/subsample.c:1799 lib/src/subsample.c:1816
 msgid "error reading smpl line"
 msgstr "erreur de lecture de la ligne smpl"
 
-#: lib/src/dbread.c:1892 lib/src/subsample.c:1822
+#: lib/src/dbread.c:1892 lib/src/subsample.c:1840
 msgid "Invalid null sample"
 msgstr "Échantillon nul invalide"
 
@@ -3353,7 +3353,7 @@ msgstr "\"%s\" n'est pas défini.\n"
 msgid "_Open data"
 msgstr "_Ouvrir les données"
 
-#: lib/src/gretl_intl.c:105 lib/src/subsample.c:2144
+#: lib/src/gretl_intl.c:105 lib/src/subsample.c:2162
 msgid "annual"
 msgstr "annuel"
 
@@ -3762,7 +3762,7 @@ msgstr "Hétéroscédasticité par groupes"
 msgid "Error: unit %g, period %g: duplicated observation"
 msgstr "Erreur : unité %g, période %g : observation dupliquée"
 
-#: lib/src/gretl_panel.c:4797 lib/src/gretl_panel.c:4807
+#: lib/src/gretl_panel.c:4854
 #, fuzzy
 msgid "Sorry, can't do this with a sub-sampled dataset"
 msgstr "Vous ne pouvez faire cela lors de l'édition du jeu de données"
@@ -3893,7 +3893,7 @@ msgstr "Écart type de la régression"
 msgid "Robust chi^2"
 msgstr "Chi^2 robuste"
 
-#: lib/src/gretl_restrict.c:2250 lib/src/subsample.c:2198
+#: lib/src/gretl_restrict.c:2250 lib/src/subsample.c:2216
 #: lib/src/system.c:1303
 msgid "restriction"
 msgstr "restriction"
@@ -5638,7 +5638,7 @@ msgid "Modulus"
 msgstr "Modulo"
 
 #: lib/src/modelprint.c:4837 lib/src/modelprint.c:4845
-#: lib/src/subsample.c:2186 lib/src/subsample.c:2208 lib/src/subsample.c:2258
+#: lib/src/subsample.c:2204 lib/src/subsample.c:2226 lib/src/subsample.c:2276
 msgid "Frequency"
 msgstr "Fréquence"
 
@@ -6378,7 +6378,7 @@ msgstr "Échantillon actuel : %d observations\n"
 msgid "Full data range"
 msgstr "Étendue complète des données"
 
-#: lib/src/printout.c:728 lib/src/subsample.c:2172
+#: lib/src/printout.c:728 lib/src/subsample.c:2190
 msgid "Current sample"
 msgstr "Échantillon actuel"
 
@@ -6654,52 +6654,56 @@ msgstr "GED (forme = %g): "
 msgid "out of memory in XML encoding"
 msgstr "hors mémoire dans l'encodage XML"
 
-#: lib/src/subsample.c:602
+#: lib/src/subsample.c:610
 msgid "Missing sub-sample information; can't merge data\n"
 msgstr ""
 "Information manquante du sous-échantillon ; ne peut faire la fusion des "
 "données\n"
 
-#: lib/src/subsample.c:720 lib/src/subsample.c:744
+#: lib/src/subsample.c:730 lib/src/subsample.c:754
 #, c-format
 msgid "'%s' is not a dummy variable"
 msgstr "« %s » n'est pas une variable muette"
 
-#: lib/src/subsample.c:739
+#: lib/src/subsample.c:749
 #, c-format
 msgid "Variable '%s' not defined"
 msgstr "Variable « %s » non définie"
 
-#: lib/src/subsample.c:827
+#: lib/src/subsample.c:837
 #, c-format
 msgid "Invalid number of cases %d"
 msgstr "Nombre de cas %d incorrect"
 
-#: lib/src/subsample.c:1189
+#: lib/src/subsample.c:1199
 msgid "Sub-sample command failed mysteriously"
 msgstr "Commande de sous-échantillonnage a mystérieusement échoué"
 
-#: lib/src/subsample.c:1210
+#: lib/src/subsample.c:1220
 msgid "No observations would be left!"
 msgstr "Aucune observation ne resterait !"
 
-#: lib/src/subsample.c:1215
+#: lib/src/subsample.c:1225
 msgid "No observations were dropped!"
 msgstr "Aucune observation n'a été supprimée !"
 
-#: lib/src/subsample.c:1787 lib/src/subsample.c:1806
+#: lib/src/subsample.c:1263
+msgid "--balanced option is invalid: the (full) dataset is not a panel"
+msgstr ""
+
+#: lib/src/subsample.c:1805 lib/src/subsample.c:1824
 msgid "error in new starting obs"
 msgstr "erreur dans les nouvelles observations de départ"
 
-#: lib/src/subsample.c:1815
+#: lib/src/subsample.c:1833
 msgid "error in new ending obs"
 msgstr "erreur dans les nouvelles observations de fin"
 
-#: lib/src/subsample.c:1905 lib/src/subsample.c:1911 lib/src/subsample.c:1933
+#: lib/src/subsample.c:1923 lib/src/subsample.c:1929 lib/src/subsample.c:1951
 msgid "missing values"
 msgstr "valeurs manquantes"
 
-#: lib/src/subsample.c:1920
+#: lib/src/subsample.c:1938
 #, c-format
 msgid ""
 "\n"
@@ -6709,7 +6713,7 @@ msgstr ""
 "Nombre d'observations (rangées) avec des valeurs de données manquantes = %d "
 "(%.2f%%)\n"
 
-#: lib/src/subsample.c:1923
+#: lib/src/subsample.c:1941
 #, c-format
 msgid ""
 "Total number of missing data values = %d (%.2f%% of total data values)\n"
@@ -6717,91 +6721,91 @@ msgstr ""
 "Nombre total de valeurs de données manquantes = %d (%.2f%% du total des "
 "valeurs des données)\n"
 
-#: lib/src/subsample.c:1934
+#: lib/src/subsample.c:1952
 msgid "valid values"
 msgstr "valeurs valides"
 
-#: lib/src/subsample.c:2103 lib/src/subsample.c:2104
+#: lib/src/subsample.c:2121 lib/src/subsample.c:2122
 msgid "dataset is subsampled, model is not\n"
 msgstr "le jeu de données est sous-échantillonné, pas le modèle\n"
 
-#: lib/src/subsample.c:2110 lib/src/subsample.c:2111
+#: lib/src/subsample.c:2128 lib/src/subsample.c:2129
 msgid "model is subsampled, dataset is not\n"
 msgstr "le modèle est sous-échantillonné, pas le jeu de données\n"
 
-#: lib/src/subsample.c:2118
+#: lib/src/subsample.c:2136
 msgid "model and dataset subsamples not the same\n"
 msgstr "échantillon du modèle et du jeu de données ne sont pas identiques\n"
 
-#: lib/src/subsample.c:2129
+#: lib/src/subsample.c:2147
 msgid "time series"
 msgstr "série temporelle"
 
-#: lib/src/subsample.c:2131
+#: lib/src/subsample.c:2149
 msgid "panel"
 msgstr "panel"
 
-#: lib/src/subsample.c:2133
+#: lib/src/subsample.c:2151
 msgid "undated"
 msgstr "non daté"
 
-#: lib/src/subsample.c:2140
+#: lib/src/subsample.c:2158
 msgid "special"
 msgstr "spécial"
 
-#: lib/src/subsample.c:2146 gui2/dialogs.c:3760
+#: lib/src/subsample.c:2164 gui2/dialogs.c:3760
 msgid "quarterly"
 msgstr "trimestriel"
 
-#: lib/src/subsample.c:2148 gui2/dialogs.c:3760
+#: lib/src/subsample.c:2166 gui2/dialogs.c:3760
 msgid "monthly"
 msgstr "mensuel"
 
-#: lib/src/subsample.c:2150
+#: lib/src/subsample.c:2168
 msgid "hourly"
 msgstr "horaire"
 
-#: lib/src/subsample.c:2152
+#: lib/src/subsample.c:2170
 msgid "weekly"
 msgstr "hebdomadaire"
 
-#: lib/src/subsample.c:2156
+#: lib/src/subsample.c:2174
 msgid "daily"
 msgstr "quotidien"
 
-#: lib/src/subsample.c:2158
+#: lib/src/subsample.c:2176
 msgid "decennial"
 msgstr "décennal"
 
-#: lib/src/subsample.c:2181
+#: lib/src/subsample.c:2199
 msgid "Full dataset"
 msgstr "Jeu de données complet"
 
-#: lib/src/subsample.c:2183 lib/src/subsample.c:2205
+#: lib/src/subsample.c:2201 lib/src/subsample.c:2223
 msgid "Type"
 msgstr "Type"
 
-#: lib/src/subsample.c:2190 lib/src/subsample.c:2212 gui2/datawiz.c:1246
+#: lib/src/subsample.c:2208 lib/src/subsample.c:2230 gui2/datawiz.c:1246
 msgid "Number of cross-sectional units"
 msgstr "Nombre d'unités de coupe transversale"
 
-#: lib/src/subsample.c:2191 lib/src/subsample.c:2213 gui2/datawiz.c:1247
+#: lib/src/subsample.c:2209 lib/src/subsample.c:2231 gui2/datawiz.c:1247
 msgid "Number of time periods"
 msgstr "Nombre de périodes :"
 
-#: lib/src/subsample.c:2193 lib/src/subsample.c:2261
+#: lib/src/subsample.c:2211 lib/src/subsample.c:2279
 msgid "Range"
 msgstr "Étendue"
 
-#: lib/src/subsample.c:2196
+#: lib/src/subsample.c:2214
 msgid "Subsampled data"
 msgstr "Données sous-échantillonnées"
 
-#: lib/src/subsample.c:2215
+#: lib/src/subsample.c:2233
 msgid "Full range"
 msgstr "Étendue complète des données"
 
-#: lib/src/subsample.c:2241
+#: lib/src/subsample.c:2259
 #, c-format
 msgid ""
 "Data file %s\n"
@@ -6810,19 +6814,19 @@ msgstr ""
 "Fichier de données %s\n"
 "en tant que"
 
-#: lib/src/subsample.c:2242
+#: lib/src/subsample.c:2260
 msgid "(unsaved)"
 msgstr "(non sauvegardé)"
 
-#: lib/src/subsample.c:2248 gui2/database.c:1376
+#: lib/src/subsample.c:2266 gui2/database.c:1376
 msgid "Description"
 msgstr "Description"
 
-#: lib/src/subsample.c:2254
+#: lib/src/subsample.c:2272
 msgid "Type of data"
 msgstr "Type de données"
 
-#: lib/src/subsample.c:2264
+#: lib/src/subsample.c:2282
 msgid "Listing of variables"
 msgstr "Liste des variables"
 
@@ -9574,7 +9578,7 @@ msgstr "fichiers ASCII (*.txt)"
 
 #: gui2/fileselect.c:796
 #, fuzzy
-msgid "Gnumeric files (*.gnumeric"
+msgid "Gnumeric files (*.gnumeric)"
 msgstr "fichier Gnumeric (*.gnumeric)"
 
 #: gui2/fileselect.c:797

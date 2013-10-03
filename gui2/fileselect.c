@@ -793,7 +793,7 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_filter(filesel, N_("Gretl data files (*.gdt)"), "*.gdt", maxlen);
 	filesel_add_filter(filesel, N_("CSV files (*.csv)"), "*.csv", maxlen);
 	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt", maxlen);
-	filesel_add_filter(filesel, N_("Gnumeric files (*.gnumeric"), "*.gnumeric", maxlen);
+	filesel_add_filter(filesel, N_("Gnumeric files (*.gnumeric)"), "*.gnumeric", maxlen);
 	filesel_add_filter(filesel, N_("Open Document files (*.ods)"), "*.ods", maxlen);
 	filesel_add_filter(filesel, N_("Excel files (*.xls)"), "*.xls", maxlen);
 	filesel_add_filter(filesel, N_("Excel files (*.xlsx)"), "*.xlsx", maxlen);

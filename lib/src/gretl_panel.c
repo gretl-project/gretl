@@ -4735,6 +4735,20 @@ static void finalize_panel_datainfo (DATASET *dset, int nperiods)
     ntodate(dset->endobs, dset->n - 1, dset);
 }
 
+static int panel_structure_check (void)
+{
+    DATASET *fset = fetch_full_dataset();
+
+    if (!dataset_is_panel(fset)) {
+	gretl_errmsg_set("Sorry, can't do this when the dataset is "
+			   "sub-sampled\nand the full dataset is not "
+			   "a panel");
+	return E_DATA;
+    }
+
+    return 0;
+}
+
 /**
  * set_panel_structure_from_vars:
  * @uv: index of series uniquely identifying units/groups.
@@ -4815,19 +4829,12 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
 
     subsampled = complex_subsampled();
 
-#if 1
     if (totmiss > 0 && subsampled) {
-	DATASET *fset = fetch_full_dataset();
-
-	if (!dataset_is_panel(fset)) {
-	    gretl_errmsg_set(_("Sorry, can't do this when the dataset is "
-			       "sub-sampled\nand the full dataset is not "
-			       "a panel"));
-	    err = E_DATA;
+	err = panel_structure_check();
+	if (err) {
 	    goto bailout;
 	}
     }
-#endif
 
     /* determine if the data rows are already in sort order by unit,
        and by period for each unit */
