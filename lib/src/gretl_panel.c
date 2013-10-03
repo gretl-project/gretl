@@ -4816,10 +4816,16 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
     subsampled = complex_subsampled();
 
 #if 1
-    if (totmiss > 0 && subsampled && !dataset_is_panel(dset)) {
-	gretl_errmsg_set(_("Sorry, can't do this with a sub-sampled dataset"));
-	err = E_DATA;
-	goto bailout;
+    if (totmiss > 0 && subsampled) {
+	DATASET *fset = fetch_full_dataset();
+
+	if (!dataset_is_panel(fset)) {
+	    gretl_errmsg_set(_("Sorry, can't do this when the dataset is "
+			       "sub-sampled\nand the full dataset is not "
+			       "a panel"));
+	    err = E_DATA;
+	    goto bailout;
+	}
     }
 #endif
 

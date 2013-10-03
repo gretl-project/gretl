@@ -1259,6 +1259,12 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 	return E_DATA;
     }
 
+    if ((opt & OPT_B) && !dataset_is_panel(dset)) {
+	gretl_errmsg_set(_("--balanced option is invalid: the (full) "
+			   "dataset is not a panel"));
+	return E_BADOPT;
+    }
+
     subset = datainfo_new();
     if (subset == NULL) {
 	return E_ALLOC;
