@@ -752,7 +752,7 @@ static int write_data_for_stata (const DATASET *dset,
     strncat(save_na, get_csv_na_write_string(), 7);
     set_csv_na_write_string(".");
     sdata = g_strdup_printf("%sstata.csv", gretl_dotdir());
-    err = write_data(sdata, NULL, dset, OPT_C, 0);
+    err = write_data(sdata, NULL, dset, OPT_C, NULL);
     set_csv_na_write_string(save_na);
  
     if (err) {
@@ -818,7 +818,7 @@ static int write_data_for_octave (const DATASET *dset,
     int err;
 
     mdata = g_strdup_printf("%smdata.tmp", gretl_dotdir());
-    err = write_data(mdata, NULL, dset, OPT_M, 0);
+    err = write_data(mdata, NULL, dset, OPT_M, NULL);
  
     if (err) {
 	gretl_errmsg_sprintf("write_data_for_octave: failed with err = %d\n", err);
@@ -886,7 +886,7 @@ static int write_data_for_R (const DATASET *dset,
 
     Rdata = g_strdup_printf("%sRdata.tmp", gretl_dot_dir);
 
-    err = write_data(Rdata, NULL, dset, OPT_R, 0);
+    err = write_data(Rdata, NULL, dset, OPT_R, NULL);
     if (err) {
 	gretl_errmsg_sprintf("write_data_for_R: failed with err = %d\n", err);
 	g_free(Rdata);

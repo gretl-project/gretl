@@ -7799,7 +7799,7 @@ int do_store (char *filename, int action, gpointer data)
 
     if (!err) {
 	/* actually write the data to file */
-	err = write_data(filename, libcmd.list, dataset, opt, 1);
+	err = gui_write_data(filename, libcmd.list, dataset, opt);
     }
 
     if (err) {

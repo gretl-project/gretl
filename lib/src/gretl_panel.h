@@ -61,4 +61,6 @@ int plausible_panel_time_var (const DATASET *dset);
 int panel_isconst (int t1, int t2, int pd, const double *x,
 		   int bygroup);
 
+int series_is_group_invariant (const DATASET *dset, int v);
+
 #endif /* GRETL_PANEL_H_ */

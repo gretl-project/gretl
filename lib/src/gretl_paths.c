@@ -1523,6 +1523,7 @@ char *gretl_addpath (char *fname, int script)
 	    fname, script);
 #endif
 
+    /* keep a backup */
     strcpy(orig, fname);
 
     if (dotpath(fname) && shelldir_open_dotfile(fname, orig)) {
@@ -1630,7 +1631,18 @@ char *gretl_addpath (char *fname, int script)
 	    if (search_dir(fname, gpath, USER_SEARCH) != NULL) { 
 		return fname;
 	    }
-	}	    
+	}
+
+	fname = tmp;
+	strcpy(fname, orig);
+	gpath = get_shelldir();
+
+	if (gpath != NULL && *gpath != '\0') {
+	    /* try looking in shelldir? */
+	    if (search_dir(fname, gpath, CURRENT_DIR) != NULL) { 
+		return fname;
+	    }
+	}	
     }
 
 #ifdef WIN32
@@ -1745,18 +1757,16 @@ static int get_gfn_special (char *fname)
 int getopenfile (const char *line, char *fname, gretlopt opt)
 {
     int script = (opt & (OPT_S | OPT_I))? 1 : 0;
+    int got_quoted;
     char *fullname;
 
     /* skip past command word */
     line += strcspn(line, " ");
     line += strspn(line, " ");
 
-    if (get_quoted_filename(line, fname)) {
-	/* if the filename was quoted, leave it as is */
-	return 0; 
-    }
+    got_quoted = get_quoted_filename(line, fname);
 
-    if (sscanf(line, "%s", fname) != 1) {
+    if (!got_quoted && sscanf(line, "%s", fname) != 1) {
 	return E_PARSE;
     }
 

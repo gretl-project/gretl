@@ -514,4 +514,8 @@ char const **get_panel_group_names (DATASET *dset);
 
 int panel_group_names_ok (const DATASET *dset);
 
+const char *panel_group_names_varname (const DATASET *dset);
+
+int is_panel_group_names_series (const DATASET *dset, int v);
+
 #endif /* DATASET_H */

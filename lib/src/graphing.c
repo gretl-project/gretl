@@ -2952,7 +2952,7 @@ static void make_calendar_tics (const DATASET *dset,
     }
 }
 
-static int panel_plot (const DATASET *dset, int t1, int t2)
+static int multiple_groups (const DATASET *dset, int t1, int t2)
 {
     int ret = 0;
 
@@ -2986,7 +2986,7 @@ static void make_time_tics (gnuplot_info *gi,
 	pputs(prn, "set mxtics 12\n");
     } else if (dated_daily_data(dset) || dated_weekly_data(dset)) {
 	make_calendar_tics(dset, gi, prn);
-    } else if (panel_plot(dset, gi->t1, gi->t2)) {
+    } else if (multiple_groups(dset, gi->t1, gi->t2)) {
 	make_panel_unit_tics(dset, gi, prn);
 	if (xlabel != NULL) {
 	    strcpy(xlabel, _("time series by group"));
@@ -5281,6 +5281,9 @@ static int dataset_has_panel_labels (const DATASET *dset,
    cross-sectional unit. The individuals' series are overlaid, in the
    same manner as a plot of several distinct time series. To do
    this we construct on the fly a notional time-series dataset.
+   
+   But note: if it turns out the series in question is invariant
+   across groups, just show a single line.
 */
 
 static int panel_overlay_ts_plot (const int vnum, 
@@ -5293,13 +5296,21 @@ static int panel_overlay_ts_plot (const int vnum,
     gchar *literal = NULL;
     gchar *title = NULL;
     const double *obs = NULL;
-    char const **grpnames;
+    char const **grpnames = NULL;
     int nv, panel_labels = 0;
+    int single_series;
     int use = 0, strip = 0;
     int i, t, s, s0;
     int err = 0;
 
-    nunits = panel_sample_size(dset);
+    single_series = series_is_group_invariant(dset, vnum);
+
+    if (single_series) {
+	nunits = 1;
+    } else {
+	nunits = panel_sample_size(dset);
+    }
+
     nv = nunits + 2;
     u0 = dset->t1 / T;
 
@@ -5319,17 +5330,20 @@ static int panel_overlay_ts_plot (const int vnum,
 	return E_ALLOC;
     }
 
-    grpnames = get_panel_group_names(dset);
-
-    if (grpnames == NULL && dset->S != NULL) {
-	panel_labels = dataset_has_panel_labels(dset, &use, &strip);
+    if (!single_series) {
+	grpnames = get_panel_group_names(dset);
+	if (grpnames == NULL && dset->S != NULL) {
+	    panel_labels = dataset_has_panel_labels(dset, &use, &strip);
+	}
     }
 
     s0 = dset->t1 * dset->pd;
 
     for (i=0; i<nunits; i++) {
 	s = s0 + i * T;
-	if (grpnames != NULL) {
+	if (single_series) {
+	    sprintf(gset->varname[i+1], dset->varname[vnum]);
+	} else if (grpnames != NULL) {
 	    strncat(gset->varname[i+1], grpnames[u0+i], VNAMELEN-1);
 	} else if (panel_labels) {
 	    if (use > 0) {
@@ -5354,8 +5368,20 @@ static int panel_overlay_ts_plot (const int vnum,
 
     opt |= OPT_O; /* use lines */
 
-    title = g_strdup_printf("%s by group", series_get_graph_name(dset, vnum));
-    literal = g_strdup_printf("set title \"%s\" ; set xlabel ;", title);
+    if (single_series) {
+	opt |= OPT_S; /* suppress-fitted */
+    } else {
+	const char *gname = series_get_graph_name(dset, vnum);
+	const char *vname = panel_group_names_varname(dset);
+
+	if (vname != NULL) {
+	    title = g_strdup_printf("%s by %s", gname, vname);
+	} else {
+	    title = g_strdup_printf("%s by group", gname);
+	}
+	literal = g_strdup_printf("set title \"%s\" ; set xlabel ;", title);
+    }
+
     err = gnuplot(list, literal, gset, opt);
 
     g_free(title);

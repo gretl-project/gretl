@@ -4064,3 +4064,29 @@ int panel_group_names_ok (const DATASET *dset)
 
     return ret;
 }
+
+const char *panel_group_names_varname (const DATASET *dset)
+{
+    if (dataset_is_panel(dset) && dset->pangrps != NULL) {
+	int n, v = current_series_index(dset, dset->pangrps);
+
+	if (v > 0 && v < dset->v) {
+	    char const **S = series_get_string_vals(dset, v, &n);
+
+	    if (S != NULL && n == dset->n / dset->pd) {
+		return dset->pangrps;
+	    }
+	}
+    }
+
+    return NULL;
+}
+
+int is_panel_group_names_series (const DATASET *dset, int v)
+{
+    if (dataset_is_panel(dset) && dset->pangrps != NULL) {
+	return v == current_series_index(dset, dset->pangrps);
+    } else {
+	return 0;
+    }
+}

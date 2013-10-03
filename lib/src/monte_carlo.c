@@ -2373,11 +2373,9 @@ static int loop_store_save (LOOP_STORE *lstore, PRN *prn)
 
     lstore->dset->t2 = lstore->n - 1;
     pprintf(prn, _("store: using filename %s\n"), lstore->fname);
-    err = write_data(lstore->fname, list, lstore->dset, lstore->opt, 0);
+    err = write_data(lstore->fname, list, lstore->dset, lstore->opt, prn);
 
-    if (!err) {
-	pprintf(prn, _("Data written OK.\n"));
-    } else {
+    if (err) {
 	pprintf(prn, _("write of data file failed\n"));
     }
 

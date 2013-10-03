@@ -5567,14 +5567,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (*cmd->param == '\0') {
 	    pputs(prn, _("store: no filename given\n"));
 	    err = E_PARSE;
-	} else if (gretl_messages_on()) {
-	    pprintf(prn, _("store: using filename %s\n"), cmd->param);
 	}
 	if (!err) {
-	    err = write_data(cmd->param, cmd->list, dset, cmd->opt, 0);
-	}
-	if (!err && gretl_messages_on()) {
-	    pprintf(prn, _("Data written OK.\n"));
+	    err = write_data(cmd->param, cmd->list, dset, cmd->opt, prn);
 	}
 	break;
 

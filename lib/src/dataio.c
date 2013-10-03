@@ -1297,23 +1297,8 @@ static void R_data_out (const DATASET *dset, const int *list,
 
 #define DEFAULT_CSV_DIGITS 12
 
-/**
- * write_data:
- * @fname: name of file to write.
- * @list: list of variables to write (or %NULL to write all series).
- * @dset: dataset struct.
- * @opt: option flag indicating format in which to write the data.
- * @progress: may be 1 when called from gui to display progress
- * bar in case of a large data write; generally should be 0.
- * 
- * Write out a data file containing the values of the given set
- * of variables.
- * 
- * Returns: 0 on successful completion, non-zero on error.
- */
-
-int write_data (const char *fname, int *list, const DATASET *dset, 
-		gretlopt opt, int progress)
+static int real_write_data (const char *fname, int *list, const DATASET *dset, 
+			    gretlopt opt, int progress, PRN *prn)
 {
     int i, t, v, l0;
     GretlDataFormat fmt;
@@ -1581,11 +1566,41 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 
  write_exit:
 
+    if (!err && prn != NULL) {
+	pprintf(prn, "wrote %s\n", fname);
+    }
+
     if (freelist) {
 	free(list);
     }
 
     return err;
+}
+
+/**
+ * write_data:
+ * @fname: name of file to write.
+ * @list: list of variables to write (or %NULL to write all series).
+ * @dset: dataset struct.
+ * @opt: option flag indicating format in which to write the data.
+ * @prn: gretl printer or NULL.
+ * 
+ * Write out a data file containing the values of the given set
+ * of variables.
+ * 
+ * Returns: 0 on successful completion, non-zero on error.
+ */
+
+int write_data (const char *fname, int *list, const DATASET *dset, 
+		gretlopt opt, PRN *prn)
+{
+    return real_write_data(fname, list, dset, opt, 0, prn);
+}
+
+int gui_write_data (const char *fname, int *list, const DATASET *dset, 
+		    gretlopt opt)
+{
+    return real_write_data(fname, list, dset, opt, 1, NULL);
 }
 
 static int no_case_series_index (const DATASET *dset,

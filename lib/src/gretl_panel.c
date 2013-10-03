@@ -4735,14 +4735,21 @@ static void finalize_panel_datainfo (DATASET *dset, int nperiods)
     ntodate(dset->endobs, dset->n - 1, dset);
 }
 
-static int panel_structure_check (void)
+static int check_full_dataset (void)
 {
     DATASET *fset = fetch_full_dataset();
 
     if (!dataset_is_panel(fset)) {
-	gretl_errmsg_set("Sorry, can't do this when the dataset is "
-			   "sub-sampled\nand the full dataset is not "
-			   "a panel");
+	const char *msg =
+	    "You cannot use the --panel-vars option with the setobs command when\n"
+	    "\n"
+	    "* the dataset is currently sub-sampled and\n"
+	    "* the full dataset is not a panel.\n"
+	    "\n"
+	    "If you first structure your full dataset as a panel, you can then\n"
+	    "do what you are trying to do.";
+
+	gretl_errmsg_set(msg);
 	return E_DATA;
     }
 
@@ -4763,8 +4770,7 @@ static int panel_structure_check (void)
 
 int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
 {
-    int subsampled;
-    int presorted;
+    int subsampled, presorted;
     double *uid = NULL;
     double *tid = NULL;
     char *mask = NULL;
@@ -4775,6 +4781,15 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
     int nperiods = 0;
     int ustrs = 0;
     int err = 0;
+
+    subsampled = complex_subsampled();
+
+    if (subsampled) {
+	err = check_full_dataset();
+	if (err) {
+	    return err;
+	}
+    }    
 
 #if PDEBUG
     fprintf(stderr, "\n*** set_panel_structure_from_vars:\n "
@@ -4826,15 +4841,6 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
     fprintf(stderr, "Required rows = %d * %d = %d\n", nunits, nperiods, fulln);
     fprintf(stderr, "Missing rows = %d - %d = %d\n", fulln, dset->n, totmiss);
 #endif
-
-    subsampled = complex_subsampled();
-
-    if (totmiss > 0 && subsampled) {
-	err = panel_structure_check();
-	if (err) {
-	    goto bailout;
-	}
-    }
 
     /* determine if the data rows are already in sort order by unit,
        and by period for each unit */
@@ -5443,4 +5449,23 @@ int panel_variance_info (const double *x, const DATASET *dset,
     *psb = sb;
 
     return 0;
+}
+
+int series_is_group_invariant (const DATASET *dset, int v)
+{
+    const double *x = dset->Z[v];
+    int T = dset->pd;
+    int N = dset->n / T;
+    int i, t, s;
+
+    for (i=1; i<N; i++) {
+	for (t=0; t<T; t++) {
+	    s = t + i * T;
+	    if (x[s] != x[t]) {
+		return 0;
+	    }
+	}
+    }
+
+    return 1;
 }

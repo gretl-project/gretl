@@ -2905,12 +2905,15 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
     }
 
     if (new_ptype == 0) {
+	/* not already determined */
 	new_ptype = plotvar_code(dset);
     }
     if (T == 0) {
+	/* not already determined */
 	T = dset->n;
     }
     if (sd0 == 0.0) {
+	/* not already determined */
 	sd0 = dset->sd0;
     }
 
@@ -2945,7 +2948,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
     switch (ptype) {
     case PLOTVAR_ANNUAL: 
 	for (t=0; t<T; t++) {
-	    x[t] = (double) (t + atoi(dset->stobs));
+	    x[t] = sd0 + t;
 	}
 	break;
     case PLOTVAR_QUARTERS:
