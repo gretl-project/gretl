@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-10-03 08:28-0400\n"
-"PO-Revision-Date: 2013-10-03 10:21+0100\n"
+"PO-Revision-Date: 2013-10-03 16:03+0100\n"
 "Last-Translator: Helio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -6646,6 +6646,8 @@ msgstr "Não foram descartadas nenhumas observações!"
 #: lib/src/subsample.c:1263
 msgid "--balanced option is invalid: the (full) dataset is not a panel"
 msgstr ""
+"a opção --balanced não é válida: o conjunto de dados (completo) não é um "
+"painel"
 
 #: lib/src/subsample.c:1805 lib/src/subsample.c:1824
 msgid "error in new starting obs"
@@ -9529,7 +9531,6 @@ msgid "ASCII files (*.txt)"
 msgstr "Ficheiros ASCII (*.txt)"
 
 #: gui2/fileselect.c:796
-#, fuzzy
 msgid "Gnumeric files (*.gnumeric)"
 msgstr "Ficheiros Gnumeric (*.gnumeric)"
 
