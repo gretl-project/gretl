@@ -1616,8 +1616,8 @@ static NODE *stringvec_calc (NODE *l, NODE *r, int f, parser *p)
     }
 
     for (t=p->dset->t1; t<=p->dset->t2; t++) {
-	sl = series_get_string_val(p->dset, l->vnum, t);
-	sr = series_get_string_val(p->dset, r->vnum, t);
+	sl = series_get_string_for_obs(p->dset, l->vnum, t);
+	sr = series_get_string_for_obs(p->dset, r->vnum, t);
 	if (sl == NULL || sr == NULL) {
 	    ret->v.xvec[t] = NADBL;
 	} else {

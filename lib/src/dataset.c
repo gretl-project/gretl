@@ -3877,7 +3877,7 @@ series_table *series_get_string_table (const DATASET *dset, int i)
 }
 
 /**
- * series_get_string_val:
+ * series_get_string_for_obs:
  * @dset: pointer to dataset.
  * @i: index number of series.
  * @t: 0-based index of observation.
@@ -3886,13 +3886,36 @@ series_table *series_get_string_table (const DATASET *dset, int i)
  * series @i at observation @t, or NULL if there is no such string.
  */
 
-const char *series_get_string_val (const DATASET *dset, int i, int t)
+const char *series_get_string_for_obs (const DATASET *dset, int i, 
+				       int t)
 {
     const char *ret = NULL;
 
     if (i > 0 && i < dset->v && dset->varinfo[i]->st != NULL) {
 	ret = series_table_get_string(dset->varinfo[i]->st, 
 				      dset->Z[i][t]);
+    } 
+
+    return ret;
+}
+
+/**
+ * series_get_string_for_value:
+ * @dset: pointer to dataset.
+ * @i: index number of series.
+ * @val: the value to look up.
+ *
+ * Returns: the string associated with numerical value @val of
+ * series @i, or NULL if there is no such string.
+ */
+
+const char *series_get_string_for_value (const DATASET *dset, int i,
+					 double val)
+{
+    const char *ret = NULL;
+
+    if (i > 0 && i < dset->v && dset->varinfo[i]->st != NULL) {
+	ret = series_table_get_string(dset->varinfo[i]->st, val);
     } 
 
     return ret;

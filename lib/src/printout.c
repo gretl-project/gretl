@@ -1347,7 +1347,7 @@ static void print_stringvals_for_var (const DATASET *dset, int v, PRN *prn)
     int t, n;
 
     for (t=dset->t1; t<=dset->t2; t++) {
-	s = series_get_string_val(dset, v, t);
+	s = series_get_string_for_obs(dset, v, t);
 	if (s == NULL) {
 	    s = "(null)";
 	}
@@ -2016,7 +2016,7 @@ static int print_by_obs (int *list, const DATASET *dset,
 	    for (i=1, j=j0; i<=blist[0]; i++, j++) {
 		v = blist[i];
 		if (!(opt & OPT_U) && series_has_string_table(dset, v)) {
-		    const char *s = series_get_string_val(dset, v, t);
+		    const char *s = series_get_string_for_obs(dset, v, t);
 
 		    if (s == NULL || *s == '\0') {
 			bufspace(colwidth, prn);

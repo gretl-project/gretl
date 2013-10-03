@@ -638,7 +638,17 @@ static int get_transform (int ci, int v, int aux, double x,
 	sprintf(label, _("= %s times %s"), dset->varname[v], 
 		dset->varname[aux]);
     } else if (ci == DUMMIFY) {
-	sprintf(label, _("dummy for %s = %g"), dset->varname[v], x);
+	if (series_has_string_table(dset, v)) {
+	    const char *s = series_get_string_for_value(dset, v, x);
+
+	    if (s != NULL && *s != '\0') {
+		sprintf(label, _("dummy for %s = '%s'"), dset->varname[v], s);
+	    } else {
+		sprintf(label, _("dummy for %s = %g"), dset->varname[v], x);
+	    }
+	} else {
+	    sprintf(label, _("dummy for %s = %g"), dset->varname[v], x);
+	}
     } else {
 	make_transform_label(label, dset->varname[v], ci, aux);
     }

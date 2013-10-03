@@ -496,7 +496,11 @@ int series_has_string_table (const DATASET *dset, int i);
 
 series_table *series_get_string_table (const DATASET *dset, int i);
 
-const char *series_get_string_val (const DATASET *dset, int i, int t);
+const char *series_get_string_for_obs (const DATASET *dset, int i, 
+				       int t);
+
+const char *series_get_string_for_value (const DATASET *dset, int i,
+					 double val);
 
 int series_set_string_val (DATASET *dset, int i, int t, const char *s);
 

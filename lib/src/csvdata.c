@@ -3173,7 +3173,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 	    s_src = 1;
 	} else {
 	    /* column is string-valued, fine */
-	    s = series_get_string_val(jr->r_dset, tcol, i);
+	    s = series_get_string_for_obs(jr->r_dset, tcol, i);
 	    s_src = 2;
 	}
     } else {
