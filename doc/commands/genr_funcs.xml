@@ -458,7 +458,7 @@
 	  targ="setobs"/> command).  The returned series holds 8-digit
 	  numbers on the pattern <lit>YYYYMMDD</lit> (ISO 8601
 	  <quote>basic</quote> date format), which correspond to the
-	  day of the observation, of the first day of the observation
+	  day of the observation, or the first day of the observation
 	  period in case of a time-series frequency less than daily.
 	</para>
 	<para>
