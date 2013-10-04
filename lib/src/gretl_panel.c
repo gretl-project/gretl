@@ -5010,7 +5010,7 @@ int set_panel_group_strings (const char *line, DATASET *dset)
 	int ngtest = 0;
 
 	if (strchr(namestr, '"') != NULL) {
-	    S = gretl_string_split_quoted(namestr, &ngtest, &err);
+	    S = gretl_string_split_quoted(namestr, &ngtest, NULL, &err);
 	} else {
 	    S = gretl_string_split(namestr, &ngtest, " \n\t");
 	}

@@ -131,9 +131,79 @@ struct csvdata_ {
 static int
 time_series_label_check (DATASET *dset, int reversed, char *skipstr, PRN *prn);
 
+/* file-scope global */
 static char import_na[8];
-static char *g_timecol_fmt;
-static int g_m_means_q;
+
+struct timecols_map {
+    int ncols;       /* number of "timecols" */
+    char **colnames; /* array of outer-dataset column names */
+    int nfmts;       /* number of time-column formats */
+    char **fmt;      /* array of time-format strings */
+    char *m_means_q; /* array of "monthly means quarterly" flags */
+};
+
+/* file-scope global */
+struct timecols_map g_timecols_map;
+
+static void timecols_map_set (int ncols, char **colnames, 
+			      int nfmts, char **fmt, char *mq)
+{
+    g_timecols_map.ncols = ncols;
+    g_timecols_map.colnames = colnames;
+    g_timecols_map.nfmts = nfmts;
+    g_timecols_map.fmt = fmt;
+    g_timecols_map.m_means_q = mq;
+}
+
+static void timecols_map_init (void)
+{
+    timecols_map_set(0, NULL, 0, NULL, NULL);
+}
+
+static void timecols_map_destroy (void)
+{
+    if (g_timecols_map.ncols > 0) {
+	strings_array_free(g_timecols_map.colnames, g_timecols_map.ncols);
+    }
+    if (g_timecols_map.nfmts > 0) {
+	strings_array_free(g_timecols_map.fmt, g_timecols_map.nfmts);
+    }
+    if (g_timecols_map.m_means_q != NULL) {
+	free(g_timecols_map.m_means_q);
+    }
+    timecols_map_init();
+}
+
+static int timecol_get_format (const DATASET *dset, int v, 
+			       char **pfmt, int *q)
+{
+    int nf = g_timecols_map.nfmts;
+
+    if (nf == 0) {
+	return 0;
+    } else if (nf == 1) {
+	*pfmt = g_timecols_map.fmt[0];
+	*q = g_timecols_map.m_means_q[0];
+	return 1;
+    } else {
+	/* Multiple formats were specified under the --timecol-fmt
+	   option: find the one which corresponds to the name
+	   of the column we're looking at.
+	*/
+	const char *vname = dset->varname[v];
+	int i;
+
+	for (i=0; i<g_timecols_map.nfmts; i++) {
+	    if (!strcmp(vname, g_timecols_map.colnames[i])) {
+		*pfmt = g_timecols_map.fmt[i];
+		*q = g_timecols_map.m_means_q[i];
+		return 1;
+	    }
+	}	
+    }
+
+    return 0;
+}
 
 static void csvdata_free (csvdata *c)
 {
@@ -1753,12 +1823,13 @@ static int non_numeric_check (csvdata *c, PRN *prn)
    global variable g_timecol_fmt.
 */
 
-static double special_time_val (const char *s)
+static double special_time_val (const char *s, const char *fmt,
+				int m_means_q)
 {
     struct tm t = {0};
     char *test;
 
-    test = strptime(s, g_timecol_fmt, &t);
+    test = strptime(s, fmt, &t);
     
     if (test == NULL || *test != '\0') {
 	/* conversion didn't work right */
@@ -1770,7 +1841,7 @@ static double special_time_val (const char *s)
 	m = t.tm_mon + 1;
 	d = t.tm_mday;
 
-	if (g_m_means_q) {
+	if (m_means_q) {
 	    /* convert to 1st month of quarter */
 	    if (m == 2) m = 4;
 	    else if (m == 3) m = 7;
@@ -1791,10 +1862,14 @@ static double eval_non_numeric (csvdata *c, int i, const char *s)
     double x = NON_NUMERIC;
 
     if (series_get_flags(c->dset, i) & VAR_TIMECOL) {
-	if (g_timecol_fmt != NULL) {
-	    /* the user gave a format for this */
-	    x = special_time_val(s);
+	char *fmt = NULL;
+	int mq = 0;
+
+	if (timecol_get_format(c->dset, i, &fmt, &mq)) {
+	    /* the user gave a specific format for this */
+	    x = special_time_val(s, fmt, mq);
 	} else {
+	    /* default: ISO 8601 extended */
 	    int y, m, d, n;
 
 	    n = sscanf(s, "%d-%d-%d", &y, &m, &d);
@@ -3693,6 +3768,8 @@ static int aggr_val_determined (joiner *jr, int n, double *x, int *err)
     }
 }
 
+#define AGGDEBUG 0
+
 #define min_max_cond(x,y,a) ((a==AGGR_MAX && x>y) || (a==AGGR_MIN && x<y))
 
 /* aggr_value: here we're working on a given row of the left-hand
@@ -3706,7 +3783,7 @@ static int aggr_val_determined (joiner *jr, int n, double *x, int *err)
    the caller.
 */
 
-static double aggr_value (joiner *jr, int key, int key2,
+static double aggr_value (joiner *jr, int key1, int key2,
 			  double *xmatch, double *auxmatch, 
 			  int *err)
 {
@@ -3716,13 +3793,13 @@ static double aggr_value (joiner *jr, int key, int key2,
 
     /* find the position of the inner (primary) key in the 
        array of unique outer key values */
-    pos = binsearch(key, jr->keys, jr->n_unique, 0);
+    pos = binsearch(key1, jr->keys, jr->n_unique, 0);
 
-#if CDEBUG
+#if AGGDEBUG
     if (pos < 0) {
-	fprintf(stderr, "  key = %d: no match\n", key);
+	fprintf(stderr, " key1 = %d: no match\n", key1);
     } else {
-	fprintf(stderr, "  key = %d: matched at position %d\n", key, pos);
+	fprintf(stderr, " key1 = %d: matched at position %d\n", key1, pos);
     }
 #endif    
 
@@ -3736,7 +3813,7 @@ static double aggr_value (joiner *jr, int key, int key2,
     */
     n = jr->key_freq[pos];
 
-#if CDEBUG > 1
+#if AGGDEBUG
     fprintf(stderr, "  number of matches = %d\n", n);
 #endif
 
@@ -3757,7 +3834,7 @@ static double aggr_value (joiner *jr, int key, int key2,
     imin = jr->key_row[pos];
     imax = imin + n;
 
-#if CDEBUG > 1
+#if AGGDEBUG > 1
     fprintf(stderr, "  aggregation row range: %d to %d\n", imin+1, imax);
 #endif
 
@@ -3937,7 +4014,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
     int i, t, nmax;
     int err = 0;
 
-#if CDEBUG
+#if AGGDEBUG
     fputs("\naggregate data:\n", stderr);
 #endif
 
@@ -3990,7 +4067,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 	}
 
 	z = aggr_value(jr, key, key2, xmatch, auxmatch, &err);
-#if CDEBUG
+#if AGGDEBUG
 	if (na(z)) {
 	    fprintf(stderr, " aggr_value: got NA (keys=%d,%d, err=%d)\n", 
 		    key, key2, err);
@@ -4369,34 +4446,93 @@ static int auto_keys_check (const DATASET *l_dset,
 /* Crawl along the string containing comma-separated names of columns
    that are to be treated as "timecols". For each name, look for a
    match among the names of columns selected from the CSV file for
-   some role in the join operation (data, key or whatever). Note that
-   it's not considered an error if there's no match for a given
-   "timecol" name; we just ignore that name.  
+   some role in the join operation (data, key or whatever). It is
+   not considered an error if there's no match for a given "timecol"
+   name; in that case the column will be ignored.
+
+   In addition, if @fmts is non-NULL, parse out a specific time
+   format or formats to be applied to the timecols series.
 */
 
-static int process_timecols (csvjoin *jspec, const char *s)
+static int process_timecols_info (csvjoin *jspec, const char *cols,
+				  const char *fmts)
 {
     int *list = NULL;
-    char *name;
-    int i, err = 0;
+    char **names = NULL;
+    char **fmt = NULL;
+    char *mq = NULL;
+    const char *colname;
+    int nnames = 0;
+    int nfmts = 0;
+    int i, j, err = 0;
 
-    while (!err && (name = gretl_word_strdup(s, &s, OPT_NONE, &err)) != NULL) {
-	for (i=0; i<JOIN_MAXCOL; i++) {
-	    if (jspec->colnames[i] != NULL && !strcmp(name, jspec->colnames[i])) {
-		gretl_list_append_term(&list, i);
+    names = gretl_string_split(cols, &nnames, " ,");
+    if (names == NULL) {
+	err = E_ALLOC;
+    }
+
+    /* match the names we got against the set of "wanted" columns */
+
+    for (i=0; i<nnames && !err; i++) {
+	for (j=0; j<JOIN_MAXCOL; j++) {
+	    colname = jspec->colnames[j];
+	    if (colname != NULL && !strcmp(names[i], colname)) {
+		gretl_list_append_term(&list, j);
 		if (list == NULL) {
 		    err = E_ALLOC;
 		}
 		break;
 	    }
 	}
-	free(name);
+    }
+
+    /* process the format(s) option if it has been supplied: there
+       should be either just one common format, or one format for each
+       of the timecols columns
+    */
+
+    if (!err && fmts != NULL && list != NULL) {
+	fmt = gretl_string_split_quoted(fmts, &nfmts, ",", &err);
+	if (!err && nfmts != 1 && nfmts != nnames) {
+	    gretl_errmsg_set("timecol-fmt: invalid number of formats");
+	    err = E_INVARG;
+	}
+	if (!err) {
+	    mq = calloc(nfmts, 1);
+	    if (mq == NULL) {
+		err = E_ALLOC;
+	    } else {
+		for (i=0; i<nfmts; i++) {
+		    if (format_uses_quarterly(fmt[i])) {
+			mq[i] = 1;
+		    }
+		}
+	    }
+	}	    
     }
 
 #if CDEBUG
     printlist(list, "timecols list");
+    if (fmts != NULL) {
+	for (i=0; i<nfmts; i++) {
+	    fprintf(stderr, "timecol-fmt %d = '%s'\n", i, fmt[i]);
+	}
+    }
 #endif
-    jspec->timecols = list;
+
+    if (!err && list != NULL) {
+	timecols_map_set(nnames, names, nfmts, fmt, mq);
+    }
+
+    if (err) {
+	/* clean up if need be */
+	strings_array_free(names, nnames);
+	free(list);
+	strings_array_free(fmt, nfmts);
+	free(mq);
+    } else {
+	jspec->timecols = list;
+    }
 
     return err;
 }
@@ -4588,6 +4724,7 @@ static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
  * @auxname: name of auxiliary column for max or min aggregation,
  * or NULL.
  * @timecolstr: string specifying time/date columns, or NULL.
+ * @timecolfmt: string giving format(s) for time/date columns, or NULL.
  * @opt: may contain OPT_V for verbose operation.
  * @prn: gretl printing struct (or NULL).
  * 
@@ -4639,6 +4776,7 @@ int join_from_csv (const char *fname,
     }
 
     obskey_init(&auto_keys);
+    timecols_map_init();
 
 #if CDEBUG
     fputs("*** join_from_csv:\n", stderr);
@@ -4675,6 +4813,9 @@ int join_from_csv (const char *fname,
     }
     if (timecolstr != NULL) {
 	fprintf(stderr, " timecols = '%s'\n", timecolstr);
+    }
+    if (timecolfmt != NULL) {
+	fprintf(stderr, " timecolfmt = '%s'\n", timecolfmt);
     }    
 #endif
 
@@ -4738,22 +4879,11 @@ int join_from_csv (const char *fname,
 	}
     }
 
-    /* Step 3: handle the timecols and/or timecol-fmt options */
+    /* Step 3: handle the timecols and timecol-fmt options */
 
-    if (!err) {
-	if (timecolstr != NULL) {
-	    err = process_timecols(&jspec, timecolstr);
-	}
-	if (!err && timecolfmt != NULL) {
-	    /* publish the timecols format info */
-	    g_timecol_fmt = gretl_strdup(timecolfmt);
-	    if (g_timecol_fmt == NULL) {
-		err = E_ALLOC;
-	    } else if (format_uses_quarterly(g_timecol_fmt)) {
-		g_m_means_q = 1;
-	    }
-	}
-    }	    
+    if (!err && timecolstr != NULL) {
+	err = process_timecols_info(&jspec, timecolstr, timecolfmt);
+    }
 
     /* Step 4: read data from the outer file; check we got all the
        required columns; check that nothing is screwed up type-wise
@@ -4863,9 +4993,7 @@ int join_from_csv (const char *fname,
  bailout:
 
     /* null out file-scope "timecols" globals */
-    free(g_timecol_fmt);
-    g_timecol_fmt = NULL;
-    g_m_means_q = 0;
+    timecols_map_destroy();
 
     if (auto_keys.timefmt != NULL) {
 	free(auto_keys.timefmt);

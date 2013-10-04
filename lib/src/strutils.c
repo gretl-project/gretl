@@ -803,6 +803,9 @@ char **gretl_string_split (const char *s, int *n,
  * gretl_string_split_quoted:
  * @s: the source string.
  * @n: location to receive the number of substrings.
+ * @sep: string containing the character(s) to count as
+ * field separators, or NULL. If @sep is NULL only space,
+ * tab and newline count.
  * @err: location to receive error code.
  *
  * Similar to gretl_string_split(), except that this variant
@@ -813,15 +816,18 @@ char **gretl_string_split (const char *s, int *n,
  * Returns: allocated array of substrings or NULL in case of failure.
  */
 
-char **gretl_string_split_quoted (const char *s, int *n, int *err)
+char **gretl_string_split_quoted (const char *s, int *n, 
+				  const char *sep, int *err)
 {
-    const char *ignore = " \t\n";
+    const char *ignore;
     const char *q, *p = s;
     int i, len, m = 0;
     int quoted = 0;
     int grabit;
     char *substr;
     char **S;
+
+    ignore = sep != NULL ? sep : " \t\n";
 
     *n = 0;
 

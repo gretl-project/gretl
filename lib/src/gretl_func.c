@@ -4631,7 +4631,7 @@ static int read_param_labels (char **ps, fn_param *param,
 	} else {
 	    *ps = p + len + 1;
 	    param->labels = gretl_string_split_quoted(tmp, &param->nlabels,
-						      &err);
+						      NULL, &err);
 	    free(tmp);
 	    if (!err && param->nlabels != nvals) {
 		gretl_errmsg_sprintf("%s: found %d values but %d value-labels",

@@ -82,7 +82,8 @@ char *gretl_quoted_string_strdup (const char *s, const char **ptr);
 
 char **gretl_string_split (const char *s, int *n, const char *sep);
 
-char **gretl_string_split_quoted (const char *s, int *n, int *err);
+char **gretl_string_split_quoted (const char *s, int *n, 
+				  const char *sep, int *err);
 
 char *gretl_str_expand (char **orig, const char *add, const char *sep);
 
