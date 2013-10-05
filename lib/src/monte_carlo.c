@@ -1047,7 +1047,7 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
 {
     char ivar[VNAMELEN] = {0};
     int done = 0;
-    int i, nf, err = 0;
+    int nf, err = 0;
 
     /* we're looking at the string that follows "loop foreach" */
     if (*s == '\0') {
@@ -1060,6 +1060,7 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
     fprintf(stderr, "parse_as_each_loop: s = '%s'\n", s);
 #endif 
 
+    /* get the index variable name (as in "foreach i") */
     if (gretl_scan_varname(s, ivar) != 1) {
 	return E_PARSE;
     } 
@@ -1093,24 +1094,8 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
     }
 
     if (!done) {
-	/* simple list of values */
-	err = allocate_each_strings(loop, nf);
-
-	for (i=0; i<nf && !err; i++) {
-	    int len;
-
-	    while (isspace((unsigned char) *s)) s++;
-	    len = strcspn(s, " \n");
-
-	    loop->eachstrs[i] = gretl_strndup(s, len);
-	    if (loop->eachstrs[i] == NULL) {
-		strings_array_free(loop->eachstrs, nf);
-		loop->eachstrs = NULL;
-		err = E_ALLOC;
-	    } else {
-		s += len;
-	    }
-	}
+	/* simple array of strings: allow for quoted substrings */
+	loop->eachstrs = gretl_string_split_quoted(s, &nf, NULL, &err);
     }
 
     if (!err) {
